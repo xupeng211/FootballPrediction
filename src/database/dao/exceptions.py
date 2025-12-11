@@ -5,7 +5,7 @@ Database Access Object (DAO) Module Exception Definitions
 定义DAO层的专用异常类型，提供更精确的错误处理和调试信息。
 """
 
-from typing import Optional, Any 
+from typing import Optional, Any
 
 
 class DAOException(Exception):
@@ -18,7 +18,7 @@ class DAOException(Exception):
         self,
         message: str,
         details: Optional[dict[str, Any]] = None,
-        original_exception: Optional[Exception] = None
+        original_exception: Optional[Exception] = None,
     ):
         self.message = message
         self.details = details or {}
@@ -30,7 +30,7 @@ class DAOException(Exception):
         return {
             "error_type": self.__class__.__name__,
             "message": self.message,
-            "details": self.details
+            "details": self.details,
         }
 
 
@@ -65,7 +65,9 @@ class DuplicateRecordError(DAOException):
     当插入或更新操作违反唯一性约束时抛出。
     """
 
-    def __init__(self, model: str, field: str, value: Any, message: Optional[str] = None):
+    def __init__(
+        self, model: str, field: str, value: Any, message: Optional[str] = None
+    ):
         self.model = model
         self.field = field
         self.value = value
@@ -81,7 +83,12 @@ class ValidationError(DAOException):
     当数据不符合模型验证规则时抛出。
     """
 
-    def __init__(self, model: str, validation_errors: dict[str, Any], message: Optional[str] = None):
+    def __init__(
+        self,
+        model: str,
+        validation_errors: dict[str, Any],
+        message: Optional[str] = None,
+    ):
         self.model = model
         self.validation_errors = validation_errors
         if not message:
@@ -110,7 +117,9 @@ class QueryTimeoutError(DAOException):
     当数据库操作执行超时时抛出。
     """
 
-    def __init__(self, query: str, timeout_seconds: float, message: Optional[str] = None):
+    def __init__(
+        self, query: str, timeout_seconds: float, message: Optional[str] = None
+    ):
         self.query = query
         self.timeout_seconds = timeout_seconds
         if not message:
@@ -147,12 +156,12 @@ def handle_sqlalchemy_exception(func_name: str, exc: Exception) -> DAOException:
 
 # 导出所有异常
 __all__ = [
-    'DAOException',
-    'DatabaseConnectionError',
-    'RecordNotFoundError',
-    'DuplicateRecordError',
-    'ValidationError',
-    'TransactionError',
-    'QueryTimeoutError',
-    'handle_sqlalchemy_exception'
+    "DAOException",
+    "DatabaseConnectionError",
+    "RecordNotFoundError",
+    "DuplicateRecordError",
+    "ValidationError",
+    "TransactionError",
+    "QueryTimeoutError",
+    "handle_sqlalchemy_exception",
 ]

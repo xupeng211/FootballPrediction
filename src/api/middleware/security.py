@@ -98,7 +98,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         # 7. Strict-Transport-Security: 强制 HTTPS（仅生产环境）
         if self.is_production and request.url.scheme == "https":
             # 1年有效期，包含子域名，预加载
-            hsts_value = "max-age=31536000; " "includeSubDomains; " "preload"
+            hsts_value = "max-age=31536000; includeSubDomains; preload"
             response.headers["Strict-Transport-Security"] = hsts_value
 
         # 8. 清除可能泄露服务器信息的不安全头

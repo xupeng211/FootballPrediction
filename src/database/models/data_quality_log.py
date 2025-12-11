@@ -66,7 +66,9 @@ class DataQualityLog(BaseModel):
     status = Column(String(20), nullable=False, default="open", comment="处理状态")
 
     # 时间字段
-    created_at = Column(DateTime, nullable=False, default=func.now(), comment="创建时间")
+    created_at = Column(
+        DateTime, nullable=False, default=func.now(), comment="创建时间"
+    )
     resolved_at = Column(DateTime, nullable=True, comment="解决时间")
 
     # 附加信息

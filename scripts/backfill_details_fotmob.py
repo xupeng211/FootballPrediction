@@ -10,18 +10,14 @@ import asyncio
 import json
 import logging
 import os
-import re
 import sys
-import time
 from datetime import datetime, timedelta
 from pathlib import Path
 from dataclasses import dataclass
 
 # 添加必要的第三方库导入
-import pandas as pd
 import psycopg2
 from psycopg2.extras import RealDictCursor
-import httpx
 from difflib import SequenceMatcher
 
 # 添加项目路径
@@ -30,13 +26,16 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from src.data.collectors.fotmob_match_collector import FotmobCollector, FotmobAPIError
 from scripts.enhanced_database_saver import EnhancedDatabaseSaver
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 
 @dataclass
 class MatchRecord:
     """比赛记录数据类"""
+
     id: int
     home_team: str
     away_team: str
@@ -56,27 +55,27 @@ class FotMobMatchMatcher:
         self.collector = FotmobCollector()
         self.team_name_mappings = {
             # 常见的球队名称映射
-            'Manchester United': ['Manchester Utd', 'Man United', 'Man Utd'],
-            'Manchester City': ['Man City', 'Manchester City'],
-            'Liverpool': ['Liverpool'],
-            'Chelsea': ['Chelsea'],
-            'Arsenal': ['Arsenal'],
-            'Tottenham': ['Tottenham', 'Spurs', 'Tottenham Hotspur'],
-            'Leicester City': ['Leicester', 'Leicester City'],
-            'Everton': ['Everton'],
-            'Wolverhampton': ['Wolves', 'Wolverhampton Wanderers'],
-            'West Ham': ['West Ham', 'West Ham United'],
-            'Aston Villa': ['Aston Villa'],
-            'Southampton': ['Southampton', 'Soton'],
-            'Newcastle': ['Newcastle', 'Newcastle United'],
-            'Brighton': ['Brighton', 'Brighton & Hove Albion'],
-            'Crystal Palace': ['Crystal Palace', 'Palace'],
-            'Brentford': ['Brentford'],
-            'Fulham': ['Fulham'],
-            'Leeds United': ['Leeds', 'Leeds United'],
-            'Burnley': ['Burnley'],
-            'Sheffield United': ['Sheffield Utd', 'Sheffield United'],
-            'Luton Town': ['Luton', 'Luton Town'],
+            "Manchester United": ["Manchester Utd", "Man United", "Man Utd"],
+            "Manchester City": ["Man City", "Manchester City"],
+            "Liverpool": ["Liverpool"],
+            "Chelsea": ["Chelsea"],
+            "Arsenal": ["Arsenal"],
+            "Tottenham": ["Tottenham", "Spurs", "Tottenham Hotspur"],
+            "Leicester City": ["Leicester", "Leicester City"],
+            "Everton": ["Everton"],
+            "Wolverhampton": ["Wolves", "Wolverhampton Wanderers"],
+            "West Ham": ["West Ham", "West Ham United"],
+            "Aston Villa": ["Aston Villa"],
+            "Southampton": ["Southampton", "Soton"],
+            "Newcastle": ["Newcastle", "Newcastle United"],
+            "Brighton": ["Brighton", "Brighton & Hove Albion"],
+            "Crystal Palace": ["Crystal Palace", "Palace"],
+            "Brentford": ["Brentford"],
+            "Fulham": ["Fulham"],
+            "Leeds United": ["Leeds", "Leeds United"],
+            "Burnley": ["Burnley"],
+            "Sheffield United": ["Sheffield Utd", "Sheffield United"],
+            "Luton Town": ["Luton", "Luton Town"],
         }
 
     def normalize_team_name(self, team_name: str) -> str:
@@ -93,7 +92,9 @@ class FotMobMatchMatcher:
 
         return team_name
 
-    def find_fotmob_match_id(self, home_team: str, away_team: str, match_date: datetime) -> Optional[str]:
+    def find_fotmob_match_id(
+        self, home_team: str, away_team: str, match_date: datetime
+    ) -> Optional[str]:
         """
         查找FotMob比赛ID - 核心匹配逻辑
 
@@ -106,7 +107,9 @@ class FotMobMatchMatcher:
             FotMob比赛ID，如果找不到返回None
         """
         try:
-            logger.info(f"🔍 搜索FotMob比赛: {home_team} vs {away_team} @ {match_date.date()}")
+            logger.info(
+                f"🔍 搜索FotMob比赛: {home_team} vs {away_team} @ {match_date.date()}"
+            )
 
             # 标准化队名
             home_team_norm = self.normalize_team_name(home_team)
@@ -146,8 +149,9 @@ class FotMobMatchMatcher:
             logger.error(f"💥 查找FotMob比赛ID失败: {e}")
             return None
 
-    def _search_matches_by_team_names(self, home_team: str, away_team: str,
-                                     date_str: str, original_date: datetime) -> Optional[str]:
+    def _search_matches_by_team_names(
+        self, home_team: str, away_team: str, date_str: str, original_date: datetime
+    ) -> Optional[str]:
         """
         按队名搜索比赛（使用启发式方法）
 
@@ -170,21 +174,31 @@ class FotMobMatchMatcher:
                     # 尝试获取比赛详情来验证ID是否有效
                     match_data = self.collector.get_match_details(candidate_id)
 
-                    if match_data and match_data.get('home_team') and match_data.get('away_team'):
+                    if (
+                        match_data
+                        and match_data.get("home_team")
+                        and match_data.get("away_team")
+                    ):
                         # 验证队名匹配
-                        fotmob_home = self.normalize_team_name(match_data['home_team'])
-                        fotmob_away = self.normalize_team_name(match_data['away_team'])
+                        fotmob_home = self.normalize_team_name(match_data["home_team"])
+                        fotmob_away = self.normalize_team_name(match_data["away_team"])
 
                         # 使用模糊匹配
-                        home_match = self._fuzzy_match_teams(home_team_norm, fotmob_home)
-                        away_match = self._fuzzy_match_teams(away_team_norm, fotmob_away)
+                        home_match = self._fuzzy_match_teams(
+                            home_team_norm, fotmob_home
+                        )
+                        away_match = self._fuzzy_match_teams(
+                            away_team_norm, fotmob_away
+                        )
 
                         # 验证日期匹配
-                        fotmob_date = match_data.get('match_time_utc', '')
+                        fotmob_date = match_data.get("match_time_utc", "")
                         date_match = self._verify_date_match(original_date, fotmob_date)
 
                         if home_match and away_match and date_match:
-                            logger.info(f"🎯 匹配成功: {home_team}/{away_team} -> {fotmob_home}/{fotmob_away}")
+                            logger.info(
+                                f"🎯 匹配成功: {home_team}/{away_team} -> {fotmob_home}/{fotmob_away}"
+                            )
                             return candidate_id
 
                 except FotmobAPIError as e:
@@ -221,10 +235,12 @@ class FotMobMatchMatcher:
                 return True  # 如果没有日期信息，假设匹配
 
             # 尝试解析FotMob日期
-            if 'T' in fotmob_date_str:
-                fotmob_date = datetime.fromisoformat(fotmob_date_str.replace('Z', '+00:00'))
+            if "T" in fotmob_date_str:
+                fotmob_date = datetime.fromisoformat(
+                    fotmob_date_str.replace("Z", "+00:00")
+                )
             else:
-                fotmob_date = datetime.strptime(fotmob_date_str, '%Y-%m-%d %H:%M:%S')
+                fotmob_date = datetime.strptime(fotmob_date_str, "%Y-%m-%d %H:%M:%S")
 
             # 检查日期差异（允许3小时误差）
             time_diff = abs((expected_date - fotmob_date).total_seconds())
@@ -245,11 +261,11 @@ class FotmobDetailsCollector:
 
         # 数据库连接配置
         self.db_config = {
-            'host': os.getenv('POSTGRES_HOST', 'localhost'),
-            'port': os.getenv('POSTGRES_PORT', '5432'),
-            'database': os.getenv('POSTGRES_DB', 'football_prediction'),
-            'user': os.getenv('POSTGRES_USER', 'postgres'),
-            'password': os.getenv('POSTGRES_PASSWORD', 'postgres-dev-password')
+            "host": os.getenv("POSTGRES_HOST", "localhost"),
+            "port": os.getenv("POSTGRES_PORT", "5432"),
+            "database": os.getenv("POSTGRES_DB", "football_prediction"),
+            "user": os.getenv("POSTGRES_USER", "postgres"),
+            "password": os.getenv("POSTGRES_PASSWORD", "postgres-dev-password"),
         }
 
     def get_pending_matches(self, limit: int = 50) -> list[MatchRecord]:
@@ -260,7 +276,8 @@ class FotmobDetailsCollector:
 
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
                 # 查询data_source='fbref'且data_completeness='partial'的记录
-                cur.execute("""
+                cur.execute(
+                    """
                     SELECT id, home_team, away_team, home_team_id, away_team_id,
                            match_date, home_score, away_score, data_completeness,
                            CASE
@@ -275,21 +292,23 @@ class FotmobDetailsCollector:
                     AND match_date > NOW() - INTERVAL '2 years'
                     ORDER BY match_date DESC
                     LIMIT %s
-                """, (limit,))
+                """,
+                    (limit,),
+                )
 
                 records = []
                 for row in cur.fetchall():
                     record = MatchRecord(
-                        id=row['id'],
-                        home_team=row['home_team'],
-                        away_team=row['away_team'],
-                        home_team_id=row['home_team_id'],
-                        away_team_id=row['away_team_id'],
-                        match_date=row['match_date'],
-                        home_score=row['home_score'],
-                        away_score=row['away_score'],
-                        data_completeness=row['data_completeness'],
-                        metadata=dict(row['metadata'])
+                        id=row["id"],
+                        home_team=row["home_team"],
+                        away_team=row["away_team"],
+                        home_team_id=row["home_team_id"],
+                        away_team_id=row["away_team_id"],
+                        match_date=row["match_date"],
+                        home_score=row["home_score"],
+                        away_score=row["away_score"],
+                        data_completeness=row["data_completeness"],
+                        metadata=dict(row["metadata"]),
                     )
                     records.append(record)
 
@@ -300,16 +319,18 @@ class FotmobDetailsCollector:
             logger.error(f"❌ 获取待处理记录失败: {e}")
             return []
 
-    async def collect_match_fotmob_data(self, match_record: MatchRecord) -> dict[str, any]:
+    async def collect_match_fotmob_data(
+        self, match_record: MatchRecord
+    ) -> dict[str, any]:
         """采集单场比赛的FotMob数据"""
         try:
-            logger.info(f"🔍 开始采集FotMob数据: {match_record.home_team} vs {match_record.away_team}")
+            logger.info(
+                f"🔍 开始采集FotMob数据: {match_record.home_team} vs {match_record.away_team}"
+            )
 
             # 1. 查找FotMob比赛ID
             fotmob_match_id = self.match_matcher.find_fotmob_match_id(
-                match_record.home_team,
-                match_record.away_team,
-                match_record.match_date
+                match_record.home_team, match_record.away_team, match_record.match_date
             )
 
             if not fotmob_match_id:
@@ -317,7 +338,9 @@ class FotmobDetailsCollector:
                 return {"success": False, "reason": "fotmob_match_not_found"}
 
             # 2. 获取FotMob详细数据
-            fotmob_data = self.fotmob_collector.get_comprehensive_match_data(fotmob_match_id)
+            fotmob_data = self.fotmob_collector.get_comprehensive_match_data(
+                fotmob_match_id
+            )
 
             if not fotmob_data:
                 logger.warning(f"⚠️ 无法获取FotMob数据: {fotmob_match_id}")
@@ -326,13 +349,15 @@ class FotmobDetailsCollector:
             # 3. 提取并格式化数据
             processed_data = self._process_fotmob_data(fotmob_data)
 
-            logger.info(f"✅ 成功采集FotMob数据: {len(processed_data.get('events', []))} events, "
-                       f"{len(processed_data.get('lineups', {}).get('home_players', []))} home players")
+            logger.info(
+                f"✅ 成功采集FotMob数据: {len(processed_data.get('events', []))} events, "
+                f"{len(processed_data.get('lineups', {}).get('home_players', []))} home players"
+            )
 
             return {
                 "success": True,
                 "fotmob_match_id": fotmob_match_id,
-                "data": processed_data
+                "data": processed_data,
             }
 
         except Exception as e:
@@ -345,47 +370,47 @@ class FotmobDetailsCollector:
 
         try:
             # 处理射门图数据
-            shotmap = fotmob_data.get('shotmap', [])
+            shotmap = fotmob_data.get("shotmap", [])
             if shotmap:
                 # 转换为统一格式的事件数据
                 events = []
                 for shot in shotmap:
                     event = {
-                        'event_type': 'shot',
-                        'minute': shot.get('time', 0),
-                        'team': shot.get('team'),
-                        'player': shot.get('player_name'),
-                        'xg': shot.get('xg', 0.0),
-                        'coordinates': shot.get('coordinates', {}),
-                        'is_goal': shot.get('is_goal', False),
-                        'shot_type': shot.get('eventType', ''),
-                        'situation': shot.get('situation', ''),
-                        'body_part': shot.get('bodyPart', '')
+                        "event_type": "shot",
+                        "minute": shot.get("time", 0),
+                        "team": shot.get("team"),
+                        "player": shot.get("player_name"),
+                        "xg": shot.get("xg", 0.0),
+                        "coordinates": shot.get("coordinates", {}),
+                        "is_goal": shot.get("is_goal", False),
+                        "shot_type": shot.get("eventType", ""),
+                        "situation": shot.get("situation", ""),
+                        "body_part": shot.get("bodyPart", ""),
                     }
                     events.append(event)
 
-                processed['events'] = events
+                processed["events"] = events
 
             # 处理阵容数据
-            lineup = fotmob_data.get('lineup', {})
+            lineup = fotmob_data.get("lineup", {})
             if lineup:
-                processed['lineups'] = {
-                    'home_team': lineup.get('home_team'),
-                    'away_team': lineup.get('away_team'),
-                    'home_players': lineup.get('home_players', []),
-                    'away_players': lineup.get('away_players', [])
+                processed["lineups"] = {
+                    "home_team": lineup.get("home_team"),
+                    "away_team": lineup.get("away_team"),
+                    "home_players": lineup.get("home_players", []),
+                    "away_players": lineup.get("away_players", []),
                 }
 
             # 处理统计数据
-            stats = fotmob_data.get('match_details', {}).get('stats', {})
+            stats = fotmob_data.get("match_details", {}).get("stats", {})
             if stats:
-                processed['stats'] = stats
+                processed["stats"] = stats
 
             # 添加FotMob元数据
-            processed['fotmob_metadata'] = {
-                'data_source': 'fotmob',
-                'collected_at': datetime.now().isoformat(),
-                'match_details': fotmob_data.get('match_details', {})
+            processed["fotmob_metadata"] = {
+                "data_source": "fotmob",
+                "collected_at": datetime.now().isoformat(),
+                "match_details": fotmob_data.get("match_details", {}),
             }
 
         except Exception as e:
@@ -405,23 +430,25 @@ class FotmobDetailsCollector:
                 params = []
 
                 # 更新events字段
-                if 'events' in fotmob_data:
+                if "events" in fotmob_data:
                     update_parts.append("events = %s")
-                    params.append(json.dumps(fotmob_data['events'], ensure_ascii=False))
+                    params.append(json.dumps(fotmob_data["events"], ensure_ascii=False))
 
                 # 更新lineups字段
-                if 'lineups' in fotmob_data:
+                if "lineups" in fotmob_data:
                     update_parts.append("lineups = %s")
-                    params.append(json.dumps(fotmob_data['lineups'], ensure_ascii=False))
+                    params.append(
+                        json.dumps(fotmob_data["lineups"], ensure_ascii=False)
+                    )
 
                 # 更新stats字段
-                if 'stats' in fotmob_data:
+                if "stats" in fotmob_data:
                     update_parts.append("stats = COALESCE(stats, '{}'::jsonb) || %s")
-                    params.append(json.dumps(fotmob_data['stats'], ensure_ascii=False))
+                    params.append(json.dumps(fotmob_data["stats"], ensure_ascii=False))
 
                 # 更新metadata字段，添加FotMob信息
                 metadata = match_record.metadata.copy()
-                metadata.update(fotmob_data.get('fotmob_metadata', {}))
+                metadata.update(fotmob_data.get("fotmob_metadata", {}))
                 update_parts.append("metadata = %s")
                 params.append(json.dumps(metadata, ensure_ascii=False))
 
@@ -434,7 +461,7 @@ class FotmobDetailsCollector:
                 # 执行更新
                 sql = f"""
                     UPDATE matches
-                    SET {', '.join(update_parts)}
+                    SET {", ".join(update_parts)}
                     WHERE id = %s
                 """
 
@@ -446,27 +473,31 @@ class FotmobDetailsCollector:
 
         except Exception as e:
             logger.error(f"❌ 更新比赛记录失败: {e}")
-            if 'conn' in locals():
+            if "conn" in locals():
                 conn.rollback()
             return False
         finally:
-            if 'conn' in locals():
+            if "conn" in locals():
                 conn.close()
 
-    async def run_collection_batch(self, batch_size: int = 20, max_batches: int = None) -> dict:
+    async def run_collection_batch(
+        self, batch_size: int = 20, max_batches: int = None
+    ) -> dict:
         """运行批量采集"""
         stats = {
-            'total_processed': 0,
-            'successful': 0,
-            'failed': 0,
-            'start_time': datetime.now()
+            "total_processed": 0,
+            "successful": 0,
+            "failed": 0,
+            "start_time": datetime.now(),
         }
 
         batch_count = 0
 
         try:
-            while (max_batches is None or batch_count < max_batches):
-                logger.info(f"🔄 开始第 {batch_count + 1} 批采集 (批次大小: {batch_size})")
+            while max_batches is None or batch_count < max_batches:
+                logger.info(
+                    f"🔄 开始第 {batch_count + 1} 批采集 (批次大小: {batch_size})"
+                )
 
                 # 获取待处理记录
                 pending_matches = self.get_pending_matches(batch_size)
@@ -479,23 +510,27 @@ class FotmobDetailsCollector:
 
                 # 处理每条记录
                 for i, match_record in enumerate(pending_matches, 1):
-                    logger.info(f"处理 {i}/{len(pending_matches)}: {match_record.home_team} vs {match_record.away_team}")
+                    logger.info(
+                        f"处理 {i}/{len(pending_matches)}: {match_record.home_team} vs {match_record.away_team}"
+                    )
 
                     # 采集FotMob数据
                     result = await self.collect_match_fotmob_data(match_record)
-                    stats['total_processed'] += 1
+                    stats["total_processed"] += 1
 
-                    if result.get('success'):
+                    if result.get("success"):
                         # 更新数据库记录
-                        if self.update_match_record(match_record, result['data']):
-                            stats['successful'] += 1
+                        if self.update_match_record(match_record, result["data"]):
+                            stats["successful"] += 1
                             logger.info(f"✅ 成功处理记录: {match_record.id}")
                         else:
-                            stats['failed'] += 1
+                            stats["failed"] += 1
                             logger.error(f"❌ 更新记录失败: {match_record.id}")
                     else:
-                        stats['failed'] += 1
-                        logger.warning(f"⚠️ 采集失败: {match_record.id} - {result.get('reason')}")
+                        stats["failed"] += 1
+                        logger.warning(
+                            f"⚠️ 采集失败: {match_record.id} - {result.get('reason')}"
+                        )
 
                     # 延迟以避免过载
                     if i % 5 == 0:  # 每5条记录延迟
@@ -506,8 +541,10 @@ class FotmobDetailsCollector:
                 batch_count += 1
 
                 # 批次间延迟
-                logger.info(f"📈 批次 {batch_count} 完成: {stats['successful']}/{stats['total_processed']} 成功")
-                if batch_count < (max_batches or float('inf')):
+                logger.info(
+                    f"📈 批次 {batch_count} 完成: {stats['successful']}/{stats['total_processed']} 成功"
+                )
+                if batch_count < (max_batches or float("inf")):
                     logger.info("⏸️ 批次间延迟30秒...")
                     await asyncio.sleep(30)
 
@@ -515,8 +552,10 @@ class FotmobDetailsCollector:
             logger.error(f"💥 批量采集异常: {e}")
 
         finally:
-            stats['end_time'] = datetime.now()
-            stats['duration'] = (stats['end_time'] - stats['start_time']).total_seconds()
+            stats["end_time"] = datetime.now()
+            stats["duration"] = (
+                stats["end_time"] - stats["start_time"]
+            ).total_seconds()
 
         return stats
 
@@ -538,11 +577,13 @@ async def main():
         logger.info(f"   总处理: {stats['total_processed']}")
         logger.info(f"   成功: {stats['successful']}")
         logger.info(f"   失败: {stats['failed']}")
-        logger.info(f"   成功率: {stats['successful']/max(stats['total_processed'], 1)*100:.1f}%")
+        logger.info(
+            f"   成功率: {stats['successful'] / max(stats['total_processed'], 1) * 100:.1f}%"
+        )
         logger.info(f"   耗时: {stats['duration']:.1f}秒")
         logger.info("=" * 60)
 
-        if stats['successful'] > 0:
+        if stats["successful"] > 0:
             logger.info("🎉 L2深度数据采集任务完成!")
         else:
             logger.warning("⚠️ 没有成功处理任何记录")
@@ -550,6 +591,7 @@ async def main():
     except Exception as e:
         logger.error(f"💥 主程序异常: {e}")
         import traceback
+
         traceback.print_exc()
 
 

@@ -19,21 +19,16 @@ Production-Grade L2 Data Backfill Script
 
 import asyncio
 import csv
-import json
 import logging
-import os
 import signal
 import sys
-import time
 from datetime import datetime
 from pathlib import Path
-from typing import AsyncGenerator, Dict, List, Optional, Set, Tuple
+from typing import AsyncGenerator, Optional, Set, Tuple
 from dataclasses import dataclass, field
 
 import aiofiles
-import httpx
 import tqdm
-from tenacity import retry, stop_after_attempt, wait_exponential
 
 # 添加项目根目录到Python路径
 project_root = Path(__file__).parent.parent.parent
@@ -41,12 +36,13 @@ sys.path.insert(0, str(project_root))
 
 from src.collectors.l2_fetcher import L2Fetcher, L2FetchError
 from src.collectors.l2_parser import L2Parser
-from src.schemas.l2_schemas import L2MatchData, L2DataProcessingResult
+from src.schemas.l2_schemas import L2MatchData
 
 
 @dataclass
 class BackfillConfig:
     """回填配置"""
+
     # 并发控制
     max_concurrent: int = 15
     batch_size: int = 1000  # 每批读取的match_ids数量
@@ -68,6 +64,7 @@ class BackfillConfig:
 @dataclass
 class BackfillStats:
     """回填统计信息"""
+
     total_processed: int = 0
     successful: int = 0
     failed: int = 0
@@ -137,18 +134,18 @@ class BackfillManager:
         # 配置日志格式
         logging.basicConfig(
             level=logging.INFO,
-            format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+            format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
             handlers=[
-                logging.FileHandler(self.config.log_file, encoding='utf-8'),
-                logging.StreamHandler(sys.stdout)
-            ]
+                logging.FileHandler(self.config.log_file, encoding="utf-8"),
+                logging.StreamHandler(sys.stdout),
+            ],
         )
 
         self.logger = logging.getLogger(__name__)
 
         # 减少第三方库日志噪音
-        logging.getLogger('httpx').setLevel(logging.WARNING)
-        logging.getLogger('tenacity').setLevel(logging.WARNING)
+        logging.getLogger("httpx").setLevel(logging.WARNING)
+        logging.getLogger("tenacity").setLevel(logging.WARNING)
 
     def _setup_directories(self) -> None:
         """创建必要的目录"""
@@ -157,8 +154,11 @@ class BackfillManager:
 
     def _setup_signal_handlers(self) -> None:
         """设置信号处理器，支持优雅停机"""
+
         def signal_handler(signum, frame):
-            self.logger.info("Received signal %d, initiating graceful shutdown...", signum)
+            self.logger.info(
+                "Received signal %d, initiating graceful shutdown...", signum
+            )
             self._shutdown_requested = True
             self._running = False
 
@@ -176,7 +176,7 @@ class BackfillManager:
             self._fetcher = L2Fetcher(
                 timeout=self.config.request_timeout,
                 max_retries=self.config.max_retries,
-                rate_limiter=rate_limiter
+                rate_limiter=rate_limiter,
             )
 
             # L2Fetcher 使用延迟初始化，无需显式调用 initialize()
@@ -197,7 +197,9 @@ class BackfillManager:
         self.logger.info("Reading match IDs from %s", self.config.input_file)
 
         try:
-            async with aiofiles.open(self.config.input_file, 'r', encoding='utf-8') as file:
+            async with aiofiles.open(
+                self.config.input_file, "r", encoding="utf-8"
+            ) as file:
                 # 读取并跳过标题行
                 header_line = await file.readline()
                 self.logger.debug("CSV header: %s", header_line.strip())
@@ -212,7 +214,7 @@ class BackfillManager:
                         continue
 
                     # 手动解析CSV（简单情况，只有一列）
-                    match_id = line.split(',')[0].strip().strip('"\'')
+                    match_id = line.split(",")[0].strip().strip("\"'")
 
                     if match_id and match_id not in self._processed_ids:
                         yield match_id
@@ -223,7 +225,7 @@ class BackfillManager:
                             self.logger.info(
                                 "Read %d match IDs so far (batch %d)",
                                 batch_count,
-                                batch_count // self.config.batch_size
+                                batch_count // self.config.batch_size,
                             )
 
         except FileNotFoundError:
@@ -233,7 +235,9 @@ class BackfillManager:
             self.logger.error("Error reading match IDs: %s", e)
             raise
 
-    async def _process_single_match(self, match_id: str) -> Tuple[bool, Optional[L2MatchData]]:
+    async def _process_single_match(
+        self, match_id: str
+    ) -> Tuple[bool, Optional[L2MatchData]]:
         """
         处理单个比赛数据
 
@@ -266,11 +270,15 @@ class BackfillManager:
             except L2FetchError as e:
                 self.logger.error(
                     "Fetch error for match %s (status=%s): %s",
-                    match_id, e.status_code, e.message
+                    match_id,
+                    e.status_code,
+                    e.message,
                 )
                 return False, None
             except Exception as e:
-                self.logger.error("Unexpected error processing match %s: %s", match_id, e)
+                self.logger.error(
+                    "Unexpected error processing match %s: %s", match_id, e
+                )
                 return False, None
 
     async def _save_match_data(self, match_id: str, match_data: L2MatchData) -> None:
@@ -286,16 +294,24 @@ class BackfillManager:
 
         try:
             import json
+
             data_dict = match_data.to_dict()
 
             # 处理datetime序列化问题
             def datetime_handler(obj):
-                if hasattr(obj, 'isoformat'):
+                if hasattr(obj, "isoformat"):
                     return obj.isoformat()
                 raise TypeError(repr(obj) + " is not JSON serializable")
 
-            async with aiofiles.open(filepath, 'w', encoding='utf-8') as file:
-                await file.write(json.dumps(data_dict, ensure_ascii=False, indent=2, default=datetime_handler))
+            async with aiofiles.open(filepath, "w", encoding="utf-8") as file:
+                await file.write(
+                    json.dumps(
+                        data_dict,
+                        ensure_ascii=False,
+                        indent=2,
+                        default=datetime_handler,
+                    )
+                )
 
             self.logger.debug("Saved match data to %s", filepath)
 
@@ -306,7 +322,9 @@ class BackfillManager:
     async def _log_failed_id(self, match_id: str) -> None:
         """记录失败的match_id"""
         try:
-            async with aiofiles.open(self.config.failed_ids_file, 'a', encoding='utf-8') as file:
+            async with aiofiles.open(
+                self.config.failed_ids_file, "a", encoding="utf-8"
+            ) as file:
                 await file.write(f"{match_id}\n")
         except Exception as e:
             self.logger.error("Failed to log failed ID %s: %s", match_id, e)
@@ -321,11 +339,12 @@ class BackfillManager:
                 "successful_count": self.stats.successful,
                 "failed_count": self.stats.failed,
                 "processed_ids": list(self._processed_ids),
-                "last_update": datetime.now().isoformat()
+                "last_update": datetime.now().isoformat(),
             }
 
             import json
-            async with aiofiles.open(progress_file, 'w', encoding='utf-8') as file:
+
+            async with aiofiles.open(progress_file, "w", encoding="utf-8") as file:
                 await file.write(json.dumps(progress_data, indent=2))
 
         except Exception as e:
@@ -349,7 +368,7 @@ class BackfillManager:
             progress_bar = tqdm.tqdm(
                 desc="Processing matches",
                 unit="matches",
-                disable=not self.config.enable_progress_bar
+                disable=not self.config.enable_progress_bar,
             )
 
             # 创建并发任务队列
@@ -369,8 +388,7 @@ class BackfillManager:
                 # 控制并发队列大小
                 if len(tasks) >= self.config.max_concurrent:
                     done, pending = await asyncio.wait(
-                        tasks,
-                        return_when=asyncio.FIRST_COMPLETED
+                        tasks, return_when=asyncio.FIRST_COMPLETED
                     )
 
                     for completed_task in done:
@@ -411,7 +429,9 @@ class BackfillManager:
 
             # 等待剩余任务完成 - 修复 AsyncIO 警告的关键部分
             if tasks:
-                self.logger.info("Waiting for %d remaining tasks to complete...", len(tasks))
+                self.logger.info(
+                    "Waiting for %d remaining tasks to complete...", len(tasks)
+                )
 
                 # 使用 asyncio.gather 等待所有任务完成，避免 as_completed 的警告
                 try:
@@ -419,7 +439,9 @@ class BackfillManager:
 
                     for i, result in enumerate(results):
                         if isinstance(result, Exception):
-                            self.logger.error("Task %d failed with exception: %s", i, result)
+                            self.logger.error(
+                                "Task %d failed with exception: %s", i, result
+                            )
                             self.stats.failed += 1
                             continue
 
@@ -435,7 +457,9 @@ class BackfillManager:
                                 await self._log_failed_id(match_id)
 
                         except Exception as e:
-                            self.logger.error("Error processing final task result %d: %s", i, e)
+                            self.logger.error(
+                                "Error processing final task result %d: %s", i, e
+                            )
                             self.stats.failed += 1
 
                 except Exception as e:
@@ -478,7 +502,7 @@ class BackfillManager:
                 self.stats.total_processed,
                 self.stats.successful,
                 self.stats.failed,
-                self.stats.success_rate
+                self.stats.success_rate,
             )
 
         return self.stats
@@ -497,9 +521,9 @@ def create_sample_input_file(file_path: str, num_ids: int = 1000) -> None:
     # 确保目录存在
     Path(file_path).parent.mkdir(parents=True, exist_ok=True)
 
-    with open(file_path, 'w', newline='', encoding='utf-8') as file:
+    with open(file_path, "w", newline="", encoding="utf-8") as file:
         writer = csv.writer(file)
-        writer.writerow(['match_id'])  # 标题行
+        writer.writerow(["match_id"])  # 标题行
 
         # 生成示例match_ids
         for i in range(num_ids):
@@ -515,26 +539,11 @@ async def main():
 
     parser = argparse.ArgumentParser(description="L2数据回填脚本")
     parser.add_argument(
-        "--input", "-i",
-        default="data/l2_backfill_queue.csv",
-        help="输入CSV文件路径"
+        "--input", "-i", default="data/l2_backfill_queue.csv", help="输入CSV文件路径"
     )
-    parser.add_argument(
-        "--output", "-o",
-        default="data/l2_output",
-        help="输出目录路径"
-    )
-    parser.add_argument(
-        "--concurrent", "-c",
-        type=int,
-        default=15,
-        help="最大并发数"
-    )
-    parser.add_argument(
-        "--create-sample",
-        action="store_true",
-        help="创建示例输入文件"
-    )
+    parser.add_argument("--output", "-o", default="data/l2_output", help="输出目录路径")
+    parser.add_argument("--concurrent", "-c", type=int, default=15, help="最大并发数")
+    parser.add_argument("--create-sample", action="store_true", help="创建示例输入文件")
 
     args = parser.parse_args()
 
@@ -548,7 +557,7 @@ async def main():
         input_file=args.input,
         output_dir=args.output,
         max_concurrent=args.concurrent,
-        enable_progress_bar=True
+        enable_progress_bar=True,
     )
 
     # 运行回填
@@ -556,8 +565,8 @@ async def main():
 
     try:
         stats = await manager.run_backfill()
-        print(f"\n🎉 Backfill completed successfully!")
-        print(f"📊 Statistics:")
+        print("\n🎉 Backfill completed successfully!")
+        print("📊 Statistics:")
         print(f"   Total processed: {stats.total_processed}")
         print(f"   Successful: {stats.successful}")
         print(f"   Failed: {stats.failed}")

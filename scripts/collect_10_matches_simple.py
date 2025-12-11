@@ -18,10 +18,10 @@ from collectors.fotmob_api_collector import FotMobAPICollector
 
 # 配置日志
 logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s"
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
+
 
 async def test_data_collection():
     """测试数据采集功能"""
@@ -62,7 +62,9 @@ async def test_data_collection():
             if match_data.stats and len(match_data.stats.stats) > 0:
                 logger.info(f"  - 统计数据: {len(match_data.stats.stats)} 项")
                 for stat in match_data.stats.stats[:3]:  # 显示前3项
-                    logger.info(f"    * {stat.stat_type}: {stat.home_value} - {stat.away_value}")
+                    logger.info(
+                        f"    * {stat.stat_type}: {stat.home_value} - {stat.away_value}"
+                    )
 
             success_count += 1
 
@@ -73,6 +75,7 @@ async def test_data_collection():
     logger.info(f"\n📊 数据采集测试结果: {success_count}/{len(test_match_ids)} 成功")
     return success_count > 0
 
+
 async def test_database_connection():
     """测试数据库连接和表结构"""
     logger.info("\n🔍 测试数据库连接...")
@@ -80,6 +83,7 @@ async def test_database_connection():
     try:
         # 初始化数据库
         from database.async_manager import initialize_database
+
         initialize_database()
 
         from database.async_manager import get_async_db_session
@@ -94,17 +98,21 @@ async def test_database_connection():
                 logger.info(f"✅ 数据库连接正常，matches表有 {match_count} 条记录")
 
                 # 检查表结构
-                table_info = await session.execute(text("""
+                table_info = await session.execute(
+                    text("""
                     SELECT column_name, data_type, is_nullable
                     FROM information_schema.columns
                     WHERE table_name = 'matches'
                     ORDER BY ordinal_position
-                """))
+                """)
+                )
 
                 columns = table_info.fetchall()
                 logger.info(f"✅ matches表结构有 {len(columns)} 个字段:")
                 for col in columns[:10]:  # 显示前10个字段
-                    logger.info(f"  - {col[0]}: {col[1]} ({'NULL' if col[2] == 'YES' else 'NOT NULL'})")
+                    logger.info(
+                        f"  - {col[0]}: {col[1]} ({'NULL' if col[2] == 'YES' else 'NOT NULL'})"
+                    )
 
                 return True
 
@@ -114,6 +122,7 @@ async def test_database_connection():
     except Exception as e:
         logger.error(f"❌ 数据库连接测试失败: {str(e)}")
         return False
+
 
 async def save_test_match():
     """保存测试比赛数据到数据库"""
@@ -141,7 +150,7 @@ async def save_test_match():
                 # 检查是否已存在
                 existing = await session.execute(
                     text("SELECT id FROM matches WHERE fotmob_id = :fotmob_id"),
-                    {"fotmob_id": fotmob_id}
+                    {"fotmob_id": fotmob_id},
                 )
                 if existing.fetchone():
                     logger.info(f"ℹ️ 比赛 {fotmob_id} 已存在，跳过保存")
@@ -161,11 +170,19 @@ async def save_test_match():
                     data_source="fotmob_v2_test",
                     data_completeness="test_partial",
                     match_info=match_data.match_info,
-                    lineups_json=match_data.lineups.model_dump_json() if match_data.lineups else None,
-                    stats_json=match_data.stats.model_dump_json() if match_data.stats else None,
-                    events_json=match_data.events.model_dump_json() if match_data.events else None,
-                    odds_snapshot_json=match_data.odds.model_dump_json() if match_data.odds else None,
-                    collection_time=datetime.utcnow()
+                    lineups_json=match_data.lineups.model_dump_json()
+                    if match_data.lineups
+                    else None,
+                    stats_json=match_data.stats.model_dump_json()
+                    if match_data.stats
+                    else None,
+                    events_json=match_data.events.model_dump_json()
+                    if match_data.events
+                    else None,
+                    odds_snapshot_json=match_data.odds.model_dump_json()
+                    if match_data.odds
+                    else None,
+                    collection_time=datetime.utcnow(),
                 )
 
                 session.add(db_match)
@@ -185,6 +202,7 @@ async def save_test_match():
     except Exception as e:
         logger.error(f"❌ 测试保存功能失败: {str(e)}")
         return False
+
 
 async def main():
     """主函数"""
@@ -218,6 +236,7 @@ async def main():
     logger.info("🚀 可以开始大规模数据采集任务")
 
     return True
+
 
 if __name__ == "__main__":
     success = asyncio.run(main())

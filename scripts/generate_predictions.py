@@ -15,11 +15,10 @@ from typing import Any
 # 添加项目路径
 sys.path.insert(0, str(Path(__file__).parent))
 
-import asyncpg
 import logging
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy import select, text
+from sqlalchemy import text
 
 # 导入推理服务和数据库
 from src.services.inference_service import InferenceService

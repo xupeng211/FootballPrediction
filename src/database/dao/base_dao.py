@@ -13,18 +13,14 @@ from typing import (
     Generic,
     Optional,
     Any,
-    Union,
-    cast,
 )
-from collections.abc import Sequence
 from datetime import datetime
 from contextlib import asynccontextmanager
 
 from pydantic import BaseModel
-from sqlalchemy import select, update, delete, func, and_, or_
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql import Select
-from sqlalchemy.orm import selectinload, joinedload
 from sqlalchemy.exc import SQLAlchemyError
 
 # 导入异常定义
@@ -68,7 +64,9 @@ except ImportError:
         def __init__(self, message: str):
             super().__init__(f"数据库连接错误: {message}")
 
-    def handle_sqlalchemy_exception(func_name: str, exc: SQLAlchemyError) -> DAOException:
+    def handle_sqlalchemy_exception(
+        func_name: str, exc: SQLAlchemyError
+    ) -> DAOException:
         """SQLAlchemy异常转换工具函数"""
         if "duplicate key" in str(exc).lower():
             return DuplicateRecordError("Unknown", "unknown", "unknown")
@@ -76,6 +74,7 @@ except ImportError:
             return DatabaseConnectionError(str(exc))
         else:
             return DAOException(f"{func_name}执行失败: {str(exc)}")
+
 
 # 类型定义
 ModelType = TypeVar("ModelType")  # SQLAlchemy模型类型
@@ -103,7 +102,7 @@ class BaseDAO(Generic[ModelType, CreateSchemaType, UpdateSchemaType], ABC):
         """
         self.model = model
         self.session = session
-        self.model_name = model.__name__ if hasattr(model, '__name__') else 'Model'
+        self.model_name = model.__name__ if hasattr(model, "__name__") else "Model"
 
     @property
     @abstractmethod
@@ -121,11 +120,7 @@ class BaseDAO(Generic[ModelType, CreateSchemaType, UpdateSchemaType], ABC):
     # ==================== 基础CRUD操作 ====================
 
     async def get(
-        self,
-        id: Any,
-        *,
-        options: Optional[list] = None,
-        for_update: bool = False
+        self, id: Any, *, options: Optional[list] = None, for_update: bool = False
     ) -> Optional[ModelType]:
         """
         根据主键获取单条记录
@@ -142,7 +137,9 @@ class BaseDAO(Generic[ModelType, CreateSchemaType, UpdateSchemaType], ABC):
             DatabaseConnectionError: 数据库连接错误
         """
         try:
-            query = select(self.model).where(getattr(self.model, self.primary_key_field) == id)
+            query = select(self.model).where(
+                getattr(self.model, self.primary_key_field) == id
+            )
 
             # 应用预加载选项
             if options:
@@ -174,7 +171,7 @@ class BaseDAO(Generic[ModelType, CreateSchemaType, UpdateSchemaType], ABC):
         limit: int = 100,
         filters: Optional[dict[str, Any]] = None,
         order_by: Optional[str] = None,
-        options: Optional[list] = None
+        options: Optional[list] = None,
     ) -> list[ModelType]:
         """
         获取多条记录
@@ -205,7 +202,7 @@ class BaseDAO(Generic[ModelType, CreateSchemaType, UpdateSchemaType], ABC):
             if order_by:
                 if hasattr(self.model, order_by):
                     query = query.order_by(getattr(self.model, order_by))
-                elif order_by.startswith('-'):
+                elif order_by.startswith("-"):
                     # 降序处理
                     field = order_by[1:]
                     if hasattr(self.model, field):
@@ -230,10 +227,7 @@ class BaseDAO(Generic[ModelType, CreateSchemaType, UpdateSchemaType], ABC):
             raise handle_sqlalchemy_exception(f"{self.model_name}.get_multi", e)
 
     async def create(
-        self,
-        *,
-        obj_in: CreateSchemaType,
-        refresh: bool = True
+        self, *, obj_in: CreateSchemaType, refresh: bool = True
     ) -> ModelType:
         """
         创建新记录
@@ -270,7 +264,9 @@ class BaseDAO(Generic[ModelType, CreateSchemaType, UpdateSchemaType], ABC):
                     # 如果刷新失败，对象已经包含需要的信息
                     pass
 
-            logger.info(f"创建{self.model_name}记录成功: {getattr(db_obj, self.primary_key_field, 'unknown')}")
+            logger.info(
+                f"创建{self.model_name}记录成功: {getattr(db_obj, self.primary_key_field, 'unknown')}"
+            )
             return db_obj
 
         except SQLAlchemyError as e:
@@ -278,11 +274,7 @@ class BaseDAO(Generic[ModelType, CreateSchemaType, UpdateSchemaType], ABC):
             raise handle_sqlalchemy_exception(f"{self.model_name}.create", e)
 
     async def update(
-        self,
-        *,
-        db_obj: ModelType,
-        obj_in: UpdateSchemaType,
-        refresh: bool = True
+        self, *, db_obj: ModelType, obj_in: UpdateSchemaType, refresh: bool = True
     ) -> ModelType:
         """
         更新记录
@@ -328,19 +320,16 @@ class BaseDAO(Generic[ModelType, CreateSchemaType, UpdateSchemaType], ABC):
                     # 如果刷新失败，对象已经包含更新的信息
                     pass
 
-            logger.info(f"更新{self.model_name}记录成功: {getattr(db_obj, self.primary_key_field, 'unknown')}")
+            logger.info(
+                f"更新{self.model_name}记录成功: {getattr(db_obj, self.primary_key_field, 'unknown')}"
+            )
             return db_obj
 
         except SQLAlchemyError as e:
             logger.error(f"更新{self.model_name}记录失败: {obj_in}")
             raise handle_sqlalchemy_exception(f"{self.model_name}.update", e)
 
-    async def delete(
-        self,
-        *,
-        id: Any,
-        soft_delete: bool = False
-    ) -> bool:
+    async def delete(self, *, id: Any, soft_delete: bool = False) -> bool:
         """
         删除记录
 
@@ -361,7 +350,7 @@ class BaseDAO(Generic[ModelType, CreateSchemaType, UpdateSchemaType], ABC):
             if not db_obj:
                 raise RecordNotFoundError(self.model_name, id)
 
-            if soft_delete and hasattr(db_obj, 'deleted_at'):
+            if soft_delete and hasattr(db_obj, "deleted_at"):
                 # 软删除
                 db_obj.deleted_at = datetime.utcnow()
                 self.session.add(db_obj)
@@ -381,11 +370,7 @@ class BaseDAO(Generic[ModelType, CreateSchemaType, UpdateSchemaType], ABC):
 
     # ==================== 高级查询方法 ====================
 
-    async def count(
-        self,
-        *,
-        filters: Optional[dict[str, Any]] = None
-    ) -> int:
+    async def count(self, *, filters: Optional[dict[str, Any]] = None) -> int:
         """
         统计记录数量
 
@@ -417,11 +402,7 @@ class BaseDAO(Generic[ModelType, CreateSchemaType, UpdateSchemaType], ABC):
             logger.error(f"统计{self.model_name}记录数量失败")
             raise handle_sqlalchemy_exception(f"{self.model_name}.count", e)
 
-    async def exists(
-        self,
-        *,
-        filters: dict[str, Any]
-    ) -> bool:
+    async def exists(self, *, filters: dict[str, Any]) -> bool:
         """
         检查记录是否存在
 
@@ -456,10 +437,7 @@ class BaseDAO(Generic[ModelType, CreateSchemaType, UpdateSchemaType], ABC):
     # ==================== 批量操作方法 ====================
 
     async def bulk_create(
-        self,
-        *,
-        objects_in: list[CreateSchemaType],
-        batch_size: int = 1000
+        self, *, objects_in: list[CreateSchemaType], batch_size: int = 1000
     ) -> list[ModelType]:
         """
         批量创建记录
@@ -479,7 +457,7 @@ class BaseDAO(Generic[ModelType, CreateSchemaType, UpdateSchemaType], ABC):
 
             # 分批处理
             for i in range(0, len(objects_in), batch_size):
-                batch = objects_in[i:i + batch_size]
+                batch = objects_in[i : i + batch_size]
 
                 for obj_in in batch:
                     obj_data = obj_in.model_dump(exclude_unset=True)
@@ -550,13 +528,11 @@ class BaseDAO(Generic[ModelType, CreateSchemaType, UpdateSchemaType], ABC):
             "model": self.model_name,
             "query_string": str(query),
             "compiled_query": query.compile(compile_kwargs={"literal_binds": True}),
-            "parameters": query.compile().params
+            "parameters": query.compile().params,
         }
 
     async def execute_query_with_logging(
-        self,
-        query: Select,
-        operation_name: str = "query"
+        self, query: Select, operation_name: str = "query"
     ) -> Any:
         """
         执行查询并记录日志
@@ -595,10 +571,10 @@ class BaseDAO(Generic[ModelType, CreateSchemaType, UpdateSchemaType], ABC):
 
 # 导出主要接口
 __all__ = [
-    'BaseDAO',
-    'DAOException',
-    'RecordNotFoundError',
-    'DuplicateRecordError',
-    'ValidationError',
-    'DatabaseConnectionError'
+    "BaseDAO",
+    "DAOException",
+    "RecordNotFoundError",
+    "DuplicateRecordError",
+    "ValidationError",
+    "DatabaseConnectionError",
 ]

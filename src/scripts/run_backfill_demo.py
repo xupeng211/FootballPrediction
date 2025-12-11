@@ -11,7 +11,11 @@ from pathlib import Path
 # 添加项目路径
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.scripts.backfill_l2_matches import BackfillManager, BackfillConfig, create_sample_input_file
+from src.scripts.backfill_l2_matches import (
+    BackfillManager,
+    BackfillConfig,
+    create_sample_input_file,
+)
 
 
 async def demo_basic_usage():
@@ -28,11 +32,11 @@ async def demo_basic_usage():
     config = BackfillConfig(
         input_file=sample_file,
         output_dir="data/demo_output",
-        max_concurrent=3,          # 演示用低并发
+        max_concurrent=3,  # 演示用低并发
         batch_size=10,
         request_timeout=10.0,
         enable_progress_bar=True,
-        save_interval=5
+        save_interval=5,
     )
 
     # 3. 创建回填管理器
@@ -46,7 +50,7 @@ async def demo_basic_usage():
 
         # 5. 显示结果
         print("\n✅ 回填完成!")
-        print(f"📊 处理统计:")
+        print("📊 处理统计:")
         print(f"   总处理数: {stats.total_processed}")
         print(f"   成功数: {stats.successful}")
         print(f"   失败数: {stats.failed}")
@@ -68,17 +72,17 @@ async def demo_error_handling():
     invalid_file = "data/invalid_matches.csv"
     Path(invalid_file).parent.mkdir(parents=True, exist_ok=True)
 
-    with open(invalid_file, 'w', encoding='utf-8') as f:
+    with open(invalid_file, "w", encoding="utf-8") as f:
         f.write("match_id\n")
-        f.write("invalid_id\n")      # 无效ID
-        f.write("999999999\n")       # 不存在的ID
-        f.write("1234567\n")         # 有效ID（如果存在）
+        f.write("invalid_id\n")  # 无效ID
+        f.write("999999999\n")  # 不存在的ID
+        f.write("1234567\n")  # 有效ID（如果存在）
 
     config = BackfillConfig(
         input_file=invalid_file,
         output_dir="data/error_demo_output",
         max_concurrent=2,
-        enable_progress_bar=True
+        enable_progress_bar=True,
     )
 
     manager = BackfillManager(config)
@@ -156,7 +160,7 @@ async def main():
     # 询问用户是否运行演示
     try:
         choice = input("\n是否运行演示? (y/n): ").lower().strip()
-        if choice == 'y':
+        if choice == "y":
             await demo_basic_usage()
             await demo_error_handling()
         else:

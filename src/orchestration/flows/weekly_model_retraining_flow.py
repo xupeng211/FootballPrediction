@@ -5,15 +5,13 @@ This module implements the weekly model retraining using P2-5 train_flow,
 integrating with the existing ML infrastructure for continuous model improvement.
 """
 
-import asyncio
 import logging
 from datetime import datetime, timedelta
-from typing import  Optional, Any
-from pathlib import Path
+from typing import Optional, Any
 
 from prefect import flow, task
 from prefect.tasks import task_input_hash
-from prefect.runtime import flow_run, task_run
+from prefect.runtime import flow_run
 
 # Import P2-5 training infrastructure
 from src.ml.enhanced_xgboost_trainer import EnhancedXGBoostTrainer

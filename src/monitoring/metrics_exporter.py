@@ -21,7 +21,6 @@ from prometheus_client import (
 from sqlalchemy import text
 
 from src.core.config import get_settings
-from src.database.async_manager import get_db_session
 
 logger = logging.getLogger(__name__)
 
@@ -393,9 +392,7 @@ class MetricsExporter:
 
                         safe_table_name = quoted_name(table_name, quote=True)
                         result = await session.execute(
-                            text(
-                                f"SELECT COUNT(*) FROM {safe_table_name}"
-                            )  # nosec B608 - using quoted_name for safety
+                            text(f"SELECT COUNT(*) FROM {safe_table_name}")  # nosec B608 - using quoted_name for safety
                         )
                         row_count = result.scalar()
                         self.table_row_count.labels(table_name=table_name).set(

@@ -67,7 +67,7 @@ class SQLiteCompatibleJSONB(TypeDecorator):
             if isinstance(value, str):
                 try:
                     return json.loads(value)
-                except (json.JSONDecodeErrorError):
+                except json.JSONDecodeErrorError:
                     return value
             return value
 
@@ -105,7 +105,7 @@ class CompatibleJSON(TypeDecorator):
             if isinstance(value, str):
                 try:
                     return json.loads(value)
-                except (json.JSONDecodeErrorError):
+                except json.JSONDecodeErrorError:
                     return value
             return value
 

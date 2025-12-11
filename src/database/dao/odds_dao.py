@@ -7,20 +7,11 @@ Odds Data Access Object
 
 import logging
 from datetime import datetime, timedelta
-from typing import Optional,  Any, Union
-from decimal import Decimal
+from typing import Optional
 
-from sqlalchemy import select, and_, or_, func, desc, asc
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
+from sqlalchemy import select, and_, func, desc
 
 from .base_dao import BaseDAO
-from .schemas import (
-    OddsCreate,
-    OddsUpdate,
-    OddsHistoryCreate,
-    MarketAnalysisCreate,
-)
 from .exceptions import (
     RecordNotFoundError,
     ValidationError,
@@ -28,7 +19,7 @@ from .exceptions import (
 )
 
 # 导入Odds相关模型
-from src.database.models.odds import Odds, OddsHistory, MarketAnalysis
+from src.database.models.odds import Odds
 
 logger = logging.getLogger(__name__)
 
@@ -48,9 +39,7 @@ class OddsDAO(BaseDAO):
     # ==================== 基础CRUD方法重写 ====================
 
     async def get_by_match_and_bookmaker(
-        self,
-        match_id: int,
-        bookmaker: str
+        self, match_id: int, bookmaker: str
     ) -> Optional[Odds]:
         """
         根据比赛ID和博彩公司获取赔率
@@ -66,13 +55,17 @@ class OddsDAO(BaseDAO):
             DatabaseConnectionError: 数据库连接错误
         """
         try:
-            query = select(self.model).where(
-                and_(
-                    self.model.match_id == match_id,
-                    self.model.bookmaker == bookmaker,
-                    self.model.is_active
+            query = (
+                select(self.model)
+                .where(
+                    and_(
+                        self.model.match_id == match_id,
+                        self.model.bookmaker == bookmaker,
+                        self.model.is_active,
+                    )
                 )
-            ).order_by(desc(self.model.created_at))
+                .order_by(desc(self.model.created_at))
+            )
 
             result = await self.session.execute(query)
             record = result.scalar_one_or_none()
@@ -85,15 +78,15 @@ class OddsDAO(BaseDAO):
             return record
 
         except Exception as e:
-            logger.error(f"根据比赛和博彩公司获取赔率失败: match_id={match_id}, bookmaker={bookmaker}")
+            logger.error(
+                f"根据比赛和博彩公司获取赔率失败: match_id={match_id}, bookmaker={bookmaker}"
+            )
             raise DatabaseConnectionError(f"根据比赛和博彩公司获取赔率失败: {e}")
 
     # ==================== 业务特定方法 ====================
 
     async def get_latest_odds_by_bookmaker(
-        self,
-        match_id: int,
-        bookmaker: str
+        self, match_id: int, bookmaker: str
     ) -> Optional[Odds]:
         """
         获取指定博彩公司的最新赔率
@@ -109,32 +102,37 @@ class OddsDAO(BaseDAO):
             DatabaseConnectionError: 数据库连接错误
         """
         try:
-            query = select(self.model).where(
-                and_(
-                    self.model.match_id == match_id,
-                    self.model.bookmaker == bookmaker,
-                    self.model.is_active
+            query = (
+                select(self.model)
+                .where(
+                    and_(
+                        self.model.match_id == match_id,
+                        self.model.bookmaker == bookmaker,
+                        self.model.is_active,
+                    )
                 )
-            ).order_by(desc(self.model.last_updated)).limit(1)
+                .order_by(desc(self.model.last_updated))
+                .limit(1)
+            )
 
             result = await self.session.execute(query)
             record = result.scalar_one_or_none()
 
             if record:
-                logger.debug(f"获取最新赔率成功: match_id={match_id}, bookmaker={bookmaker}, last_updated={record.last_updated}")
+                logger.debug(
+                    f"获取最新赔率成功: match_id={match_id}, bookmaker={bookmaker}, last_updated={record.last_updated}"
+                )
 
             return record
 
         except Exception as e:
-            logger.error(f"获取最新赔率失败: match_id={match_id}, bookmaker={bookmaker}")
+            logger.error(
+                f"获取最新赔率失败: match_id={match_id}, bookmaker={bookmaker}"
+            )
             raise DatabaseConnectionError(f"获取最新赔率失败: {e}")
 
     async def get_all_odds_by_match(
-        self,
-        match_id: int,
-        *,
-        active_only: bool = True,
-        live_only: bool = False
+        self, match_id: int, *, active_only: bool = True, live_only: bool = False
     ) -> list[Odds]:
         """
         获取比赛的所有赔率
@@ -160,8 +158,7 @@ class OddsDAO(BaseDAO):
                 query = query.where(self.model.live_odds)
 
             query = query.order_by(
-                self.model.bookmaker.asc(),
-                desc(self.model.last_updated)
+                self.model.bookmaker.asc(), desc(self.model.last_updated)
             )
 
             result = await self.session.execute(query)
@@ -175,9 +172,7 @@ class OddsDAO(BaseDAO):
             raise DatabaseConnectionError(f"获取比赛赔率失败: {e}")
 
     async def get_best_odds_by_match(
-        self,
-        match_id: int,
-        bet_type: str = "home_win"
+        self, match_id: int, bet_type: str = "home_win"
     ) -> Optional[Odds]:
         """
         获取比赛的最优赔率
@@ -195,24 +190,39 @@ class OddsDAO(BaseDAO):
         """
         try:
             # 验证投注类型
-            valid_types = ['home_win', 'draw', 'away_win', 'over_under', 'asian_handicap']
+            valid_types = [
+                "home_win",
+                "draw",
+                "away_win",
+                "over_under",
+                "asian_handicap",
+            ]
             if bet_type not in valid_types:
-                raise ValidationError("Odds", {"bet_type": f"投注类型必须是以下之一: {valid_types}"})
+                raise ValidationError(
+                    "Odds", {"bet_type": f"投注类型必须是以下之一: {valid_types}"}
+                )
 
             # 构建查询
-            query = select(self.model).where(
-                and_(
-                    self.model.match_id == match_id,
-                    self.model.is_active,
-                    getattr(self.model, bet_type).isnot(None)
+            query = (
+                select(self.model)
+                .where(
+                    and_(
+                        self.model.match_id == match_id,
+                        self.model.is_active,
+                        getattr(self.model, bet_type).isnot(None),
+                    )
                 )
-            ).order_by(getattr(self.model, bet_type).asc()).limit(1)
+                .order_by(getattr(self.model, bet_type).asc())
+                .limit(1)
+            )
 
             result = await self.session.execute(query)
             best_odds = result.scalar_one_or_none()
 
             if best_odds:
-                logger.info(f"找到最优赔率: match_id={match_id}, bet_type={bet_type}, odds={getattr(best_odds, bet_type)}")
+                logger.info(
+                    f"找到最优赔率: match_id={match_id}, bet_type={bet_type}, odds={getattr(best_odds, bet_type)}"
+                )
 
             return best_odds
 
@@ -223,10 +233,7 @@ class OddsDAO(BaseDAO):
             raise DatabaseConnectionError(f"获取最优赔率失败: {e}")
 
     async def get_live_odds(
-        self,
-        *,
-        limit: int = 100,
-        match_ids: Optional[list[int]] = None
+        self, *, limit: int = 100, match_ids: Optional[list[int]] = None
     ) -> list[Odds]:
         """
         获取实时赔率
@@ -243,10 +250,7 @@ class OddsDAO(BaseDAO):
         """
         try:
             query = select(self.model).where(
-                and_(
-                    self.model.live_odds,
-                    self.model.is_active
-                )
+                and_(self.model.live_odds, self.model.is_active)
             )
 
             if match_ids:
@@ -265,10 +269,7 @@ class OddsDAO(BaseDAO):
             raise DatabaseConnectionError(f"获取实时赔率失败: {e}")
 
     async def get_odds_by_confidence_threshold(
-        self,
-        min_confidence: float = 0.7,
-        *,
-        limit: int = 50
+        self, min_confidence: float = 0.7, *, limit: int = 50
     ) -> list[Odds]:
         """
         根据置信度阈值获取赔率
@@ -288,17 +289,24 @@ class OddsDAO(BaseDAO):
             if not 0 <= min_confidence <= 1:
                 raise ValidationError("Odds", {"min_confidence": "置信度必须在0-1之间"})
 
-            query = select(self.model).where(
-                and_(
-                    self.model.confidence_score >= min_confidence,
-                    self.model.is_active
+            query = (
+                select(self.model)
+                .where(
+                    and_(
+                        self.model.confidence_score >= min_confidence,
+                        self.model.is_active,
+                    )
                 )
-            ).order_by(desc(self.model.confidence_score)).limit(limit)
+                .order_by(desc(self.model.confidence_score))
+                .limit(limit)
+            )
 
             result = await self.session.execute(query)
             high_confidence_odds = result.scalars().all()
 
-            logger.info(f"获取高置信度赔率(>={min_confidence}): 找到{len(high_confidence_odds)}条记录")
+            logger.info(
+                f"获取高置信度赔率(>={min_confidence}): 找到{len(high_confidence_odds)}条记录"
+            )
             return list(high_confidence_odds)
 
         except ValidationError:
@@ -308,10 +316,7 @@ class OddsDAO(BaseDAO):
             raise DatabaseConnectionError(f"获取高置信度赔率失败: {e}")
 
     async def search_odds_by_bookmaker(
-        self,
-        bookmaker_keyword: str,
-        *,
-        limit: int = 50
+        self, bookmaker_keyword: str, *, limit: int = 50
     ) -> list[Odds]:
         """
         根据博彩公司关键词搜索赔率
@@ -329,21 +334,29 @@ class OddsDAO(BaseDAO):
         """
         try:
             if not bookmaker_keyword or len(bookmaker_keyword.strip()) < 2:
-                raise ValidationError("Odds", {"bookmaker_keyword": "博彩公司关键词至少需要2个字符"})
+                raise ValidationError(
+                    "Odds", {"bookmaker_keyword": "博彩公司关键词至少需要2个字符"}
+                )
 
             keyword = bookmaker_keyword.strip()
 
-            query = select(self.model).where(
-                and_(
-                    self.model.bookmaker.ilike(f"%{keyword}%"),
-                    self.model.is_active
+            query = (
+                select(self.model)
+                .where(
+                    and_(
+                        self.model.bookmaker.ilike(f"%{keyword}%"), self.model.is_active
+                    )
                 )
-            ).order_by(desc(self.model.last_updated)).limit(limit)
+                .order_by(desc(self.model.last_updated))
+                .limit(limit)
+            )
 
             result = await self.session.execute(query)
             search_results = result.scalars().all()
 
-            logger.info(f"搜索博彩公司'{keyword}'的赔率: 找到{len(search_results)}条记录")
+            logger.info(
+                f"搜索博彩公司'{keyword}'的赔率: 找到{len(search_results)}条记录"
+            )
             return list(search_results)
 
         except ValidationError:
@@ -365,12 +378,11 @@ class OddsDAO(BaseDAO):
             DatabaseConnectionError: 数据库连接错误
         """
         try:
-            query = select(
-                self.model.bookmaker,
-                func.count(self.model.id)
-            ).where(
-                self.model.is_active
-            ).group_by(self.model.bookmaker)
+            query = (
+                select(self.model.bookmaker, func.count(self.model.id))
+                .where(self.model.is_active)
+                .group_by(self.model.bookmaker)
+            )
 
             result = await self.session.execute(query)
             rows = result.all()
@@ -397,10 +409,7 @@ class OddsDAO(BaseDAO):
         """
         try:
             query = select(func.count(self.model.id)).where(
-                and_(
-                    self.model.live_odds,
-                    self.model.is_active
-                )
+                and_(self.model.live_odds, self.model.is_active)
             )
 
             result = await self.session.execute(query)
@@ -416,9 +425,7 @@ class OddsDAO(BaseDAO):
     # ==================== 质量控制方法 ====================
 
     async def update_odds_quality_score(
-        self,
-        odds_id: int,
-        quality_score: float
+        self, odds_id: int, quality_score: float
     ) -> bool:
         """
         更新赔率质量分数
@@ -438,7 +445,9 @@ class OddsDAO(BaseDAO):
         try:
             # 验证质量分数
             if not 0 <= quality_score <= 1:
-                raise ValidationError("Odds", {"quality_score": "质量分数必须在0-1之间"})
+                raise ValidationError(
+                    "Odds", {"quality_score": "质量分数必须在0-1之间"}
+                )
 
             # 检查赔率是否存在
             odds = await self.get(odds_id)
@@ -459,9 +468,7 @@ class OddsDAO(BaseDAO):
             raise DatabaseConnectionError(f"更新赔率质量分数失败: {e}")
 
     async def deactivate_old_odds(
-        self,
-        hours: int = 24,
-        bookmaker: Optional[str] = None
+        self, hours: int = 24, bookmaker: Optional[str] = None
     ) -> int:
         """
         停用旧的赔率记录
@@ -508,4 +515,4 @@ class OddsDAO(BaseDAO):
 
 
 # 导出OddsDAO
-__all__ = ['OddsDAO']
+__all__ = ["OddsDAO"]

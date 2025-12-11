@@ -13,7 +13,7 @@ import os
 import json
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, Any, List, Optional
+from typing import Any, Optional
 from dataclasses import dataclass
 
 # 添加项目根目录到Python路径
@@ -24,24 +24,26 @@ sys.path.insert(0, str(project_root / "src"))
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
-    handlers=[
-        logging.FileHandler("data_audit.log"),
-        logging.StreamHandler()
-    ]
+    handlers=[logging.FileHandler("data_audit.log"), logging.StreamHandler()],
 )
 logger = logging.getLogger(__name__)
 
 # 设置环境变量
-os.environ.setdefault('DATABASE_URL', 'postgresql://postgres:postgres@db:5432/football_prediction')
+os.environ.setdefault(
+    "DATABASE_URL", "postgresql://postgres:postgres@db:5432/football_prediction"
+)
+
 
 @dataclass
 class AuditResult:
     """审计结果数据类"""
+
     check_name: str
     status: str  # "PASS", "FAIL", "WARNING"
     details: dict[str, Any]
     execution_time: float
     error_message: Optional[str] = None
+
 
 class DataAssetAuditor:
     """数据资产审计器 - 专门执行非干扰式只读检查"""
@@ -61,6 +63,7 @@ class DataAssetAuditor:
 
             # 验证连接
             from sqlalchemy import text
+
             async with get_db_session() as session:
                 result = await session.execute(text("SELECT 1 as test"))
                 test_value = result.scalar()
@@ -112,14 +115,23 @@ class DataAssetAuditor:
         """
 
         try:
-            result, execution_time = await self._execute_query_with_timing(query, "Schema Integrity")
+            result, execution_time = await self._execute_query_with_timing(
+                query, "Schema Integrity"
+            )
             rows = result.fetchall()
 
             # 验证结果
             expected_json_columns = [
-                'stats_json', 'lineups_json', 'odds_snapshot_json',
-                'match_info', 'environment_json', 'lineups',
-                'stats', 'events', 'odds', 'match_metadata'
+                "stats_json",
+                "lineups_json",
+                "odds_snapshot_json",
+                "match_info",
+                "environment_json",
+                "lineups",
+                "stats",
+                "events",
+                "odds",
+                "match_metadata",
             ]
 
             found_columns = [row[0] for row in rows]
@@ -128,9 +140,9 @@ class DataAssetAuditor:
 
             for row in rows:
                 column_name, data_type, udt_name = row
-                if 'json' in data_type.lower() or 'json' in udt_name.lower():
+                if "json" in data_type.lower() or "json" in udt_name.lower():
                     json_columns.append((column_name, data_type, udt_name))
-                    if data_type.lower() == 'jsonb':
+                    if data_type.lower() == "jsonb":
                         jsonb_columns.append(column_name)
 
             details = {
@@ -139,7 +151,7 @@ class DataAssetAuditor:
                 "found_columns": found_columns,
                 "json_columns": [(col, dtype) for col, dtype, udt in json_columns],
                 "jsonb_columns": jsonb_columns,
-                "query_result_count": len(rows)
+                "query_result_count": len(rows),
             }
 
             # 判断检查状态
@@ -153,7 +165,7 @@ class DataAssetAuditor:
                 check_name="Schema Integrity Check",
                 status=status,
                 details=details,
-                execution_time=execution_time
+                execution_time=execution_time,
             )
 
         except Exception as e:
@@ -162,7 +174,7 @@ class DataAssetAuditor:
                 status="FAIL",
                 details={},
                 execution_time=0,
-                error_message=str(e)
+                error_message=str(e),
             )
 
     async def check_data_volume(self) -> AuditResult:
@@ -172,7 +184,9 @@ class DataAssetAuditor:
         query = "SELECT COUNT(*) as total_matches FROM matches;"
 
         try:
-            result, execution_time = await self._execute_query_with_timing(query, "Data Volume")
+            result, execution_time = await self._execute_query_with_timing(
+                query, "Data Volume"
+            )
             total_matches = result.scalar()
 
             # 获取有数据的记录数统计
@@ -187,7 +201,9 @@ class DataAssetAuditor:
             FROM matches;
             """
 
-            detailed_result, _ = await self._execute_query_with_timing(detailed_stats_query, "Detailed Volume Stats")
+            detailed_result, _ = await self._execute_query_with_timing(
+                detailed_stats_query, "Detailed Volume Stats"
+            )
             detailed_row = detailed_result.first()
 
             details = {
@@ -195,11 +211,30 @@ class DataAssetAuditor:
                 "matches_with_stats": detailed_row.matches_with_stats,
                 "matches_with_environment": detailed_row.matches_with_environment,
                 "matches_with_xg": detailed_row.matches_with_xg,
-                "data_completeness_pct": round((detailed_row.matches_with_stats / total_matches * 100) if total_matches > 0 else 0, 2),
-                "environment_completeness_pct": round((detailed_row.matches_with_environment / total_matches * 100) if total_matches > 0 else 0, 2),
-                "xg_completeness_pct": round((detailed_row.matches_with_xg / total_matches * 100) if total_matches > 0 else 0, 2),
-                "latest_record": str(detailed_row.latest_record) if detailed_row.latest_record else None,
-                "earliest_record": str(detailed_row.earliest_record) if detailed_row.earliest_record else None
+                "data_completeness_pct": round(
+                    (detailed_row.matches_with_stats / total_matches * 100)
+                    if total_matches > 0
+                    else 0,
+                    2,
+                ),
+                "environment_completeness_pct": round(
+                    (detailed_row.matches_with_environment / total_matches * 100)
+                    if total_matches > 0
+                    else 0,
+                    2,
+                ),
+                "xg_completeness_pct": round(
+                    (detailed_row.matches_with_xg / total_matches * 100)
+                    if total_matches > 0
+                    else 0,
+                    2,
+                ),
+                "latest_record": str(detailed_row.latest_record)
+                if detailed_row.latest_record
+                else None,
+                "earliest_record": str(detailed_row.earliest_record)
+                if detailed_row.earliest_record
+                else None,
             }
 
             # 判断检查状态
@@ -213,7 +248,7 @@ class DataAssetAuditor:
                 check_name="Data Volume Check",
                 status=status,
                 details=details,
-                execution_time=execution_time
+                execution_time=execution_time,
             )
 
         except Exception as e:
@@ -222,7 +257,7 @@ class DataAssetAuditor:
                 status="FAIL",
                 details={},
                 execution_time=0,
-                error_message=str(e)
+                error_message=str(e),
             )
 
     async def check_data_quality_xg(self) -> AuditResult:
@@ -247,7 +282,9 @@ class DataAssetAuditor:
         """
 
         try:
-            result, execution_time = await self._execute_query_with_timing(query, "Data Quality xG")
+            result, execution_time = await self._execute_query_with_timing(
+                query, "Data Quality xG"
+            )
             row = result.first()
 
             if not row:
@@ -255,7 +292,7 @@ class DataAssetAuditor:
                     check_name="Data Quality Check (xG)",
                     status="WARNING",
                     details={"message": "No records with stats_json found"},
-                    execution_time=execution_time
+                    execution_time=execution_time,
                 )
 
             # 解析和验证JSON数据
@@ -277,7 +314,11 @@ class DataAssetAuditor:
                 try:
                     parsed_stats = json.loads(stats_json)
                     xg_validation["stats_json_parsed"] = True
-                    xg_validation["stats_json_keys"] = list(parsed_stats.keys()) if isinstance(parsed_stats, dict) else "Not a dict"
+                    xg_validation["stats_json_keys"] = (
+                        list(parsed_stats.keys())
+                        if isinstance(parsed_stats, dict)
+                        else "Not a dict"
+                    )
                 except:
                     xg_validation["stats_json_parsed"] = False
             elif isinstance(stats_json, dict):
@@ -290,22 +331,26 @@ class DataAssetAuditor:
                 "sample_match_id": row.id,
                 "sample_fotmob_id": row.fotmob_id,
                 "sample_match": f"{row.home_team_name} vs {row.away_team_name}",
-                "collection_time": str(row.collection_time) if row.collection_time else None,
-                "xg_validation": xg_validation
+                "collection_time": str(row.collection_time)
+                if row.collection_time
+                else None,
+                "xg_validation": xg_validation,
             }
 
             # 判断检查状态
             status = "PASS"
             if not xg_validation["has_stats_json"]:
                 status = "FAIL"
-            elif not (xg_validation["home_xg_numeric"] or xg_validation["away_xg_numeric"]):
+            elif not (
+                xg_validation["home_xg_numeric"] or xg_validation["away_xg_numeric"]
+            ):
                 status = "WARNING"
 
             return AuditResult(
                 check_name="Data Quality Check (xG)",
                 status=status,
                 details=details,
-                execution_time=execution_time
+                execution_time=execution_time,
             )
 
         except Exception as e:
@@ -314,7 +359,7 @@ class DataAssetAuditor:
                 status="FAIL",
                 details={},
                 execution_time=0,
-                error_message=str(e)
+                error_message=str(e),
             )
 
     async def check_environment_context(self) -> AuditResult:
@@ -337,7 +382,9 @@ class DataAssetAuditor:
         """
 
         try:
-            result, execution_time = await self._execute_query_with_timing(query, "Environment Context")
+            result, execution_time = await self._execute_query_with_timing(
+                query, "Environment Context"
+            )
             row = result.first()
 
             if not row:
@@ -345,7 +392,7 @@ class DataAssetAuditor:
                     check_name="Environment Context Check",
                     status="WARNING",
                     details={"message": "No records with environment_json found"},
-                    execution_time=execution_time
+                    execution_time=execution_time,
                 )
 
             # 解析和验证环境数据
@@ -356,7 +403,7 @@ class DataAssetAuditor:
                 "has_environment_json": environment_json is not None,
                 "environment_json_type": type(environment_json).__name__,
                 "has_venue": venue is not None,
-                "venue_value": venue
+                "venue_value": venue,
             }
 
             # 解析environment_json内容
@@ -376,10 +423,13 @@ class DataAssetAuditor:
                                 "has_referee": True,
                                 "has_id": "id" in referee_data,
                                 "has_name": "name" in referee_data,
-                                "referee_keys": list(referee_data.keys())
+                                "referee_keys": list(referee_data.keys()),
                             }
                         else:
-                            referee_info = {"has_referee": False, "referee_type": type(referee_data).__name__}
+                            referee_info = {
+                                "has_referee": False,
+                                "referee_type": type(referee_data).__name__,
+                            }
                     else:
                         referee_info = {"has_referee": False}
 
@@ -391,10 +441,13 @@ class DataAssetAuditor:
                                 "has_venue_info": True,
                                 "has_coordinates": "coordinates" in venue_data,
                                 "has_name": "name" in venue_data,
-                                "venue_keys": list(venue_data.keys())
+                                "venue_keys": list(venue_data.keys()),
                             }
                         else:
-                            venue_info = {"has_venue_info": False, "venue_type": type(venue_data).__name__}
+                            venue_info = {
+                                "has_venue_info": False,
+                                "venue_type": type(venue_data).__name__,
+                            }
                     else:
                         venue_info = {"has_venue_info": False}
 
@@ -417,21 +470,23 @@ class DataAssetAuditor:
                 "match_time": str(row.match_time) if row.match_time else None,
                 "env_validation": env_validation,
                 "referee_info": referee_info,
-                "venue_info": venue_info
+                "venue_info": venue_info,
             }
 
             # 判断检查状态
             status = "PASS"
             if not env_validation["has_environment_json"]:
                 status = "FAIL"
-            elif not referee_info.get("has_referee") and not venue_info.get("has_venue_info"):
+            elif not referee_info.get("has_referee") and not venue_info.get(
+                "has_venue_info"
+            ):
                 status = "WARNING"
 
             return AuditResult(
                 check_name="Environment Context Check",
                 status=status,
                 details=details,
-                execution_time=execution_time
+                execution_time=execution_time,
             )
 
         except Exception as e:
@@ -440,7 +495,7 @@ class DataAssetAuditor:
                 status="FAIL",
                 details={},
                 execution_time=0,
-                error_message=str(e)
+                error_message=str(e),
             )
 
     async def run_full_audit(self) -> dict[str, Any]:
@@ -454,7 +509,7 @@ class DataAssetAuditor:
             self.check_schema_integrity(),
             self.check_data_volume(),
             self.check_data_quality_xg(),
-            self.check_environment_context()
+            self.check_environment_context(),
         ]
 
         self.results = await asyncio.gather(*checks, return_exceptions=True)
@@ -463,13 +518,15 @@ class DataAssetAuditor:
         processed_results = []
         for result in self.results:
             if isinstance(result, Exception):
-                processed_results.append(AuditResult(
-                    check_name="Unknown Check",
-                    status="FAIL",
-                    details={},
-                    execution_time=0,
-                    error_message=str(result)
-                ))
+                processed_results.append(
+                    AuditResult(
+                        check_name="Unknown Check",
+                        status="FAIL",
+                        details={},
+                        execution_time=0,
+                        error_message=str(result),
+                    )
+                )
             else:
                 processed_results.append(result)
 
@@ -486,12 +543,16 @@ class DataAssetAuditor:
             "passed_checks": len([r for r in self.results if r.status == "PASS"]),
             "failed_checks": len([r for r in self.results if r.status == "FAIL"]),
             "warning_checks": len([r for r in self.results if r.status == "WARNING"]),
-            "overall_status": "PASS" if all(r.status in ["PASS", "WARNING"] for r in self.results) else "FAIL",
-            "results": self.results
+            "overall_status": "PASS"
+            if all(r.status in ["PASS", "WARNING"] for r in self.results)
+            else "FAIL",
+            "results": self.results,
         }
 
         logger.info(f"✅ 审计完成 - 总用时: {total_time:.2f}s")
-        logger.info(f"📊 结果: 通过 {summary['passed_checks']}, 失败 {summary['failed_checks']}, 警告 {summary['warning_checks']}")
+        logger.info(
+            f"📊 结果: 通过 {summary['passed_checks']}, 失败 {summary['failed_checks']}, 警告 {summary['warning_checks']}"
+        )
 
         return summary
 
@@ -503,12 +564,16 @@ class DataAssetAuditor:
         report.append("## 📋 审计概览")
         report.append("")
         report.append(f"- **审计时间**: {audit_summary['audit_timestamp']}")
-        report.append(f"- **总执行时间**: {audit_summary['total_execution_time']:.3f} 秒")
+        report.append(
+            f"- **总执行时间**: {audit_summary['total_execution_time']:.3f} 秒"
+        )
         report.append(f"- **检查项目**: {audit_summary['total_checks']} 项")
         report.append(f"- **通过检查**: {audit_summary['passed_checks']} 项")
         report.append(f"- **失败检查**: {audit_summary['failed_checks']} 项")
         report.append(f"- **警告检查**: {audit_summary['warning_checks']} 项")
-        report.append(f"- **整体状态**: {self._get_status_emoji(audit_summary['overall_status'])} {audit_summary['overall_status']}")
+        report.append(
+            f"- **整体状态**: {self._get_status_emoji(audit_summary['overall_status'])} {audit_summary['overall_status']}"
+        )
         report.append("")
 
         # 详细检查结果表格
@@ -522,7 +587,9 @@ class DataAssetAuditor:
             key_metrics = self._extract_key_metrics(result.check_name, result.details)
             notes = result.error_message or "正常"
 
-            report.append(f"| {result.check_name} | {status_emoji} {result.status} | {result.execution_time:.3f}s | {key_metrics} | {notes} |")
+            report.append(
+                f"| {result.check_name} | {status_emoji} {result.status} | {result.execution_time:.3f}s | {key_metrics} | {notes} |"
+            )
 
         report.append("")
 
@@ -534,23 +601,39 @@ class DataAssetAuditor:
             if result.status == "FAIL" or result.details:
                 report.append(f"### {result.check_name}")
                 report.append("")
-                report.append(f"**状态**: {self._get_status_emoji(result.status)} {result.status}")
+                report.append(
+                    f"**状态**: {self._get_status_emoji(result.status)} {result.status}"
+                )
                 report.append(f"**执行时间**: {result.execution_time:.3f}s")
                 report.append("")
 
                 if "total_matches" in result.details:
-                    report.append(f"- **比赛总数**: {result.details['total_matches']:,}")
-                    report.append(f"- **数据完整度**: {result.details.get('data_completeness_pct', 0):.1f}%")
-                    report.append(f"- **环境数据完整度**: {result.details.get('environment_completeness_pct', 0):.1f}%")
-                    report.append(f"- **xG数据完整度**: {result.details.get('xg_completeness_pct', 0):.1f}%")
+                    report.append(
+                        f"- **比赛总数**: {result.details['total_matches']:,}"
+                    )
+                    report.append(
+                        f"- **数据完整度**: {result.details.get('data_completeness_pct', 0):.1f}%"
+                    )
+                    report.append(
+                        f"- **环境数据完整度**: {result.details.get('environment_completeness_pct', 0):.1f}%"
+                    )
+                    report.append(
+                        f"- **xG数据完整度**: {result.details.get('xg_completeness_pct', 0):.1f}%"
+                    )
 
                 if "sample_match" in result.details:
                     report.append(f"- **采样比赛**: {result.details['sample_match']}")
-                    report.append(f"- **比赛ID**: {result.details.get('sample_match_id')}")
+                    report.append(
+                        f"- **比赛ID**: {result.details.get('sample_match_id')}"
+                    )
 
                 if "json_columns" in result.details:
-                    report.append(f"- **JSON字段数**: {len(result.details['json_columns'])}")
-                    report.append(f"- **JSONB字段数**: {len(result.details.get('jsonb_columns', []))}")
+                    report.append(
+                        f"- **JSON字段数**: {len(result.details['json_columns'])}"
+                    )
+                    report.append(
+                        f"- **JSONB字段数**: {len(result.details.get('jsonb_columns', []))}"
+                    )
 
                 report.append("")
 
@@ -558,10 +641,12 @@ class DataAssetAuditor:
         report.append("## 📝 审计结论")
         report.append("")
 
-        if audit_summary['overall_status'] == 'PASS':
+        if audit_summary["overall_status"] == "PASS":
             report.append("✅ **审计通过** - 数据资产状态良好，所有关键检查项目均正常")
-        elif audit_summary['failed_checks'] == 0:
-            report.append("⚠️ **审计通过（含警告）** - 数据资产基本正常，存在部分需要关注的项")
+        elif audit_summary["failed_checks"] == 0:
+            report.append(
+                "⚠️ **审计通过（含警告）** - 数据资产基本正常，存在部分需要关注的项"
+            )
         else:
             report.append("❌ **审计失败** - 发现关键问题，需要立即处理")
 
@@ -573,11 +658,7 @@ class DataAssetAuditor:
 
     def _get_status_emoji(self, status: str) -> str:
         """获取状态emoji"""
-        return {
-            "PASS": "✅",
-            "FAIL": "❌",
-            "WARNING": "⚠️"
-        }.get(status, "❓")
+        return {"PASS": "✅", "FAIL": "❌", "WARNING": "⚠️"}.get(status, "❓")
 
     def _extract_key_metrics(self, check_name: str, details: dict[str, Any]) -> str:
         """提取关键指标用于表格显示"""
@@ -592,15 +673,20 @@ class DataAssetAuditor:
 
         elif check_name == "Data Quality Check (xG)":
             has_stats = details.get("xg_validation", {}).get("has_stats_json", False)
-            has_xg = details.get("xg_validation", {}).get("home_xg_numeric", False) or details.get("xg_validation", {}).get("away_xg_numeric", False)
+            has_xg = details.get("xg_validation", {}).get(
+                "home_xg_numeric", False
+            ) or details.get("xg_validation", {}).get("away_xg_numeric", False)
             return f"Stats: {'✓' if has_stats else '✗'}, xG: {'✓' if has_xg else '✗'}"
 
         elif check_name == "Environment Context Check":
-            has_env = details.get("env_validation", {}).get("has_environment_json", False)
+            has_env = details.get("env_validation", {}).get(
+                "has_environment_json", False
+            )
             has_referee = details.get("referee_info", {}).get("has_referee", False)
             return f"Env: {'✓' if has_env else '✗'}, Referee: {'✓' if has_referee else '✗'}"
 
         return "无关键指标"
+
 
 async def main():
     """主函数"""
@@ -622,24 +708,26 @@ async def main():
 
         # 保存到文件
         report_file = Path("data_audit_report.md")
-        with open(report_file, 'w', encoding='utf-8') as f:
+        with open(report_file, "w", encoding="utf-8") as f:
             f.write(markdown_report)
 
         logger.info(f"📄 审计报告已保存到: {report_file}")
 
         # 输出报告到控制台
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("📊 数据资产盘点审计报告")
-        print("="*60)
+        print("=" * 60)
         print(markdown_report)
 
-        return audit_summary['overall_status'] == 'PASS'
+        return audit_summary["overall_status"] == "PASS"
 
     except Exception as e:
         logger.error(f"❌ 审计执行失败: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 if __name__ == "__main__":
     success = asyncio.run(main())

@@ -17,7 +17,6 @@
 import asyncio
 import sys
 from pathlib import Path
-from datetime import datetime
 import logging
 
 # 添加项目根目录到 Python 路径
@@ -25,8 +24,7 @@ project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 from src.database.async_manager import get_db_session, initialize_database
-from sqlalchemy import text, Index
-import uuid
+from sqlalchemy import text
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -65,20 +63,15 @@ async def create_predictions_table():
     create_indexes_sql = [
         # 匹配ID索引 (用于查找特定比赛的预测)
         "CREATE INDEX IF NOT EXISTS idx_match_predictions_match_id ON match_predictions(match_id);",
-
         # 创建时间索引 (用于按时间范围查询)
         "CREATE INDEX IF NOT EXISTS idx_match_predictions_created_at ON match_predictions(created_at);",
-
         # 模型版本索引 (用于按模型版本查询)
         "CREATE INDEX IF NOT EXISTS idx_match_predictions_model_version ON match_predictions(model_version);",
-
         # 预测结果索引 (用于统计分析)
         "CREATE INDEX IF NOT EXISTS idx_match_predictions_prediction ON match_predictions(prediction);",
-
         # 复合索引: 比赛时间 + 创建时间 (用于查找特定日期的预测)
         """CREATE INDEX IF NOT EXISTS idx_match_predictions_match_created
            ON match_predictions(match_id, created_at DESC);""",
-
         # 置信度索引 (用于查找高置信度预测)
         "CREATE INDEX IF NOT EXISTS idx_match_predictions_confidence ON match_predictions(confidence DESC);",
     ]
@@ -102,7 +95,7 @@ async def create_predictions_table():
             BEFORE UPDATE ON match_predictions
             FOR EACH ROW
             EXECUTE FUNCTION update_match_predictions_updated_at();
-        """
+        """,
     ]
 
     try:
@@ -168,8 +161,10 @@ async def verify_table_structure(session):
 
     logger.info("📋 表结构:")
     for col in columns:
-        logger.info(f"   {col.column_name}: {col.data_type} "
-                   f"(nullable: {col.is_nullable}, default: {col.column_default})")
+        logger.info(
+            f"   {col.column_name}: {col.data_type} "
+            f"(nullable: {col.is_nullable}, default: {col.column_default})"
+        )
 
     # 检查索引
     indexes_sql = """
@@ -227,15 +222,15 @@ async def insert_sample_predictions():
             for match in matches:
                 # 模拟预测结果
                 sample_prediction = {
-                    'match_id': str(match.id),
-                    'prediction': 'Home',  # 假设主队获胜
-                    'confidence': 0.65,
-                    'probabilities': {"Home": 0.65, "Draw": 0.25, "Away": 0.10},
-                    'model_version': 'v1.0.0',
-                    'feature_count': 14,
-                    'missing_features': 0,
-                    'processing_time_ms': 150.5,
-                    'prediction_source': 'sample_data'
+                    "match_id": str(match.id),
+                    "prediction": "Home",  # 假设主队获胜
+                    "confidence": 0.65,
+                    "probabilities": {"Home": 0.65, "Draw": 0.25, "Away": 0.10},
+                    "model_version": "v1.0.0",
+                    "feature_count": 14,
+                    "missing_features": 0,
+                    "processing_time_ms": 150.5,
+                    "prediction_source": "sample_data",
                 }
 
                 insert_sql = """

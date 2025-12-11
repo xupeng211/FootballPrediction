@@ -11,13 +11,13 @@ from .schemas import MatchCreate, MatchUpdate, MatchResponse
 from .match_dao import MatchDAO
 
 __all__ = [
-    'BaseDAO',
-    'MatchDAO',
-    'MatchCreate',
-    'MatchUpdate',
-    'MatchResponse',
-    'DAOException',
-    'RecordNotFoundError',
-    'DatabaseConnectionError',
-    'ValidationError'
+    "BaseDAO",
+    "MatchDAO",
+    "MatchCreate",
+    "MatchUpdate",
+    "MatchResponse",
+    "DAOException",
+    "RecordNotFoundError",
+    "DatabaseConnectionError",
+    "ValidationError",
 ]

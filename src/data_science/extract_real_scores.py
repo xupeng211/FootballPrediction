@@ -40,7 +40,7 @@ def extract_real_scores():
 
         for idx, row in df.iterrows():
             print(
-                f"\n⚽ 比赛 {idx+1}: {row['home_team_name']} vs {row['away_team_name']}"
+                f"\n⚽ 比赛 {idx + 1}: {row['home_team_name']} vs {row['away_team_name']}"
             )
             print(f"   数据库比分: {row['home_score']}:{row['away_score']}")
 

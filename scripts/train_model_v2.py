@@ -8,7 +8,6 @@ Real Football Prediction Model Training Script - Direct Database Integration
 
 import json
 import logging
-import os
 import pickle
 from datetime import datetime
 from pathlib import Path
@@ -16,7 +15,6 @@ from pathlib import Path
 import pandas as pd
 import xgboost as xgb
 from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
-from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 
 # 设置日志
@@ -38,7 +36,6 @@ def load_training_data_from_database():
         db_manager = get_database_manager()
 
         # 使用异步连接
-        import asyncio
 
         async def async_load_data():
             async with db_manager.get_async_session() as session:

@@ -10,19 +10,17 @@ import subprocess
 import time
 import os
 import sys
-import signal
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Optional, Tuple
-import json
+from typing import Optional
 
 # 配置日志
 logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
+
 
 class PilotRunMonitor:
     def __init__(self, duration_minutes: int = 60):
@@ -46,23 +44,22 @@ class PilotRunMonitor:
         try:
             # 使用subprocess.Popen启动后台进程
             cmd = [
-                "docker-compose", "exec", "app",
-                "python", "scripts/backfill_full_history.py"
+                "docker-compose",
+                "exec",
+                "app",
+                "python",
+                "scripts/backfill_full_history.py",
             ]
 
             # 创建日志文件
-            with open(self.log_file_path, 'w') as log_file:
+            with open(self.log_file_path, "w") as log_file:
                 log_file.write(f"=== 回填任务启动日志 {datetime.now()} ===\n")
                 log_file.write(f"命令: {' '.join(cmd)}\n\n")
 
             # 启动进程，重定向输出到日志文件
-            with open(self.log_file_path, 'a') as log_file:
+            with open(self.log_file_path, "a") as log_file:
                 self.backfill_process = subprocess.Popen(
-                    cmd,
-                    stdout=log_file,
-                    stderr=subprocess.STDOUT,
-                    text=True,
-                    bufsize=1
+                    cmd, stdout=log_file, stderr=subprocess.STDOUT, text=True, bufsize=1
                 )
 
             logger.info(f"✅ 回填任务已启动，PID: {self.backfill_process.pid}")
@@ -75,7 +72,9 @@ class PilotRunMonitor:
                 logger.info("✅ 回填任务进程运行正常")
                 return True
             else:
-                logger.error(f"❌ 回填任务启动失败，退出码: {self.backfill_process.returncode}")
+                logger.error(
+                    f"❌ 回填任务启动失败，退出码: {self.backfill_process.returncode}"
+                )
                 return False
 
         except Exception as e:
@@ -86,23 +85,29 @@ class PilotRunMonitor:
         """查询数据库中matches表的总记录数"""
         try:
             cmd = [
-                "docker-compose", "exec", "db",
-                "psql", "-U", "postgres", "-d", "football_prediction",
-                "-c", "SELECT COUNT(*) FROM matches;"
+                "docker-compose",
+                "exec",
+                "db",
+                "psql",
+                "-U",
+                "postgres",
+                "-d",
+                "football_prediction",
+                "-c",
+                "SELECT COUNT(*) FROM matches;",
             ]
 
-            result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                timeout=30
-            )
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
 
             if result.returncode == 0:
                 # 解析输出获取记录数
-                lines = result.stdout.strip().split('\n')
+                lines = result.stdout.strip().split("\n")
                 for line in lines:
-                    if line.strip() and not line.startswith(' count') and not line.startswith('-----'):
+                    if (
+                        line.strip()
+                        and not line.startswith(" count")
+                        and not line.startswith("-----")
+                    ):
                         return int(line.strip())
 
             logger.warning(f"⚠️ 查询数据库失败: {result.stderr}")
@@ -120,7 +125,11 @@ class PilotRunMonitor:
 
             cmd = ["tail", "-n", str(num_lines), self.log_file_path]
             result = subprocess.run(cmd, capture_output=True, text=True)
-            return result.stdout if result.returncode == 0 else f"读取日志失败: {result.stderr}"
+            return (
+                result.stdout
+                if result.returncode == 0
+                else f"读取日志失败: {result.stderr}"
+            )
 
         except Exception as e:
             return f"读取日志异常: {e}"
@@ -138,7 +147,9 @@ class PilotRunMonitor:
 
             # 检查进程状态
             if self.backfill_process.poll() is not None:
-                logger.error(f"💥 回填任务已停止！退出码: {self.backfill_process.returncode}")
+                logger.error(
+                    f"💥 回填任务已停止！退出码: {self.backfill_process.returncode}"
+                )
                 logger.error("📋 最后20行日志:")
                 logger.error(self.get_last_log_lines())
                 return False
@@ -153,11 +164,11 @@ class PilotRunMonitor:
 
             # 记录监控数据
             monitoring_point = {
-                'minute': minute,
-                'timestamp': datetime.now().isoformat(),
-                'total_matches': current_match_count,
-                'matches_added': matches_added,
-                'speed_per_minute': round(speed, 2)
+                "minute": minute,
+                "timestamp": datetime.now().isoformat(),
+                "total_matches": current_match_count,
+                "matches_added": matches_added,
+                "speed_per_minute": round(speed, 2),
             }
             self.monitoring_data.append(monitoring_point)
 
@@ -215,21 +226,25 @@ class PilotRunMonitor:
 
         end_time = datetime.now()
         duration = end_time - self.start_time
-        total_matches = self.monitoring_data[-1]['total_matches']
-        matches_added = self.monitoring_data[-1]['matches_added']
-        avg_speed = matches_added / (duration.total_seconds() / 60) if duration.total_seconds() > 0 else 0
+        total_matches = self.monitoring_data[-1]["total_matches"]
+        matches_added = self.monitoring_data[-1]["matches_added"]
+        avg_speed = (
+            matches_added / (duration.total_seconds() / 60)
+            if duration.total_seconds() > 0
+            else 0
+        )
 
         # 计算峰值速度
-        peak_speed = max(point['speed_per_minute'] for point in self.monitoring_data)
+        peak_speed = max(point["speed_per_minute"] for point in self.monitoring_data)
 
         report = f"""# 🚀 1小时无人值守试运行报告
 
 ## 📊 执行摘要
 
-- **开始时间**: {self.start_time.strftime('%Y-%m-%d %H:%M:%S')}
-- **结束时间**: {end_time.strftime('%Y-%m-%d %H:%M:%S')}
+- **开始时间**: {self.start_time.strftime("%Y-%m-%d %H:%M:%S")}
+- **结束时间**: {end_time.strftime("%Y-%m-%d %H:%M:%S")}
 - **总耗时**: {duration}
-- **任务状态**: {'✅ 成功完成' if all(p['speed_per_minute'] >= 0 for p in self.monitoring_data) else '⚠️ 有异常'}
+- **任务状态**: {"✅ 成功完成" if all(p["speed_per_minute"] >= 0 for p in self.monitoring_data) else "⚠️ 有异常"}
 
 ## 📈 数据采集统计
 
@@ -248,7 +263,9 @@ class PilotRunMonitor:
         # 添加详细数据（每5分钟一次）
         for i, point in enumerate(self.monitoring_data):
             if i % 5 == 0 or i == len(self.monitoring_data) - 1:  # 每5分钟或最后一次
-                timestamp = datetime.fromisoformat(point['timestamp']).strftime('%H:%M:%S')
+                timestamp = datetime.fromisoformat(point["timestamp"]).strftime(
+                    "%H:%M:%S"
+                )
                 report += f"| {point['minute']:3d} | {timestamp} | {point['total_matches']:4d} | {point['matches_added']:3d} | {point['speed_per_minute']:5.1f} |\n"
 
         report += f"""
@@ -273,16 +290,18 @@ class PilotRunMonitor:
 3. {"定期备份数据库" if matches_added > 0 else "检查数据采集流程"}
 
 ---
-*报告生成时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}*
+*报告生成时间: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}*
 """
 
         return report
 
     def save_report(self, report: str):
         """保存报告到文件"""
-        report_file = f"logs/pilot_run_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
+        report_file = (
+            f"logs/pilot_run_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
+        )
         try:
-            with open(report_file, 'w', encoding='utf-8') as f:
+            with open(report_file, "w", encoding="utf-8") as f:
                 f.write(report)
             logger.info(f"📋 监控报告已保存: {report_file}")
             return report_file
@@ -316,9 +335,9 @@ class PilotRunMonitor:
                 if report_file:
                     print(f"\n📋 详细报告已保存: {report_file}")
 
-                print("\n" + "="*80)
+                print("\n" + "=" * 80)
                 print("🎉 1小时无人值守试运行完成!")
-                print("="*80)
+                print("=" * 80)
                 print(report)
 
             return success
@@ -332,6 +351,7 @@ class PilotRunMonitor:
             self.stop_backfill_process()
             return False
 
+
 def main():
     """主函数"""
     monitor = PilotRunMonitor(duration_minutes=60)
@@ -343,6 +363,7 @@ def main():
     else:
         logger.error("❌ 无人值守试运行失败")
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()

@@ -20,7 +20,6 @@ OddsPortal Fetcher Dry Run Script
 import asyncio
 import sys
 import time
-from datetime import datetime
 from pathlib import Path
 
 # 添加项目根目录到 Python 路径
@@ -35,11 +34,7 @@ async def test_http_client():
     try:
         from utils.http_client import AsyncHttpClient
 
-        config = {
-            "timeout": 10.0,
-            "max_retries": 2,
-            "max_connections": 10
-        }
+        config = {"timeout": 10.0, "max_retries": 2, "max_connections": 10}
 
         async with AsyncHttpClient(**config) as client:
             # 测试一个公开的 API 服务
@@ -76,7 +71,7 @@ async def test_odds_parser():
             print(f"  ❌ 样本文件不存在: {sample_file}")
             return False
 
-        with open(sample_file, encoding='utf-8') as f:
+        with open(sample_file, encoding="utf-8") as f:
             html_content = f.read()
 
         # 创建解析器并测试
@@ -88,7 +83,9 @@ async def test_odds_parser():
         parsed_odds = parser.parse_match_page(html_content)
         parsing_time = time.time() - start_time
 
-        print(f"  ✅ 解析完成 - 找到 {len(parsed_odds)} 条记录，耗时 {parsing_time:.3f}s")
+        print(
+            f"  ✅ 解析完成 - 找到 {len(parsed_odds)} 条记录，耗时 {parsing_time:.3f}s"
+        )
 
         # 验证数据
         validated_odds = parser.validate_odds_data(parsed_odds)
@@ -99,8 +96,8 @@ async def test_odds_parser():
         bookmaker_stats = {}
 
         for odds in validated_odds:
-            market = odds['market']
-            bookmaker = odds['bookmaker']
+            market = odds["market"]
+            bookmaker = odds["bookmaker"]
 
             market_stats[market] = market_stats.get(market, 0) + 1
             bookmaker_stats[bookmaker] = bookmaker_stats.get(bookmaker, 0) + 1
@@ -111,13 +108,16 @@ async def test_odds_parser():
         # 显示前3条记录
         print("  📋 前3条记录:")
         for i, odds in enumerate(validated_odds[:3], 1):
-            print(f"     {i}. {odds['bookmaker']} | {odds['market']} | {odds['selection']} | {odds['odds']}")
+            print(
+                f"     {i}. {odds['bookmaker']} | {odds['market']} | {odds['selection']} | {odds['odds']}"
+            )
 
         return len(validated_odds) > 0
 
     except Exception as e:
         print(f"  ❌ 解析器测试失败: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 
@@ -137,24 +137,26 @@ async def test_odds_fetcher_modes():
 
         # 1. Mock 模式测试
         print("  🎯 测试 Mock 模式...")
-        mock_config = {
-            "use_mock": True,
-            "timeout": 5.0,
-            "count": 6
-        }
+        mock_config = {"use_mock": True, "timeout": 5.0, "count": 6}
 
         start_time = time.time()
         async with OddsPortalFetcher(config=mock_config) as fetcher:
             mock_odds = await fetcher.fetch_odds(test_match_id, test_league_id, count=6)
             mock_time = time.time() - start_time
 
-            print(f"    ✅ Mock 模式成功 - {len(mock_odds)} 条记录，耗时 {mock_time:.3f}s")
+            print(
+                f"    ✅ Mock 模式成功 - {len(mock_odds)} 条记录，耗时 {mock_time:.3f}s"
+            )
 
             # 获取统计信息
-            mock_stats = fetcher.get_client_stats() if hasattr(fetcher, 'get_client_stats') else {}
+            mock_stats = (
+                fetcher.get_client_stats()
+                if hasattr(fetcher, "get_client_stats")
+                else {}
+            )
             print(f"    📊 Mock 统计: {mock_stats}")
 
-            results['mock'] = len(mock_odds)
+            results["mock"] = len(mock_odds)
 
         # 2. 真实模式测试 (会失败并回退到 Mock)
         print("  🌐 测试真实模式 (预期会回退到 Mock)...")
@@ -162,7 +164,7 @@ async def test_odds_fetcher_modes():
             "use_mock": False,
             "fallback_to_mock": True,
             "timeout": 5.0,
-            "count": 6
+            "count": 6,
         }
 
         start_time = time.time()
@@ -170,7 +172,9 @@ async def test_odds_fetcher_modes():
             real_odds = await fetcher.fetch_odds(test_match_id, test_league_id, count=6)
             real_time = time.time() - start_time
 
-            print(f"    ✅ 真实模式成功 (含回退) - {len(real_odds)} 条记录，耗时 {real_time:.3f}s")
+            print(
+                f"    ✅ 真实模式成功 (含回退) - {len(real_odds)} 条记录，耗时 {real_time:.3f}s"
+            )
 
             # 获取元数据
             metadata = fetcher._metadata.get(test_match_id)
@@ -182,18 +186,19 @@ async def test_odds_fetcher_modes():
                 if metadata.error_message:
                     print(f"       - 错误信息: {metadata.error_message}")
 
-            results['real'] = len(real_odds)
+            results["real"] = len(real_odds)
 
         # 对比结果
         print("  📈 模式对比:")
         print(f"     - Mock 模式: {results.get('mock', 0)} 条记录")
         print(f"     - 真实模式: {results.get('real', 0)} 条记录")
 
-        return results.get('mock', 0) > 0 and results.get('real', 0) > 0
+        return results.get("mock", 0) > 0 and results.get("real", 0) > 0
 
     except Exception as e:
         print(f"  ❌ Fetcher 测试失败: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 
@@ -204,8 +209,6 @@ async def test_integration_workflow():
 
     try:
         # 1. 初始化组件
-        from utils.http_client import AsyncHttpClient
-        from fetchers.parsers.odds_parser import OddsParser
         from fetchers.oddsportal_fetcher import OddsPortalFetcher
 
         print("  🔧 组件初始化:")
@@ -219,9 +222,7 @@ async def test_integration_workflow():
         async with OddsPortalFetcher(config={"use_mock": True}) as fetcher:
             print("  📡 执行数据获取...")
             odds_data = await fetcher.fetch_odds(
-                test_match_id,
-                markets=["1X2", "Asian Handicap", "Over/Under"],
-                count=10
+                test_match_id, markets=["1X2", "Asian Handicap", "Over/Under"], count=10
             )
 
             print(f"     ✅ 获取成功 - {len(odds_data)} 条赔率记录")
@@ -262,7 +263,7 @@ def show_system_info():
         "src/utils/http_client.py",
         "src/fetchers/parsers/odds_parser.py",
         "src/fetchers/oddsportal_fetcher.py",
-        "tests/fixtures/oddsportal_sample.html"
+        "tests/fixtures/oddsportal_sample.html",
     ]
 
     print("   📁 关键文件检查:")
@@ -286,13 +287,13 @@ async def main():
         ("HTTP 客户端", test_http_client),
         ("赔率解析器", test_odds_parser),
         ("Fetcher 模式", test_odds_fetcher_modes),
-        ("集成工作流", test_integration_workflow)
+        ("集成工作流", test_integration_workflow),
     ]
 
     results = {}
 
     for test_name, test_func in tests:
-        print(f"\n{'='*20} {test_name} {'='*20}")
+        print(f"\n{'=' * 20} {test_name} {'=' * 20}")
         try:
             result = await test_func()
             results[test_name] = result
@@ -303,9 +304,9 @@ async def main():
             print(f"   ❌ 异常: {e}")
 
     # 总结报告
-    print(f"\n{'='*80}")
+    print(f"\n{'=' * 80}")
     print("📋 测试结果总结")
-    print(f"{'='*80}")
+    print(f"{'=' * 80}")
 
     passed = sum(1 for result in results.values() if result)
     total = len(results)
@@ -333,7 +334,7 @@ async def main():
 
         return True
     else:
-        print(f"\n⚠️  {total-passed} 个测试失败，请检查问题")
+        print(f"\n⚠️  {total - passed} 个测试失败，请检查问题")
         return False
 
 
@@ -347,5 +348,6 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"\n\n❌ 测试过程中发生异常: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)

@@ -106,22 +106,16 @@ def detailed_l1_check():
                                                     )
 
                                             # 检查嵌套的team数据
-                                            if (
-                                                "homeTeam" in first_match
-                                                and isinstance(
-                                                    first_match["homeTeam"], dict
-                                                )
+                                            if "homeTeam" in first_match and isinstance(
+                                                first_match["homeTeam"], dict
                                             ):
                                                 home_team = first_match["homeTeam"]
                                                 print(
                                                     f"         🔵 主队: {home_team.get('name', 'Unknown')} (ID: {home_team.get('id', 'Unknown')})"
                                                 )
 
-                                            if (
-                                                "awayTeam" in first_match
-                                                and isinstance(
-                                                    first_match["awayTeam"], dict
-                                                )
+                                            if "awayTeam" in first_match and isinstance(
+                                                first_match["awayTeam"], dict
                                             ):
                                                 away_team = first_match["awayTeam"]
                                                 print(

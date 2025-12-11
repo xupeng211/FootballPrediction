@@ -11,10 +11,10 @@ import json
 import random
 import sys
 from datetime import datetime, timedelta
-from typing import Any, Dict, List
+from typing import Any
 
 # 添加项目路径
-sys.path.insert(0, '/app')
+sys.path.insert(0, "/app")
 
 import asyncpg
 
@@ -36,7 +36,7 @@ class DirectSQLBenchmarkDataSeeder:
             self.pool = await asyncpg.create_pool(
                 "postgresql://postgres:postgres-dev-password@db:5432/football_prediction",
                 min_size=2,
-                max_size=10
+                max_size=10,
             )
             print("✅ 数据库连接成功")
 
@@ -100,10 +100,12 @@ class DirectSQLBenchmarkDataSeeder:
                 "id": i,
                 "name": f"Team {chr(64 + i % 26)}{chr(65 + i % 26)}{i}",
                 "short_name": f"T{i:02d}",
-                "country": random.choice(["England", "Spain", "Germany", "Italy", "France"]),
+                "country": random.choice(
+                    ["England", "Spain", "Germany", "Italy", "France"]
+                ),
                 "founded": random.randint(1880, 2020),
                 "stadium_capacity": random.randint(20000, 80000),
-                "market_value": random.randint(50_000_000, 500_000_000)
+                "market_value": random.randint(50_000_000, 500_000_000),
             }
             teams.append(team)
 
@@ -121,14 +123,16 @@ class DirectSQLBenchmarkDataSeeder:
             # 使用批量插入
             values = []
             for team in teams:
-                values.append(f"({team['id']}, '{team['name']}', '{team['short_name']}', "
-                            f"'{team['country']}', {team['founded']}, {team['stadium_capacity']}, "
-                            f"{team['market_value']}, NOW(), NOW())")
+                values.append(
+                    f"({team['id']}, '{team['name']}', '{team['short_name']}', "
+                    f"'{team['country']}', {team['founded']}, {team['stadium_capacity']}, "
+                    f"{team['market_value']}, NOW(), NOW())"
+                )
 
             query = f"""
                 INSERT INTO teams (id, name, short_name, country, founded,
                                   stadium_capacity, market_value, created_at, updated_at)
-                VALUES {','.join(values)}
+                VALUES {",".join(values)}
                 ON CONFLICT (id) DO NOTHING
             """
 
@@ -142,14 +146,23 @@ class DirectSQLBenchmarkDataSeeder:
                 success_count = 0
                 for team in teams:
                     try:
-                        await conn.execute("""
+                        await conn.execute(
+                            """
                             INSERT INTO teams (id, name, short_name, country, founded,
                                              stadium_capacity, market_value, created_at, updated_at)
                             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
                             ON CONFLICT (id) DO NOTHING
-                        """, team["id"], team["name"], team["short_name"], team["country"],
-                        team["founded"], team["stadium_capacity"], team["market_value"],
-                        datetime.now(), datetime.now())
+                        """,
+                            team["id"],
+                            team["name"],
+                            team["short_name"],
+                            team["country"],
+                            team["founded"],
+                            team["stadium_capacity"],
+                            team["market_value"],
+                            datetime.now(),
+                            datetime.now(),
+                        )
                         success_count += 1
                     except Exception as e2:
                         print(f"   ⚠️ 保存球队 {team['id']} 失败: {e2}")
@@ -172,7 +185,9 @@ class DirectSQLBenchmarkDataSeeder:
         for i in range(1, count + 1):
             # 随机选择主客队
             home_team = random.choice(self.teams)
-            away_team = random.choice([t for t in self.teams if t["id"] != home_team["id"]])
+            away_team = random.choice(
+                [t for t in self.teams if t["id"] != home_team["id"]]
+            )
 
             # 生成比赛日期
             match_date = start_date + timedelta(days=random.randint(0, 1460))  # 4年内
@@ -202,7 +217,7 @@ class DirectSQLBenchmarkDataSeeder:
                 "momentum_factor": round(random.uniform(-0.5, 0.5), 3),
                 "fatigue_index": round(random.uniform(0.0, 1.0), 3),
                 "generated_at": datetime.now().isoformat(),
-                "feature_version": "v2.0"
+                "feature_version": "v2.0",
             }
 
             match = {
@@ -217,8 +232,10 @@ class DirectSQLBenchmarkDataSeeder:
                 "away_score": away_score,
                 "final_score": final_score,
                 "status": status,
-                "attendance": random.randint(15000, 75000) if status == "completed" else None,
-                "features": features
+                "attendance": random.randint(15000, 75000)
+                if status == "completed"
+                else None,
+                "features": features,
             }
             matches.append(match)
 
@@ -235,11 +252,12 @@ class DirectSQLBenchmarkDataSeeder:
             batch_size = 50
 
             for i in range(0, len(matches), batch_size):
-                batch = matches[i:i + batch_size]
+                batch = matches[i : i + batch_size]
 
                 for match in batch:
                     try:
-                        await conn.execute("""
+                        await conn.execute(
+                            """
                             INSERT INTO matches (id, home_team_id, away_team_id, season_id,
                                               competition, match_date, venue,
                                               home_score, away_score, final_score, status,
@@ -247,11 +265,21 @@ class DirectSQLBenchmarkDataSeeder:
                             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
                             ON CONFLICT (id) DO NOTHING
                         """,
-                        match["id"], match["home_team_id"], match["away_team_id"],
-                        match["season_id"], match["competition"], match["match_date"],
-                        match["venue"], match["home_score"], match["away_score"],
-                        match["final_score"], match["status"], match["attendance"],
-                        json.dumps(match["features"]), datetime.now(), datetime.now()
+                            match["id"],
+                            match["home_team_id"],
+                            match["away_team_id"],
+                            match["season_id"],
+                            match["competition"],
+                            match["match_date"],
+                            match["venue"],
+                            match["home_score"],
+                            match["away_score"],
+                            match["final_score"],
+                            match["status"],
+                            match["attendance"],
+                            json.dumps(match["features"]),
+                            datetime.now(),
+                            datetime.now(),
                         )
                         success_count += 1
 
@@ -276,11 +304,15 @@ class DirectSQLBenchmarkDataSeeder:
             matches_count = await conn.fetchval("SELECT COUNT(*) FROM matches")
 
             # 统计特征数量
-            features_count = await conn.fetchval("SELECT COUNT(*) FROM matches WHERE features IS NOT NULL")
+            features_count = await conn.fetchval(
+                "SELECT COUNT(*) FROM matches WHERE features IS NOT NULL"
+            )
 
             # 获取赛季分布
-            seasons = await conn.fetch("SELECT DISTINCT season_id FROM matches ORDER BY season_id")
-            season_list = [row['season_id'] for row in seasons]
+            seasons = await conn.fetch(
+                "SELECT DISTINCT season_id FROM matches ORDER BY season_id"
+            )
+            season_list = [row["season_id"] for row in seasons]
 
         report = {
             "generation_timestamp": datetime.now().isoformat(),
@@ -288,13 +320,13 @@ class DirectSQLBenchmarkDataSeeder:
                 "teams_count": teams_count,
                 "matches_count": matches_count,
                 "features_count": features_count,
-                "seasons": season_list
+                "seasons": season_list,
             },
             "generation_config": {
                 "teams_target": 50,
                 "matches_target": 1000,
-                "completion_rate": random.uniform(0.7, 0.75)
-            }
+                "completion_rate": random.uniform(0.7, 0.75),
+            },
         }
 
         # 保存报告
@@ -331,12 +363,16 @@ class DirectSQLBenchmarkDataSeeder:
                 print(f"   📊 数据库比赛数量: {matches_count}")
 
                 # 验证特征数据
-                features_count = await conn.fetchval("SELECT COUNT(*) FROM matches WHERE features IS NOT NULL")
+                features_count = await conn.fetchval(
+                    "SELECT COUNT(*) FROM matches WHERE features IS NOT NULL"
+                )
                 print(f"   📊 特征数据数量: {features_count}")
 
                 # 验证赛季分布
-                seasons = await conn.fetch("SELECT DISTINCT season_id FROM matches ORDER BY season_id")
-                season_list = [row['season_id'] for row in seasons]
+                seasons = await conn.fetch(
+                    "SELECT DISTINCT season_id FROM matches ORDER BY season_id"
+                )
+                season_list = [row["season_id"] for row in seasons]
                 print(f"   📊 赛季分布: {season_list}")
 
                 return teams_count > 0 and matches_count > 0
@@ -384,12 +420,12 @@ class DirectSQLBenchmarkDataSeeder:
             print(f"✅ 数据验证: {'通过' if verification_passed else '失败'}")
 
             overall_success = (
-                teams_saved > 0 and
-                matches_saved > 0 and
-                verification_passed
+                teams_saved > 0 and matches_saved > 0 and verification_passed
             )
 
-            print(f"\n🏆 总体状态: {'✅ 全部成功' if overall_success else '⚠️ 部分失败'}")
+            print(
+                f"\n🏆 总体状态: {'✅ 全部成功' if overall_success else '⚠️ 部分失败'}"
+            )
             print("🚀 P1-7压测数据已准备就绪！")
 
             return overall_success
@@ -397,6 +433,7 @@ class DirectSQLBenchmarkDataSeeder:
         except Exception as e:
             print(f"\n❌ 数据生成过程中出现错误: {e}")
             import traceback
+
             traceback.print_exc()
             return False
 

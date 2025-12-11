@@ -9,7 +9,6 @@ from __future__ import annotations
 
 from datetime import datetime
 from typing import Any, Optional, Protocol, runtime_checkable, TypedDict
-from uuid import UUID
 
 
 class FeatureData(TypedDict, total=False):

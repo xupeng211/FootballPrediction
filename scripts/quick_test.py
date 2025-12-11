@@ -18,10 +18,10 @@ from database.models.match import Match
 
 # 配置日志
 logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s"
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
+
 
 async def test_basic_database_operation():
     """测试基本的数据库操作"""
@@ -34,7 +34,7 @@ async def test_basic_database_operation():
     async with get_async_db_session() as session:
         try:
             # 检查matches表
-            from sqlalchemy import text, func
+            from sqlalchemy import func
 
             count_result = await session.execute(func.count(Match.id))
             match_count = count_result.scalar()
@@ -51,7 +51,7 @@ async def test_basic_database_operation():
                 away_score=0,
                 data_source="test_script",
                 data_completeness="test",
-                collection_time=datetime.utcnow()
+                collection_time=datetime.utcnow(),
             )
 
             session.add(test_match)
@@ -72,6 +72,7 @@ async def test_basic_database_operation():
             await session.rollback()
             return False
 
+
 async def verify_data_with_api():
     """验证API数据采集"""
     logger.info("\n🌐 开始API数据采集验证")
@@ -89,7 +90,9 @@ async def verify_data_with_api():
 
         if match_data:
             logger.info("✅ API数据采集成功!")
-            logger.info(f"  - 比赛: {match_data.home_team_name} vs {match_data.away_team_name}")
+            logger.info(
+                f"  - 比赛: {match_data.home_team_name} vs {match_data.away_team_name}"
+            )
             logger.info(f"  - 时间: {match_data.match_time}")
             logger.info(f"  - 比分: {match_data.home_score}-{match_data.away_score}")
             logger.info(f"  - xG: {match_data.home_xg}-{match_data.away_xg}")
@@ -101,6 +104,7 @@ async def verify_data_with_api():
     except Exception as e:
         logger.error(f"❌ API测试失败: {str(e)}")
         return False
+
 
 async def main():
     """主函数"""
@@ -127,6 +131,7 @@ async def main():
     else:
         logger.error("\n⚠️ 部分功能验证失败")
         return False
+
 
 if __name__ == "__main__":
     success = asyncio.run(main())

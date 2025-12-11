@@ -223,17 +223,17 @@ def downgrade() -> None:
     op.execute("DROP FUNCTION IF EXISTS check_match_teams_consistency();")
 
     # 移除CHECK约束
-    op.drop_constraint("ck_matches_match_time_range", "matches"_="check")
+    op.drop_constraint("ck_matches_match_time_range", "matches", type_="check")
 
     # 移除赔率约束
-    op.drop_constraint("ck_odds_under_odds_range", "odds"_="check")
-    op.drop_constraint("ck_odds_over_odds_range", "odds"_="check")
-    op.drop_constraint("ck_odds_away_odds_range", "odds"_="check")
-    op.drop_constraint("ck_odds_draw_odds_range", "odds"_="check")
-    op.drop_constraint("ck_odds_home_odds_range", "odds"_="check")
+    op.drop_constraint("ck_odds_under_odds_range", "odds", type_="check")
+    op.drop_constraint("ck_odds_over_odds_range", "odds", type_="check")
+    op.drop_constraint("ck_odds_away_odds_range", "odds", type_="check")
+    op.drop_constraint("ck_odds_draw_odds_range", "odds", type_="check")
+    op.drop_constraint("ck_odds_home_odds_range", "odds", type_="check")
 
     # 移除比分约束
-    op.drop_constraint("ck_matches_away_ht_score_range", "matches"_="check")
-    op.drop_constraint("ck_matches_home_ht_score_range", "matches"_="check")
-    op.drop_constraint("ck_matches_away_score_range", "matches"_="check")
-    op.drop_constraint("ck_matches_home_score_range", "matches"_="check")
+    op.drop_constraint("ck_matches_away_ht_score_range", "matches", type_="check")
+    op.drop_constraint("ck_matches_home_ht_score_range", "matches", type_="check")
+    op.drop_constraint("ck_matches_away_score_range", "matches", type_="check")
+    op.drop_constraint("ck_matches_home_score_range", "matches", type_="check")

@@ -8,7 +8,7 @@ Enhanced XGBoost Trainer
 import logging
 import sys
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import pandas as pd
 
@@ -17,7 +17,6 @@ sys.path.append(str(Path(__file__).parent.parent.parent))
 
 from src.ml.xgboost_hyperparameter_optimization import (
     XGBoostHyperparameterOptimizer,
-    optimize_xgboost_model,
 )
 
 # 配置日志

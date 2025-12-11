@@ -14,20 +14,15 @@
 版本: 1.0.0 - Production Model v1
 """
 
-import pandas as pd
-import numpy as np
 import json
 import pickle
 from datetime import datetime
 import logging
 from pathlib import Path
-from sklearn.preprocessing import LabelEncoder
-from sklearn.metrics import accuracy_score, log_loss, classification_report
-import xgboost as xgb
 
 # 导入基线训练器
 import sys
-from pathlib import Path
+
 sys.path.append(str(Path(__file__).parent))
 from train_baseline import BaselineTrainer
 
@@ -55,8 +50,9 @@ class ProductionModelSaver(BaselineTrainer):
         X, y, feature_columns = self.select_features(df)
 
         # 时序分割
-        X_train, X_test, y_train_enc, y_test_enc, y_train_orig, y_test_orig = \
+        X_train, X_test, y_train_enc, y_test_enc, y_train_orig, y_test_orig = (
             self.split_data_chronological(X, y)
+        )
 
         # 保存特征列表
         self.feature_columns = feature_columns
@@ -70,7 +66,7 @@ class ProductionModelSaver(BaselineTrainer):
         # 保存模型工件
         self.save_model_artifacts(results)
 
-        logger.info(f"🎉 生产模型训练完成!")
+        logger.info("🎉 生产模型训练完成!")
         return results
 
     def save_model_artifacts(self, results: dict):
@@ -88,13 +84,13 @@ class ProductionModelSaver(BaselineTrainer):
 
         # 2. 保存XGBoost模型 (pickle格式 - 备份)
         model_pkl_path = models_dir / f"{self.model_name}.pkl"
-        with open(model_pkl_path, 'wb') as f:
+        with open(model_pkl_path, "wb") as f:
             pickle.dump(self.model, f)
         logger.info(f"   ✅ XGBoost模型备份已保存: {model_pkl_path}")
 
         # 3. 保存LabelEncoder
         encoder_path = models_dir / f"{self.model_name}_label_encoder.pkl"
-        with open(encoder_path, 'wb') as f:
+        with open(encoder_path, "wb") as f:
             pickle.dump(self.label_encoder, f)
         logger.info(f"   ✅ LabelEncoder已保存: {encoder_path}")
 
@@ -103,9 +99,9 @@ class ProductionModelSaver(BaselineTrainer):
         features_data = {
             "feature_columns": self.feature_columns,
             "feature_count": len(self.feature_columns),
-            "model_version": self.model_version
+            "model_version": self.model_version,
         }
-        with open(features_path, 'w') as f:
+        with open(features_path, "w") as f:
             json.dump(features_data, f, indent=2)
         logger.info(f"   ✅ 特征列表已保存: {features_path}")
 
@@ -115,28 +111,28 @@ class ProductionModelSaver(BaselineTrainer):
             "version": self.model_version,
             "training_date": datetime.now().isoformat(),
             "performance": {
-                "accuracy": results['accuracy'],
-                "log_loss": results['log_loss'],
-                "classification_report": results['classification_report']
+                "accuracy": results["accuracy"],
+                "log_loss": results["log_loss"],
+                "classification_report": results["classification_report"],
             },
             "model_params": {
                 "n_estimators": self.model.n_estimators,
                 "max_depth": self.model.max_depth,
                 "learning_rate": self.model.learning_rate,
                 "objective": self.model.objective,
-                "eval_metric": self.model.eval_metric
+                "eval_metric": self.model.eval_metric,
             },
             "dataset_info": {
                 "training_samples": len(self.feature_columns),
                 "feature_count": len(self.feature_columns),
-                "target_classes": list(self.label_encoder.classes_)
+                "target_classes": list(self.label_encoder.classes_),
             },
             "data_leakage_safe": True,
-            "feature_engineering": "rolling_features_time_series_safe"
+            "feature_engineering": "rolling_features_time_series_safe",
         }
 
         metadata_path = models_dir / f"{self.model_name}_metadata.json"
-        with open(metadata_path, 'w') as f:
+        with open(metadata_path, "w") as f:
             json.dump(metadata, f, indent=2)
         logger.info(f"   ✅ 模型元数据已保存: {metadata_path}")
 
@@ -147,74 +143,74 @@ class ProductionModelSaver(BaselineTrainer):
                 "model_pkl": str(model_pkl_path.name),
                 "label_encoder": str(encoder_path.name),
                 "features": str(features_path.name),
-                "metadata": str(metadata_path.name)
+                "metadata": str(metadata_path.name),
             },
             "input_schema": {
                 "type": "DataFrame",
                 "features_required": self.feature_columns,
-                "feature_order": "must_match_features_json"
+                "feature_order": "must_match_features_json",
             },
             "output_schema": {
                 "prediction": "encoded_class",
                 "prediction_label": "H/D/A",
-                "probabilities": "dict_class_to_probability"
+                "probabilities": "dict_class_to_probability",
             },
             "inference": {
                 "preprocessing_steps": [
                     "ensure_feature_order",
                     "fill_missing_values_0",
-                    "encode_prediction"
+                    "encode_prediction",
                 ]
-            }
+            },
         }
 
         config_path = models_dir / f"{self.model_name}_deployment_config.json"
-        with open(config_path, 'w') as f:
+        with open(config_path, "w") as f:
             json.dump(deployment_config, f, indent=2)
         logger.info(f"   ✅ 部署配置已保存: {config_path}")
 
     def print_production_summary(self, results: dict):
         """打印生产模型摘要"""
-        print("\n" + "="*80)
+        print("\n" + "=" * 80)
         print("🏆 PRODUCTION MODEL SUMMARY")
-        print("="*80)
+        print("=" * 80)
 
-        print(f"\n📋 模型信息:")
+        print("\n📋 模型信息:")
         print(f"   名称: {self.model_name}")
         print(f"   版本: {self.model_version}")
         print(f"   训练时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 
-        print(f"\n📊 性能指标:")
+        print("\n📊 性能指标:")
         print(f"   🎯 准确率: {results['accuracy']:.4f}")
         print(f"   📉 Log Loss: {results['log_loss']:.4f}")
 
-        print(f"\n🔧 模型配置:")
-        print(f"   算法: XGBoost Classifier")
+        print("\n🔧 模型配置:")
+        print("   算法: XGBoost Classifier")
         print(f"   树数量: {self.model.n_estimators}")
         print(f"   最大深度: {self.model.max_depth}")
         print(f"   学习率: {self.model.learning_rate}")
 
-        print(f"\n📁 已保存文件:")
+        print("\n📁 已保存文件:")
         models_dir = Path("models")
         for file_path in models_dir.glob(f"{self.model_name}*"):
             size_mb = file_path.stat().st_size / (1024 * 1024)
             print(f"   📄 {file_path.name} ({size_mb:.2f} MB)")
 
-        print(f"\n🚀 Phase 2 完成状态:")
-        print(f"   ✅ 数据泄露修复完成")
-        print(f"   ✅ 滚动特征工程完成")
-        print(f"   ✅ 时序安全模型训练完成")
-        print(f"   ✅ 模型工件序列化完成")
-        print(f"   ✅ 准备就绪: Phase 3 推理API")
+        print("\n🚀 Phase 2 完成状态:")
+        print("   ✅ 数据泄露修复完成")
+        print("   ✅ 滚动特征工程完成")
+        print("   ✅ 时序安全模型训练完成")
+        print("   ✅ 模型工件序列化完成")
+        print("   ✅ 准备就绪: Phase 3 推理API")
 
-        print("="*80)
+        print("=" * 80)
 
 
 def main():
     """主函数"""
     print("🏭 生产模型序列化开始")
     print("Phase 2: Feature Engineering → Production Model")
-    print("="*60)
+    print("=" * 60)
 
     # 初始化生产模型保存器
     saver = ProductionModelSaver()

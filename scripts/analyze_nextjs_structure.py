@@ -233,7 +233,7 @@ async def analyze_match_nextjs(match_id: str) -> None:
         if match_data_paths:
             print(f"✅ 找到 {len(match_data_paths)} 个可能包含比赛数据的路径:")
             for i, result in enumerate(match_data_paths[:10]):  # 只显示前10个
-                print(f"\n{i+1}. 📍 路径: {result['path']}")
+                print(f"\n{i + 1}. 📍 路径: {result['path']}")
                 print(f"   🔑 键名: {result['key']}")
                 print(f"   📝 类型: {result['type']}")
                 print(f"   📏 大小: {result['size']}")

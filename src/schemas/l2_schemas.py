@@ -20,13 +20,15 @@ L2 Data Schema Definitions using Pydantic V2
 from datetime import datetime
 from enum import Enum
 from typing import Optional, List, Dict, Any, Union
-from pydantic import BaseModel, Field, field_validator, model_validator, ConfigDict, AliasChoices
+from pydantic import BaseModel, Field, field_validator, model_validator, ConfigDict
 
 
 # ============ 基础枚举定义 ============
 
+
 class MatchStatus(str, Enum):
     """比赛状态枚举"""
+
     SCHEDULED = "scheduled"
     LIVE = "live"
     HALFTIME = "halftime"
@@ -39,6 +41,7 @@ class MatchStatus(str, Enum):
 
 class CardType(str, Enum):
     """牌型枚举"""
+
     YELLOW = "yellow"
     RED = "red"
     YELLOW_RED = "yellow_red"
@@ -46,6 +49,7 @@ class CardType(str, Enum):
 
 class EventType(str, Enum):
     """比赛事件类型"""
+
     GOAL = "Goal"
     OWN_GOAL = "OwnGoal"
     PENALTY_GOAL = "PenaltyGoal"
@@ -57,12 +61,12 @@ class EventType(str, Enum):
 
 # ============ 基础数据模型定义 ============
 
+
 class ShotData(BaseModel):
     """射门数据模型"""
+
     model_config = ConfigDict(
-        str_strip_whitespace=True,
-        validate_assignment=True,
-        extra='forbid'
+        str_strip_whitespace=True, validate_assignment=True, extra="forbid"
     )
 
     minute: int = Field(0, ge=0, le=120, description="射门发生分钟")
@@ -79,10 +83,9 @@ class ShotData(BaseModel):
 
 class L2PlayerRating(BaseModel):
     """L2球员评分模型"""
+
     model_config = ConfigDict(
-        str_strip_whitespace=True,
-        validate_assignment=True,
-        extra='forbid'
+        str_strip_whitespace=True, validate_assignment=True, extra="forbid"
     )
 
     player_id: str = Field(..., description="球员ID")
@@ -94,10 +97,9 @@ class L2PlayerRating(BaseModel):
 
 class OddsData(BaseModel):
     """赔率数据模型"""
+
     model_config = ConfigDict(
-        str_strip_whitespace=True,
-        validate_assignment=True,
-        extra='forbid'
+        str_strip_whitespace=True, validate_assignment=True, extra="forbid"
     )
 
     home_win: Optional[float] = Field(None, description="主胜赔率", gt=0)
@@ -105,17 +107,18 @@ class OddsData(BaseModel):
     away_win: Optional[float] = Field(None, description="客胜赔率", gt=0)
     asian_handicap: Optional[Dict[str, float]] = Field(None, description="亚盘赔率")
     over_under: Optional[float] = Field(None, description="大小球赔率")
-    both_teams_score: Optional[Dict[str, float]] = Field(None, description="两队都得分赔率")
+    both_teams_score: Optional[Dict[str, float]] = Field(
+        None, description="两队都得分赔率"
+    )
     provider: Optional[str] = Field(None, description="赔率提供商")
     snapshot_time: Optional[str] = Field(None, description="赔率快照时间")
 
 
 class RefereeInfo(BaseModel):
     """裁判信息模型"""
+
     model_config = ConfigDict(
-        str_strip_whitespace=True,
-        validate_assignment=True,
-        extra='forbid'
+        str_strip_whitespace=True, validate_assignment=True, extra="forbid"
     )
 
     name: Optional[str] = Field(None, description="裁判姓名")
@@ -128,10 +131,9 @@ class RefereeInfo(BaseModel):
 
 class PlayerStats(BaseModel):
     """球员统计数据"""
+
     model_config = ConfigDict(
-        str_strip_whitespace=True,
-        validate_assignment=True,
-        extra='forbid'
+        str_strip_whitespace=True, validate_assignment=True, extra="forbid"
     )
 
     player_id: Optional[str] = Field(None, description="球员ID")
@@ -148,9 +150,11 @@ class PlayerStats(BaseModel):
     pass_accuracy: Optional[float] = Field(None, description="传球成功率", ge=0, le=100)
     minutes_played: Optional[int] = Field(None, description="出场时间", ge=0)
     rating: Optional[float] = Field(None, description="球员评分", ge=0, le=10)
-    stats: Optional[Dict[str, Any]] = Field(default_factory=dict, description="其他统计数据")
+    stats: Optional[Dict[str, Any]] = Field(
+        default_factory=dict, description="其他统计数据"
+    )
 
-    @field_validator('rating')
+    @field_validator("rating")
     @classmethod
     def validate_rating(cls, v: Optional[float]) -> Optional[float]:
         """验证评分范围"""
@@ -161,10 +165,9 @@ class PlayerStats(BaseModel):
 
 class TeamStats(BaseModel):
     """球队统计数据"""
+
     model_config = ConfigDict(
-        str_strip_whitespace=True,
-        validate_assignment=True,
-        extra='forbid'
+        str_strip_whitespace=True, validate_assignment=True, extra="forbid"
     )
 
     possession: Optional[float] = Field(None, ge=0, le=100, description="控球率(%)")
@@ -180,25 +183,32 @@ class TeamStats(BaseModel):
     big_chances_created: int = Field(0, ge=0, description="创造大机会数")
     big_chances_missed: int = Field(0, ge=0, description="错失大机会数")
     passes: int = Field(0, ge=0, description="传球次数")
-    pass_accuracy: Optional[float] = Field(None, ge=0, le=100, description="传球成功率(%)")
+    pass_accuracy: Optional[float] = Field(
+        None, ge=0, le=100, description="传球成功率(%)"
+    )
     tackles: int = Field(0, ge=0, description="抢断次数")
     interceptions: int = Field(0, ge=0, description="拦截次数")
     aerials_won: Optional[int] = Field(None, ge=0, description="高空球争胜数")
     blocked_shots: Optional[int] = Field(None, ge=0, description="被封堵射门数")
     clearances: Optional[int] = Field(None, ge=0, description="解围次数")
     touches: Optional[int] = Field(None, ge=0, description="触球次数")
-    counter_attacks: Optional[int] = Field(None, ge=0, description="快速反击次数，FotMob V2+支持")
-    through_balls: Optional[int] = Field(None, ge=0, description="直塞球次数，FotMob V2+支持")
-    long_balls: Optional[int] = Field(None, ge=0, description="长传次数，FotMob V2+支持")
+    counter_attacks: Optional[int] = Field(
+        None, ge=0, description="快速反击次数，FotMob V2+支持"
+    )
+    through_balls: Optional[int] = Field(
+        None, ge=0, description="直塞球次数，FotMob V2+支持"
+    )
+    long_balls: Optional[int] = Field(
+        None, ge=0, description="长传次数，FotMob V2+支持"
+    )
     crosses: Optional[int] = Field(None, ge=0, description="传中次数，FotMob V2+支持")
 
 
 class MatchEvent(BaseModel):
     """比赛事件模型"""
+
     model_config = ConfigDict(
-        str_strip_whitespace=True,
-        validate_assignment=True,
-        extra='forbid'
+        str_strip_whitespace=True, validate_assignment=True, extra="forbid"
     )
 
     event_id: Optional[str] = Field(None, description="事件ID")
@@ -211,15 +221,16 @@ class MatchEvent(BaseModel):
     is_own_goal: Optional[bool] = Field(None, description="是否乌龙球")
     is_penalty: bool = Field(False, description="是否点球")
     description: Optional[str] = Field(None, description="事件描述")
-    details: Optional[Dict[str, Any]] = Field(default_factory=dict, description="事件详细信息")
+    details: Optional[Dict[str, Any]] = Field(
+        default_factory=dict, description="事件详细信息"
+    )
 
 
 class L2MatchEvent(BaseModel):
     """L2比赛事件模型 (简化版，用于L2Parser)"""
+
     model_config = ConfigDict(
-        str_strip_whitespace=True,
-        validate_assignment=True,
-        extra='forbid'
+        str_strip_whitespace=True, validate_assignment=True, extra="forbid"
     )
 
     event_type: str = Field(..., description="事件类型")
@@ -235,10 +246,9 @@ class L2MatchEvent(BaseModel):
 
 class WeatherInfo(BaseModel):
     """天气信息模型"""
+
     model_config = ConfigDict(
-        str_strip_whitespace=True,
-        validate_assignment=True,
-        extra='forbid'
+        str_strip_whitespace=True, validate_assignment=True, extra="forbid"
     )
 
     temperature: Optional[float] = Field(None, description="温度(摄氏度)")
@@ -252,10 +262,9 @@ class WeatherInfo(BaseModel):
 
 class StadiumInfo(BaseModel):
     """球场信息模型"""
+
     model_config = ConfigDict(
-        str_strip_whitespace=True,
-        validate_assignment=True,
-        extra='forbid'
+        str_strip_whitespace=True, validate_assignment=True, extra="forbid"
     )
 
     name: Optional[str] = Field(None, description="球场名称")
@@ -268,10 +277,9 @@ class StadiumInfo(BaseModel):
 
 class LineupPlayer(BaseModel):
     """阵容球员模型"""
+
     model_config = ConfigDict(
-        str_strip_whitespace=True,
-        validate_assignment=True,
-        extra='forbid'
+        str_strip_whitespace=True, validate_assignment=True, extra="forbid"
     )
 
     id: Optional[str] = Field(None, description="球员ID")
@@ -289,27 +297,31 @@ class LineupPlayer(BaseModel):
 
 class TeamLineup(BaseModel):
     """球队阵容模型"""
+
     model_config = ConfigDict(
         str_strip_whitespace=True,
         validate_assignment=True,
-        extra='forbid',
-        populate_by_name=True
+        extra="forbid",
+        populate_by_name=True,
     )
 
     formation: Optional[str] = Field(None, description="阵型")
     starters: List[Dict[str, Any]] = Field(default_factory=list, description="首发阵容")
-    substitutes: List[Dict[str, Any]] = Field(default_factory=list, description="替补球员")
+    substitutes: List[Dict[str, Any]] = Field(
+        default_factory=list, description="替补球员"
+    )
     manager: Optional[str] = Field(None, description="主教练")
     formation_image: Optional[str] = Field(None, description="阵型图")
 
 
 class Lineup(BaseModel):
     """阵容模型 (兼容版本)"""
+
     model_config = ConfigDict(
         str_strip_whitespace=True,
         validate_assignment=True,
-        extra='forbid',
-        populate_by_name=True
+        extra="forbid",
+        populate_by_name=True,
     )
 
     formation: Optional[str] = Field(None, description="阵型")
@@ -319,13 +331,15 @@ class Lineup(BaseModel):
 
 # ============ 核心数据模型 ============
 
+
 class L2MatchData(BaseModel):
     """L2比赛详情核心数据模型"""
+
     model_config = ConfigDict(
         str_strip_whitespace=True,
         validate_assignment=True,
-        extra='forbid',
-        use_enum_values=True
+        extra="forbid",
+        use_enum_values=True,
     )
 
     match_id: str = Field(..., description="比赛ID")
@@ -353,22 +367,32 @@ class L2MatchData(BaseModel):
     shot_map: List[ShotData] = Field(default_factory=list, description="射门分布图")
 
     # 阵容信息
-    home_lineup: Optional[Union[TeamLineup, Lineup]] = Field(None, description="主队阵容")
-    away_lineup: Optional[Union[TeamLineup, Lineup]] = Field(None, description="客队阵容")
+    home_lineup: Optional[Union[TeamLineup, Lineup]] = Field(
+        None, description="主队阵容"
+    )
+    away_lineup: Optional[Union[TeamLineup, Lineup]] = Field(
+        None, description="客队阵容"
+    )
 
     # 球员评分数据
-    player_ratings: Dict[str, L2PlayerRating] = Field(default_factory=dict, description="球员评分")
+    player_ratings: Dict[str, L2PlayerRating] = Field(
+        default_factory=dict, description="球员评分"
+    )
 
     # 赔率数据
     odds_data: Optional[OddsData] = Field(None, description="赔率数据")
 
     # 元数据
     data_source: str = Field("fotmob", description="数据源")
-    collected_at: Union[datetime, str] = Field(default_factory=datetime.utcnow, description="采集时间")
-    data_completeness_score: float = Field(0.0, ge=0, le=1, description="数据完整性评分")
+    collected_at: Union[datetime, str] = Field(
+        default_factory=datetime.utcnow, description="采集时间"
+    )
+    data_completeness_score: float = Field(
+        0.0, ge=0, le=1, description="数据完整性评分"
+    )
 
-    @model_validator(mode='after')
-    def validate_scores_consistency(self) -> 'L2MatchData':
+    @model_validator(mode="after")
+    def validate_scores_consistency(self) -> "L2MatchData":
         """验证比分一致性"""
         if self.status == "scheduled" and (self.home_score > 0 or self.away_score > 0):
             raise ValueError("未开始的比赛比分应该为0")
@@ -379,38 +403,43 @@ class L2MatchData(BaseModel):
         data = self.model_dump(exclude_none=True)
 
         # 处理datetime序列化
-        if isinstance(data.get('collected_at'), datetime):
-            data['collected_at'] = data['collected_at'].isoformat()
-        if isinstance(data.get('kickoff_time'), datetime):
-            data['kickoff_time'] = data['kickoff_time'].isoformat()
+        if isinstance(data.get("collected_at"), datetime):
+            data["collected_at"] = data["collected_at"].isoformat()
+        if isinstance(data.get("kickoff_time"), datetime):
+            data["kickoff_time"] = data["kickoff_time"].isoformat()
 
         return data
 
 
 class L2DataProcessingResult(BaseModel):
     """L2数据处理结果模型"""
+
     model_config = ConfigDict(
         str_strip_whitespace=True,
         validate_assignment=True,
-        extra='allow',
-        use_enum_values=True
+        extra="allow",
+        use_enum_values=True,
     )
 
     success: bool = Field(..., description="处理是否成功")
     data: Optional[L2MatchData] = Field(None, description="处理后的数据")
     error_message: Optional[str] = Field(None, description="错误信息")
-    processing_stats: Optional[Dict[str, Any]] = Field(default_factory=dict, description="处理统计信息")
-    parsed_sections: Optional[List[str]] = Field(default_factory=list, description="已解析的部分")
+    processing_stats: Optional[Dict[str, Any]] = Field(
+        default_factory=dict, description="处理统计信息"
+    )
+    parsed_sections: Optional[List[str]] = Field(
+        default_factory=list, description="已解析的部分"
+    )
 
 
 # ============ 数据验证模型 ============
 
+
 class L2DataValidationRule(BaseModel):
     """L2数据验证规则"""
+
     model_config = ConfigDict(
-        str_strip_whitespace=True,
-        validate_assignment=True,
-        extra='forbid'
+        str_strip_whitespace=True, validate_assignment=True, extra="forbid"
     )
 
     field_name: str = Field(..., description="字段名称")
@@ -423,17 +452,18 @@ class L2DataValidationRule(BaseModel):
 
 class L2DataValidationResult(BaseModel):
     """L2数据验证结果"""
+
     model_config = ConfigDict(
-        str_strip_whitespace=True,
-        validate_assignment=True,
-        extra='forbid'
+        str_strip_whitespace=True, validate_assignment=True, extra="forbid"
     )
 
     is_valid: bool = Field(..., description="数据是否有效")
     errors: List[str] = Field(default_factory=list, description="验证错误列表")
     warnings: List[str] = Field(default_factory=list, description="验证警告列表")
     missing_fields: List[str] = Field(default_factory=list, description="缺失字段列表")
-    data_completeness_score: float = Field(0.0, ge=0, le=1, description="数据完整性评分")
+    data_completeness_score: float = Field(
+        0.0, ge=0, le=1, description="数据完整性评分"
+    )
 
 
 # ============ 兼容性别名 ============
@@ -454,19 +484,38 @@ L2PlayerStats = PlayerStats
 # ============ 导出所有模型 ============
 __all__ = [
     # 枚举
-    "MatchStatus", "CardType", "EventType",
-
+    "MatchStatus",
+    "CardType",
+    "EventType",
     # 基础数据模型
-    "ShotData", "L2PlayerRating", "OddsData", "RefereeInfo", "PlayerStats", "TeamStats",
-    "MatchEvent", "L2MatchEvent", "WeatherInfo", "StadiumInfo", "LineupPlayer", "TeamLineup", "Lineup",
-
+    "ShotData",
+    "L2PlayerRating",
+    "OddsData",
+    "RefereeInfo",
+    "PlayerStats",
+    "TeamStats",
+    "MatchEvent",
+    "L2MatchEvent",
+    "WeatherInfo",
+    "StadiumInfo",
+    "LineupPlayer",
+    "TeamLineup",
+    "Lineup",
     # 兼容性别名
-    "L2ShotData", "L2MatchEvent", "L2TeamStats", "L2OddsData", "L2TeamLineup", "L2LineupPlayer",
-    "L2WeatherInfo", "L2StadiumInfo", "L2RefereeInfo", "L2PlayerStats",
-
+    "L2ShotData",
+    "L2MatchEvent",
+    "L2TeamStats",
+    "L2OddsData",
+    "L2TeamLineup",
+    "L2LineupPlayer",
+    "L2WeatherInfo",
+    "L2StadiumInfo",
+    "L2RefereeInfo",
+    "L2PlayerStats",
     # 核心数据模型
-    "L2MatchData", "L2DataProcessingResult",
-
+    "L2MatchData",
+    "L2DataProcessingResult",
     # 验证模型
-    "L2DataValidationRule", "L2DataValidationResult",
+    "L2DataValidationRule",
+    "L2DataValidationResult",
 ]

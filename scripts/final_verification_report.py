@@ -7,16 +7,15 @@ Final Verification Report
 """
 
 import subprocess
-import sys
 import logging
 from datetime import datetime
 
 # 配置日志
 logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s"
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
+
 
 def generate_final_report():
     """生成最终验证报告"""
@@ -54,8 +53,7 @@ def generate_final_report():
 
     try:
         result = subprocess.run(
-            ["docker-compose", "ps", "app"],
-            capture_output=True, text=True, timeout=10
+            ["docker-compose", "ps", "app"], capture_output=True, text=True, timeout=10
         )
         if "Up" in result.stdout and "healthy" in result.stdout:
             print("✅ Docker服务状态: 运行正常 (healthy)")
@@ -112,7 +110,7 @@ def generate_final_report():
         "src/collectors/fotmob_api_collector.py:491-552",
         "   - _map_stat_category 映射函数 (新增)",
         "src/collectors/fotmob_api_collector.py:623-684",
-        "   - _extract_motivation_context 方法修复"
+        "   - _extract_motivation_context 方法修复",
     ]
 
     for location in code_locations:
@@ -141,6 +139,7 @@ def generate_final_report():
         print("🚨 系统仍存在数据质量问题")
         print("❌ 建议暂停数据回填，进一步排查问题")
         return False
+
 
 if __name__ == "__main__":
     success = generate_final_report()

@@ -12,13 +12,25 @@ print("=== P0-2 FeatureStore 交付质量报告 ===\n")
 # 1. 测试覆盖率计算
 print("1. 测试覆盖率统计")
 try:
-    interface_lines = len(Path("src/features/feature_store_interface.py").read_text().splitlines())
+    interface_lines = len(
+        Path("src/features/feature_store_interface.py").read_text().splitlines()
+    )
     store_lines = len(Path("src/features/feature_store.py").read_text().splitlines())
-    definitions_lines = len(Path("src/features/feature_definitions.py").read_text().splitlines())
+    definitions_lines = len(
+        Path("src/features/feature_definitions.py").read_text().splitlines()
+    )
 
-    test_store_lines = len(Path("tests/unit/features/test_feature_store.py").read_text().splitlines())
-    test_definitions_lines = len(Path("tests/unit/features/test_feature_definitions.py").read_text().splitlines())
-    test_integration_lines = len(Path("tests/integration/features/test_feature_store_integration.py").read_text().splitlines())
+    test_store_lines = len(
+        Path("tests/unit/features/test_feature_store.py").read_text().splitlines()
+    )
+    test_definitions_lines = len(
+        Path("tests/unit/features/test_feature_definitions.py").read_text().splitlines()
+    )
+    test_integration_lines = len(
+        Path("tests/integration/features/test_feature_store_integration.py")
+        .read_text()
+        .splitlines()
+    )
 
     total_implementation = interface_lines + store_lines + definitions_lines
     total_tests = test_store_lines + test_definitions_lines + test_integration_lines
@@ -37,17 +49,27 @@ except Exception as e:
 print("\n2. 代码质量检查")
 try:
     result = subprocess.run(
-        ["ruff", "check", "src/features/feature_store_interface.py",
-         "src/features/feature_store.py", "src/features/feature_definitions.py"],
-        capture_output=True, text=True
+        [
+            "ruff",
+            "check",
+            "src/features/feature_store_interface.py",
+            "src/features/feature_store.py",
+            "src/features/feature_definitions.py",
+        ],
+        capture_output=True,
+        text=True,
     )
 
     if result.returncode == 0:
         print("   ✅ 代码质量检查通过 - 无错误和警告")
     else:
         print("   ⚠️ 发现代码质量问题:")
-        print(f"   错误数量: {len([line for line in result.stdout.splitlines() if 'error' in line.lower()])}")
-        print(f"   警告数量: {len([line for line in result.stdout.splitlines() if 'warning' in line.lower()])}")
+        print(
+            f"   错误数量: {len([line for line in result.stdout.splitlines() if 'error' in line.lower()])}"
+        )
+        print(
+            f"   警告数量: {len([line for line in result.stdout.splitlines() if 'warning' in line.lower()])}"
+        )
 
 except Exception as e:
     print(f"   ❌ 代码质量检查失败: {e}")
@@ -62,7 +84,7 @@ required_files = [
     "tests/unit/features/test_feature_definitions.py",
     "tests/integration/features/test_feature_store_integration.py",
     "patches/feature_store_migration.sql",
-    "patches/pr_feature_store.md"
+    "patches/pr_feature_store.md",
 ]
 
 existing_files = 0
@@ -76,7 +98,9 @@ for file_path in required_files:
     else:
         print(f"   ❌ {file_path} (缺失)")
 
-print(f"\n   文件完整性: {existing_files}/{len(required_files)} ({existing_files/len(required_files)*100:.0f}%)")
+print(
+    f"\n   文件完整性: {existing_files}/{len(required_files)} ({existing_files / len(required_files) * 100:.0f}%)"
+)
 print(f"   总文件大小: {total_size:,} bytes")
 
 # 4. 架构合规性
@@ -88,7 +112,7 @@ architecture_compliance = {
     "重试机制": "✅ Tenacity 库集成",
     "数据验证": "✅ Pydantic 风格验证",
     "数据库抽象": "✅ async_manager.py 统一接口",
-    "测试隔离": "✅ Mock 外部依赖"
+    "测试隔离": "✅ Mock 外部依赖",
 }
 
 for aspect, status in architecture_compliance.items():
@@ -101,7 +125,7 @@ security_checks = {
     "输入验证": "✅ 完整的数据验证",
     "类型检查": "✅ 严格类型注解",
     "异常处理": "✅ 不泄露敏感信息",
-    "依赖安全": "✅ 使用最新稳定版本"
+    "依赖安全": "✅ 使用最新稳定版本",
 }
 
 for check, status in security_checks.items():
@@ -113,7 +137,7 @@ performance_targets = {
     "单条特征加载": "< 10ms",
     "批量特征加载": "< 100ms",
     "并发批量操作": "< 200ms",
-    "JSONB 查询": "< 50ms"
+    "JSONB 查询": "< 50ms",
 }
 
 for operation, target in performance_targets.items():
@@ -124,6 +148,7 @@ print("\n7. 环境兼容性")
 try:
     # 检查 Python 版本兼容性
     import sys
+
     python_version = f"{sys.version_info.major}.{sys.version_info.minor}"
     print(f"   ✅ Python {python_version} 兼容")
 
@@ -184,7 +209,9 @@ delivery_ready_score += 1
 print("   ✅ P0-2 核心问题完全解决")
 
 readiness_percentage = (delivery_ready_score / total_criteria) * 100
-print(f"\n   交付就绪度: {delivery_ready_score}/{total_criteria} ({readiness_percentage:.0f}%)")
+print(
+    f"\n   交付就绪度: {delivery_ready_score}/{total_criteria} ({readiness_percentage:.0f}%)"
+)
 
 if readiness_percentage >= 90:
     print("   🎯 状态: ✅ 企业级交付就绪")

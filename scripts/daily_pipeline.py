@@ -30,7 +30,6 @@ import os
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Optional
 
 # 添加项目根目录到Python路径
 project_root = Path(__file__).parent.parent
@@ -274,7 +273,6 @@ class DailyPipeline:
             logger.info("从Silver层数据库加载比赛数据...")
 
             import psycopg2
-            from psycopg2.extras import RealDictCursor
 
             # 优先读取环境变量 DATABASE_URL
             db_url = os.getenv("DATABASE_URL")
@@ -449,7 +447,6 @@ class DailyPipeline:
 
             # 从数据库获取未来比赛
             import psycopg2
-            from psycopg2.extras import RealDictCursor
 
             db_config = {
                 "host": os.getenv("DB_HOST", "localhost"),

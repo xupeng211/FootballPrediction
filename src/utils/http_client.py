@@ -17,7 +17,7 @@ Async HTTP Client Module
 import asyncio
 import random
 import time
-from typing import Any,  Optional, Union
+from typing import Any, Optional
 
 import httpx
 from fake_useragent import UserAgent
@@ -80,7 +80,7 @@ class AsyncHttpClient:
                 "timeout": timeout,
                 "max_retries": max_retries,
                 "max_connections": max_connections,
-            }
+            },
         )
 
     async def _get_client(self) -> httpx.AsyncClient:
@@ -97,7 +97,9 @@ class AsyncHttpClient:
             )
         return self._client
 
-    def _get_random_headers(self, additional_headers: Optional[dict[str, str]] = None) -> dict[str, str]:
+    def _get_random_headers(
+        self, additional_headers: Optional[dict[str, str]] = None
+    ) -> dict[str, str]:
         """
         获取随机请求头
 
@@ -150,17 +152,12 @@ class AsyncHttpClient:
                 "base_delay": base_delay,
                 "max_delay": max_delay,
                 "jitter_enabled": self.enable_jitter,
-            }
+            },
         )
 
         return max_delay
 
-    async def _make_request(
-        self,
-        method: str,
-        url: str,
-        **kwargs
-    ) -> httpx.Response:
+    async def _make_request(self, method: str, url: str, **kwargs) -> httpx.Response:
         """
         执行单次 HTTP 请求
 
@@ -198,7 +195,7 @@ class AsyncHttpClient:
                     "url": url,
                     "status_code": response.status_code,
                     "response_time": f"{response_time:.3f}s",
-                }
+                },
             )
 
             return response
@@ -215,17 +212,12 @@ class AsyncHttpClient:
                     "url": url,
                     "error": str(e),
                     "response_time": f"{response_time:.3f}s",
-                }
+                },
             )
 
             raise
 
-    async def _retry_request(
-        self,
-        method: str,
-        url: str,
-        **kwargs
-    ) -> httpx.Response:
+    async def _retry_request(self, method: str, url: str, **kwargs) -> httpx.Response:
         """
         带重试的 HTTP 请求
 
@@ -256,7 +248,7 @@ class AsyncHttpClient:
                                 "max_retries": self.max_retries,
                                 "status_code": response.status_code,
                                 "delay": f"{delay:.3f}s",
-                            }
+                            },
                         )
 
                         await asyncio.sleep(delay)
@@ -280,7 +272,7 @@ class AsyncHttpClient:
                             "max_retries": self.max_retries,
                             "error": str(e),
                             "delay": f"{delay:.3f}s",
-                        }
+                        },
                     )
 
                     await asyncio.sleep(delay)
@@ -297,7 +289,7 @@ class AsyncHttpClient:
         url: str,
         params: Optional[dict[str, Any]] = None,
         headers: Optional[dict[str, str]] = None,
-        **kwargs
+        **kwargs,
     ) -> httpx.Response:
         """
         发送 GET 请求
@@ -311,7 +303,9 @@ class AsyncHttpClient:
         Returns:
             HTTP 响应对象
         """
-        return await self._retry_request("GET", url, params=params, headers=headers, **kwargs)
+        return await self._retry_request(
+            "GET", url, params=params, headers=headers, **kwargs
+        )
 
     async def post(
         self,
@@ -319,7 +313,7 @@ class AsyncHttpClient:
         data: Optional[dict[str, Any]] = None,
         json: Optional[dict[str, Any]] = None,
         headers: Optional[dict[str, str]] = None,
-        **kwargs
+        **kwargs,
     ) -> httpx.Response:
         """
         发送 POST 请求
@@ -334,14 +328,11 @@ class AsyncHttpClient:
         Returns:
             HTTP 响应对象
         """
-        return await self._retry_request("POST", url, data=data, json=json, headers=headers, **kwargs)
+        return await self._retry_request(
+            "POST", url, data=data, json=json, headers=headers, **kwargs
+        )
 
-    async def get_text(
-        self,
-        url: str,
-        encoding: str = "utf-8",
-        **kwargs
-    ) -> str:
+    async def get_text(self, url: str, encoding: str = "utf-8", **kwargs) -> str:
         """
         获取响应文本内容
 
@@ -366,8 +357,12 @@ class AsyncHttpClient:
         """
         stats = self.stats.copy()
         if stats["requests_made"] > 0:
-            stats["average_response_time"] = stats["total_response_time"] / stats["requests_made"]
-            stats["success_rate"] = stats["successful_requests"] / stats["requests_made"]
+            stats["average_response_time"] = (
+                stats["total_response_time"] / stats["requests_made"]
+            )
+            stats["success_rate"] = (
+                stats["successful_requests"] / stats["requests_made"]
+            )
         else:
             stats["average_response_time"] = 0.0
             stats["success_rate"] = 0.0

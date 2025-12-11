@@ -11,15 +11,12 @@ These flows replace manual scripts with automated, scheduled, and monitored task
 import asyncio
 import logging
 from datetime import datetime, timedelta
-from typing import  Optional, Any
-from pathlib import Path
+from typing import Optional, Any
 
 from prefect import flow, task
 from prefect.tasks import task_input_hash
-from prefect.runtime import flow_run, task_run
-from prefect.client.orchestration import PrefectClient
+from prefect.runtime import flow_run
 
-from src.tasks.celery_app import celery_app
 from src.tasks.data_collection_tasks import (
     collect_fotmob_fixtures_task,
     collect_fotmob_details_task,

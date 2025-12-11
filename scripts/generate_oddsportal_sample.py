@@ -16,9 +16,9 @@ OddsPortal Sample HTML File Generator
 版本: 1.0.0
 """
 
-import os
 from datetime import datetime
 from pathlib import Path
+
 
 def generate_oddsportal_sample():
     """生成 OddsPortal HTML 样本文件"""
@@ -334,7 +334,7 @@ def generate_oddsportal_sample():
     # 写入文件
     output_file = fixtures_dir / "oddsportal_sample.html"
 
-    with open(output_file, 'w', encoding='utf-8') as f:
+    with open(output_file, "w", encoding="utf-8") as f:
         f.write(sample_html)
 
     print(f"✅ OddsPortal HTML 样本文件已生成: {output_file}")
@@ -410,7 +410,7 @@ if __name__ == "__main__":
         sys.exit(1)
 '''
 
-    with open(test_script, 'w', encoding='utf-8') as f:
+    with open(test_script, "w", encoding="utf-8") as f:
         f.write(test_content)
 
     print(f"✅ 解析器测试脚本已生成: {test_script}")

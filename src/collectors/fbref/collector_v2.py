@@ -27,10 +27,10 @@ import logging
 import random
 import re
 import time
-from datetime import datetime, timedelta
+from datetime import datetime
 from io import StringIO
 from pathlib import Path
-from typing import Any,  Optional
+from typing import Any, Optional
 
 
 import pandas as pd
@@ -38,8 +38,8 @@ from bs4 import BeautifulSoup
 
 # 基础设施导入
 from src.core.async_base import AsyncBaseCollector, AsyncConfig
-from src.collectors.rate_limiter import RateLimiter, RateLimitConfig
-from src.collectors.proxy_pool import ProxyPool, Proxy
+from src.collectors.rate_limiter import RateLimiter
+from src.collectors.proxy_pool import ProxyPool
 
 # HTTP 客户端导入 - 支持两种选择
 try:
@@ -259,9 +259,9 @@ class FBrefCollectorV2(AsyncBaseCollector):
                 try:
                     # 重试时的额外延迟
                     if attempt > 0:
-                        delay = self.config.retry_delay * (
-                            2**attempt
-                        ) + random.uniform(3, 8)
+                        delay = self.config.retry_delay * (2**attempt) + random.uniform(
+                            3, 8
+                        )
                         self.logger.warning(
                             f"⏸️ 重试 {attempt + 1}/{self.config.max_retries}，延迟 {delay:.1f}s"
                         )
@@ -405,7 +405,6 @@ class FBrefCollectorV2(AsyncBaseCollector):
                     keyword in comment_str.lower()
                     for keyword in ["xg", "xga", "shot", "possession", "touches"]
                 ):
-
                     # 解封：移除注释标记
                     sealed_html = f"<!--{comment_str}-->"
                     unsealed_content = comment_str
@@ -754,7 +753,6 @@ class FBrefCollectorV2(AsyncBaseCollector):
                 and table.shape[0] >= 10
                 and table.shape[1] >= 3
             ):
-
                 self.logger.info(f"🎯 找到赛程表 (索引 {i}): {table.shape}")
                 self.logger.info(f"📋 表格列名: {list(table.columns)}")
 

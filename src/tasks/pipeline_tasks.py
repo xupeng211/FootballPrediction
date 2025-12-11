@@ -6,20 +6,13 @@
 
 from __future__ import annotations
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime
 
-from celery import chain, group, shared_task
-from celery.schedules import crontab
+from celery import chain, shared_task
 
 logger = logging.getLogger(__name__)
 
 # 导入基础数据采集任务
-from .data_collection_tasks import (
-    collect_daily_fixtures,
-    collect_live_scores,
-    collect_odds_data,
-    collect_fotmob_data,  # 新增 FotMob 数据采集,
-)
 
 
 def sync_task_to_async(async_func):
@@ -47,10 +40,7 @@ async def batch_data_cleaning_with_ids() -> tuple[int, list[int]]:
 
         from src.database.connection import get_async_session
         from src.database.models.raw_data import RawMatchData
-        from src.database.models.league import League
-        from src.database.models.team import Team
-        from src.database.models.match import Match
-        from sqlalchemy import select, text, update
+        from sqlalchemy import select, text
 
         total_cleaned_count = 0
         new_match_ids = []  # 🆕 存储所有新处理的比赛ID
@@ -184,7 +174,6 @@ async def _process_data_batch_with_ids(session, raw_matches) -> tuple[int, list[
     cleaned_count = 0
     new_match_ids = []  # 🆕 存储新创建的比赛ID
 
-    from sqlalchemy.dialects.postgresql import insert as pg_insert
     from sqlalchemy import text, update
     from src.database.models.league import League
     from src.database.models.team import Team
@@ -455,7 +444,7 @@ async def _process_data_batch_with_ids(session, raw_matches) -> tuple[int, list[
                         match_time_str.replace("Z", "+00:00")
                     )
                     match_date = aware_dt.replace(tzinfo=None)
-                except (ValueError):
+                except ValueError:
                     match_date = None
 
             # 如果没有有效时间，使用默认时间

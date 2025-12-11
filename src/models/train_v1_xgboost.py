@@ -7,7 +7,6 @@
 import pandas as pd
 import numpy as np
 import xgboost as xgb
-from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 from sklearn.preprocessing import StandardScaler
 import matplotlib.pyplot as plt
@@ -175,7 +174,7 @@ class V1XGBoostTrainer:
 
         # 计算准确率
         accuracy = accuracy_score(self.y_test, y_pred)
-        logger.info(f"🎯 准确率: {accuracy:.4f} ({accuracy*100:.2f}%)")
+        logger.info(f"🎯 准确率: {accuracy:.4f} ({accuracy * 100:.2f}%)")
 
         # 详细分类报告
         logger.info("📋 分类报告:")
@@ -190,7 +189,7 @@ class V1XGBoostTrainer:
         logger.info("   实际\\预测  客胜  平局  主胜")
         for i, row in enumerate(cm):
             logger.info(
-                f"   {['客胜','平局','主胜'][i]:6} {row[0]:6} {row[1]:6} {row[2]:6}"
+                f"   {['客胜', '平局', '主胜'][i]:6} {row[0]:6} {row[1]:6} {row[2]:6}"
             )
 
         return accuracy, cm, y_pred_proba
@@ -358,7 +357,7 @@ class V1XGBoostTrainer:
         logger.info("=" * 60)
         logger.info("🎉 V1 XGBoost模型训练完成！")
         logger.info("=" * 60)
-        logger.info(f"🎯 准确率: {accuracy:.4f} ({accuracy*100:.2f}%)")
+        logger.info(f"🎯 准确率: {accuracy:.4f} ({accuracy * 100:.2f}%)")
         logger.info(f"💰 ROI: {roi:.2f}%")
         logger.info(f"🔫 命中率: {hit_rate:.2f}%")
         logger.info(f"📊 测试样本: {len(self.y_test)} 场比赛")

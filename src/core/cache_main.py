@@ -14,12 +14,9 @@ import asyncio
 import json
 import logging
 import pickle
-from functools import wraps
-from typing import Any, Optional, Union
-from collections.abc import Callable
+from typing import Any, Optional
 import hashlib
 
-import redis.asyncio as redis
 from redis.asyncio import ConnectionPool, Redis
 from redis.exceptions import ConnectionError, RedisError
 

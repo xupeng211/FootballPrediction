@@ -6,7 +6,7 @@ DataValidator.
 
 import re
 from datetime import datetime
-from typing import Any, Union
+from typing import Any
 
 
 class DataValidator:
@@ -31,7 +31,7 @@ class DataValidator:
         """验证数字."""
         try:
             num = float(value)
-        except (ValueError):
+        except ValueError:
             return False
 
         if min_value is not None and num < min_value:
@@ -238,7 +238,7 @@ class DataValidator:
         try:
             num = float(value)
             return num > 0
-        except (ValueError):
+        except ValueError:
             return False
 
     @staticmethod

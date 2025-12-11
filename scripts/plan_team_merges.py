@@ -9,7 +9,6 @@ import json
 import logging
 from datetime import datetime
 from difflib import SequenceMatcher
-from typing import List, Dict, Tuple
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"

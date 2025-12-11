@@ -10,7 +10,7 @@ import asyncio
 import logging
 import uuid
 from datetime import datetime
-from typing import Any, Optional, Union
+from typing import Any, Optional
 from concurrent.futures import ThreadPoolExecutor
 
 import numpy as np
@@ -27,7 +27,7 @@ from .schemas import (
     ModelType,
     PredictionType,
 )
-from .errors import PredictionError, ModelLoadError, FeatureBuilderError, ErrorCode
+from .errors import PredictionError, ModelLoadError, FeatureBuilderError
 
 logger = logging.getLogger(__name__)
 

@@ -16,15 +16,16 @@ Date: 2025-01-08
 """
 
 import asyncio
-import json
 import random
 from datetime import datetime
-from typing import Dict, List, Any, Optional
+from typing import Any, Optional
 from dataclasses import dataclass
+
 
 @dataclass
 class AuditResult:
     """审计结果数据结构"""
+
     phase: str
     test_name: str
     status: str  # "PASS", "FAIL", "WARN"
@@ -36,6 +37,7 @@ class AuditResult:
         if self.timestamp is None:
             self.timestamp = datetime.now()
 
+
 class SystemHealthAuditor:
     """系统健康度审计器 - 独立版本"""
 
@@ -44,30 +46,34 @@ class SystemHealthAuditor:
         self.league_fixtures = []
         self.sample_match = None
 
-    def add_result(self, phase: str, test_name: str, status: str, message: str, data: Optional[dict[str, Any]] = None):
+    def add_result(
+        self,
+        phase: str,
+        test_name: str,
+        status: str,
+        message: str,
+        data: Optional[dict[str, Any]] = None,
+    ):
         """添加审计结果"""
-        result = AuditResult(phase=phase, test_name=test_name, status=status, message=message, data=data)
+        result = AuditResult(
+            phase=phase, test_name=test_name, status=status, message=message, data=data
+        )
         self.results.append(result)
         return result
 
     def get_status_emoji(self, status: str) -> str:
         """获取状态表情符号"""
-        return {
-            "PASS": "✅",
-            "FAIL": "❌",
-            "WARN": "⚠️",
-            "INFO": "ℹ️"
-        }.get(status, "❓")
+        return {"PASS": "✅", "FAIL": "❌", "WARN": "⚠️", "INFO": "ℹ️"}.get(status, "❓")
 
     def print_header(self):
         """打印审计头部"""
-        print("🔍" + "="*79)
+        print("🔍" + "=" * 79)
         print("🔍 System Health Audit - 系统健康度审计 (独立版)")
-        print("🔍" + "="*79)
+        print("🔍" + "=" * 79)
         print("📋 审计目标: L1 赛程模块 + L2 高阶数据模块")
         print("📋 审测对象: 英超 2024/2025 赛季 (League ID: 47)")
         print(f"🕐 审计时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        print("🔍" + "="*79)
+        print("🔍" + "=" * 79)
 
     async def phase1_fixture_service_audit(self):
         """Phase 1: L1 赛程模块审计"""
@@ -99,7 +105,7 @@ class SystemHealthAuditor:
                 "away_team": {"name": "Liverpool", "id": 14},
                 "status": {"finished": True, "statusStr": "FT"},
                 "start_time": "2024-12-08 20:00",
-                "score": {"home": 2, "away": 1}
+                "score": {"home": 2, "away": 1},
             },
             {
                 "id": "47_2",
@@ -107,7 +113,7 @@ class SystemHealthAuditor:
                 "away_team": {"name": "Arsenal", "id": 13},
                 "status": {"finished": True, "statusStr": "FT"},
                 "start_time": "2024-12-07 17:30",
-                "score": {"home": 3, "away": 3}
+                "score": {"home": 3, "away": 3},
             },
             {
                 "id": "47_3",
@@ -115,7 +121,7 @@ class SystemHealthAuditor:
                 "away_team": {"name": "Tottenham", "id": 21},
                 "status": {"finished": False, "statusStr": "NS"},
                 "start_time": "2025-01-15 20:00",
-                "score": {"home": 0, "away": 0}
+                "score": {"home": 0, "away": 0},
             },
             {
                 "id": "47_4",
@@ -123,7 +129,7 @@ class SystemHealthAuditor:
                 "away_team": {"name": "Everton", "id": 11},
                 "status": {"finished": True, "statusStr": "FT"},
                 "start_time": "2024-12-06 15:00",
-                "score": {"home": 1, "away": 2}
+                "score": {"home": 1, "away": 2},
             },
             {
                 "id": "47_5",
@@ -131,15 +137,20 @@ class SystemHealthAuditor:
                 "away_team": {"name": "Brighton", "id": 18},
                 "status": {"finished": True, "statusStr": "FT"},
                 "start_time": "2024-12-05 19:45",
-                "score": {"home": 0, "away": 3}
-            }
+                "score": {"home": 0, "away": 3},
+            },
         ]
 
     async def _validate_fixture_data(self):
         """验证赛程数据"""
         # 验证数据长度
         if len(self.league_fixtures) > 0:
-            self.add_result("L1", "赛程长度验证", "PASS", f"赛程列表长度合理: {len(self.league_fixtures)} > 0")
+            self.add_result(
+                "L1",
+                "赛程长度验证",
+                "PASS",
+                f"赛程列表长度合理: {len(self.league_fixtures)} > 0",
+            )
             print(f"✅ 赛程长度验证通过: {len(self.league_fixtures)} 场比赛")
         else:
             self.add_result("L1", "赛程长度验证", "FAIL", "赛程列表为空")
@@ -153,7 +164,11 @@ class SystemHealthAuditor:
             away_name = fixture["away_team"]["name"]
             status = fixture["status"]["statusStr"]
             start_time = fixture["start_time"]
-            score = f"{fixture['score']['home']}-{fixture['score']['away']}" if fixture["status"]["finished"] else "未开始"
+            score = (
+                f"{fixture['score']['home']}-{fixture['score']['away']}"
+                if fixture["status"]["finished"]
+                else "未开始"
+            )
 
             print(f"  {i}. {home_name} vs {away_name}")
             print(f"     时间: {start_time} | 状态: {status} | 比分: {score}")
@@ -163,7 +178,7 @@ class SystemHealthAuditor:
                 f"比赛{i}信息验证",
                 "PASS",
                 f"{home_name} vs {away_name} ({status})",
-                fixture
+                fixture,
             )
 
         # 统计已结束比赛
@@ -173,10 +188,12 @@ class SystemHealthAuditor:
             "比赛状态统计",
             "PASS",
             f"已结束比赛: {len(finished_matches)}/{len(self.league_fixtures)}",
-            {"finished": len(finished_matches), "total": len(self.league_fixtures)}
+            {"finished": len(finished_matches), "total": len(self.league_fixtures)},
         )
 
-        print(f"📊 比赛状态: {len(finished_matches)}/{len(self.league_fixtures)} 场比赛已结束")
+        print(
+            f"📊 比赛状态: {len(finished_matches)}/{len(self.league_fixtures)} 场比赛已结束"
+        )
 
     async def phase2_deep_dive_audit(self):
         """Phase 2: L2 高阶数据模块审计"""
@@ -230,55 +247,38 @@ class SystemHealthAuditor:
                 "referee": {
                     "id": "ref_12345",
                     "name": "Michael Oliver",
-                    "country": "England"
+                    "country": "England",
                 },
                 "venue": {
                     "id": "venue_789",
                     "name": "Old Trafford",
                     "city": "Manchester",
                     "capacity": 74140,
-                    "attendance": 73256
+                    "attendance": 73256,
                 },
-                "weather": {
-                    "temperature": 12,
-                    "condition": "cloudy",
-                    "wind_speed": 8
-                }
+                "weather": {"temperature": 12, "condition": "cloudy", "wind_speed": 8},
             },
             "stats_json": {
-                "xg": {
-                    "home": 1.8,
-                    "away": 0.9
-                },
-                "possession": {
-                    "home": 58,
-                    "away": 42
-                },
-                "shots": {
-                    "home": 15,
-                    "away": 8
-                }
+                "xg": {"home": 1.8, "away": 0.9},
+                "possession": {"home": 58, "away": 42},
+                "shots": {"home": 15, "away": 8},
             },
             "lineups_json": {
                 "home_team": {
                     "starters": [
                         {"name": "Player1", "position": "GK", "rating": 7.2},
-                        {"name": "Player2", "position": "DEF", "rating": 6.8}
+                        {"name": "Player2", "position": "DEF", "rating": 6.8},
                     ],
-                    "substitutes": [
-                        {"name": "Sub1", "position": "MID"}
-                    ],
-                    "unavailable": [
-                        {"name": "InjuredPlayer", "reason": "injury"}
-                    ]
+                    "substitutes": [{"name": "Sub1", "position": "MID"}],
+                    "unavailable": [{"name": "InjuredPlayer", "reason": "injury"}],
                 },
                 "away_team": {
                     "starters": [
                         {"name": "Away1", "position": "GK", "rating": 6.5},
-                        {"name": "Away2", "position": "DEF", "rating": 7.0}
+                        {"name": "Away2", "position": "DEF", "rating": 7.0},
                     ]
-                }
-            }
+                },
+            },
         }
 
     async def _validate_match_details(self, match_data: dict[str, Any], match_id: str):
@@ -298,7 +298,7 @@ class SystemHealthAuditor:
                     "裁判信息验证",
                     "PASS",
                     f"裁判: {referee['name']} (ID: {referee['id']})",
-                    referee
+                    referee,
                 )
                 print(f"  ✅ 裁判信息: {referee['name']} (ID: {referee['id']})")
             else:
@@ -313,7 +313,7 @@ class SystemHealthAuditor:
                     "场地信息验证",
                     "PASS",
                     f"场地: {venue['name']} (ID: {venue['id']})",
-                    venue
+                    venue,
                 )
                 print(f"  ✅ 场地信息: {venue['name']} (ID: {venue['id']})")
             else:
@@ -334,9 +334,11 @@ class SystemHealthAuditor:
                     "xG数据验证",
                     "PASS",
                     f"xG数据: 主队{xg_data['home']}, 客队{xg_data['away']}",
-                    xg_data
+                    xg_data,
                 )
-                print(f"  ✅ xG数据验证通过: 主队{xg_data['home']}, 客队{xg_data['away']}")
+                print(
+                    f"  ✅ xG数据验证通过: 主队{xg_data['home']}, 客队{xg_data['away']}"
+                )
             else:
                 self.add_result("L2", "xG数据验证", "WARN", "xG数据不完整")
                 print("  ⚠️ xG数据验证警告: 数据不完整")
@@ -373,17 +375,21 @@ class SystemHealthAuditor:
                     "阵容数据验证",
                     "PASS",
                     "阵容包含评分和伤停信息",
-                    {"has_ratings": has_ratings, "has_unavailable": has_unavailable}
+                    {"has_ratings": has_ratings, "has_unavailable": has_unavailable},
                 )
                 print("  ✅ 阵容数据验证通过: 包含球员评分和伤停信息")
             elif has_ratings or has_unavailable:
                 self.add_result("L2", "阵容数据验证", "WARN", "阵容数据部分完整")
                 status_parts = []
-                if has_ratings: status_parts.append("包含评分")
-                if has_unavailable: status_parts.append("包含伤停")
+                if has_ratings:
+                    status_parts.append("包含评分")
+                if has_unavailable:
+                    status_parts.append("包含伤停")
                 print(f"  ⚠️ 阵容数据验证警告: {' + '.join(status_parts)}")
             else:
-                self.add_result("L2", "阵容数据验证", "FAIL", "阵容数据缺少评分和伤停信息")
+                self.add_result(
+                    "L2", "阵容数据验证", "FAIL", "阵容数据缺少评分和伤停信息"
+                )
                 print("  ❌ 阵容数据验证失败: 缺少评分和伤停信息")
         else:
             self.add_result("L2", "阵容数据验证", "FAIL", "lineups_json 缺失")
@@ -404,7 +410,9 @@ class SystemHealthAuditor:
         health_score = (pass_count / total_count) * 100 if total_count > 0 else 0
 
         print(f"📊 总体健康度: {health_score:.1f}%")
-        print(f"📋 测试统计: ✅ {pass_count} 通过 | ❌ {fail_count} 失败 | ⚠️ {warn_count} 警告 | 📋 总计 {total_count}")
+        print(
+            f"📋 测试统计: ✅ {pass_count} 通过 | ❌ {fail_count} 失败 | ⚠️ {warn_count} 警告 | 📋 总计 {total_count}"
+        )
 
         # 健康等级评估
         if health_score >= 90:
@@ -435,7 +443,7 @@ class SystemHealthAuditor:
 
         phase_names = {
             "L1": "🏟️ Phase 1: L1 赛程模块",
-            "L2": "🎯 Phase 2: L2 高阶数据模块"
+            "L2": "🎯 Phase 2: L2 高阶数据模块",
         }
 
         for phase_key in ["L1", "L2"]:
@@ -457,7 +465,7 @@ class SystemHealthAuditor:
             ("🌤️ 天气信息", "weather", "✅"),
             ("📊 xG数据", "stats_json.xg", "✅"),
             ("👥 阵容评分", "lineups_json.starters[].rating", "✅"),
-            ("🏥 伤停信息", "lineups_json.unavailable", "✅")
+            ("🏥 伤停信息", "lineups_json.unavailable", "✅"),
         ]
 
         for name, path, status in dimensions:
@@ -503,6 +511,7 @@ class SystemHealthAuditor:
         # Phase 3: 健康报告
         await self.phase3_health_report()
 
+
 async def main():
     """主函数"""
     print("🔍 System Health Audit - 系统健康度审计 (独立版)")
@@ -539,6 +548,7 @@ async def main():
     except Exception as e:
         print(f"\n💥 审计过程异常: {e}")
         return False
+
 
 if __name__ == "__main__":
     # 运行主程序

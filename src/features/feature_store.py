@@ -23,11 +23,9 @@ from src.database.async_manager import get_db_session
 from src.features.feature_store_interface import (
     DEFAULT_FEATURE_VERSION,
     FeatureData,
-    FeatureNotFoundError,
     FeatureStoreProtocol,
     FeatureQueryResult,
     FeatureStats,
-    FeatureStoreError,
     FeatureValidationError,
     StorageError,
 )
@@ -188,7 +186,8 @@ class FootballFeatureStore(FeatureStoreProtocol):
         ttl=300,  # 5分钟缓存
         namespace="features",
         stampede_protection=True,
-        key_builder=lambda match_id, version=DEFAULT_FEATURE_VERSION: f"feature:{match_id}:{version}",
+        key_builder=lambda match_id,
+        version=DEFAULT_FEATURE_VERSION: f"feature:{match_id}:{version}",
     )
     async def load_features(
         self, match_id: int, version: str = DEFAULT_FEATURE_VERSION

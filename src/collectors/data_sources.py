@@ -26,7 +26,7 @@ class DataSourceAdapter:
             "data": [],
             "source": self.name,
             "timestamp": "2025-01-01T00:00:00Z",
-            "status": "placeholder"
+            "status": "placeholder",
         }
 
 

@@ -16,7 +16,7 @@ Data Fetcher Factory
 """
 
 import logging
-from typing import  Optional, Any
+from typing import Optional, Any
 
 from src.collectors.abstract_fetcher import AbstractFetcher, FetcherError
 from .oddsportal_fetcher import OddsPortalFetcher
@@ -43,7 +43,7 @@ class FetcherFactory:
         fetcher_class: type[AbstractFetcher],
         description: Optional[str] = None,
         version: str = "1.0.0",
-        **metadata
+        **metadata,
     ) -> None:
         """
         注册获取器类
@@ -79,17 +79,14 @@ class FetcherFactory:
             "description": description or f"{fetcher_class.__name__} 数据获取器",
             "version": version,
             "module": fetcher_class.__module__,
-            **metadata
+            **metadata,
         }
 
         logger.info(f"成功注册获取器: {name} ({fetcher_class.__name__})")
 
     @classmethod
     def create(
-        cls,
-        name: str,
-        config: Optional[dict[str, Any]] = None,
-        **kwargs
+        cls, name: str, config: Optional[dict[str, Any]] = None, **kwargs
     ) -> AbstractFetcher:
         """
         创建获取器实例
@@ -206,7 +203,7 @@ class FetcherFactory:
             "available_fetchers": cls.list_available(),
             "metadata_count": len(cls._metadata),
             "registry": cls._registry.copy(),
-            "metadata": cls._metadata.copy()
+            "metadata": cls._metadata.copy(),
         }
 
 
@@ -224,11 +221,23 @@ def _register_builtin_fetchers():
             fetcher_class=OddsPortalFetcher,
             description="OddsPortal 网站数据获取器，提供多种市场类型的赔率数据",
             version="1.0.0",
-            supported_markets=["1X2", "Asian Handicap", "Over/Under", "Both Teams to Score", "Correct Score"],
-            supported_bookmakers=["Bet365", "William Hill", "Betfair", "Paddy Power", "Ladbrokes"],
+            supported_markets=[
+                "1X2",
+                "Asian Handicap",
+                "Over/Under",
+                "Both Teams to Score",
+                "Correct Score",
+            ],
+            supported_bookmakers=[
+                "Bet365",
+                "William Hill",
+                "Betfair",
+                "Paddy Power",
+                "Ladbrokes",
+            ],
             data_type="odds",
             refresh_rate="实时",
-            requires_auth=False
+            requires_auth=False,
         )
 
         logger.info("内置获取器自动注册完成")

@@ -5,9 +5,8 @@ FotMob JSON 结构分析器
 """
 
 import json
-import sys
 from pathlib import Path
-from typing import Any, Dict, List, Set
+from typing import Any
 
 
 class JSONPathAnalyzer:

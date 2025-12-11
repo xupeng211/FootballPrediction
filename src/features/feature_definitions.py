@@ -9,7 +9,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from decimal import Decimal
 from enum import Enum
 from typing import Any, Optional, Union
 
@@ -500,7 +499,7 @@ class FeatureValidator:
                 if definition.feature_type == FeatureType.NUMERICAL:
                     try:
                         value = float(value)
-                    except (ValueError):
+                    except ValueError:
                         if definition.default_value is not None:
                             value = definition.default_value
                         else:

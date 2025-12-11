@@ -4,18 +4,14 @@
 """
 
 import asyncio
-import sys
-import json
 import logging
-from pathlib import Path
-from datetime import datetime
 
 # 配置日志
 logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
+
 
 async def run_pilot_10():
     """执行10场试跑"""
@@ -27,7 +23,12 @@ async def run_pilot_10():
 
         # 使用我们之前验证过的真实API响应结构
         cmd = [
-            "docker-compose", "exec", "app", "python", "-c", '''
+            "docker-compose",
+            "exec",
+            "app",
+            "python",
+            "-c",
+            '''
 import sys
 sys.path.append("/app/src")
 from collectors.fotmob_api_collector import FotMobAPICollector
@@ -177,7 +178,7 @@ async def test_data_quality():
     logger.info(f"   📈 统计数据: {with_stats}/{success_count} ({(with_stats/success_count*100):.1f}%)")
 
 asyncio.run(test_data_quality())
-            '''
+            ''',
         ]
 
         # 执行命令
@@ -199,6 +200,7 @@ asyncio.run(test_data_quality())
         print("⏰ 执行超时")
     except Exception as e:
         print(f"❌ 执行异常: {e}")
+
 
 if __name__ == "__main__":
     asyncio.run(run_pilot_10())

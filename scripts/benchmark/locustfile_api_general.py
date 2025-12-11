@@ -11,12 +11,8 @@ Version: 1.0.0
 
 import random
 import json
-import time
-from datetime import datetime
-from typing import Dict, List
 
 from locust import HttpUser, task, between
-from locust.exception import RescheduleTask
 
 
 class FootballAPIUser(HttpUser):
@@ -33,9 +29,7 @@ class FootballAPIUser(HttpUser):
     def health_check(self):
         """健康检查API."""
         with self.client.get(
-            "/health",
-            name="/health",
-            catch_response=True
+            "/health", name="/health", catch_response=True
         ) as response:
             if response.status_code == 200:
                 try:
@@ -58,7 +52,7 @@ class FootballAPIUser(HttpUser):
         with self.client.get(
             f"/api/v1/predictions?limit={limit}&offset={offset}",
             name="/api/v1/predictions [LIST]",
-            catch_response=True
+            catch_response=True,
         ) as response:
             if response.status_code == 200:
                 try:
@@ -83,7 +77,7 @@ class FootballAPIUser(HttpUser):
         with self.client.get(
             f"/api/v1/predictions/match/{match_id}",
             name=f"/api/v1/predictions/match/{match_id} [GET]",
-            catch_response=True
+            catch_response=True,
         ) as response:
             if response.status_code == 200:
                 try:
@@ -103,9 +97,7 @@ class FootballAPIUser(HttpUser):
     def get_metrics(self):
         """获取系统指标."""
         with self.client.get(
-            "/api/v1/metrics",
-            name="/api/v1/metrics",
-            catch_response=True
+            "/api/v1/metrics", name="/api/v1/metrics", catch_response=True
         ) as response:
             if response.status_code == 200:
                 response.success()
@@ -116,9 +108,7 @@ class FootballAPIUser(HttpUser):
     def database_health_check(self):
         """数据库健康检查."""
         with self.client.get(
-            "/health/database",
-            name="/health/database",
-            catch_response=True
+            "/health/database", name="/health/database", catch_response=True
         ) as response:
             if response.status_code == 200:
                 try:
@@ -145,22 +135,14 @@ class APIUserStressTest(HttpUser):
     @task(90)  # 90%的权重 - 高频API请求
     def stress_api_requests(self):
         """高频率API请求压力测试."""
-        endpoint = random.choice([
-            "/health",
-            "/api/v1/predictions",
-            "/api/v1/metrics"
-        ])
+        endpoint = random.choice(["/health", "/api/v1/predictions", "/api/v1/metrics"])
 
         if endpoint == "/api/v1/predictions":
             limit = random.choice([10, 20])
             offset = random.randint(0, 900)
             endpoint = f"{endpoint}?limit={limit}&offset={offset}"
 
-        self.client.get(
-            endpoint,
-            name=f"[STRESS] {endpoint}",
-            catch_response=True
-        )
+        self.client.get(endpoint, name=f"[STRESS] {endpoint}", catch_response=True)
 
     @task(10)  # 10%的权重 - 预测请求
     def stress_prediction_api(self):
@@ -169,17 +151,13 @@ class APIUserStressTest(HttpUser):
         self.client.get(
             f"/api/v1/predictions/match/{match_id}",
             name="[STRESS] /api/v1/predictions/match",
-            catch_response=True
+            catch_response=True,
         )
 
     @task(5)  # 5%的权重 - 系统状态检查
     def stress_health_check(self):
         """压力测试下的健康检查."""
-        self.client.get(
-            "/health",
-            name="[STRESS] /health",
-            catch_response=True
-        )
+        self.client.get("/health", name="[STRESS] /health", catch_response=True)
 
 
 # Locust Web UI启动配置
@@ -194,7 +172,10 @@ if __name__ == "__main__":
     print("📊 访问地址: http://localhost:8089")
     print("🎯 Web UI模式适合交互式测试和详细监控")
     print("⚡ 要运行headless模式，请使用以下命令:")
-    print("   locust -f scripts/benchmark/locustfile_api_general.py --headless -u 50 -r 10 -t 1m --host http://localhost:8000")
+    print(
+        "   locust -f scripts/benchmark/locustfile_api_general.py --headless -u 50 -r 10 -t 1m --host http://localhost:8000"
+    )
 
     from locust.main import main
+
     main()

@@ -115,7 +115,6 @@ def collect_daily_fixtures(self) -> dict[str, Any]:
 
         # 使用真实的FixturesCollector进行数据采集
         from src.data.collectors.fixtures_collector import FixturesCollector
-        import os
 
         # 初始化收集器
         collector = FixturesCollector(data_source="football_api")
@@ -357,7 +356,6 @@ def collect_fotmob_data(self, date: str = None) -> dict[str, Any]:
                             # 使用 ORM 方式直接插入数据
                             from src.database.connection import get_async_session
                             from src.database.models.raw_data import RawMatchData
-                            import json
 
                             async with get_async_session() as session:
                                 # 准备批量插入数据

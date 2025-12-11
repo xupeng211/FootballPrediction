@@ -8,7 +8,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from src.database.base import BaseModel
 
 if TYPE_CHECKING:
-    from .features import Features
+    pass
 
 """
 球队模型
@@ -48,18 +48,22 @@ class Team(BaseModel):
     fbref_external_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
     # 实力指标字段
     fifa_rank: Mapped[int | None] = mapped_column(Integer, nullable=True)
-    total_wage_bill: Mapped[int | None] = mapped_column(Integer, nullable=True)  # 年薪总额（欧元）
-    market_value: Mapped[int | None] = mapped_column(Integer, nullable=True)  # 球队总市值（欧元）
+    total_wage_bill: Mapped[int | None] = mapped_column(
+        Integer, nullable=True
+    )  # 年薪总额（欧元）
+    market_value: Mapped[int | None] = mapped_column(
+        Integer, nullable=True
+    )  # 球队总市值（欧元）
     created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow)
-    updated_at: Mapped[datetime] = mapped_column(default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(
+        default=datetime.utcnow, onupdate=datetime.utcnow
+    )
 
     # 关系
-    features = relationship("Features", back_populates="team", cascade="all, delete-orphan")
+    features = relationship(
+        "Features", back_populates="team", cascade="all, delete-orphan"
+    )
 
     def __repr__(self) -> str:
         """安全的__repr__方法，只访问自己的列字段."""
-        return (
-            f"Team(id={self.id}, "
-            f"name={self.name!r}, "
-            f"country={self.country!r})"
-        )
+        return f"Team(id={self.id}, name={self.name!r}, country={self.country!r})"

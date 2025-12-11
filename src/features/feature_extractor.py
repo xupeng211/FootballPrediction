@@ -16,8 +16,7 @@
 """
 
 import pandas as pd
-import numpy as np
-from typing import Any,  Optional
+from typing import Any, Optional
 import logging
 
 logger = logging.getLogger(__name__)

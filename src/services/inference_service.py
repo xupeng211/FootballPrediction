@@ -20,12 +20,11 @@ P2-6任务成果：整合真实模型与Mock模式的统一推理服务，实现
 版本: 3.0.0
 """
 
-import json
 import logging
 import os
 import pandas as pd
 from pathlib import Path
-from typing import Optional, Any, Union
+from typing import Optional, Any
 import asyncio
 
 # 初始化logger
@@ -293,7 +292,7 @@ class InferenceService:
             # 使用统一的async_manager
             from src.database.async_manager import get_db_session
             from src.database.models import Match
-            from sqlalchemy import select, and_
+            from sqlalchemy import select
 
             async with get_db_session() as session:
                 # 查询比赛数据

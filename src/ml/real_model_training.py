@@ -1,7 +1,6 @@
 # 简化版 real_model_training 模块
 
 from typing import Any
-import asyncio
 import logging
 
 logger = logging.getLogger(__name__)

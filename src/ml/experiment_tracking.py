@@ -14,11 +14,9 @@ MLflow Experiment Tracking Module
 """
 
 import os
-import sys
 import time
-import json
 import logging
-from typing import Any, Optional, Union
+from typing import Any
 from datetime import datetime
 
 try:

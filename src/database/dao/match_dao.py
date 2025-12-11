@@ -7,14 +7,11 @@ Match Data Access Object
 
 import logging
 from datetime import datetime, timedelta
-from typing import Optional,  Any
+from typing import Optional, Any
 
 from sqlalchemy import select, and_, or_, func
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 
 from .base_dao import BaseDAO
-from .schemas import MatchCreate, MatchUpdate
 from .exceptions import (
     RecordNotFoundError,
     ValidationError,
@@ -22,7 +19,6 @@ from .exceptions import (
 )
 
 # 导入Match模型
-from src.database.models.match import Match
 
 logger = logging.getLogger(__name__)
 
@@ -42,10 +38,7 @@ class MatchDAO(BaseDAO):
     # ==================== 基础CRUD方法重写 ====================
 
     async def get_by_teams(
-        self,
-        home_team: str,
-        away_team: str,
-        match_time: Optional[datetime] = None
+        self, home_team: str, away_team: str, match_time: Optional[datetime] = None
     ) -> Optional[Any]:
         """
         根据主客队获取比赛
@@ -65,7 +58,7 @@ class MatchDAO(BaseDAO):
             query = select(self.model).where(
                 and_(
                     self.model.home_team_name == home_team,
-                    self.model.away_team_name == away_team
+                    self.model.away_team_name == away_team,
                 )
             )
 
@@ -76,7 +69,7 @@ class MatchDAO(BaseDAO):
                 query = query.where(
                     and_(
                         self.model.match_time >= match_time - time_range,
-                        self.model.match_time <= match_time + time_range
+                        self.model.match_time <= match_time + time_range,
                     )
                 )
 
@@ -97,10 +90,7 @@ class MatchDAO(BaseDAO):
     # ==================== 业务特定方法 ====================
 
     async def get_upcoming_matches(
-        self,
-        hours: int = 24,
-        limit: int = 100,
-        league_id: Optional[int] = None
+        self, hours: int = 24, limit: int = 100, league_id: Optional[int] = None
     ) -> list[Any]:
         """
         获取未来N小时内的比赛
@@ -131,13 +121,20 @@ class MatchDAO(BaseDAO):
             logger.debug(f"查询未来{hours}小时内的比赛: {now} 到 {end_time}")
 
             # 构建查询
-            query = select(self.model).where(
-                and_(
-                    self.model.match_time >= now,
-                    self.model.match_time <= end_time,
-                    self.model.status.in_(['scheduled', 'postponed'])  # 只包含未开始的比赛
+            query = (
+                select(self.model)
+                .where(
+                    and_(
+                        self.model.match_time >= now,
+                        self.model.match_time <= end_time,
+                        self.model.status.in_(
+                            ["scheduled", "postponed"]
+                        ),  # 只包含未开始的比赛
+                    )
                 )
-            ).order_by(self.model.match_time.asc()).limit(limit)
+                .order_by(self.model.match_time.asc())
+                .limit(limit)
+            )
 
             # 添加联赛过滤
             if league_id:
@@ -163,7 +160,7 @@ class MatchDAO(BaseDAO):
         limit: int = 100,
         status: Optional[str] = None,
         start_date: Optional[datetime] = None,
-        end_date: Optional[datetime] = None
+        end_date: Optional[datetime] = None,
     ) -> list[Any]:
         """
         根据联赛获取比赛列表
@@ -206,7 +203,9 @@ class MatchDAO(BaseDAO):
                 query = query.where(self.model.match_time <= end_date)
 
             # 排序和分页
-            query = query.order_by(self.model.match_time.desc()).offset(skip).limit(limit)
+            query = (
+                query.order_by(self.model.match_time.desc()).offset(skip).limit(limit)
+            )
 
             result = await self.session.execute(query)
             matches = result.scalars().all()
@@ -231,9 +230,11 @@ class MatchDAO(BaseDAO):
             DatabaseConnectionError: 数据库连接错误
         """
         try:
-            query = select(self.model).where(
-                self.model.status == 'live'
-            ).order_by(self.model.match_time.asc())
+            query = (
+                select(self.model)
+                .where(self.model.status == "live")
+                .order_by(self.model.match_time.asc())
+            )
 
             result = await self.session.execute(query)
             matches = result.scalars().all()
@@ -251,7 +252,7 @@ class MatchDAO(BaseDAO):
         days: int = 7,
         league_id: Optional[int] = None,
         skip: int = 0,
-        limit: int = 100
+        limit: int = 100,
     ) -> list[Any]:
         """
         获取最近已完成的比赛
@@ -279,13 +280,19 @@ class MatchDAO(BaseDAO):
             start_time = now - timedelta(days=days)
 
             # 构建查询
-            query = select(self.model).where(
-                and_(
-                    self.model.match_time >= start_time,
-                    self.model.match_time <= now,
-                    self.model.status == 'finished'
+            query = (
+                select(self.model)
+                .where(
+                    and_(
+                        self.model.match_time >= start_time,
+                        self.model.match_time <= now,
+                        self.model.status == "finished",
+                    )
                 )
-            ).order_by(self.model.match_time.desc()).offset(skip).limit(limit)
+                .order_by(self.model.match_time.desc())
+                .offset(skip)
+                .limit(limit)
+            )
 
             # 添加联赛过滤
             if league_id:
@@ -309,7 +316,7 @@ class MatchDAO(BaseDAO):
         keyword: str,
         league_id: Optional[int] = None,
         skip: int = 0,
-        limit: int = 50
+        limit: int = 50,
     ) -> list[Any]:
         """
         搜索比赛（按球队名称）
@@ -338,7 +345,7 @@ class MatchDAO(BaseDAO):
             query = select(self.model).where(
                 or_(
                     self.model.home_team_name.ilike(f"%{keyword}%"),
-                    self.model.away_team_name.ilike(f"%{keyword}%")
+                    self.model.away_team_name.ilike(f"%{keyword}%"),
                 )
             )
 
@@ -347,7 +354,9 @@ class MatchDAO(BaseDAO):
                 query = query.where(self.model.league_id == league_id)
 
             # 排序和分页
-            query = query.order_by(self.model.match_time.desc()).offset(skip).limit(limit)
+            query = (
+                query.order_by(self.model.match_time.desc()).offset(skip).limit(limit)
+            )
 
             result = await self.session.execute(query)
             matches = result.scalars().all()
@@ -364,8 +373,7 @@ class MatchDAO(BaseDAO):
     # ==================== 统计方法 ====================
 
     async def get_match_count_by_status(
-        self,
-        league_id: Optional[int] = None
+        self, league_id: Optional[int] = None
     ) -> dict[str, int]:
         """
         按状态统计比赛数量
@@ -380,10 +388,9 @@ class MatchDAO(BaseDAO):
             DatabaseConnectionError: 数据库连接错误
         """
         try:
-            query = select(
-                self.model.status,
-                func.count(self.model.id)
-            ).group_by(self.model.status)
+            query = select(self.model.status, func.count(self.model.id)).group_by(
+                self.model.status
+            )
 
             # 添加联赛过滤
             if league_id:
@@ -402,11 +409,7 @@ class MatchDAO(BaseDAO):
             logger.error(f"获取比赛状态统计失败: {e}")
             raise DatabaseConnectionError(f"获取比赛状态统计失败: {e}")
 
-    async def update_match_status(
-        self,
-        match_id: int,
-        new_status: str
-    ) -> bool:
+    async def update_match_status(self, match_id: int, new_status: str) -> bool:
         """
         更新比赛状态
 
@@ -424,11 +427,17 @@ class MatchDAO(BaseDAO):
         """
         try:
             # 验证状态
-            allowed_statuses = ['scheduled', 'live', 'finished', 'postponed', 'cancelled']
+            allowed_statuses = [
+                "scheduled",
+                "live",
+                "finished",
+                "postponed",
+                "cancelled",
+            ]
             if new_status not in allowed_statuses:
-                raise ValidationError("Match", {
-                    "status": f"状态必须是以下之一: {allowed_statuses}"
-                })
+                raise ValidationError(
+                    "Match", {"status": f"状态必须是以下之一: {allowed_statuses}"}
+                )
 
             # 检查比赛是否存在
             match = await self.get(match_id)
@@ -450,4 +459,4 @@ class MatchDAO(BaseDAO):
 
 
 # 导出MatchDAO
-__all__ = ['MatchDAO']
+__all__ = ["MatchDAO"]

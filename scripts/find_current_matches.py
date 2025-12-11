@@ -9,7 +9,6 @@ Find Current Matches from FotMob Homepage
 import requests
 import json
 import re
-from typing import List
 
 
 def find_current_matches():

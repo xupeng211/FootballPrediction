@@ -22,7 +22,7 @@ import logging
 import sys
 import pandas as pd
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Optional
 import numpy as np
 
 # 添加项目根目录到Python路径
@@ -30,7 +30,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from src.database.async_manager import get_db_session
 from src.database.models import Match
-from sqlalchemy import select, and_, or_
+from sqlalchemy import select, and_
 
 # 配置日志
 logging.basicConfig(
@@ -38,8 +38,10 @@ logging.basicConfig(
     format="%(asctime)s [%(levelname)8s] %(name)s: %(message)s",
     handlers=[
         logging.StreamHandler(sys.stdout),
-        logging.FileHandler(f"/tmp/prepare_training_data_{pd.Timestamp.now().strftime('%Y%m%d_%H%M%S')}.log")
-    ]
+        logging.FileHandler(
+            f"/tmp/prepare_training_data_{pd.Timestamp.now().strftime('%Y%m%d_%H%M%S')}.log"
+        ),
+    ],
 )
 logger = logging.getLogger(__name__)
 
@@ -49,13 +51,19 @@ class TrainingDataPreparer:
 
     def __init__(self):
         self.required_features = [
-            'home_xg', 'away_xg',
-            'home_possession', 'away_possession',
-            'home_shots', 'away_shots',
-            'home_shots_on_target', 'away_shots_on_target'
+            "home_xg",
+            "away_xg",
+            "home_possession",
+            "away_possession",
+            "home_shots",
+            "away_shots",
+            "home_shots_on_target",
+            "away_shots_on_target",
         ]
 
-    async def load_matches_from_database(self, limit: Optional[int] = None) -> pd.DataFrame:
+    async def load_matches_from_database(
+        self, limit: Optional[int] = None
+    ) -> pd.DataFrame:
         """
         从数据库加载比赛数据
 
@@ -72,10 +80,12 @@ class TrainingDataPreparer:
             conditions = [
                 Match.status.in_(["finished", "completed"]),
                 Match.home_score.isnot(None),
-                Match.away_score.isnot(None)
+                Match.away_score.isnot(None),
             ]
 
-            query = select(Match).where(and_(*conditions)).order_by(Match.match_date.desc())
+            query = (
+                select(Match).where(and_(*conditions)).order_by(Match.match_date.desc())
+            )
 
             if limit:
                 query = query.limit(limit)
@@ -89,15 +99,15 @@ class TrainingDataPreparer:
             matches_data = []
             for match in matches:
                 match_dict = {
-                    'id': match.id,
-                    'home_team_id': match.home_team_id,
-                    'away_team_id': match.away_team_id,
-                    'home_score': match.home_score,
-                    'away_score': match.away_score,
-                    'match_date': match.match_date,
-                    'status': match.status,
-                    'league_id': match.league_id,
-                    'season': match.season,
+                    "id": match.id,
+                    "home_team_id": match.home_team_id,
+                    "away_team_id": match.away_team_id,
+                    "home_score": match.home_score,
+                    "away_score": match.away_score,
+                    "match_date": match.match_date,
+                    "status": match.status,
+                    "league_id": match.league_id,
+                    "season": match.season,
                 }
 
                 # 添加新增的统计字段（使用getattr处理可能不存在的字段）
@@ -112,7 +122,9 @@ class TrainingDataPreparer:
 
             return df
 
-    def prepare_features_and_labels(self, df: pd.DataFrame) -> tuple[pd.DataFrame, np.ndarray]:
+    def prepare_features_and_labels(
+        self, df: pd.DataFrame
+    ) -> tuple[pd.DataFrame, np.ndarray]:
         """
         准备特征和标签
 
@@ -158,7 +170,7 @@ class TrainingDataPreparer:
         original_count = len(df)
 
         # 移除关键字段为空的记录
-        required_fields = ['home_score', 'away_score'] + self.required_features
+        required_fields = ["home_score", "away_score"] + self.required_features
         for field in required_fields:
             if field in df.columns:
                 null_count = df[field].isnull().sum()
@@ -166,7 +178,7 @@ class TrainingDataPreparer:
                     logger.warning(f"   字段 {field} 有 {null_count} 个空值")
 
         # 删除所有关键字段都为空的记录
-        df_cleaned = df.dropna(subset=required_fields, how='any')
+        df_cleaned = df.dropna(subset=required_fields, how="any")
 
         # 删除重复记录
         df_cleaned = df_cleaned.drop_duplicates()
@@ -192,24 +204,39 @@ class TrainingDataPreparer:
                 logger.info(f"     填充 {col} 缺失值: 中位数={median_val}")
 
         # 2. 创建衍生特征
-        if all(col in X_engineered.columns for col in ['home_xg', 'away_xg']):
+        if all(col in X_engineered.columns for col in ["home_xg", "away_xg"]):
             # xG差值
-            X_engineered['xg_difference'] = X_engineered['home_xg'] - X_engineered['away_xg']
+            X_engineered["xg_difference"] = (
+                X_engineered["home_xg"] - X_engineered["away_xg"]
+            )
 
             # xG比率
-            X_engineered['xg_ratio'] = X_engineered['home_xg'] / (X_engineered['away_xg'] + 0.001)  # 避免0除
+            X_engineered["xg_ratio"] = X_engineered["home_xg"] / (
+                X_engineered["away_xg"] + 0.001
+            )  # 避免0除
 
-        if all(col in X_engineered.columns for col in ['home_possession', 'away_possession']):
+        if all(
+            col in X_engineered.columns
+            for col in ["home_possession", "away_possession"]
+        ):
             # 控球率差值
-            X_engineered['possession_difference'] = X_engineered['home_possession'] - X_engineered['away_possession']
+            X_engineered["possession_difference"] = (
+                X_engineered["home_possession"] - X_engineered["away_possession"]
+            )
 
-        if all(col in X_engineered.columns for col in ['home_shots', 'away_shots']):
+        if all(col in X_engineered.columns for col in ["home_shots", "away_shots"]):
             # 射门差值
-            X_engineered['shots_difference'] = X_engineered['home_shots'] - X_engineered['away_shots']
+            X_engineered["shots_difference"] = (
+                X_engineered["home_shots"] - X_engineered["away_shots"]
+            )
 
             # 射门效率
-            X_engineered['home_shot_efficiency'] = X_engineered['home_shots_on_target'] / (X_engineered['home_shots'] + 0.001)
-            X_engineered['away_shot_efficiency'] = X_engineered['away_shots_on_target'] / (X_engineered['away_shots'] + 0.001)
+            X_engineered["home_shot_efficiency"] = X_engineered[
+                "home_shots_on_target"
+            ] / (X_engineered["home_shots"] + 0.001)
+            X_engineered["away_shot_efficiency"] = X_engineered[
+                "away_shots_on_target"
+            ] / (X_engineered["away_shots"] + 0.001)
 
         logger.info(f"     衍生特征后的形状: {X_engineered.shape}")
 
@@ -217,9 +244,10 @@ class TrainingDataPreparer:
 
     def _create_labels(self, df: pd.DataFrame) -> np.ndarray:
         """创建标签"""
+
         def determine_result(row):
-            home_score = row['home_score']
-            away_score = row['away_score']
+            home_score = row["home_score"]
+            away_score = row["away_score"]
 
             if home_score > away_score:
                 return 0  # Home Win
@@ -236,25 +264,31 @@ class TrainingDataPreparer:
         logger.info("   特征统计信息:")
 
         for col in X.columns:
-            if X[col].dtype in ['float64', 'int64']:
+            if X[col].dtype in ["float64", "int64"]:
                 stats = {
-                    'count': X[col].count(),
-                    'mean': X[col].mean(),
-                    'std': X[col].std(),
-                    'min': X[col].min(),
-                    'max': X[col].max(),
-                    'null_count': X[col].isnull().sum()
+                    "count": X[col].count(),
+                    "mean": X[col].mean(),
+                    "std": X[col].std(),
+                    "min": X[col].min(),
+                    "max": X[col].max(),
+                    "null_count": X[col].isnull().sum(),
                 }
 
-                logger.info(f"     {col:<25}: "
-                           f"count={stats['count']:>5}, "
-                           f"mean={stats['mean']:>7.3f}, "
-                           f"std={stats['std']:>7.3f}, "
-                           f"min={stats['min']:>7.3f}, "
-                           f"max={stats['max']:>7.3f}")
+                logger.info(
+                    f"     {col:<25}: "
+                    f"count={stats['count']:>5}, "
+                    f"mean={stats['mean']:>7.3f}, "
+                    f"std={stats['std']:>7.3f}, "
+                    f"min={stats['min']:>7.3f}, "
+                    f"max={stats['max']:>7.3f}"
+                )
 
-    async def save_training_data(self, X: pd.DataFrame, y: np.ndarray,
-                               output_path: str = "data/training_set_v1.parquet") -> None:
+    async def save_training_data(
+        self,
+        X: pd.DataFrame,
+        y: np.ndarray,
+        output_path: str = "data/training_set_v1.parquet",
+    ) -> None:
         """
         保存训练数据
 
@@ -273,15 +307,18 @@ class TrainingDataPreparer:
         X.to_parquet(output_path, index=False)
 
         # 保存标签
-        y_path = output_path.replace('.parquet', '_labels.npz')
+        y_path = output_path.replace(".parquet", "_labels.npz")
         np.save(y_path, y)
 
         logger.info(f"   特征数据: {X.shape}, 标签数据: {y.shape}")
         logger.info(f"   特征文件: {output_path}")
         logger.info(f"   标签文件: {y_path}")
 
-    async def prepare_training_data(self, limit: Optional[int] = None,
-                                   output_path: str = "data/training_set_v1.parquet") -> tuple[pd.DataFrame, np.ndarray]:
+    async def prepare_training_data(
+        self,
+        limit: Optional[int] = None,
+        output_path: str = "data/training_set_v1.parquet",
+    ) -> tuple[pd.DataFrame, np.ndarray]:
         """
         执行完整的训练数据准备流程
 
@@ -319,13 +356,15 @@ async def main():
         # 可以设置limit参数来限制数据量，用于快速测试
         X, y = await preparer.prepare_training_data(
             limit=None,  # 设置为None使用所有可用数据
-            output_path="data/training_set_v1.parquet"
+            output_path="data/training_set_v1.parquet",
         )
 
         print("\n📊 数据准备完成:")
         print(f"   特征矩阵: {X.shape}")
         print(f"   标签向量: {y.shape}")
-        print(f"   标签分布: Home(0): {np.sum(y == 0)}, Draw(1): {np.sum(y == 1)}, Away(2): {np.sum(y == 2)}")
+        print(
+            f"   标签分布: Home(0): {np.sum(y == 0)}, Draw(1): {np.sum(y == 1)}, Away(2): {np.sum(y == 2)}"
+        )
 
         print("\n💾 数据已保存到: data/training_set_v1.parquet")
         print("✅ 训练数据准备完成!")
@@ -335,6 +374,7 @@ async def main():
     except Exception as e:
         logger.error(f"❌ 训练数据准备失败: {e}")
         import traceback
+
         traceback.print_exc()
         return 1
 

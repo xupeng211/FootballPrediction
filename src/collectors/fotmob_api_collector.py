@@ -10,9 +10,8 @@ import asyncio
 import json
 import logging
 import random
-import time
-from typing import Optional, Any 
-from datetime import datetime, timedelta
+from typing import Optional, Any
+from datetime import datetime
 from dataclasses import dataclass
 from enum import Enum
 
@@ -108,18 +107,14 @@ class FotMobAPICollector:
         rate_config = {
             "fotmob.com": {
                 "rate": float(max_concurrent),  # 每秒请求数
-                "burst": max_concurrent * 2,    # 突发容量
-                "max_wait_time": 30.0           # 最大等待时间
+                "burst": max_concurrent * 2,  # 突发容量
+                "max_wait_time": 30.0,  # 最大等待时间
             },
-            "default": {
-                "rate": 1.0,
-                "burst": 1,
-                "max_wait_time": 30.0
-            }
+            "default": {"rate": 1.0, "burst": 1, "max_wait_time": 30.0},
         }
 
         self.rate_limiter = RateLimiter(config=rate_config)
-        self.proxy_pool = ProxyPool(provider='default') if enable_proxy else None
+        self.proxy_pool = ProxyPool(provider="default") if enable_proxy else None
 
         # HTTP客户端
         self._client = None
@@ -164,7 +159,7 @@ class FotMobAPICollector:
                 timeout=timeout,
                 limits=limits,
                 headers=headers_for_init,
-                follow_redirects=True
+                follow_redirects=True,
             )
 
             logger.info("✅ FotMob API采集器初始化完成")
@@ -234,31 +229,44 @@ class FotMobAPICollector:
 
                 if response.status_code == 200:
                     try:
-                        logger.info(f"🔍 正在解析JSON响应，状态码: {response.status_code}, 响应长度: {len(response.content)}")
-                        logger.info(f"📋 响应头Content-Encoding: {response.headers.get('content-encoding', 'None')}")
-                        logger.info(f"🔍 前10字节十六进制: {response.content[:10].hex()}")
+                        logger.info(
+                            f"🔍 正在解析JSON响应，状态码: {response.status_code}, 响应长度: {len(response.content)}"
+                        )
+                        logger.info(
+                            f"📋 响应头Content-Encoding: {response.headers.get('content-encoding', 'None')}"
+                        )
+                        logger.info(
+                            f"🔍 前10字节十六进制: {response.content[:10].hex()}"
+                        )
 
                         # 🔧 让httpx自动处理解压缩，直接使用response.json()
                         try:
                             logger.info("🔧 使用httpx自动解压缩和JSON解析...")
                             data = response.json()
-                            logger.info(f"✅ httpx自动JSON解析成功，数据类型: {type(data)}")
+                            logger.info(
+                                f"✅ httpx自动JSON解析成功，数据类型: {type(data)}"
+                            )
                         except Exception as httpx_error:
                             logger.warning(f"⚠️ httpx自动解析失败: {httpx_error}")
                             logger.info("🔧 尝试手动解析...")
 
                             # 手动检查是否真的是压缩数据
-                            content_encoding = response.headers.get('content-encoding', '').lower()
-                            if content_encoding == 'br':
+                            content_encoding = response.headers.get(
+                                "content-encoding", ""
+                            ).lower()
+                            if content_encoding == "br":
                                 # Brotli压缩数据
                                 import brotli
+
                                 logger.info("🔧 手动Brotli解压缩...")
-                                decompressed_data = brotli.decompress(response.content).decode('utf-8')
+                                decompressed_data = brotli.decompress(
+                                    response.content
+                                ).decode("utf-8")
                                 data = json.loads(decompressed_data)
                                 logger.info("✅ Brotli解压缩和JSON解析成功")
                             else:
                                 # 尝试直接解析
-                                raw_text = response.content.decode('utf-8')
+                                raw_text = response.content.decode("utf-8")
                                 data = json.loads(raw_text)
                                 logger.info("✅ 直接UTF-8解析成功")
 
@@ -271,7 +279,9 @@ class FotMobAPICollector:
                         self.stats["failed_requests"] += 1
                         return None, APIResponseStatus.SERVER_ERROR
                     except Exception as e:
-                        logger.warning(f"⚠️ 解析时发生未知错误: {match_id}, 错误类型: {type(e).__name__}, 信息: {e}")
+                        logger.warning(
+                            f"⚠️ 解析时发生未知错误: {match_id}, 错误类型: {type(e).__name__}, 信息: {e}"
+                        )
                         self.stats["failed_requests"] += 1
                         return None, APIResponseStatus.SERVER_ERROR
 
@@ -374,7 +384,9 @@ class FotMobAPICollector:
                 home_team_id = header_home_team.get("id")
                 away_team_id = header_away_team.get("id")
 
-                logger.info(f"🔍 Header提取主客队: 主队={home_team_name}({home_team_id}), 客队={away_team_name}({away_team_id})")
+                logger.info(
+                    f"🔍 Header提取主客队: 主队={home_team_name}({home_team_id}), 客队={away_team_name}({away_team_id})"
+                )
             else:
                 # 如果header中没有，从general中提取作为fallback
                 home_team_name = general.get("homeTeam", {}).get("name")
@@ -382,7 +394,9 @@ class FotMobAPICollector:
                 home_team_id = general.get("homeTeam", {}).get("id")
                 away_team_id = general.get("awayTeam", {}).get("id")
 
-                logger.info(f"🔍 General提取主客队: 主队={home_team_name}({home_team_id}), 客队={away_team_name}({away_team_id})")
+                logger.info(
+                    f"🔍 General提取主客队: 主队={home_team_name}({home_team_id}), 客队={away_team_name}({away_team_id})"
+                )
 
             # 🎯 维度1: 全量技术统计 (Black Box Approach)
             match_data.stats_json = self._extract_full_match_stats(content)
@@ -391,7 +405,14 @@ class FotMobAPICollector:
             match_data.lineups_json = self._extract_full_lineups(content)
 
             # 🎯 维度3: 战意上下文 (排名、轮次) - 传入提取的主客队信息
-            match_data.match_info = self._extract_motivation_context(general, content, home_team_name, away_team_name, home_team_id, away_team_id)
+            match_data.match_info = self._extract_motivation_context(
+                general,
+                content,
+                home_team_name,
+                away_team_name,
+                home_team_id,
+                away_team_id,
+            )
 
             # 🎯 维度4: 赔率快照
             match_data.odds_snapshot_json = self._extract_odds_snapshot(data)
@@ -429,11 +450,15 @@ class FotMobAPICollector:
 
             logger.debug(f"🔍 stats_data 类型: {type(stats_data)}")
             if isinstance(stats_data, list) and len(stats_data) > 0:
-                logger.debug(f"🔍 stats_data 第一项结构: {stats_data[0] if stats_data else 'Empty'}")
+                logger.debug(
+                    f"🔍 stats_data 第一项结构: {stats_data[0] if stats_data else 'Empty'}"
+                )
 
             # 🔥 核心修复: 确认 stats_data 是列表，直接遍历
             if not isinstance(stats_data, list):
-                logger.warning(f"⚠️ stats_data 不是列表: {type(stats_data)}, 尝试兼容处理")
+                logger.warning(
+                    f"⚠️ stats_data 不是列表: {type(stats_data)}, 尝试兼容处理"
+                )
                 # 如果是字典，尝试获取其values
                 if isinstance(stats_data, dict):
                     stats_data = list(stats_data.values())
@@ -467,7 +492,9 @@ class FotMobAPICollector:
                 category_key = stat_category.get("key", "")
                 category_stats = stat_category.get("stats", [])
 
-                logger.debug(f"🔍 处理类别: {category_key}, 子项数: {len(category_stats) if isinstance(category_stats, list) else 0}")
+                logger.debug(
+                    f"🔍 处理类别: {category_key}, 子项数: {len(category_stats) if isinstance(category_stats, list) else 0}"
+                )
 
                 # 根据类别key映射到我们的统计类别
                 target_category = self._map_stat_category(category_key)
@@ -486,11 +513,16 @@ class FotMobAPICollector:
 
                                 # 存储到对应的类别
                                 if target_category in match_stats:
-                                    match_stats[target_category][stat_key] = [home_value, away_value]
+                                    match_stats[target_category][stat_key] = [
+                                        home_value,
+                                        away_value,
+                                    ]
 
                                     # 🔍 特殊记录xG数据，用于向后兼容
                                     if target_category == "xg":
-                                        logger.info(f"✅ 找到xG数据: {stat_key} = 主队{home_value}, 客队{away_value}")
+                                        logger.info(
+                                            f"✅ 找到xG数据: {stat_key} = 主队{home_value}, 客队{away_value}"
+                                        )
 
             logger.debug(f"📊 全量技术统计提取成功，字段数: {len(match_stats)}")
 
@@ -505,6 +537,7 @@ class FotMobAPICollector:
         except Exception as e:
             logger.warning(f"⚠️ 全量技术统计提取失败: {e}")
             import traceback
+
             logger.debug(f"🔍 详细错误信息: {traceback.format_exc()}")
             return {}
 
@@ -520,38 +553,30 @@ class FotMobAPICollector:
             "expected_goals_on_target": "post_shot_xg",
             "xg": "xg",
             "xgot": "post_shot_xg",
-
             # 控球率
             "ball_possession_shared": "possession",
             "possession": "possession",
             "BallPossession": "possession",
-
             # 射门
             "total_shots": "shots",
             "shots": "shots",
             "shots_on_target": "shots",
-
             # 传球
             "total_passes": "passes",
             "passes": "passes",
             "accurate_passes": "passes",
-
             # 抢断
             "tackles": "tackles",
             "total_tackles": "tackles",
-
             # 角球
             "corners": "corners",
             "total_corners": "corners",
-
             # 球员评分
             "player_rating": "player_rating",
             "ratings": "player_rating",
-
             # 期望助攻
             "expected_assists": "expected_assists",
             "xa": "expected_assists",
-
             # 越位
             "offsides": "offsides",
             "total_offsides": "offsides",
@@ -581,8 +606,12 @@ class FotMobAPICollector:
 
             # 构建完整的阵容信息
             full_lineups = {
-                "home_team": self._extract_team_lineup(lineup_data.get("homeTeam", {}), "home"),
-                "away_team": self._extract_team_lineup(lineup_data.get("awayTeam", {}), "away"),
+                "home_team": self._extract_team_lineup(
+                    lineup_data.get("homeTeam", {}), "home"
+                ),
+                "away_team": self._extract_team_lineup(
+                    lineup_data.get("awayTeam", {}), "away"
+                ),
                 "formations": {
                     "home": lineup_data.get("homeTeam", {}).get("formation"),
                     "away": lineup_data.get("awayTeam", {}).get("formation"),
@@ -590,7 +619,7 @@ class FotMobAPICollector:
                 "team_colors": {
                     "home": lineup_data.get("homeTeam", {}).get("teamColors"),
                     "away": lineup_data.get("awayTeam", {}).get("teamColors"),
-                }
+                },
             }
 
             # 检查是否有伤停名单（对战意分析至关重要）
@@ -598,7 +627,7 @@ class FotMobAPICollector:
             if unavailable:
                 full_lineups["unavailable"] = {
                     "home_team": unavailable.get("homeTeam", []),
-                    "away_team": unavailable.get("awayTeam", [])
+                    "away_team": unavailable.get("awayTeam", []),
                 }
 
             logger.debug("👥 完整阵容提取成功")
@@ -608,7 +637,9 @@ class FotMobAPICollector:
             logger.warning(f"⚠️ 完整阵容提取失败: {e}")
             return {}
 
-    def _extract_team_lineup(self, team_lineup: dict[str, Any], side: str) -> dict[str, Any]:
+    def _extract_team_lineup(
+        self, team_lineup: dict[str, Any], side: str
+    ) -> dict[str, Any]:
         """提取单个队伍的完整阵容信息"""
         return {
             "starters": team_lineup.get("starters", []),
@@ -619,9 +650,15 @@ class FotMobAPICollector:
             "captain": team_lineup.get("captain", {}),
         }
 
-    def _extract_motivation_context(self, general: dict[str, Any], content: dict[str, Any],
-                                  home_team_name: str = None, away_team_name: str = None,
-                                  home_team_id: str = None, away_team_id: str = None) -> dict[str, Any]:
+    def _extract_motivation_context(
+        self,
+        general: dict[str, Any],
+        content: dict[str, Any],
+        home_team_name: str = None,
+        away_team_name: str = None,
+        home_team_id: str = None,
+        away_team_id: str = None,
+    ) -> dict[str, Any]:
         """
         🎯 维度3: 战意上下文提取 (排名、轮次)
         这些信息对预测模型中的战意分析至关重要
@@ -651,7 +688,7 @@ class FotMobAPICollector:
                     "round_name": round_info.get("roundName"),
                     "round_number": round_info.get("roundNumber"),
                     "stage": round_info.get("stage"),  # Group Stage, Knockout, etc.
-                    "leg": round_info.get("leg"),      # First leg, Second leg
+                    "leg": round_info.get("leg"),  # First leg, Second leg
                 }
 
             # 联赛和赛季信息
@@ -671,13 +708,23 @@ class FotMobAPICollector:
             }
 
             # 🔧 修复：优先使用传入的主客队信息，fallback到general
-            motivation_context["home_team_name"] = home_team_name or general.get("homeTeam", {}).get("name")
-            motivation_context["away_team_name"] = away_team_name or general.get("awayTeam", {}).get("name")
-            motivation_context["home_team_id"] = home_team_id or general.get("homeTeam", {}).get("id")
-            motivation_context["away_team_id"] = away_team_id or general.get("awayTeam", {}).get("id")
+            motivation_context["home_team_name"] = home_team_name or general.get(
+                "homeTeam", {}
+            ).get("name")
+            motivation_context["away_team_name"] = away_team_name or general.get(
+                "awayTeam", {}
+            ).get("name")
+            motivation_context["home_team_id"] = home_team_id or general.get(
+                "homeTeam", {}
+            ).get("id")
+            motivation_context["away_team_id"] = away_team_id or general.get(
+                "awayTeam", {}
+            ).get("id")
 
             # 🔍 调试日志：显示主客队信息提取情况
-            logger.info(f"🎯 战意上下文主客队: 主队={motivation_context['home_team_name']}({motivation_context['home_team_id']}), 客队={motivation_context['away_team_name']}({motivation_context['away_team_id']})")
+            logger.info(
+                f"🎯 战意上下文主客队: 主队={motivation_context['home_team_name']}({motivation_context['home_team_id']}), 客队={motivation_context['away_team_name']}({motivation_context['away_team_id']})"
+            )
 
             logger.debug("🎯 战意上下文提取成功")
             return motivation_context
@@ -702,7 +749,9 @@ class FotMobAPICollector:
             # 从content中获取赔率信息
             content = data.get("content", {})
             if content.get("matchFacts", {}).get("odds"):
-                odds_data["match_facts_odds"] = content.get("matchFacts", {}).get("odds")
+                odds_data["match_facts_odds"] = content.get("matchFacts", {}).get(
+                    "odds"
+                )
 
             # 从通用信息中获取赔率
             general = data.get("general", {})
@@ -741,9 +790,13 @@ class FotMobAPICollector:
             referee_data = info_box.get("Referee", {})
             environment_data["referee"] = {
                 "id": referee_data.get("id"),
-                "name": referee_data.get("text", referee_data.get("name")),  # 优先使用text字段
+                "name": referee_data.get(
+                    "text", referee_data.get("name")
+                ),  # 优先使用text字段
                 "country": referee_data.get("country"),  # 国籍（用于分析执法风格）
-                "cards_this_season": referee_data.get("cardsThisSeason", {}),  # 本季执法统计
+                "cards_this_season": referee_data.get(
+                    "cardsThisSeason", {}
+                ),  # 本季执法统计
             }
 
             # 🏟️ 场地信息 (Venue) - 修复路径
@@ -758,8 +811,8 @@ class FotMobAPICollector:
                 "surface": venue_data.get("surface"),  # 草皮类型
                 "coordinates": {
                     "lat": venue_data.get("lat"),
-                    "lng": venue_data.get("lng")
-                }
+                    "lng": venue_data.get("lng"),
+                },
             }
 
             # 🎯 赔率数据 (Odds) - 新增提取
@@ -769,7 +822,7 @@ class FotMobAPICollector:
                 environment_data["odds"] = {
                     "poll_name": odds_data.get("PollName"),
                     "poll_title": odds_data.get("PollTitle"),
-                    "facts": odds_data.get("Facts", [])
+                    "facts": odds_data.get("Facts", []),
                 }
 
             # 🌤️ 天气信息 (Weather)
@@ -779,20 +832,20 @@ class FotMobAPICollector:
                 "condition": weather_data.get("condition"),  # 天气状况
                 "wind_speed": weather_data.get("wind"),  # 风速
                 "humidity": weather_data.get("humidity"),  # 湿度
-                "pitch_condition": weather_data.get("pitchCondition")  # 场地状况
+                "pitch_condition": weather_data.get("pitchCondition"),  # 场地状况
             }
 
             # 👕 主帅信息 (Managers) - 从lineup中提取
             lineup_data = content.get("lineup", {})
             environment_data["managers"] = {
                 "home_team": self._extract_team_manager(lineup_data.get("home", {})),
-                "away_team": self._extract_team_manager(lineup_data.get("away", {}))
+                "away_team": self._extract_team_manager(lineup_data.get("away", {})),
             }
 
             # 🎯 阵型信息 (Formations) - 从lineup中提取
             environment_data["formations"] = {
                 "home_team": self._extract_team_formation(lineup_data.get("home", {})),
-                "away_team": self._extract_team_formation(lineup_data.get("away", {}))
+                "away_team": self._extract_team_formation(lineup_data.get("away", {})),
             }
 
             # 📅 比赛时间上下文
@@ -801,15 +854,17 @@ class FotMobAPICollector:
                 "match_date": general.get("startDate", {}).get("date"),
                 "match_time": general.get("startDate", {}).get("time"),
                 "local_timezone": general.get("startDate", {}).get("timezone"),
-                "is_weekend": self._check_if_weekend(general.get("startDate", {}).get("date")),
-                "season_stage": self._determine_season_stage(general)  # 赛季阶段
+                "is_weekend": self._check_if_weekend(
+                    general.get("startDate", {}).get("date")
+                ),
+                "season_stage": self._determine_season_stage(general),  # 赛季阶段
             }
 
             # 💰 经济因素
             environment_data["economic_factors"] = {
                 "ticket_price_range": venue_data.get("ticketPrice"),  # 票价区间
                 "tv_broadcast": general.get("broadcast", {}),  # 转播信息
-                "prize_money": self._extract_prize_money_context(general)  # 奖金背景
+                "prize_money": self._extract_prize_money_context(general),  # 奖金背景
             }
 
             logger.debug(f"🌟 环境数据提取完成，包含 {len(environment_data)} 个维度")
@@ -831,7 +886,7 @@ class FotMobAPICollector:
                 "appointment_date": manager_info.get("appointmentDate"),  # 上任日期
                 "contract_until": manager_info.get("contractUntil"),  # 合同到期日
                 "previous_clubs": manager_info.get("previousClubs", []),  # 曾执教球队
-                "playing_style": manager_info.get("style")  # 执教风格
+                "playing_style": manager_info.get("style"),  # 执教风格
             }
         except Exception as e:
             logger.debug(f"主帅信息提取失败: {e}")
@@ -855,7 +910,7 @@ class FotMobAPICollector:
                 "position_distribution": position_count,  # 位置分布
                 "total_starters": len(starters),  # 首发人数
                 "formation_changes": formation.get("changes", []),  # 阵型变化
-                "tactical_approach": formation.get("style")  # 战术风格
+                "tactical_approach": formation.get("style"),  # 战术风格
             }
         except Exception as e:
             logger.debug(f"阵型信息提取失败: {e}")
@@ -866,10 +921,14 @@ class FotMobAPICollector:
         if not date_str:
             return False
         try:
-            from datetime import datetime
             # 简化的周末检查逻辑
             # 实际实现中应该使用更精确的日期解析
-            return "Saturday" in date_str or "Sunday" in date_str or "周六" in date_str or "周日" in date_str
+            return (
+                "Saturday" in date_str
+                or "Sunday" in date_str
+                or "周六" in date_str
+                or "周日" in date_str
+            )
         except:
             return False
 
@@ -900,14 +959,22 @@ class FotMobAPICollector:
 
             return {
                 "competition_level": league_info.get("level", "unknown"),  # 比赛级别
-                "has_champions league qualification": league_info.get("championsLeagueSpots", 0) > 0,
+                "has_champions league qualification": league_info.get(
+                    "championsLeagueSpots", 0
+                )
+                > 0,
                 "has_relegation_threat": league_info.get("relegationSpots", 0) > 0,
                 "prize_pool": league_info.get("prizePool"),  # 奖金池
             }
         except:
             return {}
 
-    def _extract_legacy_stats(self, match_data: MatchDetailData, content: dict[str, Any], general: dict[str, Any]):
+    def _extract_legacy_stats(
+        self,
+        match_data: MatchDetailData,
+        content: dict[str, Any],
+        general: dict[str, Any],
+    ):
         """
         🔥 向后兼容字段提取（保持原有逻辑）
         确保原有功能不受影响
@@ -918,10 +985,18 @@ class FotMobAPICollector:
 
             # 牌照统计
             cards_data = stats.get("cards", {})
-            match_data.home_yellow_cards = cards_data.get("homeTeam", {}).get("yellowCards", 0)
-            match_data.away_yellow_cards = cards_data.get("awayTeam", {}).get("yellowCards", 0)
-            match_data.home_red_cards = cards_data.get("homeTeam", {}).get("redCards", 0)
-            match_data.away_red_cards = cards_data.get("awayTeam", {}).get("redCards", 0)
+            match_data.home_yellow_cards = cards_data.get("homeTeam", {}).get(
+                "yellowCards", 0
+            )
+            match_data.away_yellow_cards = cards_data.get("awayTeam", {}).get(
+                "yellowCards", 0
+            )
+            match_data.home_red_cards = cards_data.get("homeTeam", {}).get(
+                "redCards", 0
+            )
+            match_data.away_red_cards = cards_data.get("awayTeam", {}).get(
+                "redCards", 0
+            )
 
             # 团队评分
             match_data.home_team_rating = general.get("homeTeam", {}).get("rating", 0.0)
@@ -936,7 +1011,9 @@ class FotMobAPICollector:
                     if isinstance(xg_values, list) and len(xg_values) >= 2:
                         match_data.xg_home = float(xg_values[0])
                         match_data.xg_away = float(xg_values[1])
-                        logger.info(f"✅ xG数据赋值成功: 主队={match_data.xg_home}, 客队={match_data.xg_away}")
+                        logger.info(
+                            f"✅ xG数据赋值成功: 主队={match_data.xg_home}, 客队={match_data.xg_away}"
+                        )
                     else:
                         logger.warning(f"⚠️ xG数据格式异常: {xg_values}")
                 else:
@@ -947,7 +1024,9 @@ class FotMobAPICollector:
                             if isinstance(xg_values, list) and len(xg_values) >= 2:
                                 match_data.xg_home = float(xg_values[0])
                                 match_data.xg_away = float(xg_values[1])
-                                logger.info(f"✅ 使用 {xg_key} 赋值xG数据: 主队={match_data.xg_home}, 客队={match_data.xg_away}")
+                                logger.info(
+                                    f"✅ 使用 {xg_key} 赋值xG数据: 主队={match_data.xg_home}, 客队={match_data.xg_away}"
+                                )
                                 break
             else:
                 # 降级到旧的stats结构（向后兼容）
@@ -955,7 +1034,9 @@ class FotMobAPICollector:
                 if xg_data:
                     match_data.xg_home = xg_data.get("home", 0.0)
                     match_data.xg_away = xg_data.get("away", 0.0)
-                    logger.info(f"✅ 使用旧stats结构赋值xG数据: 主队={match_data.xg_home}, 客队={match_data.xg_away}")
+                    logger.info(
+                        f"✅ 使用旧stats结构赋值xG数据: 主队={match_data.xg_home}, 客队={match_data.xg_away}"
+                    )
                 else:
                     logger.warning("⚠️ 未找到任何xG数据，保持默认值0.0")
 
@@ -989,15 +1070,23 @@ class FotMobAPICollector:
                 ]
 
                 if home_ratings:
-                    match_data.home_avg_player_rating = sum(home_ratings) / len(home_ratings)
+                    match_data.home_avg_player_rating = sum(home_ratings) / len(
+                        home_ratings
+                    )
                 if away_ratings:
-                    match_data.away_avg_player_rating = sum(away_ratings) / len(away_ratings)
+                    match_data.away_avg_player_rating = sum(away_ratings) / len(
+                        away_ratings
+                    )
 
             # Big chances（兼容性）
             shots_stats = stats.get("shots", {})
             if shots_stats:
-                match_data.home_big_chances = shots_stats.get("homeTeam", {}).get("bigChances", 0)
-                match_data.away_big_chances = shots_stats.get("awayTeam", {}).get("bigChances", 0)
+                match_data.home_big_chances = shots_stats.get("homeTeam", {}).get(
+                    "bigChances", 0
+                )
+                match_data.away_big_chances = shots_stats.get("awayTeam", {}).get(
+                    "bigChances", 0
+                )
 
             # 保持原有的结构化数据提取（用于向后兼容）
             match_data.lineups = self._extract_lineups(content)
@@ -1008,7 +1097,9 @@ class FotMobAPICollector:
         except Exception as e:
             logger.warning(f"⚠️ 向后兼容字段提取失败: {e}")
 
-    def _parse_fallback_data(self, fotmob_id: str, data: dict[str, Any]) -> MatchDetailData:
+    def _parse_fallback_data(
+        self, fotmob_id: str, data: dict[str, Any]
+    ) -> MatchDetailData:
         """
         降级解析：当完整解析失败时的fallback
         """
@@ -1140,7 +1231,9 @@ class FotMobAPICollector:
         """获取采集统计信息"""
         return self.stats.copy()
 
-    def _extract_match_time_with_fallback(self, general: dict[str, Any], header: dict[str, Any]) -> Optional[datetime]:
+    def _extract_match_time_with_fallback(
+        self, general: dict[str, Any], header: dict[str, Any]
+    ) -> Optional[datetime]:
         """
         🔧 修复3: 增强时间解析的容错性
         从多个字段提取比赛时间，支持TBD/Postponed比赛
@@ -1174,19 +1267,26 @@ class FotMobAPICollector:
                 try:
                     if isinstance(time_value, str):
                         # 尝试解析ISO格式时间
-                        if 'T' in time_value or time_value.count('-') >= 2:
+                        if "T" in time_value or time_value.count("-") >= 2:
                             from datetime import datetime
-                            # 处理不同的时间格式
-                            if '+' in time_value:
-                                # ISO 8601 with timezone
-                                time_value = time_value.split('+')[0].strip()
-                            if 'Z' in time_value:
-                                # UTC时间
-                                time_value = time_value.replace('Z', '').strip()
 
-                            parsed_time = datetime.fromisoformat(time_value.replace('Z', '+00:00'))
-                            logger.info(f"✅ 时间解析成功: {source_name} -> {parsed_time}")
-                            return parsed_time.replace(tzinfo=None)  # 移除时区信息以匹配数据库
+                            # 处理不同的时间格式
+                            if "+" in time_value:
+                                # ISO 8601 with timezone
+                                time_value = time_value.split("+")[0].strip()
+                            if "Z" in time_value:
+                                # UTC时间
+                                time_value = time_value.replace("Z", "").strip()
+
+                            parsed_time = datetime.fromisoformat(
+                                time_value.replace("Z", "+00:00")
+                            )
+                            logger.info(
+                                f"✅ 时间解析成功: {source_name} -> {parsed_time}"
+                            )
+                            return parsed_time.replace(
+                                tzinfo=None
+                            )  # 移除时区信息以匹配数据库
 
                 except ValueError as e:
                     logger.warning(f"⚠️ 时间解析失败 {source_name}: {time_value} - {e}")
@@ -1197,7 +1297,10 @@ class FotMobAPICollector:
             status_text = status_info.get("reason", {}).get("short", "")
             status_long = status_info.get("reason", {}).get("long", "")
 
-            if any(keyword in (status_text or "").lower() for keyword in ["tbd", "to be determined", "postponed", "cancelled"]):
+            if any(
+                keyword in (status_text or "").lower()
+                for keyword in ["tbd", "to be determined", "postponed", "cancelled"]
+            ):
                 logger.info(f"⏰ 比赛时间未确定: {status_text} - {status_long}")
                 return None
 

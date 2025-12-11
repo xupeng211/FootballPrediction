@@ -19,7 +19,7 @@ Odds Business Service Layer
 
 import logging
 from datetime import datetime
-from typing import  Any, Optional
+from typing import Any, Optional
 
 from decimal import Decimal, InvalidOperation
 
@@ -55,7 +55,7 @@ class OddsIngestionResult:
         duplicates_found: int = 0,
         validation_errors: int = 0,
         database_errors: int = 0,
-        processing_time_ms: float = 0.0
+        processing_time_ms: float = 0.0,
     ):
         self.total_processed = total_processed
         self.successful_inserts = successful_inserts
@@ -66,14 +66,18 @@ class OddsIngestionResult:
         self.processing_time_ms = processing_time_ms
         self.errors: list[dict[str, Any]] = []
 
-    def add_error(self, error_type: str, error_message: str, data: dict[str, Any] = None):
+    def add_error(
+        self, error_type: str, error_message: str, data: dict[str, Any] = None
+    ):
         """记录错误信息"""
-        self.errors.append({
-            "error_type": error_type,
-            "error_message": error_message,
-            "data": data or {},
-            "timestamp": datetime.now().isoformat()
-        })
+        self.errors.append(
+            {
+                "error_type": error_type,
+                "error_message": error_message,
+                "data": data or {},
+                "timestamp": datetime.now().isoformat(),
+            }
+        )
 
     def to_dict(self) -> dict[str, Any]:
         """转换为字典格式"""
@@ -85,8 +89,9 @@ class OddsIngestionResult:
             "validation_errors": self.validation_errors,
             "database_errors": self.database_errors,
             "processing_time_ms": self.processing_time_ms,
-            "success_rate": (self.successful_inserts + self.successful_updates) / max(self.total_processed, 1),
-            "error_details": self.errors
+            "success_rate": (self.successful_inserts + self.successful_updates)
+            / max(self.total_processed, 1),
+            "error_details": self.errors,
         }
 
 
@@ -109,7 +114,9 @@ class OddsService:
         self.match_dao = match_dao
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
 
-    async def ingest_odds_data(self, odds_data_list: list[OddsData]) -> OddsIngestionResult:
+    async def ingest_odds_data(
+        self, odds_data_list: list[OddsData]
+    ) -> OddsIngestionResult:
         """
         处理赔率数据摄取
 
@@ -140,7 +147,9 @@ class OddsService:
                 try:
                     await self._process_single_odds_record(odds_data, result)
                 except Exception as e:
-                    self.logger.error(f"处理赔率记录失败: {odds_data.match_id}, error: {e}")
+                    self.logger.error(
+                        f"处理赔率记录失败: {odds_data.match_id}, error: {e}"
+                    )
                     result.database_errors += 1
                     result.add_error("processing_error", str(e), odds_data.dict())
 
@@ -157,7 +166,9 @@ class OddsService:
 
         return result
 
-    async def fetch_and_save_odds(self, source_name: str, match_id: str) -> OddsIngestionResult:
+    async def fetch_and_save_odds(
+        self, source_name: str, match_id: str
+    ) -> OddsIngestionResult:
         """
         从指定数据源获取并保存赔率数据
 
@@ -175,7 +186,9 @@ class OddsService:
             ConnectionError: 数据源连接失败
             DatabaseConnectionError: 数据库操作失败
         """
-        self.logger.info(f"开始从数据源 '{source_name}' 获取比赛 '{match_id}' 的赔率数据")
+        self.logger.info(
+            f"开始从数据源 '{source_name}' 获取比赛 '{match_id}' 的赔率数据"
+        )
 
         datetime.now()
 
@@ -193,7 +206,9 @@ class OddsService:
             result = await self.ingest_odds_data(odds_data_list)
 
             # 记录数据源信息
-            self.logger.info(f"成功从 '{source_name}' 获取并处理了 {len(odds_data_list)} 条赔率记录")
+            self.logger.info(
+                f"成功从 '{source_name}' 获取并处理了 {len(odds_data_list)} 条赔率记录"
+            )
 
             return result
 
@@ -202,11 +217,15 @@ class OddsService:
             raise
 
         except FetcherError as e:
-            self.logger.error(f"数据获取失败: source={source_name}, match_id={match_id}, error={e}")
+            self.logger.error(
+                f"数据获取失败: source={source_name}, match_id={match_id}, error={e}"
+            )
             raise ConnectionError(f"无法从数据源 '{source_name}' 获取数据: {e}")
 
         except Exception as e:
-            self.logger.error(f"获取并保存赔率数据失败: source={source_name}, match_id={match_id}, error={e}")
+            self.logger.error(
+                f"获取并保存赔率数据失败: source={source_name}, match_id={match_id}, error={e}"
+            )
             raise DatabaseConnectionError(f"操作失败: {e}")
 
     async def _validate_match_exists(self, match_id: str) -> bool:
@@ -239,7 +258,9 @@ class OddsService:
         except RecordNotFoundError:
             raise
         except Exception as e:
-            self.logger.error(f"验证比赛存在性时发生错误: match_id={match_id}, error={e}")
+            self.logger.error(
+                f"验证比赛存在性时发生错误: match_id={match_id}, error={e}"
+            )
             raise DatabaseConnectionError(f"验证比赛存在性失败: {e}")
 
     async def _create_fetcher(self, source_name: str) -> AbstractFetcher:
@@ -264,13 +285,21 @@ class OddsService:
             return fetcher
 
         except ValueError as e:
-            self.logger.error(f"创建数据获取器失败: source_name={source_name}, error={e}")
-            raise ValidationError("Fetcher", {"source_name": f"未知的数据源: {source_name}"})
+            self.logger.error(
+                f"创建数据获取器失败: source_name={source_name}, error={e}"
+            )
+            raise ValidationError(
+                "Fetcher", {"source_name": f"未知的数据源: {source_name}"}
+            )
         except Exception as e:
-            self.logger.error(f"创建数据获取器时发生错误: source_name={source_name}, error={e}")
+            self.logger.error(
+                f"创建数据获取器时发生错误: source_name={source_name}, error={e}"
+            )
             raise DatabaseConnectionError(f"创建数据获取器失败: {e}")
 
-    async def _fetch_odds_data(self, fetcher: AbstractFetcher, match_id: str) -> list[OddsData]:
+    async def _fetch_odds_data(
+        self, fetcher: AbstractFetcher, match_id: str
+    ) -> list[OddsData]:
         """
         从获取器获取赔率数据
 
@@ -303,9 +332,7 @@ class OddsService:
             raise ConnectionError(f"获取赔率数据失败: {e}")
 
     async def _preprocess_odds_data(
-        self,
-        odds_data_list: list[OddsData],
-        result: OddsIngestionResult
+        self, odds_data_list: list[OddsData], result: OddsIngestionResult
     ) -> list[OddsData]:
         """
         预处理赔率数据
@@ -327,7 +354,9 @@ class OddsService:
                 # 验证数据
                 if not self._validate_odds_data(odds_data):
                     result.validation_errors += 1
-                    result.add_error("validation_error", "数据验证失败", odds_data.dict())
+                    result.add_error(
+                        "validation_error", "数据验证失败", odds_data.dict()
+                    )
                     continue
 
                 # 创建去重键
@@ -336,7 +365,9 @@ class OddsService:
                 # 检查重复
                 if dedupe_key in seen_records:
                     result.duplicates_found += 1
-                    result.add_error("duplicate_error", "发现重复记录", odds_data.dict())
+                    result.add_error(
+                        "duplicate_error", "发现重复记录", odds_data.dict()
+                    )
                     continue
 
                 seen_records.add(dedupe_key)
@@ -346,11 +377,15 @@ class OddsService:
                 processed_data.append(cleaned_data)
 
             except Exception as e:
-                self.logger.error(f"预处理赔率数据失败: {odds_data.match_id}, error={e}")
+                self.logger.error(
+                    f"预处理赔率数据失败: {odds_data.match_id}, error={e}"
+                )
                 result.validation_errors += 1
                 result.add_error("preprocessing_error", str(e), odds_data.dict())
 
-        self.logger.info(f"预处理完成: 原始 {len(odds_data_list)} 条，处理后 {len(processed_data)} 条")
+        self.logger.info(
+            f"预处理完成: 原始 {len(odds_data_list)} 条，处理后 {len(processed_data)} 条"
+        )
         return processed_data
 
     def _validate_odds_data(self, odds_data: OddsData) -> bool:
@@ -369,9 +404,13 @@ class OddsService:
 
         # 赔率值验证（至少要有一个有效的赔率值）
         odds_values = [
-            odds_data.home_win, odds_data.draw, odds_data.away_win,
-            odds_data.asian_handicap_home, odds_data.asian_handicap_away,
-            odds_data.over_odds, odds_data.under_odds
+            odds_data.home_win,
+            odds_data.draw,
+            odds_data.away_win,
+            odds_data.asian_handicap_home,
+            odds_data.asian_handicap_away,
+            odds_data.over_odds,
+            odds_data.under_odds,
         ]
 
         # 过滤None值并验证剩余的赔率值
@@ -386,7 +425,7 @@ class OddsService:
                 odds_float = float(odds)
                 if not (1.0 <= odds_float <= 1000.0):
                     return False
-            except (ValueError):
+            except ValueError:
                 return False
 
         return True
@@ -432,21 +471,32 @@ class OddsService:
         # 清洗赔率值（移除前导零，格式化等）
         cleaned_data = odds_data.dict(exclude_unset=True)
 
-        for field in ['home_win', 'draw', 'away_win', 'asian_handicap_home',
-                     'asian_handicap_away', 'over_odds', 'under_odds']:
+        for field in [
+            "home_win",
+            "draw",
+            "away_win",
+            "asian_handicap_home",
+            "asian_handicap_away",
+            "over_odds",
+            "under_odds",
+        ]:
             if field in cleaned_data and cleaned_data[field] is not None:
                 try:
                     # 转换为Decimal确保精度
                     decimal_value = Decimal(str(cleaned_data[field]))
                     # 舍入到4位小数
-                    cleaned_data[field] = float(decimal_value.quantize(Decimal('0.0001')))
+                    cleaned_data[field] = float(
+                        decimal_value.quantize(Decimal("0.0001"))
+                    )
                 except (InvalidOperation, ValueError):
                     # 如果转换失败，保持原值
                     pass
 
         return OddsData(**cleaned_data)
 
-    async def _process_single_odds_record(self, odds_data: OddsData, result: OddsIngestionResult):
+    async def _process_single_odds_record(
+        self, odds_data: OddsData, result: OddsIngestionResult
+    ):
         """
         处理单条赔率记录
 
@@ -464,18 +514,24 @@ class OddsService:
                 # 更新现有记录
                 await self._update_existing_odds(existing_odds, odds_data)
                 result.successful_updates += 1
-                self.logger.debug(f"更新赔率记录: match_id={odds_data.match_id}, bookmaker={odds_data.bookmaker}")
+                self.logger.debug(
+                    f"更新赔率记录: match_id={odds_data.match_id}, bookmaker={odds_data.bookmaker}"
+                )
             else:
                 # 创建新记录
                 await self._create_new_odds(odds_data)
                 result.successful_inserts += 1
-                self.logger.debug(f"创建赔率记录: match_id={odds_data.match_id}, bookmaker={odds_data.bookmaker}")
+                self.logger.debug(
+                    f"创建赔率记录: match_id={odds_data.match_id}, bookmaker={odds_data.bookmaker}"
+                )
 
         except DuplicateRecordError:
             result.duplicates_found += 1
             self.logger.warning(f"发现重复赔率记录: match_id={odds_data.match_id}")
         except Exception as e:
-            self.logger.error(f"处理赔率记录失败: match_id={odds_data.match_id}, error={e}")
+            self.logger.error(
+                f"处理赔率记录失败: match_id={odds_data.match_id}, error={e}"
+            )
             result.database_errors += 1
             result.add_error("database_error", str(e), odds_data.dict())
             raise
@@ -497,8 +553,7 @@ class OddsService:
                 try:
                     match_id_int = int(odds_data.match_id)
                     return await self.odds_dao.get_by_match_and_bookmaker(
-                        match_id_int,
-                        odds_data.bookmaker
+                        match_id_int, odds_data.bookmaker
                     )
                 except ValueError:
                     # 如果match_id不是整数，记录警告并返回None
@@ -529,26 +584,27 @@ class OddsService:
                 "over_under": odds_data.over_under_line,
                 "last_updated": odds_data.timestamp,
                 "updated_at": datetime.now(),
-                "is_active": True
+                "is_active": True,
             }
 
             # 如果有原始数据，更新price_movement字段
             if odds_data.raw_data:
-                import json
                 if existing_odds.price_movement:
                     # 将现有数据添加到历史中
                     price_history = existing_odds.price_movement
                     if isinstance(price_history, dict):
                         price_history["history"] = price_history.get("history", [])
-                        price_history["history"].append({
-                            "timestamp": datetime.now().isoformat(),
-                            "data": odds_data.raw_data
-                        })
+                        price_history["history"].append(
+                            {
+                                "timestamp": datetime.now().isoformat(),
+                                "data": odds_data.raw_data,
+                            }
+                        )
                         update_data["price_movement"] = price_history
                 else:
                     update_data["price_movement"] = {
                         "current": odds_data.raw_data,
-                        "history": []
+                        "history": [],
                     }
 
             # 执行更新
@@ -579,14 +635,14 @@ class OddsService:
                 "is_active": True,
                 "live_odds": False,  # 默认非实时
                 "data_quality_score": 0.8,  # 默认质量分数
-                "source_reliability": odds_data.source
+                "source_reliability": odds_data.source,
             }
 
             # 添加原始数据到price_movement
             if odds_data.raw_data:
                 create_data["price_movement"] = {
                     "current": odds_data.raw_data,
-                    "history": []
+                    "history": [],
                 }
 
             # 执行创建
@@ -594,14 +650,13 @@ class OddsService:
 
         except ValueError as e:
             self.logger.error(f"创建赔率记录失败 - 数据转换错误: {e}")
-            raise ValidationError("Odds", {"match_id": f"无效的比赛ID: {odds_data.match_id}"})
+            raise ValidationError(
+                "Odds", {"match_id": f"无效的比赛ID: {odds_data.match_id}"}
+            )
         except Exception as e:
             self.logger.error(f"创建赔率记录失败: {e}")
             raise DatabaseConnectionError(f"创建赔率记录失败: {e}")
 
 
 # 导出服务类
-__all__ = [
-    "OddsService",
-    "OddsIngestionResult"
-]
+__all__ = ["OddsService", "OddsIngestionResult"]

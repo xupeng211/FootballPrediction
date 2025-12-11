@@ -25,19 +25,12 @@ import json
 import sys
 import time
 from pathlib import Path
-from typing import Any, Dict, List, Optional
 
 # 添加项目根目录到 Python 路径
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 from src.collectors.http_client_factory import get_http_client_factory, FotMobConfig
-from src.collectors.interface import (
-    AuthenticationError,
-    RateLimitError,
-    NetworkError,
-    DataNotFoundError,
-)
 
 
 class DryRunTester:
@@ -45,13 +38,13 @@ class DryRunTester:
 
     def __init__(self, args):
         self.args = args
-        self.source = getattr(args, 'source', 'fotmob')
-        self.verbose = getattr(args, 'verbose', False)
-        self.max_fixtures = getattr(args, 'max_fixtures', 5)
-        self.max_matches = getattr(args, 'max_matches', 10)
-        self.test_health = getattr(args, 'test_health', False)
-        self.test_rate_limiting = getattr(args, 'test_rate_limiting', False)
-        self.use_proxies = getattr(args, 'use_proxies', False)
+        self.source = getattr(args, "source", "fotmob")
+        self.verbose = getattr(args, "verbose", False)
+        self.max_fixtures = getattr(args, "max_fixtures", 5)
+        self.max_matches = getattr(args, "max_matches", 10)
+        self.test_health = getattr(args, "test_health", False)
+        self.test_rate_limiting = getattr(args, "test_rate_limiting", False)
+        self.use_proxies = getattr(args, "use_proxies", False)
 
         # 测试结果
         self.test_results = {
@@ -91,8 +84,8 @@ class DryRunTester:
                 if self.test_rate_limiting:
                     print("   🚦 调整速率限制用于测试")
                     config.rate_limit_config = {
-                        "rate": 1.0,        # 1 QPS - 用于测试速率限制
-                        "burst": 2,         # 突发容量
+                        "rate": 1.0,  # 1 QPS - 用于测试速率限制
+                        "burst": 2,  # 突发容量
                         "max_wait_time": 15.0,
                     }
 
@@ -116,7 +109,8 @@ class DryRunTester:
             # 记录测试结束时间
             self.test_results["test_end_time"] = time.time()
             self.test_results["total_duration"] = (
-                self.test_results["test_end_time"] - self.test_results["test_start_time"]
+                self.test_results["test_end_time"]
+                - self.test_results["test_start_time"]
             )
 
             # 获取监控统计
@@ -142,13 +136,17 @@ class DryRunTester:
             print(f"   📊 健康状态: {health_result['status']}")
             print(f"   📊 响应时间: {health_result['response_time_ms']:.2f}ms")
 
-            if 'details' in health_result:
-                details = health_result['details']
-                if 'api_connectivity' in details:
-                    print(f"   📊 API连通性: {'✅ 正常' if details['api_connectivity'] else '❌ 异常'}")
-                if 'token_stats' in details:
-                    token_stats = details['token_stats']
-                    print(f"   📊 Token状态: 有效={token_stats['valid_tokens']}, 使用次数={token_stats['total_usage']}")
+            if "details" in health_result:
+                details = health_result["details"]
+                if "api_connectivity" in details:
+                    print(
+                        f"   📊 API连通性: {'✅ 正常' if details['api_connectivity'] else '❌ 异常'}"
+                    )
+                if "token_stats" in details:
+                    token_stats = details["token_stats"]
+                    print(
+                        f"   📊 Token状态: 有效={token_stats['valid_tokens']}, 使用次数={token_stats['total_usage']}"
+                    )
 
             # 清理
             await collector.close()
@@ -185,11 +183,13 @@ class DryRunTester:
 
             # 显示前几场比赛信息
             for i, fixture in enumerate(fixtures[:3], 1):
-                print(f"      {i}. {fixture['home_team']} vs {fixture['away_team']} "
-                      f"({fixture.get('status', 'N/A')})")
+                print(
+                    f"      {i}. {fixture['home_team']} vs {fixture['away_team']} "
+                    f"({fixture.get('status', 'N/A')})"
+                )
 
             if len(fixtures) > self.max_fixtures:
-                fixtures = fixtures[:self.max_fixtures]
+                fixtures = fixtures[: self.max_fixtures]
                 print(f"   📋 限制为 {self.max_fixtures} 场比赛进行后续测试")
 
             self.test_results["fixtures_collected"] = len(fixtures)
@@ -220,24 +220,28 @@ class DryRunTester:
                 return False
 
             # 选择比赛进行详情采集
-            test_matches = fixtures[:self.max_matches]
+            test_matches = fixtures[: self.max_matches]
             print(f"   📋 开始采集 {len(test_matches)} 场比赛详情...")
 
             successful_matches = 0
             for i, fixture in enumerate(test_matches, 1):
-                match_id = fixture.get('match_id')
+                match_id = fixture.get("match_id")
                 if not match_id:
                     continue
 
                 try:
-                    print(f"   📊 {i}/{len(test_matches)} 采集比赛详情: {fixture['home_team']} vs {fixture['away_team']}")
+                    print(
+                        f"   📊 {i}/{len(test_matches)} 采集比赛详情: {fixture['home_team']} vs {fixture['away_team']}"
+                    )
 
                     details = await collector.collect_match_details(match_id)
 
                     # 验证关键字段
-                    if 'home_team' in details and 'away_team' in details:
+                    if "home_team" in details and "away_team" in details:
                         successful_matches += 1
-                        print(f"      ✅ 成功 - 比分: {details.get('home_score', 'N/A')}-{details.get('away_score', 'N/A')}")
+                        print(
+                            f"      ✅ 成功 - 比分: {details.get('home_score', 'N/A')}-{details.get('away_score', 'N/A')}"
+                        )
                     else:
                         print("      ⚠️ 数据不完整")
 
@@ -365,8 +369,16 @@ class DryRunTester:
             "test_summary": {
                 "test_source": self.source,
                 "test_duration": round(self.test_results["total_duration"], 2),
-                "test_start": time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime(self.test_results["test_start_time"])),
-                "test_end": time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime(self.test_results["test_end_time"])) if self.test_results["test_end_time"] else None,
+                "test_start": time.strftime(
+                    "%Y-%m-%d %H:%M:%S UTC",
+                    time.gmtime(self.test_results["test_start_time"]),
+                ),
+                "test_end": time.strftime(
+                    "%Y-%m-%d %H:%M:%S UTC",
+                    time.gmtime(self.test_results["test_end_time"]),
+                )
+                if self.test_results["test_end_time"]
+                else None,
             },
             "collection_results": {
                 "fixtures_collected": self.test_results["fixtures_collected"],
@@ -381,33 +393,53 @@ class DryRunTester:
         # 写入Markdown报告
         report_file = reports_dir / "dry_run_results.md"
 
-        with open(report_file, 'w', encoding='utf-8') as f:
+        with open(report_file, "w", encoding="utf-8") as f:
             f.write("# 采集器 Dry-Run 测试报告\n\n")
             f.write("## 测试概览\n")
             f.write(f"- **数据源**: {report['test_summary']['test_source']}\n")
-            f.write(f"- **测试时长**: {report['test_summary']['test_duration']:.2f}秒\n")
+            f.write(
+                f"- **测试时长**: {report['test_summary']['test_duration']:.2f}秒\n"
+            )
             f.write(f"- **测试开始**: {report['test_summary']['test_start']}\n")
-            if report['test_summary']['test_end']:
+            if report["test_summary"]["test_end"]:
                 f.write(f"- **测试结束**: {report['test_summary']['test_end']}\n")
             f.write("\n")
 
             f.write("## 采集结果\n")
-            f.write(f"- **赛程数据采集**: {report['collection_results']['fixtures_collected']} 场\n")
-            f.write(f"- **比赛详情采集**: {report['collection_results']['matches_collected']} 场\n")
-            f.write(f"- **球队信息采集**: {report['collection_results']['teams_collected']} 个\n")
-            f.write(f"- **健康检查次数**: {report['collection_results']['health_checks']} 次\n")
+            f.write(
+                f"- **赛程数据采集**: {report['collection_results']['fixtures_collected']} 场\n"
+            )
+            f.write(
+                f"- **比赛详情采集**: {report['collection_results']['matches_collected']} 场\n"
+            )
+            f.write(
+                f"- **球队信息采集**: {report['collection_results']['teams_collected']} 个\n"
+            )
+            f.write(
+                f"- **健康检查次数**: {report['collection_results']['health_checks']} 次\n"
+            )
             f.write("\n")
 
             f.write("## 监控统计\n")
             monitor_stats = report.get("monitoring_statistics", {})
             if monitor_stats:
                 f.write(f"- **总请求数**: {monitor_stats.get('total_requests', 0)}\n")
-                f.write(f"- **成功请求数**: {monitor_stats.get('successful_requests', 0)}\n")
-                f.write(f"- **失败请求数**: {monitor_stats.get('failed_requests', 0)}\n")
+                f.write(
+                    f"- **成功请求数**: {monitor_stats.get('successful_requests', 0)}\n"
+                )
+                f.write(
+                    f"- **失败请求数**: {monitor_stats.get('failed_requests', 0)}\n"
+                )
                 f.write(f"- **成功率**: {monitor_stats.get('success_rate', 0):.1f}%\n")
-                f.write(f"- **平均响应时间**: {monitor_stats.get('avg_response_time_ms', 0):.2f}ms\n")
-                f.write(f"- **Token刷新次数**: {monitor_stats.get('token_refreshes', 0)}\n")
-                f.write(f"- **代理轮换次数**: {monitor_stats.get('proxy_rotations', 0)}\n")
+                f.write(
+                    f"- **平均响应时间**: {monitor_stats.get('avg_response_time_ms', 0):.2f}ms\n"
+                )
+                f.write(
+                    f"- **Token刷新次数**: {monitor_stats.get('token_refreshes', 0)}\n"
+                )
+                f.write(
+                    f"- **代理轮换次数**: {monitor_stats.get('proxy_rotations', 0)}\n"
+                )
             f.write("\n")
 
             if report["errors"]:
@@ -421,13 +453,15 @@ class DryRunTester:
             f.write(f"- **最大赛程数**: {self.max_fixtures}\n")
             f.write(f"- **最大比赛数**: {self.max_matches}\n")
             f.write(f"- **健康检查**: {'启用' if self.test_health else '禁用'}\n")
-            f.write(f"- **速率限制测试**: {'启用' if self.test_rate_limiting else '禁用'}\n")
+            f.write(
+                f"- **速率限制测试**: {'启用' if self.test_rate_limiting else '禁用'}\n"
+            )
             f.write(f"- **代理使用**: {'启用' if self.use_proxies else '禁用'}\n")
             f.write(f"- **详细输出**: {'启用' if self.verbose else '禁用'}\n")
 
         # 写入JSON报告
         json_report_file = reports_dir / "dry_run_results.json"
-        with open(json_report_file, 'w', encoding='utf-8') as f:
+        with open(json_report_file, "w", encoding="utf-8") as f:
             json.dump(report, f, indent=2, ensure_ascii=False)
 
         print("   ✅ 报告已保存:")
@@ -515,53 +549,30 @@ def parse_args():
 
   # 使用代理的测试
   python scripts/collectors_dry_run.py --source fotmob --use-proxies --verbose
-        """
+        """,
     )
 
     parser.add_argument(
-        "--source",
-        default="fotmob",
-        choices=["fotmob"],
-        help="数据源 (默认: fotmob)"
+        "--source", default="fotmob", choices=["fotmob"], help="数据源 (默认: fotmob)"
     )
 
     parser.add_argument(
-        "--max-fixtures",
-        type=int,
-        default=5,
-        help="最大采集赛程数量 (默认: 5)"
+        "--max-fixtures", type=int, default=5, help="最大采集赛程数量 (默认: 5)"
     )
 
     parser.add_argument(
-        "--max-matches",
-        type=int,
-        default=10,
-        help="最大采集比赛详情数量 (默认: 10)"
+        "--max-matches", type=int, default=10, help="最大采集比赛详情数量 (默认: 10)"
     )
 
-    parser.add_argument(
-        "--test-health",
-        action="store_true",
-        help="包含健康检查测试"
-    )
+    parser.add_argument("--test-health", action="store_true", help="包含健康检查测试")
 
     parser.add_argument(
-        "--test-rate-limiting",
-        action="store_true",
-        help="测试速率限制机制"
+        "--test-rate-limiting", action="store_true", help="测试速率限制机制"
     )
 
-    parser.add_argument(
-        "--use-proxies",
-        action="store_true",
-        help="使用代理进行测试"
-    )
+    parser.add_argument("--use-proxies", action="store_true", help="使用代理进行测试")
 
-    parser.add_argument(
-        "--verbose", "-v",
-        action="store_true",
-        help="详细输出"
-    )
+    parser.add_argument("--verbose", "-v", action="store_true", help="详细输出")
 
     return parser.parse_args()
 
@@ -582,6 +593,7 @@ async def main():
         print(f"❌ 错误: {e}")
         if args.verbose:
             import traceback
+
             traceback.print_exc()
         sys.exit(1)
 

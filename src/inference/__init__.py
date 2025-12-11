@@ -19,7 +19,7 @@ from .schemas import (
     PredictionRequest,
     PredictionResponse,
     ModelInfoResponse,
-    ErrorResponse
+    ErrorResponse,
 )
 
 __all__ = [
@@ -30,5 +30,5 @@ __all__ = [
     "PredictionRequest",
     "PredictionResponse",
     "ModelInfoResponse",
-    "ErrorResponse"
+    "ErrorResponse",
 ]

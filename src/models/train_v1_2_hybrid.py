@@ -9,7 +9,7 @@ import asyncio
 import logging
 import sys
 import json
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 import pandas as pd
 import numpy as np
@@ -17,19 +17,13 @@ import numpy as np
 # 添加项目路径
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-import asyncpg
 import os
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
-from sqlalchemy import select, text, func
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
+from sqlalchemy import text
 import xgboost as xgb
-from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.metrics import (
     accuracy_score,
-    precision_score,
-    recall_score,
-    confusion_matrix,
-    classification_report,
 )
 import joblib
 
@@ -225,14 +219,14 @@ class HybridModelTrainer:
             team_df = team_df.sort_values([team_col, "match_date"])
 
             # 计算滚动平均
-            team_df[f'avg_goals_scored_{team_col.split("_")[0]}'] = (
+            team_df[f"avg_goals_scored_{team_col.split('_')[0]}"] = (
                 team_df.groupby(team_col)[goal_col]
                 .rolling(window=self.rolling_window, min_periods=1)
                 .mean()
                 .reset_index(level=0, drop=True)
             )
 
-            team_df[f'avg_goals_conceded_{team_col.split("_")[0]}'] = (
+            team_df[f"avg_goals_conceded_{team_col.split('_')[0]}"] = (
                 team_df.groupby(team_col)[opponent_goal_col]
                 .rolling(window=self.rolling_window, min_periods=1)
                 .mean()
@@ -240,14 +234,14 @@ class HybridModelTrainer:
             )
 
             # xG滚动特征
-            team_df[f'avg_xg_created_{team_col.split("_")[0]}'] = (
+            team_df[f"avg_xg_created_{team_col.split('_')[0]}"] = (
                 team_df.groupby(team_col)[xg_col]
                 .rolling(window=self.rolling_window, min_periods=1)
                 .mean()
                 .reset_index(level=0, drop=True)
             )
 
-            team_df[f'avg_xg_conceded_{team_col.split("_")[0]}'] = (
+            team_df[f"avg_xg_conceded_{team_col.split('_')[0]}"] = (
                 team_df.groupby(team_col)[opponent_xg_col]
                 .rolling(window=self.rolling_window, min_periods=1)
                 .mean()
@@ -256,10 +250,10 @@ class HybridModelTrainer:
 
             # 合并回原DataFrame
             rolling_cols = [
-                f'avg_goals_scored_{team_col.split("_")[0]}'
-                f'avg_goals_conceded_{team_col.split("_")[0]}'
-                f'avg_xg_created_{team_col.split("_")[0]}'
-                f'avg_xg_conceded_{team_col.split("_")[0]}'
+                f"avg_goals_scored_{team_col.split('_')[0]}"
+                f"avg_goals_conceded_{team_col.split('_')[0]}"
+                f"avg_xg_created_{team_col.split('_')[0]}"
+                f"avg_xg_conceded_{team_col.split('_')[0]}"
             ]
 
             df = df.merge(
@@ -528,7 +522,7 @@ class HybridModelTrainer:
         report_file = model_dir / f"{model_name}_{timestamp}_summary.txt"
         with open(report_file, "w") as f:
             f.write("Football Prediction Model V1.2 Hybrid Summary\n")
-            f.write(f"{'='*50}\n\n")
+            f.write(f"{'=' * 50}\n\n")
             f.write(f"Model Name: {report['model_name']}\n")
             f.write(f"Version: {report['version']}\n")
             f.write(f"Training Date: {report['training_date']}\n")
@@ -622,9 +616,9 @@ class HybridModelTrainer:
         print(f"   📊 信心阈值: {self.confidence_threshold}")
 
         print("\n📈 模型性能:")
-        print(f"   🏋️ 训练集准确率: {train_acc:.4f} ({train_acc*100:.2f}%)")
-        print(f"   🧪 测试集准确率: {test_acc:.4f} ({test_acc*100:.2f}%)")
-        print(f"   📉 过拟合程度: {(train_acc - test_acc)*100:.2f}%")
+        print(f"   🏋️ 训练集准确率: {train_acc:.4f} ({train_acc * 100:.2f}%)")
+        print(f"   🧪 测试集准确率: {test_acc:.4f} ({test_acc * 100:.2f}%)")
+        print(f"   📉 过拟合程度: {(train_acc - test_acc) * 100:.2f}%")
 
         print("\n💰 模拟投注结果:")
         print(f"   🎯 总投注次数: {backtest_results['total_bets']}")

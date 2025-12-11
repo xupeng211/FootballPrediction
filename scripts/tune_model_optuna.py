@@ -23,7 +23,7 @@ import json
 import pickle
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 # 添加项目根目录到Python路径
 project_root = Path(__file__).parent.parent

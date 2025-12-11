@@ -8,15 +8,13 @@
 版本: 1.0.0
 """
 
-import asyncio
 import logging
 from datetime import datetime, timedelta
 from decimal import Decimal
-from typing import  Optional, Any
+from typing import Optional, Any
 
 
-from sqlalchemy import select, and_, or_
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, and_
 
 from src.database.async_manager import get_db_session
 from src.database.models import Match, Team
@@ -24,8 +22,6 @@ from src.database.models import Match, Team
 from .models import (
     BacktestConfig,
     BacktestResult,
-    BetResult,
-    BetDecision,
     BetOutcome,
     BetType,
     StrategyProtocol,
@@ -265,7 +261,6 @@ class BacktestEngine:
         Returns:
             赔率数据
         """
-        import random
 
         # 基于概率生成合理的赔率（包含博彩公司的利润空间）
         base_margin = 1.05  # 5%的博彩公司利润空间

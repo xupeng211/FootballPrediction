@@ -10,10 +10,9 @@ import asyncio
 import json
 import os
 import pickle
-import threading
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional, Union
+from typing import Any, Optional
 from concurrent.futures import ThreadPoolExecutor
 import hashlib
 
@@ -43,7 +42,7 @@ except ImportError:
     Observer = None
     FileSystemEventHandler = object
 
-from .errors import ModelLoadError, ErrorCode
+from .errors import ModelLoadError
 from .schemas import ModelInfo, ModelType
 
 

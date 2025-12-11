@@ -6,11 +6,9 @@ Football Prediction System Data Seeding Script
 通过调用后端API向数据库注入模拟数据
 """
 
-import json
 import sys
 import time
 from datetime import datetime, timedelta
-from typing import Optional
 
 try:
     import requests

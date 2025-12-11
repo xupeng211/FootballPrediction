@@ -161,7 +161,7 @@ class TimeUtils:
                 except ValueError:
                     continue
             return False
-        except (ValueError):
+        except ValueError:
             return False
 
     @staticmethod
@@ -182,7 +182,7 @@ class TimeUtils:
                 except ValueError:
                     continue
             return False
-        except (ValueError):
+        except ValueError:
             return False
 
     @staticmethod
@@ -250,7 +250,7 @@ def parse_datetime(
 
     try:
         return datetime.strptime(date_str, format_str)
-    except (ValueError):
+    except ValueError:
         # 尝试其他常见格式
         formats = [
             "%Y-%m-%dT%H:%M:%S.%fZ",

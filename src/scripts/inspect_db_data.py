@@ -16,12 +16,10 @@ Database Data Inspection Script
     - 可视化图表（如果 matplotlib 可用）
 """
 
-import os
 import sys
 import asyncio
-import random
 from pathlib import Path
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any
 from dataclasses import dataclass
 import logging
 
@@ -37,14 +35,14 @@ from sqlalchemy import text
 try:
     import matplotlib.pyplot as plt
     import pandas as pd
+
     HAS_VISUALIZATION = True
 except ImportError:
     HAS_VISUALIZATION = False
 
 # 配置日志
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -52,6 +50,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class InspectionConfig:
     """诊断配置参数"""
+
     sample_size: int = 10  # 采样数量
     show_all_fields: bool = False  # 是否显示所有字段
     output_charts: bool = True  # 是否输出图表
@@ -72,7 +71,7 @@ class DatabaseInspector:
         self.output_dir = Path(config.output_dir)
         self.output_dir.mkdir(exist_ok=True)
 
-        logger.info(f"🔍 初始化数据库诊断工具")
+        logger.info("🔍 初始化数据库诊断工具")
         logger.info(f"   采样数量: {config.sample_size}")
         logger.info(f"   输出目录: {self.output_dir}")
 
@@ -175,9 +174,11 @@ class DatabaseInspector:
         logger.info(f"🎲 随机采样 {self.config.sample_size} 条记录...")
 
         # 首先获取总记录数
-        count_query = text("SELECT COUNT(*) as total FROM matches WHERE fotmob_id IS NOT NULL")
+        count_query = text(
+            "SELECT COUNT(*) as total FROM matches WHERE fotmob_id IS NOT NULL"
+        )
         count_result = await fetch_all(count_query)
-        total_records = count_result[0]['total']
+        total_records = count_result[0]["total"]
 
         if total_records == 0:
             logger.warning("⚠️ 数据库中没有 fotmob_id 不为空的记录")
@@ -270,25 +271,27 @@ class DatabaseInspector:
                 SELECT COUNT(*) as count
                 FROM matches
                 WHERE fotmob_id IS NOT NULL
-            """)
+            """),
         }
 
         results = {}
         for name, query in queries.items():
             try:
                 result = await fetch_all(query)
-                results[name] = result[0]['count']
+                results[name] = result[0]["count"]
             except Exception as e:
                 logger.error(f"❌ 查询 {name} 失败: {e}")
                 results[name] = 0
 
         return results
 
-    def print_distributions(self, status_dist: List[Dict], completeness_dist: List[Dict]) -> None:
+    def print_distributions(
+        self, status_dist: List[Dict], completeness_dist: List[Dict]
+    ) -> None:
         """打印分布统计"""
-        print("\n" + "="*80)
+        print("\n" + "=" * 80)
         print("📊 字段分布统计")
-        print("="*80)
+        print("=" * 80)
 
         # Status 分布
         print(f"\n🏁 Status 字段分布 (共 {len(status_dist)} 种状态):")
@@ -304,13 +307,15 @@ class DatabaseInspector:
         print(f"{'Completeness':<15} {'Count':<10} {'Percentage':<12}")
         print("-" * 60)
         for item in completeness_dist:
-            print(f"{item['data_completeness']:<15} {item['count']:<10} {item['percentage']:<12}%")
+            print(
+                f"{item['data_completeness']:<15} {item['count']:<10} {item['percentage']:<12}%"
+            )
 
     def print_sample_records(self, samples: List[Dict]) -> None:
         """打印采样记录"""
-        print("\n" + "="*80)
+        print("\n" + "=" * 80)
         print(f"🎲 随机采样记录 ({len(samples)} 条)")
-        print("="*80)
+        print("=" * 80)
 
         if not samples:
             print("⚠️ 没有采样记录可显示")
@@ -323,7 +328,9 @@ class DatabaseInspector:
             print(f"   Status: {record.get('status', 'N/A')}")
             print(f"   Data Completeness: {record.get('data_completeness', 'N/A')}")
             print(f"   Match Date: {record.get('match_date', 'N/A')}")
-            print(f"   Teams: {record.get('home_team_name', 'N/A')} vs {record.get('away_team_name', 'N/A')}")
+            print(
+                f"   Teams: {record.get('home_team_name', 'N/A')} vs {record.get('away_team_name', 'N/A')}"
+            )
             print(f"   Season: {record.get('season', 'N/A')}")
 
             if self.config.show_all_fields:
@@ -333,29 +340,43 @@ class DatabaseInspector:
 
     def print_candidate_analysis(self, candidates: Dict[str, Any]) -> None:
         """打印回填候选分析"""
-        print("\n" + "="*80)
+        print("\n" + "=" * 80)
         print("🎯 潜在回填候选分析")
-        print("="*80)
+        print("=" * 80)
 
-        print(f"\n📊 回填候选统计:")
-        print(f"   已结束比赛 (FT/AET/PEN/finished): {candidates.get('finished_matches', 0)}")
-        print(f"   数据不完整 (NULL/partial/basic): {candidates.get('incomplete_data', 0)}")
-        print(f"   组合候选 (已结束 + 数据不完整): {candidates.get('combined_candidates', 0)}")
+        print("\n📊 回填候选统计:")
+        print(
+            f"   已结束比赛 (FT/AET/PEN/finished): {candidates.get('finished_matches', 0)}"
+        )
+        print(
+            f"   数据不完整 (NULL/partial/basic): {candidates.get('incomplete_data', 0)}"
+        )
+        print(
+            f"   组合候选 (已结束 + 数据不完整): {candidates.get('combined_candidates', 0)}"
+        )
         print(f"   所有有 fotmob_id 的比赛: {candidates.get('all_statuses', 0)}")
 
         # 计算覆盖率
-        all_matches = candidates.get('all_statuses', 0)
+        all_matches = candidates.get("all_statuses", 0)
         if all_matches > 0:
-            candidate_percentage = (candidates.get('combined_candidates', 0) / all_matches) * 100
-            finished_percentage = (candidates.get('finished_matches', 0) / all_matches) * 100
-            incomplete_percentage = (candidates.get('incomplete_data', 0) / all_matches) * 100
+            candidate_percentage = (
+                candidates.get("combined_candidates", 0) / all_matches
+            ) * 100
+            finished_percentage = (
+                candidates.get("finished_matches", 0) / all_matches
+            ) * 100
+            incomplete_percentage = (
+                candidates.get("incomplete_data", 0) / all_matches
+            ) * 100
 
-            print(f"\n📈 覆盖率分析:")
+            print("\n📈 覆盖率分析:")
             print(f"   已结束比赛占比: {finished_percentage:.2f}%")
             print(f"   数据不完整占比: {incomplete_percentage:.2f}%")
             print(f"   回填候选占比: {candidate_percentage:.2f}%")
 
-    def create_visualization(self, status_dist: List[Dict], completeness_dist: List[Dict]) -> None:
+    def create_visualization(
+        self, status_dist: List[Dict], completeness_dist: List[Dict]
+    ) -> None:
         """创建可视化图表"""
         if not HAS_VISUALIZATION or not self.config.output_charts:
             return
@@ -365,38 +386,40 @@ class DatabaseInspector:
 
             # 创建图表
             fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(15, 12))
-            fig.suptitle('Database Data Distribution Analysis', fontsize=16)
+            fig.suptitle("Database Data Distribution Analysis", fontsize=16)
 
             # Status 分布饼图
-            status_labels = [item['status'] for item in status_dist]
-            status_counts = [item['count'] for item in status_dist]
-            ax1.pie(status_counts, labels=status_labels, autopct='%1.1f%%')
-            ax1.set_title('Status Distribution')
+            status_labels = [item["status"] for item in status_dist]
+            status_counts = [item["count"] for item in status_dist]
+            ax1.pie(status_counts, labels=status_labels, autopct="%1.1f%%")
+            ax1.set_title("Status Distribution")
 
             # Status 分布柱状图
             ax2.bar(status_labels, status_counts)
-            ax2.set_title('Status Distribution (Bar)')
-            ax2.set_xlabel('Status')
-            ax2.set_ylabel('Count')
-            plt.setp(ax2.get_xticklabels(), rotation=45, ha='right')
+            ax2.set_title("Status Distribution (Bar)")
+            ax2.set_xlabel("Status")
+            ax2.set_ylabel("Count")
+            plt.setp(ax2.get_xticklabels(), rotation=45, ha="right")
 
             # Data Completeness 分布饼图
-            completeness_labels = [item['data_completeness'] for item in completeness_dist]
-            completeness_counts = [item['count'] for item in completeness_dist]
-            ax3.pie(completeness_counts, labels=completeness_labels, autopct='%1.1f%%')
-            ax3.set_title('Data Completeness Distribution')
+            completeness_labels = [
+                item["data_completeness"] for item in completeness_dist
+            ]
+            completeness_counts = [item["count"] for item in completeness_dist]
+            ax3.pie(completeness_counts, labels=completeness_labels, autopct="%1.1f%%")
+            ax3.set_title("Data Completeness Distribution")
 
             # Data Completeness 分布柱状图
             ax4.bar(completeness_labels, completeness_counts)
-            ax4.set_title('Data Completeness Distribution (Bar)')
-            ax4.set_xlabel('Data Completeness')
-            ax4.set_ylabel('Count')
-            plt.setp(ax4.get_xticklabels(), rotation=45, ha='right')
+            ax4.set_title("Data Completeness Distribution (Bar)")
+            ax4.set_xlabel("Data Completeness")
+            ax4.set_ylabel("Count")
+            plt.setp(ax4.get_xticklabels(), rotation=45, ha="right")
 
             # 调整布局并保存
             plt.tight_layout()
             output_file = self.output_dir / "database_distribution_analysis.png"
-            plt.savefig(output_file, dpi=300, bbox_inches='tight')
+            plt.savefig(output_file, dpi=300, bbox_inches="tight")
             plt.close()
 
             logger.info(f"✅ 图表已保存到: {output_file}")
@@ -426,10 +449,14 @@ class DatabaseInspector:
             candidates = await self.get_potential_backfill_candidates()
 
             # 5. 打印结果
-            print(f"\n🔌 FotMob ID 覆盖率统计:")
+            print("\n🔌 FotMob ID 覆盖率统计:")
             print(f"   总比赛数: {fotmob_stats.get('total_matches', 0)}")
-            print(f"   有 FotMob ID 的比赛: {fotmob_stats.get('matches_with_fotmob_id', 0)}")
-            print(f"   无 FotMob ID 的比赛: {fotmob_stats.get('matches_without_fotmob_id', 0)}")
+            print(
+                f"   有 FotMob ID 的比赛: {fotmob_stats.get('matches_with_fotmob_id', 0)}"
+            )
+            print(
+                f"   无 FotMob ID 的比赛: {fotmob_stats.get('matches_without_fotmob_id', 0)}"
+            )
             print(f"   覆盖率: {fotmob_stats.get('fotmob_id_coverage', 0)}%")
 
             self.print_distributions(status_dist, completeness_dist)
@@ -440,11 +467,11 @@ class DatabaseInspector:
             self.create_visualization(status_dist, completeness_dist)
 
             # 7. 输出建议
-            print("\n" + "="*80)
+            print("\n" + "=" * 80)
             print("💡 调试建议")
-            print("="*80)
+            print("=" * 80)
 
-            if candidates.get('combined_candidates', 0) == 0:
+            if candidates.get("combined_candidates", 0) == 0:
                 print("⚠️ 没有找到符合当前筛选条件的回填候选！")
                 print("\n🔧 可能的解决方案:")
                 print("1. 检查 status 字段 - 当前筛选条件可能过于严格")
@@ -453,19 +480,23 @@ class DatabaseInspector:
                 print("4. 调整 generate_backfill_queue.py 中的筛选条件")
 
                 if status_dist:
-                    print(f"\n📋 建议 status 值:")
+                    print("\n📋 建议 status 值:")
                     for item in status_dist:
                         print(f"   '{item['status']}' (出现 {item['count']} 次)")
 
                 if completeness_dist:
-                    print(f"\n📋 建议 data_completeness 值:")
+                    print("\n📋 建议 data_completeness 值:")
                     for item in completeness_dist:
-                        print(f"   '{item['data_completeness']}' (出现 {item['count']} 次)")
+                        print(
+                            f"   '{item['data_completeness']}' (出现 {item['count']} 次)"
+                        )
             else:
                 print(f"✅ 找到 {candidates.get('combined_candidates', 0)} 个回填候选")
-                print("💡 如果这个数字符合预期，请检查 generate_backfill_queue.py 的筛选逻辑")
+                print(
+                    "💡 如果这个数字符合预期，请检查 generate_backfill_queue.py 的筛选逻辑"
+                )
 
-            print("="*80)
+            print("=" * 80)
             logger.info("🎉 数据库诊断完成！")
 
         except Exception as e:
@@ -479,32 +510,23 @@ async def main():
 
     parser = argparse.ArgumentParser(
         description="数据库数据诊断脚本",
-        formatter_class=argparse.RawDescriptionHelpFormatter
+        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
 
     parser.add_argument(
-        '--sample-size', '-s',
-        type=int,
-        default=10,
-        help='采样记录数量 (默认: 10)'
+        "--sample-size", "-s", type=int, default=10, help="采样记录数量 (默认: 10)"
     )
 
     parser.add_argument(
-        '--show-all-fields', '-a',
-        action='store_true',
-        help='显示采样记录的所有字段'
+        "--show-all-fields", "-a", action="store_true", help="显示采样记录的所有字段"
     )
 
     parser.add_argument(
-        '--no-charts', '-nc',
-        action='store_true',
-        help='不生成可视化图表'
+        "--no-charts", "-nc", action="store_true", help="不生成可视化图表"
     )
 
     parser.add_argument(
-        '--output-dir', '-o',
-        default='data',
-        help='输出目录 (默认: data)'
+        "--output-dir", "-o", default="data", help="输出目录 (默认: data)"
     )
 
     args = parser.parse_args()
@@ -514,7 +536,7 @@ async def main():
         sample_size=args.sample_size,
         show_all_fields=args.show_all_fields,
         output_charts=not args.no_charts,
-        output_dir=args.output_dir
+        output_dir=args.output_dir,
     )
 
     # 创建诊断器并运行

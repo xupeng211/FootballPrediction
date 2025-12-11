@@ -6,7 +6,6 @@
 import sys
 import pandas as pd
 import numpy as np
-from datetime import datetime, timedelta
 import json
 from pathlib import Path
 
@@ -15,10 +14,10 @@ project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
 
 # 导入必要的库
-from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+from sklearn.metrics import accuracy_score, classification_report
 import joblib
 import logging
 

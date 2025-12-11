@@ -14,8 +14,7 @@ FotMob League ID Fetcher - Standardized League Configuration Center
 import asyncio
 import json
 import logging
-import time
-from typing import Dict, List, Optional, Tuple
+from typing import Optional
 from pathlib import Path
 from dataclasses import dataclass
 from datetime import datetime
@@ -25,14 +24,15 @@ from tenacity import retry, stop_after_attempt, wait_exponential
 
 # 设置日志
 logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
+
 
 @dataclass
 class LeagueInfo:
     """联赛信息数据类"""
+
     name: str
     id: int
     tier: int
@@ -47,8 +47,9 @@ class LeagueInfo:
             "id": self.id,
             "tier": self.tier,
             "country": self.country,
-            "type": self.type
+            "type": self.type,
         }
+
 
 class FotMobLeagueFetcher:
     """FotMob联赛ID采集器"""
@@ -84,9 +85,10 @@ class FotMobLeagueFetcher:
             LeagueInfo("Bundesliga", 0, 1, "Germany", "league", "Bundesliga"),
             LeagueInfo("Serie A", 0, 1, "Italy", "league", "Serie A"),
             LeagueInfo("Ligue 1", 0, 1, "France", "league", "Ligue 1"),
-            LeagueInfo("Champions League", 0, 1, "International", "cup", "Champions League"),
+            LeagueInfo(
+                "Champions League", 0, 1, "International", "cup", "Champions League"
+            ),
             LeagueInfo("Europa League", 0, 1, "International", "cup", "Europa League"),
-
             # Tier 2 (Summer Leagues & Global)
             LeagueInfo("Brasileirão Série A", 0, 2, "Brazil", "league", "Brasileirão"),
             LeagueInfo("MLS", 0, 2, "USA", "league", "MLS"),
@@ -94,7 +96,6 @@ class FotMobLeagueFetcher:
             LeagueInfo("K League 1", 0, 2, "South Korea", "league", "K League"),
             LeagueInfo("Allsvenskan", 0, 2, "Sweden", "league", "Allsvenskan"),
             LeagueInfo("Eliteserien", 0, 2, "Norway", "league", "Eliteserien"),
-
             # Tier 3 (Cups & Second Tier)
             LeagueInfo("FA Cup", 0, 3, "England", "cup", "FA Cup"),
             LeagueInfo("EFL Cup", 0, 3, "England", "cup", "Carabao Cup"),
@@ -104,13 +105,26 @@ class FotMobLeagueFetcher:
             LeagueInfo("Championship", 0, 3, "England", "league", "Championship"),
             LeagueInfo("Eredivisie", 0, 3, "Netherlands", "league", "Eredivisie"),
             LeagueInfo("Liga Portugal", 0, 3, "Portugal", "league", "Liga Portugal"),
-
             # Tier 4 (International - Valid for True Skill)
             LeagueInfo("World Cup", 0, 4, "International", "cup", "World Cup"),
             LeagueInfo("UEFA Euro", 0, 4, "International", "cup", "Euro"),
             LeagueInfo("Copa America", 0, 4, "International", "cup", "Copa America"),
-            LeagueInfo("World Cup Qualification UEFA", 0, 4, "International", "cup", "World Cup Qualification UEFA"),
-            LeagueInfo("World Cup Qualification CONMEBOL", 0, 4, "International", "cup", "World Cup Qualification CONMEBOL"),
+            LeagueInfo(
+                "World Cup Qualification UEFA",
+                0,
+                4,
+                "International",
+                "cup",
+                "World Cup Qualification UEFA",
+            ),
+            LeagueInfo(
+                "World Cup Qualification CONMEBOL",
+                0,
+                4,
+                "International",
+                "cup",
+                "World Cup Qualification CONMEBOL",
+            ),
         ]
 
     async def initialize(self):
@@ -118,9 +132,7 @@ class FotMobLeagueFetcher:
         if self.session is None:
             timeout = httpx.Timeout(self.timeout)
             self.session = httpx.AsyncClient(
-                headers=self.headers,
-                timeout=timeout,
-                follow_redirects=True
+                headers=self.headers, timeout=timeout, follow_redirects=True
             )
             logger.info("✅ FotMob联赛采集器初始化完成")
 
@@ -132,8 +144,7 @@ class FotMobLeagueFetcher:
             logger.info("🔒 联赛采集器已关闭")
 
     @retry(
-        stop=stop_after_attempt(3),
-        wait=wait_exponential(multiplier=1.5, min=2, max=10)
+        stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1.5, min=2, max=10)
     )
     async def _search_league(self, query: str) -> Optional[dict]:
         """
@@ -196,13 +207,25 @@ class FotMobLeagueFetcher:
         """
         # 预定义的一些常用联赛ID (基于现有代码和公开信息)
         known_leagues = {
-            "Premier League": {"id": 47, "name": "Premier League", "country": "England"},
+            "Premier League": {
+                "id": 47,
+                "name": "Premier League",
+                "country": "England",
+            },
             "La Liga": {"id": 87, "name": "La Liga", "country": "Spain"},
             "Bundesliga": {"id": 54, "name": "Bundesliga", "country": "Germany"},
             "Serie A": {"id": 55, "name": "Serie A", "country": "Italy"},
             "Ligue 1": {"id": 53, "name": "Ligue 1", "country": "France"},
-            "Champions League": {"id": 42, "name": "Champions League", "country": "International"},
-            "Europa League": {"id": 43, "name": "Europa League", "country": "International"},
+            "Champions League": {
+                "id": 42,
+                "name": "Champions League",
+                "country": "International",
+            },
+            "Europa League": {
+                "id": 43,
+                "name": "Europa League",
+                "country": "International",
+            },
             "FA Cup": {"id": 48, "name": "FA Cup", "country": "England"},
             "EFL Cup": {"id": 113, "name": "Carabao Cup", "country": "England"},
             "World Cup": {"id": 106, "name": "World Cup", "country": "International"},
@@ -213,7 +236,10 @@ class FotMobLeagueFetcher:
 
         # 精确匹配或模糊匹配
         for league_name, league_data in known_leagues.items():
-            if query.lower() in league_name.lower() or league_name.lower() in query.lower():
+            if (
+                query.lower() in league_name.lower()
+                or league_name.lower() in query.lower()
+            ):
                 logger.info(f"✅ 备用搜索成功: {query} -> ID {league_data['id']}")
                 # 返回模拟的搜索结果格式
                 return {
@@ -222,14 +248,16 @@ class FotMobLeagueFetcher:
                             "id": league_data["id"],
                             "name": league_data["name"],
                             "country": league_data["country"],
-                            "type": "league"
+                            "type": "league",
                         }
                     ]
                 }
 
         return None
 
-    def _extract_league_id(self, search_result: dict, league_info: LeagueInfo) -> Optional[int]:
+    def _extract_league_id(
+        self, search_result: dict, league_info: LeagueInfo
+    ) -> Optional[int]:
         """
         从搜索结果中提取联赛ID
 
@@ -248,7 +276,7 @@ class FotMobLeagueFetcher:
             ["suggestions"],  # 常见的搜索建议格式
             ["data"],
             ["leagues"],
-            ["results"]
+            ["results"],
         ]
 
         for path in possible_paths:
@@ -268,7 +296,9 @@ class FotMobLeagueFetcher:
                             if target_name in item_name or item_name in target_name:
                                 league_id = item.get("id")
                                 if league_id:
-                                    logger.info(f"✅ 找到匹配: {league_info.name} -> ID {league_id}")
+                                    logger.info(
+                                        f"✅ 找到匹配: {league_info.name} -> ID {league_id}"
+                                    )
                                     return int(league_id)
 
             except (KeyError, TypeError):
@@ -289,7 +319,9 @@ class FotMobLeagueFetcher:
         successful_count = 0
 
         for i, league_info in enumerate(self.target_leagues):
-            logger.info(f"📊 [{i+1}/{len(self.target_leagues)}] 处理: {league_info.name}")
+            logger.info(
+                f"📊 [{i + 1}/{len(self.target_leagues)}] 处理: {league_info.name}"
+            )
 
             try:
                 # 搜索联赛
@@ -306,7 +338,7 @@ class FotMobLeagueFetcher:
                         tier=league_info.tier,
                         country=league_info.country,
                         type=league_info.type,
-                        search_query=league_info.search_query
+                        search_query=league_info.search_query,
                     )
                     updated_leagues.append(updated_league)
                     successful_count += 1
@@ -325,11 +357,15 @@ class FotMobLeagueFetcher:
                 updated_leagues.append(league_info)
 
         success_rate = (successful_count / len(self.target_leagues)) * 100
-        logger.info(f"📊 联赛ID获取完成: {successful_count}/{len(self.target_leagues)} ({success_rate:.1f}%)")
+        logger.info(
+            f"📊 联赛ID获取完成: {successful_count}/{len(self.target_leagues)} ({success_rate:.1f}%)"
+        )
 
         return updated_leagues
 
-    def save_config(self, leagues: list[LeagueInfo], output_path: str = "config/target_leagues.json"):
+    def save_config(
+        self, leagues: list[LeagueInfo], output_path: str = "config/target_leagues.json"
+    ):
         """
         保存联赛配置到JSON文件
 
@@ -346,9 +382,9 @@ class FotMobLeagueFetcher:
                 "generated_at": datetime.now().isoformat(),
                 "total_leagues": len(leagues),
                 "successful_ids": len([l for l in leagues if l.id > 0]),
-                "script_version": "1.0.0"
+                "script_version": "1.0.0",
             },
-            "leagues": [league.to_dict() for league in leagues]
+            "leagues": [league.to_dict() for league in leagues],
         }
 
         # 按tier分组统计
@@ -364,7 +400,7 @@ class FotMobLeagueFetcher:
         config["metadata"]["tier_statistics"] = tier_stats
 
         # 写入文件
-        with open(output_path, 'w', encoding='utf-8') as f:
+        with open(output_path, "w", encoding="utf-8") as f:
             json.dump(config, f, indent=2, ensure_ascii=False)
 
         logger.info(f"✅ 配置文件已保存: {output_path}")
@@ -391,6 +427,7 @@ class FotMobLeagueFetcher:
         finally:
             await self.close()
 
+
 async def main():
     """主函数"""
     logger.info("🚀 启动FotMob联赛ID采集工具")
@@ -399,6 +436,7 @@ async def main():
     await fetcher.run()
 
     logger.info("✅ 任务完成，配置文件已生成到 config/target_leagues.json")
+
 
 if __name__ == "__main__":
     # 运行主程序

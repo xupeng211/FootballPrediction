@@ -8,12 +8,8 @@ Version: 1.0.0
 
 import random
 import json
-import time
-from datetime import datetime
-from typing import Dict, List
 
 from locust import HttpUser, task, between
-from locust.exception import RescheduleTask
 
 
 class FootballPredictionAPIUser(HttpUser):
@@ -38,9 +34,11 @@ class FootballPredictionAPIUser(HttpUser):
         """预热缓存，确保热门数据在缓存中."""
         try:
             for match_id in self.HOT_MATCH_IDS[:5]:  # 只预热前5个
-                self.client.get(f"/api/v1/predictions/match/{match_id}",
-                              name="Cache Warmup",
-                              catch_response=True)
+                self.client.get(
+                    f"/api/v1/predictions/match/{match_id}",
+                    name="Cache Warmup",
+                    catch_response=True,
+                )
         except Exception as e:
             print(f"⚠️ 缓存预热失败: {e}")
 
@@ -52,7 +50,7 @@ class FootballPredictionAPIUser(HttpUser):
         with self.client.get(
             f"/api/v1/predictions/match/{match_id}",
             name="/api/v1/predictions/match/{match_id} [HOT]",
-            catch_response=True
+            catch_response=True,
         ) as response:
             if response.status_code == 200:
                 # 验证响应格式
@@ -78,7 +76,7 @@ class FootballPredictionAPIUser(HttpUser):
         with self.client.get(
             f"/api/v1/predictions/match/{match_id}",
             name="/api/v1/predictions/match/{match_id} [COLD]",
-            catch_response=True
+            catch_response=True,
         ) as response:
             if response.status_code == 200:
                 # 验证响应格式
@@ -105,7 +103,7 @@ class FootballPredictionAPIUser(HttpUser):
         with self.client.get(
             f"/api/v1/predictions?limit={limit}&offset={offset}",
             name="/api/v1/predictions [BATCH]",
-            catch_response=True
+            catch_response=True,
         ) as response:
             if response.status_code == 200:
                 try:
@@ -123,9 +121,7 @@ class FootballPredictionAPIUser(HttpUser):
     def health_check(self):
         """系统健康检查."""
         with self.client.get(
-            "/health",
-            name="/health [SYSTEM]",
-            catch_response=True
+            "/health", name="/health [SYSTEM]", catch_response=True
         ) as response:
             if response.status_code == 200:
                 try:
@@ -143,9 +139,7 @@ class FootballPredictionAPIUser(HttpUser):
     def database_health_check(self):
         """数据库健康检查."""
         with self.client.get(
-            "/health/database",
-            name="/health/database [DB]",
-            catch_response=True
+            "/health/database", name="/health/database [DB]", catch_response=True
         ) as response:
             if response.status_code == 200:
                 response.success()
@@ -156,9 +150,7 @@ class FootballPredictionAPIUser(HttpUser):
     def system_metrics(self):
         """获取系统指标."""
         with self.client.get(
-            "/api/v1/metrics",
-            name="/api/v1/metrics [METRICS]",
-            catch_response=True
+            "/api/v1/metrics", name="/api/v1/metrics [METRICS]", catch_response=True
         ) as response:
             if response.status_code == 200:
                 response.success()
@@ -197,17 +189,13 @@ class APIUserStressTest(HttpUser):
         self.client.get(
             f"/api/v1/predictions/match/{match_id}",
             name="[STRESS] /api/v1/predictions/match",
-            catch_response=True
+            catch_response=True,
         )
 
     @task(5)  # 5%的权重 - 健康检查
     def stress_health_check(self):
         """压力测试下的健康检查."""
-        self.client.get(
-            "/health",
-            name="[STRESS] /health",
-            catch_response=True
-        )
+        self.client.get("/health", name="[STRESS] /health", catch_response=True)
 
 
 # 如果要使用Web UI模式，可以取消下面的注释

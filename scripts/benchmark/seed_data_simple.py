@@ -11,13 +11,11 @@ import json
 import random
 import sys
 from datetime import datetime, timedelta
-from typing import Any, Dict, List
+from typing import Any
 
 # 添加项目路径
-sys.path.insert(0, '/app')
+sys.path.insert(0, "/app")
 
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, text
 from src.database.async_manager import get_db_session
 
 
@@ -39,10 +37,12 @@ class SimpleBenchmarkDataSeeder:
                 "id": i,
                 "name": f"Team {chr(64 + i % 26)}{chr(65 + i % 26)}{i}",
                 "short_name": f"T{i:02d}",
-                "country": random.choice(["England", "Spain", "Germany", "Italy", "France"]),
+                "country": random.choice(
+                    ["England", "Spain", "Germany", "Italy", "France"]
+                ),
                 "founded": random.randint(1880, 2020),
                 "stadium_capacity": random.randint(20000, 80000),
-                "market_value": random.randint(50_000_000, 500_000_000)
+                "market_value": random.randint(50_000_000, 500_000_000),
             }
             teams.append(team)
 
@@ -83,8 +83,8 @@ class SimpleBenchmarkDataSeeder:
                             team["stadium_capacity"],
                             team["market_value"],
                             datetime.now(),
-                            datetime.now()
-                        )
+                            datetime.now(),
+                        ),
                     )
                     success_count += 1
 
@@ -112,7 +112,9 @@ class SimpleBenchmarkDataSeeder:
         for i in range(1, count + 1):
             # 随机选择主客队
             home_team = random.choice(self.teams)
-            away_team = random.choice([t for t in self.teams if t["id"] != home_team["id"]])
+            away_team = random.choice(
+                [t for t in self.teams if t["id"] != home_team["id"]]
+            )
 
             # 生成比赛日期
             match_date = start_date + timedelta(days=random.randint(0, 1460))  # 4年内
@@ -140,7 +142,9 @@ class SimpleBenchmarkDataSeeder:
                 "away_score": away_score,
                 "final_score": final_score,
                 "status": status,
-                "attendance": random.randint(15000, 75000) if status == "completed" else None
+                "attendance": random.randint(15000, 75000)
+                if status == "completed"
+                else None,
             }
             matches.append(match)
 
@@ -157,7 +161,7 @@ class SimpleBenchmarkDataSeeder:
             batch_size = 50
 
             for i in range(0, len(matches), batch_size):
-                batch = matches[i:i + batch_size]
+                batch = matches[i : i + batch_size]
 
                 for match in batch:
                     try:
@@ -192,8 +196,8 @@ class SimpleBenchmarkDataSeeder:
                                 match["status"],
                                 match["attendance"],
                                 datetime.now(),
-                                datetime.now()
-                            )
+                                datetime.now(),
+                            ),
                         )
                         success_count += 1
 
@@ -229,13 +233,13 @@ class SimpleBenchmarkDataSeeder:
                         "momentum_factor": round(random.uniform(-0.5, 0.5), 3),
                         "fatigue_index": round(random.uniform(0.0, 1.0), 3),
                         "generated_at": datetime.now().isoformat(),
-                        "feature_version": "v2.0"
+                        "feature_version": "v2.0",
                     }
 
                     # 将特征存储到matches表的features字段
                     await session.execute(
                         "UPDATE matches SET features = %s WHERE id = %s",
-                        (json.dumps(features), match["id"])
+                        (json.dumps(features), match["id"]),
                     )
                     success_count += 1
 
@@ -260,22 +264,26 @@ class SimpleBenchmarkDataSeeder:
                 "seasons": sorted({m["season_id"] for m in self.matches}),
                 "competitions": sorted({m["competition"] for m in self.matches}),
                 "match_status": {
-                    "completed": len([m for m in self.matches if m["status"] == "completed"]),
-                    "scheduled": len([m for m in self.matches if m["status"] == "scheduled"])
-                }
+                    "completed": len(
+                        [m for m in self.matches if m["status"] == "completed"]
+                    ),
+                    "scheduled": len(
+                        [m for m in self.matches if m["status"] == "scheduled"]
+                    ),
+                },
             },
             "generation_config": {
                 "teams_target": 50,
                 "matches_target": 1000,
-                "completion_rate": random.uniform(0.7, 0.75)  # 70-75%完成率
-            }
+                "completion_rate": random.uniform(0.7, 0.75),  # 70-75%完成率
+            },
         }
 
         # 保存报告
         report_path = "/app/artifacts/benchmark_seeding_report.json"
 
         try:
-            with open(report_path, 'w', encoding='utf-8') as f:
+            with open(report_path, "w", encoding="utf-8") as f:
                 json.dump(report, f, indent=2, ensure_ascii=False)
 
             print(f"   📊 球队数量: {report['data_summary']['teams_count']}")
@@ -306,12 +314,16 @@ class SimpleBenchmarkDataSeeder:
                 print(f"   📊 数据库比赛数量: {matches_count}")
 
                 # 验证特征数据
-                result = await session.execute("SELECT COUNT(*) FROM matches WHERE features IS NOT NULL")
+                result = await session.execute(
+                    "SELECT COUNT(*) FROM matches WHERE features IS NOT NULL"
+                )
                 features_count = result.scalar()
                 print(f"   📊 特征数据数量: {features_count}")
 
                 # 验证赛季分布
-                result = await session.execute("SELECT DISTINCT season_id FROM matches ORDER BY season_id")
+                result = await session.execute(
+                    "SELECT DISTINCT season_id FROM matches ORDER BY season_id"
+                )
                 seasons = [row[0] for row in result.fetchall()]
                 print(f"   📊 赛季分布: {seasons}")
 
@@ -355,13 +367,15 @@ class SimpleBenchmarkDataSeeder:
             print(f"✅ 数据验证: {'通过' if verification_passed else '失败'}")
 
             overall_success = (
-                teams_saved > 0 and
-                matches_saved > 0 and
-                features_saved > 0 and
-                verification_passed
+                teams_saved > 0
+                and matches_saved > 0
+                and features_saved > 0
+                and verification_passed
             )
 
-            print(f"\n🏆 总体状态: {'✅ 全部成功' if overall_success else '⚠️ 部分失败'}")
+            print(
+                f"\n🏆 总体状态: {'✅ 全部成功' if overall_success else '⚠️ 部分失败'}"
+            )
 
             if report:
                 print("📊 详细报告: artifacts/benchmark_seeding_report.json")
@@ -371,6 +385,7 @@ class SimpleBenchmarkDataSeeder:
         except Exception as e:
             print(f"\n❌ 数据生成过程中出现错误: {e}")
             import traceback
+
             traceback.print_exc()
             return False
 

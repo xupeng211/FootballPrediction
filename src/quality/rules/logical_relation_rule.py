@@ -17,14 +17,11 @@ Logical Relation Rule - 逻辑关系检查规则
 """
 
 import logging
-from typing import Any,  Optional
+from typing import Any, Optional
 
-from collections.abc import Callable
 
 from src.quality.quality_protocol import (
     LogicalRelationRule as LogicalRelationRuleProtocol,
-    DataQualityResult,
-    RuleSeverity,
 )
 
 logger = logging.getLogger(__name__)
@@ -284,9 +281,7 @@ class LogicalRelationRule(LogicalRelationRuleProtocol):
         value_b = features[field_b]
 
         # 检查字段值是否为数值类型
-        if not isinstance(value_a, int | float) or not isinstance(
-            value_b, int | float
-        ):
+        if not isinstance(value_a, int | float) or not isinstance(value_b, int | float):
             return None  # 非数值类型由 TypeRule 检查
 
         # 获取关系检查函数

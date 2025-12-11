@@ -9,7 +9,7 @@ import logging
 import time
 import json
 from datetime import datetime
-from typing import Any,  Optional
+from typing import Any, Optional
 from pathlib import Path
 from dataclasses import dataclass, asdict
 
@@ -338,8 +338,7 @@ class TrainingContext:
             self.monitor.logger.log_error(exc_val, f"训练失败 - 算法: {self.algorithm}")
         else:
             self.monitor.logger.log_info(
-                f"训练上下文结束 - 算法: {self.algorithm}, "
-                f"耗时: {training_time:.2f}s"
+                f"训练上下文结束 - 算法: {self.algorithm}, 耗时: {training_time:.2f}s"
             )
 
         # 记录系统指标

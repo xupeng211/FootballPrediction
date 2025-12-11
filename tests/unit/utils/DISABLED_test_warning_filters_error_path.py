@@ -6,7 +6,6 @@
 """
 
 import pytest
-from typing import Optional
 
 
 # 基础测试类，确保文件结构完整

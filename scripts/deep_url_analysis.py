@@ -7,7 +7,6 @@ Deep analysis of FotMob URL patterns and parameters
 import requests
 import re
 import json
-from urllib.parse import urljoin, urlparse, parse_qs
 
 
 def test_various_url_patterns():
@@ -113,7 +112,7 @@ def test_various_url_patterns():
             print(f"     ❌ 异常: {e}")
 
     # 显示最佳URL
-    print(f"\n{'='*70}")
+    print(f"\n{'=' * 70}")
     print("🏆 最佳URL排名:")
     best_urls.sort(key=lambda x: x["score"], reverse=True)
 
@@ -245,14 +244,14 @@ def main():
         # 深度分析最佳URL
         analyze_response_content(best_url_info["url"])
 
-        print(f"\n{'='*70}")
+        print(f"\n{'=' * 70}")
         print("🎯 结论:")
         print(f"最佳URL: {best_url_info['url']}")
         print(f"评分: {best_url_info['score']}/8")
         print("建议: 使用此URL格式进行数据采集")
 
     else:
-        print(f"\n{'='*70}")
+        print(f"\n{'=' * 70}")
         print("❌ 未找到有效的URL模式")
         print("建议: 需要进一步调试或采用其他方法")
 

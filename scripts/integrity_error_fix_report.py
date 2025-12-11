@@ -4,6 +4,7 @@ IntegrityError修复完成报告
 IntegrityError Fix Completion Report
 """
 
+
 def generate_fix_report():
     """生成IntegrityError修复完成报告"""
 
@@ -181,6 +182,7 @@ def generate_fix_report():
     print("🎉 IntegrityError修复任务圆满完成!")
     print("🚀 系统已准备好处理各种时间状态的比赛数据!")
     print("=" * 70)
+
 
 if __name__ == "__main__":
     generate_fix_report()

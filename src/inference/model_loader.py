@@ -16,13 +16,14 @@ import json
 import pickle
 import logging
 from pathlib import Path
-from typing import List, Dict, Any, Optional
+from typing import Dict, Any
 import numpy as np
-import pandas as pd
 import xgboost as xgb
-from sklearn.preprocessing import LabelEncoder
 
-from ..features.enhanced_feature_extractor import EnhancedFeatureExtractor, FeatureConfig
+from ..features.enhanced_feature_extractor import (
+    EnhancedFeatureExtractor,
+    FeatureConfig,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -70,7 +71,7 @@ class ModelLoader:
             if not encoder_path.exists():
                 raise FileNotFoundError(f"编码器文件不存在: {encoder_path}")
 
-            with open(encoder_path, 'rb') as f:
+            with open(encoder_path, "rb") as f:
                 self.label_encoder = pickle.load(f)
             logger.info(f"   ✅ LabelEncoder已加载: {encoder_path}")
 
@@ -79,17 +80,17 @@ class ModelLoader:
             if not features_path.exists():
                 raise FileNotFoundError(f"特征文件不存在: {features_path}")
 
-            with open(features_path, 'r') as f:
+            with open(features_path, "r") as f:
                 features_data = json.load(f)
-                self.feature_columns = features_data['feature_columns']
+                self.feature_columns = features_data["feature_columns"]
             logger.info(f"   ✅ 特征列表已加载: {len(self.feature_columns)}个特征")
 
             # 4. 加载模型元数据
             metadata_path = models_dir / f"{model_name}_metadata.json"
             if metadata_path.exists():
-                with open(metadata_path, 'r') as f:
+                with open(metadata_path, "r") as f:
                     self.model_metadata = json.load(f)
-                logger.info(f"   ✅ 模型元数据已加载")
+                logger.info("   ✅ 模型元数据已加载")
 
             # 5. 初始化特征提取器
             config = FeatureConfig(
@@ -97,10 +98,10 @@ class ModelLoader:
                 include_basic_stats=True,
                 include_advanced_stats=True,
                 include_context=True,
-                include_derived_features=True
+                include_derived_features=True,
             )
             self.feature_extractor = EnhancedFeatureExtractor(config)
-            logger.info(f"   ✅ 特征提取器已初始化")
+            logger.info("   ✅ 特征提取器已初始化")
 
             logger.info("🎉 所有模型工件加载完成!")
             return True
@@ -112,10 +113,10 @@ class ModelLoader:
     def is_loaded(self) -> bool:
         """检查模型是否已加载"""
         return (
-            self.model is not None and
-            self.label_encoder is not None and
-            self.feature_columns is not None and
-            self.feature_extractor is not None
+            self.model is not None
+            and self.label_encoder is not None
+            and self.feature_columns is not None
+            and self.feature_extractor is not None
         )
 
     def predict(self, match_data: Dict[str, Any]) -> Dict[str, Any]:
@@ -162,7 +163,9 @@ class ModelLoader:
             probabilities = self.model.predict_proba(X)[0]
 
             # 5. 解码预测结果
-            prediction_label = self.label_encoder.inverse_transform([prediction_encoded])[0]
+            prediction_label = self.label_encoder.inverse_transform(
+                [prediction_encoded]
+            )[0]
 
             # 6. 构建概率字典
             class_names = self.label_encoder.classes_
@@ -173,14 +176,14 @@ class ModelLoader:
             # 7. 确保概率和为1
             total_prob = sum(prob_dict.values())
             if total_prob > 0:
-                prob_dict = {k: v/total_prob for k, v in prob_dict.items()}
+                prob_dict = {k: v / total_prob for k, v in prob_dict.items()}
 
             return {
                 "prediction": prediction_label,
                 "probabilities": prob_dict,
                 "confidence": max(prob_dict.values()),
                 "feature_count": len(self.feature_columns),
-                "missing_features": len(missing_features)
+                "missing_features": len(missing_features),
             }
 
         except Exception as e:
@@ -196,8 +199,10 @@ class ModelLoader:
             "status": "loaded",
             "model_type": "XGBoost Classifier",
             "feature_count": len(self.feature_columns) if self.feature_columns else 0,
-            "target_classes": list(self.label_encoder.classes_) if self.label_encoder else [],
-            "model_metadata": self.model_metadata or {}
+            "target_classes": list(self.label_encoder.classes_)
+            if self.label_encoder
+            else [],
+            "model_metadata": self.model_metadata or {},
         }
 
         return info

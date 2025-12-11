@@ -16,11 +16,10 @@ import logging
 import sys
 import os
 import json
-import time
 import signal
 from pathlib import Path
-from typing import Optional,  Any
-from datetime import datetime, timedelta
+from typing import Any
+from datetime import datetime
 
 # 添加项目路径
 sys.path.append(str(Path(__file__).parent.parent.parent))
@@ -31,11 +30,11 @@ from sqlalchemy import text
 
 # 配置日志
 logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 
 logger = logging.getLogger(__name__)
+
 
 class L2WorkerDaemon:
     """L2 Worker 守护进程"""
@@ -48,7 +47,7 @@ class L2WorkerDaemon:
             "total_failed": 0,
             "last_batch_time": None,
             "consecutive_failures": 0,
-            "batches_processed": 0
+            "batches_processed": 0,
         }
         self.config = self._load_config()
         self.collector = None
@@ -64,10 +63,12 @@ class L2WorkerDaemon:
             "sleep_interval": int(os.getenv("L2_WORKER_SLEEP_INTERVAL", "10")),
             "max_concurrent": int(os.getenv("L2_WORKER_MAX_CONCURRENT", "5")),
             "max_consecutive_failures": int(os.getenv("L2_WORKER_MAX_FAILURES", "10")),
-            "health_check_interval": int(os.getenv("L2_WORKER_HEALTH_CHECK", "300")),  # 5分钟
+            "health_check_interval": int(
+                os.getenv("L2_WORKER_HEALTH_CHECK", "300")
+            ),  # 5分钟
             "timeout": int(os.getenv("L2_WORKER_TIMEOUT", "30")),
             "base_delay": float(os.getenv("L2_WORKER_BASE_DELAY", "1.5")),
-            "enable_jitter": os.getenv("L2_WORKER_JITTER", "true").lower() == "true"
+            "enable_jitter": os.getenv("L2_WORKER_JITTER", "true").lower() == "true",
         }
 
     def _signal_handler(self, signum, frame):
@@ -81,7 +82,10 @@ class L2WorkerDaemon:
             logger.info("🚀 初始化L2 Worker守护进程")
 
             # 初始化数据库
-            db_url = os.getenv("DATABASE_URL", "postgresql+asyncpg://postgres:postgres@db:5432/football_prediction")
+            db_url = os.getenv(
+                "DATABASE_URL",
+                "postgresql+asyncpg://postgres:postgres@db:5432/football_prediction",
+            )
             initialize_database(db_url)
             logger.info("✅ 数据库连接初始化完成")
 
@@ -91,7 +95,7 @@ class L2WorkerDaemon:
                 timeout=self.config["timeout"],
                 base_delay=self.config["base_delay"],
                 enable_proxy=False,
-                enable_jitter=self.config["enable_jitter"]
+                enable_jitter=self.config["enable_jitter"],
             )
 
             await self.collector.initialize()
@@ -147,7 +151,9 @@ class L2WorkerDaemon:
                     # 更新数据库
                     await self._update_match_data(fotmob_id, match_data)
 
-                    logger.info(f"✅ 成功: {fotmob_id} - xG: {match_data.xg_home} vs {match_data.xg_away}")
+                    logger.info(
+                        f"✅ 成功: {fotmob_id} - xG: {match_data.xg_home} vs {match_data.xg_away}"
+                    )
                     success_count += 1
                 else:
                     logger.warning(f"⚠️ 失败: {fotmob_id} - 数据采集失败")
@@ -197,19 +203,28 @@ class L2WorkerDaemon:
                 WHERE fotmob_id = :fotmob_id
             """)
 
-            await session.execute(update_query, {
-                "fotmob_id": fotmob_id,
-                "home_xg": match_data.xg_home,
-                "away_xg": match_data.xg_away,
-                "home_score": match_data.home_score,
-                "away_score": match_data.away_score,
-                "status": match_data.status,
-                "venue": match_data.venue,
-                "referee": match_data.referee,
-                "stats_json": json.dumps(match_data.stats_json) if match_data.stats_json else None,
-                "lineups_json": json.dumps(match_data.lineups_json) if match_data.lineups_json else None,
-                "environment_json": json.dumps(match_data.environment_json) if match_data.environment_json else None
-            })
+            await session.execute(
+                update_query,
+                {
+                    "fotmob_id": fotmob_id,
+                    "home_xg": match_data.xg_home,
+                    "away_xg": match_data.xg_away,
+                    "home_score": match_data.home_score,
+                    "away_score": match_data.away_score,
+                    "status": match_data.status,
+                    "venue": match_data.venue,
+                    "referee": match_data.referee,
+                    "stats_json": json.dumps(match_data.stats_json)
+                    if match_data.stats_json
+                    else None,
+                    "lineups_json": json.dumps(match_data.lineups_json)
+                    if match_data.lineups_json
+                    else None,
+                    "environment_json": json.dumps(match_data.environment_json)
+                    if match_data.environment_json
+                    else None,
+                },
+            )
 
             await session.commit()
 
@@ -243,7 +258,11 @@ class L2WorkerDaemon:
                 "total_matches": stats.total_matches,
                 "l2_completed": stats.l2_completed,
                 "l2_pending": stats.l2_pending,
-                "completion_rate": round(stats.l2_completed * 100.0 / stats.total_matches, 2) if stats.total_matches > 0 else 0
+                "completion_rate": round(
+                    stats.l2_completed * 100.0 / stats.total_matches, 2
+                )
+                if stats.total_matches > 0
+                else 0,
             }
 
     def print_status(self):
@@ -273,7 +292,9 @@ class L2WorkerDaemon:
             while self.running:
                 try:
                     # 健康检查
-                    if (datetime.now() - last_health_check).seconds > self.config["health_check_interval"]:
+                    if (datetime.now() - last_health_check).seconds > self.config[
+                        "health_check_interval"
+                    ]:
                         if not await self.health_check():
                             logger.error("❌ 健康检查失败，等待重试...")
                             await asyncio.sleep(60)  # 等待1分钟后重试
@@ -281,8 +302,13 @@ class L2WorkerDaemon:
                         last_health_check = datetime.now()
 
                     # 检查连续失败次数
-                    if self.stats["consecutive_failures"] >= self.config["max_consecutive_failures"]:
-                        logger.error(f"❌ 连续失败次数过多 ({self.stats['consecutive_failures']})，延长等待时间")
+                    if (
+                        self.stats["consecutive_failures"]
+                        >= self.config["max_consecutive_failures"]
+                    ):
+                        logger.error(
+                            f"❌ 连续失败次数过多 ({self.stats['consecutive_failures']})，延长等待时间"
+                        )
                         await asyncio.sleep(300)  # 等待5分钟
                         continue
 
@@ -295,8 +321,10 @@ class L2WorkerDaemon:
 
                         # 打印进度
                         db_stats = await self.get_database_stats()
-                        logger.info(f"📈 数据库进度: {db_stats['l2_completed']}/{db_stats['total_matches']} "
-                                  f"({db_stats['completion_rate']}%)")
+                        logger.info(
+                            f"📈 数据库进度: {db_stats['l2_completed']}/{db_stats['total_matches']} "
+                            f"({db_stats['completion_rate']}%)"
+                        )
 
                     else:
                         logger.info("🎯 没有待处理的比赛，休眠...")
@@ -329,6 +357,7 @@ class L2WorkerDaemon:
 
         logger.info("✅ L2 Worker守护进程已停止")
 
+
 async def main():
     """主函数"""
     daemon = L2WorkerDaemon()
@@ -341,6 +370,7 @@ async def main():
         sys.exit(1)
 
     return 0
+
 
 if __name__ == "__main__":
     try:

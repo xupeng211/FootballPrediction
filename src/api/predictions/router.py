@@ -319,9 +319,7 @@ async def get_match_predictions(match_id: int):
             prediction_result = await inference_service.predict_match(match_id)
         except TypeError as e:
             # 如果inference_service不是可调用的对象，返回错误
-            raise HTTPException(
-                status_code=500, detail=f"推理服务不可用: {str(e)}"
-            )
+            raise HTTPException(status_code=500, detail=f"推理服务不可用: {str(e)}")
 
         if not prediction_result.get("success", False):
             raise HTTPException(
@@ -366,9 +364,7 @@ async def get_match_predictions(match_id: int):
             model_name=response_data.get("model_name", "default_xgboost"),
             model_version=response_data.get("model_version", "mock_v1"),
             model_type=(
-                "MOCK"
-                if response_data.get("status") == "mock_data"
-                else "XGBOOST"
+                "MOCK" if response_data.get("status") == "mock_data" else "XGBOOST"
             ),
             # 元数据
             features_used=response_data.get("features_used", []),

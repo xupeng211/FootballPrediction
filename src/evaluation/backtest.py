@@ -13,8 +13,7 @@ import csv
 import numpy as np
 import pandas as pd
 from typing import Optional, Union, Any
-from collections.abc import Callable
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass
 from pathlib import Path
 from datetime import datetime
 import logging
@@ -567,7 +566,7 @@ class Backtester:
 
                 # 获取比赛日期
                 date = pred_row.get(
-                    "date", pred_row.get("match_date", f"2024-01-{i+1:02d}")
+                    "date", pred_row.get("match_date", f"2024-01-{i + 1:02d}")
                 )
 
                 # 模拟投注

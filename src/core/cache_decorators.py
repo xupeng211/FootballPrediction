@@ -13,7 +13,7 @@ import asyncio
 import functools
 import inspect
 import logging
-from typing import Any, Optional, Union
+from typing import Any, Optional
 from collections.abc import Callable
 
 from .cache_main import RedisCache, get_cache, cache_key_builder

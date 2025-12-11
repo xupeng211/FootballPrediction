@@ -16,20 +16,23 @@ Date: 2025-12-08
 """
 
 import asyncio
-import json
 import logging
 import random
 from datetime import datetime
-from typing import Dict, List, Any, Optional
+from typing import Any, Optional
 from dataclasses import dataclass
 
 # 配置日志
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
+
 
 @dataclass
 class AuditResult:
     """审计结果数据结构"""
+
     phase: str
     test_name: str
     status: str  # "PASS", "FAIL", "WARN"
@@ -41,6 +44,7 @@ class AuditResult:
         if self.timestamp is None:
             self.timestamp = datetime.now()
 
+
 class HybridHealthAuditor:
     """混合认证系统健康度审计器"""
 
@@ -50,31 +54,35 @@ class HybridHealthAuditor:
         self.sample_match = None
         self.auth_available = False
 
-    def add_result(self, phase: str, test_name: str, status: str, message: str, data: Optional[dict[str, Any]] = None):
+    def add_result(
+        self,
+        phase: str,
+        test_name: str,
+        status: str,
+        message: str,
+        data: Optional[dict[str, Any]] = None,
+    ):
         """添加审计结果"""
-        result = AuditResult(phase=phase, test_name=test_name, status=status, message=message, data=data)
+        result = AuditResult(
+            phase=phase, test_name=test_name, status=status, message=message, data=data
+        )
         self.results.append(result)
         return result
 
     def get_status_emoji(self, status: str) -> str:
         """获取状态表情符号"""
-        return {
-            "PASS": "✅",
-            "FAIL": "❌",
-            "WARN": "⚠️",
-            "INFO": "ℹ️"
-        }.get(status, "❓")
+        return {"PASS": "✅", "FAIL": "❌", "WARN": "⚠️", "INFO": "ℹ️"}.get(status, "❓")
 
     def print_header(self):
         """打印审计头部"""
-        print("🔍" + "="*79)
+        print("🔍" + "=" * 79)
         print("🔍 System Health Audit - 系统健康度审计 (混合认证版)")
-        print("🔍" + "="*79)
+        print("🔍" + "=" * 79)
         print("📋 审计目标: L1 赛程模块 + L2 高阶数据模块")
         print("📋 审测对象: 英超 2024/2025 赛季 (League ID: 47)")
         print(f"🕐 审计时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         print("🔐 认证模式: 自动检测")
-        print("🔍" + "="*79)
+        print("🔍" + "=" * 79)
 
     async def test_auth_availability(self):
         """测试认证可用性"""
@@ -92,6 +100,7 @@ class HybridHealthAuditor:
                 # 检查是否有可用的token配置
                 import os
                 from dotenv import load_dotenv
+
                 load_dotenv()
 
                 # 简单检查环境变量
@@ -105,11 +114,23 @@ class HybridHealthAuditor:
 
                 if has_tokens:
                     self.auth_available = True
-                    self.add_result("AUTH", "认证检测", "PASS", "检测到FotMob认证令牌", fotmob_tokens)
+                    self.add_result(
+                        "AUTH",
+                        "认证检测",
+                        "PASS",
+                        "检测到FotMob认证令牌",
+                        fotmob_tokens,
+                    )
                     print("✅ 检测到FotMob认证令牌，将使用真实API测试")
                 else:
                     self.auth_available = False
-                    self.add_result("AUTH", "认证检测", "WARN", "未检测到认证令牌，将使用模拟测试", fotmob_tokens)
+                    self.add_result(
+                        "AUTH",
+                        "认证检测",
+                        "WARN",
+                        "未检测到认证令牌，将使用模拟测试",
+                        fotmob_tokens,
+                    )
                     print("⚠️ 未检测到认证令牌，将使用模拟数据测试")
 
             except ImportError as e:
@@ -146,7 +167,9 @@ class HybridHealthAuditor:
 
             await self._validate_fixture_data()
 
-            self.add_result("L1", "真实API赛程获取", "PASS", "使用真实API获取赛程数据成功")
+            self.add_result(
+                "L1", "真实API赛程获取", "PASS", "使用真实API获取赛程数据成功"
+            )
 
         except Exception as e:
             self.add_result("L1", "真实API赛程获取", "FAIL", f"真实API测试失败: {e}")
@@ -184,7 +207,7 @@ class HybridHealthAuditor:
                 "away_team": {"name": "Liverpool", "id": 14},
                 "status": {"finished": True, "statusStr": "FT"},
                 "start_time": "2024-12-08 20:00",
-                "score": {"home": 2, "away": 1}
+                "score": {"home": 2, "away": 1},
             },
             {
                 "id": "47_2",
@@ -192,7 +215,7 @@ class HybridHealthAuditor:
                 "away_team": {"name": "Arsenal", "id": 13},
                 "status": {"finished": True, "statusStr": "FT"},
                 "start_time": "2024-12-07 17:30",
-                "score": {"home": 3, "away": 3}
+                "score": {"home": 3, "away": 3},
             },
             {
                 "id": "47_3",
@@ -200,7 +223,7 @@ class HybridHealthAuditor:
                 "away_team": {"name": "Tottenham", "id": 21},
                 "status": {"finished": False, "statusStr": "NS"},
                 "start_time": "2025-01-15 20:00",
-                "score": {"home": 0, "away": 0}
+                "score": {"home": 0, "away": 0},
             },
             {
                 "id": "47_4",
@@ -208,7 +231,7 @@ class HybridHealthAuditor:
                 "away_team": {"name": "Everton", "id": 11},
                 "status": {"finished": True, "statusStr": "FT"},
                 "start_time": "2024-12-06 15:00",
-                "score": {"home": 1, "away": 2}
+                "score": {"home": 1, "away": 2},
             },
             {
                 "id": "47_5",
@@ -216,15 +239,20 @@ class HybridHealthAuditor:
                 "away_team": {"name": "Brighton", "id": 18},
                 "status": {"finished": True, "statusStr": "FT"},
                 "start_time": "2024-12-05 19:45",
-                "score": {"home": 0, "away": 3}
-            }
+                "score": {"home": 0, "away": 3},
+            },
         ]
 
     async def _validate_fixture_data(self):
         """验证赛程数据"""
         # 验证数据长度
         if len(self.league_fixtures) > 0:
-            self.add_result("L1", "赛程长度验证", "PASS", f"赛程列表长度合理: {len(self.league_fixtures)} > 0")
+            self.add_result(
+                "L1",
+                "赛程长度验证",
+                "PASS",
+                f"赛程列表长度合理: {len(self.league_fixtures)} > 0",
+            )
             print(f"✅ 赛程长度验证通过: {len(self.league_fixtures)} 场比赛")
         else:
             self.add_result("L1", "赛程长度验证", "FAIL", "赛程列表为空")
@@ -238,7 +266,11 @@ class HybridHealthAuditor:
             away_name = fixture["away_team"]["name"]
             status = fixture["status"]["statusStr"]
             start_time = fixture["start_time"]
-            score = f"{fixture['score']['home']}-{fixture['score']['away']}" if fixture["status"]["finished"] else "未开始"
+            score = (
+                f"{fixture['score']['home']}-{fixture['score']['away']}"
+                if fixture["status"]["finished"]
+                else "未开始"
+            )
 
             print(f"  {i}. {home_name} vs {away_name}")
             print(f"     时间: {start_time} | 状态: {status} | 比分: {score}")
@@ -248,7 +280,7 @@ class HybridHealthAuditor:
                 f"比赛{i}信息验证",
                 "PASS",
                 f"{home_name} vs {away_name} ({status})",
-                fixture
+                fixture,
             )
 
         # 统计已结束比赛
@@ -258,10 +290,12 @@ class HybridHealthAuditor:
             "比赛状态统计",
             "PASS",
             f"已结束比赛: {len(finished_matches)}/{len(self.league_fixtures)}",
-            {"finished": len(finished_matches), "total": len(self.league_fixtures)}
+            {"finished": len(finished_matches), "total": len(self.league_fixtures)},
         )
 
-        print(f"📊 比赛状态: {len(finished_matches)}/{len(self.league_fixtures)} 场比赛已结束")
+        print(
+            f"📊 比赛状态: {len(finished_matches)}/{len(self.league_fixtures)} 场比赛已结束"
+        )
 
     async def phase2_deep_dive_audit(self):
         """Phase 2: L2 高阶数据模块审计"""
@@ -303,7 +337,12 @@ class HybridHealthAuditor:
 
             if match_data:
                 await self._validate_match_details(match_data, match_id)
-                self.add_result("L2", "真实API高阶数据", "PASS", "真实API采集Super Greedy Mode数据成功")
+                self.add_result(
+                    "L2",
+                    "真实API高阶数据",
+                    "PASS",
+                    "真实API采集Super Greedy Mode数据成功",
+                )
             else:
                 self.add_result("L2", "真实API高阶数据", "FAIL", "真实API返回空数据")
 
@@ -325,7 +364,9 @@ class HybridHealthAuditor:
 
             if match_data:
                 await self._validate_match_details(match_data, match_id)
-                self.add_result("L2", "模拟高阶数据", "PASS", "模拟Super Greedy Mode数据采集成功")
+                self.add_result(
+                    "L2", "模拟高阶数据", "PASS", "模拟Super Greedy Mode数据采集成功"
+                )
             else:
                 self.add_result("L2", "模拟高阶数据", "FAIL", "模拟数据采集失败")
 
@@ -346,7 +387,7 @@ class HybridHealthAuditor:
                     "id": "ref_12345",
                     "name": "Michael Oliver",
                     "country": "England",
-                    "experience": "15年"
+                    "experience": "15年",
                 },
                 "venue": {
                     "id": "venue_789",
@@ -354,123 +395,214 @@ class HybridHealthAuditor:
                     "city": "Manchester",
                     "capacity": 74140,
                     "attendance": 73256,
-                    "surface": "grass"
+                    "surface": "grass",
                 },
                 "weather": {
                     "temperature": 12,
                     "condition": "cloudy",
                     "humidity": 75,
                     "wind_speed": 8,
-                    "wind_direction": "NW"
+                    "wind_direction": "NW",
                 },
                 "managers": {
                     "home": {
                         "name": "Erik ten Hag",
                         "nationality": "Netherlands",
-                        "formation": "4-2-3-1"
+                        "formation": "4-2-3-1",
                     },
                     "away": {
                         "name": "Arne Slot",
                         "nationality": "Netherlands",
-                        "formation": "4-3-3"
-                    }
-                }
+                        "formation": "4-3-3",
+                    },
+                },
             },
             "stats_json": {
-                "xg": {
-                    "home": 2.3,
-                    "away": 1.1
-                },
-                "possession": {
-                    "home": 58,
-                    "away": 42
-                },
-                "shots": {
-                    "home": 18,
-                    "away": 9
-                },
-                "shots_on_target": {
-                    "home": 7,
-                    "away": 3
-                },
-                "passes": {
-                    "home": 567,
-                    "away": 389
-                },
-                "pass_accuracy": {
-                    "home": 87,
-                    "away": 81
-                }
+                "xg": {"home": 2.3, "away": 1.1},
+                "possession": {"home": 58, "away": 42},
+                "shots": {"home": 18, "away": 9},
+                "shots_on_target": {"home": 7, "away": 3},
+                "passes": {"home": 567, "away": 389},
+                "pass_accuracy": {"home": 87, "away": 81},
             },
             "lineups_json": {
                 "home_team": {
                     "starters": [
-                        {"name": "Onana", "position": "GK", "rating": 7.2, "number": 24},
-                        {"name": "Dalot", "position": "DEF", "rating": 6.8, "number": 20},
-                        {"name": "Martinez", "position": "DEF", "rating": 7.5, "number": 6},
-                        {"name": "Varane", "position": "DEF", "rating": 7.1, "number": 4},
-                        {"name": "Shaw", "position": "DEF", "rating": 6.9, "number": 23},
-                        {"name": "Casemiro", "position": "MID", "rating": 7.3, "number": 18},
-                        {"name": "Mainoo", "position": "MID", "rating": 8.1, "number": 37},
-                        {"name": "Garnacho", "position": "MID", "rating": 7.8, "number": 17},
-                        {"name": "Fernandes", "position": "MID", "rating": 8.4, "number": 8},
-                        {"name": "Rashford", "position": "FWD", "rating": 7.6, "number": 10},
-                        {"name": "Højlund", "position": "FWD", "rating": 7.0, "number": 11}
+                        {
+                            "name": "Onana",
+                            "position": "GK",
+                            "rating": 7.2,
+                            "number": 24,
+                        },
+                        {
+                            "name": "Dalot",
+                            "position": "DEF",
+                            "rating": 6.8,
+                            "number": 20,
+                        },
+                        {
+                            "name": "Martinez",
+                            "position": "DEF",
+                            "rating": 7.5,
+                            "number": 6,
+                        },
+                        {
+                            "name": "Varane",
+                            "position": "DEF",
+                            "rating": 7.1,
+                            "number": 4,
+                        },
+                        {
+                            "name": "Shaw",
+                            "position": "DEF",
+                            "rating": 6.9,
+                            "number": 23,
+                        },
+                        {
+                            "name": "Casemiro",
+                            "position": "MID",
+                            "rating": 7.3,
+                            "number": 18,
+                        },
+                        {
+                            "name": "Mainoo",
+                            "position": "MID",
+                            "rating": 8.1,
+                            "number": 37,
+                        },
+                        {
+                            "name": "Garnacho",
+                            "position": "MID",
+                            "rating": 7.8,
+                            "number": 17,
+                        },
+                        {
+                            "name": "Fernandes",
+                            "position": "MID",
+                            "rating": 8.4,
+                            "number": 8,
+                        },
+                        {
+                            "name": "Rashford",
+                            "position": "FWD",
+                            "rating": 7.6,
+                            "number": 10,
+                        },
+                        {
+                            "name": "Højlund",
+                            "position": "FWD",
+                            "rating": 7.0,
+                            "number": 11,
+                        },
                     ],
                     "substitutes": [
                         {"name": "Mount", "position": "MID", "rating": 6.5},
-                        {"name": "Antony", "position": "FWD", "rating": 6.2}
+                        {"name": "Antony", "position": "FWD", "rating": 6.2},
                     ],
                     "unavailable": [
-                        {"name": "Lisandro Martinez", "reason": "injury", "expected_return": "2025-01"},
-                        {"name": "Martial", "reason": "injury", "expected_return": "2025-01"}
-                    ]
+                        {
+                            "name": "Lisandro Martinez",
+                            "reason": "injury",
+                            "expected_return": "2025-01",
+                        },
+                        {
+                            "name": "Martial",
+                            "reason": "injury",
+                            "expected_return": "2025-01",
+                        },
+                    ],
                 },
                 "away_team": {
                     "starters": [
-                        {"name": "Alisson", "position": "GK", "rating": 6.7, "number": 1},
-                        {"name": "Alexander-Arnold", "position": "DEF", "rating": 7.0, "number": 66},
-                        {"name": "Konate", "position": "DEF", "rating": 6.9, "number": 5},
-                        {"name": "van Dijk", "position": "DEF", "rating": 7.8, "number": 4},
-                        {"name": "Tsimikas", "position": "DEF", "rating": 6.6, "number": 21},
+                        {
+                            "name": "Alisson",
+                            "position": "GK",
+                            "rating": 6.7,
+                            "number": 1,
+                        },
+                        {
+                            "name": "Alexander-Arnold",
+                            "position": "DEF",
+                            "rating": 7.0,
+                            "number": 66,
+                        },
+                        {
+                            "name": "Konate",
+                            "position": "DEF",
+                            "rating": 6.9,
+                            "number": 5,
+                        },
+                        {
+                            "name": "van Dijk",
+                            "position": "DEF",
+                            "rating": 7.8,
+                            "number": 4,
+                        },
+                        {
+                            "name": "Tsimikas",
+                            "position": "DEF",
+                            "rating": 6.6,
+                            "number": 21,
+                        },
                         {"name": "Endo", "position": "MID", "rating": 6.8, "number": 3},
-                        {"name": "Szoboszlai", "position": "MID", "rating": 7.9, "number": 8},
-                        {"name": "Mac Allister", "position": "MID", "rating": 7.4, "number": 10},
-                        {"name": "Salah", "position": "FWD", "rating": 8.7, "number": 11},
-                        {"name": "Núñez", "position": "FWD", "rating": 6.8, "number": 9},
-                        {"name": "Gakpo", "position": "FWD", "rating": 7.2, "number": 18}
+                        {
+                            "name": "Szoboszlai",
+                            "position": "MID",
+                            "rating": 7.9,
+                            "number": 8,
+                        },
+                        {
+                            "name": "Mac Allister",
+                            "position": "MID",
+                            "rating": 7.4,
+                            "number": 10,
+                        },
+                        {
+                            "name": "Salah",
+                            "position": "FWD",
+                            "rating": 8.7,
+                            "number": 11,
+                        },
+                        {
+                            "name": "Núñez",
+                            "position": "FWD",
+                            "rating": 6.8,
+                            "number": 9,
+                        },
+                        {
+                            "name": "Gakpo",
+                            "position": "FWD",
+                            "rating": 7.2,
+                            "number": 18,
+                        },
                     ],
                     "substitutes": [
                         {"name": "Elliott", "position": "MID", "rating": 6.4},
-                        {"name": "Diaz", "position": "FWD", "rating": 7.1}
+                        {"name": "Diaz", "position": "FWD", "rating": 7.1},
                     ],
                     "unavailable": [
-                        {"name": "Thiago", "reason": "injury", "expected_return": "Unknown"},
-                        {"name": "Bajcetic", "reason": "injury", "expected_return": "2025-02"}
-                    ]
-                }
+                        {
+                            "name": "Thiago",
+                            "reason": "injury",
+                            "expected_return": "Unknown",
+                        },
+                        {
+                            "name": "Bajcetic",
+                            "reason": "injury",
+                            "expected_return": "2025-02",
+                        },
+                    ],
+                },
             },
             "odds_snapshot_json": {
-                "pre_match": {
-                    "home_win": 2.15,
-                    "draw": 3.60,
-                    "away_win": 3.20
-                },
-                "over_under": {
-                    "over_2_5": 1.85,
-                    "under_2_5": 1.95
-                }
+                "pre_match": {"home_win": 2.15, "draw": 3.60, "away_win": 3.20},
+                "over_under": {"over_2_5": 1.85, "under_2_5": 1.95},
             },
             "match_info": {
                 "importance": "high",
-                "form": {
-                    "home": "WWLDW",
-                    "away": "WDWWW"
-                },
-                "head_to_head": {
-                    "last_5": "LWWWW"
-                }
-            }
+                "form": {"home": "WWLDW", "away": "WDWWW"},
+                "head_to_head": {"last_5": "LWWWW"},
+            },
         }
 
     async def _validate_match_details(self, match_data: dict[str, Any], match_id: str):
@@ -490,7 +622,7 @@ class HybridHealthAuditor:
                     "裁判信息验证",
                     "PASS",
                     f"裁判: {referee['name']} (ID: {referee['id']})",
-                    referee
+                    referee,
                 )
                 print(f"  ✅ 裁判信息: {referee['name']} (ID: {referee['id']})")
             else:
@@ -505,7 +637,7 @@ class HybridHealthAuditor:
                     "场地信息验证",
                     "PASS",
                     f"场地: {venue['name']} (ID: {venue['id']})",
-                    venue
+                    venue,
                 )
                 print(f"  ✅ 场地信息: {venue['name']} (ID: {venue['id']})")
             else:
@@ -520,9 +652,11 @@ class HybridHealthAuditor:
                     "天气信息验证",
                     "PASS",
                     f"天气: {weather['temperature']}°C, {weather.get('condition', 'unknown')}",
-                    weather
+                    weather,
                 )
-                print(f"  ✅ 天气信息: {weather['temperature']}°C, {weather.get('condition', 'unknown')}")
+                print(
+                    f"  ✅ 天气信息: {weather['temperature']}°C, {weather.get('condition', 'unknown')}"
+                )
             else:
                 self.add_result("L2", "天气信息验证", "WARN", "天气信息不完整")
                 print("  ⚠️ 天气信息验证警告")
@@ -535,9 +669,11 @@ class HybridHealthAuditor:
                     "主帅信息验证",
                     "PASS",
                     f"主帅: 主队{managers['home'].get('name', 'Unknown')} vs 客队{managers['away'].get('name', 'Unknown')}",
-                    managers
+                    managers,
                 )
-                print(f"  ✅ 主帅信息: 主队{managers['home'].get('name', 'Unknown')} vs 客队{managers['away'].get('name', 'Unknown')}")
+                print(
+                    f"  ✅ 主帅信息: 主队{managers['home'].get('name', 'Unknown')} vs 客队{managers['away'].get('name', 'Unknown')}"
+                )
             else:
                 self.add_result("L2", "主帅信息验证", "WARN", "主帅信息不完整")
                 print("  ⚠️ 主帅信息验证警告")
@@ -556,9 +692,11 @@ class HybridHealthAuditor:
                     "xG数据验证",
                     "PASS",
                     f"xG数据: 主队{xg_data['home']}, 客队{xg_data['away']}",
-                    xg_data
+                    xg_data,
                 )
-                print(f"  ✅ xG数据验证通过: 主队{xg_data['home']}, 客队{xg_data['away']}")
+                print(
+                    f"  ✅ xG数据验证通过: 主队{xg_data['home']}, 客队{xg_data['away']}"
+                )
             else:
                 self.add_result("L2", "xG数据验证", "WARN", "xG数据不完整")
                 print("  ⚠️ xG数据验证警告: 数据不完整")
@@ -595,17 +733,21 @@ class HybridHealthAuditor:
                     "阵容数据验证",
                     "PASS",
                     "阵容包含评分和伤停信息",
-                    {"has_ratings": has_ratings, "has_unavailable": has_unavailable}
+                    {"has_ratings": has_ratings, "has_unavailable": has_unavailable},
                 )
                 print("  ✅ 阵容数据验证通过: 包含球员评分和伤停信息")
             elif has_ratings or has_unavailable:
                 self.add_result("L2", "阵容数据验证", "WARN", "阵容数据部分完整")
                 status_parts = []
-                if has_ratings: status_parts.append("包含评分")
-                if has_unavailable: status_parts.append("包含伤停")
+                if has_ratings:
+                    status_parts.append("包含评分")
+                if has_unavailable:
+                    status_parts.append("包含伤停")
                 print(f"  ⚠️ 阵容数据验证警告: {' + '.join(status_parts)}")
             else:
-                self.add_result("L2", "阵容数据验证", "FAIL", "阵容数据缺少评分和伤停信息")
+                self.add_result(
+                    "L2", "阵容数据验证", "FAIL", "阵容数据缺少评分和伤停信息"
+                )
                 print("  ❌ 阵容数据验证失败: 缺少评分和伤停信息")
         else:
             self.add_result("L2", "阵容数据验证", "FAIL", "lineups_json 缺失")
@@ -616,15 +758,21 @@ class HybridHealthAuditor:
             odds = match_data["odds_snapshot_json"]
             pre_match = odds.get("pre_match", {})
 
-            if pre_match.get("home_win") and pre_match.get("draw") and pre_match.get("away_win"):
+            if (
+                pre_match.get("home_win")
+                and pre_match.get("draw")
+                and pre_match.get("away_win")
+            ):
                 self.add_result(
                     "L2",
                     "赔率数据验证",
                     "PASS",
                     f"赔率: 主胜{pre_match['home_win']} 平{pre_match['draw']} 客胜{pre_match['away_win']}",
-                    pre_match
+                    pre_match,
                 )
-                print(f"  ✅ 赔率数据验证通过: 主胜{pre_match['home_win']} 平{pre_match['draw']} 客胜{pre_match['away_win']}")
+                print(
+                    f"  ✅ 赔率数据验证通过: 主胜{pre_match['home_win']} 平{pre_match['draw']} 客胜{pre_match['away_win']}"
+                )
             else:
                 self.add_result("L2", "赔率数据验证", "WARN", "赔率数据不完整")
                 print("  ⚠️ 赔率数据验证警告")
@@ -639,7 +787,7 @@ class HybridHealthAuditor:
                     "战意信息验证",
                     "PASS",
                     f"战意重要性: {match_info['importance']}",
-                    match_info
+                    match_info,
                 )
                 print(f"  ✅ 战意信息验证通过: 重要性{match_info['importance']}")
             else:
@@ -661,7 +809,9 @@ class HybridHealthAuditor:
         health_score = (pass_count / total_count) * 100 if total_count > 0 else 0
 
         print(f"📊 总体健康度: {health_score:.1f}%")
-        print(f"📋 测试统计: ✅ {pass_count} 通过 | ❌ {fail_count} 失败 | ⚠️ {warn_count} 警告 | 📋 总计 {total_count}")
+        print(
+            f"📋 测试统计: ✅ {pass_count} 通过 | ❌ {fail_count} 失败 | ⚠️ {warn_count} 警告 | 📋 总计 {total_count}"
+        )
 
         # 健康等级评估
         if health_score >= 90:
@@ -693,7 +843,7 @@ class HybridHealthAuditor:
         phase_names = {
             "AUTH": "🔐 认证系统",
             "L1": "🏟️ Phase 1: L1 赛程模块",
-            "L2": "🎯 Phase 2: L2 高阶数据模块"
+            "L2": "🎯 Phase 2: L2 高阶数据模块",
         }
 
         for phase_key in ["AUTH", "L1", "L2"]:
@@ -717,7 +867,7 @@ class HybridHealthAuditor:
             ("👥 阵容评分", "lineups_json.starters[].rating", "✅"),
             ("🏥 伤停信息", "lineups_json.unavailable", "✅"),
             ("💰 赔率快照", "odds_snapshot_json", "✅"),
-            ("⚔️ 战意分析", "match_info", "✅")
+            ("⚔️ 战意分析", "match_info", "✅"),
         ]
 
         for name, path, status in dimensions:
@@ -774,6 +924,7 @@ class HybridHealthAuditor:
         # Phase 3: 健康报告
         await self.phase3_health_report()
 
+
 async def main():
     """主函数"""
     print("🔍 System Health Audit - 系统健康度审计 (混合认证版)")
@@ -810,6 +961,7 @@ async def main():
     except Exception as e:
         print(f"\n💥 审计过程异常: {e}")
         return False
+
 
 if __name__ == "__main__":
     # 运行主程序

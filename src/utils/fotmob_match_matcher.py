@@ -104,7 +104,9 @@ class FotmobMatchMatcher:
 
             # 🔧 DEBUG: 输出调试信息
             if self.debug_mode:
-                logger.info(f"🔍 DEBUG: 尝试匹配 {home_team} vs {away_team} (日期: {date_str})")
+                logger.info(
+                    f"🔍 DEBUG: 尝试匹配 {home_team} vs {away_team} (日期: {date_str})"
+                )
 
             # 格式化日期用于 API 调用
             api_date = self._format_date_for_api(date_str)
@@ -131,10 +133,16 @@ class FotmobMatchMatcher:
                     sample_away = sample_match.get("away", {}).get("name", "未知")
                     sample_status = sample_match.get("status", {})
                     sample_time = sample_status.get("utcTime", "无时间信息")
-                    logger.info(f"🔍 DEBUG: 样本比赛: {sample_home} vs {sample_away} (时间: {sample_time})")
-                    logger.info(f"🔍 DEBUG: 完整样本数据结构: {list(sample_match.keys())}")
+                    logger.info(
+                        f"🔍 DEBUG: 样本比赛: {sample_home} vs {sample_away} (时间: {sample_time})"
+                    )
+                    logger.info(
+                        f"🔍 DEBUG: 完整样本数据结构: {list(sample_match.keys())}"
+                    )
                 else:
-                    logger.warning(f"🔍 DEBUG: API响应无比赛数据，检查响应结构: {list(matches_data.keys())}")
+                    logger.warning(
+                        f"🔍 DEBUG: API响应无比赛数据，检查响应结构: {list(matches_data.keys())}"
+                    )
 
             # 计算每场比赛的相似度
             best_match = None
@@ -149,7 +157,9 @@ class FotmobMatchMatcher:
                 if self.debug_mode and processed_matches <= 3:  # 只显示前3个
                     match_home = match.get("home", {}).get("name", "")
                     match_away = match.get("away", {}).get("name", "")
-                    logger.info(f"🔍 DEBUG: 比赛 {processed_matches}: {match_home} vs {match_away} -> 相似度: {similarity:.1f}%")
+                    logger.info(
+                        f"🔍 DEBUG: 比赛 {processed_matches}: {match_home} vs {match_away} -> 相似度: {similarity:.1f}%"
+                    )
 
                 if (
                     similarity > best_similarity
@@ -176,11 +186,19 @@ class FotmobMatchMatcher:
                     match_finished = match_status.get("finished", False)
                     match_started = match_status.get("started", False)
                     logger.info("🔍 DEBUG: 匹配成功详情:")
-                    logger.info(f"   原始记录: {home_team} vs {away_team} (日期: {date_str})")
-                    logger.info(f"   匹配结果: {result['home_team']} vs {result['away_team']}")
-                    logger.info(f"   相似度: {best_similarity:.1f}% (阈值: {self.similarity_threshold}%)")
+                    logger.info(
+                        f"   原始记录: {home_team} vs {away_team} (日期: {date_str})"
+                    )
+                    logger.info(
+                        f"   匹配结果: {result['home_team']} vs {result['away_team']}"
+                    )
+                    logger.info(
+                        f"   相似度: {best_similarity:.1f}% (阈值: {self.similarity_threshold}%)"
+                    )
                     logger.info(f"   比赛时间: {match_time}")
-                    logger.info(f"   比赛状态: 已开始={match_started}, 已完成={match_finished}")
+                    logger.info(
+                        f"   比赛状态: 已开始={match_started}, 已完成={match_finished}"
+                    )
                     logger.info(f"   MatchID: {result['matchId']}")
                     logger.info(f"   联赛: {result['tournament']}")
 
@@ -190,8 +208,12 @@ class FotmobMatchMatcher:
                 return result
             else:
                 if self.debug_mode:
-                    logger.info(f"🔍 DEBUG: 最高相似度: {best_similarity:.1f}% (阈值: {self.similarity_threshold}%)")
-                logger.warning(f"⚠️  未找到匹配: {home_team} vs {away_team} (日期: {date_str}), 处理了 {processed_matches} 场比赛")
+                    logger.info(
+                        f"🔍 DEBUG: 最高相似度: {best_similarity:.1f}% (阈值: {self.similarity_threshold}%)"
+                    )
+                logger.warning(
+                    f"⚠️  未找到匹配: {home_team} vs {away_team} (日期: {date_str}), 处理了 {processed_matches} 场比赛"
+                )
                 return None
 
         except Exception as e:
@@ -224,7 +246,8 @@ class FotmobMatchMatcher:
         try:
             # 🔧 绕过代理，直接连接
             import os
-            no_proxy = os.getenv('NO_PROXY', '')
+
+            no_proxy = os.getenv("NO_PROXY", "")
             if no_proxy:
                 logger.info(f"🔧 绕过代理连接: NO_PROXY={no_proxy}")
 
@@ -233,7 +256,7 @@ class FotmobMatchMatcher:
                 headers=self.headers,
                 timeout=30.0,
                 # 明确禁用代理
-                proxies=None
+                proxies=None,
             )
 
             for league in leagues:
@@ -253,26 +276,38 @@ class FotmobMatchMatcher:
                         continue
 
                     # 使用已验证的正确解析路径
-                    if 'fixtures' in data and isinstance(data['fixtures'], dict):
-                        if 'allMatches' in data['fixtures']:
-                            matches = data['fixtures']['allMatches']
+                    if "fixtures" in data and isinstance(data["fixtures"], dict):
+                        if "allMatches" in data["fixtures"]:
+                            matches = data["fixtures"]["allMatches"]
 
                             # 🔧 DEBUG: 输出联赛数据信息
                             if self.debug_mode:
-                                logger.info(f"🔍 DEBUG: {league['name']} 找到 {len(matches)} 场比赛")
+                                logger.info(
+                                    f"🔍 DEBUG: {league['name']} 找到 {len(matches)} 场比赛"
+                                )
                                 if matches:
                                     sample = matches[0]
-                                    sample_home = sample.get('home', {}).get('name', '未知')
-                                    sample_away = sample.get('away', {}).get('name', '未知')
-                                    logger.info(f"🔍 DEBUG: {league['name']}样本: {sample_home} vs {sample_away}")
+                                    sample_home = sample.get("home", {}).get(
+                                        "name", "未知"
+                                    )
+                                    sample_away = sample.get("away", {}).get(
+                                        "name", "未知"
+                                    )
+                                    logger.info(
+                                        f"🔍 DEBUG: {league['name']}样本: {sample_home} vs {sample_away}"
+                                    )
 
                             all_matches.extend(matches)
                         else:
                             if self.debug_mode:
-                                logger.warning(f"🔍 DEBUG: {league['name']} 无 allMatches 数据")
+                                logger.warning(
+                                    f"🔍 DEBUG: {league['name']} 无 allMatches 数据"
+                                )
                     else:
                         if self.debug_mode:
-                            logger.warning(f"🔍 DEBUG: {league['name']} 无 fixtures 数据")
+                            logger.warning(
+                                f"🔍 DEBUG: {league['name']} 无 fixtures 数据"
+                            )
                 else:
                     logger.warning(
                         f"HTTP {response.status_code} when fetching {league['name']} data"
@@ -286,11 +321,13 @@ class FotmobMatchMatcher:
                 if all_matches:
                     logger.info("🔍 DEBUG: 前3场比赛:")
                     for i, match in enumerate(all_matches[:3]):
-                        home = match.get('home', {}).get('name', '未知')
-                        away = match.get('away', {}).get('name', '未知')
-                        logger.info(f"   {i+1}. {home} vs {away}")
+                        home = match.get("home", {}).get("name", "未知")
+                        away = match.get("away", {}).get("name", "未知")
+                        logger.info(f"   {i + 1}. {home} vs {away}")
 
-            logger.info(f"Successfully fetched {len(all_matches)} total matches for {date_str}")
+            logger.info(
+                f"Successfully fetched {len(all_matches)} total matches for {date_str}"
+            )
             return result
 
         except Exception as e:

@@ -22,7 +22,7 @@ from src.pipeline.flows.train_flow import train_flow, quick_train_flow
 from src.pipeline.config import PipelineConfig
 from src.database.async_manager import get_db_session
 from src.database.models import Match
-from sqlalchemy import select, and_, or_
+from sqlalchemy import select, and_
 import pandas as pd
 
 # 配置日志
@@ -31,8 +31,10 @@ logging.basicConfig(
     format="%(asctime)s [%(levelname)8s] %(name)s: %(message)s",
     handlers=[
         logging.StreamHandler(sys.stdout),
-        logging.FileHandler(f"/tmp/training_{pd.Timestamp.now().strftime('%Y%m%d_%H%M%S')}.log")
-    ]
+        logging.FileHandler(
+            f"/tmp/training_{pd.Timestamp.now().strftime('%Y%m%d_%H%M%S')}.log"
+        ),
+    ],
 )
 logger = logging.getLogger(__name__)
 
@@ -70,7 +72,11 @@ class TrainingRunner:
                 Match.away_possession.isnot(None),
             ]
 
-            query = select(Match.id).where(and_(*conditions)).order_by(Match.match_date.desc())
+            query = (
+                select(Match.id)
+                .where(and_(*conditions))
+                .order_by(Match.match_date.desc())
+            )
 
             if limit:
                 query = query.limit(limit)
@@ -86,7 +92,7 @@ class TrainingRunner:
         season: str = "2023-2024",
         league_id: Optional[str] = None,
         limit: Optional[int] = 5000,
-        algorithm: str = "xgboost"
+        algorithm: str = "xgboost",
     ) -> dict:
         """
         运行完整训练流程
@@ -115,7 +121,9 @@ class TrainingRunner:
             logger.info(f"   使用 {len(match_ids)} 场比赛进行训练")
 
             # 构建模型名称
-            model_name = f"football_prediction_v1_{algorithm}_{season}_{len(match_ids)}matches"
+            model_name = (
+                f"football_prediction_v1_{algorithm}_{season}_{len(match_ids)}matches"
+            )
 
             # 运行训练流程
             result = train_flow(
@@ -124,7 +132,7 @@ class TrainingRunner:
                 match_ids=match_ids,
                 model_name=model_name,
                 algorithm=algorithm,
-                config=self.config
+                config=self.config,
             )
 
             return result
@@ -134,9 +142,7 @@ class TrainingRunner:
             raise
 
     async def run_quick_training(
-        self,
-        limit: int = 1000,
-        algorithm: str = "xgboost"
+        self, limit: int = 1000, algorithm: str = "xgboost"
     ) -> dict:
         """
         运行快速训练流程（用于开发测试）
@@ -166,9 +172,7 @@ class TrainingRunner:
 
             # 运行快速训练流程
             result = quick_train_flow(
-                match_ids=match_ids,
-                algorithm=algorithm,
-                model_name=model_name
+                match_ids=match_ids, algorithm=algorithm, model_name=model_name
             )
 
             return result
@@ -184,9 +188,9 @@ class TrainingRunner:
         Args:
             result: 训练结果
         """
-        logger.info("\n" + "="*60)
+        logger.info("\n" + "=" * 60)
         logger.info("📊 训练结果报告")
-        logger.info("="*60)
+        logger.info("=" * 60)
 
         if result["status"] == "success":
             logger.info("✅ 训练成功")
@@ -219,21 +223,24 @@ class TrainingRunner:
             logger.error(f"   错误: {result.get('error', '未知错误')}")
             logger.error(f"   模型名称: {result.get('model_name', '未知')}")
 
-        logger.info("="*60)
+        logger.info("=" * 60)
 
 
 async def main():
     """主函数"""
     print("🤖 XGBoost模型训练开始")
-    print("="*60)
+    print("=" * 60)
 
     runner = TrainingRunner()
 
     try:
         # 解析命令行参数
         import argparse
+
         parser = argparse.ArgumentParser(description="足球预测模型训练")
-        parser.add_argument("--mode", choices=["quick", "full"], default="quick", help="训练模式")
+        parser.add_argument(
+            "--mode", choices=["quick", "full"], default="quick", help="训练模式"
+        )
         parser.add_argument("--algorithm", default="xgboost", help="训练算法")
         parser.add_argument("--limit", type=int, default=1000, help="训练数据限制")
         parser.add_argument("--season", default="2023-2024", help="赛季")
@@ -244,8 +251,7 @@ async def main():
         if args.mode == "quick":
             # 快速训练模式
             result = await runner.run_quick_training(
-                limit=args.limit,
-                algorithm=args.algorithm
+                limit=args.limit, algorithm=args.algorithm
             )
         else:
             # 完整训练模式
@@ -253,7 +259,7 @@ async def main():
                 season=args.season,
                 league_id=args.league_id,
                 limit=args.limit,
-                algorithm=args.algorithm
+                algorithm=args.algorithm,
             )
 
         # 打印结果
@@ -270,6 +276,7 @@ async def main():
     except Exception as e:
         logger.error(f"❌ 训练脚本执行失败: {e}")
         import traceback
+
         traceback.print_exc()
         return 1
 

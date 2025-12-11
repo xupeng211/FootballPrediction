@@ -22,6 +22,7 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
+
 async def quick_test():
     """快速测试L2详情采集器"""
     print("🚀 快速测试FotMob L2详情采集器...")
@@ -43,7 +44,9 @@ async def quick_test():
             print(f"  比分: {result.home_score} - {result.away_score}")
 
             if result.odds:
-                print(f"  市场概率: 主胜 {result.odds.home_win:.2f}, 平局 {result.odds.draw:.2f}, 客胜 {result.odds.away_win:.2f}")
+                print(
+                    f"  市场概率: 主胜 {result.odds.home_win:.2f}, 平局 {result.odds.draw:.2f}, 客胜 {result.odds.away_win:.2f}"
+                )
             else:
                 print("  市场概率: 未获取到数据")
 
@@ -55,6 +58,7 @@ async def quick_test():
     except Exception as e:
         print(f"❌ 测试异常: {e}")
         return False
+
 
 if __name__ == "__main__":
     success = asyncio.run(quick_test())

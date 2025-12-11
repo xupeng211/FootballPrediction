@@ -6,7 +6,6 @@ Simple Football Prediction Model Training Script
 
 import json
 import logging
-import os
 import pickle
 from datetime import datetime
 from pathlib import Path
@@ -14,7 +13,6 @@ from pathlib import Path
 import pandas as pd
 import xgboost as xgb
 from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
-from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 
 # 设置日志
@@ -30,8 +28,7 @@ def load_data_via_pandas():
     logger.info("🔍 使用pandas从数据库加载训练数据...")
 
     try:
-        import sqlalchemy
-        from sqlalchemy import create_engine, text
+        from sqlalchemy import create_engine
 
         # 创建数据库连接字符串
         import os

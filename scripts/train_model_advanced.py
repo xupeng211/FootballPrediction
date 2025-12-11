@@ -10,14 +10,13 @@ Chief Data Scientist: 基于EWMA特征训练高性能预测模型
 - 模型性能评估
 """
 
-import sys
 import os
 import pandas as pd
 import numpy as np
 import xgboost as xgb
-from sklearn.model_selection import train_test_split, cross_val_score, GridSearchCV
+from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.preprocessing import LabelEncoder
-from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+from sklearn.metrics import accuracy_score
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 
 try:
@@ -37,7 +36,6 @@ except ImportError:
 from datetime import datetime
 import json
 import logging
-from typing import Any, Any
 
 # 配置日志
 logging.basicConfig(

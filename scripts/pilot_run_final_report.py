@@ -4,9 +4,8 @@
 Final Pilot Run Report
 """
 
-import sys
-import subprocess
 from datetime import datetime
+
 
 def generate_final_report():
     """生成最终试跑报告"""
@@ -136,6 +135,7 @@ def generate_final_report():
     print("   4. 监控: docker-compose logs -f app 查看采集进度")
     print()
     print("🎯 系统已准备就绪，可以安全启动大规模数据回填作业!")
+
 
 if __name__ == "__main__":
     generate_final_report()

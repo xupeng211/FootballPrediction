@@ -12,7 +12,7 @@ import json
 import pickle
 import numpy as np
 import pandas as pd
-from typing import Optional, Union, Any
+from typing import Union, Any
 from dataclasses import dataclass
 from pathlib import Path
 import logging
@@ -360,7 +360,9 @@ class PlattCalibrator(BaseCalibrator):
 
             # 使用CalibratedClassifierCV进行校准
             calibrated_clf = CalibratedClassifierCV(
-                dummy_clf, method=self.method, cv="prefit"  # 使用已拟合的分类器
+                dummy_clf,
+                method=self.method,
+                cv="prefit",  # 使用已拟合的分类器
             )
 
             # 拟合校准器

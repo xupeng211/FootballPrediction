@@ -19,7 +19,7 @@ import time
 from abc import ABC, abstractmethod
 from contextlib import asynccontextmanager
 from datetime import datetime
-from typing import Any,  Optional, Union
+from typing import Any, Optional
 
 from collections.abc import AsyncGenerator
 from dataclasses import dataclass
@@ -33,7 +33,6 @@ from src.database.async_manager import get_db_session
 # from src.performance.monitoring import performance_monitor  # 暂时注释避免依赖问题
 
 # 简化的logger导入
-import logging
 
 
 def get_logger(name):
@@ -211,8 +210,7 @@ class AsyncBaseCollector(ABC):
             else:
                 self.stats.failed_requests += 1
                 self.logger.warning(
-                    f"Request returned non-200 status: {url} "
-                    f"({response.status_code})"
+                    f"Request returned non-200 status: {url} ({response.status_code})"
                 )
 
             return response

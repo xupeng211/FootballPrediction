@@ -215,11 +215,7 @@ class Tenant(BaseModel):
 
     def __repr__(self) -> str:
         """安全的__repr__方法，只访问自己的列字段."""
-        return (
-            f"Tenant(id={self.id}, "
-            f"name={self.name!r}, "
-            f"slug={self.slug!r})"
-        )
+        return f"Tenant(id={self.id}, name={self.name!r}, slug={self.slug!r})"
 
 
 class PermissionScope(str, Enum):

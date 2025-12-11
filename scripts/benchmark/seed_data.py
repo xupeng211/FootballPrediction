@@ -14,10 +14,10 @@ import json
 import random
 import sys
 from datetime import datetime, timedelta
-from typing import Any, Dict, List
+from typing import Any
 
 # 添加项目路径
-sys.path.insert(0, '/app')
+sys.path.insert(0, "/app")
 
 from src.database.async_manager import get_db_session, initialize_database
 from src.features.feature_store import FootballFeatureStore
@@ -57,12 +57,14 @@ class BenchmarkDataSeeder:
                 "id": i,
                 "name": f"Team {chr(64 + i % 26)}{chr(65 + i % 26)}{i}",
                 "short_name": f"T{i:02d}",
-                "country": random.choice(["England", "Spain", "Germany", "Italy", "France"]),
+                "country": random.choice(
+                    ["England", "Spain", "Germany", "Italy", "France"]
+                ),
                 "founded": random.randint(1880, 2020),
                 "stadium_capacity": random.randint(20000, 80000),
                 "market_value": random.randint(50_000_000, 500_000_000),
                 "created_at": datetime.now().isoformat(),
-                "updated_at": datetime.now().isoformat()
+                "updated_at": datetime.now().isoformat(),
             }
             teams.append(team)
 
@@ -100,8 +102,8 @@ class BenchmarkDataSeeder:
                             team_data["stadium_capacity"],
                             team_data["market_value"],
                             team_data["created_at"],
-                            team_data["updated_at"]
-                        )
+                            team_data["updated_at"],
+                        ),
                     )
                     await session.commit()
                     return True
@@ -134,7 +136,9 @@ class BenchmarkDataSeeder:
         for i in range(1, count + 1):
             # 随机选择主客队
             home_team = random.choice(self.teams)
-            away_team = random.choice([t for t in self.teams if t["id"] != home_team["id"]])
+            away_team = random.choice(
+                [t for t in self.teams if t["id"] != home_team["id"]]
+            )
 
             # 生成比赛日期
             match_date = start_date + timedelta(days=random.randint(0, 1460))  # 4年内
@@ -166,9 +170,11 @@ class BenchmarkDataSeeder:
                 "away_score": away_score,
                 "final_score": final_score,
                 "status": status,
-                "attendance": random.randint(15000, 75000) if status == "completed" else None,
+                "attendance": random.randint(15000, 75000)
+                if status == "completed"
+                else None,
                 "created_at": datetime.now().isoformat(),
-                "updated_at": datetime.now().isoformat()
+                "updated_at": datetime.now().isoformat(),
             }
             matches.append(match)
 
@@ -214,8 +220,8 @@ class BenchmarkDataSeeder:
                             match_data["status"],
                             match_data["attendance"],
                             match_data["created_at"],
-                            match_data["updated_at"]
-                        )
+                            match_data["updated_at"],
+                        ),
                     )
                     await session.commit()
                     return True
@@ -229,19 +235,23 @@ class BenchmarkDataSeeder:
         success_count = 0
 
         for i in range(0, len(matches), batch_size):
-            batch = matches[i:i + batch_size]
+            batch = matches[i : i + batch_size]
             tasks = [save_single_match(match) for match in batch]
             results = await asyncio.gather(*tasks, return_exceptions=True)
             batch_success = sum(1 for r in results if r is True)
             success_count += batch_success
 
-            print(f"   进度: {min(i + batch_size, len(matches))}/{len(matches)} "
-                  f"({batch_success}/{len(batch)} 成功)")
+            print(
+                f"   进度: {min(i + batch_size, len(matches))}/{len(matches)} "
+                f"({batch_success}/{len(batch)} 成功)"
+            )
 
         print(f"✅ 成功保存 {success_count}/{len(matches)} 场比赛")
         return success_count
 
-    async def generate_features(self, matches: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    async def generate_features(
+        self, matches: list[dict[str, Any]]
+    ) -> list[dict[str, Any]]:
         """生成特征数据."""
         print(f"📊 生成 {len(matches)} 组特征数据...")
 
@@ -253,7 +263,6 @@ class BenchmarkDataSeeder:
                 "match_id": match["id"],
                 "season_id": match["season_id"],
                 "competition": match["competition"],
-
                 # 主队特征
                 "home_team_form": round(random.uniform(0.0, 1.0), 3),
                 "home_team_recent_goals": round(random.uniform(0.5, 3.0), 2),
@@ -262,7 +271,6 @@ class BenchmarkDataSeeder:
                 "home_team_injuries": random.randint(0, 5),
                 "home_team_yellow_cards": random.randint(0, 10),
                 "home_team_red_cards": random.randint(0, 3),
-
                 # 客队特征
                 "away_team_form": round(random.uniform(0.0, 1.0), 3),
                 "away_team_recent_goals": round(random.uniform(0.5, 3.0), 2),
@@ -271,7 +279,6 @@ class BenchmarkDataSeeder:
                 "away_team_injuries": random.randint(0, 5),
                 "away_team_yellow_cards": random.randint(0, 10),
                 "away_team_red_cards": random.randint(0, 3),
-
                 # 历史对战特征
                 "h2h_home_wins": random.randint(0, 10),
                 "h2h_away_wins": random.randint(0, 10),
@@ -279,21 +286,18 @@ class BenchmarkDataSeeder:
                 "h2h_home_win_rate": round(random.uniform(0.2, 0.8), 3),
                 "h2h_away_win_rate": round(random.uniform(0.1, 0.6), 3),
                 "h2h_avg_goals": round(random.uniform(1.5, 4.0), 2),
-
                 # 市场特征
                 "home_win_odds": round(random.uniform(1.5, 4.0), 2),
                 "draw_odds": round(random.uniform(2.5, 4.5), 2),
                 "away_win_odds": round(random.uniform(1.8, 5.0), 2),
                 "over_2_5_odds": round(random.uniform(1.6, 2.8), 2),
                 "under_2_5_odds": round(random.uniform(1.4, 2.5), 2),
-
                 # 比赛环境特征
                 "day_of_week": random.randint(0, 6),
                 "month": random.randint(1, 12),
                 "is_weekend": random.choice([0, 1]),
                 "venue_capacity": random.randint(20000, 80000),
                 "travel_distance": round(random.uniform(10, 500), 1),
-
                 # 高级统计特征
                 "home_team_xg": round(random.uniform(0.8, 3.5), 2),
                 "away_team_xg": round(random.uniform(0.6, 3.0), 2),
@@ -301,28 +305,28 @@ class BenchmarkDataSeeder:
                 "away_team_ppda": round(random.uniform(8.0, 15.0), 2),
                 "home_team_corsi": round(random.uniform(45, 65), 1),
                 "away_team_corsi": round(random.randint(35, 60), 1),
-
                 # 复杂特征
                 "momentum_factor": round(random.uniform(-0.5, 0.5), 3),
                 "fatigue_index": round(random.uniform(0.0, 1.0), 3),
                 "weather_impact": round(random.uniform(0.8, 1.2), 2),
                 "referee_strictness": round(random.uniform(0.0, 1.0), 3),
-
                 # 元数据
                 "generated_at": datetime.now().isoformat(),
                 "feature_version": "v2.0",
-                "data_quality_score": round(random.uniform(0.7, 1.0), 3)
+                "data_quality_score": round(random.uniform(0.7, 1.0), 3),
             }
 
-            features_list.append({
-                "match_id": match["id"],
-                "features": features,
-                "metadata": {
-                    "source": "benchmark_generator",
-                    "generation_timestamp": datetime.now().isoformat(),
-                    "feature_count": len(features)
+            features_list.append(
+                {
+                    "match_id": match["id"],
+                    "features": features,
+                    "metadata": {
+                        "source": "benchmark_generator",
+                        "generation_timestamp": datetime.now().isoformat(),
+                        "feature_count": len(features),
+                    },
                 }
-            })
+            )
 
         self.features = features_list
         print(f"✅ 生成 {len(features_list)} 组特征数据")
@@ -336,7 +340,7 @@ class BenchmarkDataSeeder:
         batch_size = 20  # 特征数据较大，使用小批次
 
         for i in range(0, len(features_list), batch_size):
-            batch = features_list[i:i + batch_size]
+            batch = features_list[i : i + batch_size]
 
             # 并发保存批次
             async def save_feature_data(feature_data):
@@ -345,7 +349,7 @@ class BenchmarkDataSeeder:
                         match_id=feature_data["match_id"],
                         features=feature_data["features"],
                         version="latest",
-                        metadata=feature_data["metadata"]
+                        metadata=feature_data["metadata"],
                     )
                     return True
                 except Exception as e:
@@ -357,8 +361,10 @@ class BenchmarkDataSeeder:
             batch_success = sum(1 for r in results if r is True)
             success_count += batch_success
 
-            print(f"   进度: {min(i + batch_size, len(features_list))}/{len(features_list)} "
-                  f"({batch_success}/{len(batch)} 成功)")
+            print(
+                f"   进度: {min(i + batch_size, len(features_list))}/{len(features_list)} "
+                f"({batch_success}/{len(batch)} 成功)"
+            )
 
         print(f"✅ 成功保存 {success_count}/{len(features_list)} 组特征")
         return success_count
@@ -373,35 +379,44 @@ class BenchmarkDataSeeder:
             "data_summary": {
                 "teams_count": len(self.teams),
                 "matches_count": len(self.matches),
-                "features_count": len(self.features)
+                "features_count": len(self.features),
             },
             "data_distribution": {
                 "seasons": sorted({m["season_id"] for m in self.matches}),
                 "competitions": sorted({m["competition"] for m in self.matches}),
                 "match_status": {
-                    "completed": len([m for m in self.matches if m["status"] == "completed"]),
-                    "scheduled": len([m for m in self.matches if m["status"] == "scheduled"])
-                }
+                    "completed": len(
+                        [m for m in self.matches if m["status"] == "completed"]
+                    ),
+                    "scheduled": len(
+                        [m for m in self.matches if m["status"] == "scheduled"]
+                    ),
+                },
             },
             "feature_statistics": {
-                "avg_features_per_match": len(self.features[0]["features"]) if self.features else 0,
+                "avg_features_per_match": len(self.features[0]["features"])
+                if self.features
+                else 0,
                 "feature_categories": [
-                    "team_performance", "h2h_history", "market_odds",
-                    "match_environment", "advanced_stats"
-                ]
+                    "team_performance",
+                    "h2h_history",
+                    "market_odds",
+                    "match_environment",
+                    "advanced_stats",
+                ],
             },
             "generation_config": {
                 "teams_target": 50,
                 "matches_target": 1000,
                 "batch_size_teams": 10,
                 "batch_size_matches": 50,
-                "batch_size_features": 20
-            }
+                "batch_size_features": 20,
+            },
         }
 
         # 保存报告
         report_path = "/app/artifacts/benchmark_seeding_report.json"
-        with open(report_path, 'w', encoding='utf-8') as f:
+        with open(report_path, "w", encoding="utf-8") as f:
             json.dump(report, f, indent=2, ensure_ascii=False)
 
         print(f"   📊 球队数量: {report['data_summary']['teams_count']}")
@@ -458,12 +473,14 @@ class BenchmarkDataSeeder:
             print(f"✅ 特征数据: {features_saved}/{len(features)} 成功")
 
             overall_success = (
-                teams_saved == len(teams) and
-                matches_saved == len(matches) and
-                features_saved == len(features)
+                teams_saved == len(teams)
+                and matches_saved == len(matches)
+                and features_saved == len(features)
             )
 
-            print(f"\n🏆 总体状态: {'✅ 全部成功' if overall_success else '⚠️ 部分失败'}")
+            print(
+                f"\n🏆 总体状态: {'✅ 全部成功' if overall_success else '⚠️ 部分失败'}"
+            )
 
             if report:
                 print("📊 详细报告: artifacts/benchmark_seeding_report.json")
@@ -473,6 +490,7 @@ class BenchmarkDataSeeder:
         except Exception as e:
             print(f"\n❌ 数据生成过程中出现错误: {e}")
             import traceback
+
             traceback.print_exc()
             return False
 
@@ -489,7 +507,7 @@ async def main():
 
 if __name__ == "__main__":
     # 设置事件循环策略
-    if sys.platform == 'win32':
+    if sys.platform == "win32":
         asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
 
     asyncio.run(main())

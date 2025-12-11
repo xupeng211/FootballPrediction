@@ -16,10 +16,7 @@
 
 import pandas as pd
 import numpy as np
-from datetime import datetime
 import logging
-from pathlib import Path
-from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 from sklearn.metrics import accuracy_score, log_loss, classification_report
 from xgboost import XGBClassifier
@@ -44,26 +41,30 @@ class BaselineTrainer:
         df = pd.read_csv(file_path)
 
         # 使用现有的result列 (H=Home, A=Away, D=Draw)
-        if 'result' in df.columns:
-            result_mapping = {'H': 'Home', 'A': 'Away', 'D': 'Draw'}
-            df['true_result'] = df['result'].map(result_mapping)
+        if "result" in df.columns:
+            result_mapping = {"H": "Home", "A": "Away", "D": "Draw"}
+            df["true_result"] = df["result"].map(result_mapping)
         else:
             raise ValueError("❌ 数据集中缺少result列")
-        logger.info(f"📈 真实比赛结果分布:")
+        logger.info("📈 真实比赛结果分布:")
         logger.info(f"   {df['true_result'].value_counts().to_dict()}")
 
         # 创建match_date列用于时序排序
-        df['match_date'] = pd.to_datetime(
-            df['year'].astype(str) + '-' +
-            df['month'].astype(str).str.zfill(2) + '-' +
-            '01'  # 使用每月1号作为估算日期
+        df["match_date"] = pd.to_datetime(
+            df["year"].astype(str)
+            + "-"
+            + df["month"].astype(str).str.zfill(2)
+            + "-"
+            + "01"  # 使用每月1号作为估算日期
         )
 
         # 按日期排序 (重要: 时序分割)
-        df = df.sort_values('match_date').reset_index(drop=True)
+        df = df.sort_values("match_date").reset_index(drop=True)
 
         logger.info(f"   数据形状: {df.shape}")
-        logger.info(f"   日期范围: {df['match_date'].min()} 到 {df['match_date'].max()}")
+        logger.info(
+            f"   日期范围: {df['match_date'].min()} 到 {df['match_date'].max()}"
+        )
 
         return df
 
@@ -73,20 +74,39 @@ class BaselineTrainer:
 
         # 定义需要排除的列 (数据泄露或非特征)
         exclude_columns = [
-            'id', 'match_date', 'home_team_name', 'away_team_name',
-            'home_score', 'away_score', 'match_result', 'result_numeric',
-            'home_xg', 'away_xg', 'xg_difference', 'total_xg',
-            'has_xg_data', 'has_events', 'has_shotmap', 'has_lineups',
-            'home_lineup_count', 'away_lineup_count', 'total_lineup_players', 'has_odds',
-            'h2h_home_advantage', 'h2v_home_xg_boost'
+            "id",
+            "match_date",
+            "home_team_name",
+            "away_team_name",
+            "home_score",
+            "away_score",
+            "match_result",
+            "result_numeric",
+            "home_xg",
+            "away_xg",
+            "xg_difference",
+            "total_xg",
+            "has_xg_data",
+            "has_events",
+            "has_shotmap",
+            "has_lineups",
+            "home_lineup_count",
+            "away_lineup_count",
+            "total_lineup_players",
+            "has_odds",
+            "h2h_home_advantage",
+            "h2v_home_xg_boost",
         ]
 
         # 选择时序安全的滚动特征 (无数据泄露)
-        rolling_features = [col for col in df.columns if 'last_' in col]
+        rolling_features = [col for col in df.columns if "last_" in col]
 
         # 选择基础的赛前上下文特征
         context_features = [
-            'year', 'month', 'day_of_week', 'is_weekend',
+            "year",
+            "month",
+            "day_of_week",
+            "is_weekend",
             # 如果有赔率数据，可以添加
             # 'home_win_odds', 'draw_odds', 'away_win_odds'
         ]
@@ -101,7 +121,7 @@ class BaselineTrainer:
 
         # 提取特征和目标
         X = df[feature_columns].copy()
-        y = df['true_result'].copy()
+        y = df["true_result"].copy()
 
         # 处理缺失值
         X = X.fillna(0)  # 用0填充缺失的滚动特征
@@ -111,8 +131,9 @@ class BaselineTrainer:
 
         return X, y, feature_columns
 
-    def split_data_chronological(self, X: pd.DataFrame, y: pd.Series,
-                                test_size: float = 0.2) -> tuple:
+    def split_data_chronological(
+        self, X: pd.DataFrame, y: pd.Series, test_size: float = 0.2
+    ) -> tuple:
         """时序数据分割"""
         logger.info("📅 执行时序数据分割")
 
@@ -133,25 +154,31 @@ class BaselineTrainer:
         y_train_encoded = self.label_encoder.fit_transform(y_train)
         y_test_encoded = self.label_encoder.transform(y_test)
 
-        class_encoding = dict(zip(self.label_encoder.classes_,
-                                 self.label_encoder.transform(self.label_encoder.classes_)))
+        class_encoding = dict(
+            zip(
+                self.label_encoder.classes_,
+                self.label_encoder.transform(self.label_encoder.classes_),
+            )
+        )
         logger.info(f"   🏷️ 类别编码: {class_encoding}")
 
         return X_train, X_test, y_train_encoded, y_test_encoded, y_train, y_test
 
-    def train_xgboost(self, X_train: pd.DataFrame, y_train: np.ndarray) -> XGBClassifier:
+    def train_xgboost(
+        self, X_train: pd.DataFrame, y_train: np.ndarray
+    ) -> XGBClassifier:
         """训练XGBoost模型"""
         logger.info("🚀 训练XGBoost分类器")
 
         # 配置XGBoost参数 (对于3分类问题)
         params = {
-            'n_estimators': 100,
-            'max_depth': 6,
-            'learning_rate': 0.1,
-            'random_state': 42,
-            'eval_metric': 'mlogloss',
-            'objective': 'multi:softprob',
-            'num_class': 3  # 明确指定3分类
+            "n_estimators": 100,
+            "max_depth": 6,
+            "learning_rate": 0.1,
+            "random_state": 42,
+            "eval_metric": "mlogloss",
+            "objective": "multi:softprob",
+            "num_class": 3,  # 明确指定3分类
         }
 
         self.model = XGBClassifier(**params)
@@ -159,14 +186,18 @@ class BaselineTrainer:
 
         self.feature_names = X_train.columns.tolist()
 
-        logger.info(f"   ✅ 模型训练完成")
+        logger.info("   ✅ 模型训练完成")
         logger.info(f"   🌳 树的数量: {self.model.n_estimators}")
         logger.info(f"   📊 特征数量: {len(self.feature_names)}")
 
         return self.model
 
-    def evaluate_model(self, X_test: pd.DataFrame, y_test_encoded: np.ndarray,
-                      y_test_original: pd.Series) -> dict:
+    def evaluate_model(
+        self,
+        X_test: pd.DataFrame,
+        y_test_encoded: np.ndarray,
+        y_test_original: pd.Series,
+    ) -> dict:
         """评估模型性能"""
         logger.info("📊 模型性能评估")
 
@@ -185,21 +216,24 @@ class BaselineTrainer:
         logger.info(f"   📉 测试集Log Loss: {logloss:.4f}")
 
         # 显示分类报告
-        logger.info(f"   📋 分类报告:")
-        report = classification_report(y_test_original, y_pred_original,
-                                     output_dict=True, zero_division=0)
+        logger.info("   📋 分类报告:")
+        report = classification_report(
+            y_test_original, y_pred_original, output_dict=True, zero_division=0
+        )
 
         for class_name in self.label_encoder.classes_:
             if class_name in report:
-                precision = report[class_name]['precision']
-                recall = report[class_name]['recall']
-                f1 = report[class_name]['f1-score']
-                logger.info(f"      {class_name:6}: P={precision:.3f}, R={recall:.3f}, F1={f1:.3f}")
+                precision = report[class_name]["precision"]
+                recall = report[class_name]["recall"]
+                f1 = report[class_name]["f1-score"]
+                logger.info(
+                    f"      {class_name:6}: P={precision:.3f}, R={recall:.3f}, F1={f1:.3f}"
+                )
 
         return {
-            'accuracy': accuracy,
-            'log_loss': logloss,
-            'classification_report': report
+            "accuracy": accuracy,
+            "log_loss": logloss,
+            "classification_report": report,
         }
 
     def plot_feature_importance(self, top_n: int = 10):
@@ -221,10 +255,11 @@ class BaselineTrainer:
             logger.info(f"   {i:2d}. {feature:35}: {importance_score:.4f}")
 
         # 保存特征重要性
-        importance_df = pd.DataFrame(feature_importance,
-                                   columns=['feature', 'importance'])
-        importance_df.to_csv('feature_importance.csv', index=False)
-        logger.info(f"   💾 特征重要性已保存至: feature_importance.csv")
+        importance_df = pd.DataFrame(
+            feature_importance, columns=["feature", "importance"]
+        )
+        importance_df.to_csv("feature_importance.csv", index=False)
+        logger.info("   💾 特征重要性已保存至: feature_importance.csv")
 
     def train_baseline_model(self, data_path: str) -> dict:
         """完整的基线模型训练流程"""
@@ -237,8 +272,9 @@ class BaselineTrainer:
         X, y, feature_columns = self.select_features(df)
 
         # 3. 时序分割
-        X_train, X_test, y_train_enc, y_test_enc, y_train_orig, y_test_orig = \
+        X_train, X_test, y_train_enc, y_test_enc, y_train_orig, y_test_orig = (
             self.split_data_chronological(X, y)
+        )
 
         # 4. 训练模型
         self.train_xgboost(X_train, y_train_enc)
@@ -265,16 +301,16 @@ def main():
         )
 
         # 显示最终结果
-        print("\n" + "="*80)
+        print("\n" + "=" * 80)
         print("🏆 BASELINE MODEL PERFORMANCE SUMMARY")
-        print("="*80)
+        print("=" * 80)
 
-        print(f"\n📊 关键指标:")
+        print("\n📊 关键指标:")
         print(f"   🎯 准确率 (Accuracy): {results['accuracy']:.4f}")
         print(f"   📉 对数损失 (Log Loss): {results['log_loss']:.4f}")
 
-        print(f"\n✅ 基线模型已建立，可作为后续模型优化的基准")
-        print("="*80)
+        print("\n✅ 基线模型已建立，可作为后续模型优化的基准")
+        print("=" * 80)
 
     except Exception as e:
         logger.error(f"❌ 训练失败: {e}")

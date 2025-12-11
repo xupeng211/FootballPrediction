@@ -5,8 +5,7 @@ Senior Backend Engineer Refactored Version
 """
 
 import asyncio
-import json
-from typing import Any,  Optional
+from typing import Any, Optional
 import aiohttp
 from src.core.logging import get_logger
 

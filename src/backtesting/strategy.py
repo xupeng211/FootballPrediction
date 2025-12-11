@@ -13,7 +13,7 @@ from abc import ABC, abstractmethod
 from decimal import Decimal
 from typing import Any, Optional
 
-from .models import BetDecision, BetType, StrategyProtocol
+from .models import BetDecision, BetType
 
 logger = logging.getLogger(__name__)
 
@@ -84,7 +84,7 @@ class BaseStrategy(ABC):
             if value is None:
                 return default
             return Decimal(str(value))
-        except (ValueError):
+        except ValueError:
             self.logger.warning(
                 f"Cannot convert {value} to Decimal, using default {default}"
             )
@@ -265,7 +265,6 @@ class SimpleValueStrategy(BaseStrategy):
                 and confidence >= self.min_confidence
                 and value_edge > best_value
             ):
-
                 best_decision = BetDecision(
                     match_id=match_id,
                     bet_type=bet_type,

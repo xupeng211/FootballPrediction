@@ -3,14 +3,11 @@
 提供所有数据模型的基础类,包含通用字段和方法，以及数据库连接函数。
 """
 
-import os
-from collections.abc import AsyncGenerator, Generator
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import Column, DateTime, Integer, create_engine
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
+from sqlalchemy import Column, DateTime, Integer
+from sqlalchemy.orm import DeclarativeBase
 
 
 class Base(DeclarativeBase):
@@ -308,10 +305,12 @@ try:
 
         为向后兼容而保留的 AsyncSessionLocal 类
         """
+
         pass
 
     # 将其添加到模块命名空间（但不推荐使用）
     import sys
+
     current_module = sys.modules[__name__]
     current_module.AsyncSessionLocal = AsyncSessionLocal
 

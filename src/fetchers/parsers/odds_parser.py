@@ -18,7 +18,7 @@ Odds Data Parser
 
 import re
 from datetime import datetime
-from typing import Any,  Optional, Union
+from typing import Any, Optional
 
 from bs4 import BeautifulSoup, Tag
 
@@ -123,7 +123,7 @@ class OddsParser:
 
         try:
             # 移除常见的非数字字符
-            clean_odds = re.sub(r'[^\d.]', '', str(odds_str))
+            clean_odds = re.sub(r"[^\d.]", "", str(odds_str))
             if not clean_odds:
                 return None
 
@@ -133,7 +133,7 @@ class OddsParser:
 
             return odds
 
-        except (ValueError):
+        except ValueError:
             self.logger.warning(f"⚠️ 无效赔率值: {odds_str}")
             return None
 
@@ -151,7 +151,7 @@ class OddsParser:
             return "Unknown"
 
         # 移除多余空格和特殊字符
-        cleaned = re.sub(r'\s+', ' ', str(bookmaker_str).strip())
+        cleaned = re.sub(r"\s+", " ", str(bookmaker_str).strip())
         return cleaned
 
     def _normalize_market(self, market_str: str) -> str:
@@ -232,31 +232,33 @@ class OddsParser:
 
         try:
             # 查找博彩公司元素
-            bookmaker_elements = container.find_all(class_=re.compile(r'bookmaker|provider'))
+            bookmaker_elements = container.find_all(
+                class_=re.compile(r"bookmaker|provider")
+            )
             if not bookmaker_elements:
                 # 尝试其他常见的类名模式
                 bookmaker_elements = container.find_all(attrs={"data-bookmaker": True})
 
             for element in bookmaker_elements:
                 bookmaker = self._normalize_bookmaker(
-                    element.get("data-bookmaker") or
-                    element.get("data-provider") or
-                    element.get_text(strip=True)
+                    element.get("data-bookmaker")
+                    or element.get("data-provider")
+                    or element.get_text(strip=True)
                 )
 
                 # 查找赔率值
-                odds_elements = element.find_all(class_=re.compile(r'odds|price'))
+                odds_elements = element.find_all(class_=re.compile(r"odds|price"))
                 for odds_elem in odds_elements:
                     odds = self._normalize_odds(odds_elem.get_text(strip=True))
                     market = self._normalize_market(
-                        odds_elem.get("data-market") or
-                        odds_elem.get("data-type") or
-                        "Unknown"
+                        odds_elem.get("data-market")
+                        or odds_elem.get("data-type")
+                        or "Unknown"
                     )
                     selection = self._normalize_selection(
-                        odds_elem.get("data-selection") or
-                        odds_elem.get("data-outcome") or
-                        "Unknown"
+                        odds_elem.get("data-selection")
+                        or odds_elem.get("data-outcome")
+                        or "Unknown"
                     )
 
                     if odds:
@@ -282,7 +284,7 @@ class OddsParser:
             return []
 
         try:
-            soup = BeautifulSoup(html_content, 'html.parser')
+            soup = BeautifulSoup(html_content, "html.parser")
             all_odds_data = []
 
             # 策略1: 查找标准的赔率表格
@@ -294,7 +296,10 @@ class OddsParser:
             # 策略2: 查找其他可能的表格
             if not all_odds_data:
                 for table in soup.find_all("table"):
-                    if any(keyword in table.get_text().lower() for keyword in ['odds', 'price', 'bet']):
+                    if any(
+                        keyword in table.get_text().lower()
+                        for keyword in ["odds", "price", "bet"]
+                    ):
                         self.logger.info("📊 找到可能的赔率表格")
                         all_odds_data.extend(self._parse_odds_table(table))
 
@@ -302,7 +307,9 @@ class OddsParser:
             if not all_odds_data:
                 odds_container = soup.find("div", {"id": "odds-container"})
                 if not odds_container:
-                    odds_container = soup.find("div", class_=re.compile(r'odds|betting'))
+                    odds_container = soup.find(
+                        "div", class_=re.compile(r"odds|betting")
+                    )
 
                 if odds_container:
                     self.logger.info("📊 找到赔率容器")
@@ -317,7 +324,7 @@ class OddsParser:
                     "total_odds": len(result),
                     "unique_bookmakers": len({d["bookmaker"] for d in result}),
                     "markets": list({d["market"] for d in result}),
-                }
+                },
             )
 
             return result
@@ -341,17 +348,17 @@ class OddsParser:
             return []
 
         try:
-            soup = BeautifulSoup(html_content, 'html.parser')
+            soup = BeautifulSoup(html_content, "html.parser")
             all_odds_data = []
 
             # 查找比赛容器
             match_containers = soup.find_all(
-                attrs={"class": re.compile(r'match|game|fixture')},
-                limit=100  # 限制处理数量以避免性能问题
+                attrs={"class": re.compile(r"match|game|fixture")},
+                limit=100,  # 限制处理数量以避免性能问题
             )
 
             for i, container in enumerate(match_containers):
-                self.logger.debug(f"📊 解析比赛容器 {i+1}/{len(match_containers)}")
+                self.logger.debug(f"📊 解析比赛容器 {i + 1}/{len(match_containers)}")
 
                 # 提取比赛容器中的 HTML 并解析
                 container_html = str(container)
@@ -366,7 +373,7 @@ class OddsParser:
                 extra={
                     "matches_processed": len(match_containers),
                     "total_odds": len(result),
-                }
+                },
             )
 
             return result
@@ -375,7 +382,9 @@ class OddsParser:
             self.logger.error(f"❌ 解析多比赛页面失败: {e}")
             return []
 
-    def validate_odds_data(self, odds_data: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    def validate_odds_data(
+        self, odds_data: list[dict[str, Any]]
+    ) -> list[dict[str, Any]]:
         """
         验证和清理赔率数据
 
@@ -390,7 +399,9 @@ class OddsParser:
         for data in odds_data:
             try:
                 # 检查必要字段
-                if not all(key in data for key in ["bookmaker", "market", "selection", "odds"]):
+                if not all(
+                    key in data for key in ["bookmaker", "market", "selection", "odds"]
+                ):
                     self.logger.warning(f"⚠️ 赔率数据缺少必要字段: {data}")
                     continue
 
@@ -400,7 +411,9 @@ class OddsParser:
                     continue
 
                 # 检查字符串字段
-                if not all(data[field] for field in ["bookmaker", "market", "selection"]):
+                if not all(
+                    data[field] for field in ["bookmaker", "market", "selection"]
+                ):
                     self.logger.warning(f"⚠️ 空字符串字段: {data}")
                     continue
 
@@ -415,7 +428,7 @@ class OddsParser:
                 "original_count": len(odds_data),
                 "valid_count": len(valid_data),
                 "invalid_count": len(odds_data) - len(valid_data),
-            }
+            },
         )
 
         return valid_data

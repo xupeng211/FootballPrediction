@@ -31,12 +31,10 @@ sys.path.insert(0, str(project_root))
 
 from src.database.async_manager import get_db_session, initialize_database
 from src.features.dynamic_rolling import get_features_for_upcoming_match
-from src.inference.schemas import PredictionRequest
 from src.core.config import get_settings
 
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -45,21 +43,20 @@ class DailyPredictionRunner:
     """每日预测运行器"""
 
     def __init__(self, inference_api_url: str = "http://app:8000"):
-        self.inference_api_url = inference_api_url.rstrip('/')
+        self.inference_api_url = inference_api_url.rstrip("/")
         self.settings = get_settings()
         self.session = requests.Session()
-        self.session.headers.update({
-            "Content-Type": "application/json",
-            "Accept": "application/json"
-        })
+        self.session.headers.update(
+            {"Content-Type": "application/json", "Accept": "application/json"}
+        )
 
         # 预测统计
         self.stats = {
-            'total_matches': 0,
-            'successful_predictions': 0,
-            'failed_predictions': 0,
-            'skipped_matches': 0,
-            'prediction_distribution': {"Home": 0, "Draw": 0, "Away": 0}
+            "total_matches": 0,
+            "successful_predictions": 0,
+            "failed_predictions": 0,
+            "skipped_matches": 0,
+            "prediction_distribution": {"Home": 0, "Draw": 0, "Away": 0},
         }
 
     async def run_daily_predictions(self, days_ahead: int = 3) -> Dict[str, Any]:
@@ -77,7 +74,7 @@ class DailyPredictionRunner:
         try:
             # 1. 获取即将进行的比赛
             upcoming_matches = await self._get_upcoming_matches(days_ahead)
-            self.stats['total_matches'] = len(upcoming_matches)
+            self.stats["total_matches"] = len(upcoming_matches)
 
             logger.info(f"📋 找到 {len(upcoming_matches)} 场即将进行的比赛")
 
@@ -96,7 +93,7 @@ class DailyPredictionRunner:
 
         except Exception as e:
             logger.error(f"❌ 每日预测流程失败: {e}")
-            self.stats['failed_predictions'] = self.stats['total_matches']
+            self.stats["failed_predictions"] = self.stats["total_matches"]
             return self._generate_report()
 
     async def _get_upcoming_matches(self, days_ahead: int) -> List[Dict[str, Any]]:
@@ -126,26 +123,31 @@ class DailyPredictionRunner:
         """
 
         async with get_db_session() as session:
-            result = await session.execute(text(sql), {
-                "start_date": start_date,
-                "end_date": end_date,
-                "model_version": "v1.0.0"
-            })
+            result = await session.execute(
+                text(sql),
+                {
+                    "start_date": start_date,
+                    "end_date": end_date,
+                    "model_version": "v1.0.0",
+                },
+            )
 
             matches = []
             for row in result.fetchall():
-                matches.append({
-                    'match_id': row.id,
-                    'home_team_id': row.home_team_id,
-                    'away_team_id': row.away_team_id,
-                    'home_team_name': row.home_team_name,
-                    'away_team_name': row.away_team_name,
-                    'match_date': row.match_date,
-                    'league_id': row.league_id,
-                    'league_name': None,  # 数据库中没有这个字段
-                    'status': row.status,
-                    'has_prediction': row.has_prediction
-                })
+                matches.append(
+                    {
+                        "match_id": row.id,
+                        "home_team_id": row.home_team_id,
+                        "away_team_id": row.away_team_id,
+                        "home_team_name": row.home_team_name,
+                        "away_team_name": row.away_team_name,
+                        "match_date": row.match_date,
+                        "league_id": row.league_id,
+                        "league_name": None,  # 数据库中没有这个字段
+                        "status": row.status,
+                        "has_prediction": row.has_prediction,
+                    }
+                )
 
             return matches
 
@@ -156,87 +158,101 @@ class DailyPredictionRunner:
         async with get_db_session() as session:
             for i, match in enumerate(matches, 1):
                 try:
-                    logger.info(f"📊 处理第 {i}/{len(matches)} 场比赛: "
-                               f"{match['home_team_name']} vs {match['away_team_name']}")
+                    logger.info(
+                        f"📊 处理第 {i}/{len(matches)} 场比赛: "
+                        f"{match['home_team_name']} vs {match['away_team_name']}"
+                    )
 
                     # 跳过已有预测的比赛
-                    if match.get('has_prediction'):
-                        logger.info(f"   ⏭️ 跳过 (已有今日预测)")
-                        self.stats['skipped_matches'] += 1
+                    if match.get("has_prediction"):
+                        logger.info("   ⏭️ 跳过 (已有今日预测)")
+                        self.stats["skipped_matches"] += 1
                         continue
 
                     # 1. 计算动态特征
-                    features = await get_features_for_upcoming_match(match['match_id'])
-                    if not features.get('match_date'):
-                        logger.warning(f"   ⚠️ 特征计算失败，跳过此比赛")
-                        self.stats['failed_predictions'] += 1
+                    features = await get_features_for_upcoming_match(match["match_id"])
+                    if not features.get("match_date"):
+                        logger.warning("   ⚠️ 特征计算失败，跳过此比赛")
+                        self.stats["failed_predictions"] += 1
                         continue
 
                     # 2. 调用推理API
                     prediction_result = await self._call_inference_api(match, features)
                     if not prediction_result:
-                        self.stats['failed_predictions'] += 1
+                        self.stats["failed_predictions"] += 1
                         continue
 
                     # 3. 保存预测结果
                     await self._save_prediction(session, match, prediction_result)
-                    self.stats['successful_predictions'] += 1
+                    self.stats["successful_predictions"] += 1
 
                     # 更新统计
-                    prediction = prediction_result['prediction']
-                    self.stats['prediction_distribution'][prediction] += 1
+                    prediction = prediction_result["prediction"]
+                    self.stats["prediction_distribution"][prediction] += 1
 
-                    logger.info(f"   ✅ 预测成功: {prediction} "
-                               f"(置信度: {prediction_result['confidence']:.3f})")
+                    logger.info(
+                        f"   ✅ 预测成功: {prediction} "
+                        f"(置信度: {prediction_result['confidence']:.3f})"
+                    )
 
                 except Exception as e:
                     logger.error(f"   ❌ 处理比赛失败: {e}")
-                    self.stats['failed_predictions'] += 1
+                    self.stats["failed_predictions"] += 1
 
             # 提交所有预测
             await session.commit()
 
     async def _call_inference_api(
-        self,
-        match: Dict[str, Any],
-        features: Dict[str, Any]
+        self, match: Dict[str, Any], features: Dict[str, Any]
     ) -> Optional[Dict[str, Any]]:
         """调用推理API进行预测"""
         try:
             # 构建预测请求
             prediction_request = {
-                "match_id": int(match['match_id']) if isinstance(match['match_id'], (int, str)) else 12345,  # 确保是数字ID
-                "home_team_name": match['home_team_name'],
-                "away_team_name": match['away_team_name'],
-                "match_date": features['match_date'],
+                "match_id": int(match["match_id"])
+                if isinstance(match["match_id"], (int, str))
+                else 12345,  # 确保是数字ID
+                "home_team_name": match["home_team_name"],
+                "away_team_name": match["away_team_name"],
+                "match_date": features["match_date"],
                 "home_score": 0,  # 即将进行的比赛，比分为0
                 "away_score": 0,
-                "home_xg": features.get('home_last_5_avg_xg_for', 0),
-                "away_xg": features.get('away_last_5_avg_xg_for', 0),
-                "home_total_shots": int(features.get('home_last_5_avg_goals_scored', 0) * 10),
-                "away_total_shots": int(features.get('away_last_5_avg_goals_scored', 0) * 10),
-                "home_shots_on_target": int(features.get('home_last_5_avg_goals_scored', 0) * 4),
-                "away_shots_on_target": int(features.get('away_last_5_avg_goals_scored', 0) * 4),
-                "league_id": match['league_id'],
-                "league_name": match['league_name'],
+                "home_xg": features.get("home_last_5_avg_xg_for", 0),
+                "away_xg": features.get("away_last_5_avg_xg_for", 0),
+                "home_total_shots": int(
+                    features.get("home_last_5_avg_goals_scored", 0) * 10
+                ),
+                "away_total_shots": int(
+                    features.get("away_last_5_avg_goals_scored", 0) * 10
+                ),
+                "home_shots_on_target": int(
+                    features.get("home_last_5_avg_goals_scored", 0) * 4
+                ),
+                "away_shots_on_target": int(
+                    features.get("away_last_5_avg_goals_scored", 0) * 4
+                ),
+                "league_id": match["league_id"],
+                "league_name": match["league_name"],
                 "stats_json": {
-                    "feature_source": features['feature_source'],
-                    "home_matches_used": features['home_team_matches_used'],
-                    "away_matches_used": features['away_team_matches_used']
-                }
+                    "feature_source": features["feature_source"],
+                    "home_matches_used": features["home_team_matches_used"],
+                    "away_matches_used": features["away_team_matches_used"],
+                },
             }
 
             # 调用API
             response = self.session.post(
                 f"{self.inference_api_url}/api/v1/inference/predict",
                 json=prediction_request,
-                timeout=30
+                timeout=30,
             )
 
             if response.status_code == 200:
                 return response.json()
             else:
-                logger.error(f"   ❌ API调用失败: {response.status_code} - {response.text}")
+                logger.error(
+                    f"   ❌ API调用失败: {response.status_code} - {response.text}"
+                )
                 return None
 
         except Exception as e:
@@ -244,10 +260,7 @@ class DailyPredictionRunner:
             return None
 
     async def _save_prediction(
-        self,
-        session,
-        match: Dict[str, Any],
-        prediction_result: Dict[str, Any]
+        self, session, match: Dict[str, Any], prediction_result: Dict[str, Any]
     ):
         """保存预测结果到数据库"""
         sql = """
@@ -263,37 +276,43 @@ class DailyPredictionRunner:
         """
 
         params = {
-            "match_id": match['match_id'],
-            "prediction": prediction_result['prediction'],
-            "confidence": prediction_result['confidence'],
-            "probabilities": json.dumps(prediction_result['probabilities']),
-            "model_version": prediction_result.get('model_version', 'v1.0.0'),
-            "feature_count": prediction_result.get('feature_count', 0),
-            "missing_features": prediction_result.get('missing_features', 0),
-            "processing_time_ms": prediction_result.get('processing_time_ms'),
-            "prediction_source": "daily_automation"
+            "match_id": match["match_id"],
+            "prediction": prediction_result["prediction"],
+            "confidence": prediction_result["confidence"],
+            "probabilities": json.dumps(prediction_result["probabilities"]),
+            "model_version": prediction_result.get("model_version", "v1.0.0"),
+            "feature_count": prediction_result.get("feature_count", 0),
+            "missing_features": prediction_result.get("missing_features", 0),
+            "processing_time_ms": prediction_result.get("processing_time_ms"),
+            "prediction_source": "daily_automation",
         }
 
         await session.execute(text(sql), params)
 
     def _generate_report(self) -> Dict[str, Any]:
         """生成预测报告"""
-        total_processed = self.stats['successful_predictions'] + self.stats['failed_predictions']
-        success_rate = (self.stats['successful_predictions'] / total_processed * 100) if total_processed > 0 else 0
+        total_processed = (
+            self.stats["successful_predictions"] + self.stats["failed_predictions"]
+        )
+        success_rate = (
+            (self.stats["successful_predictions"] / total_processed * 100)
+            if total_processed > 0
+            else 0
+        )
 
         report = {
             "timestamp": datetime.now().isoformat(),
             "summary": {
-                "total_matches_found": self.stats['total_matches'],
+                "total_matches_found": self.stats["total_matches"],
                 "matches_processed": total_processed,
-                "successful_predictions": self.stats['successful_predictions'],
-                "failed_predictions": self.stats['failed_predictions'],
-                "skipped_matches": self.stats['skipped_matches'],
-                "success_rate": round(success_rate, 2)
+                "successful_predictions": self.stats["successful_predictions"],
+                "failed_predictions": self.stats["failed_predictions"],
+                "skipped_matches": self.stats["skipped_matches"],
+                "success_rate": round(success_rate, 2),
             },
-            "prediction_distribution": self.stats['prediction_distribution'],
+            "prediction_distribution": self.stats["prediction_distribution"],
             "model_version": "v1.0.0",
-            "automation_source": "daily_runner"
+            "automation_source": "daily_runner",
         }
 
         return report
@@ -304,8 +323,8 @@ class DailyPredictionRunner:
         print("📊 每日预测报告")
         print("=" * 60)
 
-        summary = report['summary']
-        print(f"\n📈 预测统计:")
+        summary = report["summary"]
+        print("\n📈 预测统计:")
         print(f"   发现比赛总数: {summary['total_matches_found']}")
         print(f"   处理比赛数: {summary['matches_processed']}")
         print(f"   ✅ 成功预测: {summary['successful_predictions']}")
@@ -313,14 +332,14 @@ class DailyPredictionRunner:
         print(f"   ⏭️ 跳过比赛: {summary['skipped_matches']}")
         print(f"   📊 成功率: {summary['success_rate']}%")
 
-        dist = report['prediction_distribution']
+        dist = report["prediction_distribution"]
         if sum(dist.values()) > 0:
-            print(f"\n🎯 预测分布:")
+            print("\n🎯 预测分布:")
             print(f"   主胜 (Home): {dist['Home']}")
             print(f"   平局 (Draw): {dist['Draw']}")
             print(f"   客胜 (Away): {dist['Away']}")
 
-        print(f"\n🤖 模型信息:")
+        print("\n🤖 模型信息:")
         print(f"   版本: {report['model_version']}")
         print(f"   自动化来源: {report['automation_source']}")
         print(f"   报告时间: {report['timestamp']}")
@@ -359,7 +378,7 @@ async def main():
         runner.print_report(report)
 
         # 返回成功状态
-        success = report['summary']['success_rate'] >= 80  # 80%以上成功率算成功
+        success = report["summary"]["success_rate"] >= 80  # 80%以上成功率算成功
         return success
 
     except KeyboardInterrupt:

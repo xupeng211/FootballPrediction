@@ -8,13 +8,9 @@ L1 Historical Data Backfill Script - Time Machine Mode
 
 import asyncio
 import sys
-import os
-import json
-import re
-from datetime import datetime
 import logging
 from pathlib import Path
-from typing import  Any, Optional
+from typing import Any, Optional
 
 # 添加项目根路径
 project_root = Path(__file__).parent.parent.parent
@@ -22,12 +18,10 @@ sys.path.insert(0, str(project_root))
 
 import httpx
 import psycopg2
-from psycopg2.extras import RealDictCursor
 
 # 配置日志
 logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -37,25 +31,21 @@ DB_CONFIG = {
     "port": 5432,
     "database": "football_prediction",
     "user": "postgres",
-    "password": "postgres"
+    "password": "postgres",
 }
 
 # FotMob API配置
 FOTMOB_HEADERS = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-    'Accept': 'application/json',
-    'Accept-Language': 'en-GB,en;q=0.9',
-    'x-mas': 'eyJib2R5Ijp7InVybCI6Ii9hcGkvZGF0YS9sZWFndWVzP2lkPTg3IiwiY29kZSI6MTc2NTEyMTc0OTUyNSwiZm9vIjoicHJvZHVjdGlvbjo0MjhmYTAzNTVmMDljYTg4Zjk3YjE3OGViNWE3OWVmMGNmYmQwZGZjIn0sInNpZ25hdHVyZSI6IkIwQzkyMzkxMTM4NTdCNUFBMjk5Rjc5M0QxOTYwRkZCIn0=',
-    'x-foo': 'eyJmb28iOiJwcm9kdWN0aW9uOjQyOGZhMDM1NWYwOWNhODhmOTdiMTc4ZWI1YTc5ZWYwY2ZiZDBkZmMiLCJ0aW1lc3RhbXAiOjE3NjUxMjE4MTJ9'
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "Accept": "application/json",
+    "Accept-Language": "en-GB,en;q=0.9",
+    "x-mas": "eyJib2R5Ijp7InVybCI6Ii9hcGkvZGF0YS9sZWFndWVzP2lkPTg3IiwiY29kZSI6MTc2NTEyMTc0OTUyNSwiZm9vIjoicHJvZHVjdGlvbjo0MjhmYTAzNTVmMDljYTg4Zjk3YjE3OGViNWE3OWVmMGNmYmQwZGZjIn0sInNpZ25hdHVyZSI6IkIwQzkyMzkxMTM4NTdCNUFBMjk5Rjc5M0QxOTYwRkZCIn0=",
+    "x-foo": "eyJmb28iOiJwcm9kdWN0aW9uOjQyOGZhMDM1NWYwOWNhODhmOTdiMTc4ZWI1YTc5ZWYwY2ZiZDBkZmMiLCJ0aW1lc3RhbXAiOjE3NjUxMjE4MTJ9",
 }
 
 # 目标联赛配置
 LEAGUE_CONFIG = {
-    "premier_league": {
-        "id": 47,
-        "name": "Premier League",
-        "country": "England"
-    }
+    "premier_league": {"id": 47, "name": "Premier League", "country": "England"}
 }
 
 # 目标历史赛季 - 使用正确的斜杠格式
@@ -66,6 +56,7 @@ TARGET_SEASONS = [
     "2020/2021",  # 历史赛季
     "2019/2020",  # 历史赛季
 ]
+
 
 class HistoricalDataCollector:
     """历史数据采集器"""
@@ -88,12 +79,17 @@ class HistoricalDataCollector:
             self.db_conn.close()
         logger.info("✅ 历史数据采集器关闭完成")
 
-    async def get_season_data(self, league_id: int, season: str) -> Optional[dict[Any, Any]]:
+    async def get_season_data(
+        self, league_id: int, season: str
+    ) -> Optional[dict[Any, Any]]:
         """获取指定赛季的数据"""
         # 对赛季参数进行URL编码，确保斜杠正确传递
         import urllib.parse
+
         encoded_season = urllib.parse.quote(season)
-        api_url = f"https://www.fotmob.com/api/leagues?id={league_id}&season={encoded_season}"
+        api_url = (
+            f"https://www.fotmob.com/api/leagues?id={league_id}&season={encoded_season}"
+        )
         logger.info(f"📡 API URL: {api_url}")
 
         try:
@@ -102,7 +98,9 @@ class HistoricalDataCollector:
 
             if response.status_code == 200:
                 data = response.json()
-                logger.info(f"✅ 成功获取赛季 {season} 数据，大小: {len(response.text)} 字节")
+                logger.info(
+                    f"✅ 成功获取赛季 {season} 数据，大小: {len(response.text)} 字节"
+                )
                 return data
             else:
                 logger.error(f"❌ 获取赛季 {season} 失败: HTTP {response.status_code}")
@@ -112,26 +110,28 @@ class HistoricalDataCollector:
             logger.error(f"❌ 获取赛季 {season} 异常: {e}")
             return None
 
-    def extract_finished_matches(self, season_data: dict[Any, Any]) -> list[dict[str, Any]]:
+    def extract_finished_matches(
+        self, season_data: dict[Any, Any]
+    ) -> list[dict[str, Any]]:
         """提取完赛比赛数据"""
         finished_matches = []
 
         try:
-            overview = season_data.get('overview', {})
-            matches = overview.get('matches', {})
-            all_matches = matches.get('allMatches', [])
+            overview = season_data.get("overview", {})
+            matches = overview.get("matches", {})
+            all_matches = matches.get("allMatches", [])
 
             logger.info(f"🔍 分析 {len(all_matches)} 场比赛...")
 
             for match in all_matches:
                 # 检查是否为完赛
-                status = match.get('status', {})
-                status_reason = status.get('reason', {})
-                status_short = status_reason.get('short', '')
+                status = match.get("status", {})
+                status_reason = status.get("reason", {})
+                status_short = status_reason.get("short", "")
 
-                if status_short in ['FT', 'Finished']:
+                if status_short in ["FT", "Finished"]:
                     # 确保fotmob_id是数字
-                    match_id = str(match.get('id', ''))
+                    match_id = str(match.get("id", ""))
                     if match_id.isdigit():
                         finished_matches.append(match)
 
@@ -142,7 +142,9 @@ class HistoricalDataCollector:
             logger.error(f"❌ 提取完赛数据异常: {e}")
             return []
 
-    def save_teams_if_not_exists(self, teams_data: list[dict[str, Any]]) -> dict[int, int]:
+    def save_teams_if_not_exists(
+        self, teams_data: list[dict[str, Any]]
+    ) -> dict[int, int]:
         """保存球队数据并返回ID映射"""
         team_mapping = {}
 
@@ -157,8 +159,7 @@ class HistoricalDataCollector:
 
                     # 检查球队是否已存在
                     cur.execute(
-                        "SELECT id FROM teams WHERE external_id = %s",
-                        (team_id,)
+                        "SELECT id FROM teams WHERE external_id = %s", (team_id,)
                     )
                     result = cur.fetchone()
 
@@ -172,7 +173,7 @@ class HistoricalDataCollector:
                             VALUES (%s, %s, %s, NOW(), NOW())
                             RETURNING id
                             """,
-                            (team_name, "England", team_id)
+                            (team_name, "England", team_id),
                         )
                         new_id = cur.fetchone()[0]
                         team_mapping[team_id] = new_id
@@ -195,23 +196,21 @@ class HistoricalDataCollector:
             # 提取所有球队数据
             teams_data = []
             for match in matches_data:
-                home_team = match.get('home', {})
-                away_team = match.get('away', {})
+                home_team = match.get("home", {})
+                away_team = match.get("away", {})
 
-                if home_team.get('id') and home_team.get('name'):
-                    teams_data.append({
-                        'id': home_team['id'],
-                        'name': home_team['name']
-                    })
+                if home_team.get("id") and home_team.get("name"):
+                    teams_data.append(
+                        {"id": home_team["id"], "name": home_team["name"]}
+                    )
 
-                if away_team.get('id') and away_team.get('name'):
-                    teams_data.append({
-                        'id': away_team['id'],
-                        'name': away_team['name']
-                    })
+                if away_team.get("id") and away_team.get("name"):
+                    teams_data.append(
+                        {"id": away_team["id"], "name": away_team["name"]}
+                    )
 
             # 去重
-            unique_teams = {team['id']: team for team in teams_data}
+            unique_teams = {team["id"]: team for team in teams_data}
             team_list = list(unique_teams.values())
 
             # 保存球队
@@ -251,11 +250,15 @@ class HistoricalDataCollector:
                                 from datetime import datetime
 
                                 # 新格式: "2021-08-13T19:00:00Z" (ISO格式)
-                                if 'T' in match_time:
-                                    match_datetime = datetime.fromisoformat(match_time.replace('Z', '+00:00'))
+                                if "T" in match_time:
+                                    match_datetime = datetime.fromisoformat(
+                                        match_time.replace("Z", "+00:00")
+                                    )
                                 # 旧格式: "Sat, 25 May 2024, 15:00"
                                 else:
-                                    match_datetime = datetime.strptime(match_time, "%a, %d %b %Y, %H:%M")
+                                    match_datetime = datetime.strptime(
+                                        match_time, "%a, %d %b %Y, %H:%M"
+                                    )
 
                             except ValueError as e:
                                 logger.warning(f"⚠️ 时间解析失败: {match_time} - {e}")
@@ -278,9 +281,14 @@ class HistoricalDataCollector:
                             )
                         """,
                             (
-                                home_team_id, away_team_id,
-                                home_score, away_score, status_short, match_datetime,
-                                fotmob_id, season
+                                home_team_id,
+                                away_team_id,
+                                home_score,
+                                away_score,
+                                status_short,
+                                match_datetime,
+                                fotmob_id,
+                                season,
                             ),
                         )
 
@@ -289,10 +297,14 @@ class HistoricalDataCollector:
                             if saved_count <= 10:  # 只显示前10场
                                 home_name = home_team_data.get("name", "Unknown")
                                 away_name = away_team_data.get("name", "Unknown")
-                                logger.info(f"💾 保存比赛: {fotmob_id} - {home_name} {home_score} vs {away_score} {away_name}")
+                                logger.info(
+                                    f"💾 保存比赛: {fotmob_id} - {home_name} {home_score} vs {away_score} {away_name}"
+                                )
 
                     except Exception as e:
-                        logger.warning(f"⚠️ 保存比赛失败: {match.get('id', 'unknown')} - {e}")
+                        logger.warning(
+                            f"⚠️ 保存比赛失败: {match.get('id', 'unknown')} - {e}"
+                        )
 
                 self.db_conn.commit()
                 logger.info(f"✅ 成功保存赛季 {season} 的 {saved_count} 场完赛比赛")
@@ -303,6 +315,7 @@ class HistoricalDataCollector:
 
         return saved_count
 
+
 async def backfill_season(league_config: dict[str, Any], season: str) -> dict[str, Any]:
     """回溯单个赛季的数据"""
     logger.info(f"🔄 开始回溯赛季: {season}")
@@ -312,7 +325,7 @@ async def backfill_season(league_config: dict[str, Any], season: str) -> dict[st
         await collector.initialize()
 
         # 获取赛季数据
-        season_data = await collector.get_season_data(league_config['id'], season)
+        season_data = await collector.get_season_data(league_config["id"], season)
         if not season_data:
             return {"success": False, "error": "Failed to fetch season data"}
 
@@ -328,11 +341,12 @@ async def backfill_season(league_config: dict[str, Any], season: str) -> dict[st
             "success": True,
             "season": season,
             "total_matches": len(finished_matches),
-            "saved_matches": saved_count
+            "saved_matches": saved_count,
         }
 
     finally:
         await collector.close()
+
 
 async def main():
     """主函数"""
@@ -349,9 +363,13 @@ async def main():
             results.append(result)
 
             if result["success"]:
-                logger.info(f"✅ 赛季 {season} 完成: {result['saved_matches']}/{result['total_matches']} 场比赛")
+                logger.info(
+                    f"✅ 赛季 {season} 完成: {result['saved_matches']}/{result['total_matches']} 场比赛"
+                )
             else:
-                logger.error(f"❌ 赛季 {season} 失败: {result.get('error', 'Unknown error')}")
+                logger.error(
+                    f"❌ 赛季 {season} 失败: {result.get('error', 'Unknown error')}"
+                )
 
             # 添加延迟以避免过快的API请求
             await asyncio.sleep(1)
@@ -366,6 +384,7 @@ async def main():
     logger.info(f"   🏆 处理联赛: {len(LEAGUE_CONFIG)}")
 
     return 0 if successful_seasons else 1
+
 
 def print_help():
     """打印帮助信息"""
@@ -393,12 +412,13 @@ def print_help():
         """
     )
 
+
 if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(description="英超历史数据回溯工具")
 
-    if len(sys.argv) > 1 and sys.argv[1] in ['--help', '-h']:
+    if len(sys.argv) > 1 and sys.argv[1] in ["--help", "-h"]:
         print_help()
         sys.exit(0)
 
@@ -413,5 +433,6 @@ if __name__ == "__main__":
     except Exception as e:
         logger.error(f"❌ 程序异常退出: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)

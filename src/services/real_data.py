@@ -6,13 +6,12 @@ Provides real database query service based on SQLAlchemy, replacing Mock data.
 """
 
 import logging
-from typing import Any, Optional
+from typing import Any
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
 from src.database.models.team import Team
-from src.database.models.league import League
 from src.database.models.match import Match
 
 logger = logging.getLogger(__name__)

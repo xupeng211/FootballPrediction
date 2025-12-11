@@ -6,11 +6,10 @@ Feature Builder
 提供特征构建、验证和转换功能。
 """
 
-import asyncio
 import json
 import logging
-from datetime import datetime, timedelta
-from typing import Any, Optional, Union
+from datetime import datetime
+from typing import Any, Optional
 from pathlib import Path
 
 import numpy as np
@@ -19,7 +18,7 @@ from sklearn.preprocessing import StandardScaler, OneHotEncoder, LabelEncoder
 from sklearn.impute import SimpleImputer
 
 from src.features.feature_definitions import FEATURE_DEFINITIONS, FeatureType
-from .errors import FeatureBuilderError, ErrorCode
+from .errors import FeatureBuilderError
 
 logger = logging.getLogger(__name__)
 

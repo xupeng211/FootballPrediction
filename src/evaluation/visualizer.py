@@ -8,13 +8,11 @@ Author: Football Prediction Team
 Version: 1.0.0
 """
 
-import os
-import json
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-from typing import Optional, Union, Any
+from typing import Union
 from pathlib import Path
 from datetime import datetime
 import logging

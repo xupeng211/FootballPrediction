@@ -5,10 +5,8 @@ Football Main Module.
 拆分策略: complexity_split
 """
 
-import asyncio
 import logging
 import os
-from datetime import datetime
 from typing import Any
 
 import httpx

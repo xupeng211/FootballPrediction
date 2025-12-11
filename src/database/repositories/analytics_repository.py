@@ -10,10 +10,9 @@ from typing import Any, Optional
 from datetime import datetime, timedelta
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, and_, or_, text
+from sqlalchemy import select, text
 
 from src.database.models.match import Match
-from src.database.models.team import Team
 from src.database.models.league import League
 
 logger = logging.getLogger(__name__)

@@ -16,16 +16,13 @@ Date: 2025-01-08
 """
 
 import asyncio
-import json
 import logging
 import sys
-import os
 import random
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Any, Optional, Tuple
+from typing import Any, Optional
 from dataclasses import dataclass
-from urllib.parse import quote
 
 # 添加项目根目录到Python路径
 project_root = Path(__file__).parent.parent
@@ -33,8 +30,7 @@ sys.path.insert(0, str(project_root / "src"))
 
 # 配置日志
 logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -46,9 +42,11 @@ AUDIT_DESCRIPTION = "英超 2024/2025 赛季"
 # FotMob API 配置
 FOTMOB_BASE_URL = "https://www.fotmob.com/api"
 
+
 @dataclass
 class AuditResult:
     """审计结果数据结构"""
+
     phase: str
     test_name: str
     status: str  # "PASS", "FAIL", "WARN"
@@ -59,6 +57,7 @@ class AuditResult:
     def __post_init__(self):
         if self.timestamp is None:
             self.timestamp = datetime.now()
+
 
 class RealAPIHealthAuditor:
     """真实API系统健康度审计器"""
@@ -83,31 +82,36 @@ class RealAPIHealthAuditor:
             # "x-foo": "production:your-secret-key",
         }
 
-    def add_result(self, phase: str, test_name: str, status: str, message: str, data: Optional[dict[str, Any]] = None):
+    def add_result(
+        self,
+        phase: str,
+        test_name: str,
+        status: str,
+        message: str,
+        data: Optional[dict[str, Any]] = None,
+    ):
         """添加审计结果"""
-        result = AuditResult(phase=phase, test_name=test_name, status=status, message=message, data=data)
+        result = AuditResult(
+            phase=phase, test_name=test_name, status=status, message=message, data=data
+        )
         self.results.append(result)
         return result
 
     def get_status_emoji(self, status: str) -> str:
         """获取状态表情符号"""
-        return {
-            "PASS": "✅",
-            "FAIL": "❌",
-            "WARN": "⚠️",
-            "INFO": "ℹ️",
-            "SKIP": "⏭️"
-        }.get(status, "❓")
+        return {"PASS": "✅", "FAIL": "❌", "WARN": "⚠️", "INFO": "ℹ️", "SKIP": "⏭️"}.get(
+            status, "❓"
+        )
 
     def print_header(self):
         """打印审计头部"""
-        print("🔍" + "="*79)
+        print("🔍" + "=" * 79)
         print("🔍 System Health Audit - 系统健康度审计 (Real API)")
-        print("🔍" + "="*79)
+        print("🔍" + "=" * 79)
         print("📋 审计目标: L1 赛程模块 + L2 高阶数据模块")
         print(f"📋 审测对象: {AUDIT_DESCRIPTION} (League ID: {AUDIT_LEAGUE_ID})")
         print(f"🕐 审计时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        print("🔍" + "="*79)
+        print("🔍" + "=" * 79)
 
     async def initialize_session(self):
         """初始化HTTP会话"""
@@ -117,12 +121,16 @@ class RealAPIHealthAuditor:
             # 尝试导入httpx或aiohttp
             try:
                 import httpx
+
                 self.session = httpx.AsyncClient(timeout=30.0, headers=self.headers)
                 self.add_result("INIT", "HTTP会话初始化", "PASS", "使用httpx客户端")
                 print("✅ HTTP会话初始化完成 (httpx)")
             except ImportError:
                 import aiohttp
-                self.session = aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=30.0), headers=self.headers)
+
+                self.session = aiohttp.ClientSession(
+                    timeout=aiohttp.ClientTimeout(total=30.0), headers=self.headers
+                )
                 self.add_result("INIT", "HTTP会话初始化", "PASS", "使用aiohttp客户端")
                 print("✅ HTTP会话初始化完成 (aiohttp)")
 
@@ -136,7 +144,7 @@ class RealAPIHealthAuditor:
     async def cleanup_session(self):
         """清理HTTP会话"""
         if self.session:
-            if hasattr(self.session, 'aclose'):
+            if hasattr(self.session, "aclose"):
                 await self.session.aclose()
             else:
                 await self.session.close()
@@ -155,8 +163,15 @@ class RealAPIHealthAuditor:
             league_info = await self._fetch_league_info()
 
             if league_info:
-                self.add_result("L1", "联赛信息获取", "PASS", f"成功获取联赛信息: {league_info.get('name', 'Unknown')}")
-                print(f"✅ 联赛信息: {league_info.get('name', 'Unknown')} ({league_info.get('country', 'Unknown')})")
+                self.add_result(
+                    "L1",
+                    "联赛信息获取",
+                    "PASS",
+                    f"成功获取联赛信息: {league_info.get('name', 'Unknown')}",
+                )
+                print(
+                    f"✅ 联赛信息: {league_info.get('name', 'Unknown')} ({league_info.get('country', 'Unknown')})"
+                )
             else:
                 self.add_result("L1", "联赛信息获取", "FAIL", "无法获取联赛信息")
                 print("❌ 联赛信息获取失败")
@@ -168,10 +183,17 @@ class RealAPIHealthAuditor:
             if seasons:
                 target_season = self._find_target_season(seasons)
                 if target_season:
-                    self.add_result("L1", "赛季信息获取", "PASS", f"找到目标赛季: {target_season.get('name', 'Unknown')}")
+                    self.add_result(
+                        "L1",
+                        "赛季信息获取",
+                        "PASS",
+                        f"找到目标赛季: {target_season.get('name', 'Unknown')}",
+                    )
                     print(f"✅ 目标赛季: {target_season.get('name', 'Unknown')}")
                 else:
-                    self.add_result("L1", "赛季信息获取", "WARN", f"未找到目标赛季 {AUDIT_SEASON}")
+                    self.add_result(
+                        "L1", "赛季信息获取", "WARN", f"未找到目标赛季 {AUDIT_SEASON}"
+                    )
                     print(f"⚠️ 未找到目标赛季 {AUDIT_SEASON}，使用默认赛季")
                     target_season = seasons[0]  # 使用第一个可用赛季
             else:
@@ -198,7 +220,7 @@ class RealAPIHealthAuditor:
         try:
             url = f"{FOTMOB_BASE_URL}/leagues?id={AUDIT_LEAGUE_ID}"
 
-            if hasattr(self.session, 'get'):
+            if hasattr(self.session, "get"):
                 response = await self.session.get(url)
                 response.raise_for_status()
                 data = response.json()
@@ -214,7 +236,9 @@ class RealAPIHealthAuditor:
             logger.error(f"获取联赛信息失败: {e}")
             return None
 
-    async def _fetch_available_seasons(self, league_info: dict[str, Any]) -> Optional[list[dict[str, Any]]]:
+    async def _fetch_available_seasons(
+        self, league_info: dict[str, Any]
+    ) -> Optional[list[dict[str, Any]]]:
         """获取可用赛季列表"""
         try:
             # FotMob没有直接的赛季列表API，我们尝试从联赛信息推断
@@ -224,13 +248,15 @@ class RealAPIHealthAuditor:
             current_year = datetime.now().year
             for year_offset in range(-2, 3):  # 近5年
                 season_year = current_year + year_offset
-                season_name = f"{season_year}/{season_year+1}"
+                season_name = f"{season_year}/{season_year + 1}"
 
-                seasons.append({
-                    "name": season_name,
-                    "id": f"{AUDIT_LEAGUE_ID}_{season_year}",
-                    "year": season_year
-                })
+                seasons.append(
+                    {
+                        "name": season_name,
+                        "id": f"{AUDIT_LEAGUE_ID}_{season_year}",
+                        "year": season_year,
+                    }
+                )
 
             return seasons
 
@@ -238,17 +264,24 @@ class RealAPIHealthAuditor:
             logger.error(f"获取赛季列表失败: {e}")
             return None
 
-    def _find_target_season(self, seasons: list[dict[str, Any]]) -> Optional[dict[str, Any]]:
+    def _find_target_season(
+        self, seasons: list[dict[str, Any]]
+    ) -> Optional[dict[str, Any]]:
         """查找目标赛季"""
         target_name = AUDIT_SEASON
 
         for season in seasons:
-            if season.get("name") == target_name or str(season.get("year")) in target_name:
+            if (
+                season.get("name") == target_name
+                or str(season.get("year")) in target_name
+            ):
                 return season
 
         return None
 
-    async def _fetch_fixtures(self, league_info: dict[str, Any], season: dict[str, Any]) -> Optional[list[dict[str, Any]]]:
+    async def _fetch_fixtures(
+        self, league_info: dict[str, Any], season: dict[str, Any]
+    ) -> Optional[list[dict[str, Any]]]:
         """获取赛程数据"""
         try:
             # 尝试多种可能的API端点
@@ -262,7 +295,7 @@ class RealAPIHealthAuditor:
                 print(f"🔍 尝试端点: {endpoint}")
 
                 try:
-                    if hasattr(self.session, 'get'):
+                    if hasattr(self.session, "get"):
                         response = await self.session.get(endpoint)
                         if response.status_code == 200:
                             data = response.json()
@@ -328,28 +361,58 @@ class RealAPIHealthAuditor:
             logger.error(f"提取赛程数据失败: {e}")
             return None
 
-    def _normalize_fixture(self, match_data: dict[str, Any]) -> Optional[dict[str, Any]]:
+    def _normalize_fixture(
+        self, match_data: dict[str, Any]
+    ) -> Optional[dict[str, Any]]:
         """标准化比赛数据格式"""
         try:
             # 根据可能的字段名提取信息
-            home_team = match_data.get("home") or match_data.get("homeTeam") or match_data.get("home_id")
-            away_team = match_data.get("away") or match_data.get("awayTeam") or match_data.get("away_id")
-            home_score = match_data.get("homeScore") or match_data.get("home_score") or 0
-            away_score = match_data.get("awayScore") or match_data.get("away_score") or 0
-            status = match_data.get("status") or match_data.get("statusStr") or "unknown"
-            start_time = match_data.get("time") or match_data.get("startTime") or match_data.get("start_time")
+            home_team = (
+                match_data.get("home")
+                or match_data.get("homeTeam")
+                or match_data.get("home_id")
+            )
+            away_team = (
+                match_data.get("away")
+                or match_data.get("awayTeam")
+                or match_data.get("away_id")
+            )
+            home_score = (
+                match_data.get("homeScore") or match_data.get("home_score") or 0
+            )
+            away_score = (
+                match_data.get("awayScore") or match_data.get("away_score") or 0
+            )
+            status = (
+                match_data.get("status") or match_data.get("statusStr") or "unknown"
+            )
+            start_time = (
+                match_data.get("time")
+                or match_data.get("startTime")
+                or match_data.get("start_time")
+            )
 
             # 创建标准化格式
             fixture = {
-                "id": match_data.get("id") or f"{AUDIT_LEAGUE_ID}_{len(self.league_fixtures)+1}",
-                "home_team": {"name": str(home_team) if isinstance(home_team, dict) else {"name": home_team}},
-                "away_team": {"name": str(away_team) if isinstance(away_team, dict) else {"name": away_team}},
+                "id": match_data.get("id")
+                or f"{AUDIT_LEAGUE_ID}_{len(self.league_fixtures) + 1}",
+                "home_team": {
+                    "name": str(home_team)
+                    if isinstance(home_team, dict)
+                    else {"name": home_team}
+                },
+                "away_team": {
+                    "name": str(away_team)
+                    if isinstance(away_team, dict)
+                    else {"name": away_team}
+                },
                 "status": {
-                    "finished": "finished" in str(status).lower() or status in ["FT", "AET"],
-                    "statusStr": status
+                    "finished": "finished" in str(status).lower()
+                    or status in ["FT", "AET"],
+                    "statusStr": status,
                 },
                 "start_time": start_time,
-                "score": {"home": int(home_score), "away": int(away_score)}
+                "score": {"home": int(home_score), "away": int(away_score)},
             }
 
             return fixture
@@ -369,7 +432,7 @@ class RealAPIHealthAuditor:
                 "away_team": {"name": "Liverpool", "id": 14},
                 "status": {"finished": True, "statusStr": "FT"},
                 "start_time": "2024-12-08 20:00",
-                "score": {"home": 2, "away": 1}
+                "score": {"home": 2, "away": 1},
             },
             {
                 "id": f"{AUDIT_LEAGUE_ID}_2",
@@ -377,7 +440,7 @@ class RealAPIHealthAuditor:
                 "away_team": {"name": "Arsenal", "id": 13},
                 "status": {"finished": True, "statusStr": "FT"},
                 "start_time": "2024-12-07 17:30",
-                "score": {"home": 3, "away": 3}
+                "score": {"home": 3, "away": 3},
             },
             {
                 "id": f"{AUDIT_LEAGUE_ID}_3",
@@ -385,7 +448,7 @@ class RealAPIHealthAuditor:
                 "away_team": {"name": "Tottenham", "id": 21},
                 "status": {"finished": False, "statusStr": "NS"},
                 "start_time": "2025-01-15 20:00",
-                "score": {"home": 0, "away": 0}
+                "score": {"home": 0, "away": 0},
             },
             {
                 "id": f"{AUDIT_LEAGUE_ID}_4",
@@ -393,7 +456,7 @@ class RealAPIHealthAuditor:
                 "away_team": {"name": "Everton", "id": 11},
                 "status": {"finished": True, "statusStr": "FT"},
                 "start_time": "2024-12-06 15:00",
-                "score": {"home": 1, "away": 2}
+                "score": {"home": 1, "away": 2},
             },
             {
                 "id": f"{AUDIT_LEAGUE_ID}_5",
@@ -401,15 +464,20 @@ class RealAPIHealthAuditor:
                 "away_team": {"name": "Brighton", "id": 18},
                 "status": {"finished": True, "statusStr": "FT"},
                 "start_time": "2024-12-05 19:45",
-                "score": {"home": 0, "away": 3}
-            }
+                "score": {"home": 0, "away": 3},
+            },
         ]
 
     async def _validate_fixture_data(self):
         """验证赛程数据"""
         # 验证数据长度
         if len(self.league_fixtures) > 0:
-            self.add_result("L1", "赛程长度验证", "PASS", f"赛程列表长度合理: {len(self.league_fixtures)} > 0")
+            self.add_result(
+                "L1",
+                "赛程长度验证",
+                "PASS",
+                f"赛程列表长度合理: {len(self.league_fixtures)} > 0",
+            )
             print(f"✅ 赛程长度验证通过: {len(self.league_fixtures)} 场比赛")
         else:
             self.add_result("L1", "赛程长度验证", "FAIL", "赛程列表为空")
@@ -423,7 +491,11 @@ class RealAPIHealthAuditor:
             away_name = fixture["away_team"]["name"]
             status = fixture["status"]["statusStr"]
             start_time = fixture["start_time"]
-            score = f"{fixture['score']['home']}-{fixture['score']['away']}" if fixture["status"]["finished"] else "未开始"
+            score = (
+                f"{fixture['score']['home']}-{fixture['score']['away']}"
+                if fixture["status"]["finished"]
+                else "未开始"
+            )
 
             print(f"  {i}. {home_name} vs {away_name}")
             print(f"     时间: {start_time} | 状态: {status} | 比分: {score}")
@@ -433,7 +505,7 @@ class RealAPIHealthAuditor:
                 f"比赛{i}信息验证",
                 "PASS",
                 f"{home_name} vs {away_name} ({status})",
-                fixture
+                fixture,
             )
 
         # 统计已结束比赛
@@ -443,10 +515,12 @@ class RealAPIHealthAuditor:
             "比赛状态统计",
             "PASS",
             f"已结束比赛: {len(finished_matches)}/{len(self.league_fixtures)}",
-            {"finished": len(finished_matches), "total": len(self.league_fixtures)}
+            {"finished": len(finished_matches), "total": len(self.league_fixtures)},
         )
 
-        print(f"📊 比赛状态: {len(finished_matches)}/{len(self.league_fixtures)} 场比赛已结束")
+        print(
+            f"📊 比赛状态: {len(finished_matches)}/{len(self.league_fixtures)} 场比赛已结束"
+        )
 
     async def phase2_deep_dive_audit(self):
         """Phase 2: L2 高阶数据模块审计"""
@@ -488,7 +562,9 @@ class RealAPIHealthAuditor:
             self.add_result("L2", "数据采集", "FAIL", f"采集异常: {e}")
             print(f"❌ 数据采集异常: {e}")
 
-    async def _simulate_real_match_collection(self, match_id: str) -> Optional[dict[str, Any]]:
+    async def _simulate_real_match_collection(
+        self, match_id: str
+    ) -> Optional[dict[str, Any]]:
         """模拟真实比赛数据采集"""
         print("🔗 模拟 FotMobAPICollector.collect_match_details 调用...")
 
@@ -510,8 +586,8 @@ class RealAPIHealthAuditor:
                     "cards_this_season": {
                         "yellow_cards": 84,
                         "red_cards": 3,
-                        "penalties": 12
-                    }
+                        "penalties": 12,
+                    },
                 },
                 "venue": {
                     "id": "venue_789",
@@ -521,17 +597,14 @@ class RealAPIHealthAuditor:
                     "capacity": 74140,
                     "attendance": 73256,
                     "surface": "grass",
-                    "coordinates": {
-                        "lat": 53.4631,
-                        "lng": -2.2913
-                    }
+                    "coordinates": {"lat": 53.4631, "lng": -2.2913},
                 },
                 "weather": {
                     "temperature": 12,
                     "condition": "cloudy",
                     "wind_speed": 8,
                     "humidity": 65,
-                    "pitch_condition": "good"
+                    "pitch_condition": "good",
                 },
                 "managers": {
                     "home_team": {
@@ -542,7 +615,7 @@ class RealAPIHealthAuditor:
                         "appointment_date": "2022-05-23",
                         "contract_until": "2025-06-30",
                         "previous_clubs": ["Ajax", "Utrecht"],
-                        "playing_style": "possession-based"
+                        "playing_style": "possession-based",
                     },
                     "away_team": {
                         "id": "manager_002",
@@ -551,122 +624,150 @@ class RealAPIHealthAuditor:
                         "nationality": "Spain",
                         "appointment_date": "2019-12-20",
                         "contract_until": "2025-06-30",
-                        "previous_clubs": ["Manchester City (assistant)", "Manchester City (youth)"],
-                        "playing_style": "high-pressing"
-                    }
+                        "previous_clubs": [
+                            "Manchester City (assistant)",
+                            "Manchester City (youth)",
+                        ],
+                        "playing_style": "high-pressing",
+                    },
                 },
                 "formations": {
                     "home_team": {
                         "primary_formation": "4-2-3-1",
                         "position_distribution": {
-                            "GK": 1, "DEF": 4, "MID": 6, "FWD": 1
+                            "GK": 1,
+                            "DEF": 4,
+                            "MID": 6,
+                            "FWD": 1,
                         },
                         "total_starters": 11,
                         "formation_changes": [],
-                        "tactical_approach": "attacking"
+                        "tactical_approach": "attacking",
                     },
                     "away_team": {
                         "primary_formation": "4-3-3",
                         "position_distribution": {
-                            "GK": 1, "DEF": 4, "MID": 3, "FWD": 3
+                            "GK": 1,
+                            "DEF": 4,
+                            "MID": 3,
+                            "FWD": 3,
                         },
                         "total_starters": 11,
                         "formation_changes": [],
-                        "tactical_approach": "counter-attacking"
-                    }
+                        "tactical_approach": "counter-attacking",
+                    },
                 },
                 "time_context": {
                     "match_date": "2024-12-08",
                     "match_time": "20:00",
                     "local_timezone": "GMT",
                     "is_weekend": True,
-                    "season_stage": "mid"
+                    "season_stage": "mid",
                 },
                 "economic_factors": {
-                    "ticket_price_range": {
-                        "min": 40,
-                        "max": 120,
-                        "average": 75
-                    },
+                    "ticket_price_range": {"min": 40, "max": 120, "average": 75},
                     "tv_broadcast": {
                         "main broadcaster": "Sky Sports",
-                        "international_broadcasters": ["NBC Sports", "DAZN"]
+                        "international_broadcasters": ["NBC Sports", "DAZN"],
                     },
                     "prize_money": {
                         "competition_level": "tier_1",
                         "has_champions_league_qualification": True,
                         "has_relegation_threat": False,
-                        "prize_pool": "high"
-                    }
-                }
+                        "prize_pool": "high",
+                    },
+                },
             },
             "stats_json": {
-                "xg": {
-                    "home": 1.8,
-                    "away": 0.9
-                },
-                "possession": {
-                    "home": 58,
-                    "away": 42
-                },
-                "shots": {
-                    "home": 15,
-                    "away": 8
-                },
-                "shots_on_target": {
-                    "home": 7,
-                    "away": 3
-                },
-                "corners": {
-                    "home": 6,
-                    "away": 3
-                },
-                "fouls": {
-                    "home": 12,
-                    "away": 15
-                },
-                "yellow_cards": {
-                    "home": 2,
-                    "away": 3
-                },
-                "red_cards": {
-                    "home": 0,
-                    "away": 0
-                }
+                "xg": {"home": 1.8, "away": 0.9},
+                "possession": {"home": 58, "away": 42},
+                "shots": {"home": 15, "away": 8},
+                "shots_on_target": {"home": 7, "away": 3},
+                "corners": {"home": 6, "away": 3},
+                "fouls": {"home": 12, "away": 15},
+                "yellow_cards": {"home": 2, "away": 3},
+                "red_cards": {"home": 0, "away": 0},
             },
             "lineups_json": {
                 "home_team": {
                     "starters": [
-                        {"name": "Player1", "position": "GK", "rating": 7.2, "number": 1},
-                        {"name": "Player2", "position": "DEF", "rating": 6.8, "number": 5},
-                        {"name": "Player3", "position": "MID", "rating": 7.5, "number": 10},
-                        {"name": "Player4", "position": "FWD", "rating": 6.9, "number": 9}
+                        {
+                            "name": "Player1",
+                            "position": "GK",
+                            "rating": 7.2,
+                            "number": 1,
+                        },
+                        {
+                            "name": "Player2",
+                            "position": "DEF",
+                            "rating": 6.8,
+                            "number": 5,
+                        },
+                        {
+                            "name": "Player3",
+                            "position": "MID",
+                            "rating": 7.5,
+                            "number": 10,
+                        },
+                        {
+                            "name": "Player4",
+                            "position": "FWD",
+                            "rating": 6.9,
+                            "number": 9,
+                        },
                     ],
                     "substitutes": [
                         {"name": "Sub1", "position": "MID", "number": 18},
-                        {"name": "Sub2", "position": "DEF", "number": 22}
+                        {"name": "Sub2", "position": "DEF", "number": 22},
                     ],
                     "unavailable": [
-                        {"name": "InjuredPlayer", "reason": "injury", "expected_return": "2025-01-15"},
-                        {"name": "SuspendedPlayer", "reason": "suspended", "matches_left": 2}
-                    ]
+                        {
+                            "name": "InjuredPlayer",
+                            "reason": "injury",
+                            "expected_return": "2025-01-15",
+                        },
+                        {
+                            "name": "SuspendedPlayer",
+                            "reason": "suspended",
+                            "matches_left": 2,
+                        },
+                    ],
                 },
                 "away_team": {
                     "starters": [
                         {"name": "Away1", "position": "GK", "rating": 6.5, "number": 1},
-                        {"name": "Away2", "position": "DEF", "rating": 7.0, "number": 4},
-                        {"name": "Away3", "position": "MID", "rating": 7.3, "number": 8},
-                        {"name": "Away4", "position": "FWD", "rating": 8.1, "number": "7"}
+                        {
+                            "name": "Away2",
+                            "position": "DEF",
+                            "rating": 7.0,
+                            "number": 4,
+                        },
+                        {
+                            "name": "Away3",
+                            "position": "MID",
+                            "rating": 7.3,
+                            "number": 8,
+                        },
+                        {
+                            "name": "Away4",
+                            "position": "FWD",
+                            "rating": 8.1,
+                            "number": "7",
+                        },
                     ],
                     "substitutes": [
                         {"name": "AwaySub1", "position": "FWD", "number": 19},
-                        {"name": "AwaySub2", "position": "MID", "number": 14}
+                        {"name": "AwaySub2", "position": "MID", "number": 14},
                     ],
                     "unavailable": [
-                        {"name": "AwayInjured", "reason": "injury", "expected_return": "2025-01-20"}
-                    ]
-                }
-            }
+                        {
+                            "name": "AwayInjured",
+                            "reason": "injury",
+                            "expected_return": "2025-01-20",
+                        }
+                    ],
+                },
+            },
         }
 
     async def _validate_match_details(self, match_data: dict[str, Any], match_id: str):
@@ -686,14 +787,16 @@ class RealAPIHealthAuditor:
                     "裁判信息验证",
                     "PASS",
                     f"裁判: {referee['name']} (ID: {referee['id']})",
-                    referee
+                    referee,
                 )
                 print(f"  ✅ 裁判信息: {referee['name']} (ID: {referee['id']})")
 
                 # 优雅性检查：显示更多裁判信息
                 if "cards_this_season" in referee:
                     cards = referee["cards_this_season"]
-                    print(f"     📋 本季执法: 黄牌{cards.get('yellow_cards', 0)}张, 红牌{cards.get('red_cards', 0)}张")
+                    print(
+                        f"     📋 本季执法: 黄牌{cards.get('yellow_cards', 0)}张, 红牌{cards.get('red_cards', 0)}张"
+                    )
             else:
                 self.add_result("L2", "裁判信息验证", "FAIL", "裁判ID或姓名缺失")
                 print("  ❌ 裁判信息验证失败")
@@ -706,7 +809,7 @@ class RealAPIHealthAuditor:
                     "场地信息验证",
                     "PASS",
                     f"场地: {venue['name']} (ID: {venue['id']})",
-                    venue
+                    venue,
                 )
                 print(f"  ✅ 场地信息: {venue['name']} (ID: {venue['id']})")
 
@@ -714,14 +817,26 @@ class RealAPIHealthAuditor:
                 if "city" in venue:
                     print(f"     🏙️ 所在城市: {venue['city']}")
                 if "capacity" in venue and "attendance" in venue:
-                    occupancy = (venue['attendance'] / venue['capacity']) * 100 if venue['capacity'] > 0 else 0
-                    print(f"     👥 上座率: {occupancy:.1f}% ({venue['attendance']}/{venue['capacity']})")
+                    occupancy = (
+                        (venue["attendance"] / venue["capacity"]) * 100
+                        if venue["capacity"] > 0
+                        else 0
+                    )
+                    print(
+                        f"     👥 上座率: {occupancy:.1f}% ({venue['attendance']}/{venue['capacity']})"
+                    )
             else:
                 self.add_result("L2", "场地信息验证", "FAIL", "场地ID或名称缺失")
                 print("  ❌ 场地信息验证失败")
 
             # 检查环境暗物质的其他维度
-            other_dims = ["weather", "managers", "formations", "time_context", "economic_factors"]
+            other_dims = [
+                "weather",
+                "managers",
+                "formations",
+                "time_context",
+                "economic_factors",
+            ]
             for dim in other_dims:
                 if dim in env_data and env_data[dim]:
                     print(f"  ✅ {dim.capitalize()}信息: 存在且完整")
@@ -741,18 +856,24 @@ class RealAPIHealthAuditor:
                     "xG数据验证",
                     "PASS",
                     f"xG数据: 主队{xg_data['home']}, 客队{xg_data['away']}",
-                    xg_data
+                    xg_data,
                 )
-                print(f"  ✅ xG数据验证通过: 主队{xg_data['home']}, 客队{xg_data['away']}")
+                print(
+                    f"  ✅ xG数据验证通过: 主队{xg_data['home']}, 客队{xg_data['away']}"
+                )
 
                 # 优雅性检查：显示其他技术统计
                 possession = stats.get("possession", {})
                 if possession:
-                    print(f"     📊 控球率: 主队{possession.get('home', 'N/A')}%, 客队{possession.get('away', 'N/A')}%")
+                    print(
+                        f"     📊 控球率: 主队{possession.get('home', 'N/A')}%, 客队{possession.get('away', 'N/A')}%"
+                    )
 
                 shots = stats.get("shots", {})
                 if shots:
-                    print(f"     📈 射门数: 主队{shots.get('home', 'N/A')}, 客队{shots.get('away', 'N/A')}")
+                    print(
+                        f"     📈 射门数: 主队{shots.get('home', 'N/A')}, 客队{shots.get('away', 'N/A')}"
+                    )
             else:
                 self.add_result("L2", "xG数据验证", "WARN", "xG数据不完整")
                 print("  ⚠️ xG数据验证警告: 数据不完整")
@@ -789,7 +910,7 @@ class RealAPIHealthAuditor:
                     "阵容数据验证",
                     "PASS",
                     "阵容包含评分和伤停信息",
-                    {"has_ratings": has_ratings, "has_unavailable": has_unavailable}
+                    {"has_ratings": has_ratings, "has_unavailable": has_unavailable},
                 )
                 print("  ✅ 阵容数据验证通过: 包含球员评分和伤停信息")
 
@@ -803,23 +924,34 @@ class RealAPIHealthAuditor:
                 away_unavailable = len(away_lineup.get("unavailable", []))
 
                 print(f"     👥 首发阵容: 主队{home_starters}人, 客队{away_starters}人")
-                print(f"     🏥 伤停名单: 主队{home_unavailable}人, 客队{away_unavailable}人")
+                print(
+                    f"     🏥 伤停名单: 主队{home_unavailable}人, 客队{away_unavailable}人"
+                )
 
             elif has_ratings or has_unavailable:
                 self.add_result("L2", "阵容数据验证", "WARN", "阵容数据部分完整")
                 status_parts = []
-                if has_ratings: status_parts.append("包含评分")
-                if has_unavailable: status_parts.append("包含伤停")
+                if has_ratings:
+                    status_parts.append("包含评分")
+                if has_unavailable:
+                    status_parts.append("包含伤停")
                 print(f"  ⚠️ 阵容数据验证警告: {' + '.join(status_parts)}")
             else:
-                self.add_result("L2", "阵容数据验证", "FAIL", "阵容数据缺少评分和伤停信息")
+                self.add_result(
+                    "L2", "阵容数据验证", "FAIL", "阵容数据缺少评分和伤停信息"
+                )
                 print("  ❌ 阵容数据验证失败: 缺少评分和伤停信息")
         else:
             self.add_result("L2", "阵容数据验证", "FAIL", "lineups_json 缺失")
             print("  ❌ 阵容数据验证失败: lineups_json 缺失")
 
         # 检查其他 JSON 字段的存在性（向后兼容）
-        for json_field in ["match_info", "odds_snapshot_json", "stats_json", "lineups_json"]:
+        for json_field in [
+            "match_info",
+            "odds_snapshot_json",
+            "stats_json",
+            "lineups_json",
+        ]:
             if match_data.get(json_field):
                 print(f"  ✅ {json_field}: 数据存在")
 
@@ -838,7 +970,9 @@ class RealAPIHealthAuditor:
         health_score = (pass_count / total_count) * 100 if total_count > 0 else 0
 
         print(f"📊 总体健康度: {health_score:.1f}%")
-        print(f"📋 测试统计: ✅ {pass_count} 通过 | ❌ {fail_count} 失败 | ⚠️ {warn_count} 警告 | 📋 总计 {total_count}")
+        print(
+            f"📋 测试统计: ✅ {pass_count} 通过 | ❌ {fail_count} 失败 | ⚠️ {warn_count} 警告 | 📋 总计 {total_count}"
+        )
 
         # 健康等级评估
         if health_score >= 90:
@@ -870,7 +1004,7 @@ class RealAPIHealthAuditor:
         phase_names = {
             "INIT": "🚀 初始化阶段",
             "L1": "🏟️ Phase 1: L1 赛程模块",
-            "L2": "🎯 Phase 2: L2 高阶数据模块"
+            "L2": "🎯 Phase 2: L2 高阶数据模块",
         }
 
         for phase_key in ["INIT", "L1", "L2"]:
@@ -887,7 +1021,9 @@ class RealAPIHealthAuditor:
                         if "fixture_count" in result.data:
                             print(f"     📊 赛程数量: {result.data['fixture_count']}")
                         elif "finished" in result.data:
-                            print(f"     📊 已完成比赛: {result.data['finished']}/{result.data['total']}")
+                            print(
+                                f"     📊 已完成比赛: {result.data['finished']}/{result.data['total']}"
+                            )
 
         # API 连通性报告
         print("\n🌐 API 连通性报告:")
@@ -914,7 +1050,7 @@ class RealAPIHealthAuditor:
             ("📊 xG数据", "stats_json.xg", "✅"),
             ("👥 阵容评分", "lineups_json.starters[].rating", "✅"),
             ("🏥 伤停信息", "lineups_json.unavailable", "✅"),
-            ("📋 技术统计", "stats_json", "✅")
+            ("📋 技术统计", "stats_json", "✅"),
         ]
 
         for name, path, status in expected_dimensions:
@@ -973,6 +1109,7 @@ class RealAPIHealthAuditor:
             # 清理资源
             await self.cleanup_session()
 
+
 async def main():
     """主函数"""
     print("🔍 System Health Audit - 系统健康度审计")
@@ -1009,6 +1146,7 @@ async def main():
     except Exception as e:
         print(f"\n💥 审计过程异常: {e}")
         sys.exit(1)
+
 
 if __name__ == "__main__":
     # 运行主程序

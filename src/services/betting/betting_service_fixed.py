@@ -349,7 +349,7 @@ class BettingService:
                     else None
                 ),
             )
-        except (ValueError) as e:
+        except ValueError as e:
             self.logger.warning(f"赔率数据解析失败: {e}")
             return None
 
@@ -381,7 +381,7 @@ class BettingService:
                     else None
                 ),
             )
-        except (ValueError) as e:
+        except ValueError as e:
             self.logger.warning(f"预测数据解析失败: {e}")
             return None
 

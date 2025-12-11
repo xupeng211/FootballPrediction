@@ -16,6 +16,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **安全等级**: 企业级
 - **版本**: v4.0.1-hotfix (生产就绪)
 
+### 关键项目定位
+- **架构模式**: DDD (领域驱动设计) + CQRS (命令查询分离) + 事件驱动架构 + 异步优先
+- **开发理念**: AI辅助维护优先，工具驱动开发，渐进式改进
+- **质量标准**: 29.0%测试覆盖率硬性门槛，零容忍CI失败
+
 ## 🏗️ Tech Stack Architecture
 
 ### 后端技术栈
@@ -27,74 +32,106 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **容器化**: Docker 27.0+ + 多环境Docker Compose
 
 ### 前端技术栈
-- **框架**: Vue.js 3 + Composition API
+- **框架**: Vue.js 3.4.0 + Composition API
 - **语言**: TypeScript 5.7.2 (完全类型安全)
 - **构建工具**: Vite 5.0 (快速开发和构建)
-- **状态管理**: Pinia (Vuex现代替代品)
+- **状态管理**: Pinia 2.1.7 (Vuex现代替代品)
 - **路由**: Vue Router 4.2.5
-- **UI框架**: Tailwind CSS (实用优先的CSS框架)
-- **图表**: Chart.js + vue-chartjs
+- **UI框架**: Tailwind CSS 3.3.6 (实用优先的CSS框架)
+- **图表**: Chart.js 4.5.1 + vue-chartjs 5.3.3
+- **HTTP客户端**: Axios 1.6.0 + vue-axios 3.5.2
 
 ## 🚀 Core Development Commands
 
 ### Environment Management
 ```bash
-make dev              # Start full development environment (app + db + redis + nginx)
-make dev-rebuild      # Rebuild images and start development environment
-make dev-stop         # Stop development environment
-make dev-logs         # View development environment logs
-make status           # Check all service status
-make clean            # Cleanup containers and cache
-make shell            # Enter backend container
-make shell-db         # Enter database container
-make install          # Install dependencies in virtual environment
-make help             # Show all available commands with descriptions ⭐
+# 📍 重要提示：有两个CLAUDE.md文件：
+# - /CLAUDE.md (根目录，AI维护的完整文档)
+# - /FootballPrediction/CLAUDE.md (Docker开发环境文档)
+
+# 📍 重要提示：Makefile位于 FootballPrediction/ 子目录中
+cd FootballPrediction  # 首先进入包含Makefile的目录
+
+# 完整Docker开发环境 (主要开发方式)
+make dev              # 启动完整开发环境 (app + db + redis + frontend + nginx + worker + beat)
+make dev-rebuild      # 重新构建镜像并启动开发环境
+make dev-logs         # 查看开发环境日志
+make dev-stop         # 停止开发环境
+make status           # 检查所有服务状态
+make clean            # 清理Docker资源和缓存
+make quick-start      # 快速启动开发环境 (别名: dev)
+make quick-stop       # 快速停止开发环境 (别名: dev-stop)
+
+# 生产环境
+make prod             # 启动生产环境 (使用 docker-compose.prod.yml)
+make prod-rebuild     # 重新构建生产环境
+
+# 容器管理和访问
+make shell            # 进入后端容器终端
+make shell-db         # 进入数据库容器
+make db-shell         # 连接PostgreSQL数据库
+make redis-shell      # 连接Redis
+make logs             # 查看应用日志
+make logs-db          # 查看数据库日志
+make logs-redis       # 查看Redis日志
+
+# 传统虚拟环境开发 (可选方式)
+make install          # 在虚拟环境中安装依赖
+make help             # 显示所有可用命令 ⭐
 ```
 
-### Testing Commands
+### Testing Commands (Docker环境优先)
 ```bash
-# 🔥 Test Golden Rule - Never run pytest directly! Always use Makefile commands
-make test.fast        # Quick core tests (API/Utils/Cache/Events only)
+# 🔥 Test Golden Rule - 在Docker容器中运行测试，本地开发可使用FootballPrediction/Makefile
+# 重要提示：默认在Docker容器中运行测试，确保环境一致性
+
+# Docker容器测试 (推荐方式)
+make test             # 在容器中运行所有测试
+make test.unit        # 在容器中运行单元测试
+make test.integration # 在容器中运行集成测试
+make test.all         # 在容器中运行所有测试
+make coverage         # 在容器中生成覆盖率报告
+
+# 传统测试命令 (需要本地环境)
+make test.fast        # 快速核心测试 (API/Utils/Cache/Events only)
 make test-fast        # 快速单元测试（开发日常使用）
-make test.unit        # Unit tests (278+ test files)
-make test.unit.ci     # CI verification (ultimate stable solution)
-make test.integration # Integration tests
-make test.all         # Run all tests including slow ones
-make coverage         # Generate coverage report
-make test-coverage-local # Run tests with coverage locally
-
-# 新增测试命令 (v31.0+)
+make test.unit.ci     # CI验证 (极致稳定方案)
+make test-coverage-local # 本地运行测试并生成覆盖率
 make test-check-unit  # 检查单元测试状态（无输出，仅返回成功/失败）
-```
 
-### Running Single Tests (Correct Way)
-```bash
-# IMPORTANT: Services must be running first (make dev)
+# Running Single Tests (Docker方式 - 推荐)
+# IMPORTANT: 服务必须先运行 (make dev)
 
-# Run specific test module (use path relative to project root)
+# 在容器中运行特定测试模块
 docker-compose exec app bash -c "cd /app && pytest tests/test_api_health.py -v"
 
-# Run tests with specific pattern
+# 在容器中运行特定模式测试
 docker-compose exec app bash -c "cd /app && pytest tests/test_utils/ -v"
 
-# Run with coverage for specific file
+# 在容器中运行特定文件的覆盖率测试
 docker-compose exec app bash -c "cd /app && pytest tests/test_collectors/test_fotmob_adapter.py --cov=src.collectors.fotmob -v"
 
-# Run tests in CI mode (mock external dependencies)
+# CI模式测试 (Mock外部依赖)
 export FOOTBALL_PREDICTION_ML_MODE=mock
 export SKIP_ML_MODEL_LOADING=true
 docker-compose exec app bash -c "cd /app && pytest tests/unit/ -v"
 ```
 
-### Code Quality
+### Code Quality (Docker环境优先)
 ```bash
-make lint             # Code checking with ruff
-make fix-code         # Auto-fix code issues with ruff
-make format           # Code formatting with ruff
-make security-check   # Security scanning with bandit
-make ci               # Complete CI verification
-make type-check       # MyPy type checking
-make prepush          # Complete pre-push validation
+# Docker容器代码质量检查 (推荐方式)
+make lint             # 在容器中运行代码检查 (Ruff + MyPy)
+make fix-code         # 在容器中运行代码自动修复
+make format           # 在容器中运行代码格式化 (ruff format)
+make type-check       # 在容器中运行类型检查
+make security-check   # 在容器中运行安全扫描
+
+# 传统代码质量检查 (需要本地环境)
+make ci               # 完整CI验证
+make prepush          # 完整提交前验证
+
+# 快速优化脚本
+./quick_optimize.sh   # 快速优化代码质量 (一键修复所有问题)
 ```
 
 ### Database Management
@@ -289,36 +326,62 @@ class InferenceService:
 
 ### Docker Services Architecture
 ```yaml
+# 开发环境完整服务栈 (docker-compose.yml)
 services:
   app:                 # FastAPI主应用 (8000)
+  frontend:            # React/Vue.js前端应用 (3000, 3001)
   db:                  # PostgreSQL 15 (5432)
   redis:               # Redis缓存 (6379)
-  frontend:            # Vue.js前端应用 (5173)
   nginx:               # 反向代理 (80)
   worker:              # Celery异步任务处理
   beat:                # Celery定时任务调度
   data-collector:      # 专用数据采集服务
   data-collector-l2:   # L2深度数据采集器
+
+# 生产环境扩展服务 (docker-compose.prod.yml)
+  prometheus:          # 指标收集和存储 (9090)
+  grafana:             # 可视化仪表板 (3000)
+  loki:                # 日志聚合 (3100)
 ```
 
 ### Multi-Environment Support
-- **开发环境**: `docker-compose.yml`
-- **生产环境**: `docker-compose.prod.yml`
-- **前端服务**: `docker-compose.frontend.yml`
-- **调度系统**: `docker-compose.scheduler.yml`
+```bash
+# 开发环境 (主要开发方式)
+docker-compose.yml                    # 完整开发栈 - app + db + redis + frontend + nginx + worker + beat
+
+# 生产环境
+docker-compose.prod.yml               # 生产优化栈 - app + db + redis + nginx + monitoring + logging
+
+# 其他环境配置文件 (在FootballPrediction/目录中)
+docker-compose.dev.yml                # 开发环境配置
+docker-compose.lightweight.yml        # 轻量级开发环境
+docker-compose.microservices.yml     # 微服务架构
+docker-compose.full-test.yml         # 完整测试环境
+docker-compose.staging.yml           # 预发环境
+docker-compose.verify.yml            # 本地验证环境
+docker-compose.optimized.yml         # 优化配置
+docker-compose.scheduler.yml         # 调度系统 (如启用)
+```
 
 ## 🔄 Monitoring & Observability (v2.5+)
 
 ### Enterprise Monitoring UIs
 ```bash
+# ML and Task Monitoring
 http://localhost:4200  # Prefect UI - Workflow orchestration
 http://localhost:5555  # Flower UI - Celery task monitoring
 http://localhost:5000  # MLflow UI - ML experiment tracking
+
+# Production Monitoring (when running production environment)
+http://localhost:9090  # Prometheus - 指标收集和存储
+http://localhost:3000  # Grafana - 可视化仪表板 (生产模式下)
+http://localhost:3100  # Loki - 日志聚合
 ```
 
 ### 调度系统管理 (v2.5+)
 ```bash
 # 启动包含调度器的完整服务栈
+cd FootballPrediction  # 进入包含docker-compose的目录
 docker-compose -f docker-compose.yml -f docker-compose.scheduler.yml up -d
 
 # 验证调度服务
@@ -334,7 +397,9 @@ docker-compose ps
 ```bash
 curl http://localhost:8000/health           # Basic health check
 curl http://localhost:8000/health/system    # System resources check
+curl http://localhost:8000/health/database  # Database connectivity
 curl http://localhost:8000/api/v1/metrics   # Prometheus metrics
+curl http://localhost:8000/api/v1/health/inference # Inference service health
 ```
 
 ### 服务状态验证
@@ -344,9 +409,14 @@ curl http://localhost:8000/health           # 基础健康检查
 curl http://localhost:8000/health/system    # 系统资源检查
 curl http://localhost:8000/api/v1/metrics   # Prometheus指标
 
-# 前端服务验证
-curl http://localhost:5173                  # 前端开发服务器
+# 前端服务验证 (React)
+curl http://localhost:3000                  # 前端开发服务器 (React)
+curl http://localhost:3001                  # 前端开发服务器 (备用端口)
 curl http://localhost:80                    # 前端生产服务器 (通过Nginx)
+
+# Docker容器监控
+make monitor            # 实时监控应用资源使用
+make monitor-all        # 监控所有容器资源使用
 ```
 
 ## 🧪 Testing Strategy
@@ -372,6 +442,48 @@ make test.unit.ci     # Minimal verification for CI (fastest)
 - **ML Mock模式**: 强制启用（除非TEST_REAL_ML=true）
 - **CI优化**: test.unit.ci 使用极致内存优化，确保CI稳定性
 
+### 详细测试标记体系 (config/pytest.ini)
+```python
+# 核心测试类型标记
+@pytest.mark.unit           # 单元测试 - 测试单个函数或类 (85% of tests)
+@pytest.mark.integration    # 集成测试 - 测试多个组件的交互 (12% of tests)
+@pytest.mark.e2e           # 端到端测试 - 完整的用户流程测试 (2% of tests)
+@pytest.mark.performance   # 性能测试 - 基准测试和性能分析 (1% of tests)
+
+# 功能域标记
+@pytest.mark.api           # API测试 - 测试HTTP端点和接口
+@pytest.mark.domain        # 领域层测试 - 业务逻辑和算法测试
+@pytest.mark.business      # 业务规则测试 - 业务逻辑和规则引擎
+@pytest.mark.services      # 服务层测试 - 业务服务和数据处理
+@pytest.mark.database      # 数据库测试 - 需要数据库连接
+@pytest.mark.cache         # 缓存相关测试 - Redis和缓存逻辑
+@pytest.mark.auth          # 认证相关测试 - JWT和权限验证
+@pytest.mark.monitoring    # 监控相关测试 - 指标和健康检查
+@pytest.mark.streaming     # 流处理测试 - Kafka和实时数据
+@pytest.mark.collectors    # 收集器测试 - 数据收集和抓取模块
+@pytest.mark.middleware    # 中间件测试 - 请求处理和管道组件
+@pytest.mark.utils         # 工具类测试 - 通用工具和辅助函数
+@pytest.mark.core          # 核心模块测试 - 配置、依赖注入、基础设施
+@pytest.mark.decorators    # 装饰器测试 - 各种装饰器功能和性能测试
+@pytest.mark.ml            # 机器学习测试 - ML模型训练、预测和评估测试
+
+# 执行特征标记
+@pytest.mark.slow          # 慢速测试 - 运行时间较长的测试 (>30s)
+@pytest.mark.smoke         # 冒烟测试 - 基本功能验证
+@pytest.mark.critical      # 关键测试 - 必须通过的核心功能测试
+@pytest.mark.regression    # 回归测试 - 验证修复的问题不会重现
+@pytest.mark.metrics       # 指标和度量测试 - 性能指标和进展验证
+@pytest.mark.external_api  # 需要外部API调用
+@pytest.mark.docker        # 需要Docker容器环境
+@pytest.mark.network       # 需要网络连接
+```
+
+### Smart Tests 优化配置
+- **核心稳定测试模块**: tests/unit/utils, tests/unit/cache, tests/unit/core
+- **排除的问题测试文件**: 自动识别并排除不稳定的测试
+- **性能优化配置**: 排除慢速测试，设置合理的最大失败数
+- **覆盖率报告**: 生成HTML和XML格式的覆盖率报告
+
 ### CI环境变量配置
 ```bash
 # 必需的环境变量
@@ -389,18 +501,18 @@ export TEST_REAL_ML=false                    # 禁用真实ML测试
 
 ## 🎨 Frontend Development Workflow
 
-### Vue.js 3 + TypeScript Development
+### React + TypeScript Development (现代前端技术栈)
 ```bash
 # 1️⃣ Initialize frontend development environment
 cd frontend
 npm install
 
 # 2️⃣ Start development with real-time validation
-npm run dev           # Terminal 1: Development server
+npm run dev           # Terminal 1: Development server (http://localhost:3000)
 npm run type-check -- --watch  # Terminal 2: Real-time type checking
 
 # 3️⃣ Development cycle
-npm run lint -- --fix          # Auto-fix linting issues
+npm run lint -- --fix          # Auto-fix ESLint issues
 npm run type-check             # Check TypeScript types
 # Make changes to components...
 
@@ -412,37 +524,43 @@ npm run build       # Build for production
 npm run preview     # Test production build locally
 ```
 
-### Frontend Project Structure
+### Frontend Project Structure (React架构)
 ```
 frontend/
 ├── src/
-│   ├── api/                    # API客户端
-│   │   └── client.ts          # Axios HTTP客户端配置
-│   ├── components/            # Vue组件
+│   ├── components/            # React组件
 │   │   ├── auth/              # 认证相关组件
-│   │   ├── charts/            # 图表组件 (Chart.js + vue-chartjs)
+│   │   ├── charts/            # 图表组件 (Chart.js + React-Chartjs)
 │   │   ├── match/             # 比赛相关组件
 │   │   └── profile/           # 用户资料组件
-│   ├── composables/           # Vue 3 Composition API
-│   │   └── useApi.ts          # API调用组合式函数
-│   ├── layouts/               # 页面布局
-│   ├── router/                # 路由配置
-│   │   └── index.ts           # Vue Router 4配置
-│   ├── stores/                # Pinia状态管理
-│   │   └── auth.ts            # 认证状态管理
-│   ├── types/                 # TypeScript类型定义
-│   ├── views/                 # 页面视图
+│   ├── pages/                 # 页面组件
 │   │   ├── auth/              # 认证页面
 │   │   ├── admin/             # 管理页面
 │   │   └── match/             # 比赛页面
-│   ├── App.vue                # 根组件
-│   └── main.ts                # 应用入口
+│   ├── hooks/                 # 自定义React hooks
+│   ├── store/                 # Redux Toolkit配置
+│   │   └── index.ts           # Redux store配置
+│   ├── services/              # API服务函数
+│   ├── types/                 # TypeScript类型定义
+│   ├── utils/                 # 前端工具函数
+│   ├── styles/                # CSS和样式
+│   ├── App.tsx                # 根组件
+│   └── main.tsx               # 应用入口
+├── public/                    # 静态资源
+├── tests/                     # 前端测试文件
 ├── package.json               # 依赖配置
 ├── vite.config.ts            # Vite构建配置
 ├── tsconfig.json             # TypeScript配置
-├── tailwind.config.js        # Tailwind CSS配置
 └── scripts/                  # 前端工具脚本
 ```
+
+### 前端技术栈详情
+- **React 19.2.0**: 现代React，支持并发特性
+- **TypeScript 4.9.5**: 完整类型安全，严格模式
+- **Ant Design 5.27.6**: 企业级组件库
+- **Redux Toolkit 2.9.2**: 状态管理，包含RTK Query
+- **React Query**: 服务端状态管理和缓存
+- **Vite**: 快速构建工具，支持HMR
 
 ## 🔧 Critical Development Rules
 
@@ -476,10 +594,10 @@ frontend/
 - **🏛️ Clean Architecture** - Layer separation with dependency inversion
 
 ### 5. Frontend Development Standards
-- **🎨 Use Vue 3 Composition API** - Prefer Composition API over Options API
+- **🎨 Use React with TypeScript** - Modern React with functional components and hooks
 - **📝 TypeScript mandatory** - All new code must have proper type definitions
-- **📦 Follow component structure** - Use `<script setup lang="ts">` syntax
-- **🎯 Pinia for state management** - Use Pinia stores for application state
+- **📦 Follow React patterns** - Use functional components with hooks, avoid class components
+- **🎯 Redux Toolkit for state management** - Use Redux Toolkit with RTK Query for server state
 - **🔧 Development workflow** - Separate terminal for `npm run dev` and `npm run type-check -- --watch`
 
 ## 🔍 Code Navigation Guide
@@ -604,20 +722,23 @@ grep -r -i "password\|secret\|token\|key" src/ --include="*.py" | grep -v "test"
 docker --version && docker-compose --version
 
 # 2. 克隆并进入项目
-git clone <repository-url>
+git clone https://github.com/xupeng211/FootballPrediction.git
 cd FootballPrediction
 
-# 3. 启动开发环境
+# 3. 进入包含Makefile的子目录
+cd FootballPrediction  # 📍 重要：Makefile在此目录中
+
+# 4. 启动完整开发环境 (Docker方式)
 make dev && make status
 
-# 4. 验证后端服务
+# 5. 验证后端服务
 curl http://localhost:8000/health
 ```
 
-### 第二步：前端开发环境
+### 第二步：前端开发环境 (React)
 ```bash
-# 1. 进入前端目录
-cd frontend
+# 1. 进入前端目录 (从项目根目录)
+cd frontend  # 直接从根目录进入frontend
 
 # 2. 安装依赖
 npm install
@@ -625,58 +746,84 @@ npm install
 # 3. 启动开发服务器 (新终端)
 npm run dev
 
-# 4. 验证前端服务
-curl http://localhost:5173
+# 4. 验证前端服务 (React开发服务器)
+curl http://localhost:3000
 ```
 
 ### 第三步：开发工作流
 ```bash
-# 1. 运行测试确保环境正常
-make test-fast
+# 1. Docker容器测试验证环境正常
+cd FootballPrediction
+make test && make lint
 
-# 2. 代码质量检查
-make lint && make fix-code
+# 2. 代码质量快速修复
+make fix-code && make format
 
 # 3. 提交前验证 (必须执行)
-make test.unit.ci && make security-check
+make security-check && make coverage
 
 # 4. 查看所有可用命令
 make help  # ⭐ 最有用的命令
 
 # 5. 高级开发 (可选)
-make test-check-unit  # 快速检查测试状态
-make test-coverage-local  # 生成本地覆盖率报告
+make test.unit          # 单元测试
+make monitor            # 监控容器资源使用
+./quick_optimize.sh     # 快速优化代码质量
 ```
 
 ## 📝 Development Workflow Summary
 
-### Daily Development Process
+### Daily Development Process (Docker优先)
 ```bash
-# 1. 启动环境并验证服务
+# 1. 进入项目目录并启动完整Docker环境
+cd FootballPrediction  # 📍 重要：进入包含Makefile的目录
 make dev && make status
 
-# 2. 验证API可访问性
-curl http://localhost:8000/health
+# 2. 验证服务可访问性
+curl http://localhost:8000/health           # 后端API
+curl http://localhost:3000                  # 前端React
 
-# 3. 运行核心测试确保环境正常
-make test-fast
+# 3. 运行Docker容器测试确保环境正常
+make test && make lint
 
-# 4. 开发过程中
-make lint && make fix-code  # 代码质量检查和修复
+# 4. 开发过程中 (Docker容器中)
+make fix-code              # 代码质量自动修复
+make format                # 代码格式化
 
 # 5. 提交前验证 (必须执行)
-make test.unit.ci && make security-check
+make security-check && make coverage
 
-# 6. 前端开发 (并行进行)
-cd frontend && npm run dev  # 新终端启动前端服务
-npm run type-check -- --watch  # 实时类型检查
+# 6. 前端开发 (并行进行，新终端)
+cd frontend
+npm run dev               # 启动React开发服务器
+npm run type-check -- --watch  # 实时TypeScript类型检查
 ```
 
-### Version v4.0.1-hotfix 特性
-- ✅ **测试覆盖率稳定**: 29.0% (385+ 测试通过)
-- ✅ **CI流水线优化**: 极致内存管理，解决超时问题
-- ✅ **前端MVP完成**: Vue 3 + TypeScript + 响应式设计
-- ✅ **企业级安全**: 47项安全问题修复，完整审计报告
-- ✅ **生产监控**: Prometheus + Grafana + 结构化日志
+### 关键服务访问地址
+```bash
+# 开发环境访问
+http://localhost:8000          # FastAPI后端服务
+http://localhost:8000/docs     # API交互式文档
+http://localhost:3000          # React前端开发服务器
+http://localhost:80            # 生产前端 (通过Nginx代理)
 
-This system represents modern full-stack application development best practices, integrating machine learning, real-time data processing, and enterprise-grade architecture patterns. It's a mature, production-ready football prediction system.
+# 监控和管理界面
+http://localhost:4200          # Prefect UI - 工作流编排
+http://localhost:5555          # Flower UI - Celery任务监控
+http://localhost:5000          # MLflow UI - ML实验跟踪
+
+# 生产环境监控 (启动生产环境时可用)
+http://localhost:9090          # Prometheus - 指标存储
+http://localhost:3000          # Grafana - 监控仪表板
+```
+
+### 项目核心特性总结
+- ✅ **Docker优先开发**: 完整容器化开发环境，确保一致性
+- ✅ **React现代前端**: React 19.2.0 + TypeScript + Redux Toolkit
+- ✅ **企业级后端**: FastAPI + SQLAlchemy + Redis + PostgreSQL
+- ✅ **机器学习流水线**: XGBoost预测模型，MLflow实验跟踪
+- ✅ **完整测试体系**: 385+ 测试用例，29.0%+ 覆盖率
+- ✅ **生产级监控**: Prometheus + Grafana + 结构化日志
+- ✅ **自动化CI/CD**: GitHub Actions，代码质量自动检查
+
+This system represents modern full-stack application development best practices, integrating machine learning, real-time data processing, and enterprise-grade architecture patterns. It's a mature, production-ready football prediction system with Docker-first development workflow.

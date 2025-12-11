@@ -38,7 +38,7 @@ except ImportError:
 
 
 from src.evaluation.metrics import Metrics, MetricsResult
-from src.evaluation.calibration import AutoCalibrator, CalibrationResult
+from src.evaluation.calibration import CalibrationResult
 from src.evaluation.visualizer import EvaluationVisualizer
 from src.evaluation.report_builder import ReportBuilder
 

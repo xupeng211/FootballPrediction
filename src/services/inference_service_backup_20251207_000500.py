@@ -12,7 +12,6 @@ import logging
 import os
 import pandas as pd
 from pathlib import Path
-from typing import Optional
 
 # 初始化logger
 logger = logging.getLogger(__name__)
@@ -196,7 +195,6 @@ class InferenceService:
                                     )
 
                                 # 使用内置的pickle模块，但添加安全检查
-                                import pickle
 
                                 with open(model_path, "rb") as f:
                                     # 添加pickle安全检查

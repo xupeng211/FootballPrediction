@@ -17,12 +17,11 @@ Range Rule - 数值范围检查规则
 """
 
 import logging
-from typing import Any,  Optional
+from typing import Any, Optional
 
 
 from src.quality.quality_protocol import (
     RangeRule as RangeRuleProtocol,
-    DataQualityResult,
     RuleSeverity,
 )
 
@@ -172,7 +171,7 @@ class RangeRule(RangeRuleProtocol):
                 return f"字段 '{field_name}' 值为无穷大: {value}"
             if math.isnan(value):
                 return f"字段 '{field_name}' 值为 NaN"
-        except (ValueError):
+        except ValueError:
             pass
 
         # 检查范围

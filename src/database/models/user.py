@@ -17,7 +17,7 @@ from sqlalchemy.orm import relationship
 from src.database.base import BaseModel
 
 if TYPE_CHECKING:
-    from .tenant import Tenant
+    pass
 
 
 class UserRole(str, Enum):

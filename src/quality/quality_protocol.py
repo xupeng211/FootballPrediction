@@ -17,8 +17,6 @@ Data Quality Rules Protocol - 数据质量规则标准接口
 
 from typing import Protocol, Any
 
-from src.features.feature_store_interface import FeatureStoreProtocol
-
 
 class DataQualityRule(Protocol):
     """数据质量规则的抽象协议。
@@ -251,7 +249,7 @@ def get_rule_class(rule_type: str) -> type[DataQualityRule]:
     if rule_type not in RULE_TYPES:
         available_types = ", ".join(RULE_TYPES.keys())
         raise ValueError(
-            f"未知的规则类型: {rule_type}. " f"可用的规则类型: {available_types}"
+            f"未知的规则类型: {rule_type}. 可用的规则类型: {available_types}"
         )
 
     return RULE_TYPES[rule_type]

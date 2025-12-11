@@ -276,10 +276,10 @@ async def verify_shopping_list_with_real_collector():
             zip(categories, verification_results, strict=False)
         ):
             status = "✅ 通过" if result else "❌ 失败"
-            print(f"{i+1}. {category}: {status}")
+            print(f"{i + 1}. {category}: {status}")
 
         print(
-            f"\n📈 总体通过率: {passed_count}/{total_count} ({(passed_count/total_count)*100:.1f}%)"
+            f"\n📈 总体通过率: {passed_count}/{total_count} ({(passed_count / total_count) * 100:.1f}%)"
         )
 
         # 显示采集器统计
@@ -295,7 +295,7 @@ async def verify_shopping_list_with_real_collector():
             print("✅ HTML解析方案完全满足客户需求")
             return True
         elif passed_count >= 2:
-            print(f"\n👍 基本满足客户需求! ({total_count-passed_count}项需要优化)")
+            print(f"\n👍 基本满足客户需求! ({total_count - passed_count}项需要优化)")
             return True
         else:
             print("\n⚠️ 需要进一步优化数据提取逻辑")

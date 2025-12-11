@@ -17,21 +17,22 @@ import time
 from datetime import datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
-from typing import List, Dict, Any
+from typing import Any
 
 # 添加项目根目录到Python路径
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.backtesting.models import (
-    BacktestConfig, BacktestResult, BetDecision, BetResult, BetOutcome, BetType
-)
+from src.backtesting.models import BacktestConfig, BacktestResult, BetOutcome, BetType
 from src.backtesting.portfolio import Portfolio
-from src.backtesting.strategy import SimpleValueStrategy, ConservativeStrategy, AggressiveStrategy
+from src.backtesting.strategy import (
+    SimpleValueStrategy,
+    ConservativeStrategy,
+    AggressiveStrategy,
+)
 
 # 配置日志
 logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)8s] %(name)s: %(message)s"
+    level=logging.INFO, format="%(asctime)s [%(levelname)8s] %(name)s: %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -76,9 +77,15 @@ class MockMatchGenerator:
 
             # 生成赔率（包含博彩公司利润）
             margin = 1.05  # 5%利润空间
-            home_odds = max(Decimal("1.1"), Decimal(str(1 / (home_prob * margin)))).quantize(Decimal("0.01"))
-            draw_odds = max(Decimal("1.1"), Decimal(str(1 / (draw_prob * margin)))).quantize(Decimal("0.01"))
-            away_odds = max(Decimal("1.1"), Decimal(str(1 / (away_prob * margin)))).quantize(Decimal("0.01"))
+            home_odds = max(
+                Decimal("1.1"), Decimal(str(1 / (home_prob * margin)))
+            ).quantize(Decimal("0.01"))
+            draw_odds = max(
+                Decimal("1.1"), Decimal(str(1 / (draw_prob * margin)))
+            ).quantize(Decimal("0.01"))
+            away_odds = max(
+                Decimal("1.1"), Decimal(str(1 / (away_prob * margin)))
+            ).quantize(Decimal("0.01"))
 
             match = {
                 "id": i + 1,
@@ -111,8 +118,8 @@ class MockMatchGenerator:
                     "away": away_odds,
                     "home_odds": home_odds,
                     "draw_odds": draw_odds,
-                    "away_odds": away_odds
-                }
+                    "away_odds": away_odds,
+                },
             }
 
             matches.append(match)
@@ -127,7 +134,9 @@ class StandaloneBacktestEngine:
         self.config = config
         self.portfolio = Portfolio(config)
 
-    async def run_backtest(self, matches: list[dict[str, Any]], strategy) -> BacktestResult:
+    async def run_backtest(
+        self, matches: list[dict[str, Any]], strategy
+    ) -> BacktestResult:
         """运行回测"""
         logger.info(f"开始回测 {len(matches)} 场比赛")
 
@@ -148,7 +157,7 @@ class StandaloneBacktestEngine:
                     result.total_bets += 1
 
                     if decision.bet_type != BetType.SKIP:
-                        logger.debug(f"第{i+1}场: 下注 {decision.bet_type.value}")
+                        logger.debug(f"第{i + 1}场: 下注 {decision.bet_type.value}")
                     else:
                         result.skipped_bets += 1
                 else:
@@ -158,7 +167,7 @@ class StandaloneBacktestEngine:
                 actual_outcome = {
                     "home_win": BetOutcome.HOME_WIN,
                     "away_win": BetOutcome.AWAY_WIN,
-                    "draw": BetOutcome.DRAW
+                    "draw": BetOutcome.DRAW,
                 }[match["actual_outcome"]]
 
                 bet_result = self.portfolio.settle_bet(
@@ -177,10 +186,10 @@ class StandaloneBacktestEngine:
 
                 # 进度报告
                 if (i + 1) % 20 == 0:
-                    logger.info(f"已处理 {i+1}/{len(matches)} 场比赛")
+                    logger.info(f"已处理 {i + 1}/{len(matches)} 场比赛")
 
             except Exception as e:
-                logger.error(f"处理第 {i+1} 场比赛失败: {e}")
+                logger.error(f"处理第 {i + 1} 场比赛失败: {e}")
                 continue
 
         # 完成统计
@@ -225,14 +234,14 @@ async def run_strategy_demo():
         max_stake=Decimal("500.00"),
         value_threshold=0.1,
         min_confidence=0.3,
-        max_daily_bets=10
+        max_daily_bets=10,
     )
 
     # 测试不同策略
     strategies = [
         ("简单价值策略", SimpleValueStrategy(value_threshold=0.1, min_confidence=0.3)),
         ("保守策略", ConservativeStrategy(value_threshold=0.15, min_confidence=0.5)),
-        ("激进策略", AggressiveStrategy(value_threshold=0.05, min_confidence=0.2))
+        ("激进策略", AggressiveStrategy(value_threshold=0.05, min_confidence=0.2)),
     ]
 
     results = {}
@@ -274,8 +283,10 @@ async def run_strategy_demo():
     best_roi = float("-inf")
 
     for strategy_name, result in results.items():
-        print(f"{strategy_name:<15} {result.total_bets:>6} {result.win_rate:>8.1%} "
-              f"{result.roi:>10.2f}% {result.max_consecutive_wins:>8}")
+        print(
+            f"{strategy_name:<15} {result.total_bets:>6} {result.win_rate:>8.1%} "
+            f"{result.roi:>10.2f}% {result.max_consecutive_wins:>8}"
+        )
 
         if result.roi > best_roi:
             best_roi = result.roi
@@ -308,25 +319,27 @@ async def run_strategy_demo():
             recent_profit = sum(bet.profit_loss for bet in recent_bets)
 
             print("\n📈 最近10场表现:")
-            print(f"   胜场: {recent_wins}/{len(recent_bets)} ({recent_wins/len(recent_bets):.1%})")
+            print(
+                f"   胜场: {recent_wins}/{len(recent_bets)} ({recent_wins / len(recent_bets):.1%})"
+            )
             print(f"   盈亏: {recent_profit:+.2f}")
 
         # 风险指标
         max_drawdown = best_result.initial_balance - best_result.min_balance
-        drawdown_pct = (max_drawdown / best_result.initial_balance * 100)
+        drawdown_pct = max_drawdown / best_result.initial_balance * 100
 
         print("\n⚠️ 风险指标:")
         print(f"   最大回撤: {max_drawdown:,.2f} ({drawdown_pct:.2f}%)")
 
         # 保存结果
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         summary_file = f"/tmp/backtest_standalone_{timestamp}.txt"
 
-        with open(summary_file, 'w', encoding='utf-8') as f:
+        with open(summary_file, "w", encoding="utf-8") as f:
             f.write("回测系统独立演示报告\n")
             f.write(f"生成时间: {datetime.now()}\n")
             f.write(f"策略: {best_strategy}\n")
-            f.write("="*50 + "\n\n")
+            f.write("=" * 50 + "\n\n")
             f.write(best_result.get_summary())
 
         logger.info(f"💾 报告已保存到: {summary_file}")
@@ -345,5 +358,6 @@ if __name__ == "__main__":
     except Exception as e:
         logger.error(f"❌ 演示失败: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)

@@ -125,7 +125,7 @@ class TenantMiddleware(BaseHTTPMiddleware):
         if tenant_id:
             try:
                 return await self.tenant_service.get_tenant_by_id(int(tenant_id))
-            except (ValueError):
+            except ValueError:
                 pass
 
         tenant_slug = request.headers.get("x-Tenant-Slug")

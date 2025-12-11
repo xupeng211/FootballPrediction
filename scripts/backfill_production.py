@@ -29,14 +29,12 @@ import logging
 import os
 import sys
 import json
-import time
 import random
 import argparse
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Optional
 from dataclasses import dataclass, asdict
-from contextlib import asynccontextmanager
 
 # 添加项目根目录到Python路径
 project_root = Path(__file__).parent.parent
@@ -48,17 +46,6 @@ def _init_orm_models():
     """延迟初始化所有ORM模型，避免循环依赖"""
     try:
         # 导入核心模型，确保ORM映射正确初始化
-        import src.database.models.tenant
-        import src.database.models.user
-        import src.database.models.team
-        import src.database.models.league
-        import src.database.models.match
-        import src.database.models.predictions
-        import src.database.models.odds
-        import src.database.models.features
-        import src.database.models.data_collection_log
-        import src.database.models.data_quality_log
-        import src.database.models.audit_log
 
         print("✅ ORM模型初始化成功")
     except Exception:

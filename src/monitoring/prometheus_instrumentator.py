@@ -7,7 +7,7 @@ from collections.abc import Callable
 from functools import wraps
 
 from prometheus_client import Counter, Histogram, Gauge, generate_latest
-from prometheus_fastapi_instrumentator import Instrumentator, metrics
+from prometheus_fastapi_instrumentator import Instrumentator
 
 logger = __name__
 

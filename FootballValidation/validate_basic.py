@@ -3,7 +3,6 @@
 基础验证脚本 - 验证 FeatureStore 核心功能。
 """
 
-import sys
 import os
 
 print("=== FootballPrediction FeatureStore 基础验证 ===\n")
@@ -15,7 +14,7 @@ key_files = [
     "src/features/feature_store.py",
     "src/features/feature_definitions.py",
     "patches/feature_store_migration.sql",
-    "patches/feature_store_fix.patch"
+    "patches/feature_store_fix.patch",
 ]
 
 existing_files = []
@@ -41,7 +40,7 @@ if os.path.exists("src/features/feature_store_interface.py"):
         "load_features": "async def load_features" in content,
         "load_batch": "async def load_batch" in content,
         "FeatureData": "class FeatureData" in content,
-        "FeatureValidationError": "class FeatureValidationError" in content
+        "FeatureValidationError": "class FeatureValidationError" in content,
     }
 
     for check_name, result in checks.items():
@@ -59,7 +58,7 @@ if os.path.exists("src/features/feature_store.py"):
         "重试机制": "@retry" in content,
         "数据验证": "_validate_features" in content,
         "健康检查": "async def health_check" in content,
-        "统计信息": "async def stats" in content
+        "统计信息": "async def stats" in content,
     }
 
     for check_name, result in impl_checks.items():
@@ -77,7 +76,7 @@ if os.path.exists("src/features/feature_definitions.py"):
         "HeadToHeadFeatures": "class HeadToHeadFeatures" in content,
         "OddsFeatures": "class OddsFeatures" in content,
         "AdvancedStatsFeatures": "class AdvancedStatsFeatures" in content,
-        "FeatureValidator": "class FeatureValidator" in content
+        "FeatureValidator": "class FeatureValidator" in content,
     }
 
     for check_name, result in def_checks.items():
@@ -89,7 +88,7 @@ print("\n3. 验证测试文件...")
 test_files = [
     "tests/unit/features/test_feature_store.py",
     "tests/unit/features/test_feature_definitions.py",
-    "tests/integration/features/test_feature_store_integration.py"
+    "tests/integration/features/test_feature_store_integration.py",
 ]
 
 test_count = 0
@@ -97,7 +96,7 @@ for test_file in test_files:
     if os.path.exists(test_file):
         with open(test_file) as f:
             content = f.read()
-        lines_count = len(content.split('\n'))
+        lines_count = len(content.split("\n"))
         test_count += lines_count
         print(f"✅ {test_file} ({lines_count} lines)")
     else:

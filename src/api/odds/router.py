@@ -22,7 +22,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Path
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.api.schemas import StandardResponse, PaginatedResponse
+from src.api.schemas import StandardResponse
 from src.database.async_manager import get_db_session
 from src.database.dao.odds_dao import OddsDAO
 from src.database.dao.match_dao import MatchDAO
@@ -38,8 +38,10 @@ router = APIRouter(prefix="/odds", tags=["odds"])
 
 # ==================== 响应模型定义 ====================
 
+
 class OddsResponse(BaseModel):
     """赔率响应模型"""
+
     id: int
     match_id: int
     bookmaker: str
@@ -58,6 +60,7 @@ class OddsResponse(BaseModel):
 
 class OddsHistoryResponse(BaseModel):
     """赔率历史响应模型"""
+
     id: int
     odds_id: int
     old_home_win: Optional[float]
@@ -75,12 +78,14 @@ class OddsHistoryResponse(BaseModel):
 
 class OddsFetchRequest(BaseModel):
     """赔率获取请求模型"""
+
     source_name: str = "oddsportal"
     force_refresh: bool = False
 
 
 class OddsStatsResponse(BaseModel):
     """赔率统计响应模型"""
+
     total_odds: int
     active_bookmakers: list[str]
     latest_update: Optional[datetime]
@@ -91,7 +96,10 @@ class OddsStatsResponse(BaseModel):
 
 # ==================== 依赖注入 ====================
 
-async def get_odds_service(session: AsyncSession = Depends(get_db_session)) -> OddsService:
+
+async def get_odds_service(
+    session: AsyncSession = Depends(get_db_session),
+) -> OddsService:
     """获取 OddsService 实例"""
     odds_dao = OddsDAO(Odds, session)
     match_dao = MatchDAO(Match, session)
@@ -100,11 +108,12 @@ async def get_odds_service(session: AsyncSession = Depends(get_db_session)) -> O
 
 # ==================== API 端点实现 ====================
 
+
 @router.get(
     "/matches/{match_id}",
     response_model=StandardResponse[list[OddsResponse]],
     summary="获取比赛赔率",
-    description="获取指定比赛的所有可用赔率数据，支持按博彩公司过滤"
+    description="获取指定比赛的所有可用赔率数据，支持按博彩公司过滤",
 )
 async def get_match_odds(
     match_id: int = Path(..., description="比赛ID", ge=1),
@@ -112,7 +121,7 @@ async def get_match_odds(
     is_active: Optional[bool] = Query(True, description="是否只显示活跃赔率"),
     limit: int = Query(50, description="返回记录数限制", ge=1, le=1000),
     offset: int = Query(0, description="分页偏移量", ge=0),
-    odds_service: OddsService = Depends(get_odds_service)
+    odds_service: OddsService = Depends(get_odds_service),
 ) -> StandardResponse[list[OddsResponse]]:
     """
     获取比赛赔率数据
@@ -138,8 +147,7 @@ async def get_match_odds(
         match = await odds_service.match_dao.get(match_id)
         if not match:
             raise HTTPException(
-                status_code=404,
-                detail=f"比赛不存在: match_id={match_id}"
+                status_code=404, detail=f"比赛不存在: match_id={match_id}"
             )
 
         # 获取赔率数据
@@ -148,14 +156,11 @@ async def get_match_odds(
             bookmaker=bookmaker,
             is_active=is_active,
             limit=limit,
-            offset=offset
+            offset=offset,
         )
 
         # 转换为响应模型
-        odds_response = [
-            OddsResponse.model_validate(record)
-            for record in odds_records
-        ]
+        odds_response = [OddsResponse.model_validate(record) for record in odds_records]
 
         logger.info(f"成功获取赔率数据: count={len(odds_response)}")
 
@@ -163,29 +168,26 @@ async def get_match_odds(
             success=True,
             message=f"成功获取比赛 {match_id} 的赔率数据",
             data=odds_response,
-            timestamp=datetime.now().isoformat()
+            timestamp=datetime.now().isoformat(),
         )
 
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"获取比赛赔率失败: match_id={match_id}, error={e}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"获取赔率数据失败: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"获取赔率数据失败: {str(e)}")
 
 
 @router.post(
     "/fetch/{match_id}",
     response_model=StandardResponse[dict],
     summary="触发赔率采集",
-    description="手动触发指定比赛的赔率数据采集"
+    description="手动触发指定比赛的赔率数据采集",
 )
 async def fetch_match_odds(
     match_id: int = Path(..., description="比赛ID", ge=1),
     request: OddsFetchRequest = OddsFetchRequest(),
-    odds_service: OddsService = Depends(get_odds_service)
+    odds_service: OddsService = Depends(get_odds_service),
 ) -> StandardResponse[dict]:
     """
     手动触发赔率数据采集
@@ -202,20 +204,20 @@ async def fetch_match_odds(
         HTTPException: 当采集失败时
     """
     try:
-        logger.info(f"手动触发赔率采集: match_id={match_id}, source={request.source_name}")
+        logger.info(
+            f"手动触发赔率采集: match_id={match_id}, source={request.source_name}"
+        )
 
         # 验证比赛是否存在
         match = await odds_service.match_dao.get(match_id)
         if not match:
             raise HTTPException(
-                status_code=404,
-                detail=f"比赛不存在: match_id={match_id}"
+                status_code=404, detail=f"比赛不存在: match_id={match_id}"
             )
 
         # 执行赔率采集
         result = await odds_service.fetch_and_save_odds(
-            source_name=request.source_name,
-            match_id=str(match_id)
+            source_name=request.source_name, match_id=str(match_id)
         )
 
         # 构建响应数据
@@ -227,7 +229,7 @@ async def fetch_match_odds(
             "successful_updates": result.successful_updates,
             "duplicates_found": result.duplicates_found,
             "processing_time_ms": result.processing_time_ms,
-            "success_rate": result.to_dict().get("success_rate", 0.0)
+            "success_rate": result.to_dict().get("success_rate", 0.0),
         }
 
         logger.info(f"赔率采集完成: {response_data}")
@@ -236,29 +238,26 @@ async def fetch_match_odds(
             success=True,
             message=f"成功采集比赛 {match_id} 的赔率数据",
             data=response_data,
-            timestamp=datetime.now().isoformat()
+            timestamp=datetime.now().isoformat(),
         )
 
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"手动触发赔率采集失败: match_id={match_id}, error={e}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"赔率采集失败: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"赔率采集失败: {str(e)}")
 
 
 @router.get(
     "/history/{odds_id}",
     response_model=StandardResponse[list[OddsHistoryResponse]],
     summary="获取赔率历史",
-    description="获取特定赔率记录的历史变动信息"
+    description="获取特定赔率记录的历史变动信息",
 )
 async def get_odds_history(
     odds_id: int = Path(..., description="赔率记录ID", ge=1),
     limit: int = Query(50, description="返回记录数限制", ge=1, le=1000),
-    odds_service: OddsService = Depends(get_odds_service)
+    odds_service: OddsService = Depends(get_odds_service),
 ) -> StandardResponse[list[OddsHistoryResponse]]:
     """
     获取赔率历史变动
@@ -281,8 +280,7 @@ async def get_odds_history(
         odds_record = await odds_service.odds_dao.get(odds_id)
         if not odds_record:
             raise HTTPException(
-                status_code=404,
-                detail=f"赔率记录不存在: odds_id={odds_id}"
+                status_code=404, detail=f"赔率记录不存在: odds_id={odds_id}"
             )
 
         # 获取历史记录 (这里需要实现相应的 DAO 方法)
@@ -290,8 +288,7 @@ async def get_odds_history(
         history_records = []  # TODO: 实现历史记录查询
 
         history_response = [
-            OddsHistoryResponse.model_validate(record)
-            for record in history_records
+            OddsHistoryResponse.model_validate(record) for record in history_records
         ]
 
         logger.info(f"成功获取赔率历史: count={len(history_response)}")
@@ -300,28 +297,25 @@ async def get_odds_history(
             success=True,
             message=f"成功获取赔率 {odds_id} 的历史变动",
             data=history_response,
-            timestamp=datetime.now().isoformat()
+            timestamp=datetime.now().isoformat(),
         )
 
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"获取赔率历史失败: odds_id={odds_id}, error={e}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"获取赔率历史失败: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"获取赔率历史失败: {str(e)}")
 
 
 @router.get(
     "/matches/{match_id}/stats",
     response_model=StandardResponse[OddsStatsResponse],
     summary="获取赔率统计",
-    description="获取指定比赛的赔率统计信息"
+    description="获取指定比赛的赔率统计信息",
 )
 async def get_match_odds_stats(
     match_id: int = Path(..., description="比赛ID", ge=1),
-    odds_service: OddsService = Depends(get_odds_service)
+    odds_service: OddsService = Depends(get_odds_service),
 ) -> StandardResponse[OddsStatsResponse]:
     """
     获取比赛赔率统计信息
@@ -343,8 +337,7 @@ async def get_match_odds_stats(
         match = await odds_service.match_dao.get(match_id)
         if not match:
             raise HTTPException(
-                status_code=404,
-                detail=f"比赛不存在: match_id={match_id}"
+                status_code=404, detail=f"比赛不存在: match_id={match_id}"
             )
 
         # 获取所有赔率记录进行统计
@@ -357,11 +350,13 @@ async def get_match_odds_stats(
                 latest_update=None,
                 avg_home_win=None,
                 avg_draw=None,
-                avg_away_win=None
+                avg_away_win=None,
             )
         else:
             # 计算统计信息
-            bookmakers = list({record.bookmaker for record in odds_records if record.bookmaker})
+            bookmakers = list(
+                {record.bookmaker for record in odds_records if record.bookmaker}
+            )
             home_wins = [record.home_win for record in odds_records if record.home_win]
             draws = [record.draw for record in odds_records if record.draw]
             away_wins = [record.away_win for record in odds_records if record.away_win]
@@ -369,10 +364,14 @@ async def get_match_odds_stats(
             stats_data = OddsStatsResponse(
                 total_odds=len(odds_records),
                 active_bookmakers=bookmakers,
-                latest_update=max(record.last_updated for record in odds_records if record.last_updated),
+                latest_update=max(
+                    record.last_updated
+                    for record in odds_records
+                    if record.last_updated
+                ),
                 avg_home_win=sum(home_wins) / len(home_wins) if home_wins else None,
                 avg_draw=sum(draws) / len(draws) if draws else None,
-                avg_away_win=sum(away_wins) / len(away_wins) if away_wins else None
+                avg_away_win=sum(away_wins) / len(away_wins) if away_wins else None,
             )
 
         logger.info(f"成功获取赔率统计: total_odds={stats_data.total_odds}")
@@ -381,27 +380,24 @@ async def get_match_odds_stats(
             success=True,
             message=f"成功获取比赛 {match_id} 的赔率统计",
             data=stats_data,
-            timestamp=datetime.now().isoformat()
+            timestamp=datetime.now().isoformat(),
         )
 
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"获取赔率统计失败: match_id={match_id}, error={e}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"获取赔率统计失败: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"获取赔率统计失败: {str(e)}")
 
 
 @router.get(
     "/bookmakers",
     response_model=StandardResponse[list[str]],
     summary="获取博彩公司列表",
-    description="获取系统中所有可用的博彩公司列表"
+    description="获取系统中所有可用的博彩公司列表",
 )
 async def get_bookmakers(
-    odds_service: OddsService = Depends(get_odds_service)
+    odds_service: OddsService = Depends(get_odds_service),
 ) -> StandardResponse[list[str]]:
     """
     获取博彩公司列表
@@ -424,27 +420,25 @@ async def get_bookmakers(
             success=True,
             message="成功获取博彩公司列表",
             data=bookmakers,
-            timestamp=datetime.now().isoformat()
+            timestamp=datetime.now().isoformat(),
         )
 
     except Exception as e:
         logger.error(f"获取博彩公司列表失败: error={e}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"获取博彩公司列表失败: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"获取博彩公司列表失败: {str(e)}")
 
 
 # ==================== 健康检查端点 ====================
+
 
 @router.get(
     "/health",
     response_model=StandardResponse[dict],
     summary="赔率服务健康检查",
-    description="检查赔率 API 服务的健康状态"
+    description="检查赔率 API 服务的健康状态",
 )
 async def health_check(
-    odds_service: OddsService = Depends(get_odds_service)
+    odds_service: OddsService = Depends(get_odds_service),
 ) -> StandardResponse[dict]:
     """
     赔率服务健康检查
@@ -462,19 +456,16 @@ async def health_check(
             "timestamp": datetime.now().isoformat(),
             "version": "1.0.0",
             "database_connection": "ok",
-            "fetcher_status": "ready"
+            "fetcher_status": "ready",
         }
 
         return StandardResponse[dict](
             success=True,
             message="赔率 API 服务运行正常",
             data=health_data,
-            timestamp=datetime.now().isoformat()
+            timestamp=datetime.now().isoformat(),
         )
 
     except Exception as e:
         logger.error(f"健康检查失败: error={e}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"健康检查失败: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"健康检查失败: {str(e)}")

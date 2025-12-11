@@ -11,9 +11,8 @@ Database Session Management - Unified Async Interface
 """
 
 import logging
+
 # Empty typing importAny, Optional,  AsyncGenerator
-from sqlalchemy import text
-from sqlalchemy import Result
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database.async_manager import (
@@ -28,6 +27,7 @@ logger = logging.getLogger(__name__)
 # ============================================================================
 # 标准异步会话接口 - 推荐使用
 # ============================================================================
+
 
 async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
     """
@@ -51,6 +51,7 @@ async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
 # ============================================================================
 # CRUD 操作接口
 # ============================================================================
+
 
 class AsyncCRUD:
     """异步CRUD操作基类"""
@@ -169,6 +170,7 @@ class AsyncCRUD:
 # 批量操作接口
 # ============================================================================
 
+
 class AsyncBatchOperations:
     """异步批量操作接口"""
 
@@ -211,7 +213,7 @@ class AsyncBatchOperations:
 
         async with get_async_session() as session:
             for update_data in updates:
-                pk = update_data.pop('id', None) or update_data.pop('uuid', None)
+                pk = update_data.pop("id", None) or update_data.pop("uuid", None)
                 if pk is not None:
                     result = await session.execute(
                         model_class.__table__.update()
@@ -254,6 +256,7 @@ class AsyncBatchOperations:
 # 便捷查询接口
 # ============================================================================
 
+
 class AsyncQuery:
     """异步查询接口"""
 
@@ -287,10 +290,7 @@ class AsyncQuery:
 
     @staticmethod
     async def fetch_page(
-        query,
-        page: int = 1,
-        page_size: int = 20,
-        params: Optional[dict] = None
+        query, page: int = 1, page_size: int = 20, params: Optional[dict] = None
     ) -> dict[str, Any]:
         """
         分页查询
@@ -317,13 +317,13 @@ class AsyncQuery:
             items = [dict(row._mapping) for row in result.fetchall()]
 
             return {
-                'items': items,
-                'total': total,
-                'page': page,
-                'page_size': page_size,
-                'pages': (total + page_size - 1) // page_size,
-                'has_next': page * page_size < total,
-                'has_prev': page > 1
+                "items": items,
+                "total": total,
+                "page": page,
+                "page_size": page_size,
+                "pages": (total + page_size - 1) // page_size,
+                "has_next": page * page_size < total,
+                "has_prev": page > 1,
             }
 
     @staticmethod
@@ -350,16 +350,12 @@ class AsyncQuery:
 __all__ = [
     # 标准会话接口
     "get_async_session",
-
     # CRUD操作
     "AsyncCRUD",
-
     # 批量操作
     "AsyncBatchOperations",
-
     # 查询接口
     "AsyncQuery",
-
     # 向后兼容性别名
     "get_session",  # 指向 get_async_session
 ]

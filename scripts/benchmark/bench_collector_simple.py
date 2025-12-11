@@ -11,15 +11,14 @@ Version: 1.0.0
 
 import asyncio
 import time
-import json
 import sys
 import statistics
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from datetime import datetime
+from typing import Optional
 from dataclasses import dataclass
 
 # 添加项目路径
-sys.path.insert(0, '/app')
+sys.path.insert(0, "/app")
 
 from src.collectors.rate_limiter import RateLimiter
 
@@ -27,6 +26,7 @@ from src.collectors.rate_limiter import RateLimiter
 @dataclass
 class BenchmarkResult:
     """基准测试结果."""
+
     test_name: str
     concurrent_requests: int
     total_requests: int
@@ -47,6 +47,7 @@ class BenchmarkResult:
 @dataclass
 class RequestMetric:
     """单个请求指标."""
+
     request_id: int
     start_time: float
     end_time: float
@@ -74,13 +75,13 @@ class SimpleCollectorBenchmarker:
                 "test_domain": {
                     "rate": 10.0,  # 10 QPS限制
                     "burst": 20,  # 突发限制
-                    "max_wait_time": 60.0  # 最大等待60秒
+                    "max_wait_time": 60.0,  # 最大等待60秒
                 },
                 "default": {
                     "rate": 5.0,  # 默认5 QPS
                     "burst": 10,  # 突发限制
-                    "max_wait_time": 60.0
-                }
+                    "max_wait_time": 60.0,
+                },
             }
             self.rate_limiter = RateLimiter(rate_limit_config)
 
@@ -91,7 +92,9 @@ class SimpleCollectorBenchmarker:
             print(f"❌ 初始化失败: {e}")
             raise
 
-    async def simulate_request(self, request_id: int, domain: str = "test_domain") -> RequestMetric:
+    async def simulate_request(
+        self, request_id: int, domain: str = "test_domain"
+    ) -> RequestMetric:
         """模拟单个请求."""
         start_time = time.time()
         success = False
@@ -126,7 +129,7 @@ class SimpleCollectorBenchmarker:
             response_time=response_time,
             success=success,
             rate_limited=rate_limited,
-            error_message=error_message
+            error_message=error_message,
         )
 
     async def run_rate_limiter_test(self):
@@ -150,16 +153,20 @@ class SimpleCollectorBenchmarker:
                 end = time.time()
                 request_time = end - start
                 request_times.append(request_time)
-                print(f"      请求 {i+1}: 间隔 {request_time*1000:.1f}ms")
+                print(f"      请求 {i + 1}: 间隔 {request_time * 1000:.1f}ms")
 
             avg_interval = statistics.mean(request_times) if request_times else 0
             expected_interval = 1000 / self.rate_limiter.config[domain].rate
 
             print(f"      理论间隔: {expected_interval:.0f}ms")
-            print(f"      实际平均间隔: {avg_interval*1000:.1f}ms")
-            print(f"      限流效果: {'有效' if avg_interval >= expected_interval * 0.8 else '无效'}")
+            print(f"      实际平均间隔: {avg_interval * 1000:.1f}ms")
+            print(
+                f"      限流效果: {'有效' if avg_interval >= expected_interval * 0.8 else '无效'}"
+            )
 
-    async def run_concurrent_test(self, concurrent_count: int = 50, test_name: str = "") -> BenchmarkResult:
+    async def run_concurrent_test(
+        self, concurrent_count: int = 50, test_name: str = ""
+    ) -> BenchmarkResult:
         """运行并发测试."""
         if test_name:
             print(f"\n🚀 {test_name}: {concurrent_count} 个并发请求")
@@ -178,8 +185,7 @@ class SimpleCollectorBenchmarker:
         for i in range(concurrent_count):
             domain = "test_domain" if i % 2 == 0 else "default"  # 交替使用不同域名
             task = asyncio.create_task(
-                self.simulate_request(i + 1, domain),
-                name=f"request_{i+1}"
+                self.simulate_request(i + 1, domain), name=f"request_{i + 1}"
             )
             tasks.append(task)
 
@@ -196,14 +202,16 @@ class SimpleCollectorBenchmarker:
                 self.results.append(task_result)
             else:
                 # 处理异常
-                self.results.append(RequestMetric(
-                    request_id=i + 1,
-                    start_time=overall_start,
-                    end_time=time.time(),
-                    response_time=time.time() - overall_start,
-                    success=False,
-                    error_message=f"Task exception: {str(task_result)}"
-                ))
+                self.results.append(
+                    RequestMetric(
+                        request_id=i + 1,
+                        start_time=overall_start,
+                        end_time=time.time(),
+                        response_time=time.time() - overall_start,
+                        success=False,
+                        error_message=f"Task exception: {str(task_result)}",
+                    )
+                )
 
         # 计算基准结果
         total_time = overall_end - overall_start
@@ -245,7 +253,7 @@ class SimpleCollectorBenchmarker:
             p99_response_time=p99_response_time,
             requests_per_second=requests_per_second,
             error_rate=error_rate,
-            rate_limit_hits=rate_limit_hits
+            rate_limit_hits=rate_limit_hits,
         )
 
     async def generate_report(self, results: list[BenchmarkResult]) -> str:
@@ -271,28 +279,32 @@ class SimpleCollectorBenchmarker:
                 f"| {result.test_name} | {result.concurrent_requests} | "
                 f"{result.total_requests} | {result.successful_requests} | "
                 f"{result.failed_requests} | {result.requests_per_second:.2f} | "
-                f"{result.avg_response_time*1000:.1f}ms | "
-                f"{result.p95_response_time*1000:.1f}ms | "
+                f"{result.avg_response_time * 1000:.1f}ms | "
+                f"{result.p95_response_time * 1000:.1f}ms | "
                 f"{result.error_rate:.2f}% | {result.rate_limit_hits} |"
             )
 
-        report_lines.extend([
-            "",
-            "## 🎯 性能指标分析",
-            "",
-            f"- **平均RPS**: {statistics.mean([r.requests_per_second for r in results]):.2f}",
-            f"- **平均响应时间**: {statistics.mean([r.avg_response_time*1000 for r in results]):.1f}ms",
-            f"- **平均P95响应时间**: {statistics.mean([r.p95_response_time*1000 for r in results]):.1f}ms",
-            f"- **平均成功率**: {statistics.mean([(r.successful_requests/r.total_requests)*100 for r in results]):.2f}%",
-            f"- **平均限流命中**: {statistics.mean([r.rate_limit_hits for r in results]):.1f}",
-            "",
-            "## 🔍 性能分析",
-            ""
-        ])
+        report_lines.extend(
+            [
+                "",
+                "## 🎯 性能指标分析",
+                "",
+                f"- **平均RPS**: {statistics.mean([r.requests_per_second for r in results]):.2f}",
+                f"- **平均响应时间**: {statistics.mean([r.avg_response_time * 1000 for r in results]):.1f}ms",
+                f"- **平均P95响应时间**: {statistics.mean([r.p95_response_time * 1000 for r in results]):.1f}ms",
+                f"- **平均成功率**: {statistics.mean([(r.successful_requests / r.total_requests) * 100 for r in results]):.2f}%",
+                f"- **平均限流命中**: {statistics.mean([r.rate_limit_hits for r in results]):.1f}",
+                "",
+                "## 🔍 性能分析",
+                "",
+            ]
+        )
 
         # 性能分析
         avg_rps = statistics.mean([r.requests_per_second for r in results])
-        avg_response_time = statistics.mean([r.avg_response_time*1000 for r in results])
+        avg_response_time = statistics.mean(
+            [r.avg_response_time * 1000 for r in results]
+        )
         avg_rate_limit_hits = statistics.mean([r.rate_limit_hits for r in results])
 
         if avg_rps >= 8 and avg_response_time <= 200:
@@ -302,32 +314,40 @@ class SimpleCollectorBenchmarker:
         else:
             performance_level = "需要优化"
 
-        report_lines.extend([
-            f"- **整体性能评级**: {performance_level}",
-            f"- **RateLimiter效果**: {'有效' if avg_rate_limit_hits > 0 else '未触发'}",
-            f"- **并发处理能力**: {max([r.concurrent_requests for r in results])} 并发",
-            "",
-            "## 📈 优化建议",
-            ""
-        ])
+        report_lines.extend(
+            [
+                f"- **整体性能评级**: {performance_level}",
+                f"- **RateLimiter效果**: {'有效' if avg_rate_limit_hits > 0 else '未触发'}",
+                f"- **并发处理能力**: {max([r.concurrent_requests for r in results])} 并发",
+                "",
+                "## 📈 优化建议",
+                "",
+            ]
+        )
 
         if avg_rate_limit_hits > len(results) * 2:  # 如果平均限流命中数较高
-            report_lines.extend([
-                "1. **调整限流策略**: 当前限流较为严格，可适当提高QPS限制",
-                "2. **增加并发容量**: 系统可以承受更高的并发负载",
-                "3. **优化缓存策略**: 减少对限流器的依赖"
-            ])
+            report_lines.extend(
+                [
+                    "1. **调整限流策略**: 当前限流较为严格，可适当提高QPS限制",
+                    "2. **增加并发容量**: 系统可以承受更高的并发负载",
+                    "3. **优化缓存策略**: 减少对限流器的依赖",
+                ]
+            )
         else:
-            report_lines.extend([
-                "1. **并发数优化**: 当前系统可以处理更高的并发数",
-                "2. **性能监控**: 持续监控系统性能指标",
-                "3. **资源利用**: 评估系统资源使用情况"
-            ])
+            report_lines.extend(
+                [
+                    "1. **并发数优化**: 当前系统可以处理更高的并发数",
+                    "2. **性能监控**: 持续监控系统性能指标",
+                    "3. **资源利用**: 评估系统资源使用情况",
+                ]
+            )
 
-        report_lines.extend([
-            "",
-            f"**报告生成时间**: {datetime.now().isoformat()}",
-        ])
+        report_lines.extend(
+            [
+                "",
+                f"**报告生成时间**: {datetime.now().isoformat()}",
+            ]
+        )
 
         return "\n".join(report_lines)
 
@@ -348,7 +368,7 @@ class SimpleCollectorBenchmarker:
                 (10, "小并发测试"),
                 (25, "中等并发测试"),
                 (50, "高并发测试"),
-                (100, "极高并发测试")
+                (100, "极高并发测试"),
             ]
             all_results = []
 
@@ -362,8 +382,8 @@ class SimpleCollectorBenchmarker:
                 print(f"   ✅ 成功请求: {result.successful_requests}")
                 print(f"   ❌ 失败请求: {result.failed_requests}")
                 print(f"   📈 RPS: {result.requests_per_second:.2f}")
-                print(f"   ⏱️  平均响应时间: {result.avg_response_time*1000:.1f}ms")
-                print(f"   ⏱️  P95响应时间: {result.p95_response_time*1000:.1f}ms")
+                print(f"   ⏱️  平均响应时间: {result.avg_response_time * 1000:.1f}ms")
+                print(f"   ⏱️  P95响应时间: {result.p95_response_time * 1000:.1f}ms")
                 print(f"   ❌ 错误率: {result.error_rate:.2f}%")
                 print(f"   🚦 限流命中: {result.rate_limit_hits}")
 
@@ -378,7 +398,7 @@ class SimpleCollectorBenchmarker:
             # 保存报告
             report_path = "/app/reports/benchmark_collector_baseline.md"
             try:
-                with open(report_path, 'w', encoding='utf-8') as f:
+                with open(report_path, "w", encoding="utf-8") as f:
                     f.write(report)
                 print(f"\n✅ 报告已保存: {report_path}")
             except Exception as e:
@@ -389,6 +409,7 @@ class SimpleCollectorBenchmarker:
         except Exception as e:
             print(f"\n❌ 基准测试失败: {e}")
             import traceback
+
             traceback.print_exc()
             return None, []
 
@@ -405,8 +426,10 @@ async def main():
 
         # 总结
         avg_rps = statistics.mean([r.requests_per_second for r in results])
-        avg_success_rate = statistics.mean([(r.successful_requests/r.total_requests)*100 for r in results])
-        avg_p95 = statistics.mean([r.p95_response_time*1000 for r in results])
+        avg_success_rate = statistics.mean(
+            [(r.successful_requests / r.total_requests) * 100 for r in results]
+        )
+        avg_p95 = statistics.mean([r.p95_response_time * 1000 for r in results])
         avg_rate_limit_hits = statistics.mean([r.rate_limit_hits for r in results])
 
         print(f"📊 平均RPS: {avg_rps:.2f}")

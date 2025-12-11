@@ -7,12 +7,10 @@ scheduling capabilities and Prefect's advanced flow orchestration.
 """
 
 import asyncio
-import json
 import logging
 from datetime import datetime
 from typing import Any, Optional
 
-from celery import schedules
 from celery.schedules import crontab
 from celery.beat import Scheduler
 
@@ -21,14 +19,6 @@ from prefect.deployments import run_deployment
 from prefect.flows import load_flow_from_script
 from prefect.exceptions import ObjectNotFound
 
-from src.orchestration.flows.daily_data_collection_flow import (
-    daily_data_collection_flow,
-    manual_data_collection_flow,
-)
-from src.orchestration.flows.weekly_model_retraining_flow import (
-    weekly_model_retraining_flow,
-    emergency_model_retraining_flow,
-)
 
 # Configure logging
 logging.basicConfig(

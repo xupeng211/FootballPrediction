@@ -19,17 +19,13 @@ Unified HTTP Client Factory
 版本: 1.0.0
 """
 
-import asyncio
-import json
 import time
-from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Any,  Optional, Protocol, runtime_checkable
-from pathlib import Path
+from typing import Any, Optional, Protocol, runtime_checkable
 
 import httpx
 
-from .auth import TokenManager, create_token_manager, create_fotmob_provider
+from .auth import TokenManager, create_token_manager
 from .fotmob.collector_v2 import FotMobCollectorV2
 from .interface import BaseCollectorProtocol
 from .proxy_pool import ProxyPool, create_proxy_pool, RotationStrategy
@@ -111,9 +107,7 @@ class FotMobConfig:
     timeout: float = 30.0
     max_retries: int = 3
     retry_delay: float = 1.0
-    user_agent: str = (
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-    )
+    user_agent: str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 
 
 class RequestEvent:

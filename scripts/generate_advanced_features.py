@@ -14,10 +14,9 @@ import sys
 import os
 import asyncio
 import pandas as pd
-import numpy as np
-from datetime import datetime, timedelta
+from datetime import datetime
 import logging
-from typing import Any, Optional
+from typing import Any
 
 # 添加src到路径
 sys.path.append("/app/src")

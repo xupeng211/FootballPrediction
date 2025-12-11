@@ -17,11 +17,10 @@ type Rule - 数据类型检查规则
 """
 
 import logging
-from typing import Any,  Optional
+from typing import Any, Optional
 
 from src.quality.quality_protocol import (
     TypeRule as TypeRuleProtocol,
-    DataQualityResult,
     RuleSeverity,
 )
 

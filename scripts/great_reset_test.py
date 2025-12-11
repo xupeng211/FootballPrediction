@@ -6,9 +6,7 @@ Great Reset - 数据重建测试
 
 import asyncio
 import sys
-import json
 from pathlib import Path
-from datetime import datetime, timedelta
 
 # 添加项目路径
 project_root = Path(__file__).parent.parent

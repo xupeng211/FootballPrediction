@@ -9,8 +9,8 @@ Premier League 2023-2024 Season Batch Collection - League Page Strategy
 import asyncio
 import sys
 import os
-from datetime import datetime, timedelta
-from typing import  Any, Optional
+from datetime import datetime
+from typing import Any, Optional
 import logging
 import json
 import re
@@ -257,7 +257,7 @@ class SeasonBackfillJob:
                         status = match.get("status", {}).get("finished", False)
                         status_text = "已结束" if status else "未结束"
                         self.logger.info(
-                            f"      {i+1}. {home_team} vs {away_team} ({status_text})"
+                            f"      {i + 1}. {home_team} vs {away_team} ({status_text})"
                         )
 
                     if len(matches) > 3:

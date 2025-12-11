@@ -14,7 +14,7 @@ import logging
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 # 添加项目根目录到路径
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -532,38 +532,38 @@ class DataForensicsExpert:
 # 🔍 数据取证专家报告
 
 ## 📊 基础信息
-- **数据大小**: {results.get('data_size_bytes', 0):,} 字节
-- **检查时间**: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+- **数据大小**: {results.get("data_size_bytes", 0):,} 字节
+- **检查时间**: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
 
 ## 🎯 关键数据检查结果
 
 ### 1. xG (预期进球) 数据
-- **状态**: {'✅ 存在' if results.get('has_xG') else '❌ 缺失'}
-{self._format_details(results.get('xg_details', {}), 'xG')}
+- **状态**: {"✅ 存在" if results.get("has_xG") else "❌ 缺失"}
+{self._format_details(results.get("xg_details", {}), "xG")}
 
 ### 2. 阵容数据
-- **状态**: {'✅ 存在' if results.get('has_lineups') else '❌ 缺失'}
-{self._format_details(results.get('lineup_details', {}), '阵容')}
+- **状态**: {"✅ 存在" if results.get("has_lineups") else "❌ 缺失"}
+{self._format_details(results.get("lineup_details", {}), "阵容")}
 
 ### 3. 球员评分
-- **状态**: {'✅ 存在' if results.get('has_ratings') else '❌ 缺失'}
-{self._format_details(results.get('rating_details', {}), '评分')}
+- **状态**: {"✅ 存在" if results.get("has_ratings") else "❌ 缺失"}
+{self._format_details(results.get("rating_details", {}), "评分")}
 
 ### 4. 赔率数据
-- **状态**: {'✅ 存在' if results.get('has_odds') else '❌ 缺失'}
-{self._format_details(results.get('odds_details', {}), '赔率')}
+- **状态**: {"✅ 存在" if results.get("has_odds") else "❌ 缺失"}
+{self._format_details(results.get("odds_details", {}), "赔率")}
 
 ### 5. 跑动距离
-- **状态**: {'✅ 存在' if results.get('has_running_distance') else '❌ 缺失'}
-{self._format_details(results.get('distance_details', {}), '跑动距离')}
+- **状态**: {"✅ 存在" if results.get("has_running_distance") else "❌ 缺失"}
+{self._format_details(results.get("distance_details", {}), "跑动距离")}
 
 ### 6. 势头图
-- **状态**: {'✅ 存在' if results.get('has_momentum') else '❌ 缺失'}
-{self._format_details(results.get('momentum_details', {}), '势头图')}
+- **状态**: {"✅ 存在" if results.get("has_momentum") else "❌ 缺失"}
+{self._format_details(results.get("momentum_details", {}), "势头图")}
 
 ## 🗺️ 数据结构样本
 ```json
-{json.dumps(results.get('sample_structure', {}), indent=2, ensure_ascii=False)}
+{json.dumps(results.get("sample_structure", {}), indent=2, ensure_ascii=False)}
 ```
 
 ## 🎯 取证结论

@@ -21,7 +21,6 @@ import re
 import shutil
 import argparse
 from pathlib import Path
-from typing import List, Dict, Tuple, Optional
 import logging
 
 # 设置日志
@@ -215,7 +214,7 @@ class DatabaseImportReplacer:
         logger.info(f"🚀 开始处理 {len(file_list)} 个文件 (预览模式: {dry_run})")
 
         for file_path in file_list:
-            logger.info(f"\n{'='*60}")
+            logger.info(f"\n{'=' * 60}")
 
             try:
                 # 分析文件
@@ -257,14 +256,14 @@ class DatabaseImportReplacer:
         """
         report = f"""
 📊 数据库导入替换处理报告
-{'='*50}
+{"=" * 50}
 
 📈 处理统计:
-- 总文件数: {stats['total']}
-- 需要替换: {stats['needs_replacement']}
-- 成功处理: {stats['processed']}
-- 跳过文件: {stats['skipped']}
-- 失败文件: {stats['failed']}
+- 总文件数: {stats["total"]}
+- 需要替换: {stats["needs_replacement"]}
+- 成功处理: {stats["processed"]}
+- 跳过文件: {stats["skipped"]}
+- 失败文件: {stats["failed"]}
 
 ✅ 成功处理的文件:
 {chr(10).join(f"  • {f}" for f in self.processed_files[:10])}

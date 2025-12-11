@@ -9,7 +9,7 @@ import asyncio
 import logging
 import sys
 import json
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 import pandas as pd
 import numpy as np
@@ -18,19 +18,13 @@ import random
 # 添加项目路径
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-import asyncpg
 import os
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
-from sqlalchemy import select, text, func
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
+from sqlalchemy import text
 import xgboost as xgb
-from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.metrics import (
     accuracy_score,
-    precision_score,
-    recall_score,
-    confusion_matrix,
-    classification_report,
 )
 import joblib
 
@@ -183,7 +177,7 @@ class RealisticModelTrainer:
                             xg_home = value
                         elif "away" in field:
                             xg_away = value
-                    except (ValueError):
+                    except ValueError:
                         continue
 
             # 严格验证：xG值必须在合理范围内
@@ -211,12 +205,8 @@ class RealisticModelTrainer:
                 odds_data = json.loads(odds_json)
 
                 # 尝试不同的赔率字段名
-                home_odds_fields = [
-                    "avg_home_win_odds" "home_win_odds" "homeWinOdds" "1"
-                ]
-                away_odds_fields = [
-                    "avg_away_win_odds" "away_win_odds" "awayWinOdds" "2"
-                ]
+                home_odds_fields = ["avg_home_win_oddshome_win_oddshomeWinOdds1"]
+                away_odds_fields = ["avg_away_win_oddsaway_win_oddsawayWinOdds2"]
                 draw_odds_fields = ["avg_draw_odds", "draw_odds", "drawOdds", "X"]
 
                 for field in home_odds_fields:
@@ -224,7 +214,7 @@ class RealisticModelTrainer:
                         try:
                             odds["home_win"] = float(odds_data[field])
                             break
-                        except (ValueError):
+                        except ValueError:
                             continue
 
                 for field in away_odds_fields:
@@ -232,7 +222,7 @@ class RealisticModelTrainer:
                         try:
                             odds["away_win"] = float(odds_data[field])
                             break
-                        except (ValueError):
+                        except ValueError:
                             continue
 
                 for field in draw_odds_fields:
@@ -240,7 +230,7 @@ class RealisticModelTrainer:
                         try:
                             odds["draw"] = float(odds_data[field])
                             break
-                        except (ValueError):
+                        except ValueError:
                             continue
 
         except (json.JSONDecodeError, ValueError):
@@ -277,7 +267,7 @@ class RealisticModelTrainer:
                         odds[key] = None
                     else:
                         odds[key] = value
-                except (ValueError):
+                except ValueError:
                     odds[key] = None
 
         return odds
@@ -356,7 +346,7 @@ class RealisticModelTrainer:
         df_filtered = df[basic_stats_mask].copy()
 
         logger.info(f"✅ 过滤后数据: {len(df_filtered)} 场比赛")
-        logger.info(f"📉 数据保留率: {len(df_filtered)/original_count*100:.1f}%")
+        logger.info(f"📉 数据保留率: {len(df_filtered) / original_count * 100:.1f}%")
 
         # 为没有xG的数据生成估算xG
         missing_xg_mask = df_filtered["xg_home"].isna() | df_filtered["xg_away"].isna()
@@ -456,14 +446,14 @@ class RealisticModelTrainer:
             team_df = team_df.sort_values([team_col, "match_date"])
 
             # 计算滚动平均
-            team_df[f'avg_goals_scored_{team_col.split("_")[0]}'] = (
+            team_df[f"avg_goals_scored_{team_col.split('_')[0]}"] = (
                 team_df.groupby(team_col)[goal_col]
                 .rolling(window=self.rolling_window, min_periods=1)
                 .mean()
                 .reset_index(level=0, drop=True)
             )
 
-            team_df[f'avg_goals_conceded_{team_col.split("_")[0]}'] = (
+            team_df[f"avg_goals_conceded_{team_col.split('_')[0]}"] = (
                 team_df.groupby(team_col)[opponent_goal_col]
                 .rolling(window=self.rolling_window, min_periods=1)
                 .mean()
@@ -471,14 +461,14 @@ class RealisticModelTrainer:
             )
 
             # xG滚动特征
-            team_df[f'avg_xg_created_{team_col.split("_")[0]}'] = (
+            team_df[f"avg_xg_created_{team_col.split('_')[0]}"] = (
                 team_df.groupby(team_col)[xg_col]
                 .rolling(window=self.rolling_window, min_periods=1)
                 .mean()
                 .reset_index(level=0, drop=True)
             )
 
-            team_df[f'avg_xg_conceded_{team_col.split("_")[0]}'] = (
+            team_df[f"avg_xg_conceded_{team_col.split('_')[0]}"] = (
                 team_df.groupby(team_col)[opponent_xg_col]
                 .rolling(window=self.rolling_window, min_periods=1)
                 .mean()
@@ -486,26 +476,26 @@ class RealisticModelTrainer:
             )
 
             # xG效率特征
-            team_df[f'xg_efficiency_{team_col.split("_")[0]}'] = team_df[
-                f'avg_goals_scored_{team_col.split("_")[0]}'
-            ] / team_df[f'avg_xg_created_{team_col.split("_")[0]}'].replace(
+            team_df[f"xg_efficiency_{team_col.split('_')[0]}"] = team_df[
+                f"avg_goals_scored_{team_col.split('_')[0]}"
+            ] / team_df[f"avg_xg_created_{team_col.split('_')[0]}"].replace(
                 [np.inf, -np.inf, np.nan], 0
             )
 
-            team_df[f'xg_defense_{team_col.split("_")[0]}'] = team_df[
-                f'avg_xg_conceded_{team_col.split("_")[0]}'
-            ] / team_df[f'avg_goals_conceded_{team_col.split("_")[0]}'].replace(
+            team_df[f"xg_defense_{team_col.split('_')[0]}"] = team_df[
+                f"avg_xg_conceded_{team_col.split('_')[0]}"
+            ] / team_df[f"avg_goals_conceded_{team_col.split('_')[0]}"].replace(
                 [np.inf, -np.inf, np.nan], 0
             )
 
             # 合并回原DataFrame
             rolling_cols = [
-                f'avg_goals_scored_{team_col.split("_")[0]}'
-                f'avg_goals_conceded_{team_col.split("_")[0]}'
-                f'avg_xg_created_{team_col.split("_")[0]}'
-                f'avg_xg_conceded_{team_col.split("_")[0]}'
-                f'xg_efficiency_{team_col.split("_")[0]}'
-                f'xg_defense_{team_col.split("_")[0]}'
+                f"avg_goals_scored_{team_col.split('_')[0]}"
+                f"avg_goals_conceded_{team_col.split('_')[0]}"
+                f"avg_xg_created_{team_col.split('_')[0]}"
+                f"avg_xg_conceded_{team_col.split('_')[0]}"
+                f"xg_efficiency_{team_col.split('_')[0]}"
+                f"xg_defense_{team_col.split('_')[0]}"
             ]
 
             df = df.merge(
@@ -628,10 +618,7 @@ class RealisticModelTrainer:
             df[col] = df[col].clip(lower=0, upper=5)
 
         for col in [
-            "xg_efficiency_home"
-            "xg_efficiency_away"
-            "xg_defense_home"
-            "xg_defense_away"
+            "xg_efficiency_homexg_efficiency_awayxg_defense_homexg_defense_away"
         ]:
             df[col] = df[col].clip(lower=0, upper=5)
 
@@ -746,7 +733,6 @@ class RealisticModelTrainer:
 
                 # 计算收益
                 if prediction == actual:  # 预测正确,
-
                     winnings = stake * odds
                     total_winnings += winnings
                     wins += 1
@@ -818,9 +804,7 @@ class RealisticModelTrainer:
             if "xg_efficiency" in f[0] or "xg_defense" in f[0]
         ]
         odds_features = ["home_win_odds", "draw_odds", "away_win_odds"]
-        relative_features = [
-            "goal_diff_advantage" "xg_advantage" "xg_efficiency_advantage"
-        ]
+        relative_features = ["goal_diff_advantagexg_advantagexg_efficiency_advantage"]
 
         return {
             "feature_importance": dict(sorted_features),
@@ -885,7 +869,7 @@ class RealisticModelTrainer:
         report_file = model_dir / f"{model_name}_{timestamp}_summary.txt"
         with open(report_file, "w") as f:
             f.write("Football Prediction Model V1.3 Realistic Summary\n")
-            f.write(f"{'='*50}\n\n")
+            f.write(f"{'=' * 50}\n\n")
             f.write(f"Model Name: {report['model_name']}\n")
             f.write(f"Version: {report['version']}\n")
             f.write(f"Training Date: {report['training_date']}\n")
@@ -996,9 +980,9 @@ class RealisticModelTrainer:
         print(f"   📊 总样本数: {sample_count:,}")
 
         print("\n📈 模型性能:")
-        print(f"   🏋️ 训练集准确率: {train_acc:.4f} ({train_acc*100:.2f}%)")
-        print(f"   🧪 测试集准确率: {test_acc:.4f} ({test_acc*100:.2f}%)")
-        print(f"   📉 过拟合程度: {(train_acc - test_acc)*100:.2f}%")
+        print(f"   🏋️ 训练集准确率: {train_acc:.4f} ({train_acc * 100:.2f}%)")
+        print(f"   🧪 测试集准确率: {test_acc:.4f} ({test_acc * 100:.2f}%)")
+        print(f"   📉 过拟合程度: {(train_acc - test_acc) * 100:.2f}%")
 
         print("\n💰 现实投注结果:")
         print(f"   🎯 总投注次数: {backtest_results['total_bets']}")

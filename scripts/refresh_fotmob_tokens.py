@@ -8,12 +8,10 @@ FotMob API Token Refresher
 """
 
 import asyncio
-import json
 import sys
-import os
 import re
 from pathlib import Path
-from typing import Optional, Dict, Tuple
+from typing import Optional
 from datetime import datetime
 
 # 添加项目根路径
@@ -135,7 +133,7 @@ class FotMobTokenExtractor:
                         if self.found_api_request:
                             break
                         if i % 3 == 0:
-                            print(f"   主动触发中... {i+1}/15秒")
+                            print(f"   主动触发中... {i + 1}/15秒")
 
                 await browser.close()
 
@@ -337,8 +335,8 @@ headers = {{
     "Referer": "https://www.fotmob.com/",
     "Origin": "https://www.fotmob.com",
     # 🔑 最新鉴权头 - 动态获取
-    "x-mas": "{tokens['x-mas']}",
-    "x-foo": "{tokens['x-foo']}",
+    "x-mas": "{tokens["x-mas"]}",
+    "x-foo": "{tokens["x-foo"]}",
 }}
         """
         return code.strip()

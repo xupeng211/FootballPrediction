@@ -7,8 +7,8 @@ CI最小化验证脚本
 import os
 import sys
 import subprocess
-import tempfile
 from pathlib import Path
+
 
 def run_command(cmd, timeout=30):
     """运行命令并返回结果"""
@@ -20,14 +20,12 @@ def run_command(cmd, timeout=30):
     except subprocess.TimeoutExpired:
         return False, "", "Command timeout"
 
+
 def check_basic_imports():
     """检查基本模块导入"""
     print("🔍 检查基本模块导入...")
 
-    imports = [
-        "sys", "os", "json", "datetime",
-        "fastapi", "pydantic", "sqlalchemy"
-    ]
+    imports = ["sys", "os", "json", "datetime", "fastapi", "pydantic", "sqlalchemy"]
 
     for module in imports:
         try:
@@ -39,13 +37,12 @@ def check_basic_imports():
 
     return True
 
+
 def check_project_structure():
     """检查项目结构"""
     print("🏗️ 检查项目结构...")
 
-    required_dirs = [
-        "src", "tests", "src/api", "src/database"
-    ]
+    required_dirs = ["src", "tests", "src/api", "src/database"]
 
     for dir_path in required_dirs:
         if Path(dir_path).exists():
@@ -56,20 +53,23 @@ def check_project_structure():
 
     return True
 
+
 def run_minimal_tests():
     """运行最小化测试"""
     print("🧪 运行最小化测试...")
 
     # 设置环境变量
-    os.environ.update({
-        'FOOTBALL_PREDICTION_ML_MODE': 'mock',
-        'SKIP_ML_MODEL_LOADING': 'true',
-        'INFERENCE_SERVICE_MOCK': 'true',
-        'TESTING': 'true'
-    })
+    os.environ.update(
+        {
+            "FOOTBALL_PREDICTION_ML_MODE": "mock",
+            "SKIP_ML_MODEL_LOADING": "true",
+            "INFERENCE_SERVICE_MOCK": "true",
+            "TESTING": "true",
+        }
+    )
 
     # 尝试运行基本导入测试
-    test_cmd = "python -c 'import sys; sys.path.insert(0, \"src\"); print(\"✅ 基本导入测试通过\")'"
+    test_cmd = 'python -c \'import sys; sys.path.insert(0, "src"); print("✅ 基本导入测试通过")\''
 
     success, stdout, stderr = run_command(test_cmd, timeout=10)
 
@@ -80,6 +80,7 @@ def run_minimal_tests():
         print(f"❌ 最小化测试失败: {stderr}")
         return False
 
+
 def main():
     """主函数"""
     print("🚀 CI最小化验证开始...")
@@ -88,7 +89,7 @@ def main():
     checks = [
         ("基本模块导入", check_basic_imports),
         ("项目结构", check_project_structure),
-        ("最小化测试", run_minimal_tests)
+        ("最小化测试", run_minimal_tests),
     ]
 
     results = []
@@ -122,6 +123,7 @@ def main():
     else:
         print("⚠️ CI验证失败，需要修复问题")
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()

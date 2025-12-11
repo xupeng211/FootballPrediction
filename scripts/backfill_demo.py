@@ -15,12 +15,10 @@ import asyncio
 import json
 import logging
 import sys
-import os
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, List, Any, Optional, Tuple, Set
 from dataclasses import dataclass
-from random import uniform, randint
+from random import randint
 
 # 添加项目根目录到Python路径
 project_root = Path(__file__).parent.parent
@@ -28,8 +26,7 @@ sys.path.insert(0, str(project_root / "src"))
 
 # 配置日志
 logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -41,12 +38,14 @@ from backfill_full_history import (
     YEARS_TO_BACKFILL,
     EUROPEAN_COUNTRIES,
     AMERICAN_COUNTRIES,
-    ASIAN_COUNTRIES
+    ASIAN_COUNTRIES,
 )
+
 
 @dataclass
 class BackfillStats:
     """回填统计信息"""
+
     total_leagues: int = 0
     total_seasons: int = 0
     total_matches: int = 0
@@ -63,16 +62,17 @@ class BackfillStats:
 
     def print_summary(self):
         """打印汇总信息"""
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("📊 回填演示统计")
-        print("="*60)
+        print("=" * 60)
         print(f"🏆 总联赛数: {self.total_leagues}")
         print(f"📅 总年份数: {len(YEARS_TO_BACKFILL)}")
         print(f"📋 总季节数: {self.total_seasons}")
         print(f"⚽ 预计比赛数: {self.total_matches}")
         print(f"🔧 应用补丁数: {self.patches_applied}")
         print(f"⏱️ 演示用时: {self.elapsed_time}")
-        print("="*60)
+        print("=" * 60)
+
 
 class DemoBackfillEngine:
     """演示版回填引擎"""
@@ -84,7 +84,7 @@ class DemoBackfillEngine:
     async def run_demo(self):
         """运行演示"""
         logger.info("🎬 启动全历史数据回填演示")
-        print("="*60)
+        print("=" * 60)
 
         # 步骤1: 加载联赛配置
         await self._demo_load_league_config()
@@ -116,7 +116,7 @@ class DemoBackfillEngine:
             return
 
         try:
-            with open(config_path, encoding='utf-8') as f:
+            with open(config_path, encoding="utf-8") as f:
                 config = json.load(f)
 
             self.leagues = config.get("leagues", [])
@@ -127,8 +127,16 @@ class DemoBackfillEngine:
             # 显示前5个联赛作为示例
             print("📊 联赛示例:")
             for _i, league in enumerate(self.leagues[:5]):
-                tier_icon = "🏆" if league.get("tier") == 1 else "🥈" if league.get("tier") == 2 else "🥉"
-                print(f"  {tier_icon} {league.get('name')} (ID: {league.get('id')}, {league.get('country')})")
+                tier_icon = (
+                    "🏆"
+                    if league.get("tier") == 1
+                    else "🥈"
+                    if league.get("tier") == 2
+                    else "🥉"
+                )
+                print(
+                    f"  {tier_icon} {league.get('name')} (ID: {league.get('id')}, {league.get('country')})"
+                )
 
             if len(self.leagues) > 5:
                 print(f"  ... 还有 {len(self.leagues) - 5} 个联赛")
@@ -152,9 +160,11 @@ class DemoBackfillEngine:
                     "name": league_name,
                     "id": league_id,
                     "tier": 2,
-                    "country": "England" if league_name == "Championship" else "Portugal",
+                    "country": "England"
+                    if league_name == "Championship"
+                    else "Portugal",
                     "type": "league",
-                    "source": "hardcoded_patch"
+                    "source": "hardcoded_patch",
                 }
                 self.leagues.append(patch_league)
                 patches_to_apply.append(patch_league)
@@ -179,12 +189,7 @@ class DemoBackfillEngine:
         total_matches = 0
 
         # 按大洲分组统计
-        continent_stats = {
-            "欧洲": 0,
-            "美洲": 0,
-            "亚洲": 0,
-            "其他": 0
-        }
+        continent_stats = {"欧洲": 0, "美洲": 0, "亚洲": 0, "其他": 0}
 
         for league in self.leagues:
             country = league.get("country", "")
@@ -208,11 +213,15 @@ class DemoBackfillEngine:
             league_matches = 0
 
             for year in YEARS_TO_BACKFILL:
-                season_formats = SeasonFormatGenerator.generate_season_string(year, league)
+                season_formats = SeasonFormatGenerator.generate_season_string(
+                    year, league
+                )
                 league_seasons += len(season_formats)
 
                 # 模拟每赛季平均比赛数
-                matches_per_season = 40 if league.get("type") == "league" else 6  # 杯赛比赛较少
+                matches_per_season = (
+                    40 if league.get("type") == "league" else 6
+                )  # 杯赛比赛较少
                 league_matches += len(season_formats) * matches_per_season
 
             total_seasons += league_seasons
@@ -249,7 +258,9 @@ class DemoBackfillEngine:
 
             # 模拟处理一个年份
             sample_year = 2023
-            season_formats = SeasonFormatGenerator.generate_season_string(sample_year, league)
+            season_formats = SeasonFormatGenerator.generate_season_string(
+                sample_year, league
+            )
 
             print(f"  {sample_year}年赛季格式: {season_formats}")
 
@@ -265,19 +276,21 @@ class DemoBackfillEngine:
         print(f"\n⚡ 模拟处理速度: ~{self.stats.total_matches / 10:.0f} 场/分钟 (估算)")
         print(f"📈 预计完整回填时间: ~{self.stats.total_matches / 60:.0f} 小时 (估算)")
 
+
 async def main():
     """主函数"""
     print("🎬 全历史数据回填演示")
-    print("="*60)
+    print("=" * 60)
     print("这是一个演示版本，展示工业级回填脚本的核心功能")
     print("不会对数据库进行实际修改")
-    print("="*60)
+    print("=" * 60)
 
     # 创建演示引擎
     demo_engine = DemoBackfillEngine()
 
     # 运行演示
     await demo_engine.run_demo()
+
 
 if __name__ == "__main__":
     asyncio.run(main())

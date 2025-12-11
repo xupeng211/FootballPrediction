@@ -16,18 +16,16 @@ End-to-End Pipeline - Collection and Database Integration Verification
 
 import argparse
 import asyncio
-import json
 import logging
 import sys
-import time
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 # 添加项目根目录到Python路径
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.collectors.http_client_factory import HttpClientFactory, FotMobConfig
+from src.collectors.http_client_factory import HttpClientFactory
 from src.collectors.fbref.collector_v2 import FBrefCollectorV2
 from src.collectors.rate_limiter import RateLimiter
 from src.collectors.proxy_pool import ProxyPool, StaticProxyProvider
@@ -42,8 +40,10 @@ logging.basicConfig(
     format="%(asctime)s [%(levelname)8s] %(name)s: %(message)s",
     handlers=[
         logging.StreamHandler(sys.stdout),
-        logging.FileHandler(f"/tmp/e2e_pipeline_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log")
-    ]
+        logging.FileHandler(
+            f"/tmp/e2e_pipeline_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
+        ),
+    ],
 )
 logger = logging.getLogger(__name__)
 
@@ -55,17 +55,21 @@ class E2EPipelineManager:
         self.stats = {
             "start_time": datetime.now(),
             "collection_stats": {
-                "fotmob": {"fixtures_collected": 0, "details_collected": 0, "errors": 0},
+                "fotmob": {
+                    "fixtures_collected": 0,
+                    "details_collected": 0,
+                    "errors": 0,
+                },
                 "fbref": {"season_stats_collected": 0, "errors": 0},
-                "total": {"requests": 0, "errors": 0}
+                "total": {"requests": 0, "errors": 0},
             },
             "database_stats": {
                 "matches_inserted": 0,
                 "features_written": 0,
-                "teams_inserted": 0
+                "teams_inserted": 0,
             },
             "end_time": None,
-            "duration": None
+            "duration": None,
         }
 
     async def setup_collectors(self) -> dict[str, Any]:
@@ -73,11 +77,13 @@ class E2EPipelineManager:
         logger.info("🚀 初始化采集器组件...")
 
         # 创建基础组件
-        rate_limiter = RateLimiter({
-            "default": {"rate": 3.0, "burst": 5, "max_wait_time": 60.0},
-            "fbref.com": {"rate": 0.5, "burst": 1, "max_wait_time": 120.0},
-            "fotmob.com": {"rate": 2.0, "burst": 3, "max_wait_time": 45.0}
-        })
+        rate_limiter = RateLimiter(
+            {
+                "default": {"rate": 3.0, "burst": 5, "max_wait_time": 60.0},
+                "fbref.com": {"rate": 0.5, "burst": 1, "max_wait_time": 120.0},
+                "fotmob.com": {"rate": 2.0, "burst": 3, "max_wait_time": 45.0},
+            }
+        )
 
         # 使用空代理提供者进行测试
         proxy_provider = StaticProxyProvider(proxies=[])
@@ -94,7 +100,7 @@ class E2EPipelineManager:
             rate_limiter=rate_limiter,
             proxy_pool=proxy_pool,
             use_curl_cffi=False,  # 测试环境不使用curl_cffi
-            raw_data_dir="/tmp/e2e_raw_data"
+            raw_data_dir="/tmp/e2e_raw_data",
         )
 
         return {
@@ -102,10 +108,12 @@ class E2EPipelineManager:
             "fbref_collector": fbref_collector,
             "client_factory": client_factory,
             "rate_limiter": rate_limiter,
-            "proxy_pool": proxy_pool
+            "proxy_pool": proxy_pool,
         }
 
-    async def collect_premier_league_fixtures(self, fotmob_collector) -> list[dict[str, Any]]:
+    async def collect_premier_league_fixtures(
+        self, fotmob_collector
+    ) -> list[dict[str, Any]]:
         """采集英超最近5轮比赛"""
         logger.info("📊 采集英超最近5轮比赛...")
 
@@ -121,14 +129,16 @@ class E2EPipelineManager:
             fixtures_data = await fotmob_collector.collect_league_fixtures(
                 league_id=league_id,
                 days_back=days_back,
-                limit=5  # 只采集5场比赛
+                limit=5,  # 只采集5场比赛
             )
 
             if fixtures_data and fixtures_data.get("matches"):
                 matches = fixtures_data["matches"]
                 recent_matches = matches[:5]  # 确保最多5场
 
-                self.stats["collection_stats"]["fotmob"]["fixtures_collected"] = len(recent_matches)
+                self.stats["collection_stats"]["fotmob"]["fixtures_collected"] = len(
+                    recent_matches
+                )
                 logger.info(f"✅ 成功采集 {len(recent_matches)} 场英超比赛")
 
                 # 记录采集统计
@@ -140,7 +150,7 @@ class E2EPipelineManager:
                         "scheduled_time": match.get("scheduled_time"),
                         "status": match.get("status"),
                         "source": "fotmob",
-                        "collected_at": datetime.utcnow().isoformat()
+                        "collected_at": datetime.utcnow().isoformat(),
                     }
                     recent_matches.append(match_data)
 
@@ -160,12 +170,16 @@ class E2EPipelineManager:
         logger.info("📅 采集英超2023-2024赛季统计数据...")
 
         # FBref英超赛程URL
-        season_url = "https://fbref.com/en/comps/9/schedule/Premier-League-Scores-and-Fixtures"
+        season_url = (
+            "https://fbref.com/en/comps/9/schedule/Premier-League-Scores-and-Fixtures"
+        )
         season_year = "2023-2024"
 
         try:
             # 采集赛季数据
-            season_data = await fbref_collector.collect_season_stats(season_url, season_year)
+            season_data = await fbref_collector.collect_season_stats(
+                season_url, season_year
+            )
 
             if not season_data.empty:
                 self.stats["collection_stats"]["fbref"]["season_stats_collected"] = 1
@@ -177,8 +191,10 @@ class E2EPipelineManager:
                     "season_year": season_year,
                     "shape": season_data.shape,
                     "columns": list(season_data.columns),
-                    "sample_data": season_data.head(3).to_dict() if not season_data.empty else {},
-                    "collected_at": datetime.utcnow().isoformat()
+                    "sample_data": season_data.head(3).to_dict()
+                    if not season_data.empty
+                    else {},
+                    "collected_at": datetime.utcnow().isoformat(),
                 }
 
                 return season_dict
@@ -192,7 +208,9 @@ class E2EPipelineManager:
 
         return {}
 
-    async def save_matches_to_database(self, matches: list[dict[str, Any]]) -> list[int]:
+    async def save_matches_to_database(
+        self, matches: list[dict[str, Any]]
+    ) -> list[int]:
         """保存比赛数据到数据库"""
         logger.info(f"💾 保存 {len(matches)} 场比赛到数据库...")
 
@@ -206,14 +224,18 @@ class E2EPipelineManager:
                         "SELECT id FROM matches WHERE source_match_id = :source_match_id AND source = :source",
                         {
                             "source_match_id": match_data["match_id"],
-                            "source": match_data["source"]
-                        }
+                            "source": match_data["source"],
+                        },
                     ).scalar()
 
                     if not existing_match:
                         # 创建或查找主客队
-                        home_team_id = await self._get_or_create_team(session, match_data["home_team"])
-                        away_team_id = await self._get_or_create_team(session, match_data["away_team"])
+                        home_team_id = await self._get_or_create_team(
+                            session, match_data["home_team"]
+                        )
+                        away_team_id = await self._get_or_create_team(
+                            session, match_data["away_team"]
+                        )
 
                         # 创建比赛记录
                         new_match = Match(
@@ -221,14 +243,18 @@ class E2EPipelineManager:
                             source_match_id=match_data["match_id"],
                             home_team_id=home_team_id,
                             away_team_id=away_team_id,
-                            scheduled_time=datetime.fromisoformat(match_data["scheduled_time"]) if match_data.get("scheduled_time") else None,
+                            scheduled_time=datetime.fromisoformat(
+                                match_data["scheduled_time"]
+                            )
+                            if match_data.get("scheduled_time")
+                            else None,
                             status=MatchStatus.SCHEDULED,
                             home_score=None,
                             away_score=None,
                             home_xg=None,
                             away_xg=None,
                             created_at=datetime.utcnow(),
-                            updated_at=datetime.utcnow()
+                            updated_at=datetime.utcnow(),
                         )
 
                         session.add(new_match)
@@ -259,14 +285,15 @@ class E2EPipelineManager:
                     "columns_count": len(season_data.get("columns", [])),
                     "source": "fbref",
                     "created_at": datetime.utcnow(),
-                    "raw_data_path": None
+                    "raw_data_path": None,
                 }
 
                 # 这里可以创建一个season_stats表或使用JSON字段存储
                 # 为了简化，我们将数据保存到JSON文件
                 import json
+
                 output_file = f"/tmp/season_stats_{season_data.get('season_year')}.json"
-                with open(output_file, 'w') as f:
+                with open(output_file, "w") as f:
                     json.dump(season_data, f, indent=2, default=str)
 
                 logger.info(f"💾 赛季统计已保存到: {output_file}")
@@ -276,7 +303,9 @@ class E2EPipelineManager:
                 logger.error(f"❌ 保存赛季统计失败: {str(e)}")
                 return False
 
-    async def write_to_feature_store(self, match_ids: list[int]) -> list[dict[str, Any]]:
+    async def write_to_feature_store(
+        self, match_ids: list[int]
+    ) -> list[dict[str, Any]]:
         """写入数据到FeatureStore"""
         logger.info(f"🔄 写入 {len(match_ids)} 场比赛到FeatureStore...")
 
@@ -299,7 +328,7 @@ class E2EPipelineManager:
                         LEFT JOIN teams at ON m.away_team_id = at.id
                         WHERE m.id = :match_id
                         """,
-                        {"match_id": match_id}
+                        {"match_id": match_id},
                     ).first()
 
                     if match:
@@ -313,13 +342,19 @@ class E2EPipelineManager:
                             "features": {
                                 "match_day": datetime.utcnow().weekday(),
                                 "is_weekend": datetime.utcnow().weekday() >= 5,
-                                "days_since_start": (datetime.utcnow() - match.scheduled_time).days if match.scheduled_time else 0
+                                "days_since_start": (
+                                    datetime.utcnow() - match.scheduled_time
+                                ).days
+                                if match.scheduled_time
+                                else 0,
                             },
-                            "created_at": datetime.utcnow()
+                            "created_at": datetime.utcnow(),
                         }
 
                         # 写入FeatureStore
-                        feature_id = await feature_store.write_features([feature_record])
+                        feature_id = await feature_store.write_features(
+                            [feature_record]
+                        )
                         if feature_id:
                             feature_records.extend(feature_id)
                             self.stats["database_stats"]["features_written"] += 1
@@ -334,8 +369,7 @@ class E2EPipelineManager:
     async def _get_or_create_team(self, session, team_name: str) -> int:
         """获取或创建球队记录"""
         team = await session.execute(
-            "SELECT id FROM teams WHERE name = :team_name",
-            {"team_name": team_name}
+            "SELECT id FROM teams WHERE name = :team_name", {"team_name": team_name}
         ).scalar()
 
         if team:
@@ -343,9 +377,7 @@ class E2EPipelineManager:
 
         # 创建新球队
         new_team = Team(
-            name=team_name,
-            created_at=datetime.utcnow(),
-            updated_at=datetime.utcnow()
+            name=team_name, created_at=datetime.utcnow(), updated_at=datetime.utcnow()
         )
         session.add(new_team)
         await session.flush()
@@ -361,14 +393,14 @@ class E2EPipelineManager:
             "tested_endpoints": 0,
             "successful_responses": 0,
             "failed_responses": 0,
-            "api_data": {}
+            "api_data": {},
         }
 
         # 测试多个API端点
         test_endpoints = [
             "http://localhost:8000/health",
             "http://localhost:8000/api/v1/predictions/",
-            "http://localhost:8000/api/v1/predictions/match/"
+            "http://localhost:8000/api/v1/predictions/match/",
         ]
 
         import httpx
@@ -385,7 +417,9 @@ class E2EPipelineManager:
                         logger.info(f"✅ API端点 {endpoint} 响应正常")
                     else:
                         api_verification["failed_responses"] += 1
-                        logger.warning(f"⚠️ API端点 {endpoint} 响应状态: {response.status_code}")
+                        logger.warning(
+                            f"⚠️ API端点 {endpoint} 响应状态: {response.status_code}"
+                        )
 
                 except Exception as e:
                     api_verification["failed_responses"] += 1
@@ -394,7 +428,9 @@ class E2EPipelineManager:
         # 测试特定比赛预测端点
         if match_ids:
             match_id = match_ids[0]
-            prediction_endpoint = f"http://localhost:8000/api/v1/predictions/match/{match_id}"
+            prediction_endpoint = (
+                f"http://localhost:8000/api/v1/predictions/match/{match_id}"
+            )
 
             try:
                 response = await client.get(prediction_endpoint, timeout=10.0)
@@ -407,7 +443,10 @@ class E2EPipelineManager:
                     logger.info(f"✅ 比赛预测API端点响应正常: match_id={match_id}")
 
                     # 验证预测数据结构
-                    if "request_id" in prediction_data and "match_id" in prediction_data:
+                    if (
+                        "request_id" in prediction_data
+                        and "match_id" in prediction_data
+                    ):
                         logger.info("✅ 预测响应格式验证通过")
                     else:
                         logger.warning("⚠️ 预测响应格式可能不正确")
@@ -434,17 +473,28 @@ class E2EPipelineManager:
                 "duration_seconds": self.stats["duration"],
                 "start_time": self.stats["start_time"].isoformat(),
                 "end_time": self.stats["end_time"].isoformat(),
-                "overall_status": "SUCCESS" if self.stats["collection_stats"]["total"]["errors"] == 0 else "FAILED"
+                "overall_status": "SUCCESS"
+                if self.stats["collection_stats"]["total"]["errors"] == 0
+                else "FAILED",
             },
             "collection_stats": self.stats["collection_stats"],
             "database_stats": self.stats["database_stats"],
             "success_criteria": {
-                "fotmob_fixtures_collected": self.stats["collection_stats"]["fotmob"]["fixtures_collected"] > 0,
-                "fbref_season_collected": self.stats["collection_stats"]["fbref"]["season_stats_collected"] > 0,
+                "fotmob_fixtures_collected": self.stats["collection_stats"]["fotmob"][
+                    "fixtures_collected"
+                ]
+                > 0,
+                "fbref_season_collected": self.stats["collection_stats"]["fbref"][
+                    "season_stats_collected"
+                ]
+                > 0,
                 "matches_saved": self.stats["database_stats"]["matches_inserted"] > 0,
-                "features_written": self.stats["database_stats"]["features_written"] > 0,
-                "api_responsive": api_verification.get("successful_responses", 0) > 0 if 'api_verification' in locals() else False
-            }
+                "features_written": self.stats["database_stats"]["features_written"]
+                > 0,
+                "api_responsive": api_verification.get("successful_responses", 0) > 0
+                if "api_verification" in locals()
+                else False,
+            },
         }
 
     async def run_pipeline(self) -> dict[str, Any]:
@@ -457,12 +507,16 @@ class E2EPipelineManager:
 
         # 2. 采集FotMob比赛数据
         logger.info("\n📊 Phase 1: FotMob数据采集")
-        fotmob_matches = await self.collect_premier_league_fixtures(collectors["fotmob_collector"])
+        fotmob_matches = await self.collect_premier_league_fixtures(
+            collectors["fotmob_collector"]
+        )
         self.stats["collection_stats"]["total"]["requests"] += len(fotmob_matches)
 
         # 3. 采集FBref赛季数据
         logger.info("\n📅 Phase 2: FBref数据采集")
-        season_stats = await self.collect_premier_league_season(collectors["fbref_collector"])
+        season_stats = await self.collect_premier_league_season(
+            collectors["fbref_collector"]
+        )
 
         # 4. 保存到数据库
         logger.info("\n💾 Phase 3: 数据库存储")
@@ -489,7 +543,7 @@ class E2EPipelineManager:
         report = self.generate_report()
 
         # 添加API验证到报告
-        if 'api_verification' in locals():
+        if "api_verification" in locals():
             report["api_verification"] = api_verification
 
         return report
@@ -499,7 +553,6 @@ async def simulate_network_error(self):
     """模拟网络中断错误"""
     logger.warning("⚠️ 模拟网络中断5秒...")
 
-    import time
     import httpx
 
     # 模拟网络不可用
@@ -518,9 +571,7 @@ async def main():
     """主函数"""
     parser = argparse.ArgumentParser(description="E2E Pipeline - 采集与入库全链路验证")
     parser.add_argument(
-        "--simulate-error",
-        action="store_true",
-        help="模拟网络错误进行错误恢复测试"
+        "--simulate-error", action="store_true", help="模拟网络错误进行错误恢复测试"
     )
 
     args = parser.parse_args()
@@ -543,23 +594,42 @@ async def main():
         # 输出结果
         logger.info("\n" + "=" * 60)
         logger.info("📊 E2E Pipeline 执行完成")
-        logger.info(f"   执行时间: {result['pipeline_summary']['duration_seconds']:.2f} 秒")
+        logger.info(
+            f"   执行时间: {result['pipeline_summary']['duration_seconds']:.2f} 秒"
+        )
         logger.info(f"   整体状态: {result['pipeline_summary']['overall_status']}")
 
-        if result['pipeline_summary']['overall_status'] == "SUCCESS":
+        if result["pipeline_summary"]["overall_status"] == "SUCCESS":
             logger.info("🎉 所有验证通过!")
             logger.info("   ✅ FotMob数据采集: 5 场比赛")
             logger.info("   ✅ FBref数据采集: 1 个赛季")
-            logger.info("   ✅ 数据库存储: {} 场比赛".format(result['database_stats']['matches_inserted']))
-            logger.info("   ✅ FeatureStore: {} 条特征".format(result['database_stats']['features_written']))
+            logger.info(
+                "   ✅ 数据库存储: {} 场比赛".format(
+                    result["database_stats"]["matches_inserted"]
+                )
+            )
+            logger.info(
+                "   ✅ FeatureStore: {} 条特征".format(
+                    result["database_stats"]["features_written"]
+                )
+            )
 
-            if 'api_verification' in result and result['api_verification']['successful_responses'] > 0:
-                logger.info("   ✅ API响应: {} 个端点".format(result['api_verification']['successful_responses']))
+            if (
+                "api_verification" in result
+                and result["api_verification"]["successful_responses"] > 0
+            ):
+                logger.info(
+                    "   ✅ API响应: {} 个端点".format(
+                        result["api_verification"]["successful_responses"]
+                    )
+                )
 
             return 0
         else:
             logger.error("❌ 部分验证失败")
-            logger.error("   失败统计: {}".format(result['collection_stats']['total']['errors']))
+            logger.error(
+                "   失败统计: {}".format(result["collection_stats"]["total"]["errors"])
+            )
             return 1
 
     except KeyboardInterrupt:
@@ -568,6 +638,7 @@ async def main():
     except Exception as e:
         logger.error(f"\n💥 Pipeline执行异常: {str(e)}")
         import traceback
+
         traceback.print_exc()
         return 1
 

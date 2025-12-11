@@ -4,8 +4,6 @@ Match Repository - 提供比赛数据的异步访问接口.
 使用 SQLAlchemy 2.0 语法，支持关联数据预加载和性能优化.
 """
 
-from typing import Any, Optional
-
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload

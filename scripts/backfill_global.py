@@ -37,7 +37,6 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Optional
 from dataclasses import dataclass, asdict
-from contextlib import asynccontextmanager
 
 # Python版本兼容性处理
 try:
@@ -64,51 +63,34 @@ def _init_orm_models():
     try:
         # 关键：按依赖顺序导入模型，解决循环依赖
         # 1. 首先导入 Tenant (被 User 引用)
-        import src.database.models.tenant
 
         print("✅ Tenant 模型加载成功")
 
         # 2. 然后导入 User (引用 Tenant)
-        import src.database.models.user
 
         print("✅ User 模型加载成功")
 
         # 3. 导入其他核心模型
-        import src.database.models.team
 
         print("✅ Team 模型加载成功")
 
-        import src.database.models.league
-
         print("✅ League 模型加载成功")
-
-        import src.database.models.match
 
         print("✅ Match 模型加载成功")
 
         # 4. 导入依赖核心模型的其他模型
-        import src.database.models.predictions
 
         print("✅ Predictions 模型加载成功")
 
-        import src.database.models.odds
-
         print("✅ Odds 模型加载成功")
-
-        import src.database.models.features
 
         print("✅ Features 模型加载成功")
 
         # 5. 导入日志和审计模型
-        import src.database.models.data_collection_log
 
         print("✅ DataCollectionLog 模型加载成功")
 
-        import src.database.models.data_quality_log
-
         print("✅ DataQualityLog 模型加载成功")
-
-        import src.database.models.audit_log
 
         print("✅ AuditLog 模型加载成功")
 

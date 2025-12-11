@@ -8,7 +8,17 @@ from datetime import datetime
 from decimal import Decimal
 from enum import Enum
 
-from sqlalchemy import Boolean, Column, DateTime, Integer, Numeric, String, Text, JSON, ForeignKey
+from sqlalchemy import (
+    Boolean,
+    Column,
+    DateTime,
+    Integer,
+    Numeric,
+    String,
+    Text,
+    JSON,
+    ForeignKey,
+)
 from sqlalchemy.orm import relationship
 from src.database.base import BaseModel
 
@@ -188,10 +198,4 @@ class MarketAnalysis(BaseModel):
 
 
 # 导出的类列表
-__all__ = [
-    "MarketType",
-    "BetType",
-    "Odds",
-    "OddsHistory",
-    "MarketAnalysis"
-]
+__all__ = ["MarketType", "BetType", "Odds", "OddsHistory", "MarketAnalysis"]

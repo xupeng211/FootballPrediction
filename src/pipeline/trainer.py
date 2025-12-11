@@ -19,16 +19,15 @@ from __future__ import annotations
 import logging
 import time
 from datetime import datetime
-from typing import Any,  Optional,  Union
+from typing import Any, Optional
 
-import joblib
 import numpy as np
 import pandas as pd
 from sklearn.metrics import classification_report, confusion_matrix
 from sklearn.model_selection import GridSearchCV, train_test_split
 from xgboost import XGBClassifier
 
-from .config import ModelConfig, PipelineConfig, TrainingConfig
+from .config import PipelineConfig
 
 logger = logging.getLogger(__name__)
 

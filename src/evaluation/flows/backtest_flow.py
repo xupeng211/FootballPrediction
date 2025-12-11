@@ -8,8 +8,6 @@ Author: Football Prediction Team
 Version: 1.0.0
 """
 
-import json
-import numpy as np
 import pandas as pd
 from pathlib import Path
 from datetime import datetime

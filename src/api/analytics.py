@@ -6,16 +6,14 @@ including team performance statistics and league standings.
 """
 
 import logging
-from typing import Any, Optional
+from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from fastapi.responses import JSONResponse
 
 from src.services.analytics_service import AnalyticsService
 from src.database.repositories.analytics_repository import AnalyticsRepository
 from src.database.dependencies import get_async_db
 from src.core.exceptions import TeamNotFoundError, LeagueNotFoundError
-from src.domain.models.analytics import TeamPerformanceStats, LeagueStandingsStats
 
 logger = logging.getLogger(__name__)
 

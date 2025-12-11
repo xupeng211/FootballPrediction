@@ -324,3 +324,37 @@ Dockerfile.bak.*
 *_*.log
 backfill_*.log
 l2_*.log
+
+# ===========================================
+# 📋 新增忽略规则 (2025-12-12)
+# ===========================================
+
+# 敏感配置文件
+config/*.ini
+config/local.*
+config/production.*
+
+# LLM和AI工具临时文件
+*.chat
+.conversation_history/
+.ai_cache/
+
+# 容器运行时数据
+.dockerignore
+docker-compose.override.yml
+
+# Prefect相关临时文件
+.prefect/
+prefect.db
+
+# MLflow相关
+mlruns/
+mlartifacts/
+
+# Redis数据文件
+dump.rdb
+appendonly.aof
+
+# PostgreSQL数据
+*.sql.gz
+pg_data/

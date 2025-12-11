@@ -19,7 +19,7 @@ Abstract Data Source Fetcher Interface
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any,  Optional, Union, Dict
+from typing import Any, Optional, Dict
 from enum import Enum
 
 from pydantic import BaseModel, Field
@@ -27,26 +27,28 @@ from pydantic import BaseModel, Field
 
 class ResourceType(str, Enum):
     """资源类型枚举"""
-    FIXTURES = "fixtures"          # 赛程数据
+
+    FIXTURES = "fixtures"  # 赛程数据
     MATCH_DETAILS = "match_details"  # 比赛详情
-    TEAM_INFO = "team_info"        # 球队信息
-    ODDS = "odds"                 # 赔率数据
-    LEAGUE_INFO = "league_info"   # 联赛信息
-    PLAYER_STATS = "player_stats" # 球员统计
-    RAW_DATA = "raw_data"         # 原始数据
+    TEAM_INFO = "team_info"  # 球队信息
+    ODDS = "odds"  # 赔率数据
+    LEAGUE_INFO = "league_info"  # 联赛信息
+    PLAYER_STATS = "player_stats"  # 球员统计
+    RAW_DATA = "raw_data"  # 原始数据
 
 
 @dataclass
 class FetchMetadata:
     """获取操作元数据"""
-    source: str                           # 数据源标识
-    fetched_at: datetime                  # 获取时间
-    resource_type: ResourceType           # 资源类型
-    resource_id: str                      # 资源ID
-    processing_time_ms: Optional[float]   # 处理时间(毫秒)
-    success: bool                         # 是否成功
-    error_message: Optional[str]          # 错误信息(如有)
-    record_count: Optional[int]           # 记录数量
+
+    source: str  # 数据源标识
+    fetched_at: datetime  # 获取时间
+    resource_type: ResourceType  # 资源类型
+    resource_id: str  # 资源ID
+    processing_time_ms: Optional[float]  # 处理时间(毫秒)
+    success: bool  # 是否成功
+    error_message: Optional[str]  # 错误信息(如有)
+    record_count: Optional[int]  # 记录数量
 
 
 class OddsData(BaseModel):
@@ -85,9 +87,7 @@ class OddsData(BaseModel):
     raw_data: Optional[dict[str, Any]] = Field(None, description="原始数据")
 
     class Config:
-        json_encoders = {
-            datetime: lambda v: v.isoformat()
-        }
+        json_encoders = {datetime: lambda v: v.isoformat()}
 
 
 class AbstractFetcher(ABC):
@@ -115,10 +115,7 @@ class AbstractFetcher(ABC):
 
     @abstractmethod
     async def fetch_data(
-        self,
-        resource_id: str,
-        resource_type: Optional[ResourceType] = None,
-        **kwargs
+        self, resource_id: str, resource_type: Optional[ResourceType] = None, **kwargs
     ) -> list[dict[str, Any]]:
         """
         获取数据的核心抽象方法
@@ -141,11 +138,7 @@ class AbstractFetcher(ABC):
         pass
 
     @abstractmethod
-    async def fetch_odds(
-        self,
-        match_id: str,
-        **kwargs
-    ) -> list[OddsData]:
+    async def fetch_odds(self, match_id: str, **kwargs) -> list[OddsData]:
         """
         获取赔率数据的专用方法
 
@@ -159,10 +152,7 @@ class AbstractFetcher(ABC):
         pass
 
     async def fetch_single(
-        self,
-        resource_id: str,
-        resource_type: Optional[ResourceType] = None,
-        **kwargs
+        self, resource_id: str, resource_type: Optional[ResourceType] = None, **kwargs
     ) -> Optional[dict[str, Any]]:
         """
         获取单条记录的便捷方法
@@ -253,7 +243,9 @@ class FetcherFactory:
         cls._fetchers[name] = fetcher_class
 
     @classmethod
-    def create(cls, name: str, config: Optional[dict[str, Any]] = None) -> AbstractFetcher:
+    def create(
+        cls, name: str, config: Optional[dict[str, Any]] = None
+    ) -> AbstractFetcher:
         """
         创建获取器实例
 
@@ -265,7 +257,9 @@ class FetcherFactory:
             AbstractFetcher: 获取器实例
         """
         if name not in cls._fetchers:
-            raise ValueError(f"Unknown fetcher: {name}. Available: {list(cls._fetchers.keys())}")
+            raise ValueError(
+                f"Unknown fetcher: {name}. Available: {list(cls._fetchers.keys())}"
+            )
 
         fetcher_class = cls._fetchers[name]
         return fetcher_class(source_name=name, config=config or {})
@@ -279,31 +273,37 @@ class FetcherFactory:
 # 异常类型定义
 class FetcherError(Exception):
     """获取器基础异常"""
+
     pass
 
 
 class ConnectionError(FetcherError):
     """连接错误"""
+
     pass
 
 
 class AuthenticationError(FetcherError):
     """认证错误"""
+
     pass
 
 
 class RateLimitError(FetcherError):
     """速率限制错误"""
+
     pass
 
 
 class DataNotFoundError(FetcherError):
     """数据未找到错误"""
+
     pass
 
 
 class ConfigurationError(FetcherError):
     """配置错误"""
+
     pass
 
 

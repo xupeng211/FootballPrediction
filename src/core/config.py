@@ -258,7 +258,7 @@ class Settings(SettingsClass):
                 else:
                     logging.warning(f"API_PORT: '{v}' 超出范围，回退到 {DEFAULT_PORT}")
                     return DEFAULT_PORT
-            except (ValueError):
+            except ValueError:
                 logging.warning(
                     f"API_PORT: '{v}' 不是有效端口号，回退到 {DEFAULT_PORT}"
                 )
@@ -342,7 +342,7 @@ class Settings(SettingsClass):
                             f"API_PORT: '{env_value}' 超出范围，回退到默认值8000"
                         )
                         env_value = 8000
-                except (ValueError):
+                except ValueError:
                     logging.warning(
                         f"API_PORT: '{env_value}' 不是有效端口号，回退到默认值8000"
                     )

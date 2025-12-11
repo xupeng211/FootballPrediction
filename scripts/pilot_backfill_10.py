@@ -8,9 +8,8 @@ import asyncio
 import sys
 import json
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Any, Optional
 from sqlalchemy import text
 
 # 添加项目根目录到Python路径
@@ -19,15 +18,14 @@ sys.path.insert(0, str(project_root / "src"))
 
 # 配置日志
 logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
 # 导入修复后的模块
 from database.async_manager import initialize_database, get_async_db_session
 from collectors.fotmob_api_collector import FotMobAPICollector
-from database.models.match import Match
+
 
 class PilotBackfill10:
     """10场试跑数据采集器"""
@@ -64,11 +62,7 @@ class PilotBackfill10:
             logger.info("✅ 数据库连接成功")
 
             # 初始化采集器
-            collector = FotMobAPICollector(
-                max_concurrent=3,
-                timeout=30,
-                max_retries=3
-            )
+            collector = FotMobAPICollector(max_concurrent=3, timeout=30, max_retries=3)
             await collector.initialize()
             logger.info("✅ 采集器初始化成功")
 
@@ -80,7 +74,9 @@ class PilotBackfill10:
                     logger.info(f"🎯 已达到目标数量 {self.max_matches}，停止采集")
                     break
 
-                logger.info(f"\n📋 进度: {i}/{len(self.test_match_ids)} | 已成功: {self.success_count} | 当前: {match_id}")
+                logger.info(
+                    f"\n📋 进度: {i}/{len(self.test_match_ids)} | 已成功: {self.success_count} | 当前: {match_id}"
+                )
 
                 # 采集单场比赛
                 success = await self._collect_single_match(collector, match_id)
@@ -88,7 +84,9 @@ class PilotBackfill10:
                 if success:
                     self.success_count += 1
                     self.collected_matches.append(match_id)
-                    logger.info(f"✅ 成功采集第 {self.success_count} 场比赛: {match_id}")
+                    logger.info(
+                        f"✅ 成功采集第 {self.success_count} 场比赛: {match_id}"
+                    )
                 else:
                     self.fail_count += 1
                     logger.warning(f"❌ 采集失败: {match_id}")
@@ -101,15 +99,20 @@ class PilotBackfill10:
             logger.info("🔒 采集器已关闭")
 
             # 生成详细验货报告
-            logger.info(f"\n🎯 采集完成: 成功 {self.success_count} 场, 失败 {self.fail_count} 场")
+            logger.info(
+                f"\n🎯 采集完成: 成功 {self.success_count} 场, 失败 {self.fail_count} 场"
+            )
             await self._generate_quality_report()
 
         except Exception as e:
             logger.error(f"💥 试跑过程异常: {e}")
             import traceback
+
             traceback.print_exc()
 
-    async def _collect_single_match(self, collector: FotMobAPICollector, match_id: str) -> bool:
+    async def _collect_single_match(
+        self, collector: FotMobAPICollector, match_id: str
+    ) -> bool:
         """采集单场比赛数据"""
         try:
             # 采集数据
@@ -178,7 +181,9 @@ class PilotBackfill10:
                     LIMIT 1
                 """)
 
-                result = await session.execute(check_query, {"fotmob_id": match_data.fotmob_id})
+                result = await session.execute(
+                    check_query, {"fotmob_id": match_data.fotmob_id}
+                )
                 existing = result.fetchone()
 
                 if existing:
@@ -212,32 +217,55 @@ class PilotBackfill10:
 
                 # 从统计中提取xG和控球率
                 home_xg, away_xg = self._extract_xg_values(stats_json)
-                home_possession, away_possession = self._extract_possession_values(stats_json)
+                home_possession, away_possession = self._extract_possession_values(
+                    stats_json
+                )
 
                 # 执行插入
-                await session.execute(insert_query, {
-                    "fotmob_id": match_data.fotmob_id,
-                    "home_team_name": match_info.get("home_team_name"),
-                    "away_team_name": match_info.get("away_team_name"),
-                    "home_score": match_data.home_score,
-                    "away_score": match_data.away_score,
-                    "status": match_data.status,
-                    "match_time": match_data.match_time,
-                    "venue": match_data.venue,
-                    "league_id": match_info.get("league_context", {}).get("league_id"),
-                    "season": match_info.get("league_context", {}).get("season"),
-                    "home_xg": home_xg,
-                    "away_xg": away_xg,
-                    "home_possession": home_possession,
-                    "away_possession": away_possession,
-                    "match_info": json.dumps(match_info, ensure_ascii=False) if match_info else None,
-                    "lineups_json": json.dumps(match_data.lineups_json, ensure_ascii=False) if match_data.lineups_json else None,
-                    "stats_json": json.dumps(stats_json, ensure_ascii=False) if stats_json else None,
-                    "environment_json": json.dumps(environment_json, ensure_ascii=False) if environment_json else None,
-                    "odds_snapshot_json": json.dumps(match_data.odds_snapshot_json, ensure_ascii=False) if match_data.odds_snapshot_json else None,
-                    "collection_time": datetime.now(),
-                    "data_completeness": "full"
-                })
+                await session.execute(
+                    insert_query,
+                    {
+                        "fotmob_id": match_data.fotmob_id,
+                        "home_team_name": match_info.get("home_team_name"),
+                        "away_team_name": match_info.get("away_team_name"),
+                        "home_score": match_data.home_score,
+                        "away_score": match_data.away_score,
+                        "status": match_data.status,
+                        "match_time": match_data.match_time,
+                        "venue": match_data.venue,
+                        "league_id": match_info.get("league_context", {}).get(
+                            "league_id"
+                        ),
+                        "season": match_info.get("league_context", {}).get("season"),
+                        "home_xg": home_xg,
+                        "away_xg": away_xg,
+                        "home_possession": home_possession,
+                        "away_possession": away_possession,
+                        "match_info": json.dumps(match_info, ensure_ascii=False)
+                        if match_info
+                        else None,
+                        "lineups_json": json.dumps(
+                            match_data.lineups_json, ensure_ascii=False
+                        )
+                        if match_data.lineups_json
+                        else None,
+                        "stats_json": json.dumps(stats_json, ensure_ascii=False)
+                        if stats_json
+                        else None,
+                        "environment_json": json.dumps(
+                            environment_json, ensure_ascii=False
+                        )
+                        if environment_json
+                        else None,
+                        "odds_snapshot_json": json.dumps(
+                            match_data.odds_snapshot_json, ensure_ascii=False
+                        )
+                        if match_data.odds_snapshot_json
+                        else None,
+                        "collection_time": datetime.now(),
+                        "data_completeness": "full",
+                    },
+                )
 
                 await session.commit()
                 await session.close()
@@ -273,9 +301,9 @@ class PilotBackfill10:
 
     async def _generate_quality_report(self):
         """生成详细的验货报告"""
-        logger.info("\n" + "="*80)
+        logger.info("\n" + "=" * 80)
         logger.info("📊 详细验货报告")
-        logger.info("="*80)
+        logger.info("=" * 80)
 
         try:
             async for session in get_async_db_session():
@@ -305,7 +333,9 @@ class PilotBackfill10:
                     ORDER BY collection_time DESC
                 """)
 
-                result = await session.execute(query, {"match_ids": self.collected_matches})
+                result = await session.execute(
+                    query, {"match_ids": self.collected_matches}
+                )
                 matches = result.fetchall()
 
                 await session.close()
@@ -318,8 +348,10 @@ class PilotBackfill10:
 
                 # 逐场比赛详细报告
                 for i, match in enumerate(matches, 1):
-                    logger.info(f"\n🎯 比赛 {i}: {match.home_team_name} vs {match.away_team_name}")
-                    logger.info("   " + "-"*70)
+                    logger.info(
+                        f"\n🎯 比赛 {i}: {match.home_team_name} vs {match.away_team_name}"
+                    )
+                    logger.info("   " + "-" * 70)
 
                     # 基础信息
                     logger.info(f"   🆔 Match ID: {match.fotmob_id}")
@@ -330,20 +362,31 @@ class PilotBackfill10:
 
                     # xG数据
                     if match.home_xg is not None and match.away_xg is not None:
-                        logger.info(f"   📊 xG: 主队 {match.home_xg:.2f} - 客队 {match.away_xg:.2f} ✅")
+                        logger.info(
+                            f"   📊 xG: 主队 {match.home_xg:.2f} - 客队 {match.away_xg:.2f} ✅"
+                        )
                     else:
                         logger.info("   📊 xG: ❌ 未找到")
 
                     # 控球率数据
-                    if match.home_possession is not None and match.away_possession is not None:
-                        logger.info(f"   📊 控球率: 主队 {match.home_possession}% - 客队 {match.away_possession}% ✅")
+                    if (
+                        match.home_possession is not None
+                        and match.away_possession is not None
+                    ):
+                        logger.info(
+                            f"   📊 控球率: 主队 {match.home_possession}% - 客队 {match.away_possession}% ✅"
+                        )
                     else:
                         logger.info("   📊 控球率: ❌ 未找到")
 
                     # 统计数据详细检查
                     if match.stats_json:
                         try:
-                            stats = json.loads(match.stats_json) if isinstance(match.stats_json, str) else match.stats_json
+                            stats = (
+                                json.loads(match.stats_json)
+                                if isinstance(match.stats_json, str)
+                                else match.stats_json
+                            )
                             if isinstance(stats, dict):
                                 xg_from_stats = stats.get("xg", {})
                                 possession_from_stats = stats.get("possession", {})
@@ -352,11 +395,17 @@ class PilotBackfill10:
                                 if xg_from_stats:
                                     logger.info(f"   📈 Stats.xG: {xg_from_stats} ✅")
                                 if possession_from_stats:
-                                    logger.info(f"   📈 Stats.Possession: {possession_from_stats} ✅")
+                                    logger.info(
+                                        f"   📈 Stats.Possession: {possession_from_stats} ✅"
+                                    )
                                 if shots_from_stats:
-                                    logger.info(f"   📈 Stats.Shots: {shots_from_stats} ✅")
+                                    logger.info(
+                                        f"   📈 Stats.Shots: {shots_from_stats} ✅"
+                                    )
 
-                                logger.info(f"   📈 Stats类别数: {len([k for k, v in stats.items() if v])} ✅")
+                                logger.info(
+                                    f"   📈 Stats类别数: {len([k for k, v in stats.items() if v])} ✅"
+                                )
                             else:
                                 logger.info("   📈 统计数据: ❌ 格式错误")
                         except Exception as e:
@@ -367,7 +416,11 @@ class PilotBackfill10:
                     # 环境数据详细检查
                     if match.environment_json:
                         try:
-                            env = json.loads(match.environment_json) if isinstance(match.environment_json, str) else match.environment_json
+                            env = (
+                                json.loads(match.environment_json)
+                                if isinstance(match.environment_json, str)
+                                else match.environment_json
+                            )
                             if isinstance(env, dict):
                                 referee = env.get("referee", {})
                                 weather = env.get("weather", {})
@@ -375,12 +428,16 @@ class PilotBackfill10:
                                 env.get("venue", {})
 
                                 if referee and referee.get("name"):
-                                    logger.info(f"   🌍 裁判: {referee.get('name')} ({referee.get('country')}) ✅")
+                                    logger.info(
+                                        f"   🌍 裁判: {referee.get('name')} ({referee.get('country')}) ✅"
+                                    )
                                 else:
                                     logger.info("   🌍 裁判: ❌ 未找到")
 
                                 if weather and weather.get("condition"):
-                                    logger.info(f"   🌍 天气: {weather.get('condition')} {weather.get('temp', '')}°C ✅")
+                                    logger.info(
+                                        f"   🌍 天气: {weather.get('condition')} {weather.get('temp', '')}°C ✅"
+                                    )
                                 else:
                                     logger.info("   🌍 天气: ❌ 未找到")
 
@@ -388,7 +445,9 @@ class PilotBackfill10:
                                     home_mgr = managers.get("home_team", {}).get("name")
                                     away_mgr = managers.get("away_team", {}).get("name")
                                     if home_mgr or away_mgr:
-                                        logger.info(f"   🌍 主教练: 主队{home_mgr} vs 客队{away_mgr} ✅")
+                                        logger.info(
+                                            f"   🌍 主教练: 主队{home_mgr} vs 客队{away_mgr} ✅"
+                                        )
                                     else:
                                         logger.info("   🌍 主教练: ❌ 未找到")
                             else:
@@ -401,12 +460,20 @@ class PilotBackfill10:
                     # 赔率数据重点检查
                     if match.odds_snapshot_json:
                         try:
-                            odds = json.loads(match.odds_snapshot_json) if isinstance(match.odds_snapshot_json, str) else match.odds_snapshot_json
+                            odds = (
+                                json.loads(match.odds_snapshot_json)
+                                if isinstance(match.odds_snapshot_json, str)
+                                else match.odds_snapshot_json
+                            )
                             if isinstance(odds, dict) and odds:
-                                logger.info(f"   💰 赔率数据: ✅ 找到 {len(odds)} 个数据源")
+                                logger.info(
+                                    f"   💰 赔率数据: ✅ 找到 {len(odds)} 个数据源"
+                                )
                                 for key, value in odds.items():
                                     if key != "snapshot_time":
-                                        logger.info(f"      - {key}: {type(value).__name__} (长度: {len(str(value))})")
+                                        logger.info(
+                                            f"      - {key}: {type(value).__name__} (长度: {len(str(value))})"
+                                        )
                             else:
                                 logger.info("   💰 赔率数据: ⚠️ Empty")
                         except Exception as e:
@@ -417,7 +484,11 @@ class PilotBackfill10:
                     # 战意上下文检查
                     if match.match_info:
                         try:
-                            info = json.loads(match.match_info) if isinstance(match.match_info, str) else match.match_info
+                            info = (
+                                json.loads(match.match_info)
+                                if isinstance(match.match_info, str)
+                                else match.match_info
+                            )
                             if isinstance(info, dict):
                                 league_table = info.get("league_table", {})
                                 round_info = info.get("round_info", {})
@@ -425,7 +496,9 @@ class PilotBackfill10:
                                 if league_table:
                                     logger.info("   🎯 战意信息: ✅ 联赛排名数据")
                                 if round_info:
-                                    logger.info(f"   🎯 战意信息: ✅ 轮次信息 ({round_info.get('round_name')})")
+                                    logger.info(
+                                        f"   🎯 战意信息: ✅ 轮次信息 ({round_info.get('round_name')})"
+                                    )
                             else:
                                 logger.info("   🎯 战意信息: ❌ 格式错误")
                         except Exception as e:
@@ -437,14 +510,17 @@ class PilotBackfill10:
             logger.error(f"❌ 生成验货报告异常: {e}")
 
         # 最终总结
-        logger.info("\n" + "="*80)
+        logger.info("\n" + "=" * 80)
         logger.info("🎯 试跑总结")
-        logger.info("="*80)
+        logger.info("=" * 80)
         logger.info(f"📊 目标: {self.max_matches} 场比赛")
         logger.info(f"✅ 成功: {self.success_count} 场")
         logger.info(f"❌ 失败: {self.fail_count} 场")
-        logger.info(f"📈 成功率: {(self.success_count/(self.success_count+self.fail_count)*100):.1f}%")
+        logger.info(
+            f"📈 成功率: {(self.success_count / (self.success_count + self.fail_count) * 100):.1f}%"
+        )
         logger.info(f"🕐 完成时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+
 
 async def main():
     """主函数"""
@@ -452,6 +528,7 @@ async def main():
 
     pilot = PilotBackfill10(max_matches=10)
     await pilot.run_pilot()
+
 
 if __name__ == "__main__":
     asyncio.run(main())

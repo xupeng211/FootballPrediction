@@ -5,22 +5,18 @@
 """
 
 import logging
-from typing import Any,  Optional,  Union
+from typing import Any, Optional
 
 import numpy as np
 import pandas as pd
-from sklearn.base import BaseEstimator
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.feature_selection import (
     RFE,
     SelectKBest,
     f_classif,
     f_regression,
-    mutual_info_classif,
-    mutual_info_regression,
 )
 from sklearn.model_selection import cross_val_score
-from sklearn.preprocessing import StandardScaler
 import matplotlib.pyplot as plt
 import seaborn as sns
 

@@ -21,7 +21,7 @@ from abc import abstractmethod
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any,  Optional, Protocol, runtime_checkable
+from typing import Any, Optional, Protocol, runtime_checkable
 
 import aiohttp
 
@@ -322,7 +322,6 @@ class FileProxyProvider:
             or self._last_modified is None
             or current_mtime > self._last_modified
         ):
-
             proxies = []
             with open(self.file_path, encoding=self.encoding) as f:
                 for line_num, line in enumerate(f, 1):
@@ -590,7 +589,9 @@ class ProxyPool:
 
             async with aiohttp.ClientSession(timeout=timeout) as session:
                 async with session.get(
-                    self.health_check_url, proxy=proxy_url, ssl=False  # 忽略SSL证书验证
+                    self.health_check_url,
+                    proxy=proxy_url,
+                    ssl=False,  # 忽略SSL证书验证
                 ) as response:
                     if response.status == 200:
                         start_time = time.monotonic()

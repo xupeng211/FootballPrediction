@@ -4,7 +4,6 @@ FootballPrediction 部署验证脚本
 验证 docker-compose.deploy.yml 部署的正确性和健康状态
 """
 
-import os
 import sys
 import time
 import argparse
@@ -15,6 +14,7 @@ from pathlib import Path
 # 添加项目路径
 sys.path.append(str(Path(__file__).parent.parent))
 
+
 class DeploymentVerifier:
     """部署验证器"""
 
@@ -24,7 +24,7 @@ class DeploymentVerifier:
         self.services = {
             "app": "http://localhost:8000/health",
             "db": "postgresql://postgres:postgres-dev-password@localhost:5432/football_prediction",
-            "redis": "redis://localhost:6379/0"
+            "redis": "redis://localhost:6379/0",
         }
 
     def log(self, message: str, level: str = "INFO"):
@@ -32,16 +32,14 @@ class DeploymentVerifier:
         timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
         print(f"[{timestamp}] [{level}] {message}")
 
-    def run_command(self, command: str, check: bool = True) -> subprocess.CompletedProcess:
+    def run_command(
+        self, command: str, check: bool = True
+    ) -> subprocess.CompletedProcess:
         """执行命令"""
         self.log(f"执行命令: {command}")
         try:
             result = subprocess.run(
-                command,
-                shell=True,
-                capture_output=True,
-                text=True,
-                check=check
+                command, shell=True, capture_output=True, text=True, check=check
             )
             return result
         except subprocess.CalledProcessError as e:
@@ -139,12 +137,7 @@ class DeploymentVerifier:
         """检查API端点"""
         self.log("检查API端点...")
 
-        endpoints = [
-            "/health",
-            "/health/system",
-            "/docs",
-            "/api/v1/predictions/"
-        ]
+        endpoints = ["/health", "/health/system", "/docs", "/api/v1/predictions/"]
 
         all_passed = True
         for endpoint in endpoints:
@@ -167,7 +160,9 @@ class DeploymentVerifier:
 
         try:
             # 检查推理服务健康状态
-            response = requests.get(f"{self.base_url}/api/v1/health/inference", timeout=10)
+            response = requests.get(
+                f"{self.base_url}/api/v1/health/inference", timeout=10
+            )
             if response.status_code == 200:
                 self.log("✅ ML推理服务正常")
                 return True
@@ -185,7 +180,10 @@ class DeploymentVerifier:
 
         config_checks = [
             ("检查.env文件", lambda: Path(".env").exists()),
-            ("检查docker-compose.deploy.yml", lambda: Path("docker-compose.deploy.yml").exists()),
+            (
+                "检查docker-compose.deploy.yml",
+                lambda: Path("docker-compose.deploy.yml").exists(),
+            ),
             ("检查Dockerfile", lambda: Path("Dockerfile").exists()),
         ]
 
@@ -213,10 +211,10 @@ class DeploymentVerifier:
 # FootballPrediction 部署验证报告
 
 ## 验证时间
-{time.strftime('%Y-%m-%d %H:%M:%S')}
+{time.strftime("%Y-%m-%d %H:%M:%S")}
 
 ## 验证结果概览
-{'✅ 部署验证通过' if all_passed else '❌ 部署验证失败'}
+{"✅ 部署验证通过" if all_passed else "❌ 部署验证失败"}
 
 ## 详细结果
 """
@@ -252,7 +250,7 @@ class DeploymentVerifier:
 
         # 写入报告文件
         report_file = Path("deployment_verification_report.md")
-        with open(report_file, 'w', encoding='utf-8') as f:
+        with open(report_file, "w", encoding="utf-8") as f:
             f.write(report)
 
         self.log(f"验证报告已保存到: {report_file}")
@@ -289,7 +287,9 @@ def main():
     """主函数"""
     parser = argparse.ArgumentParser(description="FootballPrediction 部署验证脚本")
     parser.add_argument("--timeout", type=int, default=300, help="应用启动超时时间(秒)")
-    parser.add_argument("--base-url", default="http://localhost:8000", help="应用基础URL")
+    parser.add_argument(
+        "--base-url", default="http://localhost:8000", help="应用基础URL"
+    )
 
     args = parser.parse_args()
 

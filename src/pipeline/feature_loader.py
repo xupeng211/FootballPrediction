@@ -18,7 +18,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import warnings
-from typing import Any,  Optional,  Union
+from typing import Any, Optional
 
 import numpy as np
 import pandas as pd
@@ -31,9 +31,9 @@ from src.features.feature_store_interface import (
     FeatureValidationError,
 )
 from src.quality.data_quality_monitor import DataQualityMonitor
-from src.quality.quality_protocol import DataQualityResult, RuleSeverity
+from src.quality.quality_protocol import DataQualityResult
 
-from .config import FeatureConfig, PipelineConfig
+from .config import PipelineConfig
 
 logger = logging.getLogger(__name__)
 

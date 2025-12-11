@@ -25,7 +25,7 @@ OddsPortal Data Fetcher - Production Implementation
 import logging
 import random
 from datetime import datetime, timedelta
-from typing import Any,  Optional
+from typing import Any, Optional
 
 from src.collectors.abstract_fetcher import (
     AbstractFetcher,
@@ -45,7 +45,9 @@ class OddsPortalFetcher(AbstractFetcher):
     当网络请求失败时，可自动回退到模拟数据模式，确保系统稳定性。
     """
 
-    def __init__(self, source_name: str = "oddsportal", config: Optional[dict[str, Any]] = None):
+    def __init__(
+        self, source_name: str = "oddsportal", config: Optional[dict[str, Any]] = None
+    ):
         """
         初始化OddsPortal获取器
 
@@ -63,7 +65,11 @@ class OddsPortalFetcher(AbstractFetcher):
         super().__init__(source_name, config)
 
         # 配置参数
-        self.base_url = config.get("base_url", "https://www.oddsportal.com") if config else "https://www.oddsportal.com"
+        self.base_url = (
+            config.get("base_url", "https://www.oddsportal.com")
+            if config
+            else "https://www.oddsportal.com"
+        )
         self.timeout = config.get("timeout", 30.0) if config else 30.0
         self.max_retries = config.get("max_retries", 3) if config else 3
         self.max_connections = config.get("max_connections", 20) if config else 20
@@ -91,7 +97,7 @@ class OddsPortalFetcher(AbstractFetcher):
             "Ladbrokes",
             "888Sport",
             "Unibet",
-            "Betway"
+            "Betway",
         ]
 
         # 支持的市场类型
@@ -100,7 +106,7 @@ class OddsPortalFetcher(AbstractFetcher):
             "Asian Handicap",
             "Over/Under",
             "Both Teams to Score",
-            "Correct Score"
+            "Correct Score",
         ]
 
         self.logger.info(
@@ -110,14 +116,11 @@ class OddsPortalFetcher(AbstractFetcher):
                 "base_url": self.base_url,
                 "use_mock": self.use_mock,
                 "fallback_enabled": self.fallback_to_mock,
-            }
+            },
         )
 
     async def fetch_data(
-        self,
-        resource_id: str,
-        resource_type: Optional[ResourceType] = None,
-        **kwargs
+        self, resource_id: str, resource_type: Optional[ResourceType] = None, **kwargs
     ) -> list[dict[str, Any]]:
         """
         获取通用数据
@@ -137,7 +140,9 @@ class OddsPortalFetcher(AbstractFetcher):
             self.logger.warning(f"OddsPortalFetcher 不支持资源类型: {resource_type}")
             return []
 
-    async def fetch_odds(self, match_id: str, league_id: Optional[str] = None, **kwargs) -> list[OddsData]:
+    async def fetch_odds(
+        self, match_id: str, league_id: Optional[str] = None, **kwargs
+    ) -> list[OddsData]:
         """
         获取指定比赛的赔率数据
 
@@ -183,6 +188,7 @@ class OddsPortalFetcher(AbstractFetcher):
             # 模拟请求间延迟
             if self.delay > 0:
                 import asyncio
+
                 await asyncio.sleep(self.delay)
 
             # 发送HTTP请求
@@ -206,7 +212,9 @@ class OddsPortalFetcher(AbstractFetcher):
                     self.logger.warning(
                         f"⚠️ 解析结果为空，回退到Mock模式，比赛ID: {match_id}"
                     )
-                    return await self._generate_mock_odds(match_id, start_time, **kwargs)
+                    return await self._generate_mock_odds(
+                        match_id, start_time, **kwargs
+                    )
                 else:
                     raise DataNotFoundError(f"No odds data found for match: {match_id}")
 
@@ -220,7 +228,7 @@ class OddsPortalFetcher(AbstractFetcher):
                 processing_time_ms=processing_time,
                 success=True,
                 error_message=None,
-                record_count=len(odds_data_list)
+                record_count=len(odds_data_list),
             )
 
             self.logger.info(
@@ -230,7 +238,7 @@ class OddsPortalFetcher(AbstractFetcher):
                     "processing_time_ms": processing_time,
                     "unique_bookmakers": len({d.bookmaker for d in odds_data_list}),
                     "markets": list({d.market_type for d in odds_data_list}),
-                }
+                },
             )
 
             # 应用数量限制
@@ -249,7 +257,7 @@ class OddsPortalFetcher(AbstractFetcher):
                 processing_time_ms=processing_time,
                 success=False,
                 error_message=str(e),
-                record_count=0
+                record_count=0,
             )
 
             self.logger.error(f"❌ 获取赔率数据失败，比赛ID: {match_id}, 错误: {e}")
@@ -273,10 +281,12 @@ class OddsPortalFetcher(AbstractFetcher):
                 processing_time_ms=processing_time,
                 success=False,
                 error_message=f"Unexpected error: {str(e)}",
-                record_count=0
+                record_count=0,
             )
 
-            self.logger.error(f"❌ 获取赔率数据时发生未预期错误，比赛ID: {match_id}, 错误: {e}")
+            self.logger.error(
+                f"❌ 获取赔率数据时发生未预期错误，比赛ID: {match_id}, 错误: {e}"
+            )
 
             # 检查是否允许回退到Mock
             if self.fallback_to_mock:
@@ -303,7 +313,9 @@ class OddsPortalFetcher(AbstractFetcher):
         else:
             return f"{self.base_url}/match/{match_id}/"
 
-    def _convert_to_odds_data(self, match_id: str, parsed_odds: list[dict[str, Any]]) -> list[OddsData]:
+    def _convert_to_odds_data(
+        self, match_id: str, parsed_odds: list[dict[str, Any]]
+    ) -> list[OddsData]:
         """
         将解析器输出转换为OddsData对象
 
@@ -339,7 +351,7 @@ class OddsPortalFetcher(AbstractFetcher):
                     bookmaker=bookmaker,
                     market_type=market_type,
                     last_updated=timestamp,
-                    raw_data=odds_dict
+                    raw_data=odds_dict,
                 )
 
                 odds_data_list.append(odds_data)
@@ -350,7 +362,9 @@ class OddsPortalFetcher(AbstractFetcher):
 
         return odds_data_list
 
-    async def _generate_mock_odds(self, match_id: str, start_time: datetime, **kwargs) -> list[OddsData]:
+    async def _generate_mock_odds(
+        self, match_id: str, start_time: datetime, **kwargs
+    ) -> list[OddsData]:
         """
         生成模拟赔率数据
 
@@ -376,29 +390,39 @@ class OddsPortalFetcher(AbstractFetcher):
 
         # 生成不同市场类型的模拟数据
         if "1X2" in requested_markets:
-            odds_data_list.extend(self._generate_1x2_odds(
-                match_id, requested_bookmakers[:record_count//2]
-            ))
+            odds_data_list.extend(
+                self._generate_1x2_odds(
+                    match_id, requested_bookmakers[: record_count // 2]
+                )
+            )
 
         if "Asian Handicap" in requested_markets:
-            odds_data_list.extend(self._generate_asian_handicap_odds(
-                match_id, requested_bookmakers[:record_count//3]
-            ))
+            odds_data_list.extend(
+                self._generate_asian_handicap_odds(
+                    match_id, requested_bookmakers[: record_count // 3]
+                )
+            )
 
         if "Over/Under" in requested_markets:
-            odds_data_list.extend(self._generate_over_under_odds(
-                match_id, requested_bookmakers[:record_count//3]
-            ))
+            odds_data_list.extend(
+                self._generate_over_under_odds(
+                    match_id, requested_bookmakers[: record_count // 3]
+                )
+            )
 
         if "Both Teams to Score" in requested_markets:
-            odds_data_list.extend(self._generate_btts_odds(
-                match_id, requested_bookmakers[:record_count//4]
-            ))
+            odds_data_list.extend(
+                self._generate_btts_odds(
+                    match_id, requested_bookmakers[: record_count // 4]
+                )
+            )
 
         if "Correct Score" in requested_markets:
-            odds_data_list.extend(self._generate_correct_score_odds(
-                match_id, requested_bookmakers[:record_count//6]
-            ))
+            odds_data_list.extend(
+                self._generate_correct_score_odds(
+                    match_id, requested_bookmakers[: record_count // 6]
+                )
+            )
 
         # 记录Mock模式的元数据
         processing_time = (datetime.now() - start_time).total_seconds() * 1000
@@ -410,7 +434,7 @@ class OddsPortalFetcher(AbstractFetcher):
             processing_time_ms=processing_time,
             success=True,
             error_message=None,
-            record_count=len(odds_data_list)
+            record_count=len(odds_data_list),
         )
 
         self.logger.info(
@@ -419,7 +443,9 @@ class OddsPortalFetcher(AbstractFetcher):
 
         return odds_data_list[:record_count]
 
-    def _generate_1x2_odds(self, match_id: str, bookmakers: list[str]) -> list[OddsData]:
+    def _generate_1x2_odds(
+        self, match_id: str, bookmakers: list[str]
+    ) -> list[OddsData]:
         """生成1X2市场赔率数据"""
         odds_data_list = []
 
@@ -429,7 +455,9 @@ class OddsPortalFetcher(AbstractFetcher):
             away_win_odds = round(random.uniform(2.0, 4.0), 2)
 
             # 确保赔率合理性
-            total_probability = (1/home_win_odds) + (1/draw_odds) + (1/away_win_odds)
+            total_probability = (
+                (1 / home_win_odds) + (1 / draw_odds) + (1 / away_win_odds)
+            )
             if total_probability > 1.2:
                 multiplier = total_probability / 1.1
                 home_win_odds = round(home_win_odds * multiplier, 2)
@@ -449,14 +477,16 @@ class OddsPortalFetcher(AbstractFetcher):
                     "mode": "mock",
                     "market": "1X2",
                     "bookmaker": bookmaker,
-                    "timestamp": datetime.now().isoformat()
-                }
+                    "timestamp": datetime.now().isoformat(),
+                },
             )
             odds_data_list.append(odds_data)
 
         return odds_data_list
 
-    def _generate_asian_handicap_odds(self, match_id: str, bookmakers: list[str]) -> list[OddsData]:
+    def _generate_asian_handicap_odds(
+        self, match_id: str, bookmakers: list[str]
+    ) -> list[OddsData]:
         """生成亚洲让分盘赔率数据"""
         odds_data_list = []
 
@@ -488,14 +518,16 @@ class OddsPortalFetcher(AbstractFetcher):
                     "market": "Asian Handicap",
                     "handicap_line": line,
                     "bookmaker": bookmaker,
-                    "timestamp": datetime.now().isoformat()
-                }
+                    "timestamp": datetime.now().isoformat(),
+                },
             )
             odds_data_list.append(odds_data)
 
         return odds_data_list
 
-    def _generate_over_under_odds(self, match_id: str, bookmakers: list[str]) -> list[OddsData]:
+    def _generate_over_under_odds(
+        self, match_id: str, bookmakers: list[str]
+    ) -> list[OddsData]:
         """生成大小球赔率数据"""
         odds_data_list = []
 
@@ -520,14 +552,16 @@ class OddsPortalFetcher(AbstractFetcher):
                     "market": "Over/Under",
                     "line": line,
                     "bookmaker": bookmaker,
-                    "timestamp": datetime.now().isoformat()
-                }
+                    "timestamp": datetime.now().isoformat(),
+                },
             )
             odds_data_list.append(odds_data)
 
         return odds_data_list
 
-    def _generate_btts_odds(self, match_id: str, bookmakers: list[str]) -> list[OddsData]:
+    def _generate_btts_odds(
+        self, match_id: str, bookmakers: list[str]
+    ) -> list[OddsData]:
         """生成双方进球(BTTS)赔率数据"""
         odds_data_list = []
 
@@ -539,7 +573,7 @@ class OddsPortalFetcher(AbstractFetcher):
                 match_id=match_id,
                 source=self.source_name,
                 home_win=btts_yes_odds,  # BTTS Yes
-                away_win=btts_no_odds,   # BTTS No
+                away_win=btts_no_odds,  # BTTS No
                 bookmaker=bookmaker,
                 market_type="Both Teams to Score",
                 last_updated=datetime.now() - timedelta(minutes=random.randint(1, 60)),
@@ -549,19 +583,29 @@ class OddsPortalFetcher(AbstractFetcher):
                     "btts_yes": btts_yes_odds,
                     "btts_no": btts_no_odds,
                     "bookmaker": bookmaker,
-                    "timestamp": datetime.now().isoformat()
-                }
+                    "timestamp": datetime.now().isoformat(),
+                },
             )
             odds_data_list.append(odds_data)
 
         return odds_data_list
 
-    def _generate_correct_score_odds(self, match_id: str, bookmakers: list[str]) -> list[OddsData]:
+    def _generate_correct_score_odds(
+        self, match_id: str, bookmakers: list[str]
+    ) -> list[OddsData]:
         """生成正确比分赔率数据"""
         odds_data_list = []
 
-        common_scores = [("1-0", 8.0), ("1-1", 6.5), ("2-1", 9.0), ("0-0", 9.5),
-                         ("2-0", 12.0), ("1-2", 10.0), ("2-2", 15.0), ("3-1", 18.0)]
+        common_scores = [
+            ("1-0", 8.0),
+            ("1-1", 6.5),
+            ("2-1", 9.0),
+            ("0-0", 9.5),
+            ("2-0", 12.0),
+            ("1-2", 10.0),
+            ("2-2", 15.0),
+            ("3-1", 18.0),
+        ]
 
         for bookmaker in bookmakers:
             score, base_odds = random.choice(common_scores)
@@ -581,8 +625,8 @@ class OddsPortalFetcher(AbstractFetcher):
                     "score": score,
                     "odds": actual_odds,
                     "bookmaker": bookmaker,
-                    "timestamp": datetime.now().isoformat()
-                }
+                    "timestamp": datetime.now().isoformat(),
+                },
             )
             odds_data_list.append(odds_data)
 

@@ -24,7 +24,7 @@ import json
 import sys
 import time
 from pathlib import Path
-from typing import List, Optional
+from typing import Optional
 
 # 添加项目根目录到 Python 路径
 project_root = Path(__file__).parent.parent
@@ -64,25 +64,19 @@ class ProxyCheckCLI:
 
   # 使用加权随机策略
   python scripts/proxy_check.py --source proxies.txt --strategy weighted_random --test-count 50
-            """
+            """,
         )
 
         # 代理源选择（互斥）
         source_group = parser.add_mutually_exclusive_group(required=True)
         source_group.add_argument(
-            "--source", "-s",
-            type=str,
-            help="代理文件路径（每行一个代理URL）"
+            "--source", "-s", type=str, help="代理文件路径（每行一个代理URL）"
         )
         source_group.add_argument(
-            "--proxies", "-p",
-            type=str,
-            help="逗号分隔的代理URL列表"
+            "--proxies", "-p", type=str, help="逗号分隔的代理URL列表"
         )
         source_group.add_argument(
-            "--demo", "-d",
-            action="store_true",
-            help="使用演示代理进行完整工作流程展示"
+            "--demo", "-d", action="store_true", help="使用演示代理进行完整工作流程展示"
         )
 
         # 策略选择
@@ -90,58 +84,43 @@ class ProxyCheckCLI:
             "--strategy",
             choices=["random", "round_robin", "weighted_random", "health_first"],
             default="weighted_random",
-            help="代理轮询策略 (默认: weighted_random)"
+            help="代理轮询策略 (默认: weighted_random)",
         )
 
         # 测试配置
         parser.add_argument(
-            "--test-count", "-n",
-            type=int,
-            default=10,
-            help="测试次数 (默认: 10)"
+            "--test-count", "-n", type=int, default=10, help="测试次数 (默认: 10)"
         )
         parser.add_argument(
             "--check-url",
             type=str,
             default="http://httpbin.org/ip",
-            help="健康检查URL (默认: http://httpbin.org/ip)"
+            help="健康检查URL (默认: http://httpbin.org/ip)",
         )
         parser.add_argument(
             "--timeout",
             type=float,
             default=10.0,
-            help="请求超时时间（秒） (默认: 10.0)"
+            help="请求超时时间（秒） (默认: 10.0)",
         )
 
         # 输出控制
+        parser.add_argument("--verbose", "-v", action="store_true", help="详细输出")
         parser.add_argument(
-            "--verbose", "-v",
-            action="store_true",
-            help="详细输出"
-        )
-        parser.add_argument(
-            "--json-output",
-            action="store_true",
-            help="JSON格式输出结果"
+            "--json-output", action="store_true", help="JSON格式输出结果"
         )
         parser.add_argument(
             "--no-health-check",
             action="store_true",
-            help="跳过健康检查（仅测试轮询和评分）"
+            help="跳过健康检查（仅测试轮询和评分）",
         )
 
         # 代理池配置
         parser.add_argument(
-            "--max-fail-count",
-            type=int,
-            default=5,
-            help="最大失败次数阈值 (默认: 5)"
+            "--max-fail-count", type=int, default=5, help="最大失败次数阈值 (默认: 5)"
         )
         parser.add_argument(
-            "--min-score",
-            type=float,
-            default=30.0,
-            help="最小分数阈值 (默认: 30.0)"
+            "--min-score", type=float, default=30.0, help="最小分数阈值 (默认: 30.0)"
         )
 
         return parser.parse_args()
@@ -155,7 +134,7 @@ class ProxyCheckCLI:
                 "http://127.0.0.1:8081",
                 "http://127.0.0.1:8082",
                 "http://user:pass@127.0.0.1:8083",
-                "socks5://127.0.0.1:1080"
+                "socks5://127.0.0.1:1080",
             ]
             if self.args.verbose:
                 print("🎭 演示模式：使用示例代理列表")
@@ -214,6 +193,7 @@ class ProxyCheckCLI:
             print(f"❌ 错误: {e}")
             if self.args.verbose:
                 import traceback
+
                 traceback.print_exc()
             sys.exit(1)
         finally:
@@ -259,7 +239,7 @@ class ProxyCheckCLI:
                     }
                     test_results.append(result)
                     if self.args.verbose:
-                        print(f"   测试 {i+1:2d}: ❌ 无可用代理")
+                        print(f"   测试 {i + 1:2d}: ❌ 无可用代理")
                     continue
 
                 # 记录代理使用情况
@@ -269,7 +249,7 @@ class ProxyCheckCLI:
                         "count": 0,
                         "successes": 0,
                         "failures": 0,
-                        "response_times": []
+                        "response_times": [],
                     }
 
                 proxy_usage[proxy_url]["count"] += 1
@@ -283,6 +263,7 @@ class ProxyCheckCLI:
                 else:
                     # 模拟成功率（80%）
                     import random
+
                     success = random.random() < 0.8
                     response_time = 100 + random.randint(-20, 50) if success else None
                     check_time = 0.1
@@ -308,11 +289,13 @@ class ProxyCheckCLI:
                     if response_time:
                         proxy_usage[proxy_url]["response_times"].append(response_time)
                     if self.args.verbose:
-                        print(f"   测试 {i+1:2d}: ✅ {proxy_url} ({response_time:.0f}ms)")
+                        print(
+                            f"   测试 {i + 1:2d}: ✅ {proxy_url} ({response_time:.0f}ms)"
+                        )
                 else:
                     proxy_usage[proxy_url]["failures"] += 1
                     if self.args.verbose:
-                        print(f"   测试 {i+1:2d}: ❌ {proxy_url}")
+                        print(f"   测试 {i + 1:2d}: ❌ {proxy_url}")
 
             except Exception as e:
                 result = {
@@ -322,7 +305,7 @@ class ProxyCheckCLI:
                 }
                 test_results.append(result)
                 if self.args.verbose:
-                    print(f"   测试 {i+1:2d}: ❌ 异常 - {e}")
+                    print(f"   测试 {i + 1:2d}: ❌ 异常 - {e}")
 
         self.test_results = test_results
         self.proxy_usage = proxy_usage
@@ -336,15 +319,13 @@ class ProxyCheckCLI:
             proxy_url = proxy.url
             if proxy.username and proxy.password:
                 auth_string = f"{quote(proxy.username)}:{quote(proxy.password)}"
-                proxy_url = proxy_url.replace('://', f'://{auth_string}@')
+                proxy_url = proxy_url.replace("://", f"://{auth_string}@")
 
             timeout = aiohttp.ClientTimeout(total=self.args.timeout)
 
             async with aiohttp.ClientSession(timeout=timeout) as session:
                 async with session.get(
-                    self.args.check_url,
-                    proxy=proxy_url,
-                    ssl=False
+                    self.args.check_url, proxy=proxy_url, ssl=False
                 ) as response:
                     return response.status == 200
 
@@ -353,7 +334,7 @@ class ProxyCheckCLI:
 
     async def show_results(self) -> None:
         """显示测试结果"""
-        if not hasattr(self, 'test_results'):
+        if not hasattr(self, "test_results"):
             return
 
         # 统计测试结果
@@ -375,7 +356,7 @@ class ProxyCheckCLI:
             },
             "proxy_pool_stats": final_stats,
             "proxy_details": proxy_details,
-            "proxy_usage": getattr(self, 'proxy_usage', {}),
+            "proxy_usage": getattr(self, "proxy_usage", {}),
             "test_results": self.test_results if self.args.verbose else None,
         }
 
@@ -393,20 +374,28 @@ class ProxyCheckCLI:
         print(f"   成功率: {results['test_summary']['success_rate']}%")
 
         print("\n🏊 代理池最终状态:")
-        stats = results['proxy_pool_stats']
+        stats = results["proxy_pool_stats"]
         print(f"   总代理数: {stats['total']}")
         print(f"   活跃代理: {stats['active']}")
         print(f"   被禁用: {stats['banned']}")
         print(f"   健康代理: {stats['healthy']}")
         print(f"   平均分数: {stats['avg_score']}")
-        if stats['avg_response_time']:
+        if stats["avg_response_time"]:
             print(f"   平均响应时间: {stats['avg_response_time']}ms")
 
-        if results['proxy_usage']:
+        if results["proxy_usage"]:
             print("\n📈 代理使用统计:")
-            for proxy_url, usage in results['proxy_usage'].items():
-                success_rate = (usage['successes'] / usage['count']) * 100 if usage['count'] > 0 else 0
-                avg_response = sum(usage['response_times']) / len(usage['response_times']) if usage['response_times'] else 0
+            for proxy_url, usage in results["proxy_usage"].items():
+                success_rate = (
+                    (usage["successes"] / usage["count"]) * 100
+                    if usage["count"] > 0
+                    else 0
+                )
+                avg_response = (
+                    sum(usage["response_times"]) / len(usage["response_times"])
+                    if usage["response_times"]
+                    else 0
+                )
                 print(f"   {proxy_url}")
                 print(f"     使用次数: {usage['count']}")
                 print(f"     成功/失败: {usage['successes']}/{usage['failures']}")
@@ -414,9 +403,9 @@ class ProxyCheckCLI:
                 if avg_response:
                     print(f"     平均响应时间: {avg_response:.0f}ms")
 
-        if self.args.verbose and results['test_results']:
+        if self.args.verbose and results["test_results"]:
             print("\n📋 详细测试结果:")
-            for result in results['test_results']:
+            for result in results["test_results"]:
                 status = "✅" if result.get("success", False) else "❌"
                 proxy = result.get("proxy", "N/A")
                 response_time = result.get("response_time")

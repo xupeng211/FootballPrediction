@@ -6,12 +6,10 @@ league standings, and statistical insights following DDD principles.
 """
 
 import logging
-from datetime import datetime, timedelta
-from typing import Any, Optional
+from datetime import datetime
+from typing import Any
 
-from src.domain.models.analytics import TeamPerformanceStats, LeagueStandingsStats
 from src.database.repositories.analytics_repository import AnalyticsRepository
-from src.core.exceptions import TeamNotFoundError, LeagueNotFoundError
 from src.database.models.match import Match
 
 logger = logging.getLogger(__name__)

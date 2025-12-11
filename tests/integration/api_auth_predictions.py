@@ -496,9 +496,9 @@ class TestAuthPredictionIntegration:
     async def test_complete_workflow(self, tester):
         """测试完整工作流"""
         report = await tester.run_all_tests()
-        assert (
-            report["success_rate"] >= 80
-        ), f"整体成功率不足80%: {report['success_rate']:.1f}%"
+        assert report["success_rate"] >= 80, (
+            f"整体成功率不足80%: {report['success_rate']:.1f}%"
+        )
 
 
 # 独立运行测试的主函数

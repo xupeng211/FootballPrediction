@@ -12,7 +12,6 @@ from sklearn.metrics import accuracy_score, classification_report
 from sklearn.preprocessing import LabelEncoder
 from datetime import datetime
 import os
-import sys
 import warnings
 
 warnings.filterwarnings("ignore")

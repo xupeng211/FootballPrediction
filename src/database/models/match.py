@@ -15,7 +15,7 @@
 
 from enum import Enum
 
-from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, JSON, Text, Float
+from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, JSON, Float
 from sqlalchemy.orm import relationship
 from datetime import datetime
 
@@ -52,19 +52,27 @@ class Match(BaseModel):
     # 基本字段
     id = Column(Integer, primary_key=True)
     fotmob_id = Column(String(50), nullable=True, index=True)  # FotMob外部ID
-    home_team_id = Column(Integer, ForeignKey("teams.id"), nullable=True)  # 修复: 允许NULL，Team记录可异步补齐
-    away_team_id = Column(Integer, ForeignKey("teams.id"), nullable=True)  # 修复: 允许NULL，Team记录可异步补齐
+    home_team_id = Column(
+        Integer, ForeignKey("teams.id"), nullable=True
+    )  # 修复: 允许NULL，Team记录可异步补齐
+    away_team_id = Column(
+        Integer, ForeignKey("teams.id"), nullable=True
+    )  # 修复: 允许NULL，Team记录可异步补齐
     home_score = Column(Integer, default=0)
     away_score = Column(Integer, default=0)
 
     # DAO层需要的字段
     home_team_name = Column(String(100), nullable=True)  # 主队名称 (用于DAO层)
     away_team_name = Column(String(100), nullable=True)  # 客队名称 (用于DAO层)
-    match_time = Column(DateTime, nullable=True, comment="比赛时间 (允许NULL，支持TBD/Postponed比赛)")  # 比赛时间
+    match_time = Column(
+        DateTime, nullable=True, comment="比赛时间 (允许NULL，支持TBD/Postponed比赛)"
+    )  # 比赛时间
 
     # 保持向后兼容的字段
     status = Column(String(20), default="scheduled")
-    match_date = Column(DateTime, nullable=True, comment="比赛日期 (允许NULL，支持TBD/Postponed比赛)")
+    match_date = Column(
+        DateTime, nullable=True, comment="比赛日期 (允许NULL，支持TBD/Postponed比赛)"
+    )
     venue = Column(String(255))
     league_id = Column(Integer, ForeignKey("leagues.id"))
     season = Column(String(20))
@@ -76,21 +84,25 @@ class Match(BaseModel):
     # 🚀 V2深度数据字段 - 全栈架构师升级
     # 使用JSON类型存储复杂数据结构
     lineups = Column(JSON, nullable=True)  # 阵容数据 (首发+替补)
-    stats = Column(JSON, nullable=True)    # 技术统计 (控球率、射门等)
-    events = Column(JSON, nullable=True)   # 比赛事件 (进球、红黄牌、换人)
-    odds = Column(JSON, nullable=True)     # 赔率信息
+    stats = Column(JSON, nullable=True)  # 技术统计 (控球率、射门等)
+    events = Column(JSON, nullable=True)  # 比赛事件 (进球、红黄牌、换人)
+    odds = Column(JSON, nullable=True)  # 赔率信息
     match_metadata = Column(JSON, nullable=True)  # 其他元数据 (xG、rating等)
 
     # 🔥 Greedy Mode 新增字段 - 全量数据采集
     # 专门的JSON字段存储结构化数据，避免混合存储
-    stats_json = Column(JSON, nullable=True, comment="全量技术统计 (matchStats原始数据)")
+    stats_json = Column(
+        JSON, nullable=True, comment="全量技术统计 (matchStats原始数据)"
+    )
     lineups_json = Column(JSON, nullable=True, comment="完整阵容数据 (包含评分、伤停)")
     odds_snapshot_json = Column(JSON, nullable=True, comment="赔率快照数据")
     match_info = Column(JSON, nullable=True, comment="战意上下文 (排名、轮次等)")
 
     # 🌟 Super Greedy Mode 新增字段 - 环境暗物质采集
     # 捕获裁判、场地、天气、主帅等环境因素
-    environment_json = Column(JSON, nullable=True, comment="环境暗物质 (裁判、场地、天气、主帅、阵型)")
+    environment_json = Column(
+        JSON, nullable=True, comment="环境暗物质 (裁判、场地、天气、主帅、阵型)"
+    )
 
     # 🎯 高级统计字段 - P2-3.1 数据库结构修复
     # 期望进球数 (Expected Goals)
@@ -127,7 +139,9 @@ class Match(BaseModel):
 
     # 数据来源和质量追踪
     data_source = Column(String(50), default="fotmob_v2")  # 数据来源标识
-    data_completeness = Column(String(20), default="partial")  # 数据完整度 (partial/detailed/complete)
+    data_completeness = Column(
+        String(20), default="partial"
+    )  # 数据完整度 (partial/detailed/complete)
     collection_time = Column(DateTime, nullable=True)  # 数据采集时间
 
     # 关系

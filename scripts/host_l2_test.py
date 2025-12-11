@@ -43,7 +43,9 @@ class HostL2Tester:
 
             print("🔧 初始化FotMob采集器...")
             self.collector = HTMLFotMobCollector(
-                max_concurrent=1, timeout=30, max_retries=2  # 单线程测试
+                max_concurrent=1,
+                timeout=30,
+                max_retries=2,  # 单线程测试
             )
             await self.collector.initialize()
             print("✅ FotMob采集器初始化成功")

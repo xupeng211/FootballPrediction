@@ -2,15 +2,13 @@
 足球预测系统主应用文件.
 """
 
-import logging
 import warnings
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
 import uvicorn
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import Response
 
 # 可选的速率限制功能
 try:
@@ -37,7 +35,11 @@ from src.api.schemas import RootResponse
 from src.api.system import router as system_router
 
 # Phase 3: 推理服务
-from src.inference import router as inference_router, startup_load_model, shutdown_cleanup
+from src.inference import (
+    router as inference_router,
+    startup_load_model,
+    shutdown_cleanup,
+)
 from src.config.openapi_config import setup_openapi
 from src.config.swagger_ui_config import setup_enhanced_docs
 from src.core.event_application import initialize_event_system, shutdown_event_system
@@ -91,7 +93,7 @@ async def check_and_trigger_initial_data_fill() -> None:
         # 获取数据库连接
         from src.database.definitions import get_database_manager
         from sqlalchemy import text
-        from datetime import datetime, timedelta
+        from datetime import datetime
 
         db_manager = get_database_manager()
 

@@ -7,14 +7,13 @@ Redis缓存层
 
 import json
 import logging
-from datetime import datetime, timedelta
-from typing import Any, Optional, Union
-from pathlib import Path
+from datetime import datetime
+from typing import Any, Optional
 
 import redis.asyncio as redis
 from redis.asyncio import ConnectionPool
 
-from .errors import CacheError, ErrorCode
+from .errors import CacheError
 
 logger = logging.getLogger(__name__)
 

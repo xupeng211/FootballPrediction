@@ -10,10 +10,9 @@ import asyncio
 import logging
 import sys
 import random
-import time
 from datetime import datetime
 import json
-from typing import Optional,  Any
+from typing import Any
 
 from pathlib import Path
 
@@ -85,7 +84,7 @@ class FotMobL2DetailsJob:
                                             if xg_values[1]
                                             else 0.0
                                         )
-                                    except (ValueError):
+                                    except ValueError:
                                         # 转换失败，使用默认值
                                         pass
 

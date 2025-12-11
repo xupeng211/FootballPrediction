@@ -27,21 +27,27 @@ Unified Async Database Manager
 import os
 import logging
 from enum import Enum
-from typing import Any, Optional, Union
+from typing import Any, Optional
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
-from sqlalchemy import create_engine, text
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
     AsyncSession,
     async_sessionmaker,
     create_async_engine,
 )
-from sqlalchemy.pool import NullPool
-from tenacity import retry, stop_after_attempt, wait_exponential
 
-logger = logging.getLogger(__name__)
+# 导入配置管理
+try:
+    from src.config.titan_settings import get_titan_settings
+
+    TITAN_SETTINGS_AVAILABLE = True
+except ImportError:
+    TITAN_SETTINGS_AVAILABLE = False
+    logger = logging.getLogger(__name__)
+    logger.warning("TitanSettings 不可用，将使用默认数据库配置")
 
 
 class DatabaseRole(Enum):
@@ -101,32 +107,67 @@ class AsyncDatabaseManager:
                 "ASYNC_DATABASE_URL",
                 os.getenv(
                     "DATABASE_URL",
-                    "postgresql+asyncpg://postgres:postgres@localhost:5432/football_prediction"
+                    "postgresql+asyncpg://postgres:postgres@localhost:5432/football_prediction",
                 ),
             )
 
         # 如果是同步URL，转换为异步URL
         if "postgresql://" in database_url:
-            database_url = database_url.replace("postgresql://", "postgresql+asyncpg://")
+            database_url = database_url.replace(
+                "postgresql://", "postgresql+asyncpg://"
+            )
         elif "sqlite://" in database_url and "+aiosqlite" not in database_url:
             database_url = database_url.replace("sqlite://", "sqlite+aiosqlite://")
 
         self._database_url = database_url
 
-        # 默认连接池配置 - 根据数据库类型动态配置
+        # 默认连接池配置 - 基于环境变量和配置文件
         default_config = {
             "echo": kwargs.get("echo", False),
             "pool_pre_ping": kwargs.get("pool_pre_ping", True),
         }
 
+        # 加载配置（优先使用环境变量和参数，然后是配置文件）
+        if TITAN_SETTINGS_AVAILABLE:
+            settings = get_titan_settings()
+            db_config = settings.db_pool
+            logger.info("使用 TitanSettings 数据库配置")
+        else:
+            # 回退到默认值
+            class DefaultDBConfig:
+                pool_size = 10
+                max_overflow = 20
+                pool_timeout = 30
+                pool_recycle = 3600
+
+            db_config = DefaultDBConfig()
+            logger.warning("使用默认数据库配置，建议配置 TitanSettings")
+
         # 只有非SQLite数据库才使用连接池配置
         if not database_url.startswith("sqlite+aiosqlite"):
-            default_config.update({
-                "pool_size": kwargs.get("pool_size", 10),
-                "max_overflow": kwargs.get("max_overflow", 20),
-                "pool_timeout": kwargs.get("pool_timeout", 30),
-                "pool_recycle": kwargs.get("pool_recycle", 3600),
-            })
+            # 优先级：kwargs参数 > 配置文件 > 默认值
+            default_config.update(
+                {
+                    "pool_size": kwargs.get("pool_size", db_config.pool_size),
+                    "max_overflow": kwargs.get("max_overflow", db_config.max_overflow),
+                    "pool_timeout": kwargs.get("pool_timeout", db_config.pool_timeout),
+                    "pool_recycle": kwargs.get("pool_recycle", db_config.pool_recycle),
+                }
+            )
+
+            # 记录连接池配置信息
+            logger.info(
+                "数据库连接池配置",
+                extra={
+                    "pool_size": default_config["pool_size"],
+                    "max_overflow": default_config["max_overflow"],
+                    "pool_timeout": default_config["pool_timeout"],
+                    "pool_recycle": default_config["pool_recycle"],
+                    "config_source": "titan_settings"
+                    if TITAN_SETTINGS_AVAILABLE
+                    else "default",
+                },
+            )
 
         # 创建异步引擎
         self._async_engine = create_async_engine(
@@ -147,7 +188,7 @@ class AsyncDatabaseManager:
 
         # 构建日志信息
         log_msg = f"✅ AsyncDatabaseManager 初始化成功\n数据库URL: {self._database_url}"
-        if 'pool_size' in default_config and 'max_overflow' in default_config:
+        if "pool_size" in default_config and "max_overflow" in default_config:
             log_msg += f"\n   连接池: size={default_config['pool_size']}, overflow={default_config['max_overflow']}"
 
         logger.info(log_msg)
@@ -336,6 +377,7 @@ get_session = get_async_db_session
 # ============================================================================
 # 🔧 便捷查询方法（简化数据库操作）
 # ============================================================================
+
 
 async def fetch_all(query, params: Optional[dict] = None) -> list[dict]:
     """

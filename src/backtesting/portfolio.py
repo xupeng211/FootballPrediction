@@ -10,7 +10,7 @@
 
 import logging
 from decimal import Decimal, ROUND_DOWN
-from typing import  Optional
+from typing import Optional
 from datetime import datetime
 
 from .models import BetDecision, BetResult, BetOutcome, BacktestConfig

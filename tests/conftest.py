@@ -5,13 +5,11 @@ V2.25: 修复测试环境数据库初始化问题
 """
 
 import pytest
-import sys
 import os
-import asyncio
 from unittest.mock import MagicMock
 
 # V2.25: 添加数据库初始化支持
-from src.database.definitions import get_database_manager, initialize_database
+from src.database.definitions import get_database_manager
 
 # V2.20 技术债务黑名单 - 跳过不稳定的测试模块
 TECHNICAL_DEBT_MODULES = [
@@ -160,7 +158,8 @@ def setup_integration_test_environment():
     if "integration" in os.getenv("PYTEST_CURRENT_TEST", ""):
         # 为集成测试设置独立的事件循环策略
         import asyncio
-        if hasattr(asyncio, 'set_event_loop_policy'):
+
+        if hasattr(asyncio, "set_event_loop_policy"):
             try:
                 # 尝试使用默认事件循环策略
                 asyncio.set_event_loop_policy(asyncio.DefaultEventLoopPolicy())

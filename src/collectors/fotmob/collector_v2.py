@@ -21,23 +21,17 @@ FotMob Collector V2 - Production-Grade Anti-Blocking Implementation
 import asyncio
 import json
 import time
-from typing import Any,  Optional, Union
-from urllib.parse import urljoin
+from typing import Any, Optional
 
 import httpx
 
 from ..auth import TokenManager
 from ..interface import (
-    BaseCollectorProtocol,
     CollectorError,
     AuthenticationError,
     RateLimitError,
     NetworkError,
     DataNotFoundError,
-    FixtureData,
-    MatchDetailData,
-    TeamInfoData,
-    HealthStatus,
 )
 from ..proxy_pool import Proxy, ProxyPool
 from ..rate_limiter import RateLimiter

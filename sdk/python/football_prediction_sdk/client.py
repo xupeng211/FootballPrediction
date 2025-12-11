@@ -197,7 +197,9 @@ class PredictionAPI:
             data = {"predictions": [req.to_dict() for req in requests]}
 
             response = self.client.session.post(
-                url, json=data, timeout=self.client.timeout * 2  # 批量请求需要更长时间
+                url,
+                json=data,
+                timeout=self.client.timeout * 2,  # 批量请求需要更长时间
             )
 
             if response.status_code == 200:

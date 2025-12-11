@@ -22,14 +22,12 @@ import time
 from dataclasses import dataclass
 from difflib import unified_diff
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple, Any
 import argparse
 import logging
 
 # 配置日志
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -37,6 +35,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class MigrationPattern:
     """迁移模式定义"""
+
     name: str
     pattern: str
     replacement: str
@@ -49,6 +48,7 @@ class MigrationPattern:
 @dataclass
 class MigrationIssue:
     """迁移问题记录"""
+
     file_path: str
     line_number: int
     issue_type: str
@@ -75,7 +75,7 @@ class AsyncMigrationAnalyzer:
                 replacement="import httpx",
                 description="将requests导入替换为httpx",
                 priority="high",
-                target_files=["src/collectors/*.py", "src/data/collectors/*.py"]
+                target_files=["src/collectors/*.py", "src/data/collectors/*.py"],
             ),
             MigrationPattern(
                 name="requests_get",
@@ -83,7 +83,7 @@ class AsyncMigrationAnalyzer:
                 replacement="await httpx.AsyncClient().get(",
                 description="将同步GET请求替换为异步",
                 priority="high",
-                requires_await=True
+                requires_await=True,
             ),
             MigrationPattern(
                 name="requests_post",
@@ -91,23 +91,22 @@ class AsyncMigrationAnalyzer:
                 replacement="await httpx.AsyncClient().post(",
                 description="将同步POST请求替换为异步",
                 priority="high",
-                requires_await=True
+                requires_await=True,
             ),
             MigrationPattern(
                 name="requests_session",
                 pattern=r"requests\.Session\(",
                 replacement="httpx.AsyncClient(",
                 description="将同步Session替换为异步Client",
-                priority="high"
+                priority="high",
             ),
             MigrationPattern(
                 name="curl_cffi_import",
                 pattern=r"from\s+curl_cffi\s+import\s+requests",
                 replacement="import httpx",
                 description="将curl_cffi导入替换为httpx",
-                priority="high"
+                priority="high",
             ),
-
             # 时间阻塞调用迁移
             MigrationPattern(
                 name="time_sleep",
@@ -115,9 +114,8 @@ class AsyncMigrationAnalyzer:
                 replacement="await asyncio.sleep(",
                 description="将同步sleep替换为异步",
                 priority="medium",
-                requires_await=True
+                requires_await=True,
             ),
-
             # 函数定义迁移
             MigrationPattern(
                 name="def_to_async",
@@ -125,9 +123,8 @@ class AsyncMigrationAnalyzer:
                 replacement="async def \\1(",
                 description="将函数定义转换为异步",
                 priority="medium",
-                requires_await=False
+                requires_await=False,
             ),
-
             # 数据库操作迁移
             MigrationPattern(
                 name="session_execute",
@@ -135,7 +132,7 @@ class AsyncMigrationAnalyzer:
                 replacement="await session.execute(",
                 description="数据库操作添加await",
                 priority="medium",
-                requires_await=True
+                requires_await=True,
             ),
             MigrationPattern(
                 name="session_commit",
@@ -143,8 +140,8 @@ class AsyncMigrationAnalyzer:
                 replacement="await session.commit(",
                 description="数据库提交添加await",
                 priority="medium",
-                requires_await=True
-            )
+                requires_await=True,
+            ),
         ]
 
     def analyze_file(self, file_path: Path) -> list[MigrationIssue]:
@@ -152,15 +149,17 @@ class AsyncMigrationAnalyzer:
         issues = []
 
         try:
-            with open(file_path, encoding='utf-8') as f:
+            with open(file_path, encoding="utf-8") as f:
                 content = f.read()
-                lines = content.split('\n')
+                lines = content.split("\n")
 
             # 应用迁移模式检测
             for pattern in self.migration_patterns:
                 if pattern.target_files:
                     # 检查文件是否匹配目标模式
-                    if not any(file_path.match(target) for target in pattern.target_files):
+                    if not any(
+                        file_path.match(target) for target in pattern.target_files
+                    ):
                         continue
 
                 for line_num, line in enumerate(lines, 1):
@@ -171,7 +170,7 @@ class AsyncMigrationAnalyzer:
                             issue_type=pattern.name,
                             description=f"检测到{pattern.description}",
                             suggested_fix=self._generate_fix_suggestion(line, pattern),
-                            priority=pattern.priority
+                            priority=pattern.priority,
                         )
                         issues.append(issue)
 
@@ -184,10 +183,7 @@ class AsyncMigrationAnalyzer:
         return issues
 
     def _detect_missing_awaits(
-        self,
-        file_path: Path,
-        content: str,
-        lines: list[str]
+        self, file_path: Path, content: str, lines: list[str]
     ) -> list[MigrationIssue]:
         """检测缺失的await关键字"""
         issues = []
@@ -210,7 +206,7 @@ class AsyncMigrationAnalyzer:
                                 issue_type="missing_await",
                                 description="异步函数调用缺少await关键字",
                                 suggested_fix="在函数调用前添加'await '",
-                                priority="high"
+                                priority="high",
                             )
                             issues.append(issue)
 
@@ -225,14 +221,17 @@ class AsyncMigrationAnalyzer:
         if isinstance(node.func, ast.Attribute):
             # 检查方法调用
             async_methods = {
-                'fetch', 'fetch_json', 'execute', 'get', 'post', 'get_async_session'
+                "fetch",
+                "fetch_json",
+                "execute",
+                "get",
+                "post",
+                "get_async_session",
             }
             return node.func.attr in async_methods
         elif isinstance(node.func, ast.Name):
             # 检查函数调用
-            async_functions = {
-                'get_db_session', 'async_create_engine', 'fetch_data'
-            }
+            async_functions = {"get_db_session", "async_create_engine", "fetch_data"}
             return node.func.id in async_functions
         return False
 
@@ -297,8 +296,12 @@ class AsyncMigrationAnalyzer:
             report.append(f"问题数量: {len(file_issue_list)}\n")
 
             for issue in sorted(file_issue_list, key=lambda x: x.line_number):
-                priority_icon = {"high": "🔴", "medium": "🟡", "low": "🟢"}.get(issue.priority, "⚪")
-                report.append(f"{priority_icon} **第{issue.line_number}行** - {issue.issue_type}")
+                priority_icon = {"high": "🔴", "medium": "🟡", "low": "🟢"}.get(
+                    issue.priority, "⚪"
+                )
+                report.append(
+                    f"{priority_icon} **第{issue.line_number}行** - {issue.issue_type}"
+                )
                 report.append(f"   - 描述: {issue.description}")
                 report.append(f"   - 建议: {issue.suggested_fix}")
                 report.append("")
@@ -315,7 +318,7 @@ class AsyncMigrationGenerator:
     def generate_patch(self, file_path: Path, issues: list[MigrationIssue]) -> str:
         """为单个文件生成补丁"""
         try:
-            with open(file_path, encoding='utf-8') as f:
+            with open(file_path, encoding="utf-8") as f:
                 original_content = f.read()
 
             modified_content = self._apply_modifications(original_content, issues)
@@ -329,10 +332,10 @@ class AsyncMigrationGenerator:
                 modified_lines,
                 fromfile=f"a/{file_path}",
                 tofile=f"b/{file_path}",
-                lineterm=''
+                lineterm="",
             )
 
-            return ''.join(diff)
+            return "".join(diff)
 
         except Exception as e:
             logger.error(f"生成补丁失败 {file_path}: {e}")
@@ -340,7 +343,7 @@ class AsyncMigrationGenerator:
 
     def _apply_modifications(self, content: str, issues: list[MigrationIssue]) -> str:
         """应用代码修改"""
-        lines = content.split('\n')
+        lines = content.split("\n")
 
         # 按行号排序，从后往前应用修改，避免行号偏移
         sorted_issues = sorted(issues, key=lambda x: x.line_number, reverse=True)
@@ -352,38 +355,36 @@ class AsyncMigrationGenerator:
 
                 if issue.issue_type == "def_to_async":
                     # 将def改为async def
-                    lines[line_idx] = re.sub(r'^\s*def\s', 'async def ', original_line)
+                    lines[line_idx] = re.sub(r"^\s*def\s", "async def ", original_line)
                 elif issue.issue_type == "requests_get":
                     # 替换requests.get
                     lines[line_idx] = re.sub(
-                        r'requests\.get\(',
-                        'await httpx.AsyncClient().get(',
-                        original_line
+                        r"requests\.get\(",
+                        "await httpx.AsyncClient().get(",
+                        original_line,
                     )
                 elif issue.issue_type == "requests_post":
                     # 替换requests.post
                     lines[line_idx] = re.sub(
-                        r'requests\.post\(',
-                        'await httpx.AsyncClient().post(',
-                        original_line
+                        r"requests\.post\(",
+                        "await httpx.AsyncClient().post(",
+                        original_line,
                     )
                 elif issue.issue_type == "time_sleep":
                     # 替换time.sleep
                     lines[line_idx] = re.sub(
-                        r'time\.sleep\(',
-                        'await asyncio.sleep(',
-                        original_line
+                        r"time\.sleep\(", "await asyncio.sleep(", original_line
                     )
                 elif issue.issue_type == "missing_await":
                     # 在函数调用前添加await
                     lines[line_idx] = re.sub(
-                        r'(\s*)([a-zA-Z_][a-zA-Z0-9_]*\([^)]*\))',
-                        r'\1await \2',
+                        r"(\s*)([a-zA-Z_][a-zA-Z0-9_]*\([^)]*\))",
+                        r"\1await \2",
                         original_line,
-                        count=1
+                        count=1,
                     )
 
-        return '\n'.join(lines)
+        return "\n".join(lines)
 
     def generate_all_patches(self, all_issues: list[MigrationIssue]) -> dict[str, str]:
         """为所有文件生成补丁"""
@@ -404,17 +405,19 @@ class AsyncMigrationGenerator:
 
         return patches
 
-    def save_patches(self, patches: dict[str, str], output_dir: str = "patches/async_unification"):
+    def save_patches(
+        self, patches: dict[str, str], output_dir: str = "patches/async_unification"
+    ):
         """保存补丁文件"""
         output_path = Path(output_dir)
         output_path.mkdir(parents=True, exist_ok=True)
 
         for file_path, patch_content in patches.items():
             # 生成补丁文件名
-            patch_filename = Path(file_path).name.replace('.py', '.patch')
+            patch_filename = Path(file_path).name.replace(".py", ".patch")
             patch_file_path = output_path / patch_filename
 
-            with open(patch_file_path, 'w', encoding='utf-8') as f:
+            with open(patch_file_path, "w", encoding="utf-8") as f:
                 f.write(patch_content)
 
             logger.info(f"补丁已保存: {patch_file_path}")
@@ -452,7 +455,7 @@ class AsyncMigrationTool:
         report_path = "reports/async_migration_report.md"
         Path(report_path).parent.mkdir(exist_ok=True)
 
-        with open(report_path, 'w', encoding='utf-8') as f:
+        with open(report_path, "w", encoding="utf-8") as f:
             f.write(report)
 
         logger.info(f"📄 报告已保存: {report_path}")
@@ -525,7 +528,7 @@ if __name__ == "__main__":
 """
 
         script_path = "scripts/validate_async_migration.py"
-        with open(script_path, 'w', encoding='utf-8') as f:
+        with open(script_path, "w", encoding="utf-8") as f:
             f.write(validation_script)
 
         # 使脚本可执行
@@ -536,21 +539,15 @@ if __name__ == "__main__":
 async def main():
     """主函数"""
     parser = argparse.ArgumentParser(description="异步化迁移工具")
-    parser.add_argument(
-        "--root-dir",
-        default="src",
-        help="源代码根目录 (默认: src)"
-    )
+    parser.add_argument("--root-dir", default="src", help="源代码根目录 (默认: src)")
     parser.add_argument(
         "--dry-run",
         action="store_true",
         default=True,
-        help="分析模式，只生成报告和补丁 (默认)"
+        help="分析模式，只生成报告和补丁 (默认)",
     )
     parser.add_argument(
-        "--apply",
-        action="store_true",
-        help="应用模式，直接修改代码 (实验性功能)"
+        "--apply", action="store_true", help="应用模式，直接修改代码 (实验性功能)"
     )
 
     args = parser.parse_args()
@@ -559,10 +556,7 @@ async def main():
         args.dry_run = False
 
     # 创建迁移工具实例
-    migration_tool = AsyncMigrationTool(
-        root_dir=args.root_dir,
-        dry_run=args.dry_run
-    )
+    migration_tool = AsyncMigrationTool(root_dir=args.root_dir, dry_run=args.dry_run)
 
     try:
         await migration_tool.run_migration()
@@ -571,6 +565,7 @@ async def main():
     except Exception as e:
         logger.error(f"❌ 迁移失败: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
 

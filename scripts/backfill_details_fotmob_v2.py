@@ -17,7 +17,7 @@ import sys
 import os
 import random
 import time
-from datetime import datetime, timedelta
+from datetime import datetime
 import json
 from typing import Any, Optional
 from pathlib import Path
@@ -36,7 +36,7 @@ logging.basicConfig(
     handlers=[
         # logging.FileHandler("logs/fotmob_l2_v2.log"),  # 暂时注释掉
         logging.StreamHandler(sys.stdout)
-    ]
+    ],
 )
 logger = logging.getLogger(__name__)
 
@@ -71,7 +71,7 @@ async def exponential_backoff_request(
     base_delay: float = 60.0,
     max_delay: float = 300.0,
     *args,
-    **kwargs
+    **kwargs,
 ) -> Any:
     """
     指数退避重试机制，处理 429/403 错误
@@ -158,7 +158,7 @@ class FotMobL2CollectorV2:
             "failed_match": 0,
             "failed_collection": 0,
             "failed_save": 0,
-            "start_time": datetime.now()
+            "start_time": datetime.now(),
         }
 
         self.logger.info("✅ L2 采集器初始化完成")
@@ -412,7 +412,7 @@ class FotMobL2CollectorV2:
                 details_request,
                 max_retries=2,  # 减少重试次数
                 base_delay=15.0,  # 增加延迟适应浏览器操作
-                max_delay=45.0
+                max_delay=45.0,
             )
 
             return details
@@ -596,9 +596,16 @@ class FotMobL2CollectorV2:
             **self.stats,
             "end_time": end_time,
             "duration_seconds": duration.total_seconds(),
-            "success_rate": (self.stats["saved"] / max(self.stats["processed"], 1)) * 100,
-            "match_success_rate": (self.stats["matched"] / max(self.stats["processed"], 1)) * 100,
-            "collection_success_rate": (self.stats["collected"] / max(self.stats["matched"], 1)) * 100,
+            "success_rate": (self.stats["saved"] / max(self.stats["processed"], 1))
+            * 100,
+            "match_success_rate": (
+                self.stats["matched"] / max(self.stats["processed"], 1)
+            )
+            * 100,
+            "collection_success_rate": (
+                self.stats["collected"] / max(self.stats["matched"], 1)
+            )
+            * 100,
         }
 
         return final_stats

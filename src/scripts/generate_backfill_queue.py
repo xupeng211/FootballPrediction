@@ -22,7 +22,6 @@ Author: Database Expert
 Version: 2.0 (ETL Optimized)
 """
 
-import os
 import sys
 import csv
 import asyncio
@@ -45,6 +44,7 @@ from tqdm import tqdm
 # 尝试导入 tqdm，如果没有则使用简单进度条
 try:
     from tqdm import tqdm
+
     HAS_TQDM = True
 except ImportError:
     HAS_TQDM = False
@@ -53,11 +53,11 @@ except ImportError:
 # 配置专业日志
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     handlers=[
         logging.StreamHandler(),
-        logging.FileHandler('logs/backfill_queue_generation.log', mode='a')
-    ]
+        logging.FileHandler("logs/backfill_queue_generation.log", mode="a"),
+    ],
 )
 logger = logging.getLogger(__name__)
 
@@ -65,6 +65,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class BackfillConfig:
     """回填配置参数"""
+
     output_dir: str = "data"
     output_filename: str = "l2_backfill_queue.csv"
     batch_size: int = 1000  # 批量处理大小，优化内存使用
@@ -72,10 +73,20 @@ class BackfillConfig:
     dry_run: bool = False  # 仅查询，不导出文件
 
     # 比赛状态配置 (基于 FotMob API 实际状态)
-    finished_statuses = ['FT', 'AET', 'PEN', 'finished']  # Full Time, After Extra Time, Penalties
+    finished_statuses = [
+        "FT",
+        "AET",
+        "PEN",
+        "finished",
+    ]  # Full Time, After Extra Time, Penalties
 
     # 数据完整度配置
-    incomplete_completeness = ['NULL', 'partial', 'basic', 'detailed']  # 需要回填的完整度状态
+    incomplete_completeness = [
+        "NULL",
+        "partial",
+        "basic",
+        "detailed",
+    ]  # 需要回填的完整度状态
 
 
 class BackfillQueueGenerator:
@@ -100,15 +111,15 @@ class BackfillQueueGenerator:
 
         # 统计信息
         self.stats = {
-            'total_queried': 0,
-            'valid_matches': 0,
-            'by_season': {},
-            'by_completeness': {},
-            'by_status': {},
-            'exported': 0
+            "total_queried": 0,
+            "valid_matches": 0,
+            "by_season": {},
+            "by_completeness": {},
+            "by_status": {},
+            "exported": 0,
         }
 
-        logger.info(f"🔧 初始化回填队列生成器")
+        logger.info("🔧 初始化回填队列生成器")
         logger.info(f"   输出文件: {self.output_file}")
         logger.info(f"   批量大小: {config.batch_size}")
         logger.info(f"   已结束状态: {config.finished_statuses}")
@@ -132,15 +143,17 @@ class BackfillQueueGenerator:
             SQLAlchemy Text 对象
         """
         # 构建状态条件
-        status_conditions = ", ".join([f"'{status}'" for status in self.config.finished_statuses])
+        status_conditions = ", ".join(
+            [f"'{status}'" for status in self.config.finished_statuses]
+        )
 
         # 构建完整度条件
         completeness_conditions = []
-        if 'NULL' in self.config.incomplete_completeness:
+        if "NULL" in self.config.incomplete_completeness:
             completeness_conditions.append("data_completeness IS NULL")
 
         for completeness in self.config.incomplete_completeness:
-            if completeness != 'NULL':
+            if completeness != "NULL":
                 completeness_conditions.append(f"data_completeness = '{completeness}'")
 
         completeness_clause = " OR ".join(completeness_conditions)
@@ -165,7 +178,9 @@ class BackfillQueueGenerator:
             ORDER BY match_date DESC, fotmob_id DESC
         """
 
-        logger.info(f"📋 构建查询: 已结束状态 {len(self.config.finished_statuses)} 个，不完整状态 {len(self.config.incomplete_completeness)} 个")
+        logger.info(
+            f"📋 构建查询: 已结束状态 {len(self.config.finished_statuses)} 个，不完整状态 {len(self.config.incomplete_completeness)} 个"
+        )
         return text(query)
 
     async def extract_pending_matches(self) -> List[Dict[str, Any]]:
@@ -182,7 +197,7 @@ class BackfillQueueGenerator:
         try:
             # 执行查询
             matches = await fetch_all(query)
-            self.stats['total_queried'] = len(matches)
+            self.stats["total_queried"] = len(matches)
 
             logger.info(f"📊 查询结果: 共 {len(matches)} 场比赛")
 
@@ -190,23 +205,29 @@ class BackfillQueueGenerator:
             valid_matches = []
             for match in matches:
                 # 基本数据验证
-                if not match.get('match_id'):
-                    logger.warning(f"⚠️ 跳过无效比赛记录: 缺少 match_id")
+                if not match.get("match_id"):
+                    logger.warning("⚠️ 跳过无效比赛记录: 缺少 match_id")
                     continue
 
                 # 统计信息更新
-                season = match.get('season', 'Unknown')
-                self.stats['by_season'][season] = self.stats['by_season'].get(season, 0) + 1
+                season = match.get("season", "Unknown")
+                self.stats["by_season"][season] = (
+                    self.stats["by_season"].get(season, 0) + 1
+                )
 
-                completeness = match.get('data_completeness', 'NULL')
-                self.stats['by_completeness'][completeness] = self.stats['by_completeness'].get(completeness, 0) + 1
+                completeness = match.get("data_completeness", "NULL")
+                self.stats["by_completeness"][completeness] = (
+                    self.stats["by_completeness"].get(completeness, 0) + 1
+                )
 
-                status = match.get('status', 'Unknown')
-                self.stats['by_status'][status] = self.stats['by_status'].get(status, 0) + 1
+                status = match.get("status", "Unknown")
+                self.stats["by_status"][status] = (
+                    self.stats["by_status"].get(status, 0) + 1
+                )
 
                 valid_matches.append(match)
 
-            self.stats['valid_matches'] = len(valid_matches)
+            self.stats["valid_matches"] = len(valid_matches)
             logger.info(f"✅ 有效比赛数据: {len(valid_matches)} 场")
 
             return valid_matches
@@ -230,16 +251,16 @@ class BackfillQueueGenerator:
         csv_data = []
         for match in matches:
             csv_row = {
-                'match_id': str(match['match_id']),  # 确保 match_id 为字符串
-                'status': match.get('status', ''),
-                'data_completeness': match.get('data_completeness', 'NULL'),
-                'match_date': self._format_datetime(match.get('match_date')),
-                'home_team': match.get('home_team_name', ''),
-                'away_team': match.get('away_team_name', ''),
-                'season': match.get('season', ''),
-                'league_id': str(match.get('league_id', '')),
-                'created_at': self._format_datetime(match.get('created_at')),
-                'updated_at': self._format_datetime(match.get('updated_at'))
+                "match_id": str(match["match_id"]),  # 确保 match_id 为字符串
+                "status": match.get("status", ""),
+                "data_completeness": match.get("data_completeness", "NULL"),
+                "match_date": self._format_datetime(match.get("match_date")),
+                "home_team": match.get("home_team_name", ""),
+                "away_team": match.get("away_team_name", ""),
+                "season": match.get("season", ""),
+                "league_id": str(match.get("league_id", "")),
+                "created_at": self._format_datetime(match.get("created_at")),
+                "updated_at": self._format_datetime(match.get("updated_at")),
             }
             csv_data.append(csv_row)
 
@@ -249,10 +270,10 @@ class BackfillQueueGenerator:
     def _format_datetime(self, dt_obj: Optional[datetime]) -> str:
         """格式化日期时间对象"""
         if dt_obj is None:
-            return ''
+            return ""
         if isinstance(dt_obj, str):
             return dt_obj
-        return dt_obj.strftime('%Y-%m-%d %H:%M:%S')
+        return dt_obj.strftime("%Y-%m-%d %H:%M:%S")
 
     def _write_csv_file(self, csv_data: List[Dict[str, str]]) -> None:
         """
@@ -266,7 +287,9 @@ class BackfillQueueGenerator:
             return
 
         if self.config.dry_run:
-            logger.info(f"🔍 DRY RUN: 将导出 {len(csv_data)} 条记录到 {self.output_file}")
+            logger.info(
+                f"🔍 DRY RUN: 将导出 {len(csv_data)} 条记录到 {self.output_file}"
+            )
             return
 
         logger.info(f"💾 开始导出 {len(csv_data)} 条记录到 {self.output_file}")
@@ -279,12 +302,19 @@ class BackfillQueueGenerator:
                 pbar = None
                 logger.info("📝 写入 CSV 文件...")
 
-            with open(self.output_file, 'w', newline='', encoding='utf-8') as csvfile:
+            with open(self.output_file, "w", newline="", encoding="utf-8") as csvfile:
                 # CSV 字段定义
                 fieldnames = [
-                    'match_id', 'status', 'data_completeness',
-                    'match_date', 'home_team', 'away_team',
-                    'season', 'league_id', 'created_at', 'updated_at'
+                    "match_id",
+                    "status",
+                    "data_completeness",
+                    "match_date",
+                    "home_team",
+                    "away_team",
+                    "season",
+                    "league_id",
+                    "created_at",
+                    "updated_at",
                 ]
 
                 writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
@@ -292,7 +322,7 @@ class BackfillQueueGenerator:
 
                 # 批量写入以提高性能
                 for i in range(0, len(csv_data), self.config.batch_size):
-                    batch = csv_data[i:i + self.config.batch_size]
+                    batch = csv_data[i : i + self.config.batch_size]
                     writer.writerows(batch)
 
                     if pbar:
@@ -301,12 +331,14 @@ class BackfillQueueGenerator:
                         # 简单进度显示
                         progress = min(i + self.config.batch_size, len(csv_data))
                         percentage = (progress / len(csv_data)) * 100
-                        logger.info(f"   进度: {progress}/{len(csv_data)} ({percentage:.1f}%)")
+                        logger.info(
+                            f"   进度: {progress}/{len(csv_data)} ({percentage:.1f}%)"
+                        )
 
             if pbar:
                 pbar.close()
 
-            self.stats['exported'] = len(csv_data)
+            self.stats["exported"] = len(csv_data)
             logger.info(f"✅ CSV 导出完成: {self.output_file}")
 
             # 文件大小信息
@@ -319,12 +351,12 @@ class BackfillQueueGenerator:
 
     def _print_detailed_summary(self) -> None:
         """打印详细的统计摘要"""
-        print("\n" + "="*80)
+        print("\n" + "=" * 80)
         print("🎯 L2 回填队列生成完成 - ETL Pipeline Summary")
-        print("="*80)
+        print("=" * 80)
 
         # 基本统计
-        print(f"📊 数据提取统计:")
+        print("📊 数据提取统计:")
         print(f"   数据库查询总数: {self.stats['total_queried']}")
         print(f"   有效比赛数量: {self.stats['valid_matches']}")
         print(f"   成功导出记录: {self.stats['exported']}")
@@ -332,32 +364,38 @@ class BackfillQueueGenerator:
         print()
 
         # 按赛季分布
-        if self.stats['by_season']:
+        if self.stats["by_season"]:
             print("📅 按赛季分布:")
-            for season, count in sorted(self.stats['by_season'].items(), reverse=True):
-                percentage = (count / self.stats['valid_matches']) * 100
+            for season, count in sorted(self.stats["by_season"].items(), reverse=True):
+                percentage = (count / self.stats["valid_matches"]) * 100
                 print(f"   {season:>12}: {count:>4} 场 ({percentage:>5.1f}%)")
             print()
 
         # 按数据完整度分布
-        if self.stats['by_completeness']:
+        if self.stats["by_completeness"]:
             print("📈 按数据完整度分布:")
-            for completeness, count in sorted(self.stats['by_completeness'].items(), key=lambda x: x[1], reverse=True):
-                percentage = (count / self.stats['valid_matches']) * 100
+            for completeness, count in sorted(
+                self.stats["by_completeness"].items(), key=lambda x: x[1], reverse=True
+            ):
+                percentage = (count / self.stats["valid_matches"]) * 100
                 print(f"   {completeness:>12}: {count:>4} 场 ({percentage:>5.1f}%)")
             print()
 
         # 按比赛状态分布
-        if self.stats['by_status']:
+        if self.stats["by_status"]:
             print("🏁 按比赛状态分布:")
-            for status, count in sorted(self.stats['by_status'].items(), key=lambda x: x[1], reverse=True):
-                percentage = (count / self.stats['valid_matches']) * 100
+            for status, count in sorted(
+                self.stats["by_status"].items(), key=lambda x: x[1], reverse=True
+            ):
+                percentage = (count / self.stats["valid_matches"]) * 100
                 print(f"   {status:>12}: {count:>4} 场 ({percentage:>5.1f}%)")
             print()
 
         print("🚀 使用建议:")
-        print(f"   python src/scripts/backfill_l2_matches.py --input {self.output_file}")
-        print("="*80)
+        print(
+            f"   python src/scripts/backfill_l2_matches.py --input {self.output_file}"
+        )
+        print("=" * 80)
 
     async def run(self) -> None:
         """
@@ -408,38 +446,34 @@ def parse_arguments() -> argparse.Namespace:
   %(prog)s --batch-size 500                   # 设置批量大小
   %(prog)s --dry-run                          # 仅查询，不导出文件
   %(prog)s --no-progress                      # 禁用进度显示
-        """
+        """,
     )
 
     parser.add_argument(
-        '--output-dir', '-o',
-        default='data',
-        help='输出目录路径 (默认: data)'
+        "--output-dir", "-o", default="data", help="输出目录路径 (默认: data)"
     )
 
     parser.add_argument(
-        '--output-filename', '-f',
-        default='l2_backfill_queue.csv',
-        help='输出文件名 (默认: l2_backfill_queue.csv)'
+        "--output-filename",
+        "-f",
+        default="l2_backfill_queue.csv",
+        help="输出文件名 (默认: l2_backfill_queue.csv)",
     )
 
     parser.add_argument(
-        '--batch-size', '-b',
+        "--batch-size",
+        "-b",
         type=int,
         default=1000,
-        help='批量处理大小，优化内存使用 (默认: 1000)'
+        help="批量处理大小，优化内存使用 (默认: 1000)",
     )
 
     parser.add_argument(
-        '--dry-run', '-d',
-        action='store_true',
-        help='仅查询统计，不导出文件'
+        "--dry-run", "-d", action="store_true", help="仅查询统计，不导出文件"
     )
 
     parser.add_argument(
-        '--no-progress', '-np',
-        action='store_true',
-        help='禁用进度显示'
+        "--no-progress", "-np", action="store_true", help="禁用进度显示"
     )
 
     return parser.parse_args()
@@ -448,7 +482,7 @@ def parse_arguments() -> argparse.Namespace:
 async def main():
     """主函数"""
     # 创建日志目录
-    Path('logs').mkdir(exist_ok=True)
+    Path("logs").mkdir(exist_ok=True)
 
     # 解析命令行参数
     args = parse_arguments()
@@ -459,7 +493,7 @@ async def main():
         output_filename=args.output_filename,
         batch_size=args.batch_size,
         show_progress=not args.no_progress,
-        dry_run=args.dry_run
+        dry_run=args.dry_run,
     )
 
     # 创建生成器并运行

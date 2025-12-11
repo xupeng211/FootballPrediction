@@ -19,7 +19,6 @@ import json
 import sys
 import os
 from pathlib import Path
-from typing import Dict, Any, List
 
 # 添加项目根目录到Python路径
 project_root = Path(__file__).parent.parent
@@ -27,14 +26,16 @@ sys.path.insert(0, str(project_root / "src"))
 
 # 配置日志
 import logging
+
 logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
+
 class IntegrityTestResults:
     """完整性测试结果"""
+
     def __init__(self):
         self.tests = {}
         self.total_tests = 0
@@ -44,10 +45,7 @@ class IntegrityTestResults:
 
     def add_test(self, test_name: str, passed: bool, error: str = None):
         """添加测试结果"""
-        self.tests[test_name] = {
-            "passed": passed,
-            "error": error
-        }
+        self.tests[test_name] = {"passed": passed, "error": error}
         self.total_tests += 1
         if passed:
             self.passed_tests += 1
@@ -77,6 +75,7 @@ class IntegrityTestResults:
             if not result["passed"] and result["error"]:
                 logger.info(f"    错误: {result['error']}")
 
+
 class SystemIntegrityTester:
     """系统完整性测试器"""
 
@@ -94,7 +93,7 @@ class SystemIntegrityTester:
                 return False, f"配置文件不存在: {config_file}"
 
             # 验证文件格式
-            with open(config_file, encoding='utf-8') as f:
+            with open(config_file, encoding="utf-8") as f:
                 config_data = json.load(f)
 
             if "leagues" not in config_data:
@@ -151,7 +150,9 @@ class SystemIntegrityTester:
 
             # 设置环境变量
             if not os.getenv("DATABASE_URL"):
-                os.environ["DATABASE_URL"] = "postgresql://postgres:postgres@localhost:5432/football_prediction"
+                os.environ["DATABASE_URL"] = (
+                    "postgresql://postgres:postgres@localhost:5432/football_prediction"
+                )
 
             # 导入回填引擎
             from scripts.backfill_full_history import IndustrialBackfillEngine
@@ -245,7 +246,7 @@ class SystemIntegrityTester:
                 max_retries=3,
                 base_delay=1.0,
                 enable_proxy=False,
-                enable_jitter=True
+                enable_jitter=True,
             )
 
             # 初始化
@@ -279,7 +280,9 @@ class SystemIntegrityTester:
         for test_name, test_func in tests:
             try:
                 passed, message = await test_func()
-                self.results.add_test(test_name, passed, message if not passed else None)
+                self.results.add_test(
+                    test_name, passed, message if not passed else None
+                )
 
                 if passed:
                     logger.info(f"✅ {test_name}: 通过")
@@ -296,6 +299,7 @@ class SystemIntegrityTester:
 
         # 返回总体结果
         return self.results.failed_tests == 0
+
 
 async def main():
     """主函数"""
@@ -320,6 +324,7 @@ async def main():
         logger.error(f"❌ 完整性测试异常: {e}")
         print(f"\n❌ 测试过程中发生异常: {e}")
         return 1
+
 
 if __name__ == "__main__":
     # 🔧 修复: 使用 asyncio.run() 来处理顶层 await

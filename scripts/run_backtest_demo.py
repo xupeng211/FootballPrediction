@@ -20,14 +20,12 @@ import time
 from datetime import datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
-from typing import Dict, List, Any
+from typing import Any
 
 # 添加项目根目录到Python路径
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.backtesting.models import BacktestConfig
 from src.backtesting.engine import run_simple_backtest
-from src.backtesting.strategy import StrategyFactory
 
 # 配置日志
 logging.basicConfig(
@@ -35,8 +33,10 @@ logging.basicConfig(
     format="%(asctime)s [%(levelname)8s] %(name)s: %(message)s",
     handlers=[
         logging.StreamHandler(sys.stdout),
-        logging.FileHandler(f"/tmp/backtest_demo_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log")
-    ]
+        logging.FileHandler(
+            f"/tmp/backtest_demo_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
+        ),
+    ],
 )
 logger = logging.getLogger(__name__)
 
@@ -86,7 +86,7 @@ class BacktestDemo:
                     start_date=start_date,
                     end_date=end_date,
                     initial_balance=initial_balance,
-                    **params
+                    **params,
                 )
 
                 execution_time = time.time() - start_time
@@ -95,18 +95,20 @@ class BacktestDemo:
                 results[strategy_name] = {
                     "description": strategy_desc,
                     "result": result,
-                    "execution_time": execution_time
+                    "execution_time": execution_time,
                 }
 
-                logger.info(f"   ✅ 完成 - ROI: {result.roi:+.2f}%, 胜率: {result.win_rate:.2%}, "
-                           f"下注: {result.total_bets}场, 耗时: {execution_time:.1f}s")
+                logger.info(
+                    f"   ✅ 完成 - ROI: {result.roi:+.2f}%, 胜率: {result.win_rate:.2%}, "
+                    f"下注: {result.total_bets}场, 耗时: {execution_time:.1f}s"
+                )
 
             except Exception as e:
                 logger.error(f"   ❌ {strategy_desc} 失败: {e}")
                 results[strategy_name] = {
                     "description": strategy_desc,
                     "error": str(e),
-                    "execution_time": 0
+                    "execution_time": 0,
                 }
 
         self.results = results
@@ -114,30 +116,36 @@ class BacktestDemo:
 
     def print_comparison_report(self) -> None:
         """打印策略对比报告"""
-        logger.info("\n" + "="*80)
+        logger.info("\n" + "=" * 80)
         logger.info("📊 策略对比报告")
-        logger.info("="*80)
+        logger.info("=" * 80)
 
         if not self.results:
             logger.info("❌ 没有可用的结果")
             return
 
-        print(f"\n{'策略名称':<15} {'ROI':<10} {'胜率':<10} {'下注数':<10} {'盈亏':<15} {'最大连胜':<10}")
+        print(
+            f"\n{'策略名称':<15} {'ROI':<10} {'胜率':<10} {'下注数':<10} {'盈亏':<15} {'最大连胜':<10}"
+        )
         print("-" * 80)
 
         for strategy_name, data in self.results.items():
             if "error" in data:
-                print(f"{data['description']:<15} {'错误':<10} {'-':<10} {'-':<10} {data['error']:<15} {'-':<10}")
+                print(
+                    f"{data['description']:<15} {'错误':<10} {'-':<10} {'-':<10} {data['error']:<15} {'-':<10}"
+                )
             else:
                 result = data["result"]
-                print(f"{data['description']:<15} "
-                      f"{result.roi:+7.2f}% {' ':<2} "
-                      f"{result.win_rate:>6.1%} {' ':<3} "
-                      f"{result.total_bets:>6} {' ':<3} "
-                      f"{result.total_profit_loss:+13,.2f} {' ':<1} "
-                      f"{result.max_consecutive_wins:>5}")
+                print(
+                    f"{data['description']:<15} "
+                    f"{result.roi:+7.2f}% {' ':<2} "
+                    f"{result.win_rate:>6.1%} {' ':<3} "
+                    f"{result.total_bets:>6} {' ':<3} "
+                    f"{result.total_profit_loss:+13,.2f} {' ':<1} "
+                    f"{result.max_consecutive_wins:>5}"
+                )
 
-        print("\n" + "="*80)
+        print("\n" + "=" * 80)
 
         # 找出最佳策略
         best_strategy = None
@@ -180,21 +188,25 @@ class BacktestDemo:
                 strategy_name=strategy_name,
                 start_date=start_date,
                 end_date=end_date,
-                initial_balance=initial_balance
+                initial_balance=initial_balance,
             )
 
             # 打印详细结果
-            logger.info("\n" + "="*80)
+            logger.info("\n" + "=" * 80)
             logger.info("📈 详细回测结果")
-            logger.info("="*80)
+            logger.info("=" * 80)
 
             summary = result.get_summary()
             print(summary)
 
             # 风险分析
             logger.info("\n📊 风险分析:")
-            logger.info(f"   最大资金回撤: {result.initial_balance - result.min_balance:,.2f}")
-            logger.info(f"   回撤率: {((result.initial_balance - result.min_balance) / result.initial_balance * 100):.2f}%")
+            logger.info(
+                f"   最大资金回撤: {result.initial_balance - result.min_balance:,.2f}"
+            )
+            logger.info(
+                f"   回撤率: {((result.initial_balance - result.min_balance) / result.initial_balance * 100):.2f}%"
+            )
             logger.info(f"   夏普比率: {result.sharpe_ratio:.3f}")
             logger.info(f"   盈亏波动率: {result.profit_volatility:.2f}")
 
@@ -208,9 +220,13 @@ class BacktestDemo:
                 # 计算最近10场的表现
                 recent_bets = result.bet_results[-10:]
                 recent_wins = sum(1 for bet in recent_bets if bet.profit_loss > 0)
-                recent_roi = sum(bet.profit_loss for bet in recent_bets) / initial_balance * 100
+                recent_roi = (
+                    sum(bet.profit_loss for bet in recent_bets) / initial_balance * 100
+                )
 
-                logger.info(f"   最近10场胜率: {recent_wins}/{len(recent_bets)} ({recent_wins/len(recent_bets):.1%})")
+                logger.info(
+                    f"   最近10场胜率: {recent_wins}/{len(recent_bets)} ({recent_wins / len(recent_bets):.1%})"
+                )
                 logger.info(f"   最近10场ROI: {recent_roi:+.2f}%")
 
             # 保存详细结果
@@ -219,6 +235,7 @@ class BacktestDemo:
         except Exception as e:
             logger.error(f"❌ 详细回测失败: {e}")
             import traceback
+
             traceback.print_exc()
 
     def _save_detailed_results(self, result, strategy_name: str) -> None:
@@ -229,14 +246,14 @@ class BacktestDemo:
             result: 回测结果
             strategy_name: 策略名称
         """
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
         # 保存结果摘要
         summary_file = f"/tmp/backtest_summary_{strategy_name}_{timestamp}.txt"
-        with open(summary_file, 'w', encoding='utf-8') as f:
+        with open(summary_file, "w", encoding="utf-8") as f:
             f.write(f"回测策略: {strategy_name}\n")
             f.write(f"生成时间: {datetime.now()}\n")
-            f.write("="*50 + "\n\n")
+            f.write("=" * 50 + "\n\n")
             f.write(result.get_summary())
 
         logger.info(f"💾 结果摘要已保存到: {summary_file}")
@@ -244,9 +261,11 @@ class BacktestDemo:
         # 保存下注记录
         if result.bet_results:
             bets_file = f"/tmp/backtest_bets_{strategy_name}_{timestamp}.csv"
-            with open(bets_file, 'w', encoding='utf-8') as f:
+            with open(bets_file, "w", encoding="utf-8") as f:
                 # 写入表头
-                f.write("match_id,bet_type,stake,odds,profit_loss,is_correct,timestamp\n")
+                f.write(
+                    "match_id,bet_type,stake,odds,profit_loss,is_correct,timestamp\n"
+                )
 
                 # 写入数据
                 for bet_result in result.bet_results:
@@ -267,11 +286,7 @@ class BacktestDemo:
         Returns:
             可视化数据字典
         """
-        viz_data = {
-            "strategies": [],
-            "performance": {},
-            "comparison": []
-        }
+        viz_data = {"strategies": [], "performance": {}, "comparison": []}
 
         for strategy_name, data in self.results.items():
             if "error" not in data:
@@ -284,14 +299,18 @@ class BacktestDemo:
                     "total_bets": result.total_bets,
                     "max_consecutive_wins": result.max_consecutive_wins,
                     "max_consecutive_losses": result.max_consecutive_losses,
-                    "sharpe_ratio": result.sharpe_ratio
+                    "sharpe_ratio": result.sharpe_ratio,
                 }
 
                 if result.balance_history:
-                    viz_data["comparison"].append({
-                        "strategy": strategy_name,
-                        "balance_history": [float(b) for b in result.balance_history]
-                    })
+                    viz_data["comparison"].append(
+                        {
+                            "strategy": strategy_name,
+                            "balance_history": [
+                                float(b) for b in result.balance_history
+                            ],
+                        }
+                    )
 
         return viz_data
 
@@ -333,6 +352,7 @@ async def main():
     except Exception as e:
         logger.error(f"❌ 演示执行失败: {e}")
         import traceback
+
         traceback.print_exc()
         return 1
 

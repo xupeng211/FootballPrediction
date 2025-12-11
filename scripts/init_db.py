@@ -24,7 +24,6 @@ sys.path.insert(0, str(project_root))
 
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy import text
-from src.core.config import get_settings
 from src.database.base import Base
 from src.database.models import *  # 导入所有模型以注册到Base.metadata  # noqa: F403
 

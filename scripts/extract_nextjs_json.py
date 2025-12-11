@@ -9,7 +9,7 @@ Next.js架构专家 - 绕过API鉴权，直接获取静态生成的JSON数据
 import requests
 import json
 import re
-from typing import Optional, Dict, Any
+from typing import Optional, Any
 
 
 class NextJSDataExtractor:
@@ -263,7 +263,7 @@ def main():
             total_checks = len(verification)
 
             print(
-                f"   📊 购物清单通过率: {passed_checks}/{total_checks} ({(passed_checks/total_checks)*100:.1f}%)"
+                f"   📊 购物清单通过率: {passed_checks}/{total_checks} ({(passed_checks / total_checks) * 100:.1f}%)"
             )
 
             if passed_checks >= 4:
@@ -290,7 +290,7 @@ def main():
     print("🎯" * 18)
 
     print(
-        f"📈 成功率: {success_count}/{total_count} ({(success_count/total_count)*100:.1f}%)"
+        f"📈 成功率: {success_count}/{total_count} ({(success_count / total_count) * 100:.1f}%)"
     )
 
     if success_count > 0:

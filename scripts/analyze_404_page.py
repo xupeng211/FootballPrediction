@@ -94,7 +94,7 @@ def extract_hidden_data(html: str) -> bool:
         print(f"   ✅ 找到Next.js数据: {len(next_matches)} 个")
 
         for i, data in enumerate(next_matches):
-            print(f"      数据块 {i+1}: 长度 {len(data)}")
+            print(f"      数据块 {i + 1}: 长度 {len(data)}")
 
             try:
                 parsed_data = json.loads(data)

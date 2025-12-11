@@ -12,7 +12,7 @@
 import json
 import sys
 from pathlib import Path
-from sqlalchemy import create_engine, text, Column, Integer, String, MetaData, Table
+from sqlalchemy import create_engine, text
 from sqlalchemy.exc import SQLAlchemyError
 
 # 添加项目路径

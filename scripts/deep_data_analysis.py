@@ -104,7 +104,7 @@ def analyze_structure(obj, path: str, max_depth: int = 3, current_depth: int = 0
         if len(keys) <= 5:
             print(f"{indent}   Keys: {keys}")
         else:
-            print(f"{indent}   Keys: {keys[:5]}... (+{len(keys)-5})")
+            print(f"{indent}   Keys: {keys[:5]}... (+{len(keys) - 5})")
 
         # 递归分析重要的子项
         important_keys = [

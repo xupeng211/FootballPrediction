@@ -8,11 +8,10 @@ Unified Prediction API
 
 import logging
 from datetime import datetime
-from typing import Any,  Optional
+from typing import Optional
 from contextlib import asynccontextmanager
 
 from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
-from fastapi.responses import JSONResponse
 
 from src.inference import (
     get_predictor,
@@ -29,7 +28,6 @@ from src.inference import (
     BatchPredictionResponse,
     ModelListResponse,
     HealthCheckResponse,
-    ErrorResponse,
 )
 from src.inference.errors import (
     InferenceError,

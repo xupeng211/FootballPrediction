@@ -30,10 +30,9 @@ import json
 import logging
 import sys
 import os
-import time
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, List, Any, Optional, Tuple, Set
+from typing import Any
 from dataclasses import dataclass
 from random import uniform
 
@@ -47,14 +46,15 @@ logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     handlers=[
         logging.FileHandler("backfill_full_history.log"),
-        logging.StreamHandler()
-    ]
+        logging.StreamHandler(),
+    ],
 )
 logger = logging.getLogger(__name__)
 
 # 尝试导入进度条
 try:
     from tqdm import tqdm
+
     TQDM_AVAILABLE = True
 except ImportError:
     TQDM_AVAILABLE = False
@@ -65,6 +65,7 @@ try:
     from collectors.fotmob_api_collector import FotMobAPICollector
     from database.async_manager import get_db_session, initialize_database
     from database.models.match import Match
+
     COLLECTOR_AVAILABLE = True
 except ImportError as e:
     logger.error(f"❌ 无法导入采集器模块: {e}")
@@ -72,14 +73,13 @@ except ImportError as e:
 
 # 配置常量
 DATABASE_URL = os.getenv(
-    "DATABASE_URL",
-    "postgresql://postgres:postgres@localhost:5432/football_prediction"
+    "DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/football_prediction"
 )
 
 # 🏗️ 硬编码补丁 - 高价值联赛 ID
 HARDCODED_PATCHES = {
-    "Championship": 48,      # 英冠 - 关键次级联赛
-    "Liga Portugal": 61,     # 葡超 - 葡萄牙顶级联赛
+    "Championship": 48,  # 英冠 - 关键次级联赛
+    "Liga Portugal": 61,  # 葡超 - 葡萄牙顶级联赛
 }
 
 # 时间机器配置 - 倒序回填策略 (优先近期高价值数据)
@@ -91,25 +91,60 @@ RATE_LIMIT_COOLDOWN = 60  # 429 触发时的冷却时间(秒)
 
 # 洲际联赛配置 (用于赛季格式判断)
 EUROPEAN_COUNTRIES = {
-    "England", "Spain", "Germany", "Italy", "France",
-    "Netherlands", "Portugal", "Belgium", "Scotland",
-    "Turkey", "Russia", "Ukraine", "Poland", "Czech Republic",
-    "Austria", "Switzerland", "Denmark", "Norway", "Sweden"
+    "England",
+    "Spain",
+    "Germany",
+    "Italy",
+    "France",
+    "Netherlands",
+    "Portugal",
+    "Belgium",
+    "Scotland",
+    "Turkey",
+    "Russia",
+    "Ukraine",
+    "Poland",
+    "Czech Republic",
+    "Austria",
+    "Switzerland",
+    "Denmark",
+    "Norway",
+    "Sweden",
 }
 
 AMERICAN_COUNTRIES = {
-    "USA", "Brazil", "Argentina", "Mexico", "Chile", "Colombia",
-    "Peru", "Uruguay", "Paraguay", "Ecuador", "Bolivia", "Venezuela"
+    "USA",
+    "Brazil",
+    "Argentina",
+    "Mexico",
+    "Chile",
+    "Colombia",
+    "Peru",
+    "Uruguay",
+    "Paraguay",
+    "Ecuador",
+    "Bolivia",
+    "Venezuela",
 }
 
 ASIAN_COUNTRIES = {
-    "Japan", "South Korea", "China", "Australia", "Saudi Arabia",
-    "UAE", "Qatar", "Iran", "Iraq", "Jordan"
+    "Japan",
+    "South Korea",
+    "China",
+    "Australia",
+    "Saudi Arabia",
+    "UAE",
+    "Qatar",
+    "Iran",
+    "Iraq",
+    "Jordan",
 }
+
 
 @dataclass
 class BackfillStats:
     """回填统计信息"""
+
     total_matches: int = 0
     processed_matches: int = 0
     skipped_matches: int = 0
@@ -155,6 +190,7 @@ class BackfillStats:
             f"⏱️ 已用: {self.elapsed_time}"
         )
 
+
 class SeasonFormatGenerator:
     """赛季格式生成器 - 智能处理不同联赛的赛季格式"""
 
@@ -171,52 +207,67 @@ class SeasonFormatGenerator:
         # 欧洲联赛主要使用跨年格式
         if country in EUROPEAN_COUNTRIES:
             if league_type == "league":
-                season_formats.extend([
-                    f"{year}/{year + 1}",  # 2023/2024
-                    f"{year-1}/{year}",    # 2022/2023 (对于年初比赛)
-                ])
+                season_formats.extend(
+                    [
+                        f"{year}/{year + 1}",  # 2023/2024
+                        f"{year - 1}/{year}",  # 2022/2023 (对于年初比赛)
+                    ]
+                )
             else:  # 杯赛
-                season_formats.extend([
-                    str(year),            # 2023
-                    f"{year}/{year + 1}",  # 2023/2024
-                ])
+                season_formats.extend(
+                    [
+                        str(year),  # 2023
+                        f"{year}/{year + 1}",  # 2023/2024
+                    ]
+                )
 
         # 美洲联赛主要使用单年格式
         elif country in AMERICAN_COUNTRIES:
-            season_formats.extend([
-                str(year),            # 2023
-                f"{year}/{year + 1}",  # 备选跨年格式
-            ])
+            season_formats.extend(
+                [
+                    str(year),  # 2023
+                    f"{year}/{year + 1}",  # 备选跨年格式
+                ]
+            )
 
         # 亚洲联赛混合使用
         elif country in ASIAN_COUNTRIES:
             if country in ["Japan", "South Korea"]:  # 跨年赛季
-                season_formats.extend([
-                    f"{year}/{year + 1}",
-                    str(year),
-                ])
+                season_formats.extend(
+                    [
+                        f"{year}/{year + 1}",
+                        str(year),
+                    ]
+                )
             else:  # 单年赛季
-                season_formats.extend([
-                    str(year),
-                    f"{year}/{year + 1}",
-                ])
+                season_formats.extend(
+                    [
+                        str(year),
+                        f"{year}/{year + 1}",
+                    ]
+                )
 
         # 国际赛事
         elif league_type == "cup" and "International" in country:
-            season_formats.extend([
-                str(year),
-                f"{year}/{year + 1}",
-            ])
+            season_formats.extend(
+                [
+                    str(year),
+                    f"{year}/{year + 1}",
+                ]
+            )
 
         # 默认格式
         else:
-            season_formats.extend([
-                f"{year}/{year + 1}",
-                str(year),
-            ])
+            season_formats.extend(
+                [
+                    f"{year}/{year + 1}",
+                    str(year),
+                ]
+            )
 
         # 去重并返回
         return list(dict.fromkeys(season_formats))
+
 
 class IndustrialBackfillEngine:
     """工业级回填引擎"""
@@ -245,7 +296,7 @@ class IndustrialBackfillEngine:
             max_retries=3,
             base_delay=1.0,
             enable_proxy=False,  # 回填时禁用代理以提高速度
-            enable_jitter=True
+            enable_jitter=True,
         )
 
         await self.collector.initialize()
@@ -283,7 +334,7 @@ class IndustrialBackfillEngine:
             return []
 
         try:
-            with open(config_path, encoding='utf-8') as f:
+            with open(config_path, encoding="utf-8") as f:
                 config = json.load(f)
 
             leagues = config.get("leagues", [])
@@ -301,7 +352,9 @@ class IndustrialBackfillEngine:
             return []
 
     # 🔧 修复: 这个方法没有异步操作，改为同步函数
-    def _apply_hardcoded_patches(self, leagues: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    def _apply_hardcoded_patches(
+        self, leagues: list[dict[str, Any]]
+    ) -> list[dict[str, Any]]:
         """应用硬编码补丁"""
         logger.info("🔧 应用硬编码补丁...")
 
@@ -315,9 +368,11 @@ class IndustrialBackfillEngine:
                     "name": league_name,
                     "id": league_id,
                     "tier": 2,  # 默认为二级联赛
-                    "country": "England" if league_name == "Championship" else "Portugal",
+                    "country": "England"
+                    if league_name == "Championship"
+                    else "Portugal",
                     "type": "league",
-                    "source": "hardcoded_patch"
+                    "source": "hardcoded_patch",
                 }
                 leagues.append(patch_league)
                 logger.info(f"🔧 添加硬编码补丁联赛: {league_name} (ID: {league_id})")
@@ -337,12 +392,16 @@ class IndustrialBackfillEngine:
             logger.debug(f"🔍 获取联赛 {league_id} 赛季 {season} 的比赛列表...")
 
             # 模拟数据 - 实际实现中需要替换为真实的API调用
-            match_ids = [f"{league_id}_{i}_{hash(season) % 10000}" for i in range(1, 50)]  # 模拟49场比赛
+            match_ids = [
+                f"{league_id}_{i}_{hash(season) % 10000}" for i in range(1, 50)
+            ]  # 模拟49场比赛
 
             # 随机延迟模拟网络请求
             await asyncio.sleep(uniform(0.1, 0.3))
 
-            logger.info(f"✅ 联赛 {league_id} 赛季 {season}: 找到 {len(match_ids)} 场比赛")
+            logger.info(
+                f"✅ 联赛 {league_id} 赛季 {season}: 找到 {len(match_ids)} 场比赛"
+            )
             return match_ids
 
         except Exception as e:
@@ -371,13 +430,17 @@ class IndustrialBackfillEngine:
                     return True
                 else:
                     self.stats.failed_matches += 1
-                    self.stats.errors_by_type["collection_failed"] = self.stats.errors_by_type.get("collection_failed", 0) + 1
+                    self.stats.errors_by_type["collection_failed"] = (
+                        self.stats.errors_by_type.get("collection_failed", 0) + 1
+                    )
                     return False
 
             except Exception as e:
                 self.stats.failed_matches += 1
                 error_type = type(e).__name__
-                self.stats.errors_by_type[error_type] = self.stats.errors_by_type.get(error_type, 0) + 1
+                self.stats.errors_by_type[error_type] = (
+                    self.stats.errors_by_type.get(error_type, 0) + 1
+                )
                 logger.error(f"❌ 处理比赛 {match_id} 失败: {e}")
                 return False
 
@@ -397,9 +460,17 @@ class IndustrialBackfillEngine:
                 error_str = str(e).lower()
 
                 # 检查是否为429错误
-                if "429" in error_str or "too many requests" in error_str or "rate limit" in error_str:
-                    logger.warning(f"⚠️ Rate Limit Hit! Cooling down for {RATE_LIMIT_COOLDOWN}s... (Attempt {attempt + 1}/{max_retries})")
-                    self.stats.errors_by_type["rate_limit_429"] = self.stats.errors_by_type.get("rate_limit_429", 0) + 1
+                if (
+                    "429" in error_str
+                    or "too many requests" in error_str
+                    or "rate limit" in error_str
+                ):
+                    logger.warning(
+                        f"⚠️ Rate Limit Hit! Cooling down for {RATE_LIMIT_COOLDOWN}s... (Attempt {attempt + 1}/{max_retries})"
+                    )
+                    self.stats.errors_by_type["rate_limit_429"] = (
+                        self.stats.errors_by_type.get("rate_limit_429", 0) + 1
+                    )
 
                     # 强制冷却
                     await asyncio.sleep(RATE_LIMIT_COOLDOWN)
@@ -409,7 +480,9 @@ class IndustrialBackfillEngine:
                         logger.info("🔄 Retrying after cooldown...")
                         continue
                     else:
-                        logger.error(f"❌ Max retries exceeded for {match_id} after 429 errors")
+                        logger.error(
+                            f"❌ Max retries exceeded for {match_id} after 429 errors"
+                        )
                         return None
 
                 else:
@@ -439,14 +512,29 @@ class IndustrialBackfillEngine:
                         updated_at = NOW()
                     WHERE fotmob_id = :fotmob_id
                     """
-                    await session.execute(update_query, {
-                        "stats_json": json.dumps(match_data.stats_json) if match_data.stats_json else None,
-                        "lineups_json": json.dumps(match_data.lineups_json) if match_data.lineups_json else None,
-                        "odds_snapshot_json": json.dumps(match_data.odds_snapshot_json) if match_data.odds_snapshot_json else None,
-                        "match_info": json.dumps(match_data.match_info) if match_data.match_info else None,
-                        "environment_json": json.dumps(match_data.environment_json) if match_data.environment_json else None,
-                        "fotmob_id": match_data.fotmob_id
-                    })
+                    await session.execute(
+                        update_query,
+                        {
+                            "stats_json": json.dumps(match_data.stats_json)
+                            if match_data.stats_json
+                            else None,
+                            "lineups_json": json.dumps(match_data.lineups_json)
+                            if match_data.lineups_json
+                            else None,
+                            "odds_snapshot_json": json.dumps(
+                                match_data.odds_snapshot_json
+                            )
+                            if match_data.odds_snapshot_json
+                            else None,
+                            "match_info": json.dumps(match_data.match_info)
+                            if match_data.match_info
+                            else None,
+                            "environment_json": json.dumps(match_data.environment_json)
+                            if match_data.environment_json
+                            else None,
+                            "fotmob_id": match_data.fotmob_id,
+                        },
+                    )
                 else:
                     # 插入新记录
                     insert_query = """
@@ -462,21 +550,36 @@ class IndustrialBackfillEngine:
                         :match_info, :environment_json, NOW(), NOW()
                     )
                     """
-                    await session.execute(insert_query, {
-                        "fotmob_id": match_data.fotmob_id,
-                        "home_score": match_data.home_score,
-                        "away_score": match_data.away_score,
-                        "status": match_data.status,
-                        "match_time": match_data.match_time,
-                        "venue": match_data.venue,
-                        "attendance": match_data.attendance,
-                        "referee": match_data.referee,
-                        "stats_json": json.dumps(match_data.stats_json) if match_data.stats_json else None,
-                        "lineups_json": json.dumps(match_data.lineups_json) if match_data.lineups_json else None,
-                        "odds_snapshot_json": json.dumps(match_data.odds_snapshot_json) if match_data.odds_snapshot_json else None,
-                        "match_info": json.dumps(match_data.match_info) if match_data.match_info else None,
-                        "environment_json": json.dumps(match_data.environment_json) if match_data.environment_json else None,
-                    })
+                    await session.execute(
+                        insert_query,
+                        {
+                            "fotmob_id": match_data.fotmob_id,
+                            "home_score": match_data.home_score,
+                            "away_score": match_data.away_score,
+                            "status": match_data.status,
+                            "match_time": match_data.match_time,
+                            "venue": match_data.venue,
+                            "attendance": match_data.attendance,
+                            "referee": match_data.referee,
+                            "stats_json": json.dumps(match_data.stats_json)
+                            if match_data.stats_json
+                            else None,
+                            "lineups_json": json.dumps(match_data.lineups_json)
+                            if match_data.lineups_json
+                            else None,
+                            "odds_snapshot_json": json.dumps(
+                                match_data.odds_snapshot_json
+                            )
+                            if match_data.odds_snapshot_json
+                            else None,
+                            "match_info": json.dumps(match_data.match_info)
+                            if match_data.match_info
+                            else None,
+                            "environment_json": json.dumps(match_data.environment_json)
+                            if match_data.environment_json
+                            else None,
+                        },
+                    )
 
                 await session.commit()
                 self.processed_match_ids.add(match_data.fotmob_id)
@@ -517,7 +620,9 @@ class IndustrialBackfillEngine:
             logger.error(f"❌ 回填流程执行失败: {e}")
             return False
 
-    async def _generate_backfill_tasks(self, leagues: list[dict[str, Any]]) -> list[tuple[str, dict[str, Any]]]:
+    async def _generate_backfill_tasks(
+        self, leagues: list[dict[str, Any]]
+    ) -> list[tuple[str, dict[str, Any]]]:
         """生成回填任务列表"""
         logger.info("📋 生成回填任务...")
 
@@ -531,7 +636,9 @@ class IndustrialBackfillEngine:
 
             for year in YEARS_TO_BACKFILL:
                 # 生成赛季格式
-                season_formats = SeasonFormatGenerator.generate_season_string(year, league)
+                season_formats = SeasonFormatGenerator.generate_season_string(
+                    year, league
+                )
 
                 for season in season_formats:
                     try:
@@ -542,7 +649,9 @@ class IndustrialBackfillEngine:
                             tasks.append((match_id, league))
 
                     except Exception as e:
-                        logger.warning(f"⚠️ 获取联赛 {league_name} 赛季 {season} 失败: {e}")
+                        logger.warning(
+                            f"⚠️ 获取联赛 {league_name} 赛季 {season} 失败: {e}"
+                        )
                         continue
 
         logger.info(f"✅ 生成回填任务: {len(tasks)} 个")
@@ -561,7 +670,7 @@ class IndustrialBackfillEngine:
         processed_count = 0
 
         for i in range(0, len(tasks), batch_size):
-            batch = tasks[i:i + batch_size]
+            batch = tasks[i : i + batch_size]
 
             # 创建并发任务
             batch_tasks = [
@@ -595,9 +704,9 @@ class IndustrialBackfillEngine:
 
     async def _print_final_stats(self):
         """打印最终统计信息"""
-        logger.info("\n" + "="*60)
+        logger.info("\n" + "=" * 60)
         logger.info("🏁 全历史数据回填完成")
-        logger.info("="*60)
+        logger.info("=" * 60)
         logger.info(f"📊 总比赛数: {self.stats.total_matches}")
         logger.info(f"✅ 成功处理: {self.stats.successful_matches}")
         logger.info(f"⏭️ 跳过已存在: {self.stats.skipped_matches}")
@@ -620,12 +729,16 @@ class IndustrialBackfillEngine:
                 total_429_cooldown = rate_429_count * RATE_LIMIT_COOLDOWN
                 logger.info("\n🛡️ 风控报告:")
                 logger.info(f"  429触发次数: {rate_429_count}")
-                logger.info(f"  总冷却时间: {total_429_cooldown//60}分{total_429_cooldown%60}秒")
-                logger.info(f"  平均处理速度: ~{self.stats.successful_matches / max(1, (self.stats.elapsed_time.total_seconds() - total_429_cooldown) / 3600):.0f}场/小时 (不含冷却时间)")
+                logger.info(
+                    f"  总冷却时间: {total_429_cooldown // 60}分{total_429_cooldown % 60}秒"
+                )
+                logger.info(
+                    f"  平均处理速度: ~{self.stats.successful_matches / max(1, (self.stats.elapsed_time.total_seconds() - total_429_cooldown) / 3600):.0f}场/小时 (不含冷却时间)"
+                )
             else:
                 logger.info("\n🛡️ 风控报告: 未触发429限制，安全运行")
 
-        logger.info("="*60)
+        logger.info("=" * 60)
         logger.info("🎉 全历史数据回填任务完成!")
 
     async def cleanup(self):
@@ -634,10 +747,13 @@ class IndustrialBackfillEngine:
             await self.collector.close()
         logger.info("🧹 资源清理完成")
 
+
 async def main():
     """主函数"""
     logger.info("🛡️ 启动安全加固版全历史数据回填脚本 (已修复异步调用错误)")
-    logger.info(f"📊 策略配置: 倒序回填 ({YEARS_TO_BACKFILL[0]} -> {YEARS_TO_BACKFILL[-1]})")
+    logger.info(
+        f"📊 策略配置: 倒序回填 ({YEARS_TO_BACKFILL[0]} -> {YEARS_TO_BACKFILL[-1]})"
+    )
     logger.info(f"🔒 风控设置: {CONCURRENT_LIMIT}并发 + {MIN_DELAY}-{MAX_DELAY}秒延迟")
     logger.info(f"🚨 429避障: {RATE_LIMIT_COOLDOWN}秒自动冷却 + 3次重试")
 
@@ -673,6 +789,7 @@ async def main():
 
     finally:
         await engine.cleanup()
+
 
 if __name__ == "__main__":
     # 运行主程序

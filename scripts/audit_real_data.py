@@ -8,7 +8,6 @@
 import asyncio
 import sys
 import json
-from datetime import datetime, timedelta
 from pathlib import Path
 
 # 添加项目根目录到Python路径
@@ -17,6 +16,7 @@ sys.path.insert(0, str(project_root / "src"))
 
 from database.async_manager import initialize_database, get_async_db_session
 from sqlalchemy import text
+
 
 def format_json_print(data, indent=2):
     """格式化打印JSON数据"""
@@ -32,6 +32,7 @@ def format_json_print(data, indent=2):
         print(json.dumps(parsed, indent=indent, ensure_ascii=False))
     except:
         print(f"      {data}")
+
 
 async def audit_real_data():
     """审计真实数据质量"""
@@ -94,7 +95,9 @@ async def audit_real_data():
 
             # 基础信息验证
             print("\n🏟️  基础信息验证:")
-            print(f"   比赛: {real_record.home_team_name} vs {real_record.away_team_name}")
+            print(
+                f"   比赛: {real_record.home_team_name} vs {real_record.away_team_name}"
+            )
             print(f"   状态: {real_record.status}")
             print(f"   场地: {real_record.venue}")
             print(f"   FotMob ID: {real_record.fotmob_id}")
@@ -106,9 +109,9 @@ async def audit_real_data():
             # 深度验证 - 裁判信息
             print("\n👨‍⚖️  裁判信息验证:")
             environment_data = real_record.environment_json
-            if environment_data and 'referee' in environment_data:
-                referee = environment_data['referee']
-                if referee and referee.get('name'):
+            if environment_data and "referee" in environment_data:
+                referee = environment_data["referee"]
+                if referee and referee.get("name"):
                     print(f"   ✅ 裁判姓名: {referee.get('name')}")
                     print(f"   国籍: {referee.get('nationality', 'Unknown')}")
                     print(f"   ID: {referee.get('id', 'Unknown')}")
@@ -121,8 +124,8 @@ async def audit_real_data():
 
             # 深度验证 - 天气信息
             print("\n🌤️  天气信息验证:")
-            if environment_data and 'weather' in environment_data:
-                weather = environment_data['weather']
+            if environment_data and "weather" in environment_data:
+                weather = environment_data["weather"]
                 if weather:
                     print(f"   ✅ 温度: {weather.get('temperature_celsius')}°C")
                     print(f"   状况: {weather.get('condition')}")
@@ -148,12 +151,18 @@ async def audit_real_data():
             print("\n📈 详细统计数据验证:")
             stats_data = real_record.stats_json
             if stats_data:
-                print(f"   ✅ 控球率数据: 主队 {real_record.home_possession}% - 客队 {real_record.away_possession}%")
-                print(f"   ✅ 射门数据: 主队 {real_record.home_shots} - 客队 {real_record.away_shots}")
+                print(
+                    f"   ✅ 控球率数据: 主队 {real_record.home_possession}% - 客队 {real_record.away_possession}%"
+                )
+                print(
+                    f"   ✅ 射门数据: 主队 {real_record.home_shots} - 客队 {real_record.away_shots}"
+                )
 
-                if 'possession' in stats_data:
-                    possession = stats_data['possession']
-                    print(f"   JSON控球率: 主队 {possession.get('home')}% - 客队 {possession.get('away')}%")
+                if "possession" in stats_data:
+                    possession = stats_data["possession"]
+                    print(
+                        f"   JSON控球率: 主队 {possession.get('home')}% - 客队 {possession.get('away')}%"
+                    )
             else:
                 print("   ❌ 详细统计数据为空")
                 return False
@@ -162,16 +171,16 @@ async def audit_real_data():
             print("\n👥 阵容信息验证:")
             lineups_data = real_record.lineups_json
             if lineups_data:
-                home_team = lineups_data.get('home_team', {})
-                away_team = lineups_data.get('away_team', {})
+                home_team = lineups_data.get("home_team", {})
+                away_team = lineups_data.get("away_team", {})
 
-                if home_team.get('formation') and away_team.get('formation'):
+                if home_team.get("formation") and away_team.get("formation"):
                     print(f"   ✅ 主队阵型: {home_team.get('formation')}")
                     print(f"   ✅ 客队阵型: {away_team.get('formation')}")
 
-                    if home_team.get('manager'):
+                    if home_team.get("manager"):
                         print(f"   ✅ 主队教练: {home_team.get('manager')}")
-                    if away_team.get('manager'):
+                    if away_team.get("manager"):
                         print(f"   ✅ 客队教练: {away_team.get('manager')}")
                 else:
                     print("   ❌ 阵型信息不完整")
@@ -183,13 +192,15 @@ async def audit_real_data():
             # 深度验证 - 比赛事件
             print("\n⚽ 比赛事件验证:")
             events_data = real_record.events
-            if events_data and 'goals' in events_data:
-                goals = events_data['goals']
+            if events_data and "goals" in events_data:
+                goals = events_data["goals"]
                 if goals:
                     print(f"   ✅ 进球事件: {len(goals)} 个")
                     for i, goal in enumerate(goals[:3], 1):  # 只显示前3个
-                        scorer = goal.get('scorer', {})
-                        print(f"      {i}. {goal.get('minute')}\\' - {scorer.get('name', 'Unknown')}")
+                        scorer = goal.get("scorer", {})
+                        print(
+                            f"      {i}. {goal.get('minute')}\\' - {scorer.get('name', 'Unknown')}"
+                        )
                 else:
                     print("   ⚠️  比赛可能未开始或没有进球")
             else:
@@ -199,11 +210,12 @@ async def audit_real_data():
             print("\n🎯 数据完整性评分:")
             checks = [
                 real_record.home_team_name and real_record.away_team_name,  # 基础信息
-                environment_data and 'referee' in environment_data,         # 裁判
-                environment_data and 'weather' in environment_data,         # 天气
-                real_record.home_xg is not None and real_record.away_xg is not None,  # xG
-                stats_data is not None,                                     # 统计
-                lineups_data is not None                                     # 阵容
+                environment_data and "referee" in environment_data,  # 裁判
+                environment_data and "weather" in environment_data,  # 天气
+                real_record.home_xg is not None
+                and real_record.away_xg is not None,  # xG
+                stats_data is not None,  # 统计
+                lineups_data is not None,  # 阵容
             ]
 
             completeness = sum(1 for check in checks if check) / len(checks) * 100
@@ -235,10 +247,12 @@ async def audit_real_data():
         except Exception as e:
             print(f"\n❌ 审计过程出错: {str(e)}")
             import traceback
+
             traceback.print_exc()
             return False
         finally:
             await session.close()
+
 
 async def main():
     """主函数"""
@@ -265,6 +279,7 @@ async def main():
         print("   要么没有采集数据，要么数据质量不达标")
 
     return audit_result
+
 
 if __name__ == "__main__":
     success = asyncio.run(main())

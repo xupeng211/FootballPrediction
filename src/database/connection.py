@@ -16,11 +16,9 @@ For new code, please use the new interface in src/database/async_manager.py
 """
 
 import logging
-from collections.abc import AsyncGenerator, Generator
+from collections.abc import AsyncGenerator
 
-from sqlalchemy import create_engine
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from .async_manager import (
     get_db_session as _new_get_db_session,
@@ -59,6 +57,7 @@ __all__ = [
 # 向后兼容性别名（标记为过时）
 # DEPRECATED ALIASES - Marked as deprecated
 # ============================================================================
+
 
 # 新的初始化函数
 def initialize_database(database_url=None, **kwargs):

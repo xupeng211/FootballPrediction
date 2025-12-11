@@ -274,7 +274,7 @@ async def main():
                 years = int(arg.split("=")[1])
                 current_year = datetime.now().year
                 seasons = [
-                    f"{year}/{year+1}"
+                    f"{year}/{year + 1}"
                     for year in range(current_year - years, current_year)
                 ]
             elif arg.startswith("--max-concurrent="):

@@ -9,7 +9,6 @@ Next.js架构专家 - 通过分析现有页面发现真实的路由模式
 import requests
 import json
 import re
-from typing import List
 
 
 def analyze_page_routes():

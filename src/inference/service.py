@@ -26,7 +26,7 @@ from .schemas import (
     PredictionRequest,
     PredictionResponse,
     ModelInfoResponse,
-    ErrorResponse
+    ErrorResponse,
 )
 
 logger = logging.getLogger(__name__)
@@ -38,12 +38,14 @@ router = APIRouter(
     responses={
         404: {"model": ErrorResponse, "description": "Not Found"},
         422: {"model": ErrorResponse, "description": "Validation Error"},
-        500: {"model": ErrorResponse, "description": "Internal Server Error"}
-    }
+        500: {"model": ErrorResponse, "description": "Internal Server Error"},
+    },
 )
 
 
-@router.post("/predict", response_model=PredictionResponse, status_code=status.HTTP_200_OK)
+@router.post(
+    "/predict", response_model=PredictionResponse, status_code=status.HTTP_200_OK
+)
 async def predict_match(request: PredictionRequest) -> PredictionResponse:
     """
     对单场比赛进行预测
@@ -61,14 +63,16 @@ async def predict_match(request: PredictionRequest) -> PredictionResponse:
 
     try:
         # 记录请求
-        logger.info(f"🎯 收到预测请求: 比赛ID {request.match_id}, "
-                   f"{request.home_team_name} vs {request.away_team_name}")
+        logger.info(
+            f"🎯 收到预测请求: 比赛ID {request.match_id}, "
+            f"{request.home_team_name} vs {request.away_team_name}"
+        )
 
         # 检查模型是否已加载
         if not model_loader.is_loaded():
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail="Model not loaded. Please check server logs."
+                detail="Model not loaded. Please check server logs.",
             )
 
         # 转换为模型需要的格式
@@ -87,7 +91,7 @@ async def predict_match(request: PredictionRequest) -> PredictionResponse:
             "away_shots_on_target": request.away_shots_on_target,
             "league_id": request.league_id,
             "league_name": request.league_name,
-            "stats_json": request.stats_json or {}
+            "stats_json": request.stats_json or {},
         }
 
         # 执行预测
@@ -102,16 +106,20 @@ async def predict_match(request: PredictionRequest) -> PredictionResponse:
             prediction=prediction_result["prediction"],
             probabilities=prediction_result["probabilities"],
             confidence=prediction_result["confidence"],
-            model_version=model_loader.model_metadata.get("version", "v1.0.0") if model_loader.model_metadata else "v1.0.0",
+            model_version=model_loader.model_metadata.get("version", "v1.0.0")
+            if model_loader.model_metadata
+            else "v1.0.0",
             timestamp=datetime.now(),
             feature_count=prediction_result["feature_count"],
             missing_features=prediction_result["missing_features"],
-            processing_time_ms=round(processing_time_ms, 2)
+            processing_time_ms=round(processing_time_ms, 2),
         )
 
-        logger.info(f"✅ 预测完成: {response.prediction} "
-                   f"(置信度: {response.confidence:.3f}, "
-                   f"处理时间: {processing_time_ms:.1f}ms)")
+        logger.info(
+            f"✅ 预测完成: {response.prediction} "
+            f"(置信度: {response.confidence:.3f}, "
+            f"处理时间: {processing_time_ms:.1f}ms)"
+        )
 
         return response
 
@@ -122,7 +130,7 @@ async def predict_match(request: PredictionRequest) -> PredictionResponse:
         logger.error(f"❌ 预测失败: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Prediction failed: {str(e)}"
+            detail=f"Prediction failed: {str(e)}",
         )
 
 
@@ -140,17 +148,21 @@ async def get_model_info() -> ModelInfoResponse:
         if model_info["status"] == "not_loaded":
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail="Model not loaded"
+                detail="Model not loaded",
             )
 
         response = ModelInfoResponse(
             status=model_info["status"],
             model_type=model_info["model_type"],
-            model_version=model_info["model_metadata"].get("version", "v1.0.0") if model_info.get("model_metadata") else "v1.0.0",
+            model_version=model_info["model_metadata"].get("version", "v1.0.0")
+            if model_info.get("model_metadata")
+            else "v1.0.0",
             feature_count=model_info["feature_count"],
             target_classes=model_info["target_classes"],
-            performance_metrics=model_info["model_metadata"].get("performance", {}) if model_info.get("model_metadata") else None,
-            loaded_at=datetime.now()  # 这里应该从模型加载器获取实际加载时间
+            performance_metrics=model_info["model_metadata"].get("performance", {})
+            if model_info.get("model_metadata")
+            else None,
+            loaded_at=datetime.now(),  # 这里应该从模型加载器获取实际加载时间
         )
 
         return response
@@ -161,7 +173,7 @@ async def get_model_info() -> ModelInfoResponse:
         logger.error(f"❌ 获取模型信息失败: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to get model info: {str(e)}"
+            detail=f"Failed to get model info: {str(e)}",
         )
 
 
@@ -181,7 +193,7 @@ async def health_check() -> Dict[str, Any]:
             "service": "football-prediction-inference",
             "model_status": model_status,
             "timestamp": datetime.now().isoformat(),
-            "version": "v1.0.0"
+            "version": "v1.0.0",
         }
     except Exception as e:
         logger.error(f"❌ 健康检查失败: {e}")
@@ -190,8 +202,8 @@ async def health_check() -> Dict[str, Any]:
             content={
                 "status": "unhealthy",
                 "error": str(e),
-                "timestamp": datetime.now().isoformat()
-            }
+                "timestamp": datetime.now().isoformat(),
+            },
         )
 
 
@@ -208,14 +220,13 @@ async def predict_batch(matches: List[Dict[str, Any]]) -> Dict[str, Any]:
     """
     if not model_loader.is_loaded():
         raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Model not loaded"
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Model not loaded"
         )
 
     if len(matches) > 10:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Maximum 10 matches allowed per batch request"
+            detail="Maximum 10 matches allowed per batch request",
         )
 
     start_time = time.time()
@@ -223,24 +234,30 @@ async def predict_batch(matches: List[Dict[str, Any]]) -> Dict[str, Any]:
 
     try:
         for i, match_data in enumerate(matches):
-            logger.info(f"处理第 {i+1}/{len(matches)} 场比赛")
+            logger.info(f"处理第 {i + 1}/{len(matches)} 场比赛")
 
             # 确保必要的字段存在
-            if "match_id" not in match_data or "home_team_name" not in match_data or "away_team_name" not in match_data:
+            if (
+                "match_id" not in match_data
+                or "home_team_name" not in match_data
+                or "away_team_name" not in match_data
+            ):
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"Match {i+1} missing required fields"
+                    detail=f"Match {i + 1} missing required fields",
                 )
 
             # 执行预测
             prediction_result = model_loader.predict(match_data)
 
-            predictions.append({
-                "match_id": match_data["match_id"],
-                "prediction": prediction_result["prediction"],
-                "probabilities": prediction_result["probabilities"],
-                "confidence": prediction_result["confidence"]
-            })
+            predictions.append(
+                {
+                    "match_id": match_data["match_id"],
+                    "prediction": prediction_result["prediction"],
+                    "probabilities": prediction_result["probabilities"],
+                    "confidence": prediction_result["confidence"],
+                }
+            )
 
         # 计算处理时间
         processing_time_ms = (time.time() - start_time) * 1000
@@ -255,11 +272,13 @@ async def predict_batch(matches: List[Dict[str, Any]]) -> Dict[str, Any]:
             "predictions": predictions,
             "total_matches": len(matches),
             "processing_time_ms": round(processing_time_ms, 2),
-            "prediction_distribution": prediction_counts
+            "prediction_distribution": prediction_counts,
         }
 
-        logger.info(f"✅ 批量预测完成: {len(matches)} 场比赛, "
-                   f"处理时间: {processing_time_ms:.1f}ms")
+        logger.info(
+            f"✅ 批量预测完成: {len(matches)} 场比赛, "
+            f"处理时间: {processing_time_ms:.1f}ms"
+        )
 
         return result
 
@@ -269,7 +288,7 @@ async def predict_batch(matches: List[Dict[str, Any]]) -> Dict[str, Any]:
         logger.error(f"❌ 批量预测失败: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Batch prediction failed: {str(e)}"
+            detail=f"Batch prediction failed: {str(e)}",
         )
 
 
