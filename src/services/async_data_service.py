@@ -658,7 +658,7 @@ class AsyncDataService:
                     "away_team": away_team,
                     "date": scheduled_at.isoformat() + "Z",
                     "status": "SCHEDULED",
-                    "venue": f"Stadium {i+1}",
+                    "venue": f"Stadium {i + 1}",
                     "league": {"name": "Premier League"},
                     "source": "mock",
                 }

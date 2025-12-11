@@ -27,7 +27,9 @@ from .async_manager import fetch_all, fetch_one, execute
 logger = logging.getLogger(__name__)
 
 
-def fetch_all_sync(query, params: Optional[dict[str, Any]] = None) -> list[dict[str, Any]]:
+def fetch_all_sync(
+    query, params: Optional[dict[str, Any]] = None
+) -> list[dict[str, Any]]:
     """
     同步版本的 fetch_all（适配器）
 
@@ -51,6 +53,7 @@ def fetch_all_sync(query, params: Optional[dict[str, Any]] = None) -> list[dict[
         asyncio.get_running_loop()
         # 如果已有事件循环，创建任务
         import concurrent.futures
+
         with concurrent.futures.ThreadPoolExecutor() as executor:
             future = executor.submit(asyncio.run, fetch_all(query, params))
             return future.result()
@@ -59,7 +62,9 @@ def fetch_all_sync(query, params: Optional[dict[str, Any]] = None) -> list[dict[
         return asyncio.run(fetch_all(query, params))
 
 
-def fetch_one_sync(query, params: Optional[dict[str, Any]] = None) -> Optional[dict[str, Any]]:
+def fetch_one_sync(
+    query, params: Optional[dict[str, Any]] = None
+) -> Optional[dict[str, Any]]:
     """
     同步版本的 fetch_one（适配器）
 
@@ -83,6 +88,7 @@ def fetch_one_sync(query, params: Optional[dict[str, Any]] = None) -> Optional[d
         asyncio.get_running_loop()
         # 如果已有事件循环，创建任务
         import concurrent.futures
+
         with concurrent.futures.ThreadPoolExecutor() as executor:
             future = executor.submit(asyncio.run, fetch_one(query, params))
             return future.result()
@@ -115,6 +121,7 @@ def execute_sync(query, params: Optional[dict[str, Any]] = None) -> Any:
         asyncio.get_running_loop()
         # 如果已有事件循环，创建任务
         import concurrent.futures
+
         with concurrent.futures.ThreadPoolExecutor() as executor:
             future = executor.submit(asyncio.run, execute(query, params))
             return future.result()
@@ -126,6 +133,7 @@ def execute_sync(query, params: Optional[dict[str, Any]] = None) -> Any:
 # ============================================================================
 # 向后兼容的包装函数（用于最常见的场景）
 # ============================================================================
+
 
 class DatabaseCompatManager:
     """

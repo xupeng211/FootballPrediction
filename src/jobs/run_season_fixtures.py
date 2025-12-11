@@ -343,9 +343,7 @@ async def main():
         logger.info("🧪 运行在测试模式 - 不会写入数据库")
 
     # 初始化采集器
-    collector = HTMLFotMobCollector(
-        max_retries=3, timeout=30, enable_stealth=True
-    )
+    collector = HTMLFotMobCollector(max_retries=3, timeout=30, enable_stealth=True)
 
     try:
         # 联赛页面URL
@@ -356,17 +354,18 @@ async def main():
 
         # 简单的同步请求
         import httpx
+
         with httpx.Client(timeout=30) as client:
             response = client.get(
                 test_url,
                 headers={
-                    'User-Agent': collector.user_manager.get_desktop_user_agent(),
-                    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-                    'Accept-Language': 'en-GB,en;q=0.9',
-                    'Accept-Encoding': 'gzip, deflate, br',
-                    'Connection': 'keep-alive',
-                    'Upgrade-Insecure-Requests': '1',
-                }
+                    "User-Agent": collector.user_manager.get_desktop_user_agent(),
+                    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                    "Accept-Language": "en-GB,en;q=0.9",
+                    "Accept-Encoding": "gzip, deflate, br",
+                    "Connection": "keep-alive",
+                    "Upgrade-Insecure-Requests": "1",
+                },
             )
 
         logger.info(

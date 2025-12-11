@@ -17,7 +17,7 @@ OddsPortalFetcher Usage Example
 
 import asyncio
 import logging
-from typing import Any 
+from typing import Any
 
 from src.fetchers.fetcher_factory import FetcherFactory
 from src.fetchers.oddsportal_fetcher import OddsPortalFetcher
@@ -44,7 +44,7 @@ async def example_basic_usage():
 
         odds_data = await fetcher.fetch_odds(
             match_id=match_id,
-            count=10  # 最多10条记录
+            count=10,  # 最多10条记录
         )
 
         logger.info(f"成功获取 {len(odds_data)} 条赔率记录")
@@ -78,20 +78,24 @@ async def example_different_markets():
         for market in markets:
             logger.info(f"\n获取 {market} 市场数据...")
             odds_data = await fetcher.fetch_odds(
-                match_id=match_id,
-                markets=[market],
-                count=3
+                match_id=match_id, markets=[market], count=3
             )
 
             if odds_data:
                 logger.info(f"找到 {len(odds_data)} 条 {market} 赔率记录")
                 for odds in odds_data:
                     if odds.market_type == "1X2":
-                        logger.info(f"  {odds.bookmaker}: 主胜={odds.home_win} 平局={odds.draw} 客胜={odds.away_win}")
+                        logger.info(
+                            f"  {odds.bookmaker}: 主胜={odds.home_win} 平局={odds.draw} 客胜={odds.away_win}"
+                        )
                     elif odds.market_type == "Asian Handicap":
-                        logger.info(f"  {odds.bookmaker}: 让分={odds.asian_handicap_line} 主队={odds.asian_handicap_home} 客队={odds.asian_handicap_away}")
+                        logger.info(
+                            f"  {odds.bookmaker}: 让分={odds.asian_handicap_line} 主队={odds.asian_handicap_home} 客队={odds.asian_handicap_away}"
+                        )
                     elif odds.market_type == "Over/Under":
-                        logger.info(f"  {odds.bookmaker}: 线路={odds.over_under_line} 大球={odds.over_odds} 小球={odds.under_odds}")
+                        logger.info(
+                            f"  {odds.bookmaker}: 线路={odds.over_under_line} 大球={odds.over_odds} 小球={odds.under_odds}"
+                        )
             else:
                 logger.warning(f"未找到 {market} 市场数据")
 
@@ -111,9 +115,7 @@ async def example_custom_bookmakers():
         custom_bookmakers = ["Bet365", "William Hill", "Betfair"]
 
         odds_data = await fetcher.fetch_odds(
-            match_id=match_id,
-            bookmakers=custom_bookmakers,
-            count=5
+            match_id=match_id, bookmakers=custom_bookmakers, count=5
         )
 
         logger.info(f"从指定博彩公司获取到 {len(odds_data)} 条记录")
@@ -129,7 +131,9 @@ async def example_custom_bookmakers():
         for bookmaker, records in bookmaker_groups.items():
             logger.info(f"\n{bookmaker} 提供的市场:")
             for odds in records:
-                logger.info(f"  - {odds.market_type}: {odds.home_win or odds.over_odds or 'N/A'}")
+                logger.info(
+                    f"  - {odds.market_type}: {odds.home_win or odds.over_odds or 'N/A'}"
+                )
 
     except Exception as e:
         logger.error(f"自定义博彩公司示例失败: {e}")
@@ -144,9 +148,7 @@ async def example_quality_validation():
         match_id = "test_quality_match"
 
         odds_data = await fetcher.fetch_odds(
-            match_id=match_id,
-            markets=["1X2"],
-            count=5
+            match_id=match_id, markets=["1X2"], count=5
         )
 
         logger.info(f"获取到 {len(odds_data)} 条记录进行质量验证")
@@ -157,19 +159,29 @@ async def example_quality_validation():
             # 验证赔率合理性
             if odds.home_win and odds.draw and odds.away_win:
                 # 计算隐含概率
-                total_probability = (1/odds.home_win) + (1/odds.draw) + (1/odds.away_win)
+                total_probability = (
+                    (1 / odds.home_win) + (1 / odds.draw) + (1 / odds.away_win)
+                )
                 if total_probability > 1.3:  # 如果总概率过高，可能数据有问题
-                    quality_issues.append(f"{odds.bookmaker}: 隐含概率过高 ({total_probability:.2f})")
+                    quality_issues.append(
+                        f"{odds.bookmaker}: 隐含概率过高 ({total_probability:.2f})"
+                    )
 
                 # 验证赔率范围
                 if not (1.0 <= odds.home_win <= 10.0):
-                    quality_issues.append(f"{odds.bookmaker}: 主胜赔率异常 ({odds.home_win})")
+                    quality_issues.append(
+                        f"{odds.bookmaker}: 主胜赔率异常 ({odds.home_win})"
+                    )
 
             # 验证数据新鲜度
             if odds.last_updated:
-                time_diff = asyncio.get_event_loop().time() - odds.last_updated.timestamp()
+                time_diff = (
+                    asyncio.get_event_loop().time() - odds.last_updated.timestamp()
+                )
                 if time_diff > 3600:  # 超过1小时
-                    quality_issues.append(f"{odds.bookmaker}: 数据过期 ({time_diff/3600:.1f}小时前)")
+                    quality_issues.append(
+                        f"{odds.bookmaker}: 数据过期 ({time_diff / 3600:.1f}小时前)"
+                    )
 
         if quality_issues:
             logger.warning("发现数据质量问题:")
@@ -242,7 +254,9 @@ async def example_fetcher_info():
             logger.info(f"  - 描述: {metadata['description']}")
             logger.info(f"  - 版本: {metadata['version']}")
             logger.info(f"  - 支持的市场: {metadata.get('supported_markets', [])}")
-            logger.info(f"  - 支持的博彩公司: {metadata.get('supported_bookmakers', [])}")
+            logger.info(
+                f"  - 支持的博彩公司: {metadata.get('supported_bookmakers', [])}"
+            )
 
         # 创建获取器实例并查看其配置
         fetcher = FetcherFactory.create("oddsportal", timeout=15, max_retries=2)

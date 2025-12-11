@@ -11,7 +11,7 @@ OddsService Usage Examples
 
 import asyncio
 import logging
-from typing import Any 
+from typing import Any
 
 from src.collectors.abstract_fetcher import OddsData, FetcherFactory
 from src.collectors.examples.example_fetcher import ExampleFetcher
@@ -65,7 +65,7 @@ async def example_ingest_odds_data():
                 away_win=2.80,
                 bookmaker="Example Bookmaker",
                 market_type="1X2",
-                raw_data={"source": "example_api", "timestamp": "2025-12-07T10:00:00Z"}
+                raw_data={"source": "example_api", "timestamp": "2025-12-07T10:00:00Z"},
             ),
             OddsData(
                 match_id="12346",
@@ -74,7 +74,7 @@ async def example_ingest_odds_data():
                 asian_handicap_away=1.85,
                 asian_handicap_line=-0.5,
                 bookmaker="Example Bookmaker",
-                market_type="Asian Handicap"
+                market_type="Asian Handicap",
             ),
             OddsData(
                 match_id="12347",
@@ -83,8 +83,8 @@ async def example_ingest_odds_data():
                 draw=3.60,
                 away_win=4.20,
                 bookmaker="Another Bookmaker",
-                market_type="1X2"
-            )
+                market_type="1X2",
+            ),
         ]
 
         # 摄取数据
@@ -152,18 +152,29 @@ async def example_batch_processing():
                     total_results[f"{source}_{match_id}"] = result.to_dict()
 
                 except Exception as e:
-                    logger.error(f"处理失败: source={source}, match_id={match_id}, error={e}")
+                    logger.error(
+                        f"处理失败: source={source}, match_id={match_id}, error={e}"
+                    )
                     total_results[f"{source}_{match_id}"] = {"error": str(e)}
 
         # 统计总体结果
-        total_processed = sum(r.get("total_processed", 0) for r in total_results.values() if isinstance(r, dict))
-        total_successful = sum(r.get("successful_inserts", 0) + r.get("successful_updates", 0)
-                              for r in total_results.values() if isinstance(r, dict))
+        total_processed = sum(
+            r.get("total_processed", 0)
+            for r in total_results.values()
+            if isinstance(r, dict)
+        )
+        total_successful = sum(
+            r.get("successful_inserts", 0) + r.get("successful_updates", 0)
+            for r in total_results.values()
+            if isinstance(r, dict)
+        )
 
         logger.info("批量处理完成:")
         logger.info(f"  - 总处理记录数: {total_processed}")
         logger.info(f"  - 总成功记录数: {total_successful}")
-        logger.info(f"  - 成功率: {(total_successful / max(total_processed, 1)) * 100:.2f}%")
+        logger.info(
+            f"  - 成功率: {(total_successful / max(total_processed, 1)) * 100:.2f}%"
+        )
 
     except Exception as e:
         logger.error(f"批量处理过程中发生错误: {e}")
@@ -185,19 +196,19 @@ async def example_error_handling():
                 match_id="",  # 无效的空match_id
                 source="test_source",
                 home_win=2.45,
-                bookmaker="Test Bookmaker"
+                bookmaker="Test Bookmaker",
             ),
             OddsData(
                 match_id="12352",
                 source="test_source",
                 home_win=0.5,  # 无效的赔率值（小于1.0）
-                bookmaker="Test Bookmaker"
+                bookmaker="Test Bookmaker",
             ),
             OddsData(
                 match_id="12353",
                 source="test_source",
                 # 没有任何赔率值
-                bookmaker="Test Bookmaker"
+                bookmaker="Test Bookmaker",
             ),
             # 一条有效数据
             OddsData(
@@ -206,8 +217,8 @@ async def example_error_handling():
                 home_win=2.10,
                 draw=3.40,
                 away_win=3.20,
-                bookmaker="Test Bookmaker"
-            )
+                bookmaker="Test Bookmaker",
+            ),
         ]
 
         # 处理包含错误的数据
