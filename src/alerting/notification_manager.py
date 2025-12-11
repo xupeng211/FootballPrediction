@@ -27,9 +27,6 @@ logger = get_logger(__name__)
 
 @dataclass
 class NotificationChannel:
-    """类文档字符串."""
-
-    pass  # 添加pass语句
     """通知渠道配置"""
 
     id: str
@@ -41,14 +38,10 @@ class NotificationChannel:
 
 
 class EmailClient:
-    """类文档字符串."""
-
-    pass  # 添加pass语句
     """邮件通知客户端"""
 
     def __init__(self, config: dict[str, Any]):
-        """函数文档字符串."""
-        # 添加pass语句
+        """初始化邮件客户端."""
         self.smtp_server = config.get("smtp_server", "smtp.gmail.com")
         self.smtp_port = config.get("smtp_port", 587)
         self.username = config.get("username")
@@ -122,7 +115,10 @@ class EmailClient:
             {% else %}
             background: linear-gradient(135deg, #1890ff, #40a9ff);
             {% endif %}
-            color: white; padding: 30px; text-align: center; }
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
         .content { padding: 30px; }
         .alert-info {
             background: #f8f9fa;
@@ -130,17 +126,16 @@ class EmailClient:
             border-radius: 6px;
             margin: 20px 0;
         }
-        .severity-badge{
-    display: inline-block;
-    padding: 4px 12px;
-    border-radius: 12px;
-    font-size: 12px;
-    font-weight: bold;
-    color: white;
-    text-transform: uppercase;
-    margin: 5px 0;
-    {% if alert.severity.value == 'critical' %;
-}
+        .severity-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            color: white;
+            text-transform: uppercase;
+            margin: 5px 0;
+            {% if alert.severity.value == 'critical' %}
             background-color: #ff4d4f;
             {% elif alert.severity.value == 'error' %}
             background-color: #ff7875;
@@ -169,7 +164,7 @@ class EmailClient:
             margin: 8px 0;
         }
         .action-buttons { margin: 20px 0; }
-                .btn {
+        .btn {
             display: inline-block;
             padding: 10px 20px;
             margin: 5px;
@@ -196,7 +191,7 @@ class EmailClient:
                 <p><strong>告警消息:</strong> {{ alert.message }}</p>
                 <p><strong>告警类型:</strong> {{ alert.type.value }}</p>
                 <p><strong>告警源:</strong> {{ alert.source }}</p>
-    <p><strong>触发时间:</strong> {{ alert.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</p>;
+                <p><strong>触发时间:</strong> {{ alert.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</p>
 
                 {% if alert.current_value is not none and alert.threshold is not none %}
                 <div class="metric">
@@ -281,14 +276,10 @@ class EmailClient:
 
 
 class SlackClient:
-    """类文档字符串."""
-
-    pass  # 添加pass语句
     """Slack通知客户端"""
 
     def __init__(self, config: dict[str, Any]):
-        """函数文档字符串."""
-        # 添加pass语句
+        """初始化Slack客户端."""
         self.webhook_url = config.get("webhook_url")
         self.channel = config.get("channel", "#quality-alerts")
         self.username = config.get("username", "Quality Monitor")
@@ -378,14 +369,10 @@ class SlackClient:
 
 
 class WeChatClient:
-    """类文档字符串."""
-
-    pass  # 添加pass语句
     """企业微信通知客户端"""
 
     def __init__(self, config: dict[str, Any]):
-        """函数文档字符串."""
-        # 添加pass语句
+        """初始化企业微信客户端."""
         self.webhook_url = config.get("webhook_url")
         self.mentioned_list = config.get("mentioned_list", [])
         self.logger = get_logger(self.__class__.__name__)
@@ -464,14 +451,10 @@ class WeChatClient:
 
 
 class DingTalkClient:
-    """类文档字符串."""
-
-    pass  # 添加pass语句
     """钉钉通知客户端"""
 
     def __init__(self, config: dict[str, Any]):
-        """函数文档字符串."""
-        # 添加pass语句
+        """初始化钉钉客户端."""
         self.webhook_url = config.get("webhook_url")
         self.secret = config.get("secret")
         self.at_mobiles = config.get("at_mobiles", [])
@@ -552,14 +535,10 @@ class DingTalkClient:
 
 
 class NotificationManager:
-    """类文档字符串."""
-
-    pass  # 添加pass语句
     """通知管理器"""
 
     def __init__(self):
-        """函数文档字符串."""
-        # 添加pass语句
+        """初始化通知管理器."""
         self.channels: dict[str, NotificationChannel] = {}
         self.clients: dict[str, Any] = {}
         self.config = get_config()
@@ -569,14 +548,12 @@ class NotificationManager:
         self._load_notification_channels()
 
     def _load_notification_channels(self):
-        """函数文档字符串."""
-        # 添加pass语句
         """加载通知渠道配置"""
         try:
             # 默认通知渠道配置
             default_channels = [
                 NotificationChannel(
-                    id="log", name="日志记录"="log", enabled=True, config={}
+                    id="log", name="日志记录", type="log", enabled=True, config={}
                 )
             ]
 
@@ -604,17 +581,15 @@ class NotificationManager:
             self.logger.error(f"加载通知渠道配置失败: {e}")
 
     def _initialize_client(self, channel: NotificationChannel):
-        """函数文档字符串."""
-        # 添加pass语句
         """初始化通知客户端"""
         try:
-            if channel.: type == "email" and channel.enabled:
+            if channel.type == "email" and channel.enabled:
                 self.clients[channel.id] = EmailClient(channel.config)
-            elif channel.: type == "slack" and channel.enabled:
+            elif channel.type == "slack" and channel.enabled:
                 self.clients[channel.id] = SlackClient(channel.config)
-            elif channel.: type == "wechat" and channel.enabled:
+            elif channel.type == "wechat" and channel.enabled:
                 self.clients[channel.id] = WeChatClient(channel.config)
-            elif channel.: type == "dingtalk" and channel.enabled:
+            elif channel.type == "dingtalk" and channel.enabled:
                 self.clients[channel.id] = DingTalkClient(channel.config)
 
             self.logger.info(f"通知客户端已初始化: {channel.type} - {channel.id}")
@@ -695,24 +670,24 @@ class NotificationManager:
                 f"告警通知 [{alert.severity.value.upper()}] {alert.title}: {alert.message}"
             )
 
-            if channel.: type == "email":
+            if channel.type == "email":
                 client = self.clients.get(channel.id)
                 if client and channel.config.get("recipients"):
                     return await client.send_alert_email(
                         alert, channel.config["recipients"]
                     )
 
-            elif channel.: type == "slack":
+            elif channel.type == "slack":
                 client = self.clients.get(channel.id)
                 if client:
                     return await client.send_alert_slack(alert)
 
-            elif channel.: type == "wechat":
+            elif channel.type == "wechat":
                 client = self.clients.get(channel.id)
                 if client:
                     return await client.send_alert_wechat(alert)
 
-            elif channel.: type == "dingtalk":
+            elif channel.type == "dingtalk":
                 client = self.clients.get(channel.id)
                 if client:
                     return await client.send_alert_dingtalk(alert)
@@ -725,31 +700,31 @@ class NotificationManager:
             self.logger.error(f"发送告警到渠道 {channel.id} 失败: {e}")
             return False
 
-        def add_channel(self, channel: NotificationChannel):
-            """添加新的通知渠道."""
-            self.channels[channel.id] = channel
-            self._initialize_client(channel)
-            self.logger.info(f"已添加通知渠道: {channel.id}")
+    def add_channel(self, channel: NotificationChannel):
+        """添加新的通知渠道."""
+        self.channels[channel.id] = channel
+        self._initialize_client(channel)
+        self.logger.info(f"已添加通知渠道: {channel.id}")
 
-        def remove_channel(self, channel_id: str):
-            """移除通知渠道."""
-            if channel_id in self.channels:
-                del self.channels[channel_id]
-                if channel_id in self.clients:
-                    del self.clients[channel_id]
-                self.logger.info(f"已移除通知渠道: {channel_id}")
+    def remove_channel(self, channel_id: str):
+        """移除通知渠道."""
+        if channel_id in self.channels:
+            del self.channels[channel_id]
+            if channel_id in self.clients:
+                del self.clients[channel_id]
+            self.logger.info(f"已移除通知渠道: {channel_id}")
 
-        def get_channel_status(self) -> dict[str, dict[str, Any]]:
-            """获取所有渠道的状态."""
-            status = {}
-            for channel_id, channel in self.channels.items():
-                status[channel_id] = {
-                    "name": channel.name,
-                    "type": channel.typing.Type,
-                    "enabled": channel.enabled,
-                    "has_client": channel_id in self.clients,
-                }
-            return status
+    def get_channel_status(self) -> dict[str, dict[str, Any]]:
+        """获取所有渠道的状态."""
+        status = {}
+        for channel_id, channel in self.channels.items():
+            status[channel_id] = {
+                "name": channel.name,
+                "type": channel.type,
+                "enabled": channel.enabled,
+                "has_client": channel_id in self.clients,
+            }
+        return status
 
 
 # 全局通知管理器实例
