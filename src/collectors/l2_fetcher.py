@@ -1,280 +1,359 @@
 #!/usr/bin/env python3
 """
-L2数据获取器 (L2 Data Fetcher) - 生产版本
-负责从FotMob API获取L2详情数据，包含重试机制、压缩处理和错误处理。
+L2数据获取器 - 生产版本
+L2 Data Fetcher - Production Release
 
-核心功能:
-1. HTTP请求管理 (AsyncClient + tenacity重试)
-2. 压缩数据处理 (Brotli检测和无压缩重试)
-3. 错误处理和自定义异常
-4. 认证头部管理
-5. 结构化日志记录
-6. 性能监控和统计
+用于从FotMob API获取详细的比赛数据，支持：
+- 异步HTTP请求处理
+- HTTP压缩和编码处理
+- 请求重试和限流
+- 结构化数据提取
+- 多种数据格式支持
 
-作者: L2重构团队
+作者: L2开发团队
 创建时间: 2025-12-10
 版本: 1.0.0 (Production Release)
 """
 
 import asyncio
 import logging
-import os
-import time
-from typing import Optional, Dict, Any, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple, Union
+from datetime import datetime
+from dataclasses import dataclass, field
 
 import httpx
-from tenacity import (
-    retry,
-    stop_after_attempt,
-    wait_exponential,
-    retry_if_exception_type,
-    before_sleep_log,
-)
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 
-from .user_agent import UserAgentManager
 from .rate_limiter import RateLimiter
-from .interface import (
-    AuthenticationError,
-    RateLimitError,
-    NetworkError,
-    DataNotFoundError,
-)
-
-logger = logging.getLogger(__name__)
 
 
+@dataclass
 class L2FetchError(Exception):
-    """L2数据获取自定义异常"""
+    """L2数据获取错误"""
+    status_code: int
+    message: str
+    match_id: Optional[str] = None
 
-    def __init__(self, message: str, match_id: str, status_code: Optional[int] = None):
-        super().__init__(message)
-        self.match_id = match_id
-        self.status_code = status_code
-        self.message = message
+    def __post_init__(self):
+        super().__init__(self.message)
 
-    def __repr__(self) -> str:
-        return f"L2FetchError(match_id={self.match_id}, status_code={self.status_code}, message='{self.message}')"
+
+@dataclass
+class L2FetchConfig:
+    """L2数据获取配置"""
+    base_url: str = "https://www.fotmob.com/api"
+    timeout: float = 30.0
+    max_retries: int = 3
+    retry_delay_base: float = 1.0
+    max_retry_delay: float = 60.0
+
+    # 请求头配置
+    default_headers: Dict[str, str] = field(default_factory=lambda: {
+        "Accept": "application/json, text/plain, */*",
+        "Accept-Language": "en-US,en;q=0.9",
+        "Cache-Control": "no-cache",
+        "Pragma": "no-cache",
+        "Sec-Ch-Ua": '"Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"',
+        "Sec-Ch-Ua-Mobile": "?0",
+        "Sec-Ch-Ua-Platform": '"Linux"',
+        "Sec-Fetch-Dest": "empty",
+        "Sec-Fetch-Mode": "cors",
+        "Sec-Fetch-Site": "same-origin",
+        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+    })
+
+    # 压缩支持
+    enable_compression: bool = True
+    compression_fallback: bool = True
 
 
 class L2Fetcher:
     """
     L2数据获取器 - 生产版本
 
-    负责从FotMob API获取L2详情数据，包含完整的重试机制、
-    压缩处理、错误处理和性能监控功能。
-
-    Attributes:
-        base_url: FotMob API基础URL
-        timeout: HTTP请求超时时间
-        max_retries: 最大重试次数
-        rate_limiter: 速率限制器
-        user_agent_manager: User-Agent管理器
-        stats: 统计信息
+    提供高性能、可靠的FotMob API数据获取服务，支持并发请求、
+    压缩处理、重试机制和错误恢复等功能。
     """
 
     def __init__(
         self,
-        base_url: str = "https://www.fotmob.com",
         timeout: float = 30.0,
-        max_retries: int = 5,
+        max_retries: int = 3,
         rate_limiter: Optional[RateLimiter] = None,
+        config: Optional[L2FetchConfig] = None
     ):
         """
         初始化L2数据获取器
 
         Args:
-            base_url: FotMob API基础URL
-            timeout: HTTP请求超时时间（秒）
+            timeout: 请求超时时间
             max_retries: 最大重试次数
-            rate_limiter: 速率限制器实例
+            rate_limiter: 限流器实例
+            config: 详细配置，如果为None则使用默认配置
         """
-        self.base_url = base_url.rstrip("/")
-        self.timeout = timeout
-        self.max_retries = max_retries
+        self.config = config or L2FetchConfig(
+            timeout=timeout,
+            max_retries=max_retries
+        )
         self.rate_limiter = rate_limiter
-        self.user_agent_manager = UserAgentManager()
+        self.logger = logging.getLogger(__name__)
 
-        # HTTP客户端（延迟初始化）
-        self._http_client: Optional[httpx.AsyncClient] = None
+        # HTTP客户端配置
+        self._client: Optional[httpx.AsyncClient] = None
+        self._headers = self.config.default_headers.copy()
 
         # 统计信息
-        self.stats = {
-            "total_requests": 0,
-            "successful_requests": 0,
-            "failed_requests": 0,
-            "retry_attempts": 0,
-            "rate_limited_requests": 0,
-            "authentication_errors": 0,
-            "network_errors": 0,
-            "not_found_errors": 0,
-            "server_errors": 0,
-            "compression_errors": 0,
-            "total_response_time_ms": 0,
-            "average_response_time_ms": 0.0,
+        self._stats = {
+            'total_requests': 0,
+            'successful_requests': 0,
+            'failed_requests': 0,
+            'retry_count': 0,
+            'compression_hits': 0,
+            'compression_fallbacks': 0
         }
 
-        logger.info(
-            f"L2Fetcher initialized with base_url={base_url}, "
-            f"timeout={timeout}s, max_retries={max_retries}"
+        # 支持的端点映射
+        self._endpoint_map = {
+            'match_details': '/matchDetails',
+            'match_lineup': '/matchLineup',
+            'match_stats': '/matchStats',
+            'match_shots': '/matchShots'
+        }
+
+    async def initialize(self) -> None:
+        """
+        异步初始化HTTP客户端和其他资源
+
+        注意：这个方法已弃用，L2Fetcher现在使用延迟初始化
+        """
+        self.logger.warning(
+            "L2Fetcher.initialize() is deprecated. "
+            "The fetcher now uses lazy initialization."
         )
 
-    async def _get_http_client(self) -> httpx.AsyncClient:
-        """
-        获取HTTP客户端实例（延迟初始化）
+    async def _ensure_client(self) -> httpx.AsyncClient:
+        """确保HTTP客户端已初始化"""
+        if self._client is None or self._client.is_closed:
+            timeout = httpx.Timeout(self.config.timeout, connect=10.0)
+            limits = httpx.Limits(max_keepalive_connections=20, max_connections=100)
 
-        Returns:
-            httpx.AsyncClient: 配置好的HTTP客户端
-
-        Raises:
-            RuntimeError: 如果客户端初始化失败
-        """
-        if self._http_client is None or self._http_client.is_closed:
-            timeout_config = httpx.Timeout(self.timeout)
-            limits_config = httpx.Limits(
-                max_connections=20,
-                max_keepalive_connections=10
+            self._client = httpx.AsyncClient(
+                timeout=timeout,
+                limits=limits,
+                headers=self._headers,
+                follow_redirects=True
             )
 
-            headers = self._build_request_headers()
+            self.logger.debug("HTTP client initialized with timeout=%.1fs", self.config.timeout)
 
-            try:
-                self._http_client = httpx.AsyncClient(
-                    timeout=timeout_config,
-                    limits=limits_config,
-                    headers=headers,
-                    follow_redirects=True
-                )
-                logger.debug("HTTP client initialized successfully")
-            except Exception as initialization_error:
-                logger.error(f"Failed to initialize HTTP client: {initialization_error}")
-                raise RuntimeError(f"HTTP client initialization failed: {initialization_error}")
+        return self._client
 
-        return self._http_client
-
-    async def _fetch_without_compression(self, match_id: str) -> httpx.Response:
+    def _get_endpoint_url(self, endpoint_type: str, match_id: str) -> str:
         """
-        发起不压缩的HTTP请求用于处理压缩响应问题
+        获取端点URL
 
         Args:
+            endpoint_type: 端点类型
             match_id: 比赛ID
 
         Returns:
-            httpx.Response: HTTP响应对象
+            str: 完整的URL
         """
-        from urllib.parse import urlencode
+        endpoint = self._endpoint_map.get(endpoint_type)
+        if not endpoint:
+            raise ValueError(f"Unknown endpoint type: {endpoint_type}")
 
-        api_url = f"{self.base_url}/api/matchDetails"
-        params = {"matchId": match_id}
-        full_url = f"{api_url}?{urlencode(params)}"
-
-        # 构建不请求压缩的头部
-        headers_no_compression = self._build_request_headers()
-        headers_no_compression["Accept-Encoding"] = "identity"
-
-        async with httpx.AsyncClient(timeout=self.timeout) as client:
-            response = await client.get(full_url, headers=headers_no_compression)
-            logger.debug(f"Fetched uncompressed response for match {match_id}, length: {len(response.text)}")
-            return response
-
-    def _build_request_headers(self) -> Dict[str, str]:
-        """
-        构建HTTP请求头
-
-        Returns:
-            Dict[str, str]: 包含认证信息的请求头
-        """
-        headers = {
-            "User-Agent": self.user_agent_manager.get_random_user_agent(),
-            "Accept": "application/json, text/plain, */*",
-            "Accept-Language": "en-US,en;q=0.9",
-            "Accept-Encoding": "gzip, deflate, br",
-            "Connection": "keep-alive",
-            "Cache-Control": "no-cache",
-            "Pragma": "no-cache",
-            "Sec-Fetch-Dest": "empty",
-            "Sec-Fetch-Mode": "cors",
-            "Sec-Fetch-Site": "same-origin",
-        }
-
-        # 添加FotMob API认证头部
-        x_mas_token = os.getenv("FOTMOB_X_MAS_TOKEN")
-        x_foo_token = os.getenv("FOTMOB_X_FOO_TOKEN")
-
-        if x_mas_token:
-            headers["x-mas"] = x_mas_token
-        if x_foo_token:
-            headers["x-foo"] = x_foo_token
-
-        return headers
+        return f"{self.config.base_url}{endpoint}?matchId={match_id}"
 
     @retry(
-        stop=stop_after_attempt(5),
-        wait=wait_exponential(multiplier=1.5, min=2, max=60),
-        retry=retry_if_exception_type(
-            (httpx.RequestError, httpx.TimeoutException, httpx.NetworkError)
-        ),
-        before_sleep=before_sleep_log(logger, logging.WARNING),
-        reraise=True
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=4, max=10),
+        retry=retry_if_exception_type((httpx.RequestError, httpx.TimeoutException))
     )
-    async def _make_http_request(
-        self, url: str, match_id: str
+    async def _make_request(
+        self,
+        url: str,
+        method: str = "GET",
+        headers: Optional[Dict[str, str]] = None,
+        params: Optional[Dict[str, Any]] = None
     ) -> httpx.Response:
         """
-        发起HTTP请求（包含重试逻辑）
+        发起HTTP请求
 
         Args:
             url: 请求URL
-            match_id: 比赛ID，用于日志和错误处理
+            method: HTTP方法
+            headers: 请求头
+            params: 查询参数
 
         Returns:
             httpx.Response: HTTP响应对象
 
         Raises:
-            L2FetchError: 当请求失败时
-            AuthenticationError: 认证失败时
-            RateLimitError: 速率限制时
-            NetworkError: 网络错误时
+            L2FetchError: 请求失败
         """
-        request_start_time = time.monotonic()
+        client = await self._ensure_client()
+
+        # 合并请求头
+        request_headers = self._headers.copy()
+        if headers:
+            request_headers.update(headers)
+
+        # 限流处理
+        if self.rate_limiter:
+            async with self.rate_limiter.acquire("fotmob.com"):
+                return await self._execute_request_with_stats(
+                    client, method, url, request_headers, params
+                )
+        else:
+            return await self._execute_request_with_stats(
+                client, method, url, request_headers, params
+            )
+
+    async def _execute_request_with_stats(
+        self,
+        client: httpx.AsyncClient,
+        method: str,
+        url: str,
+        headers: Dict[str, str],
+        params: Optional[Dict[str, Any]]
+    ) -> httpx.Response:
+        """执行HTTP请求并更新统计信息"""
+        self._stats['total_requests'] += 1
 
         try:
-            # 应用速率限制（如果配置了限流器）
-            if self.rate_limiter:
-                async with self.rate_limiter.acquire("fotmob.com"):
-                    http_client = await self._get_http_client()
-                    response = await http_client.get(url)
-            else:
-                http_client = await self._get_http_client()
-                response = await http_client.get(url)
+            self.logger.debug("Making %s request to %s", method, url)
 
-            # 记录请求统计
-            request_time_ms = (time.monotonic() - request_start_time) * 1000
-            self._update_request_stats(True, request_time_ms)
+            response = await client.request(
+                method=method,
+                url=url,
+                headers=headers,
+                params=params
+            )
 
-            logger.info(
-                f"HTTP request completed for match {match_id}: "
-                f"status={response.status_code}, time={request_time_ms:.2f}ms"
+            self._stats['successful_requests'] += 1
+            self.logger.debug(
+                "Request completed: status=%d, size=%d bytes",
+                response.status_code,
+                len(response.content)
             )
 
             return response
 
-        except httpx.TimeoutException as timeout_error:
-            request_time_ms = (time.monotonic() - request_start_time) * 1000
-            self._update_request_stats(False, request_time_ms)
+        except httpx.HTTPStatusError as e:
+            self._stats['failed_requests'] += 1
+            error_msg = f"HTTP {e.response.status_code}: {e.response.text[:200]}"
 
-            error_message = f"Request timeout for match {match_id} after {self.timeout}s"
-            logger.error(error_message)
-            raise NetworkError(error_message) from timeout_error
+            raise L2FetchError(
+                status_code=e.response.status_code,
+                message=error_msg
+            )
 
-        except httpx.RequestError as request_error:
-            request_time_ms = (time.monotonic() - request_start_time) * 1000
-            self._update_request_stats(False, request_time_ms)
+        except httpx.RequestError as e:
+            self._stats['failed_requests'] += 1
+            raise L2FetchError(
+                status_code=-1,
+                message=f"Request error: {str(e)}"
+            )
 
-            error_message = f"Network request failed for match {match_id}: {request_error}"
-            logger.error(error_message)
-            raise NetworkError(error_message) from request_error
+        except Exception as e:
+            self._stats['failed_requests'] += 1
+            raise L2FetchError(
+                status_code=-2,
+                message=f"Unexpected error: {str(e)}"
+            )
 
-    async def fetch_match_details(self, match_id: str) -> Dict[str, Any]:
+    async def _fetch_with_compression(self, url: str) -> Dict[str, Any]:
+        """
+        使用压缩获取数据
+
+        Args:
+            url: 请求URL
+
+        Returns:
+            Dict[str, Any]: 解析后的JSON数据
+
+        Raises:
+            L2FetchError: 请求失败
+        """
+        # 添加压缩请求头
+        headers = {
+            "Accept-Encoding": "gzip, deflate, br"
+        }
+
+        response = await self._make_request(url, headers=headers)
+
+        # 检查响应是否被压缩
+        content_encoding = response.headers.get("content-encoding", "").lower()
+
+        if content_encoding:
+            self._stats['compression_hits'] += 1
+            self.logger.debug("Response compressed with: %s", content_encoding)
+        else:
+            self.logger.debug("Response not compressed")
+
+        # 检查响应内容
+        if response.content.startswith(b'\x1f\x8b'):  # gzip magic number
+            self.logger.debug("Detected gzip compression")
+        elif response.content.startswith(b'BZ'):  # bzip2 magic number
+            self.logger.debug("Detected bzip2 compression")
+        elif response.content.startswith(b'\x28\xb5\x2f\xfd'):  # zstd magic number
+            self.logger.debug("Detected zstd compression")
+
+        try:
+            data = response.json()
+            self.logger.debug(
+                "Successfully parsed compressed JSON response (%d bytes)",
+                len(response.content)
+            )
+            return data
+
+        except Exception as e:
+            self.logger.error("Failed to parse compressed JSON response: %s", e)
+            raise L2FetchError(
+                status_code=-3,
+                message=f"JSON parsing error: {str(e)}"
+            )
+
+    async def _fetch_without_compression(self, url: str) -> Dict[str, Any]:
+        """
+        不使用压缩获取数据（回退选项）
+
+        Args:
+            url: 请求URL
+
+        Returns:
+            Dict[str, Any]: 解析后的JSON数据
+
+        Raises:
+            L2FetchError: 请求失败
+        """
+        self._stats['compression_fallbacks'] += 1
+        self.logger.info("Using compression fallback for URL: %s", url)
+
+        # 明确禁用压缩
+        headers = {
+            "Accept-Encoding": "identity"
+        }
+
+        response = await self._make_request(url, headers=headers)
+
+        try:
+            data = response.json()
+            self.logger.debug(
+                "Successfully parsed uncompressed JSON response (%d bytes)",
+                len(response.content)
+            )
+            return data
+
+        except Exception as e:
+            self.logger.error("Failed to parse uncompressed JSON response: %s", e)
+            raise L2FetchError(
+                status_code=-4,
+                message=f"JSON parsing error (uncompressed): {str(e)}"
+            )
+
+    async def fetch_match_details(self, match_id: str) -> Optional[Dict[str, Any]]:
         """
         获取比赛详情数据
 
@@ -282,200 +361,122 @@ class L2Fetcher:
             match_id: 比赛ID
 
         Returns:
-            Dict[str, Any]: API响应的JSON数据
-
-        Raises:
-            L2FetchError: 数据获取失败时
-            AuthenticationError: 认证失败时
-            RateLimitError: 速率限制时
-            NetworkError: 网络错误时
-            DataNotFoundError: 数据不存在时
+            Optional[Dict[str, Any]]: 比赛详情数据，获取失败返回None
         """
-        if not match_id or not isinstance(match_id, str):
-            raise L2FetchError("Invalid match ID provided", match_id or "None")
-
-        api_url = f"{self.base_url}/api/matchDetails"
-        params = {"matchId": match_id}
-
-        logger.info(f"Fetching L2 match details for match {match_id}")
+        url = self._get_endpoint_url('match_details', match_id)
 
         try:
-            # 构建完整URL
-            from urllib.parse import urlencode
-            full_url = f"{api_url}?{urlencode(params)}"
-
-            # 发起HTTP请求
-            response = await self._make_http_request(full_url, match_id)
-
-            # 处理不同的HTTP状态码
-            if response.status_code == 200:
+            # 首先尝试使用压缩
+            if self.config.enable_compression:
                 try:
-                    # 检查响应是否为空或压缩数据
-                    if not response.text or response.text.startswith('��'):
-                        logger.warning(f"Received compressed/empty response for match {match_id}, retrying without compression")
-                        self.stats["compression_errors"] += 1
-                        # 重试时不请求压缩
-                        uncompressed_response = await self._fetch_without_compression(match_id)
-                        json_data = uncompressed_response.json()
+                    return await self._fetch_with_compression(url)
+                except L2FetchError as e:
+                    if self.config.compression_fallback and e.status_code == -3:
+                        self.logger.warning(
+                            "Compression failed for match %s, trying without compression",
+                            match_id
+                        )
+                        return await self._fetch_without_compression(url)
                     else:
-                        json_data = response.json()
-                    logger.info(f"Successfully fetched L2 data for match {match_id}")
-                    return json_data
-                except ValueError as json_error:
-                    error_message = f"Invalid JSON response for match {match_id}: {json_error}"
-                    logger.error(error_message)
-                    raise L2FetchError(error_message, match_id, response.status_code)
+                        raise
 
-            elif response.status_code == 401:
-                self.stats["authentication_errors"] += 1
-                error_message = f"Authentication failed for match {match_id}"
-                logger.error(error_message)
-                raise AuthenticationError(error_message)
-
-            elif response.status_code == 403:
-                self.stats["authentication_errors"] += 1
-                error_message = f"Access forbidden for match {match_id}"
-                logger.error(error_message)
-                raise AuthenticationError(error_message)
-
-            elif response.status_code == 429:
-                self.stats["rate_limited_requests"] += 1
-                error_message = f"Rate limit exceeded for match {match_id}"
-                logger.error(error_message)
-                raise RateLimitError(error_message)
-
-            elif response.status_code == 404:
-                self.stats["not_found_errors"] += 1
-                error_message = f"Match data not found for match {match_id}"
-                logger.warning(error_message)
-                raise DataNotFoundError(error_message)
-
-            elif 500 <= response.status_code < 600:
-                self.stats["server_errors"] += 1
-                error_message = f"Server error for match {match_id}: {response.status_code}"
-                logger.error(error_message)
-                raise L2FetchError(error_message, match_id, response.status_code)
-
+            # 如果禁用压缩，直接使用无压缩方式
             else:
-                error_message = f"Unexpected HTTP status {response.status_code} for match {match_id}"
-                logger.error(error_message)
-                raise L2FetchError(error_message, match_id, response.status_code)
+                return await self._fetch_without_compression(url)
 
-        except L2FetchError:
-            # 重新抛出已知的L2FetchError
+        except L2FetchError as e:
+            self.logger.error(
+                "Failed to fetch match details for %s (status=%s): %s",
+                match_id, e.status_code, e.message
+            )
+
+            # 对于某些错误状态码，返回None而不是抛出异常
+            if e.status_code in [404, 401, 403]:
+                self.logger.debug(
+                    "Match %s not available (status=%s), returning None",
+                    match_id, e.status_code
+                )
+                return None
+
             raise
-        except (AuthenticationError, RateLimitError, NetworkError, DataNotFoundError):
-            # 重新抛出其他已知的业务异常
-            raise
-        except Exception as unexpected_error:
-            error_message = f"Unexpected error fetching match {match_id}: {unexpected_error}"
-            logger.error(error_message, exc_info=True)
-            raise L2FetchError(error_message, match_id) from unexpected_error
+        except Exception as e:
+            self.logger.error("Unexpected error fetching match details for %s: %s", match_id, e)
+            raise L2FetchError(
+                status_code=-5,
+                message=f"Unexpected error: {str(e)}",
+                match_id=match_id
+            )
 
     async def fetch_multiple_matches(
-        self, match_ids: list[str], max_concurrent: int = 10
-    ) -> Dict[str, Dict[str, Any]]:
+        self,
+        match_ids: List[str],
+        max_concurrent: int = 10
+    ) -> Dict[str, Optional[Dict[str, Any]]]:
         """
-        并发获取多个比赛的详情数据
+        批量获取多个比赛的详情数据
 
         Args:
             match_ids: 比赛ID列表
             max_concurrent: 最大并发数
 
         Returns:
-            Dict[str, Dict[str, Any]]: 比赛ID到数据的映射
+            Dict[str, Optional[Dict[str, Any]]]: 比赛ID到数据的映射
         """
-        if not match_ids:
-            return {}
+        self.logger.info(
+            "Fetching details for %d matches with max_concurrent=%d",
+            len(match_ids), max_concurrent
+        )
 
         semaphore = asyncio.Semaphore(max_concurrent)
+        results = {}
 
-        async def fetch_single_match(match_id: str) -> Tuple[str, Optional[Dict[str, Any]]]:
+        async def fetch_single(match_id: str) -> Tuple[str, Optional[Dict[str, Any]]]:
             async with semaphore:
                 try:
                     data = await self.fetch_match_details(match_id)
                     return match_id, data
-                except Exception as fetch_error:
-                    logger.error(f"Failed to fetch match {match_id}: {fetch_error}")
+                except Exception as e:
+                    self.logger.error("Error fetching match %s: %s", match_id, e)
                     return match_id, None
 
-        logger.info(f"Fetching {len(match_ids)} matches with max concurrency {max_concurrent}")
+        tasks = [fetch_single(match_id) for match_id in match_ids]
+        completed_tasks = await asyncio.gather(*tasks, return_exceptions=True)
 
-        # 并发获取所有比赛数据
-        tasks = [fetch_single_match(match_id) for match_id in match_ids]
-        results = await asyncio.gather(*tasks, return_exceptions=True)
-
-        # 整理结果
-        successful_results = {}
-        failed_count = 0
-
-        for result in results:
-            if isinstance(result, Exception):
-                logger.error(f"Task failed with exception: {result}")
-                failed_count += 1
+        for task in completed_tasks:
+            if isinstance(task, Exception):
+                self.logger.error("Task failed with exception: %s", task)
                 continue
 
-            match_id, match_data = result
-            if match_data is not None:
-                successful_results[match_id] = match_data
-            else:
-                failed_count += 1
+            match_id, data = task
+            results[match_id] = data
 
-        success_count = len(successful_results)
-        logger.info(
-            f"Batch fetch completed: {success_count} successful, "
-            f"{failed_count} failed out of {len(match_ids)} total"
+        successful_count = sum(1 for data in results.values() if data is not None)
+        self.logger.info(
+            "Batch fetch completed: %d/%d matches successful",
+            successful_count, len(match_ids)
         )
 
-        return successful_results
-
-    def _update_request_stats(self, success: bool, response_time_ms: float) -> None:
-        """
-        更新请求统计信息
-
-        Args:
-            success: 请求是否成功
-            response_time_ms: 响应时间（毫秒）
-        """
-        self.stats["total_requests"] += 1
-        self.stats["total_response_time_ms"] += response_time_ms
-
-        if success:
-            self.stats["successful_requests"] += 1
-        else:
-            self.stats["failed_requests"] += 1
-
-        # 计算平均响应时间
-        if self.stats["total_requests"] > 0:
-            self.stats["average_response_time_ms"] = (
-                self.stats["total_response_time_ms"] / self.stats["total_requests"]
-            )
-
-    def get_stats(self) -> Dict[str, Any]:
-        """
-        获取统计信息
-
-        Returns:
-            Dict[str, Any]: 统计信息副本
-        """
-        stats_copy = self.stats.copy()
-
-        # 添加成功率计算
-        if stats_copy["total_requests"] > 0:
-            stats_copy["success_rate"] = (
-                stats_copy["successful_requests"] / stats_copy["total_requests"] * 100
-            )
-        else:
-            stats_copy["success_rate"] = 0.0
-
-        return stats_copy
+        return results
 
     async def close(self) -> None:
-        """关闭HTTP客户端和相关资源"""
-        if self._http_client and not self._http_client.is_closed:
-            await self._http_client.aclose()
-            self._http_client = None
-            logger.info("L2Fetcher closed successfully")
+        """关闭HTTP客户端和清理资源"""
+        if self._client and not self._client.is_closed:
+            await self._client.aclose()
+            self.logger.debug("HTTP client closed")
+
+    def get_stats(self) -> Dict[str, Any]:
+        """获取统计信息"""
+        success_rate = 0.0
+        if self._stats['total_requests'] > 0:
+            success_rate = (self._stats['successful_requests'] / self._stats['total_requests']) * 100
+
+        return {
+            **self._stats,
+            'success_rate': round(success_rate, 2),
+            'compression_hit_rate': round(
+                (self._stats['compression_hits'] / max(self._stats['total_requests'], 1)) * 100, 2
+            )
+        }
 
     async def __aenter__(self):
         """异步上下文管理器入口"""
@@ -484,38 +485,3 @@ class L2Fetcher:
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         """异步上下文管理器出口"""
         await self.close()
-
-
-# 便利函数，用于创建L2Fetcher实例
-def create_l2_fetcher(
-    base_url: str = "https://www.fotmob.com",
-    timeout: float = 30.0,
-    max_retries: int = 5,
-    rate_limiter: Optional[RateLimiter] = None,
-) -> L2Fetcher:
-    """
-    创建L2Fetcher实例的便利函数
-
-    Args:
-        base_url: FotMob API基础URL
-        timeout: HTTP请求超时时间
-        max_retries: 最大重试次数
-        rate_limiter: 速率限制器
-
-    Returns:
-        L2Fetcher: L2数据获取器实例
-    """
-    return L2Fetcher(
-        base_url=base_url,
-        timeout=timeout,
-        max_retries=max_retries,
-        rate_limiter=rate_limiter,
-    )
-
-
-# 导出
-__all__ = [
-    "L2Fetcher",
-    "L2FetchError",
-    "create_l2_fetcher",
-]

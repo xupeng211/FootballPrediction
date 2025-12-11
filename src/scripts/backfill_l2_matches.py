@@ -408,23 +408,48 @@ class BackfillManager:
                 if self.config.rate_limit_delay > 0:
                     await asyncio.sleep(self.config.rate_limit_delay)
 
-            # 等待剩余任务完成
+            # 等待剩余任务完成 - 修复 AsyncIO 警告的关键部分
             if tasks:
                 self.logger.info("Waiting for %d remaining tasks to complete...", len(tasks))
-                for task in asyncio.as_completed(tasks):
-                    try:
-                        success, match_data = task.result()
-                        self.stats.total_processed += 1
 
-                        if success and match_data:
-                            await self._save_match_data(match_id, match_data)
-                            self.stats.successful += 1
-                        else:
+                # 使用 asyncio.gather 等待所有任务完成，避免 as_completed 的警告
+                try:
+                    results = await asyncio.gather(*tasks, return_exceptions=True)
+
+                    for i, result in enumerate(results):
+                        if isinstance(result, Exception):
+                            self.logger.error("Task %d failed with exception: %s", i, result)
                             self.stats.failed += 1
-                            await self._log_failed_id(match_id)
+                            continue
 
-                    except Exception as e:
-                        self.logger.error("Error in final task: %s", e)
+                        try:
+                            success, match_data = result
+                            self.stats.total_processed += 1
+
+                            if success and match_data:
+                                await self._save_match_data(match_id, match_data)
+                                self.stats.successful += 1
+                            else:
+                                self.stats.failed += 1
+                                await self._log_failed_id(match_id)
+
+                        except Exception as e:
+                            self.logger.error("Error processing final task result %d: %s", i, e)
+                            self.stats.failed += 1
+
+                except Exception as e:
+                    self.logger.error("Error waiting for final tasks: %s", e)
+
+                    # 如果 gather 失败，尝试取消所有任务
+                    for task in tasks:
+                        if not task.done():
+                            task.cancel()
+
+                    # 等待取消完成
+                    try:
+                        await asyncio.gather(*tasks, return_exceptions=True)
+                    except Exception:
+                        pass
 
             progress_bar.close()
 
@@ -434,12 +459,18 @@ class BackfillManager:
         finally:
             self._running = False
 
-            # 清理资源
-            if self._fetcher:
-                await self._fetcher.close()
+            # 清理资源 - 确保 fetcher 正确关闭
+            try:
+                if self._fetcher:
+                    await self._fetcher.close()
+            except Exception as e:
+                self.logger.error("Error closing fetcher: %s", e)
 
             # 最终保存进度
-            await self._save_progress()
+            try:
+                await self._save_progress()
+            except Exception as e:
+                self.logger.error("Error saving final progress: %s", e)
 
             self.logger.info(
                 "Backfill completed. Total: %d, Success: %d, Failed: %d, Success Rate: %.2f%%",
