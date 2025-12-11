@@ -1,19 +1,19 @@
 #!/usr/bin/env python3
 """
-L2数据解析器 - 生产版本
-L2 Data Parser - Production Release
+L2数据解析器 - 企业级完整版本
+L2 Data Parser - Enterprise Complete Version
 
 用于解析从FotMob API获取的原始数据，提取结构化的L2信息：
-- 比赛基本信息
-- 球队统计数据
+- 比赛基本信息和元数据 (Referee, Weather, Attendance, Stadium)
+- 球队统计数据和深度战术数据 (Odds, Formation, Lineups)
 - 比赛事件数据
 - 射门分布数据
 - 球员评分数据
-- 阵容信息
+- 完整阵容信息
 
 作者: L2开发团队
 创建时间: 2025-12-10
-版本: 1.0.0 (Production Release)
+版本: 2.6.0 (Enterprise Release - Ultimate Score Path Correction)
 """
 
 import logging
@@ -27,11 +27,16 @@ from pydantic import BaseModel, Field, ValidationError
 
 from ..schemas.l2_schemas import (
     L2MatchData,
-    L2TeamStats,
+    TeamStats,
     L2MatchEvent,
-    L2ShotData,
+    ShotData,
     L2PlayerRating,
-    L2DataProcessingResult
+    L2DataProcessingResult,
+    RefereeInfo,
+    WeatherInfo,
+    StadiumInfo,
+    OddsData,
+    TeamLineup
 )
 
 
@@ -43,1483 +48,996 @@ class EventType(str, Enum):
     VAR = "Var"
     PENALTY_SHOOTOUT = "PenaltyShootout"
     PERIOD_START = "PeriodStart"
-    PERIOD_END = "PeriodEnd"
-
-
-class CardType(str, Enum):
-    """卡片类型"""
-    YELLOW = "Yellow"
-    RED = "Red"
-    SECOND_YELLOW = "SecondYellow"
 
 
 @dataclass
 class ParsingContext:
-    """解析上下文信息"""
-    match_id: str
+    """解析上下文，用于在解析过程中传递状态信息"""
     raw_data: Dict[str, Any]
-    strict_mode: bool = True
-
-    # 解析状态
-    parsed_sections: List[str] = None
-
-    def __post_init__(self):
-        if self.parsed_sections is None:
-            self.parsed_sections = []
+    parsed_sections: List[str]
+    errors: List[str]
+    logger: logging.Logger
 
 
 class L2Parser:
     """
-    L2数据解析器 - 生产版本
+    L2数据解析器 - 企业级完整版本
 
-    提供强大的数据解析功能，支持多种数据格式、错误恢复、
-    数据验证和结构化输出等功能。
+    专门用于解析FotMob API返回的原始比赛数据，提取结构化的L2信息。
+    支持完整的数据段解析和元数据提取。
     """
 
-    def __init__(self, strict_mode: bool = True):
+    def __init__(self, strict_mode: bool = False):
         """
-        初始化L2数据解析器
+        初始化解析器
 
         Args:
-            strict_mode: 严格模式，True时遇到错误会抛出异常，
-                        False时会尽可能解析数据并记录警告
+            strict_mode: 严格模式，启用时更严格的验证
         """
         self.strict_mode = strict_mode
         self.logger = logging.getLogger(__name__)
 
-        # 数据提取路径映射 - 修正为小写以匹配FotMob API结构
-        self._data_paths = {
+        # 定义数据提取路径 - 黄金路径
+        self.field_paths = {
             'match_id': ['general', 'matchId'],
             'home_team': ['general', 'homeTeam', 'name'],
             'away_team': ['general', 'awayTeam', 'name'],
+            'competition': ['general', 'competition', 'name'],
             'home_score': ['header', 'teams', 0, 'score'],
             'away_score': ['header', 'teams', 1, 'score'],
-            'status': ['header', 'status', 'finished'],  # 🔧 修正路径
-            'match_time': ['general', 'status', 'started'],
-            'stadium': ['content', 'matchFacts', 'infoBox', 'Stadium'],  # 🔧 修正路径
-            'attendance': ['header', 'attendance'],
-            'referee': ['header', 'referee', 'name'],
-            'weather': ['header', 'weather', 'condition']
+            'kickoff_time': ['general', 'startTimeUTC'],
+            'status': ['header', 'status', 'reason', 'short']
         }
 
-        # 统计数据字段映射 - 支持大小写变体
-        self._stats_fields_mapping = {
-            'possession': ['possession', 'Possession'],
-            'shots': ['shots', 'Shots'],
-            'shots_on_target': ['shotsOnTarget', 'ShotsOnTarget'],
-            'corners': ['corners', 'Corners'],
-            'fouls': ['fouls', 'Fouls'],
-            'offsides': ['offsides', 'Offsides'],
-            'yellow_cards': ['yellowCards', 'YellowCards'],
-            'red_cards': ['redCards', 'RedCards'],
-            'saves': ['saves', 'Saves'],
-            'expected_goals': ['expectedGoals', 'ExpectedGoals', 'xG'],
-            'big_chances_created': ['bigChancesCreated', 'BigChancesCreated'],
-            'big_chances_missed': ['bigChancesMissed', 'BigChancesMissed'],
-            'passes': ['passes', 'Passes'],
-            'tackles': ['tackles', 'Tackles'],
-            'interceptions': ['interceptions', 'Interceptions'],
-            'clearances': ['clearances', 'Clearances'],
-            'aerials_won': ['aerialsWon', 'AerialsWon'],
-            'blocked_shots': ['blockedShots', 'BlockedShots'],
-            'counter_attacks': ['counterAttacks', 'CounterAttacks'],
-            'through_balls': ['throughBalls', 'ThroughBalls'],
-            'long_balls': ['longBalls', 'LongBalls'],
-            'crosses': ['crosses', 'Crosses'],
-            'touches': ['touches', 'Touches']
-        }
-
-    def _get_nested_value(
-        self,
-        data: Dict[str, Any],
-        path: List[Union[str, int]],
-        default: Any = None
-    ) -> Any:
+    def parse_match_data(self, raw_data: Union[Dict[str, Any], str]) -> L2DataProcessingResult:
         """
-        从嵌套字典中获取值，支持大小写不敏感和整数索引
+        解析比赛数据的主入口方法
 
         Args:
-            data: 源数据字典
-            path: 值的路径，支持字符串键和整数索引
-            default: 默认值
+            raw_data: FotMob API返回的原始数据（字典或JSON字符串）
 
         Returns:
-            Any: 找到的值或默认值
+            L2DataProcessingResult: 解析结果，包含所有提取的L2数据
         """
-        if not data or not path:
-            return default
-
-        current = data
-
         try:
-            for key in path:
-                if isinstance(current, dict):
-                    if isinstance(key, int):
-                        # 整数键，直接匹配或转换为字符串匹配
-                        if key in current:
-                            current = current[key]
-                        else:
-                            # 尝试字符串形式的数字键
-                            key_str = str(key)
-                            if key_str in current:
-                                current = current[key_str]
-                            else:
-                                # 大小写不敏感匹配
-                                found = False
-                                for dict_key in current.keys():
-                                    if str(dict_key).lower() == key_str.lower():
-                                        current = current[dict_key]
-                                        found = True
-                                        break
-                                if not found:
-                                    return default
-                    else:
-                        # 字符串键，直接匹配
-                        if key in current:
-                            current = current[key]
-                            continue
+            # 初始化解析上下文
+            if isinstance(raw_data, str):
+                import json
+                raw_data = json.loads(raw_data)
 
-                        # 大小写不敏感匹配
-                        found = False
-                        for dict_key in current.keys():
-                            if dict_key.lower() == key.lower():
-                                current = current[dict_key]
-                                found = True
-                                break
-                        if not found:
-                            return default
+            ctx = ParsingContext(
+                raw_data=raw_data,
+                parsed_sections=[],
+                errors=[],
+                logger=self.logger
+            )
 
-                elif isinstance(current, list):
-                    # 处理列表索引
-                    if isinstance(key, int):
-                        if 0 <= key < len(current):
-                            current = current[key]
-                        else:
-                            return default
-                    elif isinstance(key, str) and key.isdigit():
-                        index = int(key)
-                        if 0 <= index < len(current):
-                            current = current[index]
-                        else:
-                            return default
-                    else:
-                        return default
-                else:
-                    return default
+            self.logger.info("Starting L2 data parsing")
 
-            return current
+            # 执行各个数据段的解析
+            result_data = self._parse_all_sections(ctx)
 
-        except (KeyError, TypeError, IndexError, ValueError):
-            return default
+            # 创建最终结果
+            result = L2DataProcessingResult(
+                success=True,
+                data=result_data,
+                parsed_sections=ctx.parsed_sections,
+                errors=ctx.errors,
+                metadata={
+                    "total_sections": len(ctx.parsed_sections),
+                    "parser_version": "2.6.0",
+                    "strict_mode": self.strict_mode
+                }
+            )
 
-    def _get_value_from_alternatives(
-        self,
-        data: Dict[str, Any],
-        keys: List[str],
-        default: Any = None
-    ) -> Any:
-        """
-        从备选键名列表中获取第一个存在的值
+            self.logger.info(f"Successfully parsed {len(ctx.parsed_sections)} data sections: {ctx.parsed_sections}")
+            return result
 
-        Args:
-            data: 源数据字典
-            keys: 备选键名列表，按优先级顺序
-            default: 默认值
+        except Exception as e:
+            error_msg = f"Error parsing match data: {str(e)}"
+            self.logger.error(error_msg)
 
-        Returns:
-            Any: 找到的值或默认值
-        """
-        if not data or not keys:
-            return default
+            return L2DataProcessingResult(
+                success=False,
+                data=L2MatchData(
+                    match_id="",
+                    fotmob_id="",
+                    home_team="",
+                    away_team="",
+                    home_score=0,
+                    away_score=0
+                ),
+                parsed_sections=[],
+                errors=[error_msg],
+                metadata={"parser_version": "2.6.0", "error": True}
+            )
 
-        for key in keys:
-            if key in data:
-                return data[key]
-            # 尝试大小写不敏感匹配
-            for data_key in data.keys():
-                if data_key.lower() == key.lower():
-                    return data[data_key]
+    def _parse_all_sections(self, ctx: ParsingContext) -> L2MatchData:
+        """解析所有数据段"""
 
-        return default
+        # 基础信息 (始终最先解析)
+        basic_info = self._extract_match_basic_info(ctx)
 
-    def _smart_unwrap(
-        self,
-        data: Any,
-        expected_type: str = 'list',
-        target_key: Optional[str] = None
-    ) -> Any:
-        """
-        智能拆包数据 - 处理FotMob API的"包装"数据结构
+        # 核心统计数据
+        team_stats = self._parse_team_stats(ctx)
 
-        Args:
-            data: 原始数据
-            expected_type: 期望的数据类型 ('list', 'dict')
-            target_key: 目标键名（如 'events', 'shots', 'stats'）
+        # 比赛事件
+        match_events = self._parse_match_events(ctx)
 
-        Returns:
-            拆包后的数据
-        """
-        if data is None:
-            return None
+        # 射门数据
+        shot_data = self._parse_shot_data(ctx)
 
-        # 如果已经是期望的类型，直接返回
-        if (expected_type == 'list' and isinstance(data, list)) or \
-           (expected_type == 'dict' and isinstance(data, dict)):
-            return data
+        # 球员评分
+        player_ratings = self._parse_player_ratings(ctx)
 
-        # 如果是字典，尝试拆包
-        if isinstance(data, dict):
-            # 1. 尝试直接使用 target_key
-            if target_key and target_key in data:
-                unwrapped = data[target_key]
-                if (expected_type == 'list' and isinstance(unwrapped, list)) or \
-                   (expected_type == 'dict' and isinstance(unwrapped, dict)):
-                    return unwrapped
+        # 元数据 (体育场、裁判、天气等)
+        metadata = self._parse_metadata(ctx)
 
-            # 2. 尝试常见的数据键名
-            common_keys = {
-                'list': ['events', 'shots', 'players', 'ratings', 'lineups', 'starters', 'substitutes'],
-                'dict': ['stats', 'teamStats', 'playerStats', 'matchStats']
-            }
+        # 赔率数据
+        odds_data = self._parse_odds_data(ctx)
 
-            if target_key:
-                common_keys[expected_type].insert(0, target_key)
+        # 阵型和阵容数据
+        home_formation, away_formation = self._extract_formations(ctx)
+        home_lineup, away_lineup = self._extract_lineups(ctx)
 
-            for key in common_keys.get(expected_type, []):
-                if key in data:
-                    value = data[key]
-                    if isinstance(value, list) if expected_type == 'list' else isinstance(value, dict):
-                        return value
+        # 期望进球 (xG) 数据
+        xg_data = self._parse_xg_data(ctx)
 
-            # 3. 尝试找到第一个列表/字典值
-            for value in data.values():
-                if isinstance(value, list) if expected_type == 'list' else isinstance(value, dict):
-                    return value
+        # 组装最终数据
+        return L2MatchData(
+            # 必需的基础信息
+            match_id=str(basic_info.get("match_id", "")),
+            fotmob_id=str(basic_info.get("match_id", "")),
+            home_team=str(basic_info.get("home_team", "")),
+            away_team=str(basic_info.get("away_team", "")),
+            home_score=int(basic_info.get("home_score", 0)),
+            away_score=int(basic_info.get("away_score", 0)),
+            status=str(basic_info.get("status", "scheduled")),
+            kickoff_time=basic_info.get("kickoff_time"),
 
-        return data  # 返回原始数据，让调用方处理
+            # 统计数据
+            home_stats=team_stats.get("home") if team_stats and team_stats.get("home") else TeamStats(),
+            away_stats=team_stats.get("away") if team_stats and team_stats.get("away") else TeamStats(),
+
+            # 比赛事件
+            events=match_events,
+
+            # 射门数据
+            shot_map=shot_data,
+
+            # 球员评分数据 (转换为字典格式)
+            player_ratings={str(r.player_id or i): r for i, r in enumerate(player_ratings)} if player_ratings else {},
+
+            # 元数据
+            stadium_info=metadata.get("stadium") if metadata else None,
+            referee_info=metadata.get("referee") if metadata else None,
+            weather_info=metadata.get("weather") if metadata else None,
+
+            # 阵容信息
+            home_lineup=home_lineup,
+            away_lineup=away_lineup,
+
+            # 赔率数据
+            odds_data=odds_data,
+
+            # 数据完整性评分 (基于解析的段落数)
+            data_completeness_score=min(len(ctx.parsed_sections) / 10.0, 1.0)
+        )
 
     def _extract_match_basic_info(self, ctx: ParsingContext) -> Dict[str, Any]:
         """
-        提取比赛基本信息
+        提取比赛基础信息 - 终极比分路径校正版本
 
-        Args:
-            ctx: 解析上下文
-
-        Returns:
-            Dict[str, Any]: 比赛基本信息
+        CRITICAL: 强制使用比分字符串作为主要提取源
         """
-        self.logger.debug("Extracting match basic info for match %s", ctx.match_id)
-
-        basic_info = {}
-
-        for field, path in self._data_paths.items():
-            value = self._get_nested_value(ctx.raw_data, path)
-
-            # 🔧 特殊处理 status 字段 - 将布尔值转换为字符串枚举
-            if field == 'status':
-                status = self._extract_match_status(ctx.raw_data)
-                if status:
-                    basic_info[field] = status
-                elif self.strict_mode:
-                    raise ValueError(f"Required field '{field}' could not be determined")
-                else:
-                    self.logger.warning("Could not determine match status, using default")
-                    basic_info[field] = self._get_default_value(field)
-                continue
-
-            if value is not None:
-                basic_info[field] = value
-            elif self.strict_mode:
-                raise ValueError(f"Required field '{field}' not found at path {path}")
-            else:
-                self.logger.warning(
-                    "Field '%s' not found at path %s, using default value",
-                    field, path
-                )
-                basic_info[field] = self._get_default_value(field)
-
-        ctx.parsed_sections.append('basic_info')
-        self.logger.debug("Extracted basic info: %s", basic_info)
-
-        return basic_info
-
-    def _extract_match_status(self, raw_data: Dict[str, Any]) -> Optional[str]:
-        """
-        提取比赛状态 - 特殊处理布尔值转换为字符串枚举
-
-        Args:
-            raw_data: 原始数据字典
-
-        Returns:
-            Optional[str]: 比赛状态字符串
-        """
-        # 尝试多个可能的状态路径
-        status_paths = [
-            ['header', 'status'],
-            ['general', 'status'],
-            ['status'],
-            ['content', 'matchFacts', 'status']
-        ]
-
-        status_obj = None
-        found_path = None
-
-        for path in status_paths:
-            status_obj = self._get_nested_value(raw_data, path)
-            if status_obj:
-                found_path = path
-                self.logger.debug(f"Found status object at path: {path}")
-                break
-
-        if not status_obj:
-            self.logger.warning("No status object found in any known path")
-            return None
-
-        self.logger.debug(f"Status object type: {type(status_obj)}, content: {status_obj}")
-
-        # 🔧 处理布尔值状态对象
-        if isinstance(status_obj, dict):
-            if status_obj.get('finished'):
-                status = 'finished'
-                self.logger.debug("Match finished (finished=True)")
-            elif status_obj.get('started') and not status_obj.get('finished'):
-                status = 'live'
-                self.logger.debug("Match live (started=True, finished=False)")
-            elif status_obj.get('cancelled'):
-                status = 'cancelled'
-                self.logger.debug("Match cancelled")
-            elif status_obj.get('postponed'):
-                status = 'postponed'
-                self.logger.debug("Match postponed")
-            else:
-                status = 'scheduled'
-                self.logger.debug("Match scheduled (no status flags set)")
-        elif isinstance(status_obj, bool):
-            # 直接布尔值的情况
-            if status_obj:
-                status = 'finished'
-                self.logger.debug("Match finished (direct boolean=True)")
-            else:
-                status = 'scheduled'
-                self.logger.debug("Match scheduled (direct boolean=False)")
-        elif isinstance(status_obj, str):
-            # 已经是字符串，直接使用
-            status = status_obj.lower()
-            self.logger.debug(f"Match status string: {status}")
-
-            # 标准化状态值
-            status_mapping = {
-                'ft': 'finished',
-                'finished': 'finished',
-                'live': 'live',
-                'ongoing': 'live',
-                'scheduled': 'scheduled',
-                'upcoming': 'scheduled',
-                'postponed': 'postponed',
-                'cancelled': 'cancelled',
-                'abandoned': 'abandoned'
-            }
-            status = status_mapping.get(status, 'scheduled')
-        else:
-            self.logger.warning(f"Unexpected status object type: {type(status_obj)}")
-            return None
-
-        self.logger.debug(f"Final determined status: {status}")
-        return status
-
-    def _extract_team_stats(self, ctx: ParsingContext) -> Tuple[L2TeamStats, L2TeamStats]:
-        """
-        提取球队统计数据
-
-        Args:
-            ctx: 解析上下文
-
-        Returns:
-            Tuple[L2TeamStats, L2TeamStats]: (主队统计, 客队统计)
-        """
-        self.logger.debug("Extracting team stats for match %s", ctx.match_id)
-
-        # 尝试多个可能的统计数据位置 - 修正为小写，添加 FotMob V3 和旧版路径
-        stats_paths = [
-            ['stats', 'teamStats'],
-            ['teamStats'],
-            ['content', 'stats', 'teamStats'],
-            ['content', 'matchFacts', 'stats'],
-            ['content', 'matchFacts', 'teamMatchStats'],  # 🔧 添加 FotMob V3 常见路径
-            ['content', 'stats', 'Periods', 'All', 'stats'],  # 🔧 添加旧版 FotMob 路径
-            ['header', 'stats'],
-            ['stats'],
-            ['matchFacts', 'stats'],
-            ['matchFacts', 'teamMatchStats'],  # 🔧 添加 FotMob V3 常见路径
-            ['stats', 'Periods', 'All', 'stats']  # 🔧 添加旧版 FotMob 路径
-        ]
-
-        team_stats_data = None
-
-        for path in stats_paths:
-            team_stats_data = self._get_nested_value(ctx.raw_data, path)
-            if team_stats_data:
-                self.logger.debug(f"Found team stats at path: {path}")
-                break
-
-        if not team_stats_data:
-            if self.strict_mode:
-                raise ValueError("Team stats data not found")
-            else:
-                self.logger.warning("Team stats data not found, using default stats")
-                return self._create_default_team_stats(ctx.match_id)
-
-        # 🔧 智能拆包：处理包装的数据结构
-        team_stats_data = self._smart_unwrap(team_stats_data, expected_type='list', target_key='stats')
-
-        # 🎯 处理 FotMob 新版数据结构：包含多个统计类别的列表
-        if isinstance(team_stats_data, list) and team_stats_data and isinstance(team_stats_data[0], dict):
-            if 'stats' in team_stats_data[0] and 'title' in team_stats_data[0]:
-                # 新版数据格式：{"title": "Shots", "stats": [stat1, stat2, ...]}
-                home_stats_data = self._extract_new_format_team_stats(team_stats_data, 'home')
-                away_stats_data = self._extract_new_format_team_stats(team_stats_data, 'away')
-            else:
-                # 旧版数据格式：直接的主客队统计数组
-                home_stats_data = team_stats_data[0]
-                away_stats_data = team_stats_data[1]
-        elif isinstance(team_stats_data, dict):
-            if 'home' in team_stats_data and 'away' in team_stats_data:
-                home_stats_data = team_stats_data['home']
-                away_stats_data = team_stats_data['away']
-            elif 'Home' in team_stats_data and 'Away' in team_stats_data:
-                home_stats_data = team_stats_data['Home']
-                away_stats_data = team_stats_data['Away']
-            else:
-                if self.strict_mode:
-                    raise ValueError("Cannot determine home/away team stats structure")
-                else:
-                    self.logger.warning("Cannot determine team stats structure, using defaults")
-                    return self._create_default_team_stats(ctx.match_id)
-        else:
-            if self.strict_mode:
-                raise ValueError(f"Unexpected team stats format: {type(team_stats_data)}")
-            else:
-                self.logger.warning("Unexpected team stats format, using defaults")
-                return self._create_default_team_stats(ctx.match_id)
-
-        # 解析统计数据
         try:
-            home_stats = self._parse_single_team_stats(home_stats_data, "home")
-            away_stats = self._parse_single_team_stats(away_stats_data, "away")
+            basic_info = {}
 
-            ctx.parsed_sections.append('team_stats')
-            self.logger.debug(
-                "Extracted team stats - Home: %s, Away: %s",
-                home_stats.dict(), away_stats.dict()
-            )
+            # Step 1: 首先提取比分字符串 (CRITICAL)
+            self.logger.debug("Step 1: Extracting score string as primary source")
+            score_str = self._parse_score(ctx.raw_data)
 
-            return home_stats, away_stats
+            if score_str and score_str != "0-0":
+                # Step 2: 转换字符串为整数 (CRITICAL)
+                self.logger.debug(f"Step 2: Converting score string '{score_str}' to integers")
+                home_score, away_score = self._parse_score_to_ints(score_str)
+
+                # Step 3: 赋值给basic_info (CRITICAL)
+                basic_info['home_score'] = home_score
+                basic_info['away_score'] = away_score
+
+                self.logger.info(f"ULTIMATE: Extracted scores from string: home={home_score}, away={away_score}")
+            else:
+                # 备用方案：尝试直接路径提取
+                self.logger.warning("Score string extraction failed, trying direct path extraction")
+
+                home_score_raw = self._get_nested_value_robust(ctx.raw_data, ['header', 'teams', 0, 'score'])
+                away_score_raw = self._get_nested_value_robust(ctx.raw_data, ['header', 'teams', 1, 'score'])
+
+                if home_score_raw is not None and away_score_raw is not None:
+                    basic_info['home_score'] = self._safe_int_convert(home_score_raw)
+                    basic_info['away_score'] = self._safe_int_convert(away_score_raw)
+                    self.logger.info(f"BACKUP: Extracted scores from direct path: home={basic_info['home_score']}, away={basic_info['away_score']}")
+                else:
+                    basic_info['home_score'] = 0
+                    basic_info['away_score'] = 0
+                    self.logger.warning("All score extraction methods failed, defaulting to 0-0")
+
+            # Step 4: 最后提取其他字段 (CRITICAL)
+            self.logger.debug("Step 4: Extracting other basic info fields")
+            score_fields = {'home_score', 'away_score'}
+
+            for field_name, path in self.field_paths.items():
+                if field_name in score_fields:
+                    continue  # 跳过比分字段，已处理
+
+                value = self._get_nested_value_robust(ctx.raw_data, path)
+                if value is not None:
+                    basic_info[field_name] = value
+                    self.logger.debug(f"Extracted {field_name}: {value}")
+
+            # 最终比分验证
+            self.logger.info(f"Final extracted scores: home={basic_info['home_score']}, away={basic_info['away_score']}")
+
+            ctx.parsed_sections.append('basic_info')
+            return basic_info
 
         except Exception as e:
-            if self.strict_mode:
-                raise ValueError(f"Error parsing team stats: {str(e)}")
-            else:
-                self.logger.error("Error parsing team stats: %s", e)
-                return self._create_default_team_stats(ctx.match_id)
+            ctx.errors.append(f"Error parsing basic info: {str(e)}")
+            self.logger.error(f"Critical error in basic info extraction: {e}")
+            return {
+                'home_score': 0,
+                'away_score': 0
+            }
 
-    def _parse_single_team_stats(self, stats_data: Dict[str, Any], team_type: str) -> L2TeamStats:
+    def _safe_int_convert(self, value: Any) -> int:
+        """
+        安全地将值转换为整数
+
+        Args:
+            value: 原始值（可能是字符串、数字等）
+
+        Returns:
+            int: 转换后的整数
+        """
+        try:
+            if value is None:
+                return 0
+            if isinstance(value, int):
+                return value
+            if isinstance(value, float):
+                return int(value)
+            if isinstance(value, str):
+                # 清理字符串并转换
+                cleaned = re.sub(r'[^\d\.\-]', '', value.strip())
+                if cleaned:
+                    return int(float(cleaned))
+            return 0
+        except Exception as e:
+            self.logger.debug(f"Failed to convert {value} to int: {e}")
+            return 0
+
+    def _get_nested_value_robust(self, data: Dict[str, Any], path: List[str]) -> Any:
+        """
+        从嵌套字典中获取值 - 最终健壮版本
+
+        关键修复: 支持大小写不敏感的键名匹配和列表索引
+
+        Args:
+            data: 嵌套字典
+            path: 访问路径
+
+        Returns:
+            Any: 找到的值，如果找不到返回None
+        """
+        current = data
+
+        for key in path:
+            # 处理列表索引 (数字索引)
+            if isinstance(current, list) and isinstance(key, int):
+                if 0 <= key < len(current):
+                    current = current[key]
+                    continue
+                else:
+                    self.logger.debug(f"Robust path matching: list index {key} out of range (len={len(current)})")
+                    return None
+
+            # 处理列表索引 (字符串形式的数字)
+            elif isinstance(current, list) and isinstance(key, str) and key.isdigit():
+                index = int(key)
+                if 0 <= index < len(current):
+                    current = current[index]
+                    continue
+                else:
+                    self.logger.debug(f"Robust path matching: list index {index} out of range (len={len(current)})")
+                    return None
+
+            # 处理字典访问
+            elif isinstance(current, dict):
+                # 首先尝试精确匹配
+                if key in current:
+                    current = current[key]
+                    continue
+
+                # 精确匹配失败，尝试大小写不敏感匹配
+                found_key = None
+                for dict_key in current.keys():
+                    if dict_key.lower() == key.lower():
+                        found_key = dict_key
+                        break
+
+                if found_key is not None:
+                    current = current[found_key]
+                    self.logger.debug(f"Robust path matching: found '{found_key}' for '{key}'")
+                else:
+                    self.logger.debug(f"Robust path matching: key '{key}' not found in {list(current.keys())}")
+                    return None
+            else:
+                self.logger.debug(f"Robust path matching: unexpected type {type(current)} for key '{key}'")
+                return None
+
+        return current
+
+    def _parse_team_stats(self, ctx: ParsingContext) -> Optional[Dict[str, TeamStats]]:
+        """解析球队统计数据"""
+        try:
+            stats_data = self._get_nested_value_robust(ctx.raw_data, ["content", "stats"])
+            if not stats_data:
+                return None
+
+            home_stats = None
+            away_stats = None
+
+            if isinstance(stats_data, dict) and "stats" in stats_data:
+                stats_list = stats_data["stats"]
+                if isinstance(stats_list, list):
+                    stats_dict = {}
+                    for stat in stats_list:
+                        if isinstance(stat, dict) and "type" in stat:
+                            stats_dict[stat["type"]] = stat.get("stats", [])
+
+                    # 解析各项统计数据
+                    home_stats = self._parse_single_team_stats(stats_dict, team_index=0)
+                    away_stats = self._parse_single_team_stats(stats_dict, team_index=1)
+
+            ctx.parsed_sections.append('team_stats')
+            return {"home": home_stats, "away": away_stats}
+
+        except Exception as e:
+            ctx.errors.append(f"Error parsing team stats: {str(e)}")
+            return None
+
+    def _parse_single_team_stats(self, stats_dict: Dict[str, Any], team_index: int) -> TeamStats:
         """
         解析单个球队的统计数据
 
         Args:
-            stats_data: 球队统计数据
-            team_type: 球队类型 ("home" 或 "away")
-
-        Returns:
-            L2TeamStats: 解析后的统计数据
+            stats_dict: 统计数据字典
+            team_index: 球队索引 (0=主队, 1=客队)
         """
-        parsed_stats = {}
-
-        # 🎯 处理新格式的统计数据：已经是从 _extract_new_format_team_stats 提取的平面字典
-        if not stats_data:
-            self.logger.warning(f"No stats data provided for {team_type} team")
-            stats_data = {}
-
-        # 直接从平面字典中提取统计数据
-        for stat_field, _ in self._stats_fields_mapping.items():
-            value = stats_data.get(stat_field)
-
-            # 🧹 清洗统计数据中的非数字字符
-            if value is not None:
-                value = self._clean_stat_value(value)
-
-            # 类型转换
-            if value is not None:
-                try:
-                    if stat_field in ['possession']:
-                        parsed_stats[stat_field] = float(value)
-                    elif stat_field in [
-                        'shots', 'shots_on_target', 'corners', 'fouls', 'offsides',
-                        'yellow_cards', 'red_cards', 'saves', 'passes', 'tackles',
-                        'interceptions', 'clearances', 'aerials_won', 'blocked_shots',
-                        'counter_attacks', 'through_balls', 'long_balls', 'crosses',
-                        'touches', 'big_chances_created', 'big_chances_missed'
-                    ]:
-                        parsed_stats[stat_field] = int(value)
-                    elif stat_field in ['expected_goals']:
-                        parsed_stats[stat_field] = float(value)
-                    else:
-                        parsed_stats[stat_field] = value
-
-                except (ValueError, TypeError):
-                    self.logger.warning(
-                        "Invalid value for %s %s: %s",
-                        team_type, stat_field, value
-                    )
-                    parsed_stats[stat_field] = self._get_default_stat_value(stat_field)
-            else:
-                parsed_stats[stat_field] = self._get_default_stat_value(stat_field)
-
-        return L2TeamStats(**parsed_stats)
-
-    def _clean_stat_value(self, value: Any) -> Any:
-        """
-        清洗统计数据中的非数字字符
-
-        Args:
-            value: 原始数值（可能包含非数字字符）
-
-        Returns:
-            Any: 清洗后的数值
-        """
-        if not isinstance(value, str):
-            return value
-
-        import re
-
-        # 移除常见的非数字后缀，例如：
-        # "17 (33%)" -> "17"
-        # "66%" -> "66"
-        # "1.91xG" -> "1.91"
-        # "123.5K" -> "123.5"
-
-        # 提取字符串开头的数字部分（支持小数点）
-        match = re.match(r'^([\d\.]+)', value.strip())
-        if match:
-            cleaned_value = match.group(1)
-            self.logger.debug(f"Cleaned stat value: '{value}' -> '{cleaned_value}'")
-            return cleaned_value
-
-        # 如果没有找到数字模式，返回原值
-        self.logger.debug(f"No numeric pattern found in value: '{value}'")
-        return value
-
-    def _extract_new_format_team_stats(self, stats_categories: List[Dict], team_type: str) -> Dict:
-        """
-        从新版 FotMob 数据格式中提取指定球队的统计数据
-
-        新版数据格式：
-        [
-          {"title": "Top stats", "stats": [stat1, stat2, ...]},
-          {"title": "Shots", "stats": [stat1, stat2, ...]},
-          ...
-        ]
-
-        Args:
-            stats_categories: 统计类别列表
-            team_type: 'home' 或 'away'
-
-        Returns:
-            Dict: 提取的统计数据
-        """
-        team_stats = {}
-        team_index = 0 if team_type == 'home' else 1
-
-        for category in stats_categories:
-            if not isinstance(category, dict) or 'stats' not in category:
-                continue
-
-            category_stats = category['stats']
-            if not isinstance(category_stats, list):
-                continue
-
-            for stat_item in category_stats:
-                if not isinstance(stat_item, dict) or 'stats' not in stat_item:
-                    continue
-
-                stat_values = stat_item['stats']
-                if not isinstance(stat_values, list) or len(stat_values) <= team_index:
-                    continue
-
-                # 获取统计键名
-                stat_key = self._normalize_stat_key(stat_item.get('key', ''))
-                if not stat_key:
-                    # 如果没有 key，尝试从 title 生成
-                    stat_key = self._normalize_stat_key(stat_item.get('title', ''))
-
-                if stat_key:
-                    team_stats[stat_key] = stat_values[team_index]
-
-        self.logger.debug(f"Extracted {len(team_stats)} stats for {team_type} team: {list(team_stats.keys())}")
-        return team_stats
-
-    def _normalize_stat_key(self, key: str) -> str:
-        """
-        标准化统计键名
-
-        Args:
-            key: 原始键名
-
-        Returns:
-            str: 标准化后的键名
-        """
-        if not key:
-            return ""
-
-        # 移除特殊字符并转换为小写
-        normalized = key.lower().replace(' ', '_').replace('-', '_')
-
-        # 常见的键名映射
-        key_mapping = {
-            'ballpossesion': 'possession',  # FotMob 拼写错误
-            'expected_goals': 'expected_goals',
-            'expected_goals_(xg)': 'expected_goals',
-            'total_shots': 'shots',
-            'shots_on_target': 'shots_on_target',
-            'yellow_cards': 'yellow_cards',
-            'red_cards': 'red_cards',
-            'fouls': 'fouls',
-            'offsides': 'offsides',
-            'corners': 'corners',
-            'passes': 'passes',
-            'tackles': 'tackles',
-            'interceptions': 'interceptions',
-            'clearances': 'clearances',
-            'blocked_shots': 'blocked_shots',
-            'aerials_won': 'aerials_won',
-            'saves': 'saves',
-            'crosses': 'crosses',
-            'long_balls': 'long_balls',
-            'through_balls': 'through_balls',
-            'counter_attacks': 'counter_attacks',
-            'duel_won': 'duels_won',
-            'big_chances_created': 'big_chances_created',
-            'big_chances_missed': 'big_chances_missed',
-            'touches': 'touches',
-            'matchstats.headers.tackles': 'tackles'
-        }
-
-        return key_mapping.get(normalized, normalized)
-
-    def _extract_match_events(self, ctx: ParsingContext) -> List[L2MatchEvent]:
-        """
-        提取比赛事件数据 - 优化版本，支持事件类型白名单过滤
-
-        Args:
-            ctx: 解析上下文
-
-        Returns:
-            List[L2MatchEvent]: 比赛事件列表
-        """
-        self.logger.debug("Extracting match events for match %s", ctx.match_id)
-
-        # 🎯 核心事件类型白名单 - 仅处理我们需要的业务事件
-        CORE_EVENT_TYPES = ['goal', 'card', 'substitution']  # 大小写不敏感
-
-        # 尝试多个可能的事件数据位置 - 修正为小写
-        events_paths = [
-            ['content', 'stats', 'events'],
-            ['stats', 'events'],
-            ['events'],
-            ['matchFacts', 'events'],
-            ['content', 'matchFacts', 'events'],
-            ['header', 'events']
-        ]
-
-        events_data = None
-
-        for path in events_paths:
-            events_data = self._get_nested_value(ctx.raw_data, path)
-            if events_data:
-                self.logger.debug(f"Found events at path: {path}")
-                break
-
-        if not events_data:
-            if self.strict_mode:
-                raise ValueError("Match events data not found")
-            else:
-                self.logger.warning("Match events data not found, returning empty list")
-                return []
-
-        # 🔧 智能拆包：处理包装的事件数据
-        events_data = self._smart_unwrap(events_data, expected_type='list', target_key='events')
-
-        if not isinstance(events_data, list):
-            if self.strict_mode:
-                raise ValueError(f"Events data is not a list: {type(events_data)}")
-            else:
-                self.logger.warning("Events data is not a list, returning empty list")
-                return []
-
-        events = []
-        skipped_count = 0
-        processed_count = 0
-
-        for i, event_data in enumerate(events_data):
-            try:
-                # 🔍 预检查事件类型 - 白名单过滤
-                if not isinstance(event_data, dict):
-                    self.logger.debug("Event data %d is not a dictionary, skipping", i)
-                    skipped_count += 1
-                    continue
-
-                # 🔧 修复：使用备选键名提取而不是嵌套路径
-                event_type_str = self._get_value_from_alternatives(event_data, ['type', 'Type'], '')
-                if not event_type_str:
-                    self.logger.debug("Event %d has no type field, skipping", i)
-                    skipped_count += 1
-                    continue
-
-                event_type_lower = event_type_str.lower()
-                if event_type_lower not in CORE_EVENT_TYPES:
-                    self.logger.debug(
-                        "Skipping non-core event %d: type='%s' (not in whitelist: %s)",
-                        i, event_type_str, CORE_EVENT_TYPES
-                    )
-                    skipped_count += 1
-                    continue
-
-                # ✅ 在白名单内，进行完整解析
-                event = self._parse_single_event(event_data, i)
-                if event:
-                    events.append(event)
-                    processed_count += 1
-                    self.logger.debug(
-                        "Processed core event %d: type=%s, player=%s",
-                        i, event.event_type, event.player_name
-                    )
-                else:
-                    self.logger.debug("Failed to parse event %d despite being in whitelist", i)
-                    skipped_count += 1
-
-            except Exception as e:
-                error_msg = f"Error parsing event {i}: {str(e)}"
-                if self.strict_mode:
-                    raise ValueError(error_msg)
-                else:
-                    self.logger.warning(error_msg)
-                    skipped_count += 1
-                    continue
-
-        ctx.parsed_sections.append('match_events')
-
-        # 📊 记录处理统计信息
-        total_events = len(events_data)
-        self.logger.info(
-            "Event processing summary - Total: %d, Processed: %d, Skipped: %d, Yielded: %d",
-            total_events, processed_count, skipped_count, len(events)
+        return TeamStats(
+            possession=self._extract_stat_value(stats_dict, "possession", team_index),
+            shots=self._extract_stat_value(stats_dict, "shots", team_index),
+            shots_on_target=self._extract_stat_value(stats_dict, "shotsOnTarget", team_index),
+            corners=self._extract_stat_value(stats_dict, "corners", team_index),
+            fouls=self._extract_stat_value(stats_dict, "fouls", team_index),
+            yellow_cards=self._extract_stat_value(stats_dict, "yellowCards", team_index),
+            red_cards=self._extract_stat_value(stats_dict, "redCards", team_index),
+            expected_goals=self._extract_stat_value(stats_dict, "xg", team_index)
         )
 
-        if len(events) == 0 and total_events > 0:
-            self.logger.warning(
-                "No core events extracted from %d total events. Check event types: %s",
-                total_events, [self._get_value_from_alternatives(event, ['type', 'Type'], 'unknown')
-                             for event in events_data[:5] if isinstance(event, dict)]
-            )
-
-        return events
-
-    def _parse_single_event(self, event_data: Dict[str, Any], index: int) -> Optional[L2MatchEvent]:
-        """
-        解析单个比赛事件 - 数据质量修复版本
-
-        Args:
-            event_data: 事件数据 (假设已通过白名单过滤)
-            index: 事件索引
-
-        Returns:
-            Optional[L2MatchEvent]: 解析后的事件，解析失败返回None
-        """
-        if not isinstance(event_data, dict):
-            self.logger.debug("Event data %d is not a dictionary", index)
-            return None
-
-        # 🔧 修复：使用备选键名提取而不是嵌套路径
-        event_type_str = self._get_value_from_alternatives(event_data, ['type', 'Type'], '')
-
-        # 🔧 修复时间提取 - 添加 timeStr 支持 (FotMob 常用字段)
-        minute = self._get_value_from_alternatives(event_data, ['minute', 'Minute', 'timeStr', 'time'], 0)
-
-        team_id = self._get_value_from_alternatives(event_data, ['teamId', 'team'], '')
-
-        # 🔧 修复球员名称提取 - 处理字典格式的 player 对象
-        player_name = self._get_value_from_alternatives(event_data, ['playerName', 'player'], '')
-
-        if not event_type_str:
-            self.logger.debug("Event %d has empty type field", index)
-            return None
-
-        # 🔧 清理球员名称 - 处理字典对象
-        if isinstance(player_name, dict):
-            player_name = (
-                player_name.get('name') or
-                player_name.get('fullName') or
-                player_name.get('firstName') or
-                str(player_name)
-            )
-
-        # 🔧 时间字符串处理 - 解析 "45+3" 格式
-        if isinstance(minute, str):
-            minute = self._parse_minute_string(minute)
-        elif isinstance(minute, (int, float)):
-            minute = int(minute)
-        else:
-            minute = 0
-
-        # 🎯 事件类型转换 - 优化处理首字母大写格式
-        event_type_lower = event_type_str.lower()
-
-        # 直接匹配核心事件类型 (避免枚举转换的复杂性)
-        if event_type_lower in ['goal', 'gol']:
-            event_type_str = 'Goal'
-        elif event_type_lower in ['card', 'yellowcard', 'redcard']:
-            event_type_str = 'Card'
-        elif event_type_lower in ['substitution', 'sub']:
-            event_type_str = 'Substitution'
-        elif event_type_lower in ['var']:
-            event_type_str = 'Var'
-        else:
-            # 如果通过了白名单但仍然无法识别，记录为debug而不是warning
-            self.logger.debug("Unexpected event type after whitelist: %s", event_type_str)
-            return None
-
-        # 转换为枚举类型
-        try:
-            event_type = EventType(event_type_str)
-        except ValueError:
-            self.logger.debug("Failed to convert event type to enum: %s", event_type_str)
-            return None
-
-        # 处理特殊字段
-        is_goal = False
-        is_own_goal = False
-        card_type = None
-        substituted_player = None
-
-        if event_type == EventType.GOAL:
-            is_goal = True
-            # 🔧 修复：使用备选键名提取
-            is_own_goal = self._get_value_from_alternatives(event_data, ['isOwnGoal', 'ownGoal'], False)
-
-            # 确保 is_own_goal 是布尔类型
-            if isinstance(is_own_goal, str):
-                is_own_goal = is_own_goal.lower() in ['true', '1', 'yes']
-            elif is_own_goal is None:
-                is_own_goal = False
-
-        elif event_type == EventType.CARD:
-            # 🔧 修复：使用备选键名提取
-            card_type_str = self._get_value_from_alternatives(event_data, ['cardType', 'card'], '')
-            try:
-                card_type = CardType(card_type_str.title())
-            except ValueError:
-                card_type_lower = card_type_str.lower()
-                if 'yellow' in card_type_lower:
-                    card_type = CardType.YELLOW
-                elif 'red' in card_type_lower:
-                    card_type = CardType.RED
-                elif 'second' in card_type_lower:
-                    card_type = CardType.SECOND_YELLOW
-                else:
-                    card_type = None
-
-        elif event_type == EventType.SUBSTITUTION:
-            # 🔧 修复：使用备选键名提取
-            substituted_player = self._get_value_from_alternatives(event_data, ['substitutedPlayer', 'playerOut'], '')
-
-        # 🔧 修复：使用备选键名提取
-        description = self._get_value_from_alternatives(event_data, ['description', 'desc'], '')
-        if isinstance(description, dict):
-            # 如果是字典，尝试获取文本值
-            description = description.get('text', '') or str(description)
-        elif not isinstance(description, str):
-            description = str(description) if description is not None else ''
-
-        # 创建事件对象
-        try:
-            event = L2MatchEvent(
-                event_type=str(event_type.value),
-                minute=minute,
-                player_name=str(player_name) if player_name else '',
-                team_id=str(team_id) if team_id else '',
-                description=description,
-                is_goal=is_goal,
-                is_own_goal=is_own_goal,
-                card_type=str(card_type.value) if card_type else None,
-                substituted_player=str(substituted_player) if substituted_player else None
-            )
-
-            self.logger.debug(
-                "Parsed event: type=%s, minute=%d, player=%s",
-                event.event_type, event.minute, event.player_name
-            )
-
-            return event
-
-        except ValidationError as e:
-            self.logger.error("Validation error for event %d: %s", index, e)
-            if self.strict_mode:
-                raise
-            else:
-                return None
-
-    def _parse_minute_string(self, time_str: str) -> int:
-        """
-        解析时间字符串，支持 "45+3" 格式
-
-        Args:
-            time_str: 时间字符串
-
-        Returns:
-            int: 解析后的分钟数
-        """
-        if not isinstance(time_str, str):
-            return 0
-
-        try:
-            # 处理 "45+3" 格式
-            if '+' in time_str:
-                parts = time_str.split('+')
-                if len(parts) >= 2:
-                    base_minute = int(parts[0].strip())
-                    added_minute = int(parts[1].strip())
-                    return base_minute + added_minute
-
-            # 处理纯数字
-            return int(float(time_str))
-
-        except (ValueError, TypeError):
-            self.logger.debug(f"Failed to parse minute string: {time_str}")
-            return 0
-
-    def _extract_shot_data(self, ctx: ParsingContext) -> List[L2ShotData]:
-        """
-        提取射门数据
-
-        Args:
-            ctx: 解析上下文
-
-        Returns:
-            List[L2ShotData]: 射门数据列表
-        """
-        self.logger.debug("Extracting shot data for match %s", ctx.match_id)
-
-        # 尝试多个可能的射门数据位置 - 修正为小写
-        shot_paths = [
-            ['content', 'stats', 'shots'],
-            ['stats', 'shots'],
-            ['shots'],
-            ['header', 'shots'],
-            ['matchFacts', 'shots'],
-            ['content', 'matchFacts', 'shots']
-        ]
-
-        shots_data = None
-
-        for path in shot_paths:
-            shots_data = self._get_nested_value(ctx.raw_data, path)
-            if shots_data:
-                self.logger.debug(f"Found shots at path: {path}")
-                break
-
-        if not shots_data:
-            if self.strict_mode:
-                raise ValueError("Shot data not found")
-            else:
-                self.logger.warning("Shot data not found, returning empty list")
-                return []
-
-        # 🔧 智能拆包：处理包装的射门数据
-        shots_data = self._smart_unwrap(shots_data, expected_type='list', target_key='shots')
-
-        if not isinstance(shots_data, list):
-            if self.strict_mode:
-                raise ValueError(f"Shot data is not a list: {type(shots_data)}")
-            else:
-                self.logger.warning("Shot data is not a list, returning empty list")
-                return []
-
-        shots = []
-
-        for i, shot_data in enumerate(shots_data):
-            try:
-                shot = self._parse_single_shot(shot_data, i)
-                if shot:
-                    shots.append(shot)
-
-            except Exception as e:
-                error_msg = f"Error parsing shot {i}: {str(e)}"
-                if self.strict_mode:
-                    raise ValueError(error_msg)
-                else:
-                    self.logger.warning(error_msg)
-                    continue
-
-        ctx.parsed_sections.append('shot_data')
-        self.logger.debug("Extracted %d shot data points", len(shots))
-
-        return shots
-
-    def _parse_single_shot(self, shot_data: Dict[str, Any], index: int) -> Optional[L2ShotData]:
-        """
-        解析单个射门数据 - 数据质量修复版本
-
-        Args:
-            shot_data: 射门数据
-            index: 射门索引
-
-        Returns:
-            Optional[L2ShotData]: 解析后的射门数据
-        """
-        if not isinstance(shot_data, dict):
-            self.logger.warning("Shot data %d is not a dictionary", index)
-            return None
-
-        # 🔧 修复：使用备选键名提取而不是嵌套路径
-        # 🔧 修复时间提取 - 添加 timeStr 支持 (FotMob 常用字段)
-        minute = self._get_value_from_alternatives(shot_data, ['minute', 'Minute', 'timeStr', 'time'], 0)
-        player_name = self._get_value_from_alternatives(shot_data, ['playerName', 'player'], '')
-        team_id = self._get_value_from_alternatives(shot_data, ['teamId', 'team'], '')
-        x = self._get_value_from_alternatives(shot_data, ['x', 'X'], 0.0)
-        y = self._get_value_from_alternatives(shot_data, ['y', 'Y'], 0.0)
-        is_on_target = self._get_value_from_alternatives(shot_data, ['isOnTarget', 'onTarget'], False)
-        expected_goals = self._get_value_from_alternatives(shot_data, ['expectedGoals', 'xg', 'xG'], 0.0)
-        shot_type = self._get_value_from_alternatives(shot_data, ['shotType', 'type'], '')
-        is_goal = self._get_value_from_alternatives(shot_data, ['isGoal', 'goal'], False)
-        is_blocked = self._get_value_from_alternatives(shot_data, ['isBlocked', 'blocked'], False)
-
-        # 🔧 清理球员名称 - 处理字典对象
-        if isinstance(player_name, dict):
-            player_name = (
-                player_name.get('name') or
-                player_name.get('fullName') or
-                player_name.get('firstName') or
-                str(player_name)
-            )
-
-        # 🔧 时间字符串处理 - 解析 "45+3" 格式
-        if isinstance(minute, str):
-            minute = self._parse_minute_string(minute)
-        elif isinstance(minute, (int, float)):
-            minute = int(minute)
-        else:
-            minute = 0
-
-        # 类型转换和默认值处理
-        try:
-            minute = int(minute) if minute is not None else 0
-            x = float(x) if x is not None else 0.0
-            y = float(y) if y is not None else 0.0
-            expected_goals = float(expected_goals) if expected_goals is not None else 0.0
-
-            if isinstance(is_on_target, str):
-                is_on_target = is_on_target.lower() in ['true', '1', 'yes']
-            else:
-                is_on_target = bool(is_on_target)
-
-            if isinstance(is_goal, str):
-                is_goal = is_goal.lower() in ['true', '1', 'yes']
-            else:
-                is_goal = bool(is_goal)
-
-            if isinstance(is_blocked, str):
-                is_blocked = is_blocked.lower() in ['true', '1', 'yes']
-            else:
-                is_blocked = bool(is_blocked)
-
-        except (ValueError, TypeError) as e:
-            self.logger.warning("Type conversion error for shot %d: %s", index, e)
-            minute, x, y, expected_goals = 0, 0.0, 0.0, 0.0
-            is_on_target, is_goal, is_blocked = False, False, False
-
-        # 确保字符串类型
-        player_name = str(player_name) if player_name else ''
-        team_id = str(team_id) if team_id else ''
-        shot_type = str(shot_type) if shot_type else ''
-
-        try:
-            shot = L2ShotData(
-                minute=minute,
-                player_name=player_name,
-                team_id=team_id,
-                x=x,
-                y=y,
-                is_on_target=is_on_target,
-                expected_goals=expected_goals,
-                shot_type=shot_type,
-                is_goal=is_goal,
-                is_blocked=is_blocked
-            )
-
-            self.logger.debug(
-                "Parsed shot: minute=%d, player=%s, x=%.2f, y=%.2f, goal=%s",
-                shot.minute, shot.player_name, shot.x, shot.y, shot.is_goal
-            )
-
-            return shot
-
-        except ValidationError as e:
-            self.logger.error("Validation error for shot %d: %s", index, e)
-            if self.strict_mode:
-                raise
-            else:
-                return None
-
-    def _extract_player_ratings(self, ctx: ParsingContext) -> Dict[str, L2PlayerRating]:
-        """
-        提取球员评分数据
-
-        Args:
-            ctx: 解析上下文
-
-        Returns:
-            Dict[str, L2PlayerRating]: 球员评分数据
-        """
-        self.logger.debug("Extracting player ratings for match %s", ctx.match_id)
-
-        # 尝试多个可能的球员评分位置 - 修正为小写
-        rating_paths = [
-            ['content', 'stats', 'playerRatings'],
-            ['stats', 'playerRatings'],
-            ['playerRatings'],
-            ['ratings'],
-            ['header', 'ratings'],
-            ['matchFacts', 'ratings']
-        ]
-
-        ratings_data = None
-
-        for path in rating_paths:
-            ratings_data = self._get_nested_value(ctx.raw_data, path)
-            if ratings_data:
-                self.logger.debug(f"Found ratings at path: {path}")
-                break
-
-        if not ratings_data:
-            if self.strict_mode:
-                raise ValueError("Player ratings data not found")
-            else:
-                self.logger.warning("Player ratings data not found, returning empty dict")
-                return {}
-
-        # 🔧 智能拆包：处理包装的评分数据
-        ratings_data = self._smart_unwrap(ratings_data, expected_type='dict', target_key='ratings')
-
-        player_ratings = {}
-
-        if isinstance(ratings_data, dict):
-            for player_id, rating_data in ratings_data.items():
-                try:
-                    rating = self._parse_single_player_rating(player_id, rating_data)
-                    if rating:
-                        player_ratings[str(player_id)] = rating
-                except Exception as e:
-                    if self.strict_mode:
-                        raise ValueError(f"Error parsing player rating for {player_id}: {str(e)}")
-                    else:
-                        self.logger.warning("Error parsing player rating for %s: %s", player_id, e)
-                        continue
-        else:
-            if self.strict_mode:
-                raise ValueError(f"Player ratings data is not a dictionary: {type(ratings_data)}")
-            else:
-                self.logger.warning("Player ratings data is not a dictionary, returning empty dict")
-                return {}
-
-        ctx.parsed_sections.append('player_ratings')
-        self.logger.debug("Extracted ratings for %d players", len(player_ratings))
-
-        return player_ratings
-
-    def _parse_single_player_rating(
-        self,
-        player_id: str,
-        rating_data: Union[Dict[str, Any], float, int, str]
-    ) -> Optional[L2PlayerRating]:
-        """
-        解析单个球员评分
-
-        Args:
-            player_id: 球员ID
-            rating_data: 评分数据
-
-        Returns:
-            Optional[L2PlayerRating]: 解析后的评分数据
-        """
-        try:
-            if isinstance(rating_data, (int, float)):
-                rating = float(rating_data)
-                player_name = ''
-            elif isinstance(rating_data, str):
-                rating = float(rating_data) if rating_data.replace('.', '').isdigit() else 0.0
-                player_name = ''
-            elif isinstance(rating_data, dict):
-                # 🔧 修复：使用备选键名提取而不是嵌套路径
-                rating = float(self._get_value_from_alternatives(rating_data, ['rating', 'Rating'], 0.0))
-                player_name = str(self._get_value_from_alternatives(rating_data, ['playerName', 'name'], ''))
-            else:
-                self.logger.warning("Invalid rating data type for player %s: %s", player_id, type(rating_data))
-                return None
-
-            # 验证评分范围
-            if not (0.0 <= rating <= 10.0):
-                self.logger.warning("Invalid rating value for player %s: %s", player_id, rating)
-                if self.strict_mode:
-                    return None
-                else:
-                    rating = max(0.0, min(10.0, rating))
-
-            player_rating = L2PlayerRating(
-                player_id=str(player_id),
-                player_name=player_name,
-                rating=rating
-            )
-
-            self.logger.debug(
-                "Parsed player rating: id=%s, name=%s, rating=%.2f",
-                player_rating.player_id, player_rating.player_name, player_rating.rating
-            )
-
-            return player_rating
-
-        except (ValueError, TypeError) as e:
-            self.logger.error("Error parsing player rating for %s: %s", player_id, e)
-            if self.strict_mode:
-                return None
-            else:
-                return None
-
-    def _get_default_value(self, field: str) -> Any:
-        """获取字段的默认值"""
-        defaults = {
-            'match_id': '',
-            'home_team': '',
-            'away_team': '',
-            'home_score': 0,
-            'away_score': 0,
-            'status': '',
-            'match_time': '',
-            'stadium': '',
-            'attendance': 0,
-            'referee': '',
-            'weather': ''
-        }
-        return defaults.get(field, None)
-
-    def _get_default_stat_value(self, stat_field: str) -> Any:
-        """获取统计字段的默认值"""
-        if stat_field in ['possession', 'expected_goals']:
-            return 0.0
-        elif stat_field in [
-            'shots', 'shots_on_target', 'corners', 'fouls', 'offsides',
-            'yellow_cards', 'red_cards', 'saves', 'passes', 'tackles',
-            'interceptions', 'clearances', 'aerials_won', 'blocked_shots',
-            'counter_attacks', 'through_balls', 'long_balls', 'crosses',
-            'touches', 'big_chances_created', 'big_chances_missed'
-        ]:
-            return 0
-        else:
-            return None
-
-    def _create_default_team_stats(self, match_id: str) -> Tuple[L2TeamStats, L2TeamStats]:
-        """创建默认的球队统计数据"""
-        default_stats = {
-            'possession': 0.0,
-            'shots': 0,
-            'shots_on_target': 0,
-            'corners': 0,
-            'fouls': 0,
-            'offsides': 0,
-            'yellow_cards': 0,
-            'red_cards': 0,
-            'saves': 0,
-            'expected_goals': 0.0,
-            'big_chances_created': 0,
-            'big_chances_missed': 0,
-            'passes': 0,
-            'tackles': 0,
-            'interceptions': 0
-        }
-
-        home_stats = L2TeamStats(**default_stats)
-        away_stats = L2TeamStats(**default_stats)
-
-        return home_stats, away_stats
-
-    def _extract_match_id(self, raw_data: Dict[str, Any]) -> Optional[str]:
-        """
-        从原始数据中提取比赛ID，支持多种可能的路径
-
-        Args:
-            raw_data: 原始数据字典
-
-        Returns:
-            Optional[str]: 比赛ID，如果无法找到则返回None
-        """
-        self.logger.debug("Attempting to extract match_id from raw data")
-
-        # 尝试多种可能的路径来提取match_id
-        possible_paths = [
-            # 标准路径 - 修正为小写
-            ['general', 'matchId'],
-            ['matchId'],
-
-            # FotMob API 常见路径
-            ['id'],
-            ['match', 'id'],
-            ['matchId'],
-            ['match_id'],
-
-            # 嵌套结构路径 - 修正为小写
-            ['header', 'id'],
-            ['header', 'matchId'],
-            ['content', 'matchFacts', 'matchId'],
-            ['matchDetails', 'general', 'matchId'],
-
-            # 其他可能的路径
-            ['data', 'id'],
-            ['response', 'id'],
-            ['data', 'matchId'],
-            ['response', 'matchId'],
-        ]
-
-        for path in possible_paths:
-            match_id = self._get_nested_value(raw_data, path)
-            if match_id:
-                # 清理和验证ID
-                match_id_str = str(match_id).strip()
-                if match_id_str and match_id_str.isdigit():
-                    self.logger.debug(f"Found match_id {match_id_str} at path {' -> '.join(path)}")
-                    return match_id_str
-                elif match_id_str:
-                    # 如果不是纯数字但非空，也返回
-                    self.logger.debug(f"Found match_id {match_id_str} (non-numeric) at path {' -> '.join(path)}")
-                    return match_id_str
-
-        # 尝试从URL中提取（如果存在）
-        try:
-            for key in raw_data.keys():
-                if 'url' in key.lower():
-                    url = str(raw_data[key])
-                    match_id_match = re.search(r'/(\d{6,8})/?(?:[^0-9]|$)', url)
-                    if match_id_match:
-                        match_id = match_id_match.group(1)
-                        self.logger.debug(f"Extracted match_id {match_id} from URL {key}")
-                        return match_id
-        except Exception as e:
-            self.logger.debug(f"Error extracting match_id from URL: {e}")
-
-        # 尝试从数据根级别的任意数值字段中提取
-        try:
-            for key, value in raw_data.items():
-                if key.lower() in ['match', 'matchid', 'match_id', 'id', 'gameid', 'game_id']:
-                    if isinstance(value, (int, str)):
-                        match_id_str = str(value).strip()
-                        if match_id_str.isdigit() and len(match_id_str) >= 6:
-                            self.logger.debug(f"Found potential match_id {match_id_str} at root key '{key}'")
-                            return match_id_str
-        except Exception as e:
-            self.logger.debug(f"Error scanning root keys: {e}")
-
-        self.logger.warning("Could not extract match_id from any known path")
+    def _extract_stat_value(self, stats_dict: Dict[str, Any], stat_type: str, team_index: int) -> Optional[float]:
+        """从统计数据字典中提取指定类型的值"""
+        stat_data = stats_dict.get(stat_type)
+        if stat_data and isinstance(stat_data, list) and len(stat_data) > team_index:
+            value = stat_data[team_index]
+            if value is not None:
+                cleaned_value = self._clean_stat_value(value)
+                return float(cleaned_value) if cleaned_value is not None else None
         return None
 
-    def parse_match_data(self, raw_data: Dict[str, Any]) -> L2DataProcessingResult:
+    def _clean_stat_value(self, value: Any) -> Optional[str]:
         """
-        解析比赛数据的主入口
+        清洗统计数据值 - 最终修复版本
+
+        使用正则表达式清洗带有百分比或后缀的字符串
 
         Args:
-            raw_data: 原始数据字典
+            value: 原始值
 
         Returns:
-            L2DataProcessingResult: 解析结果
+            Optional[str]: 清洗后的值
         """
-        if not isinstance(raw_data, dict):
-            return L2DataProcessingResult(
-                success=False,
-                data=None,
-                error_message="Input data is not a dictionary",
-                parsed_sections=[]
-            )
+        if value is None:
+            return None
 
-        # 获取match_id
-        match_id = self._extract_match_id(raw_data)
+        if isinstance(value, (int, float)):
+            return str(value)
 
-        if not match_id:
-            return L2DataProcessingResult(
-                success=False,
-                data=None,
-                error_message="Cannot extract match_id from raw data",
-                parsed_sections=[]
-            )
+        if isinstance(value, str):
+            # 使用正则表达式提取数字部分
+            match = re.match(r'^([\d\.]+)', value.strip())
+            if match:
+                return match.group(1)
 
-        ctx = ParsingContext(match_id=match_id, raw_data=raw_data, strict_mode=self.strict_mode)
+        return None
 
+    def _parse_match_events(self, ctx: ParsingContext) -> List[L2MatchEvent]:
+        """解析比赛事件"""
         try:
-            # 提取基本信息
-            basic_info = self._extract_match_basic_info(ctx)
+            events_data = self._get_nested_value_robust(ctx.raw_data, ["content", "events"])
+            if not events_data:
+                return []
 
-            # 提取球队统计
-            home_stats, away_stats = self._extract_team_stats(ctx)
+            events = []
+            if isinstance(events_data, list):
+                for event in events_data:
+                    if isinstance(event, dict):
+                        # 使用schema中定义的EventType
+                        event_type_str = self._map_event_type(event.get("type"))
+                        try:
+                            event_type = EventType(event_type_str)
+                        except ValueError:
+                            event_type = EventType.CARD  # 默认值
 
-            # 提取比赛事件
-            events = self._extract_match_events(ctx)
+                        parsed_event = L2MatchEvent(
+                            event_type=event_type_str,
+                            minute=event.get("minute", 0),
+                            player_name=event.get("player", {}).get("name") if event.get("player") else "",
+                            team_id=str(event.get("team", {}).get("id", "")) if event.get("team") else "",
+                            description=event.get("name", ""),
+                            is_goal=event_type_str in ["Goal", "OwnGoal", "PenaltyGoal"],
+                            is_own_goal=event_type_str == "OwnGoal",
+                            card_type=event.get("cardType") if "card" in event_type_str.lower() else None,
+                            substituted_player=event.get("substitutedPlayer", {}).get("name") if event_type_str == "Substitution" and event.get("substitutedPlayer") else None
+                        )
+                        events.append(parsed_event)
 
-            # 提取射门数据
-            shot_data = self._extract_shot_data(ctx)
-
-            # 提取球员评分
-            player_ratings = self._extract_player_ratings(ctx)
-
-            # 创建L2MatchData对象
-            l2_data = L2MatchData(
-                match_id=basic_info.get('match_id', ''),
-                fotmob_id=basic_info.get('match_id', ''),
-                home_team=basic_info.get('home_team', ''),
-                away_team=basic_info.get('away_team', ''),
-                home_score=basic_info.get('home_score', 0),
-                away_score=basic_info.get('away_score', 0),
-                status=basic_info.get('status', ''),
-                home_stats=home_stats,
-                away_stats=away_stats,
-                events=events,
-                shot_map=shot_data,
-                player_ratings=player_ratings,
-                data_source="fotmob",
-                collected_at=datetime.now(),
-                data_completeness_score=0.8  # 默认完整性分数
-            )
-
-            self.logger.info(
-                "Successfully parsed match data for %s: %s vs %s (%d-%d), %d events, %d shots",
-                match_id,
-                l2_data.home_team,
-                l2_data.away_team,
-                l2_data.home_score,
-                l2_data.away_score,
-                len(events),
-                len(shot_data)
-            )
-
-            return L2DataProcessingResult(
-                success=True,
-                data=l2_data,
-                error_message=None,
-                parsed_sections=ctx.parsed_sections
-            )
+            ctx.parsed_sections.append('match_events')
+            return events
 
         except Exception as e:
-            error_message = f"Error parsing match data: {str(e)}"
-            self.logger.error("%s (match: %s, sections: %s)", error_message, match_id, ctx.parsed_sections)
+            ctx.errors.append(f"Error parsing match events: {str(e)}")
+            return []
 
-            return L2DataProcessingResult(
-                success=False,
-                data=None,
-                error_message=error_message,
-                parsed_sections=ctx.parsed_sections
+    def _parse_shot_data(self, ctx: ParsingContext) -> List[ShotData]:
+        """解析射门数据"""
+        try:
+            shot_data = self._get_nested_value_robust(ctx.raw_data, ["content", "shotmap", "shots"])
+            if not shot_data:
+                return []
+
+            shots = []
+            if isinstance(shot_data, list):
+                for shot in shot_data:
+                    if isinstance(shot, dict):
+                        parsed_shot = ShotData(
+                            minute=shot.get("time", 0),
+                            player_name=shot.get("playerName", ""),
+                            team_id=str(shot.get("teamId", "")),
+                            x=shot.get("position", {}).get("x", 0.0) if shot.get("position") else 0.0,
+                            y=shot.get("position", {}).get("y", 0.0) if shot.get("position") else 0.0,
+                            is_on_target=shot.get("isOnTarget", False),
+                            expected_goals=shot.get("xg", 0.0),
+                            shot_type=shot.get("shotType", ""),
+                            is_goal=shot.get("shotType") == "Goal",
+                            is_blocked=shot.get("isBlocked", False)
+                        )
+                        shots.append(parsed_shot)
+
+            ctx.parsed_sections.append('shotmap')
+            return shots
+
+        except Exception as e:
+            ctx.errors.append(f"Error parsing shot data: {str(e)}")
+            return []
+
+    def _parse_player_ratings(self, ctx: ParsingContext) -> List[L2PlayerRating]:
+        """解析球员评分"""
+        try:
+            ratings_data = self._get_nested_value_robust(ctx.raw_data, ["content", "playerRatings"])
+            if not ratings_data:
+                return []
+
+            ratings = []
+            if isinstance(ratings_data, dict):
+                # 处理主客队评分
+                for team_key in ["home", "away"]:
+                    team_ratings = ratings_data.get(team_key, {})
+                    if isinstance(team_ratings, dict) and "ratings" in team_ratings:
+                        for player_rating in team_ratings["ratings"]:
+                            if isinstance(player_rating, dict):
+                                rating = L2PlayerRating(
+                                    player_id=str(player_rating.get("id", f"player_{len(ratings)}")),
+                                    player_name=player_rating.get("playerName", ""),
+                                    rating=float(player_rating.get("rating", 0.0)),
+                                    position=player_rating.get("position"),
+                                    minutes_played=player_rating.get("minutesPlayed")
+                                )
+                                ratings.append(rating)
+
+            ctx.parsed_sections.append('player_ratings')
+            return ratings
+
+        except Exception as e:
+            ctx.errors.append(f"Error parsing player ratings: {str(e)}")
+            return []
+
+    def _parse_metadata(self, ctx: ParsingContext) -> Optional[Dict[str, Any]]:
+        """解析元数据（体育场、裁判、天气等）"""
+        try:
+            metadata = {}
+
+            # 体育场信息
+            stadium_name = self._get_nested_value_robust(ctx.raw_data, ["content", "ground", "name"])
+            if stadium_name:
+                metadata["stadium"] = StadiumInfo(name=stadium_name)
+
+            # 裁判信息
+            referee_data = self._get_nested_value_robust(ctx.raw_data, ["content", "referee"])
+            if referee_data and isinstance(referee_data, dict):
+                metadata["referee"] = RefereeInfo(
+                    name=referee_data.get("name", ""),
+                    nationality=referee_data.get("nationality", "")
+                )
+
+            # 天气信息
+            weather_data = self._get_nested_value_robust(ctx.raw_data, ["content", "weather"])
+            if weather_data and isinstance(weather_data, dict):
+                metadata["weather"] = WeatherInfo(
+                    condition=weather_data.get("condition", ""),
+                    temperature=weather_data.get("temperature"),
+                    humidity=weather_data.get("humidity"),
+                    wind_speed=weather_data.get("windSpeed")
+                )
+
+            # 观众数量
+            attendance = self._get_nested_value_robust(ctx.raw_data, ["content", "attendance"])
+            if attendance:
+                metadata["attendance"] = self._clean_numeric_value(attendance)
+
+            if metadata:
+                ctx.parsed_sections.append('metadata')
+                return metadata
+
+            return None
+
+        except Exception as e:
+            ctx.errors.append(f"Error parsing metadata: {str(e)}")
+            return None
+
+    def _parse_odds_data(self, ctx: ParsingContext) -> Optional[OddsData]:
+        """解析赔率数据"""
+        try:
+            odds_paths = [
+                ["content", "matchFacts", "odds"],
+                ["content", "odds"],
+                ["matchFacts", "odds"]
+            ]
+
+            odds_data = None
+            for path in odds_paths:
+                odds_data = self._get_nested_value_robust(ctx.raw_data, path)
+                if odds_data:
+                    break
+
+            if odds_data and isinstance(odds_data, dict):
+                result = OddsData(
+                    home_win=odds_data.get("homeWin"),
+                    draw=odds_data.get("draw"),
+                    away_win=odds_data.get("awayWin"),
+                    provider=odds_data.get("provider", ""),
+                    snapshot_time=self._parse_datetime(odds_data.get("snapshotTime"))
+                )
+                ctx.parsed_sections.append('odds')
+                return result
+
+            return None
+
+        except Exception as e:
+            ctx.errors.append(f"Error parsing odds data: {str(e)}")
+            return None
+
+    def _extract_formations(self, ctx: ParsingContext) -> Tuple[Optional[str], Optional[str]]:
+        """
+        提取主客队阵型数据 - 修复版本
+
+        基于实际数据结构：['content', 'lineup', 'homeTeam/awayTeam', 'formation']
+        """
+        try:
+            # 基于实际数据结构的正确路径
+            lineup_base = self._get_nested_value_robust(ctx.raw_data, ['content', 'lineup'])
+
+            if not lineup_base or not isinstance(lineup_base, dict):
+                return None, None
+
+            home_formation = None
+            away_formation = None
+
+            # 从 homeTeam 和 awayTeam 中提取阵型
+            if 'homeTeam' in lineup_base:
+                home_team_data = lineup_base['homeTeam']
+                if isinstance(home_team_data, dict) and 'formation' in home_team_data:
+                    home_formation = self._validate_formation(home_team_data['formation'])
+
+            if 'awayTeam' in lineup_base:
+                away_team_data = lineup_base['awayTeam']
+                if isinstance(away_team_data, dict) and 'formation' in away_team_data:
+                    away_formation = self._validate_formation(away_team_data['formation'])
+
+            # 备用路径检查（保持向后兼容）
+            if not home_formation or not away_formation:
+                # 检查其他可能的路径
+                backup_paths = [
+                    ['general', 'lineups'],
+                    ['header', 'lineups'],
+                    ['lineups']
+                ]
+
+                for path in backup_paths:
+                    lineups_data = self._get_nested_value_robust(ctx.raw_data, path)
+                    if lineups_data:
+                        backup_home, backup_away = self._extract_formations_from_generic(lineups_data)
+                        if not home_formation:
+                            home_formation = backup_home
+                        if not away_formation:
+                            away_formation = backup_away
+                        break
+
+            if home_formation or away_formation:
+                ctx.parsed_sections.append('formations')
+                self.logger.debug(f"Extracted formations: home={home_formation}, away={away_formation}")
+
+            return home_formation, away_formation
+
+        except Exception as e:
+            self.logger.warning(f"Error extracting formations: {e}")
+            return None, None
+
+    def _extract_lineups(self, ctx: ParsingContext) -> Tuple[Optional[TeamLineup], Optional[TeamLineup]]:
+        """
+        提取完整的阵容信息 - 新增方法
+
+        从 ['content', 'lineup', 'homeTeam/awayTeam'] 中提取
+        """
+        try:
+            lineup_base = self._get_nested_value_robust(ctx.raw_data, ['content', 'lineup'])
+
+            if not lineup_base or not isinstance(lineup_base, dict):
+                return None, None
+
+            home_lineup = None
+            away_lineup = None
+
+            # 处理主队阵容
+            if 'homeTeam' in lineup_base:
+                home_team_data = lineup_base['homeTeam']
+                if isinstance(home_team_data, dict):
+                    home_lineup = self._parse_single_lineup(home_team_data, is_home=True)
+
+            # 处理客队阵容
+            if 'awayTeam' in lineup_base:
+                away_team_data = lineup_base['awayTeam']
+                if isinstance(away_team_data, dict):
+                    away_lineup = self._parse_single_lineup(away_team_data, is_home=False)
+
+            if home_lineup or away_lineup:
+                ctx.parsed_sections.append('lineups')
+                self.logger.debug(f"Extracted lineups: home={len(home_lineup.starters) if home_lineup else 0} starters, away={len(away_lineup.starters) if away_lineup else 0} starters")
+
+            return home_lineup, away_lineup
+
+        except Exception as e:
+            self.logger.warning(f"Error extracting lineups: {e}")
+            return None, None
+
+    def _parse_single_lineup(self, team_data: Dict[str, Any], is_home: bool) -> Optional[TeamLineup]:
+        """
+        解析单个球队的阵容信息
+
+        Args:
+            team_data: 球队数据字典
+            is_home: 是否为主队
+
+        Returns:
+            TeamLineup: 解析后的阵容对象
+        """
+        try:
+            formation = self._validate_formation(team_data.get('formation'))
+            starters = []
+            substitutes = []
+
+            # 解析首发阵容
+            starters_data = team_data.get('starters', [])
+            if isinstance(starters_data, list):
+                for player in starters_data:
+                    if isinstance(player, dict):
+                        starter_info = {
+                            'id': player.get('id'),
+                            'name': player.get('name'),
+                            'position': player.get('position'),
+                            'shirt_number': player.get('shirtNumber'),
+                            'rating': player.get('rating')
+                        }
+                        starters.append(starter_info)
+
+            # 解析替补阵容
+            subs_data = team_data.get('subs', [])
+            if isinstance(subs_data, list):
+                for player in subs_data:
+                    if isinstance(player, dict):
+                        sub_info = {
+                            'id': player.get('id'),
+                            'name': player.get('name'),
+                            'position': player.get('position'),
+                            'shirt_number': player.get('shirtNumber')
+                        }
+                        substitutes.append(sub_info)
+
+            # 创建阵容对象
+            lineup = TeamLineup(
+                formation=formation,
+                starters=starters,
+                substitutes=substitutes,
+                manager=team_data.get('coach', {}).get('name') if team_data.get('coach') else None
             )
+
+            return lineup
+
+        except Exception as e:
+            self.logger.warning(f"Error parsing single lineup: {e}")
+            return None
+
+    def _validate_formation(self, formation: Any) -> Optional[str]:
+        """
+        验证和标准化阵型字符串
+
+        Args:
+            formation: 原始阵型数据
+
+        Returns:
+            Optional[str]: 验证后的阵型字符串
+        """
+        if not formation:
+            return None
+
+        if isinstance(formation, str):
+            # 清理阵型字符串
+            formation = formation.strip()
+
+            # 验证阵型格式
+            if re.match(r'^\d-\d-\d$', formation):  # 4-4-2, 4-3-3 等
+                return formation
+            elif re.match(r'^\d-\d-\d-\d$', formation):  # 4-2-3-1, 4-1-4-1 等
+                return formation
+            elif re.match(r'^\d-\d$', formation):  # 3-5, 4-4 等
+                return formation
+            # 常见阵型白名单
+            elif formation in ['4-3-3', '4-4-2', '4-2-3-1', '3-5-2', '5-3-2', '4-1-4-1', '3-4-3', '3-4-2-1']:
+                return formation
+
+        return None
+
+    def _extract_formations_from_generic(self, lineups_data: Any) -> Tuple[Optional[str], Optional[str]]:
+        """
+        从通用格式中提取阵型（备用方法）
+
+        Args:
+            lineups_data: 通用阵容数据
+
+        Returns:
+            Tuple[Optional[str], Optional[str]]: (主队阵型, 客队阵型)
+        """
+        if not isinstance(lineups_data, dict):
+            return None, None
+
+        home_formation = None
+        away_formation = None
+
+        # 结构1: {"home": {"formation": "4-3-3"}, "away": {"formation": "4-4-2"}}
+        if 'home' in lineups_data and 'away' in lineups_data:
+            home_formation = self._validate_formation(lineups_data['home'].get('formation'))
+            away_formation = self._validate_formation(lineups_data['away'].get('formation'))
+
+        # 结构2: [{"team": "home", "formation": "4-3-3"}, {"team": "away", "formation": "4-4-2"}]
+        elif isinstance(lineups_data, list) and len(lineups_data) >= 2:
+            for lineup in lineups_data[:2]:
+                if isinstance(lineup, dict):
+                    team_side = lineup.get('team', lineup.get('side', '')).lower()
+                    formation = self._validate_formation(lineup.get('formation'))
+
+                    if 'home' in team_side and formation:
+                        home_formation = formation
+                    elif 'away' in team_side and formation:
+                        away_formation = formation
+
+        return home_formation, away_formation
+
+    def _parse_xg_data(self, ctx: ParsingContext) -> Optional[Dict[str, float]]:
+        """解析期望进球(xG)数据"""
+        try:
+            xg_paths = [
+                ["content", "stats", "stats"],
+                ["content", "xg"],
+                ["stats", "xg"]
+            ]
+
+            for path in xg_paths:
+                stats_data = self._get_nested_value_robust(ctx.raw_data, path)
+                if stats_data and isinstance(stats_data, list):
+                    for stat in stats_data:
+                        if isinstance(stat, dict) and stat.get("type") == "xg":
+                            xg_values = stat.get("stats", [])
+                            if len(xg_values) >= 2:
+                                return {
+                                    "home": float(xg_values[0]) if xg_values[0] else 0.0,
+                                    "away": float(xg_values[1]) if xg_values[1] else 0.0
+                                }
+
+            # 从统计数据中提取xG
+            if ctx.raw_data.get("content", {}).get("stats"):
+                home_xg = ctx.raw_data["content"]["stats"].get("home", {}).get("xg")
+                away_xg = ctx.raw_data["content"]["stats"].get("away", {}).get("xg")
+
+                if home_xg is not None or away_xg is not None:
+                    return {
+                        "home": float(home_xg) if home_xg else 0.0,
+                        "away": float(away_xg) if away_xg else 0.0
+                    }
+
+            return None
+
+        except Exception as e:
+            ctx.errors.append(f"Error parsing xG data: {str(e)}")
+            return None
+
+    # Helper methods
+    def _get_nested_value(self, data: Dict[str, Any], path: List[str]) -> Any:
+        """
+        从嵌套字典中获取值 - 向后兼容方法
+
+        Args:
+            data: 嵌套字典
+            path: 访问路径
+
+        Returns:
+            Any: 找到的值，如果找不到返回None
+        """
+        current = data
+        for key in path:
+            if isinstance(current, dict) and key in current:
+                current = current[key]
+            else:
+                return None
+        return current
+
+    def _map_event_type(self, event_type: str) -> str:
+        """映射事件类型"""
+        type_mapping = {
+            "goal": EventType.GOAL,
+            "card": EventType.CARD,
+            "substitution": EventType.SUBSTITUTION,
+            "var": EventType.VAR,
+            "penalty_shootout": EventType.PENALTY_SHOOTOUT
+        }
+        return type_mapping.get(event_type.lower(), event_type)
+
+    def _parse_score(self, data: Dict[str, Any]) -> str:
+        """
+        解析比分 - 终极鲁棒版本
+
+        优先使用备用路径获取比分字符串，如 "1-1"
+        """
+        try:
+            # 方法1: 从 status.score 获取比分字符串
+            score_from_status = self._get_nested_value_robust(data, ["header", "status", "score"])
+            if score_from_status and isinstance(score_from_status, str) and '-' in score_from_status:
+                # 处理带空格的比分字符串，例如 "2 - 2" -> "2-2"
+                cleaned_score = score_from_status.replace(' ', '')
+                # 验证比分格式是否有效 (如 "1-1", "2-0", "0-3")
+                parts = cleaned_score.split('-')
+                if len(parts) == 2 and parts[0].strip().isdigit() and parts[1].strip().isdigit():
+                    self.logger.debug(f"Found score string from status: {cleaned_score} (original: {score_from_status})")
+                    return cleaned_score
+
+            # 方法2: 从 teams 数组提取比分
+            home_score = self._get_nested_value_robust(data, ["header", "teams", 0, "score"])
+            away_score = self._get_nested_value_robust(data, ["header", "teams", 1, "score"])
+
+            if home_score is not None and away_score is not None:
+                score_str = f"{home_score}-{away_score}"
+                self.logger.debug(f"Found score from teams array: {score_str}")
+                return score_str
+
+            # 方法3: 尝试其他可能的比分路径
+            backup_paths = [
+                ["header", "status", "scoreStr"],  # 实际数据的比分路径 (例如 "2 - 2")
+                ["header", "scoreStr"],           # 备用路径
+                ["general", "score"],             # 备用路径
+                ["score"]                         # 备用路径
+            ]
+
+            for path in backup_paths:
+                score_candidate = self._get_nested_value_robust(data, path)
+                if score_candidate and isinstance(score_candidate, str) and '-' in score_candidate:
+                    # 处理带空格的比分字符串，例如 "2 - 2" -> "2-2"
+                    cleaned_score = score_candidate.replace(' ', '')
+                    parts = cleaned_score.split('-')
+                    if len(parts) == 2 and parts[0].strip().isdigit() and parts[1].strip().isdigit():
+                        self.logger.debug(f"Found score from backup path {path}: {cleaned_score} (original: {score_candidate})")
+                        return cleaned_score
+
+            # 所有方法都失败，返回默认值
+            self.logger.warning("No valid score string found, returning default 0-0")
+            return "0-0"
+
+        except Exception as e:
+            self.logger.debug(f"Error parsing score: {e}")
+            return "0-0"
+
+    def _parse_score_to_ints(self, score_str: str) -> Tuple[int, int]:
+        """将比分字符串转换为整数元组"""
+        try:
+            if isinstance(score_str, str) and '-' in score_str:
+                parts = score_str.split('-')
+                if len(parts) == 2:
+                    home = int(parts[0].strip())
+                    away = int(parts[1].strip())
+                    return home, away
+            return 0, 0
+        except:
+            return 0, 0
+
+    def _clean_numeric_value(self, value: Any) -> Optional[Union[int, float]]:
+        """清理数值数据，移除非数字字符"""
+        if value is None:
+            return None
+
+        if isinstance(value, (int, float)):
+            return value
+
+        if isinstance(value, str):
+            # 移除逗号、空格和其他非数字字符（保留小数点和负号）
+            cleaned = re.sub(r'[^\d\.\-]', '', value.strip())
+
+            if cleaned:
+                try:
+                    # 尝试转换为浮点数，如果是整数则返回整数
+                    if '.' in cleaned:
+                        return float(cleaned)
+                    else:
+                        return int(cleaned)
+                except ValueError:
+                    pass
+
+        return None
+
+    def _parse_datetime(self, dt_str: Any) -> Optional[datetime]:
+        """解析日期时间字符串"""
+        if not dt_str:
+            return None
+
+        try:
+            # 如果是时间戳
+            if isinstance(dt_str, (int, float)):
+                return datetime.fromtimestamp(dt_str)
+
+            if isinstance(dt_str, str):
+                # 常见的日期时间格式
+                formats = [
+                    '%Y-%m-%dT%H:%M:%SZ',      # ISO 8601
+                    '%Y-%m-%dT%H:%M:%S.%fZ',    # ISO 8601 with microseconds
+                    '%Y-%m-%d %H:%M:%S',        # Standard format
+                    '%Y-%m-%d',                 # Date only
+                ]
+
+                for fmt in formats:
+                    try:
+                        return datetime.strptime(dt_str, fmt)
+                    except ValueError:
+                        continue
+
+        except Exception as e:
+            self.logger.debug(f"Could not parse datetime '{dt_str}': {e}")
+
+        return None
