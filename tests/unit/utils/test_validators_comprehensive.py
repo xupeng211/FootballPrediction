@@ -128,13 +128,13 @@ class TestValidatorsComprehensive:
         """测试数据类型验证功能"""
         # 正确类型
         data = {"name": "John", "age": 30, "active": True}
-        schema = {"name": str, "age": int, "active": bool}
+        schema = {"name": "str", "age": "int", "active": "bool"}
         result = validate_data_types(data, schema)
         assert result == []
 
         # 错误类型
         data = {"name": 123, "age": "30", "active": "true"}
-        schema = {"name": str, "age": int, "active": bool}
+        schema = {"name": "str", "age": "int", "active": "bool"}
         result = validate_data_types(data, schema)
         assert len(result) == 3
         assert any("name" in error for error in result)
@@ -143,7 +143,7 @@ class TestValidatorsComprehensive:
 
         # 部分正确
         data = {"name": "John", "age": "30"}
-        schema = {"name": str, "age": int, "email": str}
+        schema = {"name": "str", "age": "int", "email": "str"}
         result = validate_data_types(data, schema)
         assert len(result) == 1
         assert "age" in result[0]
