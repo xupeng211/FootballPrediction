@@ -328,17 +328,62 @@ class DIContainer:
                             f"无法解析参数 {param_name} 的类型注解: {param.annotation}"
                         ) from None
 
+            # 跳过基本类型，避免对内置类型进行依赖注入
+            if param_type in (str, int, float, bool, list, dict, tuple, set):
+                if param.default != inspect.Parameter.empty:
+                    logger.debug(f"参数 {param_name} 使用基本类型 {param_type.__name__} 和默认值: {param.default}")
+                else:
+                    logger.debug(f"参数 {param_name} 使用基本类型 {param_type.__name__}，将使用默认构造值")
+                    params[param_name] = self._get_default_value_for_type(param_type)
+                continue
+
             # 解析依赖
             if param_type in self._services:
                 params[param_name] = self.resolve(param_type)
             else:
-                # 尝试自动注册
-                type_name = self._get_type_name(param_type)
-                logger.warning(f"自动注册类型: {type_name}")
-                self.register_transient(param_type)
-                params[param_name] = self.resolve(param_type)
+                # 尝试自动注册（仅对自定义类型）
+                if self._is_custom_type(param_type):
+                    type_name = self._get_type_name(param_type)
+                    logger.warning(f"自动注册自定义类型: {type_name}")
+                    self.register_transient(param_type)
+                    params[param_name] = self.resolve(param_type)
+                else:
+                    # 非自定义类型且没有默认值，报错
+                    if param.default == inspect.Parameter.empty:
+                        logger.error(f"参数 {param_name} 的类型 {param_type} 无法注册且没有默认值")
+                        raise DependencyInjectionError(
+                            f"无法解析参数 {param_name} 的类型注解: {param_type}"
+                        )
+                    else:
+                        params[param_name] = param.default
 
         return params
+
+    def _get_default_value_for_type(self, param_type: type) -> Any:
+        """为基本类型获取默认值."""
+        defaults = {
+            str: "",
+            int: 0,
+            float: 0.0,
+            bool: False,
+            list: [],
+            dict: {},
+            tuple: (),
+            set: set(),
+        }
+        return defaults.get(param_type, None)
+
+    def _is_custom_type(self, param_type: type) -> bool:
+        """判断是否为自定义类型（非内置类型）。"""
+        if param_type in (str, int, float, bool, list, dict, tuple, set):
+            return False
+
+        # 检查是否为内置类型或typing模块中的类型
+        module = getattr(param_type, '__module__', '')
+        if module == 'builtins' or module.startswith('typing.'):
+            return False
+
+        return True
 
     def _get_type_name(self, param_type) -> str:
         """安全地获取类型名称."""
