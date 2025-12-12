@@ -142,6 +142,7 @@ jobs:
           timeout 15m python -m pytest tests/unit/cache/ tests/unit/events/ tests/unit/utils/ tests/unit/core/ \
             -vv \
             --tb=short \
+            --junit-xml=test-results.xml \
             --ignore=tests/unit/api/predictions/ \
             --ignore=tests/unit/api/optimization/ \
             --ignore=tests/unit/api/test_auth_comprehensive.py \

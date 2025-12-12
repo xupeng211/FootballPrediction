@@ -371,7 +371,7 @@ class DIContainer:
             tuple: (),
             set: set(),
         }
-        return defaults.get(param_type, None)
+        return defaults.get(param_type)
 
     def _is_custom_type(self, param_type: type) -> bool:
         """判断是否为自定义类型（非内置类型）。"""
