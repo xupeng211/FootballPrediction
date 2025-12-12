@@ -149,9 +149,6 @@ addopts = [
     "--strict-config",
 ]
 
-# Test timeout
-timeout = 300
-
 # Markers configuration
 markers = [
     "unit: Unit tests",
