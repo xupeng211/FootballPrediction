@@ -74,6 +74,12 @@ jobs:
         run: |
           cat > .env.test << EOF
           DATABASE_URL=postgresql://postgres:postgres@localhost:5432/test_football_prediction
+          TEST_DATABASE_URL=postgresql://postgres:postgres@localhost:5432/test_football_prediction
+          DB_USER=postgres
+          DB_PASSWORD=postgres
+          DB_HOST=localhost
+          DB_PORT=5432
+          DB_NAME=test_football_prediction
           REDIS_URL=redis://localhost:6379/0
           ENV=testing
           DEBUG=false
