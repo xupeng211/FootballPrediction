@@ -212,13 +212,26 @@ class DIContainer:
 
         # 如果有工厂方法
         if descriptor.factory:
-            return descriptor.factory()
+            # 分析工厂函数的依赖
+            dependencies = self._analyze_dependencies(descriptor.factory)
+            if dependencies:
+                # 自动注入依赖
+                args = []
+                for dep in dependencies:
+                    args.append(self.resolve(dep))
+                return descriptor.factory(*args)
+            else:
+                return descriptor.factory()
 
         # 如果有实现类
         if descriptor.implementation:
+            # 如果implementation是实例，直接返回
+            if not isinstance(descriptor.implementation, type):
+                return descriptor.implementation
+
             # 检查是否为Protocol类型
             if hasattr(descriptor.implementation, '__abstractmethods__') and descriptor.implementation.__name__.startswith('I'):
-                # 简单的Protocol检测：有abstractmethods且名称以I开头
+                # 简单的Protocol检测：有abstractmethods且名称以I开头的类
                 raise DependencyInjectionError(
                     f"Protocol类型 {self._get_type_name(descriptor.interface)} 无法被实例化，请提供具体实现类或工厂方法"
                 )
@@ -253,12 +266,19 @@ class DIContainer:
             f"无法创建实例: {self._get_type_name(descriptor.interface)}"
         )
 
-    def _analyze_dependencies(self, cls: type) -> list[type]:
-        """分析类的依赖."""
+    def _analyze_dependencies(self, callable_obj) -> list[type]:
+        """分析类或函数的依赖."""
         dependencies = []
 
-        # 获取构造函数签名
-        sig = inspect.signature(cls.__init__)
+        # 如果不是可调用对象（如实例），返回空列表
+        if not callable(callable_obj):
+            return dependencies
+
+        # 获取签名
+        if inspect.isclass(callable_obj):
+            sig = inspect.signature(callable_obj.__init__)
+        else:
+            sig = inspect.signature(callable_obj)
 
         for param_name, param in sig.parameters.items():
             if param_name == "self":

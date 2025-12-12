@@ -61,11 +61,12 @@ class TestServiceImpl(ITestService):
 
     __test__ = False  # 告诉pytest这不是测试类
 
-    def __init__(self):
-        self.prefix = "impl"
+    def __init__(self, prefix: str = "impl"):
+        self.prefix = prefix
+        self.name = f"{prefix}_name"
 
     def get_name(self) -> str:
-        return f"{self.prefix}_name"
+        return self.name
 
 
 class ServiceWithCleanup:
@@ -597,14 +598,19 @@ class TestGlobalFunctions:
 
     def test_resolve_without_default_container(self):
         """测试没有默认容器时解析服务"""
-        # 清除全局容器
+        # 清除并重新配置默认容器
         import src.core.di
 
         src.core.di._default_container = None
 
+        def configurator(collection):
+            collection.add_singleton(TestService, TestServiceImpl)
+
+        configure_services(configurator)
+
         instance = resolve(TestService)
 
-        assert isinstance(instance, TestService)
+        assert isinstance(instance, TestServiceImpl)
 
 
 class TestInjectDecorator:
