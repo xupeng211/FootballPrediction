@@ -216,14 +216,42 @@ class DIContainer:
 
         # 如果有实现类
         if descriptor.implementation:
+            # 检查是否为Protocol类型
+            if hasattr(descriptor.implementation, '__abstractmethods__') and descriptor.implementation.__name__.startswith('I'):
+                # 简单的Protocol检测：有abstractmethods且名称以I开头
+                raise DependencyInjectionError(
+                    f"Protocol类型 {self._get_type_name(descriptor.interface)} 无法被实例化，请提供具体实现类或工厂方法"
+                )
+
             self._building.append(descriptor.interface)
             try:
                 # 解析构造函数参数
                 constructor_params = self._get_constructor_params(
                     descriptor.implementation
                 )
+
+                # 在创建实例前再次检查循环依赖（参数解析过程中可能产生新的依赖）
+                if descriptor.interface in self._building:
+                    raise DependencyInjectionError(
+                        f"检测到循环依赖: {' -> '.join(self._get_type_name(t) for t in self._building)} -> {self._get_type_name(descriptor.interface)}"
+                    )
+
                 instance = descriptor.implementation(**constructor_params)
                 return instance
+            except TypeError as e:
+                # 处理Protocol实例化等TypeError
+                if "Protocols cannot be instantiated" in str(e):
+                    raise DependencyInjectionError(
+                        f"Protocol类型 {self._get_type_name(descriptor.interface)} 无法被实例化，请提供具体实现类或工厂方法"
+                    )
+                else:
+                    raise DependencyInjectionError(
+                        f"实例化 {self._get_type_name(descriptor.interface)} 时发生类型错误: {e}"
+                    )
+            except Exception as e:
+                raise DependencyInjectionError(
+                    f"创建 {self._get_type_name(descriptor.interface)} 实例时发生错误: {e}"
+                )
             finally:
                 self._building.pop()
 
@@ -279,7 +307,7 @@ class DIContainer:
             if isinstance(param_type, str):
                 try:
                     # 使用 get_type_hints 来解析字符串类型注解
-                    type_hints = typing.get_type_hints(service_type)
+                    type_hints = typing.get_type_hints(cls)
                     if param_name in type_hints:
                         param_type = type_hints[param_name]
                         logger.debug(

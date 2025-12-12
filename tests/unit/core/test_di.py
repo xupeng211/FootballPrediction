@@ -244,7 +244,7 @@ class TestDIContainer:
         with pytest.raises(DependencyInjectionError) as exc_info:
             container.resolve(ITestService)
 
-        assert "参数 args 没有类型注解且没有默认值" in str(exc_info.value)
+        assert "Protocol类型 ITestService 无法被实例化" in str(exc_info.value)
 
     def test_resolve_unregistered_service(self):
         """测试解析未注册的服务"""
