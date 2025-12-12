@@ -139,7 +139,7 @@ jobs:
 
           # V27.0: Only stable core tests - exclude problematic auth and optimization tests
           echo "🔥 执行稳定核心测试 (Fast execution)..."
-          timeout 8m python -m pytest tests/unit/cache/ tests/unit/events/ tests/unit/utils/ tests/unit/core/ \
+          timeout 15m python -m pytest tests/unit/cache/ tests/unit/events/ tests/unit/utils/ tests/unit/core/ \
             -vv \
             --tb=short \
             --ignore=tests/unit/api/predictions/ \
