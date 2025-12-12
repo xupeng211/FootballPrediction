@@ -221,8 +221,13 @@ class TestRedisClusterManager:
         }
 
         # 使用Mock连接
-        with patch("src.cache.redis_cluster_manager.MockRedisManager") as mock_redis:
+        with patch("src.cache.mock_redis.MockRedisManager") as mock_redis:
             mock_instance = MagicMock()
+            # 配置mock实例的行为
+            mock_instance.ping.return_value = True
+            mock_instance.set.return_value = True
+            mock_instance.get.return_value = None
+            mock_instance.delete.return_value = True
             mock_redis.return_value = mock_instance
 
             result = await manager.add_node(node_config)
@@ -239,7 +244,7 @@ class TestRedisClusterManager:
         # 先添加节点
         node_config = {"node_id": "test_node", "host": "localhost", "port": 6379}
 
-        with patch("src.cache.redis_cluster_manager.MockRedisManager"):
+        with patch("src.cache.mock_redis.MockRedisManager"):
             await manager.add_node(node_config)
 
         # 移除节点
