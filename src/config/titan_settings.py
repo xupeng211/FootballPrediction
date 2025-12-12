@@ -19,12 +19,19 @@ Titan007 Collector Configuration Management
 """
 
 from typing import Optional
-from pydantic import Field
+from pydantic import Field, ConfigDict
 from pydantic_settings import BaseSettings
 
 
 class TitanCollectorSettings(BaseSettings):
     """Titan007 采集器配置"""
+
+    model_config = ConfigDict(
+        env_prefix="TITAN_",
+        env_file=".env",
+        case_sensitive=False,
+        extra="ignore"
+    )
 
     # API 配置
     base_url: str = Field(
@@ -69,15 +76,16 @@ class TitanCollectorSettings(BaseSettings):
         default=30.0, ge=1.0, description="限流最大等待时间（秒）"
     )
 
-    class Config:
-        env_prefix = "TITAN_"
-        env_file = ".env"
-        case_sensitive = False
-        extra = "ignore"  # 忽略额外的环境变量
-
 
 class DatabasePoolSettings(BaseSettings):
     """数据库连接池配置"""
+
+    model_config = ConfigDict(
+        env_prefix="DB_POOL_",
+        env_file=".env",
+        case_sensitive=False,
+        extra="ignore"
+    )
 
     pool_size: int = Field(default=20, ge=5, le=100, description="数据库连接池大小")
 
@@ -91,15 +99,15 @@ class DatabasePoolSettings(BaseSettings):
 
     pool_recycle: int = Field(default=3600, ge=1800, description="连接回收时间（秒）")
 
-    class Config:
-        env_prefix = "DB_POOL_"
-        env_file = ".env"
-        case_sensitive = False
-        extra = "ignore"
-
 
 class TitanSettings(BaseSettings):
     """Titan007 完整配置"""
+
+    model_config = ConfigDict(
+        env_file=".env",
+        case_sensitive=False,
+        extra="ignore"
+    )
 
     titan: TitanCollectorSettings = Field(default_factory=TitanCollectorSettings)
     db_pool: DatabasePoolSettings = Field(default_factory=DatabasePoolSettings)
@@ -109,11 +117,6 @@ class TitanSettings(BaseSettings):
 
     # 调试模式
     debug: bool = Field(default=False, description="是否启用调试模式")
-
-    class Config:
-        env_file = ".env"
-        case_sensitive = False
-        extra = "ignore"
 
 
 # 全局配置实例（单例）
