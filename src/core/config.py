@@ -104,6 +104,21 @@ class Config:
         """设置配置项 - 仅更新内存中的配置,需调用save()持久化."""
         self.config[key] = value
 
+    def load_from_dict(self, data: dict[str, Any]) -> None:
+        """从字典加载配置 - 支持嵌套键值访问."""
+        # 递归展开嵌套字典，使用点号分隔的键
+        self._flatten_dict(data)
+
+    def load_from_file(self, file_path: str | Path) -> None:
+        """从文件加载配置 - 支持JSON格式."""
+        file_path = Path(file_path)
+        if not file_path.exists():
+            raise FileNotFoundError(f"配置文件不存在: {file_path}")
+
+        with open(file_path, encoding="utf-8") as f:
+            data = json.load(f)
+            self.load_from_dict(data)
+
     def save(self) -> None:
         """保存配置到文件 - 自动创建目录,确保配置持久化."""
         # 确保配置目录存在,parents=True递归创建父目录
@@ -111,6 +126,18 @@ class Config:
         with open(self.config_file, "w", encoding="utf-8") as f:
             # ensure_ascii=False保证中文字符正确显示
             json.dump(self.config, f, ensure_ascii=False, indent=2)
+
+    def _flatten_dict(self, data: dict[str, Any], parent_key: str = "") -> None:
+        """递归展开嵌套字典为平面结构，同时保持原始嵌套结构."""
+        for key, value in data.items():
+            new_key = f"{parent_key}.{key}" if parent_key else key
+            if isinstance(value, dict):
+                # 始终同时存储原始字典和展平后的键
+                self.config[new_key] = value
+                # 递归展平
+                self._flatten_dict(value, new_key)
+            else:
+                self.config[new_key] = value
 
 
 SettingsClass = BaseSettings if HAS_PYDANTIC else object

@@ -147,9 +147,6 @@ addopts = [
     "--tb=short",
     "--strict-markers",
     "--strict-config",
-    # 暂时跳过不稳定的底层配置测试，依赖注入测试已修复
-    "--ignore=tests/unit/core/test_config_di.py",
-    "--ignore=tests/unit/core/test_config_new.py",
 ]
 
 # Markers configuration
