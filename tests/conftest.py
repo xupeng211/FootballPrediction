@@ -101,6 +101,14 @@ def setup_test_database():
     # 设置测试环境变量
     os.environ["TESTING"] = "true"
 
+    # 强制设置数据库环境变量为postgres用户（防止任何地方使用root）
+    os.environ["DB_USER"] = "postgres"
+    os.environ["POSTGRES_USER"] = "postgres"
+    os.environ["DB_PASSWORD"] = "postgres"
+    os.environ["DATABASE_URL"] = "postgresql+asyncpg://postgres:postgres@localhost:5432/test_football_prediction"
+    os.environ["TEST_DATABASE_URL"] = "postgresql+asyncpg://postgres:postgres@localhost:5432/test_football_prediction"
+    os.environ["ASYNC_DATABASE_URL"] = "postgresql+asyncpg://postgres:postgres@localhost:5432/test_football_prediction"
+
     # 初始化数据库管理器（使用内存SQLite用于测试）
     try:
         # 获取数据库管理器并初始化

@@ -15,7 +15,7 @@ from pydantic import BaseModel
 
 # 数据库配置
 DATABASE_URL = os.getenv(
-    "DATABASE_URL", "postgresql://user:password@localhost/football_db"
+    "DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/football_prediction"
 )
 
 # 全局数据库连接池

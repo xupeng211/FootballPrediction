@@ -7,6 +7,7 @@ Enhanced fixtures and configuration for integration and E2E testing
 """
 
 import asyncio
+import os
 import sys
 import tempfile
 from collections.abc import AsyncGenerator
@@ -23,6 +24,14 @@ from httpx import AsyncClient
 from sqlalchemy import create_engine, text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import sessionmaker
+
+# 强制设置数据库环境变量为postgres用户（防止任何地方使用root）
+os.environ["DB_USER"] = "postgres"
+os.environ["POSTGRES_USER"] = "postgres"
+os.environ["DB_PASSWORD"] = "postgres"
+os.environ["DATABASE_URL"] = "postgresql+asyncpg://postgres:postgres@localhost:5432/test_football_prediction"
+os.environ["TEST_DATABASE_URL"] = "postgresql+asyncpg://postgres:postgres@localhost:5432/test_football_prediction"
+os.environ["ASYNC_DATABASE_URL"] = "postgresql+asyncpg://postgres:postgres@localhost:5432/test_football_prediction"
 
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))

@@ -42,7 +42,7 @@ class DatabaseManager:
         import os
 
         db_url = database_url or os.getenv(
-            "DATABASE_URL", "postgresql://localhost/football_prediction"
+            "DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/football_prediction"
         )
         if db_url is None:
             raise ValueError("Database URL is required")
