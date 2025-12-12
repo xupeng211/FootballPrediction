@@ -76,6 +76,7 @@ class UserCacheDecorator(CacheDecorator):
 
 # 便捷装饰器函数
 cache_by_user = UserCacheDecorator
+cached = cache_result  # 为unified_interface.py提供cached装饰器
 cache_invalidate = invalidate_cache
 cache_match_data = cache_result
 cache_team_stats = cache_result
