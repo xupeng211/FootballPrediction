@@ -130,3 +130,59 @@ split-on-trailing-comma = true
 quote-style = "double"
 # 缩进风格
 indent-style = "space"
+
+[tool.pytest.ini_options]
+# Test discovery patterns
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+
+# Asyncio configuration - 修复 pytest-asyncio 警告和错误
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+
+# Output configuration
+addopts = [
+    "-v",
+    "--tb=short",
+    "--strict-markers",
+    "--strict-config",
+]
+
+# Test timeout
+timeout = 300
+
+# Markers configuration
+markers = [
+    "unit: Unit tests",
+    "integration: Integration tests",
+    "e2e: End-to-end tests",
+    "slow: Slow running tests",
+    "critical: Critical functionality tests",
+    "regression: Regression tests",
+    "performance: Performance tests",
+    "api: API tests",
+    "domain: Domain layer tests",
+    "business: Business rule tests",
+    "services: Service layer tests",
+    "database: Database tests",
+    "cache: Cache tests",
+    "auth: Authentication tests",
+    "monitoring: Monitoring tests",
+    "streaming: Streaming tests",
+    "collectors: Data collectors tests",
+    "middleware: Middleware tests",
+    "utils: Utility tests",
+    "core: Core module tests",
+    "decorators: Decorator tests",
+    "ml: Machine learning tests",
+    "external_api: Tests requiring external API calls",
+    "docker: Tests requiring Docker containers",
+    "network: Tests requiring network connection"
+]
+
+# Minimum version requirement
+minversion = "6.0"
+
+# Test paths
+testpaths = ["tests"]
