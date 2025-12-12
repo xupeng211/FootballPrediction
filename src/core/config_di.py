@@ -5,6 +5,7 @@ Configuration-driven Dependency Injection.
 Manages dependency injection through configuration files.
 """
 
+import importlib
 import json
 import logging
 from dataclasses import dataclass, field
@@ -96,13 +97,46 @@ class ConfigurationBinder:
 
     def load_from_dict(self, config_data: dict[str, Any]) -> None:
         """从字典加载配置."""
-        self.config = self._parse_config(config_data)
-        logger.info("从字典加载配置")
+        try:
+            self.config = self._parse_config(config_data)
+            logger.info("从字典加载配置")
+        except (AttributeError, KeyError, TypeError) as e:
+            raise DependencyInjectionError(f"解析配置失败: {e}") from e
 
     def set_active_profile(self, profile: str) -> None:
         """设置活动配置文件."""
+        # 检查profile是否在配置的profiles列表中
+        if self.config and profile not in self.config.profiles:
+            raise DependencyInjectionError(f"配置文件不存在: {profile}")
+
         self._active_profile = profile
         logger.info(f"设置活动配置文件: {profile}")
+
+    def bind_services(self) -> None:
+        """绑定服务 - apply_configuration的别名."""
+        self.apply_configuration()
+
+    def auto_scan_and_bind(self) -> None:
+        """自动扫描并绑定 - 委托给auto_binder."""
+        if not self.config:
+            return
+
+        # 对每个自动扫描模块进行绑定
+        for module_path in self.config.auto_scan:
+            self.auto_binder.auto_scan_and_bind(module_path, recursive=True)
+
+    def import_modules(self) -> None:
+        """导入配置的模块."""
+        if not self.config:
+            return
+
+        # 导入所有配置的模块
+        for module_name in self.config.imports:
+            try:
+                importlib.import_module(module_name)
+                logger.debug(f"导入模块: {module_name}")
+            except (ValueError, AttributeError, KeyError, RuntimeError) as e:
+                logger.error(f"导入模块失败 {module_name}: {e}")
 
     def apply_configuration(self) -> None:
         """应用配置."""
@@ -195,60 +229,128 @@ class ConfigurationBinder:
     def _register_service(self, service_name: str, config: ServiceConfig) -> None:
         """注册服务."""
         try:
-            # 获取服务类型
-            service_type = self._get_type(service_name)
+            # 尝试获取服务类型，如果失败则使用实现类型
+            service_type = None
+            if "." in service_name:
+                try:
+                    service_type = self._get_type(service_name)
+                except (ValueError, AttributeError, KeyError, RuntimeError):
+                    # 如果服务名称不是有效的类型路径，记录警告并继续
+                    logger.warning(f"服务名称 {service_name} 不是有效的类型路径，将使用实现类型")
 
             if config.implementation:
                 # 指定了实现类
-                implementation_type = self._get_type(config.implementation)
+                try:
+                    # 检查实现是否包含模块路径
+                    if "." in config.implementation:
+                        implementation_type = self._get_type(config.implementation)
+                    else:
+                        # 如果没有模块路径，无法解析类型，跳过此服务
+                        logger.warning(f"实现 {config.implementation} 没有模块路径，跳过服务注册")
+                        return
 
-                lifetime = self._parse_lifetime(config.lifetime)
+                    # 如果没有服务类型，使用实现类型
+                    if service_type is None:
+                        service_type = implementation_type
 
-                if lifetime == ServiceLifetime.SINGLETON:
-                    self.container.register_singleton(service_type, implementation_type)
-                elif lifetime == ServiceLifetime.SCOPED:
-                    self.container.register_scoped(service_type, implementation_type)
-                else:
-                    self.container.register_transient(service_type, implementation_type)
+                    lifetime = self._parse_lifetime(config.lifetime)
 
-                logger.debug(f"注册服务: {service_name} -> {config.implementation}")
+                    if lifetime == ServiceLifetime.SINGLETON:
+                        self.container.register_singleton(service_type, implementation_type)
+                    elif lifetime == ServiceLifetime.SCOPED:
+                        self.container.register_scoped(service_type, implementation_type)
+                    else:
+                        self.container.register_transient(service_type, implementation_type)
+
+                    logger.debug(f"注册服务: {service_name} -> {config.implementation}")
+                except DependencyInjectionError as e:
+                    # 如果无法解析实现类型，跳过此服务
+                    logger.warning(f"无法注册服务 {service_name}: {e}")
+                    return
 
             elif config.factory:
                 # 使用工厂方法
-                factory_func = self._get_factory(config.factory)
-                lifetime = self._parse_lifetime(config.lifetime)
+                try:
+                    # 检查工厂是否包含模块路径
+                    if "." in config.factory:
+                        factory_func = self._get_factory(config.factory)
+                    else:
+                        # 如果没有模块路径，无法解析，跳过此服务
+                        logger.warning(f"工厂 {config.factory} 没有模块路径，跳过服务注册")
+                        return
 
-                if lifetime == ServiceLifetime.SINGLETON:
-                    self.container.register_singleton(
-                        service_type, factory=factory_func
-                    )
-                elif lifetime == ServiceLifetime.SCOPED:
-                    self.container.register_scoped(service_type, factory=factory_func)
-                else:
-                    self.container.register_transient(
-                        service_type, factory=factory_func
-                    )
+                    lifetime = self._parse_lifetime(config.lifetime)
 
-                logger.debug(f"注册工厂服务: {service_name}")
+                    # 如果没有服务类型，尝试使用工厂的返回类型
+                    if service_type is None:
+                        # 调用工厂函数来获取返回类型
+                        try:
+                            temp_instance = factory_func()
+                            service_type = type(temp_instance)
+                            logger.debug(f"从工厂获取服务类型: {service_type}")
+                        except Exception as e:
+                            logger.error(f"无法调用工厂函数来获取类型: {e}")
+                            raise DependencyInjectionError(
+                                f"使用工厂方法注册服务时，无法获取服务类型: {e}"
+                            )
+
+                    if lifetime == ServiceLifetime.SINGLETON:
+                        self.container.register_singleton(
+                            service_type, factory=factory_func
+                        )
+                    elif lifetime == ServiceLifetime.SCOPED:
+                        self.container.register_scoped(service_type, factory=factory_func)
+                    else:
+                        self.container.register_transient(
+                            service_type, factory=factory_func
+                        )
+
+                    logger.debug(f"注册工厂服务: {service_name}")
+                except DependencyInjectionError as e:
+                    # 如果无法解析工厂，跳过此服务
+                    logger.warning(f"无法注册服务 {service_name}: {e}")
+                    return
 
             else:
                 # 没有指定实现,尝试自动绑定
+                if service_type is None:
+                    raise DependencyInjectionError(
+                        f"服务 {service_name} 既没有指定实现也没有指定工厂，且服务名称不是有效的类型路径"
+                    )
                 self.auto_binder.bind_interface_to_implementations(service_type)
 
         except (ValueError, AttributeError, KeyError, RuntimeError) as e:
             logger.error(f"注册服务失败 {service_name}: {e}")
+            raise
 
     def _get_type(self, service_name: str) -> type:
         """获取类型."""
         # 尝试导入类型
-        module_path, class_name = service_name.rsplit(".", 1)
-        module = __import__(module_path, fromlist=[class_name])
-        return getattr(module, class_name)
+        try:
+            module_path, class_name = service_name.rsplit(".", 1)
+        except ValueError:
+            raise DependencyInjectionError(
+                f"无效的类型路径: {service_name}，必须包含 '.' 分隔符"
+            )
+
+        try:
+            module = importlib.import_module(module_path)
+        except (ValueError, AttributeError, ImportError) as e:
+            raise DependencyInjectionError(
+                f"导入模块失败 {module_path}: {e}"
+            ) from e
+
+        try:
+            return getattr(module, class_name)
+        except AttributeError:
+            raise DependencyInjectionError(
+                f"模块 {module_path} 中没有找到属性 {class_name}"
+            )
 
     def _get_factory(self, factory_path: str) -> callable:
         """获取工厂函数."""
         module_path, func_name = factory_path.rsplit(".", 1)
-        module = __import__(module_path, fromlist=[func_name])
+        module = importlib.import_module(module_path)
         return getattr(module, func_name)
 
     def _parse_lifetime(self, lifetime_str: str) -> ServiceLifetime:

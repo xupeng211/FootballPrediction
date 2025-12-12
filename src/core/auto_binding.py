@@ -74,6 +74,12 @@ class AutoBinder:
             # 扫描单个模块
             self._scan_module(module)
 
+    def auto_scan_and_bind(
+        self, module_path: str, pattern: str = "*", recursive: bool = True
+    ) -> None:
+        """自动扫描并绑定 - bind_from_assembly的别名."""
+        self.bind_from_assembly(module_path, pattern, recursive)
+
     def bind_by_convention(self, convention: str = "default") -> None:
         """按约定绑定."""
         if convention == "default":
