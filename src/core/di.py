@@ -230,12 +230,6 @@ class DIContainer:
                     descriptor.implementation
                 )
 
-                # 在创建实例前再次检查循环依赖（参数解析过程中可能产生新的依赖）
-                if descriptor.interface in self._building:
-                    raise DependencyInjectionError(
-                        f"检测到循环依赖: {' -> '.join(self._get_type_name(t) for t in self._building)} -> {self._get_type_name(descriptor.interface)}"
-                    )
-
                 instance = descriptor.implementation(**constructor_params)
                 return instance
             except TypeError as e:
@@ -313,20 +307,36 @@ class DIContainer:
                         logger.debug(
                             f"成功解析字符串类型注解: {param_name} -> {param_type}"
                         )
-                except (NameError, AttributeError) as e:
-                    # 如果无法解析，跳过这个参数（如果有默认值）
-                    if param.default != inspect.Parameter.empty:
-                        logger.warning(
-                            f"无法解析参数 {param_name} 的类型注解 {param.annotation}，使用默认值: {e}"
-                        )
-                        continue
-                    else:
-                        logger.error(
-                            f"无法解析参数 {param_name} 的类型注解 {param.annotation}，且没有默认值"
-                        )
-                        raise DependencyInjectionError(
-                            f"无法解析参数 {param_name} 的类型注解: {param.annotation}"
-                        ) from None
+                except (NameError, AttributeError, TypeError) as e:
+                    # 对于无法解析的字符串类型注解，暂时跳过类型检查
+                    # 假设这是一个有效的自定义类型，稍后会在依赖解析中处理
+                    logger.debug(
+                        f"暂时无法解析字符串类型注解 {param_name}: {param.annotation}，将在依赖解析时处理"
+                    )
+                    # 继续处理，但保持param_type为字符串
+                    # 这样在后续的依赖解析中，如果能找到对应的注册服务，就可以正常工作
+
+            # 处理字符串类型（前向引用或其他字符串类型）
+            if isinstance(param_type, str):
+                # 查找已注册的服务中是否有匹配的
+                matching_service = None
+                for service_interface in self._services:
+                    if self._get_type_name(service_interface) == param_type:
+                        matching_service = service_interface
+                        break
+
+                if matching_service:
+                    logger.debug(f"找到字符串类型匹配的服务: {param_name} -> {matching_service}")
+                    params[param_name] = self.resolve(matching_service)
+                elif param.default != inspect.Parameter.empty:
+                    logger.debug(f"字符串类型参数 {param_name} 使用默认值: {param.default}")
+                    params[param_name] = param.default
+                else:
+                    logger.error(f"字符串类型参数 {param_name} 无法找到对应的服务: {param_type}")
+                    raise DependencyInjectionError(
+                        f"无法解析参数 {param_name} 的字符串类型注解: {param_type}"
+                    )
+                continue
 
             # 跳过基本类型，避免对内置类型进行依赖注入
             if param_type in (str, int, float, bool, list, dict, tuple, set):
@@ -344,7 +354,7 @@ class DIContainer:
                 # 尝试自动注册（仅对自定义类型）
                 if self._is_custom_type(param_type):
                     type_name = self._get_type_name(param_type)
-                    logger.warning(f"自动注册自定义类型: {type_name}")
+                    logger.warning(f"自动注册类型: {type_name}")
                     self.register_transient(param_type)
                     params[param_name] = self.resolve(param_type)
                 else:
