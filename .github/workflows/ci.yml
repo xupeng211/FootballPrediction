@@ -77,13 +77,13 @@ jobs:
         export PYTHONPATH="$(pwd):$(pwd)/FootballPrediction:${PYTHONPATH}"
         make ci-temp
 
-    - name: Upload coverage to Codecov
-      if: github.event_name == 'push'
-      uses: codecov/codecov-action@v3
-      with:
-        file: ./coverage.xml
-        flags: unittests
-        name: codecov-umbrella
+    # - name: Upload coverage to Codecov
+    #   if: github.event_name == 'push'
+    #   uses: codecov/codecov-action@v3
+    #   with:
+    #     file: ./coverage.xml
+    #     flags: unittests
+    #     name: codecov-umbrella
 
     - name: Upload test results
       uses: actions/upload-artifact@v4
