@@ -1,0 +1,177 @@
+name: Issue标签管理
+
+on:
+  # 每周日晚上执行标签检查
+  schedule:
+    - cron: '0 20 * * 0'
+
+  # 手动触发
+  workflow_dispatch:
+    inputs:
+      action:
+        description: '执行操作'
+        required: true
+        default: 'check'
+        type: choice
+        options:
+        - check
+        - fix
+        - report
+      dry_run:
+        description: '试运行模式'
+        required: false
+        default: true
+        type: boolean
+
+  # 当创建或更新Issue时触发标签检查
+  issues:
+    types: [opened, edited, closed]
+
+jobs:
+  label-management:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      contents: read
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 设置Python环境
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: 安装依赖
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests pyyaml
+
+      - name: 创建报告目录
+        run: |
+          mkdir -p reports
+
+      - name: 运行标签一致性检查
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "🏷️ 开始标签管理检查..."
+
+          # 根据输入参数决定操作类型
+          ACTION="${{ github.event.inputs.action || 'check' }}"
+          DRY_RUN="${{ github.event.inputs.dry_run || 'true' }}"
+
+          if [ "$ACTION" = "check" ]; then
+            echo "🔍 检查标签一致性..."
+            python scripts/check_label_consistency.py --repo ${{ github.repository }} --output reports/label_consistency_report.md
+          elif [ "$ACTION" = "fix" ] && [ "$DRY_RUN" = "false" ]; then
+            echo "🔧 修复标签问题..."
+            python scripts/fix_label_issues.py --repo ${{ github.repository }} --execute
+          elif [ "$ACTION" = "report" ]; then
+            echo "📊 生成标签使用报告..."
+            python scripts/generate_label_usage_report.py --repo ${{ github.repository }}
+          else
+            echo "🔍 试运行模式 - 仅生成报告"
+            python scripts/fix_label_issues.py --repo ${{ github.repository }} --dry-run
+          fi
+
+      - name: 验证标签规范
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "📋 验证标签是否符合规范..."
+          python scripts/validate_label_standards.py --repo ${{ github.repository }} --config docs/github_issues_guidelines.md
+
+      - name: 上传标签管理报告
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: label-management-reports-${{ github.run_number }}
+          path: |
+            reports/label_consistency_report.md
+            reports/label_usage_report_*.md
+            reports/label_validation_report.md
+          retention-days: 30
+
+      - name: 创建标签问题Issue
+        if: failure() && github.event_name != 'issues'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+
+            try {
+              const consistencyReport = fs.readFileSync('reports/label_consistency_report.md', 'utf8');
+
+              const issueBody = `
+## 🏷️ Issue标签管理发现问题
+
+**执行时间**: ${new Date().toISOString()}
+**工作流运行**: #${{ github.run_number }}
+**仓库**: ${{ github.repository }}
+
+### 📋 标签一致性报告
+${consistencyReport}
+
+### 🔧 需要处理的问题
+请检查并修复标签使用不一致的问题。
+
+### 📚 参考资料
+- [GitHub Issues管理指南](docs/github_issues_guidelines.md)
+
+---
+*此Issue由GitHub Actions自动创建*
+              `;
+
+              github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: '🏷️ Issue标签管理发现问题 - 需要修复',
+                body: issueBody,
+                labels: ['maintenance', 'automated', 'priority/low']
+              });
+
+            } catch (error) {
+              console.log('无法读取报告文件:', error.message);
+            }
+
+  # 自动为新创建的Issue添加基础标签
+  auto-label-new-issues:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      contents: read
+
+    if: github.event_name == 'issues' && github.event.action == 'opened'
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 设置Python环境
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: 安装依赖
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests
+
+      - name: 自动添加基础标签
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "🏷️ 为新Issue #${{ github.event.issue.number }}添加基础标签..."
+
+          ISSUE_NUMBER="${{ github.event.issue.number }}"
+          ISSUE_TITLE="${{ github.event.issue.title }}"
+          ISSUE_BODY="${{ github.event.issue.body }}"
+
+          # 分析Issue标题和内容，自动添加合适的标签
+          python scripts/auto_label_issues.py \
+            --issue-number "$ISSUE_NUMBER" \
+            --title "$ISSUE_TITLE" \
+            --body "$ISSUE_BODY" \
+            --repo ${{ github.repository }}

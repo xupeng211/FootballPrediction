@@ -1,0 +1,32 @@
+# User Management Service 配置文件
+
+service:
+  name: "User Management Service"
+  description: "用户管理服务微服务"
+  port: 8003
+  version: "1.0.0"
+
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+database:
+  host: "localhost"
+  port: 5432
+  name: "footballprediction_user_management"
+  user: "postgres"
+  password: "password"
+
+redis:
+  host: "localhost"
+  port: 6379
+  db: 0
+
+monitoring:
+  enabled: true
+  metrics_path: "/metrics"
+  health_path: "/health"
+
+security:
+  cors_enabled: true
+  authentication_required: false

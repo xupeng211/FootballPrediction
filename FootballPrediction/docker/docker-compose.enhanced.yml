@@ -1,0 +1,78 @@
+version: "3.8"
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: football-prediction-enhanced-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: football_prediction_staging
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: enhanced_db_password_2024
+    volumes:
+      - postgres_enhanced_data:/var/lib/postgresql/data
+      - ./scripts/init-staging-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+    ports:
+      - "5433:5432"
+    networks:
+      - enhanced_backend
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d football_prediction_staging"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  redis:
+    image: redis:7-alpine
+    container_name: football-prediction-enhanced-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass enhanced_redis_password_2024
+    volumes:
+      - redis_enhanced_data:/data
+    ports:
+      - "6380:6379"
+    networks:
+      - enhanced_backend
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 30s
+
+  app:
+    build:
+      context: ..
+      dockerfile: Dockerfile.enhanced
+    image: football-prediction:enhanced
+    container_name: football-prediction-enhanced-app
+    restart: unless-stopped
+    environment:
+      - ENV=staging
+      - PYTHONPATH=/app
+      - DEBUG=false
+      - DATABASE_URL=postgresql://postgres:enhanced_db_password_2024@db:5432/football_prediction_staging
+      - REDIS_URL=redis://:enhanced_redis_password_2024@redis:6379/0
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - enhanced_backend
+    ports:
+      - "8001:8000"
+    volumes:
+      - ../app_enhanced.py:/app/app_enhanced.py
+    command: uvicorn app_enhanced:app --host 0.0.0.0 --port 8000 --reload
+
+networks:
+  enhanced_backend:
+    driver: bridge
+
+volumes:
+  postgres_enhanced_data:
+    driver: local
+  redis_enhanced_data:
+    driver: local

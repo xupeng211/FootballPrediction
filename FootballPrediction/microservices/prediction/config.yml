@@ -1,0 +1,32 @@
+# Prediction Service 配置文件
+
+service:
+  name: "Prediction Service"
+  description: "预测服务微服务"
+  port: 8001
+  version: "1.0.0"
+
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+database:
+  host: "localhost"
+  port: 5432
+  name: "footballprediction_prediction"
+  user: "postgres"
+  password: "password"
+
+redis:
+  host: "localhost"
+  port: 6379
+  db: 0
+
+monitoring:
+  enabled: true
+  metrics_path: "/metrics"
+  health_path: "/health"
+
+security:
+  cors_enabled: true
+  authentication_required: false

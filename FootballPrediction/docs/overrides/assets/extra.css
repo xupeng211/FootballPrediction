@@ -1,0 +1,179 @@
+/* 自定义CSS样式 */
+
+/* 中文字体优化 */
+.md-typeset {
+  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+/* 代码块中文字体优化 */
+.md-typeset code {
+  font-family: "Roboto Mono", "SF Mono", Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+/* 表格样式优化 */
+.md-typeset table:not([class]) {
+  font-size: 0.8rem;
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.md-typeset table:not([class]) th {
+  background-color: var(--md-primary-fg-color);
+  color: var(--md-primary-bg-color);
+  font-weight: 600;
+}
+
+/* 链接样式优化 */
+.md-typeset a {
+  color: var(--md-accent-fg-color);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.md-typeset a:hover {
+  color: var(--md-accent-fg-color--transparent);
+  text-decoration: underline;
+}
+
+/* 导航栏样式优化 */
+.md-nav__title {
+  font-weight: 600;
+}
+
+/* 搜索框中文支持 */
+.md-search__form {
+  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+}
+
+/* 标签页样式 */
+.md-typeset .tabbed-labels {
+  border-bottom: 2px solid var(--md-default-fg-color--lightest);
+}
+
+.md-typeset .tabbed-label {
+  color: var(--md-default-fg-color--light);
+  font-weight: 500;
+}
+
+.md-typeset .tabbed-label.active {
+  color: var(--md-accent-fg-color);
+  border-bottom: 2px solid var(--md-accent-fg-color);
+}
+
+/* 提示框样式优化 */
+.md-typeset .admonition {
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.md-typeset .admonition-title {
+  font-weight: 600;
+}
+
+/* 代码复制按钮优化 */
+.md-clipboard {
+  border-radius: 4px;
+}
+
+/* 目录优化 */
+.md-nav--secondary .md-nav__link--active {
+  color: var(--md-accent-fg-color);
+  font-weight: 500;
+}
+
+/* 面包屑导航 */
+.md-breadcrumb {
+  font-size: 0.8rem;
+}
+
+/* 页脚优化 */
+.md-footer {
+  font-size: 0.8rem;
+}
+
+/* 响应式设计优化 */
+@media screen and (max-width: 76.1875em) {
+  .md-nav--primary .md-nav__item--active > .md-nav__link {
+    color: var(--md-accent-fg-color);
+  }
+}
+
+/* 深色模式下的优化 */
+[data-md-color-scheme="slate"] .md-typeset table:not([class]) th {
+  background-color: var(--md-code-bg-color);
+}
+
+/* 高亮搜索结果 */
+.md-search-result__teaser {
+  color: var(--md-default-fg-color--light);
+}
+
+/* 加载动画 */
+.md-progress {
+  background-color: var(--md-accent-fg-color);
+}
+
+/* 版本信息样式 */
+.md-version__current {
+  font-weight: 600;
+}
+
+/* 社交链接样式 */
+.md-social__link {
+  transition: transform 0.2s ease;
+}
+
+.md-social__link:hover {
+  transform: scale(1.1);
+}
+
+/* 自定义提示框颜色 */
+.md-typeset .admonition.important {
+  border-color: #ff9800;
+}
+
+.md-typeset .admonition.important > .admonition-title {
+  background-color: rgba(255, 152, 0, 0.1);
+  color: #f57c00;
+}
+
+.md-typeset .admonition.tip {
+  border-color: #00bcd4;
+}
+
+.md-typeset .admonition.tip > .admonition-title {
+  background-color: rgba(0, 188, 212, 0.1);
+  color: #00acc1;
+}
+
+/* 代码行号样式 */
+.md-typeset .linenums {
+  background-color: var(--md-code-bg-color);
+  border-right: 1px solid var(--md-default-fg-color--lightest);
+  padding-right: 1rem;
+  margin-right: 1rem;
+  color: var(--md-default-fg-color--light);
+  user-select: none;
+}
+
+/* 任务列表样式 */
+.md-typeset .task-list-item {
+  list-style-type: none;
+  margin-left: -1.5rem;
+}
+
+.md-typeset .task-list-control [type="checkbox"]:checked + .task-list-indicator::before {
+  background-color: var(--md-accent-fg-color);
+}
+
+/* 脚注样式 */
+.md-typeset .footnote-ref {
+  font-size: 0.8em;
+  vertical-align: super;
+}
+
+.md-typeset .footnote-backref {
+  text-decoration: none;
+  font-weight: 600;
+}

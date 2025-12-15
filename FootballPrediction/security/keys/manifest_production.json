@@ -1,0 +1,137 @@
+{
+  "environment": "production",
+  "generated_at": "2025-10-04T09:26:57.493954",
+  "keys": {
+    "SECRET_KEY": {
+      "length": 86,
+      "type": "hex",
+      "purpose": "应用签名密钥",
+      "rotation_period_days": 365,
+      "checksum": "2cb3aa914c705f95"
+    },
+    "JWT_SECRET_KEY": {
+      "length": 86,
+      "type": "urlsafe",
+      "purpose": "JWT访问令牌签名",
+      "rotation_period_days": 90,
+      "checksum": "6240bdf6167f8397"
+    },
+    "JWT_REFRESH_SECRET_KEY": {
+      "length": 86,
+      "type": "hex",
+      "purpose": "JWT刷新令牌签名",
+      "rotation_period_days": 180,
+      "checksum": "3f546e3cf04d8302"
+    },
+    "API_KEY": {
+      "length": 64,
+      "type": "urlsafe",
+      "purpose": "API访问密钥",
+      "rotation_period_days": 180,
+      "checksum": "527d60efe20503f5"
+    },
+    "API_SECRET_KEY": {
+      "length": 86,
+      "type": "urlsafe",
+      "purpose": "其他用途",
+      "rotation_period_days": 180,
+      "checksum": "91c2ff8c1e74cb63"
+    },
+    "DB_ENCRYPTION_KEY": {
+      "length": 64,
+      "type": "hex",
+      "purpose": "数据库加密",
+      "rotation_period_days": 365,
+      "checksum": "298abcb05574a292"
+    },
+    "DB_SALT": {
+      "length": 32,
+      "type": "hex",
+      "purpose": "其他用途",
+      "rotation_period_days": 180,
+      "checksum": "78c96955e2976ff9"
+    },
+    "REDIS_PASSWORD": {
+      "length": 43,
+      "type": "urlsafe",
+      "purpose": "Redis认证",
+      "rotation_period_days": 90,
+      "checksum": "b0eec1b95b431ef9"
+    },
+    "MLFLOW_TRACKING_PASSWORD": {
+      "length": 43,
+      "type": "hex",
+      "purpose": "其他用途",
+      "rotation_period_days": 180,
+      "checksum": "eabb55a090847793"
+    },
+    "MLFLOW_ARTIFACT_KEY": {
+      "length": 64,
+      "type": "hex",
+      "purpose": "其他用途",
+      "rotation_period_days": 180,
+      "checksum": "881cfc6b1c57f701"
+    },
+    "EXTERNAL_API_KEY": {
+      "length": 64,
+      "type": "hex",
+      "purpose": "其他用途",
+      "rotation_period_days": 180,
+      "checksum": "b913a929edccc7de"
+    },
+    "WEBHOOK_SECRET": {
+      "length": 86,
+      "type": "urlsafe",
+      "purpose": "其他用途",
+      "rotation_period_days": 180,
+      "checksum": "6fa92ecc858f3e95"
+    },
+    "ENCRYPTION_KEY": {
+      "length": 44,
+      "type": "hex",
+      "purpose": "通用加密",
+      "rotation_period_days": 365,
+      "checksum": "fd95567f8276444c"
+    },
+    "HASH_SALT": {
+      "length": 64,
+      "type": "hex",
+      "purpose": "其他用途",
+      "rotation_period_days": 180,
+      "checksum": "0bb52e3490a8a99c"
+    },
+    "SESSION_SECRET": {
+      "length": 86,
+      "type": "hex",
+      "purpose": "其他用途",
+      "rotation_period_days": 180,
+      "checksum": "30954536bb69ffc3"
+    },
+    "CSRF_SECRET": {
+      "length": 86,
+      "type": "hex",
+      "purpose": "其他用途",
+      "rotation_period_days": 180,
+      "checksum": "3d0a1def4f3363aa"
+    }
+  },
+  "security_policies": {
+    "password_policy": {
+      "min_length": 32,
+      "require_uppercase": true,
+      "require_lowercase": true,
+      "require_numbers": true,
+      "require_symbols": true
+    },
+    "key_rotation": {
+      "automatic": true,
+      "notification_days_before": 30,
+      "grace_period_days": 7
+    },
+    "access_control": {
+      "principle": "least_privilege",
+      "audit_log": true,
+      "mfa_required": true
+    }
+  }
+}
