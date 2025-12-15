@@ -1,40 +1,180 @@
-# Football Prediction System - Core Architecture
+# FootballPrediction 系统架构指南
 
-## 📖 概述
+## 📋 项目概述
 
-本文档是 **Football Prediction System** 的核心架构文档，作为技术传承和AI辅助开发的标准参考。记录系统设计原则、关键决策和技术实现细节。
+FootballPrediction 是一个企业级足球预测系统，采用现代化全栈架构，集成了机器学习、数据采集、实时预测和事件驱动架构。
+
+**核心理念**: DDD + CQRS + Event-Driven + Async-First
+**当前版本**: v4.0.1-hotfix (生产就绪)
+**测试覆盖率**: 29.0% (385+ 通过测试)
 
 ## 🏗️ 系统架构
 
-### 核心原则
-- **单一数据源**: FotMob 作为主要数据源
-- **分层采集**: L1 (赛程) → L2 (详情) → L3 (特征) 的数据流水线
-- **HTTP优先**: 禁止使用 Playwright，必须使用 HTTP API
-- **外键安全**: 通过 `ensure_team_exists` 解决球队外键约束
-- **异步架构**: 全链路异步，支持高并发
+### 1. 领域驱动设计 (DDD) 层次结构
 
-### 技术栈
-- **后端**: FastAPI + PostgreSQL 15 + Redis 7.0+
-- **ORM**: SQLAlchemy 2.0+ (async)
-- **HTTP客户端**: aiohttp + asyncio
-- **机器学习**: XGBoost + TensorFlow + MLflow
-- **容器化**: Docker + Docker Compose
-
-## 🌐 数据源架构
-
-### FotMob API 规范
-
-#### 端点定义
-```python
-# L1 - 赛程采集
-L1_ENDPOINT = "https://www.fotmob.com/api/matches?date={YYYYMMDD}&timezone=Asia/Shanghai&ccode3=CHN"
-
-# L2 - 详情采集
-L2_ENDPOINT = "https://www.fotmob.com/api/matchDetails?matchId={match_id}"
+```
+src/
+├── domain/                 # 领域层 - 核心业务逻辑
+│   ├── entities/          # 实体对象
+│   ├── value_objects/     # 值对象
+│   ├── services/          # 领域服务
+│   └── repositories/      # 仓储接口
+├── application/           # 应用层 - 业务流程编排
+├── infrastructure/        # 基础设施层 - 技术实现
+└── presentation/          # 表现层 - API接口
 ```
 
-#### API 鉴权 (关键)
-所有 FotMob API 请求必须包含以下 Header：
+### 2. CQRS 命令查询分离
+
+**位置**: `src/cqrs/`
+
+- **Commands**: 写操作命令定义
+- **Queries**: 读操作查询定义
+- **Handlers**: 命令和查询处理器
+- **Event Bus**: 事件驱动通信
+
+## 📡 标准化入口点
+
+### 数据采集模块
+
+#### 🎯 FotMob 数据采集
+**标准入口**: `src.collectors.fotmob.collector_v2.FotMobCollectorV2`
+
+```python
+# 标准用法
+from src.collectors.fotmob.collector_v2 import FotMobCollectorV2
+
+collector = FotMobCollectorV2()
+match_data = await collector.get_match_details(fotmob_id)
+```
+
+**黄金法则**:
+- ✅ 使用 `FotMobCollectorV2` 进行所有FotMob数据采集
+- ❌ **禁止创建新的collector类**
+- ✅ 需要扩展时，继承现有类并重写方法
+- ❌ **严禁使用Playwright或浏览器自动化**
+
+#### 📊 L2数据解析
+**标准入口**: `src.collectors.l2_parser.CompleteL2Parser`
+
+```python
+# 标准用法
+from src.collectors.l2_parser import CompleteL2Parser, parse_l2_match_stats
+
+# 方式1: 使用解析器类
+parser = CompleteL2Parser()
+l2_stats = parser.parse_match_data(raw_data)
+
+# 方式2: 使用便捷函数
+l2_stats = parse_l2_match_stats(raw_data)
+```
+
+**数据维度**: 79+ 字段的完整战术统计
+- Big Chances (绝佳机会)
+- Accurate Crosses (精准传中)
+- Accurate Long Balls (精准长传)
+- Blocked Shots (被封堵射门)
+- xG期望进球数据
+- 控球率、传球、抢断等完整指标
+
+### 数据库操作
+
+#### 🗄️ 数据库连接
+**标准入口**: `src.database.async_manager.AsyncDatabaseManager`
+
+```python
+# 标准用法
+from src.database.async_manager import AsyncDatabaseManager
+
+async with AsyncDatabaseManager() as db:
+    result = await db.fetch_one(query, params)
+```
+
+**黄金法则**:
+- ✅ **必须使用** `AsyncDatabaseManager`
+- ❌ **禁止使用** 旧的 `src.database.connection.py`
+- ✅ 所有操作必须使用 `async/await`
+
+#### 数据库模式
+```sql
+-- 核心比赛表
+matches (
+    id UUID PRIMARY KEY,
+    fotmob_id VARCHAR UNIQUE,
+    home_team_id UUID REFERENCES teams(id),
+    away_team_id UUID REFERENCES teams(id),
+    match_date TIMESTAMP,
+    -- L2战术数据 (79+字段)
+    home_big_chances_created INT,
+    away_big_chances_created INT,
+    home_accurate_crosses INT,
+    away_accurate_crosses INT,
+    -- xG数据
+    home_expected_goals FLOAT,
+    away_expected_goals FLOAT,
+    -- 其他字段...
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+)
+
+-- 球队表
+teams (
+    id UUID PRIMARY KEY,
+    name VARCHAR UNIQUE,
+    fotmob_id VARCHAR,
+    created_at TIMESTAMP DEFAULT NOW()
+)
+```
+
+### 标准化脚本
+
+#### 🚀 批量数据更新
+**官方入口**: `scripts/backfill_l2_batch.py`
+
+```bash
+# 标准用法 - L2数据回补
+python scripts/backfill_l2_batch.py --batch-size 50 --delay 3
+
+# 监控面板
+python scripts/monitor_fixed.py
+```
+
+#### 📈 监控和健康检查
+```bash
+# L2数据进度监控
+python scripts/monitor_fixed.py
+
+# 数据质量审计
+python scripts/audit_data.py
+```
+
+## 🛠️ 开发规范
+
+### 代码组织原则
+
+1. **单一职责**: 每个模块专注单一业务领域
+2. **依赖倒置**: 高层模块不依赖低层模块
+3. **开闭原则**: 对扩展开放，对修改封闭
+4. **接口隔离**: 使用小而专一的接口
+
+### 数据采集规范
+
+```python
+# ✅ 正确的扩展方式
+class EnhancedFotMobCollector(FotMobCollectorV2):
+    async def get_enhanced_match_data(self, match_id: str):
+        base_data = await super().get_match_details(match_id)
+        # 添加增强逻辑
+        return enhanced_data
+
+# ❌ 错误的方式 - 不要创建新的collector
+class NewDataCollector:  # 禁止这样做
+    pass
+```
+
+### API鉴权要求
+
+所有FotMob API请求必须包含以下Headers：
 
 ```python
 headers = {
@@ -48,174 +188,155 @@ headers = {
 }
 ```
 
-**⚠️ 严格禁止**: 任何形式的 Playwright 或浏览器自动化
-**✅ 必须使用**: `src/collectors/enhanced_fotmob_collector.py`
+### 错误处理规范
 
-## 🔄 数据流水线
-
-### L1 - 赛程采集 (`src/jobs/run_l1_fixtures.py`)
-
-**职责**: 创建基础数据记录
-- 创建 `teams` 表记录 (通过 `_get_or_create_team`)
-- 创建 `matches` 表基础记录
-- 设置 `data_completeness = 'partial'`
-
-**关键方法**:
 ```python
-async def ensure_team_exists(self, session, team_name: str) -> int:
-    """
-    解决外键约束的核心方法
-    1. 检查球队是否存在
-    2. 不存在则创建新记录
-    3. 返回球队ID
-    """
+# ✅ 标准错误处理
+try:
+    data = await collector.get_match_details(match_id)
+except RateLimitException:
+    logger.warning(f"Rate limit hit for match {match_id}")
+    await asyncio.sleep(5)
+except DataNotFoundException:
+    logger.error(f"Match {match_id} not found")
+    raise
+except Exception as e:
+    logger.error(f"Unexpected error for match {match_id}: {e}")
+    raise
 ```
 
-### L2 - 详情采集 (`src/jobs/run_l2_details.py`)
+## 🔧 技术栈
 
-**职责**: 更新深度详情数据
-- 更新 `matches` 表的详情字段
-- 采集 xG、赔率、射门数据
-- 设置 `data_completeness = 'complete'`
+### 后端核心
+- **Web框架**: FastAPI 0.104+
+- **数据库**: PostgreSQL 15 + Redis 7.0+
+- **ORM**: SQLAlchemy 2.0+ (完全异步)
+- **任务调度**: Prefect 2.x + Celery Beat
 
-**数据字段**:
-```sql
--- L2 更新的字段
-UPDATE matches SET
-    home_xg = :home_xg,           -- 主队期望进球数
-    away_xg = :away_xg,           -- 客队期望进球数
-    referee = :referee,           -- 裁判
-    weather_data = :weather_data, -- 天气信息 (JSON)
-    shotmap_data = :shotmap_data, -- 射门数据 (JSON)
-    odds_data = :odds_data,       -- 赔率数据 (JSON)
-    data_completeness = 'complete'
-WHERE fotmob_id = :fotmob_id;
+### 前端技术栈
+- **框架**: Vue.js 3.4.0 + TypeScript 5.7.2
+- **构建工具**: Vite 5.0
+- **状态管理**: Pinia 2.1.7
+- **UI框架**: Tailwind CSS 3.3.6
+
+### 机器学习
+- **框架**: XGBoost 2.0+ + TensorFlow 2.18.0
+- **实验跟踪**: MLflow
+- **特征工程**: 自定义79维战术特征
+
+## 📊 数据流水线
+
+### 数据分层架构
+```
+L1: 基础数据 (Basic Data)
+├── 比赛时间、对阵双方
+├── 联赛信息、比分
+└── 基础比赛统计
+
+L2: 战术数据 (Tactical Data) ⭐ 核心资产
+├── 79+ 维度完整统计
+├── xG期望进球数据
+├── 传中、长传、封堵等
+└── Big Chances等高价值指标
+
+L3: 特征工程 (ML Features)
+├── 历史战绩统计
+├── 球队状态指标
+├── 球员表现数据
+└── 14个核心ML特征
 ```
 
-## 🗄️ 数据库设计
+### 数据质量标准
+- **L2数据完整性**: 99%+ 字段填充率
+- **API成功率**: 95%+ 采集成功率
+- **数据新鲜度**: 24小时内更新
 
-### 核心表结构
+## 🚦 部署和运维
 
-#### teams 表
-```sql
-CREATE TABLE teams (
-    id INTEGER PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    country VARCHAR(100),
-    created_at TIMESTAMP,
-    updated_at TIMESTAMP
-);
-```
-
-#### matches 表
-```sql
-CREATE TABLE matches (
-    id SERIAL PRIMARY KEY,
-    home_team_id INTEGER REFERENCES teams(id),  -- 外键约束
-    away_team_id INTEGER REFERENCES teams(id),  -- 外键约束
-    home_score INTEGER,
-    away_score INTEGER,
-    status VARCHAR(20),
-    match_date TIMESTAMP,
-    venue VARCHAR(255),
-    league_id INTEGER,
-    season VARCHAR(20),
-    fotmob_id VARCHAR(50),           -- FotMob比赛ID
-    data_source VARCHAR(50),         -- 数据源标识
-    data_completeness VARCHAR(20),  -- 数据完整性
-    home_xg FLOAT,                  -- 主队xG (L2)
-    away_xg FLOAT,                  -- 客队xG (L2)
-    referee VARCHAR(255),           -- 裁判 (L2)
-    weather_data JSONB,             -- 天气数据 (L2)
-    shotmap_data JSONB,             -- 射门数据 (L2)
-    odds_data JSONB,                -- 赔率数据 (L2)
-    created_at TIMESTAMP,
-    updated_at TIMESTAMP
-);
-```
-
-## 🚀 生产运行
-
-### 启动命令
-
-#### 开发环境
+### Docker化部署
 ```bash
-# 启动开发环境
-make dev
+# 开发环境
+cd FootballPrediction  # 进入包含Makefile的目录
+make dev              # 启动完整开发环境
+make test             # 运行测试套件
+make lint             # 代码质量检查
 
-# L1 赛程采集
-python src/jobs/run_l1_fixtures.py
-
-# L2 详情采集
-python src/jobs/run_l2_details.py
+# 生产环境
+make prod             # 启动生产环境
+make monitor          # 监控系统状态
 ```
 
-#### 生产环境
+### 服务架构
+```yaml
+# 核心服务
+app:           # FastAPI主应用 (8000)
+frontend:      # Vue.js前端 (5173/80)
+db:            # PostgreSQL数据库 (5432)
+redis:         # Redis缓存 (6379)
+nginx:         # 反向代理 (80)
+
+# 调度服务
+worker:        # Celery异步任务
+beat:          # Celery定时任务
+data-collector: # 专用数据采集服务
+```
+
+### 监控和可观测性
 ```bash
-# 后台运行 L1
-nohup python src/jobs/run_l1_fixtures.py > logs/l1_fixtures.log 2>&1 &
+# 服务健康检查
+curl http://localhost:8000/health
+curl http://localhost:8000/api/v1/metrics
 
-# 后台运行 L2
-nohup python src/jobs/run_l2_details.py > logs/l2_details.log 2>&1 &
+# 监控UI
+http://localhost:4200  # Prefect UI
+http://localhost:5555  # Flower UI
+http://localhost:5000  # MLflow UI
 ```
 
-### 监控命令
-```bash
-# 检查数据状态
-SELECT
-    COUNT(*) as total_matches,
-    COUNT(*) FILTER (WHERE data_source = 'fotmob_v2') as l1_count,
-    COUNT(*) FILTER (WHERE data_completeness = 'complete') as l2_count
-FROM matches;
+## 🎯 AI开发指南
 
-# 检查进程状态
-ps aux | grep -E "(run_l1|run_l2)" | grep -v grep
-```
-
-## 🛡️ 安全与性能
-
-### 反爬策略
-- **请求头伪装**: 完整的浏览器请求头
-- **智能延迟**: 2-5秒随机延迟
-- **认证签名**: x-mas 和 x-foo 头部
-- **错误处理**: 完善的异常处理和重试机制
-
-### 性能优化
-- **异步数据库**: 使用 asyncpg 连接池
-- **批量处理**: 批量插入和更新
-- **连接复用**: aiohttp 会话复用
-- **缓存机制**: Redis 缓存热点数据
-
-## 🔧 开发规范
-
-### 代码标准
-- **异步优先**: 所有 I/O 操作使用 async/await
-- **类型注解**: 完整的 Python 类型提示
-- **错误处理**: 详细的异常处理和日志记录
-- **测试覆盖**: 核心业务逻辑 100% 测试覆盖
-
-### 导入规范
+### 标准化AI入口
 ```python
-# ✅ 正确的导入路径
-sys.path.append(str(Path(__file__).parent.parent.parent))
-from src.collectors.enhanced_fotmob_collector import EnhancedFotMobCollector
-from src.database.async_manager import get_db_session
+# 机器学习推理
+from src.inference.service import InferenceService
+
+inference = InferenceService()
+prediction = await inference.predict_match(match_id)
+
+# 数据预处理
+from src.ml.features import FeatureBuilder
+
+builder = FeatureBuilder()
+features = await builder.build_features(match_id)
 ```
 
-### 日志规范
-```python
-# ✅ 标准化日志配置
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler('logs/job_name.log'),
-        logging.StreamHandler(sys.stdout)
-    ]
-)
+### 模型管理
+- **模型注册**: MLflow Model Registry
+- **版本控制**: Git + DVC
+- **实验跟踪**: MLflow Experiments
+- **部署策略**: A/B测试 + 蓝绿部署
+
+## 📞 技术支持
+
+### 开发环境要求
+- **Python**: 3.11+
+- **Node.js**: 18+
+- **PostgreSQL**: 15+
+- **Redis**: 7.0+
+
+### 快速诊断
+```bash
+# 系统状态检查
+make status           # 检查所有服务
+make test-fast        # 快速核心测试
+make security-check   # 安全扫描
+
+# 数据质量检查
+python scripts/audit_data.py
+python scripts/monitor_fixed.py
 ```
 
-## 📋 关键决策记录
+## 🔍 关键决策记录
 
 ### 为什么禁止 Playwright？
 1. **性能问题**: 浏览器启动开销大 (10-100x)
@@ -223,56 +344,33 @@ logging.basicConfig(
 3. **维护复杂**: 需要处理页面结构变化
 4. **资源消耗**: 内存和 CPU 占用高
 
-### 为什么需要 `ensure_team_exists`？
-1. **外键约束**: matches 表依赖 teams 表
-2. **数据完整性**: 确保球队记录先于比赛记录存在
-3. **避免错误**: 防止外键约束异常
-4. **自动创建**: 未知球队自动创建，保证数据采集连续性
+### 为什么需要标准化入口点？
+1. **代码一致性**: 统一的接口和调用方式
+2. **维护简化**: 减少重复代码和混乱
+3. **AI辅助**: 为AI开发提供明确的操作指南
+4. **扩展性**: 基于继承而非重写的扩展模式
 
-### API 鉴权的重要性
-1. **访问控制**: 无鉴权返回 401 错误
-2. **签名验证**: x-mas 是加密签名
-3. **版本控制**: x-foo 标识客户端版本
-4. **反爬检测**: 基础请求头不足以绕过检测
-
-## 🔍 故障排查
-
-### 常见问题
-
-#### 401 Unauthorized
-```bash
-# 检查鉴权头
-curl -H "x-mas: <signature>" -H "x-foo: <version>" https://www.fotmob.com/api/matches?date=20241205
-```
-
-#### 外键约束错误
-```sql
--- 检查缺失的球队
-SELECT DISTINCT home_team_id FROM matches
-WHERE home_team_id NOT IN (SELECT id FROM teams);
-```
-
-#### 数据采集失败
-```bash
-# 检查日志
-tail -f logs/l1_fixtures.log
-tail -f logs/l2_details.log
-
-# 检查进程
-ps aux | grep python
-```
-
-## 📚 参考资源
-
-- **项目配置**: `CLAUDE.md` - 开发指南
-- **API文档**: `src/collectors/enhanced_fotmob_collector.py`
-- **数据库**: `src/database/async_manager.py`
-- **测试**: `tests/unit/collectors/`
+### L2数据的重要性
+1. **ML价值**: 79维度战术数据是预测模型的核心特征
+2. **商业价值**: 完整的战术统计具有极高商业价值
+3. **稀缺性**: 高质量足球战术数据难以获取
+4. **完整性**: 99%+覆盖率确保模型训练质量
 
 ---
 
-**维护说明**: 本文档是系统的技术圣经，任何架构变更都必须同步更新本文档。
+## 📝 维护说明
 
-**版本**: v2.0.0
-**最后更新**: 2024-12-05
-**负责人**: Tech Lead & Documentation Expert
+**版本**: v4.0.1-hotfix (生产就绪)
+**最后更新**: 2025-12-15
+**维护者**: AI-Assisted Development Team
+
+**核心原则**:
+1. **数据质量第一** - 99%+ L2数据完整性
+2. **架构稳定性** - 不轻易破坏现有接口
+3. **渐进式改进** - 小步快跑，持续集成
+4. **AI辅助开发** - 拥抱AI工具，提升开发效率
+5. **标准化优先** - 固定入口，避免技术债务
+
+---
+
+🎯 **记住**: 这个架构是AI辅助维护的，所有修改都应该遵循已建立的模式和标准。**不要创建新的collector，扩展现有的collector！**

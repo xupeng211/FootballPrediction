@@ -358,3 +358,39 @@ appendonly.aof
 # PostgreSQL数据
 *.sql.gz
 pg_data/
+
+# ===========================================
+# 🗂️ 工件文件和备份 (Phase 1 清理补充)
+# ===========================================
+
+# 压缩文件和归档
+*.tar.gz
+*.zip
+*.rar
+*.7z
+
+# 数据库备份和转储
+*.sql
+*.dump
+*.backup
+
+# 备份目录
+backups/
+backup/
+
+# 大型数据文件
+*.csv
+*.json
+*.xml
+*.xlsx
+*.parquet
+*.data
+
+# 日志文件
+*.log
+*.log.*
+
+# 环境配置
+.env
+.env.local
+.env.production

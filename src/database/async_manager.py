@@ -131,7 +131,8 @@ class AsyncDatabaseManager:
         if TITAN_SETTINGS_AVAILABLE:
             settings = get_titan_settings()
             db_config = settings.db_pool
-            logger.info("使用 TitanSettings 数据库配置")
+            _logger = logging.getLogger(__name__)
+            _logger.info("使用 TitanSettings 数据库配置")
         else:
             # 回退到默认值
             class DefaultDBConfig:
@@ -156,7 +157,8 @@ class AsyncDatabaseManager:
             )
 
             # 记录连接池配置信息
-            logger.info(
+            _logger = logging.getLogger(__name__)
+            _logger.info(
                 "数据库连接池配置",
                 extra={
                     "pool_size": default_config["pool_size"],
@@ -191,7 +193,8 @@ class AsyncDatabaseManager:
         if "pool_size" in default_config and "max_overflow" in default_config:
             log_msg += f"\n   连接池: size={default_config['pool_size']}, overflow={default_config['max_overflow']}"
 
-        logger.info(log_msg)
+        _logger = logging.getLogger(__name__)
+        _logger.info(log_msg)
 
     @property
     def is_initialized(self) -> bool:
