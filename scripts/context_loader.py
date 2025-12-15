@@ -14,9 +14,19 @@ from pathlib import Path
 from typing import Any, Dict
 
 # 添加项目路径以便导入核心模块
-sys.path.insert(0, str(Path(__file__).parent.parent))
+project_root = Path(__file__).parent.parent
+sys.path.insert(0, str(project_root))
 
-from src.core import Logger  # noqa: E402
+# 临时跳过有问题的导入，直接使用标准logging
+import logging
+logger = logging.getLogger(__name__)
+
+try:
+    from src.core import Logger  # noqa: E402
+    logger_instance = Logger()
+except ImportError:
+    # 如果导入失败，使用标准logging
+    logger_instance = logger
 
 
 class ProjectContextLoader:
@@ -32,7 +42,13 @@ class ProjectContextLoader:
         self.project_root = Path(project_root).resolve()
         self.context: Dict[str, Any] = {}
         # 设置日志器
-        self.logger = Logger.setup_logger("context_loader", "INFO")
+        # 设置日志器
+        try:
+            self.logger = Logger.setup_logger("context_loader", "INFO")
+        except (NameError, AttributeError):
+            # 如果Logger不可用，使用标准logging
+            logging.basicConfig(level=logging.INFO)
+            self.logger = logging.getLogger("context_loader")
 
     def load_all_context(self) -> Dict[str, Any]:
         """
