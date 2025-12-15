@@ -1,5 +1,3 @@
-from typing import Optional
-
 """增强核心服务测试
 Enhanced Core Service Tests.
 
@@ -7,8 +5,7 @@ Enhanced Core Service Tests.
 """
 
 import pytest
-from datetime import datetime, timedelta
-from unittest.mock import AsyncMock, Mock, patch
+from datetime import datetime
 import time
 
 from src.services.enhanced_core import (

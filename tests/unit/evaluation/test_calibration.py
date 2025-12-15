@@ -6,14 +6,14 @@ Unit tests for Football Prediction Calibration module.
 
 import pytest
 import numpy as np
-import pandas as pd
-import pickle
-from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 from src.evaluation.calibration import (
-    BaseCalibrator, IsotonicCalibrator, PlattCalibrator,
-    AutoCalibrator, CalibrationResult,
+    BaseCalibrator,
+    IsotonicCalibrator,
+    PlattCalibrator,
+    AutoCalibrator,
+    CalibrationResult,
     calibrate_probabilities,
 )
 
@@ -31,7 +31,7 @@ class TestCalibrationResult:
             calibrated_score=0.18,
             improvement=0.07,
             calibration_params={"param1": "value1"},
-            metadata={"test": True}
+            metadata={"test": True},
         )
 
     def test_calibration_result_creation(self, sample_calibration_result):
@@ -53,6 +53,7 @@ class TestCalibrationResult:
         json_str = sample_calibration_result.to_json()
 
         import json
+
         parsed = json.loads(json_str)
         assert parsed["is_calibrated"] is True
         assert parsed["calibration_method"] == "isotonic"
@@ -77,14 +78,16 @@ class TestBaseCalibrator:
         """测试需要校准的情况"""
         # 创建 poorly calibrated probabilities
         y_true = np.array([0, 0, 1, 1, 2, 2])
-        y_proba = np.array([
-            [0.9, 0.05, 0.05],  # 过度自信
-            [0.8, 0.1, 0.1],   # 过度自信
-            [0.1, 0.8, 0.1],   # 过度自信
-            [0.05, 0.9, 0.05], # 过度自信
-            [0.05, 0.05, 0.9], # 过度自信
-            [0.1, 0.1, 0.8]    # 过度自信
-        ])
+        y_proba = np.array(
+            [
+                [0.9, 0.05, 0.05],  # 过度自信
+                [0.8, 0.1, 0.1],  # 过度自信
+                [0.1, 0.8, 0.1],  # 过度自信
+                [0.05, 0.9, 0.05],  # 过度自信
+                [0.05, 0.05, 0.9],  # 过度自信
+                [0.1, 0.1, 0.8],  # 过度自信
+            ]
+        )
 
         needs_cal = base_calibrator.needs_calibration(y_true, y_proba, threshold=0.1)
         assert needs_cal is True
@@ -93,19 +96,21 @@ class TestBaseCalibrator:
         """测试不需要校准的情况"""
         # 创建 well-calibrated probabilities
         y_true = np.array([0, 0, 1, 1, 2, 2])
-        y_proba = np.array([
-            [0.7, 0.2, 0.1],
-            [0.6, 0.3, 0.1],
-            [0.1, 0.6, 0.3],
-            [0.2, 0.7, 0.1],
-            [0.1, 0.2, 0.7],
-            [0.3, 0.1, 0.6]
-        ])
+        y_proba = np.array(
+            [
+                [0.7, 0.2, 0.1],
+                [0.6, 0.3, 0.1],
+                [0.1, 0.6, 0.3],
+                [0.2, 0.7, 0.1],
+                [0.1, 0.2, 0.7],
+                [0.3, 0.1, 0.6],
+            ]
+        )
 
         needs_cal = base_calibrator.needs_calibration(y_true, y_proba, threshold=0.1)
         assert needs_cal is False
 
-    @patch('src.evaluation.calibration.HAS_SKLEARN', False)
+    @patch("src.evaluation.calibration.HAS_SKLEARN", False)
     def test_sklearn_unavailable(self, base_calibrator):
         """测试sklearn不可用时的情况"""
         y_true = np.array([0, 1, 2])
@@ -181,7 +186,9 @@ class TestIsotonicCalibrator:
         with pytest.raises(ValueError, match="Calibrator must be fitted"):
             isotonic_calibrator.transform(y_proba)
 
-    def test_save_and_load(self, isotonic_calibrator, sample_calibration_data, tmp_path):
+    def test_save_and_load(
+        self, isotonic_calibrator, sample_calibration_data, tmp_path
+    ):
         """测试保存和加载功能"""
         y_true, y_proba = sample_calibration_data
 
@@ -197,7 +204,10 @@ class TestIsotonicCalibrator:
 
         assert loaded_calibrator.n_classes == isotonic_calibrator.n_classes
         assert loaded_calibrator.is_fitted is True
-        assert loaded_calibrator.calibration_method == isotonic_calibrator.calibration_method
+        assert (
+            loaded_calibrator.calibration_method
+            == isotonic_calibrator.calibration_method
+        )
 
     def test_invalid_probabilities(self, isotonic_calibrator):
         """测试无效概率处理"""
@@ -300,18 +310,14 @@ class TestAutoCalibrator:
         result = auto_calibrator.calibrate(y_true, y_proba)
 
         assert isinstance(result, CalibrationResult)
-        assert hasattr(result, 'is_calibrated')
-        assert hasattr(result, 'calibration_method')
+        assert hasattr(result, "is_calibrated")
+        assert hasattr(result, "calibration_method")
 
     def test_calibrate_no_need(self, auto_calibrator):
         """测试不需要校准的情况"""
         # 创建perfect校准的数据
         y_true = np.array([0, 1, 2])
-        y_proba = np.array([
-            [0.9, 0.05, 0.05],
-            [0.05, 0.9, 0.05],
-            [0.05, 0.05, 0.9]
-        ])
+        y_proba = np.array([[0.9, 0.05, 0.05], [0.05, 0.9, 0.05], [0.05, 0.05, 0.9]])
 
         result = auto_calibrator.calibrate(y_true, y_proba)
 
@@ -333,7 +339,9 @@ class TestAutoCalibrator:
             prob_sums = calibrated_proba.sum(axis=1)
             np.testing.assert_allclose(prob_sums, 1.0, rtol=1e-5)
 
-    def test_transform_without_calibrate(self, auto_calibrator, sample_calibration_data):
+    def test_transform_without_calibrate(
+        self, auto_calibrator, sample_calibration_data
+    ):
         """测试未校准时的变换"""
         _, y_proba = sample_calibration_data
 
@@ -353,7 +361,10 @@ class TestAutoCalibrator:
         loaded_calibrator = AutoCalibrator.load(save_path)
 
         assert loaded_calibrator.n_classes == auto_calibrator.n_classes
-        assert loaded_calibrator.calibration_threshold == auto_calibrator.calibration_threshold
+        assert (
+            loaded_calibrator.calibration_threshold
+            == auto_calibrator.calibration_threshold
+        )
 
 
 class TestCalibrationFunctions:
@@ -374,7 +385,9 @@ class TestCalibrationFunctions:
         """测试自动校准函数"""
         y_true, y_proba = sample_data
 
-        calibrated_proba, result = calibrate_probabilities(y_true, y_proba, method="auto")
+        calibrated_proba, result = calibrate_probabilities(
+            y_true, y_proba, method="auto"
+        )
 
         assert isinstance(result, CalibrationResult)
         assert calibrated_proba.shape == y_proba.shape
@@ -387,7 +400,9 @@ class TestCalibrationFunctions:
         """测试Isotonic校准函数"""
         y_true, y_proba = sample_data
 
-        calibrated_proba, result = calibrate_probabilities(y_true, y_proba, method="isotonic")
+        calibrated_proba, result = calibrate_probabilities(
+            y_true, y_proba, method="isotonic"
+        )
 
         assert isinstance(result, CalibrationResult)
         assert result.calibration_method == "isotonic"
@@ -397,7 +412,9 @@ class TestCalibrationFunctions:
         """测试Platt校准函数"""
         y_true, y_proba = sample_data
 
-        calibrated_proba, result = calibrate_probabilities(y_true, y_proba, method="platt")
+        calibrated_proba, result = calibrate_probabilities(
+            y_true, y_proba, method="platt"
+        )
 
         assert isinstance(result, CalibrationResult)
         assert result.calibration_method == "platt"

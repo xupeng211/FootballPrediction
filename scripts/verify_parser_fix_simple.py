@@ -7,14 +7,14 @@ Verify Parser Fix Script - Simple Version
 """
 
 import logging
-from typing import Dict, Any
+from typing import Any
 
 # 配置日志
 logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
+
 
 def _map_stat_category(category_key: str) -> str:
     """
@@ -28,38 +28,30 @@ def _map_stat_category(category_key: str) -> str:
         "expected_goals_on_target": "post_shot_xg",
         "xg": "xg",
         "xgot": "post_shot_xg",
-
         # 控球率
         "ball_possession_shared": "possession",
         "possession": "possession",
         "BallPossession": "possession",
-
         # 射门
         "total_shots": "shots",
         "shots": "shots",
         "shots_on_target": "shots",
-
         # 传球
         "total_passes": "passes",
         "passes": "passes",
         "accurate_passes": "passes",
-
         # 抢断
         "tackles": "tackles",
         "total_tackles": "tackles",
-
         # 角球
         "corners": "corners",
         "total_corners": "corners",
-
         # 球员评分
         "player_rating": "player_rating",
         "ratings": "player_rating",
-
         # 期望助攻
         "expected_assists": "expected_assists",
         "xa": "expected_assists",
-
         # 越位
         "offsides": "offsides",
         "total_offsides": "offsides",
@@ -78,6 +70,7 @@ def _map_stat_category(category_key: str) -> str:
     # 默认归类到球员评分
     logger.debug(f"🔍 未知统计类别: {category_key}, 归类到player_rating")
     return "player_rating"
+
 
 def extract_full_match_stats_fixed(content: dict[str, Any]) -> dict[str, Any]:
     """
@@ -98,7 +91,9 @@ def extract_full_match_stats_fixed(content: dict[str, Any]) -> dict[str, Any]:
 
         logger.info(f"🔍 stats_data 类型: {type(stats_data)}")
         if isinstance(stats_data, list) and len(stats_data) > 0:
-            logger.info(f"🔍 stats_data 第一项结构: {stats_data[0] if stats_data else 'Empty'}")
+            logger.info(
+                f"🔍 stats_data 第一项结构: {stats_data[0] if stats_data else 'Empty'}"
+            )
 
         # 🔥 核心修复: 确认 stats_data 是列表，直接遍历
         if not isinstance(stats_data, list):
@@ -136,7 +131,9 @@ def extract_full_match_stats_fixed(content: dict[str, Any]) -> dict[str, Any]:
             category_key = stat_category.get("key", "")
             category_stats = stat_category.get("stats", [])
 
-            logger.info(f"🔍 处理类别: {category_key}, 子项数: {len(category_stats) if isinstance(category_stats, list) else 0}")
+            logger.info(
+                f"🔍 处理类别: {category_key}, 子项数: {len(category_stats) if isinstance(category_stats, list) else 0}"
+            )
 
             # 根据类别key映射到我们的统计类别
             target_category = _map_stat_category(category_key)
@@ -155,11 +152,16 @@ def extract_full_match_stats_fixed(content: dict[str, Any]) -> dict[str, Any]:
 
                             # 存储到对应的类别
                             if target_category in match_stats:
-                                match_stats[target_category][stat_key] = [home_value, away_value]
+                                match_stats[target_category][stat_key] = [
+                                    home_value,
+                                    away_value,
+                                ]
 
                                 # 🔍 特殊记录xG数据，用于向后兼容
                                 if target_category == "xg":
-                                    logger.info(f"✅ 找到xG数据: {stat_key} = 主队{home_value}, 客队{away_value}")
+                                    logger.info(
+                                        f"✅ 找到xG数据: {stat_key} = 主队{home_value}, 客队{away_value}"
+                                    )
 
         logger.info(f"📊 全量技术统计提取成功，字段数: {len(match_stats)}")
 
@@ -174,8 +176,10 @@ def extract_full_match_stats_fixed(content: dict[str, Any]) -> dict[str, Any]:
     except Exception as e:
         logger.warning(f"⚠️ 全量技术统计提取失败: {e}")
         import traceback
+
         logger.debug(f"🔍 详细错误信息: {traceback.format_exc()}")
         return {}
+
 
 def test_parser_fix():
     """测试解析器修复效果"""
@@ -191,39 +195,36 @@ def test_parser_fix():
                         {
                             "key": "expected_goals",
                             "stats": [
-                                {
-                                    "key": "xg",
-                                    "stats": [2.21, 1.85]  # 🔍 xG: 2.21
-                                }
-                            ]
+                                {"key": "xg", "stats": [2.21, 1.85]}  # 🔍 xG: 2.21
+                            ],
                         },
                         {
                             "key": "ball_possession_shared",
                             "stats": [
                                 {
                                     "key": "possession",
-                                    "stats": [58, 42]  # 控球率: 58% vs 42%
+                                    "stats": [58, 42],  # 控球率: 58% vs 42%
                                 }
-                            ]
+                            ],
                         },
                         {
                             "key": "total_shots",
                             "stats": [
                                 {
                                     "key": "shots_total",
-                                    "stats": [15, 8]  # 射门: 15 vs 8
+                                    "stats": [15, 8],  # 射门: 15 vs 8
                                 }
-                            ]
+                            ],
                         },
                         {
                             "key": "passes",
                             "stats": [
                                 {
                                     "key": "total_passes",
-                                    "stats": [420, 380]  # 传球: 420 vs 380
+                                    "stats": [420, 380],  # 传球: 420 vs 380
                                 }
-                            ]
-                        }
+                            ],
+                        },
                     ]
                 }
             }
@@ -267,8 +268,13 @@ def test_parser_fix():
         if possession_data and "possession" in possession_data:
             possession_values = possession_data["possession"]
             if len(possession_values) >= 2:
-                home_possession, away_possession = possession_values[0], possession_values[1]
-                logger.info(f"✅ 控球率数据提取成功: 主队={home_possession}%, 客队={away_possession}%")
+                home_possession, away_possession = (
+                    possession_values[0],
+                    possession_values[1],
+                )
+                logger.info(
+                    f"✅ 控球率数据提取成功: 主队={home_possession}%, 客队={away_possession}%"
+                )
                 test_results["possession_extraction"] = True
 
         # 验证射门数据提取
@@ -277,7 +283,9 @@ def test_parser_fix():
             shots_values = shots_data["shots_total"]
             if len(shots_values) >= 2:
                 home_shots, away_shots = shots_values[0], shots_values[1]
-                logger.info(f"✅ 射门数据提取成功: 主队={home_shots}, 客队={away_shots}")
+                logger.info(
+                    f"✅ 射门数据提取成功: 主队={home_shots}, 客队={away_shots}"
+                )
                 test_results["shots_extraction"] = True
 
         # 显示完整解析结果
@@ -327,6 +335,7 @@ def test_parser_fix():
         logger.error("\n💥 ❌ 解析器修复验证失败!")
         logger.error("🚨 需要进一步调试和修复")
         return False
+
 
 if __name__ == "__main__":
     success = test_parser_fix()

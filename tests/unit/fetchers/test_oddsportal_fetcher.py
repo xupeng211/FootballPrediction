@@ -15,7 +15,6 @@ OddsPortal Fetcher Unit Tests
 
 import pytest
 from datetime import datetime
-from typing import List
 
 from src.fetchers.oddsportal_fetcher import OddsPortalFetcher
 from src.collectors.abstract_fetcher import OddsData, ResourceType
@@ -28,11 +27,7 @@ class TestOddsPortalFetcher:
     @pytest.fixture
     def fetcher(self) -> OddsPortalFetcher:
         """创建OddsPortalFetcher实例"""
-        config = {
-            "timeout": 10,
-            "max_retries": 2,
-            "delay_between_requests": 0.1
-        }
+        config = {"timeout": 10, "max_retries": 2, "delay_between_requests": 0.1}
         return OddsPortalFetcher(source_name="oddsportal_test", config=config)
 
     @pytest.fixture
@@ -41,7 +36,9 @@ class TestOddsPortalFetcher:
         return "test_match_123"
 
     @pytest.mark.asyncio
-    async def test_fetch_odds_success(self, fetcher: OddsPortalFetcher, sample_match_id: str):
+    async def test_fetch_odds_success(
+        self, fetcher: OddsPortalFetcher, sample_match_id: str
+    ):
         """测试成功获取赔率数据"""
         result = await fetcher.fetch_odds(sample_match_id, count=5)
 
@@ -60,14 +57,12 @@ class TestOddsPortalFetcher:
             assert odds_data.timestamp is not None
 
     @pytest.mark.asyncio
-    async def test_fetch_odds_different_markets(self, fetcher: OddsPortalFetcher, sample_match_id: str):
+    async def test_fetch_odds_different_markets(
+        self, fetcher: OddsPortalFetcher, sample_match_id: str
+    ):
         """测试获取不同市场类型的赔率数据"""
         markets = ["1X2", "Asian Handicap", "Over/Under"]
-        result = await fetcher.fetch_odds(
-            sample_match_id,
-            markets=markets,
-            count=6
-        )
+        result = await fetcher.fetch_odds(sample_match_id, markets=markets, count=6)
 
         # 验证返回了不同市场类型的数据
         market_types = {odds.market_type for odds in result}
@@ -82,7 +77,9 @@ class TestOddsPortalFetcher:
             assert odds.away_win is not None
 
         # 验证亚洲让分盘数据
-        odds_handicap = [odds for odds in result if odds.market_type == "Asian Handicap"]
+        odds_handicap = [
+            odds for odds in result if odds.market_type == "Asian Handicap"
+        ]
         if odds_handicap:
             odds = odds_handicap[0]
             assert odds.asian_handicap_home is not None
@@ -98,13 +95,13 @@ class TestOddsPortalFetcher:
             assert odds.under_odds is not None
 
     @pytest.mark.asyncio
-    async def test_fetch_odds_custom_bookmakers(self, fetcher: OddsPortalFetcher, sample_match_id: str):
+    async def test_fetch_odds_custom_bookmakers(
+        self, fetcher: OddsPortalFetcher, sample_match_id: str
+    ):
         """测试获取指定博彩公司的赔率数据"""
         custom_bookmakers = ["Bet365", "William Hill"]
         result = await fetcher.fetch_odds(
-            sample_match_id,
-            bookmakers=custom_bookmakers,
-            count=4
+            sample_match_id, bookmakers=custom_bookmakers, count=4
         )
 
         # 验证只返回指定博彩公司的数据
@@ -121,13 +118,13 @@ class TestOddsPortalFetcher:
             await fetcher.fetch_odds("   ")
 
     @pytest.mark.asyncio
-    async def test_fetch_general_data(self, fetcher: OddsPortalFetcher, sample_match_id: str):
+    async def test_fetch_general_data(
+        self, fetcher: OddsPortalFetcher, sample_match_id: str
+    ):
         """测试获取通用数据接口"""
         # 测试获取赔率数据
         result = await fetcher.fetch_data(
-            sample_match_id,
-            resource_type=ResourceType.ODDS,
-            count=3
+            sample_match_id, resource_type=ResourceType.ODDS, count=3
         )
 
         assert isinstance(result, list)
@@ -139,8 +136,7 @@ class TestOddsPortalFetcher:
 
         # 测试不支持的资源类型
         result_empty = await fetcher.fetch_data(
-            sample_match_id,
-            resource_type=ResourceType.FIXTURES
+            sample_match_id, resource_type=ResourceType.FIXTURES
         )
 
         assert result_empty == []
@@ -163,7 +159,7 @@ class TestOddsPortalFetcher:
             "base_url": "https://custom.oddsportal.com",
             "timeout": 15,
             "max_retries": 5,
-            "delay_between_requests": 0.5
+            "delay_between_requests": 0.5,
         }
 
         fetcher = OddsPortalFetcher(source_name="custom", config=config)
@@ -202,7 +198,9 @@ class TestOddsPortalFetcher:
         assert "William Hill" in bookmakers
 
     @pytest.mark.asyncio
-    async def test_metadata_tracking(self, fetcher: OddsPortalFetcher, sample_match_id: str):
+    async def test_metadata_tracking(
+        self, fetcher: OddsPortalFetcher, sample_match_id: str
+    ):
         """测试元数据跟踪功能"""
         # 获取数据
         await fetcher.fetch_odds(sample_match_id, count=2)
@@ -218,7 +216,9 @@ class TestOddsPortalFetcher:
         assert metadata.processing_time_ms >= 0
 
     @pytest.mark.asyncio
-    async def test_data_quality_and_consistency(self, fetcher: OddsPortalFetcher, sample_match_id: str):
+    async def test_data_quality_and_consistency(
+        self, fetcher: OddsPortalFetcher, sample_match_id: str
+    ):
         """测试数据质量和一致性"""
         result = await fetcher.fetch_odds(sample_match_id, markets=["1X2"], count=5)
 
@@ -238,14 +238,12 @@ class TestOddsPortalFetcher:
                 assert time_diff.total_seconds() < 3600  # 不超过1小时前
 
     @pytest.mark.asyncio
-    async def test_market_specific_data_structure(self, fetcher: OddsPortalFetcher, sample_match_id: str):
+    async def test_market_specific_data_structure(
+        self, fetcher: OddsPortalFetcher, sample_match_id: str
+    ):
         """测试市场特定的数据结构"""
         # 测试1X2市场
-        odds_1x2 = await fetcher.fetch_odds(
-            sample_match_id,
-            markets=["1X2"],
-            count=1
-        )
+        odds_1x2 = await fetcher.fetch_odds(sample_match_id, markets=["1X2"], count=1)
 
         if odds_1x2:
             odds = odds_1x2[0]
@@ -256,9 +254,7 @@ class TestOddsPortalFetcher:
 
         # 测试亚洲让分盘
         odds_handicap = await fetcher.fetch_odds(
-            sample_match_id,
-            markets=["Asian Handicap"],
-            count=1
+            sample_match_id, markets=["Asian Handicap"], count=1
         )
 
         if odds_handicap:
@@ -270,9 +266,7 @@ class TestOddsPortalFetcher:
 
         # 测试大小球
         odds_ou = await fetcher.fetch_odds(
-            sample_match_id,
-            markets=["Over/Under"],
-            count=1
+            sample_match_id, markets=["Over/Under"], count=1
         )
 
         if odds_ou:
@@ -308,10 +302,7 @@ class TestFetcherFactory:
 
     def test_create_oddsportal_fetcher_with_config(self):
         """测试带配置创建OddsPortalFetcher实例"""
-        config = {
-            "timeout": 20,
-            "max_retries": 5
-        }
+        config = {"timeout": 20, "max_retries": 5}
 
         fetcher = FetcherFactory.create("oddsportal", config=config)
 
@@ -353,7 +344,4 @@ class TestFetcherFactory:
 
 
 # 导出测试类
-__all__ = [
-    "TestOddsPortalFetcher",
-    "TestFetcherFactory"
-]
+__all__ = ["TestOddsPortalFetcher", "TestFetcherFactory"]

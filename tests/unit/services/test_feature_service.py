@@ -5,12 +5,10 @@ Feature Service Tests.
 """
 
 import pytest
-import sys
 from datetime import datetime
 from unittest.mock import AsyncMock, Mock, patch
 
 # 添加Python 3.10+ 类型提示兼容性
-from typing import Optional, Union
 
 
 # Temporarily skip due to type annotation issues

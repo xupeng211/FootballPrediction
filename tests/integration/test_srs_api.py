@@ -1,5 +1,3 @@
-from typing import Optional
-
 #!/usr/bin/env python3
 """
 SRS规范API测试脚本
@@ -73,7 +71,7 @@ class SRSApiTester:
                     await response.text()
                     return False
 
-        except Exception as e:
+        except Exception:
             return False
 
     async def test_batch_prediction(self):
@@ -137,7 +135,7 @@ class SRSApiTester:
                     await response.text()
                     return False
 
-        except Exception as e:
+        except Exception:
             return False
 
     async def test_metrics_endpoint(self):
@@ -165,7 +163,7 @@ class SRSApiTester:
                     await response.text()
                     return False
 
-        except Exception as e:
+        except Exception:
             return False
 
     async def test_rate_limiting(self):
@@ -199,7 +197,7 @@ class SRSApiTester:
                         rate_limited_requests += 1
                     else:
                         pass
-            except Exception as e:
+            except Exception:
                 pass
 
         return True

@@ -17,9 +17,7 @@ Proxy Pool Unit Tests
 import asyncio
 import pytest
 import tempfile
-import time
 from pathlib import Path
-from typing import Any, Dict, List
 from unittest.mock import AsyncMock, Mock, patch
 
 from src.collectors.proxy_pool import (
@@ -45,7 +43,7 @@ class TestProxy:
             url="http://127.0.0.1:8080",
             protocol=ProxyProtocol.HTTP,
             host="127.0.0.1",
-            port=8080
+            port=8080,
         )
 
         assert proxy.url == "http://127.0.0.1:8080"
@@ -162,18 +160,18 @@ class TestProxy:
 
         data = proxy.to_dict()
 
-        assert data['url'] == "http://user:pass@127.0.0.1:8080"
-        assert data['protocol'] == "http"
-        assert data['host'] == "127.0.0.1"
-        assert data['port'] == 8080
-        assert data['username'] == "user"
-        assert data['password'] == "***"  # 密码被隐藏
-        assert data['score'] == 85.5
-        assert data['fail_count'] == 2
-        assert data['success_count'] == 8
-        assert data['is_active'] is True
-        assert data['is_banned'] is False
-        assert data['is_healthy'] is True
+        assert data["url"] == "http://user:pass@127.0.0.1:8080"
+        assert data["protocol"] == "http"
+        assert data["host"] == "127.0.0.1"
+        assert data["port"] == 8080
+        assert data["username"] == "user"
+        assert data["password"] == "***"  # 密码被隐藏
+        assert data["score"] == 85.5
+        assert data["fail_count"] == 2
+        assert data["success_count"] == 8
+        assert data["is_active"] is True
+        assert data["is_banned"] is False
+        assert data["is_healthy"] is True
 
     def test_proxy_str_representation(self):
         """测试字符串表示"""
@@ -194,7 +192,7 @@ class TestStaticProxyProvider:
         proxy_urls = [
             "http://127.0.0.1:8080",
             "http://127.0.0.1:8081",
-            "socks5://127.0.0.1:1080"
+            "socks5://127.0.0.1:1080",
         ]
 
         provider = StaticProxyProvider(proxy_urls)
@@ -246,7 +244,7 @@ socks5://127.0.0.1:1080
 # 这是注释
 https://secure-proxy:8080
 """
-        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.txt') as f:
+        with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".txt") as f:
             f.write(proxy_content)
             temp_path = f.name
 
@@ -264,7 +262,7 @@ invalid-proxy-url
 http://127.0.0.1:8081
 another-invalid
 """
-        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.txt') as f:
+        with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".txt") as f:
             f.write(proxy_content)
             temp_path = f.name
 
@@ -277,7 +275,7 @@ another-invalid
         provider = FileProxyProvider("/path/to/proxies.txt")
 
         assert provider.file_path == Path("/path/to/proxies.txt")
-        assert provider.encoding == 'utf-8'
+        assert provider.encoding == "utf-8"
         assert provider._cached_proxies is None
         assert provider._last_modified is None
 
@@ -295,7 +293,9 @@ another-invalid
         assert proxies[3].url == "https://secure-proxy:8080"
 
     @pytest.mark.asyncio
-    async def test_file_provider_load_with_invalid_lines(self, temp_proxy_file_with_invalid):
+    async def test_file_provider_load_with_invalid_lines(
+        self, temp_proxy_file_with_invalid
+    ):
         """测试加载包含无效行的文件"""
         provider = FileProxyProvider(temp_proxy_file_with_invalid)
 
@@ -393,9 +393,7 @@ class TestProxyPool:
     async def test_get_proxy_random_strategy(self, mock_provider):
         """测试随机策略获取代理"""
         pool = ProxyPool(
-            mock_provider,
-            strategy=RotationStrategy.RANDOM,
-            auto_health_check=False
+            mock_provider, strategy=RotationStrategy.RANDOM, auto_health_check=False
         )
         await pool.initialize()
 
@@ -415,7 +413,7 @@ class TestProxyPool:
         pool = ProxyPool(
             mock_provider,
             strategy=RotationStrategy.ROUND_ROBIN,
-            auto_health_check=False
+            auto_health_check=False,
         )
         await pool.initialize()
 
@@ -441,7 +439,7 @@ class TestProxyPool:
         pool = ProxyPool(
             mock_provider,
             strategy=RotationStrategy.WEIGHTED_RANDOM,
-            auto_health_check=False
+            auto_health_check=False,
         )
         await pool.initialize()
 
@@ -471,7 +469,7 @@ class TestProxyPool:
         pool = ProxyPool(
             mock_provider,
             strategy=RotationStrategy.HEALTH_FIRST,
-            auto_health_check=False
+            auto_health_check=False,
         )
         await pool.initialize()
 
@@ -491,7 +489,7 @@ class TestProxyPool:
         await pool.initialize()
 
         # 没有健康代理，应该尝试重新激活
-        with patch.object(pool, '_reactivate_banned_proxies') as mock_reactivate:
+        with patch.object(pool, "_reactivate_banned_proxies") as mock_reactivate:
             proxy = await pool.get_proxy()
             mock_reactivate.assert_called_once()
 
@@ -570,7 +568,9 @@ class TestProxyPool:
         await proxy_pool._reactivate_banned_proxies()
 
         # 应该有部分代理被重新激活
-        reactivated_count = len([p for p in proxy_pool.proxies if p.is_active and not p.is_banned])
+        reactivated_count = len(
+            [p for p in proxy_pool.proxies if p.is_active and not p.is_banned]
+        )
         assert reactivated_count > 0
 
     @pytest.mark.asyncio
@@ -610,12 +610,12 @@ class TestProxyPool:
 
         stats = proxy_pool.get_stats()
 
-        assert stats['total'] == 3
-        assert stats['active'] == 2
-        assert stats['banned'] == 1
-        assert stats['healthy'] == 2  # 分数>50的代理
-        assert stats['avg_score'] == 53.33  # (90+70+0)/3
-        assert stats['avg_response_time'] == 175.0  # (150+200)/2
+        assert stats["total"] == 3
+        assert stats["active"] == 2
+        assert stats["banned"] == 1
+        assert stats["healthy"] == 2  # 分数>50的代理
+        assert stats["avg_score"] == 53.33  # (90+70+0)/3
+        assert stats["avg_response_time"] == 175.0  # (150+200)/2
 
     def test_get_proxies_info(self, proxy_pool):
         """测试获取代理详细信息"""
@@ -627,19 +627,19 @@ class TestProxyPool:
         info = proxy_pool.get_proxies_info()
 
         assert len(info) == 3
-        assert info[0]['url'] == "http://127.0.0.1:8080"
-        assert info[0]['score'] == 85.5
-        assert info[0]['fail_count'] == 2
-        assert info[0]['success_count'] == 8
-        assert info[0]['is_active'] is True
-        assert info[0]['is_healthy'] is True
+        assert info[0]["url"] == "http://127.0.0.1:8080"
+        assert info[0]["score"] == 85.5
+        assert info[0]["fail_count"] == 2
+        assert info[0]["success_count"] == 8
+        assert info[0]["is_active"] is True
+        assert info[0]["is_healthy"] is True
 
     @pytest.mark.asyncio
     async def test_health_check_single_proxy_success(self, proxy_pool):
         """测试单个代理健康检查成功"""
         proxy = proxy_pool.proxies[0]
 
-        with patch('aiohttp.ClientSession.get') as mock_get:
+        with patch("aiohttp.ClientSession.get") as mock_get:
             # 模拟成功响应
             mock_response = AsyncMock()
             mock_response.status = 200
@@ -659,7 +659,7 @@ class TestProxyPool:
         """测试单个代理健康检查失败"""
         proxy = proxy_pool.proxies[0]
 
-        with patch('aiohttp.ClientSession.get') as mock_get:
+        with patch("aiohttp.ClientSession.get") as mock_get:
             # 模拟失败响应
             mock_get.side_effect = Exception("Connection failed")
 
@@ -673,7 +673,7 @@ class TestProxyPool:
         """测试关闭代理池"""
         pool = ProxyPool(Mock(spec=ProxyProvider), auto_health_check=True)
 
-        with patch.object(pool, '_health_check_task') as mock_task:
+        with patch.object(pool, "_health_check_task") as mock_task:
             await pool.close()
             mock_task.cancel.assert_called_once()
 
@@ -683,15 +683,10 @@ class TestConvenienceFunctions:
 
     def test_create_proxy_pool(self):
         """测试创建代理池便利函数"""
-        proxy_urls = [
-            "http://127.0.0.1:8080",
-            "http://127.0.0.1:8081"
-        ]
+        proxy_urls = ["http://127.0.0.1:8080", "http://127.0.0.1:8081"]
 
         pool = create_proxy_pool(
-            proxy_urls,
-            strategy=RotationStrategy.RANDOM,
-            max_fail_count=5
+            proxy_urls, strategy=RotationStrategy.RANDOM, max_fail_count=5
         )
 
         assert isinstance(pool.provider, StaticProxyProvider)
@@ -704,7 +699,7 @@ class TestConvenienceFunctions:
         pool = create_file_proxy_pool(
             "/path/to/proxies.txt",
             strategy=RotationStrategy.ROUND_ROBIN,
-            health_check_timeout=15.0
+            health_check_timeout=15.0,
         )
 
         assert isinstance(pool.provider, FileProxyProvider)
@@ -723,8 +718,8 @@ class TestProtocolCompliance:
         assert isinstance(static_provider, ProxyProvider)
 
         # 检查是否有必需的方法
-        assert hasattr(static_provider, 'load_proxies')
-        assert hasattr(static_provider, 'refresh_proxies')
+        assert hasattr(static_provider, "load_proxies")
+        assert hasattr(static_provider, "refresh_proxies")
         assert callable(static_provider.load_proxies)
         assert callable(static_provider.refresh_proxies)
 
@@ -804,7 +799,7 @@ async def test_integration_workflow():
         proxy_urls,
         strategy=RotationStrategy.WEIGHTED_RANDOM,
         max_fail_count=3,
-        auto_health_check=False
+        auto_health_check=False,
     )
 
     await pool.initialize()
@@ -868,8 +863,8 @@ async def test_integration_workflow():
 
     # 验证关键指标
     assert len(proxy_counts) >= 2, "应该使用多个不同的代理"
-    assert stats['total'] == 4, "总代理数应该为4"
-    assert stats['banned'] >= 1, "至少应该有1个被禁用的代理"
+    assert stats["total"] == 4, "总代理数应该为4"
+    assert stats["banned"] >= 1, "至少应该有1个被禁用的代理"
 
 
 if __name__ == "__main__":

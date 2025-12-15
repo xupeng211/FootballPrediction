@@ -7,16 +7,14 @@ FeatureStore 集成测试.
 
 from __future__ import annotations
 
-import asyncio
 from datetime import datetime, timezone
-from typing import Dict, Any
+from typing import Any
 
 import pytest
 from testcontainers.postgres import PostgresContainer
 import asyncpg
 
 from src.features.feature_store import FootballFeatureStore
-from src.features.feature_store_interface import FeatureData
 
 
 class TestFeatureStoreIntegration:
@@ -39,7 +37,8 @@ class TestFeatureStoreIntegration:
         conn = await asyncpg.connect(database_url)
         try:
             # 创建测试表
-            await conn.execute("""
+            await conn.execute(
+                """
                 CREATE TABLE IF NOT EXISTS feature_store (
                     match_id BIGINT NOT NULL,
                     version VARCHAR(50) NOT NULL DEFAULT 'latest',
@@ -49,18 +48,23 @@ class TestFeatureStoreIntegration:
                     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
                     PRIMARY KEY (match_id, version)
                 )
-            """)
+            """
+            )
 
             # 创建索引
-            await conn.execute("""
+            await conn.execute(
+                """
                 CREATE INDEX IF NOT EXISTS idx_featurestore_match_id
                 ON feature_store(match_id)
-            """)
+            """
+            )
 
-            await conn.execute("""
+            await conn.execute(
+                """
                 CREATE INDEX IF NOT EXISTS idx_featurestore_features_gin
                 ON feature_store USING GIN(features)
-            """)
+            """
+            )
 
             yield conn
         finally:
@@ -71,6 +75,7 @@ class TestFeatureStoreIntegration:
         """创建 FeatureStore 实例。"""
         # 临时设置数据库 URL
         import os
+
         original_url = os.environ.get("DATABASE_URL")
         os.environ["DATABASE_URL"] = database_url
 
@@ -101,15 +106,13 @@ class TestFeatureStoreIntegration:
             "home_win_odds": 2.1,
             "home_implied_probability": 0.476,
             "home_possession": 55.5,
-            "away_possession": 44.5
+            "away_possession": 44.5,
         }
 
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_save_and_load_features(
-        self,
-        feature_store: FootballFeatureStore,
-        sample_features: dict[str, Any]
+        self, feature_store: FootballFeatureStore, sample_features: dict[str, Any]
     ):
         """测试保存和加载特征。"""
         match_id = 12345
@@ -131,9 +134,7 @@ class TestFeatureStoreIntegration:
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_save_and_load_with_version(
-        self,
-        feature_store: FootballFeatureStore,
-        sample_features: dict[str, Any]
+        self, feature_store: FootballFeatureStore, sample_features: dict[str, Any]
     ):
         """测试带版本的特征保存和加载。"""
         match_id = 12346
@@ -165,9 +166,7 @@ class TestFeatureStoreIntegration:
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_load_batch_features(
-        self,
-        feature_store: FootballFeatureStore,
-        sample_features: dict[str, Any]
+        self, feature_store: FootballFeatureStore, sample_features: dict[str, Any]
     ):
         """测试批量加载特征。"""
         match_ids = [12347, 12348, 12349]
@@ -186,14 +185,15 @@ class TestFeatureStoreIntegration:
             assert match_id in batch_data
             assert batch_data[match_id]["match_id"] == match_id
             assert batch_data[match_id]["features"]["batch_index"] == i
-            assert batch_data[match_id]["features"]["home_recent_5_wins"] == sample_features["home_recent_5_wins"]
+            assert (
+                batch_data[match_id]["features"]["home_recent_5_wins"]
+                == sample_features["home_recent_5_wins"]
+            )
 
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_load_batch_partial_match(
-        self,
-        feature_store: FootballFeatureStore,
-        sample_features: dict[str, Any]
+        self, feature_store: FootballFeatureStore, sample_features: dict[str, Any]
     ):
         """测试批量加载部分匹配的情况。"""
         match_ids = [12350, 12351, 12352]
@@ -214,9 +214,7 @@ class TestFeatureStoreIntegration:
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_query_features(
-        self,
-        feature_store: FootballFeatureStore,
-        sample_features: dict[str, Any]
+        self, feature_store: FootballFeatureStore, sample_features: dict[str, Any]
     ):
         """测试查询特定特征字段。"""
         match_ids = [12353, 12354]
@@ -241,9 +239,7 @@ class TestFeatureStoreIntegration:
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_upsert_features(
-        self,
-        feature_store: FootballFeatureStore,
-        sample_features: dict[str, Any]
+        self, feature_store: FootballFeatureStore, sample_features: dict[str, Any]
     ):
         """测试更新现有特征（UPSERT）。"""
         match_id = 12355
@@ -252,7 +248,11 @@ class TestFeatureStoreIntegration:
         await feature_store.save_features(match_id, sample_features)
 
         # 更新特征
-        updated_features = {**sample_features, "home_recent_5_wins": 4, "updated_flag": True}
+        updated_features = {
+            **sample_features,
+            "home_recent_5_wins": 4,
+            "updated_flag": True,
+        }
         await feature_store.save_features(match_id, updated_features)
 
         # 加载并验证更新
@@ -261,14 +261,15 @@ class TestFeatureStoreIntegration:
         assert loaded_data is not None
         assert loaded_data["features"]["home_recent_5_wins"] == 4  # 已更新
         assert loaded_data["features"]["updated_flag"] is True  # 新增字段
-        assert loaded_data["features"]["away_recent_5_wins"] == sample_features["away_recent_5_wins"]  # 保持不变
+        assert (
+            loaded_data["features"]["away_recent_5_wins"]
+            == sample_features["away_recent_5_wins"]
+        )  # 保持不变
 
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_delete_features(
-        self,
-        feature_store: FootballFeatureStore,
-        sample_features: dict[str, Any]
+        self, feature_store: FootballFeatureStore, sample_features: dict[str, Any]
     ):
         """测试删除特征。"""
         match_id = 12356
@@ -291,9 +292,7 @@ class TestFeatureStoreIntegration:
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_delete_features_version_specific(
-        self,
-        feature_store: FootballFeatureStore,
-        sample_features: dict[str, Any]
+        self, feature_store: FootballFeatureStore, sample_features: dict[str, Any]
     ):
         """测试删除特定版本的特征。"""
         match_id = 12357
@@ -302,7 +301,9 @@ class TestFeatureStoreIntegration:
 
         # 保存不同版本的特征
         await feature_store.save_features(match_id, sample_features, version=version_v1)
-        await feature_store.save_features(match_id, {**sample_features, "version_2_flag": True}, version=version_v2)
+        await feature_store.save_features(
+            match_id, {**sample_features, "version_2_flag": True}, version=version_v2
+        )
 
         # 验证两个版本都存在
         v1_data = await feature_store.load_features(match_id, version=version_v1)
@@ -323,9 +324,7 @@ class TestFeatureStoreIntegration:
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_list_feature_versions(
-        self,
-        feature_store: FootballFeatureStore,
-        sample_features: dict[str, Any]
+        self, feature_store: FootballFeatureStore, sample_features: dict[str, Any]
     ):
         """测试列出特征版本。"""
         match_id = 12358
@@ -333,7 +332,9 @@ class TestFeatureStoreIntegration:
 
         # 保存多个版本
         for version in versions:
-            await feature_store.save_features(match_id, {**sample_features, "version": version}, version=version)
+            await feature_store.save_features(
+                match_id, {**sample_features, "version": version}, version=version
+            )
 
         # 列出版本
         version_list = await feature_store.list_feature_versions(match_id)
@@ -346,9 +347,7 @@ class TestFeatureStoreIntegration:
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_latest_feature_timestamp(
-        self,
-        feature_store: FootballFeatureStore,
-        sample_features: dict[str, Any]
+        self, feature_store: FootballFeatureStore, sample_features: dict[str, Any]
     ):
         """测试获取最新特征时间戳。"""
         match_id = 12359
@@ -367,9 +366,7 @@ class TestFeatureStoreIntegration:
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_stats(
-        self,
-        feature_store: FootballFeatureStore,
-        sample_features: dict[str, Any]
+        self, feature_store: FootballFeatureStore, sample_features: dict[str, Any]
     ):
         """测试获取统计信息。"""
         # 保存多个特征
@@ -389,9 +386,7 @@ class TestFeatureStoreIntegration:
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_health_check(
-        self,
-        feature_store: FootballFeatureStore,
-        sample_features: dict[str, Any]
+        self, feature_store: FootballFeatureStore, sample_features: dict[str, Any]
     ):
         """测试健康检查。"""
         # 保存一些特征
@@ -413,9 +408,7 @@ class TestFeatureStoreIntegration:
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_performance_batch_operations(
-        self,
-        feature_store: FootballFeatureStore,
-        sample_features: dict[str, Any]
+        self, feature_store: FootballFeatureStore, sample_features: dict[str, Any]
     ):
         """测试批量操作的性能。"""
         import time
@@ -452,14 +445,12 @@ class TestFeatureStoreIntegration:
 
         # 性能断言
         assert avg_save_time < 50  # 每个特征保存时间应小于50毫秒
-        assert avg_load_time < 10   # 每个特征加载时间应小于10毫秒
+        assert avg_load_time < 10  # 每个特征加载时间应小于10毫秒
 
     @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_jsonb_feature_queries(
-        self,
-        feature_store: FootballFeatureStore,
-        db_connection
+        self, feature_store: FootballFeatureStore, db_connection
     ):
         """测试 JSONB 特征查询功能。"""
         match_id = 12364
@@ -470,8 +461,8 @@ class TestFeatureStoreIntegration:
                 "string": "test",
                 "number": 42,
                 "boolean": True,
-                "null": None
-            }
+                "null": None,
+            },
         }
 
         # 保存复杂特征
@@ -479,8 +470,7 @@ class TestFeatureStoreIntegration:
 
         # 直接查询数据库验证 JSONB 存储
         row = await db_connection.fetchrow(
-            "SELECT features FROM feature_store WHERE match_id = $1",
-            match_id
+            "SELECT features FROM feature_store WHERE match_id = $1", match_id
         )
 
         assert row is not None

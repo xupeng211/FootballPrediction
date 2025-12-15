@@ -11,9 +11,12 @@
 import pytest
 from decimal import Decimal
 
-from src.backtesting.models import BetType, BetDecision
+from src.backtesting.models import BetType
 from src.backtesting.strategy import (
-    SimpleValueStrategy, ConservativeStrategy, AggressiveStrategy, StrategyFactory,
+    SimpleValueStrategy,
+    ConservativeStrategy,
+    AggressiveStrategy,
+    StrategyFactory,
 )
 
 
@@ -37,7 +40,7 @@ class TestSimpleValueStrategy:
             "home_win_prob": 0.45,
             "draw_prob": 0.30,
             "away_win_prob": 0.25,
-            "model_confidence": 0.75
+            "model_confidence": 0.75,
         }
 
     @pytest.fixture
@@ -49,15 +52,17 @@ class TestSimpleValueStrategy:
             "away": Decimal("3.80"),
             "home_odds": Decimal("2.20"),
             "draw_odds": Decimal("3.30"),
-            "away_odds": Decimal("3.80")
+            "away_odds": Decimal("3.80"),
         }
 
     @pytest.mark.asyncio
-    async def test_decide_value_bet(self, strategy, sample_match_data, sample_odds_data):
+    async def test_decide_value_bet(
+        self, strategy, sample_match_data, sample_odds_data
+    ):
         """测试有价值下注决策"""
         # 创建有价值的主队胜出场景
         sample_match_data["home_win_prob"] = 0.50  # 高概率
-        sample_odds_data["home"] = Decimal("2.50")   # 高赔率
+        sample_odds_data["home"] = Decimal("2.50")  # 高赔率
 
         decision = await strategy.decide(sample_match_data, sample_odds_data)
 
@@ -68,7 +73,9 @@ class TestSimpleValueStrategy:
         assert decision.odds == Decimal("2.50")
 
     @pytest.mark.asyncio
-    async def test_decide_skip_no_value(self, strategy, sample_match_data, sample_odds_data):
+    async def test_decide_skip_no_value(
+        self, strategy, sample_match_data, sample_odds_data
+    ):
         """测试无价值时的跳过决策"""
         # 创建无价值场景（概率与赔率匹配）
         sample_match_data["home_win_prob"] = 0.40
@@ -80,7 +87,9 @@ class TestSimpleValueStrategy:
         assert decision.stake == Decimal("0.00")
 
     @pytest.mark.asyncio
-    async def test_decide_insufficient_confidence(self, strategy, sample_match_data, sample_odds_data):
+    async def test_decide_insufficient_confidence(
+        self, strategy, sample_match_data, sample_odds_data
+    ):
         """测试置信度不足时的跳过决策"""
         # 创建有价值但置信度不足的场景
         sample_match_data["home_win_prob"] = 0.60
@@ -97,11 +106,7 @@ class TestSimpleValueStrategy:
         # 测试标准格式
         match_data_1 = {
             "id": 1,
-            "predictions": {
-                "home_win": 0.45,
-                "draw": 0.30,
-                "away_win": 0.25
-            }
+            "predictions": {"home_win": 0.45, "draw": 0.30, "away_win": 0.25},
         }
 
         probs = strategy._extract_model_probabilities(match_data_1)
@@ -114,7 +119,7 @@ class TestSimpleValueStrategy:
             "id": 2,
             "home_win_prob": 0.35,
             "draw_prob": 0.35,
-            "away_win_prob": 0.30
+            "away_win_prob": 0.30,
         }
 
         probs = strategy._extract_model_probabilities(match_data_2)
@@ -134,7 +139,7 @@ class TestSimpleValueStrategy:
             "odds": {
                 "home": Decimal("2.20"),
                 "draw": Decimal("3.30"),
-                "away": Decimal("3.80")
+                "away": Decimal("3.80"),
             }
         }
 
@@ -147,7 +152,7 @@ class TestSimpleValueStrategy:
         odds_data_2 = {
             "home_odds": Decimal("2.50"),
             "draw_odds": Decimal("3.40"),
-            "away_odds": Decimal("3.90")
+            "away_odds": Decimal("3.90"),
         }
 
         odds = strategy._extract_odds(odds_data_2)
@@ -194,13 +199,13 @@ class TestStrategyVariants:
             "id": 1,
             "home_win_prob": 0.45,
             "draw_prob": 0.30,
-            "away_win_prob": 0.25
+            "away_win_prob": 0.25,
         }
 
         odds_data = {
             "home": Decimal("2.50"),  # 价值边际不足
             "draw": Decimal("3.30"),
-            "away": Decimal("3.80")
+            "away": Decimal("3.80"),
         }
 
         decision = await strategy.decide(match_data, odds_data)
@@ -215,13 +220,13 @@ class TestStrategyVariants:
             "id": 1,
             "home_win_prob": 0.45,
             "draw_prob": 0.30,
-            "away_win_prob": 0.25
+            "away_win_prob": 0.25,
         }
 
         odds_data = {
             "home": Decimal("2.50"),  # 对激进策略来说有价值
             "draw": Decimal("3.30"),
-            "away": Decimal("3.80")
+            "away": Decimal("3.80"),
         }
 
         decision = await strategy.decide(match_data, odds_data)

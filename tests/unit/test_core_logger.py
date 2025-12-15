@@ -1,5 +1,3 @@
-from typing import Optional
-
 """
 增强的测试文件 - 目标覆盖率 98%
 模块: core.logger
@@ -28,7 +26,7 @@ class TestLogger:
         try:
             setup_logger("test_setup")
             assert True
-        except Exception as e:
+        except Exception:
             pytest.skip("Logger setup failed")
 
     @patch("logging.getLogger")

@@ -52,11 +52,7 @@ class TestAsyncConfig:
 
     def test_custom_config(self):
         """测试自定义配置"""
-        config = AsyncConfig(
-            http_timeout=60.0,
-            max_retries=5,
-            retry_delay=2.0
-        )
+        config = AsyncConfig(http_timeout=60.0, max_retries=5, retry_delay=2.0)
         assert config.http_timeout == 60.0
         assert config.max_retries == 5
         assert config.retry_delay == 2.0
@@ -132,7 +128,7 @@ class TestAsyncBaseCollector:
         mock_response.status_code = 200
         mock_response.json.return_value = {"status": "ok"}
 
-        with patch('httpx.AsyncClient.request', return_value=mock_response):
+        with patch("httpx.AsyncClient.request", return_value=mock_response):
             async with collector:
                 response = await collector.fetch("https://example.com")
                 assert response.status_code == 200
@@ -148,10 +144,10 @@ class TestAsyncBaseCollector:
         mock_response_success = AsyncMock()
         mock_response_success.status_code = 200
 
-        with patch('httpx.AsyncClient.request') as mock_request:
+        with patch("httpx.AsyncClient.request") as mock_request:
             mock_request.side_effect = [
                 Exception("Network error"),
-                mock_response_success
+                mock_response_success,
             ]
 
             async with collector:
@@ -167,7 +163,7 @@ class TestAsyncBaseCollector:
         mock_response.status_code = 200
         mock_response.json.return_value = {"key": "value"}
 
-        with patch('httpx.AsyncClient.request', return_value=mock_response):
+        with patch("httpx.AsyncClient.request", return_value=mock_response):
             async with collector:
                 data = await collector.fetch_json("https://example.com")
                 assert data == {"key": "value"}
@@ -220,7 +216,7 @@ class TestAsyncBaseService:
 
         mock_session = AsyncMock()
 
-        with patch('src.core.async_base.get_db_session') as mock_get_session:
+        with patch("src.core.async_base.get_db_session") as mock_get_session:
             mock_get_session.return_value.__aenter__.return_value = mock_session
             mock_get_session.return_value.__aexit__.return_value = None
 
@@ -233,9 +229,11 @@ class TestAsyncBaseService:
         """测试性能日志记录"""
         service = MockAsyncService()
 
-        with patch.object(service.logger, 'info') as mock_info:
+        with patch.object(service.logger, "info") as mock_info:
             await service.log_performance("test_operation", 150.5)
-            mock_info.assert_called_with("Performance: test_operation completed in 150.50ms")
+            mock_info.assert_called_with(
+                "Performance: test_operation completed in 150.50ms"
+            )
 
 
 @pytest.mark.asyncio
@@ -254,7 +252,9 @@ class TestAsyncBatchProcessor:
         # 测试数据
         items = [1, 2, 3, 4, 5]
 
-        results = await processor.process_batch(items, mock_process_func, max_concurrent=3)
+        results = await processor.process_batch(
+            items, mock_process_func, max_concurrent=3
+        )
 
         assert results == [2, 4, 6, 8, 10]
 
@@ -270,8 +270,10 @@ class TestAsyncBatchProcessor:
 
         items = [1, 2, 3, 4]
 
-        with patch.object(processor.logger, 'error') as mock_error:
-            results = await processor.process_batch(items, mock_process_func, max_concurrent=2)
+        with patch.object(processor.logger, "error") as mock_error:
+            results = await processor.process_batch(
+                items, mock_process_func, max_concurrent=2
+            )
 
             # 验证成功的项目被处理
             assert results == [2, 4, 8]  # 失败的项目(3)被跳过
@@ -318,7 +320,7 @@ class TestEdgeCases:
         collector = MockAsyncCollector()
         collector.config.rate_limit_delay = 0.01  # 10ms延迟
 
-        with patch('asyncio.sleep', new_callable=AsyncMock) as mock_sleep:
+        with patch("asyncio.sleep", new_callable=AsyncMock) as mock_sleep:
             async with collector:
                 # 第一次调用应该应用速率限制
                 await collector._apply_rate_limit()

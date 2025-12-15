@@ -1,12 +1,10 @@
-from typing import Optional
-
 """
 适配器工厂模块测试
 Tests for adapter factory module.
 """
 
 import pytest
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import patch
 
 # 导入被测试模块
 from src.adapters.factory_simple import (
@@ -371,7 +369,6 @@ class TestConcurrentAccess:
     def test_concurrent_singleton_creation(self):
         """测试并发单例创建（简化版模拟）"""
         import threading
-        import time
 
         factory = BaseAdapterFactory()
         factory.register_adapter("test", MockAdapterA)

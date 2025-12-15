@@ -8,7 +8,6 @@ Unit Tests for Inference Schemas
 import json
 import pytest
 from datetime import datetime
-from typing import Dict, Any
 from pydantic import ValidationError
 
 from src.inference.schemas import (
@@ -34,7 +33,7 @@ class TestPredictionRequest:
         data = {
             "match_id": "match_123",
             "model_name": "xgboost_v1",
-            "prediction_type": "probability"
+            "prediction_type": "probability",
         }
 
         request = PredictionRequest(**data)
@@ -53,12 +52,8 @@ class TestPredictionRequest:
             "model_name": "lstm_v2",
             "prediction_type": "winner",
             "model_version": "2.1.0",
-            "features": {
-                "home_goals": 2,
-                "away_goals": 1,
-                "home_possession": 65.5
-            },
-            "force_recalculate": True
+            "features": {"home_goals": 2, "away_goals": 1, "home_possession": 65.5},
+            "force_recalculate": True,
         }
 
         request = PredictionRequest(**data)
@@ -75,7 +70,7 @@ class TestPredictionRequest:
         data = {
             "match_id": "",
             "model_name": "xgboost_v1",
-            "prediction_type": "probability"
+            "prediction_type": "probability",
         }
 
         with pytest.raises(ValidationError) as exc_info:
@@ -88,7 +83,7 @@ class TestPredictionRequest:
         data = {
             "match_id": "match_123",
             "model_name": "",
-            "prediction_type": "probability"
+            "prediction_type": "probability",
         }
 
         with pytest.raises(ValidationError) as exc_info:
@@ -101,7 +96,7 @@ class TestPredictionRequest:
         data = {
             "match_id": "match_123",
             "model_name": "xgboost_v1",
-            "prediction_type": "invalid_type"
+            "prediction_type": "invalid_type",
         }
 
         with pytest.raises(ValidationError) as exc_info:
@@ -115,7 +110,7 @@ class TestPredictionRequest:
             match_id="match_123",
             model_name="xgboost_v1",
             prediction_type="probability",
-            features={"home_goals": 2}
+            features={"home_goals": 2},
         )
 
         serialized = request.model_dump()
@@ -127,9 +122,7 @@ class TestPredictionRequest:
     def test_prediction_request_json_serialization(self):
         """测试预测请求JSON序列化"""
         request = PredictionRequest(
-            match_id="match_123",
-            model_name="xgboost_v1",
-            prediction_type="probability"
+            match_id="match_123", model_name="xgboost_v1", prediction_type="probability"
         )
 
         json_str = request.model_dump_json()
@@ -142,12 +135,14 @@ class TestPredictionRequest:
 
     def test_prediction_request_deserialization(self):
         """测试预测请求反序列化"""
-        json_str = json.dumps({
-            "match_id": "match_123",
-            "model_name": "xgboost_v1",
-            "prediction_type": "probability",
-            "features": {"home_goals": 2}
-        })
+        json_str = json.dumps(
+            {
+                "match_id": "match_123",
+                "model_name": "xgboost_v1",
+                "prediction_type": "probability",
+                "features": {"home_goals": 2},
+            }
+        )
 
         request = PredictionRequest.model_validate_json(json_str)
 
@@ -174,7 +169,7 @@ class TestPredictionResponse:
             "model_type": "xgboost",
             "features_used": ["home_goals", "away_goals"],
             "prediction_time_ms": 150,
-            "cached": False
+            "cached": False,
         }
 
         response = PredictionResponse(**data)
@@ -202,7 +197,7 @@ class TestPredictionResponse:
             "model_name": "xgboost_v1",
             "model_version": "1.0.0",
             "model_type": "xgboost",
-            "features_used": ["home_goals"]
+            "features_used": ["home_goals"],
         }
 
         with pytest.raises(ValidationError) as exc_info:
@@ -224,7 +219,7 @@ class TestPredictionResponse:
             "model_name": "xgboost_v1",
             "model_version": "1.0.0",
             "model_type": "xgboost",
-            "features_used": ["home_goals"]
+            "features_used": ["home_goals"],
         }
 
         with pytest.raises(ValidationError) as exc_info:
@@ -246,7 +241,7 @@ class TestPredictionResponse:
             "model_name": "xgboost_v1",
             "model_version": "1.0.0",
             "model_type": "xgboost",
-            "features_used": ["home_goals"]
+            "features_used": ["home_goals"],
         }
 
         with pytest.raises(ValidationError) as exc_info:
@@ -268,7 +263,7 @@ class TestPredictionResponse:
             "model_name": "xgboost_v1",
             "model_version": "1.0.0",
             "model_type": "xgboost",
-            "features_used": ["home_goals"]
+            "features_used": ["home_goals"],
         }
 
         response = PredictionResponse(**data)
@@ -288,16 +283,16 @@ class TestBatchPredictionRequest:
                 {
                     "match_id": "match_1",
                     "model_name": "xgboost_v1",
-                    "prediction_type": "probability"
+                    "prediction_type": "probability",
                 },
                 {
                     "match_id": "match_2",
                     "model_name": "xgboost_v1",
-                    "prediction_type": "probability"
-                }
+                    "prediction_type": "probability",
+                },
             ],
             "batch_id": "batch_123",
-            "parallel": True
+            "parallel": True,
         }
 
         batch_request = BatchPredictionRequest(**data)
@@ -308,9 +303,7 @@ class TestBatchPredictionRequest:
 
     def test_invalid_batch_prediction_request_empty_requests(self):
         """测试无效的批量预测请求 - 空请求列表"""
-        data = {
-            "requests": []
-        }
+        data = {"requests": []}
 
         with pytest.raises(ValidationError) as exc_info:
             BatchPredictionRequest(**data)
@@ -324,7 +317,7 @@ class TestBatchPredictionRequest:
                 {
                     "match_id": "match_1",
                     "model_name": "xgboost_v1",
-                    "prediction_type": "probability"
+                    "prediction_type": "probability",
                 }
             ]
         }
@@ -358,18 +351,18 @@ class TestBatchPredictionResponse:
                     "model_name": "xgboost_v1",
                     "model_version": "1.0.0",
                     "model_type": "xgboost",
-                    "features_used": ["home_goals"]
+                    "features_used": ["home_goals"],
                 }
             ],
             "errors": [
                 {
                     "request_index": 1,
                     "match_id": "match_2",
-                    "error": "Model load failed"
+                    "error": "Model load failed",
                 }
             ],
             "batch_time_ms": 500,
-            "cached_count": 1
+            "cached_count": 1,
         }
 
         response = BatchPredictionResponse(**data)
@@ -402,9 +395,9 @@ class TestBatchPredictionResponse:
                     "model_name": "xgboost_v1",
                     "model_version": "1.0.0",
                     "model_type": "xgboost",
-                    "features_used": ["home_goals"]
+                    "features_used": ["home_goals"],
                 }
-            ]
+            ],
         }
 
         response = BatchPredictionResponse(**data)
@@ -426,7 +419,7 @@ class TestModelInfo:
             "created_at": datetime.utcnow().isoformat(),
             "features": ["home_goals", "away_goals"],
             "accuracy": 0.85,
-            "description": "XGBoost football prediction model"
+            "description": "XGBoost football prediction model",
         }
 
         model_info = ModelInfo(**data)
@@ -444,7 +437,7 @@ class TestModelInfo:
             "model_type": "xgboost",
             "created_at": datetime.utcnow().isoformat(),
             "features": ["home_goals"],
-            "accuracy": 1.5
+            "accuracy": 1.5,
         }
 
         with pytest.raises(ValidationError) as exc_info:
@@ -463,7 +456,7 @@ class TestModelMetadata:
             model_version="1.0.0",
             model_type="xgboost",
             created_at=datetime.utcnow().isoformat(),
-            features=["home_goals"]
+            features=["home_goals"],
         )
 
         metadata = ModelMetadata(
@@ -472,7 +465,7 @@ class TestModelMetadata:
             file_size=1024000,
             checksum="md5_hash",
             loaded_at=datetime.utcnow(),
-            load_time_ms=100
+            load_time_ms=100,
         )
 
         assert metadata.model_info.model_name == "xgboost_v1"
@@ -490,7 +483,7 @@ class TestPredictionMetadata:
             calibration_applied=True,
             prediction_type="probability",
             feature_count=10,
-            cache_hit=False
+            cache_hit=False,
         )
 
         assert metadata.model_accuracy == 0.85
@@ -508,10 +501,7 @@ class TestErrorResponse:
         error_response = ErrorResponse(
             error="ModelLoadError",
             message="Failed to load model: model file not found",
-            details={
-                "model_name": "xgboost_v1",
-                "file_path": "/path/to/model.pkl"
-            }
+            details={"model_name": "xgboost_v1", "file_path": "/path/to/model.pkl"},
         )
 
         assert error_response.error == "ModelLoadError"
@@ -521,8 +511,7 @@ class TestErrorResponse:
     def test_error_response_minimal(self):
         """测试最小错误响应"""
         error_response = ErrorResponse(
-            error="ValidationError",
-            message="Invalid input data"
+            error="ValidationError", message="Invalid input data"
         )
 
         assert error_response.error == "ValidationError"
@@ -538,7 +527,7 @@ class TestFeatureImportance:
             "feature_name": "home_goals",
             "importance_score": 0.85,
             "feature_type": "numeric",
-            "description": "Number of goals scored by home team"
+            "description": "Number of goals scored by home team",
         }
 
         feature_importance = FeatureImportance(**data)
@@ -552,7 +541,7 @@ class TestFeatureImportance:
         data = {
             "feature_name": "home_goals",
             "importance_score": 1.5,
-            "feature_type": "numeric"
+            "feature_type": "numeric",
         }
 
         with pytest.raises(ValidationError) as exc_info:
@@ -605,7 +594,7 @@ class TestSchemaIntegration:
             match_id="match_123",
             model_name="xgboost_v1",
             prediction_type="probability",
-            features={"home_goals": 2}
+            features={"home_goals": 2},
         )
 
         # 创建响应
@@ -621,7 +610,7 @@ class TestSchemaIntegration:
             model_name=request.model_name,
             model_version="1.0.0",
             model_type="xgboost",
-            features_used=["home_goals"]
+            features_used=["home_goals"],
         )
 
         # 序列化和反序列化
@@ -641,11 +630,11 @@ class TestSchemaIntegration:
                 PredictionRequest(
                     match_id=f"match_{i}",
                     model_name="xgboost_v1",
-                    prediction_type="probability"
+                    prediction_type="probability",
                 )
                 for i in range(3)
             ],
-            parallel=True
+            parallel=True,
         )
 
         # 模拟批量响应
@@ -663,7 +652,7 @@ class TestSchemaIntegration:
                 model_name=req.model_name,
                 model_version="1.0.0",
                 model_type="xgboost",
-                features_used=["home_goals"]
+                features_used=["home_goals"],
             )
             predictions.append(pred)
 
@@ -672,9 +661,11 @@ class TestSchemaIntegration:
             total_requests=len(batch_request.requests),
             successful_predictions=len(predictions),
             failed_predictions=0,
-            predictions=predictions
+            predictions=predictions,
         )
 
         assert batch_response.total_requests == 3
         assert len(batch_response.predictions) == 3
-        assert all(pred.match_id.startswith("match_") for pred in batch_response.predictions)
+        assert all(
+            pred.match_id.startswith("match_") for pred in batch_response.predictions
+        )

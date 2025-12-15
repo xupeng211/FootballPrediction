@@ -1,5 +1,3 @@
-from typing import Optional, Any
-
 """CQRS处理器架构测试
 CQRS Handlers Architecture Tests.
 
@@ -15,9 +13,9 @@ Architecture Validation Strategy:
 """
 
 import asyncio
-from datetime import datetime, date
+from datetime import datetime
 from decimal import Decimal
-from unittest.mock import AsyncMock, MagicMock, patch, call
+from unittest.mock import AsyncMock, MagicMock, patch
 import time
 
 import pytest
@@ -31,7 +29,6 @@ from src.cqrs.commands import (
     UpdatePredictionCommand,
 )
 from src.cqrs.dto import (
-    CommandResult,
     MatchDTO,
     PredictionDTO,
     PredictionStatsDTO,
@@ -1035,12 +1032,12 @@ class TestHandlerArchitectureValidation:
         ]
 
         for handler, expected_type in command_handlers:
-            assert hasattr(handler, "command_type"), (
-                f"{handler.__class__.__name__} 缺少 command_type 属性"
-            )
-            assert handler.command_type == expected_type, (
-                f"{handler.__class__.__name__} command_type 不正确"
-            )
+            assert hasattr(
+                handler, "command_type"
+            ), f"{handler.__class__.__name__} 缺少 command_type 属性"
+            assert (
+                handler.command_type == expected_type
+            ), f"{handler.__class__.__name__} command_type 不正确"
 
         # 查询Handler类型验证
         query_handlers = [
@@ -1054,12 +1051,12 @@ class TestHandlerArchitectureValidation:
         ]
 
         for handler, expected_type in query_handlers:
-            assert hasattr(handler, "query_type"), (
-                f"{handler.__class__.__name__} 缺少 query_type 属性"
-            )
-            assert handler.query_type == expected_type, (
-                f"{handler.__class__.__name__} query_type 不正确"
-            )
+            assert hasattr(
+                handler, "query_type"
+            ), f"{handler.__class__.__name__} 缺少 query_type 属性"
+            assert (
+                handler.query_type == expected_type
+            ), f"{handler.__class__.__name__} query_type 不正确"
 
     async def test_handler_async_methods(self):
         """验证所有Handler都实现了正确的异步方法."""
@@ -1081,12 +1078,12 @@ class TestHandlerArchitectureValidation:
 
         for handler in handlers_to_test:
             # 验证handle方法存在且是协程
-            assert hasattr(handler, "handle"), (
-                f"{handler.__class__.__name__} 缺少 handle 方法"
-            )
-            assert asyncio.iscoroutinefunction(handler.handle), (
-                f"{handler.__class__.__name__} handle 方法不是异步的"
-            )
+            assert hasattr(
+                handler, "handle"
+            ), f"{handler.__class__.__name__} 缺少 handle 方法"
+            assert asyncio.iscoroutinefunction(
+                handler.handle
+            ), f"{handler.__class__.__name__} handle 方法不是异步的"
 
     async def test_handler_inheritance_structure(self):
         """验证Handler继承结构."""
@@ -1103,9 +1100,9 @@ class TestHandlerArchitectureValidation:
         ]
 
         for handler_class in command_handlers:
-            assert issubclass(handler_class, CommandHandler), (
-                f"{handler_class} 未继承 CommandHandler"
-            )
+            assert issubclass(
+                handler_class, CommandHandler
+            ), f"{handler_class} 未继承 CommandHandler"
 
         # 验证查询Handler继承
         query_handlers = [
@@ -1119,9 +1116,9 @@ class TestHandlerArchitectureValidation:
         ]
 
         for handler_class in query_handlers:
-            assert issubclass(handler_class, QueryHandler), (
-                f"{handler_class} 未继承 QueryHandler"
-            )
+            assert issubclass(
+                handler_class, QueryHandler
+            ), f"{handler_class} 未继承 QueryHandler"
 
 
 @pytest.mark.asyncio
@@ -1212,9 +1209,9 @@ class TestHandlerErrorHandlingValidation:
 
                 # 所有未找到的查询都应该返回None
                 result = await handler.handle(query)
-                assert result is None, (
-                    f"{handler.__class__.__name__} 在未找到记录时应该返回None"
-                )
+                assert (
+                    result is None
+                ), f"{handler.__class__.__name__} 在未找到记录时应该返回None"
 
 
 @pytest.mark.asyncio

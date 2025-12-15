@@ -6,11 +6,12 @@ Unit tests for Football Prediction Metrics module.
 
 import pytest
 import numpy as np
-import pandas as pd
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 from src.evaluation.metrics import (
-    Metrics, MetricsResult, evaluate_model,
+    Metrics,
+    MetricsResult,
+    evaluate_model,
 )
 
 
@@ -34,7 +35,9 @@ class TestMetrics:
         # 生成预测（模拟不同质量）
         y_pred = y_true.copy()
         # 添加一些错误预测
-        error_indices = np.random.choice(n_samples, size=int(n_samples * 0.3), replace=False)
+        error_indices = np.random.choice(
+            n_samples, size=int(n_samples * 0.3), replace=False
+        )
         y_pred[error_indices] = np.random.randint(0, 3, len(error_indices))
 
         # 生成概率矩阵
@@ -89,7 +92,9 @@ class TestMetrics:
             assert "logloss" in metrics
             assert metrics["logloss"] >= 0
 
-    def test_classification_metrics_without_probabilities(self, metrics_calculator, sample_data):
+    def test_classification_metrics_without_probabilities(
+        self, metrics_calculator, sample_data
+    ):
         """测试无概率预测的分类指标"""
         y_true, y_pred, _ = sample_data
 
@@ -131,7 +136,7 @@ class TestMetrics:
     def test_odds_metrics(self, metrics_calculator, sample_data, sample_odds):
         """测试博彩相关指标"""
         y_true, y_pred, y_proba = sample_data
-        odds = sample_odds[:len(y_true)]  # 确保长度匹配
+        odds = sample_odds[: len(y_true)]  # 确保长度匹配
 
         metrics = metrics_calculator.odds_metrics(y_true, y_proba, odds)
 
@@ -148,10 +153,12 @@ class TestMetrics:
             assert 0 <= metrics["win_rate"] <= 100
             assert metrics["total_stake"] >= 0
 
-    def test_odds_metrics_no_threshold(self, metrics_calculator, sample_data, sample_odds):
+    def test_odds_metrics_no_threshold(
+        self, metrics_calculator, sample_data, sample_odds
+    ):
         """测试高阈值下的博彩指标（可能无投注）"""
         y_true, y_pred, y_proba = sample_data
-        odds = sample_odds[:len(y_true)]
+        odds = sample_odds[: len(y_true)]
 
         # 使用很高阈值，可能没有投注
         metrics = metrics_calculator.odds_metrics(y_true, y_proba, odds, threshold=1.0)
@@ -164,19 +171,17 @@ class TestMetrics:
     def test_evaluate_all(self, metrics_calculator, sample_data, sample_odds):
         """测试完整评估功能"""
         y_true, y_pred, y_proba = sample_data
-        odds = sample_odds[:len(y_true)]
+        odds = sample_odds[: len(y_true)]
 
-        result = metrics_calculator.evaluate_all(
-            y_true, y_pred, y_proba, odds
-        )
+        result = metrics_calculator.evaluate_all(y_true, y_pred, y_proba, odds)
 
         # 验证返回类型
         assert isinstance(result, MetricsResult)
 
         # 验证基本属性
-        assert hasattr(result, 'metrics')
-        assert hasattr(result, 'metadata')
-        assert hasattr(result, 'timestamp')
+        assert hasattr(result, "metrics")
+        assert hasattr(result, "metadata")
+        assert hasattr(result, "timestamp")
 
         # 验证包含所有指标类型
         assert "accuracy" in result.metrics
@@ -199,7 +204,7 @@ class TestMetrics:
         assert "accuracy" in result.metrics
         assert "brier_score_avg" in result.metrics
 
-    @patch('src.evaluation.metrics.HAS_SKLEARN', False)
+    @patch("src.evaluation.metrics.HAS_SKLEARN", False)
     def test_sklearn_unavailable(self, metrics_calculator, sample_data):
         """测试sklearn不可用时的行为"""
         y_true, y_pred, y_proba = sample_data
@@ -242,17 +247,12 @@ class TestMetricsResult:
             "accuracy": 0.85,
             "precision_weighted": 0.83,
             "recall_weighted": 0.85,
-            "f1_weighted": 0.84
+            "f1_weighted": 0.84,
         }
-        metadata = {
-            "n_samples": 100,
-            "model_name": "test_model"
-        }
+        metadata = {"n_samples": 100, "model_name": "test_model"}
 
         return MetricsResult(
-            metrics=metrics,
-            metadata=metadata,
-            timestamp="2024-01-01T00:00:00"
+            metrics=metrics, metadata=metadata, timestamp="2024-01-01T00:00:00"
         )
 
     def test_metrics_result_creation(self, sample_metrics_result):
@@ -276,6 +276,7 @@ class TestMetricsResult:
 
         # 验证是有效JSON
         import json
+
         parsed = json.loads(json_str)
         assert parsed["metrics"]["accuracy"] == 0.85
 
@@ -293,7 +294,9 @@ class TestEvaluateModel:
         y_pred = y_true.copy()
 
         # 添加一些错误
-        error_indices = np.random.choice(n_samples, size=int(n_samples * 0.2), replace=False)
+        error_indices = np.random.choice(
+            n_samples, size=int(n_samples * 0.2), replace=False
+        )
         y_pred[error_indices] = np.random.randint(0, 3, len(error_indices))
 
         y_proba = np.random.dirichlet([1, 1, 1], n_samples)

@@ -20,9 +20,8 @@ import asyncio
 import json
 import logging
 import sys
-from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 # 添加项目根路径到sys.path
 project_root = Path(__file__).parent.parent
@@ -38,7 +37,7 @@ logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     handlers=[
         logging.StreamHandler(sys.stdout),
-    ]
+    ],
 )
 logger = logging.getLogger(__name__)
 
@@ -50,7 +49,7 @@ class CoreLogicVerifier:
         self.verification_results = {
             "l1_verification": {},
             "l2_verification": {},
-            "overall_status": "PENDING"
+            "overall_status": "PENDING",
         }
 
     def print_header(self):
@@ -75,7 +74,7 @@ class CoreLogicVerifier:
         """Step 1: L1 赛程验证 (The Map Check)"""
         self.print_step_header(
             "Step 1: L1 赛程验证 (The Map Check)",
-            "调用 API 获取英超 (ID 47) 的最新赛程，验证 Match ID 格式"
+            "调用 API 获取英超 (ID 47) 的最新赛程，验证 Match ID 格式",
         )
 
         try:
@@ -87,17 +86,22 @@ class CoreLogicVerifier:
 
             # 使用正确的API端点获取英超比赛
             import aiohttp
-            headers = collector.client.headers if collector.client else {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-                "Accept": "application/json, text/plain, */*",
-                "Accept-Language": "en-US,en;q=0.9",
-                "Accept-Encoding": "gzip, deflate, br",
-                "Connection": "keep-alive",
-                "Referer": "https://www.fotmob.com/",
-                "Origin": "https://www.fotmob.com",
-                "x-mas": "eyJib2R5Ijp7InVybCI6Ii9hcGkvZGF0YS9hdWRpby1tYXRjaGVzIiwiY29kZSI6MTc2NDA1NTcxMjgyOCwiZm9vIjoicHJvZHVjdGlvbjoyMDhhOGY4N2MyY2MxMzM0M2YxZGQ4NjcxNDcxY2Y1YTAzOWRjZWQzIn0sInNpZ25hdHVyZSI6IkMyMkI0MUQ5Njk2NUJBREM1NjMyNzcwRDgyNzVFRTQ4In0=",
-                "x-foo": "production:208a8f87c2cc13343f1dd8671471cf5a039dced3",
-            }
+
+            headers = (
+                collector.client.headers
+                if collector.client
+                else {
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+                    "Accept": "application/json, text/plain, */*",
+                    "Accept-Language": "en-US,en;q=0.9",
+                    "Accept-Encoding": "gzip, deflate, br",
+                    "Connection": "keep-alive",
+                    "Referer": "https://www.fotmob.com/",
+                    "Origin": "https://www.fotmob.com",
+                    "x-mas": "eyJib2R5Ijp7InVybCI6Ii9hcGkvZGF0YS9hdWRpby1tYXRjaGVzIiwiY29kZSI6MTc2NDA1NTcxMjgyOCwiZm9vIjoicHJvZHVjdGlvbjoyMDhhOGY4N2MyY2MxMzM0M2YxZGQ4NjcxNDcxY2Y1YTAzOWRjZWQzIn0sInNpZ25hdHVyZSI6IkMyMkI0MUQ5Njk2NUJBREM1NjMyNzcwRDgyNzVFRTQ4In0=",
+                    "x-foo": "production:208a8f87c2cc13343f1dd8671471cf5a039dced3",
+                }
+            )
 
             async with aiohttp.ClientSession(headers=headers) as session:
                 # 正确的API端点
@@ -120,7 +124,9 @@ class CoreLogicVerifier:
                             # 检查是否有fixtures字段
                             if "fixtures" in data:
                                 fixtures = data["fixtures"]
-                                print(f"🔍 Fixtures数据结构: {type(fixtures)}, 键: {list(fixtures.keys()) if isinstance(fixtures, dict) else 'N/A'}")
+                                print(
+                                    f"🔍 Fixtures数据结构: {type(fixtures)}, 键: {list(fixtures.keys()) if isinstance(fixtures, dict) else 'N/A'}"
+                                )
 
                                 # fixtures可能是字典或列表
                                 if isinstance(fixtures, dict):
@@ -129,18 +135,28 @@ class CoreLogicVerifier:
                                         all_matches = fixtures["allMatches"]
                                         if isinstance(all_matches, list):
                                             matches.extend(all_matches)
-                                            print(f"✅ 从 allMatches 提取到 {len(all_matches)} 场比赛")
+                                            print(
+                                                f"✅ 从 allMatches 提取到 {len(all_matches)} 场比赛"
+                                            )
                                     else:
                                         # 尝试其他键
                                         for round_key, round_data in fixtures.items():
-                                            if isinstance(round_data, dict) and "matches" in round_data:
+                                            if (
+                                                isinstance(round_data, dict)
+                                                and "matches" in round_data
+                                            ):
                                                 round_matches = round_data["matches"]
                                                 if isinstance(round_matches, list):
                                                     matches.extend(round_matches)
-                                                    print(f"✅ 从 {round_key} 提取到 {len(round_matches)} 场比赛")
+                                                    print(
+                                                        f"✅ 从 {round_key} 提取到 {len(round_matches)} 场比赛"
+                                                    )
                                 elif isinstance(fixtures, list):
                                     for fixture in fixtures:
-                                        if isinstance(fixture, dict) and "matches" in fixture:
+                                        if (
+                                            isinstance(fixture, dict)
+                                            and "matches" in fixture
+                                        ):
                                             matches.extend(fixture["matches"])
 
                         print(f"✅ 成功获取到 {len(matches)} 场英超比赛")
@@ -153,7 +169,7 @@ class CoreLogicVerifier:
                 self.verification_results["l1_verification"] = {
                     "status": "FAILED",
                     "error": "无法获取比赛数据",
-                    "matches_found": 0
+                    "matches_found": 0,
                 }
                 await collector.close()
                 return False
@@ -183,7 +199,7 @@ class CoreLogicVerifier:
                 "matches_found": len(matches),
                 "valid_ids": valid_ids,
                 "invalid_ids": invalid_ids,
-                "sample_matches": matches[:3]  # 保存前3个比赛用于L2验证
+                "sample_matches": matches[:3],  # 保存前3个比赛用于L2验证
             }
 
             await collector.close()
@@ -202,26 +218,29 @@ class CoreLogicVerifier:
         except Exception as e:
             logger.error(f"❌ L1 验证过程中发生错误: {e}")
             import traceback
+
             logger.error(f"详细错误: {traceback.format_exc()}")
 
             self.verification_results["l1_verification"] = {
                 "status": "ERROR",
-                "error": str(e)
+                "error": str(e),
             }
             return False
 
-    async def step_2_l2_verification(self, sample_matches: list[dict[str, Any]]) -> bool:
+    async def step_2_l2_verification(
+        self, sample_matches: list[dict[str, Any]]
+    ) -> bool:
         """Step 2: L2 详情验证 (The Deep Dive)"""
         self.print_step_header(
             "Step 2: L2 详情验证 (The Deep Dive)",
-            "从 L1 获取的比赛中选取样本，调用详情API并验证数据解析"
+            "从 L1 获取的比赛中选取样本，调用详情API并验证数据解析",
         )
 
         if not sample_matches:
             print("❌ 没有可用的比赛样本进行 L2 验证！")
             self.verification_results["l2_verification"] = {
                 "status": "FAILED",
-                "error": "没有比赛样本"
+                "error": "没有比赛样本",
             }
             return False
 
@@ -236,12 +255,16 @@ class CoreLogicVerifier:
 
             print("🔍 分析比赛状态，选择验证样本:")
             for match in sample_matches:
-                status = match.get("status", {}).get("reason", {}).get("short", "Unknown")
+                status = (
+                    match.get("status", {}).get("reason", {}).get("short", "Unknown")
+                )
                 match_id = str(match.get("id", ""))
                 home_team = match.get("home", {}).get("name", "Unknown")
                 away_team = match.get("away", {}).get("name", "Unknown")
 
-                print(f"   比赛 {match_id}: {home_team} vs {away_team} (状态: {status})")
+                print(
+                    f"   比赛 {match_id}: {home_team} vs {away_team} (状态: {status})"
+                )
 
                 if status == "FT" and not finished_match:
                     finished_match = match
@@ -266,7 +289,9 @@ class CoreLogicVerifier:
                 match_id = str(match.get("id", ""))
                 home_team = match.get("home", {}).get("name", "Unknown")
                 away_team = match.get("away", {}).get("name", "Unknown")
-                status = match.get("status", {}).get("reason", {}).get("short", "Unknown")
+                status = (
+                    match.get("status", {}).get("reason", {}).get("short", "Unknown")
+                )
 
                 print(f"\n🎯 验证比赛 {i}: {home_team} vs {away_team} (ID: {match_id})")
 
@@ -278,42 +303,60 @@ class CoreLogicVerifier:
                     report = self.generate_autopsy_report(match, match_detail)
                     print(report)
 
-                    l2_results.append({
-                        "match_id": match_id,
-                        "success": True,
-                        "detail": match_detail,
-                        "xg_extracted": match_detail.xg_home > 0 or match_detail.xg_away > 0,
-                        "referee_extracted": match_detail.referee is not None,
-                        "lineups_extracted": match_detail.lineups_json is not None
-                    })
+                    l2_results.append(
+                        {
+                            "match_id": match_id,
+                            "success": True,
+                            "detail": match_detail,
+                            "xg_extracted": match_detail.xg_home > 0
+                            or match_detail.xg_away > 0,
+                            "referee_extracted": match_detail.referee is not None,
+                            "lineups_extracted": match_detail.lineups_json is not None,
+                        }
+                    )
                 else:
                     print(f"❌ 无法获取比赛 {match_id} 的详情数据")
-                    l2_results.append({
-                        "match_id": match_id,
-                        "success": False,
-                        "detail": None,
-                        "xg_extracted": False,
-                        "referee_extracted": False,
-                        "lineups_extracted": False
-                    })
+                    l2_results.append(
+                        {
+                            "match_id": match_id,
+                            "success": False,
+                            "detail": None,
+                            "xg_extracted": False,
+                            "referee_extracted": False,
+                            "lineups_extracted": False,
+                        }
+                    )
 
             # 分析 L2 验证结果
             successful_extractions = [r for r in l2_results if r["success"]]
-            xg_success_count = sum(1 for r in successful_extractions if r["xg_extracted"])
-            referee_success_count = sum(1 for r in successful_extractions if r["referee_extracted"])
-            lineups_success_count = sum(1 for r in successful_extractions if r["lineups_extracted"])
+            xg_success_count = sum(
+                1 for r in successful_extractions if r["xg_extracted"]
+            )
+            referee_success_count = sum(
+                1 for r in successful_extractions if r["referee_extracted"]
+            )
+            lineups_success_count = sum(
+                1 for r in successful_extractions if r["lineups_extracted"]
+            )
 
             print("\n📈 L2 验证统计:")
-            print(f"   成功获取详情: {len(successful_extractions)}/{len(l2_results)} 场比赛")
-            print(f"   xG 数据提取: {xg_success_count}/{len(successful_extractions)} 场比赛")
-            print(f"   裁判数据提取: {referee_success_count}/{len(successful_extractions)} 场比赛")
-            print(f"   阵容数据提取: {lineups_success_count}/{len(successful_extractions)} 场比赛")
+            print(
+                f"   成功获取详情: {len(successful_extractions)}/{len(l2_results)} 场比赛"
+            )
+            print(
+                f"   xG 数据提取: {xg_success_count}/{len(successful_extractions)} 场比赛"
+            )
+            print(
+                f"   裁判数据提取: {referee_success_count}/{len(successful_extractions)} 场比赛"
+            )
+            print(
+                f"   阵容数据提取: {lineups_success_count}/{len(successful_extractions)} 场比赛"
+            )
 
             # 判断 L2 验证是否通过
             # 至少需要成功提取到一些关键数据
-            critical_features_ok = (
-                len(successful_extractions) > 0 and
-                (xg_success_count > 0 or referee_success_count > 0)
+            critical_features_ok = len(successful_extractions) > 0 and (
+                xg_success_count > 0 or referee_success_count > 0
             )
 
             self.verification_results["l2_verification"] = {
@@ -323,7 +366,7 @@ class CoreLogicVerifier:
                 "xg_success": xg_success_count,
                 "referee_success": referee_success_count,
                 "lineups_success": lineups_success_count,
-                "results": l2_results
+                "results": l2_results,
             }
 
             await collector.close()
@@ -338,11 +381,12 @@ class CoreLogicVerifier:
         except Exception as e:
             logger.error(f"❌ L2 验证过程中发生错误: {e}")
             import traceback
+
             logger.error(f"详细错误: {traceback.format_exc()}")
 
             self.verification_results["l2_verification"] = {
                 "status": "ERROR",
-                "error": str(e)
+                "error": str(e),
             }
             return False
 
@@ -405,34 +449,52 @@ class CoreLogicVerifier:
         print("🏁 验证脚本执行完成")
         print("=" * 80)
 
-        l1_status = self.verification_results["l1_verification"].get("status", "UNKNOWN")
-        l2_status = self.verification_results["l2_verification"].get("status", "UNKNOWN")
+        l1_status = self.verification_results["l1_verification"].get(
+            "status", "UNKNOWN"
+        )
+        l2_status = self.verification_results["l2_verification"].get(
+            "status", "UNKNOWN"
+        )
 
         print(f"📊 L1 赛程验证: {'✅ 通过' if l1_status == 'PASSED' else '❌ 失败'}")
         print(f"📊 L2 详情验证: {'✅ 通过' if l2_status == 'PASSED' else '❌ 失败'}")
 
         # 整体状态
         overall_passed = l1_status == "PASSED" and l2_status == "PASSED"
-        self.verification_results["overall_status"] = "PASSED" if overall_passed else "FAILED"
+        self.verification_results["overall_status"] = (
+            "PASSED" if overall_passed else "FAILED"
+        )
 
-        print(f"\n🎯 整体验证结果: {'✅ 全部通过' if overall_passed else '❌ 存在问题'}")
+        print(
+            f"\n🎯 整体验证结果: {'✅ 全部通过' if overall_passed else '❌ 存在问题'}"
+        )
 
         # 详细结果
         if l1_status == "PASSED":
             l1_result = self.verification_results["l1_verification"]
-            print(f"   • L1: 成功验证 {len(l1_result.get('valid_ids', []))} 个纯数字 Match ID")
+            print(
+                f"   • L1: 成功验证 {len(l1_result.get('valid_ids', []))} 个纯数字 Match ID"
+            )
 
         if l2_status == "PASSED":
             l2_result = self.verification_results["l2_verification"]
-            print(f"   • L2: 成功提取 {l2_result.get('xg_success', 0)} 个 xG 数据, {l2_result.get('referee_success', 0)} 个裁判数据")
+            print(
+                f"   • L2: 成功提取 {l2_result.get('xg_success', 0)} 个 xG 数据, {l2_result.get('referee_success', 0)} 个裁判数据"
+            )
 
         print("\n" + "=" * 80)
 
         # 保存验证结果到文件
         results_file = project_root / "scripts" / "verification_results.json"
         try:
-            with open(results_file, 'w', encoding='utf-8') as f:
-                json.dump(self.verification_results, f, indent=2, ensure_ascii=False, default=str)
+            with open(results_file, "w", encoding="utf-8") as f:
+                json.dump(
+                    self.verification_results,
+                    f,
+                    indent=2,
+                    ensure_ascii=False,
+                    default=str,
+                )
             print(f"📄 验证结果已保存到: {results_file}")
         except Exception as e:
             logger.error(f"保存验证结果失败: {e}")
@@ -452,7 +514,9 @@ class CoreLogicVerifier:
             return False
 
         # Step 2: L2 验证
-        sample_matches = self.verification_results["l1_verification"].get("sample_matches", [])
+        sample_matches = self.verification_results["l1_verification"].get(
+            "sample_matches", []
+        )
         await self.step_2_l2_verification(sample_matches)
 
         # 打印最终总结

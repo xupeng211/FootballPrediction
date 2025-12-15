@@ -1,5 +1,3 @@
-from typing import Optional
-
 """
 事件系统集成测试
 Event System Integration Tests
@@ -544,7 +542,7 @@ class TestEventSourcingIntegration:
         try:
             event_sourced_aggregate.apply(valid_event)
             validation_passed = True
-        except Exception as e:
+        except Exception:
             validation_passed = False
 
         assert validation_passed is True

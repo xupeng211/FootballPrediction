@@ -1,5 +1,3 @@
-from typing import Optional
-
 """审计服务测试
 Audit Service Tests.
 
@@ -8,7 +6,7 @@ Audit Service Tests.
 
 import pytest
 from datetime import datetime
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock
 
 from src.services.audit_service import (
     AuditSeverity,
@@ -587,7 +585,6 @@ class TestAuditService:
     def test_concurrent_logging(self):
         """测试并发日志记录."""
         import threading
-        import time
 
         results = []
 

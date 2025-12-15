@@ -9,14 +9,13 @@ import numpy as np
 import pandas as pd
 import json
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 import tempfile
-import csv
 
 from src.evaluation.flows.backtest_flow import (
-    backtest_flow, run_backtest,
+    backtest_flow,
+    run_backtest,
 )
-from src.evaluation.backtest import BacktestResult, BetType
 
 
 class TestBacktestFlowIntegration:
@@ -36,17 +35,17 @@ class TestBacktestFlowIntegration:
 
         # 生成预测数据
         predictions_data = {
-            'match_id': [f"match_{i:03d}" for i in range(1, n_samples + 1)],
-            'prob_H': np.random.beta(2, 3, n_samples),  # 倾向较低概率
-            'prob_D': np.random.beta(1.5, 4, n_samples),
-            'prob_A': np.random.beta(2.5, 2.5, n_samples),
-            'predicted_class': np.random.randint(0, 3, n_samples),
-            'actual_result': np.random.randint(0, 3, n_samples),
-            'date': pd.date_range('2024-01-01', periods=n_samples).strftime('%Y-%m-%d')
+            "match_id": [f"match_{i:03d}" for i in range(1, n_samples + 1)],
+            "prob_H": np.random.beta(2, 3, n_samples),  # 倾向较低概率
+            "prob_D": np.random.beta(1.5, 4, n_samples),
+            "prob_A": np.random.beta(2.5, 2.5, n_samples),
+            "predicted_class": np.random.randint(0, 3, n_samples),
+            "actual_result": np.random.randint(0, 3, n_samples),
+            "date": pd.date_range("2024-01-01", periods=n_samples).strftime("%Y-%m-%d"),
         }
 
         # 归一化概率
-        prob_cols = ['prob_H', 'prob_D', 'prob_A']
+        prob_cols = ["prob_H", "prob_D", "prob_A"]
         for col in prob_cols:
             predictions_data[col] = predictions_data[col] + 0.1  # 避免过小概率
 
@@ -58,10 +57,10 @@ class TestBacktestFlowIntegration:
 
         # 生成赔率数据
         odds_data = {
-            'match_id': [f"match_{i:03d}" for i in range(1, n_samples + 1)],
-            'odds_H': np.random.uniform(1.8, 4.5, n_samples),
-            'odds_D': np.random.uniform(2.8, 4.2, n_samples),
-            'odds_A': np.random.uniform(2.5, 6.0, n_samples)
+            "match_id": [f"match_{i:03d}" for i in range(1, n_samples + 1)],
+            "odds_H": np.random.uniform(1.8, 4.5, n_samples),
+            "odds_D": np.random.uniform(2.8, 4.2, n_samples),
+            "odds_A": np.random.uniform(2.5, 6.0, n_samples),
         }
 
         odds_df = pd.DataFrame(odds_data)
@@ -85,38 +84,42 @@ class TestBacktestFlowIntegration:
         predictions_data = []
         for i in range(n_samples):
             probs = np.random.dirichlet([2, 1.5, 2.5])
-            predictions_data.append({
-                'match_id': f"match_{i+1:03d}",
-                'probabilities': {
-                    'H': float(probs[0]),
-                    'D': float(probs[1]),
-                    'A': float(probs[2])
-                },
-                'prediction': int(np.random.randint(0, 3)),
-                'actual_result': int(np.random.randint(0, 3)),
-                'date': f"2024-01-{(i % 28) + 1:02d}"
-            })
+            predictions_data.append(
+                {
+                    "match_id": f"match_{i+1:03d}",
+                    "probabilities": {
+                        "H": float(probs[0]),
+                        "D": float(probs[1]),
+                        "A": float(probs[2]),
+                    },
+                    "prediction": int(np.random.randint(0, 3)),
+                    "actual_result": int(np.random.randint(0, 3)),
+                    "date": f"2024-01-{(i % 28) + 1:02d}",
+                }
+            )
 
         # JSON格式的赔率数据
         odds_data = []
         for i in range(n_samples):
-            odds_data.append({
-                'match_id': f"match_{i+1:03d}",
-                'odds': {
-                    'H': float(np.random.uniform(1.8, 4.5)),
-                    'D': float(np.random.uniform(2.8, 4.2)),
-                    'A': float(np.random.uniform(2.5, 6.0))
+            odds_data.append(
+                {
+                    "match_id": f"match_{i+1:03d}",
+                    "odds": {
+                        "H": float(np.random.uniform(1.8, 4.5)),
+                        "D": float(np.random.uniform(2.8, 4.2)),
+                        "A": float(np.random.uniform(2.5, 6.0)),
+                    },
                 }
-            })
+            )
 
         # 保存JSON文件
         predictions_path = temp_dir / "predictions.json"
         odds_path = temp_dir / "odds.json"
 
-        with open(predictions_path, 'w') as f:
+        with open(predictions_path, "w") as f:
             json.dump(predictions_data, f, indent=2)
 
-        with open(odds_path, 'w') as f:
+        with open(odds_path, "w") as f:
             json.dump(odds_data, f, indent=2)
 
         return predictions_path, odds_path
@@ -135,7 +138,7 @@ class TestBacktestFlowIntegration:
             staking_strategy="flat",
             staking_params={"stake_amount": 10.0},
             initial_bankroll=1000.0,
-            output_dir=str(output_dir)
+            output_dir=str(output_dir),
         )
 
         # 验证结果结构
@@ -196,10 +199,10 @@ class TestBacktestFlowIntegration:
             staking_params={
                 "kelly_fraction": 0.25,
                 "min_stake": 5.0,
-                "max_stake_percentage": 0.05
+                "max_stake_percentage": 0.05,
             },
             initial_bankroll=1000.0,
-            output_dir=str(output_dir)
+            output_dir=str(output_dir),
         )
 
         # 验证策略信息
@@ -221,12 +224,9 @@ class TestBacktestFlowIntegration:
             predictions_path=predictions_path,
             odds_path=odds_path,
             staking_strategy="value",
-            staking_params={
-                "min_ev_threshold": 0.05,  # 较低阈值
-                "base_stake": 10.0
-            },
+            staking_params={"min_ev_threshold": 0.05, "base_stake": 10.0},  # 较低阈值
             initial_bankroll=1000.0,
-            output_dir=str(output_dir)
+            output_dir=str(output_dir),
         )
 
         # 验证策略信息
@@ -234,7 +234,9 @@ class TestBacktestFlowIntegration:
         assert strategy_info["type"] == "value"
         assert strategy_info["params"]["min_ev_threshold"] == 0.05
 
-    def test_backtest_flow_json_format(self, sample_predictions_and_odds_json, temp_dir):
+    def test_backtest_flow_json_format(
+        self, sample_predictions_and_odds_json, temp_dir
+    ):
         """测试JSON格式数据的回测流程"""
         predictions_path, odds_path = sample_predictions_and_odds_json
         output_dir = temp_dir / "backtest_json"
@@ -248,7 +250,7 @@ class TestBacktestFlowIntegration:
                 odds_path=odds_path,
                 predictions_format="json",
                 odds_format="json",
-                output_dir=str(output_dir)
+                output_dir=str(output_dir),
             )
 
             # 如果成功，验证基本结构
@@ -257,7 +259,7 @@ class TestBacktestFlowIntegration:
             # 预期可能的失败，因为JSON格式需要特殊处理
             print(f"JSON format test failed as expected: {e}")
 
-    @patch('src.evaluation.flows.backtest_flow.HAS_PREFECT', False)
+    @patch("src.evaluation.flows.backtest_flow.HAS_PREFECT", False)
     def test_backtest_flow_without_prefect(self, sample_predictions_and_odds, temp_dir):
         """测试无Prefect时的回测流程"""
         predictions_path, odds_path = sample_predictions_and_odds
@@ -267,7 +269,7 @@ class TestBacktestFlowIntegration:
         result = backtest_flow(
             predictions_path=predictions_path,
             odds_path=odds_path,
-            output_dir=str(output_dir)
+            output_dir=str(output_dir),
         )
 
         # 即使没有Prefect，应该仍能工作
@@ -284,7 +286,7 @@ class TestBacktestFlowIntegration:
             backtest_flow(
                 predictions_path="nonexistent_predictions.csv",
                 odds_path="nonexistent_odds.csv",
-                output_dir=str(output_dir)
+                output_dir=str(output_dir),
             )
 
     def test_backtest_flow_no_common_matches(self, temp_dir):
@@ -294,22 +296,26 @@ class TestBacktestFlowIntegration:
         odds_path = temp_dir / "odds.csv"
 
         # 预测数据
-        predictions_df = pd.DataFrame({
-            'match_id': ['match_1', 'match_2', 'match_3'],
-            'prob_H': [0.5, 0.3, 0.7],
-            'prob_D': [0.3, 0.4, 0.2],
-            'prob_A': [0.2, 0.3, 0.1],
-            'actual_result': [0, 1, 0]
-        })
+        predictions_df = pd.DataFrame(
+            {
+                "match_id": ["match_1", "match_2", "match_3"],
+                "prob_H": [0.5, 0.3, 0.7],
+                "prob_D": [0.3, 0.4, 0.2],
+                "prob_A": [0.2, 0.3, 0.1],
+                "actual_result": [0, 1, 0],
+            }
+        )
         predictions_df.to_csv(predictions_path, index=False)
 
         # 赔率数据（不同的match_id）
-        odds_df = pd.DataFrame({
-            'match_id': ['match_4', 'match_5', 'match_6'],
-            'odds_H': [2.0, 2.5, 3.0],
-            'odds_D': [3.0, 3.2, 2.8],
-            'odds_A': [4.0, 2.8, 4.5]
-        })
+        odds_df = pd.DataFrame(
+            {
+                "match_id": ["match_4", "match_5", "match_6"],
+                "odds_H": [2.0, 2.5, 3.0],
+                "odds_D": [3.0, 3.2, 2.8],
+                "odds_A": [4.0, 2.8, 4.5],
+            }
+        )
         odds_df.to_csv(odds_path, index=False)
 
         output_dir = temp_dir / "backtest_no_matches"
@@ -319,10 +325,12 @@ class TestBacktestFlowIntegration:
             backtest_flow(
                 predictions_path=predictions_path,
                 odds_path=odds_path,
-                output_dir=str(output_dir)
+                output_dir=str(output_dir),
             )
 
-    def test_backtest_flow_invalid_staking_strategy(self, sample_predictions_and_odds, temp_dir):
+    def test_backtest_flow_invalid_staking_strategy(
+        self, sample_predictions_and_odds, temp_dir
+    ):
         """测试无效投注策略"""
         predictions_path, odds_path = sample_predictions_and_odds
         output_dir = temp_dir / "backtest_invalid_strategy"
@@ -333,10 +341,12 @@ class TestBacktestFlowIntegration:
                 predictions_path=predictions_path,
                 odds_path=odds_path,
                 staking_strategy="invalid_strategy",
-                output_dir=str(output_dir)
+                output_dir=str(output_dir),
             )
 
-    def test_backtest_flow_custom_backtest_params(self, sample_predictions_and_odds, temp_dir):
+    def test_backtest_flow_custom_backtest_params(
+        self, sample_predictions_and_odds, temp_dir
+    ):
         """测试自定义回测参数"""
         predictions_path, odds_path = sample_predictions_and_odds
         output_dir = temp_dir / "backtest_custom_params"
@@ -348,10 +358,10 @@ class TestBacktestFlowIntegration:
             staking_strategy="flat",
             backtest_params={
                 "min_confidence": 0.6,  # 较高置信度要求
-                "min_odds": 2.0,      # 最小赔率
-                "max_odds": 5.0       # 最大赔率
+                "min_odds": 2.0,  # 最小赔率
+                "max_odds": 5.0,  # 最大赔率
             },
-            output_dir=str(output_dir)
+            output_dir=str(output_dir),
         )
 
         # 验证参数影响结果
@@ -359,7 +369,9 @@ class TestBacktestFlowIntegration:
         # 由于高置信度要求，投注次数可能减少
         assert backtest_result["total_bets"] >= 0
 
-    def test_backtest_flow_result_serialization(self, sample_predictions_and_odds, temp_dir):
+    def test_backtest_flow_result_serialization(
+        self, sample_predictions_and_odds, temp_dir
+    ):
         """测试结果序列化"""
         predictions_path, odds_path = sample_predictions_and_odds
         output_dir = temp_dir / "backtest_serialization"
@@ -368,7 +380,7 @@ class TestBacktestFlowIntegration:
         result = backtest_flow(
             predictions_path=predictions_path,
             odds_path=odds_path,
-            output_dir=str(output_dir)
+            output_dir=str(output_dir),
         )
 
         # 验证JSON序列化
@@ -376,7 +388,7 @@ class TestBacktestFlowIntegration:
         assert result_file.exists()
 
         # 加载并验证JSON内容
-        with open(result_file, encoding='utf-8') as f:
+        with open(result_file, encoding="utf-8") as f:
             loaded_result = json.load(f)
 
         assert loaded_result["model_info"]["name"] == result["model_info"]["name"]
@@ -406,14 +418,16 @@ class TestRunBacktestFunction:
         predictions_data = []
         for i in range(50):
             probs = np.random.dirichlet([2, 1.5, 2.5])
-            predictions_data.append({
-                'match_id': f"match_{i+1:03d}",
-                'prob_H': float(probs[0]),
-                'prob_D': float(probs[1]),
-                'prob_A': float(probs[2]),
-                'predicted_class': int(np.random.randint(0, 3)),
-                'actual_result': int(np.random.randint(0, 3))
-            })
+            predictions_data.append(
+                {
+                    "match_id": f"match_{i+1:03d}",
+                    "prob_H": float(probs[0]),
+                    "prob_D": float(probs[1]),
+                    "prob_A": float(probs[2]),
+                    "predicted_class": int(np.random.randint(0, 3)),
+                    "actual_result": int(np.random.randint(0, 3)),
+                }
+            )
 
         predictions_df = pd.DataFrame(predictions_data)
         predictions_path = temp_dir / "predictions.csv"
@@ -421,10 +435,10 @@ class TestRunBacktestFunction:
 
         # 赔率数据
         odds_data = {
-            'match_id': [f"match_{i+1:03d}" for i in range(50)],
-            'odds_H': np.random.uniform(2.0, 4.0, 50),
-            'odds_D': np.random.uniform(3.0, 4.5, 50),
-            'odds_A': np.random.uniform(2.5, 5.5, 50)
+            "match_id": [f"match_{i+1:03d}" for i in range(50)],
+            "odds_H": np.random.uniform(2.0, 4.0, 50),
+            "odds_D": np.random.uniform(3.0, 4.5, 50),
+            "odds_A": np.random.uniform(2.5, 5.5, 50),
         }
         odds_df = pd.DataFrame(odds_data)
         odds_path = temp_dir / "odds.csv"
@@ -445,7 +459,7 @@ class TestRunBacktestFunction:
             model_name="Convenience Test Model",
             staking_strategy="percentage",
             staking_params={"percentage": 0.02},
-            output_dir=str(output_dir)
+            output_dir=str(output_dir),
         )
 
         # 验证基本结构
@@ -455,15 +469,12 @@ class TestRunBacktestFunction:
         assert result["model_info"]["name"] == "Convenience Test Model"
         assert result["strategy_info"]["type"] == "percentage"
 
-    @patch('src.evaluation.flows.backtest_flow.HAS_PREFECT', False)
+    @patch("src.evaluation.flows.backtest_flow.HAS_PREFECT", False)
     def test_run_backtest_without_prefect(self, sample_files, temp_dir):
         """测试无Prefect时的run_backtest函数"""
         predictions_path, odds_path = sample_files
 
-        result = run_backtest(
-            predictions_path=predictions_path,
-            odds_path=odds_path
-        )
+        result = run_backtest(predictions_path=predictions_path, odds_path=odds_path)
 
         # 应该仍能工作
         assert "backtest_result" in result

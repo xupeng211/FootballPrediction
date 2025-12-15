@@ -21,10 +21,11 @@ sys.path.insert(0, str(project_root))
 # 导入修复后的采集器
 from src.collectors.fotmob_api_collector import FotMobAPICollector
 
+
 async def verify_clean_run():
     """极简验证L1和L2修复效果"""
     print("🚀 开始极简验证...")
-    print("="*50)
+    print("=" * 50)
 
     # 初始化采集器
     collector = FotMobAPICollector(max_concurrent=1, timeout=30)
@@ -53,7 +54,9 @@ async def verify_clean_run():
         test_match = None
         for match in all_matches[:10]:  # 检查前10场
             if isinstance(match, dict):
-                match_status = match.get("status", {}).get("reason", {}).get("short", "")
+                match_status = (
+                    match.get("status", {}).get("reason", {}).get("short", "")
+                )
                 if match_status == "FT":  # 已结束比赛
                     test_match = match
                     break
@@ -102,11 +105,13 @@ async def verify_clean_run():
     except Exception as e:
         print(f"❌ 验证过程中发生错误: {e}")
         import traceback
+
         print(f"详细错误: {traceback.format_exc()}")
         return False
 
     finally:
         await collector.close()
+
 
 if __name__ == "__main__":
     success = asyncio.run(verify_clean_run())

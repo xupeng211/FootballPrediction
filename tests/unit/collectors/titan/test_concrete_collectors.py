@@ -8,9 +8,7 @@ import pytest
 import respx
 import httpx
 from unittest.mock import MagicMock, AsyncMock
-from datetime import datetime
 
-from src.collectors.titan.base_collector import BaseTitanCollector
 from src.collectors.titan.constants import CompanyID
 from src.collectors.titan.collectors import (
     TitanEuroCollector,
@@ -49,6 +47,7 @@ def overunder_collector(mock_rate_limiter):
 # 欧赔采集器测试
 # ==============================================================================
 
+
 @respx.mock
 @pytest.mark.asyncio
 async def test_titan_euro_collector_success(euro_collector):
@@ -70,9 +69,9 @@ async def test_titan_euro_collector_success(euro_collector):
                 "go": 1.85,  # go = current home win
                 "go2": 3.60,  # go2 = current draw
                 "go3": 4.20,  # go3 = current away win
-                "utime": "2024-01-01 16:00:00"  # 更新时间
+                "utime": "2024-01-01 16:00:00",  # 更新时间
             }
-        ]
+        ],
     }
 
     route = respx.get("https://live.titan007.com/api/odds/euro").mock(
@@ -80,8 +79,7 @@ async def test_titan_euro_collector_success(euro_collector):
     )
 
     result = await euro_collector.fetch_euro_odds(
-        match_id=match_id,
-        company_id=company_id
+        match_id=match_id, company_id=company_id
     )
 
     # 验证请求被调用
@@ -118,7 +116,7 @@ async def test_titan_euro_collector_missing_fields(euro_collector):
                 "cname": "Bet365",
                 # 缺少 h, d, a 字段
             }
-        ]
+        ],
     }
 
     route = respx.get("https://live.titan007.com/api/odds/euro").mock(
@@ -126,8 +124,7 @@ async def test_titan_euro_collector_missing_fields(euro_collector):
     )
 
     result = await euro_collector.fetch_euro_odds(
-        match_id=match_id,
-        company_id=CompanyID.BET365
+        match_id=match_id, company_id=CompanyID.BET365
     )
 
     assert route.called
@@ -138,6 +135,7 @@ async def test_titan_euro_collector_missing_fields(euro_collector):
 # ==============================================================================
 # 亚盘采集器测试
 # ==============================================================================
+
 
 @respx.mock
 @pytest.mark.asyncio
@@ -160,9 +158,9 @@ async def test_titan_asian_collector_success(asian_collector):
                 "go": 0.85,  # go = current home_odds
                 "go2": 1.05,  # go2 = current away_odds
                 "go3": "0.25",  # go3 = current line
-                "utime": "2024-01-01 16:00:00"
+                "utime": "2024-01-01 16:00:00",
             }
-        ]
+        ],
     }
 
     route = respx.get("https://live.titan007.com/api/odds/handicap").mock(
@@ -170,8 +168,7 @@ async def test_titan_asian_collector_success(asian_collector):
     )
 
     result = await asian_collector.fetch_asian_handicap(
-        match_id=match_id,
-        company_id=company_id
+        match_id=match_id, company_id=company_id
     )
 
     assert route.called
@@ -206,7 +203,7 @@ async def test_titan_asian_collector_invalid_handicap(asian_collector):
                 "a": 0.95,
                 "l": "",  # 盘口为空
             }
-        ]
+        ],
     }
 
     route = respx.get("https://live.titan007.com/api/odds/handicap").mock(
@@ -214,8 +211,7 @@ async def test_titan_asian_collector_invalid_handicap(asian_collector):
     )
 
     result = await asian_collector.fetch_asian_handicap(
-        match_id=match_id,
-        company_id=CompanyID.BET365
+        match_id=match_id, company_id=CompanyID.BET365
     )
 
     assert route.called
@@ -226,6 +222,7 @@ async def test_titan_asian_collector_invalid_handicap(asian_collector):
 # ==============================================================================
 # 大小球采集器测试
 # ==============================================================================
+
 
 @respx.mock
 @pytest.mark.asyncio
@@ -248,9 +245,9 @@ async def test_titan_overunder_collector_success(overunder_collector):
                 "go": 0.82,  # go = current over_odds
                 "go2": 1.08,  # go2 = current under_odds
                 "go3": "2.5",  # go3 = current line
-                "utime": "2024-01-01 16:00:00"
+                "utime": "2024-01-01 16:00:00",
             }
-        ]
+        ],
     }
 
     route = respx.get("https://live.titan007.com/api/odds/overunder").mock(
@@ -258,8 +255,7 @@ async def test_titan_overunder_collector_success(overunder_collector):
     )
 
     result = await overunder_collector.fetch_over_under(
-        match_id=match_id,
-        company_id=company_id
+        match_id=match_id, company_id=company_id
     )
 
     assert route.called
@@ -280,6 +276,7 @@ async def test_titan_overunder_collector_success(overunder_collector):
 # 错误处理测试
 # ==============================================================================
 
+
 @respx.mock
 @pytest.mark.asyncio
 async def test_titan_collectors_403_error(euro_collector):
@@ -294,8 +291,7 @@ async def test_titan_collectors_403_error(euro_collector):
 
     with pytest.raises(TitanScrapingError) as exc_info:
         await euro_collector.fetch_euro_odds(
-            match_id=match_id,
-            company_id=CompanyID.BET365
+            match_id=match_id, company_id=CompanyID.BET365
         )
 
     assert route.called

@@ -1,13 +1,8 @@
-from typing import Optional
-
 """数据服务测试
 Data Service Tests.
 
 测试src/services/data.py模块中的数据服务功能。
 """
-
-import pytest
-from unittest.mock import Mock, patch
 
 from src.services.data import DataService, MatchService, get_data_service
 

@@ -233,7 +233,7 @@ class TestAutoEntityResolver:
         try:
             result = await resolver.resolve_team_entity("Test Team")
             assert result["action_taken"] in ["used_existing", "error"]
-        except Exception as e:
+        except Exception:
             # 如果有未捕获的异常，测试失败
             pytest.fail("未捕获的异常")
 

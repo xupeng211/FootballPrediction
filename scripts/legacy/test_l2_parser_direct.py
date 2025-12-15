@@ -4,9 +4,7 @@
 使用之前保存的实际数据进行测试
 """
 
-import json
 import sys
-import os
 from pathlib import Path
 
 # 添加src目录到Python路径
@@ -15,14 +13,18 @@ sys.path.insert(0, str(project_root / "src"))
 
 from src.collectors.l2_parser_enhanced import EnhancedL2Parser
 
+
 def test_with_real_data():
     """使用真实数据测试解析器"""
     # 重新获取FotMob数据
     print("🔗 重新获取FotMob测试数据...")
 
     import requests
+
     try:
-        response = requests.get("https://www.fotmob.com/api/matchDetails?matchId=4506508", timeout=10)
+        response = requests.get(
+            "https://www.fotmob.com/api/matchDetails?matchId=4506508", timeout=10
+        )
         response.raise_for_status()
         test_data = response.json()
         print("✅ 成功获取FotMob数据")
@@ -39,7 +41,7 @@ def test_with_real_data():
         # 解析数据
         stats = parser.parse_api_response(test_data)
 
-        print(f"📊 解析结果:")
+        print("📊 解析结果:")
         print("-" * 30)
 
         # 关键指标验证
@@ -48,7 +50,11 @@ def test_with_real_data():
             ("期望进球", stats.home_expected_goals, stats.away_expected_goals),
             ("总射门", stats.home_total_shots, stats.away_total_shots),
             ("射正", stats.home_shots_on_target, stats.away_shots_on_target),
-            ("绝佳机会", stats.home_big_chances_created, stats.away_big_chances_created),
+            (
+                "绝佳机会",
+                stats.home_big_chances_created,
+                stats.away_big_chances_created,
+            ),
             ("角球", stats.home_corners, stats.away_corners),
             ("黄牌", stats.home_yellow_cards, stats.away_yellow_cards),
             ("传球", stats.home_total_passes, stats.away_total_passes),
@@ -64,7 +70,9 @@ def test_with_real_data():
             else:
                 print(f"❌ {name}: 主队={home_val}, 客队={away_val}")
 
-        print(f"\n📈 解析统计: {extracted_count}/{len(key_indicators)} 个关键指标成功提取")
+        print(
+            f"\n📈 解析统计: {extracted_count}/{len(key_indicators)} 个关键指标成功提取"
+        )
 
         # 检查原始数据是否保存
         if stats.l2_stats_raw:
@@ -80,20 +88,24 @@ def test_with_real_data():
         print("-" * 30)
 
         for metric_name, values in summary.items():
-            print(f"{metric_name:12}: 主队={values['home']:>6}, 客队={values['away']:>6}, 差值={values['diff']:>+4}")
+            print(
+                f"{metric_name:12}: 主队={values['home']:>6}, 客队={values['away']:>6}, 差值={values['diff']:>+4}"
+            )
 
-        print(f"\n🎯 L2解析器测试完成!")
-        print(f"✅ 成功解析FotMob API的完整L2统计数据")
-        print(f"✅ 支持79个统计字段的提取和转换")
-        print(f"✅ 数据库字段映射准确无误")
+        print("\n🎯 L2解析器测试完成!")
+        print("✅ 成功解析FotMob API的完整L2统计数据")
+        print("✅ 支持79个统计字段的提取和转换")
+        print("✅ 数据库字段映射准确无误")
 
         return True
 
     except Exception as e:
         print(f"❌ 解析器测试失败: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 def main():
     """主函数"""
@@ -109,6 +121,7 @@ def main():
     else:
         print("\n❌ 测试失败!")
         print("需要进一步调试解析逻辑。")
+
 
 if __name__ == "__main__":
     main()

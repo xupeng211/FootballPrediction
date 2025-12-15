@@ -20,6 +20,7 @@ os.environ["SKIP_ML_MODEL_LOADING"] = "true"
 # 导入应用
 import sys
 from pathlib import Path
+
 project_root = Path(__file__).parent.parent.parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
@@ -50,13 +51,16 @@ class TestOddsAPI:
         response = client.get("/api/v1/odds/matches/999")
 
         # 由于没有真实数据库，我们期望得到错误响应，但端点应该存在
-        assert response.status_code in [404, 500]  # 404表示比赛不存在，500表示数据库连接问题
+        assert response.status_code in [
+            404,
+            500,
+        ]  # 404表示比赛不存在，500表示数据库连接问题
 
     def test_trigger_fetch_endpoint_exists(self):
         """测试触发赔率采集端点是否存在"""
         response = client.post(
             "/api/v1/odds/fetch/999",
-            json={"source_name": "oddsportal", "force_refresh": False}
+            json={"source_name": "oddsportal", "force_refresh": False},
         )
 
         # 由于没有真实数据库，我们期望得到错误响应，但端点应该存在
@@ -90,7 +94,7 @@ class TestOddsAPI:
             "/api/v1/odds/matches/1",
             "/api/v1/odds/matches/1/stats",
             "/api/v1/odds/history/1",
-            "/api/v1/odds/bookmakers"
+            "/api/v1/odds/bookmakers",
         ]
 
         for endpoint in endpoints:
@@ -108,8 +112,7 @@ class TestOddsAPI:
     def test_post_endpoints_respond_with_json(self):
         """测试POST端点返回JSON响应"""
         response = client.post(
-            "/api/v1/odds/fetch/1",
-            json={"source_name": "oddsportal"}
+            "/api/v1/odds/fetch/1", json={"source_name": "oddsportal"}
         )
 
         # 所有端点都应该返回JSON
@@ -136,11 +139,13 @@ class TestOddsAPI:
             "/odds/fetch/{match_id}",
             "/odds/history/{odds_id}",
             "/odds/matches/{match_id}/stats",
-            "/odds/bookmakers"
+            "/odds/bookmakers",
         ]
 
         for expected_route in expected_routes:
-            assert expected_route in routes, f"Route {expected_route} not found in odds router"
+            assert (
+                expected_route in routes
+            ), f"Route {expected_route} not found in odds router"
 
     def test_response_structure_on_health_check(self):
         """测试健康检查响应的结构"""
@@ -154,7 +159,13 @@ class TestOddsAPI:
 
         # 验证data字段的结构
         health_data = data["data"]
-        required_health_fields = ["status", "service", "timestamp", "database_connection", "fetcher_status"]
+        required_health_fields = [
+            "status",
+            "service",
+            "timestamp",
+            "database_connection",
+            "fetcher_status",
+        ]
         for field in required_health_fields:
             assert field in health_data, f"Missing field {field} in health data"
 

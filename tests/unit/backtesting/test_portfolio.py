@@ -13,7 +13,10 @@ from decimal import Decimal
 from datetime import datetime
 
 from src.backtesting.models import (
-    BacktestConfig, BetDecision, BetResult, BetOutcome, BetType,
+    BacktestConfig,
+    BetDecision,
+    BetOutcome,
+    BetType,
 )
 from src.backtesting.portfolio import Portfolio
 
@@ -31,7 +34,7 @@ class TestPortfolio:
             max_stake=Decimal("500.00"),
             value_threshold=0.1,
             min_confidence=0.3,
-            max_daily_bets=10
+            max_daily_bets=10,
         )
 
     @pytest.fixture
@@ -60,11 +63,13 @@ class TestPortfolio:
             implied_probability=0.4,
             model_probability=0.5,
             odds=Decimal("2.5"),
-            value_edge=0.1
+            value_edge=0.1,
         )
 
         stake = portfolio.calculate_stake(decision)
-        expected = portfolio.current_balance * Decimal(str(portfolio.config.max_stake_pct))
+        expected = portfolio.current_balance * Decimal(
+            str(portfolio.config.max_stake_pct)
+        )
         expected *= Decimal(str(decision.confidence))
         expected *= Decimal(str(1 + min(decision.value_edge * 2, 1.0)))
 
@@ -79,7 +84,7 @@ class TestPortfolio:
             confidence=0.0,
             implied_probability=0.0,
             model_probability=0.0,
-            odds=Decimal("2.0")
+            odds=Decimal("2.0"),
         )
 
         stake = portfolio.calculate_stake(decision)
@@ -95,7 +100,7 @@ class TestPortfolio:
             implied_probability=0.3,
             model_probability=0.5,
             odds=Decimal("3.0"),
-            value_edge=0.2
+            value_edge=0.2,
         )
 
         # 满足所有条件
@@ -114,7 +119,7 @@ class TestPortfolio:
             implied_probability=0.3,
             model_probability=0.5,
             odds=Decimal("3.0"),
-            value_edge=0.2
+            value_edge=0.2,
         )
 
         assert not portfolio.can_place_bet(decision, datetime.now())
@@ -129,7 +134,7 @@ class TestPortfolio:
             implied_probability=0.45,
             model_probability=0.5,
             odds=Decimal("2.0"),
-            value_edge=0.05  # 小于配置的0.1阈值
+            value_edge=0.05,  # 小于配置的0.1阈值
         )
 
         assert not portfolio.can_place_bet(decision, datetime.now())
@@ -146,7 +151,7 @@ class TestPortfolio:
             implied_probability=0.3,
             model_probability=0.5,
             odds=Decimal("3.0"),
-            value_edge=0.2
+            value_edge=0.2,
         )
 
         result = portfolio.place_bet(decision)
@@ -166,7 +171,7 @@ class TestPortfolio:
             confidence=0.0,
             implied_probability=0.0,
             model_probability=0.0,
-            odds=Decimal("2.0")
+            odds=Decimal("2.0"),
         )
 
         result = portfolio.place_bet(decision)
@@ -187,7 +192,7 @@ class TestPortfolio:
             implied_probability=0.3,
             model_probability=0.5,
             odds=Decimal("3.0"),
-            value_edge=0.2
+            value_edge=0.2,
         )
         portfolio.place_bet(decision)
 
@@ -212,7 +217,7 @@ class TestPortfolio:
             implied_probability=0.3,
             model_probability=0.5,
             odds=Decimal("3.0"),
-            value_edge=0.2
+            value_edge=0.2,
         )
         portfolio.place_bet(decision)
 
@@ -241,7 +246,7 @@ class TestPortfolio:
                 implied_probability=0.3,
                 model_probability=0.5,
                 odds=Decimal("2.5"),
-                value_edge=0.1
+                value_edge=0.1,
             )
             portfolio.place_bet(decision)
 
@@ -254,7 +259,7 @@ class TestPortfolio:
         assert stats["total_bets"] == 3
         assert stats["total_wins"] == 2
         assert stats["total_losses"] == 1
-        assert stats["win_rate"] == pytest.approx(2/3)
+        assert stats["win_rate"] == pytest.approx(2 / 3)
         assert stats["roi_percent"] > 0  # 应该有正ROI
 
     def test_reset(self, portfolio):
@@ -268,7 +273,7 @@ class TestPortfolio:
             implied_probability=0.3,
             model_probability=0.5,
             odds=Decimal("2.5"),
-            value_edge=0.1
+            value_edge=0.1,
         )
         portfolio.place_bet(decision)
         portfolio.total_skips = 5
@@ -297,10 +302,12 @@ class TestPortfolio:
                 implied_probability=0.3,
                 model_probability=0.5,
                 odds=Decimal("2.5"),
-                value_edge=0.1
+                value_edge=0.1,
             )
             portfolio.place_bet(decision)
-            portfolio.settle_bet(i, BetOutcome.HOME_WIN if i % 2 == 0 else BetOutcome.AWAY_WIN)
+            portfolio.settle_bet(
+                i, BetOutcome.HOME_WIN if i % 2 == 0 else BetOutcome.AWAY_WIN
+            )
 
         history = portfolio.get_balance_history()
         assert len(history) > 1  # 应该包含初始余额和变化记录

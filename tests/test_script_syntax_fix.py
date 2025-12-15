@@ -13,6 +13,7 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root / "src"))
 
+
 def test_script_import():
     """测试脚本是否可以正常导入"""
     try:
@@ -31,6 +32,7 @@ def test_script_import():
         # 其他错误（如导入依赖）是预期的，我们只关心语法
         assert not isinstance(e, SyntaxError), f"存在语法错误: {e}"
 
+
 def test_function_definitions():
     """测试关键函数是否正确定义"""
     import importlib.util
@@ -42,13 +44,14 @@ def test_function_definitions():
 
     # 检查关键函数是否存在
     required_functions = [
-        'wait_random',
-        'exponential_backoff_request',
-        'FotmobL2DataCollector'
+        "wait_random",
+        "exponential_backoff_request",
+        "FotmobL2DataCollector",
     ]
 
     for func_name in required_functions:
         assert hasattr(module, func_name), f"缺少必需的函数或类: {func_name}"
+
 
 def test_logging_configuration():
     """测试日志配置是否正确"""
@@ -60,7 +63,8 @@ def test_logging_configuration():
     spec.loader.exec_module(module)
 
     # 验证日志配置
-    assert hasattr(module, 'logger'), "日志记录器未正确初始化"
+    assert hasattr(module, "logger"), "日志记录器未正确初始化"
+
 
 if __name__ == "__main__":
     # 运行基本测试

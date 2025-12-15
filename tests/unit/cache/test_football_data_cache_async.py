@@ -1,5 +1,3 @@
-from typing import Optional
-
 """足球数据缓存异步测试
 Football Data Cache Async Tests.
 
@@ -7,7 +5,6 @@ Football Data Cache Async Tests.
 """
 
 import json
-from datetime import datetime
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest

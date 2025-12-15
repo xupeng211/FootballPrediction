@@ -5,7 +5,6 @@
 """
 
 import pytest
-from datetime import datetime
 
 # 假设我们要开发的类将在以下位置
 from src.utils.prediction_validator import PredictionResultValidator, ValidationError
@@ -129,7 +128,7 @@ class TestPredictionResultValidator:
         # Given: 执行几次验证
         self.validator.validate_prediction("home_win", "2-1")  # 正确
         self.validator.validate_prediction("away_win", "1-2")  # 正确
-        self.validator.validate_prediction("draw", "2-1")      # 错误
+        self.validator.validate_prediction("draw", "2-1")  # 错误
 
         # When: 获取统计信息
         stats = self.validator.get_statistics()
@@ -137,7 +136,7 @@ class TestPredictionResultValidator:
         # Then: 统计信息应该正确
         assert stats["total_validations"] == 3
         assert stats["correct_predictions"] == 2
-        assert stats["accuracy"] == 2/3
+        assert stats["accuracy"] == 2 / 3
 
     def test_reset_statistics(self):
         """测试场景: 重置验证统计信息.

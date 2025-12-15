@@ -12,14 +12,15 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
+
 async def verify_tokens():
     """验证令牌有效性"""
     print("🔐 FotMob API 令牌验证器")
     print("=" * 50)
 
     # 检查环境变量
-    token = os.getenv('FOTMOB_TOKEN')
-    secret = os.getenv('FOTMOB_SECRET')
+    token = os.getenv("FOTMOB_TOKEN")
+    secret = os.getenv("FOTMOB_SECRET")
 
     print(f"📝 FOTMOB_TOKEN: {'✅ 存在' if token else '❌ 缺失'}")
     print(f"📝 FOTMOB_SECRET: {'✅ 存在' if secret else '❌ 缺失'}")
@@ -35,16 +36,16 @@ async def verify_tokens():
         import httpx
 
         headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-            'Referer': 'https://www.fotmob.com/',
-            'x-mas': token,
-            'x-foo': secret,
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+            "Referer": "https://www.fotmob.com/",
+            "x-mas": token,
+            "x-foo": secret,
         }
 
         # 测试API端点
         test_urls = [
-            'https://www.fotmob.com/api/data/leagues?id=47',
-            'https://www.fotmob.com/api/data/matches?date=20251207',
+            "https://www.fotmob.com/api/data/leagues?id=47",
+            "https://www.fotmob.com/api/data/matches?date=20251207",
         ]
 
         print("\n🌐 测试API端点...")
@@ -54,11 +55,16 @@ async def verify_tokens():
                 try:
                     response = await client.get(url, headers=headers)
                     status = response.status_code
-                    print(f"  {url.split('/')[-1]}: {'✅' if status == 200 else f'❌ ({status})'}")
+                    print(
+                        f"  {url.split('/')[-1]}: {'✅' if status == 200 else f'❌ ({status})'}"
+                    )
 
                     if status == 200:
                         data = response.json()
-                        if 'leagues' in str(data).lower() or 'matches' in str(data).lower():
+                        if (
+                            "leagues" in str(data).lower()
+                            or "matches" in str(data).lower()
+                        ):
                             print("    📊 数据结构正确")
                         else:
                             print("    ⚠️ 数据结构异常")
@@ -72,6 +78,7 @@ async def verify_tokens():
     except Exception as e:
         print(f"\n❌ 验证过程中发生错误: {e}")
         return False
+
 
 if __name__ == "__main__":
     success = asyncio.run(verify_tokens())

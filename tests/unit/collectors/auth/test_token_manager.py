@@ -17,8 +17,7 @@ Token Manager Unit Tests
 import asyncio
 import pytest
 import time
-from typing import Any, Dict
-from unittest.mock import AsyncMock, Mock, patch
+from unittest.mock import patch
 
 from src.collectors.auth.token_manager import (
     Token,
@@ -44,7 +43,7 @@ class TestToken:
         token = Token(
             value="test_token_123",
             token_type=TokenType.BEARER,
-            headers={"Authorization": "Bearer test_token_123"}
+            headers={"Authorization": "Bearer test_token_123"},
         )
 
         assert token.value == "test_token_123"
@@ -59,9 +58,7 @@ class TestToken:
         """测试带过期时间的令牌"""
         expires_at = time.monotonic() + 3600  # 1小时后过期
         token = Token(
-            value="expiring_token",
-            token_type=TokenType.API_KEY,
-            expires_at=expires_at
+            value="expiring_token", token_type=TokenType.API_KEY, expires_at=expires_at
         )
 
         assert token.is_expired is False
@@ -73,9 +70,7 @@ class TestToken:
         # 创建已过期的令牌
         expires_at = time.monotonic() - 1  # 1秒前就过期了
         token = Token(
-            value="expired_token",
-            token_type=TokenType.BEARER,
-            expires_at=expires_at
+            value="expired_token", token_type=TokenType.BEARER, expires_at=expires_at
         )
 
         assert token.is_expired is True
@@ -84,10 +79,7 @@ class TestToken:
 
     def test_token_no_expiration(self):
         """测试无过期时间的令牌"""
-        token = Token(
-            value="permanent_token",
-            token_type=TokenType.CUSTOM_HEADER
-        )
+        token = Token(value="permanent_token", token_type=TokenType.CUSTOM_HEADER)
 
         assert token.is_expired is False
         assert token.is_valid is True
@@ -109,9 +101,7 @@ class TestToken:
     def test_token_string_conversion(self):
         """测试令牌字符串转换"""
         token = Token(
-            value="test_token",
-            token_type=TokenType.BEARER,
-            provider="test_provider"
+            value="test_token", token_type=TokenType.BEARER, provider="test_provider"
         )
 
         str_repr = str(token)
@@ -127,21 +117,21 @@ class TestToken:
             headers={"X-API-Key": "secret_token_12345"},
             expires_at=expires_at,
             provider="test_provider",
-            usage_count=5
+            usage_count=5,
         )
 
         data = token.to_dict()
 
         # 检查敏感信息被隐藏
-        assert data['value'] == "secret_token_12345"  # 完整显示（因为长度<20）
-        assert data['token_type'] == "api_key"
-        assert data['headers'] == {"X-API-Key": "secret_token_12345"}
-        assert data['expires_at'] == expires_at
-        assert data['provider'] == "test_provider"
-        assert data['usage_count'] == 5
-        assert data['is_valid'] is True
-        assert data['is_expired'] is False
-        assert data['ttl'] is not None
+        assert data["value"] == "secret_token_12345"  # 完整显示（因为长度<20）
+        assert data["token_type"] == "api_key"
+        assert data["headers"] == {"X-API-Key": "secret_token_12345"}
+        assert data["expires_at"] == expires_at
+        assert data["provider"] == "test_provider"
+        assert data["usage_count"] == 5
+        assert data["is_valid"] is True
+        assert data["is_expired"] is False
+        assert data["ttl"] is not None
 
     def test_token_long_value_truncation(self):
         """测试长令牌值的截断"""
@@ -149,8 +139,8 @@ class TestToken:
         token = Token(value=long_value, token_type=TokenType.BEARER)
 
         data = token.to_dict()
-        assert data['value'].endswith("...")
-        assert len(data['value']) < len(long_value)
+        assert data["value"].endswith("...")
+        assert len(data["value"]) < len(long_value)
 
 
 class TestMockAuthProvider:
@@ -210,7 +200,7 @@ class TestTokenManager:
             default_ttl=3600.0,
             cache_refresh_threshold=300.0,
             max_retry_attempts=3,
-            retry_delay=0.1
+            retry_delay=0.1,
         )
 
     @pytest.fixture
@@ -243,6 +233,7 @@ class TestTokenManager:
     @pytest.mark.asyncio
     async def test_register_provider_failure(self):
         """测试注册失败提供者"""
+
         class FailingProvider:
             @property
             def provider_name(self) -> str:
@@ -334,7 +325,7 @@ class TestTokenManager:
         )
 
         # 再次获取，应该触发刷新
-        with patch.object(token_manager, '_get_provider_by_name') as mock_get:
+        with patch.object(token_manager, "_get_provider_by_name") as mock_get:
             mock_get.return_value = near_expiry_provider
 
             new_token = await token_manager.get_token("near_expiry")
@@ -367,10 +358,10 @@ class TestTokenManager:
         info = await manager_with_provider.get_token_info("test_provider")
 
         assert isinstance(info, dict)
-        assert 'value' in info
-        assert 'token_type' in info
-        assert 'provider' in info
-        assert info['provider'] == "test_provider"
+        assert "value" in info
+        assert "token_type" in info
+        assert "provider" in info
+        assert info["provider"] == "test_provider"
 
     @pytest.mark.asyncio
     async def test_get_token_info_all(self, manager_with_provider):
@@ -382,8 +373,8 @@ class TestTokenManager:
         all_info = await manager_with_provider.get_token_info()
 
         assert isinstance(all_info, dict)
-        assert 'test_provider' in all_info
-        assert 'provider2' in all_info
+        assert "test_provider" in all_info
+        assert "provider2" in all_info
 
     @pytest.mark.asyncio
     async def test_get_token_info_nonexistent(self, token_manager):
@@ -391,8 +382,8 @@ class TestTokenManager:
         info = await token_manager.get_token_info("nonexistent")
 
         assert isinstance(info, dict)
-        assert 'error' in info
-        assert "nonexistent_provider" in info['error']
+        assert "error" in info
+        assert "nonexistent_provider" in info["error"]
 
     @pytest.mark.asyncio
     async def test_get_stats(self, token_manager):
@@ -400,22 +391,22 @@ class TestTokenManager:
         stats = await token_manager.get_stats()
 
         assert isinstance(stats, dict)
-        assert 'total_providers' in stats
-        assert 'valid_tokens' in stats
-        assert 'expired_tokens' in stats
-        assert 'total_usage' in stats
-        assert stats['total_providers'] == 0
-        assert stats['valid_tokens'] == 0
-        assert stats['expired_tokens'] == 0
+        assert "total_providers" in stats
+        assert "valid_tokens" in stats
+        assert "expired_tokens" in stats
+        assert "total_usage" in stats
+        assert stats["total_providers"] == 0
+        assert stats["valid_tokens"] == 0
+        assert stats["expired_tokens"] == 0
 
     @pytest.mark.asyncio
     async def test_get_stats_with_providers(self, manager_with_provider):
         """测试带提供者的统计信息"""
         stats = await manager_with_provider.get_stats()
 
-        assert stats['total_providers'] == 1
-        assert stats['valid_tokens'] == 1
-        assert stats['expired_tokens'] == 0
+        assert stats["total_providers"] == 1
+        assert stats["valid_tokens"] == 1
+        assert stats["expired_tokens"] == 0
 
 
 class TestFotMobAuthProvider:
@@ -424,9 +415,7 @@ class TestFotMobAuthProvider:
     def test_fotmob_provider_initialization(self):
         """测试 FotMob 提供者初始化"""
         provider = create_fotmob_provider(
-            base_url="https://test.fotmob.com",
-            timeout=15.0,
-            token_ttl=7200.0
+            base_url="https://test.fotmob.com", timeout=15.0, token_ttl=7200.0
         )
 
         assert provider.base_url == "https://test.fotmob.com"
@@ -460,7 +449,7 @@ class TestFotMobAuthProvider:
         </html>
         """
 
-        with patch.object(provider, '_fetch_fotmob_homepage', return_value=mock_html):
+        with patch.object(provider, "_fetch_fotmob_homepage", return_value=mock_html):
             token = await provider.get_token()
 
         assert isinstance(token, Token)
@@ -474,18 +463,20 @@ class TestFotMobAuthProvider:
         assert "mock_x_foo_value_67890" in token.value
 
         # 检查头部信息
-        assert 'x-mas' in token.headers
-        assert 'x-foo' in token.headers
-        assert 'x-client-version' in token.headers
-        assert token.headers['x-mas'] == "mock_x_mas_value_12345"
-        assert token.headers['x-foo'] == "mock_x_foo_value_67890"
+        assert "x-mas" in token.headers
+        assert "x-foo" in token.headers
+        assert "x-client-version" in token.headers
+        assert token.headers["x-mas"] == "mock_x_mas_value_12345"
+        assert token.headers["x-foo"] == "mock_x_foo_value_67890"
 
     @pytest.mark.asyncio
     async def test_fotmob_get_token_network_failure(self):
         """测试 FotMob 获取令牌网络失败"""
         provider = create_fotmob_provider()
 
-        with patch.object(provider, '_fetch_fotmob_homepage', side_effect=Exception("Network error")):
+        with patch.object(
+            provider, "_fetch_fotmob_homepage", side_effect=Exception("Network error")
+        ):
             with pytest.raises(AuthenticationError, match="Failed to get FotMob token"):
                 await provider.get_token()
 
@@ -494,7 +485,11 @@ class TestFotMobAuthProvider:
         """测试 FotMob 获取令牌HTTP错误"""
         provider = create_fotmob_provider()
 
-        with patch.object(provider, '_fetch_fotmob_homepage', side_effect=AuthenticationError("HTTP 403")):
+        with patch.object(
+            provider,
+            "_fetch_fotmob_homepage",
+            side_effect=AuthenticationError("HTTP 403"),
+        ):
             with pytest.raises(AuthenticationError, match="Failed to get FotMob token"):
                 await provider.get_token()
 
@@ -521,13 +516,15 @@ class TestFotMobAuthProvider:
         token_data = provider._extract_token_from_html(html_content)
 
         assert token_data is not None
-        assert 'value' in token_data
-        assert 'headers' in token_data
-        assert "extracted_x_mas_value" in token_data['value']
-        assert "extracted_x_foo_value" in token_data['value']
-        assert token_data['headers']['x-mas'] == "extracted_x_mas_value"
-        assert token_data['headers']['x-foo'] == "extracted_x_foo_value"
-        assert token_data['headers']['x-client-version'] == "production:extracted_version"
+        assert "value" in token_data
+        assert "headers" in token_data
+        assert "extracted_x_mas_value" in token_data["value"]
+        assert "extracted_x_foo_value" in token_data["value"]
+        assert token_data["headers"]["x-mas"] == "extracted_x_mas_value"
+        assert token_data["headers"]["x-foo"] == "extracted_x_foo_value"
+        assert (
+            token_data["headers"]["x-client-version"] == "production:extracted_version"
+        )
 
     @pytest.mark.asyncio
     async def test_fotmob_extract_token_partial_failure(self):
@@ -546,13 +543,17 @@ class TestFotMobAuthProvider:
         </html>
         """
 
-        with patch.object(provider, '_generate_mock_x_foo', return_value="mocked_x_foo"):
-            with patch.object(provider, '_generate_mock_x_mas', return_value="mocked_x_mas"):
+        with patch.object(
+            provider, "_generate_mock_x_foo", return_value="mocked_x_foo"
+        ):
+            with patch.object(
+                provider, "_generate_mock_x_mas", return_value="mocked_x_mas"
+            ):
                 token_data = provider._extract_token_from_html(html_content)
 
         assert token_data is not None
-        assert 'value' in token_data
-        assert 'headers' in token_data
+        assert "value" in token_data
+        assert "headers" in token_data
 
     @pytest.mark.asyncio
     async def test_fotmob_extract_token_complete_failure(self):
@@ -565,13 +566,13 @@ class TestFotMobAuthProvider:
         token_data = provider._extract_token_from_html(html_content)
 
         assert token_data is not None
-        assert 'value' in token_data
-        assert 'headers' in token_data
+        assert "value" in token_data
+        assert "headers" in token_data
 
         # 检查mock值
-        assert 'x-mas' in token_data['headers']
-        assert 'x-foo' in token_data['headers']
-        assert token_data['headers']['x-mas'].startswith("mock")  # mock值以mock开头
+        assert "x-mas" in token_data["headers"]
+        assert "x-foo" in token_data["headers"]
+        assert token_data["headers"]["x-mas"].startswith("mock")  # mock值以mock开头
 
     def test_fotmob_generate_mock_values(self):
         """测试生成mock值"""
@@ -583,7 +584,7 @@ class TestFotMobAuthProvider:
 
         # 检查长度
         assert all(len(value) == 32 for value in x_mas_values)  # SHA256 前32字符
-        assert all(len(value) == 40 for value in x_foo_values)   # Base64 编码长度
+        assert all(len(value) == 40 for value in x_foo_values)  # Base64 编码长度
 
         # 检查唯一性（可能有小概率重复，但5个中应该不同）
         assert len(set(x_mas_values)) >= 4  # 至少有4个不同
@@ -596,16 +597,16 @@ class TestFotMobAuthProvider:
         token_data = provider._generate_mock_token_data()
 
         assert isinstance(token_data, dict)
-        assert 'value' in token_data
-        assert 'headers' in token_data
-        assert 'x-mas' in token_data['headers']
-        assert 'x-foo' in token_data['headers']
-        assert 'x-client-version' in token_data['headers']
+        assert "value" in token_data
+        assert "headers" in token_data
+        assert "x-mas" in token_data["headers"]
+        assert "x-foo" in token_data["headers"]
+        assert "x-client-version" in token_data["headers"]
 
         # 检查令牌值格式
-        assert ':' in token_data['value']
-        assert token_data['headers']['x-mas'] in token_data['value']
-        assert token_data['headers']['x-foo'] in token_data['value']
+        assert ":" in token_data["value"]
+        assert token_data["headers"]["x-mas"] in token_data["value"]
+        assert token_data["headers"]["x-foo"] in token_data["value"]
 
     @pytest.mark.asyncio
     async def test_fotmob_refresh_token(self):
@@ -619,7 +620,7 @@ class TestFotMobAuthProvider:
         </script>
         """
 
-        with patch.object(provider, '_fetch_fotmob_homepage', return_value=mock_html):
+        with patch.object(provider, "_fetch_fotmob_homepage", return_value=mock_html):
             new_token = await provider.refresh_token()
 
         assert isinstance(new_token, Token)
@@ -632,8 +633,12 @@ class TestFotMobAuthProvider:
         """测试刷新FotMob令牌失败"""
         provider = create_fotmob_provider()
 
-        with patch.object(provider, 'get_token', side_effect=Exception("Refresh failed")):
-            with pytest.raises(TokenRefreshError, match="Failed to refresh FotMob token"):
+        with patch.object(
+            provider, "get_token", side_effect=Exception("Refresh failed")
+        ):
+            with pytest.raises(
+                TokenRefreshError, match="Failed to refresh FotMob token"
+            ):
                 await provider.refresh_token()
 
 
@@ -643,9 +648,7 @@ class TestConvenienceFunctions:
     def test_create_token_manager(self):
         """测试创建令牌管理器便利函数"""
         manager = create_token_manager(
-            default_ttl=7200.0,
-            cache_refresh_threshold=600.0,
-            max_retry_attempts=5
+            default_ttl=7200.0, cache_refresh_threshold=600.0, max_retry_attempts=5
         )
 
         assert isinstance(manager, TokenManager)
@@ -656,8 +659,7 @@ class TestConvenienceFunctions:
     def test_create_fotmob_provider(self):
         """测试创建FotMob提供者便利函数"""
         provider = create_fotmob_provider(
-            base_url="https://custom.fotmob.com",
-            user_agent="Custom User Agent"
+            base_url="https://custom.fotmob.com", user_agent="Custom User Agent"
         )
 
         assert isinstance(provider, FotMobAuthProvider)
@@ -667,9 +669,7 @@ class TestConvenienceFunctions:
     def test_create_mock_provider(self):
         """测试创建模拟提供者便利函数"""
         provider = create_mock_provider(
-            "custom_mock",
-            token_value="custom_token",
-            ttl=900.0
+            "custom_mock", token_value="custom_token", ttl=900.0
         )
 
         assert isinstance(provider, MockAuthProvider)
@@ -688,7 +688,7 @@ class TestErrorHandling:
         expired_token = Token(
             value="expired",
             token_type=TokenType.BEARER,
-            expires_at=time.monotonic() - 1
+            expires_at=time.monotonic() - 1,
         )
 
         assert expired_token.is_expired is True
@@ -719,9 +719,9 @@ class TestErrorHandling:
         assert isinstance(mock_provider, AuthProvider)
 
         # 检查必需方法
-        assert hasattr(mock_provider, 'get_token')
-        assert hasattr(mock_provider, 'refresh_token')
-        assert hasattr(mock_provider, 'provider_name')
+        assert hasattr(mock_provider, "get_token")
+        assert hasattr(mock_provider, "refresh_token")
+        assert hasattr(mock_provider, "provider_name")
         assert callable(mock_provider.get_token)
         assert callable(mock_provider.refresh_token)
 
@@ -736,7 +736,7 @@ async def test_integration_workflow():
         default_ttl=300.0,
         cache_refresh_threshold=60.0,
         max_retry_attempts=2,
-        retry_delay=0.1
+        retry_delay=0.1,
     )
 
     # 2. 注册多个提供者
@@ -776,8 +776,8 @@ async def test_integration_workflow():
     # 6. 测试统计信息
     stats = manager.get_stats()
     print(f"📊 管理器统计: {stats}")
-    assert stats['total_providers'] == 2
-    assert stats['valid_tokens'] == 2
+    assert stats["total_providers"] == 2
+    assert stats["valid_tokens"] == 2
 
     # 7. 测试令牌信息
     all_info = manager.get_token_info()

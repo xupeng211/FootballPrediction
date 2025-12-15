@@ -4,12 +4,11 @@ Unit Tests for Model Loader
 """
 
 import pytest
-import asyncio
 import tempfile
 import json
 from datetime import datetime
 from pathlib import Path
-from unittest.mock import Mock, patch, AsyncMock
+from unittest.mock import Mock, patch
 
 from src.inference.loader import ModelLoader, ModelMetadata, LoadedModel
 from src.inference.errors import ModelLoadError, ErrorCode
@@ -35,7 +34,7 @@ async def temp_model_dir():
             "model_type": "xgboost",
             "created_at": datetime.utcnow().isoformat(),
             "file_size": model_file.stat().st_size,
-            "accuracy": 0.85
+            "accuracy": 0.85,
         }
         metadata_file.write_text(json.dumps(metadata, indent=2))
 
@@ -66,7 +65,7 @@ class TestModelLoader:
     @pytest.mark.asyncio
     async def test_load_model_success(self, model_loader):
         """测试成功加载模型"""
-        with patch('joblib.load') as mock_load:
+        with patch("joblib.load") as mock_load:
             mock_model = Mock()
             mock_load.return_value = mock_model
 
@@ -88,7 +87,7 @@ class TestModelLoader:
     @pytest.mark.asyncio
     async def test_get_model_cached(self, model_loader):
         """测试模型缓存"""
-        with patch('joblib.load') as mock_load:
+        with patch("joblib.load") as mock_load:
             mock_model = Mock()
             mock_load.return_value = mock_model
 
@@ -130,7 +129,7 @@ class TestModelLoader:
     @pytest.mark.asyncio
     async def test_unload_model(self, model_loader):
         """测试卸载模型"""
-        with patch('joblib.load') as mock_load:
+        with patch("joblib.load") as mock_load:
             mock_model = Mock()
             mock_load.return_value = mock_model
 
@@ -145,7 +144,7 @@ class TestModelLoader:
     @pytest.mark.asyncio
     async def test_reload_model(self, model_loader):
         """测试重新加载模型"""
-        with patch('joblib.load') as mock_load:
+        with patch("joblib.load") as mock_load:
             mock_model = Mock()
             mock_load.return_value = mock_model
 
@@ -167,10 +166,18 @@ class TestModelLoader:
 
     def test_detect_model_type(self, model_loader):
         """测试模型类型检测"""
-        assert model_loader._detect_model_type(Path("xgboost_model.pkl")) == ModelType.XGBOOST
+        assert (
+            model_loader._detect_model_type(Path("xgboost_model.pkl"))
+            == ModelType.XGBOOST
+        )
         assert model_loader._detect_model_type(Path("lstm_model.h5")) == ModelType.LSTM
-        assert model_loader._detect_model_type(Path("ensemble_model.joblib")) == ModelType.ENSEMBLE
-        assert model_loader._detect_model_type(Path("mock_model.pkl")) == ModelType.XGBOOST
+        assert (
+            model_loader._detect_model_type(Path("ensemble_model.joblib"))
+            == ModelType.ENSEMBLE
+        )
+        assert (
+            model_loader._detect_model_type(Path("mock_model.pkl")) == ModelType.XGBOOST
+        )
 
 
 class TestModelMetadata:
@@ -183,7 +190,7 @@ class TestModelMetadata:
             model_name="test_model",
             model_version="1.0.0",
             model_type=ModelType.XGBOOST,
-            created_at=datetime.utcnow()
+            created_at=datetime.utcnow(),
         )
 
         metadata = ModelMetadata(model_info, str(model_file))
@@ -200,7 +207,7 @@ class TestModelMetadata:
             model_name="test_model",
             model_version="1.0.0",
             model_type=ModelType.XGBOOST,
-            created_at=datetime.utcnow()
+            created_at=datetime.utcnow(),
         )
 
         metadata = ModelMetadata(model_info, str(model_file))
@@ -210,6 +217,7 @@ class TestModelMetadata:
 
         # 修改文件时间戳
         import time
+
         time.sleep(0.1)  # 确保时间差异
         model_file.touch()
 
@@ -227,7 +235,7 @@ class TestLoadedModel:
             model_name="test_model",
             model_version="1.0.0",
             model_type=ModelType.XGBOOST,
-            created_at=datetime.utcnow()
+            created_at=datetime.utcnow(),
         )
         metadata = ModelMetadata(model_info, str(temp_model_dir / "test_model.pkl"))
 
@@ -245,7 +253,7 @@ class TestLoadedModel:
             model_name="test_model",
             model_version="1.0.0",
             model_type=ModelType.XGBOOST,
-            created_at=datetime.utcnow()
+            created_at=datetime.utcnow(),
         )
         metadata = ModelMetadata(model_info, str(temp_model_dir / "test_model.pkl"))
 

@@ -21,7 +21,7 @@ def test_odds_parser():
 
     # 读取样本文件
     sample_file = Path(__file__).parent / "oddsportal_sample.html"
-    with open(sample_file, encoding='utf-8') as f:
+    with open(sample_file, encoding="utf-8") as f:
         html_content = f.read()
 
     # 创建解析器实例

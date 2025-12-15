@@ -1,5 +1,3 @@
-from typing import Optional
-
 """
 optimized_router.py 黑盒集成测试
 Optimized Router Black Box Integration Tests
@@ -83,9 +81,9 @@ class TestOptimizedRouterSafetyNet:
         assert "status" in data, "Response should contain 'status' field"
         assert "timestamp" in data, "Response should contain 'timestamp' field"
         assert "cache_stats" in data, "Response should contain 'cache_stats' field"
-        assert "system_metrics" in data, (
-            "Response should contain 'system_metrics' field"
-        )
+        assert (
+            "system_metrics" in data
+        ), "Response should contain 'system_metrics' field"
 
         # 验证数据结构合理性
         assert isinstance(data["status"], str), "Status should be a string"
@@ -151,17 +149,17 @@ class TestOptimizedRouterSafetyNet:
         assert "status" in data, "Response should contain 'status' field"
         assert "match_id" in data, "Response should contain 'match_id' field"
         assert "created_at" in data, "Response should contain 'created_at' field"
-        assert "estimated_completion" in data, (
-            "Response should contain 'estimated_completion' field"
-        )
+        assert (
+            "estimated_completion" in data
+        ), "Response should contain 'estimated_completion' field"
 
         # 验证数据合理性
-        assert data["status"] == "pending", (
-            "New prediction should have 'pending' status"
-        )
-        assert data["match_id"] == request_payload["match_id"], (
-            "Match ID should match request"
-        )
+        assert (
+            data["status"] == "pending"
+        ), "New prediction should have 'pending' status"
+        assert (
+            data["match_id"] == request_payload["match_id"]
+        ), "Match ID should match request"
         assert isinstance(data["id"], str), "Prediction ID should be a string"
         assert data["id"].startswith("pred_"), "Prediction ID should start with 'pred_'"
 
@@ -189,55 +187,55 @@ class TestOptimizedRouterSafetyNet:
         assert "status" in data, "Response should contain 'status' field"
         assert "data" in data, "Response should contain 'data' field"
         assert "cached" in data, "Response should contain 'cached' field"
-        assert "execution_time_ms" in data, (
-            "Response should contain 'execution_time_ms' field"
-        )
+        assert (
+            "execution_time_ms" in data
+        ), "Response should contain 'execution_time_ms' field"
 
         # 验证预测数据结构
         prediction_data = data["data"]
-        assert "match_id" in prediction_data, (
-            "Prediction data should contain 'match_id'"
-        )
-        assert "prediction_id" in prediction_data, (
-            "Prediction data should contain 'prediction_id'"
-        )
-        assert "predicted_outcome" in prediction_data, (
-            "Prediction data should contain 'predicted_outcome'"
-        )
-        assert "confidence_score" in prediction_data, (
-            "Prediction data should contain 'confidence_score'"
-        )
-        assert "probabilities" in prediction_data, (
-            "Prediction data should contain 'probabilities'"
-        )
-        assert "created_at" in prediction_data, (
-            "Prediction data should contain 'created_at'"
-        )
+        assert (
+            "match_id" in prediction_data
+        ), "Prediction data should contain 'match_id'"
+        assert (
+            "prediction_id" in prediction_data
+        ), "Prediction data should contain 'prediction_id'"
+        assert (
+            "predicted_outcome" in prediction_data
+        ), "Prediction data should contain 'predicted_outcome'"
+        assert (
+            "confidence_score" in prediction_data
+        ), "Prediction data should contain 'confidence_score'"
+        assert (
+            "probabilities" in prediction_data
+        ), "Prediction data should contain 'probabilities'"
+        assert (
+            "created_at" in prediction_data
+        ), "Prediction data should contain 'created_at'"
 
         # 验证数据合理性
         assert data["status"] == "success", "Response status should be 'success'"
         assert prediction_data["match_id"] == match_id, "Match ID should match request"
-        assert isinstance(prediction_data["confidence_score"], (int, float)), (
-            "Confidence should be numeric"
-        )
-        assert 0 <= prediction_data["confidence_score"] <= 1, (
-            "Confidence should be between 0 and 1"
-        )
+        assert isinstance(
+            prediction_data["confidence_score"], (int, float)
+        ), "Confidence should be numeric"
+        assert (
+            0 <= prediction_data["confidence_score"] <= 1
+        ), "Confidence should be between 0 and 1"
 
         # 验证概率结构
         probs = prediction_data["probabilities"]
         assert "home_win" in probs, "Probabilities should contain 'home_win'"
         assert "draw" in probs, "Probabilities should contain 'draw'"
         assert "away_win" in probs, "Probabilities should contain 'away_win'"
-        assert isinstance(probs["home_win"], (int, float)), (
-            "Home win probability should be numeric"
-        )
-        assert isinstance(probs["draw"], (int, float)), (
-            "Draw probability should be numeric"
-        )
-        assert isinstance(probs["away_win"], (int, float)), (
-            "Away win probability should be numeric"
-        )
+        assert isinstance(
+            probs["home_win"], (int, float)
+        ), "Home win probability should be numeric"
+        assert isinstance(
+            probs["draw"], (int, float)
+        ), "Draw probability should be numeric"
+        assert isinstance(
+            probs["away_win"], (int, float)
+        ), "Away win probability should be numeric"
 
     @pytest.mark.integration
     @pytest.mark.api
@@ -271,21 +269,21 @@ class TestOptimizedRouterSafetyNet:
         # 验证热门预测数据结构（如果有数据）
         if data["data"]:
             prediction = data["data"][0]  # 检查第一个预测的结构
-            assert "prediction_id" in prediction, (
-                "Popular prediction should contain 'prediction_id'"
-            )
-            assert "match_id" in prediction, (
-                "Popular prediction should contain 'match_id'"
-            )
-            assert "predicted_outcome" in prediction, (
-                "Popular prediction should contain 'predicted_outcome'"
-            )
-            assert "confidence_score" in prediction, (
-                "Popular prediction should contain 'confidence_score'"
-            )
-            assert "popularity_score" in prediction, (
-                "Popular prediction should contain 'popularity_score'"
-            )
+            assert (
+                "prediction_id" in prediction
+            ), "Popular prediction should contain 'prediction_id'"
+            assert (
+                "match_id" in prediction
+            ), "Popular prediction should contain 'match_id'"
+            assert (
+                "predicted_outcome" in prediction
+            ), "Popular prediction should contain 'predicted_outcome'"
+            assert (
+                "confidence_score" in prediction
+            ), "Popular prediction should contain 'confidence_score'"
+            assert (
+                "popularity_score" in prediction
+            ), "Popular prediction should contain 'popularity_score'"
 
     @pytest.mark.integration
     @pytest.mark.api
@@ -353,9 +351,10 @@ class TestOptimizedRouterSafetyNet:
         )
 
         # 断言HTTP状态码（可能是400或422，取决于验证逻辑）
-        assert response.status_code in [400, 422], (
-            f"Expected 400 or 422, got {response.status_code}"
-        )
+        assert response.status_code in [
+            400,
+            422,
+        ], f"Expected 400 or 422, got {response.status_code}"
 
     @pytest.mark.integration
     @pytest.mark.api
@@ -375,9 +374,11 @@ class TestOptimizedRouterSafetyNet:
         )
 
         # 断言HTTP状态码
-        assert response.status_code in [400, 404, 422], (
-            f"Expected 400, 404 or 422, got {response.status_code}"
-        )
+        assert response.status_code in [
+            400,
+            404,
+            422,
+        ], f"Expected 400, 404 or 422, got {response.status_code}"
 
     @pytest.mark.integration
     @pytest.mark.api

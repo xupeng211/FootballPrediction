@@ -8,14 +8,12 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-import pytest
 
 from src.features.feature_definitions import (
     AdvancedStatsFeatures,
     FeatureDefinition,
     FeatureKeys,
     FeatureType,
-    FeatureValidator,
     HeadToHeadFeatures,
     OddsFeatures,
     RecentPerformanceFeatures,
@@ -74,7 +72,7 @@ class TestFeatureDefinition:
             min_value=0.0,
             max_value=100.0,
             required=True,
-            default_value=50.0
+            default_value=50.0,
         )
 
         assert definition.key == "test_feature"
@@ -92,7 +90,7 @@ class TestFeatureDefinition:
             key="simple_feature",
             name="Simple Feature",
             feature_type=FeatureType.CATEGORICAL,
-            description="A simple feature"
+            description="A simple feature",
         )
 
         assert definition.min_value is None
@@ -113,7 +111,7 @@ class TestRecentPerformanceFeatures:
             recent_5_draws=1,
             recent_5_losses=1,
             recent_5_goals_for=8,
-            recent_5_goals_against=5
+            recent_5_goals_against=5,
         )
 
         assert features.team_id == 123
@@ -127,17 +125,13 @@ class TestRecentPerformanceFeatures:
         """测试胜率计算属性。"""
         # 有胜利的情况
         features = RecentPerformanceFeatures(
-            team_id=123,
-            calculation_date=datetime.now(timezone.utc),
-            recent_5_wins=3
+            team_id=123, calculation_date=datetime.now(timezone.utc), recent_5_wins=3
         )
         assert features.recent_5_win_rate == 0.6
 
         # 没有胜利的情况
         features_no_wins = RecentPerformanceFeatures(
-            team_id=124,
-            calculation_date=datetime.now(timezone.utc),
-            recent_5_wins=0
+            team_id=124, calculation_date=datetime.now(timezone.utc), recent_5_wins=0
         )
         assert features_no_wins.recent_5_win_rate == 0.0
 
@@ -147,7 +141,7 @@ class TestRecentPerformanceFeatures:
             team_id=123,
             calculation_date=datetime.now(timezone.utc),
             recent_5_goals_for=8,
-            recent_5_goals_against=5
+            recent_5_goals_against=5,
         )
         assert features.recent_5_goals_diff == 3
 
@@ -156,7 +150,7 @@ class TestRecentPerformanceFeatures:
             team_id=124,
             calculation_date=datetime.now(timezone.utc),
             recent_5_goals_for=3,
-            recent_5_goals_against=7
+            recent_5_goals_against=7,
         )
         assert features_negative.recent_5_goals_diff == -4
 
@@ -169,7 +163,7 @@ class TestRecentPerformanceFeatures:
             recent_5_draws=2,
             recent_5_losses=1,
             recent_5_goals_for=5,
-            recent_5_goals_against=4
+            recent_5_goals_against=4,
         )
 
         errors = features.validate()
@@ -182,7 +176,7 @@ class TestRecentPerformanceFeatures:
             calculation_date=datetime.now(timezone.utc),
             recent_5_wins=6,  # 超过5场
             recent_5_draws=0,
-            recent_5_losses=0
+            recent_5_losses=0,
         )
 
         errors = features.validate()
@@ -196,7 +190,7 @@ class TestRecentPerformanceFeatures:
             calculation_date=datetime.now(timezone.utc),
             recent_5_wins=3,
             recent_5_draws=3,
-            recent_5_losses=0  # 总共6场，超过限制
+            recent_5_losses=0,  # 总共6场，超过限制
         )
 
         errors = features.validate()
@@ -210,7 +204,7 @@ class TestRecentPerformanceFeatures:
             calculation_date=datetime.now(timezone.utc),
             recent_5_wins=-1,  # 负数
             recent_5_draws=0,
-            recent_5_losses=0
+            recent_5_losses=0,
         )
 
         errors = features.validate()
@@ -232,7 +226,7 @@ class TestHeadToHeadFeatures:
             away_wins=3,
             draws=1,
             home_goals=15,
-            away_goals=8
+            away_goals=8,
         )
 
         assert features.home_team_id == 123
@@ -251,7 +245,7 @@ class TestHeadToHeadFeatures:
             total_matches=10,
             home_wins=6,
             away_wins=3,
-            draws=1
+            draws=1,
         )
 
         assert features.home_win_rate == 0.6
@@ -264,7 +258,7 @@ class TestHeadToHeadFeatures:
             total_matches=0,
             home_wins=0,
             away_wins=0,
-            draws=0
+            draws=0,
         )
 
         assert features_no_matches.home_win_rate == 0.0
@@ -277,7 +271,7 @@ class TestHeadToHeadFeatures:
             calculation_date=datetime.now(timezone.utc),
             total_matches=10,
             home_goals=25,
-            away_goals=15
+            away_goals=15,
         )
 
         assert features.avg_total_goals == 4.0
@@ -291,7 +285,7 @@ class TestHeadToHeadFeatures:
             total_matches=10,
             home_wins=6,
             away_wins=3,
-            draws=1
+            draws=1,
         )
 
         errors = features.validate()
@@ -306,7 +300,7 @@ class TestHeadToHeadFeatures:
             total_matches=10,
             home_wins=6,
             away_wins=3,
-            draws=2  # 6+3+2=11，不等于total_matches=10
+            draws=2,  # 6+3+2=11，不等于total_matches=10
         )
 
         errors = features.validate()
@@ -322,7 +316,7 @@ class TestHeadToHeadFeatures:
             total_matches=10,
             home_wins=-1,  # 负数
             away_wins=5,
-            draws=5
+            draws=5,
         )
 
         errors = features.validate()
@@ -341,7 +335,7 @@ class TestOddsFeatures:
             bookmaker="William Hill",
             home_win_odds=2.1,
             draw_odds=3.2,
-            away_win_odds=3.8
+            away_win_odds=3.8,
         )
 
         assert features.match_id == 12345
@@ -356,7 +350,7 @@ class TestOddsFeatures:
             match_id=12345,
             calculation_date=datetime.now(timezone.utc),
             bookmaker="Test",
-            home_win_odds=2.0
+            home_win_odds=2.0,
         )
 
         assert features.home_implied_probability == 0.5
@@ -365,7 +359,7 @@ class TestOddsFeatures:
         features_no_odds = OddsFeatures(
             match_id=12346,
             calculation_date=datetime.now(timezone.utc),
-            bookmaker="Test"
+            bookmaker="Test",
         )
 
         assert features_no_odds.home_implied_probability is None
@@ -375,7 +369,7 @@ class TestOddsFeatures:
             match_id=12347,
             calculation_date=datetime.now(timezone.utc),
             bookmaker="Test",
-            home_win_odds=1.0  # 1.0的隐含概率是1.0，但通常赔率会>1.0
+            home_win_odds=1.0,  # 1.0的隐含概率是1.0，但通常赔率会>1.0
         )
 
         assert features_invalid.home_implied_probability is None
@@ -389,7 +383,7 @@ class TestOddsFeatures:
             bookmaker="Test",
             home_win_odds=2.0,
             draw_odds=3.0,
-            away_win_odds=4.0
+            away_win_odds=4.0,
         )
         assert features_home.bookmaker_consensus == "home"
 
@@ -400,7 +394,7 @@ class TestOddsFeatures:
             bookmaker="Test",
             home_win_odds=4.0,
             draw_odds=3.0,
-            away_win_odds=2.0
+            away_win_odds=2.0,
         )
         assert features_away.bookmaker_consensus == "away"
 
@@ -411,7 +405,7 @@ class TestOddsFeatures:
             bookmaker="Test",
             home_win_odds=3.0,
             draw_odds=2.5,
-            away_win_odds=4.0
+            away_win_odds=4.0,
         )
         assert features_draw.bookmaker_consensus == "draw"
 
@@ -419,7 +413,7 @@ class TestOddsFeatures:
         features_missing = OddsFeatures(
             match_id=12348,
             calculation_date=datetime.now(timezone.utc),
-            bookmaker="Test"
+            bookmaker="Test",
         )
         assert features_missing.bookmaker_consensus is None
 
@@ -431,7 +425,7 @@ class TestOddsFeatures:
             bookmaker="Test",
             home_win_odds=2.1,
             draw_odds=3.2,
-            away_win_odds=3.8
+            away_win_odds=3.8,
         )
 
         errors = features.validate()
@@ -443,7 +437,7 @@ class TestOddsFeatures:
             match_id=12345,
             calculation_date=datetime.now(timezone.utc),
             bookmaker="Test",
-            home_win_odds=0.5  # 赔率不能 <= 1.0
+            home_win_odds=0.5,  # 赔率不能 <= 1.0
         )
 
         errors = features.validate()
@@ -463,7 +457,7 @@ class TestAdvancedStatsFeatures:
             xg=1.5,
             xga=1.2,
             ppda=8.5,
-            possession=55.0
+            possession=55.0,
         )
 
         assert features.match_id == 12345
@@ -482,7 +476,7 @@ class TestAdvancedStatsFeatures:
             xg=1.5,
             xga=1.2,
             ppda=8.5,
-            possession=55.0
+            possession=55.0,
         )
 
         errors = features.validate()
@@ -494,7 +488,7 @@ class TestAdvancedStatsFeatures:
             match_id=12345,
             team_id=123,
             calculation_date=datetime.now(timezone.utc),
-            xg=-1.0  # xG不能为负数
+            xg=-1.0,  # xG不能为负数
         )
 
         errors = features.validate()
@@ -507,7 +501,7 @@ class TestAdvancedStatsFeatures:
             match_id=12345,
             team_id=123,
             calculation_date=datetime.now(timezone.utc),
-            possession=150.0  # 控球率不能超过100%
+            possession=150.0,  # 控球率不能超过100%
         )
 
         errors = features.validate()
@@ -524,7 +518,7 @@ class TestFeatureValidator:
             "match_id": 12345,
             "home_recent_5_wins": 3,
             "home_recent_5_win_rate": 0.6,
-            "home_xg": 1.5
+            "home_xg": 1.5,
         }
 
         errors = validate_feature_data(features)
@@ -534,7 +528,7 @@ class TestFeatureValidator:
         """测试缺少必需特征验证。"""
         features = {
             "home_recent_5_wins": 3,
-            "home_recent_5_win_rate": 0.6
+            "home_recent_5_win_rate": 0.6,
             # 缺少必需的 match_id
         }
 
@@ -544,10 +538,7 @@ class TestFeatureValidator:
 
     def test_validate_feature_data_invalid_type(self):
         """测试无效类型验证。"""
-        features = {
-            "match_id": "12345",  # 应该是数值
-            "home_recent_5_wins": 3
-        }
+        features = {"match_id": "12345", "home_recent_5_wins": 3}  # 应该是数值
 
         errors = validate_feature_data(features)
         assert len(errors) > 0
@@ -558,7 +549,7 @@ class TestFeatureValidator:
         features = {
             "match_id": 12345,
             "home_recent_5_wins": 6,  # 超过最大值5
-            "home_recent_5_win_rate": 1.5  # 超过最大值1.0
+            "home_recent_5_win_rate": 1.5,  # 超过最大值1.0
         }
 
         errors = validate_feature_data(features)
@@ -569,7 +560,7 @@ class TestFeatureValidator:
         features = {
             "match_id": "12345",  # 字符串转数值
             "home_recent_5_win_rate": "0.6",  # 字符串转浮点数
-            "invalid_feature": "not_convertible"
+            "invalid_feature": "not_convertible",
         }
 
         sanitized = sanitize_features(features)
@@ -638,7 +629,7 @@ class TestUtilityFunctions:
             calculation_date=datetime.now(timezone.utc),
             recent_5_wins=3,
             recent_5_draws=1,
-            recent_5_losses=1
+            recent_5_losses=1,
         )
 
         errors = validate_features_object(features)
@@ -648,7 +639,7 @@ class TestUtilityFunctions:
         invalid_features = RecentPerformanceFeatures(
             team_id=123,
             calculation_date=datetime.now(timezone.utc),
-            recent_5_wins=6  # 超过5场限制
+            recent_5_wins=6,  # 超过5场限制
         )
 
         errors = validate_features_object(invalid_features)
@@ -656,6 +647,7 @@ class TestUtilityFunctions:
 
     def test_validate_features_object_without_validation_method(self):
         """测试没有验证方法的普通对象。"""
+
         class SimpleObject:
             pass
 

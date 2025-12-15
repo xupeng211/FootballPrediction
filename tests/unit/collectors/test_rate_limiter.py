@@ -18,7 +18,6 @@ Rate Limiter Unit Tests
 import asyncio
 import pytest
 import time
-from typing import Any, Dict
 
 from src.collectors.rate_limiter import (
     RateLimiter,
@@ -151,6 +150,7 @@ class TestTokenBucket:
     @pytest.mark.asyncio
     async def test_concurrent_access(self, bucket):
         """测试并发访问安全性"""
+
         async def worker():
             results = []
             for _ in range(10):
@@ -178,7 +178,7 @@ class TestRateLimiter:
         return {
             "fotmob.com": {"rate": 2.0, "burst": 5},
             "fbref.com": {"rate": 1.0, "burst": 3},
-            "default": {"rate": 1.0, "burst": 1}
+            "default": {"rate": 1.0, "burst": 1},
         }
 
     @pytest.fixture
@@ -239,16 +239,12 @@ class TestRateLimiter:
 
         # 消耗fotmob.com的令牌
         for _ in range(5):
-            task = asyncio.create_task(
-                limiter.try_acquire("fotmob.com")
-            )
+            task = asyncio.create_task(limiter.try_acquire("fotmob.com"))
             fotmob_tasks.append(task)
 
         # 消耗fbref.com的令牌
         for _ in range(3):
-            task = asyncio.create_task(
-                limiter.try_acquire("fbref.com")
-            )
+            task = asyncio.create_task(limiter.try_acquire("fbref.com"))
             fbref_tasks.append(task)
 
         # 等待所有任务完成
@@ -386,9 +382,7 @@ class TestRateLimiter:
             await limiter.try_acquire("fotmob.com")
 
         # 创建一个任务并取消它
-        task = asyncio.create_task(
-            limiter.acquire("fotmob.com").__aenter__()
-        )
+        task = asyncio.create_task(limiter.acquire("fotmob.com").__aenter__())
 
         # 等待一小段时间然后取消
         await asyncio.sleep(0.1)
@@ -413,19 +407,14 @@ class TestCreateRateLimiter:
 
     def test_create_with_custom_defaults(self):
         """测试自定义默认参数"""
-        limiter = create_rate_limiter(
-            default_rate=5.0,
-            default_burst=10
-        )
+        limiter = create_rate_limiter(default_rate=5.0, default_burst=10)
 
         assert limiter.config["default"].rate == 5.0
         assert limiter.config["default"].burst == 10
 
     def test_create_with_config(self):
         """测试带配置创建"""
-        config = {
-            "test.com": {"rate": 3.0, "burst": 7}
-        }
+        config = {"test.com": {"rate": 3.0, "burst": 7}}
         limiter = create_rate_limiter(config)
 
         assert limiter.config["test.com"].rate == 3.0
@@ -485,8 +474,8 @@ async def test_integration_scenario():
     # 创建配置
     config = {
         "fotmob.com": {"rate": 5.0, "burst": 10},  # 5 QPS, 突发10
-        "fbref.com": {"rate": 2.0, "burst": 5},   # 2 QPS, 突发5
-        "default": {"rate": 1.0, "burst": 2}       # 1 QPS, 突发2
+        "fbref.com": {"rate": 2.0, "burst": 5},  # 2 QPS, 突发5
+        "default": {"rate": 1.0, "burst": 2},  # 1 QPS, 突发2
     }
 
     limiter = create_rate_limiter(config)
@@ -524,7 +513,9 @@ async def test_integration_scenario():
         # 4. 测试状态查询
         print("4. 测试状态查询...")
         status = limiter.get_status("fotmob.com")
-        print(f"   fotmob.com状态: {status['available_tokens']}/{status['capacity']} 令牌")
+        print(
+            f"   fotmob.com状态: {status['available_tokens']}/{status['capacity']} 令牌"
+        )
         print("✅ 状态查询测试通过")
 
         print("\n🎉 所有集成测试通过！")

@@ -58,7 +58,7 @@ class TestPredictionServiceRedPhase:
         service = PredictionService()
 
         # 模拟模型文件不存在，触发冷启动训练
-        with patch('src.ml.inference.service.os.path.exists', return_value=False):
+        with patch("src.ml.inference.service.os.path.exists", return_value=False):
             # 冷启动训练会调用_save_model，这应该抛出NotImplementedError
             with pytest.raises(NotImplementedError, match="TDD Red Phase"):
                 await service.initialize()

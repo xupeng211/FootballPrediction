@@ -10,7 +10,7 @@ import os
 import sys
 import time
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 # 添加项目根目录到Python路径
 sys.path.insert(0, "/home/user/projects/FootballPrediction")
@@ -251,7 +251,7 @@ class Stage4E2ETester:
                     if cached_data and cached_data.get("id") == team_id:
                         return True
                     return False
-                except Exception as e:
+                except Exception:
                     return False
 
             # 并发写入测试
@@ -265,7 +265,7 @@ class Stage4E2ETester:
                     return self.cache_manager.set_cache(
                         f"concurrent_team_{team_id}", data, ttl_seconds=300
                     )
-                except Exception as e:
+                except Exception:
                     return False
 
             # 执行并发测试

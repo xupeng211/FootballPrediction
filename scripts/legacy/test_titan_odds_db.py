@@ -16,7 +16,6 @@ import asyncio
 import sys
 import logging
 import argparse
-from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
@@ -25,7 +24,7 @@ sys.path.append(str(Path(__file__).parent))
 
 from src.database.repositories.titan_odds_factory import RealTitanOddsRepository
 from src.database.repositories.odds_repository import TitanOddsRepository
-from src.database.async_manager import initialize_database, get_db_session
+from src.database.async_manager import initialize_database
 from src.schemas.titan import (
     EuroOddsRecord,
     AsianHandicapRecord,
@@ -35,27 +34,40 @@ from src.schemas.titan import (
 # 配置日志
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s [%(levelname)8s] %(name)s: %(message)s',
-    datefmt='%Y-%m-%d %H:%M:%S'
+    format="%(asctime)s [%(levelname)8s] %(name)s: %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
 )
 logger = logging.getLogger(__name__)
 
 
 class MockRepository:
     """模拟数据库仓库 - 支持双表架构"""
+
     async def save_euro_odds(self, dto):
-        logger.info(f"💾 [MockDB] 欧赔 Latest表入库: 公司={dto.companyname}, 主胜={dto.homeodds}")
-        logger.info(f"📜 [MockDB] 欧赔 History表入库: 公司={dto.companyname}, 主胜={dto.homeodds}")
+        logger.info(
+            f"💾 [MockDB] 欧赔 Latest表入库: 公司={dto.companyname}, 主胜={dto.homeodds}"
+        )
+        logger.info(
+            f"📜 [MockDB] 欧赔 History表入库: 公司={dto.companyname}, 主胜={dto.homeodds}"
+        )
         return (True, True)  # (latest_result, history_result)
 
     async def save_asian_odds(self, dto):
-        logger.info(f"💾 [MockDB] 亚盘 Latest表入库: 公司={dto.companyname}, 盘口={dto.handicap}")
-        logger.info(f"📜 [MockDB] 亚盘 History表入库: 公司={dto.companyname}, 盘口={dto.handicap}")
+        logger.info(
+            f"💾 [MockDB] 亚盘 Latest表入库: 公司={dto.companyname}, 盘口={dto.handicap}"
+        )
+        logger.info(
+            f"📜 [MockDB] 亚盘 History表入库: 公司={dto.companyname}, 盘口={dto.handicap}"
+        )
         return (True, True)
 
     async def save_overunder_odds(self, dto):
-        logger.info(f"💾 [MockDB] 大小球 Latest表入库: 公司={dto.companyname}, 盘口={dto.handicap}")
-        logger.info(f"📜 [MockDB] 大小球 History表入库: 公司={dto.companyname}, 盘口={dto.handicap}")
+        logger.info(
+            f"💾 [MockDB] 大小球 Latest表入库: 公司={dto.companyname}, 盘口={dto.handicap}"
+        )
+        logger.info(
+            f"📜 [MockDB] 大小球 History表入库: 公司={dto.companyname}, 盘口={dto.handicap}"
+        )
         return (True, True)
 
 
@@ -84,54 +96,60 @@ class TitanOddsDBValidator:
 
     def create_test_euro_dto(self) -> EuroOddsRecord:
         """创建测试用的欧赔 DTO"""
-        return EuroOddsRecord.model_validate({
-            "matchid": "test_match_001",
-            "companyid": 3,  # William Hill
-            "companyname": "William Hill",
-            "homeodds": 1.85,
-            "drawodds": 3.60,
-            "awayodds": 4.20,
-            "homeopen": 1.90,
-            "drawopen": 3.50,
-            "awayopen": 4.10,
-            "utime": "2024-01-01T16:00:00Z",
-            "is_live": False,
-            "confidence_score": 0.95,
-        })
+        return EuroOddsRecord.model_validate(
+            {
+                "matchid": "test_match_001",
+                "companyid": 3,  # William Hill
+                "companyname": "William Hill",
+                "homeodds": 1.85,
+                "drawodds": 3.60,
+                "awayodds": 4.20,
+                "homeopen": 1.90,
+                "drawopen": 3.50,
+                "awayopen": 4.10,
+                "utime": "2024-01-01T16:00:00Z",
+                "is_live": False,
+                "confidence_score": 0.95,
+            }
+        )
 
     def create_test_asian_dto(self) -> AsianHandicapRecord:
         """创建测试用的亚盘 DTO"""
-        return AsianHandicapRecord.model_validate({
-            "matchid": "test_match_001",
-            "companyid": 8,  # Bet365
-            "companyname": "Bet365",
-            "upperodds": 0.95,
-            "lowerodds": 0.90,
-            "handicap": "-0.5",
-            "upperopen": 0.98,
-            "loweropen": 0.88,
-            "handicapopen": "-0.5",
-            "utime": "2024-01-01T16:00:00Z",
-            "is_live": False,
-            "confidence_score": 0.98,
-        })
+        return AsianHandicapRecord.model_validate(
+            {
+                "matchid": "test_match_001",
+                "companyid": 8,  # Bet365
+                "companyname": "Bet365",
+                "upperodds": 0.95,
+                "lowerodds": 0.90,
+                "handicap": "-0.5",
+                "upperopen": 0.98,
+                "loweropen": 0.88,
+                "handicapopen": "-0.5",
+                "utime": "2024-01-01T16:00:00Z",
+                "is_live": False,
+                "confidence_score": 0.98,
+            }
+        )
 
     def create_test_overunder_dto(self) -> OverUnderRecord:
         """创建测试用的大小球 DTO"""
-        return OverUnderRecord.model_validate({
-            "matchid": "test_match_001",
-            "companyid": 17,  # Pinnacle
-            "companyname": "Pinnacle",
-            "overodds": 1.90,
-            "underodds": 1.90,
-            "handicap": "2.5",
-            "overopen": 1.95,
-            "underopen": 1.85,
-            "handicapopen": "2.5",
-            "utime": "2024-01-01T16:00:00Z",
-            "is_live": False,
-            "confidence_score": 0.97,
-        })
+        return OverUnderRecord.model_validate(
+            {
+                "matchid": "test_match_001",
+                "companyid": 17,  # Pinnacle
+                "companyname": "Pinnacle",
+                "overodds": 1.90,
+                "underodds": 1.90,
+                "handicap": "2.5",
+                "overopen": 1.95,
+                "underopen": 1.85,
+                "handicapopen": "2.5",
+                "utime": "2024-01-01T16:00:00Z",
+                "is_live": False,
+                "confidence_score": 0.97,
+            }
+        )
 
     async def test_euro_odds(self) -> bool:
         """测试欧赔双写数据存储"""
@@ -168,7 +186,9 @@ class TitanOddsDBValidator:
                     dto.matchid, dto.companyid, limit=5
                 )
                 if saved_history:
-                    logger.info(f"✅ 欧赔 History表验证成功: 找到 {len(saved_history)} 条历史记录")
+                    logger.info(
+                        f"✅ 欧赔 History表验证成功: 找到 {len(saved_history)} 条历史记录"
+                    )
                     logger.info(f"   最新历史记录: {saved_history[0]}")
                 else:
                     logger.warning("⚠️ 欧赔 History表为空（可能是智能去重跳过）")
@@ -200,16 +220,22 @@ class TitanOddsDBValidator:
 
             # 验证真实数据库
             if self.use_real_db:
-                saved_latest = await self.raw_repository.get_asian_odds_latest(dto.matchid, dto.companyid)
+                saved_latest = await self.raw_repository.get_asian_odds_latest(
+                    dto.matchid, dto.companyid
+                )
                 if saved_latest:
                     logger.info(f"✅ 亚盘 Latest表验证成功: {saved_latest}")
                 else:
                     logger.error("❌ 亚盘 Latest表验证失败: 数据未找到")
                     return False
 
-                saved_history = await self.raw_repository.get_asian_odds_history(dto.matchid, dto.companyid, limit=5)
+                saved_history = await self.raw_repository.get_asian_odds_history(
+                    dto.matchid, dto.companyid, limit=5
+                )
                 if saved_history:
-                    logger.info(f"✅ 亚盘 History表验证成功: 找到 {len(saved_history)} 条历史记录")
+                    logger.info(
+                        f"✅ 亚盘 History表验证成功: 找到 {len(saved_history)} 条历史记录"
+                    )
                 else:
                     logger.warning("⚠️ 亚盘 History表为空（可能是智能去重跳过）")
 
@@ -229,7 +255,9 @@ class TitanOddsDBValidator:
             dto = self.create_test_overunder_dto()
 
             # 双写数据存储
-            latest_result, history_result = await self.repository.save_overunder_odds(dto)
+            latest_result, history_result = await self.repository.save_overunder_odds(
+                dto
+            )
 
             if not latest_result:
                 logger.error("❌ 大小球 Latest表数据存储失败")
@@ -240,16 +268,22 @@ class TitanOddsDBValidator:
 
             # 验证真实数据库
             if self.use_real_db:
-                saved_latest = await self.raw_repository.get_overunder_odds_latest(dto.matchid, dto.companyid)
+                saved_latest = await self.raw_repository.get_overunder_odds_latest(
+                    dto.matchid, dto.companyid
+                )
                 if saved_latest:
                     logger.info(f"✅ 大小球 Latest表验证成功: {saved_latest}")
                 else:
                     logger.error("❌ 大小球 Latest表验证失败: 数据未找到")
                     return False
 
-                saved_history = await self.raw_repository.get_overunder_odds_history(dto.matchid, dto.companyid, limit=5)
+                saved_history = await self.raw_repository.get_overunder_odds_history(
+                    dto.matchid, dto.companyid, limit=5
+                )
                 if saved_history:
-                    logger.info(f"✅ 大小球 History表验证成功: 找到 {len(saved_history)} 条历史记录")
+                    logger.info(
+                        f"✅ 大小球 History表验证成功: 找到 {len(saved_history)} 条历史记录"
+                    )
                 else:
                     logger.warning("⚠️ 大小球 History表为空（可能是智能去重跳过）")
 
@@ -270,6 +304,7 @@ class TitanOddsDBValidator:
             logger.info("🔌 测试数据库连接...")
 
             from src.database.async_manager import get_database_manager
+
             db_manager = get_database_manager()
 
             # 使用 check_connection 方法
@@ -289,7 +324,7 @@ class TitanOddsDBValidator:
     async def run_all_tests(self) -> bool:
         """运行所有测试"""
         logger.info("🚀 开始 Titan007 数据库功能完整性测试")
-        logger.info("="*60)
+        logger.info("=" * 60)
 
         tests = [
             ("数据库连接测试", self.test_database_connection),
@@ -316,7 +351,7 @@ class TitanOddsDBValidator:
                 logger.error(f"❌ {test_name} 异常: {e}")
 
         # 总结
-        logger.info("\n" + "="*60)
+        logger.info("\n" + "=" * 60)
         logger.info("📊 测试结果总结:")
         logger.info(f"    ✅ 通过: {passed} 项")
         logger.info(f"    ❌ 失败: {failed} 项")
@@ -336,22 +371,20 @@ async def main():
     parser.add_argument(
         "--use-real-db",
         action="store_true",
-        help="使用真实数据库 (PostgreSQL) 而不是 Mock 数据库"
+        help="使用真实数据库 (PostgreSQL) 而不是 Mock 数据库",
     )
     parser.add_argument(
-        "--db-url",
-        type=str,
-        help="数据库连接 URL (可选，默认使用环境变量)"
+        "--db-url", type=str, help="数据库连接 URL (可选，默认使用环境变量)"
     )
 
     args = parser.parse_args()
 
-    print("="*60)
+    print("=" * 60)
     if args.use_real_db:
         print("🎯 Titan007 数据库功能验证 (真实数据库版)")
     else:
         print("🎯 Titan007 数据库功能验证 (Mock数据库版)")
-    print("="*60)
+    print("=" * 60)
 
     # 创建验证器并运行测试
     validator = TitanOddsDBValidator(use_real_db=args.use_real_db, db_url=args.db_url)

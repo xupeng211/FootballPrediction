@@ -92,13 +92,15 @@ class TestFeatureLoader:
     @pytest.fixture
     def sample_dataframe(self):
         """样本DataFrame."""
-        return pd.DataFrame({
-            "match_id": [1, 2],
-            "feature1": [1.0, 1.5],
-            "feature2": [2.0, 2.5],
-            "feature3": ["A", "B"],
-            "result": ["home_win", "draw"],
-        })
+        return pd.DataFrame(
+            {
+                "match_id": [1, 2],
+                "feature1": [1.0, 1.5],
+                "feature2": [2.0, 2.5],
+                "feature3": ["A", "B"],
+                "result": ["home_win", "draw"],
+            }
+        )
 
     def test_init(self, mock_store, config):
         """测试初始化."""
@@ -112,7 +114,12 @@ class TestFeatureLoader:
     @patch("src.pipeline.feature_loader.asyncio.new_event_loop")
     @patch("src.pipeline.feature_loader.asyncio.set_event_loop")
     def test_load_training_data_success(
-        self, mock_set_loop, mock_new_loop, feature_loader, sample_feature_data, sample_dataframe
+        self,
+        mock_set_loop,
+        mock_new_loop,
+        feature_loader,
+        sample_feature_data,
+        sample_dataframe,
     ):
         """测试成功加载训练数据."""
         # 设置异步mock
@@ -135,25 +142,29 @@ class TestFeatureLoader:
         assert "result" not in X.columns
         assert len(y) == 2
 
-    def test_load_training_data_async_success(self, feature_loader, sample_feature_data):
+    def test_load_training_data_async_success(
+        self, feature_loader, sample_feature_data
+    ):
         """测试异步加载训练数据成功."""
         # 设置mock返回
         feature_loader.store.load_features.return_value = asyncio.Future()
-        feature_loader.store.load_features.return_value.set_result(sample_feature_data[0])
+        feature_loader.store.load_features.return_value.set_result(
+            sample_feature_data[0]
+        )
 
         # 模拟其他异步调用
-        with patch.object(feature_loader, '_load_features_batch') as mock_batch:
+        with patch.object(feature_loader, "_load_features_batch") as mock_batch:
             mock_batch.return_value = asyncio.Future()
             mock_batch.return_value.set_result(sample_feature_data)
 
-            with patch.object(feature_loader, '_validate_data_quality') as mock_quality:
+            with patch.object(feature_loader, "_validate_data_quality") as mock_quality:
                 mock_quality.return_value = asyncio.Future()
                 mock_quality.return_value.set_result(
                     DataQualityResult(
                         rule_name="test",
                         severity=RuleSeverity.INFO,
                         passed=True,
-                        message="Test passed"
+                        message="Test passed",
                     )
                 )
 
@@ -170,7 +181,9 @@ class TestFeatureLoader:
         """测试批量特征加载."""
         # 设置mock
         feature_loader.store.load_features.return_value = asyncio.Future()
-        feature_loader.store.load_features.return_value.set_result(sample_feature_data[0])
+        feature_loader.store.load_features.return_value.set_result(
+            sample_feature_data[0]
+        )
 
         # 执行测试
         result = asyncio.run(feature_loader._load_features_batch([1, 2]))
@@ -186,7 +199,10 @@ class TestFeatureLoader:
         assert len(df) == 2
         assert "match_id" in df.columns
         assert "feature1" in df.columns
-        assert all(feature in df.columns for feature in feature_loader.feature_config.required_features)
+        assert all(
+            feature in df.columns
+            for feature in feature_loader.feature_config.required_features
+        )
 
     def test_convert_to_dataframe_with_missing_features(self, feature_loader):
         """测试缺少特征时的DataFrame转换."""
@@ -219,10 +235,12 @@ class TestFeatureLoader:
 
     def test_handle_missing_values_median(self, feature_loader):
         """测试缺失值处理 - 中位数填充."""
-        df_with_missing = pd.DataFrame({
-            "feature1": [1.0, np.nan, 3.0],
-            "feature2": [2.0, 2.5, np.nan],
-        })
+        df_with_missing = pd.DataFrame(
+            {
+                "feature1": [1.0, np.nan, 3.0],
+                "feature2": [2.0, 2.5, np.nan],
+            }
+        )
 
         processed = feature_loader._handle_missing_values(df_with_missing)
 
@@ -234,10 +252,12 @@ class TestFeatureLoader:
         """测试缺失值处理 - 删除."""
         feature_loader.feature_config.handle_missing = "drop"
 
-        df_with_missing = pd.DataFrame({
-            "feature1": [1.0, np.nan, 3.0],
-            "feature2": [2.0, 2.5, 2.0],
-        })
+        df_with_missing = pd.DataFrame(
+            {
+                "feature1": [1.0, np.nan, 3.0],
+                "feature2": [2.0, 2.5, 2.0],
+            }
+        )
 
         processed = feature_loader._handle_missing_values(df_with_missing)
 
@@ -257,10 +277,12 @@ class TestFeatureLoader:
 
     def test_encode_categorical(self, feature_loader):
         """测试分类变量编码."""
-        df_categorical = pd.DataFrame({
-            "category1": ["A", "B", "A", "C"],
-            "category2": ["X", "X", "Y", "Y"],
-        })
+        df_categorical = pd.DataFrame(
+            {
+                "category1": ["A", "B", "A", "C"],
+                "category2": ["X", "X", "Y", "Y"],
+            }
+        )
 
         processed = feature_loader._encode_categorical(df_categorical)
 
@@ -274,7 +296,9 @@ class TestFeatureLoader:
         # 不应该抛出异常
         feature_loader._validate_input_data(sample_dataframe, y)
 
-    def test_validate_input_data_length_mismatch(self, feature_loader, sample_dataframe):
+    def test_validate_input_data_length_mismatch(
+        self, feature_loader, sample_dataframe
+    ):
         """测试输入数据长度不匹配."""
         y = pd.Series(["home_win"])  # 长度不匹配
 
@@ -302,12 +326,14 @@ class TestFeatureLoader:
     @pytest.mark.asyncio
     async def test_validate_data_quality(self, feature_loader, sample_dataframe):
         """测试数据质量检查."""
-        with patch.object(feature_loader.quality_monitor, 'check_data_quality') as mock_check:
+        with patch.object(
+            feature_loader.quality_monitor, "check_data_quality"
+        ) as mock_check:
             mock_result = DataQualityResult(
                 rule_name="test",
                 severity=RuleSeverity.INFO,
                 passed=True,
-                message="Test passed"
+                message="Test passed",
             )
             mock_check.return_value = mock_result
 
@@ -319,36 +345,40 @@ class TestFeatureLoader:
     async def test_load_training_data_target_column_missing(self, feature_loader):
         """测试目标列缺失."""
         # 设置mock返回没有目标列的DataFrame
-        with patch.object(feature_loader, '_load_training_data_async') as mock_async:
+        with patch.object(feature_loader, "_load_training_data_async") as mock_async:
             df_no_target = pd.DataFrame({"feature1": [1.0], "feature2": [2.0]})
             y_no_target = pd.Series([1])
             mock_async.return_value = (df_no_target, y_no_target)
 
-            with pytest.raises(FeatureNotFoundError, match="Target column 'missing_target' not found"):
+            with pytest.raises(
+                FeatureNotFoundError, match="Target column 'missing_target' not found"
+            ):
                 feature_loader.load_training_data([1], target_column="missing_target")
 
     @pytest.mark.asyncio
     async def test_load_training_data_quality_error(self, feature_loader):
         """测试数据质量错误."""
         # 设置mock返回质量检查失败
-        with patch.object(feature_loader, '_load_training_data_async') as mock_async:
+        with patch.object(feature_loader, "_load_training_data_async") as mock_async:
             # 创建质量检查失败的结果
             error_result = DataQualityResult(
                 rule_name="test",
                 severity=RuleSeverity.ERROR,
                 passed=False,
-                message="Critical quality issue"
+                message="Critical quality issue",
             )
 
             # 模拟_data_quality_check抛出异常
-            with patch.object(feature_loader, '_validate_data_quality') as mock_quality:
+            with patch.object(feature_loader, "_validate_data_quality") as mock_quality:
                 mock_quality.return_value = error_result
 
                 df = pd.DataFrame({"feature1": [1.0], "result": [1]})
                 y = pd.Series([1])
                 mock_async.return_value = (df, y)
 
-                with pytest.raises(FeatureValidationError, match="Critical data quality issues"):
+                with pytest.raises(
+                    FeatureValidationError, match="Critical data quality issues"
+                ):
                     feature_loader.load_training_data([1], validate_quality=True)
 
     def test_save_and_load_preprocessors(self, feature_loader, tmp_path):
@@ -398,21 +428,23 @@ class TestFeatureLoaderIntegration:
 
         # 创建模拟Store
         mock_store = AsyncMock(spec=FeatureStoreProtocol)
-        mock_store.load_features.return_value = sample_data[0]  # 模拟返回单个FeatureData
+        mock_store.load_features.return_value = sample_data[
+            0
+        ]  # 模拟返回单个FeatureData
 
         # 创建FeatureLoader
         feature_loader = FeatureLoader(mock_store, config)
 
         # 模拟批量加载
-        with patch.object(feature_loader, '_load_features_batch') as mock_batch:
+        with patch.object(feature_loader, "_load_features_batch") as mock_batch:
             mock_batch.return_value = sample_data
 
-            with patch.object(feature_loader, '_validate_data_quality') as mock_quality:
+            with patch.object(feature_loader, "_validate_data_quality") as mock_quality:
                 mock_quality.return_value = DataQualityResult(
                     rule_name="test",
                     severity=RuleSeverity.INFO,
                     passed=True,
-                    message="Test passed"
+                    message="Test passed",
                 )
 
                 # 执行加载
@@ -421,5 +453,8 @@ class TestFeatureLoaderIntegration:
                 # 验证结果
                 assert len(X) == 100
                 assert len(y) == 100
-                assert all(feature in X.columns for feature in config.features.required_features)
-                assert X.dtypes.apply(lambda x: x.kind in 'biufc').all()  # 数值类型
+                assert all(
+                    feature in X.columns
+                    for feature in config.features.required_features
+                )
+                assert X.dtypes.apply(lambda x: x.kind in "biufc").all()  # 数值类型

@@ -9,7 +9,6 @@ Verify Parser Fix Script
 import sys
 import logging
 from pathlib import Path
-from typing import Dict, Any
 
 # 添加项目根目录到Python路径
 project_root = Path(__file__).parent.parent
@@ -17,17 +16,18 @@ sys.path.insert(0, str(project_root / "src"))
 
 # 配置日志
 logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
 # 直接导入修复后的采集器，避免通过__init__.py的循环导入
 import sys
 import os
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src', 'collectors'))
+
+sys.path.append(os.path.join(os.path.dirname(__file__), "..", "src", "collectors"))
 
 from fotmob_api_collector import FotMobAPICollector
+
 
 class ParserFixVerifier:
     """解析器修复验证器"""
@@ -68,13 +68,16 @@ class ParserFixVerifier:
             total_tests = len(self.test_results)
             success_rate = passed_tests / total_tests * 100
 
-            logger.info(f"📊 总体通过率: {passed_tests}/{total_tests} ({success_rate:.1f}%)")
+            logger.info(
+                f"📊 总体通过率: {passed_tests}/{total_tests} ({success_rate:.1f}%)"
+            )
 
             return success_rate >= 80  # 80%以上通过率视为修复成功
 
         except Exception as e:
             logger.error(f"💥 验证过程异常: {e}")
             import traceback
+
             traceback.print_exc()
             return False
 
@@ -92,37 +95,37 @@ class ParserFixVerifier:
                                     "stats": [
                                         {
                                             "key": "xg",
-                                            "stats": [2.21, 1.85]  # 🔍 xG: 2.21
+                                            "stats": [2.21, 1.85],  # 🔍 xG: 2.21
                                         }
-                                    ]
+                                    ],
                                 },
                                 {
                                     "key": "ball_possession_shared",
                                     "stats": [
                                         {
                                             "key": "possession",
-                                            "stats": [58, 42]  # 控球率: 58% vs 42%
+                                            "stats": [58, 42],  # 控球率: 58% vs 42%
                                         }
-                                    ]
+                                    ],
                                 },
                                 {
                                     "key": "total_shots",
                                     "stats": [
                                         {
                                             "key": "shots_total",
-                                            "stats": [15, 8]  # 射门: 15 vs 8
+                                            "stats": [15, 8],  # 射门: 15 vs 8
                                         }
-                                    ]
+                                    ],
                                 },
                                 {
                                     "key": "passes",
                                     "stats": [
                                         {
                                             "key": "total_passes",
-                                            "stats": [420, 380]  # 传球: 420 vs 380
+                                            "stats": [420, 380],  # 传球: 420 vs 380
                                         }
-                                    ]
-                                }
+                                    ],
+                                },
                             ]
                         }
                     }
@@ -144,7 +147,9 @@ class ParserFixVerifier:
                     xg_values = xg_data["xg"]
                     if len(xg_values) >= 2:
                         home_xg, away_xg = xg_values[0], xg_values[1]
-                        logger.info(f"✅ xG数据提取成功: 主队={home_xg}, 客队={away_xg}")
+                        logger.info(
+                            f"✅ xG数据提取成功: 主队={home_xg}, 客队={away_xg}"
+                        )
 
                         # 验证关键值2.21是否被正确提取
                         if abs(home_xg - 2.21) < 0.01:
@@ -158,8 +163,13 @@ class ParserFixVerifier:
                 if possession_data and "possession" in possession_data:
                     possession_values = possession_data["possession"]
                     if len(possession_values) >= 2:
-                        home_possession, away_possession = possession_values[0], possession_values[1]
-                        logger.info(f"✅ 控球率数据提取成功: 主队={home_possession}%, 客队={away_possession}%")
+                        home_possession, away_possession = (
+                            possession_values[0],
+                            possession_values[1],
+                        )
+                        logger.info(
+                            f"✅ 控球率数据提取成功: 主队={home_possession}%, 客队={away_possession}%"
+                        )
                         self.test_results["possession_extraction"] = True
 
                 # 验证射门数据提取
@@ -168,7 +178,9 @@ class ParserFixVerifier:
                     shots_values = shots_data["shots_total"]
                     if len(shots_values) >= 2:
                         home_shots, away_shots = shots_values[0], shots_values[1]
-                        logger.info(f"✅ 射门数据提取成功: 主队={home_shots}, 客队={away_shots}")
+                        logger.info(
+                            f"✅ 射门数据提取成功: 主队={home_shots}, 客队={away_shots}"
+                        )
                         self.test_results["shots_extraction"] = True
 
                 # 显示完整解析结果
@@ -188,7 +200,6 @@ class ParserFixVerifier:
     async def _test_real_api_call(self):
         """测试真实API调用"""
         try:
-            import asyncio
 
             logger.info("🌐 测试真实API调用...")
 
@@ -262,6 +273,7 @@ class ParserFixVerifier:
         else:
             logger.error("   ❌ 列表结构处理: 仍有问题")
 
+
 def main():
     """主函数"""
     logger.info("🔧 FotMobAPI 解析器修复验证工具")
@@ -270,7 +282,12 @@ def main():
 
     # 对于真实API测试，需要异步执行
     import asyncio
-    asyncio.run(verifier._test_real_api_call()) if hasattr(verifier, '_test_real_api_call') else False
+
+    (
+        asyncio.run(verifier._test_real_api_call())
+        if hasattr(verifier, "_test_real_api_call")
+        else False
+    )
 
     # 运行完整验证
     overall_success = verifier.run_verification()
@@ -283,6 +300,7 @@ def main():
         logger.error("\n💥 ❌ 解析器修复验证失败!")
         logger.error("🚨 需要进一步调试和修复")
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()
