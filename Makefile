@@ -130,7 +130,14 @@ context: venv ## 加载项目上下文
 .PHONY: format
 format: venv ## 代码格式化
 	@echo "$(BLUE)>>> 代码格式化...$(RESET)"
-	$(ACTIVATE) && python -m black src/core/ src/models/ src/services/ src/utils/ src/database/ src/api/ tests/ scripts/
+	$(ACTIVATE) && python -m black src/core/ src/utils/ src/database/ src/api/ tests/ scripts/ || echo "跳过不存在的目录"
+	@# 检查并格式化存在的目录
+	@if [ -d "src/models" ]; then \
+		$(ACTIVATE) && python -m black src/models/; \
+	fi
+	@if [ -d "src/services" ]; then \
+		$(ACTIVATE) && python -m black src/services/; \
+	fi
 	@echo "$(GREEN)✅ 代码格式化完成$(RESET)"
 
 .PHONY: lint
