@@ -523,6 +523,93 @@ This project is AI-first maintained with these configurations:
 - **Error Handling**: Comprehensive exception handling with proper logging
 - **Security First**: Never expose secrets, validate all inputs
 
+#### 🚀 Standard AI Development Workflow (Tool-First Mode)
+
+**⚠️ CRITICAL**: AI MUST execute these commands in order:
+
+```bash
+# 第1步：环境检查
+make env-check          # 验证开发环境完整性
+
+# 第2步：加载项目上下文（⭐ 关键步骤）
+make context            # AI必须运行此命令获取项目上下文
+
+# 第3步：执行开发任务
+make quality            # 代码质量全面检查
+make test              # 运行单元测试
+make ci                # 本地CI完整模拟
+make prepush           # 提交前完整验证
+
+# ⚠️ 禁止直接运行python脚本，必须通过Makefile工具链
+```
+
+#### 📋 AI Task Execution Principles
+1. **工具优先** (Tool-First): 任何操作必须通过`make`命令执行
+2. **上下文优先** (Context-First): 每次开始工作前运行`make context`
+3. **质量优先** (Quality-First): 代码变更必须通过`make ci`验证
+4. **完整流程** (Complete Flow): 提交前使用`make prepush`完整检查
+
+#### 💻 Code Generation Requirements
+All generated code MUST follow:
+- ✅ **完整类型注解** (Complete Type Annotations): 所有函数和变量必须有类型标注
+- ✅ **Google风格文档字符串** (Google-Style Docstrings): 使用标准的文档字符串格式
+- ✅ **中文注释** (Chinese Comments): 所有生成的代码必须带简明的中文注释，解释模块/函数的用途与核心逻辑
+- ✅ **遵循项目结构** (Follow Project Structure): 严格遵循既定的模块结构和目录组织
+- ✅ **质量门禁** (Quality Gate): 所有检查必须通过才能提交
+
+**函数定义示例**:
+```python
+def process_user_data(
+    user_id: int,
+    data: Dict[str, Any],
+    validate: bool = True
+) -> Optional[Dict[str, Any]]:
+    """
+    处理用户数据 - 验证、清洗和转换用户输入的数据
+
+    这个函数负责对用户提交的数据进行全面处理，包括格式验证、
+    数据清洗和必要的类型转换，确保数据质量符合业务要求。
+
+    Args:
+        user_id: 用户标识符，用于日志记录和权限验证
+        data: 待处理的原始数据字典，包含用户输入的所有字段
+        validate: 是否启用数据验证，默认启用以保障数据质量
+
+    Returns:
+        处理成功返回清洗后的数据字典，失败返回None
+
+    Raises:
+        ValidationError: 当数据验证失败时
+        ProcessingError: 当数据处理过程出错时
+    """
+    if validate:
+        _validate_user_data(data)
+    cleaned_data = _clean_data(data)
+    return cleaned_data
+```
+
+#### 🚨 Strict Prohibitions
+- ❌ **环境混用** (Environment Mixing): 不允许在全局Python环境中开发，必须使用虚拟环境
+- ❌ **跳过测试** (Skip Tests): 不允许提交未测试的代码
+- ❌ **硬编码** (Hardcoding): 不允许硬编码敏感信息或配置
+- ❌ **格式混乱** (Formatting Issues): 不允许提交未格式化的代码
+- ❌ **结构破坏** (Structure Breaking): 不允许破坏既定的目录结构
+- ❌ **工具绕过** (Tool Bypassing): 不允许绕过预设的检查工具
+- ❌ **直接脚本执行** (Direct Script Execution): 禁止直接运行python脚本，必须通过Makefile工具链
+
+#### 🔧 Essential Makefile Commands for AI
+```bash
+make help              # 查看所有可用命令和说明
+make env-check         # 环境健康检查
+make context           # 加载项目上下文（AI必须使用）
+make quality           # 完整代码质量检查
+make test              # 运行单元测试
+make coverage          # 测试覆盖率检查
+make ci                # 本地CI完整模拟
+make prepush           # 提交前完整验证流程
+make clean             # 清理临时文件和缓存
+```
+
 #### Preferred Patterns
 ```python
 # ✅ Preferred: Service layer with dependency injection
