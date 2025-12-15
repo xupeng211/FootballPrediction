@@ -226,7 +226,7 @@ class TitanWebCollector:
                 await self.start_browser()
 
             # Step 1: 按日期分组比赛
-            print(f"🔍 DEBUG: 开始按日期分组...")
+            print("🔍 DEBUG: 开始按日期分组...")
             matches_by_date = self._group_matches_by_date(matches)
             print(f"📅 按日期分组完成，共 {len(matches_by_date)} 个日期")
             logger.info(f"📅 按日期分组完成，共 {len(matches_by_date)} 个日期")
@@ -811,7 +811,7 @@ class TitanWebCollector:
                             'home_win': home_odds_val,
                             'draw': draw_odds_val,
                             'away_win': away_odds_val,
-                            'source': f'nowgoal_goal8_xml',
+                            'source': 'nowgoal_goal8_xml',
                             'url': url,
                             'match_id': match_id,
                             'company_id': company_id

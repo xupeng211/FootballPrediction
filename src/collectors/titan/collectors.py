@@ -66,7 +66,7 @@ class TitanEuroCollector(BaseTitanCollector):
                 "https://interface.bet007.com/nba/xml",  # 备用接口
             ]
 
-            print(f"\n=== Titan/NowGoal ID 映射调试 ===")
+            print("\n=== Titan/NowGoal ID 映射调试 ===")
             print(f"查找比赛: {home_team} vs {away_team}")
             print(f"比赛日期: {match_date.strftime('%Y-%m-%d')}")
             print("=" * 35)
@@ -270,7 +270,7 @@ class TitanEuroCollector(BaseTitanCollector):
                         print(f"✅ 在文本中找到匹配 (ID: {titan_id}): {line[:100]}...")
                         return titan_id
 
-            print(f"❌ 在文本中未找到匹配的比赛")
+            print("❌ 在文本中未找到匹配的比赛")
             return None
 
         except Exception as e:

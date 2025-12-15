@@ -131,7 +131,7 @@ class BaseTitanCollector:
                 async with self.rate_limiter.acquire("titan_odds"):
                     # 调试：打印完整的请求URL和参数
                     full_url = f"{self.base_url}{endpoint}"
-                    print(f"\n=== TITAN API 请求调试 ===")
+                    print("\n=== TITAN API 请求调试 ===")
                     print(f"完整URL: {full_url}")
                     print(f"请求参数: {params}")
                     print(f"请求头User-Agent: {headers.get('User-Agent', 'Unknown')}")
@@ -217,7 +217,7 @@ class BaseTitanCollector:
                 except json.JSONDecodeError as e:
                     # JSON 解析失败 - 详细调试信息
                     self.logger.error(
-                        f"JSON解析失败 - 响应内容调试",
+                        "JSON解析失败 - 响应内容调试",
                         extra={
                             "endpoint": endpoint,
                             "match_id": match_id,
@@ -237,7 +237,7 @@ class BaseTitanCollector:
                     )
 
                     # 额外的控制台输出调试
-                    print(f"\n=== TITAN API 响应调试信息 ===")
+                    print("\n=== TITAN API 响应调试信息 ===")
                     print(f"状态码: {response.status_code}")
                     print(f"Content-Type: {response.headers.get('content-type', 'Unknown')}")
                     print(f"User-Agent: {headers.get('User-Agent', 'Unknown')}")

@@ -237,7 +237,7 @@ class MatchRepository(BaseRepository):
 
         except (SQLAlchemyError, ValueError) as e:
             self.session.rollback()
-            self._handle_db_error(e, f"upsert_match")
+            self._handle_db_error(e, "upsert_match")
 
     def _normalize_match_data(self, match_data: Dict) -> Dict:
         """标准化比赛数据"""
@@ -402,5 +402,5 @@ class MatchRepository(BaseRepository):
     def get_unprocessed_matches(self) -> List[Match]:
         """获取未处理的比赛（用于特征工程）"""
         return self.session.query(Match).filter(
-            Match.is_processed == False
+            not Match.is_processed
         ).all()
