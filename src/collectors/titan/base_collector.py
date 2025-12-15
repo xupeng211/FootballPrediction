@@ -51,11 +51,20 @@ class BaseTitanCollector:
         self.op_logger = TitanOperationLogger("BaseTitanCollector")
 
         # 初始化限流器（使用配置参数）
-        self.rate_limiter = rate_limiter or RateLimiter(
-            rate=titan_config.rate_limit_qps,
-            burst=titan_config.rate_limit_burst,
-            max_wait_time=titan_config.rate_limit_max_wait,
-        )
+        if rate_limiter:
+            self.rate_limiter = rate_limiter
+        else:
+            # 创建配置字典格式
+            limiter_config = {
+                "default": {
+                    "rate": titan_config.rate_limit_qps,
+                    "burst": titan_config.rate_limit_burst
+                }
+            }
+            self.rate_limiter = RateLimiter(
+                config=limiter_config,
+                default_config=None
+            )
 
         # 初始化UA管理器
         self.user_agent_manager = user_agent_manager or UserAgentManager()
@@ -108,7 +117,6 @@ class BaseTitanCollector:
             try:
                 # Step 1: 限流控制
                 start_time = time.time()
-                await self.rate_limiter.acquire("titan_odds")
 
                 # Step 2: 设置请求头
                 headers = {
@@ -119,13 +127,22 @@ class BaseTitanCollector:
                     "Connection": "keep-alive",
                 }
 
-                # Step 3: 发送异步HTTP请求
-                response = await self.http_client.get(
-                    url,
-                    params=params,
-                    headers=headers,
-                    follow_redirects=True,
-                )
+                # Step 3: 在限流保护下发送异步HTTP请求
+                async with self.rate_limiter.acquire("titan_odds"):
+                    # 调试：打印完整的请求URL和参数
+                    full_url = f"{self.base_url}{endpoint}"
+                    print(f"\n=== TITAN API 请求调试 ===")
+                    print(f"完整URL: {full_url}")
+                    print(f"请求参数: {params}")
+                    print(f"请求头User-Agent: {headers.get('User-Agent', 'Unknown')}")
+                    print("=" * 30)
+
+                    response = await self.http_client.get(
+                        full_url,
+                        params=params,
+                        headers=headers,
+                        follow_redirects=True,
+                    )
 
                 # Step 4: 响应状态码验证
                 if response.status_code == 403:
@@ -154,10 +171,32 @@ class BaseTitanCollector:
                 raw_content = response.text
                 response_size = len(raw_content)
 
-                # Step 6: 清理响应内容
+                # Step 6: 详细调试响应信息
+                if response.status_code != 200:
+                    # 非成功状态码的详细调试
+                    self.logger.error(
+                        f"HTTP错误状态码: {response.status_code}",
+                        extra={
+                            "endpoint": endpoint,
+                            "match_id": match_id,
+                            "company_id": company_id,
+                            "status_code": response.status_code,
+                            "response_headers": dict(response.headers),
+                            "response_body": raw_content[:500],
+                            "user_agent": headers.get("User-Agent", "Unknown"),
+                        },
+                    )
+                    raise TitanNetworkError(
+                        message=f"HTTP {response.status_code}: {raw_content[:200]}",
+                        status_code=response.status_code,
+                        endpoint=endpoint,
+                        params=params,
+                    )
+
+                # Step 7: 清理响应内容
                 cleaned_content = self._clean_response_content(raw_content)
 
-                # Step 7: 解析 JSON
+                # Step 8: 解析 JSON
                 try:
                     data = json.loads(cleaned_content)
 
@@ -176,22 +215,39 @@ class BaseTitanCollector:
 
                     return data
                 except json.JSONDecodeError as e:
-                    # JSON 解析失败
+                    # JSON 解析失败 - 详细调试信息
                     self.logger.error(
-                        "JSON解析失败",
+                        f"JSON解析失败 - 响应内容调试",
                         extra={
                             "endpoint": endpoint,
                             "match_id": match_id,
                             "company_id": company_id,
-                            "error_type": "JSONDecodeError",
-                            "error_message": str(e),
+                            "status_code": response.status_code,
+                            "response_headers": dict(response.headers),
+                            "content_type": response.headers.get("content-type", "Unknown"),
                             "response_size": response_size,
-                            "raw_content_preview": raw_content[:200],
+                            "raw_content_preview": raw_content[:500],
+                            "cleaned_content_preview": cleaned_content[:500],
+                            "user_agent": headers.get("User-Agent", "Unknown"),
+                            "error_message": str(e),
+                            "looks_like_html": "<html" in raw_content.lower() or "<!DOCTYPE" in raw_content.upper(),
+                            "looks_like_cloudflare": "cloudflare" in raw_content.lower(),
+                            "looks_like_blocked": any(word in raw_content.lower() for word in ["blocked", "forbidden", "access denied", "rate limit"]),
                         },
                     )
+
+                    # 额外的控制台输出调试
+                    print(f"\n=== TITAN API 响应调试信息 ===")
+                    print(f"状态码: {response.status_code}")
+                    print(f"Content-Type: {response.headers.get('content-type', 'Unknown')}")
+                    print(f"User-Agent: {headers.get('User-Agent', 'Unknown')}")
+                    print(f"响应大小: {response_size} 字符")
+                    print(f"响应内容前500字符:\n{raw_content[:500]}")
+                    print("=" * 50)
+
                     raise TitanParsingError(
                         message=f"JSON parsing failed: {str(e)}",
-                        raw_content=raw_content[:500],
+                        raw_content=raw_content[:1000],  # 增加到1000字符用于调试
                         endpoint=endpoint,
                         params=params,
                     )

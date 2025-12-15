@@ -43,7 +43,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 🚀 Core Development Commands
 
-### Environment Management
+### 重要环境说明
 ```bash
 # 📍 重要提示：有两个CLAUDE.md文件：
 # - /CLAUDE.md (根目录，AI维护的完整文档)
@@ -51,6 +51,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 # 📍 重要提示：Makefile位于 FootballPrediction/ 子目录中
 cd FootballPrediction  # 首先进入包含Makefile的目录
+
+# 📍 项目结构说明：
+# /                    # 项目根目录 (包含此CLAUDE.md)
+# ├─ frontend/         # Vue.js前端代码
+# ├─ src/             # 后端Python代码
+# ├─ tests/           # 测试套件
+# └─ FootballPrediction/  # Docker开发环境配置
+#    ├─ Makefile      # 开发命令管理
+#    ├─ docker-compose*.yml  # Docker配置
+#    └─ ...           # 其他Docker相关文件
+```
 
 # 完整Docker开发环境 (主要开发方式)
 make dev              # 启动完整开发环境 (app + db + redis + frontend + nginx + worker + beat)
@@ -110,6 +121,18 @@ docker-compose exec app bash -c "cd /app && pytest tests/test_utils/ -v"
 
 # 在容器中运行特定文件的覆盖率测试
 docker-compose exec app bash -c "cd /app && pytest tests/test_collectors/test_fotmob_adapter.py --cov=src.collectors.fotmob -v"
+
+# 运行特定测试函数
+docker-compose exec app bash -c "cd /app && pytest tests/test_services/test_prediction_service.py::test_prediction_success -v"
+
+# 使用标记运行测试
+docker-compose exec app bash -c "cd /app && pytest tests/unit/ -m 'unit and not slow' -v"
+
+# 快速失败模式 (第一次失败时停止)
+docker-compose exec app bash -c "cd /app && pytest tests/unit/ --maxfail=3 -x"
+
+# 生成覆盖率报告
+docker-compose exec app bash -c "cd /app && pytest --cov=src --cov-report=html --cov-report=term-missing"
 
 # CI模式测试 (Mock外部依赖)
 export FOOTBALL_PREDICTION_ML_MODE=mock
@@ -177,13 +200,49 @@ npm run type-check             # 检查TypeScript类型
 npm run lint && npm run type-check && npm run build
 ```
 
+### Vue.js 3 开发模式
+```typescript
+// Composition API 推荐模式
+<script setup lang="ts">
+import { ref, computed, onMounted } from 'vue'
+import type { Ref } from 'vue'
+
+// 响应式数据
+const matchData: Ref<MatchData | null> = ref(null)
+const loading = ref(false)
+
+// 计算属性
+const hasPrediction = computed(() => matchData.value?.prediction !== null)
+
+// 生命周期
+onMounted(async () => {
+  await fetchMatchData()
+})
+
+// 方法
+const fetchMatchData = async () => {
+  loading.value = true
+  try {
+    const response = await fetch('/api/v1/matches/123')
+    matchData.value = await response.json()
+  } catch (error) {
+    console.error('Failed to fetch match data:', error)
+  } finally {
+    loading.value = false
+  }
+}
+</script>
+```
+
 ### 前端开发服务器配置
-- **开发端口**: 5173
+- **开发端口**: 5173 (Vite默认)
 - **生产端口**: 80 (通过Nginx代理)
 - **API代理**: /api -> http://localhost:8000
-- **构建工具**: Vite 5.0
+- **构建工具**: Vite 5.0 (快速热更新)
 - **路径别名**: @/* -> ./src/*
 - **TypeScript**: 严格模式，完整类型安全
+- **样式框架**: Tailwind CSS 3.3.6 (实用优先)
+- **状态管理**: Pinia 2.1.7 (Vue 3官方推荐)
 
 ### Data Collection Commands
 ```bash
@@ -409,9 +468,9 @@ curl http://localhost:8000/health           # 基础健康检查
 curl http://localhost:8000/health/system    # 系统资源检查
 curl http://localhost:8000/api/v1/metrics   # Prometheus指标
 
-# 前端服务验证 (React)
-curl http://localhost:3000                  # 前端开发服务器 (React)
-curl http://localhost:3001                  # 前端开发服务器 (备用端口)
+# 前端服务验证 (Vue.js)
+curl http://localhost:5173                  # 前端开发服务器 (Vue.js + Vite)
+curl http://localhost:3000                  # 前端开发服务器 (备用端口)
 curl http://localhost:80                    # 前端生产服务器 (通过Nginx)
 
 # Docker容器监控
@@ -501,14 +560,14 @@ export TEST_REAL_ML=false                    # 禁用真实ML测试
 
 ## 🎨 Frontend Development Workflow
 
-### React + TypeScript Development (现代前端技术栈)
+### Vue.js + TypeScript Development (现代前端技术栈)
 ```bash
 # 1️⃣ Initialize frontend development environment
 cd frontend
 npm install
 
 # 2️⃣ Start development with real-time validation
-npm run dev           # Terminal 1: Development server (http://localhost:3000)
+npm run dev           # Terminal 1: Development server (http://localhost:5173)
 npm run type-check -- --watch  # Terminal 2: Real-time type checking
 
 # 3️⃣ Development cycle
@@ -524,28 +583,28 @@ npm run build       # Build for production
 npm run preview     # Test production build locally
 ```
 
-### Frontend Project Structure (React架构)
+### Frontend Project Structure (Vue.js架构)
 ```
 frontend/
 ├── src/
-│   ├── components/            # React组件
+│   ├── components/            # Vue组件
 │   │   ├── auth/              # 认证相关组件
-│   │   ├── charts/            # 图表组件 (Chart.js + React-Chartjs)
+│   │   ├── charts/            # 图表组件 (Chart.js + vue-chartjs)
 │   │   ├── match/             # 比赛相关组件
 │   │   └── profile/           # 用户资料组件
-│   ├── pages/                 # 页面组件
+│   ├── views/                 # 页面组件 (Vue Router)
 │   │   ├── auth/              # 认证页面
 │   │   ├── admin/             # 管理页面
 │   │   └── match/             # 比赛页面
-│   ├── hooks/                 # 自定义React hooks
-│   ├── store/                 # Redux Toolkit配置
-│   │   └── index.ts           # Redux store配置
+│   ├── composables/           # Vue 3 Composition API functions
+│   ├── stores/                # Pinia状态管理
+│   │   └── index.ts           # Pinia store配置
 │   ├── services/              # API服务函数
 │   ├── types/                 # TypeScript类型定义
 │   ├── utils/                 # 前端工具函数
-│   ├── styles/                # CSS和样式
-│   ├── App.tsx                # 根组件
-│   └── main.tsx               # 应用入口
+│   ├── styles/                # CSS和Tailwind样式
+│   ├── App.vue                # 根组件
+│   └── main.ts                # 应用入口
 ├── public/                    # 静态资源
 ├── tests/                     # 前端测试文件
 ├── package.json               # 依赖配置
@@ -555,12 +614,16 @@ frontend/
 ```
 
 ### 前端技术栈详情
-- **React 19.2.0**: 现代React，支持并发特性
-- **TypeScript 4.9.5**: 完整类型安全，严格模式
-- **Ant Design 5.27.6**: 企业级组件库
-- **Redux Toolkit 2.9.2**: 状态管理，包含RTK Query
-- **React Query**: 服务端状态管理和缓存
-- **Vite**: 快速构建工具，支持HMR
+- **Vue.js 3.4.0**: 现代Vue框架，Composition API
+- **TypeScript 5.7.2**: 完整类型安全，严格模式
+- **Vite 5.0**: 快速构建工具，支持HMR和热更新
+- **Pinia 2.1.7**: Vue 3官方推荐状态管理（Vuex现代替代品）
+- **Vue Router 4.2.5**: Vue官方路由管理
+- **Tailwind CSS 3.3.6**: 实用优先的CSS框架
+- **Chart.js 4.5.1**: 图表可视化库
+- **vue-chartjs 5.3.3**: Vue.js的Chart.js封装
+- **Axios 1.6.0**: HTTP客户端
+- **vue-axios 3.5.2**: Vue.js的Axios集成
 
 ## 🔧 Critical Development Rules
 
@@ -594,10 +657,10 @@ frontend/
 - **🏛️ Clean Architecture** - Layer separation with dependency inversion
 
 ### 5. Frontend Development Standards
-- **🎨 Use React with TypeScript** - Modern React with functional components and hooks
+- **🎨 Use Vue.js 3 with Composition API** - Modern Vue with TypeScript support
 - **📝 TypeScript mandatory** - All new code must have proper type definitions
-- **📦 Follow React patterns** - Use functional components with hooks, avoid class components
-- **🎯 Redux Toolkit for state management** - Use Redux Toolkit with RTK Query for server state
+- **📦 Follow Vue 3 patterns** - Use Composition API, `<script setup>`, and reactive patterns
+- **🎯 Pinia for state management** - Use Pinia stores for application state
 - **🔧 Development workflow** - Separate terminal for `npm run dev` and `npm run type-check -- --watch`
 
 ## 🔍 Code Navigation Guide
@@ -781,7 +844,7 @@ make dev && make status
 
 # 2. 验证服务可访问性
 curl http://localhost:8000/health           # 后端API
-curl http://localhost:3000                  # 前端React
+curl http://localhost:5173                  # 前端Vue.js
 
 # 3. 运行Docker容器测试确保环境正常
 make test && make lint
@@ -795,8 +858,13 @@ make security-check && make coverage
 
 # 6. 前端开发 (并行进行，新终端)
 cd frontend
-npm run dev               # 启动React开发服务器
+npm run dev               # 启动Vue.js开发服务器
 npm run type-check -- --watch  # 实时TypeScript类型检查
+
+# 📍 重要：前端和后端分离开发
+# 前端开发在项目根目录的 frontend/ 中进行
+# 后端开发通过Docker容器 (FootballPrediction/ 目录中的Makefile管理)
+# 前端API请求通过Vite代理转发到后端容器 (见 frontend/vite.config.ts)
 ```
 
 ### 关键服务访问地址
@@ -804,7 +872,8 @@ npm run type-check -- --watch  # 实时TypeScript类型检查
 # 开发环境访问
 http://localhost:8000          # FastAPI后端服务
 http://localhost:8000/docs     # API交互式文档
-http://localhost:3000          # React前端开发服务器
+http://localhost:5173          # Vue.js前端开发服务器
+http://localhost:3000          # 前端备用端口
 http://localhost:80            # 生产前端 (通过Nginx代理)
 
 # 监控和管理界面
@@ -819,7 +888,7 @@ http://localhost:3000          # Grafana - 监控仪表板
 
 ### 项目核心特性总结
 - ✅ **Docker优先开发**: 完整容器化开发环境，确保一致性
-- ✅ **React现代前端**: React 19.2.0 + TypeScript + Redux Toolkit
+- ✅ **Vue.js现代前端**: Vue.js 3.4.0 + TypeScript + Pinia + Tailwind CSS
 - ✅ **企业级后端**: FastAPI + SQLAlchemy + Redis + PostgreSQL
 - ✅ **机器学习流水线**: XGBoost预测模型，MLflow实验跟踪
 - ✅ **完整测试体系**: 385+ 测试用例，29.0%+ 覆盖率

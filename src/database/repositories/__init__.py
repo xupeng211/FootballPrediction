@@ -1,23 +1,20 @@
-from typing import Optional
-
-"""Repository模式实现
-Repository Pattern Implementation.
-
-提供数据访问层的抽象,实现仓储模式以进一步解耦数据访问层.
-Provides data access layer abstraction, implementing repository pattern for further decoupling.
+"""
+数据仓库模块 - 单一入口点
+从 repositories_main.py 导入所有仓库类，避免循环引用和命名冲突
 """
 
-from .base import BaseRepository, T
-from .match import MatchRepository
-from .prediction import PredictionRepository
-from .team_repository import TeamRepository
-from .user import UserRepository
+# 单一真理源：从目录内的 repositories_main.py 文件导入所有仓库类
+from .repositories_main import (
+    BaseRepository,
+    TeamRepository,
+    LeagueRepository,
+    MatchRepository,
+)
 
+# 导出所有仓库类，提供统一的导入接口
 __all__ = [
     "BaseRepository",
-    "T",
-    "MatchRepository",
-    "PredictionRepository",
-    "UserRepository",
     "TeamRepository",
+    "LeagueRepository",
+    "MatchRepository",
 ]
