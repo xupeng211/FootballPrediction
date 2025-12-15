@@ -34,6 +34,9 @@ from src.api.prometheus_metrics import router as prometheus_router
 from src.api.schemas import RootResponse
 from src.api.system import router as system_router
 
+# Phase 3: 新的PredictionService路由
+from src.api.endpoints.prediction import router as prediction_service_router
+
 # Phase 3: 推理服务
 from src.inference import (
     router as inference_router,
@@ -290,6 +293,17 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
             logger.error(f"❌ 推理模型加载失败: {e}")
             logger.warning("⚠️ 推理API将不可用，但其他服务正常运行")
 
+        # Phase 3: 初始化新的PredictionService
+        try:
+            logger.info("🚀 初始化PredictionService...")
+            from src.ml.inference.service import PredictionService
+            prediction_service = PredictionService.get_instance()
+            await prediction_service.initialize()
+            logger.info("✅ PredictionService初始化成功")
+        except Exception as e:
+            logger.error(f"❌ PredictionService初始化失败: {e}")
+            logger.warning("⚠️ 预测服务将不可用，但其他服务正常运行")
+
         logger.info("🚀 足球预测系统启动完成!")
 
     except Exception as e:
@@ -404,6 +418,9 @@ app.include_router(prometheus_router, tags=["监控"])
 
 # Phase 3: 推理服务路由
 app.include_router(inference_router, tags=["推理服务"])
+
+# Phase 3: 新的PredictionService路由
+app.include_router(prediction_service_router, prefix="/api/v1/prediction-service", tags=["PredictionService"])
 
 # 配置OpenAPI
 setup_openapi(app)

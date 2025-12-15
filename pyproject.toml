@@ -19,7 +19,7 @@ line-length = 88
 target-version = "py311"
 
 [tool.ruff.lint]
-# 启用的规则
+# 启用的规则 (企业级标准)
 select = [
     # pycodestyle
     "E",
@@ -33,76 +33,25 @@ select = [
     "SIM",
     # isort
     "I",
+    # PEP8 naming
+    "N",
 ]
 
-# 忽略的规则
+# 忽略的规则 (Phase 2严格模式)
 ignore = [
-    # E402: 模块级导入不在文件顶部 - 对于现有代码暂时忽略
+    # E402: 模块级导入不在文件顶部 - 在ML模块中允许条件导入
     "E402",
-    # F401: 导入但未使用 - 对于大型项目暂时的灵活性
-    "F401",
-    # E501: 行过长 - 由black处理
-    "E501",
-    # B008: 不要在函数参数中调用函数 - 对于FastAPI Depends很常见
+    # B008: 不要在函数参数中调用函数 - FastAPI Dependencies很常见
     "B008",
-    # F821: 未定义名称 - 暂时忽略，避免语法错误影响
-    "F821",
-    # E999: 语法错误 - 暂时忽略，避免影响CI
-    "E999",
-    # I001: 导入顺序问题 - 暂时忽略
-    "I001",
-    # B904: 异常处理中的raise问题 - 暂时忽略
-    "B904",
-    # F841: 局部变量定义但未使用 - 暂时忽略
-    "F841",
-    # SIM105: try-except-pass模式 - 暂时忽略
-    "SIM105",
-    # SIM114: 合并if分支 - 暂时忽略
-    "SIM114",
-    # SIM117: 嵌套with语句 - 暂时忽略
-    "SIM117",
-    # SIM108: 三元操作符建议 - 暂时忽略
-    "SIM108",
-    # SIM102: 嵌套if语句 - 暂时忽略
-    "SIM102",
-    # SIM103: 直接返回条件 - 暂时忽略
-    "SIM103",
-    # UP045: 类型注解 - 暂时忽略
-    "UP045",
-    # UP017: datetime.UTC - 暂时忽略
-    "UP017",
-    # E722: 裸except - 暂时忽略
-    "E722",
-    # F811: 重复定义 - 暂时忽略
-    "F811",
-    # SIM系列: 代码简化建议 - 暂时忽略
-    "SIM110", "SIM118", "SIM212", "SIM102", "SIM103", "SIM117", "SIM108", "SIM114", "SIM105",
-    # UP系列: 现代化建议 - 暂时忽略
-    "UP045", "UP017", "UP006", "UP007", "UP035", "UP015",
-    # B系列: 其他代码风格建议 - 暂时忽略
-    "B027", "B024", "B025", "B007", "B905", "B023",
-    # F系列: 其他函数问题 - 暂时忽略
-    "F403", "F405", "F822",
-    # SIM112: 环境变量大写建议 - 暂时忽略
-    "SIM112",
-    # SIM115: 文件上下文管理器 - 暂时忽略
-    "SIM115",
 ]
 
 # 每个文件允许的未使用导入数量
 unfixable = ["F401"]
 
 [tool.ruff.lint.per-file-ignores]
-# 对关键文件严格要求E402
-"src/api/app.py" = ["E402"]
-"src/database/async_manager.py" = ["E402"]
-"src/services/prediction_service.py" = ["E402"]
-"src/core/prediction_engine.py" = ["E402"]
-"src/tasks/pipeline_tasks.py" = ["E402"]
-
 # 测试文件允许更多灵活性
 "tests/**/*" = [
-    "F401",
+    "F401",  # 导入但未使用
     "F811",  # 重复定义
     "E402",  # 允许测试中的条件导入
 ]
@@ -114,13 +63,15 @@ unfixable = ["F401"]
     "F811",
 ]
 
-# 脚本文件允许灵活性
-"src/scripts/**/*" = ["E402"]
-"src/jobs/**/*" = ["E402"]
+# ML模块允许特定灵活性
+"src/ml/**/*" = [
+    "E402",  # 允许条件导入(根据环境选择ML库)
+    "F401",  # 类型检查时的导入
+]
 
 [tool.ruff.lint.isort]
 known-first-party = ["src"]
-known-third-party = ["fastapi", "pydantic", "sqlalchemy", "pandas", "numpy"]
+known-third-party = ["fastapi", "pydantic", "sqlalchemy", "pandas", "numpy", "sklearn", "xgboost", "mlflow"]
 force-single-line = false
 force-sort-within-sections = true
 split-on-trailing-comma = true
@@ -131,13 +82,44 @@ quote-style = "double"
 # 缩进风格
 indent-style = "space"
 
+[tool.mypy]
+python_version = "3.11"
+strict = true  # 启用严格类型检查
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+strict_equality = true
+
+# 忽略导入错误 (第三方库类型存根)
+ignore_missing_imports = true
+
+# ML模块特定配置
+[[tool.mypy.overrides]]
+module = [
+    "sklearn.*",
+    "xgboost.*",
+    "mlflow.*",
+    "shap.*",
+    "optuna.*",
+    "seaborn.*",
+]
+ignore_missing_imports = true
+
 [tool.pytest.ini_options]
 # Test discovery patterns
 python_files = ["test_*.py", "*_test.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
 
-# Asyncio configuration - 修复 pytest-asyncio 警告和错误
+# Asyncio configuration - ML模块需要
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
 
@@ -147,35 +129,23 @@ addopts = [
     "--tb=short",
     "--strict-markers",
     "--strict-config",
+    "--cov=src",
+    "--cov-report=term-missing",
+    "--cov-report=html",
+    "--cov-fail-under=80",  # Phase 2要求80%覆盖率
 ]
 
-# Markers configuration
+# Markers configuration for ML
 markers = [
     "unit: Unit tests",
     "integration: Integration tests",
     "e2e: End-to-end tests",
-    "slow: Slow running tests",
-    "critical: Critical functionality tests",
-    "regression: Regression tests",
-    "performance: Performance tests",
-    "api: API tests",
-    "domain: Domain layer tests",
-    "business: Business rule tests",
-    "services: Service layer tests",
-    "database: Database tests",
-    "cache: Cache tests",
-    "auth: Authentication tests",
-    "monitoring: Monitoring tests",
-    "streaming: Streaming tests",
-    "collectors: Data collectors tests",
-    "middleware: Middleware tests",
-    "utils: Utility tests",
-    "core: Core module tests",
-    "decorators: Decorator tests",
-    "ml: Machine learning tests",
-    "external_api: Tests requiring external API calls",
-    "docker: Tests requiring Docker containers",
-    "network: Tests requiring network connection"
+    "slow: Slow running tests (>30s)",
+    "ml: Machine learning specific tests",
+    "training: Model training tests",
+    "inference: Model inference tests",
+    "data: Data processing tests",
+    "features: Feature engineering tests",
 ]
 
 # Minimum version requirement
@@ -183,3 +153,53 @@ minversion = "6.0"
 
 # Test paths
 testpaths = ["tests"]
+
+[tool.coverage.run]
+source = ["src"]
+omit = [
+    "*/tests/*",
+    "*/migrations/*",
+    "*/__pycache__/*",
+    "*/venv/*",
+    "*/env/*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if 0:",
+    "if __name__ == .__main__.:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+]
+
+[tool.black]
+line-length = 88
+target-version = ['py311']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+  | migrations
+)/
+'''
+
+# Phase 2 ML 特定配置
+[tool.mlflow]
+# MLflow 实验跟踪配置
+experiment_name = "football-prediction"
+tracking_uri = "http://localhost:5000"
+default_artifact_root = "mlruns"
