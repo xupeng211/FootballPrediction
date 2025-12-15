@@ -136,13 +136,13 @@ teams (
 python scripts/backfill_l2_batch.py --batch-size 50 --delay 3
 
 # 监控面板
-python scripts/monitor_fixed.py
+python scripts/monitor.py
 ```
 
 #### 📈 监控和健康检查
 ```bash
 # L2数据进度监控
-python scripts/monitor_fixed.py
+python scripts/monitor.py
 
 # 数据质量审计
 python scripts/audit_data.py
@@ -333,7 +333,7 @@ make security-check   # 安全扫描
 
 # 数据质量检查
 python scripts/audit_data.py
-python scripts/monitor_fixed.py
+python scripts/monitor.py
 ```
 
 ## 🔍 关键决策记录

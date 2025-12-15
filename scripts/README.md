@@ -9,9 +9,9 @@
   ```
 
 ### 监控与审计
-- **`monitor_fixed.py`** - L2数据进度监控面板
+- **`monitor.py`** - L2数据进度监控面板
   ```bash
-  python scripts/monitor_fixed.py
+  python scripts/monitor.py
   ```
 
 - **`audit_data.py`** - 数据质量审计工具
@@ -61,7 +61,7 @@
 ### 标准工作流
 1. **启动开发环境**: `cd FootballPrediction && make dev`
 2. **运行L2更新**: `python scripts/run_l2_update.py`
-3. **监控进度**: `python scripts/monitor_fixed.py`
+3. **监控进度**: `python scripts/monitor.py`
 4. **审计质量**: `python scripts/audit_data.py`
 
 ### 开发规范
