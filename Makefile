@@ -271,8 +271,9 @@ quality: venv format lint typecheck security complexity ## 完整质量检查
 	@if $(ACTIVATE) && python scripts/quality_checker.py --summary; then \
 		echo "$(GREEN)✅ 完整质量检查通过$(RESET)"; \
 	else \
-		echo "$(YELLOW)⚠️  质量检查发现问题，但不中断CI流程$(RESET)"; \
-		echo "$(YELLOW)   建议稍后修复代码质量问题$(RESET)"; \
+		echo "$(RED)❌ 质量检查失败$(RESET)"; \
+		echo "$(YELLOW)   请修复上述质量问题后重试$(RESET)"; \
+		exit 1; \
 	fi
 
 # -------------------------------
@@ -302,7 +303,7 @@ ci: env-check context quality test coverage ## 完整CI流程
 
 # 临时CI目标，跳过环境检查
 .PHONY: ci-temp
-ci-temp: context quality ## 临时CI流程(跳过环境检查和测试)
+ci-temp: context quality test coverage ## 临时CI流程(跳过环境检查)
 	@echo "$(GREEN)>>> 临时CI检查全部通过 ✅$(RESET)"
 	@echo "$(GREEN)>>> 代码质量验证完成，可以安全推送$(RESET)"
 
