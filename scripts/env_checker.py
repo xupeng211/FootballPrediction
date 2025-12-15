@@ -40,7 +40,12 @@ class EnvironmentChecker:
         self.project_root = Path(project_root).resolve()
         self.check_results: Dict[str, Any] = {}
         # 设置日志器
-        self.logger = Logger.setup_logger("env_checker", "INFO")
+        try:
+            self.logger = Logger.setup_logger("env_checker", "INFO")
+        except (NameError, AttributeError):
+            # 如果Logger不可用，使用标准logging
+            logging.basicConfig(level=logging.INFO)
+            self.logger = logging.getLogger("env_checker")
 
     def run_all_checks(self) -> Dict[str, Any]:
         """
