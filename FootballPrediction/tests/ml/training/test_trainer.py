@@ -53,23 +53,19 @@ class TestModelTrainer:
         self, mock_data_loader, mock_feature_transformer, sample_model_params
     ):
         """测试ModelTrainer类的接口定义。"""
-        # 尝试导入ModelTrainer
         try:
             from src.ml.training.trainer import ModelTrainer
         except ImportError:
             from FootballPrediction.src.ml.training.trainer import ModelTrainer
 
-        # 验证类存在
         assert ModelTrainer is not None
-
-        # 验证可以实例化
+        
         trainer = ModelTrainer(
             data_loader=mock_data_loader,
             feature_transformers=[mock_feature_transformer],
             model_params=sample_model_params,
         )
 
-        # 验证接口方法存在
         assert hasattr(trainer, "run")
         assert hasattr(trainer, "_split_data")
         assert hasattr(trainer, "get_feature_importance")
@@ -79,7 +75,6 @@ class TestModelTrainer:
         self, mock_data_loader, mock_feature_transformer, sample_model_params
     ):
         """测试训练管道的完整流程调用。"""
-        # 尝试导入ModelTrainer
         try:
             from src.ml.training.trainer import ModelTrainer
         except ImportError:
@@ -91,10 +86,8 @@ class TestModelTrainer:
             model_params=sample_model_params,
         )
 
-        # 测试训练管道
         metrics = await trainer.run(test_size=0.2)
 
-        # 验证返回的指标格式
         assert "accuracy" in metrics
         assert "train_samples" in metrics
         assert "test_samples" in metrics
@@ -104,7 +97,6 @@ class TestModelTrainer:
         self, mock_data_loader, mock_feature_transformer, sample_model_params
     ):
         """测试特征重要性接口。"""
-        # 尝试导入ModelTrainer
         try:
             from src.ml.training.trainer import ModelTrainer
         except ImportError:
@@ -116,14 +108,11 @@ class TestModelTrainer:
             model_params=sample_model_params,
         )
 
-        # 验证方法存在
         assert hasattr(trainer, "get_feature_importance")
 
-        # 训练前应该返回None
         importance = trainer.get_feature_importance()
         assert importance is None
 
-        # 训练后应该返回DataFrame
         await trainer.run(test_size=0.2)
         importance = trainer.get_feature_importance()
         assert importance is not None
