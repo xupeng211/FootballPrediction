@@ -1,0 +1,110 @@
+# Service Mesh Configuration
+# 服务网格配置（Istio）
+# 生成时间: 2025-10-26 20:57:41
+
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: footballprediction-gateway
+  namespace: footballprediction
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+  - port:
+      number: 80
+      name: http
+      protocol: HTTP
+    hosts:
+    - footballprediction.example.com
+  - port:
+      number: 443
+      name: https
+      protocol: HTTPS
+    tls:
+      mode: SIMPLE
+      credentialName: footballprediction-tls
+    hosts:
+    - footballprediction.example.com
+
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: footballprediction-vs
+  namespace: footballprediction
+spec:
+  hosts:
+  - footballprediction.example.com
+  gateways:
+  - footballprediction-gateway
+  http:
+  - match:
+    - uri:
+        prefix: /api/v1/predictions
+    route:
+    - destination:
+        host: prediction-service
+        port:
+          number: 8001
+    timeout: 30s
+    retries:
+      attempts: 3
+      perTryTimeout: 10s
+  - match:
+    - uri:
+        prefix: /api/v1/data
+    route:
+    - destination:
+        host: data-collection-service
+        port:
+          number: 8002
+    timeout: 30s
+  - match:
+    - uri:
+        prefix: /api/v1/users
+    route:
+    - destination:
+        host: user-management-service
+        port:
+          number: 8003
+    timeout: 30s
+  - match:
+    - uri:
+        prefix: /api/v1/analytics
+    route:
+    - destination:
+        host: analytics-service
+        port:
+          number: 8004
+    timeout: 30s
+  - match:
+    - uri:
+        prefix: /
+    route:
+    - destination:
+        host: api-gateway
+        port:
+          number: 8000
+
+---
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: footballprediction-dr
+  namespace: footballprediction
+spec:
+  host: prediction-service
+  trafficPolicy:
+    loadBalancer:
+      simple: LEAST_CONN
+    connectionPool:
+      tcp:
+        maxConnections: 100
+      http:
+        http1MaxPendingRequests: 50
+        maxRequestsPerConnection: 10
+    circuitBreaker:
+      consecutiveErrors: 3
+      interval: 30s
+      baseEjectionTime: 30s

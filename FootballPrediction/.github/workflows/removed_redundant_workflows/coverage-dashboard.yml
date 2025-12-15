@@ -1,0 +1,32 @@
+name: Coverage Dashboard
+
+on:
+  schedule:
+    - cron: "0 2 * * 5"   # 每周五凌晨 2 点运行
+  workflow_dispatch:       # 允许手动触发
+
+jobs:
+  dashboard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest pytest-cov coverage
+      - name: Run tests and generate coverage.json
+        run: |
+          pytest --cov=. --cov-report=json:coverage.json
+      - name: Generate Coverage Dashboard
+        run: |
+          python scripts/coverage_dashboard.py
+      - name: Commit and push dashboard
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+          git add docs/_reports/COVERAGE_DASHBOARD.md coverage.json
+          git commit -m "chore(ci): update coverage dashboard [skip ci]" || echo "No changes to commit"
+          git push

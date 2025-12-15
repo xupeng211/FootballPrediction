@@ -1,0 +1,19 @@
+{
+  "timestamp": "2025-11-03T23:17:45.726266",
+  "github_sha": "unknown",
+  "github_ref": "unknown",
+  "github_event": "unknown",
+  "success": false,
+  "execution_time": 3.42085337638855,
+  "test_results": {
+    "unit": {
+      "success": false,
+      "execution_time": 3.4208247661590576,
+      "output": "tests/integration/test_api_schemas_comprehensive.py\nERROR tests/integration/test_betting_ev_strategy.py - NameError: name 'Bettin...\nERROR tests/integration/test_ci_cd_basic.py\nERROR tests/integration/test_core_functionality.py\nERROR tests/integration/test_database_phase2_simple.py\nERROR tests/integration/test_domain_prediction_comprehensive.py\nERROR tests/integration/test_ml_pipeline.py\nERROR tests/integration/test_oddsportal_integration.py\nERROR tests/integration/test_oddsportal_scraper.py\nERROR tests/integration/test_utils_dict_comprehensive.py\nERROR tests/unit/services/test_monitoring_service.py\nERROR tests/unit/services/test_prediction_service.py\nERROR tests/unit/test_api_endpoints.py\nERROR tests/unit/test_config.backup20251103_193028.py\nERROR tests/unit/test_core_logger_enhanced.py\nERROR tests/unit/test_domain_models.py\n!!!!!!!!!!!!!!!!!!! Interrupted: 16 errors during collection !!!!!!!!!!!!!!!!!!!\n================ 1 skipped, 1338 deselected, 16 errors in 2.36s ================\n",
+      "error": ""
+    }
+  },
+  "coverage_results": {},
+  "quality_results": {},
+  "performance_results": {}
+}

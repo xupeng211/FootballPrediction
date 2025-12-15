@@ -1,0 +1,371 @@
+name: 'Quality Gate Integration'
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:  # 允许手动触发
+
+env:
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  # Phase G Week 3 质量门禁工作流
+  phase-g-week3-quality:
+    name: 'Phase G Week 3 质量门禁'
+    runs-on: ubuntu-latest
+    outputs:
+      syntax-health: ${{ steps.quality-gate.outputs.syntax-health }}
+      test-coverage: ${{ steps.quality-gate.outputs.test-coverage }}
+      quality-status: ${{ steps.quality-gate.outputs.quality-status }}
+
+    steps:
+    - name: 'Checkout 代码'
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # 获取完整历史记录
+
+    - name: '设置 Python ${{ env.PYTHON_VERSION }}'
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: '缓存 pip 依赖'
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+
+    - name: '安装依赖'
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest pytest-cov ruff mypy bandit safety
+
+    - name: 'Phase G Week 3 质量门禁检查'
+      id: quality-gate
+      run: |
+        python3 scripts/week3_ci_quality_gate.py
+
+        # 读取质量报告并设置输出
+        python3 -c "
+import json
+import os
+
+# 查找最新的质量报告
+reports = [f for f in os.listdir('.') if f.startswith('ci_quality_gate_report_') and f.endswith('.json')]
+if reports:
+            latest = sorted(reports)[-1]
+            with open(latest, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+
+            syntax_health = data['checks']['syntax_health']['details']['health_percentage']
+            test_coverage = data.get('checks', {}).get('test_coverage', {}).get('details', {}).get('total_coverage', 0)
+            quality_status = data['overall_status']
+
+            print(f'syntax-health={syntax_health}')
+            print(f'test-coverage={test_coverage}')
+            print(f'quality-status={quality_status}')
+
+            # 设置GitHub Actions输出
+            with open(os.environ['GITHUB_OUTPUT'], 'a') as f_out:
+                f_out.write(f'syntax-health={syntax_health}\\n')
+                f_out.write(f'test-coverage={test_coverage}\\n')
+                f_out.write(f'quality-status={quality_status}\\n')
+        "
+
+    - name: '上传质量报告'
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: phase-g-week3-quality-report
+        path: ci_quality_gate_report_*.json
+        retention-days: 30
+
+    - name: '语法健康度检查失败处理'
+      if: steps.quality-gate.outputs.quality-status == 'failed'
+      run: |
+        echo "❌ Phase G Week 3 质量门禁检查失败"
+        echo "📊 语法健康度: ${{ steps.quality-gate.outputs.syntax-health }}%"
+        echo "📈 测试覆盖率: ${{ steps.quality-gate.outputs.test-coverage }}%"
+        exit 1
+
+  # 测试生成和覆盖率检查
+  test-generation:
+    name: '测试生成和覆盖率'
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: 'Checkout 代码'
+      uses: actions/checkout@v4
+
+    - name: '设置 Python ${{ env.PYTHON_VERSION }}'
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: '安装依赖'
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest pytest-cov
+
+    - name: 'Phase G Week 3 测试生成'
+      run: |
+        python3 scripts/week3_test_coverage_monitor.py
+
+    - name: '运行测试套件'
+      run: |
+        pytest tests/unit/ -v --tb=short --maxfail=5 || true
+
+    - name: '上传测试报告'
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: test-generation-report
+        path: week3_test_coverage_report_*.json
+        retention-days: 30
+
+  # 代码质量检查
+  code-quality:
+    name: '代码质量检查'
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: 'Checkout 代码'
+      uses: actions/checkout@v4
+
+    - name: '设置 Python ${{ env.PYTHON_VERSION }}'
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: '安装依赖'
+      run: |
+        python -m pip install --upgrade pip
+        pip install ruff mypy
+
+    - name: 'Ruff 代码检查'
+      run: |
+        ruff check src/ --output-format=json > ruff-report.json || true
+        ruff format --check src/ || true
+
+    - name: 'MyPy 类型检查'
+      run: |
+        mypy src/ --ignore-missing-imports > mypy-report.txt || true
+
+    - name: '上传代码质量报告'
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: code-quality-reports
+        path: |
+          ruff-report.json
+          mypy-report.txt
+        retention-days: 30
+
+  # 安全扫描
+  security-scan:
+    name: '安全扫描'
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: 'Checkout 代码'
+      uses: actions/checkout@v4
+
+    - name: '设置 Python ${{ env.PYTHON_VERSION }}'
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: '安装安全工具'
+      run: |
+        python -m pip install --upgrade pip
+        pip install bandit safety
+
+    - name: 'Bandit 安全扫描'
+      run: |
+        bandit -r src/ -f json -o bandit-report.json || true
+
+    - name: 'Safety 依赖检查'
+      run: |
+        safety check --json --output safety-report.json || true
+
+    - name: '上传安全报告'
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: security-reports
+        path: |
+          bandit-report.json
+          safety-report.json
+        retention-days: 30
+
+  # 质量报告汇总
+  quality-summary:
+    name: '质量报告汇总'
+    runs-on: ubuntu-latest
+    needs: [phase-g-week3-quality, test-generation, code-quality, security-scan]
+    if: always()
+
+    steps:
+    - name: 'Checkout 代码'
+      uses: actions/checkout@v4
+
+    - name: '下载所有报告'
+      uses: actions/download-artifact@v3
+
+    - name: '生成综合质量报告'
+      run: |
+        python3 -c "
+import json
+import os
+from datetime import datetime
+from pathlib import Path
+
+# 收集所有报告
+reports = {}
+report_paths = [
+    'phase-g-week3-quality-report',
+    'test-generation-report',
+    'code-quality-reports',
+    'security-reports'
+]
+
+for path in report_paths:
+    if os.path.exists(path):
+        for file in Path(path).glob('*.json'):
+            try:
+                with open(file, 'r', encoding='utf-8') as f:
+                    reports[file.name] = json.load(f)
+            except Exception as e:
+                print(f'Error reading {file}: {e}')
+
+# 生成综合报告
+summary = {
+    'timestamp': datetime.now().isoformat(),
+    'workflow_run_id': '${{ github.run_id }}',
+    'commit_sha': '${{ github.sha }}',
+    'branch': '${{ github.ref_name }}',
+    'reports_collected': len(reports),
+    'job_results': {
+        'phase_g_week3_quality': '${{ needs.phase-g-week3-quality.result }}',
+        'test_generation': '${{ needs.test-generation.result }}',
+        'code_quality': '${{ needs.code-quality.result }}',
+        'security_scan': '${{ needs.security-scan.result }}'
+    }
+}
+
+# 提取关键指标
+if 'ci_quality_gate_report.json' in reports:
+    qg = reports['ci_quality_gate_report.json']
+    summary['quality_gate'] = {
+        'overall_status': qg.get('overall_status', 'unknown'),
+        'syntax_health': qg.get('checks', {}).get('syntax_health', {}).get('details', {}).get('health_percentage', 0),
+        'summary': qg.get('summary', {})
+    }
+
+if 'week3_test_coverage_report.json' in reports:
+    tc = reports['week3_test_coverage_report.json']
+    summary['test_coverage'] = {
+        'test_files_created': tc.get('test_files_created', 0),
+        'total_tests': tc.get('total_tests', 0),
+        'recommendations_count': len(tc.get('recommendations', []))
+    }
+
+# 保存综合报告
+with open('phase_g_week3_comprehensive_quality_report.json', 'w', encoding='utf-8') as f:
+    json.dump(summary, f, indent=2, ensure_ascii=False)
+
+print('📊 Phase G Week 3 综合质量报告生成完成')
+print(f'📋 收集报告数: {summary[\"reports_collected\"]}')
+print(f'🎯 质量门禁状态: {summary.get(\"quality_gate\", {}).get(\"overall_status\", \"unknown\")}')
+print(f'📈 语法健康度: {summary.get(\"quality_gate\", {}).get(\"syntax_health\", 0)}%')
+print(f'🧪 测试文件数: {summary.get(\"test_coverage\", {}).get(\"test_files_created\", 0)}')
+"
+
+    - name: '上传综合质量报告'
+      uses: actions/upload-artifact@v3
+      with:
+        name: comprehensive-quality-report
+        path: phase_g_week3_comprehensive_quality_report.json
+        retention-days: 90
+
+    - name: 'PR 质量报告评论'
+      uses: actions/github-script@v6
+      if: github.event_name == 'pull_request'
+      with:
+        script: |
+          const fs = require('fs');
+
+          if (fs.existsSync('comprehensive-quality-report/phase_g_week3_comprehensive_quality_report.json')) {
+            const report = JSON.parse(fs.readFileSync('comprehensive-quality-report/phase_g_week3_comprehensive_quality_report.json', 'utf8'));
+
+            const comment = `
+## 🚨 Phase G Week 3 质量门禁报告
+
+**执行时间**: ${report.timestamp}
+**工作流运行**: #${report.workflow_run_id}
+**提交SHA**: \`${report.commit_sha}\`
+
+### 📊 质量检查结果
+
+| 检查项 | 状态 | 详情 |
+|--------|------|------|
+| 质量门禁 | ${report.job_results.phase_g_week3_quality} | ${report.quality_gate?.overall_status?.toUpperCase() || 'N/A'} |
+| 测试生成 | ${report.job_results.test_generation} | ${report.test_coverage?.test_files_created || 0} 个测试文件 |
+| 代码质量 | ${report.job_results.code_quality} | 代码风格和类型检查 |
+| 安全扫描 | ${report.job_results.security_scan} | 安全漏洞扫描 |
+
+### 📈 关键指标
+
+- **语法健康度**: ${report.quality_gate?.syntax_health || 0}%
+- **测试文件创建**: ${report.test_coverage?.test_files_created || 0} 个
+- **收集报告数**: ${report.reports_collected} 个
+
+### 🎯 Phase G Week 3 状态
+
+${report.quality_gate?.overall_status === 'passed' ?
+  '✅ **质量门禁通过** - 代码质量符合 Phase G Week 3 标准' :
+  '❌ **质量门禁失败** - 需要修复质量问题'}
+
+---
+📅 报告生成: ${report.timestamp}
+🔧 Phase G Week 3 质量门禁系统
+📋 [查看详细报告](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            `;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+          }
+
+    - name: '更新 Commit Status'
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const fs = require('fs');
+
+          if (fs.existsSync('comprehensive-quality-report/phase_g_week3_comprehensive_quality_report.json')) {
+            const report = JSON.parse(fs.readFileSync('comprehensive-quality-report/phase_g_week3_comprehensive_quality_report.json', 'utf8'));
+
+            const qualityStatus = report.quality_gate?.overall_status || 'unknown';
+            const syntaxHealth = report.quality_gate?.syntax_health || 0;
+
+            // 创建 commit status
+            github.rest.repos.createCommitStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha: context.sha,
+              state: qualityStatus === 'passed' ? 'success' : 'failure',
+              target_url: \`https://github.com/\${context.repo.owner}/\${context.repo.repo}/actions/runs/\${context.runId}\`,
+              description: \`Phase G Week 3: \${qualityStatus.toUpperCase()} (语法健康度: \${syntaxHealth}%)\`,
+              context: 'phase-g-week-3/quality-gate'
+            });
+          }

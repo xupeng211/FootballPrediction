@@ -1,0 +1,361 @@
+# 基于Issue #98智能质量修复方法论和Issue #94覆盖率提升实践的CI/CD流水线
+# 为Issue #89 CI/CD优化项目提供企业级自动化支持
+
+name: 🛡️ Automated Quality Gate - Issue #89
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+    inputs:
+      run_coverage:
+        description: 'Run full coverage analysis'
+        required: false
+        default: false
+        type: boolean
+
+env:
+  PYTHON_VERSION: "3.11"
+  NODE_VERSION: "18"
+
+jobs:
+  # 质量门禁检查 - 基于Issue #98智能质量修复方法论
+  quality-gate:
+    runs-on: ubuntu-latest
+    name: 🛡️ Quality Gate Check
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🐍 Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: 📦 Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest pytest-cov ruff mypy bandit
+          if [ -f requirements/requirements.lock ]; then pip install -r requirements/requirements.lock; fi
+
+      - name: 🔧 Run syntax check (Issue #98 methodology)
+        run: |
+          echo "🔧 基于Issue #98执行语法检查..."
+          python3 scripts/smart_quality_fixer.py --syntax-only || echo "语法检查完成"
+
+      - name: 🛡️ Run quality guardian (Issue #98 methodology)
+        run: |
+          echo "🛡️ 基于Issue #98执行质量守护检查..."
+          python3 scripts/quality_guardian.py --check-only
+
+      - name: 🚀 Run automated quality gate (Issue #89 Phase 1)
+        run: |
+          echo "🚀 运行Issue #89自动化质量门禁..."
+          python3 scripts/automated_quality_gate.py --save-report
+
+      - name: 📊 Upload quality reports
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: quality-reports-${{ github.run_number }}
+          path: |
+            ci-reports/
+            quality-reports/
+          retention-days: 30
+
+      - name: 🎯 Gate status evaluation
+        run: |
+          echo "🎯 评估质量门禁状态..."
+
+          # 检查最新报告
+          LATEST_REPORT=$(ls -t ci-reports/quality_gate_report_*.json | head -1)
+          if [ -f "$LATEST_REPORT" ]; then
+            GATE_STATUS=$(python3 -c "
+import json
+import sys
+try:
+    with open('$LATEST_REPORT', 'r') as f:
+        report = json.load(f)
+    print(report['gate_status'])
+except:
+    print('unknown')
+    sys.exit(1)
+")
+            echo "🎯 质量门禁状态: $GATE_STATUS"
+
+            if [ "$GATE_STATUS" = "pass" ]; then
+              echo "✅ 质量门禁通过"
+            elif [ "$GATE_STATUS" = "warning" ]; then
+              echo "⚠️ 质量门禁警告 - 可继续但需关注"
+            else
+              echo "❌ 质量门禁失败"
+              exit 1
+            fi
+          else
+            echo "❌ 未找到质量报告"
+            exit 1
+          fi
+
+  # 测试执行和覆盖率检查 - 支持Issue #94覆盖率提升计划
+  test-coverage:
+    runs-on: ubuntu-latest
+    name: 🧪 Test & Coverage Analysis
+    needs: quality-gate
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🐍 Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: 📦 Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest pytest-cov pytest-xdist
+          if [ -f requirements/requirements.lock ]; then pip install -r requirements/requirements.lock; fi
+
+      - name: 🧪 Run utils module tests (Issue #94 priority)
+        run: |
+          echo "🧪 执行Issue #94优先的utils模块测试..."
+          python -m pytest tests/unit/utils/ \
+            --cov=src/utils \
+            --cov-report=xml \
+            --cov-report=html \
+            --cov-report=term-missing \
+            --tb=short \
+            -v \
+            --maxfail=20
+
+      - name: 📊 Upload coverage reports
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: coverage-reports-${{ github.run_number }}
+          path: |
+            htmlcov/
+            coverage.xml
+          retention-days: 30
+
+      - name: 📈 Coverage summary (Issue #94 tracking)
+        run: |
+          echo "📈 Issue #94覆盖率提升进展报告..."
+
+          # 解析覆盖率数据
+          if [ -f htmlcov/index.html ]; then
+            COVERAGE=$(grep -o '[0-9]*\.[0-9]%' htmlcov/index.html | head -1)
+            echo "📊 当前覆盖率: $COVERAGE"
+            echo "🎯 Issue #94目标: 15%+ (当前阶段)"
+
+            # 检查是否达到目标
+            COVERAGE_NUM=$(echo $COVERAGE | sed 's/%//')
+            if (( $(echo "$COVERAGE_NUM >= 15" | bc -l) )); then
+              echo "🎉 恭喜！已达到Issue #94 15%覆盖率目标！"
+            else
+              echo "📈 继续推进Issue #94覆盖率提升计划"
+              echo "🎯 当前距离15%目标还需提升: $(echo "15 - $COVERAGE_NUM" | bc -l)%"
+            fi
+          fi
+
+  # 代码质量检查
+  code-quality:
+    runs-on: ubuntu-latest
+    name: 🔍 Code Quality Analysis
+    needs: quality-gate
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🐍 Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: 📦 Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install ruff mypy bandit
+          if [ -f requirements/requirements.lock ]; then pip install -r requirements/requirements.lock; fi
+
+      - name: 🔍 Run Ruff linting (Issue #98 methodology)
+        run: |
+          echo "🔍 基于Issue #98执行Ruff代码检查..."
+          ruff check src/ --output-format=github --output-file=ruff-results.json
+
+      - name: 🔍 Run MyPy type checking
+        run: |
+          echo "🔍 执行MyPy类型检查..."
+          mypy src/ --json-report mypy-results.json || echo "MyPy检查完成"
+
+      - name: 🔍 Run security scan
+        run: |
+          echo "🔍 执行安全扫描..."
+          bandit -r src/ -f json -o bandit-results.json || echo "安全扫描完成"
+
+      - name: 📊 Upload quality reports
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: code-quality-reports-${{ github.run_number }}
+          path: |
+            ruff-results.json
+            mypy-results.json
+            bandit-results.json
+          retention-days: 30
+
+  # Issue #94覆盖率提升专项任务
+  coverage-boost:
+    runs-on: ubuntu-latest
+    name: 🚀 Coverage Boost Task
+    needs: test-coverage
+    if: github.event.inputs.run_coverage == 'true'
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🐍 Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: 📦 Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest pytest-cov pytest-xdist
+          if [ -f requirements/requirements.lock ]; then pip install -r requirements/requirements.lock; fi
+
+      - name: 🚀 Run comprehensive coverage analysis
+        run: |
+          echo "🚀 执行Issue #94全面覆盖率分析..."
+
+          # 运行更多模块测试
+          python -m pytest tests/unit/ tests/integration/ \
+            --cov=src/ \
+            --cov-report=xml \
+            --cov-report=html \
+            --cov-report=term-missing \
+            --tb=short \
+            -x \
+            --maxfail=50 \
+            --timeout=300
+
+      - name: 📊 Upload comprehensive coverage
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: comprehensive-coverage-${{ github.run_number }}
+          path: htmlcov/
+          retention-days: 7
+
+  # 汇总报告
+  summary:
+    runs-on: ubuntu-latest
+    name: 📋 Build Summary
+    needs: [quality-gate, test-coverage, code-quality]
+    if: always()
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 📊 Download all artifacts
+        uses: actions/download-artifact@v3
+        with:
+          path: artifacts/
+
+      - name: 📋 Generate summary report
+        run: |
+          echo "# 🛡️ Issue #89 CI/CD Pipeline Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## 📊 Pipeline Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # 质量门禁状态
+          if [ -f artifacts/quality-reports-*/quality_gate_report_*.json ]; then
+            echo "### 🛡️ Quality Gate" >> $GITHUB_STEP_SUMMARY
+            python3 -c "
+import json
+import glob
+latest_report = sorted(glob.glob('artifacts/quality-reports-*/quality_gate_report_*.json'))[-1]
+if latest_report:
+    with open(latest_report, 'r') as f:
+        report = json.load(f)
+
+    status = report['gate_status']
+    summary = report['summary']
+
+    status_emoji = {
+        'pass': '✅',
+        'warning': '⚠️',
+        'fail': '❌',
+        'error': '🚨',
+        'timeout': '⏰'
+    }
+
+    print(f'- **Status**: {status_emoji.get(status, \"❓\")} {status.upper()}')
+    print(f'- **Checks**: {summary[\"total_checks\"]} total')
+    print(f'- **Passed**: {summary[\"passed\"]} ✅')
+    print(f'- **Failed**: {summary[\"failed\"]} ❌')
+    print(f'- **Errors**: {summary[\"errors\"]} 🚨')
+    print(f'- **Timeouts**: {summary[\"timeouts\"]} ⏰')
+
+    if report.get('metrics'):
+        print('')
+        print('### 📈 Key Metrics')
+        for metric, value in report['metrics'].items():
+            if isinstance(value, float):
+                print(f'- **{metric}**: {value:.1f}')
+            else:
+                print(f'- **{metric}**: {value}')
+" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          # 覆盖率信息
+          if [ -f artifacts/coverage-reports-*/htmlcov/index.html ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### 📊 Coverage Analysis" >> $GITHUB_STEP_SUMMARY
+            python3 -c "
+import glob
+import re
+latest_html = sorted(glob.glob('artifacts/coverage-reports-*/htmlcov/index.html'))[-1]
+if latest_html:
+    with open(latest_html, 'r') as f:
+        content = f.read()
+
+    # 查找覆盖率百分比
+    match = re.search(r'([0-9]+\.[0-9]+)%', content)
+    if match:
+        coverage = match.group(1)
+        print(f'- **Current Coverage**: {coverage} 📊')
+        print(f'- **Issue #94 Target**: 15%+ 🎯')
+
+        # 检查是否达到目标
+        coverage_num = float(coverage)
+        if coverage_num >= 15:
+            print('- **Status**: 🎉 **TARGET ACHIEVED!**')
+        else:
+            needed = 15 - coverage_num
+            print(f'- **Gap to Target**: {needed:.1f}% 📈')
+" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          # 推荐行动
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🚀 Next Steps (Issue #94 & #89)" >> $GITHUB_STEP_SUMMARY
+          echo "- Continue Issue #94 coverage boost plan" >> $GITHUB_STEP_SUMMARY
+          echo "- Advance Issue #89 Phase 2 optimizations" >> $GITHUB_STEP_SUMMARY
+          echo "- Apply Issue #98 methodology for improvements" >> $GITHUB_STEP_SUMMARY
+          echo "- Monitor quality trends and adjust strategies" >> $GITHUB_STEP_SUMMARY
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "*Report generated by Issue #89 CI/CD Pipeline*" >> $GITHUB_STEP_SUMMARY
+          echo "*Based on Issue #98 quality methodology*" >> $GITHUB_STEP_SUMMARY
+          echo "*Supporting Issue #94 coverage enhancement*" >> $GITHUB_STEP_SUMMARY

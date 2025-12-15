@@ -1,0 +1,71 @@
+# CI/CD MyPy配置 (优化版)
+name: 🔍 MyPy Type Check (Optimized)
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+env:
+  PYTHON_VERSION: '3.11'
+  MYPY_CACHE_DIR: '.mypy_cache'
+
+jobs:
+  mypy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: 📥 Checkout代码
+        uses: actions/checkout@v4
+
+      - name: 🐍 设置Python环境
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: 💾 缓存MyPy结果
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.MYPY_CACHE_DIR }}
+          key: ${{ runner.os }}-mypy-${{ hashFiles('**/mypy_*.ini', '**/src/**') }}
+          restore-keys: |
+            ${{ runner.os }}-mypy-
+            ${{ runner.os }}-mypy-${{ hashFiles('**/mypy_*.ini') }}
+
+      - name: 📦 安装依赖
+        run: |
+          pip install mypy
+          pip install -r requirements/requirements.lock
+
+      - name: 🔍 运行MyPy类型检查
+        run: |
+          echo "🔍 开始MyPy类型检查..."
+          mypy src/ \
+            --config-file mypy_minimum.ini \
+            --no-error-summary \
+            --cache-dir ${{ env.MYPY_CACHE_DIR }} \
+            --show-error-codes \
+            --show-column-numbers
+          echo "✅ MyPy检查完成"
+
+      - name: 📊 生成MyPy报告
+        if: failure()
+        run: |
+          mypy src/ \
+            --config-file mypy_minimum.ini \
+            --cache-dir ${{ env.MYPY_CACHE_DIR }} \
+            --html-report mypy-report \
+            --junit-xml mypy-report.xml
+          echo "📋 MyPy报告已生成"
+
+      - name: 📤 上传MyPy报告
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: mypy-report
+          path: |
+            mypy-report/
+            mypy-report.xml
+          retention-days: 7

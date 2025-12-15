@@ -1,0 +1,38 @@
+{
+  "version": "2.1",
+  "last_updated": "2025-10-24T02:12:30.000000",
+  "standards": {
+    "coverage": {
+      "minimum": 20.0,
+      "target": 25.0,
+      "excellent": 40.0,
+      "critical_files": {
+        "src/api/schemas.py": 100.0,
+        "src/api/cqrs.py": 80.0,
+        "src/core/exceptions.py": 90.0,
+        "src/models/": 60.0
+      }
+    },
+    "tests": {
+      "min_pass_rate": 85.0,
+      "max_failures": 5,
+      "min_total": 100
+    },
+    "code_quality": {
+      "max_ruff_errors": 10,
+      "max_mypy_errors": 10,
+      "format_required": true
+    },
+    "security": {
+      "max_vulnerabilities": 2,
+      "max_secrets": 3
+    }
+  },
+  "applied_optimizations": {
+    "ci_quality_gate": true,
+    "health_monitor": true,
+    "coverage_threshold_adjusted": true,
+    "error_thresholds_optimized": true
+  },
+  "next_review_date": "2025-10-31T00:00:00"
+}

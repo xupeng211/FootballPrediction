@@ -1,0 +1,207 @@
+site_name: 足球预测系统文档
+site_description: 基于现代Python技术栈的足球预测系统完整文档
+site_author: Football Prediction Team
+site_url: https://football-prediction-docs.example.com
+
+# Repository
+repo_name: football-prediction/docs
+repo_url: https://github.com/your-org/football-prediction
+edit_uri: edit/main/docs/
+
+# Copyright
+copyright: Copyright &copy; 2025 Football Prediction Team
+
+# Configuration
+theme:
+  name: material
+  language: zh
+  custom_dir: docs/overrides
+
+  # Theme features
+  features:
+    - announce.dismiss
+    - content.action.edit
+    - content.action.view
+    - content.code.annotate
+    - content.code.copy
+    - content.code.select
+    - content.tabs.link
+    - content.tooltips
+    - header.autohide
+    - navigation.expand
+    - navigation.footer
+    - navigation.indexes
+    - navigation.instant
+    - navigation.instant.prefetch
+    - navigation.instant.progress
+    - navigation.prune
+    - navigation.sections
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.top
+    - navigation.tracking
+    - search.highlight
+    - search.share
+    - search.suggest
+    - toc.follow
+    - toc.integrate
+
+  # Theme palette
+  palette:
+    # Palette toggle for automatic mode
+    - media: "(prefers-color-scheme)"
+      scheme: default
+      primary: blue
+      accent: blue
+      toggle:
+        icon: material/brightness-auto
+        name: 切换至深色模式
+
+    # Palette toggle for light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: blue
+      accent: blue
+      toggle:
+        icon: material/brightness-7
+        name: 切换至深色模式
+
+    # Palette toggle for dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: blue
+      accent: blue
+      toggle:
+        icon: material/brightness-4
+        name: 切换至浅色模式
+
+  # Font settings
+  font:
+    text: Roboto
+    code: Roboto Mono
+
+  # Logo and favicon
+  logo: assets/logo.png
+  favicon: assets/favicon.png
+
+# Plugins
+plugins:
+  - search:
+      separator: '[\s\-,:!=\[\]()"`/]+|\.(?!\d)|&[lg]t;|(?!\b)(?=[A-Z][a-z])'
+      lang:
+        - zh
+        - en
+
+# Customization
+extra:
+  generator: false
+
+# Extensions
+markdown_extensions:
+  - abbr
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - toc:
+      permalink: true
+      title: 目录
+  - tables
+  - pymdownx.arithmatex
+  - pymdownx.betterem
+  - pymdownx.caret
+  - pymdownx.details
+  - pymdownx.emoji
+  - pymdownx.highlight
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.magiclink
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - pymdownx.tabbed
+  - pymdownx.tasklist
+  - pymdownx.tilde
+
+# Navigation
+nav:
+  - 首页: index.md
+  - 快速开始:
+    - 快速入门: how-to/QUICKSTART_TOOLS.md
+    - 完整演示: how-to/COMPLETE_DEMO.md
+    - 开发环境: how-to/DEVELOPMENT_SETUP.md
+    - 部署指南: how-to/PRODUCTION_DEPLOYMENT_GUIDE.md
+    - 故障排除: how-to/TROUBLESHOOTING_GUIDE.md
+  - 架构设计:
+    - 系统架构: architecture/ARCHITECTURE.md
+    - 数据库设计: architecture/DATABASE_DESIGN.md
+    - 缓存设计: architecture/CACHING_IMPLEMENTATION_DESIGN.md
+    - 重试机制: architecture/RETRY_MECHANISM_DESIGN.md
+    - 架构改进: architecture/ARCHITECTURE_IMPROVEMENTS.md
+  - API参考:
+    - API概览: reference/API_REFERENCE.md
+    - API使用示例: reference/API_USAGE_EXAMPLES.md
+    - API端点详情: reference/API_ENDPOINTS.md
+    - 开发指南: reference/DEVELOPMENT_GUIDE.md
+    - 数据库架构: reference/DATABASE_SCHEMA.md
+    - 术语表: reference/glossary.md
+  - 测试指南:
+    - 测试策略: testing/TEST_IMPROVEMENT_GUIDE.md
+    - 测试策略总览: testing/TESTING_STRATEGY.md
+    - CI Guardian: testing/CI_GUARDIAN_GUIDE.md
+    - API测试: testing/API_TESTING.md
+    - 集成测试: testing/INTEGRATION_TESTING.md
+    - 性能测试: testing/performance_tests.md
+    - 测试用例: testing/examples.md
+  - 运维部署:
+    - 生产就绪: ops/PRODUCTION_READINESS_PLAN.md
+    - 监控系统: ops/MONITORING.md
+    - 运维手册: ops/runbooks/README.md
+    - 备份恢复: ops/runbooks/BACKUP_RECOVERY_RUNBOOK.md
+    - 灾难恢复: ops/runbooks/DISASTER_RECOVERY_RUNBOOK.md
+  - 机器学习:
+    - ML模型指南: ml/ML_MODEL_GUIDE.md
+    - 特征工程: ml/FEATURE_ENGINEERING.md
+    - 模型训练: ml/MODEL_TRAINING.md
+    - 模型评估: ml/MODEL_EVALUATION.md
+  - 安全配置:
+    - 安全政策: security/SECURITY_POLICY.md
+    - 认证机制: security/AUTHENTICATION.md
+    - 授权机制: security/AUTHORIZATION.md
+    - 安全审计: security/SECURITY_AUDIT.md
+  - 项目管理:
+    - 贡献指南: project/CONTRIBUTING.md
+    - 变更日志: project/CHANGELOG.md
+    - 发布流程: release/RELEASE_PROCESS.md
+    - 工具指南: how-to/MAKEFILE_GUIDE.md
+  - 参考资料:
+    - AI开发规则: AI_DEVELOPMENT_DOCUMENTATION_RULES.md
+    - 数据采集: reference/DATA_COLLECTION_SETUP.md
+    - 配置参考: reference/CONFIGURATION.md
+    - 监控指南: reference/MONITORING_GUIDE.md
+
+# Document directories
+docs_dir: docs
+site_dir: site
+
+# Deployment configuration
+use_directory_urls: true
+strict: false
+watch:
+  - src
+
+# Development server
+dev_addr: 0.0.0.0:8000
+
+# Exclude files from build
+exclude_docs: |
+  _reports/
+  _meta/
+  legacy/
+  *.tmp
+  *.bak
+  *.draft
+
+# Include files from outside docs directory will be handled in navigation structure

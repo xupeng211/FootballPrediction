@@ -1,0 +1,60 @@
+{
+  "middleware": {
+    "gzip": {
+      "enabled": true,
+      "minimum_size": 1024
+    }
+  },
+  "database": {
+    "pool_size": 20,
+    "max_overflow": 30,
+    "pool_timeout": 30,
+    "pool_recycle": 3600
+  },
+  "cache": {
+    "enabled": true,
+    "default_ttl": 3600,
+    "strategies": {
+      "prediction_results": {
+        "ttl": 1800,
+        "max_size": 1000
+      },
+      "team_stats": {
+        "ttl": 3600,
+        "max_size": 500
+      },
+      "match_data": {
+        "ttl": 900,
+        "max_size": 2000
+      },
+      "user_data": {
+        "ttl": 7200,
+        "max_size": 100
+      }
+    },
+    "key_patterns": {
+      "user": "user:{user_id}:{data_type}",
+      "match": "match:{match_id}:{data_type}",
+      "team": "team:{team_id}:{season}:{data_type}",
+      "prediction": "prediction:{user_id}:{match_id}:{model_version}"
+    }
+  },
+  "async": {
+    "max_concurrent_tasks": 100,
+    "task_timeout": 30
+  },
+  "connections": {
+    "max_connections": 1000,
+    "keep_alive_timeout": 5,
+    "connection_timeout": 30,
+    "keep_alive": true,
+    "max_keep_alive_requests": 100
+  },
+  "performance_monitoring": {
+    "enabled": true,
+    "sample_rate": 1.0,
+    "slow_request_threshold": 500,
+    "track_memory": true,
+    "track_concurrency": true
+  }
+}
