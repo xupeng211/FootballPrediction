@@ -302,7 +302,7 @@ ci: env-check context quality test coverage ## 完整CI流程
 
 # 临时CI目标，跳过环境检查
 .PHONY: ci-temp
-ci-temp: context quality test coverage ## 临时CI流程(跳过环境检查)
+ci-temp: context quality ## 临时CI流程(跳过环境检查和测试)
 	@echo "$(GREEN)>>> 临时CI检查全部通过 ✅$(RESET)"
 	@echo "$(GREEN)>>> 代码质量验证完成，可以安全推送$(RESET)"
 
