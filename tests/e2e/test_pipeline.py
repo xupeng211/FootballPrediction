@@ -62,17 +62,32 @@ class TestPipelineE2E:
         # 模拟数据提取
         try:
             # 模拟创建提取文件
-            with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
-                json.dump([
-                    {"date": "2025-12-01", "home": "Team A", "away": "Team B", "score": "2-1"},
-                    {"date": "2025-12-01", "home": "Team C", "away": "Team D", "score": "1-1"}
-                ], f)
+            with tempfile.NamedTemporaryFile(
+                mode="w", suffix=".json", delete=False
+            ) as f:
+                json.dump(
+                    [
+                        {
+                            "date": "2025-12-01",
+                            "home": "Team A",
+                            "away": "Team B",
+                            "score": "2-1",
+                        },
+                        {
+                            "date": "2025-12-01",
+                            "home": "Team C",
+                            "away": "Team D",
+                            "score": "1-1",
+                        },
+                    ],
+                    f,
+                )
                 temp_file = f.name
 
             return {
                 "status": "success",
                 "matches_collected": 2,
-                "output_file": temp_file
+                "output_file": temp_file,
             }
         except Exception as e:
             return {"status": "failed", "error": str(e)}
@@ -82,9 +97,16 @@ class TestPipelineE2E:
         try:
             # 模拟数据库查询 - 检查是否有可用的数据库
             cmd = [
-                'docker-compose', 'exec', 'db',
-                'psql', '-U', 'postgres', '-d', 'football_prediction',
-                '-c', 'SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = \'public\''
+                "docker-compose",
+                "exec",
+                "db",
+                "psql",
+                "-U",
+                "postgres",
+                "-d",
+                "football_prediction",
+                "-c",
+                "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public'",
             ]
 
             result = subprocess.run(cmd, capture_output=True, text=True)
@@ -92,13 +114,14 @@ class TestPipelineE2E:
             if result.returncode == 0:
                 # 提取表数量
                 import re
-                numbers = re.findall(r'\d+', result.stdout)
+
+                numbers = re.findall(r"\d+", result.stdout)
                 table_count = int(numbers[0]) if numbers else 0
 
                 return {
                     "status": "success",
                     "tables_found": table_count,
-                    "database_accessible": True
+                    "database_accessible": True,
                 }
             else:
                 # 数据库不可用，使用模拟数据
@@ -106,7 +129,7 @@ class TestPipelineE2E:
                     "status": "success",
                     "tables_found": 5,
                     "database_accessible": False,
-                    "note": "Using mock data - database not available"
+                    "note": "Using mock data - database not available",
                 }
 
         except Exception as e:
@@ -114,7 +137,7 @@ class TestPipelineE2E:
                 "status": "success",
                 "tables_found": 3,
                 "database_accessible": False,
-                "note": f"Exception but continuing: {e}"
+                "note": f"Exception but continuing: {e}",
             }
 
     async def _test_entity_resolution(self):
@@ -130,14 +153,14 @@ class TestPipelineE2E:
                 "Chelsea",
                 "Arsenal",
                 "Manchester City",
-                "Tottenham"
+                "Tottenham",
             ]
 
             # 模拟加载现有球队（如果失败也没关系）
             try:
                 await resolver.load_existing_teams()
                 loaded_teams = True
-            except Exception as e:
+            except Exception:
                 loaded_teams = False
 
             # 执行解析
@@ -146,9 +169,11 @@ class TestPipelineE2E:
             return {
                 "status": "success",
                 "teams_processed": len(test_teams),
-                "new_teams_detected": resolution_results.get("stats", {}).get("new_teams_detected", 0),
+                "new_teams_detected": resolution_results.get("stats", {}).get(
+                    "new_teams_detected", 0
+                ),
                 "existing_teams_loaded": loaded_teams,
-                "resolution_stats": resolution_results.get("stats", {})
+                "resolution_stats": resolution_results.get("stats", {}),
             }
 
         except Exception as e:
@@ -157,7 +182,7 @@ class TestPipelineE2E:
                 "teams_processed": 6,
                 "new_teams_detected": 0,
                 "existing_teams_loaded": False,
-                "note": f"Exception but continuing: {e}"
+                "note": f"Exception but continuing: {e}",
             }
 
     async def _test_feature_engineering(self):
@@ -171,7 +196,7 @@ class TestPipelineE2E:
                     "status": "success",
                     "feature_script_exists": True,
                     "estimated_features": 8,
-                    "estimated_rows": 5000
+                    "estimated_rows": 5000,
                 }
             else:
                 return {
@@ -179,7 +204,7 @@ class TestPipelineE2E:
                     "feature_script_exists": False,
                     "estimated_features": 6,
                     "estimated_rows": 3000,
-                    "note": "Using mock estimates"
+                    "note": "Using mock estimates",
                 }
 
         except Exception as e:
@@ -188,7 +213,7 @@ class TestPipelineE2E:
                 "feature_script_exists": False,
                 "estimated_features": 5,
                 "estimated_rows": 2000,
-                "note": f"Exception but continuing: {e}"
+                "note": f"Exception but continuing: {e}",
             }
 
     async def _test_data_export(self):
@@ -203,14 +228,14 @@ class TestPipelineE2E:
                     "status": "success",
                     "export_dir_exists": True,
                     "existing_datasets": len(csv_files),
-                    "latest_dataset": "training_set_v1_20251202_105952.csv"
+                    "latest_dataset": "training_set_v1_20251202_105952.csv",
                 }
             else:
                 return {
                     "status": "success",
                     "export_dir_exists": False,
                     "existing_datasets": 0,
-                    "note": "Export directory doesn't exist yet"
+                    "note": "Export directory doesn't exist yet",
                 }
 
         except Exception as e:
@@ -218,7 +243,7 @@ class TestPipelineE2E:
                 "status": "success",
                 "export_dir_exists": False,
                 "existing_datasets": 0,
-                "note": f"Exception but continuing: {e}"
+                "note": f"Exception but continuing: {e}",
             }
 
     @pytest.mark.asyncio
@@ -237,9 +262,15 @@ class TestPipelineE2E:
                 script_content = f.read()
 
             # 检查关键函数是否存在
-            assert "class DailyPipelineOrchestrator" in script_content, "Pipeline orchestrator class not found"
-            assert "async def run_pipeline" in script_content, "Pipeline run method not found"
-            assert "parse_postgres_output" in script_content, "PostgreSQL parser function not found"
+            assert (
+                "class DailyPipelineOrchestrator" in script_content
+            ), "Pipeline orchestrator class not found"
+            assert (
+                "async def run_pipeline" in script_content
+            ), "Pipeline run method not found"
+            assert (
+                "parse_postgres_output" in script_content
+            ), "PostgreSQL parser function not found"
 
             print("✅ 管道集成测试通过!")
 
@@ -255,7 +286,7 @@ class TestPipelineE2E:
             "scripts/run_daily_pipeline.py",
             "scripts/install_crontab.sh",
             "src/data/collectors/fotmob_browser_v2.py",
-            "src/data/processors/match_parser.py"
+            "src/data/processors/match_parser.py",
         ]
 
         for file_path in required_files:
@@ -272,7 +303,7 @@ class TestPipelineE2E:
         config_checks = [
             (project_root / ".gitignore", ".gitignore"),
             (project_root / "requirements.txt", "requirements.txt"),
-            (project_root / "docker-compose.yml", "docker-compose.yml")
+            (project_root / "docker-compose.yml", "docker-compose.yml"),
         ]
 
         for config_file, name in config_checks:
@@ -298,7 +329,9 @@ async def test_complete_pipeline():
     assert len(results) == 5, f"Expected 5 stages, got {len(results)}"
 
     successful_stages = sum(1 for r in results.values() if r["status"] == "success")
-    assert successful_stages == 5, f"Expected 5 successful stages, got {successful_stages}"
+    assert (
+        successful_stages == 5
+    ), f"Expected 5 successful stages, got {successful_stages}"
 
     print("🎉 完整管道测试成功!")
     return results

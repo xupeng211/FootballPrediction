@@ -12,14 +12,13 @@ L2 Data Parser TDD Test File
 """
 
 import pytest
-from datetime import datetime, timezone
 from typing import Dict, Any
 
 from src.schemas.l2_schemas import (
-    MatchStatus, EventType, CardType, L2MatchData,
-    L2DataProcessingResult, OddsData, RefereeInfo,
-    TeamStats, MatchEvent, StadiumInfo, WeatherInfo,
-    TeamLineup, LineupPlayer
+    MatchStatus,
+    EventType,
+    L2MatchData,
+    L2DataProcessingResult,
 )
 
 
@@ -34,68 +33,33 @@ class TestL2ParserTDD:
         return {
             "match": {
                 "id": "123456",
-                "home": {
-                    "name": "Manchester City",
-                    "score": 2
-                },
-                "away": {
-                    "name": "Liverpool",
-                    "score": 1
-                },
-                "status": {
-                    "statusCode": "FT",
-                    "utcTime": "2025-12-10T20:00:00Z"
-                },
+                "home": {"name": "Manchester City", "score": 2},
+                "away": {"name": "Liverpool", "score": 1},
+                "status": {"statusCode": "FT", "utcTime": "2025-12-10T20:00:00Z"},
                 "venue": {
                     "name": "Etihad Stadium",
                     "city": "Manchester",
-                    "capacity": 55000
+                    "capacity": 55000,
                 },
                 "referee": {
                     "name": "Michael Oliver",
-                    "country": {
-                        "name": "England"
-                    },
-                    "age": 38
+                    "country": {"name": "England"},
+                    "age": 38,
                 },
-                "attendance": 53234
+                "attendance": 53234,
             },
             "content": {
-                "possession": {
-                    "home": 65,
-                    "away": 35
-                },
+                "possession": {"home": 65, "away": 35},
                 "shotmap": {
                     "stats": {
-                        "home": {
-                            "total": 18,
-                            "onTarget": 7
-                        },
-                        "away": {
-                            "total": 12,
-                            "onTarget": 4
-                        }
+                        "home": {"total": 18, "onTarget": 7},
+                        "away": {"total": 12, "onTarget": 4},
                     }
                 },
-                "expectedGoals": {
-                    "home": 2.3,
-                    "away": 0.8
-                },
+                "expectedGoals": {"home": 2.3, "away": 0.8},
                 "matchStats": [
-                    {
-                        "type": "Corners",
-                        "stats": {
-                            "home": 7,
-                            "away": 3
-                        }
-                    },
-                    {
-                        "type": "Yellow Cards",
-                        "stats": {
-                            "home": 2,
-                            "away": 3
-                        }
-                    }
+                    {"type": "Corners", "stats": {"home": 7, "away": 3}},
+                    {"type": "Yellow Cards", "stats": {"home": 2, "away": 3}},
                 ],
                 "lineUp": {
                     "home": {
@@ -105,10 +69,10 @@ class TestL2ParserTDD:
                                 "playerName": "Erling Haaland",
                                 "shirtNo": 9,
                                 "position": "F",
-                                "starter": True
+                                "starter": True,
                             }
                         ],
-                        "formation": "4-3-3"
+                        "formation": "4-3-3",
                     },
                     "away": {
                         "lineups": [
@@ -117,11 +81,11 @@ class TestL2ParserTDD:
                                 "playerName": "Mohamed Salah",
                                 "shirtNo": 11,
                                 "position": "F",
-                                "starter": True
+                                "starter": True,
                             }
                         ],
-                        "formation": "4-3-3"
-                    }
+                        "formation": "4-3-3",
+                    },
                 },
                 "events": [
                     {
@@ -130,7 +94,7 @@ class TestL2ParserTDD:
                         "minute": 25,
                         "team": "home",
                         "player": "Erling Haaland",
-                        "isPenalty": False
+                        "isPenalty": False,
                     },
                     {
                         "id": "evt2",
@@ -138,17 +102,17 @@ class TestL2ParserTDD:
                         "minute": 67,
                         "team": "away",
                         "player": "Ibrahima Konaté",
-                        "cardType": "yellow"
-                    }
+                        "cardType": "yellow",
+                    },
                 ],
                 "odds": {
                     "homeWin": 1.85,
                     "draw": 3.60,
                     "awayWin": 4.20,
                     "provider": "Bet365",
-                    "lastUpdated": "2025-12-10T19:30:00Z"
-                }
-            }
+                    "lastUpdated": "2025-12-10T19:30:00Z",
+                },
+            },
         }
 
     @pytest.fixture
@@ -157,16 +121,9 @@ class TestL2ParserTDD:
         return {
             "match": {
                 "id": "789012",
-                "home": {
-                    "name": "Chelsea"
-                },
-                "away": {
-                    "name": "Arsenal"
-                },
-                "status": {
-                    "statusCode": "NS",
-                    "utcTime": "2025-12-15T15:00:00Z"
-                }
+                "home": {"name": "Chelsea"},
+                "away": {"name": "Arsenal"},
+                "status": {"statusCode": "NS", "utcTime": "2025-12-15T15:00:00Z"},
             }
         }
 
@@ -180,10 +137,7 @@ class TestL2ParserTDD:
                     "name": "Team A"
                     # 缺少away信息
                 },
-                "status": {
-                    "statusCode": "INVALID_STATUS",
-                    "utcTime": "invalid-date"
-                }
+                "status": {"statusCode": "INVALID_STATUS", "utcTime": "invalid-date"},
             }
         }
 
@@ -296,7 +250,10 @@ class TestL2ParserTDD:
         assert result.error_message is not None
         # 检查错误信息包含相关关键词
         error_msg_lower = result.error_message.lower()
-        assert any(keyword in error_msg_lower for keyword in ["invalid", "missing", "failed", "error"])
+        assert any(
+            keyword in error_msg_lower
+            for keyword in ["invalid", "missing", "failed", "error"]
+        )
         assert result.data is None
 
     # ============ 边界情况测试 ============
@@ -331,7 +288,7 @@ class TestL2ParserTDD:
                 "id": "test123",
                 "home": {"name": "Team A", "score": invalid_score},
                 "away": {"name": "Team B", "score": 2},
-                "status": {"statusCode": "FT", "utcTime": "2025-12-10T20:00:00Z"}
+                "status": {"statusCode": "FT", "utcTime": "2025-12-10T20:00:00Z"},
             }
         }
 
@@ -343,7 +300,9 @@ class TestL2ParserTDD:
 
     # ============ 数据验证测试 ============
 
-    def test_validate_data_completeness_complete(self, mock_fotmob_api_response_complete):
+    def test_validate_data_completeness_complete(
+        self, mock_fotmob_api_response_complete
+    ):
         """测试完整数据的完整性验证"""
         from src.collectors.l2_parser import L2Parser
 
@@ -370,7 +329,7 @@ class TestL2ParserTDD:
             "match": {
                 "home": {"name": "Team A"},
                 "away": {"name": "Team B"},
-                "status": {"statusCode": "FT"}
+                "status": {"statusCode": "FT"},
             }
         }
 
@@ -378,8 +337,10 @@ class TestL2ParserTDD:
         result = parser.parse_match_data(invalid_data)
 
         assert result.success is False
-        assert any(field in result.error_message.lower()
-                  for field in ["id", "match", "required"])
+        assert any(
+            field in result.error_message.lower()
+            for field in ["id", "match", "required"]
+        )
 
     # ============ 性能测试 ============
 
@@ -448,14 +409,14 @@ class TestL2ParserTDD:
                 "status": {"statusCode": "FT", "utcTime": "2025-12-10T20:00:00Z"},
                 "venue": {
                     "name": "Stadium",
-                    "capacity": "invalid_capacity"  # 无效的容量格式
+                    "capacity": "invalid_capacity",  # 无效的容量格式
                 },
                 "content": {
                     "possession": {
                         "home": "invalid_possession",  # 无效的控球率
-                        "away": 35
+                        "away": 35,
                     }
-                }
+                },
             }
         }
 
@@ -483,32 +444,17 @@ class TestL2ParserTDD:
                 "id": "stats123",
                 "home": {"name": "Team A", "score": 3},
                 "away": {"name": "Team B", "score": 1},
-                "status": {"statusCode": "FT", "utcTime": "2025-12-10T20:00:00Z"}
+                "status": {"statusCode": "FT", "utcTime": "2025-12-10T20:00:00Z"},
             },
             "content": {
-                "expectedGoals": {
-                    "home": 2.8,
-                    "away": 1.2
-                },
+                "expectedGoals": {"home": 2.8, "away": 1.2},
                 "matchStats": [
-                    {
-                        "type": "Total Passes",
-                        "stats": {"home": 580, "away": 420}
-                    },
-                    {
-                        "type": "Pass Accuracy",
-                        "stats": {"home": 88, "away": 82}
-                    },
-                    {
-                        "type": "Tackles",
-                        "stats": {"home": 15, "away": 12}
-                    },
-                    {
-                        "type": "Interceptions",
-                        "stats": {"home": 8, "away": 10}
-                    }
-                ]
-            }
+                    {"type": "Total Passes", "stats": {"home": 580, "away": 420}},
+                    {"type": "Pass Accuracy", "stats": {"home": 88, "away": 82}},
+                    {"type": "Tackles", "stats": {"home": 15, "away": 12}},
+                    {"type": "Interceptions", "stats": {"home": 8, "away": 10}},
+                ],
+            },
         }
 
         parser = L2Parser()

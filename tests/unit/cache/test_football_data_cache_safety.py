@@ -23,8 +23,7 @@ Football Data Cache Safety Net Tests
 """
 
 import pytest
-from unittest.mock import AsyncMock, Mock, patch, MagicMock
-from typing import Any, Optional
+from unittest.mock import AsyncMock, Mock, patch
 
 # 直接导入目标文件中的类和方法
 try:

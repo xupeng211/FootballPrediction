@@ -1,13 +1,10 @@
-from typing import Optional
-
 """
 数据库连接管理器测试
 Enhanced database connection manager tests.
 """
 
 import pytest
-import asyncio
-from unittest.mock import Mock, patch, MagicMock, AsyncMock
+from unittest.mock import Mock, patch, AsyncMock
 
 # 导入被测试模块
 from src.database.connection import (

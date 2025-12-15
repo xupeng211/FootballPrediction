@@ -8,7 +8,6 @@ import pytest
 import respx
 import httpx
 from unittest.mock import AsyncMock, MagicMock
-from datetime import datetime
 
 from src.collectors.titan.exceptions import (
     TitanScrapingError,
@@ -16,7 +15,6 @@ from src.collectors.titan.exceptions import (
     TitanParsingError,
 )
 from src.collectors.titan.base_collector import BaseTitanCollector
-from src.schemas.titan import EuroOddsResponse
 
 
 @pytest.fixture
@@ -55,10 +53,10 @@ async def test_fetch_json_success(collector):
                 "homeodds": 1.85,
                 "drawodds": 3.60,
                 "awayodds": 4.20,
-                "updatetime": "2024-01-01 16:00:00"
+                "updatetime": "2024-01-01 16:00:00",
             }
         ],
-        "message": None
+        "message": None,
     }
 
     # 配置 respx mock
@@ -92,7 +90,7 @@ async def test_fetch_json_forbidden(collector):
         return_value=httpx.Response(
             403,
             text="Forbidden - Access Denied",
-            headers={"Content-Type": "text/html; charset=utf-8"}
+            headers={"Content-Type": "text/html; charset=utf-8"},
         )
     )
 
@@ -122,16 +120,21 @@ async def test_fetch_json_retry_success(collector):
     # 第1次: 500 (服务器错误)
     # 第2次: 429 (限流)
     # 第3次: 200 (成功)
-    route = respx.get("https://live.titan007.com/api/odds/handicap").mock(side_effect=[
-        httpx.Response(500, text="Internal Server Error"),
-        httpx.Response(429, json={"error": "Too Many Requests"}),
-        httpx.Response(200, json={
-            "matchid": "2971466",
-            "success": True,
-            "data": [],
-            "message": "No handicap data"
-        })
-    ])
+    route = respx.get("https://live.titan007.com/api/odds/handicap").mock(
+        side_effect=[
+            httpx.Response(500, text="Internal Server Error"),
+            httpx.Response(429, json={"error": "Too Many Requests"}),
+            httpx.Response(
+                200,
+                json={
+                    "matchid": "2971466",
+                    "success": True,
+                    "data": [],
+                    "message": "No handicap data",
+                },
+            ),
+        ]
+    )
 
     # 执行请求（应该自动重试，最终成功）
     result = await collector._fetch_json(endpoint, params)
@@ -153,12 +156,14 @@ async def test_fetch_json_max_retries_exceeded(collector):
     params = {"matchid": "2971467", "companyid": 8}
 
     # 模拟：前3次都失败（超过最大重试次数）
-    route = respx.get("https://live.titan007.com/api/odds/overunder").mock(side_effect=[
-        httpx.Response(500, text="Internal Server Error"),
-        httpx.Response(500, text="Internal Server Error"),
-        httpx.Response(500, text="Internal Server Error"),
-        httpx.Response(200, json={"success": True})  # 这个不会被调用
-    ])
+    route = respx.get("https://live.titan007.com/api/odds/overunder").mock(
+        side_effect=[
+            httpx.Response(500, text="Internal Server Error"),
+            httpx.Response(500, text="Internal Server Error"),
+            httpx.Response(500, text="Internal Server Error"),
+            httpx.Response(200, json={"success": True}),  # 这个不会被调用
+        ]
+    )
 
     # 执行请求，应该抛出 TitanNetworkError
     with pytest.raises(TitanNetworkError) as exc_info:
@@ -178,7 +183,9 @@ async def test_fetch_json_jsonp_cleaning(collector):
     params = {"matchid": "2971465", "companyid": 8}
 
     # 模拟带有 BOM 头和 JSONP 包装器的响应
-    jsonp_response = '\ufeffcallback({"matchid": "2971465", "success": true, "data": []});'
+    jsonp_response = (
+        '\ufeffcallback({"matchid": "2971465", "success": true, "data": []});'
+    )
 
     route = respx.get("https://live.titan007.com/api/odds/euro").mock(
         return_value=httpx.Response(200, text=jsonp_response)
@@ -227,7 +234,7 @@ async def test_fetch_json_unexpected_format(collector):
         return_value=httpx.Response(
             200,
             text="<html><body>Unexpected HTML response</body></html>",
-            headers={"Content-Type": "text/html"}
+            headers={"Content-Type": "text/html"},
         )
     )
 
@@ -249,7 +256,7 @@ async def test_rate_limiter_integration(collector):
     params = {"matchid": "2971465", "companyid": 8}
 
     # 模拟多个并发请求
-    route = respx.get("https://live.titan007.com/api/odds/euro").mock(
+    respx.get("https://live.titan007.com/api/odds/euro").mock(
         return_value=httpx.Response(200, json={"success": True, "data": []})
     )
 

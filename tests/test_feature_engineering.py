@@ -33,58 +33,72 @@ class TestFeatureTransformer:
         self.transformer = FeatureTransformer()
 
         # 创建有效的测试数据
-        self.valid_data = pd.DataFrame({
-            'match_id': [1, 2, 3, 4, 5],
-            'home_odds': [2.50, 1.80, 3.20, 1.45, 2.10],
-            'away_odds': [2.80, 4.50, 2.30, 6.80, 3.40],
-            'draw_odds': [3.20, 3.60, 2.90, 4.20, 3.15],
-            'home_goals_last_5': [8, 12, 6, 15, 9],
-            'away_goals_last_5': [7, 5, 8, 4, 11]
-        })
+        self.valid_data = pd.DataFrame(
+            {
+                "match_id": [1, 2, 3, 4, 5],
+                "home_odds": [2.50, 1.80, 3.20, 1.45, 2.10],
+                "away_odds": [2.80, 4.50, 2.30, 6.80, 3.40],
+                "draw_odds": [3.20, 3.60, 2.90, 4.20, 3.15],
+                "home_goals_last_5": [8, 12, 6, 15, 9],
+                "away_goals_last_5": [7, 5, 8, 4, 11],
+            }
+        )
 
         # 创建无效的测试数据（包含负赔率）
-        self.invalid_data = pd.DataFrame({
-            'match_id': [1, 2],
-            'home_odds': [2.50, -1.80],  # 包含负值
-            'away_odds': [2.80, 4.50],
-            'draw_odds': [3.20, 3.60],
-            'home_goals_last_5': [8, 12],
-            'away_goals_last_5': [7, 5]
-        })
+        self.invalid_data = pd.DataFrame(
+            {
+                "match_id": [1, 2],
+                "home_odds": [2.50, -1.80],  # 包含负值
+                "away_odds": [2.80, 4.50],
+                "draw_odds": [3.20, 3.60],
+                "home_goals_last_5": [8, 12],
+                "away_goals_last_5": [7, 5],
+            }
+        )
 
         # 创建包含缺失值的数据
-        self.missing_data = pd.DataFrame({
-            'match_id': [1, 2, 3],
-            'home_odds': [2.50, np.nan, 3.20],  # 包含缺失值
-            'away_odds': [2.80, 4.50, 2.30],
-            'draw_odds': [3.20, 3.60, 2.90],
-            'home_goals_last_5': [8, 12, 6],
-            'away_goals_last_5': [7, 5, 8]
-        })
+        self.missing_data = pd.DataFrame(
+            {
+                "match_id": [1, 2, 3],
+                "home_odds": [2.50, np.nan, 3.20],  # 包含缺失值
+                "away_odds": [2.80, 4.50, 2.30],
+                "draw_odds": [3.20, 3.60, 2.90],
+                "home_goals_last_5": [8, 12, 6],
+                "away_goals_last_5": [7, 5, 8],
+            }
+        )
 
     def test_initialization(self):
         """测试 FeatureTransformer 的初始化"""
         assert self.transformer is not None
-        assert hasattr(self.transformer, 'transform')
-        assert hasattr(self.transformer, '_validate_input')
+        assert hasattr(self.transformer, "transform")
+        assert hasattr(self.transformer, "_validate_input")
 
     def test_input_validation_missing_columns(self):
         """测试缺少必需列的情况"""
-        incomplete_data = pd.DataFrame({
-            'match_id': [1, 2],
-            'home_odds': [2.50, 1.80],
-            # 缺少其他必需列
-        })
+        incomplete_data = pd.DataFrame(
+            {
+                "match_id": [1, 2],
+                "home_odds": [2.50, 1.80],
+                # 缺少其他必需列
+            }
+        )
 
         with pytest.raises(ValueError, match="缺少必需的列"):
             self.transformer._validate_input(incomplete_data)
 
     def test_input_validation_empty_dataframe(self):
         """测试空数据框的情况"""
-        empty_df = pd.DataFrame(columns=[
-            'match_id', 'home_odds', 'away_odds', 'draw_odds',
-            'home_goals_last_5', 'away_goals_last_5'
-        ])
+        empty_df = pd.DataFrame(
+            columns=[
+                "match_id",
+                "home_odds",
+                "away_odds",
+                "draw_odds",
+                "home_goals_last_5",
+                "away_goals_last_5",
+            ]
+        )
 
         with pytest.raises(ValueError, match="输入数据框不能为空"):
             self.transformer._validate_input(empty_df)
@@ -164,8 +178,10 @@ class TestFeatureTransformer:
 
         # 验证新特征列是否存在
         expected_columns = [
-            'Implied_Prob_Home', 'Implied_Prob_Away', 'Odds_Entropy',
-            'Avg_Goals_Diff_L5'
+            "Implied_Prob_Home",
+            "Implied_Prob_Away",
+            "Odds_Entropy",
+            "Avg_Goals_Diff_L5",
         ]
         for col in expected_columns:
             assert col in result.columns, f"缺少列: {col}"
@@ -179,8 +195,12 @@ class TestFeatureTransformer:
         expected_home_prob = 1 / 2.50  # 0.40
         expected_away_prob = 1 / 2.80  # 约0.3571
 
-        assert first_row['Implied_Prob_Home'] == pytest.approx(expected_home_prob, rel=1e-10)
-        assert first_row['Implied_Prob_Away'] == pytest.approx(expected_away_prob, rel=1e-4)
+        assert first_row["Implied_Prob_Home"] == pytest.approx(
+            expected_home_prob, rel=1e-10
+        )
+        assert first_row["Implied_Prob_Away"] == pytest.approx(
+            expected_away_prob, rel=1e-4
+        )
 
     def test_transform_odds_entropy_calculation(self):
         """测试赔率熵计算的正确性"""
@@ -188,9 +208,9 @@ class TestFeatureTransformer:
 
         # 手动计算第一行的期望熵值
         first_row_data = self.valid_data.iloc[0]
-        home_prob = 1 / first_row_data['home_odds']      # 1/2.50 = 0.40
-        draw_prob = 1 / first_row_data['draw_odds']      # 1/3.20 = 0.3125
-        away_prob = 1 / first_row_data['away_odds']      # 1/2.80 ≈ 0.3571
+        home_prob = 1 / first_row_data["home_odds"]  # 1/2.50 = 0.40
+        draw_prob = 1 / first_row_data["draw_odds"]  # 1/3.20 = 0.3125
+        away_prob = 1 / first_row_data["away_odds"]  # 1/2.80 ≈ 0.3571
 
         # 归一化概率（使其和为1）
         total_prob = home_prob + draw_prob + away_prob
@@ -202,7 +222,7 @@ class TestFeatureTransformer:
             p * np.log2(p) for p in [home_prob_norm, draw_prob_norm, away_prob_norm]
         )
 
-        actual_entropy = result.iloc[0]['Odds_Entropy']
+        actual_entropy = result.iloc[0]["Odds_Entropy"]
         assert actual_entropy == pytest.approx(expected_entropy, rel=1e-4)
 
     def test_transform_goals_diff_calculation(self):
@@ -211,9 +231,11 @@ class TestFeatureTransformer:
 
         # 检查第一行的进球差
         first_row_data = self.valid_data.iloc[0]
-        expected_diff = first_row_data['home_goals_last_5'] - first_row_data['away_goals_last_5']
+        expected_diff = (
+            first_row_data["home_goals_last_5"] - first_row_data["away_goals_last_5"]
+        )
 
-        actual_diff = result.iloc[0]['Avg_Goals_Diff_L5']
+        actual_diff = result.iloc[0]["Avg_Goals_Diff_L5"]
         assert actual_diff == expected_diff
 
     def test_transform_preserves_original_columns(self):
@@ -229,21 +251,23 @@ class TestFeatureTransformer:
     def test_transform_edge_cases(self):
         """测试边界情况"""
         # 创建极小赔率的数据（高概率）
-        extreme_data = pd.DataFrame({
-            'match_id': [1],
-            'home_odds': [1.01],  # 极低赔率
-            'away_odds': [10.0],  # 极高赔率
-            'draw_odds': [5.0],
-            'home_goals_last_5': [10],
-            'away_goals_last_5': [2]
-        })
+        extreme_data = pd.DataFrame(
+            {
+                "match_id": [1],
+                "home_odds": [1.01],  # 极低赔率
+                "away_odds": [10.0],  # 极高赔率
+                "draw_odds": [5.0],
+                "home_goals_last_5": [10],
+                "away_goals_last_5": [2],
+            }
+        )
 
         result = self.transformer.transform(extreme_data)
 
         # 验证计算仍然正常
         assert len(result) == 1
-        assert result.iloc[0]['Implied_Prob_Home'] == pytest.approx(0.9901, rel=1e-4)
-        assert result.iloc[0]['Implied_Prob_Away'] == 0.1
+        assert result.iloc[0]["Implied_Prob_Home"] == pytest.approx(0.9901, rel=1e-4)
+        assert result.iloc[0]["Implied_Prob_Away"] == 0.1
 
     def test_transform_single_row(self):
         """测试单行数据的转换"""
@@ -251,42 +275,59 @@ class TestFeatureTransformer:
         result = self.transformer.transform(single_row_data)
 
         assert len(result) == 1
-        assert all(col in result.columns for col in [
-            'Implied_Prob_Home', 'Implied_Prob_Away', 'Odds_Entropy', 'Avg_Goals_Diff_L5'
-        ])
+        assert all(
+            col in result.columns
+            for col in [
+                "Implied_Prob_Home",
+                "Implied_Prob_Away",
+                "Odds_Entropy",
+                "Avg_Goals_Diff_L5",
+            ]
+        )
 
     def test_feature_value_ranges(self):
         """测试特征值的合理范围"""
         result = self.transformer.transform(self.valid_data)
 
         # 隐含概率应该在 (0, 1] 范围内
-        assert all(result['Implied_Prob_Home'] > 0) and all(result['Implied_Prob_Home'] <= 1)
-        assert all(result['Implied_Prob_Away'] > 0) and all(result['Implied_Prob_Away'] <= 1)
+        assert all(result["Implied_Prob_Home"] > 0) and all(
+            result["Implied_Prob_Home"] <= 1
+        )
+        assert all(result["Implied_Prob_Away"] > 0) and all(
+            result["Implied_Prob_Away"] <= 1
+        )
 
         # 熵应该为正数
-        assert all(result['Odds_Entropy'] > 0)
+        assert all(result["Odds_Entropy"] > 0)
 
         # 进球差可以是任何实数
-        assert isinstance(result['Avg_Goals_Diff_L5'].dtype, (np.int64, np.float64))
+        assert isinstance(result["Avg_Goals_Diff_L5"].dtype, (np.int64, np.float64))
 
-    @pytest.mark.parametrize("home_odds,away_odds,draw_odds,expected_diff", [
-        (2.0, 3.0, 4.0, 1),    # 正进球差
-        (3.0, 2.0, 4.0, -1),   # 负进球差
-        (2.5, 2.5, 3.0, 0),    # 零进球差
-        (5.0, 1.8, 3.5, 3),    # 大进球差
-    ])
-    def test_goals_diff_parameterized(self, home_odds, away_odds, draw_odds, expected_diff):
+    @pytest.mark.parametrize(
+        "home_odds,away_odds,draw_odds,expected_diff",
+        [
+            (2.0, 3.0, 4.0, 1),  # 正进球差
+            (3.0, 2.0, 4.0, -1),  # 负进球差
+            (2.5, 2.5, 3.0, 0),  # 零进球差
+            (5.0, 1.8, 3.5, 3),  # 大进球差
+        ],
+    )
+    def test_goals_diff_parameterized(
+        self, home_odds, away_odds, draw_odds, expected_diff
+    ):
         """参数化测试进球差计算"""
-        test_data = pd.DataFrame({
-            'match_id': [1],
-            'home_odds': [home_odds],
-            'away_odds': [away_odds],
-            'draw_odds': [draw_odds],
-            'home_goals_last_5': [10 + expected_diff],
-            'away_goals_last_5': [10]
-        })
+        test_data = pd.DataFrame(
+            {
+                "match_id": [1],
+                "home_odds": [home_odds],
+                "away_odds": [away_odds],
+                "draw_odds": [draw_odds],
+                "home_goals_last_5": [10 + expected_diff],
+                "away_goals_last_5": [10],
+            }
+        )
 
         result = self.transformer.transform(test_data)
-        actual_diff = result.iloc[0]['Avg_Goals_Diff_L5']
+        actual_diff = result.iloc[0]["Avg_Goals_Diff_L5"]
 
         assert actual_diff == expected_diff

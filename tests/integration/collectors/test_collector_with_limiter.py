@@ -17,7 +17,6 @@ Integration Test: Collector with Rate Limiter
 import asyncio
 import pytest
 import time
-from typing import Any, Dict, List
 
 from src.collectors.interface import BaseCollectorProtocol
 from src.collectors.dummy_collector import DummyCollector, create_dummy_collector
@@ -30,9 +29,7 @@ class TestCollectorWithRateLimiter:
     @pytest.fixture
     async def rate_limiter(self):
         """创建测试用的速率限制器 - 5 QPS，突发2"""
-        config = {
-            "dummy": {"rate": 5.0, "burst": 2}  # 5 QPS，突发容量2
-        }
+        config = {"dummy": {"rate": 5.0, "burst": 2}}  # 5 QPS，突发容量2
         return RateLimiter(config)
 
     @pytest.fixture
@@ -40,7 +37,7 @@ class TestCollectorWithRateLimiter:
         """创建带有速率限制器的采集器"""
         config = {
             "delay_range": (0.01, 0.02),  # 很短的模拟延迟
-            "error_rate": 0.0,          # 无错误模式
+            "error_rate": 0.0,  # 无错误模式
             "failure_mode": False,
         }
         collector = DummyCollector(config, rate_limiter)
@@ -52,7 +49,7 @@ class TestCollectorWithRateLimiter:
         """测试采集器与速率限制器集成"""
         # 验证采集器实现了协议
         assert isinstance(collector_with_limiter, BaseCollectorProtocol)
-        assert hasattr(collector_with_limiter, 'rate_limiter')
+        assert hasattr(collector_with_limiter, "rate_limiter")
 
         # 第一次调用应该立即成功（突发容量）
         start_time = time.monotonic()
@@ -79,13 +76,15 @@ class TestCollectorWithRateLimiter:
             fixtures = await collector_with_limiter.collect_fixtures(request_id)
             task_end = time.monotonic()
 
-            results.append({
-                'request_id': request_id,
-                'start_time': task_start,
-                'end_time': task_end,
-                'duration': task_end - task_start,
-                'fixtures_count': len(fixtures)
-            })
+            results.append(
+                {
+                    "request_id": request_id,
+                    "start_time": task_start,
+                    "end_time": task_end,
+                    "duration": task_end - task_start,
+                    "fixtures_count": len(fixtures),
+                }
+            )
 
         tasks = [collect_with_timing(i) for i in range(num_requests)]
         await asyncio.gather(*tasks)
@@ -93,10 +92,14 @@ class TestCollectorWithRateLimiter:
         total_elapsed = time.monotonic() - start_time
 
         # 验证结果
-        assert total_elapsed >= expected_min_time, f"总耗时 {total_elapsed:.3f}s 小于期望最小值 {expected_min_time:.3f}s"
-        assert total_elapsed <= expected_max_time, f"总耗时 {total_elapsed:.3f}s 超过期望最大值 {expected_max_time:.3f}s"
+        assert (
+            total_elapsed >= expected_min_time
+        ), f"总耗时 {total_elapsed:.3f}s 小于期望最小值 {expected_min_time:.3f}s"
+        assert (
+            total_elapsed <= expected_max_time
+        ), f"总耗时 {total_elapsed:.3f}s 超过期望最大值 {expected_max_time:.3f}s"
         assert len(results) == num_requests
-        assert all(r['fixtures_count'] > 0 for r in results)
+        assert all(r["fixtures_count"] > 0 for r in results)
 
         print(f"✅ 速率限制测试通过: {num_requests}个请求耗时 {total_elapsed:.3f}s")
 
@@ -109,29 +112,29 @@ class TestCollectorWithRateLimiter:
         async def worker(task_id: int):
             try:
                 fixtures = await collector_with_limiter.collect_fixtures(task_id % 5)
-                results.append({
-                    'task_id': task_id,
-                    'success': True,
-                    'fixtures_count': len(fixtures)
-                })
+                results.append(
+                    {
+                        "task_id": task_id,
+                        "success": True,
+                        "fixtures_count": len(fixtures),
+                    }
+                )
             except Exception as e:
-                results.append({
-                    'task_id': task_id,
-                    'success': False,
-                    'error': str(e)
-                })
+                results.append({"task_id": task_id, "success": False, "error": str(e)})
 
         # 创建大量并发任务
         tasks = [worker(i) for i in range(num_tasks)]
         await asyncio.gather(*tasks)
 
         # 验证结果
-        successful = [r for r in results if r['success']]
-        failed = [r for r in results if not r['success']]
+        successful = [r for r in results if r["success"]]
+        failed = [r for r in results if not r["success"]]
 
-        assert len(successful) >= num_tasks * 0.95, f"成功率过低: {len(successful)}/{num_tasks}"
+        assert (
+            len(successful) >= num_tasks * 0.95
+        ), f"成功率过低: {len(successful)}/{num_tasks}"
         assert len(failed) == 0, f"存在失败的请求: {failed}"
-        assert all(r['fixtures_count'] > 0 for r in successful)
+        assert all(r["fixtures_count"] > 0 for r in successful)
 
         print(f"✅ 并发安全测试通过: {len(successful)}/{num_tasks} 成功")
 
@@ -152,15 +155,9 @@ class TestCollectorWithRateLimiter:
             # 并发测试不同速率
             start_time = time.monotonic()
 
-            fast_tasks = [
-                fast_collector.collect_fixtures(1, "2024")
-                for _ in range(10)
-            ]
+            fast_tasks = [fast_collector.collect_fixtures(1, "2024") for _ in range(10)]
 
-            slow_tasks = [
-                slow_collector.collect_fixtures(2, "2024")
-                for _ in range(5)
-            ]
+            slow_tasks = [slow_collector.collect_fixtures(2, "2024") for _ in range(5)]
 
             await asyncio.gather(*fast_tasks, *slow_tasks)
 
@@ -223,8 +220,12 @@ class TestCollectorWithRateLimiter:
         # 创建共享的速率限制器：5 QPS，突发5
         shared_limiter = RateLimiter({"shared": {"rate": 5.0, "burst": 5}})
 
-        collector1 = create_dummy_collector({"delay_range": (0.01, 0.01)}, shared_limiter)
-        collector2 = create_dummy_collector({"delay_range": (0.01, 0.01)}, shared_limiter)
+        collector1 = create_dummy_collector(
+            {"delay_range": (0.01, 0.01)}, shared_limiter
+        )
+        collector2 = create_dummy_collector(
+            {"delay_range": (0.01, 0.01)}, shared_limiter
+        )
 
         try:
             start_time = time.monotonic()
@@ -252,7 +253,9 @@ class TestCollectorWithRateLimiter:
     @pytest.mark.asyncio
     async def test_performance_metrics(self, rate_limiter):
         """测试性能指标"""
-        collector = create_dummy_collector({"delay_range": (0.001, 0.002)}, rate_limiter)
+        collector = create_dummy_collector(
+            {"delay_range": (0.001, 0.002)}, rate_limiter
+        )
 
         try:
             num_requests = 100
@@ -273,8 +276,12 @@ class TestCollectorWithRateLimiter:
             print(f"  请求速率: {requests_per_second:.1f} RPS")
 
             # 验证性能合理性
-            assert requests_per_second > 4.0, f"请求速率过低: {requests_per_second:.1f} RPS"
-            assert avg_time_per_request < 0.5, f"平均延迟过高: {avg_time_per_request:.3f}s"
+            assert (
+                requests_per_second > 4.0
+            ), f"请求速率过低: {requests_per_second:.1f} RPS"
+            assert (
+                avg_time_per_request < 0.5
+            ), f"平均延迟过高: {avg_time_per_request:.3f}s"
 
         finally:
             await collector.close()
@@ -287,9 +294,7 @@ async def test_end_to_end_scenario():
     print("=" * 50)
 
     # 创建速率限制器：5 QPS，突发3
-    limiter_config = {
-        "dummy": {"rate": 5.0, "burst": 3, "max_wait_time": 30.0}
-    }
+    limiter_config = {"dummy": {"rate": 5.0, "burst": 3, "max_wait_time": 30.0}}
     limiter = RateLimiter(limiter_config)
 
     # 创建采集器
@@ -342,7 +347,9 @@ async def test_end_to_end_scenario():
 
         limiter_status = limiter.get_status("dummy")
         print(f"✅ 健康检查: {health['status']}")
-        print(f"✅ 速率限制器状态: {limiter_status['available_tokens']:.1f}/{limiter_status['capacity']} 令牌")
+        print(
+            f"✅ 速率限制器状态: {limiter_status['available_tokens']:.1f}/{limiter_status['capacity']} 令牌"
+        )
 
         total_requests = 18  # 3 + 15
         total_time = burst_time + rate_limit_time

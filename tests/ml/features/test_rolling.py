@@ -8,11 +8,8 @@ Phase 2: AI Modeling - 滚动窗口特征测试用例
 """
 
 import pytest
-from datetime import datetime, timezone
-from typing import List
 import pandas as pd
 import numpy as np
-from unittest.mock import Mock, patch
 
 # 注意：此时RollingAverageTransformer还不存在，这是TDD的核心
 # 我们先定义期望的接口，然后在下一步实现
@@ -32,18 +29,20 @@ class TestRollingAverageTransformer:
         3. 目标变量：goals作为计算目标
         4. 历史数据：确保有足够历史记录进行滚动计算
         """
-        return pd.DataFrame({
-            'match_date': pd.date_range('2024-01-01', periods=12, freq='D'),
-            'team_id': ['Team_A'] * 4 + ['Team_B'] * 4 + ['Team_C'] * 4,
-            'goals': [2, 1, 3, 2, 1, 0, 2, 1, 3, 2, 4, 1],
-            'shots': [10, 8, 15, 12, 6, 4, 8, 7, 12, 10, 16, 9],
-            'possession': [55, 48, 62, 58, 42, 35, 45, 38, 65, 60, 70, 55],
-        })
+        return pd.DataFrame(
+            {
+                "match_date": pd.date_range("2024-01-01", periods=12, freq="D"),
+                "team_id": ["Team_A"] * 4 + ["Team_B"] * 4 + ["Team_C"] * 4,
+                "goals": [2, 1, 3, 2, 1, 0, 2, 1, 3, 2, 4, 1],
+                "shots": [10, 8, 15, 12, 6, 4, 8, 7, 12, 10, 16, 9],
+                "possession": [55, 48, 62, 58, 42, 35, 45, 38, 65, 60, 70, 55],
+            }
+        )
 
     @pytest.fixture
     def empty_data(self) -> pd.DataFrame:
         """创建空数据测试边界条件。"""
-        return pd.DataFrame(columns=['match_date', 'team_id', 'goals'])
+        return pd.DataFrame(columns=["match_date", "team_id", "goals"])
 
     def test_rolling_average_transformer_interface_definition(self):
         """
@@ -64,15 +63,13 @@ class TestRollingAverageTransformer:
 
         # 验证可以实例化
         transformer = RollingAverageTransformer(
-            column='goals',
-            window_size=3,
-            group_by=['team_id']
+            column="goals", window_size=3, group_by=["team_id"]
         )
 
         # 验证接口方法存在
-        assert hasattr(transformer, 'fit')
-        assert hasattr(transformer, 'transform')
-        assert hasattr(transformer, 'fit_transform')
+        assert hasattr(transformer, "fit")
+        assert hasattr(transformer, "transform")
+        assert hasattr(transformer, "fit_transform")
 
     @pytest.mark.asyncio
     async def test_rolling_average_basic_functionality(self, sample_team_data):
@@ -89,21 +86,20 @@ class TestRollingAverageTransformer:
 
         # 创建转换器
         transformer = RollingAverageTransformer(
-            column='goals',
-            window_size=3,
-            group_by=['team_id']
+            column="goals", window_size=3, group_by=["team_id"]
         )
 
         # 执行转换
         result = transformer.fit_transform(sample_team_data)
 
         # 验证输出结构
-        assert 'rolling_goals_3' in result.columns, "应该生成滚动平均特征列"
+        assert "rolling_goals_3" in result.columns, "应该生成滚动平均特征列"
         assert len(result) == len(sample_team_data), "输出行数应与输入一致"
 
         # 验证基础数据完整性
-        assert all(col in result.columns for col in sample_team_data.columns), \
-            "应该保留所有输入列"
+        assert all(
+            col in result.columns for col in sample_team_data.columns
+        ), "应该保留所有输入列"
 
     @pytest.mark.asyncio
     async def test_rolling_average_anti_leakage_critical(self, sample_team_data):
@@ -121,33 +117,38 @@ class TestRollingAverageTransformer:
         from src.ml.features.rolling import RollingAverageTransformer
 
         transformer = RollingAverageTransformer(
-            column='goals',
-            window_size=3,
-            group_by=['team_id']
+            column="goals", window_size=3, group_by=["team_id"]
         )
 
         result = transformer.fit_transform(sample_team_data)
 
         # 关键防泄露检查
-        team_a_rows = result[result['team_id'] == 'Team_A']
+        team_a_rows = result[result["team_id"] == "Team_A"]
 
         # 第一个Team_A记录必须为NaN（没有历史数据）
-        first_team_a_value = team_a_rows['rolling_goals_3'].iloc[0]
-        assert pd.isna(first_team_a_value), \
-            f"第一个记录应该是NaN，但得到: {first_team_a_value}"
+        first_team_a_value = team_a_rows["rolling_goals_3"].iloc[0]
+        assert pd.isna(
+            first_team_a_value
+        ), f"第一个记录应该是NaN，但得到: {first_team_a_value}"
 
         # 第2个Team_A记录应该基于第1个记录计算
-        second_team_a_value = team_a_rows['rolling_goals_3'].iloc[1]
-        expected_second_value = sample_team_data[sample_team_data['team_id'] == 'Team_A']['goals'].iloc[0]
-        assert second_team_a_value == expected_second_value, \
-            f"第2个记录应该等于第1个记录: expected={expected_second_value}, got={second_team_a_value}"
+        second_team_a_value = team_a_rows["rolling_goals_3"].iloc[1]
+        expected_second_value = sample_team_data[
+            sample_team_data["team_id"] == "Team_A"
+        ]["goals"].iloc[0]
+        assert (
+            second_team_a_value == expected_second_value
+        ), f"第2个记录应该等于第1个记录: expected={expected_second_value}, got={second_team_a_value}"
 
         # 第4个Team_A记录应该基于第1-3个记录计算
-        fourth_team_a_value = team_a_rows['rolling_goals_3'].iloc[3]
-        team_a_goals = sample_team_data[sample_team_data['team_id'] == 'Team_A']['goals'].iloc[:3]
+        fourth_team_a_value = team_a_rows["rolling_goals_3"].iloc[3]
+        team_a_goals = sample_team_data[sample_team_data["team_id"] == "Team_A"][
+            "goals"
+        ].iloc[:3]
         expected_fourth_value = team_a_goals.mean()
-        assert abs(fourth_team_a_value - expected_fourth_value) < 1e-6, \
-            f"第4个记录应该是前3个的平均值: expected={expected_fourth_value}, got={fourth_team_a_value}"
+        assert (
+            abs(fourth_team_a_value - expected_fourth_value) < 1e-6
+        ), f"第4个记录应该是前3个的平均值: expected={expected_fourth_value}, got={fourth_team_a_value}"
 
     @pytest.mark.asyncio
     async def test_rolling_average_different_window_sizes(self, sample_team_data):
@@ -163,31 +164,30 @@ class TestRollingAverageTransformer:
 
         # 测试window_size=1
         transformer_1 = RollingAverageTransformer(
-            column='goals',
-            window_size=1,
-            group_by=['team_id']
+            column="goals", window_size=1, group_by=["team_id"]
         )
         result_1 = transformer_1.fit_transform(sample_team_data)
 
         # 第一个记录应该是NaN
-        assert pd.isna(result_1[result_1['team_id'] == 'Team_A']['rolling_goals_1'].iloc[0])
+        assert pd.isna(
+            result_1[result_1["team_id"] == "Team_A"]["rolling_goals_1"].iloc[0]
+        )
 
         # 第二个记录应该等于第一个记录
-        team_a_result_1 = result_1[result_1['team_id'] == 'Team_A']
-        assert team_a_result_1['rolling_goals_1'].iloc[1] == 2.0
+        team_a_result_1 = result_1[result_1["team_id"] == "Team_A"]
+        assert team_a_result_1["rolling_goals_1"].iloc[1] == 2.0
 
         # 测试window_size=5（大于可用数据）
         transformer_5 = RollingAverageTransformer(
-            column='goals',
-            window_size=5,
-            group_by=['team_id']
+            column="goals", window_size=5, group_by=["team_id"]
         )
         result_5 = transformer_5.fit_transform(sample_team_data)
 
         # 所有记录都应该是NaN（窗口大小大于历史数据）
-        team_a_result_5 = result_5[result_5['team_id'] == 'Team_A']
-        assert team_a_result_5['rolling_goals_5'].isna().all(), \
-            "窗口大于历史数据时，所有值应该是NaN"
+        team_a_result_5 = result_5[result_5["team_id"] == "Team_A"]
+        assert (
+            team_a_result_5["rolling_goals_5"].isna().all()
+        ), "窗口大于历史数据时，所有值应该是NaN"
 
     @pytest.mark.asyncio
     async def test_rolling_average_multiple_columns(self, sample_team_data):
@@ -202,22 +202,25 @@ class TestRollingAverageTransformer:
         from src.ml.features.rolling import RollingAverageTransformer
 
         transformer = RollingAverageTransformer(
-            columns=['goals', 'shots', 'possession'],
+            columns=["goals", "shots", "possession"],
             window_size=2,
-            group_by=['team_id']
+            group_by=["team_id"],
         )
 
         result = transformer.fit_transform(sample_team_data)
 
         # 验证所有特征列都存在
-        expected_columns = ['rolling_goals_2', 'rolling_shots_2', 'rolling_possession_2']
+        expected_columns = [
+            "rolling_goals_2",
+            "rolling_shots_2",
+            "rolling_possession_2",
+        ]
         for col in expected_columns:
             assert col in result.columns, f"应该包含列: {col}"
 
         # 验证防泄露仍然有效
-        team_a_rows = result[result['team_id'] == 'Team_A']
-        assert pd.isna(team_a_rows['rolling_goals_2'].iloc[0]), \
-            "多列情况下也要防泄露"
+        team_a_rows = result[result["team_id"] == "Team_A"]
+        assert pd.isna(team_a_rows["rolling_goals_2"].iloc[0]), "多列情况下也要防泄露"
 
     @pytest.mark.asyncio
     async def test_rolling_average_empty_data(self, empty_data):
@@ -232,9 +235,7 @@ class TestRollingAverageTransformer:
         from src.ml.features.rolling import RollingAverageTransformer
 
         transformer = RollingAverageTransformer(
-            column='goals',
-            window_size=3,
-            group_by=['team_id']
+            column="goals", window_size=3, group_by=["team_id"]
         )
 
         # 应该不抛出异常
@@ -242,7 +243,7 @@ class TestRollingAverageTransformer:
 
         # 应该返回空DataFrame
         assert len(result) == 0, "空数据应该返回空DataFrame"
-        assert 'rolling_goals_3' in result.columns, "即使空数据也应该包含特征列"
+        assert "rolling_goals_3" in result.columns, "即使空数据也应该包含特征列"
 
     @pytest.mark.asyncio
     async def test_rolling_average_invalid_input(self, sample_team_data):
@@ -257,13 +258,11 @@ class TestRollingAverageTransformer:
         from src.ml.features.rolling import RollingAverageTransformer
 
         transformer = RollingAverageTransformer(
-            column='goals',
-            window_size=3,
-            group_by=['team_id']
+            column="goals", window_size=3, group_by=["team_id"]
         )
 
         # 测试缺失必需列
-        invalid_data = sample_team_data.drop('goals', axis=1)
+        invalid_data = sample_team_data.drop("goals", axis=1)
 
         with pytest.raises(ValueError, match="缺少必需列"):
             transformer.fit_transform(invalid_data)
@@ -271,9 +270,7 @@ class TestRollingAverageTransformer:
         # 测试无效窗口大小
         with pytest.raises(ValueError, match="window_size"):
             RollingAverageTransformer(
-                column='goals',
-                window_size=0,
-                group_by=['team_id']
+                column="goals", window_size=0, group_by=["team_id"]
             )
 
     @pytest.mark.asyncio
@@ -289,27 +286,25 @@ class TestRollingAverageTransformer:
         from src.ml.features.rolling import RollingAverageTransformer
 
         transformer1 = RollingAverageTransformer(
-            column='goals',
-            window_size=2,
-            group_by=['team_id']
+            column="goals", window_size=2, group_by=["team_id"]
         )
         transformer2 = RollingAverageTransformer(
-            column='goals',
-            window_size=2,
-            group_by=['team_id']
+            column="goals", window_size=2, group_by=["team_id"]
         )
 
         # fit_transform vs fit().transform()
         result1 = transformer1.fit_transform(sample_team_data.copy())
-        result2 = transformer2.fit(sample_team_data.copy()).transform(sample_team_data.copy())
+        result2 = transformer2.fit(sample_team_data.copy()).transform(
+            sample_team_data.copy()
+        )
 
-        pd.testing.assert_frame_equal(result1, result2,
-                                     "fit_transform应该等于fit().transform()")
+        pd.testing.assert_frame_equal(
+            result1, result2, "fit_transform应该等于fit().transform()"
+        )
 
         # 重复transform测试
         result3 = transformer2.transform(sample_team_data.copy())
-        pd.testing.assert_frame_equal(result2, result3,
-                                     "重复transform应该返回相同结果")
+        pd.testing.assert_frame_equal(result2, result3, "重复transform应该返回相同结果")
 
     @pytest.mark.asyncio
     async def test_rolling_average_feature_names(self, sample_team_data):
@@ -324,9 +319,7 @@ class TestRollingAverageTransformer:
         from src.ml.features.rolling import RollingAverageTransformer
 
         transformer = RollingAverageTransformer(
-            column='goals',
-            window_size=3,
-            group_by=['team_id']
+            column="goals", window_size=3, group_by=["team_id"]
         )
 
         # 先fit
@@ -336,7 +329,7 @@ class TestRollingAverageTransformer:
         feature_names = transformer.get_feature_names_out()
 
         assert isinstance(feature_names, list), "特征名称应该是列表"
-        assert 'rolling_goals_3' in feature_names, "应该包含正确的特征名称"
+        assert "rolling_goals_3" in feature_names, "应该包含正确的特征名称"
 
         # 验证transform结果包含这些特征
         result = transformer.transform(sample_team_data)
@@ -352,12 +345,14 @@ class TestRollingSumTransformer:
         """
         创建累积数据测试滚动求和功能。
         """
-        return pd.DataFrame({
-            'match_date': pd.date_range('2024-01-01', periods=8, freq='D'),
-            'team_id': ['Team_A'] * 8,
-            'goals': [1, 2, 1, 3, 2, 4, 1, 2],
-            'yellow_cards': [1, 2, 0, 1, 3, 2, 1, 0],
-        })
+        return pd.DataFrame(
+            {
+                "match_date": pd.date_range("2024-01-01", periods=8, freq="D"),
+                "team_id": ["Team_A"] * 8,
+                "goals": [1, 2, 1, 3, 2, 4, 1, 2],
+                "yellow_cards": [1, 2, 0, 1, 3, 2, 1, 0],
+            }
+        )
 
     def test_rolling_sum_transformer_interface_definition(self, sample_cumulative_data):
         """
@@ -367,13 +362,11 @@ class TestRollingSumTransformer:
         from src.ml.features.rolling import RollingSumTransformer
 
         transformer = RollingSumTransformer(
-            column='goals',
-            window_size=3,
-            group_by=['team_id']
+            column="goals", window_size=3, group_by=["team_id"]
         )
 
-        assert hasattr(transformer, 'fit')
-        assert hasattr(transformer, 'transform')
+        assert hasattr(transformer, "fit")
+        assert hasattr(transformer, "transform")
 
     @pytest.mark.asyncio
     async def test_rolling_sum_basic_functionality(self, sample_cumulative_data):
@@ -383,22 +376,20 @@ class TestRollingSumTransformer:
         from src.ml.features.rolling import RollingSumTransformer
 
         transformer = RollingSumTransformer(
-            column='goals',
-            window_size=3,
-            group_by=['team_id']
+            column="goals", window_size=3, group_by=["team_id"]
         )
 
         result = transformer.fit_transform(sample_cumulative_data)
 
-        assert 'rolling_sum_goals_3' in result.columns
+        assert "rolling_sum_goals_3" in result.columns
         assert len(result) == len(sample_cumulative_data)
 
         # 验证计算正确性
         # 第4行应该是前3行的和: 1 + 2 + 1 = 4
-        assert result['rolling_sum_goals_3'].iloc[3] == 4.0
+        assert result["rolling_sum_goals_3"].iloc[3] == 4.0
 
         # 防泄露：第1行应该是NaN
-        assert pd.isna(result['rolling_sum_goals_3'].iloc[0])
+        assert pd.isna(result["rolling_sum_goals_3"].iloc[0])
 
 
 @pytest.mark.integration
@@ -411,18 +402,20 @@ class TestRollingFeaturesIntegration:
         np.random.seed(42)
         n_matches = 100
         n_teams = 10
-        teams = [f'Team_{i}' for i in range(n_teams)]
+        teams = [f"Team_{i}" for i in range(n_teams)]
 
         data = []
         for i in range(n_matches):
             team_id = np.random.choice(teams)
-            data.append({
-                'match_date': pd.Timestamp('2024-01-01') + pd.Timedelta(days=i),
-                'team_id': team_id,
-                'goals': np.random.poisson(1.5),
-                'shots': np.random.poisson(12),
-                'possession': np.random.normal(50, 15),
-            })
+            data.append(
+                {
+                    "match_date": pd.Timestamp("2024-01-01") + pd.Timedelta(days=i),
+                    "team_id": team_id,
+                    "goals": np.random.poisson(1.5),
+                    "shots": np.random.poisson(12),
+                    "possession": np.random.normal(50, 15),
+                }
+            )
 
         return pd.DataFrame(data)
 
@@ -439,13 +432,12 @@ class TestRollingFeaturesIntegration:
         from src.ml.features.rolling import RollingAverageTransformer
 
         transformer = RollingAverageTransformer(
-            columns=['goals', 'shots'],
-            window_size=5,
-            group_by=['team_id']
+            columns=["goals", "shots"], window_size=5, group_by=["team_id"]
         )
 
         # 测试性能
         import time
+
         start_time = time.time()
 
         result = transformer.fit_transform(large_sample_data.copy())
@@ -468,16 +460,16 @@ class TestRollingFeaturesIntegration:
         from src.ml.features.rolling import RollingAverageTransformer
 
         # 创建大量数据
-        large_data = pd.DataFrame({
-            'match_date': pd.date_range('2020-01-01', periods=10000, freq='D'),
-            'team_id': ['Team_A'] * 10000,
-            'goals': np.random.poisson(1.5, 10000),
-        })
+        large_data = pd.DataFrame(
+            {
+                "match_date": pd.date_range("2020-01-01", periods=10000, freq="D"),
+                "team_id": ["Team_A"] * 10000,
+                "goals": np.random.poisson(1.5, 10000),
+            }
+        )
 
         transformer = RollingAverageTransformer(
-            column='goals',
-            window_size=10,
-            group_by=['team_id']
+            column="goals", window_size=10, group_by=["team_id"]
         )
 
         # 应该能处理大数据集
@@ -487,4 +479,5 @@ class TestRollingFeaturesIntegration:
         # 清理内存
         del large_data, result
         import gc
+
         gc.collect()

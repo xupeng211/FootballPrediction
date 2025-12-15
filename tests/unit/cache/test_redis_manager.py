@@ -1,13 +1,10 @@
-from typing import Optional
-
 """
 Redis缓存管理器测试
 Tests for Redis cache manager module.
 """
 
 import pytest
-import asyncio
-from unittest.mock import Mock, patch, AsyncMock, MagicMock
+from unittest.mock import Mock, patch, AsyncMock
 
 # 导入被测试模块
 try:

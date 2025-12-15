@@ -5,8 +5,7 @@
 import pytest
 import numpy as np
 import pandas as pd
-from typing import Any
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 # 测试目标
 from src.ml.football_prediction_pipeline import (
@@ -34,7 +33,7 @@ class TestFootballPredictionPipeline:
             "away_team_shots": np.random.randint(5, 25, n_samples),
             "odds_home_win": np.random.uniform(1.5, 5.0, n_samples),
             "odds_draw": np.random.uniform(3.0, 4.5, n_samples),
-            "odds_away_win": np.random.uniform(1.8, 6.0, n_samples)
+            "odds_away_win": np.random.uniform(1.8, 6.0, n_samples),
         }
 
         # 创建目标变量（主队是否获胜）

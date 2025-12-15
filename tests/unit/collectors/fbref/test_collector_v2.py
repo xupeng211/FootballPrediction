@@ -13,19 +13,16 @@ FBref Collector V2 Unit Tests
 创建时间: 2025-12-06
 """
 
-import asyncio
 import gzip
-import hashlib
 import pytest
-from datetime import datetime
 from pathlib import Path
-from unittest.mock import Mock, AsyncMock, patch, MagicMock
+from unittest.mock import Mock, AsyncMock, patch
 import pandas as pd
 
 # 导入被测试的模块
 from src.collectors.fbref.collector_v2 import FBrefCollectorV2
-from src.collectors.rate_limiter import RateLimiter, RateLimitConfig
-from src.collectors.proxy_pool import ProxyPool, Proxy, ProxyProtocol, ProxyStatus
+from src.collectors.rate_limiter import RateLimiter
+from src.collectors.proxy_pool import ProxyPool, Proxy, ProxyProtocol
 
 
 class TestFBrefCollectorV2:
@@ -52,7 +49,7 @@ class TestFBrefCollectorV2:
             rate_limiter=mock_rate_limiter,
             proxy_pool=mock_proxy_pool,
             use_curl_cffi=False,  # 测试时不使用curl_cffi
-            raw_data_dir="/tmp/test_fbref_v2"
+            raw_data_dir="/tmp/test_fbref_v2",
         )
 
     @pytest.fixture
@@ -115,12 +112,12 @@ class TestFBrefCollectorV2:
             rate_limiter=mock_rate_limiter,
             proxy_pool=mock_proxy_pool,
             use_curl_cffi=True,
-            raw_data_dir="/tmp/test_fbref_v2"
+            raw_data_dir="/tmp/test_fbref_v2",
         )
 
         assert collector.rate_limiter == mock_rate_limiter
         assert collector.proxy_pool == mock_proxy_pool
-        assert collector.use_curl_cffi == True
+        assert collector.use_curl_cffi
         assert collector.config.rate_limit_delay == 2.0
         assert collector.config.max_retries == 5
         assert collector.config.http_timeout == 45.0
@@ -133,7 +130,7 @@ class TestFBrefCollectorV2:
         assert collector.rate_limiter is not None
         assert isinstance(collector.rate_limiter, RateLimiter)
         assert collector.proxy_pool is None
-        assert collector.use_curl_cffi == False  # 依赖可能不可用
+        assert not collector.use_curl_cffi  # 依赖可能不可用
         assert collector.config.rate_limit_delay == 2.0
 
     @pytest.mark.asyncio
@@ -142,11 +139,11 @@ class TestFBrefCollectorV2:
         headers = await collector._get_headers()
 
         assert isinstance(headers, dict)
-        assert 'User-Agent' in headers
-        assert 'Accept' in headers
-        assert 'Accept-Language' in headers
-        assert 'Accept-Encoding' in headers
-        assert 'Connection' in headers
+        assert "User-Agent" in headers
+        assert "Accept" in headers
+        assert "Accept-Language" in headers
+        assert "Accept-Encoding" in headers
+        assert "Connection" in headers
 
     @pytest.mark.asyncio
     async def test_get_user_agent(self, collector):
@@ -154,23 +151,25 @@ class TestFBrefCollectorV2:
         user_agent = await collector._get_user_agent()
 
         assert isinstance(user_agent, str)
-        assert 'Mozilla' in user_agent
-        assert any(browser in user_agent for browser in ['Chrome', 'Firefox'])
+        assert "Mozilla" in user_agent
+        assert any(browser in user_agent for browser in ["Chrome", "Firefox"])
 
-    def test_unseal_html_with_comments(self, collector, sample_html_with_commented_tables):
+    def test_unseal_html_with_comments(
+        self, collector, sample_html_with_commented_tables
+    ):
         """测试HTML注释解封功能"""
         original_html = sample_html_with_commented_tables
         unsealed_html = collector._unseal_html(original_html)
 
         # 验证注释被解封
         assert '<div id="sched_hidden"' in unsealed_html
-        assert '<table' in unsealed_html
-        assert 'Team E' in unsealed_html
-        assert '3-0' in unsealed_html
+        assert "<table" in unsealed_html
+        assert "Team E" in unsealed_html
+        assert "3-0" in unsealed_html
 
         # 验证原有表格仍然存在
         assert '<table id="sched_visible"' in unsealed_html
-        assert 'Team A' in unsealed_html
+        assert "Team A" in unsealed_html
 
     def test_unseal_html_without_comments(self, collector, sample_html_with_tables):
         """测试没有注释的HTML解封"""
@@ -190,31 +189,29 @@ class TestFBrefCollectorV2:
         # 验证表格内容
         df = tables[0]
         assert len(df) == 2  # 两行数据
-        assert 'Date' in df.columns or 'date' in df.columns
+        assert "Date" in df.columns or "date" in df.columns
 
     def test_extract_match_report_links(self, collector, sample_html_with_tables):
         """测试Match Report链接提取"""
         links = collector._extract_match_report_links(sample_html_with_tables)
 
         assert len(links) == 2
-        assert any('/en/matches/test123' in link for link in links)
-        assert any('/en/matches/test456' in link for link in links)
-        assert all(link.startswith('https://fbref.com') for link in links)
+        assert any("/en/matches/test123" in link for link in links)
+        assert any("/en/matches/test456" in link for link in links)
+        assert all(link.startswith("https://fbref.com") for link in links)
 
     def test_extract_advanced_stats(self, collector):
         """测试高级统计数据提取"""
         # 创建包含xG数据的DataFrame
-        shooting_df = pd.DataFrame({
-            'Player': ['Player A', 'Player B'],
-            'xG': [1.5, 0.8],
-            'xGA': [1.2, 1.5]
-        })
+        shooting_df = pd.DataFrame(
+            {"Player": ["Player A", "Player B"], "xG": [1.5, 0.8], "xGA": [1.2, 1.5]}
+        )
 
         tables = [shooting_df]
         advanced_stats = collector._extract_advanced_stats(tables)
 
-        assert 'shooting' in advanced_stats
-        assert isinstance(advanced_stats['shooting'], pd.DataFrame)
+        assert "shooting" in advanced_stats
+        assert isinstance(advanced_stats["shooting"], pd.DataFrame)
 
     def test_extract_schedule_table(self, collector, sample_html_with_tables):
         """测试赛程表提取"""
@@ -228,30 +225,35 @@ class TestFBrefCollectorV2:
     def test_clean_schedule_data(self, collector):
         """测试赛程数据清洗"""
         # 创建原始DataFrame（模拟pandas.read_html的输出）
-        raw_df = pd.DataFrame({
-            'Date': ['2023-12-01', '2023-12-02'],
-            'Home': ['Team A', 'Team C'],
-            'Away': ['Team B', 'Team D'],
-            'Score': ['2-1', '1-1'],
-            'xG': [1.5, 1.2],
-            'xG.1': [0.8, 1.2],
-            'match_report_url': ['https://fbref.com/matches/1', 'https://fbref.com/matches/2']
-        })
+        raw_df = pd.DataFrame(
+            {
+                "Date": ["2023-12-01", "2023-12-02"],
+                "Home": ["Team A", "Team C"],
+                "Away": ["Team B", "Team D"],
+                "Score": ["2-1", "1-1"],
+                "xG": [1.5, 1.2],
+                "xG.1": [0.8, 1.2],
+                "match_report_url": [
+                    "https://fbref.com/matches/1",
+                    "https://fbref.com/matches/2",
+                ],
+            }
+        )
 
         cleaned_df = collector._clean_schedule_data(raw_df)
 
         # 验证列映射
-        assert 'date' in cleaned_df.columns
-        assert 'home' in cleaned_df.columns
-        assert 'away' in cleaned_df.columns
-        assert 'score' in cleaned_df.columns
-        assert 'xg_home' in cleaned_df.columns
-        assert 'xg_away' in cleaned_df.columns
-        assert 'match_report_url' in cleaned_df.columns
+        assert "date" in cleaned_df.columns
+        assert "home" in cleaned_df.columns
+        assert "away" in cleaned_df.columns
+        assert "score" in cleaned_df.columns
+        assert "xg_home" in cleaned_df.columns
+        assert "xg_away" in cleaned_df.columns
+        assert "match_report_url" in cleaned_df.columns
 
         # 验证数据类型
-        assert pd.api.types.is_numeric_dtype(cleaned_df['xg_home'])
-        assert pd.api.types.is_numeric_dtype(cleaned_df['xg_away'])
+        assert pd.api.types.is_numeric_dtype(cleaned_df["xg_home"])
+        assert pd.api.types.is_numeric_dtype(cleaned_df["xg_away"])
 
     @pytest.mark.asyncio
     async def test_save_raw_html(self, collector):
@@ -268,7 +270,7 @@ class TestFBrefCollectorV2:
         assert Path(file_path).exists()
 
         # 验证文件内容
-        with gzip.open(file_path, 'rt', encoding='utf-8') as f:
+        with gzip.open(file_path, "rt", encoding="utf-8") as f:
             saved_content = f.read()
         assert saved_content == html_content
 
@@ -283,7 +285,7 @@ class TestFBrefCollectorV2:
         mock_response.status_code = 200
         mock_response.text = sample_html_with_tables
 
-        with patch('httpx.AsyncClient.get', return_value=mock_response):
+        with patch("httpx.AsyncClient.get", return_value=mock_response):
             html_content = await collector._fetch_with_httpx("https://fbref.com/test")
 
         assert html_content == sample_html_with_tables
@@ -294,7 +296,7 @@ class TestFBrefCollectorV2:
         mock_response = AsyncMock()
         mock_response.status_code = 403
 
-        with patch('httpx.AsyncClient.get', return_value=mock_response):
+        with patch("httpx.AsyncClient.get", return_value=mock_response):
             html_content = await collector._fetch_with_httpx("https://fbref.com/test")
 
         assert html_content is None
@@ -305,7 +307,7 @@ class TestFBrefCollectorV2:
         mock_response = AsyncMock()
         mock_response.status_code = 429
 
-        with patch('httpx.AsyncClient.get', return_value=mock_response):
+        with patch("httpx.AsyncClient.get", return_value=mock_response):
             html_content = await collector._fetch_with_httpx("https://fbref.com/test")
 
         assert html_content is None
@@ -317,8 +319,12 @@ class TestFBrefCollectorV2:
         season_year = "2023-2024"
 
         # Mock fetch_html方法
-        with patch.object(collector, 'fetch_html', return_value=sample_html_with_tables):
-            with patch.object(collector, '_save_raw_html', return_value="/tmp/test.html"):
+        with patch.object(
+            collector, "fetch_html", return_value=sample_html_with_tables
+        ):
+            with patch.object(
+                collector, "_save_raw_html", return_value="/tmp/test.html"
+            ):
                 result = await collector.collect_season_stats(season_url, season_year)
 
         assert isinstance(result, pd.DataFrame)
@@ -330,23 +336,27 @@ class TestFBrefCollectorV2:
         match_url = "https://fbref.com/en/matches/test"
 
         # Mock fetch_html和parse_html_tables方法
-        with patch.object(collector, 'fetch_html', return_value=sample_html_with_tables):
-            with patch.object(collector, 'parse_html_tables', return_value=([], {})):
-                with patch.object(collector, '_save_raw_html', return_value="/tmp/test.html"):
+        with patch.object(
+            collector, "fetch_html", return_value=sample_html_with_tables
+        ):
+            with patch.object(collector, "parse_html_tables", return_value=([], {})):
+                with patch.object(
+                    collector, "_save_raw_html", return_value="/tmp/test.html"
+                ):
                     result = await collector.collect_match_stats(match_url)
 
         assert isinstance(result, dict)
-        assert 'match_url' in result
-        assert 'raw_file_path' in result
-        assert 'tables_count' in result
-        assert result['match_url'] == match_url
+        assert "match_url" in result
+        assert "raw_file_path" in result
+        assert "tables_count" in result
+        assert result["match_url"] == match_url
 
     @pytest.mark.asyncio
     async def test_rate_limiting(self, collector, mock_rate_limiter):
         """测试速率限制"""
         # 模拟fetch_html调用
-        with patch.object(collector, '_fetch_with_httpx', return_value="test"):
-            with patch.object(collector, '_fetch_with_curl_cffi', return_value=None):
+        with patch.object(collector, "_fetch_with_httpx", return_value="test"):
+            with patch.object(collector, "_fetch_with_curl_cffi", return_value=None):
                 await collector.fetch_html("https://fbref.com/test")
 
         # 验证速率限制器被调用
@@ -360,7 +370,7 @@ class TestFBrefCollectorV2:
             url="http://127.0.0.1:8080",
             protocol=ProxyProtocol.HTTP,
             host="127.0.0.1",
-            port=8080
+            port=8080,
         )
         mock_proxy_pool.get_proxy.return_value = mock_proxy
 
@@ -377,7 +387,7 @@ class TestFBrefCollectorV2:
         async with FBrefCollectorV2(
             rate_limiter=mock_rate_limiter,
             proxy_pool=mock_proxy_pool,
-            use_curl_cffi=False
+            use_curl_cffi=False,
         ) as collector:
             assert collector._is_initialized is True
             assert collector.session is not None
@@ -400,7 +410,7 @@ class TestFBrefCollectorV2:
 
         # 验证关键列存在（与旧版一致）
         if not cleaned_table.empty:
-            expected_columns = ['home', 'away', 'score']
+            expected_columns = ["home", "away", "score"]
             for col in expected_columns:
                 if any(col in str(c).lower() for c in cleaned_table.columns):
                     assert True  # 找到对应的列
@@ -412,14 +422,18 @@ class TestFBrefCollectorV2:
     async def test_error_handling(self, collector):
         """测试错误处理"""
         # 测试无效URL
-        with patch.object(collector, 'fetch_html', return_value=None):
+        with patch.object(collector, "fetch_html", return_value=None):
             result = await collector.collect_season_stats("invalid_url")
             assert isinstance(result, pd.DataFrame)
             assert result.empty
 
         # 测试HTML解析错误
-        with patch.object(collector, 'fetch_html', return_value="<html><body>Invalid HTML</body></html>"):
-            with patch.object(collector, 'parse_html_tables', return_value=([], {})):
+        with patch.object(
+            collector,
+            "fetch_html",
+            return_value="<html><body>Invalid HTML</body></html>",
+        ):
+            with patch.object(collector, "parse_html_tables", return_value=([], {})):
                 result = await collector.collect_season_stats("test_url")
                 assert isinstance(result, pd.DataFrame)
                 assert result.empty
@@ -446,8 +460,7 @@ class TestFBrefCollectorV2Integration:
         """测试真实HTML处理（使用样本数据）"""
         # 创建不使用外部依赖的采集器
         collector = FBrefCollectorV2(
-            use_curl_cffi=False,
-            raw_data_dir="/tmp/test_fbref_v2"
+            use_curl_cffi=False, raw_data_dir="/tmp/test_fbref_v2"
         )
 
         # 使用更完整的HTML样本
@@ -515,35 +528,32 @@ class TestFBrefCollectorV2Integration:
         assert len(cleaned_table) == 2
 
         # 验证关键数据
-        assert 'Manchester City' in str(cleaned_table.values)
-        assert 'Liverpool' in str(cleaned_table.values)
-        assert 'Arsenal' in str(cleaned_table.values)
-        assert 'Chelsea' in str(cleaned_table.values)
+        assert "Manchester City" in str(cleaned_table.values)
+        assert "Liverpool" in str(cleaned_table.values)
+        assert "Arsenal" in str(cleaned_table.values)
+        assert "Chelsea" in str(cleaned_table.values)
 
         # 测试Match Report链接提取
         links = collector._extract_match_report_links(unsealed_html)
         assert len(links) == 2
-        assert any('/matches/abc123' in link for link in links)
-        assert any('/matches/def456' in link for link in links)
+        assert any("/matches/abc123" in link for link in links)
+        assert any("/matches/def456" in link for link in links)
 
     @pytest.mark.asyncio
     async def test_performance_monitoring(self):
         """测试性能监控功能"""
-        collector = FBrefCollectorV2(
-            use_curl_cffi=False,
-            config=collector.config
-        )
+        collector = FBrefCollectorV2(use_curl_cffi=False, config=collector.config)
 
         # 测试统计信息获取
         stats = collector.get_stats()
         assert isinstance(stats, dict)
-        assert 'name' in stats
-        assert 'total_requests' in stats
-        assert 'success_rate' in stats
+        assert "name" in stats
+        assert "total_requests" in stats
+        assert "success_rate" in stats
 
         # 测试统计信息重置
         collector.reset_stats()
         reset_stats = collector.get_stats()
-        assert reset_stats['total_requests'] == 0
-        assert reset_stats['successful_requests'] == 0
-        assert reset_stats['failed_requests'] == 0
+        assert reset_stats["total_requests"] == 0
+        assert reset_stats["successful_requests"] == 0
+        assert reset_stats["failed_requests"] == 0

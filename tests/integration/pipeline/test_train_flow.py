@@ -11,8 +11,7 @@ Train Flow 集成测试
 from __future__ import annotations
 
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
-from datetime import datetime
+from unittest.mock import MagicMock, patch
 
 import pandas as pd
 
@@ -40,11 +39,13 @@ class TestTrainFlowIntegration:
     @pytest.fixture
     def sample_training_data(self):
         """样本训练数据."""
-        X = pd.DataFrame({
-            "feature1": [1.0, 1.5, 2.0, 2.5, 3.0],
-            "feature2": [2.0, 2.5, 3.0, 3.5, 4.0],
-            "feature3": [0.1, 0.2, 0.3, 0.4, 0.5],
-        })
+        X = pd.DataFrame(
+            {
+                "feature1": [1.0, 1.5, 2.0, 2.5, 3.0],
+                "feature2": [2.0, 2.5, 3.0, 3.5, 4.0],
+                "feature3": [0.1, 0.2, 0.3, 0.4, 0.5],
+            }
+        )
         y = pd.Series([0, 1, 0, 1, 0])
         return X, y
 
@@ -53,10 +54,12 @@ class TestTrainFlowIntegration:
         """样本FeatureLoader."""
         mock_loader = MagicMock()
         mock_loader.load_training_data.return_value = (
-            pd.DataFrame({
-                "feature1": [1.0, 1.5, 2.0, 2.5, 3.0],
-                "feature2": [2.0, 2.5, 3.0, 3.5, 4.0],
-            }),
+            pd.DataFrame(
+                {
+                    "feature1": [1.0, 1.5, 2.0, 2.5, 3.0],
+                    "feature2": [2.0, 2.5, 3.0, 3.5, 4.0],
+                }
+            ),
             pd.Series([0, 1, 0, 1, 0]),
         )
         return mock_loader
@@ -67,8 +70,12 @@ class TestTrainFlowIntegration:
         match_ids = [1, 2, 3]
 
         # 模拟FeatureStore和FeatureLoader
-        with patch('src.pipeline.flows.train_flow.FootballFeatureStore') as mock_store_class:
-            with patch('src.pipeline.flows.train_flow.FeatureLoader') as mock_loader_class:
+        with patch(
+            "src.pipeline.flows.train_flow.FootballFeatureStore"
+        ) as mock_store_class:
+            with patch(
+                "src.pipeline.flows.train_flow.FeatureLoader"
+            ) as mock_loader_class:
                 mock_store = MagicMock()
                 mock_loader = MagicMock()
                 mock_store_class.return_value = mock_store
@@ -92,8 +99,12 @@ class TestTrainFlowIntegration:
         """测试加载训练数据任务重试机制."""
         match_ids = [1, 2, 3]
 
-        with patch('src.pipeline.flows.train_flow.FootballFeatureStore') as mock_store_class:
-            with patch('src.pipeline.flows.train_flow.FeatureLoader') as mock_loader_class:
+        with patch(
+            "src.pipeline.flows.train_flow.FootballFeatureStore"
+        ) as mock_store_class:
+            with patch(
+                "src.pipeline.flows.train_flow.FeatureLoader"
+            ) as mock_loader_class:
                 mock_store = MagicMock()
                 mock_loader = MagicMock()
                 mock_store_class.return_value = mock_store
@@ -121,8 +132,10 @@ class TestTrainFlowIntegration:
         X, y = sample_training_data
 
         # 模拟Trainer和ModelRegistry
-        with patch('src.pipeline.flows.train_flow.Trainer') as mock_trainer_class:
-            with patch('src.pipeline.flows.train_flow.ModelRegistry') as mock_registry_class:
+        with patch("src.pipeline.flows.train_flow.Trainer") as mock_trainer_class:
+            with patch(
+                "src.pipeline.flows.train_flow.ModelRegistry"
+            ) as mock_registry_class:
                 mock_trainer = MagicMock()
                 mock_registry = MagicMock()
                 mock_trainer_class.return_value = mock_trainer
@@ -152,11 +165,13 @@ class TestTrainFlowIntegration:
                 mock_trainer.train.assert_called_once_with(X, y, algorithm="xgboost")
 
     @pytest.mark.asyncio
-    async def test_train_model_task_with_different_algorithms(self, config, sample_training_data):
+    async def test_train_model_task_with_different_algorithms(
+        self, config, sample_training_data
+    ):
         """测试不同算法的训练任务."""
         X, y = sample_training_data
 
-        with patch('src.pipeline.flows.train_flow.Trainer') as mock_trainer_class:
+        with patch("src.pipeline.flows.train_flow.Trainer") as mock_trainer_class:
             mock_trainer = MagicMock()
             mock_trainer_class.return_value = mock_trainer
 
@@ -192,7 +207,9 @@ class TestTrainFlowIntegration:
         }
         model_name = "test_model"
 
-        with patch('src.pipeline.flows.train_flow.ModelRegistry') as mock_registry_class:
+        with patch(
+            "src.pipeline.flows.train_flow.ModelRegistry"
+        ) as mock_registry_class:
             mock_registry = MagicMock()
             mock_registry_class.return_value = mock_registry
 
@@ -225,15 +242,25 @@ class TestTrainFlowIntegration:
         model_name = "integration_test_model"
 
         # 模拟各个组件
-        with patch('src.pipeline.flows.train_flow._get_season_matches') as mock_get_matches:
-            with patch('src.pipeline.flows.train_flow.load_training_data_task') as mock_load:
-                with patch('src.pipeline.flows.train_flow.train_model_task') as mock_train:
-                    with patch('src.pipeline.flows.train_flow.save_model_task') as mock_save:
+        with patch(
+            "src.pipeline.flows.train_flow._get_season_matches"
+        ) as mock_get_matches:
+            with patch(
+                "src.pipeline.flows.train_flow.load_training_data_task"
+            ) as mock_load:
+                with patch(
+                    "src.pipeline.flows.train_flow.train_model_task"
+                ) as mock_train:
+                    with patch(
+                        "src.pipeline.flows.train_flow.save_model_task"
+                    ) as mock_save:
 
                         # 设置返回值
                         mock_get_matches.return_value = match_ids
 
-                        X, y = pd.DataFrame({"feature1": [1, 2, 3]}), pd.Series([0, 1, 0])
+                        X, y = pd.DataFrame({"feature1": [1, 2, 3]}), pd.Series(
+                            [0, 1, 0]
+                        )
                         mock_load.return_value = (X, y, MagicMock())
 
                         training_result = {
@@ -274,13 +301,25 @@ class TestTrainFlowIntegration:
         season = "2023-2024"
         match_ids = [1, 2, 3]
 
-        with patch('src.pipeline.flows.train_flow._get_season_matches') as mock_get_matches:
-            with patch('src.pipeline.flows.train_flow.load_training_data_task') as mock_load:
-                with patch('src.pipeline.flows.train_flow.train_model_task') as mock_train:
-                    with patch('src.pipeline.flows.train_flow.save_model_task') as mock_save:
+        with patch(
+            "src.pipeline.flows.train_flow._get_season_matches"
+        ) as mock_get_matches:
+            with patch(
+                "src.pipeline.flows.train_flow.load_training_data_task"
+            ) as mock_load:
+                with patch(
+                    "src.pipeline.flows.train_flow.train_model_task"
+                ) as mock_train:
+                    with patch(
+                        "src.pipeline.flows.train_flow.save_model_task"
+                    ) as mock_save:
 
                         mock_get_matches.return_value = match_ids
-                        mock_load.return_value = (pd.DataFrame(), pd.Series(), MagicMock())
+                        mock_load.return_value = (
+                            pd.DataFrame(),
+                            pd.Series(),
+                            MagicMock(),
+                        )
                         mock_train.return_value = {
                             "model": MagicMock(),
                             "metrics": {},
@@ -300,7 +339,9 @@ class TestTrainFlowIntegration:
         """测试没有找到比赛的情况."""
         season = "2023-2024"
 
-        with patch('src.pipeline.flows.train_flow._get_season_matches') as mock_get_matches:
+        with patch(
+            "src.pipeline.flows.train_flow._get_season_matches"
+        ) as mock_get_matches:
             mock_get_matches.return_value = []  # 没有比赛
 
             result = await train_flow(season=season, config=config)
@@ -314,13 +355,19 @@ class TestTrainFlowIntegration:
         season = "2023-2024"
         match_ids = [1, 2, 3]
 
-        with patch('src.pipeline.flows.train_flow._get_season_matches') as mock_get_matches:
-            with patch('src.pipeline.flows.train_flow.load_training_data_task') as mock_load:
+        with patch(
+            "src.pipeline.flows.train_flow._get_season_matches"
+        ) as mock_get_matches:
+            with patch(
+                "src.pipeline.flows.train_flow.load_training_data_task"
+            ) as mock_load:
 
                 mock_get_matches.return_value = match_ids
                 mock_load.side_effect = Exception("Data loading failed")
 
-                result = await train_flow(season=season, match_ids=match_ids, config=config)
+                result = await train_flow(
+                    season=season, match_ids=match_ids, config=config
+                )
 
                 assert result["status"] == "failed"
                 assert "Data loading failed" in result["error"]
@@ -329,7 +376,7 @@ class TestTrainFlowIntegration:
         """测试快速训练流程同步版本."""
         match_ids = [1, 2, 3]
 
-        with patch('src.pipeline.flows.train_flow.train_flow') as mock_train_flow:
+        with patch("src.pipeline.flows.train_flow.train_flow") as mock_train_flow:
             mock_train_flow.return_value = {
                 "status": "success",
                 "model_name": "quick_model",
@@ -337,7 +384,9 @@ class TestTrainFlowIntegration:
             }
 
             # 使用同步调用
-            result = quick_train_flow(match_ids, algorithm="xgboost", model_name="quick_model")
+            result = quick_train_flow(
+                match_ids, algorithm="xgboost", model_name="quick_model"
+            )
 
             assert result["status"] == "success"
             assert result["model_name"] == "quick_model"
@@ -361,13 +410,17 @@ class TestTrainFlowErrorHandling:
         """测试加载训练数据任务的永久失败."""
         match_ids = [1, 2, 3]
 
-        with patch('src.pipeline.flows.train_flow.FootballFeatureStore'):
-            with patch('src.pipeline.flows.train_flow.FeatureLoader') as mock_loader_class:
+        with patch("src.pipeline.flows.train_flow.FootballFeatureStore"):
+            with patch(
+                "src.pipeline.flows.train_flow.FeatureLoader"
+            ) as mock_loader_class:
                 mock_loader = MagicMock()
                 mock_loader_class.return_value = mock_loader
 
                 # 始终失败
-                mock_loader.load_training_data.side_effect = Exception("Permanent failure")
+                mock_loader.load_training_data.side_effect = Exception(
+                    "Permanent failure"
+                )
 
                 # 由于Prefect的重试机制，这个测试可能需要调整
                 # 在实际测试中，我们可能需要模拟重试耗尽的情况
@@ -379,12 +432,14 @@ class TestTrainFlowErrorHandling:
         """测试不支持的算法."""
         X, y = pd.DataFrame({"feature1": [1]}), pd.Series([0])
 
-        with patch('src.pipeline.flows.train_flow.Trainer') as mock_trainer_class:
+        with patch("src.pipeline.flows.train_flow.Trainer") as mock_trainer_class:
             mock_trainer = MagicMock()
             mock_trainer_class.return_value = mock_trainer
 
             # 模拟不支持算法的异常
-            mock_trainer.train.side_effect = ValueError("Unsupported algorithm: unknown_algo")
+            mock_trainer.train.side_effect = ValueError(
+                "Unsupported algorithm: unknown_algo"
+            )
 
             with pytest.raises(ValueError, match="Unsupported algorithm"):
                 await train_model_task(X, y, config, "unknown_algo")
@@ -394,7 +449,9 @@ class TestTrainFlowErrorHandling:
         """测试模型注册表保存失败."""
         training_result = {"model": MagicMock(), "algorithm": "xgboost"}
 
-        with patch('src.pipeline.flows.train_flow.ModelRegistry') as mock_registry_class:
+        with patch(
+            "src.pipeline.flows.train_flow.ModelRegistry"
+        ) as mock_registry_class:
             mock_registry = MagicMock()
             mock_registry_class.return_value = mock_registry
 
@@ -410,9 +467,15 @@ class TestTrainFlowErrorHandling:
         season = "2023-2024"
         match_ids = [1, 2, 3]
 
-        with patch('src.pipeline.flows.train_flow._get_season_matches') as mock_get_matches:
-            with patch('src.pipeline.flows.train_flow.load_training_data_task') as mock_load:
-                with patch('src.pipeline.flows.train_flow.train_model_task') as mock_train:
+        with patch(
+            "src.pipeline.flows.train_flow._get_season_matches"
+        ) as mock_get_matches:
+            with patch(
+                "src.pipeline.flows.train_flow.load_training_data_task"
+            ) as mock_load:
+                with patch(
+                    "src.pipeline.flows.train_flow.train_model_task"
+                ) as mock_train:
 
                     mock_get_matches.return_value = match_ids
 
@@ -422,7 +485,9 @@ class TestTrainFlowErrorHandling:
 
                     mock_train.side_effect = Exception("Training failed")
 
-                    result = await train_flow(season=season, match_ids=match_ids, config=config)
+                    result = await train_flow(
+                        season=season, match_ids=match_ids, config=config
+                    )
 
                     assert result["status"] == "failed"
                     assert "Training failed" in result["error"]
@@ -438,28 +503,38 @@ class TestTrainFlowPerformance:
         """测试大数据集训练流程性能."""
         # 创建较大的数据集
         import numpy as np
+
         n_samples = 10000
         n_features = 20
 
         X = pd.DataFrame(
             np.random.random((n_samples, n_features)),
-            columns=[f"feature_{i}" for i in range(n_features)]
+            columns=[f"feature_{i}" for i in range(n_features)],
         )
         y = pd.Series(np.random.randint(0, 2, n_samples))
 
         season = "2023-2024"
         match_ids = list(range(1, n_samples + 1))
 
-        with patch('src.pipeline.flows.train_flow._get_season_matches') as mock_get_matches:
-            with patch('src.pipeline.flows.train_flow.load_training_data_task') as mock_load:
-                with patch('src.pipeline.flows.train_flow.train_model_task') as mock_train:
-                    with patch('src.pipeline.flows.train_flow.save_model_task') as mock_save:
+        with patch(
+            "src.pipeline.flows.train_flow._get_season_matches"
+        ) as mock_get_matches:
+            with patch(
+                "src.pipeline.flows.train_flow.load_training_data_task"
+            ) as mock_load:
+                with patch(
+                    "src.pipeline.flows.train_flow.train_model_task"
+                ) as mock_train:
+                    with patch(
+                        "src.pipeline.flows.train_flow.save_model_task"
+                    ) as mock_save:
 
                         mock_get_matches.return_value = match_ids
                         mock_load.return_value = (X, y, MagicMock())
 
                         # 模拟较长时间的训练
                         import time
+
                         def slow_train(*args, **kwargs):
                             time.sleep(0.1)  # 模拟100ms训练时间
                             return {
@@ -472,7 +547,6 @@ class TestTrainFlowPerformance:
                         mock_train.side_effect = slow_train
                         mock_save.return_value = "/path/to/model.joblib"
 
-                        import time
                         start_time = time.time()
 
                         result = await train_flow(

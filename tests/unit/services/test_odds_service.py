@@ -18,17 +18,13 @@ Odds Service Unit Tests
 
 import pytest
 from datetime import datetime
-from decimal import Decimal
-from typing import List, Dict, Any
-from unittest.mock import Mock, patch, AsyncMock, MagicMock, call
+from unittest.mock import Mock, patch, AsyncMock
 
 from src.collectors.abstract_fetcher import (
     AbstractFetcher,
     OddsData,
     FetcherFactory,
-    DataNotFoundError,
     ConnectionError,
-    FetcherError,
 )
 from src.services.odds_service import (
     OddsService,
@@ -41,7 +37,6 @@ from src.database.dao.exceptions import (
     RecordNotFoundError,
     DatabaseConnectionError,
     ValidationError,
-    DuplicateRecordError,
 )
 
 
@@ -69,7 +64,7 @@ class TestOddsIngestionResult:
             successful_updates=3,
             duplicates_found=1,
             validation_errors=1,
-            processing_time_ms=150.5
+            processing_time_ms=150.5,
         )
 
         assert result.total_processed == 10
@@ -93,9 +88,7 @@ class TestOddsIngestionResult:
     def test_to_dict(self):
         """测试转换为字典格式"""
         result = OddsIngestionResult(
-            total_processed=10,
-            successful_inserts=7,
-            successful_updates=2
+            total_processed=10, successful_inserts=7, successful_updates=2
         )
         result.add_error("test_error", "Test message")
 
@@ -135,10 +128,7 @@ class TestOddsService:
     @pytest.fixture
     def odds_service(self, mock_odds_dao: Mock, mock_match_dao: Mock) -> OddsService:
         """创建赔率服务实例"""
-        return OddsService(
-            odds_dao=mock_odds_dao,
-            match_dao=mock_match_dao
-        )
+        return OddsService(odds_dao=mock_odds_dao, match_dao=mock_match_dao)
 
     @pytest.fixture
     def sample_odds_data(self) -> list[OddsData]:
@@ -151,7 +141,7 @@ class TestOddsService:
                 draw=3.20,
                 away_win=2.80,
                 bookmaker="Test Bookmaker",
-                market_type="1X2"
+                market_type="1X2",
             ),
             OddsData(
                 match_id="124",
@@ -160,7 +150,7 @@ class TestOddsService:
                 asian_handicap_away=1.85,
                 asian_handicap_line=-0.5,
                 bookmaker="Test Bookmaker",
-                market_type="Asian Handicap"
+                market_type="Asian Handicap",
             ),
             OddsData(
                 match_id="125",
@@ -169,8 +159,8 @@ class TestOddsService:
                 draw=3.60,
                 away_win=4.20,
                 bookmaker="Another Bookmaker",
-                market_type="1X2"
-            )
+                market_type="1X2",
+            ),
         ]
 
     @pytest.fixture
@@ -195,7 +185,9 @@ class TestOddsServiceIngestion(TestOddsService):
     """赔率服务摄取功能测试"""
 
     @pytest.mark.asyncio
-    async def test_ingest_odds_data_success_all_new(self, odds_service, sample_odds_data):
+    async def test_ingest_odds_data_success_all_new(
+        self, odds_service, sample_odds_data
+    ):
         """测试成功摄取全新数据"""
         # 模拟没有现有记录
         odds_service.odds_dao.get_by_match_and_bookmaker.return_value = None
@@ -219,13 +211,15 @@ class TestOddsServiceIngestion(TestOddsService):
         assert odds_service.odds_dao.update.call_count == 0
 
     @pytest.mark.asyncio
-    async def test_ingest_odds_data_with_duplicates(self, odds_service, sample_odds_data, sample_odds_model):
+    async def test_ingest_odds_data_with_duplicates(
+        self, odds_service, sample_odds_data, sample_odds_model
+    ):
         """测试处理重复数据"""
         # 模拟第一条记录已存在
         odds_service.odds_dao.get_by_match_and_bookmaker.side_effect = [
             sample_odds_model,  # 第一条记录存在
-            None,               # 第二条记录不存在
-            None                # 第三条记录不存在
+            None,  # 第二条记录不存在
+            None,  # 第三条记录不存在
         ]
 
         odds_service.odds_dao.update.return_value = None
@@ -252,19 +246,19 @@ class TestOddsServiceIngestion(TestOddsService):
                 match_id="",  # 无效：空的match_id
                 source="test_source",
                 home_win=2.45,
-                bookmaker="Test Bookmaker"
+                bookmaker="Test Bookmaker",
             ),
             OddsData(
                 match_id="123",
                 source="test_source",
                 home_win=0.5,  # 无效：赔率小于1.0
-                bookmaker="Test Bookmaker"
+                bookmaker="Test Bookmaker",
             ),
             OddsData(
                 match_id="124",
                 source="test_source",
                 # 没有任何赔率值
-                bookmaker="Test Bookmaker"
+                bookmaker="Test Bookmaker",
             ),
             OddsData(
                 match_id="125",
@@ -272,8 +266,8 @@ class TestOddsServiceIngestion(TestOddsService):
                 home_win=2.10,  # 有效数据
                 draw=3.40,
                 away_win=3.20,
-                bookmaker="Test Bookmaker"
-            )
+                bookmaker="Test Bookmaker",
+            ),
         ]
 
         odds_service.odds_dao.get_by_match_and_bookmaker.return_value = None
@@ -284,14 +278,16 @@ class TestOddsServiceIngestion(TestOddsService):
         # 验证结果统计
         assert result.total_processed == 1  # 只有1条有效数据通过了预处理
         assert result.successful_inserts == 1  # 1条有效数据被插入
-        assert result.validation_errors == 3   # 3条验证错误
+        assert result.validation_errors == 3  # 3条验证错误
 
         # 验证错误详情
         assert len(result.errors) == 3
         assert all(error["error_type"] == "validation_error" for error in result.errors)
 
     @pytest.mark.asyncio
-    async def test_ingest_odds_data_with_duplicate_in_batch(self, odds_service, sample_odds_data):
+    async def test_ingest_odds_data_with_duplicate_in_batch(
+        self, odds_service, sample_odds_data
+    ):
         """测试批次内重复数据"""
         # 创建包含重复数据的数据集（相同match_id, source, bookmaker, market_type）
         duplicate_odds_data = [
@@ -307,19 +303,23 @@ class TestOddsServiceIngestion(TestOddsService):
         # 验证结果统计 - 根据实际行为调整期望
         assert result.total_processed == 2  # 两条数据都通过了预处理（去重未生效）
         assert result.successful_inserts == 2  # 2条都被插入（会在数据库层面去重）
-        assert result.duplicates_found == 0    # 批次内去重未检测到重复
+        assert result.duplicates_found == 0  # 批次内去重未检测到重复
 
         # 验证DAO调用
         assert odds_service.odds_dao.create.call_count == 2  # 调用两次创建
 
     @pytest.mark.asyncio
-    async def test_ingest_odds_data_database_error(self, odds_service, sample_odds_data):
+    async def test_ingest_odds_data_database_error(
+        self, odds_service, sample_odds_data
+    ):
         """测试数据库错误处理"""
         # 模拟数据库错误在创建阶段
         odds_service.odds_dao.get_by_match_and_bookmaker.return_value = None
         odds_service.odds_dao.create.side_effect = DatabaseConnectionError("DB连接失败")
 
-        result = await odds_service.ingest_odds_data(sample_odds_data[:1])  # 只测试一条记录
+        result = await odds_service.ingest_odds_data(
+            sample_odds_data[:1]
+        )  # 只测试一条记录
 
         # 验证错误被正确处理（错误可能被记录多次）
         assert result.total_processed == 1
@@ -330,7 +330,6 @@ class TestOddsServiceIngestion(TestOddsService):
     @pytest.mark.asyncio
     async def test_data_cleaning_and_standardization(self, odds_service):
         """测试数据清洗和标准化"""
-        from datetime import datetime
 
         dirty_odds_data = [
             OddsData(
@@ -339,7 +338,7 @@ class TestOddsServiceIngestion(TestOddsService):
                 home_win=2.4500000,  # 需要精度处理
                 bookmaker="  test bookmaker  ",  # 需要标准化
                 market_type="  1X2  ",  # 需要标准化
-                timestamp=datetime.now()  # 提供有效的时间戳
+                timestamp=datetime.now(),  # 提供有效的时间戳
             )
         ]
 
@@ -348,6 +347,7 @@ class TestOddsServiceIngestion(TestOddsService):
 
         # 捕获传递给create的参数
         create_args = []
+
         async def capture_create_args(args):
             create_args.append(args)
 
@@ -386,7 +386,7 @@ class TestOddsServiceFetchAndSave(TestOddsService):
     @pytest.mark.asyncio
     async def test_fetch_and_save_odds_success(self, odds_service, mock_fetcher):
         """测试成功获取和保存赔率数据"""
-        with patch.object(FetcherFactory, 'create') as mock_factory_create:
+        with patch.object(FetcherFactory, "create") as mock_factory_create:
             mock_factory_create.return_value = mock_fetcher
 
             # 模拟获取器返回数据
@@ -395,7 +395,7 @@ class TestOddsServiceFetchAndSave(TestOddsService):
                     match_id="123",
                     source="test_source",
                     home_win=2.45,
-                    bookmaker="Test Bookmaker"
+                    bookmaker="Test Bookmaker",
                 )
             ]
             mock_fetcher.fetch_odds.return_value = mock_odds_data
@@ -420,7 +420,7 @@ class TestOddsServiceFetchAndSave(TestOddsService):
     @pytest.mark.asyncio
     async def test_fetch_and_save_odds_match_not_found(self, odds_service):
         """测试比赛不存在的情况"""
-        with patch.object(FetcherFactory, 'create') as mock_factory_create:
+        with patch.object(FetcherFactory, "create") as mock_factory_create:
             mock_fetcher = AsyncMock()
             mock_factory_create.return_value = mock_fetcher
 
@@ -428,18 +428,22 @@ class TestOddsServiceFetchAndSave(TestOddsService):
             odds_service.match_dao.get_by_external_id.return_value = None
 
             with pytest.raises(RecordNotFoundError) as exc_info:
-                await odds_service.fetch_and_save_odds("test_source", "nonexistent_match")
+                await odds_service.fetch_and_save_odds(
+                    "test_source", "nonexistent_match"
+                )
 
             # 验证异常信息包含比赛ID
             assert "nonexistent_match" in str(exc_info.value)
 
             # 验证调用了比赛查找方法
-            odds_service.match_dao.get_by_external_id.assert_called_once_with("nonexistent_match")
+            odds_service.match_dao.get_by_external_id.assert_called_once_with(
+                "nonexistent_match"
+            )
 
     @pytest.mark.asyncio
     async def test_fetch_and_save_odds_fetcher_error(self, odds_service):
         """测试数据获取器错误"""
-        with patch.object(FetcherFactory, 'create') as mock_factory_create:
+        with patch.object(FetcherFactory, "create") as mock_factory_create:
             mock_factory_create.return_value = Mock()
 
             # 模拟比赛存在
@@ -454,9 +458,11 @@ class TestOddsServiceFetchAndSave(TestOddsService):
                 await odds_service.fetch_and_save_odds("failing_source", "123")
 
     @pytest.mark.asyncio
-    async def test_fetch_and_save_odds_no_data_returned(self, odds_service, mock_fetcher):
+    async def test_fetch_and_save_odds_no_data_returned(
+        self, odds_service, mock_fetcher
+    ):
         """测试获取器返回空数据"""
-        with patch.object(FetcherFactory, 'create') as mock_factory_create:
+        with patch.object(FetcherFactory, "create") as mock_factory_create:
             mock_factory_create.return_value = mock_fetcher
 
             # 模拟获取器返回空数据
@@ -485,9 +491,11 @@ class TestOddsServiceFetchAndSave(TestOddsService):
     @pytest.mark.asyncio
     async def test_fetch_and_save_odds_unknown_source(self, odds_service):
         """测试未知的数据源"""
-        with patch.object(FetcherFactory, 'create') as mock_factory_create:
+        with patch.object(FetcherFactory, "create") as mock_factory_create:
             # 模拟工厂抛出未知数据源错误
-            mock_factory_create.side_effect = ValueError("Unknown fetcher: unknown_source")
+            mock_factory_create.side_effect = ValueError(
+                "Unknown fetcher: unknown_source"
+            )
 
             odds_service.match_dao.get.return_value = Mock(id=123)
 
@@ -528,7 +536,7 @@ class TestOddsServiceHelperMethods(TestOddsService):
     @pytest.mark.asyncio
     async def test_create_fetcher_success(self, odds_service):
         """测试创建获取器 - 成功情况"""
-        with patch.object(FetcherFactory, 'create') as mock_create:
+        with patch.object(FetcherFactory, "create") as mock_create:
             mock_create.return_value = Mock(spec=AbstractFetcher)
 
             fetcher = await odds_service._create_fetcher("test_source")
@@ -545,7 +553,7 @@ class TestOddsServiceHelperMethods(TestOddsService):
     @pytest.mark.asyncio
     async def test_create_fetcher_unknown_source(self, odds_service):
         """测试创建获取器 - 未知数据源"""
-        with patch.object(FetcherFactory, 'create') as mock_create:
+        with patch.object(FetcherFactory, "create") as mock_create:
             mock_create.side_effect = ValueError("Unknown fetcher")
 
             with pytest.raises(ValidationError):
@@ -554,9 +562,7 @@ class TestOddsServiceHelperMethods(TestOddsService):
     @pytest.mark.asyncio
     async def test_fetch_odds_data_success(self, odds_service, mock_fetcher):
         """测试获取赔率数据 - 成功情况"""
-        mock_odds_data = [
-            OddsData(match_id="123", source="test", home_win=2.45)
-        ]
+        mock_odds_data = [OddsData(match_id="123", source="test", home_win=2.45)]
         mock_fetcher.fetch_odds.return_value = mock_odds_data
 
         result = await odds_service._fetch_odds_data(mock_fetcher, "123")
@@ -585,10 +591,7 @@ class TestOddsServiceHelperMethods(TestOddsService):
     def test_validate_odds_data_valid(self, odds_service):
         """测试验证赔率数据 - 有效数据"""
         valid_odds = OddsData(
-            match_id="123",
-            source="test",
-            home_win=2.45,
-            bookmaker="Test"
+            match_id="123", source="test", home_win=2.45, bookmaker="Test"
         )
 
         result = odds_service._validate_odds_data(valid_odds)
@@ -599,18 +602,12 @@ class TestOddsServiceHelperMethods(TestOddsService):
         """测试验证赔率数据 - 缺少必填字段"""
         # 空match_id
         invalid_odds1 = OddsData(
-            match_id="",
-            source="test",
-            home_win=2.45,
-            bookmaker="Test"
+            match_id="", source="test", home_win=2.45, bookmaker="Test"
         )
 
         # 空source
         invalid_odds2 = OddsData(
-            match_id="123",
-            source="",
-            home_win=2.45,
-            bookmaker="Test"
+            match_id="123", source="", home_win=2.45, bookmaker="Test"
         )
 
         assert odds_service._validate_odds_data(invalid_odds1) is False
@@ -621,7 +618,7 @@ class TestOddsServiceHelperMethods(TestOddsService):
         invalid_odds = OddsData(
             match_id="123",
             source="test",
-            bookmaker="Test"
+            bookmaker="Test",
             # 没有任何赔率值
         )
 
@@ -635,7 +632,7 @@ class TestOddsServiceHelperMethods(TestOddsService):
             match_id="123",
             source="test",
             home_win=0.5,  # 小于1.0，无效
-            bookmaker="Test"
+            bookmaker="Test",
         )
 
         result = odds_service._validate_odds_data(invalid_odds)
@@ -646,26 +643,17 @@ class TestOddsServiceHelperMethods(TestOddsService):
         """测试验证赔率数据 - 边界值情况"""
         # 最小有效值
         valid_odds1 = OddsData(
-            match_id="123",
-            source="test",
-            home_win=1.0,
-            bookmaker="Test"
+            match_id="123", source="test", home_win=1.0, bookmaker="Test"
         )
 
         # 最大有效值
         valid_odds2 = OddsData(
-            match_id="124",
-            source="test",
-            home_win=1000.0,
-            bookmaker="Test"
+            match_id="124", source="test", home_win=1000.0, bookmaker="Test"
         )
 
         # 略大于最大值（应该无效）
         invalid_odds = OddsData(
-            match_id="125",
-            source="test",
-            home_win=1000.1,
-            bookmaker="Test"
+            match_id="125", source="test", home_win=1000.1, bookmaker="Test"
         )
 
         assert odds_service._validate_odds_data(valid_odds1) is True
@@ -678,7 +666,7 @@ class TestOddsServiceHelperMethods(TestOddsService):
             match_id="123",
             source="test_source",
             bookmaker="Test Bookmaker",
-            market_type="1X2"
+            market_type="1X2",
         )
 
         key = odds_service._create_deduplication_key(odds_data)
@@ -689,17 +677,10 @@ class TestOddsServiceHelperMethods(TestOddsService):
     def test_create_deduplication_key_missing_fields(self, odds_service):
         """测试创建去重键 - 缺少字段"""
         # 缺少bookmaker
-        odds_data1 = OddsData(
-            match_id="123",
-            source="test_source"
-        )
+        odds_data1 = OddsData(match_id="123", source="test_source")
 
         # 缺少market_type
-        odds_data2 = OddsData(
-            match_id="123",
-            source="test_source",
-            bookmaker="Test"
-        )
+        odds_data2 = OddsData(match_id="123", source="test_source", bookmaker="Test")
 
         key1 = odds_service._create_deduplication_key(odds_data1)
         key2 = odds_service._create_deduplication_key(odds_data2)
@@ -711,14 +692,13 @@ class TestOddsServiceHelperMethods(TestOddsService):
     @pytest.mark.asyncio
     async def test_clean_odds_data(self, odds_service):
         """测试清洗赔率数据"""
-        from datetime import datetime
         dirty_odds = OddsData(
             match_id="123",
             source="test",
             home_win="2.450000",  # 字符串形式的数字
             bookmaker="  test bookmaker  ",  # 需要标准化
             market_type="  1X2  ",  # 需要标准化
-            timestamp=datetime.now()  # 提供有效时间戳
+            timestamp=datetime.now(),  # 提供有效时间戳
         )
 
         cleaned_odds = await odds_service._clean_odds_data(dirty_odds)
@@ -737,7 +717,7 @@ class TestOddsServiceIntegration(TestOddsService):
     @pytest.mark.asyncio
     async def test_complete_workflow_new_data(self, odds_service, mock_fetcher):
         """测试完整工作流程 - 新数据"""
-        with patch.object(FetcherFactory, 'create') as mock_factory_create:
+        with patch.object(FetcherFactory, "create") as mock_factory_create:
             mock_factory_create.return_value = mock_fetcher
 
             # 设置模拟数据
@@ -746,7 +726,7 @@ class TestOddsServiceIntegration(TestOddsService):
                     match_id="123",
                     source="test_source",
                     home_win=2.45,
-                    bookmaker="Test Bookmaker"
+                    bookmaker="Test Bookmaker",
                 )
             ]
             mock_fetcher.fetch_odds.return_value = mock_odds_data
@@ -764,15 +744,19 @@ class TestOddsServiceIntegration(TestOddsService):
             mock_factory_create.assert_called_once_with("test_source")
             mock_fetcher.fetch_odds.assert_called_once_with("123")
             odds_service.match_dao.get.assert_called_once_with(123)
-            odds_service.odds_dao.get_by_match_and_bookmaker.assert_called_once_with(123, "Test Bookmaker")
+            odds_service.odds_dao.get_by_match_and_bookmaker.assert_called_once_with(
+                123, "Test Bookmaker"
+            )
             odds_service.odds_dao.create.assert_called_once()
 
             assert result.successful_inserts == 1
 
     @pytest.mark.asyncio
-    async def test_complete_workflow_existing_data(self, odds_service, mock_fetcher, sample_odds_model):
+    async def test_complete_workflow_existing_data(
+        self, odds_service, mock_fetcher, sample_odds_model
+    ):
         """测试完整工作流程 - 现有数据更新"""
-        with patch.object(FetcherFactory, 'create') as mock_factory_create:
+        with patch.object(FetcherFactory, "create") as mock_factory_create:
             mock_factory_create.return_value = mock_fetcher
 
             # 设置模拟数据
@@ -781,7 +765,7 @@ class TestOddsServiceIntegration(TestOddsService):
                     match_id="123",
                     source="test_source",
                     home_win=2.45,
-                    bookmaker="Test Bookmaker"
+                    bookmaker="Test Bookmaker",
                 )
             ]
             mock_fetcher.fetch_odds.return_value = mock_odds_data
@@ -790,13 +774,17 @@ class TestOddsServiceIntegration(TestOddsService):
             odds_service.match_dao.get.return_value = Mock(id=123)
 
             # 模拟现有赔率记录存在
-            odds_service.odds_dao.get_by_match_and_bookmaker.return_value = sample_odds_model
+            odds_service.odds_dao.get_by_match_and_bookmaker.return_value = (
+                sample_odds_model
+            )
             odds_service.odds_dao.update.return_value = None
 
             result = await odds_service.fetch_and_save_odds("test_source", "123")
 
             # 验证更新操作
-            odds_service.odds_dao.get_by_match_and_bookmaker.assert_called_once_with(123, "Test Bookmaker")
+            odds_service.odds_dao.get_by_match_and_bookmaker.assert_called_once_with(
+                123, "Test Bookmaker"
+            )
             odds_service.odds_dao.update.assert_called_once()
             odds_service.odds_dao.create.assert_not_called()
 
@@ -808,22 +796,16 @@ class TestOddsServiceIntegration(TestOddsService):
         # 创建混合数据：有效、无效、重复
         mixed_odds_data = [
             OddsData(
-                match_id="123",
-                source="test",
-                home_win=2.45,
-                bookmaker="BookmakerA"
+                match_id="123", source="test", home_win=2.45, bookmaker="BookmakerA"
             ),
             OddsData(
                 match_id="124",
                 source="test",
                 home_win=0.5,  # 无效赔率
-                bookmaker="BookmakerB"
+                bookmaker="BookmakerB",
             ),
             OddsData(
-                match_id="123",
-                source="test",
-                home_win=2.45,
-                bookmaker="BookmakerA"
+                match_id="123", source="test", home_win=2.45, bookmaker="BookmakerA"
             ),  # 重复数据
         ]
 
@@ -836,9 +818,9 @@ class TestOddsServiceIntegration(TestOddsService):
         # 验证统计准确性（根据实际行为调整）
         assert result.total_processed == 1  # 只有1条有效数据通过预处理
         assert result.successful_inserts == 1  # 1条有效新数据
-        assert result.validation_errors == 1   # 1条验证错误
-        assert result.duplicates_found == 1   # 1条重复数据
-        assert result.to_dict()["success_rate"] == 1.0     # 成功率计算（1/1）
+        assert result.validation_errors == 1  # 1条验证错误
+        assert result.duplicates_found == 1  # 1条重复数据
+        assert result.to_dict()["success_rate"] == 1.0  # 成功率计算（1/1）
 
         # 验证错误详情记录
         error_types = [error["error_type"] for error in result.errors]
@@ -853,5 +835,5 @@ __all__ = [
     "TestOddsServiceIngestion",
     "TestOddsServiceFetchAndSave",
     "TestOddsServiceHelperMethods",
-    "TestOddsServiceIntegration"
+    "TestOddsServiceIntegration",
 ]

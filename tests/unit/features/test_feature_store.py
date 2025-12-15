@@ -12,14 +12,10 @@ from datetime import datetime, timezone
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from pytest_mock import MockerFixture
 
 from src.features.feature_store import FootballFeatureStore
 from src.features.feature_store_interface import (
-    FeatureData,
-    FeatureNotFoundError,
     FeatureValidationError,
-    StorageError,
 )
 
 
@@ -30,9 +26,7 @@ class TestFootballFeatureStore:
     def feature_store(self) -> FootballFeatureStore:
         """创建 FeatureStore 实例用于测试。"""
         return FootballFeatureStore(
-            max_batch_size=10,
-            retry_attempts=1,
-            enable_logging=False
+            max_batch_size=10, retry_attempts=1, enable_logging=False
         )
 
     @pytest.fixture
@@ -58,13 +52,15 @@ class TestFootballFeatureStore:
             "home_xg": 1.5,
             "away_xg": 1.2,
             "home_win_odds": 2.1,
-            "home_implied_probability": 0.476
+            "home_implied_probability": 0.476,
         }
 
     @pytest.mark.asyncio
-    async def test_initialize_success(self, feature_store: FootballFeatureStore, mock_session):
+    async def test_initialize_success(
+        self, feature_store: FootballFeatureStore, mock_session
+    ):
         """测试成功初始化。"""
-        with patch('src.features.feature_store.get_db_session') as mock_get_session:
+        with patch("src.features.feature_store.get_db_session") as mock_get_session:
             mock_get_session.return_value.__aenter__.return_value = mock_session
 
             await feature_store.initialize()
@@ -74,11 +70,13 @@ class TestFootballFeatureStore:
             mock_session.commit.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_initialize_already_initialized(self, feature_store: FootballFeatureStore):
+    async def test_initialize_already_initialized(
+        self, feature_store: FootballFeatureStore
+    ):
         """测试重复初始化。"""
         feature_store._initialized = True
 
-        with patch('src.features.feature_store.get_db_session') as mock_get_session:
+        with patch("src.features.feature_store.get_db_session") as mock_get_session:
             await feature_store.initialize()
 
             # 不应该再次调用数据库操作
@@ -86,15 +84,12 @@ class TestFootballFeatureStore:
 
     @pytest.mark.asyncio
     async def test_save_features_success(
-        self,
-        feature_store: FootballFeatureStore,
-        mock_session,
-        sample_features: dict
+        self, feature_store: FootballFeatureStore, mock_session, sample_features: dict
     ):
         """测试成功保存特征。"""
         feature_store._initialized = True
 
-        with patch('src.features.feature_store.get_db_session') as mock_get_session:
+        with patch("src.features.feature_store.get_db_session") as mock_get_session:
             mock_get_session.return_value.__aenter__.return_value = mock_session
 
             await feature_store.save_features(12345, sample_features)
@@ -114,9 +109,7 @@ class TestFootballFeatureStore:
 
     @pytest.mark.asyncio
     async def test_save_features_invalid_match_id(
-        self,
-        feature_store: FootballFeatureStore,
-        sample_features: dict
+        self, feature_store: FootballFeatureStore, sample_features: dict
     ):
         """测试无效的 match_id。"""
         feature_store._initialized = True
@@ -126,8 +119,7 @@ class TestFootballFeatureStore:
 
     @pytest.mark.asyncio
     async def test_save_features_empty_features(
-        self,
-        feature_store: FootballFeatureStore
+        self, feature_store: FootballFeatureStore
     ):
         """测试空的特征字典。"""
         feature_store._initialized = True
@@ -137,8 +129,7 @@ class TestFootballFeatureStore:
 
     @pytest.mark.asyncio
     async def test_save_features_invalid_feature_names(
-        self,
-        feature_store: FootballFeatureStore
+        self, feature_store: FootballFeatureStore
     ):
         """测试无效的特征名。"""
         feature_store._initialized = True
@@ -150,10 +141,7 @@ class TestFootballFeatureStore:
 
     @pytest.mark.asyncio
     async def test_load_features_success(
-        self,
-        feature_store: FootballFeatureStore,
-        mock_session,
-        sample_features: dict
+        self, feature_store: FootballFeatureStore, mock_session, sample_features: dict
     ):
         """测试成功加载特征。"""
         feature_store._initialized = True
@@ -171,7 +159,7 @@ class TestFootballFeatureStore:
 
         mock_session.fetchone.return_value = mock_row
 
-        with patch('src.features.feature_store.get_db_session') as mock_get_session:
+        with patch("src.features.feature_store.get_db_session") as mock_get_session:
             mock_get_session.return_value.__aenter__.return_value = mock_session
 
             result = await feature_store.load_features(12345)
@@ -183,15 +171,13 @@ class TestFootballFeatureStore:
 
     @pytest.mark.asyncio
     async def test_load_features_not_found(
-        self,
-        feature_store: FootballFeatureStore,
-        mock_session
+        self, feature_store: FootballFeatureStore, mock_session
     ):
         """测试加载不存在的特征。"""
         feature_store._initialized = True
         mock_session.fetchone.return_value = None
 
-        with patch('src.features.feature_store.get_db_session') as mock_get_session:
+        with patch("src.features.feature_store.get_db_session") as mock_get_session:
             mock_get_session.return_value.__aenter__.return_value = mock_session
 
             result = await feature_store.load_features(99999)
@@ -200,10 +186,7 @@ class TestFootballFeatureStore:
 
     @pytest.mark.asyncio
     async def test_load_batch_success(
-        self,
-        feature_store: FootballFeatureStore,
-        mock_session,
-        sample_features: dict
+        self, feature_store: FootballFeatureStore, mock_session, sample_features: dict
     ):
         """测试批量加载成功。"""
         feature_store._initialized = True
@@ -225,7 +208,7 @@ class TestFootballFeatureStore:
 
         mock_session.fetchall.return_value = mock_rows
 
-        with patch('src.features.feature_store.get_db_session') as mock_get_session:
+        with patch("src.features.feature_store.get_db_session") as mock_get_session:
             mock_get_session.return_value.__aenter__.return_value = mock_session
 
             result = await feature_store.load_batch(match_ids)
@@ -251,8 +234,7 @@ class TestFootballFeatureStore:
 
     @pytest.mark.asyncio
     async def test_load_batch_exceeds_max_size(
-        self,
-        feature_store: FootballFeatureStore
+        self, feature_store: FootballFeatureStore
     ):
         """测试批量加载超过最大大小。"""
         feature_store._initialized = True
@@ -263,10 +245,7 @@ class TestFootballFeatureStore:
 
     @pytest.mark.asyncio
     async def test_query_features_with_names(
-        self,
-        feature_store: FootballFeatureStore,
-        mock_session,
-        sample_features: dict
+        self, feature_store: FootballFeatureStore, mock_session, sample_features: dict
     ):
         """测试查询特定特征名。"""
         feature_store._initialized = True
@@ -277,18 +256,22 @@ class TestFootballFeatureStore:
         mock_rows = []
         for match_id in match_ids:
             mock_row = MagicMock()
-            filtered_features = {k: v for k, v in sample_features.items() if k in feature_names}
-            mock_row.__getitem__ = lambda self, key, match_id=match_id, features=filtered_features: {
-                0: match_id,  # match_id
-                1: json.dumps(features),  # features
-                2: "latest",  # version
-                3: datetime.now(timezone.utc),  # updated_at
-            }[key]
+            filtered_features = {
+                k: v for k, v in sample_features.items() if k in feature_names
+            }
+            mock_row.__getitem__ = (
+                lambda self, key, match_id=match_id, features=filtered_features: {
+                    0: match_id,  # match_id
+                    1: json.dumps(features),  # features
+                    2: "latest",  # version
+                    3: datetime.now(timezone.utc),  # updated_at
+                }[key]
+            )
             mock_rows.append(mock_row)
 
         mock_session.fetchall.return_value = mock_rows
 
-        with patch('src.features.feature_store.get_db_session') as mock_get_session:
+        with patch("src.features.feature_store.get_db_session") as mock_get_session:
             mock_get_session.return_value.__aenter__.return_value = mock_session
 
             results = await feature_store.query_features(match_ids, feature_names)
@@ -302,14 +285,12 @@ class TestFootballFeatureStore:
 
     @pytest.mark.asyncio
     async def test_delete_features_success(
-        self,
-        feature_store: FootballFeatureStore,
-        mock_session
+        self, feature_store: FootballFeatureStore, mock_session
     ):
         """测试删除特征成功。"""
         feature_store._initialized = True
 
-        with patch('src.features.feature_store.get_db_session') as mock_get_session:
+        with patch("src.features.feature_store.get_db_session") as mock_get_session:
             mock_get_session.return_value.__aenter__.return_value = mock_session
 
             result = await feature_store.delete_features(12345)
@@ -325,14 +306,12 @@ class TestFootballFeatureStore:
 
     @pytest.mark.asyncio
     async def test_delete_features_with_version(
-        self,
-        feature_store: FootballFeatureStore,
-        mock_session
+        self, feature_store: FootballFeatureStore, mock_session
     ):
         """测试删除特定版本的特征。"""
         feature_store._initialized = True
 
-        with patch('src.features.feature_store.get_db_session') as mock_get_session:
+        with patch("src.features.feature_store.get_db_session") as mock_get_session:
             mock_get_session.return_value.__aenter__.return_value = mock_session
 
             result = await feature_store.delete_features(12345, "v1.0")
@@ -345,9 +324,7 @@ class TestFootballFeatureStore:
 
     @pytest.mark.asyncio
     async def test_latest_feature_timestamp(
-        self,
-        feature_store: FootballFeatureStore,
-        mock_session
+        self, feature_store: FootballFeatureStore, mock_session
     ):
         """测试获取最新特征时间戳。"""
         feature_store._initialized = True
@@ -359,7 +336,7 @@ class TestFootballFeatureStore:
         }[key]
         mock_session.fetchone.return_value = mock_row
 
-        with patch('src.features.feature_store.get_db_session') as mock_get_session:
+        with patch("src.features.feature_store.get_db_session") as mock_get_session:
             mock_get_session.return_value.__aenter__.return_value = mock_session
 
             result = await feature_store.latest_feature_timestamp()
@@ -368,15 +345,13 @@ class TestFootballFeatureStore:
 
     @pytest.mark.asyncio
     async def test_latest_feature_timestamp_no_data(
-        self,
-        feature_store: FootballFeatureStore,
-        mock_session
+        self, feature_store: FootballFeatureStore, mock_session
     ):
         """测试没有特征数据时的时间戳。"""
         feature_store._initialized = True
         mock_session.fetchone.return_value = None
 
-        with patch('src.features.feature_store.get_db_session') as mock_get_session:
+        with patch("src.features.feature_store.get_db_session") as mock_get_session:
             mock_get_session.return_value.__aenter__.return_value = mock_session
 
             result = await feature_store.latest_feature_timestamp()
@@ -385,9 +360,7 @@ class TestFootballFeatureStore:
 
     @pytest.mark.asyncio
     async def test_stats_success(
-        self,
-        feature_store: FootballFeatureStore,
-        mock_session
+        self, feature_store: FootballFeatureStore, mock_session
     ):
         """测试获取统计信息成功。"""
         feature_store._initialized = True
@@ -398,11 +371,11 @@ class TestFootballFeatureStore:
             1: 500,  # total_features
             2: "latest,v1.0",  # feature_versions
             3: datetime.now(timezone.utc),  # latest_timestamp
-            4: "10 MB"  # storage_size
+            4: "10 MB",  # storage_size
         }[key]
         mock_session.fetchone.return_value = mock_row
 
-        with patch('src.features.feature_store.get_db_session') as mock_get_session:
+        with patch("src.features.feature_store.get_db_session") as mock_get_session:
             mock_get_session.return_value.__aenter__.return_value = mock_session
 
             result = await feature_store.stats()
@@ -416,9 +389,7 @@ class TestFootballFeatureStore:
 
     @pytest.mark.asyncio
     async def test_list_feature_versions(
-        self,
-        feature_store: FootballFeatureStore,
-        mock_session
+        self, feature_store: FootballFeatureStore, mock_session
     ):
         """测试列出特征版本。"""
         feature_store._initialized = True
@@ -430,7 +401,7 @@ class TestFootballFeatureStore:
         ]
         mock_session.fetchall.return_value = mock_rows
 
-        with patch('src.features.feature_store.get_db_session') as mock_get_session:
+        with patch("src.features.feature_store.get_db_session") as mock_get_session:
             mock_get_session.return_value.__aenter__.return_value = mock_session
 
             versions = await feature_store.list_feature_versions(12345)
@@ -442,19 +413,25 @@ class TestFootballFeatureStore:
 
     @pytest.mark.asyncio
     async def test_health_check_healthy(
-        self,
-        feature_store: FootballFeatureStore,
-        mock_session
+        self, feature_store: FootballFeatureStore, mock_session
     ):
         """测试健康检查 - 健康状态。"""
         feature_store._initialized = True
 
         # Mock stats 和 latest_timestamp 方法
-        with patch.object(feature_store, 'stats', return_value={
-            "total_features": 100,
-            "total_matches": 50,
-            "storage_size_mb": 5.0
-        }), patch.object(feature_store, 'latest_feature_timestamp', return_value=datetime.now(timezone.utc)):
+        with patch.object(
+            feature_store,
+            "stats",
+            return_value={
+                "total_features": 100,
+                "total_matches": 50,
+                "storage_size_mb": 5.0,
+            },
+        ), patch.object(
+            feature_store,
+            "latest_feature_timestamp",
+            return_value=datetime.now(timezone.utc),
+        ):
 
             result = await feature_store.health_check()
 
@@ -466,7 +443,9 @@ class TestFootballFeatureStore:
             assert "data_age_seconds" in result
 
     @pytest.mark.asyncio
-    async def test_health_check_uninitialized(self, feature_store: FootballFeatureStore):
+    async def test_health_check_uninitialized(
+        self, feature_store: FootballFeatureStore
+    ):
         """测试健康检查 - 未初始化状态。"""
         feature_store._initialized = False
 
@@ -476,14 +455,13 @@ class TestFootballFeatureStore:
         assert result["initialized"] is False
 
     @pytest.mark.asyncio
-    async def test_health_check_error(
-        self,
-        feature_store: FootballFeatureStore
-    ):
+    async def test_health_check_error(self, feature_store: FootballFeatureStore):
         """测试健康检查 - 错误状态。"""
         feature_store._initialized = True
 
-        with patch.object(feature_store, 'stats', side_effect=Exception("Database error")):
+        with patch.object(
+            feature_store, "stats", side_effect=Exception("Database error")
+        ):
             result = await feature_store.health_check()
 
             assert result["status"] == "unhealthy"
@@ -494,7 +472,9 @@ class TestFootballFeatureStore:
         # 不应该抛出异常
         feature_store._validate_match_id(12345)
 
-    def test_validate_match_id_invalid_negative(self, feature_store: FootballFeatureStore):
+    def test_validate_match_id_invalid_negative(
+        self, feature_store: FootballFeatureStore
+    ):
         """测试无效的负数 match_id。"""
         with pytest.raises(FeatureValidationError, match="Invalid match_id"):
             feature_store._validate_match_id(-1)
@@ -504,7 +484,9 @@ class TestFootballFeatureStore:
         with pytest.raises(FeatureValidationError, match="Invalid match_id"):
             feature_store._validate_match_id(0)
 
-    def test_validate_features_valid(self, feature_store: FootballFeatureStore, sample_features: dict):
+    def test_validate_features_valid(
+        self, feature_store: FootballFeatureStore, sample_features: dict
+    ):
         """测试有效的特征验证。"""
         # 不应该抛出异常
         feature_store._validate_features(sample_features)
@@ -535,7 +517,9 @@ class TestFootballFeatureStore:
         with pytest.raises(FeatureValidationError, match="Invalid version"):
             feature_store._validate_version("")
 
-    def test_validate_version_invalid_whitespace(self, feature_store: FootballFeatureStore):
+    def test_validate_version_invalid_whitespace(
+        self, feature_store: FootballFeatureStore
+    ):
         """测试包含空白字符的版本。"""
         with pytest.raises(FeatureValidationError, match="Invalid version"):
             feature_store._validate_version("   ")
@@ -553,7 +537,9 @@ class TestFootballFeatureStore:
         assert feature_store._parse_storage_size("") is None
         assert feature_store._parse_storage_size("invalid") is None
 
-    def test_parse_storage_size_case_insensitive(self, feature_store: FootballFeatureStore):
+    def test_parse_storage_size_case_insensitive(
+        self, feature_store: FootballFeatureStore
+    ):
         """测试大小写不敏感的存储大小解析。"""
         assert feature_store._parse_storage_size("10 mb") == 10.0
         assert feature_store._parse_storage_size("1 GB") == 1024.0

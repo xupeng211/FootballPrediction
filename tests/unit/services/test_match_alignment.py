@@ -25,28 +25,28 @@ def sample_fotmob_matches() -> List[FotMobMatchInfo]:
             home_team="Man City",
             away_team="Liverpool",
             match_date=datetime(2024, 1, 1),
-            competition_name="Premier League"
+            competition_name="Premier League",
         ),
         FotMobMatchInfo(
             fotmob_id="4193498",
             home_team="Chelsea",
             away_team="Arsenal",
             match_date=datetime(2024, 1, 1),
-            competition_name="Premier League"
+            competition_name="Premier League",
         ),
         FotMobMatchInfo(
             fotmob_id="4193499",
             home_team="Man United",
             away_team="Tottenham",
             match_date=datetime(2024, 1, 2),
-            competition_name="Premier League"
+            competition_name="Premier League",
         ),
         FotMobMatchInfo(
             fotmob_id="4193500",
             home_team="PSG",
             away_team="Monaco",
             match_date=datetime(2024, 1, 1),
-            competition_name="Ligue 1"
+            competition_name="Ligue 1",
         ),
     ]
 
@@ -62,7 +62,7 @@ def sample_titan_matches() -> List[TitanMatchInfo]:
             home_team=TitanTeamInfo(name="Manchester City", tid=1001),
             away_team=TitanTeamInfo(name="Liverpool", tid=1002),
             match_date="2024-01-01",
-            match_time="16:00"
+            match_time="16:00",
         ),
         TitanMatchInfo(
             match_id="2971466",
@@ -71,7 +71,7 @@ def sample_titan_matches() -> List[TitanMatchInfo]:
             home_team=TitanTeamInfo(name="Chelsea", tid=1003),
             away_team=TitanTeamInfo(name="Arsenal", tid=1004),
             match_date="2024-01-01",
-            match_time="18:30"
+            match_time="18:30",
         ),
         TitanMatchInfo(
             match_id="2971467",
@@ -80,7 +80,7 @@ def sample_titan_matches() -> List[TitanMatchInfo]:
             home_team=TitanTeamInfo(name="Manchester United", tid=1005),
             away_team=TitanTeamInfo(name="Tottenham Hotspur", tid=1006),
             match_date="2024-01-02",
-            match_time="20:00"
+            match_time="20:00",
         ),
         TitanMatchInfo(
             match_id="2971468",
@@ -89,7 +89,7 @@ def sample_titan_matches() -> List[TitanMatchInfo]:
             home_team=TitanTeamInfo(name="Paris Saint-Germain", tid=2001),
             away_team=TitanTeamInfo(name="AS Monaco", tid=2002),
             match_date="2024-01-01",
-            match_time="21:00"
+            match_time="21:00",
         ),
     ]
 
@@ -102,12 +102,13 @@ class TestMatchAlignmentService:
         """创建对齐服务实例"""
         return MatchAlignmentService(min_confidence_score=80.0)
 
-    def test_perfect_match_simple_names(self, alignment_service, sample_fotmob_matches, sample_titan_matches):
+    def test_perfect_match_simple_names(
+        self, alignment_service, sample_fotmob_matches, sample_titan_matches
+    ):
         """测试完全匹配（简单队名相同）"""
         # 测试 Liverpool 精准匹配
         result = alignment_service.align_match(
-            sample_fotmob_matches[0],
-            sample_titan_matches[0]
+            sample_fotmob_matches[0], sample_titan_matches[0]
         )
 
         assert result is not None
@@ -122,7 +123,7 @@ class TestMatchAlignmentService:
             fotmob_id="4193497",
             home_team="Man City",
             away_team="Liverpool",
-            match_date=datetime(2024, 1, 1)
+            match_date=datetime(2024, 1, 1),
         )
 
         titan_match = TitanMatchInfo(
@@ -132,7 +133,7 @@ class TestMatchAlignmentService:
             home_team=TitanTeamInfo(name="Manchester City", tid=1001),
             away_team=TitanTeamInfo(name="Liverpool", tid=1002),
             match_date="2024-01-01",
-            match_time="16:00"
+            match_time="16:00",
         )
 
         result = alignment_service.align_match(fotmob_match, titan_match)
@@ -140,7 +141,9 @@ class TestMatchAlignmentService:
         assert result is not None
         assert result.home_team_fotmob == "Man City"
         assert result.home_team_titan == "Manchester City"
-        assert result.confidence_score >= 80.0  # "Man City" vs "Manchester City" 分数应该很高
+        assert (
+            result.confidence_score >= 80.0
+        )  # "Man City" vs "Manchester City" 分数应该很高
         assert result.is_aligned is True
 
     def test_fuzzy_match_full_names(self, alignment_service):
@@ -149,7 +152,7 @@ class TestMatchAlignmentService:
             fotmob_id="4193499",
             home_team="Man United",
             away_team="Tottenham",
-            match_date=datetime(2024, 1, 2)
+            match_date=datetime(2024, 1, 2),
         )
 
         titan_match = TitanMatchInfo(
@@ -159,7 +162,7 @@ class TestMatchAlignmentService:
             home_team=TitanTeamInfo(name="Manchester United", tid=1005),
             away_team=TitanTeamInfo(name="Tottenham Hotspur", tid=1006),
             match_date="2024-01-02",
-            match_time="20:00"
+            match_time="20:00",
         )
 
         result = alignment_service.align_match(fotmob_match, titan_match)
@@ -175,7 +178,7 @@ class TestMatchAlignmentService:
             fotmob_id="4193497",
             home_team="Man City",
             away_team="Liverpool",
-            match_date=datetime(2024, 1, 1)
+            match_date=datetime(2024, 1, 1),
         )
 
         titan_match = TitanMatchInfo(
@@ -185,7 +188,7 @@ class TestMatchAlignmentService:
             home_team=TitanTeamInfo(name="Manchester City", tid=1001),
             away_team=TitanTeamInfo(name="Liverpool", tid=1002),
             match_date="2024-01-05",  # 不同日期
-            match_time="16:00"
+            match_time="16:00",
         )
 
         result = alignment_service.align_match(fotmob_match, titan_match)
@@ -208,7 +211,7 @@ class TestMatchAlignmentService:
             home_team=TitanTeamInfo(name="Paris Saint-Germain", tid=2001),
             away_team=TitanTeamInfo(name="AS Monaco", tid=2002),
             match_date="2024-01-01",
-            match_time="21:00"
+            match_time="21:00",
         )
 
         result = alignment_service.align_match(fotmob_match, titan_match)
@@ -225,7 +228,7 @@ class TestMatchAlignmentService:
             fotmob_id="test123",
             home_team="Chelsea",
             away_team="Arsenal",
-            match_date=datetime(2024, 1, 1)
+            match_date=datetime(2024, 1, 1),
         )
 
         titan_match = TitanMatchInfo(
@@ -235,7 +238,7 @@ class TestMatchAlignmentService:
             home_team=TitanTeamInfo(name="Chelsea", tid=1),
             away_team=TitanTeamInfo(name="Arsenal", tid=2),
             match_date="2024-01-01",
-            match_time="18:30"
+            match_time="18:30",
         )
 
         result = alignment_service.align_match(fotmob_match, titan_match)
@@ -245,11 +248,12 @@ class TestMatchAlignmentService:
         assert result.confidence_score == 100.0
         assert result.is_aligned is True
 
-    def test_batch_align_multiple_matches(self, alignment_service, sample_fotmob_matches, sample_titan_matches):
+    def test_batch_align_multiple_matches(
+        self, alignment_service, sample_fotmob_matches, sample_titan_matches
+    ):
         """测试批量对齐多场比赛"""
         results = alignment_service.batch_align(
-            fotmob_matches=sample_fotmob_matches,
-            titan_matches=sample_titan_matches
+            fotmob_matches=sample_fotmob_matches, titan_matches=sample_titan_matches
         )
 
         assert len(results) >= 3  # 至少匹配3场

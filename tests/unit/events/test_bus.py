@@ -7,8 +7,7 @@ This test suite focuses on EventBus core functionality, ensuring 90%+ coverage
 
 import asyncio
 import pytest
-from unittest.mock import patch, MagicMock, AsyncMock, call
-from typing import Any, Dict, List
+from unittest.mock import patch, MagicMock, AsyncMock
 
 # 导入被测试的模块
 from src.events.bus import (
@@ -355,7 +354,7 @@ class TestEventBusFilters:
         assert callable(bus._filters[handler][0])
         # 通过调用测试验证是同一个函数
         test_event = BusEvent("TestEvent", {"allowed": True})
-        assert bus._filters[handler][0](test_event) == True
+        assert bus._filters[handler][0](test_event)
 
 
 class TestEventBusGlobalFunctions:
@@ -479,16 +478,16 @@ class TestEventBusErrorHandling:
 
         # 测试过滤器通过的事件
         event1 = BusEvent("TestEvent", {"should_process": True})
-        assert bus._should_handle(handler, event1) == True
+        assert bus._should_handle(handler, event1)
 
         # 测试过滤器不通过的事件
         event2 = BusEvent("TestEvent", {"should_process": False})
-        assert bus._should_handle(handler, event2) == False
+        assert not bus._should_handle(handler, event2)
 
         # 测试没有过滤器的事件
         handler2 = TestConcreteHandler("test_handler2")
         event3 = BusEvent("TestEvent", {"test": True})
-        assert bus._should_handle(handler2, event3) == True
+        assert bus._should_handle(handler2, event3)
 
     @pytest.mark.asyncio
     async def test_should_handle_filter_exception_handling(self):
@@ -507,7 +506,7 @@ class TestEventBusErrorHandling:
 
         # 应该返回False（过滤器异常时不应处理事件）
         result = bus._should_handle(handler, test_event)
-        assert result == False
+        assert not result
 
     @pytest.mark.asyncio
     async def test_handler_without_name_attribute(self):
@@ -1606,7 +1605,7 @@ class TestEventBusCoverageEdgeCases:
                 for i in range(2, 7):  # 稍微错开
                     try:
                         await bus.unsubscribe(f"Event{i}", handler)
-                    except Exception as e:
+                    except Exception:
                         pass  # 可能还没有订阅
                     await asyncio.sleep(0.001)
 

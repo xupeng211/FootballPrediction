@@ -16,12 +16,12 @@ Data Quality Monitor Unit Tests
 
 import pytest
 import asyncio
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock
 from datetime import datetime, timezone
-from typing import Dict, Any, List
+from typing import Any
 
 from src.quality.data_quality_monitor import DataQualityMonitor, DataQualityStats
-from src.quality.quality_protocol import DataQualityRule, DataQualityResult, RuleSeverity
+from src.quality.quality_protocol import DataQualityRule
 from src.quality.rules.missing_value_rule import MissingValueRule
 from src.quality.rules.range_rule import RangeRule
 from src.quality.rules.type_rule import TypeRule
@@ -143,12 +143,7 @@ def mock_feature_store():
 @pytest.fixture
 def default_rules():
     """创建默认的4条规则"""
-    return [
-        MissingValueRule(),
-        RangeRule(),
-        TypeRule(),
-        LogicalRelationRule()
-    ]
+    return [MissingValueRule(), RangeRule(), TypeRule(), LogicalRelationRule()]
 
 
 @pytest.fixture
@@ -158,7 +153,7 @@ def data_quality_monitor(mock_feature_store, default_rules):
         rules=default_rules,
         feature_store=mock_feature_store,
         enable_stats=True,
-        max_concurrent_checks=5
+        max_concurrent_checks=5,
     )
 
 
@@ -181,22 +176,24 @@ class TestDataQualityMonitor:
 
         # 验证具体内容
         assert result["match_id"] == 1
-        assert result["passed"] == True  # 应该通过所有检查
+        assert result["passed"]  # 应该通过所有检查
         assert len(result["results"]) == 4  # 4条规则
         assert result["summary"]["passed_rules"] == 4
         assert result["summary"]["failed_rules"] == 0
 
         # 验证每个规则的结果
         for rule_result in result["results"]:
-            assert rule_result["passed"] == True
+            assert rule_result["passed"]
             assert len(rule_result["errors"]) == 0
 
     @pytest.mark.asyncio
-    async def test_check_match_failure_missing_values(self, data_quality_monitor, mock_feature_store):
+    async def test_check_match_failure_missing_values(
+        self, data_quality_monitor, mock_feature_store
+    ):
         """测试缺失值失败场景"""
         result = await data_quality_monitor.check_match(2)  # 缺失值数据
 
-        assert result["passed"] == False
+        assert not result["passed"]
         assert result["summary"]["failed_rules"] > 0
 
         # 检查是否捕获到缺失值错误
@@ -209,11 +206,13 @@ class TestDataQualityMonitor:
         assert any("缺失" in error for error in missing_value_errors)
 
     @pytest.mark.asyncio
-    async def test_check_match_failure_range_violation(self, data_quality_monitor, mock_feature_store):
+    async def test_check_match_failure_range_violation(
+        self, data_quality_monitor, mock_feature_store
+    ):
         """测试范围违规失败场景"""
         result = await data_quality_monitor.check_match(3)  # 范围违规数据
 
-        assert result["passed"] == False
+        assert not result["passed"]
 
         # 检查是否捕获到范围错误
         range_errors = []
@@ -222,14 +221,18 @@ class TestDataQualityMonitor:
                 range_errors.extend(rule_result["errors"])
 
         assert len(range_errors) > 0
-        assert any("超出范围" in error or "小于最小值" in error for error in range_errors)
+        assert any(
+            "超出范围" in error or "小于最小值" in error for error in range_errors
+        )
 
     @pytest.mark.asyncio
-    async def test_check_match_failure_type_error(self, data_quality_monitor, mock_feature_store):
+    async def test_check_match_failure_type_error(
+        self, data_quality_monitor, mock_feature_store
+    ):
         """测试类型错误失败场景"""
         result = await data_quality_monitor.check_match(4)  # 类型错误数据
 
-        assert result["passed"] == False
+        assert not result["passed"]
 
         # 检查是否捕获到类型错误
         type_errors = []
@@ -240,11 +243,13 @@ class TestDataQualityMonitor:
         assert len(type_errors) > 0
 
     @pytest.mark.asyncio
-    async def test_check_match_failure_logical_error(self, data_quality_monitor, mock_feature_store):
+    async def test_check_match_failure_logical_error(
+        self, data_quality_monitor, mock_feature_store
+    ):
         """测试逻辑关系错误失败场景"""
         result = await data_quality_monitor.check_match(5)  # 逻辑错误数据
 
-        assert result["passed"] == False
+        assert not result["passed"]
 
         # 检查是否捕获到逻辑错误
         logical_errors = []
@@ -259,7 +264,7 @@ class TestDataQualityMonitor:
         """测试没有找到数据的场景"""
         result = await data_quality_monitor.check_match(999)  # 不存在的match_id
 
-        assert result["passed"] == False
+        assert not result["passed"]
         assert "未找到" in result["summary"]["error"]
         assert result["summary"]["failed_rules"] == 4  # 所有规则都失败
 
@@ -298,7 +303,7 @@ class TestDataQualityMonitor:
 
         stats = await data_quality_monitor.get_stats()
 
-        assert stats["stats_enabled"] == True
+        assert stats["stats_enabled"]
         assert stats["total_checks"] == 3
         assert stats["passed_checks"] == 1
         assert stats["failed_checks"] == 2
@@ -346,7 +351,7 @@ class TestDataQualityMonitor:
 
         success = data_quality_monitor.remove_rule(rule_name)
 
-        assert success == True
+        assert success
         assert len(data_quality_monitor.rules) == original_count - 1
         assert rule_to_remove not in data_quality_monitor.rules
 
@@ -354,7 +359,7 @@ class TestDataQualityMonitor:
     async def test_remove_nonexistent_rule(self, data_quality_monitor):
         """测试移除不存在的规则"""
         success = data_quality_monitor.remove_rule("nonexistent_rule")
-        assert success == False
+        assert not success
 
     @pytest.mark.asyncio
     async def test_get_rule_names(self, data_quality_monitor):
@@ -378,7 +383,7 @@ class TestDataQualityMonitor:
         duration_ms = (end_time - start_time) * 1000
 
         # 验证结果正确
-        assert result["passed"] == True
+        assert result["passed"]
 
         # 性能检查（单次检查应该很快）
         assert duration_ms < 100  # 应该在100ms内完成
@@ -403,9 +408,9 @@ class TestDataQualityMonitor:
         duration_ms = (end_time - start_time) * 1000
 
         assert len(results) == 3
-        assert results[0]["passed"] == True  # match 1
-        assert results[1]["passed"] == False  # match 2
-        assert results[2]["passed"] == False  # match 3
+        assert results[0]["passed"]  # match 1
+        assert not results[1]["passed"]  # match 2
+        assert not results[2]["passed"]  # match 3
 
         # 并发应该比顺序执行快
         assert duration_ms < 200  # 3个并发检查应该在200ms内完成
@@ -443,7 +448,7 @@ class TestSpecificRules:
             "match_id": 1,
             "full_time_score_home": 2,
             "xg_home": 1.5,
-            "shot_home": 10
+            "shot_home": 10,
         }
         errors = await rule.check(good_features)
         assert len(errors) == 0
@@ -466,17 +471,17 @@ class TestSpecificRules:
         # 测试正常范围内的数据
         good_features = {
             "full_time_score_home": 2,  # 在0-99范围内
-            "possession_home": 60.0,    # 在0-100范围内
-            "xg_home": 1.5,            # 在0-10范围内
+            "possession_home": 60.0,  # 在0-100范围内
+            "xg_home": 1.5,  # 在0-10范围内
         }
         errors = await rule.check(good_features)
         assert len(errors) == 0
 
         # 测试超出范围的数据
         bad_features = {
-            "full_time_score_home": -1,    # 小于最小值
-            "possession_home": 150.0,      # 大于最大值
-            "xg_home": 15.0,              # 大于最大值
+            "full_time_score_home": -1,  # 小于最小值
+            "possession_home": 150.0,  # 大于最大值
+            "xg_home": 15.0,  # 大于最大值
         }
         errors = await rule.check(bad_features)
         assert len(errors) > 0
@@ -489,9 +494,9 @@ class TestSpecificRules:
 
         # 测试正确类型
         good_features = {
-            "match_id": 1,                 # int
-            "xg_home": 1.5,               # float
-            "match_time": "2023-01-01",   # str
+            "match_id": 1,  # int
+            "xg_home": 1.5,  # float
+            "match_time": "2023-01-01",  # str
         }
         errors = await rule.check(good_features)
         assert len(errors) == 0
@@ -499,7 +504,7 @@ class TestSpecificRules:
         # 测试错误类型
         bad_features = {
             "match_id": "not_a_number",  # 应该是int
-            "xg_home": "1.5",            # 应该是float
+            "xg_home": "1.5",  # 应该是float
         }
         errors = await rule.check(bad_features)
         assert len(errors) > 0
@@ -513,11 +518,11 @@ class TestSpecificRules:
         # 测试正确的逻辑关系
         good_features = {
             "full_time_score_home": 2,
-            "half_time_score_home": 1,      # 全场 >= 半场
+            "half_time_score_home": 1,  # 全场 >= 半场
             "shot_home": 15,
-            "shot_on_target_home": 6,      # 射正 <= 总射门
+            "shot_on_target_home": 6,  # 射正 <= 总射门
             "possession_home": 60.0,
-            "possession_away": 40.0,       # 和接近100%
+            "possession_away": 40.0,  # 和接近100%
         }
         errors = await rule.check(good_features)
         # 可能有一些关于xG的警告，但不应该有严重的逻辑错误
@@ -527,9 +532,9 @@ class TestSpecificRules:
         # 测试错误的逻辑关系
         bad_features = {
             "full_time_score_home": 1,
-            "half_time_score_home": 2,      # 全场 < 半场 (错误)
+            "half_time_score_home": 2,  # 全场 < 半场 (错误)
             "shot_home": 5,
-            "shot_on_target_home": 10,      # 射正 > 总射门 (错误)
+            "shot_on_target_home": 10,  # 射正 > 总射门 (错误)
         }
         errors = await rule.check(bad_features)
         assert len(errors) > 0
@@ -546,14 +551,12 @@ class TestErrorHandling:
         mock_store.load_features.side_effect = Exception("数据库连接失败")
 
         monitor = DataQualityMonitor(
-            rules=default_rules,
-            feature_store=mock_store,
-            enable_stats=False
+            rules=default_rules, feature_store=mock_store, enable_stats=False
         )
 
         result = await monitor.check_match(1)
 
-        assert result["passed"] == False
+        assert not result["passed"]
         assert "错误" in result["summary"]["error"]
 
     @pytest.mark.asyncio
@@ -564,16 +567,14 @@ class TestErrorHandling:
         failing_rule.check = AsyncMock(side_effect=Exception("规则执行失败"))
 
         monitor = DataQualityMonitor(
-            rules=[failing_rule],
-            feature_store=mock_feature_store,
-            enable_stats=False
+            rules=[failing_rule], feature_store=mock_feature_store, enable_stats=False
         )
 
         result = await monitor.check_match(1)
 
-        assert result["passed"] == False
+        assert not result["passed"]
         assert len(result["results"]) == 1
-        assert result["results"][0]["passed"] == False
+        assert not result["results"][0]["passed"]
         assert "异常" in result["results"][0]["errors"][0]
 
 
@@ -594,10 +595,7 @@ class TestDataQualityStats:
         """测试统计信息序列化"""
         now = datetime.now(timezone.utc)
         stats = DataQualityStats(
-            total_checks=10,
-            passed_checks=7,
-            failed_checks=3,
-            last_check_time=now
+            total_checks=10, passed_checks=7, failed_checks=3, last_check_time=now
         )
 
         stats_dict = stats.to_dict()
@@ -648,7 +646,7 @@ async def test_end_to_end_workflow():
 
     # 1. 检查单个比赛
     result1 = await monitor.check_match(1)
-    assert result1["passed"] == True
+    assert result1["passed"]
 
     # 2. 批量检查
     batch_results = await monitor.check_batch([1, 2, 3])

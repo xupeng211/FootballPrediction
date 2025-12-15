@@ -14,13 +14,8 @@ Phase 3: PredictionService - TDD Red Phase
 """
 
 import pytest
-from datetime import datetime, timezone, timedelta
-from typing import Dict, Any
-from unittest.mock import Mock, AsyncMock, MagicMock, patch, call
-import pandas as pd
-import numpy as np
-import os
-import asyncio
+from datetime import datetime, timezone
+from unittest.mock import patch
 
 # PredictionService将在测试中被导入
 # from src.ml.inference.service import PredictionService
@@ -54,9 +49,9 @@ class TestPredictionService:
         assert PredictionService._instance is not None, "类属性_instance应该被设置"
         assert PredictionService._instance is instance1, "类属性应该指向正确的实例"
 
-    @patch('src.ml.inference.service.os.path.exists')
-    @patch('src.ml.inference.service.PredictionService._cold_start_training')
-    @patch('src.ml.inference.service.PredictionService._load_model')
+    @patch("src.ml.inference.service.os.path.exists")
+    @patch("src.ml.inference.service.PredictionService._cold_start_training")
+    @patch("src.ml.inference.service.PredictionService._load_model")
     async def test_initialization_triggers_training_when_model_missing(
         self, mock_load_model, mock_cold_start, mock_path_exists
     ):
@@ -86,8 +81,8 @@ class TestPredictionService:
         # 验证服务状态
         assert service.is_ready is True, "服务应该初始化完成"
 
-    @patch('src.ml.inference.service.os.path.exists')
-    @patch('src.ml.inference.service.PredictionService._load_model')
+    @patch("src.ml.inference.service.os.path.exists")
+    @patch("src.ml.inference.service.PredictionService._load_model")
     async def test_initialization_loads_existing_model(
         self, mock_load_model, mock_path_exists
     ):
@@ -116,7 +111,7 @@ class TestPredictionService:
         # 验证服务状态
         assert service.is_ready is True, "服务应该初始化完成"
 
-    @patch('src.ml.inference.service.PredictionService.initialize')
+    @patch("src.ml.inference.service.PredictionService.initialize")
     async def test_predict_match_when_service_not_ready(self, mock_initialize):
         """
         测试目标：验证服务未初始化时的错误处理。
@@ -156,20 +151,20 @@ class TestPredictionService:
 
         # 测试各种无效输入
         invalid_inputs = [
-            (None, 2, datetime.now()),      # home_team_id为None
-            (1, None, datetime.now()),      # away_team_id为None
-            (1, 2, None),                   # match_date为None
-            (0, 2, datetime.now()),         # home_team_id为0
-            (1, 0, datetime.now()),         # away_team_id为0
+            (None, 2, datetime.now()),  # home_team_id为None
+            (1, None, datetime.now()),  # away_team_id为None
+            (1, 2, None),  # match_date为None
+            (0, 2, datetime.now()),  # home_team_id为0
+            (1, 0, datetime.now()),  # away_team_id为0
         ]
 
         for home_id, away_id, match_date in invalid_inputs:
             with pytest.raises(ValueError, match="所有预测参数都是必需的"):
                 await service.predict_match(home_id, away_id, match_date)
 
-    @patch('src.ml.inference.service.PredictionService._build_prediction_features')
-    @patch('src.ml.inference.service.PredictionService._run_inference')
-    @patch('src.ml.inference.service.PredictionService._format_prediction_result')
+    @patch("src.ml.inference.service.PredictionService._build_prediction_features")
+    @patch("src.ml.inference.service.PredictionService._run_inference")
+    @patch("src.ml.inference.service.PredictionService._format_prediction_result")
     async def test_predict_match_complete_flow(
         self, mock_format_result, mock_inference, mock_build_features
     ):
@@ -198,7 +193,7 @@ class TestPredictionService:
             "away_win_prob": 0.20,
             "draw_prob": 0.15,
             "prediction": "home_win",
-            "confidence": 0.65
+            "confidence": 0.65,
         }
 
         # 设置mock返回值
@@ -214,7 +209,9 @@ class TestPredictionService:
         result = await service.predict_match(home_team_id, away_team_id, match_date)
 
         # 验证调用顺序和参数
-        mock_build_features.assert_called_once_with(home_team_id, away_team_id, match_date)
+        mock_build_features.assert_called_once_with(
+            home_team_id, away_team_id, match_date
+        )
         mock_inference.assert_called_once_with(mock_features)
         mock_format_result.assert_called_once_with(
             mock_prediction_prob, mock_features, home_team_id, away_team_id, match_date
@@ -268,13 +265,17 @@ class TestPredictionService:
         assert result["confidence"] == 0.65, "置信度应该正确"
 
         # 验证概率总和
-        prob_sum = result["home_win_prob"] + result["away_win_prob"] + result["draw_prob"]
+        prob_sum = (
+            result["home_win_prob"] + result["away_win_prob"] + result["draw_prob"]
+        )
         assert abs(prob_sum - 1.0) < 0.01, "概率总和应该接近1"
 
-    @patch('src.ml.inference.service.DataLoader')
-    @patch('src.ml.inference.service.RollingAverageTransformer')
-    @patch('src.ml.inference.service.ModelTrainer')
-    def test_build_pipeline_components(self, mock_trainer, mock_transformer, mock_loader):
+    @patch("src.ml.inference.service.DataLoader")
+    @patch("src.ml.inference.service.RollingAverageTransformer")
+    @patch("src.ml.inference.service.ModelTrainer")
+    def test_build_pipeline_components(
+        self, mock_trainer, mock_transformer, mock_loader
+    ):
         """
         测试目标：验证ML管道组件的构建。
 
@@ -300,9 +301,9 @@ class TestPredictionService:
         # 验证训练器初始化参数
         mock_trainer.assert_called_once()
         call_args = mock_trainer.call_args
-        assert 'data_loader' in call_args.kwargs, "应该包含数据加载器"
-        assert 'feature_transformers' in call_args.kwargs, "应该包含特征转换器"
-        assert 'model_params' in call_args.kwargs, "应该包含模型参数"
+        assert "data_loader" in call_args.kwargs, "应该包含数据加载器"
+        assert "feature_transformers" in call_args.kwargs, "应该包含特征转换器"
+        assert "model_params" in call_args.kwargs, "应该包含模型参数"
 
     def test_service_string_representation(self):
         """
@@ -328,7 +329,7 @@ class TestPredictionService:
         assert "model_path" in repr_str, "应该包含模型路径"
         assert "version='v1'" in repr_str, "应该包含版本信息"
 
-    @patch('src.ml.inference.service.os.path.exists')
+    @patch("src.ml.inference.service.os.path.exists")
     async def test_initialization_failure_handling(self, mock_path_exists):
         """
         测试目标：验证初始化失败时的错误处理。

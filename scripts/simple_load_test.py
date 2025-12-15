@@ -8,7 +8,6 @@ import asyncio
 import logging
 import sys
 import os
-from datetime import datetime
 from pathlib import Path
 
 # 添加项目根目录到Python路径
@@ -19,15 +18,15 @@ sys.path.insert(0, str(project_root / "src"))
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
-    handlers=[
-        logging.FileHandler("load_test.log"),
-        logging.StreamHandler()
-    ]
+    handlers=[logging.FileHandler("load_test.log"), logging.StreamHandler()],
 )
 logger = logging.getLogger(__name__)
 
 # 设置环境变量
-os.environ.setdefault('DATABASE_URL', 'postgresql://postgres:postgres@db:5432/football_prediction')
+os.environ.setdefault(
+    "DATABASE_URL", "postgresql://postgres:postgres@db:5432/football_prediction"
+)
+
 
 async def simple_load_test():
     """简单的负载测试"""
@@ -52,8 +51,10 @@ async def simple_load_test():
     except Exception as e:
         logger.error(f"❌ 数据库初始化失败: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 async def test_basic_functionality():
     """测试基本功能"""
@@ -62,9 +63,9 @@ async def test_basic_functionality():
     try:
         # 测试导入关键模块
         from src.collectors.fotmob_api_collector import FotMobAPICollector
+
         logger.info("✅ 导入采集器成功")
 
-        from src.database.models import Match, Team
         logger.info("✅ 导入数据库模型成功")
 
         # 创建采集器实例
@@ -86,8 +87,10 @@ async def test_basic_functionality():
     except Exception as e:
         logger.error(f"❌ 基本功能测试失败: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 async def main():
     """主函数"""
@@ -105,9 +108,9 @@ async def main():
         success_count += 1
 
     # 输出结果
-    logger.info("\n" + "="*50)
+    logger.info("\n" + "=" * 50)
     logger.info("📊 简化负载测试结果报告")
-    logger.info("="*50)
+    logger.info("=" * 50)
     logger.info(f"📋 总测试数: {total_tests}")
     logger.info(f"✅ 成功测试: {success_count}")
     logger.info(f"❌ 失败测试: {total_tests - success_count}")
@@ -119,7 +122,8 @@ async def main():
     else:
         logger.warning("⚠️ 部分测试失败，需要检查系统配置")
 
-    logger.info("="*50)
+    logger.info("=" * 50)
+
 
 if __name__ == "__main__":
     asyncio.run(main())

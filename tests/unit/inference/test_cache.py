@@ -5,15 +5,13 @@ Unit Tests for Prediction Cache
 测试Redis缓存的各项功能，包括缓存存储、检索、TTL管理和统计。
 """
 
-import asyncio
 import json
 import pytest
-from datetime import datetime, timedelta
-from unittest.mock import AsyncMock, MagicMock, patch
-from typing import Dict, Any
+from datetime import datetime
+from unittest.mock import AsyncMock, patch
 
 from src.inference.cache import PredictionCache, get_prediction_cache
-from src.inference.schemas import PredictionRequest, PredictionResponse
+from src.inference.schemas import PredictionRequest
 from src.inference.errors import CacheError
 
 
@@ -35,11 +33,13 @@ class TestPredictionCache:
     @pytest.fixture
     def cache_instance(self, mock_redis_client):
         """缓存实例fixture"""
-        with patch('src.inference.cache.redis.from_url', return_value=mock_redis_client):
+        with patch(
+            "src.inference.cache.redis.from_url", return_value=mock_redis_client
+        ):
             cache = PredictionCache(
                 redis_url="redis://localhost:6379/0",
                 default_ttl=3600,
-                key_prefix="test_prediction"
+                key_prefix="test_prediction",
             )
             return cache
 
@@ -57,7 +57,7 @@ class TestPredictionCache:
             match_id="match_123",
             model_name="xgboost_v1",
             prediction_type="probability",
-            features={"home_goals": 2, "away_goals": 1}
+            features={"home_goals": 2, "away_goals": 1},
         )
 
         cache_key = cache_instance._generate_cache_key(request)
@@ -68,22 +68,20 @@ class TestPredictionCache:
             "match_123",
             "xgboost_v1",
             "latest",
-            "probability"
+            "probability",
         ]
 
         for part in expected_parts:
             assert part in cache_key
 
         # 验证特征哈希包含在内
-        assert len(cache_key.split(':')) >= len(expected_parts) + 1
+        assert len(cache_key.split(":")) >= len(expected_parts) + 1
 
     @pytest.mark.asyncio
     async def test_set_prediction_success(self, cache_instance):
         """测试设置预测缓存成功"""
         request = PredictionRequest(
-            match_id="match_123",
-            model_name="xgboost_v1",
-            prediction_type="probability"
+            match_id="match_123", model_name="xgboost_v1", prediction_type="probability"
         )
 
         prediction_data = {
@@ -93,7 +91,7 @@ class TestPredictionCache:
             "predicted_outcome": "home_win",
             "confidence": 0.75,
             "model_name": "xgboost_v1",
-            "model_version": "1.0.0"
+            "model_version": "1.0.0",
         }
 
         # 测试设置缓存
@@ -116,15 +114,13 @@ class TestPredictionCache:
     async def test_set_prediction_with_custom_ttl(self, cache_instance):
         """测试使用自定义TTL设置缓存"""
         request = PredictionRequest(
-            match_id="match_123",
-            model_name="xgboost_v1",
-            prediction_type="probability"
+            match_id="match_123", model_name="xgboost_v1", prediction_type="probability"
         )
 
         prediction_data = {
             "home_win_prob": 0.65,
             "draw_prob": 0.25,
-            "away_win_prob": 0.10
+            "away_win_prob": 0.10,
         }
 
         # 使用自定义TTL
@@ -139,9 +135,7 @@ class TestPredictionCache:
     async def test_get_prediction_cache_hit(self, cache_instance):
         """测试缓存命中"""
         request = PredictionRequest(
-            match_id="match_123",
-            model_name="xgboost_v1",
-            prediction_type="probability"
+            match_id="match_123", model_name="xgboost_v1", prediction_type="probability"
         )
 
         cached_data = {
@@ -152,7 +146,7 @@ class TestPredictionCache:
             "confidence": 0.75,
             "model_name": "xgboost_v1",
             "model_version": "1.0.0",
-            "cached_at": datetime.utcnow().isoformat()
+            "cached_at": datetime.utcnow().isoformat(),
         }
 
         # 模拟Redis返回缓存数据
@@ -169,9 +163,7 @@ class TestPredictionCache:
     async def test_get_prediction_cache_miss(self, cache_instance):
         """测试缓存未命中"""
         request = PredictionRequest(
-            match_id="match_456",
-            model_name="xgboost_v1",
-            prediction_type="probability"
+            match_id="match_456", model_name="xgboost_v1", prediction_type="probability"
         )
 
         # 模拟Redis返回None
@@ -185,9 +177,7 @@ class TestPredictionCache:
     async def test_get_prediction_invalid_json(self, cache_instance):
         """测试获取损坏的JSON数据"""
         request = PredictionRequest(
-            match_id="match_123",
-            model_name="xgboost_v1",
-            prediction_type="probability"
+            match_id="match_123", model_name="xgboost_v1", prediction_type="probability"
         )
 
         # 模拟Redis返回损坏的JSON
@@ -201,9 +191,7 @@ class TestPredictionCache:
     async def test_delete_prediction_success(self, cache_instance):
         """测试删除预测缓存成功"""
         request = PredictionRequest(
-            match_id="match_123",
-            model_name="xgboost_v1",
-            prediction_type="probability"
+            match_id="match_123", model_name="xgboost_v1", prediction_type="probability"
         )
 
         # 模拟删除成功
@@ -218,9 +206,7 @@ class TestPredictionCache:
     async def test_delete_prediction_not_found(self, cache_instance):
         """测试删除不存在的缓存"""
         request = PredictionRequest(
-            match_id="match_789",
-            model_name="xgboost_v1",
-            prediction_type="probability"
+            match_id="match_789", model_name="xgboost_v1", prediction_type="probability"
         )
 
         # 模拟删除失败（键不存在）
@@ -238,7 +224,7 @@ class TestPredictionCache:
         # 模拟存在匹配的键
         cache_instance._client.keys.return_value = [
             "test_prediction:prediction:match_123:xgboost_v1:latest:probability",
-            "test_prediction:prediction:match_456:xgboost_v1:latest:probability"
+            "test_prediction:prediction:match_456:xgboost_v1:latest:probability",
         ]
         cache_instance._client.delete.return_value = 2
 
@@ -256,7 +242,7 @@ class TestPredictionCache:
             "keyspace_hits": 100,
             "keyspace_misses": 50,
             "used_memory": 1048576,  # 1MB
-            "used_memory_human": "1M"
+            "used_memory_human": "1M",
         }
 
         stats = await cache_instance.get_cache_stats()
@@ -297,9 +283,7 @@ class TestPredictionCache:
     async def test_cache_error_handling(self, cache_instance):
         """测试缓存错误处理"""
         request = PredictionRequest(
-            match_id="match_123",
-            model_name="xgboost_v1",
-            prediction_type="probability"
+            match_id="match_123", model_name="xgboost_v1", prediction_type="probability"
         )
 
         # 模拟Redis连接错误
@@ -317,7 +301,7 @@ class TestPredictionCache:
             PredictionRequest(
                 match_id=f"match_{i}",
                 model_name="xgboost_v1",
-                prediction_type="probability"
+                prediction_type="probability",
             )
             for i in range(3)
         ]
@@ -327,7 +311,7 @@ class TestPredictionCache:
                 "home_win_prob": 0.6 + i * 0.1,
                 "draw_prob": 0.3,
                 "away_win_prob": 0.1 - i * 0.05,
-                "predicted_outcome": "home_win"
+                "predicted_outcome": "home_win",
             }
             for i in range(3)
         ]
@@ -347,13 +331,13 @@ class TestPredictionCache:
                 "request": PredictionRequest(
                     match_id="match_123",
                     model_name="xgboost_v1",
-                    prediction_type="probability"
+                    prediction_type="probability",
                 ),
                 "prediction": {
                     "home_win_prob": 0.65,
                     "draw_prob": 0.25,
-                    "away_win_prob": 0.10
-                }
+                    "away_win_prob": 0.10,
+                },
             }
         ]
 
@@ -366,15 +350,11 @@ class TestPredictionCache:
     def test_cache_key_uniqueness(self, cache_instance):
         """测试缓存键唯一性"""
         request1 = PredictionRequest(
-            match_id="match_123",
-            model_name="xgboost_v1",
-            prediction_type="probability"
+            match_id="match_123", model_name="xgboost_v1", prediction_type="probability"
         )
 
         request2 = PredictionRequest(
-            match_id="match_123",
-            model_name="xgboost_v2",
-            prediction_type="probability"
+            match_id="match_123", model_name="xgboost_v2", prediction_type="probability"
         )
 
         key1 = cache_instance._generate_cache_key(request1)
@@ -390,14 +370,14 @@ class TestPredictionCache:
             match_id="match_123",
             model_name="xgboost_v1",
             prediction_type="probability",
-            features={"home_goals": 2}
+            features={"home_goals": 2},
         )
 
         request2 = PredictionRequest(
             match_id="match_123",
             model_name="xgboost_v1",
             prediction_type="probability",
-            features={"home_goals": 3}
+            features={"home_goals": 3},
         )
 
         key1 = cache_instance._generate_cache_key(request1)
@@ -408,7 +388,7 @@ class TestPredictionCache:
     @pytest.mark.asyncio
     async def test_get_prediction_cache_singleton(self):
         """测试全局缓存实例"""
-        with patch('src.inference.cache.redis.from_url') as mock_redis:
+        with patch("src.inference.cache.redis.from_url") as mock_redis:
             mock_client = AsyncMock()
             mock_client.ping.return_value = True
             mock_redis.return_value = mock_client

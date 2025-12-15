@@ -4,8 +4,6 @@ Unit Tests for Predictor
 """
 
 import pytest
-import asyncio
-from datetime import datetime
 from unittest.mock import Mock, AsyncMock, patch
 import numpy as np
 
@@ -40,12 +38,15 @@ async def mock_feature_builder():
     """模拟特征构建器"""
     builder = AsyncMock()
     import pandas as pd
-    mock_features_df = pd.DataFrame({
-        "home_goals": [2],
-        "away_goals": [1],
-        "home_possession": [60.0],
-        "away_possession": [40.0]
-    })
+
+    mock_features_df = pd.DataFrame(
+        {
+            "home_goals": [2],
+            "away_goals": [1],
+            "home_possession": [60.0],
+            "away_possession": [40.0],
+        }
+    )
     builder.build_features.return_value = mock_features_df
     return builder
 
@@ -62,9 +63,13 @@ async def mock_cache():
 @pytest.fixture
 async def predictor(mock_model_loader, mock_feature_builder, mock_cache):
     """创建预测器实例"""
-    with patch('src.inference.predictor.get_model_loader', return_value=mock_model_loader), \
-         patch('src.inference.predictor.get_feature_builder', return_value=mock_feature_builder), \
-         patch('src.inference.predictor.get_prediction_cache', return_value=mock_cache):
+    with patch(
+        "src.inference.predictor.get_model_loader", return_value=mock_model_loader
+    ), patch(
+        "src.inference.predictor.get_feature_builder", return_value=mock_feature_builder
+    ), patch(
+        "src.inference.predictor.get_prediction_cache", return_value=mock_cache
+    ):
         predictor = Predictor()
         yield predictor
         await predictor.cleanup()
@@ -74,16 +79,20 @@ class TestPredictor:
     """预测器测试"""
 
     @pytest.mark.asyncio
-    async def test_predict_success(self, predictor, mock_model_loader, mock_feature_builder):
+    async def test_predict_success(
+        self, predictor, mock_model_loader, mock_feature_builder
+    ):
         """测试成功预测"""
         request = PredictionRequest(
             match_id="test_match_001",
             model_name="test_model",
-            features={"home_goals": 2, "away_goals": 1}
+            features={"home_goals": 2, "away_goals": 1},
         )
 
         # 模拟模型预测返回
-        mock_model_loader.get.return_value.model.predict_proba.return_value = np.array([[0.1, 0.3, 0.6]])
+        mock_model_loader.get.return_value.model.predict_proba.return_value = np.array(
+            [[0.1, 0.3, 0.6]]
+        )
 
         result = await predictor.predict(request)
 
@@ -98,10 +107,7 @@ class TestPredictor:
     @pytest.mark.asyncio
     async def test_predict_from_cache(self, predictor, mock_cache):
         """测试从缓存获取预测结果"""
-        request = PredictionRequest(
-            match_id="test_match_001",
-            model_name="test_model"
-        )
+        request = PredictionRequest(match_id="test_match_001", model_name="test_model")
 
         # 模拟缓存命中
         cached_result = PredictionResult(
@@ -114,7 +120,7 @@ class TestPredictor:
             model_version="1.0.0",
             model_type=ModelType.XGBOOST,
             features_used=["home_goals", "away_goals"],
-            prediction_time_ms=45.0
+            prediction_time_ms=45.0,
         ).to_response("req_123", "test_match_001")
 
         mock_cache.get_prediction.return_value = cached_result.model_dump()
@@ -125,6 +131,7 @@ class TestPredictor:
         assert result.home_win_prob == 0.7
         # 验证模型加载器没有被调用（因为来自缓存）
         from src.inference.predictor import get_model_loader
+
         get_model_loader.assert_not_awaited()
 
     @pytest.mark.asyncio
@@ -135,19 +142,19 @@ class TestPredictor:
                 PredictionRequest(
                     match_id="test_match_001",
                     model_name="test_model",
-                    features={"home_goals": 2, "away_goals": 1}
+                    features={"home_goals": 2, "away_goals": 1},
                 ),
                 PredictionRequest(
                     match_id="test_match_002",
                     model_name="test_model",
-                    features={"home_goals": 1, "away_goals": 2}
-                )
+                    features={"home_goals": 1, "away_goals": 2},
+                ),
             ],
-            parallel=True
+            parallel=True,
         )
 
         # 模拟模型预测返回
-        with patch('src.inference.predictor.get_model_loader') as mock_get_loader:
+        with patch("src.inference.predictor.get_model_loader") as mock_get_loader:
             mock_model = Mock()
             mock_model.predict_proba.return_value = np.array([[0.1, 0.3, 0.6]])
             mock_loaded_model = Mock()
@@ -155,7 +162,10 @@ class TestPredictor:
             mock_loaded_model.metadata.model_info.model_name = "test_model"
             mock_loaded_model.metadata.model_info.model_version = "1.0.0"
             mock_loaded_model.metadata.model_info.model_type = ModelType.XGBOOST
-            mock_loaded_model.metadata.model_info.features = ["home_goals", "away_goals"]
+            mock_loaded_model.metadata.model_info.features = [
+                "home_goals",
+                "away_goals",
+            ]
             mock_get_loader.return_value.get.return_value = mock_loaded_model
 
             result = await predictor.predict_batch(request)
@@ -169,14 +179,16 @@ class TestPredictor:
     async def test_predict_model_error(self, predictor):
         """测试模型错误"""
         request = PredictionRequest(
-            match_id="test_match_001",
-            model_name="nonexistent_model"
+            match_id="test_match_001", model_name="nonexistent_model"
         )
 
         # 模拟模型加载失败
         from src.inference.errors import ModelLoadError
-        with patch('src.inference.predictor.get_model_loader') as mock_get_loader:
-            mock_get_loader.return_value.get.side_effect = ModelLoadError("Model not found")
+
+        with patch("src.inference.predictor.get_model_loader") as mock_get_loader:
+            mock_get_loader.return_value.get.side_effect = ModelLoadError(
+                "Model not found"
+            )
 
             with pytest.raises(PredictionError):
                 await predictor.predict(request)
@@ -184,14 +196,13 @@ class TestPredictor:
     @pytest.mark.asyncio
     async def test_predict_feature_error(self, predictor):
         """测试特征构建错误"""
-        request = PredictionRequest(
-            match_id="test_match_001",
-            model_name="test_model"
-        )
+        request = PredictionRequest(match_id="test_match_001", model_name="test_model")
 
         # 模拟特征构建失败
-        with patch('src.inference.predictor.get_feature_builder') as mock_get_builder:
-            mock_get_builder.return_value.build_features.side_effect = Exception("Feature build failed")
+        with patch("src.inference.predictor.get_feature_builder") as mock_get_builder:
+            mock_get_builder.return_value.build_features.side_effect = Exception(
+                "Feature build failed"
+            )
 
             with pytest.raises(PredictionError):
                 await predictor.predict(request)
@@ -209,11 +220,14 @@ class TestPredictor:
             model_version="1.0.0",
             model_type=ModelType.XGBOOST,
             features_used=["home_goals"],
-            prediction_time_ms=50.0
+            prediction_time_ms=50.0,
         )
 
         # 验证概率被归一化
-        assert abs(result.home_win_prob + result.draw_prob + result.away_win_prob - 1.0) < 0.001
+        assert (
+            abs(result.home_win_prob + result.draw_prob + result.away_win_prob - 1.0)
+            < 0.001
+        )
 
     @pytest.mark.asyncio
     async def test_predict_with_different_prediction_types(self, predictor):
@@ -222,11 +236,11 @@ class TestPredictor:
             match_id="test_match_001",
             model_name="test_model",
             prediction_type=PredictionType.WINNER,
-            features={"home_goals": 2, "away_goals": 1}
+            features={"home_goals": 2, "away_goals": 1},
         )
 
         # 模拟模型预测返回
-        with patch('src.inference.predictor.get_model_loader') as mock_get_loader:
+        with patch("src.inference.predictor.get_model_loader") as mock_get_loader:
             mock_model = Mock()
             # 模拟返回胜者预测（假设2表示home_win）
             mock_model.predict.return_value = np.array([2])
@@ -236,7 +250,10 @@ class TestPredictor:
             mock_loaded_model.metadata.model_info.model_name = "test_model"
             mock_loaded_model.metadata.model_info.model_version = "1.0.0"
             mock_loaded_model.metadata.model_info.model_type = ModelType.XGBOOST
-            mock_loaded_model.metadata.model_info.features = ["home_goals", "away_goals"]
+            mock_loaded_model.metadata.model_info.features = [
+                "home_goals",
+                "away_goals",
+            ]
             mock_get_loader.return_value.get.return_value = mock_loaded_model
 
             result = await predictor.predict(request)
@@ -266,7 +283,7 @@ class TestPredictor:
             match_id="test_match_001",
             model_name="test_model",
             model_version="1.0.0",
-            prediction_type=PredictionType.PROBABILITY
+            prediction_type=PredictionType.PROBABILITY,
         )
 
         cache_key = predictor._generate_cache_key(request)
@@ -286,7 +303,7 @@ class TestPredictor:
             "home_win_prob": 0.6,
             "draw_prob": 0.3,
             "away_win_prob": 0.1,
-            "metadata": {}
+            "metadata": {},
         }
 
         # 模拟需要校准的模型
@@ -298,13 +315,11 @@ class TestPredictor:
         request = PredictionRequest(
             match_id="test_match",
             model_name="test_model",
-            prediction_type=PredictionType.PROBABILITY
+            prediction_type=PredictionType.PROBABILITY,
         )
 
         processed_result = await predictor._post_process_prediction(
-            prediction_result,
-            mock_loaded_model,
-            request
+            prediction_result, mock_loaded_model, request
         )
 
         assert "predicted_outcome" in processed_result

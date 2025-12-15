@@ -14,7 +14,6 @@ import asyncio
 import sys
 from pathlib import Path
 from collections import Counter
-from datetime import datetime
 
 # 添加项目根路径
 project_root = Path(__file__).parent.parent
@@ -22,6 +21,7 @@ sys.path.insert(0, str(project_root))
 
 # 导入采集器
 from src.collectors.fotmob_api_collector import FotMobAPICollector
+
 
 class CoverageVerifier:
     """数据覆盖率验证器"""
@@ -39,7 +39,9 @@ class CoverageVerifier:
 
     async def get_league_data(self, league_id: int = 47) -> dict:
         """获取联赛数据"""
-        url = f"https://www.fotmob.com/api/leagues?id={league_id}&timezone=Europe/London"
+        url = (
+            f"https://www.fotmob.com/api/leagues?id={league_id}&timezone=Europe/London"
+        )
 
         data, status = await self.collector._make_request(url, f"league_{league_id}")
 
@@ -59,7 +61,7 @@ class CoverageVerifier:
             "has_dates": 0,
             "date_range": {"earliest": None, "latest": None},
             "team_count": set(),
-            "sample_matches": []
+            "sample_matches": [],
         }
 
         for i, match in enumerate(matches):
@@ -84,13 +86,15 @@ class CoverageVerifier:
 
             # 保存前5个样本
             if i < 5:
-                analysis["sample_matches"].append({
-                    "id": match.get("id"),
-                    "home": home_team,
-                    "away": away_team,
-                    "status": status,
-                    "date": match.get("utcTime") or match.get("date")
-                })
+                analysis["sample_matches"].append(
+                    {
+                        "id": match.get("id"),
+                        "home": home_team,
+                        "away": away_team,
+                        "status": status,
+                        "date": match.get("utcTime") or match.get("date"),
+                    }
+                )
 
         analysis["unique_teams"] = len(analysis["team_count"])
         del analysis["team_count"]  # 移除set对象
@@ -132,24 +136,28 @@ class CoverageVerifier:
                 return False
 
             # 详细分析
-            analysis = self.analyze_matches(all_matches, f"{league_name} {current_season}")
+            analysis = self.analyze_matches(
+                all_matches, f"{league_name} {current_season}"
+            )
 
             # 打印分析结果
             print("\n📈 详细分析结果:")
             print(f"   比赛总数: {analysis['total']}")
             print("   状态分布:")
-            for status, count in analysis['status_breakdown'].items():
+            for status, count in analysis["status_breakdown"].items():
                 print(f"     {status}: {count}")
             print(f"   有日期信息的比赛: {analysis['has_dates']}")
             print(f"   涉及球队数: {analysis['unique_teams']}")
 
             print("\n🔍 前5场比赛样本:")
-            for i, match in enumerate(analysis['sample_matches'], 1):
-                print(f"   {i}. {match['home']} vs {match['away']} ({match['status']}, ID: {match['id']})")
+            for i, match in enumerate(analysis["sample_matches"], 1):
+                print(
+                    f"   {i}. {match['home']} vs {match['away']} ({match['status']}, ID: {match['id']})"
+                )
 
             # 🎯 关键验证：英超标准赛季应该有380场比赛
             expected_total = 380
-            actual_total = analysis['total']
+            actual_total = analysis["total"]
 
             print("\n🎯 覆盖率验证:")
             print(f"   期望比赛数 (英超标准): {expected_total}")
@@ -203,6 +211,7 @@ class CoverageVerifier:
         except Exception as e:
             print(f"❌ 验证过程中发生错误: {e}")
             import traceback
+
             print(f"详细错误: {traceback.format_exc()}")
             return False
 
@@ -210,7 +219,7 @@ class CoverageVerifier:
         """验证多个赛季的数据覆盖率"""
         print(f"\n{'='*80}")
         print("📊 多赛季数据覆盖率对比")
-        print("="*80)
+        print("=" * 80)
 
         # 这里可以扩展到其他联赛的验证
         leagues_to_check = [
@@ -222,12 +231,12 @@ class CoverageVerifier:
         for league in leagues_to_check:
             print(f"\n🏆 验证 {league['name']} (ID: {league['id']})")
             try:
-                data = await self.get_league_data(league['id'])
+                data = await self.get_league_data(league["id"])
                 fixtures = data.get("fixtures", {})
                 all_matches = fixtures.get("allMatches", [])
 
                 actual = len(all_matches)
-                expected = league['expected']
+                expected = league["expected"]
                 coverage = (actual / expected) * 100 if expected > 0 else 0
 
                 status = "✅" if coverage >= 95 else "⚠️" if coverage >= 50 else "❌"
@@ -235,6 +244,7 @@ class CoverageVerifier:
 
             except Exception as e:
                 print(f"   ❌ 验证失败: {e}")
+
 
 async def main():
     """主函数"""
@@ -256,12 +266,13 @@ async def main():
         else:
             print("⚠️ 验证发现问题! 可能需要恢复 finishedMatches 解析逻辑")
             print("🔧 建议检查是否遗漏了历史比赛数据")
-        print("="*80)
+        print("=" * 80)
 
         return success
 
     finally:
         await verifier.close()
+
 
 if __name__ == "__main__":
     success = asyncio.run(main())

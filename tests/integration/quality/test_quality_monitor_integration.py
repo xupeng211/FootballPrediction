@@ -17,8 +17,6 @@ Data Quality Monitor Integration Tests
 import pytest
 import asyncio
 import time
-from datetime import datetime, timezone
-from typing import Dict, Any, List
 import json
 
 # 集成测试需要导入真实的实现
@@ -81,7 +79,7 @@ class TestFeatureStoreIntegration:
             "match_status": "completed",
             "home_team_id": 101,
             "away_team_id": 102,
-            "match_date": "2023-12-05"
+            "match_date": "2023-12-05",
         }
 
     @pytest.fixture(scope="class")
@@ -90,12 +88,12 @@ class TestFeatureStoreIntegration:
         return {
             "match_id": 99998,
             "full_time_score_home": None,  # 缺失值
-            "full_time_score_away": 150,   # 超出范围
-            "xg_home": -5.0,               # 负xG
-            "shot_home": "invalid",        # 错误类型
-            "possession_home": 150.0,      # 超出100%
-            "possession_away": -10.0,      # 负值
-            "shot_on_target_home": 20,     # 大于总射门数（假设总射门数是10）
+            "full_time_score_away": 150,  # 超出范围
+            "xg_home": -5.0,  # 负xG
+            "shot_home": "invalid",  # 错误类型
+            "possession_home": 150.0,  # 超出100%
+            "possession_away": -10.0,  # 负值
+            "shot_on_target_home": 20,  # 大于总射门数（假设总射门数是10）
             "shot_home": 10,
         }
 
@@ -103,16 +101,22 @@ class TestFeatureStoreIntegration:
     async def setup_test_data(self, feature_store, test_match_data, invalid_match_data):
         """设置测试数据，在测试前后进行清理"""
         # 清理可能存在的测试数据
-        await self._cleanup_test_data(feature_store, [test_match_data["match_id"], invalid_match_data["match_id"]])
+        await self._cleanup_test_data(
+            feature_store, [test_match_data["match_id"], invalid_match_data["match_id"]]
+        )
 
         # 插入测试数据
         await feature_store.save_features(test_match_data["match_id"], test_match_data)
-        await feature_store.save_features(invalid_match_data["match_id"], invalid_match_data)
+        await feature_store.save_features(
+            invalid_match_data["match_id"], invalid_match_data
+        )
 
         yield
 
         # 清理测试数据
-        await self._cleanup_test_data(feature_store, [test_match_data["match_id"], invalid_match_data["match_id"]])
+        await self._cleanup_test_data(
+            feature_store, [test_match_data["match_id"], invalid_match_data["match_id"]]
+        )
 
     async def _cleanup_test_data(self, feature_store, match_ids):
         """清理测试数据"""
@@ -123,10 +127,10 @@ class TestFeatureStoreIntegration:
                     # 直接执行SQL删除（如果FeatureStore没有删除方法）
                     await session.execute(
                         "DELETE FROM feature_store WHERE match_id = :match_id",
-                        {"match_id": match_id}
+                        {"match_id": match_id},
                     )
                     await session.commit()
-                except Exception as e:
+                except Exception:
                     # 如果表不存在或删除失败，忽略错误
                     pass
 
@@ -162,23 +166,20 @@ class TestDataQualityMonitorIntegration:
     @pytest.fixture(scope="class")
     async def data_quality_monitor(self, feature_store):
         """创建 DataQualityMonitor 实例"""
-        rules = [
-            MissingValueRule(),
-            RangeRule(),
-            TypeRule(),
-            LogicalRelationRule()
-        ]
+        rules = [MissingValueRule(), RangeRule(), TypeRule(), LogicalRelationRule()]
 
         monitor = DataQualityMonitor(
             rules=rules,
             feature_store=feature_store,
             enable_stats=True,
-            max_concurrent_checks=5
+            max_concurrent_checks=5,
         )
         return monitor
 
     @pytest.mark.asyncio
-    async def test_check_match_with_valid_data(self, data_quality_monitor, test_match_data):
+    async def test_check_match_with_valid_data(
+        self, data_quality_monitor, test_match_data
+    ):
         """测试有效数据的检查"""
         match_id = test_match_data["match_id"]
 
@@ -196,7 +197,7 @@ class TestDataQualityMonitorIntegration:
 
         # 验证具体内容
         assert result["match_id"] == match_id
-        assert result["passed"] == True  # 有效数据应该通过所有检查
+        assert result["passed"]  # 有效数据应该通过所有检查
         assert len(result["results"]) == 4  # 4条规则
 
         # 验证规则结果
@@ -205,7 +206,7 @@ class TestDataQualityMonitorIntegration:
             assert "passed" in rule_result
             assert "errors" in rule_result
             assert "severity" in rule_result
-            assert rule_result["passed"] == True  # 所有规则都应该通过
+            assert rule_result["passed"]  # 所有规则都应该通过
             assert len(rule_result["errors"]) == 0
 
         # 性能检查
@@ -213,7 +214,9 @@ class TestDataQualityMonitorIntegration:
         assert result["check_duration_ms"] < 50
 
     @pytest.mark.asyncio
-    async def test_check_match_with_invalid_data(self, data_quality_monitor, invalid_match_data):
+    async def test_check_match_with_invalid_data(
+        self, data_quality_monitor, invalid_match_data
+    ):
         """测试无效数据的检查"""
         match_id = invalid_match_data["match_id"]
 
@@ -221,7 +224,7 @@ class TestDataQualityMonitorIntegration:
 
         # 验证结果结构
         assert result["match_id"] == match_id
-        assert result["passed"] == False  # 无效数据应该失败
+        assert not result["passed"]  # 无效数据应该失败
         assert len(result["results"]) == 4
 
         # 验证有规则失败
@@ -237,15 +240,26 @@ class TestDataQualityMonitorIntegration:
 
         # 检查特定类型的错误
         error_text = " ".join(all_errors).lower()
-        assert any(keyword in error_text for keyword in [
-            "缺失", "null", "missing",     # 缺失值错误
-            "超出", "范围", "out of",      # 范围错误
-            "类型", "type",               # 类型错误
-            "逻辑", "logical",            # 逻辑错误
-        ])
+        assert any(
+            keyword in error_text
+            for keyword in [
+                "缺失",
+                "null",
+                "missing",  # 缺失值错误
+                "超出",
+                "范围",
+                "out of",  # 范围错误
+                "类型",
+                "type",  # 类型错误
+                "逻辑",
+                "logical",  # 逻辑错误
+            ]
+        )
 
     @pytest.mark.asyncio
-    async def test_check_batch_performance(self, data_quality_monitor, test_match_data, invalid_match_data):
+    async def test_check_batch_performance(
+        self, data_quality_monitor, test_match_data, invalid_match_data
+    ):
         """测试批量检查性能"""
         match_ids = [test_match_data["match_id"], invalid_match_data["match_id"]]
 
@@ -255,20 +269,30 @@ class TestDataQualityMonitorIntegration:
 
         # 验证结果
         assert len(results) == 2
-        assert results[0]["passed"] == True   # 有效数据通过
-        assert results[1]["passed"] == False  # 无效数据失败
+        assert results[0]["passed"]  # 有效数据通过
+        assert not results[1]["passed"]  # 无效数据失败
 
         # 性能检查：批量检查应该很快
         assert duration_ms < 100, f"批量检查耗时过长: {duration_ms:.2f}ms"
 
         # 验证结果结构一致性
         for result in results:
-            assert all(key in result for key in [
-                "match_id", "passed", "results", "summary", "timestamp", "check_duration_ms"
-            ])
+            assert all(
+                key in result
+                for key in [
+                    "match_id",
+                    "passed",
+                    "results",
+                    "summary",
+                    "timestamp",
+                    "check_duration_ms",
+                ]
+            )
 
     @pytest.mark.asyncio
-    async def test_stats_collection(self, data_quality_monitor, test_match_data, invalid_match_data):
+    async def test_stats_collection(
+        self, data_quality_monitor, test_match_data, invalid_match_data
+    ):
         """测试统计信息收集"""
         match_ids = [test_match_data["match_id"], invalid_match_data["match_id"]]
 
@@ -281,14 +305,20 @@ class TestDataQualityMonitorIntegration:
         stats = await data_quality_monitor.get_stats()
 
         # 验证统计信息
-        assert stats["stats_enabled"] == True
+        assert stats["stats_enabled"]
         assert stats["total_checks"] == 4  # 2个单次 + 2个批量
         assert stats["passed_checks"] >= 2  # 至少有效数据的2次检查通过
         assert stats["failed_checks"] >= 2  # 至少无效数据的2次检查失败
 
         # 验证成功率计算
-        assert stats["success_rate"] == (stats["passed_checks"] / stats["total_checks"]) * 100
-        assert stats["error_rate"] == (stats["failed_checks"] / stats["total_checks"]) * 100
+        assert (
+            stats["success_rate"]
+            == (stats["passed_checks"] / stats["total_checks"]) * 100
+        )
+        assert (
+            stats["error_rate"]
+            == (stats["failed_checks"] / stats["total_checks"]) * 100
+        )
 
     @pytest.mark.asyncio
     async def test_health_check(self, data_quality_monitor, test_match_data):
@@ -310,7 +340,7 @@ class TestDataQualityMonitorIntegration:
         assert health["feature_store_status"] in ["healthy", "warning"]
 
         # 验证统计信息包含在健康检查中
-        assert health["stats"]["stats_enabled"] == True
+        assert health["stats"]["stats_enabled"]
 
     @pytest.mark.asyncio
     async def test_concurrent_checks(self, data_quality_monitor, test_match_data):
@@ -333,7 +363,7 @@ class TestDataQualityMonitorIntegration:
         # 验证所有检查都成功
         assert len(results) == 3
         for result in results:
-            assert result["passed"] == True
+            assert result["passed"]
             assert result["match_id"] == match_id
 
         # 并发检查应该比顺序执行快
@@ -364,23 +394,30 @@ class TestDataQualityMonitorIntegration:
 
         # 验证缺失值检测
         if missing_value_errors:
-            assert any(keyword in " ".join(missing_value_errors).lower()
-                      for keyword in ["缺失", "null", "missing"])
+            assert any(
+                keyword in " ".join(missing_value_errors).lower()
+                for keyword in ["缺失", "null", "missing"]
+            )
 
         # 验证范围检测
         if range_errors:
-            assert any(keyword in " ".join(range_errors).lower()
-                      for keyword in ["范围", "range", "超出"])
+            assert any(
+                keyword in " ".join(range_errors).lower()
+                for keyword in ["范围", "range", "超出"]
+            )
 
         # 验证类型检测
         if type_errors:
-            assert any(keyword in " ".join(type_errors).lower()
-                      for keyword in ["类型", "type"])
+            assert any(
+                keyword in " ".join(type_errors).lower() for keyword in ["类型", "type"]
+            )
 
         # 验证逻辑关系检测
         if logical_errors:
-            assert any(keyword in " ".join(logical_errors).lower()
-                      for keyword in ["逻辑", "logical", "关系"])
+            assert any(
+                keyword in " ".join(logical_errors).lower()
+                for keyword in ["逻辑", "logical", "关系"]
+            )
 
     @pytest.mark.asyncio
     async def test_json_serialization(self, data_quality_monitor, test_match_data):
@@ -401,7 +438,9 @@ class TestDataQualityMonitorIntegration:
             pytest.fail(f"结果JSON序列化失败: {e}")
 
     @pytest.mark.asyncio
-    async def test_large_dataset_performance(self, data_quality_monitor, test_match_data):
+    async def test_large_dataset_performance(
+        self, data_quality_monitor, test_match_data
+    ):
         """测试大数据集性能"""
         match_id = test_match_data["match_id"]
 
@@ -430,7 +469,7 @@ class TestDataQualityMonitorIntegration:
         result = await data_quality_monitor.check_match(999999999)
 
         # 验证错误处理正确
-        assert result["passed"] == False
+        assert not result["passed"]
         assert "未找到" in result["summary"]["error"]
         assert len(result["results"]) == 0  # 没有规则被执行
         assert result["summary"]["failed_rules"] == 4  # 所有规则标记为失败
@@ -439,7 +478,6 @@ class TestDataQualityMonitorIntegration:
     async def test_memory_usage(self, data_quality_monitor, test_match_data):
         """测试内存使用（简单检查）"""
         import gc
-        import sys
 
         # 获取初始内存使用
         gc.collect()
@@ -478,6 +516,7 @@ async def test_environment_setup():
     """检查测试环境设置"""
     # 检查必要的环境变量
     import os
+
     database_url = os.getenv("DATABASE_URL")
     if not database_url:
         pytest.skip("DATABASE_URL 环境变量未设置")
@@ -498,12 +537,7 @@ async def test_environment_setup():
 async def test_integration_performance_benchmark():
     """集成性能基准测试"""
     feature_store = FootballFeatureStore()
-    rules = [
-        MissingValueRule(),
-        RangeRule(),
-        TypeRule(),
-        LogicalRelationRule()
-    ]
+    rules = [MissingValueRule(), RangeRule(), TypeRule(), LogicalRelationRule()]
     monitor = DataQualityMonitor(rules, feature_store, enable_stats=False)
 
     # 创建测试数据
@@ -546,8 +580,8 @@ async def test_integration_performance_benchmark():
             async with get_db_session() as session:
                 await session.execute(
                     "DELETE FROM feature_store WHERE match_id = :match_id",
-                    {"match_id": test_match_id}
+                    {"match_id": test_match_id},
                 )
                 await session.commit()
-        except Exception as e:
+        except Exception:
             pass

@@ -14,10 +14,10 @@ sys.path.insert(0, str(project_root / "src"))
 
 # 配置日志
 logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s"
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
+
 
 async def simple_database_test():
     """简单数据库连接测试"""
@@ -26,6 +26,7 @@ async def simple_database_test():
     try:
         # 初始化数据库
         from database.async_manager import initialize_database
+
         initialize_database()
         logger.info("✅ 数据库初始化成功")
 
@@ -45,10 +46,14 @@ async def simple_database_test():
                     return False
 
                 # 检查matches表
-                result = await session.execute(text("""
+                result = await session.execute(
+                    text(
+                        """
                     SELECT COUNT(*) FROM information_schema.tables
                     WHERE table_name = 'matches'
-                """))
+                """
+                    )
+                )
                 table_exists = result.scalar()
                 if table_exists:
                     logger.info("✅ matches表存在")
@@ -70,6 +75,7 @@ async def simple_database_test():
         logger.error(f"❌ 数据库测试失败: {str(e)}")
         return False
 
+
 async def test_data_collection_ready():
     """测试数据采集准备状态"""
     logger.info("\n🔍 测试数据采集准备状态")
@@ -77,11 +83,13 @@ async def test_data_collection_ready():
     try:
         # 检查采集器是否能初始化
         from collectors.fotmob_api_collector import FotMobAPICollector
+
         FotMobAPICollector()
         logger.info("✅ FotMob采集器初始化成功")
 
         # 检查环境变量
         import os
+
         fotmob_token = os.getenv("FOTMOB_TOKEN")
         if fotmob_token:
             logger.info("✅ FOTMOB_TOKEN环境变量已设置")
@@ -93,6 +101,7 @@ async def test_data_collection_ready():
     except Exception as e:
         logger.error(f"❌ 数据采集准备测试失败: {str(e)}")
         return False
+
 
 async def main():
     """主函数"""
@@ -119,6 +128,7 @@ async def main():
     else:
         logger.error("\n⚠️ 基础功能验证失败")
         return False
+
 
 if __name__ == "__main__":
     success = asyncio.run(main())

@@ -1,5 +1,3 @@
-from typing import Optional
-
 """
 领域层基础测试
 Basic Domain Layer Tests

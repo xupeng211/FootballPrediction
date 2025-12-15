@@ -1,5 +1,3 @@
-from typing import Optional
-
 #!/usr/bin/env python3
 """
 简化的第二阶段测试脚本
@@ -364,7 +362,7 @@ async def main():
                     passed += 1
                 else:
                     failed += 1
-            except Exception as e:
+            except Exception:
                 failed += 1
 
     end_time = datetime.now()

@@ -3,7 +3,7 @@ Simple API tests focusing on logic without database connections.
 """
 
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock
 from fastapi.testclient import TestClient
 from sqlalchemy.ext.asyncio import AsyncSession
 

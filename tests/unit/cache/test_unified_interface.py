@@ -1,5 +1,3 @@
-from typing import Optional
-
 """统一缓存接口测试
 Unified Cache Interface Tests.
 
@@ -7,7 +5,6 @@ Unified Cache Interface Tests.
 """
 
 import json
-import pickle
 import time
 import threading
 from unittest.mock import Mock, patch

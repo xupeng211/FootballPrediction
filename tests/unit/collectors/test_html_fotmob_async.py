@@ -7,11 +7,9 @@ HTMLFotMobCollector 异步版本单元测试
 创建时间: 2025-12-06
 """
 
-import asyncio
 import json
 import pytest
-from unittest.mock import AsyncMock, patch, MagicMock
-from datetime import datetime
+from unittest.mock import patch, MagicMock
 
 from src.collectors.html_fotmob_collector import AsyncHTMLFotMobCollector
 
@@ -24,9 +22,7 @@ class TestAsyncHTMLFotMobCollector:
     async def collector(self):
         """创建采集器实例"""
         collector = AsyncHTMLFotMobCollector(
-            max_retries=2,
-            timeout=10,
-            enable_stealth=False  # 测试时关闭隐身模式
+            max_retries=2, timeout=10, enable_stealth=False  # 测试时关闭隐身模式
         )
         return collector
 
@@ -44,7 +40,7 @@ class TestAsyncHTMLFotMobCollector:
                                     "stats": [
                                         {
                                             "title": "Expected Goals (xG)",
-                                            "stats": [1.5, 0.8]
+                                            "stats": [1.5, 0.8],
                                         }
                                     ]
                                 }
@@ -52,7 +48,7 @@ class TestAsyncHTMLFotMobCollector:
                         },
                         "lineup": {"homeTeam": [], "awayTeam": []},
                         "shotmap": {"shots": []},
-                        "playerStats": {"homeTeam": [], "awayTeam": []}
+                        "playerStats": {"homeTeam": [], "awayTeam": []},
                     }
                 }
             }
@@ -106,13 +102,7 @@ class TestAsyncHTMLFotMobCollector:
     async def test_extract_nextjs_data(self, collector):
         """测试Next.js数据提取"""
         # 准备测试数据
-        test_data = {
-            "props": {
-                "pageProps": {
-                    "content": {"test": "data"}
-                }
-            }
-        }
+        test_data = {"props": {"pageProps": {"content": {"test": "data"}}}}
         html = f'<script id="__NEXT_DATA__">{json.dumps(test_data)}</script>'
 
         # 执行提取
@@ -124,14 +114,8 @@ class TestAsyncHTMLFotMobCollector:
 
     async def test_extract_nextjs_data_with_window_format(self, collector):
         """测试window.__NEXT_DATA__格式提取"""
-        test_data = {
-            "props": {
-                "pageProps": {
-                    "content": {"test": "data"}
-                }
-            }
-        }
-        html = f'<script>window.__NEXT_DATA__ = {json.dumps(test_data)};</script>'
+        test_data = {"props": {"pageProps": {"content": {"test": "data"}}}}
+        html = f"<script>window.__NEXT_DATA__ = {json.dumps(test_data)};</script>"
 
         result = await collector._extract_nextjs_data(html, "123456")
 
@@ -158,12 +142,7 @@ class TestAsyncHTMLFotMobCollector:
 
     async def test_extract_content_data_404_page(self, collector):
         """测试404页面content提取"""
-        nextjs_data = {
-            "props": {
-                "pageProps": {},
-                "url": "/404"
-            }
-        }
+        nextjs_data = {"props": {"pageProps": {}, "url": "/404"}}
 
         result = await collector._extract_content_data(nextjs_data, "123456")
 
@@ -171,7 +150,7 @@ class TestAsyncHTMLFotMobCollector:
 
     async def test_collect_match_data_success(self, collector, mock_html_response):
         """测试成功采集比赛数据"""
-        with patch.object(collector, 'fetch_with_retry') as mock_fetch:
+        with patch.object(collector, "fetch_with_retry") as mock_fetch:
             # 模拟HTTP响应
             mock_response = MagicMock()
             mock_response.status_code = 200
@@ -187,9 +166,11 @@ class TestAsyncHTMLFotMobCollector:
             assert "content" in result
             assert "matchFacts" in result["content"]
 
-    async def test_collect_match_data_404_with_nextjs(self, collector, mock_html_response):
+    async def test_collect_match_data_404_with_nextjs(
+        self, collector, mock_html_response
+    ):
         """测试404页面包含Next.js数据"""
-        with patch.object(collector, 'fetch_with_retry') as mock_fetch:
+        with patch.object(collector, "fetch_with_retry") as mock_fetch:
             # 模拟404响应但包含数据
             mock_response = MagicMock()
             mock_response.status_code = 404
@@ -205,7 +186,7 @@ class TestAsyncHTMLFotMobCollector:
 
     async def test_collect_match_data_404_no_data(self, collector):
         """测试404页面无数据"""
-        with patch.object(collector, 'fetch_with_retry') as mock_fetch:
+        with patch.object(collector, "fetch_with_retry") as mock_fetch:
             # 模拟404响应无数据
             mock_response = MagicMock()
             mock_response.status_code = 404
@@ -220,7 +201,7 @@ class TestAsyncHTMLFotMobCollector:
 
     async def test_collect_match_data_429_retry(self, collector, mock_html_response):
         """测试429状态码重试"""
-        with patch.object(collector, 'fetch_with_retry') as mock_fetch:
+        with patch.object(collector, "fetch_with_retry") as mock_fetch:
             # 先返回429，然后返回200
             mock_response_429 = MagicMock()
             mock_response_429.status_code = 429
@@ -232,7 +213,7 @@ class TestAsyncHTMLFotMobCollector:
             mock_fetch.side_effect = [mock_response_429, mock_response_200]
 
             # 模拟sleep避免实际等待
-            with patch('asyncio.sleep', return_value=None):
+            with patch("asyncio.sleep", return_value=None):
                 # 执行采集
                 result = await collector.collect_match_data("123456")
 
@@ -242,7 +223,7 @@ class TestAsyncHTMLFotMobCollector:
 
     async def test_collect_match_data_403_retry(self, collector, mock_html_response):
         """测试403状态码重试"""
-        with patch.object(collector, 'fetch_with_retry') as mock_fetch:
+        with patch.object(collector, "fetch_with_retry") as mock_fetch:
             # 先返回403，然后返回200
             mock_response_403 = MagicMock()
             mock_response_403.status_code = 403
@@ -253,8 +234,8 @@ class TestAsyncHTMLFotMobCollector:
             mock_fetch.side_effect = [mock_response_403, mock_response_200]
 
             # 模拟sleep和refresh_disguise
-            with patch('asyncio.sleep', return_value=None):
-                with patch.object(collector, '_refresh_disguise', return_value=None):
+            with patch("asyncio.sleep", return_value=None):
+                with patch.object(collector, "_refresh_disguise", return_value=None):
                     # 执行采集
                     result = await collector.collect_match_data("123456")
 
@@ -264,7 +245,7 @@ class TestAsyncHTMLFotMobCollector:
 
     async def test_collect_match_data_network_error(self, collector):
         """测试网络错误处理"""
-        with patch.object(collector, 'fetch_with_retry') as mock_fetch:
+        with patch.object(collector, "fetch_with_retry") as mock_fetch:
             # 模拟网络异常
             mock_fetch.side_effect = Exception("Network error")
 
@@ -298,9 +279,12 @@ class TestAsyncHTMLFotMobCollector:
         collector.enable_stealth = True
         collector.last_rotation = 0  # 强制轮换
 
-        with patch.object(collector, '_get_user_agent', return_value="test-ua"):
-            with patch('asyncio.get_event_loop') as mock_loop:
-                mock_loop.return_value.time.side_effect = [0, 1000]  # 第一次调用返回0，第二次返回1000
+        with patch.object(collector, "_get_user_agent", return_value="test-ua"):
+            with patch("asyncio.get_event_loop") as mock_loop:
+                mock_loop.return_value.time.side_effect = [
+                    0,
+                    1000,
+                ]  # 第一次调用返回0，第二次返回1000
 
                 await collector._refresh_disguise()
 
@@ -330,7 +314,7 @@ class TestAsyncHTMLFotMobCollector:
                                     "stats": [
                                         {
                                             "title": "Expected Goals (xG)",
-                                            "stats": [2.1, 0.9]
+                                            "stats": [2.1, 0.9],
                                         }
                                     ]
                                 }
@@ -372,15 +356,15 @@ class TestAsyncHTMLFotMobCollectorIntegration:
                         "general": {
                             "matchHead2Head": {
                                 "homeTeam": {"name": "Team A", "id": 123},
-                                "awayTeam": {"name": "Team B", "id": 456}
+                                "awayTeam": {"name": "Team B", "id": 456},
                             }
                         },
                         "matchFacts": {
                             "id": "123456",
                             "status": {
                                 "finished": False,
-                                "startTimeStr": "2024-01-01 15:00"
-                            }
+                                "startTimeStr": "2024-01-01 15:00",
+                            },
                         },
                         "stats": {
                             "Periods": {
@@ -388,20 +372,17 @@ class TestAsyncHTMLFotMobCollectorIntegration:
                                     "stats": [
                                         {
                                             "title": "Expected Goals (xG)",
-                                            "stats": [1.8, 1.2]
+                                            "stats": [1.8, 1.2],
                                         },
-                                        {
-                                            "title": "Ball Possession",
-                                            "stats": [55, 45]
-                                        }
+                                        {"title": "Ball Possession", "stats": [55, 45]},
                                     ]
                                 }
                             }
                         },
                         "lineup": {
                             "home": [{"name": "Player A"}],
-                            "away": [{"name": "Player B"}]
-                        }
+                            "away": [{"name": "Player B"}],
+                        },
                     }
                 }
             }
@@ -409,7 +390,7 @@ class TestAsyncHTMLFotMobCollectorIntegration:
 
         html = f'<script id="__NEXT_DATA__" type="application/json">{json.dumps(real_nextjs_data)}</script>'
 
-        with patch.object(collector, 'fetch_with_retry') as mock_fetch:
+        with patch.object(collector, "fetch_with_retry") as mock_fetch:
             mock_response = MagicMock()
             mock_response.status_code = 200
             mock_response.text = html

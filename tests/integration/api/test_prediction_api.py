@@ -6,28 +6,17 @@ Integration Tests for Prediction API
 """
 
 import asyncio
-import json
 import pytest
 import time
-from datetime import datetime
-from pathlib import Path
-from typing import Dict, Any
 
 import httpx
-import pandas as pd
 
 from src.inference import (
     get_predictor,
     get_model_loader,
     get_prediction_cache,
     get_hot_reload_manager,
-    PredictionRequest,
-    BatchPredictionRequest,
-    PredictionType,
-    ModelType,
 )
-from src.inference.schemas import PredictionResponse, BatchPredictionResponse
-from src.inference.errors import PredictionError
 
 
 class TestPredictionAPI:
@@ -58,7 +47,7 @@ class TestPredictionAPI:
                 "predictor": predictor,
                 "model_loader": model_loader,
                 "cache": cache,
-                "hot_reload_manager": hot_reload_manager
+                "hot_reload_manager": hot_reload_manager,
             }
 
         except Exception as e:
@@ -89,8 +78,8 @@ class TestPredictionAPI:
                 "home_possession": 60.5,
                 "away_possession": 39.5,
                 "home_shots": 15,
-                "away_shots": 8
-            }
+                "away_shots": 8,
+            },
         }
 
         response = await api_client.post("/v1/predictions/predict", json=request_data)
@@ -119,7 +108,7 @@ class TestPredictionAPI:
         probs = [
             prediction_data["home_win_prob"],
             prediction_data["draw_prob"],
-            prediction_data["away_win_prob"]
+            prediction_data["away_win_prob"],
         ]
         for prob in probs:
             assert 0.0 <= prob <= 1.0
@@ -138,8 +127,8 @@ class TestPredictionAPI:
                         "home_goals": 3,
                         "away_goals": 1,
                         "home_possession": 65.0,
-                        "away_possession": 35.0
-                    }
+                        "away_possession": 35.0,
+                    },
                 },
                 {
                     "match_id": "test_match_003",
@@ -148,14 +137,16 @@ class TestPredictionAPI:
                         "home_goals": 1,
                         "away_goals": 2,
                         "home_possession": 45.0,
-                        "away_possession": 55.0
-                    }
-                }
+                        "away_possession": 55.0,
+                    },
+                },
             ],
-            "parallel": True
+            "parallel": True,
         }
 
-        response = await api_client.post("/v1/predictions/predict/batch", json=request_data)
+        response = await api_client.post(
+            "/v1/predictions/predict/batch", json=request_data
+        )
 
         assert response.status_code == 200
 
@@ -191,8 +182,8 @@ class TestPredictionAPI:
                 "home_goals": 2,
                 "away_goals": 1,
                 "home_possession": 55.0,
-                "away_possession": 45.0
-            }
+                "away_possession": 45.0,
+            },
         }
 
         # 第一次请求（应该计算预测）
@@ -249,7 +240,7 @@ class TestPredictionAPI:
         request_data = {
             "match_id": "test_match_cache_mgmt_001",
             "model_name": "xgboost_football_v1",
-            "features": {"home_goals": 1, "away_goals": 1}
+            "features": {"home_goals": 1, "away_goals": 1},
         }
 
         await api_client.post("/v1/predictions/predict", json=request_data)
@@ -304,10 +295,12 @@ class TestPredictionAPI:
         invalid_request = {
             "match_id": "test_error_001",
             "model_name": "nonexistent_model",
-            "features": {"home_goals": 1, "away_goals": 1}
+            "features": {"home_goals": 1, "away_goals": 1},
         }
 
-        response = await api_client.post("/v1/predictions/predict", json=invalid_request)
+        response = await api_client.post(
+            "/v1/predictions/predict", json=invalid_request
+        )
 
         # 应该返回错误状态码
         assert response.status_code in [400, 404, 503]
@@ -320,7 +313,7 @@ class TestPredictionAPI:
         invalid_format = {
             "match_id": "",  # 空的match_id
             "model_name": "xgboost_football_v1",
-            "features": {}
+            "features": {},
         }
 
         response = await api_client.post("/v1/predictions/predict", json=invalid_format)
@@ -332,11 +325,7 @@ class TestPredictionAPI:
         request_data = {
             "match_id": "test_concurrent_001",
             "model_name": "xgboost_football_v1",
-            "features": {
-                "home_goals": 2,
-                "away_goals": 1,
-                "home_possession": 55.0
-            }
+            "features": {"home_goals": 2, "away_goals": 1, "home_possession": 55.0},
         }
 
         # 创建多个并发请求
@@ -378,13 +367,13 @@ class TestPredictionAPI:
             "home_shots": 12,
             "away_shots": 8,
             "home_corners": 6,
-            "away_corners": 3
+            "away_corners": 3,
         }
 
         request_data = {
             "match_id": "test_feature_parity_001",
             "model_name": "xgboost_football_v1",
-            "features": features
+            "features": features,
         }
 
         # 进行多次预测，验证结果一致性
@@ -394,7 +383,9 @@ class TestPredictionAPI:
             request_copy["match_id"] = f"test_parity_{i:03d}"
             request_copy["force_recalculate"] = True  # 强制重新计算
 
-            response = await api_client.post("/v1/predictions/predict", json=request_copy)
+            response = await api_client.post(
+                "/v1/predictions/predict", json=request_copy
+            )
             assert response.status_code == 200
 
             prediction_data = response.json()
@@ -403,9 +394,13 @@ class TestPredictionAPI:
         # 验证预测结果的一致性（忽略request_id和时间戳等）
         for response in responses[1:]:
             # 主概率应该相同（允许小的浮点误差）
-            assert abs(response["home_win_prob"] - responses[0]["home_win_prob"]) < 0.001
+            assert (
+                abs(response["home_win_prob"] - responses[0]["home_win_prob"]) < 0.001
+            )
             assert abs(response["draw_prob"] - responses[0]["draw_prob"]) < 0.001
-            assert abs(response["away_win_prob"] - responses[0]["away_win_prob"]) < 0.001
+            assert (
+                abs(response["away_win_prob"] - responses[0]["away_win_prob"]) < 0.001
+            )
 
             # 预测结果应该相同
             assert response["predicted_outcome"] == responses[0]["predicted_outcome"]
@@ -423,8 +418,8 @@ class TestPredictionAPI:
                 "home_goals": 2,
                 "away_goals": 1,
                 "home_possession": 55.0,
-                "away_possession": 45.0
-            }
+                "away_possession": 45.0,
+            },
         }
 
         # 测试单次预测性能
@@ -441,7 +436,9 @@ class TestPredictionAPI:
         # 预测本身的时间应该合理（< 500ms）
         assert prediction_data.get("prediction_time_ms", 0) < 500
 
-        print(f"Performance test passed: API={prediction_time:.2f}ms, Prediction={prediction_data.get('prediction_time_ms', 0)}ms")
+        print(
+            f"Performance test passed: API={prediction_time:.2f}ms, Prediction={prediction_data.get('prediction_time_ms', 0)}ms"
+        )
 
     @pytest.mark.asyncio
     async def test_api_response_format_consistency(self, api_client):
@@ -449,13 +446,13 @@ class TestPredictionAPI:
         request_data = {
             "match_id": "test_format_001",
             "model_name": "xgboost_football_v1",
-            "features": {"home_goals": 1, "away_goals": 1}
+            "features": {"home_goals": 1, "away_goals": 1},
         }
 
         # 测试不同的端点
         endpoints = [
             "/v1/predictions/predict",
-            "/v1/predictions/xgboost_football_v1/test_format_001"
+            "/v1/predictions/xgboost_football_v1/test_format_001",
         ]
 
         responses = []
@@ -471,18 +468,29 @@ class TestPredictionAPI:
         if len(responses) > 1:
             first_response = responses[0]
             required_fields = [
-                "request_id", "match_id", "predicted_at",
-                "home_win_prob", "draw_prob", "away_win_prob",
-                "predicted_outcome", "confidence",
-                "model_name", "model_version", "model_type"
+                "request_id",
+                "match_id",
+                "predicted_at",
+                "home_win_prob",
+                "draw_prob",
+                "away_win_prob",
+                "predicted_outcome",
+                "confidence",
+                "model_name",
+                "model_version",
+                "model_type",
             ]
 
             for response in responses[1:]:
                 for field in required_fields:
                     assert field in response, f"Missing field '{field}' in response"
-                    assert type(response[field]) == type(first_response[field]), f"Type mismatch for field '{field}'"
+                    assert type(response[field]) == type(
+                        first_response[field]
+                    ), f"Type mismatch for field '{field}'"
 
-            print(f"Response format consistency test passed: {len(responses)} consistent responses")
+            print(
+                f"Response format consistency test passed: {len(responses)} consistent responses"
+            )
 
 
 if __name__ == "__main__":

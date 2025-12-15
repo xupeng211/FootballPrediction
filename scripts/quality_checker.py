@@ -19,10 +19,12 @@ sys.path.insert(0, str(project_root))
 
 # 临时跳过有问题的导入，直接使用标准logging
 import logging
+
 logger = logging.getLogger(__name__)
 
 try:
     from src.core import Logger  # noqa: E402
+
     logger_instance = Logger()
 except ImportError:
     # 如果导入失败，使用标准logging
@@ -727,7 +729,9 @@ def main():
     parser = argparse.ArgumentParser(description="代码质量检查器")
     parser.add_argument("--project-root", default=".", help="项目根目录")
     parser.add_argument("--max-retries", type=int, default=3, help="最大重试次数")
-    parser.add_argument("--output", default="logs/quality_check.json", help="结果输出文件")
+    parser.add_argument(
+        "--output", default="logs/quality_check.json", help="结果输出文件"
+    )
     parser.add_argument("--summary", action="store_true", help="显示摘要")
 
     args = parser.parse_args()

@@ -5,12 +5,9 @@ Unit Tests for Hot Reload Manager
 测试模型文件监控、自动重载、版本管理和回滚功能。
 """
 
-import asyncio
 import pytest
-from datetime import datetime, timedelta
-from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, Mock, patch, mock_open
-from typing import Dict, Any
+from datetime import datetime
+from unittest.mock import AsyncMock, Mock, patch, mock_open
 
 from src.inference.hot_reload import (
     HotReloadManager,
@@ -40,7 +37,7 @@ class TestModelFileHandler:
             "/path/to/model.pkl",
             "/path/to/model.joblib",
             "/path/to/model.model",
-            "/path/to/model.h5"
+            "/path/to/model.h5",
         ]
 
         for file_path in valid_files:
@@ -53,7 +50,7 @@ class TestModelFileHandler:
             "/path/to/model.csv",
             "/path/to/model.json",
             "/path/to/model.py",
-            "/path/to/.hidden"
+            "/path/to/.hidden",
         ]
 
         for file_path in invalid_files:
@@ -88,7 +85,7 @@ class TestModelFileHandler:
         mock_event.is_directory = False
         mock_event.src_path = "/path/to/model.pkl"
 
-        with patch('asyncio.create_task') as mock_create_task:
+        with patch("asyncio.create_task") as mock_create_task:
             file_handler.on_modified(mock_event)
 
             # 验证创建了异步任务
@@ -96,7 +93,9 @@ class TestModelFileHandler:
             args = mock_create_task.call_args[0]
             assert len(args) == 1
             # 验证任务调用了处理函数
-            assert args[0] == file_handler.hot_reload_manager.handle_file_change("/path/to/model.pkl")
+            assert args[0] == file_handler.hot_reload_manager.handle_file_change(
+                "/path/to/model.pkl"
+            )
 
     def test_debounce_time_logic(self, file_handler):
         """测试防抖逻辑"""
@@ -104,7 +103,7 @@ class TestModelFileHandler:
         mock_event.is_directory = False
         mock_event.src_path = "/path/to/model.pkl"
 
-        with patch('asyncio.create_task') as mock_create_task:
+        with patch("asyncio.create_task") as mock_create_task:
             # 第一次修改
             file_handler.on_modified(mock_event)
             first_call_count = mock_create_task.call_count
@@ -133,7 +132,7 @@ class TestHotReloadManager:
         return HotReloadManager(
             model_directory=str(temp_model_dir),
             check_interval=0.1,  # 快速检查用于测试
-            max_workers=2
+            max_workers=2,
         )
 
     @pytest.fixture
@@ -168,12 +167,7 @@ class TestHotReloadManager:
 
     def test_extract_model_name_invalid_path(self, hot_reload_manager):
         """测试提取无效路径的模型名称"""
-        invalid_paths = [
-            "",
-            "/",
-            "no_extension",
-            ".hidden"
-        ]
+        invalid_paths = ["", "/", "no_extension", ".hidden"]
 
         for path in invalid_paths:
             model_name = hot_reload_manager._extract_model_name(path)
@@ -186,7 +180,7 @@ class TestHotReloadManager:
         model_file = temp_model_dir / "test_model.pkl"
         model_file.write_bytes(b"fake model data")
 
-        with patch.object(hot_reload_manager, '_test_model_load') as mock_test_load:
+        with patch.object(hot_reload_manager, "_test_model_load") as mock_test_load:
             mock_test_load.return_value = None  # 成功
 
             # 应该不抛出异常
@@ -201,7 +195,9 @@ class TestHotReloadManager:
         assert "does not exist" in str(exc_info.value)
 
     @pytest.mark.asyncio
-    async def test_validate_new_model_empty_file(self, hot_reload_manager, temp_model_dir):
+    async def test_validate_new_model_empty_file(
+        self, hot_reload_manager, temp_model_dir
+    ):
         """测试验证空模型文件"""
         empty_file = temp_model_dir / "empty.pkl"
         empty_file.write_bytes(b"")
@@ -212,7 +208,9 @@ class TestHotReloadManager:
         assert "is empty" in str(exc_info.value)
 
     @pytest.mark.asyncio
-    async def test_validate_new_model_invalid_format(self, hot_reload_manager, temp_model_dir):
+    async def test_validate_new_model_invalid_format(
+        self, hot_reload_manager, temp_model_dir
+    ):
         """测试验证无效格式文件"""
         invalid_file = temp_model_dir / "model.txt"
         invalid_file.write_bytes(b"some data")
@@ -223,12 +221,14 @@ class TestHotReloadManager:
         assert "Unsupported model file format" in str(exc_info.value)
 
     @pytest.mark.asyncio
-    async def test_validate_new_model_load_failure(self, hot_reload_manager, temp_model_dir):
+    async def test_validate_new_model_load_failure(
+        self, hot_reload_manager, temp_model_dir
+    ):
         """测试验证模型加载失败"""
         model_file = temp_model_dir / "invalid_model.pkl"
         model_file.write_bytes(b"invalid model data")
 
-        with patch.object(hot_reload_manager, '_test_model_load') as mock_test_load:
+        with patch.object(hot_reload_manager, "_test_model_load") as mock_test_load:
             mock_test_load.side_effect = RuntimeError("Load failed")
 
             with pytest.raises(HotReloadError) as exc_info:
@@ -238,7 +238,7 @@ class TestHotReloadManager:
 
     def test_test_model_load_joblib(self, hot_reload_manager, temp_model_dir):
         """测试模型加载 - joblib格式"""
-        with patch('joblib.load') as mock_load:
+        with patch("joblib.load") as mock_load:
             mock_load.return_value = "fake model"
 
             model_file = temp_model_dir / "model.pkl"
@@ -250,8 +250,8 @@ class TestHotReloadManager:
 
     def test_test_model_load_pickle(self, hot_reload_manager, temp_model_dir):
         """测试模型加载 - pickle格式"""
-        with patch('builtins.open', mock_open(read_data=b"fake model")):
-            with patch('pickle.load') as mock_pickle_load:
+        with patch("builtins.open", mock_open(read_data=b"fake model")):
+            with patch("pickle.load") as mock_pickle_load:
                 mock_pickle_load.return_value = "fake model"
 
                 model_file = temp_model_dir / "model.h5"
@@ -274,7 +274,7 @@ class TestHotReloadManager:
     @pytest.mark.asyncio
     async def test_load_new_model_success(self, hot_reload_manager):
         """测试加载新模型成功"""
-        with patch.object(hot_reload_manager, '_load_model_sync') as mock_load:
+        with patch.object(hot_reload_manager, "_load_model_sync") as mock_load:
             mock_load.return_value = "loaded model"
 
             result = await hot_reload_manager._load_new_model("/path/to/model.pkl")
@@ -285,7 +285,7 @@ class TestHotReloadManager:
     @pytest.mark.asyncio
     async def test_load_new_model_failure(self, hot_reload_manager):
         """测试加载新模型失败"""
-        with patch.object(hot_reload_manager, '_load_model_sync') as mock_load:
+        with patch.object(hot_reload_manager, "_load_model_sync") as mock_load:
             mock_load.side_effect = RuntimeError("Load failed")
 
             with pytest.raises(HotReloadError) as exc_info:
@@ -296,7 +296,9 @@ class TestHotReloadManager:
     @pytest.mark.asyncio
     async def test_verify_reload_success(self, hot_reload_manager, mock_model_loader):
         """测试验证重载成功"""
-        with patch('src.inference.hot_reload.get_model_loader', return_value=mock_model_loader):
+        with patch(
+            "src.inference.hot_reload.get_model_loader", return_value=mock_model_loader
+        ):
             loaded_model = Mock()
             loaded_model.model = "test_model"
             mock_model_loader.get.return_value = loaded_model
@@ -305,9 +307,13 @@ class TestHotReloadManager:
             await hot_reload_manager._verify_reload("test_model")
 
     @pytest.mark.asyncio
-    async def test_verify_reload_model_not_available(self, hot_reload_manager, mock_model_loader):
+    async def test_verify_reload_model_not_available(
+        self, hot_reload_manager, mock_model_loader
+    ):
         """测试验证重载 - 模型不可用"""
-        with patch('src.inference.hot_reload.get_model_loader', return_value=mock_model_loader):
+        with patch(
+            "src.inference.hot_reload.get_model_loader", return_value=mock_model_loader
+        ):
             mock_model_loader.get.return_value = None
 
             with pytest.raises(HotReloadError) as exc_info:
@@ -318,7 +324,9 @@ class TestHotReloadManager:
     @pytest.mark.asyncio
     async def test_rollback_model_success(self, hot_reload_manager, mock_model_loader):
         """测试模型回滚成功"""
-        with patch('src.inference.hot_reload.get_model_loader', return_value=mock_model_loader):
+        with patch(
+            "src.inference.hot_reload.get_model_loader", return_value=mock_model_loader
+        ):
             # 应该不抛出异常
             await hot_reload_manager._rollback_model("test_model")
 
@@ -327,7 +335,9 @@ class TestHotReloadManager:
     @pytest.mark.asyncio
     async def test_rollback_model_failure(self, hot_reload_manager, mock_model_loader):
         """测试模型回滚失败"""
-        with patch('src.inference.hot_reload.get_model_loader', return_value=mock_model_loader):
+        with patch(
+            "src.inference.hot_reload.get_model_loader", return_value=mock_model_loader
+        ):
             mock_model_loader.unload_model.side_effect = Exception("Unload failed")
 
             with pytest.raises(HotReloadError) as exc_info:
@@ -340,9 +350,7 @@ class TestHotReloadManager:
         start_time = datetime.utcnow()
 
         hot_reload_manager._record_reload_success(
-            "test_model",
-            "/path/to/model.pkl",
-            start_time
+            "test_model", "/path/to/model.pkl", start_time
         )
 
         assert hot_reload_manager._stats["successful_reloads"] == 1
@@ -360,10 +368,7 @@ class TestHotReloadManager:
         error = "Load failed"
 
         hot_reload_manager._record_reload_failure(
-            "test_model",
-            "/path/to/model.pkl",
-            start_time,
-            error
+            "test_model", "/path/to/model.pkl", start_time, error
         )
 
         assert hot_reload_manager._stats["failed_reloads"] == 1
@@ -413,7 +418,7 @@ class TestHotReloadManager:
         model_file = temp_model_dir / "test_model.pkl"
         model_file.write_bytes(b"model data")
 
-        with patch.object(hot_reload_manager, '_reload_model') as mock_reload:
+        with patch.object(hot_reload_manager, "_reload_model") as mock_reload:
             mock_reload.return_value = None
 
             await hot_reload_manager.force_reload("test_model", str(model_file))
@@ -433,8 +438,10 @@ class TestHotReloadManager:
         """测试健康检查循环"""
         hot_reload_manager._is_monitoring = True
 
-        with patch('src.inference.hot_reload.get_model_loader', return_value=mock_model_loader):
-            with patch('asyncio.sleep', side_effect=Exception("Stop loop")):
+        with patch(
+            "src.inference.hot_reload.get_model_loader", return_value=mock_model_loader
+        ):
+            with patch("asyncio.sleep", side_effect=Exception("Stop loop")):
                 try:
                     await hot_reload_manager._health_check_loop()
                 except Exception as e:
@@ -445,23 +452,31 @@ class TestHotReloadManager:
                 mock_model_loader.get_load_stats.assert_called()
 
     @pytest.mark.asyncio
-    async def test_perform_health_check_success(self, hot_reload_manager, mock_model_loader):
+    async def test_perform_health_check_success(
+        self, hot_reload_manager, mock_model_loader
+    ):
         """测试执行健康检查成功"""
         mock_model_loader.get_load_stats.return_value = {"load_errors": 5}
 
-        with patch('src.inference.hot_reload.get_model_loader', return_value=mock_model_loader):
+        with patch(
+            "src.inference.hot_reload.get_model_loader", return_value=mock_model_loader
+        ):
             # 应该不抛出异常
             await hot_reload_manager._perform_health_check()
 
         assert hot_reload_manager._last_health_check is not None
 
     @pytest.mark.asyncio
-    async def test_perform_health_check_high_error_rate(self, hot_reload_manager, mock_model_loader):
+    async def test_perform_health_check_high_error_rate(
+        self, hot_reload_manager, mock_model_loader
+    ):
         """测试执行健康检查 - 高错误率"""
         mock_model_loader.get_load_stats.return_value = {"load_errors": 15}
 
-        with patch('src.inference.hot_reload.get_model_loader', return_value=mock_model_loader):
-            with patch('src.inference.hot_reload.logger') as mock_logger:
+        with patch(
+            "src.inference.hot_reload.get_model_loader", return_value=mock_model_loader
+        ):
+            with patch("src.inference.hot_reload.logger") as mock_logger:
                 # 应该不抛出异常，但会记录警告
                 await hot_reload_manager._perform_health_check()
 
@@ -489,11 +504,13 @@ class TestHotReloadManager:
         """测试获取重载历史"""
         # 添加一些历史记录
         for i in range(5):
-            hot_reload_manager._reload_history.append({
-                "timestamp": datetime.utcnow().isoformat(),
-                "model_name": f"model_{i}",
-                "status": "success"
-            })
+            hot_reload_manager._reload_history.append(
+                {
+                    "timestamp": datetime.utcnow().isoformat(),
+                    "model_name": f"model_{i}",
+                    "status": "success",
+                }
+            )
 
         history = hot_reload_manager.get_reload_history(limit=3)
 
@@ -519,10 +536,10 @@ class TestHotReloadManager:
     @pytest.mark.asyncio
     async def test_get_hot_reload_manager_singleton(self):
         """测试全局热更新管理器实例"""
-        with patch.dict('os.environ', {
-            'MODEL_DIRECTORY': '/tmp/models',
-            'HOT_RELOAD_CHECK_INTERVAL': '0.5'
-        }):
+        with patch.dict(
+            "os.environ",
+            {"MODEL_DIRECTORY": "/tmp/models", "HOT_RELOAD_CHECK_INTERVAL": "0.5"},
+        ):
             manager1 = await get_hot_reload_manager()
             manager2 = await get_hot_reload_manager()
 
@@ -534,6 +551,7 @@ class TestHotReloadManager:
         # 先设置全局实例
         manager = HotReloadManager()
         import src.inference.hot_reload
+
         src.inference.hot_reload._hot_reload_manager = manager
 
         # 同步获取应该成功
@@ -544,6 +562,7 @@ class TestHotReloadManager:
         """测试同步获取未初始化的管理器"""
         # 清除全局实例
         import src.inference.hot_reload
+
         src.inference.hot_reload._hot_reload_manager = None
 
         with pytest.raises(RuntimeError) as exc_info:

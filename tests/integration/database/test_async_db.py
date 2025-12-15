@@ -14,18 +14,26 @@ import asyncio
 import pytest
 import uuid
 from datetime import datetime
-from typing import Optional
 
 from sqlalchemy import (
-    Column, String, Integer, Float, DateTime, Boolean,
-    select, delete, update, text, func,
+    Column,
+    String,
+    Float,
+    DateTime,
+    Boolean,
+    select,
+    text,
 )
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.database.async_manager import get_db_session, execute, fetch_all, fetch_one
-from src.database.session import get_async_session, AsyncCRUD, AsyncBatchOperations, AsyncQuery
+from src.database.async_manager import execute, fetch_one
+from src.database.session import (
+    get_async_session,
+    AsyncCRUD,
+    AsyncBatchOperations,
+    AsyncQuery,
+)
 
 
 # Test Model Definitions
@@ -34,6 +42,7 @@ TestBase = declarative_base()
 
 class AsyncTestModel(TestBase):
     """异步测试模型"""
+
     __tablename__ = "async_test_models"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -72,7 +81,9 @@ class TestAsyncDatabaseOperations:
 
         try:
             await execute(text(create_table_sql))
-            await execute(text("TRUNCATE TABLE async_test_models RESTART IDENTITY CASCADE"))
+            await execute(
+                text("TRUNCATE TABLE async_test_models RESTART IDENTITY CASCADE")
+            )
         except Exception as e:
             pytest.skip(f"Database setup failed: {e}")
 
@@ -81,8 +92,10 @@ class TestAsyncDatabaseOperations:
         """清理测试数据"""
         yield
         try:
-            await execute(text("TRUNCATE TABLE async_test_models RESTART IDENTITY CASCADE"))
-        except Exception as e:
+            await execute(
+                text("TRUNCATE TABLE async_test_models RESTART IDENTITY CASCADE")
+            )
+        except Exception:
             pass  # Cleanup should not fail tests
 
     async def test_create_model_instance(self):
@@ -95,7 +108,7 @@ class TestAsyncDatabaseOperations:
             "name": test_name,
             "description": "Test model for async database operations",
             "score": 95.5,
-            "is_active": True
+            "is_active": True,
         }
 
         # 使用 AsyncCRUD 创建实例
@@ -121,7 +134,7 @@ class TestAsyncDatabaseOperations:
             AsyncTestModel,
             name=test_name,
             description="Model for read test",
-            score=88.0
+            score=88.0,
         )
 
         # 使用 AsyncCRUD 读取实例
@@ -146,16 +159,18 @@ class TestAsyncDatabaseOperations:
             AsyncTestModel,
             name=test_name,
             description="Original description",
-            score=75.0
+            score=75.0,
         )
 
         # 更新实例
         updated_data = {
             "description": "Updated description",
             "score": 92.5,
-            "is_active": False
+            "is_active": False,
         }
-        updated_model = await AsyncCRUD.update(AsyncTestModel, created_model.id, **updated_data)
+        updated_model = await AsyncCRUD.update(
+            AsyncTestModel, created_model.id, **updated_data
+        )
 
         # 断言
         assert updated_model is not None
@@ -177,7 +192,7 @@ class TestAsyncDatabaseOperations:
             AsyncTestModel,
             name=test_name,
             description="Model for deletion test",
-            score=80.0
+            score=80.0,
         )
 
         # 删除实例
@@ -199,15 +214,19 @@ class TestAsyncDatabaseOperations:
         # 准备批量数据
         batch_data = []
         for i in range(5):
-            batch_data.append({
-                "name": f"batch_model_{i}_{uuid.uuid4().hex[:4]}",
-                "description": f"Batch test model {i}",
-                "score": 80.0 + i * 2.5,
-                "is_active": i % 2 == 0
-            })
+            batch_data.append(
+                {
+                    "name": f"batch_model_{i}_{uuid.uuid4().hex[:4]}",
+                    "description": f"Batch test model {i}",
+                    "score": 80.0 + i * 2.5,
+                    "is_active": i % 2 == 0,
+                }
+            )
 
         # 批量创建
-        created_models = await AsyncBatchOperations.bulk_create(AsyncTestModel, batch_data)
+        created_models = await AsyncBatchOperations.bulk_create(
+            AsyncTestModel, batch_data
+        )
 
         # 断言批量创建成功
         assert len(created_models) == 5
@@ -220,14 +239,18 @@ class TestAsyncDatabaseOperations:
         # 准备批量更新数据
         update_data = []
         for model in created_models:
-            update_data.append({
-                "id": model.id,
-                "description": f"Updated: {model.description}",
-                "score": model.score + 10.0
-            })
+            update_data.append(
+                {
+                    "id": model.id,
+                    "description": f"Updated: {model.description}",
+                    "score": model.score + 10.0,
+                }
+            )
 
         # 批量更新
-        updated_count = await AsyncBatchOperations.bulk_update(AsyncTestModel, update_data)
+        updated_count = await AsyncBatchOperations.bulk_update(
+            AsyncTestModel, update_data
+        )
 
         # 断言批量更新成功
         assert updated_count == 5
@@ -236,7 +259,9 @@ class TestAsyncDatabaseOperations:
 
         # 批量删除
         model_ids = [model.id for model in created_models]
-        deleted_count = await AsyncBatchOperations.bulk_delete(AsyncTestModel, model_ids)
+        deleted_count = await AsyncBatchOperations.bulk_delete(
+            AsyncTestModel, model_ids
+        )
 
         # 断言批量删除成功
         assert deleted_count == 5
@@ -255,7 +280,7 @@ class TestAsyncDatabaseOperations:
                 name=f"query_test_{i}",
                 description=f"Query test model {i}",
                 score=85.0 + i * 5,
-                is_active=i != 1  # 第二个不活跃
+                is_active=i != 1,  # 第二个不活跃
             )
             test_models.append(model)
 
@@ -280,7 +305,7 @@ class TestAsyncDatabaseOperations:
         page_result = await AsyncQuery.fetch_page(
             select(AsyncTestModel).where(AsyncTestModel.name.like("query_test_%")),
             page=1,
-            page_size=2
+            page_size=2,
         )
 
         # 断言
@@ -292,13 +317,17 @@ class TestAsyncDatabaseOperations:
         print(f"✅ 分页查询成功: {page_result}")
 
         # 测试 exists
-        exists_query = select(AsyncTestModel).where(AsyncTestModel.name == "query_test_0")
+        exists_query = select(AsyncTestModel).where(
+            AsyncTestModel.name == "query_test_0"
+        )
         exists = await AsyncQuery.exists(exists_query)
         assert exists is True
         print("✅ exists 查询成功")
 
         # 测试不存在的记录
-        not_exists_query = select(AsyncTestModel).where(AsyncTestModel.name == "non_existent")
+        not_exists_query = select(AsyncTestModel).where(
+            AsyncTestModel.name == "non_existent"
+        )
         not_exists = await AsyncQuery.exists(not_exists_query)
         assert not_exists is False
         print("✅ not exists 查询成功")
@@ -322,7 +351,7 @@ class TestAsyncDatabaseOperations:
             "score": 90.0,
             "is_active": True,
             "created_at": now,
-            "updated_at": now
+            "updated_at": now,
         }
 
         # 执行插入
@@ -371,9 +400,7 @@ class TestAsyncDatabaseOperations:
             # 创建实例
             test_name = f"context_test_{uuid.uuid4().hex[:8]}"
             new_model = AsyncTestModel(
-                name=test_name,
-                description="Context manager test",
-                score=87.5
+                name=test_name, description="Context manager test", score=87.5
             )
             session.add(new_model)
             await session.commit()
@@ -407,7 +434,7 @@ class TestAsyncDatabaseOperations:
                     AsyncTestModel,
                     name=model_name,
                     description=f"Concurrent test {index}",
-                    score=80.0 + index
+                    score=80.0 + index,
                 )
 
                 # 立即验证
@@ -424,10 +451,14 @@ class TestAsyncDatabaseOperations:
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
         # 验证结果
-        successful_results = [r for r in results if r is not None and not isinstance(r, Exception)]
+        successful_results = [
+            r for r in results if r is not None and not isinstance(r, Exception)
+        ]
         failed_results = [r for r in results if r is None or isinstance(r, Exception)]
 
-        print(f"✅ 并发测试完成: {len(successful_results)} 成功, {len(failed_results)} 失败")
+        print(
+            f"✅ 并发测试完成: {len(successful_results)} 成功, {len(failed_results)} 失败"
+        )
 
         # 断言至少80%的任务成功
         success_rate = len(successful_results) / 10
@@ -436,8 +467,9 @@ class TestAsyncDatabaseOperations:
         # 验证没有 GreenletExit 或 AttachError
         exceptions = [r for r in results if isinstance(r, Exception)]
         for exc in exceptions:
-            assert not isinstance(exc, (asyncio.CancelledError, Exception)), \
-                f"不应该出现 GreenletExit 或 AttachError: {exc}"
+            assert not isinstance(
+                exc, (asyncio.CancelledError, Exception)
+            ), f"不应该出现 GreenletExit 或 AttachError: {exc}"
 
         print("✅ 连接池和性能测试通过，无 GreenletExit 或 AttachError 错误")
 
@@ -461,31 +493,29 @@ class TestAsyncDatabaseOperations:
 
                 # 创建第一个模型
                 model1 = AsyncTestModel(
-                    name="rollback_test_1",
-                    description="First model",
-                    score=85.0
+                    name="rollback_test_1", description="First model", score=85.0
                 )
                 session.add(model1)
                 await session.flush()  # 刷新到数据库但不提交
 
                 # 故意引发错误
                 model2 = AsyncTestModel(
-                    name="",  # 无效数据
-                    description="This will cause error",
-                    score=90.0
+                    name="", description="This will cause error", score=90.0  # 无效数据
                 )
                 session.add(model2)
                 await session.flush()
 
                 await session.commit()  # 这应该失败并回滚
 
-            except Exception as e:
+            except Exception:
                 await session.rollback()
                 print("✅ 事务回滚成功")
 
                 # 验证第一个模型也没有被保存
                 result = await session.execute(
-                    select(AsyncTestModel).where(AsyncTestModel.name == "rollback_test_1")
+                    select(AsyncTestModel).where(
+                        AsyncTestModel.name == "rollback_test_1"
+                    )
                 )
                 saved_model = result.scalar_one_or_none()
                 assert saved_model is None
@@ -509,16 +539,22 @@ class TestAsyncDatabaseConnection:
             print("✅ 数据库连接正常")
 
             # 测试连接池状态
-            pool_info = await fetch_one(text("""
+            pool_info = await fetch_one(
+                text(
+                    """
                 SELECT
                     count(*) as total_connections,
                     count(*) FILTER (WHERE state = 'active') as active_connections
                 FROM pg_stat_activity
                 WHERE datname = current_database()
-            """))
+            """
+                )
+            )
 
-            print(f"✅ 连接池状态: 总连接 {pool_info['total_connections']}, "
-                  f"活跃连接 {pool_info['active_connections']}")
+            print(
+                f"✅ 连接池状态: 总连接 {pool_info['total_connections']}, "
+                f"活跃连接 {pool_info['active_connections']}"
+            )
 
             # 测试事务支持
             async with get_async_session() as session:
@@ -535,24 +571,31 @@ class TestAsyncDatabaseConnection:
         # 准备测试数据
         test_data = []
         for i in range(20):
-            test_data.append({
-                "name": f"perf_test_{i}_{uuid.uuid4().hex[:4]}",
-                "description": f"Performance test model {i}",
-                "score": 70.0 + i * 1.5,
-                "is_active": i % 2 == 0
-            })
+            test_data.append(
+                {
+                    "name": f"perf_test_{i}_{uuid.uuid4().hex[:4]}",
+                    "description": f"Performance test model {i}",
+                    "score": 70.0 + i * 1.5,
+                    "is_active": i % 2 == 0,
+                }
+            )
 
         # 测量批量创建性能
         import time
+
         start_time = time.time()
 
-        created_models = await AsyncBatchOperations.bulk_create(AsyncTestModel, test_data)
+        created_models = await AsyncBatchOperations.bulk_create(
+            AsyncTestModel, test_data
+        )
 
         creation_time = time.time() - start_time
         creation_rate = len(created_models) / creation_time
 
-        print(f"✅ 异步批量创建性能: {len(created_models)} 条记录, "
-              f"耗时 {creation_time:.3f}s, 速率 {creation_rate:.1f} 记录/秒")
+        print(
+            f"✅ 异步批量创建性能: {len(created_models)} 条记录, "
+            f"耗时 {creation_time:.3f}s, 速率 {creation_rate:.1f} 记录/秒"
+        )
 
         # 性能断言（应该在合理范围内）
         assert creation_rate > 50, f"异步创建速率 {creation_rate:.1f} 记录/秒 低于期望"
@@ -561,9 +604,4 @@ class TestAsyncDatabaseConnection:
 
 if __name__ == "__main__":
     # 运行测试
-    pytest.main([
-        __file__,
-        "-v",
-        "--tb=short",
-        "-m=not slow"
-    ])
+    pytest.main([__file__, "-v", "--tb=short", "-m=not slow"])

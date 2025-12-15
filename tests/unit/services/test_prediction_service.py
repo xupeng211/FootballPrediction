@@ -1,5 +1,3 @@
-from typing import Optional
-
 """预测服务测试
 Prediction Service Tests.
 
@@ -7,10 +5,9 @@ Prediction Service Tests.
 """
 
 import pytest
-import asyncio
 import random
 from datetime import datetime
-from unittest.mock import AsyncMock, Mock, patch, MagicMock
+from unittest.mock import patch
 
 from src.services.prediction_service import (
     PredictionResult,

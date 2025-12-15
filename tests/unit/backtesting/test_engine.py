@@ -11,10 +11,11 @@
 import pytest
 from decimal import Decimal
 from datetime import datetime, timedelta
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock
 
 from src.backtesting.models import (
-    BacktestConfig, BacktestResult, BetType, BetDecision, BetOutcome,
+    BacktestConfig,
+    BacktestResult,
 )
 from src.backtesting.engine import BacktestEngine, run_simple_backtest
 from src.backtesting.strategy import SimpleValueStrategy
@@ -30,7 +31,7 @@ class TestBacktestEngine:
             initial_balance=Decimal("10000.00"),
             max_stake_pct=0.05,
             min_stake=Decimal("100.00"),
-            max_stake=Decimal("500.00")
+            max_stake=Decimal("500.00"),
         )
 
     @pytest.fixture
@@ -57,8 +58,10 @@ class TestBacktestEngine:
 
     def test_set_progress_callback(self, engine):
         """测试设置进度回调"""
+
         def callback(current, total, message):
             return None
+
         engine.set_progress_callback(callback)
         assert engine.progress_callback == callback
 
@@ -109,8 +112,8 @@ class TestBacktestEngine:
                 "odds": {
                     "home": Decimal("2.20"),
                     "draw": Decimal("3.30"),
-                    "away": Decimal("3.80")
-                }
+                    "away": Decimal("3.80"),
+                },
             }
         ]
 
@@ -139,19 +142,15 @@ class TestBacktestEngine:
 
         # 验证概率总和接近1.0
         total_prob = (
-            predictions["home_win_prob"] +
-            predictions["draw_prob"] +
-            predictions["away_win_prob"]
+            predictions["home_win_prob"]
+            + predictions["draw_prob"]
+            + predictions["away_win_prob"]
         )
         assert abs(total_prob - 1.0) < 0.1
 
     def test_generate_mock_odds(self, engine):
         """测试生成模拟赔率"""
-        match_data = {
-            "home_win_prob": 0.4,
-            "draw_prob": 0.3,
-            "away_win_prob": 0.3
-        }
+        match_data = {"home_win_prob": 0.4, "draw_prob": 0.3, "away_win_prob": 0.3}
 
         odds = engine._generate_mock_odds(match_data)
 
@@ -174,7 +173,7 @@ class TestBacktestEngine:
 
         assert progress["current_balance"] == Decimal("11000.00")
         assert progress["total_bets"] == 8  # wins + losses
-        assert progress["win_rate"] == pytest.approx(5/8)
+        assert progress["win_rate"] == pytest.approx(5 / 8)
         assert progress["roi_percent"] == pytest.approx(10.0)
 
 
@@ -195,7 +194,7 @@ class TestRunSimpleBacktest:
                 strategy_name="simple_value",
                 start_date=start_date,
                 end_date=end_date,
-                initial_balance=Decimal("5000.00")
+                initial_balance=Decimal("5000.00"),
             )
 
             assert isinstance(result, BacktestResult)
@@ -217,7 +216,7 @@ class TestRunSimpleBacktest:
                 start_date=start_date,
                 end_date=end_date,
                 value_threshold=0.15,
-                min_confidence=0.5
+                min_confidence=0.5,
             )
 
             assert isinstance(result, BacktestResult)
@@ -236,7 +235,7 @@ class TestBacktestIntegration:
         config = BacktestConfig(
             initial_balance=Decimal("10000.00"),
             max_stake_pct=0.1,  # 更大的下注比例用于测试
-            min_stake=Decimal("50.00")
+            min_stake=Decimal("50.00"),
         )
 
         # 创建引擎
@@ -257,7 +256,7 @@ class TestBacktestIntegration:
                 "away_team_name": f"Team {i+100}",
                 "home_score": 2 if i % 2 == 0 else 1,
                 "away_score": 1 if i % 2 == 0 else 2,
-                "match_date": datetime.now() - timedelta(hours=i+1),
+                "match_date": datetime.now() - timedelta(hours=i + 1),
                 "status": "finished",
                 "league_id": 1,
                 "season": "2023-2024",
@@ -267,8 +266,8 @@ class TestBacktestIntegration:
                 "odds": {
                     "home": Decimal("2.10") if i % 2 == 0 else Decimal("3.20"),
                     "draw": Decimal("3.40"),
-                    "away": Decimal("3.80") if i % 2 == 0 else Decimal("2.30")
-                }
+                    "away": Decimal("3.80") if i % 2 == 0 else Decimal("2.30"),
+                },
             }
             mock_matches.append(match_data)
 

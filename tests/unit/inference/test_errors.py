@@ -6,7 +6,6 @@ Unit Tests for Inference Errors
 """
 
 import pytest
-from typing import Dict, Any
 
 from src.inference.errors import (
     InferenceError,
@@ -16,7 +15,6 @@ from src.inference.errors import (
     CacheError,
     HotReloadError,
     ErrorCode,
-    handle_inference_error,
 )
 
 
@@ -71,7 +69,7 @@ class TestInferenceError:
             error_code=ErrorCode.MODEL_LOAD_FAILED,
             severity=ErrorSeverity.HIGH,
             category=ErrorCategory.MODEL_ERROR,
-            details=details
+            details=details,
         )
 
         assert error.message == "Complex error"
@@ -87,7 +85,7 @@ class TestInferenceError:
             message="Test error",
             error_code=ErrorCode.PREDICTION_FAILED,
             severity=ErrorSeverity.CRITICAL,
-            details=details
+            details=details,
         )
 
         error_dict = error.to_dict()
@@ -98,17 +96,14 @@ class TestInferenceError:
             "message": "Test error",
             "severity": "critical",
             "category": "system_error",
-            "details": details
+            "details": details,
         }
 
         assert error_dict == expected
 
     def test_inference_error_with_prediction_id(self):
         """测试带预测ID的推理错误"""
-        error = InferenceError(
-            message="Prediction failed",
-            prediction_id="pred_123"
-        )
+        error = InferenceError(message="Prediction failed", prediction_id="pred_123")
 
         assert error.prediction_id == "pred_123"
         assert "prediction_id" in error.to_dict()
@@ -131,7 +126,7 @@ class TestModelLoadError:
         details = {
             "model_name": "xgboost_v1",
             "file_path": "/path/to/model.pkl",
-            "file_size": 0
+            "file_size": 0,
         }
         error = ModelLoadError("Model file is empty", details=details)
 
@@ -143,7 +138,7 @@ class TestModelLoadError:
         error = ModelLoadError(
             "Model file not found",
             model_name="nonexistent_model",
-            file_path="/path/to/nonexistent.pkl"
+            file_path="/path/to/nonexistent.pkl",
         )
 
         assert error.model_name == "nonexistent_model"
@@ -169,7 +164,7 @@ class TestFeatureBuilderError:
             "Invalid feature value",
             feature_name="home_goals",
             feature_value=-5,
-            expected_range="[0, +∞)"
+            expected_range="[0, +∞)",
         )
 
         assert error.feature_name == "home_goals"
@@ -180,8 +175,7 @@ class TestFeatureBuilderError:
         """测试缺失特征错误"""
         missing_features = ["home_possession", "away_corners"]
         error = FeatureBuilderError(
-            "Required features are missing",
-            missing_features=missing_features
+            "Required features are missing", missing_features=missing_features
         )
 
         assert error.missing_features == missing_features
@@ -203,9 +197,7 @@ class TestPredictionError:
     def test_prediction_error_with_prediction_id(self):
         """测试带预测ID的预测错误"""
         error = PredictionError(
-            "Model prediction failed",
-            prediction_id="pred_456",
-            model_name="xgboost_v1"
+            "Model prediction failed", prediction_id="pred_456", model_name="xgboost_v1"
         )
 
         assert error.prediction_id == "pred_456"
@@ -217,7 +209,7 @@ class TestPredictionError:
             "Model inference returned invalid probabilities",
             model_name="lstm_v1",
             prediction_type="probability",
-            invalid_output="[0.8, 0.3]"  # 概率和不为1
+            invalid_output="[0.8, 0.3]",  # 概率和不为1
         )
 
         assert error.model_name == "lstm_v1"
@@ -243,7 +235,7 @@ class TestCacheError:
             "Cache set operation failed",
             cache_key="prediction:match_123:xgboost_v1",
             operation="set",
-            redis_error="Connection timeout"
+            redis_error="Connection timeout",
         )
 
         assert error.cache_key == "prediction:match_123:xgboost_v1"
@@ -256,7 +248,7 @@ class TestCacheError:
             "Failed to serialize prediction data",
             operation="serialize",
             data_type="PredictionResponse",
-            serialization_error="Object not JSON serializable"
+            serialization_error="Object not JSON serializable",
         )
 
         assert error.operation == "serialize"
@@ -282,7 +274,7 @@ class TestHotReloadError:
             model_name="xgboost_v1",
             old_file_path="/path/to/old.pkl",
             new_file_path="/path/to/new.pkl",
-            rollback_successful=True
+            rollback_successful=True,
         )
 
         assert error.model_name == "xgboost_v1"
@@ -297,8 +289,8 @@ class TestHotReloadError:
             model_name="neural_net_v2",
             validation_errors=[
                 "Accuracy below threshold (0.45 < 0.70)",
-                "Feature count mismatch (expected: 20, actual: 15)"
-            ]
+                "Feature count mismatch (expected: 20, actual: 15)",
+            ],
         )
 
         assert error.model_name == "neural_net_v2"
@@ -311,10 +303,7 @@ class TestErrorUtilityFunctions:
 
     def test_create_error_response(self):
         """测试创建错误响应"""
-        error = ModelLoadError(
-            "Model file not found",
-            model_name="xgboost_v1"
-        )
+        error = ModelLoadError("Model file not found", model_name="xgboost_v1")
 
         error_response = create_error_response(error)
 
@@ -324,9 +313,7 @@ class TestErrorUtilityFunctions:
             "message": "Model file not found",
             "severity": "high",
             "category": "model_error",
-            "details": {
-                "model_name": "xgboost_v1"
-            }
+            "details": {"model_name": "xgboost_v1"},
         }
 
         assert error_response == expected
@@ -346,7 +333,7 @@ class TestErrorUtilityFunctions:
         formatted = format_error_message(
             template="Model {model_name} failed to load from {file_path}",
             model_name="xgboost_v1",
-            file_path="/path/to/model.pkl"
+            file_path="/path/to/model.pkl",
         )
 
         expected = "Model xgboost_v1 failed to load from /path/to/model.pkl"
@@ -355,8 +342,7 @@ class TestErrorUtilityFunctions:
     def test_format_error_message_missing_template(self):
         """测试缺失模板的错误消息格式化"""
         formatted = format_error_message(
-            "Simple error message with {placeholder}",
-            missing_param="value"
+            "Simple error message with {placeholder}", missing_param="value"
         )
 
         # 应该保留占位符，因为没有提供对应的值
@@ -377,6 +363,7 @@ class TestErrorUtilityFunctions:
 
     def test_get_error_category_unknown_type(self):
         """测试获取未知错误类型的类别"""
+
         class CustomError(Exception):
             pass
 
@@ -389,7 +376,7 @@ class TestErrorUtilityFunctions:
         retryable_errors = [
             CacheError("Redis connection timeout"),
             HotReloadError("File monitoring failed"),
-            InferenceError("Temporary system error")
+            InferenceError("Temporary system error"),
         ]
 
         for error in retryable_errors:
@@ -399,7 +386,7 @@ class TestErrorUtilityFunctions:
         non_retryable_errors = [
             ModelLoadError("Model file not found"),
             FeatureBuilderError("Invalid feature value"),
-            PredictionError("Model architecture mismatch")
+            PredictionError("Model architecture mismatch"),
         ]
 
         for error in non_retryable_errors:
@@ -446,7 +433,7 @@ class TestErrorUtilityFunctions:
     def test_error_context_management(self):
         """测试错误上下文管理（如果实现了的话）"""
         # 如果错误类实现了上下文管理器
-        if hasattr(ModelLoadError, '__enter__'):
+        if hasattr(ModelLoadError, "__enter__"):
             try:
                 with ModelLoadError("Test context") as error:
                     assert isinstance(error, ModelLoadError)
@@ -478,7 +465,7 @@ class TestErrorIntegration:
         original_error = HotReloadError(
             "Reload failed",
             model_name="neural_net_v2",
-            validation_errors=["Error 1", "Error 2"]
+            validation_errors=["Error 1", "Error 2"],
         )
 
         # 转换为字典
@@ -495,7 +482,7 @@ class TestErrorIntegration:
         errors = [
             ModelLoadError("Model not found", model_name="model1"),
             FeatureBuilderError("Invalid feature", feature_name="goals"),
-            CacheError("Redis down")
+            CacheError("Redis down"),
         ]
 
         responses = [create_error_response(error) for error in errors]

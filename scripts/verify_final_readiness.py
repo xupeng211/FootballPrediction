@@ -11,9 +11,7 @@ import asyncio
 import sys
 import json
 import logging
-from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, List, Any, Optional
 
 # 添加项目根目录到Python路径
 project_root = Path(__file__).parent.parent
@@ -21,14 +19,14 @@ sys.path.insert(0, str(project_root / "src"))
 
 # 配置日志
 logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
 # 导入项目模块
 from database.async_manager import initialize_database, get_async_db_session
 from sqlalchemy import text
+
 
 class FinalReadinessVerifier:
     """最终就绪验证器"""
@@ -83,17 +81,21 @@ class FinalReadinessVerifier:
             total_tests = len(self.verification_results)
             success_rate = passed_tests / total_tests * 100
 
-            logger.info(f"\n📊 总体通过率: {passed_tests}/{total_tests} ({success_rate:.1f}%)")
+            logger.info(
+                f"\n📊 总体通过率: {passed_tests}/{total_tests} ({success_rate:.1f}%)"
+            )
 
             # 关键验收标准：必须全部通过
             critical_tests = [
                 "home_team_name_real",
                 "away_team_name_real",
                 "xg_data_real",
-                "referee_data_real"
+                "referee_data_real",
             ]
 
-            critical_passed = all(self.verification_results[test] for test in critical_tests)
+            critical_passed = all(
+                self.verification_results[test] for test in critical_tests
+            )
 
             if critical_passed:
                 logger.info("\n🎉 ✅ 关键验收标准全部通过!")
@@ -102,7 +104,11 @@ class FinalReadinessVerifier:
                 return True
             else:
                 logger.error("\n💥 ❌ 关键验收标准未通过!")
-                failed_critical = [test for test in critical_tests if not self.verification_results[test]]
+                failed_critical = [
+                    test
+                    for test in critical_tests
+                    if not self.verification_results[test]
+                ]
                 logger.error(f"❌ 失败的关键测试: {failed_critical}")
                 logger.error("🚨 系统仍存在'空壳数据'问题，需要进一步修复")
                 return False
@@ -110,6 +116,7 @@ class FinalReadinessVerifier:
         except Exception as e:
             logger.error(f"💥 验证过程异常: {e}")
             import traceback
+
             traceback.print_exc()
             return False
 
@@ -128,12 +135,16 @@ class FinalReadinessVerifier:
         try:
             async for session in get_async_db_session():
                 # 删除测试比赛的数据（如果存在）
-                delete_query = text("""
+                delete_query = text(
+                    """
                     DELETE FROM matches
                     WHERE fotmob_id = :test_match_id
-                """)
+                """
+                )
 
-                result = await session.execute(delete_query, {"test_match_id": self.test_match_id})
+                result = await session.execute(
+                    delete_query, {"test_match_id": self.test_match_id}
+                )
                 deleted_count = result.rowcount
 
                 if deleted_count > 0:
@@ -158,7 +169,12 @@ class FinalReadinessVerifier:
 
             # 在Docker容器中执行Python脚本进行数据采集
             cmd = [
-                "docker-compose", "exec", "app", "python", "-c", f'''
+                "docker-compose",
+                "exec",
+                "app",
+                "python",
+                "-c",
+                f"""
 import sys
 sys.path.append("/app/src")
 from collectors.fotmob_api_collector import FotMobAPICollector
@@ -188,7 +204,7 @@ async def test_collection():
 
 result = asyncio.run(test_collection())
 sys.exit(0 if result else 1)
-                '''
+                """,
             ]
 
             result = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
@@ -214,7 +230,8 @@ sys.exit(0 if result else 1)
         try:
             async for session in get_async_db_session():
                 # 查询刚采集的测试数据
-                query = text("""
+                query = text(
+                    """
                     SELECT
                         fotmob_id,
                         home_team_name,
@@ -231,9 +248,12 @@ sys.exit(0 if result else 1)
                     WHERE fotmob_id = :test_match_id
                     ORDER BY collection_time DESC
                     LIMIT 1
-                """)
+                """
+                )
 
-                result = await session.execute(query, {"test_match_id": self.test_match_id})
+                result = await session.execute(
+                    query, {"test_match_id": self.test_match_id}
+                )
                 match_record = result.fetchone()
 
                 await session.close()
@@ -242,7 +262,9 @@ sys.exit(0 if result else 1)
                     logger.error("❌ 数据库中未找到测试比赛数据")
                     return
 
-                logger.info(f"✅ 找到测试比赛数据，采集时间: {match_record.collection_time}")
+                logger.info(
+                    f"✅ 找到测试比赛数据，采集时间: {match_record.collection_time}"
+                )
 
                 # 验证主客队名是否为真实数据
                 home_team = match_record.home_team_name
@@ -272,7 +294,12 @@ sys.exit(0 if result else 1)
                 logger.info(f"   主队xG: {home_xg}")
                 logger.info(f"   客队xG: {away_xg}")
 
-                if home_xg is not None and home_xg > 0 and away_xg is not None and away_xg >= 0:
+                if (
+                    home_xg is not None
+                    and home_xg > 0
+                    and away_xg is not None
+                    and away_xg >= 0
+                ):
                     logger.info("✅ xG数据为真实数值")
                     self.verification_results["xg_data_real"] = True
                 else:
@@ -281,7 +308,11 @@ sys.exit(0 if result else 1)
                     # 检查stats_json中的xG数据
                     if match_record.stats_json:
                         try:
-                            stats = json.loads(match_record.stats_json) if isinstance(match_record.stats_json, str) else match_record.stats_json
+                            stats = (
+                                json.loads(match_record.stats_json)
+                                if isinstance(match_record.stats_json, str)
+                                else match_record.stats_json
+                            )
                             if stats.get("xg"):
                                 logger.info("✅ 在stats_json中找到xG数据")
                                 self.verification_results["xg_data_real"] = True
@@ -301,7 +332,11 @@ sys.exit(0 if result else 1)
                     # 检查environment_json中的裁判信息
                     if match_record.match_info:
                         try:
-                            json.loads(match_record.match_info) if isinstance(match_record.match_info, str) else match_record.match_info
+                            (
+                                json.loads(match_record.match_info)
+                                if isinstance(match_record.match_info, str)
+                                else match_record.match_info
+                            )
                             # 这里我们暂时跳过检查，因为environment_json需要单独查询
                         except:
                             pass
@@ -319,7 +354,11 @@ sys.exit(0 if result else 1)
                 # 验证统计数据完整性
                 if match_record.stats_json:
                     try:
-                        stats = json.loads(match_record.stats_json) if isinstance(match_record.stats_json, str) else match_record.stats_json
+                        stats = (
+                            json.loads(match_record.stats_json)
+                            if isinstance(match_record.stats_json, str)
+                            else match_record.stats_json
+                        )
                         if isinstance(stats, dict) and len(stats) > 0:
                             logger.info(f"✅ 统计数据完整，包含 {len(stats)} 个类别")
                             logger.info(f"   类别: {list(stats.keys())}")
@@ -350,12 +389,13 @@ sys.exit(0 if result else 1)
             ("主队名真实", "home_team_name_real"),
             ("客队名真实", "away_team_name_real"),
             ("xG数据真实", "xg_data_real"),
-            ("裁判信息真实", "referee_data_real")
+            ("裁判信息真实", "referee_data_real"),
         ]
 
         for display_name, test_key in critical_tests:
             status = "✅ 通过" if self.verification_results[test_key] else "❌ 失败"
             logger.info(f"   {display_name}: {status}")
+
 
 async def main():
     """主函数"""
@@ -373,6 +413,7 @@ async def main():
         logger.error("\n💥 ❌ 系统就绪验证失败!")
         logger.error("🚨 仍存在数据质量问题，请检查上述失败的测试")
         sys.exit(1)
+
 
 if __name__ == "__main__":
     asyncio.run(main())

@@ -7,17 +7,18 @@ Unit tests for Football Prediction Backtest module.
 import pytest
 import numpy as np
 import pandas as pd
-import csv
 import json
-from pathlib import Path
-from unittest.mock import patch, MagicMock
-from datetime import datetime
 
 from src.evaluation.backtest import (
-    Bet, BetType, BacktestResult,
-    StakingStrategy, FlatStakingStrategy, PercentageStakingStrategy,
-    KellyStakingStrategy, ValueBettingStrategy,
-    Backtester, run_backtest,
+    Bet,
+    BetType,
+    BacktestResult,
+    FlatStakingStrategy,
+    PercentageStakingStrategy,
+    KellyStakingStrategy,
+    ValueBettingStrategy,
+    Backtester,
+    run_backtest,
 )
 
 
@@ -39,7 +40,7 @@ class TestBet:
             won=True,
             profit=11.0,  # 10.0 * 2.1 - 10.0
             ev=0.26,  # (0.6 * 2.1) - 1
-            confidence=0.6
+            confidence=0.6,
         )
 
     def test_bet_creation(self, sample_bet):
@@ -92,9 +93,7 @@ class TestStakingStrategies:
     def test_kelly_staking_strategy(self):
         """测试凯利投注策略"""
         strategy = KellyStakingStrategy(
-            kelly_fraction=0.25,
-            min_stake=5.0,
-            max_stake_percentage=0.1
+            kelly_fraction=0.25, min_stake=5.0, max_stake_percentage=0.1
         )
 
         # 高价值投注
@@ -102,7 +101,7 @@ class TestStakingStrategies:
             bankroll=1000.0,
             predicted_proba=[0.7, 0.2, 0.1],
             odds=[3.0, 3.2, 3.5],
-            prediction=0
+            prediction=0,
         )
         assert stake >= 5.0  # 最小投注
 
@@ -111,16 +110,14 @@ class TestStakingStrategies:
             bankroll=1000.0,
             predicted_proba=[0.4, 0.3, 0.3],
             odds=[2.0, 3.2, 3.5],
-            prediction=0
+            prediction=0,
         )
         assert stake_low == 0.0  # 不投注
 
     def test_value_betting_strategy(self):
         """测试价值投注策略"""
         strategy = ValueBettingStrategy(
-            min_ev_threshold=0.1,
-            base_stake=10.0,
-            max_stake_percentage=0.05
+            min_ev_threshold=0.1, base_stake=10.0, max_stake_percentage=0.05
         )
 
         # 高价值投注
@@ -128,7 +125,7 @@ class TestStakingStrategies:
             bankroll=1000.0,
             predicted_proba=[0.6, 0.2, 0.2],
             odds=[3.0, 3.2, 3.5],
-            prediction=0
+            prediction=0,
         )
         assert stake >= 0  # 应该投注
 
@@ -137,7 +134,7 @@ class TestStakingStrategies:
             bankroll=1000.0,
             predicted_proba=[0.4, 0.3, 0.3],
             odds=[2.0, 3.2, 3.5],
-            prediction=0
+            prediction=0,
         )
         assert stake_low == 0.0  # 不投注
 
@@ -157,17 +154,19 @@ class TestBacktester:
         n_samples = 100
 
         # 创建预测DataFrame
-        predictions = pd.DataFrame({
-            'prob_H': np.random.uniform(0.2, 0.7, n_samples),
-            'prob_D': np.random.uniform(0.1, 0.4, n_samples),
-            'prob_A': np.random.uniform(0.1, 0.5, n_samples),
-            'predicted_class': np.random.randint(0, 3, n_samples),
-            'actual_result': np.random.randint(0, 3, n_samples),
-            'date': [f"2024-01-{i+1:02d}" for i in range(n_samples)]
-        })
+        predictions = pd.DataFrame(
+            {
+                "prob_H": np.random.uniform(0.2, 0.7, n_samples),
+                "prob_D": np.random.uniform(0.1, 0.4, n_samples),
+                "prob_A": np.random.uniform(0.1, 0.5, n_samples),
+                "predicted_class": np.random.randint(0, 3, n_samples),
+                "actual_result": np.random.randint(0, 3, n_samples),
+                "date": [f"2024-01-{i+1:02d}" for i in range(n_samples)],
+            }
+        )
 
         # 归一化概率
-        prob_cols = ['prob_H', 'prob_D', 'prob_A']
+        prob_cols = ["prob_H", "prob_D", "prob_A"]
         predictions[prob_cols] = predictions[prob_cols].div(
             predictions[prob_cols].sum(axis=1), axis=0
         )
@@ -180,11 +179,13 @@ class TestBacktester:
         np.random.seed(42)
         n_samples = 100
 
-        odds = pd.DataFrame({
-            'odds_H': np.random.uniform(1.8, 4.0, n_samples),
-            'odds_D': np.random.uniform(2.8, 4.5, n_samples),
-            'odds_A': np.random.uniform(2.5, 6.0, n_samples)
-        })
+        odds = pd.DataFrame(
+            {
+                "odds_H": np.random.uniform(1.8, 4.0, n_samples),
+                "odds_D": np.random.uniform(2.8, 4.5, n_samples),
+                "odds_A": np.random.uniform(2.5, 6.0, n_samples),
+            }
+        )
 
         return odds
 
@@ -213,11 +214,15 @@ class TestBacktester:
         odds = [2.0, 3.0, 4.0]
 
         # 高价值情况
-        should_bet = backtester.should_bet(predicted_proba, odds, strategy="value", threshold=0.1)
+        should_bet = backtester.should_bet(
+            predicted_proba, odds, strategy="value", threshold=0.1
+        )
         assert should_bet is True
 
         # 低价值情况
-        should_bet_low = backtester.should_bet(predicted_proba, odds, strategy="value", threshold=0.5)
+        should_bet_low = backtester.should_bet(
+            predicted_proba, odds, strategy="value", threshold=0.5
+        )
         assert should_bet_low is False
 
     def test_get_best_bet(self, backtester):
@@ -226,12 +231,16 @@ class TestBacktester:
         odds = [2.0, 4.0, 5.0]
 
         # 基于期望值
-        best_idx, best_value = backtester.get_best_bet(predicted_proba, odds, strategy="ev")
+        best_idx, best_value = backtester.get_best_bet(
+            predicted_proba, odds, strategy="ev"
+        )
         assert best_idx in [0, 1, 2]
         assert isinstance(best_value, float)
 
         # 基于概率
-        best_prob_idx, best_prob_value = backtester.get_best_bet(predicted_proba, odds, strategy="prob")
+        best_prob_idx, best_prob_value = backtester.get_best_bet(
+            predicted_proba, odds, strategy="prob"
+        )
         assert best_prob_idx == 0  # 最高概率
         assert best_prob_value == 0.5
 
@@ -248,7 +257,7 @@ class TestBacktester:
             predicted_proba=predicted_proba,
             odds=odds,
             actual_result=0,  # Home win
-            stake_strategy=strategy
+            stake_strategy=strategy,
         )
 
         assert bet is not None
@@ -264,7 +273,7 @@ class TestBacktester:
             predicted_proba=predicted_proba,
             odds=odds,
             actual_result=1,  # Not home win
-            stake_strategy=strategy
+            stake_strategy=strategy,
         )
 
         assert bet_lose is not None
@@ -276,9 +285,7 @@ class TestBacktester:
         strategy = FlatStakingStrategy(stake_amount=10.0)
 
         result = backtester.simulate(
-            predictions=sample_predictions,
-            odds=sample_odds,
-            stake_strategy=strategy
+            predictions=sample_predictions, odds=sample_odds, stake_strategy=strategy
         )
 
         assert isinstance(result, BacktestResult)
@@ -288,14 +295,14 @@ class TestBacktester:
         assert len(result.equity_curve) >= 1  # 至少包含初始资金
         assert result.equity_curve[0] == 1000.0
 
-    def test_simulate_with_value_strategy(self, backtester, sample_predictions, sample_odds):
+    def test_simulate_with_value_strategy(
+        self, backtester, sample_predictions, sample_odds
+    ):
         """测试价值投注策略回测"""
         strategy = ValueBettingStrategy(min_ev_threshold=0.05)  # 较低阈值
 
         result = backtester.simulate(
-            predictions=sample_predictions,
-            odds=sample_odds,
-            stake_strategy=strategy
+            predictions=sample_predictions, odds=sample_odds, stake_strategy=strategy
         )
 
         assert isinstance(result, BacktestResult)
@@ -311,13 +318,13 @@ class TestBacktester:
         assert result.net_profit == 0.0
         assert result.roi == 0.0
 
-    def test_save_and_load_results(self, backtester, sample_predictions, sample_odds, tmp_path):
+    def test_save_and_load_results(
+        self, backtester, sample_predictions, sample_odds, tmp_path
+    ):
         """测试回测结果保存和加载"""
         strategy = FlatStakingStrategy(stake_amount=10.0)
         result = backtester.simulate(
-            predictions=sample_predictions,
-            odds=sample_odds,
-            stake_strategy=strategy
+            predictions=sample_predictions, odds=sample_odds, stake_strategy=strategy
         )
 
         # 保存结果
@@ -343,12 +350,48 @@ class TestBacktestResult:
     def sample_backtest_result(self):
         """创建样本BacktestResult"""
         bets = [
-            Bet("match_1", "2024-01-01", 0, [0.6, 0.3, 0.1], [2.5, 3.2, 4.0],
-                 10.0, BetType.HOME_WIN, 0, True, 15.0, 0.5, 0.6),
-            Bet("match_2", "2024-01-02", 1, [0.2, 0.6, 0.2], [2.8, 3.0, 4.2],
-                 10.0, BetType.DRAW, 1, True, 20.0, 0.8, 0.6),
-            Bet("match_3", "2024-01-03", 2, [0.1, 0.2, 0.7], [3.0, 3.5, 2.8],
-                 10.0, BetType.AWAY_WIN, 0, False, -10.0, 0.3, 0.7)
+            Bet(
+                "match_1",
+                "2024-01-01",
+                0,
+                [0.6, 0.3, 0.1],
+                [2.5, 3.2, 4.0],
+                10.0,
+                BetType.HOME_WIN,
+                0,
+                True,
+                15.0,
+                0.5,
+                0.6,
+            ),
+            Bet(
+                "match_2",
+                "2024-01-02",
+                1,
+                [0.2, 0.6, 0.2],
+                [2.8, 3.0, 4.2],
+                10.0,
+                BetType.DRAW,
+                1,
+                True,
+                20.0,
+                0.8,
+                0.6,
+            ),
+            Bet(
+                "match_3",
+                "2024-01-03",
+                2,
+                [0.1, 0.2, 0.7],
+                [3.0, 3.5, 2.8],
+                10.0,
+                BetType.AWAY_WIN,
+                0,
+                False,
+                -10.0,
+                0.3,
+                0.7,
+            ),
         ]
 
         equity_curve = [1000.0, 1015.0, 1035.0, 1025.0]
@@ -376,7 +419,7 @@ class TestBacktestResult:
             std_profit_per_bet=12.5,
             bets=bets,
             equity_curve=equity_curve,
-            metadata={"test": True}
+            metadata={"test": True},
         )
 
     def test_backtest_result_creation(self, sample_backtest_result):
@@ -400,7 +443,6 @@ class TestBacktestResult:
         """测试BacktestResult转JSON"""
         json_str = sample_backtest_result.to_json()
 
-        import json
         parsed = json.loads(json_str)
         assert parsed["initial_bankroll"] == 1000.0
         assert parsed["total_bets"] == 3
@@ -414,12 +456,12 @@ class TestConvenienceFunctions:
         """创建样本CSV文件"""
         # 预测文件
         predictions_data = {
-            'match_id': [1, 2, 3],
-            'prob_H': [0.6, 0.3, 0.2],
-            'prob_D': [0.3, 0.5, 0.3],
-            'prob_A': [0.1, 0.2, 0.5],
-            'predicted_class': [0, 1, 2],
-            'actual_result': [0, 1, 0]
+            "match_id": [1, 2, 3],
+            "prob_H": [0.6, 0.3, 0.2],
+            "prob_D": [0.3, 0.5, 0.3],
+            "prob_A": [0.1, 0.2, 0.5],
+            "predicted_class": [0, 1, 2],
+            "actual_result": [0, 1, 0],
         }
         predictions_df = pd.DataFrame(predictions_data)
         predictions_path = tmp_path / "predictions.csv"
@@ -427,10 +469,10 @@ class TestConvenienceFunctions:
 
         # 赔率文件
         odds_data = {
-            'match_id': [1, 2, 3],
-            'odds_H': [2.5, 2.8, 3.0],
-            'odds_D': [3.2, 3.0, 3.5],
-            'odds_A': [4.0, 4.2, 2.8]
+            "match_id": [1, 2, 3],
+            "odds_H": [2.5, 2.8, 3.0],
+            "odds_D": [3.2, 3.0, 3.5],
+            "odds_A": [4.0, 4.2, 2.8],
         }
         odds_df = pd.DataFrame(odds_data)
         odds_path = tmp_path / "odds.csv"
@@ -447,7 +489,7 @@ class TestConvenienceFunctions:
             odds_file=odds_path,
             stake_strategy="flat",
             initial_bankroll=1000.0,
-            stake_amount=10.0
+            stake_amount=10.0,
         )
 
         assert isinstance(result, BacktestResult)
@@ -463,7 +505,7 @@ class TestConvenienceFunctions:
             odds_file=odds_path,
             stake_strategy="kelly",
             initial_bankroll=1000.0,
-            kelly_fraction=0.25
+            kelly_fraction=0.25,
         )
 
         assert isinstance(result, BacktestResult)
@@ -478,7 +520,7 @@ class TestConvenienceFunctions:
             run_backtest(
                 predictions_file=predictions_path,
                 odds_file=odds_path,
-                stake_strategy="invalid_strategy"
+                stake_strategy="invalid_strategy",
             )
 
 

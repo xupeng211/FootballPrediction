@@ -17,10 +17,12 @@ sys.path.insert(0, str(project_root))
 
 # 临时跳过有问题的导入，直接使用标准logging
 import logging
+
 logger = logging.getLogger(__name__)
 
 try:
     from src.core import Logger  # noqa: E402
+
     logger_instance = Logger()
 except ImportError:
     # 如果导入失败，使用标准logging

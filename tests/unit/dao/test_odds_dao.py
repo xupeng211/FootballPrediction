@@ -8,20 +8,17 @@ OddsDAO Unit Tests
 import pytest
 import pytest_asyncio
 from datetime import datetime, timedelta
-from typing import List
 from decimal import Decimal
 
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
-from sqlalchemy import select
 
 # 导入Odds相关模块
 from src.database.dao.schemas import OddsCreate, OddsUpdate
 from src.database.dao.odds_dao import OddsDAO
-from src.database.models.odds import Odds, OddsHistory, MarketAnalysis
+from src.database.models.odds import Odds
 from src.database.dao.exceptions import (
     RecordNotFoundError,
     ValidationError,
-    DatabaseConnectionError,
 )
 
 
@@ -33,13 +30,12 @@ class TestOddsDAO:
         """创建测试数据库会话"""
         # 使用内存SQLite数据库进行测试
         engine = create_async_engine(
-            "sqlite+aiosqlite:///:memory:",
-            echo=False,
-            future=True
+            "sqlite+aiosqlite:///:memory:", echo=False, future=True
         )
 
         # 创建所有表
         from src.database.base import BaseModel
+
         async with engine.begin() as conn:
             await conn.run_sync(BaseModel.metadata.create_all)
 
@@ -75,7 +71,7 @@ class TestOddsDAO:
             "away_win_volume": Decimal("35000.00"),
             "data_quality_score": Decimal("0.90"),
             "source_reliability": "high",
-            "last_updated": datetime.utcnow()
+            "last_updated": datetime.utcnow(),
         }
 
     @pytest_asyncio.fixture
@@ -135,16 +131,11 @@ class TestOddsDAO:
         """测试更新赔率"""
         # 准备更新数据
         update_data = OddsUpdate(
-            home_win=Decimal("2.40"),
-            confidence_score=Decimal("0.88"),
-            live_odds=True
+            home_win=Decimal("2.40"), confidence_score=Decimal("0.88"), live_odds=True
         )
 
         # 执行更新
-        updated_odds = await odds_dao.update(
-            db_obj=created_odds,
-            obj_in=update_data
-        )
+        updated_odds = await odds_dao.update(db_obj=created_odds, obj_in=update_data)
 
         # 验证更新结果
         assert updated_odds.home_win == Decimal("2.40")
@@ -180,10 +171,7 @@ class TestOddsDAO:
 
         # 3. Update
         update_data = OddsUpdate(confidence_score=Decimal("0.95"))
-        updated_odds = await odds_dao.update(
-            db_obj=retrieved_odds,
-            obj_in=update_data
-        )
+        updated_odds = await odds_dao.update(db_obj=retrieved_odds, obj_in=update_data)
         assert updated_odds.confidence_score == Decimal("0.95")
 
         # 4. Delete
@@ -197,12 +185,13 @@ class TestOddsDAO:
     # ==================== 业务方法测试 ====================
 
     @pytest.mark.asyncio
-    async def test_get_by_match_and_bookmaker(self, odds_dao: OddsDAO, created_odds: Odds):
+    async def test_get_by_match_and_bookmaker(
+        self, odds_dao: OddsDAO, created_odds: Odds
+    ):
         """测试根据比赛和博彩公司获取赔率"""
         # 根据比赛和博彩公司查找赔率
         found_odds = await odds_dao.get_by_match_and_bookmaker(
-            match_id=created_odds.match_id,
-            bookmaker=created_odds.bookmaker
+            match_id=created_odds.match_id, bookmaker=created_odds.bookmaker
         )
 
         # 验证结果
@@ -212,13 +201,15 @@ class TestOddsDAO:
         assert found_odds.bookmaker == created_odds.bookmaker
 
     @pytest.mark.asyncio
-    async def test_get_latest_odds_by_bookmaker(self, odds_dao: OddsDAO, created_odds: Odds):
+    async def test_get_latest_odds_by_bookmaker(
+        self, odds_dao: OddsDAO, created_odds: Odds
+    ):
         """测试获取博彩公司的最新赔率"""
         # 创建另一个相同博彩公司的赔率（时间更晚）
         newer_odds_data = {
             **created_odds.__dict__,
             "last_updated": datetime.utcnow() + timedelta(hours=1),
-            "home_win": Decimal("2.30")
+            "home_win": Decimal("2.30"),
         }
         # 移除不需要的字段
         for key in ["id", "created_at", "updated_at"]:
@@ -229,8 +220,7 @@ class TestOddsDAO:
 
         # 获取最新赔率
         latest_odds = await odds_dao.get_latest_odds_by_bookmaker(
-            match_id=created_odds.match_id,
-            bookmaker=created_odds.bookmaker
+            match_id=created_odds.match_id, bookmaker=created_odds.bookmaker
         )
 
         # 验证结果（应该是最新的）
@@ -238,7 +228,9 @@ class TestOddsDAO:
         assert latest_odds.home_win == Decimal("2.30")
 
     @pytest.mark.asyncio
-    async def test_get_all_odds_by_match(self, odds_dao: OddsDAO, sample_odds_data: dict):
+    async def test_get_all_odds_by_match(
+        self, odds_dao: OddsDAO, sample_odds_data: dict
+    ):
         """测试获取比赛的所有赔率"""
         # 创建多个博彩公司的赔率
         bookmakers = ["Bet365", "William Hill", "Betfair"]
@@ -259,12 +251,18 @@ class TestOddsDAO:
             assert odds.bookmaker in bookmakers
 
     @pytest.mark.asyncio
-    async def test_get_best_odds_by_match(self, odds_dao: OddsDAO, sample_odds_data: dict):
+    async def test_get_best_odds_by_match(
+        self, odds_dao: OddsDAO, sample_odds_data: dict
+    ):
         """测试获取最优赔率"""
         # 创建多个博彩公司的赔率，包含不同的主胜赔率
         odds_data_list = [
             {**sample_odds_data, "bookmaker": "Bet365", "home_win": Decimal("2.50")},
-            {**sample_odds_data, "bookmaker": "William Hill", "home_win": Decimal("2.45")},
+            {
+                **sample_odds_data,
+                "bookmaker": "William Hill",
+                "home_win": Decimal("2.45"),
+            },
             {**sample_odds_data, "bookmaker": "Betfair", "home_win": Decimal("2.40")},
         ]
 
@@ -274,8 +272,7 @@ class TestOddsDAO:
 
         # 获取最优主胜赔率
         best_odds = await odds_dao.get_best_odds_by_match(
-            match_id=sample_odds_data["match_id"],
-            bet_type="home_win"
+            match_id=sample_odds_data["match_id"], bet_type="home_win"
         )
 
         # 验证结果（应该是最低赔率，即最优赔率）
@@ -291,7 +288,7 @@ class TestOddsDAO:
             **sample_odds_data,
             "bookmaker": "Bet365",
             "live_odds": True,
-            "home_win": Decimal("2.20")
+            "home_win": Decimal("2.20"),
         }
         odds_create = OddsCreate(**live_odds_data)
         await odds_dao.create(obj_in=odds_create)
@@ -300,7 +297,7 @@ class TestOddsDAO:
         non_live_odds_data = {
             **sample_odds_data,
             "bookmaker": "William Hill",
-            "live_odds": False
+            "live_odds": False,
         }
         odds_create2 = OddsCreate(**non_live_odds_data)
         await odds_dao.create(obj_in=odds_create2)
@@ -315,7 +312,9 @@ class TestOddsDAO:
             assert odds.is_active is True
 
     @pytest.mark.asyncio
-    async def test_get_odds_by_confidence_threshold(self, odds_dao: OddsDAO, sample_odds_data: dict):
+    async def test_get_odds_by_confidence_threshold(
+        self, odds_dao: OddsDAO, sample_odds_data: dict
+    ):
         """测试根据置信度阈值获取赔率"""
         # 创建不同置信度的赔率
         confidence_levels = [0.6, 0.75, 0.85, 0.95]
@@ -323,7 +322,7 @@ class TestOddsDAO:
             odds_data = {
                 **sample_odds_data,
                 "bookmaker": f"Bookmaker{i}",
-                "confidence_score": Decimal(str(confidence))
+                "confidence_score": Decimal(str(confidence)),
             }
             odds_create = OddsCreate(**odds_data)
             await odds_dao.create(obj_in=odds_create)
@@ -339,7 +338,9 @@ class TestOddsDAO:
             assert odds.confidence_score >= Decimal("0.8")
 
     @pytest.mark.asyncio
-    async def test_search_odds_by_bookmaker(self, odds_dao: OddsDAO, sample_odds_data: dict):
+    async def test_search_odds_by_bookmaker(
+        self, odds_dao: OddsDAO, sample_odds_data: dict
+    ):
         """测试搜索博彩公司赔率"""
         # 创建特定博彩公司的赔率
         bookmakers = ["Bet365 Sports", "William Hill Betting", "Betfair Exchange"]
@@ -361,10 +362,17 @@ class TestOddsDAO:
     # ==================== 统计方法测试 ====================
 
     @pytest.mark.asyncio
-    async def test_get_odds_count_by_bookmaker(self, odds_dao: OddsDAO, sample_odds_data: dict):
+    async def test_get_odds_count_by_bookmaker(
+        self, odds_dao: OddsDAO, sample_odds_data: dict
+    ):
         """测试按博彩公司统计赔率数量"""
         # 创建多个博彩公司的赔率
-        bookmakers = ["Bet365", "William Hill", "Bet365", "William Hill"]  # 重复测试聚合
+        bookmakers = [
+            "Bet365",
+            "William Hill",
+            "Bet365",
+            "William Hill",
+        ]  # 重复测试聚合
         for bookmaker in bookmakers:
             odds_data = {**sample_odds_data, "bookmaker": bookmaker}
             odds_create = OddsCreate(**odds_data)
@@ -389,7 +397,7 @@ class TestOddsDAO:
             odds_data = {
                 **sample_odds_data,
                 "bookmaker": f"Bookmaker{i}",
-                "live_odds": i < live_count
+                "live_odds": i < live_count,
             }
             odds_create = OddsCreate(**odds_data)
             await odds_dao.create(obj_in=odds_create)
@@ -403,12 +411,13 @@ class TestOddsDAO:
     # ==================== 质量控制方法测试 ====================
 
     @pytest.mark.asyncio
-    async def test_update_odds_quality_score(self, odds_dao: OddsDAO, created_odds: Odds):
+    async def test_update_odds_quality_score(
+        self, odds_dao: OddsDAO, created_odds: Odds
+    ):
         """测试更新赔率质量分数"""
         # 更新质量分数
         result = await odds_dao.update_odds_quality_score(
-            odds_id=created_odds.id,
-            quality_score=0.95
+            odds_id=created_odds.id, quality_score=0.95
         )
 
         # 验证更新结果
@@ -426,7 +435,7 @@ class TestOddsDAO:
         old_odds_data = {
             **sample_odds_data,
             "bookmaker": "OldBookmaker",
-            "last_updated": datetime.utcnow() - timedelta(hours=48)
+            "last_updated": datetime.utcnow() - timedelta(hours=48),
         }
         odds_create = OddsCreate(**old_odds_data)
         old_odds = await odds_dao.create(obj_in=odds_create)
@@ -435,7 +444,7 @@ class TestOddsDAO:
         new_odds_data = {
             **sample_odds_data,
             "bookmaker": "NewBookmaker",
-            "last_updated": datetime.utcnow() - timedelta(hours=2)
+            "last_updated": datetime.utcnow() - timedelta(hours=2),
         }
         odds_create2 = OddsCreate(**new_odds_data)
         new_odds = await odds_dao.create(obj_in=odds_create2)
@@ -460,31 +469,28 @@ class TestOddsDAO:
     async def test_update_nonexistent_odds_quality_score(self, odds_dao: OddsDAO):
         """测试更新不存在赔率的质量分数"""
         with pytest.raises(RecordNotFoundError):
-            await odds_dao.update_odds_quality_score(
-                odds_id=99999,
-                quality_score=0.8
-            )
+            await odds_dao.update_odds_quality_score(odds_id=99999, quality_score=0.8)
 
     @pytest.mark.asyncio
-    async def test_update_odds_with_invalid_quality_score(self, odds_dao: OddsDAO, created_odds: Odds):
+    async def test_update_odds_with_invalid_quality_score(
+        self, odds_dao: OddsDAO, created_odds: Odds
+    ):
         """测试使用无效质量分数更新赔率"""
         with pytest.raises(ValidationError):
             await odds_dao.update_odds_quality_score(
-                odds_id=created_odds.id,
-                quality_score=1.5  # 超出范围
+                odds_id=created_odds.id, quality_score=1.5  # 超出范围
             )
 
     @pytest.mark.asyncio
     async def test_get_best_odds_with_invalid_bet_type(self, odds_dao: OddsDAO):
         """测试使用无效投注类型获取最优赔率"""
         with pytest.raises(ValidationError):
-            await odds_dao.get_best_odds_by_match(
-                match_id=1,
-                bet_type="invalid_type"
-            )
+            await odds_dao.get_best_odds_by_match(match_id=1, bet_type="invalid_type")
 
     @pytest.mark.asyncio
-    async def test_get_odds_by_confidence_with_invalid_threshold(self, odds_dao: OddsDAO):
+    async def test_get_odds_by_confidence_with_invalid_threshold(
+        self, odds_dao: OddsDAO
+    ):
         """测试使用无效置信度阈值获取赔率"""
         with pytest.raises(ValidationError):
             await odds_dao.get_odds_by_confidence_threshold(
@@ -503,6 +509,4 @@ class TestOddsDAO:
     async def test_deactivate_old_odds_with_invalid_hours(self, odds_dao: OddsDAO):
         """测试使用无效小时数停用旧赔率"""
         with pytest.raises(ValidationError):
-            await odds_dao.deactivate_old_odds(
-                hours=0  # 小时数必须大于0
-            )
+            await odds_dao.deactivate_old_odds(hours=0)  # 小时数必须大于0

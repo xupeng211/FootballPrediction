@@ -1,5 +1,3 @@
-from typing import Optional
-
 """数据质量监控服务测试
 Data Quality Monitor Service Tests.
 
@@ -7,8 +5,6 @@ Data Quality Monitor Service Tests.
 """
 
 import pytest
-from datetime import datetime
-from unittest.mock import AsyncMock, Mock, patch, MagicMock
 
 from src.services.data_quality_monitor import DataQualityMonitor
 
@@ -247,7 +243,6 @@ class TestDataQualityMonitor:
     async def test_concurrent_processing(self):
         """测试并发数据处理."""
         import asyncio
-        import threading
 
         async def process_data_async(data):
             return await self.monitor.process_data(data)
@@ -352,7 +347,7 @@ class TestDataQualityMonitor:
             # 如果返回了指标，验证结构
             if isinstance(metrics, dict):
                 assert "error" in metrics or len(metrics) == 0
-        except Exception as e:
+        except Exception:
             # 如果抛出异常，这是可以接受的（因为我们在测试极端情况）
             pass
 
@@ -365,6 +360,6 @@ class TestDataQualityMonitor:
         # 测试调用主函数不会立即崩溃
         try:
             await self.monitor.main()
-        except Exception as e:
+        except Exception:
             # 主函数可能需要特定的环境或配置，异常是可以接受的
             pass

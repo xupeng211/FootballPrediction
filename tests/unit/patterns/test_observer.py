@@ -6,7 +6,7 @@ Observer Pattern Tests.
 
 import pytest
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 from src.patterns.observer import (
     AsyncSubject,

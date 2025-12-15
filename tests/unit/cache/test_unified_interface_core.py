@@ -1,5 +1,3 @@
-from typing import Optional
-
 """统一缓存接口核心功能测试
 Unified Cache Interface Core Tests.
 
@@ -8,7 +6,6 @@ Unified Cache Interface Core Tests.
 
 import time
 import threading
-from unittest.mock import Mock, patch
 
 import pytest
 

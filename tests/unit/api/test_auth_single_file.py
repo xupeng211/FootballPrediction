@@ -1,5 +1,3 @@
-from typing import Optional
-
 """认证API单文件测试
 Auth API Single File Tests.
 
@@ -7,7 +5,6 @@ Auth API Single File Tests.
 """
 
 import sys
-import os
 from pathlib import Path
 
 # 添加src目录到Python路径
@@ -35,7 +32,7 @@ try:
     MOCK_USERS = auth_module.MOCK_USERS
     security = auth_module.security
 
-except Exception as e:
+except Exception:
     # 创建最小的mock对象以避免测试崩溃
     class MockRouter:
         prefix = "/auth"
@@ -124,7 +121,7 @@ class TestAuthSingleFile:
                 data = response.json()
                 assert isinstance(data, dict)
 
-        except Exception as e:
+        except Exception:
             # 如果路由无法工作，至少验证客户端存在
             assert client is not None
 
@@ -139,7 +136,7 @@ class TestAuthSingleFile:
             # 验证响应状态码
             assert response.status_code in [200, 422]
 
-        except Exception as e:
+        except Exception:
             # 如果路由无法工作，至少验证客户端存在
             assert client is not None
 
@@ -154,7 +151,7 @@ class TestAuthSingleFile:
             # 验证响应状态码
             assert response.status_code in [200, 401, 422]
 
-        except Exception as e:
+        except Exception:
             # 如果路由无法工作，至少验证客户端存在
             assert client is not None
 
@@ -209,7 +206,7 @@ class TestAuthSingleFile:
             result = await get_user_by_id(0)  # 使用不存在的ID
             # 应该返回None而不是抛出异常
             assert result is None
-        except Exception as e:
+        except Exception:
             pytest.fail("get_user_by_id函数调用失败")
 
     def test_file_structure_integrity(self):

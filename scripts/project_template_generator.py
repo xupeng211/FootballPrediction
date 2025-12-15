@@ -613,8 +613,12 @@ python generate_project.py --name YourProject
 def main():
     """主函数"""
     parser = argparse.ArgumentParser(description="AICultureKit项目模板生成器")
-    parser.add_argument("--output", "-o", default="./template_output", help="模板输出路径")
-    parser.add_argument("--name", "-n", default="python-project-template", help="模板名称")
+    parser.add_argument(
+        "--output", "-o", default="./template_output", help="模板输出路径"
+    )
+    parser.add_argument(
+        "--name", "-n", default="python-project-template", help="模板名称"
+    )
     parser.add_argument("--source", "-s", default=".", help="源项目路径")
 
     args = parser.parse_args()
