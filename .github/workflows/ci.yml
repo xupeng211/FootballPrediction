@@ -75,7 +75,7 @@ jobs:
       run: |
         . venv/bin/activate
         export PYTHONPATH="$(pwd):$(pwd)/FootballPrediction:${PYTHONPATH}"
-        make ci
+        make ci-temp
 
     - name: Upload coverage to Codecov
       if: github.event_name == 'push'

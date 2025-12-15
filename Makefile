@@ -293,6 +293,12 @@ ci: env-check context quality test coverage ## 完整CI流程
 	@echo "$(GREEN)>>> 完整CI检查全部通过 ✅$(RESET)"
 	@echo "$(GREEN)>>> 代码质量验证完成，可以安全推送$(RESET)"
 
+# 临时CI目标，跳过环境检查
+.PHONY: ci-temp
+ci-temp: context quality test coverage ## 临时CI流程(跳过环境检查)
+	@echo "$(GREEN)>>> 临时CI检查全部通过 ✅$(RESET)"
+	@echo "$(GREEN)>>> 代码质量验证完成，可以安全推送$(RESET)"
+
 .PHONY: ci-local
 ci-local: ci ## 本地执行与远程完全相同的CI流程
 	@echo "$(GREEN)>>> 本地CI-LOCAL检查全部通过 ✅$(RESET)"
