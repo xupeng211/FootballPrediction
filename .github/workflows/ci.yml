@@ -75,7 +75,6 @@ jobs:
       run: |
         . venv/bin/activate
         export PYTHONPATH="$(pwd):$(pwd)/FootballPrediction:${PYTHONPATH}"
-        cd FootballPrediction
         make ci
 
     - name: Upload coverage to Codecov
