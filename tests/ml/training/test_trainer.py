@@ -100,8 +100,8 @@ try:
 except ImportError:
     from FootballPrediction.src.ml.training.trainer import ModelTrainer
 
-        # 验证类存在
-        assert ModelTrainer is not None
+    # 验证类存在
+    assert ModelTrainer is not None
 
         # 验证可以实例化
         trainer = ModelTrainer(
