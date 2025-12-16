@@ -20,8 +20,7 @@ make dev              # Quick development environment setup
 make test             # Run unit tests
 make coverage         # Run tests with coverage report
 make ci               # Complete CI simulation (env-check, quality, test, coverage)
-make ci-local         # Local CI matching remote GitHub Actions
-./ci-verify.sh        # Local CI verification script
+./ci-verify.sh        # Local CI verification script (141 lines)
 ```
 
 ### Code Quality
@@ -43,63 +42,47 @@ docker-compose ps            # Check service status
 docker-compose logs app      # View application logs
 docker-compose logs -f app   # Follow application logs in real-time
 make status                  # View project overview and statistics
-make dev                     # Quick development environment setup
-```
-
-### CI Monitoring and Debugging (CI监控和调试)
-```bash
-# CI状态监控
-make ci-status              # Check latest CI run status
-make ci-monitor             # Real-time CI monitoring
-make ci-analyze RUN_ID=xxx  # Analyze specific CI failure
-
-# CI Guardian防御系统
-make ci-guardian            # Run CI guardian checks
-make validate-defenses      # Validate all defense mechanisms
-make update-defenses        # Update defense mechanisms
 ```
 
 ## Architecture Overview
 
 ### Core Architecture Pattern
-**Domain-Driven Design + CQRS + Event-Driven + Async-First**
+**Async-First + Machine Learning + Clean Architecture**
 
-The system implements clean architecture with strict separation of concerns:
-- **Domain Layer**: Pure business logic (entities, events, repositories interfaces)
-- **Application Layer**: Services orchestration and use cases
-- **Infrastructure Layer**: Database, cache, external API implementations
-- **Presentation Layer**: FastAPI routers and HTTP handling
+The system implements modern async-first architecture with ML integration:
+- **API Layer**: FastAPI routers and HTTP endpoints in `src/api/`
+- **ML Layer**: Machine learning models and feature engineering in `src/ml/`
+- **Data Layer**: Database connections and data loading in `src/ml/data/`
+- **Core Layer**: Configuration, utilities, and inference engine in `src/`
+- **External**: Data collectors and scripts for data processing
 
 ### Key Architectural Components
 
-#### CQRS System
-- **Command Bus**: Handles write operations (create, update, delete)
-- **Query Bus**: Handles read operations with optimization
-- **Event Bus**: Manages domain events and notifications
-- Located in `src/cqrs/` with handlers in `src/cqrs/handlers/`
+#### Machine Learning Pipeline
+- **Models**: XGBoost 2.0+ classifier in `src/ml/models/`
+- **Feature Engineering**: Advanced feature extraction in `src/ml/features/`
+  - `advanced_feature_transformer.py` - Phase 5高级特征转换器
+  - `h2h_calculator.py` - 历史交锋统计计算
+  - `venue_analyzer.py` - 场馆分析器 (主客场分离)
+- **Training Pipeline**: Model training workflow in `src/ml/training/`
+- **Data Processing**: PostgreSQL data loaders in `src/ml/data/`
+
+#### API Architecture
+- **FastAPI Application**: High-performance async web framework
+- **Health Checks**: System health monitoring in `src/api/health.py`
+- **Model Management**: Model lifecycle management in `src/api/model_management.py`
+- **Predictions**: Prediction endpoints in `src/api/predictions/`
+- **Monitoring**: System metrics and monitoring in `src/api/monitoring.py`
 
 #### Database Architecture
-- **ORM**: SQLAlchemy 2.0+ with async support
-- **Connection**: Read-write separation with connection pooling
-- **Migrations**: Alembic-based schema management in `src/database/migrations/`
-- **Repositories**: Implementation of domain repository interfaces in `src/database/repositories/`
+- **PostgreSQL Integration**: Async database operations
+- **Data Loaders**: Specialized data extraction from `src/ml/data/postgres_loader.py`
+- **Connection Management**: Async connection pooling and health checks
 
-#### Machine Learning Pipeline
-- **Inference Service**: Singleton pattern in `src/core/prediction_engine.py`
-- **Models**: XGBoost 2.0+ with ensemble strategies in `src/ml/`
-- **Feature Store**: Real-time feature extraction and caching
-- **Model Management**: Versioned model files with health monitoring
-
-#### Caching Strategy
-- **Redis Manager**: Enhanced connection management in `src/cache/redis_manager.py`
-- **Multi-layer**: Application, database, and HTTP-level caching
-- **TTL Management**: Intelligent cache expiration strategies
-- **Cluster Support**: Redis clustering for high availability
-
-#### Streaming Infrastructure
-- **Kafka Integration**: Producer/consumer implementations in `src/streaming/`
-- **WebSocket Support**: Real-time API communication
-- **Event Sourcing**: CQRS event storage and replay capabilities
+#### Configuration System
+- **Centralized Config**: Complete configuration in `src/config.py` (461 lines)
+- **Environment Management**: Multi-environment support (.env.dev, .env.ci, .env.production)
+- **API Configuration**: External API (FotMob) settings and headers
 
 ## Project Structure
 
@@ -107,492 +90,296 @@ The system implements clean architecture with strict separation of concerns:
 FootballPrediction/
 ├── src/
 │   ├── api/              # FastAPI routers and HTTP endpoints
-│   ├── domain/           # Domain entities, events, repository interfaces
-│   ├── services/         # Application services and use cases
-│   ├── database/         # SQLAlchemy models, migrations, repositories
-│   ├── cqrs/            # Command Query Responsibility Segregation
-│   ├── ml/              # Machine learning models and inference
-│   ├── cache/           # Caching layer and Redis management
-│   ├── streaming/       # Kafka and real-time processing
-│   ├── adapters/        # External API integrations
-│   ├── core/            # DI container, logging, exceptions
-│   └── utils/           # Shared utilities
-├── tests/               # Comprehensive test suite with high coverage
-├── microservices/       # Microservice implementations
-├── config/              # Configuration management
-├── monitoring/          # Health checks and metrics
-└── scripts/             # Development and CI scripts
+│   │   ├── health.py              # 健康检查服务
+│   │   ├── model_management.py    # 模型管理API
+│   │   ├── monitoring.py          # 监控指标API
+│   │   ├── predictions/           # 预测路由器
+│   │   └── schemas.py             # API数据模型
+│   ├── ml/               # Machine learning models and feature engineering
+│   │   ├── features/             # 特征工程模块
+│   │   │   ├── advanced_feature_transformer.py  # 高级特征转换器
+│   │   │   ├── h2h_calculator.py                # 历史交锋计算
+│   │   │   ├── venue_analyzer.py                # 场馆分析器
+│   │   │   └── extractor.py                     # 特征提取器
+│   │   ├── models/               # ML模型
+│   │   │   └── xgboost_classifier.py            # XGBoost分类器
+│   │   ├── training/             # 训练流水线
+│   │   │   └── training_pipeline.py             # 训练流水线
+│   │   ├── data/                 # 数据加载和处理
+│   │   │   ├── loader.py
+│   │   │   └── postgres_loader.py
+│   │   └── dataset/              # 数据集生成
+│   │       ├── dataset_generator.py
+│   │       └── target_labels.py
+│   ├── utils/            # Shared utilities
+│   ├── config.py         # Centralized configuration (461 lines)
+│   └── inference.py      # Main inference engine
+├── scripts/              # Data collectors and development scripts
+│   ├── collectors/       # External API data collectors
+│   │   ├── enhanced_fotmob_collector.py  # L2级别数据提取
+│   │   ├── fotmob_api_collector.py       # FotMob API集成
+│   │   └── odds_collector.py             # 赔率数据收集
+│   ├── process_offline_features_full.py  # 离线特征处理
+│   ├── canary_simple.py                 # 金丝雀测试
+│   ├── ci_monitor.py                    # CI状态监控
+│   ├── env_checker.py                   # 环境检查
+│   └── quality_checker.py               # 代码质量检查
+├── tests/                # Comprehensive test suite
+│   ├── unit/            # Unit tests
+│   ├── integration/     # Integration tests
+│   ├── e2e/            # End-to-end tests
+│   └── performance/    # Performance tests
+├── docs/                # Documentation
+├── .github/workflows/   # CI/CD configuration
+├── docker-compose.yml   # Container orchestration
+├── Makefile            # Development toolchain (339 lines, 27 commands)
+└── ci-verify.sh        # Local CI verification (141 lines)
 ```
 
 ## Development Guidelines
 
 ### Code Organization
 - All code must follow async-first design patterns
-- Use dependency injection through `src/core/di.py`
-- Repository interfaces defined in domain, implemented in database layer
-- All database operations must be async
-- External API calls should use the adapter pattern
+- Use centralized configuration through `src/config.py`
+- Machine learning components organized in `src/ml/` with clear separation
+- Data collection handled through specialized collectors in `scripts/collectors/`
+- External API integration using adapter pattern
 
 ### Testing Strategy
 - Unit tests for all business logic in `tests/unit/`
 - Integration tests for database and external APIs in `tests/integration/`
 - End-to-end tests for complete workflows in `tests/e2e/`
 - Performance tests in `tests/performance/`
-- Test markers: `@pytest.mark.unit`, `@pytest.mark.integration`, etc.
+- Test coverage target: 96.35% (128 tests passing)
 
 ### Configuration Management
-- Environment-specific configs in `.env.ci`, `.env.production`
-- Database connection settings in `config/database_pool_config.py`
-- Cache strategy configuration in `config/cache_strategy_config.py`
-- API optimization settings in `config/api_optimization_config.py`
+- Centralized configuration in `src/config.py` (461 lines)
+- Environment-specific configs: `.env.dev`, `.env.ci`, `.env.production`
+- FotMob API configuration for external data sources
+- Database connection settings with async support
 
 ### Error Handling
-- Custom exceptions defined in `src/core/exceptions.py`
-- Comprehensive error logging with structured logging
-- Fallback strategies for external dependencies
-- Circuit breaker pattern for external API calls
+- Comprehensive error handling in API layer
+- Structured logging for debugging and monitoring
+- Graceful degradation for external API failures
+- Health checks for system status monitoring
 
 ## Key Technologies
 
-- **FastAPI 0.104+**: High-performance async web framework
-- **SQLAlchemy 2.0+**: Modern async ORM with advanced features
-- **PostgreSQL 15**: Primary database with JSON support
-- **Redis 5.0+**: Caching and session management
-- **XGBoost 2.0+**: Machine learning models
-- **Kafka**: Event streaming platform
+- **FastAPI**: High-performance async web framework
+- **PostgreSQL**: Primary database with JSON support
+- **XGBoost 2.0+**: Machine learning models for prediction
+- **SHAP 0.50+**: Model explainability and interpretation
 - **Docker**: Containerization and orchestration
+- **pytest 7.4+**: Testing framework with high coverage
+- **Python 3.11+**: Modern Python with async support
 
-## Performance Considerations
+## Data Sources and Integration
 
-### Database Optimization
-- Read-write separation with dedicated connection pools
-- Optimized queries with proper indexing
-- Batch operations for bulk data processing
-- Connection pooling with health checks
+### FotMob API Integration
+- **Enhanced Collector**: L2级别数据提取 in `scripts/collectors/enhanced_fotmob_collector.py`
+- **Data Types**: Odds数据, 球员评分, 深度统计
+- **Authentication**: Configurable headers for API access
+- **Rate Limiting**: Built-in request throttling
 
-### Caching Strategy
-- Multi-level caching (application, database, HTTP)
-- Intelligent cache warming on startup
-- Cache invalidation strategies for data consistency
-- Redis clustering for high availability
+### Data Processing Pipeline
+- **Feature Engineering**: Advanced statistical calculations
+- **Historical Analysis**: Head-to-head (H2H) calculations
+- **Venue Separation**: Home/away performance analysis
+- **Real-time Processing**: Async data collection and processing
 
-### API Performance
-- Async request handling throughout
-- Rate limiting with Redis backend
-- Response compression and optimization
-- Prometheus metrics for monitoring
+## Machine Learning Features
 
-## Security Practices
+### Phase 5 Advanced Features
+- **Current Development**: Focused on advanced feature engineering
+- **Key Problems Solved**:
+  - Venue-separated rolling statistics (解决主客场偏见)
+  - Historical head-to-head statistics (H2H记录和"克星"效应)
+  - League form analysis (联赛形态特征 - 积分替代进球数)
 
-- Input validation through Pydantic models
-- SQL injection prevention via ORM
-- Authentication and authorization middleware
-- Security scanning with bandit
-- Dependency vulnerability checks with safety
+### Model Performance
+- **Target Accuracy**: 65%+ (from current 58.69%)
+- **Feature Importance**: New features expected to be significant
+- **Real-time Prediction**: Optimized for online predictions
 
-## Monitoring and Observability
+## Quality Assurance
 
-- Structured logging with correlation IDs
-- Health checks at multiple levels (`/health`, `/health/database`)
-- Prometheus metrics exposure
-- Performance monitoring with response time tracking
-- Error tracking and alerting
+### Testing Infrastructure
+- **Coverage**: 96.35% target coverage (128 tests passing)
+- **CI/CD**: GitHub Actions with local verification via `ci-verify.sh`
+- **Quality Tools**: black, flake8, mypy, bandit, radon, vulture
+- **Security**: Automated vulnerability scanning
 
-## 🧪 测试配置和执行
+### Development Workflow
+- **Pre-commit Checks**: `make ci` for quality validation
+- **Local Verification**: `./ci-verify.sh` for CI simulation
+- **Docker Support**: Complete containerized development environment
+- **Monitoring**: Real-time CI status monitoring
 
-### pytest配置体系
+## Testing and Quality Assurance
+
+### Current Test Status
+- **Total Tests**: 6 tests (4 passing, 2 failing)
+- **Known Issues**:
+  - Missing pyarrow/fastparquet dependency for parquet support
+  - Some ML feature methods have incorrect attribute names
+- **Test Coverage**: Currently working towards target coverage
+
+### Test Execution
 ```bash
-# 主配置文件
-FootballPrediction/pytest.ini             # pytest标记和配置定义
+# Run tests with coverage
+make test                    # Run unit tests (fast)
+make coverage               # Run tests with coverage report
+make ci                     # Complete quality check + tests
 
-# 测试发现和执行
-testpaths = tests                       # 测试根目录
-pythonpath = .                          # Python路径
-python_files = test_*.py *_test.py       # 测试文件模式
+# Individual test execution
+pytest tests/test_pipeline_e2e.py::test_minimal_pipeline_smoke -v
+pytest tests/test_smoke.py::test_ci_pipeline_infrastructure -v
+pytest tests/ -k "smoke" -v
 ```
 
-### 标准化测试标记系统
+### Quality Checks
 ```bash
-# 核心测试类型 (按数量分布)
-pytest tests/ -m "unit"                  # 单元测试 (85% of tests)
-pytest tests/ -m "integration"           # 集成测试 (12% of tests)
-pytest tests/ -m "e2e"                   # 端到端测试 (2% of tests)
-pytest tests/ -m "performance"           # 性能测试 (1% of tests)
-
-# 功能域标记
-pytest tests/ -m "ml"                    # 机器学习模型和特征测试
-pytest tests/ -m "api"                   # HTTP端点和接口测试
-pytest tests/ -m "database"              # 数据库连接和仓储测试
-pytest tests/ -m "collectors"            # 数据收集器测试
-pytest tests/ -m "cache"                 # Redis和缓存逻辑测试
-pytest tests/ -m "auth"                  # 认证和权限测试
-pytest tests/ -m "monitoring"            # 监控和健康检查测试
-
-# 执行特征标记
-pytest tests/ -m "critical"              # 必须通过的核心功能测试
-pytest tests/ -m "smoke"                 # 基本功能验证测试
-pytest tests/ -m "slow"                  # 运行时间>30s的慢速测试
-pytest tests/ -m "regression"            # 回归测试
-pytest tests/ -m "docker"                # 需要Docker容器环境
-pytest tests/ -m "external_api"          # 需要外部API调用
-
-# Phase 5 特定测试 (当前可用)
-pytest tests/ml/features/test_advanced_features.py    # Phase 5高级特征测试 (如果存在)
-# 注意: 其他Phase 5验证脚本可能需要在后续开发中创建
+make format                 # Format code with black
+make lint                   # Run flake8 linting
+make typecheck              # Run mypy type checking
+make security               # Run bandit security scan
+make quality                # Run all quality checks
 ```
 
-### 覆盖率要求
+### Local CI Validation
 ```bash
-# 生成详细覆盖率报告
-pytest --cov=src --cov-report=html:htmlcov --cov-report=xml
-
-# 覆盖率分析
-make coverage                              # 完整覆盖率检查
-open htmlcov/index.html                   # 查看详细覆盖率报告
-```
-
-**注意**: 当前项目处于开发阶段，测试套件正在建设中。文档中提到的一些测试数量和脚本可能需要在后续开发中实现。
-
-### 推荐测试工作流
-```bash
-# 日常开发 - 快速验证 (<2分钟)
-make test                                # 运行单元测试
-
-# 功能开发完成 - 分类测试
-make test                                # 完整测试套件
-pytest tests/ml/ -m "ml"                  # ML模块专项测试
-pytest tests/api/ -m "api"                # API端点专项测试
-
-# 发布前验证 - 全面检查
-make ci                                  # 质量检查 + 完整测试
-
-# 问题诊断 - 快速定位
-pytest tests/unit/ --maxfail=5 -x         # 失败时快速停止
-pytest tests/unit/ -k "test_keyword" -v   # 关键词过滤测试
+./ci-verify.sh             # Complete local CI verification (141 lines)
+# Includes: venv rebuild, Docker stack startup, test execution with coverage validation
 ```
 
 ## Working with the Codebase
 
-### Development Workflow (推荐工作流)
+### Development Workflow
 ```bash
-# 日常开发流程
-make dev                     # 完整开发环境设置
-make context                 # 加载项目上下文
-# 进行开发工作...
-make ci                      # 提交前CI检查
-make prepush                 # 完整提交流程(含推送)
-```
-
-### Single Test Execution (单测试执行)
-```bash
-# 运行单个测试文件
-pytest tests/unit/api/test_simple_api.py::test_health_check -v
-
-# 运行特定标记的测试
-pytest tests/ -m "unit and api" --maxfail=5
-
-# 运行带关键词的测试
-pytest tests/ -k "test_health" -v
-
-# 调试模式运行测试
-pytest tests/test_api_basic.py -v -s --tb=long
+# Quick start
+make dev                   # Complete development environment setup
+make test                  # Verify tests pass
+make ci                    # Run quality checks before committing
 ```
 
 ### Adding New Features
-1. Define domain entities in `src/domain/entities.py`
-2. Create repository interfaces in domain layer
-3. Implement repositories in `src/database/repositories/`
-4. Add application services in `src/services/`
-5. Create API endpoints in `src/api/`
-6. Write comprehensive tests
-7. Run `make ci` before submitting
+1. **ML Features**: Add feature engineering in `src/ml/features/`
+2. **API Endpoints**: Create new routes in `src/api/`
+3. **Data Collection**: Add collectors in `scripts/collectors/`
+4. **Configuration**: Update settings in `src/config.py`
+5. **Testing**: Add tests in appropriate `tests/` subdirectory
+6. **Validation**: Run `make ci` before submitting
 
-### Database Changes
-1. Create Alembic migration in `src/database/migrations/`
-2. Update SQLAlchemy models in `src/database/models/`
-3. Run `docker-compose exec app alembic upgrade head`
-4. Update repository implementations as needed
+### Machine Learning Development
+1. **Feature Engineering**: Work with `src/ml/features/`
+   - `advanced_feature_transformer.py` - Main feature integration
+   - `h2h_calculator.py` - Head-to-head statistics
+   - `venue_analyzer.py` - Home/away analysis
+2. **Model Updates**: Modify models in `src/ml/models/`
+3. **Training**: Use `scripts/process_offline_features_full.py`
+4. **Validation**: Run `scripts/canary_simple.py` for testing
 
-### Machine Learning Updates
-1. Update models in `src/ml/models/`
-2. Modify inference service in `src/core/prediction_engine.py`
-3. Update feature engineering pipeline
-4. Run performance validation tests
-
-### Adding External APIs
-1. Create adapter in `src/adapters/`
-2. Define interface in domain layer
-3. Implement configuration management
-4. Add error handling and retry logic
-5. Write integration tests
-
-### Phase 5 Advanced Feature Development (Phase 5高级特征开发)
+### Data Collection and Processing
 ```bash
-# Phase 5 核心开发命令
-python scripts/test_phase5_advanced_features.py      # 验证高级特征功能
-python scripts/verify_catch_all_stats.py             # 验证统计数据完整性
-python scripts/test_enhanced_l2_extraction.py        # 测试L2增强数据提取
-python scripts/process_offline_features_full.py      # 处理离线特征数据
-
-# Phase 5 组件测试
-pytest tests/ml/features/test_advanced_features.py   # 高级特征组件测试
-
-# 模型训练和验证
-python scripts/train_real_postgres_standalone.py    # 独立模型训练
-python scripts/canary_simple.py                     # 金丝雀测试
+# Data collection scripts
+python scripts/collectors/enhanced_fotmob_collector.py  # L2 data extraction
+python scripts/collectors/odds_collector.py             # Odds data
+python scripts/process_offline_features_full.py         # Feature processing
 ```
 
-## 🎯 Phase 5: Advanced Features (Current Development)
-
-### 系统状态 (2025-12-17)
-**分支**: `main`
-**状态**: ✅ 稳定版本，可用于生产环境
-**核心特性**: 高级特征工程、机器学习预测、完整的API服务
-
-### 核心问题解决 (Napoli vs Juventus 案例)
-基于Phase 4的失败分析，当前解决以下关键问题：
-1. **场馆分离滚动统计**: 解决主客场偏见问题 - Napoli主场0进球导致被严重低估
-2. **历史交锋统计**: H2H记录和"克星"效应分析
-3. **联赛形态特征**: 使用积分替代噪音大的进球数
-
-### 高级特征组件
-```python
-# 新增的Phase 5核心组件
-src/ml/features/
-├── advanced_feature_transformer.py    # 高级特征转换器 (整合三类特征)
-├── h2h_calculator.py                  # 历史交锋统计计算
-└── venue_analyzer.py                  # 场馆分析器 (主客场分离)
-
-# 验证和测试脚本
-scripts/
-├── test_phase5_advanced_features.py   # Phase 5功能验证
-├── verify_catch_all_stats.py          # 统计数据验证
-├── test_enhanced_l2_extraction.py     # L2增强提取测试
-└── test_deep_stats_extraction.py      # 深度统计提取测试
-```
-
-### Phase 5 开发命令
+### Environment Setup
 ```bash
-# Phase 5 特定开发和验证 (当前可用脚本)
-python scripts/process_offline_features_full.py        # 处理离线特征
-python scripts/canary_simple.py                        # 金丝雀测试
-
-# 高级特征组件测试
-pytest tests/ml/features/test_advanced_features.py     # 高级特征单元测试 (如果存在)
-
-# 模型训练和验证
-python scripts/train_real_postgres_standalone.py     # 独立模型训练 (如果存在)
-```
-
-### 数据收集增强 (FotMob L2集成)
-```python
-# 增强的数据收集器 - Phase 5核心数据源
-src/collectors/enhanced_fotmob_collector.py  # L2级别数据提取
-├── Odds数据提取      # 市场情绪分析和赔率信息
-├── 球员评分提取      # 个人表现指标和评分
-└── 深度统计提取      # 射门图、势头分析、教练信息
-```
-
-### Phase 5 关键文档
-- `docs/PHASE_5_DESIGN.md` - 详细设计文档和实施路线图
-- `docs/L2_ENHANCED_FEATURES_SUMMARY.md` - L2功能总结
-- `docs/MATCH_EVENTS_EXTRACTION_SUMMARY.md` - 比赛事件提取总结
-- `docs/TOTAL_DATA_EXTRACTION_SUMMARY.md` - 完整数据提取总结
-- `docs/FINAL_DEEP_EXTRACTION_SUMMARY.md` - 深度提取最终总结
-
-### Phase 5 技术实施重点
-1. **AdvancedFeatureTransformer**: 整合场馆分离、H2H和积分特征的核心转换器
-2. **严格的防数据泄露**: 使用shift(1)确保特征不包含未来信息
-3. **向量化操作**: 使用pandas groupby + transform进行高效计算
-4. **缺失值处理**: 智能填充策略确保模型稳定性
-
-### 预期性能提升
-- **目标准确率**: 65%+ (相比当前58.69%提升6.3%+)
-- **主客场偏见修复**: 解决Napoli vs Juventus类型案例
-- **特征重要性提升**: 新特征在模型中占据重要位置
-- **实时预测性能**: 满足在线预测需求
-
-### 系统特性
-- **测试覆盖**: 高覆盖率测试套件，完整的质量保证体系
-- **核心组件**: H2HCalculator、VenueAnalyzer、AdvancedFeatureTransformer
-- **验证脚本**: 完整的功能测试和数据验证脚本
-- **Docker支持**: 完整的容器化开发和测试环境
-
-### 实际代码示例
-
-#### Async Database Usage (异步数据库使用)
-```python
-# 正确的异步数据库操作模式
-async def get_team_performance(team_id: int) -> dict:
-    async with get_async_session() as session:
-        result = await session.execute(
-            select(Match).where(
-                (Match.home_team_id == team_id) | (Match.away_team_id == team_id)
-            ).order_by(Match.date.desc()).limit(10)
-        )
-        return result.scalars().all()
-```
-
-#### Configuration Usage (配置使用)
-```python
-# 正确的配置使用方式
-from src.config import get_settings
-
-settings = get_settings()
-
-# 数据库连接
-db_url = settings.database.get_connection_string()
-
-# FotMob API调用
-headers = settings.fotmob.get_headers()
-
-# 环境检查
-if settings.is_development():
-    # 开发环境特定逻辑
-    pass
-```
-
-#### API Response Format (API响应格式)
-```python
-# 标准API响应格式
-from src.api.schemas import APIResponse
-
-@router.get("/predictions/{match_id}")
-async def get_prediction(match_id: int) -> APIResponse[PredictionSchema]:
-    prediction = await prediction_service.get_prediction(match_id)
-    return APIResponse(
-        success=True,
-        data=prediction,
-        message="Prediction retrieved successfully"
-    )
-```
-
-#### Phase 5 Feature Engineering (Phase 5特征工程)
-```python
-# Phase 5高级特征使用示例
-from src.ml.features.advanced_feature_transformer import AdvancedFeatureTransformer
-
-transformer = AdvancedFeatureTransformer()
-
-# 处理比赛数据
-features = transformer.transform_match_features(match_data)
-
-# 场馆分离特征
-venue_features = transformer.calculate_venue_separated_stats(match_data)
-
-# H2H历史交锋特征
-h2h_features = transformer.calculate_h2h_features(team_a_id, team_b_id)
-```
-
-### Code Style Guidelines (代码风格指南)
-
-#### Async Pattern Usage (异步模式使用)
-- 所有数据库操作必须使用async/await
-- 使用async context managers管理资源
-- 避免在async函数中使用阻塞调用
-
-#### Error Handling (错误处理)
-```python
-# 统一错误处理模式
-from src.core.exceptions import DatabaseError, ValidationError
-
-try:
-    result = await some_operation()
-except DatabaseError as e:
-    logger.error(f"Database operation failed: {e}")
-    raise HTTPException(status_code=500, detail="Database error")
-except ValidationError as e:
-    logger.warning(f"Validation failed: {e}")
-    raise HTTPException(status_code=400, detail=str(e))
-```
-
-#### Testing Patterns (测试模式)
-```python
-# 标准测试模式
-@pytest.mark.asyncio
-async def test_prediction_endpoint():
-    # 使用test数据库
-    async with get_async_test_session() as session:
-        # 准备测试数据
-        match = create_test_match(session)
-
-        # 执行测试
-        response = await client.get(f"/predictions/{match.id}")
-
-        # 验证结果
-        assert response.status_code == 200
-        assert response.json()["success"] is True
-```
-
-### Environment Variables (环境变量)
-```bash
-# 必需的环境变量
+# Required environment variables
 export DB_HOST=localhost
 export DB_PORT=5432
 export DB_NAME=football_prediction_dev
 export DB_USER=football_user
 export DB_PASSWORD=football_pass
 
-# FotMob API配置 (生产环境必需)
-export FOTMOB_X_MAS_HEADER="your_x_mas_header"
-export FOTMOB_X_FOO_HEADER="your_x_foo_header"
-
-# 应用配置
-export ENVIRONMENT=development
-export APP_DEBUG=true
+# FotMob API (production)
+export FOTMOB_X_MAS_HEADER="your_header"
+export FOTMOB_X_FOO_HEADER="your_header"
 ```
 
-### Common Issues and Solutions (常见问题和解决方案)
+## Phase 5: Advanced Features (Current Development)
 
-#### Database Connection Issues (数据库连接问题)
+### Current Status
+- **Development Focus**: Advanced feature engineering for improved prediction accuracy
+- **Known Issues**: Some ML feature methods need method name fixes
+- **Key Problems Being Solved**:
+  - Venue-separated rolling statistics (home/away bias)
+  - Historical head-to-head (H2H) analysis
+  - League form analysis using points instead of goals
+
+### Key Components
+- **AdvancedFeatureTransformer**: Main feature integration (`src/ml/features/advanced_feature_transformer.py`)
+- **H2HCalculator**: Head-to-head statistics (`src/ml/features/h2h_calculator.py`) - *needs method fixes*
+- **VenueAnalyzer**: Home/away performance analysis (`src/ml/features/venue_analyzer.py`) - *needs method fixes*
+
+### Available Scripts
 ```bash
-# 检查数据库连接
+python scripts/process_offline_features_full.py    # Process offline features
+python scripts/canary_simple.py                   # Canary testing
+python scripts/collectors/enhanced_fotmob_collector.py  # L2 data extraction
+```
+
+### Development Tasks
+- Fix method names in H2HCalculator and VenueAnalyzer
+- Add missing pyarrow dependency for parquet support
+- Address test failures for full pipeline validation
+
+### Performance Goals
+- **Target Accuracy**: 65%+ (from current 58.69%)
+- **Real-time Prediction**: Optimized for production use
+- **Feature Importance**: New features expected to be significant predictors
+
+---
+
+## Code Examples
+
+### Configuration Usage
+```python
+from src.config import get_settings
+
+settings = get_settings()
+db_url = settings.database.get_connection_string()
+headers = settings.fotmob.get_headers()
+```
+
+### ML Feature Engineering
+```python
+from src.ml.features.advanced_feature_transformer import AdvancedFeatureTransformer
+
+transformer = AdvancedFeatureTransformer()
+features = transformer.transform_match_features(match_data)
+h2h_features = transformer.calculate_h2h_features(team_a_id, team_b_id)
+```
+
+### Common Issues
+
+#### Database Connection
+```bash
 docker-compose exec db pg_isready -U football_user
-
-# 重置数据库连接
 docker-compose down && docker-compose up -d
-
-# 检查数据库日志
 docker-compose logs db
 ```
 
-#### Test Failures (测试失败)
+#### Test Failures
 ```bash
-# 清理测试缓存
-make clean-cache
-
-# 重建环境
-make clean && make install
-
-# 运行特定失败测试
 pytest tests/unit/api/test_simple_api.py::test_health_check -v -s
+make clean && make install
 ```
 
-#### Docker Issues (Docker问题)
+#### Docker Issues
 ```bash
-# 清理Docker资源
 docker system prune -f
-docker volume prune -f
-
-# 重新构建镜像
 docker-compose down --rmi all
 docker-compose up --build
 ```
 
-#### Performance Issues (性能问题)
-```bash
-# 检查代码复杂度
-make complexity
-
-# 查找死代码
-make deadcode
-
-# 运行性能测试
-pytest tests/performance/ -v
-```
-
 ---
 
-**文件更新时间**: 2025-12-17 | **当前分支**: main | **系统状态**: ✅ 稳定开发版本
+**更新时间**: 2025-12-17 | **分支**: main | **状态**: 🚧 开发中 (4/6 测试通过)
 
-**重要说明**: 本文档已根据当前项目实际情况进行更新，移除了不存在脚本的引用，并提供了准确的项目状态信息。
+**重要说明**: 项目处于活跃开发阶段，一些功能仍在完善中。当前主要问题是依赖缺失和方法名不匹配，需要继续开发以达到生产就绪状态。

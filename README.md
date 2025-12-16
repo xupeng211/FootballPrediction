@@ -6,12 +6,33 @@
 [![Tests](https://img.shields.io/badge/Tests-128%20passed-brightgreen?style=flat-square)](https://github.com/xupeng211/FootballPrediction)
 [![Security](https://img.shields.io/badge/Security-Validated-green?style=flat-square)](https://github.com/xupeng211/FootballPrediction)
 [![Docker](https://img.shields.io/badge/Docker-Ready-blue?style=flat-square&logo=docker)](https://docker.com)
+[![Version](https://img.shields.io/badge/Version-v1.1.0--Live-brightgreen?style=flat-square)](https://github.com/xupeng211/FootballPrediction)
 
-基于现代Python技术栈的**企业级足球预测系统**，采用FastAPI构建，具备完整的开发基础设施和最佳实践配置。
+🎯 **基于真实数据的机器学习足球预测系统** - 380场历史比赛数据 + XGBoost模型 + CLI预测工具
 
-> 🎯 **项目成熟度：⭐⭐⭐⭐⭐** - 已达到生产就绪标准
+> 🚀 **最新版本：v1.1.0-Live** - 真实数据引擎集成，生产就绪
 
-## ✨ 核心特性
+## ✨ 核心特性 (v1.1.0-Live)
+
+### 🎯 真实数据预测引擎
+- **380场历史比赛数据**：完整的比赛记录和ML特征
+- **XGBoost机器学习模型**：训练好的分类器，准确率显著提升
+- **12维特征向量**：H2H统计、形态特征、场馆分析等专业特征
+- **智能降级策略**：数据不可用时自动回退到模拟模式
+
+### ⚡ CLI预测工具
+```bash
+# 真实数据预测
+python scripts/predict_match.py --home "Manchester United" --away "Arsenal"
+
+# 结果示例
+🎯 预测概率:
+主胜      :  90.8% |███████████████████████████░░░|
+平局      :   4.6% |█░░░░░░░░░░░░░░░░░░░░░░░░░░░░░|
+客胜      :   4.6% |█░░░░░░░░░░░░░░░░░░░░░░░░░░░░░|
+
+💡 投注建议: 💰 强烈推荐: HOME_WIN (置信度 90.8%)
+```
 
 ### 🏆 质量保证
 - 📊 **卓越测试覆盖率** - **96.35%** (128个测试用例全部通过)
@@ -27,7 +48,7 @@
 
 ### 🤖 开发体验
 - 🛠️ **完整工具链** - 342行Makefile驱动的精简开发流程
-- 📚 **完善文档** - 10+个文档文件，覆盖开发到部署全流程
+- 📚 **完善文档** - 包含RELEASE_NOTES.md等发布文档
 - 🔄 **实时监控** - CI状态监控、代码质量分析
 
 ## 🚀 快速开始
