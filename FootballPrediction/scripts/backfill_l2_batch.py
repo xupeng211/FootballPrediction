@@ -89,34 +89,14 @@ class L2BackfillProcessor:
         logger.info("🔍 查询需要L2回补的比赛...")
 
         try:
-            # 直接使用数据库连接，避免复杂的异步管理器
-            import asyncpg
+            # 使用数据库连接池，提高性能和稳定性
+            import sys
             import os
+            sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
+            from database.db_pool import get_db_pool
 
-            # 从环境变量获取数据库连接信息
-            db_url = os.getenv("DATABASE_URL", "postgresql+asyncpg://postgres:postgres@localhost:5432/football_prediction")
-
-            # 解析连接URL获取连接参数
-            import re
-            match = re.match(r'postgresql\+asyncpg://([^:]+):([^@]+)@([^:]+):(\d+)/(.+)', db_url)
-            if match:
-                user, password, host, port, database = match.groups()
-            else:
-                # 默认值
-                user = "postgres"
-                password = "postgres"
-                host = "localhost"
-                port = "5432"
-                database = "football_prediction"
-
-            # 直接创建数据库连接
-            conn = await asyncpg.connect(
-                host=host,
-                port=int(port),
-                user=user,
-                password=password,
-                database=database
-            )
+            # 获取数据库连接池
+            pool = await get_db_pool()
 
             # 查询所有完赛但无L2数据的比赛
             query = """
@@ -135,8 +115,8 @@ class L2BackfillProcessor:
 
             logger.info("📡 执行SQL查询...")
 
-            # 执行查询
-            rows = await conn.fetch(query)
+            # 执行查询 - 使用连接池
+            rows = await pool.fetch(query)
 
             # 转换为字典列表
             matches = []
@@ -150,9 +130,6 @@ class L2BackfillProcessor:
                     "home_team": row.get("home_team_name", "Unknown"),
                     "away_team": row.get("away_team_name", "Unknown")
                 })
-
-            # 关闭数据库连接
-            await conn.close()
 
             logger.info(f"📊 真实数据库: 找到 {len(matches)} 场需要回补的比赛")
             return matches

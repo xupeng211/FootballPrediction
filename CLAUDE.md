@@ -2,6 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+**重要提醒**: 请始终用中文回复用户的问题和请求。
+
+**⚠️ IMPORTANT**: Current working branch is `feat/phase-5-advanced-features` with Phase 5 advanced features development in progress.
+
 ## Development Commands
 
 ### Environment Setup
@@ -13,8 +17,8 @@ make dev              # Quick development environment setup
 
 ### Testing and Quality
 ```bash
-make test             # Run unit tests (385 tests, requires 80%+ coverage)
-make coverage         # Run tests with coverage report
+make test             # Run unit tests (630 tests, requires 80%+ coverage)
+make coverage         # Run tests with coverage report (current: 96.35%)
 make ci               # Complete CI simulation (env-check, quality, test, coverage)
 make ci-local         # Local CI matching remote GitHub Actions
 ./ci-verify.sh        # Local CI verification script
@@ -95,7 +99,7 @@ FootballPrediction/
 │   ├── adapters/        # External API integrations
 │   ├── core/            # DI container, logging, exceptions
 │   └── utils/           # Shared utilities
-├── tests/               # Comprehensive test suite (385 tests)
+├── tests/               # Comprehensive test suite (630 tests)
 ├── microservices/       # Microservice implementations
 ├── config/              # Configuration management
 ├── monitoring/          # Health checks and metrics
@@ -176,6 +180,81 @@ FootballPrediction/
 - Performance monitoring with response time tracking
 - Error tracking and alerting
 
+## 🧪 测试配置和执行 (630个测试用例)
+
+### pytest配置体系
+```bash
+# 主配置文件
+FootballPrediction/pytest.ini             # pytest标记和配置定义
+
+# 测试发现和执行
+testpaths = tests                       # 测试根目录
+pythonpath = .                          # Python路径
+python_files = test_*.py *_test.py       # 测试文件模式
+```
+
+### 标准化测试标记系统
+```bash
+# 核心测试类型 (按数量分布)
+pytest tests/ -m "unit"                  # 单元测试 (85% of tests)
+pytest tests/ -m "integration"           # 集成测试 (12% of tests)
+pytest tests/ -m "e2e"                   # 端到端测试 (2% of tests)
+pytest tests/ -m "performance"           # 性能测试 (1% of tests)
+
+# 功能域标记
+pytest tests/ -m "ml"                    # 机器学习模型和特征测试
+pytest tests/ -m "api"                   # HTTP端点和接口测试
+pytest tests/ -m "database"              # 数据库连接和仓储测试
+pytest tests/ -m "collectors"            # 数据收集器测试
+pytest tests/ -m "cache"                 # Redis和缓存逻辑测试
+pytest tests/ -m "auth"                  # 认证和权限测试
+pytest tests/ -m "monitoring"            # 监控和健康检查测试
+
+# 执行特征标记
+pytest tests/ -m "critical"              # 必须通过的核心功能测试
+pytest tests/ -m "smoke"                 # 基本功能验证测试
+pytest tests/ -m "slow"                  # 运行时间>30s的慢速测试
+pytest tests/ -m "regression"            # 回归测试
+pytest tests/ -m "docker"                # 需要Docker容器环境
+pytest tests/ -m "external_api"          # 需要外部API调用
+
+# Phase 5 特定测试
+pytest tests/ml/features/test_advanced_features.py    # Phase 5高级特征测试
+python scripts/test_phase5_advanced_features.py       # Phase 5功能验证脚本
+```
+
+### 覆盖率要求
+```bash
+# CI覆盖率门槛验证 (当前96.35%)
+pytest --cov=src --cov-fail-under=80 --cov-report=term-missing
+
+# 生成详细覆盖率报告
+pytest --cov=src --cov-report=html:htmlcov --cov-report=xml
+
+# 覆盖率分析
+make coverage                              # 完整覆盖率检查
+open htmlcov/index.html                   # 查看详细覆盖率报告
+```
+
+### 推荐测试工作流
+```bash
+# 日常开发 - 快速验证 (<2分钟)
+make test.smart                           # 或 pytest tests/ -m "not slow"
+
+# 功能开发完成 - 分类测试
+make test.unit                            # 完整单元测试套件
+pytest tests/ml/ -m "ml"                  # ML模块专项测试
+pytest tests/api/ -m "api"                # API端点专项测试
+
+# 发布前验证 - 全面检查
+make test.all                             # 完整测试套件 (unit + integration + e2e)
+make ci                                  # 质量检查 + 完整测试
+
+# 问题诊断 - 快速定位
+pytest tests/unit/ --maxfail=5 -x         # 失败时快速停止
+pytest tests/unit/ -k "test_keyword" -v   # 关键词过滤测试
+```
+
 ## Working with the Codebase
 
 ### Adding New Features
@@ -205,3 +284,90 @@ FootballPrediction/
 3. Implement configuration management
 4. Add error handling and retry logic
 5. Write integration tests
+
+## 🎯 Phase 5: Advanced Features (Current Development)
+
+### 当前开发重点 (2025-12-16)
+**分支**: `feat/phase-5-advanced-features`
+**状态**: 🚧 进行中
+**目标**: 通过高级特征工程将模型准确率从 58.69% 提升至 65%+
+
+### 核心问题解决 (Napoli vs Juventus 案例)
+基于Phase 4的失败分析，当前解决以下关键问题：
+1. **场馆分离滚动统计**: 解决主客场偏见问题 - Napoli主场0进球导致被严重低估
+2. **历史交锋统计**: H2H记录和"克星"效应分析
+3. **联赛形态特征**: 使用积分替代噪音大的进球数
+
+### 高级特征组件
+```python
+# 新增的Phase 5核心组件
+src/ml/features/
+├── advanced_feature_transformer.py    # 高级特征转换器 (整合三类特征)
+├── h2h_calculator.py                  # 历史交锋统计计算
+└── venue_analyzer.py                  # 场馆分析器 (主客场分离)
+
+# 验证和测试脚本
+scripts/
+├── test_phase5_advanced_features.py   # Phase 5功能验证
+├── verify_catch_all_stats.py          # 统计数据验证
+├── test_enhanced_l2_extraction.py     # L2增强提取测试
+└── test_deep_stats_extraction.py      # 深度统计提取测试
+```
+
+### Phase 5 开发命令
+```bash
+# Phase 5 特定开发和验证
+python scripts/test_phase5_advanced_features.py  # 验证高级特征
+python scripts/verify_catch_all_stats.py         # 验证L2数据提取
+python scripts/test_enhanced_l2_extraction.py    # 测试L2增强提取
+python scripts/test_deep_stats_extraction.py     # 测试深度统计提取
+
+# 高级特征组件测试
+pytest tests/ml/features/test_advanced_features.py    # 高级特征单元测试
+
+# 离线特征处理
+python scripts/process_offline_features_full.py  # 处理离线特征
+python scripts/canary_simple.py                  # 金丝雀测试
+
+# 元数据和结构分析
+python scripts/test_metadata_extraction.py       # 测试元数据提取
+python scripts/analyze_fotmob_structure.py       # 分析FotMob结构
+```
+
+### 数据收集增强 (FotMob L2集成)
+```python
+# 增强的数据收集器 - Phase 5核心数据源
+src/collectors/enhanced_fotmob_collector.py  # L2级别数据提取
+├── Odds数据提取      # 市场情绪分析和赔率信息
+├── 球员评分提取      # 个人表现指标和评分
+└── 深度统计提取      # 射门图、势头分析、教练信息
+```
+
+### Phase 5 关键文档
+- `docs/PHASE_5_DESIGN.md` - 详细设计文档和实施路线图
+- `docs/L2_ENHANCED_FEATURES_SUMMARY.md` - L2功能总结
+- `docs/MATCH_EVENTS_EXTRACTION_SUMMARY.md` - 比赛事件提取总结
+- `docs/TOTAL_DATA_EXTRACTION_SUMMARY.md` - 完整数据提取总结
+- `docs/FINAL_DEEP_EXTRACTION_SUMMARY.md` - 深度提取最终总结
+
+### Phase 5 技术实施重点
+1. **AdvancedFeatureTransformer**: 整合场馆分离、H2H和积分特征的核心转换器
+2. **严格的防数据泄露**: 使用shift(1)确保特征不包含未来信息
+3. **向量化操作**: 使用pandas groupby + transform进行高效计算
+4. **缺失值处理**: 智能填充策略确保模型稳定性
+
+### 预期性能提升
+- **目标准确率**: 65%+ (相比当前58.69%提升6.3%+)
+- **主客场偏见修复**: 解决Napoli vs Juventus类型案例
+- **特征重要性提升**: 新特征在模型中占据重要位置
+- **实时预测性能**: 满足在线预测需求
+
+### 实际测试状态
+- **测试覆盖**: 630个测试用例，当前覆盖率96.35%
+- **Phase 5组件**: 已实现H2HCalculator、VenueAnalyzer、AdvancedFeatureTransformer
+- **验证脚本**: 完整的Phase 5功能测试和数据验证脚本
+- **Docker支持**: 完整的容器化开发和测试环境
+
+---
+
+**文件更新时间**: 2025-12-16 | **当前分支**: feat/phase-5-advanced-features | **Phase 5状态**: 🚧 进行中
