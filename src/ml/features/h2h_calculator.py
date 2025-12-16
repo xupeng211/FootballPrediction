@@ -27,6 +27,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class H2HStats:
     """历史交锋统计数据结构"""
+
     home_win_rate: float = 0.5  # 主队历史胜率
     avg_goal_diff: float = 0.0  # 平均进球差
     avg_total_goals: float = 2.5  # 平均总进球数
@@ -35,10 +36,10 @@ class H2HStats:
     def to_dict(self) -> Dict[str, float]:
         """转换为字典格式"""
         return {
-            'h2h_home_win_rate': self.home_win_rate,
-            'h2h_avg_goal_diff': self.avg_goal_diff,
-            'h2h_avg_total_goals': self.avg_total_goals,
-            'h2h_matches_count': self.matches_count
+            "h2h_home_win_rate": self.home_win_rate,
+            "h2h_avg_goal_diff": self.avg_goal_diff,
+            "h2h_avg_total_goals": self.avg_total_goals,
+            "h2h_matches_count": self.matches_count,
         }
 
 
@@ -60,8 +61,9 @@ class H2HCalculator:
         self.min_matches = min_matches
         logger.info(f"H2HCalculator 初始化完成，最小交锋场次: {min_matches}")
 
-    def calculate_h2h_for_match(self, df: pd.DataFrame, home_id: int, away_id: int,
-                               match_date: pd.Timestamp) -> H2HStats:
+    def calculate_h2h_for_match(
+        self, df: pd.DataFrame, home_id: int, away_id: int, match_date: pd.Timestamp
+    ) -> H2HStats:
         """
         为特定比赛计算历史交锋统计
 
@@ -76,17 +78,23 @@ class H2HCalculator:
         """
         try:
             # 获取两队历史交锋记录（排除当前比赛）
-            past_matches = self._get_historical_matches(df, home_id, away_id, match_date)
+            past_matches = self._get_historical_matches(
+                df, home_id, away_id, match_date
+            )
 
             if len(past_matches) < self.min_matches:
-                logger.debug(f"历史交锋场次不足: {len(past_matches)} < {self.min_matches}")
+                logger.debug(
+                    f"历史交锋场次不足: {len(past_matches)} < {self.min_matches}"
+                )
                 return self._get_default_stats()
 
             # 计算各项统计指标
             stats = self._calculate_match_stats(past_matches, home_id)
 
-            logger.debug(f"H2H统计完成: {home_id} vs {away_id}, "
-                        f"场次: {stats.matches_count}, 主队胜率: {stats.home_win_rate:.3f}")
+            logger.debug(
+                f"H2H统计完成: {home_id} vs {away_id}, "
+                f"场次: {stats.matches_count}, 主队胜率: {stats.home_win_rate:.3f}"
+            )
 
             return stats
 
@@ -107,18 +115,20 @@ class H2HCalculator:
         logger.info("开始计算所有比赛的历史交锋统计...")
 
         # 按日期排序确保时间顺序
-        df_sorted = df.sort_values('match_date').copy()
+        df_sorted = df.sort_values("match_date").copy()
 
         # 初始化H2H特征列
         h2h_features = []
 
         for idx, match in df_sorted.iterrows():
-            home_id = int(match['home_team_id'])
-            away_id = int(match['away_team_id'])
-            match_date = pd.to_datetime(match['match_date'])
+            home_id = int(match["home_team_id"])
+            away_id = int(match["away_team_id"])
+            match_date = pd.to_datetime(match["match_date"])
 
             # 计算该场比赛的历史交锋统计
-            h2h_stats = self.calculate_h2h_for_match(df_sorted, home_id, away_id, match_date)
+            h2h_stats = self.calculate_h2h_for_match(
+                df_sorted, home_id, away_id, match_date
+            )
 
             # 将统计结果添加到特征列表
             h2h_features.append(h2h_stats.to_dict())
@@ -131,24 +141,26 @@ class H2HCalculator:
 
         return result_df
 
-    def _get_historical_matches(self, df: pd.DataFrame, home_id: int, away_id: int,
-                               match_date: pd.Timestamp) -> pd.DataFrame:
+    def _get_historical_matches(
+        self, df: pd.DataFrame, home_id: int, away_id: int, match_date: pd.Timestamp
+    ) -> pd.DataFrame:
         """获取两队在指定日期前的历史交锋记录"""
 
         # 查找两队之间的历史比赛（不考虑主客场顺序）
         h2h_mask = (
-            ((df['home_team_id'] == home_id) & (df['away_team_id'] == away_id)) |
-            ((df['home_team_id'] == away_id) & (df['away_team_id'] == home_id))
-        )
+            (df["home_team_id"] == home_id) & (df["away_team_id"] == away_id)
+        ) | ((df["home_team_id"] == away_id) & (df["away_team_id"] == home_id))
 
         # 只获取当前日期前的比赛
-        date_mask = pd.to_datetime(df['match_date']) < match_date
+        date_mask = pd.to_datetime(df["match_date"]) < match_date
 
-        past_matches = df[h2h_mask & date_mask].sort_values('match_date')
+        past_matches = df[h2h_mask & date_mask].sort_values("match_date")
 
         return past_matches
 
-    def _calculate_match_stats(self, past_matches: pd.DataFrame, target_home_id: int) -> H2HStats:
+    def _calculate_match_stats(
+        self, past_matches: pd.DataFrame, target_home_id: int
+    ) -> H2HStats:
         """基于历史比赛计算统计数据"""
 
         if past_matches.empty:
@@ -160,11 +172,11 @@ class H2HCalculator:
         total_goals = []
 
         for _, match in past_matches.iterrows():
-            home_score = int(match['home_score'])
-            away_score = int(match['away_score'])
+            home_score = int(match["home_score"])
+            away_score = int(match["away_score"])
 
             # 判断目标主队是否获胜
-            if match['home_team_id'] == target_home_id:
+            if match["home_team_id"] == target_home_id:
                 # 目标队是主队
                 if home_score > away_score:
                     home_wins += 1
@@ -181,7 +193,9 @@ class H2HCalculator:
         # 2. 计算统计指标
         stats = H2HStats()
         stats.matches_count = len(past_matches)
-        stats.home_win_rate = home_wins / stats.matches_count if stats.matches_count > 0 else 0.5
+        stats.home_win_rate = (
+            home_wins / stats.matches_count if stats.matches_count > 0 else 0.5
+        )
         stats.avg_goal_diff = np.mean(goal_diffs) if goal_diffs else 0.0
         stats.avg_total_goals = np.mean(total_goals) if total_goals else 2.5
 
@@ -193,7 +207,7 @@ class H2HCalculator:
             home_win_rate=0.5,  # 默认50%胜率
             avg_goal_diff=0.0,  # 默认0进球差
             avg_total_goals=2.5,  # 默认平均2.5球
-            matches_count=0
+            matches_count=0,
         )
 
     def get_h2h_summary(self, df: pd.DataFrame, team1_id: int, team2_id: int) -> Dict:
@@ -215,14 +229,14 @@ class H2HCalculator:
 
         if all_matches.empty:
             return {
-                'teams': [team1_id, team2_id],
-                'total_matches': 0,
-                'team1_wins': 0,
-                'team2_wins': 0,
-                'draws': 0,
-                'team1_goals': 0,
-                'team2_goals': 0,
-                'last_match_date': None
+                "teams": [team1_id, team2_id],
+                "total_matches": 0,
+                "team1_wins": 0,
+                "team2_wins": 0,
+                "draws": 0,
+                "team1_goals": 0,
+                "team2_goals": 0,
+                "last_match_date": None,
             }
 
         # 统计各项数据
@@ -231,11 +245,11 @@ class H2HCalculator:
         last_match_date = None
 
         for _, match in all_matches.iterrows():
-            home_id = int(match['home_team_id'])
-            away_id = int(match['away_team_id'])
-            home_score = int(match['home_score'])
-            away_score = int(match['away_score'])
-            match_date = pd.to_datetime(match['match_date'])
+            home_id = int(match["home_team_id"])
+            away_id = int(match["away_team_id"])
+            home_score = int(match["home_score"])
+            away_score = int(match["away_score"])
+            match_date = pd.to_datetime(match["match_date"])
 
             # 统计进球
             if home_id == team1_id:
@@ -264,16 +278,22 @@ class H2HCalculator:
                 last_match_date = match_date
 
         return {
-            'teams': [team1_id, team2_id],
-            'total_matches': len(all_matches),
-            'team1_wins': team1_wins,
-            'team2_wins': team2_wins,
-            'draws': draws,
-            'team1_goals': team1_goals,
-            'team2_goals': team2_goals,
-            'team1_win_rate': team1_wins / len(all_matches) if len(all_matches) > 0 else 0,
-            'last_match_date': last_match_date.isoformat() if last_match_date else None,
-            'avg_goals_per_match': (team1_goals + team2_goals) / len(all_matches) if len(all_matches) > 0 else 0
+            "teams": [team1_id, team2_id],
+            "total_matches": len(all_matches),
+            "team1_wins": team1_wins,
+            "team2_wins": team2_wins,
+            "draws": draws,
+            "team1_goals": team1_goals,
+            "team2_goals": team2_goals,
+            "team1_win_rate": (
+                team1_wins / len(all_matches) if len(all_matches) > 0 else 0
+            ),
+            "last_match_date": last_match_date.isoformat() if last_match_date else None,
+            "avg_goals_per_match": (
+                (team1_goals + team2_goals) / len(all_matches)
+                if len(all_matches) > 0
+                else 0
+            ),
         }
 
 
@@ -281,21 +301,27 @@ class H2HCalculator:
 if __name__ == "__main__":
     # 示例数据
     sample_data = {
-        'home_team_id': [1, 2, 1, 3, 2],
-        'away_team_id': [2, 1, 2, 1, 1],
-        'home_score': [2, 1, 0, 1, 3],
-        'away_score': [1, 2, 0, 0, 1],
-        'match_date': ['2024-01-01', '2024-01-15', '2024-02-01', '2024-02-15', '2024-03-01']
+        "home_team_id": [1, 2, 1, 3, 2],
+        "away_team_id": [2, 1, 2, 1, 1],
+        "home_score": [2, 1, 0, 1, 3],
+        "away_score": [1, 2, 0, 0, 1],
+        "match_date": [
+            "2024-01-01",
+            "2024-01-15",
+            "2024-02-01",
+            "2024-02-15",
+            "2024-03-01",
+        ],
     }
 
     df = pd.DataFrame(sample_data)
-    df['match_date'] = pd.to_datetime(df['match_date'])
+    df["match_date"] = pd.to_datetime(df["match_date"])
 
     # 创建H2H计算器
     h2h_calc = H2HCalculator(min_matches=1)
 
     # 计算H2H统计
-    h2h_stats = h2h_calc.calculate_h2h_for_match(df, 1, 2, pd.Timestamp('2024-03-15'))
+    h2h_stats = h2h_calc.calculate_h2h_for_match(df, 1, 2, pd.Timestamp("2024-03-15"))
     print(f"H2H统计结果: {h2h_stats.to_dict()}")
 
     # 获取详细摘要
