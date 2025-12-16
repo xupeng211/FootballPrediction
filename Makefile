@@ -81,6 +81,8 @@ lock: venv ## 生成依赖锁定文件
 # -------------------------------
 .PHONY: env-check
 env-check: venv ## 环境检查
+	@echo "$(BLUE)>>> 初始化项目结构...$(RESET)"
+	@mkdir -p logs tests data models temp .pytest_cache .mypy_cache
 	@echo "$(BLUE)>>> 运行环境检查...$(RESET)"
 	@if $(ACTIVATE) && python scripts/env_checker.py --summary --fix-suggestions; then \
 		echo "$(GREEN)✅ 环境检查通过$(RESET)"; \
