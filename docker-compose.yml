@@ -42,7 +42,7 @@ services:
     networks:
       - football-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U football_user"]
       interval: 10s
       timeout: 5s
       retries: 5

@@ -8,9 +8,8 @@ import asyncio
 import json
 from typing import Any, Optional
 import aiohttp
-from src.core.logging import get_logger
-
-logger = get_logger(__name__)
+import logging
+logger = logging.getLogger(__name__)
 
 
 class EnhancedFotMobCollector:
@@ -124,34 +123,54 @@ class EnhancedFotMobCollector:
             bool: 保存是否成功
         """
         try:
-            # 使用数据库连接池，提高性能和稳定性
-            from src.database.db_pool import get_db_pool
+            # 使用asyncpg直接连接，避免ORM开销
+            import asyncpg
+            import urllib.parse
+            import os
 
-            # 获取数据库连接池
-            pool = await get_db_pool()
-
-            # 构建UPSERT SQL语句 - 数据湖模式
-            query = """
-                INSERT INTO raw_match_data
-                (external_id, source, match_data, collected_at, created_at, updated_at)
-                VALUES ($1, $2, $3, NOW(), NOW(), NOW())
-                ON CONFLICT (external_id)
-                DO UPDATE SET
-                    match_data = EXCLUDED.match_data,
-                    updated_at = NOW()
-            """
-
-            # 执行保存 - 使用连接池
-            await pool.execute(
-                query,
-                match_id,
-                'fotmob',
-                json.dumps(data, ensure_ascii=False)
+            # 从环境变量获取数据库URL
+            db_url = os.getenv(
+                "DB_URL",
+                "postgresql+asyncpg://postgres:postgres@localhost:5432/football_prediction"
             )
 
-            data_size = len(json.dumps(data, ensure_ascii=False))
-            logger.info(f"📊 原始数据已保存: {match_id} (大小: {data_size} 字节)")
-            return True
+            # 解析数据库URL
+            parsed = urllib.parse.urlparse(db_url.replace("postgresql+asyncpg://", "postgresql://"))
+
+            conn = await asyncpg.connect(
+                host=parsed.hostname or "localhost",
+                port=parsed.port or 5432,
+                user=parsed.username or "postgres",
+                password=parsed.password or "postgres",
+                database=parsed.path.lstrip("/") or "football_prediction"
+            )
+
+            try:
+                # 构建UPSERT SQL语句 - 数据湖模式
+                query = """
+                    INSERT INTO raw_match_data
+                    (external_id, source, raw_data, collected_at, created_at, updated_at)
+                    VALUES ($1, $2, $3, NOW(), NOW(), NOW())
+                    ON CONFLICT (external_id)
+                    DO UPDATE SET
+                        raw_data = EXCLUDED.raw_data,
+                        updated_at = NOW()
+                """
+
+                # 执行保存
+                await conn.execute(
+                    query,
+                    match_id,
+                    'fotmob',
+                    json.dumps(data, ensure_ascii=False)
+                )
+
+                data_size = len(json.dumps(data, ensure_ascii=False))
+                logger.info(f"📊 原始数据已保存: {match_id} (大小: {data_size} 字节)")
+                return True
+
+            finally:
+                await conn.close()
 
         except Exception as e:
             logger.error(f"❌ 原始数据保存失败 {match_id}: {e}")
