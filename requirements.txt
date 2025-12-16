@@ -20,3 +20,6 @@ mypy>=1.0.0
 bandit>=1.7.0
 alembic>=1.8.0
 radon>=5.1.0
+psutil>=5.9.0
+requests>=2.31.0
+aiohttp>=3.8.0
