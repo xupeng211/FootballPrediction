@@ -35,11 +35,10 @@ import pandas as pd
 import numpy as np
 
 # 导入M1模块 - 数据库访问
-from src.database.db_pool import DatabasePool, get_db_pool
+from src.database import DatabasePool, get_db_pool
 
 # 导入M3模块 - 特征工程
-from src.features.extractor import MatchFeatureExtractor
-from src.features.schemas import MatchFeatureSet
+from src.ml.features.extractor import MatchFeatureExtractor, MatchFeatureSet
 
 # 导入内部模块 - 标签定义
 from .target_labels import MatchOutcome, score_to_label, label_to_numeric
