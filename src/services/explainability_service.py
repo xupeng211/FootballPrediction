@@ -30,9 +30,7 @@ class ExplainabilityService:
         logger.debug("SHAP可解释性服务初始化完成")
 
     async def get_shap_contributions(
-        self,
-        features: pd.DataFrame,
-        model: XGBoostClassifier
+        self, features: pd.DataFrame, model: XGBoostClassifier
     ) -> List[Dict[str, float]]:
         """
         计算SHAP特征贡献度
@@ -50,12 +48,14 @@ class ExplainabilityService:
             ExplainabilityError: SHAP计算失败时抛出
         """
         try:
-            logger.info(f"开始计算SHAP贡献度，特征数量: {len(features)}, 预测数量: {len(features)}")
+            logger.info(
+                f"开始计算SHAP贡献度，特征数量: {len(features)}, 预测数量: {len(features)}"
+            )
 
             # 获取模型基础信息
             model_info = model.get_model_info()
-            model_path = model_info.get('model_path', 'unknown')
-            model_version = model_info.get('model_version', 'unknown')
+            model_path = model_info.get("model_path", "unknown")
+            model_version = model_info.get("model_version", "unknown")
 
             # 验证模型已加载
             if not model.is_trained:
@@ -93,13 +93,14 @@ class ExplainabilityService:
 
         if model_id not in self._explainer_cache:
             import shap
+
             logger.debug("创建新的SHAP TreeExplainer (fast模式)")
 
             # 使用fast模式优化性能
             explainer = shap.TreeExplainer(
                 model.model,
-                model_output='probability',  # 输出概率值
-                feature_perturbation='interventional'  # 干预式扰动
+                model_output="probability",  # 输出概率值
+                feature_perturbation="interventional",  # 干预式扰动
             )
 
             self._explainer_cache[model_id] = explainer
@@ -122,7 +123,7 @@ class ExplainabilityService:
             match_id="test",
             home_team_id="home",
             away_team_id="away",
-            match_date=datetime.now()
+            match_date=datetime.now(),
         )
         expected_feature_names = set(empty_feature_set.get_feature_names())
 
@@ -146,8 +147,7 @@ class ExplainabilityService:
         try:
             # 使用SHAP fast mode计算
             shap_values = explainer.shap_values(
-                features,
-                check_additivity=True  # 检查加性一致性
+                features, check_additivity=True  # 检查加性一致性
             )
 
             # 处理多分类SHAP值（如果是多分类输出）
@@ -164,10 +164,7 @@ class ExplainabilityService:
             raise ExplainabilityError(f"SHAP值计算失败: {str(e)}")
 
     async def _format_contributions(
-        self,
-        features: pd.DataFrame,
-        shap_values: np.ndarray,
-        model: XGBoostClassifier
+        self, features: pd.DataFrame, shap_values: np.ndarray, model: XGBoostClassifier
     ) -> List[Dict[str, float]]:
         """将SHAP值格式化为特征贡献度字典"""
         contributions_list = []
@@ -182,9 +179,7 @@ class ExplainabilityService:
 
             # 按贡献度绝对值排序（可选）
             sorted_contributions = dict(
-                sorted(contributions.items(),
-                      key=lambda x: abs(x[1]),
-                      reverse=True)
+                sorted(contributions.items(), key=lambda x: abs(x[1]), reverse=True)
             )
 
             contributions_list.append(sorted_contributions)
@@ -196,7 +191,7 @@ class ExplainabilityService:
         features: pd.DataFrame,
         model: XGBoostClassifier,
         shap_values: np.ndarray,
-        contributions_list: List[Dict[str, float]]
+        contributions_list: List[Dict[str, float]],
     ):
         """验证SHAP值计算的一致性和正确性"""
         try:
@@ -233,8 +228,7 @@ class ExplainabilityService:
             logger.warning(f"SHAP一致性验证失败（不影响功能）: {e}")
 
     def get_feature_importance_ranking(
-        self,
-        contributions_list: List[Dict[str, float]]
+        self, contributions_list: List[Dict[str, float]]
     ) -> Dict[str, float]:
         """
         计算全局特征重要性排名
@@ -279,9 +273,7 @@ class ExplainabilityService:
         logger.info(f"已清除SHAP解释器缓存，清除数量: {cache_size}")
 
     async def explain_single_prediction(
-        self,
-        features: Dict[str, Any],
-        model: XGBoostClassifier
+        self, features: Dict[str, Any], model: XGBoostClassifier
     ) -> Dict[str, Any]:
         """
         解释单个预测结果
@@ -309,21 +301,21 @@ class ExplainabilityService:
 
             # 格式化解释结果
             explanation = {
-                'prediction': prediction_result,
-                'feature_contributions': contributions,
-                'top_positive_contributors': [
-                    {'feature': k, 'contribution': v}
-                    for k, v in sorted(contributions.items(),
-                                     key=lambda x: x[1], reverse=True)[:5]
+                "prediction": prediction_result,
+                "feature_contributions": contributions,
+                "top_positive_contributors": [
+                    {"feature": k, "contribution": v}
+                    for k, v in sorted(
+                        contributions.items(), key=lambda x: x[1], reverse=True
+                    )[:5]
                     if v > 0
                 ],
-                'top_negative_contributors': [
-                    {'feature': k, 'contribution': v}
-                    for k, v in sorted(contributions.items(),
-                                     key=lambda x: x[1])[:5]
+                "top_negative_contributors": [
+                    {"feature": k, "contribution": v}
+                    for k, v in sorted(contributions.items(), key=lambda x: x[1])[:5]
                     if v < 0
                 ],
-                'feature_importance_ranking': importance_ranking
+                "feature_importance_ranking": importance_ranking,
             }
 
             return explanation

@@ -33,7 +33,11 @@ from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch, mock_open
 
 # 导入待测试的模块（这些将在Step 3中实现）
-from src.ml.models.xgboost_classifier import XGBoostClassifier, XGBoostModelConfig, create_xgboost_classifier
+from src.ml.models.xgboost_classifier import (
+    XGBoostClassifier,
+    XGBoostModelConfig,
+    create_xgboost_classifier,
+)
 from src.ml.training.training_pipeline import ClassificationTrainingPipeline
 
 # 导入依赖模块
@@ -50,7 +54,7 @@ class TestXGBoostModelConfig:
         assert config.max_depth == 6
         assert config.learning_rate == 0.1
         assert config.n_estimators == 100
-        assert config.objective == 'multi:softprob'
+        assert config.objective == "multi:softprob"
         assert config.num_class == 3
         assert config.model_name == "football_1x2_classifier"
         assert config.model_version == "1.0.0"
@@ -84,8 +88,8 @@ class TestXGBoostModelConfig:
         # 测试字典转换
         config_dict = config.to_dict()
         assert isinstance(config_dict, dict)
-        assert config_dict['model_name'] == "test_model"
-        assert config_dict['max_depth'] == 8
+        assert config_dict["model_name"] == "test_model"
+        assert config_dict["max_depth"] == 8
 
         # 测试从字典重建
         rebuilt_config = XGBoostModelConfig.from_dict(config_dict)
@@ -120,7 +124,7 @@ class TestXGBoostClassifier:
             learning_rate=0.1,
             n_estimators=10,  # 小数量用于快速测试
             early_stopping_rounds=2,
-            random_state=42
+            random_state=42,
         )
 
     @pytest.fixture
@@ -173,12 +177,12 @@ class TestXGBoostClassifier:
         assert len(classifier.classes_) == 3
 
         # 验证指标
-        assert 'train_accuracy' in metrics
-        assert 'training_time_seconds' in metrics
-        assert 'n_features' in metrics
-        assert 'n_samples' in metrics
-        assert metrics['train_accuracy'] >= 0.0
-        assert metrics['train_accuracy'] <= 1.0
+        assert "train_accuracy" in metrics
+        assert "training_time_seconds" in metrics
+        assert "n_features" in metrics
+        assert "n_samples" in metrics
+        assert metrics["train_accuracy"] >= 0.0
+        assert metrics["train_accuracy"] <= 1.0
 
     def test_model_training_with_validation(self, sample_config, sample_data):
         """测试带验证集的训练"""
@@ -194,10 +198,10 @@ class TestXGBoostClassifier:
         metrics = classifier.train(X_train, y_train, X_val, y_val)
 
         # 验证包含验证指标
-        assert 'val_accuracy' in metrics
-        assert 'train_accuracy' in metrics
-        assert metrics['val_accuracy'] >= 0.0
-        assert metrics['val_accuracy'] <= 1.0
+        assert "val_accuracy" in metrics
+        assert "train_accuracy" in metrics
+        assert metrics["val_accuracy"] >= 0.0
+        assert metrics["val_accuracy"] <= 1.0
 
     def test_model_prediction(self, sample_config, sample_data):
         """测试模型预测"""
@@ -230,9 +234,13 @@ class TestXGBoostClassifier:
 
         # 验证评估指标
         expected_metrics = [
-            'test_accuracy', 'test_precision_weighted',
-            'test_recall_weighted', 'test_f1_weighted',
-            'test_precision_HOME_WIN', 'test_precision_DRAW', 'test_precision_AWAY_WIN'
+            "test_accuracy",
+            "test_precision_weighted",
+            "test_recall_weighted",
+            "test_f1_weighted",
+            "test_precision_HOME_WIN",
+            "test_precision_DRAW",
+            "test_precision_AWAY_WIN",
         ]
 
         for metric in expected_metrics:
@@ -253,10 +261,10 @@ class TestXGBoostClassifier:
         # 验证特征重要性
         assert isinstance(importance_df, pd.DataFrame)
         assert len(importance_df) == X.shape[1]
-        assert 'feature_name' in importance_df.columns
-        assert 'importance' in importance_df.columns
-        assert 'feature_display_name' in importance_df.columns
-        assert all(importance_df['importance'] >= 0)
+        assert "feature_name" in importance_df.columns
+        assert "importance" in importance_df.columns
+        assert "feature_display_name" in importance_df.columns
+        assert all(importance_df["importance"] >= 0)
 
     def test_model_save_and_load(self, sample_config, sample_data, tmp_path):
         """测试模型保存和加载"""
@@ -273,8 +281,8 @@ class TestXGBoostClassifier:
 
         # 验证文件存在
         assert model_path.exists()
-        assert model_path.with_suffix('.json').exists()
-        assert model_path.with_suffix('.config.json').exists()
+        assert model_path.with_suffix(".json").exists()
+        assert model_path.with_suffix(".config.json").exists()
 
         # 加载模型
         loaded_classifier = XGBoostClassifier.load_model(model_path)
@@ -336,16 +344,16 @@ class TestXGBoostClassifier:
 
         # 未训练时的信息
         info = classifier.get_model_info()
-        assert info['is_trained'] is False
-        assert info['model_name'] == sample_config.model_name
-        assert 'n_estimators' not in info  # 未训练时没有此信息
+        assert info["is_trained"] is False
+        assert info["model_name"] == sample_config.model_name
+        assert "n_estimators" not in info  # 未训练时没有此信息
 
         # 训练后的信息
         classifier.train(X, y)
         info = classifier.get_model_info()
-        assert info['is_trained'] is True
-        assert 'n_estimators' in info
-        assert 'model_params' in info
+        assert info["is_trained"] is True
+        assert "n_estimators" in info
+        assert "model_params" in info
 
 
 class TestClassificationTrainingPipeline:
@@ -359,21 +367,23 @@ class TestClassificationTrainingPipeline:
         n_samples = 200
 
         data = {
-            'match_id': [f'match_{i}' for i in range(n_samples)],
-            'home_team_id': [f'team_{i % 10}' for i in range(n_samples)],
-            'away_team_id': [f'team_{i % 10 + 10}' for i in range(n_samples)],
-            'match_date': ['2024-01-01'] * n_samples,
-            'final_home_score': np.random.poisson(1.5, n_samples),
-            'final_away_score': np.random.poisson(1.2, n_samples),
-            'target_label': np.random.choice(['HOME_WIN', 'DRAW', 'AWAY_WIN'], n_samples),
-            'target_numeric': np.random.choice([2, 1, 0], n_samples),
-            'feature_completeness_score': np.random.uniform(0.8, 1.0, n_samples),
-            'data_quality_flag': ['HIGH'] * n_samples
+            "match_id": [f"match_{i}" for i in range(n_samples)],
+            "home_team_id": [f"team_{i % 10}" for i in range(n_samples)],
+            "away_team_id": [f"team_{i % 10 + 10}" for i in range(n_samples)],
+            "match_date": ["2024-01-01"] * n_samples,
+            "final_home_score": np.random.poisson(1.5, n_samples),
+            "final_away_score": np.random.poisson(1.2, n_samples),
+            "target_label": np.random.choice(
+                ["HOME_WIN", "DRAW", "AWAY_WIN"], n_samples
+            ),
+            "target_numeric": np.random.choice([2, 1, 0], n_samples),
+            "feature_completeness_score": np.random.uniform(0.8, 1.0, n_samples),
+            "data_quality_flag": ["HIGH"] * n_samples,
         }
 
         # 添加特征列
         for i in range(13):  # 13个特征
-            data[f'feature_{i+1:03d}_test_feature'] = np.random.randn(n_samples)
+            data[f"feature_{i+1:03d}_test_feature"] = np.random.randn(n_samples)
 
         df = pd.DataFrame(data)
         dataset_path = tmp_path / "test_dataset.parquet"
@@ -390,7 +400,9 @@ class TestClassificationTrainingPipeline:
     def test_pipeline_initialization(self, tmp_path):
         """测试流水线初始化"""
         model_output_dir = tmp_path / "models"
-        pipeline = ClassificationTrainingPipeline(model_output_dir=str(model_output_dir))
+        pipeline = ClassificationTrainingPipeline(
+            model_output_dir=str(model_output_dir)
+        )
 
         assert pipeline.model_output_dir == Path(model_output_dir)
         assert isinstance(pipeline.classifier, XGBoostClassifier)
@@ -398,16 +410,21 @@ class TestClassificationTrainingPipeline:
     def test_pipeline_run_success(self, training_pipeline, mock_dataset_path, tmp_path):
         """测试成功运行流水线"""
         # 运行流水线
-        metrics = asyncio.run(training_pipeline.run_pipeline(
-            dataset_path=str(mock_dataset_path),
-            model_output_path=str(tmp_path / "trained_model.pkl")
-        ))
+        metrics = asyncio.run(
+            training_pipeline.run_pipeline(
+                dataset_path=str(mock_dataset_path),
+                model_output_path=str(tmp_path / "trained_model.pkl"),
+            )
+        )
 
         # 验证输出指标
         expected_metrics = [
-            'train_accuracy', 'test_accuracy',
-            'train_precision_weighted', 'test_precision_weighted',
-            'train_f1_weighted', 'test_f1_weighted'
+            "train_accuracy",
+            "test_accuracy",
+            "train_precision_weighted",
+            "test_precision_weighted",
+            "train_f1_weighted",
+            "test_f1_weighted",
         ]
 
         for metric in expected_metrics:
@@ -425,7 +442,9 @@ class TestClassificationTrainingPipeline:
     def test_pipeline_data_preprocessing(self, training_pipeline, mock_dataset_path):
         """测试数据预处理"""
         # 加载和预处理数据
-        X, y, feature_names = training_pipeline._load_and_preprocess_data(str(mock_dataset_path))
+        X, y, feature_names = training_pipeline._load_and_preprocess_data(
+            str(mock_dataset_path)
+        )
 
         # 验证数据形状和类型
         assert isinstance(X, np.ndarray)
@@ -439,13 +458,17 @@ class TestClassificationTrainingPipeline:
         unique_labels = np.unique(y)
         assert all(label in [0, 1, 2] for label in unique_labels)
 
-    def test_pipeline_model_saving(self, training_pipeline, mock_dataset_path, tmp_path):
+    def test_pipeline_model_saving(
+        self, training_pipeline, mock_dataset_path, tmp_path
+    ):
         """测试模型保存功能"""
         # 运行流水线
-        metrics = asyncio.run(training_pipeline.run_pipeline(
-            dataset_path=str(mock_dataset_path),
-            model_output_path=str(tmp_path / "pipeline_test_model.pkl")
-        ))
+        metrics = asyncio.run(
+            training_pipeline.run_pipeline(
+                dataset_path=str(mock_dataset_path),
+                model_output_path=str(tmp_path / "pipeline_test_model.pkl"),
+            )
+        )
 
         # 验证模型文件存在
         model_file = tmp_path / "pipeline_test_model.pkl"
@@ -460,29 +483,35 @@ class TestClassificationTrainingPipeline:
         assert metadata_file.exists()
 
         # 验证元数据内容
-        with open(metadata_file, 'r', encoding='utf-8') as f:
+        with open(metadata_file, "r", encoding="utf-8") as f:
             metadata = json.load(f)
 
-        assert 'training_metrics' in metadata
-        assert 'model_config' in metadata
-        assert 'feature_names' in metadata
-        assert 'trained_at' in metadata
+        assert "training_metrics" in metadata
+        assert "model_config" in metadata
+        assert "feature_names" in metadata
+        assert "trained_at" in metadata
 
     def test_pipeline_error_handling_invalid_dataset(self, training_pipeline):
         """测试无效数据集的错误处理"""
         with pytest.raises(FileNotFoundError):
-            asyncio.run(training_pipeline.run_pipeline(
-                dataset_path="nonexistent_dataset.parquet",
-                model_output_path="model.pkl"
-            ))
+            asyncio.run(
+                training_pipeline.run_pipeline(
+                    dataset_path="nonexistent_dataset.parquet",
+                    model_output_path="model.pkl",
+                )
+            )
 
-    def test_pipeline_feature_importance_analysis(self, training_pipeline, mock_dataset_path, tmp_path):
+    def test_pipeline_feature_importance_analysis(
+        self, training_pipeline, mock_dataset_path, tmp_path
+    ):
         """测试特征重要性分析"""
         # 运行流水线
-        asyncio.run(training_pipeline.run_pipeline(
-            dataset_path=str(mock_dataset_path),
-            model_output_path=str(tmp_path / "importance_test_model.pkl")
-        ))
+        asyncio.run(
+            training_pipeline.run_pipeline(
+                dataset_path=str(mock_dataset_path),
+                model_output_path=str(tmp_path / "importance_test_model.pkl"),
+            )
+        )
 
         # 验证特征重要性文件
         importance_file = tmp_path / "feature_importance.csv"
@@ -490,10 +519,10 @@ class TestClassificationTrainingPipeline:
 
         # 验证特征重要性内容
         importance_df = pd.read_csv(importance_file)
-        assert 'feature_name' in importance_df.columns
-        assert 'importance' in importance_df.columns
+        assert "feature_name" in importance_df.columns
+        assert "importance" in importance_df.columns
         assert len(importance_df) > 0
-        assert all(importance_df['importance'] >= 0)
+        assert all(importance_df["importance"] >= 0)
 
 
 class TestIntegrationScenarios:
@@ -508,27 +537,31 @@ class TestIntegrationScenarios:
 
         # 更真实的特征数据
         data = {
-            'match_id': [f'match_{i}' for i in range(n_samples)],
-            'final_home_score': np.random.poisson(1.4, n_samples),
-            'final_away_score': np.random.poisson(1.1, n_samples),
-            'target_numeric': np.random.choice([0, 1, 2], n_samples, p=[0.28, 0.26, 0.46])
+            "match_id": [f"match_{i}" for i in range(n_samples)],
+            "final_home_score": np.random.poisson(1.4, n_samples),
+            "final_away_score": np.random.poisson(1.1, n_samples),
+            "target_numeric": np.random.choice(
+                [0, 1, 2], n_samples, p=[0.28, 0.26, 0.46]
+            ),
         }
 
         # Phase 5特征 (13个)
         feature_data = {
-            'feature_001_home_form_score_5': np.random.beta(2, 3, n_samples),
-            'feature_002_away_form_score_5': np.random.beta(2, 3, n_samples),
-            'feature_003_home_form_score_3': np.random.beta(2, 3, n_samples),
-            'feature_004_away_form_score_3': np.random.beta(2, 3, n_samples),
-            'feature_005_home_xg_efficiency_5': np.random.gamma(2, 0.5, n_samples),
-            'feature_006_away_xg_efficiency_5': np.random.gamma(2, 0.5, n_samples),
-            'feature_007_home_xg_efficiency_3': np.random.gamma(2, 0.5, n_samples),
-            'feature_008_away_xg_efficiency_3': np.random.gamma(2, 0.5, n_samples),
-            'feature_009_odds_home_normalized': np.random.beta(1.5, 3, n_samples),
-            'feature_010_odds_draw_normalized': np.random.beta(1, 3, n_samples),
-            'feature_011_odds_away_normalized': np.random.beta(1.5, 3, n_samples),
-            'feature_012_h2h_home_win_rate': np.random.beta(3, 3, n_samples),
-            'feature_013_h2h_match_count_normalized': np.random.uniform(0, 1, n_samples)
+            "feature_001_home_form_score_5": np.random.beta(2, 3, n_samples),
+            "feature_002_away_form_score_5": np.random.beta(2, 3, n_samples),
+            "feature_003_home_form_score_3": np.random.beta(2, 3, n_samples),
+            "feature_004_away_form_score_3": np.random.beta(2, 3, n_samples),
+            "feature_005_home_xg_efficiency_5": np.random.gamma(2, 0.5, n_samples),
+            "feature_006_away_xg_efficiency_5": np.random.gamma(2, 0.5, n_samples),
+            "feature_007_home_xg_efficiency_3": np.random.gamma(2, 0.5, n_samples),
+            "feature_008_away_xg_efficiency_3": np.random.gamma(2, 0.5, n_samples),
+            "feature_009_odds_home_normalized": np.random.beta(1.5, 3, n_samples),
+            "feature_010_odds_draw_normalized": np.random.beta(1, 3, n_samples),
+            "feature_011_odds_away_normalized": np.random.beta(1.5, 3, n_samples),
+            "feature_012_h2h_home_win_rate": np.random.beta(3, 3, n_samples),
+            "feature_013_h2h_match_count_normalized": np.random.uniform(
+                0, 1, n_samples
+            ),
         }
 
         data.update(feature_data)
@@ -539,20 +572,19 @@ class TestIntegrationScenarios:
 
         # 创建并运行训练流水线
         pipeline = ClassificationTrainingPipeline(
-            model_output_dir=str(tmp_path / "models"),
-            config_type="fine_tuning"
+            model_output_dir=str(tmp_path / "models"), config_type="fine_tuning"
         )
 
         # 运行完整流水线
         metrics = await pipeline.run_pipeline(
             dataset_path=str(dataset_path),
-            model_output_path=str(tmp_path / "end_to_end_model.pkl")
+            model_output_path=str(tmp_path / "end_to_end_model.pkl"),
         )
 
         # 验证结果
-        assert metrics['train_accuracy'] >= 0.5  # 基线准确率
-        assert metrics['test_accuracy'] >= 0.4   # 测试准确率
-        assert 'training_time_seconds' in metrics
+        assert metrics["train_accuracy"] >= 0.5  # 基线准确率
+        assert metrics["test_accuracy"] >= 0.4  # 测试准确率
+        assert "training_time_seconds" in metrics
 
         # 验证模型持久化
         model_file = tmp_path / "end_to_end_model.pkl"
@@ -560,7 +592,9 @@ class TestIntegrationScenarios:
 
         # 验证模型可以重新加载并预测
         loaded_classifier = XGBoostClassifier.load_model(model_file)
-        test_data = df[[col for col in df.columns if col.startswith('feature_')]].values[:10]
+        test_data = df[
+            [col for col in df.columns if col.startswith("feature_")]
+        ].values[:10]
         predictions = loaded_classifier.predict(test_data)
 
         assert len(predictions) == 10

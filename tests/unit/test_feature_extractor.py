@@ -28,6 +28,7 @@ sys.path.insert(0, str(project_root / "src"))
 # from features.extractor import MatchFeatureExtractor
 # from features.schemas import MatchFeatureSet, TeamFormFeatures, XGFeatures, OddsFeatures
 
+
 # Mock数据构造器
 class MockMatchDataGenerator:
     """模拟比赛数据生成器"""
@@ -47,8 +48,16 @@ class MockMatchDataGenerator:
         base_date = datetime.now() - timedelta(days=30)
 
         teams = [
-            "team_1", "team_2", "team_3", "team_4", "team_5",
-            "team_6", "team_7", "team_8", "team_9", "team_10"
+            "team_1",
+            "team_2",
+            "team_3",
+            "team_4",
+            "team_5",
+            "team_6",
+            "team_7",
+            "team_8",
+            "team_9",
+            "team_10",
         ]
 
         for i in range(num_matches):
@@ -79,42 +88,45 @@ class MockMatchDataGenerator:
                 "content": {
                     "general": {
                         "matchId": f"match_{i}",
-                        "homeTeam": {"id": home_team, "name": f"Team {home_team.split('_')[1]}"},
-                        "awayTeam": {"id": away_team, "name": f"Team {away_team.split('_')[1]}"},
-                        "status": {"finished": True}
+                        "homeTeam": {
+                            "id": home_team,
+                            "name": f"Team {home_team.split('_')[1]}",
+                        },
+                        "awayTeam": {
+                            "id": away_team,
+                            "name": f"Team {away_team.split('_')[1]}",
+                        },
+                        "status": {"finished": True},
                     },
-                    "stats": {
-                        "xg": {
-                            "home": home_xg,
-                            "away": away_xg
-                        }
-                    },
+                    "stats": {"xg": {"home": home_xg, "away": away_xg}},
                     "odds": {
-                        "preMatchOdds": {
-                            "home": home_odds,
-                            "draw": draw_odds,
-                            "away": away_odds
-                        } if home_odds else None
-                    }
+                        "preMatchOdds": (
+                            {"home": home_odds, "draw": draw_odds, "away": away_odds}
+                            if home_odds
+                            else None
+                        )
+                    },
                 }
             }
 
-            data.append({
-                "match_id": f"match_{i}",
-                "home_team_id": home_team,
-                "away_team_id": away_team,
-                "match_date": match_date.isoformat(),
-                "home_score": home_score,
-                "away_score": away_score,
-                "home_xg": home_xg,
-                "away_xg": away_xg,
-                "home_odds": home_odds,
-                "draw_odds": draw_odds,
-                "away_odds": away_odds,
-                "raw_match_data": raw_data,
-                "venue": f"Stadium {i % 5 + 1}",
-                "status": "FINISHED"
-            })
+            data.append(
+                {
+                    "match_id": f"match_{i}",
+                    "home_team_id": home_team,
+                    "away_team_id": away_team,
+                    "match_date": match_date.isoformat(),
+                    "home_score": home_score,
+                    "away_score": away_score,
+                    "home_xg": home_xg,
+                    "away_xg": away_xg,
+                    "home_odds": home_odds,
+                    "draw_odds": draw_odds,
+                    "away_odds": away_odds,
+                    "raw_match_data": raw_data,
+                    "venue": f"Stadium {i % 5 + 1}",
+                    "status": "FINISHED",
+                }
+            )
 
         return pd.DataFrame(data)
 
@@ -127,9 +139,9 @@ class MockMatchDataGenerator:
     def create_no_odds_data() -> pd.DataFrame:
         """创建无赔率数据的DataFrame"""
         df = MockMatchDataGenerator.create_historical_dataframe(5)
-        df['home_odds'] = None
-        df['draw_odds'] = None
-        df['away_odds'] = None
+        df["home_odds"] = None
+        df["draw_odds"] = None
+        df["away_odds"] = None
         return df
 
 
@@ -149,15 +161,24 @@ class TestMatchFeatureExtractor:
 
         # 验证数据结构
         assert len(df) == 10, f"预期10行数据，实际{len(df)}行"
-        assert all(col in df.columns for col in [
-            'match_id', 'home_team_id', 'away_team_id', 'match_date',
-            'home_score', 'away_score', 'home_xg', 'away_xg'
-        ]), "缺少必要的列"
+        assert all(
+            col in df.columns
+            for col in [
+                "match_id",
+                "home_team_id",
+                "away_team_id",
+                "match_date",
+                "home_score",
+                "away_score",
+                "home_xg",
+                "away_xg",
+            ]
+        ), "缺少必要的列"
 
         # 验证数据质量
         assert not df.empty, "DataFrame不应为空"
-        assert df['home_score'].notna().all(), "主队得分不应为空"
-        assert df['away_score'].notna().all(), "客队得分不应为空"
+        assert df["home_score"].notna().all(), "主队得分不应为空"
+        assert df["away_score"].notna().all(), "客队得分不应为空"
 
         print(f"   ✅ 生成了{len(df)}场比赛数据")
         print(f"   📊 数据列: {list(df.columns)}")
@@ -179,9 +200,11 @@ class TestMatchFeatureExtractor:
             # feature_set = self.extractor.extract_features(target_match_id, historical_data)
 
             # 临时验证逻辑
-            assert target_match_id in historical_data['match_id'].values, "目标比赛应在历史数据中"
-            assert target_match['home_team_id'] == "team_10", "主队ID应该匹配"
-            assert target_match['away_team_id'] == "team_1", "客队ID应该匹配"
+            assert (
+                target_match_id in historical_data["match_id"].values
+            ), "目标比赛应在历史数据中"
+            assert target_match["home_team_id"] == "team_10", "主队ID应该匹配"
+            assert target_match["away_team_id"] == "team_1", "客队ID应该匹配"
 
             print(f"   ✅ 目标比赛验证通过: {target_match_id}")
             print(f"   🏠 主队: {target_match['home_team_id']}")
@@ -203,7 +226,9 @@ class TestMatchFeatureExtractor:
             # feature_set = self.extractor.extract_features(target_match_id, historical_data)
 
             # 验证输入数据
-            assert len(historical_data) == 2, f"预期2行数据，实际{len(historical_data)}行"
+            assert (
+                len(historical_data) == 2
+            ), f"预期2行数据，实际{len(historical_data)}行"
 
             # 临时验证
             print(f"   ✅ 数据不足场景可处理: {len(historical_data)}场比赛")
@@ -218,16 +243,16 @@ class TestMatchFeatureExtractor:
 
         # 生成无赔率的数据
         historical_data = MockMatchDataGenerator.create_no_odds_data()
-        target_match_id = historical_data.iloc[-1]['match_id']
+        target_match_id = historical_data.iloc[-1]["match_id"]
 
         try:
             # 预期：应该能处理无赔率数据，赔率特征应该使用默认值
             # feature_set = self.extractor.extract_features(target_match_id, historical_data)
 
             # 验证无赔率数据
-            assert historical_data['home_odds'].isna().all(), "应该无主胜赔率数据"
-            assert historical_data['draw_odds'].isna().all(), "应该无平局赔率数据"
-            assert historical_data['away_odds'].isna().all(), "应该无客胜赔率数据"
+            assert historical_data["home_odds"].isna().all(), "应该无主胜赔率数据"
+            assert historical_data["draw_odds"].isna().all(), "应该无平局赔率数据"
+            assert historical_data["away_odds"].isna().all(), "应该无客胜赔率数据"
 
             print(f"   ✅ 无赔率数据场景可处理: {len(historical_data)}场比赛")
             print("   ⚠️  注意: 需要确保赔率特征使用默认值")
@@ -243,25 +268,27 @@ class TestMatchFeatureExtractor:
         historical_data = MockMatchDataGenerator.create_historical_dataframe(10)
 
         # 确保按时间排序
-        historical_data['match_date'] = pd.to_datetime(historical_data['match_date'])
-        historical_data = historical_data.sort_values('match_date')
+        historical_data["match_date"] = pd.to_datetime(historical_data["match_date"])
+        historical_data = historical_data.sort_values("match_date")
 
         # 选择中间一场比赛作为目标 (不是最新的一场)
         target_match_idx = 5  # 第6场比赛 (0-indexed)
         target_match = historical_data.iloc[target_match_idx]
-        target_match_id = target_match['match_id']
+        target_match_id = target_match["match_id"]
 
         # 构建只包含目标比赛及之前数据的数据集
-        anti_leak_data = historical_data.iloc[:target_match_idx + 1]
+        anti_leak_data = historical_data.iloc[: target_match_idx + 1]
 
         try:
             # 预期：提取器应该只使用目标比赛及之前的数据
             # feature_set = self.extractor.extract_features(target_match_id, anti_leak_data)
 
             # 验证数据泄露防护
-            assert len(anti_leak_data) == target_match_idx + 1, "数据集应该只包含目标比赛及之前的数据"
-            latest_match_date = anti_leak_data['match_date'].max()
-            target_match_date = pd.to_datetime(target_match['match_date'])
+            assert (
+                len(anti_leak_data) == target_match_idx + 1
+            ), "数据集应该只包含目标比赛及之前的数据"
+            latest_match_date = anti_leak_data["match_date"].max()
+            target_match_date = pd.to_datetime(target_match["match_date"])
             assert latest_match_date <= target_match_date, "不应包含未来比赛数据"
 
             print(f"   ✅ 反未来函数验证通过")
@@ -299,11 +326,11 @@ class TestMatchFeatureExtractor:
         print("🧪 测试时间窗口计算")
 
         historical_data = MockMatchDataGenerator.create_historical_dataframe(15)
-        historical_data['match_date'] = pd.to_datetime(historical_data['match_date'])
-        historical_data = historical_data.sort_values('match_date')
+        historical_data["match_date"] = pd.to_datetime(historical_data["match_date"])
+        historical_data = historical_data.sort_values("match_date")
 
         target_match = historical_data.iloc[-1]
-        target_date = target_match['match_date']
+        target_date = target_match["match_date"]
 
         # 测试不同时间窗口
         windows = [3, 5, 10]
@@ -312,8 +339,11 @@ class TestMatchFeatureExtractor:
             try:
                 # 预期：应该正确计算指定时间窗口的特征
                 window_data = historical_data[
-                    (historical_data['match_date'] < target_date) &
-                    (historical_data['match_date'] >= target_date - timedelta(days=window * 3))
+                    (historical_data["match_date"] < target_date)
+                    & (
+                        historical_data["match_date"]
+                        >= target_date - timedelta(days=window * 3)
+                    )
                 ]
 
                 print(f"   ✅ {window}场比赛时间窗口: {len(window_data)}场比赛")
@@ -326,7 +356,7 @@ class TestMatchFeatureExtractor:
         print("🧪 测试特征向量生成")
 
         historical_data = MockMatchDataGenerator.create_historical_dataframe(10)
-        target_match_id = historical_data.iloc[-1]['match_id']
+        target_match_id = historical_data.iloc[-1]["match_id"]
 
         try:
             # 预期：应该生成固定维度的特征向量
@@ -348,9 +378,21 @@ class TestMatchFeatureExtractor:
 
         # 测试不同质量的数据
         quality_scenarios = [
-            ("高质量数据", MockMatchDataGenerator.create_historical_dataframe(15), "HIGH"),
-            ("中等质量数据", MockMatchDataGenerator.create_historical_dataframe(7), "MEDIUM"),
-            ("低质量数据", MockMatchDataGenerator.create_limited_data_dataframe(3), "LOW"),
+            (
+                "高质量数据",
+                MockMatchDataGenerator.create_historical_dataframe(15),
+                "HIGH",
+            ),
+            (
+                "中等质量数据",
+                MockMatchDataGenerator.create_historical_dataframe(7),
+                "MEDIUM",
+            ),
+            (
+                "低质量数据",
+                MockMatchDataGenerator.create_limited_data_dataframe(3),
+                "LOW",
+            ),
             ("无赔率数据", MockMatchDataGenerator.create_no_odds_data(), "MEDIUM"),
         ]
 
@@ -369,11 +411,21 @@ class TestMatchFeatureExtractor:
         print("🧪 测试空历史数据边界情况")
 
         # 创建空的DataFrame
-        empty_df = pd.DataFrame(columns=[
-            'match_id', 'home_team_id', 'away_team_id', 'match_date',
-            'home_score', 'away_score', 'home_xg', 'away_xg',
-            'home_odds', 'draw_odds', 'away_odds'
-        ])
+        empty_df = pd.DataFrame(
+            columns=[
+                "match_id",
+                "home_team_id",
+                "away_team_id",
+                "match_date",
+                "home_score",
+                "away_score",
+                "home_xg",
+                "away_xg",
+                "home_odds",
+                "draw_odds",
+                "away_odds",
+            ]
+        )
 
         try:
             # 预期：应该优雅处理空数据，返回默认特征
@@ -391,7 +443,7 @@ class TestMatchFeatureExtractor:
         print("🧪 测试并发特征提取")
 
         historical_data = MockMatchDataGenerator.create_historical_dataframe(20)
-        match_ids = historical_data['match_id'].tolist()
+        match_ids = historical_data["match_id"].tolist()
 
         try:
             # 预期：应该支持并发提取多个比赛的特征
@@ -417,7 +469,7 @@ def run_feature_extractor_tests():
     print("=" * 60)
 
     test_class = TestMatchFeatureExtractor()
-    test_methods = [method for method in dir(test_class) if method.startswith('test_')]
+    test_methods = [method for method in dir(test_class) if method.startswith("test_")]
 
     passed_tests = 0
     total_tests = len(test_methods)
@@ -431,6 +483,7 @@ def run_feature_extractor_tests():
         except Exception as e:
             print(f"❌ {test_method} 失败: {e}")
             import traceback
+
             traceback.print_exc()
 
     print(f"\n{'='*60}")

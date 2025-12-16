@@ -17,8 +17,7 @@ from typing import Dict, Any, List, Optional
 
 # 配置日志
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -36,7 +35,7 @@ class SimpleCanary:
             timeout=30.0,
             headers={
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-            }
+            },
         )
         logger.info("✅ HTTP客户端初始化完成")
 
@@ -46,19 +45,24 @@ class SimpleCanary:
 
         # 解析数据库URL
         import urllib.parse
-        parsed = urllib.parse.urlparse(self.db_url.replace("postgresql+asyncpg://", "postgresql://"))
+
+        parsed = urllib.parse.urlparse(
+            self.db_url.replace("postgresql+asyncpg://", "postgresql://")
+        )
 
         conn = await asyncpg.connect(
             host=parsed.hostname,
             port=parsed.port,
             user=parsed.username,
             password=parsed.password,
-            database=parsed.path.lstrip("/")
+            database=parsed.path.lstrip("/"),
         )
 
         try:
             # 获取总比赛数
-            total_count = await conn.fetchval("SELECT COUNT(*) FROM matches WHERE fotmob_id IS NOT NULL")
+            total_count = await conn.fetchval(
+                "SELECT COUNT(*) FROM matches WHERE fotmob_id IS NOT NULL"
+            )
             if total_count == 0:
                 logger.error("❌ 数据库中没有找到有fotmob_id的比赛")
                 return []
@@ -66,13 +70,16 @@ class SimpleCanary:
             logger.info(f"📊 数据库中共有 {total_count} 场有fotmob_id的比赛")
 
             # 随机选择比赛
-            rows = await conn.fetch("""
+            rows = await conn.fetch(
+                """
                 SELECT id, fotmob_id, home_team_name, away_team_name
                 FROM matches
                 WHERE fotmob_id IS NOT NULL
                 ORDER BY RANDOM()
                 LIMIT $1
-            """, limit)
+            """,
+                limit,
+            )
 
             matches = [dict(row) for row in rows]
             logger.info(f"✅ 成功获取 {len(matches)} 场随机比赛")
@@ -136,13 +143,15 @@ class SimpleCanary:
             "stadium": None,
             "attendance": None,
             "city": None,
-            "country": None
+            "country": None,
         }
 
         try:
             if "matchFacts" in content and isinstance(content["matchFacts"], dict):
                 match_facts = content["matchFacts"]
-                if "infoBox" in match_facts and isinstance(match_facts["infoBox"], dict):
+                if "infoBox" in match_facts and isinstance(
+                    match_facts["infoBox"], dict
+                ):
                     info_box = match_facts["infoBox"]
 
                     # 裁判信息
@@ -159,7 +168,10 @@ class SimpleCanary:
                     # 观众人数
                     if "Attendance" in info_box:
                         attendance_info = info_box["Attendance"]
-                        if isinstance(attendance_info, dict) and "value" in attendance_info:
+                        if (
+                            isinstance(attendance_info, dict)
+                            and "value" in attendance_info
+                        ):
                             try:
                                 metadata["attendance"] = int(attendance_info["value"])
                             except (ValueError, TypeError):
@@ -171,7 +183,9 @@ class SimpleCanary:
                                 pass
 
             if metadata["referee"] or metadata["stadium"]:
-                logger.info(f"   🏟️ 提取元数据: 裁判={metadata['referee']}, 球场={metadata['stadium']}")
+                logger.info(
+                    f"   🏟️ 提取元数据: 裁判={metadata['referee']}, 球场={metadata['stadium']}"
+                )
 
         except Exception as e:
             logger.error(f"   ❌ 元数据提取失败: {e}")
@@ -183,14 +197,17 @@ class SimpleCanary:
         try:
             # 解析数据库URL
             import urllib.parse
-            parsed = urllib.parse.urlparse(self.db_url.replace("postgresql+asyncpg://", "postgresql://"))
+
+            parsed = urllib.parse.urlparse(
+                self.db_url.replace("postgresql+asyncpg://", "postgresql://")
+            )
 
             conn = await asyncpg.connect(
                 host=parsed.hostname,
                 port=parsed.port,
                 user=parsed.username,
                 password=parsed.password,
-                database=parsed.path.lstrip("/")
+                database=parsed.path.lstrip("/"),
             )
 
             try:
@@ -238,7 +255,9 @@ class SimpleCanary:
         home_team = match["home_team_name"]
         away_team = match["away_team_name"]
 
-        logger.info(f"⚽ 处理比赛: {home_team} vs {away_team} (ID: {match_id}, FotMob ID: {fotmob_id})")
+        logger.info(
+            f"⚽ 处理比赛: {home_team} vs {away_team} (ID: {match_id}, FotMob ID: {fotmob_id})"
+        )
 
         try:
             # 采集FotMob数据
@@ -248,7 +267,7 @@ class SimpleCanary:
                     "match_id": match_id,
                     "status": "failed",
                     "reason": "FotMob数据采集失败",
-                    "stats": {}
+                    "stats": {},
                 }
 
             # 提取content
@@ -258,7 +277,7 @@ class SimpleCanary:
                     "match_id": match_id,
                     "status": "failed",
                     "reason": "没有content数据",
-                    "stats": {}
+                    "stats": {},
                 }
 
             # 提取各类数据
@@ -291,19 +310,21 @@ class SimpleCanary:
 
             if success:
                 logger.info(f"   ✅ 处理成功: {home_team} vs {away_team}")
-                logger.info(f"   📊 数据统计: 射门={stats['shots']}, 事件={stats['events']}, 裁判={stats['referee']}, 球场={stats['stadium']}")
+                logger.info(
+                    f"   📊 数据统计: 射门={stats['shots']}, 事件={stats['events']}, 裁判={stats['referee']}, 球场={stats['stadium']}"
+                )
                 return {
                     "match_id": match_id,
                     "status": "success",
                     "reason": "处理成功",
-                    "stats": stats
+                    "stats": stats,
                 }
             else:
                 return {
                     "match_id": match_id,
                     "status": "failed",
                     "reason": "数据库更新失败",
-                    "stats": stats
+                    "stats": stats,
                 }
 
         except Exception as e:
@@ -312,7 +333,7 @@ class SimpleCanary:
                 "match_id": match_id,
                 "status": "error",
                 "reason": f"处理异常: {str(e)}",
-                "stats": {}
+                "stats": {},
             }
 
     async def run_canary_test(self, limit: int = 5, delay: float = 2.0):
@@ -328,7 +349,9 @@ class SimpleCanary:
 
         logger.info(f"📋 测试比赛列表:")
         for i, match in enumerate(matches, 1):
-            logger.info(f"   {i}. {match['home_team_name']} vs {match['away_team_name']} (FotMob ID: {match['fotmob_id']})")
+            logger.info(
+                f"   {i}. {match['home_team_name']} vs {match['away_team_name']} (FotMob ID: {match['fotmob_id']})"
+            )
 
         logger.info("\n" + "=" * 80)
 
@@ -391,7 +414,9 @@ class SimpleCanary:
         logger.info("\n📋 详细处理结果:")
         for result in results:
             status_icon = "✅" if result["status"] == "success" else "❌"
-            logger.info(f"   {status_icon} 比赛ID {result['match_id']}: {result['reason']}")
+            logger.info(
+                f"   {status_icon} 比赛ID {result['match_id']}: {result['reason']}"
+            )
 
     async def close(self):
         """关闭资源"""
@@ -404,7 +429,9 @@ async def main():
     """主函数"""
     parser = argparse.ArgumentParser(description="简化L2数据冒烟测试脚本")
     parser.add_argument("--limit", type=int, default=5, help="测试比赛数量 (默认: 5)")
-    parser.add_argument("--delay", type=float, default=2.0, help="API调用间隔秒数 (默认: 2.0)")
+    parser.add_argument(
+        "--delay", type=float, default=2.0, help="API调用间隔秒数 (默认: 2.0)"
+    )
     parser.add_argument("--db-host", default="localhost", help="数据库主机")
     parser.add_argument("--db-port", default="5432", help="数据库端口")
     parser.add_argument("--db-name", default="football_prediction", help="数据库名")
@@ -431,6 +458,7 @@ async def main():
     except Exception as e:
         logger.error(f"❌ 测试异常: {e}")
         import traceback
+
         traceback.print_exc()
     finally:
         # 清理资源

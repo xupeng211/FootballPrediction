@@ -46,15 +46,18 @@ router = APIRouter(
         404: {"description": "比赛不存在"},
         400: {"description": "请求参数错误或特征提取失败"},
         500: {"description": "服务器内部错误"},
-        503: {"description": "服务不可用"}
-    }
+        503: {"description": "服务不可用"},
+    },
 )
 
 
 # Pydantic Schema定义
 class PredictionRequest(BaseModel):
     """预测请求模型"""
-    match_id: str = Field(..., description="比赛唯一标识符", min_length=1, max_length=100)
+
+    match_id: str = Field(
+        ..., description="比赛唯一标识符", min_length=1, max_length=100
+    )
     include_features: bool = Field(default=False, description="是否包含特征信息")
     include_metadata: bool = Field(default=True, description="是否包含元数据")
 
@@ -63,13 +66,14 @@ class PredictionRequest(BaseModel):
             "example": {
                 "match_id": "match_12345",
                 "include_features": False,
-                "include_metadata": True
+                "include_metadata": True,
             }
         }
 
 
 class PredictionResult(BaseModel):
     """预测结果模型"""
+
     match_id: str = Field(..., description="比赛ID")
     HOME_WIN_PROBA: float = Field(..., ge=0.0, le=1.0, description="主队获胜概率")
     DRAW_PROBA: float = Field(..., ge=0.0, le=1.0, description="平局概率")
@@ -79,17 +83,17 @@ class PredictionResult(BaseModel):
     model_version: str = Field(..., description="模型版本")
     processed_at: str = Field(..., description="处理时间")
 
-    @validator('HOME_WIN_PROBA', 'DRAW_PROBA', 'AWAY_WIN_PROBA')
+    @validator("HOME_WIN_PROBA", "DRAW_PROBA", "AWAY_WIN_PROBA")
     def validate_probabilities(cls, v):
         if not (0.0 <= v <= 1.0):
-            raise ValueError('概率值必须在0.0到1.0之间')
+            raise ValueError("概率值必须在0.0到1.0之间")
         return v
 
-    @validator('predicted_class')
+    @validator("predicted_class")
     def validate_predicted_class(cls, v):
-        valid_classes = ['HOME_WIN', 'DRAW', 'AWAY_WIN']
+        valid_classes = ["HOME_WIN", "DRAW", "AWAY_WIN"]
         if v not in valid_classes:
-            raise ValueError(f'预测类别必须是以下之一: {valid_classes}')
+            raise ValueError(f"预测类别必须是以下之一: {valid_classes}")
         return v
 
     class Config:
@@ -102,23 +106,28 @@ class PredictionResult(BaseModel):
                 "predicted_class": "HOME_WIN",
                 "confidence": 0.65,
                 "model_version": "1.0.0",
-                "processed_at": "2024-01-15T10:30:00Z"
+                "processed_at": "2024-01-15T10:30:00Z",
             }
         }
 
 
 class DetailedPredictionResult(PredictionResult):
     """详细预测结果模型"""
-    feature_completeness: float = Field(..., ge=0.0, le=1.0, description="特征完整性分数")
+
+    feature_completeness: float = Field(
+        ..., ge=0.0, le=1.0, description="特征完整性分数"
+    )
     data_quality: str = Field(..., description="数据质量标记")
-    feature_importance: Optional[Dict[str, float]] = Field(None, description="特征重要性")
+    feature_importance: Optional[Dict[str, float]] = Field(
+        None, description="特征重要性"
+    )
     processing_time_ms: Optional[float] = Field(None, description="处理时间（毫秒）")
 
-    @validator('data_quality')
+    @validator("data_quality")
     def validate_data_quality(cls, v):
-        valid_qualities = ['HIGH', 'MEDIUM', 'LOW', 'FALLBACK']
+        valid_qualities = ["HIGH", "MEDIUM", "LOW", "FALLBACK"]
         if v not in valid_qualities:
-            raise ValueError(f'数据质量必须是以下之一: {valid_qualities}')
+            raise ValueError(f"数据质量必须是以下之一: {valid_qualities}")
         return v
 
     class Config:
@@ -137,34 +146,43 @@ class DetailedPredictionResult(PredictionResult):
                 "feature_importance": {
                     "home_form_score": 0.25,
                     "away_form_score": 0.20,
-                    "h2h_home_win_rate": 0.15
+                    "h2h_home_win_rate": 0.15,
                 },
-                "processing_time_ms": 45.2
+                "processing_time_ms": 45.2,
             }
         }
 
 
 class FeatureContribution(BaseModel):
     """特征贡献度模型"""
+
     feature: str = Field(..., description="特征名称")
     contribution: float = Field(..., description="SHAP贡献度值")
 
     class Config:
         schema_extra = {
-            "example": {
-                "feature": "home_form_score",
-                "contribution": 0.142
-            }
+            "example": {"feature": "home_form_score", "contribution": 0.142}
         }
 
 
 class ExplainablePredictionResult(PredictionResult):
     """可解释预测结果模型"""
-    feature_contributions: Dict[str, float] = Field(..., description="特征SHAP贡献度字典")
-    top_positive_contributors: List[FeatureContribution] = Field(..., description="正向贡献最大的特征")
-    top_negative_contributors: List[FeatureContribution] = Field(..., description="负向贡献最大的特征")
-    feature_importance_ranking: Dict[str, float] = Field(..., description="全局特征重要性排名")
-    explanation_metadata: Optional[Dict[str, Any]] = Field(None, description="解释元数据")
+
+    feature_contributions: Dict[str, float] = Field(
+        ..., description="特征SHAP贡献度字典"
+    )
+    top_positive_contributors: List[FeatureContribution] = Field(
+        ..., description="正向贡献最大的特征"
+    )
+    top_negative_contributors: List[FeatureContribution] = Field(
+        ..., description="负向贡献最大的特征"
+    )
+    feature_importance_ranking: Dict[str, float] = Field(
+        ..., description="全局特征重要性排名"
+    )
+    explanation_metadata: Optional[Dict[str, Any]] = Field(
+        None, description="解释元数据"
+    )
 
     class Config:
         schema_extra = {
@@ -181,42 +199,45 @@ class ExplainablePredictionResult(PredictionResult):
                     "home_form_score": 0.142,
                     "away_form_score": -0.083,
                     "h2h_home_win_rate": 0.067,
-                    "rolling_home_score_3": 0.045
+                    "rolling_home_score_3": 0.045,
                 },
                 "top_positive_contributors": [
                     {"feature": "home_form_score", "contribution": 0.142},
-                    {"feature": "h2h_home_win_rate", "contribution": 0.067}
+                    {"feature": "h2h_home_win_rate", "contribution": 0.067},
                 ],
                 "top_negative_contributors": [
                     {"feature": "away_form_score", "contribution": -0.083},
-                    {"feature": "rolling_away_score_3", "contribution": -0.025}
+                    {"feature": "rolling_away_score_3", "contribution": -0.025},
                 ],
                 "feature_importance_ranking": {
                     "home_form_score": 0.142,
                     "away_form_score": 0.121,
-                    "h2h_home_win_rate": 0.105
+                    "h2h_home_win_rate": 0.105,
                 },
                 "explanation_metadata": {
                     "shap_computation_time_ms": 15.2,
                     "total_features": 12,
-                    "base_value": 0.333
-                }
+                    "base_value": 0.333,
+                },
             }
         }
 
 
 class BatchPredictionRequest(BaseModel):
     """批量预测请求模型"""
-    match_ids: List[str] = Field(..., description="比赛ID列表", min_items=1, max_items=100)
+
+    match_ids: List[str] = Field(
+        ..., description="比赛ID列表", min_items=1, max_items=100
+    )
     include_features: bool = Field(default=False, description="是否包含特征信息")
     include_metadata: bool = Field(default=True, description="是否包含元数据")
 
-    @validator('match_ids')
+    @validator("match_ids")
     def validate_match_ids(cls, v):
         if not v:
-            raise ValueError('比赛ID列表不能为空')
+            raise ValueError("比赛ID列表不能为空")
         if len(v) > 100:
-            raise ValueError('批量预测最多支持100场比赛')
+            raise ValueError("批量预测最多支持100场比赛")
         return v
 
     class Config:
@@ -224,13 +245,14 @@ class BatchPredictionRequest(BaseModel):
             "example": {
                 "match_ids": ["match_12345", "match_67890", "match_11111"],
                 "include_features": False,
-                "include_metadata": True
+                "include_metadata": True,
             }
         }
 
 
 class BatchPredictionResult(BaseModel):
     """批量预测结果模型"""
+
     results: List[PredictionResult] = Field(..., description="预测结果列表")
     total_count: int = Field(..., description="总预测数量")
     successful_count: int = Field(..., description="成功预测数量")
@@ -250,25 +272,21 @@ class BatchPredictionResult(BaseModel):
                         "predicted_class": "HOME_WIN",
                         "confidence": 0.65,
                         "model_version": "1.0.0",
-                        "processed_at": "2024-01-15T10:30:00Z"
+                        "processed_at": "2024-01-15T10:30:00Z",
                     }
                 ],
                 "total_count": 3,
                 "successful_count": 2,
                 "failed_count": 1,
-                "errors": [
-                    {
-                        "match_id": "match_11111",
-                        "error": "比赛不存在"
-                    }
-                ],
-                "processed_at": "2024-01-15T10:30:05Z"
+                "errors": [{"match_id": "match_11111", "error": "比赛不存在"}],
+                "processed_at": "2024-01-15T10:30:05Z",
             }
         }
 
 
 class HealthCheckResult(BaseModel):
     """健康检查结果模型"""
+
     status: str = Field(..., description="服务状态")
     timestamp: str = Field(..., description="检查时间")
     service: str = Field(..., description="服务名称")
@@ -284,7 +302,7 @@ class HealthCheckResult(BaseModel):
                 "service": "InferenceService",
                 "model_loaded": True,
                 "total_predictions": 1250,
-                "avg_response_time_ms": 45.2
+                "avg_response_time_ms": 45.2,
             }
         }
 
@@ -295,6 +313,7 @@ async def get_inference_service_dependency() -> InferenceService:
     try:
         # 创建服务实例但不强制初始化数据库连接
         from src.services.inference_service import InferenceService, InferenceConfig
+
         config = InferenceConfig(enable_fallback=True)
         service = InferenceService(config)
 
@@ -311,10 +330,7 @@ async def get_inference_service_dependency() -> InferenceService:
         return service
     except Exception as e:
         logger.error(f"推理服务初始化失败: {e}")
-        raise HTTPException(
-            status_code=503,
-            detail="预测服务不可用，请稍后重试"
-        )
+        raise HTTPException(status_code=503, detail="预测服务不可用，请稍后重试")
 
 
 async def get_explainability_service_dependency() -> ExplainabilityService:
@@ -324,10 +340,7 @@ async def get_explainability_service_dependency() -> ExplainabilityService:
         return explainability_service
     except Exception as e:
         logger.error(f"可解释性服务初始化失败: {e}")
-        raise HTTPException(
-            status_code=503,
-            detail="可解释性服务不可用，请稍后重试"
-        )
+        raise HTTPException(status_code=503, detail="可解释性服务不可用，请稍后重试")
 
 
 # API路由实现
@@ -339,19 +352,15 @@ async def get_explainability_service_dependency() -> ExplainabilityService:
     responses={
         200: {
             "description": "预测成功",
-            "content": {
-                "application/json": {
-                    "schema": PredictionResult.schema()
-                }
-            }
+            "content": {"application/json": {"schema": PredictionResult.schema()}},
         }
-    }
+    },
 )
 async def predict_match(
     match_id: str = Path(..., description="比赛唯一标识符"),
     include_features: bool = Query(default=False, description="是否包含特征信息"),
     include_metadata: bool = Query(default=True, description="是否包含元数据"),
-    inference_service: InferenceService = Depends(get_inference_service_dependency)
+    inference_service: InferenceService = Depends(get_inference_service_dependency),
 ) -> PredictionResult:
     """
     单场比赛预测端点
@@ -393,10 +402,7 @@ async def predict_match(
         raise
     except Exception as e:
         logger.error(f"预测请求处理失败 {match_id}: {e}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"预测服务内部错误: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"预测服务内部错误: {str(e)}")
 
 
 @router.post(
@@ -407,17 +413,13 @@ async def predict_match(
     responses={
         200: {
             "description": "批量预测成功",
-            "content": {
-                "application/json": {
-                    "schema": BatchPredictionResult.schema()
-                }
-            }
+            "content": {"application/json": {"schema": BatchPredictionResult.schema()}},
         }
-    }
+    },
 )
 async def predict_batch(
     request: BatchPredictionRequest,
-    inference_service: InferenceService = Depends(get_inference_service_dependency)
+    inference_service: InferenceService = Depends(get_inference_service_dependency),
 ) -> BatchPredictionResult:
     """
     批量比赛预测端点
@@ -442,6 +444,7 @@ async def predict_batch(
 
         # 并发处理批量请求
         import asyncio
+
         semaphore = asyncio.Semaphore(10)  # 限制并发数
 
         async def predict_single(match_id: str) -> tuple:
@@ -459,16 +462,10 @@ async def predict_batch(
         # 处理结果
         for match_id, result, error in responses:
             if isinstance(responses[0], Exception):
-                errors.append({
-                    "match_id": match_id,
-                    "error": str(responses[0])
-                })
+                errors.append({"match_id": match_id, "error": str(responses[0])})
                 failed_count += 1
             elif error:
-                errors.append({
-                    "match_id": match_id,
-                    "error": error
-                })
+                errors.append({"match_id": match_id, "error": error})
                 failed_count += 1
             else:
                 # 根据请求参数构建响应
@@ -487,7 +484,7 @@ async def predict_batch(
             successful_count=successful_count,
             failed_count=failed_count,
             errors=errors,
-            processed_at=datetime.now().isoformat()
+            processed_at=datetime.now().isoformat(),
         )
 
         logger.info(f"批量预测完成: 成功={successful_count}, 失败={failed_count}")
@@ -495,10 +492,7 @@ async def predict_batch(
 
     except Exception as e:
         logger.error(f"批量预测请求处理失败: {e}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"批量预测服务内部错误: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"批量预测服务内部错误: {str(e)}")
 
 
 @router.get(
@@ -509,16 +503,12 @@ async def predict_batch(
     responses={
         200: {
             "description": "健康检查成功",
-            "content": {
-                "application/json": {
-                    "schema": HealthCheckResult.schema()
-                }
-            }
+            "content": {"application/json": {"schema": HealthCheckResult.schema()}},
         }
-    }
+    },
 )
 async def health_check(
-    inference_service: InferenceService = Depends(get_inference_service_dependency)
+    inference_service: InferenceService = Depends(get_inference_service_dependency),
 ) -> HealthCheckResult:
     """
     服务健康检查端点
@@ -538,7 +528,7 @@ async def health_check(
             status="unhealthy",
             timestamp=datetime.now().isoformat(),
             service="InferenceService",
-            model_loaded=False
+            model_loaded=False,
         )
 
 
@@ -559,15 +549,15 @@ async def health_check(
                         "errors": 45,
                         "avg_response_time_ms": 42.5,
                         "cache_size": 150,
-                        "is_initialized": True
+                        "is_initialized": True,
                     }
                 }
-            }
+            },
         }
-    }
+    },
 )
 async def get_stats(
-    inference_service: InferenceService = Depends(get_inference_service_dependency)
+    inference_service: InferenceService = Depends(get_inference_service_dependency),
 ) -> Dict[str, Any]:
     """
     服务统计信息端点
@@ -583,10 +573,7 @@ async def get_stats(
         return JSONResponse(content=stats)
     except Exception as e:
         logger.error(f"获取统计信息失败: {e}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"获取统计信息失败: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"获取统计信息失败: {str(e)}")
 
 
 @router.get(
@@ -607,16 +594,16 @@ async def get_stats(
                         "config": {
                             "max_depth": 6,
                             "learning_rate": 0.1,
-                            "n_estimators": 100
-                        }
+                            "n_estimators": 100,
+                        },
                     }
                 }
-            }
+            },
         }
-    }
+    },
 )
 async def get_model_info(
-    inference_service: InferenceService = Depends(get_inference_service_dependency)
+    inference_service: InferenceService = Depends(get_inference_service_dependency),
 ) -> Dict[str, Any]:
     """
     模型信息端点
@@ -632,10 +619,7 @@ async def get_model_info(
         return JSONResponse(content=model_info)
     except Exception as e:
         logger.error(f"获取模型信息失败: {e}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"获取模型信息失败: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"获取模型信息失败: {str(e)}")
 
 
 @router.post(
@@ -650,16 +634,16 @@ async def get_model_info(
                     "example": {
                         "success": True,
                         "message": "模型重新加载成功",
-                        "model_path": "models/football_xgboost_classifier_v2.pkl"
+                        "model_path": "models/football_xgboost_classifier_v2.pkl",
                     }
                 }
-            }
+            },
         }
-    }
+    },
 )
 async def reload_model(
     model_path: Optional[str] = Query(None, description="新的模型文件路径"),
-    inference_service: InferenceService = Depends(get_inference_service_dependency)
+    inference_service: InferenceService = Depends(get_inference_service_dependency),
 ) -> Dict[str, Any]:
     """
     模型重新加载端点
@@ -680,23 +664,17 @@ async def reload_model(
                 "success": True,
                 "message": "模型重新加载成功",
                 "model_path": model_path or "使用默认路径",
-                "reloaded_at": datetime.now().isoformat()
+                "reloaded_at": datetime.now().isoformat(),
             }
         else:
             logger.error(f"模型重新加载失败: {model_path}")
-            raise HTTPException(
-                status_code=500,
-                detail="模型重新加载失败"
-            )
+            raise HTTPException(status_code=500, detail="模型重新加载失败")
 
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"模型重新加载异常: {e}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"模型重新加载异常: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"模型重新加载异常: {str(e)}")
 
 
 @router.get(
@@ -708,17 +686,17 @@ async def reload_model(
         200: {
             "description": "预测解释成功",
             "content": {
-                "application/json": {
-                    "schema": ExplainablePredictionResult.schema()
-                }
-            }
+                "application/json": {"schema": ExplainablePredictionResult.schema()}
+            },
         }
-    }
+    },
 )
 async def predict_match_with_explanation(
     match_id: str = Path(..., description="比赛唯一标识符"),
     inference_service: InferenceService = Depends(get_inference_service_dependency),
-    explainability_service: ExplainabilityService = Depends(get_explainability_service_dependency)
+    explainability_service: ExplainabilityService = Depends(
+        get_explainability_service_dependency
+    ),
 ) -> ExplainablePredictionResult:
     """
     单场比赛预测解释端点
@@ -738,6 +716,7 @@ async def predict_match_with_explanation(
     """
     try:
         import time
+
         start_time = time.time()
 
         logger.info(f"收到预测解释请求: match_id={match_id}")
@@ -751,12 +730,12 @@ async def predict_match_with_explanation(
 
         if features_data is None:
             raise HTTPException(
-                status_code=404,
-                detail=f"无法获取比赛 {match_id} 的特征数据"
+                status_code=404, detail=f"无法获取比赛 {match_id} 的特征数据"
             )
 
         # 转换为DataFrame格式
         import pandas as pd
+
         features_df = pd.DataFrame([features_data])
 
         # 计算SHAP贡献度
@@ -767,10 +746,7 @@ async def predict_match_with_explanation(
         shap_computation_time = (time.time() - shap_start_time) * 1000
 
         if not contributions_list:
-            raise HTTPException(
-                status_code=500,
-                detail="SHAP贡献度计算失败"
-            )
+            raise HTTPException(status_code=500, detail="SHAP贡献度计算失败")
 
         contributions = contributions_list[0]
 
@@ -781,9 +757,7 @@ async def predict_match_with_explanation(
 
         # 提取正向和负向贡献最大的特征
         sorted_contributions = sorted(
-            contributions.items(),
-            key=lambda x: x[1],
-            reverse=True
+            contributions.items(), key=lambda x: x[1], reverse=True
         )
 
         top_positive = [
@@ -804,9 +778,17 @@ async def predict_match_with_explanation(
             "total_features": len(contributions),
             "positive_contributions_count": len(top_positive),
             "negative_contributions_count": len(top_negative),
-            "base_value": getattr(explainability_service._explainer_cache.get(
-                id(inference_service.model.model)
-            ), 'expected_value', 0.0) if explainability_service._explainer_cache else 0.0
+            "base_value": (
+                getattr(
+                    explainability_service._explainer_cache.get(
+                        id(inference_service.model.model)
+                    ),
+                    "expected_value",
+                    0.0,
+                )
+                if explainability_service._explainer_cache
+                else 0.0
+            ),
         }
 
         # 构建可解释预测结果
@@ -825,7 +807,7 @@ async def predict_match_with_explanation(
             top_positive_contributors=top_positive,
             top_negative_contributors=top_negative,
             feature_importance_ranking=importance_ranking,
-            explanation_metadata=explanation_metadata
+            explanation_metadata=explanation_metadata,
         )
 
         logger.info(f"预测解释完成: match_id={match_id}, 耗时={total_time:.2f}ms")
@@ -835,22 +817,23 @@ async def predict_match_with_explanation(
         raise
     except Exception as e:
         logger.error(f"预测解释失败 {match_id}: {e}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"预测解释服务内部错误: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"预测解释服务内部错误: {str(e)}")
 
 
 @router.post(
     "/batch/explain",
     summary="批量比赛预测解释",
     description="批量预测多场比赛的1X2结果并提供SHAP特征解释",
-    response_model=Dict[str, Any]
+    response_model=Dict[str, Any],
 )
 async def predict_batch_with_explanation(
-    match_ids: List[str] = Query(..., description="比赛ID列表", min_items=1, max_items=10),
+    match_ids: List[str] = Query(
+        ..., description="比赛ID列表", min_items=1, max_items=10
+    ),
     inference_service: InferenceService = Depends(get_inference_service_dependency),
-    explainability_service: ExplainabilityService = Depends(get_explainability_service_dependency)
+    explainability_service: ExplainabilityService = Depends(
+        get_explainability_service_dependency
+    ),
 ) -> Dict[str, Any]:
     """
     批量比赛预测解释端点
@@ -865,12 +848,12 @@ async def predict_batch_with_explanation(
     """
     try:
         import time
+
         start_time = time.time()
 
         if len(match_ids) > 10:
             raise HTTPException(
-                status_code=400,
-                detail="批量解释最多支持10场比赛以保证性能"
+                status_code=400, detail="批量解释最多支持10场比赛以保证性能"
             )
 
         logger.info(f"收到批量预测解释请求: {len(match_ids)} 场比赛")
@@ -882,6 +865,7 @@ async def predict_batch_with_explanation(
 
         # 并发处理批量请求（限制并发数以优化SHAP计算性能）
         import asyncio
+
         semaphore = asyncio.Semaphore(3)  # 限制并发数，SHAP计算资源密集
 
         async def explain_single(match_id: str) -> tuple:
@@ -891,24 +875,31 @@ async def predict_batch_with_explanation(
                     prediction_result = await inference_service.predict(match_id)
 
                     # 获取特征数据
-                    features_data = await inference_service._get_features_for_match(match_id)
+                    features_data = await inference_service._get_features_for_match(
+                        match_id
+                    )
 
                     if features_data is None:
                         return match_id, None, f"无法获取比赛 {match_id} 的特征数据"
 
                     # 计算SHAP贡献度
                     import pandas as pd
+
                     features_df = pd.DataFrame([features_data])
-                    contributions_list = await explainability_service.get_shap_contributions(
-                        features_df, inference_service.model
+                    contributions_list = (
+                        await explainability_service.get_shap_contributions(
+                            features_df, inference_service.model
+                        )
                     )
 
                     if not contributions_list:
                         return match_id, None, "SHAP贡献度计算失败"
 
                     contributions = contributions_list[0]
-                    importance_ranking = explainability_service.get_feature_importance_ranking(
-                        [contributions]
+                    importance_ranking = (
+                        explainability_service.get_feature_importance_ranking(
+                            [contributions]
+                        )
                     )
 
                     # 构建结果
@@ -919,16 +910,18 @@ async def predict_batch_with_explanation(
                         "feature_importance_ranking": importance_ranking,
                         "top_positive_contributors": [
                             {"feature": k, "contribution": v}
-                            for k, v in sorted(contributions.items(),
-                                             key=lambda x: x[1], reverse=True)[:5]
+                            for k, v in sorted(
+                                contributions.items(), key=lambda x: x[1], reverse=True
+                            )[:5]
                             if v > 0
                         ],
                         "top_negative_contributors": [
                             {"feature": k, "contribution": v}
-                            for k, v in sorted(contributions.items(),
-                                             key=lambda x: x[1])[:5]
+                            for k, v in sorted(
+                                contributions.items(), key=lambda x: x[1]
+                            )[:5]
                             if v < 0
-                        ]
+                        ],
                     }
 
                     return match_id, result, None
@@ -943,16 +936,10 @@ async def predict_batch_with_explanation(
         # 处理结果
         for match_id, result, error in responses:
             if isinstance(responses[0], Exception):
-                errors.append({
-                    "match_id": match_id,
-                    "error": str(responses[0])
-                })
+                errors.append({"match_id": match_id, "error": str(responses[0])})
                 failed_count += 1
             elif error:
-                errors.append({
-                    "match_id": match_id,
-                    "error": error
-                })
+                errors.append({"match_id": match_id, "error": error})
                 failed_count += 1
             else:
                 results.append(result)
@@ -968,10 +955,14 @@ async def predict_batch_with_explanation(
             "errors": errors,
             "processed_at": datetime.now().isoformat(),
             "processing_time_ms": round(total_time, 2),
-            "avg_time_per_prediction": round(total_time / len(match_ids), 2) if match_ids else 0
+            "avg_time_per_prediction": (
+                round(total_time / len(match_ids), 2) if match_ids else 0
+            ),
         }
 
-        logger.info(f"批量预测解释完成: 成功={successful_count}, 失败={failed_count}, 耗时={total_time:.2f}ms")
+        logger.info(
+            f"批量预测解释完成: 成功={successful_count}, 失败={failed_count}, 耗时={total_time:.2f}ms"
+        )
         return batch_result
 
     except HTTPException:
@@ -979,8 +970,7 @@ async def predict_batch_with_explanation(
     except Exception as e:
         logger.error(f"批量预测解释失败: {e}")
         raise HTTPException(
-            status_code=500,
-            detail=f"批量预测解释服务内部错误: {str(e)}"
+            status_code=500, detail=f"批量预测解释服务内部错误: {str(e)}"
         )
 
 
