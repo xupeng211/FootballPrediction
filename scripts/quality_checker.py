@@ -575,7 +575,7 @@ class QualityChecker:
             if result.returncode == 0:
                 try:
                     complexity_data = json.loads(result.stdout)
-                    max_complexity = int(os.getenv("MAX_COMPLEXITY", "10"))
+                    max_complexity = int(os.getenv("MAX_COMPLEXITY", "20"))
 
                     high_complexity_items = []
                     for file_path, items in complexity_data.items():
@@ -600,49 +600,31 @@ class QualityChecker:
                             },
                         )
                     else:
-                        # 在基础设施交付阶段，允许高复杂度函数存在但不阻塞CI
                         return (
-                            True,
-                            f"发现 {len(high_complexity_items)} 个高复杂度函数，但允许通过",
+                            False,
+                            f"发现 {len(high_complexity_items)} 个高复杂度函数 (> {max_complexity})",
                             {
                                 "max_complexity": max_complexity,
                                 "high_complexity_items": high_complexity_items,
                                 "details": complexity_data,
-                                "allow_failure": True,
                             },
                         )
 
                 except json.JSONDecodeError:
-                    # 在基础设施交付阶段，允许JSON解析失败但不阻塞CI
                     return (
-                        True,
-                        "无法解析复杂度报告，但允许通过",
-                        {
-                            "raw_output": result.stdout,
-                            "allow_failure": True,
-                        },
+                        False,
+                        "无法解析复杂度报告",
+                        {"raw_output": result.stdout},
                     )
 
             return (
-                True,
-                "复杂度检查失败，但允许通过",
-                {
-                    "stdout": result.stdout,
-                    "stderr": result.stderr,
-                    "allow_failure": True,
-                },
+                False,
+                "复杂度检查失败",
+                {"stdout": result.stdout, "stderr": result.stderr},
             )
 
         except Exception as e:
-            # 在基础设施交付阶段，允许异常但不阻塞CI
-            return (
-                True,
-                f"复杂度检查异常: {e}，但允许通过",
-                {
-                    "exception": str(e),
-                    "allow_failure": True,
-                },
-            )
+            return False, f"复杂度检查失败: {e}", {"exception": str(e)}
 
     def _can_auto_fix(self, check_id: str) -> bool:
         """判断是否可以自动修复"""
