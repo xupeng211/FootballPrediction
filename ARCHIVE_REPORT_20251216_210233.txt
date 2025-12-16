@@ -1,0 +1,75 @@
+==================================================
+足球预测系统 - 项目归档报告
+==================================================
+
+归档完成时间: 2025-12-16 21:02:34
+项目版本: 1.0.0
+Git Hash: 23a3e9042
+Git 分支: main
+归档文件: football_prediction_v1.0.0_20251216_23a3e9042.tar.gz
+
+归档内容:
+- 源代码 (src/)
+- 测试用例 (tests/)
+- 项目文档 (docs/)
+- 脚本工具 (scripts/)
+- 配置文件 (config/)
+- 依赖文件 (requirements.txt, Dockerfile等)
+- 项目信息 (PROJECT_INFO.txt, VERSION.txt)
+
+文件统计:
+  总文件数: 1506
+
+目录结构:
+│── 
+│── config/
+│── config/promtail/
+│── config/promtail/promtail.yml
+│── config/redis/
+│── config/target_leagues.json.backup
+│── config/nginx/
+│── config/nginx/nginx.prod.conf
+│── config/fotmob_leagues.json
+│── config/redis.conf
+│── config/great_reset_config.json
+│── config/team_mapping.json
+│── config/team_mapping_unmatched.json
+│── config/target_leagues.json
+│── config/backup/
+│── config/backup/v1.1.0_final_snapshot.sql
+│── config/team_mapping_refined.json
+│── config/team_mapping_corrections.json
+│── config/team_mapping_low_confidence.json
+│── config/TEAM_MAPPING_FINAL_REPORT.md
+│── config/loki/
+│── config/loki/loki.yml
+│── config/fotmob_league_mapping.json
+│── requirements.txt
+│── monitoring/
+│── monitoring/prometheus.yml
+│── monitoring/configs/
+│── monitoring/configs/monitoring_config.json
+│── monitoring/grafana/
+│── monitoring/grafana/datasources/
+
+注意事项:
+1. 解压后请检查 models/ 目录是否存在模型文件
+2. 运行前请确保安装了所有依赖: pip install -r requirements.txt
+3. 建议在虚拟环境中运行项目
+4. 生产环境部署请使用 docker-compose.prod.yml
+
+快速启动:
+1. tar -xzf football_prediction_v1.0.0_20251216_23a3e9042.tar.gz
+2. cd football_prediction_v1.0.0_20251216_23a3e9042
+3. pip install -r requirements.txt
+4. python -m uvicorn src.main:app --host 0.0.0.0 --port 8000
+
+验证命令:
+- 运行测试: python -m pytest tests/
+- 检查代码质量: make quality
+- 启动开发环境: make dev
+
+==================================================
+报告生成时间: 2025年 12月 16日 星期二 21:02:35 CST
+归档脚本: scripts/archive_project.sh
+==================================================

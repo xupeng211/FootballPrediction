@@ -513,6 +513,105 @@ docker exec -it app python scripts/update_model.py
 kubectl rollout restart deployment/football-prediction
 ```
 
+#### SHAP可解释性API操作
+```bash
+# SHAP解释功能验证
+curl -X GET "http://localhost:8000/predict/match/{match_id}/explain" \
+     -H "accept: application/json"
+
+# 批量预测解释（最多10场比赛）
+curl -X POST "http://localhost:8000/predict/batch/explain?match_ids=match1,match2,match3" \
+     -H "accept: application/json"
+
+# 模型热重载（保持SHAP解释功能）
+curl -X POST "http://localhost:8000/api/v1/models/reload" \
+     -H "Content-Type: application/json" \
+     -d '{"model_path": "models/baseline_v1_retrained.pkl", "backup_current": true}'
+```
+
+##### SHAP API响应字段说明
+
+**单个比赛解释响应** (`GET /predict/match/{match_id}/explain`):
+```json
+{
+  "match_id": "match_12345",
+  "HOME_WIN_PROBA": 0.65,
+  "DRAW_PROBA": 0.25,
+  "AWAY_WIN_PROBA": 0.10,
+  "predicted_class": "HOME_WIN",
+  "confidence": 0.65,
+  "model_version": "1.0.0",
+  "processed_at": "2024-01-15T10:30:00Z",
+  "feature_contributions": {
+    "home_form_score_5": 0.142,
+    "away_form_score_3": -0.083,
+    "h2h_home_win_rate": 0.067
+  },
+  "top_positive_contributors": [
+    {"feature": "home_form_score_5", "contribution": 0.142},
+    {"feature": "h2h_home_win_rate", "contribution": 0.067}
+  ],
+  "top_negative_contributors": [
+    {"feature": "away_form_score_3", "contribution": -0.083},
+    {"feature": "away_xg_efficiency_5", "contribution": -0.045}
+  ],
+  "feature_importance_ranking": {
+    "home_form_score_5": 0.142,
+    "away_form_score_5": 0.121,
+    "h2h_home_win_rate": 0.105
+  },
+  "explanation_metadata": {
+    "shap_computation_time_ms": 15.2,
+    "total_features": 13,
+    "base_value": 0.333
+  }
+}
+```
+
+**字段含义**:
+- `feature_contributions`: 每个特征对预测结果的SHAP贡献度（正值促进预测，负值抑制预测）
+- `top_positive_contributors`: 对预测结果贡献最大的前5个特征
+- `top_negative_contributors`: 对预测结果负面影响最大的前5个特征
+- `feature_importance_ranking`: 全局特征重要性排名（基于平均SHAP值）
+- `explanation_metadata`: SHAP计算的元数据信息
+
+**批量解释响应** (`POST /predict/batch/explain`):
+```json
+{
+  "results": [
+    {
+      "match_id": "match_1",
+      "prediction": {...},
+      "feature_contributions": {...},
+      "top_positive_contributors": [...],
+      "top_negative_contributors": [...]
+    }
+  ],
+  "total_count": 3,
+  "successful_count": 2,
+  "failed_count": 1,
+  "errors": [
+    {"match_id": "match_3", "error": "比赛不存在"}
+  ],
+  "processed_at": "2024-01-15T10:30:05Z",
+  "processing_time_ms": 125.5,
+  "avg_time_per_prediction": 62.8
+}
+```
+
+##### SHAP性能监控
+```bash
+# SHAP计算性能指标
+curl -X GET "http://localhost:8000/api/v1/models/info" | jq '.explanation_stats'
+
+# 监控SHAP缓存状态
+curl -X GET "http://localhost:8000/predict/stats" | jq '.shap_cache_stats'
+
+# 清除SHAP缓存（如果需要）
+curl -X POST "http://localhost:8000/internal/shap/clear-cache" \
+     -H "Authorization: Bearer <admin-token>"
+```
+
 ## 📚 Key Design Decisions
 
 ### 1. Architecture Patterns
