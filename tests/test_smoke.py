@@ -5,6 +5,10 @@
 在测试套件重构期间，提供一个最小化的测试用例来确保 CI 管道正常运行。
 """
 
+import pytest
+
+
+@pytest.mark.unit
 def test_ci_pipeline_infrastructure():
     """
     烟雾测试：验证 CI 管道基础设施是否正常工作。
