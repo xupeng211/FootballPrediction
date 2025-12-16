@@ -42,8 +42,10 @@ from fastapi import HTTPException
 from src.database.db_pool import get_db_pool, DatabasePool
 
 # 导入M3模块 - 特征工程
-from src.features.extractor import MatchFeatureExtractor
-from src.features.schemas import MatchFeatureSet
+# TODO: 修复特征工程导入 - 暂时注释以解决CI问题
+# from src.features.extractor import MatchFeatureExtractor
+# from src.features.schemas import MatchFeatureSet
+from src.ml.features.advanced_feature_transformer import AdvancedFeatureTransformer
 
 # 导入M4模块 - 模型推理
 from src.ml.models.xgboost_classifier import XGBoostClassifier
