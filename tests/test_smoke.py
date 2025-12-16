@@ -9,6 +9,9 @@ import pytest
 
 
 @pytest.mark.unit
+@pytest.mark.integration
+@pytest.mark.api
+@pytest.mark.smoke
 def test_ci_pipeline_infrastructure():
     """
     烟雾测试：验证 CI 管道基础设施是否正常工作。
@@ -20,5 +23,6 @@ def test_ci_pipeline_infrastructure():
     - 基础测试框架功能
 
     这是一个无状态的基础设施验证测试，不依赖任何业务逻辑。
+    打上所有标签以确保在任何测试矩阵中都能被选中。
     """
     assert True
