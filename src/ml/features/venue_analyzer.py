@@ -27,6 +27,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class VenueStats:
     """场馆统计数据结构"""
+
     home_goals_rolling_3: float = 0.0  # 主队主场3场平均进球
     home_goals_rolling_5: float = 0.0  # 主队主场5场平均进球
     away_goals_rolling_3: float = 0.0  # 客队客场3场平均进球
@@ -39,14 +40,14 @@ class VenueStats:
     def to_dict(self) -> Dict[str, float]:
         """转换为字典格式"""
         return {
-            'venue_home_goals_rolling_3': self.home_goals_rolling_3,
-            'venue_home_goals_rolling_5': self.home_goals_rolling_5,
-            'venue_away_goals_rolling_3': self.away_goals_rolling_3,
-            'venue_away_goals_rolling_5': self.away_goals_rolling_5,
-            'venue_home_vs_away_diff_3': self.home_away_goal_diff_3,
-            'venue_home_vs_away_diff_5': self.home_away_goal_diff_5,
-            'venue_home_advantage_3': self.home_advantage_3,
-            'venue_home_advantage_5': self.home_advantage_5
+            "venue_home_goals_rolling_3": self.home_goals_rolling_3,
+            "venue_home_goals_rolling_5": self.home_goals_rolling_5,
+            "venue_away_goals_rolling_3": self.away_goals_rolling_3,
+            "venue_away_goals_rolling_5": self.away_goals_rolling_5,
+            "venue_home_vs_away_diff_3": self.home_away_goal_diff_3,
+            "venue_home_vs_away_diff_5": self.home_away_goal_diff_5,
+            "venue_home_advantage_3": self.home_advantage_3,
+            "venue_home_advantage_5": self.home_advantage_5,
         }
 
 
@@ -68,8 +69,9 @@ class VenueAnalyzer:
         self.windows = windows
         logger.info(f"VenueAnalyzer 初始化完成，滚动窗口: {windows}")
 
-    def calculate_venue_features_for_match(self, df: pd.DataFrame, home_id: int, away_id: int,
-                                         match_date: pd.Timestamp) -> VenueStats:
+    def calculate_venue_features_for_match(
+        self, df: pd.DataFrame, home_id: int, away_id: int, match_date: pd.Timestamp
+    ) -> VenueStats:
         """
         为特定比赛计算场馆特征
 
@@ -84,10 +86,14 @@ class VenueAnalyzer:
         """
         try:
             # 1. 计算主队主场表现
-            home_venue_stats = self._calculate_team_venue_stats(df, home_id, 'home', match_date)
+            home_venue_stats = self._calculate_team_venue_stats(
+                df, home_id, "home", match_date
+            )
 
             # 2. 计算客队客场表现
-            away_venue_stats = self._calculate_team_venue_stats(df, away_id, 'away', match_date)
+            away_venue_stats = self._calculate_team_venue_stats(
+                df, away_id, "away", match_date
+            )
 
             # 3. 合并统计结果
             venue_stats = VenueStats()
@@ -112,8 +118,10 @@ class VenueAnalyzer:
                 df, home_id, match_date, 5
             )
 
-            logger.debug(f"场馆特征计算完成: {home_id}(主) vs {away_id}(客), "
-                        f"主场进球(3场): {venue_stats.home_goals_rolling_3:.2f}")
+            logger.debug(
+                f"场馆特征计算完成: {home_id}(主) vs {away_id}(客), "
+                f"主场进球(3场): {venue_stats.home_goals_rolling_3:.2f}"
+            )
 
             return venue_stats
 
@@ -121,7 +129,9 @@ class VenueAnalyzer:
             logger.error(f"计算场馆特征失败: {str(e)}")
             return VenueStats()
 
-    def calculate_venue_features_for_all_matches(self, df: pd.DataFrame) -> pd.DataFrame:
+    def calculate_venue_features_for_all_matches(
+        self, df: pd.DataFrame
+    ) -> pd.DataFrame:
         """
         为DataFrame中的所有比赛计算场馆特征
 
@@ -134,38 +144,37 @@ class VenueAnalyzer:
         logger.info("开始计算所有比赛的场馆特征...")
 
         # 按日期排序确保时间顺序
-        df_sorted = df.sort_values('match_date').copy()
+        df_sorted = df.sort_values("match_date").copy()
 
         # 为每支球队计算主场和客场滚动统计
         df_with_home_stats = self._add_home_venue_features(df_sorted)
         df_with_venue_stats = self._add_away_venue_features(df_with_home_stats)
 
         # 计算对比特征
-        df_with_venue_stats['venue_home_vs_away_diff_3'] = (
-            df_with_venue_stats['venue_home_goals_rolling_3'] -
-            df_with_venue_stats['venue_away_goals_rolling_3']
+        df_with_venue_stats["venue_home_vs_away_diff_3"] = (
+            df_with_venue_stats["venue_home_goals_rolling_3"]
+            - df_with_venue_stats["venue_away_goals_rolling_3"]
         )
-        df_with_venue_stats['venue_home_vs_away_diff_5'] = (
-            df_with_venue_stats['venue_home_goals_rolling_5'] -
-            df_with_venue_stats['venue_away_goals_rolling_5']
+        df_with_venue_stats["venue_home_vs_away_diff_5"] = (
+            df_with_venue_stats["venue_home_goals_rolling_5"]
+            - df_with_venue_stats["venue_away_goals_rolling_5"]
         )
 
         # 计算主场优势指数
-        df_with_venue_stats['venue_home_advantage_3'] = (
-            df_with_venue_stats['venue_home_goals_rolling_3'] /
-            (df_with_venue_stats['venue_away_goals_rolling_3'] + 0.01)
-        )
-        df_with_venue_stats['venue_home_advantage_5'] = (
-            df_with_venue_stats['venue_home_goals_rolling_5'] /
-            (df_with_venue_stats['venue_away_goals_rolling_5'] + 0.01)
-        )
+        df_with_venue_stats["venue_home_advantage_3"] = df_with_venue_stats[
+            "venue_home_goals_rolling_3"
+        ] / (df_with_venue_stats["venue_away_goals_rolling_3"] + 0.01)
+        df_with_venue_stats["venue_home_advantage_5"] = df_with_venue_stats[
+            "venue_home_goals_rolling_5"
+        ] / (df_with_venue_stats["venue_away_goals_rolling_5"] + 0.01)
 
         logger.info(f"场馆特征计算完成，新增特征数量: 8")
 
         return df_with_venue_stats
 
-    def _calculate_team_venue_stats(self, df: pd.DataFrame, team_id: int,
-                                  venue_type: str, match_date: pd.Timestamp) -> Dict[int, float]:
+    def _calculate_team_venue_stats(
+        self, df: pd.DataFrame, team_id: int, venue_type: str, match_date: pd.Timestamp
+    ) -> Dict[int, float]:
         """
         计算特定球队在特定场馆类型的滚动统计
 
@@ -179,18 +188,18 @@ class VenueAnalyzer:
             Dict[int, float]: 各窗口大小的平均进球数
         """
         # 筛选球队在特定场馆的历史比赛
-        if venue_type == 'home':
+        if venue_type == "home":
             team_matches = df[
-                (df['home_team_id'] == team_id) &
-                (pd.to_datetime(df['match_date']) < match_date)
-            ].sort_values('match_date')
-            goals_col = 'home_score'
+                (df["home_team_id"] == team_id)
+                & (pd.to_datetime(df["match_date"]) < match_date)
+            ].sort_values("match_date")
+            goals_col = "home_score"
         else:  # venue_type == 'away'
             team_matches = df[
-                (df['away_team_id'] == team_id) &
-                (pd.to_datetime(df['match_date']) < match_date)
-            ].sort_values('match_date')
-            goals_col = 'away_score'
+                (df["away_team_id"] == team_id)
+                & (pd.to_datetime(df["match_date"]) < match_date)
+            ].sort_values("match_date")
+            goals_col = "away_score"
 
         if team_matches.empty:
             return {window: 0.0 for window in self.windows}
@@ -217,15 +226,15 @@ class VenueAnalyzer:
         """添加主场场馆特征"""
         df_result = df.copy()
 
-        for team_id in df['home_team_id'].unique():
+        for team_id in df["home_team_id"].unique():
             # 获取该球队的所有主场比赛
-            home_matches = df[df['home_team_id'] == team_id].sort_values('match_date')
+            home_matches = df[df["home_team_id"] == team_id].sort_values("match_date")
 
             # 计算各窗口的滚动平均
             for window in self.windows:
-                col_name = f'venue_home_goals_rolling_{window}'
+                col_name = f"venue_home_goals_rolling_{window}"
                 rolling_stats = (
-                    home_matches['home_score']
+                    home_matches["home_score"]
                     .rolling(window, min_periods=1)
                     .mean()
                     .shift(1)  # 防止数据泄露
@@ -240,15 +249,15 @@ class VenueAnalyzer:
         """添加客场场馆特征"""
         df_result = df.copy()
 
-        for team_id in df['away_team_id'].unique():
+        for team_id in df["away_team_id"].unique():
             # 获取该球队的所有客场比赛
-            away_matches = df[df['away_team_id'] == team_id].sort_values('match_date')
+            away_matches = df[df["away_team_id"] == team_id].sort_values("match_date")
 
             # 计算各窗口的滚动平均
             for window in self.windows:
-                col_name = f'venue_away_goals_rolling_{window}'
+                col_name = f"venue_away_goals_rolling_{window}"
                 rolling_stats = (
-                    away_matches['away_score']
+                    away_matches["away_score"]
                     .rolling(window, min_periods=1)
                     .mean()
                     .shift(1)  # 防止数据泄露
@@ -259,8 +268,9 @@ class VenueAnalyzer:
 
         return df_result
 
-    def _calculate_home_advantage(self, df: pd.DataFrame, team_id: int,
-                                match_date: pd.Timestamp, window: int) -> float:
+    def _calculate_home_advantage(
+        self, df: pd.DataFrame, team_id: int, match_date: pd.Timestamp, window: int
+    ) -> float:
         """
         计算主场优势指数
 
@@ -275,8 +285,12 @@ class VenueAnalyzer:
         """
         try:
             # 获取该球队的主场和客场历史表现
-            home_stats = self._calculate_team_venue_stats(df, team_id, 'home', match_date)
-            away_stats = self._calculate_team_venue_stats(df, team_id, 'away', match_date)
+            home_stats = self._calculate_team_venue_stats(
+                df, team_id, "home", match_date
+            )
+            away_stats = self._calculate_team_venue_stats(
+                df, team_id, "away", match_date
+            )
 
             home_goals = home_stats.get(window, 0.0)
             away_goals = away_stats.get(window, 0.0)
@@ -303,18 +317,22 @@ class VenueAnalyzer:
             Dict: 场馆表现摘要
         """
         # 分离主场和客场比赛
-        home_matches = df[df['home_team_id'] == team_id]
-        away_matches = df[df['away_team_id'] == team_id]
+        home_matches = df[df["home_team_id"] == team_id]
+        away_matches = df[df["away_team_id"] == team_id]
 
         # 计算基础统计
         home_games = len(home_matches)
         away_games = len(away_matches)
 
-        home_goals = home_matches['home_score'].sum() if home_games > 0 else 0
-        away_goals = away_matches['away_score'].sum() if away_games > 0 else 0
+        home_goals = home_matches["home_score"].sum() if home_games > 0 else 0
+        away_goals = away_matches["away_score"].sum() if away_games > 0 else 0
 
-        home_wins = len(home_matches[home_matches['home_score'] > home_matches['away_score']])
-        away_wins = len(away_matches[away_matches['away_score'] > away_matches['home_score']])
+        home_wins = len(
+            home_matches[home_matches["home_score"] > home_matches["away_score"]]
+        )
+        away_wins = len(
+            away_matches[away_matches["away_score"] > away_matches["home_score"]]
+        )
 
         # 计算平均指标
         avg_home_goals = home_goals / home_games if home_games > 0 else 0
@@ -324,22 +342,24 @@ class VenueAnalyzer:
         away_win_rate = away_wins / away_games if away_games > 0 else 0
 
         # 计算主场优势
-        home_advantage = avg_home_goals / (avg_away_goals + 0.01) if avg_away_goals > 0 else 1.0
+        home_advantage = (
+            avg_home_goals / (avg_away_goals + 0.01) if avg_away_goals > 0 else 1.0
+        )
 
         return {
-            'team_id': team_id,
-            'home_games': home_games,
-            'away_games': away_games,
-            'total_games': home_games + away_games,
-            'home_goals': home_goals,
-            'away_goals': away_goals,
-            'avg_home_goals': avg_home_goals,
-            'avg_away_goals': avg_away_goals,
-            'home_wins': home_wins,
-            'away_wins': away_wins,
-            'home_win_rate': home_win_rate,
-            'away_win_rate': away_win_rate,
-            'home_advantage': home_advantage
+            "team_id": team_id,
+            "home_games": home_games,
+            "away_games": away_games,
+            "total_games": home_games + away_games,
+            "home_goals": home_goals,
+            "away_goals": away_goals,
+            "avg_home_goals": avg_home_goals,
+            "avg_away_goals": avg_away_goals,
+            "home_wins": home_wins,
+            "away_wins": away_wins,
+            "home_win_rate": home_win_rate,
+            "away_win_rate": away_win_rate,
+            "home_advantage": home_advantage,
         }
 
 
@@ -347,23 +367,30 @@ class VenueAnalyzer:
 if __name__ == "__main__":
     # 示例数据
     sample_data = {
-        'home_team_id': [1, 2, 1, 3, 2, 1, 2],
-        'away_team_id': [2, 1, 3, 1, 1, 2, 3],
-        'home_score': [2, 1, 0, 1, 3, 2, 1],
-        'away_score': [1, 2, 0, 0, 1, 1, 2],
-        'match_date': ['2024-01-01', '2024-01-15', '2024-02-01', '2024-02-15',
-                      '2024-03-01', '2024-03-15', '2024-03-20']
+        "home_team_id": [1, 2, 1, 3, 2, 1, 2],
+        "away_team_id": [2, 1, 3, 1, 1, 2, 3],
+        "home_score": [2, 1, 0, 1, 3, 2, 1],
+        "away_score": [1, 2, 0, 0, 1, 1, 2],
+        "match_date": [
+            "2024-01-01",
+            "2024-01-15",
+            "2024-02-01",
+            "2024-02-15",
+            "2024-03-01",
+            "2024-03-15",
+            "2024-03-20",
+        ],
     }
 
     df = pd.DataFrame(sample_data)
-    df['match_date'] = pd.to_datetime(df['match_date'])
+    df["match_date"] = pd.to_datetime(df["match_date"])
 
     # 创建场馆分析器
     venue_analyzer = VenueAnalyzer(windows=[3, 5])
 
     # 计算场馆特征
     venue_stats = venue_analyzer.calculate_venue_features_for_match(
-        df, 1, 2, pd.Timestamp('2024-03-25')
+        df, 1, 2, pd.Timestamp("2024-03-25")
     )
     print(f"场馆特征结果: {venue_stats.to_dict()}")
 

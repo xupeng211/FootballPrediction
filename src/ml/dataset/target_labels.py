@@ -32,9 +32,10 @@ class MatchOutcome(str, Enum):
     定义标准的三分类比赛结果，用于1X2预测任务。
     继承自str确保JSON序列化兼容性。
     """
-    HOME_WIN = "HOME_WIN"    # 主队获胜
-    DRAW = "DRAW"            # 平局
-    AWAY_WIN = "AWAY_WIN"    # 客队获胜
+
+    HOME_WIN = "HOME_WIN"  # 主队获胜
+    DRAW = "DRAW"  # 平局
+    AWAY_WIN = "AWAY_WIN"  # 客队获胜
 
     @classmethod
     def get_all_outcomes(cls) -> list[str]:
@@ -46,7 +47,7 @@ class MatchOutcome(str, Enum):
         descriptions = {
             MatchOutcome.HOME_WIN: "主队获胜",
             MatchOutcome.DRAW: "平局",
-            MatchOutcome.AWAY_WIN: "客队获胜"
+            MatchOutcome.AWAY_WIN: "客队获胜",
         }
         return descriptions[self]
 
@@ -71,8 +72,9 @@ class MatchOutcome(str, Enum):
             raise ValueError(f"team_side必须是'home'或'away'，当前值: {team_side}")
 
 
-def score_to_label(home_score: Union[int, float, str],
-                  away_score: Union[int, float, str]) -> MatchOutcome:
+def score_to_label(
+    home_score: Union[int, float, str], away_score: Union[int, float, str]
+) -> MatchOutcome:
     """
     将比分转换为比赛结果标签
 
@@ -103,12 +105,16 @@ def score_to_label(home_score: Union[int, float, str],
     try:
         # 转换输入为整数（处理字符串和浮点数输入）
         if isinstance(home_score, str):
-            home_score = int(float(home_score)) if '.' in home_score else int(home_score)
+            home_score = (
+                int(float(home_score)) if "." in home_score else int(home_score)
+            )
         elif isinstance(home_score, float):
             home_score = int(home_score)
 
         if isinstance(away_score, str):
-            away_score = int(float(away_score)) if '.' in away_score else int(away_score)
+            away_score = (
+                int(float(away_score)) if "." in away_score else int(away_score)
+            )
         elif isinstance(away_score, float):
             away_score = int(away_score)
 
@@ -154,11 +160,7 @@ def label_to_numeric(outcome: MatchOutcome) -> int:
         >>> label_to_numeric(MatchOutcome.AWAY_WIN)
         0
     """
-    mapping = {
-        MatchOutcome.AWAY_WIN: 0,
-        MatchOutcome.DRAW: 1,
-        MatchOutcome.HOME_WIN: 2
-    }
+    mapping = {MatchOutcome.AWAY_WIN: 0, MatchOutcome.DRAW: 1, MatchOutcome.HOME_WIN: 2}
     return mapping[outcome]
 
 
@@ -185,11 +187,7 @@ def numeric_to_label(numeric_label: int) -> MatchOutcome:
         >>> numeric_to_label(0)
         <MatchOutcome.AWAY_WIN: 'AWAY_WIN'>
     """
-    mapping = {
-        0: MatchOutcome.AWAY_WIN,
-        1: MatchOutcome.DRAW,
-        2: MatchOutcome.HOME_WIN
-    }
+    mapping = {0: MatchOutcome.AWAY_WIN, 1: MatchOutcome.DRAW, 2: MatchOutcome.HOME_WIN}
 
     if numeric_label not in mapping:
         raise ValueError(f"无效的数值标签: {numeric_label}，有效值: 0, 1, 2")
@@ -197,8 +195,9 @@ def numeric_to_label(numeric_label: int) -> MatchOutcome:
     return mapping[numeric_label]
 
 
-def validate_scores(home_score: Union[int, float, str],
-                   away_score: Union[int, float, str]) -> Tuple[int, int]:
+def validate_scores(
+    home_score: Union[int, float, str], away_score: Union[int, float, str]
+) -> Tuple[int, int]:
     """
     验证并标准化比分输入
 
@@ -214,8 +213,12 @@ def validate_scores(home_score: Union[int, float, str],
     """
     try:
         # 转换为整数
-        home_int = int(float(home_score)) if isinstance(home_score, str) else int(home_score)
-        away_int = int(float(away_score)) if isinstance(away_score, str) else int(away_score)
+        home_int = (
+            int(float(home_score)) if isinstance(home_score, str) else int(home_score)
+        )
+        away_int = (
+            int(float(away_score)) if isinstance(away_score, str) else int(away_score)
+        )
 
         # 验证非负
         if home_int < 0 or away_int < 0:
@@ -247,12 +250,14 @@ def get_label_probabilities() -> dict[MatchOutcome, float]:
     return {
         MatchOutcome.HOME_WIN: 0.46,
         MatchOutcome.DRAW: 0.26,
-        MatchOutcome.AWAY_WIN: 0.28
+        MatchOutcome.AWAY_WIN: 0.28,
     }
 
 
 # 便捷函数用于批量处理
-def batch_scores_to_labels(score_pairs: list[Tuple[Union[int, float, str], Union[int, float, str]]]) -> list[MatchOutcome]:
+def batch_scores_to_labels(
+    score_pairs: list[Tuple[Union[int, float, str], Union[int, float, str]]],
+) -> list[MatchOutcome]:
     """
     批量将比分对转换为标签
 
@@ -285,13 +290,13 @@ def batch_scores_to_labels(score_pairs: list[Tuple[Union[int, float, str], Union
 LABEL_DESCRIPTIONS = {
     MatchOutcome.HOME_WIN: "主队获胜",
     MatchOutcome.DRAW: "平局",
-    MatchOutcome.AWAY_WIN: "客队获胜"
+    MatchOutcome.AWAY_WIN: "客队获胜",
 }
 
 NUMERIC_LABELS = {
     MatchOutcome.HOME_WIN: 2,
     MatchOutcome.DRAW: 1,
-    MatchOutcome.AWAY_WIN: 0
+    MatchOutcome.AWAY_WIN: 0,
 }
 
 REVERSE_NUMERIC_LABELS = {v: k for k, v in NUMERIC_LABELS.items()}
@@ -307,7 +312,7 @@ if __name__ == "__main__":
         (1, 3, MatchOutcome.AWAY_WIN),
         ("3", "1", MatchOutcome.HOME_WIN),
         (2.0, 1.0, MatchOutcome.HOME_WIN),
-        (0, 5, MatchOutcome.AWAY_WIN)
+        (0, 5, MatchOutcome.AWAY_WIN),
     ]
 
     print("\n📋 测试比分转换:")
