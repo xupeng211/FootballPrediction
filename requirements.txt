@@ -19,3 +19,4 @@ flake8>=6.0.0
 mypy>=1.0.0
 bandit>=1.7.0
 alembic>=1.8.0
+radon>=5.1.0
