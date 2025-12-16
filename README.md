@@ -3,7 +3,7 @@
 [![Python](https://img.shields.io/badge/Python-3.11+-blue?style=flat-square&logo=python)](https://python.org)
 [![Code Coverage](https://img.shields.io/badge/Coverage-96.35%25-brightgreen?style=flat-square)](https://github.com/xupeng211/FootballPrediction)
 [![Code Quality](https://img.shields.io/badge/Code%20Quality-A+-green?style=flat-square)](https://github.com/xupeng211/FootballPrediction)
-[![Tests](https://img.shields.io/badge/Tests-385%20passed-brightgreen?style=flat-square)](https://github.com/xupeng211/FootballPrediction)
+[![Tests](https://img.shields.io/badge/Tests-128%20passed-brightgreen?style=flat-square)](https://github.com/xupeng211/FootballPrediction)
 [![Security](https://img.shields.io/badge/Security-Validated-green?style=flat-square)](https://github.com/xupeng211/FootballPrediction)
 [![Docker](https://img.shields.io/badge/Docker-Ready-blue?style=flat-square&logo=docker)](https://docker.com)
 
@@ -14,7 +14,7 @@
 ## ✨ 核心特性
 
 ### 🏆 质量保证
-- 📊 **卓越测试覆盖率** - **96.35%** (385个测试用例全部通过)
+- 📊 **卓越测试覆盖率** - **96.35%** (128个测试用例全部通过)
 - 🛡️ **安全性验证** - 通过bandit安全扫描，依赖漏洞已修复
 - 📏 **代码质量** - 通过flake8、mypy、black等全套质量检查
 - 🎯 **类型安全** - 完整的Python类型注解和静态检查
@@ -26,8 +26,7 @@
 - ⚡ **自动化CI/CD** - GitHub Actions + 本地CI模拟
 
 ### 🤖 开发体验
-- 🛠️ **完整工具链** - 613行Makefile驱动的开发流程
-- 🔍 **AI辅助开发** - 内置Cursor规则和AI工作流程指引
+- 🛠️ **完整工具链** - 342行Makefile驱动的精简开发流程
 - 📚 **完善文档** - 10+个文档文件，覆盖开发到部署全流程
 - 🔄 **实时监控** - CI状态监控、代码质量分析
 
@@ -45,7 +44,7 @@ cd FootballPrediction
 ```bash
 make install      # 安装依赖
 make env-check    # 检查环境
-make test         # 运行测试 (385个测试用例)
+make test         # 运行测试 (128个测试用例)
 make coverage     # 查看96.35%覆盖率报告
 ```
 
@@ -80,11 +79,11 @@ make ci           # 本地CI检查
 make prepush      # 提交前检查
 ```
 
-## 🤖 AI辅助开发
+## 🛠️ 开发工作流
 
-遵循工具优先原则：
+遵循标准开发流程：
 1. `make env-check` - 检查环境
-2. `make context` - 加载上下文
+2. `make dev` - 开发环境快速准备
 3. 开发和测试
 4. `make ci` - 质量检查
 5. `make prepush` - 完整验证
@@ -147,7 +146,8 @@ docker-compose up --build
 ## 🎉 开始使用
 
 ```bash
-python generate_project.py --name YourProject
+make dev           # 快速开始开发
+make status        # 查看项目状态
 ```
 
 祝您开发愉快！ 🚀
