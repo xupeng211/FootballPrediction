@@ -96,13 +96,7 @@ env-check: venv ## 环境检查
 .PHONY: format
 format: venv ## 代码格式化
 	@echo "$(BLUE)>>> 代码格式化...$(RESET)"
-	$(ACTIVATE) && python -m black src/core/ src/utils/ src/database/ src/api/ tests/ scripts/ || echo "跳过不存在的目录"
-	@if [ -d "src/models" ]; then \
-		$(ACTIVATE) && python -m black src/models/; \
-	fi
-	@if [ -d "src/services" ]; then \
-		$(ACTIVATE) && python -m black src/services/; \
-	fi
+	$(ACTIVATE) && python -m black src/core/ src/utils/ src/database/ src/api/ src/ml/ src/services/ tests/ scripts/ || echo "跳过不存在的目录"
 	@echo "$(GREEN)✅ 代码格式化完成$(RESET)"
 
 .PHONY: lint
@@ -115,7 +109,7 @@ lint: venv ## 代码风格检查
 typecheck: venv ## 类型检查
 	@echo "$(BLUE)>>> 类型检查...$(RESET)"
 	@if $(ACTIVATE) && python -c "import mypy" 2>/dev/null; then \
-		$(ACTIVATE) && python -m mypy src/core/ src/models/ src/services/ src/utils/ src/database/ src/api/ --ignore-missing-imports --explicit-package-bases --check-untyped-defs; \
+		$(ACTIVATE) && python -m mypy src/core/ src/ml/ src/services/ src/utils/ src/database/ src/api/ --ignore-missing-imports --explicit-package-bases --check-untyped-defs; \
 		echo "$(GREEN)✅ 类型检查完成$(RESET)"; \
 	else \
 		echo "$(YELLOW)⚠️ mypy未安装，跳过类型检查$(RESET)"; \
