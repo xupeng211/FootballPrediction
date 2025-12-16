@@ -67,7 +67,7 @@ venv: $(VENV)/bin/activate ## 创建虚拟环境
 install: venv ## 安装项目依赖
 	@echo "$(BLUE)>>> 安装依赖包...$(RESET)"
 	$(ACTIVATE) && pip install -U pip setuptools wheel
-	$(ACTIVATE) && pip install -r requirements.txt -r requirements-dev.txt
+	$(ACTIVATE) && pip install -r requirements.txt
 	@echo "$(GREEN)✅ 依赖安装完成$(RESET)"
 
 .PHONY: lock
