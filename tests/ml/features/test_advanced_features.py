@@ -215,10 +215,10 @@ class TestAdvancedFeatureTransformer(unittest.TestCase):
         """设置测试数据"""
         # 模拟Napoli vs Juventus案例的数据
         self.test_data = {
-            "home_team_id": [1, 1, 2, 1, 2, 1, 2],
-            "away_team_id": [2, 3, 1, 2, 1, 2, 1],
-            "home_score": [0, 2, 1, 0, 1, 2, 0],
-            "away_score": [1, 0, 2, 0, 3, 1, 1],
+            "home_team_id": [1, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1],
+            "away_team_id": [2, 3, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2],
+            "home_score": [0, 2, 1, 0, 1, 2, 0, 3, 1, 2, 1, 2],
+            "away_score": [1, 0, 2, 0, 3, 1, 1, 1, 0, 1, 0, 1],
             "match_date": [
                 "2024-01-01",
                 "2024-01-15",
@@ -227,19 +227,27 @@ class TestAdvancedFeatureTransformer(unittest.TestCase):
                 "2024-02-15",
                 "2024-03-01",
                 "2024-03-15",
+                "2024-04-01",
+                "2024-04-15",
+                "2024-05-01",
+                "2024-05-15",
+                "2024-06-01",
             ],
         }
 
         self.df = pd.DataFrame(self.test_data)
         self.df["match_date"] = pd.to_datetime(self.df["match_date"])
 
-        # 配置高级特征转换器
+        # 配置高级特征转换器 - 只启用Phase 5特征，避免Phase 8的数据需求
         self.config = AdvancedFeatureConfig(
             enable_venue_features=True,
             enable_h2h_features=True,
             enable_points_features=True,
-            venue_windows=[3],
-            points_windows=[3],
+            enable_player_ratings_features=False,  # 禁用Phase 8球员评分特征
+            enable_metadata_features=False,  # 禁用Phase 8元数据特征
+            enable_discipline_features=False,  # 禁用Phase 8纪律特征
+            venue_windows=[3, 5],  # 包含5以匹配get_advanced_feature_names中的硬编码特征
+            points_windows=[3, 5],
         )
 
         self.transformer = AdvancedFeatureTransformer(self.config)
