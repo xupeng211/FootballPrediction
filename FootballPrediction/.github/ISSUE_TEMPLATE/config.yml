@@ -1,8 +1,0 @@
-blank_issues_enabled: false
-contact_links:
-  - name: 📚 贡献指南
-    url: https://github.com/xupeng211/FootballPrediction/blob/main/AGENTS.md
-    about: 请先阅读仓库指南，了解项目结构与开发流程。
-  - name: 🛠️ 支持与讨论
-    url: https://github.com/xupeng211/FootballPrediction/discussions
-    about: 如果问题不是 Bug 或功能需求，请在 Discussions 中发起讨论。

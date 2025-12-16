@@ -14,6 +14,7 @@ from fastapi.responses import JSONResponse
 
 from src.api.health import router as health_router
 from src.api.monitoring import router as monitoring_router
+from src.api.model_management import router as model_management_router
 from src.api.schemas import RootResponse
 from src.database.connection import initialize_database
 
@@ -70,6 +71,7 @@ app.add_middleware(
 # 注册路由
 app.include_router(health_router)
 app.include_router(monitoring_router, prefix="/api/v1")
+app.include_router(model_management_router)
 
 
 @app.get("/", summary="根路径", tags=["基础"], response_model=RootResponse)
@@ -147,3 +149,4 @@ if __name__ == "__main__":
         reload=os.getenv("ENVIRONMENT") == "development",
         log_level="info",
     )
+# 热重载测试 - 2025年 12月 16日 星期二 20:10:31 CST

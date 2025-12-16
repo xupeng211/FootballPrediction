@@ -34,6 +34,7 @@ from pydantic import BaseModel, Field, validator
 
 # 导入推理服务
 from src.services.inference_service import InferenceService, get_inference_service
+from src.services.explainability_service import ExplainabilityService
 
 logger = logging.getLogger(__name__)
 
@@ -139,6 +140,67 @@ class DetailedPredictionResult(PredictionResult):
                     "h2h_home_win_rate": 0.15
                 },
                 "processing_time_ms": 45.2
+            }
+        }
+
+
+class FeatureContribution(BaseModel):
+    """特征贡献度模型"""
+    feature: str = Field(..., description="特征名称")
+    contribution: float = Field(..., description="SHAP贡献度值")
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "feature": "home_form_score",
+                "contribution": 0.142
+            }
+        }
+
+
+class ExplainablePredictionResult(PredictionResult):
+    """可解释预测结果模型"""
+    feature_contributions: Dict[str, float] = Field(..., description="特征SHAP贡献度字典")
+    top_positive_contributors: List[FeatureContribution] = Field(..., description="正向贡献最大的特征")
+    top_negative_contributors: List[FeatureContribution] = Field(..., description="负向贡献最大的特征")
+    feature_importance_ranking: Dict[str, float] = Field(..., description="全局特征重要性排名")
+    explanation_metadata: Optional[Dict[str, Any]] = Field(None, description="解释元数据")
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "match_id": "match_12345",
+                "HOME_WIN_PROBA": 0.65,
+                "DRAW_PROBA": 0.25,
+                "AWAY_WIN_PROBA": 0.10,
+                "predicted_class": "HOME_WIN",
+                "confidence": 0.65,
+                "model_version": "1.0.0",
+                "processed_at": "2024-01-15T10:30:00Z",
+                "feature_contributions": {
+                    "home_form_score": 0.142,
+                    "away_form_score": -0.083,
+                    "h2h_home_win_rate": 0.067,
+                    "rolling_home_score_3": 0.045
+                },
+                "top_positive_contributors": [
+                    {"feature": "home_form_score", "contribution": 0.142},
+                    {"feature": "h2h_home_win_rate", "contribution": 0.067}
+                ],
+                "top_negative_contributors": [
+                    {"feature": "away_form_score", "contribution": -0.083},
+                    {"feature": "rolling_away_score_3", "contribution": -0.025}
+                ],
+                "feature_importance_ranking": {
+                    "home_form_score": 0.142,
+                    "away_form_score": 0.121,
+                    "h2h_home_win_rate": 0.105
+                },
+                "explanation_metadata": {
+                    "shap_computation_time_ms": 15.2,
+                    "total_features": 12,
+                    "base_value": 0.333
+                }
             }
         }
 
@@ -252,6 +314,19 @@ async def get_inference_service_dependency() -> InferenceService:
         raise HTTPException(
             status_code=503,
             detail="预测服务不可用，请稍后重试"
+        )
+
+
+async def get_explainability_service_dependency() -> ExplainabilityService:
+    """获取可解释性服务依赖"""
+    try:
+        explainability_service = ExplainabilityService()
+        return explainability_service
+    except Exception as e:
+        logger.error(f"可解释性服务初始化失败: {e}")
+        raise HTTPException(
+            status_code=503,
+            detail="可解释性服务不可用，请稍后重试"
         )
 
 
@@ -621,6 +696,291 @@ async def reload_model(
         raise HTTPException(
             status_code=500,
             detail=f"模型重新加载异常: {str(e)}"
+        )
+
+
+@router.get(
+    "/match/{match_id}/explain",
+    response_model=ExplainablePredictionResult,
+    summary="单场比赛预测解释",
+    description="根据比赛ID预测1X2结果并提供SHAP特征解释",
+    responses={
+        200: {
+            "description": "预测解释成功",
+            "content": {
+                "application/json": {
+                    "schema": ExplainablePredictionResult.schema()
+                }
+            }
+        }
+    }
+)
+async def predict_match_with_explanation(
+    match_id: str = Path(..., description="比赛唯一标识符"),
+    inference_service: InferenceService = Depends(get_inference_service_dependency),
+    explainability_service: ExplainabilityService = Depends(get_explainability_service_dependency)
+) -> ExplainablePredictionResult:
+    """
+    单场比赛预测解释端点
+
+    提供完整的预测结果以及SHAP特征贡献度分析。
+
+    Args:
+        match_id: 比赛ID
+        inference_service: 推理服务实例
+        explainability_service: 可解释性服务实例
+
+    Returns:
+        ExplainablePredictionResult: 包含SHAP解释的预测结果
+
+    Raises:
+        HTTPException: 当预测或解释失败时
+    """
+    try:
+        import time
+        start_time = time.time()
+
+        logger.info(f"收到预测解释请求: match_id={match_id}")
+
+        # 获取预测结果
+        prediction_result = await inference_service.predict(match_id)
+
+        # 获取特征数据用于SHAP计算
+        # 注意：这里需要根据实际的推理服务实现来获取特征
+        features_data = await inference_service._get_features_for_match(match_id)
+
+        if features_data is None:
+            raise HTTPException(
+                status_code=404,
+                detail=f"无法获取比赛 {match_id} 的特征数据"
+            )
+
+        # 转换为DataFrame格式
+        import pandas as pd
+        features_df = pd.DataFrame([features_data])
+
+        # 计算SHAP贡献度
+        shap_start_time = time.time()
+        contributions_list = await explainability_service.get_shap_contributions(
+            features_df, inference_service.model
+        )
+        shap_computation_time = (time.time() - shap_start_time) * 1000
+
+        if not contributions_list:
+            raise HTTPException(
+                status_code=500,
+                detail="SHAP贡献度计算失败"
+            )
+
+        contributions = contributions_list[0]
+
+        # 获取特征重要性排名
+        importance_ranking = explainability_service.get_feature_importance_ranking(
+            [contributions]
+        )
+
+        # 提取正向和负向贡献最大的特征
+        sorted_contributions = sorted(
+            contributions.items(),
+            key=lambda x: x[1],
+            reverse=True
+        )
+
+        top_positive = [
+            FeatureContribution(feature=k, contribution=v)
+            for k, v in sorted_contributions[:5]
+            if v > 0
+        ]
+
+        top_negative = [
+            FeatureContribution(feature=k, contribution=v)
+            for k, v in sorted_contributions[-5:]
+            if v < 0
+        ]
+
+        # 构建解释元数据
+        explanation_metadata = {
+            "shap_computation_time_ms": round(shap_computation_time, 2),
+            "total_features": len(contributions),
+            "positive_contributions_count": len(top_positive),
+            "negative_contributions_count": len(top_negative),
+            "base_value": getattr(explainability_service._explainer_cache.get(
+                id(inference_service.model.model)
+            ), 'expected_value', 0.0) if explainability_service._explainer_cache else 0.0
+        }
+
+        # 构建可解释预测结果
+        total_time = (time.time() - start_time) * 1000
+
+        explainable_result = ExplainablePredictionResult(
+            match_id=prediction_result["match_id"],
+            HOME_WIN_PROBA=prediction_result["HOME_WIN_PROBA"],
+            DRAW_PROBA=prediction_result["DRAW_PROBA"],
+            AWAY_WIN_PROBA=prediction_result["AWAY_WIN_PROBA"],
+            predicted_class=prediction_result["predicted_class"],
+            confidence=prediction_result["confidence"],
+            model_version=prediction_result["model_version"],
+            processed_at=prediction_result["processed_at"],
+            feature_contributions=contributions,
+            top_positive_contributors=top_positive,
+            top_negative_contributors=top_negative,
+            feature_importance_ranking=importance_ranking,
+            explanation_metadata=explanation_metadata
+        )
+
+        logger.info(f"预测解释完成: match_id={match_id}, 耗时={total_time:.2f}ms")
+        return explainable_result
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"预测解释失败 {match_id}: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"预测解释服务内部错误: {str(e)}"
+        )
+
+
+@router.post(
+    "/batch/explain",
+    summary="批量比赛预测解释",
+    description="批量预测多场比赛的1X2结果并提供SHAP特征解释",
+    response_model=Dict[str, Any]
+)
+async def predict_batch_with_explanation(
+    match_ids: List[str] = Query(..., description="比赛ID列表", min_items=1, max_items=10),
+    inference_service: InferenceService = Depends(get_inference_service_dependency),
+    explainability_service: ExplainabilityService = Depends(get_explainability_service_dependency)
+) -> Dict[str, Any]:
+    """
+    批量比赛预测解释端点
+
+    Args:
+        match_ids: 比赛ID列表（限制最大10个以保证性能）
+        inference_service: 推理服务实例
+        explainability_service: 可解释性服务实例
+
+    Returns:
+        Dict[str, Any]: 批量预测解释结果
+    """
+    try:
+        import time
+        start_time = time.time()
+
+        if len(match_ids) > 10:
+            raise HTTPException(
+                status_code=400,
+                detail="批量解释最多支持10场比赛以保证性能"
+            )
+
+        logger.info(f"收到批量预测解释请求: {len(match_ids)} 场比赛")
+
+        results = []
+        errors = []
+        successful_count = 0
+        failed_count = 0
+
+        # 并发处理批量请求（限制并发数以优化SHAP计算性能）
+        import asyncio
+        semaphore = asyncio.Semaphore(3)  # 限制并发数，SHAP计算资源密集
+
+        async def explain_single(match_id: str) -> tuple:
+            async with semaphore:
+                try:
+                    # 获取预测结果
+                    prediction_result = await inference_service.predict(match_id)
+
+                    # 获取特征数据
+                    features_data = await inference_service._get_features_for_match(match_id)
+
+                    if features_data is None:
+                        return match_id, None, f"无法获取比赛 {match_id} 的特征数据"
+
+                    # 计算SHAP贡献度
+                    import pandas as pd
+                    features_df = pd.DataFrame([features_data])
+                    contributions_list = await explainability_service.get_shap_contributions(
+                        features_df, inference_service.model
+                    )
+
+                    if not contributions_list:
+                        return match_id, None, "SHAP贡献度计算失败"
+
+                    contributions = contributions_list[0]
+                    importance_ranking = explainability_service.get_feature_importance_ranking(
+                        [contributions]
+                    )
+
+                    # 构建结果
+                    result = {
+                        "match_id": match_id,
+                        "prediction": prediction_result,
+                        "feature_contributions": contributions,
+                        "feature_importance_ranking": importance_ranking,
+                        "top_positive_contributors": [
+                            {"feature": k, "contribution": v}
+                            for k, v in sorted(contributions.items(),
+                                             key=lambda x: x[1], reverse=True)[:5]
+                            if v > 0
+                        ],
+                        "top_negative_contributors": [
+                            {"feature": k, "contribution": v}
+                            for k, v in sorted(contributions.items(),
+                                             key=lambda x: x[1])[:5]
+                            if v < 0
+                        ]
+                    }
+
+                    return match_id, result, None
+
+                except Exception as e:
+                    return match_id, None, str(e)
+
+        # 执行并发解释
+        tasks = [explain_single(match_id) for match_id in match_ids]
+        responses = await asyncio.gather(*tasks, return_exceptions=True)
+
+        # 处理结果
+        for match_id, result, error in responses:
+            if isinstance(responses[0], Exception):
+                errors.append({
+                    "match_id": match_id,
+                    "error": str(responses[0])
+                })
+                failed_count += 1
+            elif error:
+                errors.append({
+                    "match_id": match_id,
+                    "error": error
+                })
+                failed_count += 1
+            else:
+                results.append(result)
+                successful_count += 1
+
+        total_time = (time.time() - start_time) * 1000
+
+        batch_result = {
+            "results": results,
+            "total_count": len(match_ids),
+            "successful_count": successful_count,
+            "failed_count": failed_count,
+            "errors": errors,
+            "processed_at": datetime.now().isoformat(),
+            "processing_time_ms": round(total_time, 2),
+            "avg_time_per_prediction": round(total_time / len(match_ids), 2) if match_ids else 0
+        }
+
+        logger.info(f"批量预测解释完成: 成功={successful_count}, 失败={failed_count}, 耗时={total_time:.2f}ms")
+        return batch_result
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"批量预测解释失败: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"批量预测解释服务内部错误: {str(e)}"
         )
 
 
