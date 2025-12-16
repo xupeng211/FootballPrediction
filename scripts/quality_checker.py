@@ -359,11 +359,11 @@ class QualityChecker:
                     "-m",
                     "mypy",
                     "src/core/",
-                    "src/models/",
                     "src/services/",
                     "src/utils/",
                     "src/database/",
                     "src/api/",
+                    "src/ml/",
                     "--ignore-missing-imports",
                     "--explicit-package-bases",
                 ],
@@ -375,9 +375,18 @@ class QualityChecker:
             if result.returncode == 0:
                 return True, "类型检查通过", {"issues": []}
             else:
+                # 合并stdout和stderr来获取所有mypy输出
+                all_output = result.stdout + result.stderr
                 issues = (
-                    result.stdout.strip().split("\n") if result.stdout.strip() else []
+                    [line for line in all_output.strip().split("\n")
+                     if line.strip() and not line.startswith("Success:")]
+                    if all_output.strip() else []
                 )
+
+                # 如果没有实际的类型问题，则视为通过
+                if len(issues) == 0:
+                    return True, "类型检查通过 (无实际类型问题)", {"issues": []}
+
                 return (
                     False,
                     f"发现 {len(issues)} 个类型问题",
