@@ -1,5 +1,5 @@
 """
-AICultureKit 核心功能模块
+FootballPrediction 核心功能模块
 
 提供系统核心功能，包括：
 - 配置管理
@@ -18,7 +18,7 @@ class Config:
 
     def __init__(self):
         # 配置文件存储在用户主目录下，避免权限问题
-        self.config_dir = Path.home() / ".aiculturekit"
+        self.config_dir = Path.home() / ".footballprediction"
         self.config_file = self.config_dir / "config.json"
         self._config: Dict[str, Any] = {}
         self._load_config()
@@ -74,19 +74,19 @@ class Logger:
         return logger
 
 
-class AICultureKitError(Exception):
-    """AICultureKit基础异常类"""
+class FootballPredictionError(Exception):
+    """FootballPrediction基础异常类"""
 
     pass
 
 
-class ConfigError(AICultureKitError):
+class ConfigError(FootballPredictionError):
     """配置相关异常"""
 
     pass
 
 
-class DataError(AICultureKitError):
+class DataError(FootballPredictionError):
     """数据处理异常"""
 
     pass
@@ -96,12 +96,12 @@ class DataError(AICultureKitError):
 config = Config()
 
 # 默认日志器
-logger = Logger.setup_logger("aiculturekit")
+logger = Logger.setup_logger("footballprediction")
 
 __all__ = [
     "Config",
     "Logger",
-    "AICultureKitError",
+    "FootballPredictionError",
     "ConfigError",
     "DataError",
     "config",

@@ -31,6 +31,9 @@ make lint             # Run flake8 linting
 make typecheck        # Run mypy type checking
 make security         # Run bandit security scan
 make quality          # Run all quality checks (format, lint, typecheck, security)
+make complexity       # Run code complexity analysis with radon
+make deadcode         # Run dead code detection with vulture
+make fix              # Quick fix: format + lint
 ```
 
 ### Local Development
@@ -38,7 +41,22 @@ make quality          # Run all quality checks (format, lint, typecheck, securit
 docker-compose up --build    # Start full development stack
 docker-compose ps            # Check service status
 docker-compose logs app      # View application logs
+docker-compose logs -f app   # Follow application logs in real-time
 make status                  # View project overview and statistics
+make dev                     # Quick development environment setup
+```
+
+### CI Monitoring and Debugging (CI监控和调试)
+```bash
+# CI状态监控
+make ci-status              # Check latest CI run status
+make ci-monitor             # Real-time CI monitoring
+make ci-analyze RUN_ID=xxx  # Analyze specific CI failure
+
+# CI Guardian防御系统
+make ci-guardian            # Run CI guardian checks
+make validate-defenses      # Validate all defense mechanisms
+make update-defenses        # Update defense mechanisms
 ```
 
 ## Architecture Overview
@@ -257,6 +275,31 @@ pytest tests/unit/ -k "test_keyword" -v   # 关键词过滤测试
 
 ## Working with the Codebase
 
+### Development Workflow (推荐工作流)
+```bash
+# 日常开发流程
+make dev                     # 完整开发环境设置
+make context                 # 加载项目上下文
+# 进行开发工作...
+make ci                      # 提交前CI检查
+make prepush                 # 完整提交流程(含推送)
+```
+
+### Single Test Execution (单测试执行)
+```bash
+# 运行单个测试文件
+pytest tests/unit/api/test_simple_api.py::test_health_check -v
+
+# 运行特定标记的测试
+pytest tests/ -m "unit and api" --maxfail=5
+
+# 运行带关键词的测试
+pytest tests/ -k "test_health" -v
+
+# 调试模式运行测试
+pytest tests/test_api_basic.py -v -s --tb=long
+```
+
 ### Adding New Features
 1. Define domain entities in `src/domain/entities.py`
 2. Create repository interfaces in domain layer
@@ -284,6 +327,22 @@ pytest tests/unit/ -k "test_keyword" -v   # 关键词过滤测试
 3. Implement configuration management
 4. Add error handling and retry logic
 5. Write integration tests
+
+### Phase 5 Advanced Feature Development (Phase 5高级特征开发)
+```bash
+# Phase 5 核心开发命令
+python scripts/test_phase5_advanced_features.py      # 验证高级特征功能
+python scripts/verify_catch_all_stats.py             # 验证统计数据完整性
+python scripts/test_enhanced_l2_extraction.py        # 测试L2增强数据提取
+python scripts/process_offline_features_full.py      # 处理离线特征数据
+
+# Phase 5 组件测试
+pytest tests/ml/features/test_advanced_features.py   # 高级特征组件测试
+
+# 模型训练和验证
+python scripts/train_real_postgres_standalone.py    # 独立模型训练
+python scripts/canary_simple.py                     # 金丝雀测试
+```
 
 ## 🎯 Phase 5: Advanced Features (Current Development)
 
@@ -367,6 +426,179 @@ src/collectors/enhanced_fotmob_collector.py  # L2级别数据提取
 - **Phase 5组件**: 已实现H2HCalculator、VenueAnalyzer、AdvancedFeatureTransformer
 - **验证脚本**: 完整的Phase 5功能测试和数据验证脚本
 - **Docker支持**: 完整的容器化开发和测试环境
+
+### 实际代码示例
+
+#### Async Database Usage (异步数据库使用)
+```python
+# 正确的异步数据库操作模式
+async def get_team_performance(team_id: int) -> dict:
+    async with get_async_session() as session:
+        result = await session.execute(
+            select(Match).where(
+                (Match.home_team_id == team_id) | (Match.away_team_id == team_id)
+            ).order_by(Match.date.desc()).limit(10)
+        )
+        return result.scalars().all()
+```
+
+#### Configuration Usage (配置使用)
+```python
+# 正确的配置使用方式
+from src.config import get_settings
+
+settings = get_settings()
+
+# 数据库连接
+db_url = settings.database.get_connection_string()
+
+# FotMob API调用
+headers = settings.fotmob.get_headers()
+
+# 环境检查
+if settings.is_development():
+    # 开发环境特定逻辑
+    pass
+```
+
+#### API Response Format (API响应格式)
+```python
+# 标准API响应格式
+from src.api.schemas import APIResponse
+
+@router.get("/predictions/{match_id}")
+async def get_prediction(match_id: int) -> APIResponse[PredictionSchema]:
+    prediction = await prediction_service.get_prediction(match_id)
+    return APIResponse(
+        success=True,
+        data=prediction,
+        message="Prediction retrieved successfully"
+    )
+```
+
+#### Phase 5 Feature Engineering (Phase 5特征工程)
+```python
+# Phase 5高级特征使用示例
+from src.ml.features.advanced_feature_transformer import AdvancedFeatureTransformer
+
+transformer = AdvancedFeatureTransformer()
+
+# 处理比赛数据
+features = transformer.transform_match_features(match_data)
+
+# 场馆分离特征
+venue_features = transformer.calculate_venue_separated_stats(match_data)
+
+# H2H历史交锋特征
+h2h_features = transformer.calculate_h2h_features(team_a_id, team_b_id)
+```
+
+### Code Style Guidelines (代码风格指南)
+
+#### Async Pattern Usage (异步模式使用)
+- 所有数据库操作必须使用async/await
+- 使用async context managers管理资源
+- 避免在async函数中使用阻塞调用
+
+#### Error Handling (错误处理)
+```python
+# 统一错误处理模式
+from src.core.exceptions import DatabaseError, ValidationError
+
+try:
+    result = await some_operation()
+except DatabaseError as e:
+    logger.error(f"Database operation failed: {e}")
+    raise HTTPException(status_code=500, detail="Database error")
+except ValidationError as e:
+    logger.warning(f"Validation failed: {e}")
+    raise HTTPException(status_code=400, detail=str(e))
+```
+
+#### Testing Patterns (测试模式)
+```python
+# 标准测试模式
+@pytest.mark.asyncio
+async def test_prediction_endpoint():
+    # 使用test数据库
+    async with get_async_test_session() as session:
+        # 准备测试数据
+        match = create_test_match(session)
+
+        # 执行测试
+        response = await client.get(f"/predictions/{match.id}")
+
+        # 验证结果
+        assert response.status_code == 200
+        assert response.json()["success"] is True
+```
+
+### Environment Variables (环境变量)
+```bash
+# 必需的环境变量
+export DB_HOST=localhost
+export DB_PORT=5432
+export DB_NAME=football_prediction_dev
+export DB_USER=football_user
+export DB_PASSWORD=football_pass
+
+# FotMob API配置 (生产环境必需)
+export FOTMOB_X_MAS_HEADER="your_x_mas_header"
+export FOTMOB_X_FOO_HEADER="your_x_foo_header"
+
+# 应用配置
+export ENVIRONMENT=development
+export APP_DEBUG=true
+```
+
+### Common Issues and Solutions (常见问题和解决方案)
+
+#### Database Connection Issues (数据库连接问题)
+```bash
+# 检查数据库连接
+docker-compose exec db pg_isready -U football_user
+
+# 重置数据库连接
+docker-compose down && docker-compose up -d
+
+# 检查数据库日志
+docker-compose logs db
+```
+
+#### Test Failures (测试失败)
+```bash
+# 清理测试缓存
+make clean-cache
+
+# 重建环境
+make clean && make install
+
+# 运行特定失败测试
+pytest tests/unit/api/test_simple_api.py::test_health_check -v -s
+```
+
+#### Docker Issues (Docker问题)
+```bash
+# 清理Docker资源
+docker system prune -f
+docker volume prune -f
+
+# 重新构建镜像
+docker-compose down --rmi all
+docker-compose up --build
+```
+
+#### Performance Issues (性能问题)
+```bash
+# 检查代码复杂度
+make complexity
+
+# 查找死代码
+make deadcode
+
+# 运行性能测试
+pytest tests/performance/ -v
+```
 
 ---
 

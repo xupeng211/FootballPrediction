@@ -1,5 +1,5 @@
 """
-AICultureKit 工具模块
+FootballPrediction 工具模块
 
 提供系统中使用的工具函数和辅助类，包括：
 - 文件处理工具

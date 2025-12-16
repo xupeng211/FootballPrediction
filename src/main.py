@@ -7,6 +7,7 @@
 import logging
 import os
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -17,6 +18,19 @@ from src.api.monitoring import router as monitoring_router
 from src.api.model_management import router as model_management_router
 from src.api.schemas import RootResponse
 from src.database.connection import initialize_database
+
+
+def get_version() -> str:
+    """获取应用版本号"""
+    try:
+        version_file = Path(__file__).parent.parent / "VERSION.txt"
+        if version_file.exists():
+            with open(version_file, "r", encoding="utf-8") as f:
+                return f.read().strip()
+        else:
+            return "1.0.0"  # 默认版本
+    except Exception:
+        return "1.0.0"  # 出错时使用默认版本
 
 # 配置日志
 logging.basicConfig(
@@ -52,7 +66,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="足球预测API",
     description="基于机器学习的足球比赛结果预测系统",
-    version="1.0.0",
+    version=get_version(),
     docs_url="/docs",
     redoc_url="/redoc",
     lifespan=lifespan,
@@ -84,7 +98,7 @@ async def root():
     """
     return {
         "service": "足球预测API",
-        "version": "1.0.0",
+        "version": get_version(),
         "status": "运行中",
         "docs_url": "/docs",
         "health_check": "/health",
