@@ -201,8 +201,8 @@ class ClassificationTrainingPipeline:
 
             # 3. 特征工程
             self.logger.info("步骤 3/7: 特征工程")
-            X_train_processed, X_test_processed, y_train, y_test = self._feature_engineering(
-                X_train, X_test, y_train, y_test
+            X_train_processed, X_test_processed, y_train, y_test = (
+                self._feature_engineering(X_train, X_test, y_train, y_test)
             )
 
             # 4. 模型训练
@@ -369,7 +369,11 @@ class ClassificationTrainingPipeline:
         return X_train, X_test, y_train, y_test
 
     def _feature_engineering(
-        self, X_train: np.ndarray, X_test: np.ndarray, y_train: np.ndarray, y_test: np.ndarray
+        self,
+        X_train: np.ndarray,
+        X_test: np.ndarray,
+        y_train: np.ndarray,
+        y_test: np.ndarray,
     ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """特征工程"""
         X_train_processed = X_train.copy()
