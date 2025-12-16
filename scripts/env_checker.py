@@ -425,7 +425,7 @@ class EnvironmentChecker:
         """检查项目结构完整性"""
         try:
             required_dirs = ["tests", "scripts", "logs"]
-            required_files = ["requirements.txt", "rules.md", "README.md"]
+            required_files = ["requirements.txt", "README.md"]
 
             missing_dirs = []
             missing_files = []
