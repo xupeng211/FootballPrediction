@@ -7,6 +7,7 @@
 from .base import Base
 from .config import DatabaseConfig, get_database_config
 from .connection import DatabaseManager, get_async_db_session, get_db_session
+from .db_pool import DatabasePool, get_db_pool
 
 __all__ = [
     "DatabaseConfig",
@@ -15,4 +16,6 @@ __all__ = [
     "get_db_session",
     "get_async_db_session",
     "Base",
+    "DatabasePool",
+    "get_db_pool",
 ]

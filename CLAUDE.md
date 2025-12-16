@@ -17,7 +17,7 @@ make dev              # Quick development environment setup
 
 ### Testing and Quality
 ```bash
-make test             # Run unit tests (requires 80%+ coverage)
+make test             # Run unit tests
 make coverage         # Run tests with coverage report
 make ci               # Complete CI simulation (env-check, quality, test, coverage)
 make ci-local         # Local CI matching remote GitHub Actions
@@ -198,7 +198,7 @@ FootballPrediction/
 - Performance monitoring with response time tracking
 - Error tracking and alerting
 
-## 🧪 测试配置和执行 (630个测试用例)
+## 🧪 测试配置和执行
 
 ### pytest配置体系
 ```bash
@@ -236,9 +236,9 @@ pytest tests/ -m "regression"            # 回归测试
 pytest tests/ -m "docker"                # 需要Docker容器环境
 pytest tests/ -m "external_api"          # 需要外部API调用
 
-# Phase 5 特定测试
-pytest tests/ml/features/test_advanced_features.py    # Phase 5高级特征测试
-python scripts/test_phase5_advanced_features.py       # Phase 5功能验证脚本
+# Phase 5 特定测试 (当前可用)
+pytest tests/ml/features/test_advanced_features.py    # Phase 5高级特征测试 (如果存在)
+# 注意: 其他Phase 5验证脚本可能需要在后续开发中创建
 ```
 
 ### 覆盖率要求
@@ -250,6 +250,8 @@ pytest --cov=src --cov-report=html:htmlcov --cov-report=xml
 make coverage                              # 完整覆盖率检查
 open htmlcov/index.html                   # 查看详细覆盖率报告
 ```
+
+**注意**: 当前项目处于开发阶段，测试套件正在建设中。文档中提到的一些测试数量和脚本可能需要在后续开发中实现。
 
 ### 推荐测试工作流
 ```bash
@@ -371,22 +373,15 @@ scripts/
 
 ### Phase 5 开发命令
 ```bash
-# Phase 5 特定开发和验证
-python scripts/test_phase5_advanced_features.py  # 验证高级特征
-python scripts/verify_catch_all_stats.py         # 验证L2数据提取
-python scripts/test_enhanced_l2_extraction.py    # 测试L2增强提取
-python scripts/test_deep_stats_extraction.py     # 测试深度统计提取
+# Phase 5 特定开发和验证 (当前可用脚本)
+python scripts/process_offline_features_full.py        # 处理离线特征
+python scripts/canary_simple.py                        # 金丝雀测试
 
 # 高级特征组件测试
-pytest tests/ml/features/test_advanced_features.py    # 高级特征单元测试
+pytest tests/ml/features/test_advanced_features.py     # 高级特征单元测试 (如果存在)
 
-# 离线特征处理
-python scripts/process_offline_features_full.py  # 处理离线特征
-python scripts/canary_simple.py                  # 金丝雀测试
-
-# 元数据和结构分析
-python scripts/test_metadata_extraction.py       # 测试元数据提取
-python scripts/analyze_fotmob_structure.py       # 分析FotMob结构
+# 模型训练和验证
+python scripts/train_real_postgres_standalone.py     # 独立模型训练 (如果存在)
 ```
 
 ### 数据收集增强 (FotMob L2集成)
@@ -598,4 +593,6 @@ pytest tests/performance/ -v
 
 ---
 
-**文件更新时间**: 2025-12-17 | **当前分支**: main | **系统状态**: ✅ 生产就绪
+**文件更新时间**: 2025-12-17 | **当前分支**: main | **系统状态**: ✅ 稳定开发版本
+
+**重要说明**: 本文档已根据当前项目实际情况进行更新，移除了不存在脚本的引用，并提供了准确的项目状态信息。
