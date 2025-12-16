@@ -24,8 +24,8 @@ import os
 import logging
 from typing import Optional, List, Dict, Any
 from pathlib import Path
-from pydantic import BaseSettings, Field, validator
-from pydantic.env_settings import SettingsSourceCallable
+from pydantic import Field, validator, field_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 logger = logging.getLogger(__name__)
 
@@ -34,18 +34,21 @@ class DatabaseSettings(BaseSettings):
     """数据库连接配置"""
 
     # 基本连接配置
-    host: str = Field(default="localhost", env="DB_HOST", description="数据库主机地址")
-    port: int = Field(default=5432, env="DB_PORT", description="数据库端口")
-    user: str = Field(default="postgres", env="DB_USER", description="数据库用户名")
-    password: str = Field(default="postgres", env="DB_PASSWORD", description="数据库密码")
-    database: str = Field(default="football_prediction", env="DB_NAME", description="数据库名称")
+    host: str = Field(default="localhost", description="数据库主机地址")
+    port: int = Field(default=5432, description="数据库端口")
+    user: str = Field(default="postgres", description="数据库用户名")
+    password: str = Field(default="postgres", description="数据库密码")
+    database: str = Field(default="football_prediction", description="数据库名称")
 
     # 数据库URL (可选，如果提供则覆盖上述配置)
-    url: Optional[str] = Field(default=None, env="DATABASE_URL", description="完整数据库URL")
+    url: Optional[str] = Field(default=None, description="完整数据库URL")
 
-    class Config:
-        env_prefix = "DB_"
-        case_sensitive = False
+    model_config = SettingsConfigDict(
+        env_prefix="DB_",
+        case_sensitive=False,
+        env_file=".env",
+        env_file_encoding="utf-8"
+    )
 
     def get_connection_string(self) -> str:
         """获取数据库连接字符串"""

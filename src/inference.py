@@ -175,7 +175,8 @@ class Predictor:
             # 执行预测
             if hasattr(self.model, 'predict_proba'):
                 probabilities = self.model.predict_proba(feature_array)[0]
-                predicted_class = self.model.predict(feature_array)[0]
+                predicted_class_array = self.model.predict(feature_array)
+                predicted_class = predicted_class_array[0] if hasattr(predicted_class_array, '__len__') else predicted_class_array
             else:
                 raise PredictionError("模型不支持预测，请确保模型有predict_proba和predict方法")
 

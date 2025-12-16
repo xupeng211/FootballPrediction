@@ -224,32 +224,20 @@ class MatchFeatureExtractor:
             Dict[str, float]: H2H特征字典
         """
         try:
-            # 获取两队历史交锋记录
-            h2h_matches = self.h2h_calculator.get_h2h_matches(
-                home_team_id, away_team_id, historical_matches, match_date
+            # 使用正确的方法名计算H2H统计
+            h2h_stats = self.h2h_calculator.calculate_h2h_for_match(
+                historical_matches, home_team_id, away_team_id, match_date
             )
 
-            if h2h_matches.empty:
+            if h2h_stats.matches_count == 0:
                 return self._get_default_h2h_features()
-
-            # 计算H2H统计
-            h2h_stats = self.h2h_calculator.calculate_h2h_stats(h2h_matches)
 
             # 转换为特征向量
             features = {
-                'h2h_matches_played': float(len(h2h_matches)),
-                'h2h_home_wins': float(h2h_stats.get('home_wins', 0)),
-                'h2h_away_wins': float(h2h_stats.get('away_wins', 0)),
-                'h2h_draws': float(h2h_stats.get('draws', 0)),
-                'h2h_home_win_rate': float(h2h_stats.get('home_win_rate', 0.0)),
-                'h2h_away_win_rate': float(h2h_stats.get('away_win_rate', 0.0)),
-                'h2h_draw_rate': float(h2h_stats.get('draw_rate', 0.0)),
-                'h2h_avg_home_goals': float(h2h_stats.get('avg_home_goals', 0.0)),
-                'h2h_avg_away_goals': float(h2h_stats.get('avg_away_goals', 0.0)),
-                'h2h_avg_total_goals': float(h2h_stats.get('avg_total_goals', 0.0)),
-                'h2h_both_teams_score_rate': float(h2h_stats.get('both_teams_score_rate', 0.0)),
-                'h2h_clean_sheets_home_rate': float(h2h_stats.get('home_clean_sheets_rate', 0.0)),
-                'h2h_clean_sheets_away_rate': float(h2h_stats.get('away_clean_sheets_rate', 0.0))
+                'h2h_matches_played': float(h2h_stats.matches_count),
+                'h2h_home_win_rate': float(h2h_stats.home_win_rate),
+                'h2h_avg_goal_diff': float(h2h_stats.avg_goal_diff),
+                'h2h_avg_total_goals': float(h2h_stats.avg_total_goals)
             }
 
             return features
@@ -279,43 +267,28 @@ class MatchFeatureExtractor:
         """
         try:
             # 获取主队在主场的表现
-            home_venue_stats = self.venue_analyzer.calculate_team_venue_stats(
-                home_team_id, 'home', historical_matches, match_date
+            home_venue_stats = self.venue_analyzer.calculate_venue_features_for_match(
+                historical_matches, home_team_id, away_team_id, match_date
             )
 
-            # 获取客队在客场的表现
-            away_venue_stats = self.venue_analyzer.calculate_team_venue_stats(
-                away_team_id, 'away', historical_matches, match_date
-            )
+            # 注意：VenueAnalyzer的calculate_venue_features_for_match已包含两队的统计
+            # 我们直接从返回的VenueStats中提取数据
+            venue_stats = home_venue_stats
 
             # 合并场馆特征
             features = {}
 
-            # 主队主场特征
-            if home_venue_stats:
-                features.update({
-                    'home_venue_matches': float(home_venue_stats.get('matches', 0)),
-                    'home_venue_win_rate': float(home_venue_stats.get('win_rate', 0.0)),
-                    'home_venue_draw_rate': float(home_venue_stats.get('draw_rate', 0.0)),
-                    'home_venue_loss_rate': float(home_venue_stats.get('loss_rate', 0.0)),
-                    'home_venue_avg_goals_scored': float(home_venue_stats.get('avg_goals_scored', 0.0)),
-                    'home_venue_avg_goals_conceded': float(home_venue_stats.get('avg_goals_conceded', 0.0)),
-                    'home_venue_clean_sheets_rate': float(home_venue_stats.get('clean_sheets_rate', 0.0)),
-                    'home_venue_cs_score': float(home_venue_stats.get('cs_score', 0.0))
-                })
-
-            # 客队客场特征
-            if away_venue_stats:
-                features.update({
-                    'away_venue_matches': float(away_venue_stats.get('matches', 0)),
-                    'away_venue_win_rate': float(away_venue_stats.get('win_rate', 0.0)),
-                    'away_venue_draw_rate': float(away_venue_stats.get('draw_rate', 0.0)),
-                    'away_venue_loss_rate': float(away_venue_stats.get('loss_rate', 0.0)),
-                    'away_venue_avg_goals_scored': float(away_venue_stats.get('avg_goals_scored', 0.0)),
-                    'away_venue_avg_goals_conceded': float(away_venue_stats.get('avg_goals_conceded', 0.0)),
-                    'away_venue_clean_sheets_rate': float(away_venue_stats.get('clean_sheets_rate', 0.0)),
-                    'away_venue_cs_score': float(away_venue_stats.get('cs_score', 0.0))
-                })
+            # 从VenueStats提取特征
+            features.update({
+                'home_venue_goals_rolling_3': float(venue_stats.home_goals_rolling_3),
+                'home_venue_goals_rolling_5': float(venue_stats.home_goals_rolling_5),
+                'away_venue_goals_rolling_3': float(venue_stats.away_goals_rolling_3),
+                'away_venue_goals_rolling_5': float(venue_stats.away_goals_rolling_5),
+                'home_venue_advantage_3': float(venue_stats.home_advantage_3),
+                'home_venue_advantage_5': float(venue_stats.home_advantage_5),
+                'venue_home_vs_away_diff_3': float(venue_stats.home_away_goal_diff_3),
+                'venue_home_vs_away_diff_5': float(venue_stats.home_away_goal_diff_5)
+            })
 
             return features
 
@@ -353,7 +326,7 @@ class MatchFeatureExtractor:
 
                 if not team_matches.empty:
                     # 计算形态指标
-                    recent_form = self._calculate_recent_form(team_matches)
+                    recent_form = self._calculate_recent_form(team_matches, team_id)
 
                     features.update({
                         f'{prefix}_recent_matches': float(len(team_matches)),
@@ -464,7 +437,7 @@ class MatchFeatureExtractor:
 
         return team_matches
 
-    def _calculate_recent_form(self, team_matches: pd.DataFrame) -> Dict[str, float]:
+    def _calculate_recent_form(self, team_matches: pd.DataFrame, team_id: int) -> Dict[str, float]:
         """计算球队近期形态"""
         if team_matches.empty:
             return {}

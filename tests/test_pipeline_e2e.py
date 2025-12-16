@@ -323,15 +323,18 @@ def test_label_conversion():
     """
     测试标签转换函数
     """
+    # 导入所需的枚举
+    from src.ml.dataset.target_labels import MatchOutcome
+
     # 测试比分到标签的转换
-    assert score_to_label(2, 1) == 2  # HOME_WIN
-    assert score_to_label(1, 2) == 0  # AWAY_WIN
-    assert score_to_label(1, 1) == 1  # DRAW
+    assert score_to_label(2, 1) == MatchOutcome.HOME_WIN
+    assert score_to_label(1, 2) == MatchOutcome.AWAY_WIN
+    assert score_to_label(1, 1) == MatchOutcome.DRAW
 
     # 测试标签到数字的转换
-    assert label_to_numeric('HOME_WIN') == 2
-    assert label_to_numeric('AWAY_WIN') == 0
-    assert label_to_numeric('DRAW') == 1
+    assert label_to_numeric(MatchOutcome.HOME_WIN) == 2
+    assert label_to_numeric(MatchOutcome.AWAY_WIN) == 0
+    assert label_to_numeric(MatchOutcome.DRAW) == 1
 
     logger.info("标签转换测试通过")
 
