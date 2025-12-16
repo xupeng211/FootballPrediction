@@ -48,33 +48,58 @@ class DatabasePoolConfig:
 
     所有配置项都支持从环境变量加载，提供合理的默认值
     """
+
     # 基本连接配置
     host: str = field(default_factory=lambda: os.getenv("DB_HOST", "localhost"))
     port: int = field(default_factory=lambda: int(os.getenv("DB_PORT", "5432")))
     user: str = field(default_factory=lambda: os.getenv("DB_USER", "postgres"))
     password: str = field(default_factory=lambda: os.getenv("DB_PASSWORD", "postgres"))
-    database: str = field(default_factory=lambda: os.getenv("DB_NAME", "football_prediction"))
+    database: str = field(
+        default_factory=lambda: os.getenv("DB_NAME", "football_prediction")
+    )
 
     # 连接池配置
-    min_size: int = field(default_factory=lambda: int(os.getenv("DB_POOL_MIN_SIZE", "5")))
-    max_size: int = field(default_factory=lambda: int(os.getenv("DB_POOL_MAX_SIZE", "20")))
-    max_queries: int = field(default_factory=lambda: int(os.getenv("DB_POOL_MAX_QUERIES", "50000")))
-    max_inactive_connection_lifetime: float = field(default_factory=lambda: float(os.getenv("DB_POOL_MAX_INACTIVE_LIFETIME", "300.0")))
+    min_size: int = field(
+        default_factory=lambda: int(os.getenv("DB_POOL_MIN_SIZE", "5"))
+    )
+    max_size: int = field(
+        default_factory=lambda: int(os.getenv("DB_POOL_MAX_SIZE", "20"))
+    )
+    max_queries: int = field(
+        default_factory=lambda: int(os.getenv("DB_POOL_MAX_QUERIES", "50000"))
+    )
+    max_inactive_connection_lifetime: float = field(
+        default_factory=lambda: float(
+            os.getenv("DB_POOL_MAX_INACTIVE_LIFETIME", "300.0")
+        )
+    )
 
     # 超时配置
-    timeout: float = field(default_factory=lambda: float(os.getenv("DB_TIMEOUT", "60.0")))
-    command_timeout: float = field(default_factory=lambda: float(os.getenv("DB_COMMAND_TIMEOUT", "30.0")))
+    timeout: float = field(
+        default_factory=lambda: float(os.getenv("DB_TIMEOUT", "60.0"))
+    )
+    command_timeout: float = field(
+        default_factory=lambda: float(os.getenv("DB_COMMAND_TIMEOUT", "30.0"))
+    )
 
     # 健康检查配置
-    health_check_interval: float = field(default_factory=lambda: float(os.getenv("DB_HEALTH_CHECK_INTERVAL", "30.0")))
-    health_check_timeout: float = field(default_factory=lambda: float(os.getenv("DB_HEALTH_CHECK_TIMEOUT", "5.0")))
+    health_check_interval: float = field(
+        default_factory=lambda: float(os.getenv("DB_HEALTH_CHECK_INTERVAL", "30.0"))
+    )
+    health_check_timeout: float = field(
+        default_factory=lambda: float(os.getenv("DB_HEALTH_CHECK_TIMEOUT", "5.0"))
+    )
 
     # 重连配置
-    max_retries: int = field(default_factory=lambda: int(os.getenv("DB_MAX_RETRIES", "3")))
-    retry_delay: float = field(default_factory=lambda: float(os.getenv("DB_RETRY_DELAY", "1.0")))
+    max_retries: int = field(
+        default_factory=lambda: int(os.getenv("DB_MAX_RETRIES", "3"))
+    )
+    retry_delay: float = field(
+        default_factory=lambda: float(os.getenv("DB_RETRY_DELAY", "1.0"))
+    )
 
     @classmethod
-    def from_url(cls, db_url: Optional[str] = None) -> 'DatabasePoolConfig':
+    def from_url(cls, db_url: Optional[str] = None) -> "DatabasePoolConfig":
         """从数据库URL创建配置对象
 
         Args:
@@ -84,17 +109,22 @@ class DatabasePoolConfig:
             DatabasePoolConfig: 配置对象
         """
         if db_url is None:
-            db_url = os.getenv("DATABASE_URL", "postgresql+asyncpg://postgres:postgres@localhost:5432/football_prediction")
+            db_url = os.getenv(
+                "DATABASE_URL",
+                "postgresql+asyncpg://postgres:postgres@localhost:5432/football_prediction",
+            )
 
         # 解析数据库URL
-        parsed = urllib.parse.urlparse(db_url.replace("postgresql+asyncpg://", "postgresql://"))
+        parsed = urllib.parse.urlparse(
+            db_url.replace("postgresql+asyncpg://", "postgresql://")
+        )
 
         return cls(
             host=parsed.hostname or "localhost",
             port=parsed.port or 5432,
             user=parsed.username or "postgres",
             password=parsed.password or "postgres",
-            database=parsed.path.lstrip("/") or "football_prediction"
+            database=parsed.path.lstrip("/") or "football_prediction",
         )
 
 
@@ -106,7 +136,7 @@ class DatabasePool:
     提供企业级的连接池管理功能，包括健康检查、自动重连、性能监控等。
     """
 
-    _instance: Optional['DatabasePool'] = None
+    _instance: Optional["DatabasePool"] = None
     _lock = asyncio.Lock()
 
     def __init__(self, config: Optional[DatabasePoolConfig] = None):
@@ -129,11 +159,13 @@ class DatabasePool:
             "total_errors": 0,
             "pool_creation_time": None,
             "last_health_check": None,
-            "health_check_count": 0
+            "health_check_count": 0,
         }
 
     @classmethod
-    async def get_instance(cls, config: Optional[DatabasePoolConfig] = None) -> 'DatabasePool':
+    async def get_instance(
+        cls, config: Optional[DatabasePoolConfig] = None
+    ) -> "DatabasePool":
         """
         获取数据库连接池单例实例
 
@@ -165,7 +197,9 @@ class DatabasePool:
 
         start_time = time.time()
         logger.info("🚀 开始初始化数据库连接池")
-        logger.info(f"   数据库: {self.config.host}:{self.config.port}/{self.config.database}")
+        logger.info(
+            f"   数据库: {self.config.host}:{self.config.port}/{self.config.database}"
+        )
         logger.info(f"   连接池大小: {self.config.min_size}-{self.config.max_size}")
         logger.info(f"   超时设置: {self.config.timeout}s")
 
@@ -183,7 +217,7 @@ class DatabasePool:
                 timeout=self.config.timeout,
                 command_timeout=self.config.command_timeout,
                 setup=self._setup_connection,
-                init=self._init_connection
+                init=self._init_connection,
             )
 
             self._is_initialized = True
@@ -273,7 +307,9 @@ class DatabasePool:
                 logger.error(f"SQL执行失败: {query} - {e}")
                 raise
 
-    async def executemany(self, query: str, args_list: List[tuple], timeout: Optional[float] = None) -> str:
+    async def executemany(
+        self, query: str, args_list: List[tuple], timeout: Optional[float] = None
+    ) -> str:
         """
         批量执行SQL语句
 
@@ -295,7 +331,9 @@ class DatabasePool:
                 logger.error(f"批量SQL执行失败: {query} - {e}")
                 raise
 
-    async def fetch(self, query: str, *args, timeout: Optional[float] = None) -> List[asyncpg.Record]:
+    async def fetch(
+        self, query: str, *args, timeout: Optional[float] = None
+    ) -> List[asyncpg.Record]:
         """
         执行查询并返回所有结果
 
@@ -317,7 +355,9 @@ class DatabasePool:
                 logger.error(f"查询执行失败: {query} - {e}")
                 raise
 
-    async def fetchrow(self, query: str, *args, timeout: Optional[float] = None) -> Optional[asyncpg.Record]:
+    async def fetchrow(
+        self, query: str, *args, timeout: Optional[float] = None
+    ) -> Optional[asyncpg.Record]:
         """
         执行查询并返回第一行结果
 
@@ -339,7 +379,9 @@ class DatabasePool:
                 logger.error(f"查询执行失败: {query} - {e}")
                 raise
 
-    async def fetchval(self, query: str, *args, column: int = 0, timeout: Optional[float] = None) -> Any:
+    async def fetchval(
+        self, query: str, *args, column: int = 0, timeout: Optional[float] = None
+    ) -> Any:
         """
         执行查询并返回单个值
 
@@ -354,7 +396,9 @@ class DatabasePool:
         """
         async with self.connection() as conn:
             try:
-                result = await conn.fetchval(query, *args, column=column, timeout=timeout)
+                result = await conn.fetchval(
+                    query, *args, column=column, timeout=timeout
+                )
                 self._stats["total_queries_executed"] += 1
                 return result
             except Exception as e:
@@ -427,14 +471,16 @@ class DatabasePool:
         stats = self._stats.copy()
 
         if self._pool:
-            stats.update({
-                "pool_size": self._pool.get_size(),
-                "pool_min_size": self._pool.get_min_size(),
-                "pool_max_size": self._pool.get_max_size(),
-                "pool_idle_connections": self._pool.get_idle_size(),
-                "pool_max_queries_per_connection": self._pool.get_max_queries(),
-                "pool_max_inactive_lifetime": self._pool.get_max_inactive_connection_lifetime()
-            })
+            stats.update(
+                {
+                    "pool_size": self._pool.get_size(),
+                    "pool_min_size": self._pool.get_min_size(),
+                    "pool_max_size": self._pool.get_max_size(),
+                    "pool_idle_connections": self._pool.get_idle_size(),
+                    "pool_max_queries_per_connection": self._pool.get_max_queries(),
+                    "pool_max_inactive_lifetime": self._pool.get_max_inactive_connection_lifetime(),
+                }
+            )
 
         return stats
 
@@ -453,12 +499,12 @@ class DatabasePool:
                 "database": self.config.database,
                 "min_size": self.config.min_size,
                 "max_size": self.config.max_size,
-                "timeout": self.config.timeout
+                "timeout": self.config.timeout,
             },
-            "stats": self.get_stats()
+            "stats": self.get_stats(),
         }
 
-    async def __aenter__(self) -> 'DatabasePool':
+    async def __aenter__(self) -> "DatabasePool":
         """异步上下文管理器入口"""
         await self.init_pool()
         return self
@@ -490,7 +536,9 @@ async def get_db_pool(config: Optional[DatabasePoolConfig] = None) -> DatabasePo
     return _global_pool
 
 
-async def init_global_db_pool(config: Optional[DatabasePoolConfig] = None) -> DatabasePool:
+async def init_global_db_pool(
+    config: Optional[DatabasePoolConfig] = None,
+) -> DatabasePool:
     """
     初始化全局数据库连接池
 

@@ -15,14 +15,16 @@ class TestModelTrainer:
     def mock_data_loader(self):
         """创建模拟的数据加载器。"""
         mock_loader = AsyncMock()
-        sample_data = pd.DataFrame({
-            "match_date": pd.date_range("2024-01-01", periods=100, freq="D"),
-            "home_team_id": [f"team_{i % 10}" for i in range(100)],
-            "away_team_id": [f"team_{(i + 1) % 10}" for i in range(100)],
-            "home_goals": np.random.poisson(1.5, 100),
-            "away_goals": np.random.poisson(1.2, 100),
-            "result": np.random.choice(["win", "draw", "loss"], 100),
-        })
+        sample_data = pd.DataFrame(
+            {
+                "match_date": pd.date_range("2024-01-01", periods=100, freq="D"),
+                "home_team_id": [f"team_{i % 10}" for i in range(100)],
+                "away_team_id": [f"team_{(i + 1) % 10}" for i in range(100)],
+                "home_goals": np.random.poisson(1.5, 100),
+                "away_goals": np.random.poisson(1.2, 100),
+                "result": np.random.choice(["win", "draw", "loss"], 100),
+            }
+        )
         mock_loader.load_data.return_value = sample_data
         return mock_loader
 
@@ -59,7 +61,7 @@ class TestModelTrainer:
             from FootballPrediction.src.ml.training.trainer import ModelTrainer
 
         assert ModelTrainer is not None
-        
+
         trainer = ModelTrainer(
             data_loader=mock_data_loader,
             feature_transformers=[mock_feature_transformer],

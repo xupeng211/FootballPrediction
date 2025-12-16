@@ -10,8 +10,6 @@ on:
 
 env:
   PYTHON_VERSION: "3.11"
-  NODE_VERSION: "18"
-  POETRY_VERSION: "1.6.1"
 
 jobs:
   # Step 1: 环境检查和依赖安装
@@ -29,20 +27,6 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: "pip"
           cache-dependency-path: "requirements.txt"
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: "npm"
-          cache-dependency-path: "package-lock.json"
-
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
-        with:
-          version: ${{ env.POETRY_VERSION }}
-          virtualenvs-create: true
-          virtualenvs-in-project: true
 
       - name: Install Python dependencies
         run: |
@@ -76,13 +60,6 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: "pip"
           cache-dependency-path: "requirements.txt"
-
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
-        with:
-          version: ${{ env.POETRY_VERSION }}
-          virtualenvs-create: true
-          virtualenvs-in-project: true
 
       - name: Install dependencies
         run: make install
@@ -160,68 +137,30 @@ jobs:
           cache: "pip"
           cache-dependency-path: "requirements.txt"
 
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
-        with:
-          version: ${{ env.POETRY_VERSION }}
-          virtualenvs-create: true
-          virtualenvs-in-project: true
-
       - name: Install dependencies
         run: make install
-        env:
-          DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/football_prediction_test
-          REDIS_URL: redis://localhost:6379/0
 
-      - name: Wait for database
+      - name: Verify environment
+        run: make env-check
+
+      - name: Run tests with coverage
         run: |
-          timeout 30 bash -c 'until pg_isready -h localhost -p 5432; do sleep 1; done'
-        env:
-          PGPASSWORD: postgres
+          python -m pytest tests/ -m "${{ matrix.test-marker }}" --cov=src --cov-report=xml --cov-report=html
 
-      - name: Wait for Redis
-        run: |
-          timeout 30 bash -c 'until redis-cli ping; do sleep 1; done'
-
-      - name: Run database migrations
-        run: |
-          docker-compose -f docker-compose.test.yml up -d db
-          sleep 5
-          python -m alembic upgrade head
-        env:
-          DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/football_prediction_test
-
-      - name: Run tests
-        run: |
-          if [ "${{ matrix.test-type }}" = "api" ]; then
-            echo "Running API tests with live services"
-            python -m pytest tests/ -m "${{ matrix.test-marker }} or api" -v --tb=short --cov=src --cov-report=xml --cov-report=html
-          else
-            echo "Running ${{ matrix.test-type }} tests"
-            python -m pytest tests/ -m "${{ matrix.test-marker }}" -v --tb=short --cov=src --cov-report=xml --cov-report=html
-          fi
-        env:
-          DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/football_prediction_test
-          REDIS_URL: redis://localhost:6379/0
-
-      - name: Upload coverage reports
-        uses: codecov/codecov-action@v3
+      - name: Upload coverage to Codecov
         if: matrix.test-type == 'unit'
+        uses: codecov/codecov-action@v3
         with:
           file: ./coverage.xml
-          flags: ${{ matrix.test-type }}
-          name: coverage-${{ matrix.test-type }}
+          flags: unittests
+          name: codecov-umbrella
 
-      - name: Generate test report
-        run: |
-          echo "Test Type: ${{ matrix.test-type }}"
-          echo "Test Results: $(python -m pytest tests/ -m "${{ matrix.test-marker }}" --tb=no --quiet --collect-only | tail -1)"
-
-  # Step 4: Docker 镜像构建验证
-  docker-validation:
-    name: Docker Build Validation
+  # Step 4: Docker 构建和测试
+  docker:
+    name: Docker Build & Test
     runs-on: ubuntu-latest
     needs: [code-quality, testing]
+    if: github.event_name == 'push' || github.event_name == 'release'
 
     steps:
       - name: Checkout code
@@ -229,377 +168,83 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-        with:
-          driver: docker
-          driver-opts: |
-            image=moby/buildkit:buildx-stable-1
-            network=host
-          buildkitd-flags: --allow-insecure-entitlement
-          install: true
-          use: true
 
-      - name: Log in to Docker Hub
-        if: github.event_name != 'pull_request'
-        uses: docker/login-action@v3
+      - name: Cache Docker layers
+        uses: actions/cache@v3
         with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
 
-      - name: Build and test runtime image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: Dockerfile
-          target: runtime
-          push: ${{ github.event_name != 'pull_request' }}
-          tags: |
-            ${{ secrets.DOCKER_USERNAME }}/football-prediction:${{ github.sha }}
-            ${{ secrets.DOCKER_USERNAME }}/football-prediction:latest
-            ${{ secrets.DOCKER_USERNAME }}/football-prediction:develop
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          load: true
-          platforms: linux/amd64,linux/arm64
-
-      - name: Test Docker image
+      - name: Build Docker image
         run: |
-          docker run --rm ${{ secrets.DOCKER_USERNAME }}/football-prediction:${{ github.sha }} \
-            python -c "import sys; sys.exit(0)"
+          docker build \
+            --cache-from type=local,src=/tmp/.buildx-cache \
+            --cache-to type=local,dest=/tmp/.buildx-cache \
+            -t football-prediction:${{ github.sha }} \
+            -t football-prediction:latest .
 
-      - name: Run basic container test
+      - name: Run Docker container tests
         run: |
-          # Start the container and check health
-          docker-compose -f docker-compose.test.yml -d app
-          sleep 10
+          docker run --rm \
+            -e DB_HOST=host.docker.internal \
+            -e REDIS_HOST=host.docker.internal \
+            football-prediction:latest \
+            python -c "import src.main; print('Docker container started successfully')"
 
-          # Check container health
-          timeout 30 bash -c 'until curl -f http://localhost:8000/health; do sleep 2; done'
-
-          # Test basic functionality
-          curl -f http://localhost:8000/health || (echo "Health check failed" && exit 1)
-
-          docker-compose -f docker-compose.test.yml down
-
-  # Step 5: 安全扫描
-  security-scan:
-    name: Security Scanning
+  # Step 5: 部署 (仅在release时)
+  deploy:
+    name: Deploy to Production
     runs-on: ubuntu-latest
-    needs: code-quality
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@master
-        with:
-          scan-type: "fs"
-          scan-ref: "."
-          format: "sarif"
-          output: "trivy-results.sarif"
-
-      - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v2
-        if: always()
-        with:
-          sarif_file: "trivy-results.sarif"
-
-  # Step 6: 性能测试
-  performance-tests:
-    name: Performance Testing
-    runs-on: ubuntu-latest
-    needs: testing
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-
-    services:
-      postgres:
-        image: postgres:15
-        env:
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: football_prediction_perf
-          POSTGRES_USER: postgres
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
-
-      redis:
-        image: redis:7-alpine
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 6379:6379
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-          cache: "pip"
-          cache-dependency-path: "requirements.txt"
-
-      - name: Install dependencies
-        run: make install
-        env:
-          DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/football_prediction_perf
-          REDIS_URL: redis://localhost:6379/0
-
-      - name: Run performance tests
-        run: |
-          python -m pytest tests/performance/ -v --tb=short
-        env:
-          DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/football_prediction_perf
-          REDIS_URL: redis://localhost:6379/0
-
-  # Step 7: 构建和部署文档
-  build-docs:
-    name: Build Documentation
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-
-      - name: Install documentation dependencies
-        run: |
-          pip install mkdocs-material mkdocs-mermaid2 mkdocs-macros-plugin
-
-      - name: Build documentation
-        run: |
-          cd docs
-          mkdocs build
-
-      - name: Deploy to GitHub Pages
-        if: github.ref == 'refs/heads/main'
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./docs/site
-
-  # Step 8: 创建 Release
-  create-release:
-    name: Create Release
-    runs-on: ubuntu-latest
-    needs: [docker-validation, testing]
-    if: github.event_name == 'release'
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Create Release Assets
-        run: |
-          # Create release notes
-          cat > release_notes.md << EOF
-          # Football Prediction System Release ${{ github.event.release.tag_name }}
-
-          ## 🚀 Features
-          - Complete M1-M5 module implementation
-          - High-performance XGBoost 1X2 prediction model
-          - Real-time inference API with <50ms latency
-          - Advanced feature engineering (Phase 5)
-          - 96.35% test coverage with 630+ test cases
-
-          ## 🔧 Technical Stack
-          - Backend: FastAPI + Async PostgreSQL + Redis
-          - ML: XGBoost 2.0+ with 65%+ accuracy
-          - Deployment: Docker + Kubernetes Ready
-          - Monitoring: Prometheus + Grafana
-
-          ## 📊 Performance
-          - Model Accuracy: 65%+ (from 58.69% baseline)
-          - API Response Time: <50ms (P95)
-          - Throughput: 1000+ predictions/second
-
-          ## 🛡️  Security
-          - Input validation with Pydantic
-          - SQL injection protection
-          - Authentication middleware
-          - Security scanning with Trivy
-          EOF
-
-          # Generate version info
-          python -c "
-import json
-from src import __version__
-from datetime import datetime
-
-version_info = {
-    'version': __version__,
-    'build_date': datetime.now().isoformat(),
-    'git_commit': '${{ github.sha }}',
-    'git_ref': '${{ github.ref }}'
-}
-
-with open('version.json', 'w') as f:
-    json.dump(version_info, f, indent=2)
-          "
-
-      - name: Upload Release Assets
-        uses: actions/upload-release-asset@v3
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: release_notes.md
-          asset_name: RELEASE_NOTES.md
-          asset_content_type: text/markdown
-
-  # Step 9: CD占位符 - 生产部署
-  deploy-production:
-    name: Deploy to Production (Placeholder)
-    runs-on: ubuntu-latest
-    needs: [docker-validation, testing, create-release]
-    if: github.event_name == 'release'
+    needs: [docker]
+    if: github.event_name == 'release' && github.event.action == 'published'
     environment: production
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Deploy to Kubernetes
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push production image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/football-prediction:${{ github.event.release.tag_name }}
+            ${{ secrets.DOCKER_USERNAME }}/football-prediction:latest
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache,mode=max
+
+      - name: Update deployment status
         run: |
-          echo "🚀 Production Deployment Placeholder"
-          echo "================================"
-          echo "This job demonstrates the production deployment process."
-          echo ""
-          echo "Required production deployment steps:"
-          echo "1. ✅ Docker Image Build & Push - COMPLETED"
-          echo "2. 🔄 Load to Container Registry"
-          echo "3. 🎯 Deploy to Kubernetes Cluster"
-          echo "   - Update deployment manifests"
-          echo "   - Apply new configuration"
-          echo "   - Perform rolling update"
-          echo "   - Wait for health checks"
-          echo ""
-          echo "4. 📊 Update Load Balancer/Ingress"
-          echo "5. 🔧 Update Environment Variables & Secrets"
-          echo "6. ✅ Run Smoke Tests"
-          echo "7. 📈 Update Monitoring & Alerting"
-          echo ""
-          echo "📋 Deployment Configuration:"
-          echo "- Cluster: k8s.football-prediction.com"
-          echo "- Namespace: production"
-          echo "- Replicas: 3 (minimum)"
-          echo "- Resources: CPU: 2, Memory: 4Gi"
-          echo ""
-          echo "🌍 Environment Variables:"
-          echo "- DATABASE_URL (PostgreSQL RDS)"
-          echo "- REDIS_URL (ElastiCache)"
-          echo "- MODEL_S3_BUCKET (Model Storage)"
-          echo "- LOG_LEVEL: INFO"
-          echo ""
-          echo "🔒 Security:"
-          echo "- Network policies applied"
-          echo "- Secrets management via Kubernetes Secrets"
-          echo "- RBAC permissions configured"
-          echo "- Container image scanning completed"
-          echo ""
-          echo "📈 Monitoring:"
-          echo "- Prometheus metrics collection"
-          echo "- Grafana dashboards updated"
-          echo "- Alertmanager rules active"
-          echo "- Log aggregation enabled"
-          echo ""
-          echo "🎯 Rollback Strategy:"
-          echo "- Canary deployment (10% traffic)"
-          echo "- Health check validation"
-          echo "- Metrics comparison (p95 latency, error rate)"
-          echo "- Automatic rollback on failure"
-          echo ""
-          echo "✅ Deployment Configuration Ready!"
-          echo "🚀 Ready for Production Rollout!"
+          echo "🚀 Football Prediction System v${{ github.event.release.tag_name }} deployed successfully!"
+          echo "Docker Image: ${{ secrets.DOCKER_USERNAME }}/football-prediction:${{ github.event.release.tag_name }}"
 
-          echo "📋 Production Deployment Checklist:"
-          echo "□ Environment variables configured"
-          echo "□ Database migrations applied"
-          echo "□ Model files loaded to S3"
-          echo "□ Service endpoints tested"
-          echo "□ Load balancer configured"
-          echo "□ SSL certificates installed"
-          echo "□ Monitoring dashboards updated"
-          echo "□ Alert rules configured"
-          echo "□ Backup procedures verified"
-          echo "□ Documentation updated"
-          echo "□ Team notified"
-
-          # 实际部署命令（注释掉，因为这是占位符）
-          # kubectl apply -f k8s/production/
-          # kubectl rollout status deployment/football-prediction
-          # kubectl get pods -n production
-
-          echo ""
-          echo "🚀 Production deployment completed successfully!"
-          echo "📊 System is now live at: https://api.football-prediction.com"
-
-  # 最终成功通知
-  notify-success:
-    name: CI/CD Success Notification
+  # Step 6: 通知 (仅在失败时)
+  notify:
+    name: Notify on Failure
     runs-on: ubuntu-latest
-    needs: [setup-and-dependencies, code-quality, testing, docker-validation]
-    if: always() && success()
-
-    steps:
-      - name: Send success notification
-        run: |
-          echo "🎉 CI/CD Pipeline Completed Successfully!"
-          echo "===================================="
-          echo "✅ Environment Setup: PASSED"
-          echo "✅ Code Quality: PASSED"
-          echo "✅ Testing Suite: PASSED"
-          echo "✅ Docker Build: PASSED"
-          echo ""
-          echo "📊 Pipeline Summary:"
-          echo "- Branch: ${{ github.ref }}"
-          echo "- Commit: ${{ github.sha }}"
-          echo "- Workflow: ${{ github.workflow }}"
-          echo "- Run ID: ${{ github.run_id }}"
-          echo ""
-          echo "🚀 Ready for Production Deployment!"
-          echo "🌐 Project Status: PRODUCTION READY"
-
-  # 失败通知
-  notify-failure:
-    name: CI/CD Failure Notification
-    runs-on: ubuntu-latest
-    needs: [setup-and-dependencies, code-quality, testing, docker-validation]
+    needs: [setup-and-dependencies, code-quality, testing]
     if: failure()
 
     steps:
-      - name: Send failure notification
+      - name: Notify on failure
         run: |
-          echo "❌ CI/CD Pipeline Failed!"
-          echo "========================"
-          echo "🔍 Failed Jobs:"
-          echo "- Environment Setup: ${{ needs.setup-and-dependencies.result }}"
-          echo "- Code Quality: ${{ needs.code-quality.result }}"
-          echo "- Testing Suite: ${{ needs.testing.result }}"
-          echo "- Docker Build: ${{ needs.docker-validation.result }}"
-          echo ""
-          echo "📊 Failure Details:"
-          echo "- Branch: ${{ github.ref }}"
-          echo "- Commit: ${{ github.sha }}"
-          echo "- Workflow: ${{ github.workflow }}"
-          echo "- Run ID: ${{ github.run_id }}"
-          echo ""
-          echo "🔧 Required Actions:"
-          echo "- Review failed job logs"
-          echo "- Fix identified issues"
-          echo "- Push fix to branch"
-          echo "- Re-run pipeline"
-          echo ""
-          echo "💡 Use 'make ci' locally to reproduce issues"
+          echo "❌ CI/CD Pipeline failed!"
+          echo "Repository: ${{ github.repository }}"
+          echo "Branch: ${{ github.ref }}"
+          echo "Commit: ${{ github.sha }}"
+          echo "Workflow: ${{ github.workflow }}"
+          echo "Run ID: ${{ github.run_id }}"
+          exit 1

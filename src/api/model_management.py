@@ -23,34 +23,32 @@ router = APIRouter(
     responses={
         400: {"description": "请求参数错误"},
         404: {"description": "模型文件不存在"},
-        500: {"description": "服务器内部错误"}
-    }
+        500: {"description": "服务器内部错误"},
+    },
 )
 
 
 # Pydantic模型定义
 class ModelReloadRequest(BaseModel):
     """模型重载请求"""
+
     model_path: Optional[str] = Field(
-        None,
-        description="新的模型文件路径，如果不提供则使用默认路径"
+        None, description="新的模型文件路径，如果不提供则使用默认路径"
     )
-    backup_current: bool = Field(
-        default=True,
-        description="是否备份当前模型"
-    )
+    backup_current: bool = Field(default=True, description="是否备份当前模型")
 
     class Config:
         schema_extra = {
             "example": {
                 "model_path": "models/baseline_v1_retrained.pkl",
-                "backup_current": True
+                "backup_current": True,
             }
         }
 
 
 class ModelReloadResponse(BaseModel):
     """模型重载响应"""
+
     success: bool = Field(..., description="是否重载成功")
     message: str = Field(..., description="重载结果信息")
     previous_version: Optional[str] = Field(None, description="重载前的模型版本")
@@ -66,13 +64,14 @@ class ModelReloadResponse(BaseModel):
                 "previous_version": "baseline_v1_mock",
                 "new_version": "baseline_v1_retrained",
                 "reload_time": "2025-12-16T20:15:00.000Z",
-                "model_path": "models/baseline_v1_retrained.pkl"
+                "model_path": "models/baseline_v1_retrained.pkl",
             }
         }
 
 
 class ModelInfoResponse(BaseModel):
     """模型信息响应"""
+
     is_loaded: bool = Field(..., description="模型是否已加载")
     model_version: str = Field(..., description="当前模型版本")
     model_path: str = Field(..., description="模型文件路径")
@@ -92,8 +91,8 @@ class ModelInfoResponse(BaseModel):
                 "last_modified": "2025-12-16T20:12:00.000Z",
                 "available_models": [
                     "models/baseline_v1.pkl",
-                    "models/baseline_v1_retrained.pkl"
-                ]
+                    "models/baseline_v1_retrained.pkl",
+                ],
             }
         }
 
@@ -126,13 +125,14 @@ def get_available_models() -> list[str]:
 def get_model_metadata(model_path: str) -> Dict[str, Any]:
     """获取模型元数据"""
     model_path_obj = Path(model_path)
-    metadata_path = model_path_obj.with_suffix('_metadata.json')
+    metadata_path = model_path_obj.with_suffix("_metadata.json")
 
     metadata = {}
     if metadata_path.exists():
         try:
             import json
-            with open(metadata_path, 'r') as f:
+
+            with open(metadata_path, "r") as f:
                 metadata = json.load(f)
         except Exception as e:
             logger.warning(f"读取模型元数据失败 {metadata_path}: {e}")
@@ -141,10 +141,7 @@ def get_model_metadata(model_path: str) -> Dict[str, Any]:
 
 
 @router.post("/reload", response_model=ModelReloadResponse)
-async def reload_model(
-    request: ModelReloadRequest,
-    background_tasks: BackgroundTasks
-):
+async def reload_model(request: ModelReloadRequest, background_tasks: BackgroundTasks):
     """
     重新加载模型
 
@@ -162,17 +159,20 @@ async def reload_model(
 
         # 获取当前模型版本
         current_info = inference_service.get_model_info()
-        previous_version = current_info.get('model_version', 'unknown')
+        previous_version = current_info.get("model_version", "unknown")
 
         # 确定模型路径
         target_model_path = request.model_path or "models/baseline_v1.pkl"
 
         # 备份当前模型
         if request.backup_current:
-            backup_path = f"{target_model_path}.backup.{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+            backup_path = (
+                f"{target_model_path}.backup.{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+            )
             try:
                 import shutil
-                current_model_path = current_info.get('model_path', target_model_path)
+
+                current_model_path = current_info.get("model_path", target_model_path)
                 if Path(current_model_path).exists():
                     shutil.copy2(current_model_path, backup_path)
                     logger.info(f"当前模型已备份到: {backup_path}")
@@ -185,15 +185,11 @@ async def reload_model(
         if reload_success:
             # 获取新模型信息
             new_info = inference_service.get_model_info()
-            new_version = new_info.get('model_version', 'unknown')
+            new_version = new_info.get("model_version", "unknown")
 
             # 后台任务：记录重载日志
             background_tasks.add_task(
-                log_model_reload,
-                previous_version,
-                new_version,
-                target_model_path,
-                True
+                log_model_reload, previous_version, new_version, target_model_path, True
             )
 
             return ModelReloadResponse(
@@ -202,30 +198,20 @@ async def reload_model(
                 previous_version=previous_version,
                 new_version=new_version,
                 reload_time=datetime.now().isoformat(),
-                model_path=target_model_path
+                model_path=target_model_path,
             )
         else:
             background_tasks.add_task(
-                log_model_reload,
-                previous_version,
-                "unknown",
-                target_model_path,
-                False
+                log_model_reload, previous_version, "unknown", target_model_path, False
             )
 
-            raise HTTPException(
-                status_code=500,
-                detail="模型重载失败"
-            )
+            raise HTTPException(status_code=500, detail="模型重载失败")
 
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"模型重载异常: {e}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"模型重载异常: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"模型重载异常: {str(e)}")
 
 
 @router.get("/info", response_model=ModelInfoResponse)
@@ -241,7 +227,7 @@ async def get_model_info():
         model_info = inference_service.get_model_info()
 
         # 获取模型文件信息
-        model_path = model_info.get('model_path', '')
+        model_path = model_info.get("model_path", "")
         model_path_obj = Path(model_path)
 
         file_size_mb = None
@@ -257,21 +243,18 @@ async def get_model_info():
         available_models = get_available_models()
 
         return ModelInfoResponse(
-            is_loaded=model_info.get('is_trained', False),
-            model_version=model_info.get('model_version', 'unknown'),
+            is_loaded=model_info.get("is_trained", False),
+            model_version=model_info.get("model_version", "unknown"),
             model_path=model_path,
-            load_time=model_info.get('load_time'),
+            load_time=model_info.get("load_time"),
             file_size_mb=file_size_mb,
             last_modified=last_modified,
-            available_models=available_models
+            available_models=available_models,
         )
 
     except Exception as e:
         logger.error(f"获取模型信息失败: {e}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"获取模型信息失败: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"获取模型信息失败: {str(e)}")
 
 
 @router.get("/list")
@@ -297,31 +280,22 @@ async def list_models():
                 "last_modified": datetime.fromtimestamp(
                     model_path_obj.stat().st_mtime
                 ).isoformat(),
-                "version": metadata.get('model_version', 'unknown'),
-                "training_date": metadata.get('training_date'),
-                "accuracy": metadata.get('metrics', {}).get('accuracy'),
-                "is_metadata_available": bool(metadata)
+                "version": metadata.get("model_version", "unknown"),
+                "training_date": metadata.get("training_date"),
+                "accuracy": metadata.get("metrics", {}).get("accuracy"),
+                "is_metadata_available": bool(metadata),
             }
             models.append(model_info)
 
-        return {
-            "total_models": len(models),
-            "models": models
-        }
+        return {"total_models": len(models), "models": models}
 
     except Exception as e:
         logger.error(f"列出模型失败: {e}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"列出模型失败: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"列出模型失败: {str(e)}")
 
 
 async def log_model_reload(
-    old_version: str,
-    new_version: str,
-    model_path: str,
-    success: bool
+    old_version: str, new_version: str, model_path: str, success: bool
 ):
     """记录模型重载日志"""
     status = "成功" if success else "失败"

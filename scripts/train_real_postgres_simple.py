@@ -25,8 +25,7 @@ sys.path.insert(0, str(project_root))
 
 # 配置日志
 logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s"
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -47,19 +46,26 @@ class SimpleRealDataTrainer:
         """初始化训练器"""
         self.data_loader = PostgresDataLoader(
             selected_columns=[
-                'home_team_id', 'away_team_id', 'home_score', 'away_score',
-                'match_date', 'status', 'home_team_name', 'away_team_name', 'league_id'
+                "home_team_id",
+                "away_team_id",
+                "home_score",
+                "away_score",
+                "match_date",
+                "status",
+                "home_team_name",
+                "away_team_name",
+                "league_id",
             ]
         )
 
         # 模型参数
         self.model_params = {
-            'n_estimators': 200,
-            'max_depth': 5,
-            'learning_rate': 0.1,
-            'random_state': 42,
-            'eval_metric': 'logloss',
-            'use_label_encoder': False,
+            "n_estimators": 200,
+            "max_depth": 5,
+            "learning_rate": 0.1,
+            "random_state": 42,
+            "eval_metric": "logloss",
+            "use_label_encoder": False,
         }
 
         self.model = None
@@ -80,29 +86,25 @@ class SimpleRealDataTrainer:
         df_features = df.copy()
 
         # 按主队分组，创建得分滚动特征
-        df_features = df_features.sort_values(['home_team_id', 'match_date'])
+        df_features = df_features.sort_values(["home_team_id", "match_date"])
 
         # 主队得分滚动特征
-        df_features['home_score_rolling_3'] = (
-            df_features.groupby('home_team_id')['home_score']
-            .transform(lambda x: x.rolling(3, min_periods=1).mean().shift(1))
-        )
+        df_features["home_score_rolling_3"] = df_features.groupby("home_team_id")[
+            "home_score"
+        ].transform(lambda x: x.rolling(3, min_periods=1).mean().shift(1))
 
-        df_features['home_score_rolling_5'] = (
-            df_features.groupby('home_team_id')['home_score']
-            .transform(lambda x: x.rolling(5, min_periods=1).mean().shift(1))
-        )
+        df_features["home_score_rolling_5"] = df_features.groupby("home_team_id")[
+            "home_score"
+        ].transform(lambda x: x.rolling(5, min_periods=1).mean().shift(1))
 
         # 客队得分滚动特征
-        df_features['away_score_rolling_3'] = (
-            df_features.groupby('away_team_id')['away_score']
-            .transform(lambda x: x.rolling(3, min_periods=1).mean().shift(1))
-        )
+        df_features["away_score_rolling_3"] = df_features.groupby("away_team_id")[
+            "away_score"
+        ].transform(lambda x: x.rolling(3, min_periods=1).mean().shift(1))
 
-        df_features['away_score_rolling_5'] = (
-            df_features.groupby('away_team_id')['away_score']
-            .transform(lambda x: x.rolling(5, min_periods=1).mean().shift(1))
-        )
+        df_features["away_score_rolling_5"] = df_features.groupby("away_team_id")[
+            "away_score"
+        ].transform(lambda x: x.rolling(5, min_periods=1).mean().shift(1))
 
         # 删除NaN值
         initial_count = len(df_features)
@@ -124,14 +126,18 @@ class SimpleRealDataTrainer:
         logger.info("准备训练数据...")
 
         # 创建目标变量：主队获胜 (home_score > away_score)
-        y = (df['home_score'] > df['away_score']).astype(int)
+        y = (df["home_score"] > df["away_score"]).astype(int)
         logger.info(f"目标变量分布 - 主队获胜: {y.sum()}/{len(y)} ({y.mean():.2%})")
 
         # 选择特征列
         feature_cols = [
-            'home_score_rolling_3', 'home_score_rolling_5',
-            'away_score_rolling_3', 'away_score_rolling_5',
-            'home_team_id', 'away_team_id', 'league_id'
+            "home_score_rolling_3",
+            "home_score_rolling_5",
+            "away_score_rolling_3",
+            "away_score_rolling_5",
+            "home_team_id",
+            "away_team_id",
+            "league_id",
         ]
 
         # 过滤存在的列
@@ -178,10 +184,10 @@ class SimpleRealDataTrainer:
         y_pred = self.model.predict(X_test)
 
         metrics = {
-            'accuracy': accuracy_score(y_test, y_pred),
-            'precision': precision_score(y_test, y_pred, zero_division=0),
-            'recall': recall_score(y_test, y_pred, zero_division=0),
-            'f1_score': f1_score(y_test, y_pred, zero_division=0)
+            "accuracy": accuracy_score(y_test, y_pred),
+            "precision": precision_score(y_test, y_pred, zero_division=0),
+            "recall": recall_score(y_test, y_pred, zero_division=0),
+            "f1_score": f1_score(y_test, y_pred, zero_division=0),
         }
 
         logger.info(f"模型性能: {metrics}")
@@ -200,15 +206,12 @@ class SimpleRealDataTrainer:
 
         importance = self.model.feature_importances_
         feature_importance = [
-            {
-                'feature': feature_name,
-                'importance': float(imp)
-            }
+            {"feature": feature_name, "importance": float(imp)}
             for feature_name, imp in zip(self.feature_names, importance)
         ]
 
         # 按重要性排序
-        feature_importance.sort(key=lambda x: x['importance'], reverse=True)
+        feature_importance.sort(key=lambda x: x["importance"], reverse=True)
 
         return feature_importance
 
@@ -231,13 +234,13 @@ class SimpleRealDataTrainer:
 
         # 保存模型信息
         model_info = {
-            'feature_names': self.feature_names,
-            'model_params': self.model_params,
-            'training_date': datetime.now().isoformat()
+            "feature_names": self.feature_names,
+            "model_params": self.model_params,
+            "training_date": datetime.now().isoformat(),
         }
 
-        info_path = str(model_path).replace('.json', '_info.json')
-        with open(info_path, 'w', encoding='utf-8') as f:
+        info_path = str(model_path).replace(".json", "_info.json")
+        with open(info_path, "w", encoding="utf-8") as f:
             json.dump(model_info, f, indent=2, ensure_ascii=False)
 
         logger.info(f"✅ 模型已保存到: {model_path}")
@@ -298,15 +301,16 @@ class SimpleRealDataTrainer:
             self._print_results(metrics, feature_importance)
 
             return {
-                'metrics': metrics,
-                'feature_importance': feature_importance[:5],  # Top 5
-                'training_samples': len(X_train),
-                'test_samples': len(X_test)
+                "metrics": metrics,
+                "feature_importance": feature_importance[:5],  # Top 5
+                "training_samples": len(X_train),
+                "test_samples": len(X_test),
             }
 
         except Exception as e:
             logger.error(f"❌ 训练失败: {str(e)}")
             import traceback
+
             traceback.print_exc()
             return None
 
@@ -315,14 +319,24 @@ class SimpleRealDataTrainer:
         logger.info("🎉 真实数据训练完成!")
         logger.info("=" * 60)
         logger.info("📊 模型性能:")
-        logger.info(f"   • Accuracy:  {metrics['accuracy']:.4f} ({metrics['accuracy']:.2%})")
-        logger.info(f"   • Precision: {metrics['precision']:.4f} ({metrics['precision']:.2%})")
-        logger.info(f"   • Recall:    {metrics['recall']:.4f} ({metrics['recall']:.2%})")
-        logger.info(f"   • F1 Score:  {metrics['f1_score']:.4f} ({metrics['f1_score']:.2%})")
+        logger.info(
+            f"   • Accuracy:  {metrics['accuracy']:.4f} ({metrics['accuracy']:.2%})"
+        )
+        logger.info(
+            f"   • Precision: {metrics['precision']:.4f} ({metrics['precision']:.2%})"
+        )
+        logger.info(
+            f"   • Recall:    {metrics['recall']:.4f} ({metrics['recall']:.2%})"
+        )
+        logger.info(
+            f"   • F1 Score:  {metrics['f1_score']:.4f} ({metrics['f1_score']:.2%})"
+        )
 
         logger.info("\n🏆 Top 5 重要特征:")
         for i, feature in enumerate(feature_importance[:5], 1):
-            logger.info(f"   {i}. {feature['feature']:<20} : {feature['importance']:.6f}")
+            logger.info(
+                f"   {i}. {feature['feature']:<20} : {feature['importance']:.6f}"
+            )
 
         logger.info("=" * 60)
 
@@ -341,17 +355,17 @@ async def main():
         logger.info("✅ 真实数据训练圆满完成!")
 
         # 显示核心指标
-        metrics = result['metrics']
-        logger.info("\n" + "="*50)
+        metrics = result["metrics"]
+        logger.info("\n" + "=" * 50)
         logger.info("📈 核心指标总结:")
         logger.info(f"   • Accuracy:  {metrics['accuracy']:.2%}")
         logger.info(f"   • Precision: {metrics['precision']:.2%}")
 
         logger.info("\n🏆 Top 5 特征重要性:")
-        for i, feature in enumerate(result['feature_importance'], 1):
+        for i, feature in enumerate(result["feature_importance"], 1):
             logger.info(f"   {i}. {feature['feature']}: {feature['importance']:.6f}")
 
-        logger.info("="*50)
+        logger.info("=" * 50)
         sys.exit(0)
     else:
         logger.error("❌ 真实数据训练失败!")

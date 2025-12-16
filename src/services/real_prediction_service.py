@@ -65,11 +65,11 @@ class RealPredictionService:
             self.model.load_model(str(self.model_path))
 
             # 加载特征信息
-            info_path = str(self.model_path).replace('.json', '_info.json')
+            info_path = str(self.model_path).replace(".json", "_info.json")
             if Path(info_path).exists():
-                with open(info_path, 'r', encoding='utf-8') as f:
+                with open(info_path, "r", encoding="utf-8") as f:
                     model_info = json.load(f)
-                    self.feature_names = model_info.get('feature_names', [])
+                    self.feature_names = model_info.get("feature_names", [])
 
             self.model_loaded = True
 
@@ -93,8 +93,15 @@ class RealPredictionService:
         # 初始化数据加载器
         self.data_loader = PostgresDataLoader(
             selected_columns=[
-                'home_team_id', 'away_team_id', 'home_score', 'away_score',
-                'match_date', 'status', 'home_team_name', 'away_team_name', 'league_id'
+                "home_team_id",
+                "away_team_id",
+                "home_score",
+                "away_score",
+                "match_date",
+                "status",
+                "home_team_name",
+                "away_team_name",
+                "league_id",
             ]
         )
 
@@ -131,6 +138,7 @@ class RealPredictionService:
 
             async with self.data_loader.db_manager.get_async_session() as session:
                 from sqlalchemy import text
+
                 result = await session.execute(text(query))
                 records = result.fetchall()
 
@@ -143,11 +151,17 @@ class RealPredictionService:
                 df = pd.DataFrame(data)
 
                 # 数据类型转换
-                df['match_date'] = pd.to_datetime(df['match_date'], errors='coerce')
-                numeric_cols = ['home_team_id', 'away_team_id', 'home_score', 'away_score', 'league_id']
+                df["match_date"] = pd.to_datetime(df["match_date"], errors="coerce")
+                numeric_cols = [
+                    "home_team_id",
+                    "away_team_id",
+                    "home_score",
+                    "away_score",
+                    "league_id",
+                ]
                 for col in numeric_cols:
                     if col in df.columns:
-                        df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
+                        df[col] = pd.to_numeric(df[col], errors="coerce").fillna(0)
 
                 logger.info(f"✅ 获取比赛数据成功: ID {match_id}")
                 return df
@@ -156,7 +170,9 @@ class RealPredictionService:
             logger.error(f"❌ 获取比赛数据失败: {str(e)}")
             return None
 
-    def create_features_for_prediction(self, match_data: pd.DataFrame, historical_data: pd.DataFrame) -> pd.DataFrame:
+    def create_features_for_prediction(
+        self, match_data: pd.DataFrame, historical_data: pd.DataFrame
+    ) -> pd.DataFrame:
         """
         为预测创建特征
 
@@ -169,30 +185,26 @@ class RealPredictionService:
         """
         # 合并历史数据和当前比赛
         combined_data = pd.concat([historical_data, match_data], ignore_index=True)
-        combined_data = combined_data.sort_values(['home_team_id', 'match_date'])
+        combined_data = combined_data.sort_values(["home_team_id", "match_date"])
 
         # 创建滚动特征（与训练时相同）
-        combined_data['home_score_rolling_3'] = (
-            combined_data.groupby('home_team_id')['home_score']
-            .transform(lambda x: x.rolling(3, min_periods=1).mean().shift(1))
-        )
+        combined_data["home_score_rolling_3"] = combined_data.groupby("home_team_id")[
+            "home_score"
+        ].transform(lambda x: x.rolling(3, min_periods=1).mean().shift(1))
 
-        combined_data['home_score_rolling_5'] = (
-            combined_data.groupby('home_team_id')['home_score']
-            .transform(lambda x: x.rolling(5, min_periods=1).mean().shift(1))
-        )
+        combined_data["home_score_rolling_5"] = combined_data.groupby("home_team_id")[
+            "home_score"
+        ].transform(lambda x: x.rolling(5, min_periods=1).mean().shift(1))
 
-        combined_data = combined_data.sort_values(['away_team_id', 'match_date'])
+        combined_data = combined_data.sort_values(["away_team_id", "match_date"])
 
-        combined_data['away_score_rolling_3'] = (
-            combined_data.groupby('away_team_id')['away_score']
-            .transform(lambda x: x.rolling(3, min_periods=1).mean().shift(1))
-        )
+        combined_data["away_score_rolling_3"] = combined_data.groupby("away_team_id")[
+            "away_score"
+        ].transform(lambda x: x.rolling(3, min_periods=1).mean().shift(1))
 
-        combined_data['away_score_rolling_5'] = (
-            combined_data.groupby('away_team_id')['away_score']
-            .transform(lambda x: x.rolling(5, min_periods=1).mean().shift(1))
-        )
+        combined_data["away_score_rolling_5"] = combined_data.groupby("away_team_id")[
+            "away_score"
+        ].transform(lambda x: x.rolling(5, min_periods=1).mean().shift(1))
 
         # 提取当前比赛的特征（最后一行）
         current_match_features = combined_data.iloc[-1:].copy()
@@ -220,9 +232,13 @@ class RealPredictionService:
                 return None
 
             match_info = match_data.iloc[0]
-            logger.info(f"🏆 比赛: {match_info['home_team_name']} vs {match_info['away_team_name']}")
+            logger.info(
+                f"🏆 比赛: {match_info['home_team_name']} vs {match_info['away_team_name']}"
+            )
             logger.info(f"📅 日期: {match_info['match_date']}")
-            logger.info(f"⚽ 真实比分: {match_info['home_score']} - {match_info['away_score']}")
+            logger.info(
+                f"⚽ 真实比分: {match_info['home_score']} - {match_info['away_score']}"
+            )
 
             # 2. 获取历史数据用于计算滚动特征
             logger.info("📊 加载历史数据用于特征计算...")
@@ -234,16 +250,24 @@ class RealPredictionService:
 
             # 3. 创建特征
             logger.info("⚙️ 创建预测特征...")
-            features_df = self.create_features_for_prediction(match_data, historical_data)
+            features_df = self.create_features_for_prediction(
+                match_data, historical_data
+            )
 
             # 4. 选择模型需要的特征
             required_features = [
-                'home_score_rolling_3', 'home_score_rolling_5',
-                'away_score_rolling_3', 'away_score_rolling_5',
-                'home_team_id', 'away_team_id', 'league_id'
+                "home_score_rolling_3",
+                "home_score_rolling_5",
+                "away_score_rolling_3",
+                "away_score_rolling_5",
+                "home_team_id",
+                "away_team_id",
+                "league_id",
             ]
 
-            available_features = [f for f in required_features if f in features_df.columns]
+            available_features = [
+                f for f in required_features if f in features_df.columns
+            ]
 
             if not available_features:
                 logger.error("没有可用的特征进行预测")
@@ -258,42 +282,44 @@ class RealPredictionService:
 
             # 解析概率
             probabilities = {
-                'away_win': float(prediction_proba[0]),  # 客队获胜概率
-                'home_win': float(prediction_proba[1])   # 主队获胜概率
+                "away_win": float(prediction_proba[0]),  # 客队获胜概率
+                "home_win": float(prediction_proba[1]),  # 主队获胜概率
             }
 
             # 6. 确定真实结果
-            home_score = int(match_info['home_score'])
-            away_score = int(match_info['away_score'])
+            home_score = int(match_info["home_score"])
+            away_score = int(match_info["away_score"])
             if home_score > away_score:
-                actual_result = 'home_win'
+                actual_result = "home_win"
             elif away_score > home_score:
-                actual_result = 'away_win'
+                actual_result = "away_win"
             else:
-                actual_result = 'draw'
+                actual_result = "draw"
 
             # 7. 构建返回结果
             result = {
-                'match_id': match_id,
-                'match_info': {
-                    'home_team': match_info['home_team_name'],
-                    'away_team': match_info['away_team_name'],
-                    'home_team_id': int(match_info['home_team_id']),
-                    'away_team_id': int(match_info['away_team_id']),
-                    'match_date': str(match_info['match_date']),
-                    'actual_score': f"{home_score}-{away_score}",
-                    'actual_result': actual_result
+                "match_id": match_id,
+                "match_info": {
+                    "home_team": match_info["home_team_name"],
+                    "away_team": match_info["away_team_name"],
+                    "home_team_id": int(match_info["home_team_id"]),
+                    "away_team_id": int(match_info["away_team_id"]),
+                    "match_date": str(match_info["match_date"]),
+                    "actual_score": f"{home_score}-{away_score}",
+                    "actual_result": actual_result,
                 },
-                'prediction': {
-                    'predicted_class': 'home_win' if prediction_class == 1 else 'away_win',
-                    'home_win_probability': probabilities['home_win'],
-                    'away_win_probability': probabilities['away_win'],
-                    'confidence': max(probabilities.values())
+                "prediction": {
+                    "predicted_class": (
+                        "home_win" if prediction_class == 1 else "away_win"
+                    ),
+                    "home_win_probability": probabilities["home_win"],
+                    "away_win_probability": probabilities["away_win"],
+                    "confidence": max(probabilities.values()),
                 },
-                'features_used': available_features,
-                'feature_values': {
+                "features_used": available_features,
+                "feature_values": {
                     col: float(X[col].iloc[0]) for col in available_features
-                }
+                },
             }
 
             logger.info(f"🎯 预测完成:")
@@ -307,6 +333,7 @@ class RealPredictionService:
         except Exception as e:
             logger.error(f"❌ 预测失败: {str(e)}")
             import traceback
+
             traceback.print_exc()
             return None
 
@@ -338,8 +365,8 @@ class RealPredictionService:
             dict: 模型信息
         """
         return {
-            'model_loaded': self.model_loaded,
-            'model_path': str(self.model_path),
-            'feature_names': self.feature_names,
-            'model_type': 'XGBClassifier' if self.model_loaded else None
+            "model_loaded": self.model_loaded,
+            "model_path": str(self.model_path),
+            "feature_names": self.feature_names,
+            "model_type": "XGBClassifier" if self.model_loaded else None,
         }

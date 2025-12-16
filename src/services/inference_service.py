@@ -58,6 +58,7 @@ class InferenceConfig:
 
     包含模型路径、特征配置、缓存策略等推理相关参数。
     """
+
     # 模型配置
     model_path: str = "models/football_xgboost_classifier.pkl"
     model_config_path: Optional[str] = None
@@ -82,7 +83,7 @@ class InferenceConfig:
         default_factory=lambda: {
             "HOME_WIN_PROBA": 0.46,
             "DRAW_PROBA": 0.26,
-            "AWAY_WIN_PROBA": 0.28
+            "AWAY_WIN_PROBA": 0.28,
         }
     )
 
@@ -132,7 +133,7 @@ class InferenceService:
         # }
     """
 
-    _instance: Optional['InferenceService'] = None
+    _instance: Optional["InferenceService"] = None
     _lock = asyncio.Lock()
 
     def __init__(self, config: Optional[InferenceConfig] = None):
@@ -155,21 +156,23 @@ class InferenceService:
 
         # 统计信息
         self.stats = {
-            'total_requests': 0,
-            'successful_predictions': 0,
-            'cache_hits': 0,
-            'fallback_used': 0,
-            'errors': 0,
-            'avg_response_time_ms': 0.0,
-            'model_load_time_ms': 0.0,
-            'started_at': None,
-            'last_prediction_time': None
+            "total_requests": 0,
+            "successful_predictions": 0,
+            "cache_hits": 0,
+            "fallback_used": 0,
+            "errors": 0,
+            "avg_response_time_ms": 0.0,
+            "model_load_time_ms": 0.0,
+            "started_at": None,
+            "last_prediction_time": None,
         }
 
         self.is_initialized = False
 
     @classmethod
-    async def get_instance(cls, config: Optional[InferenceConfig] = None) -> 'InferenceService':
+    async def get_instance(
+        cls, config: Optional[InferenceConfig] = None
+    ) -> "InferenceService":
         """
         获取推理服务单例实例
 
@@ -210,8 +213,8 @@ class InferenceService:
 
             # 5. 记录初始化信息
             load_time = (time.time() - start_time) * 1000
-            self.stats['model_load_time_ms'] = load_time
-            self.stats['started_at'] = datetime.now().isoformat()
+            self.stats["model_load_time_ms"] = load_time
+            self.stats["started_at"] = datetime.now().isoformat()
 
             self.is_initialized = True
             self.logger.info(f"✅ 推理服务初始化完成，耗时: {load_time:.1f}ms")
@@ -243,8 +246,10 @@ class InferenceService:
             if not self.model.is_trained:
                 raise RuntimeError("模型未训练，无法用于推理")
 
-            self.logger.info(f"📊 模型信息: 特征数={len(self.model.feature_names or [])}, "
-                           f"类别={self.model.classes_.tolist() if self.model.classes_ is not None else 'N/A'}")
+            self.logger.info(
+                f"📊 模型信息: 特征数={len(self.model.feature_names or [])}, "
+                f"类别={self.model.classes_.tolist() if self.model.classes_ is not None else 'N/A'}"
+            )
 
         except Exception as e:
             # 尝试加载备用模型
@@ -289,7 +294,7 @@ class InferenceService:
             raise HTTPException(status_code=503, detail="推理服务未初始化")
 
         start_time = time.time()
-        self.stats['total_requests'] += 1
+        self.stats["total_requests"] += 1
 
         try:
             self.logger.debug(f"开始预测比赛: {match_id}")
@@ -298,7 +303,7 @@ class InferenceService:
             if self.config.enable_cache:
                 cached_result = self._get_from_cache(match_id)
                 if cached_result:
-                    self.stats['cache_hits'] += 1
+                    self.stats["cache_hits"] += 1
                     self.logger.debug(f"使用缓存结果: {match_id}")
                     return cached_result
 
@@ -322,25 +327,29 @@ class InferenceService:
             self.logger.debug(f"预测完成: {match_id}, 耗时: {response_time:.1f}ms")
 
             if self.config.log_prediction_requests:
-                self.logger.info(f"预测请求: {match_id} -> {prediction_result['predicted_class']} "
-                               f"(置信度: {prediction_result['confidence']:.3f})")
+                self.logger.info(
+                    f"预测请求: {match_id} -> {prediction_result['predicted_class']} "
+                    f"(置信度: {prediction_result['confidence']:.3f})"
+                )
 
             return prediction_result
 
         except HTTPException:
             # 重新抛出HTTP异常
-            self.stats['errors'] += 1
+            self.stats["errors"] += 1
             raise
         except Exception as e:
-            self.stats['errors'] += 1
+            self.stats["errors"] += 1
             self.logger.error(f"预测失败 {match_id}: {e}")
 
             # 使用降级策略
             if self.config.enable_fallback:
-                self.stats['fallback_used'] += 1
+                self.stats["fallback_used"] += 1
                 return self._create_fallback_result(match_id, str(e))
             else:
-                raise HTTPException(status_code=500, detail=f"预测服务内部错误: {str(e)}")
+                raise HTTPException(
+                    status_code=500, detail=f"预测服务内部错误: {str(e)}"
+                )
 
     async def _fetch_match_data(self, match_id: str) -> pd.DataFrame:
         """
@@ -375,22 +384,19 @@ class InferenceService:
             record = await self.db_pool.fetchrow(query, match_id)
 
             if not record:
-                raise HTTPException(
-                    status_code=404,
-                    detail=f"比赛不存在: {match_id}"
-                )
+                raise HTTPException(status_code=404, detail=f"比赛不存在: {match_id}")
 
             # 转换为DataFrame
             data = {
-                'match_id': [record['match_id']],
-                'home_team_id': [record['home_team_id']],
-                'away_team_id': [record['away_team_id']],
-                'match_date': [record['match_date']],
-                'home_score': [record['home_score']],
-                'away_score': [record['away_score']],
-                'status': [record['status']],
-                'venue': [record.get('venue')],
-                'league_id': [record.get('league_id')]
+                "match_id": [record["match_id"]],
+                "home_team_id": [record["home_team_id"]],
+                "away_team_id": [record["away_team_id"]],
+                "match_date": [record["match_date"]],
+                "home_score": [record["home_score"]],
+                "away_score": [record["away_score"]],
+                "status": [record["status"]],
+                "venue": [record.get("venue")],
+                "league_id": [record.get("league_id")],
             }
 
             df = pd.DataFrame(data)
@@ -402,12 +408,11 @@ class InferenceService:
             raise
         except Exception as e:
             self.logger.error(f"获取比赛数据失败 {match_id}: {e}")
-            raise HTTPException(
-                status_code=500,
-                detail=f"数据库查询失败: {str(e)}"
-            )
+            raise HTTPException(status_code=500, detail=f"数据库查询失败: {str(e)}")
 
-    async def _extract_features(self, match_id: str, match_data: pd.DataFrame) -> MatchFeatureSet:
+    async def _extract_features(
+        self, match_id: str, match_data: pd.DataFrame
+    ) -> MatchFeatureSet:
         """
         提取比赛特征
 
@@ -426,17 +431,21 @@ class InferenceService:
             historical_data = await self._get_historical_data(match_data)
 
             # 提取特征
-            feature_set = await self.feature_extractor.extract_features(match_id, historical_data)
+            feature_set = await self.feature_extractor.extract_features(
+                match_id, historical_data
+            )
 
             # 验证特征质量
             if feature_set.feature_completeness_score < 0.7:
                 raise HTTPException(
                     status_code=400,
-                    detail=f"特征质量不足: 完整性={feature_set.feature_completeness_score:.3f}"
+                    detail=f"特征质量不足: 完整性={feature_set.feature_completeness_score:.3f}",
                 )
 
-            self.logger.debug(f"特征提取成功: {match_id}, "
-                            f"完整性={feature_set.feature_completeness_score:.3f}")
+            self.logger.debug(
+                f"特征提取成功: {match_id}, "
+                f"完整性={feature_set.feature_completeness_score:.3f}"
+            )
 
             return feature_set
 
@@ -444,10 +453,7 @@ class InferenceService:
             raise
         except Exception as e:
             self.logger.error(f"特征提取失败 {match_id}: {e}")
-            raise HTTPException(
-                status_code=400,
-                detail=f"特征提取失败: {str(e)}"
-            )
+            raise HTTPException(status_code=400, detail=f"特征提取失败: {str(e)}")
 
     async def _get_historical_data(self, match_data: pd.DataFrame) -> pd.DataFrame:
         """
@@ -461,8 +467,8 @@ class InferenceService:
         """
         try:
             # 获取比赛日期和联赛ID
-            match_date = match_data['match_date'].iloc[0]
-            league_id = match_data.get('league_id', pd.Series([None])).iloc[0]
+            match_date = match_data["match_date"].iloc[0]
+            league_id = match_data.get("league_id", pd.Series([None])).iloc[0]
 
             # 构建查询
             if league_id:
@@ -524,21 +530,23 @@ class InferenceService:
             # 转换为DataFrame
             data = []
             for record in records:
-                data.append({
-                    'match_id': record['match_id'],
-                    'home_team_id': record['home_team_id'],
-                    'away_team_id': record['away_team_id'],
-                    'match_date': record['match_date'],
-                    'home_score': record['home_score'],
-                    'away_score': record['away_score'],
-                    'home_xg': record.get('home_xg', 0.0),
-                    'away_xg': record.get('away_xg', 0.0),
-                    'home_odds': record.get('home_odds', 0.0),
-                    'draw_odds': record.get('draw_odds', 0.0),
-                    'away_odds': record.get('away_odds', 0.0),
-                    'status': record['status'],
-                    'venue': record.get('venue')
-                })
+                data.append(
+                    {
+                        "match_id": record["match_id"],
+                        "home_team_id": record["home_team_id"],
+                        "away_team_id": record["away_team_id"],
+                        "match_date": record["match_date"],
+                        "home_score": record["home_score"],
+                        "away_score": record["away_score"],
+                        "home_xg": record.get("home_xg", 0.0),
+                        "away_xg": record.get("away_xg", 0.0),
+                        "home_odds": record.get("home_odds", 0.0),
+                        "draw_odds": record.get("draw_odds", 0.0),
+                        "away_odds": record.get("away_odds", 0.0),
+                        "status": record["status"],
+                        "venue": record.get("venue"),
+                    }
+                )
 
             df = pd.DataFrame(data)
             self.logger.debug(f"获取历史数据成功: {len(df)} 条记录")
@@ -555,7 +563,7 @@ class InferenceService:
         mock_data = []
         base_date = datetime.now()
 
-        teams = ['team_1', 'team_2', 'team_3', 'team_4', 'team_5', 'team_6']
+        teams = ["team_1", "team_2", "team_3", "team_4", "team_5", "team_6"]
 
         for i in range(30):  # 创建30场历史比赛
             match_date = base_date - pd.Timedelta(days=i * 2)
@@ -564,25 +572,29 @@ class InferenceService:
             home_score = max(0, int(np.random.normal(1.5, 1.0)))
             away_score = max(0, int(np.random.normal(1.2, 1.0)))
 
-            mock_data.append({
-                'match_id': f'historical_match_{i}',
-                'home_team_id': home_team,
-                'away_team_id': away_team,
-                'match_date': match_date,
-                'home_score': home_score,
-                'away_score': away_score,
-                'home_xg': max(0.1, np.random.normal(1.6, 0.8)),
-                'away_xg': max(0.1, np.random.normal(1.4, 0.7)),
-                'home_odds': round(np.random.uniform(1.8, 4.0), 2),
-                'draw_odds': round(np.random.uniform(3.0, 4.0), 2),
-                'away_odds': round(np.random.uniform(2.5, 5.0), 2),
-                'status': 'FINISHED',
-                'venue': f'Stadium {i % 5 + 1}'
-            })
+            mock_data.append(
+                {
+                    "match_id": f"historical_match_{i}",
+                    "home_team_id": home_team,
+                    "away_team_id": away_team,
+                    "match_date": match_date,
+                    "home_score": home_score,
+                    "away_score": away_score,
+                    "home_xg": max(0.1, np.random.normal(1.6, 0.8)),
+                    "away_xg": max(0.1, np.random.normal(1.4, 0.7)),
+                    "home_odds": round(np.random.uniform(1.8, 4.0), 2),
+                    "draw_odds": round(np.random.uniform(3.0, 4.0), 2),
+                    "away_odds": round(np.random.uniform(2.5, 5.0), 2),
+                    "status": "FINISHED",
+                    "venue": f"Stadium {i % 5 + 1}",
+                }
+            )
 
         return pd.DataFrame(mock_data)
 
-    async def _perform_inference(self, match_id: str, features: MatchFeatureSet) -> Dict[str, Any]:
+    async def _perform_inference(
+        self, match_id: str, features: MatchFeatureSet
+    ) -> Dict[str, Any]:
         """
         执行模型推理
 
@@ -606,32 +618,29 @@ class InferenceService:
             probabilities = self.model.predict_proba(X)[0]
 
             # 转换数值标签为字符串
-            label_mapping = {0: 'AWAY_WIN', 1: 'DRAW', 2: 'HOME_WIN'}
-            predicted_class = label_mapping.get(predicted_class_numeric, 'UNKNOWN')
+            label_mapping = {0: "AWAY_WIN", 1: "DRAW", 2: "HOME_WIN"}
+            predicted_class = label_mapping.get(predicted_class_numeric, "UNKNOWN")
 
             # 构建结果
             result = {
-                'match_id': match_id,
-                'HOME_WIN_PROBA': float(probabilities[2]),  # HOME_WIN是索引2
-                'DRAW_PROBA': float(probabilities[1]),     # DRAW是索引1
-                'AWAY_WIN_PROBA': float(probabilities[0]), # AWAY_WIN是索引0
-                'predicted_class': predicted_class,
-                'confidence': float(max(probabilities)),
-                'model_version': getattr(self.model.config, 'model_version', '1.0.0'),
-                'feature_completeness': float(features.feature_completeness_score),
-                'data_quality': features.data_quality_flag,
-                'processed_at': datetime.now().isoformat()
+                "match_id": match_id,
+                "HOME_WIN_PROBA": float(probabilities[2]),  # HOME_WIN是索引2
+                "DRAW_PROBA": float(probabilities[1]),  # DRAW是索引1
+                "AWAY_WIN_PROBA": float(probabilities[0]),  # AWAY_WIN是索引0
+                "predicted_class": predicted_class,
+                "confidence": float(max(probabilities)),
+                "model_version": getattr(self.model.config, "model_version", "1.0.0"),
+                "feature_completeness": float(features.feature_completeness_score),
+                "data_quality": features.data_quality_flag,
+                "processed_at": datetime.now().isoformat(),
             }
 
-            self.stats['successful_predictions'] += 1
+            self.stats["successful_predictions"] += 1
             return result
 
         except Exception as e:
             self.logger.error(f"推理执行失败 {match_id}: {e}")
-            raise HTTPException(
-                status_code=500,
-                detail=f"模型推理失败: {str(e)}"
-            )
+            raise HTTPException(status_code=500, detail=f"模型推理失败: {str(e)}")
 
     def _get_from_cache(self, match_id: str) -> Optional[Dict[str, Any]]:
         """从缓存获取结果"""
@@ -659,40 +668,44 @@ class InferenceService:
         # 检查缓存大小
         if len(self._prediction_cache) >= self.config.max_cache_size:
             # 删除最旧的缓存项
-            oldest_key = min(self._prediction_cache.keys(),
-                           key=lambda k: self._prediction_cache[k][1])
+            oldest_key = min(
+                self._prediction_cache.keys(),
+                key=lambda k: self._prediction_cache[k][1],
+            )
             del self._prediction_cache[oldest_key]
 
         # 添加新缓存
         self._prediction_cache[match_id] = (result, time.time())
 
-    def _create_fallback_result(self, match_id: str, error_message: str) -> Dict[str, Any]:
+    def _create_fallback_result(
+        self, match_id: str, error_message: str
+    ) -> Dict[str, Any]:
         """创建降级结果"""
         return {
-            'match_id': match_id,
-            'HOME_WIN_PROBA': self.config.default_probabilities['HOME_WIN_PROBA'],
-            'DRAW_PROBA': self.config.default_probabilities['DRAW_PROBA'],
-            'AWAY_WIN_PROBA': self.config.default_probabilities['AWAY_WIN_PROBA'],
-            'predicted_class': 'HOME_WIN',  # 默认预测
-            'confidence': self.config.default_probabilities['HOME_WIN_PROBA'],
-            'model_version': 'fallback',
-            'feature_completeness': 0.0,
-            'data_quality': 'FALLBACK',
-            'error_message': error_message,
-            'processed_at': datetime.now().isoformat()
+            "match_id": match_id,
+            "HOME_WIN_PROBA": self.config.default_probabilities["HOME_WIN_PROBA"],
+            "DRAW_PROBA": self.config.default_probabilities["DRAW_PROBA"],
+            "AWAY_WIN_PROBA": self.config.default_probabilities["AWAY_WIN_PROBA"],
+            "predicted_class": "HOME_WIN",  # 默认预测
+            "confidence": self.config.default_probabilities["HOME_WIN_PROBA"],
+            "model_version": "fallback",
+            "feature_completeness": 0.0,
+            "data_quality": "FALLBACK",
+            "error_message": error_message,
+            "processed_at": datetime.now().isoformat(),
         }
 
     def _update_stats(self, response_time_ms: float, success: bool) -> None:
         """更新统计信息"""
         # 更新平均响应时间
-        current_avg = self.stats['avg_response_time_ms']
-        total_requests = self.stats['total_requests']
-        self.stats['avg_response_time_ms'] = (
-            (current_avg * (total_requests - 1) + response_time_ms) / total_requests
-        )
+        current_avg = self.stats["avg_response_time_ms"]
+        total_requests = self.stats["total_requests"]
+        self.stats["avg_response_time_ms"] = (
+            current_avg * (total_requests - 1) + response_time_ms
+        ) / total_requests
 
         # 更新最后预测时间
-        self.stats['last_prediction_time'] = datetime.now().isoformat()
+        self.stats["last_prediction_time"] = datetime.now().isoformat()
 
     async def _cache_cleanup_task(self) -> None:
         """缓存清理后台任务"""
@@ -723,43 +736,45 @@ class InferenceService:
         """获取服务统计信息"""
         return {
             **self.stats,
-            'cache_size': len(self._prediction_cache),
-            'is_initialized': self.is_initialized,
-            'config': {
-                'enable_cache': self.config.enable_cache,
-                'cache_ttl_seconds': self.config.cache_ttl_seconds,
-                'max_cache_size': self.config.max_cache_size,
-                'enable_fallback': self.config.enable_fallback,
-                'model_path': self.config.model_path
-            }
+            "cache_size": len(self._prediction_cache),
+            "is_initialized": self.is_initialized,
+            "config": {
+                "enable_cache": self.config.enable_cache,
+                "cache_ttl_seconds": self.config.cache_ttl_seconds,
+                "max_cache_size": self.config.max_cache_size,
+                "enable_fallback": self.config.enable_fallback,
+                "model_path": self.config.model_path,
+            },
         }
 
     def get_model_info(self) -> Dict[str, Any]:
         """获取模型信息"""
         if not self.model:
-            return {'error': '模型未加载'}
+            return {"error": "模型未加载"}
 
         return self.model.get_model_info()
 
     async def health_check(self) -> Dict[str, Any]:
         """健康检查"""
         health_info = {
-            'status': 'healthy' if self.is_initialized else 'unhealthy',
-            'timestamp': datetime.now().isoformat(),
-            'service': 'InferenceService'
+            "status": "healthy" if self.is_initialized else "unhealthy",
+            "timestamp": datetime.now().isoformat(),
+            "service": "InferenceService",
         }
 
         if self.is_initialized:
-            health_info.update({
-                'model_loaded': self.model is not None,
-                'feature_extractor_ready': self.feature_extractor is not None,
-                'database_connected': self.db_pool is not None,
-                'cache_enabled': self.config.enable_cache,
-                'total_predictions': self.stats['successful_predictions'],
-                'avg_response_time_ms': self.stats['avg_response_time_ms']
-            })
+            health_info.update(
+                {
+                    "model_loaded": self.model is not None,
+                    "feature_extractor_ready": self.feature_extractor is not None,
+                    "database_connected": self.db_pool is not None,
+                    "cache_enabled": self.config.enable_cache,
+                    "total_predictions": self.stats["successful_predictions"],
+                    "avg_response_time_ms": self.stats["avg_response_time_ms"],
+                }
+            )
         else:
-            health_info['error'] = '服务未初始化'
+            health_info["error"] = "服务未初始化"
 
         return health_info
 
@@ -779,7 +794,9 @@ class InferenceService:
                 self.config.model_path = model_path
 
             await self._load_model()
-            self.logger.info(f"模型重新加载成功: {model_path or self.config.model_path}")
+            self.logger.info(
+                f"模型重新加载成功: {model_path or self.config.model_path}"
+            )
             return True
 
         except Exception as e:
@@ -790,7 +807,9 @@ class InferenceService:
 
 
 # 便捷函数
-async def get_inference_service(config: Optional[InferenceConfig] = None) -> InferenceService:
+async def get_inference_service(
+    config: Optional[InferenceConfig] = None,
+) -> InferenceService:
     """
     获取推理服务实例的便捷函数
 
@@ -814,7 +833,7 @@ if __name__ == "__main__":
             config = InferenceConfig(
                 model_path="models/demo_football_classifier.pkl",
                 enable_cache=True,
-                enable_fallback=True
+                enable_fallback=True,
             )
 
             print("🔄 初始化推理服务...")
@@ -826,8 +845,10 @@ if __name__ == "__main__":
 
             # 获取服务统计
             stats = service.get_service_stats()
-            print(f"📊 服务统计: 总请求={stats['total_requests']}, "
-                  f"成功预测={stats['successful_predictions']}")
+            print(
+                f"📊 服务统计: 总请求={stats['total_requests']}, "
+                f"成功预测={stats['successful_predictions']}"
+            )
 
             # 获取模型信息
             model_info = service.get_model_info()
@@ -838,6 +859,7 @@ if __name__ == "__main__":
         except Exception as e:
             print(f"❌ 测试失败: {e}")
             import traceback
+
             traceback.print_exc()
             return False
 

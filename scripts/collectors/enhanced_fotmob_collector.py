@@ -9,6 +9,7 @@ import json
 from typing import Any, Optional
 import aiohttp
 import logging
+
 logger = logging.getLogger(__name__)
 
 
@@ -131,18 +132,20 @@ class EnhancedFotMobCollector:
             # 从环境变量获取数据库URL
             db_url = os.getenv(
                 "DB_URL",
-                "postgresql+asyncpg://postgres:postgres@localhost:5432/football_prediction"
+                "postgresql+asyncpg://postgres:postgres@localhost:5432/football_prediction",
             )
 
             # 解析数据库URL
-            parsed = urllib.parse.urlparse(db_url.replace("postgresql+asyncpg://", "postgresql://"))
+            parsed = urllib.parse.urlparse(
+                db_url.replace("postgresql+asyncpg://", "postgresql://")
+            )
 
             conn = await asyncpg.connect(
                 host=parsed.hostname or "localhost",
                 port=parsed.port or 5432,
                 user=parsed.username or "postgres",
                 password=parsed.password or "postgres",
-                database=parsed.path.lstrip("/") or "football_prediction"
+                database=parsed.path.lstrip("/") or "football_prediction",
             )
 
             try:
@@ -159,10 +162,7 @@ class EnhancedFotMobCollector:
 
                 # 执行保存
                 await conn.execute(
-                    query,
-                    match_id,
-                    'fotmob',
-                    json.dumps(data, ensure_ascii=False)
+                    query, match_id, "fotmob", json.dumps(data, ensure_ascii=False)
                 )
 
                 data_size = len(json.dumps(data, ensure_ascii=False))
@@ -175,6 +175,7 @@ class EnhancedFotMobCollector:
         except Exception as e:
             logger.error(f"❌ 原始数据保存失败 {match_id}: {e}")
             import traceback
+
             logger.error(f"🔍 详细错误: {traceback.format_exc()}")
             return False
 
@@ -186,7 +187,7 @@ class EnhancedFotMobCollector:
             "pre_match_away_odds": None,
             "home_win_probability": None,
             "draw_probability": None,
-            "away_win_probability": None
+            "away_win_probability": None,
         }
 
         try:
@@ -208,9 +209,15 @@ class EnhancedFotMobCollector:
                 if "preMatchOdds" in betting:
                     pre_odds = betting["preMatchOdds"]
                     if isinstance(pre_odds, dict):
-                        odds_data["pre_match_home_odds"] = pre_odds.get("home") or odds_data["pre_match_home_odds"]
-                        odds_data["pre_match_draw_odds"] = pre_odds.get("draw") or odds_data["pre_match_draw_odds"]
-                        odds_data["pre_match_away_odds"] = pre_odds.get("away") or odds_data["pre_match_away_odds"]
+                        odds_data["pre_match_home_odds"] = (
+                            pre_odds.get("home") or odds_data["pre_match_home_odds"]
+                        )
+                        odds_data["pre_match_draw_odds"] = (
+                            pre_odds.get("draw") or odds_data["pre_match_draw_odds"]
+                        )
+                        odds_data["pre_match_away_odds"] = (
+                            pre_odds.get("away") or odds_data["pre_match_away_odds"]
+                        )
 
                 # 检查matchOdds
                 if "matchOdds" in betting and not odds_data["pre_match_home_odds"]:
@@ -227,35 +234,66 @@ class EnhancedFotMobCollector:
                     betting_odds = general["bettingOdds"]
                     if isinstance(betting_odds, dict):
                         # 尝试多个可能的字段名
-                        home_odds = betting_odds.get("homeWin") or betting_odds.get("home") or betting_odds.get("1")
+                        home_odds = (
+                            betting_odds.get("homeWin")
+                            or betting_odds.get("home")
+                            or betting_odds.get("1")
+                        )
                         draw_odds = betting_odds.get("draw") or betting_odds.get("X")
-                        away_odds = betting_odds.get("awayWin") or betting_odds.get("away") or betting_odds.get("2")
+                        away_odds = (
+                            betting_odds.get("awayWin")
+                            or betting_odds.get("away")
+                            or betting_odds.get("2")
+                        )
 
-                        odds_data["pre_match_home_odds"] = home_odds or odds_data["pre_match_home_odds"]
-                        odds_data["pre_match_draw_odds"] = draw_odds or odds_data["pre_match_draw_odds"]
-                        odds_data["pre_match_away_odds"] = away_odds or odds_data["pre_match_away_odds"]
+                        odds_data["pre_match_home_odds"] = (
+                            home_odds or odds_data["pre_match_home_odds"]
+                        )
+                        odds_data["pre_match_draw_odds"] = (
+                            draw_odds or odds_data["pre_match_draw_odds"]
+                        )
+                        odds_data["pre_match_away_odds"] = (
+                            away_odds or odds_data["pre_match_away_odds"]
+                        )
 
             # 4. 计算隐含概率 (如果有赔率数据)
             if odds_data["pre_match_home_odds"]:
                 try:
                     home_odds = float(odds_data["pre_match_home_odds"])
-                    draw_odds = float(odds_data["pre_match_draw_odds"]) if odds_data["pre_match_draw_odds"] else None
+                    draw_odds = (
+                        float(odds_data["pre_match_draw_odds"])
+                        if odds_data["pre_match_draw_odds"]
+                        else None
+                    )
                     away_odds = float(odds_data["pre_match_away_odds"])
 
                     # 转换为隐含概率 (考虑bookmaker margin)
                     if home_odds > 0 and away_odds > 0:
-                        odds_data["home_win_probability"] = round(1.0 / home_odds * 100, 2)
-                        odds_data["away_win_probability"] = round(1.0 / away_odds * 100, 2)
+                        odds_data["home_win_probability"] = round(
+                            1.0 / home_odds * 100, 2
+                        )
+                        odds_data["away_win_probability"] = round(
+                            1.0 / away_odds * 100, 2
+                        )
                         if draw_odds and draw_odds > 0:
-                            odds_data["draw_probability"] = round(1.0 / draw_odds * 100, 2)
+                            odds_data["draw_probability"] = round(
+                                1.0 / draw_odds * 100, 2
+                            )
                 except (ValueError, TypeError) as e:
                     logger.warning(f"赔率数据转换失败: {e}")
 
             # 5. 数据质量验证
-            valid_odds_count = sum([
-                1 for v in [odds_data["pre_match_home_odds"], odds_data["pre_match_draw_odds"], odds_data["pre_match_away_odds"]]
-                if v is not None and isinstance(v, (int, float)) and v > 1.0
-            ])
+            valid_odds_count = sum(
+                [
+                    1
+                    for v in [
+                        odds_data["pre_match_home_odds"],
+                        odds_data["pre_match_draw_odds"],
+                        odds_data["pre_match_away_odds"],
+                    ]
+                    if v is not None and isinstance(v, (int, float)) and v > 1.0
+                ]
+            )
 
             if valid_odds_count > 0:
                 logger.info(f"✅ 成功提取 {valid_odds_count}/3 项赔率数据")
@@ -278,7 +316,7 @@ class EnhancedFotMobCollector:
             "best_home_player": None,
             "best_away_player": None,
             "total_players_rated": 0,
-            "team_ratings": {}  # 按teamId分组
+            "team_ratings": {},  # 按teamId分组
         }
 
         try:
@@ -319,7 +357,10 @@ class EnhancedFotMobCollector:
                             rating_info = stat_details["FotMob rating"]
                             if isinstance(rating_info, dict) and "stat" in rating_info:
                                 stat_value = rating_info["stat"]
-                                if isinstance(stat_value, dict) and "value" in stat_value:
+                                if (
+                                    isinstance(stat_value, dict)
+                                    and "value" in stat_value
+                                ):
                                     player_rating = float(stat_value["value"])
                                     break
 
@@ -328,7 +369,7 @@ class EnhancedFotMobCollector:
                         "player_id": int(player_id),
                         "player_name": player_name,
                         "team_id": team_id,
-                        "rating": player_rating
+                        "rating": player_rating,
                     }
 
                     # 按球队分组
@@ -344,45 +385,66 @@ class EnhancedFotMobCollector:
                 home_team_id = team_ids[0]
                 away_team_id = team_ids[1]
 
-                ratings_data["home_team_ratings"] = ratings_data["team_ratings"][home_team_id]
-                ratings_data["away_team_ratings"] = ratings_data["team_ratings"][away_team_id]
+                ratings_data["home_team_ratings"] = ratings_data["team_ratings"][
+                    home_team_id
+                ]
+                ratings_data["away_team_ratings"] = ratings_data["team_ratings"][
+                    away_team_id
+                ]
 
                 # 计算主队统计
                 home_ratings = [p["rating"] for p in ratings_data["home_team_ratings"]]
                 if home_ratings:
-                    ratings_data["avg_home_rating"] = round(sum(home_ratings) / len(home_ratings), 2)
-                    best_home = max(ratings_data["home_team_ratings"], key=lambda x: x["rating"])
+                    ratings_data["avg_home_rating"] = round(
+                        sum(home_ratings) / len(home_ratings), 2
+                    )
+                    best_home = max(
+                        ratings_data["home_team_ratings"], key=lambda x: x["rating"]
+                    )
                     ratings_data["best_home_player"] = {
                         "name": best_home["player_name"],
-                        "rating": best_home["rating"]
+                        "rating": best_home["rating"],
                     }
 
                 # 计算客队统计
                 away_ratings = [p["rating"] for p in ratings_data["away_team_ratings"]]
                 if away_ratings:
-                    ratings_data["avg_away_rating"] = round(sum(away_ratings) / len(away_ratings), 2)
-                    best_away = max(ratings_data["away_team_ratings"], key=lambda x: x["rating"])
+                    ratings_data["avg_away_rating"] = round(
+                        sum(away_ratings) / len(away_ratings), 2
+                    )
+                    best_away = max(
+                        ratings_data["away_team_ratings"], key=lambda x: x["rating"]
+                    )
                     ratings_data["best_away_player"] = {
                         "name": best_away["player_name"],
-                        "rating": best_away["rating"]
+                        "rating": best_away["rating"],
                     }
 
             # 计算总评分球员数
-            ratings_data["total_players_rated"] = (
-                len(ratings_data["home_team_ratings"]) + len(ratings_data["away_team_ratings"])
-            )
+            ratings_data["total_players_rated"] = len(
+                ratings_data["home_team_ratings"]
+            ) + len(ratings_data["away_team_ratings"])
 
             if ratings_data["total_players_rated"] > 0:
-                logger.info(f"✅ 成功提取 {ratings_data['total_players_rated']} 名球员评分")
+                logger.info(
+                    f"✅ 成功提取 {ratings_data['total_players_rated']} 名球员评分"
+                )
                 logger.debug(f"   主队平均评分: {ratings_data['avg_home_rating']}")
                 logger.debug(f"   客队平均评分: {ratings_data['avg_away_rating']}")
 
                 # 显示评分前3名的球员
-                all_players = ratings_data["home_team_ratings"] + ratings_data["away_team_ratings"]
-                top_players = sorted(all_players, key=lambda x: x["rating"], reverse=True)[:3]
+                all_players = (
+                    ratings_data["home_team_ratings"]
+                    + ratings_data["away_team_ratings"]
+                )
+                top_players = sorted(
+                    all_players, key=lambda x: x["rating"], reverse=True
+                )[:3]
                 logger.debug("   评分前3名球员:")
                 for i, player in enumerate(top_players, 1):
-                    logger.debug(f"     {i}. {player['player_name']}: {player['rating']}")
+                    logger.debug(
+                        f"     {i}. {player['player_name']}: {player['rating']}"
+                    )
             else:
                 logger.debug("⚠️ 未找到有效球员评分数据")
 
@@ -403,7 +465,7 @@ class EnhancedFotMobCollector:
             "goals": [],
             "cards": [],
             "substitutions": [],
-            "match_events": []  # 完整事件时间线
+            "match_events": [],  # 完整事件时间线
         }
 
         try:
@@ -441,7 +503,7 @@ class EnhancedFotMobCollector:
                                 "timeStr": event.get("timeStr", ""),
                                 "isHome": is_home,
                                 "player": event.get("player", {}),
-                                "team": "home" if is_home else "away"
+                                "team": "home" if is_home else "away",
                             }
 
                             # 添加特定事件的详细信息
@@ -450,8 +512,9 @@ class EnhancedFotMobCollector:
                                     "player": event.get("nameStr", ""),
                                     "player_id": event.get("playerId"),
                                     "score": event.get("newScore", []),
-                                    "isPenalty": event.get("goalDescription") == "Penalty",
-                                    "ownGoal": event.get("ownGoal", False)
+                                    "isPenalty": event.get("goalDescription")
+                                    == "Penalty",
+                                    "ownGoal": event.get("ownGoal", False),
                                 }
                                 standardized_event.update(goal_info)
                                 events_data["goals"].append(standardized_event)
@@ -461,7 +524,7 @@ class EnhancedFotMobCollector:
                                 card_info = {
                                     "player": event.get("nameStr", ""),
                                     "player_id": event.get("playerId"),
-                                    "cardType": card_type  # "Yellow" 或 "Red"
+                                    "cardType": card_type,  # "Yellow" 或 "Red"
                                 }
                                 standardized_event.update(card_info)
                                 events_data["cards"].append(standardized_event)
@@ -479,9 +542,7 @@ class EnhancedFotMobCollector:
                                         events_data["away_yellow_cards"] += 1
 
                             elif event_type == "Substitution":
-                                sub_info = {
-                                    "swap": event.get("swap", [])
-                                }
+                                sub_info = {"swap": event.get("swap", [])}
                                 standardized_event.update(sub_info)
                                 events_data["substitutions"].append(standardized_event)
 
@@ -504,7 +565,9 @@ class EnhancedFotMobCollector:
                         events_data["away_red_cards"] = header_away_reds
 
             logger.info(f"✅ 成功提取比赛事件: {events_data['total_events']} 个事件")
-            logger.info(f"   进球: {len(events_data['goals'])}, 黄牌: {events_data['home_yellow_cards'] + events_data['away_yellow_cards']}, 红牌: {events_data['home_red_cards'] + events_data['away_red_cards']}")
+            logger.info(
+                f"   进球: {len(events_data['goals'])}, 黄牌: {events_data['home_yellow_cards'] + events_data['away_yellow_cards']}, 红牌: {events_data['home_red_cards'] + events_data['away_red_cards']}"
+            )
 
             return events_data
 
@@ -549,7 +612,9 @@ class EnhancedFotMobCollector:
             has_events = events_data["total_events"] > 0
 
             # 至少需要一个关键特征
-            quality_score = sum([has_xg, has_lineups, has_odds, has_ratings, has_events])
+            quality_score = sum(
+                [has_xg, has_lineups, has_odds, has_ratings, has_events]
+            )
 
             logger.info(
                 f"📊 数据质量评估 {match_id}: xG={has_xg}, lineups={has_lineups}, odds={has_odds}, ratings={has_ratings}, events={has_events}, score={quality_score}/5"
@@ -673,12 +738,12 @@ class EnhancedFotMobCollector:
     def _extract_deep_stats(self, content: dict[str, Any]) -> dict[str, Any]:
         """提取深度统计数据 - 射图谱、势头、教练、板凳评分等"""
         deep_stats = {
-            "match_shotmap": [],      # 射图谱数据
-            "match_momentum": [],     # 比赛势头数据
-            "home_coach": None,       # 主队教练
-            "away_coach": None,       # 客队教练
-            "home_bench_rating": None,# 主队板凳评分
-            "away_bench_rating": None,# 客队板凳评分
+            "match_shotmap": [],  # 射图谱数据
+            "match_momentum": [],  # 比赛势头数据
+            "home_coach": None,  # 主队教练
+            "away_coach": None,  # 客队教练
+            "home_bench_rating": None,  # 主队板凳评分
+            "away_bench_rating": None,  # 客队板凳评分
             "match_detailed_stats": {},  # 🆕 抓取所有详细统计数据 (Catch-All)
         }
 
@@ -726,7 +791,9 @@ class EnhancedFotMobCollector:
                             deep_stats["away_coach"] = away_team["managerName"]
 
                 # 从lineups中查找教练信息（备用数据源）
-                if (not deep_stats["home_coach"] or not deep_stats["away_coach"]) and "lineups" in content_data:
+                if (
+                    not deep_stats["home_coach"] or not deep_stats["away_coach"]
+                ) and "lineups" in content_data:
                     lineups = content_data["lineups"]
                     if isinstance(lineups, dict):
                         # 主队教练
@@ -753,7 +820,7 @@ class EnhancedFotMobCollector:
                     ("players", "players"),
                     ("ratings", "ratings"),
                     ("playerStats", "playerStats"),
-                    ("stats", "stats")
+                    ("stats", "stats"),
                 ]
 
                 for source_key, nested_key in rating_sources:
@@ -772,9 +839,18 @@ class EnhancedFotMobCollector:
 
                     for player in player_ratings:
                         if isinstance(player, dict):
-                            rating = player.get("rating") or player.get("averageRating") or player.get("score")
-                            is_home = player.get("isHome") or player.get("team") == "home"
-                            is_bench = player.get("position") == "bench" or player.get("substitute") is True
+                            rating = (
+                                player.get("rating")
+                                or player.get("averageRating")
+                                or player.get("score")
+                            )
+                            is_home = (
+                                player.get("isHome") or player.get("team") == "home"
+                            )
+                            is_bench = (
+                                player.get("position") == "bench"
+                                or player.get("substitute") is True
+                            )
 
                             if rating and is_bench:
                                 try:
@@ -788,18 +864,29 @@ class EnhancedFotMobCollector:
 
                     # 计算平均板凳评分
                     if home_bench_ratings:
-                        deep_stats["home_bench_rating"] = sum(home_bench_ratings) / len(home_bench_ratings)
-                        logger.info(f"🏠 主队板凳评分: {deep_stats['home_bench_rating']:.2f}")
+                        deep_stats["home_bench_rating"] = sum(home_bench_ratings) / len(
+                            home_bench_ratings
+                        )
+                        logger.info(
+                            f"🏠 主队板凳评分: {deep_stats['home_bench_rating']:.2f}"
+                        )
 
                     if away_bench_ratings:
-                        deep_stats["away_bench_rating"] = sum(away_bench_ratings) / len(away_bench_ratings)
-                        logger.info(f"✈️ 客队板凳评分: {deep_stats['away_bench_rating']:.2f}")
+                        deep_stats["away_bench_rating"] = sum(away_bench_ratings) / len(
+                            away_bench_ratings
+                        )
+                        logger.info(
+                            f"✈️ 客队板凳评分: {deep_stats['away_bench_rating']:.2f}"
+                        )
 
             # 记录提取结果摘要
-            extracted_count = sum([
-                1 for v in deep_stats.values()
-                if v is not None and v != [] and v != ""
-            ])
+            extracted_count = sum(
+                [
+                    1
+                    for v in deep_stats.values()
+                    if v is not None and v != [] and v != ""
+                ]
+            )
 
             logger.info(f"📊 深度统计提取完成: {extracted_count}/6 项数据成功提取")
 
@@ -807,11 +894,11 @@ class EnhancedFotMobCollector:
             # 尝试从多个位置提取统计数据
             detailed_stats = {}
             stats_sources = [
-                "stats",                    # 主要统计数据
-                "matchStats",                # 比赛统计数据
-                "content",                  # 根内容结构中的统计
-                "matchFacts",               # 比赛详情中的统计
-                "statistics"               # 备用统计字段
+                "stats",  # 主要统计数据
+                "matchStats",  # 比赛统计数据
+                "content",  # 根内容结构中的统计
+                "matchFacts",  # 比赛详情中的统计
+                "statistics",  # 备用统计字段
             ]
 
             for source_key in stats_sources:
@@ -820,17 +907,35 @@ class EnhancedFotMobCollector:
                     if isinstance(stats_data, dict) and stats_data:
                         # 检查是否包含关键足球统计数据指标
                         has_football_stats = any(
-                            key.lower() in [
-                                "big chances", "big chances created", "goals", "shots",
-                                "passes", "pass accuracy", "tackles", "dribbles", "corners",
-                                "fouls", "offsides", "possession", "expected goals", "xg",
-                                "saves", " interceptions", "clearances", "aerial duels"
-                            ] for key in stats_data.keys()
+                            key.lower()
+                            in [
+                                "big chances",
+                                "big chances created",
+                                "goals",
+                                "shots",
+                                "passes",
+                                "pass accuracy",
+                                "tackles",
+                                "dribbles",
+                                "corners",
+                                "fouls",
+                                "offsides",
+                                "possession",
+                                "expected goals",
+                                "xg",
+                                "saves",
+                                " interceptions",
+                                "clearances",
+                                "aerial duels",
+                            ]
+                            for key in stats_data.keys()
                         )
 
                         if has_football_stats or len(stats_data) > 10:
                             detailed_stats = stats_data
-                            logger.info(f"📊 从 '{source_key}' 提取到完整统计数据: {len(stats_data)} 个字段")
+                            logger.info(
+                                f"📊 从 '{source_key}' 提取到完整统计数据: {len(stats_data)} 个字段"
+                            )
 
                             # 检查包含的关键指标
                             key_stats = []
@@ -840,7 +945,10 @@ class EnhancedFotMobCollector:
                                 key_stats.append("Passes")
                             if "tackles" in str(stats_data).lower():
                                 key_stats.append("Tackles")
-                            if "xg" in str(stats_data).lower() or "expected goals" in str(stats_data).lower():
+                            if (
+                                "xg" in str(stats_data).lower()
+                                or "expected goals" in str(stats_data).lower()
+                            ):
                                 key_stats.append("xG")
 
                             if key_stats:
@@ -857,7 +965,9 @@ class EnhancedFotMobCollector:
             if deep_stats["match_shotmap"]:
                 logger.info(f"🎯 射图谱数据: {len(deep_stats['match_shotmap'])} 个射门")
             if deep_stats["match_momentum"]:
-                logger.info(f"📈 势头数据: {len(deep_stats['match_momentum'])} 个数据点")
+                logger.info(
+                    f"📈 势头数据: {len(deep_stats['match_momentum'])} 个数据点"
+                )
             if detailed_stats:
                 logger.info(f"📊 详细统计: {len(detailed_stats)} 个字段")
 
@@ -866,6 +976,7 @@ class EnhancedFotMobCollector:
         except Exception as e:
             logger.error(f"❌ 深度统计提取失败: {e}")
             import traceback
+
             traceback.print_exc()
             return deep_stats
 

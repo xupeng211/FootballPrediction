@@ -27,6 +27,7 @@ from tqdm import tqdm
 @dataclass
 class TeamFeatures:
     """球队特征数据结构"""
+
     team_name: str
     team_id: int
     starting_xi_avg_rating: float
@@ -40,6 +41,7 @@ class TeamFeatures:
 @dataclass
 class MatchFeatures:
     """比赛特征数据结构"""
+
     external_id: str
     match_id: Optional[int]  # matches表的主键ID
     home_team: TeamFeatures
@@ -59,14 +61,16 @@ class HighPerformanceFeatureExtractor:
         print("🔧 初始化高性能特征提取器...")
 
         # 解析数据库URL
-        parsed = urllib.parse.urlparse(self.db_url.replace("postgresql+asyncpg://", "postgresql://"))
+        parsed = urllib.parse.urlparse(
+            self.db_url.replace("postgresql+asyncpg://", "postgresql://")
+        )
 
         self.conn = await asyncpg.connect(
             host=parsed.hostname or "localhost",
             port=parsed.port or 5432,
             user=parsed.username or "postgres",
             password=parsed.password or "postgres",
-            database=parsed.path.lstrip("/") or "football_prediction"
+            database=parsed.path.lstrip("/") or "football_prediction",
         )
 
         print("✅ 高性能特征提取器初始化完成")
@@ -98,7 +102,7 @@ class HighPerformanceFeatureExtractor:
         """
 
         rows = await self.conn.fetch(query)
-        mapping = {row['external_id']: row['match_id'] for row in rows}
+        mapping = {row["external_id"]: row["match_id"] for row in rows}
         print(f"✅ 找到 {len(mapping)} 个ID映射关系")
 
         return mapping
@@ -106,17 +110,18 @@ class HighPerformanceFeatureExtractor:
     def extract_features_from_raw(self, raw_record) -> Optional[MatchFeatures]:
         """从原始数据中提取特征"""
         # 处理asyncpg返回的Record对象
-        if hasattr(raw_record, 'external_id'):
-            external_id = raw_record['external_id']
-            match_data = raw_record['match_data']
+        if hasattr(raw_record, "external_id"):
+            external_id = raw_record["external_id"]
+            match_data = raw_record["match_data"]
         else:
-            external_id = raw_record['external_id']
-            match_data = raw_record['match_data']
+            external_id = raw_record["external_id"]
+            match_data = raw_record["match_data"]
 
         # 确保match_data是字典
         if not isinstance(match_data, dict):
             # asyncpg返回的JSONB数据可能需要特殊处理
             import json
+
             if isinstance(match_data, str):
                 try:
                     match_data = json.loads(match_data)
@@ -127,11 +132,11 @@ class HighPerformanceFeatureExtractor:
                 print(f"⚠️ 记录 {external_id}: match_data 类型为 {type(match_data)}")
                 return None
 
-        content = match_data.get('content', {})
+        content = match_data.get("content", {})
 
         # 获取球队信息
-        header = match_data.get('header', {})
-        teams = header.get('teams', [])
+        header = match_data.get("header", {})
+        teams = header.get("teams", [])
 
         if len(teams) < 2:
             return None
@@ -140,7 +145,7 @@ class HighPerformanceFeatureExtractor:
         away_team_info = teams[1]
 
         # 提取球员数据
-        player_stats = content.get('playerStats', {})
+        player_stats = content.get("playerStats", {})
 
         if not player_stats:
             return None
@@ -151,10 +156,10 @@ class HighPerformanceFeatureExtractor:
 
         for player_id, player_data in player_stats.items():
             if isinstance(player_data, dict):
-                team_id = player_data.get('teamId')
-                if team_id == home_team_info.get('id'):
+                team_id = player_data.get("teamId")
+                if team_id == home_team_info.get("id"):
                     home_players[player_id] = player_data
-                elif team_id == away_team_info.get('id'):
+                elif team_id == away_team_info.get("id"):
                     away_players[player_id] = player_data
 
         # 如果没有找到球员数据，跳过
@@ -164,11 +169,15 @@ class HighPerformanceFeatureExtractor:
 
         # 提取球队特征
         home_features = self._extract_team_features(
-            home_players, home_team_info.get('name', 'Unknown'), home_team_info.get('id', 0)
+            home_players,
+            home_team_info.get("name", "Unknown"),
+            home_team_info.get("id", 0),
         )
 
         away_features = self._extract_team_features(
-            away_players, away_team_info.get('name', 'Unknown'), away_team_info.get('id', 0)
+            away_players,
+            away_team_info.get("name", "Unknown"),
+            away_team_info.get("id", 0),
         )
 
         return MatchFeatures(
@@ -176,10 +185,12 @@ class HighPerformanceFeatureExtractor:
             match_id=None,  # 稍后填充
             home_team=home_features,
             away_team=away_features,
-            total_players_analyzed=len(home_players) + len(away_players)
+            total_players_analyzed=len(home_players) + len(away_players),
         )
 
-    def _extract_team_features(self, players: Dict[str, Any], team_name: str, team_id: int) -> TeamFeatures:
+    def _extract_team_features(
+        self, players: Dict[str, Any], team_name: str, team_id: int
+    ) -> TeamFeatures:
         """提取单个球队的特征"""
 
         # 提取球员评分和位置信息
@@ -196,18 +207,18 @@ class HighPerformanceFeatureExtractor:
             if rating is None:
                 continue
 
-            player_name = player_data.get('name', 'Unknown')
-            is_goalkeeper = player_data.get('isGoalkeeper', False)
+            player_name = player_data.get("name", "Unknown")
+            is_goalkeeper = player_data.get("isGoalkeeper", False)
 
             # 简单判断是否为首发（通过评分数据的存在和完整性）
             is_starting = self._is_starting_player(player_data)
 
             player_info = {
-                'id': player_id,
-                'name': player_name,
-                'rating': rating,
-                'is_goalkeeper': is_goalkeeper,
-                'is_starting': is_starting
+                "id": player_id,
+                "name": player_name,
+                "rating": rating,
+                "is_goalkeeper": is_goalkeeper,
+                "is_starting": is_starting,
             }
 
             player_ratings.append(player_info)
@@ -218,47 +229,61 @@ class HighPerformanceFeatureExtractor:
                 bench_players.append(player_info)
 
         # 计算平均评分
-        starting_xi_avg = sum(p['rating'] for p in starting_xi_players) / len(starting_xi_players) if starting_xi_players else 0.0
-        bench_avg = sum(p['rating'] for p in bench_players) / len(bench_players) if bench_players else 0.0
+        starting_xi_avg = (
+            sum(p["rating"] for p in starting_xi_players) / len(starting_xi_players)
+            if starting_xi_players
+            else 0.0
+        )
+        bench_avg = (
+            sum(p["rating"] for p in bench_players) / len(bench_players)
+            if bench_players
+            else 0.0
+        )
 
         # 找到最佳球员
-        all_players_sorted = sorted(player_ratings, key=lambda x: x['rating'], reverse=True)
-        star_player = all_players_sorted[0] if all_players_sorted else {'name': 'N/A', 'rating': 0.0, 'id': 0}
+        all_players_sorted = sorted(
+            player_ratings, key=lambda x: x["rating"], reverse=True
+        )
+        star_player = (
+            all_players_sorted[0]
+            if all_players_sorted
+            else {"name": "N/A", "rating": 0.0, "id": 0}
+        )
 
         return TeamFeatures(
             team_name=team_name,
             team_id=team_id,
             starting_xi_avg_rating=round(starting_xi_avg, 2),
             bench_avg_rating=round(bench_avg, 2),
-            star_player_name=star_player['name'],
-            star_player_rating=round(star_player['rating'], 2),
-            star_player_id=star_player['id'],
-            total_players=len(player_ratings)
+            star_player_name=star_player["name"],
+            star_player_rating=round(star_player["rating"], 2),
+            star_player_id=star_player["id"],
+            total_players=len(player_ratings),
         )
 
     def _extract_player_rating(self, player_data: Dict[str, Any]) -> Optional[float]:
         """提取球员评分"""
         # 方法1: 从stats中查找rating
-        stats = player_data.get('stats', [])
+        stats = player_data.get("stats", [])
         for stat_section in stats:
-            if isinstance(stat_section, dict) and 'stats' in stat_section:
-                section_stats = stat_section['stats']
+            if isinstance(stat_section, dict) and "stats" in stat_section:
+                section_stats = stat_section["stats"]
                 for key, value in section_stats.items():
-                    if isinstance(value, dict) and 'stat' in value:
-                        stat_value = value['stat']
-                        if key == 'FotMob rating' or key == 'rating':
+                    if isinstance(value, dict) and "stat" in value:
+                        stat_value = value["stat"]
+                        if key == "FotMob rating" or key == "rating":
                             try:
-                                return float(stat_value.get('value', 0))
+                                return float(stat_value.get("value", 0))
                             except (ValueError, TypeError):
                                 continue
 
         # 方法2: 直接查找rating字段
         for key, value in player_data.items():
-            if 'rating' in key.lower() and isinstance(value, (int, float)):
+            if "rating" in key.lower() and isinstance(value, (int, float)):
                 return float(value)
-            elif isinstance(value, dict) and 'value' in value:
+            elif isinstance(value, dict) and "value" in value:
                 try:
-                    return float(value['value'])
+                    return float(value["value"])
                 except (ValueError, TypeError):
                     continue
 
@@ -270,7 +295,7 @@ class HighPerformanceFeatureExtractor:
         rating = self._extract_player_rating(player_data)
 
         # 门将通常是首发
-        if player_data.get('isGoalkeeper', False):
+        if player_data.get("isGoalkeeper", False):
             return True
 
         # 评分较高的球员更可能是首发
@@ -278,19 +303,21 @@ class HighPerformanceFeatureExtractor:
             return True
 
         # 如果有minutes played字段，大于60分钟的通常是首发
-        stats = player_data.get('stats', [])
+        stats = player_data.get("stats", [])
         for stat_section in stats:
-            if isinstance(stat_section, dict) and 'stats' in stat_section:
-                section_stats = stat_section['stats']
+            if isinstance(stat_section, dict) and "stats" in stat_section:
+                section_stats = stat_section["stats"]
                 for key, value in section_stats.items():
-                    if 'minutes' in key.lower() and isinstance(value, dict):
-                        minutes = value.get('stat', {}).get('value', 0)
+                    if "minutes" in key.lower() and isinstance(value, dict):
+                        minutes = value.get("stat", {}).get("value", 0)
                         if minutes and minutes > 60:
                             return True
 
         return False
 
-    async def batch_update_matches(self, features_list: List[MatchFeatures], id_mapping: Dict[str, int]):
+    async def batch_update_matches(
+        self, features_list: List[MatchFeatures], id_mapping: Dict[str, int]
+    ):
         """批量更新matches表"""
         print("💾 开始批量更新matches表...")
 
@@ -326,7 +353,7 @@ class HighPerformanceFeatureExtractor:
                     features.away_team.star_player_rating,
                     features.home_team.bench_avg_rating,
                     features.away_team.bench_avg_rating,
-                    match_id
+                    match_id,
                 )
 
                 successful_updates += 1
@@ -404,9 +431,15 @@ class HighPerformanceFeatureExtractor:
         print("\n📋 验证结果:")
         for i, row in enumerate(rows, 1):
             print(f"{i}. {row['home_team_name']} vs {row['away_team_name']}")
-            print(f"   首发均分: 主队 {row['home_xi_rating']}, 客队 {row['away_xi_rating']}")
-            print(f"   球星评分: 主队 {row['home_star_rating']}, 客队 {row['away_star_rating']}")
-            print(f"   板凳均分: 主队 {row['home_bench_rating']}, 客队 {row['away_bench_rating']}")
+            print(
+                f"   首发均分: 主队 {row['home_xi_rating']}, 客队 {row['away_xi_rating']}"
+            )
+            print(
+                f"   球星评分: 主队 {row['home_star_rating']}, 客队 {row['away_star_rating']}"
+            )
+            print(
+                f"   板凳均分: 主队 {row['home_bench_rating']}, 客队 {row['away_bench_rating']}"
+            )
             print(f"   FotMob ID: {row['fotmob_id']}")
             print()
 
@@ -420,7 +453,7 @@ class HighPerformanceFeatureExtractor:
 async def main():
     """主函数"""
     print("🚀 启动全量离线特征提取")
-    print("="*60)
+    print("=" * 60)
 
     # 数据库配置
     db_url = "postgresql+asyncpg://postgres:postgres@localhost:5432/football_prediction"
@@ -450,6 +483,7 @@ async def main():
     except Exception as e:
         print(f"❌ 处理失败: {e}")
         import traceback
+
         traceback.print_exc()
 
     finally:
