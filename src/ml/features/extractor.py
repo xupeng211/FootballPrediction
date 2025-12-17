@@ -14,9 +14,9 @@
 import logging
 import pandas as pd
 import numpy as np
-from typing import Dict, List, Optional, Any, Tuple
+from typing import Dict, List, Optional, Any
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from .h2h_calculator import H2HCalculator
 from .venue_analyzer import VenueAnalyzer

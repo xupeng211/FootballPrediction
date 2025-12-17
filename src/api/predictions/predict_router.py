@@ -33,7 +33,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field, validator
 
 # 导入推理服务
-from src.services.inference_service import InferenceService, get_inference_service
+from src.services.inference_service import InferenceService
 from src.services.explainability_service import ExplainabilityService
 
 logger = logging.getLogger(__name__)

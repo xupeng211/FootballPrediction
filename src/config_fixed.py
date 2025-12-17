@@ -20,10 +20,8 @@
 - 日志配置: LOG_*
 """
 
-import os
 import logging
-from typing import Optional, List, Dict, Any
-from pathlib import Path
+from typing import Optional, Dict, Any
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -324,7 +322,7 @@ if __name__ == "__main__":
     try:
         # 创建配置实例
         config = Settings()
-        print(f"✅ 配置创建成功")
+        print("✅ 配置创建成功")
         print(f"   环境: {config.environment}")
         print(f"   应用: {config.app.name} v{config.app.version}")
         print(

@@ -6,14 +6,13 @@
 
 import logging
 import os
-import time
 from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response
-from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
+from prometheus_client import CONTENT_TYPE_LATEST
 
 from src.api.health import router as health_router
 from src.api.monitoring import router as monitoring_router

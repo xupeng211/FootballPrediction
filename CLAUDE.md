@@ -6,6 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **⚠️ IMPORTANT**: Current working branch is `main` with stable system ready for production use.
 
+**📋 当前Git状态**: 有多个文件处于staging状态，包括配置文件、脚本和源代码。在开始新开发前，建议先处理这些现有变更（提交或重置）。
+
 ## Development Commands
 
 ### Environment Setup
@@ -20,8 +22,8 @@ make clean            # Clean environment and cache
 
 ### Testing and Quality
 ```bash
-make test             # Run unit tests (630 tests)
-make coverage         # Run tests with coverage report (96.35%)
+make test             # Run unit tests (279 tests total)
+make coverage         # Run tests with coverage report (target: 80%+)
 make ci               # Complete CI simulation (env-check, quality, test, coverage)
 make prepush          # Pre-commit full check
 ./ci-verify.sh        # Local CI verification script (141 lines)
@@ -64,6 +66,11 @@ make status                                       # 查看项目概览和统计
 make ci-status           # 查看CI运行状态
 make ci-monitor          # 实时监控CI执行
 ```
+
+**⚠️ CI状态说明**: 当前CI工作流(`ci_pipeline.yml`)中测试功能暂时禁用("Tests Disabled")，仅运行代码质量检查。要重新启用测试，需要：
+1. 更新工作流名称，移除"Tests Disabled"
+2. 取消注释或添加测试相关的job步骤
+3. 确保测试环境配置正确
 
 ## Architecture Overview
 
@@ -255,8 +262,10 @@ FootballPrediction/
 - Integration tests for database and external APIs in `tests/integration/`
 - End-to-end tests for complete workflows in `tests/e2e/`
 - Performance tests in `tests/performance/`
-- **Current Test Count**: 630 test functions across 10 test files
-- Test coverage target: 80%+ (current: 96.35%)
+- **Current Test Count**: 279 test functions across 21 test files
+  - V2 tests: 51 tests in `tests/v2/` (29 passing, 22 skipped)
+  - Legacy tests: 228 tests (some may have dependency issues)
+- Test coverage target: 80%+ (current varies by test category)
 
 ### Configuration Management
 - Centralized configuration in `src/config.py` (461 lines)
@@ -347,6 +356,7 @@ open http://localhost:9090
 - **Response Time**: <100ms (single prediction)
 - **Cache Hit Rate**: >80%
 - **Feature Dimensions**: 12+ professional features
+- **Current Architecture**: Service Layer v2.0 + ML Inference Layer (production ready)
 
 ## Quality Assurance
 
@@ -376,15 +386,18 @@ make ci                     # Complete quality check + tests
 ./scripts/docker-manager.sh quality           # Run quality checks
 
 # Individual test execution
-pytest tests/test_pipeline_e2e.py::test_minimal_pipeline_smoke -v
-pytest tests/test_smoke.py::test_ci_pipeline_infrastructure -v
+pytest tests/v2/test_inference_logic.py::test_single_match_prediction -v
+pytest tests/v2/test_health_schema.py::test_health_check_response -v
 pytest tests/ -k "smoke" -v
 
 # Run specific test categories
-pytest tests/unit/ -v       # Unit tests only
-pytest tests/integration/ -v # Integration tests only
-pytest tests/e2e/ -v        # End-to-end tests only
-pytest tests/performance/ -v # Performance tests only
+pytest tests/v2/ -v             # V2 tests only (51 tests, 29 passing)
+pytest tests/unit/ -v           # Unit tests only
+pytest tests/integration/ -v    # Integration tests only
+pytest tests/e2e/ -v            # End-to-end tests only
+pytest tests/performance/ -v    # Performance tests only
+
+# Note: Some legacy tests may have database dependency issues; focus on v2 tests
 ```
 
 ### Quality Checks
@@ -439,6 +452,16 @@ python scripts/process_offline_features_full.py         # Feature processing
 ```
 
 ### Environment Setup
+
+#### 环境文件说明
+项目提供多个环境配置文件：
+- `.env.example` - 配置模板和说明
+- `.env.dev` - 本地开发环境配置
+- `.env.ci` - CI/CD环境配置
+- `.env.production` - 生产环境配置
+- `.env.docker` - Docker容器配置
+
+#### 核心环境变量
 ```bash
 # Database Configuration
 export DB_HOST=localhost
@@ -453,19 +476,20 @@ export REDIS_PORT=6379
 export REDIS_DB=0
 export REDIS_PASSWORD=""
 
-# FotMob API (production)
+# FotMob API (production - 可选)
 export FOTMOB_X_MAS_HEADER="your_header"
 export FOTMOB_X_FOO_HEADER="your_header"
 
 # Service Configuration (v2.0)
-export INFERENCE_SERVICE_URL=http://localhost:8000
-export COLLECTION_SERVICE_URL=http://localhost:8001
-export EXPLAINABILITY_SERVICE_URL=http://localhost:8002
+export INFERENCE_SERVICE_V2_ENABLED=true
+export COLLECTION_SERVICE_ENABLED=true
+export EXPLAINABILITY_SERVICE_ENABLED=true
 
-# Environment Files
-# .env.dev - Development environment
-# .env.ci - CI environment
-# .env.production - Production environment
+# 应用基础配置
+export ENVIRONMENT=development
+export DEBUG=false
+export API_HOST=0.0.0.0
+export API_PORT=8000
 ```
 
 ### Dependency Management
@@ -637,8 +661,62 @@ make env-check    # Check environment setup
 make clean && make install  # Reset environment
 ```
 
+### 当前项目状态特定问题
+
+#### Git状态处理
+当前有多个已修改文件处于staging状态。建议在开始开发前：
+```bash
+# 查看当前状态
+git status
+
+# 查看具体修改
+git diff --cached
+
+# 如果需要重置状态
+git reset HEAD  # 取消所有staging
+# 或保留部分修改，选择性提交
+```
+
+#### V2测试相关问题
+部分V2测试可能被跳过，通常原因：
+- 缺少外部依赖（Redis、数据库连接）
+- 模型文件不存在
+- 外部API配置缺失
+
+**解决方案**：
+```bash
+# 启动完整环境后再运行测试
+docker-compose up -d
+sleep 30  # 等待服务就绪
+./scripts/docker-manager.sh test
+
+# 或运行特定可用的测试
+pytest tests/v2/test_health_schema.py -v
+pytest tests/v2/test_inference_logic.py::test_single_match_prediction -v
+```
+
+#### Docker服务连接问题
+如果遇到数据库或Redis连接错误：
+```bash
+# 检查服务状态
+docker-compose ps
+docker-compose logs db
+docker-compose logs redis
+
+# 重启服务
+docker-compose down
+docker-compose up -d
+
+# 手动检查数据库连接
+docker-compose exec app python -c "
+import asyncio
+from src.database.connection import get_connection
+asyncio.run(get_connection())
+print('Database connection successful')"
+```
+
 ---
 
 **更新时间**: 2025-12-17 | **分支**: main | **版本**: v2.0.0-Stable
 
-**重要说明**: 项目已升级到v2.0稳定版本，采用全新Service Layer架构，完全容器化部署，生产就绪。
+**重要说明**: 项目已升级到v2.0稳定版本，采用全新Service Layer架构，完全容器化部署，生产就绪。当前有多个文件处于修改状态，建议在开发前先处理这些变更。

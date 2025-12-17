@@ -7,7 +7,7 @@ FootballPrediction 业务服务模块
 - 真实预测服务
 """
 
-from typing import Any, Dict
+from typing import Dict
 
 from src.core import logger
 

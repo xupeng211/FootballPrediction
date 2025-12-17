@@ -77,19 +77,13 @@ class Logger:
 class FootballPredictionError(Exception):
     """FootballPrediction基础异常类"""
 
-    pass
-
 
 class ConfigError(FootballPredictionError):
     """配置相关异常"""
 
-    pass
-
 
 class DataError(FootballPredictionError):
     """数据处理异常"""
-
-    pass
 
 
 # 全局配置实例

@@ -32,19 +32,16 @@ warnings.warn(
 )
 
 # 重定向到新的重构模块
-from src.ml.inference import *
+# Note: Wildcard import removed to avoid F403 error
+# All classes are already defined in this file for backward compatibility
 
 
 class ModelLoadError(Exception):
     """模型加载异常"""
 
-    pass
-
 
 class PredictionError(Exception):
     """预测异常"""
-
-    pass
 
 
 class Predictor:

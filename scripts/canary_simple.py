@@ -41,7 +41,7 @@ class SimpleCanary:
 
     async def get_random_matches(self, limit: int) -> List[Dict[str, Any]]:
         """从数据库随机获取比赛样本"""
-        logger.info(f"🎲 从数据库随机获取 {limit} 场比赛...")
+        logger.info("🎲 从数据库随机获取 {limit} 场比赛...")
 
         # 解析数据库URL
         import urllib.parse
@@ -67,7 +67,7 @@ class SimpleCanary:
                 logger.error("❌ 数据库中没有找到有fotmob_id的比赛")
                 return []
 
-            logger.info(f"📊 数据库中共有 {total_count} 场有fotmob_id的比赛")
+            logger.info("📊 数据库中共有 {total_count} 场有fotmob_id的比赛")
 
             # 随机选择比赛
             rows = await conn.fetch(
@@ -82,7 +82,7 @@ class SimpleCanary:
             )
 
             matches = [dict(row) for row in rows]
-            logger.info(f"✅ 成功获取 {len(matches)} 场随机比赛")
+            logger.info("✅ 成功获取 {len(matches)} 场随机比赛")
             return matches
 
         finally:
@@ -93,19 +93,19 @@ class SimpleCanary:
         url = f"https://www.fotmob.com/api/matchDetails?matchId={fotmob_id}"
 
         try:
-            logger.info(f"   📡 采集FotMob数据: {fotmob_id}")
+            logger.info("   📡 采集FotMob数据: {fotmob_id}")
             response = await self.http_client.get(url)
 
             if response.status_code == 200:
                 data = response.json()
-                logger.info(f"   ✅ 采集成功: {fotmob_id}")
+                logger.info("   ✅ 采集成功: {fotmob_id}")
                 return data
             else:
                 logger.warning(f"   ⚠️ HTTP错误 {response.status_code}: {fotmob_id}")
                 return None
 
         except Exception as e:
-            logger.error(f"   ❌ 采集异常 {fotmob_id}: {e}")
+            logger.error("   ❌ 采集异常 {fotmob_id}: {e}")
             return None
 
     def extract_shotmap_data(self, content: Dict[str, Any]) -> List[Dict[str, Any]]:
@@ -116,9 +116,9 @@ class SimpleCanary:
                 shotmap_data = content["shotmap"]
                 if "shots" in shotmap_data and isinstance(shotmap_data["shots"], list):
                     shots = shotmap_data["shots"]
-                    logger.info(f"   🎯 提取到 {len(shots)} 个射门数据")
+                    logger.info("   🎯 提取到 {len(shots)} 个射门数据")
         except Exception as e:
-            logger.error(f"   ❌ 射谱提取失败: {e}")
+            logger.error("   ❌ 射谱提取失败: {e}")
 
         return shots
 
@@ -130,9 +130,9 @@ class SimpleCanary:
                 events_data = content["events"]
                 if "events" in events_data and isinstance(events_data["events"], list):
                     events = events_data["events"]
-                    logger.info(f"   ⚽️ 提取到 {len(events)} 个事件数据")
+                    logger.info("   ⚽️ 提取到 {len(events)} 个事件数据")
         except Exception as e:
-            logger.error(f"   ❌ 事件提取失败: {e}")
+            logger.error("   ❌ 事件提取失败: {e}")
 
         return events
 
@@ -188,7 +188,7 @@ class SimpleCanary:
                 )
 
         except Exception as e:
-            logger.error(f"   ❌ 元数据提取失败: {e}")
+            logger.error("   ❌ 元数据提取失败: {e}")
 
         return metadata
 
@@ -238,14 +238,14 @@ class SimpleCanary:
                 """
 
                 await conn.execute(query, *params.values())
-                logger.info(f"   ✅ 数据库更新成功: match_id={match_id}")
+                logger.info("   ✅ 数据库更新成功: match_id={match_id}")
                 return True
 
             finally:
                 await conn.close()
 
         except Exception as e:
-            logger.error(f"   ❌ 数据库更新失败 {match_id}: {e}")
+            logger.error("   ❌ 数据库更新失败 {match_id}: {e}")
             return False
 
     async def process_match(self, match: Dict[str, Any]) -> Dict[str, Any]:
@@ -309,7 +309,7 @@ class SimpleCanary:
             }
 
             if success:
-                logger.info(f"   ✅ 处理成功: {home_team} vs {away_team}")
+                logger.info("   ✅ 处理成功: {home_team} vs {away_team}")
                 logger.info(
                     f"   📊 数据统计: 射门={stats['shots']}, 事件={stats['events']}, 裁判={stats['referee']}, 球场={stats['stadium']}"
                 )
@@ -328,7 +328,7 @@ class SimpleCanary:
                 }
 
         except Exception as e:
-            logger.error(f"   ❌ 处理异常 {match_id}: {e}")
+            logger.error("   ❌ 处理异常 {match_id}: {e}")
             return {
                 "match_id": match_id,
                 "status": "error",
@@ -338,7 +338,7 @@ class SimpleCanary:
 
     async def run_canary_test(self, limit: int = 5, delay: float = 2.0):
         """运行冒烟测试"""
-        logger.info(f"🐦 开始简化冒烟测试 (limit={limit}, delay={delay}s)")
+        logger.info("🐦 开始简化冒烟测试 (limit={limit}, delay={delay}s)")
         logger.info("=" * 80)
 
         # 获取随机比赛
@@ -347,7 +347,7 @@ class SimpleCanary:
             logger.error("❌ 无法获取比赛样本，测试终止")
             return
 
-        logger.info(f"📋 测试比赛列表:")
+        logger.info("📋 测试比赛列表:")
         for i, match in enumerate(matches, 1):
             logger.info(
                 f"   {i}. {match['home_team_name']} vs {match['away_team_name']} (FotMob ID: {match['fotmob_id']})"
@@ -358,14 +358,14 @@ class SimpleCanary:
         # 处理每场比赛
         results = []
         for i, match in enumerate(matches, 1):
-            logger.info(f"\n🔄 处理第 {i}/{len(matches)} 场比赛...")
+            logger.info("\n🔄 处理第 {i}/{len(matches)} 场比赛...")
 
             result = await self.process_match(match)
             results.append(result)
 
             # API限流延迟
             if i < len(matches):
-                logger.info(f"   ⏱️  等待 {delay}s 后处理下一场比赛...")
+                logger.info("   ⏱️  等待 {delay}s 后处理下一场比赛...")
                 time.sleep(delay)
 
         # 生成测试报告
@@ -383,10 +383,10 @@ class SimpleCanary:
         successful_matches = len([r for r in results if r["status"] == "success"])
         failed_matches = total_matches - successful_matches
 
-        logger.info(f"总比赛数: {total_matches}")
-        logger.info(f"成功: {successful_matches}")
-        logger.info(f"失败: {failed_matches}")
-        logger.info(f"成功率: {successful_matches/total_matches*100:.1f}%")
+        logger.info("总比赛数: {total_matches}")
+        logger.info("成功: {successful_matches}")
+        logger.info("失败: {failed_matches}")
+        logger.info("成功率: {successful_matches/total_matches*100:.1f}%")
 
         # 统计各字段填充情况
         total_stats = {
@@ -404,11 +404,11 @@ class SimpleCanary:
                     total_stats[key] += value
 
         logger.info("\n📈 数据填充统计:")
-        logger.info(f"   射门数据: {total_stats['shots']} 个")
-        logger.info(f"   事件数据: {total_stats['events']} 个")
-        logger.info(f"   裁判信息: {total_stats['referee']}/{total_matches}")
-        logger.info(f"   球场信息: {total_stats['stadium']}/{total_matches}")
-        logger.info(f"   观众信息: {total_stats['attendance']}/{total_matches}")
+        logger.info("   射门数据: {total_stats['shots']} 个")
+        logger.info("   事件数据: {total_stats['events']} 个")
+        logger.info("   裁判信息: {total_stats['referee']}/{total_matches}")
+        logger.info("   球场信息: {total_stats['stadium']}/{total_matches}")
+        logger.info("   观众信息: {total_stats['attendance']}/{total_matches}")
 
         # 详细结果
         logger.info("\n📋 详细处理结果:")
@@ -456,7 +456,7 @@ async def main():
     except KeyboardInterrupt:
         logger.info("\n⚠️ 用户中断测试")
     except Exception as e:
-        logger.error(f"❌ 测试异常: {e}")
+        logger.error("❌ 测试异常: {e}")
         import traceback
 
         traceback.print_exc()

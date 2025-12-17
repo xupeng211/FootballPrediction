@@ -28,7 +28,7 @@ Phase 8 特征 (新增)：
 import logging
 import pandas as pd
 import numpy as np
-from typing import Dict, List, Tuple, Optional, Any
+from typing import Dict, List, Optional, Any
 from dataclasses import dataclass
 
 from .h2h_calculator import H2HCalculator

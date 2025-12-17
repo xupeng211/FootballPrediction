@@ -53,10 +53,10 @@ class DataCollectorDisplay:
         successful_tasks = sum(1 for r in results if r.get("status") == "success")
         failed_tasks = total_tasks - successful_tasks
 
-        print(f"\n📊 收集统计:")
-        print(f"   总任务数: {total_tasks}")
-        print(f"   成功任务: {successful_tasks}")
-        print(f"   失败任务: {failed_tasks}")
+        print("\n📊 收集统计:")
+        print("   总任务数: {total_tasks}")
+        print("   成功任务: {successful_tasks}")
+        print("   失败任务: {failed_tasks}")
         print(
             f"   成功率: {successful_tasks/total_tasks*100:.1f}%"
             if total_tasks > 0
@@ -64,7 +64,7 @@ class DataCollectorDisplay:
         )
 
         # 详细结果
-        print(f"\n📋 详细结果:")
+        print("\n📋 详细结果:")
         for i, result in enumerate(results, 1):
             status = result.get("status", "unknown")
             task_id = result.get("task_id", f"task_{i}")
@@ -72,18 +72,18 @@ class DataCollectorDisplay:
             duration = result.get("duration_seconds", 0)
 
             status_icon = "✅" if status == "success" else "❌"
-            print(f"   {i}. {status_icon} {task_id} ({source_type}) - {duration:.2f}s")
+            print("   {i}. {status_icon} {task_id} ({source_type}) - {duration:.2f}s")
 
             if status == "failed" and result.get("error"):
-                print(f"      错误: {result['error']}")
+                print("      错误: {result['error']}")
             elif status == "success" and result.get("result"):
                 result_data = result["result"]
                 if isinstance(result_data, dict):
                     data_points = len(result_data)
-                    print(f"      数据点: {data_points}")
+                    print("      数据点: {data_points}")
                 elif isinstance(result_data, list):
                     data_points = len(result_data)
-                    print(f"      数据点: {data_points}")
+                    print("      数据点: {data_points}")
 
     @staticmethod
     def display_service_stats(stats: Dict[str, Any]) -> None:
@@ -92,26 +92,26 @@ class DataCollectorDisplay:
         print("📈 数据收集服务统计")
         print("=" * 60)
 
-        print(f"\n🔧 服务状态:")
-        print(f"   状态: {stats.get('service_status', 'unknown')}")
-        print(f"   可用收集器: {', '.join(stats.get('available_collectors', []))}")
-        print(f"   最大并发任务: {stats.get('max_concurrent_tasks', 0)}")
+        print("\n🔧 服务状态:")
+        print("   状态: {stats.get('service_status', 'unknown')}")
+        print("   可用收集器: {', '.join(stats.get('available_collectors', []))}")
+        print("   最大并发任务: {stats.get('max_concurrent_tasks', 0)}")
 
-        print(f"\n📊 任务统计:")
-        print(f"   总任务数: {stats.get('total_tasks', 0)}")
-        print(f"   成功任务: {stats.get('successful_tasks', 0)}")
-        print(f"   失败任务: {stats.get('failed_tasks', 0)}")
-        print(f"   运行中任务: {stats.get('running_tasks', 0)}")
-        print(f"   待处理任务: {stats.get('pending_tasks', 0)}")
+        print("\n📊 任务统计:")
+        print("   总任务数: {stats.get('total_tasks', 0)}")
+        print("   成功任务: {stats.get('successful_tasks', 0)}")
+        print("   失败任务: {stats.get('failed_tasks', 0)}")
+        print("   运行中任务: {stats.get('running_tasks', 0)}")
+        print("   待处理任务: {stats.get('pending_tasks', 0)}")
 
-        print(f"\n📈 性能指标:")
-        print(f"   成功率: {stats.get('success_rate', 0)*100:.1f}%")
-        print(f"   平均执行时间: {stats.get('avg_duration_seconds', 0):.2f}秒")
-        print(f"   总数据点: {stats.get('total_data_points', 0)}")
+        print("\n📈 性能指标:")
+        print("   成功率: {stats.get('success_rate', 0)*100:.1f}%")
+        print("   平均执行时间: {stats.get('avg_duration_seconds', 0):.2f}秒")
+        print("   总数据点: {stats.get('total_data_points', 0)}")
 
         last_collection = stats.get("last_collection_time")
         if last_collection:
-            print(f"   最后收集时间: {last_collection}")
+            print("   最后收集时间: {last_collection}")
 
 
 class DataCollectorCLI:
@@ -138,7 +138,7 @@ class DataCollectorCLI:
             return True
 
         except Exception as e:
-            logger.error(f"初始化失败: {e}")
+            logger.error("初始化失败: {e}")
             return False
 
     async def collect_match_data(
@@ -154,17 +154,17 @@ class DataCollectorCLI:
         Returns:
             List[Dict[str, Any]]: 收集结果列表
         """
-        logger.info(f"开始收集比赛数据: {match_id}")
+        logger.info("开始收集比赛数据: {match_id}")
 
         try:
             # 使用服务层收集数据
             result = await self.collection_service.collect_match_data(match_id, sources)
 
-            logger.info(f"比赛数据收集完成: {match_id}")
+            logger.info("比赛数据收集完成: {match_id}")
             return result.get("results", [])
 
         except Exception as e:
-            logger.error(f"比赛数据收集失败: {e}")
+            logger.error("比赛数据收集失败: {e}")
             return []
 
     async def collect_league_data(
@@ -180,7 +180,7 @@ class DataCollectorCLI:
         Returns:
             Dict[str, Any]: 收集结果
         """
-        logger.info(f"开始收集联赛数据: {league_code}")
+        logger.info("开始收集联赛数据: {league_code}")
 
         try:
             # 使用服务层收集数据
@@ -188,11 +188,11 @@ class DataCollectorCLI:
                 league_code, league_id
             )
 
-            logger.info(f"联赛数据收集完成: {league_code}")
+            logger.info("联赛数据收集完成: {league_code}")
             return result
 
         except Exception as e:
-            logger.error(f"联赛数据收集失败: {e}")
+            logger.error("联赛数据收集失败: {e}")
             return {"error": str(e)}
 
     async def collect_custom_data(
@@ -208,7 +208,7 @@ class DataCollectorCLI:
         Returns:
             Dict[str, Any]: 收集结果
         """
-        logger.info(f"开始收集自定义数据: {source_type}")
+        logger.info("开始收集自定义数据: {source_type}")
 
         try:
             # 创建自定义任务
@@ -219,11 +219,11 @@ class DataCollectorCLI:
             # 执行任务
             result = await self.collection_service.execute_task(task_id)
 
-            logger.info(f"自定义数据收集完成: {task_id}")
+            logger.info("自定义数据收集完成: {task_id}")
             return result
 
         except Exception as e:
-            logger.error(f"自定义数据收集失败: {e}")
+            logger.error("自定义数据收集失败: {e}")
             return {"error": str(e), "success": False}
 
     async def get_service_stats(self) -> Dict[str, Any]:
@@ -367,7 +367,7 @@ def parse_config(config_str: str) -> Dict[str, Any]:
     try:
         return json.loads(config_str)
     except json.JSONDecodeError as e:
-        logger.error(f"配置格式错误: {e}")
+        logger.error("配置格式错误: {e}")
         return {}
 
 
@@ -402,7 +402,7 @@ async def main():
             if "results" in result:
                 results = result["results"]
             else:
-                print(f"联赛数据收集结果: {result}")
+                print("联赛数据收集结果: {result}")
 
         # 自定义数据收集
         elif args.custom:
@@ -417,7 +417,7 @@ async def main():
 
             tasks = await cli.get_task_status(args.filter)
             if tasks:
-                print(f"\n📋 任务列表 (过滤: {args.filter or '全部'}):")
+                print("\n📋 任务列表 (过滤: {args.filter or '全部'}):")
                 for task in tasks:
                     print(
                         f"   - {task.get('task_id', 'unknown')}: {task.get('status', 'unknown')}"
@@ -428,7 +428,7 @@ async def main():
         # 清理任务
         elif args.cleanup:
             cleaned_count = await cli.clear_completed_tasks(args.older_hours)
-            print(f"已清理 {cleaned_count} 个已完成任务")
+            print("已清理 {cleaned_count} 个已完成任务")
             return 0
 
         # 显示收集结果
@@ -441,9 +441,9 @@ async def main():
                 try:
                     with open(output_path, "w", encoding="utf-8") as f:
                         json.dump(results, f, indent=2, ensure_ascii=False, default=str)
-                    print(f"\n💾 结果已保存到: {output_path}")
+                    print("\n💾 结果已保存到: {output_path}")
                 except Exception as e:
-                    logger.error(f"文件保存失败: {e}")
+                    logger.error("文件保存失败: {e}")
 
         return 0
 
@@ -451,7 +451,7 @@ async def main():
         logger.info("用户中断操作")
         return 130
     except Exception as e:
-        logger.error(f"程序异常: {e}")
+        logger.error("程序异常: {e}")
         return 1
     finally:
         # 清理资源

@@ -15,8 +15,8 @@
 import asyncio
 import logging
 from datetime import datetime
-from typing import Dict, Any, Optional, List, Union
-from dataclasses import dataclass, field
+from typing import Dict, Any, Optional, List
+from dataclasses import dataclass
 from pathlib import Path
 
 from .__init__ import BaseService

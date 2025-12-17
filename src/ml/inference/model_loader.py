@@ -16,13 +16,14 @@ from pathlib import Path
 from typing import Dict, Any, Optional, Union, List
 from dataclasses import dataclass
 
+# Import joblib for model loading
+import joblib
+
 logger = logging.getLogger(__name__)
 
 
 class ModelLoadError(Exception):
     """模型加载异常"""
-
-    pass
 
 
 @dataclass
@@ -617,7 +618,7 @@ class ModelLoader:
         """析构函数，确保线程正确停止"""
         try:
             self.stop_hot_reload()
-        except:
+        except Exception:
             pass
 
     def __len__(self) -> int:

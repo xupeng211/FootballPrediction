@@ -17,8 +17,7 @@ Phase 5 Advanced Features 核心组件之一
 
 import logging
 import pandas as pd
-import numpy as np
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List
 from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
@@ -168,7 +167,7 @@ class VenueAnalyzer:
             "venue_home_goals_rolling_5"
         ] / (df_with_venue_stats["venue_away_goals_rolling_5"] + 0.01)
 
-        logger.info(f"场馆特征计算完成，新增特征数量: 8")
+        logger.info("场馆特征计算完成，新增特征数量: 8")
 
         return df_with_venue_stats
 

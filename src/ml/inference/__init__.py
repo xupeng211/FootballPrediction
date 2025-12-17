@@ -12,6 +12,10 @@ from pathlib import Path
 from typing import Dict, Any, Optional, Union, List
 from datetime import datetime
 
+# Import numpy and pandas for type annotations
+import numpy as np
+import pandas as pd
+
 # 导入重构后的组件，使用别名避免循环引用
 from .model_loader import (
     ModelLoader as _InternalModelLoader,
