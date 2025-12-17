@@ -241,11 +241,17 @@ jobs:
       - name: Create test database
         run: |
           echo "🔄 创建测试数据库..."
-          PGPASSWORD=${{ secrets.DB_PASSWORD || 'test_password' }} psql -h localhost -p 5432 -U ${{ secrets.DB_USER || 'test_user' }} -c "
-            CREATE DATABASE IF NOT EXISTS football_prediction_test;
-            \c football_prediction_test;
+
+          # 先连接到postgres数据库创建测试数据库
+          PGPASSWORD=${{ secrets.DB_PASSWORD || 'test_password' }} psql -h localhost -p 5432 -U ${{ secrets.DB_USER || 'test_user' }} -d postgres -c "
+            CREATE DATABASE football_prediction_test;
+          " || echo "数据库可能已存在，继续执行"
+
+          # 连接到测试数据库创建扩展
+          PGPASSWORD=${{ secrets.DB_PASSWORD || 'test_password' }} psql -h localhost -p 5432 -U ${{ secrets.DB_USER || 'test_user' }} -d football_prediction_test -c "
             CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";
           "
+
           echo "✅ 测试数据库创建完成"
 
       - name: Run Database Migrations
