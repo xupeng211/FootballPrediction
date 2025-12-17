@@ -6,13 +6,10 @@
 
 import unittest
 from unittest.mock import Mock, patch, MagicMock
-import sys
 
-sys.path.append("/home/user/projects/FootballPrediction/src")
-
-from ml.inference.model_loader import ModelLoader, ModelMetadata, ModelLoadError
-from ml.inference.cache_manager import PredictionCache
-from ml.inference.predictor import MatchPredictor, PredictionError
+from src.ml.inference.model_loader import ModelLoader, ModelMetadata, ModelLoadError
+from src.ml.inference.cache_manager import PredictionCache
+from src.ml.inference.predictor import MatchPredictor, PredictionError
 
 
 class TestModelLoaderSimple(unittest.TestCase):
