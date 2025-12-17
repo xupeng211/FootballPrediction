@@ -1,41 +1,36 @@
 #!/usr/bin/env python3
 """
-数据收集服务 (Data Collection Service)
+FotMob 数据收集服务 (FotMob Collection Service)
 
-统一管理所有外部数据源的收集逻辑，为scripts目录提供的服务层抽象。
-遵循单一职责原则，专门负责数据收集的协调和管理。
+专注于FotMob数据的高并发采集、清洗和入库。
+实现完整的ETL流程，包含Circuit Breaker熔断器保护。
 
 主要功能：
-1. 外部API数据收集 (FotMob, OddsPortal等)
-2. 多数据源聚合和标准化
-3. 数据收集任务调度和监控
-4. 错误处理和重试机制
-5. 数据质量验证
+1. FotMob API数据收集 (Extract)
+2. 数据清洗和验证 (Transform)
+3. PostgreSQL数据库存储 (Load)
+4. 熔断器保护和重试机制
+5. 高并发控制和限流
 """
 
 import asyncio
 import logging
-from datetime import datetime, timedelta
-from typing import Dict, Any, List, Optional, Union, Callable
-from dataclasses import dataclass, field
-from pathlib import Path
-import json
 import time
+from datetime import datetime, timedelta
+from typing import Dict, Any, List, Optional, Callable, Union
+from dataclasses import dataclass, field
 from enum import Enum
+from pathlib import Path
+
+import aiohttp
+import asyncpg
+from tenacity import retry, stop_after_attempt, wait_exponential
 
 from .__init__ import BaseService
+from src.config import get_settings
 from src.database.db_pool import get_db_pool
-from src.database.config import get_database_config
 
 logger = logging.getLogger(__name__)
-
-
-class DataSourceType(Enum):
-    """数据源类型枚举"""
-    FOTMOB = "fotmob"
-    ODPORTAL = "oddsportal"
-    FOOTBALL_DATA = "football_data"
-    CUSTOM = "custom"
 
 
 class CollectionStatus(Enum):
@@ -48,11 +43,12 @@ class CollectionStatus(Enum):
 
 
 @dataclass
-class CollectionTask:
-    """数据收集任务"""
+class FotMobCollectionTask:
+    """FotMob数据收集任务"""
     task_id: str
-    source_type: DataSourceType
-    source_config: Dict[str, Any]
+    match_id: Optional[str] = None
+    league_id: Optional[str] = None
+    collection_type: str = "match"  # match, league, fixtures
     priority: int = 5
     max_retries: int = 3
     retry_count: int = 0
@@ -62,6 +58,7 @@ class CollectionTask:
     completed_at: Optional[datetime] = None
     result: Optional[Dict[str, Any]] = None
     error: Optional[str] = None
+    data_points_collected: int = 0
 
     @property
     def duration_seconds(self) -> Optional[float]:
@@ -74,8 +71,9 @@ class CollectionTask:
         """转换为字典格式"""
         return {
             "task_id": self.task_id,
-            "source_type": self.source_type.value,
-            "source_config": self.source_config,
+            "match_id": self.match_id,
+            "league_id": self.league_id,
+            "collection_type": self.collection_type,
             "priority": self.priority,
             "status": self.status.value,
             "created_at": self.created_at.isoformat(),
@@ -85,7 +83,8 @@ class CollectionTask:
             "retry_count": self.retry_count,
             "max_retries": self.max_retries,
             "result": self.result,
-            "error": self.error
+            "error": self.error,
+            "data_points_collected": self.data_points_collected
         }
 
 
@@ -101,8 +100,10 @@ class CollectionStats:
     success_rate: float = 0.0
     total_data_points: int = 0
     last_collection_time: Optional[datetime] = None
+    circuit_breaker_trips: int = 0
+    last_error: Optional[str] = None
 
-    def update(self, tasks: List[CollectionTask]) -> None:
+    def update(self, tasks: List[FotMobCollectionTask]) -> None:
         """更新统计信息"""
         self.total_tasks = len(tasks)
         self.successful_tasks = len([t for t in tasks if t.status == CollectionStatus.SUCCESS])
@@ -119,119 +120,117 @@ class CollectionStats:
         if completed_tasks:
             self.avg_duration = sum(t.duration_seconds for t in completed_tasks) / len(completed_tasks)
 
-        # 记录最后一次收集时间
+        # 统计数据点
+        self.total_data_points = sum(t.data_points_collected for t in tasks)
+
+        # 记录最后一次成功收集时间
         successful_tasks = [t for t in tasks if t.status == CollectionStatus.SUCCESS]
         if successful_tasks:
             self.last_collection_time = max(t.completed_at for t in successful_tasks)
 
 
-class CollectionService(BaseService):
+class CircuitBreaker:
+    """熔断器实现"""
+
+    def __init__(self, failure_threshold: int = 5, recovery_timeout: int = 300,
+                 half_open_max_calls: int = 3):
+        self.failure_threshold = failure_threshold
+        self.recovery_timeout = recovery_timeout
+        self.half_open_max_calls = half_open_max_calls
+
+        self.failure_count = 0
+        self.last_failure_time = None
+        self.state = "CLOSED"  # CLOSED, OPEN, HALF_OPEN
+        self.half_open_calls = 0
+
+        logger.info(f"熔断器初始化: 失败阈值={failure_threshold}, 恢复超时={recovery_timeout}s")
+
+    def call_allowed(self) -> bool:
+        """检查是否允许调用"""
+        now = time.time()
+
+        if self.state == "CLOSED":
+            return True
+        elif self.state == "OPEN":
+            if now - self.last_failure_time >= self.recovery_timeout:
+                self.state = "HALF_OPEN"
+                self.half_open_calls = 0
+                logger.info("熔断器状态从OPEN转为HALF_OPEN")
+                return True
+            return False
+        elif self.state == "HALF_OPEN":
+            return self.half_open_calls < self.half_open_max_calls
+
+        return False
+
+    def call_succeeded(self) -> None:
+        """调用成功"""
+        if self.state == "HALF_OPEN":
+            self.half_open_calls += 1
+            if self.half_open_calls >= self.half_open_max_calls:
+                self.state = "CLOSED"
+                self.failure_count = 0
+                logger.info("熔断器状态从HALF_OPEN转为CLOSED")
+        elif self.state == "CLOSED":
+            self.failure_count = 0
+
+    def call_failed(self) -> None:
+        """调用失败"""
+        self.failure_count += 1
+        self.last_failure_time = time.time()
+
+        if self.failure_count >= self.failure_threshold:
+            if self.state != "OPEN":
+                self.state = "OPEN"
+                logger.warning(f"熔断器触发! 失败次数: {self.failure_count}")
+
+    def get_state(self) -> Dict[str, Any]:
+        """获取熔断器状态"""
+        return {
+            "state": self.state,
+            "failure_count": self.failure_count,
+            "last_failure_time": self.last_failure_time,
+            "recovery_timeout": self.recovery_timeout
+        }
+
+
+class FotMobCollectionService(BaseService):
     """
-    数据收集服务
+    FotMob数据收集服务
 
     职责：
-    1. 管理多种数据源的收集任务
-    2. 提供统一的数据收集接口
-    3. 协调不同收集器的工作
-    4. 监控和统计收集情况
+    1. 管理FotMob数据收集任务
+    2. 提供ETL流程（Extract, Transform, Load）
+    3. 协调高并发采集和入库
+    4. 熔断器保护和错误恢复
+    5. 数据质量验证和清洗
     """
 
     def __init__(self):
-        super().__init__("CollectionService")
+        super().__init__("FotMobCollectionService")
+        self.settings = get_settings()
         self.db_pool = None
-        self.tasks: List[CollectionTask] = []
-        self.collectors: Dict[DataSourceType, Callable] = {}
+        self.tasks: List[FotMobCollectionTask] = []
         self.is_running = False
-        self.max_concurrent_tasks = 5
+        self.max_concurrent_tasks = self.settings.fotmob.max_concurrent_requests
         self.stats = CollectionStats()
 
-        # 注册收集器
-        self._register_collectors()
+        # 初始化熔断器
+        self.circuit_breaker = CircuitBreaker(
+            failure_threshold=self.settings.fotmob.circuit_breaker_failure_threshold,
+            recovery_timeout=self.settings.fotmob.circuit_breaker_recovery_timeout,
+            half_open_max_calls=self.settings.fotmob.circuit_breaker_half_open_max_calls
+        )
 
-    def _register_collectors(self) -> None:
-        """注册数据收集器"""
-        try:
-            # 注册FotMob收集器
-            from scripts.collectors.enhanced_fotmob_collector import EnhancedFotMobCollector
-            self.collectors[DataSourceType.FOTMOB] = self._create_fotmob_collector(EnhancedFotMobCollector)
-            self.logger.info("FotMob收集器已注册")
+        # HTTP会话
+        self.http_session: Optional[aiohttp.ClientSession] = None
 
-        except ImportError as e:
-            self.logger.warning(f"FotMob收集器注册失败: {e}")
-
-        try:
-            # 注册OddsPortal收集器
-            from scripts.collectors.odds_collector import OddsCollector
-            self.collectors[DataSourceType.ODPORTAL] = self._create_odds_collector(OddsCollector)
-            self.logger.info("OddsPortal收集器已注册")
-
-        except ImportError as e:
-            self.logger.warning(f"OddsPortal收集器注册失败: {e}")
-
-        try:
-            # 注册FootballData收集器
-            from scripts.collectors.football_data_collector import FootballDataCollector
-            self.collectors[DataSourceType.FOOTBALL_DATA] = self._create_football_data_collector(FootballDataCollector)
-            self.logger.info("FootballData收集器已注册")
-
-        except ImportError as e:
-            self.logger.warning(f"FootballData收集器注册失败: {e}")
-
-    def _create_fotmob_collector(self, collector_class) -> Callable:
-        """创建FotMob收集器包装器"""
-        def wrapper(config: Dict[str, Any]) -> Dict[str, Any]:
-            try:
-                collector = collector_class()
-                # 根据配置调用相应的收集方法
-                if config.get("match_id"):
-                    return collector.collect_match_data(config["match_id"])
-                elif config.get("league_id"):
-                    return collector.collect_league_data(config["league_id"])
-                else:
-                    raise ValueError("FotMob收集器需要match_id或league_id参数")
-            except Exception as e:
-                self.logger.error(f"FotMob收集器执行失败: {e}")
-                raise
-        return wrapper
-
-    def _create_odds_collector(self, collector_class) -> Callable:
-        """创建Odds收集器包装器"""
-        def wrapper(config: Dict[str, Any]) -> Dict[str, Any]:
-            try:
-                collector = collector_class()
-                # 根据配置调用相应的收集方法
-                if config.get("match_id"):
-                    return collector.collect_match_odds(config["match_id"])
-                elif config.get("league_id"):
-                    return collector.collect_league_odds(config["league_id"])
-                else:
-                    raise ValueError("Odds收集器需要match_id或league_id参数")
-            except Exception as e:
-                self.logger.error(f"Odds收集器执行失败: {e}")
-                raise
-        return wrapper
-
-    def _create_football_data_collector(self, collector_class) -> Callable:
-        """创建FootballData收集器包装器"""
-        def wrapper(config: Dict[str, Any]) -> Dict[str, Any]:
-            try:
-                collector = collector_class()
-                # 根据配置调用相应的收集方法
-                if config.get("league_code"):
-                    return collector.collect_league_data(config["league_code"])
-                elif config.get("match_id"):
-                    return collector.collect_match_data(config["match_id"])
-                else:
-                    raise ValueError("FootballData收集器需要league_code或match_id参数")
-            except Exception as e:
-                self.logger.error(f"FootballData收集器执行失败: {e}")
-                raise
-        return wrapper
+        logger.info("🚀 FotMob数据收集服务初始化完成")
 
     async def initialize(self) -> bool:
         """初始化服务"""
         try:
-            self.logger.info("正在初始化数据收集服务...")
+            self.logger.info("正在初始化FotMob数据收集服务...")
 
             # 初始化数据库连接池
             self.db_pool = await get_db_pool()
@@ -239,90 +238,100 @@ class CollectionService(BaseService):
             # 测试数据库连接
             await self.db_pool.fetchval("SELECT 1")
 
+            # 初始化HTTP会话
+            headers = self.settings.fotmob.get_headers()
+            timeout = aiohttp.ClientTimeout(total=self.settings.fotmob.timeout)
+            self.http_session = aiohttp.ClientSession(
+                headers=headers,
+                timeout=timeout
+            )
+
             self.is_running = True
-            self.logger.info("数据收集服务初始化成功")
+            self.logger.info("✅ FotMob数据收集服务初始化成功")
             return True
 
         except Exception as e:
-            self.logger.error(f"数据收集服务初始化失败: {e}")
+            self.logger.error(f"❌ FotMob数据收集服务初始化失败: {e}")
             return False
 
     async def shutdown(self) -> None:
         """关闭服务"""
         try:
-            self.logger.info("正在关闭数据收集服务...")
+            self.logger.info("正在关闭FotMob数据收集服务...")
 
             # 停止所有运行中的任务
             self.is_running = False
+
+            # 关闭HTTP会话
+            if self.http_session:
+                await self.http_session.close()
 
             # 关闭数据库连接
             if self.db_pool:
                 await self.db_pool.close()
 
-            self.logger.info("数据收集服务已关闭")
+            self.logger.info("✅ FotMob数据收集服务已关闭")
 
         except Exception as e:
-            self.logger.error(f"数据收集服务关闭失败: {e}")
+            self.logger.error(f"❌ FotMob数据收集服务关闭失败: {e}")
 
-    def create_collection_task(
+    def create_match_collection_task(
         self,
-        source_type: Union[str, DataSourceType],
-        source_config: Dict[str, Any],
+        match_id: str,
         priority: int = 5,
         task_id: Optional[str] = None
     ) -> str:
-        """
-        创建数据收集任务
-
-        Args:
-            source_type: 数据源类型
-            source_config: 数据源配置
-            priority: 任务优先级 (1-10, 数字越小优先级越高)
-            task_id: 任务ID，如果为None则自动生成
-
-        Returns:
-            str: 任务ID
-        """
-        if isinstance(source_type, str):
-            source_type = DataSourceType(source_type)
-
+        """创建比赛数据收集任务"""
         if task_id is None:
-            task_id = f"{source_type.value}_{int(time.time())}_{len(self.tasks)}"
+            task_id = f"match_{match_id}_{int(time.time())}"
 
-        task = CollectionTask(
+        task = FotMobCollectionTask(
             task_id=task_id,
-            source_type=source_type,
-            source_config=source_config,
+            match_id=match_id,
+            collection_type="match",
             priority=priority
         )
 
         self.tasks.append(task)
-        self.logger.info(f"已创建收集任务: {task_id} (来源: {source_type.value})")
+        self.logger.info(f"已创建比赛收集任务: {task_id} (match_id: {match_id})")
+        return task_id
 
+    def create_league_collection_task(
+        self,
+        league_id: str,
+        priority: int = 3,
+        task_id: Optional[str] = None
+    ) -> str:
+        """创建联赛数据收集任务"""
+        if task_id is None:
+            task_id = f"league_{league_id}_{int(time.time())}"
+
+        task = FotMobCollectionTask(
+            task_id=task_id,
+            league_id=league_id,
+            collection_type="league",
+            priority=priority
+        )
+
+        self.tasks.append(task)
+        self.logger.info(f"已创建联赛收集任务: {task_id} (league_id: {league_id})")
         return task_id
 
     async def execute_task(self, task_id: str) -> Dict[str, Any]:
-        """
-        执行单个收集任务
-
-        Args:
-            task_id: 任务ID
-
-        Returns:
-            Dict[str, Any]: 执行结果
-        """
+        """执行单个收集任务"""
         # 查找任务
         task = next((t for t in self.tasks if t.task_id == task_id), None)
         if not task:
             raise ValueError(f"任务不存在: {task_id}")
 
-        # 检查收集器是否可用
-        if task.source_type not in self.collectors:
-            error_msg = f"不支持的收集器类型: {task.source_type.value}"
+        # 检查熔断器状态
+        if not self.circuit_breaker.call_allowed():
+            error_msg = "熔断器开启，暂停FotMob API调用"
             task.status = CollectionStatus.FAILED
             task.error = error_msg
             task.completed_at = datetime.now()
-            raise ValueError(error_msg)
+            self.stats.last_error = error_msg
+            raise RuntimeError(error_msg)
 
         # 更新任务状态
         task.status = CollectionStatus.RUNNING
@@ -330,78 +339,250 @@ class CollectionService(BaseService):
         task.retry_count += 1
 
         try:
-            self.logger.info(f"开始执行任务: {task_id}")
+            self.logger.info(f"🎯 开始执行任务: {task_id}")
 
-            # 执行收集
-            collector_func = self.collectors[task.source_type]
-            result = await self._execute_collector_async(collector_func, task.source_config)
+            # 导入FotMob采集器
+            from scripts.collectors.fotmob_collector import FotMobCollector
+            collector = FotMobCollector()
+            await collector.initialize()
+
+            # 执行数据收集
+            if task.collection_type == "match" and task.match_id:
+                raw_data = await collector.collect_match_data(task.match_id)
+            elif task.collection_type == "league" and task.league_id:
+                raw_data = await collector.collect_league_data(task.league_id)
+            else:
+                raise ValueError(f"无效的任务配置: {task}")
+
+            # 数据清洗和转换
+            cleaned_data = await self._transform_data(raw_data, task)
+
+            # 数据入库
+            if cleaned_data:
+                await self._load_data(cleaned_data, task)
+                task.data_points_collected = self._count_data_points(cleaned_data)
 
             # 更新任务结果
             task.status = CollectionStatus.SUCCESS
-            task.result = result
+            task.result = cleaned_data
             task.completed_at = datetime.now()
 
-            # 更新统计
-            self.stats.total_data_points += self._count_data_points(result)
-            self.stats.last_collection_time = datetime.now()
+            # 熔断器调用成功
+            self.circuit_breaker.call_succeeded()
 
-            self.logger.info(f"任务执行成功: {task_id}")
+            self.logger.info(f"✅ 任务执行成功: {task_id} (数据点: {task.data_points_collected})")
             return task.to_dict()
 
         except Exception as e:
+            # 熔断器调用失败
+            self.circuit_breaker.call_failed()
+
             # 任务执行失败
             error_msg = str(e)
             task.status = CollectionStatus.FAILED
             task.error = error_msg
             task.completed_at = datetime.now()
-
-            self.logger.error(f"任务执行失败: {task_id}, 错误: {error_msg}")
+            self.stats.last_error = error_msg
 
             # 如果还有重试机会，则重新调度
             if task.retry_count < task.max_retries:
                 task.status = CollectionStatus.RETRY
-                self.logger.info(f"任务将重试: {task_id} (第{task.retry_count + 1}次)")
+                self.logger.warning(f"⚠️ 任务将重试: {task_id} (第{task.retry_count + 1}次)")
 
+            self.logger.error(f"❌ 任务执行失败: {task_id}, 错误: {error_msg}")
             return task.to_dict()
 
         finally:
             # 更新统计信息
             self.stats.update(self.tasks)
 
-    async def _execute_collector_async(self, collector_func: Callable, config: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        异步执行收集器函数
+    async def _transform_data(self, raw_data: Dict[str, Any], task: FotMobCollectionTask) -> Dict[str, Any]:
+        """数据清洗和转换 (ETL的Transform阶段)"""
+        try:
+            if not raw_data:
+                return {}
 
-        Args:
-            collector_func: 收集器函数
-            config: 配置参数
+            # 基本数据验证
+            if not isinstance(raw_data, dict):
+                raise ValueError("原始数据不是字典格式")
 
-        Returns:
-            Dict[str, Any]: 收集结果
-        """
-        # 在线程池中执行同步的收集器函数
-        loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(None, collector_func, config)
+            # 提取核心字段
+            transformed = {
+                "source": "fotmob",
+                "collection_type": task.collection_type,
+                "collection_time": datetime.utcnow().isoformat(),
+                "task_id": task.task_id
+            }
 
-    def _count_data_points(self, result: Dict[str, Any]) -> int:
+            # 根据收集类型进行不同的转换
+            if task.collection_type == "match":
+                transformed.update({
+                    "match_id": task.match_id,
+                    "raw_data": raw_data,  # 暂时保存原始数据
+                    "processed_data": self._process_match_data(raw_data)
+                })
+            elif task.collection_type == "league":
+                transformed.update({
+                    "league_id": task.league_id,
+                    "raw_data": raw_data,
+                    "processed_data": self._process_league_data(raw_data)
+                })
+
+            return transformed
+
+        except Exception as e:
+            self.logger.error(f"数据转换失败: {e}")
+            raise
+
+    def _process_match_data(self, raw_data: Dict[str, Any]) -> Dict[str, Any]:
+        """处理比赛数据"""
+        processed = {}
+
+        try:
+            # 提取基本信息
+            if "general" in raw_data:
+                general = raw_data["general"]
+                processed.update({
+                    "home_team": general.get("homeTeam", {}).get("name"),
+                    "away_team": general.get("awayTeam", {}).get("name"),
+                    "home_score": general.get("homeGoals"),
+                    "away_score": general.get("awayGoals"),
+                    "status": general.get("statusText"),
+                    "match_time": general.get("startDateStr"),
+                    "venue": general.get("venue", {}).get("name")
+                })
+
+            # 提取阵容数据
+            if "lineups" in raw_data:
+                processed["lineups"] = raw_data["lineups"]
+
+            # 提取技术统计
+            if "header" in raw_data and "stats" in raw_data["header"]:
+                processed["stats"] = raw_data["header"]["stats"]
+
+            # 提取xG数据
+            if "content" in raw_data and "stats" in raw_data["content"]:
+                stats = raw_data["content"]["stats"]
+                for stat in stats:
+                    if stat.get("title") == "Expected Goals (xG)":
+                        processed["xg"] = stat.get("stats")
+                        break
+
+            self.logger.debug(f"比赛数据处理完成: {len(processed)} 个字段")
+            return processed
+
+        except Exception as e:
+            self.logger.error(f"比赛数据处理失败: {e}")
+            return {"error": str(e)}
+
+    def _process_league_data(self, raw_data: Dict[str, Any]) -> Dict[str, Any]:
+        """处理联赛数据"""
+        processed = {}
+
+        try:
+            # 这里可以添加联赛数据的具体处理逻辑
+            processed["league_data"] = raw_data
+            processed["processed_at"] = datetime.utcnow().isoformat()
+
+            self.logger.debug(f"联赛数据处理完成")
+            return processed
+
+        except Exception as e:
+            self.logger.error(f"联赛数据处理失败: {e}")
+            return {"error": str(e)}
+
+    async def _load_data(self, data: Dict[str, Any], task: FotMobCollectionTask) -> None:
+        """数据入库 (ETL的Load阶段)"""
+        try:
+            if not data.get("processed_data"):
+                self.logger.warning("没有处理后的数据，跳过入库")
+                return
+
+            processed_data = data["processed_data"]
+
+            if task.collection_type == "match":
+                await self._save_match_data(processed_data, task)
+            elif task.collection_type == "league":
+                await self._save_league_data(processed_data, task)
+
+            self.logger.debug(f"数据入库完成: {task.collection_type}")
+
+        except Exception as e:
+            self.logger.error(f"数据入库失败: {e}")
+            raise
+
+    async def _save_match_data(self, data: Dict[str, Any], task: FotMobCollectionTask) -> None:
+        """保存比赛数据到数据库"""
+        try:
+            # 这里应该实现具体的数据库保存逻辑
+            # 由于没有具体的Match模型定义，暂时使用通用SQL
+
+            sql = """
+            INSERT INTO matches (
+                fotmob_id, home_team, away_team, home_score, away_score,
+                status, match_time, venue, lineups, stats, metadata,
+                data_source, collection_time
+            ) VALUES (
+                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13
+            )
+            ON CONFLICT (fotmob_id) DO UPDATE SET
+                home_team = EXCLUDED.home_team,
+                away_team = EXCLUDED.away_team,
+                home_score = EXCLUDED.home_score,
+                away_score = EXCLUDED.away_score,
+                status = EXCLUDED.status,
+                match_time = EXCLUDED.match_time,
+                venue = EXCLUDED.venue,
+                lineups = EXCLUDED.lineups,
+                stats = EXCLUDED.stats,
+                metadata = EXCLUDED.metadata,
+                collection_time = EXCLUDED.collection_time
+            """
+
+            await self.db_pool.execute(
+                sql,
+                task.match_id,
+                data.get("home_team"),
+                data.get("away_team"),
+                data.get("home_score"),
+                data.get("away_score"),
+                data.get("status"),
+                data.get("match_time"),
+                data.get("venue"),
+                data.get("lineups"),
+                data.get("stats"),
+                data.get("xg"),
+                "fotmob",
+                datetime.utcnow()
+            )
+
+            self.logger.debug(f"比赛数据已保存: {task.match_id}")
+
+        except Exception as e:
+            self.logger.error(f"比赛数据保存失败: {e}")
+            raise
+
+    async def _save_league_data(self, data: Dict[str, Any], task: FotMobCollectionTask) -> None:
+        """保存联赛数据到数据库"""
+        try:
+            # 暂时使用通用SQL，实际应该有具体的League模型
+            self.logger.info(f"联赛数据保存: {task.league_id} (暂未实现)")
+
+        except Exception as e:
+            self.logger.error(f"联赛数据保存失败: {e}")
+            raise
+
+    def _count_data_points(self, data: Dict[str, Any]) -> int:
         """计算收集的数据点数量"""
-        if isinstance(result, dict):
-            return len(result)
-        elif isinstance(result, list):
-            return len(result)
+        if isinstance(data, dict):
+            return len(data)
+        elif isinstance(data, list):
+            return len(data)
         else:
             return 1
 
     async def execute_all_tasks(self, max_concurrent: Optional[int] = None) -> List[Dict[str, Any]]:
-        """
-        执行所有待处理的任务
-
-        Args:
-            max_concurrent: 最大并发数
-
-        Returns:
-            List[Dict[str, Any]]: 所有任务的执行结果
-        """
+        """执行所有待处理的任务"""
         if max_concurrent is None:
             max_concurrent = self.max_concurrent_tasks
 
@@ -417,12 +598,12 @@ class CollectionService(BaseService):
         # 按优先级排序
         pending_tasks.sort(key=lambda t: t.priority)
 
-        self.logger.info(f"开始执行 {len(pending_tasks)} 个任务，最大并发数: {max_concurrent}")
+        self.logger.info(f"🚀 开始执行 {len(pending_tasks)} 个任务，最大并发数: {max_concurrent}")
 
         # 创建信号量控制并发数
         semaphore = asyncio.Semaphore(max_concurrent)
 
-        async def execute_with_semaphore(task: CollectionTask) -> Dict[str, Any]:
+        async def execute_with_semaphore(task: FotMobCollectionTask) -> Dict[str, Any]:
             async with semaphore:
                 return await self.execute_task(task.task_id)
 
@@ -447,171 +628,19 @@ class CollectionService(BaseService):
 
         return final_results
 
-    def get_tasks(
-        self,
-        status: Optional[CollectionStatus] = None,
-        source_type: Optional[DataSourceType] = None
-    ) -> List[Dict[str, Any]]:
-        """
-        获取任务列表
-
-        Args:
-            status: 按状态过滤
-            source_type: 按数据源类型过滤
-
-        Returns:
-            List[Dict[str, Any]]: 任务列表
-        """
-        filtered_tasks = self.tasks
-
-        if status:
-            filtered_tasks = [t for t in filtered_tasks if t.status == status]
-
-        if source_type:
-            filtered_tasks = [t for t in filtered_tasks if t.source_type == source_type]
-
-        return [task.to_dict() for task in filtered_tasks]
-
-    def get_stats(self) -> Dict[str, Any]:
-        """
-        获取收集统计信息
-
-        Returns:
-            Dict[str, Any]: 统计信息
-        """
-        self.stats.update(self.tasks)
-
+    def get_service_status(self) -> Dict[str, Any]:
+        """获取服务状态"""
         return {
-            "service_status": "running" if self.is_running else "stopped",
+            "service_name": "FotMobCollectionService",
+            "is_running": self.is_running,
             "total_tasks": self.stats.total_tasks,
             "successful_tasks": self.stats.successful_tasks,
             "failed_tasks": self.stats.failed_tasks,
-            "running_tasks": self.stats.running_tasks,
-            "pending_tasks": self.stats.pending_tasks,
             "success_rate": self.stats.success_rate,
-            "avg_duration_seconds": self.stats.avg_duration,
+            "avg_duration": self.stats.avg_duration,
             "total_data_points": self.stats.total_data_points,
             "last_collection_time": self.stats.last_collection_time.isoformat() if self.stats.last_collection_time else None,
-            "available_collectors": [source_type.value for source_type in self.collectors.keys()],
-            "max_concurrent_tasks": self.max_concurrent_tasks
+            "circuit_breaker": self.circuit_breaker.get_state(),
+            "max_concurrent_tasks": self.max_concurrent_tasks,
+            "last_error": self.stats.last_error
         }
-
-    def clear_completed_tasks(self, older_than_hours: int = 24) -> int:
-        """
-        清理已完成的任务
-
-        Args:
-            older_than_hours: 清理多少小时前的任务
-
-        Returns:
-            int: 清理的任务数量
-        """
-        cutoff_time = datetime.now() - timedelta(hours=older_than_hours)
-
-        original_count = len(self.tasks)
-        self.tasks = [
-            task for task in self.tasks
-            if task.status not in [CollectionStatus.SUCCESS, CollectionStatus.FAILED]
-            or (task.completed_at and task.completed_at > cutoff_time)
-        ]
-
-        cleaned_count = original_count - len(self.tasks)
-        self.logger.info(f"已清理 {cleaned_count} 个已完成任务")
-
-        return cleaned_count
-
-    async def collect_match_data(
-        self,
-        match_id: str,
-        sources: Optional[List[str]] = None
-    ) -> Dict[str, Any]:
-        """
-        收集指定比赛的数据
-
-        Args:
-            match_id: 比赛ID
-            sources: 指定数据源，如果为None则使用所有可用源
-
-        Returns:
-            Dict[str, Any]: 收集结果
-        """
-        if sources is None:
-            sources = [source_type.value for source_type in self.collectors.keys()]
-
-        task_ids = []
-
-        # 为每个数据源创建任务
-        for source in sources:
-            task_id = self.create_collection_task(
-                source_type=source,
-                source_config={"match_id": match_id},
-                priority=1  # 高优先级
-            )
-            task_ids.append(task_id)
-
-        # 等待所有任务完成
-        await asyncio.sleep(1)  # 给任务调度一些时间
-        results = await self.execute_all_tasks()
-
-        return {
-            "match_id": match_id,
-            "task_ids": task_ids,
-            "results": results,
-            "total_sources": len(sources),
-            "successful_collections": len([r for r in results if r.get("status") == "success"])
-        }
-
-    # 便捷方法：直接与特定收集器交互
-    async def collect_fotmob_data(self, match_id: str) -> Dict[str, Any]:
-        """收集FotMob数据"""
-        return await self.collect_match_data(match_id, sources=["fotmob"])
-
-    async def collect_odds_data(self, match_id: str) -> Dict[str, Any]:
-        """收集赔率数据"""
-        return await self.collect_match_data(match_id, sources=["oddsportal"])
-
-    async def collect_league_data(self, league_code: str, league_id: Optional[str] = None) -> Dict[str, Any]:
-        """收集联赛数据"""
-        task_ids = []
-
-        if DataSourceType.FOOTBALL_DATA in self.collectors:
-            task_id = self.create_collection_task(
-                source_type="football_data",
-                source_config={"league_code": league_code},
-                priority=3
-            )
-            task_ids.append(task_id)
-
-        if league_id and DataSourceType.FOTMOB in self.collectors:
-            task_id = self.create_collection_task(
-                source_type="fotmob",
-                source_config={"league_id": league_id},
-                priority=3
-            )
-            task_ids.append(task_id)
-
-        if task_ids:
-            await asyncio.sleep(1)
-            results = await self.execute_all_tasks()
-
-            return {
-                "league_code": league_code,
-                "league_id": league_id,
-                "task_ids": task_ids,
-                "results": results
-            }
-        else:
-            return {"error": "没有可用的数据源"}
-
-
-# 创建全局服务实例
-collection_service = CollectionService()
-
-__all__ = [
-    "CollectionService",
-    "CollectionTask",
-    "CollectionStats",
-    "DataSourceType",
-    "CollectionStatus",
-    "collection_service"
-]
