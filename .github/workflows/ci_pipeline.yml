@@ -138,7 +138,7 @@ jobs:
           --health-cmd pg_isready
           --health-interval 10s
           --health-timeout 5s
-          --health-retries: 3  # 减少重试次数
+          --health-retries 3  # 减少重试次数
         ports:
           - 5432:5432
 
@@ -148,7 +148,7 @@ jobs:
           --health-cmd "redis-cli ping"
           --health-interval 5s  # 加快检查频率
           --health-timeout 3s
-          --health-retries: 3
+          --health-retries 3
         ports:
           - 6379:6379
 
