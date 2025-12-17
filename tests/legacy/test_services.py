@@ -23,6 +23,7 @@ class TestInferenceService:
     @pytest.mark.asyncio
     async def test_inference_service_initialization(self):
         """测试推理服务初始化"""
+
         # 模拟推理服务初始化
         class MockInferenceService:
             def __init__(self):
@@ -67,6 +68,7 @@ class TestInferenceService:
     @pytest.mark.asyncio
     async def test_predict_match_success(self):
         """测试比赛预测成功"""
+
         class MockInferenceService:
             def __init__(self):
                 self.model_loaded = True
@@ -83,19 +85,44 @@ class TestInferenceService:
                     "away_team_id": 2,
                     "league_id": 10,
                     "match_date": "2024-01-01",
-                    "venue": "home_stadium"
+                    "venue": "home_stadium",
                 }
 
             async def _extract_features(self, match_data):
                 """模拟特征提取"""
                 return {
-                    "features": np.array([0.5, 0.3, 0.7, 0.2, 0.8, 0.4, 0.6, 0.1, 0.9, 0.5, 0.3, 0.7, 0.2]),
+                    "features": np.array(
+                        [
+                            0.5,
+                            0.3,
+                            0.7,
+                            0.2,
+                            0.8,
+                            0.4,
+                            0.6,
+                            0.1,
+                            0.9,
+                            0.5,
+                            0.3,
+                            0.7,
+                            0.2,
+                        ]
+                    ),
                     "feature_names": [
-                        "home_form", "away_form", "h2h_home_win_rate", "h2h_away_win_rate",
-                        "home_goals_conceded", "away_goals_scored", "venue_home_advantage",
-                        "league_home_advantage", "home_recent_form", "away_recent_form",
-                        "head_to_head_draws", "team_morale_home", "team_morale_away"
-                    ]
+                        "home_form",
+                        "away_form",
+                        "h2h_home_win_rate",
+                        "h2h_away_win_rate",
+                        "home_goals_conceded",
+                        "away_goals_scored",
+                        "venue_home_advantage",
+                        "league_home_advantage",
+                        "home_recent_form",
+                        "away_recent_form",
+                        "head_to_head_draws",
+                        "team_morale_home",
+                        "team_morale_away",
+                    ],
                 }
 
             async def predict_match(self, match_id):
@@ -128,12 +155,12 @@ class TestInferenceService:
                     "predictions": {
                         "HOME_WIN": float(probabilities[2]),
                         "DRAW": float(probabilities[1]),
-                        "AWAY_WIN": float(probabilities[0])
+                        "AWAY_WIN": float(probabilities[0]),
                     },
                     "predicted_class": predicted_class,
                     "confidence": float(np.max(probabilities)),
                     "features_used": feature_names,
-                    "timestamp": "2024-01-01T12:00:00Z"
+                    "timestamp": "2024-01-01T12:00:00Z",
                 }
 
                 # 缓存结果
@@ -170,6 +197,7 @@ class TestInferenceService:
     @pytest.mark.asyncio
     async def test_predict_match_model_not_loaded(self):
         """测试比赛预测 - 模型未加载"""
+
         class MockInferenceService:
             def __init__(self):
                 self.model_loaded = False
@@ -187,6 +215,7 @@ class TestInferenceService:
     @pytest.mark.asyncio
     async def test_predict_match_cached_result(self):
         """测试比赛预测 - 缓存结果"""
+
         class MockInferenceService:
             def __init__(self):
                 self.model_loaded = True
@@ -204,7 +233,7 @@ class TestInferenceService:
                     "match_id": match_id,
                     "predicted_class": "HOME_WIN",
                     "confidence": 0.67,
-                    "cached": False
+                    "cached": False,
                 }
 
                 self.prediction_cache[cache_key] = new_result
@@ -217,7 +246,7 @@ class TestInferenceService:
             "match_id": 12345,
             "predicted_class": "DRAW",
             "confidence": 0.33,
-            "cached": True
+            "cached": True,
         }
         service.prediction_cache["match_12345"] = cached_result
 
@@ -231,6 +260,7 @@ class TestInferenceService:
     @pytest.mark.asyncio
     async def test_reload_model_success(self):
         """测试模型重载成功"""
+
         class MockInferenceService:
             def __init__(self):
                 self.model_loaded = True
@@ -254,13 +284,13 @@ class TestInferenceService:
                         "model_path": new_model_path,
                         "previous_model": "models/old_model.pkl",
                         "reload_time": "2024-01-01T12:00:00Z",
-                        "model_version": "v2.1.0"
+                        "model_version": "v2.1.0",
                     }
                 except Exception as e:
                     return {
                         "success": False,
                         "error": str(e),
-                        "model_path": new_model_path
+                        "model_path": new_model_path,
                     }
 
             async def _unload_current_model(self):
@@ -289,6 +319,7 @@ class TestInferenceService:
     @pytest.mark.asyncio
     async def test_reload_model_failure(self):
         """测试模型重载失败"""
+
         class MockInferenceService:
             def __init__(self):
                 self.model_loaded = True
@@ -299,16 +330,14 @@ class TestInferenceService:
 
                     # 模拟加载失败
                     if "missing" in new_model_path:
-                        raise FileNotFoundError(f"Model file not found: {new_model_path}")
+                        raise FileNotFoundError(
+                            f"Model file not found: {new_model_path}"
+                        )
 
                     return {"success": True, "model_path": new_model_path}
 
                 except Exception as e:
-                    return {
-                        "success": False,
-                        "error": str(e),
-                        "model_path": model_path
-                    }
+                    return {"success": False, "error": str(e), "model_path": model_path}
 
         service = MockInferenceService()
 
@@ -322,6 +351,7 @@ class TestInferenceService:
     @pytest.mark.asyncio
     async def test_batch_predictions(self):
         """测试批量预测"""
+
         class MockInferenceService:
             def __init__(self):
                 self.model_loaded = True
@@ -337,7 +367,7 @@ class TestInferenceService:
                 return {
                     "match_id": match_id,
                     "predicted_class": "HOME_WIN" if match_id % 2 == 0 else "DRAW",
-                    "confidence": 0.65 + (match_id % 10) * 0.02
+                    "confidence": 0.65 + (match_id % 10) * 0.02,
                 }
 
             async def predict_batch(self, match_ids):
@@ -353,7 +383,7 @@ class TestInferenceService:
                     "predictions": results,
                     "total_count": len(results),
                     "success_count": len(results),
-                    "timestamp": "2024-01-01T12:00:00Z"
+                    "timestamp": "2024-01-01T12:00:00Z",
                 }
 
         service = MockInferenceService()
@@ -382,6 +412,7 @@ class TestRealPredictionService:
 
     def test_real_prediction_service_initialization(self):
         """测试真实预测服务初始化"""
+
         class MockRealPredictionService:
             def __init__(self, model_path=None):
                 self.model_path = model_path or "models/default_model.json"
@@ -398,9 +429,15 @@ class TestRealPredictionService:
                 # 模拟模型加载
                 self.model = Mock()
                 self.feature_names = [
-                    "home_team_id", "away_team_id", "league_id",
-                    "home_goals_5", "away_goals_5", "home_form_3",
-                    "away_form_3", "h2h_home_wins", "h2h_away_wins"
+                    "home_team_id",
+                    "away_team_id",
+                    "league_id",
+                    "home_goals_5",
+                    "away_goals_5",
+                    "home_form_3",
+                    "away_form_3",
+                    "h2h_home_wins",
+                    "h2h_away_wins",
                 ]
                 self.model_loaded = True
                 return True
@@ -418,6 +455,7 @@ class TestRealPredictionService:
 
     def test_load_model_success(self):
         """测试模型加载成功"""
+
         class MockRealPredictionService:
             def __init__(self):
                 self.model_path = "models/valid_model.json"
@@ -427,6 +465,7 @@ class TestRealPredictionService:
 
             def load_model(self):
                 from xgboost import XGBClassifier
+
                 # 模拟成功加载
                 self.model = XGBClassifier()
                 self.feature_names = ["feature_1", "feature_2", "feature_3"]
@@ -443,6 +482,7 @@ class TestRealPredictionService:
 
     def test_load_model_file_not_found(self):
         """测试模型加载 - 文件不存在"""
+
         class MockRealPredictionService:
             def __init__(self):
                 self.model_path = "models/missing_model.json"
@@ -461,13 +501,18 @@ class TestRealPredictionService:
 
     def test_predict_match_success(self):
         """测试比赛预测成功"""
+
         class MockRealPredictionService:
             def __init__(self):
                 self.model_loaded = True
                 self.model = Mock()
                 self.feature_names = [
-                    "home_team_id", "away_team_id", "league_id",
-                    "home_goals_5", "away_goals_5", "h2h_goals_diff"
+                    "home_team_id",
+                    "away_team_id",
+                    "league_id",
+                    "home_goals_5",
+                    "away_goals_5",
+                    "h2h_goals_diff",
                 ]
                 self.data_loader = Mock()
 
@@ -476,15 +521,17 @@ class TestRealPredictionService:
                     raise RuntimeError("Model not loaded")
 
                 # 模拟数据加载
-                match_data = pd.DataFrame({
-                    'match_id': [match_id],
-                    'home_team_id': [1],
-                    'away_team_id': [2],
-                    'league_id': [10],
-                    'home_goals_5': [2.0],
-                    'away_goals_5': [1.0],
-                    'h2h_goals_diff': [0.5]
-                })
+                match_data = pd.DataFrame(
+                    {
+                        "match_id": [match_id],
+                        "home_team_id": [1],
+                        "away_team_id": [2],
+                        "league_id": [10],
+                        "home_goals_5": [2.0],
+                        "away_goals_5": [1.0],
+                        "h2h_goals_diff": [0.5],
+                    }
+                )
 
                 # 模拟特征提取
                 features = match_data[self.feature_names].values
@@ -504,12 +551,12 @@ class TestRealPredictionService:
                     "predictions": {
                         "HOME_WIN": float(pred_proba[2]),
                         "DRAW": float(pred_proba[1]),
-                        "AWAY_WIN": float(pred_proba[0])
+                        "AWAY_WIN": float(pred_proba[0]),
                     },
                     "predicted_class": predicted_class,
                     "confidence": float(np.max(pred_proba)),
                     "features_count": len(features[0]),
-                    "model_version": "v1.0.0"
+                    "model_version": "v1.0.0",
                 }
 
         service = MockRealPredictionService()
@@ -531,6 +578,7 @@ class TestRealPredictionService:
 
     def test_predict_match_model_not_loaded(self):
         """测试比赛预测 - 模型未加载"""
+
         class MockRealPredictionService:
             def __init__(self):
                 self.model_loaded = False
@@ -547,6 +595,7 @@ class TestRealPredictionService:
 
     def test_predict_batch_matches(self):
         """测试批量比赛预测"""
+
         class MockRealPredictionService:
             def __init__(self):
                 self.model_loaded = True
@@ -565,8 +614,8 @@ class TestRealPredictionService:
                     "predictions": {
                         "HOME_WIN": 0.4 + variation if match_id % 3 == 0 else 0.3,
                         "DRAW": 0.3 if match_id % 3 == 1 else 0.3,
-                        "AWAY_WIN": 0.3 if match_id % 3 == 2 else 0.4 - variation
-                    }
+                        "AWAY_WIN": 0.3 if match_id % 3 == 2 else 0.4 - variation,
+                    },
                 }
 
             def predict_batch_matches(self, match_ids):
@@ -580,7 +629,7 @@ class TestRealPredictionService:
                     "total_count": len(predictions),
                     "success_count": len(predictions),
                     "avg_confidence": np.mean([p["confidence"] for p in predictions]),
-                    "timestamp": "2024-01-01T12:00:00Z"
+                    "timestamp": "2024-01-01T12:00:00Z",
                 }
 
         service = MockRealPredictionService()
@@ -603,6 +652,7 @@ class TestRealPredictionService:
 
     def test_predict_invalid_match_id(self):
         """测试预测无效比赛ID"""
+
         class MockRealPredictionService:
             def __init__(self):
                 self.model_loaded = True
@@ -628,13 +678,18 @@ class TestExplainabilityService:
 
     def test_feature_importance_analysis(self):
         """测试特征重要性分析"""
+
         class MockExplainabilityService:
             def __init__(self):
                 self.model = Mock()
                 self.feature_names = [
-                    "home_form", "away_form", "h2h_home_win_rate",
-                    "venue_home_advantage", "home_goals_conceded",
-                    "away_goals_scored", "league_home_advantage"
+                    "home_form",
+                    "away_form",
+                    "h2h_home_win_rate",
+                    "venue_home_advantage",
+                    "home_goals_conceded",
+                    "away_goals_scored",
+                    "league_home_advantage",
                 ]
 
             def get_feature_importance(self):
@@ -647,16 +702,14 @@ class TestExplainabilityService:
                     0.15,  # venue_home_advantage
                     0.10,  # home_goals_conceded
                     0.07,  # away_goals_scored
-                    0.05   # league_home_advantage
+                    0.05,  # league_home_advantage
                 ]
 
                 feature_importance = [
-                    {
-                        "feature": feature,
-                        "importance": score,
-                        "rank": idx + 1
-                    }
-                    for idx, (feature, score) in enumerate(zip(self.feature_names, importance_scores))
+                    {"feature": feature, "importance": score, "rank": idx + 1}
+                    for idx, (feature, score) in enumerate(
+                        zip(self.feature_names, importance_scores)
+                    )
                 ]
 
                 # 按重要性排序
@@ -666,7 +719,7 @@ class TestExplainabilityService:
                     "feature_importance": feature_importance,
                     "total_features": len(feature_importance),
                     "top_features": feature_importance[:5],
-                    "model_type": "xgboost"
+                    "model_type": "xgboost",
                 }
 
         service = MockExplainabilityService()
@@ -689,12 +742,16 @@ class TestExplainabilityService:
 
     def test_prediction_explanation(self):
         """测试预测解释"""
+
         class MockExplainabilityService:
             def __init__(self):
                 self.model = Mock()
                 self.feature_names = [
-                    "home_form", "away_form", "h2h_stats",
-                    "venue_advantage", "recent_goals"
+                    "home_form",
+                    "away_form",
+                    "h2h_stats",
+                    "venue_advantage",
+                    "recent_goals",
                 ]
 
             def explain_prediction(self, match_id, prediction_result):
@@ -705,7 +762,7 @@ class TestExplainabilityService:
                     "away_form": -0.08,
                     "h2h_stats": 0.12,
                     "venue_advantage": 0.06,
-                    "recent_goals": -0.03
+                    "recent_goals": -0.03,
                 }
 
                 # 计算基线值
@@ -717,23 +774,23 @@ class TestExplainabilityService:
                     "predicted_class": prediction_result.get("predicted_class"),
                     "base_value": base_value,
                     "feature_contributions": [],
-                    "summary": {}
+                    "summary": {},
                 }
 
                 # 按贡献度排序
                 sorted_features = sorted(
-                    shap_values.items(),
-                    key=lambda x: abs(x[1]),
-                    reverse=True
+                    shap_values.items(), key=lambda x: abs(x[1]), reverse=True
                 )
 
                 for feature, contribution in sorted_features:
-                    explanation["feature_contributions"].append({
-                        "feature": feature,
-                        "contribution": contribution,
-                        "impact": "positive" if contribution > 0 else "negative",
-                        "magnitude": abs(contribution)
-                    })
+                    explanation["feature_contributions"].append(
+                        {
+                            "feature": feature,
+                            "contribution": contribution,
+                            "impact": "positive" if contribution > 0 else "negative",
+                            "magnitude": abs(contribution),
+                        }
+                    )
 
                 # 生成摘要
                 positive_features = [f for f, c in shap_values.items() if c > 0]
@@ -745,16 +802,22 @@ class TestExplainabilityService:
                     "explanation_text": self._generate_explanation_text(
                         prediction_result.get("predicted_class"),
                         positive_features,
-                        negative_features
-                    )
+                        negative_features,
+                    ),
                 }
 
                 return explanation
 
-            def _generate_explanation_text(self, predicted_class, positive_factors, negative_factors):
+            def _generate_explanation_text(
+                self, predicted_class, positive_factors, negative_factors
+            ):
                 """生成解释文本"""
-                positive_text = ", ".join(positive_factors[:2]) if positive_factors else "无"
-                negative_text = ", ".join(negative_factors[:2]) if negative_factors else "无"
+                positive_text = (
+                    ", ".join(positive_factors[:2]) if positive_factors else "无"
+                )
+                negative_text = (
+                    ", ".join(negative_factors[:2]) if negative_factors else "无"
+                )
 
                 return f"预测{predicted_class}的主要原因: {positive_text}对结果有积极影响，而{negative_text}对结果有消极影响。"
 
@@ -763,7 +826,7 @@ class TestExplainabilityService:
         prediction_result = {
             "match_id": 12345,
             "predicted_class": "HOME_WIN",
-            "confidence": 0.67
+            "confidence": 0.67,
         }
 
         explanation = service.explain_prediction(12345, prediction_result)
@@ -775,12 +838,16 @@ class TestExplainabilityService:
 
         # 验证特征贡献
         contributions = explanation["feature_contributions"]
-        home_form_contrib = next(c for c in contributions if c["feature"] == "home_form")
+        home_form_contrib = next(
+            c for c in contributions if c["feature"] == "home_form"
+        )
         assert home_form_contrib["contribution"] == 0.15
         assert home_form_contrib["impact"] == "positive"
         assert home_form_contrib["magnitude"] == 0.15
 
-        away_form_contrib = next(c for c in contributions if c["feature"] == "away_form")
+        away_form_contrib = next(
+            c for c in contributions if c["feature"] == "away_form"
+        )
         assert away_form_contrib["contribution"] == -0.08
         assert away_form_contrib["impact"] == "negative"
         assert away_form_contrib["magnitude"] == 0.08
@@ -794,6 +861,7 @@ class TestExplainabilityService:
 
     def test_batch_explanation(self):
         """测试批量解释"""
+
         class MockExplainabilityService:
             def __init__(self):
                 self.feature_names = ["feature_1", "feature_2", "feature_3"]
@@ -807,7 +875,7 @@ class TestExplainabilityService:
                     shap_values = {
                         "feature_1": 0.1 * (i + 1),
                         "feature_2": -0.05 * (i + 1),
-                        "feature_3": 0.02 * (i + 1)
+                        "feature_3": 0.02 * (i + 1),
                     }
 
                     explanation = {
@@ -816,12 +884,14 @@ class TestExplainabilityService:
                             {
                                 "feature": feature,
                                 "contribution": contribution,
-                                "impact": "positive" if contribution > 0 else "negative"
+                                "impact": (
+                                    "positive" if contribution > 0 else "negative"
+                                ),
                             }
                             for feature, contribution in shap_values.items()
                         ],
                         "top_factor": max(shap_values.items(), key=lambda x: abs(x[1])),
-                        "summary": f"Match {pred['match_id']} prediction explained by top feature"
+                        "summary": f"Match {pred['match_id']} prediction explained by top feature",
                     }
 
                     explanations.append(explanation)
@@ -829,7 +899,9 @@ class TestExplainabilityService:
                 return {
                     "explanations": explanations,
                     "total_count": len(explanations),
-                    "avg_contributions": self._calculate_avg_contributions(explanations)
+                    "avg_contributions": self._calculate_avg_contributions(
+                        explanations
+                    ),
                 }
 
             def _calculate_avg_contributions(self, explanations):
@@ -861,7 +933,7 @@ class TestExplainabilityService:
         predictions = [
             {"match_id": 12345, "predicted_class": "HOME_WIN"},
             {"match_id": 12346, "predicted_class": "DRAW"},
-            {"match_id": 12347, "predicted_class": "AWAY_WIN"}
+            {"match_id": 12347, "predicted_class": "AWAY_WIN"},
         ]
 
         result = service.explain_batch_predictions(predictions)

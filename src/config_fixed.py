@@ -47,7 +47,7 @@ class DatabaseSettings(BaseSettings):
         env_prefix="DB_",
         case_sensitive=False,
         env_file=".env",
-        env_file_encoding="utf-8"
+        env_file_encoding="utf-8",
     )
 
     def get_connection_string(self) -> str:
@@ -56,11 +56,11 @@ class DatabaseSettings(BaseSettings):
             return self.url
         return f"postgresql://{self.user}:{self.password}@{self.host}:{self.port}/{self.database}"
 
-    @field_validator('port')
+    @field_validator("port")
     @classmethod
     def validate_port(cls, v):
         if not 1 <= v <= 65535:
-            raise ValueError('端口号必须在1-65535之间')
+            raise ValueError("端口号必须在1-65535之间")
         return v
 
 
@@ -72,33 +72,27 @@ class DatabasePoolSettings(BaseSettings):
     max_size: int = Field(default=20, ge=1, le=1000, description="最大连接数")
     max_queries: int = Field(default=50000, ge=100, description="每连接最大查询数")
     max_inactive_connection_lifetime: float = Field(
-        default=300.0,
-        ge=10.0,
-        le=3600.0,
-        description="连接最大非活跃时间(秒)"
+        default=300.0, ge=10.0, le=3600.0, description="连接最大非活跃时间(秒)"
     )
 
     # 超时配置
     timeout: float = Field(default=60.0, ge=1.0, le=600.0, description="连接超时(秒)")
     command_timeout: float = Field(
-        default=30.0,
-        ge=1.0,
-        le=300.0,
-        description="命令超时(秒)"
+        default=30.0, ge=1.0, le=300.0, description="命令超时(秒)"
     )
 
     model_config = SettingsConfigDict(
         env_prefix="DB_POOL_",
         case_sensitive=False,
         env_file=".env",
-        env_file_encoding="utf-8"
+        env_file_encoding="utf-8",
     )
 
-    @field_validator('max_size')
+    @field_validator("max_size")
     @classmethod
     def validate_max_size(cls, v, info):
-        if info.data and 'min_size' in info.data and v < info.data['min_size']:
-            raise ValueError('最大连接数不能小于最小连接数')
+        if info.data and "min_size" in info.data and v < info.data["min_size"]:
+            raise ValueError("最大连接数不能小于最小连接数")
         return v
 
 
@@ -107,8 +101,7 @@ class FotMobSettings(BaseSettings):
 
     # API基本配置
     base_url: str = Field(
-        default="https://www.fotmob.com/api",
-        description="FotMob API基础URL"
+        default="https://www.fotmob.com/api", description="FotMob API基础URL"
     )
     timeout: int = Field(default=30, ge=1, le=300, description="API请求超时(秒)")
     retry_attempts: int = Field(default=3, ge=0, le=10, description="重试次数")
@@ -117,15 +110,14 @@ class FotMobSettings(BaseSettings):
     x_mas_header: str = Field(default="", description="X-MAS请求头")
     x_foo_header: str = Field(default="", description="X-FOO请求头")
     user_agent: str = Field(
-        default="FootballPrediction/1.0.0",
-        description="User-Agent"
+        default="FootballPrediction/1.0.0", description="User-Agent"
     )
 
     model_config = SettingsConfigDict(
         env_prefix="FOTMOB_",
         case_sensitive=False,
         env_file=".env",
-        env_file_encoding="utf-8"
+        env_file_encoding="utf-8",
     )
 
     def get_headers(self) -> Dict[str, str]:
@@ -133,7 +125,7 @@ class FotMobSettings(BaseSettings):
         headers = {
             "User-Agent": self.user_agent,
             "Accept": "application/json",
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
         }
 
         if self.x_mas_header:
@@ -152,7 +144,7 @@ class ApplicationSettings(BaseSettings):
     version: str = Field(default="1.0.0", description="应用版本")
     description: str = Field(
         default="Football match prediction API using machine learning",
-        description="应用描述"
+        description="应用描述",
     )
 
     # 服务器配置
@@ -162,21 +154,17 @@ class ApplicationSettings(BaseSettings):
 
     # 安全配置
     secret_key: str = Field(
-        default="your-secret-key-change-in-production",
-        description="JWT密钥"
+        default="your-secret-key-change-in-production", description="JWT密钥"
     )
     access_token_expire_minutes: int = Field(
-        default=30,
-        ge=1,
-        le=1440,
-        description="访问令牌过期时间(分钟)"
+        default=30, ge=1, le=1440, description="访问令牌过期时间(分钟)"
     )
 
     model_config = SettingsConfigDict(
         env_prefix="APP_",
         case_sensitive=False,
         env_file=".env",
-        env_file_encoding="utf-8"
+        env_file_encoding="utf-8",
     )
 
 
@@ -186,34 +174,27 @@ class LoggingSettings(BaseSettings):
     level: str = Field(default="INFO", description="日志级别")
     format: str = Field(
         default="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-        description="日志格式"
+        description="日志格式",
     )
     file_path: Optional[str] = Field(default=None, description="日志文件路径")
     max_file_size: int = Field(
-        default=10485760,  # 10MB
-        ge=1024,
-        description="日志文件最大大小(字节)"
+        default=10485760, ge=1024, description="日志文件最大大小(字节)"  # 10MB
     )
-    backup_count: int = Field(
-        default=5,
-        ge=1,
-        le=100,
-        description="日志文件备份数量"
-    )
+    backup_count: int = Field(default=5, ge=1, le=100, description="日志文件备份数量")
 
     model_config = SettingsConfigDict(
         env_prefix="LOG_",
         case_sensitive=False,
         env_file=".env",
-        env_file_encoding="utf-8"
+        env_file_encoding="utf-8",
     )
 
-    @field_validator('level')
+    @field_validator("level")
     @classmethod
     def validate_level(cls, v):
-        valid_levels = ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']
+        valid_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
         if v.upper() not in valid_levels:
-            raise ValueError(f'日志级别必须是以下之一: {valid_levels}')
+            raise ValueError(f"日志级别必须是以下之一: {valid_levels}")
         return v.upper()
 
 
@@ -229,30 +210,24 @@ class Settings(BaseSettings):
 
     # 其他配置
     environment: str = Field(
-        default="development",
-        description="运行环境 (development, testing, production)"
+        default="development", description="运行环境 (development, testing, production)"
     )
     timezone: str = Field(default="UTC", description="时区")
-    max_workers: int = Field(
-        default=4,
-        ge=1,
-        le=50,
-        description="最大工作线程数"
-    )
+    max_workers: int = Field(default=4, ge=1, le=50, description="最大工作线程数")
 
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
         case_sensitive=False,
-        extra="ignore"  # 忽略额外的环境变量
+        extra="ignore",  # 忽略额外的环境变量
     )
 
-    @field_validator('environment')
+    @field_validator("environment")
     @classmethod
     def validate_environment(cls, v):
-        valid_envs = ['development', 'testing', 'staging', 'production']
+        valid_envs = ["development", "testing", "staging", "production"]
         if v.lower() not in valid_envs:
-            raise ValueError(f'环境必须是以下之一: {valid_envs}')
+            raise ValueError(f"环境必须是以下之一: {valid_envs}")
         return v.lower()
 
     def is_production(self) -> bool:
@@ -338,7 +313,7 @@ def validate_configuration() -> Dict[str, Any]:
         "valid": len(issues) == 0,
         "issues": issues,
         "warnings": warnings,
-        "environment": settings.environment
+        "environment": settings.environment,
     }
 
 
@@ -352,7 +327,9 @@ if __name__ == "__main__":
         print(f"✅ 配置创建成功")
         print(f"   环境: {config.environment}")
         print(f"   应用: {config.app.name} v{config.app.version}")
-        print(f"   数据库: {config.database.host}:{config.database.port}/{config.database.database}")
+        print(
+            f"   数据库: {config.database.host}:{config.database.port}/{config.database.database}"
+        )
 
         # 验证配置
         validation = validate_configuration()
@@ -382,5 +359,6 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"❌ 配置模块测试失败: {e}")
         import traceback
+
         traceback.print_exc()
         exit(1)

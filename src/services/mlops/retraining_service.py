@@ -37,7 +37,7 @@ class ModelMetadata:
         training_time: float,
         model_path: str,
         created_at: datetime,
-        description: str = ""
+        description: str = "",
     ):
         self.version = version
         self.accuracy = accuracy
@@ -60,7 +60,7 @@ class ModelMetadata:
             "training_time": self.training_time,
             "model_path": self.model_path,
             "created_at": self.created_at.isoformat(),
-            "description": self.description
+            "description": self.description,
         }
 
     @classmethod
@@ -75,7 +75,7 @@ class ModelMetadata:
             training_time=data["training_time"],
             model_path=data["model_path"],
             created_at=datetime.fromisoformat(data["created_at"]),
-            description=data.get("description", "")
+            description=data.get("description", ""),
         )
 
 
@@ -97,14 +97,14 @@ class ModelRegistry:
         registry = {
             "models": {},
             "current_best": None,
-            "last_updated": datetime.now(timezone.utc).isoformat()
+            "last_updated": datetime.now(timezone.utc).isoformat(),
         }
         self._save_registry(registry)
 
     def _load_registry(self) -> Dict[str, Any]:
         """加载模型注册表"""
         try:
-            with open(self.registry_file, 'r', encoding='utf-8') as f:
+            with open(self.registry_file, "r", encoding="utf-8") as f:
                 return json.load(f)
         except (FileNotFoundError, json.JSONDecodeError):
             self._init_registry()
@@ -113,7 +113,7 @@ class ModelRegistry:
     def _save_registry(self, registry: Dict[str, Any]):
         """保存模型注册表"""
         registry["last_updated"] = datetime.now(timezone.utc).isoformat()
-        with open(self.registry_file, 'w', encoding='utf-8') as f:
+        with open(self.registry_file, "w", encoding="utf-8") as f:
             json.dump(registry, f, indent=2, ensure_ascii=False)
 
     def register_model(self, metadata: ModelMetadata) -> bool:
@@ -135,13 +135,15 @@ class ModelRegistry:
             current_accuracy = registry["models"][current_best]["accuracy"]
             if metadata.accuracy > current_accuracy:
                 registry["current_best"] = metadata.version
-                logger.info(f"新模型 {metadata.version} 成为最佳模型 (准确率: {metadata.accuracy:.4f})")
+                logger.info(
+                    f"新模型 {metadata.version} 成为最佳模型 (准确率: {metadata.accuracy:.4f})"
+                )
 
         # 保存注册表
         self._save_registry(registry)
 
         # 更新当前最佳文件
-        with open(self.current_best_file, 'w', encoding='utf-8') as f:
+        with open(self.current_best_file, "w", encoding="utf-8") as f:
             f.write(registry["current_best"])
 
         return True
@@ -185,7 +187,7 @@ class ModelRegistry:
         registry["current_best"] = version
         self._save_registry(registry)
 
-        with open(self.current_best_file, 'w', encoding='utf-8') as f:
+        with open(self.current_best_file, "w", encoding="utf-8") as f:
             f.write(version)
 
         logger.info(f"当前最佳模型已切换到 {version}")
@@ -207,7 +209,9 @@ class RetrainingService:
         self.min_samples = 1000  # 最少训练样本数
         self.test_size = 0.2  # 测试集比例
 
-    def execute_pipeline(self, description: str = "Scheduled retraining") -> Dict[str, Any]:
+    def execute_pipeline(
+        self, description: str = "Scheduled retraining"
+    ) -> Dict[str, Any]:
         """
         执行完整的重训练流水线
 
@@ -230,7 +234,7 @@ class RetrainingService:
                 return {
                     "status": "failed",
                     "reason": f"Insufficient training samples: {len(X)}",
-                    "training_time": time.time() - start_time
+                    "training_time": time.time() - start_time,
                 }
 
             # 2. 数据预处理
@@ -258,7 +262,7 @@ class RetrainingService:
             return {
                 "status": "failed",
                 "reason": str(e),
-                "training_time": time.time() - start_time
+                "training_time": time.time() - start_time,
             }
 
     def _fetch_training_data(self) -> Tuple[pd.DataFrame, pd.Series]:
@@ -270,9 +274,9 @@ class RetrainingService:
             raise ValueError("无法获取训练数据")
 
         # 分离特征和标签
-        feature_columns = [col for col in df.columns if col != 'target']
+        feature_columns = [col for col in df.columns if col != "target"]
         X = df[feature_columns]
-        y = df['target']
+        y = df["target"]
 
         logger.info(f"获取到 {len(X)} 条训练数据")
         return X, y
@@ -293,7 +297,9 @@ class RetrainingService:
         logger.info(f"预处理后特征维度: {X_transformed.shape[1]}")
         return X_transformed
 
-    def _train_model(self, X: pd.DataFrame, y: pd.Series) -> Tuple[xgb.XGBClassifier, int]:
+    def _train_model(
+        self, X: pd.DataFrame, y: pd.Series
+    ) -> Tuple[xgb.XGBClassifier, int]:
         """训练 XGBoost 模型"""
         # 分割训练集和测试集
         X_train, X_test, y_train, y_test = train_test_split(
@@ -307,8 +313,8 @@ class RetrainingService:
             learning_rate=0.1,
             random_state=42,
             n_jobs=-1,
-            eval_metric='logloss',
-            use_label_encoder=False
+            eval_metric="logloss",
+            use_label_encoder=False,
         )
 
         model.fit(X_train, y_train)
@@ -318,7 +324,9 @@ class RetrainingService:
 
         return model, feature_count
 
-    def _evaluate_model(self, model: xgb.XGBClassifier, X: pd.DataFrame, y: pd.Series) -> Dict[str, float]:
+    def _evaluate_model(
+        self, model: xgb.XGBClassifier, X: pd.DataFrame, y: pd.Series
+    ) -> Dict[str, float]:
         """评估模型性能"""
         # 分割训练集和测试集
         _, X_test, _, y_test = train_test_split(
@@ -341,7 +349,7 @@ class RetrainingService:
             "log_loss": logloss,
             "macro_precision": report["macro avg"]["precision"],
             "macro_recall": report["macro avg"]["recall"],
-            "macro_f1": report["macro avg"]["f1-score"]
+            "macro_f1": report["macro avg"]["f1-score"],
         }
 
         logger.info(f"模型评估结果 - 准确率: {accuracy:.4f}, LogLoss: {logloss:.4f}")
@@ -354,7 +362,7 @@ class RetrainingService:
         metrics: Dict[str, float],
         feature_count: int,
         start_time: float,
-        description: str
+        description: str,
     ) -> Dict[str, Any]:
         """如果模型性能有提升则注册新模型"""
         training_time = time.time() - start_time
@@ -379,7 +387,7 @@ class RetrainingService:
             training_time=training_time,
             model_path=str(model_path),
             created_at=datetime.now(timezone.utc),
-            description=description
+            description=description,
         )
 
         # 检查是否应该部署新模型
@@ -397,9 +405,13 @@ class RetrainingService:
 
             if improvement > self.improvement_threshold:
                 should_deploy = True
-                logger.info(f"新模型性能提升 {improvement:.4f}，超过阈值 {self.improvement_threshold}")
+                logger.info(
+                    f"新模型性能提升 {improvement:.4f}，超过阈值 {self.improvement_threshold}"
+                )
             else:
-                logger.info(f"新模型性能提升 {improvement:.4f}，未达到阈值 {self.improvement_threshold}")
+                logger.info(
+                    f"新模型性能提升 {improvement:.4f}，未达到阈值 {self.improvement_threshold}"
+                )
 
         # 注册模型
         self.registry.register_model(metadata)
@@ -412,7 +424,7 @@ class RetrainingService:
             "threshold": self.improvement_threshold,
             "should_deploy": should_deploy,
             "training_time": training_time,
-            "description": description
+            "description": description,
         }
 
         # 记录日志
@@ -430,13 +442,13 @@ class RetrainingService:
             return {
                 "status": "success",
                 "version": target_version,
-                "message": f"已回滚到模型版本 {target_version}"
+                "message": f"已回滚到模型版本 {target_version}",
             }
         else:
             logger.error(f"❌ 回滚失败，模型版本 {target_version} 不存在")
             return {
                 "status": "failed",
-                "reason": f"Model version {target_version} not found"
+                "reason": f"Model version {target_version} not found",
             }
 
     def get_training_status(self) -> Dict[str, Any]:
@@ -456,8 +468,8 @@ class RetrainingService:
                     "accuracy": model.accuracy,
                     "log_loss": model.log_loss,
                     "created_at": model.created_at.isoformat(),
-                    "description": model.description
+                    "description": model.description,
                 }
                 for model in models[:10]  # 最近 10 个模型
-            ]
+            ],
         }

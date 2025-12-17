@@ -135,14 +135,12 @@ class MockCache:
         """设置缓存值"""
         # 如果缓存已满，删除最旧的条目
         if len(self.cache) >= self.max_size:
-            oldest_key = min(self.cache.keys(),
-                           key=lambda k: self.cache[k]["timestamp"])
+            oldest_key = min(
+                self.cache.keys(), key=lambda k: self.cache[k]["timestamp"]
+            )
             del self.cache[oldest_key]
 
-        self.cache[key] = {
-            "data": data,
-            "timestamp": time.time()
-        }
+        self.cache[key] = {"data": data, "timestamp": time.time()}
 
     def clear(self) -> None:
         """清空缓存"""
@@ -163,10 +161,14 @@ class MockInferenceService:
         # 组件
         self.model: Optional[MockModel] = None
         self.feature_extractor: Optional[MockFeatureExtractor] = None
-        self.cache = MockCache(
-            ttl_seconds=self.config.cache_ttl_seconds,
-            max_size=self.config.max_cache_size
-        ) if self.config.enable_cache else None
+        self.cache = (
+            MockCache(
+                ttl_seconds=self.config.cache_ttl_seconds,
+                max_size=self.config.max_cache_size,
+            )
+            if self.config.enable_cache
+            else None
+        )
 
         # 统计信息
         self.stats = {
@@ -183,7 +185,9 @@ class MockInferenceService:
 
         self.is_initialized = False
 
-    async def initialize(self, model_should_fail=False, feature_should_fail=False) -> bool:
+    async def initialize(
+        self, model_should_fail=False, feature_should_fail=False
+    ) -> bool:
         """初始化服务"""
         start_time = time.time()
 
@@ -194,7 +198,9 @@ class MockInferenceService:
                 raise Exception("模型加载失败")
 
             # 初始化特征提取器
-            self.feature_extractor = MockFeatureExtractor(should_fail=feature_should_fail)
+            self.feature_extractor = MockFeatureExtractor(
+                should_fail=feature_should_fail
+            )
 
             self.is_initialized = True
             self.stats["started_at"] = datetime.now(timezone.utc)
@@ -206,8 +212,9 @@ class MockInferenceService:
             self.logger.error(f"初始化失败: {e}")
             return False
 
-    async def predict_match(self, home_team: str, away_team: str,
-                          match_date: Optional[str] = None) -> Dict[str, Any]:
+    async def predict_match(
+        self, home_team: str, away_team: str, match_date: Optional[str] = None
+    ) -> Dict[str, Any]:
         """预测比赛结果"""
         if not self.is_initialized:
             raise RuntimeError("服务未初始化")
@@ -232,7 +239,7 @@ class MockInferenceService:
                 "home_team": home_team,
                 "away_team": away_team,
                 "match_date": match_date or datetime.now(timezone.utc).isoformat(),
-                "extracted_at": datetime.now(timezone.utc).isoformat()
+                "extracted_at": datetime.now(timezone.utc).isoformat(),
             }
 
             # 提取特征
@@ -261,7 +268,7 @@ class MockInferenceService:
                 "processed_at": datetime.now(timezone.utc).isoformat(),
                 "from_cache": False,
                 "extraction_time_ms": 0.1,
-                "prediction_time_ms": 0.05
+                "prediction_time_ms": 0.05,
             }
 
             # 缓存结果
@@ -277,8 +284,8 @@ class MockInferenceService:
             current_avg = self.stats["avg_response_time_ms"]
             total_requests = self.stats["total_requests"]
             self.stats["avg_response_time_ms"] = (
-                (current_avg * (total_requests - 1) + response_time) / total_requests
-            )
+                current_avg * (total_requests - 1) + response_time
+            ) / total_requests
 
             return result
 
@@ -293,8 +300,9 @@ class MockInferenceService:
             else:
                 raise e
 
-    def _get_fallback_prediction(self, home_team: str, away_team: str,
-                                match_date: Optional[str]) -> Dict[str, Any]:
+    def _get_fallback_prediction(
+        self, home_team: str, away_team: str, match_date: Optional[str]
+    ) -> Dict[str, Any]:
         """获取降级预测结果"""
         return {
             "home_team": home_team,
@@ -308,7 +316,7 @@ class MockInferenceService:
             "model_version": "fallback_v1.0",
             "processed_at": datetime.now(timezone.utc).isoformat(),
             "from_cache": False,
-            "fallback_used": True
+            "fallback_used": True,
         }
 
     def get_stats(self) -> Dict[str, Any]:
@@ -319,8 +327,9 @@ class MockInferenceService:
             "is_initialized": self.is_initialized,
             "uptime_seconds": (
                 (datetime.now(timezone.utc) - self.stats["started_at"]).total_seconds()
-                if self.stats["started_at"] else 0
-            )
+                if self.stats["started_at"]
+                else 0
+            ),
         }
 
     def clear_cache(self) -> None:
@@ -348,7 +357,7 @@ class TestInferenceConfig:
         config.default_probabilities = {
             "HOME_WIN_PROBA": 0.5,
             "DRAW_PROBA": 0.3,
-            "AWAY_WIN_PROBA": 0.4  # 总和为1.2
+            "AWAY_WIN_PROBA": 0.4,  # 总和为1.2
         }
 
         config.__post_init__()
@@ -524,7 +533,7 @@ class TestInferenceService:
         config.default_probabilities = {
             "HOME_WIN_PROBA": 0.5,
             "DRAW_PROBA": 0.3,
-            "AWAY_WIN_PROBA": 0.2
+            "AWAY_WIN_PROBA": 0.2,
         }
 
         service = MockInferenceService(config)
@@ -610,10 +619,7 @@ class TestInferenceService:
         await service.initialize()
 
         # 创建并发预测任务
-        tasks = [
-            service.predict_match(f"Team {i}", f"Opponent {i}")
-            for i in range(10)
-        ]
+        tasks = [service.predict_match(f"Team {i}", f"Opponent {i}") for i in range(10)]
 
         # 执行并发预测
         results = await asyncio.gather(*tasks)
@@ -645,17 +651,22 @@ class TestInferenceServiceIntegration:
 
         # 执行预测
         result = await service.predict_match(
-            "Liverpool",
-            "Manchester City",
-            "2024-01-15T20:00:00Z"
+            "Liverpool", "Manchester City", "2024-01-15T20:00:00Z"
         )
 
         # 验证结果结构
         required_fields = [
-            "home_team", "away_team", "match_date",
-            "HOME_WIN_PROBA", "DRAW_PROBA", "AWAY_WIN_PROBA",
-            "predicted_class", "confidence", "model_version",
-            "processed_at", "from_cache"
+            "home_team",
+            "away_team",
+            "match_date",
+            "HOME_WIN_PROBA",
+            "DRAW_PROBA",
+            "AWAY_WIN_PROBA",
+            "predicted_class",
+            "confidence",
+            "model_version",
+            "processed_at",
+            "from_cache",
         ]
 
         for field in required_fields:
@@ -669,7 +680,9 @@ class TestInferenceServiceIntegration:
         assert 0 <= result["confidence"] <= 1
 
         # 验证概率和为1（允许小的浮点误差）
-        prob_sum = result["HOME_WIN_PROBA"] + result["DRAW_PROBA"] + result["AWAY_WIN_PROBA"]
+        prob_sum = (
+            result["HOME_WIN_PROBA"] + result["DRAW_PROBA"] + result["AWAY_WIN_PROBA"]
+        )
         assert abs(prob_sum - 1.0) < 1e-6
 
     @pytest.mark.asyncio

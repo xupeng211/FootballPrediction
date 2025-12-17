@@ -21,12 +21,14 @@ logger = logging.getLogger(__name__)
 
 class ModelLoadError(Exception):
     """模型加载异常"""
+
     pass
 
 
 @dataclass
 class ModelMetadata:
     """模型元数据"""
+
     model_version: str = "unknown"
     feature_names: Optional[List[str]] = None
     created_at: Optional[str] = None
@@ -52,7 +54,7 @@ class ModelLoader:
         self,
         model_cache_dir: Optional[Union[str, Path]] = None,
         enable_hot_reload: bool = True,
-        reload_interval: int = 30
+        reload_interval: int = 30,
     ):
         """
         初始化模型加载器
@@ -62,7 +64,9 @@ class ModelLoader:
             enable_hot_reload: 是否启用热更新功能
             reload_interval: 热更新检查间隔（秒）
         """
-        self.model_cache_dir = Path(model_cache_dir) if model_cache_dir else Path("models")
+        self.model_cache_dir = (
+            Path(model_cache_dir) if model_cache_dir else Path("models")
+        )
         self.loaded_models: Dict[str, Any] = {}  # 存储加载的模型对象
         self.model_metadata: Dict[str, ModelMetadata] = {}  # 存储模型元数据
         self.model_paths: Dict[str, Path] = {}  # 存储模型路径
@@ -90,7 +94,7 @@ class ModelLoader:
         self,
         model_name: str,
         model_path: Optional[Union[str, Path]] = None,
-        validate_model: bool = True
+        validate_model: bool = True,
     ) -> bool:
         """
         加载模型到内存
@@ -160,11 +164,12 @@ class ModelLoader:
         """
         try:
             # 根据文件扩展名选择加载方式
-            if model_path.suffix == '.json':
+            if model_path.suffix == ".json":
                 import xgboost as xgb
+
                 return xgb.XGBClassifier()
-            elif model_path.suffix in ['.pkl', '.pickle']:
-                with open(model_path, 'rb') as f:
+            elif model_path.suffix in [".pkl", ".pickle"]:
+                with open(model_path, "rb") as f:
                     return pickle.load(f)
             else:
                 # 使用joblib加载，适合大型模型文件
@@ -172,7 +177,9 @@ class ModelLoader:
         except Exception as e:
             raise ModelLoadError(f"模型文件读取失败: {str(e)}") from e
 
-    def _parse_model_data(self, model_data: Any, model_name: str) -> tuple[Any, ModelMetadata]:
+    def _parse_model_data(
+        self, model_data: Any, model_name: str
+    ) -> tuple[Any, ModelMetadata]:
         """
         解析模型数据和元数据
 
@@ -185,22 +192,22 @@ class ModelLoader:
         """
         if isinstance(model_data, dict):
             # 如果是包含模型和元数据的字典
-            model = model_data.get('model')
-            metadata_dict = model_data.get('metadata', {})
+            model = model_data.get("model")
+            metadata_dict = model_data.get("metadata", {})
 
             # 构建元数据对象
             metadata = ModelMetadata(
-                model_version=metadata_dict.get('model_version', 'unknown'),
-                feature_names=metadata_dict.get('feature_names'),
-                created_at=metadata_dict.get('created_at'),
-                description=metadata_dict.get('description'),
-                accuracy=metadata_dict.get('accuracy'),
-                training_data_hash=metadata_dict.get('training_data_hash')
+                model_version=metadata_dict.get("model_version", "unknown"),
+                feature_names=metadata_dict.get("feature_names"),
+                created_at=metadata_dict.get("created_at"),
+                description=metadata_dict.get("description"),
+                accuracy=metadata_dict.get("accuracy"),
+                training_data_hash=metadata_dict.get("training_data_hash"),
             )
         else:
             # 直接是模型对象
             model = model_data
-            metadata = ModelMetadata(model_version='unknown')
+            metadata = ModelMetadata(model_version="unknown")
 
         if model is None:
             raise ModelLoadError("模型文件中未找到有效的模型对象")
@@ -219,15 +226,17 @@ class ModelLoader:
             ModelLoadError: 模型验证失败时抛出
         """
         # 检查必要的预测方法
-        required_methods = ['predict']
-        optional_methods = ['predict_proba']
+        required_methods = ["predict"]
+        optional_methods = ["predict_proba"]
 
         for method in required_methods:
             if not hasattr(model, method):
                 raise ModelLoadError(f"模型缺少必要方法: {method}")
 
         # 记录可选方法的可用性
-        available_methods = [method for method in optional_methods if hasattr(model, method)]
+        available_methods = [
+            method for method in optional_methods if hasattr(model, method)
+        ]
         if available_methods:
             logger.info(f"模型 {model_name} 支持高级方法: {available_methods}")
 
@@ -332,10 +341,7 @@ class ModelLoader:
             Dict[str, Any]: 模型详细信息
         """
         if model_name not in self.loaded_models:
-            return {
-                "status": "not_loaded",
-                "model_name": model_name
-            }
+            return {"status": "not_loaded", "model_name": model_name}
 
         model = self.loaded_models[model_name]
         metadata = self.model_metadata[model_name]
@@ -348,16 +354,18 @@ class ModelLoader:
             "model_path": str(model_path),
             "metadata": {
                 "model_version": metadata.model_version,
-                "feature_count": len(metadata.feature_names) if metadata.feature_names else None,
+                "feature_count": (
+                    len(metadata.feature_names) if metadata.feature_names else None
+                ),
                 "feature_names": metadata.feature_names,
                 "created_at": metadata.created_at,
                 "description": metadata.description,
-                "accuracy": metadata.accuracy
+                "accuracy": metadata.accuracy,
             },
             "capabilities": {
-                "has_predict": hasattr(model, 'predict'),
-                "has_predict_proba": hasattr(model, 'predict_proba')
-            }
+                "has_predict": hasattr(model, "predict"),
+                "has_predict_proba": hasattr(model, "predict_proba"),
+            },
         }
 
     def is_model_loaded(self, model_name: str) -> bool:
@@ -418,7 +426,9 @@ class ModelLoader:
             return
 
         self._stop_reload.clear()
-        self._reload_thread = threading.Thread(target=self._hot_reload_worker, daemon=True)
+        self._reload_thread = threading.Thread(
+            target=self._hot_reload_worker, daemon=True
+        )
         self._reload_thread.start()
         logger.info("热更新监听线程已启动")
 
@@ -447,14 +457,16 @@ class ModelLoader:
                 return
 
             # 读取当前最佳版本
-            with open(self.current_best_file, 'r', encoding='utf-8') as f:
+            with open(self.current_best_file, "r", encoding="utf-8") as f:
                 current_version = f.read().strip()
 
             # 如果版本没有变化，无需更新
             if current_version == self._current_version:
                 return
 
-            logger.info(f"检测到模型版本更新: {self._current_version} -> {current_version}")
+            logger.info(
+                f"检测到模型版本更新: {self._current_version} -> {current_version}"
+            )
 
             # 加载新模型
             self._load_current_best_model()
@@ -470,7 +482,7 @@ class ModelLoader:
                 return
 
             # 读取当前版本
-            with open(self.current_best_file, 'r', encoding='utf-8') as f:
+            with open(self.current_best_file, "r", encoding="utf-8") as f:
                 current_version = f.read().strip()
 
             if not current_version:
@@ -491,7 +503,10 @@ class ModelLoader:
                 return
 
             # 如果当前已加载的模型版本相同，无需重新加载
-            if self._current_version == current_version and "xgboost_v2" in self.loaded_models:
+            if (
+                self._current_version == current_version
+                and "xgboost_v2" in self.loaded_models
+            ):
                 logger.info(f"模型版本 {current_version} 已是最新版本")
                 return
 
@@ -508,9 +523,9 @@ class ModelLoader:
                 # 更新 Prometheus 指标（如果可用）
                 try:
                     from src.main import cache_operations_total
+
                     cache_operations_total.labels(
-                        cache_type="model",
-                        operation="hot_reload"
+                        cache_type="model", operation="hot_reload"
                     ).inc()
                 except ImportError:
                     pass
@@ -527,7 +542,7 @@ class ModelLoader:
             if not self.registry_file.exists():
                 return None
 
-            with open(self.registry_file, 'r', encoding='utf-8') as f:
+            with open(self.registry_file, "r", encoding="utf-8") as f:
                 registry = json.load(f)
 
             models = registry.get("models", {})
@@ -574,7 +589,7 @@ class ModelLoader:
                 return False
 
             # 更新当前最佳文件
-            with open(self.current_best_file, 'w', encoding='utf-8') as f:
+            with open(self.current_best_file, "w", encoding="utf-8") as f:
                 f.write(target_version)
 
             # 触发重载

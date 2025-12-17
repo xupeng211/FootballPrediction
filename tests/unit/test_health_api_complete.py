@@ -43,8 +43,10 @@ class TestHealthCheck:
         验证响应完全符合HealthCheckResponse schema
         """
         # 执行健康检查
-        with patch('src.api.health.datetime') as mock_datetime:
-            mock_datetime.utcnow.return_value.isoformat.return_value = "2024-01-01T00:00:00"
+        with patch("src.api.health.datetime") as mock_datetime:
+            mock_datetime.utcnow.return_value.isoformat.return_value = (
+                "2024-01-01T00:00:00"
+            )
 
             response = await health_check()
 
@@ -57,9 +59,9 @@ class TestHealthCheck:
 
         # 验证各服务检查结构
         for service_name, check_result in response.checks.items():
-            assert hasattr(check_result, 'status')
-            assert hasattr(check_result, 'response_time_ms')
-            assert hasattr(check_result, 'details')
+            assert hasattr(check_result, "status")
+            assert hasattr(check_result, "response_time_ms")
+            assert hasattr(check_result, "details")
             assert isinstance(check_result.details, dict)
 
     @pytest.mark.asyncio
@@ -102,7 +104,7 @@ class TestHealthCheck:
         """
         测试时间戳格式符合ISO标准
         """
-        with patch('src.api.health.datetime') as mock_datetime:
+        with patch("src.api.health.datetime") as mock_datetime:
             test_time = datetime(2024, 1, 1, 12, 0, 0)
             mock_datetime.utcnow.return_value = test_time
 
@@ -123,14 +125,14 @@ class TestReadinessCheck:
         """
         测试所有服务健康时的就绪性检查
         """
-        with patch('src.api.health._check_database') as mock_check_db:
+        with patch("src.api.health._check_database") as mock_check_db:
             mock_check_db.return_value = {
                 "healthy": True,
                 "message": "数据库连接正常",
-                "response_time_ms": 1.0
+                "response_time_ms": 1.0,
             }
 
-            with patch('src.api.health.get_db_session', return_value=mock_db_session):
+            with patch("src.api.health.get_db_session", return_value=mock_db_session):
                 response = await readiness_check(mock_db_session)
 
         # 验证响应结构
@@ -146,14 +148,14 @@ class TestReadinessCheck:
         """
         测试数据库不健康时的就绪性检查
         """
-        with patch('src.api.health._check_database') as mock_check_db:
+        with patch("src.api.health._check_database") as mock_check_db:
             mock_check_db.return_value = {
                 "healthy": False,
                 "message": "数据库连接失败",
-                "error": "Connection timeout"
+                "error": "Connection timeout",
             }
 
-            with patch('src.api.health.get_db_session', return_value=mock_db_session):
+            with patch("src.api.health.get_db_session", return_value=mock_db_session):
                 with pytest.raises(HTTPException) as exc_info:
                     await readiness_check(mock_db_session)
 
@@ -169,10 +171,10 @@ class TestReadinessCheck:
         """
         测试数据库检查抛出异常时的就绪性检查
         """
-        with patch('src.api.health._check_database') as mock_check_db:
+        with patch("src.api.health._check_database") as mock_check_db:
             mock_check_db.side_effect = Exception("数据库连接异常")
 
-            with patch('src.api.health.get_db_session', return_value=mock_db_session):
+            with patch("src.api.health.get_db_session", return_value=mock_db_session):
                 with pytest.raises(HTTPException) as exc_info:
                     await readiness_check(mock_db_session)
 
@@ -182,21 +184,25 @@ class TestReadinessCheck:
         assert error_detail["ready"] is False
         assert "database" in error_detail["checks"]
         assert error_detail["checks"]["database"]["status"] == "unhealthy"
-        assert "数据库连接异常" in error_detail["checks"]["database"]["details"]["error"]
+        assert (
+            "数据库连接异常" in error_detail["checks"]["database"]["details"]["error"]
+        )
 
     @pytest.mark.asyncio
     async def test_readiness_check_timestamp_format(self, mock_db_session):
         """
         测试就绪性检查的时间戳格式
         """
-        with patch('src.api.health.datetime') as mock_datetime:
+        with patch("src.api.health.datetime") as mock_datetime:
             test_time = datetime(2024, 1, 1, 12, 0, 0)
             mock_datetime.utcnow.return_value = test_time
 
-            with patch('src.api.health._check_database') as mock_check_db:
+            with patch("src.api.health._check_database") as mock_check_db:
                 mock_check_db.return_value = {"healthy": True, "message": "正常"}
 
-                with patch('src.api.health.get_db_session', return_value=mock_db_session):
+                with patch(
+                    "src.api.health.get_db_session", return_value=mock_db_session
+                ):
                     response = await readiness_check(mock_db_session)
 
         assert response["timestamp"] == test_time.isoformat()
@@ -262,7 +268,7 @@ class TestLivenessCheck:
         """
         from src.api.health import liveness_check
 
-        with patch('src.api.health.datetime') as mock_datetime:
+        with patch("src.api.health.datetime") as mock_datetime:
             test_time = datetime(2024, 1, 1, 12, 0, 0)
             mock_datetime.utcnow.return_value = test_time
 
@@ -282,18 +288,19 @@ class TestHealthCheckIntegration:
         """
         测试所有健康检查端点的一致性
         """
-        with patch('src.api.health.datetime') as mock_datetime:
+        with patch("src.api.health.datetime") as mock_datetime:
             test_time = datetime(2024, 1, 1, 12, 0, 0)
             mock_datetime.utcnow.return_value = test_time
 
             # 获取各端点响应
             health_response = await health_check()
 
-            with patch('src.api.health._check_database') as mock_check_db:
+            with patch("src.api.health._check_database") as mock_check_db:
                 mock_check_db.return_value = {"healthy": True, "message": "正常"}
                 readiness_response = await readiness_check(mock_db_session)
 
             from src.api.health import liveness_check
+
             liveness_response = await liveness_check()
 
         # 验证时间戳一致性
@@ -311,7 +318,7 @@ class TestHealthCheckIntegration:
         """
         测试数据库失败时的错误日志记录
         """
-        with patch('src.api.health.logger') as mock_logger:
+        with patch("src.api.health.logger") as mock_logger:
             mock_db_session.execute.side_effect = Exception("数据库错误")
 
             result = await _check_database(mock_db_session)
@@ -332,7 +339,7 @@ class TestSchemaValidation:
         valid_data = {
             "status": "healthy",
             "response_time_ms": 1.5,
-            "details": {"message": "服务正常"}
+            "details": {"message": "服务正常"},
         }
         service_check = ServiceCheck(**valid_data)
         assert service_check.status == "healthy"
@@ -353,9 +360,7 @@ class TestSchemaValidation:
         # 创建测试用的ServiceCheck
         checks = {
             "database": ServiceCheck(
-                status="healthy",
-                response_time_ms=1.0,
-                details={"message": "正常"}
+                status="healthy", response_time_ms=1.0, details={"message": "正常"}
             )
         }
 
@@ -366,7 +371,7 @@ class TestSchemaValidation:
             "service": "test-service",
             "version": "1.0.0",
             "response_time_ms": 5.0,
-            "checks": checks
+            "checks": checks,
         }
 
         health_response = HealthCheckResponse(**valid_data)

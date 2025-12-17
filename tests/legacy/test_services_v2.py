@@ -20,18 +20,19 @@ from typing import List, Dict, Any
 
 # 导入被测试的模块
 import sys
-sys.path.append('/home/user/projects/FootballPrediction/src')
+
+sys.path.append("/home/user/projects/FootballPrediction/src")
 
 from services.inference_service_v2 import (
     InferenceServiceV2,
     PredictionRequest,
-    PredictionResponse
+    PredictionResponse,
 )
 from services.collection_service import (
     FotMobCollectionService,
     FotMobCollectionTask,
     CollectionStats,
-    CollectionStatus
+    CollectionStatus,
 )
 
 
@@ -45,7 +46,7 @@ class TestPredictionRequest(unittest.TestCase):
             home_team="Team A",
             away_team="Team B",
             match_date="2024-01-01",
-            features={"feature1": 1.0, "feature2": 2.0}
+            features={"feature1": 1.0, "feature2": 2.0},
         )
 
         # 验证属性
@@ -61,7 +62,7 @@ class TestPredictionRequest(unittest.TestCase):
             match_id=123,
             home_team="Team A",
             away_team="Team B",
-            match_date="2024-01-01"
+            match_date="2024-01-01",
         )
 
         result = request.to_dict()
@@ -71,7 +72,7 @@ class TestPredictionRequest(unittest.TestCase):
             "match_id": 123,
             "home_team": "Team A",
             "away_team": "Team B",
-            "match_date": "2024-01-01"
+            "match_date": "2024-01-01",
         }
         self.assertEqual(result, expected)
 
@@ -86,7 +87,7 @@ class TestPredictionResponse(unittest.TestCase):
             prediction=1,  # Draw
             probabilities=[0.2, 0.5, 0.3],
             confidence=0.8,
-            model_version="1.0.0"
+            model_version="1.0.0",
         )
 
         # 验证属性
@@ -103,7 +104,7 @@ class TestPredictionResponse(unittest.TestCase):
             prediction=1,
             probabilities=[0.2, 0.5, 0.3],
             confidence=0.8,
-            model_version="1.0.0"
+            model_version="1.0.0",
         )
 
         result = response.to_dict()
@@ -114,7 +115,7 @@ class TestPredictionResponse(unittest.TestCase):
             "prediction": 1,
             "probabilities": [0.2, 0.5, 0.3],
             "confidence": 0.8,
-            "model_version": "1.0.0"
+            "model_version": "1.0.0",
         }
         self.assertEqual(result, expected)
 
@@ -131,7 +132,9 @@ class TestInferenceServiceV2(unittest.TestCase):
         self.mock_feature_extractor = Mock()
 
         # 创建服务实例
-        with patch('services.inference_service_v2.MatchPredictor') as mock_predictor_class:
+        with patch(
+            "services.inference_service_v2.MatchPredictor"
+        ) as mock_predictor_class:
             mock_predictor_class.return_value = self.mock_match_predictor
             self.inference_service = InferenceServiceV2("/mock/model/path")
 
@@ -160,14 +163,14 @@ class TestInferenceServiceV2(unittest.TestCase):
             home_team="Team A",
             away_team="Team B",
             match_date="2024-01-01",
-            features={"feature1": 1.0, "feature2": 2.0}
+            features={"feature1": 1.0, "feature2": 2.0},
         )
 
         # Mock 预测结果
         mock_prediction_result = {
-            'prediction': 1,
-            'probabilities': [0.2, 0.5, 0.3],
-            'timestamp': time.time()
+            "prediction": 1,
+            "probabilities": [0.2, 0.5, 0.3],
+            "timestamp": time.time(),
         }
         self.mock_match_predictor.predict.return_value = mock_prediction_result
 
@@ -189,19 +192,19 @@ class TestInferenceServiceV2(unittest.TestCase):
             match_id=123,
             home_team="Team A",
             away_team="Team B",
-            match_date="2024-01-01"
+            match_date="2024-01-01",
         )
 
         # Mock 特征提取
         mock_features = {"feature1": 1.0, "feature2": 2.0}
-        with patch.object(self.inference_service, '_extract_features') as mock_extract:
+        with patch.object(self.inference_service, "_extract_features") as mock_extract:
             mock_extract.return_value = mock_features
 
             # Mock 预测结果
             mock_prediction_result = {
-                'prediction': 2,
-                'probabilities': [0.1, 0.3, 0.6],
-                'timestamp': time.time()
+                "prediction": 2,
+                "probabilities": [0.1, 0.3, 0.6],
+                "timestamp": time.time(),
             }
             self.mock_match_predictor.predict.return_value = mock_prediction_result
 
@@ -221,7 +224,7 @@ class TestInferenceServiceV2(unittest.TestCase):
             match_id=123,
             home_team="Team A",
             away_team="Team B",
-            match_date="2024-01-01"
+            match_date="2024-01-01",
         )
 
         # Mock 预测失败
@@ -237,9 +240,9 @@ class TestInferenceServiceV2(unittest.TestCase):
         """测试简化预测接口"""
         # Mock 预测结果
         mock_prediction_result = {
-            'prediction': 0,
-            'probabilities': [0.6, 0.3, 0.1],
-            'timestamp': time.time()
+            "prediction": 0,
+            "probabilities": [0.6, 0.3, 0.1],
+            "timestamp": time.time(),
         }
         self.mock_match_predictor.predict.return_value = mock_prediction_result
 
@@ -248,7 +251,7 @@ class TestInferenceServiceV2(unittest.TestCase):
             match_id=123,
             home_team="Team A",
             away_team="Team B",
-            match_date="2024-01-01"
+            match_date="2024-01-01",
         )
 
         # 验证结果
@@ -259,14 +262,26 @@ class TestInferenceServiceV2(unittest.TestCase):
     def test_batch_predict_success(self):
         """测试批量预测成功"""
         requests = [
-            PredictionRequest(match_id=1, home_team="A", away_team="B", match_date="2024-01-01"),
-            PredictionRequest(match_id=2, home_team="C", away_team="D", match_date="2024-01-02")
+            PredictionRequest(
+                match_id=1, home_team="A", away_team="B", match_date="2024-01-01"
+            ),
+            PredictionRequest(
+                match_id=2, home_team="C", away_team="D", match_date="2024-01-02"
+            ),
         ]
 
         # Mock 预测结果
         mock_results = [
-            {'prediction': 1, 'probabilities': [0.2, 0.5, 0.3], 'timestamp': time.time()},
-            {'prediction': 2, 'probabilities': [0.1, 0.3, 0.6], 'timestamp': time.time()}
+            {
+                "prediction": 1,
+                "probabilities": [0.2, 0.5, 0.3],
+                "timestamp": time.time(),
+            },
+            {
+                "prediction": 2,
+                "probabilities": [0.1, 0.3, 0.6],
+                "timestamp": time.time(),
+            },
         ]
         self.mock_match_predictor.predict.side_effect = mock_results
 
@@ -285,14 +300,22 @@ class TestInferenceServiceV2(unittest.TestCase):
     def test_batch_predict_partial_failure(self):
         """测试批量预测部分失败"""
         requests = [
-            PredictionRequest(match_id=1, home_team="A", away_team="B", match_date="2024-01-01"),
-            PredictionRequest(match_id=2, home_team="C", away_team="D", match_date="2024-01-02")
+            PredictionRequest(
+                match_id=1, home_team="A", away_team="B", match_date="2024-01-01"
+            ),
+            PredictionRequest(
+                match_id=2, home_team="C", away_team="D", match_date="2024-01-02"
+            ),
         ]
 
         # Mock 预测结果（第一个成功，第二个失败）
         self.mock_match_predictor.predict.side_effect = [
-            {'prediction': 1, 'probabilities': [0.2, 0.5, 0.3], 'timestamp': time.time()},
-            None
+            {
+                "prediction": 1,
+                "probabilities": [0.2, 0.5, 0.3],
+                "timestamp": time.time(),
+            },
+            None,
         ]
 
         # 执行批量预测
@@ -307,12 +330,14 @@ class TestInferenceServiceV2(unittest.TestCase):
         """测试获取服务统计信息"""
         # Mock 预测器统计信息
         mock_predictor_stats = {
-            'total_predictions': 100,
-            'cache_hits': 70,
-            'cache_misses': 30,
-            'cache_hit_rate': 0.7
+            "total_predictions": 100,
+            "cache_hits": 70,
+            "cache_misses": 30,
+            "cache_hit_rate": 0.7,
         }
-        self.mock_match_predictor.get_prediction_stats.return_value = mock_predictor_stats
+        self.mock_match_predictor.get_prediction_stats.return_value = (
+            mock_predictor_stats
+        )
 
         # Mock 模型加载器统计信息
         self.mock_model_loader.list_loaded_models.return_value = ["model1", "model2"]
@@ -322,9 +347,9 @@ class TestInferenceServiceV2(unittest.TestCase):
 
         # 验证统计信息
         self.assertIsNotNone(stats)
-        self.assertIn('predictor_stats', stats)
-        self.assertIn('loaded_models', stats)
-        self.assertEqual(len(stats['loaded_models']), 2)
+        self.assertIn("predictor_stats", stats)
+        self.assertIn("loaded_models", stats)
+        self.assertEqual(len(stats["loaded_models"]), 2)
 
     def test_load_model(self):
         """测试加载模型"""
@@ -336,7 +361,9 @@ class TestInferenceServiceV2(unittest.TestCase):
 
         # 验证结果
         self.assertTrue(result)
-        self.mock_model_loader.load_model.assert_called_once_with("new_model", "/mock/new_model.pkl")
+        self.mock_model_loader.load_model.assert_called_once_with(
+            "new_model", "/mock/new_model.pkl"
+        )
 
     def test_unload_model(self):
         """测试卸载模型"""
@@ -376,7 +403,7 @@ class TestCollectionTask(unittest.TestCase):
             source_type=DataSourceType.FOTMOB,
             source_config={"match_id": 123},
             priority=1,
-            created_at=datetime.now()
+            created_at=datetime.now(),
         )
 
         # 验证属性
@@ -392,17 +419,17 @@ class TestCollectionTask(unittest.TestCase):
             task_id="task_123",
             source_type=DataSourceType.ODPORTAL,
             source_config={"match_id": 456},
-            priority=2
+            priority=2,
         )
 
         result = task.to_dict()
 
         # 验证转换结果
-        self.assertEqual(result['task_id'], "task_123")
-        self.assertEqual(result['source_type'], DataSourceType.ODPORTAL)
-        self.assertEqual(result['source_config'], {"match_id": 456})
-        self.assertEqual(result['priority'], 2)
-        self.assertEqual(result['status'], CollectionStatus.PENDING)
+        self.assertEqual(result["task_id"], "task_123")
+        self.assertEqual(result["source_type"], DataSourceType.ODPORTAL)
+        self.assertEqual(result["source_config"], {"match_id": 456})
+        self.assertEqual(result["priority"], 2)
+        self.assertEqual(result["status"], CollectionStatus.PENDING)
 
 
 class TestCollectionStats(unittest.TestCase):
@@ -427,7 +454,7 @@ class TestCollectionStats(unittest.TestCase):
             Mock(status=CollectionStatus.SUCCESS),
             Mock(status=CollectionStatus.SUCCESS),
             Mock(status=CollectionStatus.FAILED),
-            Mock(status=CollectionStatus.PENDING)
+            Mock(status=CollectionStatus.PENDING),
         ]
 
         # 更新统计
@@ -445,7 +472,7 @@ class TestCollectionService(unittest.TestCase):
 
     def setUp(self):
         """测试前的设置"""
-        with patch('services.collection_service.asyncio.create_task'):
+        with patch("services.collection_service.asyncio.create_task"):
             self.collection_service = CollectionService()
 
     def test_initialize_success(self):
@@ -463,7 +490,7 @@ class TestCollectionService(unittest.TestCase):
             source_type=DataSourceType.FOTMOB,
             source_config={"match_id": 123},
             priority=1,
-            task_id="custom_task_id"
+            task_id="custom_task_id",
         )
 
         # 验证任务创建
@@ -481,12 +508,13 @@ class TestCollectionService(unittest.TestCase):
         """测试执行任务成功"""
         # 创建任务
         task = self.collection_service.create_collection_task(
-            source_type=DataSourceType.FOTMOB,
-            source_config={"match_id": 123}
+            source_type=DataSourceType.FOTMOB, source_config={"match_id": 123}
         )
 
         # Mock 数据收集器
-        with patch.object(self.collection_service, '_execute_fotmob_collection') as mock_execute:
+        with patch.object(
+            self.collection_service, "_execute_fotmob_collection"
+        ) as mock_execute:
             mock_execute.return_value = {"status": "success", "data": "collected_data"}
 
             # 执行任务
@@ -501,12 +529,13 @@ class TestCollectionService(unittest.TestCase):
         """测试执行任务失败"""
         # 创建任务
         task = self.collection_service.create_collection_task(
-            source_type=DataSourceType.FOTMOB,
-            source_config={"match_id": 123}
+            source_type=DataSourceType.FOTMOB, source_config={"match_id": 123}
         )
 
         # Mock 数据收集器抛出异常
-        with patch.object(self.collection_service, '_execute_fotmob_collection') as mock_execute:
+        with patch.object(
+            self.collection_service, "_execute_fotmob_collection"
+        ) as mock_execute:
             mock_execute.side_effect = Exception("Collection failed")
 
             # 执行任务
@@ -520,20 +549,17 @@ class TestCollectionService(unittest.TestCase):
         """测试获取任务列表"""
         # 创建不同状态的任务
         task1 = self.collection_service.create_collection_task(
-            source_type=DataSourceType.FOTMOB,
-            source_config={"match_id": 1}
+            source_type=DataSourceType.FOTMOB, source_config={"match_id": 1}
         )
         task1.status = CollectionStatus.SUCCESS
 
         task2 = self.collection_service.create_collection_task(
-            source_type=DataSourceType.ODPORTAL,
-            source_config={"match_id": 2}
+            source_type=DataSourceType.ODPORTAL, source_config={"match_id": 2}
         )
         task2.status = CollectionStatus.PENDING
 
         task3 = self.collection_service.create_collection_task(
-            source_type=DataSourceType.FOTMOB,
-            source_config={"match_id": 3}
+            source_type=DataSourceType.FOTMOB, source_config={"match_id": 3}
         )
         task3.status = CollectionStatus.RUNNING
 
@@ -542,12 +568,16 @@ class TestCollectionService(unittest.TestCase):
         self.assertEqual(len(all_tasks), 3)
 
         # 测试按状态筛选
-        pending_tasks = self.collection_service.get_tasks(status=CollectionStatus.PENDING)
+        pending_tasks = self.collection_service.get_tasks(
+            status=CollectionStatus.PENDING
+        )
         self.assertEqual(len(pending_tasks), 1)
         self.assertEqual(pending_tasks[0].task_id, task2.task_id)
 
         # 测试按数据源类型筛选
-        fotmob_tasks = self.collection_service.get_tasks(source_type=DataSourceType.FOTMOB)
+        fotmob_tasks = self.collection_service.get_tasks(
+            source_type=DataSourceType.FOTMOB
+        )
         self.assertEqual(len(fotmob_tasks), 2)
 
     def test_get_stats(self):
@@ -555,8 +585,7 @@ class TestCollectionService(unittest.TestCase):
         # 创建不同状态的任务
         for i in range(3):
             task = self.collection_service.create_collection_task(
-                source_type=DataSourceType.FOTMOB,
-                source_config={"match_id": i}
+                source_type=DataSourceType.FOTMOB, source_config={"match_id": i}
             )
             if i < 2:
                 task.status = CollectionStatus.SUCCESS
@@ -570,7 +599,7 @@ class TestCollectionService(unittest.TestCase):
         self.assertEqual(stats.total_tasks, 3)
         self.assertEqual(stats.completed_tasks, 2)
         self.assertEqual(stats.failed_tasks, 1)
-        self.assertEqual(stats.success_rate, 2/3)
+        self.assertEqual(stats.success_rate, 2 / 3)
 
     def test_clear_completed_tasks(self):
         """测试清理已完成任务"""
@@ -580,22 +609,22 @@ class TestCollectionService(unittest.TestCase):
 
         # 创建旧任务
         old_task = self.collection_service.create_collection_task(
-            source_type=DataSourceType.FOTMOB,
-            source_config={"match_id": 1}
+            source_type=DataSourceType.FOTMOB, source_config={"match_id": 1}
         )
         old_task.status = CollectionStatus.SUCCESS
         old_task.created_at = old_time
 
         # 创建新任务
         new_task = self.collection_service.create_collection_task(
-            source_type=DataSourceType.ODPORTAL,
-            source_config={"match_id": 2}
+            source_type=DataSourceType.ODPORTAL, source_config={"match_id": 2}
         )
         new_task.status = CollectionStatus.SUCCESS
         new_task.created_at = recent_time
 
         # 清理24小时前的已完成任务
-        cleared_count = self.collection_service.clear_completed_tasks(older_than_hours=24)
+        cleared_count = self.collection_service.clear_completed_tasks(
+            older_than_hours=24
+        )
 
         # 验证结果
         self.assertEqual(cleared_count, 1)
@@ -604,13 +633,14 @@ class TestCollectionService(unittest.TestCase):
 
     def test_collect_match_data(self):
         """测试收集比赛数据"""
-        with patch.object(self.collection_service, 'create_collection_task') as mock_create_task:
+        with patch.object(
+            self.collection_service, "create_collection_task"
+        ) as mock_create_task:
             mock_create_task.return_value = Mock(task_id="mock_task_id")
 
             # 执行测试
             task_ids = self.collection_service.collect_match_data(
-                match_id=123,
-                sources=[DataSourceType.FOTMOB, DataSourceType.ODPORTAL]
+                match_id=123, sources=[DataSourceType.FOTMOB, DataSourceType.ODPORTAL]
             )
 
             # 验证结果
@@ -620,7 +650,7 @@ class TestCollectionService(unittest.TestCase):
     def test_collect_fotmob_data(self):
         """测试收集FotMob数据"""
         # Mock 执行任务
-        with patch.object(self.collection_service, 'execute_task') as mock_execute:
+        with patch.object(self.collection_service, "execute_task") as mock_execute:
             mock_execute.return_value = True
 
             # 执行测试
@@ -633,7 +663,7 @@ class TestCollectionService(unittest.TestCase):
     def test_collect_odds_data(self):
         """测试收集赔率数据"""
         # Mock 执行任务
-        with patch.object(self.collection_service, 'execute_task') as mock_execute:
+        with patch.object(self.collection_service, "execute_task") as mock_execute:
             mock_execute.return_value = True
 
             # 执行测试
@@ -666,14 +696,14 @@ class TestServiceIntegration(unittest.TestCase):
         self.mock_cache_manager = Mock()
 
         # 创建推理服务
-        with patch('services.inference_service_v2.MatchPredictor'):
+        with patch("services.inference_service_v2.MatchPredictor"):
             self.inference_service = InferenceServiceV2("/mock/model")
             self.inference_service.predictor = self.mock_predictor
             self.inference_service.model_loader = self.mock_model_loader
             self.inference_service.cache_manager = self.mock_cache_manager
 
         # 创建收集服务
-        with patch('services.collection_service.asyncio.create_task'):
+        with patch("services.collection_service.asyncio.create_task"):
             self.collection_service = CollectionService()
 
     def test_inference_service_end_to_end(self):
@@ -685,15 +715,15 @@ class TestServiceIntegration(unittest.TestCase):
 
         # Mock 预测结果
         mock_prediction_result = {
-            'prediction': 1,
-            'probabilities': [0.2, 0.5, 0.3],
-            'timestamp': time.time()
+            "prediction": 1,
+            "probabilities": [0.2, 0.5, 0.3],
+            "timestamp": time.time(),
         }
         self.mock_predictor.predict.return_value = mock_prediction_result
         self.mock_predictor.get_prediction_stats.return_value = {
-            'total_predictions': 10,
-            'cache_hits': 7,
-            'cache_misses': 3
+            "total_predictions": 10,
+            "cache_hits": 7,
+            "cache_misses": 3,
         }
 
         # 初始化服务
@@ -704,7 +734,7 @@ class TestServiceIntegration(unittest.TestCase):
             match_id=123,
             home_team="Team A",
             away_team="Team B",
-            match_date="2024-01-01"
+            match_date="2024-01-01",
         )
         response = self.inference_service.predict_match(request)
 
@@ -731,12 +761,13 @@ class TestServiceIntegration(unittest.TestCase):
 
         # 创建任务
         task_id = self.collection_service.create_collection_task(
-            source_type=DataSourceType.FOTMOB,
-            source_config={"match_id": 123}
+            source_type=DataSourceType.FOTMOB, source_config={"match_id": 123}
         )
 
         # Mock 执行成功
-        with patch.object(self.collection_service, '_execute_fotmob_collection') as mock_execute:
+        with patch.object(
+            self.collection_service, "_execute_fotmob_collection"
+        ) as mock_execute:
             mock_execute.return_value = {"status": "success"}
 
             # 执行任务
@@ -756,7 +787,7 @@ class TestServiceIntegration(unittest.TestCase):
             self.assertFalse(self.collection_service._initialized)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # 创建测试套件
     suite = unittest.TestSuite()
 
@@ -779,5 +810,7 @@ if __name__ == '__main__':
     print(f"总测试数: {result.testsRun}")
     print(f"失败: {len(result.failures)}")
     print(f"错误: {len(result.errors)}")
-    print(f"成功率: {((result.testsRun - len(result.failures) - len(result.errors)) / result.testsRun * 100):.1f}%")
+    print(
+        f"成功率: {((result.testsRun - len(result.failures) - len(result.errors)) / result.testsRun * 100):.1f}%"
+    )
     print(f"{'='*60}")

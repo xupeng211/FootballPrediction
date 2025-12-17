@@ -15,16 +15,16 @@ logger = logging.getLogger(__name__)
 
 # 获取 Celery 实例
 settings = get_settings()
-celery_app = Celery('football_prediction')
+celery_app = Celery("football_prediction")
 
 # Celery 配置
 celery_app.conf.update(
     broker_url=settings.redis_url,
     result_backend=settings.redis_url,
-    task_serializer='json',
-    accept_content=['json'],
-    result_serializer='json',
-    timezone='UTC',
+    task_serializer="json",
+    accept_content=["json"],
+    result_serializer="json",
+    timezone="UTC",
     enable_utc=True,
     task_track_started=True,
     task_time_limit=30 * 60,  # 30分钟超时
@@ -36,74 +36,54 @@ celery_app.conf.update(
 # 调度配置
 celery_app.conf.beat_schedule = {
     # 模型重训练任务 - 每周一凌晨 3:00 执行
-    'train-new-model': {
-        'task': 'src.tasks.schedule.train_new_model',
-        'schedule': crontab(
-            hour=3,
-            minute=0,
-            day_of_week=1  # 周一
-        ),
-        'options': {
-            'queue': 'ml_training',
-            'priority': 5,
-        }
+    "train-new-model": {
+        "task": "src.tasks.schedule.train_new_model",
+        "schedule": crontab(hour=3, minute=0, day_of_week=1),  # 周一
+        "options": {
+            "queue": "ml_training",
+            "priority": 5,
+        },
     },
-
     # 模型性能检查任务 - 每天早上 8:00 执行
-    'check-model-performance': {
-        'task': 'src.tasks.schedule.check_model_performance',
-        'schedule': crontab(
-            hour=8,
-            minute=0
-        ),
-        'options': {
-            'queue': 'monitoring',
-            'priority': 3,
-        }
+    "check-model-performance": {
+        "task": "src.tasks.schedule.check_model_performance",
+        "schedule": crontab(hour=8, minute=0),
+        "options": {
+            "queue": "monitoring",
+            "priority": 3,
+        },
     },
-
     # 数据质量检查任务 - 每天凌晨 2:00 执行
-    'check-data-quality': {
-        'task': 'src.tasks.schedule.check_data_quality',
-        'schedule': crontab(
-            hour=2,
-            minute=0
-        ),
-        'options': {
-            'queue': 'data_quality',
-            'priority': 4,
-        }
+    "check-data-quality": {
+        "task": "src.tasks.schedule.check_data_quality",
+        "schedule": crontab(hour=2, minute=0),
+        "options": {
+            "queue": "data_quality",
+            "priority": 4,
+        },
     },
-
     # 系统健康检查任务 - 每 15 分钟执行
-    'system-health-check': {
-        'task': 'src.tasks.schedule.system_health_check',
-        'schedule': crontab(
-            minute='*/15'
-        ),
-        'options': {
-            'queue': 'monitoring',
-            'priority': 2,
-        }
+    "system-health-check": {
+        "task": "src.tasks.schedule.system_health_check",
+        "schedule": crontab(minute="*/15"),
+        "options": {
+            "queue": "monitoring",
+            "priority": 2,
+        },
     },
-
     # 清理旧模型任务 - 每月 1 号凌晨 4:00 执行
-    'cleanup-old-models': {
-        'task': 'src.tasks.schedule.cleanup_old_models',
-        'schedule': crontab(
-            hour=4,
-            minute=0,
-            day_of_month=1
-        ),
-        'options': {
-            'queue': 'maintenance',
-            'priority': 1,
-        }
+    "cleanup-old-models": {
+        "task": "src.tasks.schedule.cleanup_old_models",
+        "schedule": crontab(hour=4, minute=0, day_of_month=1),
+        "options": {
+            "queue": "maintenance",
+            "priority": 1,
+        },
     },
 }
 
 
-@celery_app.task(bind=True, name='src.tasks.schedule.train_new_model')
+@celery_app.task(bind=True, name="src.tasks.schedule.train_new_model")
 def train_new_model(self, description: str = "Scheduled weekly training"):
     """
     定时模型重训练任务
@@ -143,7 +123,7 @@ def train_new_model(self, description: str = "Scheduled weekly training"):
         raise
 
 
-@celery_app.task(bind=True, name='src.tasks.schedule.check_model_performance')
+@celery_app.task(bind=True, name="src.tasks.schedule.check_model_performance")
 def check_model_performance(self):
     """检查模型性能任务"""
     logger.info("🔍 开始检查模型性能")
@@ -175,7 +155,7 @@ def check_model_performance(self):
         raise
 
 
-@celery_app.task(bind=True, name='src.tasks.schedule.check_data_quality')
+@celery_app.task(bind=True, name="src.tasks.schedule.check_data_quality")
 def check_data_quality(self):
     """数据质量检查任务"""
     logger.info("🔍 开始检查数据质量")
@@ -192,7 +172,7 @@ def check_data_quality(self):
             "total_matches": len(recent_data),
             "missing_data_ratio": 0.0,
             "data_quality_score": 0.0,
-            "issues": []
+            "issues": [],
         }
 
         if len(recent_data) == 0:
@@ -231,7 +211,7 @@ def check_data_quality(self):
         raise
 
 
-@celery_app.task(bind=True, name='src.tasks.schedule.system_health_check')
+@celery_app.task(bind=True, name="src.tasks.schedule.system_health_check")
 def system_health_check(self):
     """系统健康检查任务"""
     logger.info("🔍 开始系统健康检查")
@@ -244,7 +224,7 @@ def system_health_check(self):
             "database": False,
             "redis": False,
             "model_service": False,
-            "overall": False
+            "overall": False,
         }
 
         # 检查数据库连接
@@ -277,11 +257,13 @@ def system_health_check(self):
             logger.warning(f"⚠️ 模型服务异常: {str(e)}")
 
         # 计算整体健康状态
-        health_status["overall"] = all([
-            health_status["database"],
-            health_status["redis"],
-            health_status["model_service"]
-        ])
+        health_status["overall"] = all(
+            [
+                health_status["database"],
+                health_status["redis"],
+                health_status["model_service"],
+            ]
+        )
 
         if health_status["overall"]:
             logger.info("✅ 系统健康检查通过")
@@ -295,7 +277,7 @@ def system_health_check(self):
         raise
 
 
-@celery_app.task(bind=True, name='src.tasks.schedule.cleanup_old_models')
+@celery_app.task(bind=True, name="src.tasks.schedule.cleanup_old_models")
 def cleanup_old_models(self, keep_last_n: int = 10):
     """
     清理旧模型任务
@@ -316,7 +298,7 @@ def cleanup_old_models(self, keep_last_n: int = 10):
             return {
                 "status": "no_action",
                 "total_models": len(models),
-                "keep_threshold": keep_last_n
+                "keep_threshold": keep_last_n,
             }
 
         # 按创建时间排序，删除最旧的模型
@@ -347,7 +329,7 @@ def cleanup_old_models(self, keep_last_n: int = 10):
             "status": "success",
             "total_models": len(models),
             "deleted_models": deleted_count,
-            "remaining_models": len(models_to_keep)
+            "remaining_models": len(models_to_keep),
         }
 
     except Exception as e:
@@ -356,14 +338,14 @@ def cleanup_old_models(self, keep_last_n: int = 10):
 
 
 # 手动触发任务
-@celery_app.task(name='src.tasks.schedule.manual_retrain')
+@celery_app.task(name="src.tasks.schedule.manual_retrain")
 def manual_retrain(description: str = "Manual retraining trigger"):
     """手动触发模型重训练"""
     return train_new_model.s(description).apply()
 
 
 # 紧急回滚任务
-@celery_app.task(name='src.tasks.schedule.emergency_rollback')
+@celery_app.task(name="src.tasks.schedule.emergency_rollback")
 def emergency_rollback(target_version: str):
     """紧急回滚到指定模型版本"""
     logger.info(f"🚨 开始紧急回滚到模型版本: {target_version}")
@@ -385,5 +367,5 @@ def emergency_rollback(target_version: str):
 
 
 # 启动 Celery Worker 和 Beat
-if __name__ == '__main__':
+if __name__ == "__main__":
     celery_app.start()

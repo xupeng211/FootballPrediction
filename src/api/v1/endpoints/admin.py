@@ -55,7 +55,7 @@ def verify_admin(credentials: HTTPAuthorizationCredentials = Depends(security)) 
 @router.post("/retrain", summary="手动触发模型重训练")
 async def trigger_manual_retrain(
     description: str = "Manual retraining trigger",
-    admin_verified: bool = Depends(verify_admin)
+    admin_verified: bool = Depends(verify_admin),
 ) -> Dict[str, Any]:
     """
     手动触发模型重训练
@@ -77,21 +77,20 @@ async def trigger_manual_retrain(
             "status": "triggered",
             "task_id": task.id,
             "message": f"模型重训练任务已提交，任务ID: {task.id}",
-            "description": description
+            "description": description,
         }
 
     except Exception as e:
         logger.error(f"手动触发重训练失败: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"触发重训练失败: {str(e)}"
+            detail=f"触发重训练失败: {str(e)}",
         )
 
 
 @router.post("/model/switch", summary="切换模型版本")
 async def switch_model_version(
-    target_version: str,
-    admin_verified: bool = Depends(verify_admin)
+    target_version: str, admin_verified: bool = Depends(verify_admin)
 ) -> Dict[str, Any]:
     """
     切换到指定版本的模型
@@ -108,8 +107,7 @@ async def switch_model_version(
 
         # 使用模型加载器切换版本
         model_loader = ModelLoader(
-            model_cache_dir=settings.model_path,
-            enable_hot_reload=True
+            model_cache_dir=settings.model_path, enable_hot_reload=True
         )
 
         success = model_loader.switch_model_version(target_version)
@@ -118,12 +116,12 @@ async def switch_model_version(
             return {
                 "status": "success",
                 "message": f"成功切换到模型版本: {target_version}",
-                "current_version": model_loader.get_current_version()
+                "current_version": model_loader.get_current_version(),
             }
         else:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"切换模型版本失败: {target_version}"
+                detail=f"切换模型版本失败: {target_version}",
             )
 
     except HTTPException:
@@ -132,14 +130,13 @@ async def switch_model_version(
         logger.error(f"切换模型版本失败: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"切换模型版本失败: {str(e)}"
+            detail=f"切换模型版本失败: {str(e)}",
         )
 
 
 @router.post("/model/rollback", summary="紧急回滚模型")
 async def emergency_rollback_model(
-    target_version: str,
-    admin_verified: bool = Depends(verify_admin)
+    target_version: str, admin_verified: bool = Depends(verify_admin)
 ) -> Dict[str, Any]:
     """
     紧急回滚到指定版本模型
@@ -161,20 +158,20 @@ async def emergency_rollback_model(
             "status": "triggered",
             "task_id": task.id,
             "message": f"紧急回滚任务已提交，任务ID: {task.id}",
-            "target_version": target_version
+            "target_version": target_version,
         }
 
     except Exception as e:
         logger.error(f"紧急回滚失败: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"紧急回滚失败: {str(e)}"
+            detail=f"紧急回滚失败: {str(e)}",
         )
 
 
 @router.get("/model/status", summary="获取模型状态")
 async def get_model_status(
-    admin_verified: bool = Depends(verify_admin)
+    admin_verified: bool = Depends(verify_admin),
 ) -> Dict[str, Any]:
     """
     获取当前模型状态和历史
@@ -193,7 +190,7 @@ async def get_model_status(
         # 获取模型加载器状态
         model_loader = ModelLoader(
             model_cache_dir=settings.model_path,
-            enable_hot_reload=False  # 避免重复启动热更新
+            enable_hot_reload=False,  # 避免重复启动热更新
         )
 
         current_version = model_loader.get_current_version()
@@ -208,20 +205,20 @@ async def get_model_status(
             "loaded_models": loaded_models,
             "current_best": current_best.to_dict() if current_best else None,
             "hot_reload_enabled": model_loader.enable_hot_reload,
-            "models_directory": str(model_loader.get_cache_directory())
+            "models_directory": str(model_loader.get_cache_directory()),
         }
 
     except Exception as e:
         logger.error(f"获取模型状态失败: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"获取模型状态失败: {str(e)}"
+            detail=f"获取模型状态失败: {str(e)}",
         )
 
 
 @router.get("/models", summary="获取所有模型列表")
 async def list_all_models(
-    admin_verified: bool = Depends(verify_admin)
+    admin_verified: bool = Depends(verify_admin),
 ) -> Dict[str, Any]:
     """
     获取所有注册的模型列表
@@ -241,35 +238,33 @@ async def list_all_models(
 
         model_list = []
         for model in models:
-            model_list.append({
-                "version": model.version,
-                "accuracy": model.accuracy,
-                "log_loss": model.log_loss,
-                "training_samples": model.training_samples,
-                "feature_count": model.feature_count,
-                "training_time": model.training_time,
-                "model_path": model.model_path,
-                "created_at": model.created_at.isoformat(),
-                "description": model.description
-            })
+            model_list.append(
+                {
+                    "version": model.version,
+                    "accuracy": model.accuracy,
+                    "log_loss": model.log_loss,
+                    "training_samples": model.training_samples,
+                    "feature_count": model.feature_count,
+                    "training_time": model.training_time,
+                    "model_path": model.model_path,
+                    "created_at": model.created_at.isoformat(),
+                    "description": model.description,
+                }
+            )
 
-        return {
-            "total_models": len(model_list),
-            "models": model_list
-        }
+        return {"total_models": len(model_list), "models": model_list}
 
     except Exception as e:
         logger.error(f"获取模型列表失败: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"获取模型列表失败: {str(e)}"
+            detail=f"获取模型列表失败: {str(e)}",
         )
 
 
 @router.get("/model/{version}", summary="获取指定版本模型详情")
 async def get_model_details(
-    version: str,
-    admin_verified: bool = Depends(verify_admin)
+    version: str, admin_verified: bool = Depends(verify_admin)
 ) -> Dict[str, Any]:
     """
     获取指定版本的模型详细信息
@@ -288,11 +283,12 @@ async def get_model_details(
         if not metadata:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"模型版本 {version} 不存在"
+                detail=f"模型版本 {version} 不存在",
             )
 
         # 检查模型文件是否存在
         from pathlib import Path
+
         model_path = Path(metadata.model_path)
         file_exists = model_path.exists()
         file_size = model_path.stat().st_size if file_exists else 0
@@ -308,7 +304,7 @@ async def get_model_details(
             "file_exists": file_exists,
             "file_size": file_size,
             "created_at": metadata.created_at.isoformat(),
-            "description": metadata.description
+            "description": metadata.description,
         }
 
     except HTTPException:
@@ -317,13 +313,13 @@ async def get_model_details(
         logger.error(f"获取模型详情失败: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"获取模型详情失败: {str(e)}"
+            detail=f"获取模型详情失败: {str(e)}",
         )
 
 
 @router.post("/model/reload", summary="手动重新加载模型")
 async def manual_reload_model(
-    admin_verified: bool = Depends(verify_admin)
+    admin_verified: bool = Depends(verify_admin),
 ) -> Dict[str, Any]:
     """
     手动触发模型重新加载
@@ -338,8 +334,7 @@ async def manual_reload_model(
         logger.info("管理员手动触发模型重新加载")
 
         model_loader = ModelLoader(
-            model_cache_dir=settings.model_path,
-            enable_hot_reload=False  # 手动控制
+            model_cache_dir=settings.model_path, enable_hot_reload=False  # 手动控制
         )
 
         success = model_loader.trigger_model_reload()
@@ -348,12 +343,12 @@ async def manual_reload_model(
             return {
                 "status": "success",
                 "message": "模型重新加载已触发",
-                "current_version": model_loader.get_current_version()
+                "current_version": model_loader.get_current_version(),
             }
         else:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="触发模型重新加载失败"
+                detail="触发模型重新加载失败",
             )
 
     except HTTPException:
@@ -362,15 +357,13 @@ async def manual_reload_model(
         logger.error(f"手动重新加载模型失败: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"手动重新加载模型失败: {str(e)}"
+            detail=f"手动重新加载模型失败: {str(e)}",
         )
 
 
 @router.delete("/model/{version}", summary="删除指定版本模型")
 async def delete_model_version(
-    version: str,
-    force: bool = False,
-    admin_verified: bool = Depends(verify_admin)
+    version: str, force: bool = False, admin_verified: bool = Depends(verify_admin)
 ) -> Dict[str, Any]:
     """
     删除指定版本的模型
@@ -393,7 +386,7 @@ async def delete_model_version(
         if not metadata:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"模型版本 {version} 不存在"
+                detail=f"模型版本 {version} 不存在",
             )
 
         # 检查是否是当前最佳模型
@@ -401,11 +394,12 @@ async def delete_model_version(
         if current_best and current_best.version == version and not force:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"无法删除当前最佳模型 {version}，请先切换到其他版本或使用 force=true"
+                detail=f"无法删除当前最佳模型 {version}，请先切换到其他版本或使用 force=true",
             )
 
         # 删除模型文件
         from pathlib import Path
+
         model_path = Path(metadata.model_path)
         deleted_files = []
 
@@ -421,7 +415,7 @@ async def delete_model_version(
             "status": "success",
             "message": f"模型版本 {version} 已删除",
             "deleted_files": deleted_files,
-            "version": version
+            "version": version,
         }
 
     except HTTPException:
@@ -430,13 +424,13 @@ async def delete_model_version(
         logger.error(f"删除模型版本失败: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"删除模型版本失败: {str(e)}"
+            detail=f"删除模型版本失败: {str(e)}",
         )
 
 
 @router.get("/system/health", summary="获取系统健康状态")
 async def get_system_health(
-    admin_verified: bool = Depends(verify_admin)
+    admin_verified: bool = Depends(verify_admin),
 ) -> Dict[str, Any]:
     """
     获取详细的系统健康状态
@@ -461,20 +455,20 @@ async def get_system_health(
             "cpu_count": psutil.cpu_count(),
             "memory_total": psutil.virtual_memory().total,
             "memory_available": psutil.virtual_memory().available,
-            "disk_usage": psutil.disk_usage('/').percent,
+            "disk_usage": psutil.disk_usage("/").percent,
             "process_id": os.getpid(),
-            "uptime": psutil.boot_time()
+            "uptime": psutil.boot_time(),
         }
 
         return {
             "health_status": health_status.get(),
             "system_info": system_info,
-            "timestamp": psutil.time.time()
+            "timestamp": psutil.time.time(),
         }
 
     except Exception as e:
         logger.error(f"获取系统健康状态失败: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"获取系统健康状态失败: {str(e)}"
+            detail=f"获取系统健康状态失败: {str(e)}",
         )

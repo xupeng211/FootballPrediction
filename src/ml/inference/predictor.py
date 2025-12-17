@@ -20,6 +20,7 @@ logger = logging.getLogger(__name__)
 
 class PredictionError(Exception):
     """预测异常"""
+
     pass
 
 
@@ -37,17 +38,13 @@ class MatchPredictor:
     """
 
     # 足球比赛结果映射
-    OUTCOME_MAP = {
-        0: "AWAY_WIN",
-        1: "DRAW",
-        2: "HOME_WIN"
-    }
+    OUTCOME_MAP = {0: "AWAY_WIN", 1: "DRAW", 2: "HOME_WIN"}
 
     def __init__(
         self,
         model_loader: ModelLoader,
         cache_manager: Optional[PredictionCache] = None,
-        default_model_name: str = "xgboost_model"
+        default_model_name: str = "xgboost_model",
     ):
         """
         初始化预测器
@@ -67,7 +64,7 @@ class MatchPredictor:
             "successful_predictions": 0,
             "cache_hits": 0,
             "errors": 0,
-            "start_time": datetime.now()
+            "start_time": datetime.now(),
         }
 
         logger.info(f"预测器初始化完成，默认模型: {default_model_name}")
@@ -77,7 +74,7 @@ class MatchPredictor:
         features: Union[np.ndarray, pd.DataFrame, List[float]],
         model_name: Optional[str] = None,
         use_cache: bool = True,
-        additional_params: Optional[Dict[str, Any]] = None
+        additional_params: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """
         执行足球比赛预测
@@ -108,31 +105,37 @@ class MatchPredictor:
                 cached_result = self.cache_manager.get(
                     features=feature_list,
                     model_name=model_name,
-                    additional_params=additional_params
+                    additional_params=additional_params,
                 )
                 if cached_result:
                     self._prediction_stats["cache_hits"] += 1
                     logger.info(f"使用缓存预测结果 (模型: {model_name})")
-                    return self._enrich_cached_result(cached_result, prediction_start_time)
+                    return self._enrich_cached_result(
+                        cached_result, prediction_start_time
+                    )
 
             # 执行预测
-            result = self._execute_prediction(feature_list, model_name, additional_params)
+            result = self._execute_prediction(
+                feature_list, model_name, additional_params
+            )
 
             # 缓存结果
             if use_cache and self.cache_manager:
                 cache_success = self.cache_manager.set(
-                    features=feature_list,
-                    model_name=model_name,
-                    result=result
+                    features=feature_list, model_name=model_name, result=result
                 )
                 if cache_success:
                     logger.debug(f"预测结果已缓存 (模型: {model_name})")
 
             # 增强结果信息
-            enriched_result = self._enrich_result(result, model_name, prediction_start_time)
+            enriched_result = self._enrich_result(
+                result, model_name, prediction_start_time
+            )
 
             self._prediction_stats["successful_predictions"] += 1
-            logger.info(f"预测完成: {enriched_result.get('predicted_outcome')} (置信度: {enriched_result.get('confidence', 0):.3f})")
+            logger.info(
+                f"预测完成: {enriched_result.get('predicted_outcome')} (置信度: {enriched_result.get('confidence', 0):.3f})"
+            )
 
             return enriched_result
 
@@ -145,7 +148,9 @@ class MatchPredictor:
             logger.error(error_msg)
             raise PredictionError(error_msg) from e
 
-    def _convert_features_to_list(self, features: Union[np.ndarray, pd.DataFrame, List[float]]) -> List[float]:
+    def _convert_features_to_list(
+        self, features: Union[np.ndarray, pd.DataFrame, List[float]]
+    ) -> List[float]:
         """
         将各种格式的特征转换为统一列表格式
 
@@ -162,7 +167,9 @@ class MatchPredictor:
             if isinstance(features, pd.DataFrame):
                 # DataFrame -> 数组 -> 列表
                 if features.shape[0] != 1:
-                    logger.warning(f"DataFrame有多行数据，只使用第一行: {features.shape}")
+                    logger.warning(
+                        f"DataFrame有多行数据，只使用第一行: {features.shape}"
+                    )
                 feature_array = features.iloc[0].values
                 return feature_array.tolist()
 
@@ -193,7 +200,7 @@ class MatchPredictor:
         self,
         feature_list: List[float],
         model_name: str,
-        additional_params: Optional[Dict[str, Any]]
+        additional_params: Optional[Dict[str, Any]],
     ) -> Dict[str, Any]:
         """
         执行核心预测逻辑
@@ -240,7 +247,7 @@ class MatchPredictor:
             predicted_class = int(model.predict(feature_2d)[0])
 
             # 获取概率（如果模型支持）
-            if hasattr(model, 'predict_proba'):
+            if hasattr(model, "predict_proba"):
                 probabilities = model.predict_proba(feature_2d)[0]
                 probabilities = [float(p) for p in probabilities]
             else:
@@ -251,17 +258,21 @@ class MatchPredictor:
             result = {
                 "predicted_class": predicted_class,
                 "probabilities": probabilities,
-                "feature_count": len(feature_list)
+                "feature_count": len(feature_list),
             }
 
             # 解析足球比赛特定的概率
             if len(probabilities) == 3:
-                result.update({
-                    "away_win_prob": probabilities[0],
-                    "draw_prob": probabilities[1],
-                    "home_win_prob": probabilities[2],
-                    "predicted_outcome": self.OUTCOME_MAP.get(predicted_class, "UNKNOWN")
-                })
+                result.update(
+                    {
+                        "away_win_prob": probabilities[0],
+                        "draw_prob": probabilities[1],
+                        "home_win_prob": probabilities[2],
+                        "predicted_outcome": self.OUTCOME_MAP.get(
+                            predicted_class, "UNKNOWN"
+                        ),
+                    }
+                )
 
             return result
 
@@ -269,10 +280,7 @@ class MatchPredictor:
             raise PredictionError(f"模型预测执行失败: {str(e)}") from e
 
     def _enrich_result(
-        self,
-        result: Dict[str, Any],
-        model_name: str,
-        prediction_time: datetime
+        self, result: Dict[str, Any], model_name: str, prediction_time: datetime
     ) -> Dict[str, Any]:
         """
         增强预测结果信息
@@ -292,17 +300,22 @@ class MatchPredictor:
         confidence = self._calculate_confidence(result.get("probabilities", []))
 
         enriched_result = result.copy()
-        enriched_result.update({
-            "model_name": model_name,
-            "model_version": metadata.model_version,
-            "prediction_time": prediction_time.isoformat(),
-            "confidence": confidence,
-            "processing_time_ms": (datetime.now() - prediction_time).total_seconds() * 1000
-        })
+        enriched_result.update(
+            {
+                "model_name": model_name,
+                "model_version": metadata.model_version,
+                "prediction_time": prediction_time.isoformat(),
+                "confidence": confidence,
+                "processing_time_ms": (datetime.now() - prediction_time).total_seconds()
+                * 1000,
+            }
+        )
 
         return enriched_result
 
-    def _enrich_cached_result(self, cached_result: Dict[str, Any], prediction_time: datetime) -> Dict[str, Any]:
+    def _enrich_cached_result(
+        self, cached_result: Dict[str, Any], prediction_time: datetime
+    ) -> Dict[str, Any]:
         """
         增强缓存结果信息
 
@@ -314,11 +327,13 @@ class MatchPredictor:
             Dict[str, Any]: 增强后的缓存结果
         """
         enriched_result = cached_result.copy()
-        enriched_result.update({
-            "prediction_time": prediction_time.isoformat(),
-            "from_cache": True,
-            "processing_time_ms": 0  # 缓存命中，处理时间为0
-        })
+        enriched_result.update(
+            {
+                "prediction_time": prediction_time.isoformat(),
+                "from_cache": True,
+                "processing_time_ms": 0,  # 缓存命中，处理时间为0
+            }
+        )
 
         return enriched_result
 
@@ -347,7 +362,9 @@ class MatchPredictor:
             Dict[str, Any]: 预测统计信息
         """
         current_time = datetime.now()
-        uptime_seconds = (current_time - self._prediction_stats["start_time"]).total_seconds()
+        uptime_seconds = (
+            current_time - self._prediction_stats["start_time"]
+        ).total_seconds()
 
         return {
             "total_predictions": self._prediction_stats["total_predictions"],
@@ -355,26 +372,29 @@ class MatchPredictor:
             "cache_hits": self._prediction_stats["cache_hits"],
             "errors": self._prediction_stats["errors"],
             "success_rate": (
-                self._prediction_stats["successful_predictions"] /
-                self._prediction_stats["total_predictions"]
-                if self._prediction_stats["total_predictions"] > 0 else 0.0
+                self._prediction_stats["successful_predictions"]
+                / self._prediction_stats["total_predictions"]
+                if self._prediction_stats["total_predictions"] > 0
+                else 0.0
             ),
             "cache_hit_rate": (
-                self._prediction_stats["cache_hits"] /
-                self._prediction_stats["total_predictions"]
-                if self._prediction_stats["total_predictions"] > 0 else 0.0
+                self._prediction_stats["cache_hits"]
+                / self._prediction_stats["total_predictions"]
+                if self._prediction_stats["total_predictions"] > 0
+                else 0.0
             ),
             "uptime_seconds": uptime_seconds,
             "predictions_per_second": (
                 self._prediction_stats["total_predictions"] / uptime_seconds
-                if uptime_seconds > 0 else 0.0
-            )
+                if uptime_seconds > 0
+                else 0.0
+            ),
         }
 
     def validate_features(
         self,
         features: Union[np.ndarray, pd.DataFrame, List[float]],
-        model_name: Optional[str] = None
+        model_name: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         验证特征数据的有效性
@@ -393,13 +413,12 @@ class MatchPredictor:
             # 获取模型元数据
             metadata = self.model_loader.get_model_metadata(model_name)
             if not metadata:
-                return {
-                    "valid": False,
-                    "error": f"模型元数据缺失: {model_name}"
-                }
+                return {"valid": False, "error": f"模型元数据缺失: {model_name}"}
 
             # 检查特征数量
-            expected_count = len(metadata.feature_names) if metadata.feature_names else None
+            expected_count = (
+                len(metadata.feature_names) if metadata.feature_names else None
+            )
             actual_count = len(feature_list)
 
             validation_result = {
@@ -412,8 +431,8 @@ class MatchPredictor:
                 "feature_range": {
                     "min": float(np.min(feature_list)),
                     "max": float(np.max(feature_list)),
-                    "mean": float(np.mean(feature_list))
-                }
+                    "mean": float(np.mean(feature_list)),
+                },
             }
 
             # 检查特征数量匹配
@@ -426,10 +445,7 @@ class MatchPredictor:
             return validation_result
 
         except Exception as e:
-            return {
-                "valid": False,
-                "error": f"特征验证失败: {str(e)}"
-            }
+            return {"valid": False, "error": f"特征验证失败: {str(e)}"}
 
     def get_model_info(self, model_name: Optional[str] = None) -> Dict[str, Any]:
         """
@@ -460,7 +476,7 @@ class MatchPredictor:
             "successful_predictions": 0,
             "cache_hits": 0,
             "errors": 0,
-            "start_time": datetime.now()
+            "start_time": datetime.now(),
         }
         logger.info("预测统计信息已重置")
 

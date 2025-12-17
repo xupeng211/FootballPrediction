@@ -21,10 +21,21 @@ class ModelMetadataTest:
 
     def test_model_metadata_initialization(self):
         """模拟测试ModelMetadata初始化"""
+
         # 模拟ModelMetadata类的功能
         class MockModelMetadata:
-            def __init__(self, version, accuracy, log_loss, training_samples,
-                        feature_count, training_time, model_path, created_at, description=""):
+            def __init__(
+                self,
+                version,
+                accuracy,
+                log_loss,
+                training_samples,
+                feature_count,
+                training_time,
+                model_path,
+                created_at,
+                description="",
+            ):
                 self.version = version
                 self.accuracy = accuracy
                 self.log_loss = log_loss
@@ -45,7 +56,7 @@ class ModelMetadataTest:
                     "training_time": self.training_time,
                     "model_path": self.model_path,
                     "created_at": self.created_at.isoformat(),
-                    "description": self.description
+                    "description": self.description,
                 }
 
         created_at = datetime.now(timezone.utc)
@@ -58,7 +69,7 @@ class ModelMetadataTest:
             training_time=120.5,
             model_path="/models/test.json",
             created_at=created_at,
-            description="Test model"
+            description="Test model",
         )
 
         assert metadata.version == "v2.1.20240101_120000"
@@ -89,6 +100,7 @@ class ModelRegistryTest:
 
     def test_registry_initialization(self, temp_models_dir):
         """测试注册表初始化逻辑"""
+
         # 模拟ModelRegistry的核心功能
         class MockModelRegistry:
             def __init__(self, models_dir):
@@ -102,18 +114,18 @@ class ModelRegistryTest:
                 registry = {
                     "models": {},
                     "current_best": None,
-                    "last_updated": datetime.now(timezone.utc).isoformat()
+                    "last_updated": datetime.now(timezone.utc).isoformat(),
                 }
                 self._save_registry(registry)
 
             def _save_registry(self, registry):
                 registry["last_updated"] = datetime.now(timezone.utc).isoformat()
-                with open(self.registry_file, 'w', encoding='utf-8') as f:
+                with open(self.registry_file, "w", encoding="utf-8") as f:
                     json.dump(registry, f, indent=2, ensure_ascii=False)
 
             def _load_registry(self):
                 try:
-                    with open(self.registry_file, 'r', encoding='utf-8') as f:
+                    with open(self.registry_file, "r", encoding="utf-8") as f:
                         return json.load(f)
                 except (FileNotFoundError, json.JSONDecodeError):
                     self._init_registry()
@@ -134,6 +146,7 @@ class ModelRegistryTest:
 
     def test_registry_operations(self, temp_models_dir):
         """测试注册表操作逻辑"""
+
         class MockModelMetadata:
             def __init__(self, version, accuracy):
                 self.version = version
@@ -150,15 +163,15 @@ class ModelRegistryTest:
 
             def _init_registry(self):
                 registry = {"models": {}, "current_best": None}
-                with open(self.registry_file, 'w') as f:
+                with open(self.registry_file, "w") as f:
                     json.dump(registry, f)
 
             def _load_registry(self):
-                with open(self.registry_file, 'r') as f:
+                with open(self.registry_file, "r") as f:
                     return json.load(f)
 
             def _save_registry(self, registry):
-                with open(self.registry_file, 'w') as f:
+                with open(self.registry_file, "w") as f:
                     json.dump(registry, f)
 
             def register_model(self, metadata):
@@ -210,6 +223,7 @@ class RetrainingServiceTest:
 
     def test_training_logic_mock(self):
         """测试训练逻辑的mock版本"""
+
         class MockRetrainingService:
             def __init__(self):
                 self.improvement_threshold = 0.005
@@ -246,6 +260,7 @@ class RetrainingServiceTest:
 
     def test_data_preprocessing_logic(self):
         """测试数据预处理逻辑"""
+
         class MockDataProcessor:
             @staticmethod
             def _remove_high_missing_columns(X, threshold=0.8):
@@ -267,16 +282,18 @@ class RetrainingServiceTest:
         processor = MockDataProcessor()
 
         # 测试移除高缺失值列
-        X = pd.DataFrame({
-            'good_col': [1, 2, 3, 4, 5],
-            'bad_col': [1, np.nan, np.nan, np.nan, np.nan],  # 80%缺失
-            'ok_col': [1, 2, np.nan, 4, 5]
-        })
+        X = pd.DataFrame(
+            {
+                "good_col": [1, 2, 3, 4, 5],
+                "bad_col": [1, np.nan, np.nan, np.nan, np.nan],  # 80%缺失
+                "ok_col": [1, 2, np.nan, 4, 5],
+            }
+        )
 
         result = processor._remove_high_missing_columns(X)
-        assert 'bad_col' not in result.columns
-        assert 'good_col' in result.columns
-        assert 'ok_col' in result.columns
+        assert "bad_col" not in result.columns
+        assert "good_col" in result.columns
+        assert "ok_col" in result.columns
 
         # 测试填充缺失值
         result = processor._fill_missing_values(X)
@@ -284,6 +301,7 @@ class RetrainingServiceTest:
 
     def test_model_evaluation_logic(self):
         """测试模型评估逻辑"""
+
         class MockModelEvaluator:
             @staticmethod
             def _calculate_accuracy(y_true, y_pred):
@@ -301,7 +319,7 @@ class RetrainingServiceTest:
         # 测试准确率计算
         y_true = np.array([0, 1, 2, 1, 0])
         y_pred_good = np.array([0, 1, 2, 1, 0])  # 完全正确
-        y_pred_bad = np.array([1, 0, 1, 2, 1])   # 完全错误
+        y_pred_bad = np.array([1, 0, 1, 2, 1])  # 完全错误
 
         assert evaluator._calculate_accuracy(y_true, y_pred_good) == 1.0
         assert evaluator._calculate_accuracy(y_true, y_pred_bad) == 0.0
@@ -315,12 +333,13 @@ class RetrainingServiceTest:
 
     def test_pipeline_error_handling(self):
         """测试流水线错误处理"""
+
         class MockPipeline:
             def __init__(self):
                 self.error_scenarios = {
                     "insufficient_data": ValueError("Insufficient training samples"),
                     "database_error": ConnectionError("Database connection failed"),
-                    "model_error": RuntimeError("Model training failed")
+                    "model_error": RuntimeError("Model training failed"),
                 }
 
             def simulate_pipeline_step(self, step_name):
@@ -334,7 +353,7 @@ class RetrainingServiceTest:
                 return {
                     "status": "failed",
                     "reason": str(error),
-                    "training_time": time.time() - start_time
+                    "training_time": time.time() - start_time,
                 }
 
         import time
@@ -368,12 +387,13 @@ class TestModelTrainingIntegration:
 
         X = pd.DataFrame(
             np.random.randn(n_samples, n_features),
-            columns=[f"feature_{i}" for i in range(n_features)]
+            columns=[f"feature_{i}" for i in range(n_features)],
         )
         y = pd.Series(np.random.choice([0, 1, 2], size=n_samples))
 
         # 分割数据
         from sklearn.model_selection import train_test_split
+
         X_train, X_test, y_train, y_test = train_test_split(
             X, y, test_size=0.2, random_state=42, stratify=y
         )
@@ -383,14 +403,14 @@ class TestModelTrainingIntegration:
             n_estimators=10,  # 使用少量estimators以加快测试
             max_depth=3,
             random_state=42,
-            eval_metric='logloss',
-            use_label_encoder=False
+            eval_metric="logloss",
+            use_label_encoder=False,
         )
 
         model.fit(X_train, y_train)
 
         # 验证模型训练成功
-        assert hasattr(model, 'feature_importances_')
+        assert hasattr(model, "feature_importances_")
 
         # 验证预测功能
         y_pred = model.predict(X_test)
@@ -403,6 +423,7 @@ class TestModelTrainingIntegration:
 
         # 计算指标
         from sklearn.metrics import accuracy_score, log_loss
+
         accuracy = accuracy_score(y_test, y_pred)
         logloss = log_loss(y_test, y_pred_proba)
 
@@ -419,8 +440,8 @@ class TestModelTrainingIntegration:
             n_estimators=5,
             max_depth=2,
             random_state=42,
-            eval_metric='logloss',
-            use_label_encoder=False
+            eval_metric="logloss",
+            use_label_encoder=False,
         )
         model.fit(X, y)
 

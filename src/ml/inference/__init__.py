@@ -13,8 +13,16 @@ from typing import Dict, Any, Optional, Union, List
 from datetime import datetime
 
 # 导入重构后的组件，使用别名避免循环引用
-from .model_loader import ModelLoader as _InternalModelLoader, ModelLoadError, ModelMetadata
-from .cache_manager import PredictionCache as _InternalPredictionCache, CacheEntry, CacheStats
+from .model_loader import (
+    ModelLoader as _InternalModelLoader,
+    ModelLoadError,
+    ModelMetadata,
+)
+from .cache_manager import (
+    PredictionCache as _InternalPredictionCache,
+    CacheEntry,
+    CacheStats,
+)
 from .predictor import MatchPredictor, PredictionError
 
 logger = logging.getLogger(__name__)
@@ -22,6 +30,7 @@ logger = logging.getLogger(__name__)
 # ============================================================================
 # 兼容性接口 - 保持与原始代码相同的类名和接口
 # ============================================================================
+
 
 class Predictor:
     """
@@ -31,7 +40,9 @@ class Predictor:
     内部使用重构后的 MatchPredictor 实现。
     """
 
-    def __init__(self, model_path: Union[str, Path], feature_names: Optional[List[str]] = None):
+    def __init__(
+        self, model_path: Union[str, Path], feature_names: Optional[List[str]] = None
+    ):
         """
         初始化兼容性预测器
 
@@ -41,7 +52,9 @@ class Predictor:
         """
         # 创建重构后的组件
         self._model_loader = _InternalModelLoader()
-        self._cache_manager = _InternalPredictionCache(enable_auto_cleanup=False)  # 禁用自动清理以保持兼容性
+        self._cache_manager = _InternalPredictionCache(
+            enable_auto_cleanup=False
+        )  # 禁用自动清理以保持兼容性
         self._model_name = "compatibility_model"
 
         # 加载模型
@@ -55,7 +68,7 @@ class Predictor:
         self._predictor = MatchPredictor(
             model_loader=self._model_loader,
             cache_manager=self._cache_manager,
-            default_model_name=self._model_name
+            default_model_name=self._model_name,
         )
 
         # 保持原始属性兼容性
@@ -76,7 +89,9 @@ class Predictor:
         # 模型在初始化时已经加载，直接返回成功
         return True
 
-    def predict(self, features: Union[List[float], 'np.ndarray', 'pd.DataFrame']) -> Dict[str, Any]:
+    def predict(
+        self, features: Union[List[float], "np.ndarray", "pd.DataFrame"]
+    ) -> Dict[str, Any]:
         """
         执行预测（兼容性方法）
 
@@ -88,7 +103,9 @@ class Predictor:
         """
         try:
             # 调用重构后的预测器
-            result = self._predictor.predict(features, use_cache=False)  # 禁用缓存以保持兼容性
+            result = self._predictor.predict(
+                features, use_cache=False
+            )  # 禁用缓存以保持兼容性
 
             # 转换为原始格式
             original_result = {
@@ -99,8 +116,10 @@ class Predictor:
                 "predicted_outcome": result.get("predicted_outcome", "UNKNOWN"),
                 "probabilities": result.get("probabilities", []),
                 "model_version": result.get("model_version", "unknown"),
-                "prediction_time": result.get("prediction_time", datetime.now().isoformat()),
-                "feature_count": result.get("feature_count", 0)
+                "prediction_time": result.get(
+                    "prediction_time", datetime.now().isoformat()
+                ),
+                "feature_count": result.get("feature_count", 0),
             }
 
             return original_result
@@ -124,11 +143,11 @@ class Predictor:
             "model_path": str(self.model_path),
             "feature_count": len(self.feature_names) if self.feature_names else None,
             "feature_names": self.feature_names,
-            "metadata": self.model_metadata.__dict__ if self.model_metadata else {}
+            "metadata": self.model_metadata.__dict__ if self.model_metadata else {},
         }
 
     # 保持原始的私有方法（虽然不再使用，但为了兼容性）
-    def _validate_features(self, features) -> 'np.ndarray':
+    def _validate_features(self, features) -> "np.ndarray":
         """特征验证（兼容性方法，已弃用）"""
         warnings.warn("_validate_features is deprecated", DeprecationWarning)
         return features  # 直接返回，验证已在重构版本中完成
@@ -160,7 +179,9 @@ class ModelLoader:
 
         logger.info(f"兼容性模型加载器初始化完成，缓存目录: {model_cache_dir}")
 
-    def load_model(self, model_name: str, model_path: Optional[Union[str, Path]] = None) -> bool:
+    def load_model(
+        self, model_name: str, model_path: Optional[Union[str, Path]] = None
+    ) -> bool:
         """
         加载模型（兼容性方法）
 
@@ -173,9 +194,12 @@ class ModelLoader:
         """
         try:
             # 内部创建重构后的 Predictor
-            predictor = Predictor(model_path or f"{self._model_loader.get_cache_directory()}/{model_name}.pkl")
+            predictor = Predictor(
+                model_path
+                or f"{self._model_loader.get_cache_directory()}/{model_name}.pkl"
+            )
             # 存储到内部映射中（模拟原始行为）
-            if not hasattr(self, '_loaded_models'):
+            if not hasattr(self, "_loaded_models"):
                 self._loaded_models = {}
             self._loaded_models[model_name] = predictor
             return True
@@ -193,7 +217,7 @@ class ModelLoader:
         Returns:
             Optional[Predictor]: 预测器实例
         """
-        if hasattr(self, '_loaded_models'):
+        if hasattr(self, "_loaded_models"):
             return self._loaded_models.get(model_name)
         return None
 
@@ -207,7 +231,7 @@ class ModelLoader:
         Returns:
             bool: 卸载成功返回True
         """
-        if hasattr(self, '_loaded_models') and model_name in self._loaded_models:
+        if hasattr(self, "_loaded_models") and model_name in self._loaded_models:
             del self._loaded_models[model_name]
             return True
         return False
@@ -219,7 +243,7 @@ class ModelLoader:
         Returns:
             List[str]: 已加载的模型名称列表
         """
-        if hasattr(self, '_loaded_models'):
+        if hasattr(self, "_loaded_models"):
             return list(self._loaded_models.keys())
         return []
 
@@ -239,16 +263,19 @@ class PredictionCache:
         Args:
             default_ttl: 默认TTL（秒）
         """
-        self._cache = _InternalPredictionCache(default_ttl=default_ttl, enable_auto_cleanup=False)
+        self._cache = _InternalPredictionCache(
+            default_ttl=default_ttl, enable_auto_cleanup=False
+        )
         logger.info("兼容性预测缓存初始化完成")
 
-    def _generate_cache_key(self, features: 'np.ndarray', model_name: str) -> str:
+    def _generate_cache_key(self, features: "np.ndarray", model_name: str) -> str:
         """生成缓存键（兼容性方法）"""
         import hashlib
+
         features_hash = hashlib.md5(features.tobytes()).hexdigest()
         return f"{model_name}:{features_hash}"
 
-    def get(self, features: 'np.ndarray', model_name: str) -> Optional[Dict[str, Any]]:
+    def get(self, features: "np.ndarray", model_name: str) -> Optional[Dict[str, Any]]:
         """
         获取缓存（兼容性方法）
 
@@ -262,7 +289,13 @@ class PredictionCache:
         feature_list = features.flatten().tolist()
         return self._cache.get(features=feature_list, model_name=model_name)
 
-    def set(self, features: 'np.ndarray', model_name: str, result: Dict[str, Any], ttl: Optional[int] = None) -> None:
+    def set(
+        self,
+        features: "np.ndarray",
+        model_name: str,
+        result: Dict[str, Any],
+        ttl: Optional[int] = None,
+    ) -> None:
         """
         设置缓存（兼容性方法）
 
@@ -273,7 +306,9 @@ class PredictionCache:
             ttl: 生存时间（秒）
         """
         feature_list = features.flatten().tolist()
-        self._cache.set(features=feature_list, model_name=model_name, result=result, ttl=ttl)
+        self._cache.set(
+            features=feature_list, model_name=model_name, result=result, ttl=ttl
+        )
 
     def clear(self) -> None:
         """清空缓存（兼容性方法）"""
@@ -288,7 +323,7 @@ class HotReloadManager:
     内部使用重构后的组件实现。
     """
 
-    def __init__(self, model_loader: 'ModelLoader', check_interval: int = 60):
+    def __init__(self, model_loader: "ModelLoader", check_interval: int = 60):
         """
         初始化兼容性热重载管理器
 
@@ -332,17 +367,20 @@ _global_model_loader = None
 _global_prediction_cache = None
 _global_hot_reload_manager = None
 
+
 def _get_global_model_loader():
     global _global_model_loader
     if _global_model_loader is None:
         _global_model_loader = ModelLoader()
     return _global_model_loader
 
+
 def _get_global_prediction_cache():
     global _global_prediction_cache
     if _global_prediction_cache is None:
         _global_prediction_cache = PredictionCache()
     return _global_prediction_cache
+
 
 def _get_global_hot_reload_manager():
     global _global_hot_reload_manager
@@ -351,7 +389,9 @@ def _get_global_hot_reload_manager():
     return _global_hot_reload_manager
 
 
-def get_predictor(model_path: Union[str, Path], feature_names: Optional[List[str]] = None) -> Predictor:
+def get_predictor(
+    model_path: Union[str, Path], feature_names: Optional[List[str]] = None
+) -> Predictor:
     """
     获取预测器实例（兼容性函数）
 
@@ -381,10 +421,10 @@ def get_hot_reload_manager() -> HotReloadManager:
 
 
 def predict_match(
-    features: Union[List[float], 'np.ndarray', 'pd.DataFrame'],
+    features: Union[List[float], "np.ndarray", "pd.DataFrame"],
     model_path: Union[str, Path],
     feature_names: Optional[List[str]] = None,
-    use_cache: bool = True
+    use_cache: bool = True,
 ) -> Dict[str, Any]:
     """
     便捷函数：执行单次预测（兼容性函数）
@@ -403,7 +443,7 @@ def predict_match(
         predictor = get_predictor(model_path, feature_names)
 
         # 验证特征格式
-        if hasattr(features, 'values'):  # DataFrame
+        if hasattr(features, "values"):  # DataFrame
             feature_array = features.values
         elif isinstance(features, list):
             feature_array = features
@@ -412,7 +452,9 @@ def predict_match(
 
         # 检查缓存
         if use_cache:
-            cache_result = _get_global_prediction_cache().get(feature_array, Path(model_path).stem)
+            cache_result = _get_global_prediction_cache().get(
+                feature_array, Path(model_path).stem
+            )
             if cache_result:
                 logger.info("使用缓存预测结果")
                 return cache_result
@@ -422,7 +464,9 @@ def predict_match(
 
         # 缓存结果
         if use_cache:
-            _get_global_prediction_cache().set(feature_array, Path(model_path).stem, result)
+            _get_global_prediction_cache().set(
+                feature_array, Path(model_path).stem, result
+            )
 
         return result
 
@@ -437,23 +481,22 @@ def predict_match(
 
 __all__ = [
     # 兼容性接口
-    'Predictor',
-    'ModelLoader',
-    'PredictionCache',
-    'HotReloadManager',
-    'ModelLoadError',
-    'PredictionError',
-    'get_predictor',
-    'get_model_loader',
-    'get_prediction_cache',
-    'get_hot_reload_manager',
-    'predict_match',
-
+    "Predictor",
+    "ModelLoader",
+    "PredictionCache",
+    "HotReloadManager",
+    "ModelLoadError",
+    "PredictionError",
+    "get_predictor",
+    "get_model_loader",
+    "get_prediction_cache",
+    "get_hot_reload_manager",
+    "predict_match",
     # 重构后组件（新代码推荐使用）
-    'MatchPredictor',
-    'ModelMetadata',
-    'CacheEntry',
-    'CacheStats'
+    "MatchPredictor",
+    "ModelMetadata",
+    "CacheEntry",
+    "CacheStats",
 ]
 
 # 版本信息

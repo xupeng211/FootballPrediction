@@ -38,10 +38,10 @@ init()
 
 # 配置日志
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
+
 
 # 系统配置
 class SystemConfig:
@@ -73,6 +73,7 @@ class SystemConfig:
     # 测试数据
     TEST_MATCH_ID = "test_match_audit_001"
     TEST_BATCH_MATCH_IDS = [f"test_match_audit_{i:03d}" for i in range(1, 6)]
+
 
 class HealthCheckResult:
     """健康检查结果类"""
@@ -124,8 +125,9 @@ class HealthCheckResult:
             "status": self.status,
             "message": self.message,
             "details": self.details,
-            "duration_ms": self.duration_ms
+            "duration_ms": self.duration_ms,
         }
+
 
 class SystemAuditor:
     """系统审计器"""
@@ -149,7 +151,7 @@ class SystemAuditor:
             "FAIL": Fore.RED,
             "SKIP": Fore.YELLOW,
             "RUNNING": Fore.BLUE,
-            "PENDING": Fore.WHITE
+            "PENDING": Fore.WHITE,
         }
 
         color = status_colors.get(result.status, Fore.WHITE)
@@ -158,14 +160,16 @@ class SystemAuditor:
             "FAIL": "✗",
             "SKIP": "-",
             "RUNNING": "⟳",
-            "PENDING": "○"
+            "PENDING": "○",
         }.get(result.status, "?")
 
         print(f"{color}{status_icon} [{result.status}] {result.name}{Style.RESET_ALL}")
         if result.message:
             print(f"    {result.message}")
         if self.verbose and result.details:
-            print(f"    详情: {json.dumps(result.details, indent=2, ensure_ascii=False)}")
+            print(
+                f"    详情: {json.dumps(result.details, indent=2, ensure_ascii=False)}"
+            )
         if result.duration_ms > 0:
             print(f"    耗时: {result.duration_ms}ms")
         print()
@@ -195,7 +199,7 @@ class SystemAuditor:
                 port=self.config.REDIS_PORT,
                 db=self.config.REDIS_DB,
                 decode_responses=True,
-                socket_timeout=5
+                socket_timeout=5,
             )
             r.ping()
             return True
@@ -207,8 +211,7 @@ class SystemAuditor:
     async def check_basic_health(self) -> HealthCheckResult:
         """1. 基础健康检查"""
         result = HealthCheckResult(
-            "基础健康检查",
-            "验证API服务、数据库、Redis等基础组件是否正常运行"
+            "基础健康检查", "验证API服务、数据库、Redis等基础组件是否正常运行"
         )
         result.start()
 
@@ -231,22 +234,22 @@ class SystemAuditor:
                     if failed_components:
                         result.fail_check(
                             f"以下组件不健康: {', '.join(failed_components)}",
-                            {"health_data": health_data}
+                            {"health_data": health_data},
                         )
                     else:
                         result.pass_check(
                             f"所有组件正常运行 (响应时间: {health_data.get('response_time_ms', 0)}ms)",
-                            {"components": list(checks.keys())}
+                            {"components": list(checks.keys())},
                         )
                 else:
                     result.fail_check(
                         f"服务状态不健康: {health_data.get('status')}",
-                        {"health_data": health_data}
+                        {"health_data": health_data},
                     )
             else:
                 result.fail_check(
                     f"健康检查失败，HTTP状态码: {response.status_code}",
-                    {"response_text": response.text[:200]}
+                    {"response_text": response.text[:200]},
                 )
 
         except Exception as e:
@@ -258,10 +261,7 @@ class SystemAuditor:
 
     async def check_redis_connectivity(self) -> HealthCheckResult:
         """2. Redis连接检查"""
-        result = HealthCheckResult(
-            "Redis连接检查",
-            "验证Redis缓存服务是否可以正常连接"
-        )
+        result = HealthCheckResult("Redis连接检查", "验证Redis缓存服务是否可以正常连接")
         result.start()
 
         try:
@@ -279,8 +279,7 @@ class SystemAuditor:
     async def check_sync_prediction(self) -> HealthCheckResult:
         """3. 同步预测检查"""
         result = HealthCheckResult(
-            "同步预测检查",
-            "验证单场比赛预测API是否正常工作，检查缓存命中情况"
+            "同步预测检查", "验证单场比赛预测API是否正常工作，检查缓存命中情况"
         )
         result.start()
 
@@ -288,13 +287,13 @@ class SystemAuditor:
             # 第一次请求 - 应该是缓存未命中
             response1 = self._make_request(
                 "GET",
-                f"{self.config.PREDICT_ENDPOINT}/match/{self.config.TEST_MATCH_ID}"
+                f"{self.config.PREDICT_ENDPOINT}/match/{self.config.TEST_MATCH_ID}",
             )
 
             if response1.status_code != 200:
                 result.fail_check(
                     f"第一次预测请求失败，状态码: {response1.status_code}",
-                    {"response": response1.text[:200]}
+                    {"response": response1.text[:200]},
                 )
                 return result
 
@@ -307,13 +306,13 @@ class SystemAuditor:
             # 第二次请求 - 应该是缓存命中
             response2 = self._make_request(
                 "GET",
-                f"{self.config.PREDICT_ENDPOINT}/match/{self.config.TEST_MATCH_ID}"
+                f"{self.config.PREDICT_ENDPOINT}/match/{self.config.TEST_MATCH_ID}",
             )
 
             if response2.status_code != 200:
                 result.fail_check(
                     f"第二次预测请求失败，状态码: {response2.status_code}",
-                    {"response": response2.text[:200]}
+                    {"response": response2.text[:200]},
                 )
                 return result
 
@@ -321,13 +320,15 @@ class SystemAuditor:
             cache_hit2 = response2.headers.get("X-Cache-Hit", "false").lower() == "true"
 
             # 验证预测结果一致性
-            if first_prediction.get("predicted_class") != second_prediction.get("predicted_class"):
+            if first_prediction.get("predicted_class") != second_prediction.get(
+                "predicted_class"
+            ):
                 result.fail_check(
                     "两次预测结果不一致，可能存在随机性问题",
                     {
                         "first": first_prediction.get("predicted_class"),
-                        "second": second_prediction.get("predicted_class")
-                    }
+                        "second": second_prediction.get("predicted_class"),
+                    },
                 )
             else:
                 # 检查缓存行为
@@ -345,9 +346,9 @@ class SystemAuditor:
                         "confidence": first_prediction.get("confidence"),
                         "cache_behavior": {
                             "first_request_hit": cache_hit1,
-                            "second_request_hit": cache_hit2
-                        }
-                    }
+                            "second_request_hit": cache_hit2,
+                        },
+                    },
                 )
 
         except Exception as e:
@@ -360,8 +361,7 @@ class SystemAuditor:
     async def check_batch_prediction(self) -> HealthCheckResult:
         """4. 异步批量预测检查"""
         result = HealthCheckResult(
-            "异步批量预测检查",
-            "验证批量预测API是否能正常排队并返回Task ID"
+            "异步批量预测检查", "验证批量预测API是否能正常排队并返回Task ID"
         )
         result.start()
 
@@ -370,26 +370,27 @@ class SystemAuditor:
             batch_request = {
                 "match_ids": self.config.TEST_BATCH_MATCH_IDS,
                 "include_features": False,
-                "include_metadata": True
+                "include_metadata": True,
             }
 
             response = self._make_request(
-                "POST",
-                self.config.BATCH_PREDICT_ENDPOINT,
-                json=batch_request
+                "POST", self.config.BATCH_PREDICT_ENDPOINT, json=batch_request
             )
 
             if response.status_code != 200:
                 result.fail_check(
                     f"批量预测任务提交失败，状态码: {response.status_code}",
-                    {"response": response.text[:200]}
+                    {"response": response.text[:200]},
                 )
                 return result
 
             batch_result = response.json()
 
             # 检查任务结果格式
-            if "total_count" not in batch_result or "successful_count" not in batch_result:
+            if (
+                "total_count" not in batch_result
+                or "successful_count" not in batch_result
+            ):
                 result.fail_check("批量预测响应格式不正确", {"response": batch_result})
                 return result
 
@@ -398,7 +399,9 @@ class SystemAuditor:
             failed_count = batch_result["failed_count"]
 
             if successful_count == 0:
-                result.fail_check("批量预测全部失败", {"errors": batch_result.get("errors", [])})
+                result.fail_check(
+                    "批量预测全部失败", {"errors": batch_result.get("errors", [])}
+                )
                 return result
 
             success_rate = successful_count / total_count * 100
@@ -410,8 +413,8 @@ class SystemAuditor:
                     "successful_count": successful_count,
                     "failed_count": failed_count,
                     "success_rate": success_rate,
-                    "processing_time_ms": batch_result.get("processing_time_ms", 0)
-                }
+                    "processing_time_ms": batch_result.get("processing_time_ms", 0),
+                },
             )
 
         except Exception as e:
@@ -424,8 +427,7 @@ class SystemAuditor:
     async def check_mlops_functionality(self) -> HealthCheckResult:
         """5. MLOps功能检查"""
         result = HealthCheckResult(
-            "MLOps功能检查",
-            "验证模型状态查询和重训练任务触发功能"
+            "MLOps功能检查", "验证模型状态查询和重训练任务触发功能"
         )
         result.start()
 
@@ -436,9 +438,7 @@ class SystemAuditor:
                 headers["Authorization"] = f"Bearer {self.admin_token}"
 
             status_response = self._make_request(
-                "GET",
-                self.config.ADMIN_MODEL_STATUS_ENDPOINT,
-                headers=headers
+                "GET", self.config.ADMIN_MODEL_STATUS_ENDPOINT, headers=headers
             )
 
             if status_response.status_code == 401:
@@ -447,7 +447,7 @@ class SystemAuditor:
             elif status_response.status_code != 200:
                 result.fail_check(
                     f"获取模型状态失败，状态码: {status_response.status_code}",
-                    {"response": status_response.text[:200]}
+                    {"response": status_response.text[:200]},
                 )
                 return result
 
@@ -455,21 +455,19 @@ class SystemAuditor:
             current_version = model_status.get("current_version", "unknown")
 
             # 模拟触发重训练任务（使用测试描述）
-            retrain_payload = {
-                "description": "System audit test retraining"
-            }
+            retrain_payload = {"description": "System audit test retraining"}
 
             retrain_response = self._make_request(
                 "POST",
                 self.config.ADMIN_RETRAIN_ENDPOINT,
                 json=retrain_payload,
-                headers=headers
+                headers=headers,
             )
 
             if retrain_response.status_code != 200:
                 result.fail_check(
                     f"触发重训练任务失败，状态码: {retrain_response.status_code}",
-                    {"response": retrain_response.text[:200]}
+                    {"response": retrain_response.text[:200]},
                 )
                 return result
 
@@ -477,15 +475,17 @@ class SystemAuditor:
             task_id = retrain_result.get("task_id")
 
             if not task_id:
-                result.fail_check("重训练任务未返回有效的Task ID", {"response": retrain_result})
+                result.fail_check(
+                    "重训练任务未返回有效的Task ID", {"response": retrain_result}
+                )
             else:
                 result.pass_check(
                     f"MLOps功能正常，当前模型版本: {current_version}，重训练任务已提交",
                     {
                         "current_version": current_version,
                         "task_id": task_id,
-                        "training_status": model_status.get("training_status", {})
-                    }
+                        "training_status": model_status.get("training_status", {}),
+                    },
                 )
 
         except Exception as e:
@@ -498,8 +498,7 @@ class SystemAuditor:
     async def check_prometheus_metrics(self) -> HealthCheckResult:
         """6. Prometheus指标检查"""
         result = HealthCheckResult(
-            "Prometheus指标检查",
-            "验证Prometheus指标是否正常暴露和收集"
+            "Prometheus指标检查", "验证Prometheus指标是否正常暴露和收集"
         )
         result.start()
 
@@ -519,7 +518,7 @@ class SystemAuditor:
             key_metrics = [
                 "prediction_requests_total",
                 "model_inference_latency_seconds",
-                "fastapi_http_requests_total"
+                "fastapi_http_requests_total",
             ]
 
             found_metrics = []
@@ -557,8 +556,8 @@ class SystemAuditor:
                     {
                         "found_metrics": found_metrics,
                         "missing_metrics": missing_metrics,
-                        "prometheus_available": prometheus_available
-                    }
+                        "prometheus_available": prometheus_available,
+                    },
                 )
             else:
                 prometheus_status = "可用" if prometheus_available else "不可访问"
@@ -567,8 +566,8 @@ class SystemAuditor:
                     {
                         "found_metrics": found_metrics,
                         "prometheus_available": prometheus_available,
-                        "prometheus_data_points": prometheus_response_count
-                    }
+                        "prometheus_data_points": prometheus_response_count,
+                    },
                 )
 
         except Exception as e:
@@ -593,7 +592,7 @@ class SystemAuditor:
             self.check_sync_prediction,
             self.check_batch_prediction,
             self.check_mlops_functionality,
-            self.check_prometheus_metrics
+            self.check_prometheus_metrics,
         ]
 
         for check_func in checks:
@@ -621,31 +620,36 @@ class SystemAuditor:
         status_color = Fore.GREEN if overall_status == "PASS" else Fore.RED
         status_icon = "✓" if overall_status == "PASS" else "✗"
 
-        print(f"\n{status_color}{status_icon} 整体验收状态: {overall_status}{Style.RESET_ALL}\n")
+        print(
+            f"\n{status_color}{status_icon} 整体验收状态: {overall_status}{Style.RESET_ALL}\n"
+        )
 
         # 生成详细报告
         report = {
             "audit_info": {
                 "timestamp": datetime.now().isoformat(),
                 "total_duration_seconds": round(total_time, 2),
-                "overall_status": overall_status
+                "overall_status": overall_status,
             },
             "summary": {
                 "total_checks": total_count,
                 "passed": passed_count,
                 "failed": failed_count,
-                "skipped": skipped_count
+                "skipped": skipped_count,
             },
-            "checks": [result.to_dict() for result in self.results]
+            "checks": [result.to_dict() for result in self.results],
         }
 
         return report
+
 
 async def main():
     """主函数"""
     parser = argparse.ArgumentParser(description="FootballPrediction系统集成验收脚本")
     parser.add_argument("--verbose", "-v", action="store_true", help="详细输出")
-    parser.add_argument("--output-json", "-j", action="store_true", help="输出JSON格式报告")
+    parser.add_argument(
+        "--output-json", "-j", action="store_true", help="输出JSON格式报告"
+    )
     parser.add_argument("--output-file", "-o", type=str, help="输出报告到文件")
 
     args = parser.parse_args()
@@ -660,7 +664,7 @@ async def main():
         # 输出报告
         if args.output_json:
             if args.output_file:
-                with open(args.output_file, 'w', encoding='utf-8') as f:
+                with open(args.output_file, "w", encoding="utf-8") as f:
                     json.dump(report, f, indent=2, ensure_ascii=False)
                 print(f"\n报告已保存到: {args.output_file}")
             else:
@@ -676,6 +680,7 @@ async def main():
     except Exception as e:
         print(f"\n{Fore.RED}验收检查异常: {str(e)}{Style.RESET_ALL}")
         sys.exit(1)
+
 
 if __name__ == "__main__":
     asyncio.run(main())

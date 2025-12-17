@@ -19,7 +19,13 @@ from .h2h_calculator import H2HCalculator
 from .venue_analyzer import VenueAnalyzer
 from .extractor import MatchFeatureExtractor, MatchFeatureSet
 
-__all__ = ["AdvancedFeatureTransformer", "H2HCalculator", "VenueAnalyzer", "MatchFeatureExtractor", "MatchFeatureSet"]
+__all__ = [
+    "AdvancedFeatureTransformer",
+    "H2HCalculator",
+    "VenueAnalyzer",
+    "MatchFeatureExtractor",
+    "MatchFeatureSet",
+]
 
 __version__ = "5.0.0"
 __author__ = "Football Prediction Team"

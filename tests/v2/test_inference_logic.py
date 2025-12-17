@@ -46,18 +46,18 @@ class TestModelLoader:
         model_name = "test_model"
 
         # 模拟文件存在
-        with patch('pathlib.Path.exists', return_value=True):
+        with patch("pathlib.Path.exists", return_value=True):
             # 模拟pickle加载
             mock_model_data = {
-                'model': mock_model,
-                'metadata': {
-                    'model_version': '1.0.0',
-                    'feature_names': ['feature1', 'feature2', 'feature3']
-                }
+                "model": mock_model,
+                "metadata": {
+                    "model_version": "1.0.0",
+                    "feature_names": ["feature1", "feature2", "feature3"],
+                },
             }
 
-            with patch('pickle.load', return_value=mock_model_data):
-                with patch('builtins.open', mock_open()):
+            with patch("pickle.load", return_value=mock_model_data):
+                with patch("builtins.open", mock_open()):
                     result = model_loader.load_model(model_name, model_path)
 
                     assert result is True
@@ -68,7 +68,7 @@ class TestModelLoader:
         model_name = "nonexistent_model"
         model_path = "nonexistent.pkl"
 
-        with patch('pathlib.Path.exists', return_value=False):
+        with patch("pathlib.Path.exists", return_value=False):
             with pytest.raises(ModelLoadError, match="模型文件不存在"):
                 model_loader.load_model(model_name, model_path)
 
@@ -78,20 +78,20 @@ class TestModelLoader:
         model_path = "test_model.pkl"
 
         # 首先加载模型
-        with patch('pathlib.Path.exists', return_value=True):
+        with patch("pathlib.Path.exists", return_value=True):
             mock_model_data = {
-                'model': mock_model,
-                'metadata': {'model_version': '1.0.0'}
+                "model": mock_model,
+                "metadata": {"model_version": "1.0.0"},
             }
 
-            with patch('pickle.load', return_value=mock_model_data):
-                with patch('builtins.open', mock_open()):
+            with patch("pickle.load", return_value=mock_model_data):
+                with patch("builtins.open", mock_open()):
                     model_loader.load_model(model_name, model_path)
 
         # 现在获取模型
         retrieved_model = model_loader.get_model(model_name)
         assert retrieved_model is not None
-        assert hasattr(retrieved_model, 'predict')
+        assert hasattr(retrieved_model, "predict")
 
         # 获取不存在的模型
         nonexistent_model = model_loader.get_model("nonexistent")
@@ -103,14 +103,14 @@ class TestModelLoader:
         model_path = "test_model.pkl"
 
         # 加载模型
-        with patch('pathlib.Path.exists', return_value=True):
+        with patch("pathlib.Path.exists", return_value=True):
             mock_model_data = {
-                'model': mock_model,
-                'metadata': {'model_version': '1.0.0'}
+                "model": mock_model,
+                "metadata": {"model_version": "1.0.0"},
             }
 
-            with patch('pickle.load', return_value=mock_model_data):
-                with patch('builtins.open', mock_open()):
+            with patch("pickle.load", return_value=mock_model_data):
+                with patch("builtins.open", mock_open()):
                     model_loader.load_model(model_name, model_path)
 
         assert model_name in model_loader.loaded_models
@@ -179,7 +179,7 @@ class TestPredictionCache:
         assert cached_result is not None
 
         # 模拟时间过期
-        with patch('datetime.datetime') as mock_datetime:
+        with patch("datetime.datetime") as mock_datetime:
             now = datetime.now()
             mock_datetime.now.return_value = now + timedelta(seconds=2)
 
@@ -230,7 +230,7 @@ class TestMatchPredictor:
         return MatchPredictor(
             model_loader=mock_model_loader,
             cache_manager=mock_cache_manager,
-            default_model_name="test_model"
+            default_model_name="test_model",
         )
 
     async def test_predictor_initialization(self, predictor):
@@ -238,7 +238,7 @@ class TestMatchPredictor:
         assert predictor.model_loader is not None
         assert predictor.cache_manager is not None
         assert predictor.default_model_name == "test_model"
-        assert hasattr(predictor, 'OUTCOME_MAP')
+        assert hasattr(predictor, "OUTCOME_MAP")
 
     @pytest.mark.skip(reason="Legacy configuration issue - to be fixed in v2.1")
     async def test_predict_with_numpy_features(self, predictor):
@@ -264,13 +264,15 @@ class TestMatchPredictor:
 
     async def test_predict_with_dataframe_features(self, predictor):
         """测试使用DataFrame特征预测"""
-        features = pd.DataFrame({
-            'feature1': [1.0],
-            'feature2': [2.0],
-            'feature3': [3.0],
-            'feature4': [4.0],
-            'feature5': [5.0]
-        })
+        features = pd.DataFrame(
+            {
+                "feature1": [1.0],
+                "feature2": [2.0],
+                "feature3": [3.0],
+                "feature4": [4.0],
+                "feature5": [5.0],
+            }
+        )
 
         result = await predictor.predict(features)
 
@@ -283,7 +285,7 @@ class TestMatchPredictor:
         cached_result = {
             "prediction": "HOME_WIN",
             "confidence": 0.7,
-            "probabilities": [0.1, 0.2, 0.7]
+            "probabilities": [0.1, 0.2, 0.7],
         }
 
         # 模拟缓存命中
@@ -321,7 +323,7 @@ class TestMatchPredictor:
         features_list = [
             np.array([[1.0, 2.0, 3.0]]),
             np.array([[4.0, 5.0, 6.0]]),
-            np.array([[7.0, 8.0, 9.0]])
+            np.array([[7.0, 8.0, 9.0]]),
         ]
 
         results = await predictor.predict_batch(features_list)
@@ -345,12 +347,14 @@ class TestMatchPredictor:
         assert predictor.OUTCOME_MAP[1] == "DRAW"
         assert predictor.OUTCOME_MAP[2] == "HOME_WIN"
 
-    async def test_predictor_with_different_models(self, mock_model_loader, mock_cache_manager):
+    async def test_predictor_with_different_models(
+        self, mock_model_loader, mock_cache_manager
+    ):
         """测试使用不同模型预测"""
         predictor = MatchPredictor(
             model_loader=mock_model_loader,
             cache_manager=mock_cache_manager,
-            default_model_name="alternative_model"
+            default_model_name="alternative_model",
         )
 
         features = np.array([[1.0, 2.0, 3.0]])
@@ -380,16 +384,16 @@ class TestInferenceIntegration:
         model_loader = ModelLoader()
 
         # 模拟模型加载
-        with patch('pathlib.Path.exists', return_value=True):
+        with patch("pathlib.Path.exists", return_value=True):
             mock_model_data = {
-                'model': mock_model,
-                'metadata': {
-                    'model_version': '1.0.0',
-                    'feature_names': ['f1', 'f2', 'f3', 'f4', 'f5']
-                }
+                "model": mock_model,
+                "metadata": {
+                    "model_version": "1.0.0",
+                    "feature_names": ["f1", "f2", "f3", "f4", "f5"],
+                },
             }
-            with patch('pickle.load', return_value=mock_model_data):
-                with patch('builtins.open', mock_open()):
+            with patch("pickle.load", return_value=mock_model_data):
+                with patch("builtins.open", mock_open()):
                     model_loader.load_model("test_model", "test_model.pkl")
 
         # 创建缓存管理器
@@ -397,8 +401,7 @@ class TestInferenceIntegration:
 
         # 创建预测器
         predictor = MatchPredictor(
-            model_loader=model_loader,
-            cache_manager=cache_manager
+            model_loader=model_loader, cache_manager=cache_manager
         )
 
         # 执行预测
@@ -420,9 +423,9 @@ class TestInferenceErrorHandling:
         """测试模型加载错误处理"""
         model_loader = ModelLoader()
 
-        with patch('pathlib.Path.exists', return_value=True):
-            with patch('pickle.load', side_effect=Exception("Corrupted file")):
-                with patch('builtins.open', mock_open()):
+        with patch("pathlib.Path.exists", return_value=True):
+            with patch("pickle.load", side_effect=Exception("Corrupted file")):
+                with patch("builtins.open", mock_open()):
                     with pytest.raises(ModelLoadError):
                         model_loader.load_model("corrupted_model", "corrupted.pkl")
 
@@ -436,10 +439,7 @@ class TestInferenceErrorHandling:
         mock_model_loader = MagicMock()
         mock_model_loader.get_model.return_value = mock_model
 
-        predictor = MatchPredictor(
-            model_loader=mock_model_loader,
-            cache_manager=None
-        )
+        predictor = MatchPredictor(model_loader=mock_model_loader, cache_manager=None)
 
         features = np.array([[1.0, 2.0, 3.0]])
 
@@ -462,10 +462,7 @@ class TestInferencePerformance:
         mock_model_loader = MagicMock()
         mock_model_loader.get_model.return_value = mock_model
 
-        predictor = MatchPredictor(
-            model_loader=mock_model_loader,
-            cache_manager=None
-        )
+        predictor = MatchPredictor(model_loader=mock_model_loader, cache_manager=None)
 
         features = np.array([[1.0, 2.0, 3.0]])
 
@@ -489,17 +486,14 @@ class TestInferencePerformance:
         mock_model_loader = MagicMock()
         mock_model_loader.get_model.return_value = mock_model
 
-        predictor = MatchPredictor(
-            model_loader=mock_model_loader,
-            cache_manager=None
-        )
+        predictor = MatchPredictor(model_loader=mock_model_loader, cache_manager=None)
 
         import asyncio
 
         # 创建多个并发预测任务
         tasks = []
         for i in range(10):
-            features = np.array([[float(i), float(i+1), float(i+2)]])
+            features = np.array([[float(i), float(i + 1), float(i + 2)]])
             task = predictor.predict(features)
             tasks.append(task)
 

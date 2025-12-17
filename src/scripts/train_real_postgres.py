@@ -44,6 +44,7 @@ except ImportError:
         # 直接创建相对导入
         import sys
         import os
+
         current_dir = Path(__file__).parent
         src_dir = current_dir.parent
         if str(src_dir) not in sys.path:
@@ -59,8 +60,7 @@ except ImportError:
 
 # 配置日志
 logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -78,49 +78,56 @@ class RealDataTrainingPipeline:
         self.data_loader = PostgresDataLoader(
             batch_size=1000,
             selected_columns=[
-                'home_team_id', 'away_team_id', 'home_score', 'away_score',
-                'match_date', 'status', 'home_team_name', 'away_team_name', 'league_id'
+                "home_team_id",
+                "away_team_id",
+                "home_score",
+                "away_score",
+                "match_date",
+                "status",
+                "home_team_name",
+                "away_team_name",
+                "league_id",
             ],
-            max_records=5000
+            max_records=5000,
         )
 
         # 特征工程配置
         self.feature_transformers = [
             RollingAverageTransformer(
                 windows=[3, 5, 10],  # 3场、5场、10场滚动平均
-                columns=['home_score', 'away_score'],  # 对得分进行滚动平均
-                group_by=['home_team_id'],  # 按主队分组
-                date_column='match_date',
-                output_prefix='rolling_home'
+                columns=["home_score", "away_score"],  # 对得分进行滚动平均
+                group_by=["home_team_id"],  # 按主队分组
+                date_column="match_date",
+                output_prefix="rolling_home",
             ),
             RollingAverageTransformer(
                 windows=[3, 5, 10],
-                columns=['home_score', 'away_score'],
-                group_by=['away_team_id'],  # 按客队分组
-                date_column='match_date',
-                output_prefix='rolling_away'
-            )
+                columns=["home_score", "away_score"],
+                group_by=["away_team_id"],  # 按客队分组
+                date_column="match_date",
+                output_prefix="rolling_away",
+            ),
         ]
 
         # 模型参数配置
         self.model_params = {
-            'n_estimators': 200,
-            'max_depth': 5,
-            'learning_rate': 0.1,
-            'subsample': 0.8,
-            'colsample_bytree': 0.8,
-            'random_state': 42,
-            'eval_metric': 'logloss',
-            'use_label_encoder': False,
-            'reg_alpha': 0.1,  # L1正则化
-            'reg_lambda': 1.0,  # L2正则化
+            "n_estimators": 200,
+            "max_depth": 5,
+            "learning_rate": 0.1,
+            "subsample": 0.8,
+            "colsample_bytree": 0.8,
+            "random_state": 42,
+            "eval_metric": "logloss",
+            "use_label_encoder": False,
+            "reg_alpha": 0.1,  # L1正则化
+            "reg_lambda": 1.0,  # L2正则化
         }
 
         # 模型训练器
         self.model_trainer = ModelTrainer(
             data_loader=self.data_loader,
             feature_transformers=self.feature_transformers,
-            model_params=self.model_params
+            model_params=self.model_params,
         )
 
         logger.info("真实数据训练流水线初始化完成")
@@ -170,10 +177,13 @@ class RealDataTrainingPipeline:
         except Exception as e:
             logger.error(f"❌ 真实数据训练失败: {str(e)}")
             import traceback
+
             traceback.print_exc()
             return {"success": False, "error": str(e)}
 
-    def _generate_evaluation_report(self, training_metrics, feature_importance_df, data_summary) -> dict:
+    def _generate_evaluation_report(
+        self, training_metrics, feature_importance_df, data_summary
+    ) -> dict:
         """
         生成详细的评估报告
 
@@ -190,10 +200,9 @@ class RealDataTrainingPipeline:
         if feature_importance_df is not None and not feature_importance_df.empty:
             top_5_features = feature_importance_df.head(5)
             for _, row in top_5_features.iterrows():
-                top_features.append({
-                    'feature': row['feature'],
-                    'importance': float(row['importance'])
-                })
+                top_features.append(
+                    {"feature": row["feature"], "importance": float(row["importance"])}
+                )
 
         # 构建评估报告
         evaluation_report = {
@@ -201,15 +210,15 @@ class RealDataTrainingPipeline:
             "training_info": {
                 "model_type": "XGBClassifier",
                 "data_source": "PostgreSQL - 真实比赛数据",
-                "total_samples": data_summary.get('total_records', 0),
-                "training_samples": training_metrics.get('train_samples', 0),
-                "test_samples": training_metrics.get('test_samples', 0),
+                "total_samples": data_summary.get("total_records", 0),
+                "training_samples": training_metrics.get("train_samples", 0),
+                "test_samples": training_metrics.get("test_samples", 0),
                 "feature_engineering": "RollingAverageTransformer (3, 5, 10 windows)",
-                "target_variable": "主队获胜 (home_score > away_score)"
+                "target_variable": "主队获胜 (home_score > away_score)",
             },
             "performance_metrics": {
-                "accuracy": float(training_metrics.get('accuracy', 0)),
-                "precision": float(training_metrics.get('precision', 0)),
+                "accuracy": float(training_metrics.get("accuracy", 0)),
+                "precision": float(training_metrics.get("precision", 0)),
             },
             "top_5_features": top_features,
             "model_parameters": self.model_params,
@@ -217,8 +226,8 @@ class RealDataTrainingPipeline:
             "data_quality": {
                 "missing_values": "已处理",
                 "outliers": "已处理",
-                "temporal_splitting": "严格时间序列切分"
-            }
+                "temporal_splitting": "严格时间序列切分",
+            },
         }
 
         return evaluation_report
@@ -230,7 +239,10 @@ class RealDataTrainingPipeline:
         Returns:
             str: 模型保存路径
         """
-        if not hasattr(self.model_trainer, 'model') or not self.model_trainer.is_trained_:
+        if (
+            not hasattr(self.model_trainer, "model")
+            or not self.model_trainer.is_trained_
+        ):
             raise RuntimeError("模型尚未训练，无法保存")
 
         # 创建模型目录
@@ -248,14 +260,14 @@ class RealDataTrainingPipeline:
             "feature_transformers": [
                 {
                     "type": type(t).__name__,
-                    "windows": t.windows if hasattr(t, 'windows') else None,
-                    "columns": t.columns if hasattr(t, 'columns') else None
+                    "windows": t.windows if hasattr(t, "windows") else None,
+                    "columns": t.columns if hasattr(t, "columns") else None,
                 }
                 for t in self.feature_transformers
-            ]
+            ],
         }
 
-        with open(feature_info_path, 'w', encoding='utf-8') as f:
+        with open(feature_info_path, "w", encoding="utf-8") as f:
             json.dump(feature_info, f, indent=2, ensure_ascii=False)
 
         logger.info(f"✅ 模型已保存: {model_path}")
@@ -280,14 +292,16 @@ class RealDataTrainingPipeline:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         report_path = reports_dir / f"training_report_real_v2_{timestamp}.json"
 
-        with open(report_path, 'w', encoding='utf-8') as f:
+        with open(report_path, "w", encoding="utf-8") as f:
             json.dump(evaluation_report, f, indent=2, ensure_ascii=False)
 
         logger.info(f"✅ 训练报告已保存: {report_path}")
 
         return str(report_path)
 
-    def _print_training_summary(self, evaluation_report: dict, model_path: str, report_path: str):
+    def _print_training_summary(
+        self, evaluation_report: dict, model_path: str, report_path: str
+    ):
         """
         打印训练总结报告
 
@@ -301,8 +315,12 @@ class RealDataTrainingPipeline:
         logger.info("📊 模型性能:")
 
         metrics = evaluation_report["performance_metrics"]
-        logger.info(f"   • Accuracy:  {metrics['accuracy']:.4f} ({metrics['accuracy']:.2%})")
-        logger.info(f"   • Precision: {metrics['precision']:.4f} ({metrics['precision']:.2%})")
+        logger.info(
+            f"   • Accuracy:  {metrics['accuracy']:.4f} ({metrics['accuracy']:.2%})"
+        )
+        logger.info(
+            f"   • Precision: {metrics['precision']:.4f} ({metrics['precision']:.2%})"
+        )
 
         logger.info("🔧 技术规格:")
         training_info = evaluation_report["training_info"]
@@ -316,7 +334,9 @@ class RealDataTrainingPipeline:
         logger.info("🏆 Top 5 重要特征:")
         top_features = evaluation_report["top_5_features"]
         for i, feature_info in enumerate(top_features, 1):
-            logger.info(f"   {i}. {feature_info['feature']:<30} : {feature_info['importance']:.6f}")
+            logger.info(
+                f"   {i}. {feature_info['feature']:<30} : {feature_info['importance']:.6f}"
+            )
 
         logger.info("💾 输出文件:")
         logger.info(f"   • 模型文件:   {model_path}")
@@ -346,7 +366,7 @@ async def main():
 
         # 提取并显示关键指标
         metrics = result["performance_metrics"]
-        logger.info("\n" + "="*50)
+        logger.info("\n" + "=" * 50)
         logger.info("📈 核心指标总结:")
         logger.info(f"   • Accuracy:  {metrics['accuracy']:.2%}")
         logger.info(f"   • Precision: {metrics['precision']:.2%}")
@@ -355,7 +375,7 @@ async def main():
         for i, feature in enumerate(result["top_5_features"], 1):
             logger.info(f"   {i}. {feature['feature']}: {feature['importance']:.6f}")
 
-        logger.info("="*50)
+        logger.info("=" * 50)
 
         sys.exit(0)
     else:

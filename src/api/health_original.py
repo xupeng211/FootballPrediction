@@ -43,17 +43,17 @@ async def health_check() -> Dict[str, Any]:
             "database": {
                 "healthy": True,
                 "response_time_ms": 1.0,
-                "details": {"message": "数据库连接正常"}
+                "details": {"message": "数据库连接正常"},
             },
             "redis": {
                 "healthy": True,
                 "response_time_ms": 0.5,
-                "details": {"message": "Redis连接正常"}
+                "details": {"message": "Redis连接正常"},
             },
             "filesystem": {
                 "healthy": True,
                 "response_time_ms": 0.2,
-                "details": {"message": "文件系统正常"}
+                "details": {"message": "文件系统正常"},
             },
         },
     }

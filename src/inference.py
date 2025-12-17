@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 warnings.warn(
     "src.inference.py is deprecated. Use 'from src.ml.inference import *' instead.",
     DeprecationWarning,
-    stacklevel=2
+    stacklevel=2,
 )
 
 # 重定向到新的重构模块
@@ -37,11 +37,13 @@ from src.ml.inference import *
 
 class ModelLoadError(Exception):
     """模型加载异常"""
+
     pass
 
 
 class PredictionError(Exception):
     """预测异常"""
+
     pass
 
 
@@ -53,7 +55,9 @@ class Predictor:
     支持1X2分类预测，输出各类别概率。
     """
 
-    def __init__(self, model_path: Union[str, Path], feature_names: Optional[List[str]] = None):
+    def __init__(
+        self, model_path: Union[str, Path], feature_names: Optional[List[str]] = None
+    ):
         """
         初始化预测器
 
@@ -84,15 +88,15 @@ class Predictor:
                 raise ModelLoadError(f"模型文件不存在: {self.model_path}")
 
             # 加载模型
-            if self.model_path.suffix in ['.pkl', '.pickle']:
-                with open(self.model_path, 'rb') as f:
+            if self.model_path.suffix in [".pkl", ".pickle"]:
+                with open(self.model_path, "rb") as f:
                     model_data = pickle.load(f)
 
                 # 处理不同的模型格式
                 if isinstance(model_data, dict):
                     # 如果是包含模型和元数据的字典
-                    self.model = model_data.get('model')
-                    self.model_metadata = model_data.get('metadata', {})
+                    self.model = model_data.get("model")
+                    self.model_metadata = model_data.get("metadata", {})
                 else:
                     # 直接是模型对象
                     self.model = model_data
@@ -101,8 +105,8 @@ class Predictor:
                 # 使用joblib加载
                 model_data = joblib.load(self.model_path)
                 if isinstance(model_data, dict):
-                    self.model = model_data.get('model')
-                    self.model_metadata = model_data.get('metadata', {})
+                    self.model = model_data.get("model")
+                    self.model_metadata = model_data.get("metadata", {})
                 else:
                     self.model = model_data
                     self.model_metadata = {}
@@ -111,8 +115,8 @@ class Predictor:
                 raise ModelLoadError("模型文件中未找到有效的模型对象")
 
             # 从元数据中提取特征名称（如果未提供）
-            if not self.feature_names and 'feature_names' in self.model_metadata:
-                self.feature_names = self.model_metadata['feature_names']
+            if not self.feature_names and "feature_names" in self.model_metadata:
+                self.feature_names = self.model_metadata["feature_names"]
 
             self.model_loaded = True
             logger.info(f"模型加载成功: {self.model_path}")
@@ -127,7 +131,9 @@ class Predictor:
             logger.error(error_msg)
             raise ModelLoadError(error_msg) from e
 
-    def _validate_features(self, features: Union[np.ndarray, pd.DataFrame, List[float]]) -> np.ndarray:
+    def _validate_features(
+        self, features: Union[np.ndarray, pd.DataFrame, List[float]]
+    ) -> np.ndarray:
         """
         验证和预处理输入特征
 
@@ -169,7 +175,9 @@ class Predictor:
 
         return feature_array
 
-    def predict(self, features: Union[np.ndarray, pd.DataFrame, List[float]]) -> Dict[str, Any]:
+    def predict(
+        self, features: Union[np.ndarray, pd.DataFrame, List[float]]
+    ) -> Dict[str, Any]:
         """
         执行预测
 
@@ -190,12 +198,18 @@ class Predictor:
             feature_array = self._validate_features(features)
 
             # 执行预测
-            if hasattr(self.model, 'predict_proba'):
+            if hasattr(self.model, "predict_proba"):
                 probabilities = self.model.predict_proba(feature_array)[0]
                 predicted_class_array = self.model.predict(feature_array)
-                predicted_class = predicted_class_array[0] if hasattr(predicted_class_array, '__len__') else predicted_class_array
+                predicted_class = (
+                    predicted_class_array[0]
+                    if hasattr(predicted_class_array, "__len__")
+                    else predicted_class_array
+                )
             else:
-                raise PredictionError("模型不支持预测，请确保模型有predict_proba和predict方法")
+                raise PredictionError(
+                    "模型不支持预测，请确保模型有predict_proba和predict方法"
+                )
 
             # 解析概率结果
             if len(probabilities) == 3:
@@ -206,21 +220,25 @@ class Predictor:
                     "home_win_prob": float(probabilities[2]),
                     "predicted_class": int(predicted_class),
                     "predicted_outcome": self._class_to_outcome(predicted_class),
-                    "probabilities": [float(p) for p in probabilities]
+                    "probabilities": [float(p) for p in probabilities],
                 }
             else:
                 # 其他分类问题
                 result = {
                     "predicted_class": int(predicted_class),
-                    "probabilities": [float(p) for p in probabilities]
+                    "probabilities": [float(p) for p in probabilities],
                 }
 
             # 添加元数据
-            result.update({
-                "model_version": self.model_metadata.get("model_version", "unknown"),
-                "prediction_time": datetime.now().isoformat(),
-                "feature_count": feature_array.shape[1]
-            })
+            result.update(
+                {
+                    "model_version": self.model_metadata.get(
+                        "model_version", "unknown"
+                    ),
+                    "prediction_time": datetime.now().isoformat(),
+                    "feature_count": feature_array.shape[1],
+                }
+            )
 
             logger.info(f"预测完成: {result.get('predicted_outcome', predicted_class)}")
             return result
@@ -259,7 +277,7 @@ class Predictor:
             "model_path": str(self.model_path),
             "feature_count": len(self.feature_names) if self.feature_names else None,
             "feature_names": self.feature_names,
-            "metadata": self.model_metadata
+            "metadata": self.model_metadata,
         }
 
 
@@ -273,11 +291,15 @@ class ModelLoader:
         Args:
             model_cache_dir: 模型缓存目录
         """
-        self.model_cache_dir = Path(model_cache_dir) if model_cache_dir else Path("models")
+        self.model_cache_dir = (
+            Path(model_cache_dir) if model_cache_dir else Path("models")
+        )
         self.loaded_models: Dict[str, Predictor] = {}
         logger.info(f"模型加载器初始化完成，缓存目录: {self.model_cache_dir}")
 
-    def load_model(self, model_name: str, model_path: Optional[Union[str, Path]] = None) -> bool:
+    def load_model(
+        self, model_name: str, model_path: Optional[Union[str, Path]] = None
+    ) -> bool:
         """
         加载模型
 
@@ -389,16 +411,25 @@ class PredictionCache:
             cache_entry = self.cache[cache_key]
 
             # 检查是否过期
-            if datetime.now().timestamp() - cache_entry['timestamp'] < cache_entry['ttl']:
+            if (
+                datetime.now().timestamp() - cache_entry["timestamp"]
+                < cache_entry["ttl"]
+            ):
                 logger.debug(f"缓存命中: {cache_key}")
-                return cache_entry['result']
+                return cache_entry["result"]
             else:
                 # 清理过期缓存
                 del self.cache[cache_key]
 
         return None
 
-    def set(self, features: np.ndarray, model_name: str, result: Dict[str, Any], ttl: Optional[int] = None) -> None:
+    def set(
+        self,
+        features: np.ndarray,
+        model_name: str,
+        result: Dict[str, Any],
+        ttl: Optional[int] = None,
+    ) -> None:
         """
         设置缓存
 
@@ -411,9 +442,9 @@ class PredictionCache:
         cache_key = self._generate_cache_key(features, model_name)
 
         self.cache[cache_key] = {
-            'result': result,
-            'timestamp': datetime.now().timestamp(),
-            'ttl': ttl if ttl is not None else self.default_ttl
+            "result": result,
+            "timestamp": datetime.now().timestamp(),
+            "ttl": ttl if ttl is not None else self.default_ttl,
         }
 
         logger.debug(f"缓存已设置: {cache_key}")
@@ -476,7 +507,9 @@ class HotReloadManager:
                 if model_name in self.model_timestamps:
                     if current_timestamp > self.model_timestamps[model_name]:
                         # 模型文件已更新，重新加载
-                        if self.model_loader.load_model(model_name, predictor.model_path):
+                        if self.model_loader.load_model(
+                            model_name, predictor.model_path
+                        ):
                             reloaded_models.append(model_name)
                             self.model_timestamps[model_name] = current_timestamp
                             logger.info(f"模型 {model_name} 已热重载")
@@ -492,7 +525,9 @@ _prediction_cache = PredictionCache()
 _hot_reload_manager = HotReloadManager(_model_loader)
 
 
-def get_predictor(model_path: Union[str, Path], feature_names: Optional[List[str]] = None) -> Predictor:
+def get_predictor(
+    model_path: Union[str, Path], feature_names: Optional[List[str]] = None
+) -> Predictor:
     """
     获取预测器实例
 
@@ -527,7 +562,7 @@ def predict_match(
     features: Union[np.ndarray, pd.DataFrame, List[float]],
     model_path: Union[str, Path],
     feature_names: Optional[List[str]] = None,
-    use_cache: bool = True
+    use_cache: bool = True,
 ) -> Dict[str, Any]:
     """
     便捷函数：执行单次预测

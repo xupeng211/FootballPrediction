@@ -33,8 +33,7 @@ sys.path.insert(0, str(project_root))
 
 # 配置日志
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -44,8 +43,12 @@ class PredictionConfig:
 
     def __init__(self):
         # 从环境变量或默认值加载配置
-        self.model_path = os.getenv("MODEL_PATH", "models/football_prediction_model.pkl")
-        self.database_url = os.getenv("DATABASE_URL", "postgresql://localhost:5432/football_prediction")
+        self.model_path = os.getenv(
+            "MODEL_PATH", "models/football_prediction_model.pkl"
+        )
+        self.database_url = os.getenv(
+            "DATABASE_URL", "postgresql://localhost:5432/football_prediction"
+        )
         self.use_real_data = os.getenv("USE_REAL_DATA", "true").lower() == "true"
         self.cache_enabled = os.getenv("CACHE_ENABLED", "true").lower() == "true"
         self.log_level = os.getenv("LOG_LEVEL", "INFO").upper()
@@ -58,7 +61,7 @@ class PredictionConfig:
     def load_from_file(self, config_file: Path) -> None:
         """从文件加载配置"""
         try:
-            with open(config_file, 'r', encoding='utf-8') as f:
+            with open(config_file, "r", encoding="utf-8") as f:
                 config_data = json.load(f)
                 for key, value in config_data.items():
                     if hasattr(self, key):
@@ -81,9 +84,9 @@ class PredictionDisplay:
     @staticmethod
     def display_prediction_result(result: Dict[str, Any]) -> None:
         """展示预测结果"""
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("⚽  足球比赛预测结果")
-        print("="*60)
+        print("=" * 60)
 
         # 比赛信息
         print("\n📅 比赛信息:")
@@ -92,26 +95,36 @@ class PredictionDisplay:
         print(f"   日期: {result.get('match_date', 'Unknown')}")
 
         # 预测状态
-        success = result.get('success', False)
+        success = result.get("success", False)
         if not success:
             print(f"\n❌ 预测失败: {result.get('error', 'Unknown error')}")
             return
 
         # 预测概率
-        prediction = result.get('prediction', {})
-        if 'home_win_prob' in prediction and 'draw_prob' in prediction and 'away_win_prob' in prediction:
+        prediction = result.get("prediction", {})
+        if (
+            "home_win_prob" in prediction
+            and "draw_prob" in prediction
+            and "away_win_prob" in prediction
+        ):
             print(f"\n🎯 预测概率:")
-            home_prob = prediction['home_win_prob']
-            draw_prob = prediction['draw_prob']
-            away_prob = prediction['away_win_prob']
+            home_prob = prediction["home_win_prob"]
+            draw_prob = prediction["draw_prob"]
+            away_prob = prediction["away_win_prob"]
 
-            print(f"主胜      : {home_prob:6.1%} |{PredictionDisplay.format_confidence_bar(home_prob)}|")
-            print(f"平局      : {draw_prob:6.1%} |{PredictionDisplay.format_confidence_bar(draw_prob)}|")
-            print(f"客胜      : {away_prob:6.1%} |{PredictionDisplay.format_confidence_bar(away_prob)}|")
+            print(
+                f"主胜      : {home_prob:6.1%} |{PredictionDisplay.format_confidence_bar(home_prob)}|"
+            )
+            print(
+                f"平局      : {draw_prob:6.1%} |{PredictionDisplay.format_confidence_bar(draw_prob)}|"
+            )
+            print(
+                f"客胜      : {away_prob:6.1%} |{PredictionDisplay.format_confidence_bar(away_prob)}|"
+            )
 
         # 投注建议
-        predicted_outcome = prediction.get('predicted_outcome', 'UNKNOWN')
-        confidence = prediction.get('confidence', 0.0)
+        predicted_outcome = prediction.get("predicted_outcome", "UNKNOWN")
+        confidence = prediction.get("confidence", 0.0)
 
         print(f"\n💡 投注建议:")
         if confidence > 0.7:
@@ -138,14 +151,14 @@ class PredictionDisplay:
         print(f"   缓存命中: {'是' if result.get('cached', False) else '否'}")
 
         # 模型信息
-        model_info = result.get('model_info', {})
+        model_info = result.get("model_info", {})
         if model_info:
             print(f"\n🤖 模型信息:")
             print(f"   模型版本: {model_info.get('model_version', 'Unknown')}")
             print(f"   特征数量: {model_info.get('feature_count', 'Unknown')}")
             print(f"   模型状态: {model_info.get('status', 'Unknown')}")
 
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
 
 
 class MatchPredictorCLI:
@@ -177,8 +190,7 @@ class MatchPredictorCLI:
             # 尝试加载模型
             if Path(self.config.model_path).exists():
                 model_loaded = self.inference_service.load_model(
-                    "football_model",
-                    self.config.model_path
+                    "football_model", self.config.model_path
                 )
                 if model_loaded:
                     logger.info(f"模型加载成功: {self.config.model_path}")
@@ -199,7 +211,7 @@ class MatchPredictorCLI:
         home_team: str,
         away_team: str,
         match_date: Optional[datetime] = None,
-        match_id: Optional[str] = None
+        match_id: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         预测比赛结果
@@ -219,7 +231,9 @@ class MatchPredictorCLI:
             match_id = f"match_{timestamp}_{hash(home_team + away_team) % 10000}"
 
         if self.simulation_mode:
-            return await self._simulate_prediction(match_id, home_team, away_team, match_date)
+            return await self._simulate_prediction(
+                match_id, home_team, away_team, match_date
+            )
 
         try:
             # 使用服务层进行预测
@@ -227,7 +241,7 @@ class MatchPredictorCLI:
                 match_id=match_id,
                 home_team=home_team,
                 away_team=away_team,
-                match_date=match_date
+                match_date=match_date,
             )
 
             return result
@@ -243,7 +257,7 @@ class MatchPredictorCLI:
                 "error": str(e),
                 "prediction": {},
                 "processing_time_ms": 0,
-                "cached": False
+                "cached": False,
             }
 
     async def _simulate_prediction(
@@ -251,13 +265,17 @@ class MatchPredictorCLI:
         match_id: str,
         home_team: str,
         away_team: str,
-        match_date: Optional[datetime]
+        match_date: Optional[datetime],
     ) -> Dict[str, Any]:
         """模拟预测结果"""
         import random
 
         # 生成模拟概率
-        probabilities = [random.uniform(0.1, 0.5), random.uniform(0.2, 0.4), random.uniform(0.2, 0.6)]
+        probabilities = [
+            random.uniform(0.1, 0.5),
+            random.uniform(0.2, 0.4),
+            random.uniform(0.2, 0.6),
+        ]
         probabilities = [p / sum(probabilities) for p in probabilities]  # 归一化
 
         max_prob_idx = probabilities.index(max(probabilities))
@@ -279,20 +297,22 @@ class MatchPredictorCLI:
                 "probabilities": probabilities,
                 "confidence": max(probabilities),
                 "model_version": "simulation-1.0",
-                "prediction_time": datetime.now().isoformat()
+                "prediction_time": datetime.now().isoformat(),
             },
             "processing_time_ms": random.uniform(50, 200),
             "cached": False,
             "model_info": {
                 "status": "simulation",
                 "model_version": "simulation-1.0",
-                "feature_count": 12
-            }
+                "feature_count": 12,
+            },
         }
 
         return result
 
-    async def batch_predict(self, matches: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    async def batch_predict(
+        self, matches: List[Dict[str, Any]]
+    ) -> List[Dict[str, Any]]:
         """批量预测"""
         results = []
 
@@ -302,7 +322,7 @@ class MatchPredictorCLI:
                     match.get("match_id", f"match_{len(results)}"),
                     match["home_team"],
                     match["away_team"],
-                    match.get("match_date")
+                    match.get("match_date"),
                 )
                 results.append(result)
         else:
@@ -315,7 +335,7 @@ class MatchPredictorCLI:
                     match_id=match.get("match_id", f"match_{len(requests)}"),
                     home_team=match["home_team"],
                     away_team=match["away_team"],
-                    match_date=match.get("match_date")
+                    match_date=match.get("match_date"),
                 )
                 requests.append(request)
 
@@ -330,7 +350,7 @@ class MatchPredictorCLI:
             return {
                 "service_name": "MatchPredictorCLI",
                 "mode": "simulation",
-                "status": "running"
+                "status": "running",
             }
 
         return self.inference_service.get_service_stats()
@@ -362,63 +382,31 @@ def create_arg_parser() -> argparse.ArgumentParser:
 
   # 查看服务状态
   python scripts/predict_match_v2.py --stats
-        """
+        """,
     )
 
-    parser.add_argument(
-        "--home", "-H",
-        type=str,
-        help="主队名称"
-    )
+    parser.add_argument("--home", "-H", type=str, help="主队名称")
 
-    parser.add_argument(
-        "--away", "-A",
-        type=str,
-        help="客队名称"
-    )
+    parser.add_argument("--away", "-A", type=str, help="客队名称")
 
-    parser.add_argument(
-        "--date", "-d",
-        type=str,
-        help="比赛日期 (YYYY-MM-DD)"
-    )
+    parser.add_argument("--date", "-d", type=str, help="比赛日期 (YYYY-MM-DD)")
 
-    parser.add_argument(
-        "--match-id",
-        type=str,
-        help="比赛ID (可选，会自动生成)"
-    )
+    parser.add_argument("--match-id", type=str, help="比赛ID (可选，会自动生成)")
 
     parser.add_argument(
         "--model-path",
         type=str,
         default="models/football_prediction_model.pkl",
-        help="模型文件路径"
+        help="模型文件路径",
     )
 
-    parser.add_argument(
-        "--config",
-        type=str,
-        help="配置文件路径"
-    )
+    parser.add_argument("--config", type=str, help="配置文件路径")
 
-    parser.add_argument(
-        "--verbose", "-v",
-        action="store_true",
-        help="详细输出模式"
-    )
+    parser.add_argument("--verbose", "-v", action="store_true", help="详细输出模式")
 
-    parser.add_argument(
-        "--stats",
-        action="store_true",
-        help="显示服务统计信息"
-    )
+    parser.add_argument("--stats", action="store_true", help="显示服务统计信息")
 
-    parser.add_argument(
-        "--batch-file",
-        type=str,
-        help="批量预测文件路径 (JSON格式)"
-    )
+    parser.add_argument("--batch-file", type=str, help="批量预测文件路径 (JSON格式)")
 
     return parser
 
@@ -435,7 +423,7 @@ def parse_date(date_str: str) -> Optional[datetime]:
 def load_batch_matches(file_path: str) -> List[Dict[str, Any]]:
     """加载批量预测文件"""
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             data = json.load(f)
 
         if isinstance(data, list):
@@ -491,7 +479,7 @@ async def main():
             results = await cli.batch_predict(matches)
 
             print(f"\n📈 批量预测完成 ({len(results)} 场比赛)")
-            success_count = sum(1 for r in results if r.get('success', False))
+            success_count = sum(1 for r in results if r.get("success", False))
             print(f"成功: {success_count}, 失败: {len(results) - success_count}")
 
             # 显示每个结果
@@ -518,14 +506,14 @@ async def main():
             home_team=args.home,
             away_team=args.away,
             match_date=match_date,
-            match_id=args.match_id
+            match_id=args.match_id,
         )
 
         # 显示结果
         PredictionDisplay.display_prediction_result(result)
 
         # 返回状态码
-        return 0 if result.get('success', False) else 1
+        return 0 if result.get("success", False) else 1
 
     except KeyboardInterrupt:
         logger.info("用户中断操作")

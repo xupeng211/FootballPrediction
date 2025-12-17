@@ -30,6 +30,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class PredictionRequest:
     """预测请求"""
+
     match_id: str
     home_team: str
     away_team: str
@@ -47,13 +48,14 @@ class PredictionRequest:
             "match_date": self.match_date.isoformat() if self.match_date else None,
             "features": self.features,
             "use_cache": self.use_cache,
-            "model_name": self.model_name
+            "model_name": self.model_name,
         }
 
 
 @dataclass
 class PredictionResponse:
     """预测响应"""
+
     request: PredictionRequest
     prediction: Dict[str, Any]
     success: bool
@@ -72,7 +74,7 @@ class PredictionResponse:
             "processing_time_ms": self.processing_time_ms,
             "cached": self.cached,
             "model_info": self.model_info,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
 
 
@@ -102,7 +104,7 @@ class InferenceServiceV2(BaseService):
             "successful_predictions": 0,
             "cache_hits": 0,
             "errors": 0,
-            "avg_processing_time_ms": 0.0
+            "avg_processing_time_ms": 0.0,
         }
 
         self.is_initialized = False
@@ -114,13 +116,19 @@ class InferenceServiceV2(BaseService):
 
             # 尝试加载默认模型
             if Path(self.default_model_path).exists():
-                success = await self._load_model_async(self.default_model_name, self.default_model_path)
+                success = await self._load_model_async(
+                    self.default_model_name, self.default_model_path
+                )
                 if success:
                     self.logger.info(f"默认模型加载成功: {self.default_model_path}")
                 else:
-                    self.logger.warning(f"默认模型加载失败，将使用降级模式: {self.default_model_path}")
+                    self.logger.warning(
+                        f"默认模型加载失败，将使用降级模式: {self.default_model_path}"
+                    )
             else:
-                self.logger.info(f"默认模型文件不存在，使用降级模式: {self.default_model_path}")
+                self.logger.info(
+                    f"默认模型文件不存在，使用降级模式: {self.default_model_path}"
+                )
 
             # 初始化特征提取器
             await self.feature_extractor.initialize()
@@ -142,7 +150,7 @@ class InferenceServiceV2(BaseService):
             await self.cache_manager.shutdown()
 
             # 关闭特征提取器
-            if hasattr(self.feature_extractor, 'shutdown'):
+            if hasattr(self.feature_extractor, "shutdown"):
                 await self.feature_extractor.shutdown()
 
             self.is_initialized = False
@@ -157,10 +165,7 @@ class InferenceServiceV2(BaseService):
             # 在线程池中执行同步的模型加载
             loop = asyncio.get_event_loop()
             return await loop.run_in_executor(
-                None,
-                self.model_loader.load_model,
-                model_name,
-                model_path
+                None, self.model_loader.load_model, model_name, model_path
             )
         except Exception as e:
             self.logger.error(f"模型加载异步执行失败: {e}")
@@ -178,10 +183,7 @@ class InferenceServiceV2(BaseService):
         """
         if not self.is_initialized:
             return PredictionResponse(
-                request=request,
-                prediction={},
-                success=False,
-                error="服务未初始化"
+                request=request, prediction={}, success=False, error="服务未初始化"
             )
 
         start_time = datetime.now()
@@ -193,7 +195,7 @@ class InferenceServiceV2(BaseService):
             predictor = MatchPredictor(
                 model_loader=self.model_loader,
                 cache_manager=self.cache_manager,
-                default_model_name=request.model_name or self.default_model_name
+                default_model_name=request.model_name or self.default_model_name,
             )
 
             # 获取或生成特征
@@ -203,16 +205,20 @@ class InferenceServiceV2(BaseService):
             prediction = await predictor.predict(
                 features=features,
                 model_name=request.model_name or self.default_model_name,
-                use_cache=request.use_cache
+                use_cache=request.use_cache,
             )
 
             # 添加业务信息
-            prediction.update({
-                "match_id": request.match_id,
-                "home_team": request.home_team,
-                "away_team": request.away_team,
-                "requested_at": request.match_date.isoformat() if request.match_date else None
-            })
+            prediction.update(
+                {
+                    "match_id": request.match_id,
+                    "home_team": request.home_team,
+                    "away_team": request.away_team,
+                    "requested_at": (
+                        request.match_date.isoformat() if request.match_date else None
+                    ),
+                }
+            )
 
             # 获取模型信息
             model_info = predictor.get_model_info()
@@ -234,7 +240,7 @@ class InferenceServiceV2(BaseService):
                 success=True,
                 processing_time_ms=processing_time,
                 cached=cached,
-                model_info=model_info
+                model_info=model_info,
             )
 
         except Exception as e:
@@ -250,10 +256,12 @@ class InferenceServiceV2(BaseService):
                 prediction={},
                 success=False,
                 error=error_msg,
-                processing_time_ms=processing_time
+                processing_time_ms=processing_time,
             )
 
-    async def _get_or_generate_features(self, request: PredictionRequest) -> List[float]:
+    async def _get_or_generate_features(
+        self, request: PredictionRequest
+    ) -> List[float]:
         """获取或生成特征数据"""
         if request.features is not None:
             # 使用提供的特征
@@ -265,14 +273,14 @@ class InferenceServiceV2(BaseService):
                 match_id=request.match_id,
                 home_team=request.home_team,
                 away_team=request.away_team,
-                match_date=request.match_date
+                match_date=request.match_date,
             )
 
             # 转换为列表格式
-            if hasattr(features, 'to_dict'):
+            if hasattr(features, "to_dict"):
                 feature_dict = features.to_dict()
                 feature_list = list(feature_dict.values())
-            elif hasattr(features, '__iter__'):
+            elif hasattr(features, "__iter__"):
                 feature_list = list(features)
             else:
                 feature_list = [features]
@@ -293,15 +301,15 @@ class InferenceServiceV2(BaseService):
             # 计算移动平均值
             current_avg = self.request_stats["avg_processing_time_ms"]
             self.request_stats["avg_processing_time_ms"] = (
-                (current_avg * (total_requests - 1) + processing_time_ms) / total_requests
-            )
+                current_avg * (total_requests - 1) + processing_time_ms
+            ) / total_requests
 
     async def predict_match_simple(
         self,
         match_id: str,
         home_team: str,
         away_team: str,
-        match_date: Optional[datetime] = None
+        match_date: Optional[datetime] = None,
     ) -> Dict[str, Any]:
         """
         简化的预测接口
@@ -319,13 +327,15 @@ class InferenceServiceV2(BaseService):
             match_id=match_id,
             home_team=home_team,
             away_team=away_team,
-            match_date=match_date
+            match_date=match_date,
         )
 
         response = await self.predict_match(request)
         return response.to_dict()
 
-    async def batch_predict(self, requests: List[PredictionRequest]) -> List[PredictionResponse]:
+    async def batch_predict(
+        self, requests: List[PredictionRequest]
+    ) -> List[PredictionResponse]:
         """
         批量预测
 
@@ -347,7 +357,7 @@ class InferenceServiceV2(BaseService):
                     request=requests[i],
                     prediction={},
                     success=False,
-                    error=f"批量预测异常: {str(response)}"
+                    error=f"批量预测异常: {str(response)}",
                 )
                 result.append(error_response)
             else:
@@ -362,15 +372,19 @@ class InferenceServiceV2(BaseService):
             "is_initialized": self.is_initialized,
             "model_status": {
                 "loaded_models": self.model_loader.list_loaded_models(),
-                "default_model": self.default_model_name
+                "default_model": self.default_model_name,
             },
             "request_stats": self.request_stats.copy(),
-            "cache_stats": self.cache_manager.get_stats().__dict__ if hasattr(self.cache_manager, 'get_stats') else {},
+            "cache_stats": (
+                self.cache_manager.get_stats().__dict__
+                if hasattr(self.cache_manager, "get_stats")
+                else {}
+            ),
             "components": {
                 "model_loader": type(self.model_loader).__name__,
                 "cache_manager": type(self.cache_manager).__name__,
-                "feature_extractor": type(self.feature_extractor).__name__
-            }
+                "feature_extractor": type(self.feature_extractor).__name__,
+            },
         }
 
     def load_model(self, model_name: str, model_path: str) -> bool:
@@ -428,5 +442,5 @@ __all__ = [
     "InferenceServiceV2",
     "PredictionRequest",
     "PredictionResponse",
-    "inference_service_v2"
+    "inference_service_v2",
 ]
