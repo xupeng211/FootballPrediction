@@ -27,19 +27,15 @@ from datetime import datetime, timedelta
 from types import SimpleNamespace
 
 # 导入被测试的模块
-import sys
-
-sys.path.append("/home/user/projects/FootballPrediction/src")
-
-from ml.inference.model_loader import ModelLoader, ModelMetadata, ModelLoadError
-from ml.inference.cache_manager import PredictionCache, CacheEntry, CacheStats
-from ml.inference.predictor import MatchPredictor, PredictionError
+from src.ml.inference.model_loader import ModelLoader, ModelMetadata, ModelLoadError
+from src.ml.inference.cache_manager import PredictionCache, CacheEntry, CacheStats
+from src.ml.inference.predictor import MatchPredictor, PredictionError
 
 
 class TestModelLoader(unittest.TestCase):
     """测试 ModelLoader 类的模型加载和管理功能"""
 
-    @patch("ml.inference.model_loader.Path")
+    @patch("src.ml.inference.model_loader.Path")
     def setUp(self, mock_path):
         """测试前的设置"""
         # Mock Path 对象以避免实际文件系统操作
@@ -50,8 +46,8 @@ class TestModelLoader(unittest.TestCase):
         mock_path.return_value = self.mock_cache_dir
         self.model_loader = ModelLoader(self.mock_cache_dir)
 
-    @patch("ml.inference.model_loader.Path")
-    @patch("ml.inference.model_loader.pickle.load")
+    @patch("src.ml.inference.model_loader.Path")
+    @patch("src.ml.inference.model_loader.pickle.load")
     def test_load_model_success(self, mock_pickle_load, mock_path):
         """测试成功加载模型"""
         # 准备测试数据
@@ -72,7 +68,7 @@ class TestModelLoader(unittest.TestCase):
         self.assertEqual(result, mock_model)
         self.assertTrue(self.model_loader.is_model_loaded("test_model"))
 
-    @patch("ml.inference.model_loader.Path")
+    @patch("src.ml.inference.model_loader.Path")
     def test_load_model_file_not_exists(self, mock_path):
         """测试加载不存在的模型文件"""
         mock_file_path = Mock()
@@ -85,8 +81,8 @@ class TestModelLoader(unittest.TestCase):
         with self.assertRaises(ModelLoadError):
             self.model_loader.load_model("nonexistent_model", model_path)
 
-    @patch("ml.inference.model_loader.Path")
-    @patch("ml.inference.model_loader.pickle.load")
+    @patch("src.ml.inference.model_loader.Path")
+    @patch("src.ml.inference.model_loader.pickle.load")
     def test_load_model_with_metadata(self, mock_pickle_load, mock_path):
         """测试加载包含元数据的模型"""
         # 准备测试数据
@@ -179,9 +175,9 @@ class TestModelLoader(unittest.TestCase):
 class TestPredictionCache(unittest.TestCase):
     """测试 PredictionCache 类的缓存管理功能"""
 
-    @patch("ml.inference.cache_manager.asyncio.create_task")
-    @patch("ml.inference.cache_manager.threading.RLock")
-    @patch("ml.inference.cache_manager.time.time")
+    @patch("src.ml.inference.cache_manager.asyncio.create_task")
+    @patch("src.ml.inference.cache_manager.threading.RLock")
+    @patch("src.ml.inference.cache_manager.time.time")
     def setUp(self, mock_time, mock_lock, mock_asyncio):
         """测试前的设置"""
         # Mock 时间函数
@@ -329,8 +325,8 @@ class TestPredictionCache(unittest.TestCase):
 class TestMatchPredictor(unittest.TestCase):
     """测试 MatchPredictor 类的预测逻辑"""
 
-    @patch("ml.inference.predictor.time.time")
-    @patch("ml.inference.predictor.datetime")
+    @patch("src.ml.inference.predictor.time.time")
+    @patch("src.ml.inference.predictor.datetime")
     def setUp(self, mock_datetime, mock_time):
         """测试前的设置"""
         # Mock 时间函数
@@ -535,8 +531,8 @@ class TestIntegration(unittest.TestCase):
             default_model_name="test_model",
         )
 
-    @patch("ml.inference.model_loader.pickle.load")
-    @patch("ml.inference.model_loader.Path")
+    @patch("src.ml.inference.model_loader.pickle.load")
+    @patch("src.ml.inference.model_loader.Path")
     def test_end_to_end_prediction_flow(self, mock_path, mock_pickle_load):
         """测试端到端预测流程"""
         # 准备测试模型
