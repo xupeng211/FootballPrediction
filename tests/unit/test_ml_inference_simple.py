@@ -43,9 +43,9 @@ class TestModelLoaderSimple(unittest.TestCase):
 class TestPredictionCacheSimple(unittest.TestCase):
     """简化的 PredictionCache 测试"""
 
-    @patch("ml.inference.cache_manager.asyncio.create_task")
-    @patch("ml.inference.cache_manager.threading.RLock")
-    @patch("ml.inference.cache_manager.time.time")
+    @patch("src.ml.inference.cache_manager.asyncio.create_task")
+    @patch("src.ml.inference.cache_manager.threading.RLock")
+    @patch("src.ml.inference.cache_manager.time.time")
     def test_cache_basic_operations(self, mock_time, mock_lock, mock_asyncio):
         """测试缓存基本操作"""
         mock_time.return_value = 1000.0
@@ -66,9 +66,9 @@ class TestPredictionCacheSimple(unittest.TestCase):
 
         self.assertEqual(cached_result, result)
 
-    @patch("ml.inference.cache_manager.asyncio.create_task")
-    @patch("ml.inference.cache_manager.threading.RLock")
-    @patch("ml.inference.cache_manager.time.time")
+    @patch("src.ml.inference.cache_manager.asyncio.create_task")
+    @patch("src.ml.inference.cache_manager.threading.RLock")
+    @patch("src.ml.inference.cache_manager.time.time")
     def test_cache_miss(self, mock_time, mock_lock, mock_asyncio):
         """测试缓存未命中"""
         mock_time.return_value = 1000.0
@@ -101,8 +101,8 @@ class TestMatchPredictorSimple(unittest.TestCase):
         self.assertIsNotNone(predictor)
         self.assertEqual(predictor.default_model_name, "test_model")
 
-    @patch("ml.inference.predictor.time.time")
-    @patch("ml.inference.predictor.datetime")
+    @patch("src.ml.inference.predictor.time.time")
+    @patch("src.ml.inference.predictor.datetime")
     def test_predict_model_not_loaded(self, mock_datetime, mock_time):
         """测试模型未加载时的预测"""
         mock_time.return_value = 1000.0
@@ -124,8 +124,8 @@ class TestMatchPredictorSimple(unittest.TestCase):
 
         self.assertIsNone(result)
 
-    @patch("ml.inference.predictor.time.time")
-    @patch("ml.inference.predictor.datetime")
+    @patch("src.ml.inference.predictor.time.time")
+    @patch("src.ml.inference.predictor.datetime")
     def test_predict_cache_hit(self, mock_datetime, mock_time):
         """测试缓存命中"""
         mock_time.return_value = 1000.0
