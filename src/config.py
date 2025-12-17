@@ -47,7 +47,8 @@ class DatabaseSettings(BaseSettings):
         env_prefix="DB_",
         case_sensitive=False,
         env_file=".env",
-        env_file_encoding="utf-8"
+        env_file_encoding="utf-8",
+        extra='ignore'
     )
 
     def get_connection_string(self) -> str:
@@ -106,6 +107,7 @@ class DatabasePoolSettings(BaseSettings):
     class Config:
         env_prefix = "DB_POOL_"
         case_sensitive = False
+        extra = 'ignore'
 
 
 class FotMobSettings(BaseSettings):
@@ -196,6 +198,14 @@ class FotMobSettings(BaseSettings):
             "x-foo": self.x_foo_header,
         }
 
+    model_config = SettingsConfigDict(
+        env_prefix="FOTMOB_",
+        case_sensitive=False,
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra='ignore'
+    )
+
 
 class ApplicationSettings(BaseSettings):
     """应用程序基础配置"""
@@ -244,6 +254,14 @@ class ApplicationSettings(BaseSettings):
                 return v
             raise ValueError("应用密钥长度必须至少32个字符")
         return v
+
+    model_config = SettingsConfigDict(
+        env_prefix="APP_",
+        case_sensitive=False,
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra='ignore'
+    )
 
 
 class LoggingSettings(BaseSettings):
@@ -314,6 +332,14 @@ class LoggingSettings(BaseSettings):
 
         return config
 
+    model_config = SettingsConfigDict(
+        env_prefix="LOG_",
+        case_sensitive=False,
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra='ignore'
+    )
+
 
 class Settings(BaseSettings):
     """主配置类 - 整合所有配置模块"""
@@ -329,6 +355,7 @@ class Settings(BaseSettings):
         env_file = ".env"
         env_file_encoding = "utf-8"
         case_sensitive = False
+        extra = 'ignore'  # 允许额外的环境变量，避免CI/运维变量导致启动失败
 
         # 自定义环境变量加载器
         @classmethod

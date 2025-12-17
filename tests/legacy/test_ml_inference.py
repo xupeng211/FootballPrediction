@@ -329,8 +329,8 @@ class TestMatchPredictor(unittest.TestCase):
     """测试 MatchPredictor 类的预测逻辑"""
 
     @patch('ml.inference.predictor.time.time')
-  @patch('ml.inference.predictor.datetime')
-  def setUp(self, mock_datetime, mock_time):
+    @patch('ml.inference.predictor.datetime')
+    def setUp(self, mock_datetime, mock_time):
         """测试前的设置"""
         # Mock 时间函数
         mock_time.return_value = 1609459200.0  # 2021-01-01 00:00:00 UTC

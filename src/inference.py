@@ -11,6 +11,7 @@
 新代码请直接导入 `from src.ml.inference import *`
 """
 
+import logging
 import warnings
 from pathlib import Path
 from typing import Dict, Any, Optional, Union, List
@@ -18,6 +19,11 @@ import numpy as np
 import pandas as pd
 from datetime import datetime
 import hashlib
+import pickle
+import joblib
+
+# 配置logger
+logger = logging.getLogger(__name__)
 
 warnings.warn(
     "src.inference.py is deprecated. Use 'from src.ml.inference import *' instead.",
