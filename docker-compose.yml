@@ -1,22 +1,41 @@
-version: '3.8'
-
 services:
   app:
     build:
       context: .
-      target: production
+      target: runtime
     ports:
       - "8000:8000"
     env_file:
       - .env.ci
     environment:
+      # 基础配置
       - ENVIRONMENT=development
+      - TZ=UTC
+      - PYTHONPATH=/app/src
+
+      # 数据库配置
       - DB_HOST=db
       - DB_PORT=5432
       - DB_NAME=football_prediction_dev
       - DB_USER=football_user
       - DB_PASSWORD=football_pass
+
+      # Redis 配置
       - REDIS_URL=redis://redis:6379/0
+
+      # v2.0 服务配置
+      - INFERENCE_SERVICE_V2_ENABLED=true
+      - COLLECTION_SERVICE_ENABLED=true
+      - EXPLAINABILITY_SERVICE_ENABLED=true
+
+      # 模型配置
+      - MODEL_PATH=/app/data/models
+      - DEFAULT_MODEL_NAME=xgboost_v2
+
+      # API 配置
+      - API_HOST=0.0.0.0
+      - API_PORT=8000
+      - API_DEBUG=false
     depends_on:
       db:
         condition: service_healthy
@@ -25,6 +44,9 @@ services:
     volumes:
       - ./src:/app/src:ro
       - ./logs:/app/logs
+      - ./data:/app/data
+      - model_data:/app/data/models
+      - cache_data:/app/data/cache
     networks:
       - football-network
     restart: unless-stopped
@@ -84,6 +106,10 @@ volumes:
   postgres_data:
     driver: local
   redis_data:
+    driver: local
+  model_data:
+    driver: local
+  cache_data:
     driver: local
 
 networks:

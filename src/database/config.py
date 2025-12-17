@@ -5,6 +5,7 @@
 """
 
 import os
+import urllib.parse
 from dataclasses import dataclass
 from typing import Optional
 
@@ -36,13 +37,19 @@ class DatabaseConfig:
 
     @property
     def sync_url(self) -> str:
-        """同步数据库连接URL"""
-        return f"postgresql+psycopg2://{self.username}:{self.password}@{self.host}:{self.port}/{self.database}"
+        """同步数据库连接URL - 安全版本，防止SQL注入"""
+        # 对用户名和密码进行URL编码，防止特殊字符导致的安全问题
+        encoded_username = urllib.parse.quote_plus(self.username)
+        encoded_password = urllib.parse.quote_plus(self.password)
+        return f"postgresql+psycopg2://{encoded_username}:{encoded_password}@{self.host}:{self.port}/{self.database}"
 
     @property
     def async_url(self) -> str:
-        """异步数据库连接URL"""
-        return f"postgresql+asyncpg://{self.username}:{self.password}@{self.host}:{self.port}/{self.database}"
+        """异步数据库连接URL - 安全版本，防止SQL注入"""
+        # 对用户名和密码进行URL编码，防止特殊字符导致的安全问题
+        encoded_username = urllib.parse.quote_plus(self.username)
+        encoded_password = urllib.parse.quote_plus(self.password)
+        return f"postgresql+asyncpg://{encoded_username}:{encoded_password}@{self.host}:{self.port}/{self.database}"
 
     @property
     def alembic_url(self) -> str:

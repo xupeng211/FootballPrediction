@@ -156,6 +156,9 @@ class InferenceService:
         # 缓存
         self._prediction_cache: Dict[str, Tuple[Dict[str, Any], float]] = {}
 
+        # 后台任务控制
+        self._stop_event = asyncio.Event()
+
         # 统计信息
         self.stats = {
             "total_requests": 0,
@@ -710,10 +713,17 @@ class InferenceService:
         self.stats["last_prediction_time"] = datetime.now().isoformat()
 
     async def _cache_cleanup_task(self) -> None:
-        """缓存清理后台任务"""
-        while True:
+        """缓存清理后台任务 - 修复内存泄漏版本"""
+        while not self._stop_event.is_set():
             try:
-                await asyncio.sleep(60)  # 每分钟清理一次
+                # 使用 wait_for 实现可中断的等待
+                try:
+                    await asyncio.wait_for(self._stop_event.wait(), timeout=60.0)
+                    # 如果 stop_event 被设置，退出循环
+                    break
+                except asyncio.TimeoutError:
+                    # 超时是正常的，继续执行清理任务
+                    pass
 
                 if not self.config.enable_cache:
                     continue
@@ -733,6 +743,8 @@ class InferenceService:
 
             except Exception as e:
                 self.logger.error(f"缓存清理任务异常: {e}")
+
+        self.logger.info("缓存清理任务已优雅退出")
 
     def get_service_stats(self) -> Dict[str, Any]:
         """获取服务统计信息"""
@@ -755,6 +767,34 @@ class InferenceService:
             return {"error": "模型未加载"}
 
         return self.model.get_model_info()
+
+    async def shutdown(self) -> None:
+        """
+        优雅关闭推理服务
+
+        停止所有后台任务，清理资源，确保服务安全退出。
+        """
+        self.logger.info("开始关闭推理服务...")
+
+        # 设置停止事件，通知所有后台任务退出
+        self._stop_event.set()
+
+        # 清理缓存
+        self._prediction_cache.clear()
+        self.logger.info("缓存已清理")
+
+        # 关闭数据库连接池
+        if self.db_pool:
+            try:
+                await self.db_pool.close()
+                self.logger.info("数据库连接池已关闭")
+            except Exception as e:
+                self.logger.error(f"关闭数据库连接池失败: {e}")
+
+        # 重置初始化状态
+        self.is_initialized = False
+
+        self.logger.info("推理服务已优雅关闭")
 
     async def health_check(self) -> Dict[str, Any]:
         """健康检查"""

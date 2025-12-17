@@ -74,11 +74,19 @@ WORKDIR /app
 # 从构建阶段复制虚拟环境
 COPY --from=builder /opt/venv /opt/venv
 
-# 复制应用代码
+# 复制应用代码 - v2.0 架构更新
 COPY src/ ./src/
 COPY scripts/ ./scripts/
-COPY docker/entrypoint.sh ./entrypoint.sh
-COPY docker/healthcheck.py ./healthcheck.py
+COPY docker/entrypoint_v2.sh ./entrypoint.sh
+COPY docker/healthcheck_v2.py ./healthcheck.py
+
+# 复制配置文件
+COPY alembic.ini ./
+COPY docker/.env.example ./.env.example
+
+# 复制 alembic 迁移文件 (如果存在)
+RUN mkdir -p ./src/database/migrations
+COPY src/database/migrations/ ./src/database/migrations/
 
 # 创建必要的目录并设置权限
 RUN mkdir -p /app/logs /app/data /app/tmp && \

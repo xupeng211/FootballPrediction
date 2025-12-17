@@ -1,4 +1,5 @@
 import axios, { AxiosInstance, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
+import { mockConfig, defaultMockUsers, generateMockToken, generateMockRefreshToken, mockPredictionData, generateMockHistory, generateMockMatches } from '../config/mockData';
 class ApiClient {
     client;
     refreshTokenPromise = null;
@@ -188,35 +189,30 @@ class ApiClient {
     }
     // Mock auth methods for development
     mockLogin(email, password) {
-        // Mock validation
-        if (email === 'admin@football.com' && password === 'admin123') {
+        // 使用配置化的Mock认证
+        const mockUsers = Object.keys(mockConfig.mockUsers).length > 0
+            ? mockConfig.mockUsers
+            : defaultMockUsers;
+
+        // 查找匹配的用户
+        const userEntry = Object.entries(mockUsers).find(([key, user]) =>
+            user.email === email && user.password === password
+        );
+
+        if (userEntry) {
+            const [userType, userData] = userEntry;
             return {
                 user: {
-                    id: 1,
-                    username: 'admin',
-                    email: 'admin@football.com',
-                    role: 'admin',
-                    created_at: new Date().toISOString()
+                    ...userData,
+                    id: userData.id || (userType === 'admin' ? 1 : 2),
+                    created_at: userData.created_at || new Date().toISOString()
                 },
-                token: 'mock-jwt-token-admin-' + Date.now(),
-                refreshToken: 'mock-refresh-token-admin-' + Date.now(),
+                token: generateMockToken(userType),
+                refreshToken: generateMockRefreshToken(userType),
                 expiresIn: 3600
             };
         }
-        if (email === 'user@football.com' && password === 'user123') {
-            return {
-                user: {
-                    id: 2,
-                    username: 'user',
-                    email: 'user@football.com',
-                    role: 'user',
-                    created_at: new Date().toISOString()
-                },
-                token: 'mock-jwt-token-user-' + Date.now(),
-                refreshToken: 'mock-refresh-token-user-' + Date.now(),
-                expiresIn: 3600
-            };
-        }
+
         throw new Error('Invalid credentials');
     }
     mockRegister(username, email, password) {
@@ -320,36 +316,46 @@ class ApiClient {
     }
     // Mock predictions for development
     getMockPredictions(matchId) {
-        const mockPredictions = [
-            {
-                match_id: matchId || 12345,
-                prediction: 'home_win',
-                predicted_outcome: 'home_win',
-                home_win_prob: 0.65,
-                draw_prob: 0.25,
-                away_win_prob: 0.10,
-                confidence: 0.82,
-                success: true,
-                mode: 'mock',
-                mock_reason: 'Development mode - mock data',
-                features_used: ['home_xg', 'away_xg', 'home_possession', 'away_possession'],
-                created_at: new Date().toISOString(),
-            },
-            {
-                match_id: matchId || 12346,
-                prediction: 'draw',
-                predicted_outcome: 'draw',
-                home_win_prob: 0.35,
-                draw_prob: 0.40,
-                away_win_prob: 0.25,
-                confidence: 0.71,
-                success: true,
-                mode: 'mock',
-                mock_reason: 'Development mode - mock data',
-                features_used: ['home_xg', 'away_xg', 'shots_difference'],
-                created_at: new Date().toISOString(),
-            },
-        ];
+        // 使用配置化的Mock预测数据
+        const probabilities = mockPredictionData.defaultProbabilities;
+        const predictions = [];
+
+        // 生成第一个预测结果（主场优势）
+        predictions.push({
+            match_id: matchId || 12345,
+            prediction: probabilities[2] > probabilities[0] && probabilities[2] > probabilities[1] ? 'home_win' :
+                      probabilities[1] > probabilities[0] && probabilities[1] > probabilities[2] ? 'draw' : 'away_win',
+            predicted_outcome: probabilities[2] > probabilities[0] && probabilities[2] > probabilities[1] ? 'HOME_WIN' :
+                            probabilities[1] > probabilities[0] && probabilities[1] > probabilities[2] ? 'DRAW' : 'AWAY_WIN',
+            home_win_prob: probabilities[2],
+            draw_prob: probabilities[1],
+            away_win_prob: probabilities[0],
+            confidence: Math.max(...probabilities),
+            success: true,
+            mode: 'mock',
+            mock_reason: 'Development mode - configuration-based mock data',
+            features_used: Array.from({length: mockPredictionData.featureCount}, (_, i) => `feature_${i + 1}`),
+            created_at: new Date().toISOString(),
+        });
+
+        // 生成第二个预测结果（更平衡）
+        const balancedProbabilities = [0.35, 0.40, 0.25];
+        predictions.push({
+            match_id: matchId || 12346,
+            prediction: balancedProbabilities[1] > balancedProbabilities[0] && balancedProbabilities[1] > balancedProbabilities[2] ? 'draw' :
+                      balancedProbabilities[0] > balancedProbabilities[2] ? 'home_win' : 'away_win',
+            predicted_outcome: balancedProbabilities[1] > balancedProbabilities[0] && balancedProbabilities[1] > balancedProbabilities[2] ? 'DRAW' :
+                            balancedProbabilities[0] > balancedProbabilities[2] ? 'HOME_WIN' : 'AWAY_WIN',
+            home_win_prob: balancedProbabilities[2],
+            draw_prob: balancedProbabilities[1],
+            away_win_prob: balancedProbabilities[0],
+            confidence: Math.max(...balancedProbabilities),
+            success: true,
+            mode: 'mock',
+            mock_reason: 'Development mode - configuration-based mock data',
+            features_used: Array.from({length: mockPredictionData.featureCount}, (_, i) => `feature_${i + 1}`),
+            created_at: new Date().toISOString(),
+        });
         return {
             predictions: mockPredictions,
             total: mockPredictions.length,
@@ -359,51 +365,8 @@ class ApiClient {
     }
     // Mock matches for development
     getMockMatches() {
-        return [
-            {
-                id: 12345,
-                home_team: 'Manchester United',
-                away_team: 'Liverpool',
-                scheduled_at: '2024-01-15T20:00:00Z',
-                league: 'Premier League',
-                status: 'scheduled',
-                odds: {
-                    home_win: 2.10,
-                    draw: 3.40,
-                    away_win: 3.80,
-                },
-            },
-            {
-                id: 12346,
-                home_team: 'Barcelona',
-                away_team: 'Real Madrid',
-                scheduled_at: '2024-01-16T19:45:00Z',
-                league: 'La Liga',
-                status: 'scheduled',
-                odds: {
-                    home_win: 2.50,
-                    draw: 3.20,
-                    away_win: 2.80,
-                },
-            },
-            {
-                id: 12347,
-                home_team: 'Bayern Munich',
-                away_team: 'Borussia Dortmund',
-                scheduled_at: '2024-01-17T18:30:00Z',
-                league: 'Bundesliga',
-                status: 'live',
-                score: {
-                    home: 1,
-                    away: 0,
-                },
-                odds: {
-                    home_win: 1.45,
-                    draw: 4.80,
-                    away_win: 6.50,
-                },
-            },
-        ];
+        // 使用配置化的Mock比赛数据
+        return generateMockMatches();
     }
     // Mock match details for development
     getMockMatchDetails(matchId) {
@@ -490,7 +453,8 @@ class ApiClient {
     }
     // Mock user history for development
     getMockUserHistory(page = 1, limit = 20) {
-        const mockRecords = this.generateMockHistoryRecords();
+        // 使用配置化的Mock历史数据生成
+        const mockRecords = generateMockHistory();
         const startIndex = (page - 1) * limit;
         const endIndex = startIndex + limit;
         const paginatedRecords = mockRecords.slice(startIndex, endIndex);
@@ -516,60 +480,7 @@ class ApiClient {
             }
         };
     }
-    // Generate mock history records
-    generateMockHistoryRecords() {
-        const teams = [
-            'Manchester United', 'Liverpool', 'Barcelona', 'Real Madrid', 'Bayern Munich',
-            'Borussia Dortmund', 'PSG', 'Manchester City', 'Chelsea', 'Arsenal',
-            'Juventus', 'AC Milan', 'Inter', 'Atletico Madrid', 'Tottenham'
-        ];
-        const leagues = ['Premier League', 'La Liga', 'Bundesliga', 'Serie A', 'Ligue 1'];
-        const outcomes = ['home_win', 'draw', 'away_win'];
-        const results = ['win', 'loss', 'push'];
-        return Array.from({ length: 100 }, (_, index) => {
-            const homeTeam = teams[Math.floor(Math.random() * teams.length)];
-            let awayTeam = teams[Math.floor(Math.random() * teams.length)];
-            while (awayTeam === homeTeam) {
-                awayTeam = teams[Math.floor(Math.random() * teams.length)];
-            }
-            const prediction = outcomes[Math.floor(Math.random() * outcomes.length)];
-            const result = results[Math.floor(Math.random() * results.length)];
-            const odds = 1.8 + Math.random() * 2.5; // 1.8 to 4.3
-            const stake = 50 + Math.floor(Math.random() * 200); // 50 to 250
-            let profit = 0;
-            if (result === 'win') {
-                profit = stake * odds - stake;
-            }
-            else if (result === 'loss') {
-                profit = -stake;
-            } // push = 0 profit
-            const matchDate = new Date();
-            matchDate.setDate(matchDate.getDate() - Math.floor(Math.random() * 30));
-            const finalScore = result !== 'push' ? {
-                home: Math.floor(Math.random() * 5),
-                away: Math.floor(Math.random() * 5)
-            } : { home: 0, away: 0 };
-            return {
-                id: 1000 + index,
-                match_id: 12000 + index,
-                home_team: homeTeam,
-                away_team: awayTeam,
-                league: leagues[Math.floor(Math.random() * leagues.length)],
-                scheduled_at: matchDate.toISOString(),
-                prediction,
-                predicted_outcome: prediction,
-                actual_outcome: result === 'win' ? prediction : outcomes[Math.floor(Math.random() * outcomes.length)],
-                stake,
-                odds: parseFloat(odds.toFixed(2)),
-                result,
-                profit: parseFloat(profit.toFixed(2)),
-                confidence: 0.6 + Math.random() * 0.4, // 0.6 to 1.0
-                created_at: matchDate.toISOString(),
-                match_status: 'completed',
-                final_score
-            };
-        }).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-    }
+    // 注意: generateMockHistoryRecords 方法已移至 config/mockData.js
 }
 // Create singleton instance
 const apiClient = new ApiClient();
