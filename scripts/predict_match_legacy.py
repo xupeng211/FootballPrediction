@@ -35,7 +35,7 @@ try:
     from src.database.connection import get_database_config
     from sqlalchemy import create_engine, text
 except ImportError as e:
-    logger.error(f"导入模块失败: {e}")
+    logger.error("导入模块失败: {e}")
     logger.info("将使用简化模式进行演示预测")
     Predictor = None
 
@@ -73,7 +73,7 @@ class MatchPredictorCLI:
                     conn.execute(text("SELECT 1"))
                 logger.info("✅ 成功连接数据库")
             except Exception as e:
-                logger.error(f"❌ 数据库连接失败: {e}")
+                logger.error("❌ 数据库连接失败: {e}")
                 self.engine = None
 
             # 如果没有模型或数据库，启用模拟模式
@@ -82,7 +82,7 @@ class MatchPredictorCLI:
                 logger.info("🎭 启用模拟预测模式")
 
         except Exception as e:
-            logger.error(f"初始化组件失败: {e}")
+            logger.error("初始化组件失败: {e}")
             self.simulation_mode = True
 
     def _get_team_id(self, team_name: str) -> Optional[int]:
@@ -143,7 +143,7 @@ class MatchPredictorCLI:
                     "away_features": away_row,
                 }
         except Exception as e:
-            logger.error(f"获取球队特征数据失败: {e}")
+            logger.error("获取球队特征数据失败: {e}")
             return None
 
     def _extract_real_features(
@@ -152,7 +152,7 @@ class MatchPredictorCLI:
         """提取真实特征数据"""
 
         try:
-            logger.info(f"🔍 正在提取真实特征数据: {home_team} vs {away_team}")
+            logger.info("🔍 正在提取真实特征数据: {home_team} vs {away_team}")
 
             # 获取球队特征数据
             home_data = self._get_team_features(home_team)
@@ -222,11 +222,11 @@ class MatchPredictorCLI:
                 dtype=np.float64,
             )
 
-            logger.info(f"✅ 成功提取真实特征数据: {len(features)} 维")
+            logger.info("✅ 成功提取真实特征数据: {len(features)} 维")
             return features
 
         except Exception as e:
-            logger.error(f"❌ 提取真实特征失败: {e}")
+            logger.error("❌ 提取真实特征失败: {e}")
             import traceback
 
             traceback.print_exc()
@@ -546,15 +546,15 @@ class MatchPredictorCLI:
             "white": "\033[97m",
         }
 
-        print(f"\n{colors['bold']}{colors['cyan']}{'='*60}{colors['reset']}")
-        print(f"{colors['bold']}{colors['white']}⚽  足球比赛预测结果{colors['reset']}")
-        print(f"{colors['cyan']}{'='*60}{colors['reset']}\n")
+        print("\n{colors['bold']}{colors['cyan']}{'='*60}{colors['reset']}")
+        print("{colors['bold']}{colors['white']}⚽  足球比赛预测结果{colors['reset']}")
+        print("{colors['cyan']}{'='*60}{colors['reset']}\n")
 
         # 比赛信息
-        print(f"{colors['bold']}📅 比赛信息:{colors['reset']}")
-        print(f"   主队: {colors['green']}{home_team}{colors['reset']}")
-        print(f"   客队: {colors['red']}{away_team}{colors['reset']}")
-        print(f"   日期: {match_date.strftime('%Y年%m月%d日 %H:%M')}\n")
+        print("{colors['bold']}📅 比赛信息:{colors['reset']}")
+        print("   主队: {colors['green']}{home_team}{colors['reset']}")
+        print("   客队: {colors['red']}{away_team}{colors['reset']}")
+        print("   日期: {match_date.strftime('%Y年%m月%d日 %H:%M')}\n")
 
         # 数据源标识
         if self.simulation_mode:
@@ -571,7 +571,7 @@ class MatchPredictorCLI:
             print("   基于历史比赛数据和机器学习模型进行预测\n")
 
         # 预测概率
-        print(f"{colors['bold']}🎯 预测概率:{colors['reset']}")
+        print("{colors['bold']}🎯 预测概率:{colors['reset']}")
 
         home_prob = predictions["HOME_WIN"]
         draw_prob = predictions["DRAW"]
@@ -591,15 +591,15 @@ class MatchPredictorCLI:
         print()
 
         # 投注建议
-        print(f"{colors['bold']}💡 投注建议:{colors['reset']}")
-        print(f"   {suggestion['suggestion']}")
+        print("{colors['bold']}💡 投注建议:{colors['reset']}")
+        print("   {suggestion['suggestion']}")
         print(
             f"   风险等级: {colors['magenta']}{suggestion['risk_level']}{colors['reset']}"
         )
-        print(f"   {suggestion['value_bet']}\n")
+        print("   {suggestion['value_bet']}\n")
 
         # 预测详情
-        print(f"{colors['bold']}📊 预测详情:{colors['reset']}")
+        print("{colors['bold']}📊 预测详情:{colors['reset']}")
         print(
             f"   最终预测: {colors['bold']}{suggestion['prediction']}{colors['reset']}"
         )
@@ -608,11 +608,11 @@ class MatchPredictorCLI:
         )
 
         # 添加免责声明
-        print(f"\n{colors['yellow']}{colors['bold']}⚠️  免责声明:{colors['reset']}")
+        print("\n{colors['yellow']}{colors['bold']}⚠️  免责声明:{colors['reset']}")
         print("   本预测仅供参考，不构成投资建议。")
         print("   足球比赛结果具有不确定性，请理性投注。")
 
-        print(f"\n{colors['cyan']}{'='*60}{colors['reset']}\n")
+        print("\n{colors['cyan']}{'='*60}{colors['reset']}\n")
 
     def predict_match(
         self, home_team: str, away_team: str, match_date: Optional[str] = None
@@ -624,13 +624,13 @@ class MatchPredictorCLI:
                 try:
                     match_dt = datetime.strptime(match_date, "%Y-%m-%d")
                 except ValueError:
-                    logger.error(f"日期格式错误，请使用 YYYY-MM-DD 格式")
+                    logger.error("日期格式错误，请使用 YYYY-MM-DD 格式")
                     return False
             else:
                 match_dt = datetime.now()
 
             # 提取特征
-            logger.info(f"正在提取 {home_team} vs {away_team} 的特征...")
+            logger.info("正在提取 {home_team} vs {away_team} 的特征...")
             features = self.extract_features_with_fallback(
                 home_team, away_team, match_dt
             )
@@ -650,7 +650,7 @@ class MatchPredictorCLI:
             return True
 
         except Exception as e:
-            logger.error(f"预测过程中发生错误: {e}")
+            logger.error("预测过程中发生错误: {e}")
             return False
 
 

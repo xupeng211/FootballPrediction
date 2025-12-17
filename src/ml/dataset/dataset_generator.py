@@ -30,7 +30,7 @@ import logging
 import warnings
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import List, Dict, Any, Optional, Union, Tuple
+from typing import List, Dict, Any, Optional
 import pandas as pd
 import numpy as np
 
@@ -38,10 +38,10 @@ import numpy as np
 from src.database import DatabasePool, get_db_pool
 
 # 导入M3模块 - 特征工程
-from src.ml.features.extractor import MatchFeatureExtractor, MatchFeatureSet
+from src.ml.features.extractor import MatchFeatureExtractor
 
 # 导入内部模块 - 标签定义
-from .target_labels import MatchOutcome, score_to_label, label_to_numeric
+from .target_labels import score_to_label, label_to_numeric
 
 # 设置日志
 logger = logging.getLogger(__name__)
@@ -298,7 +298,6 @@ class ClassificationDatasetGenerator:
         historical_data = await self._get_historical_data()
 
         # 批量处理（控制并发数）
-        batch_size = 10
         semaphore = asyncio.Semaphore(5)  # 限制并发数
 
         async def extract_single_features(match_id: str) -> Optional[Dict[str, Any]]:
@@ -672,7 +671,7 @@ if __name__ == "__main__":
         print("🚀 分类数据集生成器演示")
 
         try:
-            generator = ClassificationDatasetGenerator()
+            ClassificationDatasetGenerator()
 
             # 这里需要实际的数据才能运行
             print("数据集生成器已初始化，需要实际的数据库连接才能演示完整功能")

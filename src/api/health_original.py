@@ -5,7 +5,6 @@
 """
 
 import logging
-import time
 from datetime import datetime
 from typing import Any, Dict
 
@@ -13,7 +12,6 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from src.api.schemas import HealthCheckResponse, ServiceCheck
 from src.database.connection import get_db_session
 
 logger = logging.getLogger(__name__)

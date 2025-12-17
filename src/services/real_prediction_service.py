@@ -6,10 +6,9 @@
 """
 
 import logging
-from typing import Dict, Any, Optional, List, Tuple
+from typing import Dict, Any, Optional, List
 from pathlib import Path
 import json
-import numpy as np
 import pandas as pd
 from xgboost import XGBClassifier
 
@@ -322,7 +321,7 @@ class RealPredictionService:
                 },
             }
 
-            logger.info(f"🎯 预测完成:")
+            logger.info("🎯 预测完成:")
             logger.info(f"   主队获胜概率: {probabilities['home_win']:.2%}")
             logger.info(f"   客队获胜概率: {probabilities['away_win']:.2%}")
             logger.info(f"   预测结果: {result['prediction']['predicted_class']}")

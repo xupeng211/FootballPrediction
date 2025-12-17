@@ -33,7 +33,7 @@ import logging
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, Any, List, Optional, Tuple, Union
+from typing import Dict, Any, Optional, Tuple
 import dataclasses
 
 import numpy as np
@@ -44,10 +44,7 @@ from fastapi import HTTPException
 from src.database.db_pool import get_db_pool, DatabasePool
 
 # 导入M3模块 - 特征工程
-# TODO: 修复特征工程导入 - 暂时注释以解决CI问题
-# from src.features.extractor import MatchFeatureExtractor
-# from src.features.schemas import MatchFeatureSet
-from src.ml.features.advanced_feature_transformer import AdvancedFeatureTransformer
+from src.ml.features.extractor import MatchFeatureExtractor, MatchFeatureSet
 
 # 导入M4模块 - 模型推理
 from src.ml.models.xgboost_classifier import XGBoostClassifier
@@ -615,7 +612,7 @@ class InferenceService:
         try:
             # 获取特征向量
             feature_vector = features.get_feature_vector()
-            feature_names = features.get_feature_names()
+            features.get_feature_names()
 
             # 转换为模型输入格式
             X = feature_vector.reshape(1, -1)

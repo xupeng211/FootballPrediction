@@ -19,7 +19,7 @@ M4模块: 比赛结果标签定义
 """
 
 from enum import Enum
-from typing import Union, Optional, Tuple
+from typing import Union, Tuple
 import logging
 
 logger = logging.getLogger(__name__)

@@ -22,10 +22,12 @@
 
 import os
 import logging
-from typing import Optional, List, Dict, Any, Callable
-from pathlib import Path
+from typing import Optional, List, Dict, Any, Callable, TYPE_CHECKING
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+if TYPE_CHECKING:
+    from database.db_pool import DatabasePoolConfig
 
 logger = logging.getLogger(__name__)
 

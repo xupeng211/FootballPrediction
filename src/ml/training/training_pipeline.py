@@ -26,7 +26,6 @@ MLOps规范:
 - 模型可解释性和特征分析
 """
 
-import asyncio
 import json
 import logging
 import warnings
@@ -38,16 +37,12 @@ import dataclasses
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler, LabelEncoder
-import joblib
+from sklearn.preprocessing import StandardScaler
 
 # 导入M4模块组件
 from ..models.xgboost_classifier import (
-    XGBoostClassifier,
-    XGBoostModelConfig,
     create_xgboost_classifier,
 )
-from ..dataset.dataset_generator import create_classification_dataset
 
 # 设置日志
 logger = logging.getLogger(__name__)

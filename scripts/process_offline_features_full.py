@@ -86,7 +86,7 @@ class HighPerformanceFeatureExtractor:
         """
 
         rows = await self.conn.fetch(query)
-        print(f"✅ 找到 {len(rows)} 条原始数据记录")
+        print("✅ 找到 {len(rows)} 条原始数据记录")
 
         # asyncpg返回的记录已经包含正确的数据类型，不需要额外转换
         return rows
@@ -103,7 +103,7 @@ class HighPerformanceFeatureExtractor:
 
         rows = await self.conn.fetch(query)
         mapping = {row["external_id"]: row["match_id"] for row in rows}
-        print(f"✅ 找到 {len(mapping)} 个ID映射关系")
+        print("✅ 找到 {len(mapping)} 个ID映射关系")
 
         return mapping
 
@@ -126,10 +126,10 @@ class HighPerformanceFeatureExtractor:
                 try:
                     match_data = json.loads(match_data)
                 except json.JSONDecodeError:
-                    print(f"⚠️ 记录 {external_id}: 无法解析JSON字符串")
+                    print("⚠️ 记录 {external_id}: 无法解析JSON字符串")
                     return None
             else:
-                print(f"⚠️ 记录 {external_id}: match_data 类型为 {type(match_data)}")
+                print("⚠️ 记录 {external_id}: match_data 类型为 {type(match_data)}")
                 return None
 
         content = match_data.get("content", {})
@@ -164,7 +164,7 @@ class HighPerformanceFeatureExtractor:
 
         # 如果没有找到球员数据，跳过
         if not home_players and not away_players:
-            print(f"⚠️ 跳过记录 {external_id}: 没有找到球员数据")
+            print("⚠️ 跳过记录 {external_id}: 没有找到球员数据")
             return None
 
         # 提取球队特征
@@ -360,12 +360,12 @@ class HighPerformanceFeatureExtractor:
 
             except Exception as e:
                 failed_updates += 1
-                print(f"❌ 更新失败 {features.external_id}: {e}")
+                print("❌ 更新失败 {features.external_id}: {e}")
                 continue
 
-        print(f"\n✅ 批量更新完成:")
-        print(f"   成功: {successful_updates} 条记录")
-        print(f"   失败: {failed_updates} 条记录")
+        print("\n✅ 批量更新完成:")
+        print("   成功: {successful_updates} 条记录")
+        print("   失败: {failed_updates} 条记录")
 
     async def process_all_records(self, batch_size: int = 50):
         """处理所有记录"""
@@ -393,10 +393,10 @@ class HighPerformanceFeatureExtractor:
             else:
                 skipped_count += 1
 
-        print(f"\n📊 特征提取统计:")
-        print(f"   成功提取: {processed_count} 条记录")
-        print(f"   跳过: {skipped_count} 条记录")
-        print(f"   总计特征: {len(all_features)} 条")
+        print("\n📊 特征提取统计:")
+        print("   成功提取: {processed_count} 条记录")
+        print("   跳过: {skipped_count} 条记录")
+        print("   总计特征: {len(all_features)} 条")
 
         if not all_features:
             print("❌ 没有可处理的特征数据")
@@ -407,7 +407,7 @@ class HighPerformanceFeatureExtractor:
 
     async def verify_results(self, limit: int = 5):
         """验证更新结果"""
-        print(f"\n🔍 验证更新结果 (显示前 {limit} 条)...")
+        print("\n🔍 验证更新结果 (显示前 {limit} 条)...")
 
         query = f"""
             SELECT
@@ -430,7 +430,7 @@ class HighPerformanceFeatureExtractor:
 
         print("\n📋 验证结果:")
         for i, row in enumerate(rows, 1):
-            print(f"{i}. {row['home_team_name']} vs {row['away_team_name']}")
+            print("{i}. {row['home_team_name']} vs {row['away_team_name']}")
             print(
                 f"   首发均分: 主队 {row['home_xi_rating']}, 客队 {row['away_xi_rating']}"
             )
@@ -440,7 +440,7 @@ class HighPerformanceFeatureExtractor:
             print(
                 f"   板凳均分: 主队 {row['home_bench_rating']}, 客队 {row['away_bench_rating']}"
             )
-            print(f"   FotMob ID: {row['fotmob_id']}")
+            print("   FotMob ID: {row['fotmob_id']}")
             print()
 
     async def close(self):
@@ -472,7 +472,7 @@ async def main():
 
         # 计算耗时
         elapsed_time = time.time() - start_time
-        print(f"\n⏱️ 总耗时: {elapsed_time:.2f} 秒")
+        print("\n⏱️ 总耗时: {elapsed_time:.2f} 秒")
 
         # 验证结果
         await extractor.verify_results()
@@ -481,7 +481,7 @@ async def main():
         print("✨ 球员级高级特征已成功集成到数据湖系统")
 
     except Exception as e:
-        print(f"❌ 处理失败: {e}")
+        print("❌ 处理失败: {e}")
         import traceback
 
         traceback.print_exc()

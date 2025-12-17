@@ -5,7 +5,7 @@
 """
 
 import logging
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 
 from fastapi import APIRouter, HTTPException, Depends, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials

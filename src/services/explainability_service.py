@@ -5,7 +5,7 @@ SHAP可解释性服务
 """
 
 import logging
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any
 import pandas as pd
 import numpy as np
 
@@ -54,8 +54,8 @@ class ExplainabilityService:
 
             # 获取模型基础信息
             model_info = model.get_model_info()
-            model_path = model_info.get("model_path", "unknown")
-            model_version = model_info.get("model_version", "unknown")
+            model_info.get("model_path", "unknown")
+            model_info.get("model_version", "unknown")
 
             # 验证模型已加载
             if not model.is_trained:
@@ -142,7 +142,6 @@ class ExplainabilityService:
 
     async def _compute_shap_values(self, explainer, features: pd.DataFrame):
         """计算SHAP值"""
-        import shap
 
         try:
             # 使用SHAP fast mode计算

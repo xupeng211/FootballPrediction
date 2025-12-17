@@ -12,7 +12,7 @@ import pandas as pd
 from datetime import datetime
 from typing import Dict, Any, Optional, Union, List
 
-from .model_loader import ModelLoader, ModelLoadError
+from .model_loader import ModelLoader
 from .cache_manager import PredictionCache
 
 logger = logging.getLogger(__name__)
@@ -20,8 +20,6 @@ logger = logging.getLogger(__name__)
 
 class PredictionError(Exception):
     """预测异常"""
-
-    pass
 
 
 class MatchPredictor:

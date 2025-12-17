@@ -33,7 +33,7 @@ import os
 import logging
 import time
 import urllib.parse
-from typing import Optional, Dict, Any, List, Union, AsyncContextManager
+from typing import Optional, Dict, Any, List, AsyncContextManager
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
 import asyncpg
@@ -111,7 +111,7 @@ class DatabasePoolConfig:
         if db_url is None:
             db_url = os.getenv(
                 "DATABASE_URL",
-                f"postgresql+asyncpg://football_user:football_pass@db:5432/football_prediction_dev",
+                "postgresql+asyncpg://football_user:football_pass@db:5432/football_prediction_dev",
             )
 
         # 解析数据库URL
@@ -254,7 +254,6 @@ class DatabasePool:
         在连接从池中获取时调用
         """
         # 可以在这里添加连接验证逻辑
-        pass
 
     async def acquire(self) -> AsyncContextManager[Connection]:
         """

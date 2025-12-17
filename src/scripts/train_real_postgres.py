@@ -8,16 +8,11 @@
 
 import asyncio
 import sys
-import os
 import logging
 from pathlib import Path
 import json
 from datetime import datetime
 
-import pandas as pd
-import numpy as np
-from xgboost import XGBClassifier
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 
 # 添加项目根路径
 project_root = Path(__file__).parent.parent  # src/scripts -> src
@@ -43,7 +38,6 @@ except ImportError:
     except ImportError:
         # 直接创建相对导入
         import sys
-        import os
 
         current_dir = Path(__file__).parent
         src_dir = current_dir.parent

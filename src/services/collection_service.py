@@ -16,14 +16,12 @@ FotMob 数据收集服务 (FotMob Collection Service)
 import asyncio
 import logging
 import time
-from datetime import datetime, timedelta
-from typing import Dict, Any, List, Optional, Callable, Union
+from datetime import datetime
+from typing import Dict, Any, List, Optional
 from dataclasses import dataclass, field
 from enum import Enum
-from pathlib import Path
 
 import aiohttp
-import asyncpg
 
 # from tenacity import retry, stop_after_attempt, wait_exponential
 
@@ -510,7 +508,7 @@ class FotMobCollectionService(BaseService):
             processed["league_data"] = raw_data
             processed["processed_at"] = datetime.utcnow().isoformat()
 
-            self.logger.debug(f"联赛数据处理完成")
+            self.logger.debug("联赛数据处理完成")
             return processed
 
         except Exception as e:
