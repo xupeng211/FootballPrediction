@@ -20,7 +20,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from .__init__ import BaseService
-from src.ml.inference import ModelLoader, MatchPredictor, PredictionCache
+from src.ml.inference import ModelLoader, MatchPredictor
+from src.ml.inference.cache_manager import PredictionCache
 from src.ml.features.extractor import MatchFeatureExtractor
 
 logger = logging.getLogger(__name__)

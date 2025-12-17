@@ -28,10 +28,9 @@ from services.inference_service_v2 import (
     PredictionResponse
 )
 from services.collection_service import (
-    CollectionService,
-    CollectionTask,
+    FotMobCollectionService,
+    FotMobCollectionTask,
     CollectionStats,
-    DataSourceType,
     CollectionStatus
 )
 
