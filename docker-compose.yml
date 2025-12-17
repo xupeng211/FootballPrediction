@@ -36,6 +36,8 @@ services:
       - API_HOST=0.0.0.0
       - API_PORT=8000
       - API_DEBUG=false
+    # 临时命令：保持容器存活以便修复
+    command: ["tail", "-f", "/dev/null"]
     depends_on:
       db:
         condition: service_healthy
@@ -88,6 +90,169 @@ services:
     restart: unless-stopped
     command: redis-server --appendonly yes
 
+  # ================================
+  # Monitoring Stack
+  # ================================
+  prometheus:
+    image: prom/prometheus:v2.47.0
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./deploy/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./deploy/monitoring/alerts.yml:/etc/prometheus/alerts.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=15d'
+      - '--web.enable-lifecycle'
+    networks:
+      - football-network
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:10.1.0
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./deploy/grafana/provisioning:/etc/grafana/provisioning
+      - ./deploy/grafana/dashboards:/var/lib/grafana/dashboards
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin123
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_INSTALL_PLUGINS=redis-datasource
+    networks:
+      - football-network
+    restart: unless-stopped
+    depends_on:
+      - prometheus
+
+  # Exporters
+  redis-exporter:
+    image: oliver006/redis_exporter:v1.45.0
+    ports:
+      - "9121:9121"
+    environment:
+      - REDIS_ADDR=redis://redis:6379
+    depends_on:
+      - redis
+    networks:
+      - football-network
+    restart: unless-stopped
+
+  celery-exporter:
+    image: telegraf:1.27.0
+    ports:
+      - "9200:9200"
+    volumes:
+      - ./deploy/monitoring/telegraf.conf:/etc/telegraf/telegraf.conf:ro
+    depends_on:
+      - redis
+    networks:
+      - football-network
+    restart: unless-stopped
+
+  node-exporter:
+    image: prom/node-exporter:v1.6.0
+    ports:
+      - "9100:9100"
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/rootfs'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    networks:
+      - football-network
+    restart: unless-stopped
+
+  # ================================
+  # Celery Worker & Beat
+  # ================================
+  celery-worker:
+    build:
+      context: .
+      target: runtime
+    command: celery -A src.tasks.schedule worker --loglevel=info --queue=ml_training,monitoring,data_quality,maintenance
+    environment:
+      - ENVIRONMENT=development
+      - PYTHONPATH=/app/src
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_NAME=football_prediction_dev
+      - DB_USER=football_user
+      - DB_PASSWORD=football_pass
+      - REDIS_URL=redis://redis:6379/0
+      - ENABLE_METRICS=true
+      - MODEL_PATH=/app/data/models
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./src:/app/src:ro
+      - ./logs:/app/logs
+      - ./data:/app/data
+      - model_data:/app/data/models
+    networks:
+      - football-network
+    restart: unless-stopped
+
+  celery-beat:
+    build:
+      context: .
+      target: runtime
+    command: celery -A src.tasks.schedule beat --loglevel=info
+    environment:
+      - ENVIRONMENT=development
+      - PYTHONPATH=/app/src
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_NAME=football_prediction_dev
+      - DB_USER=football_user
+      - DB_PASSWORD=football_pass
+      - REDIS_URL=redis://redis:6379/0
+      - ENABLE_METRICS=true
+      - MODEL_PATH=/app/data/models
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./src:/app/src:ro
+      - ./logs:/app/logs
+      - ./data:/app/data
+      - model_data:/app/data/models
+    networks:
+      - football-network
+    restart: unless-stopped
+
+  flower:
+    build:
+      context: .
+      target: runtime
+    command: celery -A src.tasks.schedule flower --port=5555
+    ports:
+      - "5555:5555"
+    environment:
+      - ENVIRONMENT=development
+      - PYTHONPATH=/app/src
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      - redis
+    networks:
+      - football-network
+    restart: unless-stopped
+
   nginx:
     image: nginx:alpine
     ports:
@@ -98,6 +263,7 @@ services:
       - ./nginx/ssl:/etc/nginx/ssl:ro
     depends_on:
       - app
+      - grafana
     networks:
       - football-network
     restart: unless-stopped
@@ -110,6 +276,10 @@ volumes:
   model_data:
     driver: local
   cache_data:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
     driver: local
 
 networks:

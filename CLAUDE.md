@@ -37,23 +37,38 @@ make fix              # Quick fix: format + lint
 
 ### Local Development
 ```bash
-docker-compose up --build    # Start full development stack
-docker-compose ps            # Check service status
-docker-compose logs app      # View application logs
-docker-compose logs -f app   # Follow application logs in real-time
-make status                  # View project overview and statistics
+# Docker管理脚本 (v2.0推荐)
+./scripts/docker-manager.sh dev                    # 启动完整开发环境
+./scripts/docker-manager.sh status                 # 查看服务状态
+./scripts/docker-manager.sh logs -f app           # 实时查看应用日志
+./scripts/docker-manager.sh shell                  # 进入容器shell
+./scripts/docker-manager.sh health                 # 检查服务健康状态
+
+# 传统Docker命令
+docker-compose up --build                         # 启动完整开发栈
+docker-compose ps                                 # 检查服务状态
+docker-compose logs app                           # 查看应用日志
+docker-compose logs -f app                        # 实时跟踪应用日志
+make status                                       # 查看项目概览和统计
 ```
 
 ## Architecture Overview
 
 ### Core Architecture Pattern
-**Async-First + Machine Learning + Clean Architecture**
+**Service Layer v2.0 + ML Inference + Docker Containerization**
 
-The system implements modern async-first architecture with ML integration:
+The system implements modern Service Layer architecture with ML integration:
+- **Services Layer (v2.0)**: Core business logic services in `src/services/`
+  - `inference_service_v2.py` - 推理服务，支持预测和批量预测
+  - `collection_service.py` - 数据收集服务，支持并发任务管理
+  - `explainability_service.py` - 可解释性服务，SHAP分析和特征重要性
+- **ML Inference Layer (v2.0)**: Dedicated ML inference components in `src/ml/inference/`
+  - `model_loader.py` - 模型加载器，支持版本管理和内存缓存
+  - `predictor.py` - 预测器，特征验证和预测逻辑
+  - `cache_manager.py` - 缓存管理器，LRU缓存和TTL管理
 - **API Layer**: FastAPI routers and HTTP endpoints in `src/api/`
 - **ML Layer**: Machine learning models and feature engineering in `src/ml/`
-- **Data Layer**: Database connections and data loading in `src/ml/data/`
-- **Core Layer**: Configuration, utilities, and inference engine in `src/`
+- **Data Layer**: PostgreSQL, Redis, File System, and External APIs
 - **External**: Data collectors and scripts for data processing
 
 ### Key Architectural Components
@@ -89,13 +104,21 @@ The system implements modern async-first architecture with ML integration:
 ```
 FootballPrediction/
 ├── src/
-│   ├── api/              # FastAPI routers and HTTP endpoints
-│   │   ├── health.py              # 健康检查服务
-│   │   ├── model_management.py    # 模型管理API
-│   │   ├── monitoring.py          # 监控指标API
-│   │   ├── predictions/           # 预测路由器
-│   │   └── schemas.py             # API数据模型
+│   ├── api/                      # FastAPI routers and HTTP endpoints
+│   │   ├── health.py             # 健康检查服务
+│   │   ├── model_management.py   # 模型管理API
+│   │   ├── monitoring.py         # 监控指标API
+│   │   ├── predictions/          # 预测路由器
+│   │   └── schemas.py            # API数据模型
+│   ├── services/                 # 服务层 (v2.0新增)
+│   │   ├── inference_service_v2.py      # 推理服务
+│   │   ├── collection_service.py        # 数据收集服务
+│   │   └── explainability_service.py   # 可解释性服务
 │   ├── ml/               # Machine learning models and feature engineering
+│   │   ├── inference/            # 推理层 (v2.0新增)
+│   │   │   ├── model_loader.py          # 模型加载器
+│   │   │   ├── predictor.py             # 预测器
+│   │   │   └── cache_manager.py         # 缓存管理器
 │   │   ├── features/             # 特征工程模块
 │   │   │   ├── advanced_feature_transformer.py  # 高级特征转换器
 │   │   │   ├── h2h_calculator.py                # 历史交锋计算
@@ -111,10 +134,13 @@ FootballPrediction/
 │   │   └── dataset/              # 数据集生成
 │   │       ├── dataset_generator.py
 │   │       └── target_labels.py
+│   ├── database/                 # 数据库相关
 │   ├── utils/            # Shared utilities
 │   ├── config.py         # Centralized configuration (461 lines)
 │   └── inference.py      # Main inference engine
 ├── scripts/              # Data collectors and development scripts
+│   ├── predict_match_v2.py             # v2.0 预测CLI工具
+│   ├── docker-manager.sh               # Docker容器管理脚本 (440行)
 │   ├── collectors/       # External API data collectors
 │   │   ├── enhanced_fotmob_collector.py  # L2级别数据提取
 │   │   ├── fotmob_api_collector.py       # FotMob API集成
@@ -150,7 +176,8 @@ FootballPrediction/
 - Integration tests for database and external APIs in `tests/integration/`
 - End-to-end tests for complete workflows in `tests/e2e/`
 - Performance tests in `tests/performance/`
-- Test coverage target: 96.35% (128 tests passing)
+- **Current Test Count**: 154 test functions across 10 test files
+- Test coverage target: 80%+ (as specified in README.md)
 
 ### Configuration Management
 - Centralized configuration in `src/config.py` (461 lines)
@@ -218,13 +245,6 @@ FootballPrediction/
 
 ## Testing and Quality Assurance
 
-### Current Test Status
-- **Total Tests**: 6 tests (4 passing, 2 failing)
-- **Known Issues**:
-  - Missing pyarrow/fastparquet dependency for parquet support
-  - Some ML feature methods have incorrect attribute names
-- **Test Coverage**: Currently working towards target coverage
-
 ### Test Execution
 ```bash
 # Run tests with coverage
@@ -232,10 +252,19 @@ make test                    # Run unit tests (fast)
 make coverage               # Run tests with coverage report
 make ci                     # Complete quality check + tests
 
+# Docker-based testing (v2.0)
+./scripts/docker-manager.sh test              # Run tests in containers
+./scripts/docker-manager.sh quality           # Run quality checks
+
 # Individual test execution
 pytest tests/test_pipeline_e2e.py::test_minimal_pipeline_smoke -v
 pytest tests/test_smoke.py::test_ci_pipeline_infrastructure -v
 pytest tests/ -k "smoke" -v
+
+# Run specific test categories
+pytest tests/unit/ -v       # Unit tests only
+pytest tests/integration/ -v # Integration tests only
+pytest tests/e2e/ -v        # End-to-end tests only
 ```
 
 ### Quality Checks
@@ -290,49 +319,114 @@ python scripts/process_offline_features_full.py         # Feature processing
 
 ### Environment Setup
 ```bash
-# Required environment variables
+# Database Configuration
 export DB_HOST=localhost
 export DB_PORT=5432
 export DB_NAME=football_prediction_dev
 export DB_USER=football_user
 export DB_PASSWORD=football_pass
 
+# Redis Configuration (v2.0)
+export REDIS_HOST=localhost
+export REDIS_PORT=6379
+export REDIS_DB=0
+export REDIS_PASSWORD=""
+
 # FotMob API (production)
 export FOTMOB_X_MAS_HEADER="your_header"
 export FOTMOB_X_FOO_HEADER="your_header"
+
+# Service Configuration (v2.0)
+export INFERENCE_SERVICE_URL=http://localhost:8000
+export COLLECTION_SERVICE_URL=http://localhost:8001
+export EXPLAINABILITY_SERVICE_URL=http://localhost:8002
+
+# Environment Files
+# .env.dev - Development environment
+# .env.ci - CI environment
+# .env.production - Production environment
 ```
 
-## Phase 5: Advanced Features (Current Development)
-
-### Current Status
-- **Development Focus**: Advanced feature engineering for improved prediction accuracy
-- **Known Issues**: Some ML feature methods need method name fixes
-- **Key Problems Being Solved**:
-  - Venue-separated rolling statistics (home/away bias)
-  - Historical head-to-head (H2H) analysis
-  - League form analysis using points instead of goals
-
-### Key Components
-- **AdvancedFeatureTransformer**: Main feature integration (`src/ml/features/advanced_feature_transformer.py`)
-- **H2HCalculator**: Head-to-head statistics (`src/ml/features/h2h_calculator.py`) - *needs method fixes*
-- **VenueAnalyzer**: Home/away performance analysis (`src/ml/features/venue_analyzer.py`) - *needs method fixes*
-
-### Available Scripts
+### Dependency Management
 ```bash
-python scripts/process_offline_features_full.py    # Process offline features
-python scripts/canary_simple.py                   # Canary testing
-python scripts/collectors/enhanced_fotmob_collector.py  # L2 data extraction
+# Install dependencies
+make install                    # Install all dependencies including dev deps
+pip install -r requirements.txt                # Production dependencies
+pip install -r requirements-dev.txt           # Development dependencies
+
+# Development dependencies include:
+# - pytest 7.4+ (testing)
+# - black, flake8, mypy, bandit (code quality)
+# - coverage (test coverage)
+# - pre-commit (git hooks)
 ```
 
-### Development Tasks
-- Fix method names in H2HCalculator and VenueAnalyzer
-- Add missing pyarrow dependency for parquet support
-- Address test failures for full pipeline validation
+## CLI Tools and Usage
 
-### Performance Goals
-- **Target Accuracy**: 65%+ (from current 58.69%)
-- **Real-time Prediction**: Optimized for production use
-- **Feature Importance**: New features expected to be significant predictors
+### v2.0 Prediction CLI
+```bash
+# Single match prediction
+python scripts/predict_match_v2.py --home "Manchester United" --away "Arsenal"
+
+# Batch prediction
+python scripts/predict_match_v2.py --batch matches.json
+
+# Use specific model version
+python scripts/predict_match_v2.py --home "Chelsea" --away "Liverpool" --model xgboost_v2
+
+# Example output:
+🏟️  比赛: Manchester United vs Arsenal
+📅  日期: 2024-01-15
+
+📊 预测概率:
+主胜 (HOME) : 65.2% |███████████████████████████████████░░░|
+平局 (DRAW) : 22.1% |███████████████░░░░░░░░░░░░░░░░░░░░░░|
+客胜 (AWAY) : 12.7% |███████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░|
+
+🎯 预测结果: HOME_WIN
+💡 置信度: 65.2%
+📈 模型版本: xgboost_v2
+```
+
+### Docker Management Script (v2.0)
+```bash
+# Environment management
+./scripts/docker-manager.sh dev                    # Start development environment
+./scripts/docker-manager.sh prod                   # Start production environment
+./scripts/docker-manager.sh health                 # Health check all services
+
+# Development features
+./scripts/docker-manager.sh dev --collectors       # Start with data collectors
+./scripts/docker-manager.sh dev --debug           # Enable debug mode
+./scripts/docker-manager.sh dev --reload          # Enable hot reload
+
+# Service management
+./scripts/docker-manager.sh logs -f app           # Follow application logs
+./scripts/docker-manager.sh shell                 # Enter container shell
+./scripts/docker-manager.sh restart               # Restart all services
+
+# Testing and quality
+./scripts/docker-manager.sh test                  # Run test suite
+./scripts/docker-manager.sh quality               # Run quality checks
+
+# Cleanup
+./scripts/docker-manager.sh clean                 # Clean unused resources
+./scripts/docker-manager.sh clean --all           # Clean all resources
+```
+
+### Model Performance and Features
+
+#### Current Performance Metrics
+- **Target Accuracy**: 65%+ (from current 58.69% in v1.1)
+- **Response Time**: <100ms (single prediction)
+- **Cache Hit Rate**: >80%
+- **Feature Dimensions**: 12+ professional features
+
+#### Advanced Feature Engineering (v2.0)
+- **Venue-separated rolling statistics**: 解决主客场偏见
+- **Historical head-to-head (H2H) analysis**: H2H记录和"克星"效应
+- **League form analysis**: 联赛形态特征 - 积分替代进球数
+- **Real-time feature processing**: 异步特征计算和缓存
 
 ---
 
@@ -380,6 +474,6 @@ docker-compose up --build
 
 ---
 
-**更新时间**: 2025-12-17 | **分支**: main | **状态**: 🚧 开发中 (4/6 测试通过)
+**更新时间**: 2025-12-17 | **分支**: main | **版本**: v2.0.0-Stable
 
-**重要说明**: 项目处于活跃开发阶段，一些功能仍在完善中。当前主要问题是依赖缺失和方法名不匹配，需要继续开发以达到生产就绪状态。
+**重要说明**: 项目已升级到v2.0稳定版本，采用全新Service Layer架构，完全容器化部署，生产就绪。

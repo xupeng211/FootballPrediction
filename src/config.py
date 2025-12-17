@@ -251,22 +251,23 @@ class LoggingSettings(BaseSettings):
 
     def get_logging_config(self) -> Dict[str, Any]:
         """获取日志配置字典"""
-        return {
+        config = {
             "version": 1,
             "disable_existing_loggers": False,
             "formatters": {
                 "default": {
                     "format": self.format,
                 },
-                "json": {
-                    "()": "pythonjsonlogger.jsonlogger.JsonFormatter",
-                    "fmt": self.format,
-                },
+                # JSON formatter - 临时禁用以修复启动问题
+                # "json": {
+                #     "()": "pythonjsonlogger.jsonlogger.JsonFormatter",
+                #     "fmt": self.format,
+                # },
             },
             "handlers": {
                 "console": {
                     "class": "logging.StreamHandler",
-                    "formatter": "json" if self.enable_json_logs else "default",
+                    "formatter": "default",  # 强制使用default formatter
                     "level": self.level,
                 },
             },
@@ -287,6 +288,8 @@ class LoggingSettings(BaseSettings):
                 },
             },
         }
+
+        return config
 
 
 class Settings(BaseSettings):

@@ -3,12 +3,15 @@
 模型加载器模块 (Model Loader)
 
 专职负责模型的加载、版本校验、文件路径管理。
+支持热更新和自动监听模型版本变更。
 遵循单一职责原则，只负责模型生命周期管理。
 """
 
+import json
 import logging
 import pickle
-import joblib
+import threading
+import time
 from pathlib import Path
 from typing import Dict, Any, Optional, Union, List
 from dataclasses import dataclass
@@ -45,22 +48,43 @@ class ModelLoader:
     设计原则：单一职责，高内聚，易于测试
     """
 
-    def __init__(self, model_cache_dir: Optional[Union[str, Path]] = None):
+    def __init__(
+        self,
+        model_cache_dir: Optional[Union[str, Path]] = None,
+        enable_hot_reload: bool = True,
+        reload_interval: int = 30
+    ):
         """
         初始化模型加载器
 
         Args:
             model_cache_dir: 模型缓存目录，用于存储和管理多个模型文件
+            enable_hot_reload: 是否启用热更新功能
+            reload_interval: 热更新检查间隔（秒）
         """
         self.model_cache_dir = Path(model_cache_dir) if model_cache_dir else Path("models")
         self.loaded_models: Dict[str, Any] = {}  # 存储加载的模型对象
         self.model_metadata: Dict[str, ModelMetadata] = {}  # 存储模型元数据
         self.model_paths: Dict[str, Path] = {}  # 存储模型路径
 
+        # 热更新相关配置
+        self.enable_hot_reload = enable_hot_reload
+        self.reload_interval = reload_interval
+        self.current_best_file = self.model_cache_dir / "current_best.txt"
+        self.registry_file = self.model_cache_dir / "registry.json"
+        self._current_version = None
+        self._reload_thread = None
+        self._stop_reload = threading.Event()
+
         # 确保缓存目录存在
         self.model_cache_dir.mkdir(parents=True, exist_ok=True)
 
+        # 启动热更新监听
+        if self.enable_hot_reload:
+            self._start_hot_reload()
+
         logger.info(f"模型加载器初始化完成，缓存目录: {self.model_cache_dir}")
+        logger.info(f"热更新功能: {'启用' if self.enable_hot_reload else '禁用'}")
 
     def load_model(
         self,
@@ -136,7 +160,10 @@ class ModelLoader:
         """
         try:
             # 根据文件扩展名选择加载方式
-            if model_path.suffix in ['.pkl', '.pickle']:
+            if model_path.suffix == '.json':
+                import xgboost as xgb
+                return xgb.XGBClassifier()
+            elif model_path.suffix in ['.pkl', '.pickle']:
                 with open(model_path, 'rb') as f:
                     return pickle.load(f)
             else:
@@ -379,6 +406,204 @@ class ModelLoader:
             available_models.append(model_name)
 
         return available_models
+
+    # ================================
+    # 热更新功能
+    # ================================
+
+    def _start_hot_reload(self):
+        """启动热更新监听线程"""
+        if self._reload_thread is not None:
+            logger.warning("热更新线程已在运行")
+            return
+
+        self._stop_reload.clear()
+        self._reload_thread = threading.Thread(target=self._hot_reload_worker, daemon=True)
+        self._reload_thread.start()
+        logger.info("热更新监听线程已启动")
+
+    def _hot_reload_worker(self):
+        """热更新工作线程"""
+        logger.info("热更新监听线程开始运行")
+
+        while not self._stop_reload.is_set():
+            try:
+                self._check_for_model_updates()
+                time.sleep(self.reload_interval)
+            except Exception as e:
+                logger.error(f"热更新检查出错: {str(e)}")
+                time.sleep(self.reload_interval)
+
+        logger.info("热更新监听线程已停止")
+
+    def _check_for_model_updates(self):
+        """检查模型更新"""
+        try:
+            # 检查当前最佳模型文件
+            if not self.current_best_file.exists():
+                if self._current_version is None:
+                    # 首次运行，尝试加载当前最佳模型
+                    self._load_current_best_model()
+                return
+
+            # 读取当前最佳版本
+            with open(self.current_best_file, 'r', encoding='utf-8') as f:
+                current_version = f.read().strip()
+
+            # 如果版本没有变化，无需更新
+            if current_version == self._current_version:
+                return
+
+            logger.info(f"检测到模型版本更新: {self._current_version} -> {current_version}")
+
+            # 加载新模型
+            self._load_current_best_model()
+
+        except Exception as e:
+            logger.error(f"检查模型更新失败: {str(e)}")
+
+    def _load_current_best_model(self):
+        """加载当前最佳模型"""
+        try:
+            if not self.current_best_file.exists():
+                logger.warning("当前最佳模型文件不存在")
+                return
+
+            # 读取当前版本
+            with open(self.current_best_file, 'r', encoding='utf-8') as f:
+                current_version = f.read().strip()
+
+            if not current_version:
+                logger.warning("当前最佳模型版本为空")
+                return
+
+            # 构建模型路径
+            model_path = self.model_cache_dir / f"{current_version}.json"
+
+            if not model_path.exists():
+                logger.warning(f"模型文件不存在: {model_path}")
+                return
+
+            # 加载模型元数据
+            metadata = self._load_model_metadata(current_version)
+            if not metadata:
+                logger.warning(f"无法加载模型元数据: {current_version}")
+                return
+
+            # 如果当前已加载的模型版本相同，无需重新加载
+            if self._current_version == current_version and "xgboost_v2" in self.loaded_models:
+                logger.info(f"模型版本 {current_version} 已是最新版本")
+                return
+
+            # 卸载旧模型
+            if "xgboost_v2" in self.loaded_models:
+                self.unload_model("xgboost_v2")
+
+            # 加载新模型
+            success = self.load_model("xgboost_v2", model_path, validate_model=True)
+            if success:
+                self._current_version = current_version
+                logger.info(f"✅ 成功加载新模型版本: {current_version}")
+
+                # 更新 Prometheus 指标（如果可用）
+                try:
+                    from src.main import cache_operations_total
+                    cache_operations_total.labels(
+                        cache_type="model",
+                        operation="hot_reload"
+                    ).inc()
+                except ImportError:
+                    pass
+
+            else:
+                logger.error(f"❌ 加载新模型失败: {current_version}")
+
+        except Exception as e:
+            logger.error(f"加载当前最佳模型失败: {str(e)}")
+
+    def _load_model_metadata(self, version: str) -> Optional[Dict[str, Any]]:
+        """加载模型元数据"""
+        try:
+            if not self.registry_file.exists():
+                return None
+
+            with open(self.registry_file, 'r', encoding='utf-8') as f:
+                registry = json.load(f)
+
+            models = registry.get("models", {})
+            model_data = models.get(version)
+
+            if not model_data:
+                return None
+
+            return model_data
+
+        except Exception as e:
+            logger.error(f"加载模型元数据失败: {str(e)}")
+            return None
+
+    def trigger_model_reload(self) -> bool:
+        """手动触发模型重载"""
+        try:
+            logger.info("手动触发模型重载")
+            self._check_for_model_updates()
+            return True
+        except Exception as e:
+            logger.error(f"手动触发模型重载失败: {str(e)}")
+            return False
+
+    def get_current_version(self) -> Optional[str]:
+        """获取当前加载的模型版本"""
+        return self._current_version
+
+    def switch_model_version(self, target_version: str) -> bool:
+        """切换到指定版本的模型"""
+        try:
+            logger.info(f"手动切换模型版本到: {target_version}")
+
+            # 检查目标版本是否存在
+            model_path = self.model_cache_dir / f"{target_version}.json"
+            if not model_path.exists():
+                logger.error(f"目标模型版本不存在: {target_version}")
+                return False
+
+            # 检查元数据是否存在
+            metadata = self._load_model_metadata(target_version)
+            if not metadata:
+                logger.error(f"目标模型元数据不存在: {target_version}")
+                return False
+
+            # 更新当前最佳文件
+            with open(self.current_best_file, 'w', encoding='utf-8') as f:
+                f.write(target_version)
+
+            # 触发重载
+            self._current_version = None  # 强制重载
+            self.trigger_model_reload()
+
+            logger.info(f"✅ 成功切换到模型版本: {target_version}")
+            return True
+
+        except Exception as e:
+            logger.error(f"切换模型版本失败: {str(e)}")
+            return False
+
+    def stop_hot_reload(self):
+        """停止热更新监听"""
+        if self._reload_thread is None:
+            return
+
+        logger.info("停止热更新监听")
+        self._stop_reload.set()
+        self._reload_thread.join(timeout=5)
+        self._reload_thread = None
+
+    def __del__(self):
+        """析构函数，确保线程正确停止"""
+        try:
+            self.stop_hot_reload()
+        except:
+            pass
 
     def __len__(self) -> int:
         """

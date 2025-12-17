@@ -1,4 +1,4 @@
-# ⚽ FootballPrediction v2.0 - 足球预测系统
+# ⚽ Football Prediction v2.0 - AI驱动的足球赛事预测系统
 
 [![Python](https://img.shields.io/badge/Python-3.11+-blue?style=flat-square&logo=python)](https://python.org)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.104+-green?style=flat-square&logo=fastapi)](https://fastapi.tiangolo.com)
@@ -6,414 +6,374 @@
 [![Coverage](https://img.shields.io/badge/Coverage-80%25+-brightgreen?style=flat-square)](https://github.com/xupeng211/FootballPrediction)
 [![Tests](https://img.shields.io/badge/Tests-Passing-brightgreen?style=flat-square)](https://github.com/xupeng211/FootballPrediction)
 [![Security](https://img.shields.io/badge/Security-Validated-green?style=flat-square)](https://github.com/xupeng211/FootballPrediction)
+[![License](https://img.shields.io/badge/License-MIT-blue?style=flat-square)](https://opensource.org/licenses/MIT)
 [![Version](https://img.shields.io/badge/Version-v2.0.0--Stable-brightgreen?style=flat-square)](https://github.com/xupeng211/FootballPrediction)
 
-🎯 **现代化微服务架构的足球预测系统** - Service Layer + ML Inference + Docker容器化
+> 🎯 **基于机器学习和现代微服务架构的高性能足球赛事预测系统** - Service Layer + ML Inference + 容器化部署
 
-> 🚀 **最新版本：v2.0.0-Stable** - 全新架构重构，生产就绪
+## 📋 项目简介
 
----
+Football Prediction v2.0 是一个现代化的足球赛事预测系统，采用**机器学习算法**分析历史数据、球员状态、场馆因素等多维度特征，为足球比赛提供精准的胜负平预测结果。
 
-## 🏗️ v2.0 架构概览
+### 🌟 核心特性
 
-### 🔄 服务层架构 (Service Layer Architecture)
+- **🤖 AI 驱动**: 基于 XGBoost 2.0+ 的机器学习模型，预测准确率目标 65%+
+- **⚡ 高性能**: 异步 FastAPI 架构，响应时间 < 100ms，支持 1000+ QPS
+- **🏗️ 微服务架构**: Service Layer v2.0 + ML Inference Layer，可扩展设计
+- **📊 全链路监控**: Prometheus + Grafana 实时监控，业务指标可视化
+- **🐳 容器化部署**: Docker + Docker Compose，一键启动生产环境
+- **🔒 企业级安全**: 完整的安全扫描、依赖管理、API认证
 
+## 🏗️ 系统架构
+
+```mermaid
+graph TB
+    subgraph "客户端层"
+        CLI[CLI工具<br/>predict_match_v2.py]
+        WEB[Web界面<br/>FastAPI Docs]
+        API[外部API客户端]
+    end
+
+    subgraph "服务层 v2.0"
+        SVC1[InferenceService<br/>预测服务]
+        SVC2[CollectionService<br/>数据收集服务]
+        SVC3[ExplainabilityService<br/>可解释性服务]
+    end
+
+    subgraph "ML推理层"
+        MODEL[ModelLoader<br/>模型加载器]
+        PREDICTOR[Predictor<br/>预测器]
+        CACHE[CacheManager<br/>缓存管理器]
+    end
+
+    subgraph "数据层"
+        PG[(PostgreSQL<br/>主数据库)]
+        REDIS[(Redis<br/>缓存/队列)]
+        FILES[文件系统<br/>模型存储]
+        EXTERNAL[外部API<br/>FotMob]
+    end
+
+    subgraph "监控层"
+        PROM[Prometheus<br/>指标收集]
+        GRAFANA[Grafana<br/>可视化]
+        ALERT[Alertmanager<br/>报警]
+    end
+
+    CLI --> SVC1
+    WEB --> SVC1
+    API --> SVC2
+
+    SVC1 --> MODEL
+    SVC1 --> PREDICTOR
+    SVC1 --> CACHE
+
+    SVC2 --> REDIS
+    SVC2 --> EXTERNAL
+
+    SVC3 --> MODEL
+    SVC3 --> CACHE
+
+    MODEL --> FILES
+    PREDICTOR --> PG
+    CACHE --> REDIS
+
+    SVC1 -.->|指标暴露| PROM
+    SVC2 -.->|指标暴露| PROM
+    SVC3 -.->|指标暴露| PROM
+
+    PROM --> GRAFANA
+    PROM --> ALERT
+
+    style CLI fill:#e1f5fe
+    style WEB fill:#e1f5fe
+    style API fill:#e1f5fe
+    style SVC1 fill:#f3e5f5
+    style SVC2 fill:#f3e5f5
+    style SVC3 fill:#f3e5f5
+    style MODEL fill:#e8f5e8
+    style PREDICTOR fill:#e8f5e8
+    style CACHE fill:#e8f5e8
 ```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   CLI Scripts    │    │   FastAPI Web    │    │   External API  │
-│                 │    │     Interface    │    │    Clients      │
-└─────────┬───────┘    └─────────┬───────┘    └─────────┬───────┘
-          │                      │                      │
-          ▼                      ▼                      ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                    Services Layer (v2.0)                         │
-├─────────────────┬─────────────────┬─────────────────────────────┤
-│ InferenceServiceV2│ CollectionService│  ExplainabilityService     │
-│                 │                 │                             │
-│ • 比赛预测       │ • 数据收集        │ • 模型解释                   │
-│ • 批量预测       │ • 任务管理        │ • SHAP分析                   │
-│ • 缓存管理       │ • 并发执行        │ • 特征重要性                 │
-└─────────────────┴─────────────────┴─────────────────────────────┘
-          │                      │                      │
-          ▼                      ▼                      ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                   ML Inference Layer (v2.0)                        │
-├─────────────────┬─────────────────┬─────────────────────────────┤
-│  ModelLoader    │  MatchPredictor │  PredictionCache            │
-│                 │                 │                             │
-│ • 模型加载       │ • 预测逻辑       │ • LRU缓存                    │
-│ • 版本管理       │ • 特征验证       │ • TTL管理                    │
-│ • 内存缓存       │ • 统计信息       │ • 自动清理                   │
-└─────────────────┴─────────────────┴─────────────────────────────┘
-          │                      │                      │
-          ▼                      ▼                      ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                    Data Layer                                     │
-│  PostgreSQL  │    Redis    │  File System  │  External APIs    │
-└─────────────────────────────────────────────────────────────────┘
-```
+
+### 📦 架构组件说明
+
+| 层级 | 组件 | 职责 | 技术栈 |
+|------|------|------|--------|
+| **客户端层** | CLI工具 / Web界面 / API客户端 | 用户交互和数据输入 | Python / FastAPI / HTTP |
+| **服务层** | 推理/数据收集/可解释性服务 | 业务逻辑编排和API接口 | FastAPI / Python 3.11+ |
+| **推理层** | 模型加载器/预测器/缓存管理 | ML模型执行和性能优化 | XGBoost / Redis / LRU Cache |
+| **数据层** | PostgreSQL / Redis / 文件系统 / 外部API | 数据存储、缓存和外部数据源 | SQLAlchemy / Redis / REST |
+| **监控层** | Prometheus / Grafana / Alertmanager | 指标收集、可视化和报警 | Prometheus / Grafana |
 
 ## 🚀 快速开始
 
-### 🐳 一键启动 (推荐)
+### 📋 前置要求
+
+- **Docker** 20.0+ 和 **Docker Compose** 2.0+
+- **Git** 用于代码管理
+- 8GB+ 内存推荐（用于容器化部署）
+
+### ⚡ 一键启动
 
 ```bash
-# 克隆项目
+# 1. 克隆项目
 git clone https://github.com/xupeng211/FootballPrediction.git
 cd FootballPrediction
 
-# 一键启动完整开发环境
-./scripts/docker-manager.sh dev
+# 2. 配置环境变量（可选）
+cp .env.example .env
+# 编辑 .env 文件以调整配置
 
-# 🎉 服务已启动！
-# 📱 Web应用: http://localhost:8000
-# 📚 API文档: http://localhost:8000/docs
-# 🗄️ 数据库管理: http://localhost:8080
-# 📦 Redis管理: http://localhost:8081
+# 3. 启动完整系统
+docker-compose up -d
+
+# 🎉 系统启动完成！等待 30 秒让所有服务就绪
 ```
 
-### 📋 Docker 管理命令
+### 🌐 访问地址
+
+| 服务 | 地址 | 账户 | 说明 |
+|------|------|------|------|
+| **🔮 API 文档** | http://localhost:8000/docs | - | Swagger UI，可测试所有API |
+| **📊 监控仪表盘** | http://localhost:3000 | admin/admin123 | Grafana 监控面板 |
+| **📈 指标收集** | http://localhost:9090 | - | Prometheus 指标界面 |
+| **🗄️ 数据库管理** | http://localhost:8080 | football_user/football_pass | PgAdmin（可选） |
+| **📦 Redis管理** | http://localhost:8081 | - | Redis Commander（可选） |
+
+### 🎯 快速体验
 
 ```bash
-# 构建和启动
-./scripts/docker-manager.sh build
-./scripts/docker-manager.sh up
+# 方式1：使用 CLI 工具预测
+docker-compose exec app python scripts/predict_match_v2.py \
+  --home "Manchester United" --away "Arsenal"
 
-# 查看状态和日志
-./scripts/docker-manager.sh status
-./scripts/docker-manager.sh logs -f app
+# 方式2：使用 API 预测
+curl -X POST "http://localhost:8000/api/v1/predictions" \
+  -H "Content-Type: application/json" \
+  -d '{"home_team": "Manchester United", "away_team": "Arsenal"}'
 
-# 健康检查
-./scripts/docker-manager.sh health
-
-# 开发环境特性
-./scripts/docker-manager.sh dev --collectors    # 启动数据收集器
-./scripts/docker-manager.sh test               # 运行测试套件
-./scripts/docker-manager.sh quality            # 代码质量检查
-
-# 清理和重置
-./scripts/docker-manager.sh clean --all        # 清理所有资源
+# 方式3：批量预测
+echo '[{"home_team": "Chelsea", "away_team": "Liverpool"}]' > matches.json
+docker-compose exec app python scripts/predict_match_v2.py --batch matches.json
 ```
 
-## ⚡ CLI 使用指南
+## 🛠️ 开发指南
 
-### 🎯 预测比赛 (v2.0)
-
-```bash
-# 使用新的 v2.0 预测脚本
-python scripts/predict_match_v2.py --home "Manchester United" --away "Arsenal"
-
-# 批量预测
-python scripts/predict_match_v2.py --batch matches.json
-
-# 使用特定模型
-python scripts/predict_match_v2.py --home "Chelsea" --away "Liverpool" --model xgboost_v2
-
-# 输出示例
-🏟️  比赛: Manchester United vs Arsenal
-📅  日期: 2024-01-15
-
-📊 预测概率:
-主胜 (HOME) : 65.2% |███████████████████████████████████░░░|
-平局 (DRAW) : 22.1% |███████████████░░░░░░░░░░░░░░░░░░░░░░|
-客胜 (AWAY) : 12.7% |███████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░|
-
-🎯 预测结果: HOME_WIN
-💡 置信度: 65.2%
-📈 模型版本: xgboost_v2
-```
-
-### 🗂️ 数据收集
+### 📦 本地开发环境
 
 ```bash
-# 收集 FotMob 数据
-python scripts/collectors/enhanced_fotmob_collector.py --match-id 123456
+# 1. 创建虚拟环境
+python -m venv venv
+source venv/bin/activate  # Linux/Mac
+# 或 venv\Scripts\activate  # Windows
 
-# 收集赔率数据
-python scripts/collectors/odds_collector.py --match-id 123456
+# 2. 安装依赖
+make install  # 或 pip install -r requirements-dev.txt
 
-# 处理离线特征
-python scripts/process_offline_features_full.py
-```
+# 3. 启动本地服务
+uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
 
-## 🔧 开发环境设置
-
-### 📦 本地开发
-
-```bash
-# 安装依赖
-make install
-
-# 开发环境设置
-make dev
-
-# 运行测试
+# 4. 运行测试
 make test
 
-# 代码质量检查
+# 5. 代码质量检查
 make quality
-
-# 生成覆盖率报告
-make coverage
 ```
 
-### 🐳 Docker 开发环境
-
-```bash
-# 启动完整开发环境 (包含热重载和调试)
-./scripts/docker-manager.sh dev
-
-# 进入容器开发
-./scripts/docker-manager.sh shell
-
-# 查看实时日志
-./scripts/docker-manager.sh logs -f app
-
-# 重启服务
-./scripts/docker-manager.sh restart
-```
-
-### 🧪 测试和质量保证
+### 🧪 测试指南
 
 ```bash
 # 运行所有测试
-./scripts/docker-manager.sh test
+pytest
 
-# 代码质量检查
-./scripts/docker-manager.sh quality
+# 运行特定类型测试
+pytest tests/unit/ -v          # 单元测试
+pytest tests/integration/ -v   # 集成测试
+pytest tests/e2e/ -v           # 端到端测试
+
+# 生成覆盖率报告
+pytest --cov=src --cov-report=html
+
+# 性能测试
+pytest tests/performance/ -v
+```
+
+### 🎨 代码规范
+
+```bash
+# 安装 pre-commit 钩子
+pre-commit install
+
+# 代码格式化
+make format
+
+# 代码检查
+make lint
+
+# 类型检查
+make typecheck
 
 # 安全扫描
 make security
 
-# 复杂度分析
-make complexity
+# 运行所有质量检查
+make ci
 ```
 
-## 📚 API 文档
+## ⚙️ 环境配置
 
-### 🌐 REST API 端点
+### 🔧 必需的环境变量
+
+创建 `.env` 文件并配置以下关键变量：
 
 ```bash
-# 启动服务后访问 API 文档
-http://localhost:8000/docs
+# 数据库配置
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=football_prediction_dev
+DB_USER=football_user
+DB_PASSWORD=football_pass
+
+# Redis 配置
+REDIS_URL=redis://localhost:6379/0
+
+# 外部 API 配置（生产环境）
+FOTMOB_X_MAS_HEADER="your_fotmob_header"
+FOTMOB_X_FOO_HEADER="your_fotmob_header"
+
+# 功能开关
+ENABLE_METRICS=true
+ENABLE_CELERY=true
+ENABLE_DEBUG=false
+
+# 服务配置
+API_HOST=0.0.0.0
+API_PORT=8000
+MODEL_PATH=/app/data/models
+DEFAULT_MODEL_NAME=xgboost_v2
 ```
 
-#### 主要端点：
+### 🏗️ 环境文件说明
 
-- `GET /health` - 健康检查
-- `GET /api/v1/predictions/{match_id}` - 获取预测结果
-- `POST /api/v1/predictions/batch` - 批量预测
-- `GET /api/v1/models` - 模型列表和状态
-- `GET /api/v1/stats` - 服务统计信息
+| 文件 | 用途 | 环境 |
+|------|------|------|
+| `.env.example` | 配置模板 | 开发参考 |
+| `.env.dev` | 开发环境配置 | 本地开发 |
+| `.env.ci` | CI/CD 环境配置 | 自动化测试 |
+| `.env.production` | 生产环境配置 | 生产部署 |
 
-#### 示例请求：
-
-```bash
-# 单场比赛预测
-curl -X GET "http://localhost:8000/api/v1/predictions/123456" \
-  -H "accept: application/json"
-
-# 批量预测
-curl -X POST "http://localhost:8000/api/v1/predictions/batch" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "matches": [
-      {"home_team": "Man United", "away_team": "Arsenal"},
-      {"home_team": "Chelsea", "away_team": "Liverpool"}
-    ]
-  }'
-```
-
-## 🏗️ 项目结构
+## 📁 项目结构
 
 ```
 FootballPrediction/
 ├── 📁 src/                          # 核心源代码
-│   ├── 📁 api/                      # FastAPI 路由
+│   ├── 📁 api/                      # FastAPI 路由层
 │   │   ├── health.py                # 健康检查
-│   │   ├── predictions/             # 预测API
-│   │   └── monitoring.py            # 监控API
-│   ├── 📁 services/                 # 服务层 (v2.0新增)
+│   │   ├── monitoring.py            # 监控指标API
+│   │   ├── model_management.py      # 模型管理
+│   │   └── predictions/             # 预测路由
+│   ├── 📁 services/                 # 服务层 (v2.0)
 │   │   ├── inference_service_v2.py  # 推理服务
-│   │   ├── collection_service.py    # 数据收集服务
-│   │   └── explainability_service.py # 可解释性服务
-│   ├── 📁 ml/                       # 机器学习
-│   │   ├── 📁 inference/            # 推理层 (v2.0新增)
+│   │   ├── collection_service.py    # 数据收集
+│   │   └── explainability_service.py # 模型解释
+│   ├── 📁 ml/                       # 机器学习模块
+│   │   ├── 📁 inference/            # 推理层 (v2.0)
 │   │   │   ├── model_loader.py      # 模型加载器
 │   │   │   ├── predictor.py         # 预测器
-│   │   │   └── cache_manager.py     # 缓存管理器
-│   │   ├── 📁 models/                # ML模型
-│   │   └── 📁 features/              # 特征工程
+│   │   │   └── cache_manager.py     # 缓存管理
+│   │   ├── 📁 models/               # ML模型
+│   │   │   └── xgboost_classifier.py
+│   │   └── 📁 features/             # 特征工程
+│   │       ├── advanced_feature_transformer.py
+│   │       ├── h2h_calculator.py    # 历史交锋计算
+│   │       └── venue_analyzer.py    # 场馆分析
 │   ├── 📁 database/                 # 数据库相关
-│   └── main.py                       # FastAPI 应用入口
+│   ├── config.py                    # 配置管理
+│   └── main.py                      # FastAPI 应用入口
 ├── 📁 scripts/                      # 脚本工具
-│   ├── predict_match_v2.py          # v2.0 预测CLI
+│   ├── predict_match_v2.py          # 预测CLI工具
 │   ├── docker-manager.sh            # Docker管理脚本
 │   └── 📁 collectors/               # 数据收集器
+├── 📁 deploy/                       # 部署配置
+│   └── 📁 monitoring/               # 监控配置
+│       ├── prometheus.yml           # Prometheus配置
+│       ├── alerts.yml               # 报警规则
+│       └── telegraf.conf            # Celery监控
 ├── 📁 tests/                        # 测试套件
 │   ├── unit/                        # 单元测试
 │   ├── integration/                 # 集成测试
 │   └── e2e/                         # 端到端测试
-├── 📁 docker/                       # Docker配置
-│   ├── entrypoint_v2.sh             # v2.0 容器入口
-│   └── healthcheck_v2.py            # v2.0 健康检查
-├── docker-compose.yml              # 生产环境
-├── docker-compose.dev.yml           # 开发环境
+├── 📁 .github/                      # GitHub 配置
+│   ├── workflows/                   # CI/CD 工作流
+│   └── PULL_REQUEST_TEMPLATE.md     # PR 模板
+├── docker-compose.yml               # 容器编排
 ├── Dockerfile                       # 容器镜像
-├── Makefile                        # 构建工具
-└── requirements.txt                # Python依赖
+├── pyproject.toml                   # 项目配置
+└── requirements.txt                 # Python依赖
 ```
 
-## 🔧 核心技术栈
+## 📊 监控和观测
 
-### 🎯 后端架构
-- **FastAPI 0.104+** - 现代高性能异步Web框架
-- **SQLAlchemy 2.0+** - 现代ORM，支持异步操作
-- **PostgreSQL 15+** - 主数据库，JSON支持
-- **Redis 7+** - 缓存和消息队列
-- **Pydantic V2** - 数据验证和序列化
+### 📈 关键指标
 
-### 🤖 机器学习
-- **XGBoost 2.0+** - 梯度提升模型
-- **SHAP 0.50+** - 模型可解释性
-- **NumPy/Pandas** - 数据处理
-- **Scikit-learn** - 特征工程
+| 指标类型 | 说明 | 仪表盘位置 |
+|----------|------|------------|
+| **API性能** | QPS、P95延迟、错误率 | Grafana → API Performance |
+| **业务指标** | 预测请求率、模型推理时间、准确率 | Grafana → Business Metrics |
+| **系统资源** | CPU、内存、磁盘使用率 | Grafana → System Overview |
+| **缓存健康** | Redis命中率、内存使用 | Grafana → Cache Health |
 
-### 🐳 容器化和部署
-- **Docker** - 容器化
-- **Docker Compose** - 多服务编排
-- **Multi-stage builds** - 优化的镜像构建
-- **Health checks** - 服务健康监控
+### 🚨 报警规则
 
-### 🔍 测试和质量
-- **pytest 7.4+** - 测试框架
-- **pytest-asyncio** - 异步测试
-- **coverage** - 覆盖率报告
-- **black/flake8/mypy** - 代码质量
-- **bandit** - 安全扫描
+- **API错误率 > 5%**: 持续2分钟触发警告
+- **P95延迟 > 1s**: 持续5分钟触发警告
+- **系统资源 > 80%**: 持续10分钟触发警告
+- **Redis命中率 < 50%**: 持续15分钟触发警告
 
-## 📊 性能指标
+## 🧬 模型性能
 
-### 🎯 预测性能
-- **准确率目标**: 65%+ (从v1.1的58.69%提升)
-- **特征维度**: 12维+ 专业特征
-- **响应时间**: <100ms (单次预测)
-- **缓存命中率**: >80%
-
-### ⚡ 系统性能
-- **并发处理**: 1000+ 请求/秒
-- **内存使用**: <1GB (标准部署)
-- **启动时间**: <30秒 (容器启动)
-- **可用性**: 99.9% (生产环境)
-
-## 🛡️ 安全性
-
-### 🔒 安全措施
-- ✅ **API认证** - JWT token认证
-- ✅ **输入验证** - Pydantic严格验证
-- ✅ **SQL注入防护** - SQLAlchemy参数化查询
-- ✅ **依赖扫描** - 定期安全更新
-- ✅ **HTTPS强制** - 生产环境TLS
-
-### 🛡️ 安全扫描
-```bash
-# 运行安全扫描
-make security
-
-# 依赖漏洞检查
-pip-audit
-
-# 容器安全扫描
-docker scan footballprediction-app
-```
-
-## 📈 监控和运维
-
-### 📊 健康检查
-- **应用健康**: `/health` 端点
-- **数据库连接**: 连接池状态监控
-- **缓存状态**: Redis连接检查
-- **ML模型**: 模型加载状态
-
-### 📝 日志管理
-- **结构化日志**: JSON格式
-- **日志级别**: DEBUG/INFO/WARNING/ERROR/CRITICAL
-- **日志轮转**: 自动日志轮转和压缩
-- **集中收集**: 支持ELK Stack集成
-
-### 📊 指标监控
-- **应用指标**: QPS、延迟、错误率
-- **系统指标**: CPU、内存、磁盘、网络
-- **业务指标**: 预测准确率、模型性能
+| 指标 | 当前值 | 目标值 |
+|------|--------|--------|
+| **预测准确率** | 58.69% (v1.1) | 65%+ (v2.0) |
+| **响应时间** | < 100ms | < 100ms |
+| **特征维度** | 12+ | 12+ |
+| **缓存命中率** | > 80% | > 80% |
 
 ## 🤝 贡献指南
 
-### 🔧 开发流程
-1. Fork 项目
-2. 创建功能分支: `git checkout -b feature/amazing-feature`
-3. 提交更改: `git commit -m 'Add amazing feature'`
-4. 推送分支: `git push origin feature/amazing-feature`
-5. 创建 Pull Request
+我们欢迎所有形式的贡献！请查看 [CONTRIBUTING.md](./CONTRIBUTING.md) 了解详细的贡献流程。
 
-### 📋 开发规范
-- 遵循 PEP 8 代码风格
-- 编写单元测试和集成测试
-- 更新相关文档
-- 通过所有质量检查
+### 🏆 贡献者
 
-### 🧪 测试要求
-```bash
-# 运行完整测试套件
-make ci
+感谢所有为这个项目做出贡献的开发者！
 
-# 确保测试覆盖率 >80%
-make coverage
-
-# 代码质量检查
-make quality
-```
-
-## 📝 更新日志
-
-### 🎉 v2.0.0-Stable (2024-01-15)
-
-#### 🏗️ 重大架构更新
-- **服务层重构**: 全新的Service Layer架构
-- **ML推理引擎**: 独立的ML Inference层
-- **容器化升级**: 完整的Docker容器化方案
-- **API现代化**: FastAPI异步Web框架
-
-#### 🚀 新增功能
-- **批量预测API**: 支持多场比赛同时预测
-- **模型解释**: SHAP模型可解释性分析
-- **缓存系统**: LRU预测结果缓存
-- **健康检查**: 多层服务健康监控
-
-#### 🔧 技术改进
-- **异步架构**: 全栈异步支持，性能提升3x
-- **类型安全**: 完整的Python类型注解
-- **依赖升级**: Pydantic V2, SQLAlchemy 2.0等
-- **安全增强**: JWT认证、输入验证、HTTPS
-
-#### 🛠️ 开发体验
-- **一键部署**: Docker管理脚本
-- **热重载**: 开发环境热重载支持
-- **调试工具**: 集成调试和性能分析
-- **文档完善**: 自动生成API文档
-
----
+<a href="https://github.com/xupeng211/FootballPrediction/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=xupeng211/FootballPrediction" />
+</a>
 
 ## 📄 许可证
 
-本项目采用 MIT 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情
+本项目采用 [MIT 许可证](./LICENSE)。
 
 ## 🙏 致谢
 
-感谢所有为这个项目做出贡献的开发者和用户！
+- [FastAPI](https://fastapi.tiangolo.com/) - 现代化的Python Web框架
+- [XGBoost](https://xgboost.ai/) - 高性能的机器学习库
+- [Docker](https://www.docker.com/) - 容器化技术
+- [Prometheus](https://prometheus.io/) - 监控和报警系统
 
 ---
 
 <div align="center">
-  <p>⚽ <strong>FootballPrediction v2.0</strong> - 现代化足球预测系统</p>
-  <p>🚀 <em>Powered by ML, Service Architecture & Docker</em></p>
+
+  <p>⚽ <strong>Football Prediction v2.0</strong> - AI驱动的足球赛事预测系统</p>
+
+  <p>🚀 <em>Powered by Machine Learning, Modern Architecture & Docker</em></p>
+
+  <p>
+    <a href="#top">返回顶部</a> •
+    <a href="https://github.com/xupeng211/FootballPrediction/issues">报告问题</a> •
+    <a href="https://github.com/xupeng211/FootballPrediction/discussions">参与讨论</a>
+  </p>
+
 </div>

@@ -1,0 +1,32 @@
+# System Audit Script Dependencies
+# 足球预测系统集成验收脚本依赖项
+
+# HTTP客户端
+requests>=2.31.0
+
+# Redis客户端
+redis>=5.0.0
+
+# 异步支持
+asyncio-mqtt>=0.13.0
+
+# 彩色终端输出
+colorama>=0.4.6
+
+# 数据处理
+pandas>=2.0.0
+numpy>=1.24.0
+
+# 时间处理
+python-dateutil>=2.8.2
+
+# 系统监控
+psutil>=5.9.0
+
+# 可选：更丰富的终端输出
+rich>=13.0.0  # 可选，用于更美观的终端输出
+tqdm>=4.64.0  # 可选，用于进度条显示
+
+# 开发和调试工具（可选）
+pytest>=7.0.0
+pytest-asyncio>=0.21.0
