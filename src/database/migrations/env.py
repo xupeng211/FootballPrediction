@@ -30,6 +30,7 @@ try:
     from src.database.base import Base  # noqa: E402
     from src.database.config import get_database_config  # noqa: E402
     from src.database.models import Odds  # noqa: F401, E402
+
     print("✅ Alembic: 所有模块导入成功")
 except ImportError as e:
     print(f"❌ Alembic: 模块导入失败: {e}")
@@ -40,15 +41,18 @@ except ImportError as e:
 # 注意：config只在alembic运行时可用，不要在import时直接使用
 config = None
 
+
 def setup_logging():
     """设置日志配置"""
     try:
         from alembic import context
-        if hasattr(context, 'config') and context.config.config_file_name is not None:
+
+        if hasattr(context, "config") and context.config.config_file_name is not None:
             fileConfig(context.config.config_file_name)
     except Exception as e:
         print(f"⚠️ Alembic: 日志配置失败，使用默认日志: {e}")
         # 忽略日志配置错误，继续执行
+
 
 def get_database_url():
     """获取数据库URL，优先使用环境变量"""
@@ -61,6 +65,7 @@ def get_database_url():
         db_config = get_database_config()
         print(f"✅ Alembic: 使用配置文件URL = {db_config.alembic_url}")
         return db_config.alembic_url
+
 
 # add your model's MetaData object here
 # for 'autogenerate' support
