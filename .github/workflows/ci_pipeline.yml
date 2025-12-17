@@ -114,6 +114,7 @@ jobs:
   test:
     name: V2 Testing
     runs-on: ubuntu-latest
+    timeout-minutes: 15  # 添加15分钟超时
 
     strategy:
       matrix:
@@ -211,14 +212,15 @@ jobs:
       - name: Run V2 and Unit tests with coverage
         run: |
           # 只运行V2和Unit测试，排除Legacy测试
-          pytest tests/v2/ tests/unit/ \
+          # 添加超时和快速失败机制
+          timeout 600 pytest tests/v2/ tests/unit/ \
             --ignore=tests/legacy/ \
             --cov=src \
             --cov-report=xml:"coverage-${{ matrix.test-type }}.xml" \
             --cov-report=html:"htmlcov-${{ matrix.test-type }}" \
             --cov-fail-under="${{ matrix.coverage-target }}" \
             --junitxml:"test-results-${{ matrix.test-type }}.xml" \
-            -v
+            -v --tb=short -x  # -x: 第一个失败后停止，--tb=short: 简化错误输出
 
       - name: Upload coverage reports to Codecov
         if: matrix.test-type == 'unit'
