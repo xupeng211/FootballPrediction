@@ -12,14 +12,28 @@ from logging.config import fileConfig
 from alembic import context
 from sqlalchemy import engine_from_config, pool
 
-# 导入我们的数据库配置和模型
-sys.path.append(os.path.join(os.path.dirname(__file__), "../../.."))
+# 修复sys.path问题 - 确保能找到src模块
+project_root = os.getcwd()
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
 
-from src.database.base import Base  # noqa: E402
-from src.database.config import get_database_config  # noqa: E402
+# 备用路径计算方式
+current_dir = os.path.dirname(os.path.abspath(__file__))
+project_root_alt = os.path.abspath(os.path.join(current_dir, "../../../"))
+if project_root_alt not in sys.path:
+    sys.path.insert(0, project_root_alt)
 
-# 导入所有模型以确保它们被注册到Base.metadata
-from src.database.models import Odds  # noqa: F401, E402
+print(f"Alembic Debug: sys.path = {sys.path}")
+print(f"Alembic Debug: project_root = {project_root}")
+
+try:
+    from src.database.base import Base  # noqa: E402
+    from src.database.config import get_database_config  # noqa: E402
+    from src.database.models import Odds  # noqa: F401, E402
+    print("✅ Alembic: 所有模块导入成功")
+except ImportError as e:
+    print(f"❌ Alembic: 模块导入失败: {e}")
+    sys.exit(1)
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -27,14 +41,24 @@ config = context.config
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
-if config.config_file_name is not None:
-    fileConfig(config.config_file_name)
+try:
+    if config.config_file_name is not None:
+        fileConfig(config.config_file_name)
+except Exception as e:
+    print(f"⚠️ Alembic: 日志配置失败，使用默认日志: {e}")
+    # 忽略日志配置错误，继续执行
 
-# 获取数据库配置
-db_config = get_database_config()
-
-# 设置数据库连接URL
-config.set_main_option("sqlalchemy.url", db_config.alembic_url)
+def get_database_url():
+    """获取数据库URL，优先使用环境变量"""
+    env_url = os.getenv("DATABASE_URL")
+    if env_url:
+        print(f"✅ Alembic: 使用环境变量DATABASE_URL = {env_url}")
+        return env_url
+    else:
+        # 回退到配置文件
+        db_config = get_database_config()
+        print(f"✅ Alembic: 使用配置文件URL = {db_config.alembic_url}")
+        return db_config.alembic_url
 
 # add your model's MetaData object here
 # for 'autogenerate' support
@@ -58,7 +82,7 @@ def run_migrations_offline() -> None:
     Calls to context.execute() here emit the given string to the
     script output.
     """
-    url = config.get_main_option("sqlalchemy.url")
+    url = get_database_url()
     context.configure(
         url=url,
         target_metadata=target_metadata,
@@ -91,6 +115,7 @@ async def run_async_migrations():
     """在异步模式下运行迁移"""
     from sqlalchemy.ext.asyncio import create_async_engine
 
+    db_config = get_database_config()  # 重新获取配置
     connectable = create_async_engine(
         db_config.async_url,
         poolclass=pool.NullPool,
@@ -109,6 +134,9 @@ def run_migrations_online() -> None:
     In this scenario we need to create an Engine
     and associate a connection with the context.
     """
+    # 获取配置
+    database_url = get_database_url()
+
     # 检查是否在异步环境中
     try:
         # 如果当前已经有事件循环，使用异步方式
@@ -121,16 +149,16 @@ def run_migrations_online() -> None:
 
     # 同步方式运行迁移
     connectable = engine_from_config(
-        config.get_section(config.config_ini_section, {}),
+        {"sqlalchemy.url": database_url},  # 直接使用URL，不依赖config
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
-        url=db_config.sync_url,
     )
 
     with connectable.connect() as connection:
         do_run_migrations(connection)
 
 
+# 运行迁移的入口点
 if context.is_offline_mode():
     run_migrations_offline()
 else:

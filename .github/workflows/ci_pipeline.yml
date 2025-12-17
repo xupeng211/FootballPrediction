@@ -228,6 +228,26 @@ jobs:
           "
           echo "✅ 测试数据库创建完成"
 
+      - name: Run Database Migrations
+        env:
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_NAME: football_prediction_test
+          DB_USER: ${{ secrets.DB_USER || 'test_user' }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD || 'test_password' }}
+          DATABASE_URL: postgresql+psycopg2://${{ secrets.DB_USER || 'test_user' }}:${{ secrets.DB_PASSWORD || 'test_password' }}@localhost:5432/football_prediction_test
+        run: |
+          echo "🔄 执行数据库迁移..."
+          echo "🔍 环境变量检查:"
+          echo "  - DATABASE_URL: $DATABASE_URL"
+          echo "  - PWD: $(pwd)"
+          echo "  - PYTHONPATH: $PYTHONPATH"
+
+          # 使用python -m调用alembic，确保sys.path正确
+          python -m alembic upgrade head
+
+          echo "✅ 数据库迁移完成"
+
       - name: Run V2 and Unit tests with Real Database
         run: |
           # 使用真实数据库连接运行测试
