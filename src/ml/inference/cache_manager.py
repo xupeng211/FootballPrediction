@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class CacheEntry:
     """缓存条目"""
+
     result: Dict[str, Any]
     timestamp: float
     ttl: float
@@ -47,6 +48,7 @@ class CacheEntry:
 @dataclass
 class CacheStats:
     """缓存统计信息"""
+
     total_entries: int = 0
     expired_entries: int = 0
     hit_count: int = 0
@@ -88,7 +90,7 @@ class PredictionCache:
         default_ttl: int = 3600,
         max_size: int = 10000,
         cleanup_interval: int = 300,
-        enable_auto_cleanup: bool = True
+        enable_auto_cleanup: bool = True,
     ):
         """
         初始化缓存管理器
@@ -123,7 +125,12 @@ class PredictionCache:
         if self.enable_auto_cleanup:
             self._start_cleanup_task()
 
-    def _generate_cache_key(self, features_hash: str, model_name: str, additional_params: Optional[Dict] = None) -> str:
+    def _generate_cache_key(
+        self,
+        features_hash: str,
+        model_name: str,
+        additional_params: Optional[Dict] = None,
+    ) -> str:
         """
         生成缓存键
 
@@ -163,7 +170,7 @@ class PredictionCache:
         self,
         features: List[float],
         model_name: str,
-        additional_params: Optional[Dict] = None
+        additional_params: Optional[Dict] = None,
     ) -> Optional[Dict[str, Any]]:
         """
         获取缓存结果
@@ -181,7 +188,9 @@ class PredictionCache:
 
             try:
                 features_hash = self._hash_features(features)
-                cache_key = self._generate_cache_key(features_hash, model_name, additional_params)
+                cache_key = self._generate_cache_key(
+                    features_hash, model_name, additional_params
+                )
 
                 if cache_key not in self._cache:
                     self._stats.miss_count += 1
@@ -217,7 +226,7 @@ class PredictionCache:
         model_name: str,
         result: Dict[str, Any],
         ttl: Optional[int] = None,
-        additional_params: Optional[Dict] = None
+        additional_params: Optional[Dict] = None,
     ) -> bool:
         """
         设置缓存结果
@@ -235,7 +244,9 @@ class PredictionCache:
         with self._lock:
             try:
                 features_hash = self._hash_features(features)
-                cache_key = self._generate_cache_key(features_hash, model_name, additional_params)
+                cache_key = self._generate_cache_key(
+                    features_hash, model_name, additional_params
+                )
 
                 # 检查缓存大小限制
                 if len(self._cache) >= self.max_size:
@@ -250,7 +261,7 @@ class PredictionCache:
                     timestamp=time.time(),
                     ttl=ttl if ttl is not None else self.default_ttl,
                     access_count=1,
-                    last_access=time.time()
+                    last_access=time.time(),
                 )
 
                 # 存储到缓存
@@ -264,7 +275,12 @@ class PredictionCache:
                 logger.error(f"缓存设置异常: {e}")
                 return False
 
-    def delete(self, features: List[float], model_name: str, additional_params: Optional[Dict] = None) -> bool:
+    def delete(
+        self,
+        features: List[float],
+        model_name: str,
+        additional_params: Optional[Dict] = None,
+    ) -> bool:
         """
         删除特定缓存条目
 
@@ -279,7 +295,9 @@ class PredictionCache:
         with self._lock:
             try:
                 features_hash = self._hash_features(features)
-                cache_key = self._generate_cache_key(features_hash, model_name, additional_params)
+                cache_key = self._generate_cache_key(
+                    features_hash, model_name, additional_params
+                )
 
                 if cache_key in self._cache:
                     del self._cache[cache_key]
@@ -312,11 +330,15 @@ class PredictionCache:
                     logger.info(f"所有缓存已清空，共清理 {deleted_count} 个条目")
                 else:
                     # 按模式清理
-                    keys_to_delete = [key for key in self._cache.keys() if pattern in key]
+                    keys_to_delete = [
+                        key for key in self._cache.keys() if pattern in key
+                    ]
                     for key in keys_to_delete:
                         del self._cache[key]
                     deleted_count = len(keys_to_delete)
-                    logger.info(f"按模式 '{pattern}' 清理缓存，共删除 {deleted_count} 个条目")
+                    logger.info(
+                        f"按模式 '{pattern}' 清理缓存，共删除 {deleted_count} 个条目"
+                    )
 
                 self._stats.total_entries = len(self._cache)
                 return deleted_count
@@ -369,7 +391,9 @@ class PredictionCache:
             try:
                 # 使用可中断的等待
                 try:
-                    await asyncio.wait_for(self._stop_event.wait(), timeout=self.cleanup_interval)
+                    await asyncio.wait_for(
+                        self._stop_event.wait(), timeout=self.cleanup_interval
+                    )
                     break  # 收到停止信号
                 except asyncio.TimeoutError:
                     pass  # 正常超时，继续执行清理
@@ -454,29 +478,39 @@ class PredictionCache:
                     "default_ttl": self.default_ttl,
                     "max_size": self.max_size,
                     "cleanup_interval": self.cleanup_interval,
-                    "auto_cleanup_enabled": self.enable_auto_cleanup
+                    "auto_cleanup_enabled": self.enable_auto_cleanup,
                 },
                 "status": {
                     "current_size": len(self._cache),
                     "max_size": self.max_size,
-                    "utilization_rate": len(self._cache) / self.max_size if self.max_size > 0 else 0
+                    "utilization_rate": (
+                        len(self._cache) / self.max_size if self.max_size > 0 else 0
+                    ),
                 },
                 "performance": {
                     "hit_rate": stats.hit_rate,
                     "miss_rate": stats.miss_rate,
                     "total_requests": stats.total_requests,
                     "hit_count": stats.hit_count,
-                    "miss_count": stats.miss_count
+                    "miss_count": stats.miss_count,
                 },
                 "maintenance": {
                     "expired_entries": stats.expired_entries,
                     "cleanup_count": stats.cleanup_count,
-                    "last_cleanup_time": stats.last_cleanup_time.isoformat() if stats.last_cleanup_time else None
+                    "last_cleanup_time": (
+                        stats.last_cleanup_time.isoformat()
+                        if stats.last_cleanup_time
+                        else None
+                    ),
                 },
                 "memory": {
                     "estimated_usage_mb": stats.memory_usage_mb,
-                    "average_entry_size_kb": (stats.memory_usage_mb * 1024 / len(self._cache)) if len(self._cache) > 0 else 0
-                }
+                    "average_entry_size_kb": (
+                        (stats.memory_usage_mb * 1024 / len(self._cache))
+                        if len(self._cache) > 0
+                        else 0
+                    ),
+                },
             }
 
     def __len__(self) -> int:

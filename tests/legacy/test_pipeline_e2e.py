@@ -66,20 +66,22 @@ def sample_historical_data():
         home_goals = np.random.poisson(1.5)
         away_goals = np.random.poisson(1.2)
 
-        matches.append({
-            'id': i + 1,
-            'match_date': match_date,
-            'home_team_id': home_team,
-            'away_team_id': away_team,
-            'home_team_name': f'Team_{home_team}',
-            'away_team_name': f'Team_{away_team}',
-            'home_score': home_goals,
-            'away_score': away_goals,
-            'status': 'FT',
-            'league_id': 'test_league',
-            'season': '2024',
-            'fotmob_id': f'fotmob_{i+1}'
-        })
+        matches.append(
+            {
+                "id": i + 1,
+                "match_date": match_date,
+                "home_team_id": home_team,
+                "away_team_id": away_team,
+                "home_team_name": f"Team_{home_team}",
+                "away_team_name": f"Team_{away_team}",
+                "home_score": home_goals,
+                "away_score": away_goals,
+                "status": "FT",
+                "league_id": "test_league",
+                "season": "2024",
+                "fotmob_id": f"fotmob_{i+1}",
+            }
+        )
 
     return pd.DataFrame(matches)
 
@@ -95,18 +97,20 @@ def sample_team_stats():
         goals_for = np.random.randint(20, 80)
         goals_against = np.random.randint(20, 60)
 
-        stats.append({
-            'team_id': team_id,
-            'team_name': f'Team_{team_id}',
-            'position': i + 1,
-            'points': points,
-            'goals_for': goals_for,
-            'goals_against': goals_against,
-            'goal_difference': goals_for - goals_against,
-            'matches_played': 30,
-            'league_id': 'test_league',
-            'season': '2024'
-        })
+        stats.append(
+            {
+                "team_id": team_id,
+                "team_name": f"Team_{team_id}",
+                "position": i + 1,
+                "points": points,
+                "goals_for": goals_for,
+                "goals_against": goals_against,
+                "goal_difference": goals_for - goals_against,
+                "matches_played": 30,
+                "league_id": "test_league",
+                "season": "2024",
+            }
+        )
 
     return pd.DataFrame(stats)
 
@@ -114,7 +118,9 @@ def sample_team_stats():
 @pytest.mark.asyncio
 @pytest.mark.integration
 @pytest.mark.e2e
-async def test_full_prediction_pipeline(temp_dir, sample_historical_data, sample_team_stats):
+async def test_full_prediction_pipeline(
+    temp_dir, sample_historical_data, sample_team_stats
+):
     """
     完整的预测流水线测试
 
@@ -129,21 +135,19 @@ async def test_full_prediction_pipeline(temp_dir, sample_historical_data, sample
 
         # 选择一场比赛作为测试目标
         test_match_data = {
-            'id': 999,
-            'home_team_id': 1,
-            'away_team_id': 2,
-            'home_team_name': 'Team_1',
-            'away_team_name': 'Team_2',
-            'match_date': datetime.now(),
-            'league_id': 'test_league',
-            'season': '2024'
+            "id": 999,
+            "home_team_id": 1,
+            "away_team_id": 2,
+            "home_team_name": "Team_1",
+            "away_team_name": "Team_2",
+            "match_date": datetime.now(),
+            "league_id": "test_league",
+            "season": "2024",
         }
 
         # 提取特征
         feature_set = await feature_extractor.extract_features(
-            test_match_data,
-            sample_historical_data,
-            sample_team_stats
+            test_match_data, sample_historical_data, sample_team_stats
         )
 
         logger.info(f"特征提取完成，特征数: {len(feature_set.features)}")
@@ -159,15 +163,13 @@ async def test_full_prediction_pipeline(temp_dir, sample_historical_data, sample
             try:
                 # 为每场历史比赛提取特征
                 match_features = await feature_extractor.extract_features(
-                    match.to_dict(),
-                    sample_historical_data,
-                    sample_team_stats
+                    match.to_dict(), sample_historical_data, sample_team_stats
                 )
 
                 # 创建标签（基于比分）
-                if match['home_score'] > match['away_score']:
+                if match["home_score"] > match["away_score"]:
                     label = 2  # HOME_WIN
-                elif match['home_score'] < match['away_score']:
+                elif match["home_score"] < match["away_score"]:
                     label = 0  # AWAY_WIN
                 else:
                     label = 1  # DRAW
@@ -175,10 +177,10 @@ async def test_full_prediction_pipeline(temp_dir, sample_historical_data, sample
                 # 组合特征向量
                 feature_row = {}
                 for i, feature_name in enumerate(feature_set.feature_names):
-                    feature_row[f'feature_{i}'] = match_features.feature_vector[i]
+                    feature_row[f"feature_{i}"] = match_features.feature_vector[i]
 
-                feature_row['target_numeric'] = label
-                feature_row['match_id'] = match['id']
+                feature_row["target_numeric"] = label
+                feature_row["match_id"] = match["id"]
                 training_data.append(feature_row)
 
             except Exception as e:
@@ -202,18 +204,16 @@ async def test_full_prediction_pipeline(temp_dir, sample_historical_data, sample
 
         model_path = temp_dir / "test_model.pkl"
         pipeline = ClassificationTrainingPipeline(
-            model_output_dir=temp_dir,
-            config_type="fast_training"  # 使用快速训练配置
+            model_output_dir=temp_dir, config_type="fast_training"  # 使用快速训练配置
         )
 
         # 运行训练流水线
         metrics = await pipeline.run_pipeline(
-            dataset_path=str(dataset_path),
-            model_output_path=str(model_path)
+            dataset_path=str(dataset_path), model_output_path=str(model_path)
         )
 
         logger.info(f"模型训练完成，准确率: {metrics.get('test_accuracy', 0):.3f}")
-        assert metrics.get('test_accuracy', 0) > 0, "模型准确率应该大于0"
+        assert metrics.get("test_accuracy", 0) > 0, "模型准确率应该大于0"
         assert model_path.exists(), "模型文件应该存在"
 
         # 步骤4: 模型推理
@@ -224,29 +224,31 @@ async def test_full_prediction_pipeline(temp_dir, sample_historical_data, sample
             features=feature_set.feature_vector.reshape(1, -1),
             model_path=str(model_path),
             feature_names=feature_set.feature_names,
-            use_cache=False
+            use_cache=False,
         )
 
         logger.info(f"预测结果: {prediction_result}")
 
         # 验证预测结果
-        assert 'away_win_prob' in prediction_result, "预测结果应该包含客胜概率"
-        assert 'draw_prob' in prediction_result, "预测结果应该包含平局概率"
-        assert 'home_win_prob' in prediction_result, "预测结果应该包含主胜概率"
-        assert 'predicted_class' in prediction_result, "预测结果应该包含预测类别"
+        assert "away_win_prob" in prediction_result, "预测结果应该包含客胜概率"
+        assert "draw_prob" in prediction_result, "预测结果应该包含平局概率"
+        assert "home_win_prob" in prediction_result, "预测结果应该包含主胜概率"
+        assert "predicted_class" in prediction_result, "预测结果应该包含预测类别"
 
         # 验证概率和为1（允许小误差）
         prob_sum = (
-            prediction_result['away_win_prob'] +
-            prediction_result['draw_prob'] +
-            prediction_result['home_win_prob']
+            prediction_result["away_win_prob"]
+            + prediction_result["draw_prob"]
+            + prediction_result["home_win_prob"]
         )
         assert abs(prob_sum - 1.0) < 0.01, f"概率和应该接近1.0，实际为: {prob_sum}"
 
         # 验证概率在合理范围内
-        for prob_key in ['away_win_prob', 'draw_prob', 'home_win_prob']:
+        for prob_key in ["away_win_prob", "draw_prob", "home_win_prob"]:
             prob = prediction_result[prob_key]
-            assert 0.0 <= prob <= 1.0, f"概率 {prob_key} 应该在[0,1]范围内，实际为: {prob}"
+            assert (
+                0.0 <= prob <= 1.0
+            ), f"概率 {prob_key} 应该在[0,1]范围内，实际为: {prob}"
 
         # 步骤5: 测试预测器的其他功能
         logger.info("步骤5: 测试预测器功能")
@@ -259,21 +261,23 @@ async def test_full_prediction_pipeline(temp_dir, sample_historical_data, sample
 
         # 获取模型信息
         model_info = predictor.get_model_info()
-        assert model_info['status'] == 'loaded', "模型状态应该是已加载"
+        assert model_info["status"] == "loaded", "模型状态应该是已加载"
 
         # 再次预测（测试不同接口）
         prediction_result_2 = predictor.predict(feature_set.feature_vector)
-        assert 'predicted_outcome' in prediction_result_2, "预测结果应该包含预测结果描述"
+        assert (
+            "predicted_outcome" in prediction_result_2
+        ), "预测结果应该包含预测结果描述"
 
         logger.info("端到端流水线测试完成！")
 
         # 返回性能指标用于报告
         return {
-            'training_samples': len(training_df),
-            'feature_count': len(feature_set.features),
-            'test_accuracy': metrics.get('test_accuracy', 0),
-            'feature_completeness': feature_set.feature_completeness,
-            'prediction_result': prediction_result
+            "training_samples": len(training_df),
+            "feature_count": len(feature_set.features),
+            "test_accuracy": metrics.get("test_accuracy", 0),
+            "feature_completeness": feature_set.feature_completeness,
+            "prediction_result": prediction_result,
         }
 
     except Exception as e:
@@ -283,7 +287,9 @@ async def test_full_prediction_pipeline(temp_dir, sample_historical_data, sample
 
 @pytest.mark.asyncio
 @pytest.mark.integration
-async def test_feature_extractor_standalone(temp_dir, sample_historical_data, sample_team_stats):
+async def test_feature_extractor_standalone(
+    temp_dir, sample_historical_data, sample_team_stats
+):
     """
     独立测试特征提取器
     """
@@ -292,20 +298,18 @@ async def test_feature_extractor_standalone(temp_dir, sample_historical_data, sa
     feature_extractor = MatchFeatureExtractor()
 
     test_match = {
-        'id': 123,
-        'home_team_id': 5,
-        'away_team_id': 10,
-        'home_team_name': 'Team_5',
-        'away_team_name': 'Team_10',
-        'match_date': datetime.now(),
-        'league_id': 'test_league',
-        'season': '2024'
+        "id": 123,
+        "home_team_id": 5,
+        "away_team_id": 10,
+        "home_team_name": "Team_5",
+        "away_team_name": "Team_10",
+        "match_date": datetime.now(),
+        "league_id": "test_league",
+        "season": "2024",
     }
 
     feature_set = await feature_extractor.extract_features(
-        test_match,
-        sample_historical_data,
-        sample_team_stats
+        test_match, sample_historical_data, sample_team_stats
     )
 
     # 验证特征集
@@ -381,29 +385,33 @@ async def test_minimal_pipeline_smoke():
         logger.info("✅ MatchFeatureExtractor 初始化成功")
 
         # 测试简单的特征提取（使用最小数据）
-        minimal_matches = pd.DataFrame([{
-            'id': 1,
-            'match_date': datetime.now() - timedelta(days=10),
-            'home_team_id': 1,
-            'away_team_id': 2,
-            'home_team_name': 'Team_1',
-            'away_team_name': 'Team_2',
-            'home_score': 2,
-            'away_score': 1,
-            'status': 'FT',
-            'league_id': 'test',
-            'season': '2024'
-        }])
+        minimal_matches = pd.DataFrame(
+            [
+                {
+                    "id": 1,
+                    "match_date": datetime.now() - timedelta(days=10),
+                    "home_team_id": 1,
+                    "away_team_id": 2,
+                    "home_team_name": "Team_1",
+                    "away_team_name": "Team_2",
+                    "home_score": 2,
+                    "away_score": 1,
+                    "status": "FT",
+                    "league_id": "test",
+                    "season": "2024",
+                }
+            ]
+        )
 
         test_match = {
-            'id': 2,
-            'home_team_id': 1,
-            'away_team_id': 2,
-            'home_team_name': 'Team_1',
-            'away_team_name': 'Team_2',
-            'match_date': datetime.now(),
-            'league_id': 'test',
-            'season': '2024'
+            "id": 2,
+            "home_team_id": 1,
+            "away_team_id": 2,
+            "home_team_name": "Team_1",
+            "away_team_name": "Team_2",
+            "match_date": datetime.now(),
+            "league_id": "test",
+            "season": "2024",
         }
 
         feature_set = await feature_extractor.extract_features(

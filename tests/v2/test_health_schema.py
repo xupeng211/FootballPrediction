@@ -45,7 +45,14 @@ class TestHealthAPISchema:
         data = response.json()
 
         # 验证必需字段存在
-        required_fields = ["status", "timestamp", "service", "version", "response_time_ms", "checks"]
+        required_fields = [
+            "status",
+            "timestamp",
+            "service",
+            "version",
+            "response_time_ms",
+            "checks",
+        ]
         for field in required_fields:
             assert field in data, f"Missing required field: {field}"
 
@@ -56,7 +63,7 @@ class TestHealthAPISchema:
         assert isinstance(data["timestamp"], str)
         # 验证ISO格式时间戳
         try:
-            datetime.fromisoformat(data["timestamp"].replace('Z', '+00:00'))
+            datetime.fromisoformat(data["timestamp"].replace("Z", "+00:00"))
         except ValueError:
             pytest.fail("Invalid timestamp format")
 
@@ -94,7 +101,7 @@ class TestHealthAPISchema:
         healthy_check = ServiceCheck(
             status="healthy",
             response_time_ms=10.5,
-            details={"message": "Service is running normally"}
+            details={"message": "Service is running normally"},
         )
 
         assert healthy_check.status == "healthy"
@@ -105,10 +112,7 @@ class TestHealthAPISchema:
         unhealthy_check = ServiceCheck(
             status="unhealthy",
             response_time_ms=0,
-            details={
-                "message": "Service is down",
-                "error": "Connection timeout"
-            }
+            details={"message": "Service is down", "error": "Connection timeout"},
         )
 
         assert unhealthy_check.status == "unhealthy"
@@ -156,7 +160,7 @@ class TestHealthAPISchema:
 
         # 验证时间戳格式
         try:
-            datetime.fromisoformat(data["timestamp"].replace('Z', '+00:00'))
+            datetime.fromisoformat(data["timestamp"].replace("Z", "+00:00"))
         except ValueError:
             pytest.fail("Invalid timestamp format")
 
@@ -164,11 +168,11 @@ class TestHealthAPISchema:
     def test_readiness_check_response_success(self, client):
         """测试就绪性检查成功响应"""
         # Mock数据库检查成功
-        with patch('src.api.health._check_database') as mock_db_check:
+        with patch("src.api.health._check_database") as mock_db_check:
             mock_db_check.return_value = {
                 "healthy": True,
                 "message": "数据库连接正常",
-                "response_time_ms": 15.0
+                "response_time_ms": 15.0,
             }
 
             response = client.get("/health/readiness")
@@ -197,12 +201,12 @@ class TestHealthAPISchema:
     def test_readiness_check_response_failure(self, client):
         """测试就绪性检查失败响应"""
         # Mock数据库检查失败
-        with patch('src.api.health._check_database') as mock_db_check:
+        with patch("src.api.health._check_database") as mock_db_check:
             mock_db_check.return_value = {
                 "healthy": False,
                 "message": "数据库连接失败",
                 "error": "Connection timeout",
-                "response_time_ms": 5000.0
+                "response_time_ms": 5000.0,
             }
 
             response = client.get("/health/readiness")
@@ -220,11 +224,16 @@ class TestHealthAPISchema:
     @pytest.mark.asyncio
     async def test_get_database_service_check(self):
         """测试数据库服务检查函数"""
-        result = await router._get_database_service_check() if hasattr(router, '_get_database_service_check') else None
+        result = (
+            await router._get_database_service_check()
+            if hasattr(router, "_get_database_service_check")
+            else None
+        )
 
         if result is None:
             # 如果函数不在router上，从模块导入测试
             from src.api.health import _get_database_service_check
+
             result = await _get_database_service_check()
 
         # 验证返回类型
@@ -273,19 +282,19 @@ class TestHealthAPISchema:
                 "database": ServiceCheck(
                     status="healthy",
                     response_time_ms=50.0,
-                    details={"message": "数据库连接正常"}
+                    details={"message": "数据库连接正常"},
                 ),
                 "redis": ServiceCheck(
                     status="healthy",
                     response_time_ms=25.0,
-                    details={"message": "Redis连接正常"}
+                    details={"message": "Redis连接正常"},
                 ),
                 "filesystem": ServiceCheck(
                     status="healthy",
                     response_time_ms=25.5,
-                    details={"message": "文件系统正常"}
-                )
-            }
+                    details={"message": "文件系统正常"},
+                ),
+            },
         }
 
         # 尝试JSON序列化
@@ -311,13 +320,13 @@ class TestHealthAPIEdgeCases:
             "database": ServiceCheck(
                 status="unhealthy",
                 response_time_ms=0,
-                details={"message": "数据库不可用"}
+                details={"message": "数据库不可用"},
             ),
             "redis": ServiceCheck(
                 status="unhealthy",
                 response_time_ms=0,
-                details={"message": "Redis不可用"}
-            )
+                details={"message": "Redis不可用"},
+            ),
         }
 
         # 模拟不健康的响应
@@ -327,7 +336,7 @@ class TestHealthAPIEdgeCases:
             service="football-prediction-api",
             version="1.0.0",
             response_time_ms=0,
-            checks=checks
+            checks=checks,
         )
 
         assert unhealthy_response.status == "unhealthy"
@@ -337,7 +346,7 @@ class TestHealthAPIEdgeCases:
         large_response_time = ServiceCheck(
             status="healthy",
             response_time_ms=999999.999,
-            details={"message": "High latency but functional"}
+            details={"message": "High latency but functional"},
         )
 
         assert large_response_time.response_time_ms == 999999.999
@@ -350,8 +359,8 @@ class TestHealthAPIEdgeCases:
             details={
                 "message": "服务正常 🚀",
                 "description": "系统运行良好 ✓",
-                "emoji": "⚽"
-            }
+                "emoji": "⚽",
+            },
         )
 
         # 验证Unicode字符可以正确处理

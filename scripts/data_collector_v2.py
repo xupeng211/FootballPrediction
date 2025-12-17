@@ -34,8 +34,7 @@ sys.path.insert(0, str(project_root))
 
 # 配置日志
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -46,35 +45,39 @@ class DataCollectorDisplay:
     @staticmethod
     def display_collection_results(results: List[Dict[str, Any]]) -> None:
         """展示收集结果"""
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("🌐 数据收集结果")
-        print("="*60)
+        print("=" * 60)
 
         total_tasks = len(results)
-        successful_tasks = sum(1 for r in results if r.get('status') == 'success')
+        successful_tasks = sum(1 for r in results if r.get("status") == "success")
         failed_tasks = total_tasks - successful_tasks
 
         print(f"\n📊 收集统计:")
         print(f"   总任务数: {total_tasks}")
         print(f"   成功任务: {successful_tasks}")
         print(f"   失败任务: {failed_tasks}")
-        print(f"   成功率: {successful_tasks/total_tasks*100:.1f}%" if total_tasks > 0 else "   成功率: 0%")
+        print(
+            f"   成功率: {successful_tasks/total_tasks*100:.1f}%"
+            if total_tasks > 0
+            else "   成功率: 0%"
+        )
 
         # 详细结果
         print(f"\n📋 详细结果:")
         for i, result in enumerate(results, 1):
-            status = result.get('status', 'unknown')
-            task_id = result.get('task_id', f'task_{i}')
-            source_type = result.get('source_type', 'unknown')
-            duration = result.get('duration_seconds', 0)
+            status = result.get("status", "unknown")
+            task_id = result.get("task_id", f"task_{i}")
+            source_type = result.get("source_type", "unknown")
+            duration = result.get("duration_seconds", 0)
 
-            status_icon = "✅" if status == 'success' else "❌"
+            status_icon = "✅" if status == "success" else "❌"
             print(f"   {i}. {status_icon} {task_id} ({source_type}) - {duration:.2f}s")
 
-            if status == 'failed' and result.get('error'):
+            if status == "failed" and result.get("error"):
                 print(f"      错误: {result['error']}")
-            elif status == 'success' and result.get('result'):
-                result_data = result['result']
+            elif status == "success" and result.get("result"):
+                result_data = result["result"]
                 if isinstance(result_data, dict):
                     data_points = len(result_data)
                     print(f"      数据点: {data_points}")
@@ -85,9 +88,9 @@ class DataCollectorDisplay:
     @staticmethod
     def display_service_stats(stats: Dict[str, Any]) -> None:
         """展示服务统计信息"""
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("📈 数据收集服务统计")
-        print("="*60)
+        print("=" * 60)
 
         print(f"\n🔧 服务状态:")
         print(f"   状态: {stats.get('service_status', 'unknown')}")
@@ -106,7 +109,7 @@ class DataCollectorDisplay:
         print(f"   平均执行时间: {stats.get('avg_duration_seconds', 0):.2f}秒")
         print(f"   总数据点: {stats.get('total_data_points', 0)}")
 
-        last_collection = stats.get('last_collection_time')
+        last_collection = stats.get("last_collection_time")
         if last_collection:
             print(f"   最后收集时间: {last_collection}")
 
@@ -139,9 +142,7 @@ class DataCollectorCLI:
             return False
 
     async def collect_match_data(
-        self,
-        match_id: str,
-        sources: Optional[List[str]] = None
+        self, match_id: str, sources: Optional[List[str]] = None
     ) -> List[Dict[str, Any]]:
         """
         收集比赛数据
@@ -160,16 +161,14 @@ class DataCollectorCLI:
             result = await self.collection_service.collect_match_data(match_id, sources)
 
             logger.info(f"比赛数据收集完成: {match_id}")
-            return result.get('results', [])
+            return result.get("results", [])
 
         except Exception as e:
             logger.error(f"比赛数据收集失败: {e}")
             return []
 
     async def collect_league_data(
-        self,
-        league_code: str,
-        league_id: Optional[str] = None
+        self, league_code: str, league_id: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         收集联赛数据
@@ -185,7 +184,9 @@ class DataCollectorCLI:
 
         try:
             # 使用服务层收集数据
-            result = await self.collection_service.collect_league_data(league_code, league_id)
+            result = await self.collection_service.collect_league_data(
+                league_code, league_id
+            )
 
             logger.info(f"联赛数据收集完成: {league_code}")
             return result
@@ -195,9 +196,7 @@ class DataCollectorCLI:
             return {"error": str(e)}
 
     async def collect_custom_data(
-        self,
-        source_type: str,
-        config: Dict[str, Any]
+        self, source_type: str, config: Dict[str, Any]
     ) -> Dict[str, Any]:
         """
         收集自定义数据
@@ -214,8 +213,7 @@ class DataCollectorCLI:
         try:
             # 创建自定义任务
             task_id = self.collection_service.create_collection_task(
-                source_type=source_type,
-                source_config=config
+                source_type=source_type, source_config=config
             )
 
             # 执行任务
@@ -236,9 +234,7 @@ class DataCollectorCLI:
         return self.collection_service.get_stats()
 
     async def get_task_status(
-        self,
-        status_filter: Optional[str] = None,
-        source_filter: Optional[str] = None
+        self, status_filter: Optional[str] = None, source_filter: Optional[str] = None
     ) -> List[Dict[str, Any]]:
         """
         获取任务状态
@@ -271,8 +267,7 @@ class DataCollectorCLI:
                 logger.warning(f"无效的数据源过滤条件: {source_filter}")
 
         return self.collection_service.get_tasks(
-            status=status_enum,
-            source_type=source_enum
+            status=status_enum, source_type=source_enum
         )
 
     async def clear_completed_tasks(self, older_than_hours: int = 24) -> int:
@@ -312,80 +307,43 @@ def create_arg_parser() -> argparse.ArgumentParser:
 
   # 清理任务
   python scripts/data_collector_v2.py --cleanup --older-hours 12
-        """
+        """,
     )
 
     # 数据收集选项
     group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument(
-        "--match-id",
-        type=str,
-        help="比赛ID"
-    )
-    group.add_argument(
-        "--league-code",
-        type=str,
-        help="联赛代码 (如 PL, BL1, SA)"
-    )
-    group.add_argument(
-        "--custom",
-        type=str,
-        help="自定义数据源类型"
-    )
-    group.add_argument(
-        "--status",
-        action="store_true",
-        help="查看收集状态"
-    )
-    group.add_argument(
-        "--cleanup",
-        action="store_true",
-        help="清理已完成任务"
-    )
+    group.add_argument("--match-id", type=str, help="比赛ID")
+    group.add_argument("--league-code", type=str, help="联赛代码 (如 PL, BL1, SA)")
+    group.add_argument("--custom", type=str, help="自定义数据源类型")
+    group.add_argument("--status", action="store_true", help="查看收集状态")
+    group.add_argument("--cleanup", action="store_true", help="清理已完成任务")
 
     # 配置选项
     parser.add_argument(
         "--sources",
         type=str,
-        help="数据源列表，逗号分隔 (fotmob, oddsportal, football_data, all)"
+        help="数据源列表，逗号分隔 (fotmob, oddsportal, football_data, all)",
     )
 
     parser.add_argument(
-        "--league-id",
-        type=str,
-        help="联赛ID (与--league-code配合使用)"
+        "--league-id", type=str, help="联赛ID (与--league-code配合使用)"
     )
 
-    parser.add_argument(
-        "--config",
-        type=str,
-        help="自定义收集配置 (JSON格式)"
-    )
+    parser.add_argument("--config", type=str, help="自定义收集配置 (JSON格式)")
 
     parser.add_argument(
         "--filter",
         type=str,
-        help="状态过滤条件 (pending, running, success, failed, retry)"
+        help="状态过滤条件 (pending, running, success, failed, retry)",
     )
 
     parser.add_argument(
-        "--older-hours",
-        type=int,
-        default=24,
-        help="清理多少小时前的任务 (默认: 24)"
+        "--older-hours", type=int, default=24, help="清理多少小时前的任务 (默认: 24)"
     )
 
-    parser.add_argument(
-        "--output",
-        type=str,
-        help="输出文件路径 (JSON格式)"
-    )
+    parser.add_argument("--output", type=str, help="输出文件路径 (JSON格式)")
 
-    parser.add_argument(
-        "--verbose",
-        action="store_true",
-        help="详细输出模式"
-    )
+    parser.add_argument("--verbose", action="store_true", help="详细输出模式")
 
     return parser
 
@@ -395,7 +353,7 @@ def parse_sources(sources_str: str) -> Optional[List[str]]:
     if not sources_str:
         return None
 
-    sources = [s.strip() for s in sources_str.split(',')]
+    sources = [s.strip() for s in sources_str.split(",")]
 
     # 特殊处理 "all"
     if "all" in sources:
@@ -441,8 +399,8 @@ async def main():
         # 收集联赛数据
         elif args.league_code:
             result = await cli.collect_league_data(args.league_code, args.league_id)
-            if 'results' in result:
-                results = result['results']
+            if "results" in result:
+                results = result["results"]
             else:
                 print(f"联赛数据收集结果: {result}")
 
@@ -461,7 +419,9 @@ async def main():
             if tasks:
                 print(f"\n📋 任务列表 (过滤: {args.filter or '全部'}):")
                 for task in tasks:
-                    print(f"   - {task.get('task_id', 'unknown')}: {task.get('status', 'unknown')}")
+                    print(
+                        f"   - {task.get('task_id', 'unknown')}: {task.get('status', 'unknown')}"
+                    )
 
             return 0
 
@@ -479,7 +439,7 @@ async def main():
             if args.output:
                 output_path = Path(args.output)
                 try:
-                    with open(output_path, 'w', encoding='utf-8') as f:
+                    with open(output_path, "w", encoding="utf-8") as f:
                         json.dump(results, f, indent=2, ensure_ascii=False, default=str)
                     print(f"\n💾 结果已保存到: {output_path}")
                 except Exception as e:

@@ -44,17 +44,19 @@ async def health_check() -> HealthCheckResponse:
 
     # 计算总响应时间
     total_response_time = (
-        database_check.response_time_ms +
-        redis_check.response_time_ms +
-        filesystem_check.response_time_ms
+        database_check.response_time_ms
+        + redis_check.response_time_ms
+        + filesystem_check.response_time_ms
     )
 
     # 确定整体状态
-    all_healthy = all([
-        database_check.status == "healthy",
-        redis_check.status == "healthy",
-        filesystem_check.status == "healthy"
-    ])
+    all_healthy = all(
+        [
+            database_check.status == "healthy",
+            redis_check.status == "healthy",
+            filesystem_check.status == "healthy",
+        ]
+    )
 
     overall_status = "healthy" if all_healthy else "unhealthy"
 
@@ -71,7 +73,7 @@ async def health_check() -> HealthCheckResponse:
         service="football-prediction-api",
         version="1.0.0",
         response_time_ms=total_response_time,
-        checks=checks
+        checks=checks,
     )
 
 
@@ -105,7 +107,7 @@ async def readiness_check(db: Session = Depends(get_db_session)) -> Dict[str, An
             checks["database"] = ServiceCheck(
                 status="healthy",
                 response_time_ms=database_result.get("response_time_ms", 0),
-                details={"message": database_result.get("message", "数据库连接正常")}
+                details={"message": database_result.get("message", "数据库连接正常")},
             )
         else:
             checks["database"] = ServiceCheck(
@@ -113,17 +115,14 @@ async def readiness_check(db: Session = Depends(get_db_session)) -> Dict[str, An
                 response_time_ms=database_result.get("response_time_ms", 0),
                 details={
                     "message": database_result.get("message", "数据库连接失败"),
-                    "error": database_result.get("error", "")
-                }
+                    "error": database_result.get("error", ""),
+                },
             )
     except Exception as e:
         checks["database"] = ServiceCheck(
             status="unhealthy",
             response_time_ms=0,
-            details={
-                "message": "数据库检查异常",
-                "error": str(e)
-            }
+            details={"message": "数据库检查异常", "error": str(e)},
         )
 
     # 判断整体就绪状态
@@ -140,7 +139,7 @@ async def readiness_check(db: Session = Depends(get_db_session)) -> Dict[str, An
             name: {
                 "status": check.status,
                 "response_time_ms": check.response_time_ms,
-                "details": check.details
+                "details": check.details,
             }
             for name, check in checks.items()
         },
@@ -160,17 +159,14 @@ async def _get_database_service_check() -> ServiceCheck:
         return ServiceCheck(
             status="healthy",
             response_time_ms=1.0,
-            details={"message": "数据库连接正常"}
+            details={"message": "数据库连接正常"},
         )
     except Exception as e:
         logger.error(f"数据库健康检查失败: {e}")
         return ServiceCheck(
             status="unhealthy",
             response_time_ms=0,
-            details={
-                "message": "数据库连接失败",
-                "error": str(e)
-            }
+            details={"message": "数据库连接失败", "error": str(e)},
         )
 
 
@@ -179,19 +175,14 @@ async def _get_redis_service_check() -> ServiceCheck:
     try:
         # 模拟Redis检查，实际应该连接Redis
         return ServiceCheck(
-            status="healthy",
-            response_time_ms=0.5,
-            details={"message": "Redis连接正常"}
+            status="healthy", response_time_ms=0.5, details={"message": "Redis连接正常"}
         )
     except Exception as e:
         logger.error(f"Redis健康检查失败: {e}")
         return ServiceCheck(
             status="unhealthy",
             response_time_ms=0,
-            details={
-                "message": "Redis连接失败",
-                "error": str(e)
-            }
+            details={"message": "Redis连接失败", "error": str(e)},
         )
 
 
@@ -208,17 +199,14 @@ async def _get_filesystem_service_check() -> ServiceCheck:
         return ServiceCheck(
             status="healthy",
             response_time_ms=0.2,
-            details={"message": "文件系统正常", "log_directory": log_dir}
+            details={"message": "文件系统正常", "log_directory": log_dir},
         )
     except Exception as e:
         logger.error(f"文件系统健康检查失败: {e}")
         return ServiceCheck(
             status="unhealthy",
             response_time_ms=0,
-            details={
-                "message": "文件系统检查失败",
-                "error": str(e)
-            }
+            details={"message": "文件系统检查失败", "error": str(e)},
         )
 
 
@@ -233,7 +221,7 @@ async def _check_database(db: Session) -> Dict[str, Any]:
         return {
             "healthy": True,
             "message": "数据库连接正常",
-            "response_time_ms": response_time
+            "response_time_ms": response_time,
         }
     except Exception as e:
         logger.error(f"数据库健康检查失败: {e}")
@@ -241,7 +229,7 @@ async def _check_database(db: Session) -> Dict[str, Any]:
             "healthy": False,
             "message": f"数据库连接失败: {str(e)}",
             "error": str(e),
-            "response_time_ms": 0
+            "response_time_ms": 0,
         }
 
 
@@ -256,7 +244,7 @@ async def _check_redis() -> Dict[str, Any]:
         return {
             "healthy": True,
             "message": "Redis连接正常",
-            "response_time_ms": response_time
+            "response_time_ms": response_time,
         }
     except Exception as e:
         logger.error(f"Redis健康检查失败: {e}")
@@ -264,7 +252,7 @@ async def _check_redis() -> Dict[str, Any]:
             "healthy": False,
             "message": f"Redis连接失败: {str(e)}",
             "error": str(e),
-            "response_time_ms": 0
+            "response_time_ms": 0,
         }
 
 
@@ -278,15 +266,11 @@ async def _check_filesystem() -> Dict[str, Any]:
         if not os.path.exists(log_dir):
             os.makedirs(log_dir)
 
-        return {
-            "healthy": True,
-            "message": "文件系统正常",
-            "log_directory": log_dir
-        }
+        return {"healthy": True, "message": "文件系统正常", "log_directory": log_dir}
     except Exception as e:
         logger.error(f"文件系统健康检查失败: {e}")
         return {
             "healthy": False,
             "message": f"文件系统检查失败: {str(e)}",
-            "error": str(e)
+            "error": str(e),
         }

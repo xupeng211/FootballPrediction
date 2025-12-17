@@ -125,7 +125,7 @@ class DatabaseManager:
         """
         if self._async_session_factory is None:
             raise RuntimeError("数据库连接未初始化，请先调用 initialize()")
-        
+
         async with self._async_session_factory() as session:
             try:
                 yield session

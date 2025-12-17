@@ -17,7 +17,7 @@ from src.services.collection_service import (
     FotMobCollectionService,
     CollectionStatus,
     FotMobCollectionTask,
-    CircuitBreaker
+    CircuitBreaker,
 )
 from src.config import get_settings
 
@@ -28,9 +28,7 @@ class TestFotMobCollectionTask:
     def test_task_creation(self):
         """测试任务创建"""
         task = FotMobCollectionTask(
-            task_id="test-123",
-            match_id="match-456",
-            league_id="league-789"
+            task_id="test-123", match_id="match-456", league_id="league-789"
         )
 
         assert task.task_id == "test-123"
@@ -64,9 +62,7 @@ class TestCircuitBreaker:
     def test_circuit_breaker_initial_state(self):
         """测试熔断器初始状态"""
         breaker = CircuitBreaker(
-            failure_threshold=3,
-            recovery_timeout=60,
-            half_open_max_calls=2
+            failure_threshold=3, recovery_timeout=60, half_open_max_calls=2
         )
 
         # 验证熔断器初始化
@@ -80,9 +76,7 @@ class TestCircuitBreaker:
     def test_circuit_breaker_success(self):
         """测试熔断器允许调用"""
         breaker = CircuitBreaker(
-            failure_threshold=3,
-            recovery_timeout=60,
-            half_open_max_calls=2
+            failure_threshold=3, recovery_timeout=60, half_open_max_calls=2
         )
 
         # 测试初始状态允许调用
@@ -107,15 +101,13 @@ class TestFotMobCollectionService:
     async def test_service_initialization(self, service):
         """测试服务初始化"""
         assert service is not None
-        assert hasattr(service, 'settings')
+        assert hasattr(service, "settings")
         # 假设有metrics属性
         # assert isinstance(service.metrics, CollectionMetrics)
 
     async def test_create_collection_task(self, service):
         """测试创建收集任务"""
-        task_id = service.create_match_collection_task(
-            match_id="match-123"
-        )
+        task_id = service.create_match_collection_task(match_id="match-123")
 
         assert isinstance(task_id, str)
         assert "match-123" in task_id
@@ -149,8 +141,10 @@ class TestFotMobCollectionService:
 
         mock_aiohttp_session.get.return_value.__aenter__.return_value = mock_response
 
-        with patch('aiohttp.ClientSession') as mock_session_class:
-            mock_session_class.return_value.__aenter__.return_value = mock_aiohttp_session
+        with patch("aiohttp.ClientSession") as mock_session_class:
+            mock_session_class.return_value.__aenter__.return_value = (
+                mock_aiohttp_session
+            )
 
             with pytest.raises(Exception):  # 应该抛出适当异常
                 await service.process_single_match("non-existent-match")
@@ -209,9 +203,9 @@ class TestCollectionIntegration:
 
         assert service is not None
         # 验证服务具有必要的属性和方法
-        assert hasattr(service, 'execute_task')
-        assert hasattr(service, 'execute_all_tasks')
-        assert hasattr(service, 'create_match_collection_task')
+        assert hasattr(service, "execute_task")
+        assert hasattr(service, "execute_all_tasks")
+        assert hasattr(service, "create_match_collection_task")
 
 
 # TODO: 实现CollectionMetrics类并添加测试

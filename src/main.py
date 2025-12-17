@@ -37,6 +37,7 @@ def get_version() -> str:
     except Exception:
         return "1.0.0"  # 出错时使用默认版本
 
+
 # 配置日志
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
@@ -97,6 +98,7 @@ app.include_router(model_management_router)
 # 注册 v1 端点
 try:
     from src.api.v1.endpoints.admin import router as admin_router
+
     app.include_router(admin_router, prefix="/api/v1")
     logger.info("✅ 管理API接口已注册")
 except ImportError as e:
@@ -128,19 +130,19 @@ async def health():
             "database": {
                 "healthy": True,
                 "response_time_ms": 1.0,
-                "details": {"message": "数据库连接正常"}
+                "details": {"message": "数据库连接正常"},
             },
             "redis": {
                 "healthy": True,
                 "response_time_ms": 0.5,
-                "details": {"message": "Redis连接正常"}
+                "details": {"message": "Redis连接正常"},
             },
             "filesystem": {
                 "healthy": True,
                 "response_time_ms": 0.2,
-                "details": {"message": "文件系统正常"}
-            }
-        }
+                "details": {"message": "文件系统正常"},
+            },
+        },
     }
 
 

@@ -28,7 +28,8 @@ from types import SimpleNamespace
 
 # 导入被测试的模块
 import sys
-sys.path.append('/home/user/projects/FootballPrediction/src')
+
+sys.path.append("/home/user/projects/FootballPrediction/src")
 
 from ml.inference.model_loader import ModelLoader, ModelMetadata, ModelLoadError
 from ml.inference.cache_manager import PredictionCache, CacheEntry, CacheStats
@@ -38,7 +39,7 @@ from ml.inference.predictor import MatchPredictor, PredictionError
 class TestModelLoader(unittest.TestCase):
     """测试 ModelLoader 类的模型加载和管理功能"""
 
-    @patch('ml.inference.model_loader.Path')
+    @patch("ml.inference.model_loader.Path")
     def setUp(self, mock_path):
         """测试前的设置"""
         # Mock Path 对象以避免实际文件系统操作
@@ -49,8 +50,8 @@ class TestModelLoader(unittest.TestCase):
         mock_path.return_value = self.mock_cache_dir
         self.model_loader = ModelLoader(self.mock_cache_dir)
 
-    @patch('ml.inference.model_loader.Path')
-    @patch('ml.inference.model_loader.pickle.load')
+    @patch("ml.inference.model_loader.Path")
+    @patch("ml.inference.model_loader.pickle.load")
     def test_load_model_success(self, mock_pickle_load, mock_path):
         """测试成功加载模型"""
         # 准备测试数据
@@ -71,7 +72,7 @@ class TestModelLoader(unittest.TestCase):
         self.assertEqual(result, mock_model)
         self.assertTrue(self.model_loader.is_model_loaded("test_model"))
 
-    @patch('ml.inference.model_loader.Path')
+    @patch("ml.inference.model_loader.Path")
     def test_load_model_file_not_exists(self, mock_path):
         """测试加载不存在的模型文件"""
         mock_file_path = Mock()
@@ -84,8 +85,8 @@ class TestModelLoader(unittest.TestCase):
         with self.assertRaises(ModelLoadError):
             self.model_loader.load_model("nonexistent_model", model_path)
 
-    @patch('ml.inference.model_loader.Path')
-    @patch('ml.inference.model_loader.pickle.load')
+    @patch("ml.inference.model_loader.Path")
+    @patch("ml.inference.model_loader.pickle.load")
     def test_load_model_with_metadata(self, mock_pickle_load, mock_path):
         """测试加载包含元数据的模型"""
         # 准备测试数据
@@ -94,7 +95,7 @@ class TestModelLoader(unittest.TestCase):
             model_version="1.0.0",
             feature_names=["feature1", "feature2"],
             created_at=datetime.now(),
-            model_type="xgboost"
+            model_type="xgboost",
         )
 
         # 模拟返回模型和元数据
@@ -178,9 +179,9 @@ class TestModelLoader(unittest.TestCase):
 class TestPredictionCache(unittest.TestCase):
     """测试 PredictionCache 类的缓存管理功能"""
 
-    @patch('ml.inference.cache_manager.asyncio.create_task')
-    @patch('ml.inference.cache_manager.threading.RLock')
-    @patch('ml.inference.cache_manager.time.time')
+    @patch("ml.inference.cache_manager.asyncio.create_task")
+    @patch("ml.inference.cache_manager.threading.RLock")
+    @patch("ml.inference.cache_manager.time.time")
     def setUp(self, mock_time, mock_lock, mock_asyncio):
         """测试前的设置"""
         # Mock 时间函数
@@ -196,7 +197,7 @@ class TestPredictionCache(unittest.TestCase):
             default_ttl=3600,  # 1小时
             max_size=100,
             cleanup_interval=60,
-            enable_auto_cleanup=False  # 测试时禁用自动清理
+            enable_auto_cleanup=False,  # 测试时禁用自动清理
         )
 
     def test_set_and_get_cache(self):
@@ -305,14 +306,14 @@ class TestPredictionCache(unittest.TestCase):
 
         # 验证统计信息（根据实际 CacheStats 结构调整）
         self.assertIsInstance(stats, dict)
-        self.assertIn('total_requests', stats)
-        self.assertIn('size', stats)
+        self.assertIn("total_requests", stats)
+        self.assertIn("size", stats)
 
     def test_cleanup_expired(self):
         """测试清理过期缓存"""
         # 设置一些缓存，其中一些会过期
         self.cache.set({"f": 1}, "model", "result1", ttl=0.1)  # 很快过期
-        self.cache.set({"f": 2}, "model", "result2", ttl=10)   # 不过期
+        self.cache.set({"f": 2}, "model", "result2", ttl=10)  # 不过期
 
         # 等待第一个缓存过期
         time.sleep(0.2)
@@ -328,8 +329,8 @@ class TestPredictionCache(unittest.TestCase):
 class TestMatchPredictor(unittest.TestCase):
     """测试 MatchPredictor 类的预测逻辑"""
 
-    @patch('ml.inference.predictor.time.time')
-    @patch('ml.inference.predictor.datetime')
+    @patch("ml.inference.predictor.time.time")
+    @patch("ml.inference.predictor.datetime")
     def setUp(self, mock_datetime, mock_time):
         """测试前的设置"""
         # Mock 时间函数
@@ -341,7 +342,7 @@ class TestMatchPredictor(unittest.TestCase):
         self.predictor = MatchPredictor(
             model_loader=self.mock_model_loader,
             cache_manager=self.mock_cache_manager,
-            default_model_name="default_model"
+            default_model_name="default_model",
         )
 
     def test_predict_success(self):
@@ -350,7 +351,9 @@ class TestMatchPredictor(unittest.TestCase):
         features = np.array([[1.0, 2.0, 3.0]])
         mock_model = Mock()
         mock_model.predict.return_value = np.array([2])  # Away win
-        mock_model.predict_proba.return_value = np.array([[0.1, 0.3, 0.6]])  # Probabilities
+        mock_model.predict_proba.return_value = np.array(
+            [[0.1, 0.3, 0.6]]
+        )  # Probabilities
 
         self.mock_model_loader.get_model.return_value = mock_model
         self.mock_cache_manager.get.return_value = None  # 缓存未命中
@@ -360,9 +363,9 @@ class TestMatchPredictor(unittest.TestCase):
 
         # 验证结果
         self.assertIsNotNone(result)
-        self.assertIn('prediction', result)
-        self.assertIn('probabilities', result)
-        self.assertEqual(result['prediction'], 2)  # Away win
+        self.assertIn("prediction", result)
+        self.assertIn("probabilities", result)
+        self.assertEqual(result["prediction"], 2)  # Away win
 
         # 验证调用
         self.mock_model_loader.get_model.assert_called_once_with("default_model")
@@ -373,9 +376,9 @@ class TestMatchPredictor(unittest.TestCase):
         """测试缓存命中的预测"""
         features = np.array([[1.0, 2.0, 3.0]])
         cached_result = {
-            'prediction': 1,
-            'probabilities': [0.2, 0.5, 0.3],
-            'timestamp': time.time()
+            "prediction": 1,
+            "probabilities": [0.2, 0.5, 0.3],
+            "timestamp": time.time(),
         }
 
         self.mock_cache_manager.get.return_value = cached_result
@@ -467,8 +470,8 @@ class TestMatchPredictor(unittest.TestCase):
 
         # 验证结果
         self.assertIsNotNone(model_info)
-        self.assertIn('model_name', model_info)
-        self.assertIn('model_loaded', model_info)
+        self.assertIn("model_name", model_info)
+        self.assertIn("model_loaded", model_info)
 
     def test_get_prediction_stats(self):
         """测试获取预测统计信息"""
@@ -490,9 +493,9 @@ class TestMatchPredictor(unittest.TestCase):
 
         # 验证统计信息
         self.assertIsNotNone(stats)
-        self.assertIn('total_predictions', stats)
-        self.assertIn('cache_hits', stats)
-        self.assertEqual(stats['total_predictions'], 2)
+        self.assertIn("total_predictions", stats)
+        self.assertIn("cache_hits", stats)
+        self.assertEqual(stats["total_predictions"], 2)
 
     def test_reset_stats(self):
         """测试重置预测统计信息"""
@@ -514,9 +517,9 @@ class TestMatchPredictor(unittest.TestCase):
         stats = self.predictor.get_prediction_stats()
 
         # 验证统计信息已重置
-        self.assertEqual(stats['total_predictions'], 0)
-        self.assertEqual(stats['cache_hits'], 0)
-        self.assertEqual(stats['cache_misses'], 0)
+        self.assertEqual(stats["total_predictions"], 0)
+        self.assertEqual(stats["cache_hits"], 0)
+        self.assertEqual(stats["cache_misses"], 0)
 
 
 class TestIntegration(unittest.TestCase):
@@ -529,11 +532,11 @@ class TestIntegration(unittest.TestCase):
         self.predictor = MatchPredictor(
             model_loader=self.model_loader,
             cache_manager=self.cache_manager,
-            default_model_name="test_model"
+            default_model_name="test_model",
         )
 
-    @patch('ml.inference.model_loader.pickle.load')
-    @patch('ml.inference.model_loader.Path')
+    @patch("ml.inference.model_loader.pickle.load")
+    @patch("ml.inference.model_loader.Path")
     def test_end_to_end_prediction_flow(self, mock_path, mock_pickle_load):
         """测试端到端预测流程"""
         # 准备测试模型
@@ -563,17 +566,17 @@ class TestIntegration(unittest.TestCase):
         # 验证结果
         self.assertIsNotNone(result1)
         self.assertIsNotNone(result2)
-        self.assertEqual(result1['prediction'], 1)
-        self.assertEqual(result2['prediction'], 1)
+        self.assertEqual(result1["prediction"], 1)
+        self.assertEqual(result2["prediction"], 1)
 
         # 验证缓存生效
         stats = self.predictor.get_prediction_stats()
-        self.assertEqual(stats['total_predictions'], 2)
-        self.assertEqual(stats['cache_hits'], 1)
-        self.assertEqual(stats['cache_misses'], 1)
+        self.assertEqual(stats["total_predictions"], 2)
+        self.assertEqual(stats["cache_hits"], 1)
+        self.assertEqual(stats["cache_misses"], 1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # 创建测试套件
     suite = unittest.TestSuite()
 
@@ -593,5 +596,7 @@ if __name__ == '__main__':
     print(f"总测试数: {result.testsRun}")
     print(f"失败: {len(result.failures)}")
     print(f"错误: {len(result.errors)}")
-    print(f"成功率: {((result.testsRun - len(result.failures) - len(result.errors)) / result.testsRun * 100):.1f}%")
+    print(
+        f"成功率: {((result.testsRun - len(result.failures) - len(result.errors)) / result.testsRun * 100):.1f}%"
+    )
     print(f"{'='*60}")

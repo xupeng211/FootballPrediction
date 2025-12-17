@@ -25,7 +25,9 @@ project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 # 配置日志
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 try:
@@ -110,37 +112,43 @@ class MatchPredictorCLI:
         try:
             with self.engine.connect() as conn:
                 # 获取该球队的最新特征数据（主队）
-                home_features_query = text("""
+                home_features_query = text(
+                    """
                     SELECT * FROM match_features
                     WHERE home_team_id = :team_id
                     ORDER BY match_date DESC
                     LIMIT 1
-                """)
+                """
+                )
 
                 result = conn.execute(home_features_query, {"team_id": team_id})
                 home_row = result.fetchone()
 
                 # 获取该球队的最新特征数据（客队）
-                away_features_query = text("""
+                away_features_query = text(
+                    """
                     SELECT * FROM match_features
                     WHERE away_team_id = :team_id
                     ORDER BY match_date DESC
                     LIMIT 1
-                """)
+                """
+                )
 
                 result = conn.execute(away_features_query, {"team_id": team_id})
                 away_row = result.fetchone()
 
                 return {
-                    'team_id': team_id,
-                    'home_features': home_row,
-                    'away_features': away_row
+                    "team_id": team_id,
+                    "home_features": home_row,
+                    "away_features": away_row,
                 }
         except Exception as e:
             logger.error(f"获取球队特征数据失败: {e}")
             return None
 
-    def _extract_real_features(self, home_team: str, away_team: str, match_date: datetime) -> Optional[Dict[str, float]]:
+    def _extract_real_features(
+        self, home_team: str, away_team: str, match_date: datetime
+    ) -> Optional[Dict[str, float]]:
         """提取真实特征数据"""
 
         try:
@@ -155,8 +163,8 @@ class MatchPredictorCLI:
                 return None
 
             # 构建特征向量 - 使用验证过的12维特征
-            home_features = home_data['home_features']
-            away_features = away_data['away_features']
+            home_features = home_data["home_features"]
+            away_features = away_data["away_features"]
 
             if not home_features or not away_features:
                 logger.warning("⚠️ 特征数据不完整")
@@ -167,20 +175,52 @@ class MatchPredictorCLI:
                 return float(value) if value is not None else default
 
             # 构建12个核心特征向量 - 确保所有值都是float类型
-            features = np.array([
-                safe_float(home_features[14] if home_features[14] is not None else 0.5),  # home_recent_points_3
-                safe_float(away_features[18] if away_features[18] is not None else 0.5),  # away_recent_points_3
-                safe_float(home_features[10] if home_features[10] is not None else 0.33),  # h2h_home_win_rate
-                safe_float(home_features[11] if home_features[11] is not None else 0.34),  # h2h_draw_rate
-                safe_float(home_features[12] if home_features[12] is not None else 0.33),  # h2h_away_win_rate
-                safe_float(home_features[23] if home_features[23] is not None else 1.2),   # venue_home_win_rate_3
-                safe_float(1.0 / (away_features[23] if away_features[23] is not None and away_features[23] > 0 else 1.0)),  # venue_away_disadvantage_3
-                safe_float(home_features[15] if home_features[15] is not None else 1.0),  # home_goals_scored_avg_5
-                safe_float(away_features[20] if away_features[20] is not None else 1.0),  # away_goals_conceded_avg_5
-                safe_float(away_features[19] if away_features[19] is not None else 1.0),  # away_goals_scored_avg_5
-                safe_float(home_features[16] if home_features[16] is not None else 1.0),  # home_goals_conceded_avg_5
-                safe_float(home_features[14] if home_features[14] is not None else 1.0),  # home_recent_points_3 (备用)
-            ], dtype=np.float64)
+            features = np.array(
+                [
+                    safe_float(
+                        home_features[14] if home_features[14] is not None else 0.5
+                    ),  # home_recent_points_3
+                    safe_float(
+                        away_features[18] if away_features[18] is not None else 0.5
+                    ),  # away_recent_points_3
+                    safe_float(
+                        home_features[10] if home_features[10] is not None else 0.33
+                    ),  # h2h_home_win_rate
+                    safe_float(
+                        home_features[11] if home_features[11] is not None else 0.34
+                    ),  # h2h_draw_rate
+                    safe_float(
+                        home_features[12] if home_features[12] is not None else 0.33
+                    ),  # h2h_away_win_rate
+                    safe_float(
+                        home_features[23] if home_features[23] is not None else 1.2
+                    ),  # venue_home_win_rate_3
+                    safe_float(
+                        1.0
+                        / (
+                            away_features[23]
+                            if away_features[23] is not None and away_features[23] > 0
+                            else 1.0
+                        )
+                    ),  # venue_away_disadvantage_3
+                    safe_float(
+                        home_features[15] if home_features[15] is not None else 1.0
+                    ),  # home_goals_scored_avg_5
+                    safe_float(
+                        away_features[20] if away_features[20] is not None else 1.0
+                    ),  # away_goals_conceded_avg_5
+                    safe_float(
+                        away_features[19] if away_features[19] is not None else 1.0
+                    ),  # away_goals_scored_avg_5
+                    safe_float(
+                        home_features[16] if home_features[16] is not None else 1.0
+                    ),  # home_goals_conceded_avg_5
+                    safe_float(
+                        home_features[14] if home_features[14] is not None else 1.0
+                    ),  # home_recent_points_3 (备用)
+                ],
+                dtype=np.float64,
+            )
 
             logger.info(f"✅ 成功提取真实特征数据: {len(features)} 维")
             return features
@@ -188,10 +228,13 @@ class MatchPredictorCLI:
         except Exception as e:
             logger.error(f"❌ 提取真实特征失败: {e}")
             import traceback
+
             traceback.print_exc()
             return None
 
-    def extract_features_with_fallback(self, home_team: str, away_team: str, match_date: datetime) -> Dict[str, float]:
+    def extract_features_with_fallback(
+        self, home_team: str, away_team: str, match_date: datetime
+    ) -> Dict[str, float]:
         """提取特征，支持回退到模拟数据"""
 
         # 尝试提取真实特征
@@ -212,13 +255,15 @@ class MatchPredictorCLI:
                 "away_goals_scored_avg_5": float(real_features[9]),
                 "home_goals_conceded_avg_5": float(real_features[10]),
                 "home_recent_points_3": float(real_features[11]),
-                "away_recent_points_3": float(real_features[1])  # 重复使用away_form_3
+                "away_recent_points_3": float(real_features[1]),  # 重复使用away_form_3
             }
         else:
             logger.info("回退到模拟特征数据")
             return self._generate_simulation_features(home_team, away_team)
 
-    def _generate_simulation_features(self, home_team: str, away_team: str) -> Dict[str, float]:
+    def _generate_simulation_features(
+        self, home_team: str, away_team: str
+    ) -> Dict[str, float]:
         """生成模拟特征数据用于演示"""
         import random
 
@@ -263,7 +308,7 @@ class MatchPredictorCLI:
             "away_goals_scored_avg_5": away_goals_scored,
             "home_goals_conceded_avg_5": home_goals_conceded,
             "home_recent_points_3": home_recent_points,
-            "away_recent_points_3": away_recent_points
+            "away_recent_points_3": away_recent_points,
         }
 
         logger.info("🎭 生成了模拟特征数据")
@@ -275,20 +320,23 @@ class MatchPredictorCLI:
         if not self.simulation_mode and self.predictor:
             try:
                 # 准备特征向量（使用验证过的12维特征）
-                feature_vector = np.array([
-                    features.get("home_recent_points_3", 0.5),   # 1
-                    features.get("away_recent_points_3", 0.5),   # 2
-                    features.get("h2h_home_win_rate", 0.33),     # 3
-                    features.get("h2h_draw_rate", 0.34),         # 4
-                    features.get("h2h_away_win_rate", 0.33),     # 5
-                    features.get("venue_home_advantage_3", 1.2), # 6
-                    features.get("venue_away_disadvantage_3", 0.8), # 7
-                    features.get("home_goals_scored_avg_5", 1.0), # 8
-                    features.get("away_goals_conceded_avg_5", 1.0), # 9
-                    features.get("away_goals_scored_avg_5", 1.0), # 10
-                    features.get("home_goals_conceded_avg_5", 1.0), # 11
-                    features.get("home_recent_points_3", 1.0),   # 12 (备用)
-                ], dtype=np.float64)
+                feature_vector = np.array(
+                    [
+                        features.get("home_recent_points_3", 0.5),  # 1
+                        features.get("away_recent_points_3", 0.5),  # 2
+                        features.get("h2h_home_win_rate", 0.33),  # 3
+                        features.get("h2h_draw_rate", 0.34),  # 4
+                        features.get("h2h_away_win_rate", 0.33),  # 5
+                        features.get("venue_home_advantage_3", 1.2),  # 6
+                        features.get("venue_away_disadvantage_3", 0.8),  # 7
+                        features.get("home_goals_scored_avg_5", 1.0),  # 8
+                        features.get("away_goals_conceded_avg_5", 1.0),  # 9
+                        features.get("away_goals_scored_avg_5", 1.0),  # 10
+                        features.get("home_goals_conceded_avg_5", 1.0),  # 11
+                        features.get("home_recent_points_3", 1.0),  # 12 (备用)
+                    ],
+                    dtype=np.float64,
+                )
 
                 # 使用真实模型预测
                 predictions = self.predictor.predict(feature_vector)
@@ -297,12 +345,14 @@ class MatchPredictorCLI:
 
                 # 解析预测结果
                 if isinstance(predictions, dict):
-                    if 'probabilities' in predictions:
-                        probs = predictions['probabilities']
+                    if "probabilities" in predictions:
+                        probs = predictions["probabilities"]
                         # 如果只有2个概率，假设是HOME_WIN vs NOT_HOME_WIN
                         if len(probs) == 2:
                             home_prob = float(probs[0])
-                            draw_prob = float(probs[1]) * 0.5  # 将剩余概率分配给平局和客胜
+                            draw_prob = (
+                                float(probs[1]) * 0.5
+                            )  # 将剩余概率分配给平局和客胜
                             away_prob = float(probs[1]) * 0.5
                         else:
                             home_prob = float(probs[0]) if len(probs) > 0 else 0.33
@@ -311,7 +361,7 @@ class MatchPredictorCLI:
                     else:
                         # 默认概率
                         home_prob, draw_prob, away_prob = 0.4, 0.3, 0.3
-                elif hasattr(predictions, '__len__') and len(predictions) >= 3:
+                elif hasattr(predictions, "__len__") and len(predictions) >= 3:
                     home_prob = float(predictions[0])
                     draw_prob = float(predictions[1])
                     away_prob = float(predictions[2])
@@ -334,7 +384,7 @@ class MatchPredictorCLI:
                     return {
                         "HOME_WIN": home_prob / total,
                         "DRAW": draw_prob / total,
-                        "AWAY_WIN": away_prob / total
+                        "AWAY_WIN": away_prob / total,
                     }
                 else:
                     return {"HOME_WIN": 0.33, "DRAW": 0.34, "AWAY_WIN": 0.33}
@@ -352,21 +402,21 @@ class MatchPredictorCLI:
 
         # 基于特征计算基础概率
         home_strength = (
-            features.get("home_form_3", 0.5) * 0.3 +
-            features.get("h2h_home_win_rate", 0.33) * 0.25 +
-            features.get("venue_home_advantage_3", 0.5) * 0.2 +
-            features.get("home_recent_points_3", 5.0) * 0.05 / 9.0 +
-            features.get("home_goals_scored_avg_5", 1.5) * 0.05 / 3.0 +
-            features.get("away_goals_conceded_avg_5", 1.5) * 0.05 / 3.0
+            features.get("home_form_3", 0.5) * 0.3
+            + features.get("h2h_home_win_rate", 0.33) * 0.25
+            + features.get("venue_home_advantage_3", 0.5) * 0.2
+            + features.get("home_recent_points_3", 5.0) * 0.05 / 9.0
+            + features.get("home_goals_scored_avg_5", 1.5) * 0.05 / 3.0
+            + features.get("away_goals_conceded_avg_5", 1.5) * 0.05 / 3.0
         )
 
         away_strength = (
-            features.get("away_form_3", 0.5) * 0.3 +
-            features.get("h2h_away_win_rate", 0.33) * 0.25 +
-            features.get("venue_away_disadvantage_3", 1.5) * 0.2 +
-            features.get("away_recent_points_3", 5.0) * 0.05 / 9.0 +
-            features.get("away_goals_scored_avg_5", 1.5) * 0.05 / 3.0 +
-            features.get("home_goals_conceded_avg_5", 1.5) * 0.05 / 3.0
+            features.get("away_form_3", 0.5) * 0.3
+            + features.get("h2h_away_win_rate", 0.33) * 0.25
+            + features.get("venue_away_disadvantage_3", 1.5) * 0.2
+            + features.get("away_recent_points_3", 5.0) * 0.05 / 9.0
+            + features.get("away_goals_scored_avg_5", 1.5) * 0.05 / 3.0
+            + features.get("home_goals_conceded_avg_5", 1.5) * 0.05 / 3.0
         )
 
         draw_strength = features.get("h2h_draw_rate", 0.34) * 0.4
@@ -399,10 +449,12 @@ class MatchPredictorCLI:
         return {
             "HOME_WIN": round(home_prob, 3),
             "DRAW": round(draw_prob, 3),
-            "AWAY_WIN": round(away_prob, 3)
+            "AWAY_WIN": round(away_prob, 3),
         }
 
-    def generate_betting_suggestion(self, predictions: Dict[str, float]) -> Dict[str, Any]:
+    def generate_betting_suggestion(
+        self, predictions: Dict[str, float]
+    ) -> Dict[str, Any]:
         """生成投注建议"""
         home_win_prob = predictions["HOME_WIN"]
         draw_prob = predictions["DRAW"]
@@ -429,7 +481,9 @@ class MatchPredictorCLI:
             suggestion = f"⚠️ 谨慎考虑: {prediction} (置信度 {confidence:.1%})"
             risk_level = "中等风险"
         else:
-            suggestion = f"🚫 不建议投注: 比赛结果难以预测 (最高置信度 {confidence:.1%})"
+            suggestion = (
+                f"🚫 不建议投注: 比赛结果难以预测 (最高置信度 {confidence:.1%})"
+            )
             risk_level = "高风险"
 
         return {
@@ -437,7 +491,7 @@ class MatchPredictorCLI:
             "confidence": confidence,
             "suggestion": suggestion,
             "risk_level": risk_level,
-            "value_bet": self._calculate_value_bet(predictions)
+            "value_bet": self._calculate_value_bet(predictions),
         }
 
     def _calculate_value_bet(self, predictions: Dict[str, float]) -> str:
@@ -452,11 +506,14 @@ class MatchPredictorCLI:
         away_odds = round(1 / away_prob, 2)
 
         # 寻找价值投注机会
-        best_value = max([
-            ("主胜", home_prob, home_odds),
-            ("平局", draw_prob, draw_odds),
-            ("客胜", away_prob, away_odds)
-        ], key=lambda x: x[1] * 0.9 - 1/x[2] if x[2] > 1 else -1)
+        best_value = max(
+            [
+                ("主胜", home_prob, home_odds),
+                ("平局", draw_prob, draw_odds),
+                ("客胜", away_prob, away_odds),
+            ],
+            key=lambda x: x[1] * 0.9 - 1 / x[2] if x[2] > 1 else -1,
+        )
 
         outcome, prob, odds = best_value
         implied_prob = 1 / odds if odds > 1 else 1
@@ -466,21 +523,27 @@ class MatchPredictorCLI:
         else:
             return "📊 当前赔率无明显价值投注机会"
 
-    def print_beautiful_results(self, home_team: str, away_team: str, match_date: datetime,
-                              predictions: Dict[str, float], suggestion: Dict[str, Any]):
+    def print_beautiful_results(
+        self,
+        home_team: str,
+        away_team: str,
+        match_date: datetime,
+        predictions: Dict[str, float],
+        suggestion: Dict[str, Any],
+    ):
         """以漂亮的格式打印预测结果"""
 
         # 颜色和表情符号
         colors = {
-            'reset': '\033[0m',
-            'bold': '\033[1m',
-            'red': '\033[91m',
-            'green': '\033[92m',
-            'yellow': '\033[93m',
-            'blue': '\033[94m',
-            'magenta': '\033[95m',
-            'cyan': '\033[96m',
-            'white': '\033[97m'
+            "reset": "\033[0m",
+            "bold": "\033[1m",
+            "red": "\033[91m",
+            "green": "\033[92m",
+            "yellow": "\033[93m",
+            "blue": "\033[94m",
+            "magenta": "\033[95m",
+            "cyan": "\033[96m",
+            "white": "\033[97m",
         }
 
         print(f"\n{colors['bold']}{colors['cyan']}{'='*60}{colors['reset']}")
@@ -495,10 +558,16 @@ class MatchPredictorCLI:
 
         # 数据源标识
         if self.simulation_mode:
-            print(f"{colors['yellow']}{colors['bold']}[⚠️ 警告: 使用模拟数据演示]{colors['reset']}")
-            print("   由于数据库连接失败或缺少历史数据，使用基于统计的模拟特征进行预测\n")
+            print(
+                f"{colors['yellow']}{colors['bold']}[⚠️ 警告: 使用模拟数据演示]{colors['reset']}"
+            )
+            print(
+                "   由于数据库连接失败或缺少历史数据，使用基于统计的模拟特征进行预测\n"
+            )
         else:
-            print(f"{colors['green']}{colors['bold']}[✅ 使用真实数据预测]{colors['reset']}")
+            print(
+                f"{colors['green']}{colors['bold']}[✅ 使用真实数据预测]{colors['reset']}"
+            )
             print("   基于历史比赛数据和机器学习模型进行预测\n")
 
         # 预测概率
@@ -516,21 +585,27 @@ class MatchPredictorCLI:
             bar = "█" * bar_length + "░" * (30 - bar_length)
             return f"{color}{label:8}: {prob:6.1%} |{bar}| {colors['reset']}"
 
-        print(prob_bar(home_prob, "主胜", colors['green']))
-        print(prob_bar(draw_prob, "平局", colors['yellow']))
-        print(prob_bar(away_prob, "客胜", colors['red']))
+        print(prob_bar(home_prob, "主胜", colors["green"]))
+        print(prob_bar(draw_prob, "平局", colors["yellow"]))
+        print(prob_bar(away_prob, "客胜", colors["red"]))
         print()
 
         # 投注建议
         print(f"{colors['bold']}💡 投注建议:{colors['reset']}")
         print(f"   {suggestion['suggestion']}")
-        print(f"   风险等级: {colors['magenta']}{suggestion['risk_level']}{colors['reset']}")
+        print(
+            f"   风险等级: {colors['magenta']}{suggestion['risk_level']}{colors['reset']}"
+        )
         print(f"   {suggestion['value_bet']}\n")
 
         # 预测详情
         print(f"{colors['bold']}📊 预测详情:{colors['reset']}")
-        print(f"   最终预测: {colors['bold']}{suggestion['prediction']}{colors['reset']}")
-        print(f"   置信度: {colors['cyan']}{suggestion['confidence']:.1%}{colors['reset']}")
+        print(
+            f"   最终预测: {colors['bold']}{suggestion['prediction']}{colors['reset']}"
+        )
+        print(
+            f"   置信度: {colors['cyan']}{suggestion['confidence']:.1%}{colors['reset']}"
+        )
 
         # 添加免责声明
         print(f"\n{colors['yellow']}{colors['bold']}⚠️  免责声明:{colors['reset']}")
@@ -539,7 +614,9 @@ class MatchPredictorCLI:
 
         print(f"\n{colors['cyan']}{'='*60}{colors['reset']}\n")
 
-    def predict_match(self, home_team: str, away_team: str, match_date: Optional[str] = None) -> bool:
+    def predict_match(
+        self, home_team: str, away_team: str, match_date: Optional[str] = None
+    ) -> bool:
         """执行比赛预测"""
         try:
             # 处理比赛日期
@@ -554,7 +631,9 @@ class MatchPredictorCLI:
 
             # 提取特征
             logger.info(f"正在提取 {home_team} vs {away_team} 的特征...")
-            features = self.extract_features_with_fallback(home_team, away_team, match_dt)
+            features = self.extract_features_with_fallback(
+                home_team, away_team, match_dt
+            )
 
             # 进行预测
             logger.info("正在进行预测...")
@@ -564,7 +643,9 @@ class MatchPredictorCLI:
             suggestion = self.generate_betting_suggestion(predictions)
 
             # 打印结果
-            self.print_beautiful_results(home_team, away_team, match_dt, predictions, suggestion)
+            self.print_beautiful_results(
+                home_team, away_team, match_dt, predictions, suggestion
+            )
 
             return True
 
@@ -583,34 +664,22 @@ def main():
   python scripts/predict_match.py --home "Arsenal" --away "Chelsea"
   python scripts/predict_match.py --home "Manchester United" --away "Liverpool" --date "2024-01-15"
   python scripts/predict_match.py -h "Barcelona" -a "Real Madrid" -d "2024-12-25"
-        """
+        """,
     )
 
     parser.add_argument(
-        "--home", "-H",
-        type=str,
-        required=True,
-        help="主队名称 (例如: Arsenal)"
+        "--home", "-H", type=str, required=True, help="主队名称 (例如: Arsenal)"
     )
 
     parser.add_argument(
-        "--away", "-a",
-        type=str,
-        required=True,
-        help="客队名称 (例如: Chelsea)"
+        "--away", "-a", type=str, required=True, help="客队名称 (例如: Chelsea)"
     )
 
     parser.add_argument(
-        "--date", "-d",
-        type=str,
-        help="比赛日期 (格式: YYYY-MM-DD，默认为今天)"
+        "--date", "-d", type=str, help="比赛日期 (格式: YYYY-MM-DD，默认为今天)"
     )
 
-    parser.add_argument(
-        "--verbose", "-v",
-        action="store_true",
-        help="显示详细日志"
-    )
+    parser.add_argument("--verbose", "-v", action="store_true", help="显示详细日志")
 
     args = parser.parse_args()
 

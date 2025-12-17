@@ -19,7 +19,8 @@ import xgboost as xgb
 # 使用系统路径模块导入，避免配置依赖
 import sys
 import os
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
+
+sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
 
 # 暂时跳过复杂的导入问题，使用简单的Mock
 # TODO: 修复包结构后恢复完整测试
@@ -53,7 +54,7 @@ def sample_training_data():
 
     X = pd.DataFrame(
         np.random.randn(n_samples, n_features),
-        columns=[f"feature_{i}" for i in range(n_features)]
+        columns=[f"feature_{i}" for i in range(n_features)],
     )
 
     # 创建3分类目标变量 (0: 平局, 1: 主胜, 2: 客胜)
@@ -70,7 +71,7 @@ def sample_model_metrics():
         "log_loss": 0.8765,
         "macro_precision": 0.6234,
         "macro_recall": 0.6123,
-        "macro_f1": 0.6178
+        "macro_f1": 0.6178,
     }
 
 
@@ -89,7 +90,7 @@ class TestModelMetadata:
             training_time=120.5,
             model_path="/models/v2.1.20240101_120000.json",
             created_at=created_at,
-            description="Scheduled retraining"
+            description="Scheduled retraining",
         )
 
         assert metadata.version == "v2.1.20240101_120000"
@@ -114,7 +115,7 @@ class TestModelMetadata:
             training_time=120.5,
             model_path="/models/v2.1.20240101_120000.json",
             created_at=created_at,
-            description="Test model"
+            description="Test model",
         )
 
         result = metadata.to_dict()
@@ -140,7 +141,7 @@ class TestModelMetadata:
             "training_time": 120.5,
             "model_path": "/models/v2.1.20240101_120000.json",
             "created_at": "2024-01-01T12:00:00+00:00",
-            "description": "Test model"
+            "description": "Test model",
         }
 
         metadata = ModelMetadata.from_dict(data)
@@ -159,7 +160,7 @@ class TestModelMetadata:
             "feature_count": 15,
             "training_time": 120.5,
             "model_path": "/models/v2.1.20240101_120000.json",
-            "created_at": "2024-01-01T12:00:00+00:00"
+            "created_at": "2024-01-01T12:00:00+00:00",
             # 缺少description字段
         }
 
@@ -190,7 +191,7 @@ class TestModelRegistry:
         assert registry.current_best_file.exists()
 
         # 检查注册表内容
-        with open(registry.registry_file, 'r') as f:
+        with open(registry.registry_file, "r") as f:
             data = json.load(f)
 
         assert "models" in data
@@ -210,7 +211,7 @@ class TestModelRegistry:
             training_time=120.5,
             model_path="/models/test.json",
             created_at=datetime.now(timezone.utc),
-            description="First model"
+            description="First model",
         )
 
         result = registry.register_model(metadata)
@@ -221,7 +222,7 @@ class TestModelRegistry:
         assert current_best.version == "v2.1.20240101_120000"
 
         # 检查current_best文件
-        with open(registry.current_best_file, 'r') as f:
+        with open(registry.current_best_file, "r") as f:
             assert f.read() == "v2.1.20240101_120000"
 
     def test_register_better_model(self, registry):
@@ -236,7 +237,7 @@ class TestModelRegistry:
             training_time=120.5,
             model_path="/models/first.json",
             created_at=datetime.now(timezone.utc),
-            description="First model"
+            description="First model",
         )
         registry.register_model(first_metadata)
 
@@ -250,7 +251,7 @@ class TestModelRegistry:
             training_time=125.0,
             model_path="/models/better.json",
             created_at=datetime.now(timezone.utc),
-            description="Better model"
+            description="Better model",
         )
 
         result = registry.register_model(better_metadata)
@@ -271,7 +272,7 @@ class TestModelRegistry:
             training_time=120.5,
             model_path="/models/first.json",
             created_at=datetime.now(timezone.utc),
-            description="First model"
+            description="First model",
         )
         registry.register_model(first_metadata)
 
@@ -285,7 +286,7 @@ class TestModelRegistry:
             training_time=125.0,
             model_path="/models/worse.json",
             created_at=datetime.now(timezone.utc),
-            description="Worse model"
+            description="Worse model",
         )
 
         result = registry.register_model(worse_metadata)
@@ -306,7 +307,7 @@ class TestModelRegistry:
             training_time=120.5,
             model_path="/models/test.json",
             created_at=datetime.now(timezone.utc),
-            description="First model"
+            description="First model",
         )
 
         registry.register_model(metadata)
@@ -315,7 +316,7 @@ class TestModelRegistry:
         metadata.accuracy = 0.6700
         metadata.description = "Updated model"
 
-        with patch('src.services.mlops.retraining_service.logger') as mock_logger:
+        with patch("src.services.mlops.retraining_service.logger") as mock_logger:
             result = registry.register_model(metadata)
             mock_logger.warning.assert_called_once()
 
@@ -332,7 +333,7 @@ class TestModelRegistry:
             training_time=120.5,
             model_path="/models/test.json",
             created_at=datetime.now(timezone.utc),
-            description="Test model"
+            description="Test model",
         )
         registry.register_model(metadata)
 
@@ -360,7 +361,7 @@ class TestModelRegistry:
                 training_time=120.0 + i * 5,
                 model_path=f"/models/model_{i}.json",
                 created_at=datetime.now(timezone.utc),
-                description=f"Model {i}"
+                description=f"Model {i}",
             )
             registry.register_model(metadata)
 
@@ -381,11 +382,11 @@ class TestModelRegistry:
                 training_time=120.0,
                 model_path=f"/models/model_{i}.json",
                 created_at=datetime.now(timezone.utc),
-                description=f"Model {i}"
+                description=f"Model {i}",
             )
             registry.register_model(metadata)
 
-        with patch('src.services.mlops.retraining_service.logger') as mock_logger:
+        with patch("src.services.mlops.retraining_service.logger") as mock_logger:
             result = registry.switch_current_best("v2.1.20240101_000000")
             mock_logger.info.assert_called_once()
 
@@ -395,7 +396,7 @@ class TestModelRegistry:
 
     def test_switch_current_best_not_exists(self, registry):
         """测试切换到不存在的模型版本"""
-        with patch('src.services.mlops.retraining_service.logger') as mock_logger:
+        with patch("src.services.mlops.retraining_service.logger") as mock_logger:
             result = registry.switch_current_best("nonexistent")
             mock_logger.error.assert_called_once()
 
@@ -405,14 +406,14 @@ class TestModelRegistry:
         """测试加载损坏的注册表文件"""
         # 创建损坏的JSON文件
         registry_file = Path(temp_models_dir) / "registry.json"
-        with open(registry_file, 'w') as f:
+        with open(registry_file, "w") as f:
             f.write("invalid json content")
 
         # 初始化注册表应该修复文件
         registry = ModelRegistry(temp_models_dir)
 
         # 验证文件已修复
-        with open(registry_file, 'r') as f:
+        with open(registry_file, "r") as f:
             data = json.load(f)
             assert "models" in data
             assert "current_best" in data
@@ -425,7 +426,10 @@ class TestRetrainingService:
     def service(self, mock_settings, temp_models_dir):
         """创建RetrainingService实例"""
         mock_settings.model_path = temp_models_dir
-        with patch('src.services.mlops.retraining_service.get_settings', return_value=mock_settings):
+        with patch(
+            "src.services.mlops.retraining_service.get_settings",
+            return_value=mock_settings,
+        ):
             return RetrainingService()
 
     def test_service_initialization(self, service, mock_settings):
@@ -437,19 +441,27 @@ class TestRetrainingService:
         assert service.min_samples == 1000
         assert service.test_size == 0.2
 
-    def test_execute_pipeline_success(self, service, sample_training_data, sample_model_metrics):
+    def test_execute_pipeline_success(
+        self, service, sample_training_data, sample_model_metrics
+    ):
         """测试成功执行训练流水线"""
         X, y = sample_training_data
 
-        with patch.object(service, '_fetch_training_data', return_value=(X, y)), \
-             patch.object(service, '_preprocess_data', return_value=X), \
-             patch.object(service, '_train_model', return_value=(Mock(), X.shape[1])), \
-             patch.object(service, '_evaluate_model', return_value=sample_model_metrics), \
-             patch.object(service, '_register_model_if_improved', return_value={
-                 "status": "success",
-                 "version": "v2.1.20240101_120000",
-                 "should_deploy": True
-             }) as mock_register:
+        with (
+            patch.object(service, "_fetch_training_data", return_value=(X, y)),
+            patch.object(service, "_preprocess_data", return_value=X),
+            patch.object(service, "_train_model", return_value=(Mock(), X.shape[1])),
+            patch.object(service, "_evaluate_model", return_value=sample_model_metrics),
+            patch.object(
+                service,
+                "_register_model_if_improved",
+                return_value={
+                    "status": "success",
+                    "version": "v2.1.20240101_120000",
+                    "should_deploy": True,
+                },
+            ) as mock_register,
+        ):
 
             result = service.execute_pipeline("Test training")
 
@@ -463,7 +475,7 @@ class TestRetrainingService:
         X = pd.DataFrame(np.random.randn(100, 5))
         y = pd.Series(np.random.choice([0, 1, 2], size=100))
 
-        with patch.object(service, '_fetch_training_data', return_value=(X, y)):
+        with patch.object(service, "_fetch_training_data", return_value=(X, y)):
             result = service.execute_pipeline()
 
             assert result["status"] == "failed"
@@ -472,7 +484,9 @@ class TestRetrainingService:
 
     def test_execute_pipeline_exception(self, service):
         """测试流水线执行异常"""
-        with patch.object(service, '_fetch_training_data', side_effect=Exception("Database error")):
+        with patch.object(
+            service, "_fetch_training_data", side_effect=Exception("Database error")
+        ):
             result = service.execute_pipeline()
 
             assert result["status"] == "failed"
@@ -485,45 +499,52 @@ class TestRetrainingService:
 
         # 创建包含target列的DataFrame
         df = X.copy()
-        df['target'] = y
+        df["target"] = y
 
-        with patch.object(service.data_loader, 'load_recent_matches', return_value=df):
+        with patch.object(service.data_loader, "load_recent_matches", return_value=df):
             result_X, result_y = service._fetch_training_data()
 
             assert len(result_X) == len(X)
             assert len(result_y) == len(y)
-            assert 'target' not in result_X.columns
+            assert "target" not in result_X.columns
 
     def test_fetch_training_data_empty(self, service):
         """测试获取空训练数据"""
-        with patch.object(service.data_loader, 'load_recent_matches', return_value=pd.DataFrame()):
+        with patch.object(
+            service.data_loader, "load_recent_matches", return_value=pd.DataFrame()
+        ):
             with pytest.raises(ValueError, match="无法获取训练数据"):
                 service._fetch_training_data()
 
     def test_preprocess_data_removes_missing_columns(self, service):
         """测试数据预处理移除缺失值过多的列"""
         # 创建测试数据，其中一列缺失值过多
-        X = pd.DataFrame({
-            'feature_1': [1, 2, 3, 4, 5],
-            'feature_2': [1, np.nan, np.nan, np.nan, np.nan],  # 80%缺失
-            'feature_3': [1, 2, np.nan, 4, 5]
-        })
+        X = pd.DataFrame(
+            {
+                "feature_1": [1, 2, 3, 4, 5],
+                "feature_2": [1, np.nan, np.nan, np.nan, np.nan],  # 80%缺失
+                "feature_3": [1, 2, np.nan, 4, 5],
+            }
+        )
 
-        with patch.object(service.feature_transformer, 'transform', return_value=X) as mock_transform:
+        with patch.object(
+            service.feature_transformer, "transform", return_value=X
+        ) as mock_transform:
             result = service._preprocess_data(X)
 
             # feature_2应该被移除
-            assert 'feature_2' not in result.columns
+            assert "feature_2" not in result.columns
             mock_transform.assert_called_once()
 
     def test_preprocess_data_fills_missing_values(self, service):
         """测试数据预处理填充缺失值"""
-        X = pd.DataFrame({
-            'feature_1': [1, 2, np.nan, 4, 5],
-            'feature_2': [np.nan, 2, 3, 4, np.nan]
-        })
+        X = pd.DataFrame(
+            {"feature_1": [1, 2, np.nan, 4, 5], "feature_2": [np.nan, 2, 3, 4, np.nan]}
+        )
 
-        with patch.object(service.feature_transformer, 'transform', return_value=X) as mock_transform:
+        with patch.object(
+            service.feature_transformer, "transform", return_value=X
+        ) as mock_transform:
             result = service._preprocess_data(X)
 
             # 检查缺失值是否被填充
@@ -552,8 +573,8 @@ class TestRetrainingService:
             n_estimators=10,
             max_depth=3,
             random_state=42,
-            eval_metric='logloss',
-            use_label_encoder=False
+            eval_metric="logloss",
+            use_label_encoder=False,
         )
         model.fit(X[:800], y[:800])  # 使用部分数据训练
 
@@ -568,16 +589,29 @@ class TestRetrainingService:
         assert 0 <= metrics["accuracy"] <= 1
         assert metrics["log_loss"] >= 0
 
-    def test_register_model_if_improved_first_model(self, service, sample_model_metrics):
+    def test_register_model_if_improved_first_model(
+        self, service, sample_model_metrics
+    ):
         """测试注册第一个模型"""
         model = Mock()
         model.save_model = Mock()
 
-        with patch.object(service, '_fetch_training_data', return_value=(pd.DataFrame(np.random.randn(100, 5)), pd.Series(np.random.choice([0, 1, 2], 100)))), \
-             patch('src.services.mlops.retraining_service.datetime') as mock_datetime:
+        with (
+            patch.object(
+                service,
+                "_fetch_training_data",
+                return_value=(
+                    pd.DataFrame(np.random.randn(100, 5)),
+                    pd.Series(np.random.choice([0, 1, 2], 100)),
+                ),
+            ),
+            patch("src.services.mlops.retraining_service.datetime") as mock_datetime,
+        ):
 
             mock_datetime.now.return_value.strftime.return_value = "20240101_120000"
-            mock_datetime.now.return_value = datetime(2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
+            mock_datetime.now.return_value = datetime(
+                2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc
+            )
 
             result = service._register_model_if_improved(
                 model, sample_model_metrics, 15, 0.0, "First model"
@@ -588,7 +622,9 @@ class TestRetrainingService:
             assert result["improvement"] == 0.0
             model.save_model.assert_called_once()
 
-    def test_register_model_if_improved_better_model(self, service, sample_model_metrics):
+    def test_register_model_if_improved_better_model(
+        self, service, sample_model_metrics
+    ):
         """测试注册性能更好的模型"""
         model = Mock()
         model.save_model = Mock()
@@ -603,15 +639,28 @@ class TestRetrainingService:
             training_time=120.0,
             model_path="/models/current.json",
             created_at=datetime.now(timezone.utc),
-            description="Current model"
+            description="Current model",
         )
 
-        with patch.object(service.registry, 'get_current_best', return_value=current_metadata), \
-             patch.object(service, '_fetch_training_data', return_value=(pd.DataFrame(np.random.randn(100, 5)), pd.Series(np.random.choice([0, 1, 2], 100)))), \
-             patch('src.services.mlops.retraining_service.datetime') as mock_datetime:
+        with (
+            patch.object(
+                service.registry, "get_current_best", return_value=current_metadata
+            ),
+            patch.object(
+                service,
+                "_fetch_training_data",
+                return_value=(
+                    pd.DataFrame(np.random.randn(100, 5)),
+                    pd.Series(np.random.choice([0, 1, 2], 100)),
+                ),
+            ),
+            patch("src.services.mlops.retraining_service.datetime") as mock_datetime,
+        ):
 
             mock_datetime.now.return_value.strftime.return_value = "20240101_120000"
-            mock_datetime.now.return_value = datetime(2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
+            mock_datetime.now.return_value = datetime(
+                2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc
+            )
 
             result = service._register_model_if_improved(
                 model, sample_model_metrics, 15, 0.0, "Better model"
@@ -623,7 +672,9 @@ class TestRetrainingService:
             assert result["improvement"] == improvement
             assert improvement > service.improvement_threshold
 
-    def test_register_model_if_improved_insufficient_improvement(self, service, sample_model_metrics):
+    def test_register_model_if_improved_insufficient_improvement(
+        self, service, sample_model_metrics
+    ):
         """测试注册性能提升不足的模型"""
         model = Mock()
         model.save_model = Mock()
@@ -638,15 +689,28 @@ class TestRetrainingService:
             training_time=120.0,
             model_path="/models/current.json",
             created_at=datetime.now(timezone.utc),
-            description="Current model"
+            description="Current model",
         )
 
-        with patch.object(service.registry, 'get_current_best', return_value=current_metadata), \
-             patch.object(service, '_fetch_training_data', return_value=(pd.DataFrame(np.random.randn(100, 5)), pd.Series(np.random.choice([0, 1, 2], 100)))), \
-             patch('src.services.mlops.retraining_service.datetime') as mock_datetime:
+        with (
+            patch.object(
+                service.registry, "get_current_best", return_value=current_metadata
+            ),
+            patch.object(
+                service,
+                "_fetch_training_data",
+                return_value=(
+                    pd.DataFrame(np.random.randn(100, 5)),
+                    pd.Series(np.random.choice([0, 1, 2], 100)),
+                ),
+            ),
+            patch("src.services.mlops.retraining_service.datetime") as mock_datetime,
+        ):
 
             mock_datetime.now.return_value.strftime.return_value = "20240101_120000"
-            mock_datetime.now.return_value = datetime(2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
+            mock_datetime.now.return_value = datetime(
+                2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc
+            )
 
             result = service._register_model_if_improved(
                 model, sample_model_metrics, 15, 0.0, "Slightly better model"
@@ -659,7 +723,9 @@ class TestRetrainingService:
 
     def test_rollback_model_success(self, service):
         """测试成功回滚模型"""
-        with patch.object(service.registry, 'switch_current_best', return_value=True) as mock_switch:
+        with patch.object(
+            service.registry, "switch_current_best", return_value=True
+        ) as mock_switch:
             result = service.rollback_model("v2.1.20240101_110000")
 
             assert result["status"] == "success"
@@ -668,7 +734,9 @@ class TestRetrainingService:
 
     def test_rollback_model_failure(self, service):
         """测试回滚模型失败"""
-        with patch.object(service.registry, 'switch_current_best', return_value=False) as mock_switch:
+        with patch.object(
+            service.registry, "switch_current_best", return_value=False
+        ) as mock_switch:
             result = service.rollback_model("nonexistent")
 
             assert result["status"] == "failed"
@@ -688,13 +756,15 @@ class TestRetrainingService:
                 training_time=120.0,
                 model_path=f"/models/model_{i}.json",
                 created_at=datetime(2024, 1, i, 12, 0, 0, tzinfo=timezone.utc),
-                description=f"Model {i}"
+                description=f"Model {i}",
             )
             for i in range(1, 4)  # 创建3个模型
         ]
 
-        with patch.object(service.registry, 'list_models', return_value=models), \
-             patch.object(service.registry, 'get_current_best', return_value=models[0]):
+        with (
+            patch.object(service.registry, "list_models", return_value=models),
+            patch.object(service.registry, "get_current_best", return_value=models[0]),
+        ):
 
             status = service.get_training_status()
 
@@ -705,8 +775,10 @@ class TestRetrainingService:
 
     def test_get_training_status_no_models(self, service):
         """测试获取训练状态（无模型的情况）"""
-        with patch.object(service.registry, 'list_models', return_value=[]), \
-             patch.object(service.registry, 'get_current_best', return_value=None):
+        with (
+            patch.object(service.registry, "list_models", return_value=[]),
+            patch.object(service.registry, "get_current_best", return_value=None),
+        ):
 
             status = service.get_training_status()
 
@@ -723,7 +795,10 @@ class TestRetrainingServiceIntegration:
         mock_settings = Mock()
         mock_settings.model_path = temp_models_dir
 
-        with patch('src.services.mlops.retraining_service.get_settings', return_value=mock_settings):
+        with patch(
+            "src.services.mlops.retraining_service.get_settings",
+            return_value=mock_settings,
+        ):
             service = RetrainingService()
 
         # 创建真实的训练数据
@@ -733,16 +808,18 @@ class TestRetrainingServiceIntegration:
 
         X = pd.DataFrame(
             np.random.randn(n_samples, n_features),
-            columns=[f"feature_{i}" for i in range(n_features)]
+            columns=[f"feature_{i}" for i in range(n_features)],
         )
         y = pd.Series(np.random.choice([0, 1, 2], size=n_samples, p=[0.25, 0.45, 0.30]))
 
         # 创建包含target的DataFrame
         df = X.copy()
-        df['target'] = y
+        df["target"] = y
 
-        with patch.object(service.data_loader, 'load_recent_matches', return_value=df), \
-             patch.object(service.feature_transformer, 'transform', return_value=X):
+        with (
+            patch.object(service.data_loader, "load_recent_matches", return_value=df),
+            patch.object(service.feature_transformer, "transform", return_value=X),
+        ):
 
             result = service.execute_pipeline("Integration test")
 
