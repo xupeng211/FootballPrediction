@@ -37,16 +37,18 @@ except ImportError as e:
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
-config = context.config
+# 注意：config只在alembic运行时可用，不要在import时直接使用
+config = None
 
-# Interpret the config file for Python logging.
-# This line sets up loggers basically.
-try:
-    if config.config_file_name is not None:
-        fileConfig(config.config_file_name)
-except Exception as e:
-    print(f"⚠️ Alembic: 日志配置失败，使用默认日志: {e}")
-    # 忽略日志配置错误，继续执行
+def setup_logging():
+    """设置日志配置"""
+    try:
+        from alembic import context
+        if hasattr(context, 'config') and context.config.config_file_name is not None:
+            fileConfig(context.config.config_file_name)
+    except Exception as e:
+        print(f"⚠️ Alembic: 日志配置失败，使用默认日志: {e}")
+        # 忽略日志配置错误，继续执行
 
 def get_database_url():
     """获取数据库URL，优先使用环境变量"""
@@ -82,6 +84,7 @@ def run_migrations_offline() -> None:
     Calls to context.execute() here emit the given string to the
     script output.
     """
+    setup_logging()  # 设置日志
     url = get_database_url()
     context.configure(
         url=url,
@@ -99,6 +102,7 @@ def run_migrations_offline() -> None:
 
 def do_run_migrations(connection):
     """运行迁移的辅助函数"""
+    setup_logging()  # 设置日志
     context.configure(
         connection=connection,
         target_metadata=target_metadata,
@@ -158,8 +162,4 @@ def run_migrations_online() -> None:
         do_run_migrations(connection)
 
 
-# 运行迁移的入口点
-if context.is_offline_mode():
-    run_migrations_offline()
-else:
-    run_migrations_online()
+# 运行迁移的入口点 - Alembic会自动调用适当的函数
