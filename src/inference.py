@@ -1,13 +1,17 @@
 """
-推理模块 - Inference Module
+推理模块 - Inference Module (已弃用)
 
-提供真实的足球比赛预测功能，基于训练好的XGBoost模型。
-支持模型加载、预测执行、结果缓存和热重载功能。
+⚠️  **DEPRECATED** - 此文件已被重构，请使用新的模块结构：
+   - `src/ml/inference/predictor.py` - 核心预测逻辑
+   - `src/ml/inference/model_loader.py` - 模型加载管理
+   - `src/ml/inference/cache_manager.py` - 缓存管理
+   - `src/ml/inference/__init__.py` - 兼容性接口
+
+为了保持向后兼容，此文件重定向到新的重构模块。
+新代码请直接导入 `from src.ml.inference import *`
 """
 
-import logging
-import pickle
-import joblib
+import warnings
 from pathlib import Path
 from typing import Dict, Any, Optional, Union, List
 import numpy as np
@@ -15,7 +19,14 @@ import pandas as pd
 from datetime import datetime
 import hashlib
 
-logger = logging.getLogger(__name__)
+warnings.warn(
+    "src.inference.py is deprecated. Use 'from src.ml.inference import *' instead.",
+    DeprecationWarning,
+    stacklevel=2
+)
+
+# 重定向到新的重构模块
+from src.ml.inference import *
 
 
 class ModelLoadError(Exception):
