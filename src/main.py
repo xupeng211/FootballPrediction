@@ -14,7 +14,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response
 from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST
-from prometheus_fastapi_instrumentator import Instrumentator
+# from prometheus_fastapi_instrumentator import Instrumentator
 
 from src.api.health import router as health_router
 from src.api.monitoring import router as monitoring_router
@@ -66,9 +66,9 @@ cache_operations_total = Counter(
 )
 
 # Initialize FastAPI Instrumentator
-instrumentator = Instrumentator(
-    excluded_handlers=["/metrics"],
-)
+# instrumentator = Instrumentator(
+#     excluded_handlers=["/metrics"],
+# )
 
 
 def get_version() -> str:
@@ -153,7 +153,7 @@ except Exception as e:
 # 初始化 Prometheus metrics (在应用创建后，启动前)
 if os.getenv("ENABLE_METRICS", "true").lower() == "true":
     logger.info("📈 初始化 Prometheus metrics...")
-    instrumentator.instrument(app).expose(app)
+    # instrumentator.instrument(app).expose(app)
     logger.info("✅ Prometheus metrics 已启用")
 
 

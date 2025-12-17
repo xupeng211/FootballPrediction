@@ -24,7 +24,7 @@ from pathlib import Path
 
 import aiohttp
 import asyncpg
-from tenacity import retry, stop_after_attempt, wait_exponential
+# from tenacity import retry, stop_after_attempt, wait_exponential
 
 from .__init__ import BaseService
 from src.config import get_settings
