@@ -147,6 +147,29 @@ class FotMobSettings(BaseSettings):
         description="最大并发请求数"
     )
 
+    # Circuit Breaker配置
+    circuit_breaker_failure_threshold: int = Field(
+        default=5,
+        env="FOTMOB_CIRCUIT_BREAKER_FAILURE_THRESHOLD",
+        ge=1,
+        le=20,
+        description="熔断器失败阈值"
+    )
+    circuit_breaker_recovery_timeout: int = Field(
+        default=300,  # 5分钟
+        env="FOTMOB_CIRCUIT_BREAKER_RECOVERY_TIMEOUT",
+        ge=60,
+        le=1800,
+        description="熔断器恢复超时(秒)"
+    )
+    circuit_breaker_half_open_max_calls: int = Field(
+        default=3,
+        env="FOTMOB_CIRCUIT_BREAKER_HALF_OPEN_MAX_CALLS",
+        ge=1,
+        le=10,
+        description="熔断器半开状态最大调用数"
+    )
+
     @field_validator('x_mas_header', 'x_foo_header')
     @classmethod
     def validate_auth_headers(cls, v, info):

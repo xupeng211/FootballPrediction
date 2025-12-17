@@ -13,7 +13,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class EnhancedFotMobCollector:
+class FotMobCollector:
     """FotMob API 采集器 - 正确鉴权版本."""
 
     def __init__(
