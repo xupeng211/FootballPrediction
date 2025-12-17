@@ -15,7 +15,7 @@ from src.ml.inference.predictor import MatchPredictor, PredictionError
 class TestModelLoaderSimple(unittest.TestCase):
     """简化的 ModelLoader 测试"""
 
-    @patch("ml.inference.model_loader.Path")
+    @patch("src.ml.inference.model_loader.Path")
     def test_model_loader_init(self, mock_path):
         """测试 ModelLoader 初始化"""
         mock_cache_dir = Mock()
@@ -27,7 +27,7 @@ class TestModelLoaderSimple(unittest.TestCase):
         self.assertIsNotNone(loader)
         mock_cache_dir.mkdir.assert_called_once_with(parents=True, exist_ok=True)
 
-    @patch("ml.inference.model_loader.Path")
+    @patch("src.ml.inference.model_loader.Path")
     def test_load_model_file_not_found(self, mock_path):
         """测试加载不存在的模型文件"""
         mock_cache_dir = Mock()
