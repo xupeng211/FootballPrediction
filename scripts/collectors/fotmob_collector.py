@@ -997,6 +997,6 @@ class FotMobCollector:
 
 
 # 便捷函数
-async def create_fotmob_collector(**kwargs) -> EnhancedFotMobCollector:
+async def create_fotmob_collector(**kwargs) -> FotMobCollector:
     """创建FotMob采集器."""
-    return EnhancedFotMobCollector(**kwargs)
+    return FotMobCollector(**kwargs)
