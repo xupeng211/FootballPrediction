@@ -13,62 +13,16 @@ from pathlib import Path
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response
-from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST
-# from prometheus_fastapi_instrumentator import Instrumentator
+from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
 
 from src.api.health import router as health_router
 from src.api.monitoring import router as monitoring_router
 from src.api.model_management import router as model_management_router
 from src.api.schemas import RootResponse
 from src.database.connection import initialize_database
+from src.core.metrics import get_metrics
 
-# ================================
-# Prometheus Metrics Configuration (Temporarily Disabled)
-# ================================
-
-# Business Metrics
-prediction_requests_total = Counter(
-    'prediction_requests_total',
-    'Total number of prediction requests',
-    ['model_name', 'prediction_type']
-)
-
-model_inference_latency = Histogram(
-    'model_inference_latency_seconds',
-    'Time spent on model inference',
-    ['model_name'],
-    buckets=[0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0]
-)
-
-prediction_accuracy_total = Counter(
-    'prediction_accuracy_total',
-    'Prediction accuracy counter',
-    ['model_name', 'result_type']  # result_type: correct, incorrect
-)
-
-data_collection_requests_total = Counter(
-    'data_collection_requests_total',
-    'Total number of data collection requests',
-    ['data_source', 'status']
-)
-
-feature_computation_latency = Histogram(
-    'feature_computation_latency_seconds',
-    'Time spent on feature computation',
-    ['feature_type'],
-    buckets=[0.01, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0]
-)
-
-cache_operations_total = Counter(
-    'cache_operations_total',
-    'Total number of cache operations',
-    ['cache_type', 'operation']  # operation: hit, miss, set, delete
-)
-
-# Initialize FastAPI Instrumentator
-# instrumentator = Instrumentator(
-#     excluded_handlers=["/metrics"],
-# )
+# Prometheus指标通过独立模块管理，避免重复注册
 
 
 def get_version() -> str:
@@ -203,7 +157,7 @@ async def metrics():
     只有在 ENABLE_METRICS=true 时才会暴露指标。
     """
     if os.getenv("ENABLE_METRICS", "true").lower() == "true":
-        return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
+        return Response(get_metrics(), media_type=CONTENT_TYPE_LATEST)
     else:
         raise HTTPException(status_code=404, detail="Metrics endpoint is disabled")
 

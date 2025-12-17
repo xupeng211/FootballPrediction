@@ -6,7 +6,7 @@ services:
     build:
       context: .
       target: runtime
-    image: football-prediction:v1.0
+    image: football-prediction:v2.0-stable
     container_name: football-prediction-app
     ports:
       - "8000:8000"
@@ -17,8 +17,9 @@ services:
       - ENVIRONMENT=production
       - DB_HOST=db
       - REDIS_HOST=redis
-      - HTTP_PROXY=http://172.25.16.1:7890
-      - HTTPS_PROXY=http://172.25.16.1:7890
+      # 移除代理以避免构建时网络超时
+      # - HTTP_PROXY=http://172.25.16.1:7890
+      # - HTTPS_PROXY=http://172.25.16.1:7890
       - NO_PROXY=localhost,127.0.0.1,db,redis,frontend
     depends_on:
       db:

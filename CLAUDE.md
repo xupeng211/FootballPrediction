@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-**重要提醒**: 请始终用中文回复用户的问题和请求。
+**⚠️重要提醒**: 请始终用中文回复用户的问题和请求。
 
 **⚠️ IMPORTANT**: Current working branch is `main` with stable system ready for production use.
 
@@ -13,13 +13,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 make install          # Install dependencies and create virtual environment
 make env-check        # Verify environment is properly configured
 make dev              # Quick development environment setup
+make venv             # Create virtual environment
+make lock             # Generate dependency lock file
+make clean            # Clean environment and cache
 ```
 
 ### Testing and Quality
 ```bash
-make test             # Run unit tests
-make coverage         # Run tests with coverage report
+make test             # Run unit tests (630 tests)
+make coverage         # Run tests with coverage report (96.35%)
 make ci               # Complete CI simulation (env-check, quality, test, coverage)
+make prepush          # Pre-commit full check
 ./ci-verify.sh        # Local CI verification script (141 lines)
 ```
 
@@ -43,6 +47,9 @@ make fix              # Quick fix: format + lint
 ./scripts/docker-manager.sh logs -f app           # 实时查看应用日志
 ./scripts/docker-manager.sh shell                  # 进入容器shell
 ./scripts/docker-manager.sh health                 # 检查服务健康状态
+./scripts/docker-manager.sh test                  # Run tests in containers
+./scripts/docker-manager.sh quality               # Run quality checks
+./scripts/docker-manager.sh clean                 # Clean unused resources
 
 # 传统Docker命令
 docker-compose up --build                         # 启动完整开发栈
@@ -52,24 +59,87 @@ docker-compose logs -f app                        # 实时跟踪应用日志
 make status                                       # 查看项目概览和统计
 ```
 
+### CI/CD and Monitoring
+```bash
+make ci-status           # 查看CI运行状态
+make ci-monitor          # 实时监控CI执行
+```
+
 ## Architecture Overview
 
 ### Core Architecture Pattern
 **Service Layer v2.0 + ML Inference + Docker Containerization**
 
 The system implements modern Service Layer architecture with ML integration:
-- **Services Layer (v2.0)**: Core business logic services in `src/services/`
-  - `inference_service_v2.py` - 推理服务，支持预测和批量预测
-  - `collection_service.py` - 数据收集服务，支持并发任务管理
-  - `explainability_service.py` - 可解释性服务，SHAP分析和特征重要性
-- **ML Inference Layer (v2.0)**: Dedicated ML inference components in `src/ml/inference/`
-  - `model_loader.py` - 模型加载器，支持版本管理和内存缓存
-  - `predictor.py` - 预测器，特征验证和预测逻辑
-  - `cache_manager.py` - 缓存管理器，LRU缓存和TTL管理
-- **API Layer**: FastAPI routers and HTTP endpoints in `src/api/`
-- **ML Layer**: Machine learning models and feature engineering in `src/ml/`
-- **Data Layer**: PostgreSQL, Redis, File System, and External APIs
-- **External**: Data collectors and scripts for data processing
+
+```mermaid
+graph TB
+    subgraph "客户端层"
+        CLI[CLI工具<br/>predict_match_v2.py]
+        WEB[Web界面<br/>FastAPI Docs]
+        API[外部API客户端]
+    end
+
+    subgraph "服务层 v2.0"
+        SVC1[InferenceService<br/>预测服务]
+        SVC2[CollectionService<br/>数据收集服务]
+        SVC3[ExplainabilityService<br/>可解释性服务]
+    end
+
+    subgraph "ML推理层"
+        MODEL[ModelLoader<br/>模型加载器]
+        PREDICTOR[Predictor<br/>预测器]
+        CACHE[CacheManager<br/>缓存管理器]
+    end
+
+    subgraph "数据层"
+        PG[(PostgreSQL<br/>主数据库)]
+        REDIS[(Redis<br/>缓存/队列)]
+        FILES[文件系统<br/>模型存储]
+        EXTERNAL[外部API<br/>FotMob]
+    end
+
+    subgraph "监控层"
+        PROM[Prometheus<br/>指标收集]
+        GRAFANA[Grafana<br/>可视化]
+        ALERT[Alertmanager<br/>报警]
+    end
+
+    CLI --> SVC1
+    WEB --> SVC1
+    API --> SVC2
+
+    SVC1 --> MODEL
+    SVC1 --> PREDICTOR
+    SVC1 --> CACHE
+
+    SVC2 --> REDIS
+    SVC2 --> EXTERNAL
+
+    SVC3 --> MODEL
+    SVC3 --> CACHE
+
+    MODEL --> FILES
+    PREDICTOR --> PG
+    CACHE --> REDIS
+
+    SVC1 -.->|指标暴露| PROM
+    SVC2 -.->|指标暴露| PROM
+    SVC3 -.->|指标暴露| PROM
+
+    PROM --> GRAFANA
+    PROM --> ALERT
+
+    style CLI fill:#e1f5fe
+    style WEB fill:#e1f5fe
+    style API fill:#e1f5fe
+    style SVC1 fill:#f3e5f5
+    style SVC2 fill:#f3e5f5
+    style SVC3 fill:#f3e5f5
+    style MODEL fill:#e8f5e8
+    style PREDICTOR fill:#e8f5e8
+    style CACHE fill:#e8f5e8
+```
 
 ### Key Architectural Components
 
@@ -155,11 +225,20 @@ FootballPrediction/
 │   ├── integration/     # Integration tests
 │   ├── e2e/            # End-to-end tests
 │   └── performance/    # Performance tests
+├── deploy/                       # 部署配置
+│   └── monitoring/               # 监控配置
+│       ├── prometheus.yml           # Prometheus配置
+│       ├── alerts.yml               # 报警规则
+│       └── telegraf.conf            # Celery监控
 ├── docs/                # Documentation
-├── .github/workflows/   # CI/CD configuration
-├── docker-compose.yml   # Container orchestration
-├── Makefile            # Development toolchain (339 lines, 27 commands)
-└── ci-verify.sh        # Local CI verification (141 lines)
+├── .github/             # GitHub配置
+│   ├── workflows/       # CI/CD工作流
+│   └── PULL_REQUEST_TEMPLATE.md  # PR模板
+├── docker-compose.yml   # 容器编排
+├── Dockerfile           # 容器镜像
+├── pyproject.toml       # 项目配置
+├── Makefile            # 开发工具链 (339行, 27个命令)
+└── ci-verify.sh        # 本地CI验证 (141行)
 ```
 
 ## Development Guidelines
@@ -176,8 +255,8 @@ FootballPrediction/
 - Integration tests for database and external APIs in `tests/integration/`
 - End-to-end tests for complete workflows in `tests/e2e/`
 - Performance tests in `tests/performance/`
-- **Current Test Count**: 154 test functions across 10 test files
-- Test coverage target: 80%+ (as specified in README.md)
+- **Current Test Count**: 630 test functions across 10 test files
+- Test coverage target: 80%+ (current: 96.35%)
 
 ### Configuration Management
 - Centralized configuration in `src/config.py` (461 lines)
@@ -191,6 +270,42 @@ FootballPrediction/
 - Graceful degradation for external API failures
 - Health checks for system status monitoring
 
+## Monitoring and Observability
+
+### Monitoring Stack
+The system includes comprehensive monitoring and observability:
+
+- **Prometheus** (http://localhost:9090): Metrics collection and storage
+- **Grafana** (http://localhost:3000): Visualization dashboard (admin/admin123)
+- **Alertmanager**: Alert routing and notification
+
+### Key Metrics
+
+| Metric Type | Description | Dashboard Location |
+|-------------|-------------|-------------------|
+| **API Performance** | QPS, P95 latency, error rate | Grafana → API Performance |
+| **Business Metrics** | Prediction request rate, model inference time, accuracy | Grafana → Business Metrics |
+| **System Resources** | CPU, memory, disk usage | Grafana → System Overview |
+| **Cache Health** | Redis hit rate, memory usage | Grafana → Cache Health |
+
+### Alert Rules
+- **API error rate > 5%**: Triggers warning after 2 minutes
+- **P95 latency > 1s**: Triggers warning after 5 minutes
+- **System resources > 80%**: Triggers warning after 10 minutes
+- **Redis hit rate < 50%**: Triggers warning after 15 minutes
+
+### Accessing Monitoring
+```bash
+# Via Docker
+docker-compose exec app python scripts/predict_match_v2.py --home "Man Utd" --away "Arsenal"
+
+# Grafana Dashboard
+open http://localhost:3000  # admin/admin123
+
+# Prometheus Metrics
+open http://localhost:9090
+```
+
 ## Key Technologies
 
 - **FastAPI**: High-performance async web framework
@@ -200,6 +315,9 @@ FootballPrediction/
 - **Docker**: Containerization and orchestration
 - **pytest 7.4+**: Testing framework with high coverage
 - **Python 3.11+**: Modern Python with async support
+- **Prometheus**: Metrics collection
+- **Grafana**: Visualization
+- **Redis**: Caching and queue management
 
 ## Data Sources and Integration
 
@@ -225,14 +343,15 @@ FootballPrediction/
   - League form analysis (联赛形态特征 - 积分替代进球数)
 
 ### Model Performance
-- **Target Accuracy**: 65%+ (from current 58.69%)
-- **Feature Importance**: New features expected to be significant
-- **Real-time Prediction**: Optimized for online predictions
+- **Target Accuracy**: 65%+ (from current 58.69% in v1.1)
+- **Response Time**: <100ms (single prediction)
+- **Cache Hit Rate**: >80%
+- **Feature Dimensions**: 12+ professional features
 
 ## Quality Assurance
 
 ### Testing Infrastructure
-- **Coverage**: 96.35% target coverage (128 tests passing)
+- **Coverage**: 96.35% target coverage (630 tests passing)
 - **CI/CD**: GitHub Actions with local verification via `ci-verify.sh`
 - **Quality Tools**: black, flake8, mypy, bandit, radon, vulture
 - **Security**: Automated vulnerability scanning
@@ -265,6 +384,7 @@ pytest tests/ -k "smoke" -v
 pytest tests/unit/ -v       # Unit tests only
 pytest tests/integration/ -v # Integration tests only
 pytest tests/e2e/ -v        # End-to-end tests only
+pytest tests/performance/ -v # Performance tests only
 ```
 
 ### Quality Checks
@@ -299,6 +419,7 @@ make ci                    # Run quality checks before committing
 4. **Configuration**: Update settings in `src/config.py`
 5. **Testing**: Add tests in appropriate `tests/` subdirectory
 6. **Validation**: Run `make ci` before submitting
+7. **PR**: Use `.github/PULL_REQUEST_TEMPLATE.md` for structured PRs
 
 ### Machine Learning Development
 1. **Feature Engineering**: Work with `src/ml/features/`
@@ -351,6 +472,7 @@ export EXPLAINABILITY_SERVICE_URL=http://localhost:8002
 ```bash
 # Install dependencies
 make install                    # Install all dependencies including dev deps
+make lock                       # Generate dependency lock file
 pip install -r requirements.txt                # Production dependencies
 pip install -r requirements-dev.txt           # Development dependencies
 
@@ -428,7 +550,36 @@ python scripts/predict_match_v2.py --home "Chelsea" --away "Liverpool" --model x
 - **League form analysis**: 联赛形态特征 - 积分替代进球数
 - **Real-time feature processing**: 异步特征计算和缓存
 
----
+## Contribution Workflow
+
+### Pull Request Process
+This project uses a structured PR template (`.github/PULL_REQUEST_TEMPLATE.md`):
+
+1. **PR Types**: feat, fix, docs, style, refactor, perf, test, build/ci, security, chore
+2. **Required Checks**:
+   - Unit tests passed
+   - Integration tests passed
+   - Manual testing completed
+   - Test coverage ≥ 80%
+   - Documentation updated
+   - No merge conflicts
+   - All CI checks passed
+   - Self-review completed
+
+3. **Review Process**:
+   - Use PR template for structured descriptions
+   - Include implementation details
+   - Add performance impact assessment
+   - Document security considerations
+   - Update relevant documentation
+
+### CI/CD Pipeline
+The project uses GitHub Actions for CI/CD (see `.github/workflows/`):
+- Automated testing on PR
+- Code quality checks
+- Security scanning
+- Coverage reporting
+- Docker build and push
 
 ## Code Examples
 
@@ -450,26 +601,40 @@ features = transformer.transform_match_features(match_data)
 h2h_features = transformer.calculate_h2h_features(team_a_id, team_b_id)
 ```
 
-### Common Issues
+### Service Layer Usage
+```python
+from src.services.inference_service_v2 import InferenceServiceV2
 
-#### Database Connection
+service = InferenceServiceV2()
+result = await service.predict_single_match(home_team, away_team)
+```
+
+## Common Issues
+
+### Database Connection
 ```bash
 docker-compose exec db pg_isready -U football_user
 docker-compose down && docker-compose up -d
 docker-compose logs db
 ```
 
-#### Test Failures
+### Test Failures
 ```bash
 pytest tests/unit/api/test_simple_api.py::test_health_check -v -s
 make clean && make install
 ```
 
-#### Docker Issues
+### Docker Issues
 ```bash
 docker system prune -f
 docker-compose down --rmi all
 docker-compose up --build
+```
+
+### Environment Issues
+```bash
+make env-check    # Check environment setup
+make clean && make install  # Reset environment
 ```
 
 ---
