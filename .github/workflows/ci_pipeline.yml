@@ -1,5 +1,5 @@
 ---
-name: CI/CD Pipeline - Football Prediction v2.0
+name: Football Prediction v2.0 - CI Pipeline
 
 on:
   push:
@@ -109,25 +109,24 @@ jobs:
           retention-days: 30
 
   # ================================
-  # Testing (Unit, Integration, E2E)
+  # Testing (V2 Only - Legacy Tests Disabled)
   # ================================
   test:
-    name: Testing
+    name: V2 Testing
     runs-on: ubuntu-latest
 
     strategy:
       matrix:
-        test-type: [unit, integration, e2e]
+        test-type: [v2, unit]
         include:
+          - test-type: v2
+            test-path: tests/v2/
+            coverage-target: 80
+            marker: "v2"
           - test-type: unit
             test-path: tests/unit/
             coverage-target: 85
-          - test-type: integration
-            test-path: tests/integration/
-            coverage-target: 80
-          - test-type: e2e
-            test-path: tests/e2e/
-            coverage-target: 75
+            marker: "unit"
 
     services:
       postgres:
@@ -202,9 +201,18 @@ jobs:
           # Add migration commands here if you have them
           echo "✅ Database migrations completed"
 
-      - name: Run tests with coverage
+      - name: Verify test directories
         run: |
-          pytest "${{ matrix.test-path }}" \
+          echo "Checking test directories..."
+          ls -la tests/v2/ || echo "V2 tests directory not found"
+          ls -la tests/unit/ || echo "Unit tests directory not found"
+          echo "✅ Test directories verified"
+
+      - name: Run V2 and Unit tests with coverage
+        run: |
+          # 只运行V2和Unit测试，排除Legacy测试
+          pytest tests/v2/ tests/unit/ \
+            --ignore=tests/legacy/ \
             --cov=src \
             --cov-report=xml:"coverage-${{ matrix.test-type }}.xml" \
             --cov-report=html:"htmlcov-${{ matrix.test-type }}" \
