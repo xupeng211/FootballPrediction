@@ -17,6 +17,9 @@ services:
       - ENVIRONMENT=production
       - DB_HOST=db
       - REDIS_HOST=redis
+      - HTTP_PROXY=http://172.25.16.1:7890
+      - HTTPS_PROXY=http://172.25.16.1:7890
+      - NO_PROXY=localhost,127.0.0.1,db,redis,frontend
     depends_on:
       db:
         condition: service_healthy
