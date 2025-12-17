@@ -111,7 +111,7 @@ class DatabasePoolConfig:
         if db_url is None:
             db_url = os.getenv(
                 "DATABASE_URL",
-                "postgresql+asyncpg://postgres:postgres@localhost:5432/football_prediction",
+                f"postgresql+asyncpg://football_user:football_pass@db:5432/football_prediction_dev",
             )
 
         # 解析数据库URL
