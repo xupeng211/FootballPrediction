@@ -1,5 +1,5 @@
 ---
-name: Football Prediction v2.0 - CI Pipeline
+name: Football Prediction v2.0 - CI Pipeline (Tests Disabled)
 
 on:
   push:
