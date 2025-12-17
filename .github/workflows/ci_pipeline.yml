@@ -283,8 +283,8 @@ jobs:
             --cov-report=xml:"coverage-${{ matrix.test-type }}.xml" \
             --cov-report=html:"htmlcov-${{ matrix.test-type }}" \
             --cov-fail-under="${{ matrix.coverage-target }}" \
-            --junitxml:"test-results-${{ matrix.test-type }}.xml" \
-            -v --tb=short -x \
+            --junitxml="test-results-${{ matrix.test-type }}.xml" \
+            -x \
             -m "not slow"  # 跳过慢速测试
         env:
           MOCK_DATABASE: "false"
