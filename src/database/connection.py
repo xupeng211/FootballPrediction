@@ -1,21 +1,20 @@
 """
 数据库连接管理模块
 
-提供同步和异步的PostgreSQL数据库连接、会话管理和生命周期控制。
+提供异步的PostgreSQL数据库连接、会话管理和生命周期控制。
+仅支持异步操作，移除同步引擎以避免psycopg2依赖。
 """
 
 import logging
 from contextlib import asynccontextmanager, contextmanager
 from typing import AsyncGenerator, Generator, Optional
 
-from sqlalchemy import Engine, create_engine, text
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
     AsyncSession,
     async_sessionmaker,
     create_async_engine,
 )
-from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import QueuePool
 
 from .config import DatabaseConfig, get_database_config
@@ -27,13 +26,11 @@ class DatabaseManager:
     """
     数据库连接管理器
 
-    提供单例模式的数据库连接管理，支持同步和异步操作。
+    提供单例模式的数据库连接管理，支持异步操作。
     """
 
     _instance: Optional["DatabaseManager"] = None
-    _sync_engine: Optional[Engine] = None
     _async_engine: Optional[AsyncEngine] = None
-    _session_factory: Optional[sessionmaker] = None
     _async_session_factory: Optional[async_sessionmaker] = None
 
     def __new__(cls) -> "DatabaseManager":
@@ -59,18 +56,6 @@ class DatabaseManager:
         self._config = config
         logger.info(f"初始化数据库连接到 {config.host}:{config.port}/{config.database}")
 
-        # 创建同步引擎
-        self._sync_engine = create_engine(
-            config.sync_url,
-            poolclass=QueuePool,
-            pool_size=config.pool_size,
-            max_overflow=config.max_overflow,
-            pool_timeout=config.pool_timeout,
-            pool_recycle=config.pool_recycle,
-            echo=config.echo,
-            echo_pool=config.echo_pool,
-        )
-
         # 创建异步引擎
         self._async_engine = create_async_engine(
             config.async_url,
@@ -82,14 +67,7 @@ class DatabaseManager:
             echo_pool=config.echo_pool,
         )
 
-        # 创建会话工厂
-        self._session_factory = sessionmaker(
-            bind=self._sync_engine,
-            autocommit=False,
-            autoflush=False,
-            expire_on_commit=False,
-        )
-
+        # 创建异步会话工厂
         self._async_session_factory = async_sessionmaker(
             bind=self._async_engine,
             class_=AsyncSession,
@@ -101,11 +79,10 @@ class DatabaseManager:
         logger.info("数据库连接初始化完成")
 
     @property
-    def sync_engine(self) -> Engine:
-        """获取同步数据库引擎"""
-        if self._sync_engine is None:
-            raise RuntimeError("数据库连接未初始化，请先调用 initialize()")
-        return self._sync_engine
+    def sync_engine(self) -> None:
+        """获取同步数据库引擎 - 已禁用，仅支持异步"""
+        # 已禁用同步引擎，仅支持异步操作
+        return None
 
     @property
     def async_engine(self) -> AsyncEngine:
@@ -114,11 +91,10 @@ class DatabaseManager:
             raise RuntimeError("数据库连接未初始化，请先调用 initialize()")
         return self._async_engine
 
-    def create_session(self) -> Session:
-        """创建同步数据库会话"""
-        if self._session_factory is None:
-            raise RuntimeError("数据库连接未初始化，请先调用 initialize()")
-        return self._session_factory()
+    def create_session(self) -> None:
+        """创建同步数据库会话 - 已禁用，仅支持异步"""
+        # 已禁用同步会话，仅支持异步操作
+        return None
 
     def create_async_session(self) -> AsyncSession:
         """创建异步数据库会话"""
@@ -127,25 +103,15 @@ class DatabaseManager:
         return self._async_session_factory()
 
     @contextmanager
-    def get_session(self) -> Generator[Session, None, None]:
+    def get_session(self) -> Generator[None, None, None]:
         """
-        获取同步数据库会话上下文管理器
+        获取同步数据库会话上下文管理器 - 已禁用，仅支持异步
 
         使用示例:
-            with db_manager.get_session() as session:
-                # 执行数据库操作
-                result = session.query(Model).all()
+            使用 create_async_session() 和 get_async_session() 替代
         """
-        session = self.create_session()
-        try:
-            yield session
-            session.commit()
-        except Exception as e:
-            session.rollback()
-            logger.error(f"数据库操作失败: {e}")
-            raise
-        finally:
-            session.close()
+        # 已禁用同步会话，仅支持异步操作
+        yield None
 
     @asynccontextmanager
     async def get_async_session(self) -> AsyncGenerator[AsyncSession, None]:
@@ -157,73 +123,32 @@ class DatabaseManager:
                 # 执行异步数据库操作
                 result = await session.execute(select(Model))
         """
-        session = self.create_async_session()
-        try:
-            yield session
-            await session.commit()
-        except Exception as e:
-            await session.rollback()
-            logger.error(f"异步数据库操作失败: {e}")
-            raise
-        finally:
-            await session.close()
+        if self._async_session_factory is None:
+            raise RuntimeError("数据库连接未初始化，请先调用 initialize()")
+        
+        async with self._async_session_factory() as session:
+            try:
+                yield session
+            except Exception as e:
+                await session.rollback()
+                logger.error(f"异步数据库操作失败: {e}")
+                raise
+            finally:
+                await session.close()
 
-    async def close(self) -> None:
+    def close(self) -> None:
         """关闭数据库连接"""
-        if self._async_engine:
-            try:
-                await self._async_engine.dispose()
-                logger.info("异步数据库连接已关闭")
-            except Exception as e:
-                logger.error(f"关闭异步数据库连接失败: {e}")
+        if self._async_engine is not None:
+            self._async_engine.dispose()
+            logger.info("数据库连接已关闭")
 
-        if self._sync_engine:
-            try:
-                self._sync_engine.dispose()
-                logger.info("同步数据库连接已关闭")
-            except Exception as e:
-                logger.error(f"关闭同步数据库连接失败: {e}")
-
-    def health_check(self) -> bool:
-        """
-        检查数据库连接健康状态（同步版本）
-
-        Returns:
-            bool: 数据库是否健康
-        """
-        try:
-            session = self.create_session()
-            # 使用text()包装SQL字符串
-            session.execute(text("SELECT 1"))
-            session.close()
-            return True
-        except Exception:
-            return False
-
-    async def async_health_check(self) -> bool:
-        """
-        检查数据库连接健康状态（异步版本）
-
-        Returns:
-            bool: 数据库是否健康
-        """
-        try:
-            session = self.create_async_session()
-            # 使用text()包装SQL字符串
-            await session.execute(text("SELECT 1"))
-            await session.close()
-            return True
-        except Exception:
-            return False
+    def is_initialized(self) -> bool:
+        """检查数据库是否已初始化"""
+        return self._async_engine is not None
 
 
-# 全局数据库管理器实例
+# 创建全局数据库管理器实例
 _db_manager = DatabaseManager()
-
-
-def get_database_manager() -> DatabaseManager:
-    """获取数据库管理器实例"""
-    return _db_manager
 
 
 def initialize_database(config: Optional[DatabaseConfig] = None) -> None:
@@ -231,33 +156,44 @@ def initialize_database(config: Optional[DatabaseConfig] = None) -> None:
     初始化数据库连接
 
     Args:
-        config: 数据库配置
+        config: 数据库配置，如果为None则使用默认配置
     """
     _db_manager.initialize(config)
 
 
-def get_db_session() -> Generator[Session, None, None]:
+def get_db_manager() -> DatabaseManager:
     """
-    FastAPI依赖注入使用的同步数据库会话获取器
+    获取数据库管理器实例
 
-    使用示例:
-        @app.get("/items/")
-        def read_items(db: Session = Depends(get_db_session)):
-            return db.query(Item).all()
+    Returns:
+        DatabaseManager实例
     """
-    with _db_manager.get_session() as session:
-        yield session
+    return _db_manager
 
 
 async def get_async_db_session() -> AsyncGenerator[AsyncSession, None]:
     """
-    FastAPI依赖注入使用的异步数据库会话获取器
+    获取异步数据库会话的便捷函数
 
     使用示例:
-        @app.get("/items/")
-        async def read_items(db: AsyncSession = Depends(get_async_db_session)):
-            result = await db.execute(select(Item))
-            return result.scalars().all()
+        async for session in get_async_db_session():
+            await session.execute(select(Model))
     """
     async with _db_manager.get_async_session() as session:
         yield session
+
+
+def get_db_session() -> None:
+    """
+    获取同步数据库会话的便捷函数 - 已禁用
+
+    使用示例:
+        使用 get_async_db_session() 替代
+    """
+    # 已禁用同步会话，仅支持异步操作
+    return None
+
+
+def close_database() -> None:
+    """关闭数据库连接"""
+    _db_manager.close()
