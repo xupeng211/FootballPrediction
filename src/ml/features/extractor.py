@@ -42,7 +42,7 @@ class MatchFeatureSet:
     # 特征向量
     features: Dict[str, float]
     feature_names: List[str]
-    feature_vector: np.ndarray
+    feature_vector: np.ndarray[Any, Any]
 
     # 元数据
     feature_completeness: float
@@ -671,7 +671,7 @@ class MatchFeatureExtractor:
 
     def _create_feature_vector(
         self, features: Dict[str, float], feature_names: List[str]
-    ) -> np.ndarray:
+    ) -> np.ndarray[Any, Any]:
         """创建特征向量"""
         vector = []
         for name in feature_names:

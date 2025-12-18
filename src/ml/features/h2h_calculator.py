@@ -210,7 +210,7 @@ class H2HCalculator:
             matches_count=0,
         )
 
-    def get_h2h_summary(self, df: pd.DataFrame, team1_id: int, team2_id: int) -> Dict:
+    def get_h2h_summary(self, df: pd.DataFrame, team1_id: int, team2_id: int) -> Dict[str, Any]:
         """
         获取两队历史交锋的详细摘要
 
