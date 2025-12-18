@@ -140,10 +140,10 @@ def mock_model_loader(temp_model_file):
 @pytest.fixture(scope="function")
 def mock_config():
     """Mock配置对象"""
-    from src.config_secure import Settings
+    from src.config_unified import UnifiedSettings
 
     # 创建测试配置
-    test_config = Settings()
+    test_config = UnifiedSettings()
     test_config.database.host = "localhost"
     test_config.database.port = 5432
     test_config.database.name = "football_prediction_test"

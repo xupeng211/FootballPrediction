@@ -16,7 +16,7 @@ class TestBasicFunctionality:
     def test_config_imports(self):
         """测试配置模块可以正常导入"""
         try:
-            from src.config import get_settings
+            from src.config_unified import get_settings
 
             settings = get_settings()
             assert settings is not None

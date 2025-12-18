@@ -743,7 +743,7 @@ class TestServicesIntegration:
     def test_services_configuration_integration(self):
         """测试服务配置集成"""
         try:
-            from src.config import get_settings
+            from src.config_unified import get_settings
 
             settings = get_settings()
 

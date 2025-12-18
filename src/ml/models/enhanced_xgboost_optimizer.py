@@ -22,21 +22,12 @@ logger = logging.getLogger(__name__)
 
 # 尝试导入机器学习工程组件
 try:
-    import sys
-
-    sys.path.append(
-        str(
-            Path(__file__).parent.parent.parent.parent
-            / ".claude"
-            / "skills"
-            / "machine-learning-engineering"
-            / "scripts"
-        )
-    )
-    from xgboost_optimizer import FootballPredictionOptimizer
-    from feature_engineering_analyzer import FootballFeatureAnalyzer
-
-    ML_ENGINEERING_ENABLED = True
+    # 暂时禁用，模块不存在
+    # from xgboost_optimizer import FootballPredictionOptimizer
+    # from feature_engineering_analyzer import FootballFeatureAnalyzer
+    ML_ENGINEERING_ENABLED = False
+    FootballPredictionOptimizer = None
+    FootballFeatureAnalyzer = None
 except ImportError as e:
     logger.warning(f"机器学习工程组件导入失败: {e}")
     ML_ENGINEERING_ENABLED = False

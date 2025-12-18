@@ -313,7 +313,7 @@ if __name__ == "__main__":
 
     for home, away, expected in test_cases:
         try:
-            result = score_to_label(home, away)
+            result = score_to_label(int(home), int(away))
             status = "✅" if result == expected else "❌"
         except Exception as e:
             status = f"❌ Error: {e}"
@@ -324,7 +324,7 @@ if __name__ == "__main__":
         back_to_label = numeric_to_label(numeric)
         status = "✅" if back_to_label == outcome else "❌"
 
-    batch_scores = [(2, 1), (0, 0), (1, 3)]
+    batch_scores: list[tuple[int | float | str, int | float | str]] = [(2, 1), (0, 0), (1, 3)]
     try:
         batch_results = batch_scores_to_labels(batch_scores)
     except Exception as e:

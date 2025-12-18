@@ -14,7 +14,7 @@ class TestConfigQuickCoverage:
 
     def test_database_settings_basic(self):
         """测试数据库设置基本功能"""
-        from src.config import DatabaseSettings
+        from src.config_unified import DatabaseSettings
 
         # 测试默认值
         settings = DatabaseSettings()
@@ -30,7 +30,7 @@ class TestConfigQuickCoverage:
 
     def test_database_pool_settings_basic(self):
         """测试数据库连接池设置基本功能"""
-        from src.config import DatabasePoolSettings
+        from src.config_unified import DatabasePoolSettings
 
         settings = DatabasePoolSettings()
         assert hasattr(settings, "min_size")
@@ -45,7 +45,7 @@ class TestConfigQuickCoverage:
 
     def test_fotmob_settings_basic(self):
         """测试FotMob设置基本功能"""
-        from src.config import FotMobSettings
+        from src.config_unified import FotMobSettings
 
         settings = FotMobSettings()
         assert hasattr(settings, "base_url")
@@ -59,7 +59,7 @@ class TestConfigQuickCoverage:
 
     def test_app_settings_basic(self):
         """测试应用设置基本功能"""
-        from src.config import ApplicationSettings
+        from src.config_unified import ApplicationSettings
 
         settings = ApplicationSettings()
         assert hasattr(settings, "name")
@@ -76,7 +76,7 @@ class TestConfigQuickCoverage:
 
     def test_logging_settings_basic(self):
         """测试日志设置基本功能"""
-        from src.config import LoggingSettings
+        from src.config_unified import LoggingSettings
 
         settings = LoggingSettings()
         assert hasattr(settings, "level")

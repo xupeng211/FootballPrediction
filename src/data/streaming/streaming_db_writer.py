@@ -22,8 +22,8 @@ from contextlib import asynccontextmanager
 import pandas as pd
 from decimal import Decimal
 
-from ..database.connection import get_connection
-from ..constants import FOOTBALL, MATH
+from src.database.connection import get_connection
+from src.constants import FOOTBALL, MATH
 
 logger = logging.getLogger(__name__)
 

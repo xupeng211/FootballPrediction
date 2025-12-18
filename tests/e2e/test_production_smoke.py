@@ -20,7 +20,7 @@ from typing import Dict, Any, List
 
 # 导入核心组件（跳过有问题的模块）
 try:
-    from src.config import get_settings
+    from src.config_unified import get_settings
 except ImportError:
 
     def get_settings():
@@ -500,27 +500,172 @@ if __name__ == "__main__":
         mock_db.is_connected = True
         mock_db.connection_string = "test://db"
 
-        # 读取测试数据
-        test_file = Path(__file__).parent / "fixtures" / "sample_matches.json"
-        if test_file.exists():
-            with open(test_file) as f:
-                sample_data = json.load(f)
-        else:
-            # 使用默认测试数据
-            sample_data = test_class.TestProductionSmoke.sample_match_data
+        # 使用硬编码的测试数据（避免fixture问题）
+        sample_data = [
+            {
+                "match_id": "epl_2024_manutd_liverpool",
+                "home_team": "Manchester United",
+                "away_team": "Liverpool",
+                "league": "Premier League",
+                "season": "2023/24",
+                "match_date": (datetime.now() + timedelta(days=1)).isoformat(),
+                "venue": "Old Trafford",
+                "market_odds": {"home_win": 2.10, "draw": 3.40, "away_win": 3.80},
+                "team_stats": {
+                    "home": {
+                        "elo_rating": 1850,
+                        "recent_form": [1, 1, 0, 1, 0],  # W-W-D-W-D
+                        "goals_scored": 15,
+                        "goals_conceded": 8,
+                    },
+                    "away": {
+                        "elo_rating": 1920,
+                        "recent_form": [1, 1, 1, 0, 1],  # W-W-W-D-W
+                        "goals_scored": 22,
+                        "goals_conceded": 10,
+                    },
+                },
+                "h2h_history": {
+                    "home_wins": 8,
+                    "away_wins": 12,
+                    "draws": 5,
+                    "last_5_games": [0, 1, 0, 1, 1],  # D-W-D-W-W
+                },
+            },
+            {
+                "match_id": "epl_2024_arsenal_chelsea",
+                "home_team": "Arsenal",
+                "away_team": "Chelsea",
+                "league": "Premier League",
+                "season": "2023/24",
+                "match_date": (datetime.now() + timedelta(days=2)).isoformat(),
+                "venue": "Emirates Stadium",
+                "market_odds": {"home_win": 1.85, "draw": 3.60, "away_win": 4.20},
+                "team_stats": {
+                    "home": {
+                        "elo_rating": 1880,
+                        "recent_form": [1, 1, 1, 1, 0],  # W-W-W-W-D
+                        "goals_scored": 18,
+                        "goals_conceded": 6,
+                    },
+                    "away": {
+                        "elo_rating": 1820,
+                        "recent_form": [0, 1, 0, 1, 0],  # D-W-D-W-D
+                        "goals_scored": 14,
+                        "goals_conceded": 12,
+                    },
+                },
+                "h2h_history": {
+                    "home_wins": 10,
+                    "away_wins": 8,
+                    "draws": 7,
+                    "last_5_games": [1, 0, 1, 1, 0],  # W-D-W-W-D
+                },
+            },
+            {
+                "match_id": "epl_2024_mancity_tottenham",
+                "home_team": "Manchester City",
+                "away_team": "Tottenham",
+                "league": "Premier League",
+                "season": "2023/24",
+                "match_date": (datetime.now() + timedelta(days=3)).isoformat(),
+                "venue": "Etihad Stadium",
+                "market_odds": {"home_win": 1.35, "draw": 5.50, "away_win": 7.80},
+                "team_stats": {
+                    "home": {
+                        "elo_rating": 2050,
+                        "recent_form": [1, 1, 1, 1, 1],  # W-W-W-W-W
+                        "goals_scored": 28,
+                        "goals_conceded": 5,
+                    },
+                    "away": {
+                        "elo_rating": 1790,
+                        "recent_form": [1, 0, 0, 1, 1],  # W-D-D-W-W
+                        "goals_scored": 16,
+                        "goals_conceded": 14,
+                    },
+                },
+                "h2h_history": {
+                    "home_wins": 14,
+                    "away_wins": 6,
+                    "draws": 5,
+                    "last_5_games": [1, 1, 1, 0, 1],  # W-W-W-D-W
+                },
+            },
+        ]
+
+        # 创建mock推理服务
+        mock_inference_service = AsyncMock()
+
+        async def mock_predict(match_id, match_data=None):
+            # 模拟基于特征的预测逻辑
+            if not match_data:
+                match_data = {}
+
+            # 简化的特征工程
+            home_elo = (
+                match_data.get("team_stats", {}).get("home", {}).get("elo_rating", 1800)
+            )
+            away_elo = (
+                match_data.get("team_stats", {}).get("away", {}).get("elo_rating", 1800)
+            )
+            home_form = (
+                sum(
+                    match_data.get("team_stats", {})
+                    .get("home", {})
+                    .get("recent_form", [0, 0, 0, 0, 0])
+                )
+                / 5
+            )
+            away_form = (
+                sum(
+                    match_data.get("team_stats", {})
+                    .get("away", {})
+                    .get("recent_form", [0, 0, 0, 0, 0])
+                )
+                / 5
+            )
+
+            # 基础概率计算
+            elo_diff = home_elo - away_elo
+            base_home_prob = 0.5 + (elo_diff / 1000) + (home_form - away_form) * 0.1
+            base_home_prob = max(0.1, min(0.9, base_home_prob))
+
+            # 计算概率
+            home_prob = base_home_prob
+            draw_prob = 0.25 * (1 - abs(home_prob - 0.5) * 2)
+            away_prob = 1 - home_prob - draw_prob
+
+            return {
+                "match_id": match_id,
+                "predictions": {
+                    "home_win": round(home_prob, 3),
+                    "draw": round(draw_prob, 3),
+                    "away_win": round(away_prob, 3),
+                },
+                "confidence": round(0.7 + abs(home_prob - 0.5) * 0.4, 3),
+                "features": {"home_elo": home_elo, "away_elo": away_elo},
+                "metadata": {
+                    "model_version": "xgboost_v2_production",
+                    "prediction_time": datetime.now().isoformat(),
+                    "feature_count": 2,
+                },
+            }
+
+        mock_inference_service.predict = mock_predict
 
         # 运行主要冒烟测试
         try:
             report = await test_class.test_production_smoke_workflow(
                 mock_database_setup=mock_db,
                 sample_match_data=sample_data,
-                mock_inference_service=MagicMock(),
-                mock_kelly_calculator=lambda p, o, b=1000: {
+                mock_inference_service=mock_inference_service,
+                mock_kelly_calculator=lambda predictions, market_odds, bankroll=1000: {
                     "recommended_stake": 50.0,
                     "kelly_fraction": 0.05,
                     "safe_kelly_fraction": 0.0125,
                     "expected_value": 0.15,
-                    "bankroll": b,
+                    "bankroll": bankroll,
                     "selection": "home_win",
                 },
             )

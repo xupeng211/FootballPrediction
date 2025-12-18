@@ -13,7 +13,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from src.services.mlops.retraining_service import RetrainingService
 from src.ml.inference.model_loader import ModelLoader
 from src.tasks.schedule import manual_retrain, emergency_rollback
-from src.config import get_settings
+from src.config_unified import get_settings
 
 logger = logging.getLogger(__name__)
 

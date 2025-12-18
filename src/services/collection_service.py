@@ -22,7 +22,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 from contextlib import asynccontextmanager
 from functools import wraps
-from src.config_secure import get_settings
+from src.config_unified import get_settings
 
 settings = get_settings()
 
@@ -38,7 +38,7 @@ from tenacity import (
 )
 
 from .__init__ import BaseService
-from src.config import get_settings
+from src.config_unified import get_settings
 from src.database.db_pool import get_db_pool
 
 logger = logging.getLogger(__name__)

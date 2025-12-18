@@ -189,7 +189,7 @@ class TechnicalDebtCleaner:
                     )
 
                     # 添加必要的导入
-                    if "from src.config_secure import get_settings" not in content:
+                    if "from src.config_unified import get_settings" not in content:
                         content = self._add_config_import(content)
 
                     file_modified = True
@@ -367,8 +367,8 @@ class TechnicalDebtCleaner:
         """添加配置导入语句"""
         # 检查是否已有导入语句
         if (
-            "from src.config_secure import" in content
-            or "import src.config_secure" in content
+            "from src.config_unified import" in content
+            or "import src.config_unified_secure" in content
         ):
             return content
 
@@ -383,7 +383,7 @@ class TechnicalDebtCleaner:
                 break
 
         # 添加导入语句
-        lines.insert(import_position, "from src.config_secure import get_settings")
+        lines.insert(import_position, "from src.config_unified import get_settings")
         lines.insert(import_position + 1, "settings = get_settings()")
         lines.insert(import_position + 2, "")
 

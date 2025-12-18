@@ -108,7 +108,7 @@ class DIContainer:
         self._instances[service_name] = instance
         self.logger.info(f"注册实例: {service_name} -> {type(instance).__name__}")
 
-    async def resolve(self, service_name: str) -> T:
+    async def resolve(self, service_name: str) -> Any:  # type: ignore
         """
         解析服务
 

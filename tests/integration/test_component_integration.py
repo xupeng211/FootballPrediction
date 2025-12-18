@@ -345,7 +345,7 @@ class TestConfigurationIntegration:
     def test_config_service_integration(self):
         """测试配置与服务集成"""
         try:
-            from src.config import get_settings
+            from src.config_unified import get_settings
             from src.services.inference_service import InferenceService
 
             settings = get_settings()
@@ -376,7 +376,7 @@ class TestConfigurationIntegration:
         """测试环境特定集成"""
         try:
             import os
-            from src.config import get_settings
+            from src.config_unified import get_settings
 
             # 测试环境变量影响
             original_env = os.environ.get("ENVIRONMENT")

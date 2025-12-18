@@ -15,7 +15,7 @@ class TestConfigExtended:
 
     def test_database_settings_validation(self):
         """测试数据库配置验证"""
-        from src.config import DatabaseSettings
+        from src.config_unified import DatabaseSettings
 
         # 测试有效配置
         config = DatabaseSettings(
@@ -35,7 +35,7 @@ class TestConfigExtended:
 
     def test_database_settings_url_override(self):
         """测试数据库URL覆盖"""
-        from src.config import DatabaseSettings
+        from src.config_unified import DatabaseSettings
 
         config = DatabaseSettings(
             url="postgresql+asyncpg://override:pass@host:1234/overridedb"
@@ -49,7 +49,7 @@ class TestConfigExtended:
 
     def test_database_settings_from_env(self):
         """测试从环境变量加载数据库配置"""
-        from src.config import DatabaseSettings
+        from src.config_unified import DatabaseSettings
 
         with patch.dict(
             os.environ,
@@ -71,7 +71,7 @@ class TestConfigExtended:
 
     def test_database_pool_settings_boundaries(self):
         """测试数据库连接池配置边界"""
-        from src.config import DatabasePoolSettings
+        from src.config_unified import DatabasePoolSettings
 
         # 测试边界值
         config = DatabasePoolSettings(
@@ -88,7 +88,7 @@ class TestConfigExtended:
 
     def test_database_pool_settings_validation_errors(self):
         """测试数据库连接池配置验证错误"""
-        from src.config import DatabasePoolSettings
+        from src.config_unified import DatabasePoolSettings
 
         # 测试超出范围的值
         with pytest.raises(ValidationError) as exc_info:
@@ -108,7 +108,7 @@ class TestConfigExtended:
 
     def test_database_pool_settings_from_env(self):
         """测试从环境变量加载连接池配置"""
-        from src.config import DatabasePoolSettings
+        from src.config_unified import DatabasePoolSettings
 
         with patch.dict(
             os.environ,
@@ -132,7 +132,7 @@ class TestConfigExtended:
 
     def test_fotmob_settings_validation(self):
         """测试FotMob配置验证"""
-        from src.config import FotMobSettings
+        from src.config_unified import FotMobSettings
 
         config = FotMobSettings(
             base_url="https://api.fotmob.com",
@@ -150,7 +150,7 @@ class TestConfigExtended:
 
     def test_fotmob_settings_from_env(self):
         """测试从环境变量加载FotMob配置"""
-        from src.config import FotMobSettings
+        from src.config_unified import FotMobSettings
 
         with patch.dict(
             os.environ,
@@ -172,7 +172,7 @@ class TestConfigExtended:
 
     def test_fotmob_settings_headers_method(self):
         """测试FotMob配置的headers方法"""
-        from src.config import FotMobSettings
+        from src.config_unified import FotMobSettings
 
         config = FotMobSettings(x_mas_header="mas-value", x_foo_header="foo-value")
 
@@ -183,7 +183,7 @@ class TestConfigExtended:
 
     def test_app_settings_validation(self):
         """测试应用配置验证"""
-        from src.config import AppSettings
+        from src.config_unified import AppSettings
 
         config = AppSettings(
             name="Test App",
@@ -203,7 +203,7 @@ class TestConfigExtended:
 
     def test_app_settings_from_env(self):
         """测试从环境变量加载应用配置"""
-        from src.config import AppSettings
+        from src.config_unified import AppSettings
 
         with patch.dict(
             os.environ,
@@ -227,7 +227,7 @@ class TestConfigExtended:
 
     def test_logging_settings_validation(self):
         """测试日志配置验证"""
-        from src.config import LoggingSettings
+        from src.config_unified import LoggingSettings
 
         config = LoggingSettings(
             level="INFO",
@@ -245,7 +245,7 @@ class TestConfigExtended:
 
     def test_logging_settings_from_env(self):
         """测试从环境变量加载日志配置"""
-        from src.config import LoggingSettings
+        from src.config_unified import LoggingSettings
 
         with patch.dict(
             os.environ,
@@ -267,7 +267,7 @@ class TestConfigExtended:
 
     def test_settings_integration(self):
         """测试配置集成"""
-        from src.config import Settings
+        from src.config_unified import UnifiedSettings
 
         with patch.dict(
             os.environ,
@@ -279,7 +279,7 @@ class TestConfigExtended:
                 "FOTMOB_X_MAS_HEADER": "integration_header",
             },
         ):
-            settings = Settings()
+            settings = UnifiedSettings()
 
             # 验证各个配置模块都正确加载
             assert settings.database.host == "integration_host"
@@ -290,7 +290,7 @@ class TestConfigExtended:
 
     def test_settings_env_file_loading(self):
         """测试从环境文件加载配置"""
-        from src.config import Settings
+        from src.config_unified import UnifiedSettings
 
         # 创建临时环境文件
         env_content = """
@@ -312,7 +312,7 @@ LOG_LEVEL=DEBUG
                         env_file=env_file_path, env_file_encoding="utf-8"
                     )
 
-                    settings = Settings()
+                    settings = UnifiedSettings()
 
                     # 验证从环境文件加载的配置
                     # 注意：这里需要根据实际的实现调整验证逻辑
@@ -323,7 +323,7 @@ LOG_LEVEL=DEBUG
 
     def test_config_value_conversion(self):
         """测试配置值类型转换"""
-        from src.config import AppSettings
+        from src.config_unified import AppSettings
 
         # 测试字符串到布尔值的转换
         with patch.dict(os.environ, {"APP_DEBUG": "true", "APP_API_PORT": "8080"}):
@@ -336,7 +336,7 @@ LOG_LEVEL=DEBUG
 
     def test_config_default_values(self):
         """测试配置默认值"""
-        from src.config import DatabaseSettings, AppSettings, LoggingSettings
+        from src.config_unified import DatabaseSettings, AppSettings, LoggingSettings
 
         # 测试不设置环境变量时的默认值
         db_config = DatabaseSettings()
@@ -354,7 +354,7 @@ LOG_LEVEL=DEBUG
 
     def test_config_sensitive_data_handling(self):
         """测试敏感数据处理"""
-        from src.config import DatabaseSettings
+        from src.config_unified import DatabaseSettings
 
         config = DatabaseSettings(user="secret_user", password="secret_password")
 
@@ -369,7 +369,7 @@ LOG_LEVEL=DEBUG
 
     def test_config_validation_edge_cases(self):
         """测试配置验证边界情况"""
-        from src.config import DatabasePoolSettings
+        from src.config_unified import DatabasePoolSettings
         from pydantic import ValidationError
 
         # 测试极值
@@ -390,7 +390,7 @@ LOG_LEVEL=DEBUG
     def test_config_performance_impact(self):
         """测试配置加载性能"""
         import time
-        from src.config import get_settings
+        from src.config_unified import get_settings
 
         # 测试多次调用的性能
         start_time = time.time()
@@ -408,7 +408,7 @@ LOG_LEVEL=DEBUG
     def test_config_thread_safety(self):
         """测试配置线程安全性"""
         import threading
-        from src.config import get_settings
+        from src.config_unified import get_settings
 
         results = []
 

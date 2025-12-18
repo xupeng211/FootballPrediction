@@ -297,7 +297,7 @@ class TestConfigCoverage:
 
     def test_config_functions_coverage(self):
         """测试配置函数覆盖率"""
-        from src.config import (
+        from src.config_unified import (
             get_settings,
             load_settings_from_file,
             load_settings_from_env,
@@ -312,7 +312,7 @@ class TestConfigCoverage:
 
     def test_settings_creation(self):
         """测试设置创建覆盖率"""
-        from src.config import get_settings
+        from src.config_unified import get_settings
 
         settings = get_settings()
         assert settings is not None
@@ -327,7 +327,7 @@ class TestConfigCoverage:
     @patch("src.config.load_settings_from_env")
     def test_config_loading(self, mock_load_env):
         """测试配置加载覆盖率"""
-        from src.config import load_settings_from_env
+        from src.config_unified import load_settings_from_env
 
         mock_load_env.return_value = {"loaded": True}
 

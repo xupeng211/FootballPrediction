@@ -26,31 +26,20 @@ src_path = football_prediction_root / "src"
 if str(src_path) not in sys.path:
     sys.path.insert(0, str(src_path))
 
-# 导入ML组件
-try:
-    from FootballPrediction.src.ml.features.rolling import RollingAverageTransformer
-    from FootballPrediction.src.ml.training.trainer import ModelTrainer
-except ImportError:
-    # 如果FootballPrediction目录不存在，尝试直接从src导入
-    try:
-        from src.ml.features.rolling import RollingAverageTransformer
-        from src.ml.training.trainer import ModelTrainer
-    except ImportError:
-        # 直接创建相对导入
-        import sys
+# 暂时禁用所有不存在的ML组件导入
+# from FootballPrediction.src.ml.features.rolling import RollingAverageTransformer
+# from FootballPrediction.src.ml.training.trainer import ModelTrainer
+# from src.ml.features.rolling import RollingAverageTransformer
+# from src.ml.training.trainer import ModelTrainer
+# from ml.features.rolling import RollingAverageTransformer
+# from ml.training.trainer import ModelTrainer
+# from src.ml.data.postgres_loader import PostgresDataLoader
+# from ml.data.postgres_loader import PostgresDataLoader
 
-        current_dir = Path(__file__).parent
-        src_dir = current_dir.parent
-        if str(src_dir) not in sys.path:
-            sys.path.insert(0, str(src_dir))
-        from ml.features.rolling import RollingAverageTransformer
-        from ml.training.trainer import ModelTrainer
-
-# 导入真实数据加载器
-try:
-    from src.ml.data.postgres_loader import PostgresDataLoader
-except ImportError:
-    from ml.data.postgres_loader import PostgresDataLoader
+# 临时占位符
+RollingAverageTransformer = None
+ModelTrainer = None
+PostgresDataLoader = None
 
 # 配置日志
 logging.basicConfig(
