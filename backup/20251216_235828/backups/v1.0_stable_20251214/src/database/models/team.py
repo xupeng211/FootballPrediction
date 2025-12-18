@@ -1,0 +1,69 @@
+from datetime import datetime
+from enum import Enum
+from typing import TYPE_CHECKING
+
+from sqlalchemy import Integer, String
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from src.database.base import BaseModel
+
+if TYPE_CHECKING:
+    pass
+
+"""
+球队模型
+
+存储足球队伍的基础信息,如曼联,巴塞罗那等.
+"""
+
+# Match model imported locally to avoid circular imports
+
+
+class TeamForm(Enum):
+    """球队状态枚举."""
+
+    GOOD = "good"  # 状态良好
+    AVERAGE = "average"  # 状态一般
+    POOR = "poor"  # 状态不佳
+
+
+class Team(BaseModel):
+    __table_args__ = {"extend_existing": True}
+    __tablename__ = "teams"
+
+    # 基本字段
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    name: Mapped[str] = mapped_column(String(100), nullable=False)
+    short_name: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    country: Mapped[str] = mapped_column(String(50), nullable=False)
+    league_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    external_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    founded_year: Mapped[int] = mapped_column(Integer, nullable=True)
+    stadium: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    venue: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    logo_url: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    website: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    # FBref数据字段
+    fbref_url: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    fbref_external_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    # 实力指标字段
+    fifa_rank: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    total_wage_bill: Mapped[int | None] = mapped_column(
+        Integer, nullable=True
+    )  # 年薪总额（欧元）
+    market_value: Mapped[int | None] = mapped_column(
+        Integer, nullable=True
+    )  # 球队总市值（欧元）
+    created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(
+        default=datetime.utcnow, onupdate=datetime.utcnow
+    )
+
+    # 关系
+    features = relationship(
+        "Features", back_populates="team", cascade="all, delete-orphan"
+    )
+
+    def __repr__(self) -> str:
+        """安全的__repr__方法，只访问自己的列字段."""
+        return f"Team(id={self.id}, name={self.name!r}, country={self.country!r})"

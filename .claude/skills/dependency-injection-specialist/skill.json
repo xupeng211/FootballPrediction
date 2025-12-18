@@ -1,0 +1,205 @@
+{
+  "skill_name": "dependency-injection-specialist",
+  "display_name": "依赖注入架构专家",
+  "description": "专业级依赖注入架构设计和实施工具，专门解决Football Prediction系统的耦合问题",
+  "version": "1.0.0",
+  "author": "Claude Code",
+  "priority": "P0",
+  "tags": ["dependency-injection", "architecture", "decoupling", "ioc", "design-patterns"],
+  "category": "architecture-transformation",
+
+  "target_problems": [
+    "Hard-coded service dependencies",
+    "Business logic coupled with API layer",
+    "Testability issues due to tight coupling",
+    "SOLID principle violations",
+    "Service instantiation scattered throughout codebase"
+  ],
+
+  "injection_framework": {
+    "recommended": "dependency-injector",
+    "alternative": "fastapi-injector",
+    "implementation_style": "constructor_injection",
+    "lifetime_management": "singleton_and_scoped"
+  },
+
+  "architecture_layers": {
+    "api_layer": {
+      "responsibility": "HTTP request/response handling only",
+      "dependencies": ["service_interfaces"],
+      "injection_pattern": "controller_injection"
+    },
+
+    "service_layer": {
+      "responsibility": "Business logic orchestration",
+      "dependencies": ["repository_interfaces", "external_services"],
+      "injection_pattern": "service_injection"
+    },
+
+    "repository_layer": {
+      "responsibility": "Data access abstraction",
+      "dependencies": ["database_connections", "cache_clients"],
+      "injection_pattern": "repository_injection"
+    }
+  },
+
+  "target_removals": [
+    {
+      "file": "src/api/predictions/predict_router.py:87-127",
+      "issue": "Business logic embedded in API controller",
+      "extraction_pattern": "service_layer_extraction",
+      "new_structure": "PredictionService interface + implementation"
+    },
+    {
+      "file": "src/services/inference_service.py:140-177",
+      "issue": "Direct service instantiation",
+      "extraction_pattern": "constructor_injection",
+      "new_structure": "DI container-managed dependencies"
+    },
+    {
+      "file": "src/services/real_prediction_service.py:50-84",
+      "issue": "Hard-coded model loading",
+      "extraction_pattern": "factory_pattern + injection",
+      "new_structure": "ModelFactory interface + injection"
+    }
+  ],
+
+  "implementation_plan": {
+    "phase_1_interfaces": {
+      "duration": "2-3 days",
+      "deliverables": [
+        "IModelLoader interface",
+        "IFeatureExtractor interface",
+        "IPredictionService interface",
+        "IDataRepository interface"
+      ],
+      "validation": "Interface completeness check"
+    },
+
+    "phase_2_services": {
+      "duration": "3-4 days",
+      "deliverables": [
+        "Service layer implementations",
+        "Business logic extraction from API layer",
+        "Service orchestration patterns"
+      ],
+      "validation": "Unit test isolation and coverage"
+    },
+
+    "phase_3_container": {
+      "duration": "2-3 days",
+      "deliverables": [
+        "DI container configuration",
+        "Lifetime management setup",
+        "Factory implementations"
+      ],
+      "validation": "Integration tests and dependency verification"
+    },
+
+    "phase_4_migration": {
+      "duration": "1-2 days",
+      "deliverables": [
+        "API controller refactoring",
+        "Service injection configuration",
+        "Legacy code cleanup"
+      ],
+      "validation": "End-to-end functionality verification"
+    }
+  },
+
+  "service_implementations": {
+    "prediction_service": {
+      "interface": "IPredictionService",
+      "dependencies": ["IModelLoader", "IFeatureExtractor", "ICacheService"],
+      "methods": [
+        "predict_match(home_team: str, away_team: str) -> PredictionResult",
+        "predict_batch(matches: List[MatchRequest]) -> List[PredictionResult]",
+        "get_prediction_confidence(prediction_id: str) -> ConfidenceScore"
+      ]
+    },
+
+    "model_loader_service": {
+      "interface": "IModelLoader",
+      "dependencies": ["ICacheService", "IModelRepository"],
+      "methods": [
+        "load_model(model_id: str) -> Model",
+        "get_available_models() -> List[ModelInfo]",
+        "reload_model(model_id: str) -> bool"
+      ]
+    },
+
+    "feature_extractor_service": {
+      "interface": "IFeatureExtractor",
+      "dependencies": ["IDataRepository", "ICacheService"],
+      "methods": [
+        "extract_features(match_data: MatchData) -> FeatureVector",
+        "get_feature_metadata() -> FeatureMetadata",
+        "validate_features(features: FeatureVector) -> ValidationResult"
+      ]
+    }
+  },
+
+  "container_configuration": {
+    "scoped_services": [
+      "IPredictionService",
+      "IRequestContext"
+    ],
+    "singleton_services": [
+      "IModelLoader",
+      "IFeatureExtractor",
+      "ICacheService",
+      "ILoggerService"
+    ],
+    "transient_services": [
+      "IValidationService"
+    ]
+  },
+
+  "testing_strategies": {
+    "unit_tests": {
+      "approach": "Dependency injection enables easy mocking",
+      "tools": ["unittest.mock", "pytest fixtures"],
+      "coverage_target": "95% for service layer"
+    },
+
+    "integration_tests": {
+      "approach": "Real services with test doubles for external dependencies",
+      "tools": ["testcontainers", "factory_boy"],
+      "coverage_target": "80% for integration scenarios"
+    },
+
+    "contract_tests": {
+      "approach": "Interface contract validation",
+      "tools": ["hypothesis", "property-based-testing"],
+      "validation": "Interface invariants and preconditions"
+    }
+  },
+
+  "migration_validation": {
+    "before_migration": {
+      "baseline_tests": "Complete test suite execution",
+      "performance_metrics": "Current response times and resource usage",
+      "functionality_verification": "All API endpoints working"
+    },
+
+    "after_migration": {
+      "regression_testing": "Same tests pass",
+      "performance_validation": "No significant performance degradation",
+      "functionality_verification": "All features preserved"
+    }
+  },
+
+  "quality_gates": {
+    "code_review_focus": [
+      "Dependency direction correctness",
+      "Interface design appropriateness",
+      "Lifetime management soundness",
+      "Error handling completeness"
+    ],
+    "automated_checks": [
+      "Circular dependency detection",
+      "Interface implementation completeness",
+      "Container configuration validation"
+    ]
+  }
+}

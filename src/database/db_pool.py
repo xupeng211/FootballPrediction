@@ -33,7 +33,7 @@ import os
 import logging
 import time
 import urllib.parse
-from typing import Optional, Dict, Any, List, AsyncContextManager
+from typing import Optional, Dict, Any, List, Tuple, AsyncContextManager
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
 import asyncpg
@@ -192,7 +192,6 @@ class DatabasePool:
             asyncpg.PostgresError: 数据库连接错误
         """
         if self._is_initialized and self._pool:
-            logger.debug("📦 连接池已经初始化，跳过重复初始化")
             return
 
         start_time = time.time()
@@ -455,7 +454,6 @@ class DatabasePool:
             self._stats["last_health_check"] = time.time()
             self._stats["health_check_count"] += 1
 
-            logger.debug(f"💓 健康检查通过 (耗时: {check_time:.3f}s)")
 
         except Exception as e:
             logger.error(f"💔 健康检查失败: {e}")

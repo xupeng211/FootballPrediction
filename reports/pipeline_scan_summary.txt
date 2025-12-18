@@ -1,0 +1,58 @@
+# ML Pipeline 扫描报告摘要
+生成时间: 2025年 12月 06日 星期六 09:37:03 CST
+
+## 关键发现
+
+### 1. 现有训练脚本
+
+- src/ml/enhanced_xgboost_trainer.py (XGBoost训练器)
+- src/ml/football_prediction_pipeline.py (完整预测流水线)  
+- src/models/poisson_model.py (泊松模型)
+- scripts/train_model.py (基础训练脚本)
+- scripts/train_model_v2.py (v2训练脚本)
+- scripts/train_model_advanced.py (高级训练脚本)
+- scripts/tune_model_optuna.py (超参调优)
+
+### 2. 关键组件分析
+
+
+**FeatureStore集成状态:**
+- 未发现直接集成 (搜索结果为空)
+- 现有脚本使用原始SQL或CSV加载数据
+
+**Prefect集成状态:**
+- 未发现Prefect Flow (搜索结果为空)  
+- 仅有基础脚本，无工作流编排
+
+**MLflow集成状态:**
+- 未发现MLflow跟踪 (搜索结果为空)
+- 无实验跟踪和模型版本管理
+
+**DataQualityMonitor集成状态:**
+- 未发现集成 (搜索结果为空)
+- 无数据质量检查
+
+### 3. 失败点识别
+
+
+**主要失败点:**
+
+1. **数据加载失败风险** - 多个脚本直接读取CSV，无FeatureStore集成
+2. **特征不一致** - 各脚本特征工程分散，无统一接口
+3. **模型保存混乱** - 不同脚本使用不同保存路径，无统一管理
+4. **异步/同步混用** - 现代FeatureStore是async，但训练脚本都是sync
+5. **无实验跟踪** - 缺少MLflow集成，训练过程不可复现
+
+### 4. 依赖分析
+
+
+**同步/异步混用问题:**
+- FeatureStoreProtocol (async) vs 训练脚本 (sync)
+- DataQualityMonitor (async) vs 传统训练 (sync)
+
+**API版本冲突:**
+- Prefect 1.x vs 2.x 潜在冲突 (需要检查requirements.txt)
+
+**循环引用风险:**
+- src/ml -> src/database.async_manager -> src.ml 可能存在循环
+

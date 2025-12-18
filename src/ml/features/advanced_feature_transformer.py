@@ -751,10 +751,6 @@ if __name__ == "__main__":
     # 转换特征
     df_with_features = transformer.transform(df)
 
-    print(f"原始数据形状: {df.shape}")
-    print(f"转换后数据形状: {df_with_features.shape}")
-    print(f"高级特征: {transformer.get_advanced_feature_names()}")
 
     # 生成特征报告
     report = transformer.generate_feature_report(df_with_features)
-    print(f"特征报告: {report}")

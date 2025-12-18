@@ -117,7 +117,6 @@ class VenueAnalyzer:
                 df, home_id, match_date, 5
             )
 
-            logger.debug(
                 f"场馆特征计算完成: {home_id}(主) vs {away_id}(客), "
                 f"主场进球(3场): {venue_stats.home_goals_rolling_3:.2f}"
             )
@@ -391,8 +390,6 @@ if __name__ == "__main__":
     venue_stats = venue_analyzer.calculate_venue_features_for_match(
         df, 1, 2, pd.Timestamp("2024-03-25")
     )
-    print(f"场馆特征结果: {venue_stats.to_dict()}")
 
     # 获取场馆摘要
     summary = venue_analyzer.get_venue_summary(df, 1)
-    print(f"场馆摘要: {summary}")

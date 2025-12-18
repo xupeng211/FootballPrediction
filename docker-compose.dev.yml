@@ -22,7 +22,7 @@ services:
       - DB_PORT=5432
       - DB_NAME=football_prediction_dev
       - DB_USER=football_user
-      - DB_PASSWORD=football_pass
+      - DB_PASSWORD=${DB_PASSWORD}
 
       # Redis 配置
       - REDIS_URL=redis://redis:6379/0
@@ -215,7 +215,7 @@ services:
       - DB_PORT=5432
       - DB_NAME=football_prediction_dev
       - DB_USER=football_user
-      - DB_PASSWORD=football_pass
+      - DB_PASSWORD=${DB_PASSWORD}
       - SERVICE_MODE=collector
     depends_on:
       db:

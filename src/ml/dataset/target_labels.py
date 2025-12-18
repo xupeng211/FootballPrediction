@@ -125,13 +125,10 @@ def score_to_label(
         # 确定比赛结果
         if home_score > away_score:
             result = MatchOutcome.HOME_WIN
-            logger.debug(f"主队获胜: {home_score}-{away_score}")
         elif home_score < away_score:
             result = MatchOutcome.AWAY_WIN
-            logger.debug(f"客队获胜: {home_score}-{away_score}")
         else:
             result = MatchOutcome.DRAW
-            logger.debug(f"平局: {home_score}-{away_score}")
 
         return result
 
@@ -304,7 +301,6 @@ REVERSE_NUMERIC_LABELS = {v: k for k, v in NUMERIC_LABELS.items()}
 
 if __name__ == "__main__":
     # 模块测试
-    print("🧪 比赛结果标签模块测试")
 
     test_cases = [
         (2, 1, MatchOutcome.HOME_WIN),
@@ -315,28 +311,19 @@ if __name__ == "__main__":
         (0, 5, MatchOutcome.AWAY_WIN),
     ]
 
-    print("\n📋 测试比分转换:")
     for home, away, expected in test_cases:
         try:
             result = score_to_label(home, away)
             status = "✅" if result == expected else "❌"
-            print(f"{status} {home}-{away} -> {result.value} (期望: {expected.value})")
         except Exception as e:
-            print(f"❌ {home}-{away} -> 错误: {e}")
 
-    print("\n📋 测试数值转换:")
     for outcome in MatchOutcome:
         numeric = label_to_numeric(outcome)
         back_to_label = numeric_to_label(numeric)
         status = "✅" if back_to_label == outcome else "❌"
-        print(f"{status} {outcome.value} -> {numeric} -> {back_to_label.value}")
 
-    print("\n📋 测试批量转换:")
     batch_scores = [(2, 1), (0, 0), (1, 3)]
     try:
         batch_results = batch_scores_to_labels(batch_scores)
-        print(f"✅ 批量转换成功: {[r.value for r in batch_results]}")
     except Exception as e:
-        print(f"❌ 批量转换失败: {e}")
 
-    print("\n🎉 标签模块测试完成!")

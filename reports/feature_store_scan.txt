@@ -1,0 +1,156 @@
+FootballPrediction FeatureStore 现状扫描报告
+========================================
+扫描时间: 2025年 12月 05日 星期五 22:38:08 CST
+
+=== 发现的关键问题 ===
+
+1. FeatureStore 相关文件扫描:
+src/api/features.py:18:from src.features.feature_store import FootballFeatureStore
+src/api/features.py:25:feature_store: FootballFeatureStore | None = None
+src/api/features.py:28:def get_feature_store() -> FootballFeatureStore | None:
+src/api/features.py:35:        feature_store = FootballFeatureStore()
+src/stubs/feast.pyi:3:class FeatureStore:
+src/features/feature_store.py:11:        FootballFeatureStore,
+src/features/feature_store.py:13:        MockFeatureStore,
+src/features/feature_store.py:16:    FootballFeatureStore = None
+src/features/feature_store.py:18:    MockFeatureStore = None
+src/features/feature_store.py:22:    "FootballFeatureStore",
+src/features/feature_store.py:24:    "MockFeatureStore",
+src/features/__init__.py:13:from .feature_store import FootballFeatureStore
+src/features/__init__.py:42:    "FootballFeatureStore",
+src/features/features/feature_store_stores.py:14:class FootballFeatureStore:
+src/features/features/feature_store_stores.py:29:class MockFeatureStore:
+src/data/features/feature_store.py:4:class FeatureStore:
+src/data/features/__init__.py:9:- FeatureStore: 特征仓库管理器
+src/data/features/__init__.py:23:from .feature_store import FeatureStore as FootballFeatureStore
+src/data/features/__init__.py:26:    "FootballFeatureStore",
+
+2. feature_store 相关文件扫描:
+src/api/features.py:18:from src.features.feature_store import FootballFeatureStore
+src/api/features.py:25:feature_store: FootballFeatureStore | None = None
+src/api/features.py:28:def get_feature_store() -> FootballFeatureStore | None:
+src/api/features.py:30:    global feature_store
+src/api/features.py:31:    if feature_store is not None:
+src/api/features.py:32:        return feature_store
+src/api/features.py:35:        feature_store = FootballFeatureStore()
+src/api/features.py:44:        feature_store = None
+src/api/features.py:45:    return feature_store
+src/api/features.py:58:def check_feature_store availability() -> None:
+src/api/features.py:60:    if get_feature_store() is None:
+src/api/features.py:111:    store = get_feature_store()
+src/api/features.py:194:    check_feature_store_availability()
+src/api/features.py:214:        "status": "healthy" if get_feature_store() else "unhealthy",
+src/api/features.py:215:        "feature_store": "available" if get_feature_store() else "unavailable",
+
+3. FeatureBuilder 相关文件扫描:
+src/features/feature_builder.py:21:class FeatureBuilder:
+src/features/feature_builder.py:680:feature_builder = FeatureBuilder()
+
+=== 关键文件分析 ===
+
+4.1 src/features/feature_store.py 内容:
+```python
+"""feature_store 主模块.
+此文件由长文件拆分工具自动生成
+拆分策略: component_split
+"""
+
+# 导入拆分的模块
+try:
+    from .components.feature_store_core import (
+        FootballFeatureStore,
+        MockEntity,
+        MockFeatureStore,
+    )
+except ImportError:
+    FootballFeatureStore = None
+    MockEntity = None
+    MockFeatureStore = None
+
+# 导出所有公共接口
+__all__ = [
+    "FootballFeatureStore",
+    "MockEntity",
+    "MockFeatureStore",
+]
+```
+
+4.2 src/features/components/feature_store_core.py:
+❌ 文件不存在 - 关键问题！
+
+4.3 src/features/features/feature_store_stores.py 内容:
+```python
+class FootballFeatureStore:
+    """足球特征存储管理器
+    基于 Feast 实现的特征存储,支持:
+    - 在线特征查询（Redis）
+    - 离线特征查询（PostgreSQL）
+    - 特征注册和版本管理
+    - 在线/离线特征同步"""
+    pass  # ISSUE: Implement complete class logic for production use
+
+class MockFeatureStore:
+    """测试友好的Feast替代实现."""
+    pass  # ISSUE: Implement complete class logic for production use
+```
+
+4.4 src/data/features/feature_store.py 内容:
+```python
+# 简化版 feature_store 模块
+class FeatureStore:
+    def __init__(self):
+        pass
+
+def example():
+    return None
+
+EXAMPLE = "value"
+```
+
+=== 导入错误分析 ===
+
+4.5 SQLAlchemy 兼容性问题:
+❌ SyntaxError: invalid syntax (_collections.py, line 385)
+- 问题: SQLAlchemy 2.x 使用了 Python 3.9+ 的类型注解语法
+- 原因: `data: [Iterable[_T], Set[_T], List[_T]]` 在当前环境中不支持
+- 影响: 所有使用 SQLAlchemy 的模块都无法导入
+
+4.6 特征定义文件:
+src/features/feature_definitions.py
+src/data/features/feature_definitions.py
+
+=== Mock 实现 ===
+
+4.7 扫描到的 Mock 实现:
+- MockFeatureStore: 空实现，只有pass语句
+- MockEntity: 空实现，未定义
+- MockTransformer: feature_engineer.py 中的 ML 工具 Mock
+- MockPipeline: Mock scikit-learn Pipeline
+
+=== 问题汇总 ===
+
+🔴 **P0 阻断问题:**
+1. SQLAlchemy 版本兼容性导致所有 import 失败
+2. feature_store_core.py 文件不存在
+3. FootballFeatureStore 为空实现 (pass 语句)
+4. MockFeatureStore 无实际功能
+
+🟡 **结构性问题:**
+1. 多个 feature_store.py 文件分散在不同目录
+2. 导入路径不一致 (features/ vs data/features/)
+3. 缺少标准的 FeatureStore 接口定义
+4. 未使用 async_manager.py 统一数据库接口
+
+📊 **统计信息:**
+- 总文件数: 6个 feature_store 相关文件
+- 实现文件: 0个 (全部为 Mock/空实现)
+- 导入错误: 100% (SQLAlchemy 兼容性问题)
+- 依赖缺失: SQLAlchemy 版本不兼容
+
+=== 推荐修复策略 ===
+
+1. 优先修复 SQLAlchemy 版本兼容性问题
+2. 统一 FeatureStore 实现到 src/features/feature_store.py
+3. 创建标准接口定义
+4. 使用 async_manager.py 替代直接 SQLAlchemy
+5. 实现完整的 async/await 模式
