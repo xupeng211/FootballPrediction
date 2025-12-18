@@ -12,6 +12,7 @@ FootballPrediction 工具模块
 import hashlib
 import json
 import os
+from typing import Tuple
 import re
 import uuid
 from datetime import datetime, timezone
@@ -34,7 +35,8 @@ class FileUtils:
         """读取JSON文件"""
         try:
             with open(file_path, "r", encoding="utf-8") as f:
-                return json.load(f)
+                data: Dict[str, Any] = json.load(f)
+                return data
         except (FileNotFoundError, json.JSONDecodeError) as e:
             raise FileNotFoundError(f"无法读取JSON文件 {file_path}: {e}")
 
@@ -249,7 +251,7 @@ class DictUtils:
         d: Dict[str, Any], parent_key: str = "", sep: str = "."
     ) -> Dict[str, Any]:
         """扁平化嵌套字典 - 将多层嵌套结构转为单层，便于配置管理和数据传输"""
-        items: List[tuple] = []
+        items: List[Tuple[str, Any]] = []
         for k, v in d.items():
             # 构建新的键名，使用分隔符连接层级关系
             new_key = f"{parent_key}{sep}{k}" if parent_key else k

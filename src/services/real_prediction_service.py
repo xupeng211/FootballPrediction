@@ -118,8 +118,8 @@ class RealPredictionService:
             pd.DataFrame: 比赛数据，如果未找到则返回None
         """
         try:
-            # 修改数据加载器以获取特定比赛
-            query = f"""
+            # 修改数据加载器以获取特定比赛 - 使用参数化查询防止SQL注入
+            query = """
                 SELECT
                     id,
                     home_team_id,
@@ -132,13 +132,13 @@ class RealPredictionService:
                     COALESCE(away_team_name, away_team_id::text) as away_team_name,
                     league_id
                 FROM matches
-                WHERE id = {match_id} AND status = 'FT'
+                WHERE id = :match_id AND status = 'FT'
             """
 
             async with self.data_loader.db_manager.get_async_session() as session:
                 from sqlalchemy import text
 
-                result = await session.execute(text(query))
+                result = await session.execute(text(query), {"match_id": match_id})
                 records = result.fetchall()
 
                 if not records:

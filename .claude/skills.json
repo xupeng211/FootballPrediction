@@ -1,0 +1,109 @@
+{
+  "version": "1.0",
+  "skills": {
+    "code-quality": {
+      "name": "代码质量管理",
+      "description": "专门用于FootballPrediction项目的代码质量保证和改进",
+      "enabled": true,
+      "priority": "high",
+      "triggers": [
+        "代码修改",
+        "PR提交",
+        "质量检查",
+        "测试运行",
+        "代码审查"
+      ],
+      "tools": [
+        "black",
+        "flake8",
+        "mypy",
+        "bandit",
+        "radon",
+        "vulture",
+        "coverage",
+        "pytest"
+      ],
+      "commands": {
+        "check_all": "make quality",
+        "format_code": "make format",
+        "run_tests": "make test",
+        "check_coverage": "make coverage",
+        "type_check": "make typecheck",
+        "security_check": "make security",
+        "complexity_check": "make complexity",
+        "dead_code_check": "make deadcode",
+        "quick_fix": "make fix",
+        "pre_commit": "make prepush",
+        "ci_simulation": "make ci",
+        "local_ci_verify": "./ci-verify.sh"
+      },
+      "file_patterns": {
+        "python_source": [
+          "src/**/*.py",
+          "scripts/**/*.py",
+          "tests/**/*.py"
+        ],
+        "config_files": [
+          "pyproject.toml",
+          "setup.cfg",
+          ".flake8",
+          "mypy.ini"
+        ],
+        "test_files": [
+          "tests/**/*.py",
+          "test_*.py"
+        ]
+      },
+      "quality_metrics": {
+        "target_coverage": 80,
+        "max_complexity": 10,
+        "max_line_length": 88,
+        "type_checking": "strict",
+        "security_scan": true
+      },
+      "project_specific": {
+        "architecture_patterns": [
+          "async-first",
+          "service_layer",
+          "ml_pipeline",
+          "docker_containerization"
+        ],
+        "key_modules": [
+          "src/ml/features/",
+          "src/services/",
+          "src/api/",
+          "src/ml/inference/"
+        ],
+        "test_categories": [
+          "tests/v2/",
+          "tests/unit/",
+          "tests/integration/",
+          "tests/e2e/",
+          "tests/performance/"
+        ],
+        "quality_thresholds": {
+          "v2_tests_passing": 51,
+          "total_tests": 279,
+          "ci_pipeline_success": true
+        }
+      },
+      "auto_fixes": {
+        "formatting": true,
+        "import_sorting": true,
+        "unused_imports": true,
+        "basic_style": true
+      },
+      "reporting": {
+        "coverage_report": "htmlcov/index.html",
+        "quality_report": "quality_report.json",
+        "ci_status": "ci_status.json"
+      },
+      "integration": {
+        "github_actions": true,
+        "local_verification": true,
+        "docker_quality_checks": true,
+        "pre_commit_hooks": true
+      }
+    }
+  }
+}
