@@ -8,6 +8,7 @@ global:
 
 rule_files:
   - "alerts.yml"
+  - "recording_rules.yml"
 
 # Alertmanager configuration (for production use)
 alerting:
@@ -92,38 +93,13 @@ scrape_configs:
         replacement: blackbox-exporter:9115
 
 # ================================
-# Recording Rules
+# Remote Write Configuration (for production)
 # ================================
-recording_rules:
-  - name: football-prediction.rules
-    interval: 30s
-    rules:
-      # API Performance Rules
-      - record: api:request_rate_5m
-        expr: rate(flask_http_request_total[5m])
-
-      - record: api:error_rate_5m
-        expr: rate(flask_http_request_exceptions_total[5m]) / rate(flask_http_request_total[5m]) * 100
-
-      - record: api:p95_latency_5m
-        expr: histogram_quantile(0.95, rate(flask_http_request_duration_seconds_bucket[5m]))
-
-      # Business Metrics Rules
-      - record: business:prediction_rate_5m
-        expr: rate(prediction_requests_total[5m])
-
-      - record: business:model_latency_p95_5m
-        expr: histogram_quantile(0.95, rate(model_inference_latency_seconds_bucket[5m]))
-
-      # System Metrics Rules
-      - record: system:cpu_usage_percent
-        expr: 100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)
-
-      - record: system:memory_usage_percent
-        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100
-
-      - record: system:disk_usage_percent
-        expr: (node_filesystem_size_bytes - node_filesystem_avail_bytes) / node_filesystem_size_bytes * 100
+# remote_write:
+#   - url: "https://prometheus-remote-write-endpoint/api/v1/write"
+#     basic_auth:
+#       username: your_username
+#       password: your_password
 
 # ================================
 # Remote Write Configuration (for production)

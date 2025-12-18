@@ -66,7 +66,7 @@ class PredictionConfig:
                 for key, value in config_data.items():
                     if hasattr(self, key):
                         setattr(self, key, value)
-            logger.info("配置已从文件加载: {config_file}")
+            logger.info(f"配置已从文件加载: {config_file}")
         except Exception as e:
             logger.warning(f"配置文件加载失败，使用默认配置: {e}")
 
@@ -90,14 +90,14 @@ class PredictionDisplay:
 
         # 比赛信息
         print("\n📅 比赛信息:")
-        print("   主队: {result.get('home_team', 'Unknown')}")
-        print("   客队: {result.get('away_team', 'Unknown')}")
-        print("   日期: {result.get('match_date', 'Unknown')}")
+        print(f"   主队: {result.get('home_team', 'Unknown')}")
+        print(f"   客队: {result.get('away_team', 'Unknown')}")
+        print(f"   日期: {result.get('match_date', 'Unknown')}")
 
         # 预测状态
         success = result.get("success", False)
         if not success:
-            print("\n❌ 预测失败: {result.get('error', 'Unknown error')}")
+            print(f"\n❌ 预测失败: {result.get('error', 'Unknown error')}")
             return
 
         # 预测概率
@@ -140,23 +140,23 @@ class PredictionDisplay:
             strength = "⚠️ 不建议投注"
             risk = "高风险"
 
-        print("   {strength}: {predicted_outcome} (置信度 {confidence:.1%})")
-        print("   风险等级: {risk}")
+        print(f"   {strength}: {predicted_outcome} (置信度 {confidence:.1%})")
+        print(f"   风险等级: {risk}")
 
         # 详细信息
         print("\n📊 预测详情:")
-        print("   最终预测: {predicted_outcome}")
-        print("   置信度: {confidence:.3f}")
-        print("   处理时间: {result.get('processing_time_ms', 0):.1f}ms")
-        print("   缓存命中: {'是' if result.get('cached', False) else '否'}")
+        print(f"   最终预测: {predicted_outcome}")
+        print(f"   置信度: {confidence:.3f}")
+        print(f"   处理时间: {result.get('processing_time_ms', 0):.1f}ms")
+        print(f"   缓存命中: {'是' if result.get('cached', False) else '否'}")
 
         # 模型信息
         model_info = result.get("model_info", {})
         if model_info:
             print("\n🤖 模型信息:")
-            print("   模型版本: {model_info.get('model_version', 'Unknown')}")
-            print("   特征数量: {model_info.get('feature_count', 'Unknown')}")
-            print("   模型状态: {model_info.get('status', 'Unknown')}")
+            print(f"   模型版本: {model_info.get('model_version', 'Unknown')}")
+            print(f"   特征数量: {model_info.get('feature_count', 'Unknown')}")
+            print(f"   模型状态: {model_info.get('status', 'Unknown')}")
 
         print("\n" + "=" * 60)
 
@@ -176,9 +176,9 @@ class MatchPredictorCLI:
         """初始化服务"""
         try:
             # 导入服务层
-            from src.services.inference_service_v2 import inference_service_v2
+            from src.services.inference_service import InferenceService
 
-            self.inference_service = inference_service_v2
+            self.inference_service = InferenceService()
 
             # 初始化服务
             success = await self.inference_service.initialize()
@@ -193,16 +193,17 @@ class MatchPredictorCLI:
                     "football_model", self.config.model_path
                 )
                 if model_loaded:
-                    logger.info("模型加载成功: {self.config.model_path}")
+                    logger.info(f"模型加载成功: {self.config.model_path}")
                 else:
                     logger.warning("模型加载失败，使用降级模式")
             else:
-                logger.info("模型文件不存在，使用降级模式: {self.config.model_path}")
+                logger.info(f"模型文件不存在，使用降级模式: {self.config.model_path}")
 
             return True
 
         except Exception as e:
             logger.error("初始化失败: {e}")
+            logger.exception("完整初始化错误堆栈:")  # 增加完整的traceback
             self.simulation_mode = True
             return True  # 继续运行，使用模拟模式
 
@@ -247,7 +248,8 @@ class MatchPredictorCLI:
             return result
 
         except Exception as e:
-            logger.error("预测失败: {e}")
+            logger.error(f"预测失败: {e}")
+            logger.exception("完整预测错误堆栈:")  # 增加完整的traceback
             return {
                 "match_id": match_id,
                 "home_team": home_team,
@@ -416,7 +418,7 @@ def parse_date(date_str: str) -> Optional[datetime]:
     try:
         return datetime.strptime(date_str, "%Y-%m-%d")
     except ValueError:
-        logger.error("日期格式错误: {date_str}，请使用 YYYY-MM-DD 格式")
+        logger.error(f"日期格式错误: {date_str}，请使用 YYYY-MM-DD 格式")
         return None
 
 
@@ -434,7 +436,7 @@ def load_batch_matches(file_path: str) -> List[Dict[str, Any]]:
             raise ValueError("无效的批量文件格式")
 
     except Exception as e:
-        logger.error("批量文件加载失败: {e}")
+        logger.error(f"批量文件加载失败: {e}")
         return []
 
 
@@ -451,6 +453,12 @@ async def main():
         config.model_path = args.model_path
     if args.verbose:
         config.log_level = "DEBUG"
+
+    # 验证参数注入 - 增加调试信息
+    logger.info(f"Container Mode Active: 参数验证开始")
+    logger.info(f"解析到的参数: home={args.home}, away={args.away}, verbose={args.verbose}")
+    logger.info(f"模型路径: {config.model_path}")
+    logger.info(f"容器环境变量: MODEL_PATH={os.getenv('MODEL_PATH', 'NOT_SET')}")
 
     # 创建CLI实例
     cli = MatchPredictorCLI(config)
@@ -475,16 +483,16 @@ async def main():
                 logger.error("批量文件为空或格式错误")
                 return 1
 
-            logger.info("开始批量预测 {len(matches)} 场比赛")
+            logger.info(f"开始批量预测 {len(matches)} 场比赛")
             results = await cli.batch_predict(matches)
 
-            print("\n📈 批量预测完成 ({len(results)} 场比赛)")
+            print(f"\n📈 批量预测完成 ({len(results)} 场比赛)")
             success_count = sum(1 for r in results if r.get("success", False))
-            print("成功: {success_count}, 失败: {len(results) - success_count}")
+            print(f"成功: {success_count}, 失败: {len(results) - success_count}")
 
             # 显示每个结果
             for i, result in enumerate(results, 1):
-                print("\n--- 比赛 {i} ---")
+                print(f"\n--- 比赛 {i} ---")
                 PredictionDisplay.display_prediction_result(result)
 
             return 0
@@ -501,7 +509,7 @@ async def main():
                 return 1
 
         # 执行预测
-        logger.info("开始预测比赛: {args.home} vs {args.away}")
+        logger.info(f"开始预测比赛: {args.home} vs {args.away}")
         result = await cli.predict_match(
             home_team=args.home,
             away_team=args.away,
@@ -519,7 +527,8 @@ async def main():
         logger.info("用户中断操作")
         return 130
     except Exception as e:
-        logger.error("程序异常: {e}")
+        logger.error(f"程序异常: {e}")
+        logger.exception("完整程序异常堆栈:")  # 增加完整的traceback
         return 1
     finally:
         # 清理资源

@@ -4,6 +4,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **重要提醒**: This is a production-ready football prediction system with Service Layer v2.0 architecture. Always test changes thoroughly before deployment.
 
+**语言要求**: 与用户交流时，请始终使用中文回复。
+
 ## Development Commands
 
 ### Environment Setup
