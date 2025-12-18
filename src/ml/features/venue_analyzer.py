@@ -304,7 +304,7 @@ class VenueAnalyzer:
             logger.error(f"计算主场优势失败: {str(e)}")
             return 1.0  # 默认中性优势
 
-    def get_venue_summary(self, df: pd.DataFrame, team_id: int) -> Dict:
+    def get_venue_summary(self, df: pd.DataFrame, team_id: int) -> Dict[str, Any]:
         """
         获取球队的场馆表现摘要
 
