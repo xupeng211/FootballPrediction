@@ -241,35 +241,41 @@ class TestFotMobCollectionService:
         assert "max_concurrent_tasks" in status
 
 
-class TestInferenceServiceV2:
+class TestInferenceService:
     """推理服务v2测试"""
 
-    def test_inference_service_v2_initialization(self):
+    @patch("src.services.dependency_injection.ServiceContainer")
+    def test_inference_service_initialization(self, mock_container):
         """测试推理服务v2初始化"""
-        from src.services.inference_service_v2 import InferenceServiceV2
+        from src.services.inference_service import InferenceService
 
-        service = InferenceServiceV2()
+        # Mock依赖注入容器
+        mock_container_instance = Mock()
+        mock_container.return_value = mock_container_instance
+        mock_container_instance.resolve = AsyncMock(return_value=Mock())
+
+        service = InferenceService()
 
         # 验证基本属性
-        assert service.name == "InferenceServiceV2"
+        assert service.name == "InferenceService"
         assert hasattr(service, "model_loader")
         assert hasattr(service, "cache_manager")
         assert hasattr(service, "feature_extractor")
         assert hasattr(service, "request_stats")
         assert not service.is_initialized
 
-    @patch("src.services.inference_service_v2.Path.exists")
-    @patch("src.services.inference_service_v2.MatchFeatureExtractor")
-    async def test_inference_service_v2_initialize(self, mock_extractor, mock_path):
+    @patch("src.services.inference_service.Path.exists")
+    @patch("src.services.inference_service.MatchFeatureExtractor")
+    async def test_inference_service_initialize(self, mock_extractor, mock_path):
         """测试推理服务初始化"""
-        from src.services.inference_service_v2 import InferenceServiceV2
+        from src.services.inference_service import InferenceService
 
         # 模拟模型文件存在
         mock_path.return_value = True
         mock_extractor_instance = AsyncMock()
         mock_extractor.return_value = mock_extractor_instance
 
-        service = InferenceServiceV2()
+        service = InferenceService()
         service.model_loader = Mock()
         service.model_loader.load_model = Mock(return_value=True)
 
@@ -281,7 +287,7 @@ class TestInferenceServiceV2:
 
     async def test_prediction_request_creation(self):
         """测试预测请求创建"""
-        from src.services.inference_service_v2 import PredictionRequest
+        from src.services.inference_service import PredictionRequest
         from datetime import datetime
 
         request = PredictionRequest(
@@ -301,7 +307,7 @@ class TestInferenceServiceV2:
 
     async def test_prediction_response_creation(self):
         """测试预测响应创建"""
-        from src.services.inference_service_v2 import (
+        from src.services.inference_service import (
             PredictionResponse,
             PredictionRequest,
         )
@@ -325,12 +331,12 @@ class TestInferenceServiceV2:
         assert response_dict["cached"] is False
         assert "timestamp" in response_dict
 
-    @patch("src.services.inference_service_v2.MatchPredictor")
-    @patch("src.services.inference_service_v2.MatchFeatureExtractor")
+    @patch("src.services.inference_service.MatchPredictor")
+    @patch("src.services.inference_service.MatchFeatureExtractor")
     async def test_predict_match_success(self, mock_extractor, mock_predictor_class):
         """测试比赛预测成功"""
-        from src.services.inference_service_v2 import (
-            InferenceServiceV2,
+        from src.services.inference_service import (
+            InferenceService,
             PredictionRequest,
         )
 
@@ -346,7 +352,7 @@ class TestInferenceServiceV2:
         mock_extractor_instance = AsyncMock()
         mock_extractor.return_value = mock_extractor_instance
 
-        service = InferenceServiceV2()
+        service = InferenceService()
         service.is_initialized = True
         service.feature_extractor = mock_extractor_instance
 
@@ -362,12 +368,12 @@ class TestInferenceServiceV2:
 
     async def test_predict_match_not_initialized(self):
         """测试服务未初始化时的预测"""
-        from src.services.inference_service_v2 import (
-            InferenceServiceV2,
+        from src.services.inference_service import (
+            InferenceService,
             PredictionRequest,
         )
 
-        service = InferenceServiceV2()
+        service = InferenceService()
         service.is_initialized = False
 
         request = PredictionRequest(
@@ -381,9 +387,9 @@ class TestInferenceServiceV2:
 
     async def test_predict_match_simple(self):
         """测试简化预测接口"""
-        from src.services.inference_service_v2 import InferenceServiceV2
+        from src.services.inference_service import InferenceService
 
-        service = InferenceServiceV2()
+        service = InferenceService()
         service.predict_match = AsyncMock(
             return_value=Mock(to_dict=Mock(return_value={"test": "result"}))
         )
@@ -396,13 +402,13 @@ class TestInferenceServiceV2:
 
     async def test_batch_predict(self):
         """测试批量预测"""
-        from src.services.inference_service_v2 import (
-            InferenceServiceV2,
+        from src.services.inference_service import (
+            InferenceService,
             PredictionRequest,
             PredictionResponse,
         )
 
-        service = InferenceServiceV2()
+        service = InferenceService()
 
         # 模拟单个预测
         service.predict_match = AsyncMock(
@@ -427,15 +433,15 @@ class TestInferenceServiceV2:
 
     def test_get_service_stats(self):
         """测试获取服务统计"""
-        from src.services.inference_service_v2 import InferenceServiceV2
+        from src.services.inference_service import InferenceService
 
-        service = InferenceServiceV2()
+        service = InferenceService()
         service.model_loader = Mock()
         service.model_loader.list_loaded_models.return_value = ["model_1", "model_2"]
 
         stats = service.get_service_stats()
 
-        assert stats["service_name"] == "InferenceServiceV2"
+        assert stats["service_name"] == "InferenceService"
         assert "is_initialized" in stats
         assert "model_status" in stats
         assert "request_stats" in stats
@@ -443,9 +449,9 @@ class TestInferenceServiceV2:
 
     def test_load_model(self):
         """测试模型加载"""
-        from src.services.inference_service_v2 import InferenceServiceV2
+        from src.services.inference_service import InferenceService
 
-        service = InferenceServiceV2()
+        service = InferenceService()
         service.model_loader = Mock()
         service.model_loader.load_model.return_value = True
 
@@ -455,9 +461,9 @@ class TestInferenceServiceV2:
 
     def test_unload_model(self):
         """测试模型卸载"""
-        from src.services.inference_service_v2 import InferenceServiceV2
+        from src.services.inference_service import InferenceService
 
-        service = InferenceServiceV2()
+        service = InferenceService()
         service.model_loader = Mock()
         service.model_loader.unload_model.return_value = True
 
@@ -467,9 +473,9 @@ class TestInferenceServiceV2:
 
     def test_list_models(self):
         """测试列出已加载模型"""
-        from src.services.inference_service_v2 import InferenceServiceV2
+        from src.services.inference_service import InferenceService
 
-        service = InferenceServiceV2()
+        service = InferenceService()
         service.model_loader = Mock()
         service.model_loader.list_loaded_models.return_value = ["model_1", "model_2"]
 
@@ -670,15 +676,15 @@ class TestServiceIntegration:
     async def test_inference_service_with_manager(self):
         """测试推理服务与管理者集成"""
         from src.services import ServiceManager
-        from src.services.inference_service_v2 import InferenceServiceV2
+        from src.services.inference_service import InferenceService
 
         manager = ServiceManager()
-        inference_service = InferenceServiceV2()
+        inference_service = InferenceService()
         manager.register_service(inference_service)
 
         # 模拟模型文件不存在且简化初始化
-        with patch("src.services.inference_service_v2.Path.exists", return_value=False):
-            with patch.object(InferenceServiceV2, "initialize", return_value=True):
+        with patch("src.services.inference_service.Path.exists", return_value=False):
+            with patch.object(InferenceService, "initialize", return_value=True):
                 with patch.object(inference_service, "is_initialized", True):
                     result = await manager.initialize_all()
 
@@ -686,7 +692,7 @@ class TestServiceIntegration:
                     assert inference_service.is_initialized is True
 
         # 通过管理者获取服务
-        retrieved_service = manager.get_service("InferenceServiceV2")
+        retrieved_service = manager.get_service("InferenceService")
         assert retrieved_service is inference_service
 
         await manager.shutdown_all()
@@ -699,10 +705,10 @@ class TestServicesIntegration:
     def test_services_data_flow_integration(self):
         """测试服务数据流集成"""
         from src.services.collection_service import FotMobCollectionService
-        from src.services.inference_service_v2 import InferenceServiceV2
+        from src.services.inference_service import InferenceService
 
         collection_service = FotMobCollectionService()
-        inference_service = InferenceServiceV2()
+        inference_service = InferenceService()
 
         # 验证服务可以正常初始化
         assert collection_service is not None
@@ -715,10 +721,10 @@ class TestServicesIntegration:
     async def test_services_error_handling(self):
         """测试服务错误处理"""
         from src.services.collection_service import FotMobCollectionService
-        from src.services.inference_service_v2 import InferenceServiceV2
+        from src.services.inference_service import InferenceService
 
         collection_service = FotMobCollectionService()
-        inference_service = InferenceServiceV2()
+        inference_service = InferenceService()
 
         # 测试无效任务ID处理
         try:
@@ -750,10 +756,10 @@ class TestServicesIntegration:
     def test_services_performance_monitoring(self):
         """测试服务性能监控"""
         from src.services.collection_service import FotMobCollectionService
-        from src.services.inference_service_v2 import InferenceServiceV2
+        from src.services.inference_service import InferenceService
 
         collection_service = FotMobCollectionService()
-        inference_service = InferenceServiceV2()
+        inference_service = InferenceService()
 
         # 验证性能相关属性或方法
         assert hasattr(collection_service, "get_service_status")
@@ -778,10 +784,10 @@ class TestServicesIntegration:
     async def test_concurrent_service_operations(self):
         """测试并发服务操作"""
         from src.services.collection_service import FotMobCollectionService
-        from src.services.inference_service_v2 import InferenceServiceV2
+        from src.services.inference_service import InferenceService
 
         collection_service = FotMobCollectionService()
-        inference_service = InferenceServiceV2()
+        inference_service = InferenceService()
 
         # 模拟并发任务创建
         tasks = []
@@ -810,10 +816,10 @@ class TestServicesIntegration:
     def test_service_health_checks(self):
         """测试服务健康检查"""
         from src.services.collection_service import FotMobCollectionService
-        from src.services.inference_service_v2 import InferenceServiceV2
+        from src.services.inference_service import InferenceService
 
         collection_service = FotMobCollectionService()
-        inference_service = InferenceServiceV2()
+        inference_service = InferenceService()
 
         # 测试收集服务健康状态
         collection_status = collection_service.get_service_status()
@@ -822,7 +828,7 @@ class TestServicesIntegration:
 
         # 测试推理服务健康状态
         inference_stats = inference_service.get_service_stats()
-        assert inference_stats["service_name"] == "InferenceServiceV2"
+        assert inference_stats["service_name"] == "InferenceService"
         assert "is_initialized" in inference_stats
         assert "components" in inference_stats
 

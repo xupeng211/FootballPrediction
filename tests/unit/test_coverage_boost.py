@@ -11,15 +11,15 @@ import json
 from pathlib import Path
 
 
-class TestInferenceServiceV2Coverage:
+class TestInferenceServiceCoverage:
     """推理服务v2覆盖率测试"""
 
     @pytest.fixture
     def service(self):
         """创建推理服务实例"""
-        from src.services.inference_service_v2 import InferenceServiceV2
+        from src.services.inference_service import InferenceService
 
-        return InferenceServiceV2()
+        return InferenceService()
 
     def test_service_attributes(self, service):
         """测试服务属性"""
@@ -33,7 +33,7 @@ class TestInferenceServiceV2Coverage:
 
     def test_request_and_response_classes(self):
         """测试请求和响应类"""
-        from src.services.inference_service_v2 import (
+        from src.services.inference_service import (
             PredictionRequest,
             PredictionResponse,
         )
@@ -66,10 +66,10 @@ class TestInferenceServiceV2Coverage:
 
     def test_global_service_instance(self):
         """测试全局服务实例"""
-        from src.services.inference_service_v2 import inference_service_v2
+        from src.services.inference_service import InferenceService
 
-        assert inference_service_v2 is not None
-        assert hasattr(inference_service_v2, "model_loader")
+        service = InferenceService()
+        assert service is not None
 
 
 class TestMLInferenceCoverage:

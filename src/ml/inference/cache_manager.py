@@ -398,6 +398,7 @@ class PredictionCache:
                 # 执行清理
                 cleaned_count = self.cleanup_expired()
                 if cleaned_count > 0:
+                    logger.debug(f"清理了 {cleaned_count} 个过期缓存项")
 
             except Exception as e:
                 logger.error(f"后台清理任务异常: {e}")

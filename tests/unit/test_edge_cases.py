@@ -98,10 +98,10 @@ class TestInputValidationEdgeCases:
     def test_unicode_and_special_characters(self):
         """测试Unicode和特殊字符处理"""
         try:
-            from src.services.inference_service_v2 import InferenceServiceV2
+            from src.services.inference_service import InferenceService
 
             # 包含特殊字符的球队名称
-            service = InferenceServiceV2()
+            service = InferenceService()
 
             special_names = [
                 "Team™ © ®",
@@ -254,14 +254,14 @@ class TestErrorHandling:
     def test_service_initialization_errors(self):
         """测试服务初始化错误"""
         try:
-            from src.services.inference_service_v2 import InferenceServiceV2
+            from src.services.inference_service import InferenceService
 
             # 模拟初始化失败
             with patch(
-                "src.services.inference_service_v2.Path.exists", return_value=True
+                "src.services.inference_service.Path.exists", return_value=True
             ):
                 with patch(
-                    "src.services.inference_service_v2.ModelLoader"
+                    "src.services.inference_service.ModelLoader"
                 ) as mock_loader:
                     mock_loader_instance = Mock()
                     mock_loader_instance.load_model.side_effect = Exception(
@@ -269,7 +269,7 @@ class TestErrorHandling:
                     )
                     mock_loader.return_value = mock_loader_instance
 
-                    service = InferenceServiceV2()
+                    service = InferenceService()
 
                     try:
                         result = asyncio.run(service.initialize())
@@ -357,10 +357,10 @@ class TestErrorHandling:
     def test_file_system_errors(self):
         """测试文件系统错误"""
         try:
-            from src.services.inference_service_v2 import InferenceServiceV2
+            from src.services.inference_service import InferenceService
 
             # 测试不存在的模型文件
-            service = InferenceServiceV2(model_path="/nonexistent/path/model.pkl")
+            service = InferenceService(model_path="/nonexistent/path/model.pkl")
 
             try:
                 result = service.load_model("test_model", "/nonexistent/path/model.pkl")
@@ -383,10 +383,10 @@ class TestConcurrencyEdgeCases:
     async def test_concurrent_service_initialization(self):
         """测试并发服务初始化"""
         try:
-            from src.services.inference_service_v2 import InferenceServiceV2
+            from src.services.inference_service import InferenceService
 
             # 创建多个服务实例
-            services = [InferenceServiceV2() for _ in range(5)]
+            services = [InferenceService() for _ in range(5)]
 
             # 并发初始化
             tasks = [service.initialize() for service in services]
@@ -402,9 +402,9 @@ class TestConcurrencyEdgeCases:
     async def test_concurrent_prediction_requests(self):
         """测试并发预测请求"""
         try:
-            from src.services.inference_service_v2 import InferenceServiceV2
+            from src.services.inference_service import InferenceService
 
-            service = InferenceServiceV2()
+            service = InferenceService()
             service.is_initialized = True
 
             # 模拟预测响应

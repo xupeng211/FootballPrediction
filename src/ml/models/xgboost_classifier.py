@@ -719,10 +719,14 @@ if __name__ == "__main__":
         probabilities = classifier.predict_proba(X_test[:5])
 
         for i, (pred, prob) in enumerate(zip(predictions, probabilities)):
+            # 处理每个预测结果
+            pass
 
         # 特征重要性
         importance_df = classifier.get_feature_importance()
         for _, row in importance_df.head().iterrows():
+            # 处理特征重要性
+            pass
 
 
     except Exception as e:

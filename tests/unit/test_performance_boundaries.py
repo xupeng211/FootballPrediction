@@ -21,17 +21,17 @@ class TestPerformanceBoundaries:
     @pytest.mark.asyncio
     async def test_high_concurrency_performance(self):
         """测试高并发性能边界"""
-        from src.services.inference_service_v2 import (
-            InferenceServiceV2,
+        from src.services.inference_service import (
+            InferenceService,
             PredictionRequest,
         )
 
-        service = InferenceServiceV2()
+        service = InferenceService()
         service.is_initialized = True
 
         # 模拟快速预测
         with patch(
-            "src.services.inference_service_v2.MatchPredictor"
+            "src.services.inference_service.MatchPredictor"
         ) as mock_predictor_class:
             mock_predictor = Mock()
             mock_predictor_class.return_value = mock_predictor
@@ -81,12 +81,12 @@ class TestPerformanceBoundaries:
     @pytest.mark.asyncio
     async def test_memory_boundary_stress(self):
         """测试内存边界压力"""
-        from src.services.inference_service_v2 import (
-            InferenceServiceV2,
+        from src.services.inference_service import (
+            InferenceService,
             PredictionRequest,
         )
 
-        service = InferenceServiceV2()
+        service = InferenceService()
         service.is_initialized = True
 
         # 记录初始内存
@@ -97,7 +97,7 @@ class TestPerformanceBoundaries:
         large_features = [float(i) for i in range(5000)]  # 较大的特征向量
 
         with patch(
-            "src.services.inference_service_v2.MatchPredictor"
+            "src.services.inference_service.MatchPredictor"
         ) as mock_predictor_class:
             mock_predictor = Mock()
             mock_predictor_class.return_value = mock_predictor
@@ -135,12 +135,12 @@ class TestPerformanceBoundaries:
     @pytest.mark.asyncio
     async def test_cpu_utilization_boundaries(self):
         """测试CPU利用率边界"""
-        from src.services.inference_service_v2 import (
-            InferenceServiceV2,
+        from src.services.inference_service import (
+            InferenceService,
             PredictionRequest,
         )
 
-        service = InferenceServiceV2()
+        service = InferenceService()
         service.is_initialized = True
 
         # 创建CPU密集型预测模拟
@@ -152,7 +152,7 @@ class TestPerformanceBoundaries:
             return {"result": "HOME_WIN", "calculation": total}
 
         with patch(
-            "src.services.inference_service_v2.MatchPredictor"
+            "src.services.inference_service.MatchPredictor"
         ) as mock_predictor_class:
             mock_predictor = Mock()
             mock_predictor_class.return_value = mock_predictor
@@ -194,12 +194,12 @@ class TestPerformanceBoundaries:
     @pytest.mark.asyncio
     async def test_io_bound_performance(self):
         """测试IO密集型性能边界"""
-        from src.services.inference_service_v2 import (
-            InferenceServiceV2,
+        from src.services.inference_service import (
+            InferenceService,
             PredictionRequest,
         )
 
-        service = InferenceServiceV2()
+        service = InferenceService()
         service.is_initialized = True
 
         # 模拟IO密集型特征提取
@@ -214,7 +214,7 @@ class TestPerformanceBoundaries:
         )
 
         with patch(
-            "src.services.inference_service_v2.MatchPredictor"
+            "src.services.inference_service.MatchPredictor"
         ) as mock_predictor_class:
             mock_predictor = Mock()
             mock_predictor_class.return_value = mock_predictor
@@ -252,12 +252,12 @@ class TestErrorRecoveryMechanisms:
     @pytest.mark.asyncio
     async def test_circuit_breaker_recovery(self):
         """测试熔断器恢复机制"""
-        from src.services.inference_service_v2 import (
-            InferenceServiceV2,
+        from src.services.inference_service import (
+            InferenceService,
             PredictionRequest,
         )
 
-        service = InferenceServiceV2()
+        service = InferenceService()
         service.is_initialized = True
 
         # 模拟熔断器行为
@@ -275,7 +275,7 @@ class TestErrorRecoveryMechanisms:
                 return {"result": "HOME_WIN", "recovered": True}
 
         with patch(
-            "src.services.inference_service_v2.MatchPredictor"
+            "src.services.inference_service.MatchPredictor"
         ) as mock_predictor_class:
             mock_predictor = Mock()
             mock_predictor_class.return_value = mock_predictor
@@ -306,12 +306,12 @@ class TestErrorRecoveryMechanisms:
     @pytest.mark.asyncio
     async def test_graceful_degradation(self):
         """测试优雅降级机制"""
-        from src.services.inference_service_v2 import (
-            InferenceServiceV2,
+        from src.services.inference_service import (
+            InferenceService,
             PredictionRequest,
         )
 
-        service = InferenceServiceV2()
+        service = InferenceService()
         service.is_initialized = True
 
         # 模拟特征提取失败时的降级
@@ -334,7 +334,7 @@ class TestErrorRecoveryMechanisms:
             else:
                 # 模拟预测器失败
                 with patch(
-                    "src.services.inference_service_v2.MatchPredictor"
+                    "src.services.inference_service.MatchPredictor"
                 ) as mock_predictor_class:
                     mock_predictor = Mock()
                     mock_predictor_class.return_value = mock_predictor
@@ -358,12 +358,12 @@ class TestErrorRecoveryMechanisms:
     @pytest.mark.asyncio
     async def test_service_self_healing(self):
         """测试服务自愈机制"""
-        from src.services.inference_service_v2 import (
-            InferenceServiceV2,
+        from src.services.inference_service import (
+            InferenceService,
             PredictionRequest,
         )
 
-        service = InferenceServiceV2()
+        service = InferenceService()
         service.is_initialized = True
 
         # 模拟服务健康检查和自愈
@@ -407,12 +407,12 @@ class TestErrorRecoveryMechanisms:
     @pytest.mark.asyncio
     async def test_resource_exhaustion_recovery(self):
         """测试资源耗尽恢复"""
-        from src.services.inference_service_v2 import (
-            InferenceServiceV2,
+        from src.services.inference_service import (
+            InferenceService,
             PredictionRequest,
         )
 
-        service = InferenceServiceV2()
+        service = InferenceService()
         service.is_initialized = True
 
         # 模拟资源耗尽场景
@@ -434,7 +434,7 @@ class TestErrorRecoveryMechanisms:
                 return {"result": "HOME_WIN", "recovered": True}
 
         with patch(
-            "src.services.inference_service_v2.MatchPredictor"
+            "src.services.inference_service.MatchPredictor"
         ) as mock_predictor_class:
             mock_predictor = Mock()
             mock_predictor_class.return_value = mock_predictor
@@ -472,12 +472,12 @@ class TestErrorRecoveryMechanisms:
     @pytest.mark.asyncio
     async def test_retry_mechanism_with_backoff(self):
         """测试重试机制和退避策略"""
-        from src.services.inference_service_v2 import (
-            InferenceServiceV2,
+        from src.services.inference_service import (
+            InferenceService,
             PredictionRequest,
         )
 
-        service = InferenceServiceV2()
+        service = InferenceService()
         service.is_initialized = True
 
         # 模拟带重试的预测器
@@ -497,7 +497,7 @@ class TestErrorRecoveryMechanisms:
                 return {"result": "HOME_WIN", "attempts": attempt_count}
 
         with patch(
-            "src.services.inference_service_v2.MatchPredictor"
+            "src.services.inference_service.MatchPredictor"
         ) as mock_predictor_class:
             mock_predictor = Mock()
             mock_predictor_class.return_value = mock_predictor
@@ -525,9 +525,9 @@ class TestErrorRecoveryMechanisms:
 
     def test_service_metrics_consistency(self):
         """测试服务指标一致性"""
-        from src.services.inference_service_v2 import InferenceServiceV2
+        from src.services.inference_service import InferenceService
 
-        service = InferenceServiceV2()
+        service = InferenceService()
 
         # 验证初始指标状态
         stats = service.get_service_stats()

@@ -17,12 +17,12 @@ class TestInferenceServiceBoundaryConditions:
     @pytest.mark.asyncio
     async def test_empty_input_handling(self):
         """测试空输入处理"""
-        from src.services.inference_service_v2 import (
-            InferenceServiceV2,
+        from src.services.inference_service import (
+            InferenceService,
             PredictionRequest,
         )
 
-        service = InferenceServiceV2()
+        service = InferenceService()
         service.is_initialized = True
 
         # 测试各种空输入
@@ -50,12 +50,12 @@ class TestInferenceServiceBoundaryConditions:
     @pytest.mark.asyncio
     async def test_extremely_long_team_names(self):
         """测试极长球队名称"""
-        from src.services.inference_service_v2 import (
-            InferenceServiceV2,
+        from src.services.inference_service import (
+            InferenceService,
             PredictionRequest,
         )
 
-        service = InferenceServiceV2()
+        service = InferenceService()
         service.is_initialized = True
 
         # 创建极长的球队名称
@@ -85,12 +85,12 @@ class TestInferenceServiceBoundaryConditions:
     @pytest.mark.asyncio
     async def test_unicode_and_special_characters(self):
         """测试Unicode和特殊字符"""
-        from src.services.inference_service_v2 import (
-            InferenceServiceV2,
+        from src.services.inference_service import (
+            InferenceService,
             PredictionRequest,
         )
 
-        service = InferenceServiceV2()
+        service = InferenceService()
         service.is_initialized = True
 
         # 各种特殊字符组合
@@ -112,7 +112,7 @@ class TestInferenceServiceBoundaryConditions:
 
             # 模拟预测器
             with patch(
-                "src.services.inference_service_v2.MatchPredictor"
+                "src.services.inference_service.MatchPredictor"
             ) as mock_predictor_class:
                 mock_predictor = Mock()
                 mock_predictor_class.return_value = mock_predictor
@@ -130,12 +130,12 @@ class TestInferenceServiceBoundaryConditions:
     @pytest.mark.asyncio
     async def test_numeric_boundary_features(self):
         """测试数值边界特征"""
-        from src.services.inference_service_v2 import (
-            InferenceServiceV2,
+        from src.services.inference_service import (
+            InferenceService,
             PredictionRequest,
         )
 
-        service = InferenceServiceV2()
+        service = InferenceService()
         service.is_initialized = True
 
         # 测试各种数值边界
@@ -160,7 +160,7 @@ class TestInferenceServiceBoundaryConditions:
 
             # 模拟预测器处理边界值
             with patch(
-                "src.services.inference_service_v2.MatchPredictor"
+                "src.services.inference_service.MatchPredictor"
             ) as mock_predictor_class:
                 mock_predictor = Mock()
                 mock_predictor_class.return_value = mock_predictor
@@ -190,12 +190,12 @@ class TestInferenceServiceBoundaryConditions:
     @pytest.mark.asyncio
     async def test_concurrent_request_limits(self):
         """测试并发请求限制"""
-        from src.services.inference_service_v2 import (
-            InferenceServiceV2,
+        from src.services.inference_service import (
+            InferenceService,
             PredictionRequest,
         )
 
-        service = InferenceServiceV2()
+        service = InferenceService()
         service.is_initialized = True
 
         # 模拟慢速预测
@@ -204,7 +204,7 @@ class TestInferenceServiceBoundaryConditions:
             return {"result": "HOME_WIN"}
 
         with patch(
-            "src.services.inference_service_v2.MatchPredictor"
+            "src.services.inference_service.MatchPredictor"
         ) as mock_predictor_class:
             mock_predictor = Mock()
             mock_predictor_class.return_value = mock_predictor
@@ -243,12 +243,12 @@ class TestInferenceServiceBoundaryConditions:
     @pytest.mark.asyncio
     async def test_memory_pressure_handling(self):
         """测试内存压力处理"""
-        from src.services.inference_service_v2 import (
-            InferenceServiceV2,
+        from src.services.inference_service import (
+            InferenceService,
             PredictionRequest,
         )
 
-        service = InferenceServiceV2()
+        service = InferenceService()
         service.is_initialized = True
 
         # 模拟内存压力情况
@@ -262,7 +262,7 @@ class TestInferenceServiceBoundaryConditions:
         )
 
         with patch(
-            "src.services.inference_service_v2.MatchPredictor"
+            "src.services.inference_service.MatchPredictor"
         ) as mock_predictor_class:
             mock_predictor = Mock()
             mock_predictor_class.return_value = mock_predictor
@@ -281,12 +281,12 @@ class TestInferenceServiceBoundaryConditions:
     @pytest.mark.asyncio
     async def test_time_boundary_conditions(self):
         """测试时间边界条件"""
-        from src.services.inference_service_v2 import (
-            InferenceServiceV2,
+        from src.services.inference_service import (
+            InferenceService,
             PredictionRequest,
         )
 
-        service = InferenceServiceV2()
+        service = InferenceService()
         service.is_initialized = True
 
         # 测试极端时间值
@@ -314,7 +314,7 @@ class TestInferenceServiceBoundaryConditions:
                 )
 
                 with patch(
-                    "src.services.inference_service_v2.MatchPredictor"
+                    "src.services.inference_service.MatchPredictor"
                 ) as mock_predictor_class:
                     mock_predictor = Mock()
                     mock_predictor_class.return_value = mock_predictor
@@ -335,12 +335,12 @@ class TestInferenceServiceBoundaryConditions:
     @pytest.mark.asyncio
     async def test_batch_size_limits(self):
         """测试批量大小限制"""
-        from src.services.inference_service_v2 import (
-            InferenceServiceV2,
+        from src.services.inference_service import (
+            InferenceService,
             PredictionRequest,
         )
 
-        service = InferenceServiceV2()
+        service = InferenceService()
         service.is_initialized = True
 
         # 测试不同批量大小
@@ -359,7 +359,7 @@ class TestInferenceServiceBoundaryConditions:
 
             try:
                 with patch(
-                    "src.services.inference_service_v2.MatchPredictor"
+                    "src.services.inference_service.MatchPredictor"
                 ) as mock_predictor_class:
                     mock_predictor = Mock()
                     mock_predictor_class.return_value = mock_predictor
@@ -387,12 +387,12 @@ class TestInferenceServiceBoundaryConditions:
     @pytest.mark.asyncio
     async def test_timeout_boundary_conditions(self):
         """测试超时边界条件"""
-        from src.services.inference_service_v2 import (
-            InferenceServiceV2,
+        from src.services.inference_service import (
+            InferenceService,
             PredictionRequest,
         )
 
-        service = InferenceServiceV2()
+        service = InferenceService()
         service.is_initialized = True
 
         # 测试超时场景
@@ -401,7 +401,7 @@ class TestInferenceServiceBoundaryConditions:
             return {"result": "HOME_WIN"}
 
         with patch(
-            "src.services.inference_service_v2.MatchPredictor"
+            "src.services.inference_service.MatchPredictor"
         ) as mock_predictor_class:
             mock_predictor = Mock()
             mock_predictor_class.return_value = mock_predictor
@@ -435,7 +435,7 @@ class TestInferenceServiceBoundaryConditions:
 
     def test_configuration_boundary_values(self):
         """测试配置边界值"""
-        from src.services.inference_service_v2 import InferenceServiceV2
+        from src.services.inference_service import InferenceService
 
         # 测试各种边界配置
         boundary_configs = [
@@ -446,7 +446,7 @@ class TestInferenceServiceBoundaryConditions:
 
         for config in boundary_configs:
             try:
-                service = InferenceServiceV2(**config)
+                service = InferenceService(**config)
                 # 如果能创建，验证基本属性
                 assert service is not None
                 # 检查实际存在的属性而不是model_path
@@ -459,18 +459,18 @@ class TestInferenceServiceBoundaryConditions:
     @pytest.mark.asyncio
     async def test_service_statistics_boundaries(self):
         """测试服务统计边界"""
-        from src.services.inference_service_v2 import (
-            InferenceServiceV2,
+        from src.services.inference_service import (
+            InferenceService,
             PredictionRequest,
         )
 
-        service = InferenceServiceV2()
+        service = InferenceService()
         service.is_initialized = True
 
         # 测试统计边界值
         # 模拟大量请求以测试统计准确性
         with patch(
-            "src.services.inference_service_v2.MatchPredictor"
+            "src.services.inference_service.MatchPredictor"
         ) as mock_predictor_class:
             mock_predictor = Mock()
             mock_predictor_class.return_value = mock_predictor
@@ -496,12 +496,12 @@ class TestInferenceServiceBoundaryConditions:
     @pytest.mark.asyncio
     async def test_feature_vector_boundaries(self):
         """测试特征向量边界"""
-        from src.services.inference_service_v2 import (
-            InferenceServiceV2,
+        from src.services.inference_service import (
+            InferenceService,
             PredictionRequest,
         )
 
-        service = InferenceServiceV2()
+        service = InferenceService()
         service.is_initialized = True
 
         # 测试不同长度的特征向量
@@ -518,7 +518,7 @@ class TestInferenceServiceBoundaryConditions:
             )
 
             with patch(
-                "src.services.inference_service_v2.MatchPredictor"
+                "src.services.inference_service.MatchPredictor"
             ) as mock_predictor_class:
                 mock_predictor = Mock()
                 mock_predictor_class.return_value = mock_predictor
@@ -548,12 +548,12 @@ class TestInferenceServiceBoundaryConditions:
     @pytest.mark.asyncio
     async def test_error_recovery_boundaries(self):
         """测试错误恢复边界"""
-        from src.services.inference_service_v2 import (
-            InferenceServiceV2,
+        from src.services.inference_service import (
+            InferenceService,
             PredictionRequest,
         )
 
-        service = InferenceServiceV2()
+        service = InferenceService()
         service.is_initialized = True
 
         # 测试错误恢复机制
@@ -568,7 +568,7 @@ class TestInferenceServiceBoundaryConditions:
                 return {"result": "HOME_WIN"}
 
         with patch(
-            "src.services.inference_service_v2.MatchPredictor"
+            "src.services.inference_service.MatchPredictor"
         ) as mock_predictor_class:
             mock_predictor = Mock()
             mock_predictor_class.return_value = mock_predictor

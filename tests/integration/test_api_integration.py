@@ -154,7 +154,7 @@ class TestPredictionIntegration:
     def mock_prediction_service(self):
         """Mock预测服务"""
         with patch(
-            "src.services.inference_service_v2.InferenceServiceV2"
+            "src.services.inference_service.InferenceService"
         ) as mock_service_class:
             mock_service = Mock()
             mock_service.predict_match.return_value = {

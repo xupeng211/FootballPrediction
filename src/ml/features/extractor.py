@@ -765,6 +765,7 @@ class MatchFeatureExtractor:
                     if not (0 <= value <= float(SCORING.MAX_REASONABLE_TOTAL_GOALS)):
                         self.logger.warning(f"异常进球值: {name}={value}")
 
+                self.logger.info(
                 f"形态计算完成 (精确): 队伍={team_id}, "
                 f"场次={total_matches}, 胜率={win_rate:.3f}, "
                 f"场均进球={avg_goals_scored:.3f}, 动量={momentum:.3f}"

@@ -117,6 +117,7 @@ class VenueAnalyzer:
                 df, home_id, match_date, 5
             )
 
+            logger.info(
                 f"场馆特征计算完成: {home_id}(主) vs {away_id}(客), "
                 f"主场进球(3场): {venue_stats.home_goals_rolling_3:.2f}"
             )

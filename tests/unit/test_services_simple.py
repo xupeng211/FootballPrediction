@@ -52,8 +52,8 @@ class TestPredictionClasses(unittest.TestCase):
         self.assertEqual(response_data["model_version"], "1.0.0")
 
 
-class TestInferenceServiceV2Simple(unittest.TestCase):
-    """简化的 InferenceServiceV2 测试"""
+class TestInferenceServiceSimple(unittest.TestCase):
+    """简化的 InferenceService 测试"""
 
     def test_service_initialization_logic(self):
         """测试服务初始化逻辑"""

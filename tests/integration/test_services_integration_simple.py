@@ -9,8 +9,8 @@ from unittest.mock import Mock, AsyncMock, patch
 from datetime import datetime
 from typing import Dict, Any, List
 
-from src.services.inference_service_v2 import (
-    InferenceServiceV2,
+from src.services.inference_service import (
+    InferenceService,
     PredictionRequest,
     PredictionResponse,
 )
@@ -20,7 +20,7 @@ from src.ml.inference.cache_manager import PredictionCache
 from src.core.exceptions import PredictionError, ModelError, ValidationError
 
 
-class TestInferenceServiceV2Integration:
+class TestInferenceServiceIntegration:
     """推理服务v2集成测试"""
 
     @pytest.fixture
@@ -58,7 +58,7 @@ class TestInferenceServiceV2Integration:
     @pytest.fixture
     def inference_service(self, mock_dependencies):
         """创建推理服务实例"""
-        service = InferenceServiceV2()
+        service = InferenceService()
         service.model_loader = mock_dependencies["model_loader"]
         service.cache_manager = mock_dependencies["cache_manager"]
         service.is_initialized = True
@@ -167,7 +167,7 @@ class TestInferenceServiceV2Integration:
         assert "cache_stats" in stats
         assert "components" in stats
 
-        assert stats["service_name"] == "InferenceServiceV2"
+        assert stats["service_name"] == "InferenceService"
         assert stats["is_initialized"] is True
 
     def test_cache_operations(self, inference_service, mock_dependencies):
@@ -280,7 +280,7 @@ class TestServiceIntegration:
         mock_loader = Mock()
         mock_cache = Mock()
 
-        service = InferenceServiceV2()
+        service = InferenceService()
         service.model_loader = mock_loader
         service.cache_manager = mock_cache
         service.is_initialized = True
@@ -294,7 +294,7 @@ class TestServiceIntegration:
         mock_loader = Mock()
         mock_loader.get_model.side_effect = ModelError("Model not found")
 
-        service = InferenceServiceV2()
+        service = InferenceService()
         service.model_loader = mock_loader
         service.is_initialized = True
 
@@ -317,7 +317,7 @@ class TestServiceIntegration:
         mock_cache.get.return_value = None
 
         # 创建服务实例
-        service = InferenceServiceV2()
+        service = InferenceService()
         service.model_loader = mock_loader
         service.cache_manager = mock_cache
         service.is_initialized = True

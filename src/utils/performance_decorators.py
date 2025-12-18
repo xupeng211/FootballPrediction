@@ -128,14 +128,6 @@ def monitor_performance(
     """
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
-        def sync_wrapper(*args, **kwargs):
-            return _monitor_function_execution(
-                func, args, kwargs,
-                log_calls, track_memory, track_gc, min_execution_time_ms,
-                is_async=False
-            )
-
-        @functools.wraps(func)
         async def async_wrapper(*args, **kwargs):
             return await _monitor_function_execution(
                 func, args, kwargs,
@@ -147,12 +139,20 @@ def monitor_performance(
         if asyncio.iscoroutinefunction(func):
             return async_wrapper
         else:
+            # 对于同步函数，返回包装后的异步版本
+            @functools.wraps(func)
+            def sync_wrapper(*args, **kwargs):
+                return asyncio.run(_monitor_function_execution(
+                    func, args, kwargs,
+                    log_calls, track_memory, track_gc, min_execution_time_ms,
+                    is_async=False
+                ))
             return sync_wrapper
 
     return decorator
 
 
-def _monitor_function_execution(
+async def _monitor_function_execution(
     func: Callable,
     args: tuple,
     kwargs: dict,

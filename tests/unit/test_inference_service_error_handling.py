@@ -19,10 +19,10 @@ class TestInferenceServiceErrorHandling:
     @pytest.mark.asyncio
     async def test_initialization_model_file_not_found(self):
         """测试模型文件不存在的初始化错误"""
-        from src.services.inference_service_v2 import InferenceServiceV2
+        from src.services.inference_service import InferenceService
 
         # 使用不存在的模型路径
-        service = InferenceServiceV2(model_path="/nonexistent/path/model.pkl")
+        service = InferenceService(model_path="/nonexistent/path/model.pkl")
 
         # 应该优雅处理文件不存在错误
         result = await service.initialize()
@@ -34,14 +34,14 @@ class TestInferenceServiceErrorHandling:
     @pytest.mark.asyncio
     async def test_initialization_model_load_corruption_error(self):
         """测试模型文件损坏的加载错误"""
-        from src.services.inference_service_v2 import InferenceServiceV2
+        from src.services.inference_service import InferenceService
         from src.ml.inference.model_loader import ModelLoadError
 
-        service = InferenceServiceV2()
+        service = InferenceService()
 
         # 模拟模型加载器抛出损坏错误
         with patch(
-            "src.services.inference_service_v2.ModelLoader"
+            "src.services.inference_service.ModelLoader"
         ) as mock_loader_class:
             mock_loader = Mock()
             mock_loader_class.return_value = mock_loader
@@ -58,13 +58,13 @@ class TestInferenceServiceErrorHandling:
     @pytest.mark.asyncio
     async def test_initialization_permission_denied_error(self):
         """测试权限拒绝的初始化错误"""
-        from src.services.inference_service_v2 import InferenceServiceV2
+        from src.services.inference_service import InferenceService
 
-        service = InferenceServiceV2()
+        service = InferenceService()
 
         # 模拟权限拒绝错误
         with patch(
-            "src.services.inference_service_v2.ModelLoader"
+            "src.services.inference_service.ModelLoader"
         ) as mock_loader_class:
             mock_loader = Mock()
             mock_loader_class.return_value = mock_loader
@@ -81,13 +81,13 @@ class TestInferenceServiceErrorHandling:
     @pytest.mark.asyncio
     async def test_initialization_memory_insufficient_error(self):
         """测试内存不足的初始化错误"""
-        from src.services.inference_service_v2 import InferenceServiceV2
+        from src.services.inference_service import InferenceService
 
-        service = InferenceServiceV2()
+        service = InferenceService()
 
         # 模拟内存不足错误
         with patch(
-            "src.services.inference_service_v2.ModelLoader"
+            "src.services.inference_service.ModelLoader"
         ) as mock_loader_class:
             mock_loader = Mock()
             mock_loader_class.return_value = mock_loader
@@ -104,13 +104,13 @@ class TestInferenceServiceErrorHandling:
     @pytest.mark.asyncio
     async def test_initialization_partial_success_cleanup(self):
         """测试部分成功后的清理机制"""
-        from src.services.inference_service_v2 import InferenceServiceV2
+        from src.services.inference_service import InferenceService
 
-        service = InferenceServiceV2()
+        service = InferenceService()
 
         # 模拟部分初始化成功但后续失败
         with patch(
-            "src.services.inference_service_v2.ModelLoader"
+            "src.services.inference_service.ModelLoader"
         ) as mock_loader_class:
             mock_loader = Mock()
             mock_loader_class.return_value = mock_loader
@@ -129,9 +129,9 @@ class TestInferenceServiceErrorHandling:
     @pytest.mark.asyncio
     async def test_shutdown_graceful_cleanup_error(self):
         """测试关闭时的优雅清理错误"""
-        from src.services.inference_service_v2 import InferenceServiceV2
+        from src.services.inference_service import InferenceService
 
-        service = InferenceServiceV2()
+        service = InferenceService()
         service.is_initialized = True
 
         # 模拟缓存管理器关闭时的错误
@@ -149,9 +149,9 @@ class TestInferenceServiceErrorHandling:
     @pytest.mark.asyncio
     async def test_model_loading_async_cancellation(self):
         """测试异步模型加载的取消"""
-        from src.services.inference_service_v2 import InferenceServiceV2
+        from src.services.inference_service import InferenceService
 
-        service = InferenceServiceV2()
+        service = InferenceService()
 
         # 模拟长时间运行的模型加载
         async def slow_model_load(*args, **kwargs):
@@ -159,7 +159,7 @@ class TestInferenceServiceErrorHandling:
             return Mock()
 
         with patch(
-            "src.services.inference_service_v2.ModelLoader"
+            "src.services.inference_service.ModelLoader"
         ) as mock_loader_class:
             mock_loader = Mock()
             mock_loader.load_model = AsyncMock(side_effect=slow_model_load)
@@ -181,12 +181,12 @@ class TestInferenceServiceErrorHandling:
     @pytest.mark.asyncio
     async def test_prediction_feature_extraction_error(self):
         """测试预测时特征提取错误"""
-        from src.services.inference_service_v2 import (
-            InferenceServiceV2,
+        from src.services.inference_service import (
+            InferenceService,
             PredictionRequest,
         )
 
-        service = InferenceServiceV2()
+        service = InferenceService()
         service.is_initialized = True
 
         # 模拟特征提取器失败
@@ -207,10 +207,10 @@ class TestInferenceServiceErrorHandling:
     @pytest.mark.asyncio
     async def test_prediction_model_inference_error(self):
         """测试预测时模型推理错误"""
-        from src.services.inference_service_v2 import InferenceServiceV2
+        from src.services.inference_service import InferenceService
         from src.ml.inference import PredictionError
 
-        service = InferenceServiceV2()
+        service = InferenceService()
         service.is_initialized = True
         service.feature_extractor = Mock()
         service.feature_extractor.extract_features_from_match = AsyncMock(
@@ -232,9 +232,9 @@ class TestInferenceServiceErrorHandling:
     @pytest.mark.asyncio
     async def test_prediction_invalid_features_format(self):
         """测试预测时无效特征格式"""
-        from src.services.inference_service_v2 import InferenceServiceV2
+        from src.services.inference_service import InferenceService
 
-        service = InferenceServiceV2()
+        service = InferenceService()
         service.is_initialized = True
 
         # 模拟无效的特征格式
@@ -252,9 +252,9 @@ class TestInferenceServiceErrorHandling:
     @pytest.mark.asyncio
     async def test_prediction_timeout_handling(self):
         """测试预测超时处理"""
-        from src.services.inference_service_v2 import InferenceServiceV2
+        from src.services.inference_service import InferenceService
 
-        service = InferenceServiceV2()
+        service = InferenceService()
         service.is_initialized = True
 
         # 模拟超时的特征提取
@@ -282,9 +282,9 @@ class TestInferenceServiceErrorHandling:
     @pytest.mark.asyncio
     async def test_cache_service_connection_error(self):
         """测试缓存服务连接错误"""
-        from src.services.inference_service_v2 import InferenceServiceV2
+        from src.services.inference_service import InferenceService
 
-        service = InferenceServiceV2()
+        service = InferenceService()
         service.is_initialized = True
 
         # 模拟缓存服务连接失败
@@ -314,9 +314,9 @@ class TestInferenceServiceErrorHandling:
     @pytest.mark.asyncio
     async def test_concurrent_prediction_resource_conflict(self):
         """测试并发预测时的资源冲突"""
-        from src.services.inference_service_v2 import InferenceServiceV2
+        from src.services.inference_service import InferenceService
 
-        service = InferenceServiceV2()
+        service = InferenceService()
         service.is_initialized = True
 
         # 模拟资源冲突
@@ -351,9 +351,9 @@ class TestInferenceServiceErrorHandling:
 
     def test_service_stats_with_missing_components(self):
         """测试缺少组件时的服务统计"""
-        from src.services.inference_service_v2 import InferenceServiceV2
+        from src.services.inference_service import InferenceService
 
-        service = InferenceServiceV2()
+        service = InferenceService()
         # 故意不设置某些组件
 
         stats = service.get_service_stats()
@@ -366,9 +366,9 @@ class TestInferenceServiceErrorHandling:
     @pytest.mark.asyncio
     async def test_health_check_degraded_performance(self):
         """测试性能降级时的健康检查"""
-        from src.services.inference_service_v2 import InferenceServiceV2
+        from src.services.inference_service import InferenceService
 
-        service = InferenceServiceV2()
+        service = InferenceService()
         service.is_initialized = True
 
         # 模拟性能降级
@@ -390,9 +390,9 @@ class TestInferenceServiceErrorHandling:
 
     def test_model_info_with_invalid_model_state(self):
         """测试无效模型状态时的模型信息"""
-        from src.services.inference_service_v2 import InferenceServiceV2
+        from src.services.inference_service import InferenceService
 
-        service = InferenceServiceV2()
+        service = InferenceService()
         # 模拟无效的模型状态
         service.model_loader = Mock()
         service.model_loader.get_model_info.side_effect = Exception(
@@ -408,9 +408,9 @@ class TestInferenceServiceErrorHandling:
     @pytest.mark.asyncio
     async def test_batch_prediction_partial_failure(self):
         """测试批量预测时的部分失败"""
-        from src.services.inference_service_v2 import InferenceServiceV2
+        from src.services.inference_service import InferenceService
 
-        service = InferenceServiceV2()
+        service = InferenceService()
         service.is_initialized = True
 
         # 模拟部分预测失败
@@ -442,9 +442,9 @@ class TestInferenceServiceErrorHandling:
 
     def test_error_recovery_and_fallback_mechanisms(self):
         """测试错误恢复和回退机制"""
-        from src.services.inference_service_v2 import InferenceServiceV2
+        from src.services.inference_service import InferenceService
 
-        service = InferenceServiceV2()
+        service = InferenceService()
 
         # 测试各种回退机制
         with patch.object(
@@ -465,9 +465,9 @@ class TestInferenceServiceErrorHandling:
     @pytest.mark.asyncio
     async def test_resource_exhaustion_handling(self):
         """测试资源耗尽处理"""
-        from src.services.inference_service_v2 import InferenceServiceV2
+        from src.services.inference_service import InferenceService
 
-        service = InferenceServiceV2()
+        service = InferenceService()
         service.is_initialized = True
 
         # 模拟资源耗尽
@@ -484,11 +484,11 @@ class TestInferenceServiceErrorHandling:
 
     def test_configuration_validation_errors(self):
         """测试配置验证错误"""
-        from src.services.inference_service_v2 import InferenceServiceV2
+        from src.services.inference_service import InferenceService
 
         # 测试无效配置
         with pytest.raises(ValueError) as exc_info:
-            service = InferenceServiceV2(model_path="", model_name="")  # 空配置
+            service = InferenceService(model_path="", model_name="")  # 空配置
 
         # 应该抛出配置错误
         assert (
@@ -499,16 +499,16 @@ class TestInferenceServiceErrorHandling:
     @pytest.mark.asyncio
     async def test_service_lifecycle_state_consistency(self):
         """测试服务生命周期状态一致性"""
-        from src.services.inference_service_v2 import InferenceServiceV2
+        from src.services.inference_service import InferenceService
 
-        service = InferenceServiceV2()
+        service = InferenceService()
 
         # 验证初始状态
         assert service.is_initialized is False
 
         # 模拟初始化过程中的状态变化
         with patch(
-            "src.services.inference_service_v2.ModelLoader"
+            "src.services.inference_service.ModelLoader"
         ) as mock_loader_class:
             mock_loader = Mock()
             mock_loader_class.return_value = mock_loader
@@ -527,12 +527,12 @@ class TestInferenceServiceErrorHandling:
 
     def test_error_logging_and_monitoring_integration(self):
         """测试错误日志记录和监控集成"""
-        from src.services.inference_service_v2 import InferenceServiceV2
+        from src.services.inference_service import InferenceService
 
-        service = InferenceServiceV2()
+        service = InferenceService()
 
         # 模拟监控组件
-        with patch("src.services.inference_service_v2.logger") as mock_logger:
+        with patch("src.services.inference_service.logger") as mock_logger:
             # 触发一个错误
             try:
                 service._nonexistent_method()  # 故意触发不存在的方法错误
