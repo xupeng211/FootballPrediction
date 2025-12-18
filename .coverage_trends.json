@@ -1,0 +1,40 @@
+{
+  "history": [
+    {
+      "timestamp": "2025-12-18T12:14:52.299037",
+      "overall_coverage": 26.364219987160283,
+      "module_coverage": {"inference_service_v2": 92.0, "config": 77.1, "database": 35.0},
+      "raw_data": {
+        "total": 26.364219987160283,
+        "lines_covered": 1232,
+        "lines_valid": 4673
+      }
+    }
+  ],
+  "module_trends": {
+    "inference_service_v2": [
+      {
+        "timestamp": "2025-12-18T12:14:52.299037",
+        "coverage": 92.0
+      }
+    ],
+    "config": [
+      {
+        "timestamp": "2025-12-18T12:14:52.299037",
+        "coverage": 77.1
+      }
+    ],
+    "database": [
+      {
+        "timestamp": "2025-12-18T12:14:52.299037",
+        "coverage": 35.0
+      }
+    ]
+  },
+  "targets": {
+    "overall": 25.0,
+    "inference_service_v2": 90.0,
+    "config": 70.0,
+    "database": 50.0
+  }
+}

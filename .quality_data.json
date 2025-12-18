@@ -1,0 +1,127 @@
+{
+  "history": [
+    {
+      "timestamp": "2025-12-18T12:12:29.663145",
+      "test_info": {
+        "core_tests": 40,
+        "core_passed": 40,
+        "inference_tests": 33,
+        "inference_passed": 33,
+        "total_tests": 73,
+        "total_passed": 73,
+        "pass_rate": 100.0
+      },
+      "coverage_info": {
+        "error": "./scripts/test-automation.sh: line 5: $'\\n测试自动化脚本\\n提供完整的测试执行、覆盖率分析、质量检查功能\\n': command not found\n"
+      },
+      "quality_info": {
+        "formatting": false,
+        "formatting_issues": 0,
+        "style": false,
+        "style_issues": 714,
+        "type_check": false,
+        "type_issues": 1
+      },
+      "quality_score": 40.0
+    },
+    {
+      "timestamp": "2025-12-18T12:23:17.501563",
+      "test_info": {
+        "core_tests": 40,
+        "core_passed": 40,
+        "inference_tests": 33,
+        "inference_passed": 33,
+        "total_tests": 73,
+        "total_passed": 73,
+        "pass_rate": 100.0
+      },
+      "coverage_info": {
+        "error": "./scripts/test-automation.sh: line 5: $'\\n测试自动化脚本\\n提供完整的测试执行、覆盖率分析、质量检查功能\\n': command not found\n"
+      },
+      "quality_info": {
+        "formatting": false,
+        "formatting_issues": 0,
+        "style": false,
+        "style_issues": 714,
+        "type_check": false,
+        "type_issues": 1
+      },
+      "quality_score": 40.0
+    },
+    {
+      "timestamp": "2025-12-18T12:26:07.268408",
+      "test_info": {
+        "core_tests": 40,
+        "core_passed": 40,
+        "inference_tests": 33,
+        "inference_passed": 33,
+        "total_tests": 73,
+        "total_passed": 73,
+        "pass_rate": 100.0
+      },
+      "coverage_info": {
+        "error": "./scripts/test-automation.sh: line 5: $'\\n测试自动化脚本\\n提供完整的测试执行、覆盖率分析、质量检查功能\\n': command not found\n"
+      },
+      "quality_info": {
+        "formatting": true,
+        "style": false,
+        "style_issues": 591,
+        "type_check": false,
+        "type_issues": 1
+      },
+      "quality_score": 50.0
+    },
+    {
+      "timestamp": "2025-12-18T12:27:37.932509",
+      "test_info": {
+        "core_tests": 40,
+        "core_passed": 40,
+        "inference_tests": 33,
+        "inference_passed": 33,
+        "total_tests": 73,
+        "total_passed": 73,
+        "pass_rate": 100.0
+      },
+      "coverage_info": {
+        "error": "./scripts/test-automation.sh: line 5: $'\\n测试自动化脚本\\n提供完整的测试执行、覆盖率分析、质量检查功能\\n': command not found\n"
+      },
+      "quality_info": {
+        "formatting": true,
+        "style": false,
+        "style_issues": 591,
+        "type_check": false,
+        "type_issues": 1
+      },
+      "quality_score": 50.0
+    }
+  ],
+  "baseline": {
+    "timestamp": "2025-12-18T12:12:29.663145",
+    "test_info": {
+      "core_tests": 40,
+      "core_passed": 40,
+      "inference_tests": 33,
+      "inference_passed": 33,
+      "total_tests": 73,
+      "total_passed": 73,
+      "pass_rate": 100.0
+    },
+    "coverage_info": {
+      "error": "./scripts/test-automation.sh: line 5: $'\\n测试自动化脚本\\n提供完整的测试执行、覆盖率分析、质量检查功能\\n': command not found\n"
+    },
+    "quality_info": {
+      "formatting": false,
+      "formatting_issues": 0,
+      "style": false,
+      "style_issues": 714,
+      "type_check": false,
+      "type_issues": 1
+    },
+    "quality_score": 40.0
+  },
+  "targets": {
+    "test_pass_rate": 95.0,
+    "coverage_percentage": 25.0,
+    "quality_score": 80.0
+  }
+}

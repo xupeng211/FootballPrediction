@@ -36,8 +36,11 @@ services:
       - API_HOST=0.0.0.0
       - API_PORT=8000
       - API_DEBUG=false
-    # 临时命令：保持容器存活以便修复
-    command: ["tail", "-f", "/dev/null"]
+    # 使用临时解决方案 - 运行标准的main.py
+    entrypoint: []
+    command: ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000", "--log-level", "info"]
+    # 临时使用root用户解决权限问题
+    user: "0:0"
     depends_on:
       db:
         condition: service_healthy
@@ -49,6 +52,15 @@ services:
       - ./data:/app/data
       - model_data:/app/data/models
       - cache_data:/app/data/cache
+    # 性能优化配置
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
     networks:
       - football-network
     restart: unless-stopped

@@ -75,10 +75,11 @@ WORKDIR /app
 COPY --from=builder /opt/venv /opt/venv
 
 # 复制应用代码 - v2.0 架构更新
-COPY src/ ./src/
-COPY scripts/ ./scripts/
-COPY docker/entrypoint_v2.sh ./entrypoint.sh
-COPY docker/healthcheck_v2.py ./healthcheck.py
+COPY --chown=appuser:appuser src/ ./src/
+COPY --chown=appuser:appuser scripts/ ./scripts/
+COPY --chown=appuser:appuser docker/entrypoint_v2.sh ./entrypoint.sh
+COPY --chown=appuser:appuser docker/simple_entrypoint.sh ./docker/simple_entrypoint.sh
+COPY --chown=appuser:appuser docker/healthcheck_v2.py ./healthcheck.py
 
 # 复制配置文件
 COPY alembic.ini ./
@@ -91,7 +92,7 @@ COPY src/database/migrations/ ./src/database/migrations/
 # 创建必要的目录并设置权限
 RUN mkdir -p /app/logs /app/data /app/tmp && \
     chown -R appuser:appuser /app && \
-    chmod +x /app/entrypoint.sh /app/healthcheck.py
+    chmod +x /app/entrypoint.sh /app/healthcheck.py /app/docker/simple_entrypoint.sh
 
 # 切换到非root用户
 USER appuser

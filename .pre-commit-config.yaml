@@ -1,106 +1,160 @@
+# Pre-commit hooks configuration for Football Prediction System
+# 安装: pre-commit install
+# 运行: pre-commit run --all-files
+
 repos:
-  # ================================
-  # Basic pre-commit hooks
-  # ================================
+  # 基础代码质量检查
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.5.0
     hooks:
       - id: trailing-whitespace
+        description: 删除行尾空白字符
       - id: end-of-file-fixer
+        description: 确保文件以换行符结尾
       - id: check-yaml
-      - id: check-added-large-files
-        args: ['--maxkb=1000']
+        description: 检查YAML文件语法
+      - id: check-json
+        description: 检查JSON文件语法
+      - id: check-toml
+        description: 检查TOML文件语法
       - id: check-merge-conflict
-      - id: check-case-conflict
-      - id: check-docstring-first
+        description: 检查合并冲突标记
+      - id: check-added-large-files
+        description: 防止添加大文件
+        args: ['--maxkb=1000']
       - id: debug-statements
+        description: 检查调试语句
       - id: name-tests-test
+        description: 确保测试文件命名规范
         args: [--pytest-test-first]
 
-  # ================================
-  # Code formatting
-  # ================================
+  # Python代码格式化
   - repo: https://github.com/psf/black
     rev: 23.12.1
     hooks:
       - id: black
+        description: Python代码格式化
         language_version: python3.11
         args: [--line-length=88]
 
-  # ================================
-  # Import sorting
-  # ================================
+  # 代码导入排序
   - repo: https://github.com/pycqa/isort
     rev: 5.13.2
     hooks:
       - id: isort
+        description: Python导入排序
         args: [--profile=black, --line-length=88]
 
-  # ================================
-  # Linting
-  # ================================
+  # 代码风格检查
   - repo: https://github.com/pycqa/flake8
     rev: 7.0.0
     hooks:
       - id: flake8
+        description: Python代码风格检查
         args: [--max-line-length=88, --extend-ignore=E203,W503]
+        additional_dependencies:
+          - flake8-docstrings
+          - flake8-import-order
+          - flake8-bugbear
 
-  # ================================
-  # Type checking
-  # ================================
+  # 类型检查
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: v1.8.0
     hooks:
       - id: mypy
+        description: Python类型检查
         additional_dependencies: [types-all]
         args: [--ignore-missing-imports, --strict-optional]
         exclude: ^tests/
 
-  # ================================
-  # Security scanning
-  # ================================
+  # 安全检查
   - repo: https://github.com/pycqa/bandit
     rev: 1.7.5
     hooks:
       - id: bandit
-        args: [-r, src/, -f, json, -o, bandit-report.json]
+        description: Python安全检查
+        args: [-r, src/, -f, json, -o, bandit-precommit.json]
         pass_filenames: false
 
-  # ================================
-  # Dependency checking
-  # ================================
+  # 依赖安全检查
   - repo: https://github.com/pyupio/safety
     rev: 3.0.1
     hooks:
       - id: safety
+        description: Python依赖安全检查
         args: [--json, --output, safety-report.json]
 
-  # ================================
-  # YAML/JSON validation
-  # ================================
-  - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.28.0
-    hooks:
-      - id: check-github-workflows
-      - id: check-jsonschema
-        files: ^docker-compose.*\.ya?ml$
-        types: [yaml]
-
-  # ================================
-  # Dockerfile linting
-  # ================================
-  - repo: https://github.com/hadolint/hadolint
-    rev: v2.12.0
-    hooks:
-      - id: hadolint-docker
-        args: [--ignore, DL3008, --ignore, DL3009]
-
-  # ================================
-  # Documentation checking
-  # ================================
+  # 文档检查
   - repo: https://github.com/pycqa/pydocstyle
     rev: 6.3.0
     hooks:
       - id: pydocstyle
+        description: Python文档字符串检查
         args: [--convention=google]
         exclude: ^tests/
+
+  # 复杂度检查
+  - repo: https://github.com/xenon-python/xenon
+    rev: 0.9.0
+    hooks:
+      - id: xenon
+        description: 代码复杂度检查
+        args: [--max-average=A, --max-modules=A, --max-absolute=B]
+
+  # YAML/JSON验证
+  - repo: https://github.com/python-jsonschema/check-jsonschema
+    rev: 0.28.0
+    hooks:
+      - id: check-github-workflows
+        description: 检查GitHub工作流
+      - id: check-jsonschema
+        description: 检查JSON Schema
+        files: ^docker-compose.*\.ya?ml$
+        types: [yaml]
+
+  # Dockerfile检查
+  - repo: https://github.com/hadolint/hadolint
+    rev: v2.12.0
+    hooks:
+      - id: hadolint-docker
+        description: Dockerfile检查
+        args: [--ignore, DL3008, --ignore, DL3009]
+
+  # 本地质量门禁检查
+  - repo: local
+    hooks:
+      - id: quality-gate
+        name: 质量门禁检查
+        entry: python scripts/quality_gate.py
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [commit]
+
+  # 测试覆盖率检查（仅在提交时）
+  - repo: local
+    hooks:
+      - id: pytest-coverage
+        name: 测试覆盖率检查
+        entry: python scripts/quality_gate.py --coverage-only
+        language: system
+        pass_filenames: false
+        stages: [commit]
+        always_run: false
+
+# 全局配置
+default_language_version:
+  python: python3.11
+
+# CI配置
+ci:
+  autofix_commit_msg: |
+    [pre-commit.ci] auto fixes from pre-commit.com hooks
+
+    for more information, see https://pre-commit.ci
+  autofix_prs: true
+  autoupdate_branch: ''
+  autoupdate_commit_msg: '[pre-commit.ci] pre-commit autoupdate'
+  autoupdate_schedule: weekly
+  skip: [quality-gate, pytest-coverage]
+  submodules: false
