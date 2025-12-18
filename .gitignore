@@ -1,17 +1,38 @@
 # ==================== Football Prediction System - .gitignore ====================
 # 🚨 SECURITY: This file ensures sensitive data is NEVER committed to version control
-# Last updated: 2024-12-18
-# Maintainer: Senior DevOps Engineer
+# Last updated: 2024-12-18 (Emergency Update)
+# Maintainer: Senior Git DevOps Expert (Emergency Cleanup)
 
 # ============================================================================
-# 🚨 CRITICAL EXCLUSIONS (BACKUP, TEMP, AND NON-CODE FILES)
+# 🚨 EMERGENCY ROOT-LEVEL EXCLUSIONS (HIGHEST PRIORITY)
 # ============================================================================
-# Backup and archive directories (CRITICAL)
-backup/
-backups/
-archive/
-deprecated/
-old_versions/
+# 彻底屏蔽所有级别的备份和数据 (物理删除 + 逻辑屏蔽)
+/backup/
+/backups/
+/data/
+/logs/
+/venv/
+/.claude/
+/config_backup/
+/tests_backup/
+/database/
+/archive/
+/deprecated/
+/old_versions/
+/temp/
+/tmp/
+
+# 通配符屏蔽 - 防止任何子目录和递归备份
+**/backup/
+**/backups/
+# 注释掉过于宽泛的 data 规则，保护 src/data/ 和 src/ml/data/
+# **/data/
+**/logs/
+**/venv/
+**/temp/
+**/tmp/
+**/.cache/
+**/__pycache__/
 *.old
 *.backup
 *.bak
