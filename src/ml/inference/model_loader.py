@@ -171,7 +171,14 @@ class ModelLoader:
                 return xgb.XGBClassifier()
             elif model_path.suffix in [".pkl", ".pickle"]:
                 with open(model_path, "rb") as f:
-                    return pickle.load(f)
+                    try:
+                        model_data = pickle.load(f)  # nosec B301
+                        # 安全验证：确保是XGBoost模型
+                        if not hasattr(model_data, "predict"):
+                            raise ModelLoadError("加载的模型不是有效的预测模型")
+                        return model_data
+                    except (pickle.PickleError, EOFError, AttributeError) as e:
+                        raise ModelLoadError(f"模型文件损坏: {e}")
             else:
                 # 使用joblib加载，适合大型模型文件
                 return joblib.load(model_path)

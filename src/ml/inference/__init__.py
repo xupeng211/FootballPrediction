@@ -276,7 +276,9 @@ class PredictionCache:
         """生成缓存键（兼容性方法）"""
         import hashlib
 
-        features_hash = hashlib.md5(features.tobytes()).hexdigest()
+        features_hash = hashlib.sha256(
+            features.tobytes(), usedforsecurity=False
+        ).hexdigest()
         return f"{model_name}:{features_hash}"
 
     def get(self, features: "np.ndarray", model_name: str) -> Optional[Dict[str, Any]]:

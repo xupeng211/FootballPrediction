@@ -16,7 +16,7 @@ from typing import Any, Dict
 class Config:
     """配置管理类 - 提供统一的配置读写和持久化机制"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         # 配置文件存储在用户主目录下，避免权限问题
         self.config_dir = Path.home() / ".footballprediction"
         self.config_file = self.config_dir / "config.json"

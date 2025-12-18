@@ -1,0 +1,153 @@
+{
+  "project_name": "FootballPrediction",
+  "version": "v2.0.0",
+  "quality_profile": "production_ready",
+  "last_updated": "2025-12-17",
+  "status": "stable",
+
+  "architecture": {
+    "pattern": "Service Layer v2.0 + ML Inference + Docker",
+    "key_components": [
+      "InferenceService",
+      "CollectionService",
+      "ExplainabilityService",
+      "ModelLoader",
+      "Predictor",
+      "CacheManager"
+    ]
+  },
+
+  "quality_targets": {
+    "code_coverage": {
+      "target": 80,
+      "current": "varies_by_category",
+      "v2_tests": {
+        "total": 51,
+        "passing": 29,
+        "skipped": 22
+      },
+      "legacy_tests": {
+        "total": 228,
+        "status": "some_dependency_issues"
+      }
+    },
+    "performance": {
+      "response_time": "<100ms",
+      "cache_hit_rate": ">80%",
+      "model_accuracy": "65%+ (target)"
+    }
+  },
+
+  "quality_tools_config": {
+    "makefile_commands": {
+      "primary_checks": [
+        "make quality",
+        "make ci",
+        "make test",
+        "make coverage"
+      ],
+      "individual_checks": [
+        "make format",
+        "make lint",
+        "make typecheck",
+        "make security",
+        "make complexity",
+        "make deadcode"
+      ],
+      "docker_integration": [
+        "./scripts/docker-manager.sh test",
+        "./scripts/docker-manager.sh quality"
+      ]
+    },
+
+    "ci_workflow": {
+      "local_verification": "./ci-verify.sh",
+      "github_actions": ".github/workflows/",
+      "current_status": "Tests Disabled - 仅运行质量检查",
+      "reenable_tests_steps": [
+        "更新工作流名称，移除Tests Disabled",
+        "取消注释或添加测试相关的job步骤",
+        "确保测试环境配置正确"
+      ]
+    }
+  },
+
+  "file_quality_rules": {
+    "python_files": {
+      "patterns": ["src/**/*.py", "scripts/**/*.py", "tests/**/*.py"],
+      "requirements": [
+        "async/await模式",
+        "类型注解",
+        "文档字符串",
+        "错误处理"
+      ]
+    },
+
+    "ml_specific": {
+      "feature_engineering": "src/ml/features/",
+      "model_files": "src/ml/models/",
+      "inference_layer": "src/ml/inference/",
+      "training_pipeline": "src/ml/training/"
+    },
+
+    "api_specific": {
+      "fastapi_endpoints": "src/api/",
+      "schemas": "src/api/schemas.py",
+      "health_checks": "src/api/health.py",
+      "monitoring": "src/api/monitoring.py"
+    }
+  },
+
+  "known_issues": {
+    "git_status": "多个文件处于staging状态，需要先处理",
+    "v2_test_skip_reasons": [
+      "缺少外部依赖（Redis、数据库连接）",
+      "模型文件不存在",
+      "外部API配置缺失"
+    ],
+    "docker_connection_issues": {
+      "database": "PostgreSQL连接问题",
+      "redis": "Redis连接问题",
+      "solution": "使用docker-compose up -d启动完整环境"
+    }
+  },
+
+  "improvement_areas": [
+    {
+      "area": "测试稳定性",
+      "priority": "high",
+      "action": "解决V2测试跳过问题，确保外部依赖就绪"
+    },
+    {
+      "area": "CI/CD完善",
+      "priority": "medium",
+      "action": "重新启用CI工作流中的测试功能"
+    },
+    {
+      "area": "代码覆盖率",
+      "priority": "medium",
+      "action": "提升到80%+的目标覆盖率"
+    },
+    {
+      "area": "Git状态清理",
+      "priority": "high",
+      "action": "处理staging状态的文件"
+    }
+  ],
+
+  "environment_config": {
+    "files": [
+      ".env.example",
+      ".env.dev",
+      ".env.ci",
+      ".env.production",
+      ".env.docker"
+    ],
+    "key_variables": {
+      "database": ["DB_HOST", "DB_PORT", "DB_NAME", "DB_USER", "DB_PASSWORD"],
+      "redis": ["REDIS_HOST", "REDIS_PORT", "REDIS_DB", "REDIS_PASSWORD"],
+      "fotmob_api": ["FOTMOB_X_MAS_HEADER", "FOTMOB_X_FOO_HEADER"],
+      "services": ["INFERENCE_SERVICE_V2_ENABLED", "COLLECTION_SERVICE_ENABLED", "EXPLAINABILITY_SERVICE_ENABLED"]
+    }
+  }
+}

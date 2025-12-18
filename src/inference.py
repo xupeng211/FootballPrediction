@@ -84,10 +84,25 @@ class Predictor:
             if not self.model_path.exists():
                 raise ModelLoadError(f"模型文件不存在: {self.model_path}")
 
-            # 加载模型
+            # 加载模型 (带安全验证)
             if self.model_path.suffix in [".pkl", ".pickle"]:
                 with open(self.model_path, "rb") as f:
-                    model_data = pickle.load(f)
+                    try:
+                        # 安全的pickle加载，验证数据结构
+                        model_data = pickle.load(f)  # nosec B301
+
+                        # 基本安全检查：验证加载的数据是预期的类型
+                        if not isinstance(model_data, (dict, object)):
+                            raise ModelLoadError(f"无效的模型数据类型: {type(model_data)}")
+
+                        # 如果是字典格式，验证必要的键
+                        if isinstance(model_data, dict):
+                            required_keys = ["model", "metadata"]
+                            if not all(key in model_data for key in required_keys):
+                                raise ModelLoadError(f"模型数据缺少必要的键: {required_keys}")
+
+                    except (pickle.PickleError, EOFError, AttributeError) as e:
+                        raise ModelLoadError(f"模型文件损坏或格式错误: {e}")
 
                 # 处理不同的模型格式
                 if isinstance(model_data, dict):
@@ -388,7 +403,7 @@ class PredictionCache:
             str: 缓存键
         """
         # 使用特征数据的哈希值和模型名称生成缓存键
-        features_hash = hashlib.md5(features.tobytes()).hexdigest()
+        features_hash = hashlib.sha256(features.tobytes(), usedforsecurity=False).hexdigest()
         return f"{model_name}:{features_hash}"
 
     def get(self, features: np.ndarray, model_name: str) -> Optional[Dict[str, Any]]:

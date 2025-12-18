@@ -325,7 +325,7 @@ if __name__ == "__main__":
 
     # 安全的主机配置
     if os.getenv("ENVIRONMENT") == "development":
-        default_host = "0.0.0.0"
+        default_host = "127.0.0.1"  # 修复：即使在开发环境也避免使用0.0.0.0
     else:
         default_host = "127.0.0.1"
     host = os.getenv("API_HOST", default_host)

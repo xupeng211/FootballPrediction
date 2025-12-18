@@ -147,7 +147,9 @@ class PredictionCache:
         # 添加额外参数到键中
         if additional_params:
             sorted_params = sorted(additional_params.items())
-            params_hash = hashlib.md5(str(sorted_params).encode()).hexdigest()[:8]
+            params_hash = hashlib.sha256(
+                str(sorted_params).encode(), usedforsecurity=False
+            ).hexdigest()[:8]
             key_parts.append(params_hash)
 
         return ":".join(key_parts)
@@ -164,7 +166,7 @@ class PredictionCache:
         """
         # 转换为字符串以确保一致性
         features_str = ",".join(map(str, features))
-        return hashlib.md5(features_str.encode()).hexdigest()
+        return hashlib.sha256(features_str.encode(), usedforsecurity=False).hexdigest()
 
     def get(
         self,

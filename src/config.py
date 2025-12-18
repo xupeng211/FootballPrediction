@@ -248,7 +248,7 @@ class ApplicationSettings(BaseSettings):
     debug: bool = Field(default=False, env="APP_DEBUG", description="调试模式")
 
     # 服务配置
-    host: str = Field(default="0.0.0.0", env="APP_HOST", description="服务监听地址")
+    host: str = Field(default="127.0.0.1", env="APP_HOST", description="服务监听地址")
     port: int = Field(
         default=8000, env="APP_PORT", ge=1, le=65535, description="服务端口"
     )
