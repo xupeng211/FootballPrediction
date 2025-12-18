@@ -114,7 +114,7 @@ class PredictionCache:
         self._stats = CacheStats()
 
         # 后台清理任务
-        self._cleanup_task: Optional[asyncio.Task] = None
+        self._cleanup_task: Optional[asyncio.Task[None]] = None
         self._stop_event = asyncio.Event()
 
         logger.info(
