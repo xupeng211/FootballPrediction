@@ -42,7 +42,7 @@ class TestHealthEndpoint:
             app.include_router(router, prefix="/health")
             client = TestClient(app)
 
-            response = client.get("/health")
+            response = client.get("/health/health")  # 修正路由：prefix + route
 
             assert response.status_code == 200
             data = response.json()
@@ -66,7 +66,7 @@ class TestHealthEndpoint:
             app.include_router(router, prefix="/health")
             client = TestClient(app)
 
-            response = client.get("/health")
+            response = client.get("/health/health")  # 修正路由：prefix + route
 
             # 应该返回错误状态
             assert response.status_code >= 400
@@ -171,7 +171,7 @@ class TestPredictionEndpoints:
             app = FastAPI()
 
             @app.post("/predict/batch")
-            async def predict_batch(requests: list):
+            async def predict_batch(requests: list[dict]):
                 return [
                     {
                         "success": True,
@@ -231,7 +231,7 @@ class TestModelManagementEndpoints:
             app.include_router(router, prefix="/models")
             client = TestClient(app)
 
-            response = client.get("/models")
+            response = client.get("/models/api/v1/models/list")  # 修正路由：prefix + api_version + route
 
             assert response.status_code == 200
             data = response.json()
@@ -259,7 +259,7 @@ class TestModelManagementEndpoints:
             # 测试模型加载请求
             model_data = {"model_name": "new_model", "model_path": "/path/to/model.pkl"}
 
-            response = client.post("/models/load", json=model_data)
+            response = client.post("/models/api/v1/models/reload", json=model_data)  # 修正路由
 
             # 应该有响应（成功或失败）
             assert response.status_code in [200, 400, 500]
@@ -290,7 +290,7 @@ class TestMonitoringEndpoints:
             from fastapi import FastAPI
 
             # 模拟服务统计
-            mock_inference_service.return_value.get_service_stats.return_value = {
+            mock_inference.return_value.get_service_stats.return_value = {
                 "service_name": "InferenceService",
                 "is_initialized": True,
                 "request_stats": {"total_requests": 100},
@@ -306,7 +306,7 @@ class TestMonitoringEndpoints:
             app.include_router(router, prefix="/metrics")
             client = TestClient(app)
 
-            response = client.get("/metrics")
+            response = client.get("/metrics/metrics")  # 修正路由：prefix + route
 
             assert response.status_code == 200
             data = response.json()

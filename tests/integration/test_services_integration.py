@@ -10,10 +10,10 @@ from datetime import datetime
 from typing import Dict, Any, List
 
 from src.services.prediction_service import (
-    InferenceService,
     PredictionRequest,
     PredictionResponse,
 )
+from src.services.inference_service import InferenceService
 from src.services.collection_service import FotMobCollectionService
 from src.services.explainability_service import ExplainabilityService
 from src.ml.inference import ModelLoader, MatchPredictor
