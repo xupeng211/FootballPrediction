@@ -1,0 +1,129 @@
+{
+  "skill_name": "tech-debt-cleanup",
+  "display_name": "技术债务清理专家",
+  "description": "专业级技术债务识别、分析和系统性修复工具，专门针对Football Prediction项目优化",
+  "version": "2.0.0",
+  "author": "Claude Code",
+  "priority": "P0",
+  "tags": ["tech-debt", "refactoring", "quality", "architecture", "security"],
+  "category": "code-remediation",
+
+  "project_context": {
+    "project_type": "ml-prediction-system",
+    "language": "python",
+    "frameworks": ["fastapi", "xgboost", "pandas", "numpy"],
+    "critical_areas": [
+      "data-collection",
+      "feature-engineering",
+      "model-inference",
+      "api-endpoints",
+      "database-operations"
+    ]
+  },
+
+  "capabilities": [
+    "自动识别192个技术债务点",
+    "P0级债务立即修复能力",
+    "数学计算精度验证和优化",
+    "架构解耦和依赖注入实施",
+    "安全漏洞检测和加固",
+    "性能瓶颈分析和优化",
+    "测试覆盖率提升指导",
+    "重构影响评估和回滚方案"
+  ],
+
+  "specialized_prompts": {
+    "p0_immediate_fix": {
+      "prompt": "立即修复P0级技术债务：\n1. 识别硬编码配置并提供环境变量方案\n2. 修复缺失的错误处理和重试机制\n3. 解决数学计算精度问题\n4. 实施数据库事务保护\n\n重点文件：{target_files}\n修复优先级：安全 > 数据一致性 > 性能 > 可维护性",
+      "impact_assessment": "评估每个修复对系统稳定性和预测准确性的影响",
+      "rollback_plan": "为每个高风险修复提供回滚方案"
+    },
+
+    "architecture_decoupling": {
+      "prompt": "实施架构解耦策略：\n1. 识别业务逻辑与API层耦合点\n2. 设计依赖注入架构\n3. 创建抽象层和接口\n4. 实施Repository和Service模式\n\n目标：将耦合度降低到可接受水平，提升代码复用性和可测试性",
+      "design_patterns": ["Dependency Injection", "Repository", "Service", "Factory", "Strategy"],
+      "validation_criteria": ["单元测试覆盖率>90%", "API层纯业务逻辑", "依赖可替换"]
+    },
+
+    "security_hardening": {
+      "prompt": "安全加固专项：\n1. 检测所有硬编码密钥和敏感信息\n2. 实施API安全最佳实践\n3. 加强输入验证和数据清理\n4. 优化数据库连接安全\n5. 实施安全错误处理\n\n安全等级：企业级生产标准",
+      "security_standards": ["OWASP Top 10", "ISO 27001", "GDPR"],
+      "encryption_requirements": ["at-rest", "in-transit", "api-keys", "sensitive-data"]
+    }
+  },
+
+  "debt_taxonomy": {
+    "p0_critical": {
+      "hardcoded_values": {
+        "files": ["src/config.py", "src/api/", "src/database/"],
+        "impact": "Security risk + Deployment inflexibility",
+        "fix_time": "2-4 hours"
+      },
+      "error_handling": {
+        "files": ["src/services/", "src/api/"],
+        "impact": "System stability + Data consistency",
+        "fix_time": "4-8 hours"
+      },
+      "math_precision": {
+        "files": ["src/ml/features/", "src/ml/inference/"],
+        "impact": "Prediction accuracy + Financial risk",
+        "fix_time": "3-6 hours"
+      }
+    },
+
+    "p1_important": {
+      "architecture_coupling": {
+        "files": ["src/api/predictions/", "src/services/"],
+        "impact": "Maintainability + Testability",
+        "fix_time": "1-2 weeks"
+      },
+      "code_complexity": {
+        "files": ["src/data/processors/", "src/ml/training/"],
+        "impact": "Development speed + Bug rate",
+        "fix_time": "1 week"
+      }
+    }
+  },
+
+  "quality_gates": {
+    "pre_fix_validation": {
+      "backup_required": true,
+      "test_suite_run": true,
+      "performance_baseline": true
+    },
+    "post_fix_validation": {
+      "unit_tests": "must pass",
+      "integration_tests": "must pass",
+      "performance_test": "< 5% regression",
+      "security_scan": "no new vulnerabilities"
+    }
+  },
+
+  "remediation_workflows": {
+    "immediate_action": [
+      "Create branch: fix/tech-debt-p0-{issue_id}",
+      "Implement fix with comprehensive tests",
+      "Performance regression testing",
+      "Security validation",
+      "Documentation update",
+      "Pull request with detailed change description"
+    ],
+
+    "monitoring": {
+      "track_metrics": ["complexity_reduction", "test_coverage", "performance_impact"],
+      "alert_thresholds": {
+        "performance_regression": "5%",
+        "test_coverage_drop": "2%",
+        "new_security_issues": "0"
+      }
+    }
+  },
+
+  "tools_integration": {
+    "static_analysis": ["bandit", "mypy", "radon", "vulture"],
+    "testing": ["pytest", "pytest-cov", "pytest-benchmark"],
+    "security": ["safety", "bandit"],
+    "performance": ["memory_profiler", "py-spy"],
+    "documentation": ["sphinx", "mkdocs"]
+  }
+}

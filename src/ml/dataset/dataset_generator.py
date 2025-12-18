@@ -133,9 +133,6 @@ class ClassificationDatasetGenerator:
         Example:
             >>> generator = ClassificationDatasetGenerator()
             >>> dataset = await generator.generate_dataset("premier_league", "2024-01-01")
-            >>> print(f"数据集形状: {dataset.shape}")
-            >>> print(f"特征列: {[col for col in dataset.columns if col.startswith('feature_')]}")
-            >>> print(f"标签分布: {dataset['target_label'].value_counts()}")
         """
         start_time = datetime.now()
         self.logger.info(f"开始生成数据集: 联赛={league_id}, 开始日期={start_date}")
@@ -668,23 +665,17 @@ if __name__ == "__main__":
     # 模块演示
     async def main():
         """主函数 - 数据集生成器演示"""
-        print("🚀 分类数据集生成器演示")
 
         try:
             ClassificationDatasetGenerator()
 
             # 这里需要实际的数据才能运行
-            print("数据集生成器已初始化，需要实际的数据库连接才能演示完整功能")
-            print("使用示例:")
-            print(
                 ">>> dataset = await generator.generate_dataset('premier_league', '2024-01-01')"
             )
-            print(
                 ">>> await generator.save_dataset_to_parquet(dataset, 'training_data.parquet')"
             )
 
         except Exception as e:
-            print(f"❌ 演示失败: {e}")
             return False
 
         return True

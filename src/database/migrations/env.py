@@ -23,17 +23,13 @@ project_root_alt = os.path.abspath(os.path.join(current_dir, "../../../"))
 if project_root_alt not in sys.path:
     sys.path.insert(0, project_root_alt)
 
-print(f"Alembic Debug: sys.path = {sys.path}")
-print(f"Alembic Debug: project_root = {project_root}")
 
 try:
     from src.database.base import Base  # noqa: E402
     from src.database.config import get_database_config  # noqa: E402
     from src.database.models import Odds  # noqa: F401, E402
 
-    print("✅ Alembic: 所有模块导入成功")
 except ImportError as e:
-    print(f"❌ Alembic: 模块导入失败: {e}")
     sys.exit(1)
 
 # this is the Alembic Config object, which provides
@@ -50,7 +46,6 @@ def setup_logging():
         if hasattr(context, "config") and context.config.config_file_name is not None:
             fileConfig(context.config.config_file_name)
     except Exception as e:
-        print(f"⚠️ Alembic: 日志配置失败，使用默认日志: {e}")
         # 忽略日志配置错误，继续执行
 
 
@@ -58,12 +53,10 @@ def get_database_url():
     """获取数据库URL，优先使用环境变量"""
     env_url = os.getenv("DATABASE_URL")
     if env_url:
-        print(f"✅ Alembic: 使用环境变量DATABASE_URL = {env_url}")
         return env_url
     else:
         # 回退到配置文件
         db_config = get_database_config()
-        print(f"✅ Alembic: 使用配置文件URL = {db_config.alembic_url}")
         return db_config.alembic_url
 
 

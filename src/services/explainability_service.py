@@ -28,7 +28,6 @@ class ExplainabilityService:
     def __init__(self):
         """初始化SHAP解释器"""
         self._explainer_cache = {}
-        logger.debug("SHAP可解释性服务初始化完成")
 
     async def get_shap_contributions(
         self, features: pd.DataFrame, model: XGBoostClassifier
@@ -95,7 +94,6 @@ class ExplainabilityService:
         if model_id not in self._explainer_cache:
             import shap
 
-            logger.debug("创建新的SHAP TreeExplainer (fast模式)")
 
             # 使用fast模式优化性能
             explainer = shap.TreeExplainer(
@@ -139,7 +137,6 @@ class ExplainabilityService:
             if col in features.columns and features[col].isnull().all():
                 raise ExplainabilityError(f"特征列 {col} 全部为空值")
 
-        logger.debug(f"特征验证通过，特征数量: {len(expected_feature_names)}")
 
     async def _compute_shap_values(self, explainer, features: pd.DataFrame):
         """计算SHAP值"""
@@ -153,10 +150,8 @@ class ExplainabilityService:
             # 处理多分类SHAP值（如果是多分类输出）
             if isinstance(shap_values, list):
                 # 对于多分类，取预测概率最高的类别
-                logger.debug("检测到多分类SHAP值，处理为单分类格式")
                 shap_values = shap_values[0]  # 假设二元分类，取第一类
 
-            logger.debug(f"SHAP值计算完成，形状: {shap_values.shape}")
             return shap_values
 
         except Exception as e:
@@ -222,7 +217,6 @@ class ExplainabilityService:
                     missing = expected_features - actual_features
                     logger.warning(f"样本{i}缺少SHAP贡献度特征: {missing}")
 
-            logger.debug("SHAP一致性验证完成")
 
         except Exception as e:
             logger.warning(f"SHAP一致性验证失败（不影响功能）: {e}")

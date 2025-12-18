@@ -1,0 +1,92 @@
+{
+  "timestamp": 1766017236.6921399,
+  "results": [
+    {
+      "description": "基础功能测试",
+      "test_path": "tests/working_basic_tests.py",
+      "duration": 0.8664214611053467,
+      "memory_increase": 0.0,
+      "exit_code": 0,
+      "test_result": {},
+      "success": true
+    },
+    {
+      "description": "ML推理测试",
+      "test_path": "tests/unit/test_ml_inference_fixed.py",
+      "duration": 2.197126626968384,
+      "memory_increase": 0.0,
+      "exit_code": 0,
+      "test_result": {},
+      "success": true
+    },
+    {
+      "description": "配置测试",
+      "test_path": "tests/unit/test_config.py",
+      "duration": 0.3687398433685303,
+      "memory_increase": 0.0,
+      "exit_code": 0,
+      "test_result": {},
+      "success": true
+    },
+    {
+      "description": "健康API测试",
+      "test_path": "tests/unit/test_health_api_complete.py",
+      "duration": 0.8482649326324463,
+      "memory_increase": 0.0,
+      "exit_code": 0,
+      "test_result": {},
+      "success": true
+    },
+    {
+      "description": "API路由测试",
+      "test_path": "tests/unit/test_api_routes.py",
+      "duration": 0.8186345100402832,
+      "memory_increase": 0.0,
+      "exit_code": 0,
+      "test_result": {},
+      "success": true
+    },
+    {
+      "description": "V2测试套件",
+      "test_path": "tests/v2/",
+      "duration": 1.3267366886138916,
+      "memory_increase": 0.0,
+      "exit_code": 0,
+      "test_result": {},
+      "success": true
+    },
+    {
+      "description": "集成测试",
+      "test_path": "tests/integration/test_api_integration.py",
+      "duration": 0.9836525917053223,
+      "memory_increase": 0.0,
+      "exit_code": 1,
+      "test_result": {},
+      "success": false
+    },
+    {
+      "description": "指标测试",
+      "test_path": "tests/unit/test_metrics.py",
+      "duration": 0.8915433883666992,
+      "memory_increase": 0.0,
+      "exit_code": 0,
+      "test_result": {},
+      "success": true
+    },
+    {
+      "description": "异常处理测试",
+      "test_path": "tests/unit/test_exceptions.py",
+      "duration": 0.7691211700439453,
+      "memory_increase": 0.125,
+      "exit_code": 0,
+      "test_result": {},
+      "success": true
+    }
+  ],
+  "summary": {
+    "total_tests": 9,
+    "total_duration": 9.070241212844849,
+    "total_memory": 0.125,
+    "success_rate": 88.88888888888889
+  }
+}

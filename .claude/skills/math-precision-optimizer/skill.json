@@ -1,0 +1,162 @@
+{
+  "skill_name": "math-precision-optimizer",
+  "display_name": "数学精度优化专家",
+  "description": "专门针对体育博赔预测系统的数学计算精度验证和优化工具",
+  "version": "1.0.0",
+  "author": "Claude Code",
+  "priority": "P0",
+  "tags": ["mathematics", "precision", "probability", "statistics", "optimization"],
+  "category": "specialized-optimization",
+
+  "domain_expertise": {
+    "primary_domain": "sports_betting_mathematics",
+    "specializations": [
+      "odds_conversion_accuracy",
+      "probability_distribution_normalization",
+      "floating_point_precision_management",
+      "statistical_significance_validation",
+      "edge_case_mathematical_handling"
+    ]
+  },
+
+  "precision_requirements": {
+    "odds_calculation": {
+      "precision_level": "decimal_places_8",
+      "tolerance_threshold": 0.00000001,
+      "overflow_protection": true,
+      "underflow_protection": true
+    },
+    "probability_normalization": {
+      "sum_tolerance": 0.000001,
+      "individual_tolerance": 0.0000001,
+      "edge_case_handling": "guaranteed_normalization"
+    },
+    "statistical_operations": {
+      "numerical_stability": "protected",
+      "precision_preservation": "high_priority",
+      "error_bounds": "calculated_and_tracked"
+    }
+  },
+
+  "critical_math_areas": [
+    {
+      "area": "odds_to_probability_conversion",
+      "files": ["src/ml/features/extractor.py:522-580", "src/ml/inference/predictor.py:70-109"],
+      "risk_level": "HIGH",
+      "impact": "prediction_accuracy_financial_loss",
+      "current_issues": [
+        "division_by_zero_insufficient_protection",
+        "floating_point_precision_loss",
+        "overflow_risk_in_large_numbers"
+      ]
+    },
+    {
+      "area": "home_advantage_calculation",
+      "files": ["src/ml/features/h2h_calculator.py:199-213"],
+      "risk_level": "HIGH",
+      "impact": "prediction_bias_accuracy_degradation",
+      "current_issues": [
+        "magic_numbers_without_documentation",
+        "insufficient_zero_handling",
+        "statistical_significance_not_considered"
+      ]
+    },
+    {
+      "area": "probability_normalization",
+      "files": ["src/ml/inference/predictor.py:150-179"],
+      "risk_level": "CRITICAL",
+      "impact": "system_stability_prediction_errors",
+      "current_issues": [
+        "sum_not_equal_1_risk",
+        "numerical_overflow_possibility",
+        "edge_case_hardcoded_solutions"
+      ]
+    }
+  ],
+
+  "optimization_strategies": {
+    "high_precision_arithmetic": {
+      "library": "decimal.Decimal",
+      "precision": "28_places",
+      "context": "ROUND_HALF_EVEN",
+      "use_cases": ["odds_conversion", "probability_normalization"]
+    },
+
+    "numerical_stability": {
+      "techniques": [
+        "log_domain_transformations",
+        "kahan_summation_algorithm",
+        "compensated_arithmetic",
+        "interval_arithmetic_validation"
+      ]
+    },
+
+    "edge_case_handling": {
+      "strategies": [
+        "graceful_degradation",
+        "statistical_fallbacks",
+        "confidence_interval_reporting",
+        "uncertainty_quantification"
+      ]
+    }
+  },
+
+  "validation_protocols": {
+    "unit_testing": {
+      "math_precision_tests": "separate_test_suite",
+      "edge_case_coverage": "100%",
+      "statistical_validation": "automated",
+      "regression_testing": "performance_and_accuracy"
+    },
+
+    "property_based_testing": {
+      "library": "hypothesis",
+      "properties_to_test": [
+        "probability_sum_equals_1",
+        "odds_conversion_reversibility",
+        "monotonicity_preservation",
+        "bounds_observance"
+      ]
+    },
+
+    "numerical_analysis": {
+      "precision_loss_tracking": "automated",
+      "error_bounds_calculation": "implemented",
+      "stability_analysis": "continuous"
+    }
+  },
+
+  "implementation_templates": {
+    "decimal_odds_conversion": {
+      "template": "from decimal import Decimal, getcontext\n\ngetcontext().prec = 28\ngetcontext().rounding = ROUND_HALF_EVEN\n\ndef safe_odds_to_probability(odds: Union[float, Decimal]) -> Decimal:\n    \"\"\"Convert odds to probability with high precision\"\"\"\n    if odds <= 0:\n        raise ValueError(f\"Invalid odds: {odds}\")\n    return Decimal(1) / Decimal(str(odds))",
+      "benefits": ["precision_guarantee", "error_tracking", "audit_trail"]
+    },
+
+    "stable_probability_normalization": {
+      "template": "def normalize_probabilities_stable(probs: List[float]) -> np.ndarray:\n    \"\"\"Numerically stable probability normalization\"\"\"\n    probs_array = np.array(probs, dtype=np.float64)\n    \n    # Use log-domain for numerical stability\n    log_probs = np.log(probs_array + 1e-15)  # Small epsilon to avoid log(0)\n    \n    # Subtract maximum for stability (log-sum-exp trick)\n    max_log = np.max(log_probs)\n    shifted_log_probs = log_probs - max_log\n    \n    # Normalize in log domain and convert back\n    normalized_log_probs = shifted_log_probs - np.log(np.sum(np.exp(shifted_log_probs)))\n    \n    return np.exp(normalized_log_probs)",
+      "benefits": ["overflow_protection", "underflow_protection", "precision_preservation"]
+    }
+  },
+
+  "quality_assurance": {
+    "continuous_monitoring": {
+      "precision_metrics": ["mean_absolute_error", "numerical_stability_index"],
+      "alert_thresholds": {"precision_degradation": 0.0001, "stability_risk": 0.01},
+      "automated_regression": "enabled"
+    },
+
+    "validation_datasets": {
+      "mathematical_edge_cases": "comprehensive_test_set",
+      "statistical_properties": "verified_against_theoretical",
+      "real_world_validation": "production_data_sampling"
+    }
+  },
+
+  "performance_considerations": {
+    "precision_vs_speed": {
+      "balance_strategy": "use_decimal_for_critical_paths",
+      "fallback_options": "float64_for_performance_critical",
+      "benchmarking": "automated_performance_regression"
+    }
+  }
+}

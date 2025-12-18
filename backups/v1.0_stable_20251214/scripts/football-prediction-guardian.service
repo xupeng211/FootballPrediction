@@ -1,0 +1,29 @@
+[Unit]
+Description=Football Prediction System Health Guardian
+Documentation=https://github.com/xupeng211/FootballPrediction
+After=network.target docker.service
+Wants=docker.service
+
+[Service]
+Type=oneshot
+User=%I
+Group=%I
+WorkingDirectory=%h/projects/FootballPrediction
+ExecStart=%h/projects/FootballPrediction/scripts/ensure_running.sh
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=football-prediction-guardian
+
+# 环境变量
+Environment=PATH=/usr/local/bin:/usr/bin:/bin
+Environment=HOME=%h
+
+# 安全设置
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=%h/projects/FootballPrediction/logs %h/projects/FootballPrediction/tmp
+
+[Install]
+WantedBy=multi-user.target

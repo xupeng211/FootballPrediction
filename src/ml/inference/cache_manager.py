@@ -206,7 +206,6 @@ class PredictionCache:
                     del self._cache[cache_key]
                     self._stats.expired_entries += 1
                     self._stats.miss_count += 1
-                    logger.debug(f"缓存过期已清理: {cache_key}")
                     return None
 
                 # 更新访问统计（LRU）
@@ -214,7 +213,6 @@ class PredictionCache:
                 self._cache.move_to_end(cache_key)  # 移动到末尾（最近使用）
                 self._stats.hit_count += 1
 
-                logger.debug(f"缓存命中: {cache_key}")
                 return cache_entry.result.copy()
 
             except Exception as e:
@@ -255,7 +253,6 @@ class PredictionCache:
                     # 移除最久未使用的条目
                     oldest_key = next(iter(self._cache))
                     del self._cache[oldest_key]
-                    logger.debug(f"缓存已满，移除最久未使用条目: {oldest_key}")
 
                 # 创建缓存条目
                 cache_entry = CacheEntry(
@@ -270,7 +267,6 @@ class PredictionCache:
                 self._cache[cache_key] = cache_entry
                 self._stats.total_entries = len(self._cache)
 
-                logger.debug(f"缓存已设置: {cache_key}, TTL={cache_entry.ttl}s")
                 return True
 
             except Exception as e:
@@ -304,7 +300,6 @@ class PredictionCache:
                 if cache_key in self._cache:
                     del self._cache[cache_key]
                     self._stats.total_entries = len(self._cache)
-                    logger.debug(f"缓存已删除: {cache_key}")
                     return True
 
                 return False
@@ -403,7 +398,6 @@ class PredictionCache:
                 # 执行清理
                 cleaned_count = self.cleanup_expired()
                 if cleaned_count > 0:
-                    logger.debug(f"自动清理完成，清理 {cleaned_count} 个过期条目")
 
             except Exception as e:
                 logger.error(f"后台清理任务异常: {e}")

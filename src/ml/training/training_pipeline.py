@@ -127,7 +127,6 @@ class ClassificationTrainingPipeline:
             model_output_path="models/football_classifier.pkl"
         )
 
-        print(f"训练完成，测试准确率: {metrics['test_accuracy']:.3f}")
     """
 
     def __init__(
@@ -605,13 +604,11 @@ if __name__ == "__main__":
     # 流水线演示
     async def main():
         """主函数 - 训练流水线演示"""
-        print("🚀 XGBoost分类训练流水线演示")
 
         try:
             # 创建示例数据集
             from ..dataset.dataset_generator import create_classification_dataset
 
-            print("📊 生成示例数据集...")
             dataset_path = "demo_dataset.parquet"
             await create_classification_dataset(
                 league_id="demo_league",
@@ -620,39 +617,27 @@ if __name__ == "__main__":
             )
 
             # 创建训练流水线
-            print("⚙️  初始化训练流水线...")
             pipeline = ClassificationTrainingPipeline(
                 model_output_dir="demo_models/",
                 config_type="fast_training",  # 使用快速配置进行演示
             )
 
             # 运行训练流水线
-            print("🏃 运行训练流水线...")
             metrics = await pipeline.run_pipeline(
                 dataset_path=dataset_path,
                 model_output_path="demo_models/demo_football_classifier.pkl",
             )
 
             # 显示结果
-            print("\\n✅ 训练完成!")
-            print(f"📊 测试准确率: {metrics['test_accuracy']:.3f}")
-            print(f"🎯 测试F1分数: {metrics['test_f1_weighted']:.3f}")
-            print(f"⏱️  训练时间: {metrics['total_training_time_seconds']:.2f}秒")
 
             # 显示各类别指标
-            print("\\n📈 各类别性能:")
-            print(
                 f"   主队获胜: 精确率={metrics.get('test_precision_HOME_WIN', 0):.3f}"
             )
-            print(f"   平局: 精确率={metrics.get('test_precision_DRAW', 0):.3f}")
-            print(
                 f"   客队获胜: 精确率={metrics.get('test_precision_AWAY_WIN', 0):.3f}"
             )
 
-            print("\\n🎉 训练流水线演示完成!")
 
         except Exception as e:
-            print(f"❌ 演示失败: {e}")
             import traceback
 
             traceback.print_exc()

@@ -2,11 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-**⚠️重要提醒**: 请始终用中文回复用户的问题和请求。
-
-**⚠️ IMPORTANT**: Current working branch is `main` with stable system ready for production use.
-
-**📋 当前Git状态**: 有多个文件处于staging状态，包括配置文件、脚本和源代码。在开始新开发前，建议先处理这些现有变更（提交或重置）。
+**重要提醒**: This is a production-ready football prediction system with Service Layer v2.0 architecture. Always test changes thoroughly before deployment.
 
 ## Development Commands
 
@@ -22,7 +18,7 @@ make clean            # Clean environment and cache
 
 ### Testing and Quality
 ```bash
-make test             # Run unit tests (279 tests total)
+make test             # Run unit tests (630 tests total)
 make coverage         # Run tests with coverage report (target: 80%+)
 make ci               # Complete CI simulation (env-check, quality, test, coverage)
 make prepush          # Pre-commit full check
@@ -66,11 +62,6 @@ make status                                       # 查看项目概览和统计
 make ci-status           # 查看CI运行状态
 make ci-monitor          # 实时监控CI执行
 ```
-
-**⚠️ CI状态说明**: 当前CI工作流(`ci_pipeline.yml`)中测试功能暂时禁用("Tests Disabled")，仅运行代码质量检查。要重新启用测试，需要：
-1. 更新工作流名称，移除"Tests Disabled"
-2. 取消注释或添加测试相关的job步骤
-3. 确保测试环境配置正确
 
 ## Architecture Overview
 
@@ -262,9 +253,7 @@ FootballPrediction/
 - Integration tests for database and external APIs in `tests/integration/`
 - End-to-end tests for complete workflows in `tests/e2e/`
 - Performance tests in `tests/performance/`
-- **Current Test Count**: 279 test functions across 21 test files
-  - V2 tests: 51 tests in `tests/v2/` (29 passing, 22 skipped)
-  - Legacy tests: 228 tests (some may have dependency issues)
+- **Current Test Count**: 630 tests across multiple test files
 - Test coverage target: 80%+ (current varies by test category)
 
 ### Configuration Management
@@ -320,7 +309,7 @@ open http://localhost:9090
 - **FastAPI**: High-performance async web framework
 - **PostgreSQL**: Primary database with JSON support
 - **XGBoost 2.0+**: Machine learning models for prediction
-- **SHAP 0.50+**: Model explainability and interpretation
+- **SHAP 0.42+**: Model explainability and interpretation
 - **Docker**: Containerization and orchestration
 - **pytest 7.4+**: Testing framework with high coverage
 - **Python 3.11+**: Modern Python with async support
@@ -391,13 +380,11 @@ pytest tests/v2/test_health_schema.py::test_health_check_response -v
 pytest tests/ -k "smoke" -v
 
 # Run specific test categories
-pytest tests/v2/ -v             # V2 tests only (51 tests, 29 passing)
+pytest tests/v2/ -v             # V2 tests only
 pytest tests/unit/ -v           # Unit tests only
 pytest tests/integration/ -v    # Integration tests only
 pytest tests/e2e/ -v            # End-to-end tests only
 pytest tests/performance/ -v    # Performance tests only
-
-# Note: Some legacy tests may have database dependency issues; focus on v2 tests
 ```
 
 ### Quality Checks
@@ -661,62 +648,8 @@ make env-check    # Check environment setup
 make clean && make install  # Reset environment
 ```
 
-### 当前项目状态特定问题
-
-#### Git状态处理
-当前有多个已修改文件处于staging状态。建议在开始开发前：
-```bash
-# 查看当前状态
-git status
-
-# 查看具体修改
-git diff --cached
-
-# 如果需要重置状态
-git reset HEAD  # 取消所有staging
-# 或保留部分修改，选择性提交
-```
-
-#### V2测试相关问题
-部分V2测试可能被跳过，通常原因：
-- 缺少外部依赖（Redis、数据库连接）
-- 模型文件不存在
-- 外部API配置缺失
-
-**解决方案**：
-```bash
-# 启动完整环境后再运行测试
-docker-compose up -d
-sleep 30  # 等待服务就绪
-./scripts/docker-manager.sh test
-
-# 或运行特定可用的测试
-pytest tests/v2/test_health_schema.py -v
-pytest tests/v2/test_inference_logic.py::test_single_match_prediction -v
-```
-
-#### Docker服务连接问题
-如果遇到数据库或Redis连接错误：
-```bash
-# 检查服务状态
-docker-compose ps
-docker-compose logs db
-docker-compose logs redis
-
-# 重启服务
-docker-compose down
-docker-compose up -d
-
-# 手动检查数据库连接
-docker-compose exec app python -c "
-import asyncio
-from src.database.connection import get_connection
-asyncio.run(get_connection())
-print('Database connection successful')"
-```
-
 ---
 
-**更新时间**: 2025-12-17 | **分支**: main | **版本**: v2.0.0-Stable
+**更新时间**: 2024-12-18 | **分支**: main | **版本**: v2.0.0-Stable
 
 **重要说明**: 项目已升级到v2.0稳定版本，采用全新Service Layer架构，完全容器化部署，生产就绪。当前有多个文件处于修改状态，建议在开发前先处理这些变更。
