@@ -4,6 +4,65 @@
 # Maintainer: Senior DevOps Engineer
 
 # ============================================================================
+# 🚨 CRITICAL EXCLUSIONS (BACKUP, TEMP, AND NON-CODE FILES)
+# ============================================================================
+# Backup and archive directories (CRITICAL)
+backup/
+backups/
+archive/
+deprecated/
+old_versions/
+*.old
+*.backup
+*.bak
+
+# Virtual environments (CRITICAL)
+venv/
+env/
+.venv/
+.env/
+virtualenv/
+pip-env/
+
+# Data files and datasets (CRITICAL)
+*.csv
+*.json
+*.json.gz
+*.jsonl
+*.parquet
+*.feather
+*.hdf5
+*.h5
+*.pkl
+*.pickle
+*.joblib
+*.model
+*.onnx
+*.pb
+
+# Cache and temporary files (CRITICAL)
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+.cache/
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# IDE and editor files (CRITICAL)
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+.Thumbs.db
+
+# ============================================================================
 # 🔐 SENSITIVE CONFIGURATION FILES (NEVER COMMIT)
 # ============================================================================
 # Environment files (contain API keys, passwords, secrets)

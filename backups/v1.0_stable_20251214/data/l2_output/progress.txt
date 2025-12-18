@@ -1,7 +1,0 @@
-{
-  "processed_count": 1,
-  "successful_count": 1,
-  "failed_count": 0,
-  "processed_ids": [],
-  "last_update": "2025-12-11T15:11:39.387661"
-}
