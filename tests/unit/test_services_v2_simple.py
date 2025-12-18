@@ -1,6 +1,6 @@
 """
 推理服务v2测试 - 简化版本
-基于实际InferenceServiceV2接口编写的测试
+基于实际InferenceService接口编写的测试
 """
 
 import pytest
@@ -9,20 +9,20 @@ from unittest.mock import Mock, AsyncMock, patch
 from datetime import datetime
 from typing import Dict, Any, List
 
-from src.services.inference_service_v2 import (
-    InferenceServiceV2,
+from src.services.prediction_service import (
     PredictionRequest,
     PredictionResponse,
 )
+from src.services.inference_service import InferenceService
 
 
-class TestInferenceServiceV2Simple:
+class TestInferenceServiceSimple:
     """V2推理服务简化测试"""
 
     @pytest.fixture
     def inference_service(self):
         """推理服务实例"""
-        return InferenceServiceV2(model_path="test_model_path")
+        return InferenceService(model_path="test_model_path")
 
     def test_service_initialization(self, inference_service):
         """测试服务初始化"""
@@ -184,7 +184,7 @@ class TestInferenceServiceV2Simple:
         assert "request_stats" in stats
         assert "components" in stats
 
-        assert stats["service_name"] == "InferenceServiceV2"
+        assert stats["service_name"] == "InferenceService"
         assert not stats["is_initialized"]
 
     def test_load_model(self, inference_service):

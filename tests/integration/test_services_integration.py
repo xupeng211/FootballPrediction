@@ -9,8 +9,8 @@ from unittest.mock import Mock, AsyncMock, patch
 from datetime import datetime
 from typing import Dict, Any, List
 
-from src.services.inference_service_v2 import (
-    InferenceServiceV2,
+from src.services.prediction_service import (
+    InferenceService,
     PredictionRequest,
     PredictionResponse,
 )
@@ -54,7 +54,7 @@ class TestInferenceServiceIntegration:
     @pytest.fixture
     def inference_service(self, mock_dependencies):
         """创建推理服务实例"""
-        service = InferenceServiceV2()
+        service = InferenceService()
         service.model_loader = mock_dependencies["model_loader"]
         service.cache_manager = mock_dependencies["cache_manager"]
         service.is_initialized = True
@@ -181,7 +181,7 @@ class TestInferenceServiceIntegration:
         assert "cache_stats" in stats
         assert "components" in stats
 
-        assert stats["service_name"] == "InferenceServiceV2"
+        assert stats["service_name"] == "InferenceService"
         assert stats["is_initialized"] is True
 
     @pytest.mark.asyncio
@@ -360,7 +360,7 @@ class TestServiceIntegration:
         # 进行特征工程和预测
 
         collection_service = FotMobCollectionService()
-        inference_service = InferenceServiceV2()
+        inference_service = InferenceService()
 
         # Mock收集服务返回的数据
         mock_match_data = {
@@ -396,7 +396,7 @@ class TestServiceIntegration:
     @pytest.mark.asyncio
     async def test_inference_explainability_integration(self):
         """测试推理服务和可解释性服务集成"""
-        inference_service = InferenceServiceV2()
+        inference_service = InferenceService()
         explainability_service = ExplainabilityService()
 
         # 模拟预测结果
@@ -432,7 +432,7 @@ class TestServiceIntegration:
         """测试端到端工作流程"""
         # 创建服务实例
         collection_service = FotMobCollectionService()
-        inference_service = InferenceServiceV2()
+        inference_service = InferenceService()
         explainability_service = ExplainabilityService()
 
         # Mock各个服务的输出
@@ -482,7 +482,7 @@ class TestServiceIntegration:
     async def test_error_propagation_between_services(self):
         """测试服务间错误传播"""
         collection_service = FotMobCollectionService()
-        inference_service = InferenceServiceV2()
+        inference_service = InferenceService()
 
         # Mock数据收集失败
         with patch.object(collection_service, "collect_match_data") as mock_collect:

@@ -11,8 +11,8 @@ from unittest.mock import Mock, AsyncMock, patch
 from typing import Dict, Any, List
 from fastapi.testclient import TestClient
 
-from src.services.inference_service_v2 import (
-    InferenceServiceV2,
+from src.services.prediction_service import (
+    InferenceService,
     PredictionRequest,
     PredictionResponse,
 )
@@ -54,7 +54,7 @@ class TestEndToEndPredictionWorkflow:
         mock_cache.get_stats.return_value = {"hits": 0, "misses": 1, "hit_rate": 0.0}
 
         # 创建推理服务
-        inference_service = InferenceServiceV2()
+        inference_service = InferenceService()
         inference_service.model_loader = mock_loader
         inference_service.cache_manager = mock_cache
         inference_service.is_initialized = True

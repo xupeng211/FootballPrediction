@@ -90,7 +90,7 @@ class TestPredictionEndpoints:
         except:
             pass  # 预测模块可能还没实现
 
-    @patch("src.services.inference_service_v2.InferenceServiceV2")
+    @patch("src.services.inference_service.InferenceService")
     def test_single_match_prediction_endpoint(self, mock_inference_service):
         """测试单场比赛预测端点"""
         try:
@@ -145,7 +145,7 @@ class TestPredictionEndpoints:
             # 如果端点还没实现，至少测试验证逻辑
             assert isinstance(e, (ImportError, AttributeError))
 
-    @patch("src.services.inference_service_v2.InferenceServiceV2")
+    @patch("src.services.inference_service.InferenceService")
     def test_batch_prediction_endpoint(self, mock_inference_service):
         """测试批量预测端点"""
         try:
@@ -215,7 +215,7 @@ class TestModelManagementEndpoints:
         except ImportError:
             pytest.skip("模型管理模块不可用")
 
-    @patch("src.services.inference_service_v2.InferenceServiceV2")
+    @patch("src.services.inference_service.InferenceService")
     def test_list_models_endpoint(self, mock_inference_service):
         """测试列出模型端点"""
         try:
@@ -240,7 +240,7 @@ class TestModelManagementEndpoints:
         except ImportError:
             pytest.skip("模型管理模块不可用")
 
-    @patch("src.services.inference_service_v2.InferenceServiceV2")
+    @patch("src.services.inference_service.InferenceService")
     def test_load_model_endpoint(self, mock_inference_service):
         """测试加载模型端点"""
         try:
@@ -281,7 +281,7 @@ class TestMonitoringEndpoints:
         except ImportError:
             pytest.skip("监控模块不可用")
 
-    @patch("src.services.inference_service_v2.InferenceServiceV2")
+    @patch("src.services.inference_service.InferenceService")
     @patch("src.services.collection_service.FotMobCollectionService")
     def test_metrics_endpoint(self, mock_collection, mock_inference):
         """测试指标端点"""
@@ -291,7 +291,7 @@ class TestMonitoringEndpoints:
 
             # 模拟服务统计
             mock_inference_service.return_value.get_service_stats.return_value = {
-                "service_name": "InferenceServiceV2",
+                "service_name": "InferenceService",
                 "is_initialized": True,
                 "request_stats": {"total_requests": 100},
             }
