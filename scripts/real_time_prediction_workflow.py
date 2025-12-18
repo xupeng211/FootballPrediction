@@ -46,10 +46,7 @@ from src.strategy.tuner import run_optimization, create_default_optimization_con
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    handlers=[
-        logging.StreamHandler(),
-        logging.FileHandler("real_time_workflow.log")
-    ]
+    handlers=[logging.StreamHandler(), logging.FileHandler("real_time_workflow.log")],
 )
 logger = logging.getLogger(__name__)
 
@@ -79,7 +76,7 @@ class RealTimePredictionWorkflow:
             "total_processing_time": 0.0,
             "avg_processing_time": 0.0,
             "last_prediction_time": None,
-            "workflow_start_time": None
+            "workflow_start_time": None,
         }
 
         logger.info("🔄 实时预测工作流初始化完成")
@@ -103,7 +100,7 @@ class RealTimePredictionWorkflow:
                 kelly_strategy=KellyStrategy.FRACTIONAL_KELLY,
                 fraction_multiplier=self.config.get("fraction_multiplier", 0.25),
                 min_edge_threshold=self.config.get("min_edge_threshold", 0.05),
-                max_stake_percentage=self.config.get("max_stake_percentage", 0.10)
+                max_stake_percentage=self.config.get("max_stake_percentage", 0.10),
             )
 
             # 4. 初始化告警系统
@@ -115,11 +112,9 @@ class RealTimePredictionWorkflow:
                     smtp_username=self.config.get("smtp_username"),
                     smtp_password=self.config.get("smtp_password"),
                     email_from=self.config.get("email_from"),
-                    email_to=self.config.get("email_to", [])
+                    email_to=self.config.get("email_to", []),
                 )
-                self.notifier = await create_notifier(
-                    **alert_config.__dict__
-                )
+                self.notifier = await create_notifier(**alert_config.__dict__)
 
             self.stats["workflow_start_time"] = datetime.utcnow()
             logger.info("✅ 实时预测工作流初始化成功")
@@ -130,10 +125,7 @@ class RealTimePredictionWorkflow:
             return False
 
     async def run_single_prediction(
-        self,
-        home_team: str,
-        away_team: str,
-        match_id: Optional[str] = None
+        self, home_team: str, away_team: str, match_id: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         运行单场比赛预测
@@ -161,13 +153,15 @@ class RealTimePredictionWorkflow:
             logger.info("⚙️ 提取实时特征...")
 
             # 模拟特征向量 (实际应用中应该从collection_service获取)
-            feature_vector = await self._extract_real_time_features(home_team, away_team)
+            feature_vector = await self._extract_real_time_features(
+                home_team, away_team
+            )
 
             # 3. 模型预测阶段
             logger.info("🤖 运行模型预测...")
             prediction_result = await self.inference_service.predict_single_match(
                 match_id=match_id or f"{home_team}_vs_{away_team}_{int(time.time())}",
-                feature_vector=feature_vector
+                feature_vector=feature_vector,
             )
 
             # 4. 策略分析阶段
@@ -188,14 +182,18 @@ class RealTimePredictionWorkflow:
                     "home_team": home_team,
                     "away_team": away_team,
                     "match_id": match_id,
-                    "prediction_time": datetime.utcnow().isoformat()
+                    "prediction_time": datetime.utcnow().isoformat(),
                 },
-                "model_prediction": prediction_result.data if hasattr(prediction_result, 'data') else prediction_result,
+                "model_prediction": (
+                    prediction_result.data
+                    if hasattr(prediction_result, "data")
+                    else prediction_result
+                ),
                 "strategy_analysis": strategy_analysis,
                 "kelly_recommendations": kelly_recommendations,
                 "processing_time_seconds": round(processing_time, 3),
                 "confidence_level": self._calculate_confidence_level(prediction_result),
-                "workflow_status": "success"
+                "workflow_status": "success",
             }
 
             # 更新统计信息
@@ -204,7 +202,9 @@ class RealTimePredictionWorkflow:
             # 7. 发送告警 (如果是高风险预测)
             await self._check_risk_alerts(result)
 
-            logger.info(f"✅ 预测完成: {home_team} vs {away_team} (耗时: {processing_time:.3f}s)")
+            logger.info(
+                f"✅ 预测完成: {home_team} vs {away_team} (耗时: {processing_time:.3f}s)"
+            )
             return result
 
         except Exception as e:
@@ -225,8 +225,8 @@ class RealTimePredictionWorkflow:
                     metadata={
                         "home_team": home_team,
                         "away_team": away_team,
-                        "match_id": match_id
-                    }
+                        "match_id": match_id,
+                    },
                 )
 
             return {
@@ -234,17 +234,15 @@ class RealTimePredictionWorkflow:
                 "match_info": {
                     "home_team": home_team,
                     "away_team": away_team,
-                    "match_id": match_id
+                    "match_id": match_id,
                 },
                 "error": error_msg,
                 "processing_time_seconds": round(processing_time, 3),
-                "workflow_status": "failed"
+                "workflow_status": "failed",
             }
 
     async def _extract_real_time_features(
-        self,
-        home_team: str,
-        away_team: str
+        self, home_team: str, away_team: str
     ) -> List[float]:
         """提取实时特征 (确保与历史回测逻辑一致)"""
         try:
@@ -256,18 +254,18 @@ class RealTimePredictionWorkflow:
 
             # 模拟12维特征向量
             features = [
-                1.2,   # 主队实力评分
+                1.2,  # 主队实力评分
                 -0.3,  # 客队实力评分
-                0.8,   # 主场优势
-                0.5,   # 近期状态
-                0.2,   # 历史交锋
+                0.8,  # 主场优势
+                0.5,  # 近期状态
+                0.2,  # 历史交锋
                 -0.1,  # 伤病影响
-                0.4,   # 天气因素
-                0.6,   # 战术匹配
-                0.3,   # 裁判因素
-                0.1,   # 其他因素
+                0.4,  # 天气因素
+                0.6,  # 战术匹配
+                0.3,  # 裁判因素
+                0.1,  # 其他因素
                 0.15,  # 市场情绪
-                0.25   # 赔率分析
+                0.25,  # 赔率分析
             ]
 
             logger.debug(f"🔍 提取到 {len(features)} 维特征向量")
@@ -278,14 +276,11 @@ class RealTimePredictionWorkflow:
             # 返回默认特征向量
             return [0.0] * 12
 
-    async def _analyze_strategy(
-        self,
-        prediction_result: Any
-    ) -> Dict[str, Any]:
+    async def _analyze_strategy(self, prediction_result: Any) -> Dict[str, Any]:
         """分析策略表现"""
         try:
             # 解析预测结果
-            if hasattr(prediction_result, 'data'):
+            if hasattr(prediction_result, "data"):
                 pred_data = prediction_result.data
             else:
                 pred_data = prediction_result
@@ -303,8 +298,12 @@ class RealTimePredictionWorkflow:
                 "prediction_confidence": max(home_prob, away_prob),
                 "market_efficiency": abs(home_prob - 0.5) + abs(away_prob - 0.3),
                 "risk_assessment": self._assess_risk(home_prob, draw_prob, away_prob),
-                "recommendation": self._get_strategy_recommendation(home_prob, draw_prob, away_prob),
-                "expected_value": self._calculate_expected_value(home_prob, draw_prob, away_prob)
+                "recommendation": self._get_strategy_recommendation(
+                    home_prob, draw_prob, away_prob
+                ),
+                "expected_value": self._calculate_expected_value(
+                    home_prob, draw_prob, away_prob
+                ),
             }
 
             return strategy_analysis
@@ -316,7 +315,7 @@ class RealTimePredictionWorkflow:
                 "market_efficiency": 0.5,
                 "risk_assessment": "medium",
                 "recommendation": "hold",
-                "expected_value": 0.0
+                "expected_value": 0.0,
             }
 
     def _assess_risk(self, home_prob: float, draw_prob: float, away_prob: float) -> str:
@@ -330,7 +329,9 @@ class RealTimePredictionWorkflow:
         else:
             return "high"
 
-    def _get_strategy_recommendation(self, home_prob: float, draw_prob: float, away_prob: float) -> str:
+    def _get_strategy_recommendation(
+        self, home_prob: float, draw_prob: float, away_prob: float
+    ) -> str:
         """获取策略建议"""
         max_prob = max(home_prob, draw_prob, away_prob)
 
@@ -346,28 +347,30 @@ class RealTimePredictionWorkflow:
         else:
             return "hold"
 
-    def _calculate_expected_value(self, home_prob: float, draw_prob: float, away_prob: float) -> float:
+    def _calculate_expected_value(
+        self, home_prob: float, draw_prob: float, away_prob: float
+    ) -> float:
         """计算期望值 (简化计算)"""
         # 假设的赔率 (实际应用中应该从市场获取)
         home_odds = 2.0
         draw_odds = 3.2
         away_odds = 3.8
 
-        ev = (home_prob * (home_odds - 1) +
-              draw_prob * (draw_odds - 1) +
-              away_prob * (away_odds - 1)) - 1
+        ev = (
+            home_prob * (home_odds - 1)
+            + draw_prob * (draw_odds - 1)
+            + away_prob * (away_odds - 1)
+        ) - 1
 
         return round(ev, 3)
 
     async def _calculate_kelly_recommendations(
-        self,
-        prediction_result: Any,
-        strategy_analysis: Dict[str, Any]
+        self, prediction_result: Any, strategy_analysis: Dict[str, Any]
     ) -> Dict[str, Any]:
         """计算凯利建议"""
         try:
             # 解析预测概率
-            if hasattr(prediction_result, 'data'):
+            if hasattr(prediction_result, "data"):
                 pred_data = prediction_result.data
             else:
                 pred_data = prediction_result
@@ -379,39 +382,44 @@ class RealTimePredictionWorkflow:
                 home_prob, draw_prob, away_prob = 0.5, 0.3, 0.2
 
             # 模拟市场赔率
-            market_odds = {
-                "home": 2.1,
-                "draw": 3.4,
-                "away": 3.8
-            }
+            market_odds = {"home": 2.1, "draw": 3.4, "away": 3.8}
 
             # 计算凯利建议
             kelly_results = {}
 
             # 主队建议
-            if strategy_analysis.get("recommendation") in ["bet_home", "consider_small_bet"]:
+            if strategy_analysis.get("recommendation") in [
+                "bet_home",
+                "consider_small_bet",
+            ]:
                 home_kelly = self.kelly_criterion.calculate_kelly_fraction(
                     decimal_odds=market_odds["home"],
                     predicted_prob=home_prob,
-                    outcome="home"
+                    outcome="home",
                 )
                 kelly_results["home"] = home_kelly
 
             # 平局建议
-            if strategy_analysis.get("recommendation") in ["bet_draw", "consider_small_bet"]:
+            if strategy_analysis.get("recommendation") in [
+                "bet_draw",
+                "consider_small_bet",
+            ]:
                 draw_kelly = self.kelly_criterion.calculate_kelly_fraction(
                     decimal_odds=market_odds["draw"],
                     predicted_prob=draw_prob,
-                    outcome="draw"
+                    outcome="draw",
                 )
                 kelly_results["draw"] = draw_kelly
 
             # 客队建议
-            if strategy_analysis.get("recommendation") in ["bet_away", "consider_small_bet"]:
+            if strategy_analysis.get("recommendation") in [
+                "bet_away",
+                "consider_small_bet",
+            ]:
                 away_kelly = self.kelly_criterion.calculate_kelly_fraction(
                     decimal_odds=market_odds["away"],
                     predicted_prob=away_prob,
-                    outcome="away"
+                    outcome="away",
                 )
                 kelly_results["away"] = away_kelly
 
@@ -420,18 +428,18 @@ class RealTimePredictionWorkflow:
                 "home": {
                     "odds": market_odds["home"],
                     "probability": home_prob,
-                    "confidence": strategy_analysis.get("prediction_confidence", 0.5)
+                    "confidence": strategy_analysis.get("prediction_confidence", 0.5),
                 },
                 "draw": {
                     "odds": market_odds["draw"],
                     "probability": draw_prob,
-                    "confidence": strategy_analysis.get("prediction_confidence", 0.5)
+                    "confidence": strategy_analysis.get("prediction_confidence", 0.5),
                 },
                 "away": {
                     "odds": market_odds["away"],
                     "probability": away_prob,
-                    "confidence": strategy_analysis.get("prediction_confidence", 0.5)
-                }
+                    "confidence": strategy_analysis.get("prediction_confidence", 0.5),
+                },
             }
 
             recommendations = self.kelly_criterion.generate_bet_recommendation(outcomes)
@@ -446,10 +454,11 @@ class RealTimePredictionWorkflow:
                         "kelly_fraction": rec.kelly_fraction,
                         "stake_amount": rec.stake_amount,
                         "expected_value": rec.expected_value,
-                        "risk_level": rec.risk_level.value
-                    } for rec in recommendations
+                        "risk_level": rec.risk_level.value,
+                    }
+                    for rec in recommendations
                 ],
-                "portfolio_state": self.kelly_criterion.get_portfolio_state()
+                "portfolio_state": self.kelly_criterion.get_portfolio_state(),
             }
 
         except Exception as e:
@@ -457,13 +466,13 @@ class RealTimePredictionWorkflow:
             return {
                 "kelly_fractions": {},
                 "bet_recommendations": [],
-                "portfolio_state": self.kelly_criterion.get_portfolio_state()
+                "portfolio_state": self.kelly_criterion.get_portfolio_state(),
             }
 
     def _calculate_confidence_level(self, prediction_result: Any) -> str:
         """计算置信度等级"""
         try:
-            if hasattr(prediction_result, 'data'):
+            if hasattr(prediction_result, "data"):
                 pred_data = prediction_result.data
             else:
                 pred_data = prediction_result
@@ -491,7 +500,9 @@ class RealTimePredictionWorkflow:
 
         try:
             confidence = result.get("confidence_level", "unknown")
-            recommendation = result.get("kelly_recommendations", {}).get("bet_recommendations", [])
+            recommendation = result.get("kelly_recommendations", {}).get(
+                "bet_recommendations", []
+            )
 
             # 高风险告警条件
             if confidence == "low" and recommendation:
@@ -506,7 +517,7 @@ class RealTimePredictionWorkflow:
                     """.strip(),
                     level=AlertLevel.WARNING,
                     source="real_time_workflow",
-                    tags=["low_confidence", "risk_alert"]
+                    tags=["low_confidence", "risk_alert"],
                 )
 
             # 大额投注告警
@@ -524,7 +535,7 @@ class RealTimePredictionWorkflow:
                         """.strip(),
                         level=AlertLevel.WARNING,
                         source="real_time_workflow",
-                        tags=["large_stake", "risk_alert"]
+                        tags=["large_stake", "risk_alert"],
                     )
 
         except Exception as e:
@@ -553,8 +564,12 @@ class RealTimePredictionWorkflow:
         stats = self.stats.copy()
 
         if stats["total_predictions"] > 0:
-            stats["success_rate"] = stats["successful_predictions"] / stats["total_predictions"]
-            stats["failure_rate"] = stats["failed_predictions"] / stats["total_predictions"]
+            stats["success_rate"] = (
+                stats["successful_predictions"] / stats["total_predictions"]
+            )
+            stats["failure_rate"] = (
+                stats["failed_predictions"] / stats["total_predictions"]
+            )
         else:
             stats["success_rate"] = 0.0
             stats["failure_rate"] = 0.0
@@ -567,7 +582,9 @@ class RealTimePredictionWorkflow:
 
         return stats
 
-    async def run_batch_predictions(self, matches: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    async def run_batch_predictions(
+        self, matches: List[Dict[str, Any]]
+    ) -> List[Dict[str, Any]]:
         """
         批量运行预测
 
@@ -589,7 +606,7 @@ class RealTimePredictionWorkflow:
                 result = await self.run_single_prediction(
                     home_team=match["home_team"],
                     away_team=match["away_team"],
-                    match_id=match.get("match_id")
+                    match_id=match.get("match_id"),
                 )
 
                 results.append(result)
@@ -600,12 +617,14 @@ class RealTimePredictionWorkflow:
 
             except Exception as e:
                 logger.error(f"❌ 比赛 {i} 预测失败: {e}")
-                results.append({
-                    "prediction_id": f"batch_failed_{i}_{int(time.time())}",
-                    "match_info": match,
-                    "error": str(e),
-                    "workflow_status": "failed"
-                })
+                results.append(
+                    {
+                        "prediction_id": f"batch_failed_{i}_{int(time.time())}",
+                        "match_info": match,
+                        "error": str(e),
+                        "workflow_status": "failed",
+                    }
+                )
 
         total_time = time.time() - start_time
         logger.info(f"✅ 批量预测完成: {len(results)} 个结果, 耗时: {total_time:.2f}s")
@@ -627,13 +646,15 @@ class RealTimePredictionWorkflow:
 
                 optimization_result = await run_optimization(config, save_results=True)
 
-                logger.info(f"✅ 参数优化完成: 最佳得分 {optimization_result.best_score:.4f}")
+                logger.info(
+                    f"✅ 参数优化完成: 最佳得分 {optimization_result.best_score:.4f}"
+                )
 
                 return {
                     "optimization_completed": True,
                     "best_score": optimization_result.best_score,
                     "best_params": optimization_result.best_params,
-                    "improvement": optimization_result.improvement_over_baseline
+                    "improvement": optimization_result.improvement_over_baseline,
                 }
 
             return None
@@ -662,12 +683,16 @@ class RealTimePredictionWorkflow:
 async def main():
     """主函数 - 示例使用"""
     parser = argparse.ArgumentParser(description="实时预测工作流")
-    parser.add_argument("--mode", choices=["single", "batch"], default="single", help="运行模式")
+    parser.add_argument(
+        "--mode", choices=["single", "batch"], default="single", help="运行模式"
+    )
     parser.add_argument("--home", type=str, help="主队名称 (单次模式)")
     parser.add_argument("--away", type=str, help="客队名称 (单次模式)")
     parser.add_argument("--match-id", type=str, help="比赛ID (可选)")
     parser.add_argument("--config", type=str, help="配置文件路径")
-    parser.add_argument("--enable-optimization", action="store_true", help="启用自动优化")
+    parser.add_argument(
+        "--enable-optimization", action="store_true", help="启用自动优化"
+    )
     parser.add_argument("--enable-alerts", action="store_true", help="启用告警通知")
 
     args = parser.parse_args()
@@ -675,7 +700,7 @@ async def main():
     # 加载配置
     config = {}
     if args.config and Path(args.config).exists():
-        with open(args.config, 'r') as f:
+        with open(args.config, "r") as f:
             config = json.load(f)
 
     config["enable_alerts"] = args.enable_alerts
@@ -699,37 +724,49 @@ async def main():
 
             # 单次预测
             result = await workflow.run_single_prediction(
-                home_team=args.home,
-                away_team=args.away,
-                match_id=args.match_id
+                home_team=args.home, away_team=args.away, match_id=args.match_id
             )
 
             # 输出结果
-            print("\n" + "="*60)
+            print("\n" + "=" * 60)
             print("🎯 预测结果")
-            print("="*60)
+            print("=" * 60)
             print(json.dumps(result, indent=2, ensure_ascii=False))
 
         else:
             # 批量预测示例
             sample_matches = [
-                {"home_team": "Manchester United", "away_team": "Arsenal", "match_id": "mu_vs_ars"},
-                {"home_team": "Liverpool", "away_team": "Chelsea", "match_id": "liv_vs_che"},
-                {"home_team": "Barcelona", "away_team": "Real Madrid", "match_id": "bar_vs_rma"}
+                {
+                    "home_team": "Manchester United",
+                    "away_team": "Arsenal",
+                    "match_id": "mu_vs_ars",
+                },
+                {
+                    "home_team": "Liverpool",
+                    "away_team": "Chelsea",
+                    "match_id": "liv_vs_che",
+                },
+                {
+                    "home_team": "Barcelona",
+                    "away_team": "Real Madrid",
+                    "match_id": "bar_vs_rma",
+                },
             ]
 
             results = await workflow.run_batch_predictions(sample_matches)
 
             # 输出结果摘要
             print(f"\n🎯 批量预测完成: {len(results)} 个结果")
-            success_count = sum(1 for r in results if r.get("workflow_status") == "success")
+            success_count = sum(
+                1 for r in results if r.get("workflow_status") == "success"
+            )
             print(f"✅ 成功: {success_count}, ❌ 失败: {len(results) - success_count}")
 
             # 保存结果到文件
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             output_file = f"batch_predictions_{timestamp}.json"
 
-            with open(output_file, 'w', encoding='utf-8') as f:
+            with open(output_file, "w", encoding="utf-8") as f:
                 json.dump(results, f, indent=2, ensure_ascii=False)
 
             print(f"💾 结果已保存到: {output_file}")
@@ -737,8 +774,12 @@ async def main():
         # 自动优化 (如果启用)
         if args.enable_optimization:
             optimization_result = await workflow.run_optimization_if_needed()
-            if optimization_result and optimization_result.get("optimization_completed"):
-                print(f"\n🔧 自动优化完成: 改进 {optimization_result.get('improvement', 0):.2f}%")
+            if optimization_result and optimization_result.get(
+                "optimization_completed"
+            ):
+                print(
+                    f"\n🔧 自动优化完成: 改进 {optimization_result.get('improvement', 0):.2f}%"
+                )
 
         # 显示统计信息
         stats = workflow.get_statistics()

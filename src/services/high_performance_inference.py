@@ -35,6 +35,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class BatchInferenceConfig:
     """批量推理配置"""
+
     # 批处理配置
     batch_size: int = 1000
     max_memory_usage_mb: float = 512.0
@@ -64,6 +65,7 @@ class BatchInferenceConfig:
 @dataclass
 class BatchInferenceStats:
     """批量推理统计"""
+
     total_predictions: int = 0
     successful_predictions: int = 0
     failed_predictions: int = 0
@@ -92,14 +94,14 @@ class VectorizedOddsCalculator:
     def _create_decimal_context(self):
         """创建Decimal上下文"""
         from decimal import getcontext, ROUND_HALF_UP
+
         ctx = getcontext().copy()
         ctx.prec = self.config.precision_bits
         ctx.rounding = getattr(Decimal, self.config.rounding_mode, ROUND_HALF_UP)
         return ctx
 
     def calculate_implied_probabilities_vectorized(
-        self,
-        odds_array: np.ndarray
+        self, odds_array: np.ndarray
     ) -> np.ndarray:
         """
         向量化计算隐含概率
@@ -111,22 +113,18 @@ class VectorizedOddsCalculator:
             np.ndarray: 概率数组 (n x 3)
         """
         # 使用向量化操作
-        with np.errstate(divide='ignore', invalid='ignore'):
+        with np.errstate(divide="ignore", invalid="ignore"):
             prob_array = 1.0 / odds_array
 
         # 处理无效值
         prob_array = np.where(
-            np.isfinite(prob_array),
-            prob_array,
-            PROBABILITY.MIN_PROBABILITY
+            np.isfinite(prob_array), prob_array, PROBABILITY.MIN_PROBABILITY
         )
 
         # 概率归一化 (向量化)
         prob_sums = np.sum(prob_array, axis=1, keepdims=True)
         prob_sums = np.where(
-            prob_sums > 0,
-            prob_sums,
-            PROBABILITY.MIN_PROBABILITY * 3  # 避免0除
+            prob_sums > 0, prob_sums, PROBABILITY.MIN_PROBABILITY * 3  # 避免0除
         )
 
         normalized_probs = prob_array / prob_sums
@@ -134,10 +132,7 @@ class VectorizedOddsCalculator:
         # 使用Sprint 2的业务规则验证
         return self._validate_probability_vectors(normalized_probs)
 
-    def _validate_probability_vectors(
-        self,
-        prob_vectors: np.ndarray
-    ) -> np.ndarray:
+    def _validate_probability_vectors(self, prob_vectors: np.ndarray) -> np.ndarray:
         """验证概率向量"""
         # 向量化业务规则验证
         prob_sums = np.sum(prob_vectors, axis=1)
@@ -154,17 +149,13 @@ class VectorizedOddsCalculator:
 
         # 检查概率范围
         prob_vectors = np.clip(
-            prob_vectors,
-            PROBABILITY.MIN_PROBABILITY,
-            PROBABILITY.MAX_PROBABILITY
+            prob_vectors, PROBABILITY.MIN_PROBABILITY, PROBABILITY.MAX_PROBABILITY
         )
 
         return prob_vectors
 
     def convert_to_decimal_vectorized(
-        self,
-        float_array: np.ndarray,
-        preserve_precision: bool = True
+        self, float_array: np.ndarray, preserve_precision: bool = True
     ) -> np.ndarray:
         """
         向量化转换为Decimal类型
@@ -181,8 +172,7 @@ class VectorizedOddsCalculator:
 
         # 使用vectorize进行高效转换
         decimal_converter = np.vectorize(
-            lambda x: Decimal(str(x)).quantize(Decimal('0.000001')),
-            otypes=[object]
+            lambda x: Decimal(str(x)).quantize(Decimal("0.000001")), otypes=[object]
         )
 
         return decimal_converter(float_array)
@@ -200,7 +190,9 @@ class HighPerformanceInferenceEngine(ServiceLifecycle):
     - 缓存优化
     """
 
-    def __init__(self, predictor: Predictor, config: Optional[BatchInferenceConfig] = None):
+    def __init__(
+        self, predictor: Predictor, config: Optional[BatchInferenceConfig] = None
+    ):
         self.predictor = predictor
         self.config = config or BatchInferenceConfig()
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
@@ -212,10 +204,7 @@ class HighPerformanceInferenceEngine(ServiceLifecycle):
         self._start_time = time.time()
 
         # 内存管理
-        self._memory_tracker = {
-            'peak_usage': 0.0,
-            'current_usage': 0.0
-        }
+        self._memory_tracker = {"peak_usage": 0.0, "current_usage": 0.0}
 
         self._initialized = False
 
@@ -253,7 +242,7 @@ class HighPerformanceInferenceEngine(ServiceLifecycle):
         match_data_list: List[Dict[str, Any]],
         include_features: bool = False,
         include_metadata: bool = True,
-        batch_size: Optional[int] = None
+        batch_size: Optional[int] = None,
     ) -> List[Dict[str, Any]]:
         """
         向量化批量预测
@@ -282,7 +271,10 @@ class HighPerformanceInferenceEngine(ServiceLifecycle):
             # 分批处理
             results = []
 
-            if self.config.enable_parallel_processing and len(processed_data) > batch_size:
+            if (
+                self.config.enable_parallel_processing
+                and len(processed_data) > batch_size
+            ):
                 results = await self._predict_parallel_vectorized(
                     processed_data, batch_size, include_features, include_metadata
                 )
@@ -308,8 +300,7 @@ class HighPerformanceInferenceEngine(ServiceLifecycle):
             raise
 
     async def predict_odds_batch_vectorized(
-        self,
-        odds_data: Union[pd.DataFrame, np.ndarray, List[Dict[str, Any]]]
+        self, odds_data: Union[pd.DataFrame, np.ndarray, List[Dict[str, Any]]]
     ) -> np.ndarray:
         """
         向量化批量赔率预测
@@ -328,24 +319,29 @@ class HighPerformanceInferenceEngine(ServiceLifecycle):
         try:
             # 数据格式标准化
             if isinstance(odds_data, pd.DataFrame):
-                odds_array = odds_data[['home_odds', 'draw_odds', 'away_odds']].values
+                odds_array = odds_data[["home_odds", "draw_odds", "away_odds"]].values
             elif isinstance(odds_data, list):
-                odds_array = np.array([
-                    [item['home_odds'], item['draw_odds'], item['away_odds']]
-                    for item in odds_data
-                ])
+                odds_array = np.array(
+                    [
+                        [item["home_odds"], item["draw_odds"], item["away_odds"]]
+                        for item in odds_data
+                    ]
+                )
             else:
                 odds_array = odds_data
 
             # 向量化概率计算
-            prob_array = self._odds_calculator.calculate_implied_probabilities_vectorized(
-                odds_array
+            prob_array = (
+                self._odds_calculator.calculate_implied_probabilities_vectorized(
+                    odds_array
+                )
             )
 
             # 性能统计
             processing_time = time.time() - start_time
             self._stats.vectorized_operations += len(prob_array)
 
+            self.logger.info(
                 f"向量化赔率计算完成: {len(prob_array)} 条记录, "
                 f"耗时 {processing_time*1000:.1f}ms"
             )
@@ -357,8 +353,7 @@ class HighPerformanceInferenceEngine(ServiceLifecycle):
             raise
 
     async def _preprocess_batch_vectorized(
-        self,
-        match_data_list: List[Dict[str, Any]]
+        self, match_data_list: List[Dict[str, Any]]
     ) -> List[Dict[str, Any]]:
         """向量化预处理批量数据"""
         processed_data = []
@@ -381,7 +376,9 @@ class HighPerformanceInferenceEngine(ServiceLifecycle):
                     self._feature_cache[cache_key] = processed_match
 
             except Exception as e:
-                self.logger.warning(f"预处理比赛数据失败 {match_data.get('match_id', 'unknown')}: {e}")
+                self.logger.warning(
+                    f"预处理比赛数据失败 {match_data.get('match_id', 'unknown')}: {e}"
+                )
                 # 添加空结果以保持顺序
                 processed_data.append(None)
 
@@ -392,12 +389,12 @@ class HighPerformanceInferenceEngine(ServiceLifecycle):
         processed_data: List[Dict[str, Any]],
         batch_size: int,
         include_features: bool,
-        include_metadata: bool
+        include_metadata: bool,
     ) -> List[Dict[str, Any]]:
         """并行向量化预测"""
         # 分割批次
         batches = [
-            processed_data[i:i + batch_size]
+            processed_data[i : i + batch_size]
             for i in range(0, len(processed_data), batch_size)
         ]
 
@@ -408,10 +405,7 @@ class HighPerformanceInferenceEngine(ServiceLifecycle):
             # 提交所有批次任务
             future_to_batch = {
                 executor.submit(
-                    self._predict_batch_chunk,
-                    batch,
-                    include_features,
-                    include_metadata
+                    self._predict_batch_chunk, batch, include_features, include_metadata
                 ): batch_idx
                 for batch_idx, batch in enumerate(batches)
             }
@@ -435,13 +429,13 @@ class HighPerformanceInferenceEngine(ServiceLifecycle):
         processed_data: List[Dict[str, Any]],
         batch_size: int,
         include_features: bool,
-        include_metadata: bool
+        include_metadata: bool,
     ) -> List[Dict[str, Any]]:
         """顺序向量化预测"""
         all_results = []
 
         for i in range(0, len(processed_data), batch_size):
-            batch = processed_data[i:i + batch_size]
+            batch = processed_data[i : i + batch_size]
             batch_results = await self._predict_batch_chunk(
                 batch, include_features, include_metadata
             )
@@ -453,7 +447,7 @@ class HighPerformanceInferenceEngine(ServiceLifecycle):
         self,
         batch: List[Dict[str, Any]],
         include_features: bool,
-        include_metadata: bool
+        include_metadata: bool,
     ) -> List[Dict[str, Any]]:
         """预测单个批次"""
         batch_start_time = time.time()
@@ -502,8 +496,8 @@ class HighPerformanceInferenceEngine(ServiceLifecycle):
             # 记录批次性能
             batch_time = time.time() - batch_start_time
             if self.config.log_batch_times:
-                    f"批次处理完成: {len(batch)} 项, "
-                    f"耗时 {batch_time*1000:.1f}ms"
+                self.logger.info(
+                    f"批次处理完成: {len(batch)} 项, " f"耗时 {batch_time*1000:.1f}ms"
                 )
 
             return final_results
@@ -513,8 +507,7 @@ class HighPerformanceInferenceEngine(ServiceLifecycle):
             return [None] * len(batch)
 
     async def _extract_features_vectorized(
-        self,
-        match_data_list: List[Dict[str, Any]]
+        self, match_data_list: List[Dict[str, Any]]
     ) -> np.ndarray:
         """向量化特征提取"""
         # 这里可以实现更复杂的向量化特征提取
@@ -539,8 +532,7 @@ class HighPerformanceInferenceEngine(ServiceLifecycle):
             return np.zeros(13)
 
     async def _predict_batch_features(
-        self,
-        features_vectors: Union[np.ndarray, List[np.ndarray]]
+        self, features_vectors: Union[np.ndarray, List[np.ndarray]]
     ) -> List[Dict[str, Any]]:
         """批量特征预测"""
         try:
@@ -560,11 +552,13 @@ class HighPerformanceInferenceEngine(ServiceLifecycle):
                 proba = proba / proba.sum()  # 归一化
 
                 pred = {
-                    'HOME_WIN_PROBA': float(proba[2]),
-                    'DRAW_PROBA': float(proba[1]),
-                    'AWAY_WIN_PROBA': float(proba[0]),
-                    'predicted_class': ['AWAY_WIN', 'DRAW', 'HOME_WIN'][np.argmax(proba)],
-                    'confidence': float(np.max(proba))
+                    "HOME_WIN_PROBA": float(proba[2]),
+                    "DRAW_PROBA": float(proba[1]),
+                    "AWAY_WIN_PROBA": float(proba[0]),
+                    "predicted_class": ["AWAY_WIN", "DRAW", "HOME_WIN"][
+                        np.argmax(proba)
+                    ],
+                    "confidence": float(np.max(proba)),
                 }
                 predictions.append(pred)
 
@@ -579,23 +573,22 @@ class HighPerformanceInferenceEngine(ServiceLifecycle):
         match_data: Dict[str, Any],
         prediction: Dict[str, Any],
         include_features: bool,
-        include_metadata: bool
+        include_metadata: bool,
     ) -> Dict[str, Any]:
         """构建预测结果"""
-        result = {
-            'match_id': match_data.get('match_id'),
-            **prediction
-        }
+        result = {"match_id": match_data.get("match_id"), **prediction}
 
         if include_features:
-            result['features'] = match_data.get('features', {})
+            result["features"] = match_data.get("features", {})
 
         if include_metadata:
-            result.update({
-                'model_version': 'high_performance_v1',
-                'processed_at': time.time(),
-                'batch_processed': True
-            })
+            result.update(
+                {
+                    "model_version": "high_performance_v1",
+                    "processed_at": time.time(),
+                    "batch_processed": True,
+                }
+            )
 
         return result
 
@@ -638,7 +631,7 @@ async def create_high_performance_inference(
     predictor: Predictor,
     batch_size: int = 1000,
     enable_parallel: bool = True,
-    max_workers: int = 4
+    max_workers: int = 4,
 ) -> HighPerformanceInferenceEngine:
     """
     创建高性能推理引擎
@@ -657,7 +650,7 @@ async def create_high_performance_inference(
         enable_parallel_processing=enable_parallel,
         max_workers=max_workers,
         enable_vectorized_computation=True,
-        use_decimal_precision=True
+        use_decimal_precision=True,
     )
 
     engine = HighPerformanceInferenceEngine(predictor, config)

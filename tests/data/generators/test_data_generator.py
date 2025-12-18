@@ -24,10 +24,22 @@ class TestDataGenerator:
 
         # 足球相关数据
         self.teams = [
-            "Manchester United", "Manchester City", "Liverpool", "Chelsea",
-            "Arsenal", "Tottenham", "Leicester City", "West Ham",
-            "Everton", "Aston Villa", "Newcastle United", "Wolves",
-            "Leeds United", "Southampton", "Brighton", "Burnley"
+            "Manchester United",
+            "Manchester City",
+            "Liverpool",
+            "Chelsea",
+            "Arsenal",
+            "Tottenham",
+            "Leicester City",
+            "West Ham",
+            "Everton",
+            "Aston Villa",
+            "Newcastle United",
+            "Wolves",
+            "Leeds United",
+            "Southampton",
+            "Brighton",
+            "Burnley",
         ]
 
         self.leagues = ["Premier League", "La Liga", "Serie A", "Bundesliga", "Ligue 1"]
@@ -53,7 +65,7 @@ class TestDataGenerator:
             "venue": f"{home_team} Stadium",
             "season": f"{match_date.year-1}/{match_date.year}",
             "round": random.randint(1, 38),
-            "status": "scheduled"
+            "status": "scheduled",
         }
 
     def generate_features(self, feature_count: int = 12) -> List[float]:
@@ -85,7 +97,9 @@ class TestDataGenerator:
 
         return features[:feature_count]
 
-    def generate_prediction_result(self, model_name: str = "xgboost_v2") -> Dict[str, Any]:
+    def generate_prediction_result(
+        self, model_name: str = "xgboost_v2"
+    ) -> Dict[str, Any]:
         """生成预测结果"""
         # 生成随机概率，确保总和为1
         probs = [random.random() for _ in range(3)]
@@ -99,12 +113,14 @@ class TestDataGenerator:
         return {
             "match_id": str(uuid.uuid4()),
             "home_team": random.choice(self.teams),
-            "away_team": random.choice([t for t in self.teams if t != random.choice(self.teams)]),
+            "away_team": random.choice(
+                [t for t in self.teams if t != random.choice(self.teams)]
+            ),
             "prediction": predicted_outcome,
             "probabilities": {
                 "HOME_WIN": probs[0],
                 "DRAW": probs[1],
-                "AWAY_WIN": probs[2]
+                "AWAY_WIN": probs[2],
             },
             "confidence": max(probs),
             "model_name": model_name,
@@ -112,7 +128,7 @@ class TestDataGenerator:
             "prediction_time": datetime.now().isoformat(),
             "processing_time_ms": random.uniform(10.0, 100.0),
             "features_count": random.randint(8, 15),
-            "feature_names": [f"feature_{i}" for i in range(random.randint(8, 15))]
+            "feature_names": [f"feature_{i}" for i in range(random.randint(8, 15))],
         }
 
     def generate_batch_predictions(self, batch_size: int = 10) -> Dict[str, Any]:
@@ -130,13 +146,17 @@ class TestDataGenerator:
             "status": "completed",
             "created_time": datetime.now().isoformat(),
             "completed_time": datetime.now().isoformat(),
-            "total_processing_time_ms": sum(p["processing_time_ms"] for p in predictions)
+            "total_processing_time_ms": sum(
+                p["processing_time_ms"] for p in predictions
+            ),
         }
 
     def generate_model_info(self) -> Dict[str, Any]:
         """生成模型信息"""
         return {
-            "model_name": random.choice(["xgboost_v2", "neural_net_v1", "random_forest_v3"]),
+            "model_name": random.choice(
+                ["xgboost_v2", "neural_net_v1", "random_forest_v3"]
+            ),
             "version": f"{random.randint(1, 5)}.{random.randint(0, 9)}.{random.randint(0, 9)}",
             "type": random.choice(["classifier", "regressor"]),
             "algorithm": random.choice(["XGBoost", "Neural Network", "Random Forest"]),
@@ -146,10 +166,12 @@ class TestDataGenerator:
             "precision": random.uniform(0.6, 0.8),
             "recall": random.uniform(0.6, 0.8),
             "f1_score": random.uniform(0.6, 0.8),
-            "training_date": (datetime.now() - timedelta(days=random.randint(1, 30))).isoformat(),
+            "training_date": (
+                datetime.now() - timedelta(days=random.randint(1, 30))
+            ).isoformat(),
             "last_updated": datetime.now().isoformat(),
             "model_path": f"/models/xgboost_v2_{random.randint(1, 100)}.pkl",
-            "size_mb": random.uniform(5.0, 50.0)
+            "size_mb": random.uniform(5.0, 50.0),
         }
 
     def generate_health_check_data(self) -> Dict[str, Any]:
@@ -168,26 +190,26 @@ class TestDataGenerator:
                     "details": {
                         "connection_pool": "active",
                         "active_connections": random.randint(1, 10),
-                        "max_connections": 20
-                    }
+                        "max_connections": 20,
+                    },
                 },
                 "redis": {
                     "status": "healthy",
                     "response_time_ms": random.uniform(0.5, 5.0),
                     "details": {
                         "memory_usage": f"{random.randint(50, 200)}MB",
-                        "connected_clients": random.randint(1, 5)
-                    }
+                        "connected_clients": random.randint(1, 5),
+                    },
                 },
                 "model_service": {
                     "status": "healthy",
                     "response_time_ms": random.uniform(10.0, 100.0),
                     "details": {
                         "loaded_models": random.randint(1, 5),
-                        "cache_hit_rate": random.uniform(0.7, 0.95)
-                    }
-                }
-            }
+                        "cache_hit_rate": random.uniform(0.7, 0.95),
+                    },
+                },
+            },
         }
 
     def generate_error_data(self, error_type: str = "validation") -> Dict[str, Any]:
@@ -196,23 +218,23 @@ class TestDataGenerator:
             "validation": [
                 "Invalid input features",
                 "Missing required fields",
-                "Feature dimension mismatch"
+                "Feature dimension mismatch",
             ],
             "model": [
                 "Model not found",
                 "Model loading failed",
-                "Model inference error"
+                "Model inference error",
             ],
             "database": [
                 "Connection timeout",
                 "Query execution failed",
-                "Database unavailable"
+                "Database unavailable",
             ],
             "external_api": [
                 "Rate limit exceeded",
                 "API unavailable",
-                "Invalid response format"
-            ]
+                "Invalid response format",
+            ],
         }
 
         return {
@@ -225,8 +247,8 @@ class TestDataGenerator:
                 "request_id": str(uuid.uuid4()),
                 "user_id": random.randint(1000, 9999),
                 "endpoint": random.choice(["/predict", "/models", "/health"]),
-                "method": random.choice(["GET", "POST", "PUT"])
-            }
+                "method": random.choice(["GET", "POST", "PUT"]),
+            },
         }
 
     def generate_metrics_data(self) -> Dict[str, Any]:
@@ -241,7 +263,7 @@ class TestDataGenerator:
             "active_models": random.randint(1, 5),
             "memory_usage_mb": random.uniform(100.0, 500.0),
             "cpu_usage_percent": random.uniform(10.0, 80.0),
-            "last_updated": datetime.now().isoformat()
+            "last_updated": datetime.now().isoformat(),
         }
 
     def generate_config_data(self) -> Dict[str, Any]:
@@ -253,37 +275,39 @@ class TestDataGenerator:
                 "name": "football_prediction_test",
                 "user": "test_user",
                 "pool_size": random.randint(5, 20),
-                "max_overflow": random.randint(10, 30)
+                "max_overflow": random.randint(10, 30),
             },
             "redis": {
                 "host": "localhost",
                 "port": 6379,
                 "db": 0,
                 "password": None,
-                "max_connections": random.randint(10, 50)
+                "max_connections": random.randint(10, 50),
             },
             "model": {
                 "default_model": "xgboost_v2",
                 "model_path": "/app/data/models",
                 "cache_ttl": random.randint(3600, 7200),
-                "max_features": random.randint(20, 50)
+                "max_features": random.randint(20, 50),
             },
             "api": {
                 "host": "0.0.0.0",
                 "port": 8000,
                 "debug": False,
                 "workers": random.randint(1, 4),
-                "timeout": random.randint(30, 120)
+                "timeout": random.randint(30, 120),
             },
             "monitoring": {
                 "enabled": True,
                 "metrics_port": 9090,
                 "health_check_interval": random.randint(10, 60),
-                "log_level": random.choice(["DEBUG", "INFO", "WARNING", "ERROR"])
-            }
+                "log_level": random.choice(["DEBUG", "INFO", "WARNING", "ERROR"]),
+            },
         }
 
-    def save_test_data(self, data: Dict[str, Any], filename: str, data_type: str = "json"):
+    def save_test_data(
+        self, data: Dict[str, Any], filename: str, data_type: str = "json"
+    ):
         """保存测试数据到文件
 
         Args:
@@ -300,13 +324,15 @@ class TestDataGenerator:
         # 保存文件
         if data_type.lower() == "json":
             filepath = data_dir / f"{filename}.json"
-            with open(filepath, 'w', encoding='utf-8') as f:
+            with open(filepath, "w", encoding="utf-8") as f:
                 json.dump(data, f, indent=2, ensure_ascii=False, default=str)
             print(f"✅ 测试数据已保存到: {filepath}")
         else:
             raise ValueError(f"不支持的数据类型: {data_type}")
 
-    def generate_test_dataset(self, dataset_name: str = "test_dataset", size: int = 100):
+    def generate_test_dataset(
+        self, dataset_name: str = "test_dataset", size: int = 100
+    ):
         """生成完整的测试数据集
 
         Args:
@@ -318,15 +344,22 @@ class TestDataGenerator:
                 "name": dataset_name,
                 "created_time": datetime.now().isoformat(),
                 "size": size,
-                "version": "1.0.0"
+                "version": "1.0.0",
             },
             "matches": [self.generate_match_data() for _ in range(size)],
-            "predictions": [self.generate_prediction_result() for _ in range(size // 2)],
+            "predictions": [
+                self.generate_prediction_result() for _ in range(size // 2)
+            ],
             "health_checks": [self.generate_health_check_data() for _ in range(5)],
             "models": [self.generate_model_info() for _ in range(3)],
-            "errors": [self.generate_error_data(random.choice(["validation", "model", "database"])) for _ in range(10)],
+            "errors": [
+                self.generate_error_data(
+                    random.choice(["validation", "model", "database"])
+                )
+                for _ in range(10)
+            ],
             "metrics": self.generate_metrics_data(),
-            "config": self.generate_config_data()
+            "config": self.generate_config_data(),
         }
 
         self.save_test_data(dataset, dataset_name)
@@ -355,7 +388,7 @@ def generate_quick_test_data() -> Dict[str, Any]:
         "features": generator.generate_features(),
         "prediction": generator.generate_prediction_result(),
         "health_check": generator.generate_health_check_data(),
-        "model_info": generator.generate_model_info()
+        "model_info": generator.generate_model_info(),
     }
 
 

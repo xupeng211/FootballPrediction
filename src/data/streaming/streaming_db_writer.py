@@ -278,6 +278,7 @@ class StreamingDBWriter:
                 batch_time = (time.time() - start_time) * 1000
                 self._update_stats(len(data), batch_time, attempt > 0)
 
+                self.logger.info(
                     f"工作器 {worker_id}: 写入 {len(data)} 行到 {table_name}, "
                     f"耗时 {batch_time:.1f}ms"
                 )

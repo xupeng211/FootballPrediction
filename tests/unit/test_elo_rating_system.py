@@ -15,7 +15,11 @@ import math
 from datetime import datetime, timedelta
 from typing import Dict, Any
 
-from src.ml.features.elo_rating_system import EloRatingSystem, TeamRating, HeadToHeadRecord
+from src.ml.features.elo_rating_system import (
+    EloRatingSystem,
+    TeamRating,
+    HeadToHeadRecord,
+)
 
 
 class TestEloRatingSystem:
@@ -30,7 +34,7 @@ class TestEloRatingSystem:
             base_k_factor=40.0,
             enable_goal_margin=True,
             enable_dynamic_k=True,
-            rating_decay_days=365
+            rating_decay_days=365,
         )
 
     @pytest.fixture
@@ -40,7 +44,7 @@ class TestEloRatingSystem:
             "team_a": "Manchester United",
             "team_b": "Arsenal",
             "team_c": "Chelsea",
-            "team_d": "Liverpool"
+            "team_d": "Liverpool",
         }
 
     def test_initialization(self, elo_system):
@@ -57,12 +61,12 @@ class TestEloRatingSystem:
         elo_system.team_ratings[sample_teams["team_a"]] = TeamRating(
             team_id=sample_teams["team_a"],
             rating=1500.0,
-            last_updated=datetime.utcnow()
+            last_updated=datetime.utcnow(),
         )
         elo_system.team_ratings[sample_teams["team_b"]] = TeamRating(
             team_id=sample_teams["team_b"],
             rating=1500.0,
-            last_updated=datetime.utcnow()
+            last_updated=datetime.utcnow(),
         )
 
         # 验证初始评级
@@ -93,17 +97,23 @@ class TestEloRatingSystem:
         assert k_factor == 40.0 * 1.5 * 0.9
 
         # 杯重限制
-        k_factor_limited = elo_system._calculate_k_factor("league", weight=3.0, confidence=0.5)
+        k_factor_limited = elo_system._calculate_k_factor(
+            "league", weight=3.0, confidence=0.5
+        )
         assert k_factor_limited == 40.0 * 2.0 * 0.5  # 最大2.0倍权重
 
     def test_basic_rating_update(self, elo_system, sample_teams):
         """测试基础评级更新"""
         # 设置初始评级
         elo_system.team_ratings[sample_teams["team_a"]] = TeamRating(
-            team_id=sample_teams["team_a"], rating=1500.0, last_updated=datetime.utcnow()
+            team_id=sample_teams["team_a"],
+            rating=1500.0,
+            last_updated=datetime.utcnow(),
         )
         elo_system.team_ratings[sample_teams["team_b"]] = TeamRating(
-            team_id=sample_teams["team_b"], rating=1500.0, last_updated=datetime.utcnow()
+            team_id=sample_teams["team_b"],
+            rating=1500.0,
+            last_updated=datetime.utcnow(),
         )
 
         # 强队主场战胜弱队
@@ -113,7 +123,7 @@ class TestEloRatingSystem:
             home_goals=3,
             away_goals=1,
             match_date=datetime.utcnow(),
-            competition_type="league"
+            competition_type="league",
         )
 
         # 验证评级更新
@@ -134,10 +144,14 @@ class TestEloRatingSystem:
         """测试平局结果评级更新"""
         # 设置初始评级
         elo_system.team_ratings[sample_teams["team_a"]] = TeamRating(
-            team_id=sample_teams["team_a"], rating=1600.0, last_updated=datetime.utcnow()
+            team_id=sample_teams["team_a"],
+            rating=1600.0,
+            last_updated=datetime.utcnow(),
         )
         elo_system.team_ratings[sample_teams["team_b"]] = TeamRating(
-            team_id=sample_teams["team_b"], rating=1400.0, last_updated=datetime.utcnow()
+            team_id=sample_teams["team_b"],
+            rating=1400.0,
+            last_updated=datetime.utcnow(),
         )
 
         result = elo_system.update_ratings(
@@ -146,7 +160,7 @@ class TestEloRatingSystem:
             home_goals=1,
             away_goals=1,
             match_date=datetime.utcnow(),
-            competition_type="league"
+            competition_type="league",
         )
 
         # 平局情况下，低排名队应该获得收益
@@ -158,14 +172,18 @@ class TestEloRatingSystem:
         # 低排名队（客队）应该获得评级
         assert new_away_rating > 1400.0
 
-    def test_goal_margin_impact(self,elo_system, sample_teams):
+    def test_goal_margin_impact(self, elo_system, sample_teams):
         """测试进球差距对评级更新的影响"""
         # 设置初始评级
         elo_system.team_ratings[sample_teams["team_a"]] = TeamRating(
-            team_id=sample_teams["team_a"], rating=1500.0, last_updated=datetime.utcnow()
+            team_id=sample_teams["team_a"],
+            rating=1500.0,
+            last_updated=datetime.utcnow(),
         )
         elo_system.team_ratings[sample_teams["team_b"]] = TeamRating(
-            team_id=sample_teams["team_b"], rating=1500.0, last_updated=datetime.utcnow()
+            team_id=sample_teams["team_b"],
+            rating=1500.0,
+            last_updated=datetime.utcnow(),
         )
 
         # 大比分胜利
@@ -175,15 +193,19 @@ class TestEloRatingSystem:
             home_goals=5,
             away_goals=0,
             match_date=datetime.utcnow(),
-            competition_type="league"
+            competition_type="league",
         )
 
         # 小比分胜利
         elo_system.team_ratings[sample_teams["team_a"]] = TeamRating(
-            team_id=sample_teams["team_a"], rating=1500.0, last_updated=datetime.utcnow()
+            team_id=sample_teams["team_a"],
+            rating=1500.0,
+            last_updated=datetime.utcnow(),
         )
         elo_system.team_ratings[sample_teams["team_b"]] = TeamRating(
-            team_id=sample_teams["team_b"], rating=1500.0, last_updated=datetime.utcnow()
+            team_id=sample_teams["team_b"],
+            rating=1500.0,
+            last_updated=datetime.utcnow(),
         )
 
         result_small = elo_system.update_ratings(
@@ -192,7 +214,7 @@ class TestEloRatingSystem:
             home_goals=1,
             away_goals=0,
             match_date=datetime.utcnow(),
-            competition_type="league"
+            competition_type="league",
         )
 
         # 大比分胜利应该获得更多评级提升
@@ -204,10 +226,14 @@ class TestEloRatingSystem:
         """测试主场优势的影响"""
         # 设置初始评级
         elo_system.team_ratings[sample_teams["team_a"]] = TeamRating(
-            team_id=sample_teams["team_a"], rating=1500.0, last_updated=datetime.utcnow()
+            team_id=sample_teams["team_a"],
+            rating=1500.0,
+            last_updated=datetime.utcnow(),
         )
         elo_system.team_ratings[sample_teams["team_b"]] = TeamRating(
-            team_id=sample_teams["team_b"], rating=1500.0, last_updated=datetime.utcnow()
+            team_id=sample_teams["team_b"],
+            rating=1500.0,
+            last_updated=datetime.utcnow(),
         )
 
         # 主队获胜
@@ -217,15 +243,19 @@ class TestEloRatingSystem:
             home_goals=2,
             away_goals=1,
             match_date=datetime.utcnow(),
-            competition_type="league"
+            competition_type="league",
         )
 
         # 客队获胜（相同比分，客场）
         elo_system.team_ratings[sample_teams["team_a"]] = TeamRating(
-            team_id=sample_teams["team_a"], rating=1500.0, last_updated=datetime.utcnow()
+            team_id=sample_teams["team_a"],
+            rating=1500.0,
+            last_updated=datetime.utcnow(),
         )
         elo_system.team_ratings[sample_teams["team_b"]] = TeamRating(
-            team_id=sample_teams["team_b"], rating=1500.0, last_updated=datetime.utcnow()
+            team_id=sample_teams["team_b"],
+            rating=1500.0,
+            last_updated=datetime.utcnow(),
         )
 
         result_away = elo_system.update_ratings(
@@ -234,7 +264,7 @@ class TestEloRatingSystem:
             home_goals=1,
             away_goals=2,
             match_date=datetime.utcnow(),
-            competition_type="league"
+            competition_type="league",
         )
 
         # 相同比分下，主场胜利获得的评级提升应该多于客场胜利
@@ -254,27 +284,37 @@ class TestEloRatingSystem:
         """测试预测概率计算"""
         # 设置不同评级
         elo_system.team_ratings[sample_teams["team_a"]] = TeamRating(
-            team_id=sample_teams["team_a"], rating=1700.0, last_updated=datetime.utcnow()
+            team_id=sample_teams["team_a"],
+            rating=1700.0,
+            last_updated=datetime.utcnow(),
         )
         elo_system.team_ratings[sample_teams["team_b"]] = TeamRating(
             team_id=sample_teams["team_b"], rating=1300.0, rating_decay_days=365
         )
 
         probabilities = elo_system.predict_match_probabilities(
-            home_team_id=sample_teams["team_a"],
-            away_team_id=sample_teams["team_b"]
+            home_team_id=sample_teams["team_a"], away_team_id=sample_teams["team_b"]
         )
 
         # 验证概率有效性
         assert 0 <= probabilities["probabilities"]["home_win"] <= 1
         assert 0 <= probabilities["probabilities"]["draw"] <= 1
         assert 0 <= probabilities["probabilities"]["away_win"] <= 1
-        assert abs(probabilities["probabilities"]["home_win"] +
-                  probabilities["probabilities"]["draw"] +
-                  probabilities["probabilities"]["away_win"] - 1.0) < 0.0001
+        assert (
+            abs(
+                probabilities["probabilities"]["home_win"]
+                + probabilities["probabilities"]["draw"]
+                + probabilities["probabilities"]["away_win"]
+                - 1.0
+            )
+            < 0.0001
+        )
 
         # 高评级主队应该有更高的胜率
-        assert probabilities["probabilities"]["home_win"] > probabilities["probabilities"]["away_win"]
+        assert (
+            probabilities["probabilities"]["home_win"]
+            > probabilities["probabilities"]["away_win"]
+        )
 
     def test_head_to_head_record_tracking(self, elo_system, sample_teams):
         """测试历史交锋记录跟踪"""
@@ -310,14 +350,15 @@ class TestEloRatingSystem:
         # 强队有历史优势
         for i in range(3):
             elo_system._add_h2h_record(
-                sample_teams["team_a"], sample_teams["team_b"],
-                2, 0, match_date - timedelta(days=i*10)
+                sample_teams["team_a"],
+                sample_teams["team_b"],
+                2,
+                0,
+                match_date - timedelta(days=i * 10),
             )
 
         # 测试H2H影响
-        k_with_h2h = elo_system._calculate_k_factor(
-            "league", confidence=1.0
-        )
+        k_with_h2h = elo_system._calculate_k_factor("league", confidence=1.0)
 
         # 无H2H记录的球队
         k_without_h2h = elo_system._calculate_k_factor(
@@ -332,8 +373,7 @@ class TestEloRatingSystem:
         # 设置过期评级
         old_date = datetime.utcnow() - timedelta(days=400)
         elo_system.team_ratings[sample_teams["team_a"]] = TeamRating(
-            team_id=sample_teams["team_a"], rating=1600.0,
-            last_updated=old_date
+            team_id=sample_teams["team_a"], rating=1600.0, last_updated=old_date
         )
 
         # 验证衰减后的评级
@@ -343,8 +383,7 @@ class TestEloRatingSystem:
         # 测试不衰减的近期评级
         recent_date = datetime.utcnow() - timedelta(days=100)
         elo_system.team_ratings[sample_teams["team_b"]] = TeamRating(
-            team_id=sample_teams["team_b"], rating=1500.0,
-            last_updated=recent_date
+            team_id=sample_teams["team_b"], rating=1500.0, last_updated=recent_date
         )
 
         no_decay_rating = elo_system.get_team_rating(sample_teams["team_b"])
@@ -360,8 +399,7 @@ class TestEloRatingSystem:
 
         # 添加一些比赛记录
         elo_system._add_h2h_record(
-            sample_teams["team_a"], sample_teams["team_b"], 2, 1,
-            datetime.utcnow()
+            sample_teams["team_a"], sample_teams["team_b"], 2, 1, datetime.utcnow()
         )
 
         stats = elo_system.get_system_stats()
@@ -383,20 +421,22 @@ class TestEloRatingSystem:
 
         # 测试无效概率
         with pytest.raises(ValueError):
-            elo_system._validate_probabilities({
-                "home_win": 1.5,
-                "draw": 0.3,
-                "away_win": 0.2
-            })
+            elo_system._validate_probabilities(
+                {"home_win": 1.5, "draw": 0.3, "away_win": 0.2}
+            )
 
     def test_numerical_precision(self, elo_system, sample_teams):
         """测试数值精度和一致性"""
         # 重复相同操作应该产生相同结果
         elo_system.team_ratings[sample_teams["team_a"]] = TeamRating(
-            team_id=sample_teams["team_a"], rating=1500.0, last_updated=datetime.utcnow()
+            team_id=sample_teams["team_a"],
+            rating=1500.0,
+            last_updated=datetime.utcnow(),
         )
         elo_system.team_ratings[sample_teams["team_b"]] = TeamRating(
-            team_id=sample_teams["team_b"], rating=1500.0, last_updated=datetime.utcnow()
+            team_id=sample_teams["team_b"],
+            rating=1500.0,
+            last_updated=datetime.utcnow(),
         )
 
         # 第一次更新
@@ -406,7 +446,7 @@ class TestEloRatingSystem:
             home_goals=2,
             away_goals=1,
             match_date=datetime.utcnow(),
-            competition_type="league"
+            competition_type="league",
         )
 
         # 重置到相同状态
@@ -420,12 +460,16 @@ class TestEloRatingSystem:
             home_goals=2,
             away_goals=1,
             match_date=datetime.utcnow(),
-            competition_type="league"
+            competition_type="league",
         )
 
         # 结果应该完全相同
-        assert result1["ratings"]["home"]["after"] == result2["ratings"]["home"]["after"]
-        assert result1["ratings"]["away"]["after"] == result2["ratings"]["away"]["after"]
+        assert (
+            result1["ratings"]["home"]["after"] == result2["ratings"]["home"]["after"]
+        )
+        assert (
+            result1["ratings"]["away"]["after"] == result2["ratings"]["away"]["after"]
+        )
 
     def test_configuration_variations(self):
         """测试不同配置的影响"""
@@ -508,7 +552,7 @@ class TestEloRatingSystem:
             ("TeamC", "TeamD", 1, 1),
             ("TeamE", "TeamA", 3, 0),
             ("TeamB", "TeamC", 0, 2),
-            ("TeamD", "TeamE", 1, 2)
+            ("TeamD", "TeamE", 1, 2),
         ]
 
         # 执行赛季比赛
@@ -519,7 +563,7 @@ class TestEloRatingSystem:
                 home_goals=home_goals,
                 away_goals=away_goals,
                 match_date=datetime.utcnow(),
-                competition_type="league"
+                competition_type="league",
             )
 
         # 验证所有球队都有评级
@@ -527,9 +571,7 @@ class TestEloRatingSystem:
             assert elo_system.get_team_rating(team) != 1500.0  # 应该有变化
 
         # 验证最终排名合理性
-        final_ratings = [
-            (team, elo_system.get_team_rating(team)) for team in teams
-        ]
+        final_ratings = [(team, elo_system.get_team_rating(team)) for team in teams]
         final_ranking = sorted(final_ratings, key=lambda x: x[1], reverse=True)
 
         # 最高评级应该属于胜率最高的球队
@@ -546,7 +588,7 @@ class TestEloRatingSystem:
 
         # 异步上下文管理器测试 - 暂时注释掉，需要异步测试环境
         # async with elo_system as elo_async:
-            # 测试在异步上下文中的使用
+        # 测试在异步上下文中的使用
         # assert elo_async.get_team_rating("TestTeam") == 1500.0
 
         # 模拟异步操作
@@ -557,15 +599,15 @@ class TestEloRatingSystem:
 
         # 在异步上下文中更新评级
         # result = elo_async.update_ratings(
-            #     home_team_id=team_id,
-            #     away_team_id="OtherTeam",
-            #     home_goals=1,
-            #     away_goals=0,
-            #     match_date=datetime.utcnow(),
-            #     competition_type="league"
-            # )
+        #     home_team_id=team_id,
+        #     away_team_id="OtherTeam",
+        #     home_goals=1,
+        #     away_goals=0,
+        #     match_date=datetime.utcnow(),
+        #     competition_type="league"
+        # )
 
-            # assert result["success"] is True
+        # assert result["success"] is True
 
 
 class TestKellyCriterion:
@@ -581,7 +623,7 @@ class TestKellyCriterion:
             kelly_strategy=KellyStrategy.FRACTIONAL_KELLY,
             fraction_multiplier=0.25,
             min_edge_threshold=0.05,
-            max_stake_percentage=0.10
+            max_stake_percentage=0.10,
         )
 
     def test_basic_kelly_calculation(self, kelly_system):
@@ -598,8 +640,7 @@ class TestKellyCriterion:
         # expected_f = (2.0 * 0.6 - 0.4) / 1.0  # = 0.2
 
         result = kelly_system.calculate_kelly_fraction(
-            decimal_odds=odds,
-            predicted_prob=probability
+            decimal_odds=odds, predicted_prob=probability
         )
 
         assert result["kelly_fraction"] == expected_f
@@ -613,8 +654,7 @@ class TestKellyCriterion:
         probability = 0.6
 
         result = kelly_system.calculate_kelly_fraction(
-            decimal_odds=odds,
-            predicted_prob=probability
+            decimal_odds=odds, predicted_prob=probability
         )
 
         # 分数Kelly应该是完整凯利的25%
@@ -631,8 +671,7 @@ class TestKellyCriterion:
         probability = 0.55  # 略高概率
 
         result = kelly_system.calculate_kelly_fraction(
-            decimal_odds=odds,
-            predicted_prob=probability
+            decimal_odds=odds, predicted_prob=probability
         )
 
         # 优势5%以下不应该投注
@@ -645,8 +684,7 @@ class TestKellyCriterion:
         probability = 0.7
 
         result = kelly_system.calculate_kelly_fraction(
-            decimal_odds=odds,
-            predicted_prob=probability
+            decimal_odds=odds, predicted_prob=probability
         )
 
         assert result["should_bet"] is True
@@ -659,8 +697,7 @@ class TestKellyCriterion:
         probability = 0.8
 
         result = kelly_system.calculate_kelly_fraction(
-            decimal_odds=odds,
-            predicted_prob=probability
+            decimal_odds=odds, predicted_prob=probability
         )
 
         # 投注比例应该被限制在最大值
@@ -674,21 +711,9 @@ class TestKellyCriterion:
     def test_multiple_outcome_analysis(self, kelly_system):
         """测试多结果分析"""
         outcomes = {
-            "home": {
-                "odds": 2.1,
-                "probability": 0.45,
-                "confidence": 0.8
-            },
-            "draw": {
-                "odds": 3.4,
-                "probability": 0.25,
-                "confidence": 0.7
-            },
-            "away": {
-                "odds": 4.2,
-                "probability": 0.30,
-                "confidence": 0.6
-            }
+            "home": {"odds": 2.1, "probability": 0.45, "confidence": 0.8},
+            "draw": {"odds": 3.4, "probability": 0.25, "confidence": 0.7},
+            "away": {"odds": 4.2, "probability": 0.30, "confidence": 0.6},
         }
 
         recommendations = kelly_system.generate_bet_recommendation(outcomes)
@@ -698,13 +723,13 @@ class TestKellyCriterion:
 
         # 验证每个推荐的结构
         for rec in recommendations:
-            assert hasattr(rec, 'outcome')
-            assert hasattr(rec, 'odds')
-            assert hasattr(rec, 'predicted_prob')
-            assert hasattr(rec, 'kelly_fraction')
-            assert hasattr(rec, 'stake_amount')
-            assert hasattr(rec, 'expected_value')
-            assert hasattr(rec, 'risk_level')
+            assert hasattr(rec, "outcome")
+            assert hasattr(rec, "odds")
+            assert hasattr(rec, "predicted_prob")
+            assert hasattr(rec, "kelly_fraction")
+            assert hasattr(rec, "stake_amount")
+            assert hasattr(rec, "expected_value")
+            assert hasattr(rec, "risk_level")
 
     def test_portfolio_management(self, kelly_system):
         """测试投资组合管理"""
@@ -721,7 +746,7 @@ class TestKellyCriterion:
             "outcome": "home",
             "stake_amount": 100.0,
             "payout": 210.0,  # 赔率2.1
-            "profit": 110.0
+            "profit": 110.0,
         }
 
         kelly_system._update_portfolio_after_bet(successful_bet)
@@ -740,7 +765,7 @@ class TestKellyCriterion:
             "outcome": "home",
             "stake_amount": 150.0,
             "payout": 0.0,
-            "loss": 150.0
+            "loss": 150.0,
         }
 
         kelly_system._update_portfolio_after_bet(failed_bet)
@@ -763,7 +788,7 @@ class TestKellyCriterion:
                 "outcome": "home",
                 "stake_amount": 200.0,
                 "payout": 0.0,
-                "loss": 200.0
+                "loss": 200.0,
             }
             losing_streak.append(failed_bet)
             kelly_system._update_portfolio_after_bet(failed_bet)
@@ -777,7 +802,7 @@ class TestKellyCriterion:
             "outcome": "home",
             "stake_amount": 100.0,
             "payout": 250.0,
-            "profit": 150.0
+            "profit": 150.0,
         }
         kelly_system._update_portfolio_after_bet(winning_bet)
 
@@ -823,8 +848,7 @@ class TestKellyCriterion:
         # 极端赔率
         with pytest.raises(ValueError):
             kelly_system.calculate_kelly_fraction(
-                decimal_odds=0.0,  # 无效赔率
-                predicted_prob=0.6
+                decimal_odds=0.0, predicted_prob=0.6  # 无效赔率
             )
 
         # 无效概率
@@ -837,15 +861,13 @@ class TestKellyCriterion:
         # 超出概率范围
         with pytest.raises(ValueError):
             kelly_system.calculate_kelly_fraction(
-                decimal_odds=2.0,
-                predicted_prob=1.5  # 概率超过100%
+                decimal_odds=2.0, predicted_prob=1.5  # 概率超过100%
             )
 
         # 负数赔率
         with pytest.raises(ValueError):
             kelly_system.calculate_kelly_fraction(
-                decimal_odds=-1.0,  # 负数赔率
-                predicted_prob=0.6
+                decimal_odds=-1.0, predicted_prob=0.6  # 负数赔率
             )
 
     def test_comprehensive_betting_scenario(self, kelly_system):
@@ -856,31 +878,33 @@ class TestKellyCriterion:
                 "outcomes": {
                     "home": {"odds": 2.1, "probability": 0.55, "confidence": 0.8},
                     "draw": {"odds": 3.4, "probability": 0.25, "confidence": 0.7},
-                    "away": {"odds": 4.2, "probability": 0.20, "confidence": 0.6}
+                    "away": {"odds": 4.2, "probability": 0.20, "confidence": 0.6},
                 },
-                "actual_outcome": "home"
+                "actual_outcome": "home",
             },
             {
                 "outcomes": {
                     "home": {"odds": 1.9, "probability": 0.52, "confidence": 0.7},
                     "draw": {"odds": 3.6, "probability": 0.28, "confidence": 0.6},
-                    "away": {"odds": 4.0, "probability": 0.20, "confidence": 0.5}
+                    "away": {"odds": 4.0, "probability": 0.20, "confidence": 0.5},
                 },
-                "actual_outcome": "draw"
+                "actual_outcome": "draw",
             },
             {
                 "outcomes": {
                     "home": {"odds": 2.3, "probability": 0.45, "confidence": 0.75},
                     "draw": {"odds": 3.2, "probability": 0.30, "confidence": 0.6},
-                    "away": {"odds": 3.8, "probability": 0.25, "confidence": 0.5}
+                    "away": {"odds": 3.8, "probability": 0.25, "confidence": 0.5},
                 },
-                "actual_outcome": "home"
-            }
+                "actual_outcome": "home",
+            },
         ]
 
         # 执行投注序列
         for match in matches:
-            recommendations = kelly_system.generate_bet_recommendation(match["outcomes"])
+            recommendations = kelly_system.generate_bet_recommendation(
+                match["outcomes"]
+            )
 
             for rec in recommendations:
                 if rec.should_bet:
@@ -888,26 +912,33 @@ class TestKellyCriterion:
                     if match["actual_outcome"] == rec.outcome:
                         # 赢利
                         profit = rec.stake_amount * (rec.odds - 1)
-                        kelly_system._update_portfolio_after_bet({
-                            "outcome": rec.outcome,
-                            "stake_amount": rec.stake_amount,
-                            "payout": rec.stake_amount * rec.odds,
-                            "profit": profit
-                        })
+                        kelly_system._update_portfolio_after_bet(
+                            {
+                                "outcome": rec.outcome,
+                                "stake_amount": rec.stake_amount,
+                                "payout": rec.stake_amount * rec.odds,
+                                "profit": profit,
+                            }
+                        )
                     else:
                         # 亏损
-                        kelly_system._update_portfolio_after_bet({
-                            "outcome": rec.outcome,
-                            "stake_amount": rec.stake_amount,
-                            "payout": 0.0,
-                            "loss": rec.stake_amount
-                        })
+                        kelly_system._update_portfolio_after_bet(
+                            {
+                                "outcome": rec.outcome,
+                                "stake_amount": rec.stake_amount,
+                                "payout": 0.0,
+                                "loss": rec.stake_amount,
+                            }
+                        )
 
         # 验证最终投资组合状态
         final_portfolio = kelly_system.get_portfolio_state()
 
         assert final_portfolio["performance"]["total_bets"] == len(matches)
-        assert final_portfolio["bankroll"]["total"] == 10000.0 + final_portfolio["performance"]["total_profit"]
+        assert (
+            final_portfolio["bankroll"]["total"]
+            == 10000.0 + final_portfolio["performance"]["total_profit"]
+        )
 
         # 验证性能指标
         assert final_portfolio["performance"]["win_rate"] >= 0.0
@@ -919,23 +950,20 @@ class TestKellyCriterion:
         # 测试资金耗尽情况
         kelly_system.bankroll = 100.0  # 设置极小资金
 
-        outcomes = {
-            "home": {
-                "odds": 2.5,
-                "probability": 0.6,
-                "confidence": 0.8
-            }
-        }
+        outcomes = {"home": {"odds": 2.5, "probability": 0.6, "confidence": 0.8}}
 
         result = kelly_system.calculate_kelly_fraction(
             decimal_odds=outcomes["home"]["odds"],
-            predicted_prob=outcomes["home"]["probability"]
+            predicted_prob=outcomes["home"]["probability"],
         )
 
         # 资金不足时应该限制投注
         assert result["stake_limited"] is True
         assert result["bankroll_exhausted"] is True
-        assert result["reasoning"] and "insufficient bankroll" in result["reasoning"].lower()
+        assert (
+            result["reasoning"]
+            and "insufficient bankroll" in result["reasoning"].lower()
+        )
 
     def test_portfolio_state_persistence(self, kelly_system):
         """测试投资组合状态持久化"""
@@ -947,7 +975,7 @@ class TestKellyCriterion:
             "outcome": "home",
             "stake_amount": 500.0,
             "payout": 1200.0,
-            "profit": 700.0
+            "profit": 700.0,
         }
 
         kelly_system._update_portfolio_after_bet(test_bet)
@@ -974,33 +1002,33 @@ class TestKellyCriterion:
         conservative_kelly = KellyCriterion(
             kelly_strategy=KellyStrategy.CONSERVATIVE,
             fraction_multiplier=0.1,
-            max_stake_percentage=0.05
+            max_stake_percentage=0.05,
         )
 
         # 测试激进策略
         aggressive_kelly = KellyCriterion(
             kelly_strategy=KellyStrategy.AGGRESSIVE,
             fraction_multiplier=0.5,
-            max_stake_percentage=0.25
+            max_stake_percentage=0.25,
         )
 
         # 相同预测，不同策略
-        outcomes = {
-            "home": {"odds": 2.5, "probability": 0.6, "confidence": 0.8}
-        }
+        outcomes = {"home": {"odds": 2.5, "probability": 0.6, "confidence": 0.8}}
 
         conservative_result = conservative_kelly.calculate_kelly_fraction(
             decimal_odds=outcomes["home"]["odds"],
-            predicted_prob=outcomes["home"]["probability"]
+            predicted_prob=outcomes["home"]["probability"],
         )
 
         aggressive_result = aggressive_kelly.calculate_kelly_fraction(
             decimal_odds=outcomes["home"]["odds"],
-            predicted_prob=outcomes["home"]["probability"]
+            predicted_prob=outcomes["home"]["probability"],
         )
 
         # 激进策略应该产生更高的投注比例
-        assert aggressive_result["kelly_fraction"] > conservative_result["kelly_fraction"]
+        assert (
+            aggressive_result["kelly_fraction"] > conservative_result["kelly_fraction"]
+        )
 
         # 保守策略应该有更严格的最大投注限制
         assert conservative_kelly["max_stake_percentage"] == 0.05
@@ -1011,14 +1039,11 @@ class TestKellyCriterion:
         # 测试无效赔率处理
         with pytest.raises(ValueError):
             kelly_system.calculate_kelly_fraction(
-                decimal_odds="invalid",
-                predicted_prob=0.5
+                decimal_odds="invalid", predicted_prob=0.5
             )
 
         # 测试概率验证错误处理
-        outcomes = {
-            "home": {"odds": 2.5, "probability": 0.6, "confidence": 0.8}
-        }
+        outcomes = {"home": {"odds": 2.5, "probability": 0.6, "confidence": 0.8}}
         outcomes["home"]["probability"] = 1.5  # 无效概率
 
         with pytest.raises(ValueError):
@@ -1045,7 +1070,9 @@ class TestKellyCriterion:
         for i in range(100):
             odds = 2.0 + (i * 0.01)
             prob = 0.5 + (i * 0.001)
-            kelly_system.calculate_kelly_fraction(decimal_odds=odds, predicted_prob=prob)
+            kelly_system.calculate_kelly_fraction(
+                decimal_odds=odds, predicted_prob=prob
+            )
 
         calculation_time = time.time() - start_time
         print(f"100次凯利计算耗时: {calculation_time:.4f}s")
@@ -1064,7 +1091,7 @@ class TestKellyCriterion:
                 "outcome": "home",
                 "stake_amount": 100.0,
                 "payout": 0.0,
-                "loss": 100.0
+                "loss": 100.0,
             }
             kelly_system._update_portfolio_after_bet(test_bet)
 
@@ -1090,7 +1117,7 @@ class TestKellyCriterion:
             "away_win_probability": 0.15,
             "home_odds": 2.1,
             "draw_odds": 3.4,
-            "away_odds": 4.2
+            "away_odds": 4.2,
         }
 
         # 验证可以处理预测输出
@@ -1099,15 +1126,13 @@ class TestKellyCriterion:
     def test_backtesting_compatibility(self, kelly_system):
         """测试与回测系统的兼容性"""
         # 验证凯利系统可以为回测提供资金管理功能
-        assert hasattr(kelly_system, 'get_portfolio_state')
-        assert hasattr(kelly_system, 'generate_bet_recommendation')
-        assert hasattr(kelly_system, '_update_portfolio_after_bet')
+        assert hasattr(kelly_system, "get_portfolio_state")
+        assert hasattr(kelly_system, "generate_bet_recommendation")
+        assert hasattr(kelly_system, "_update_portfolio_after_bet")
 
         # 验证数据格式一致性
         portfolio = kelly_system.get_portfolio_state()
-        required_fields = [
-            "bankroll", "performance", "risk_management"
-        ]
+        required_fields = ["bankroll", "performance", "risk_management"]
 
         for field in required_fields:
             assert field in portfolio
@@ -1155,13 +1180,12 @@ class TestKellyCriterion:
             (0.95, 1.1, "极低赔率"),
             (0.99, 5.0, "极高概率"),
             (0.501, 2.0, "刚好优势"),
-            (0.49, 2.02, "边缘情况")
+            (0.49, 2.02, "边缘情况"),
         ]
 
         for prob, odds, description in edge_cases:
             result = kelly_system.calculate_kelly_fraction(
-                decimal_odds=odds,
-                predicted_prob=prob
+                decimal_odds=odds, predicted_prob=prob
             )
 
             # 验证结果的合理性
@@ -1172,7 +1196,11 @@ class TestKellyCriterion:
             else:
                 # 合理范围内的投注
                 if result["should_bet"]:
-                    assert 0.0 < result["kelly_fraction"] <= kelly_system.max_stake_percentage
+                    assert (
+                        0.0
+                        < result["kelly_fraction"]
+                        <= kelly_system.max_stake_percentage
+                    )
 
     def test_integration_consistency(self):
         """测试集成一致性"""
@@ -1185,6 +1213,14 @@ class TestKellyCriterion:
         assert kelly_system.min_edge_threshold == 0.05
         assert kelly_system.max_stake_percentage == 0.10
 
+
 # 运行测试
 if __name__ == "__main__":
-    pytest.main(["-v", "--tb=short", "tests/unit/test_elo_rating_system.py", "tests/unit/test_kelly_criterion.py"])
+    pytest.main(
+        [
+            "-v",
+            "--tb=short",
+            "tests/unit/test_elo_rating_system.py",
+            "tests/unit/test_kelly_criterion.py",
+        ]
+    )

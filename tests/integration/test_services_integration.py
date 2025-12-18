@@ -12,13 +12,13 @@ from datetime import datetime
 from typing import Dict, Any, List
 
 # 设置环境变量
-os.environ['SECRET_KEY'] = 'test_secret_key_32_characters_long'
-os.environ['JWT_SECRET_KEY'] = 'test_jwt_secret_key_32_characters_long'
-os.environ['DB_HOST'] = 'localhost'
-os.environ['DB_PORT'] = '5432'
-os.environ['DB_NAME'] = 'test'
-os.environ['DB_USER'] = 'test'
-os.environ['DB_PASSWORD'] = 'test'
+os.environ["SECRET_KEY"] = "test_secret_key_32_characters_long"
+os.environ["JWT_SECRET_KEY"] = "test_jwt_secret_key_32_characters_long"
+os.environ["DB_HOST"] = "localhost"
+os.environ["DB_PORT"] = "5432"
+os.environ["DB_NAME"] = "test"
+os.environ["DB_USER"] = "test"
+os.environ["DB_PASSWORD"] = "test"
 
 from tests.unit.mock_factories import (
     create_mock_di_container,
@@ -41,9 +41,9 @@ class TestCoreServiceIntegration:
     def mock_services(self, mock_container):
         """提取Mock服务"""
         return {
-            'model_service': create_mock_model_service(),
-            'cache_service': create_mock_cache_service(),
-            'feature_extractor': create_mock_feature_extractor(),
+            "model_service": create_mock_model_service(),
+            "cache_service": create_mock_cache_service(),
+            "feature_extractor": create_mock_feature_extractor(),
         }
 
     @pytest.mark.asyncio
@@ -55,7 +55,7 @@ class TestCoreServiceIntegration:
             "home_team": "Manchester United",
             "away_team": "Arsenal",
             "competition": "Premier League",
-            "match_date": "2025-01-20T15:00:00Z"
+            "match_date": "2025-01-20T15:00:00Z",
         }
 
         print("🚀 开始完整预测工作流测试...")
@@ -69,20 +69,22 @@ class TestCoreServiceIntegration:
 
         # 模拟特征提取调用
         mock_features = {
-            'home_strength': 1.25,
-            'away_strength': 0.85,
-            'home_form': 0.75,
-            'away_form': 0.65,
-            'h2h_home_wins': 3,
-            'h2h_away_wins': 2,
-            'venue_factor': 1.1
+            "home_strength": 1.25,
+            "away_strength": 0.85,
+            "home_form": 0.75,
+            "away_form": 0.65,
+            "h2h_home_wins": 3,
+            "h2h_away_wins": 2,
+            "venue_factor": 1.1,
         }
 
         # 对于AsyncMock，需要使用coroutine
         async def mock_extract_features(request):
             return mock_features
 
-        mock_inference_service.extract_features = AsyncMock(side_effect=mock_extract_features)
+        mock_inference_service.extract_features = AsyncMock(
+            side_effect=mock_extract_features
+        )
         print("✅ 特征提取成功，提取了{}个特征".format(len(mock_features)))
 
         # 3. 模拟MatchPredictor计算
@@ -90,19 +92,15 @@ class TestCoreServiceIntegration:
 
         # 模拟预测结果
         mock_prediction_result = {
-            "probabilities": {
-                "home_win": 0.65,
-                "draw": 0.25,
-                "away_win": 0.10
-            },
+            "probabilities": {"home_win": 0.65, "draw": 0.25, "away_win": 0.10},
             "predicted_class": "HOME_WIN",
             "confidence": 0.75,
             "feature_contributions": {
                 "home_strength": 0.15,
                 "away_strength": -0.10,
                 "home_form": 0.08,
-                "away_form": -0.05
-            }
+                "away_form": -0.05,
+            },
         }
 
         # 对于AsyncMock，需要使用coroutine
@@ -116,9 +114,11 @@ class TestCoreServiceIntegration:
         # 4. 模拟缓存操作
         print("💾 步骤3: 缓存预测结果")
 
-        mock_cache_service = mock_services['cache_service']
+        mock_cache_service = mock_services["cache_service"]
         # 缓存键生成
-        cache_key = f"pred_{prediction_request['home_team']}_{prediction_request['away_team']}"
+        cache_key = (
+            f"pred_{prediction_request['home_team']}_{prediction_request['away_team']}"
+        )
         mock_cache_service.generate_cache_key.return_value = cache_key
 
         # 模拟缓存操作
@@ -140,21 +140,31 @@ class TestCoreServiceIntegration:
         # 实际执行工作流程
         try:
             # 步骤1: 特征提取
-            features_result = await mock_inference_service.extract_features(prediction_request)
+            features_result = await mock_inference_service.extract_features(
+                prediction_request
+            )
             print(f"✅ 特征提取验证成功: {len(features_result)}个特征")
 
             # 步骤2: 预测计算
-            prediction_result = await mock_inference_service.predict_match(features_result)
+            prediction_result = await mock_inference_service.predict_match(
+                features_result
+            )
             print(f"✅ 预测计算验证成功: {prediction_result['predicted_class']}")
 
             # 步骤3: 缓存操作
             cache_key_result = mock_cache_service.generate_cache_key(prediction_request)
-            cache_result = await mock_cache_service.set(cache_key_result, prediction_result)
+            cache_result = await mock_cache_service.set(
+                cache_key_result, prediction_result
+            )
             print(f"✅ 缓存操作验证成功: {cache_key_result}")
 
             # 验证数据完整性
             assert len(features_result) > 0, "特征提取结果为空"
-            assert prediction_result["predicted_class"] in ["HOME_WIN", "AWAY_WIN", "DRAW"], "预测结果无效"
+            assert prediction_result["predicted_class"] in [
+                "HOME_WIN",
+                "AWAY_WIN",
+                "DRAW",
+            ], "预测结果无效"
             assert cache_result is True, "缓存存储失败"
 
             # 验证预测结果格式
@@ -180,8 +190,8 @@ class TestCoreServiceIntegration:
                     "InferenceService.receive_request",
                     "FeatureExtractor.extract_features",
                     "MatchPredictor.calculate_probabilities",
-                    "CacheService.store_result"
-                ]
+                    "CacheService.store_result",
+                ],
             }
 
         except Exception as e:
@@ -197,21 +207,20 @@ class TestCoreServiceIntegration:
         # 模拟特征提取失败
         mock_inference_service = AsyncMock()
         mock_inference_service.is_initialized = True
-        mock_inference_service.extract_features.side_effect = Exception("特征提取服务不可用")
+        mock_inference_service.extract_features.side_effect = Exception(
+            "特征提取服务不可用"
+        )
 
         # 模拟降级处理
-        mock_cache_service = mock_services['cache_service']
+        mock_cache_service = mock_services["cache_service"]
         mock_cache_service.get.return_value = {
             "probabilities": {"home_win": 0.5, "draw": 0.3, "away_win": 0.2},
             "predicted_class": "HOME_WIN",
             "confidence": 0.6,
-            "from_cache": True
+            "from_cache": True,
         }
 
-        prediction_request = {
-            "home_team": "Team A",
-            "away_team": "Team B"
-        }
+        prediction_request = {"home_team": "Team A", "away_team": "Team B"}
 
         # 测试降级流程
         cache_key = mock_cache_service.generate_cache_key(prediction_request)
@@ -232,7 +241,7 @@ class TestCoreServiceIntegration:
         batch_requests = [
             {"home_team": "Man Utd", "away_team": "Arsenal"},
             {"home_team": "Chelsea", "away_team": "Liverpool"},
-            {"home_team": "Man City", "away_team": "Tottenham"}
+            {"home_team": "Man City", "away_team": "Tottenham"},
         ]
 
         # 模拟批量处理
@@ -241,16 +250,16 @@ class TestCoreServiceIntegration:
 
         # 模拟批量特征提取
         batch_features = [
-            {'home_strength': 1.2, 'away_strength': 0.8},
-            {'home_strength': 1.1, 'away_strength': 0.9},
-            {'home_strength': 1.3, 'away_strength': 0.7}
+            {"home_strength": 1.2, "away_strength": 0.8},
+            {"home_strength": 1.1, "away_strength": 0.9},
+            {"home_strength": 1.3, "away_strength": 0.7},
         ]
 
         # 模拟批量预测
         batch_predictions = [
             {"predicted_class": "HOME_WIN", "confidence": 0.72},
             {"predicted_class": "HOME_WIN", "confidence": 0.65},
-            {"predicted_class": "HOME_WIN", "confidence": 0.78}
+            {"predicted_class": "HOME_WIN", "confidence": 0.78},
         ]
 
         mock_inference_service.extract_features.side_effect = batch_features
@@ -265,14 +274,16 @@ class TestCoreServiceIntegration:
 
         # 验证批量结果
         assert len(results) == 3, "批量预测结果数量不正确"
-        assert all(r["predicted_class"] == "HOME_WIN" for r in results), "批量预测结果不一致"
+        assert all(
+            r["predicted_class"] == "HOME_WIN" for r in results
+        ), "批量预测结果不一致"
 
         print(f"✅ 批量预测完成，处理了{len(batch_requests)}个请求")
 
         return {
             "batch_size": len(batch_requests),
             "all_processed": True,
-            "success_rate": 100
+            "success_rate": 100,
         }
 
 
@@ -302,12 +313,12 @@ class TestActiveModeIntegration:
             print(f"📊 模型状态: {model_info.get('status', 'unknown')}")
 
             # 如果是loaded状态，则Active模式成功
-            if model_info.get('status') == 'loaded':
+            if model_info.get("status") == "loaded":
                 print("✅ Active模式验证成功 - 模型已加载")
                 return {"active_mode": True, "model_status": "loaded"}
             else:
                 print("⚠️  模型未加载，使用Mock模式进行测试")
-                return {"active_mode": False, "model_status": model_info.get('status')}
+                return {"active_mode": False, "model_status": model_info.get("status")}
 
         except Exception as e:
             print(f"❌ Active模式测试失败: {e}")

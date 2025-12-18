@@ -12,13 +12,16 @@ import shutil
 from pathlib import Path
 import time
 
+
 def run_command(cmd, description=""):
     """执行命令并处理结果"""
     print(f"🔄 {description}")
     print(f"   命令: {cmd}")
 
     try:
-        result = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=30)
+        result = subprocess.run(
+            cmd, shell=True, capture_output=True, text=True, timeout=30
+        )
         if result.returncode == 0:
             print(f"   ✅ 成功")
             if result.stdout.strip():
@@ -34,6 +37,7 @@ def run_command(cmd, description=""):
         print(f"   ❌ 异常: {str(e)}")
         return False
 
+
 def check_python_version():
     """检查Python版本"""
     print("\n🐍 检查Python版本...")
@@ -43,20 +47,17 @@ def check_python_version():
         print(f"   ✅ Python版本: {version.major}.{version.minor}.{version.micro}")
         return True
     else:
-        print(f"   ❌ Python版本过低: {version.major}.{version.minor}.{version.micro} (需要3.8+)")
+        print(
+            f"   ❌ Python版本过低: {version.major}.{version.minor}.{version.micro} (需要3.8+)"
+        )
         return False
+
 
 def install_dependencies():
     """安装必要的依赖"""
     print("\n📦 安装依赖包...")
 
-    dependencies = [
-        "asyncpg",
-        "psutil",
-        "mcp",
-        "pyyaml",
-        "urllib3"
-    ]
+    dependencies = ["asyncpg", "psutil", "mcp", "pyyaml", "urllib3"]
 
     failed_deps = []
 
@@ -71,6 +72,7 @@ def install_dependencies():
         print("\n   ✅ 所有依赖安装成功")
         return True
 
+
 def verify_mcp_servers():
     """验证MCP服务器文件"""
     print("\n🔍 验证MCP服务器文件...")
@@ -80,7 +82,7 @@ def verify_mcp_servers():
         "postgres_server.py",
         "redis_server.py",
         "filesystem_server.py",
-        "system_monitor_server.py"
+        "system_monitor_server.py",
     ]
 
     all_exist = True
@@ -94,6 +96,7 @@ def verify_mcp_servers():
 
     return all_exist
 
+
 def verify_skills():
     """验证专业技能文件"""
     print("\n🎯 验证专业技能文件...")
@@ -102,7 +105,7 @@ def verify_skills():
     required_skills = [
         "infrastructure_optimization.py",
         "network_troubleshooting.py",
-        "database_performance.py"
+        "database_performance.py",
     ]
 
     all_exist = True
@@ -115,6 +118,7 @@ def verify_skills():
             all_exist = False
 
     return all_exist
+
 
 def setup_claude_config():
     """设置Claude配置"""
@@ -133,7 +137,7 @@ def setup_claude_config():
 
     # 验证配置文件格式
     try:
-        with open(config_file, 'r', encoding='utf-8') as f:
+        with open(config_file, "r", encoding="utf-8") as f:
             config = json.load(f)
 
         # 检查必要字段
@@ -165,7 +169,7 @@ def setup_claude_config():
                 "performance-monitoring",
                 "infrastructure-optimization",
                 "network-troubleshooting",
-                "database-performance"
+                "database-performance",
             ]
 
             for skill in required_skills:
@@ -184,6 +188,7 @@ def setup_claude_config():
         print(f"   ❌ 配置验证失败: {e}")
         return False
 
+
 def test_mcp_functionality():
     """测试MCP功能"""
     print("\n🧪 测试MCP功能...")
@@ -195,6 +200,7 @@ def test_mcp_functionality():
     try:
         sys.path.append("mcp_servers")
         from system_monitor_server import SystemMonitorMCPServer
+
         server = SystemMonitorMCPServer()
         test_results.append(("System Monitor", True, ""))
     except Exception as e:
@@ -204,6 +210,7 @@ def test_mcp_functionality():
     try:
         sys.path.append("skills")
         from infrastructure_optimization import InfrastructureOptimizationSkill
+
         skill = InfrastructureOptimizationSkill()
         test_results.append(("Infrastructure Optimization", True, ""))
     except Exception as e:
@@ -219,6 +226,7 @@ def test_mcp_functionality():
     all_success = all(result[1] for result in test_results)
     return all_success
 
+
 def setup_environment_variables():
     """设置环境变量"""
     print("\n🌍 设置环境变量...")
@@ -230,7 +238,7 @@ def setup_environment_variables():
         "DB_NAME": "football_prediction_prod",
         "DB_USER": "football_user",
         "REDIS_HOST": "localhost",
-        "REDIS_PORT": "6379"
+        "REDIS_PORT": "6379",
     }
 
     for var, value in env_vars.items():
@@ -240,6 +248,7 @@ def setup_environment_variables():
             print(f"   ⚠️ {var} 未设置 (建议: {value})")
 
     return True
+
 
 def create_log_directories():
     """创建日志目录"""
@@ -252,7 +261,7 @@ def create_log_directories():
         "data/postgres",
         "data/redis",
         "data/grafana",
-        "data/prometheus"
+        "data/prometheus",
     ]
 
     for log_dir in log_dirs:
@@ -260,6 +269,7 @@ def create_log_directories():
         print(f"   ✅ {log_dir}")
 
     return True
+
 
 def generate_setup_report():
     """生成安装报告"""
@@ -273,7 +283,7 @@ def generate_setup_report():
             "postgres": "✅ 已配置",
             "redis": "✅ 已配置",
             "filesystem": "✅ 已配置",
-            "system-monitor": "✅ 新增"
+            "system-monitor": "✅ 新增",
         },
         "skills": {
             "football-prediction": "✅ 已配置",
@@ -282,22 +292,23 @@ def generate_setup_report():
             "performance-monitoring": "✅ 已配置",
             "infrastructure-optimization": "✅ 新增",
             "network-troubleshooting": "✅ 新增",
-            "database-performance": "✅ 新增"
+            "database-performance": "✅ 新增",
         },
         "next_steps": [
             "启动MCP服务器: ./scripts/enhanced_mcp_manager.sh start",
             "查看系统监控: ./scripts/enhanced_mcp_manager.sh monitor",
             "测试网络连通性: ./scripts/enhanced_mcp_manager.sh connectivity",
-            "执行健康检查: ./scripts/enhanced_mcp_manager.sh health"
-        ]
+            "执行健康检查: ./scripts/enhanced_mcp_manager.sh health",
+        ],
     }
 
     report_file = Path("ENHANCED_MCP_SETUP_REPORT.json")
-    with open(report_file, 'w', encoding='utf-8') as f:
+    with open(report_file, "w", encoding="utf-8") as f:
         json.dump(report, f, indent=2, ensure_ascii=False)
 
     print(f"   ✅ 报告已生成: {report_file}")
     return True
+
 
 def main():
     """主函数"""
@@ -312,7 +323,7 @@ def main():
         ("设置Claude配置", setup_claude_config),
         ("测试MCP功能", test_mcp_functionality),
         ("设置环境变量", setup_environment_variables),
-        ("创建日志目录", create_log_directories)
+        ("创建日志目录", create_log_directories),
     ]
 
     failed_steps = []
@@ -322,9 +333,9 @@ def main():
         if not step_func():
             failed_steps.append(step_name)
 
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("📊 安装结果总结")
-    print("="*60)
+    print("=" * 60)
 
     if not failed_steps:
         print("🎉 所有安装步骤都成功完成！")
@@ -347,6 +358,7 @@ def main():
         print(f"❌ 以下步骤失败: {', '.join(failed_steps)}")
         print("\n请检查错误信息并重新运行安装脚本")
         return False
+
 
 if __name__ == "__main__":
     success = main()

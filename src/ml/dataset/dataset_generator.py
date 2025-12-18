@@ -670,8 +670,10 @@ if __name__ == "__main__":
             ClassificationDatasetGenerator()
 
             # 这里需要实际的数据才能运行
+            logger.info(
                 ">>> dataset = await generator.generate_dataset('premier_league', '2024-01-01')"
             )
+            logger.info(
                 ">>> await generator.save_dataset_to_parquet(dataset, 'training_data.parquet')"
             )
 

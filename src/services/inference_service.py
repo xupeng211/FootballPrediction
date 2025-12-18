@@ -33,6 +33,7 @@ logger = logging.getLogger(__name__)
 # 定义依赖接口协议
 class ModelProtocol(Protocol):
     """模型协议接口"""
+
     async def predict(self, features: Any) -> Any:
         """预测方法"""
         ...
@@ -53,6 +54,7 @@ class ModelProtocol(Protocol):
 
 class FeatureExtractorProtocol(Protocol):
     """特征提取器协议接口"""
+
     async def extract_features(self, match_id: str, historical_data: Any) -> Any:
         """提取特征方法"""
         ...
@@ -60,6 +62,7 @@ class FeatureExtractorProtocol(Protocol):
 
 class DatabaseProtocol(Protocol):
     """数据库协议接口"""
+
     async def fetchrow(self, query: str, *args) -> Optional[Dict[str, Any]]:
         """查询单行数据"""
         ...
@@ -110,7 +113,9 @@ class InferenceServiceConfig:
                 self.default_probabilities[key] /= total
 
 
-@injectable("inference_service", ["model_service", "feature_extractor", "database_service"])
+@injectable(
+    "inference_service", ["model_service", "feature_extractor", "database_service"]
+)
 class InferenceService(ServiceLifecycle):
     """
     推理服务 - Sprint 3 依赖注入版本
@@ -130,7 +135,7 @@ class InferenceService(ServiceLifecycle):
         model_service: ModelProtocol,
         feature_extractor: FeatureExtractorProtocol,
         database_service: DatabaseProtocol,
-        config: Optional[InferenceServiceConfig] = None
+        config: Optional[InferenceServiceConfig] = None,
     ):
         """
         初始化推理服务 - 使用依赖注入
@@ -177,7 +182,7 @@ class InferenceService(ServiceLifecycle):
                 raise ValueError("database_service 不能为空")
 
             # 验证模型状态
-            if not getattr(self.model_service, 'is_trained', False):
+            if not getattr(self.model_service, "is_trained", False):
                 self.logger.warning("模型未训练，可能影响预测质量")
 
             # 记录初始化时间
@@ -234,7 +239,9 @@ class InferenceService(ServiceLifecycle):
             historical_data = await self._get_historical_data(match_data)
 
             # 4. 提取特征
-            features = await self.feature_extractor.extract_features(match_id, historical_data)
+            features = await self.feature_extractor.extract_features(
+                match_id, historical_data
+            )
 
             # 5. 进行推理
             prediction_result = await self._perform_inference(match_id, features)
@@ -324,7 +331,9 @@ class InferenceService(ServiceLifecycle):
                 ORDER BY match_date DESC
                 LIMIT 200
                 """
-                records = await self.database_service.fetch(query, league_id, match_date)
+                records = await self.database_service.fetch(
+                    query, league_id, match_date
+                )
             else:
                 query = """
                 SELECT
@@ -376,7 +385,9 @@ class InferenceService(ServiceLifecycle):
                 "DRAW_PROBA": float(probabilities.get("DRAW_PROBA", 0.0)),
                 "AWAY_WIN_PROBA": float(probabilities.get("AWAY_WIN_PROBA", 0.0)),
                 "predicted_class": str(predicted_class),
-                "confidence": float(max(probabilities.values()) if probabilities else 0.0),
+                "confidence": float(
+                    max(probabilities.values()) if probabilities else 0.0
+                ),
                 "model_version": model_info.get("model_version", "1.0.0"),
                 "processed_at": datetime.now().isoformat(),
             }
@@ -414,13 +425,15 @@ class InferenceService(ServiceLifecycle):
         if len(self._prediction_cache) >= self.config.max_cache_size:
             oldest_key = min(
                 self._prediction_cache.keys(),
-                key=lambda k: self._prediction_cache[k][1]
+                key=lambda k: self._prediction_cache[k][1],
             )
             del self._prediction_cache[oldest_key]
 
         self._prediction_cache[match_id] = (result, time.time())
 
-    def _create_fallback_result(self, match_id: str, error_message: str) -> Dict[str, Any]:
+    def _create_fallback_result(
+        self, match_id: str, error_message: str
+    ) -> Dict[str, Any]:
         """创建降级结果"""
         return {
             "match_id": match_id,

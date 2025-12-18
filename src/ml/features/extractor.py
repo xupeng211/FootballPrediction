@@ -114,11 +114,11 @@ class MatchFeatureSet:
             try:
                 # 将 float 转换为高精度 Decimal
                 decimal_features[name] = Decimal(str(value)).quantize(
-                    Decimal('0.000001'), rounding=ROUND_HALF_UP
+                    Decimal("0.000001"), rounding=ROUND_HALF_UP
                 )
             except (ValueError, TypeError):
                 # 处理异常值
-                decimal_features[name] = Decimal('0')
+                decimal_features[name] = Decimal("0")
 
         return decimal_features
 
@@ -203,12 +203,16 @@ class MatchFeatureExtractor:
         self.venue_analyzer = venue_analyzer or VenueAnalyzer()
 
         # 使用业务常量替代魔法数字
-        self.min_history_days = min_history_days or int(STATISTICAL.MEDIUM_TERM_WINDOW * 3)  # 15天
+        self.min_history_days = min_history_days or int(
+            STATISTICAL.MEDIUM_TERM_WINDOW * 3
+        )  # 15天
         self.max_history_days = max_history_days or 365  # 一年
 
         # 验证配置合理性
         if self.min_history_days >= self.max_history_days:
-            raise ValueError(f"最小历史天数({self.min_history_days})不能大于等于最大历史天数({self.max_history_days})")
+            raise ValueError(
+                f"最小历史天数({self.min_history_days})不能大于等于最大历史天数({self.max_history_days})"
+            )
 
         self.feature_weights = feature_weights or {}
         self.precision_context = precision_context
@@ -677,7 +681,11 @@ class MatchFeatureExtractor:
 
             # 使用业务常量的动量权重 (替代魔法数字 [5,4,3,2,1])
             momentum_weights = [
-                Decimal("5"), Decimal("4"), Decimal("3"), Decimal("2"), Decimal("1")
+                Decimal("5"),
+                Decimal("4"),
+                Decimal("3"),
+                Decimal("2"),
+                Decimal("1"),
             ]
 
             momentum = Decimal("0")
@@ -685,7 +693,9 @@ class MatchFeatureExtractor:
 
             for i, (_, match) in enumerate(team_matches.iterrows()):
                 # 使用业务常量进行权重分配
-                weight = momentum_weights[i] if i < len(momentum_weights) else Decimal("1")
+                weight = (
+                    momentum_weights[i] if i < len(momentum_weights) else Decimal("1")
+                )
                 recent_weight_sum += weight
 
                 # 数据有效性检查
@@ -695,8 +705,12 @@ class MatchFeatureExtractor:
 
                 # 精确提取比赛数据
                 is_home = match["home_team_id"] == team_id
-                team_score = Decimal(str(match["home_score"] if is_home else match["away_score"]))
-                opponent_score = Decimal(str(match["away_score"] if is_home else match["home_score"]))
+                team_score = Decimal(
+                    str(match["home_score"] if is_home else match["away_score"])
+                )
+                opponent_score = Decimal(
+                    str(match["away_score"] if is_home else match["home_score"])
+                )
 
                 # 累计进球统计
                 goals_scored += team_score
@@ -718,16 +732,30 @@ class MatchFeatureExtractor:
 
             # 金融级安全除法计算
             if total_matches > 0:
-                win_rate = MATH.safe_divide(wins, total_matches, SCORING.SMOOTHING_EPSILON)
-                draw_rate = MATH.safe_divide(draws, total_matches, SCORING.SMOOTHING_EPSILON)
-                loss_rate = MATH.safe_divide(losses, total_matches, SCORING.SMOOTHING_EPSILON)
-                avg_goals_scored = MATH.safe_divide(goals_scored, total_matches, SCORING.SMOOTHING_EPSILON)
-                avg_goals_conceded = MATH.safe_divide(goals_conceded, total_matches, SCORING.SMOOTHING_EPSILON)
-                points_per_game = MATH.safe_divide(total_points, total_matches, SCORING.SMOOTHING_EPSILON)
+                win_rate = MATH.safe_divide(
+                    wins, total_matches, SCORING.SMOOTHING_EPSILON
+                )
+                draw_rate = MATH.safe_divide(
+                    draws, total_matches, SCORING.SMOOTHING_EPSILON
+                )
+                loss_rate = MATH.safe_divide(
+                    losses, total_matches, SCORING.SMOOTHING_EPSILON
+                )
+                avg_goals_scored = MATH.safe_divide(
+                    goals_scored, total_matches, SCORING.SMOOTHING_EPSILON
+                )
+                avg_goals_conceded = MATH.safe_divide(
+                    goals_conceded, total_matches, SCORING.SMOOTHING_EPSILON
+                )
+                points_per_game = MATH.safe_divide(
+                    total_points, total_matches, SCORING.SMOOTHING_EPSILON
+                )
 
                 # 动量计算：考虑权重分布的归一化
                 if recent_weight_sum > 0:
-                    momentum = MATH.safe_divide(momentum, recent_weight_sum, SCORING.SMOOTHING_EPSILON)
+                    momentum = MATH.safe_divide(
+                        momentum, recent_weight_sum, SCORING.SMOOTHING_EPSILON
+                    )
                 else:
                     momentum = Decimal("0")
             else:
@@ -735,8 +763,12 @@ class MatchFeatureExtractor:
                 win_rate = SCORING.DEFAULT_H2H_WIN_RATE  # 0.5
                 draw_rate = SCORING.DEFAULT_H2H_DRAW_RATE  # 0.25
                 loss_rate = SCORING.DEFAULT_H2H_LOSS_RATE  # 0.25
-                avg_goals_scored = SCORING.DEFAULT_AVG_TOTAL_GOALS / Decimal("2")  # 1.25
-                avg_goals_conceded = SCORING.DEFAULT_AVG_TOTAL_GOALS / Decimal("2")  # 1.25
+                avg_goals_scored = SCORING.DEFAULT_AVG_TOTAL_GOALS / Decimal(
+                    "2"
+                )  # 1.25
+                avg_goals_conceded = SCORING.DEFAULT_AVG_TOTAL_GOALS / Decimal(
+                    "2"
+                )  # 1.25
                 points_per_game = Decimal("1")  # 平均每场1分
                 momentum = Decimal("0")
 
@@ -754,7 +786,9 @@ class MatchFeatureExtractor:
             # 验证概率总和
             prob_sum = win_rate + draw_rate + loss_rate
             if abs(float(prob_sum) - 1.0) > float(PROBABILITY.PROBABILITY_EPSILON * 10):
-                self.logger.warning(f"形态概率总和不等于1: {prob_sum} (队伍: {team_id})")
+                self.logger.warning(
+                    f"形态概率总和不等于1: {prob_sum} (队伍: {team_id})"
+                )
 
             # 验证数值范围
             for name, value in stats.items():
@@ -766,10 +800,10 @@ class MatchFeatureExtractor:
                         self.logger.warning(f"异常进球值: {name}={value}")
 
                 self.logger.info(
-                f"形态计算完成 (精确): 队伍={team_id}, "
-                f"场次={total_matches}, 胜率={win_rate:.3f}, "
-                f"场均进球={avg_goals_scored:.3f}, 动量={momentum:.3f}"
-            )
+                    f"形态计算完成 (精确): 队伍={team_id}, "
+                    f"场次={total_matches}, 胜率={win_rate:.3f}, "
+                    f"场均进球={avg_goals_scored:.3f}, 动量={momentum:.3f}"
+                )
 
             return stats
 
@@ -811,13 +845,19 @@ class MatchFeatureExtractor:
                 # 数值稳定性检查
                 if abs(weighted_value) > VALIDATION.MAX_FEATURE_VALUE:
                     self.logger.warning(f"加权特征值溢出: {name}={weighted_value}")
-                    weighted_value = Decimal(str(VALIDATION.MAX_FEATURE_VALUE)) if weighted_value > 0 else Decimal(str(VALIDATION.MIN_FEATURE_VALUE))
+                    weighted_value = (
+                        Decimal(str(VALIDATION.MAX_FEATURE_VALUE))
+                        if weighted_value > 0
+                        else Decimal(str(VALIDATION.MIN_FEATURE_VALUE))
+                    )
 
                 weighted_features[name] = float(weighted_value)
 
             return weighted_features
 
-    def apply_precision_weights_high(self, features: Dict[str, float]) -> Dict[str, float]:
+    def apply_precision_weights_high(
+        self, features: Dict[str, float]
+    ) -> Dict[str, float]:
         """
         应用高精度权重计算 (新增方法)
 
@@ -845,7 +885,7 @@ class MatchFeatureExtractor:
 
                 # 金融级舍入
                 weighted_value = weighted_value.quantize(
-                    Decimal('0.000001'), rounding=ROUND_HALF_UP
+                    Decimal("0.000001"), rounding=ROUND_HALF_UP
                 )
 
                 weighted_features[name] = float(weighted_value)
@@ -1031,7 +1071,9 @@ class MatchFeatureExtractor:
             "h2h": len([n for n in feature_names if n.startswith("h2h_")]),
             "venue": len([n for n in feature_names if "venue" in n]),
             "form": len([n for n in feature_names if "recent" in n]),
-            "ranking": len([n for n in feature_names if "league" in n or "difference" in n]),
+            "ranking": len(
+                [n for n in feature_names if "league" in n or "difference" in n]
+            ),
         }
 
         # 计算精度质量指标
@@ -1043,13 +1085,11 @@ class MatchFeatureExtractor:
             "feature_categories": category_counts,
             "feature_weights": self.feature_weights,
             "feature_names": feature_names,
-
             # Sprint 2 新增的精度和质量信息
             "precision_context": self.precision_context,
             "precision_quality": precision_quality,
             "calculation_stability": self._assess_calculation_stability(),
             "business_validation_status": self._check_business_validation_status(),
-
             # 性能监控
             "cache_status": {
                 "feature_names_cached": self._feature_names_cache is not None,
@@ -1085,7 +1125,9 @@ class MatchFeatureExtractor:
 
             # 精度上下文评分
             context_scores = {"high": 1.0, "medium": 0.8, "low": 0.6}
-            quality_scores["precision_context_score"] = context_scores.get(self.precision_context, 0.5)
+            quality_scores["precision_context_score"] = context_scores.get(
+                self.precision_context, 0.5
+            )
 
             # 计算稳定性评分
             try:
@@ -1101,7 +1143,8 @@ class MatchFeatureExtractor:
                     perturbed_weighted = self._apply_feature_weights(perturbed)
 
                     change_ratio = abs(
-                        perturbed_weighted["test_feature"] - initial_weighted["test_feature"]
+                        perturbed_weighted["test_feature"]
+                        - initial_weighted["test_feature"]
                     ) / (abs(initial_weighted["test_feature"]) + 1e-10)
 
                     stability_scores.append(min(1.0, 1.0 - change_ratio))
@@ -1147,6 +1190,7 @@ class MatchFeatureExtractor:
         return {
             "weights_valid": all(-10 <= w <= 10 for w in self.feature_weights.values()),
             "history_range_valid": self.min_history_days < self.max_history_days,
-            "precision_context_valid": self.precision_context in ["high", "medium", "low"],
+            "precision_context_valid": self.precision_context
+            in ["high", "medium", "low"],
             "features_configured": len(self._get_feature_names()) > 0,
         }

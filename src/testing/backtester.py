@@ -55,40 +55,44 @@ logger = logging.getLogger(__name__)
 @dataclass
 class BacktestConfig:
     """回测配置"""
+
     # 数据配置
-    data_path: str = "./data/historical/"           # 数据路径
-    start_date: Optional[datetime] = None          # 开始日期
-    end_date: Optional[datetime] = None            # 结束日期
-    file_pattern: str = "*.parquet"                # 文件模式
+    data_path: str = "./data/historical/"  # 数据路径
+    start_date: Optional[datetime] = None  # 开始日期
+    end_date: Optional[datetime] = None  # 结束日期
+    file_pattern: str = "*.parquet"  # 文件模式
 
     # 处理配置
-    chunk_size: int = 10000                       # 数据块大小
-    n_workers: int = mp.cpu_count() - 1           # 工作线程数
-    memory_limit_gb: float = 4.0                  # 内存限制(GB)
-    use_streaming: bool = True                     # 启用流式处理
-    cache_features: bool = True                    # 缓存特征
+    chunk_size: int = 10000  # 数据块大小
+    n_workers: int = mp.cpu_count() - 1  # 工作线程数
+    memory_limit_gb: float = 4.0  # 内存限制(GB)
+    use_streaming: bool = True  # 启用流式处理
+    cache_features: bool = True  # 缓存特征
 
     # 策略配置
-    strategies: List[str] = field(default_factory=lambda: [
-        "kelly_fractional",
-        "elo_based",
-        "poisson_based",
-        "ensemble",
-    ])
-    initial_bankroll: float = 10000.0             # 初始资金
-    min_odds: float = 1.1                         # 最小赔率
-    max_odds: float = 10.0                        # 最大赔率
-    min_edge_threshold: float = 0.05              # 最小优势阈值
+    strategies: List[str] = field(
+        default_factory=lambda: [
+            "kelly_fractional",
+            "elo_based",
+            "poisson_based",
+            "ensemble",
+        ]
+    )
+    initial_bankroll: float = 10000.0  # 初始资金
+    min_odds: float = 1.1  # 最小赔率
+    max_odds: float = 10.0  # 最大赔率
+    min_edge_threshold: float = 0.05  # 最小优势阈值
 
     # 输出配置
-    output_path: str = "./results/backtest/"      # 输出路径
-    save_intermediate: bool = True                 # 保存中间结果
-    detailed_logs: bool = False                    # 详细日志
+    output_path: str = "./results/backtest/"  # 输出路径
+    save_intermediate: bool = True  # 保存中间结果
+    detailed_logs: bool = False  # 详细日志
 
 
 @dataclass
 class BacktestResult:
     """回测结果"""
+
     strategy_name: str
     total_bets: int
     winning_bets: int
@@ -105,13 +109,14 @@ class BacktestResult:
     max_consecutive_losses: int
     calmar_ratio: float  # 年化收益率/最大回撤
     sortino_ratio: float  # 下行风险调整收益
-    var_95: float       # 95% VaR
+    var_95: float  # 95% VaR
     execution_time: float
 
 
 @dataclass
 class PerformanceMetrics:
     """性能指标"""
+
     start_time: float = 0.0
     end_time: float = 0.0
     peak_memory_mb: float = 0.0
@@ -145,10 +150,7 @@ class StreamingDataProcessor:
 
         logger.info("流式数据处理器初始化完成")
 
-    def process_file_stream(
-        self,
-        file_path: str
-    ) -> Iterator[pd.DataFrame]:
+    def process_file_stream(self, file_path: str) -> Iterator[pd.DataFrame]:
         """
         流式处理文件
 
@@ -160,11 +162,11 @@ class StreamingDataProcessor:
         """
         try:
             # 根据文件扩展名选择读取方式
-            if file_path.endswith('.parquet'):
+            if file_path.endswith(".parquet"):
                 yield from self._process_parquet_stream(file_path)
-            elif file_path.endswith('.csv'):
+            elif file_path.endswith(".csv"):
                 yield from self._process_csv_stream(file_path)
-            elif file_path.endswith('.json'):
+            elif file_path.endswith(".json"):
                 yield from self._process_json_stream(file_path)
             else:
                 raise ValueError(f"不支持的文件格式: {file_path}")
@@ -173,14 +175,12 @@ class StreamingDataProcessor:
             logger.error(f"处理文件失败 {file_path}: {e}")
             raise
 
-    def _process_parquet_stream(
-        self,
-        file_path: str
-    ) -> Iterator[pd.DataFrame]:
+    def _process_parquet_stream(self, file_path: str) -> Iterator[pd.DataFrame]:
         """流式处理Parquet文件"""
         try:
             # 使用pyarrow的流式读取
             import pyarrow.parquet as pq
+
             parquet_file = pq.ParquetFile(file_path)
 
             for batch in parquet_file.iter_batches(batch_size=self.config.chunk_size):
@@ -202,10 +202,7 @@ class StreamingDataProcessor:
                 if not chunk.empty:
                     yield chunk
 
-    def _process_csv_stream(
-        self,
-        file_path: str
-    ) -> Iterator[pd.DataFrame]:
+    def _process_csv_stream(self, file_path: str) -> Iterator[pd.DataFrame]:
         """流式处理CSV文件"""
         for chunk in pd.read_csv(file_path, chunksize=self.config.chunk_size):
             if self.config.start_date or self.config.end_date:
@@ -213,10 +210,7 @@ class StreamingDataProcessor:
             if not chunk.empty:
                 yield chunk
 
-    def _process_json_stream(
-        self,
-        file_path: str
-    ) -> Iterator[pd.DataFrame]:
+    def _process_json_stream(self, file_path: str) -> Iterator[pd.DataFrame]:
         """流式处理JSON文件"""
         # JSON文件通常较小，一次性读取后分块
         df = pd.read_json(file_path)
@@ -224,19 +218,19 @@ class StreamingDataProcessor:
             df = self._filter_by_date(df)
 
         for i in range(0, len(df), self.config.chunk_size):
-            yield df.iloc[i:i + self.config.chunk_size]
+            yield df.iloc[i : i + self.config.chunk_size]
 
     def _filter_by_date(self, df: pd.DataFrame) -> pd.DataFrame:
         """按日期过滤数据"""
-        date_col = 'match_date'
+        date_col = "match_date"
         if date_col not in df.columns:
-            date_col = 'date'
+            date_col = "date"
 
         if date_col not in df.columns:
             return df  # 无日期列，返回全部数据
 
         # 转换日期格式
-        df[date_col] = pd.to_datetime(df[date_col], errors='coerce')
+        df[date_col] = pd.to_datetime(df[date_col], errors="coerce")
 
         # 应用过滤
         if self.config.start_date:
@@ -248,9 +242,7 @@ class StreamingDataProcessor:
         return df
 
     def process_chunk(
-        self,
-        chunk: pd.DataFrame,
-        strategy_func: Callable
+        self, chunk: pd.DataFrame, strategy_func: Callable
     ) -> List[Dict[str, Any]]:
         """
         处理数据块
@@ -301,33 +293,34 @@ class StreamingDataProcessor:
         chunk[numeric_columns] = chunk[numeric_columns].fillna(0)
 
         # 数据类型转换
-        if 'match_date' in chunk.columns:
-            chunk['match_date'] = pd.to_datetime(chunk['match_date'])
+        if "match_date" in chunk.columns:
+            chunk["match_date"] = pd.to_datetime(chunk["match_date"])
 
         return chunk
 
     def _process_single_match(
-        self,
-        row: pd.Series,
-        strategy_func: Callable
+        self, row: pd.Series, strategy_func: Callable
     ) -> Optional[Dict[str, Any]]:
         """处理单场比赛"""
         try:
             # 提取基础信息
             match_info = {
-                'match_id': row.get('match_id', f"{row.get('home_team')}_{row.get('away_team')}_{row.get('match_date')}"),
-                'home_team': row.get('home_team'),
-                'away_team': row.get('away_team'),
-                'home_goals': row.get('home_goals', 0),
-                'away_goals': row.get('away_goals', 0),
-                'match_date': row.get('match_date'),
-                'home_odds': row.get('home_odds'),
-                'draw_odds': row.get('draw_odds'),
-                'away_odds': row.get('away_odds'),
+                "match_id": row.get(
+                    "match_id",
+                    f"{row.get('home_team')}_{row.get('away_team')}_{row.get('match_date')}",
+                ),
+                "home_team": row.get("home_team"),
+                "away_team": row.get("away_team"),
+                "home_goals": row.get("home_goals", 0),
+                "away_goals": row.get("away_goals", 0),
+                "match_date": row.get("match_date"),
+                "home_odds": row.get("home_odds"),
+                "draw_odds": row.get("draw_odds"),
+                "away_odds": row.get("away_odds"),
             }
 
             # 验证数据完整性
-            if not all([match_info['home_team'], match_info['away_team']]):
+            if not all([match_info["home_team"], match_info["away_team"]]):
                 return None
 
             # 应用策略
@@ -354,7 +347,9 @@ class StreamingDataProcessor:
         if len(self.memory_samples) > 100:
             self.memory_samples.pop(0)
 
-        self.performance.peak_memory_mb = max(self.performance.peak_memory_mb, memory_mb)
+        self.performance.peak_memory_mb = max(
+            self.performance.peak_memory_mb, memory_mb
+        )
         self.performance.avg_memory_mb = np.mean(self.memory_samples)
 
 
@@ -444,16 +439,19 @@ class BacktestEngine:
         return [str(f) for f in files]
 
     def _run_strategies_parallel(
-        self,
-        data_files: List[str]
+        self, data_files: List[str]
     ) -> Dict[str, BacktestResult]:
         """并行运行多个策略"""
         results = {}
 
-        with ThreadPoolExecutor(max_workers=min(len(self.config.strategies), 4)) as executor:
+        with ThreadPoolExecutor(
+            max_workers=min(len(self.config.strategies), 4)
+        ) as executor:
             # 提交所有策略任务
             future_to_strategy = {
-                executor.submit(self._run_single_strategy, data_files, strategy): strategy
+                executor.submit(
+                    self._run_single_strategy, data_files, strategy
+                ): strategy
                 for strategy in self.config.strategies
             }
 
@@ -469,9 +467,7 @@ class BacktestEngine:
         return results
 
     def _run_single_strategy(
-        self,
-        data_files: List[str],
-        strategy_name: Optional[str] = None
+        self, data_files: List[str], strategy_name: Optional[str] = None
     ) -> Dict[str, BacktestResult]:
         """运行单个策略"""
         strategies_to_run = [strategy_name] if strategy_name else self.config.strategies
@@ -527,18 +523,18 @@ class BacktestEngine:
         return results
 
     def _kelly_fractional_strategy(
-        self,
-        match_info: Dict[str, Any],
-        processor: StreamingDataProcessor
+        self, match_info: Dict[str, Any], processor: StreamingDataProcessor
     ) -> Optional[Dict[str, Any]]:
         """凯利分数策略"""
         try:
             # 检查赔率
-            if not all([
-                match_info.get('home_odds'),
-                match_info.get('draw_odds'),
-                match_info.get('away_odds')
-            ]):
+            if not all(
+                [
+                    match_info.get("home_odds"),
+                    match_info.get("draw_odds"),
+                    match_info.get("away_odds"),
+                ]
+            ):
                 return None
 
             # 初始化凯利系统
@@ -546,7 +542,7 @@ class BacktestEngine:
                 initial_bankroll=self.config.initial_bankroll,
                 kelly_strategy=KellyStrategy.FRACTIONAL_KELLY,
                 fraction_multiplier=Decimal("0.25"),
-                min_edge_threshold=Decimal(str(self.config.min_edge_threshold))
+                min_edge_threshold=Decimal(str(self.config.min_edge_threshold)),
             )
 
             # 获取预测概率（这里简化处理，实际应该从模型获取）
@@ -579,12 +575,27 @@ class BacktestEngine:
 
                 # 结算投注
                 result_profit = 0
-                if rec.outcome == "home" and match_info["home_goals"] > match_info["away_goals"]:
-                    result_profit = float(rec.stake_amount * rec.odds - rec.stake_amount)
-                elif rec.outcome == "draw" and match_info["home_goals"] == match_info["away_goals"]:
-                    result_profit = float(rec.stake_amount * rec.odds - rec.stake_amount)
-                elif rec.outcome == "away" and match_info["home_goals"] < match_info["away_goals"]:
-                    result_profit = float(rec.stake_amount * rec.odds - rec.stake_amount)
+                if (
+                    rec.outcome == "home"
+                    and match_info["home_goals"] > match_info["away_goals"]
+                ):
+                    result_profit = float(
+                        rec.stake_amount * rec.odds - rec.stake_amount
+                    )
+                elif (
+                    rec.outcome == "draw"
+                    and match_info["home_goals"] == match_info["away_goals"]
+                ):
+                    result_profit = float(
+                        rec.stake_amount * rec.odds - rec.stake_amount
+                    )
+                elif (
+                    rec.outcome == "away"
+                    and match_info["home_goals"] < match_info["away_goals"]
+                ):
+                    result_profit = float(
+                        rec.stake_amount * rec.odds - rec.stake_amount
+                    )
                 else:
                     result_profit = -float(rec.stake_amount)
 
@@ -606,9 +617,7 @@ class BacktestEngine:
             return None
 
     def _elo_based_strategy(
-        self,
-        match_info: Dict[str, Any],
-        processor: StreamingDataProcessor
+        self, match_info: Dict[str, Any], processor: StreamingDataProcessor
     ) -> Optional[Dict[str, Any]]:
         """基于Elo的策略"""
         try:
@@ -618,13 +627,13 @@ class BacktestEngine:
                 away_team_id=match_info["away_team"],
                 home_goals=match_info["home_goals"],
                 away_goals=match_info["away_goals"],
-                match_date=match_info["match_date"]
+                match_date=match_info["match_date"],
             )
 
             # 预测下一场比赛（简化处理）
             prediction = processor.elo_system.predict_match_probabilities(
                 home_team_id=match_info["home_team"],
-                away_team_id=match_info["away_team"]
+                away_team_id=match_info["away_team"],
             )
 
             # 基于Elo预测的投注决策
@@ -633,9 +642,11 @@ class BacktestEngine:
 
             # 选择最有价值的结果
             best_outcome = max(
-                [("home", home_prob, match_info["home_odds"]),
-                 ("away", away_prob, match_info["away_odds"])],
-                key=lambda x: x[1] * float(x[2]) - 1
+                [
+                    ("home", home_prob, match_info["home_odds"]),
+                    ("away", away_prob, match_info["away_odds"]),
+                ],
+                key=lambda x: x[1] * float(x[2]) - 1,
             )
 
             outcome, prob, odds = best_outcome
@@ -647,9 +658,15 @@ class BacktestEngine:
 
                 # 结算
                 result_profit = 0
-                if outcome == "home" and match_info["home_goals"] > match_info["away_goals"]:
+                if (
+                    outcome == "home"
+                    and match_info["home_goals"] > match_info["away_goals"]
+                ):
                     result_profit = stake * float(odds) - stake
-                elif outcome == "away" and match_info["home_goals"] < match_info["away_goals"]:
+                elif (
+                    outcome == "away"
+                    and match_info["home_goals"] < match_info["away_goals"]
+                ):
                     result_profit = stake * float(odds) - stake
                 else:
                     result_profit = -stake
@@ -661,7 +678,8 @@ class BacktestEngine:
                     "predicted_prob": float(prob),
                     "stake": stake,
                     "profit": result_profit,
-                    "elo_rating_diff": elo_result["ratings"]["home"]["after"] - elo_result["ratings"]["away"]["after"],
+                    "elo_rating_diff": elo_result["ratings"]["home"]["after"]
+                    - elo_result["ratings"]["away"]["after"],
                     "edge": edge,
                 }
 
@@ -672,16 +690,14 @@ class BacktestEngine:
             return None
 
     def _poisson_based_strategy(
-        self,
-        match_info: Dict[str, Any],
-        processor: StreamingDataProcessor
+        self, match_info: Dict[str, Any], processor: StreamingDataProcessor
     ) -> Optional[Dict[str, Any]]:
         """基于泊松分布的策略"""
         try:
             # 计算泊松概率
             probabilities = processor.poisson_calculator.calculate_match_probabilities(
                 home_team_id=match_info["home_team"],
-                away_team_id=match_info["away_team"]
+                away_team_id=match_info["away_team"],
             )
 
             # 基于泊松预测的投注决策
@@ -693,7 +709,7 @@ class BacktestEngine:
             outcomes = [
                 ("home", home_prob, match_info["home_odds"]),
                 ("draw", draw_prob, match_info["draw_odds"]),
-                ("away", away_prob, match_info["away_odds"])
+                ("away", away_prob, match_info["away_odds"]),
             ]
 
             best_outcome = max(outcomes, key=lambda x: x[1] * float(x[2]) - 1)
@@ -706,11 +722,20 @@ class BacktestEngine:
 
                 # 结算
                 result_profit = 0
-                if outcome == "home" and match_info["home_goals"] > match_info["away_goals"]:
+                if (
+                    outcome == "home"
+                    and match_info["home_goals"] > match_info["away_goals"]
+                ):
                     result_profit = stake * float(odds) - stake
-                elif outcome == "draw" and match_info["home_goals"] == match_info["away_goals"]:
+                elif (
+                    outcome == "draw"
+                    and match_info["home_goals"] == match_info["away_goals"]
+                ):
                     result_profit = stake * float(odds) - stake
-                elif outcome == "away" and match_info["home_goals"] < match_info["away_goals"]:
+                elif (
+                    outcome == "away"
+                    and match_info["home_goals"] < match_info["away_goals"]
+                ):
                     result_profit = stake * float(odds) - stake
                 else:
                     result_profit = -stake
@@ -734,9 +759,7 @@ class BacktestEngine:
             return None
 
     def _ensemble_strategy(
-        self,
-        match_info: Dict[str, Any],
-        processor: StreamingDataProcessor
+        self, match_info: Dict[str, Any], processor: StreamingDataProcessor
     ) -> Optional[Dict[str, Any]]:
         """集成策略"""
         try:
@@ -779,17 +802,29 @@ class BacktestEngine:
         self,
         strategy_name: str,
         detailed_results: List[Dict[str, Any]],
-        execution_time: float
+        execution_time: float,
     ) -> BacktestResult:
         """计算回测指标"""
         if not detailed_results:
             return BacktestResult(
                 strategy_name=strategy_name,
-                total_bets=0, winning_bets=0, total_stake=0, total_return=0,
-                total_profit=0, roi=0, max_drawdown=0, brier_score=0,
-                sharpe_ratio=0, win_rate=0, avg_odds=0, avg_stake=0,
-                max_consecutive_losses=0, calmar_ratio=0, sortino_ratio=0,
-                var_95=0, execution_time=execution_time
+                total_bets=0,
+                winning_bets=0,
+                total_stake=0,
+                total_return=0,
+                total_profit=0,
+                roi=0,
+                max_drawdown=0,
+                brier_score=0,
+                sharpe_ratio=0,
+                win_rate=0,
+                avg_odds=0,
+                avg_stake=0,
+                max_consecutive_losses=0,
+                calmar_ratio=0,
+                sortino_ratio=0,
+                var_95=0,
+                execution_time=execution_time,
             )
 
         # 提取数据
@@ -848,7 +883,7 @@ class BacktestEngine:
             calmar_ratio=calmar_ratio,
             sortino_ratio=sortino_ratio,
             var_95=var_95,
-            execution_time=execution_time
+            execution_time=execution_time,
         )
 
     def _calculate_max_drawdown(self, profits: List[float]) -> float:
@@ -869,9 +904,7 @@ class BacktestEngine:
         return max_dd * 100  # 转换为百分比
 
     def _calculate_brier_score(
-        self,
-        predicted_probs: List[float],
-        profits: List[float]
+        self, predicted_probs: List[float], profits: List[float]
     ) -> float:
         """计算Brier Score"""
         if not predicted_probs or not profits:
@@ -945,7 +978,7 @@ class BacktestEngine:
         """生成报告"""
         report_path = Path(self.config.output_path) / "backtest_report.md"
 
-        with open(report_path, 'w', encoding='utf-8') as f:
+        with open(report_path, "w", encoding="utf-8") as f:
             f.write("# 足球预测回测报告\n\n")
             f.write(f"生成时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
             f.write(f"回测期间: {self.config.start_date} 至 {self.config.end_date}\n")
@@ -953,13 +986,19 @@ class BacktestEngine:
 
             # 策略对比表
             f.write("## 策略性能对比\n\n")
-            f.write("| 策略 | 投注次数 | 胜率 | ROI(%) | 最大回撤(%) | 夏普比率 | Brier Score |\n")
-            f.write("|------|----------|------|--------|-------------|----------|-------------|\n")
+            f.write(
+                "| 策略 | 投注次数 | 胜率 | ROI(%) | 最大回撤(%) | 夏普比率 | Brier Score |\n"
+            )
+            f.write(
+                "|------|----------|------|--------|-------------|----------|-------------|\n"
+            )
 
             for strategy, result in results.items():
-                f.write(f"| {strategy} | {result.total_bets} | {result.win_rate:.1%} | "
-                       f"{result.roi:.2f} | {result.max_drawdown:.2f} | {result.sharpe_ratio:.3f} | "
-                       f"{result.brier_score:.4f} |\n")
+                f.write(
+                    f"| {strategy} | {result.total_bets} | {result.win_rate:.1%} | "
+                    f"{result.roi:.2f} | {result.max_drawdown:.2f} | {result.sharpe_ratio:.3f} | "
+                    f"{result.brier_score:.4f} |\n"
+                )
 
             # 详细分析
             f.write("\n## 详细分析\n\n")
@@ -995,16 +1034,17 @@ class BacktestEngine:
                 "max_drawdown": result.max_drawdown,
                 "sharpe_ratio": result.sharpe_ratio,
                 "brier_score": result.brier_score,
-            } for strategy, result in results.items()
+            }
+            for strategy, result in results.items()
         }
 
-        with open(summary_path, 'w') as f:
+        with open(summary_path, "w") as f:
             json.dump(summary_data, f, indent=2, ensure_ascii=False)
 
         # 保存详细结果（如果启用）
         if self.config.save_intermediate:
             detailed_path = Path(self.config.output_path) / "detailed_results.json"
-            with open(detailed_path, 'w') as f:
+            with open(detailed_path, "w") as f:
                 json.dump(self.detailed_results, f, indent=2, ensure_ascii=False)
 
         logger.info(f"结果已保存到: {self.config.output_path}")
@@ -1030,7 +1070,7 @@ def run_backtest(
     data_path: str,
     strategies: Optional[List[str]] = None,
     output_path: str = "./results/backtest/",
-    **kwargs
+    **kwargs,
 ) -> Dict[str, BacktestResult]:
     """
     便捷的回测运行函数
@@ -1046,9 +1086,10 @@ def run_backtest(
     """
     config = BacktestConfig(
         data_path=data_path,
-        strategies=strategies or ["kelly_fractional", "elo_based", "poisson_based", "ensemble"],
+        strategies=strategies
+        or ["kelly_fractional", "elo_based", "poisson_based", "ensemble"],
         output_path=output_path,
-        **kwargs
+        **kwargs,
     )
 
     engine = BacktestEngine(config)

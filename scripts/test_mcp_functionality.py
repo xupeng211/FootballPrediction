@@ -11,12 +11,17 @@ import os
 # 添加项目根目录到Python路径
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+
 async def test_postgres_mcp():
     """测试PostgreSQL MCP服务器功能"""
     print("🔍 测试PostgreSQL MCP服务器...")
 
     try:
-        from mcp_servers.postgres_server import execute_sql, get_table_info, check_connection
+        from mcp_servers.postgres_server import (
+            execute_sql,
+            get_table_info,
+            check_connection,
+        )
 
         # 测试连接
         connection_status = await check_connection()
@@ -24,7 +29,7 @@ async def test_postgres_mcp():
 
         # 测试SQL查询
         result = await execute_sql("SELECT version() as version", fetch_one=True)
-        if result and 'version' in result:
+        if result and "version" in result:
             print(f"   数据库版本: {result['version'][:50]}...")
 
         # 测试表信息
@@ -36,6 +41,7 @@ async def test_postgres_mcp():
     except Exception as e:
         print(f"   ❌ PostgreSQL MCP测试失败: {e}")
         return False
+
 
 async def test_redis_mcp():
     """测试Redis MCP服务器功能"""
@@ -54,7 +60,7 @@ async def test_redis_mcp():
 
         # 测试Redis信息
         info = await redis_info()
-        if info and 'redis_version' in info:
+        if info and "redis_version" in info:
             print(f"   Redis版本: {info['redis_version']}")
 
         return True
@@ -62,6 +68,7 @@ async def test_redis_mcp():
     except Exception as e:
         print(f"   ❌ Redis MCP测试失败: {e}")
         return False
+
 
 async def test_filesystem_mcp():
     """测试文件系统MCP服务器功能"""
@@ -84,6 +91,7 @@ async def test_filesystem_mcp():
     except Exception as e:
         print(f"   ❌ 文件系统MCP测试失败: {e}")
         return False
+
 
 async def main():
     """主测试函数"""
@@ -118,6 +126,7 @@ async def main():
         print("\n🔄 重启Claude Code以加载更新的MCP配置")
     else:
         print("⚠️  部分MCP服务器存在问题，请检查配置")
+
 
 if __name__ == "__main__":
     asyncio.run(main())

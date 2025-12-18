@@ -55,18 +55,18 @@ class PoissonFeatureCalculator:
     """
 
     # 默认参数
-    DEFAULT_HOME_LAMBDA = 1.5    # 主队默认预期进球
-    DEFAULT_AWAY_LAMBDA = 1.2    # 客队默认预期进球
-    LEAGUE_AVG_GOALS = 2.7       # 联赛平均进球数
-    MAX_GOALS_FOR_CALC = 10      # 计算考虑的最大进球数
+    DEFAULT_HOME_LAMBDA = 1.5  # 主队默认预期进球
+    DEFAULT_AWAY_LAMBDA = 1.2  # 客队默认预期进球
+    LEAGUE_AVG_GOALS = 2.7  # 联赛平均进球数
+    MAX_GOALS_FOR_CALC = 10  # 计算考虑的最大进球数
 
     # 历史权重衰减参数
-    DECAY_FACTOR = 0.95          # 每周衰减因子
-    MIN_SAMPLE_WEIGHT = 0.1      # 最小样本权重
+    DECAY_FACTOR = 0.95  # 每周衰减因子
+    MIN_SAMPLE_WEIGHT = 0.1  # 最小样本权重
 
     # 优化参数
-    MIN_GAMES_FOR_LAMBDA = 5     # 计算λ值的最少比赛场次
-    ADVANTAGE_FACTOR = 0.15      # 主场优势因子
+    MIN_GAMES_FOR_LAMBDA = 5  # 计算λ值的最少比赛场次
+    ADVANTAGE_FACTOR = 0.15  # 主场优势因子
 
     def __init__(
         self,
@@ -118,7 +118,7 @@ class PoissonFeatureCalculator:
         self,
         team_id: str,
         matches_data: List[Dict[str, Any]],
-        is_home_team: bool = True
+        is_home_team: bool = True,
     ) -> Tuple[float, float, Dict[str, Any]]:
         """
         计算球队的进攻和防守λ值
@@ -133,15 +133,21 @@ class PoissonFeatureCalculator:
         """
         if len(matches_data) < self.MIN_GAMES_FOR_LAMBDA:
             # 数据不足时使用默认值
-            default_attack = self.home_lambda_default if is_home_team else self.away_lambda_default
+            default_attack = (
+                self.home_lambda_default if is_home_team else self.away_lambda_default
+            )
             default_defense = self.league_avg_goals - default_attack
 
-            return default_attack, default_defense, {
-                "status": "insufficient_data",
-                "matches_used": len(matches_data),
-                "attack_lambda": default_attack,
-                "defense_lambda": default_defense,
-            }
+            return (
+                default_attack,
+                default_defense,
+                {
+                    "status": "insufficient_data",
+                    "matches_used": len(matches_data),
+                    "attack_lambda": default_attack,
+                    "defense_lambda": default_defense,
+                },
+            )
 
         # 准备数据
         goals_scored = []
@@ -178,7 +184,7 @@ class PoissonFeatureCalculator:
 
                 days_ago = (datetime.now() - match_date).days
                 weeks_ago = days_ago / 7
-                weight = max(self.MIN_SAMPLE_WEIGHT, self.DECAY_FACTOR ** weeks_ago)
+                weight = max(self.MIN_SAMPLE_WEIGHT, self.DECAY_FACTOR**weeks_ago)
                 time_weights.append(weight)
             else:
                 time_weights.append(1.0)
@@ -186,10 +192,14 @@ class PoissonFeatureCalculator:
         # 计算加权平均
         total_weight = sum(time_weights)
         weighted_goals_scored = sum(g * w for g, w in zip(goals_scored, time_weights))
-        weighted_goals_conceded = sum(g * w for g, w in zip(goals_conceded, time_weights))
+        weighted_goals_conceded = sum(
+            g * w for g, w in zip(goals_conceded, time_weights)
+        )
 
         # 场地调整后的λ值
-        avg_venue_factor = sum(v * w for v, w in zip(venue_factors, time_weights)) / total_weight
+        avg_venue_factor = (
+            sum(v * w for v, w in zip(venue_factors, time_weights)) / total_weight
+        )
 
         # 基础λ值计算
         base_attack_lambda = weighted_goals_scored / total_weight
@@ -207,7 +217,9 @@ class PoissonFeatureCalculator:
         # 球队实力调整
         if self.enable_team_strength_adjustment:
             # 基于联赛平均值的调整
-            strength_factor = (base_attack_lambda + base_defense_lambda) / self.league_avg_goals
+            strength_factor = (
+                base_attack_lambda + base_defense_lambda
+            ) / self.league_avg_goals
             if strength_factor > 1.2:  # 强队
                 attack_lambda *= 0.95  # 轻微保守估计
                 defense_lambda *= 0.95
@@ -229,19 +241,23 @@ class PoissonFeatureCalculator:
                 "avg_goals_scored": np.mean(goals_scored),
                 "avg_goals_conceded": np.mean(goals_conceded),
                 "goal_variance": np.var(goals_scored),
-            }
+            },
         }
 
-        return attack_lambda, defense_lambda, {
-            "status": "success",
-            "matches_used": len(matches_data),
-            "attack_lambda": attack_lambda,
-            "defense_lambda": defense_lambda,
-            "base_attack": base_attack_lambda,
-            "base_defense": base_defense_lambda,
-            "venue_factor": avg_venue_factor,
-            "strength_applied": self.enable_team_strength_adjustment,
-        }
+        return (
+            attack_lambda,
+            defense_lambda,
+            {
+                "status": "success",
+                "matches_used": len(matches_data),
+                "attack_lambda": attack_lambda,
+                "defense_lambda": defense_lambda,
+                "base_attack": base_attack_lambda,
+                "base_defense": base_defense_lambda,
+                "venue_factor": avg_venue_factor,
+                "strength_applied": self.enable_team_strength_adjustment,
+            },
+        )
 
     def calculate_match_probabilities(
         self,
@@ -267,17 +283,17 @@ class PoissonFeatureCalculator:
             Dict[str, Any]: 比赛概率分析
         """
         # 使用存储的λ值或默认值
-        home_attack = home_attack_lambda or self.team_data.get(
-            home_team_id, {}).get("attack_lambda", self.home_lambda_default
+        home_attack = home_attack_lambda or self.team_data.get(home_team_id, {}).get(
+            "attack_lambda", self.home_lambda_default
         )
-        home_defense = home_defense_lambda or self.team_data.get(
-            home_team_id, {}).get("defense_lambda", self.league_avg_goals - self.home_lambda_default
+        home_defense = home_defense_lambda or self.team_data.get(home_team_id, {}).get(
+            "defense_lambda", self.league_avg_goals - self.home_lambda_default
         )
-        away_attack = away_attack_lambda or self.team_data.get(
-            away_team_id, {}).get("attack_lambda", self.away_lambda_default
+        away_attack = away_attack_lambda or self.team_data.get(away_team_id, {}).get(
+            "attack_lambda", self.away_lambda_default
         )
-        away_defense = away_defense_lambda or self.team_data.get(
-            away_team_id, {}).get("defense_lambda", self.league_avg_goals - self.away_lambda_default
+        away_defense = away_defense_lambda or self.team_data.get(away_team_id, {}).get(
+            "defense_lambda", self.league_avg_goals - self.away_lambda_default
         )
 
         # 主场优势调整
@@ -285,7 +301,9 @@ class PoissonFeatureCalculator:
 
         # 计算预期进球数（λ值）
         # 考虑对手防守能力
-        exp_home_goals = home_attack * away_defense / self.league_avg_goals * home_advantage
+        exp_home_goals = (
+            home_attack * away_defense / self.league_avg_goals * home_advantage
+        )
         exp_away_goals = away_attack * home_defense / self.league_avg_goals
 
         # 确保预期值合理
@@ -361,9 +379,7 @@ class PoissonFeatureCalculator:
         return result
 
     def _calculate_score_matrix(
-        self,
-        exp_home_goals: float,
-        exp_away_goals: float
+        self, exp_home_goals: float, exp_away_goals: float
     ) -> np.ndarray:
         """
         计算比分概率矩阵
@@ -402,9 +418,7 @@ class PoissonFeatureCalculator:
         return draw_prob
 
     def _calculate_over_probability(
-        self,
-        score_matrix: np.ndarray,
-        threshold: float
+        self, score_matrix: np.ndarray, threshold: float
     ) -> float:
         """计算大小球概率"""
         over_prob = 0.0
@@ -423,9 +437,7 @@ class PoissonFeatureCalculator:
         return btts_prob
 
     def _get_top_probable_scores(
-        self,
-        score_matrix: np.ndarray,
-        top_n: int = 5
+        self, score_matrix: np.ndarray, top_n: int = 5
     ) -> List[Dict[str, Any]]:
         """获取最可能的比分"""
         scores = []
@@ -433,12 +445,14 @@ class PoissonFeatureCalculator:
             for away_goals in range(self.max_goals_calc + 1):
                 prob = score_matrix[home_goals, away_goals]
                 if prob > 0:
-                    scores.append({
-                        "score": f"{home_goals}-{away_goals}",
-                        "probability": float(prob),
-                        "home_goals": home_goals,
-                        "away_goals": away_goals,
-                    })
+                    scores.append(
+                        {
+                            "score": f"{home_goals}-{away_goals}",
+                            "probability": float(prob),
+                            "home_goals": home_goals,
+                            "away_goals": away_goals,
+                        }
+                    )
 
         scores.sort(key=lambda x: x["probability"], reverse=True)
         return scores[:top_n]
@@ -451,10 +465,7 @@ class PoissonFeatureCalculator:
         return distribution
 
     def _extract_model_features(
-        self,
-        exp_home_goals: float,
-        exp_away_goals: float,
-        score_matrix: np.ndarray
+        self, exp_home_goals: float, exp_away_goals: float, score_matrix: np.ndarray
     ) -> Dict[str, float]:
         """
         提取用于机器学习模型的特征
@@ -476,15 +487,21 @@ class PoissonFeatureCalculator:
         features["expected_goal_difference"] = exp_home_goals - exp_away_goals
 
         # 概率特征
-        features["home_win_poisson_prob"] = self._calculate_home_win_probability(score_matrix)
+        features["home_win_poisson_prob"] = self._calculate_home_win_probability(
+            score_matrix
+        )
         features["draw_poisson_prob"] = self._calculate_draw_probability(score_matrix)
-        features["over_2_5_poisson_prob"] = self._calculate_over_probability(score_matrix, 2.5)
+        features["over_2_5_poisson_prob"] = self._calculate_over_probability(
+            score_matrix, 2.5
+        )
         features["btts_poisson_prob"] = self._calculate_btts_probability(score_matrix)
 
         # 高阶特征
         features["poisson_variance_home"] = exp_home_goals  # 泊松分布方差=λ
         features["poisson_variance_away"] = exp_away_goals
-        features["poisson_skewness_home"] = 1.0 / np.sqrt(exp_home_goals)  # 泊松分布偏度
+        features["poisson_skewness_home"] = 1.0 / np.sqrt(
+            exp_home_goals
+        )  # 泊松分布偏度
         features["poisson_skewness_away"] = 1.0 / np.sqrt(exp_away_goals)
 
         # 比分分散度特征
@@ -512,7 +529,7 @@ class PoissonFeatureCalculator:
         home_team_id: str,
         away_team_id: str,
         exp_home_goals: float,
-        exp_away_goals: float
+        exp_away_goals: float,
     ) -> Dict[str, float]:
         """计算预测置信度指标"""
         metrics = {}
@@ -522,12 +539,16 @@ class PoissonFeatureCalculator:
         away_matches = self.team_data.get(away_team_id, {}).get("matches_analyzed", 0)
 
         # 数据充足性置信度
-        data_confidence = min(home_matches, away_matches) / STATISTICAL.MIN_H2H_SAMPLE_SIZE
+        data_confidence = (
+            min(home_matches, away_matches) / STATISTICAL.MIN_H2H_SAMPLE_SIZE
+        )
         metrics["data_sufficiency_confidence"] = float(data_confidence)
 
         # 预测稳定性置信度（基于λ值的合理性）
         total_goals = exp_home_goals + exp_away_goals
-        stability_confidence = 1.0 - abs(total_goals - self.league_avg_goals) / self.league_avg_goals
+        stability_confidence = (
+            1.0 - abs(total_goals - self.league_avg_goals) / self.league_avg_goals
+        )
         metrics["stability_confidence"] = float(max(0.0, stability_confidence))
 
         # 综合置信度
@@ -538,9 +559,7 @@ class PoissonFeatureCalculator:
         return metrics
 
     def _update_calculation_stats(
-        self,
-        exp_home_goals: float,
-        exp_away_goals: float
+        self, exp_home_goals: float, exp_away_goals: float
     ) -> None:
         """更新计算统计信息"""
         self.stats["total_calculations"] += 1
@@ -551,18 +570,15 @@ class PoissonFeatureCalculator:
         current_avg_away = self.stats["avg_lambda_away"]
 
         self.stats["avg_lambda_home"] = (
-            (current_avg_home * (n - 1) + exp_home_goals) / n
-        )
+            current_avg_home * (n - 1) + exp_home_goals
+        ) / n
         self.stats["avg_lambda_away"] = (
-            (current_avg_away * (n - 1) + exp_away_goals) / n
-        )
+            current_avg_away * (n - 1) + exp_away_goals
+        ) / n
 
         self.stats["last_updated"] = datetime.now().isoformat()
 
-    def generate_features_for_dataset(
-        self,
-        matches_df: pd.DataFrame
-    ) -> pd.DataFrame:
+    def generate_features_for_dataset(self, matches_df: pd.DataFrame) -> pd.DataFrame:
         """
         为数据集批量生成泊松特征
 
@@ -580,9 +596,7 @@ class PoissonFeatureCalculator:
 
             try:
                 # 计算概率
-                probabilities = self.calculate_match_probabilities(
-                    home_team, away_team
-                )
+                probabilities = self.calculate_match_probabilities(home_team, away_team)
 
                 # 提取特征
                 features = probabilities["model_features"]
@@ -624,7 +638,8 @@ class PoissonFeatureCalculator:
             "data_quality": {
                 "matches_analyzed": team_data.get("matches_analyzed", 0),
                 "last_updated": team_data.get("last_updated"),
-                "data_sufficient": team_data.get("matches_analyzed", 0) >= self.MIN_GAMES_FOR_LAMBDA,
+                "data_sufficient": team_data.get("matches_analyzed", 0)
+                >= self.MIN_GAMES_FOR_LAMBDA,
             },
         }
 
@@ -643,13 +658,27 @@ class PoissonFeatureCalculator:
             "statistics": self.stats,
             "team_data_count": len(self.team_data),
             "average_lambdas": {
-                "home_attack": np.mean([
-                    data.get("attack_lambda", 0) for data in self.team_data.values()
-                ]) if self.team_data else 0,
-                "home_defense": np.mean([
-                    data.get("defense_lambda", 0) for data in self.team_data.values()
-                ]) if self.team_data else 0,
-            }
+                "home_attack": (
+                    np.mean(
+                        [
+                            data.get("attack_lambda", 0)
+                            for data in self.team_data.values()
+                        ]
+                    )
+                    if self.team_data
+                    else 0
+                ),
+                "home_defense": (
+                    np.mean(
+                        [
+                            data.get("defense_lambda", 0)
+                            for data in self.team_data.values()
+                        ]
+                    )
+                    if self.team_data
+                    else 0
+                ),
+            },
         }
 
     def __repr__(self) -> str:

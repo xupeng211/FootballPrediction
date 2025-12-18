@@ -40,9 +40,7 @@ class TestInferenceServiceErrorHandling:
         service = InferenceService()
 
         # 模拟模型加载器抛出损坏错误
-        with patch(
-            "src.services.inference_service.ModelLoader"
-        ) as mock_loader_class:
+        with patch("src.services.inference_service.ModelLoader") as mock_loader_class:
             mock_loader = Mock()
             mock_loader_class.return_value = mock_loader
 
@@ -63,9 +61,7 @@ class TestInferenceServiceErrorHandling:
         service = InferenceService()
 
         # 模拟权限拒绝错误
-        with patch(
-            "src.services.inference_service.ModelLoader"
-        ) as mock_loader_class:
+        with patch("src.services.inference_service.ModelLoader") as mock_loader_class:
             mock_loader = Mock()
             mock_loader_class.return_value = mock_loader
 
@@ -86,9 +82,7 @@ class TestInferenceServiceErrorHandling:
         service = InferenceService()
 
         # 模拟内存不足错误
-        with patch(
-            "src.services.inference_service.ModelLoader"
-        ) as mock_loader_class:
+        with patch("src.services.inference_service.ModelLoader") as mock_loader_class:
             mock_loader = Mock()
             mock_loader_class.return_value = mock_loader
 
@@ -109,9 +103,7 @@ class TestInferenceServiceErrorHandling:
         service = InferenceService()
 
         # 模拟部分初始化成功但后续失败
-        with patch(
-            "src.services.inference_service.ModelLoader"
-        ) as mock_loader_class:
+        with patch("src.services.inference_service.ModelLoader") as mock_loader_class:
             mock_loader = Mock()
             mock_loader_class.return_value = mock_loader
 
@@ -158,9 +150,7 @@ class TestInferenceServiceErrorHandling:
             await asyncio.sleep(10)  # 模拟长时间加载
             return Mock()
 
-        with patch(
-            "src.services.inference_service.ModelLoader"
-        ) as mock_loader_class:
+        with patch("src.services.inference_service.ModelLoader") as mock_loader_class:
             mock_loader = Mock()
             mock_loader.load_model = AsyncMock(side_effect=slow_model_load)
             mock_loader_class.return_value = mock_loader
@@ -507,9 +497,7 @@ class TestInferenceServiceErrorHandling:
         assert service.is_initialized is False
 
         # 模拟初始化过程中的状态变化
-        with patch(
-            "src.services.inference_service.ModelLoader"
-        ) as mock_loader_class:
+        with patch("src.services.inference_service.ModelLoader") as mock_loader_class:
             mock_loader = Mock()
             mock_loader_class.return_value = mock_loader
             mock_loader.load_model.return_value = Mock()

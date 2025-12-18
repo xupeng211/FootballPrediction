@@ -39,9 +39,7 @@ class TestInferenceServiceErrorHandling:
         service = InferenceService()
 
         # 模拟模型加载器抛出损坏错误
-        with patch(
-            "src.services.inference_service.ModelLoader"
-        ) as mock_loader_class:
+        with patch("src.services.inference_service.ModelLoader") as mock_loader_class:
             mock_loader = Mock()
             mock_loader_class.return_value = mock_loader
 
@@ -62,9 +60,7 @@ class TestInferenceServiceErrorHandling:
         service = InferenceService()
 
         # 模拟权限拒绝错误
-        with patch(
-            "src.services.inference_service.ModelLoader"
-        ) as mock_loader_class:
+        with patch("src.services.inference_service.ModelLoader") as mock_loader_class:
             mock_loader = Mock()
             mock_loader_class.return_value = mock_loader
 
@@ -85,9 +81,7 @@ class TestInferenceServiceErrorHandling:
         service = InferenceService()
 
         # 模拟内存不足错误
-        with patch(
-            "src.services.inference_service.ModelLoader"
-        ) as mock_loader_class:
+        with patch("src.services.inference_service.ModelLoader") as mock_loader_class:
             mock_loader = Mock()
             mock_loader_class.return_value = mock_loader
 

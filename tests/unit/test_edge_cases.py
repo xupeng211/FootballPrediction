@@ -257,12 +257,8 @@ class TestErrorHandling:
             from src.services.inference_service import InferenceService
 
             # 模拟初始化失败
-            with patch(
-                "src.services.inference_service.Path.exists", return_value=True
-            ):
-                with patch(
-                    "src.services.inference_service.ModelLoader"
-                ) as mock_loader:
+            with patch("src.services.inference_service.Path.exists", return_value=True):
+                with patch("src.services.inference_service.ModelLoader") as mock_loader:
                     mock_loader_instance = Mock()
                     mock_loader_instance.load_model.side_effect = Exception(
                         "Model load failed"

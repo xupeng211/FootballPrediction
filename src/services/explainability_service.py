@@ -94,7 +94,6 @@ class ExplainabilityService:
         if model_id not in self._explainer_cache:
             import shap
 
-
             # 使用fast模式优化性能
             explainer = shap.TreeExplainer(
                 model.model,
@@ -136,7 +135,6 @@ class ExplainabilityService:
         for col in expected_feature_names:
             if col in features.columns and features[col].isnull().all():
                 raise ExplainabilityError(f"特征列 {col} 全部为空值")
-
 
     async def _compute_shap_values(self, explainer, features: pd.DataFrame):
         """计算SHAP值"""
@@ -216,7 +214,6 @@ class ExplainabilityService:
                 if not expected_features.issubset(actual_features):
                     missing = expected_features - actual_features
                     logger.warning(f"样本{i}缺少SHAP贡献度特征: {missing}")
-
 
         except Exception as e:
             logger.warning(f"SHAP一致性验证失败（不影响功能）: {e}")

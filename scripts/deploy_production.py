@@ -36,6 +36,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 from config_secure import get_settings
 from scripts.verify_live_connection import LiveConnectionVerifier
 
+
 class ProductionDeployer:
     """生产环境部署器"""
 
@@ -48,7 +49,7 @@ class ProductionDeployer:
         # Docker Compose配置
         self.compose_files = [
             self.project_root / "docker-compose.prod.yml",
-            self.project_root / "docker-compose.monitoring.yml"
+            self.project_root / "docker-compose.monitoring.yml",
         ]
 
         # 必需的目录
@@ -59,7 +60,7 @@ class ProductionDeployer:
             "backups",
             "monitoring/grafana/dashboards",
             "monitoring/grafana/datasources",
-            "monitoring/prometheus"
+            "monitoring/prometheus",
         ]
 
     async def deploy_all_services(self) -> Dict[str, Any]:
@@ -100,13 +101,15 @@ class ProductionDeployer:
         final_verification = await self._final_verification()
 
         # 9. 生成部署报告
-        deployment_report = await self._generate_deployment_report({
-            "deployment_success": final_verification["success"],
-            "services_deployed": deployment_result["services"],
-            "health_status": health_result,
-            "monitoring_ready": True,
-            "cron_jobs_configured": len(self.cron_jobs)
-        })
+        deployment_report = await self._generate_deployment_report(
+            {
+                "deployment_success": final_verification["success"],
+                "services_deployed": deployment_result["services"],
+                "health_status": health_result,
+                "monitoring_ready": True,
+                "cron_jobs_configured": len(self.cron_jobs),
+            }
+        )
 
         return deployment_report
 
@@ -118,8 +121,7 @@ class ProductionDeployer:
             # 检查Docker
             try:
                 result = subprocess.run(
-                    ["docker", "--version"],
-                    capture_output=True, text=True, check=True
+                    ["docker", "--version"], capture_output=True, text=True, check=True
                 )
                 docker_version = result.stdout.strip()
                 print(f"✅ Docker: {docker_version}")
@@ -131,7 +133,9 @@ class ProductionDeployer:
             try:
                 result = subprocess.run(
                     ["docker-compose", "--version"],
-                    capture_output=True, text=True, check=True
+                    capture_output=True,
+                    text=True,
+                    check=True,
                 )
                 compose_version = result.stdout.strip()
                 print(f"✅ Docker Compose: {compose_version}")
@@ -142,12 +146,16 @@ class ProductionDeployer:
             # 检查系统资源
             cpu_count = psutil.cpu_count()
             memory = psutil.virtual_memory()
-            disk = psutil.disk_usage('/')
+            disk = psutil.disk_usage("/")
 
             print(f"💻 系统资源:")
             print(f"  CPU核心: {cpu_count}")
-            print(f"  内存: {memory.total / (1024**3):.1f}GB (可用: {memory.available / (1024**3):.1f}GB)")
-            print(f"  磁盘: {disk.total / (1024**3):.1f}GB (可用: {disk.free / (1024**3):.1f}GB)")
+            print(
+                f"  内存: {memory.total / (1024**3):.1f}GB (可用: {memory.available / (1024**3):.1f}GB)"
+            )
+            print(
+                f"  磁盘: {disk.total / (1024**3):.1f}GB (可用: {disk.free / (1024**3):.1f}GB)"
+            )
 
             # 检查最低要求
             if cpu_count < 4:
@@ -197,7 +205,7 @@ class ProductionDeployer:
         required_files = [
             ".env.production",
             "docker-compose.prod.yml",
-            "docker-compose.monitoring.yml"
+            "docker-compose.monitoring.yml",
         ]
 
         for file_name in required_files:
@@ -217,10 +225,10 @@ class ProductionDeployer:
                 "DB_HOST",
                 "DB_NAME",
                 "FOTMOB_X_MAS_HEADER",
-                "FOTMOB_X_FOO_HEADER"
+                "FOTMOB_X_FOO_HEADER",
             ]
 
-            with open(env_file, 'r') as f:
+            with open(env_file, "r") as f:
                 env_content = f.read()
 
             for var in required_vars:
@@ -241,17 +249,33 @@ class ProductionDeployer:
         try:
             # 停止现有服务
             print("🛑 停止现有服务...")
-            subprocess.run([
-                "docker-compose", "-f", "docker-compose.prod.yml",
-                "down", "--remove-orphans"
-            ], cwd=self.project_root, capture_output=True)
+            subprocess.run(
+                [
+                    "docker-compose",
+                    "-f",
+                    "docker-compose.prod.yml",
+                    "down",
+                    "--remove-orphans",
+                ],
+                cwd=self.project_root,
+                capture_output=True,
+            )
 
             # 构建并启动服务
             print("🔨 构建并启动服务...")
-            result = subprocess.run([
-                "docker-compose", "-f", "docker-compose.prod.yml",
-                "up", "-d", "--build"
-            ], cwd=self.project_root, capture_output=True, text=True)
+            result = subprocess.run(
+                [
+                    "docker-compose",
+                    "-f",
+                    "docker-compose.prod.yml",
+                    "up",
+                    "-d",
+                    "--build",
+                ],
+                cwd=self.project_root,
+                capture_output=True,
+                text=True,
+            )
 
             if result.returncode != 0:
                 print(f"❌ 服务启动失败: {result.stderr}")
@@ -262,10 +286,19 @@ class ProductionDeployer:
             await asyncio.sleep(30)
 
             # 检查服务状态
-            result = subprocess.run([
-                "docker-compose", "-f", "docker-compose.prod.yml",
-                "ps", "--format", "json"
-            ], cwd=self.project_root, capture_output=True, text=True)
+            result = subprocess.run(
+                [
+                    "docker-compose",
+                    "-f",
+                    "docker-compose.prod.yml",
+                    "ps",
+                    "--format",
+                    "json",
+                ],
+                cwd=self.project_root,
+                capture_output=True,
+                text=True,
+            )
 
             if result.returncode == 0:
                 services = json.loads(result.stdout)
@@ -274,22 +307,28 @@ class ProductionDeployer:
                         services_deployed.append(service["Service"])
                         print(f"✅ {service['Service']}: 运行中")
                     else:
-                        print(f"❌ {service['Service']}: {service.get('State', 'unknown')}")
+                        print(
+                            f"❌ {service['Service']}: {service.get('State', 'unknown')}"
+                        )
 
             # 启动监控服务
             if (self.project_root / "docker-compose.monitoring.yml").exists():
                 print("📊 启动监控服务...")
-                subprocess.run([
-                    "docker-compose", "-f", "docker-compose.monitoring.yml",
-                    "up", "-d"
-                ], cwd=self.project_root, capture_output=True)
+                subprocess.run(
+                    [
+                        "docker-compose",
+                        "-f",
+                        "docker-compose.monitoring.yml",
+                        "up",
+                        "-d",
+                    ],
+                    cwd=self.project_root,
+                    capture_output=True,
+                )
 
                 await asyncio.sleep(15)
 
-            return {
-                "success": True,
-                "services": services_deployed
-            }
+            return {"success": True, "services": services_deployed}
 
         except Exception as e:
             print(f"❌ 服务部署失败: {e}")
@@ -310,15 +349,12 @@ class ProductionDeployer:
                 "api": False,
                 "database": False,
                 "redis": False,
-                "model": False
+                "model": False,
             }
 
             # API健康检查
             try:
-                response = requests.get(
-                    "http://localhost:8000/health",
-                    timeout=10
-                )
+                response = requests.get("http://localhost:8000/health", timeout=10)
                 if response.status_code == 200:
                     health_checks["api"] = True
                     print("✅ API健康检查通过")
@@ -330,8 +366,7 @@ class ProductionDeployer:
             # 数据库健康检查
             try:
                 response = requests.get(
-                    "http://localhost:8000/api/v1/health/database",
-                    timeout=10
+                    "http://localhost:8000/api/v1/health/database", timeout=10
                 )
                 if response.status_code == 200:
                     health_checks["database"] = True
@@ -344,8 +379,7 @@ class ProductionDeployer:
             # Redis健康检查
             try:
                 response = requests.get(
-                    "http://localhost:8000/api/v1/health/redis",
-                    timeout=10
+                    "http://localhost:8000/api/v1/health/redis", timeout=10
                 )
                 if response.status_code == 200:
                     health_checks["redis"] = True
@@ -358,8 +392,7 @@ class ProductionDeployer:
             # 模型健康检查
             try:
                 response = requests.get(
-                    "http://localhost:8000/api/v1/health/model",
-                    timeout=10
+                    "http://localhost:8000/api/v1/health/model", timeout=10
                 )
                 if response.status_code == 200:
                     health_checks["model"] = True
@@ -374,16 +407,12 @@ class ProductionDeployer:
             return {
                 "success": all_healthy,
                 "health_checks": health_checks,
-                "overall_status": "healthy" if all_healthy else "unhealthy"
+                "overall_status": "healthy" if all_healthy else "unhealthy",
             }
 
         except Exception as e:
             print(f"❌ 健康检查失败: {e}")
-            return {
-                "success": False,
-                "error": str(e),
-                "overall_status": "error"
-            }
+            return {"success": False, "error": str(e), "overall_status": "error"}
 
     async def _setup_monitoring(self):
         """设置监控"""
@@ -391,10 +420,11 @@ class ProductionDeployer:
 
         # 检查监控服务状态
         try:
-            result = subprocess.run([
-                "docker", "ps", "--filter", "name=grafana",
-                "--format", "{{.Names}}"
-            ], capture_output=True, text=True)
+            result = subprocess.run(
+                ["docker", "ps", "--filter", "name=grafana", "--format", "{{.Names}}"],
+                capture_output=True,
+                text=True,
+            )
 
             if result.returncode == 0 and result.stdout.strip():
                 print("✅ Grafana监控已启动")
@@ -402,10 +432,18 @@ class ProductionDeployer:
             else:
                 print("⚠️ Grafana监控未启动，请检查docker-compose.monitoring.yml")
 
-            result = subprocess.run([
-                "docker", "ps", "--filter", "name=prometheus",
-                "--format", "{{.Names}}"
-            ], capture_output=True, text=True)
+            result = subprocess.run(
+                [
+                    "docker",
+                    "ps",
+                    "--filter",
+                    "name=prometheus",
+                    "--format",
+                    "{{.Names}}",
+                ],
+                capture_output=True,
+                text=True,
+            )
 
             if result.returncode == 0 and result.stdout.strip():
                 print("✅ Prometheus监控已启动")
@@ -425,44 +463,44 @@ class ProductionDeployer:
                 "name": "数据收集任务",
                 "schedule": "*/30 * * * *",
                 "command": f"cd {self.project_root} && docker-compose -f docker-compose.prod.yml exec -T app python scripts/collectors/scheduled_data_collector.py",
-                "description": "每30分钟收集足球数据"
+                "description": "每30分钟收集足球数据",
             },
             {
                 "name": "模型重训练任务",
                 "schedule": "0 2 * * *",
                 "command": f"cd {self.project_root} && docker-compose -f docker-compose.prod.yml exec -T app python scripts/retrain_models.py",
-                "description": "每天凌晨2点重训练模型"
+                "description": "每天凌晨2点重训练模型",
             },
             {
                 "name": "数据备份任务",
                 "schedule": "0 3 * * *",
                 "command": f"cd {self.project_root} && docker-compose -f docker-compose.prod.yml exec -T postgres pg_dump -U football_user football_prediction_prod > backups/backup_$(date +\\%Y\\%m\\%d).sql",
-                "description": "每天凌晨3点备份数据库"
+                "description": "每天凌晨3点备份数据库",
             },
             {
                 "name": "系统健康检查",
                 "schedule": "*/5 * * * *",
                 "command": f"cd {self.project_root} && python scripts/health_check.py",
-                "description": "每5分钟检查系统健康"
+                "description": "每5分钟检查系统健康",
             },
             {
                 "name": "日志清理任务",
                 "schedule": "0 4 * * 0",
-                "command": f"find {self.project_root}/logs -name \"*.log\" -mtime +7 -delete",
-                "description": "每周日凌晨4点清理旧日志"
+                "command": f'find {self.project_root}/logs -name "*.log" -mtime +7 -delete',
+                "description": "每周日凌晨4点清理旧日志",
             },
             {
                 "name": "Kelly日计数器重置",
                 "schedule": "0 0 * * *",
                 "command": f"cd {self.project_root} && python scripts/reset_kelly_counters.py",
-                "description": "每天凌晨0点重置Kelly日计数器"
+                "description": "每天凌晨0点重置Kelly日计数器",
             },
             {
                 "name": "每日性能报告",
                 "schedule": "0 23 * * *",
                 "command": f"cd {self.project_root} && python scripts/daily_performance.py",
-                "description": "每天23点生成性能报告"
-            }
+                "description": "每天23点生成性能报告",
+            },
         ]
 
         # 生成crontab配置
@@ -476,7 +514,7 @@ class ProductionDeployer:
 
         # 保存crontab配置
         crontab_file = self.project_root / "production_crontab"
-        with open(crontab_file, 'w') as f:
+        with open(crontab_file, "w") as f:
             f.write(crontab_content)
 
         print(f"✅ Cron配置已保存: {crontab_file}")
@@ -500,7 +538,7 @@ class ProductionDeployer:
             "api_accessible": False,
             "prediction_working": False,
             "kelly_safety_active": False,
-            "monitoring_accessible": False
+            "monitoring_accessible": False,
         }
 
         try:
@@ -515,14 +553,9 @@ class ProductionDeployer:
 
             # 预测功能测试
             try:
-                test_data = {
-                    "home_team": "Manchester United",
-                    "away_team": "Arsenal"
-                }
+                test_data = {"home_team": "Manchester United", "away_team": "Arsenal"}
                 response = requests.post(
-                    "http://localhost:8000/api/v1/predict",
-                    json=test_data,
-                    timeout=10
+                    "http://localhost:8000/api/v1/predict", json=test_data, timeout=10
                 )
                 verification_results["prediction_working"] = response.status_code == 200
             except:
@@ -531,19 +564,22 @@ class ProductionDeployer:
             # Kelly安全状态检查
             try:
                 response = requests.get(
-                    "http://localhost:8000/api/v1/kelly/safety-status",
-                    timeout=5
+                    "http://localhost:8000/api/v1/kelly/safety-status", timeout=5
                 )
                 if response.status_code == 200:
                     safety_data = response.json()
-                    verification_results["kelly_safety_active"] = safety_data.get("safety_enabled", False)
+                    verification_results["kelly_safety_active"] = safety_data.get(
+                        "safety_enabled", False
+                    )
             except:
                 pass
 
             # 监控可访问性检查
             try:
                 response = requests.get("http://localhost:3000", timeout=5)
-                verification_results["monitoring_accessible"] = response.status_code == 200
+                verification_results["monitoring_accessible"] = (
+                    response.status_code == 200
+                )
             except:
                 pass
 
@@ -557,19 +593,15 @@ class ProductionDeployer:
                     status = "✅" if passed else "❌"
                     print(f"  {status} {check}")
 
-            return {
-                "success": all_passed,
-                "verification_results": verification_results
-            }
+            return {"success": all_passed, "verification_results": verification_results}
 
         except Exception as e:
             print(f"❌ 最终验证失败: {e}")
-            return {
-                "success": False,
-                "error": str(e)
-            }
+            return {"success": False, "error": str(e)}
 
-    async def _generate_deployment_report(self, deployment_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def _generate_deployment_report(
+        self, deployment_data: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """生成部署报告"""
         report = {
             "deployment_time": datetime.now().isoformat(),
@@ -580,22 +612,26 @@ class ProductionDeployer:
                 "server_ip": "localhost",  # 在实际部署中应获取真实IP
                 "services_count": len(deployment_data.get("services_deployed", [])),
                 "cron_jobs_count": len(self.cron_jobs),
-                "monitoring_enabled": True
+                "monitoring_enabled": True,
             },
             "next_steps": [
                 "1. 监控系统运行状态",
                 "2. 检查API预测结果",
                 "3. 验证Kelly安全系统",
                 "4. 观察性能指标",
-                "5. 设置告警通知"
-            ]
+                "5. 设置告警通知",
+            ],
         }
 
         # 保存报告
-        report_file = self.project_root / "logs" / f"deployment_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        report_file = (
+            self.project_root
+            / "logs"
+            / f"deployment_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        )
         report_file.parent.mkdir(exist_ok=True)
 
-        with open(report_file, 'w', encoding='utf-8') as f:
+        with open(report_file, "w", encoding="utf-8") as f:
             json.dump(report, f, indent=2, ensure_ascii=False)
 
         print(f"📄 部署报告已保存: {report_file}")
@@ -605,10 +641,19 @@ class ProductionDeployer:
     async def get_deployment_status(self) -> Dict[str, Any]:
         """获取部署状态"""
         try:
-            result = subprocess.run([
-                "docker-compose", "-f", "docker-compose.prod.yml",
-                "ps", "--format", "json"
-            ], cwd=self.project_root, capture_output=True, text=True)
+            result = subprocess.run(
+                [
+                    "docker-compose",
+                    "-f",
+                    "docker-compose.prod.yml",
+                    "ps",
+                    "--format",
+                    "json",
+                ],
+                cwd=self.project_root,
+                capture_output=True,
+                text=True,
+            )
 
             if result.returncode == 0:
                 services = json.loads(result.stdout)
@@ -618,7 +663,11 @@ class ProductionDeployer:
                     "total_services": len(services),
                     "running_services": len(running_services),
                     "service_details": services,
-                    "overall_status": "running" if len(running_services) == len(services) else "partial"
+                    "overall_status": (
+                        "running"
+                        if len(running_services) == len(services)
+                        else "partial"
+                    ),
                 }
             else:
                 return {"overall_status": "error", "error": result.stderr}
@@ -632,16 +681,30 @@ class ProductionDeployer:
 
         try:
             # 停止应用服务
-            subprocess.run([
-                "docker-compose", "-f", "docker-compose.prod.yml",
-                "down", "--remove-orphans"
-            ], cwd=self.project_root, check=True)
+            subprocess.run(
+                [
+                    "docker-compose",
+                    "-f",
+                    "docker-compose.prod.yml",
+                    "down",
+                    "--remove-orphans",
+                ],
+                cwd=self.project_root,
+                check=True,
+            )
 
             # 停止监控服务
-            subprocess.run([
-                "docker-compose", "-f", "docker-compose.monitoring.yml",
-                "down", "--remove-orphans"
-            ], cwd=self.project_root, check=False)  # 监控服务可能不存在
+            subprocess.run(
+                [
+                    "docker-compose",
+                    "-f",
+                    "docker-compose.monitoring.yml",
+                    "down",
+                    "--remove-orphans",
+                ],
+                cwd=self.project_root,
+                check=False,
+            )  # 监控服务可能不存在
 
             print("✅ 所有服务已停止")
             return True
@@ -654,34 +717,38 @@ class ProductionDeployer:
 async def main():
     """主函数"""
     parser = argparse.ArgumentParser(description="Sprint 9 生产环境部署")
-    subparsers = parser.add_subparsers(dest='command', help='可用命令')
+    subparsers = parser.add_subparsers(dest="command", help="可用命令")
 
     # 部署命令
-    deploy_parser = subparsers.add_parser('deploy', help='部署生产环境')
-    deploy_parser.add_argument('--force', action='store_true', help='强制重新部署')
+    deploy_parser = subparsers.add_parser("deploy", help="部署生产环境")
+    deploy_parser.add_argument("--force", action="store_true", help="强制重新部署")
 
     # 状态命令
-    status_parser = subparsers.add_parser('status', help='查看部署状态')
+    status_parser = subparsers.add_parser("status", help="查看部署状态")
 
     # 停止命令
-    stop_parser = subparsers.add_parser('stop', help='停止所有服务')
+    stop_parser = subparsers.add_parser("stop", help="停止所有服务")
 
     args = parser.parse_args()
 
     deployer = ProductionDeployer()
 
     try:
-        if args.command == 'deploy':
+        if args.command == "deploy":
             report = await deployer.deploy_all_services()
 
             print(f"\n🎉 部署完成!")
             print(f"=" * 50)
-            print(f"部署状态: {'✅ 成功' if report['deployment_success'] else '❌ 失败'}")
+            print(
+                f"部署状态: {'✅ 成功' if report['deployment_success'] else '❌ 失败'}"
+            )
             print(f"服务数量: {len(report.get('services_deployed', []))}")
-            print(f"监控状态: {'✅ 就绪' if report.get('monitoring_ready') else '❌ 未就绪'}")
+            print(
+                f"监控状态: {'✅ 就绪' if report.get('monitoring_ready') else '❌ 未就绪'}"
+            )
             print(f"定时任务: {len(report.get('cron_jobs_configured', 0))} 个")
 
-            if not report['deployment_success']:
+            if not report["deployment_success"]:
                 print(f"❌ 部署失败: {report.get('error', 'Unknown error')}")
                 return 1
 
@@ -691,23 +758,27 @@ async def main():
 
             return 0
 
-        elif args.command == 'status':
+        elif args.command == "status":
             status = await deployer.get_deployment_status()
 
             print(f"\n📊 部署状态:")
             print(f"=" * 30)
             print(f"总体状态: {status['overall_status']}")
-            print(f"运行服务: {status.get('running_services', 0)}/{status.get('total_services', 0)}")
+            print(
+                f"运行服务: {status.get('running_services', 0)}/{status.get('total_services', 0)}"
+            )
 
             if "service_details" in status:
                 print(f"\n服务详情:")
                 for service in status["service_details"]:
                     status_icon = "✅" if service.get("State") == "running" else "❌"
-                    print(f"  {status_icon} {service.get('Service', 'unknown')}: {service.get('State', 'unknown')}")
+                    print(
+                        f"  {status_icon} {service.get('Service', 'unknown')}: {service.get('State', 'unknown')}"
+                    )
 
             return 0
 
-        elif args.command == 'stop':
+        elif args.command == "stop":
             success = await deployer.stop_all_services()
             return 0 if success else 1
 

@@ -47,6 +47,7 @@ def setup_logging():
             fileConfig(context.config.config_file_name)
     except Exception as e:
         # 忽略日志配置错误，继续执行
+        pass
 
 
 def get_database_url():

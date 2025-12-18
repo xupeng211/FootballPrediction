@@ -9,11 +9,12 @@ import os
 import sys
 from pathlib import Path
 
+
 def install_npm_packages():
     """安装必要的npm包"""
     packages = [
         "@modelcontextprotocol/server-filesystem",
-        "@modelcontextprotocol/server-git"
+        "@modelcontextprotocol/server-git",
     ]
 
     print("📦 Installing NPM packages...")
@@ -23,6 +24,7 @@ def install_npm_packages():
             print(f"✅ Installed {package}")
         except subprocess.CalledProcessError:
             print(f"⚠️  Failed to install {package}")
+
 
 def setup_postgres_mcp():
     """设置PostgreSQL MCP服务器"""
@@ -95,6 +97,7 @@ if __name__ == "__main__":
         f.write(server_code)
 
     print("✅ Created postgres_mcp_server.py")
+
 
 def setup_redis_mcp():
     """设置Redis MCP服务器"""
@@ -198,11 +201,12 @@ if __name__ == "__main__":
 
     print("✅ Created redis_mcp_server.py")
 
+
 def create_claude_config():
     """创建Claude配置文件"""
     print("\n⚙️  Creating Claude configuration...")
 
-    config_content = '''
+    config_content = """
 {
   "skills": {
     "enabled": true,
@@ -227,12 +231,13 @@ def create_claude_config():
     }
   }
 }
-'''
+"""
 
     with open(".claude/settings.json", "w") as f:
         f.write(config_content)
 
     print("✅ Created .claude/settings.json")
+
 
 def main():
     print("🚀 Setting up MCP Servers for Football Prediction System")
@@ -253,12 +258,15 @@ def main():
     print("\n✅ MCP Servers setup complete!")
     print("\n📋 Next steps:")
     print("1. Export environment variables:")
-    print("   export DATABASE_URL=postgresql://user:pass@localhost:5432/football_prediction")
+    print(
+        "   export DATABASE_URL=postgresql://user:pass@localhost:5432/football_prediction"
+    )
     print("   export REDIS_HOST=localhost")
     print("   export REDIS_PORT=6379")
     print("\n2. Restart Claude Code to load MCP servers")
     print("3. Test with: '查询数据库中最新的10场比赛'")
     print("4. Test with: '检查Redis缓存状态'")
+
 
 if __name__ == "__main__":
     main()

@@ -38,9 +38,10 @@ logger = logging.getLogger(__name__)
 @dataclass
 class TrainingConfig:
     """训练配置基类"""
-    objective: str = 'multi:softprob'
+
+    objective: str = "multi:softprob"
     num_class: int = 3
-    eval_metric: str = 'mlogloss'
+    eval_metric: str = "mlogloss"
     random_state: int = 42
     n_jobs: int = -1
     early_stopping_rounds: int = 50
@@ -55,6 +56,7 @@ class TrainingConfig:
 @dataclass
 class TrainingMetrics:
     """训练指标"""
+
     train_accuracy: float = 0.0
     val_accuracy: float = 0.0
     train_loss: float = 0.0
@@ -68,6 +70,7 @@ class TrainingMetrics:
 @dataclass
 class TrainingResult:
     """训练结果"""
+
     model: xgb.XGBClassifier
     metrics: TrainingMetrics
     status: str = "success"
@@ -99,7 +102,7 @@ class BaseXGBoostTrainer(ABC):
         y_train: pd.Series,
         X_val: Optional[pd.DataFrame] = None,
         y_val: Optional[pd.Series] = None,
-        **kwargs
+        **kwargs,
     ) -> TrainingResult:
         """
         训练模型 - 模板方法
@@ -141,22 +144,18 @@ class BaseXGBoostTrainer(ABC):
             metrics.training_time_seconds = time.time() - start_time
             metrics.model_params = params
 
-            self.logger.info(f"✅ 训练完成，耗时: {metrics.training_time_seconds:.2f}秒")
+            self.logger.info(
+                f"✅ 训练完成，耗时: {metrics.training_time_seconds:.2f}秒"
+            )
 
             return TrainingResult(
-                model=self.model,
-                metrics=metrics,
-                status="success",
-                message="训练成功"
+                model=self.model, metrics=metrics, status="success", message="训练成功"
             )
 
         except Exception as e:
             self.logger.error(f"❌ 训练失败: {e}")
             return TrainingResult(
-                model=None,
-                metrics=TrainingMetrics(),
-                status="failed",
-                message=str(e)
+                model=None, metrics=TrainingMetrics(), status="failed", message=str(e)
             )
 
     # === 模板方法步骤 (可被子类重写) ===
@@ -166,7 +165,7 @@ class BaseXGBoostTrainer(ABC):
         X_train: pd.DataFrame,
         y_train: pd.Series,
         X_val: Optional[pd.DataFrame],
-        y_val: Optional[pd.Series]
+        y_val: Optional[pd.Series],
     ) -> None:
         """验证训练数据"""
         if X_train.empty or y_train.empty:
@@ -200,7 +199,7 @@ class BaseXGBoostTrainer(ABC):
         X_train: pd.DataFrame,
         y_train: pd.Series,
         X_val: Optional[pd.DataFrame],
-        y_val: Optional[pd.Series]
+        y_val: Optional[pd.Series],
     ) -> Optional[list]:
         """准备验证数据"""
         if X_val is not None and y_val is not None:
@@ -208,17 +207,15 @@ class BaseXGBoostTrainer(ABC):
         return None
 
     def _execute_training(
-        self,
-        X_train: pd.DataFrame,
-        y_train: pd.Series,
-        eval_set: Optional[list]
+        self, X_train: pd.DataFrame, y_train: pd.Series, eval_set: Optional[list]
     ) -> None:
         """执行训练"""
         self.model.fit(
-            X_train, y_train,
+            X_train,
+            y_train,
             eval_set=eval_set,
             early_stopping_rounds=self.config.early_stopping_rounds,
-            verbose=self.config.verbose
+            verbose=self.config.verbose,
         )
 
     def _calculate_metrics(
@@ -226,7 +223,7 @@ class BaseXGBoostTrainer(ABC):
         X_train: pd.DataFrame,
         y_train: pd.Series,
         X_val: Optional[pd.DataFrame],
-        y_val: Optional[pd.Series]
+        y_val: Optional[pd.Series],
     ) -> TrainingMetrics:
         """计算训练指标"""
         metrics = TrainingMetrics()
@@ -243,11 +240,11 @@ class BaseXGBoostTrainer(ABC):
             # 获取验证损失
             eval_result = self.model.evals_result()
             if eval_result and len(eval_result) > 1:
-                val_loss_history = eval_result[1]['mlogloss']
+                val_loss_history = eval_result[1]["mlogloss"]
                 metrics.val_loss = val_loss_history[-1] if val_loss_history else 0.0
 
         # 特征重要性
-        if hasattr(self.model, 'feature_importances_'):
+        if hasattr(self.model, "feature_importances_"):
             feature_names = X_train.columns.tolist()
             importance_scores = self.model.feature_importances_
             metrics.feature_importance = dict(zip(feature_names, importance_scores))
@@ -265,18 +262,17 @@ class BasicXGBoostTrainer(BaseXGBoostTrainer):
     def _prepare_training_params(self, **kwargs) -> Dict[str, Any]:
         """准备基础训练参数"""
         params = {
-            'objective': self.config.objective,
-            'num_class': self.config.num_class,
-            'eval_metric': self.config.eval_metric,
-            'random_state': self.config.random_state,
-            'n_jobs': self.config.n_jobs,
-
+            "objective": self.config.objective,
+            "num_class": self.config.num_class,
+            "eval_metric": self.config.eval_metric,
+            "random_state": self.config.random_state,
+            "n_jobs": self.config.n_jobs,
             # 默认超参数
-            'max_depth': kwargs.get('max_depth', 6),
-            'learning_rate': kwargs.get('learning_rate', 0.1),
-            'n_estimators': kwargs.get('n_estimators', 100),
-            'subsample': kwargs.get('subsample', 0.8),
-            'colsample_bytree': kwargs.get('colsample_bytree', 0.8),
+            "max_depth": kwargs.get("max_depth", 6),
+            "learning_rate": kwargs.get("learning_rate", 0.1),
+            "n_estimators": kwargs.get("n_estimators", 100),
+            "subsample": kwargs.get("subsample", 0.8),
+            "colsample_bytree": kwargs.get("colsample_bytree", 0.8),
         }
 
         return params
@@ -302,11 +298,11 @@ class HyperparameterOptimizationTrainer(BaseXGBoostTrainer):
 
         # 合并基础参数和最佳参数
         params = {
-            'objective': self.config.objective,
-            'num_class': self.config.num_class,
-            'eval_metric': self.config.eval_metric,
-            'random_state': self.config.random_state,
-            'n_jobs': self.config.n_jobs,
+            "objective": self.config.objective,
+            "num_class": self.config.num_class,
+            "eval_metric": self.config.eval_metric,
+            "random_state": self.config.random_state,
+            "n_jobs": self.config.n_jobs,
         }
         params.update(self.best_params or {})
 
@@ -316,21 +312,21 @@ class HyperparameterOptimizationTrainer(BaseXGBoostTrainer):
         self,
         X_train: Optional[pd.DataFrame] = None,
         y_train: Optional[pd.Series] = None,
-        **kwargs
+        **kwargs,
     ) -> None:
         """执行超参数优化"""
         self.logger.info("🔍 开始超参数优化...")
 
         # 定义搜索空间
         param_grid = {
-            'max_depth': [3, 4, 5, 6, 7, 8],
-            'learning_rate': [0.01, 0.05, 0.1, 0.15, 0.2],
-            'n_estimators': [50, 100, 200, 300],
-            'subsample': [0.6, 0.7, 0.8, 0.9, 1.0],
-            'colsample_bytree': [0.6, 0.7, 0.8, 0.9, 1.0],
-            'gamma': [0, 0.1, 0.2, 0.3, 0.4],
-            'reg_alpha': [0, 0.01, 0.1, 1.0],
-            'reg_lambda': [0.5, 1.0, 2.0, 5.0]
+            "max_depth": [3, 4, 5, 6, 7, 8],
+            "learning_rate": [0.01, 0.05, 0.1, 0.15, 0.2],
+            "n_estimators": [50, 100, 200, 300],
+            "subsample": [0.6, 0.7, 0.8, 0.9, 1.0],
+            "colsample_bytree": [0.6, 0.7, 0.8, 0.9, 1.0],
+            "gamma": [0, 0.1, 0.2, 0.3, 0.4],
+            "reg_alpha": [0, 0.01, 0.1, 1.0],
+            "reg_lambda": [0.5, 1.0, 2.0, 5.0],
         }
 
         # 使用网格搜索 (简化版)
@@ -338,17 +334,17 @@ class HyperparameterOptimizationTrainer(BaseXGBoostTrainer):
         best_params = {}
 
         # 简化的搜索策略 (实际项目中可使用更高级的优化算法)
-        for max_depth in param_grid['max_depth'][:3]:  # 限制搜索范围以提高速度
-            for learning_rate in param_grid['learning_rate'][:3]:
+        for max_depth in param_grid["max_depth"][:3]:  # 限制搜索范围以提高速度
+            for learning_rate in param_grid["learning_rate"][:3]:
                 params = {
-                    'max_depth': max_depth,
-                    'learning_rate': learning_rate,
-                    'n_estimators': 100,
-                    'subsample': 0.8,
-                    'colsample_bytree': 0.8,
-                    'gamma': 0,
-                    'reg_alpha': 0,
-                    'reg_lambda': 1
+                    "max_depth": max_depth,
+                    "learning_rate": learning_rate,
+                    "n_estimators": 100,
+                    "subsample": 0.8,
+                    "colsample_bytree": 0.8,
+                    "gamma": 0,
+                    "reg_alpha": 0,
+                    "reg_lambda": 1,
                 }
 
                 # 交叉验证评估
@@ -364,10 +360,7 @@ class HyperparameterOptimizationTrainer(BaseXGBoostTrainer):
         self.logger.info(f"✅ 超参数优化完成，最佳得分: {best_score:.4f}")
 
     def _evaluate_params_with_cv(
-        self,
-        params: Dict[str, Any],
-        X: pd.DataFrame,
-        y: pd.Series
+        self, params: Dict[str, Any], X: pd.DataFrame, y: pd.Series
     ) -> float:
         """使用交叉验证评估参数"""
         if X is None or y is None:
@@ -376,18 +369,20 @@ class HyperparameterOptimizationTrainer(BaseXGBoostTrainer):
         try:
             # 创建临时模型
             temp_params = {
-                'objective': self.config.objective,
-                'num_class': self.config.num_class,
-                'eval_metric': self.config.eval_metric,
-                'random_state': self.config.random_state,
-                'n_jobs': self.config.n_jobs,
-                **params
+                "objective": self.config.objective,
+                "num_class": self.config.num_class,
+                "eval_metric": self.config.eval_metric,
+                "random_state": self.config.random_state,
+                "n_jobs": self.config.n_jobs,
+                **params,
             }
 
             temp_model = xgb.XGBClassifier(**temp_params)
 
             # 交叉验证
-            cv = StratifiedKFold(n_splits=3, shuffle=True, random_state=self.config.random_state)
+            cv = StratifiedKFold(
+                n_splits=3, shuffle=True, random_state=self.config.random_state
+            )
             scores = []
 
             for train_idx, val_idx in cv.split(X, y):
@@ -427,23 +422,20 @@ class EnhancedXGBoostTrainer(BaseXGBoostTrainer):
     def _get_enhanced_params(self) -> Dict[str, Any]:
         """获取增强参数配置"""
         return {
-            'max_depth': 8,
-            'learning_rate': 0.05,
-            'n_estimators': 300,
-            'subsample': 0.9,
-            'colsample_bytree': 0.9,
-            'colsample_bylevel': 0.8,
-            'gamma': 0.1,
-            'reg_alpha': 0.1,
-            'reg_lambda': 1.5,
-            'min_child_weight': 3
+            "max_depth": 8,
+            "learning_rate": 0.05,
+            "n_estimators": 300,
+            "subsample": 0.9,
+            "colsample_bytree": 0.9,
+            "colsample_bylevel": 0.8,
+            "gamma": 0.1,
+            "reg_alpha": 0.1,
+            "reg_lambda": 1.5,
+            "min_child_weight": 3,
         }
 
     def _execute_training(
-        self,
-        X_train: pd.DataFrame,
-        y_train: pd.Series,
-        eval_set: Optional[list]
+        self, X_train: pd.DataFrame, y_train: pd.Series, eval_set: Optional[list]
     ) -> None:
         """执行增强训练"""
         # 特征分析
@@ -462,7 +454,7 @@ class EnhancedXGBoostTrainer(BaseXGBoostTrainer):
         feature_scores = {}
         for col in X.columns:
             # 计算特征与目标的相关性
-            if X[col].dtype in ['int64', 'float64']:
+            if X[col].dtype in ["int64", "float64"]:
                 correlation = abs(X[col].corr(y.astype(float)))
                 feature_scores[col] = correlation
 
@@ -483,8 +475,7 @@ class UnifiedXGBoostTrainingFactory:
 
     @staticmethod
     def create_trainer(
-        training_type: str = "basic",
-        config: Optional[TrainingConfig] = None
+        training_type: str = "basic", config: Optional[TrainingConfig] = None
     ) -> BaseXGBoostTrainer:
         """
         创建训练器
@@ -499,11 +490,13 @@ class UnifiedXGBoostTrainingFactory:
         trainers = {
             "basic": BasicXGBoostTrainer,
             "optimization": HyperparameterOptimizationTrainer,
-            "enhanced": EnhancedXGBoostTrainer
+            "enhanced": EnhancedXGBoostTrainer,
         }
 
         if training_type not in trainers:
-            raise ValueError(f"未知的训练类型: {training_type}，可用选项: {list(trainers.keys())}")
+            raise ValueError(
+                f"未知的训练类型: {training_type}，可用选项: {list(trainers.keys())}"
+            )
 
         return trainers[training_type](config)
 
@@ -516,7 +509,7 @@ def train_xgboost_model(
     y_val: Optional[pd.Series] = None,
     training_type: str = "basic",
     config: Optional[TrainingConfig] = None,
-    **kwargs
+    **kwargs,
 ) -> TrainingResult:
     """
     统一的XGBoost训练接口

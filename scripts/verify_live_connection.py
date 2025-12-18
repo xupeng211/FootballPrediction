@@ -40,8 +40,7 @@ from database.db_pool import DatabasePool
 
 # 设置日志
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -49,6 +48,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class ConnectionTestResult:
     """连接测试结果"""
+
     service: str
     success: bool
     response_time_ms: float
@@ -64,6 +64,7 @@ class ConnectionTestResult:
 @dataclass
 class SystemHealthReport:
     """系统健康报告"""
+
     overall_status: str
     connection_tests: List[ConnectionTestResult]
     recommendations: List[str]
@@ -77,7 +78,7 @@ class SystemHealthReport:
             "recommendations": self.recommendations,
             "deployment_ready": self.deployment_ready,
             "critical_issues": self.critical_issues,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
 
 
@@ -119,7 +120,7 @@ class LiveConnectionVerifier:
                     success=False,
                     response_time_ms=0,
                     details={},
-                    error_message=str(e)
+                    error_message=str(e),
                 )
                 self.test_results.append(error_result)
                 logger.error(f"❌ {service_name}: {str(e)}")
@@ -147,15 +148,19 @@ class LiveConnectionVerifier:
 
                 # 测试写入权限
                 test_table = "connection_test"
-                await conn.execute(f"""
+                await conn.execute(
+                    f"""
                     CREATE TABLE IF NOT EXISTS {test_table} (
                         id SERIAL PRIMARY KEY,
                         test_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                     )
-                """)
+                """
+                )
 
                 await conn.execute(f"INSERT INTO {test_table} DEFAULT VALUES")
-                await conn.execute(f"DELETE FROM {test_table} WHERE test_timestamp < NOW() - INTERVAL '1 hour'")
+                await conn.execute(
+                    f"DELETE FROM {test_table} WHERE test_timestamp < NOW() - INTERVAL '1 hour'"
+                )
 
             response_time = (time.time() - start_time) * 1000
 
@@ -166,8 +171,8 @@ class LiveConnectionVerifier:
                 details={
                     "version": result,
                     "connection_pool_size": db_pool.pool.size,
-                    "write_permissions": True
-                }
+                    "write_permissions": True,
+                },
             )
 
         except Exception as e:
@@ -177,7 +182,7 @@ class LiveConnectionVerifier:
                 success=False,
                 response_time_ms=response_time,
                 details={},
-                error_message=str(e)
+                error_message=str(e),
             )
 
     async def _test_redis_connection(self) -> ConnectionTestResult:
@@ -191,7 +196,7 @@ class LiveConnectionVerifier:
                 port=self.settings.redis.port,
                 db=self.settings.redis.db,
                 password=self.settings.redis.password or None,
-                socket_timeout=5
+                socket_timeout=5,
             )
 
             # 测试基本操作
@@ -215,8 +220,8 @@ class LiveConnectionVerifier:
                     "version": info.get("redis_version"),
                     "used_memory": info.get("used_memory_human"),
                     "connected_clients": info.get("connected_clients"),
-                    "test_data_integrity": retrieved_value.decode() == test_value
-                }
+                    "test_data_integrity": retrieved_value.decode() == test_value,
+                },
             )
 
         except Exception as e:
@@ -226,7 +231,7 @@ class LiveConnectionVerifier:
                 success=False,
                 response_time_ms=response_time,
                 details={},
-                error_message=str(e)
+                error_message=str(e),
             )
 
     async def _test_fotmob_api(self) -> ConnectionTestResult:
@@ -237,7 +242,9 @@ class LiveConnectionVerifier:
             # 准备请求头
             headers = self.settings.fotmob.get_headers()
 
-            async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=10)) as session:
+            async with aiohttp.ClientSession(
+                timeout=aiohttp.ClientTimeout(total=10)
+            ) as session:
                 # 测试基础API连接
                 url = f"{self.settings.fotmob.base_url}/leagues?id=87"  # Premier League ID
 
@@ -251,11 +258,19 @@ class LiveConnectionVerifier:
                         # 测试具体比赛详情
                         match_url = f"{self.settings.fotmob.base_url}/matchDetails?matchId={self.test_match_id}"
 
-                        async with session.get(match_url, headers=headers) as match_response:
-                            match_data = await match_response.json() if match_response.status == 200 else {}
+                        async with session.get(
+                            match_url, headers=headers
+                        ) as match_response:
+                            match_data = (
+                                await match_response.json()
+                                if match_response.status == 200
+                                else {}
+                            )
 
                     else:
-                        raise Exception(f"HTTP {response.status}: {await response.text()}")
+                        raise Exception(
+                            f"HTTP {response.status}: {await response.text()}"
+                        )
 
             response_time = (time.time() - start_time) * 1000
 
@@ -268,8 +283,10 @@ class LiveConnectionVerifier:
                     "api_status": response.status,
                     "match_data_available": len(match_data) > 0,
                     "response_headers": dict(response.headers),
-                    "rate_limit_remaining": response.headers.get("X-RateLimit-Remaining", "N/A")
-                }
+                    "rate_limit_remaining": response.headers.get(
+                        "X-RateLimit-Remaining", "N/A"
+                    ),
+                },
             )
 
         except Exception as e:
@@ -279,7 +296,7 @@ class LiveConnectionVerifier:
                 success=False,
                 response_time_ms=response_time,
                 details={},
-                error_message=str(e)
+                error_message=str(e),
             )
 
     async def _test_model_loading(self) -> ConnectionTestResult:
@@ -306,8 +323,8 @@ class LiveConnectionVerifier:
                     "model_name": model_info["name"],
                     "model_version": model_info["version"],
                     "model_path": model_info.get("path"),
-                    "file_size_bytes": model_info.get("file_size_bytes")
-                }
+                    "file_size_bytes": model_info.get("file_size_bytes"),
+                },
             )
 
         except Exception as e:
@@ -317,7 +334,7 @@ class LiveConnectionVerifier:
                 success=False,
                 response_time_ms=response_time,
                 details={},
-                error_message=str(e)
+                error_message=str(e),
             )
 
     async def _test_ml_inference(self) -> ConnectionTestResult:
@@ -335,7 +352,7 @@ class LiveConnectionVerifier:
             kelly = KellyCriterion(
                 initial_bankroll=10000,
                 kelly_strategy=KellyStrategy.FRACTIONAL_KELLY,
-                fraction_multiplier=0.1  # 0.1倍凯利
+                fraction_multiplier=0.1,  # 0.1倍凯利
             )
 
             # 测试预测
@@ -344,15 +361,26 @@ class LiveConnectionVerifier:
                 "away_team": "Arsenal",
                 "home_odds": 2.10,
                 "draw_odds": 3.40,
-                "away_odds": 3.75
+                "away_odds": 3.75,
             }
 
             prediction_result = predictor.predict_match(test_data)
-            kelly_result = kelly.generate_bet_recommendation({
-                "home": {"odds": test_data["home_odds"], "probability": prediction_result["probabilities"]["home_win"]},
-                "draw": {"odds": test_data["draw_odds"], "probability": prediction_result["probabilities"]["draw"]},
-                "away": {"odds": test_data["away_odds"], "probability": prediction_result["probabilities"]["away_win"]},
-            })
+            kelly_result = kelly.generate_bet_recommendation(
+                {
+                    "home": {
+                        "odds": test_data["home_odds"],
+                        "probability": prediction_result["probabilities"]["home_win"],
+                    },
+                    "draw": {
+                        "odds": test_data["draw_odds"],
+                        "probability": prediction_result["probabilities"]["draw"],
+                    },
+                    "away": {
+                        "odds": test_data["away_odds"],
+                        "probability": prediction_result["probabilities"]["away_win"],
+                    },
+                }
+            )
 
             response_time = (time.time() - start_time) * 1000
 
@@ -365,8 +393,10 @@ class LiveConnectionVerifier:
                     "predictions_count": len(prediction_result["probabilities"]),
                     "kelly_recommendations": len(kelly_result),
                     "safety_enabled": kelly.get_safety_status()["safety_enabled"],
-                    "model_confidence": max(prediction_result["probabilities"].values())
-                }
+                    "model_confidence": max(
+                        prediction_result["probabilities"].values()
+                    ),
+                },
             )
 
         except Exception as e:
@@ -376,7 +406,7 @@ class LiveConnectionVerifier:
                 success=False,
                 response_time_ms=response_time,
                 details={},
-                error_message=str(e)
+                error_message=str(e),
             )
 
     def _generate_health_report(self) -> SystemHealthReport:
@@ -403,19 +433,24 @@ class LiveConnectionVerifier:
             if test.service in ["database", "fotmob_api"]:
                 critical_issues.append(f"{test.service}: {test.error_message}")
             else:
-                recommendations.append(f"修复 {test.service} 连接问题: {test.error_message}")
+                recommendations.append(
+                    f"修复 {test.service} 连接问题: {test.error_message}"
+                )
 
         # 性能建议
         slow_tests = [r for r in self.test_results if r.response_time_ms > 2000]
         if slow_tests:
-            recommendations.append("以下服务响应较慢，建议优化: " + ", ".join([r.service for r in slow_tests]))
+            recommendations.append(
+                "以下服务响应较慢，建议优化: "
+                + ", ".join([r.service for r in slow_tests])
+            )
 
         return SystemHealthReport(
             overall_status=overall_status,
             connection_tests=self.test_results,
             recommendations=recommendations,
             deployment_ready=deployment_ready,
-            critical_issues=critical_issues
+            critical_issues=critical_issues,
         )
 
     async def _save_health_report(self, report: SystemHealthReport):
@@ -423,7 +458,7 @@ class LiveConnectionVerifier:
         report_file = Path("logs/live_connection_report.json")
         report_file.parent.mkdir(exist_ok=True)
 
-        with open(report_file, 'w', encoding='utf-8') as f:
+        with open(report_file, "w", encoding="utf-8") as f:
             json.dump(report.to_dict(), f, indent=2, ensure_ascii=False)
 
         logger.info(f"📄 健康报告已保存: {report_file}")
@@ -460,25 +495,27 @@ async def main():
     """主函数"""
     parser = argparse.ArgumentParser(description="Sprint 9 真实API连接验证")
 
-    subparsers = parser.add_subparsers(dest='command', help='可用命令')
+    subparsers = parser.add_subparsers(dest="command", help="可用命令")
 
     # 全面验证命令
-    all_parser = subparsers.add_parser('all', help='全面验证所有连接')
-    all_parser.add_argument('--output', '-o', help='输出报告文件路径')
+    all_parser = subparsers.add_parser("all", help="全面验证所有连接")
+    all_parser.add_argument("--output", "-o", help="输出报告文件路径")
 
     # 特定服务测试
-    service_parser = subparsers.add_parser('api', help='测试特定服务')
-    service_parser.add_argument('service', help='服务名称 (database, redis, fotmob, model, inference)')
+    service_parser = subparsers.add_parser("api", help="测试特定服务")
+    service_parser.add_argument(
+        "service", help="服务名称 (database, redis, fotmob, model, inference)"
+    )
 
     # 快速检查
-    quick_parser = subparsers.add_parser('quick', help='快速连接检查')
+    quick_parser = subparsers.add_parser("quick", help="快速连接检查")
 
     args = parser.parse_args()
 
     verifier = LiveConnectionVerifier()
 
     try:
-        if args.command == 'all':
+        if args.command == "all":
             # 全面验证
             report = await verifier.verify_all_connections()
 
@@ -488,8 +525,12 @@ async def main():
             print(f"📊 整体状态: {report.overall_status}")
             print(f"🚀 部署就绪: {'✅ 是' if report.deployment_ready else '❌ 否'}")
             print(f"📡 测试服务: {len(report.connection_tests)}")
-            print(f"✅ 成功连接: {len([t for t in report.connection_tests if t.success])}")
-            print(f"❌ 失败连接: {len([t for t in report.connection_tests if not t.success])}")
+            print(
+                f"✅ 成功连接: {len([t for t in report.connection_tests if t.success])}"
+            )
+            print(
+                f"❌ 失败连接: {len([t for t in report.connection_tests if not t.success])}"
+            )
 
             # 显示详细结果
             print(f"\n📋 连接测试详情:")
@@ -514,7 +555,7 @@ async def main():
             # 退出码
             return 0 if report.deployment_ready else 1
 
-        elif args.command == 'api':
+        elif args.command == "api":
             # 测试特定服务
             result = await verifier.test_specific_service(args.service)
             print(f"\n📡 {args.service} 连接测试:")
@@ -531,7 +572,7 @@ async def main():
 
             return 0 if result.success else 1
 
-        elif args.command == 'quick':
+        elif args.command == "quick":
             # 快速检查（只检查关键服务）
             critical_services = ["database", "redis", "fotmob"]
             all_success = True

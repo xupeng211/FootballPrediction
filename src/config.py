@@ -31,8 +31,9 @@ try:
         validate_required_environment,
         ConfigurationError,
         SecurityConfigurationError,
-        print_configuration_summary
+        print_configuration_summary,
     )
+
     _SECURE_CONFIG_AVAILABLE = True
 except ImportError as e:
     logging.error(f"Failed to import secure configuration: {e}")
@@ -40,19 +41,23 @@ except ImportError as e:
 
 # 如果安全配置不可用，定义基本异常
 if not _SECURE_CONFIG_AVAILABLE:
+
     class ConfigurationError(Exception):
         """配置相关异常"""
+
         pass
 
     class SecurityConfigurationError(ConfigurationError):
         """安全配置异常"""
+
         pass
+
 
 # 发出弃用警告
 warnings.warn(
     "src.config is deprecated. Please use src.config_secure instead.",
     DeprecationWarning,
-    stacklevel=2
+    stacklevel=2,
 )
 
 logger = logging.getLogger(__name__)
@@ -217,7 +222,7 @@ def validate_configuration() -> List[str]:
     """验证配置完整性（已弃用，使用 validate_required_environment）"""
     warnings.warn(
         "validate_configuration is deprecated. Use validate_required_environment instead.",
-        DeprecationWarning
+        DeprecationWarning,
     )
     try:
         validate_required_environment()
@@ -230,7 +235,7 @@ def print_configuration_summary() -> None:
     """打印配置摘要信息（已弃用，使用 config_secure.print_configuration_summary）"""
     warnings.warn(
         "print_configuration_summary is deprecated. Use config_secure.print_configuration_summary instead.",
-        DeprecationWarning
+        DeprecationWarning,
     )
     return print_configuration_summary()
 
@@ -253,5 +258,5 @@ __all__ = [
     "get_log_level",
     "get_service_url",
     "validate_configuration",
-    "print_configuration_summary"
+    "print_configuration_summary",
 ]

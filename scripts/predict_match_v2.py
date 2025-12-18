@@ -177,7 +177,10 @@ class MatchPredictorCLI:
         try:
             # 导入依赖注入容器和服务层
             from src.services.dependency_injection import DIContainer
-            from src.services.inference_service import InferenceService, InferenceServiceConfig
+            from src.services.inference_service import (
+                InferenceService,
+                InferenceServiceConfig,
+            )
             from src.ml.inference.model_loader import ModelLoader
             from src.ml.features.extractor import FeatureExtractor
 
@@ -191,6 +194,7 @@ class MatchPredictorCLI:
             class MockDatabaseService:
                 async def fetchrow(self, query: str, *args):
                     return None
+
                 async def fetch(self, query: str, *args):
                     return []
 
@@ -200,7 +204,7 @@ class MatchPredictorCLI:
             config = InferenceServiceConfig(
                 model_path=self.config.model_path,
                 enable_cache=self.config.cache_enabled,
-                enable_fallback=True
+                enable_fallback=True,
             )
 
             # 创建推理服务，使用依赖注入
@@ -208,7 +212,7 @@ class MatchPredictorCLI:
                 model_service=model_loader,
                 feature_extractor=feature_extractor,
                 database_service=db_service,
-                config=config
+                config=config,
             )
 
             # 初始化服务
@@ -220,15 +224,18 @@ class MatchPredictorCLI:
                 try:
                     # 直接加载pickle模型文件
                     import pickle
-                    with open(model_file_path, 'rb') as f:
+
+                    with open(model_file_path, "rb") as f:
                         model_data = pickle.load(f)
 
                     # 验证模型数据结构
-                    if 'model' in model_data and 'feature_columns' in model_data:
+                    if "model" in model_data and "feature_columns" in model_data:
                         self.model_data = model_data
                         logger.info(f"模型加载成功: {self.config.model_path}")
                         logger.info(f"模型版本: {model_data.get('version', 'unknown')}")
-                        logger.info(f"模型准确率: {model_data.get('accuracy', 'unknown')}")
+                        logger.info(
+                            f"模型准确率: {model_data.get('accuracy', 'unknown')}"
+                        )
                         logger.info(f"特征数量: {len(model_data['feature_columns'])}")
                         self.simulation_mode = False
                     else:
@@ -365,13 +372,13 @@ class MatchPredictorCLI:
 
         try:
             # 获取加载的模型数据
-            model_data = getattr(self, 'model_data', None)
+            model_data = getattr(self, "model_data", None)
             if not model_data:
                 raise ValueError("模型数据未加载")
 
-            model = model_data['model']
-            feature_columns = model_data['feature_columns']
-            label_encoder = model_data.get('label_encoder')
+            model = model_data["model"]
+            feature_columns = model_data["feature_columns"]
+            label_encoder = model_data.get("label_encoder")
 
             # 模拟特征提取（简化版本）
             # 在实际应用中，这里应该使用真实的特征提取器
@@ -404,7 +411,9 @@ class MatchPredictorCLI:
 
             # 获取预测结果标签
             outcomes = ["AWAY_WIN", "DRAW", "HOME_WIN"]
-            predicted_outcome = outcomes[predicted_class] if predicted_class < 3 else "UNKNOWN"
+            predicted_outcome = (
+                outcomes[predicted_class] if predicted_class < 3 else "UNKNOWN"
+            )
 
             # 计算置信度
             confidence = max(probabilities)
@@ -426,29 +435,35 @@ class MatchPredictorCLI:
                     "predicted_class": int(predicted_class),
                     "probabilities": [float(p) for p in probabilities],
                     "confidence": float(confidence),
-                    "model_version": model_data.get('version', 'unknown'),
+                    "model_version": model_data.get("version", "unknown"),
                     "prediction_time": datetime.now().isoformat(),
                 },
                 "processing_time_ms": processing_time_ms,
                 "cached": False,
                 "model_info": {
                     "status": "loaded",
-                    "model_version": model_data.get('version', 'unknown'),
+                    "model_version": model_data.get("version", "unknown"),
                     "feature_count": len(feature_columns),
-                    "accuracy": model_data.get('accuracy', None),
+                    "accuracy": model_data.get("accuracy", None),
                 },
             }
 
-            logger.info(f"真实模型预测完成: {predicted_outcome} (置信度: {confidence:.3f})")
+            logger.info(
+                f"真实模型预测完成: {predicted_outcome} (置信度: {confidence:.3f})"
+            )
             return result
 
         except Exception as e:
             logger.error(f"真实模型预测失败: {e}")
             logger.exception("真实模型预测错误堆栈:")
             # 如果真实预测失败，回退到模拟模式
-            return await self._simulate_prediction(match_id, home_team, away_team, match_date)
+            return await self._simulate_prediction(
+                match_id, home_team, away_team, match_date
+            )
 
-    def _extract_simple_features(self, home_team: str, away_team: str) -> Dict[str, float]:
+    def _extract_simple_features(
+        self, home_team: str, away_team: str
+    ) -> Dict[str, float]:
         """简单的特征提取（演示版本）"""
         import random
         import hashlib
@@ -465,11 +480,11 @@ class MatchPredictorCLI:
         away_xg = 0.1 + (away_hash % 100) / 100 * 2.9
 
         return {
-            'home_xg': home_xg,
-            'away_xg': away_xg,
-            'total_xg': home_xg + away_xg,
-            'xg_difference': home_xg - away_xg,
-            'xg_ratio': home_xg / (away_xg + 0.01),
+            "home_xg": home_xg,
+            "away_xg": away_xg,
+            "total_xg": home_xg + away_xg,
+            "xg_difference": home_xg - away_xg,
+            "xg_ratio": home_xg / (away_xg + 0.01),
         }
 
     async def batch_predict(
@@ -616,7 +631,9 @@ async def main():
 
     # 验证参数注入 - 增加调试信息
     logger.info(f"Container Mode Active: 参数验证开始")
-    logger.info(f"解析到的参数: home={args.home}, away={args.away}, verbose={args.verbose}")
+    logger.info(
+        f"解析到的参数: home={args.home}, away={args.away}, verbose={args.verbose}"
+    )
     logger.info(f"模型路径: {config.model_path}")
     logger.info(f"容器环境变量: MODEL_PATH={os.getenv('MODEL_PATH', 'NOT_SET')}")
 

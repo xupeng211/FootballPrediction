@@ -32,8 +32,7 @@ from config_secure import get_settings
 
 # 设置日志
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -52,7 +51,7 @@ class KellyCounterReset:
             reset_data = {
                 "timestamp": datetime.now().isoformat(),
                 "dry_run": dry_run,
-                "reset_items": []
+                "reset_items": [],
             }
 
             # 1. 重置安全验证器的日计数器
@@ -64,85 +63,104 @@ class KellyCounterReset:
                 try:
                     response = requests.post(
                         "http://localhost:8000/api/v1/kelly/reset-daily-counters",
-                        timeout=10
+                        timeout=10,
                     )
 
                     if response.status_code == 200:
                         result = response.json()
-                        reset_data["reset_items"].append({
-                            "component": "kelly_safety_validator",
-                            "action": "daily_counters_reset",
-                            "status": "success",
-                            "details": result
-                        })
+                        reset_data["reset_items"].append(
+                            {
+                                "component": "kelly_safety_validator",
+                                "action": "daily_counters_reset",
+                                "status": "success",
+                                "details": result,
+                            }
+                        )
                         logger.info("✅ Kelly安全验证器日计数器重置成功")
                     else:
-                        reset_data["reset_items"].append({
-                            "component": "kelly_safety_validator",
-                            "action": "daily_counters_reset",
-                            "status": "failed",
-                            "error": f"HTTP {response.status_code}"
-                        })
-                        logger.error(f"❌ Kelly安全验证器日计数器重置失败: HTTP {response.status_code}")
+                        reset_data["reset_items"].append(
+                            {
+                                "component": "kelly_safety_validator",
+                                "action": "daily_counters_reset",
+                                "status": "failed",
+                                "error": f"HTTP {response.status_code}",
+                            }
+                        )
+                        logger.error(
+                            f"❌ Kelly安全验证器日计数器重置失败: HTTP {response.status_code}"
+                        )
 
                 except Exception as e:
-                    reset_data["reset_items"].append({
-                        "component": "kelly_safety_validator",
-                        "action": "daily_counters_reset",
-                        "status": "error",
-                        "error": str(e)
-                    })
+                    reset_data["reset_items"].append(
+                        {
+                            "component": "kelly_safety_validator",
+                            "action": "daily_counters_reset",
+                            "status": "error",
+                            "error": str(e),
+                        }
+                    )
                     logger.error(f"❌ Kelly安全验证器日计数器重置异常: {e}")
             else:
-                reset_data["reset_items"].append({
-                    "component": "kelly_safety_validator",
-                    "action": "daily_counters_reset",
-                    "status": "dry_run",
-                    "details": "预演模式，未实际执行"
-                })
+                reset_data["reset_items"].append(
+                    {
+                        "component": "kelly_safety_validator",
+                        "action": "daily_counters_reset",
+                        "status": "dry_run",
+                        "details": "预演模式，未实际执行",
+                    }
+                )
 
             # 2. 重置统计信息
             if not dry_run:
                 # 通过API重置统计
                 try:
                     response = requests.post(
-                        "http://localhost:8000/api/v1/kelly/reset-stats",
-                        timeout=10
+                        "http://localhost:8000/api/v1/kelly/reset-stats", timeout=10
                     )
 
                     if response.status_code == 200:
                         result = response.json()
-                        reset_data["reset_items"].append({
-                            "component": "kelly_statistics",
-                            "action": "statistics_reset",
-                            "status": "success",
-                            "details": result
-                        })
+                        reset_data["reset_items"].append(
+                            {
+                                "component": "kelly_statistics",
+                                "action": "statistics_reset",
+                                "status": "success",
+                                "details": result,
+                            }
+                        )
                         logger.info("✅ Kelly统计信息重置成功")
                     else:
-                        reset_data["reset_items"].append({
-                            "component": "kelly_statistics",
-                            "action": "statistics_reset",
-                            "status": "failed",
-                            "error": f"HTTP {response.status_code}"
-                        })
-                        logger.error(f"❌ Kelly统计信息重置失败: HTTP {response.status_code}")
+                        reset_data["reset_items"].append(
+                            {
+                                "component": "kelly_statistics",
+                                "action": "statistics_reset",
+                                "status": "failed",
+                                "error": f"HTTP {response.status_code}",
+                            }
+                        )
+                        logger.error(
+                            f"❌ Kelly统计信息重置失败: HTTP {response.status_code}"
+                        )
 
                 except Exception as e:
-                    reset_data["reset_items"].append({
-                        "component": "kelly_statistics",
-                        "action": "statistics_reset",
-                        "status": "error",
-                        "error": str(e)
-                    })
+                    reset_data["reset_items"].append(
+                        {
+                            "component": "kelly_statistics",
+                            "action": "statistics_reset",
+                            "status": "error",
+                            "error": str(e),
+                        }
+                    )
                     logger.error(f"❌ Kelly统计信息重置异常: {e}")
             else:
-                reset_data["reset_items"].append({
-                    "component": "kelly_statistics",
-                    "action": "statistics_reset",
-                    "status": "dry_run",
-                    "details": "预演模式，未实际执行"
-                })
+                reset_data["reset_items"].append(
+                    {
+                        "component": "kelly_statistics",
+                        "action": "statistics_reset",
+                        "status": "dry_run",
+                        "details": "预演模式，未实际执行",
+                    }
+                )
 
             # 3. 生成重置日志
             await self._log_reset_operation(reset_data)
@@ -159,7 +177,7 @@ class KellyCounterReset:
                 "timestamp": datetime.now().isoformat(),
                 "dry_run": dry_run,
                 "error": str(e),
-                "reset_items": []
+                "reset_items": [],
             }
 
     async def _log_reset_operation(self, reset_data: Dict[str, Any]):
@@ -172,12 +190,12 @@ class KellyCounterReset:
                 "timestamp": reset_data["timestamp"],
                 "operation": "kelly_daily_counters_reset",
                 "dry_run": reset_data["dry_run"],
-                "reset_items": reset_data["reset_items"]
+                "reset_items": reset_data["reset_items"],
             }
 
             # 写入日志文件
-            with open(log_file, 'a', encoding='utf-8') as f:
-                f.write(json.dumps(log_entry, ensure_ascii=False, default=str) + '\n')
+            with open(log_file, "a", encoding="utf-8") as f:
+                f.write(json.dumps(log_entry, ensure_ascii=False, default=str) + "\n")
 
             # 记录到应用日志
             if reset_data["dry_run"]:
@@ -194,7 +212,9 @@ class KellyCounterReset:
             report_dir = Path("logs/reports")
             report_dir.mkdir(parents=True, exist_ok=True)
 
-            report_file = report_dir / f"kelly_reset_{datetime.now().strftime('%Y%m%d')}.json"
+            report_file = (
+                report_dir / f"kelly_reset_{datetime.now().strftime('%Y%m%d')}.json"
+            )
 
             # 添加完整报告信息
             full_report = {
@@ -204,12 +224,24 @@ class KellyCounterReset:
                 "reset_data": reset_data,
                 "summary": {
                     "total_reset_items": len(reset_data["reset_items"]),
-                    "successful_resets": len([item for item in reset_data["reset_items"] if item["status"] == "success"]),
-                    "failed_resets": len([item for item in reset_data["reset_items"] if item["status"] in ["failed", "error"]])
-                }
+                    "successful_resets": len(
+                        [
+                            item
+                            for item in reset_data["reset_items"]
+                            if item["status"] == "success"
+                        ]
+                    ),
+                    "failed_resets": len(
+                        [
+                            item
+                            for item in reset_data["reset_items"]
+                            if item["status"] in ["failed", "error"]
+                        ]
+                    ),
+                },
             }
 
-            with open(report_file, 'w', encoding='utf-8') as f:
+            with open(report_file, "w", encoding="utf-8") as f:
                 json.dump(full_report, f, indent=2, ensure_ascii=False, default=str)
 
             logger.info(f"📄 重置报告已保存: {report_file}")
@@ -223,8 +255,7 @@ class KellyCounterReset:
             import requests
 
             response = requests.get(
-                "http://localhost:8000/api/v1/kelly/safety-status",
-                timeout=10
+                "http://localhost:8000/api/v1/kelly/safety-status", timeout=10
             )
 
             if response.status_code == 200:
@@ -233,23 +264,27 @@ class KellyCounterReset:
                 return {
                     "current_time": datetime.now().isoformat(),
                     "daily_stake_total": safety_status.get("daily_stake_total", 0),
-                    "high_value_bets_count": safety_status.get("high_value_bets_count", 0),
+                    "high_value_bets_count": safety_status.get(
+                        "high_value_bets_count", 0
+                    ),
                     "safety_blocks_count": safety_status.get("safety_blocks_count", 0),
-                    "manual_reviews_count": safety_status.get("manual_reviews_count", 0),
+                    "manual_reviews_count": safety_status.get(
+                        "manual_reviews_count", 0
+                    ),
                     "last_reset": await self._get_last_reset_time(),
-                    "next_reset_scheduled": (datetime.now().replace(hour=0, minute=0, second=0) + timedelta(days=1)).isoformat()
+                    "next_reset_scheduled": (
+                        datetime.now().replace(hour=0, minute=0, second=0)
+                        + timedelta(days=1)
+                    ).isoformat(),
                 }
             else:
                 return {
                     "current_time": datetime.now().isoformat(),
-                    "error": f"API调用失败: HTTP {response.status_code}"
+                    "error": f"API调用失败: HTTP {response.status_code}",
                 }
 
         except Exception as e:
-            return {
-                "current_time": datetime.now().isoformat(),
-                "error": str(e)
-            }
+            return {"current_time": datetime.now().isoformat(), "error": str(e)}
 
     async def _get_last_reset_time(self) -> str:
         """获取上次重置时间"""
@@ -259,7 +294,7 @@ class KellyCounterReset:
                 return "从未重置"
 
             # 读取最后一条记录
-            with open(log_file, 'r', encoding='utf-8') as f:
+            with open(log_file, "r", encoding="utf-8") as f:
                 lines = f.readlines()
                 if lines:
                     last_line = lines[-1]
@@ -274,9 +309,9 @@ class KellyCounterReset:
 
     def print_status_summary(self, status: Dict[str, Any]):
         """打印状态摘要"""
-        print("\n" + "="*50)
+        print("\n" + "=" * 50)
         print("🔄 Kelly日计数器状态")
-        print("="*50)
+        print("=" * 50)
         print(f"当前时间: {status['current_time']}")
         print(f"日投注总额: ¥{status.get('daily_stake_total', 0):,.2f}")
         print(f"高风险投注数: {status.get('high_value_bets_count', 0)}")
@@ -290,13 +325,13 @@ class KellyCounterReset:
         if "error" in status:
             print(f"❌ 错误: {status['error']}")
 
-        print("="*50)
+        print("=" * 50)
 
     def print_reset_summary(self, reset_data: Dict[str, Any]):
         """打印重置摘要"""
-        print("\n" + "="*50)
+        print("\n" + "=" * 50)
         print(f"🔄 Kelly日计数器重置报告")
-        print("="*50)
+        print("=" * 50)
         print(f"执行时间: {reset_data['timestamp']}")
         print(f"执行模式: {'预演' if reset_data['dry_run'] else '执行'}")
         print(f"重置项数: {len(reset_data['reset_items'])}")
@@ -309,34 +344,36 @@ class KellyCounterReset:
         if "error" in reset_data:
             print(f"\n❌ 错误: {reset_data['error']}")
 
-        print("="*50)
+        print("=" * 50)
 
 
 async def main():
     """主函数"""
     parser = argparse.ArgumentParser(description="Sprint 9 Kelly日计数器重置")
-    subparsers = parser.add_subparsers(dest='command', help='可用命令')
+    subparsers = parser.add_subparsers(dest="command", help="可用命令")
 
     # 重置命令
-    reset_parser = subparsers.add_parser('reset', help='重置Kelly日计数器')
-    reset_parser.add_argument('--dry-run', action='store_true', help='预演模式，不实际执行')
+    reset_parser = subparsers.add_parser("reset", help="重置Kelly日计数器")
+    reset_parser.add_argument(
+        "--dry-run", action="store_true", help="预演模式，不实际执行"
+    )
 
     # 状态命令
-    status_parser = subparsers.add_parser('status', help='查看Kelly计数器状态')
+    status_parser = subparsers.add_parser("status", help="查看Kelly计数器状态")
 
     args = parser.parse_args()
 
     resetter = KellyCounterReset()
 
     try:
-        if args.command == 'reset':
+        if args.command == "reset":
             # 执行重置
             result = await resetter.reset_daily_counters(args.dry_run)
             resetter.print_reset_summary(result)
 
-            return 0 if not result.get('error') else 1
+            return 0 if not result.get("error") else 1
 
-        elif args.command == 'status':
+        elif args.command == "status":
             # 查看状态
             status = await resetter.get_reset_status()
             resetter.print_status_summary(status)

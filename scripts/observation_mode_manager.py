@@ -42,33 +42,36 @@ from database.db_pool import DatabasePool
 
 # 设置日志
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
 
 class ObservationMode(Enum):
     """观察模式状态"""
-    NORMAL = "normal"           # 正常模式（预测+投注）
+
+    NORMAL = "normal"  # 正常模式（预测+投注）
     OBSERVATION = "observation"  # 观察模式（仅预测，不投注）
-    SUSPENDED = "suspended"      # 暂停模式（停止预测）
-    EMERGENCY = "emergency"      # 紧急模式（完全停止）
+    SUSPENDED = "suspended"  # 暂停模式（停止预测）
+    EMERGENCY = "emergency"  # 紧急模式（完全停止）
 
 
 @dataclass
 class ObservationThreshold:
     """观察模式阈值配置"""
+
     name: str
     description: str
     threshold_value: float
     comparison_operator: str  # "gt", "lt", "eq"
-    criticality: str           # "low", "medium", "high", "critical"
+    criticality: str  # "low", "medium", "high", "critical"
     enabled: bool = True
+
 
 @dataclass
 class ObservationEvent:
     """观察模式事件"""
+
     event_id: str
     timestamp: str
     mode_before: ObservationMode
@@ -94,67 +97,67 @@ class ObservationModeManager:
                 description="Brier Score偏差超过15%",
                 threshold_value=15.0,
                 comparison_operator="gt",
-                criticality="high"
+                criticality="high",
             ),
             ObservationThreshold(
                 name="prediction_accuracy_drop",
                 description="预测准确率低于40%",
                 threshold_value=40.0,
                 comparison_operator="lt",
-                criticality="critical"
+                criticality="critical",
             ),
             ObservationThreshold(
                 name="roi_loss_threshold",
                 description="单日ROI损失超过20%",
                 threshold_value=-20.0,
                 comparison_operator="lt",
-                criticality="medium"
+                criticality="medium",
             ),
             ObservationThreshold(
                 name="kelly_safety_blocks_threshold",
                 description="Kelly安全拦截超过10次/天",
                 threshold_value=10,
                 comparison_operator="gt",
-                criticality="medium"
+                criticality="medium",
             ),
             ObservationThreshold(
                 name="api_response_time_threshold",
                 description="API响应时间超过5秒",
                 threshold_value=5000.0,
                 comparison_operator="gt",
-                criticality="low"
+                criticality="low",
             ),
             ObservationThreshold(
                 name="consecutive_failures",
                 description="连续预测失败超过5次",
                 threshold_value=5,
                 comparison_operator="gt",
-                criticality="high"
-            )
+                criticality="high",
+            ),
         ]
 
         # 回退策略配置
         self.rollback_strategies = {
             "normal": {
                 "kelly_multiplier": 0.1,  # 0.1倍凯利（低风险）
-                "max_daily_stake": 0.05,   # 日最大投注5%
-                "min_confidence": 0.65    # 最低置信度65%
+                "max_daily_stake": 0.05,  # 日最大投注5%
+                "min_confidence": 0.65,  # 最低置信度65%
             },
             "observation": {
                 "kelly_multiplier": 0.0,  # 0倍凯利（不投注）
-                "max_daily_stake": 0.0,    # 不投注
-                "min_confidence": 0.60    # 继续预测但记录
+                "max_daily_stake": 0.0,  # 不投注
+                "min_confidence": 0.60,  # 继续预测但记录
             },
             "suspended": {
                 "kelly_multiplier": 0.0,
                 "max_daily_stake": 0.0,
-                "min_confidence": 0.0
+                "min_confidence": 0.0,
             },
             "emergency": {
                 "kelly_multiplier": 0.0,
                 "max_daily_stake": 0.0,
-                "min_confidence": 0.0
-            }
+                "min_confidence": 0.0,
+            },
         }
 
     async def initialize(self):
@@ -169,7 +172,8 @@ class ObservationModeManager:
         """创建观察模式相关表"""
         async with self.db_pool.get_connection() as conn:
             # 观察模式事件表
-            await conn.execute("""
+            await conn.execute(
+                """
                 CREATE TABLE IF NOT EXISTS observation_mode_events (
                     event_id VARCHAR(36) PRIMARY KEY,
                     mode_before VARCHAR(20) NOT NULL,
@@ -182,10 +186,12 @@ class ObservationModeManager:
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
-            """)
+            """
+            )
 
             # 观察模式阈值触发记录
-            await conn.execute("""
+            await conn.execute(
+                """
                 CREATE TABLE IF NOT EXISTS observation_threshold_triggers (
                     id SERIAL PRIMARY KEY,
                     threshold_name VARCHAR(100) NOT NULL,
@@ -196,10 +202,12 @@ class ObservationModeManager:
                     action_taken VARCHAR(100),
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
-            """)
+            """
+            )
 
             # 观察模式配置表
-            await conn.execute("""
+            await conn.execute(
+                """
                 CREATE TABLE IF NOT EXISTS observation_mode_config (
                     id SERIAL PRIMARY KEY,
                     mode VARCHAR(20) NOT NULL UNIQUE,
@@ -211,10 +219,12 @@ class ObservationModeManager:
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
-            """)
+            """
+            )
 
             # 首周观察期报告表
-            await conn.execute("""
+            await conn.execute(
+                """
                 CREATE TABLE IF NOT EXISTS observation_weekly_reports (
                     id SERIAL PRIMARY KEY,
                     week_number INTEGER NOT NULL,
@@ -230,7 +240,8 @@ class ObservationModeManager:
                     recommendations TEXT,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
-            """)
+            """
+            )
 
     async def check_observation_conditions(self) -> Dict[str, Any]:
         """检查观察模式触发条件"""
@@ -266,7 +277,7 @@ class ObservationModeManager:
                         current_value, threshold_value
                     ),
                     "criticality": threshold.criticality,
-                    "triggered": triggered
+                    "triggered": triggered,
                 }
 
                 trigger_results.append(result)
@@ -282,7 +293,9 @@ class ObservationModeManager:
                     await self._record_threshold_trigger(result)
 
             # 确定需要的观察模式
-            required_mode = await self._determine_required_mode(triggered_thresholds, current_metrics)
+            required_mode = await self._determine_required_mode(
+                triggered_thresholds, current_metrics
+            )
 
             # 检查是否需要模式变更
             current_mode = await self._get_current_observation_mode()
@@ -295,7 +308,9 @@ class ObservationModeManager:
                 "triggered_thresholds": triggered_thresholds,
                 "all_thresholds": trigger_results,
                 "current_metrics": current_metrics,
-                "recommendation": self._generate_recommendation(required_mode, triggered_thresholds)
+                "recommendation": self._generate_recommendation(
+                    required_mode, triggered_thresholds
+                ),
             }
 
             if mode_change_needed:
@@ -311,7 +326,7 @@ class ObservationModeManager:
                 "required_mode": "normal",
                 "mode_change_needed": False,
                 "triggered_thresholds": [],
-                "recommendation": "检查失败，建议手动检查系统状态"
+                "recommendation": "检查失败，建议手动检查系统状态",
             }
 
     async def _collect_current_metrics(self) -> Dict[str, Any]:
@@ -321,59 +336,76 @@ class ObservationModeManager:
                 metrics = {}
 
                 # Brier Score相关
-                brier_result = await conn.fetchrow("""
+                brier_result = await conn.fetchrow(
+                    """
                     SELECT AVG(brier_score) as avg_brier_score
                     FROM prediction_quality_metrics
                     WHERE created_at >= NOW() - INTERVAL '24 hours'
                     AND brier_score IS NOT NULL
-                """)
+                """
+                )
                 metrics["brier_score"] = float(brier_result["avg_brier_score"] or 0.25)
 
                 # 预测准确率
-                accuracy_result = await conn.fetchrow("""
+                accuracy_result = await conn.fetchrow(
+                    """
                     SELECT
                         COUNT(*) as total,
                         COUNT(CASE WHEN predicted_outcome = actual_outcome THEN 1 END) as correct
                     FROM matches_realtime
                     WHERE created_at >= NOW() - INTERVAL '24 hours'
                     AND actual_outcome IS NOT NULL
-                """)
+                """
+                )
                 total = accuracy_result["total"]
                 correct = accuracy_result["correct"]
-                metrics["prediction_accuracy"] = (correct / total * 100) if total > 0 else 50.0
+                metrics["prediction_accuracy"] = (
+                    (correct / total * 100) if total > 0 else 50.0
+                )
 
                 # ROI相关
-                roi_result = await conn.fetchrow("""
+                roi_result = await conn.fetchrow(
+                    """
                     SELECT
                         COALESCE(SUM(stake_amount), 0) as total_staked,
                         COALESCE(SUM(return_amount), 0) as total_return
                     FROM matches_realtime
                     WHERE DATE(created_at) = CURRENT_DATE
                     AND stake_amount > 0
-                """)
+                """
+                )
                 staked = float(roi_result["total_staked"])
                 returned = float(roi_result["total_return"])
-                metrics["roi_daily"] = ((returned - staked) / staked * 100) if staked > 0 else 0.0
+                metrics["roi_daily"] = (
+                    ((returned - staked) / staked * 100) if staked > 0 else 0.0
+                )
 
                 # Kelly安全拦截
-                blocks_result = await conn.fetchrow("""
+                blocks_result = await conn.fetchrow(
+                    """
                     SELECT COUNT(*) as safety_blocks
                     FROM matches_realtime
                     WHERE DATE(created_at) = CURRENT_DATE
                     AND safety_block = true
-                """)
+                """
+                )
                 metrics["kelly_safety_blocks"] = blocks_result["safety_blocks"]
 
                 # API响应时间
-                api_result = await conn.fetchrow("""
+                api_result = await conn.fetchrow(
+                    """
                     SELECT AVG(response_time_ms) as avg_response_time
                     FROM api_performance_logs
                     WHERE created_at >= NOW() - INTERVAL '1 hour'
-                """)
-                metrics["api_response_time"] = float(api_result["avg_response_time"] or 1000)
+                """
+                )
+                metrics["api_response_time"] = float(
+                    api_result["avg_response_time"] or 1000
+                )
 
                 # 连续失败次数
-                failure_result = await conn.fetchrow("""
+                failure_result = await conn.fetchrow(
+                    """
                     WITH ranked_failures AS (
                         SELECT
                             created_at,
@@ -386,7 +418,8 @@ class ObservationModeManager:
                     FROM ranked_failures
                     WHERE rn <= 10 AND success = false
                     ORDER BY created_at DESC
-                """)
+                """
+                )
                 metrics["consecutive_failures"] = failure_result["consecutive_failures"]
 
                 return metrics
@@ -395,7 +428,9 @@ class ObservationModeManager:
             logger.error(f"收集当前指标失败: {e}")
             return {}
 
-    def _evaluate_threshold(self, current: float, threshold: float, operator: str) -> bool:
+    def _evaluate_threshold(
+        self, current: float, threshold: float, operator: str
+    ) -> bool:
         """评估阈值是否触发"""
         try:
             if operator == "gt":
@@ -413,7 +448,9 @@ class ObservationModeManager:
         except:
             return False
 
-    def _calculate_deviation_percentage(self, current: float, threshold: float) -> float:
+    def _calculate_deviation_percentage(
+        self, current: float, threshold: float
+    ) -> float:
         """计算偏差百分比"""
         try:
             if threshold == 0:
@@ -422,13 +459,17 @@ class ObservationModeManager:
         except:
             return 0.0
 
-    async def _determine_required_mode(self, triggered_thresholds: List[Dict], metrics: Dict[str, Any]) -> ObservationMode:
+    async def _determine_required_mode(
+        self, triggered_thresholds: List[Dict], metrics: Dict[str, Any]
+    ) -> ObservationMode:
         """确定需要的观察模式"""
         if not triggered_thresholds:
             return ObservationMode.NORMAL
 
         # 检查关键性级别
-        critical_count = sum(1 for t in triggered_thresholds if t["criticality"] == "critical")
+        critical_count = sum(
+            1 for t in triggered_thresholds if t["criticality"] == "critical"
+        )
         high_count = sum(1 for t in triggered_thresholds if t["criticality"] == "high")
 
         if critical_count > 0:
@@ -451,21 +492,29 @@ class ObservationModeManager:
         """获取当前观察模式"""
         try:
             async with self.db_pool.get_connection() as conn:
-                result = await conn.fetchrow("""
+                result = await conn.fetchrow(
+                    """
                     SELECT mode FROM observation_mode_config
                     ORDER BY updated_at DESC
                     LIMIT 1
-                """)
+                """
+                )
 
                 if result:
                     return ObservationMode(result["mode"])
                 else:
                     # 插入默认配置
-                    await conn.execute("""
+                    await conn.execute(
+                        """
                         INSERT INTO observation_mode_config
                         (mode, kelly_multiplier, max_daily_stake, min_confidence)
                         VALUES ($1, $2, $3, $4)
-                    """, "normal", 0.10, 0.05, 0.60)
+                    """,
+                        "normal",
+                        0.10,
+                        0.05,
+                        0.60,
+                    )
 
                     return ObservationMode.NORMAL
 
@@ -473,7 +522,9 @@ class ObservationModeManager:
             logger.error(f"获取当前观察模式失败: {e}")
             return ObservationMode.NORMAL
 
-    def _generate_recommendation(self, required_mode: ObservationMode, triggered_thresholds: List[Dict]) -> str:
+    def _generate_recommendation(
+        self, required_mode: ObservationMode, triggered_thresholds: List[Dict]
+    ) -> str:
         """生成建议"""
         if required_mode == ObservationMode.NORMAL:
             return "✅ 系统运行正常，无需特殊操作"
@@ -495,7 +546,12 @@ class ObservationModeManager:
 
         return "未知状态，建议手动检查"
 
-    async def _handle_mode_change(self, from_mode: ObservationMode, to_mode: ObservationMode, result: Dict[str, Any]):
+    async def _handle_mode_change(
+        self,
+        from_mode: ObservationMode,
+        to_mode: ObservationMode,
+        result: Dict[str, Any],
+    ):
         """处理模式变更"""
         event_id = str(int(time.time() * 1000))
 
@@ -505,7 +561,7 @@ class ObservationModeManager:
             mode_before=from_mode,
             mode_after=to_mode,
             trigger_reason=result["recommendation"],
-            metrics=result["current_metrics"]
+            metrics=result["current_metrics"],
         )
 
         # 记录事件
@@ -529,19 +585,20 @@ class ObservationModeManager:
         """记录观察模式事件"""
         try:
             async with self.db_pool.get_connection() as conn:
-                await conn.execute("""
+                await conn.execute(
+                    """
                     INSERT INTO observation_mode_events
                     (event_id, mode_before, mode_after, trigger_reason, metrics, created_at)
                     VALUES ($1, $2, $3, $4, $5, NOW())
                 """,
-                event.event_id,
-                event.mode_before.value,
-                event.mode_after.value,
-                event.trigger_reason,
-                json.dumps(event.metrics)
-                # created_at 使用默认值
-                # 其他字段使用默认值
-            )
+                    event.event_id,
+                    event.mode_before.value,
+                    event.mode_after.value,
+                    event.trigger_reason,
+                    json.dumps(event.metrics),
+                    # created_at 使用默认值
+                    # 其他字段使用默认值
+                )
 
         except Exception as e:
             logger.error(f"记录观察模式事件失败: {e}")
@@ -550,7 +607,8 @@ class ObservationModeManager:
         """记录阈值触发"""
         try:
             async with self.db_pool.get_connection() as conn:
-                await conn.execute("""
+                await conn.execute(
+                    """
                     INSERT INTO observation_threshold_triggers
                     (threshold_name, current_value, threshold_value, deviation_percentage, criticality, action_taken)
                     VALUES ($1, $2, $3, $4, $5, $6)
@@ -560,7 +618,7 @@ class ObservationModeManager:
                     threshold_result["threshold_value"],
                     threshold_result["deviation_percentage"],
                     threshold_result["criticality"],
-                    "threshold_triggered"
+                    "threshold_triggered",
                 )
 
         except Exception as e:
@@ -572,7 +630,8 @@ class ObservationModeManager:
             strategy = self.rollback_strategies[mode.value]
 
             async with self.db_pool.get_connection() as conn:
-                await conn.execute("""
+                await conn.execute(
+                    """
                     INSERT INTO observation_mode_config
                     (mode, kelly_multiplier, max_daily_stake, min_confidence, auto_prediction, auto_betting)
                     VALUES ($1, $2, $3, $4, $5, $6)
@@ -589,7 +648,7 @@ class ObservationModeManager:
                     strategy["max_daily_stake"],
                     strategy["min_confidence"],
                     mode != ObservationMode.SUSPENDED,  # 暂停模式下仍预测
-                    mode == ObservationMode.NORMAL       # 只有正常模式投注
+                    mode == ObservationMode.NORMAL,  # 只有正常模式投注
                 )
 
         except Exception as e:
@@ -612,9 +671,9 @@ class ObservationModeManager:
                         "mode": mode.value,
                         "kelly_multiplier": strategy["kelly_multiplier"],
                         "max_daily_stake": strategy["max_daily_stake"],
-                        "min_confidence": strategy["min_confidence"]
+                        "min_confidence": strategy["min_confidence"],
                     },
-                    timeout=10
+                    timeout=10,
                 )
 
                 if response.status_code == 200:
@@ -625,7 +684,9 @@ class ObservationModeManager:
         except Exception as e:
             logger.error(f"应用回退策略失败: {e}")
 
-    async def _send_mode_change_notification(self, event: ObservationEvent, result: Dict[str, Any]):
+    async def _send_mode_change_notification(
+        self, event: ObservationEvent, result: Dict[str, Any]
+    ):
         """发送模式变更通知"""
         try:
             # 发送邮件通知
@@ -637,18 +698,20 @@ class ObservationModeManager:
         except Exception as e:
             logger.error(f"发送通知失败: {e}")
 
-    async def _send_email_notification(self, event: ObservationEvent, result: Dict[str, Any]):
+    async def _send_email_notification(
+        self, event: ObservationEvent, result: Dict[str, Any]
+    ):
         """发送邮件通知"""
         try:
             # 这里实现邮件发送逻辑
             # 需要配置SMTP服务器
-            if not hasattr(self.settings, 'smtp') or not self.settings.smtp.host:
+            if not hasattr(self.settings, "smtp") or not self.settings.smtp.host:
                 return
 
             msg = MimeMultipart()
-            msg['From'] = self.settings.smtp.from_email
-            msg['To'] = self.settings.smtp.to_email
-            msg['Subject'] = f"🚨 观察模式变更通知: {event.mode_after.value}"
+            msg["From"] = self.settings.smtp.from_email
+            msg["To"] = self.settings.smtp.to_email
+            msg["Subject"] = f"🚨 观察模式变更通知: {event.mode_after.value}"
 
             body = f"""
 观察模式已变更：
@@ -665,13 +728,10 @@ class ObservationModeManager:
 Football Prediction System
             """
 
-            msg.attach(MimeText(body, 'plain', 'utf-8'))
+            msg.attach(MimeText(body, "plain", "utf-8"))
 
             # 发送邮件
-            server = smtplib.SMTP(
-                self.settings.smtp.host,
-                self.settings.smtp.port
-            )
+            server = smtplib.SMTP(self.settings.smtp.host, self.settings.smtp.port)
             server.starttls()
             server.login(self.settings.smtp.username, self.settings.smtp.password)
             server.send_message(msg)
@@ -682,12 +742,17 @@ Football Prediction System
         except Exception as e:
             logger.error(f"发送邮件通知失败: {e}")
 
-    async def _send_slack_notification(self, event: ObservationEvent, result: Dict[str, Any]):
+    async def _send_slack_notification(
+        self, event: ObservationEvent, result: Dict[str, Any]
+    ):
         """发送Slack通知"""
         try:
             # 这里实现Slack Webhook通知
             # 需要配置Slack Webhook URL
-            if not hasattr(self.settings, 'slack') or not self.settings.slack.webhook_url:
+            if (
+                not hasattr(self.settings, "slack")
+                or not self.settings.slack.webhook_url
+            ):
                 return
 
             import requests
@@ -696,32 +761,35 @@ Football Prediction System
                 "text": f"🚨 观察模式变更: {event.mode_after.value}",
                 "attachments": [
                     {
-                        "color": "danger" if event.mode_after in [ObservationMode.SUSPENDED, ObservationMode.EMERGENCY] else "warning",
+                        "color": (
+                            "danger"
+                            if event.mode_after
+                            in [ObservationMode.SUSPENDED, ObservationMode.EMERGENCY]
+                            else "warning"
+                        ),
                         "fields": [
                             {
                                 "title": "模式变更",
                                 "value": f"{event.mode_before.value} → {event.mode_after.value}",
-                                "short": True
+                                "short": True,
                             },
                             {
                                 "title": "触发时间",
                                 "value": event.timestamp,
-                                "short": True
+                                "short": True,
                             },
                             {
                                 "title": "触发原因",
                                 "value": event.trigger_reason,
-                                "short": False
-                            }
-                        ]
+                                "short": False,
+                            },
+                        ],
                     }
-                ]
+                ],
             }
 
             response = requests.post(
-                self.settings.slack.webhook_url,
-                json=payload,
-                timeout=10
+                self.settings.slack.webhook_url, json=payload, timeout=10
             )
 
             if response.status_code == 200:
@@ -743,29 +811,37 @@ Football Prediction System
         try:
             async with self.db_pool.get_connection() as conn:
                 # 获取本周日期范围
-                start_date = datetime.now().date() - timedelta(days=datetime.now().weekday())
+                start_date = datetime.now().date() - timedelta(
+                    days=datetime.now().weekday()
+                )
                 end_date = start_date + timedelta(days=6)
 
                 # 收集本周数据
-                report_data = await self._collect_weekly_data(conn, week_number, start_date, end_date)
+                report_data = await self._collect_weekly_data(
+                    conn, week_number, start_date, end_date
+                )
 
                 # 进行风险评估
                 risk_assessment = await self._assess_weekly_risk(report_data, conn)
 
                 # 生成建议
-                recommendations = await self._generate_weekly_recommendations(report_data, risk_assessment)
+                recommendations = await self._generate_weekly_recommendations(
+                    report_data, risk_assessment
+                )
 
                 # 保存报告
-                await self._save_weekly_report(report_data, risk_assessment, recommendations)
+                await self._save_weekly_report(
+                    report_data, risk_assessment, recommendations
+                )
 
                 return {
                     "week_number": week_number,
-                    "start_date": start_date.strftime('%Y-%m-%d'),
-                    "end_date": end_date.strftime('%Y-%m-%d'),
+                    "start_date": start_date.strftime("%Y-%m-%d"),
+                    "end_date": end_date.strftime("%Y-%m-%d"),
                     "report_data": report_data,
                     "risk_assessment": risk_assessment,
                     "recommendations": recommendations,
-                    "generated_at": datetime.now().isoformat()
+                    "generated_at": datetime.now().isoformat(),
                 }
 
         except Exception as e:
@@ -773,55 +849,77 @@ Football Prediction System
             return {
                 "error": str(e),
                 "week_number": week_number,
-                "generated_at": datetime.now().isoformat()
+                "generated_at": datetime.now().isoformat(),
             }
 
-    async def _collect_weekly_data(self, conn, week_number: int, start_date, end_date) -> Dict[str, Any]:
+    async def _collect_weekly_data(
+        self, conn, week_number: int, start_date, end_date
+    ) -> Dict[str, Any]:
         """收集周数据"""
         # 预测统计
-        prediction_result = await conn.fetchrow("""
+        prediction_result = await conn.fetchrow(
+            """
             SELECT
                 COUNT(*) as total_predictions,
                 COUNT(CASE WHEN success = true THEN 1 END) as successful_predictions
             FROM matches_realtime
             WHERE DATE(created_at) BETWEEN $1 AND $2
-        """, start_date, end_date)
+        """,
+            start_date,
+            end_date,
+        )
 
         # Brier Score统计
-        brier_result = await conn.fetchrow("""
+        brier_result = await conn.fetchrow(
+            """
             SELECT AVG(brier_score) as avg_brier_score
             FROM prediction_quality_metrics
             WHERE created_at BETWEEN $1 AND $2::timestamp + INTERVAL '1 day'
             AND brier_score IS NOT NULL
-        """, start_date, end_date)
+        """,
+            start_date,
+            end_date,
+        )
 
         # ROI统计
-        roi_result = await conn.fetchrow("""
+        roi_result = await conn.fetchrow(
+            """
             SELECT
                 COALESCE(SUM(stake_amount), 0) as total_staked,
                 COALESCE(SUM(return_amount), 0) as total_return
             FROM matches_realtime
             WHERE DATE(created_at) BETWEEN $1 AND $2
             AND stake_amount > 0
-        """, start_date, end_date)
+        """,
+            start_date,
+            end_date,
+        )
 
         # 安全拦截统计
-        safety_result = await conn.fetchrow("""
+        safety_result = await conn.fetchrow(
+            """
             SELECT
                 COUNT(CASE WHEN safety_block = true THEN 1 END) as total_safety_blocks,
                 COUNT(CASE WHEN manual_review = true THEN 1 END) as total_manual_reviews
             FROM matches_realtime
             WHERE DATE(created_at) BETWEEN $1 AND $2
-        """, start_date, end_date)
+        """,
+            start_date,
+            end_date,
+        )
 
         # 观察模式时长统计
-        observation_result = await conn.fetchrow("""
+        observation_result = await conn.fetchrow(
+            """
             SELECT
                 SUM(EXTRACT(EPOCH FROM (updated_at - created_at)) / 60) as total_observation_minutes
             FROM observation_mode_events
             WHERE DATE(created_at) BETWEEN $1 AND $2
             AND mode_after IN ('observation', 'suspended')
-        """, start_date, end_date)
+        """,
+            start_date,
+            end_date,
+        )
 
         total_predictions = prediction_result["total_predictions"]
         successful_predictions = prediction_result["successful_predictions"]
@@ -832,14 +930,25 @@ Football Prediction System
         return {
             "total_predictions": total_predictions,
             "successful_predictions": successful_predictions,
-            "prediction_accuracy": (successful_predictions / total_predictions * 100) if total_predictions > 0 else 0,
+            "prediction_accuracy": (
+                (successful_predictions / total_predictions * 100)
+                if total_predictions > 0
+                else 0
+            ),
             "average_brier_score": float(brier_result["avg_brier_score"] or 0.25),
             "total_staked": total_staked,
             "total_return": total_return,
-            "roi_percentage": ((total_return - total_staked) / total_staked * 100) if total_staked > 0 else 0,
+            "roi_percentage": (
+                ((total_return - total_staked) / total_staked * 100)
+                if total_staked > 0
+                else 0
+            ),
             "total_safety_blocks": total_safety_blocks,
             "total_manual_reviews": safety_result["total_manual_reviews"],
-            "observation_mode_hours": float(observation_result["total_observation_minutes"] or 0) / 60
+            "observation_mode_hours": float(
+                observation_result["total_observation_minutes"] or 0
+            )
+            / 60,
         }
 
     async def _assess_weekly_risk(self, report_data: Dict[str, Any], conn) -> str:
@@ -899,7 +1008,9 @@ Football Prediction System
         else:
             return "low"
 
-    async def _generate_weekly_recommendations(self, report_data: Dict[str, Any], risk_assessment: str) -> List[str]:
+    async def _generate_weekly_recommendations(
+        self, report_data: Dict[str, Any], risk_assessment: str
+    ) -> List[str]:
         """生成周建议"""
         recommendations = []
 
@@ -934,11 +1045,17 @@ Football Prediction System
 
         return recommendations
 
-    async def _save_weekly_report(self, report_data: Dict[str, Any], risk_assessment: str, recommendations: List[str]):
+    async def _save_weekly_report(
+        self,
+        report_data: Dict[str, Any],
+        risk_assessment: str,
+        recommendations: List[str],
+    ):
         """保存周报告"""
         try:
             async with self.db_pool.get_connection() as conn:
-                await conn.execute("""
+                await conn.execute(
+                    """
                     INSERT INTO observation_weekly_reports
                     (week_number, start_date, end_date, total_predictions, successful_predictions,
                      average_brier_score, average_roi, total_safety_blocks, observation_mode_hours,
@@ -955,7 +1072,7 @@ Football Prediction System
                     report_data["total_safety_blocks"],
                     report_data["observation_mode_hours"],
                     risk_assessment,
-                    json.dumps(recommendations)
+                    json.dumps(recommendations),
                 )
 
         except Exception as e:
@@ -963,16 +1080,16 @@ Football Prediction System
 
     def print_observation_summary(self, result: Dict[str, Any]):
         """打印观察模式摘要"""
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("🔍 观察模式检查结果")
-        print("="*60)
+        print("=" * 60)
         print(f"当前模式: {result['current_mode']}")
         print(f"建议模式: {result['required_mode']}")
         print(f"模式变更: {'需要' if result['mode_change_needed'] else '无需'}")
 
-        if result['triggered_thresholds']:
+        if result["triggered_thresholds"]:
             print(f"\n⚠️ 触发的阈值 ({len(result['triggered_thresholds'])} 个):")
-            for threshold in result['triggered_thresholds']:
+            for threshold in result["triggered_thresholds"]:
                 print(f"  • {threshold['description']}")
                 print(f"    当前值: {threshold['current_value']:.2f}")
                 print(f"    阈值: {threshold['threshold_value']:.2f}")
@@ -980,30 +1097,34 @@ Football Prediction System
                 print(f"    关键性: {threshold['criticality']}")
 
         print(f"\n💡 建议: {result['recommendation']}")
-        print("="*60)
+        print("=" * 60)
 
 
 async def main():
     """主函数"""
     parser = argparse.ArgumentParser(description="Sprint 9 首周观察期预案管理")
-    subparsers = parser.add_subparsers(dest='command', help='可用命令')
+    subparsers = parser.add_subparsers(dest="command", help="可用命令")
 
     # 检查命令
-    check_parser = subparsers.add_parser('check', help='检查观察模式触发条件')
+    check_parser = subparsers.add_parser("check", help="检查观察模式触发条件")
 
     # 启用观察模式
-    enable_parser = subparsers.add_parser('enable', help='启用观察模式')
-    enable_parser.add_argument('--mode', choices=['normal', 'observation', 'suspended', 'emergency'],
-                               default='observation', help='观察模式类型')
-    enable_parser.add_argument('--reason', default='手动启用', help='启用原因')
+    enable_parser = subparsers.add_parser("enable", help="启用观察模式")
+    enable_parser.add_argument(
+        "--mode",
+        choices=["normal", "observation", "suspended", "emergency"],
+        default="observation",
+        help="观察模式类型",
+    )
+    enable_parser.add_argument("--reason", default="手动启用", help="启用原因")
 
     # 禁用观察模式
-    disable_parser = subparsers.add_parser('disable', help='恢复正常模式')
-    disable_parser.add_argument('--reason', default='手动禁用', help='禁用原因')
+    disable_parser = subparsers.add_parser("disable", help="恢复正常模式")
+    disable_parser.add_argument("--reason", default="手动禁用", help="禁用原因")
 
     # 生成周报告
-    report_parser = subparsers.add_parser('report', help='生成首周观察报告')
-    report_parser.add_argument('--week', type=int, help='指定周数')
+    report_parser = subparsers.add_parser("report", help="生成首周观察报告")
+    report_parser.add_argument("--week", type=int, help="指定周数")
 
     args = parser.parse_args()
 
@@ -1011,12 +1132,12 @@ async def main():
     await manager.initialize()
 
     try:
-        if args.command == 'check':
+        if args.command == "check":
             # 检查观察模式条件
             result = await manager.check_observation_conditions()
             manager.print_observation_summary(result)
 
-        elif args.command == 'enable':
+        elif args.command == "enable":
             # 启用观察模式
             mode = ObservationMode(args.mode)
             current_mode = await manager._get_current_observation_mode()
@@ -1027,7 +1148,7 @@ async def main():
                 mode_before=current_mode,
                 mode_after=mode,
                 trigger_reason=f"手动启用: {args.reason}",
-                metrics={}
+                metrics={},
             )
 
             await manager._record_observation_event(event)
@@ -1037,7 +1158,7 @@ async def main():
             print(f"✅ 观察模式已启用: {mode.value}")
             print(f"原因: {args.reason}")
 
-        elif args.command == 'disable':
+        elif args.command == "disable":
             # 禁用观察模式
             current_mode = await manager._get_current_observation_mode()
 
@@ -1047,7 +1168,7 @@ async def main():
                 mode_before=current_mode,
                 mode_after=ObservationMode.NORMAL,
                 trigger_reason=f"手动禁用: {args.reason}",
-                metrics={}
+                metrics={},
             )
 
             await manager._record_observation_event(event)
@@ -1057,25 +1178,31 @@ async def main():
             print(f"✅ 观察模式已禁用，恢复到: {ObservationMode.NORMAL.value}")
             print(f"原因: {args.reason}")
 
-        elif args.command == 'report':
+        elif args.command == "report":
             # 生成周报告
             result = await manager.generate_weekly_report(args.week)
 
-            if 'error' not in result:
+            if "error" not in result:
                 print(f"\n📊 第{result['week_number']}周观察报告")
-                print("="*50)
+                print("=" * 50)
                 print(f"报告期间: {result['start_date']} 至 {result['end_date']}")
                 print(f"总预测场次: {result['report_data']['total_predictions']}")
                 print(f"成功预测: {result['report_data']['successful_predictions']}")
-                print(f"预测准确率: {result['report_data']['prediction_accuracy']:.1f}%")
-                print(f"平均Brier Score: {result['report_data']['average_brier_score']:.4f}")
+                print(
+                    f"预测准确率: {result['report_data']['prediction_accuracy']:.1f}%"
+                )
+                print(
+                    f"平均Brier Score: {result['report_data']['average_brier_score']:.4f}"
+                )
                 print(f"ROI: {result['report_data']['roi_percentage']:.2f}%")
                 print(f"安全拦截: {result['report_data']['total_safety_blocks']} 次")
-                print(f"观察模式时长: {result['report_data']['observation_mode_hours']:.1f}小时")
+                print(
+                    f"观察模式时长: {result['report_data']['observation_mode_hours']:.1f}小时"
+                )
                 print(f"风险等级: {result['risk_assessment']}")
 
                 print(f"\n💡 建议:")
-                for rec in result['recommendations']:
+                for rec in result["recommendations"]:
                     print(f"  • {rec}")
             else:
                 print(f"❌ 报告生成失败: {result['error']}")

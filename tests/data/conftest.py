@@ -11,7 +11,10 @@ from pathlib import Path
 from unittest.mock import Mock, patch
 from typing import Dict, Any, Generator
 
-from tests.data.generators.test_data_generator import TestDataGenerator, create_test_data_generator
+from tests.data.generators.test_data_generator import (
+    TestDataGenerator,
+    create_test_data_generator,
+)
 
 
 # 全局测试数据生成器
@@ -75,7 +78,20 @@ def mock_model():
     model.predict_proba.return_value = [[0.2, 0.5, 0.3]]
     model.n_features_in_ = 12
     model.classes_ = [0, 1, 2]
-    model.feature_importances_ = [0.1, 0.2, 0.15, 0.05, 0.1, 0.15, 0.05, 0.05, 0.05, 0.05, 0.02, 0.03]
+    model.feature_importances_ = [
+        0.1,
+        0.2,
+        0.15,
+        0.05,
+        0.1,
+        0.15,
+        0.05,
+        0.05,
+        0.05,
+        0.05,
+        0.02,
+        0.03,
+    ]
     return model
 
 
@@ -127,7 +143,7 @@ def sample_api_request():
         "home_team": "Manchester United",
         "away_team": "Arsenal",
         "model_version": "xgboost_v2",
-        "features": [1.0, 2.0, 3.0, 1.5, 2.2, 0.8, 0.9, 1.1, 0.7, 1.3, 0.6, 1.0]
+        "features": [1.0, 2.0, 3.0, 1.5, 2.2, 0.8, 0.9, 1.1, 0.7, 1.3, 0.6, 1.0],
     }
 
 
@@ -138,18 +154,18 @@ def sample_batch_api_requests():
         {
             "home_team": "Manchester United",
             "away_team": "Arsenal",
-            "model_version": "xgboost_v2"
+            "model_version": "xgboost_v2",
         },
         {
             "home_team": "Liverpool",
             "away_team": "Chelsea",
-            "model_version": "neural_net_v1"
+            "model_version": "neural_net_v1",
         },
         {
             "home_team": "Barcelona",
             "away_team": "Real Madrid",
-            "model_version": "xgboost_v2"
-        }
+            "model_version": "xgboost_v2",
+        },
     ]
 
 
@@ -165,15 +181,11 @@ def mock_external_api_response():
                     "home_team": "Manchester United",
                     "away_team": "Arsenal",
                     "league": "Premier League",
-                    "date": "2024-01-15T20:00:00Z"
+                    "date": "2024-01-15T20:00:00Z",
                 }
             ]
         },
-        "metadata": {
-            "total": 1,
-            "page": 1,
-            "per_page": 20
-        }
+        "metadata": {"total": 1, "page": 1, "per_page": 20},
     }
 
 
@@ -195,7 +207,7 @@ def mock_env_vars(monkeypatch):
         "API_HOST": "0.0.0.0",
         "API_PORT": "8000",
         "MODEL_PATH": "/tmp/test_models",
-        "LOG_LEVEL": "INFO"
+        "LOG_LEVEL": "INFO",
     }
 
     for key, value in env_vars.items():
@@ -214,7 +226,7 @@ def test_data_files():
         "predictions": data_dir / "predictions.json",
         "models": data_dir / "models.json",
         "config": data_dir / "config.json",
-        "health_checks": data_dir / "health_checks.json"
+        "health_checks": data_dir / "health_checks.json",
     }
 
 
@@ -228,7 +240,7 @@ def performance_thresholds():
         "cache_access_time_ms": 10.0,
         "api_response_time_ms": 200.0,
         "batch_prediction_throughput": 100.0,  # predictions per second
-        "memory_usage_mb": 100.0
+        "memory_usage_mb": 100.0,
     }
 
 
@@ -242,7 +254,7 @@ def integration_test_config():
         "model_path": "/tmp/test_models",
         "cache_ttl": 300,
         "max_workers": 2,
-        "timeout": 30
+        "timeout": 30,
     }
 
 
@@ -254,50 +266,36 @@ def error_scenarios():
         "database_error": {
             "error": "Connection failed",
             "error_code": "DB_CONN_001",
-            "details": {"host": "localhost", "port": 5432}
+            "details": {"host": "localhost", "port": 5432},
         },
         "model_error": {
             "error": "Model not found",
             "error_code": "MODEL_001",
-            "details": {"model_name": "nonexistent_model.pkl"}
+            "details": {"model_name": "nonexistent_model.pkl"},
         },
         "validation_error": {
             "error": "Invalid input features",
             "error_code": "VALID_001",
-            "details": {"field": "features", "expected": "list", "received": "string"}
+            "details": {"field": "features", "expected": "list", "received": "string"},
         },
         "external_api_error": {
             "error": "Rate limit exceeded",
             "error_code": "API_429",
-            "details": {"retry_after": 60, "limit": 100}
-        }
+            "details": {"retry_after": 60, "limit": 100},
+        },
     }
 
 
 # 标记定义
 def pytest_configure(config):
     """自定义pytest标记"""
-    config.addinivalue_line(
-        "markers", "unit: 单元测试"
-    )
-    config.addinivalue_line(
-        "markers", "integration: 集成测试"
-    )
-    config.addinivalue_line(
-        "markers", "performance: 性能测试"
-    )
-    config.addinivalue_line(
-        "markers", "slow: 慢速测试（需要长时间运行）"
-    )
-    config.addinivalue_line(
-        "markers", "external: 需要外部依赖的测试"
-    )
-    config.addinivalue_line(
-        "markers", "database: 需要数据库的测试"
-    )
-    config.addinivalue_line(
-        "markers", "redis: 需要Redis的测试"
-    )
+    config.addinivalue_line("markers", "unit: 单元测试")
+    config.addinivalue_line("markers", "integration: 集成测试")
+    config.addinivalue_line("markers", "performance: 性能测试")
+    config.addinivalue_line("markers", "slow: 慢速测试（需要长时间运行）")
+    config.addinivalue_line("markers", "external: 需要外部依赖的测试")
+    config.addinivalue_line("markers", "database: 需要数据库的测试")
+    config.addinivalue_line("markers", "redis: 需要Redis的测试")
 
 
 # 测试收集钩子
