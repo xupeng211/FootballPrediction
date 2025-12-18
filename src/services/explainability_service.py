@@ -10,7 +10,8 @@ import pandas as pd
 import numpy as np
 
 from src.ml.models.xgboost_classifier import XGBoostClassifier
-from src.features.schemas import MatchFeatureSet
+
+# from src.features.schemas import MatchFeatureSet  # 暂时注释掉，模块不存在
 from src.core.exceptions import ExplainabilityError
 
 logger = logging.getLogger(__name__)

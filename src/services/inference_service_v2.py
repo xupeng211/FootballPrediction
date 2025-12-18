@@ -158,6 +158,8 @@ class InferenceServiceV2(BaseService):
 
         except Exception as e:
             self.logger.error(f"推理服务 v2.0 关闭失败: {e}")
+            # 即使关闭失败，也要标记为未初始化
+            self.is_initialized = False
 
     async def _load_model_async(self, model_name: str, model_path: str) -> bool:
         """异步加载模型"""
@@ -295,7 +297,10 @@ class InferenceServiceV2(BaseService):
     def _update_processing_stats(self, processing_time_ms: float) -> None:
         """更新处理时间统计"""
         total_requests = self.request_stats["total_requests"]
-        if total_requests == 1:
+        if total_requests <= 0:
+            # 边界条件：没有请求时设置初始值
+            self.request_stats["avg_processing_time_ms"] = processing_time_ms
+        elif total_requests == 1:
             self.request_stats["avg_processing_time_ms"] = processing_time_ms
         else:
             # 计算移动平均值

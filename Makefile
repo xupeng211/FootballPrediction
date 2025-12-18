@@ -1,5 +1,5 @@
 # 🚀 FootballPrediction 精简工作流 Makefile
-# 核心MLOps工作流 - 保留27个核心targets
+# 核心MLOps工作流 - 包含Python代码质量Claude Skills
 
 PYTHON := python3
 VENV := venv
@@ -15,6 +15,7 @@ RESET := \033[0m
 
 # ==================================================
 # 核心开发原则：简洁、高效、可维护
+# 包含Python代码质量Claude Skills自动化
 # ==================================================
 
 # -------------------------------
@@ -328,12 +329,45 @@ clean: ## 清理环境和缓存
 	@echo "$(GREEN)✅ 清理完成$(RESET)"
 
 # -------------------------------
+# 🐍 Python代码质量Claude Skills
+# -------------------------------
+.PHONY: python-quality-setup python-quality-check python-quality-fix python-quality-format python-quality-score
+
+python-quality-setup: ## 🤖 安装Python代码质量Claude Skills工具集
+	@echo "$(BLUE)>>> 安装Python代码质量工具...$(RESET)"
+	./setup-python-quality-tools.sh
+
+python-quality-check: ## 🔍 运行Python代码质量检查（Claude Skill）
+	@echo "$(BLUE)>>> 运行Python代码质量Claude Skill检查...$(RESET)"
+	./scripts/python-quality-check.sh check
+
+python-quality-format: ## 🎨 运行Python代码格式化（Claude Skill）
+	@echo "$(BLUE)>>> 运行Python代码格式化...$(RESET)"
+	./scripts/python-quality-check.sh format
+
+python-quality-fix: ## 🔧 自动修复Python代码质量问题（Claude Skill）
+	@echo "$(BLUE)>>> 自动修复Python代码质量问题...$(RESET)"
+	./scripts/python-quality-check.sh fix
+
+python-quality-score: ## 📊 显示Python代码质量分数（Claude Skill）
+	@echo "$(BLUE)>>> 显示Python代码质量分数...$(RESET)"
+	./scripts/python-quality-check.sh score
+
+# 继承原有目标
+# -------------------------------
 # 🎯 快捷方式
 # -------------------------------
 .PHONY: dev
 dev: install env-check ## 开发环境快速准备
 	@echo "$(GREEN)✅ 开发环境已准备就绪$(RESET)"
 	@echo "$(BLUE)>>> 可以开始编码了！建议运行: make status$(RESET)"
+
+# 增强的开发环境
+.PHONY: dev-full
+dev-full: install env-check python-quality-setup ## 完整开发环境准备（含Claude Skills）
+	@echo "$(GREEN)✅ 完整开发环境已准备就绪$(RESET)"
+	@echo "$(BLUE)>>> 包含Python代码质量Claude Skills！$(RESET)"
+	@echo "$(BLUE)>>> 建议运行: make python-quality-check$(RESET)"
 
 # 默认目标
 .DEFAULT_GOAL := help
