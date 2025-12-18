@@ -18,7 +18,7 @@ Phase 5 Advanced Features 核心组件之一
 import logging
 import pandas as pd
 import numpy as np
-from typing import Dict
+from typing import Dict, Any
 from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
