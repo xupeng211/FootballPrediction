@@ -34,6 +34,7 @@ from .venue_analyzer import VenueAnalyzer
 
 # 导入足球业务逻辑常量
 from ...constants import SCORING, FOOTBALL, MATH, VALIDATOR, STATISTICAL, PROBABILITY
+VALIDATION = VALIDATOR  # 创建别名以兼容现有代码
 
 logger = logging.getLogger(__name__)
 

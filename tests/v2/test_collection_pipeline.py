@@ -19,7 +19,7 @@ from src.services.collection_service import (
     FotMobCollectionTask,
     CircuitBreaker,
 )
-from src.config import get_settings
+from src.config_unified import get_settings
 
 
 class TestFotMobCollectionTask:

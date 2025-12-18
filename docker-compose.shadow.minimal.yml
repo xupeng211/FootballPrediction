@@ -1,0 +1,100 @@
+services:
+  app:
+    build:
+      context: .
+      target: runtime
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env.shadow
+    environment:
+      # 影子实战测试配置
+      - ENVIRONMENT=shadow_test
+      - TZ=UTC
+      - PYTHONPATH=/app/src
+
+      # 数据库配置
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_NAME=football_prediction_shadow
+      - DB_USER=football_user
+      - DB_PASSWORD=${DB_PASSWORD:-football_pass}
+
+      # Redis配置
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=1
+
+      # 影子测试特定配置
+      - SHADOW_MODE=true
+      - INFERENCE_SERVICE_V2_ENABLED=true
+      - COLLECTION_SERVICE_ENABLED=true
+
+      # 模型配置
+      - MODEL_PATH=/app/data/models
+      - DEFAULT_MODEL_NAME=xgboost_v2
+
+      # API配置
+      - API_HOST=0.0.0.0
+      - API_PORT=8000
+      - API_DEBUG=false
+
+    # 简化启动：直接运行bash，然后手动启动守护进程
+    entrypoint: ["/bin/bash"]
+    command: ["-c", "sleep infinity"]
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./src:/app/src:ro
+      - ./scripts:/app/scripts:rw
+      - ./logs:/app/logs
+      - ./data:/app/data
+    restart: unless-stopped
+
+    # 健康检查
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8000/health', timeout=5)"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+
+  db:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=football_prediction_shadow
+      - POSTGRES_USER=football_user
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-football_pass}
+      - TZ=UTC
+    ports:
+      - "5433:5432"
+    volumes:
+      - shadow_db_data:/var/lib/postgresql/data
+      - ./scripts/init_shadow_db.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U football_user -d football_prediction_shadow"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
+    ports:
+      - "6380:6379"
+    volumes:
+      - shadow_redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  shadow_db_data:
+  shadow_redis_data:

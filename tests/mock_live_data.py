@@ -27,7 +27,7 @@ from dataclasses import dataclass, asdict
 from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
-from src.config_secure import get_settings
+from src.config_unified import get_settings
 from src.services.collection_service import CollectionService
 from src.services.inference_service import InferenceService
 from src.ml.inference.predictor import MatchPredictor

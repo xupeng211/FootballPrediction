@@ -25,7 +25,7 @@ import psutil
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-from ..constants import FOOTBALL, SCORING, MATH, VALIDATION
+from src.constants import FOOTBALL, SCORING, MATH, VALIDATION
 
 logger = logging.getLogger(__name__)
 

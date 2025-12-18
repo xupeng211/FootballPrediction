@@ -23,21 +23,10 @@ logger = logging.getLogger(__name__)
 
 # 尝试导入数据工程优化组件
 try:
-    import sys
-    from pathlib import Path
-
-    sys.path.append(
-        str(
-            Path(__file__).parent.parent.parent
-            / ".claude"
-            / "skills"
-            / "data-engineering"
-            / "scripts"
-        )
-    )
-    from database_connection_optimizer import DatabaseConnectionOptimizer
-
-    DATA_ENGINEERING_ENABLED = True
+    # 暂时禁用，模块不存在
+    # from database_connection_optimizer import DatabaseConnectionOptimizer
+    DATA_ENGINEERING_ENABLED = False
+    DatabaseConnectionOptimizer = None
 except ImportError as e:
     logger.warning(f"数据工程组件导入失败: {e}")
     DATA_ENGINEERING_ENABLED = False

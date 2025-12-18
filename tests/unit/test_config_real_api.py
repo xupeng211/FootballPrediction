@@ -14,7 +14,7 @@ class TestDatabaseSettings:
 
     def test_database_settings_defaults(self):
         """测试数据库设置默认值"""
-        from src.config import DatabaseSettings
+        from src.config_unified import DatabaseSettings
 
         with patch.dict(os.environ, {}, clear=True):
             settings = DatabaseSettings()
@@ -28,7 +28,7 @@ class TestDatabaseSettings:
 
     def test_database_settings_from_env(self):
         """测试从环境变量加载数据库设置"""
-        from src.config import DatabaseSettings
+        from src.config_unified import DatabaseSettings
 
         env_vars = {
             "DB_HOST": "env-host",
@@ -49,7 +49,7 @@ class TestDatabaseSettings:
 
     def test_database_connection_string(self):
         """测试数据库连接字符串生成"""
-        from src.config import DatabaseSettings
+        from src.config_unified import DatabaseSettings
 
         # 测试基本连接字符串
         settings = DatabaseSettings(
@@ -66,7 +66,7 @@ class TestDatabaseSettings:
 
     def test_database_url_override(self):
         """测试数据库URL覆盖"""
-        from src.config import DatabaseSettings
+        from src.config_unified import DatabaseSettings
 
         custom_url = "postgresql://custom-user:custom-pass@custom-host:5432/custom-db"
         settings = DatabaseSettings(url=custom_url)
@@ -76,7 +76,7 @@ class TestDatabaseSettings:
 
     def test_invalid_port_validation(self):
         """测试端口验证"""
-        from src.config import DatabaseSettings
+        from src.config_unified import DatabaseSettings
 
         with pytest.raises(ValidationError):
             DatabaseSettings(port=-1)
@@ -90,7 +90,7 @@ class TestDatabasePoolSettings:
 
     def test_pool_settings_defaults(self):
         """测试连接池默认设置"""
-        from src.config import DatabasePoolSettings
+        from src.config_unified import DatabasePoolSettings
 
         with patch.dict(os.environ, {}, clear=True):
             settings = DatabasePoolSettings()
@@ -104,7 +104,7 @@ class TestDatabasePoolSettings:
 
     def test_pool_settings_from_env(self):
         """测试从环境变量加载连接池设置"""
-        from src.config import DatabasePoolSettings
+        from src.config_unified import DatabasePoolSettings
 
         env_vars = {
             "DB_POOL_MIN_SIZE": "10",
@@ -125,7 +125,7 @@ class TestDatabasePoolSettings:
 
     def test_pool_settings_validation(self):
         """测试连接池设置验证"""
-        from src.config import DatabasePoolSettings
+        from src.config_unified import DatabasePoolSettings
 
         # 测试有效值
         settings = DatabasePoolSettings(
@@ -154,7 +154,7 @@ class TestFotMobSettings:
 
     def test_fotmob_settings_defaults(self):
         """测试FotMob默认设置"""
-        from src.config import FotMobSettings
+        from src.config_unified import FotMobSettings
 
         with patch.dict(os.environ, {}, clear=True):
             settings = FotMobSettings()
@@ -165,7 +165,7 @@ class TestFotMobSettings:
 
     def test_fotmob_settings_from_env(self):
         """测试从环境变量加载FotMob设置"""
-        from src.config import FotMobSettings
+        from src.config_unified import FotMobSettings
 
         # 这里需要根据实际的环境变量名称调整
         env_vars = {
@@ -185,7 +185,7 @@ class TestAppSettings:
 
     def test_app_settings_defaults(self):
         """测试应用默认设置"""
-        from src.config import AppSettings
+        from src.config_unified import AppSettings
 
         with patch.dict(os.environ, {}, clear=True):
             settings = AppSettings()
@@ -198,7 +198,7 @@ class TestAppSettings:
 
     def test_app_settings_from_env(self):
         """测试从环境变量加载应用设置"""
-        from src.config import AppSettings
+        from src.config_unified import AppSettings
 
         env_vars = {
             "APP_NAME": "test-app",
@@ -219,7 +219,7 @@ class TestLogSettings:
 
     def test_log_settings_defaults(self):
         """测试日志默认设置"""
-        from src.config import LogSettings
+        from src.config_unified import LogSettings
 
         with patch.dict(os.environ, {}, clear=True):
             settings = LogSettings()
@@ -231,7 +231,7 @@ class TestLogSettings:
 
     def test_log_settings_from_env(self):
         """测试从环境变量加载日志设置"""
-        from src.config import LogSettings
+        from src.config_unified import LogSettings
 
         env_vars = {
             "LOG_LEVEL": "DEBUG",
@@ -251,10 +251,10 @@ class TestSettingsIntegration:
 
     def test_settings_creation(self):
         """测试完整设置创建"""
-        from src.config import Settings
+        from src.config_unified import UnifiedSettings
 
         with patch.dict(os.environ, {}, clear=True):
-            settings = Settings()
+            settings = UnifiedSettings()
 
             # 验证主要组件存在
             assert hasattr(settings, "database")
@@ -269,28 +269,28 @@ class TestSettingsIntegration:
 
     def test_settings_edge_cases(self):
         """测试设置边缘情况"""
-        from src.config import Settings
+        from src.config_unified import UnifiedSettings
 
         # 测试空环境变量
         with patch.dict(os.environ, {}, clear=True):
-            settings = Settings()
+            settings = UnifiedSettings()
             # 应该使用默认值而不出错
             assert settings is not None
 
         # 测试大量环境变量
         large_env = {f"TEST_VAR_{i}": f"value_{i}" for i in range(100)}
         with patch.dict(os.environ, large_env):
-            settings = Settings()
+            settings = UnifiedSettings()
             # 应该忽略无关的环境变量
             assert settings is not None
 
     def test_settings_memory_usage(self):
         """测试设置内存使用"""
-        from src.config import Settings
+        from src.config_unified import UnifiedSettings
         import sys
 
         with patch.dict(os.environ, {}, clear=True):
-            settings = Settings()
+            settings = UnifiedSettings()
             settings_size = sys.getsizeof(settings)
 
             # 设置对象不应该过大
@@ -298,14 +298,14 @@ class TestSettingsIntegration:
 
     def test_settings_thread_safety(self):
         """测试设置线程安全性"""
-        from src.config import Settings
+        from src.config_unified import UnifiedSettings
         import threading
 
         settings_list = []
 
         def create_settings():
             with patch.dict(os.environ, {}, clear=True):
-                settings = Settings()
+                settings = UnifiedSettings()
                 settings_list.append(settings)
 
         # 创建多个线程同时创建设置
@@ -331,7 +331,7 @@ class TestSettingsValidation:
 
     def test_invalid_environment_values(self):
         """测试无效环境值"""
-        from src.config import DatabaseSettings
+        from src.config_unified import DatabaseSettings
 
         # 测试无效的端口号
         with pytest.raises(ValidationError):
@@ -343,7 +343,7 @@ class TestSettingsValidation:
 
     def test_special_characters_in_config(self):
         """测试配置中的特殊字符"""
-        from src.config import DatabaseSettings
+        from src.config_unified import DatabaseSettings
 
         # 测试包含特殊字符的配置值
         special_chars_env = {
@@ -361,7 +361,7 @@ class TestSettingsValidation:
 
     def test_unicode_in_config(self):
         """测试配置中的Unicode字符"""
-        from src.config import DatabaseSettings
+        from src.config_unified import DatabaseSettings
 
         unicode_env = {"DB_USER": "用户名", "DB_DATABASE": "测试数据库"}
 

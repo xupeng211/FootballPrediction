@@ -74,25 +74,20 @@ WORKDIR /app
 # 从构建阶段复制虚拟环境
 COPY --from=builder /opt/venv /opt/venv
 
-# 复制应用代码 - v2.0 架构更新
+# 复制应用代码 - v2.3-production 架构更新
 COPY --chown=appuser:appuser src/ ./src/
 COPY --chown=appuser:appuser scripts/ ./scripts/
-COPY --chown=appuser:appuser docker/entrypoint_v2.sh ./entrypoint.sh
+COPY --chown=appuser:appuser docker/entrypoint_production.sh ./entrypoint.sh
 COPY --chown=appuser:appuser docker/simple_entrypoint.sh ./docker/simple_entrypoint.sh
-COPY --chown=appuser:appuser docker/healthcheck_v2.py ./healthcheck.py
 
 # 复制配置文件
-COPY alembic.ini ./
 COPY docker/.env.example ./.env.example
-
-# 复制 alembic 迁移文件 (如果存在)
-RUN mkdir -p ./src/database/migrations
-COPY src/database/migrations/ ./src/database/migrations/
 
 # 创建必要的目录并设置权限
 RUN mkdir -p /app/logs /app/data /app/tmp && \
     chown -R appuser:appuser /app && \
-    chmod +x /app/entrypoint.sh /app/healthcheck.py /app/docker/simple_entrypoint.sh
+    chmod +x /app/entrypoint.sh /app/docker/simple_entrypoint.sh && \
+    chmod +x /app/scripts/*.py
 
 # 切换到非root用户
 USER appuser

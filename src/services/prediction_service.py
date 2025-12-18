@@ -453,7 +453,7 @@ class PredictionService(ServiceLifecycle):
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
         # 处理异常结果
-        processed_results = []
+        processed_results: List[PredictionResponse] = []
         for i, result in enumerate(results):
             if isinstance(result, Exception):
                 error_response = PredictionResponse(
@@ -463,7 +463,8 @@ class PredictionService(ServiceLifecycle):
                 )
                 processed_results.append(error_response)
             else:
-                processed_results.append(result)
+                # result已经是一个PredictionResponse对象
+                processed_results.append(result)  # type: ignore
 
         return processed_results
 

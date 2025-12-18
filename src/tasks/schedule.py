@@ -8,7 +8,7 @@ import logging
 from celery import Celery
 from celery.schedules import crontab
 
-from src.config import get_settings
+from src.config_unified import get_settings
 from src.services.mlops.retraining_service import RetrainingService
 
 logger = logging.getLogger(__name__)

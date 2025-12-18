@@ -8,7 +8,7 @@ from fastapi.testclient import TestClient
 from unittest.mock import patch, Mock
 import json
 
-from src.config import get_settings
+from src.config_unified import get_settings
 from src.api.schemas import HealthCheckResponse, ServiceCheck
 
 

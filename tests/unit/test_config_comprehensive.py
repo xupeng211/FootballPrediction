@@ -16,7 +16,7 @@ class TestConfigCoreFunctionality:
 
     def test_settings_creation_minimal(self):
         """测试最小配置创建"""
-        from src.config import Settings, DatabaseConfig, APIConfig, RedisConfig
+        from src.config_unified import UnifiedSettings, DatabaseConfig, APIConfig, RedisConfig
 
         # 测试最小必需配置
         db_config = DatabaseConfig(
@@ -31,7 +31,7 @@ class TestConfigCoreFunctionality:
 
         redis_config = RedisConfig(enabled=False)
 
-        settings = Settings(database=db_config, api=api_config, redis=redis_config)
+        settings = UnifiedSettings(database=db_config, api=api_config, redis=redis_config)
 
         assert settings.database.host == "localhost"
         assert settings.database.port == 5432
@@ -40,15 +40,15 @@ class TestConfigCoreFunctionality:
 
     def test_settings_with_full_config(self):
         """测试完整配置创建"""
-        from src.config import (
-            Settings,
+        from src.config_unified import (
+            UnifiedSettings,
             DatabaseConfig,
             APIConfig,
             RedisConfig,
             FotMobConfig,
         )
 
-        settings = Settings(
+        settings = UnifiedSettings(
             environment="production",
             debug=False,
             database=DatabaseConfig(
@@ -85,7 +85,7 @@ class TestConfigCoreFunctionality:
 
     def test_config_defaults(self):
         """测试配置默认值"""
-        from src.config import get_settings
+        from src.config_unified import get_settings
 
         # 测试默认设置
         with patch.dict(os.environ, {}, clear=True):
@@ -105,7 +105,7 @@ class TestConfigEnvironmentVariables:
 
     def test_database_env_variables(self):
         """测试数据库环境变量"""
-        from src.config import get_settings
+        from src.config_unified import get_settings
 
         env_vars = {
             "DB_HOST": "env-host",
@@ -128,7 +128,7 @@ class TestConfigEnvironmentVariables:
 
     def test_api_env_variables(self):
         """测试API环境变量"""
-        from src.config import get_settings
+        from src.config_unified import get_settings
 
         env_vars = {
             "API_HOST": "api-host",
@@ -147,7 +147,7 @@ class TestConfigEnvironmentVariables:
 
     def test_redis_env_variables(self):
         """测试Redis环境变量"""
-        from src.config import get_settings
+        from src.config_unified import get_settings
 
         env_vars = {
             "REDIS_ENABLED": "false",
@@ -168,7 +168,7 @@ class TestConfigEnvironmentVariables:
 
     def test_fotmob_env_variables(self):
         """测试FotMob环境变量"""
-        from src.config import get_settings
+        from src.config_unified import get_settings
 
         env_vars = {
             "FOTMOB_ENABLED": "true",
@@ -191,7 +191,7 @@ class TestConfigValidation:
 
     def test_invalid_port_numbers(self):
         """测试无效端口号"""
-        from src.config import DatabaseConfig, APIConfig, RedisConfig
+        from src.config_unified import DatabaseConfig, APIConfig, RedisConfig
         from pydantic import ValidationError
 
         # 测试数据库无效端口
@@ -223,7 +223,7 @@ class TestConfigValidation:
 
     def test_invalid_boolean_values(self):
         """测试无效布尔值"""
-        from src.config import get_settings
+        from src.config_unified import get_settings
 
         # 测试无效的布尔值环境变量
         invalid_env = {"REDIS_ENABLED": "maybe"}  # 不是true/false
@@ -239,7 +239,7 @@ class TestConfigValidation:
 
     def test_required_fields_validation(self):
         """测试必需字段验证"""
-        from src.config import DatabaseConfig, APIConfig
+        from src.config_unified import DatabaseConfig, APIConfig
         from pydantic import ValidationError
 
         # 测试缺少必需字段
@@ -254,7 +254,7 @@ class TestConfigValidation:
 
     def test_url_validation(self):
         """测试URL验证"""
-        from src.config import FotMobConfig
+        from src.config_unified import FotMobConfig
         from pydantic import ValidationError
 
         # 测试无效URL
@@ -271,7 +271,7 @@ class TestConfigFileLoading:
 
     def test_config_from_file(self):
         """测试从文件加载配置"""
-        from src.config import load_config_from_file
+        from src.config_unified import load_config_from_file
 
         # 创建临时配置文件
         config_data = """
@@ -304,14 +304,14 @@ debug: false
 
     def test_config_file_not_found(self):
         """测试配置文件不存在"""
-        from src.config import load_config_from_file
+        from src.config_unified import load_config_from_file
 
         with pytest.raises(FileNotFoundError):
             load_config_from_file("nonexistent_config.yaml")
 
     def test_invalid_config_file(self):
         """测试无效配置文件"""
-        from src.config import load_config_from_file
+        from src.config_unified import load_config_from_file
 
         # 创建无效的YAML文件
         invalid_yaml = """
@@ -336,7 +336,7 @@ class TestConfigUtilityFunctions:
 
     def test_get_connection_string(self):
         """测试数据库连接字符串生成"""
-        from src.config import DatabaseConfig
+        from src.config_unified import DatabaseConfig
 
         # 测试基本连接字符串
         db_config = DatabaseConfig(
@@ -366,10 +366,10 @@ class TestConfigUtilityFunctions:
 
     def test_is_development_environment(self):
         """测试开发环境判断"""
-        from src.config import Settings, DatabaseConfig, APIConfig, RedisConfig
+        from src.config_unified import UnifiedSettings, DatabaseConfig, APIConfig, RedisConfig
 
         # 测试开发环境
-        dev_settings = Settings(
+        dev_settings = UnifiedSettings(
             environment="development",
             database=DatabaseConfig(
                 host="localhost", port=5432, name="test", user="test", password="test"
@@ -381,7 +381,7 @@ class TestConfigUtilityFunctions:
         assert dev_settings.is_production() == False
 
         # 测试生产环境
-        prod_settings = Settings(
+        prod_settings = UnifiedSettings(
             environment="production",
             database=DatabaseConfig(
                 host="localhost", port=5432, name="test", user="test", password="test"
@@ -394,7 +394,7 @@ class TestConfigUtilityFunctions:
 
     def test_config_merge(self):
         """测试配置合并"""
-        from src.config import merge_configs, DatabaseConfig
+        from src.config_unified import merge_configs, DatabaseConfig
 
         base_config = DatabaseConfig(
             host="base-host",
@@ -415,9 +415,9 @@ class TestConfigUtilityFunctions:
 
     def test_config_export_dict(self):
         """测试配置导出为字典"""
-        from src.config import Settings, DatabaseConfig, APIConfig, RedisConfig
+        from src.config_unified import UnifiedSettings, DatabaseConfig, APIConfig, RedisConfig
 
-        settings = Settings(
+        settings = UnifiedSettings(
             environment="test",
             database=DatabaseConfig(
                 host="localhost", port=5432, name="test", user="test", password="test"
@@ -441,7 +441,7 @@ class TestConfigEdgeCases:
 
     def test_empty_environment_variables(self):
         """测试空环境变量"""
-        from src.config import get_settings
+        from src.config_unified import get_settings
 
         # 测试空字符串环境变量
         env_vars = {
@@ -457,7 +457,7 @@ class TestConfigEdgeCases:
 
     def test_extreme_values(self):
         """测试极值配置"""
-        from src.config import DatabaseConfig
+        from src.config_unified import DatabaseConfig
 
         # 测试极值
         config = DatabaseConfig(
@@ -475,10 +475,10 @@ class TestConfigEdgeCases:
 
     def test_unicode_in_config(self):
         """测试配置中的Unicode字符"""
-        from src.config import Settings, DatabaseConfig, APIConfig, RedisConfig
+        from src.config_unified import UnifiedSettings, DatabaseConfig, APIConfig, RedisConfig
 
         # 测试Unicode字符
-        settings = Settings(
+        settings = UnifiedSettings(
             environment="test",
             database=DatabaseConfig(
                 host="localhost",
@@ -496,7 +496,7 @@ class TestConfigEdgeCases:
 
     def test_config_memory_usage(self):
         """测试配置内存使用"""
-        from src.config import get_settings
+        from src.config_unified import get_settings
         import sys
 
         # 测试配置对象大小

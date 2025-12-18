@@ -58,7 +58,7 @@ class TestHealthEndpoint:
         try:
             from src.api.health import router
             from fastapi import FastAPI
-            from src.config_secure import ConfigurationError
+            from src.config_unified import ConfigurationError
 
             # 模拟健康检查失败
             mock_health_check.side_effect = ConfigurationError(

@@ -17,7 +17,7 @@ import xgboost as xgb
 from sklearn.metrics import accuracy_score, log_loss, classification_report
 from sklearn.model_selection import train_test_split
 
-from src.config import get_settings
+from src.config_unified import get_settings
 from src.ml.data.postgres_loader import PostgreSQLDataLoader
 from src.ml.features.advanced_feature_transformer import AdvancedFeatureTransformer
 

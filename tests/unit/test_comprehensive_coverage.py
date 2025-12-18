@@ -301,9 +301,9 @@ class TestConfigComprehensive:
 
     def test_config_all_imports(self):
         """测试配置模块所有导入"""
-        from src.config import (
+        from src.config_unified import (
             get_settings,
-            Settings,
+            UnifiedSettings,
             DatabaseSettings,
             FotMobSettings,
             ApplicationSettings,
@@ -322,7 +322,7 @@ class TestConfigComprehensive:
         assert logging_settings is not None
 
         # 测试主设置类
-        settings = Settings(
+        settings = UnifiedSettings(
             database=db_settings,
             fotmob=fotmob_settings,
             app=app_settings,
@@ -332,7 +332,7 @@ class TestConfigComprehensive:
 
     def test_settings_all_properties(self):
         """测试设置所有属性"""
-        from src.config import get_settings
+        from src.config_unified import get_settings
 
         settings = get_settings()
 
@@ -360,8 +360,8 @@ class TestConfigComprehensive:
 
     def test_settings_validation(self):
         """测试设置验证"""
-        from src.config import (
-            Settings,
+        from src.config_unified import (
+            UnifiedSettings,
             DatabaseSettings,
             FotMobSettings,
             ApplicationSettings,
@@ -369,7 +369,7 @@ class TestConfigComprehensive:
         )
 
         # 测试有效的设置
-        valid_settings = Settings(
+        valid_settings = UnifiedSettings(
             database=DatabaseSettings(
                 host="localhost",
                 port=5432,

@@ -187,14 +187,14 @@ class TestConfigurationBasic:
 
     def test_config_import(self):
         """测试配置导入"""
-        from src.config import get_settings, FootballPredictionSettings
+        from src.config_unified import get_settings, FootballPredictionSettings
 
         assert get_settings is not None
         assert FootballPredictionSettings is not None
 
     def test_settings_creation(self):
         """测试设置创建"""
-        from src.config import get_settings
+        from src.config_unified import get_settings
 
         settings = get_settings()
         assert settings is not None
@@ -203,7 +203,7 @@ class TestConfigurationBasic:
 
     def test_config_environment_loading(self):
         """测试环境配置加载"""
-        from src.config import _load_environment_config
+        from src.config_unified import _load_environment_config
 
         env_config = _load_environment_config()
         assert env_config is not None
