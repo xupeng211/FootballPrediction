@@ -33,6 +33,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class LoggingConfig:
     """日志配置"""
+
     # 日志级别配置
     level: str = "INFO"
     console_level: str = "WARNING"
@@ -67,10 +68,17 @@ class LoggingConfig:
 @dataclass
 class LogStats:
     """日志统计"""
+
     total_logs: int = 0
-    logs_by_level: Dict[str, int] = field(default_factory=lambda: {
-        'DEBUG': 0, 'INFO': 0, 'WARNING': 0, 'ERROR': 0, 'CRITICAL': 0
-    })
+    logs_by_level: Dict[str, int] = field(
+        default_factory=lambda: {
+            "DEBUG": 0,
+            "INFO": 0,
+            "WARNING": 0,
+            "ERROR": 0,
+            "CRITICAL": 0,
+        }
+    )
     logs_by_hour: Dict[str, int] = field(default_factory=dict)
     total_size_bytes: int = 0
     suppressed_logs: int = 0
@@ -108,11 +116,15 @@ class IntelligentLogFilter(logging.Filter):
         """更新日志统计"""
         self.stats.total_logs += 1
         level_name = record.levelname
-        self.stats.logs_by_level[level_name] = self.stats.logs_by_level.get(level_name, 0) + 1
+        self.stats.logs_by_level[level_name] = (
+            self.stats.logs_by_level.get(level_name, 0) + 1
+        )
 
         # 小时统计
         current_hour = datetime.now().strftime("%Y-%m-%d %H")
-        self.stats.logs_by_hour[current_hour] = self.stats.logs_by_hour.get(current_hour, 0) + 1
+        self.stats.logs_by_hour[current_hour] = (
+            self.stats.logs_by_hour.get(current_hour, 0) + 1
+        )
 
         # 清理旧统计
         self._cleanup_old_stats()
@@ -126,17 +138,21 @@ class IntelligentLogFilter(logging.Filter):
         # 初始化小时计数器
         if current_hour not in self._hourly_counters:
             self._hourly_counters[current_hour] = {
-                'DEBUG': 0, 'INFO': 0, 'WARNING': 0, 'ERROR': 0, 'CRITICAL': 0
+                "DEBUG": 0,
+                "INFO": 0,
+                "WARNING": 0,
+                "ERROR": 0,
+                "CRITICAL": 0,
             }
 
         # 检查小时限制
         hourly_counts = self._hourly_counters[current_hour]
         hourly_limits = {
-            'DEBUG': self.config.max_debug_logs_per_hour,
-            'INFO': self.config.max_info_logs_per_hour,
-            'WARNING': self.config.max_warning_logs_per_hour,
-            'ERROR': 1000,  # 错误日志不限制
-            'CRITICAL': 1000  # 严重错误日志不限制
+            "DEBUG": self.config.max_debug_logs_per_hour,
+            "INFO": self.config.max_info_logs_per_hour,
+            "WARNING": self.config.max_warning_logs_per_hour,
+            "ERROR": 1000,  # 错误日志不限制
+            "CRITICAL": 1000,  # 严重错误日志不限制
         }
 
         if hourly_counts[level] >= hourly_limits.get(level, 1000):
@@ -179,7 +195,8 @@ class IntelligentLogFilter(logging.Filter):
 
         # 清理小时统计
         hours_to_remove = [
-            hour for hour in self.stats.logs_by_hour.keys()
+            hour
+            for hour in self.stats.logs_by_hour.keys()
             if datetime.strptime(hour, "%Y-%m-%d %H") < cutoff_time
         ]
         for hour in hours_to_remove:
@@ -187,7 +204,8 @@ class IntelligentLogFilter(logging.Filter):
 
         # 清理小时计数器
         hours_to_remove = [
-            hour for hour in self._hourly_counters.keys()
+            hour
+            for hour in self._hourly_counters.keys()
             if datetime.strptime(hour, "%Y-%m-%d %H") < cutoff_time
         ]
         for hour in hours_to_remove:
@@ -204,8 +222,8 @@ class CompressedRotatingFileHandler(logging.handlers.RotatingFileHandler):
             filename,
             maxBytes=config.max_file_size_mb * 1024 * 1024,
             backupCount=config.backup_count,
-            encoding='utf-8',
-            **kwargs
+            encoding="utf-8",
+            **kwargs,
         )
         self.config = config
 
@@ -222,12 +240,16 @@ class CompressedRotatingFileHandler(logging.handlers.RotatingFileHandler):
             # 压缩备份文件
             for i in range(1, self.backupCount + 1):
                 old_file = f"{self.baseFilename}.{i}"
-                if os.path.exists(old_file) and not old_file.endswith('.gz'):
+                if os.path.exists(old_file) and not old_file.endswith(".gz"):
                     compressed_file = f"{old_file}.gz"
 
                     # 读取原文件
-                    with open(old_file, 'rb') as f_in:
-                        with gzip.open(compressed_file, 'wb', compresslevel=self.config.compression_level) as f_out:
+                    with open(old_file, "rb") as f_in:
+                        with gzip.open(
+                            compressed_file,
+                            "wb",
+                            compresslevel=self.config.compression_level,
+                        ) as f_out:
                             f_out.writelines(f_in)
 
                     # 删除原文件
@@ -259,15 +281,13 @@ class AsyncMemoryEfficientHandler(logging.Handler):
         log_file = log_dir / "football_prediction.log"
 
         if self.config.enable_compression:
-            return CompressedRotatingFileHandler(
-                str(log_file), self.config
-            )
+            return CompressedRotatingFileHandler(str(log_file), self.config)
         else:
             return logging.handlers.RotatingFileHandler(
                 str(log_file),
                 maxBytes=self.config.max_file_size_mb * 1024 * 1024,
                 backupCount=self.config.backup_count,
-                encoding='utf-8'
+                encoding="utf-8",
             )
 
     def emit(self, record: logging.LogRecord) -> None:
@@ -280,8 +300,10 @@ class AsyncMemoryEfficientHandler(logging.Handler):
                 self.buffer.append(formatted_record)
 
                 # 检查是否需要刷新
-                if (len(self.buffer) >= self.buffer_size or
-                    time.time() - self.last_flush >= self.config.batch_flush_interval):
+                if (
+                    len(self.buffer) >= self.buffer_size
+                    or time.time() - self.last_flush >= self.config.batch_flush_interval
+                ):
                     self._flush_buffer()
 
         except Exception as e:
@@ -295,15 +317,17 @@ class AsyncMemoryEfficientHandler(logging.Handler):
 
         try:
             for record in self.buffer:
-                self._handler.emit(logging.LogRecord(
-                    name=self._handler.logger.name,
-                    level=self._handler.level,
-                    pathname="",
-                    lineno=0,
-                    msg=record,
-                    args=(),
-                    exc_info=None
-                ))
+                self._handler.emit(
+                    logging.LogRecord(
+                        name=self._handler.logger.name,
+                        level=self._handler.level,
+                        pathname="",
+                        lineno=0,
+                        msg=record,
+                        args=(),
+                        exc_info=None,
+                    )
+                )
 
             self.buffer.clear()
             self.last_flush = time.time()
@@ -337,19 +361,37 @@ class StructuredJSONFormatter(logging.Formatter):
             "message": record.getMessage(),
             "module": record.module,
             "function": record.funcName,
-            "line": record.lineno
+            "line": record.lineno,
         }
 
         # 添加额外信息
-        if self.include_extra and hasattr(record, '__dict__'):
+        if self.include_extra and hasattr(record, "__dict__"):
             extra_fields = {
-                key: value for key, value in record.__dict__.items()
-                if key not in {
-                    'name', 'msg', 'args', 'levelname', 'levelno', 'pathname',
-                    'filename', 'module', 'lineno', 'funcName', 'created',
-                    'msecs', 'relativeCreated', 'thread', 'threadName',
-                    'processName', 'process', 'getMessage', 'exc_info',
-                    'exc_text', 'stack_info'
+                key: value
+                for key, value in record.__dict__.items()
+                if key
+                not in {
+                    "name",
+                    "msg",
+                    "args",
+                    "levelname",
+                    "levelno",
+                    "pathname",
+                    "filename",
+                    "module",
+                    "lineno",
+                    "funcName",
+                    "created",
+                    "msecs",
+                    "relativeCreated",
+                    "thread",
+                    "threadName",
+                    "processName",
+                    "process",
+                    "getMessage",
+                    "exc_info",
+                    "exc_text",
+                    "stack_info",
                 }
             }
             log_entry.update(extra_fields)
@@ -387,7 +429,7 @@ def setup_intelligent_logging(config: Optional[LoggingConfig] = None) -> logging
     console_handler = logging.StreamHandler()
     console_handler.setLevel(getattr(logging, config.console_level.upper()))
     console_formatter = logging.Formatter(
-        '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     )
     console_handler.setFormatter(console_formatter)
     console_handler.addFilter(intelligent_filter)
@@ -401,15 +443,13 @@ def setup_intelligent_logging(config: Optional[LoggingConfig] = None) -> logging
         log_file = log_dir / "football_prediction.log"
 
         if config.enable_compression:
-            file_handler = CompressedRotatingFileHandler(
-                str(log_file), config
-            )
+            file_handler = CompressedRotatingFileHandler(str(log_file), config)
         else:
             file_handler = logging.handlers.RotatingFileHandler(
                 str(log_file),
                 maxBytes=config.max_file_size_mb * 1024 * 1024,
                 backupCount=config.backup_count,
-                encoding='utf-8'
+                encoding="utf-8",
             )
 
     file_handler.setLevel(getattr(logging, config.file_level.upper()))
@@ -422,7 +462,7 @@ def setup_intelligent_logging(config: Optional[LoggingConfig] = None) -> logging
     else:
         # 生产环境使用简洁格式
         file_formatter = logging.Formatter(
-            '%(asctime)s [%(levelname)s] %(name)s: %(message)s'
+            "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
         )
         file_handler.setFormatter(file_formatter)
 
@@ -440,27 +480,21 @@ def setup_intelligent_logging(config: Optional[LoggingConfig] = None) -> logging
 def configure_specific_loggers(config: LoggingConfig) -> None:
     """配置特定logger"""
     # 数据库日志
-    db_logger = logging.getLogger('sqlalchemy')
+    db_logger = logging.getLogger("sqlalchemy")
     if config.enable_sql_logs:
         db_logger.setLevel(logging.INFO)
     else:
         db_logger.setLevel(logging.WARNING)
 
     # 性能日志
-    perf_logger = logging.getLogger('performance')
+    perf_logger = logging.getLogger("performance")
     if config.enable_performance_logs:
         perf_logger.setLevel(logging.INFO)
     else:
         perf_logger.setLevel(logging.WARNING)
 
     # 外部库日志
-    external_loggers = [
-        'urllib3',
-        'requests',
-        'botocore',
-        'boto3',
-        'asyncio'
-    ]
+    external_loggers = ["urllib3", "requests", "botocore", "boto3", "asyncio"]
 
     for logger_name in external_loggers:
         external_logger = logging.getLogger(logger_name)
@@ -474,7 +508,7 @@ def get_logger_stats() -> LogStats:
         if isinstance(handler, (IntelligentLogFilter, AsyncMemoryEfficientHandler)):
             if isinstance(handler, IntelligentLogFilter):
                 return handler.stats
-            elif hasattr(handler, '_handler'):
+            elif hasattr(handler, "_handler"):
                 for sub_handler in handler._handler.handlers:
                     if isinstance(sub_handler, IntelligentLogFilter):
                         return sub_handler.stats
@@ -509,7 +543,7 @@ def setup_production_logging() -> logging.Logger:
         max_debug_logs_per_hour=0,  # 生产环境不输出DEBUG日志
         max_info_logs_per_hour=2000,
         enable_performance_logs=False,
-        enable_sql_logs=False
+        enable_sql_logs=False,
     )
     return setup_intelligent_logging(config)
 
@@ -526,6 +560,6 @@ def setup_development_logging() -> logging.Logger:
         backup_count=3,
         enable_intelligent_filtering=False,  # 开发环境不过滤
         enable_performance_logs=True,
-        enable_sql_logs=True
+        enable_sql_logs=True,
     )
     return setup_intelligent_logging(config)

@@ -18,12 +18,10 @@ from .football_logic import (
     ProbabilityConstants,
     StatisticalConstants,
     ValidationConstants,
-
     # 工具类
     FinancialMath,
     BusinessRuleValidator,
     PrecisionContext,
-
     # 实例
     FOOTBALL,
     SCORING,
@@ -33,7 +31,6 @@ from .football_logic import (
     VALIDATION,
     MATH,
     VALIDATOR,
-
     # 配置
     DEFAULT_H2H_STATS,
     DECIMAL_PRECISION,
@@ -54,12 +51,10 @@ __all__ = [
     "ProbabilityConstants",
     "StatisticalConstants",
     "ValidationConstants",
-
     # 工具类
     "FinancialMath",
     "BusinessRuleValidator",
     "PrecisionContext",
-
     # 实例
     "FOOTBALL",
     "SCORING",
@@ -69,10 +64,9 @@ __all__ = [
     "VALIDATION",
     "MATH",
     "VALIDATOR",
-
     # 配置
     "DEFAULT_H2H_STATS",
     "DECIMAL_PRECISION",
     "CalculationThresholds",
-    "Constants"  # 向后兼容别名
+    "Constants",  # 向后兼容别名
 ]

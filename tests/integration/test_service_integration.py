@@ -26,8 +26,15 @@ from unittest.mock import Mock, AsyncMock, patch, MagicMock
 from typing import Dict, Any, List, Optional
 
 # 导入被测试的服务
-from src.services.prediction_service import PredictionService, PredictionRequest, PredictionResponse
-from src.services.collection_service import FotMobCollectionService, FotMobCollectionTask
+from src.services.prediction_service import (
+    PredictionService,
+    PredictionRequest,
+    PredictionResponse,
+)
+from src.services.collection_service import (
+    FotMobCollectionService,
+    FotMobCollectionTask,
+)
 from src.services.inference_service import InferenceService
 
 
@@ -40,44 +47,46 @@ class TestServiceIntegration:
         service = AsyncMock(spec=InferenceService)
 
         # 模拟预测结果
-        service.predict = AsyncMock(return_value={
-            "match_id": "test_match_123",
-            "prediction": "HOME_WIN",
-            "probabilities": {
-                "home_win": 0.65,
-                "draw": 0.22,
-                "away_win": 0.13
-            },
-            "confidence": 0.78,
-            "model_version": "xgboost_v2.1",
-            "features": {
-                "home_elo": 1850.0,
-                "away_elo": 1780.0,
-                "expected_home_goals": 1.85,
-                "expected_away_goals": 1.12
-            },
-            "metadata": {
-                "processed_at": datetime.now().isoformat(),
-                "data_quality": "high"
+        service.predict = AsyncMock(
+            return_value={
+                "match_id": "test_match_123",
+                "prediction": "HOME_WIN",
+                "probabilities": {"home_win": 0.65, "draw": 0.22, "away_win": 0.13},
+                "confidence": 0.78,
+                "model_version": "xgboost_v2.1",
+                "features": {
+                    "home_elo": 1850.0,
+                    "away_elo": 1780.0,
+                    "expected_home_goals": 1.85,
+                    "expected_away_goals": 1.12,
+                },
+                "metadata": {
+                    "processed_at": datetime.now().isoformat(),
+                    "data_quality": "high",
+                },
             }
-        })
+        )
 
         # 模拟健康检查
-        service.health_check = AsyncMock(return_value={
-            "status": "healthy",
-            "model_loaded": True,
-            "last_prediction": datetime.now().isoformat()
-        })
+        service.health_check = AsyncMock(
+            return_value={
+                "status": "healthy",
+                "model_loaded": True,
+                "last_prediction": datetime.now().isoformat(),
+            }
+        )
 
         # 模拟特征获取
-        service._get_features_for_match = AsyncMock(return_value={
-            "home_elo": 1850.0,
-            "away_elo": 1780.0,
-            "recent_form_home": [3, 1, 2, 3, 1],
-            "recent_form_away": [1, 0, 2, 1, 0],
-            "h2h_home_wins": 8,
-            "h2h_away_wins": 3
-        })
+        service._get_features_for_match = AsyncMock(
+            return_value={
+                "home_elo": 1850.0,
+                "away_elo": 1780.0,
+                "recent_form_home": [3, 1, 2, 3, 1],
+                "recent_form_away": [1, 0, 2, 1, 0],
+                "h2h_home_wins": 8,
+                "h2h_away_wins": 3,
+            }
+        )
 
         return service
 
@@ -87,118 +96,124 @@ class TestServiceIntegration:
         service = Mock(spec=FotMobCollectionService)
 
         # 模拟获取即将到来的比赛
-        service.get_upcoming_matches = AsyncMock(return_value={
-            "collection_time": datetime.now().isoformat(),
-            "time_window_hours": 48,
-            "matches": [
-                {
-                    "match_id": "test_match_123",
-                    "home_team": "Manchester United",
-                    "away_team": "Arsenal",
-                    "kickoff_time": (datetime.now() + timedelta(hours=24)).isoformat(),
-                    "hours_until_kickoff": 24.0,
-                    "league": "Premier League",
-                    "venue": "Old Trafford",
-                    "status": "upcoming",
-                    "initial_odds": {
-                        "home_win": 2.10,
-                        "draw": 3.40,
-                        "away_win": 3.80,
-                        "home_win_probability": 47.6,
-                        "draw_probability": 29.4,
-                        "away_win_probability": 26.3,
-                        "bookmaker_margin": 102.3
-                    },
-                    "real_time_features": {
-                        "elo_features": {
-                            "home_elo": 1850.0,
-                            "away_elo": 1780.0,
-                            "elo_difference": 70.0,
-                            "home_elo_recent_trend": 15.2,
-                            "away_elo_recent_trend": -8.5,
-                            "head_to_head_elo_advantage": "home"
+        service.get_upcoming_matches = AsyncMock(
+            return_value={
+                "collection_time": datetime.now().isoformat(),
+                "time_window_hours": 48,
+                "matches": [
+                    {
+                        "match_id": "test_match_123",
+                        "home_team": "Manchester United",
+                        "away_team": "Arsenal",
+                        "kickoff_time": (
+                            datetime.now() + timedelta(hours=24)
+                        ).isoformat(),
+                        "hours_until_kickoff": 24.0,
+                        "league": "Premier League",
+                        "venue": "Old Trafford",
+                        "status": "upcoming",
+                        "initial_odds": {
+                            "home_win": 2.10,
+                            "draw": 3.40,
+                            "away_win": 3.80,
+                            "home_win_probability": 47.6,
+                            "draw_probability": 29.4,
+                            "away_win_probability": 26.3,
+                            "bookmaker_margin": 102.3,
                         },
-                        "poisson_features": {
-                            "expected_home_goals": 1.85,
-                            "expected_away_goals": 1.12,
-                            "total_expected_goals": 2.97,
-                            "home_win_probability": 58.2,
-                            "draw_probability": 22.1,
-                            "away_win_probability": 19.7,
-                            "both_teams_to_score_probability": 64.3,
-                            "over_2_5_goals_probability": 61.8,
-                            "most_likely_score": "2-1"
+                        "real_time_features": {
+                            "elo_features": {
+                                "home_elo": 1850.0,
+                                "away_elo": 1780.0,
+                                "elo_difference": 70.0,
+                                "home_elo_recent_trend": 15.2,
+                                "away_elo_recent_trend": -8.5,
+                                "head_to_head_elo_advantage": "home",
+                            },
+                            "poisson_features": {
+                                "expected_home_goals": 1.85,
+                                "expected_away_goals": 1.12,
+                                "total_expected_goals": 2.97,
+                                "home_win_probability": 58.2,
+                                "draw_probability": 22.1,
+                                "away_win_probability": 19.7,
+                                "both_teams_to_score_probability": 64.3,
+                                "over_2_5_goals_probability": 61.8,
+                                "most_likely_score": "2-1",
+                            },
+                            "h2h_features": {
+                                "previous_meetings_count": 45,
+                                "home_wins_last_5": 3,
+                                "away_wins_last_5": 1,
+                                "draws_last_5": 1,
+                                "home_team_h2h_advantage": 0.156,
+                                "average_goals_in_h2h": 2.8,
+                                "clean_sheets_home_last_10": 4,
+                                "clean_sheets_away_last_10": 2,
+                            },
+                            "venue_features": {
+                                "home_advantage_score": 0.124,
+                                "home_form_last_6": 12,
+                                "away_form_last_6": 8,
+                                "home_goals_scored_last_6": 9,
+                                "home_goals_conceded_last_6": 3,
+                                "away_goals_scored_last_6": 5,
+                                "away_goals_conceded_last_6": 8,
+                                "venue_importance_factor": 1.15,
+                            },
+                            "market_features": {
+                                "market_confidence": 0.73,
+                                "odds_stability_index": 0.89,
+                                "volume_weighted_home_probability": 48.2,
+                                "volume_weighted_away_probability": 25.8,
+                                "steam_signals_detected": False,
+                                "market_efficiency_score": 0.91,
+                            },
                         },
-                        "h2h_features": {
-                            "previous_meetings_count": 45,
-                            "home_wins_last_5": 3,
-                            "away_wins_last_5": 1,
-                            "draws_last_5": 1,
-                            "home_team_h2h_advantage": 0.156,
-                            "average_goals_in_h2h": 2.8,
-                            "clean_sheets_home_last_10": 4,
-                            "clean_sheets_away_last_10": 2
+                        "data_quality": {
+                            "completeness_score": 0.95,
+                            "confidence_level": "high",
+                            "last_updated": datetime.now().isoformat(),
+                            "feature_coverage": {
+                                "elo_available": True,
+                                "poisson_available": True,
+                                "h2h_available": True,
+                                "venue_available": True,
+                                "market_available": True,
+                            },
                         },
-                        "venue_features": {
-                            "home_advantage_score": 0.124,
-                            "home_form_last_6": 12,
-                            "away_form_last_6": 8,
-                            "home_goals_scored_last_6": 9,
-                            "home_goals_conceded_last_6": 3,
-                            "away_goals_scored_last_6": 5,
-                            "away_goals_conceded_last_6": 8,
-                            "venue_importance_factor": 1.15
-                        },
-                        "market_features": {
-                            "market_confidence": 0.73,
-                            "odds_stability_index": 0.89,
-                            "volume_weighted_home_probability": 48.2,
-                            "volume_weighted_away_probability": 25.8,
-                            "steam_signals_detected": False,
-                            "market_efficiency_score": 0.91
-                        }
-                    },
-                    "data_quality": {
-                        "completeness_score": 0.95,
-                        "confidence_level": "high",
-                        "last_updated": datetime.now().isoformat(),
-                        "feature_coverage": {
-                            "elo_available": True,
-                            "poisson_available": True,
-                            "h2h_available": True,
-                            "venue_available": True,
-                            "market_available": True
-                        }
                     }
-                }
-            ],
-            "summary": {
-                "total_matches": 1,
-                "matches_by_league": {"Premier League": 1},
-                "avg_elo_difference": 70.0,
-                "high_confidence_matches": 1,
-                "data_collection_status": "success",
-                "processing_time_ms": 1250.0
+                ],
+                "summary": {
+                    "total_matches": 1,
+                    "matches_by_league": {"Premier League": 1},
+                    "avg_elo_difference": 70.0,
+                    "high_confidence_matches": 1,
+                    "data_collection_status": "success",
+                    "processing_time_ms": 1250.0,
+                },
             }
-        })
+        )
 
         # 模拟服务状态
-        service.get_service_status = Mock(return_value={
-            "service_name": "FotMobCollectionService",
-            "is_running": True,
-            "total_tasks": 5,
-            "successful_tasks": 4,
-            "failed_tasks": 1,
-            "success_rate": 0.8,
-            "real_time_data_interface": {
-                "enabled": True,
-                "supported_features": [
-                    "upcoming_matches",
-                    "real_time_features",
-                    "initial_odds"
-                ]
+        service.get_service_status = Mock(
+            return_value={
+                "service_name": "FotMobCollectionService",
+                "is_running": True,
+                "total_tasks": 5,
+                "successful_tasks": 4,
+                "failed_tasks": 1,
+                "success_rate": 0.8,
+                "real_time_data_interface": {
+                    "enabled": True,
+                    "supported_features": [
+                        "upcoming_matches",
+                        "real_time_features",
+                        "initial_odds",
+                    ],
+                },
             }
-        })
+        )
 
         return service
 
@@ -221,7 +236,7 @@ class TestServiceIntegration:
             match_id="test_match_123",
             include_features=True,
             include_metadata=True,
-            include_explanation=False
+            include_explanation=False,
         )
 
         # 验证响应结构
@@ -268,13 +283,9 @@ class TestServiceIntegration:
             return {
                 "match_id": match_id,
                 "prediction": "HOME_WIN" if match_id != "match_2" else "DRAW",
-                "probabilities": {
-                    "home_win": 0.60,
-                    "draw": 0.25,
-                    "away_win": 0.15
-                },
+                "probabilities": {"home_win": 0.60, "draw": 0.25, "away_win": 0.15},
                 "confidence": 0.75,
-                "model_version": "xgboost_v2.1"
+                "model_version": "xgboost_v2.1",
             }
 
         mock_inference_service.predict.side_effect = mock_predict_side_effect
@@ -285,7 +296,7 @@ class TestServiceIntegration:
             include_features=False,
             include_metadata=True,
             include_explanation=False,
-            max_concurrent=3
+            max_concurrent=3,
         )
 
         # 验证响应
@@ -313,7 +324,9 @@ class TestServiceIntegration:
             assert "probabilities" in result
 
     @pytest.mark.asyncio
-    async def test_service_health_integration(self, prediction_service, mock_inference_service):
+    async def test_service_health_integration(
+        self, prediction_service, mock_inference_service
+    ):
         """测试服务健康检查集成"""
         response = await prediction_service.get_service_health()
 
@@ -348,7 +361,9 @@ class TestServiceIntegration:
     ):
         """测试从数据收集到预测的完整工作流程"""
         # 1. 模拟数据收集服务获取即将到来的比赛
-        upcoming_data = await mock_collection_service.get_upcoming_matches(hours_ahead=48)
+        upcoming_data = await mock_collection_service.get_upcoming_matches(
+            hours_ahead=48
+        )
         assert upcoming_data["collection_time"] is not None
         assert len(upcoming_data["matches"]) > 0
 
@@ -361,7 +376,7 @@ class TestServiceIntegration:
             match_ids=match_ids,
             include_features=True,
             include_metadata=True,
-            max_concurrent=5
+            max_concurrent=5,
         )
 
         # 4. 验证数据一致性
@@ -388,14 +403,28 @@ class TestServiceIntegration:
             # 比较Elo特征
             if "elo_features" in collection_features:
                 collection_elo = collection_features["elo_features"]
-                assert abs(prediction_features.get("home_elo", 0) - collection_elo.get("home_elo", 0)) < 50
-                assert abs(prediction_features.get("away_elo", 0) - collection_elo.get("away_elo", 0)) < 50
+                assert (
+                    abs(
+                        prediction_features.get("home_elo", 0)
+                        - collection_elo.get("home_elo", 0)
+                    )
+                    < 50
+                )
+                assert (
+                    abs(
+                        prediction_features.get("away_elo", 0)
+                        - collection_elo.get("away_elo", 0)
+                    )
+                    < 50
+                )
 
     @pytest.mark.asyncio
     async def test_real_time_features_integration(self, mock_collection_service):
         """测试实时特征提取的集成"""
         # 获取即将到来的比赛数据
-        upcoming_data = await mock_collection_service.get_upcoming_matches(hours_ahead=24)
+        upcoming_data = await mock_collection_service.get_upcoming_matches(
+            hours_ahead=24
+        )
 
         assert "matches" in upcoming_data
         matches = upcoming_data["matches"]
@@ -407,9 +436,17 @@ class TestServiceIntegration:
             real_time_features = match["real_time_features"]
 
             # 验证所有特征模块都存在
-            required_features = ["elo_features", "poisson_features", "h2h_features", "venue_features", "market_features"]
+            required_features = [
+                "elo_features",
+                "poisson_features",
+                "h2h_features",
+                "venue_features",
+                "market_features",
+            ]
             for feature_type in required_features:
-                assert feature_type in real_time_features, f"Missing {feature_type} for {match_id}"
+                assert (
+                    feature_type in real_time_features
+                ), f"Missing {feature_type} for {match_id}"
 
             # 验证特征数据的完整性
             elo_features = real_time_features["elo_features"]
@@ -435,10 +472,14 @@ class TestServiceIntegration:
             assert data_quality["confidence_level"] in ["high", "medium", "low"]
 
     @pytest.mark.asyncio
-    async def test_odds_to_prediction_integration(self, prediction_service, mock_collection_service):
+    async def test_odds_to_prediction_integration(
+        self, prediction_service, mock_collection_service
+    ):
         """测试赔率数据到预测的集成"""
         # 获取包含赔率的比赛数据
-        upcoming_data = await mock_collection_service.get_upcoming_matches(hours_ahead=48)
+        upcoming_data = await mock_collection_service.get_upcoming_matches(
+            hours_ahead=48
+        )
         matches = upcoming_data["matches"]
 
         for match in matches:
@@ -465,19 +506,20 @@ class TestServiceIntegration:
 
             # 执行预测并比较
             prediction_response = await prediction_service.predict_single_match(
-                match["match_id"],
-                include_features=True
+                match["match_id"], include_features=True
             )
 
             if prediction_response.success:
                 prediction_probs = prediction_response.data["probabilities"]
                 # 预测概率应该与市场概率有一定的相关性
-                #（这里不做严格验证，因为模型可能有自己的判断）
+                # （这里不做严格验证，因为模型可能有自己的判断）
 
     # ========== 错误处理和降级测试 ==========
 
     @pytest.mark.asyncio
-    async def test_inference_service_failure_handling(self, prediction_service, mock_inference_service):
+    async def test_inference_service_failure_handling(
+        self, prediction_service, mock_inference_service
+    ):
         """测试推理服务失败的处理"""
         # 配置推理服务抛出异常
         mock_inference_service.predict.side_effect = Exception("Model inference failed")
@@ -495,14 +537,18 @@ class TestServiceIntegration:
     async def test_collection_service_failure_handling(self, mock_collection_service):
         """测试数据收集服务失败的处理"""
         # 配置收集服务抛出异常
-        mock_collection_service.get_upcoming_matches.side_effect = Exception("Data collection failed")
+        mock_collection_service.get_upcoming_matches.side_effect = Exception(
+            "Data collection failed"
+        )
 
         # 尝试获取数据
         with pytest.raises(Exception, match="Data collection failed"):
             await mock_collection_service.get_upcoming_matches()
 
     @pytest.mark.asyncio
-    async def test_partial_batch_prediction_failure(self, prediction_service, mock_inference_service):
+    async def test_partial_batch_prediction_failure(
+        self, prediction_service, mock_inference_service
+    ):
         """测试批量预测中部分失败的处理"""
         match_ids = ["match_1", "match_2", "match_3", "match_4", "match_5"]
 
@@ -514,13 +560,15 @@ class TestServiceIntegration:
                 "match_id": match_id,
                 "prediction": "HOME_WIN",
                 "probabilities": {"home_win": 0.6, "draw": 0.25, "away_win": 0.15},
-                "confidence": 0.75
+                "confidence": 0.75,
             }
 
         mock_inference_service.predict.side_effect = mock_predict_with_failures
 
         # 执行批量预测
-        response = await prediction_service.predict_batch_matches(match_ids, max_concurrent=3)
+        response = await prediction_service.predict_batch_matches(
+            match_ids, max_concurrent=3
+        )
 
         # 验证部分成功处理
         assert response.success is True  # 批量操作本身成功
@@ -528,7 +576,7 @@ class TestServiceIntegration:
 
         assert batch_data["total_count"] == len(match_ids)
         assert batch_data["successful_count"] == 3  # match_1, match_3, match_5
-        assert batch_data["failed_count"] == 2      # match_2, match_4
+        assert batch_data["failed_count"] == 2  # match_2, match_4
         assert len(batch_data["errors"]) == 2
 
         # 验证错误记录
@@ -538,7 +586,9 @@ class TestServiceIntegration:
         assert "match_4" in error_match_ids
 
     @pytest.mark.asyncio
-    async def test_service_timeout_handling(self, prediction_service, mock_inference_service):
+    async def test_service_timeout_handling(
+        self, prediction_service, mock_inference_service
+    ):
         """测试服务超时处理"""
         import asyncio
 
@@ -563,7 +613,9 @@ class TestServiceIntegration:
     # ========== 性能和并发测试 ==========
 
     @pytest.mark.asyncio
-    async def test_concurrent_prediction_performance(self, prediction_service, mock_inference_service):
+    async def test_concurrent_prediction_performance(
+        self, prediction_service, mock_inference_service
+    ):
         """测试并发预测性能"""
         match_ids = [f"match_{i}" for i in range(20)]
 
@@ -574,7 +626,7 @@ class TestServiceIntegration:
                 "match_id": match_id,
                 "prediction": "HOME_WIN",
                 "probabilities": {"home_win": 0.6, "draw": 0.25, "away_win": 0.15},
-                "confidence": 0.75
+                "confidence": 0.75,
             }
 
         mock_inference_service.predict.side_effect = fast_predict
@@ -586,8 +638,7 @@ class TestServiceIntegration:
             start_time = time.time()
 
             response = await prediction_service.predict_batch_matches(
-                match_ids=match_ids,
-                max_concurrent=max_concurrent
+                match_ids=match_ids, max_concurrent=max_concurrent
             )
 
             end_time = time.time()
@@ -598,13 +649,19 @@ class TestServiceIntegration:
             assert response.data["successful_count"] == len(match_ids)
 
             # 验证性能提升
-            expected_max_time = (len(match_ids) / max_concurrent) * 0.02  # 20ms + buffer
+            expected_max_time = (
+                len(match_ids) / max_concurrent
+            ) * 0.02  # 20ms + buffer
             assert duration < expected_max_time + 1  # 允许1秒缓冲
 
-            print(f"Concurrent {max_concurrent}: {duration:.2f}s for {len(match_ids)} predictions")
+            print(
+                f"Concurrent {max_concurrent}: {duration:.2f}s for {len(match_ids)} predictions"
+            )
 
     @pytest.mark.asyncio
-    async def test_memory_usage_during_batch_processing(self, prediction_service, mock_inference_service):
+    async def test_memory_usage_during_batch_processing(
+        self, prediction_service, mock_inference_service
+    ):
         """测试批量处理时的内存使用"""
         import psutil
         import os
@@ -622,16 +679,16 @@ class TestServiceIntegration:
                 "prediction": "HOME_WIN",
                 "probabilities": {"home_win": 0.6, "draw": 0.25, "away_win": 0.15},
                 "confidence": 0.75,
-                "features": {f"feature_{i}": i * 0.1 for i in range(1000)}  # 1000个特征
+                "features": {
+                    f"feature_{i}": i * 0.1 for i in range(1000)
+                },  # 1000个特征
             }
 
         mock_inference_service.predict.side_effect = memory_heavy_predict
 
         # 执行批量预测
         response = await prediction_service.predict_batch_matches(
-            match_ids=match_ids,
-            include_features=True,
-            max_concurrent=10
+            match_ids=match_ids, include_features=True, max_concurrent=10
         )
 
         # 检查内存使用
@@ -651,7 +708,9 @@ class TestServiceIntegration:
     async def test_feature_consistency_across_services(self, mock_collection_service):
         """测试跨服务特征一致性"""
         # 获取即将到来的比赛数据
-        upcoming_data = await mock_collection_service.get_upcoming_matches(hours_ahead=48)
+        upcoming_data = await mock_collection_service.get_upcoming_matches(
+            hours_ahead=48
+        )
         matches = upcoming_data["matches"]
 
         for match in matches:
@@ -666,28 +725,33 @@ class TestServiceIntegration:
             # 验证泊松特征概率一致性
             poisson_features = features["poisson_features"]
             prob_sum = (
-                poisson_features["home_win_probability"] +
-                poisson_features["draw_probability"] +
-                poisson_features["away_win_probability"]
+                poisson_features["home_win_probability"]
+                + poisson_features["draw_probability"]
+                + poisson_features["away_win_probability"]
             )
             assert abs(prob_sum - 100) < 1.0  # 允许1%的误差
 
             # 验证预期进球数的合理性
-            expected_total = poisson_features["expected_home_goals"] + poisson_features["expected_away_goals"]
+            expected_total = (
+                poisson_features["expected_home_goals"]
+                + poisson_features["expected_away_goals"]
+            )
             assert 1.0 <= expected_total <= 5.0  # 合理的进球数范围
 
             # 验证历史交锋特征
             h2h_features = features["h2h_features"]
             last_5_total = (
-                h2h_features["home_wins_last_5"] +
-                h2h_features["away_wins_last_5"] +
-                h2h_features["draws_last_5"]
+                h2h_features["home_wins_last_5"]
+                + h2h_features["away_wins_last_5"]
+                + h2h_features["draws_last_5"]
             )
             assert last_5_total == 5  # 最近5场比赛总和应该是5
 
             # 验证主客场特征
             venue_features = features["venue_features"]
-            assert 0 <= venue_features["home_advantage_score"] <= 1.0  # 优势分数在0-1之间
+            assert (
+                0 <= venue_features["home_advantage_score"] <= 1.0
+            )  # 优势分数在0-1之间
 
             # 验证市场特征
             market_features = features["market_features"]
@@ -698,7 +762,9 @@ class TestServiceIntegration:
     @pytest.mark.asyncio
     async def test_data_quality_validation(self, mock_collection_service):
         """测试数据质量验证"""
-        upcoming_data = await mock_collection_service.get_upcoming_matches(hours_ahead=48)
+        upcoming_data = await mock_collection_service.get_upcoming_matches(
+            hours_ahead=48
+        )
 
         # 验证整体数据质量
         assert "summary" in upcoming_data
@@ -724,7 +790,7 @@ class TestServiceIntegration:
                 "poisson_available",
                 "h2h_available",
                 "venue_available",
-                "market_available"
+                "market_available",
             ]
 
             for feature in required_features:
@@ -745,7 +811,9 @@ class TestServiceIntegration:
         """测试端到端预测工作流程"""
         # 1. 数据收集阶段
         collection_start = time.time()
-        upcoming_data = await mock_collection_service.get_upcoming_matches(hours_ahead=48)
+        upcoming_data = await mock_collection_service.get_upcoming_matches(
+            hours_ahead=48
+        )
         collection_time = time.time() - collection_start
 
         assert upcoming_data["summary"]["data_collection_status"] == "success"
@@ -756,10 +824,13 @@ class TestServiceIntegration:
         valid_matches = []
         for match in matches:
             # 验证比赛数据的完整性
-            if (match.get("match_id") and
-                match.get("home_team") and
-                match.get("away_team") and
-                match.get("data_quality", {}).get("confidence_level") in ["high", "medium"]):
+            if (
+                match.get("match_id")
+                and match.get("home_team")
+                and match.get("away_team")
+                and match.get("data_quality", {}).get("confidence_level")
+                in ["high", "medium"]
+            ):
                 valid_matches.append(match)
 
         assert len(valid_matches) > 0, "No valid matches found for prediction"
@@ -772,7 +843,7 @@ class TestServiceIntegration:
             match_ids=match_ids,
             include_features=True,
             include_metadata=True,
-            max_concurrent=5
+            max_concurrent=5,
         )
         prediction_time = time.time() - prediction_start
 
@@ -812,7 +883,9 @@ class TestServiceIntegration:
     # ========== 服务健康和监控测试 ==========
 
     @pytest.mark.asyncio
-    async def test_service_health_monitoring(self, prediction_service, mock_inference_service):
+    async def test_service_health_monitoring(
+        self, prediction_service, mock_inference_service
+    ):
         """测试服务健康监控"""
         # 获取预测服务健康状态
         health_response = await prediction_service.get_service_health()
@@ -821,7 +894,11 @@ class TestServiceIntegration:
         health_data = health_response.data
 
         # 验证健康检查数据结构
-        required_services = ["prediction_service", "inference_service", "explainability_service"]
+        required_services = [
+            "prediction_service",
+            "inference_service",
+            "explainability_service",
+        ]
         for service in required_services:
             assert service in health_data
             assert "status" in health_data[service]
@@ -829,7 +906,7 @@ class TestServiceIntegration:
         # 模拟推理服务不健康
         mock_inference_service.health_check.return_value = {
             "status": "unhealthy",
-            "error": "Model not loaded"
+            "error": "Model not loaded",
         }
 
         # 重新检查健康状态
@@ -841,15 +918,15 @@ class TestServiceIntegration:
         assert "error" in health_data["inference_service"]
 
     @pytest.mark.asyncio
-    async def test_service_metrics_collection(self, prediction_service, mock_inference_service):
+    async def test_service_metrics_collection(
+        self, prediction_service, mock_inference_service
+    ):
         """测试服务指标收集"""
         # 执行多次预测以生成指标
         match_ids = [f"metrics_test_{i}" for i in range(10)]
 
         await prediction_service.predict_batch_matches(
-            match_ids=match_ids,
-            include_features=True,
-            max_concurrent=3
+            match_ids=match_ids, include_features=True, max_concurrent=3
         )
 
         # 验证推理服务调用次数
@@ -882,7 +959,9 @@ class TestServiceIntegrationEdgeCases:
         assert len(batch_data["results"]) == 0
 
     @pytest.mark.asyncio
-    async def test_large_batch_prediction(self, prediction_service, mock_inference_service):
+    async def test_large_batch_prediction(
+        self, prediction_service, mock_inference_service
+    ):
         """测试大批量预测"""
         # 创建大量比赛ID
         match_ids = [f"large_batch_{i}" for i in range(100)]
@@ -892,14 +971,13 @@ class TestServiceIntegrationEdgeCases:
             "match_id": "dummy",
             "prediction": "HOME_WIN",
             "probabilities": {"home_win": 0.6, "draw": 0.25, "away_win": 0.15},
-            "confidence": 0.75
+            "confidence": 0.75,
         }
 
         # 执行大批量预测
         start_time = time.time()
         response = await prediction_service.predict_batch_matches(
-            match_ids=match_ids,
-            max_concurrent=20
+            match_ids=match_ids, max_concurrent=20
         )
         duration = time.time() - start_time
 
@@ -913,11 +991,11 @@ class TestServiceIntegrationEdgeCases:
         """测试格式错误的比赛ID"""
         # 测试各种边界情况
         test_cases = [
-            [],                    # 空列表
-            [""],                  # 空字符串
-            ["a" * 101],          # 过长的ID
-            [None],               # None值
-            ["valid_id", ""]     # 混合有效和无效ID
+            [],  # 空列表
+            [""],  # 空字符串
+            ["a" * 101],  # 过长的ID
+            [None],  # None值
+            ["valid_id", ""],  # 混合有效和无效ID
         ]
 
         for match_ids in test_cases:
@@ -933,7 +1011,9 @@ class TestServiceIntegrationEdgeCases:
             await service.initialize()
 
     @pytest.mark.asyncio
-    async def test_network_simulation_delays(self, prediction_service, mock_inference_service):
+    async def test_network_simulation_delays(
+        self, prediction_service, mock_inference_service
+    ):
         """测试网络延迟模拟"""
         import random
 
@@ -945,7 +1025,7 @@ class TestServiceIntegrationEdgeCases:
                 "match_id": match_id,
                 "prediction": "HOME_WIN",
                 "probabilities": {"home_win": 0.6, "draw": 0.25, "away_win": 0.15},
-                "confidence": 0.75
+                "confidence": 0.75,
             }
 
         mock_inference_service.predict.side_effect = delayed_predict
@@ -955,8 +1035,7 @@ class TestServiceIntegrationEdgeCases:
         start_time = time.time()
 
         response = await prediction_service.predict_batch_matches(
-            match_ids=match_ids,
-            max_concurrent=5
+            match_ids=match_ids, max_concurrent=5
         )
 
         duration = time.time() - start_time

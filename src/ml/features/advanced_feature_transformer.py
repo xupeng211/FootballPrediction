@@ -751,6 +751,5 @@ if __name__ == "__main__":
     # 转换特征
     df_with_features = transformer.transform(df)
 
-
     # 生成特征报告
     report = transformer.generate_feature_report(df_with_features)

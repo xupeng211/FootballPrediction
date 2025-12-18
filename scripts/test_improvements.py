@@ -9,11 +9,13 @@ import json
 import time
 from pathlib import Path
 
+
 def print_header(title):
     """打印标题"""
     print(f"\n{'='*60}")
     print(f"🧪 {title}")
     print(f"{'='*60}")
+
 
 def print_test(name, success, message=""):
     """打印测试结果"""
@@ -26,6 +28,7 @@ def print_test(name, success, message=""):
         if message:
             print(f"   {message}")
 
+
 def test_mcp_servers():
     """测试MCP服务器"""
     print_header("MCP服务器测试")
@@ -36,7 +39,7 @@ def test_mcp_servers():
         ("PostgreSQL MCP服务器", "postgres_server", "PostgresMCPServer"),
         ("Redis MCP服务器", "redis_server", "RedisMCPServer"),
         ("FileSystem MCP服务器", "filesystem_server", "FileSystemMCPServer"),
-        ("System Monitor MCP服务器", "system_monitor_server", "SystemMonitorMCPServer")
+        ("System Monitor MCP服务器", "system_monitor_server", "SystemMonitorMCPServer"),
     ]
 
     all_passed = True
@@ -52,6 +55,7 @@ def test_mcp_servers():
 
     return all_passed
 
+
 def test_skills():
     """测试专业技能"""
     print_header("专业技能测试")
@@ -59,9 +63,13 @@ def test_skills():
     sys.path.append("skills")
 
     skill_tests = [
-        ("基础设施优化技能", "infrastructure_optimization", "InfrastructureOptimizationSkill"),
+        (
+            "基础设施优化技能",
+            "infrastructure_optimization",
+            "InfrastructureOptimizationSkill",
+        ),
         ("网络故障排除技能", "network_troubleshooting", "NetworkTroubleshootingSkill"),
-        ("数据库性能技能", "database_performance", "DatabasePerformanceSkill")
+        ("数据库性能技能", "database_performance", "DatabasePerformanceSkill"),
     ]
 
     all_passed = True
@@ -70,13 +78,14 @@ def test_skills():
             module = __import__(module_name)
             skill_class = getattr(module, class_name)
             instance = skill_class()
-            capabilities = getattr(instance, 'capabilities', [])
+            capabilities = getattr(instance, "capabilities", [])
             print_test(skill_name, True, f"能力: {', '.join(capabilities)}")
         except Exception as e:
             print_test(skill_name, False, str(e))
             all_passed = False
 
     return all_passed
+
 
 def test_claude_config():
     """测试Claude配置"""
@@ -89,7 +98,7 @@ def test_claude_config():
         return False
 
     try:
-        with open(config_file, 'r', encoding='utf-8') as f:
+        with open(config_file, "r", encoding="utf-8") as f:
             config = json.load(f)
 
         # 测试技能配置
@@ -103,14 +112,16 @@ def test_claude_config():
                 "performance-monitoring",
                 "infrastructure-optimization",
                 "network-troubleshooting",
-                "database-performance"
+                "database-performance",
             ]
 
             missing_skills = [s for s in required_skills if s not in priority_skills]
             if missing_skills:
                 print_test("技能配置完整", False, f"缺少: {', '.join(missing_skills)}")
             else:
-                print_test("技能配置完整", True, f"配置了 {len(priority_skills)} 个技能")
+                print_test(
+                    "技能配置完整", True, f"配置了 {len(priority_skills)} 个技能"
+                )
 
         # 测试MCP服务器配置
         mcp_servers = config.get("mcpServers", {})
@@ -127,6 +138,7 @@ def test_claude_config():
     except Exception as e:
         print_test("配置文件解析", False, str(e))
         return False
+
 
 def test_system_monitor_features():
     """测试系统监控功能"""
@@ -146,7 +158,11 @@ def test_system_monitor_features():
                 if "cpu" in metrics and "memory" in metrics:
                     cpu_usage = metrics["cpu"].get("usage_percent", 0)
                     memory_usage = metrics["memory"].get("percent", 0)
-                    print_test("系统指标获取", True, f"CPU: {cpu_usage:.1f}%, 内存: {memory_usage:.1f}%")
+                    print_test(
+                        "系统指标获取",
+                        True,
+                        f"CPU: {cpu_usage:.1f}%, 内存: {memory_usage:.1f}%",
+                    )
                 else:
                     print_test("系统指标获取", False, "指标结构不完整")
             except Exception as e:
@@ -156,7 +172,11 @@ def test_system_monitor_features():
             try:
                 bottlenecks = await server.analyze_resource_bottlenecks()
                 if "bottlenecks" in bottlenecks:
-                    print_test("资源瓶颈分析", True, f"发现 {len(bottlenecks['bottlenecks'])} 个瓶颈")
+                    print_test(
+                        "资源瓶颈分析",
+                        True,
+                        f"发现 {len(bottlenecks['bottlenecks'])} 个瓶颈",
+                    )
                 else:
                     print_test("资源瓶颈分析", False, "分析结果结构不完整")
             except Exception as e:
@@ -179,6 +199,7 @@ def test_system_monitor_features():
     except Exception as e:
         print_test("系统监控测试", False, str(e))
         return False
+
 
 def test_infrastructure_optimization():
     """测试基础设施优化功能"""
@@ -203,11 +224,16 @@ services:
 
         # 模拟解析
         import yaml
+
         config = yaml.safe_load(test_compose)
         analysis = skill.analyze_docker_resource_allocation(test_compose, 8, 4)
 
         if "total_memory_requested" in analysis:
-            print_test("资源分配分析", True, f"总内存请求: {analysis['total_memory_requested']}MB")
+            print_test(
+                "资源分配分析",
+                True,
+                f"总内存请求: {analysis['total_memory_requested']}MB",
+            )
         else:
             print_test("资源分配分析", False, "分析结果结构不完整")
 
@@ -223,6 +249,7 @@ services:
     except Exception as e:
         print_test("基础设施优化测试", False, str(e))
         return False
+
 
 def test_network_troubleshooting():
     """测试网络故障排除功能"""
@@ -245,7 +272,7 @@ def test_network_troubleshooting():
         proxy_config = {
             "http_proxy": "http://172.25.16.1:7890",
             "https_proxy": "http://172.25.16.1:7890",
-            "no_proxy": "localhost,127.0.0.1"
+            "no_proxy": "localhost,127.0.0.1",
         }
         proxy_result = skill.configure_proxy_settings(proxy_config)
         if "configured_proxies" in proxy_result:
@@ -258,6 +285,7 @@ def test_network_troubleshooting():
     except Exception as e:
         print_test("网络故障排除测试", False, str(e))
         return False
+
 
 def test_database_performance():
     """测试数据库性能功能"""
@@ -273,7 +301,7 @@ def test_database_performance():
         current_config = {
             "shared_buffers": "128MB",
             "work_mem": "4MB",
-            "max_connections": 100
+            "max_connections": 100,
         }
 
         optimization = skill.optimize_for_large_dataset(current_config, 50, 1000)
@@ -286,7 +314,11 @@ def test_database_performance():
             work_mem = optimized.get("work_mem", "")
 
             if shared_buffers != "128MB" and work_mem != "4MB":
-                print_test("参数优化", True, f"shared_buffers: {shared_buffers}, work_mem: {work_mem}")
+                print_test(
+                    "参数优化",
+                    True,
+                    f"shared_buffers: {shared_buffers}, work_mem: {work_mem}",
+                )
             else:
                 print_test("参数优化", False, "关键参数未优化")
         else:
@@ -297,6 +329,7 @@ def test_database_performance():
     except Exception as e:
         print_test("数据库性能测试", False, str(e))
         return False
+
 
 def generate_test_report(results):
     """生成测试报告"""
@@ -327,24 +360,25 @@ def generate_test_report(results):
         "total_tests": total_tests,
         "passed_tests": passed_tests,
         "failed_tests": failed_tests,
-        "pass_rate": (passed_tests/total_tests)*100,
+        "pass_rate": (passed_tests / total_tests) * 100,
         "results": [
             {
                 "name": result[0],
                 "success": len(result) >= 2 and result[1],
-                "message": result[2] if len(result) >= 3 else ""
+                "message": result[2] if len(result) >= 3 else "",
             }
             for result in results
-        ]
+        ],
     }
 
     report_file = Path("ENHANCED_MCP_TEST_REPORT.json")
-    with open(report_file, 'w', encoding='utf-8') as f:
+    with open(report_file, "w", encoding="utf-8") as f:
         json.dump(report_data, f, indent=2, ensure_ascii=False)
 
     print(f"\n📋 详细报告已保存: {report_file}")
 
     return failed_tests == 0
+
 
 def main():
     """主函数"""
@@ -369,6 +403,7 @@ def main():
     success = generate_test_report(test_results)
 
     return success
+
 
 if __name__ == "__main__":
     success = main()

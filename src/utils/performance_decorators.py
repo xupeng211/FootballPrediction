@@ -32,6 +32,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class PerformanceMetrics:
     """性能指标"""
+
     function_name: str
     execution_time_seconds: float
     memory_start_mb: float
@@ -70,8 +71,12 @@ class PerformanceMonitor:
                 existing = self._metrics[function_name]
                 existing.call_count += 1
                 existing.total_time_seconds += metrics.execution_time_seconds
-                existing.avg_time_seconds = existing.total_time_seconds / existing.call_count
-                existing.memory_peak_mb = max(existing.memory_peak_mb, metrics.memory_peak_mb)
+                existing.avg_time_seconds = (
+                    existing.total_time_seconds / existing.call_count
+                )
+                existing.memory_peak_mb = max(
+                    existing.memory_peak_mb, metrics.memory_peak_mb
+                )
                 existing.last_called = metrics.last_called
             else:
                 self._metrics[function_name] = metrics
@@ -90,10 +95,7 @@ class PerformanceMonitor:
             if not self._metrics:
                 return {"status": "no_data"}
 
-            summary = {
-                "total_functions": len(self._metrics),
-                "functions": {}
-            }
+            summary = {"total_functions": len(self._metrics), "functions": {}}
 
             for name, metrics in self._metrics.items():
                 summary["functions"][name] = {
@@ -101,7 +103,7 @@ class PerformanceMonitor:
                     "avg_time_ms": metrics.avg_time_seconds * 1000,
                     "total_time_ms": metrics.total_time_seconds * 1000,
                     "peak_memory_mb": metrics.memory_peak_mb,
-                    "last_called": metrics.last_called.isoformat()
+                    "last_called": metrics.last_called.isoformat(),
                 }
 
             return summary
@@ -115,7 +117,7 @@ def monitor_performance(
     log_calls: bool = True,
     track_memory: bool = True,
     track_gc: bool = True,
-    min_execution_time_ms: float = 100.0
+    min_execution_time_ms: float = 100.0,
 ):
     """
     性能监控装饰器
@@ -126,13 +128,19 @@ def monitor_performance(
         track_gc: 是否跟踪垃圾回收
         min_execution_time_ms: 最小执行时间阈值(ms)
     """
+
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
         async def async_wrapper(*args, **kwargs):
             return await _monitor_function_execution(
-                func, args, kwargs,
-                log_calls, track_memory, track_gc, min_execution_time_ms,
-                is_async=True
+                func,
+                args,
+                kwargs,
+                log_calls,
+                track_memory,
+                track_gc,
+                min_execution_time_ms,
+                is_async=True,
             )
 
         # 根据函数是否为协程函数返回合适的包装器
@@ -142,11 +150,19 @@ def monitor_performance(
             # 对于同步函数，返回包装后的异步版本
             @functools.wraps(func)
             def sync_wrapper(*args, **kwargs):
-                return asyncio.run(_monitor_function_execution(
-                    func, args, kwargs,
-                    log_calls, track_memory, track_gc, min_execution_time_ms,
-                    is_async=False
-                ))
+                return asyncio.run(
+                    _monitor_function_execution(
+                        func,
+                        args,
+                        kwargs,
+                        log_calls,
+                        track_memory,
+                        track_gc,
+                        min_execution_time_ms,
+                        is_async=False,
+                    )
+                )
+
             return sync_wrapper
 
     return decorator
@@ -160,7 +176,7 @@ async def _monitor_function_execution(
     track_memory: bool,
     track_gc: bool,
     min_execution_time_ms: float,
-    is_async: bool
+    is_async: bool,
 ) -> Any:
     """执行函数监控的核心逻辑"""
     function_name = f"{func.__module__}.{func.__name__}"
@@ -218,7 +234,7 @@ async def _monitor_function_execution(
             memory_end_mb=memory_end,
             cpu_percent=cpu_percent,
             gc_collections=abs(gc_end - gc_start),
-            last_called=datetime.now()
+            last_called=datetime.now(),
         )
 
         # 更新全局监控器
@@ -257,13 +273,14 @@ def monitor_dataframe_operations(min_rows: int = 1000):
     Args:
         min_rows: 最小行数阈值，低于此值不记录
     """
+
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
             # 检查是否有DataFrame参数
             df_info = _extract_dataframe_info(args, kwargs)
 
-            if not df_info or df_info['rows'] < min_rows:
+            if not df_info or df_info["rows"] < min_rows:
                 return func(*args, **kwargs)
 
             function_name = f"{func.__module__}.{func.__name__}"
@@ -272,8 +289,8 @@ def monitor_dataframe_operations(min_rows: int = 1000):
             result = func(*args, **kwargs)
 
             execution_time = time.time() - start_time
-            rows = df_info['rows']
-            cols = df_info['columns']
+            rows = df_info["rows"]
+            cols = df_info["columns"]
             rows_per_sec = rows / execution_time if execution_time > 0 else 0
 
             logger.info(
@@ -286,6 +303,7 @@ def monitor_dataframe_operations(min_rows: int = 1000):
             return result
 
         return wrapper
+
     return decorator
 
 
@@ -296,6 +314,7 @@ def monitor_memory_usage(threshold_mb: float = 100.0):
     Args:
         threshold_mb: 内存使用阈值(MB)
     """
+
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
@@ -324,6 +343,7 @@ def monitor_memory_usage(threshold_mb: float = 100.0):
                 gc.collect()
 
         return wrapper
+
     return decorator
 
 
@@ -359,18 +379,18 @@ def _extract_dataframe_info(args: tuple, kwargs: dict) -> Optional[Dict[str, Any
     for arg in args:
         if isinstance(arg, pd.DataFrame):
             return {
-                'rows': len(arg),
-                'columns': len(arg.columns),
-                'memory_mb': arg.memory_usage(deep=True).sum() / 1024 / 1024
+                "rows": len(arg),
+                "columns": len(arg.columns),
+                "memory_mb": arg.memory_usage(deep=True).sum() / 1024 / 1024,
             }
 
     # 检查关键字参数
     for value in kwargs.values():
         if isinstance(value, pd.DataFrame):
             return {
-                'rows': len(value),
-                'columns': len(value.columns),
-                'memory_mb': value.memory_usage(deep=True).sum() / 1024 / 1024
+                "rows": len(value),
+                "columns": len(value.columns),
+                "memory_mb": value.memory_usage(deep=True).sum() / 1024 / 1024,
             }
 
     return None
@@ -381,16 +401,19 @@ def get_performance_stats() -> Dict[str, Any]:
     """获取性能统计"""
     return _global_monitor.get_performance_summary()
 
+
 def reset_performance_stats(function_name: Optional[str] = None) -> None:
     """重置性能统计"""
     _global_monitor.reset_metrics(function_name)
+
 
 def log_slow_functions(min_time_ms: float = 1000.0) -> None:
     """记录慢函数"""
     metrics = _global_monitor.get_all_metrics()
 
     slow_functions = [
-        (name, metrics) for name, metrics in metrics.items()
+        (name, metrics)
+        for name, metrics in metrics.items()
         if metrics.avg_time_seconds * 1000 >= min_time_ms
     ]
 
@@ -402,12 +425,14 @@ def log_slow_functions(min_time_ms: float = 1000.0) -> None:
                 f"(调用 {metric.call_count} 次, 峰值内存 {metric.memory_peak_mb:.1f}MB)"
             )
 
+
 def log_memory_intensive_functions(threshold_mb: float = 100.0) -> None:
     """记录内存密集函数"""
     metrics = _global_monitor.get_all_metrics()
 
     memory_intensive = [
-        (name, metrics) for name, metrics in metrics.items()
+        (name, metrics)
+        for name, metrics in metrics.items()
         if metrics.memory_peak_mb >= threshold_mb
     ]
 

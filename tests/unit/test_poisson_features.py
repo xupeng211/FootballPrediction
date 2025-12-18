@@ -150,12 +150,12 @@ class TestPoissonFeatureCalculator:
 
     # ========== 球队λ值计算测试 ==========
 
-    def test_calculate_team_lambdas_sufficient_data(self, calculator, sample_matches_data):
+    def test_calculate_team_lambdas_sufficient_data(
+        self, calculator, sample_matches_data
+    ):
         """测试数据充足时的λ值计算"""
         attack_lambda, defense_lambda, details = calculator.calculate_team_lambdas(
-            team_id="team_test",
-            matches_data=sample_matches_data,
-            is_home_team=True
+            team_id="team_test", matches_data=sample_matches_data, is_home_team=True
         )
 
         assert attack_lambda > 0
@@ -166,27 +166,32 @@ class TestPoissonFeatureCalculator:
         assert "defense_lambda" in details
         assert "venue_factor" in details
 
-    def test_calculate_team_lambdas_insufficient_data(self, calculator, sample_matches_data):
+    def test_calculate_team_lambdas_insufficient_data(
+        self, calculator, sample_matches_data
+    ):
         """测试数据不足时的默认值使用"""
-        insufficient_data = sample_matches_data[:2]  # 只有2场比赛，少于MIN_GAMES_FOR_LAMBDA(5)
+        insufficient_data = sample_matches_data[
+            :2
+        ]  # 只有2场比赛，少于MIN_GAMES_FOR_LAMBDA(5)
 
         attack_lambda, defense_lambda, details = calculator.calculate_team_lambdas(
             team_id="team_insufficient",
             matches_data=insufficient_data,
-            is_home_team=True
+            is_home_team=True,
         )
 
         assert details["status"] == "insufficient_data"
         assert attack_lambda == calculator.home_lambda_default
-        assert defense_lambda == calculator.league_avg_goals - calculator.home_lambda_default
+        assert (
+            defense_lambda
+            == calculator.league_avg_goals - calculator.home_lambda_default
+        )
         assert details["matches_used"] == 2
 
     def test_calculate_team_lambdas_away_team(self, calculator, sample_matches_data):
         """测试客队λ值计算"""
         attack_lambda, defense_lambda, details = calculator.calculate_team_lambdas(
-            team_id="away_team",
-            matches_data=sample_matches_data,
-            is_home_team=False
+            team_id="away_team", matches_data=sample_matches_data, is_home_team=False
         )
 
         assert attack_lambda > 0
@@ -199,20 +204,22 @@ class TestPoissonFeatureCalculator:
     def test_team_strength_adjustment(self, calculator, strong_team_data):
         """测试球队实力调整"""
         # 启用实力调整
-        attack_lambda_enabled, defense_lambda_enabled, _ = calculator.calculate_team_lambdas(
-            team_id="strong_team",
-            matches_data=strong_team_data,
-            is_home_team=True
+        attack_lambda_enabled, defense_lambda_enabled, _ = (
+            calculator.calculate_team_lambdas(
+                team_id="strong_team", matches_data=strong_team_data, is_home_team=True
+            )
         )
 
         # 禁用实力调整
         calculator.disable_strength = calculator.enable_team_strength_adjustment
         calculator.enable_team_strength_adjustment = False
 
-        attack_lambda_disabled, defense_lambda_disabled, _ = calculator.calculate_team_lambdas(
-            team_id="strong_team_no_adjust",
-            matches_data=strong_team_data,
-            is_home_team=True
+        attack_lambda_disabled, defense_lambda_disabled, _ = (
+            calculator.calculate_team_lambdas(
+                team_id="strong_team_no_adjust",
+                matches_data=strong_team_data,
+                is_home_team=True,
+            )
         )
 
         # 强队的λ值在启用调整后应该稍微保守（降低）
@@ -235,9 +242,7 @@ class TestPoissonFeatureCalculator:
         ]
 
         attack_lambda, defense_lambda, details = calculator.calculate_team_lambdas(
-            team_id="venue_team",
-            matches_data=venue_specific_data,
-            is_home_team=True
+            team_id="venue_team", matches_data=venue_specific_data, is_home_team=True
         )
 
         assert details["venue_factor"] > 1.0  # 主场优势应该被识别
@@ -261,13 +266,11 @@ class TestPoissonFeatureCalculator:
                 "home_goals": 1,
                 "away_goals": 1,
                 "team_is_home": True,
-            }
+            },
         ]
 
         attack_lambda, defense_lambda, details = calculator.calculate_team_lambdas(
-            team_id="time_team",
-            matches_data=time_spread_data,
-            is_home_team=True
+            team_id="time_team", matches_data=time_spread_data, is_home_team=True
         )
 
         # 由于时间衰减，最近比赛权重更高，平均进球应该接近1而不是3
@@ -281,16 +284,15 @@ class TestPoissonFeatureCalculator:
         # 先设置球队数据
         calculator.team_data["home_team"] = {
             "attack_lambda": 1.8,
-            "defense_lambda": 0.8
+            "defense_lambda": 0.8,
         }
         calculator.team_data["away_team"] = {
             "attack_lambda": 1.2,
-            "defense_lambda": 1.5
+            "defense_lambda": 1.5,
         }
 
         result = calculator.calculate_match_probabilities(
-            home_team_id="home_team",
-            away_team_id="away_team"
+            home_team_id="home_team", away_team_id="away_team"
         )
 
         # 验证结果结构
@@ -324,7 +326,7 @@ class TestPoissonFeatureCalculator:
             home_attack_lambda=2.0,
             home_defense_lambda=0.8,
             away_attack_lambda=1.3,
-            away_defense_lambda=1.6
+            away_defense_lambda=1.6,
         )
 
         expected = result["expected_goals"]
@@ -353,11 +355,13 @@ class TestPoissonFeatureCalculator:
     def test_probability_calculations(self, calculator):
         """测试各种概率计算函数"""
         # 创建简单的比分矩阵
-        matrix = np.array([
-            [0.1, 0.05, 0.02],  # 0-0, 0-1, 0-2
-            [0.15, 0.1, 0.03], # 1-0, 1-1, 1-2
-            [0.08, 0.04, 0.01], # 2-0, 2-1, 2-2
-        ])
+        matrix = np.array(
+            [
+                [0.1, 0.05, 0.02],  # 0-0, 0-1, 0-2
+                [0.15, 0.1, 0.03],  # 1-0, 1-1, 1-2
+                [0.08, 0.04, 0.01],  # 2-0, 2-1, 2-2
+            ]
+        )
         calculator.max_goals_calc = 2
 
         # 主胜概率 (1-0, 2-0, 2-1)
@@ -437,12 +441,12 @@ class TestPoissonFeatureCalculator:
         calculator.team_data["confident_team"] = {
             "matches_analyzed": 20,  # 足够的数据
             "attack_lambda": 1.6,
-            "defense_lambda": 1.1
+            "defense_lambda": 1.1,
         }
         calculator.team_data["limited_team"] = {
-            "matches_analyzed": 3,   # 数据不足
+            "matches_analyzed": 3,  # 数据不足
             "attack_lambda": 1.2,
-            "defense_lambda": 1.4
+            "defense_lambda": 1.4,
         }
 
         # 测试数据充足的球队
@@ -458,7 +462,10 @@ class TestPoissonFeatureCalculator:
             "limited_team", "limited_team", 1.5, 1.3
         )
         assert metrics_limited["data_sufficiency_confidence"] <= 1.0
-        assert metrics_limited["overall_confidence"] < metrics_confident["overall_confidence"]
+        assert (
+            metrics_limited["overall_confidence"]
+            < metrics_confident["overall_confidence"]
+        )
 
     def test_matrix_entropy_calculation(self, calculator):
         """测试矩阵熵计算"""
@@ -480,12 +487,15 @@ class TestPoissonFeatureCalculator:
 
     # ========== 边界条件和异常处理测试 ==========
 
-    @pytest.mark.parametrize("home_lambda,away_lambda", [
-        (0.1, 0.1),    # 极低λ值
-        (5.0, 5.0),    # 极高λ值
-        (0.5, 2.5),    # 不对称λ值
-        (2.7, 2.7),    # 联赛平均值
-    ])
+    @pytest.mark.parametrize(
+        "home_lambda,away_lambda",
+        [
+            (0.1, 0.1),  # 极低λ值
+            (5.0, 5.0),  # 极高λ值
+            (0.5, 2.5),  # 不对称λ值
+            (2.7, 2.7),  # 联赛平均值
+        ],
+    )
     def test_extreme_lambda_values(self, calculator, home_lambda, away_lambda):
         """测试极端λ值处理"""
         result = calculator.calculate_match_probabilities(
@@ -494,7 +504,7 @@ class TestPoissonFeatureCalculator:
             home_attack_lambda=home_lambda,
             home_defense_lambda=home_lambda,
             away_attack_lambda=away_lambda,
-            away_defense_lambda=away_lambda
+            away_defense_lambda=away_lambda,
         )
 
         expected = result["expected_goals"]
@@ -503,7 +513,10 @@ class TestPoissonFeatureCalculator:
 
         probs = result["probabilities"]
         assert all(0 <= p <= 1 for p in probs.values())
-        assert abs(sum([probs["home_win"], probs["draw"], probs["away_win"]]) - 1.0) < 0.001
+        assert (
+            abs(sum([probs["home_win"], probs["draw"], probs["away_win"]]) - 1.0)
+            < 0.001
+        )
 
     def test_zero_goals_scenario(self, calculator):
         """测试零进球场景"""
@@ -513,7 +526,7 @@ class TestPoissonFeatureCalculator:
             home_attack_lambda=0.01,
             home_defense_lambda=0.01,
             away_attack_lambda=0.01,
-            away_defense_lambda=0.01
+            away_defense_lambda=0.01,
         )
 
         expected = result["expected_goals"]
@@ -537,7 +550,7 @@ class TestPoissonFeatureCalculator:
             home_attack_lambda=4.0,
             home_defense_lambda=2.0,
             away_attack_lambda=3.5,
-            away_defense_lambda=2.5
+            away_defense_lambda=2.5,
         )
 
         expected = result["expected_goals"]
@@ -554,9 +567,7 @@ class TestPoissonFeatureCalculator:
         """测试无效输入处理"""
         # 测试空比赛数据 - 现在返回默认值而不是异常
         result = calculator.calculate_team_lambdas(
-            team_id="empty_team",
-            matches_data=[],
-            is_home_team=True
+            team_id="empty_team", matches_data=[], is_home_team=True
         )
         # 验证返回合理的默认值 (tuple格式: attack_lambda, defense_lambda, metadata)
         attack_lambda, defense_lambda, metadata = result
@@ -565,18 +576,18 @@ class TestPoissonFeatureCalculator:
         assert metadata["status"] == "insufficient_data"
 
         # 测试负数进球
-        invalid_data = [{
-            "match_date": datetime.now(),
-            "home_goals": -1,
-            "away_goals": 2,
-            "team_is_home": True,
-        }]
+        invalid_data = [
+            {
+                "match_date": datetime.now(),
+                "home_goals": -1,
+                "away_goals": 2,
+                "team_is_home": True,
+            }
+        ]
 
         # 应该能够处理但给出合理的默认值
         attack_lambda, defense_lambda, details = calculator.calculate_team_lambdas(
-            team_id="invalid_team",
-            matches_data=invalid_data,
-            is_home_team=True
+            team_id="invalid_team", matches_data=invalid_data, is_home_team=True
         )
 
         assert attack_lambda >= 0
@@ -584,48 +595,56 @@ class TestPoissonFeatureCalculator:
 
     def test_date_string_parsing(self, calculator):
         """测试日期字符串解析"""
-        date_string_data = [{
-            "match_date": "2024-01-15T15:00:00",
-            "home_goals": 2,
-            "away_goals": 1,
-            "team_is_home": True,
-        }]
+        date_string_data = [
+            {
+                "match_date": "2024-01-15T15:00:00",
+                "home_goals": 2,
+                "away_goals": 1,
+                "team_is_home": True,
+            }
+        ]
 
         attack_lambda, defense_lambda, details = calculator.calculate_team_lambdas(
-            team_id="date_string_team",
-            matches_data=date_string_data,
-            is_home_team=True
+            team_id="date_string_team", matches_data=date_string_data, is_home_team=True
         )
 
-        assert details["status"] == "success" if len(date_string_data) >= calculator.MIN_GAMES_FOR_LAMBDA else "insufficient_data"
+        assert (
+            details["status"] == "success"
+            if len(date_string_data) >= calculator.MIN_GAMES_FOR_LAMBDA
+            else "insufficient_data"
+        )
 
     # ========== 批量处理测试 ==========
 
     def test_generate_features_for_dataset(self, calculator):
         """测试数据集批量特征生成"""
         # 创建测试数据集
-        matches_df = pd.DataFrame([
-            {
-                "match_id": 1,
-                "home_team_id": "team_a",
-                "away_team_id": "team_b",
-                "match_date": datetime.now() - timedelta(days=1),
-            },
-            {
-                "match_id": 2,
-                "home_team_id": "team_c",
-                "away_team_id": "team_d",
-                "match_date": datetime.now() - timedelta(days=2),
-            },
-        ])
+        matches_df = pd.DataFrame(
+            [
+                {
+                    "match_id": 1,
+                    "home_team_id": "team_a",
+                    "away_team_id": "team_b",
+                    "match_date": datetime.now() - timedelta(days=1),
+                },
+                {
+                    "match_id": 2,
+                    "home_team_id": "team_c",
+                    "away_team_id": "team_d",
+                    "match_date": datetime.now() - timedelta(days=2),
+                },
+            ]
+        )
 
         # 设置球队数据
-        calculator.team_data.update({
-            "team_a": {"attack_lambda": 1.8, "defense_lambda": 0.9},
-            "team_b": {"attack_lambda": 1.3, "defense_lambda": 1.4},
-            "team_c": {"attack_lambda": 1.5, "defense_lambda": 1.1},
-            "team_d": {"attack_lambda": 1.2, "defense_lambda": 1.6},
-        })
+        calculator.team_data.update(
+            {
+                "team_a": {"attack_lambda": 1.8, "defense_lambda": 0.9},
+                "team_b": {"attack_lambda": 1.3, "defense_lambda": 1.4},
+                "team_c": {"attack_lambda": 1.5, "defense_lambda": 1.1},
+                "team_d": {"attack_lambda": 1.2, "defense_lambda": 1.6},
+            }
+        )
 
         features_df = calculator.generate_features_for_dataset(matches_df)
 
@@ -638,14 +657,16 @@ class TestPoissonFeatureCalculator:
     def test_generate_features_with_missing_data(self, calculator):
         """测试数据缺失时的批量特征生成"""
         # 创建包含未知球队的数据集
-        matches_df = pd.DataFrame([
-            {
-                "match_id": 1,
-                "home_team_id": "unknown_team_a",
-                "away_team_id": "unknown_team_b",
-                "match_date": datetime.now(),
-            },
-        ])
+        matches_df = pd.DataFrame(
+            [
+                {
+                    "match_id": 1,
+                    "home_team_id": "unknown_team_a",
+                    "away_team_id": "unknown_team_b",
+                    "match_date": datetime.now(),
+                },
+            ]
+        )
 
         features_df = calculator.generate_features_for_dataset(matches_df)
 
@@ -659,9 +680,7 @@ class TestPoissonFeatureCalculator:
         """测试球队统计信息获取"""
         # 先计算球队λ值
         calculator.calculate_team_lambdas(
-            team_id="stats_team",
-            matches_data=sample_matches_data,
-            is_home_team=True
+            team_id="stats_team", matches_data=sample_matches_data, is_home_team=True
         )
 
         stats = calculator.get_team_stats("stats_team")
@@ -707,14 +726,18 @@ class TestPoissonFeatureCalculator:
         # 执行多次计算
         for i in range(5):
             calculator.calculate_match_probabilities(
-                f"team_{i}", f"team_{i+1}",
+                f"team_{i}",
+                f"team_{i+1}",
                 home_attack_lambda=1.5 + i * 0.1,
-                away_attack_lambda=1.2 + i * 0.1
+                away_attack_lambda=1.2 + i * 0.1,
             )
 
         updated_stats = calculator.stats
 
-        assert updated_stats["total_calculations"] == initial_stats["total_calculations"] + 5
+        assert (
+            updated_stats["total_calculations"]
+            == initial_stats["total_calculations"] + 5
+        )
         assert updated_stats["avg_lambda_home"] != initial_stats["avg_lambda_home"]
         assert updated_stats["avg_lambda_away"] != initial_stats["avg_lambda_away"]
         assert updated_stats["last_updated"] is not None
@@ -727,11 +750,12 @@ class TestPoissonFeatureCalculator:
 
         start_time = time.time()
         result = calculator.calculate_match_probabilities(
-            "perf_home", "perf_away",
+            "perf_home",
+            "perf_away",
             home_attack_lambda=1.7,
             home_defense_lambda=1.1,
             away_attack_lambda=1.4,
-            away_defense_lambda=1.5
+            away_defense_lambda=1.5,
         )
         end_time = time.time()
 
@@ -749,11 +773,9 @@ class TestPoissonFeatureCalculator:
         start_time = time.time()
         results = []
         for i, home_team in enumerate(teams):
-            for away_team in teams[i+1:]:
+            for away_team in teams[i + 1:]:
                 result = calculator.calculate_match_probabilities(
-                    home_team, away_team,
-                    home_attack_lambda=1.5,
-                    away_attack_lambda=1.3
+                    home_team, away_team, home_attack_lambda=1.5, away_attack_lambda=1.3
                 )
                 results.append(result)
 
@@ -770,6 +792,7 @@ class TestPoissonFeatureCalculator:
         calc = PoissonFeatureCalculator(max_goals_calc=max_goals)
 
         import time
+
         start_time = time.time()
 
         matrix = calc._calculate_score_matrix(2.0, 1.5)
@@ -785,9 +808,10 @@ class TestPoissonFeatureCalculator:
     def test_probability_distribution_sum(self, calculator):
         """测试概率分布总和为1"""
         result = calculator.calculate_match_probabilities(
-            "precision_home", "precision_away",
+            "precision_home",
+            "precision_away",
             home_attack_lambda=1.8,
-            away_attack_lambda=1.4
+            away_attack_lambda=1.4,
         )
 
         probs = result["probabilities"]
@@ -811,7 +835,9 @@ class TestPoissonFeatureCalculator:
         assert abs(expected_value - lambda_val) < 0.1
 
         # 验证方差等于λ
-        variance = sum((goals - lambda_val) ** 2 * prob for goals, prob in distribution.items())
+        variance = sum(
+            (goals - lambda_val) ** 2 * prob for goals, prob in distribution.items()
+        )
         assert abs(variance - lambda_val) < 0.2
 
     # ========== 辅助方法测试 ==========
@@ -843,11 +869,12 @@ class TestPoissonFeatureCalculator:
 
         # 2. 计算比赛概率
         match_result = calculator.calculate_match_probabilities(
-            "workflow_home", "workflow_away",
+            "workflow_home",
+            "workflow_away",
             home_attack_lambda=home_attack,
             home_defense_lambda=home_defense,
             away_attack_lambda=away_attack,
-            away_defense_lambda=away_defense
+            away_defense_lambda=away_defense,
         )
 
         # 3. 获取球队统计
@@ -898,9 +925,7 @@ class TestPoissonFeatureCalculatorEdgeCases:
             max_goals_calc=20,
         )
 
-        result = maximal_calc.calculate_match_probabilities(
-            "max_home", "max_away"
-        )
+        result = maximal_calc.calculate_match_probabilities("max_home", "max_away")
 
         assert result is not None
         assert len(result["top_scores"]) == 5  # 默认Top 5

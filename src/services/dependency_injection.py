@@ -21,7 +21,7 @@ import asyncio
 
 logger = logging.getLogger(__name__)
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 class ServiceLifecycle(ABC):
@@ -77,7 +77,7 @@ class DIContainer:
         singleton: bool = True,
         lazy: bool = True,
         dependencies: Optional[list[str]] = None,
-        config: Optional[Dict[str, Any]] = None
+        config: Optional[Dict[str, Any]] = None,
     ) -> None:
         """
         注册服务
@@ -97,7 +97,7 @@ class DIContainer:
             singleton=singleton,
             lazy=lazy,
             dependencies=dependencies or [],
-            config=config or {}
+            config=config or {},
         )
 
         self._services[service_name] = descriptor
@@ -144,7 +144,9 @@ class DIContainer:
         # 非懒加载，应该已经创建
         raise ValueError(f"服务 {service_name} 未创建但标记为非懒加载")
 
-    async def _create_instance(self, service_name: str, descriptor: ServiceDescriptor) -> T:
+    async def _create_instance(
+        self, service_name: str, descriptor: ServiceDescriptor
+    ) -> T:
         """创建服务实例"""
         self._initializing.add(service_name)
 
@@ -166,9 +168,9 @@ class DIContainer:
 
             # 注入配置
             if descriptor.config:
-                if hasattr(instance, 'update_config'):
+                if hasattr(instance, "update_config"):
                     instance.update_config(descriptor.config)
-                elif hasattr(instance, '__dict__'):
+                elif hasattr(instance, "__dict__"):
                     for key, value in descriptor.config.items():
                         setattr(instance, key, value)
 
@@ -205,7 +207,9 @@ class DIContainer:
         self._instances.clear()
         self.logger.info("所有服务已关闭")
 
-    async def _shutdown_service(self, service_name: str, instance: ServiceLifecycle) -> None:
+    async def _shutdown_service(
+        self, service_name: str, instance: ServiceLifecycle
+    ) -> None:
         """关闭单个服务"""
         try:
             await instance.shutdown()
@@ -218,7 +222,7 @@ class DIContainer:
             "registered_services": list(self._services.keys()),
             "active_instances": list(self._instances.keys()),
             "service_count": len(self._services),
-            "instance_count": len(self._instances)
+            "instance_count": len(self._instances),
         }
 
 
@@ -253,6 +257,7 @@ def injectable(service_name: str, dependencies: Optional[list[str]] = None):
         service_name: 服务名称
         dependencies: 依赖服务列表
     """
+
     def decorator(cls: Type[T]) -> Type[T]:
         original_init = cls.__init__
 

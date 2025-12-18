@@ -54,8 +54,8 @@ async def setup_services() -> None:
                     "HOME_WIN_PROBA": 0.46,
                     "DRAW_PROBA": 0.26,
                     "AWAY_WIN_PROBA": 0.28,
-                }
-            )
+                },
+            ),
         )
 
         # 2. 注册模型服务 (示例工厂函数)
@@ -63,7 +63,7 @@ async def setup_services() -> None:
             service_name="model_service",
             service_type=object,  # 实际应该是具体的模型服务类型
             factory=create_model_service,
-            dependencies=["inference_config"]
+            dependencies=["inference_config"],
         )
 
         # 3. 注册特征提取器服务
@@ -71,14 +71,14 @@ async def setup_services() -> None:
             service_name="feature_extractor",
             service_type=object,  # 实际应该是具体的特征提取器类型
             factory=create_feature_extractor,
-            dependencies=["inference_config"]
+            dependencies=["inference_config"],
         )
 
         # 4. 注册数据库服务
         container.register(
             service_name="database_service",
             service_type=object,  # 实际应该是具体的数据库服务类型
-            factory=create_database_service
+            factory=create_database_service,
         )
 
         # 5. 注册推理服务 - 使用依赖注入
@@ -86,14 +86,14 @@ async def setup_services() -> None:
             service_name="inference_service",
             service_type=InferenceService,
             dependencies=["model_service", "feature_extractor", "database_service"],
-            config={"config_factory": lambda: InferenceServiceConfig()}
+            config={"config_factory": lambda: InferenceServiceConfig()},
         )
 
         # 6. 注册预测服务 - 使用依赖注入
         container.register(
             service_name="prediction_service",
             service_type=PredictionService,
-            dependencies=["inference_service", "explainability_service"]
+            dependencies=["inference_service", "explainability_service"],
         )
 
         # Sprint 5: 注册高级分析和策略服务
@@ -101,28 +101,28 @@ async def setup_services() -> None:
         container.register(
             service_name="elo_rating_system",
             service_type=EloRatingSystem,
-            factory=create_elo_rating_system
+            factory=create_elo_rating_system,
         )
 
         # 8. 注册泊松特征计算器
         container.register(
             service_name="poisson_calculator",
             service_type=PoissonFeatureCalculator,
-            factory=create_poisson_calculator
+            factory=create_poisson_calculator,
         )
 
         # 9. 注册赔率变动分析器
         container.register(
             service_name="odds_analyzer",
             service_type=OddsMovementAnalyzer,
-            factory=create_odds_analyzer
+            factory=create_odds_analyzer,
         )
 
         # 10. 注册凯利准则系统
         container.register(
             service_name="kelly_criterion",
             service_type=KellyCriterion,
-            factory=create_kelly_criterion
+            factory=create_kelly_criterion,
         )
 
         # 11. 注册回测引擎 - Sprint 5 核心组件
@@ -130,7 +130,12 @@ async def setup_services() -> None:
             service_name="backtest_engine",
             service_type=BacktestEngine,
             factory=create_backtest_engine,
-            dependencies=["elo_rating_system", "poisson_calculator", "odds_analyzer", "kelly_criterion"]
+            dependencies=[
+                "elo_rating_system",
+                "poisson_calculator",
+                "odds_analyzer",
+                "kelly_criterion",
+            ],
         )
 
         logger.info("✅ 服务容器设置完成 (包含Sprint 5高级分析服务)")
@@ -159,17 +164,13 @@ async def create_model_service(inference_config: InferenceServiceConfig) -> obje
 
         async def predict_proba(self, features):
             # 模拟概率预测
-            return {
-                "HOME_WIN_PROBA": 0.65,
-                "DRAW_PROBA": 0.25,
-                "AWAY_WIN_PROBA": 0.10
-            }
+            return {"HOME_WIN_PROBA": 0.65, "DRAW_PROBA": 0.25, "AWAY_WIN_PROBA": 0.10}
 
         def get_model_info(self):
             return {
                 "model_name": "football_xgboost_classifier",
                 "model_version": "1.0.0",
-                "is_trained": True
+                "is_trained": True,
             }
 
     return MockModelService(inference_config)
@@ -189,7 +190,7 @@ async def create_feature_extractor(inference_config: InferenceServiceConfig) -> 
             return {
                 "feature_vector": [0.1, 0.2, 0.3, 0.4, 0.5],
                 "feature_names": ["f1", "f2", "f3", "f4", "f5"],
-                "completeness_score": 0.95
+                "completeness_score": 0.95,
             }
 
     return MockFeatureExtractor(inference_config)
@@ -213,7 +214,7 @@ async def create_database_service() -> object:
                     "away_score": 1,
                     "status": "FINISHED",
                     "venue": "Stadium A",
-                    "league_id": "EPL"
+                    "league_id": "EPL",
                 }
             return None
 
@@ -227,7 +228,7 @@ async def create_database_service() -> object:
                     "match_date": "2024-01-10",
                     "home_score": 1,
                     "away_score": 1,
-                    "status": "FINISHED"
+                    "status": "FINISHED",
                 }
                 for i in range(10)
             ]
@@ -248,7 +249,7 @@ async def create_explainability_service() -> object:
                 "feature_2": -0.05,
                 "feature_3": 0.08,
                 "feature_4": -0.02,
-                "feature_5": 0.03
+                "feature_5": 0.03,
             }
 
     return MockExplainabilityService()
@@ -415,11 +416,8 @@ async def example_usage():
 
     # 进行预测
     result = await prediction_service.predict_single_match(
-        match_id="example_match_123",
-        include_features=True,
-        include_metadata=True
+        match_id="example_match_123", include_features=True, include_metadata=True
     )
-
 
     # 健康检查
     health = await prediction_service.get_service_health()

@@ -30,6 +30,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class OddsConfig:
     """赔率解析配置"""
+
     default_bookmakers: List[str]
     default_home_odds: float = 2.5
     default_draw_odds: float = 3.2
@@ -41,6 +42,7 @@ class OddsConfig:
 @dataclass
 class ParsedOdds:
     """解析后的赔率数据"""
+
     avg_home_odds: float
     avg_draw_odds: float
     avg_away_odds: float
@@ -64,7 +66,7 @@ class MatchParserV2:
     def __init__(self, config: Optional[OddsConfig] = None):
         """初始化解析器"""
         self.config = config or OddsConfig(
-            default_bookmakers=['Bet365', 'William Hill', 'Pinnacle', 'Betfair']
+            default_bookmakers=["Bet365", "William Hill", "Pinnacle", "Betfair"]
         )
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
 
@@ -107,7 +109,9 @@ class MatchParserV2:
 
     # === 拆分后的辅助函数 ===
 
-    def _validate_and_prepare_input(self, odds_json: Union[dict, str, None]) -> Optional[Dict[str, Any]]:
+    def _validate_and_prepare_input(
+        self, odds_json: Union[dict, str, None]
+    ) -> Optional[Dict[str, Any]]:
         """
         验证和预处理输入数据
 
@@ -148,7 +152,9 @@ class MatchParserV2:
             self.logger.warning(f"odds JSON解析失败: {e}")
             return None
 
-    def _extract_bookmaker_odds(self, odds_data: Dict[str, Any]) -> Dict[str, List[float]]:
+    def _extract_bookmaker_odds(
+        self, odds_data: Dict[str, Any]
+    ) -> Dict[str, List[float]]:
         """
         提取各博彩公司的赔率数据
 
@@ -158,26 +164,24 @@ class MatchParserV2:
         Returns:
             博彩公司到赔率列表的映射
         """
-        bookmaker_odds = {
-            'home_odds': [],
-            'draw_odds': [],
-            'away_odds': []
-        }
+        bookmaker_odds = {"home_odds": [], "draw_odds": [], "away_odds": []}
 
         for bookmaker in self.config.default_bookmakers:
             bm_data = self._safe_get(odds_data, bookmaker, {})
             single_odds = self._extract_single_bookmaker_odds(bm_data)
 
-            if single_odds['home'] is not None:
-                bookmaker_odds['home_odds'].append(single_odds['home'])
-            if single_odds['draw'] is not None:
-                bookmaker_odds['draw_odds'].append(single_odds['draw'])
-            if single_odds['away'] is not None:
-                bookmaker_odds['away_odds'].append(single_odds['away'])
+            if single_odds["home"] is not None:
+                bookmaker_odds["home_odds"].append(single_odds["home"])
+            if single_odds["draw"] is not None:
+                bookmaker_odds["draw_odds"].append(single_odds["draw"])
+            if single_odds["away"] is not None:
+                bookmaker_odds["away_odds"].append(single_odds["away"])
 
         return bookmaker_odds
 
-    def _extract_single_bookmaker_odds(self, bm_data: Dict[str, Any]) -> Dict[str, Optional[float]]:
+    def _extract_single_bookmaker_odds(
+        self, bm_data: Dict[str, Any]
+    ) -> Dict[str, Optional[float]]:
         """
         提取单个博彩公司的赔率
 
@@ -188,9 +192,9 @@ class MatchParserV2:
             主客平和赔率字典
         """
         return {
-            'home': self._parse_odds_value(self._safe_get(bm_data, 'home')),
-            'draw': self._parse_odds_value(self._safe_get(bm_data, 'draw')),
-            'away': self._parse_odds_value(self._safe_get(bm_data, 'away'))
+            "home": self._parse_odds_value(self._safe_get(bm_data, "home")),
+            "draw": self._parse_odds_value(self._safe_get(bm_data, "draw")),
+            "away": self._parse_odds_value(self._safe_get(bm_data, "away")),
         }
 
     def _parse_odds_value(self, odds_value: Any) -> Optional[float]:
@@ -220,7 +224,9 @@ class MatchParserV2:
         except (InvalidOperation, ValueError, TypeError):
             return None
 
-    def _validate_and_clean_odds(self, bookmaker_odds: Dict[str, List[float]]) -> Dict[str, List[float]]:
+    def _validate_and_clean_odds(
+        self, bookmaker_odds: Dict[str, List[float]]
+    ) -> Dict[str, List[float]]:
         """
         验证和清理赔率数据
 
@@ -241,19 +247,20 @@ class MatchParserV2:
             # 计算统计量
             mean_odds = sum(odds_list) / len(odds_list)
             variance = sum((x - mean_odds) ** 2 for x in odds_list) / len(odds_list)
-            std_dev = variance ** 0.5
+            std_dev = variance**0.5
 
             # 过滤异常值
             filtered_odds = [
-                odds for odds in odds_list
-                if abs(odds - mean_odds) <= 3 * std_dev
+                odds for odds in odds_list if abs(odds - mean_odds) <= 3 * std_dev
             ]
 
             cleaned_odds[odds_type] = filtered_odds if filtered_odds else odds_list
 
         return cleaned_odds
 
-    def _calculate_average_odds(self, cleaned_odds: Dict[str, List[float]]) -> Tuple[float, float, float]:
+    def _calculate_average_odds(
+        self, cleaned_odds: Dict[str, List[float]]
+    ) -> Tuple[float, float, float]:
         """
         计算平均赔率
 
@@ -264,21 +271,20 @@ class MatchParserV2:
             (主胜平均赔率, 平局平均赔率, 客胜平均赔率)
         """
         avg_home = self._safe_average(
-            cleaned_odds.get('home_odds', []),
-            self.config.default_home_odds
+            cleaned_odds.get("home_odds", []), self.config.default_home_odds
         )
         avg_draw = self._safe_average(
-            cleaned_odds.get('draw_odds', []),
-            self.config.default_draw_odds
+            cleaned_odds.get("draw_odds", []), self.config.default_draw_odds
         )
         avg_away = self._safe_average(
-            cleaned_odds.get('away_odds', []),
-            self.config.default_away_odds
+            cleaned_odds.get("away_odds", []), self.config.default_away_odds
         )
 
         return avg_home, avg_draw, avg_away
 
-    def _calculate_implied_probabilities(self, cleaned_odds: Dict[str, List[float]]) -> Tuple[float, float, float]:
+    def _calculate_implied_probabilities(
+        self, cleaned_odds: Dict[str, List[float]]
+    ) -> Tuple[float, float, float]:
         """
         计算隐含概率
 
@@ -289,9 +295,9 @@ class MatchParserV2:
             (主胜隐含概率, 平局隐含概率, 客胜隐含概率)
         """
         # 计算总隐含概率
-        total_home_prob = sum(1 / odds for odds in cleaned_odds.get('home_odds', []))
-        total_draw_prob = sum(1 / odds for odds in cleaned_odds.get('draw_odds', []))
-        total_away_prob = sum(1 / odds for odds in cleaned_odds.get('away_odds', []))
+        total_home_prob = sum(1 / odds for odds in cleaned_odds.get("home_odds", []))
+        total_draw_prob = sum(1 / odds for odds in cleaned_odds.get("draw_odds", []))
+        total_away_prob = sum(1 / odds for odds in cleaned_odds.get("away_odds", []))
 
         total_prob = total_home_prob + total_draw_prob + total_away_prob
 
@@ -310,7 +316,7 @@ class MatchParserV2:
         self,
         average_odds: Tuple[float, float, float],
         implied_probabilities: Tuple[float, float, float],
-        cleaned_odds: Dict[str, List[float]]
+        cleaned_odds: Dict[str, List[float]],
     ) -> ParsedOdds:
         """
         构建解析结果对象
@@ -328,7 +334,7 @@ class MatchParserV2:
 
         # 计算完整性
         max_bookmakers = len(self.config.default_bookmakers)
-        actual_bookmakers = len(cleaned_odds.get('home_odds', []))
+        actual_bookmakers = len(cleaned_odds.get("home_odds", []))
         completeness = actual_bookmakers / max_bookmakers if max_bookmakers > 0 else 0.0
 
         return ParsedOdds(
@@ -339,7 +345,7 @@ class MatchParserV2:
             implied_draw_prob=implied_draw,
             implied_away_prob=implied_away,
             odds_completeness=completeness,
-            bookmaker_count=actual_bookmakers
+            bookmaker_count=actual_bookmakers,
         )
 
     def _convert_to_dict(self, parsed_odds: ParsedOdds) -> Dict[str, float]:
@@ -353,14 +359,14 @@ class MatchParserV2:
             字典格式的结果
         """
         return {
-            'avg_home_odds': parsed_odds.avg_home_odds,
-            'avg_draw_odds': parsed_odds.avg_draw_odds,
-            'avg_away_odds': parsed_odds.avg_away_odds,
-            'implied_home_prob': parsed_odds.implied_home_prob,
-            'implied_draw_prob': parsed_odds.implied_draw_prob,
-            'implied_away_prob': parsed_odds.implied_away_prob,
-            'odds_completeness': parsed_odds.odds_completeness,
-            'bookmaker_count': parsed_odds.bookmaker_count
+            "avg_home_odds": parsed_odds.avg_home_odds,
+            "avg_draw_odds": parsed_odds.avg_draw_odds,
+            "avg_away_odds": parsed_odds.avg_away_odds,
+            "implied_home_prob": parsed_odds.implied_home_prob,
+            "implied_draw_prob": parsed_odds.implied_draw_prob,
+            "implied_away_prob": parsed_odds.implied_away_prob,
+            "odds_completeness": parsed_odds.odds_completeness,
+            "bookmaker_count": parsed_odds.bookmaker_count,
         }
 
     # === 工具函数 ===
@@ -378,14 +384,14 @@ class MatchParserV2:
     def _get_default_odds_dict(self) -> Dict[str, float]:
         """获取默认赔率字典"""
         return {
-            'avg_home_odds': self.config.default_home_odds,
-            'avg_draw_odds': self.config.default_draw_odds,
-            'avg_away_odds': self.config.default_away_odds,
-            'implied_home_prob': 33.33,
-            'implied_draw_prob': 33.33,
-            'implied_away_prob': 33.34,
-            'odds_completeness': 0.0,
-            'bookmaker_count': 0
+            "avg_home_odds": self.config.default_home_odds,
+            "avg_draw_odds": self.config.default_draw_odds,
+            "avg_away_odds": self.config.default_away_odds,
+            "implied_home_prob": 33.33,
+            "implied_draw_prob": 33.33,
+            "implied_away_prob": 33.34,
+            "odds_completeness": 0.0,
+            "bookmaker_count": 0,
         }
 
     # === 保持其他原有方法 ===
@@ -407,9 +413,9 @@ class MatchParserV2:
 
         # 提取统计数据（简化版）
         result = {}
-        for team_prefix, team_key in [('home_', 'home'), ('away_', 'away')]:
+        for team_prefix, team_key in [("home_", "home"), ("away_", "away")]:
             team_stats = self._safe_get(stats_data, team_key, {})
-            for stat_key in ['possession', 'shots', 'shots_on_target', 'corners']:
+            for stat_key in ["possession", "shots", "shots_on_target", "corners"]:
                 result[f"{team_prefix}{stat_key}"] = self._safe_get(
                     team_stats, stat_key, 0.0
                 )
@@ -419,8 +425,8 @@ class MatchParserV2:
     def _get_default_stats(self) -> Dict[str, float]:
         """获取默认统计数据"""
         result = {}
-        for prefix in ['home_', 'away_']:
-            for key in ['possession', 'shots', 'shots_on_target', 'corners']:
-                default_value = 50.0 if key == 'possession' else 0.0
+        for prefix in ["home_", "away_"]:
+            for key in ["possession", "shots", "shots_on_target", "corners"]:
+                default_value = 50.0 if key == "possession" else 0.0
                 result[f"{prefix}{key}"] = default_value
         return result

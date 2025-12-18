@@ -44,6 +44,7 @@ logger = logging.getLogger(__name__)
 
 class AlertLevel(Enum):
     """告警级别"""
+
     INFO = "info"
     WARNING = "warning"
     ERROR = "error"
@@ -53,6 +54,7 @@ class AlertLevel(Enum):
 
 class NotificationChannel(Enum):
     """通知渠道"""
+
     TELEGRAM = "telegram"
     EMAIL = "email"
     SLACK = "slack"
@@ -62,6 +64,7 @@ class NotificationChannel(Enum):
 
 class AlertStatus(Enum):
     """告警状态"""
+
     ACTIVE = "active"
     RESOLVED = "resolved"
     SUPPRESSED = "suppressed"
@@ -71,6 +74,7 @@ class AlertStatus(Enum):
 @dataclass
 class AlertConfig:
     """告警配置"""
+
     # Telegram配置
     telegram_bot_token: Optional[str] = None
     telegram_chat_ids: List[str] = field(default_factory=list)
@@ -113,6 +117,7 @@ class AlertConfig:
 @dataclass
 class Alert:
     """告警对象"""
+
     id: str
     title: str
     message: str
@@ -157,14 +162,17 @@ class Alert:
             "metadata": self.metadata,
             "tags": self.tags,
             "resolved_at": self.resolved_at.isoformat() if self.resolved_at else None,
-            "acknowledged_at": self.acknowledged_at.isoformat() if self.acknowledged_at else None,
-            "acknowledged_by": self.acknowledged_by
+            "acknowledged_at": (
+                self.acknowledged_at.isoformat() if self.acknowledged_at else None
+            ),
+            "acknowledged_by": self.acknowledged_by,
         }
 
 
 @dataclass
 class NotificationResult:
     """通知结果"""
+
     success: bool
     channel: NotificationChannel
     error_message: Optional[str] = None
@@ -211,23 +219,28 @@ class AlertAggregator:
         """清理过期的告警"""
         cutoff_time = datetime.utcnow() - timedelta(minutes=self.window_minutes)
         self.alert_buffer = [
-            alert for alert in self.alert_buffer
-            if alert.timestamp >= cutoff_time
+            alert for alert in self.alert_buffer if alert.timestamp >= cutoff_time
         ]
 
     def _find_similar_alerts(self, alert: Alert) -> List[Alert]:
         """查找相似的告警"""
         similar = []
-        title_prefix = alert.title.split(':')[0] if ':' in alert.title else alert.title
+        title_prefix = alert.title.split(":")[0] if ":" in alert.title else alert.title
 
         for existing_alert in self.alert_buffer:
             # 检查告警来源和级别是否相同
-            if (existing_alert.source == alert.source and
-                existing_alert.level == alert.level and
-                existing_alert.status == AlertStatus.ACTIVE):
+            if (
+                existing_alert.source == alert.source
+                and existing_alert.level == alert.level
+                and existing_alert.status == AlertStatus.ACTIVE
+            ):
 
                 # 检查标题是否相似
-                existing_prefix = existing_alert.title.split(':')[0] if ':' in existing_alert.title else existing_alert.title
+                existing_prefix = (
+                    existing_alert.title.split(":")[0]
+                    if ":" in existing_alert.title
+                    else existing_alert.title
+                )
                 if title_prefix == existing_prefix:
                     similar.append(existing_alert)
 
@@ -272,9 +285,9 @@ class AlertAggregator:
             metadata={
                 "aggregated_count": count,
                 "original_alert_ids": [alert.id for alert in alerts],
-                "sources": sources
+                "sources": sources,
             },
-            tags=["aggregated"] + base_alert.tags
+            tags=["aggregated"] + base_alert.tags,
         )
 
 
@@ -292,8 +305,7 @@ class RateLimiter:
 
         # 清理1小时前的记录
         self.alert_history = [
-            timestamp for timestamp in self.alert_history
-            if timestamp >= hour_ago
+            timestamp for timestamp in self.alert_history if timestamp >= hour_ago
         ]
 
         # 检查是否超过限制
@@ -318,14 +330,11 @@ class AlertNotifier:
         self.aggregator = AlertAggregator(
             window_minutes=config.aggregation_window_minutes
         )
-        self.rate_limiter = RateLimiter(
-            max_alerts_per_hour=config.max_alerts_per_hour
-        )
+        self.rate_limiter = RateLimiter(max_alerts_per_hour=config.max_alerts_per_hour)
 
         # 初始化模板引擎
         self.template_env = jinja2.Environment(
-            loader=jinja2.FileSystemLoader(config.templates_dir),
-            autoescape=True
+            loader=jinja2.FileSystemLoader(config.templates_dir), autoescape=True
         )
 
         # HTTP会话
@@ -341,7 +350,7 @@ class AlertNotifier:
             "alerts_by_channel": {channel.value: 0 for channel in NotificationChannel},
             "alerts_by_level": {level.value: 0 for level in AlertLevel},
             "failed_alerts": 0,
-            "last_alert_time": None
+            "last_alert_time": None,
         }
 
         logger.info("🔔 告警通知系统初始化完成")
@@ -389,7 +398,7 @@ class AlertNotifier:
         channels: Optional[List[NotificationChannel]] = None,
         metadata: Optional[Dict[str, Any]] = None,
         tags: Optional[List[str]] = None,
-        force_send: bool = False
+        force_send: bool = False,
     ) -> List[NotificationResult]:
         """
         发送告警
@@ -416,7 +425,7 @@ class AlertNotifier:
                 level=level,
                 source=source,
                 metadata=metadata or {},
-                tags=tags or []
+                tags=tags or [],
             )
 
             # 检查是否需要聚合
@@ -429,7 +438,11 @@ class AlertNotifier:
                 return []
 
             # 检查速率限制
-            if not force_send and self.config.enable_rate_limit and not self.rate_limiter.can_send_alert():
+            if (
+                not force_send
+                and self.config.enable_rate_limit
+                and not self.rate_limiter.can_send_alert()
+            ):
                 logger.warning("⚠️ 超过速率限制，跳过告警发送")
                 return []
 
@@ -446,7 +459,7 @@ class AlertNotifier:
             # 并发发送到各渠道
             results = await asyncio.gather(
                 *[self._send_to_channel(alert, channel) for channel in channels],
-                return_exceptions=True
+                return_exceptions=True,
             )
 
             # 处理结果
@@ -454,11 +467,13 @@ class AlertNotifier:
             for i, result in enumerate(results):
                 if isinstance(result, Exception):
                     logger.error(f"❌ 发送到{channels[i].value}失败: {result}")
-                    notification_results.append(NotificationResult(
-                        success=False,
-                        channel=channels[i],
-                        error_message=str(result)
-                    ))
+                    notification_results.append(
+                        NotificationResult(
+                            success=False,
+                            channel=channels[i],
+                            error_message=str(result),
+                        )
+                    )
                     self.stats["failed_alerts"] += 1
                 else:
                     notification_results.append(result)
@@ -473,11 +488,13 @@ class AlertNotifier:
 
         except Exception as e:
             logger.error(f"❌ 告警发送失败: {e}")
-            return [NotificationResult(
-                success=False,
-                channel=NotificationChannel.EMAIL,  # 默认渠道
-                error_message=str(e)
-            )]
+            return [
+                NotificationResult(
+                    success=False,
+                    channel=NotificationChannel.EMAIL,  # 默认渠道
+                    error_message=str(e),
+                )
+            ]
 
     def _is_in_cooldown(self, alert_key: str) -> bool:
         """检查告警是否在冷却期内"""
@@ -510,7 +527,9 @@ class AlertNotifier:
 
         return channels
 
-    async def _send_to_channel(self, alert: Alert, channel: NotificationChannel) -> NotificationResult:
+    async def _send_to_channel(
+        self, alert: Alert, channel: NotificationChannel
+    ) -> NotificationResult:
         """发送告警到指定渠道"""
         start_time = time.time()
 
@@ -537,7 +556,7 @@ class AlertNotifier:
                 success=False,
                 channel=channel,
                 error_message=str(e),
-                response_time_ms=(time.time() - start_time) * 1000
+                response_time_ms=(time.time() - start_time) * 1000,
             )
 
     async def _send_telegram_alert(self, alert: Alert) -> NotificationResult:
@@ -551,7 +570,7 @@ class AlertNotifier:
                 AlertLevel.WARNING: "⚠️",
                 AlertLevel.ERROR: "❌",
                 AlertLevel.CRITICAL: "🚨",
-                AlertLevel.FATAL: "💀"
+                AlertLevel.FATAL: "💀",
             }
 
             text = f"""
@@ -571,7 +590,7 @@ class AlertNotifier:
                     "chat_id": chat_id,
                     "text": text,
                     "parse_mode": "Markdown",
-                    "disable_web_page_preview": True
+                    "disable_web_page_preview": True,
                 }
 
                 async with self.http_session.post(url, json=payload) as response:
@@ -584,23 +603,27 @@ class AlertNotifier:
                         results.append(False)
 
             success = all(results)
-            return NotificationResult(success=success, channel=NotificationChannel.TELEGRAM)
+            return NotificationResult(
+                success=success, channel=NotificationChannel.TELEGRAM
+            )
 
         except Exception as e:
             return NotificationResult(
                 success=False,
                 channel=NotificationChannel.TELEGRAM,
-                error_message=str(e)
+                error_message=str(e),
             )
 
     async def _send_email_alert(self, alert: Alert) -> NotificationResult:
         """发送邮件告警"""
         try:
             # 创建邮件内容
-            msg = MIMEMultipart('alternative')
-            msg['Subject'] = f"[{alert.level.value.upper()}] {alert.title}"
-            msg['From'] = formataddr(('Football Prediction System', self.config.email_from))
-            msg['To'] = ', '.join(self.config.email_to)
+            msg = MIMEMultipart("alternative")
+            msg["Subject"] = f"[{alert.level.value.upper()}] {alert.title}"
+            msg["From"] = formataddr(
+                ("Football Prediction System", self.config.email_from)
+            )
+            msg["To"] = ", ".join(self.config.email_to)
 
             # HTML内容
             html_content = f"""
@@ -634,16 +657,14 @@ class AlertNotifier:
             """
 
             # 添加HTML和纯文本内容
-            msg.attach(MIMEText(html_content, 'html', 'utf-8'))
-            msg.attach(MIMEText(alert.message, 'plain', 'utf-8'))
+            msg.attach(MIMEText(html_content, "html", "utf-8"))
+            msg.attach(MIMEText(alert.message, "plain", "utf-8"))
 
             # 在线程池中发送邮件 (同步SMTP)
             loop = asyncio.get_event_loop()
             with ThreadPoolExecutor() as executor:
                 result = await loop.run_in_executor(
-                    executor,
-                    self._send_email_sync,
-                    msg
+                    executor, self._send_email_sync, msg
                 )
 
             if result:
@@ -655,9 +676,7 @@ class AlertNotifier:
 
         except Exception as e:
             return NotificationResult(
-                success=False,
-                channel=NotificationChannel.EMAIL,
-                error_message=str(e)
+                success=False, channel=NotificationChannel.EMAIL, error_message=str(e)
             )
 
     def _send_email_sync(self, msg: MIMEMultipart) -> bool:
@@ -684,7 +703,7 @@ class AlertNotifier:
                 AlertLevel.WARNING: ":warning:",
                 AlertLevel.ERROR: ":x:",
                 AlertLevel.CRITICAL: ":rotating_light:",
-                AlertLevel.FATAL: ":skull:"
+                AlertLevel.FATAL: ":skull:",
             }
 
             payload = {
@@ -696,32 +715,42 @@ class AlertNotifier:
                         "color": self._get_slack_color(alert.level),
                         "fields": [
                             {"title": "来源", "value": alert.source, "short": True},
-                            {"title": "级别", "value": alert.level.value.upper(), "short": True},
-                            {"title": "时间", "value": alert.timestamp.strftime('%Y-%m-%d %H:%M:%S'), "short": True}
+                            {
+                                "title": "级别",
+                                "value": alert.level.value.upper(),
+                                "short": True,
+                            },
+                            {
+                                "title": "时间",
+                                "value": alert.timestamp.strftime("%Y-%m-%d %H:%M:%S"),
+                                "short": True,
+                            },
                         ],
-                        "text": alert.message
+                        "text": alert.message,
                     }
-                ]
+                ],
             }
 
-            async with self.http_session.post(self.config.slack_webhook_url, json=payload) as response:
+            async with self.http_session.post(
+                self.config.slack_webhook_url, json=payload
+            ) as response:
                 if response.status == 200:
                     logger.info("✅ Slack告警发送成功")
-                    return NotificationResult(success=True, channel=NotificationChannel.SLACK)
+                    return NotificationResult(
+                        success=True, channel=NotificationChannel.SLACK
+                    )
                 else:
                     error_text = await response.text()
                     logger.error(f"❌ Slack告警发送失败: {error_text}")
                     return NotificationResult(
                         success=False,
                         channel=NotificationChannel.SLACK,
-                        error_message=error_text
+                        error_message=error_text,
                     )
 
         except Exception as e:
             return NotificationResult(
-                success=False,
-                channel=NotificationChannel.SLACK,
-                error_message=str(e)
+                success=False, channel=NotificationChannel.SLACK, error_message=str(e)
             )
 
     def _get_slack_color(self, level: AlertLevel) -> str:
@@ -731,7 +760,7 @@ class AlertNotifier:
             AlertLevel.WARNING: "warning",
             AlertLevel.ERROR: "danger",
             AlertLevel.CRITICAL: "#ff0000",
-            AlertLevel.FATAL: "#800000"
+            AlertLevel.FATAL: "#800000",
         }
         return color_map.get(level, "good")
 
@@ -743,7 +772,7 @@ class AlertNotifier:
                 AlertLevel.WARNING: "⚠️",
                 AlertLevel.ERROR: "❌",
                 AlertLevel.CRITICAL: "🚨",
-                AlertLevel.FATAL: "💀"
+                AlertLevel.FATAL: "💀",
             }
 
             payload = {
@@ -758,22 +787,26 @@ class AlertNotifier:
 
 {alert.message}
                     """.strip()
-                }
+                },
             }
 
-            async with self.http_session.post(self.config.wechat_work_webhook_url, json=payload) as response:
+            async with self.http_session.post(
+                self.config.wechat_work_webhook_url, json=payload
+            ) as response:
                 if response.status == 200:
                     result = await response.json()
-                    if result.get('errcode') == 0:
+                    if result.get("errcode") == 0:
                         logger.info("✅ 企业微信告警发送成功")
-                        return NotificationResult(success=True, channel=NotificationChannel.WECHAT_WORK)
+                        return NotificationResult(
+                            success=True, channel=NotificationChannel.WECHAT_WORK
+                        )
                     else:
-                        error_msg = result.get('errmsg', 'Unknown error')
+                        error_msg = result.get("errmsg", "Unknown error")
                         logger.error(f"❌ 企业微信告警发送失败: {error_msg}")
                         return NotificationResult(
                             success=False,
                             channel=NotificationChannel.WECHAT_WORK,
-                            error_message=error_msg
+                            error_message=error_msg,
                         )
                 else:
                     error_text = await response.text()
@@ -781,14 +814,14 @@ class AlertNotifier:
                     return NotificationResult(
                         success=False,
                         channel=NotificationChannel.WECHAT_WORK,
-                        error_message=error_text
+                        error_message=error_text,
                     )
 
         except Exception as e:
             return NotificationResult(
                 success=False,
                 channel=NotificationChannel.WECHAT_WORK,
-                error_message=str(e)
+                error_message=str(e),
             )
 
     async def _send_webhook_alert(self, alert: Alert) -> NotificationResult:
@@ -802,28 +835,32 @@ class AlertNotifier:
                 "source": alert.source,
                 "timestamp": alert.timestamp.isoformat(),
                 "metadata": alert.metadata,
-                "tags": alert.tags
+                "tags": alert.tags,
             }
 
             results = []
             for webhook_url in self.config.webhook_urls:
-                async with self.http_session.post(webhook_url, json=payload) as response:
+                async with self.http_session.post(
+                    webhook_url, json=payload
+                ) as response:
                     if response.status < 400:  # 2xx或3xx状态码
                         logger.info(f"✅ Webhook告警发送成功: {webhook_url}")
                         results.append(True)
                     else:
                         error_text = await response.text()
-                        logger.error(f"❌ Webhook告警发送失败 ({webhook_url}): {error_text}")
+                        logger.error(
+                            f"❌ Webhook告警发送失败 ({webhook_url}): {error_text}"
+                        )
                         results.append(False)
 
             success = all(results)
-            return NotificationResult(success=success, channel=NotificationChannel.WEBHOOK)
+            return NotificationResult(
+                success=success, channel=NotificationChannel.WEBHOOK
+            )
 
         except Exception as e:
             return NotificationResult(
-                success=False,
-                channel=NotificationChannel.WEBHOOK,
-                error_message=str(e)
+                success=False, channel=NotificationChannel.WEBHOOK, error_message=str(e)
             )
 
     async def resolve_alert(self, alert_id: str) -> bool:
@@ -841,7 +878,7 @@ class AlertNotifier:
             message=f"告警已解决\n\n原始告警ID: {alert.id}\n解决时间: {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')}",
             level=AlertLevel.INFO,
             source="alert_system",
-            tags=["alert_resolved"]
+            tags=["alert_resolved"],
         )
 
         logger.info(f"✅ 告警已解决: {alert_id}")
@@ -864,7 +901,7 @@ class AlertNotifier:
         hours: int = 24,
         level: Optional[AlertLevel] = None,
         source: Optional[str] = None,
-        status: Optional[AlertStatus] = None
+        status: Optional[AlertStatus] = None,
     ) -> List[Alert]:
         """获取告警历史"""
         cutoff_time = datetime.utcnow() - timedelta(hours=hours)
@@ -897,11 +934,29 @@ class AlertNotifier:
         return {
             **self.stats,
             "total_alerts_in_history": len(self.alert_history),
-            "active_alerts": len([a for a in self.alert_history.values() if a.status == AlertStatus.ACTIVE]),
-            "resolved_alerts": len([a for a in self.alert_history.values() if a.status == AlertStatus.RESOLVED]),
-            "acknowledged_alerts": len([a for a in self.alert_history.values() if a.status == AlertStatus.ACKNOWLEDGED]),
+            "active_alerts": len(
+                [
+                    a
+                    for a in self.alert_history.values()
+                    if a.status == AlertStatus.ACTIVE
+                ]
+            ),
+            "resolved_alerts": len(
+                [
+                    a
+                    for a in self.alert_history.values()
+                    if a.status == AlertStatus.RESOLVED
+                ]
+            ),
+            "acknowledged_alerts": len(
+                [
+                    a
+                    for a in self.alert_history.values()
+                    if a.status == AlertStatus.ACKNOWLEDGED
+                ]
+            ),
             "rate_limit_active": len(self.rate_limiter.alert_history),
-            "aggregation_buffer_size": len(self.aggregator.alert_buffer)
+            "aggregation_buffer_size": len(self.aggregator.alert_buffer),
         }
 
     def export_alerts(self, filepath: str, hours: int = 24) -> None:
@@ -910,7 +965,7 @@ class AlertNotifier:
             alerts = self.get_alert_history(hours=hours)
             data = [alert.to_dict() for alert in alerts]
 
-            with open(filepath, 'w', encoding='utf-8') as f:
+            with open(filepath, "w", encoding="utf-8") as f:
                 json.dump(data, f, indent=2, ensure_ascii=False)
 
             logger.info(f"💾 告警数据已导出: {filepath}")
@@ -939,7 +994,7 @@ async def create_notifier(
     smtp_password: Optional[str] = None,
     email_from: Optional[str] = None,
     email_to: Optional[List[str]] = None,
-    **kwargs
+    **kwargs,
 ) -> AlertNotifier:
     """
     创建告警通知器
@@ -965,7 +1020,7 @@ async def create_notifier(
         smtp_password=smtp_password,
         email_from=email_from,
         email_to=email_to or [],
-        **kwargs
+        **kwargs,
     )
 
     notifier = AlertNotifier(config)
@@ -978,24 +1033,24 @@ async def create_notifier(
 ALERT_TEMPLATES = {
     "system_error": {
         "title": "系统错误",
-        "message": "系统发生错误，需要立即处理\n\n错误详情: {error}\n组件: {component}\n时间: {time}"
+        "message": "系统发生错误，需要立即处理\n\n错误详情: {error}\n组件: {component}\n时间: {time}",
     },
     "performance_degradation": {
         "title": "性能下降",
-        "message": "系统性能检测到下降\n\n指标: {metric}\n当前值: {current_value}\n阈值: {threshold}\n时间: {time}"
+        "message": "系统性能检测到下降\n\n指标: {metric}\n当前值: {current_value}\n阈值: {threshold}\n时间: {time}",
     },
     "model_accuracy_drop": {
         "title": "模型准确率下降",
-        "message": "预测模型准确率下降\n\n模型: {model_name}\n当前准确率: {current_accuracy}%\n基线准确率: {baseline_accuracy}%\n时间: {time}"
+        "message": "预测模型准确率下降\n\n模型: {model_name}\n当前准确率: {current_accuracy}%\n基线准确率: {baseline_accuracy}%\n时间: {time}",
     },
     "data_collection_failure": {
         "title": "数据收集失败",
-        "message": "数据收集遇到问题\n\n数据源: {data_source}\n错误信息: {error}\n时间: {time}"
+        "message": "数据收集遇到问题\n\n数据源: {data_source}\n错误信息: {error}\n时间: {time}",
     },
     "strategy_performance": {
         "title": "策略性能报告",
-        "message": "策略性能更新\n\n策略: {strategy_name}\n当前ROI: {roi}%\n胜率: {win_rate}%\n最大回撤: {max_drawdown}%\n时间: {time}"
-    }
+        "message": "策略性能更新\n\n策略: {strategy_name}\n当前ROI: {roi}%\n胜率: {win_rate}%\n最大回撤: {max_drawdown}%\n时间: {time}",
+    },
 }
 
 
@@ -1010,7 +1065,7 @@ async def main():
         smtp_username="your_email@gmail.com",
         smtp_password="your_password",
         email_from="system@example.com",
-        email_to=["admin@example.com"]
+        email_to=["admin@example.com"],
     )
 
     try:
@@ -1020,7 +1075,7 @@ async def main():
             message="足球预测系统已成功启动",
             level=AlertLevel.INFO,
             source="system",
-            tags=["startup"]
+            tags=["startup"],
         )
 
         await notifier.send_alert(
@@ -1028,7 +1083,7 @@ async def main():
             message="XGBoost模型训练已完成，准确率达到85.3%",
             level=AlertLevel.INFO,
             source="model_training",
-            metadata={"model_name": "xgboost_v2", "accuracy": 0.853}
+            metadata={"model_name": "xgboost_v2", "accuracy": 0.853},
         )
 
         await notifier.send_alert(
@@ -1036,7 +1091,7 @@ async def main():
             message="FotMob API数据收集延迟超过5分钟",
             level=AlertLevel.WARNING,
             source="data_collector",
-            tags=["performance", "data"]
+            tags=["performance", "data"],
         )
 
         # 获取统计信息

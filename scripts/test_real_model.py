@@ -20,17 +20,17 @@ sys.path.insert(0, str(project_root))
 
 # 配置日志
 logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
+
 
 def load_model(model_path):
     """加载训练好的模型"""
     logger.info(f"正在加载模型: {model_path}")
 
     try:
-        with open(model_path, 'rb') as f:
+        with open(model_path, "rb") as f:
             model_data = pickle.load(f)
 
         logger.info(f"模型加载成功!")
@@ -43,6 +43,7 @@ def load_model(model_path):
     except Exception as e:
         logger.error(f"模型加载失败: {e}")
         return None
+
 
 def extract_features(home_team, away_team):
     """提取特征（简化版本）"""
@@ -57,19 +58,20 @@ def extract_features(home_team, away_team):
     away_xg = 0.5 + (away_hash % 100) / 100 * 2.0
 
     return {
-        'home_xg': home_xg,
-        'away_xg': away_xg,
-        'total_xg': home_xg + away_xg,
-        'xg_difference': home_xg - away_xg,
-        'xg_ratio': home_xg / (away_xg + 0.01),
+        "home_xg": home_xg,
+        "away_xg": away_xg,
+        "total_xg": home_xg + away_xg,
+        "xg_difference": home_xg - away_xg,
+        "xg_ratio": home_xg / (away_xg + 0.01),
     }
+
 
 def predict_with_real_model(model_data, home_team, away_team):
     """使用真实模型进行预测"""
     logger.info(f"开始真实模型预测: {home_team} vs {away_team}")
 
-    model = model_data['model']
-    feature_columns = model_data['feature_columns']
+    model = model_data["model"]
+    feature_columns = model_data["feature_columns"]
 
     # 提取特征
     features = extract_features(home_team, away_team)
@@ -106,7 +108,7 @@ def predict_with_real_model(model_data, home_team, away_team):
         "match_info": {
             "home_team": home_team,
             "away_team": away_team,
-            "prediction_date": datetime.now().isoformat()
+            "prediction_date": datetime.now().isoformat(),
         },
         "prediction": {
             "away_win_prob": float(away_prob),
@@ -118,21 +120,22 @@ def predict_with_real_model(model_data, home_team, away_team):
         },
         "model_info": {
             "status": "loaded",
-            "model_version": model_data.get('version', 'unknown'),
+            "model_version": model_data.get("version", "unknown"),
             "feature_count": len(feature_columns),
-            "accuracy": model_data.get('accuracy', None),
+            "accuracy": model_data.get("accuracy", None),
             "features_used": feature_columns,
-            "feature_values": features
-        }
+            "feature_values": features,
+        },
     }
 
     return result
 
+
 def display_prediction_result(result):
     """显示预测结果"""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("🏆 真实模型预测结果")
-    print("="*70)
+    print("=" * 70)
 
     info = result["match_info"]
     pred = result["prediction"]
@@ -144,23 +147,29 @@ def display_prediction_result(result):
     print(f"   预测时间: {info['prediction_date']}")
 
     print(f"\n🎯 预测概率:")
-    home_pct = pred['home_win_prob'] * 100
-    draw_pct = pred['draw_prob'] * 100
-    away_pct = pred['away_win_prob'] * 100
+    home_pct = pred["home_win_prob"] * 100
+    draw_pct = pred["draw_prob"] * 100
+    away_pct = pred["away_win_prob"] * 100
 
-    print(f"   主胜      : {home_pct:5.1%} |{'█' * int(home_pct/3)}{'░' * (33-int(home_pct/3))}|")
-    print(f"   平局      : {draw_pct:5.1%} |{'█' * int(draw_pct/3)}{'░' * (33-int(draw_pct/3))}|")
-    print(f"   客胜      : {away_pct:5.1%} |{'█' * int(away_pct/3)}{'░' * (33-int(away_pct/3))}|")
+    print(
+        f"   主胜      : {home_pct:5.1%} |{'█' * int(home_pct/3)}{'░' * (33-int(home_pct/3))}|"
+    )
+    print(
+        f"   平局      : {draw_pct:5.1%} |{'█' * int(draw_pct/3)}{'░' * (33-int(draw_pct/3))}|"
+    )
+    print(
+        f"   客胜      : {away_pct:5.1%} |{'█' * int(away_pct/3)}{'░' * (33-int(away_pct/3))}|"
+    )
 
     print(f"\n💡 预测结果:")
     print(f"   最终预测: {pred['predicted_outcome']}")
     print(f"   置信度: {pred['confidence']:.3f} ({pred['confidence']*100:.1f}%)")
 
     # 风险评估
-    if pred['confidence'] > 0.6:
+    if pred["confidence"] > 0.6:
         risk = "低风险"
         emoji = "💰"
-    elif pred['confidence'] > 0.5:
+    elif pred["confidence"] > 0.5:
         risk = "中等风险"
         emoji = "📈"
     else:
@@ -176,10 +185,11 @@ def display_prediction_result(result):
     print(f"   训练准确率: {model.get('accuracy', 'unknown')}")
 
     print(f"\n🔍 特征详情:")
-    for feature, value in model['feature_values'].items():
+    for feature, value in model["feature_values"].items():
         print(f"   {feature:15}: {value:.3f}")
 
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
+
 
 def main():
     """主函数"""
@@ -213,7 +223,7 @@ def main():
 
             # 添加分隔符
             if (home, away) != test_matches[-1]:
-                print("\n" + "-"*70)
+                print("\n" + "-" * 70)
 
         print("\n🎉 真实模型预测测试完成!")
         return 0
@@ -221,8 +231,10 @@ def main():
     except Exception as e:
         logger.error(f"预测过程失败: {e}")
         import traceback
+
         traceback.print_exc()
         return 1
+
 
 if __name__ == "__main__":
     sys.exit(main())

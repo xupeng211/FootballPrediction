@@ -631,11 +631,12 @@ if __name__ == "__main__":
             # 显示结果
 
             # 显示各类别指标
+            logger.info(
                 f"   主队获胜: 精确率={metrics.get('test_precision_HOME_WIN', 0):.3f}"
             )
+            logger.info(
                 f"   客队获胜: 精确率={metrics.get('test_precision_AWAY_WIN', 0):.3f}"
             )
-
 
         except Exception as e:
             import traceback

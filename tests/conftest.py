@@ -29,40 +29,32 @@ def setup_test_environment():
         "DB_NAME": "football_prediction_test",
         "DB_USER": "test_user",
         "DB_PASSWORD": "test_password",
-
         # Redis配置
         "REDIS_HOST": "localhost",
         "REDIS_PORT": "6379",
         "REDIS_DB": "1",
         "REDIS_PASSWORD": "",
-
         # API配置
         "FOTMOB_X_MAS_HEADER": "test_mas_header",
         "FOTMOB_X_FOO_HEADER": "test_foo_header",
-
         # 安全配置
         "SECRET_KEY": "test_secret_key_for_testing_only",
         "JWT_SECRET_KEY": "test_jwt_secret_key_for_testing_only",
-
         # 应用配置
         "ENVIRONMENT": "testing",
         "DEBUG": "true",
         "API_HOST": "0.0.0.0",
         "API_PORT": "8000",
-
         # 模型配置
         "MODEL_PATH": str(project_root / "models" / "test_model.pkl"),
         "DEFAULT_MODEL_NAME": "test_model",
-
         # 服务配置
         "INFERENCE_SERVICE_V2_ENABLED": "true",
         "COLLECTION_SERVICE_ENABLED": "true",
         "EXPLAINABILITY_SERVICE_ENABLED": "true",
-
         # 缓存配置
         "CACHE_TTL_SECONDS": "60",
         "MAX_CACHE_SIZE": "100",
-
         # 测试标志
         "PYTEST_CURRENT_TEST": "1",
     }
@@ -231,18 +223,10 @@ def pytest_configure(config):
     config.addinivalue_line(
         "markers", "slow: marks tests as slow (deselect with '-m \"not slow\"')"
     )
-    config.addinivalue_line(
-        "markers", "integration: marks tests as integration tests"
-    )
-    config.addinivalue_line(
-        "markers", "unit: marks tests as unit tests"
-    )
-    config.addinivalue_line(
-        "markers", "e2e: marks tests as end-to-end tests"
-    )
-    config.addinivalue_line(
-        "markers", "performance: marks tests as performance tests"
-    )
+    config.addinivalue_line("markers", "integration: marks tests as integration tests")
+    config.addinivalue_line("markers", "unit: marks tests as unit tests")
+    config.addinivalue_line("markers", "e2e: marks tests as end-to-end tests")
+    config.addinivalue_line("markers", "performance: marks tests as performance tests")
 
 
 # 真实数据支持
@@ -259,56 +243,39 @@ def sample_fotmob_data():
                     "id": 98,
                     "name": "Manchester United",
                     "shortName": "Man Utd",
-                    "country": {"name": "England"}
+                    "country": {"name": "England"},
                 },
                 "awayTeam": {
                     "id": 42,
                     "name": "Arsenal",
                     "shortName": "Arsenal",
-                    "country": {"name": "England"}
+                    "country": {"name": "England"},
                 },
-                "status": {
-                    "started": True,
-                    "finished": True,
-                    "scoreStr": "2-1"
-                },
-                "homeScore": {
-                    "normaltime": 2
-                },
-                "awayScore": {
-                    "normaltime": 1
-                },
+                "status": {"started": True, "finished": True, "scoreStr": "2-1"},
+                "homeScore": {"normaltime": 2},
+                "awayScore": {"normaltime": 1},
                 "startTime": "2025-01-15T20:00:00.000Z",
-                "competition": {
-                    "name": "Premier League",
-                    "type": "league"
-                },
+                "competition": {"name": "Premier League", "type": "league"},
                 "stats": {
                     "expectedGoals": {
-                        "homeTeam": {
-                            "value": 1.8,
-                            "before": 1.7
-                        },
-                        "awayTeam": {
-                            "value": 1.2,
-                            "before": 1.1
-                        }
+                        "homeTeam": {"value": 1.8, "before": 1.7},
+                        "awayTeam": {"value": 1.2, "before": 1.1},
                     },
                     "possession": {
                         "homeTeam": {"value": 58},
-                        "awayTeam": {"value": 42}
+                        "awayTeam": {"value": 42},
                     },
                     "shots": {
                         "homeTeam": {"onTarget": 6, "total": 15},
-                        "awayTeam": {"onTarget": 3, "total": 8}
-                    }
+                        "awayTeam": {"onTarget": 3, "total": 8},
+                    },
                 },
                 "odds": {
                     "homeWin": "2.10",
                     "draw": "3.40",
                     "awayWin": "3.60",
-                    "overUnder25": "1.85"
-                }
+                    "overUnder25": "1.85",
+                },
             },
             {
                 "id": "12346",
@@ -316,56 +283,39 @@ def sample_fotmob_data():
                     "id": 31,
                     "name": "Chelsea",
                     "shortName": "Chelsea",
-                    "country": {"name": "England"}
+                    "country": {"name": "England"},
                 },
                 "awayTeam": {
                     "id": 46,
                     "name": "Liverpool",
                     "shortName": "Liverpool",
-                    "country": {"name": "England"}
+                    "country": {"name": "England"},
                 },
-                "status": {
-                    "started": True,
-                    "finished": True,
-                    "scoreStr": "1-1"
-                },
-                "homeScore": {
-                    "normaltime": 1
-                },
-                "awayScore": {
-                    "normaltime": 1
-                },
+                "status": {"started": True, "finished": True, "scoreStr": "1-1"},
+                "homeScore": {"normaltime": 1},
+                "awayScore": {"normaltime": 1},
                 "startTime": "2025-01-14T15:00:00.000Z",
-                "competition": {
-                    "name": "Premier League",
-                    "type": "league"
-                },
+                "competition": {"name": "Premier League", "type": "league"},
                 "stats": {
                     "expectedGoals": {
-                        "homeTeam": {
-                            "value": 1.4,
-                            "before": 1.3
-                        },
-                        "awayTeam": {
-                            "value": 1.6,
-                            "before": 1.5
-                        }
+                        "homeTeam": {"value": 1.4, "before": 1.3},
+                        "awayTeam": {"value": 1.6, "before": 1.5},
                     },
                     "possession": {
                         "homeTeam": {"value": 45},
-                        "awayTeam": {"value": 55}
+                        "awayTeam": {"value": 55},
                     },
                     "shots": {
                         "homeTeam": {"onTarget": 4, "total": 12},
-                        "awayTeam": {"onTarget": 5, "total": 14}
-                    }
+                        "awayTeam": {"onTarget": 5, "total": 14},
+                    },
                 },
                 "odds": {
                     "homeWin": "2.85",
                     "draw": "3.20",
                     "awayWin": "2.45",
-                    "overUnder25": "1.95"
-                }
+                    "overUnder25": "1.95",
+                },
             },
             {
                 "id": "12347",
@@ -373,57 +323,40 @@ def sample_fotmob_data():
                     "id": 21,
                     "name": "Manchester City",
                     "shortName": "Man City",
-                    "country": {"name": "England"}
+                    "country": {"name": "England"},
                 },
                 "awayTeam": {
                     "id": 61,
                     "name": "Tottenham",
                     "shortName": "Tottenham",
-                    "country": {"name": "England"}
+                    "country": {"name": "England"},
                 },
-                "status": {
-                    "started": True,
-                    "finished": True,
-                    "scoreStr": "3-0"
-                },
-                "homeScore": {
-                    "normaltime": 3
-                },
-                "awayScore": {
-                    "normaltime": 0
-                },
+                "status": {"started": True, "finished": True, "scoreStr": "3-0"},
+                "homeScore": {"normaltime": 3},
+                "awayScore": {"normaltime": 0},
                 "startTime": "2025-01-13T17:30:00.000Z",
-                "competition": {
-                    "name": "Premier League",
-                    "type": "league"
-                },
+                "competition": {"name": "Premier League", "type": "league"},
                 "stats": {
                     "expectedGoals": {
-                        "homeTeam": {
-                            "value": 2.6,
-                            "before": 2.4
-                        },
-                        "awayTeam": {
-                            "value": 0.8,
-                            "before": 0.9
-                        }
+                        "homeTeam": {"value": 2.6, "before": 2.4},
+                        "awayTeam": {"value": 0.8, "before": 0.9},
                     },
                     "possession": {
                         "homeTeam": {"value": 68},
-                        "awayTeam": {"value": 32}
+                        "awayTeam": {"value": 32},
                     },
                     "shots": {
                         "homeTeam": {"onTarget": 9, "total": 22},
-                        "awayTeam": {"onTarget": 2, "total": 6}
-                    }
+                        "awayTeam": {"onTarget": 2, "total": 6},
+                    },
                 },
                 "odds": {
                     "homeWin": "1.35",
                     "draw": "5.80",
                     "awayWin": "7.20",
-                    "overUnder25": "1.65"
-                }
-            }
+                    "overUnder25": "1.65",
+                },
+            },
         ]
     }
 
@@ -433,35 +366,38 @@ def real_features_data():
     """提供真实特征数据的模拟"""
     try:
         import pandas as pd
-        return pd.DataFrame({
-            'home_strength': [1.25, 0.95, 1.45],
-            'away_strength': [0.85, 1.05, 0.75],
-            'home_form': [0.75, 0.60, 0.85],
-            'away_form': [0.65, 0.70, 0.55],
-            'h2h_home_wins': [3, 2, 4],
-            'h2h_away_wins': [2, 2, 1],
-            'venue_factor': [1.1, 1.0, 1.2],
-            'league_strength': [0.85, 0.85, 0.85],
-            'recent_home_goals': [7, 5, 9],
-            'recent_away_goals': [4, 5, 3],
-            'expected_home_goals': [1.8, 1.4, 2.6],
-            'expected_away_goals': [1.2, 1.6, 0.8]
-        })
+
+        return pd.DataFrame(
+            {
+                "home_strength": [1.25, 0.95, 1.45],
+                "away_strength": [0.85, 1.05, 0.75],
+                "home_form": [0.75, 0.60, 0.85],
+                "away_form": [0.65, 0.70, 0.55],
+                "h2h_home_wins": [3, 2, 4],
+                "h2h_away_wins": [2, 2, 1],
+                "venue_factor": [1.1, 1.0, 1.2],
+                "league_strength": [0.85, 0.85, 0.85],
+                "recent_home_goals": [7, 5, 9],
+                "recent_away_goals": [4, 5, 3],
+                "expected_home_goals": [1.8, 1.4, 2.6],
+                "expected_away_goals": [1.2, 1.6, 0.8],
+            }
+        )
     except ImportError:
         # 如果pandas不可用，返回字典格式
         return {
-            'home_strength': [1.25, 0.95, 1.45],
-            'away_strength': [0.85, 1.05, 0.75],
-            'home_form': [0.75, 0.60, 0.85],
-            'away_form': [0.65, 0.70, 0.55],
-            'h2h_home_wins': [3, 2, 4],
-            'h2h_away_wins': [2, 2, 1],
-            'venue_factor': [1.1, 1.0, 1.2],
-            'league_strength': [0.85, 0.85, 0.85],
-            'recent_home_goals': [7, 5, 9],
-            'recent_away_goals': [4, 5, 3],
-            'expected_home_goals': [1.8, 1.4, 2.6],
-            'expected_away_goals': [1.2, 1.6, 0.8]
+            "home_strength": [1.25, 0.95, 1.45],
+            "away_strength": [0.85, 1.05, 0.75],
+            "home_form": [0.75, 0.60, 0.85],
+            "away_form": [0.65, 0.70, 0.55],
+            "h2h_home_wins": [3, 2, 4],
+            "h2h_away_wins": [2, 2, 1],
+            "venue_factor": [1.1, 1.0, 1.2],
+            "league_strength": [0.85, 0.85, 0.85],
+            "recent_home_goals": [7, 5, 9],
+            "recent_away_goals": [4, 5, 3],
+            "expected_home_goals": [1.8, 1.4, 2.6],
+            "expected_away_goals": [1.2, 1.6, 0.8],
         }
 
 
@@ -473,8 +409,13 @@ class TestDataValidator:
     def validate_fotmob_match_data(match_data):
         """验证FotMob比赛数据的完整性"""
         required_fields = [
-            'id', 'homeTeam', 'awayTeam', 'status',
-            'homeScore', 'awayScore', 'startTime'
+            "id",
+            "homeTeam",
+            "awayTeam",
+            "status",
+            "homeScore",
+            "awayScore",
+            "startTime",
         ]
 
         for field in required_fields:
@@ -482,12 +423,12 @@ class TestDataValidator:
                 return False
 
         # 验证队伍数据
-        for team in ['homeTeam', 'awayTeam']:
-            if not all(key in match_data[team] for key in ['id', 'name']):
+        for team in ["homeTeam", "awayTeam"]:
+            if not all(key in match_data[team] for key in ["id", "name"]):
                 return False
 
         # 验证比分
-        if not all(key in match_data['status'] for key in ['started', 'finished']):
+        if not all(key in match_data["status"] for key in ["started", "finished"]):
             return False
 
         return True
@@ -495,19 +436,19 @@ class TestDataValidator:
     @staticmethod
     def validate_prediction_result(result):
         """验证预测结果的完整性"""
-        required_fields = ['probabilities', 'predicted_class', 'confidence']
+        required_fields = ["probabilities", "predicted_class", "confidence"]
 
         for field in required_fields:
             if field not in result:
                 return False
 
         # 验证概率格式
-        probs = result['probabilities']
-        if not all(key in probs for key in ['home_win', 'draw', 'away_win']):
+        probs = result["probabilities"]
+        if not all(key in probs for key in ["home_win", "draw", "away_win"]):
             return False
 
         # 验证概率和
-        prob_sum = probs['home_win'] + probs['draw'] + probs['away_win']
+        prob_sum = probs["home_win"] + probs["draw"] + probs["away_win"]
         if abs(prob_sum - 1.0) > 0.01:
             return False
 

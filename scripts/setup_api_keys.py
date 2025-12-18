@@ -31,6 +31,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from config_secure import get_settings
 
+
 class APIKeySetup:
     """API密钥配置助手"""
 
@@ -40,52 +41,44 @@ class APIKeySetup:
             "fotmob": {
                 "name": "FotMob API",
                 "description": "足球比赛数据API",
-                "required_vars": [
-                    "FOTMOB_X_MAS_HEADER",
-                    "FOTMOB_X_FOO_HEADER"
-                ],
+                "required_vars": ["FOTMOB_X_MAS_HEADER", "FOTMOB_X_FOO_HEADER"],
                 "test_url": "https://www.fotmob.com/api/leagues?id=87",
                 "instructions": [
                     "1. 访问 FotMob 官方网站",
                     "2. 在浏览器开发者工具中查看网络请求",
                     "3. 查找API请求的Header信息",
-                    "4. 提取 X-MAS 和 X-FOO Header值"
-                ]
+                    "4. 提取 X-MAS 和 X-FOO Header值",
+                ],
             },
             "telegram": {
                 "name": "Telegram Bot API",
                 "description": "消息通知API（可选）",
-                "required_vars": [
-                    "TELEGRAM_BOT_TOKEN",
-                    "TELEGRAM_CHAT_ID"
-                ],
+                "required_vars": ["TELEGRAM_BOT_TOKEN", "TELEGRAM_CHAT_ID"],
                 "test_url": None,
                 "instructions": [
                     "1. 与 @BotFather 对话创建机器人",
                     "2. 获取Bot Token",
-                    "3. 与机器人对话获取Chat ID"
-                ]
+                    "3. 与机器人对话获取Chat ID",
+                ],
             },
             "sentry": {
                 "name": "Sentry Error Tracking",
                 "description": "错误跟踪服务（可选）",
-                "required_vars": [
-                    "SENTRY_DSN"
-                ],
+                "required_vars": ["SENTRY_DSN"],
                 "test_url": None,
                 "instructions": [
                     "1. 访问 sentry.io 创建项目",
                     "2. 获取项目的 DSN",
-                    "3. 配置错误跟踪"
-                ]
-            }
+                    "3. 配置错误跟踪",
+                ],
+            },
         }
 
     def generate_secure_keys(self) -> Dict[str, str]:
         """生成安全密钥"""
         return {
             "SECRET_KEY": secrets.token_urlsafe(32),
-            "JWT_SECRET_KEY": secrets.token_urlsafe(32)
+            "JWT_SECRET_KEY": secrets.token_urlsafe(32),
         }
 
     def validate_api_key(self, api_name: str, config: Dict[str, str]) -> bool:
@@ -102,13 +95,11 @@ class APIKeySetup:
             headers = {
                 "X-MAS": config.get("FOTMOB_X_MAS_HEADER", ""),
                 "X-FOO": config.get("FOTMOB_X_FOO_HEADER", ""),
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
             }
 
             response = requests.get(
-                "https://www.fotmob.com/api/leagues?id=87",
-                headers=headers,
-                timeout=10
+                "https://www.fotmob.com/api/leagues?id=87", headers=headers, timeout=10
             )
 
             return response.status_code == 200
@@ -123,8 +114,7 @@ class APIKeySetup:
                 return False
 
             response = requests.get(
-                f"https://api.telegram.org/bot{bot_token}/getMe",
-                timeout=10
+                f"https://api.telegram.org/bot{bot_token}/getMe", timeout=10
             )
 
             return response.status_code == 200
@@ -153,8 +143,10 @@ class APIKeySetup:
                 api_configs.update(configured)
             else:
                 # 其他API是可选的
-                choice = input(f"\n是否配置 {config_info['name']}? (y/n): ").lower().strip()
-                if choice in ['y', 'yes']:
+                choice = (
+                    input(f"\n是否配置 {config_info['name']}? (y/n): ").lower().strip()
+                )
+                if choice in ["y", "yes"]:
                     configured = self._configure_api(api_name, config_info)
                     api_configs.update(configured)
 
@@ -165,7 +157,7 @@ class APIKeySetup:
         print(f"\n📊 配置 {self.api_configs['fotmob']['name']}")
         print(f"说明: {self.api_configs['fotmob']['description']}")
         print("\n配置说明:")
-        for instruction in self.api_configs['fotmob']['instructions']:
+        for instruction in self.api_configs["fotmob"]["instructions"]:
             print(f"  {instruction}")
 
         config = {}
@@ -193,22 +185,24 @@ class APIKeySetup:
         else:
             print("❌ FotMob API连接测试失败!")
             retry = input("是否重新配置? (y/n): ").lower().strip()
-            if retry in ['y', 'yes']:
+            if retry in ["y", "yes"]:
                 return self._configure_fotmob_api()
 
         return config
 
-    def _configure_api(self, api_name: str, config_info: Dict[str, Any]) -> Dict[str, str]:
+    def _configure_api(
+        self, api_name: str, config_info: Dict[str, Any]
+    ) -> Dict[str, str]:
         """配置其他API"""
         print(f"\n📊 配置 {config_info['name']}")
         print(f"说明: {config_info['description']}")
         print("\n配置说明:")
-        for instruction in config_info['instructions']:
+        for instruction in config_info["instructions"]:
             print(f"  {instruction}")
 
         config = {}
 
-        for var in config_info['required_vars']:
+        for var in config_info["required_vars"]:
             if var == "TELEGRAM_BOT_TOKEN":
                 value = input(f"\n请输入 {var}: ").strip()
             elif var == "TELEGRAM_CHAT_ID":
@@ -227,25 +221,27 @@ class APIKeySetup:
 
         return config
 
-    def create_env_file(self, api_configs: Dict[str, str], env_file: str = ".env.production"):
+    def create_env_file(
+        self, api_configs: Dict[str, str], env_file: str = ".env.production"
+    ):
         """创建环境配置文件"""
         env_path = Path(env_file)
 
         # 读取现有配置文件
         existing_config = {}
         if env_path.exists():
-            with open(env_path, 'r') as f:
+            with open(env_path, "r") as f:
                 for line in f:
                     line = line.strip()
-                    if line and not line.startswith('#') and '=' in line:
-                        key, value = line.split('=', 1)
+                    if line and not line.startswith("#") and "=" in line:
+                        key, value = line.split("=", 1)
                         existing_config[key] = value
 
         # 更新配置
         existing_config.update(api_configs)
 
         # 写入配置文件
-        with open(env_path, 'w') as f:
+        with open(env_path, "w") as f:
             f.write("# =============================================\n")
             f.write("# Football Prediction System - Production Config\n")
             f.write("# Generated by Sprint 9 API Setup Script\n")
@@ -259,7 +255,11 @@ class APIKeySetup:
                 "API Service": ["API_HOST", "API_PORT", "CORS_ORIGINS"],
                 "Database": ["DB_HOST", "DB_PORT", "DB_NAME", "DB_USER", "DB_PASSWORD"],
                 "Redis": ["REDIS_HOST", "REDIS_PORT", "REDIS_DB"],
-                "FotMob API": ["FOTMOB_BASE_URL", "FOTMOB_X_MAS_HEADER", "FOTMOB_X_FOO_HEADER"],
+                "FotMob API": [
+                    "FOTMOB_BASE_URL",
+                    "FOTMOB_X_MAS_HEADER",
+                    "FOTMOB_X_FOO_HEADER",
+                ],
                 "Kelly Safety": ["KELLY_MAX_STAKE_PERCENTAGE", "KELLY_EMERGENCY_STOP"],
                 "ML Configuration": ["MODEL_DIR", "DEFAULT_MODEL_NAME"],
                 "Monitoring": ["PROMETHEUS_ENABLED", "LOG_LEVEL"],
@@ -271,7 +271,10 @@ class APIKeySetup:
                     if key in existing_config:
                         value = existing_config[key]
                         # 敏感信息部分隐藏
-                        if any(sensitive in key.lower() for sensitive in ['key', 'token', 'password', 'secret']):
+                        if any(
+                            sensitive in key.lower()
+                            for sensitive in ["key", "token", "password", "secret"]
+                        ):
                             f.write(f"{key}={value}\n")
                         else:
                             f.write(f"{key}={value}\n")
@@ -301,11 +304,7 @@ class APIKeySetup:
             settings = get_settings()
 
             # 检查必需配置
-            required_configs = [
-                "database.host",
-                "database.name",
-                "fotmob.base_url"
-            ]
+            required_configs = ["database.host", "database.name", "fotmob.base_url"]
 
             for config in required_configs:
                 if not self._get_nested_attr(settings, config):
@@ -321,7 +320,7 @@ class APIKeySetup:
 
     def _get_nested_attr(self, obj, attr_path: str):
         """获取嵌套属性"""
-        attrs = attr_path.split('.')
+        attrs = attr_path.split(".")
         current = obj
         for attr in attrs:
             if hasattr(current, attr):
@@ -336,11 +335,11 @@ class APIKeySetup:
         config = {}
 
         if env_file.exists():
-            with open(env_file, 'r') as f:
+            with open(env_file, "r") as f:
                 for line in f:
                     line = line.strip()
-                    if line and not line.startswith('#') and '=' in line:
-                        key, value = line.split('=', 1)
+                    if line and not line.startswith("#") and "=" in line:
+                        key, value = line.split("=", 1)
                         config[key] = value
 
         return config
@@ -350,11 +349,16 @@ class APIKeySetup:
         print("\n🧪 运行连接测试...")
         try:
             import subprocess
-            result = subprocess.run([
-                sys.executable,
-                Path(__file__).parent / "verify_live_connection.py",
-                "quick"
-            ], capture_output=True, text=True)
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    Path(__file__).parent / "verify_live_connection.py",
+                    "quick",
+                ],
+                capture_output=True,
+                text=True,
+            )
 
             if result.returncode == 0:
                 print("✅ 连接测试通过!")
@@ -397,7 +401,7 @@ def main():
         if env_file.exists() and not args.force:
             print(f"⚠️ 配置文件 {args.env_file} 已存在")
             overwrite = input("是否覆盖? (y/n): ").lower().strip()
-            if overwrite not in ['y', 'yes']:
+            if overwrite not in ["y", "yes"]:
                 print("配置已取消")
                 return 0
 

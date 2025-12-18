@@ -316,6 +316,8 @@ if __name__ == "__main__":
             result = score_to_label(home, away)
             status = "✅" if result == expected else "❌"
         except Exception as e:
+            status = f"❌ Error: {e}"
+            pass
 
     for outcome in MatchOutcome:
         numeric = label_to_numeric(outcome)
@@ -326,4 +328,4 @@ if __name__ == "__main__":
     try:
         batch_results = batch_scores_to_labels(batch_scores)
     except Exception as e:
-
+        pass

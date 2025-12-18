@@ -23,7 +23,11 @@ from unittest.mock import AsyncMock, MagicMock, patch
 from typing import Dict, Any, List
 
 # Import services
-from src.services.prediction_service import PredictionService, PredictionRequest, PredictionResponse
+from src.services.prediction_service import (
+    PredictionService,
+    PredictionRequest,
+    PredictionResponse,
+)
 from src.services.inference_service import InferenceService
 from src.ml.inference.cache_manager import PredictionCache
 from src.ml.inference.model_loader import ModelLoader
@@ -55,11 +59,24 @@ class TestPredictionServiceMultiScenario:
         return loader
 
     @pytest.fixture
-    def prediction_service(self, mock_inference_service, mock_cache_manager, mock_model_loader):
+    def prediction_service(
+        self, mock_inference_service, mock_cache_manager, mock_model_loader
+    ):
         """创建预测服务实例"""
-        with patch('src.services.prediction_service.InferenceService', return_value=mock_inference_service), \
-             patch('src.services.prediction_service.PredictionCache', return_value=mock_cache_manager), \
-             patch('src.services.prediction_service.ModelLoader', return_value=mock_model_loader):
+        with (
+            patch(
+                "src.services.prediction_service.InferenceService",
+                return_value=mock_inference_service,
+            ),
+            patch(
+                "src.services.prediction_service.PredictionCache",
+                return_value=mock_cache_manager,
+            ),
+            patch(
+                "src.services.prediction_service.ModelLoader",
+                return_value=mock_model_loader,
+            ),
+        ):
 
             service = PredictionService()
             # 初始化服务（跳过实际的初始化逻辑）
@@ -76,11 +93,7 @@ class TestPredictionServiceMultiScenario:
             "match_id": "man_united_vs_arsenal_2024",
             "home_team": "Manchester United",
             "away_team": "Arsenal",
-            "predictions": {
-                "home_win": 0.65,
-                "draw": 0.22,
-                "away_win": 0.13
-            },
+            "predictions": {"home_win": 0.65, "draw": 0.22, "away_win": 0.13},
             "confidence": 0.73,
             "features": {
                 "home_elo": 1850,
@@ -89,13 +102,13 @@ class TestPredictionServiceMultiScenario:
                 "away_form": 0.45,
                 "h2h_home_wins": 8,
                 "h2h_away_wins": 5,
-                "venue_advantage": 0.15
+                "venue_advantage": 0.15,
             },
             "metadata": {
                 "model_version": "xgboost_v2",
                 "prediction_time": datetime.now().isoformat(),
-                "data_quality": 0.95
-            }
+                "data_quality": 0.95,
+            },
         }
 
     @pytest.fixture
@@ -108,7 +121,7 @@ class TestPredictionServiceMultiScenario:
             "predictions": {
                 "home_win": 0.99,  # 极端高概率
                 "draw": 0.008,
-                "away_win": 0.002  # 极端低概率
+                "away_win": 0.002,  # 极端低概率
             },
             "confidence": 0.95,
             "features": {
@@ -117,22 +130,24 @@ class TestPredictionServiceMultiScenario:
                 "home_form": 1.0,
                 "away_form": 0.0,
                 "odds_home": 1.01,  # 极端赔率
-                "odds_away": 20.0
-            }
+                "odds_away": 20.0,
+            },
         }
 
     @pytest.mark.asyncio
-    async def test_normal_prediction_scenario(self, prediction_service, sample_prediction_data):
+    async def test_normal_prediction_scenario(
+        self, prediction_service, sample_prediction_data
+    ):
         """测试场景1：正常预测流程"""
         # Arrange
         match_id = "test_match_001"
-        prediction_service.inference_service.predict.return_value = sample_prediction_data
+        prediction_service.inference_service.predict.return_value = (
+            sample_prediction_data
+        )
 
         # Act
         response = await prediction_service.predict_single_match(
-            match_id=match_id,
-            include_features=True,
-            include_metadata=True
+            match_id=match_id, include_features=True, include_metadata=True
         )
 
         # Assert
@@ -155,16 +170,10 @@ class TestPredictionServiceMultiScenario:
             "match_id": match_id,
             "home_team": "Team A",
             "away_team": "Team B",
-            "predictions": {
-                "home_win": 0.45,
-                "draw": 0.30,
-                "away_win": 0.25
-            },
+            "predictions": {"home_win": 0.45, "draw": 0.30, "away_win": 0.25},
             "confidence": 0.55,
             # 缺失 features 和部分 metadata
-            "metadata": {
-                "model_version": "xgboost_v2"
-            }
+            "metadata": {"model_version": "xgboost_v2"},
         }
         prediction_service.inference_service.predict.return_value = incomplete_data
 
@@ -172,7 +181,7 @@ class TestPredictionServiceMultiScenario:
         response = await prediction_service.predict_single_match(
             match_id=match_id,
             include_features=True,  # 即使请求features，也应该能处理缺失
-            include_metadata=True
+            include_metadata=True,
         )
 
         # Assert
@@ -184,7 +193,9 @@ class TestPredictionServiceMultiScenario:
         assert "features" not in response.data or response.data.get("features") is None
 
     @pytest.mark.asyncio
-    async def test_extreme_odds_risk_control(self, prediction_service, extreme_odds_data):
+    async def test_extreme_odds_risk_control(
+        self, prediction_service, extreme_odds_data
+    ):
         """测试场景3：极端赔率时的风控表现"""
         # Arrange
         match_id = "extreme_odds_match"
@@ -205,7 +216,9 @@ class TestPredictionServiceMultiScenario:
             assert response.data["risk_warning"] is True
 
     @pytest.mark.asyncio
-    async def test_kelly_criterion_generation(self, prediction_service, sample_prediction_data):
+    async def test_kelly_criterion_generation(
+        self, prediction_service, sample_prediction_data
+    ):
         """测试场景4：Kelly 建议生成"""
         # Arrange
         match_id = "kelly_test_match"
@@ -214,14 +227,15 @@ class TestPredictionServiceMultiScenario:
         sample_data_with_odds["odds"] = {
             "home_win": 1.85,
             "draw": 3.40,
-            "away_win": 4.20
+            "away_win": 4.20,
         }
-        prediction_service.inference_service.predict.return_value = sample_data_with_odds
+        prediction_service.inference_service.predict.return_value = (
+            sample_data_with_odds
+        )
 
         # Act
         response = await prediction_service.predict_single_match(
-            match_id=match_id,
-            include_explanation=True
+            match_id=match_id, include_explanation=True
         )
 
         # Assert
@@ -275,7 +289,7 @@ class TestPredictionServiceMultiScenario:
                     return {
                         "match_id": match_id,
                         "predictions": predictions,
-                        "confidence": 0.75
+                        "confidence": 0.75,
                     }
             return None
 
@@ -283,8 +297,7 @@ class TestPredictionServiceMultiScenario:
 
         # Act - 并发执行多个预测
         tasks = [
-            prediction_service.predict_single_match(match_id)
-            for match_id, _ in matches
+            prediction_service.predict_single_match(match_id) for match_id, _ in matches
         ]
         responses = await asyncio.gather(*tasks)
 
@@ -302,7 +315,7 @@ class TestPredictionServiceMultiScenario:
         request = PredictionRequest(
             match_id="",
             batch_mode=True,
-            match_ids=["match_001", "match_002", "match_003"]
+            match_ids=["match_001", "match_002", "match_003"],
         )
 
         batch_results = [
@@ -327,7 +340,9 @@ class TestPredictionServiceMultiScenario:
         match_id = "error_match"
 
         # 模拟推理服务错误
-        prediction_service.inference_service.predict.side_effect = Exception("Model inference failed")
+        prediction_service.inference_service.predict.side_effect = Exception(
+            "Model inference failed"
+        )
 
         # Act & Assert
         with pytest.raises(Exception):
@@ -344,11 +359,15 @@ class TestPredictionServiceMultiScenario:
             PredictionRequest(match_id="test", batch_mode=True, match_ids=None)
 
     @pytest.mark.asyncio
-    async def test_performance_monitoring(self, prediction_service, sample_prediction_data):
+    async def test_performance_monitoring(
+        self, prediction_service, sample_prediction_data
+    ):
         """测试场景10：性能监控"""
         # Arrange
         match_id = "performance_test"
-        prediction_service.inference_service.predict.return_value = sample_prediction_data
+        prediction_service.inference_service.predict.return_value = (
+            sample_prediction_data
+        )
 
         # Act
         start_time = datetime.now()
@@ -367,7 +386,9 @@ class TestPredictionServiceMultiScenario:
             assert "response_time_ms" in response.data["performance"]
 
     @pytest.mark.asyncio
-    async def test_feature_importance_analysis(self, prediction_service, sample_prediction_data):
+    async def test_feature_importance_analysis(
+        self, prediction_service, sample_prediction_data
+    ):
         """测试场景11：特征重要性分析"""
         # Arrange
         match_id = "feature_importance_test"
@@ -378,25 +399,29 @@ class TestPredictionServiceMultiScenario:
             "home_form": 0.15,
             "away_form": 0.12,
             "h2h_history": 0.18,
-            "venue_advantage": 0.10
+            "venue_advantage": 0.10,
         }
-        prediction_service.inference_service.predict.return_value = sample_data_with_importance
+        prediction_service.inference_service.predict.return_value = (
+            sample_data_with_importance
+        )
 
         # Act
         response = await prediction_service.predict_single_match(
-            match_id=match_id,
-            include_features=True,
-            include_explanation=True
+            match_id=match_id, include_features=True, include_explanation=True
         )
 
         # Assert
         assert response.success is True
         if "feature_importance" in response.data:
             importance = response.data["feature_importance"]
-            assert sum(importance.values()) == pytest.approx(1.0, rel=1e-2)  # 重要性总和应该为1
+            assert sum(importance.values()) == pytest.approx(
+                1.0, rel=1e-2
+            )  # 重要性总和应该为1
 
     @pytest.mark.asyncio
-    async def test_model_version_compatibility(self, prediction_service, sample_prediction_data):
+    async def test_model_version_compatibility(
+        self, prediction_service, sample_prediction_data
+    ):
         """测试场景12：模型版本兼容性"""
         # Arrange
         match_id = "version_test"
@@ -405,7 +430,7 @@ class TestPredictionServiceMultiScenario:
         old_model_data["predictions"] = {
             "home_win": 0.55,
             "draw": 0.28,
-            "away_win": 0.17
+            "away_win": 0.17,
         }
         prediction_service.inference_service.predict.return_value = old_model_data
 
@@ -417,7 +442,9 @@ class TestPredictionServiceMultiScenario:
         assert response.data["metadata"]["model_version"] == "xgboost_v1"
 
         # 验证版本兼容性处理
-        assert "version_compatibility" in response.data or "predictions" in response.data
+        assert (
+            "version_compatibility" in response.data or "predictions" in response.data
+        )
 
 
 class TestPredictionServiceEdgeCases:

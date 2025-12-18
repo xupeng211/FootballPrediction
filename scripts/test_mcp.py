@@ -12,6 +12,7 @@ import os
 # 添加mcp_servers到路径
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+
 async def test_postgres_server():
     """测试PostgreSQL MCP服务器"""
     print("🔍 测试PostgreSQL MCP服务器...")
@@ -39,6 +40,7 @@ async def test_postgres_server():
         print(f"  ❌ 错误: {e}")
         return False
 
+
 async def test_redis_server():
     """测试Redis MCP服务器"""
     print("\n🔍 测试Redis MCP服务器...")
@@ -65,6 +67,7 @@ async def test_redis_server():
     except Exception as e:
         print(f"  ❌ 错误: {e}")
         return False
+
 
 async def test_filesystem_server():
     """测试文件系统MCP服务器"""
@@ -94,16 +97,17 @@ async def test_filesystem_server():
         print(f"  ❌ 错误: {e}")
         return False
 
+
 async def test_claude_settings():
     """测试Claude配置文件"""
     print("\n🔍 测试Claude配置...")
     try:
-        with open('.claude/settings.json', 'r', encoding='utf-8') as f:
+        with open(".claude/settings.json", "r", encoding="utf-8") as f:
             settings = json.load(f)
 
         # 检查MCP服务器配置
-        if 'mcpServers' in settings:
-            mcp_servers = settings['mcpServers']
+        if "mcpServers" in settings:
+            mcp_servers = settings["mcpServers"]
             print(f"  ✅ MCP服务器数量: {len(mcp_servers)}")
             for name, config in mcp_servers.items():
                 print(f"    - {name}: {config.get('command', 'N/A')}")
@@ -112,17 +116,18 @@ async def test_claude_settings():
             return False
 
         # 检查技能配置
-        if 'skills' in settings:
-            skills = settings['skills']
-            enabled = skills.get('enabled', False)
+        if "skills" in settings:
+            skills = settings["skills"]
+            enabled = skills.get("enabled", False)
             print(f"  ✅ 技能系统: {'启用' if enabled else '禁用'}")
-            if enabled and 'priority' in skills:
+            if enabled and "priority" in skills:
                 print(f"    优先级技能: {', '.join(skills['priority'])}")
 
         return True
     except Exception as e:
         print(f"  ❌ 错误: {e}")
         return False
+
 
 async def main():
     """主测试函数"""
@@ -152,6 +157,7 @@ async def main():
         print("⚠️ 部分测试失败，请检查配置")
 
     return 0 if passed == total else 1
+
 
 if __name__ == "__main__":
     exit_code = asyncio.run(main())

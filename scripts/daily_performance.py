@@ -42,8 +42,7 @@ from database.db_pool import DatabasePool
 
 # 设置日志
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -51,6 +50,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class DailyPerformanceMetrics:
     """每日性能指标"""
+
     date: str
     total_predictions: int
     successful_predictions: int
@@ -89,7 +89,7 @@ class RealTimeDashboard:
     async def generate_daily_report(self, date: str = None) -> DailyPerformanceMetrics:
         """生成每日性能报告"""
         if date is None:
-            date = datetime.now().strftime('%Y-%m-%d')
+            date = datetime.now().strftime("%Y-%m-%d")
 
         logger.info(f"📊 生成 {date} 的性能报告")
 
@@ -136,7 +136,7 @@ class RealTimeDashboard:
                     "total_predictions": result["total_predictions"] or 0,
                     "successful_predictions": result["successful_predictions"] or 0,
                     "failed_predictions": result["failed_predictions"] or 0,
-                    "average_confidence": float(result["average_confidence"] or 0.0)
+                    "average_confidence": float(result["average_confidence"] or 0.0),
                 }
 
         except Exception as e:
@@ -146,7 +146,7 @@ class RealTimeDashboard:
                 "total_predictions": 0,
                 "successful_predictions": 0,
                 "failed_predictions": 0,
-                "average_confidence": 0.0
+                "average_confidence": 0.0,
             }
 
     async def _collect_kelly_metrics(self, date: str) -> Dict[str, Any]:
@@ -168,7 +168,7 @@ class RealTimeDashboard:
                 return {
                     "kelly_safety_blocks": result["kelly_safety_blocks"] or 0,
                     "kelly_manual_reviews": result["kelly_manual_reviews"] or 0,
-                    "average_ev": float(result["average_ev"] or 0.0)
+                    "average_ev": float(result["average_ev"] or 0.0),
                 }
 
         except Exception as e:
@@ -176,7 +176,7 @@ class RealTimeDashboard:
             return {
                 "kelly_safety_blocks": 0,
                 "kelly_manual_reviews": 0,
-                "average_ev": 0.0
+                "average_ev": 0.0,
             }
 
     async def _collect_financial_metrics(self, date: str) -> Dict[str, Any]:
@@ -198,7 +198,9 @@ class RealTimeDashboard:
                 total_staked = float(result["total_staked"])
                 total_return = float(result["total_return"])
                 net_profit_loss = total_return - total_staked
-                roi_percentage = (net_profit_loss / total_staked * 100) if total_staked > 0 else 0.0
+                roi_percentage = (
+                    (net_profit_loss / total_staked * 100) if total_staked > 0 else 0.0
+                )
 
                 # 获取当前资金池
                 bankroll_query = """
@@ -208,14 +210,18 @@ class RealTimeDashboard:
                 """
 
                 bankroll_result = await conn.fetchrow(bankroll_query)
-                current_bankroll = float(bankroll_result["current_bankroll"]) if bankroll_result else 10000.0
+                current_bankroll = (
+                    float(bankroll_result["current_bankroll"])
+                    if bankroll_result
+                    else 10000.0
+                )
 
                 return {
                     "total_staked": total_staked,
                     "total_return": total_return,
                     "net_profit_loss": net_profit_loss,
                     "roi_percentage": roi_percentage,
-                    "current_bankroll": current_bankroll
+                    "current_bankroll": current_bankroll,
                 }
 
         except Exception as e:
@@ -225,7 +231,7 @@ class RealTimeDashboard:
                 "total_return": 0.0,
                 "net_profit_loss": 0.0,
                 "roi_percentage": 0.0,
-                "current_bankroll": 10000.0
+                "current_bankroll": 10000.0,
             }
 
     async def _collect_quality_metrics(self, date: str) -> Dict[str, Any]:
@@ -246,22 +252,23 @@ class RealTimeDashboard:
 
                 total_matches = accuracy_result["total_matches"]
                 correct_predictions = accuracy_result["correct_predictions"]
-                prediction_accuracy = (correct_predictions / total_matches * 100) if total_matches > 0 else 0.0
+                prediction_accuracy = (
+                    (correct_predictions / total_matches * 100)
+                    if total_matches > 0
+                    else 0.0
+                )
 
                 # 计算Brier Score（如果可用）
                 brier_score = await self._calculate_brier_score(date, conn)
 
                 return {
                     "prediction_accuracy": prediction_accuracy,
-                    "brier_score": brier_score
+                    "brier_score": brier_score,
                 }
 
         except Exception as e:
             logger.error(f"收集质量指标失败: {e}")
-            return {
-                "prediction_accuracy": 0.0,
-                "brier_score": 0.0
-            }
+            return {"prediction_accuracy": 0.0, "brier_score": 0.0}
 
     async def _calculate_brier_score(self, date: str, conn) -> float:
         """计算Brier Score"""
@@ -307,7 +314,9 @@ class RealTimeDashboard:
                 predicted_vector = [pred_home, pred_draw, pred_away]
 
                 # 计算Brier Score: (predicted - actual)^2
-                brier_score = sum((p - a) ** 2 for p, a in zip(predicted_vector, actual_vector))
+                brier_score = sum(
+                    (p - a) ** 2 for p, a in zip(predicted_vector, actual_vector)
+                )
                 brier_score_sum += brier_score
 
             return brier_score_sum / len(results) if results else 0.0
@@ -332,7 +341,9 @@ class RealTimeDashboard:
             model_inference_time = await self._get_model_inference_time()
 
             # 数据收集成功率
-            data_collection_success_rate = await self._get_data_collection_success_rate()
+            data_collection_success_rate = (
+                await self._get_data_collection_success_rate()
+            )
 
             return {
                 "system_uptime": time.time(),  # 简化的uptime
@@ -340,7 +351,7 @@ class RealTimeDashboard:
                 "memory_usage_mb": memory_info.used / (1024 * 1024),
                 "cpu_usage_percentage": cpu_percent,
                 "model_inference_time_ms": model_inference_time,
-                "data_collection_success_rate": data_collection_success_rate
+                "data_collection_success_rate": data_collection_success_rate,
             }
 
         except Exception as e:
@@ -351,13 +362,14 @@ class RealTimeDashboard:
                 "memory_usage_mb": 0.0,
                 "cpu_usage_percentage": 0.0,
                 "model_inference_time_ms": 0.0,
-                "data_collection_success_rate": 0.0
+                "data_collection_success_rate": 0.0,
             }
 
     async def _measure_api_response_time(self) -> float:
         """测量API响应时间"""
         try:
             import requests
+
             start_time = time.time()
             response = requests.get("http://localhost:8000/health", timeout=5)
             response_time = (time.time() - start_time) * 1000
@@ -422,7 +434,7 @@ class RealTimeDashboard:
                 "today_metrics": asdict(today_metrics),
                 "seven_day_trend": trend_data,
                 "active_alerts": alerts,
-                "system_status": system_status
+                "system_status": system_status,
             }
 
             # 保存看板数据
@@ -456,19 +468,27 @@ class RealTimeDashboard:
 
                 trend_data = []
                 for result in results:
-                    net_pl = float(result["total_return"]) - float(result["total_staked"])
-                    roi = (net_pl / float(result["total_staked"]) * 100) if float(result["total_staked"]) > 0 else 0.0
+                    net_pl = float(result["total_return"]) - float(
+                        result["total_staked"]
+                    )
+                    roi = (
+                        (net_pl / float(result["total_staked"]) * 100)
+                        if float(result["total_staked"]) > 0
+                        else 0.0
+                    )
 
-                    trend_data.append({
-                        "date": result["date"].strftime('%Y-%m-%d'),
-                        "total_predictions": result["total_predictions"],
-                        "successful_predictions": result["successful_predictions"],
-                        "avg_confidence": float(result["avg_confidence"] or 0),
-                        "total_staked": float(result["total_staked"]),
-                        "total_return": float(result["total_return"]),
-                        "net_profit_loss": net_pl,
-                        "roi_percentage": roi
-                    })
+                    trend_data.append(
+                        {
+                            "date": result["date"].strftime("%Y-%m-%d"),
+                            "total_predictions": result["total_predictions"],
+                            "successful_predictions": result["successful_predictions"],
+                            "avg_confidence": float(result["avg_confidence"] or 0),
+                            "total_staked": float(result["total_staked"]),
+                            "total_return": float(result["total_return"]),
+                            "net_profit_loss": net_pl,
+                            "roi_percentage": roi,
+                        }
+                    )
 
                 return trend_data
 
@@ -484,39 +504,47 @@ class RealTimeDashboard:
             # 检查资金风险告警
             today_metrics = await self.generate_daily_report()
             if today_metrics.roi_percentage < -10:  # 当日亏损超过10%
-                alerts.append({
-                    "type": "financial",
-                    "severity": "high",
-                    "message": f"当日ROI过低: {today_metrics.roi_percentage:.1f}%",
-                    "timestamp": datetime.now().isoformat()
-                })
+                alerts.append(
+                    {
+                        "type": "financial",
+                        "severity": "high",
+                        "message": f"当日ROI过低: {today_metrics.roi_percentage:.1f}%",
+                        "timestamp": datetime.now().isoformat(),
+                    }
+                )
 
             # 检查安全系统告警
             if today_metrics.kelly_safety_blocks > 5:  # 安全拦截过多
-                alerts.append({
-                    "type": "safety",
-                    "severity": "medium",
-                    "message": f"Kelly安全拦截次数过多: {today_metrics.kelly_safety_blocks}次",
-                    "timestamp": datetime.now().isoformat()
-                })
+                alerts.append(
+                    {
+                        "type": "safety",
+                        "severity": "medium",
+                        "message": f"Kelly安全拦截次数过多: {today_metrics.kelly_safety_blocks}次",
+                        "timestamp": datetime.now().isoformat(),
+                    }
+                )
 
             # 检查系统性能告警
             if today_metrics.api_response_time > 2000:  # API响应过慢
-                alerts.append({
-                    "type": "performance",
-                    "severity": "medium",
-                    "message": f"API响应时间过长: {today_metrics.api_response_time:.0f}ms",
-                    "timestamp": datetime.now().isoformat()
-                })
+                alerts.append(
+                    {
+                        "type": "performance",
+                        "severity": "medium",
+                        "message": f"API响应时间过长: {today_metrics.api_response_time:.0f}ms",
+                        "timestamp": datetime.now().isoformat(),
+                    }
+                )
 
             # 检查预测准确率告警
             if today_metrics.prediction_accuracy < 40:  # 准确率过低
-                alerts.append({
-                    "type": "quality",
-                    "severity": "high",
-                    "message": f"预测准确率过低: {today_metrics.prediction_accuracy:.1f}%",
-                    "timestamp": datetime.now().isoformat()
-                })
+                alerts.append(
+                    {
+                        "type": "quality",
+                        "severity": "high",
+                        "message": f"预测准确率过低: {today_metrics.prediction_accuracy:.1f}%",
+                        "timestamp": datetime.now().isoformat(),
+                    }
+                )
 
         except Exception as e:
             logger.error(f"获取告警失败: {e}")
@@ -533,7 +561,7 @@ class RealTimeDashboard:
                 "api": "http://localhost:8000/health",
                 "database": "http://localhost:8000/api/v1/health/database",
                 "redis": "http://localhost:8000/api/v1/health/redis",
-                "model": "http://localhost:8000/api/v1/health/model"
+                "model": "http://localhost:8000/api/v1/health/model",
             }
 
             status = {}
@@ -541,14 +569,13 @@ class RealTimeDashboard:
                 try:
                     response = requests.get(url, timeout=5)
                     status[service] = {
-                        "status": "healthy" if response.status_code == 200 else "unhealthy",
-                        "response_time": response.elapsed.total_seconds() * 1000
+                        "status": (
+                            "healthy" if response.status_code == 200 else "unhealthy"
+                        ),
+                        "response_time": response.elapsed.total_seconds() * 1000,
                     }
                 except:
-                    status[service] = {
-                        "status": "down",
-                        "response_time": 0
-                    }
+                    status[service] = {"status": "down", "response_time": 0}
 
             # 计算整体状态
             healthy_count = sum(1 for s in status.values() if s["status"] == "healthy")
@@ -561,16 +588,14 @@ class RealTimeDashboard:
             return {
                 "overall_status": overall_status,
                 "services": status,
-                "healthy_percentage": (healthy_count / total_count * 100) if total_count > 0 else 0
+                "healthy_percentage": (
+                    (healthy_count / total_count * 100) if total_count > 0 else 0
+                ),
             }
 
         except Exception as e:
             logger.error(f"获取系统状态失败: {e}")
-            return {
-                "overall_status": "error",
-                "services": {},
-                "healthy_percentage": 0
-            }
+            return {"overall_status": "error", "services": {}, "healthy_percentage": 0}
 
     async def _save_dashboard_data(self, dashboard_data: Dict[str, Any]):
         """保存看板数据"""
@@ -580,12 +605,12 @@ class RealTimeDashboard:
 
             # 保存最新数据
             latest_file = dashboard_dir / "latest.json"
-            with open(latest_file, 'w', encoding='utf-8') as f:
+            with open(latest_file, "w", encoding="utf-8") as f:
                 json.dump(dashboard_data, f, indent=2, ensure_ascii=False, default=str)
 
             # 保存历史数据（按日期）
             date_file = dashboard_dir / f"{datetime.now().strftime('%Y%m%d')}.json"
-            with open(date_file, 'w', encoding='utf-8') as f:
+            with open(date_file, "w", encoding="utf-8") as f:
                 json.dump(dashboard_data, f, indent=2, ensure_ascii=False, default=str)
 
             logger.info("📄 看板数据已保存")
@@ -622,7 +647,7 @@ class RealTimeDashboard:
                         "reason": "数据不足（少于10场比赛）",
                         "current_brier_score": 0.0,
                         "historical_brier_score": 0.0,
-                        "deviation_percentage": 0.0
+                        "deviation_percentage": 0.0,
                     }
 
                 # 计算最近的Brier Score
@@ -633,18 +658,24 @@ class RealTimeDashboard:
 
                 # 计算偏差
                 deviation = abs(recent_brier - historical_brier)
-                deviation_percentage = (deviation / historical_brier * 100) if historical_brier > 0 else 0
+                deviation_percentage = (
+                    (deviation / historical_brier * 100) if historical_brier > 0 else 0
+                )
 
                 # 判断是否需要进入观察模式
                 should_enter_observation = deviation_percentage > 15  # 偏差超过15%
 
                 result = {
                     "should_enter_observation_mode": should_enter_observation,
-                    "reason": f"Brier Score偏差{deviation_percentage:.1f}%超过15%阈值" if should_enter_observation else "Brier Score在正常范围内",
+                    "reason": (
+                        f"Brier Score偏差{deviation_percentage:.1f}%超过15%阈值"
+                        if should_enter_observation
+                        else "Brier Score在正常范围内"
+                    ),
                     "current_brier_score": recent_brier,
                     "historical_brier_score": historical_brier,
                     "deviation_percentage": deviation_percentage,
-                    "recent_matches_count": len(results)
+                    "recent_matches_count": len(results),
                 }
 
                 if should_enter_observation:
@@ -662,7 +693,7 @@ class RealTimeDashboard:
                 "reason": f"检查失败: {str(e)}",
                 "current_brier_score": 0.0,
                 "historical_brier_score": 0.0,
-                "deviation_percentage": 0.0
+                "deviation_percentage": 0.0,
             }
 
     async def _calculate_brier_score_from_results(self, results) -> float:
@@ -691,7 +722,9 @@ class RealTimeDashboard:
 
                 predicted_vector = [pred_home, pred_draw, pred_away]
 
-                brier_score = sum((p - a) ** 2 for p, a in zip(predicted_vector, actual_vector))
+                brier_score = sum(
+                    (p - a) ** 2 for p, a in zip(predicted_vector, actual_vector)
+                )
                 brier_score_sum += brier_score
                 valid_results += 1
 
@@ -708,11 +741,16 @@ class RealTimeDashboard:
         try:
             # 记录观察模式触发事件
             async with self.db_pool.get_connection() as conn:
-                await conn.execute("""
+                await conn.execute(
+                    """
                     INSERT INTO observation_mode_events
                     (trigger_reason, brier_score, deviation_percentage, created_at)
                     VALUES ($1, $2, $3, NOW())
-                """, reason["reason"], reason["current_brier_score"], reason["deviation_percentage"])
+                """,
+                    reason["reason"],
+                    reason["current_brier_score"],
+                    reason["deviation_percentage"],
+                )
 
             # 这里可以添加更多的观察模式触发逻辑
             # 例如：修改系统配置、发送告警通知等
@@ -722,9 +760,9 @@ class RealTimeDashboard:
 
     def print_dashboard_summary(self, metrics: DailyPerformanceMetrics):
         """打印看板摘要"""
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("📈 足球预测系统 - 实时监控看板")
-        print("="*60)
+        print("=" * 60)
         print(f"📅 日期: {metrics.date}")
         print(f"🎯 预测统计: {metrics.total_predictions} 场")
         print(f"✅ 成功预测: {metrics.successful_predictions} 场")
@@ -743,27 +781,29 @@ class RealTimeDashboard:
         print(f"⚡ API响应时间: {metrics.api_response_time:.0f}ms")
         print(f"💾 内存使用: {metrics.memory_usage_mb:.1f}MB")
         print(f"🖥️ CPU使用率: {metrics.cpu_usage_percentage:.1f}%")
-        print("="*60)
+        print("=" * 60)
 
 
 async def main():
     """主函数"""
     parser = argparse.ArgumentParser(description="Sprint 9 实时监控看板")
-    subparsers = parser.add_subparsers(dest='command', help='可用命令')
+    subparsers = parser.add_subparsers(dest="command", help="可用命令")
 
     # 每日报告命令
-    daily_parser = subparsers.add_parser('daily', help='生成每日性能报告')
-    daily_parser.add_argument('--date', help='指定日期 (YYYY-MM-DD)')
+    daily_parser = subparsers.add_parser("daily", help="生成每日性能报告")
+    daily_parser.add_argument("--date", help="指定日期 (YYYY-MM-DD)")
 
     # 实时看板命令
-    realtime_parser = subparsers.add_parser('realtime', help='生成实时监控看板')
+    realtime_parser = subparsers.add_parser("realtime", help="生成实时监控看板")
 
     # 报告命令
-    report_parser = subparsers.add_parser('report', help='生成性能报告')
-    report_parser.add_argument('--date', help='指定日期 (YYYY-MM-DD)')
+    report_parser = subparsers.add_parser("report", help="生成性能报告")
+    report_parser.add_argument("--date", help="指定日期 (YYYY-MM-DD)")
 
     # 观察模式检查
-    observation_parser = subparsers.add_parser('check-observation', help='检查观察模式条件')
+    observation_parser = subparsers.add_parser(
+        "check-observation", help="检查观察模式条件"
+    )
 
     args = parser.parse_args()
 
@@ -771,9 +811,9 @@ async def main():
     await dashboard.initialize()
 
     try:
-        if args.command == 'daily':
+        if args.command == "daily":
             # 生成每日报告
-            date = args.date or datetime.now().strftime('%Y-%m-%d')
+            date = args.date or datetime.now().strftime("%Y-%m-%d")
             metrics = await dashboard.generate_daily_report(date)
 
             dashboard.print_dashboard_summary(metrics)
@@ -783,32 +823,32 @@ async def main():
             report_file = Path(f"logs/daily_report_{date}.json")
             report_file.parent.mkdir(exist_ok=True)
 
-            with open(report_file, 'w', encoding='utf-8') as f:
+            with open(report_file, "w", encoding="utf-8") as f:
                 json.dump(report_data, f, indent=2, ensure_ascii=False, default=str)
 
             print(f"\n📄 报告已保存: {report_file}")
 
-        elif args.command == 'realtime':
+        elif args.command == "realtime":
             # 生成实时看板
             dashboard_data = await dashboard.generate_realtime_dashboard()
 
             print("\n📈 实时监控看板")
-            print("="*40)
+            print("=" * 40)
             print(f"📊 时间: {dashboard_data['timestamp']}")
 
             # 今日指标
-            today = dashboard_data['today_metrics']
+            today = dashboard_data["today_metrics"]
             print(f"🎯 今日预测: {today['total_predictions']} 场")
             print(f"💰 ROI: {today['roi_percentage']:.2f}%")
             print(f"🛡️ 安全拦截: {today['kelly_safety_blocks']} 次")
 
             # 系统状态
-            status = dashboard_data['system_status']
+            status = dashboard_data["system_status"]
             print(f"🖥️ 系统状态: {status['overall_status']}")
             print(f"✅ 服务健康度: {status['healthy_percentage']:.1f}%")
 
             # 告警
-            alerts = dashboard_data['active_alerts']
+            alerts = dashboard_data["active_alerts"]
             if alerts:
                 print(f"⚠️ 活跃告警: {len(alerts)} 个")
                 for alert in alerts[:3]:  # 只显示前3个
@@ -816,9 +856,9 @@ async def main():
             else:
                 print("✅ 无活跃告警")
 
-        elif args.command == 'report':
+        elif args.command == "report":
             # 生成性能报告
-            date = args.date or datetime.now().strftime('%Y-%m-%d')
+            date = args.date or datetime.now().strftime("%Y-%m-%d")
             metrics = await dashboard.generate_daily_report(date)
 
             dashboard.print_dashboard_summary(metrics)
@@ -827,24 +867,26 @@ async def main():
             report_data = {
                 "metrics": asdict(metrics),
                 "timestamp": datetime.now().isoformat(),
-                "report_type": "daily_performance"
+                "report_type": "daily_performance",
             }
 
             report_file = Path(f"logs/performance_report_{date}.json")
             report_file.parent.mkdir(exist_ok=True)
 
-            with open(report_file, 'w', encoding='utf-8') as f:
+            with open(report_file, "w", encoding="utf-8") as f:
                 json.dump(report_data, f, indent=2, ensure_ascii=False, default=str)
 
             print(f"\n📄 性能报告已保存: {report_file}")
 
-        elif args.command == 'check-observation':
+        elif args.command == "check-observation":
             # 检查观察模式条件
             result = await dashboard.check_observation_mode_conditions()
 
             print("\n🔍 观察模式检查结果")
-            print("="*40)
-            print(f"是否进入观察模式: {'是' if result['should_enter_observation_mode'] else '否'}")
+            print("=" * 40)
+            print(
+                f"是否进入观察模式: {'是' if result['should_enter_observation_mode'] else '否'}"
+            )
             print(f"原因: {result['reason']}")
             print(f"当前Brier Score: {result['current_brier_score']:.4f}")
             print(f"历史Brier Score: {result['historical_brier_score']:.4f}")

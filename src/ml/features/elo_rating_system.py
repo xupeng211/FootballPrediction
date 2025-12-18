@@ -48,25 +48,25 @@ class EloRatingSystem:
 
     # 默认Elo参数
     DEFAULT_RATING = 1500.0  # 初始评分
-    K_FACTOR = 40.0         # 基础K因子
-    HOME_ADVANTAGE = 50.0   # 主场优势（Elo分）
+    K_FACTOR = 40.0  # 基础K因子
+    HOME_ADVANTAGE = 50.0  # 主场优势（Elo分）
 
     # K因子动态调整参数
     K_ADJUSTMENT = {
-        "friendly": 20.0,      # 友谊赛
-        "league": 40.0,        # 联赛比赛
-        "cup": 50.0,          # 杯赛
-        "continental": 60.0,   # 大洲俱乐部比赛
-        "world_cup": 70.0,    # 世界杯
+        "friendly": 20.0,  # 友谊赛
+        "league": 40.0,  # 联赛比赛
+        "cup": 50.0,  # 杯赛
+        "continental": 60.0,  # 大洲俱乐部比赛
+        "world_cup": 70.0,  # 世界杯
     }
 
     # 净胜球调整参数
     GOAL_MARGIN_MULTIPLIER = {
-        1: 1.0,    # 1球险胜
-        2: 1.5,    # 2球优势
-        3: 1.75,   # 3球优势
+        1: 1.0,  # 1球险胜
+        2: 1.5,  # 2球优势
+        3: 1.75,  # 3球优势
         4: 1.875,  # 4球优势
-        5: 1.9375, # 5球+优势
+        5: 1.9375,  # 5球+优势
     }
 
     def __init__(
@@ -117,9 +117,7 @@ class EloRatingSystem:
         )
 
     def get_team_rating(
-        self,
-        team_id: str,
-        as_of_date: Optional[datetime] = None
+        self, team_id: str, as_of_date: Optional[datetime] = None
     ) -> float:
         """
         获取球队Elo评分
@@ -155,7 +153,7 @@ class EloRatingSystem:
         home_team_id: str,
         away_team_id: str,
         home_rating_override: Optional[float] = None,
-        away_rating_override: Optional[float] = None
+        away_rating_override: Optional[float] = None,
     ) -> Tuple[float, float, float]:
         """
         计算比赛预期得分
@@ -196,7 +194,7 @@ class EloRatingSystem:
         match_date: Optional[datetime] = None,
         competition_type: str = "league",
         home_k_factor_override: Optional[float] = None,
-        away_k_factor_override: Optional[float] = None
+        away_k_factor_override: Optional[float] = None,
     ) -> Dict[str, Any]:
         """
         更新球队Elo评分
@@ -259,8 +257,12 @@ class EloRatingSystem:
             )
 
         # 计算评分变化
-        home_rating_change = home_k_factor * goal_multiplier * (actual_home - expected_home)
-        away_rating_change = away_k_factor * goal_multiplier * (actual_away - expected_away)
+        home_rating_change = (
+            home_k_factor * goal_multiplier * (actual_home - expected_home)
+        )
+        away_rating_change = (
+            away_k_factor * goal_multiplier * (actual_away - expected_away)
+        )
 
         # 更新评分
         new_home_rating = old_home_rating + home_rating_change
@@ -321,11 +323,7 @@ class EloRatingSystem:
 
         return result
 
-    def _calculate_k_factor(
-        self,
-        team_id: str,
-        competition_type: str
-    ) -> float:
+    def _calculate_k_factor(self, team_id: str, competition_type: str) -> float:
         """
         计算动态K因子
 
@@ -359,10 +357,7 @@ class EloRatingSystem:
         return base_k
 
     def _update_statistics(
-        self,
-        home_change: float,
-        away_change: float,
-        match_date: datetime
+        self, home_change: float, away_change: float, match_date: datetime
     ) -> None:
         """更新统计信息"""
         self.stats["total_updates"] += 1
@@ -381,11 +376,7 @@ class EloRatingSystem:
 
         self.stats["last_updated"] = match_date.isoformat()
 
-    def get_rating_trend(
-        self,
-        team_id: str,
-        days: int = 30
-    ) -> Dict[str, Any]:
+    def get_rating_trend(self, team_id: str, days: int = 30) -> Dict[str, Any]:
         """
         获取球队评分趋势
 
@@ -404,8 +395,7 @@ class EloRatingSystem:
 
         # 筛选指定时间范围内的记录
         recent_history = [
-            (date, rating) for date, rating in history
-            if date >= cutoff_date
+            (date, rating) for date, rating in history if date >= cutoff_date
         ]
 
         if len(recent_history) < 2:
@@ -437,14 +427,12 @@ class EloRatingSystem:
             "trend_slope": trend_slope,
             "volatility": volatility,
             "current_rating": self.get_team_rating(team_id),
-            "performance_classification": self._classify_performance(change, trend_slope),
+            "performance_classification": self._classify_performance(
+                change, trend_slope
+            ),
         }
 
-    def _classify_performance(
-        self,
-        rating_change: float,
-        trend_slope: float
-    ) -> str:
+    def _classify_performance(self, rating_change: float, trend_slope: float) -> str:
         """
         基于评分变化和趋势斜率分类表现
 
@@ -467,9 +455,7 @@ class EloRatingSystem:
             return "AVERAGE"
 
     def get_top_teams(
-        self,
-        limit: int = 20,
-        min_matches: int = 10
+        self, limit: int = 20, min_matches: int = 10
     ) -> List[Dict[str, Any]]:
         """
         获取评分最高的球队
@@ -490,14 +476,18 @@ class EloRatingSystem:
                 # 获取趋势信息
                 trend = self.get_rating_trend(team_id, days=30)
 
-                team_data.append({
-                    "team_id": team_id,
-                    "current_rating": rating,
-                    "match_count": match_count,
-                    "rating_change_30d": trend.get("rating_change", 0),
-                    "trend_classification": trend.get("performance_classification", "UNKNOWN"),
-                    "volatility": trend.get("volatility", 0),
-                })
+                team_data.append(
+                    {
+                        "team_id": team_id,
+                        "current_rating": rating,
+                        "match_count": match_count,
+                        "rating_change_30d": trend.get("rating_change", 0),
+                        "trend_classification": trend.get(
+                            "performance_classification", "UNKNOWN"
+                        ),
+                        "volatility": trend.get("volatility", 0),
+                    }
+                )
 
         # 按评分排序
         team_data.sort(key=lambda x: x["current_rating"], reverse=True)
@@ -505,10 +495,7 @@ class EloRatingSystem:
         return team_data[:limit]
 
     def predict_match_probabilities(
-        self,
-        home_team_id: str,
-        away_team_id: str,
-        num_simulations: int = 10000
+        self, home_team_id: str, away_team_id: str, num_simulations: int = 10000
     ) -> Dict[str, Any]:
         """
         基于Elo评分预测比赛概率
@@ -553,10 +540,14 @@ class EloRatingSystem:
         score_matrix = np.zeros((6, 6))  # 0-5球的矩阵
         for h_goals in range(6):
             for a_goals in range(6):
-                prob = (np.sum(home_sim == h_goals) * np.sum(away_sim == a_goals)) / (num_simulations ** 2)
+                prob = (np.sum(home_sim == h_goals) * np.sum(away_sim == a_goals)) / (
+                    num_simulations**2
+                )
                 score_matrix[h_goals, a_goals] = prob
 
-        most_likely_score = np.unravel_index(np.argmax(score_matrix), score_matrix.shape)
+        most_likely_score = np.unravel_index(
+            np.argmax(score_matrix), score_matrix.shape
+        )
 
         return {
             "teams": {
@@ -570,7 +561,9 @@ class EloRatingSystem:
                 "draw": float(draws),
                 "away_win": float(away_wins),
                 "over_2_5": float(np.sum(home_sim + away_sim > 2.5) / num_simulations),
-                "both_teams_score": float(np.sum((home_sim > 0) & (away_sim > 0)) / num_simulations),
+                "both_teams_score": float(
+                    np.sum((home_sim > 0) & (away_sim > 0)) / num_simulations
+                ),
             },
             "expected_goals": {
                 "home": exp_home_goals,
@@ -589,10 +582,7 @@ class EloRatingSystem:
             },
         }
 
-    def export_ratings(
-        self,
-        format: str = "dict"
-    ) -> Union[Dict[str, Any], str]:
+    def export_ratings(self, format: str = "dict") -> Union[Dict[str, Any], str]:
         """
         导出所有球队评分
 
@@ -608,16 +598,19 @@ class EloRatingSystem:
             history_count = len(self.rating_history.get(team_id, []))
             trend = self.get_rating_trend(team_id, days=30)
 
-            export_data.append({
-                "team_id": team_id,
-                "current_elo": rating,
-                "matches_played": history_count,
-                "rating_change_30d": trend.get("rating_change", 0),
-                "trend": trend.get("performance_classification", "UNKNOWN"),
-            })
+            export_data.append(
+                {
+                    "team_id": team_id,
+                    "current_elo": rating,
+                    "matches_played": history_count,
+                    "rating_change_30d": trend.get("rating_change", 0),
+                    "trend": trend.get("performance_classification", "UNKNOWN"),
+                }
+            )
 
         if format == "json":
             import json
+
             return json.dumps(export_data, indent=2, ensure_ascii=False)
         elif format == "csv":
             import csv
@@ -652,11 +645,25 @@ class EloRatingSystem:
             "statistics": self.stats,
             "team_count": len(self.team_ratings),
             "rating_distribution": {
-                "average": np.mean(list(self.team_ratings.values())) if self.team_ratings else 0,
-                "std_dev": np.std(list(self.team_ratings.values())) if self.team_ratings else 0,
-                "min": min(self.team_ratings.values()) if self.team_ratings else self.initial_rating,
-                "max": max(self.team_ratings.values()) if self.team_ratings else self.initial_rating,
-            }
+                "average": (
+                    np.mean(list(self.team_ratings.values()))
+                    if self.team_ratings
+                    else 0
+                ),
+                "std_dev": (
+                    np.std(list(self.team_ratings.values())) if self.team_ratings else 0
+                ),
+                "min": (
+                    min(self.team_ratings.values())
+                    if self.team_ratings
+                    else self.initial_rating
+                ),
+                "max": (
+                    max(self.team_ratings.values())
+                    if self.team_ratings
+                    else self.initial_rating
+                ),
+            },
         }
 
     def __repr__(self) -> str:

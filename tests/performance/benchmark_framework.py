@@ -42,7 +42,10 @@ from contextlib import asynccontextmanager
 
 # 导入项目模块
 from src.testing.stress_test_framework import (
-    StressTestFramework, StressTestConfig, ResourceUsage, PerformanceMetrics
+    StressTestFramework,
+    StressTestConfig,
+    ResourceUsage,
+    PerformanceMetrics,
 )
 from src.services.prediction_service import PredictionService
 from src.services.collection_service import FotMobCollectionService
@@ -54,15 +57,16 @@ logger = logging.getLogger(__name__)
 @dataclass
 class BenchmarkConfig:
     """基准测试配置"""
+
     # 测试标识
     benchmark_name: str
     benchmark_version: str = "1.0.0"
     environment: str = "development"  # development, staging, production
 
     # 测试规模
-    small_dataset_size: int = 1000      # 小数据集：1K记录
-    medium_dataset_size: int = 10000   # 中数据集：10K记录
-    large_dataset_size: int = 100000   # 大数据集：100K记录
+    small_dataset_size: int = 1000  # 小数据集：1K记录
+    medium_dataset_size: int = 10000  # 中数据集：10K记录
+    large_dataset_size: int = 100000  # 大数据集：100K记录
 
     # 性能目标（毫秒）
     target_prediction_time_ms: float = 50.0
@@ -96,6 +100,7 @@ class BenchmarkConfig:
 @dataclass
 class BenchmarkResult:
     """单次基准测试结果"""
+
     benchmark_name: str
     test_name: str
     timestamp: datetime
@@ -125,6 +130,7 @@ class BenchmarkResult:
 @dataclass
 class BenchmarkReport:
     """基准测试报告"""
+
     report_id: str
     benchmark_name: str
     timestamp: datetime
@@ -171,7 +177,8 @@ class BenchmarkDatabase:
     def _initialize_database(self):
         """初始化数据库"""
         self.conn = sqlite3.connect(self.db_path)
-        self.conn.execute("""
+        self.conn.execute(
+            """
             CREATE TABLE IF NOT EXISTS benchmark_results (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 benchmark_name TEXT NOT NULL,
@@ -190,37 +197,57 @@ class BenchmarkDatabase:
                 platform TEXT,
                 hostname TEXT
             )
-        """)
+        """
+        )
 
-        self.conn.execute("""
+        self.conn.execute(
+            """
             CREATE INDEX IF NOT EXISTS idx_benchmark_name
             ON benchmark_results(benchmark_name, timestamp DESC)
-        """)
+        """
+        )
 
-        self.conn.execute("""
+        self.conn.execute(
+            """
             CREATE INDEX IF NOT EXISTS idx_environment
             ON benchmark_results(environment, timestamp DESC)
-        """)
+        """
+        )
 
         self.conn.commit()
 
     def save_result(self, result: BenchmarkResult):
         """保存测试结果"""
-        additional_metrics_json = json.dumps(result.additional_metrics) if result.additional_metrics else None
+        additional_metrics_json = (
+            json.dumps(result.additional_metrics) if result.additional_metrics else None
+        )
 
-        self.conn.execute("""
+        self.conn.execute(
+            """
             INSERT INTO benchmark_results (
                 benchmark_name, test_name, timestamp, environment, dataset_size,
                 execution_time_ms, throughput_ops_per_sec, memory_peak_mb, cpu_peak_percent,
                 success, error_message, additional_metrics, python_version, platform, hostname
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (
-            result.benchmark_name, result.test_name, result.timestamp, result.environment,
-            result.dataset_size, result.execution_time_ms, result.throughput_ops_per_sec,
-            result.memory_peak_mb, result.cpu_peak_percent, result.success,
-            result.error_message, additional_metrics_json, result.python_version,
-            result.platform, result.hostname
-        ))
+        """,
+            (
+                result.benchmark_name,
+                result.test_name,
+                result.timestamp,
+                result.environment,
+                result.dataset_size,
+                result.execution_time_ms,
+                result.throughput_ops_per_sec,
+                result.memory_peak_mb,
+                result.cpu_peak_percent,
+                result.success,
+                result.error_message,
+                additional_metrics_json,
+                result.python_version,
+                result.platform,
+                result.hostname,
+            ),
+        )
 
         self.conn.commit()
 
@@ -229,13 +256,15 @@ class BenchmarkDatabase:
         benchmark_name: str,
         test_name: Optional[str] = None,
         environment: Optional[str] = None,
-        days_back: int = 30
+        days_back: int = 30,
     ) -> List[BenchmarkResult]:
         """获取历史结果"""
         query = """
             SELECT * FROM benchmark_results
             WHERE benchmark_name = ? AND timestamp >= datetime('now', '-{} days')
-        """.format(days_back)
+        """.format(
+            days_back
+        )
 
         params = [benchmark_name]
 
@@ -270,7 +299,7 @@ class BenchmarkDatabase:
                 additional_metrics=additional_metrics,
                 python_version=row[13],
                 platform=row[14],
-                hostname=row[15]
+                hostname=row[15],
             )
             results.append(result)
 
@@ -281,10 +310,12 @@ class BenchmarkDatabase:
         benchmark_name: str,
         test_name: str,
         environment: Optional[str] = None,
-        days_back: int = 7
+        days_back: int = 7,
     ) -> Dict[str, Any]:
         """获取性能统计"""
-        results = self.get_historical_results(benchmark_name, test_name, environment, days_back)
+        results = self.get_historical_results(
+            benchmark_name, test_name, environment, days_back
+        )
 
         if not results:
             return {}
@@ -295,14 +326,16 @@ class BenchmarkDatabase:
             return {}
 
         return {
-            'count': len(execution_times),
-            'mean_ms': statistics.mean(execution_times),
-            'median_ms': statistics.median(execution_times),
-            'min_ms': min(execution_times),
-            'max_ms': max(execution_times),
-            'std_ms': statistics.stdev(execution_times) if len(execution_times) > 1 else 0,
-            'p95_ms': np.percentile(execution_times, 95),
-            'p99_ms': np.percentile(execution_times, 99)
+            "count": len(execution_times),
+            "mean_ms": statistics.mean(execution_times),
+            "median_ms": statistics.median(execution_times),
+            "min_ms": min(execution_times),
+            "max_ms": max(execution_times),
+            "std_ms": (
+                statistics.stdev(execution_times) if len(execution_times) > 1 else 0
+            ),
+            "p95_ms": np.percentile(execution_times, 95),
+            "p99_ms": np.percentile(execution_times, 99),
         }
 
 
@@ -344,7 +377,7 @@ class PerformanceBenchmarkFramework:
                 self._benchmark_end_to_end_workflow(),
                 self._benchmark_concurrent_load(),
                 self._benchmark_memory_usage(),
-                self._benchmark_scalability()
+                self._benchmark_scalability(),
             ]
 
             # 并发执行测试
@@ -367,7 +400,7 @@ class PerformanceBenchmarkFramework:
                         cpu_peak_percent=0,
                         success=False,
                         error_message=str(result),
-                        error_traceback=traceback.format_exc()
+                        error_traceback=traceback.format_exc(),
                     )
                     self.results.append(error_result)
                 else:
@@ -400,12 +433,12 @@ class PerformanceBenchmarkFramework:
 
         # 收集系统信息
         system_info = {
-            'cpu_count': psutil.cpu_count(),
-            'memory_total_gb': psutil.virtual_memory().total / 1024 / 1024 / 1024,
-            'disk_total_gb': psutil.disk_usage('/').total / 1024 / 1024 / 1024,
-            'python_version': sys.version,
-            'platform': sys.platform,
-            'hostname': psutil.os.uname().nodename
+            "cpu_count": psutil.cpu_count(),
+            "memory_total_gb": psutil.virtual_memory().total / 1024 / 1024 / 1024,
+            "disk_total_gb": psutil.disk_usage("/").total / 1024 / 1024 / 1024,
+            "python_version": sys.version,
+            "platform": sys.platform,
+            "hostname": psutil.os.uname().nodename,
         }
 
         self.logger.info(f"系统信息: {system_info}")
@@ -428,7 +461,7 @@ class PerformanceBenchmarkFramework:
         dataset_sizes = [
             (self.config.small_dataset_size, "small"),
             (self.config.medium_dataset_size, "medium"),
-            (self.config.large_dataset_size, "large")
+            (self.config.large_dataset_size, "large"),
         ]
 
         for size, size_label in dataset_sizes:
@@ -445,23 +478,27 @@ class PerformanceBenchmarkFramework:
 
             except Exception as e:
                 self.logger.error(f"预测性能测试失败 ({size_label}): {e}")
-                results.append(BenchmarkResult(
-                    benchmark_name=self.config.benchmark_name,
-                    test_name=f"prediction_performance_{size_label}",
-                    timestamp=datetime.now(),
-                    environment=self.config.environment,
-                    dataset_size=size,
-                    execution_time_ms=0,
-                    throughput_ops_per_sec=0,
-                    memory_peak_mb=0,
-                    cpu_peak_percent=0,
-                    success=False,
-                    error_message=str(e)
-                ))
+                results.append(
+                    BenchmarkResult(
+                        benchmark_name=self.config.benchmark_name,
+                        test_name=f"prediction_performance_{size_label}",
+                        timestamp=datetime.now(),
+                        environment=self.config.environment,
+                        dataset_size=size,
+                        execution_time_ms=0,
+                        throughput_ops_per_sec=0,
+                        memory_peak_mb=0,
+                        cpu_peak_percent=0,
+                        success=False,
+                        error_message=str(e),
+                    )
+                )
 
         return results
 
-    async def _run_prediction_benchmark(self, dataset_size: int, size_label: str) -> BenchmarkResult:
+    async def _run_prediction_benchmark(
+        self, dataset_size: int, size_label: str
+    ) -> BenchmarkResult:
         """运行单个预测基准测试"""
         # 预热
         for _ in range(self.config.warmup_iterations):
@@ -501,10 +538,10 @@ class PerformanceBenchmarkFramework:
             cpu_peak_percent=cpu_usage,
             success=True,
             additional_metrics={
-                'operations': operations,
-                'test_duration_s': test_duration,
-                'dataset_size_per_operation': dataset_size // 100
-            }
+                "operations": operations,
+                "test_duration_s": test_duration,
+                "dataset_size_per_operation": dataset_size // 100,
+            },
         )
 
     async def _simulate_prediction(self, data_size: int):
@@ -543,7 +580,9 @@ class PerformanceBenchmarkFramework:
                 predictions = await self._simulate_batch_prediction(batch_size, 100)
 
                 execution_time = (time.time() - start_time) * 1000
-                memory_usage = psutil.Process().memory_info().rss / 1024 / 1024 - start_memory
+                memory_usage = (
+                    psutil.Process().memory_info().rss / 1024 / 1024 - start_memory
+                )
                 throughput = (batch_size * 100) / (execution_time / 1000)
 
                 result = BenchmarkResult(
@@ -558,10 +597,10 @@ class PerformanceBenchmarkFramework:
                     cpu_peak_percent=psutil.cpu_percent(interval=1),
                     success=True,
                     additional_metrics={
-                        'batch_size': batch_size,
-                        'total_predictions': len(predictions),
-                        'predictions_per_batch': batch_size
-                    }
+                        "batch_size": batch_size,
+                        "total_predictions": len(predictions),
+                        "predictions_per_batch": batch_size,
+                    },
                 )
 
                 results.append(result)
@@ -575,23 +614,27 @@ class PerformanceBenchmarkFramework:
 
             except Exception as e:
                 self.logger.error(f"批量预测测试失败 (batch_size={batch_size}): {e}")
-                results.append(BenchmarkResult(
-                    benchmark_name=self.config.benchmark_name,
-                    test_name=f"batch_prediction_batch_size_{batch_size}",
-                    timestamp=datetime.now(),
-                    environment=self.config.environment,
-                    dataset_size=batch_size * 100,
-                    execution_time_ms=0,
-                    throughput_ops_per_sec=0,
-                    memory_peak_mb=0,
-                    cpu_peak_percent=0,
-                    success=False,
-                    error_message=str(e)
-                ))
+                results.append(
+                    BenchmarkResult(
+                        benchmark_name=self.config.benchmark_name,
+                        test_name=f"batch_prediction_batch_size_{batch_size}",
+                        timestamp=datetime.now(),
+                        environment=self.config.environment,
+                        dataset_size=batch_size * 100,
+                        execution_time_ms=0,
+                        throughput_ops_per_sec=0,
+                        memory_peak_mb=0,
+                        cpu_peak_percent=0,
+                        success=False,
+                        error_message=str(e),
+                    )
+                )
 
         return results
 
-    async def _simulate_batch_prediction(self, batch_size: int, num_batches: int) -> List[np.ndarray]:
+    async def _simulate_batch_prediction(
+        self, batch_size: int, num_batches: int
+    ) -> List[np.ndarray]:
         """模拟批量预测"""
         results = []
 
@@ -620,12 +663,14 @@ class PerformanceBenchmarkFramework:
         test_scenarios = [
             ("single_match", 1, "单场比赛数据收集"),
             ("multiple_matches", 10, "多场比赛数据收集"),
-            ("league_data", 50, "联赛数据收集")
+            ("league_data", 50, "联赛数据收集"),
         ]
 
         for scenario_name, match_count, description in test_scenarios:
             try:
-                result = await self._run_collection_benchmark(scenario_name, match_count, description)
+                result = await self._run_collection_benchmark(
+                    scenario_name, match_count, description
+                )
                 results.append(result)
 
                 # 检查性能目标
@@ -637,23 +682,27 @@ class PerformanceBenchmarkFramework:
 
             except Exception as e:
                 self.logger.error(f"数据收集测试失败 ({scenario_name}): {e}")
-                results.append(BenchmarkResult(
-                    benchmark_name=self.config.benchmark_name,
-                    test_name=f"data_collection_{scenario_name}",
-                    timestamp=datetime.now(),
-                    environment=self.config.environment,
-                    dataset_size=match_count,
-                    execution_time_ms=0,
-                    throughput_ops_per_sec=0,
-                    memory_peak_mb=0,
-                    cpu_peak_percent=0,
-                    success=False,
-                    error_message=str(e)
-                ))
+                results.append(
+                    BenchmarkResult(
+                        benchmark_name=self.config.benchmark_name,
+                        test_name=f"data_collection_{scenario_name}",
+                        timestamp=datetime.now(),
+                        environment=self.config.environment,
+                        dataset_size=match_count,
+                        execution_time_ms=0,
+                        throughput_ops_per_sec=0,
+                        memory_peak_mb=0,
+                        cpu_peak_percent=0,
+                        success=False,
+                        error_message=str(e),
+                    )
+                )
 
         return results
 
-    async def _run_collection_benchmark(self, scenario_name: str, match_count: int, description: str) -> BenchmarkResult:
+    async def _run_collection_benchmark(
+        self, scenario_name: str, match_count: int, description: str
+    ) -> BenchmarkResult:
         """运行数据收集基准测试"""
         start_time = time.time()
         start_memory = psutil.Process().memory_info().rss / 1024 / 1024
@@ -663,17 +712,17 @@ class PerformanceBenchmarkFramework:
         for i in range(match_count):
             # 模拟单场比赛数据收集
             match_data = {
-                'match_id': f"match_{i:06d}",
-                'home_team': f"Team_{i % 100}",
-                'away_team': f"Team_{(i + 1) % 100}",
-                'league': f"League_{i % 20}",
-                'timestamp': datetime.now().isoformat(),
-                'features': np.random.rand(13).tolist(),
-                'odds': {
-                    'home_win': round(np.random.uniform(1.5, 5.0), 2),
-                    'draw': round(np.random.uniform(2.5, 4.0), 2),
-                    'away_win': round(np.random.uniform(2.0, 6.0), 2)
-                }
+                "match_id": f"match_{i:06d}",
+                "home_team": f"Team_{i % 100}",
+                "away_team": f"Team_{(i + 1) % 100}",
+                "league": f"League_{i % 20}",
+                "timestamp": datetime.now().isoformat(),
+                "features": np.random.rand(13).tolist(),
+                "odds": {
+                    "home_win": round(np.random.uniform(1.5, 5.0), 2),
+                    "draw": round(np.random.uniform(2.5, 4.0), 2),
+                    "away_win": round(np.random.uniform(2.0, 6.0), 2),
+                },
             }
 
             # 模拟网络延迟
@@ -696,10 +745,10 @@ class PerformanceBenchmarkFramework:
             cpu_peak_percent=psutil.cpu_percent(interval=1),
             success=True,
             additional_metrics={
-                'description': description,
-                'data_points_collected': len(collected_data),
-                'avg_time_per_match_ms': execution_time / match_count
-            }
+                "description": description,
+                "data_points_collected": len(collected_data),
+                "avg_time_per_match_ms": execution_time / match_count,
+            },
         )
 
     async def _benchmark_end_to_end_workflow(self) -> List[BenchmarkResult]:
@@ -711,12 +760,14 @@ class PerformanceBenchmarkFramework:
         workflow_scenarios = [
             ("real_time_prediction", 1, "实时预测工作流"),
             ("batch_analysis", 100, "批量分析工作流"),
-            ("historical_backtest", 1000, "历史回测工作流")
+            ("historical_backtest", 1000, "历史回测工作流"),
         ]
 
         for scenario_name, data_points, description in workflow_scenarios:
             try:
-                result = await self._run_end_to_end_benchmark(scenario_name, data_points, description)
+                result = await self._run_end_to_end_benchmark(
+                    scenario_name, data_points, description
+                )
                 results.append(result)
 
                 # 检查端到端性能目标
@@ -728,23 +779,27 @@ class PerformanceBenchmarkFramework:
 
             except Exception as e:
                 self.logger.error(f"端到端工作流测试失败 ({scenario_name}): {e}")
-                results.append(BenchmarkResult(
-                    benchmark_name=self.config.benchmark_name,
-                    test_name=f"end_to_end_{scenario_name}",
-                    timestamp=datetime.now(),
-                    environment=self.config.environment,
-                    dataset_size=data_points,
-                    execution_time_ms=0,
-                    throughput_ops_per_sec=0,
-                    memory_peak_mb=0,
-                    cpu_peak_percent=0,
-                    success=False,
-                    error_message=str(e)
-                ))
+                results.append(
+                    BenchmarkResult(
+                        benchmark_name=self.config.benchmark_name,
+                        test_name=f"end_to_end_{scenario_name}",
+                        timestamp=datetime.now(),
+                        environment=self.config.environment,
+                        dataset_size=data_points,
+                        execution_time_ms=0,
+                        throughput_ops_per_sec=0,
+                        memory_peak_mb=0,
+                        cpu_peak_percent=0,
+                        success=False,
+                        error_message=str(e),
+                    )
+                )
 
         return results
 
-    async def _run_end_to_end_benchmark(self, scenario_name: str, data_points: int, description: str) -> BenchmarkResult:
+    async def _run_end_to_end_benchmark(
+        self, scenario_name: str, data_points: int, description: str
+    ) -> BenchmarkResult:
         """运行端到端工作流基准测试"""
         start_time = time.time()
         start_memory = psutil.Process().memory_info().rss / 1024 / 1022
@@ -755,15 +810,12 @@ class PerformanceBenchmarkFramework:
             ("data_collection", 0.2),  # 20%的时间
             ("feature_extraction", 0.3),  # 30%的时间
             ("model_prediction", 0.4),  # 40%的时间
-            ("result_processing", 0.1)   # 10%的时间
+            ("result_processing", 0.1),  # 10%的时间
         ]
 
         processed_data = []
         for i in range(data_points):
-            workflow_data = {
-                'id': f"workflow_{i:06d}",
-                'stages': {}
-            }
+            workflow_data = {"id": f"workflow_{i:06d}", "stages": {}}
 
             for stage_name, time_ratio in workflow_stages:
                 stage_start = time.time()
@@ -771,29 +823,28 @@ class PerformanceBenchmarkFramework:
                 # 模拟阶段处理
                 if stage_name == "data_collection":
                     await asyncio.sleep(0.001 * time_ratio)
-                    workflow_data['stages'][stage_name] = {'data_collected': True}
+                    workflow_data["stages"][stage_name] = {"data_collected": True}
 
                 elif stage_name == "feature_extraction":
                     features = np.random.rand(13)
-                    workflow_data['stages'][stage_name] = {'features': features.tolist()}
+                    workflow_data["stages"][stage_name] = {
+                        "features": features.tolist()
+                    }
                     await asyncio.sleep(0.002 * time_ratio)
 
                 elif stage_name == "model_prediction":
                     prediction = np.random.randint(0, 3)
                     probabilities = np.random.rand(3)
                     probabilities = probabilities / np.sum(probabilities)
-                    workflow_data['stages'][stage_name] = {
-                        'prediction': int(prediction),
-                        'probabilities': probabilities.tolist()
+                    workflow_data["stages"][stage_name] = {
+                        "prediction": int(prediction),
+                        "probabilities": probabilities.tolist(),
                     }
                     await asyncio.sleep(0.003 * time_ratio)
 
                 elif stage_name == "result_processing":
-                    result = {
-                        'success': True,
-                        'confidence': np.random.rand()
-                    }
-                    workflow_data['stages'][stage_name] = result
+                    result = {"success": True, "confidence": np.random.rand()}
+                    workflow_data["stages"][stage_name] = result
                     await asyncio.sleep(0.0005 * time_ratio)
 
                 # 监控内存使用
@@ -818,11 +869,11 @@ class PerformanceBenchmarkFramework:
             cpu_peak_percent=psutil.cpu_percent(interval=1),
             success=True,
             additional_metrics={
-                'description': description,
-                'workflows_completed': len(processed_data),
-                'avg_time_per_workflow_ms': execution_time / data_points,
-                'stages_per_workflow': len(workflow_stages)
-            }
+                "description": description,
+                "workflows_completed": len(processed_data),
+                "avg_time_per_workflow_ms": execution_time / data_points,
+                "stages_per_workflow": len(workflow_stages),
+            },
         )
 
     async def _benchmark_concurrent_load(self) -> List[BenchmarkResult]:
@@ -840,19 +891,21 @@ class PerformanceBenchmarkFramework:
 
             except Exception as e:
                 self.logger.error(f"并发负载测试失败 (concurrency={concurrency}): {e}")
-                results.append(BenchmarkResult(
-                    benchmark_name=self.config.benchmark_name,
-                    test_name=f"concurrent_load_level_{concurrency}",
-                    timestamp=datetime.now(),
-                    environment=self.config.environment,
-                    dataset_size=concurrency,
-                    execution_time_ms=0,
-                    throughput_ops_per_sec=0,
-                    memory_peak_mb=0,
-                    cpu_peak_percent=0,
-                    success=False,
-                    error_message=str(e)
-                ))
+                results.append(
+                    BenchmarkResult(
+                        benchmark_name=self.config.benchmark_name,
+                        test_name=f"concurrent_load_level_{concurrency}",
+                        timestamp=datetime.now(),
+                        environment=self.config.environment,
+                        dataset_size=concurrency,
+                        execution_time_ms=0,
+                        throughput_ops_per_sec=0,
+                        memory_peak_mb=0,
+                        cpu_peak_percent=0,
+                        success=False,
+                        error_message=str(e),
+                    )
+                )
 
         return results
 
@@ -898,12 +951,12 @@ class PerformanceBenchmarkFramework:
             cpu_peak_percent=psutil.cpu_percent(interval=1),
             success=True,
             additional_metrics={
-                'concurrency_level': concurrency,
-                'total_operations': total_operations,
-                'avg_task_time_ms': avg_task_time,
-                'max_task_time_ms': max(t * 1000 for t in task_results),
-                'min_task_time_ms': min(t * 1000 for t in task_results)
-            }
+                "concurrency_level": concurrency,
+                "total_operations": total_operations,
+                "avg_task_time_ms": avg_task_time,
+                "max_task_time_ms": max(t * 1000 for t in task_results),
+                "min_task_time_ms": min(t * 1000 for t in task_results),
+            },
         )
 
     async def _benchmark_memory_usage(self) -> List[BenchmarkResult]:
@@ -916,7 +969,7 @@ class PerformanceBenchmarkFramework:
             (1000, "1K records"),
             (10000, "10K records"),
             (100000, "100K records"),
-            (1000000, "1M records")
+            (1000000, "1M records"),
         ]
 
         for size, size_label in memory_test_sizes:
@@ -933,23 +986,27 @@ class PerformanceBenchmarkFramework:
 
             except Exception as e:
                 self.logger.error(f"内存使用测试失败 ({size_label}): {e}")
-                results.append(BenchmarkResult(
-                    benchmark_name=self.config.benchmark_name,
-                    test_name=f"memory_usage_{size_label.replace(' ', '_')}",
-                    timestamp=datetime.now(),
-                    environment=self.config.environment,
-                    dataset_size=size,
-                    execution_time_ms=0,
-                    throughput_ops_per_sec=0,
-                    memory_peak_mb=0,
-                    cpu_peak_percent=0,
-                    success=False,
-                    error_message=str(e)
-                ))
+                results.append(
+                    BenchmarkResult(
+                        benchmark_name=self.config.benchmark_name,
+                        test_name=f"memory_usage_{size_label.replace(' ', '_')}",
+                        timestamp=datetime.now(),
+                        environment=self.config.environment,
+                        dataset_size=size,
+                        execution_time_ms=0,
+                        throughput_ops_per_sec=0,
+                        memory_peak_mb=0,
+                        cpu_peak_percent=0,
+                        success=False,
+                        error_message=str(e),
+                    )
+                )
 
         return results
 
-    async def _run_memory_benchmark(self, size: int, size_label: str) -> BenchmarkResult:
+    async def _run_memory_benchmark(
+        self, size: int, size_label: str
+    ) -> BenchmarkResult:
         """运行内存使用基准测试"""
         start_time = time.time()
         start_memory = psutil.Process().memory_info().rss / 1024 / 1024
@@ -961,14 +1018,14 @@ class PerformanceBenchmarkFramework:
         for i in range(size // chunk_size):
             # 创建数据块
             chunk = {
-                'features': np.random.rand(chunk_size, 13),
-                'predictions': np.random.randint(0, 3, chunk_size),
-                'probabilities': np.random.rand(chunk_size, 3),
-                'metadata': {
-                    'batch_id': i,
-                    'created_at': datetime.now().isoformat(),
-                    'size': chunk_size
-                }
+                "features": np.random.rand(chunk_size, 13),
+                "predictions": np.random.randint(0, 3, chunk_size),
+                "probabilities": np.random.rand(chunk_size, 3),
+                "metadata": {
+                    "batch_id": i,
+                    "created_at": datetime.now().isoformat(),
+                    "size": chunk_size,
+                },
             }
             data_chunks.append(chunk)
 
@@ -999,11 +1056,11 @@ class PerformanceBenchmarkFramework:
             cpu_peak_percent=psutil.cpu_percent(interval=1),
             success=True,
             additional_metrics={
-                'size_label': size_label,
-                'data_chunks': len(data_chunks),
-                'chunk_size': chunk_size,
-                'memory_per_record_bytes': (memory_usage * 1024 * 1024) / size
-            }
+                "size_label": size_label,
+                "data_chunks": len(data_chunks),
+                "chunk_size": chunk_size,
+                "memory_per_record_bytes": (memory_usage * 1024 * 1024) / size,
+            },
         )
 
     async def _benchmark_scalability(self) -> List[BenchmarkResult]:
@@ -1024,23 +1081,27 @@ class PerformanceBenchmarkFramework:
 
             except Exception as e:
                 self.logger.error(f"可扩展性测试失败 (factor={factor}): {e}")
-                results.append(BenchmarkResult(
-                    benchmark_name=self.config.benchmark_name,
-                    test_name=f"scalability_factor_{factor}",
-                    timestamp=datetime.now(),
-                    environment=self.config.environment,
-                    dataset_size=test_size,
-                    execution_time_ms=0,
-                    throughput_ops_per_sec=0,
-                    memory_peak_mb=0,
-                    cpu_peak_percent=0,
-                    success=False,
-                    error_message=str(e)
-                ))
+                results.append(
+                    BenchmarkResult(
+                        benchmark_name=self.config.benchmark_name,
+                        test_name=f"scalability_factor_{factor}",
+                        timestamp=datetime.now(),
+                        environment=self.config.environment,
+                        dataset_size=test_size,
+                        execution_time_ms=0,
+                        throughput_ops_per_sec=0,
+                        memory_peak_mb=0,
+                        cpu_peak_percent=0,
+                        success=False,
+                        error_message=str(e),
+                    )
+                )
 
         return results
 
-    async def _run_scalability_benchmark(self, factor: int, test_size: int) -> BenchmarkResult:
+    async def _run_scalability_benchmark(
+        self, factor: int, test_size: int
+    ) -> BenchmarkResult:
         """运行可扩展性基准测试"""
         start_time = time.time()
         start_memory = psutil.Process().memory_info().rss / 1024 / 1024
@@ -1051,7 +1112,9 @@ class PerformanceBenchmarkFramework:
 
         while processed_count < test_size:
             # 处理批次
-            batch_data = np.random.rand(min(batch_size, test_size - processed_count), 13)
+            batch_data = np.random.rand(
+                min(batch_size, test_size - processed_count), 13
+            )
 
             # 模拟预测计算
             probabilities = 1.0 / (1.0 + np.exp(-batch_data))
@@ -1065,7 +1128,9 @@ class PerformanceBenchmarkFramework:
         throughput = test_size / (execution_time / 1000)
 
         # 计算扩展性指标
-        efficiency = (1.0 / factor) * (throughput / (self.config.medium_dataset_size / 100))  # 相对效率
+        efficiency = (1.0 / factor) * (
+            throughput / (self.config.medium_dataset_size / 100)
+        )  # 相对效率
 
         return BenchmarkResult(
             benchmark_name=self.config.benchmark_name,
@@ -1079,11 +1144,12 @@ class PerformanceBenchmarkFramework:
             cpu_peak_percent=psutil.cpu_percent(interval=1),
             success=True,
             additional_metrics={
-                'scaling_factor': factor,
-                'efficiency_score': efficiency,
-                'linear_scaling_expected': factor,
-                'actual_throughput_ratio': throughput / (self.config.medium_dataset_size / 100)
-            }
+                "scaling_factor": factor,
+                "efficiency_score": efficiency,
+                "linear_scaling_expected": factor,
+                "actual_throughput_ratio": throughput
+                / (self.config.medium_dataset_size / 100),
+            },
         )
 
     async def _generate_report(self) -> BenchmarkReport:
@@ -1112,13 +1178,13 @@ class PerformanceBenchmarkFramework:
 
         # 收集系统信息
         system_info = {
-            'cpu_count': psutil.cpu_count(),
-            'memory_total_gb': psutil.virtual_memory().total / 1024 / 1024 / 1024,
-            'disk_total_gb': psutil.disk_usage('/').total / 1024 / 1024 / 1024,
-            'python_version': sys.version,
-            'platform': sys.platform,
-            'hostname': psutil.os.uname().nodename,
-            'benchmark_duration_s': (datetime.now() - self.start_time).total_seconds()
+            "cpu_count": psutil.cpu_count(),
+            "memory_total_gb": psutil.virtual_memory().total / 1024 / 1024 / 1024,
+            "disk_total_gb": psutil.disk_usage("/").total / 1024 / 1024 / 1024,
+            "python_version": sys.version,
+            "platform": sys.platform,
+            "hostname": psutil.os.uname().nodename,
+            "benchmark_duration_s": (datetime.now() - self.start_time).total_seconds(),
         }
 
         # 生成报告ID
@@ -1143,7 +1209,7 @@ class PerformanceBenchmarkFramework:
             p95_execution_time_ms=p95_execution_time,
             p99_execution_time_ms=p99_execution_time,
             test_results=self.results,
-            system_info=system_info
+            system_info=system_info,
         )
 
         return report
@@ -1160,28 +1226,31 @@ class PerformanceBenchmarkFramework:
 
             # 获取历史性能数据
             historical_stats = self.db.get_performance_stats(
-                result.benchmark_name,
-                result.test_name,
-                result.environment,
-                days_back=7
+                result.benchmark_name, result.test_name, result.environment, days_back=7
             )
 
             if historical_stats:
                 # 计算回归
-                historical_avg = historical_stats['mean_ms']
+                historical_avg = historical_stats["mean_ms"]
                 current_time = result.execution_time_ms
 
                 if historical_avg > 0:
-                    regression_percent = ((current_time - historical_avg) / historical_avg) * 100
+                    regression_percent = (
+                        (current_time - historical_avg) / historical_avg
+                    ) * 100
 
                     if regression_percent > self.config.regression_threshold_percent:
-                        regressions.append({
-                            'test_name': result.test_name,
-                            'current_time_ms': current_time,
-                            'historical_avg_ms': historical_avg,
-                            'regression_percent': regression_percent,
-                            'severity': 'high' if regression_percent > 50 else 'medium'
-                        })
+                        regressions.append(
+                            {
+                                "test_name": result.test_name,
+                                "current_time_ms": current_time,
+                                "historical_avg_ms": historical_avg,
+                                "regression_percent": regression_percent,
+                                "severity": (
+                                    "high" if regression_percent > 50 else "medium"
+                                ),
+                            }
+                        )
 
         report.regression_detected = len(regressions) > 0
         report.regression_details = regressions
@@ -1204,7 +1273,7 @@ class PerformanceBenchmarkFramework:
         # 保存JSON报告
         if self.config.generate_json_report:
             json_file = self.output_dir / f"benchmark_report_{report.report_id}.json"
-            with open(json_file, 'w', encoding='utf-8') as f:
+            with open(json_file, "w", encoding="utf-8") as f:
                 json.dump(asdict(report), f, indent=2, default=str)
 
             self.logger.info(f"JSON报告已保存: {json_file}")
@@ -1218,12 +1287,14 @@ class PerformanceBenchmarkFramework:
 
         # 保存原始数据（如果启用）
         if self.config.save_raw_data:
-            raw_data_file = self.output_dir / f"benchmark_raw_data_{report.report_id}.json"
-            with open(raw_data_file, 'w', encoding='utf-8') as f:
+            raw_data_file = (
+                self.output_dir / f"benchmark_raw_data_{report.report_id}.json"
+            )
+            with open(raw_data_file, "w", encoding="utf-8") as f:
                 raw_data = {
-                    'config': asdict(self.config),
-                    'results': [asdict(r) for r in self.results],
-                    'system_info': report.system_info
+                    "config": asdict(self.config),
+                    "results": [asdict(r) for r in self.results],
+                    "system_info": report.system_info,
                 }
                 json.dump(raw_data, f, indent=2, default=str)
 
@@ -1326,11 +1397,11 @@ class PerformanceBenchmarkFramework:
             p95_execution_time_ms=report.p95_execution_time_ms,
             p99_execution_time_ms=report.p99_execution_time_ms,
             regression_section=regression_section,
-            test_results_table=test_results_table
+            test_results_table=test_results_table,
         )
 
         # 写入HTML文件
-        with open(output_file, 'w', encoding='utf-8') as f:
+        with open(output_file, "w", encoding="utf-8") as f:
             f.write(html_content)
 
     async def _cleanup(self):
@@ -1355,7 +1426,9 @@ class PerformanceBenchmarkFramework:
 
 
 # 便捷函数
-async def run_performance_benchmark(config: Optional[BenchmarkConfig] = None) -> BenchmarkReport:
+async def run_performance_benchmark(
+    config: Optional[BenchmarkConfig] = None,
+) -> BenchmarkReport:
     """
     运行性能基准测试
 
@@ -1371,7 +1444,7 @@ async def run_performance_benchmark(config: Optional[BenchmarkConfig] = None) ->
             environment="development",
             enable_regression_detection=True,
             generate_html_report=True,
-            generate_json_report=True
+            generate_json_report=True,
         )
 
     framework = PerformanceBenchmarkFramework(config)
@@ -1379,9 +1452,7 @@ async def run_performance_benchmark(config: Optional[BenchmarkConfig] = None) ->
 
 
 def create_benchmark_config(
-    benchmark_name: str,
-    environment: str = "development",
-    **kwargs
+    benchmark_name: str, environment: str = "development", **kwargs
 ) -> BenchmarkConfig:
     """
     创建基准测试配置
@@ -1395,9 +1466,7 @@ def create_benchmark_config(
         BenchmarkConfig: 基准测试配置
     """
     return BenchmarkConfig(
-        benchmark_name=benchmark_name,
-        environment=environment,
-        **kwargs
+        benchmark_name=benchmark_name, environment=environment, **kwargs
     )
 
 
@@ -1406,10 +1475,14 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(description="足球预测系统性能基准测试")
-    parser.add_argument("--benchmark-name", default="football_prediction_system", help="基准测试名称")
+    parser.add_argument(
+        "--benchmark-name", default="football_prediction_system", help="基准测试名称"
+    )
     parser.add_argument("--environment", default="development", help="测试环境")
     parser.add_argument("--output-dir", default="benchmark_results", help="输出目录")
-    parser.add_argument("--enable-regression-detection", action="store_true", help="启用回归检测")
+    parser.add_argument(
+        "--enable-regression-detection", action="store_true", help="启用回归检测"
+    )
     parser.add_argument("--generate-html", action="store_true", help="生成HTML报告")
 
     args = parser.parse_args()
@@ -1420,7 +1493,7 @@ if __name__ == "__main__":
         environment=args.environment,
         output_dir=args.output_dir,
         enable_regression_detection=args.enable_regression_detection,
-        generate_html_report=args.generate_html
+        generate_html_report=args.generate_html,
     )
 
     # 运行基准测试
@@ -1438,4 +1511,5 @@ if __name__ == "__main__":
 
     # 运行
     import asyncio
+
     asyncio.run(main())

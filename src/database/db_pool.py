@@ -306,7 +306,10 @@ class DatabasePool:
                 raise
 
     async def executemany(
-        self, query: str, args_list: List[Tuple[Any, ...]], timeout: Optional[float] = None
+        self,
+        query: str,
+        args_list: List[Tuple[Any, ...]],
+        timeout: Optional[float] = None,
     ) -> str:
         """
         批量执行SQL语句
@@ -453,7 +456,6 @@ class DatabasePool:
 
             self._stats["last_health_check"] = time.time()
             self._stats["health_check_count"] += 1
-
 
         except Exception as e:
             logger.error(f"💔 健康检查失败: {e}")

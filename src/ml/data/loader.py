@@ -28,7 +28,7 @@ class DataLoader:
         self,
         batch_size: int = 1000,
         selected_columns: Optional[List[str]] = None,
-        max_records: Optional[int] = None
+        max_records: Optional[int] = None,
     ):
         """
         初始化 DataLoader。
@@ -47,7 +47,7 @@ class DataLoader:
         db_session=None,
         start_date: Optional[datetime] = None,
         end_date: Optional[datetime] = None,
-        limit: int = 50000
+        limit: int = 50000,
     ) -> pd.DataFrame:
         """
         加载已完赛(FT)的比赛数据。
@@ -85,13 +85,13 @@ class DataLoader:
         params = {}
         if start_date:
             query += " AND match_date >= :start_date"
-            params['start_date'] = start_date
+            params["start_date"] = start_date
         if end_date:
             query += " AND match_date <= :end_date"
-            params['end_date'] = end_date
+            params["end_date"] = end_date
 
         query += " ORDER BY match_date DESC LIMIT :limit"
-        params['limit'] = min(limit, self.max_records or limit)
+        params["limit"] = min(limit, self.max_records or limit)
 
         try:
             # 使用传入的会话或创建新会话
@@ -111,10 +111,7 @@ class DataLoader:
             return pd.DataFrame()
 
     async def _execute_query(
-        self,
-        session,
-        query: str,
-        params: Dict[str, Any]
+        self, session, query: str, params: Dict[str, Any]
     ) -> List[Any]:
         """
         执行数据库查询。
@@ -148,10 +145,10 @@ class DataLoader:
         # 处理不同类型的数据库记录对象
         data = []
         for record in records:
-            if hasattr(record, '_mapping'):
+            if hasattr(record, "_mapping"):
                 # asyncpg.Row 对象
                 data.append(dict(record._mapping))
-            elif hasattr(record, 'keys'):
+            elif hasattr(record, "keys"):
                 # SQLAlchemy Row 对象
                 data.append({key: getattr(record, key) for key in record.keys()})
             else:
@@ -162,7 +159,9 @@ class DataLoader:
         # 应用列选择过滤
         if self.selected_columns:
             # 确保只选择存在的列
-            available_columns = [col for col in self.selected_columns if col in df.columns]
+            available_columns = [
+                col for col in self.selected_columns if col in df.columns
+            ]
             if available_columns:
                 df = df[available_columns]
 
@@ -180,23 +179,39 @@ class DataLoader:
             空的 DataFrame with expected columns
         """
         expected_columns = [
-            'id', 'fotmob_id', 'match_date', 'status',
-            'home_team_id', 'away_team_id',
-            'home_score', 'away_score',
-            'home_team_name', 'away_team_name',
-            'league_id', 'season',
-            'home_possession', 'away_possession',
-            'home_total_shots', 'away_total_shots',
-            'home_shots_on_target', 'away_shots_on_target',
-            'home_expected_goals', 'away_expected_goals',
-            'home_big_chances_created', 'away_big_chances_created',
-            'home_accurate_passes', 'away_accurate_passes',
-            'home_accurate_crosses', 'away_accurate_crosses'
+            "id",
+            "fotmob_id",
+            "match_date",
+            "status",
+            "home_team_id",
+            "away_team_id",
+            "home_score",
+            "away_score",
+            "home_team_name",
+            "away_team_name",
+            "league_id",
+            "season",
+            "home_possession",
+            "away_possession",
+            "home_total_shots",
+            "away_total_shots",
+            "home_shots_on_target",
+            "away_shots_on_target",
+            "home_expected_goals",
+            "away_expected_goals",
+            "home_big_chances_created",
+            "away_big_chances_created",
+            "home_accurate_passes",
+            "away_accurate_passes",
+            "home_accurate_crosses",
+            "away_accurate_crosses",
         ]
 
         # 应用列选择过滤
         if self.selected_columns:
-            expected_columns = [col for col in self.selected_columns if col in expected_columns]
+            expected_columns = [
+                col for col in self.selected_columns if col in expected_columns
+            ]
 
         return pd.DataFrame(columns=expected_columns)
 
@@ -211,25 +226,35 @@ class DataLoader:
             类型转换后的 DataFrame
         """
         # 日期时间转换
-        if 'match_date' in df.columns:
-            df['match_date'] = pd.to_datetime(df['match_date'], errors='coerce')
+        if "match_date" in df.columns:
+            df["match_date"] = pd.to_datetime(df["match_date"], errors="coerce")
 
         # 数值列转换
         numeric_cols = [
-            'id', 'fotmob_id', 'league_id',
-            'home_score', 'away_score',
-            'home_possession', 'away_possession',
-            'home_total_shots', 'away_total_shots',
-            'home_shots_on_target', 'away_shots_on_target',
-            'home_expected_goals', 'away_expected_goals',
-            'home_big_chances_created', 'away_big_chances_created',
-            'home_accurate_passes', 'away_accurate_passes',
-            'home_accurate_crosses', 'away_accurate_crosses'
+            "id",
+            "fotmob_id",
+            "league_id",
+            "home_score",
+            "away_score",
+            "home_possession",
+            "away_possession",
+            "home_total_shots",
+            "away_total_shots",
+            "home_shots_on_target",
+            "away_shots_on_target",
+            "home_expected_goals",
+            "away_expected_goals",
+            "home_big_chances_created",
+            "away_big_chances_created",
+            "home_accurate_passes",
+            "away_accurate_passes",
+            "home_accurate_crosses",
+            "away_accurate_crosses",
         ]
 
         for col in numeric_cols:
             if col in df.columns:
-                df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
+                df[col] = pd.to_numeric(df[col], errors="coerce").fillna(0)
 
         return df
 
@@ -247,19 +272,19 @@ class DataLoader:
             return df
 
         # 得分字段非负验证
-        score_cols = ['home_score', 'away_score']
+        score_cols = ["home_score", "away_score"]
         for col in score_cols:
             if col in df.columns:
                 df[col] = df[col].clip(lower=0)
 
         # 期望进球非负验证
-        xg_cols = ['home_expected_goals', 'away_expected_goals']
+        xg_cols = ["home_expected_goals", "away_expected_goals"]
         for col in xg_cols:
             if col in df.columns:
                 df[col] = df[col].clip(lower=0)
 
         # 控球率范围验证 (0-100)
-        possession_cols = ['home_possession', 'away_possession']
+        possession_cols = ["home_possession", "away_possession"]
         for col in possession_cols:
             if col in df.columns:
                 df[col] = df[col].clip(lower=0, upper=100)
@@ -276,19 +301,15 @@ class DataLoader:
         df = await self.load_raw_data()
 
         if df.empty:
-            return {
-                "total_records": 0,
-                "date_range": None,
-                "status": "empty"
-            }
+            return {"total_records": 0, "date_range": None, "status": "empty"}
 
         return {
             "total_records": len(df),
             "date_range": {
-                "start": df['match_date'].min(),
-                "end": df['match_date'].max()
+                "start": df["match_date"].min(),
+                "end": df["match_date"].max(),
             },
             "status": "success",
             "columns": list(df.columns),
-            "null_counts": df.isnull().sum().to_dict()
+            "null_counts": df.isnull().sum().to_dict(),
         }

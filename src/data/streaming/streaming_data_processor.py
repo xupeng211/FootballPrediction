@@ -103,6 +103,7 @@ class StreamingDataProcessor:
             duration = time.time() - start_time
             memory_delta = end_memory - start_memory
 
+            self.logger.info(
                 f"{operation_name}: 内存变化 {memory_delta:+.1f}MB, "
                 f"耗时 {duration:.2f}s, 当前内存 {end_memory:.1f}MB"
             )

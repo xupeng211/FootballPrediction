@@ -51,7 +51,10 @@ router = APIRouter(
 # 简化的请求模型
 class BatchPredictionRequest(BaseModel):
     """批量预测请求模型 - Sprint 3 精简版本"""
-    match_ids: list[str] = Field(..., description="比赛ID列表", min_items=1, max_items=100)
+
+    match_ids: list[str] = Field(
+        ..., description="比赛ID列表", min_items=1, max_items=100
+    )
     include_features: bool = Field(default=False, description="是否包含特征信息")
     include_metadata: bool = Field(default=True, description="是否包含元数据")
 
@@ -75,7 +78,7 @@ async def get_prediction_service_dependency() -> PredictionService:
         logger.error(f"预测服务依赖注入失败: {e}")
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="预测服务不可用，请稍后重试"
+            detail="预测服务不可用，请稍后重试",
         )
 
 
@@ -107,7 +110,7 @@ async def predict_match(
         service_response = await prediction_service.predict_single_match(
             match_id=match_id,
             include_features=include_features,
-            include_metadata=include_metadata
+            include_metadata=include_metadata,
         )
 
         # 构建HTTP响应
@@ -117,12 +120,12 @@ async def predict_match(
                 "data": service_response.data,
                 "processing_time_ms": service_response.processing_time_ms,
                 "request_id": service_response.request_id,
-                "timestamp": service_response.timestamp.isoformat()
+                "timestamp": service_response.timestamp.isoformat(),
             }
         else:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail=service_response.error or "预测处理失败"
+                detail=service_response.error or "预测处理失败",
             )
 
     except HTTPException:
@@ -131,7 +134,7 @@ async def predict_match(
         logger.error(f"单场比赛预测处理失败: match_id={match_id}, error={e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"预测服务内部错误: {str(e)}"
+            detail=f"预测服务内部错误: {str(e)}",
         )
 
 
@@ -161,7 +164,7 @@ async def predict_batch(
             match_ids=request.match_ids,
             include_features=request.include_features,
             include_metadata=request.include_metadata,
-            max_concurrent=10  # 默认并发数
+            max_concurrent=10,  # 默认并发数
         )
 
         # 构建HTTP响应
@@ -171,12 +174,12 @@ async def predict_batch(
                 "data": service_response.data,
                 "processing_time_ms": service_response.processing_time_ms,
                 "request_id": service_response.request_id,
-                "timestamp": service_response.timestamp.isoformat()
+                "timestamp": service_response.timestamp.isoformat(),
             }
         else:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail=service_response.error or "批量预测处理失败"
+                detail=service_response.error or "批量预测处理失败",
             )
 
     except HTTPException:
@@ -185,7 +188,7 @@ async def predict_batch(
         logger.error(f"批量预测处理失败: match_ids={request.match_ids}, error={e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"批量预测服务内部错误: {str(e)}"
+            detail=f"批量预测服务内部错误: {str(e)}",
         )
 
 
@@ -218,13 +221,13 @@ async def health_check(
                 "data": service_response.data,
                 "processing_time_ms": service_response.processing_time_ms,
                 "request_id": service_response.request_id,
-                "timestamp": service_response.timestamp.isoformat()
+                "timestamp": service_response.timestamp.isoformat(),
             }
         else:
             return {
                 "success": False,
                 "error": service_response.error,
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
 
     except Exception as e:
@@ -232,5 +235,5 @@ async def health_check(
         return {
             "success": False,
             "error": f"健康检查服务异常: {str(e)}",
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }

@@ -22,8 +22,10 @@ from typing import Dict, Any, List
 try:
     from src.config import get_settings
 except ImportError:
+
     def get_settings():
         return MagicMock()
+
 
 # 尝试导入核心服务，失败则使用Mock
 try:
@@ -63,6 +65,7 @@ class TestProductionSmoke:
         # 清理
         if os.path.exists(temp_dir):
             import shutil
+
             shutil.rmtree(temp_dir)
 
     @pytest.fixture
@@ -77,31 +80,33 @@ class TestProductionSmoke:
                 "season": "2023/24",
                 "match_date": (datetime.now() + timedelta(days=1)).isoformat(),
                 "venue": "Old Trafford",
-                "market_odds": {
-                    "home_win": 2.10,
-                    "draw": 3.40,
-                    "away_win": 3.80
-                },
+                "market_odds": {"home_win": 2.10, "draw": 3.40, "away_win": 3.80},
                 "team_stats": {
                     "home": {
                         "elo_rating": 1850,
                         "recent_form": [1, 1, 0, 1, 0],  # W-W-D-W-D
                         "goals_scored": 15,
-                        "goals_conceded": 8
+                        "goals_conceded": 8,
                     },
                     "away": {
                         "elo_rating": 1920,
                         "recent_form": [1, 1, 1, 0, 1],  # W-W-W-D-W
                         "goals_scored": 22,
-                        "goals_conceded": 10
-                    }
+                        "goals_conceded": 10,
+                    },
                 },
                 "h2h_history": {
                     "home_wins": 8,
                     "away_wins": 12,
                     "draws": 5,
-                    "last_5_games": [0, 1, 0, 1, 1]  # D-W-D-W-W (from home perspective)
-                }
+                    "last_5_games": [
+                        0,
+                        1,
+                        0,
+                        1,
+                        1,
+                    ],  # D-W-D-W-W (from home perspective)
+                },
             },
             {
                 "match_id": "epl_2024_arsenal_chelsea",
@@ -111,31 +116,27 @@ class TestProductionSmoke:
                 "season": "2023/24",
                 "match_date": (datetime.now() + timedelta(days=2)).isoformat(),
                 "venue": "Emirates Stadium",
-                "market_odds": {
-                    "home_win": 1.85,
-                    "draw": 3.60,
-                    "away_win": 4.20
-                },
+                "market_odds": {"home_win": 1.85, "draw": 3.60, "away_win": 4.20},
                 "team_stats": {
                     "home": {
                         "elo_rating": 1880,
                         "recent_form": [1, 1, 1, 1, 0],  # W-W-W-W-D
                         "goals_scored": 18,
-                        "goals_conceded": 6
+                        "goals_conceded": 6,
                     },
                     "away": {
                         "elo_rating": 1820,
                         "recent_form": [0, 1, 0, 1, 0],  # D-W-D-W-D
                         "goals_scored": 14,
-                        "goals_conceded": 12
-                    }
+                        "goals_conceded": 12,
+                    },
                 },
                 "h2h_history": {
                     "home_wins": 10,
                     "away_wins": 8,
                     "draws": 7,
-                    "last_5_games": [1, 0, 1, 1, 0]  # W-D-W-W-D
-                }
+                    "last_5_games": [1, 0, 1, 1, 0],  # W-D-W-W-D
+                },
             },
             {
                 "match_id": "epl_2024_mancity_tottenham",
@@ -145,32 +146,28 @@ class TestProductionSmoke:
                 "season": "2023/24",
                 "match_date": (datetime.now() + timedelta(days=3)).isoformat(),
                 "venue": "Etihad Stadium",
-                "market_odds": {
-                    "home_win": 1.35,
-                    "draw": 5.50,
-                    "away_win": 7.80
-                },
+                "market_odds": {"home_win": 1.35, "draw": 5.50, "away_win": 7.80},
                 "team_stats": {
                     "home": {
                         "elo_rating": 2050,
                         "recent_form": [1, 1, 1, 1, 1],  # W-W-W-W-W
                         "goals_scored": 28,
-                        "goals_conceded": 5
+                        "goals_conceded": 5,
                     },
                     "away": {
                         "elo_rating": 1790,
                         "recent_form": [1, 0, 0, 1, 1],  # W-D-D-W-W
                         "goals_scored": 16,
-                        "goals_conceded": 14
-                    }
+                        "goals_conceded": 14,
+                    },
                 },
                 "h2h_history": {
                     "home_wins": 14,
                     "away_wins": 6,
                     "draws": 5,
-                    "last_5_games": [1, 1, 1, 0, 1]  # W-W-W-D-W
-                }
-            }
+                    "last_5_games": [1, 1, 1, 0, 1],  # W-W-W-D-W
+                },
+            },
         ]
 
     @pytest.fixture
@@ -186,11 +183,27 @@ class TestProductionSmoke:
             features = {
                 "home_elo": match_data["team_stats"]["home"]["elo_rating"],
                 "away_elo": match_data["team_stats"]["away"]["elo_rating"],
-                "elo_difference": match_data["team_stats"]["home"]["elo_rating"] - match_data["team_stats"]["away"]["elo_rating"],
-                "home_form_avg": sum(match_data["team_stats"]["home"]["recent_form"]) / 5,
-                "away_form_avg": sum(match_data["team_stats"]["away"]["recent_form"]) / 5,
-                "h2h_home_advantage": (match_data["h2h_history"]["home_wins"] - match_data["h2h_history"]["away_wins"]) / sum(match_data["h2h_history"].values()) if sum(match_data["h2h_history"].values()) > 0 else 0,
-                "venue_advantage": 0.15 if match_data["home_team"] in ["Manchester United", "Arsenal", "Manchester City"] else 0.05,
+                "elo_difference": match_data["team_stats"]["home"]["elo_rating"]
+                - match_data["team_stats"]["away"]["elo_rating"],
+                "home_form_avg": sum(match_data["team_stats"]["home"]["recent_form"])
+                / 5,
+                "away_form_avg": sum(match_data["team_stats"]["away"]["recent_form"])
+                / 5,
+                "h2h_home_advantage": (
+                    (
+                        match_data["h2h_history"]["home_wins"]
+                        - match_data["h2h_history"]["away_wins"]
+                    )
+                    / sum(match_data["h2h_history"].values())
+                    if sum(match_data["h2h_history"].values()) > 0
+                    else 0
+                ),
+                "venue_advantage": (
+                    0.15
+                    if match_data["home_team"]
+                    in ["Manchester United", "Arsenal", "Manchester City"]
+                    else 0.05
+                ),
                 "market_implied_home_prob": 1 / match_data["market_odds"]["home_win"],
                 "market_implied_away_prob": 1 / match_data["market_odds"]["away_win"],
             }
@@ -231,15 +244,15 @@ class TestProductionSmoke:
                 "predictions": {
                     "home_win": round(home_prob, 3),
                     "draw": round(draw_prob, 3),
-                    "away_win": round(away_prob, 3)
+                    "away_win": round(away_prob, 3),
                 },
                 "confidence": round(0.7 + abs(home_prob - 0.5) * 0.4, 3),
                 "features": features,
                 "metadata": {
                     "model_version": "xgboost_v2_production",
                     "prediction_time": datetime.now().isoformat(),
-                    "feature_count": len(features)
-                }
+                    "feature_count": len(features),
+                },
             }
 
         service.predict = mock_predict
@@ -248,6 +261,7 @@ class TestProductionSmoke:
     @pytest.fixture
     def mock_kelly_calculator(self):
         """模拟Kelly公式计算器"""
+
         def calculate_kelly(predictions, market_odds, bankroll=1000):
             home_prob = predictions["home_win"]
             home_odds = market_odds["home_win"]
@@ -269,12 +283,18 @@ class TestProductionSmoke:
                 "safe_kelly_fraction": round(safe_kelly, 4),
                 "expected_value": round((p * b - q), 4),
                 "bankroll": bankroll,
-                "selection": "home_win" if safe_kelly > 0 else "no_bet"
+                "selection": "home_win" if safe_kelly > 0 else "no_bet",
             }
 
         return calculate_kelly
 
-    async def test_production_smoke_workflow(self, mock_database_setup, sample_match_data, mock_inference_service, mock_kelly_calculator):
+    async def test_production_smoke_workflow(
+        self,
+        mock_database_setup,
+        sample_match_data,
+        mock_inference_service,
+        mock_kelly_calculator,
+    ):
         """
         测试完整的生产冒烟流程
 
@@ -290,7 +310,9 @@ class TestProductionSmoke:
 
         # Step 2: 注入比赛数据
         print("📝 Step 2: 注入比赛数据...")
-        assert len(sample_match_data) == 3, f"预期3场比赛，实际{len(sample_match_data)}场"
+        assert (
+            len(sample_match_data) == 3
+        ), f"预期3场比赛，实际{len(sample_match_data)}场"
 
         for i, match in enumerate(sample_match_data):
             assert match["match_id"], f"比赛{i+1}缺少match_id"
@@ -304,18 +326,21 @@ class TestProductionSmoke:
 
         for match in sample_match_data:
             prediction = await mock_inference_service.predict(
-                match_id=match["match_id"],
-                match_data=match
+                match_id=match["match_id"], match_data=match
             )
 
             # 验证预测结果
             assert prediction["match_id"] == match["match_id"], "预测match_id不匹配"
             assert "predictions" in prediction, "缺少预测概率"
-            assert abs(sum(prediction["predictions"].values()) - 1.0) < 0.01, "概率和不等于1"
+            assert (
+                abs(sum(prediction["predictions"].values()) - 1.0) < 0.01
+            ), "概率和不等于1"
             assert prediction["confidence"] > 0, "置信度应大于0"
 
             predictions.append(prediction)
-            print(f"  ✓ {match['home_team']} vs {match['away_team']}: {prediction['predictions']}")
+            print(
+                f"  ✓ {match['home_team']} vs {match['away_team']}: {prediction['predictions']}"
+            )
 
         # Step 4: 生成Kelly建议
         print("💰 Step 4: 生成Kelly建议...")
@@ -325,7 +350,7 @@ class TestProductionSmoke:
             kelly = mock_kelly_calculator(
                 predictions=prediction["predictions"],
                 market_odds=match["market_odds"],
-                bankroll=1000
+                bankroll=1000,
             )
 
             # 验证Kelly建议
@@ -333,23 +358,29 @@ class TestProductionSmoke:
             assert kelly["recommended_stake"] >= 0, "推荐投注额不能为负"
             assert "expected_value" in kelly, "缺少期望值"
 
-            kelly_recommendations.append({
-                "match": match["match_id"],
-                "teams": f"{match['home_team']} vs {match['away_team']}",
-                "kelly": kelly
-            })
+            kelly_recommendations.append(
+                {
+                    "match": match["match_id"],
+                    "teams": f"{match['home_team']} vs {match['away_team']}",
+                    "kelly": kelly,
+                }
+            )
 
             selection = kelly["selection"]
             stake = kelly["recommended_stake"]
             ev = kelly["expected_value"]
-            print(f"  ✓ {match['home_team']} vs {match['away_team']}: {selection} - ${stake:.2f} (EV: {ev:.3f})")
+            print(
+                f"  ✓ {match['home_team']} vs {match['away_team']}: {selection} - ${stake:.2f} (EV: {ev:.3f})"
+            )
 
         # Step 5: 验证整体流程完整性
         print("📋 Step 5: 验证流程完整性...")
 
         # 验证预测数量
         assert len(predictions) == 3, f"预期3个预测，实际{len(predictions)}个"
-        assert len(kelly_recommendations) == 3, f"预期3个Kelly建议，实际{len(kelly_recommendations)}个"
+        assert (
+            len(kelly_recommendations) == 3
+        ), f"预期3个Kelly建议，实际{len(kelly_recommendations)}个"
 
         # 验证性能指标
         total_processing_time = 0  # 在实际实现中应该测量时间
@@ -362,8 +393,12 @@ class TestProductionSmoke:
             assert 0 <= kelly["safe_kelly_fraction"] <= 0.25, "安全Kelly分数超出范围"
 
         # 验证风控逻辑
-        high_stake_recommendations = [r for r in kelly_recommendations if r["kelly"]["recommended_stake"] > 200]
-        assert len(high_stake_recommendations) <= 1, "高投注额建议过多，可能存在风控问题"
+        high_stake_recommendations = [
+            r for r in kelly_recommendations if r["kelly"]["recommended_stake"] > 200
+        ]
+        assert (
+            len(high_stake_recommendations) <= 1
+        ), "高投注额建议过多，可能存在风控问题"
 
         print("✅ 生产冒烟测试全部通过！")
 
@@ -375,21 +410,37 @@ class TestProductionSmoke:
             "kelly_recommendations": kelly_recommendations,
             "performance_metrics": {
                 "average_prediction_time": total_processing_time / len(predictions),
-                "total_processing_time": total_processing_time
+                "total_processing_time": total_processing_time,
             },
             "risk_assessment": {
-                "max_single_stake": max(r["kelly"]["recommended_stake"] for r in kelly_recommendations),
-                "total_recommended_stake": sum(r["kelly"]["recommended_stake"] for r in kelly_recommendations),
-                "positive_ev_bets": len([r for r in kelly_recommendations if r["kelly"]["expected_value"] > 0])
-            }
+                "max_single_stake": max(
+                    r["kelly"]["recommended_stake"] for r in kelly_recommendations
+                ),
+                "total_recommended_stake": sum(
+                    r["kelly"]["recommended_stake"] for r in kelly_recommendations
+                ),
+                "positive_ev_bets": len(
+                    [
+                        r
+                        for r in kelly_recommendations
+                        if r["kelly"]["expected_value"] > 0
+                    ]
+                ),
+            },
         }
 
         print("\n📊 冒烟测试报告:")
         print(f"  - 总比赛数: {smoke_test_report['total_matches']}")
         print(f"  - 成功预测数: {smoke_test_report['successful_predictions']}")
-        print(f"  - 正期望值投注: {smoke_test_report['risk_assessment']['positive_ev_bets']}")
-        print(f"  - 最大单笔投注: ${smoke_test_report['risk_assessment']['max_single_stake']:.2f}")
-        print(f"  - 总推荐投注: ${smoke_test_report['risk_assessment']['total_recommended_stake']:.2f}")
+        print(
+            f"  - 正期望值投注: {smoke_test_report['risk_assessment']['positive_ev_bets']}"
+        )
+        print(
+            f"  - 最大单笔投注: ${smoke_test_report['risk_assessment']['max_single_stake']:.2f}"
+        )
+        print(
+            f"  - 总推荐投注: ${smoke_test_report['risk_assessment']['total_recommended_stake']:.2f}"
+        )
 
         return smoke_test_report
 
@@ -411,14 +462,16 @@ class TestProductionSmoke:
         mock_inference_service.predict.return_value = {
             "match_id": "test_match",
             "predictions": {"home_win": 0.5, "draw": 0.3, "away_win": 0.2},
-            "confidence": 0.7
+            "confidence": 0.7,
         }
 
         result = await mock_inference_service.predict("test_match")
         assert result["match_id"] == "test_match", "恢复后预测失败"
         print("✅ 错误恢复正常")
 
-    async def test_load_balancing_simulation(self, sample_match_data, mock_inference_service):
+    async def test_load_balancing_simulation(
+        self, sample_match_data, mock_inference_service
+    ):
         """测试负载均衡模拟"""
         print("\n⚖️  测试负载均衡...")
 
@@ -468,8 +521,8 @@ if __name__ == "__main__":
                     "safe_kelly_fraction": 0.0125,
                     "expected_value": 0.15,
                     "bankroll": b,
-                    "selection": "home_win"
-                }
+                    "selection": "home_win",
+                },
             )
             print("🎉 生产冒烟测试成功完成！")
             return report
@@ -479,4 +532,5 @@ if __name__ == "__main__":
 
     # 运行测试
     import asyncio
+
     asyncio.run(run_smoke_tests())

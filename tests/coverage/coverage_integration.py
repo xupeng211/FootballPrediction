@@ -38,8 +38,7 @@ from coverage_analyzer import CoverageAnalyzer
 
 # 设置日志
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -56,10 +55,10 @@ class CoverageIntegration:
 
         # 覆盖率目标配置
         self.coverage_targets = {
-            'overall': 85.0,
-            'core_algorithms': 90.0,
-            'integration_tests': 80.0,
-            'performance_tests': 70.0
+            "overall": 85.0,
+            "core_algorithms": 90.0,
+            "integration_tests": 80.0,
+            "performance_tests": 70.0,
         }
 
     async def run_complete_coverage_suite(self) -> Dict[str, Any]:
@@ -89,29 +88,31 @@ class CoverageIntegration:
             target_assessment = await self._assess_coverage_targets(coverage_report)
 
             # 7. 生成CI/CD输出
-            ci_output = await self._generate_ci_output(integration_report, target_assessment)
+            ci_output = await self._generate_ci_output(
+                integration_report, target_assessment
+            )
 
             execution_time = time.time() - start_time
 
             logger.info(f"✅ 完整覆盖率测试套件执行完成，耗时: {execution_time:.2f}秒")
 
             return {
-                'success': True,
-                'execution_time': execution_time,
-                'test_results': test_results,
-                'coverage_report': coverage_report,
-                'deep_analysis': deep_analysis,
-                'integration_report': integration_report,
-                'target_assessment': target_assessment,
-                'ci_output': ci_output
+                "success": True,
+                "execution_time": execution_time,
+                "test_results": test_results,
+                "coverage_report": coverage_report,
+                "deep_analysis": deep_analysis,
+                "integration_report": integration_report,
+                "target_assessment": target_assessment,
+                "ci_output": ci_output,
             }
 
         except Exception as e:
             logger.error(f"❌ 覆盖率测试套件执行失败: {e}")
             return {
-                'success': False,
-                'error': str(e),
-                'execution_time': time.time() - start_time
+                "success": False,
+                "error": str(e),
+                "execution_time": time.time() - start_time,
             }
 
     async def _prepare_environment(self):
@@ -128,14 +129,14 @@ class CoverageIntegration:
             raise
 
         # 清理之前的覆盖率数据
-        cov_files = list(Path('.').glob('.coverage*'))
+        cov_files = list(Path(".").glob(".coverage*"))
         for cov_file in cov_files:
             cov_file.unlink()
 
         # 确保输出目录存在
         self.output_dir.mkdir(exist_ok=True)
-        (self.output_dir / 'htmlcov').mkdir(exist_ok=True)
-        (self.output_dir / 'xml').mkdir(exist_ok=True)
+        (self.output_dir / "htmlcov").mkdir(exist_ok=True)
+        (self.output_dir / "xml").mkdir(exist_ok=True)
 
     async def _run_test_suite(self) -> Dict[str, Any]:
         """运行测试套件"""
@@ -143,25 +144,18 @@ class CoverageIntegration:
 
         test_suites = [
             {
-                'name': 'Core Algorithms',
-                'tests': [
-                    'tests/unit/test_elo_rating_system.py',
-                    'tests/unit/test_poisson_features.py',
-                    'tests/unit/test_odds_movement_features.py'
-                ]
+                "name": "Core Algorithms",
+                "tests": [
+                    "tests/unit/test_elo_rating_system.py",
+                    "tests/unit/test_poisson_features.py",
+                    "tests/unit/test_odds_movement_features.py",
+                ],
             },
             {
-                'name': 'Integration Tests',
-                'tests': [
-                    'tests/integration/test_service_integration.py'
-                ]
+                "name": "Integration Tests",
+                "tests": ["tests/integration/test_service_integration.py"],
             },
-            {
-                'name': 'Performance Tests',
-                'tests': [
-                    'tests/performance/'
-                ]
-            }
+            {"name": "Performance Tests", "tests": ["tests/performance/"]},
         ]
 
         suite_results = {}
@@ -174,59 +168,63 @@ class CoverageIntegration:
 
             try:
                 # 运行pytest
-                result = pytest.main([
-                    '--tb=short',
-                    '--json-report',
-                    f'--json-report-file={self.output_dir}/{suite["name"].lower().replace(" ", "_")}_results.json',
-                    '-v',
-                    *suite['tests']
-                ])
+                result = pytest.main(
+                    [
+                        "--tb=short",
+                        "--json-report",
+                        f'--json-report-file={self.output_dir}/{suite["name"].lower().replace(" ", "_")}_results.json',
+                        "-v",
+                        *suite["tests"],
+                    ]
+                )
 
                 # 读取结果
-                result_file = self.output_dir / f'{suite["name"].lower().replace(" ", "_")}_results.json'
+                result_file = (
+                    self.output_dir
+                    / f'{suite["name"].lower().replace(" ", "_")}_results.json'
+                )
                 if result_file.exists():
-                    with open(result_file, 'r') as f:
+                    with open(result_file, "r") as f:
                         result_data = json.load(f)
 
-                    suite_results[suite['name']] = {
-                        'exit_code': result,
-                        'summary': result_data.get('summary', {}),
-                        'tests': result_data.get('tests', [])
+                    suite_results[suite["name"]] = {
+                        "exit_code": result,
+                        "summary": result_data.get("summary", {}),
+                        "tests": result_data.get("tests", []),
                     }
 
-                    if 'summary' in result_data:
-                        total_passed += result_data['summary'].get('passed', 0)
-                        total_failed += result_data['summary'].get('failed', 0)
-                        total_skipped += result_data['summary'].get('skipped', 0)
+                    if "summary" in result_data:
+                        total_passed += result_data["summary"].get("passed", 0)
+                        total_failed += result_data["summary"].get("failed", 0)
+                        total_skipped += result_data["summary"].get("skipped", 0)
 
                 else:
-                    suite_results[suite['name']] = {
-                        'exit_code': result,
-                        'summary': {'passed': 0, 'failed': 0, 'skipped': 0},
-                        'tests': []
+                    suite_results[suite["name"]] = {
+                        "exit_code": result,
+                        "summary": {"passed": 0, "failed": 0, "skipped": 0},
+                        "tests": [],
                     }
 
             except Exception as e:
                 logger.error(f"测试套件 {suite['name']} 执行失败: {e}")
-                suite_results[suite['name']] = {
-                    'exit_code': -1,
-                    'error': str(e),
-                    'summary': {'passed': 0, 'failed': 0, 'skipped': 0},
-                    'tests': []
+                suite_results[suite["name"]] = {
+                    "exit_code": -1,
+                    "error": str(e),
+                    "summary": {"passed": 0, "failed": 0, "skipped": 0},
+                    "tests": [],
                 }
 
         overall_success = all(
-            result.get('exit_code', -1) == 0
-            for result in suite_results.values()
+            result.get("exit_code", -1) == 0 for result in suite_results.values()
         )
 
         return {
-            'overall_success': overall_success,
-            'total_passed': total_passed,
-            'total_failed': total_failed,
-            'total_skipped': total_skipped,
-            'total_tests': total_passed + total_failed + total_skipped,
-            'suite_results': suite_results
+            "overall_success": overall_success,
+            "total_passed": total_passed,
+            "total_failed": total_failed,
+            "total_skipped": total_skipped,
+            "total_tests": total_passed + total_failed + total_skipped,
+            "suite_results": suite_results,
         }
 
     async def _generate_coverage_reports(self) -> Dict[str, Any]:
@@ -253,7 +251,7 @@ class CoverageIntegration:
             cov.load()
 
             # 生成XML报告
-            cov.xml_report(outfile=str(self.output_dir / 'xml' / 'coverage.xml'))
+            cov.xml_report(outfile=str(self.output_dir / "xml" / "coverage.xml"))
 
             logger.info("✅ XML覆盖率报告生成完成")
 
@@ -265,9 +263,11 @@ class CoverageIntegration:
         logger.info("📝 生成Markdown覆盖率报告")
 
         # 提取关键数据
-        overall_coverage = coverage_result['overall_coverage']
-        core_coverage = coverage_result['core_coverage']['average_coverage']
-        integration_coverage = coverage_result['integration_coverage']['average_coverage']
+        overall_coverage = coverage_result["overall_coverage"]
+        core_coverage = coverage_result["core_coverage"]["average_coverage"]
+        integration_coverage = coverage_result["integration_coverage"][
+            "average_coverage"
+        ]
 
         # 生成Markdown内容
         markdown_content = f"""# Sprint 7 测试覆盖率报告
@@ -285,9 +285,15 @@ class CoverageIntegration:
 """
 
         # 添加核心算法模块详情
-        for module, analysis in coverage_result['core_coverage']['detailed_analysis'].items():
-            status = '✅ 达标' if analysis['status'] == 'meets_threshold' else '❌ 未达标'
-            priority = {'high': '高', 'medium': '中', 'low': '低'}.get(analysis['priority'], '低')
+        for module, analysis in coverage_result["core_coverage"][
+            "detailed_analysis"
+        ].items():
+            status = (
+                "✅ 达标" if analysis["status"] == "meets_threshold" else "❌ 未达标"
+            )
+            priority = {"high": "高", "medium": "中", "low": "低"}.get(
+                analysis["priority"], "低"
+            )
 
             markdown_content += f"""### {module.split('.')[-1]}
 
@@ -299,8 +305,8 @@ class CoverageIntegration:
 """
 
         # 添加趋势分析
-        if 'trend_analysis' in coverage_result:
-            trend = coverage_result['trend_analysis']
+        if "trend_analysis" in coverage_result:
+            trend = coverage_result["trend_analysis"]
             markdown_content += f"""## 📈 覆盖率趋势
 
 - 趋势方向: {trend.get('trend', 'N/A')}
@@ -311,7 +317,7 @@ class CoverageIntegration:
 """
 
         # 添加回归检测
-        if coverage_result.get('regressions_detected', 0) > 0:
+        if coverage_result.get("regressions_detected", 0) > 0:
             markdown_content += f"""## ⚠️ 回归检测
 
 检测到 {coverage_result['regressions_detected']} 个覆盖率回归，请查看详细报告。
@@ -333,62 +339,98 @@ class CoverageIntegration:
 """
 
         # 保存Markdown报告
-        markdown_file = self.output_dir / f"coverage_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
-        with open(markdown_file, 'w', encoding='utf-8') as f:
+        markdown_file = (
+            self.output_dir
+            / f"coverage_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
+        )
+        with open(markdown_file, "w", encoding="utf-8") as f:
             f.write(markdown_content)
 
         logger.info(f"✅ Markdown覆盖率报告生成完成: {markdown_file}")
 
     async def _generate_integration_report(
-        self, test_results: Dict[str, Any], coverage_report: Dict[str, Any], deep_analysis: Dict[str, Any]
+        self,
+        test_results: Dict[str, Any],
+        coverage_report: Dict[str, Any],
+        deep_analysis: Dict[str, Any],
     ) -> Dict[str, Any]:
         """生成集成报告"""
         logger.info("🔗 生成集成报告")
 
         integration_report = {
-            'timestamp': datetime.now().isoformat(),
-            'test_summary': {
-                'total_tests': test_results['total_tests'],
-                'passed_tests': test_results['total_passed'],
-                'failed_tests': test_results['total_failed'],
-                'skipped_tests': test_results['total_skipped'],
-                'success_rate': (test_results['total_passed'] / test_results['total_tests'] * 100) if test_results['total_tests'] > 0 else 0
+            "timestamp": datetime.now().isoformat(),
+            "test_summary": {
+                "total_tests": test_results["total_tests"],
+                "passed_tests": test_results["total_passed"],
+                "failed_tests": test_results["total_failed"],
+                "skipped_tests": test_results["total_skipped"],
+                "success_rate": (
+                    (test_results["total_passed"] / test_results["total_tests"] * 100)
+                    if test_results["total_tests"] > 0
+                    else 0
+                ),
             },
-            'coverage_summary': {
-                'overall_coverage': coverage_report['overall_coverage'],
-                'core_algorithms_coverage': coverage_report['core_coverage']['average_coverage'],
-                'integration_coverage': coverage_report['integration_coverage']['average_coverage'],
-                'targets_met': {
-                    'overall': coverage_report['overall_coverage'] >= self.coverage_targets['overall'],
-                    'core_algorithms': coverage_report['core_coverage']['average_coverage'] >= self.coverage_targets['core_algorithms'],
-                    'integration': coverage_report['integration_coverage']['average_coverage'] >= self.coverage_targets['integration_tests']
-                }
+            "coverage_summary": {
+                "overall_coverage": coverage_report["overall_coverage"],
+                "core_algorithms_coverage": coverage_report["core_coverage"][
+                    "average_coverage"
+                ],
+                "integration_coverage": coverage_report["integration_coverage"][
+                    "average_coverage"
+                ],
+                "targets_met": {
+                    "overall": coverage_report["overall_coverage"]
+                    >= self.coverage_targets["overall"],
+                    "core_algorithms": coverage_report["core_coverage"][
+                        "average_coverage"
+                    ]
+                    >= self.coverage_targets["core_algorithms"],
+                    "integration": coverage_report["integration_coverage"][
+                        "average_coverage"
+                    ]
+                    >= self.coverage_targets["integration_tests"],
+                },
             },
-            'quality_metrics': {
-                'total_modules_analyzed': deep_analysis.get('modules_analyzed', 0),
-                'high_risk_areas': deep_analysis.get('risk_analysis', {}).get('total_high_risk', 0),
-                'medium_risk_areas': deep_analysis.get('risk_analysis', {}).get('total_medium_risk', 0),
-                'average_complexity': deep_analysis.get('complexity_analysis', {}).get('global_average_complexity', 0),
-                'improvement_suggestions': deep_analysis.get('improvement_plan', {}).get('total_improvements', 0)
+            "quality_metrics": {
+                "total_modules_analyzed": deep_analysis.get("modules_analyzed", 0),
+                "high_risk_areas": deep_analysis.get("risk_analysis", {}).get(
+                    "total_high_risk", 0
+                ),
+                "medium_risk_areas": deep_analysis.get("risk_analysis", {}).get(
+                    "total_medium_risk", 0
+                ),
+                "average_complexity": deep_analysis.get("complexity_analysis", {}).get(
+                    "global_average_complexity", 0
+                ),
+                "improvement_suggestions": deep_analysis.get(
+                    "improvement_plan", {}
+                ).get("total_improvements", 0),
             },
-            'detailed_results': {
-                'test_results': test_results,
-                'coverage_report': coverage_report,
-                'deep_analysis': deep_analysis
+            "detailed_results": {
+                "test_results": test_results,
+                "coverage_report": coverage_report,
+                "deep_analysis": deep_analysis,
             },
-            'recommendations': await self._generate_recommendations(test_results, coverage_report, deep_analysis)
+            "recommendations": await self._generate_recommendations(
+                test_results, coverage_report, deep_analysis
+            ),
         }
 
         # 保存集成报告
-        report_file = self.output_dir / f"integration_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-        with open(report_file, 'w', encoding='utf-8') as f:
+        report_file = (
+            self.output_dir
+            / f"integration_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        )
+        with open(report_file, "w", encoding="utf-8") as f:
             json.dump(integration_report, f, indent=2, default=str, ensure_ascii=False)
 
         logger.info(f"✅ 集成报告生成完成: {report_file}")
 
         return integration_report
 
-    async def _assess_coverage_targets(self, coverage_report: Dict[str, Any]) -> Dict[str, Any]:
+    async def _assess_coverage_targets(
+        self, coverage_report: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """评估覆盖率目标达成情况"""
         logger.info("🎯 评估覆盖率目标达成情况")
 
@@ -397,21 +439,23 @@ class CoverageIntegration:
         overall_score = 0
 
         for target_name, target_value in self.coverage_targets.items():
-            if target_name == 'overall':
-                actual_coverage = coverage_report['overall_coverage']
-            elif target_name == 'core_algorithms':
-                actual_coverage = coverage_report['core_coverage']['average_coverage']
-            elif target_name == 'integration_tests':
-                actual_coverage = coverage_report['integration_coverage']['average_coverage']
+            if target_name == "overall":
+                actual_coverage = coverage_report["overall_coverage"]
+            elif target_name == "core_algorithms":
+                actual_coverage = coverage_report["core_coverage"]["average_coverage"]
+            elif target_name == "integration_tests":
+                actual_coverage = coverage_report["integration_coverage"][
+                    "average_coverage"
+                ]
             else:
                 actual_coverage = 0
 
             met = actual_coverage >= target_value
             targets_status[target_name] = {
-                'target': target_value,
-                'actual': actual_coverage,
-                'met': met,
-                'gap': max(0, target_value - actual_coverage)
+                "target": target_value,
+                "actual": actual_coverage,
+                "met": met,
+                "gap": max(0, target_value - actual_coverage),
             }
 
             if not met:
@@ -424,10 +468,10 @@ class CoverageIntegration:
         overall_score = overall_score / len(self.coverage_targets)
 
         assessment = {
-            'all_targets_met': all_met,
-            'overall_score': overall_score,
-            'targets_status': targets_status,
-            'grade': self._calculate_grade(overall_score)
+            "all_targets_met": all_met,
+            "overall_score": overall_score,
+            "targets_status": targets_status,
+            "grade": self._calculate_grade(overall_score),
         }
 
         return assessment
@@ -435,111 +479,142 @@ class CoverageIntegration:
     def _calculate_grade(self, score: float) -> str:
         """计算覆盖率等级"""
         if score >= 95:
-            return 'A+ (优秀)'
+            return "A+ (优秀)"
         elif score >= 90:
-            return 'A (优秀)'
+            return "A (优秀)"
         elif score >= 85:
-            return 'B+ (良好)'
+            return "B+ (良好)"
         elif score >= 80:
-            return 'B (良好)'
+            return "B (良好)"
         elif score >= 75:
-            return 'C+ (一般)'
+            return "C+ (一般)"
         elif score >= 70:
-            return 'C (一般)'
+            return "C (一般)"
         elif score >= 60:
-            return 'D (需要改进)'
+            return "D (需要改进)"
         else:
-            return 'F (不合格)'
+            return "F (不合格)"
 
     async def _generate_recommendations(
-        self, test_results: Dict[str, Any], coverage_report: Dict[str, Any], deep_analysis: Dict[str, Any]
+        self,
+        test_results: Dict[str, Any],
+        coverage_report: Dict[str, Any],
+        deep_analysis: Dict[str, Any],
     ) -> List[Dict[str, Any]]:
         """生成改进建议"""
         recommendations = []
 
         # 测试成功率建议
-        success_rate = test_results['test_summary']['success_rate']
+        success_rate = test_results["test_summary"]["success_rate"]
         if success_rate < 95:
-            recommendations.append({
-                'category': '测试稳定性',
-                'priority': 'high',
-                'description': f"测试成功率较低({success_rate:.1f}%)，需要修复失败的测试用例",
-                'action_items': [
-                    "分析并修复失败的测试用例",
-                    "检查测试环境的稳定性",
-                    "更新测试数据和依赖"
-                ]
-            })
+            recommendations.append(
+                {
+                    "category": "测试稳定性",
+                    "priority": "high",
+                    "description": f"测试成功率较低({success_rate:.1f}%)，需要修复失败的测试用例",
+                    "action_items": [
+                        "分析并修复失败的测试用例",
+                        "检查测试环境的稳定性",
+                        "更新测试数据和依赖",
+                    ],
+                }
+            )
 
         # 覆盖率建议
-        if not coverage_report['core_coverage_met']:
-            recommendations.append({
-                'category': '核心算法覆盖率',
-                'priority': 'high',
-                'description': f"核心算法覆盖率未达标({coverage_report['core_coverage']['average_coverage']:.1f}%)",
-                'action_items': [
-                    "为核心算法函数增加单元测试",
-                    "补充边界条件测试",
-                    "增加异常处理测试"
-                ]
-            })
+        if not coverage_report["core_coverage_met"]:
+            recommendations.append(
+                {
+                    "category": "核心算法覆盖率",
+                    "priority": "high",
+                    "description": f"核心算法覆盖率未达标({coverage_report['core_coverage']['average_coverage']:.1f}%)",
+                    "action_items": [
+                        "为核心算法函数增加单元测试",
+                        "补充边界条件测试",
+                        "增加异常处理测试",
+                    ],
+                }
+            )
 
         # 风险区域建议
-        high_risk_count = deep_analysis.get('quality_metrics', {}).get('high_risk_areas', 0)
+        high_risk_count = deep_analysis.get("quality_metrics", {}).get(
+            "high_risk_areas", 0
+        )
         if high_risk_count > 0:
-            recommendations.append({
-                'category': '代码质量',
-                'priority': 'medium',
-                'description': f"发现{high_risk_count}个高风险代码区域",
-                'action_items': [
-                    "优先为高风险区域编写测试",
-                    "考虑重构高复杂度函数",
-                    "增加代码审查检查"
-                ]
-            })
+            recommendations.append(
+                {
+                    "category": "代码质量",
+                    "priority": "medium",
+                    "description": f"发现{high_risk_count}个高风险代码区域",
+                    "action_items": [
+                        "优先为高风险区域编写测试",
+                        "考虑重构高复杂度函数",
+                        "增加代码审查检查",
+                    ],
+                }
+            )
 
         # 复杂度建议
-        avg_complexity = deep_analysis.get('quality_metrics', {}).get('average_complexity', 0)
+        avg_complexity = deep_analysis.get("quality_metrics", {}).get(
+            "average_complexity", 0
+        )
         if avg_complexity > 8:
-            recommendations.append({
-                'category': '代码复杂度',
-                'priority': 'medium',
-                'description': f"平均代码复杂度偏高({avg_complexity:.1f})",
-                'action_items': [
-                    "重构高复杂度函数",
-                    "应用设计模式降低复杂度",
-                    "增加单元测试提高可测试性"
-                ]
-            })
+            recommendations.append(
+                {
+                    "category": "代码复杂度",
+                    "priority": "medium",
+                    "description": f"平均代码复杂度偏高({avg_complexity:.1f})",
+                    "action_items": [
+                        "重构高复杂度函数",
+                        "应用设计模式降低复杂度",
+                        "增加单元测试提高可测试性",
+                    ],
+                }
+            )
 
         return recommendations
 
-    async def _generate_ci_output(self, integration_report: Dict[str, Any], target_assessment: Dict[str, Any]) -> Dict[str, Any]:
+    async def _generate_ci_output(
+        self, integration_report: Dict[str, Any], target_assessment: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """生成CI/CD输出格式"""
         logger.info("🔧 生成CI/CD输出")
 
         ci_output = {
-            'success': target_assessment['all_targets_met'],
-            'metrics': {
-                'test_success_rate': integration_report['test_summary']['success_rate'],
-                'overall_coverage': integration_report['coverage_summary']['overall_coverage'],
-                'core_algorithms_coverage': integration_report['coverage_summary']['core_algorithms_coverage'],
-                'integration_coverage': integration_report['coverage_summary']['integration_coverage']
+            "success": target_assessment["all_targets_met"],
+            "metrics": {
+                "test_success_rate": integration_report["test_summary"]["success_rate"],
+                "overall_coverage": integration_report["coverage_summary"][
+                    "overall_coverage"
+                ],
+                "core_algorithms_coverage": integration_report["coverage_summary"][
+                    "core_algorithms_coverage"
+                ],
+                "integration_coverage": integration_report["coverage_summary"][
+                    "integration_coverage"
+                ],
             },
-            'targets': target_assessment['targets_status'],
-            'grade': target_assessment['grade'],
-            'summary': {
-                'total_tests': integration_report['test_summary']['total_tests'],
-                'failed_tests': integration_report['test_summary']['failed_tests'],
-                'high_risk_areas': integration_report['quality_metrics']['high_risk_areas'],
-                'improvement_suggestions': integration_report['quality_metrics']['improvement_suggestions']
+            "targets": target_assessment["targets_status"],
+            "grade": target_assessment["grade"],
+            "summary": {
+                "total_tests": integration_report["test_summary"]["total_tests"],
+                "failed_tests": integration_report["test_summary"]["failed_tests"],
+                "high_risk_areas": integration_report["quality_metrics"][
+                    "high_risk_areas"
+                ],
+                "improvement_suggestions": integration_report["quality_metrics"][
+                    "improvement_suggestions"
+                ],
             },
-            'artifacts': {
-                'html_report': str(self.output_dir / 'htmlcov' / 'index.html'),
-                'xml_report': str(self.output_dir / 'xml' / 'coverage.xml'),
-                'badge': str(self.output_dir / 'coverage_badge.svg'),
-                'integration_report': str(list(self.output_dir.glob('integration_report_*.json'))[0]) if list(self.output_dir.glob('integration_report_*.json')) else None
-            }
+            "artifacts": {
+                "html_report": str(self.output_dir / "htmlcov" / "index.html"),
+                "xml_report": str(self.output_dir / "xml" / "coverage.xml"),
+                "badge": str(self.output_dir / "coverage_badge.svg"),
+                "integration_report": (
+                    str(list(self.output_dir.glob("integration_report_*.json"))[0])
+                    if list(self.output_dir.glob("integration_report_*.json"))
+                    else None
+                ),
+            },
         }
 
         # 生成GitHub Actions输出文件
@@ -555,36 +630,62 @@ class CoverageIntegration:
         logger.info("📝 生成GitHub Actions输出")
 
         # 创建GitHub Actions输出文件
-        gh_output_file = self.output_dir / 'github_actions_output.txt'
+        gh_output_file = self.output_dir / "github_actions_output.txt"
 
-        with open(gh_output_file, 'w') as f:
+        with open(gh_output_file, "w") as f:
             # 输出覆盖率指标
-            f.write(f"::set-output name=coverage::{ci_output['metrics']['overall_coverage']:.1f}\n")
-            f.write(f"::set-output name=core_coverage::{ci_output['metrics']['core_algorithms_coverage']:.1f}\n")
-            f.write(f"::set-output name=integration_coverage::{ci_output['metrics']['integration_coverage']:.1f}\n")
-            f.write(f"::set-output name=test_success_rate::{ci_output['metrics']['test_success_rate']:.1f}\n")
+            f.write(
+                f"::set-output name=coverage::{ci_output['metrics']['overall_coverage']:.1f}\n"
+            )
+            f.write(
+                f"::set-output name=core_coverage::{ci_output['metrics']['core_algorithms_coverage']:.1f}\n"
+            )
+            f.write(
+                f"::set-output name=integration_coverage::{ci_output['metrics']['integration_coverage']:.1f}\n"
+            )
+            f.write(
+                f"::set-output name=test_success_rate::{ci_output['metrics']['test_success_rate']:.1f}\n"
+            )
             f.write(f"::set-output name=grade::{ci_output['grade']}\n")
-            f.write(f"::set-output name=targets_met::{str(ci_output['success']).lower()}\n")
+            f.write(
+                f"::set-output name=targets_met::{str(ci_output['success']).lower()}\n"
+            )
 
             # 输出摘要信息
             f.write("\n# Coverage Summary\n")
-            f.write(f"- Overall Coverage: {ci_output['metrics']['overall_coverage']:.1f}%\n")
-            f.write(f"- Core Algorithms: {ci_output['metrics']['core_algorithms_coverage']:.1f}%\n")
-            f.write(f"- Integration Tests: {ci_output['metrics']['integration_coverage']:.1f}%\n")
-            f.write(f"- Test Success Rate: {ci_output['metrics']['test_success_rate']:.1f}%\n")
+            f.write(
+                f"- Overall Coverage: {ci_output['metrics']['overall_coverage']:.1f}%\n"
+            )
+            f.write(
+                f"- Core Algorithms: {ci_output['metrics']['core_algorithms_coverage']:.1f}%\n"
+            )
+            f.write(
+                f"- Integration Tests: {ci_output['metrics']['integration_coverage']:.1f}%\n"
+            )
+            f.write(
+                f"- Test Success Rate: {ci_output['metrics']['test_success_rate']:.1f}%\n"
+            )
             f.write(f"- Grade: {ci_output['grade']}\n")
 
     async def _generate_env_vars(self, ci_output: Dict[str, Any]):
         """生成环境变量文件"""
         logger.info("🔧 生成环境变量文件")
 
-        env_file = self.output_dir / 'coverage.env'
+        env_file = self.output_dir / "coverage.env"
 
-        with open(env_file, 'w') as f:
-            f.write(f"COVERAGE_OVERALL={ci_output['metrics']['overall_coverage']:.1f}\n")
-            f.write(f"COVERAGE_CORE={ci_output['metrics']['core_algorithms_coverage']:.1f}\n")
-            f.write(f"COVERAGE_INTEGRATION={ci_output['metrics']['integration_coverage']:.1f}\n")
-            f.write(f"TEST_SUCCESS_RATE={ci_output['metrics']['test_success_rate']:.1f}\n")
+        with open(env_file, "w") as f:
+            f.write(
+                f"COVERAGE_OVERALL={ci_output['metrics']['overall_coverage']:.1f}\n"
+            )
+            f.write(
+                f"COVERAGE_CORE={ci_output['metrics']['core_algorithms_coverage']:.1f}\n"
+            )
+            f.write(
+                f"COVERAGE_INTEGRATION={ci_output['metrics']['integration_coverage']:.1f}\n"
+            )
+            f.write(
+                f"TEST_SUCCESS_RATE={ci_output['metrics']['test_success_rate']:.1f}\n"
+            )
             f.write(f"COVERAGE_GRADE={ci_output['grade']}\n")
             f.write(f"TARGETS_MET={str(ci_output['success']).lower()}\n")
 
@@ -599,50 +700,56 @@ class CoverageIntegration:
 
             # 运行关键测试
             critical_tests = [
-                'tests/unit/test_elo_rating_system.py',
-                'tests/unit/test_poisson_features.py',
-                'tests/integration/test_service_integration.py'
+                "tests/unit/test_elo_rating_system.py",
+                "tests/unit/test_poisson_features.py",
+                "tests/integration/test_service_integration.py",
             ]
 
-            result = pytest.main([
-                '--tb=short',
-                '-q',
-                *critical_tests
-            ])
+            result = pytest.main(["--tb=short", "-q", *critical_tests])
 
             cov.stop()
             cov.save()
 
             # 获取覆盖率数据
             coverage_data = cov.get_data()
-            total_statements = coverage_data.n_executed_statements() + coverage_data.n_missing_statements()
-            overall_coverage = (coverage_data.n_executed_statements() / total_statements * 100) if total_statements > 0 else 0
+            total_statements = (
+                coverage_data.n_executed_statements()
+                + coverage_data.n_missing_statements()
+            )
+            overall_coverage = (
+                (coverage_data.n_executed_statements() / total_statements * 100)
+                if total_statements > 0
+                else 0
+            )
 
             ci_result = {
-                'success': result == 0 and overall_coverage >= self.coverage_targets['overall'],
-                'exit_code': result,
-                'overall_coverage': overall_coverage,
-                'target_met': overall_coverage >= self.coverage_targets['overall'],
-                'target_gap': max(0, self.coverage_targets['overall'] - overall_coverage)
+                "success": result == 0
+                and overall_coverage >= self.coverage_targets["overall"],
+                "exit_code": result,
+                "overall_coverage": overall_coverage,
+                "target_met": overall_coverage >= self.coverage_targets["overall"],
+                "target_gap": max(
+                    0, self.coverage_targets["overall"] - overall_coverage
+                ),
             }
 
             # 生成CI输出
-            await self._generate_github_actions_output({
-                'success': ci_result['success'],
-                'metrics': {'overall_coverage': overall_coverage},
-                'grade': self._calculate_grade(overall_coverage / self.coverage_targets['overall'] * 100),
-                'targets_met': ci_result['target_met']
-            })
+            await self._generate_github_actions_output(
+                {
+                    "success": ci_result["success"],
+                    "metrics": {"overall_coverage": overall_coverage},
+                    "grade": self._calculate_grade(
+                        overall_coverage / self.coverage_targets["overall"] * 100
+                    ),
+                    "targets_met": ci_result["target_met"],
+                }
+            )
 
             return ci_result
 
         except Exception as e:
             logger.error(f"CI模式执行失败: {e}")
-            return {
-                'success': False,
-                'error': str(e),
-                'overall_coverage': 0
-            }
+            return {"success": False, "error": str(e), "overall_coverage": 0}
 
     async def run_watch_mode(self, interval: int = 60) -> None:
         """运行监控模式（持续监控覆盖率变化）"""
@@ -657,7 +764,7 @@ class CoverageIntegration:
                 # 运行快速覆盖率检查
                 result = await self.run_ci_mode()
 
-                current_coverage = result['overall_coverage']
+                current_coverage = result["overall_coverage"]
 
                 if baseline_coverage is None:
                     baseline_coverage = current_coverage
@@ -666,11 +773,15 @@ class CoverageIntegration:
                     coverage_change = current_coverage - baseline_coverage
                     if abs(coverage_change) > 1.0:  # 1%变化阈值
                         status = "📈" if coverage_change > 0 else "📉"
-                        logger.info(f"{status} 覆盖率变化: {coverage_change:+.1f}% (当前: {current_coverage:.1f}%, 基线: {baseline_coverage:.1f}%)")
+                        logger.info(
+                            f"{status} 覆盖率变化: {coverage_change:+.1f}% (当前: {current_coverage:.1f}%, 基线: {baseline_coverage:.1f}%)"
+                        )
 
                 # 检查目标达成情况
-                if not result['target_met']:
-                    logger.warning(f"⚠️ 覆盖率未达标，当前: {current_coverage:.1f}%, 目标: {self.coverage_targets['overall']:.1f}%")
+                if not result["target_met"]:
+                    logger.warning(
+                        f"⚠️ 覆盖率未达标，当前: {current_coverage:.1f}%, 目标: {self.coverage_targets['overall']:.1f}%"
+                    )
 
                 # 等待下次检查
                 logger.info(f"⏳ 等待 {interval} 秒后进行下次检查...")
@@ -686,46 +797,60 @@ async def main():
     """主函数"""
     parser = argparse.ArgumentParser(description="Sprint 7 覆盖率集成脚本")
 
-    subparsers = parser.add_subparsers(dest='command', help='可用命令')
+    subparsers = parser.add_subparsers(dest="command", help="可用命令")
 
     # 完整运行命令
-    full_parser = subparsers.add_parser('run-all', help='运行完整的覆盖率测试套件')
-    full_parser.add_argument('--output-dir', default='coverage_reports', help='输出目录')
+    full_parser = subparsers.add_parser("run-all", help="运行完整的覆盖率测试套件")
+    full_parser.add_argument(
+        "--output-dir", default="coverage_reports", help="输出目录"
+    )
 
     # CI模式命令
-    ci_parser = subparsers.add_parser('ci-mode', help='运行CI模式（快速检查）')
+    ci_parser = subparsers.add_parser("ci-mode", help="运行CI模式（快速检查）")
 
     # 监控模式命令
-    watch_parser = subparsers.add_parser('watch-mode', help='运行监控模式（持续监控）')
-    watch_parser.add_argument('--interval', type=int, default=60, help='监控间隔（秒）')
+    watch_parser = subparsers.add_parser("watch-mode", help="运行监控模式（持续监控）")
+    watch_parser.add_argument("--interval", type=int, default=60, help="监控间隔（秒）")
 
     args = parser.parse_args()
 
-    integration = CoverageIntegration(args.output_dir if hasattr(args, 'output_dir') else "coverage_reports")
+    integration = CoverageIntegration(
+        args.output_dir if hasattr(args, "output_dir") else "coverage_reports"
+    )
 
     try:
-        if args.command == 'run-all':
+        if args.command == "run-all":
             result = await integration.run_complete_coverage_suite()
 
             print(f"\n🎉 Sprint 7 覆盖率测试完成!")
             print(f"执行时间: {result['execution_time']:.2f}秒")
-            print(f"测试成功率: {result['test_results']['test_summary']['success_rate']:.1f}%")
+            print(
+                f"测试成功率: {result['test_results']['test_summary']['success_rate']:.1f}%"
+            )
             print(f"总体覆盖率: {result['coverage_report']['overall_coverage']:.1f}%")
-            print(f"核心算法覆盖率: {result['coverage_report']['core_coverage']['average_coverage']:.1f}%")
-            print(f"集成测试覆盖率: {result['coverage_report']['integration_coverage']['average_coverage']:.1f}%")
-            print(f"目标达成: {'✅ 是' if result['target_assessment']['all_targets_met'] else '❌ 否'}")
+            print(
+                f"核心算法覆盖率: {result['coverage_report']['core_coverage']['average_coverage']:.1f}%"
+            )
+            print(
+                f"集成测试覆盖率: {result['coverage_report']['integration_coverage']['average_coverage']:.1f}%"
+            )
+            print(
+                f"目标达成: {'✅ 是' if result['target_assessment']['all_targets_met'] else '❌ 否'}"
+            )
             print(f"总体评分: {result['target_assessment']['grade']}")
 
             # 输出关键文件路径
-            if 'artifacts' in result['ci_output']:
+            if "artifacts" in result["ci_output"]:
                 print(f"\n📁 生成的文件:")
-                for artifact_type, file_path in result['ci_output']['artifacts'].items():
+                for artifact_type, file_path in result["ci_output"][
+                    "artifacts"
+                ].items():
                     if file_path:
                         print(f"  {artifact_type}: {file_path}")
 
             return result
 
-        elif args.command == 'ci-mode':
+        elif args.command == "ci-mode":
             result = await integration.run_ci_mode()
 
             print(f"\n🚀 CI模式执行完成!")
@@ -733,12 +858,12 @@ async def main():
             print(f"覆盖率: {result['overall_coverage']:.1f}%")
             print(f"目标达成: {'✅' if result['target_met'] else '❌'}")
 
-            if result['target_gap'] > 0:
+            if result["target_gap"] > 0:
                 print(f"覆盖率差距: {result['target_gap']:.1f}%")
 
             return result
 
-        elif args.command == 'watch-mode':
+        elif args.command == "watch-mode":
             print(f"👁️ 启动监控模式...")
             await integration.run_watch_mode(args.interval)
 

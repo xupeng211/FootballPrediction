@@ -15,7 +15,7 @@ try:
         create_mock_di_container,
         create_mock_model_service,
         create_mock_cache_service,
-        create_mock_feature_extractor
+        create_mock_feature_extractor,
     )
 except ImportError:
     # 直接导入
@@ -23,7 +23,7 @@ except ImportError:
         create_mock_di_container,
         create_mock_model_service,
         create_mock_cache_service,
-        create_mock_feature_extractor
+        create_mock_feature_extractor,
     )
 
 
@@ -72,7 +72,7 @@ class TestInferenceServiceEnhanced:
             "successful_requests": 0,
             "failed_requests": 0,
             "cache_hits": 0,
-            "cache_misses": 0
+            "cache_misses": 0,
         }
 
     @patch("src.services.dependency_injection.ServiceContainer")
@@ -96,7 +96,7 @@ class TestInferenceServiceEnhanced:
         mock_services["model_service"].model_info.return_value = {
             "name": "xgboost_v2",
             "version": "2.0.0",
-            "accuracy": 0.67
+            "accuracy": 0.67,
         }
 
         # 创建并初始化服务
@@ -112,9 +112,7 @@ class TestInferenceServiceEnhanced:
         mock_services["model_service"].load_model.assert_called_once()
 
     @patch("src.services.dependency_injection.ServiceContainer")
-    async def test_prediction_workflow_with_proper_mocking(
-        self, mock_container_class
-    ):
+    async def test_prediction_workflow_with_proper_mocking(self, mock_container_class):
         """测试完整的预测工作流，使用正确的Mock方法"""
         from src.services.inference_service import InferenceService
 
@@ -124,19 +122,32 @@ class TestInferenceServiceEnhanced:
 
         # Mock特征提取
         mock_services["feature_extractor"].extract_features.return_value = {
-            "features": [0.65, 0.45, 0.8, 0.3, 0.2, 1.2, 0.8, 1.0, 0.75, 0.15, 0.7, 0.6],
+            "features": [
+                0.65,
+                0.45,
+                0.8,
+                0.3,
+                0.2,
+                1.2,
+                0.8,
+                1.0,
+                0.75,
+                0.15,
+                0.7,
+                0.6,
+            ],
             "feature_metadata": {
                 "match_id": "test_match_001",
                 "extraction_time": "2024-01-15T10:00:00Z",
-                "source": "enhanced_fotmob"
-            }
+                "source": "enhanced_fotmob",
+            },
         }
 
         # Mock模型预测
         mock_services["model_service"].predict.return_value = {
             "prediction": "HOME_WIN",
             "probabilities": [0.65, 0.25, 0.10],
-            "confidence": 0.75
+            "confidence": 0.75,
         }
 
         # Mock缓存操作
@@ -181,7 +192,7 @@ class TestInferenceServiceEnhanced:
             "prediction": "DRAW",
             "probabilities": [0.3, 0.5, 0.2],
             "confidence": 0.6,
-            "timestamp": "2024-01-15T09:00:00Z"
+            "timestamp": "2024-01-15T09:00:00Z",
         }
         mock_services["cache_service"].get.return_value = cached_result
 
@@ -258,7 +269,7 @@ class TestInferenceServiceEnhanced:
         # 执行批量预测
         matches = [
             {"home": "Team A", "away": "Team B"},
-            {"home": "Team C", "away": "Team D"}
+            {"home": "Team C", "away": "Team D"},
         ]
         results = await service.batch_predict(matches)
 
@@ -280,7 +291,7 @@ class TestInferenceServiceEnhanced:
         mock_services["cache_service"].stats.return_value = {
             "hit_rate": 0.85,
             "total_requests": 1000,
-            "cache_size": 150
+            "cache_size": 150,
         }
 
         # 创建服务
@@ -336,7 +347,7 @@ class TestInferenceServiceEnhanced:
             away_team="Arsenal",
             model_name="xgboost_v2",
             include_probabilities=True,
-            include_confidence=True
+            include_confidence=True,
         )
 
         assert request.home_team == "Manchester United"
@@ -351,7 +362,7 @@ class TestInferenceServiceEnhanced:
             probabilities={"HOME": 0.65, "DRAW": 0.25, "AWAY": 0.10},
             confidence=0.75,
             model_version="xgboost_v2",
-            timestamp=datetime.utcnow()
+            timestamp=datetime.utcnow(),
         )
 
         assert response.success is True
@@ -361,7 +372,10 @@ class TestInferenceServiceEnhanced:
     @patch("src.services.dependency_injection.ServiceContainer")
     def test_configuration_and_settings(self, mock_container_class):
         """测试配置和设置"""
-        from src.services.inference_service import InferenceService, InferenceServiceConfig
+        from src.services.inference_service import (
+            InferenceService,
+            InferenceServiceConfig,
+        )
 
         # Mock依赖
         mock_container, mock_services = create_mock_di_container()
@@ -372,7 +386,7 @@ class TestInferenceServiceEnhanced:
             model_path="/app/models/xgboost_v2.pkl",
             enable_cache=True,
             cache_ttl_seconds=300,
-            request_timeout_seconds=10.0
+            request_timeout_seconds=10.0,
         )
 
         # 创建带配置的服务

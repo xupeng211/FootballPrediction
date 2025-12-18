@@ -10,20 +10,25 @@ import subprocess
 import asyncio
 from pathlib import Path
 
+
 def print_header(title):
     """打印标题"""
     print(f"\n{'=' * 60}")
     print(f"🎯 {title}")
-    print('=' * 60)
+    print("=" * 60)
+
 
 def print_success(message):
     print(f"✅ {message}")
 
+
 def print_warning(message):
     print(f"⚠️  {message}")
 
+
 def print_error(message):
     print(f"❌ {message}")
+
 
 def check_mcp_config():
     """检查MCP配置文件"""
@@ -36,22 +41,22 @@ def check_mcp_config():
         return False
 
     try:
-        with open(config_file, 'r') as f:
+        with open(config_file, "r") as f:
             config = json.load(f)
 
-        servers = config.get('mcpServers', {})
+        servers = config.get("mcpServers", {})
         print_success(f"MCP配置文件存在，包含 {len(servers)} 个服务器")
 
-        expected_servers = ['postgres', 'redis', 'filesystem', 'system_monitor', 'git']
+        expected_servers = ["postgres", "redis", "filesystem", "system_monitor", "git"]
 
         for server_name in expected_servers:
             if server_name in servers:
                 server_config = servers[server_name]
-                command = server_config.get('command', '')
-                args = server_config.get('args', [])
+                command = server_config.get("command", "")
+                args = server_config.get("args", [])
 
-                if server_name in ['postgres', 'redis', 'filesystem']:
-                    if args and args[0].endswith('.py') and Path(args[0]).exists():
+                if server_name in ["postgres", "redis", "filesystem"]:
+                    if args and args[0].endswith(".py") and Path(args[0]).exists():
                         print_success(f"  {server_name}: 配置正确")
                     else:
                         print_warning(f"  {server_name}: Python文件不存在")
@@ -66,6 +71,7 @@ def check_mcp_config():
         print_error(f"读取MCP配置文件失败: {e}")
         return False
 
+
 def check_docker_services():
     """检查Docker服务状态"""
     print_header("Docker服务检查")
@@ -73,16 +79,17 @@ def check_docker_services():
     try:
         # 检查Docker容器状态
         result = subprocess.run(
-            ['docker', 'ps', '--format', 'table {{.Names}}\t{{.Status}}'],
-            capture_output=True, text=True
+            ["docker", "ps", "--format", "table {{.Names}}\t{{.Status}}"],
+            capture_output=True,
+            text=True,
         )
 
         if result.returncode == 0:
-            lines = result.stdout.strip().split('\n')
+            lines = result.stdout.strip().split("\n")
 
             # 查找关键服务
-            db_running = any('db' in line and 'Up' in line for line in lines)
-            redis_running = any('redis' in line and 'Up' in line for line in lines)
+            db_running = any("db" in line and "Up" in line for line in lines)
+            redis_running = any("redis" in line and "Up" in line for line in lines)
 
             if db_running:
                 print_success("PostgreSQL容器运行中")
@@ -103,16 +110,14 @@ def check_docker_services():
         print_error(f"检查Docker服务失败: {e}")
         return False
 
+
 def check_port_connectivity():
     """检查端口连接性"""
     print_header("端口连接性检查")
 
     import socket
 
-    ports_to_check = [
-        ('PostgreSQL', 'localhost', 5432),
-        ('Redis', 'localhost', 6379)
-    ]
+    ports_to_check = [("PostgreSQL", "localhost", 5432), ("Redis", "localhost", 6379)]
 
     all_connected = True
 
@@ -135,15 +140,16 @@ def check_port_connectivity():
 
     return all_connected
 
+
 def check_mcp_servers():
     """检查MCP服务器文件"""
     print_header("MCP服务器文件检查")
 
     server_files = [
-        'mcp_servers/postgres_server.py',
-        'mcp_servers/redis_server.py',
-        'mcp_servers/filesystem_server.py',
-        'mcp_servers/system_monitor_server.py'
+        "mcp_servers/postgres_server.py",
+        "mcp_servers/redis_server.py",
+        "mcp_servers/filesystem_server.py",
+        "mcp_servers/system_monitor_server.py",
     ]
 
     all_exist = True
@@ -157,13 +163,20 @@ def check_mcp_servers():
 
     return all_exist
 
+
 def check_environment_variables():
     """检查环境变量"""
     print_header("环境变量检查")
 
     required_vars = [
-        'DB_HOST', 'DB_PORT', 'DB_NAME', 'DB_USER', 'DB_PASSWORD',
-        'REDIS_HOST', 'REDIS_PORT', 'REDIS_DB'
+        "DB_HOST",
+        "DB_PORT",
+        "DB_NAME",
+        "DB_USER",
+        "DB_PASSWORD",
+        "REDIS_HOST",
+        "REDIS_PORT",
+        "REDIS_DB",
     ]
 
     all_set = True
@@ -178,18 +191,22 @@ def check_environment_variables():
 
     return all_set
 
+
 def generate_report():
     """生成完整的MCP验证报告"""
     print("🚀 Football Prediction System - MCP配置验证报告")
-    print("生成时间:", subprocess.run(['date'], capture_output=True, text=True).stdout.strip())
+    print(
+        "生成时间:",
+        subprocess.run(["date"], capture_output=True, text=True).stdout.strip(),
+    )
 
     # 执行各项检查
     results = {
-        'MCP配置': check_mcp_config(),
-        'Docker服务': check_docker_services(),
-        '端口连接': check_port_connectivity(),
-        '服务器文件': check_mcp_servers(),
-        '环境变量': check_environment_variables()
+        "MCP配置": check_mcp_config(),
+        "Docker服务": check_docker_services(),
+        "端口连接": check_port_connectivity(),
+        "服务器文件": check_mcp_servers(),
+        "环境变量": check_environment_variables(),
     }
 
     # 总结
@@ -207,18 +224,18 @@ def generate_report():
     # 修复建议
     print_header("修复建议")
 
-    if not results['Docker服务']:
+    if not results["Docker服务"]:
         print("🔧 启动Docker服务:")
         print("   docker-compose up -d")
         print()
 
-    if not results['端口连接']:
+    if not results["端口连接"]:
         print("🔧 检查端口映射:")
         print("   docker-compose down")
         print("   docker-compose up -d")
         print()
 
-    if not results['环境变量']:
+    if not results["环境变量"]:
         print("🔧 设置环境变量:")
         print("   export DB_HOST=localhost")
         print("   export DB_PORT=5432")
@@ -238,6 +255,7 @@ def generate_report():
         print("3. 开始使用MCP工具进行开发")
     else:
         print("⚠️  请按照上述建议修复配置问题后重新运行验证。")
+
 
 if __name__ == "__main__":
     generate_report()

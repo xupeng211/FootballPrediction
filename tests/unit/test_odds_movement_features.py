@@ -56,8 +56,8 @@ class TestOddsMovementAnalyzer:
             {
                 "timestamp": base_time + timedelta(hours=i),
                 "home_odds": 2.10 - i * 0.02,  # 逐步下降
-                "draw_odds": 3.40 + i * 0.01,   # 逐步上升
-                "away_odds": 3.80 + i * 0.03,   # 逐步上升
+                "draw_odds": 3.40 + i * 0.01,  # 逐步上升
+                "away_odds": 3.80 + i * 0.03,  # 逐步上升
                 "bookmaker": "bet365",
                 "volume": 1000 + i * 100,
                 "market_importance": 1.0,
@@ -214,10 +214,7 @@ class TestOddsMovementAnalyzer:
         match_id = "multi_test"
 
         for odds_data in sample_odds_sequence:
-            result = analyzer.add_odds_data(
-                match_id=match_id,
-                **odds_data
-            )
+            result = analyzer.add_odds_data(match_id=match_id, **odds_data)
             assert result["status"] == "success"
 
         assert len(analyzer.odds_history[match_id]) == len(sample_odds_sequence)
@@ -437,7 +434,9 @@ class TestOddsMovementAnalyzer:
         ]
 
         overall_strength = analyzer._calculate_overall_steam_strength(steam_signals)
-        expected_strength = sum(s["strength"] for s in steam_signals) / len(steam_signals)
+        expected_strength = sum(s["strength"] for s in steam_signals) / len(
+            steam_signals
+        )
 
         assert abs(overall_strength - expected_strength) < 0.001
 
@@ -559,7 +558,8 @@ class TestOddsMovementAnalyzer:
 
         # 应该检测到Z-score异常
         statistical_outliers = [
-            a for a in anomalies["anomalies"]
+            a
+            for a in anomalies["anomalies"]
             if a["anomaly_type"] == "statistical_outlier"
         ]
 
@@ -576,7 +576,8 @@ class TestOddsMovementAnalyzer:
 
         # 应该检测到大价格变动异常
         large_movements = [
-            a for a in anomalies["anomalies"]
+            a
+            for a in anomalies["anomalies"]
             if a["anomaly_type"] == "large_price_movement"
         ]
 
@@ -687,8 +688,11 @@ class TestOddsMovementAnalyzer:
         # 验证市场分类
         classification = efficiency_metrics["market_classification"]
         assert classification in [
-            "highly_efficient", "efficient", "moderately_efficient",
-            "inefficient", "highly_inefficient"
+            "highly_efficient",
+            "efficient",
+            "moderately_efficient",
+            "inefficient",
+            "highly_inefficient",
         ]
 
     def test_max_drawdown_calculation(self, analyzer):
@@ -761,8 +765,7 @@ class TestOddsMovementAnalyzer:
 
         # 应该有Steam信号
         steam_trading_signals = [
-            s for s in trading_signals["signals"]
-            if s["type"] == "steam"
+            s for s in trading_signals["signals"] if s["type"] == "steam"
         ]
         assert len(steam_trading_signals) > 0
 
@@ -906,7 +909,7 @@ class TestOddsMovementAnalyzer:
                 home_odds=2.00,
                 draw_odds=3.40,
                 away_odds=3.80,
-                timestamp=datetime.now() + timedelta(minutes=i)
+                timestamp=datetime.now() + timedelta(minutes=i),
             )
 
         result = analyzer.analyze_odds_movement(match_id)
@@ -926,9 +929,7 @@ class TestOddsMovementAnalyzer:
 
         for i, odds in enumerate(extreme_odds):
             analyzer.add_odds_data(
-                "extreme_test",
-                **odds,
-                timestamp=datetime.now() + timedelta(hours=i)
+                "extreme_test", **odds, timestamp=datetime.now() + timedelta(hours=i)
             )
 
         result = analyzer.analyze_odds_movement("extreme_test")
@@ -1011,6 +1012,7 @@ class TestOddsMovementAnalyzer:
             analyzer.add_odds_data(match_id, **odds_data)
 
         import time
+
         start_time = time.time()
         result = analyzer.analyze_odds_movement(match_id)
         end_time = time.time()
@@ -1041,7 +1043,9 @@ class TestOddsMovementAnalyzer:
         # 验证配置信息
         config = stats["configuration"]
         assert config["steam_threshold"] == analyzer.steam_threshold
-        assert config["significant_move_threshold"] == analyzer.significant_move_threshold
+        assert (
+            config["significant_move_threshold"] == analyzer.significant_move_threshold
+        )
 
         # 验证统计信息
         statistics = stats["statistics"]
@@ -1071,7 +1075,10 @@ class TestOddsMovementAnalyzer:
 
         # 如果检测到Steam，更新Steam统计
         if result["steam_signals"]["steam_detected"]:
-            assert updated_stats["steam_signals_detected"] >= initial_stats["steam_signals_detected"]
+            assert (
+                updated_stats["steam_signals_detected"]
+                >= initial_stats["steam_signals_detected"]
+            )
 
     def test_repr_method(self, analyzer):
         """测试字符串表示方法"""
@@ -1208,7 +1215,10 @@ class TestOddsMovementAnalyzerEdgeCases:
 
         # Steam信号序列
         steam_data = [
-            {"timestamp": datetime.now() + timedelta(hours=i), "home_odds": 2.00 - i * 0.001}
+            {
+                "timestamp": datetime.now() + timedelta(hours=i),
+                "home_odds": 2.00 - i * 0.001,
+            }
             for i in range(5)
         ]
 
