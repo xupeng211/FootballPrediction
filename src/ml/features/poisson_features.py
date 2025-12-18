@@ -522,7 +522,7 @@ class PoissonFeatureCalculator:
         away_matches = self.team_data.get(away_team_id, {}).get("matches_analyzed", 0)
 
         # 数据充足性置信度
-        data_confidence = min(home_matches, away_matches) / STATISTICAL.MIN_RELIABLE_SAMPLE_SIZE
+        data_confidence = min(home_matches, away_matches) / STATISTICAL.MIN_H2H_SAMPLE_SIZE
         metrics["data_sufficiency_confidence"] = float(data_confidence)
 
         # 预测稳定性置信度（基于λ值的合理性）

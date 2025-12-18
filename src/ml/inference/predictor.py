@@ -27,7 +27,8 @@ from .model_loader import ModelLoader
 from .cache_manager import PredictionCache
 
 # 导入足球业务逻辑常量
-from ...constants import PROBABILITY, STATISTICAL, VALIDATOR, MATH
+from ...constants import PROBABILITY, STATISTICAL, VALIDATOR, FOOTBALL
+from ...constants.football_logic import PrecisionContext
 
 logger = logging.getLogger(__name__)
 
@@ -65,7 +66,7 @@ class MatchPredictor:
     """
 
     # 足球比赛结果映射 (使用业务常量)
-    OUTCOME_MAP = {STATISTICAL.MIN_RELIABLE_SAMPLE_SIZE: "AWAY_WIN", FOOTBALL.DRAW: "DRAW", FOOTBALL.HOME_WIN: "HOME_WIN"}
+    OUTCOME_MAP = {FOOTBALL.AWAY_WIN: "AWAY_WIN", FOOTBALL.DRAW: "DRAW", FOOTBALL.HOME_WIN: "HOME_WIN"}
 
     def __init__(
         self,
@@ -99,11 +100,11 @@ class MatchPredictor:
 
         # 设置精度上下文
         if precision_context == "high":
-            self._decimal_ctx = MATH.PrecisionContext.high_precision()
+            self._decimal_ctx = PrecisionContext.high_precision()
         elif precision_context == "low":
-            self._decimal_ctx = MATH.PrecisionContext.low_precision()
+            self._decimal_ctx = PrecisionContext.low_precision()
         else:  # medium
-            self._decimal_ctx = MATH.PrecisionContext.medium_precision()
+            self._decimal_ctx = PrecisionContext.medium_precision()
 
         # 预测统计 (增强版)
         self._prediction_stats = {
@@ -188,6 +189,7 @@ class MatchPredictor:
                     features=feature_list, model_name=model_name, result=result
                 )
                 if cache_success:
+                    logger.debug("预测结果已缓存")
 
             # 增强结果信息
             enriched_result = self._enrich_result(
@@ -509,6 +511,7 @@ class MatchPredictor:
 
                 # 如果总和误差超过阈值，进行二次归一化
                 if prob_sum_error > PROBABILITY.PROBABILITY_EPSILON:
+                    logger.info(
                         f"概率归一化误差: {prob_sum_error:.8f}, 进行二次归一化 (模型: {model_name})"
                     )
                     self._prediction_stats["normalization_corrections"] += 1
@@ -520,6 +523,7 @@ class MatchPredictor:
                 # 第三层：业务规则验证和修正
                 validated_probs = self._validate_and_correct_probabilities(normalized_probs, model_name)
 
+                logger.info(
                     f"金融级概率归一化完成: 模型={model_name}, "
                     f"原始={[float(p) for p in decimal_probs]}, "
                     f"归一化={[float(p) for p in validated_probs]}"

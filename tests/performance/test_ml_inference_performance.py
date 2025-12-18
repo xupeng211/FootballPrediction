@@ -11,8 +11,8 @@ from unittest.mock import Mock, AsyncMock, patch
 from concurrent.futures import ThreadPoolExecutor
 from typing import List, Dict, Any
 
-from src.services.inference_service_v2 import (
-    InferenceServiceV2,
+from src.services.prediction_service import (
+    InferenceService,
     PredictionRequest,
     PredictionResponse,
 )
@@ -49,7 +49,7 @@ class TestMLInferencePerformance:
         # 使用简单的dict避免__dict__问题
         mock_cache.get_stats.return_value = {"hits": 10, "misses": 5, "hit_rate": 0.67}
 
-        service = InferenceServiceV2()
+        service = InferenceService()
         service.model_loader = mock_loader
         service.cache_manager = mock_cache
         service.is_initialized = True
