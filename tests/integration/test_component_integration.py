@@ -117,7 +117,7 @@ class TestServiceIntegration:
     ):
         """测试收集服务与推理服务集成"""
         from src.services.collection_service import FotMobCollectionService
-        from src.services.inference_service_v2 import InferenceServiceV2
+        from src.services.inference_service import InferenceService
 
         # 模拟依赖
         mock_pool_instance = AsyncMock()
@@ -126,7 +126,7 @@ class TestServiceIntegration:
 
         # 初始化服务
         collection_service = FotMobCollectionService()
-        inference_service = InferenceServiceV2()
+        inference_service = InferenceService()
 
         # 模拟数据流：收集 -> 特征 -> 预测
         task_id = collection_service.create_match_collection_task("match_123")
@@ -142,19 +142,19 @@ class TestServiceIntegration:
         assert len(collection_service.tasks) == 1
         assert hasattr(inference_service, "predict_match_simple")
 
-    @patch("src.services.inference_service_v2.Path.exists")
+    @patch("src.services.inference_service.Path.exists")
     async def test_service_manager_integration(self, mock_path):
         """测试服务管理器集成"""
         from src.services import ServiceManager
         from src.services.collection_service import FotMobCollectionService
-        from src.services.inference_service_v2 import InferenceServiceV2
+        from src.services.inference_service import InferenceService
 
         # 模拟模型文件不存在
         mock_path.return_value = False
 
         manager = ServiceManager()
         collection_service = FotMobCollectionService()
-        inference_service = InferenceServiceV2()
+        inference_service = InferenceService()
 
         # 注册服务
         manager.register_service(collection_service)
@@ -163,7 +163,7 @@ class TestServiceIntegration:
         # 验证管理器功能
         assert len(manager.services) == 2
         assert manager.get_service("FotMobCollectionService") is collection_service
-        assert manager.get_service("InferenceServiceV2") is inference_service
+        assert manager.get_service("InferenceService") is inference_service
 
         # 测试初始化（不需要实际依赖）
         result = await manager.initialize_all()
@@ -223,11 +223,11 @@ class TestAPIIntegration:
         """测试API与服务集成"""
         try:
             from fastapi import FastAPI
-            from src.services.inference_service_v2 import InferenceServiceV2
+            from src.services.inference_service import InferenceService
 
             # 创建FastAPI应用
             app = FastAPI()
-            inference_service = InferenceServiceV2()
+            inference_service = InferenceService()
 
             # 添加简单的预测端点
             @app.post("/predict")
@@ -242,7 +242,7 @@ class TestAPIIntegration:
         except ImportError:
             pytest.skip("FastAPI模块不可用")
 
-    @patch("src.services.inference_service_v2.InferenceServiceV2")
+    @patch("src.services.inference_service.InferenceService")
     def test_health_check_with_services(self, mock_inference):
         """测试健康检查与服务集成"""
         try:
@@ -252,7 +252,7 @@ class TestAPIIntegration:
             # 模拟服务状态
             mock_service = Mock()
             mock_service.get_service_stats.return_value = {
-                "service_name": "InferenceServiceV2",
+                "service_name": "InferenceService",
                 "is_initialized": True,
             }
             mock_inference.return_value = mock_service
@@ -285,9 +285,9 @@ class TestDataFlowIntegration:
             }
 
             # 2. 模拟服务处理
-            from src.services.inference_service_v2 import InferenceServiceV2
+            from src.services.inference_service import InferenceService
 
-            service = InferenceServiceV2()
+            service = InferenceService()
 
             # 3. 模拟特征提取
             features = [1.0, 2.0, 3.0, 4.0, 5.0]
@@ -318,9 +318,9 @@ class TestDataFlowIntegration:
     def test_error_propagation_integration(self):
         """测试错误传播集成"""
         try:
-            from src.services.inference_service_v2 import InferenceServiceV2
+            from src.services.inference_service import InferenceService
 
-            service = InferenceServiceV2()
+            service = InferenceService()
             service.is_initialized = False
 
             # 模拟错误情况下的响应
@@ -346,10 +346,10 @@ class TestConfigurationIntegration:
         """测试配置与服务集成"""
         try:
             from src.config import get_settings
-            from src.services.inference_service_v2 import InferenceServiceV2
+            from src.services.inference_service import InferenceService
 
             settings = get_settings()
-            service = InferenceServiceV2()
+            service = InferenceService()
 
             # 验证配置集成
             assert settings is not None

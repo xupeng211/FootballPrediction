@@ -1,6 +1,6 @@
 """
 V2服务层测试
-测试inference_service_v2和其他v2服务功能
+测试inference_service和其他v2服务功能
 """
 
 import pytest
@@ -9,11 +9,11 @@ from unittest.mock import Mock, AsyncMock, patch
 from datetime import datetime
 from typing import Dict, Any, List
 
-from src.services.inference_service_v2 import InferenceServiceV2
+from src.services.inference_service import InferenceService
 from src.core.exceptions import PredictionError, ModelError, ValidationError
 
 
-class TestInferenceServiceV2:
+class TestInferenceService:
     """V2推理服务测试"""
 
     @pytest.fixture
@@ -47,7 +47,7 @@ class TestInferenceServiceV2:
     def inference_service(self):
         """推理服务实例"""
         # 修复构造函数参数，只接受model_path参数
-        return InferenceServiceV2(model_path="test_model_path")
+        return InferenceService(model_path="test_model_path")
 
     def test_service_initialization(self, inference_service):
         """测试服务初始化"""
@@ -266,12 +266,12 @@ class TestInferenceServiceV2:
             "default_model": "test_model",
         }
 
-        service = InferenceServiceV2(**config)
+        service = InferenceService(**config)
         assert service.default_model == "test_model"
 
         # 测试无效配置 - 缺少必需参数
         with pytest.raises(ValueError):
-            InferenceServiceV2(
+            InferenceService(
                 model_loader=Mock(),
                 cache_manager=Mock(),
                 # 缺少 default_model
@@ -358,16 +358,16 @@ class TestInferenceServiceV2:
         import logging
 
         # 设置日志级别
-        logger = logging.getLogger("src.services.inference_service_v2")
+        logger = logging.getLogger("src.services.inference_service")
         logger.setLevel(logging.INFO)
 
         # 创建服务实例（会记录初始化日志）
-        service = InferenceServiceV2(
+        service = InferenceService(
             model_loader=Mock(), cache_manager=Mock(), default_model="test_model"
         )
 
         # 验证日志记录
-        assert "InferenceServiceV2 initialized" in caplog.text
+        assert "InferenceService initialized" in caplog.text
 
 
 class TestServiceIntegration:
@@ -400,7 +400,7 @@ class TestServiceIntegration:
     @pytest.mark.asyncio
     async def test_end_to_end_prediction_flow(self, mock_dependencies):
         """测试端到端预测流程"""
-        service = InferenceServiceV2(
+        service = InferenceService(
             model_loader=mock_dependencies["model_loader"],
             cache_manager=mock_dependencies["cache_manager"],
             default_model="xgboost_v2",
@@ -451,7 +451,7 @@ class TestServiceIntegration:
     async def test_service_lifecycle(self, mock_dependencies):
         """测试服务生命周期"""
         # 1. 创建服务
-        service = InferenceServiceV2(
+        service = InferenceService(
             model_loader=mock_dependencies["model_loader"],
             cache_manager=mock_dependencies["cache_manager"],
         )
@@ -492,7 +492,7 @@ class TestServiceIntegration:
         ]
 
         for config in configs:
-            service = InferenceServiceV2(**config)
+            service = InferenceService(**config)
             assert service.model_loader is not None
             assert service.cache_manager is not None
             assert service.default_model == "test_model"

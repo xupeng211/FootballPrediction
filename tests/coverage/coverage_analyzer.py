@@ -400,17 +400,17 @@ class CoverageAnalyzer:
             'phase_1': {
                 'name': '紧急修复 (0-1周)',
                 'tasks': [imp for imp in improvements if imp['priority'] == 'high'][:10],
-                'target_coverage_gain': sum(imp['expected_coverage_gain'] for imp in improvements if imp['priority'] == 'high'][:10]
+                'target_coverage_gain': sum(imp['expected_coverage_gain'] for imp in improvements if imp['priority'] == 'high')
             },
             'phase_2': {
                 'name': '中期改进 (1-3周)',
                 'tasks': [imp for imp in improvements if imp['priority'] == 'medium'][:15],
-                'target_coverage_gain': sum(imp['expected_coverage_gain'] for imp in improvements if imp['priority'] == 'medium'][:15]
+                'target_coverage_gain': sum(imp['expected_coverage_gain'] for imp in improvements[:15] if imp['priority'] == 'medium')
             },
             'phase_3': {
                 'name': '长期优化 (3-6周)',
                 'tasks': [imp for imp in improvements if imp['priority'] == 'low'],
-                'target_coverage_gain': sum(imp['expected_coverage_gain'] for imp in improvements if imp['priority'] == 'low'])
+                'target_coverage_gain': sum(imp['expected_coverage_gain'] for imp in improvements if imp.get('priority') == 'low')
             }
         }
 

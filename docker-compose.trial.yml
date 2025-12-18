@@ -33,6 +33,7 @@ services:
         condition: service_healthy
     volumes:
       - ./src:/app/src:ro
+      - ./scripts:/app/scripts:ro
       - ./logs:/app/logs
       - ./data:/app/data
       - model_data:/app/data/models

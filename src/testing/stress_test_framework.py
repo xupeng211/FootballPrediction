@@ -444,7 +444,7 @@ class StressTestFramework:
                 f"实际 {actual_duration:.1f}s, CPU使用率 {cpu_percent:.1f}%"
             )
 
-    async def _test_concurrency_limits(self) -> None):
+    async def _test_concurrency_limits(self) -> None:
         """测试并发极限"""
         self.logger.info("⚡ 测试并发极限")
 

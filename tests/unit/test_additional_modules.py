@@ -163,15 +163,15 @@ class TestServicesBasic:
 
         assert services is not None
 
-    def test_inference_service_v2_import(self):
+    def test_inference_service_import(self):
         """测试推理服务v2导入"""
-        from src.services.inference_service_v2 import (
-            InferenceServiceV2,
+        from src.services.inference_service import (
+            InferenceService,
             PredictionRequest,
             PredictionResponse,
         )
 
-        assert InferenceServiceV2 is not None
+        assert InferenceService is not None
         assert PredictionRequest is not None
         assert PredictionResponse is not None
 

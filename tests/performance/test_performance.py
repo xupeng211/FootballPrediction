@@ -21,12 +21,12 @@ class TestServicePerformance:
     def test_service_initialization_time(self):
         """测试服务初始化时间"""
         try:
-            from src.services.inference_service_v2 import InferenceServiceV2
+            from src.services.inference_service import InferenceService
             from src.services.collection_service import FotMobCollectionService
 
             # 测试推理服务初始化时间
             start_time = time.time()
-            inference_service = InferenceServiceV2()
+            inference_service = InferenceService()
             init_time = time.time() - start_time
 
             # 初始化应该在合理时间内完成
@@ -42,15 +42,15 @@ class TestServicePerformance:
         except ImportError:
             pytest.skip("服务模块不可用")
 
-    @patch("src.services.inference_service_v2.Path.exists")
+    @patch("src.services.inference_service.Path.exists")
     async def test_prediction_response_time(self, mock_path):
         """测试预测响应时间"""
         try:
-            from src.services.inference_service_v2 import InferenceServiceV2
+            from src.services.inference_service import InferenceService
 
             mock_path.return_value = False  # 避免模型加载
 
-            service = InferenceServiceV2()
+            service = InferenceService()
             service.is_initialized = True
 
             # 模拟快速预测
@@ -79,9 +79,9 @@ class TestServicePerformance:
     async def test_batch_prediction_performance(self):
         """测试批量预测性能"""
         try:
-            from src.services.inference_service_v2 import InferenceServiceV2
+            from src.services.inference_service import InferenceService
 
-            service = InferenceServiceV2()
+            service = InferenceService()
             service.is_initialized = True
 
             # 模拟批量预测
@@ -125,7 +125,7 @@ class TestMemoryPerformance:
     def test_memory_usage_stability(self):
         """测试内存使用稳定性"""
         try:
-            from src.services.inference_service_v2 import InferenceServiceV2
+            from src.services.inference_service import InferenceService
 
             # 记录初始内存使用
             process = psutil.Process()
@@ -136,7 +136,7 @@ class TestMemoryPerformance:
 
             # 创建多个服务实例
             for i in range(10):
-                service = InferenceServiceV2()
+                service = InferenceService()
                 services.append(service)
 
                 # 记录内存使用
@@ -206,14 +206,14 @@ class TestMemoryPerformance:
     def test_memory_leak_detection(self):
         """测试内存泄漏检测"""
         try:
-            from src.services.inference_service_v2 import InferenceServiceV2
+            from src.services.inference_service import InferenceService
 
             process = psutil.Process()
             memory_samples = []
 
             # 重复创建和销毁服务
             for _ in range(20):
-                service = InferenceServiceV2()
+                service = InferenceService()
                 memory_samples.append(process.memory_info().rss / 1024 / 1024)
                 del service
                 gc.collect()
@@ -237,9 +237,9 @@ class TestConcurrencyPerformance:
     def test_thread_safety_performance(self):
         """测试线程安全性能"""
         try:
-            from src.services.inference_service_v2 import InferenceServiceV2
+            from src.services.inference_service import InferenceService
 
-            service = InferenceServiceV2()
+            service = InferenceService()
             results = []
             errors = []
 
@@ -278,9 +278,9 @@ class TestConcurrencyPerformance:
     async def test_async_concurrency_performance(self):
         """测试异步并发性能"""
         try:
-            from src.services.inference_service_v2 import InferenceServiceV2
+            from src.services.inference_service import InferenceService
 
-            service = InferenceServiceV2()
+            service = InferenceService()
             service.is_initialized = True
 
             # 模拟异步操作
@@ -364,9 +364,9 @@ class TestLoadTesting:
     def test_high_load_prediction_requests(self):
         """测试高负载预测请求"""
         try:
-            from src.services.inference_service_v2 import InferenceServiceV2
+            from src.services.inference_service import InferenceService
 
-            service = InferenceServiceV2()
+            service = InferenceService()
             service.is_initialized = True
 
             # 模拟高负载
@@ -425,9 +425,9 @@ class TestLoadTesting:
     def test_sustained_load_stability(self):
         """测试持续负载稳定性"""
         try:
-            from src.services.inference_service_v2 import InferenceServiceV2
+            from src.services.inference_service import InferenceService
 
-            service = InferenceServiceV2()
+            service = InferenceService()
             service.is_initialized = True
 
             # 持续负载测试

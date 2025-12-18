@@ -29,7 +29,7 @@ import pytest
 
 from src.config_secure import get_settings
 from src.services.collection_service import CollectionService
-from src.services.inference_service_v3 import InferenceServiceV3
+from src.services.inference_service import InferenceService
 from src.ml.inference.predictor import MatchPredictor
 from src.database.db_pool import DatabasePool
 

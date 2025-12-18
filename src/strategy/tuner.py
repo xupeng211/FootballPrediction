@@ -52,7 +52,7 @@ class OptimizationStrategy(Enum):
 class ObjectiveMetric(Enum):
     """优化目标指标"""
     MAXIMIZE_SHARPE_RATIO = "maximize_sharpe_ratio"
-    MAXIMIZE ROI = "maximize_roi"
+    MAXIMIZE_ROI = "maximize_roi"
     MINIMIZE_MAX_DRAWDOWN = "minimize_max_drawdown"
     MAXIMIZE_WIN_RATE = "maximize_win_rate"
     MAXIMIZE_CALMAR_RATIO = "maximize_calmar_ratio"
@@ -1085,7 +1085,7 @@ class HyperparameterTuner:
 
             report += f"""
 ## 优化统计
-- **收敛曲线最佳值**: {max(result.convergence_curve) if result.convergence_curve else 'N/A'}:.4f}
+- **收敛曲线最佳值**: {(max(result.convergence_curve) if result.convergence_curve else 'N/A'):.4f}
 - **早期停止触发**: {'是' if len(result.trial_history) < result.config.n_trials else '否'}
 """
 

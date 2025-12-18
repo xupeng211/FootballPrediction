@@ -566,8 +566,8 @@ class TestServicesComprehensive:
     def test_services_all_imports_and_classes(self):
         """测试服务模块所有导入和类"""
         from src.services import BaseService, ServiceStatus, HealthStatus, ServiceType
-        from src.services.inference_service_v2 import (
-            InferenceServiceV2,
+        from src.services.inference_service import (
+            InferenceService,
             PredictionRequest,
             PredictionResponse,
         )
@@ -590,7 +590,7 @@ class TestServicesComprehensive:
         assert HealthStatus.DEGRADED is not None
 
         # 测试推理服务v2
-        inference_service = InferenceServiceV2()
+        inference_service = InferenceService()
         assert inference_service is not None
         assert hasattr(inference_service, "model_loader")
         assert hasattr(inference_service, "cache_manager")
@@ -598,7 +598,7 @@ class TestServicesComprehensive:
 
     def test_prediction_request_response_all_methods(self):
         """测试预测请求和响应所有方法"""
-        from src.services.inference_service_v2 import (
+        from src.services.inference_service import (
             PredictionRequest,
             PredictionResponse,
         )

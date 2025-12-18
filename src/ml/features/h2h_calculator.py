@@ -123,6 +123,7 @@ class H2HCalculator:
             )
 
             if len(past_matches) < self.min_matches:
+                logger.info(
                     f"历史交锋场次不足: {len(past_matches)} < {self.min_matches}"
                 )
                 return self._get_default_stats()
@@ -130,6 +131,7 @@ class H2HCalculator:
             # 计算各项统计指标
             stats = self._calculate_match_stats(past_matches, home_id)
 
+            logger.info(
                 f"H2H统计完成: {home_id} vs {away_id}, "
                 f"场次: {stats.matches_count}, 主队胜率: {stats.home_win_rate:.3f}"
             )
@@ -277,6 +279,7 @@ class H2HCalculator:
         # 4. 业务合理性验证
         self._validate_stats(stats)
 
+        logger.info(
             f"H2H统计计算完成 (精确): 目标队伍={target_home_id}, "
             f"场次={matches_count}, 胜率={stats.home_win_rate}, "
             f"进球差={stats.avg_goal_diff}, 总进球={stats.avg_total_goals}"
@@ -455,6 +458,7 @@ class H2HCalculator:
             # 验证摘要数据的合理性
             self._validate_h2h_summary(summary)
 
+            logger.info(
                 f"H2H摘要生成完成: {team1_id} vs {team2_id}, "
                 f"总场次={total_matches}, 优势队伍={'Team1' if team1_win_rate > team2_win_rate else 'Team2'}"
             )
