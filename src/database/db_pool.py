@@ -148,7 +148,7 @@ class DatabasePool:
         self.config = config or DatabasePoolConfig.from_url()
         self._pool: Optional[Pool] = None
         self._is_initialized = False
-        self._health_check_task: Optional[asyncio.Task] = None
+        self._health_check_task: Optional[asyncio.Task[None]] = None
 
         # 统计信息
         self._stats = {
@@ -222,7 +222,7 @@ class DatabasePool:
 
             self._is_initialized = True
             creation_time = time.time() - start_time
-            self._stats["pool_creation_time"] = creation_time
+            self._stats["pool_creation_time"] = float(creation_time)
 
             logger.info(f"✅ 数据库连接池初始化成功 (耗时: {creation_time:.2f}s)")
 
@@ -307,7 +307,7 @@ class DatabasePool:
                 raise
 
     async def executemany(
-        self, query: str, args_list: List[tuple], timeout: Optional[float] = None
+        self, query: str, args_list: List[Tuple[Any, ...]], timeout: Optional[float] = None
     ) -> str:
         """
         批量执行SQL语句

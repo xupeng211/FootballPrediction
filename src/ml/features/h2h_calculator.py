@@ -18,7 +18,7 @@ Phase 5 Advanced Features 核心组件之一
 import logging
 import pandas as pd
 import numpy as np
-from typing import Dict
+from typing import Dict, Any
 from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
@@ -210,7 +210,7 @@ class H2HCalculator:
             matches_count=0,
         )
 
-    def get_h2h_summary(self, df: pd.DataFrame, team1_id: int, team2_id: int) -> Dict:
+    def get_h2h_summary(self, df: pd.DataFrame, team1_id: int, team2_id: int) -> Dict[str, Any]:
         """
         获取两队历史交锋的详细摘要
 

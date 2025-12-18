@@ -56,7 +56,7 @@ class AdvancedFeatureConfig:
     h2h_min_matches: int = 1
     points_windows: List[int] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.venue_windows is None:
             self.venue_windows = [3, 5]
         if self.points_windows is None:
@@ -89,8 +89,8 @@ class AdvancedFeatureTransformer:
         self.venue_analyzer = VenueAnalyzer(windows=self.config.venue_windows)
 
         # 特征名称记录
-        self.feature_names = []
-        self.feature_types = {}
+        self.feature_names: List[str] = []
+        self.feature_types: Dict[str, str] = {}
 
         logger.info("AdvancedFeatureTransformer Phase 8升级版 初始化完成")
         logger.info(
@@ -346,7 +346,7 @@ class AdvancedFeatureTransformer:
 
         return df_result
 
-    def _update_feature_list(self, feature_type: str):
+    def _update_feature_list(self, feature_type: str) -> None:
         """
         更新特征名称列表
 

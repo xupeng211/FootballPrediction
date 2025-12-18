@@ -66,13 +66,13 @@ class DatabasePoolSettings(BaseSettings):
 
     # 连接池大小配置
     min_size: int = Field(
-        default=5, env="DB_POOL_MIN_SIZE", ge=1, le=100, description="最小连接数"
+        default=5, ge=1, le=100, description="最小连接数"
     )
     max_size: int = Field(
-        default=20, env="DB_POOL_MAX_SIZE", ge=1, le=1000, description="最大连接数"
+        default=20, ge=1, le=1000, description="最大连接数"
     )
     max_queries: int = Field(
-        default=50000, env="DB_POOL_MAX_QUERIES", ge=100, description="每连接最大查询数"
+        default=50000, ge=100, description="每连接最大查询数"
     )
     max_inactive_connection_lifetime: float = Field(
         default=300.0,
@@ -84,7 +84,7 @@ class DatabasePoolSettings(BaseSettings):
 
     # 超时配置
     timeout: float = Field(
-        default=60.0, env="DB_TIMEOUT", ge=1.0, le=600.0, description="连接超时(秒)"
+        default=60.0, ge=1.0, le=600.0, description="连接超时(秒)"
     )
     command_timeout: float = Field(
         default=30.0,
@@ -112,10 +112,10 @@ class DatabasePoolSettings(BaseSettings):
 
     # 重连配置
     max_retries: int = Field(
-        default=3, env="DB_MAX_RETRIES", ge=0, le=10, description="最大重试次数"
+        default=3, ge=0, le=10, description="最大重试次数"
     )
     retry_delay: float = Field(
-        default=1.0, env="DB_RETRY_DELAY", ge=0.1, le=10.0, description="重试延迟(秒)"
+        default=1.0, ge=0.1, le=10.0, description="重试延迟(秒)"
     )
 
     class Config:
@@ -136,18 +136,18 @@ class FotMobSettings(BaseSettings):
 
     # 鉴权头配置 - 从环境变量加载，无硬编码
     x_mas_header: str = Field(
-        default="", env="FOTMOB_X_MAS_HEADER", description="FotMob x-mas鉴权头"
+        default="", description="FotMob x-mas鉴权头"
     )
     x_foo_header: str = Field(
-        default="", env="FOTMOB_X_FOO_HEADER", description="FotMob x-foo鉴权头"
+        default="", description="FotMob x-foo鉴权头"
     )
 
     # 请求配置
     max_retries: int = Field(
-        default=3, env="FOTMOB_MAX_RETRIES", ge=0, le=10, description="API最大重试次数"
+        default=3, ge=0, le=10, description="API最大重试次数"
     )
     timeout: int = Field(
-        default=30, env="FOTMOB_TIMEOUT", ge=5, le=120, description="API请求超时(秒)"
+        default=30, ge=5, le=120, description="API请求超时(秒)"
     )
     delay_between_requests: float = Field(
         default=2.0,
@@ -159,7 +159,7 @@ class FotMobSettings(BaseSettings):
 
     # 数据采集配置
     batch_size: int = Field(
-        default=50, env="FOTMOB_BATCH_SIZE", ge=1, le=1000, description="批处理大小"
+        default=50, ge=1, le=1000, description="批处理大小"
     )
     max_concurrent_requests: int = Field(
         default=10,
@@ -236,24 +236,24 @@ class ApplicationSettings(BaseSettings):
 
     # 应用基础信息
     name: str = Field(
-        default="FootballPrediction", env="APP_NAME", description="应用名称"
+        default="FootballPrediction", description="应用名称"
     )
-    version: str = Field(default="1.0.0", env="APP_VERSION", description="应用版本")
+    version: str = Field(default="1.0.0", description="应用版本")
     environment: str = Field(
         default="development",
         env="APP_ENV",
         pattern="^(development|testing|staging|production)$",
         description="运行环境",
     )
-    debug: bool = Field(default=False, env="APP_DEBUG", description="调试模式")
+    debug: bool = Field(default=False, description="调试模式")
 
     # 服务配置
-    host: str = Field(default="127.0.0.1", env="APP_HOST", description="服务监听地址")
+    host: str = Field(default="127.0.0.1", description="服务监听地址")
     port: int = Field(
-        default=8000, env="APP_PORT", ge=1, le=65535, description="服务端口"
+        default=8000, ge=1, le=65535, description="服务端口"
     )
     workers: int = Field(
-        default=1, env="APP_WORKERS", ge=1, le=100, description="工作进程数"
+        default=1, ge=1, le=100, description="工作进程数"
     )
 
     # 性能配置
@@ -277,7 +277,7 @@ class ApplicationSettings(BaseSettings):
         description="应用密钥",
     )
     allowed_hosts: List[str] = Field(
-        default=["*"], env="APP_ALLOWED_HOSTS", description="允许的主机列表"
+        default=["*"], description="允许的主机列表"
     )
 
     @field_validator("secret_key")
@@ -321,7 +321,7 @@ class LoggingSettings(BaseSettings):
         description="日志格式",
     )
     file_path: Optional[str] = Field(
-        default=None, env="LOG_FILE_PATH", description="日志文件路径"
+        default=None, description="日志文件路径"
     )
     max_file_size: int = Field(
         default=10 * 1024 * 1024,
@@ -329,15 +329,15 @@ class LoggingSettings(BaseSettings):
         description="日志文件最大大小(bytes)",
     )
     backup_count: int = Field(
-        default=5, env="LOG_BACKUP_COUNT", ge=0, le=20, description="日志备份数量"
+        default=5, ge=0, le=20, description="日志备份数量"
     )
 
     # 结构化日志配置
     enable_json_logs: bool = Field(
-        default=False, env="LOG_ENABLE_JSON", description="启用JSON格式日志"
+        default=False, description="启用JSON格式日志"
     )
     enable_correlation_id: bool = Field(
-        default=True, env="LOG_ENABLE_CORRELATION_ID", description="启用关联ID"
+        default=True, description="启用关联ID"
     )
 
     def get_logging_config(self) -> Dict[str, Any]:
