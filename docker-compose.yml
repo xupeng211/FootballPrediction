@@ -27,19 +27,19 @@ services:
     ports:
       - "${API_PORT:-8000}:8000"
 
-    # 环境配置 - 支持多环境
+    # 环境配置 - 强制使用shadow环境
     env_file:
-      - .env.${ENVIRONMENT:-development}
+      - .env.shadow
     environment:
       # 基础运行时配置
-      - ENVIRONMENT=${ENVIRONMENT:-development}
+      - ENVIRONMENT=shadow
       - TZ=UTC
       - PYTHONPATH=/app:/app/src:/app/scripts
 
       # 数据库连接配置
       - DB_HOST=db
       - DB_PORT=5432
-      - DB_NAME=${DB_NAME:-football_prediction_${ENVIRONMENT:-dev}}
+      - DB_NAME=football_prediction_shadow
       - DB_USER=${DB_USER:-football_user}
       - DB_PASSWORD=${DB_PASSWORD}
 
