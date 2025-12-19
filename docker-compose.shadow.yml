@@ -1,136 +1,185 @@
-version: '3.8'
+# FootballPrediction v2.3.0-shadow - 容器化影子测试部署
+# 使用现有镜像实现Full Containerization
 
 services:
+  # ================================
+  # 核心应用服务 (容器化)
+  # ================================
   app:
-    build:
-      context: .
-      target: runtime
+    image: footballprediction-app:latest
+    container_name: footballprediction-app-shadow
+
+    # 端口配置
     ports:
-      - "8000:8000"
+      - "8001:8000"
+
+    # 环境配置
     env_file:
       - .env.shadow
     environment:
-      # 影子实战测试配置
-      - ENVIRONMENT=shadow_test
+      # 基础运行时配置
+      - ENVIRONMENT=shadow
       - TZ=UTC
-      - PYTHONPATH=/app/src
+      - PYTHONPATH=/app:/app/src:/app/scripts
 
-      # 数据库配置
-      - DB_HOST=db
-      - DB_PORT=5432
-      - DB_NAME=football_prediction_shadow
-      - DB_USER=football_user
-      - DB_PASSWORD=${DB_PASSWORD:-football_pass}
-
-      # Redis配置
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-      - REDIS_DB=1
-
-      # 影子测试特定配置
+      # 影子测试模式
       - SHADOW_MODE=true
+      - SHADOW_TEST_DURATION_HOURS=24
+      - SHADOW_PREDICTION_INTERVAL_MINUTES=15
+
+      # 服务配置
       - INFERENCE_SERVICE_V2_ENABLED=true
       - COLLECTION_SERVICE_ENABLED=true
       - EXPLAINABILITY_SERVICE_ENABLED=true
 
-      # 模型配置
-      - MODEL_PATH=/app/data/models
-      - DEFAULT_MODEL_NAME=xgboost_v2
+      # 数据库连接配置
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_NAME=football_prediction_shadow
+      - DB_USER=football_user
+      - DB_PASSWORD=football_shadow_pass
 
-      # 性能监控
-      - ENABLE_METRICS=true
-      - METRICS_PORT=9090
-      - ENABLE_TRACING=true
+      # Redis缓存配置
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=1
 
-      # API配置
-      - API_HOST=0.0.0.0
-      - API_PORT=8000
-      - API_DEBUG=false
+    # 数据卷挂载 (确保appuser权限)
+    volumes:
+      - ./src:/app/src:ro
+      - ./scripts:/app/scripts:ro
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./reports:/app/reports
 
-    command: ["python", "/app/scripts/shadow_daemon.py"]
+    # 启动命令 - 容器内运行影子测试
+    command: >
+      bash -c "
+      echo '🎯 启动容器化影子测试守护进程' &&
+      cd /app &&
+      python3 scripts/automation_daemon_24h.py --mode shadow_test --duration 24 --interval 15
+      "
+
+    # 依赖服务
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_healthy
-    volumes:
-      - ./src:/app/src:ro
-      - ./scripts:/app/scripts:ro
-      - ./logs:/app/logs
-      - ./data:/app/data
-    restart: unless-stopped
 
     # 健康检查
     healthcheck:
-      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8000/health')"]
+      test: >
+        bash -c "
+        ps aux | grep 'automation_daemon_24h.py' | grep -v grep > /dev/null &&
+        echo '✅ 自动化守护进程运行中'
+        "
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 60s
+      start_period: 30s
 
+    # 重启策略
+    restart: unless-stopped
+
+    # 网络配置
+    networks:
+      - football-shadow-network
+
+  # ================================
+  # PostgreSQL 数据库服务
+  # ================================
   db:
     image: postgres:15-alpine
+    container_name: footballprediction-db-shadow
+
+    # 端口配置
+    ports:
+      - "5433:5432"
+
+    # 数据库配置
     environment:
       - POSTGRES_DB=football_prediction_shadow
       - POSTGRES_USER=football_user
-      - POSTGRES_PASSWORD=${DB_PASSWORD:-football_pass}
+      - POSTGRES_PASSWORD=football_shadow_pass
       - TZ=UTC
-    ports:
-      - "5433:5432"
+
+    # 数据持久化
     volumes:
       - shadow_db_data:/var/lib/postgresql/data
-      - ./scripts/init_shadow_db.sql:/docker-entrypoint-initdb.d/init.sql:ro
+
+    # 健康检查
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U football_user -d football_prediction_shadow"]
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 30s
+
+    # 重启策略
     restart: unless-stopped
 
+    # 网络配置
+    networks:
+      - football-shadow-network
+
+  # ================================
+  # Redis 缓存服务
+  # ================================
   redis:
     image: redis:7-alpine
-    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
+    container_name: footballprediction-redis-shadow
+
+    # 端口配置
     ports:
       - "6380:6379"
+
+    # Redis配置命令
+    command: >
+      redis-server
+      --appendonly yes
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+
+    # 数据持久化
     volumes:
       - shadow_redis_data:/data
+
+    # 健康检查
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 3
+      start_period: 30s
+
+    # 重启策略
     restart: unless-stopped
 
-  prometheus:
-    image: prom/prometheus:latest
-    ports:
-      - "9091:9090"
-    volumes:
-      - ./monitoring/prometheus.shadow.yml:/etc/prometheus/prometheus.yml:ro
-      - shadow_prometheus_data:/prometheus
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
-      - '--web.console.libraries=/etc/prometheus/console_libraries'
-      - '--web.console.templates=/etc/prometheus/consoles'
-      - '--storage.tsdb.retention.time=48h'
-      - '--web.enable-lifecycle'
-    restart: unless-stopped
+    # 网络配置
+    networks:
+      - football-shadow-network
 
-  grafana:
-    image: grafana/grafana:latest
-    ports:
-      - "3001:3000"
-    environment:
-      - GF_SECURITY_ADMIN_PASSWORD=admin123
-      - GF_USERS_ALLOW_SIGN_UP=false
-    volumes:
-      - shadow_grafana_data:/var/lib/grafana
-      - ./monitoring/grafana/shadow-dashboard.json:/etc/grafana/provisioning/dashboards/shadow-dashboard.json:ro
-    restart: unless-stopped
-
+# ================================
+# 数据卷定义
+# ================================
 volumes:
   shadow_db_data:
+    driver: local
   shadow_redis_data:
-  shadow_prometheus_data:
-  shadow_grafana_data:
+    driver: local
+
+# ================================
+# 网络配置
+# ================================
+networks:
+  football-shadow-network:
+    driver: bridge
+    driver_opts:
+      com.docker.network.bridge.name: footballprediction-shadow-network
+      com.docker.network.bridge.enable_ip_masquerade: 'true'
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.21.0.0/16
+          gateway: 172.21.0.1

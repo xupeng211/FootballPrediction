@@ -99,8 +99,8 @@ class ProductionShadowDaemon:
     async def collect_fotmob_data(self) -> List[Dict[str, Any]]:
         """收集FotMob数据"""
         try:
-            # 构建API请求URL - 获取英超比赛数据
-            leagues = ['39']  # Premier League
+            # 构建API请求URL - 获取主要联赛比赛数据
+            leagues = ['47', '117', '48', '123', '61', '135']  # 英超、西甲、德甲、意甲、法甲、荷甲
             matches = []
 
             for league_id in leagues:
