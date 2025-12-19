@@ -85,11 +85,11 @@ echo
 echo -e "${BLUE}📊 数据库统计${NC}"
 echo "----------------------------------------"
 
-total_records=$(docker exec footballprediction-db psql -U football_user -d football_prediction_dev -t -c "SELECT COUNT(*) FROM matches;" 2>/dev/null | xargs || echo "查询失败")
-recent_predictions=$(docker exec footballprediction-db psql -U football_user -d football_prediction_dev -t -c "SELECT COUNT(*) FROM matches WHERE match_date > NOW() - INTERVAL '24 hours';" 2>/dev/null | xargs || echo "查询失败")
+total_records=$(docker exec footballprediction-db psql -U football_user -d football_prediction_shadow -t -c "SELECT COUNT(*) FROM realtime_predictions;" 2>/dev/null | xargs || echo "查询失败")
+recent_predictions=$(docker exec footballprediction-db psql -U football_user -d football_prediction_shadow -t -c "SELECT COUNT(*) FROM realtime_predictions WHERE created_at > NOW() - INTERVAL '24 hours';" 2>/dev/null | xargs || echo "查询失败")
 
 if [[ "$total_records" != "查询失败" ]]; then
-    echo -e "🗄️  比赛记录总数: ${GREEN}${total_records}${NC}"
+    echo -e "🗄️  预测记录总数: ${GREEN}${total_records}${NC}"
     echo -e "📈 24小时预测数: ${GREEN}${recent_predictions}${NC}"
 else
     echo -e "🔴 数据库查询: ${RED}失败${NC}"
