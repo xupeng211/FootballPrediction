@@ -16,7 +16,7 @@ import logging
 from pathlib import Path
 
 from .dependency_injection import get_container, container_context
-from .inference_service_v3 import InferenceService, InferenceServiceConfig
+from .inference_service import InferenceService
 from .prediction_service import PredictionService
 
 # Sprint 5 新增导入
