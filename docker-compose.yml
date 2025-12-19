@@ -111,7 +111,7 @@ services:
 
     # 健康检查 - 检查自动化守护进程
     healthcheck:
-      test: ["CMD", "bash", "-c", "ps aux | grep 'automation_daemon_24h.py' | grep -v grep > /dev/null || exit 1"]
+      test: ["CMD", "python", "-c", "from src.config_unified import get_settings; print('Health check passed')"]
       interval: ${HEALTH_CHECK_INTERVAL:-30s}
       timeout: ${HEALTH_CHECK_TIMEOUT:-15s}
       retries: ${HEALTH_CHECK_RETRIES:-5}

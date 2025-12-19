@@ -25,6 +25,9 @@ import numpy as np
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, Any, Optional, List, Tuple
+import psycopg2
+from psycopg2.extras import RealDictCursor
+import hashlib
 
 # 添加项目根目录到Python路径
 project_root = Path(__file__).parent.parent
@@ -82,12 +85,13 @@ class PredictionDisplay:
 
 
 class FootballPredictor:
-    """足球预测器 - 修复版本"""
+    """足球预测器 - 修复版本（支持自动入库）"""
 
     def __init__(self):
         self.config = None
         self.inference_service = None
         self.simulation_mode = False
+        self.db_connection = None
         
     async def initialize(self) -> bool:
         """初始化服务"""
@@ -114,7 +118,10 @@ class FootballPredictor:
                 self.simulation_mode = True
                 return True
 
-            logger.info("✅ 足球预测器初始化成功")
+            # 初始化数据库连接
+            self._init_database()
+
+            logger.info("✅ 足球预测器初始化成功（包含数据库连接）")
             return True
 
         except Exception as e:
@@ -194,6 +201,137 @@ class FootballPredictor:
         
         return probabilities, prediction
 
+    def _init_database(self):
+        """初始化数据库连接"""
+        try:
+            # 使用环境变量配置，提供默认值
+            db_host = os.getenv('DB_HOST', 'db')  # 容器内默认主机名
+            db_port = os.getenv('DB_PORT', '5432')
+            db_name = os.getenv('DB_NAME', 'football_prediction_shadow')  # 默认shadow数据库
+            db_user = os.getenv('DB_USER', 'football_user')
+            db_password = os.getenv('DB_PASSWORD', 'football_pass')
+
+            # 创建数据库连接
+            self.db_connection = psycopg2.connect(
+                host=db_host,
+                port=db_port,
+                database=db_name,
+                user=db_user,
+                password=db_password,
+                cursor_factory=RealDictCursor
+            )
+
+            # 创建表（如果不存在）
+            self._create_tables()
+
+            logger.info(f"✅ 数据库连接成功: {db_name}")
+
+        except Exception as e:
+            logger.warning(f"数据库连接失败: {e}，预测结果将不会保存")
+            self.db_connection = None
+
+    def _create_tables(self):
+        """创建数据表（如果不存在）"""
+        if not self.db_connection:
+            return
+
+        try:
+            with self.db_connection.cursor() as cursor:
+                cursor.execute("""
+                    CREATE TABLE IF NOT EXISTS realtime_predictions (
+                        id SERIAL PRIMARY KEY,
+                        match_id VARCHAR(100) UNIQUE NOT NULL,
+                        home_team VARCHAR(200) NOT NULL,
+                        away_team VARCHAR(200) NOT NULL,
+                        match_date TIMESTAMP,
+                        prediction VARCHAR(50) NOT NULL,
+                        confidence FLOAT NOT NULL,
+                        home_win_prob FLOAT,
+                        draw_prob FLOAT,
+                        away_win_prob FLOAT,
+                        features JSONB,
+                        model_version VARCHAR(100),
+                        simulation_mode BOOLEAN DEFAULT FALSE,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    );
+                """)
+
+                # 创建索引
+                cursor.execute("""
+                    CREATE INDEX IF NOT EXISTS idx_realtime_predictions_match_date
+                    ON realtime_predictions(match_date);
+                """)
+
+                cursor.execute("""
+                    CREATE INDEX IF NOT EXISTS idx_realtime_predictions_created_at
+                    ON realtime_predictions(created_at);
+                """)
+
+                self.db_connection.commit()
+                logger.info("✅ 数据表创建/检查完成")
+
+        except Exception as e:
+            logger.error(f"创建表失败: {e}")
+            self.db_connection.rollback()
+
+    def _save_prediction_to_database(self, prediction_result: Dict[str, Any]) -> bool:
+        """将预测结果保存到数据库"""
+        if not self.db_connection:
+            logger.warning("数据库未连接，跳过保存")
+            return False
+
+        try:
+            # 生成唯一的match_id
+            home_team = prediction_result.get('home_team', 'unknown')
+            away_team = prediction_result.get('away_team', 'unknown')
+            match_date = prediction_result.get('match_date') or datetime.now().isoformat()
+
+            # 基于队名和日期生成稳定的match_id
+            match_id_base = f"{home_team}_{away_team}_{match_date.split('T')[0]}"
+            match_id_hash = hashlib.md5(match_id_base.encode()).hexdigest()[:8]
+            match_id = f"{home_team[:3].upper()}_{away_team[:3].upper()}_{match_id_hash}"
+
+            probabilities = prediction_result.get('probabilities', {})
+
+            with self.db_connection.cursor() as cursor:
+                cursor.execute("""
+                    INSERT INTO realtime_predictions
+                    (match_id, home_team, away_team, match_date, prediction, confidence,
+                     home_win_prob, draw_prob, away_win_prob, features, model_version, simulation_mode)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    ON CONFLICT (match_id) DO UPDATE SET
+                        prediction = EXCLUDED.prediction,
+                        confidence = EXCLUDED.confidence,
+                        home_win_prob = EXCLUDED.home_win_prob,
+                        draw_prob = EXCLUDED.draw_prob,
+                        away_win_prob = EXCLUDED.away_win_prob,
+                        updated_at = CURRENT_TIMESTAMP;
+                """, (
+                    match_id,
+                    home_team,
+                    away_team,
+                    match_date,
+                    prediction_result.get('prediction'),
+                    prediction_result.get('confidence'),
+                    probabilities.get('HOME_WIN'),
+                    probabilities.get('DRAW'),
+                    probabilities.get('AWAY_WIN'),
+                    json.dumps(prediction_result.get('features', {}), default=str),
+                    prediction_result.get('model_info', {}).get('version', 'unknown'),
+                    prediction_result.get('simulation_mode', False)
+                ))
+
+                self.db_connection.commit()
+                logger.info(f"✅ 预测结果已保存到数据库: {match_id}")
+                return True
+
+        except Exception as e:
+            logger.error(f"保存预测结果到数据库失败: {e}")
+            if self.db_connection:
+                self.db_connection.rollback()
+            return False
+
     async def predict_match(
         self,
         home_team: str,
@@ -207,8 +345,8 @@ class FootballPredictor:
                 logger.info("使用模拟模式进行预测")
                 features = self._create_mock_features(home_team, away_team)
                 probabilities, prediction = self._calculate_mock_probabilities(features)
-                
-                return {
+
+                result = {
                     'success': True,
                     'home_team': home_team,
                     'away_team': away_team,
@@ -222,8 +360,14 @@ class FootballPredictor:
                         'status': 'mock',
                         'features_count': len(features)
                     },
+                    'features': features,
                     'simulation_mode': True
                 }
+
+                # 自动保存到数据库
+                self._save_prediction_to_database(result)
+
+                return result
             
             # 尝试使用真实推理服务
             try:
@@ -236,6 +380,8 @@ class FootballPredictor:
                 
                 if prediction_result and prediction_result.get('success'):
                     logger.info("✅ 真实模型预测成功")
+                    # 自动保存到数据库
+                    self._save_prediction_to_database(prediction_result)
                     return prediction_result
                 else:
                     logger.warning("真实模型预测失败，降级到模拟模式")
@@ -261,7 +407,7 @@ class FootballPredictor:
         features = self._create_mock_features(home_team, away_team)
         probabilities, prediction = self._calculate_mock_probabilities(features)
         
-        return {
+        result = {
             'success': True,
             'home_team': home_team,
             'away_team': away_team,
@@ -275,8 +421,14 @@ class FootballPredictor:
                 'status': 'mock',
                 'features_count': len(features)
             },
+            'features': features,
             'fallback_mode': True
         }
+
+        # 自动保存到数据库
+        self._save_prediction_to_database(result)
+
+        return result
 
 
 async def main():
