@@ -1,0 +1,20 @@
+{
+  "test_summary": {
+    "test_source": "fotmob",
+    "test_duration": 0.0,
+    "test_start": "2025-12-06 06:29:21 UTC",
+    "test_end": null
+  },
+  "collection_results": {
+    "fixtures_collected": 0,
+    "matches_collected": 0,
+    "teams_collected": 0,
+    "health_checks": 1
+  },
+  "monitoring_statistics": {},
+  "errors": [
+    "赛程采集失败: Failed to collect fixtures: Resource not found: https://www.fotmob.com/api/matches",
+    "比赛详情采集失败: Failed to collect fixtures: Resource not found: https://www.fotmob.com/api/matches",
+    "并发测试失败: Failed to register provider fotmob: Failed to get FotMob token: Network error while fetching FotMob homepage: Cannot connect to host www.fotmob.com:443 ssl:default [None]"
+  ]
+}

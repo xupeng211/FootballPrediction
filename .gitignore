@@ -1,173 +1,21 @@
-# ==================== Football Prediction System - .gitignore ====================
-# 🚨 SECURITY: This file ensures sensitive data is NEVER committed to version control
-# Last updated: 2024-12-18 (Emergency Update)
-# Maintainer: Senior Git DevOps Expert (Emergency Cleanup)
+# FootballPrediction V2.0 - Git Ignore Configuration
+# 保护敏感信息和临时文件，确保代码库清洁和安全
 
-# ============================================================================
-# 🚨 EMERGENCY ROOT-LEVEL EXCLUSIONS (HIGHEST PRIORITY)
-# ============================================================================
-# 彻底屏蔽所有级别的备份和数据 (物理删除 + 逻辑屏蔽)
-/backup/
-/backups/
-/data/
-/logs/
-/venv/
-/.claude/
-/config_backup/
-/tests_backup/
-/database/
-/archive/
-/deprecated/
-/old_versions/
-/temp/
-/tmp/
-
-# 通配符屏蔽 - 防止任何子目录和递归备份
-**/backup/
-**/backups/
-# 注释掉过于宽泛的 data 规则，保护 src/data/ 和 src/ml/data/
-# **/data/
-**/logs/
-**/venv/
-**/temp/
-**/tmp/
-**/.cache/
-**/__pycache__/
-*.old
-*.backup
-*.bak
-
-# Virtual environments (CRITICAL)
-venv/
-env/
-.venv/
-.env/
-virtualenv/
-pip-env/
-
-# Data files and datasets (CRITICAL)
-*.csv
-*.json
-*.json.gz
-*.jsonl
-*.parquet
-*.feather
-*.hdf5
-*.h5
-*.pkl
-*.pickle
-*.joblib
-*.model
-*.onnx
-*.pb
-
-# Cache and temporary files (CRITICAL)
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-.Python
-*.so
-.cache/
-.pytest_cache/
-.mypy_cache/
-.coverage
-htmlcov/
-
-# IDE and editor files (CRITICAL)
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-.DS_Store
-.Thumbs.db
-
-# ============================================================================
-# 🔐 SENSITIVE CONFIGURATION FILES (NEVER COMMIT)
-# ============================================================================
-# Environment files (contain API keys, passwords, secrets)
+# ========================================
+# 敏感配置文件 (必须排除)
+# ========================================
 .env
-.env.*
-!.env.example
 .env.local
-.env.development
-.env.staging
 .env.production
-.env.test
+.env.*.local
 
-# Configuration with sensitive data
-config_secure.py
-secrets.yaml
-secrets.yml
-secrets.json
-credentials.json
-api_keys.json
-docker_secrets.env
-
-# ============================================================================
-# 📊 LARGE DATASET EXCLUSIONS (50GB+ data folders)
-# ============================================================================
-# Historical data (very large, should be stored externally)
-/data/historical/
-/data/raw/
-/data/datasets/
-/data/cache/
-/data/backups/
-/data/exports/
-
-# Machine learning data and models
-*.pkl
-*.pickle
-*.model
-*.joblib
-*.h5
-*.hdf5
-*.pb
-*.onnx
-/models/trained/
-/models/checkpoints/
-/models/experiments/
-
-# Database and cache data
-*.db
-*.sqlite
-*.sqlite3
-*.sql.gz
-postgres_data/
-redis_data/
-cache_data/
-data_cache/
-
-# ============================================================================
-# 🐳 DOCKER VOLUME MOUNTS AND CONTAINER DATA
-# ============================================================================
-# Docker volumes and persistent data
-volumes/
-docker_volumes/
-grafana_data/
-prometheus_data/
-alertmanager_data/
-postgres_data_dev/
-postgres_data_prod/
-redis_data_dev/
-
-# Container runtime data
-.dockerignore_global
-.docker/
-
-# ============================================================================
-# 🐍 PYTHON-SPECIFIC EXCLUSIONS
-# ============================================================================
-# Byte-compiled / optimized / DLL files
+# ========================================
+# Python 标准排除
+# ========================================
 __pycache__/
 *.py[cod]
 *$py.class
-
-# C extensions
 *.so
-
-# Distribution / packaging
 .Python
 build/
 develop-eggs/
@@ -181,117 +29,60 @@ parts/
 sdist/
 var/
 wheels/
-pip-wheel-metadata/
-share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
 MANIFEST
 
-# PyInstaller
-*.manifest
-*.spec
-
-# Installer logs
-pip-log.txt
-pip-delete-this-directory.txt
-
-# Unit test / coverage reports
-htmlcov/
-.tox/
-.nox/
-.coverage
-.coverage.*
-.cache
-nosetests.xml
-coverage.xml
-*.cover
-*.py,cover
-.hypothesis/
-.pytest_cache/
-
-# Translations
-*.mo
-*.pot
-
-# Django stuff:
-*.log
-local_settings.py
-db.sqlite3
-db.sqlite3-journal
-
-# Flask stuff:
-instance/
-.webassets-cache
-
-# Scrapy stuff:
-.scrapy
-
-# Sphinx documentation
-docs/_build/
-
-# PyBuilder
-target/
-
-# Jupyter Notebook
-.ipynb_checkpoints
-
-# IPython
-profile_default/
-ipython_config.py
-
-# pyenv
-.python-version
-
-# pipenv
-Pipfile.lock
-
-# PEP 582
-__pypackages__/
-
-# Celery stuff
-celerybeat-schedule
-celerybeat.pid
-
-# SageMath parsed files
-*.sage.py
-
-# Environments
-.env
-.venv
-env/
-venv/
-ENV/
-env.bak/
-venv.bak/
-
-# Spyder project settings
-.spyderproject
-.spyproject
-
-# Rope project settings
-.ropeproject
-
-# mkdocs documentation
-/site
-
-# mypy
-.mypy_cache/
-.dmypy.json
-dmypy.json
-
-# Pyre type checker
-.pyre/
-
-# ============================================================================
-# 🔧 DEVELOPMENT AND BUILD FILES
-# ============================================================================
-# IDE and editor files
+# ========================================
+# PyCharm / IDE 配置
+# ========================================
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
+
+# ========================================
+# Jupyter Notebook
+# ========================================
+.ipynb_checkpoints
+
+# ========================================
+# 数据文件和缓存 (排除大文件和临时数据)
+# ========================================
+data/
+!data/archive/
+!data/archive/gold_dataset_with_real_scores.csv
+logs/
+*.log
+*.csv
+!database/seed_data.sql
+
+# ========================================
+# 模型和缓存文件
+# ========================================
+*.pkl
+*.joblib
+*.model
+*.h5
+.cache/
+.mypy_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# ========================================
+# 数据库文件 (PostgreSQL, Redis)
+# ========================================
+*.db
+*.sqlite
+*.sqlite3
+*.dump
+
+# ========================================
+# 操作系统临时文件
+# ========================================
 .DS_Store
 .DS_Store?
 ._*
@@ -300,298 +91,132 @@ dmypy.json
 ehthumbs.db
 Thumbs.db
 
-# Temporary files
-*.tmp
-*.temp
+# ========================================
+# Docker 相关 (排除容器镜像和临时文件)
+# ========================================
+.dockerignore
+docker-compose.override.yml
+
+# ========================================
+# 测试和覆盖率报告
+# ========================================
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+coverage.xml
+*.cover
+.hypothesis/
+
+# ========================================
+# 文档构建输出
+# ========================================
+site/
+docs/_build/
+docs/build/
+
+# ========================================
+# 监控和日志
+# ========================================
+.monitoring/
+*.pid
+*.seed
+*.prof
+
+# ========================================
+# 备份和临时文件
+# ========================================
 *.bak
 *.backup
+*.tmp
+*.temp
+archive/
+temp/
 *.old
-*.orig
-*.rej
-~*
 
-# Build artifacts
-build/
-dist/
-target/
-bin/
-out/
+# ========================================
+# AI/ML 训练文件
+# ========================================
+models/
+!models/xgb_football_v2_real_scores.joblib
+!models/xgb_football_v2_real_scores_metadata.json
+!models/xgb_football_v1_metadata.json
+*.pth
+*.pt
+*.ckpt
 
-# Log files
-logs/
-*.log
-*.log.*
-log/
-*.out
+# ========================================
+# 配置文件 (保留模板)
+# ========================================
+config/local/
+config/production/
+*.conf
+*.ini
+!config/fotmob_leagues.json
+!config/team_mapping.json
 
-# ============================================================================
-# 📈 MONITORING AND METRICS
-# ============================================================================
-# Grafana data and configuration
-grafana_data/
-monitoring/grafana/data/
-monitoring/grafana/plugins/
-
-# Prometheus data
-prometheus_data/
-monitoring/prometheus/data/
-
-# Alertmanager data
-alertmanager_data/
-monitoring/alertmanager/data/
-
-# Monitoring logs and temporary files
-monitoring/logs/
-monitoring/temp/
-monitoring/cache/
-
-# Performance metrics and profiling
-*.prof
-*.profile
-*.perf
-performance_reports/
-
-# ============================================================================
-# 🧪 TESTING AND VALIDATION
-# ============================================================================
-# Test data and temporary files
-test_data/
-test_outputs/
-test_results/
-validation_reports/
-test_reports/
-
-# Stress test results
-stress_test_logs/
-load_test_results/
-performance_test_results/
-
-# Integration test data
-integration_test_data/
-e2e_test_data/
-
-# ============================================================================
-# 🔐 SECURITY AND COMPLIANCE
-# ============================================================================
-# Security scan results
-security_reports/
-vulnerability_reports/
-bandit_reports/
-safety_reports/
-
-# Audit logs
-audit_logs/
-security_audit_logs/
-
-# Certificate files
+# ========================================
+# 安全和证书文件
+# ========================================
 *.pem
 *.key
 *.crt
-*.cert
-*.csr
-ssl/
+*.p12
+*.pfx
+certs/
 
-# ============================================================================
-# 📊 BUSINESS AND ANALYTICS
-# ============================================================================
-# Financial and betting data
-financial_data/
-betting_history/
-kelly_system_data/
-performance_reports/
-profit_loss_reports/
+# ========================================
+# 开发工具配置
+# ========================================
+.fabricrc
+.hushlogin
+.editorconfig
 
-# Analytics and reporting
-analytics_reports/
-dashboard_data/
-business_intelligence/
-kpi_reports/
+# ========================================
+# Node.js (如果有前端组件)
+# ========================================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
-# ============================================================================
-# 🗂️ PROJECT MANAGEMENT
-# ============================================================================
-# Sprint and project management files
-sprint_*.json
-sprint_*.tmp
-meeting_notes/
-project_backups/
-temp_docs/
+# ========================================
+# 特定于项目的排除
+# ========================================
+# 保留重要文档，排除临时报告
+*.md
+!CLAUDE.md
+!README.md
+!PROJECT_FINAL_REPORT.md
+!model_comparison_report.txt
+# 排除临时JSON文件和报告
+extreme_performance_report*.json
+*_report*.json
+temp_*.json
+*_backup.json
 
-# Archive and old versions
-archive/
-deprecated/
-legacy/
-old_versions/
-backup_docs/
+# ========================================
+# 构建产物
+# ========================================
+bin/
+obj/
+out/
+target/
+build/
 
-# ============================================================================
-# 📦 DEPLOYMENT AND INFRASTRUCTURE
-# ============================================================================
-# Infrastructure as Code
-terraform.tfstate
-terraform.tfstate.backup
-*.tfvars
-!.tfvars.example
-
-# Kubernetes secrets
-k8s-secrets/
-namespace.yaml
-secrets.yaml
-
-# Cloud provider credentials
-.aws/
-.gcp/
-.azure/
-.google_credentials.json
-service_account.json
-
-# CI/CD sensitive data
-.github/secrets/
-.gitlab/secrets/
-jenkins/secrets/
-
-# ============================================================================
-# 🎯 MACHINE LEARNING SPECIFIC
-# ============================================================================
-# MLflow experiments
-mlruns/
-mlartifacts/
-
-# Weights & Biases
-wandb/
-
-# TensorBoard
-runs/
-tensorboard_logs/
-
-# Jupyter checkpoints
-.ipynb_checkpoints/
-
-# ML training data
-training_data/
-validation_data/
-test_data/
-
-# Feature engineering artifacts
-features_cache/
-feature_store/
-
-# Model serving
-model_registry/
-serving_data/
-
-# ============================================================================
-# 📋 DOCUMENTATION TEMPORARY FILES
-# ============================================================================
-# Doc generation temporary files
-docs/_build/
-docs/_static/
-docs/_templates/
-docs/temp/
-
-# README drafts
-README_draft.md
-README_temp.md
-CHANGELOG_draft.md
-
-# API documentation generation
-api_docs_temp/
-swagger_temp/
-
-# ============================================================================
-# 🛠️ OPERATIONAL EXCLUSIONS
-# ============================================================================
-# Backup and archive files
+# ========================================
+# 包管理器
+# ========================================
+*.tgz
 *.tar.gz
 *.zip
-*.rar
-*.7z
-backup_*
-archive_*
 
-# Database dumps
-*.sql
-*.dump
-*.backup
-db_backup_*
-
-# System logs and monitoring
-syslog/
-system_logs/
-access_logs/
-error_logs/
-
-# ============================================================================
-# 📎 ADDITIONAL PROJECT-SPECIFIC EXCLUSIONS
-# ============================================================================
-# Football prediction specific
-match_data/
-team_statistics/
-player_statistics/
-historical_matches/
-odds_data/
-
-# Betting and financial
-bet_slips/
-wager_history/
-bankroll_data/
-risk_assessment/
-
-# External API data
-fotmob_cache/
-external_data_cache/
-api_responses/
-
-# Performance and optimization
-optimization_results/
-hyperparameter_tuning/
-model_experiments/
-
-# ============================================================================
-# 🔄 TEMPORARY DEVELOPMENT FILES (CLEAN REGULARLY)
-# ============================================================================
-# Temporary development directories
-temp/
-tmp/
-temp_files/
-dev_cache/
-
-# Local development overrides
-docker-compose.override.yml
-.env.local.override
-
-# Hot reload and development files
-.watchmanconfig
-.eslintcache
-
-# ============================================================================
-# 📊 EXCLUSION SUMMARY
-# ============================================================================
-# Total exclusions: ~100+ file/folder types
-# Estimated excluded size: 50GB+ (primarily datasets and cache)
-# Security focus: API keys, passwords, certificates, financial data
-# Development focus: Cache, temp files, IDE configs, build artifacts
-
-# ============================================================================
-# ⚠️  IMPORTANT REMINDERS
-# ============================================================================
-# 1. Never add actual passwords to .env.example (use CHANGE_ME placeholders)
-# 2. Large datasets should be stored in external storage (S3, GCS, Azure Blob)
-# 3. Model files (.pkl, .h5) should be stored in model registry, not git
-# 4. Log files should go to centralized logging service
-# 5. Database backups should be stored securely, not in git
-# 6. Regular cleanup of temp/development files is recommended
-# 7. Before committing, run: git clean -fd to remove untracked files
-# 8. Use git-secrets or similar tools to prevent accidental commits of secrets
-
-# ============================================================================
-# 🚨  SECURITY QUICK CHECKLIST BEFORE COMMIT
-# ============================================================================
-# [ ] No actual passwords in .env files (only CHANGE_ME placeholders)
-# [ ] No API keys or tokens in any committed files
-# [ ] No certificate files (*.pem, *.key, *.crt)
-# [ ] No large binary files (>10MB)
-# [ ] No personal identification information
-# [ ] No production database dumps or backups
-# [ ] No financial or betting transaction data
-# [ ] All sensitive data uses environment variables
+# ========================================
+# 实验性文件和草稿
+# ========================================
+draft/
+experimental/
+scratch/
+work/
+*.draft
+*.wip

@@ -1,0 +1,47 @@
+{
+  "mcpServers": {
+    "postgres": {
+      "command": "python",
+      "args": ["mcp_servers/postgres_server.py"],
+      "env": {
+        "DATABASE_URL": "${DATABASE_URL}",
+        "POSTGRES_HOST": "${DB_HOST:-localhost}",
+        "POSTGRES_PORT": "${DB_PORT:-5432}",
+        "POSTGRES_DB": "${DB_NAME:-football_prediction_dev}",
+        "POSTGRES_USER": "${DB_USER:-football_user}",
+        "POSTGRES_PASSWORD": "${DB_PASSWORD:-football_pass}"
+      },
+      "description": "PostgreSQL database server for football prediction system"
+    },
+    "redis": {
+      "command": "python",
+      "args": ["mcp_servers/redis_server.py"],
+      "env": {
+        "REDIS_HOST": "${REDIS_HOST:-localhost}",
+        "REDIS_PORT": "${REDIS_PORT:-6379}",
+        "REDIS_DB": "${REDIS_DB:-0}",
+        "REDIS_PASSWORD": "${REDIS_PASSWORD:-}"
+      },
+      "description": "Redis cache server for performance optimization"
+    },
+    "filesystem": {
+      "command": "python",
+      "args": ["mcp_servers/filesystem_server.py"],
+      "env": {
+        "PROJECT_ROOT": "/home/user/projects/FootballPrediction"
+      },
+      "description": "File system access for project management"
+    },
+    "system_monitor": {
+      "command": "python",
+      "args": ["mcp_servers/system_monitor_server.py"],
+      "description": "System performance monitoring and infrastructure analysis"
+    },
+    "git": {
+      "command": "git",
+      "args": ["log", "--oneline", "-5"],
+      "cwd": "/home/user/projects/FootballPrediction",
+      "description": "Git version control for code management"
+    }
+  }
+}
