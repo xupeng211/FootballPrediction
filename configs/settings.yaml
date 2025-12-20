@@ -1,0 +1,231 @@
+# Football Prediction System - Production Configuration
+# 大厂级配置管理系统
+
+database:
+  host: "localhost"
+  port: 5432
+  name: "football_prediction_dev"
+  user: "football_user"
+  password: "football_pass"
+
+redis:
+  host: "localhost"
+  port: 6379
+  db: 0
+
+fotmob_api:
+  base_url: "https://www.fotmob.com"
+  timeout: 30
+  max_retries: 3
+  rate_limit_delay: 1.0
+  headers:
+    user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    accept: "application/json, text/plain, */*"
+    accept_language: "en-US,en;q=0.9"
+    accept_encoding: "gzip, deflate, br"
+    connection: "keep-alive"
+    referer: "https://www.fotmob.com/"
+    origin: "https://www.fotmob.com"
+
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+features:
+  # 特征提取配置
+  max_recursion_depth: 10
+  xg_patterns:
+    home:
+      - "home.*xg.*?([\\d.]+)"
+      - "homexg.*?([\\d.]+)"
+      - "home.*expected.*goals.*?([\\d.]+)"
+      - "expectedGoals.*?([\\d.]+)"
+    away:
+      - "away.*xg.*?([\\d.]+)"
+      - "awayxg.*?([\\d.]+)"
+      - "away.*expected.*goals.*?([\\d.]+)"
+
+  possession_patterns:
+    home:
+      - "home.*possession.*?(\\d+)"
+      - "possession.*home.*?(\\d+)"
+    away:
+      - "away.*possession.*?(\\d+)"
+      - "possession.*away.*?(\\d+)"
+
+# 数据库Schema完整定义
+database_schema:
+  match_features_training:
+    fields:
+      # 基础字段
+      external_id: "VARCHAR(50) PRIMARY KEY"
+      match_time: "TIMESTAMP WITH TIME ZONE NOT NULL"
+      home_team: "VARCHAR(100) NOT NULL"
+      away_team: "VARCHAR(100) NOT NULL"
+      league_id: "VARCHAR(20)"
+      league_name: "VARCHAR(100)"
+      season: "VARCHAR(20)"
+
+      # xG相关特征 (Expected Goals)
+      home_xg: "FLOAT"
+      away_xg: "FLOAT"
+      xg_total: "FLOAT"
+      xg_diff: "FLOAT"
+      home_xg_first_half: "FLOAT"
+      away_xg_first_half: "FLOAT"
+      xg_total_first_half: "FLOAT"
+      home_xg_second_half: "FLOAT"
+      away_xg_second_half: "FLOAT"
+      xg_total_second_half: "FLOAT"
+      xg_dynamic_trend: "VARCHAR(20)"
+
+      # 控球率特征
+      home_possession: "FLOAT"
+      away_possession: "FLOAT"
+      possession_diff: "FLOAT"
+      home_possession_first_half: "FLOAT"
+      away_possession_first_half: "FLOAT"
+      possession_first_half_diff: "FLOAT"
+      home_possession_second_half: "FLOAT"
+      away_possession_second_half: "FLOAT"
+      possession_second_half_diff: "FLOAT"
+
+      # 射门数据
+      home_shots_total: "INTEGER"
+      away_shots_total: "INTEGER"
+      shots_total_diff: "INTEGER"
+      home_shots_on_target: "INTEGER"
+      away_shots_on_target: "INTEGER"
+      shots_on_target_diff: "INTEGER"
+      home_shots_off_target: "INTEGER"
+      away_shots_off_target: "INTEGER"
+      shots_off_target_diff: "INTEGER"
+      home_shots_blocked: "INTEGER"
+      away_shots_blocked: "INTEGER"
+      shots_blocked_diff: "INTEGER"
+      home_shot_accuracy: "FLOAT"
+      away_shot_accuracy: "FLOAT"
+      shot_accuracy_diff: "FLOAT"
+
+      # 角球数据
+      home_corners: "INTEGER"
+      away_corners: "INTEGER"
+      corners_diff: "INTEGER"
+      home_corners_first_half: "INTEGER"
+      away_corners_first_half: "INTEGER"
+      corners_first_half_diff: "INTEGER"
+      home_corners_second_half: "INTEGER"
+      away_corners_second_half: "INTEGER"
+      corners_second_half_diff: "INTEGER"
+
+      # 犯规数据
+      home_fouls: "INTEGER"
+      away_fouls: "INTEGER"
+      fouls_diff: "INTEGER"
+      home_yellow_cards: "INTEGER"
+      away_yellow_cards: "INTEGER"
+      yellow_cards_diff: "INTEGER"
+      home_red_cards: "INTEGER"
+      away_red_cards: "INTEGER"
+      red_cards_diff: "INTEGER"
+
+      # 越位数据
+      home_offsides: "INTEGER"
+      away_offsides: "INTEGER"
+      offsides_diff: "INTEGER"
+
+      # 传球数据
+      home_passes: "INTEGER"
+      away_passes: "INTEGER"
+      passes_diff: "INTEGER"
+      home_pass_accuracy: "FLOAT"
+      away_pass_accuracy: "FLOAT"
+      pass_accuracy_diff: "FLOAT"
+      home_successful_passes: "INTEGER"
+      away_successful_passes: "INTEGER"
+      successful_passes_diff: "INTEGER"
+
+      # 头球数据
+      home_aerial_won: "INTEGER"
+      away_aerial_won: "INTEGER"
+      aerial_won_diff: "INTEGER"
+      home_aerial_won_percentage: "FLOAT"
+      away_aerial_won_percentage: "FLOAT"
+      aerial_won_percentage_diff: "FLOAT"
+
+      # 赔率数据
+      home_opening_odds: "FLOAT"
+      away_opening_odds: "FLOAT"
+      draw_odds: "FLOAT"
+      home_current_odds: "FLOAT"
+      away_current_odds: "FLOAT"
+      draw_current_odds: "FLOAT"
+      odds_movement_home: "FLOAT"
+      odds_movement_away: "FLOAT"
+      odds_movement_draw: "FLOAT"
+      implied_home_win_prob: "FLOAT"
+      implied_away_win_prob: "FLOAT"
+      implied_draw_prob: "FLOAT"
+
+      # 市场数据
+      total_over_under: "FLOAT"
+      asian_handicap: "FLOAT"
+      both_teams_to_score_odds: "FLOAT"
+
+      # 历史H2H数据
+      home_team_h2h_wins: "INTEGER"
+      away_team_h2h_wins: "INTEGER"
+      h2h_draws: "INTEGER"
+      home_team_h2h_goals: "INTEGER"
+      away_team_h2h_goals: "INTEGER"
+
+      # 近期状态数据
+      home_team_form_points: "INTEGER"
+      away_team_form_points: "INTEGER"
+      home_team_recent_goals: "INTEGER"
+      away_team_recent_goals: "INTEGER"
+      home_team_recent_conceded: "INTEGER"
+      away_team_recent_conceded: "INTEGER"
+
+      # 天气和场地数据
+      weather_condition: "VARCHAR(50)"
+      temperature: "FLOAT"
+      home_advantage_score: "FLOAT"
+
+      # 技术统计
+      expected_assists_home: "FLOAT"
+      expected_assists_away: "FLOAT"
+      big_chances_home: "INTEGER"
+      big_chances_away: "INTEGER"
+      big_chances_missed_home: "INTEGER"
+      big_chances_missed_away: "INTEGER"
+
+      # 裁判和VAR数据
+      referee_name: "VARCHAR(100)"
+      var_used: "BOOLEAN"
+
+      # 元数据
+      raw_data_source: "VARCHAR(100) DEFAULT 'fotmob_api'"
+      feature_version: "VARCHAR(20) DEFAULT '1.0'"
+      feature_quality_score: "FLOAT"
+      extraction_confidence: "FLOAT"
+      data_completeness_score: "FLOAT"
+      extracted_at: "TIMESTAMP WITH TIME ZONE DEFAULT NOW()"
+      updated_at: "TIMESTAMP WITH TIME ZONE DEFAULT NOW()"
+      created_at: "TIMESTAMP WITH TIME ZONE DEFAULT NOW()"
+
+# 性能配置
+performance:
+  batch_size: 100
+  concurrent_requests: 10
+  request_timeout: 30
+  connection_pool_size: 20
+
+# 监控配置
+monitoring:
+  enable_metrics: true
+  health_check_interval: 60
+  alert_thresholds:
+    error_rate: 0.05
+    response_time: 2.0
+    success_rate: 0.95

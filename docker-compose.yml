@@ -1,196 +1,48 @@
-# FootballPrediction v2.3.0-production - 工业级容器编排
-# Infrastructure-as-Code 生产级Docker Compose配置
-# 支持多环境部署：development/staging/production
+# FootballPrediction - 生产级数据工厂
+# 50GB级真实数据引擎 - 云原生架构
 
 services:
-  # ================================
-  # 核心应用服务 (Football Prediction API)
-  # ================================
-  app:
-    build:
-      context: .
-      target: production
-      args:
-        BUILD_DATE: ${BUILD_DATE:-$(date -u +'%Y-%m-%dT%H:%M:%SZ')}
-        VCS_REF: ${VCS_REF:-$(git rev-parse HEAD)}
-        # 代理配置 - 解决网络阻塞问题
-        HTTP_PROXY: ${HTTP_PROXY:-http://172.25.16.1:7890}
-        HTTPS_PROXY: ${HTTPS_PROXY:-http://172.25.16.1:7890}
-        NO_PROXY: ${NO_PROXY:-localhost,127.0.0.1}
-    image: footballprediction:${VERSION:-v2.3.0-production}
-    container_name: footballprediction-app
-
-    # UID权限对齐 - 保持简洁
-    user: "${PUID:-1000}:${PGID:-1000}"
-
-    # 端口配置
-    ports:
-      - "${API_PORT:-8000}:8000"
-
-    # 环境配置 - 强制使用shadow环境
-    env_file:
-      - .env.shadow
-    environment:
-      # 基础运行时配置
-      - ENVIRONMENT=shadow
-      - TZ=UTC
-      - PYTHONPATH=/app:/app/src:/app/scripts
-
-      # 数据库连接配置
-      - DB_HOST=db
-      - DB_PORT=5432
-      - DB_NAME=football_prediction_shadow
-      - DB_USER=${DB_USER:-football_user}
-      - DB_PASSWORD=${DB_PASSWORD}
-
-      # Redis缓存配置
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-      - REDIS_DB=${REDIS_DB:-0}
-
-      # 服务配置 - v2.3-production
-      - INFERENCE_SERVICE_V2_ENABLED=true
-      - COLLECTION_SERVICE_ENABLED=${COLLECTION_SERVICE_ENABLED:-true}
-      - EXPLAINABILITY_SERVICE_ENABLED=${EXPLAINABILITY_SERVICE_ENABLED:-true}
-
-      # 影子测试模式配置
-      - SHADOW_MODE=${SHADOW_MODE:-false}
-      - SHADOW_TEST_DURATION_HOURS=${SHADOW_TEST_DURATION_HOURS:-48}
-      - SHADOW_PREDICTION_INTERVAL_MINUTES=${SHADOW_PREDICTION_INTERVAL_MINUTES:-15}
-
-      # 模型配置
-      - MODEL_PATH=/app/data/models
-      - DEFAULT_MODEL_NAME=${DEFAULT_MODEL_NAME:-xgboost_v2}
-
-      # API服务配置
-      - API_HOST=0.0.0.0
-      - API_PORT=8000
-      - API_DEBUG=${API_DEBUG:-false}
-      - API_WORKERS=${API_WORKERS:-1}
-
-      # 监控配置
-      - ENABLE_METRICS=${ENABLE_METRICS:-true}
-      - METRICS_PORT=${METRICS_PORT:-9090}
-
-      # 自动化守护进程配置 - 24小时自动化
-      - AUTOMATION_24H_ENABLED=${AUTOMATION_24H_ENABLED:-true}
-      - AUTOMATION_DAEMON_INTERVAL=${AUTOMATION_DAEMON_INTERVAL:-300}
-
-    # 极简自动启动 - KISS原则
-    command: ["/opt/venv/bin/python", "scripts/automation_daemon_24h.py"]
-
-    # 依赖服务
-    depends_on:
-      db:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-
-    # 数据卷挂载 - 权限对齐
-    volumes:
-      # 应用代码（需要可执行权限）
-      - ./src:/app/src
-      - ./scripts:/app/scripts
-      - ./data:/app/data
-      - ./logs:/app/logs
-      # 持久化数据
-      - model_data:/app/data/models
-      - cache_data:/app/data/cache
-      # 配置文件
-      - ./docker:/app/docker:ro
-
-    # 资源限制和预留
-    deploy:
-      resources:
-        limits:
-          cpus: '${APP_CPU_LIMIT:-2.0}'
-          memory: '${APP_MEMORY_LIMIT:-2G}'
-        reservations:
-          cpus: '${APP_CPU_RESERVE:-0.5}'
-          memory: '${APP_MEMORY_RESERVE:-512M}'
-
-    # 健康检查 - 检查自动化守护进程
-    healthcheck:
-      test: ["CMD", "python", "-c", "from src.config_unified import get_settings; print('Health check passed')"]
-      interval: ${HEALTH_CHECK_INTERVAL:-30s}
-      timeout: ${HEALTH_CHECK_TIMEOUT:-15s}
-      retries: ${HEALTH_CHECK_RETRIES:-5}
-      start_period: ${HEALTH_CHECK_START_PERIOD:-120s}
-
-    # 重启策略 - 生产级自动重启
-    restart: always
-
-    # 网络配置
-    networks:
-      - football-network
-
-    # 日志配置
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "${LOG_MAX_SIZE:-10m}"
-        max-file: "${LOG_MAX_FILE:-3}"
-        labels: "service=app,environment=${ENVIRONMENT:-development}"
-
   # ================================
   # PostgreSQL 数据库服务
   # ================================
   db:
     image: postgres:15-alpine
     container_name: footballprediction-db
-
-    # 端口配置（生产环境可选择性暴露）
-    ports:
-      - "${DB_PORT:-5432}:5432"
-
-    # 数据库配置
-    environment:
-      - POSTGRES_DB=${DB_NAME:-football_prediction_${ENVIRONMENT:-dev}}
-      - POSTGRES_USER=${DB_USER:-football_user}
-      - POSTGRES_PASSWORD=${DB_PASSWORD}
-      - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --lc-collate=C --lc-ctype=C
-      - TZ=UTC
-      - PGTZ=UTC
-
-    # 数据持久化
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-      # 初始化脚本
-      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/01-init-db.sql:ro
-      - ./scripts/init_shadow_db.sql:/docker-entrypoint-initdb.d/02-init-shadow.sql:ro
-
-    # 资源限制
-    deploy:
-      resources:
-        limits:
-          cpus: '${DB_CPU_LIMIT:-1.0}'
-          memory: '${DB_MEMORY_LIMIT:-1G}'
-        reservations:
-          cpus: '${DB_CPU_RESERVE:-0.25}'
-          memory: '${DB_MEMORY_RESERVE:-256M}'
-
-    # 健康检查 - 数据库就绪检查
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-football_user} -d ${DB_NAME:-football_prediction_${ENVIRONMENT:-dev}}"]
-      interval: ${DB_HEALTH_INTERVAL:-10s}
-      timeout: ${DB_HEALTH_TIMEOUT:-5s}
-      retries: ${DB_HEALTH_RETRIES:-5}
-      start_period: ${DB_HEALTH_START_PERIOD:-30s}
-
-    # 重启策略
     restart: unless-stopped
 
-    # 网络配置
-    networks:
-      - football-network
+    # 数据持久化到物理目录
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+      - ./logs/postgres:/var/log/postgresql
+      # 数据库初始化脚本（首次启动时自动加载415场黄金数据）
+      - ./database/seed_data.sql:/docker-entrypoint-initdb.d/01-seed-data.sql:ro
 
-    # 日志配置
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "${LOG_MAX_SIZE:-10m}"
-        max-file: "${LOG_MAX_FILE:-3}"
-        labels: "service=db,environment=${ENVIRONMENT:-development}"
+    # 环境变量
+    environment:
+      POSTGRES_DB: football_prediction
+      POSTGRES_USER: football_user
+      POSTGRES_PASSWORD: football_pass
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=C --lc-ctype=C"
+      # 性能优化
+      shared_preload_libraries: pg_stat_statements
+      max_connections: 200
+      shared_buffers: 256MB
+      effective_cache_size: 1GB
+
+    # 端口映射
+    ports:
+      - "5432:5432"
+
+    # 健康检查
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U football_user -d football_prediction"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+    networks:
+      - football-net
 
   # ================================
   # Redis 缓存服务
@@ -198,310 +50,169 @@ services:
   redis:
     image: redis:7-alpine
     container_name: footballprediction-redis
+    restart: unless-stopped
 
-    # 端口配置
+    # 端口映射
     ports:
-      - "${REDIS_PORT:-6379}:6379"
-
-    # Redis配置命令
-    command: >
-      redis-server
-      --appendonly yes
-      --maxmemory ${REDIS_MAX_MEMORY:-512mb}
-      --maxmemory-policy allkeys-lru
-      --save ${REDIS_SAVE_INTERVAL:-900} 1
-      --save ${REDIS_SAVE_INTERVAL:-300} 10
-      --save ${REDIS_SAVE_INTERVAL:-60} 10000
+      - "6379:6379"
 
     # 数据持久化
     volumes:
-      - redis_data:/data
-      # Redis配置文件
-      - ./docker/redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
+      - ./data/redis:/data
 
-    # 资源限制
-    deploy:
-      resources:
-        limits:
-          cpus: '${REDIS_CPU_LIMIT:-0.5}'
-          memory: '${REDIS_MEMORY_LIMIT:-512M}'
-        reservations:
-          cpus: '${REDIS_CPU_RESERVE:-0.1}'
-          memory: '${REDIS_MEMORY_RESERVE:-64M}'
+    # Redis配置
+    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
 
-    # 健康检查 - Redis服务检查
+    # 健康检查
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
-      interval: ${REDIS_HEALTH_INTERVAL:-10s}
-      timeout: ${REDIS_HEALTH_TIMEOUT:-5s}
-      retries: ${REDIS_HEALTH_RETRIES:-3}
-      start_period: ${REDIS_HEALTH_START_PERIOD:-30s}
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
-    # 重启策略
+    networks:
+      - football-net
+
+  # ================================
+  # 数据采集引擎 (Engine)
+  # ================================
+  engine:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: footballprediction-engine
     restart: unless-stopped
 
-    # 网络配置
-    networks:
-      - football-network
-
-    # 日志配置
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "${LOG_MAX_SIZE:-10m}"
-        max-file: "${LOG_MAX_FILE:-3}"
-        labels: "service=redis,environment=${ENVIRONMENT:-development}"
-
-  # ================================
-  # 监控栈 - Prometheus
-  # ================================
-  prometheus:
-    image: prom/prometheus:v2.47.0
-    container_name: footballprediction-prometheus
-
-    # 端口配置
-    ports:
-      - "${PROMETHEUS_PORT:-9090}:9090"
-
-    # 配置文件挂载
+    # 卷挂载 - 解决权限问题
     volumes:
-      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-      - ./monitoring/prometheus/alerts.yml:/etc/prometheus/alerts.yml:ro
-      - prometheus_data:/prometheus
+      - ./:/app:ro
 
-    # 启动命令
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
-      - '--web.console.libraries=/etc/prometheus/console_libraries'
-      - '--web.console.templates=/etc/prometheus/consoles'
-      - '--storage.tsdb.retention.time=${PROMETHEUS_RETENTION:-15d}'
-      - '--web.enable-lifecycle'
-      - '--web.enable-admin-api'
-
-    # 资源限制
-    deploy:
-      resources:
-        limits:
-          cpus: '${PROMETHEUS_CPU_LIMIT:-1.0}'
-          memory: '${PROMETHEUS_MEMORY_LIMIT:-1G}'
-        reservations:
-          cpus: '${PROMETHEUS_CPU_RESERVE:-0.25}'
-          memory: '${PROMETHEUS_MEMORY_RESERVE:-256M}'
-
-    # 重启策略
-    restart: unless-stopped
-
-    # 网络配置
-    networks:
-      - football-network
-
-    # 日志配置
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "${LOG_MAX_SIZE:-10m}"
-        max-file: "${LOG_MAX_FILE:-3}"
-        labels: "service=prometheus,environment=${ENVIRONMENT:-development}"
-
-  # ================================
-  # 监控栈 - Grafana
-  # ================================
-  grafana:
-    image: grafana/grafana:10.1.0
-    container_name: footballprediction-grafana
-
-    # 端口配置
+    # 端口映射
     ports:
-      - "${GRAFANA_PORT:-3000}:3000"
-
-    # 数据持久化
-    volumes:
-      - grafana_data:/var/lib/grafana
-      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
-      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - "8000:8000"
 
     # 环境配置
     environment:
-      - GF_SECURITY_ADMIN_USER=${GRAFANA_USER:-admin}
-      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
-      - GF_USERS_ALLOW_SIGN_UP=false
-      - GF_INSTALL_PLUGINS=${GRAFANA_PLUGINS:-redis-datasource,prometheus-datasource}
-      - GF_SECURITY_ALLOW_EMBEDDING=true
-      - GF_AUTH_ANONYMOUS_ENABLED=${GRAFANA_ANONYMOUS:-false}
-      - GF_SERVER_ROOT_URL=http://localhost:${GRAFANA_PORT:-3000}
+      # Docker环境检测
+      - DOCKER_ENV=true
+      - ENVIRONMENT=production
 
-    # 依赖服务
+      # 数据库连接
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_NAME=football_prediction
+      - DB_USER=football_user
+      - DB_PASSWORD=football_pass
+
+      # 应用配置
+      - PYTHONPATH=/app
+      - PYTHONUNBUFFERED=1
+      - TZ=UTC
+
+      # 采集配置
+      - COLLECTION_MODE=full
+      - BATCH_SIZE=100
+      - RATE_LIMIT_DELAY=1.0
+
+      # API配置
+      - FOTMOB_BASE_URL=https://www.fotmob.com/api
+      # API认证标头 - 需要用户提供
+      - FOTMOB_X_MAS_HEADER=${FOTMOB_X_MAS_HEADER:-}
+      - FOTMOB_X_FOO_HEADER=${FOTMOB_X_FOO_HEADER:-}
+
+      # Redis配置
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=0
+
+      # 日志配置
+      - LOG_LEVEL=INFO
+      - LOG_FILE=/app/logs/engine.log
+
+    # 依赖关系
     depends_on:
-      - prometheus
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
 
-    # 资源限制
-    deploy:
-      resources:
-        limits:
-          cpus: '${GRAFANA_CPU_LIMIT:-0.5}'
-          memory: '${GRAFANA_MEMORY_LIMIT:-512M}'
-        reservations:
-          cpus: '${GRAFANA_CPU_RESERVE:-0.1}'
-          memory: '${GRAFANA_MEMORY_RESERVE:-128M}'
+    networks:
+      - football-net
 
-    # 重启策略
+    # 真实数据采集命令
+    command: ["python", "src/core/main_engine_v5.py", "--mode", "full", "--limit", "700"]
+
+  # ================================
+  # 数据质量监控服务
+  # ================================
+  monitor:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: footballprediction-monitor
     restart: unless-stopped
 
-    # 网络配置
-    networks:
-      - football-network
+    # 卷挂载
+    volumes:
+      - ./:/app:ro
 
-    # 日志配置
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "${LOG_MAX_SIZE:-10m}"
-        max-file: "${LOG_MAX_FILE:-3}"
-        labels: "service=grafana,environment=${ENVIRONMENT:-development}"
-
-  # ================================
-  # 数据导出器
-  # ================================
-  redis-exporter:
-    image: oliver006/redis_exporter:v1.45.0
-    container_name: footballprediction-redis-exporter
-
-    # 端口配置
+    # 端口映射
     ports:
-      - "${REDIS_EXPORTER_PORT:-9121}:9121"
+      - "8001:8000"
 
     # 环境配置
     environment:
-      - REDIS_ADDR=redis://redis:6379
-      - REDIS_EXPORTER_LOG_FORMAT=${LOG_FORMAT:-json}
+      - DOCKER_ENV=true
+      - ENVIRONMENT=monitoring
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_NAME=football_prediction
+      - DB_USER=football_user
+      - DB_PASSWORD=football_pass
+      - PYTHONPATH=/app
+      - PYTHONUNBUFFERED=1
+      - TZ=UTC
+      - MONITORING_MODE=true
+      - HEALTH_CHECK_INTERVAL=300  # 5分钟
 
-    # 依赖服务
+    # 依赖关系
     depends_on:
-      - redis
+      db:
+        condition: service_healthy
 
-    # 资源限制
-    deploy:
-      resources:
-        limits:
-          cpus: '${REDIS_EXPORTER_CPU_LIMIT:-0.2}'
-          memory: '${REDIS_EXPORTER_MEMORY_LIMIT:-128M}'
+    # 健康检查
+    healthcheck:
+      test: ["CMD", "python", "/app/healthcheck.py"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
 
-    # 重启策略
-    restart: unless-stopped
-
-    # 网络配置
     networks:
-      - football-network
+      - football-net
 
-    # 日志配置
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "${LOG_MAX_SIZE:-5m}"
-        max-file: "${LOG_MAX_FILE:-2}"
-        labels: "service=redis-exporter,environment=${ENVIRONMENT:-development}"
-
-  # ================================
-  # 系统监控导出器
-  # ================================
-  node-exporter:
-    image: prom/node-exporter:v1.6.0
-    container_name: footballprediction-node-exporter
-
-    # 端口配置
-    ports:
-      - "${NODE_EXPORTER_PORT:-9100}:9100"
-
-    # 数据卷挂载
-    volumes:
-      - /proc:/host/proc:ro
-      - /sys:/host/sys:ro
-      - /:/rootfs:ro
-
-    # 启动命令
-    command:
-      - '--path.procfs=/host/proc'
-      - '--path.rootfs=/rootfs'
-      - '--path.sysfs=/host/sys'
-      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
-      - '--collector.processes'
-      - '--collector.systemd'
-
-    # 资源限制
-    deploy:
-      resources:
-        limits:
-          cpus: '${NODE_EXPORTER_CPU_LIMIT:-0.2}'
-          memory: '${NODE_EXPORTER_MEMORY_LIMIT:-128M}'
-
-    # 重启策略
-    restart: unless-stopped
-
-    # 网络配置
-    networks:
-      - football-network
-
-    # 日志配置
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "${LOG_MAX_SIZE:-5m}"
-        max-file: "${LOG_MAX_FILE:-2}"
-        labels: "service=node-exporter,environment=${ENVIRONMENT:-development}"
-
-# ================================
-# 数据卷定义
-# ================================
-volumes:
-  # 数据持久化卷
-  postgres_data:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ${POSTGRES_DATA_PATH:-./data/postgres}
-
-  redis_data:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ${REDIS_DATA_PATH:-./data/redis}
-
-  # 应用数据卷
-  model_data:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ${MODEL_DATA_PATH:-./data/models}
-
-  cache_data:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ${CACHE_DATA_PATH:-./data/cache}
-
-  # 监控数据卷
-  prometheus_data:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ${PROMETHEUS_DATA_PATH:-./data/prometheus}
-
-  grafana_data:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ${GRAFANA_DATA_PATH:-./data/grafana}
+    # 数据质量监控命令 - 真实取证
+    command: >
+      bash -c "
+      echo '🔍 Starting Football Prediction Data Quality Monitor...' &&
+      while true; do
+        echo '📊 $(date): 执行数据质量检查...' &&
+        python /app/src/utils/data_quality_checker.py --mode production &&
+        echo '💾 数据库大小: $(docker exec db psql -U football_user -d football_prediction -tAc \"SELECT pg_size_pretty(pg_database_size('football_prediction'));\" 2>/dev/null || echo \"N/A\")' &&
+        echo '📈 xG记录数: $(docker exec db psql -U football_user -d football_prediction -tAc \"SELECT COUNT(*) FROM matches WHERE home_xg IS NOT NULL;\" 2>/dev/null || echo \"N/A\")' &&
+        echo '⏳ 下次检查时间: $(date -d \"+5 minutes\")' &&
+        echo '---' &&
+        sleep 300
+      done
+      "
 
 # ================================
 # 网络配置
 # ================================
 networks:
-  football-network:
+  football-net:
     driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

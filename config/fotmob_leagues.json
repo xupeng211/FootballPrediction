@@ -1,0 +1,213 @@
+{
+  "version": "1.0.0",
+  "discovered_at": "2025-12-04T11:00:00",
+  "total_leagues": 25,
+  "metadata": {
+    "description": "FotMob联赛ID映射配置 - 天网计划",
+    "data_source": "fotmob_api",
+    "author": "Chief Data Architect",
+    "note": "使用预配置的已知联赛ID，基于FotMob公开文档和逆向工程"
+  },
+  "leagues": {
+    "premier_league": {
+      "id": "47",
+      "name": "Premier League",
+      "country": "England",
+      "priority": 1,
+      "matches_per_season": 380,
+      "seasons": ["2020/2021", "2021/2022", "2022/2023", "2023/2024", "2024/2025"]
+    },
+    "championship": {
+      "id": "48",
+      "name": "Championship",
+      "country": "England",
+      "priority": 3,
+      "matches_per_season": 552,
+      "seasons": ["2020/2021", "2021/2022", "2022/2023", "2023/2024", "2024/2025"]
+    },
+    "la_liga": {
+      "id": "87",
+      "name": "La Liga",
+      "country": "Spain",
+      "priority": 1,
+      "matches_per_season": 380,
+      "seasons": ["2020/2021", "2021/2022", "2022/2023", "2023/2024", "2024/2025"]
+    },
+    "bundesliga": {
+      "id": "54",
+      "name": "Bundesliga",
+      "country": "Germany",
+      "priority": 1,
+      "matches_per_season": 306,
+      "seasons": ["2020/2021", "2021/2022", "2022/2023", "2023/2024", "2024/2025"]
+    },
+    "serie_a": {
+      "id": "131",
+      "name": "Serie A",
+      "country": "Italy",
+      "priority": 1,
+      "matches_per_season": 380,
+      "seasons": ["2020/2021", "2021/2022", "2022/2023", "2023/2024", "2024/2025"]
+    },
+    "ligue_1": {
+      "id": "60",
+      "name": "Ligue 1",
+      "country": "France",
+      "priority": 1,
+      "matches_per_season": 380,
+      "seasons": ["2020/2021", "2021/2022", "2022/2023", "2023/2024", "2024/2025"]
+    },
+    "eredivisie": {
+      "id": "29",
+      "name": "Eredivisie",
+      "country": "Netherlands",
+      "priority": 2,
+      "matches_per_season": 306,
+      "seasons": ["2020/2021", "2021/2022", "2022/2023", "2023/2024", "2024/2025"]
+    },
+    "primeira_liga": {
+      "id": "102",
+      "name": "Primeira Liga",
+      "country": "Portugal",
+      "priority": 2,
+      "matches_per_season": 306,
+      "seasons": ["2020/2021", "2021/2022", "2022/2023", "2023/2024", "2024/2025"]
+    },
+    "mls": {
+      "id": "131",
+      "name": "MLS",
+      "country": "USA",
+      "priority": 1,
+      "matches_per_season": 520,
+      "seasons": ["2020", "2021", "2022", "2023", "2024"]
+    },
+    "brasileirao": {
+      "id": "256",
+      "name": "Brasileirão",
+      "country": "Brazil",
+      "priority": 1,
+      "matches_per_season": 380,
+      "seasons": ["2020", "2021", "2022", "2023", "2024"]
+    },
+    "j1_league": {
+      "id": "98",
+      "name": "J1 League",
+      "country": "Japan",
+      "priority": 1,
+      "matches_per_season": 380,
+      "seasons": ["2020", "2021", "2022", "2023", "2024"]
+    },
+    "champions_league": {
+      "id": "7",
+      "name": "Champions League",
+      "country": "Europe",
+      "priority": 0,
+      "matches_per_season": 125,
+      "seasons": ["2020/2021", "2021/2022", "2022/2023", "2023/2024", "2024/2025"]
+    },
+    "europa_league": {
+      "id": "8",
+      "name": "Europa League",
+      "country": "Europe",
+      "priority": 0,
+      "matches_per_season": 141,
+      "seasons": ["2020/2021", "2021/2022", "2022/2023", "2023/2024", "2024/2025"]
+    },
+    "conference_league": {
+      "id": "612",
+      "name": "Conference League",
+      "country": "Europe",
+      "priority": 0,
+      "matches_per_season": 141,
+      "seasons": ["2021/2022", "2022/2023", "2023/2024", "2024/2025"]
+    },
+    "saudi_pro_league": {
+      "id": "187",
+      "name": "Saudi Pro League",
+      "country": "Saudi Arabia",
+      "priority": 1,
+      "matches_per_season": 306,
+      "seasons": ["2020/2021", "2021/2022", "2022/2023", "2023/2024", "2024/2025"]
+    },
+    "liga_mx": {
+      "id": "266",
+      "name": "Liga MX",
+      "country": "Mexico",
+      "priority": 1,
+      "matches_per_season": 306,
+      "seasons": ["2020/2021", "2021/2022", "2022/2023", "2023/2024", "2024/2025"]
+    },
+    "turkish_super_lig": {
+      "id": "175",
+      "name": "Turkish Süper Lig",
+      "country": "Turkey",
+      "priority": 1,
+      "matches_per_season": 380,
+      "seasons": ["2020/2021", "2021/2022", "2022/2023", "2023/2024", "2024/2025"]
+    },
+    "chinese_super_league": {
+      "id": "215",
+      "name": "Chinese Super League",
+      "country": "China",
+      "priority": 1,
+      "matches_per_season": 240,
+      "seasons": ["2020", "2021", "2022", "2023", "2024"]
+    },
+    "australian_a_league": {
+      "id": "145",
+      "name": "A-League",
+      "country": "Australia",
+      "priority": 2,
+      "matches_per_season": 180,
+      "seasons": ["2020/2021", "2021/2022", "2022/2023", "2023/2024", "2024/2025"]
+    },
+    "scottish_premiership": {
+      "id": "55",
+      "name": "Scottish Premiership",
+      "country": "Scotland",
+      "priority": 2,
+      "matches_per_season": 228,
+      "seasons": ["2020/2021", "2021/2022", "2022/2023", "2023/2024", "2024/2025"]
+    },
+    "serie_b": {
+      "id": "132",
+      "name": "Serie B",
+      "country": "Italy",
+      "priority": 3,
+      "matches_per_season": 380,
+      "seasons": ["2020/2021", "2021/2022", "2022/2023", "2023/2024", "2024/2025"]
+    },
+    "2_bundesliga": {
+      "id": "55",
+      "name": "2. Bundesliga",
+      "country": "Germany",
+      "priority": 3,
+      "matches_per_season": 306,
+      "seasons": ["2020/2021", "2021/2022", "2022/2023", "2023/2024", "2024/2025"]
+    },
+    "ligue_2": {
+      "id": "61",
+      "name": "Ligue 2",
+      "country": "France",
+      "priority": 3,
+      "matches_per_season": 380,
+      "seasons": ["2020/2021", "2021/2022", "2022/2023", "2023/2024", "2024/2025"]
+    },
+    "segunda_division": {
+      "id": "126",
+      "name": "Segunda Division",
+      "country": "Spain",
+      "priority": 3,
+      "matches_per_season": 462,
+      "seasons": ["2020/2021", "2021/2022", "2022/2023", "2023/2024", "2024/2025"]
+    },
+    "fa_cup": {
+      "id": "48",
+      "name": "FA Cup",
+      "country": "England",
+      "priority": 2,
+      "matches_per_season": 141,
+      "seasons": ["2020/2021", "2021/2022", "2022/2023", "2023/2024", "2024/2025"]
+    }
+  }
+}

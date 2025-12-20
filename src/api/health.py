@@ -16,6 +16,7 @@ from sqlalchemy.orm import Session
 
 from src.api.schemas import HealthCheckResponse, ServiceCheck
 from src.database.connection import get_db_session
+from src.utils.data_quality_checker import DataQualityChecker
 
 logger = logging.getLogger(__name__)
 
@@ -274,3 +275,252 @@ async def _check_filesystem() -> Dict[str, Any]:
             "message": f"文件系统检查失败: {str(e)}",
             "error": str(e),
         }
+
+
+@router.get(
+    "/health/data-quality",
+    summary="数据质量检查",
+    description="检查数据库中的数据质量，包括完整性、一致性和异常检测",
+    response_model=dict,
+)
+async def data_quality_check(full_check: bool = False) -> Dict[str, Any]:
+    """
+    数据质量检查端点
+
+    Args:
+        full_check: 是否执行完整的数据质量检查（较慢）
+
+    Returns:
+        Dict: 数据质量检查结果
+    """
+    checker = DataQualityChecker()
+
+    try:
+        await checker.connect()
+
+        if full_check:
+            # 执行完整检查
+            report = await checker.run_full_check()
+            return {
+                "status": "success",
+                "report_type": "full",
+                "timestamp": report.timestamp,
+                "overall_score": report.overall_score,
+                "quality_level": report.quality_level.value,
+                "summary": report.summary,
+                "recommendations": report.recommendations,
+                "details": {
+                    "tables_valid": len([v for v in report.table_validations if v.is_valid]),
+                    "tables_total": len(report.table_validations),
+                    "integrity_avg": sum(r.integrity_score for r in report.integrity_results) / len(report.integrity_results) if report.integrity_results else 0,
+                    "consistency_passed": sum(1 for r in report.consistency_results if r.is_consistent),
+                    "consistency_total": len(report.consistency_results),
+                    "anomalies_count": sum(r.anomaly_count for r in report.anomaly_results),
+                }
+            }
+        else:
+            # 执行快速健康检查
+            health_status = await checker.get_quick_health_status()
+            return {
+                "status": "success",
+                "report_type": "quick",
+                "timestamp": health_status["timestamp"],
+                "health_status": health_status["status"],
+                "health_text": health_status["status_text"],
+                "score": health_status["score"],
+                "metrics": health_status.get("metrics", {}),
+                "error": health_status.get("error")
+            }
+
+    except Exception as e:
+        logger.error(f"数据质量检查失败: {e}")
+        return {
+            "status": "error",
+            "timestamp": datetime.utcnow().isoformat(),
+            "error": str(e)
+        }
+    finally:
+        await checker.close()
+
+
+@router.get(
+    "/health/data-quality/tables",
+    summary="表结构验证",
+    description="检查数据库表结构是否符合预期",
+    response_model=dict,
+)
+async def table_structure_check() -> Dict[str, Any]:
+    """检查表结构"""
+    checker = DataQualityChecker()
+
+    try:
+        await checker.connect()
+
+        results = []
+        for table_name in checker.expected_table_schemas.keys():
+            try:
+                validation = await checker.check_table_structure(table_name)
+                results.append({
+                    "table": table_name,
+                    "valid": validation.is_valid,
+                    "missing_columns": validation.missing_columns,
+                    "extra_columns": validation.extra_columns,
+                    "details": validation.details
+                })
+            except Exception as e:
+                results.append({
+                    "table": table_name,
+                    "valid": False,
+                    "error": str(e)
+                })
+
+        return {
+            "status": "success",
+            "timestamp": datetime.utcnow().isoformat(),
+            "results": results,
+            "all_valid": all(r.get("valid", False) for r in results)
+        }
+
+    except Exception as e:
+        logger.error(f"表结构检查失败: {e}")
+        return {
+            "status": "error",
+            "timestamp": datetime.utcnow().isoformat(),
+            "error": str(e)
+        }
+    finally:
+        await checker.close()
+
+
+@router.get(
+    "/health/data-quality/integrity",
+    summary="数据完整性检查",
+    description="检查数据的完整性，包括空值、缺失值等",
+    response_model=dict,
+)
+async def data_integrity_check() -> Dict[str, Any]:
+    """检查数据完整性"""
+    checker = DataQualityChecker()
+
+    try:
+        await checker.connect()
+
+        results = []
+        for table_name in ['matches', 'match_features_training', 'raw_match_data']:
+            try:
+                integrity = await checker.check_data_integrity(table_name)
+                results.append({
+                    "table": table_name,
+                    "total_records": integrity.total_records,
+                    "valid_records": integrity.valid_records,
+                    "integrity_score": integrity.integrity_score,
+                    "null_percentages": integrity.null_percentages,
+                    "issues": integrity.issues
+                })
+            except Exception as e:
+                results.append({
+                    "table": table_name,
+                    "error": str(e)
+                })
+
+        return {
+            "status": "success",
+            "timestamp": datetime.utcnow().isoformat(),
+            "results": results
+        }
+
+    except Exception as e:
+        logger.error(f"数据完整性检查失败: {e}")
+        return {
+            "status": "error",
+            "timestamp": datetime.utcnow().isoformat(),
+            "error": str(e)
+        }
+    finally:
+        await checker.close()
+
+
+@router.get(
+    "/health/data-quality/consistency",
+    summary="数据一致性检查",
+    description="检查数据之间的一致性，包括关联性、逻辑性等",
+    response_model=dict,
+)
+async def data_consistency_check() -> Dict[str, Any]:
+    """检查数据一致性"""
+    checker = DataQualityChecker()
+
+    try:
+        await checker.connect()
+
+        results = await checker.check_data_consistency()
+
+        return {
+            "status": "success",
+            "timestamp": datetime.utcnow().isoformat(),
+            "results": [
+                {
+                    "check_type": r.check_type,
+                    "is_consistent": r.is_consistent,
+                    "consistency_rate": r.consistency_rate,
+                    "inconsistent_count": r.inconsistent_count,
+                    "details": r.details,
+                    "recommendations": r.recommendations
+                }
+                for r in results
+            ],
+            "all_consistent": all(r.is_consistent for r in results)
+        }
+
+    except Exception as e:
+        logger.error(f"数据一致性检查失败: {e}")
+        return {
+            "status": "error",
+            "timestamp": datetime.utcnow().isoformat(),
+            "error": str(e)
+        }
+    finally:
+        await checker.close()
+
+
+@router.get(
+    "/health/data-quality/anomalies",
+    summary="异常检测",
+    description="检测数据中的异常值和异常模式",
+    response_model=dict,
+)
+async def anomaly_detection() -> Dict[str, Any]:
+    """检测数据异常"""
+    checker = DataQualityChecker()
+
+    try:
+        await checker.connect()
+
+        results = await checker.detect_anomalies()
+
+        return {
+            "status": "success",
+            "timestamp": datetime.utcnow().isoformat(),
+            "results": [
+                {
+                    "anomaly_type": r.anomaly_type,
+                    "anomaly_count": r.anomaly_count,
+                    "severity": r.severity,
+                    "affected_records": r.affected_records,
+                    "samples": r.detected_anomalies[:5]  # 只返回前5个样本
+                }
+                for r in results
+            ],
+            "total_anomalies": sum(r.anomaly_count for r in results),
+            "critical_anomalies": sum(1 for r in results if r.severity == "critical")
+        }
+
+    except Exception as e:
+        logger.error(f"异常检测失败: {e}")
+        return {
+            "status": "error",
+            "timestamp": datetime.utcnow().isoformat(),
+            "error": str(e)
+        }
+    finally:
+        await checker.close()
