@@ -105,9 +105,7 @@ class DatabasePerformanceMonitor:
             return
 
         self._running = True
-        self._monitor_task = asyncio.create_task(
-            self._monitoring_loop(interval_seconds)
-        )
+        self._monitor_task = asyncio.create_task(self._monitoring_loop(interval_seconds))
 
         self.logger.info(f"🔄 数据库性能监控已启动 (间隔: {interval_seconds}秒)")
 
@@ -193,9 +191,7 @@ class DatabasePerformanceMonitor:
             performance.index_usage = self._extract_index_usage(plan_data)
 
             # 生成优化建议
-            performance.recommendations = self._generate_query_recommendations(
-                plan_data, execution_time
-            )
+            performance.recommendations = self._generate_query_recommendations(plan_data, execution_time)
 
             return performance
 
@@ -219,10 +215,7 @@ class DatabasePerformanceMonitor:
         latest_metrics = self._metrics_history[-1]
 
         # 连接数建议
-        if (
-            latest_metrics.active_connections
-            > self._thresholds["active_connections_warning"]
-        ):
+        if latest_metrics.active_connections > self._thresholds["active_connections_warning"]:
             recommendations.append(
                 f"活跃连接数过高 ({latest_metrics.active_connections})，考虑增加连接池大小或优化查询"
             )
@@ -230,22 +223,17 @@ class DatabasePerformanceMonitor:
         # 缓存命中率建议
         if latest_metrics.cache_hit_ratio < self._thresholds["cache_hit_ratio_warning"]:
             recommendations.append(
-                f"缓存命中率过低 ({latest_metrics.cache_hit_ratio:.1%})，"
-                "考虑增加shared_buffers或优化查询"
+                f"缓存命中率过低 ({latest_metrics.cache_hit_ratio:.1%})，" "考虑增加shared_buffers或优化查询"
             )
 
         # 死元组建议
         if latest_metrics.dead_tuples > self._thresholds["dead_tuples_warning"]:
-            recommendations.append(
-                f"死元组过多 ({latest_metrics.dead_tuples:,})，建议执行VACUUM"
-            )
+            recommendations.append(f"死元组过多 ({latest_metrics.dead_tuples:,})，建议执行VACUUM")
 
         # 表大小建议
         for table_name, table_size in latest_metrics.table_size_mb.items():
             if table_size > 5000:  # 5GB警告阈值
-                recommendations.append(
-                    f"表 {table_name} 过大 ({table_size:.1f}MB)，考虑分区或归档历史数据"
-                )
+                recommendations.append(f"表 {table_name} 过大 ({table_size:.1f}MB)，考虑分区或归档历史数据")
 
         # 索引建议
         total_index_size = sum(latest_metrics.index_size_mb.values())
@@ -331,9 +319,7 @@ class DatabasePerformanceMonitor:
         except Exception as e:
             self.logger.warning(f"收集存储指标失败: {e}")
 
-    async def _collect_performance_metrics(
-        self, conn, metrics: DatabaseMetrics
-    ) -> None:
+    async def _collect_performance_metrics(self, conn, metrics: DatabaseMetrics) -> None:
         """收集性能指标"""
         try:
             # 缓存命中率
@@ -402,9 +388,7 @@ class DatabasePerformanceMonitor:
         extract_from_node(plan_data.get("Plan", {}))
         return list(set(indexes))
 
-    def _generate_query_recommendations(
-        self, plan_data: Dict[str, Any], execution_time: float
-    ) -> List[str]:
+    def _generate_query_recommendations(self, plan_data: Dict[str, Any], execution_time: float) -> List[str]:
         """生成查询优化建议"""
         recommendations = []
 
@@ -419,9 +403,7 @@ class DatabasePerformanceMonitor:
             if isinstance(node, dict):
                 scan_type = node.get("Node Type", "")
                 if scan_type == "Seq Scan" and node.get("Actual Rows", 0) > 1000:
-                    recommendations.append(
-                        f"发现全表扫描 ({scan_type})，建议添加适当的索引"
-                    )
+                    recommendations.append(f"发现全表扫描 ({scan_type})，建议添加适当的索引")
                 elif scan_type == "Bitmap Heap Scan":
                     recommendations.append("使用了位图堆扫描，考虑优化索引或查询条件")
 
@@ -436,10 +418,7 @@ class DatabasePerformanceMonitor:
     def _check_alerts(self, metrics: DatabaseMetrics) -> None:
         """检查告警条件"""
         # 连接数告警
-        if (
-            metrics.active_connections
-            >= self._thresholds["active_connections_critical"]
-        ):
+        if metrics.active_connections >= self._thresholds["active_connections_critical"]:
             self._add_alert(
                 "CRITICAL",
                 "active_connections",
@@ -447,9 +426,7 @@ class DatabasePerformanceMonitor:
                 self._thresholds["active_connections_critical"],
                 f"活跃连接数达到临界值: {metrics.active_connections}",
             )
-        elif (
-            metrics.active_connections >= self._thresholds["active_connections_warning"]
-        ):
+        elif metrics.active_connections >= self._thresholds["active_connections_warning"]:
             self._add_alert(
                 "WARNING",
                 "active_connections",
@@ -539,12 +516,8 @@ class DatabasePerformanceMonitor:
             "dead_tuples": latest.dead_tuples,
             "vacuum_status": latest.vacuum_status,
             "recent_alerts_count": len(recent_alerts),
-            "critical_alerts_count": len(
-                [a for a in recent_alerts if a.level == "CRITICAL"]
-            ),
-            "warning_alerts_count": len(
-                [a for a in recent_alerts if a.level == "WARNING"]
-            ),
+            "critical_alerts_count": len([a for a in recent_alerts if a.level == "CRITICAL"]),
+            "warning_alerts_count": len([a for a in recent_alerts if a.level == "WARNING"]),
         }
 
 

@@ -383,12 +383,8 @@ class HyperparameterTuner:
             if self.config.strategy == OptimizationStrategy.BAYESIAN_OPTIMIZATION:
                 self.study = optuna.create_study(
                     direction="maximize",
-                    sampler=optuna.samplers.TPESampler(
-                        seed=self.config.random_seed, n_startup_trials=20
-                    ),
-                    pruner=optuna.pruners.MedianPruner(
-                        n_startup_trials=10, n_warmup_steps=5, interval_steps=3
-                    ),
+                    sampler=optuna.samplers.TPESampler(seed=self.config.random_seed, n_startup_trials=20),
+                    pruner=optuna.pruners.MedianPruner(n_startup_trials=10, n_warmup_steps=5, interval_steps=3),
                 )
             elif self.config.strategy == OptimizationStrategy.RANDOM_SEARCH:
                 self.study = optuna.create_study(
@@ -448,9 +444,7 @@ class HyperparameterTuner:
             # 运行最终验证回测
             if result.best_params:
                 logger.info("🔬 运行最终验证回测...")
-                result.final_backtest_result = await self._run_validation_backtest(
-                    result.best_params
-                )
+                result.final_backtest_result = await self._run_validation_backtest(result.best_params)
 
             # 计算改进程度
             result.improvement_over_baseline = await self._calculate_improvement(result)
@@ -477,9 +471,7 @@ class HyperparameterTuner:
                 for param_name, param_space in self.parameter_spaces.items():
                     if param_space.param_type == "categorical":
                         if param_space.param_type == "bool":
-                            params[param_name] = trial.suggest_categorical(
-                                param_name, [True, False]
-                            )
+                            params[param_name] = trial.suggest_categorical(param_name, [True, False])
                         else:
                             params[param_name] = trial.suggest_categorical(
                                 param_name, param_space.choices or [param_space.default]
@@ -563,20 +555,14 @@ class HyperparameterTuner:
 
         return base_config
 
-    async def _inject_parameters_to_components(
-        self, engine: BacktestEngine, params: Dict[str, Any]
-    ) -> None:
+    async def _inject_parameters_to_components(self, engine: BacktestEngine, params: Dict[str, Any]) -> None:
         """将参数注入到回测引擎的各组件中"""
         try:
             # 1. Kelly准则参数
             if hasattr(engine, "kelly_system") and engine.kelly_system:
-                kelly_params = {
-                    k: v for k, v in params.items() if k.startswith("kelly_")
-                }
+                kelly_params = {k: v for k, v in params.items() if k.startswith("kelly_")}
                 if kelly_params:
-                    await self._update_kelly_parameters(
-                        engine.kelly_system, kelly_params
-                    )
+                    await self._update_kelly_parameters(engine.kelly_system, kelly_params)
 
             # 2. Elo评级参数
             if hasattr(engine, "elo_system") and engine.elo_system:
@@ -586,19 +572,13 @@ class HyperparameterTuner:
 
             # 3. 泊松参数
             if hasattr(engine, "poisson_calculator") and engine.poisson_calculator:
-                poisson_params = {
-                    k: v for k, v in params.items() if k.startswith("poisson_")
-                }
+                poisson_params = {k: v for k, v in params.items() if k.startswith("poisson_")}
                 if poisson_params:
-                    await self._update_poisson_parameters(
-                        engine.poisson_calculator, poisson_params
-                    )
+                    await self._update_poisson_parameters(engine.poisson_calculator, poisson_params)
 
             # 4. 模型权重参数
             if hasattr(engine, "predictor") and engine.predictor:
-                model_params = {
-                    k: v for k, v in params.items() if k.startswith("model_")
-                }
+                model_params = {k: v for k, v in params.items() if k.startswith("model_")}
                 if model_params:
                     await self._update_model_weights(engine.predictor, model_params)
 
@@ -606,10 +586,7 @@ class HyperparameterTuner:
             strategy_params = {
                 k: v
                 for k, v in params.items()
-                if any(
-                    k.startswith(prefix)
-                    for prefix in ["strategy_", "risk_", "confidence_"]
-                )
+                if any(k.startswith(prefix) for prefix in ["strategy_", "risk_", "confidence_"])
             }
             if strategy_params:
                 await self._update_strategy_parameters(engine, strategy_params)
@@ -617,16 +594,12 @@ class HyperparameterTuner:
         except Exception as e:
             logger.warning(f"⚠️ 参数注入失败: {e}")
 
-    async def _update_kelly_parameters(
-        self, kelly_system: KellyCriterion, params: Dict[str, Any]
-    ) -> None:
+    async def _update_kelly_parameters(self, kelly_system: KellyCriterion, params: Dict[str, Any]) -> None:
         """更新Kelly准则参数"""
         try:
             if "kelly_strategy" in params:
                 strategy_map = {s.value: s for s in KellyStrategy}
-                kelly_system.kelly_strategy = strategy_map.get(
-                    params["kelly_strategy"], KellyStrategy.FRACTIONAL_KELLY
-                )
+                kelly_system.kelly_strategy = strategy_map.get(params["kelly_strategy"], KellyStrategy.FRACTIONAL_KELLY)
 
             if "kelly_fraction_multiplier" in params:
                 kelly_system.fraction_multiplier = params["kelly_fraction_multiplier"]
@@ -640,9 +613,7 @@ class HyperparameterTuner:
         except Exception as e:
             logger.warning(f"⚠️ Kelly参数更新失败: {e}")
 
-    async def _update_elo_parameters(
-        self, elo_system: EloRatingSystem, params: Dict[str, Any]
-    ) -> None:
+    async def _update_elo_parameters(self, elo_system: EloRatingSystem, params: Dict[str, Any]) -> None:
         """更新Elo评级参数"""
         try:
             if "elo_initial_rating" in params:
@@ -660,9 +631,7 @@ class HyperparameterTuner:
         except Exception as e:
             logger.warning(f"⚠️ Elo参数更新失败: {e}")
 
-    async def _update_poisson_parameters(
-        self, poisson_calc: PoissonFeatureCalculator, params: Dict[str, Any]
-    ) -> None:
+    async def _update_poisson_parameters(self, poisson_calc: PoissonFeatureCalculator, params: Dict[str, Any]) -> None:
         """更新泊松参数"""
         try:
             if "poisson_home_lambda_default" in params:
@@ -680,9 +649,7 @@ class HyperparameterTuner:
         except Exception as e:
             logger.warning(f"⚠️ 泊松参数更新失败: {e}")
 
-    async def _update_model_weights(
-        self, predictor: MatchPredictor, params: Dict[str, Any]
-    ) -> None:
+    async def _update_model_weights(self, predictor: MatchPredictor, params: Dict[str, Any]) -> None:
         """更新模型权重"""
         try:
             # 标准化权重
@@ -713,9 +680,7 @@ class HyperparameterTuner:
         except Exception as e:
             logger.warning(f"⚠️ 模型权重更新失败: {e}")
 
-    async def _update_strategy_parameters(
-        self, engine: BacktestEngine, params: Dict[str, Any]
-    ) -> None:
+    async def _update_strategy_parameters(self, engine: BacktestEngine, params: Dict[str, Any]) -> None:
         """更新策略参数"""
         try:
             # 这里可以添加更多策略特定的参数更新逻辑
@@ -732,9 +697,7 @@ class HyperparameterTuner:
         except Exception as e:
             logger.warning(f"⚠️ 策略参数更新失败: {e}")
 
-    def _calculate_objective_score(
-        self, backtest_result: BacktestResult, params: Dict[str, Any]
-    ) -> float:
+    def _calculate_objective_score(self, backtest_result: BacktestResult, params: Dict[str, Any]) -> float:
         """
         根据目标指标计算得分
 
@@ -771,17 +734,10 @@ class HyperparameterTuner:
                 win_rate = backtest_result.win_rate or 0.0
 
                 # 惩罚最大回撤
-                drawdown_penalty = (
-                    max(0, (backtest_result.max_drawdown or 0) - 20) * 0.1
-                )
+                drawdown_penalty = max(0, (backtest_result.max_drawdown or 0) - 20) * 0.1
 
                 # 综合得分 (权重可调)
-                score = (
-                    0.4 * sharpe
-                    + 0.3 * (roi / 100)  # ROI转换为0-1范围
-                    + 0.2 * win_rate
-                    - drawdown_penalty
-                )
+                score = 0.4 * sharpe + 0.3 * (roi / 100) + 0.2 * win_rate - drawdown_penalty  # ROI转换为0-1范围
 
                 return max(0, score)  # 确保得分非负
 
@@ -803,9 +759,7 @@ class HyperparameterTuner:
         if self.trials_without_improvement >= self.config.early_stopping_patience:
             raise optuna.exceptions.TrialPruned()
 
-    async def _custom_optimization_loop(
-        self, objective_func: Callable, n_jobs: int
-    ) -> None:
+    async def _custom_optimization_loop(self, objective_func: Callable, n_jobs: int) -> None:
         """自定义优化循环 (用于非Bayesian策略)"""
         best_score = float("-inf")
         best_params = {}
@@ -840,9 +794,7 @@ class HyperparameterTuner:
             self.study = optuna.create_study(direction="maximize")
             self.study.tell(best_params, best_score)
 
-    def _collect_optimization_result(
-        self, optimization_time: float
-    ) -> OptimizationResult:
+    def _collect_optimization_result(self, optimization_time: float) -> OptimizationResult:
         """收集优化结果"""
         try:
             if self.study:
@@ -906,16 +858,12 @@ class HyperparameterTuner:
             logger.error(f"❌ 优化结果收集失败: {e}")
             raise
 
-    async def _run_validation_backtest(
-        self, best_params: Dict[str, Any]
-    ) -> BacktestResult:
+    async def _run_validation_backtest(self, best_params: Dict[str, Any]) -> BacktestResult:
         """运行验证回测"""
         try:
             # 使用最佳参数创建验证配置
             validation_config = self._create_custom_backtest_config(best_params)
-            validation_config.output_path = (
-                f"./optimization_results/validation_{self.optimization_id}/"
-            )
+            validation_config.output_path = f"./optimization_results/validation_{self.optimization_id}/"
 
             # 创建新的回测引擎
             validation_engine = BacktestEngine(validation_config)
@@ -926,9 +874,7 @@ class HyperparameterTuner:
             # 运行验证回测
             result = await validation_engine.run_backtest()
 
-            logger.info(
-                f"✅ 验证回测完成: ROI={result.total_roi:.2f}%, Sharpe={result.sharpe_ratio:.2f}"
-            )
+            logger.info(f"✅ 验证回测完成: ROI={result.total_roi:.2f}%, Sharpe={result.sharpe_ratio:.2f}")
 
             return result
 
@@ -948,9 +894,7 @@ class HyperparameterTuner:
             baseline_score = await self._evaluate_parameters(baseline_params)
 
             if baseline_score > 0:
-                improvement = (
-                    (result.best_score - baseline_score) / baseline_score
-                ) * 100
+                improvement = ((result.best_score - baseline_score) / baseline_score) * 100
                 logger.info(f"📈 相对基线改进: {improvement:.2f}%")
                 return improvement
             else:
@@ -960,9 +904,7 @@ class HyperparameterTuner:
             logger.warning(f"⚠️ 改进程度计算失败: {e}")
             return 0.0
 
-    def save_results(
-        self, result: OptimizationResult, filepath: Optional[str] = None
-    ) -> str:
+    def save_results(self, result: OptimizationResult, filepath: Optional[str] = None) -> str:
         """
         保存优化结果
 
@@ -975,9 +917,7 @@ class HyperparameterTuner:
         """
         try:
             if filepath is None:
-                filepath = (
-                    f"./optimization_results/optimization_{result.optimization_id}.json"
-                )
+                filepath = f"./optimization_results/optimization_{result.optimization_id}.json"
 
             # 确保目录存在
             Path(filepath).parent.mkdir(parents=True, exist_ok=True)
@@ -997,14 +937,8 @@ class HyperparameterTuner:
                 "convergence_curve": result.convergence_curve,
                 "config": (
                     {
-                        "strategy": (
-                            result.config.strategy.value if result.config else None
-                        ),
-                        "objective_metric": (
-                            result.config.objective_metric.value
-                            if result.config
-                            else None
-                        ),
+                        "strategy": (result.config.strategy.value if result.config else None),
+                        "objective_metric": (result.config.objective_metric.value if result.config else None),
                         "n_trials": result.config.n_trials if result.config else None,
                     }
                     if result.config

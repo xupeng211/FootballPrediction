@@ -231,9 +231,7 @@ class FinancialMath:
     """金融级数学计算工具"""
 
     @staticmethod
-    def safe_divide(
-        dividend: Decimal, divisor: Decimal, default: Decimal = None
-    ) -> Decimal:
+    def safe_divide(dividend: Decimal, divisor: Decimal, default: Decimal = None) -> Decimal:
         """
         安全除法运算，防止除零错误
 
@@ -350,10 +348,7 @@ class FinancialMath:
 
         # 确保归一化后的概率总和为1 (允许小的舍入误差)
         total_normalized = sum(normalized)
-        if (
-            abs(total_normalized - Decimal("1"))
-            > ProbabilityConstants.PROBABILITY_EPSILON
-        ):
+        if abs(total_normalized - Decimal("1")) > ProbabilityConstants.PROBABILITY_EPSILON:
             logger.warning(f"归一化后总概率不为1: {total_normalized}")
 
         return normalized
@@ -385,10 +380,7 @@ class BusinessRuleValidator:
         """
         # 检查范围
         for prob in probabilities:
-            if (
-                prob < ProbabilityConstants.MIN_PROBABILITY
-                or prob > ProbabilityConstants.MAX_PROBABILITY
-            ):
+            if prob < ProbabilityConstants.MIN_PROBABILITY or prob > ProbabilityConstants.MAX_PROBABILITY:
                 logger.error(f"概率超出范围: {prob}")
                 return False
 
@@ -424,10 +416,7 @@ class BusinessRuleValidator:
             logger.error(f"赔率不能为负数: {odds}")
             return False
 
-        if (
-            odds < OddsConstants.MIN_DECIMAL_ODDS
-            or odds > OddsConstants.MAX_DECIMAL_ODDS
-        ):
+        if odds < OddsConstants.MIN_DECIMAL_ODDS or odds > OddsConstants.MAX_DECIMAL_ODDS:
             logger.warning(f"赔率超出合理范围: {odds}")
             return False
 

@@ -29,9 +29,7 @@ class ExplainabilityService:
         """初始化SHAP解释器"""
         self._explainer_cache = {}
 
-    async def get_shap_contributions(
-        self, features: pd.DataFrame, model: XGBoostClassifier
-    ) -> List[Dict[str, float]]:
+    async def get_shap_contributions(self, features: pd.DataFrame, model: XGBoostClassifier) -> List[Dict[str, float]]:
         """
         计算SHAP特征贡献度
 
@@ -48,9 +46,7 @@ class ExplainabilityService:
             ExplainabilityError: SHAP计算失败时抛出
         """
         try:
-            logger.info(
-                f"开始计算SHAP贡献度，特征数量: {len(features)}, 预测数量: {len(features)}"
-            )
+            logger.info(f"开始计算SHAP贡献度，特征数量: {len(features)}, 预测数量: {len(features)}")
 
             # 获取模型基础信息
             model_info = model.get_model_info()
@@ -71,14 +67,10 @@ class ExplainabilityService:
             shap_values = await self._compute_shap_values(explainer, features)
 
             # 转换为贡献度字典
-            contributions_list = await self._format_contributions(
-                features, shap_values, model
-            )
+            contributions_list = await self._format_contributions(features, shap_values, model)
 
             # 验证SHAP值计算正确性
-            await self._validate_shap_consistency(
-                features, model, shap_values, contributions_list
-            )
+            await self._validate_shap_consistency(features, model, shap_values, contributions_list)
 
             logger.info(f"SHAP贡献度计算完成，处理了 {len(contributions_list)} 个预测")
             return contributions_list
@@ -141,9 +133,7 @@ class ExplainabilityService:
 
         try:
             # 使用SHAP fast mode计算
-            shap_values = explainer.shap_values(
-                features, check_additivity=True  # 检查加性一致性
-            )
+            shap_values = explainer.shap_values(features, check_additivity=True)  # 检查加性一致性
 
             # 处理多分类SHAP值（如果是多分类输出）
             if isinstance(shap_values, list):
@@ -171,9 +161,7 @@ class ExplainabilityService:
                 contributions[feature_name] = contribution_value
 
             # 按贡献度绝对值排序（可选）
-            sorted_contributions = dict(
-                sorted(contributions.items(), key=lambda x: abs(x[1]), reverse=True)
-            )
+            sorted_contributions = dict(sorted(contributions.items(), key=lambda x: abs(x[1]), reverse=True))
 
             contributions_list.append(sorted_contributions)
 
@@ -218,9 +206,7 @@ class ExplainabilityService:
         except Exception as e:
             logger.warning(f"SHAP一致性验证失败（不影响功能）: {e}")
 
-    def get_feature_importance_ranking(
-        self, contributions_list: List[Dict[str, float]]
-    ) -> Dict[str, float]:
+    def get_feature_importance_ranking(self, contributions_list: List[Dict[str, float]]) -> Dict[str, float]:
         """
         计算全局特征重要性排名
 
@@ -244,15 +230,10 @@ class ExplainabilityService:
                 feature_importance[feature].append(abs(shap_value))
 
         # 计算平均重要性并排序
-        avg_importance = {
-            feature: np.mean(shap_values)
-            for feature, shap_values in feature_importance.items()
-        }
+        avg_importance = {feature: np.mean(shap_values) for feature, shap_values in feature_importance.items()}
 
         # 按重要性降序排序
-        sorted_importance = dict(
-            sorted(avg_importance.items(), key=lambda x: x[1], reverse=True)
-        )
+        sorted_importance = dict(sorted(avg_importance.items(), key=lambda x: x[1], reverse=True))
 
         logger.info(f"全局特征重要性排名计算完成，特征数量: {len(sorted_importance)}")
         return sorted_importance
@@ -263,9 +244,7 @@ class ExplainabilityService:
         self._explainer_cache.clear()
         logger.info(f"已清除SHAP解释器缓存，清除数量: {cache_size}")
 
-    async def explain_single_prediction(
-        self, features: Dict[str, Any], model: XGBoostClassifier
-    ) -> Dict[str, Any]:
+    async def explain_single_prediction(self, features: Dict[str, Any], model: XGBoostClassifier) -> Dict[str, Any]:
         """
         解释单个预测结果
 
@@ -296,9 +275,7 @@ class ExplainabilityService:
                 "feature_contributions": contributions,
                 "top_positive_contributors": [
                     {"feature": k, "contribution": v}
-                    for k, v in sorted(
-                        contributions.items(), key=lambda x: x[1], reverse=True
-                    )[:5]
+                    for k, v in sorted(contributions.items(), key=lambda x: x[1], reverse=True)[:5]
                     if v > 0
                 ],
                 "top_negative_contributors": [

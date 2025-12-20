@@ -41,9 +41,7 @@ class FileUtils:
             raise FileNotFoundError(f"无法读取JSON文件 {file_path}: {e}")
 
     @staticmethod
-    def write_json(
-        data: Dict[str, Any], file_path: Union[str, Path], ensure_dir: bool = True
-    ) -> None:
+    def write_json(data: Dict[str, Any], file_path: Union[str, Path], ensure_dir: bool = True) -> None:
         """写入JSON文件"""
         file_path = Path(file_path)
         if ensure_dir:
@@ -91,9 +89,7 @@ class DataValidator:
         return bool(re.match(pattern, url, re.IGNORECASE))
 
     @staticmethod
-    def validate_required_fields(
-        data: Dict[str, Any], required_fields: List[str]
-    ) -> List[str]:
+    def validate_required_fields(data: Dict[str, Any], required_fields: List[str]) -> List[str]:
         """验证必需字段 - 检查数据完整性，返回缺失字段列表用于错误提示"""
         missing_fields = []
         for field in required_fields:
@@ -103,18 +99,13 @@ class DataValidator:
         return missing_fields
 
     @staticmethod
-    def validate_data_types(
-        data: Dict[str, Any], type_specs: Dict[str, type]
-    ) -> List[str]:
+    def validate_data_types(data: Dict[str, Any], type_specs: Dict[str, type]) -> List[str]:
         """验证数据类型 - 确保输入数据符合预期类型，防止运行时类型错误"""
         invalid_fields = []
         for field, expected_type in type_specs.items():
             if field in data and not isinstance(data[field], expected_type):
                 # 提供详细的类型不匹配信息，便于调试
-                invalid_fields.append(
-                    f"{field}: 期望 {expected_type.__name__}, "
-                    f"实际 {type(data[field]).__name__}"
-                )
+                invalid_fields.append(f"{field}: 期望 {expected_type.__name__}, " f"实际 {type(data[field]).__name__}")
         return invalid_fields
 
 
@@ -142,9 +133,7 @@ class TimeUtils:
         return dt.strftime(format_str)
 
     @staticmethod
-    def parse_datetime(
-        date_str: str, format_str: str = "%Y-%m-%d %H:%M:%S"
-    ) -> datetime:
+    def parse_datetime(date_str: str, format_str: str = "%Y-%m-%d %H:%M:%S") -> datetime:
         """解析日期时间字符串"""
         return datetime.strptime(date_str, format_str)
 
@@ -234,11 +223,7 @@ class DictUtils:
         """深度合并字典 - 递归合并嵌套字典，dict2的值会覆盖dict1中的同名键"""
         result = dict1.copy()
         for key, value in dict2.items():
-            if (
-                key in result
-                and isinstance(result[key], dict)
-                and isinstance(value, dict)
-            ):
+            if key in result and isinstance(result[key], dict) and isinstance(value, dict):
                 # 如果两边都是字典，则递归合并，保持嵌套结构
                 result[key] = DictUtils.deep_merge(result[key], value)
             else:
@@ -247,9 +232,7 @@ class DictUtils:
         return result
 
     @staticmethod
-    def flatten_dict(
-        d: Dict[str, Any], parent_key: str = "", sep: str = "."
-    ) -> Dict[str, Any]:
+    def flatten_dict(d: Dict[str, Any], parent_key: str = "", sep: str = ".") -> Dict[str, Any]:
         """扁平化嵌套字典 - 将多层嵌套结构转为单层，便于配置管理和数据传输"""
         items: List[Tuple[str, Any]] = []
         for k, v in d.items():

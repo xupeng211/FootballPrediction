@@ -32,9 +32,7 @@ router = APIRouter(
 class ModelReloadRequest(BaseModel):
     """模型重载请求"""
 
-    model_path: Optional[str] = Field(
-        None, description="新的模型文件路径，如果不提供则使用默认路径"
-    )
+    model_path: Optional[str] = Field(None, description="新的模型文件路径，如果不提供则使用默认路径")
     backup_current: bool = Field(default=True, description="是否备份当前模型")
 
     class Config:
@@ -166,9 +164,7 @@ async def reload_model(request: ModelReloadRequest, background_tasks: Background
 
         # 备份当前模型
         if request.backup_current:
-            backup_path = (
-                f"{target_model_path}.backup.{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-            )
+            backup_path = f"{target_model_path}.backup.{datetime.now().strftime('%Y%m%d_%H%M%S')}"
             try:
                 import shutil
 
@@ -188,9 +184,7 @@ async def reload_model(request: ModelReloadRequest, background_tasks: Background
             new_version = new_info.get("model_version", "unknown")
 
             # 后台任务：记录重载日志
-            background_tasks.add_task(
-                log_model_reload, previous_version, new_version, target_model_path, True
-            )
+            background_tasks.add_task(log_model_reload, previous_version, new_version, target_model_path, True)
 
             return ModelReloadResponse(
                 success=True,
@@ -201,9 +195,7 @@ async def reload_model(request: ModelReloadRequest, background_tasks: Background
                 model_path=target_model_path,
             )
         else:
-            background_tasks.add_task(
-                log_model_reload, previous_version, "unknown", target_model_path, False
-            )
+            background_tasks.add_task(log_model_reload, previous_version, "unknown", target_model_path, False)
 
             raise HTTPException(status_code=500, detail="模型重载失败")
 
@@ -235,9 +227,7 @@ async def get_model_info():
 
         if model_path_obj.exists():
             file_size_mb = round(model_path_obj.stat().st_size / (1024 * 1024), 3)
-            last_modified = datetime.fromtimestamp(
-                model_path_obj.stat().st_mtime
-            ).isoformat()
+            last_modified = datetime.fromtimestamp(model_path_obj.stat().st_mtime).isoformat()
 
         # 获取可用模型列表
         available_models = get_available_models()
@@ -277,9 +267,7 @@ async def list_models():
                 "path": model_path,
                 "filename": model_path_obj.name,
                 "size_mb": round(model_path_obj.stat().st_size / (1024 * 1024), 3),
-                "last_modified": datetime.fromtimestamp(
-                    model_path_obj.stat().st_mtime
-                ).isoformat(),
+                "last_modified": datetime.fromtimestamp(model_path_obj.stat().st_mtime).isoformat(),
                 "version": metadata.get("model_version", "unknown"),
                 "training_date": metadata.get("training_date"),
                 "accuracy": metadata.get("metrics", {}).get("accuracy"),
@@ -294,12 +282,7 @@ async def list_models():
         raise HTTPException(status_code=500, detail=f"列出模型失败: {str(e)}")
 
 
-async def log_model_reload(
-    old_version: str, new_version: str, model_path: str, success: bool
-):
+async def log_model_reload(old_version: str, new_version: str, model_path: str, success: bool):
     """记录模型重载日志"""
     status = "成功" if success else "失败"
-    logger.info(
-        f"模型重载{status}: {old_version} -> {new_version} "
-        f"模型路径: {model_path} 时间: {datetime.now()}"
-    )
+    logger.info(f"模型重载{status}: {old_version} -> {new_version} " f"模型路径: {model_path} 时间: {datetime.now()}")

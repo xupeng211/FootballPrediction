@@ -177,32 +177,22 @@ class MatchPredictor:
                 if cached_result:
                     self._prediction_stats["cache_hits"] += 1
                     logger.info(f"使用缓存预测结果 (模型: {model_name})")
-                    return self._enrich_cached_result(
-                        cached_result, prediction_start_time
-                    )
+                    return self._enrich_cached_result(cached_result, prediction_start_time)
 
             # 执行预测（支持模型融合）
             if enable_ensemble:
-                result = self._execute_ensemble_prediction(
-                    feature_list, model_name, additional_params
-                )
+                result = self._execute_ensemble_prediction(feature_list, model_name, additional_params)
             else:
-                result = self._execute_prediction(
-                    feature_list, model_name, additional_params
-                )
+                result = self._execute_prediction(feature_list, model_name, additional_params)
 
             # 缓存结果
             if use_cache and self.cache_manager:
-                cache_success = self.cache_manager.set(
-                    features=feature_list, model_name=model_name, result=result
-                )
+                cache_success = self.cache_manager.set(features=feature_list, model_name=model_name, result=result)
                 if cache_success:
                     logger.debug("预测结果已缓存")
 
             # 增强结果信息
-            enriched_result = self._enrich_result(
-                result, model_name, prediction_start_time
-            )
+            enriched_result = self._enrich_result(result, model_name, prediction_start_time)
 
             self._prediction_stats["successful_predictions"] += 1
             logger.info(
@@ -220,9 +210,7 @@ class MatchPredictor:
             logger.error(error_msg)
             raise PredictionError(error_msg) from e
 
-    def _convert_features_to_list(
-        self, features: Union[np.ndarray, pd.DataFrame, List[float]]
-    ) -> List[float]:
+    def _convert_features_to_list(self, features: Union[np.ndarray, pd.DataFrame, List[float]]) -> List[float]:
         """
         将各种格式的特征转换为统一列表格式
 
@@ -239,9 +227,7 @@ class MatchPredictor:
             if isinstance(features, pd.DataFrame):
                 # DataFrame -> 数组 -> 列表
                 if features.shape[0] != 1:
-                    logger.warning(
-                        f"DataFrame有多行数据，只使用第一行: {features.shape}"
-                    )
+                    logger.warning(f"DataFrame有多行数据，只使用第一行: {features.shape}")
                 feature_array = features.iloc[0].values
                 return feature_array.tolist()
 
@@ -308,9 +294,7 @@ class MatchPredictor:
 
         # 验证特征数量
         if metadata.feature_names and len(feature_list) != len(metadata.feature_names):
-            raise PredictionError(
-                f"特征数量不匹配: 模型期望 {len(metadata.feature_names)}, 实际 {len(feature_list)}"
-            )
+            raise PredictionError(f"特征数量不匹配: 模型期望 {len(metadata.feature_names)}, 实际 {len(feature_list)}")
 
         # 数值稳定性检查
         if self.enable_stability_checks:
@@ -321,9 +305,7 @@ class MatchPredictor:
         if np.isnan(feature_array).any():
             nan_count = np.isnan(feature_array).sum()
             logger.warning(f"检测到 {nan_count} 个NaN值，将用业务常量默认值替换")
-            feature_array = np.nan_to_num(
-                feature_array, nan=float(SCORING.DEFAULT_AVG_GOAL_DIFF)
-            )
+            feature_array = np.nan_to_num(feature_array, nan=float(SCORING.DEFAULT_AVG_GOAL_DIFF))
 
         # 特征数值范围检查
         if self.enable_stability_checks:
@@ -342,9 +324,7 @@ class MatchPredictor:
                 raw_probabilities = model.predict_proba(feature_2d)[0]
 
                 # 金融级概率归一化处理 (核心改进)
-                normalized_probabilities = self._normalize_probabilities_financial(
-                    raw_probabilities, model_name
-                )
+                normalized_probabilities = self._normalize_probabilities_financial(raw_probabilities, model_name)
 
                 probabilities = [float(p) for p in normalized_probabilities]
             else:
@@ -378,9 +358,7 @@ class MatchPredictor:
                         "away_win_prob": probabilities[0],
                         "draw_prob": probabilities[1],
                         "home_win_prob": probabilities[2],
-                        "predicted_outcome": self.OUTCOME_MAP.get(
-                            predicted_class, "UNKNOWN"
-                        ),
+                        "predicted_outcome": self.OUTCOME_MAP.get(predicted_class, "UNKNOWN"),
                     }
                 )
 
@@ -397,9 +375,7 @@ class MatchPredictor:
 
             raise PredictionError(error_msg) from e
 
-    def _enrich_result(
-        self, result: Dict[str, Any], model_name: str, prediction_time: datetime
-    ) -> Dict[str, Any]:
+    def _enrich_result(self, result: Dict[str, Any], model_name: str, prediction_time: datetime) -> Dict[str, Any]:
         """
         增强预测结果信息
 
@@ -424,16 +400,13 @@ class MatchPredictor:
                 "model_version": metadata.model_version,
                 "prediction_time": prediction_time.isoformat(),
                 "confidence": confidence,
-                "processing_time_ms": (datetime.now() - prediction_time).total_seconds()
-                * 1000,
+                "processing_time_ms": (datetime.now() - prediction_time).total_seconds() * 1000,
             }
         )
 
         return enriched_result
 
-    def _enrich_cached_result(
-        self, cached_result: Dict[str, Any], prediction_time: datetime
-    ) -> Dict[str, Any]:
+    def _enrich_cached_result(self, cached_result: Dict[str, Any], prediction_time: datetime) -> Dict[str, Any]:
         """
         增强缓存结果信息
 
@@ -455,9 +428,7 @@ class MatchPredictor:
 
         return enriched_result
 
-    def _normalize_probabilities_financial(
-        self, raw_probabilities: np.ndarray, model_name: str
-    ) -> List[Decimal]:
+    def _normalize_probabilities_financial(self, raw_probabilities: np.ndarray, model_name: str) -> List[Decimal]:
         """
         金融级概率归一化处理 (核心算法)
 
@@ -486,14 +457,10 @@ class MatchPredictor:
                 # 检查数值合理性
                 for i, p in enumerate(decimal_probs):
                     if p < 0:
-                        logger.warning(
-                            f"负概率值检测到: {p} (索引: {i}, 模型: {model_name})"
-                        )
+                        logger.warning(f"负概率值检测到: {p} (索引: {i}, 模型: {model_name})")
                         decimal_probs[i] = PROBABILITY.MIN_PROBABILITY
                     elif p > 1:
-                        logger.warning(
-                            f"超概率值检测到: {p} (索引: {i}, 模型: {model_name})"
-                        )
+                        logger.warning(f"超概率值检测到: {p} (索引: {i}, 模型: {model_name})")
                         self._prediction_stats["extreme_probabilities"] += 1
 
                 # 计算概率总和
@@ -501,9 +468,7 @@ class MatchPredictor:
 
                 # 检查概率总和是否为0或接近0
                 if total_prob == 0 or total_prob < PROBABILITY.PROBABILITY_EPSILON:
-                    logger.warning(
-                        f"概率总和使用业务常量替代: {total_prob} (模型: {model_name})"
-                    )
+                    logger.warning(f"概率总和使用业务常量替代: {total_prob} (模型: {model_name})")
                     self._prediction_stats["normalization_corrections"] += 1
 
                     # 使用业务常量的默认概率分布
@@ -516,9 +481,7 @@ class MatchPredictor:
                 # 第一层：基础归一化
                 normalized_probs = []
                 for p in decimal_probs:
-                    normalized_p = MATH.safe_divide(
-                        p, total_prob, PROBABILITY.MIN_PROBABILITY
-                    )
+                    normalized_p = MATH.safe_divide(p, total_prob, PROBABILITY.MIN_PROBABILITY)
                     normalized_probs.append(normalized_p)
 
                 # 第二层：检查概率总和是否为1
@@ -527,9 +490,7 @@ class MatchPredictor:
 
                 # 如果总和误差超过阈值，进行二次归一化
                 if prob_sum_error > PROBABILITY.PROBABILITY_EPSILON:
-                    logger.info(
-                        f"概率归一化误差: {prob_sum_error:.8f}, 进行二次归一化 (模型: {model_name})"
-                    )
+                    logger.info(f"概率归一化误差: {prob_sum_error:.8f}, 进行二次归一化 (模型: {model_name})")
                     self._prediction_stats["normalization_corrections"] += 1
 
                     # 使用业务验证器进行归一化
@@ -537,9 +498,7 @@ class MatchPredictor:
                     normalized_probs = final_probs
 
                 # 第三层：业务规则验证和修正
-                validated_probs = self._validate_and_correct_probabilities(
-                    normalized_probs, model_name
-                )
+                validated_probs = self._validate_and_correct_probabilities(normalized_probs, model_name)
 
                 logger.info(
                     f"金融级概率归一化完成: 模型={model_name}, "
@@ -562,9 +521,7 @@ class MatchPredictor:
                 SCORING.DEFAULT_H2H_WIN_RATE,  # 0.5
             ][: len(raw_probabilities)]
 
-    def _validate_and_correct_probabilities(
-        self, probabilities: List[Decimal], model_name: str
-    ) -> List[Decimal]:
+    def _validate_and_correct_probabilities(self, probabilities: List[Decimal], model_name: str) -> List[Decimal]:
         """
         验证和修正概率分布 (业务规则版本)
 
@@ -605,10 +562,7 @@ class MatchPredictor:
         for i, value in enumerate(feature_list):
             if abs(value) > float(VALIDATION.MAX_FEATURE_VALUE):
                 self._prediction_stats["stability_warnings"] += 1
-                logger.warning(
-                    f"特征值超出合理范围: 特征{i}={value}, "
-                    f"阈值={float(VALIDATION.MAX_FEATURE_VALUE)}"
-                )
+                logger.warning(f"特征值超出合理范围: 特征{i}={value}, " f"阈值={float(VALIDATION.MAX_FEATURE_VALUE)}")
 
             # 检查无效数值
             if not (-float("inf") < value < float("inf")):
@@ -620,13 +574,10 @@ class MatchPredictor:
             if feature_std > float(VALIDATION.STABILITY_THRESHOLD):
                 self._prediction_stats["stability_warnings"] += 1
                 logger.warning(
-                    f"特征数值分布不稳定: 标准差={feature_std:.4f}, "
-                    f"阈值={float(VALIDATION.STABILITY_THRESHOLD)}"
+                    f"特征数值分布不稳定: 标准差={feature_std:.4f}, " f"阈值={float(VALIDATION.STABILITY_THRESHOLD)}"
                 )
 
-    def _validate_feature_range(
-        self, feature_array: np.ndarray, model_name: str
-    ) -> None:
+    def _validate_feature_range(self, feature_array: np.ndarray, model_name: str) -> None:
         """
         验证特征数值范围
 
@@ -637,13 +588,9 @@ class MatchPredictor:
         for i, value in enumerate(feature_array):
             # 检查溢出风险
             if abs(value) > float(VALIDATION.OVERFLOW_THRESHOLD):
-                raise NumericalStabilityError(
-                    f"特征值溢出风险: 特征{i}={value} (模型: {model_name})"
-                )
+                raise NumericalStabilityError(f"特征值溢出风险: 特征{i}={value} (模型: {model_name})")
 
-    def _validate_probability_distribution(
-        self, probabilities: List[float], model_name: str
-    ) -> None:
+    def _validate_probability_distribution(self, probabilities: List[float], model_name: str) -> None:
         """
         验证概率分布的有效性
 
@@ -659,9 +606,7 @@ class MatchPredictor:
 
         # 检查概率范围
         for i, p in enumerate(probabilities):
-            if not (
-                PROBABILITY.MIN_REASONABLE_PROB <= p <= PROBABILITY.MAX_REASONABLE_PROB
-            ):
+            if not (PROBABILITY.MIN_REASONABLE_PROB <= p <= PROBABILITY.MAX_REASONABLE_PROB):
                 self._prediction_stats["extreme_probabilities"] += 1
                 logger.warning(f"极端概率值: {p:.6f} (索引: {i}, 模型: {model_name})")
 
@@ -670,9 +615,7 @@ class MatchPredictor:
         if abs(prob_sum - 1.0) > float(PROBABILITY.PROBABILITY_EPSILON * 10):
             logger.warning(f"概率总和异常: {prob_sum:.8f} (模型: {model_name})")
 
-    def _create_fallback_result(
-        self, feature_list: List[float], model_name: str
-    ) -> Dict[str, Any]:
+    def _create_fallback_result(self, feature_list: List[float], model_name: str) -> Dict[str, Any]:
         """
         创建回退预测结果 (安全恢复机制)
 
@@ -728,10 +671,7 @@ class MatchPredictor:
         max_prob = max(probabilities)
 
         # 数值稳定性检查
-        if (
-            max_prob < PROBABILITY.MIN_REASONABLE_PROB
-            or max_prob > PROBABILITY.MAX_REASONABLE_PROB
-        ):
+        if max_prob < PROBABILITY.MIN_REASONABLE_PROB or max_prob > PROBABILITY.MAX_REASONABLE_PROB:
             logger.warning(f"置信度计算异常: max_prob={max_prob}")
             return float(PROBABILITY.MIN_PROBABILITY)
 
@@ -751,9 +691,7 @@ class MatchPredictor:
         4. 金融级精度计算比率
         """
         current_time = datetime.now()
-        uptime_seconds = (
-            current_time - self._prediction_stats["start_time"]
-        ).total_seconds()
+        uptime_seconds = (current_time - self._prediction_stats["start_time"]).total_seconds()
 
         total_predictions = self._prediction_stats["total_predictions"]
 
@@ -782,13 +720,9 @@ class MatchPredictor:
 
             # 数值稳定性指标 (新增)
             stability_metrics = {
-                "normalization_corrections": self._prediction_stats[
-                    "normalization_corrections"
-                ],
+                "normalization_corrections": self._prediction_stats["normalization_corrections"],
                 "stability_warnings": self._prediction_stats["stability_warnings"],
-                "extreme_probabilities": self._prediction_stats[
-                    "extreme_probabilities"
-                ],
+                "extreme_probabilities": self._prediction_stats["extreme_probabilities"],
                 "stability_warning_rate": MATH.safe_divide(
                     Decimal(str(self._prediction_stats["stability_warnings"])),
                     Decimal(str(total_predictions)),
@@ -828,12 +762,8 @@ class MatchPredictor:
                         Decimal("0"),
                     )
                 ),
-                "total_normalization_corrections": self._prediction_stats[
-                    "normalization_corrections"
-                ],
-                "total_stability_warnings": self._prediction_stats[
-                    "stability_warnings"
-                ],
+                "total_normalization_corrections": self._prediction_stats["normalization_corrections"],
+                "total_stability_warnings": self._prediction_stats["stability_warnings"],
             },
         }
 
@@ -870,9 +800,7 @@ class MatchPredictor:
                     + self._prediction_stats["stability_warnings"]
                     + self._prediction_stats["extreme_probabilities"]
                 )
-                stability_score = MATH.safe_divide(
-                    total - Decimal(str(stability_issues)), total, Decimal("1")
-                )
+                stability_score = MATH.safe_divide(total - Decimal(str(stability_issues)), total, Decimal("1"))
 
                 # 缓存效率评分 (20%)
                 cache_score = MATH.safe_divide(
@@ -930,9 +858,7 @@ class MatchPredictor:
                 return {"valid": False, "error": f"模型元数据缺失: {model_name}"}
 
             # 检查特征数量
-            expected_count = (
-                len(metadata.feature_names) if metadata.feature_names else None
-            )
+            expected_count = len(metadata.feature_names) if metadata.feature_names else None
             actual_count = len(feature_list)
 
             validation_result = {
@@ -952,9 +878,7 @@ class MatchPredictor:
             # 检查特征数量匹配
             if expected_count and actual_count != expected_count:
                 validation_result["valid"] = False
-                validation_result["error"] = (
-                    f"特征数量不匹配: 期望 {expected_count}, 实际 {actual_count}"
-                )
+                validation_result["error"] = f"特征数量不匹配: 期望 {expected_count}, 实际 {actual_count}"
 
             return validation_result
 
@@ -1043,9 +967,7 @@ class MatchPredictor:
                     continue
 
                 # 验证特征数量
-                if metadata.feature_names and len(feature_list) != len(
-                    metadata.feature_names
-                ):
+                if metadata.feature_names and len(feature_list) != len(metadata.feature_names):
                     logger.warning(f"模型 {model_id} 特征数量不匹配，跳过")
                     continue
 
@@ -1081,23 +1003,17 @@ class MatchPredictor:
             return self._execute_prediction(feature_list, model_name, additional_params)
 
         # 加权融合概率
-        ensemble_probabilities = self._weighted_ensemble(
-            model_predictions, model_weights
-        )
+        ensemble_probabilities = self._weighted_ensemble(model_predictions, model_weights)
 
         # 计算融合置信度
-        ensemble_confidence = self._calculate_ensemble_confidence(
-            model_predictions, model_weights
-        )
+        ensemble_confidence = self._calculate_ensemble_confidence(model_predictions, model_weights)
 
         # 验证融合结果
         if self.enable_stability_checks:
             self._validate_ensemble_probabilities(ensemble_probabilities)
 
         # 应用金融级概率归一化
-        normalized_probabilities = self._normalize_probabilities_financial(
-            np.array(ensemble_probabilities), "ensemble"
-        )
+        normalized_probabilities = self._normalize_probabilities_financial(np.array(ensemble_probabilities), "ensemble")
 
         # 构建融合结果
         predicted_class = int(np.argmax(normalized_probabilities))
@@ -1123,9 +1039,7 @@ class MatchPredictor:
                     "away_win_prob": probabilities[0],
                     "draw_prob": probabilities[1],
                     "home_win_prob": probabilities[2],
-                    "predicted_outcome": self.OUTCOME_MAP.get(
-                        predicted_class, "UNKNOWN"
-                    ),
+                    "predicted_outcome": self.OUTCOME_MAP.get(predicted_class, "UNKNOWN"),
                 }
             )
 
@@ -1253,9 +1167,7 @@ class MatchPredictor:
             raise ProbabilityNormalizationError("融合概率列表为空")
 
         if len(probabilities) != 3:
-            raise ProbabilityNormalizationError(
-                f"融合概率长度错误: {len(probabilities)}"
-            )
+            raise ProbabilityNormalizationError(f"融合概率长度错误: {len(probabilities)}")
 
         prob_sum = sum(probabilities)
         if abs(prob_sum - 1.0) > 0.1:
@@ -1292,9 +1204,7 @@ class MatchPredictor:
                 "logistic_regression": 0.3,
                 "poisson_model": 0.3,
             },
-            "recommended_for_production": all(
-                info["available"] for info in available_models.values()
-            ),
+            "recommended_for_production": all(info["available"] for info in available_models.values()),
         }
 
     def update_ensemble_weights(
@@ -1319,9 +1229,7 @@ class MatchPredictor:
             normalized_weights = {}
             for model in ensemble_models:
                 weight = new_weights.get(model, 0)
-                normalized_weights[model] = (
-                    weight / total_weight if total_weight > 0 else 0
-                )
+                normalized_weights[model] = weight / total_weight if total_weight > 0 else 0
 
             new_weights = normalized_weights
 

@@ -54,49 +54,27 @@ class DatabasePoolConfig:
     port: int = field(default_factory=lambda: int(os.getenv("DB_PORT", "5432")))
     user: str = field(default_factory=lambda: os.getenv("DB_USER", "postgres"))
     password: str = field(default_factory=lambda: os.getenv("DB_PASSWORD", "postgres"))
-    database: str = field(
-        default_factory=lambda: os.getenv("DB_NAME", "football_prediction")
-    )
+    database: str = field(default_factory=lambda: os.getenv("DB_NAME", "football_prediction"))
 
     # 连接池配置
-    min_size: int = field(
-        default_factory=lambda: int(os.getenv("DB_POOL_MIN_SIZE", "5"))
-    )
-    max_size: int = field(
-        default_factory=lambda: int(os.getenv("DB_POOL_MAX_SIZE", "20"))
-    )
-    max_queries: int = field(
-        default_factory=lambda: int(os.getenv("DB_POOL_MAX_QUERIES", "50000"))
-    )
+    min_size: int = field(default_factory=lambda: int(os.getenv("DB_POOL_MIN_SIZE", "5")))
+    max_size: int = field(default_factory=lambda: int(os.getenv("DB_POOL_MAX_SIZE", "20")))
+    max_queries: int = field(default_factory=lambda: int(os.getenv("DB_POOL_MAX_QUERIES", "50000")))
     max_inactive_connection_lifetime: float = field(
-        default_factory=lambda: float(
-            os.getenv("DB_POOL_MAX_INACTIVE_LIFETIME", "300.0")
-        )
+        default_factory=lambda: float(os.getenv("DB_POOL_MAX_INACTIVE_LIFETIME", "300.0"))
     )
 
     # 超时配置
-    timeout: float = field(
-        default_factory=lambda: float(os.getenv("DB_TIMEOUT", "60.0"))
-    )
-    command_timeout: float = field(
-        default_factory=lambda: float(os.getenv("DB_COMMAND_TIMEOUT", "30.0"))
-    )
+    timeout: float = field(default_factory=lambda: float(os.getenv("DB_TIMEOUT", "60.0")))
+    command_timeout: float = field(default_factory=lambda: float(os.getenv("DB_COMMAND_TIMEOUT", "30.0")))
 
     # 健康检查配置
-    health_check_interval: float = field(
-        default_factory=lambda: float(os.getenv("DB_HEALTH_CHECK_INTERVAL", "30.0"))
-    )
-    health_check_timeout: float = field(
-        default_factory=lambda: float(os.getenv("DB_HEALTH_CHECK_TIMEOUT", "5.0"))
-    )
+    health_check_interval: float = field(default_factory=lambda: float(os.getenv("DB_HEALTH_CHECK_INTERVAL", "30.0")))
+    health_check_timeout: float = field(default_factory=lambda: float(os.getenv("DB_HEALTH_CHECK_TIMEOUT", "5.0")))
 
     # 重连配置
-    max_retries: int = field(
-        default_factory=lambda: int(os.getenv("DB_MAX_RETRIES", "3"))
-    )
-    retry_delay: float = field(
-        default_factory=lambda: float(os.getenv("DB_RETRY_DELAY", "1.0"))
-    )
+    max_retries: int = field(default_factory=lambda: int(os.getenv("DB_MAX_RETRIES", "3")))
+    retry_delay: float = field(default_factory=lambda: float(os.getenv("DB_RETRY_DELAY", "1.0")))
 
     @classmethod
     def from_url(cls, db_url: Optional[str] = None) -> "DatabasePoolConfig":
@@ -115,9 +93,7 @@ class DatabasePoolConfig:
             )
 
         # 解析数据库URL
-        parsed = urllib.parse.urlparse(
-            db_url.replace("postgresql+asyncpg://", "postgresql://")
-        )
+        parsed = urllib.parse.urlparse(db_url.replace("postgresql+asyncpg://", "postgresql://"))
 
         return cls(
             host=parsed.hostname or "localhost",
@@ -163,9 +139,7 @@ class DatabasePool:
         }
 
     @classmethod
-    async def get_instance(
-        cls, config: Optional[DatabasePoolConfig] = None
-    ) -> "DatabasePool":
+    async def get_instance(cls, config: Optional[DatabasePoolConfig] = None) -> "DatabasePool":
         """
         获取数据库连接池单例实例
 
@@ -196,9 +170,7 @@ class DatabasePool:
 
         start_time = time.time()
         logger.info("🚀 开始初始化数据库连接池")
-        logger.info(
-            f"   数据库: {self.config.host}:{self.config.port}/{self.config.database}"
-        )
+        logger.info(f"   数据库: {self.config.host}:{self.config.port}/{self.config.database}")
         logger.info(f"   连接池大小: {self.config.min_size}-{self.config.max_size}")
         logger.info(f"   超时设置: {self.config.timeout}s")
 
@@ -332,9 +304,7 @@ class DatabasePool:
                 logger.error(f"批量SQL执行失败: {query} - {e}")
                 raise
 
-    async def fetch(
-        self, query: str, *args, timeout: Optional[float] = None
-    ) -> List[asyncpg.Record]:
+    async def fetch(self, query: str, *args, timeout: Optional[float] = None) -> List[asyncpg.Record]:
         """
         执行查询并返回所有结果
 
@@ -356,9 +326,7 @@ class DatabasePool:
                 logger.error(f"查询执行失败: {query} - {e}")
                 raise
 
-    async def fetchrow(
-        self, query: str, *args, timeout: Optional[float] = None
-    ) -> Optional[asyncpg.Record]:
+    async def fetchrow(self, query: str, *args, timeout: Optional[float] = None) -> Optional[asyncpg.Record]:
         """
         执行查询并返回第一行结果
 
@@ -380,9 +348,7 @@ class DatabasePool:
                 logger.error(f"查询执行失败: {query} - {e}")
                 raise
 
-    async def fetchval(
-        self, query: str, *args, column: int = 0, timeout: Optional[float] = None
-    ) -> Any:
+    async def fetchval(self, query: str, *args, column: int = 0, timeout: Optional[float] = None) -> Any:
         """
         执行查询并返回单个值
 
@@ -397,9 +363,7 @@ class DatabasePool:
         """
         async with self.connection() as conn:
             try:
-                result = await conn.fetchval(
-                    query, *args, column=column, timeout=timeout
-                )
+                result = await conn.fetchval(query, *args, column=column, timeout=timeout)
                 self._stats["total_queries_executed"] += 1
                 return result
             except Exception as e:

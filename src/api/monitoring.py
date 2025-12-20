@@ -156,9 +156,7 @@ async def _get_business_metrics(db: Session) -> Dict[str, Any]:
         for key, query in business_queries.items():
             try:
                 result = db.execute(text(query)).fetchone()
-                business_stats[key] = (
-                    result[0] if result and result[0] is not None else 0
-                )
+                business_stats[key] = result[0] if result and result[0] is not None else 0
             except Exception as e:
                 logger.warning(f"获取业务指标 {key} 失败: {e}")
                 business_stats[key] = None
@@ -212,11 +210,7 @@ async def get_service_status(db: Session = Depends(get_db_session)) -> Dict[str,
     except Exception:
         services["cache"] = "unhealthy"
 
-    overall_status = (
-        "healthy"
-        if all(status == "healthy" for status in services.values())
-        else "degraded"
-    )
+    overall_status = "healthy" if all(status == "healthy" for status in services.values()) else "degraded"
 
     return {
         "status": overall_status,

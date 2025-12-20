@@ -163,9 +163,7 @@ class ClassificationTrainingPipeline:
         self.logger.info(f"训练流水线初始化完成: {self.model_output_dir}")
         self.logger.info(f"模型配置类型: {config_type}")
 
-    async def run_pipeline(
-        self, dataset_path: str, model_output_path: str
-    ) -> Dict[str, float]:
+    async def run_pipeline(self, dataset_path: str, model_output_path: str) -> Dict[str, float]:
         """
         运行完整的训练流水线
 
@@ -195,8 +193,8 @@ class ClassificationTrainingPipeline:
 
             # 3. 特征工程
             self.logger.info("步骤 3/7: 特征工程")
-            X_train_processed, X_test_processed, y_train, y_test = (
-                self._feature_engineering(X_train, X_test, y_train, y_test)
+            X_train_processed, X_test_processed, y_train, y_test = self._feature_engineering(
+                X_train, X_test, y_train, y_test
             )
 
             # 4. 模型训练
@@ -209,9 +207,7 @@ class ClassificationTrainingPipeline:
 
             # 6. 模型保存
             self.logger.info("步骤 6/7: 模型保存")
-            await self._save_model_and_metadata(
-                model_output_path, feature_names, evaluation_metrics
-            )
+            await self._save_model_and_metadata(model_output_path, feature_names, evaluation_metrics)
 
             # 7. 生成报告
             self.logger.info("步骤 7/7: 生成报告")
@@ -219,9 +215,7 @@ class ClassificationTrainingPipeline:
 
             # 合并指标
             all_metrics = {**training_metrics, **evaluation_metrics}
-            all_metrics["total_training_time_seconds"] = (
-                datetime.now() - start_time
-            ).total_seconds()
+            all_metrics["total_training_time_seconds"] = (datetime.now() - start_time).total_seconds()
 
             # 记录最终结果
             self.training_results = {
@@ -232,9 +226,7 @@ class ClassificationTrainingPipeline:
                 "completed_at": datetime.now().isoformat(),
             }
 
-            self.logger.info(
-                f"训练流水线完成，耗时: {all_metrics['total_training_time_seconds']:.2f}秒"
-            )
+            self.logger.info(f"训练流水线完成，耗时: {all_metrics['total_training_time_seconds']:.2f}秒")
             self.logger.info(f"测试准确率: {all_metrics['test_accuracy']:.3f}")
             self.logger.info(f"测试F1分数: {all_metrics['test_f1_weighted']:.3f}")
 
@@ -244,9 +236,7 @@ class ClassificationTrainingPipeline:
             self.logger.error(f"训练流水线失败: {e}")
             raise
 
-    async def _load_and_preprocess_data(
-        self, dataset_path: str
-    ) -> Tuple[np.ndarray, np.ndarray, List[str]]:
+    async def _load_and_preprocess_data(self, dataset_path: str) -> Tuple[np.ndarray, np.ndarray, List[str]]:
         """
         加载和预处理数据集
 
@@ -293,9 +283,7 @@ class ClassificationTrainingPipeline:
 
         return X, y, feature_columns
 
-    def _validate_data_quality(
-        self, X: np.ndarray, y: np.ndarray, feature_columns: List[str]
-    ) -> None:
+    def _validate_data_quality(self, X: np.ndarray, y: np.ndarray, feature_columns: List[str]) -> None:
         """验证数据质量"""
         # 检查形状
         if X.shape[0] != len(y):
@@ -320,9 +308,7 @@ class ClassificationTrainingPipeline:
         if len(feature_columns) < 5:
             self.logger.warning(f"特征数量较少: {len(feature_columns)}")
 
-    def _split_dataset(
-        self, X: np.ndarray, y: np.ndarray
-    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    def _split_dataset(self, X: np.ndarray, y: np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """分离训练集和测试集"""
         # 过滤有效样本
         valid_mask = np.isin(y, [0, 1, 2])
@@ -353,12 +339,8 @@ class ClassificationTrainingPipeline:
         # 验证标签分布
         train_dist = np.bincount(y_train)
         test_dist = np.bincount(y_test)
-        self.logger.info(
-            f"训练集标签分布: AWAY_WIN={train_dist[0]}, DRAW={train_dist[1]}, HOME_WIN={train_dist[2]}"
-        )
-        self.logger.info(
-            f"测试集标签分布: AWAY_WIN={test_dist[0]}, DRAW={test_dist[1]}, HOME_WIN={test_dist[2]}"
-        )
+        self.logger.info(f"训练集标签分布: AWAY_WIN={train_dist[0]}, DRAW={train_dist[1]}, HOME_WIN={train_dist[2]}")
+        self.logger.info(f"测试集标签分布: AWAY_WIN={test_dist[0]}, DRAW={test_dist[1]}, HOME_WIN={test_dist[2]}")
 
         return X_train, X_test, y_train, y_test
 
@@ -398,9 +380,7 @@ class ClassificationTrainingPipeline:
         if self.config.feature_selection and self.config.max_features:
             from sklearn.feature_selection import SelectKBest, f_classif
 
-            selector = SelectKBest(
-                f_classif, k=min(self.config.max_features, X_train_processed.shape[1])
-            )
+            selector = SelectKBest(f_classif, k=min(self.config.max_features, X_train_processed.shape[1]))
             X_train_processed = selector.fit_transform(X_train_processed, y_train)
             X_test_processed = selector.transform(X_test_processed)
             self.logger.info(f"应用特征选择，保留 {X_train_processed.shape[1]} 个特征")
@@ -409,9 +389,7 @@ class ClassificationTrainingPipeline:
 
         return X_train_processed, X_test_processed, y_train, y_test
 
-    def _train_model(
-        self, X_train: np.ndarray, y_train: np.ndarray
-    ) -> Dict[str, float]:
+    def _train_model(self, X_train: np.ndarray, y_train: np.ndarray) -> Dict[str, float]:
         """训练模型"""
         # 分离验证集
         if self.config.validation_split > 0:
@@ -427,21 +405,15 @@ class ClassificationTrainingPipeline:
             X_val, y_val = None, None
 
         # 训练模型
-        training_metrics = self.classifier.train(
-            X_train_main, y_train_main, X_val, y_val
-        )
+        training_metrics = self.classifier.train(X_train_main, y_train_main, X_val, y_val)
 
         self.logger.info(f"模型训练完成: {len(X_train_main)} 个训练样本")
         if X_val is not None:
-            self.logger.info(
-                f"验证准确率: {training_metrics.get('val_accuracy', 'N/A'):.3f}"
-            )
+            self.logger.info(f"验证准确率: {training_metrics.get('val_accuracy', 'N/A'):.3f}")
 
         return training_metrics
 
-    def _evaluate_model(
-        self, X_test: np.ndarray, y_test: np.ndarray
-    ) -> Dict[str, float]:
+    def _evaluate_model(self, X_test: np.ndarray, y_test: np.ndarray) -> Dict[str, float]:
         """评估模型"""
         evaluation_metrics = self.classifier.evaluate(X_test, y_test)
 
@@ -499,17 +471,12 @@ class ClassificationTrainingPipeline:
 
             self.logger.info(f"模型元数据已保存到: {metadata_path}")
 
-    async def _generate_reports(
-        self, model_output_path: str, evaluation_metrics: Dict[str, float]
-    ) -> None:
+    async def _generate_reports(self, model_output_path: str, evaluation_metrics: Dict[str, float]) -> None:
         """生成训练报告"""
         output_dir = Path(model_output_path).parent
 
         # 特征重要性报告
-        if (
-            self.config.calculate_feature_importance
-            and self.config.save_feature_importance
-        ):
+        if self.config.calculate_feature_importance and self.config.save_feature_importance:
             await self._save_feature_importance_report(output_dir)
 
         # 评估报告
@@ -530,9 +497,7 @@ class ClassificationTrainingPipeline:
         except Exception as e:
             self.logger.warning(f"特征重要性报告保存失败: {e}")
 
-    async def _save_evaluation_report(
-        self, output_dir: Path, evaluation_metrics: Dict[str, float]
-    ) -> None:
+    async def _save_evaluation_report(self, output_dir: Path, evaluation_metrics: Dict[str, float]) -> None:
         """保存评估报告"""
         try:
             report_path = output_dir / "evaluation_report.json"
@@ -540,23 +505,13 @@ class ClassificationTrainingPipeline:
             # 提取关键指标
             key_metrics = {
                 "test_accuracy": evaluation_metrics.get("test_accuracy", 0),
-                "test_precision_weighted": evaluation_metrics.get(
-                    "test_precision_weighted", 0
-                ),
-                "test_recall_weighted": evaluation_metrics.get(
-                    "test_recall_weighted", 0
-                ),
+                "test_precision_weighted": evaluation_metrics.get("test_precision_weighted", 0),
+                "test_recall_weighted": evaluation_metrics.get("test_recall_weighted", 0),
                 "test_f1_weighted": evaluation_metrics.get("test_f1_weighted", 0),
-                "test_precision_HOME_WIN": evaluation_metrics.get(
-                    "test_precision_HOME_WIN", 0
-                ),
+                "test_precision_HOME_WIN": evaluation_metrics.get("test_precision_HOME_WIN", 0),
                 "test_precision_DRAW": evaluation_metrics.get("test_precision_DRAW", 0),
-                "test_precision_AWAY_WIN": evaluation_metrics.get(
-                    "test_precision_AWAY_WIN", 0
-                ),
-                "classification_report": evaluation_metrics.get(
-                    "classification_report", {}
-                ),
+                "test_precision_AWAY_WIN": evaluation_metrics.get("test_precision_AWAY_WIN", 0),
+                "classification_report": evaluation_metrics.get("classification_report", {}),
             }
 
             with open(report_path, "w", encoding="utf-8") as f:
@@ -631,12 +586,8 @@ if __name__ == "__main__":
             # 显示结果
 
             # 显示各类别指标
-            logger.info(
-                f"   主队获胜: 精确率={metrics.get('test_precision_HOME_WIN', 0):.3f}"
-            )
-            logger.info(
-                f"   客队获胜: 精确率={metrics.get('test_precision_AWAY_WIN', 0):.3f}"
-            )
+            logger.info(f"   主队获胜: 精确率={metrics.get('test_precision_HOME_WIN', 0):.3f}")
+            logger.info(f"   客队获胜: 精确率={metrics.get('test_precision_AWAY_WIN', 0):.3f}")
 
         except Exception as e:
             import traceback

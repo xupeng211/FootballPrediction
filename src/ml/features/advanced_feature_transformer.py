@@ -120,11 +120,7 @@ class AdvancedFeatureTransformer:
             # 1. 添加场馆分离特征
             if self.config.enable_venue_features:
                 logger.info("📍 添加场馆分离特征...")
-                df_result = (
-                    self.venue_analyzer.calculate_venue_features_for_all_matches(
-                        df_result
-                    )
-                )
+                df_result = self.venue_analyzer.calculate_venue_features_for_all_matches(df_result)
                 self._update_feature_list("venue")
 
             # 2. 添加历史交锋特征
@@ -169,9 +165,7 @@ class AdvancedFeatureTransformer:
             logger.error(f"❌ 高级特征转换失败: {str(e)}")
             raise
 
-    def transform_for_prediction(
-        self, match_data: pd.DataFrame, historical_data: pd.DataFrame
-    ) -> pd.DataFrame:
+    def transform_for_prediction(self, match_data: pd.DataFrame, historical_data: pd.DataFrame) -> pd.DataFrame:
         """
         为预测场景转换特定比赛的特征
 
@@ -239,8 +233,7 @@ class AdvancedFeatureTransformer:
         # 2. 计算各队的积分滚动统计
         for team_id in df_result["home_team_id"].unique():
             team_matches = df_result[
-                (df_result["home_team_id"] == team_id)
-                | (df_result["away_team_id"] == team_id)
+                (df_result["home_team_id"] == team_id) | (df_result["away_team_id"] == team_id)
             ].sort_values("match_date")
 
             # 计算各窗口的积分滚动统计
@@ -455,9 +448,7 @@ class AdvancedFeatureTransformer:
             self.feature_names.extend(discipline_features)
             self.feature_types["discipline"] = discipline_features
 
-    def analyze_feature_correlation(
-        self, df: pd.DataFrame
-    ) -> Dict[str, Dict[str, float]]:
+    def analyze_feature_correlation(self, df: pd.DataFrame) -> Dict[str, Dict[str, float]]:
         """
         分析高级特征与目标变量的相关性
 
@@ -546,28 +537,16 @@ class AdvancedFeatureTransformer:
         df_result = df.copy()
 
         # 1. 首发评分差异特征 (🎯 关键特征)
-        df_result["xi_rating_diff"] = (
-            df_result["home_xi_rating"] - df_result["away_xi_rating"]
-        )
-        df_result["xi_rating_ratio"] = df_result["home_xi_rating"] / (
-            df_result["away_xi_rating"] + 0.01
-        )
+        df_result["xi_rating_diff"] = df_result["home_xi_rating"] - df_result["away_xi_rating"]
+        df_result["xi_rating_ratio"] = df_result["home_xi_rating"] / (df_result["away_xi_rating"] + 0.01)
 
         # 2. 球星评分差异特征
-        df_result["star_rating_diff"] = (
-            df_result["home_star_rating"] - df_result["away_star_rating"]
-        )
-        df_result["star_rating_ratio"] = df_result["home_star_rating"] / (
-            df_result["away_star_rating"] + 0.01
-        )
+        df_result["star_rating_diff"] = df_result["home_star_rating"] - df_result["away_star_rating"]
+        df_result["star_rating_ratio"] = df_result["home_star_rating"] / (df_result["away_star_rating"] + 0.01)
 
         # 3. 替补实力差异特征
-        df_result["bench_rating_diff"] = (
-            df_result["home_bench_rating"] - df_result["away_bench_rating"]
-        )
-        df_result["bench_rating_ratio"] = df_result["home_bench_rating"] / (
-            df_result["away_bench_rating"] + 0.01
-        )
+        df_result["bench_rating_diff"] = df_result["home_bench_rating"] - df_result["away_bench_rating"]
+        df_result["bench_rating_ratio"] = df_result["home_bench_rating"] / (df_result["away_bench_rating"] + 0.01)
 
         # 4. 综合实力评分 (加权组合)
         df_result["home_team_strength"] = (
@@ -582,12 +561,8 @@ class AdvancedFeatureTransformer:
             + df_result["away_bench_rating"] * 0.1
         )
 
-        df_result["strength_diff"] = (
-            df_result["home_team_strength"] - df_result["away_team_strength"]
-        )
-        df_result["strength_ratio"] = df_result["home_team_strength"] / (
-            df_result["away_team_strength"] + 0.01
-        )
+        df_result["strength_diff"] = df_result["home_team_strength"] - df_result["away_team_strength"]
+        df_result["strength_ratio"] = df_result["home_team_strength"] / (df_result["away_team_strength"] + 0.01)
 
         # 5. 离散化特征 (评分等级)
         df_result["home_xi_rating_tier"] = pd.cut(
@@ -616,12 +591,8 @@ class AdvancedFeatureTransformer:
         df_result = df.copy()
 
         # 1. 上座率相关特征
-        df_result["attendance_normalized"] = (
-            df_result["attendance"] / 100000
-        )  # 标准化到0-1范围
-        df_result["high_attendance_flag"] = (df_result["attendance"] > 50000).astype(
-            int
-        )
+        df_result["attendance_normalized"] = df_result["attendance"] / 100000  # 标准化到0-1范围
+        df_result["high_attendance_flag"] = (df_result["attendance"] > 50000).astype(int)
         df_result["medium_attendance_flag"] = (
             (df_result["attendance"] >= 30000) & (df_result["attendance"] <= 50000)
         ).astype(int)
@@ -629,20 +600,14 @@ class AdvancedFeatureTransformer:
 
         # 2. 裁判相关特征 (简单计数，后续可扩展为裁判历史统计)
         df_result["referee_encoded"] = df_result["referee"].astype("category").cat.codes
-        df_result["has_referee_data"] = (
-            df_result["referee"].notna() & (df_result["referee"] != "")
-        ).astype(int)
+        df_result["has_referee_data"] = (df_result["referee"].notna() & (df_result["referee"] != "")).astype(int)
 
         # 3. 体育场相关特征
         df_result["stadium_encoded"] = df_result["stadium"].astype("category").cat.codes
-        df_result["has_stadium_data"] = (
-            df_result["stadium"].notna() & (df_result["stadium"] != "")
-        ).astype(int)
+        df_result["has_stadium_data"] = (df_result["stadium"].notna() & (df_result["stadium"] != "")).astype(int)
 
         # 4. 主客场优势特征 (结合上座率)
-        df_result["home_advantage_attendance"] = (
-            df_result["attendance_normalized"] * 1.5
-        )  # 主场上座率优势
+        df_result["home_advantage_attendance"] = df_result["attendance_normalized"] * 1.5  # 主场上座率优势
 
         return df_result
 
@@ -659,37 +624,21 @@ class AdvancedFeatureTransformer:
         df_result = df.copy()
 
         # 1. 红牌相关特征
-        df_result["total_red_cards"] = (
-            df_result["home_red_cards"] + df_result["away_red_cards"]
-        )
-        df_result["red_cards_diff"] = (
-            df_result["home_red_cards"] - df_result["away_red_cards"]
-        )
+        df_result["total_red_cards"] = df_result["home_red_cards"] + df_result["away_red_cards"]
+        df_result["red_cards_diff"] = df_result["home_red_cards"] - df_result["away_red_cards"]
         df_result["home_red_cards_flag"] = (df_result["home_red_cards"] > 0).astype(int)
         df_result["away_red_cards_flag"] = (df_result["away_red_cards"] > 0).astype(int)
         df_result["any_red_cards_flag"] = (df_result["total_red_cards"] > 0).astype(int)
 
         # 2. 半场进球相关特征
-        df_result["total_goals_ht"] = (
-            df_result["home_goals_ht"] + df_result["away_goals_ht"]
-        )
-        df_result["goals_ht_diff"] = (
-            df_result["home_goals_ht"] - df_result["away_goals_ht"]
-        )
-        df_result["goals_ht_ratio"] = df_result["home_goals_ht"] / (
-            df_result["away_goals_ht"] + 0.01
-        )
+        df_result["total_goals_ht"] = df_result["home_goals_ht"] + df_result["away_goals_ht"]
+        df_result["goals_ht_diff"] = df_result["home_goals_ht"] - df_result["away_goals_ht"]
+        df_result["goals_ht_ratio"] = df_result["home_goals_ht"] / (df_result["away_goals_ht"] + 0.01)
 
         # 3. 半场vs全场特征
-        df_result["home_goals_ft_vs_ht"] = (
-            df_result["home_score"] - df_result["home_goals_ht"]
-        )
-        df_result["away_goals_ft_vs_ht"] = (
-            df_result["away_score"] - df_result["away_goals_ht"]
-        )
-        df_result["ht_scoring_intensity"] = (
-            df_result["total_goals_ht"] * 2
-        )  # 半场进球强度
+        df_result["home_goals_ft_vs_ht"] = df_result["home_score"] - df_result["home_goals_ht"]
+        df_result["away_goals_ft_vs_ht"] = df_result["away_score"] - df_result["away_goals_ht"]
+        df_result["ht_scoring_intensity"] = df_result["total_goals_ht"] * 2  # 半场进球强度
 
         # 4. 比赛动态特征
         df_result["ht_leading_to_ft_win"] = (

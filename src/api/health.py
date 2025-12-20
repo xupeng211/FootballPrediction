@@ -45,9 +45,7 @@ async def health_check() -> HealthCheckResponse:
 
     # 计算总响应时间
     total_response_time = (
-        database_check.response_time_ms
-        + redis_check.response_time_ms
-        + filesystem_check.response_time_ms
+        database_check.response_time_ms + redis_check.response_time_ms + filesystem_check.response_time_ms
     )
 
     # 确定整体状态
@@ -129,9 +127,7 @@ async def readiness_check(db: Session = Depends(get_db_session)) -> Dict[str, An
     # 判断整体就绪状态
     all_healthy = all(check.status == "healthy" for check in checks.values())
 
-    status_code = (
-        status.HTTP_200_OK if all_healthy else status.HTTP_503_SERVICE_UNAVAILABLE
-    )
+    status_code = status.HTTP_200_OK if all_healthy else status.HTTP_503_SERVICE_UNAVAILABLE
 
     result = {
         "ready": all_healthy,
@@ -175,9 +171,7 @@ async def _get_redis_service_check() -> ServiceCheck:
     """获取Redis服务检查结果"""
     try:
         # 模拟Redis检查，实际应该连接Redis
-        return ServiceCheck(
-            status="healthy", response_time_ms=0.5, details={"message": "Redis连接正常"}
-        )
+        return ServiceCheck(status="healthy", response_time_ms=0.5, details={"message": "Redis连接正常"})
     except Exception as e:
         logger.error(f"Redis健康检查失败: {e}")
         return ServiceCheck(
@@ -312,11 +306,15 @@ async def data_quality_check(full_check: bool = False) -> Dict[str, Any]:
                 "details": {
                     "tables_valid": len([v for v in report.table_validations if v.is_valid]),
                     "tables_total": len(report.table_validations),
-                    "integrity_avg": sum(r.integrity_score for r in report.integrity_results) / len(report.integrity_results) if report.integrity_results else 0,
+                    "integrity_avg": (
+                        sum(r.integrity_score for r in report.integrity_results) / len(report.integrity_results)
+                        if report.integrity_results
+                        else 0
+                    ),
                     "consistency_passed": sum(1 for r in report.consistency_results if r.is_consistent),
                     "consistency_total": len(report.consistency_results),
                     "anomalies_count": sum(r.anomaly_count for r in report.anomaly_results),
-                }
+                },
             }
         else:
             # 执行快速健康检查
@@ -329,16 +327,12 @@ async def data_quality_check(full_check: bool = False) -> Dict[str, Any]:
                 "health_text": health_status["status_text"],
                 "score": health_status["score"],
                 "metrics": health_status.get("metrics", {}),
-                "error": health_status.get("error")
+                "error": health_status.get("error"),
             }
 
     except Exception as e:
         logger.error(f"数据质量检查失败: {e}")
-        return {
-            "status": "error",
-            "timestamp": datetime.utcnow().isoformat(),
-            "error": str(e)
-        }
+        return {"status": "error", "timestamp": datetime.utcnow().isoformat(), "error": str(e)}
     finally:
         await checker.close()
 
@@ -360,34 +354,28 @@ async def table_structure_check() -> Dict[str, Any]:
         for table_name in checker.expected_table_schemas.keys():
             try:
                 validation = await checker.check_table_structure(table_name)
-                results.append({
-                    "table": table_name,
-                    "valid": validation.is_valid,
-                    "missing_columns": validation.missing_columns,
-                    "extra_columns": validation.extra_columns,
-                    "details": validation.details
-                })
+                results.append(
+                    {
+                        "table": table_name,
+                        "valid": validation.is_valid,
+                        "missing_columns": validation.missing_columns,
+                        "extra_columns": validation.extra_columns,
+                        "details": validation.details,
+                    }
+                )
             except Exception as e:
-                results.append({
-                    "table": table_name,
-                    "valid": False,
-                    "error": str(e)
-                })
+                results.append({"table": table_name, "valid": False, "error": str(e)})
 
         return {
             "status": "success",
             "timestamp": datetime.utcnow().isoformat(),
             "results": results,
-            "all_valid": all(r.get("valid", False) for r in results)
+            "all_valid": all(r.get("valid", False) for r in results),
         }
 
     except Exception as e:
         logger.error(f"表结构检查失败: {e}")
-        return {
-            "status": "error",
-            "timestamp": datetime.utcnow().isoformat(),
-            "error": str(e)
-        }
+        return {"status": "error", "timestamp": datetime.utcnow().isoformat(), "error": str(e)}
     finally:
         await checker.close()
 
@@ -406,36 +394,27 @@ async def data_integrity_check() -> Dict[str, Any]:
         await checker.connect()
 
         results = []
-        for table_name in ['matches', 'match_features_training', 'raw_match_data']:
+        for table_name in ["matches", "match_features_training", "raw_match_data"]:
             try:
                 integrity = await checker.check_data_integrity(table_name)
-                results.append({
-                    "table": table_name,
-                    "total_records": integrity.total_records,
-                    "valid_records": integrity.valid_records,
-                    "integrity_score": integrity.integrity_score,
-                    "null_percentages": integrity.null_percentages,
-                    "issues": integrity.issues
-                })
+                results.append(
+                    {
+                        "table": table_name,
+                        "total_records": integrity.total_records,
+                        "valid_records": integrity.valid_records,
+                        "integrity_score": integrity.integrity_score,
+                        "null_percentages": integrity.null_percentages,
+                        "issues": integrity.issues,
+                    }
+                )
             except Exception as e:
-                results.append({
-                    "table": table_name,
-                    "error": str(e)
-                })
+                results.append({"table": table_name, "error": str(e)})
 
-        return {
-            "status": "success",
-            "timestamp": datetime.utcnow().isoformat(),
-            "results": results
-        }
+        return {"status": "success", "timestamp": datetime.utcnow().isoformat(), "results": results}
 
     except Exception as e:
         logger.error(f"数据完整性检查失败: {e}")
-        return {
-            "status": "error",
-            "timestamp": datetime.utcnow().isoformat(),
-            "error": str(e)
-        }
+        return {"status": "error", "timestamp": datetime.utcnow().isoformat(), "error": str(e)}
     finally:
         await checker.close()
 
@@ -465,20 +444,16 @@ async def data_consistency_check() -> Dict[str, Any]:
                     "consistency_rate": r.consistency_rate,
                     "inconsistent_count": r.inconsistent_count,
                     "details": r.details,
-                    "recommendations": r.recommendations
+                    "recommendations": r.recommendations,
                 }
                 for r in results
             ],
-            "all_consistent": all(r.is_consistent for r in results)
+            "all_consistent": all(r.is_consistent for r in results),
         }
 
     except Exception as e:
         logger.error(f"数据一致性检查失败: {e}")
-        return {
-            "status": "error",
-            "timestamp": datetime.utcnow().isoformat(),
-            "error": str(e)
-        }
+        return {"status": "error", "timestamp": datetime.utcnow().isoformat(), "error": str(e)}
     finally:
         await checker.close()
 
@@ -507,20 +482,16 @@ async def anomaly_detection() -> Dict[str, Any]:
                     "anomaly_count": r.anomaly_count,
                     "severity": r.severity,
                     "affected_records": r.affected_records,
-                    "samples": r.detected_anomalies[:5]  # 只返回前5个样本
+                    "samples": r.detected_anomalies[:5],  # 只返回前5个样本
                 }
                 for r in results
             ],
             "total_anomalies": sum(r.anomaly_count for r in results),
-            "critical_anomalies": sum(1 for r in results if r.severity == "critical")
+            "critical_anomalies": sum(1 for r in results if r.severity == "critical"),
         }
 
     except Exception as e:
         logger.error(f"异常检测失败: {e}")
-        return {
-            "status": "error",
-            "timestamp": datetime.utcnow().isoformat(),
-            "error": str(e)
-        }
+        return {"status": "error", "timestamp": datetime.utcnow().isoformat(), "error": str(e)}
     finally:
         await checker.close()

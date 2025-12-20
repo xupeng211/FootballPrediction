@@ -12,7 +12,7 @@ from typing import Dict, Any, List
 from fastapi.testclient import TestClient
 
 from src.services.prediction_service import (
-    InferenceService,
+    PredictionService,
     PredictionRequest,
     PredictionResponse,
 )

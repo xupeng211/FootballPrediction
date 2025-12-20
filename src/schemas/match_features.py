@@ -12,6 +12,7 @@ from enum import Enum
 
 class WeatherCondition(str, Enum):
     """天气状况枚举"""
+
     SUNNY = "sunny"
     RAINY = "rainy"
     CLOUDY = "cloudy"
@@ -22,6 +23,7 @@ class WeatherCondition(str, Enum):
 
 class FeatureVersion(str, Enum):
     """特征版本枚举"""
+
     V1_0 = "1.0"
     V1_1 = "1.1"
     V2_0 = "2.0"
@@ -29,6 +31,7 @@ class FeatureVersion(str, Enum):
 
 class DataSource(str, Enum):
     """数据源枚举"""
+
     FOTMOB_API = "fotmob_api"
     BET365_API = "bet365_api"
     MANUAL = "manual"
@@ -208,8 +211,8 @@ class MatchFeatures(BaseModel):
             datetime: lambda v: v.isoformat(),
             WeatherCondition: lambda v: v.value,
             DataSource: lambda v: v.value,
-            FeatureVersion: lambda v: v.value
-        }
+            FeatureVersion: lambda v: v.value,
+        },
     )
 
     xg_total: Optional[float] = Field(default=None, description="总xG")
@@ -226,50 +229,41 @@ class MatchFeatures(BaseModel):
     @property
     def has_complete_xg_data(self) -> bool:
         """是否有完整的xG数据"""
-        return all([
-            self.home_xg is not None,
-            self.away_xg is not None,
-            self.xg_total is not None,
-            self.xg_diff is not None
-        ])
+        return all(
+            [self.home_xg is not None, self.away_xg is not None, self.xg_total is not None, self.xg_diff is not None]
+        )
 
     @computed_field
     @property
     def has_complete_odds_data(self) -> bool:
         """是否有完整的赔率数据"""
-        return all([
-            self.home_opening_odds is not None,
-            self.away_opening_odds is not None,
-            self.draw_odds is not None
-        ])
+        return all([self.home_opening_odds is not None, self.away_opening_odds is not None, self.draw_odds is not None])
 
 
 class MatchFeaturesTrainingBatch(BaseModel):
     """批量比赛特征模型"""
+
     features: list[MatchFeatures]
     batch_id: str
     batch_size: int
     total_processed: int
     processing_time_seconds: float
 
-    @field_validator('batch_size', mode='before')
+    @field_validator("batch_size", mode="before")
     @classmethod
     def validate_batch_size(cls, v, info):
         """验证批次大小"""
-        values = info.data if hasattr(info, 'data') else {}
-        if 'features' in values:
-            return len(values['features'])
+        values = info.data if hasattr(info, "data") else {}
+        if "features" in values:
+            return len(values["features"])
         return v
 
-    model_config = ConfigDict(
-        json_encoders={
-            datetime: lambda v: v.isoformat()
-        }
-    )
+    model_config = ConfigDict(json_encoders={datetime: lambda v: v.isoformat()})
 
 
 class FeatureExtractionRequest(BaseModel):
     """特征提取请求模型"""
+
     match_ids: list[str]
     extraction_mode: str = Field("full", pattern="^(full|incremental)$")
     batch_size: int = Field(50, ge=1, le=1000)
@@ -279,6 +273,7 @@ class FeatureExtractionRequest(BaseModel):
 
 class FeatureExtractionResponse(BaseModel):
     """特征提取响应模型"""
+
     request_id: str
     status: str = Field(..., pattern="^(success|partial|failed)$")
     processed_count: int
@@ -300,8 +295,7 @@ def create_match_features_from_dict(data: Dict[str, Any]) -> MatchFeatures:
 def validate_feature_completeness(features: MatchFeatures) -> float:
     """验证特征完整性并返回完整性分数"""
     total_fields = 106
-    non_null_fields = sum(1 for field, value in features.model_dump().items()
-                          if value is not None and value != "")
+    non_null_fields = sum(1 for field, value in features.model_dump().items() if value is not None and value != "")
     return non_null_fields / total_fields
 
 
@@ -318,7 +312,7 @@ if __name__ == "__main__":
         "away_possession": 45.0,
         "home_opening_odds": 2.15,
         "away_opening_odds": 3.40,
-        "draw_odds": 3.20
+        "draw_odds": 3.20,
     }
 
     features = create_match_features_from_dict(test_data)

@@ -160,9 +160,7 @@ class ClassificationDatasetGenerator:
                 return self._create_empty_dataset()
 
             # 3. 合并特征和原始数据
-            merged_data = self._merge_features_and_raw_data(
-                features_data, raw_match_data
-            )
+            merged_data = self._merge_features_and_raw_data(features_data, raw_match_data)
 
             # 4. 计算目标标签
             self._calculate_target_labels(merged_data)
@@ -175,13 +173,9 @@ class ClassificationDatasetGenerator:
 
             # 更新统计信息
             self.stats["final_dataset_size"] = len(final_dataset)
-            self.stats["processing_time_seconds"] = (
-                datetime.now() - start_time
-            ).total_seconds()
+            self.stats["processing_time_seconds"] = (datetime.now() - start_time).total_seconds()
 
-            self.logger.info(
-                f"数据集生成完成: {len(final_dataset)}/{len(raw_match_data)} 场比赛"
-            )
+            self.logger.info(f"数据集生成完成: {len(final_dataset)}/{len(raw_match_data)} 场比赛")
             self.logger.info(f"处理统计: {self.stats}")
 
             return final_dataset
@@ -245,9 +239,7 @@ class ClassificationDatasetGenerator:
             records = await db_pool.fetch(query, league_id, start_date)
 
             if not records:
-                self.logger.warning(
-                    f"没有找到联赛 {league_id} 从 {start_date} 开始的比赛数据"
-                )
+                self.logger.warning(f"没有找到联赛 {league_id} 从 {start_date} 开始的比赛数据")
                 return pd.DataFrame()
 
             # 转换为DataFrame
@@ -274,9 +266,7 @@ class ClassificationDatasetGenerator:
             self.logger.error(f"数据库查询失败: {e}")
             raise Exception(f"获取比赛数据失败: {e}") from e
 
-    async def _extract_features_batch(
-        self, raw_match_data: pd.DataFrame
-    ) -> List[Dict[str, Any]]:
+    async def _extract_features_batch(self, raw_match_data: pd.DataFrame) -> List[Dict[str, Any]]:
         """
         批量提取特征
 
@@ -300,9 +290,7 @@ class ClassificationDatasetGenerator:
         async def extract_single_features(match_id: str) -> Optional[Dict[str, Any]]:
             async with semaphore:
                 try:
-                    feature_set = await self.feature_extractor.extract_features(
-                        match_id, historical_data
-                    )
+                    feature_set = await self.feature_extractor.extract_features(match_id, historical_data)
 
                     return {
                         "match_id": match_id,
@@ -452,9 +440,7 @@ class ClassificationDatasetGenerator:
         self.logger.info(f"开始应用过滤器，初始数据量: {initial_size}")
 
         # 1. 过滤特征完整性低的数据
-        completeness_mask = (
-            data["feature_completeness_score"] >= self.min_completeness_score
-        )
+        completeness_mask = data["feature_completeness_score"] >= self.min_completeness_score
         data_filtered = data[completeness_mask].copy()
         filtered_by_completeness = initial_size - len(data_filtered)
         self.stats["matches_filtered_low_completeness"] = filtered_by_completeness
@@ -470,9 +456,7 @@ class ClassificationDatasetGenerator:
         # 3. 过滤数据质量低的数据
         quality_mask = data_filtered["data_quality_flag"].isin(["HIGH", "MEDIUM"])
         data_filtered = data_filtered[quality_mask].copy()
-        filtered_by_quality = (
-            len(data_filtered[~quality_mask]) if len(data_filtered) > 0 else 0
-        )
+        filtered_by_quality = len(data_filtered[~quality_mask]) if len(data_filtered) > 0 else 0
         self.logger.info(f"数据质量过滤: {filtered_by_quality} 场比赛被移除")
 
         final_size = len(data_filtered)
@@ -526,9 +510,7 @@ class ClassificationDatasetGenerator:
 
         final_dataset = filtered_data[final_columns].copy()
 
-        self.logger.info(
-            f"最终数据集准备完成: {final_dataset.shape} 列，{len(feature_columns)} 个特征列"
-        )
+        self.logger.info(f"最终数据集准备完成: {final_dataset.shape} 列，{len(feature_columns)} 个特征列")
         return final_dataset
 
     def _create_empty_dataset(self) -> pd.DataFrame:
@@ -553,13 +535,9 @@ class ClassificationDatasetGenerator:
         import asyncio
 
         loop = asyncio.get_event_loop()
-        return loop.run_until_complete(
-            self.save_dataset_to_parquet(dataset, output_path)
-        )
+        return loop.run_until_complete(self.save_dataset_to_parquet(dataset, output_path))
 
-    async def save_dataset_to_parquet(
-        self, dataset: pd.DataFrame, output_path: str
-    ) -> None:
+    async def save_dataset_to_parquet(self, dataset: pd.DataFrame, output_path: str) -> None:
         """
         保存数据集为Parquet格式
 
@@ -590,9 +568,7 @@ class ClassificationDatasetGenerator:
             dataset_copy.to_parquet(output_path, index=False)
 
             self.logger.info(f"数据集已保存到: {output_path}")
-            self.logger.info(
-                f"文件大小: {output_file.stat().st_size / 1024 / 1024:.2f} MB"
-            )
+            self.logger.info(f"文件大小: {output_file.stat().st_size / 1024 / 1024:.2f} MB")
 
         except Exception as e:
             self.logger.error(f"保存数据集失败: {e}")
@@ -602,20 +578,12 @@ class ClassificationDatasetGenerator:
         """获取处理统计信息"""
         return {
             "total_matches_processed": self.stats["total_matches_processed"],
-            "matches_filtered_low_completeness": self.stats[
-                "matches_filtered_low_completeness"
-            ],
-            "matches_filtered_missing_labels": self.stats[
-                "matches_filtered_missing_labels"
-            ],
+            "matches_filtered_low_completeness": self.stats["matches_filtered_low_completeness"],
+            "matches_filtered_missing_labels": self.stats["matches_filtered_missing_labels"],
             "feature_extraction_errors": self.stats["feature_extraction_errors"],
             "final_dataset_size": self.stats["final_dataset_size"],
             "processing_time_seconds": self.stats["processing_time_seconds"],
-            "success_rate": (
-                self.stats["final_dataset_size"]
-                / max(self.stats["total_matches_processed"], 1)
-            )
-            * 100,
+            "success_rate": (self.stats["final_dataset_size"] / max(self.stats["total_matches_processed"], 1)) * 100,
         }
 
     def reset_statistics(self) -> None:
@@ -649,9 +617,7 @@ async def create_classification_dataset(
     Returns:
         pd.DataFrame: 生成的数据集
     """
-    generator = ClassificationDatasetGenerator(
-        min_completeness_score=min_completeness_score
-    )
+    generator = ClassificationDatasetGenerator(min_completeness_score=min_completeness_score)
 
     dataset = await generator.generate_dataset(league_id, start_date)
 
@@ -670,12 +636,8 @@ if __name__ == "__main__":
             ClassificationDatasetGenerator()
 
             # 这里需要实际的数据才能运行
-            logger.info(
-                ">>> dataset = await generator.generate_dataset('premier_league', '2024-01-01')"
-            )
-            logger.info(
-                ">>> await generator.save_dataset_to_parquet(dataset, 'training_data.parquet')"
-            )
+            logger.info(">>> dataset = await generator.generate_dataset('premier_league', '2024-01-01')")
+            logger.info(">>> await generator.save_dataset_to_parquet(dataset, 'training_data.parquet')")
 
         except Exception as e:
             return False

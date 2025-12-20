@@ -241,9 +241,7 @@ class StreamingDataProcessor:
 
         return df
 
-    def process_chunk(
-        self, chunk: pd.DataFrame, strategy_func: Callable
-    ) -> List[Dict[str, Any]]:
+    def process_chunk(self, chunk: pd.DataFrame, strategy_func: Callable) -> List[Dict[str, Any]]:
         """
         处理数据块
 
@@ -298,9 +296,7 @@ class StreamingDataProcessor:
 
         return chunk
 
-    def _process_single_match(
-        self, row: pd.Series, strategy_func: Callable
-    ) -> Optional[Dict[str, Any]]:
+    def _process_single_match(self, row: pd.Series, strategy_func: Callable) -> Optional[Dict[str, Any]]:
         """处理单场比赛"""
         try:
             # 提取基础信息
@@ -347,9 +343,7 @@ class StreamingDataProcessor:
         if len(self.memory_samples) > 100:
             self.memory_samples.pop(0)
 
-        self.performance.peak_memory_mb = max(
-            self.performance.peak_memory_mb, memory_mb
-        )
+        self.performance.peak_memory_mb = max(self.performance.peak_memory_mb, memory_mb)
         self.performance.avg_memory_mb = np.mean(self.memory_samples)
 
 
@@ -438,20 +432,14 @@ class BacktestEngine:
 
         return [str(f) for f in files]
 
-    def _run_strategies_parallel(
-        self, data_files: List[str]
-    ) -> Dict[str, BacktestResult]:
+    def _run_strategies_parallel(self, data_files: List[str]) -> Dict[str, BacktestResult]:
         """并行运行多个策略"""
         results = {}
 
-        with ThreadPoolExecutor(
-            max_workers=min(len(self.config.strategies), 4)
-        ) as executor:
+        with ThreadPoolExecutor(max_workers=min(len(self.config.strategies), 4)) as executor:
             # 提交所有策略任务
             future_to_strategy = {
-                executor.submit(
-                    self._run_single_strategy, data_files, strategy
-                ): strategy
+                executor.submit(self._run_single_strategy, data_files, strategy): strategy
                 for strategy in self.config.strategies
             }
 
@@ -498,9 +486,7 @@ class BacktestEngine:
 
                     # 流式读取和处理
                     for chunk in self.stream_processor.process_file_stream(file_path):
-                        chunk_results = self.stream_processor.process_chunk(
-                            chunk, strategy_func
-                        )
+                        chunk_results = self.stream_processor.process_chunk(chunk, strategy_func)
                         detailed_results.extend(chunk_results)
 
                         # 内存检查
@@ -575,27 +561,12 @@ class BacktestEngine:
 
                 # 结算投注
                 result_profit = 0
-                if (
-                    rec.outcome == "home"
-                    and match_info["home_goals"] > match_info["away_goals"]
-                ):
-                    result_profit = float(
-                        rec.stake_amount * rec.odds - rec.stake_amount
-                    )
-                elif (
-                    rec.outcome == "draw"
-                    and match_info["home_goals"] == match_info["away_goals"]
-                ):
-                    result_profit = float(
-                        rec.stake_amount * rec.odds - rec.stake_amount
-                    )
-                elif (
-                    rec.outcome == "away"
-                    and match_info["home_goals"] < match_info["away_goals"]
-                ):
-                    result_profit = float(
-                        rec.stake_amount * rec.odds - rec.stake_amount
-                    )
+                if rec.outcome == "home" and match_info["home_goals"] > match_info["away_goals"]:
+                    result_profit = float(rec.stake_amount * rec.odds - rec.stake_amount)
+                elif rec.outcome == "draw" and match_info["home_goals"] == match_info["away_goals"]:
+                    result_profit = float(rec.stake_amount * rec.odds - rec.stake_amount)
+                elif rec.outcome == "away" and match_info["home_goals"] < match_info["away_goals"]:
+                    result_profit = float(rec.stake_amount * rec.odds - rec.stake_amount)
                 else:
                     result_profit = -float(rec.stake_amount)
 
@@ -658,15 +629,9 @@ class BacktestEngine:
 
                 # 结算
                 result_profit = 0
-                if (
-                    outcome == "home"
-                    and match_info["home_goals"] > match_info["away_goals"]
-                ):
+                if outcome == "home" and match_info["home_goals"] > match_info["away_goals"]:
                     result_profit = stake * float(odds) - stake
-                elif (
-                    outcome == "away"
-                    and match_info["home_goals"] < match_info["away_goals"]
-                ):
+                elif outcome == "away" and match_info["home_goals"] < match_info["away_goals"]:
                     result_profit = stake * float(odds) - stake
                 else:
                     result_profit = -stake
@@ -678,8 +643,7 @@ class BacktestEngine:
                     "predicted_prob": float(prob),
                     "stake": stake,
                     "profit": result_profit,
-                    "elo_rating_diff": elo_result["ratings"]["home"]["after"]
-                    - elo_result["ratings"]["away"]["after"],
+                    "elo_rating_diff": elo_result["ratings"]["home"]["after"] - elo_result["ratings"]["away"]["after"],
                     "edge": edge,
                 }
 
@@ -722,20 +686,11 @@ class BacktestEngine:
 
                 # 结算
                 result_profit = 0
-                if (
-                    outcome == "home"
-                    and match_info["home_goals"] > match_info["away_goals"]
-                ):
+                if outcome == "home" and match_info["home_goals"] > match_info["away_goals"]:
                     result_profit = stake * float(odds) - stake
-                elif (
-                    outcome == "draw"
-                    and match_info["home_goals"] == match_info["away_goals"]
-                ):
+                elif outcome == "draw" and match_info["home_goals"] == match_info["away_goals"]:
                     result_profit = stake * float(odds) - stake
-                elif (
-                    outcome == "away"
-                    and match_info["home_goals"] < match_info["away_goals"]
-                ):
+                elif outcome == "away" and match_info["home_goals"] < match_info["away_goals"]:
                     result_profit = stake * float(odds) - stake
                 else:
                     result_profit = -stake
@@ -903,9 +858,7 @@ class BacktestEngine:
 
         return max_dd * 100  # 转换为百分比
 
-    def _calculate_brier_score(
-        self, predicted_probs: List[float], profits: List[float]
-    ) -> float:
+    def _calculate_brier_score(self, predicted_probs: List[float], profits: List[float]) -> float:
         """计算Brier Score"""
         if not predicted_probs or not profits:
             return 0
@@ -986,12 +939,8 @@ class BacktestEngine:
 
             # 策略对比表
             f.write("## 策略性能对比\n\n")
-            f.write(
-                "| 策略 | 投注次数 | 胜率 | ROI(%) | 最大回撤(%) | 夏普比率 | Brier Score |\n"
-            )
-            f.write(
-                "|------|----------|------|--------|-------------|----------|-------------|\n"
-            )
+            f.write("| 策略 | 投注次数 | 胜率 | ROI(%) | 最大回撤(%) | 夏普比率 | Brier Score |\n")
+            f.write("|------|----------|------|--------|-------------|----------|-------------|\n")
 
             for strategy, result in results.items():
                 f.write(
@@ -1086,8 +1035,7 @@ def run_backtest(
     """
     config = BacktestConfig(
         data_path=data_path,
-        strategies=strategies
-        or ["kelly_fractional", "elo_based", "poisson_based", "ensemble"],
+        strategies=strategies or ["kelly_fractional", "elo_based", "poisson_based", "ensemble"],
         output_path=output_path,
         **kwargs,
     )

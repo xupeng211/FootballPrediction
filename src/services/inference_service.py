@@ -113,9 +113,7 @@ class InferenceServiceConfig:
                 self.default_probabilities[key] /= total
 
 
-@injectable(
-    "inference_service", ["model_service", "feature_extractor", "database_service"]
-)
+@injectable("inference_service", ["model_service", "feature_extractor", "database_service"])
 class InferenceService(ServiceLifecycle):
     """
     推理服务 - Sprint 3 依赖注入版本
@@ -239,9 +237,7 @@ class InferenceService(ServiceLifecycle):
             historical_data = await self._get_historical_data(match_data)
 
             # 4. 提取特征
-            features = await self.feature_extractor.extract_features(
-                match_id, historical_data
-            )
+            features = await self.feature_extractor.extract_features(match_id, historical_data)
 
             # 5. 进行推理
             prediction_result = await self._perform_inference(match_id, features)
@@ -331,9 +327,7 @@ class InferenceService(ServiceLifecycle):
                 ORDER BY match_date DESC
                 LIMIT 200
                 """
-                records = await self.database_service.fetch(
-                    query, league_id, match_date
-                )
+                records = await self.database_service.fetch(query, league_id, match_date)
             else:
                 query = """
                 SELECT
@@ -385,9 +379,7 @@ class InferenceService(ServiceLifecycle):
                 "DRAW_PROBA": float(probabilities.get("DRAW_PROBA", 0.0)),
                 "AWAY_WIN_PROBA": float(probabilities.get("AWAY_WIN_PROBA", 0.0)),
                 "predicted_class": str(predicted_class),
-                "confidence": float(
-                    max(probabilities.values()) if probabilities else 0.0
-                ),
+                "confidence": float(max(probabilities.values()) if probabilities else 0.0),
                 "model_version": model_info.get("model_version", "1.0.0"),
                 "processed_at": datetime.now().isoformat(),
             }
@@ -431,9 +423,7 @@ class InferenceService(ServiceLifecycle):
 
         self._prediction_cache[match_id] = (result, time.time())
 
-    def _create_fallback_result(
-        self, match_id: str, error_message: str
-    ) -> Dict[str, Any]:
+    def _create_fallback_result(self, match_id: str, error_message: str) -> Dict[str, Any]:
         """创建降级结果"""
         return {
             "match_id": match_id,
@@ -452,9 +442,7 @@ class InferenceService(ServiceLifecycle):
         # 更新平均响应时间
         current_avg = self.stats["avg_response_time_ms"]
         total_requests = self.stats["total_requests"]
-        self.stats["avg_response_time_ms"] = (
-            current_avg * (total_requests - 1) + response_time_ms
-        ) / total_requests
+        self.stats["avg_response_time_ms"] = (current_avg * (total_requests - 1) + response_time_ms) / total_requests
 
         # 更新最后预测时间
         self.stats["last_prediction_time"] = datetime.now().isoformat()

@@ -42,9 +42,7 @@ ModelTrainer = None
 PostgresDataLoader = None
 
 # 配置日志
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -141,9 +139,7 @@ class RealDataTrainingPipeline:
 
             # 4. 生成详细评估报告
             logger.info("📋 第4步: 生成评估报告...")
-            evaluation_report = self._generate_evaluation_report(
-                training_metrics, feature_importance_df, data_summary
-            )
+            evaluation_report = self._generate_evaluation_report(training_metrics, feature_importance_df, data_summary)
 
             # 5. 保存模型
             logger.info("💾 第5步: 保存模型...")
@@ -164,9 +160,7 @@ class RealDataTrainingPipeline:
             traceback.print_exc()
             return {"success": False, "error": str(e)}
 
-    def _generate_evaluation_report(
-        self, training_metrics, feature_importance_df, data_summary
-    ) -> dict:
+    def _generate_evaluation_report(self, training_metrics, feature_importance_df, data_summary) -> dict:
         """
         生成详细的评估报告
 
@@ -183,9 +177,7 @@ class RealDataTrainingPipeline:
         if feature_importance_df is not None and not feature_importance_df.empty:
             top_5_features = feature_importance_df.head(5)
             for _, row in top_5_features.iterrows():
-                top_features.append(
-                    {"feature": row["feature"], "importance": float(row["importance"])}
-                )
+                top_features.append({"feature": row["feature"], "importance": float(row["importance"])})
 
         # 构建评估报告
         evaluation_report = {
@@ -222,10 +214,7 @@ class RealDataTrainingPipeline:
         Returns:
             str: 模型保存路径
         """
-        if (
-            not hasattr(self.model_trainer, "model")
-            or not self.model_trainer.is_trained_
-        ):
+        if not hasattr(self.model_trainer, "model") or not self.model_trainer.is_trained_:
             raise RuntimeError("模型尚未训练，无法保存")
 
         # 创建模型目录
@@ -282,9 +271,7 @@ class RealDataTrainingPipeline:
 
         return str(report_path)
 
-    def _print_training_summary(
-        self, evaluation_report: dict, model_path: str, report_path: str
-    ):
+    def _print_training_summary(self, evaluation_report: dict, model_path: str, report_path: str):
         """
         打印训练总结报告
 
@@ -298,12 +285,8 @@ class RealDataTrainingPipeline:
         logger.info("📊 模型性能:")
 
         metrics = evaluation_report["performance_metrics"]
-        logger.info(
-            f"   • Accuracy:  {metrics['accuracy']:.4f} ({metrics['accuracy']:.2%})"
-        )
-        logger.info(
-            f"   • Precision: {metrics['precision']:.4f} ({metrics['precision']:.2%})"
-        )
+        logger.info(f"   • Accuracy:  {metrics['accuracy']:.4f} ({metrics['accuracy']:.2%})")
+        logger.info(f"   • Precision: {metrics['precision']:.4f} ({metrics['precision']:.2%})")
 
         logger.info("🔧 技术规格:")
         training_info = evaluation_report["training_info"]
@@ -317,9 +300,7 @@ class RealDataTrainingPipeline:
         logger.info("🏆 Top 5 重要特征:")
         top_features = evaluation_report["top_5_features"]
         for i, feature_info in enumerate(top_features, 1):
-            logger.info(
-                f"   {i}. {feature_info['feature']:<30} : {feature_info['importance']:.6f}"
-            )
+            logger.info(f"   {i}. {feature_info['feature']:<30} : {feature_info['importance']:.6f}")
 
         logger.info("💾 输出文件:")
         logger.info(f"   • 模型文件:   {model_path}")

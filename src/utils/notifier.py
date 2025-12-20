@@ -162,9 +162,7 @@ class Alert:
             "metadata": self.metadata,
             "tags": self.tags,
             "resolved_at": self.resolved_at.isoformat() if self.resolved_at else None,
-            "acknowledged_at": (
-                self.acknowledged_at.isoformat() if self.acknowledged_at else None
-            ),
+            "acknowledged_at": (self.acknowledged_at.isoformat() if self.acknowledged_at else None),
             "acknowledged_by": self.acknowledged_by,
         }
 
@@ -218,9 +216,7 @@ class AlertAggregator:
     def _cleanup_expired_alerts(self) -> None:
         """清理过期的告警"""
         cutoff_time = datetime.utcnow() - timedelta(minutes=self.window_minutes)
-        self.alert_buffer = [
-            alert for alert in self.alert_buffer if alert.timestamp >= cutoff_time
-        ]
+        self.alert_buffer = [alert for alert in self.alert_buffer if alert.timestamp >= cutoff_time]
 
     def _find_similar_alerts(self, alert: Alert) -> List[Alert]:
         """查找相似的告警"""
@@ -237,9 +233,7 @@ class AlertAggregator:
 
                 # 检查标题是否相似
                 existing_prefix = (
-                    existing_alert.title.split(":")[0]
-                    if ":" in existing_alert.title
-                    else existing_alert.title
+                    existing_alert.title.split(":")[0] if ":" in existing_alert.title else existing_alert.title
                 )
                 if title_prefix == existing_prefix:
                     similar.append(existing_alert)
@@ -304,9 +298,7 @@ class RateLimiter:
         hour_ago = now - timedelta(hours=1)
 
         # 清理1小时前的记录
-        self.alert_history = [
-            timestamp for timestamp in self.alert_history if timestamp >= hour_ago
-        ]
+        self.alert_history = [timestamp for timestamp in self.alert_history if timestamp >= hour_ago]
 
         # 检查是否超过限制
         return len(self.alert_history) < self.max_alerts_per_hour
@@ -327,15 +319,11 @@ class AlertNotifier:
         self.config = config
 
         # 初始化组件
-        self.aggregator = AlertAggregator(
-            window_minutes=config.aggregation_window_minutes
-        )
+        self.aggregator = AlertAggregator(window_minutes=config.aggregation_window_minutes)
         self.rate_limiter = RateLimiter(max_alerts_per_hour=config.max_alerts_per_hour)
 
         # 初始化模板引擎
-        self.template_env = jinja2.Environment(
-            loader=jinja2.FileSystemLoader(config.templates_dir), autoescape=True
-        )
+        self.template_env = jinja2.Environment(loader=jinja2.FileSystemLoader(config.templates_dir), autoescape=True)
 
         # HTTP会话
         self.http_session: Optional[aiohttp.ClientSession] = None
@@ -438,11 +426,7 @@ class AlertNotifier:
                 return []
 
             # 检查速率限制
-            if (
-                not force_send
-                and self.config.enable_rate_limit
-                and not self.rate_limiter.can_send_alert()
-            ):
+            if not force_send and self.config.enable_rate_limit and not self.rate_limiter.can_send_alert():
                 logger.warning("⚠️ 超过速率限制，跳过告警发送")
                 return []
 
@@ -527,9 +511,7 @@ class AlertNotifier:
 
         return channels
 
-    async def _send_to_channel(
-        self, alert: Alert, channel: NotificationChannel
-    ) -> NotificationResult:
+    async def _send_to_channel(self, alert: Alert, channel: NotificationChannel) -> NotificationResult:
         """发送告警到指定渠道"""
         start_time = time.time()
 
@@ -603,9 +585,7 @@ class AlertNotifier:
                         results.append(False)
 
             success = all(results)
-            return NotificationResult(
-                success=success, channel=NotificationChannel.TELEGRAM
-            )
+            return NotificationResult(success=success, channel=NotificationChannel.TELEGRAM)
 
         except Exception as e:
             return NotificationResult(
@@ -620,9 +600,7 @@ class AlertNotifier:
             # 创建邮件内容
             msg = MIMEMultipart("alternative")
             msg["Subject"] = f"[{alert.level.value.upper()}] {alert.title}"
-            msg["From"] = formataddr(
-                ("Football Prediction System", self.config.email_from)
-            )
+            msg["From"] = formataddr(("Football Prediction System", self.config.email_from))
             msg["To"] = ", ".join(self.config.email_to)
 
             # HTML内容
@@ -663,9 +641,7 @@ class AlertNotifier:
             # 在线程池中发送邮件 (同步SMTP)
             loop = asyncio.get_event_loop()
             with ThreadPoolExecutor() as executor:
-                result = await loop.run_in_executor(
-                    executor, self._send_email_sync, msg
-                )
+                result = await loop.run_in_executor(executor, self._send_email_sync, msg)
 
             if result:
                 logger.info(f"✅ 邮件告警发送成功: {', '.join(self.config.email_to)}")
@@ -675,9 +651,7 @@ class AlertNotifier:
             return NotificationResult(success=result, channel=NotificationChannel.EMAIL)
 
         except Exception as e:
-            return NotificationResult(
-                success=False, channel=NotificationChannel.EMAIL, error_message=str(e)
-            )
+            return NotificationResult(success=False, channel=NotificationChannel.EMAIL, error_message=str(e))
 
     def _send_email_sync(self, msg: MIMEMultipart) -> bool:
         """同步发送邮件"""
@@ -731,14 +705,10 @@ class AlertNotifier:
                 ],
             }
 
-            async with self.http_session.post(
-                self.config.slack_webhook_url, json=payload
-            ) as response:
+            async with self.http_session.post(self.config.slack_webhook_url, json=payload) as response:
                 if response.status == 200:
                     logger.info("✅ Slack告警发送成功")
-                    return NotificationResult(
-                        success=True, channel=NotificationChannel.SLACK
-                    )
+                    return NotificationResult(success=True, channel=NotificationChannel.SLACK)
                 else:
                     error_text = await response.text()
                     logger.error(f"❌ Slack告警发送失败: {error_text}")
@@ -749,9 +719,7 @@ class AlertNotifier:
                     )
 
         except Exception as e:
-            return NotificationResult(
-                success=False, channel=NotificationChannel.SLACK, error_message=str(e)
-            )
+            return NotificationResult(success=False, channel=NotificationChannel.SLACK, error_message=str(e))
 
     def _get_slack_color(self, level: AlertLevel) -> str:
         """获取Slack颜色"""
@@ -790,16 +758,12 @@ class AlertNotifier:
                 },
             }
 
-            async with self.http_session.post(
-                self.config.wechat_work_webhook_url, json=payload
-            ) as response:
+            async with self.http_session.post(self.config.wechat_work_webhook_url, json=payload) as response:
                 if response.status == 200:
                     result = await response.json()
                     if result.get("errcode") == 0:
                         logger.info("✅ 企业微信告警发送成功")
-                        return NotificationResult(
-                            success=True, channel=NotificationChannel.WECHAT_WORK
-                        )
+                        return NotificationResult(success=True, channel=NotificationChannel.WECHAT_WORK)
                     else:
                         error_msg = result.get("errmsg", "Unknown error")
                         logger.error(f"❌ 企业微信告警发送失败: {error_msg}")
@@ -840,28 +804,20 @@ class AlertNotifier:
 
             results = []
             for webhook_url in self.config.webhook_urls:
-                async with self.http_session.post(
-                    webhook_url, json=payload
-                ) as response:
+                async with self.http_session.post(webhook_url, json=payload) as response:
                     if response.status < 400:  # 2xx或3xx状态码
                         logger.info(f"✅ Webhook告警发送成功: {webhook_url}")
                         results.append(True)
                     else:
                         error_text = await response.text()
-                        logger.error(
-                            f"❌ Webhook告警发送失败 ({webhook_url}): {error_text}"
-                        )
+                        logger.error(f"❌ Webhook告警发送失败 ({webhook_url}): {error_text}")
                         results.append(False)
 
             success = all(results)
-            return NotificationResult(
-                success=success, channel=NotificationChannel.WEBHOOK
-            )
+            return NotificationResult(success=success, channel=NotificationChannel.WEBHOOK)
 
         except Exception as e:
-            return NotificationResult(
-                success=False, channel=NotificationChannel.WEBHOOK, error_message=str(e)
-            )
+            return NotificationResult(success=False, channel=NotificationChannel.WEBHOOK, error_message=str(e))
 
     async def resolve_alert(self, alert_id: str) -> bool:
         """解决告警"""
@@ -934,26 +890,10 @@ class AlertNotifier:
         return {
             **self.stats,
             "total_alerts_in_history": len(self.alert_history),
-            "active_alerts": len(
-                [
-                    a
-                    for a in self.alert_history.values()
-                    if a.status == AlertStatus.ACTIVE
-                ]
-            ),
-            "resolved_alerts": len(
-                [
-                    a
-                    for a in self.alert_history.values()
-                    if a.status == AlertStatus.RESOLVED
-                ]
-            ),
+            "active_alerts": len([a for a in self.alert_history.values() if a.status == AlertStatus.ACTIVE]),
+            "resolved_alerts": len([a for a in self.alert_history.values() if a.status == AlertStatus.RESOLVED]),
             "acknowledged_alerts": len(
-                [
-                    a
-                    for a in self.alert_history.values()
-                    if a.status == AlertStatus.ACKNOWLEDGED
-                ]
+                [a for a in self.alert_history.values() if a.status == AlertStatus.ACKNOWLEDGED]
             ),
             "rate_limit_active": len(self.rate_limiter.alert_history),
             "aggregation_buffer_size": len(self.aggregator.alert_buffer),

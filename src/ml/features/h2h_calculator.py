@@ -118,14 +118,10 @@ class H2HCalculator:
         """
         try:
             # 获取两队历史交锋记录（排除当前比赛）
-            past_matches = self._get_historical_matches(
-                df, home_id, away_id, match_date
-            )
+            past_matches = self._get_historical_matches(df, home_id, away_id, match_date)
 
             if len(past_matches) < self.min_matches:
-                logger.info(
-                    f"历史交锋场次不足: {len(past_matches)} < {self.min_matches}"
-                )
+                logger.info(f"历史交锋场次不足: {len(past_matches)} < {self.min_matches}")
                 return self._get_default_stats()
 
             # 计算各项统计指标
@@ -166,9 +162,7 @@ class H2HCalculator:
             match_date = pd.to_datetime(match["match_date"])
 
             # 计算该场比赛的历史交锋统计
-            h2h_stats = self.calculate_h2h_for_match(
-                df_sorted, home_id, away_id, match_date
-            )
+            h2h_stats = self.calculate_h2h_for_match(df_sorted, home_id, away_id, match_date)
 
             # 将统计结果添加到特征列表
             h2h_features.append(h2h_stats.to_dict())
@@ -187,9 +181,9 @@ class H2HCalculator:
         """获取两队在指定日期前的历史交锋记录"""
 
         # 查找两队之间的历史比赛（不考虑主客场顺序）
-        h2h_mask = (
-            (df["home_team_id"] == home_id) & (df["away_team_id"] == away_id)
-        ) | ((df["home_team_id"] == away_id) & (df["away_team_id"] == home_id))
+        h2h_mask = ((df["home_team_id"] == home_id) & (df["away_team_id"] == away_id)) | (
+            (df["home_team_id"] == away_id) & (df["away_team_id"] == home_id)
+        )
 
         # 只获取当前日期前的比赛
         date_mask = pd.to_datetime(df["match_date"]) < match_date
@@ -198,9 +192,7 @@ class H2HCalculator:
 
         return past_matches
 
-    def _calculate_match_stats(
-        self, past_matches: pd.DataFrame, target_home_id: int
-    ) -> H2HStats:
+    def _calculate_match_stats(self, past_matches: pd.DataFrame, target_home_id: int) -> H2HStats:
         """
         基于历史比赛计算统计数据 (金融级精度版本)
 
@@ -327,20 +319,12 @@ class H2HCalculator:
             return False
 
         # 验证进球差范围
-        if not (
-            SCORING.MIN_REASONABLE_GOAL_DIFF
-            <= stats.avg_goal_diff
-            <= SCORING.MAX_REASONABLE_GOAL_DIFF
-        ):
+        if not (SCORING.MIN_REASONABLE_GOAL_DIFF <= stats.avg_goal_diff <= SCORING.MAX_REASONABLE_GOAL_DIFF):
             logger.warning(f"进球差超出合理范围: {stats.avg_goal_diff}")
             # 不返回False，因为极端情况确实可能发生
 
         # 验证总进球范围
-        if not (
-            SCORING.MIN_REASONABLE_TOTAL_GOALS
-            <= stats.avg_total_goals
-            <= SCORING.MAX_REASONABLE_TOTAL_GOALS
-        ):
+        if not (SCORING.MIN_REASONABLE_TOTAL_GOALS <= stats.avg_total_goals <= SCORING.MAX_REASONABLE_TOTAL_GOALS):
             logger.warning(f"总进球超出合理范围: {stats.avg_total_goals}")
             # 不返回False，因为极端情况确实可能发生
 
@@ -351,9 +335,7 @@ class H2HCalculator:
 
         return True
 
-    def get_h2h_summary(
-        self, df: pd.DataFrame, team1_id: int, team2_id: int
-    ) -> Dict[str, Any]:
+    def get_h2h_summary(self, df: pd.DataFrame, team1_id: int, team2_id: int) -> Dict[str, Any]:
         """
         获取两队历史交锋的详细摘要 (金融级精度版本)
 
@@ -377,9 +359,7 @@ class H2HCalculator:
         """
         try:
             # 获取所有交锋记录
-            all_matches = self._get_historical_matches(
-                df, team1_id, team2_id, pd.Timestamp.max
-            )
+            all_matches = self._get_historical_matches(df, team1_id, team2_id, pd.Timestamp.max)
 
             if all_matches.empty:
                 return self._get_empty_h2h_summary(team1_id, team2_id)
@@ -426,9 +406,7 @@ class H2HCalculator:
                 team1_win_rate = team1_wins / Decimal(str(total_matches))
                 team2_win_rate = team2_wins / Decimal(str(total_matches))
                 draw_rate = draws / Decimal(str(total_matches))
-                avg_goals_per_match = (team1_goals + team2_goals) / Decimal(
-                    str(total_matches)
-                )
+                avg_goals_per_match = (team1_goals + team2_goals) / Decimal(str(total_matches))
             else:
                 team1_win_rate = Decimal("0")
                 team2_win_rate = Decimal("0")
@@ -438,9 +416,7 @@ class H2HCalculator:
             # 获取最近比赛日期
             if not all_matches.empty:
                 last_match_date = pd.to_datetime(all_matches["match_date"]).max()
-                last_match_date_str = (
-                    last_match_date.isoformat() if pd.notnull(last_match_date) else None
-                )
+                last_match_date_str = last_match_date.isoformat() if pd.notnull(last_match_date) else None
             else:
                 last_match_date_str = None
 
@@ -458,22 +434,16 @@ class H2HCalculator:
                 "draw_rate": float(draw_rate),
                 "last_match_date": last_match_date_str,
                 "avg_goals_per_match": float(avg_goals_per_match),
-                "form_balance": float(
-                    abs(team1_win_rate - team2_win_rate)
-                ),  # 势态平衡指数
+                "form_balance": float(abs(team1_win_rate - team2_win_rate)),  # 势态平衡指数
             }
 
             # 计算高级统计指标
             if total_matches >= 3:  # 只在样本量足够时计算
                 summary.update(
                     {
-                        "team1_dominance": float(
-                            team1_win_rate > 0.6
-                        ),  # 是否具备压倒性优势
+                        "team1_dominance": float(team1_win_rate > 0.6),  # 是否具备压倒性优势
                         "competitive_balance": float(draw_rate > 0.3),  # 是否竞争激烈
-                        "high_scoring_tendency": float(
-                            avg_goals_per_match > 3.0
-                        ),  # 是否倾向高分
+                        "high_scoring_tendency": float(avg_goals_per_match > 3.0),  # 是否倾向高分
                     }
                 )
 
@@ -521,11 +491,7 @@ class H2HCalculator:
         """
         try:
             # 验证概率总和
-            prob_sum = (
-                summary.get("team1_win_rate", 0)
-                + summary.get("draw_rate", 0)
-                + summary.get("team2_win_rate", 0)
-            )
+            prob_sum = summary.get("team1_win_rate", 0) + summary.get("draw_rate", 0) + summary.get("team2_win_rate", 0)
             if abs(prob_sum - 1.0) > 0.01:  # 允许1%的舍入误差
                 logger.warning(f"H2H摘要概率总和不等于1: {prob_sum}")
 
@@ -535,9 +501,7 @@ class H2HCalculator:
             if avg_goals > 0 and total_goals > 0:
                 expected_total = avg_goals * summary.get("total_matches", 0)
                 if abs(total_goals - expected_total) > 5:  # 允许5球的误差
-                    logger.warning(
-                        f"H2H摘要进球数不一致: 实际={total_goals}, 期望={expected_total}"
-                    )
+                    logger.warning(f"H2H摘要进球数不一致: 实际={total_goals}, 期望={expected_total}")
 
             return True
 

@@ -72,9 +72,7 @@ class MatchOutcome(str, Enum):
             raise ValueError(f"team_side必须是'home'或'away'，当前值: {team_side}")
 
 
-def score_to_label(
-    home_score: Union[int, float, str], away_score: Union[int, float, str]
-) -> MatchOutcome:
+def score_to_label(home_score: Union[int, float, str], away_score: Union[int, float, str]) -> MatchOutcome:
     """
     将比分转换为比赛结果标签
 
@@ -105,16 +103,12 @@ def score_to_label(
     try:
         # 转换输入为整数（处理字符串和浮点数输入）
         if isinstance(home_score, str):
-            home_score = (
-                int(float(home_score)) if "." in home_score else int(home_score)
-            )
+            home_score = int(float(home_score)) if "." in home_score else int(home_score)
         elif isinstance(home_score, float):
             home_score = int(home_score)
 
         if isinstance(away_score, str):
-            away_score = (
-                int(float(away_score)) if "." in away_score else int(away_score)
-            )
+            away_score = int(float(away_score)) if "." in away_score else int(away_score)
         elif isinstance(away_score, float):
             away_score = int(away_score)
 
@@ -192,9 +186,7 @@ def numeric_to_label(numeric_label: int) -> MatchOutcome:
     return mapping[numeric_label]
 
 
-def validate_scores(
-    home_score: Union[int, float, str], away_score: Union[int, float, str]
-) -> Tuple[int, int]:
+def validate_scores(home_score: Union[int, float, str], away_score: Union[int, float, str]) -> Tuple[int, int]:
     """
     验证并标准化比分输入
 
@@ -210,12 +202,8 @@ def validate_scores(
     """
     try:
         # 转换为整数
-        home_int = (
-            int(float(home_score)) if isinstance(home_score, str) else int(home_score)
-        )
-        away_int = (
-            int(float(away_score)) if isinstance(away_score, str) else int(away_score)
-        )
+        home_int = int(float(home_score)) if isinstance(home_score, str) else int(home_score)
+        away_int = int(float(away_score)) if isinstance(away_score, str) else int(away_score)
 
         # 验证非负
         if home_int < 0 or away_int < 0:

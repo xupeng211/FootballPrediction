@@ -144,9 +144,7 @@ class DIContainer:
         # 非懒加载，应该已经创建
         raise ValueError(f"服务 {service_name} 未创建但标记为非懒加载")
 
-    async def _create_instance(
-        self, service_name: str, descriptor: ServiceDescriptor
-    ) -> T:
+    async def _create_instance(self, service_name: str, descriptor: ServiceDescriptor) -> T:
         """创建服务实例"""
         self._initializing.add(service_name)
 
@@ -207,9 +205,7 @@ class DIContainer:
         self._instances.clear()
         self.logger.info("所有服务已关闭")
 
-    async def _shutdown_service(
-        self, service_name: str, instance: ServiceLifecycle
-    ) -> None:
+    async def _shutdown_service(self, service_name: str, instance: ServiceLifecycle) -> None:
         """关闭单个服务"""
         try:
             await instance.shutdown()
