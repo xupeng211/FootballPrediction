@@ -58,7 +58,7 @@ make python-quality-score    # Get code quality score and recommendations
 # Enhanced MCP development
 ./scripts/mcp_manager.sh start                     # Start all MCP servers
 ./scripts/enhanced_mcp_manager.sh dev             # Development mode with MCP
-./scripts/test_mcp_servers.sh                     # Test MCP server connectivity
+./scripts/test_mcp_servers.sh                      # Test MCP server connectivity
 
 # 传统Docker命令
 docker-compose up --build                         # 启动完整开发栈
@@ -174,7 +174,7 @@ graph TB
 - **Connection Management**: Async connection pooling and health checks
 
 #### Configuration System
-- **Centralized Config**: Complete configuration in `src/config.py` (461 lines)
+- **Centralized Config**: Complete configuration in `src/config_unified.py` (461 lines)
 - **Environment Management**: Multi-environment support (.env.dev, .env.ci, .env.production)
 - **API Configuration**: External API (FotMob) settings and headers
 
@@ -194,7 +194,7 @@ FootballPrediction/
 │   │   └── dataset/              # 数据集生成
 │   ├── database/                 # 数据库相关
 │   ├── utils/            # Shared utilities
-│   ├── config.py         # Centralized configuration (461 lines)
+│   ├── config_unified.py         # Centralized configuration (461 lines)
 │   └── inference.py      # Main inference engine
 ├── scripts/              # Data collectors and development scripts
 │   ├── predict_match_v2.py             # v2.0 预测CLI工具
@@ -221,7 +221,7 @@ FootballPrediction/
 
 ### Code Organization
 - All code must follow async-first design patterns
-- Use centralized configuration through `src/config.py`
+- Use centralized configuration through `src/config_unified.py`
 - Machine learning components organized in `src/ml/` with clear separation
 - Data collection handled through specialized collectors in `scripts/collectors/`
 - External API integration using adapter pattern
@@ -235,7 +235,7 @@ FootballPrediction/
 - Test coverage target: 80%+ (current: 96.35%)
 
 ### Configuration Management
-- Centralized configuration in `src/config.py` (461 lines)
+- Centralized configuration in `src/config_unified.py` (461 lines)
 - Environment-specific configs: `.env.dev`, `.env.ci`, `.env.production`
 - FotMob API configuration for external data sources
 - Database connection settings with async support
@@ -409,7 +409,7 @@ make ci                    # Run quality checks before committing
 1. **ML Features**: Add feature engineering in `src/ml/features/`
 2. **API Endpoints**: Create new routes in `src/api/`
 3. **Data Collection**: Add collectors in `scripts/collectors/`
-4. **Configuration**: Update settings in `src/config.py`
+4. **Configuration**: Update settings in `src/config_unified.py`
 5. **Testing**: Add tests in appropriate `tests/` subdirectory
 6. **Validation**: Run `make ci` before submitting
 7. **PR**: Use `.github/PULL_REQUEST_TEMPLATE.md` for structured PRs
@@ -500,7 +500,7 @@ python scripts/predict_match_v2.py --home "Chelsea" --away "Liverpool" --model x
 📊 预测概率:
 主胜 (HOME) : 65.2% |███████████████████████████████████░░░|
 平局 (DRAW) : 22.1% |███████████████░░░░░░░░░░░░░░░░░░░░░░|
-客胜 (AWAY) : 12.7% |███████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░|
+客胜 (AWAY) : 12.7% |███████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░|
 
 🎯 预测结果: HOME_WIN
 💡 置信度: 65.2%
@@ -583,7 +583,7 @@ The project uses GitHub Actions for CI/CD (see `.github/workflows/`):
 ### Configuration Usage
 ```python
 # 推荐使用新的安全配置系统
-from src.config_secure import get_settings
+from src.config_unified import get_settings
 
 settings = get_settings()
 db_url = settings.database.get_connection_string()
