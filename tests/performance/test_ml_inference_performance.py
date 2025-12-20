@@ -11,10 +11,9 @@ from unittest.mock import Mock, AsyncMock, patch
 from concurrent.futures import ThreadPoolExecutor
 from typing import List, Dict, Any
 
-from src.services.prediction_service import (
+from src.services.inference_service import (
     InferenceService,
-    PredictionRequest,
-    PredictionResponse,
+    InferenceServiceConfig,
 )
 from src.ml.inference import ModelLoader, MatchPredictor
 from src.ml.inference.cache_manager import PredictionCache

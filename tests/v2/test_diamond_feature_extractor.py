@@ -15,15 +15,13 @@ from typing import Dict, Any, List
 from datetime import datetime
 from unittest.mock import Mock, patch
 
-from src.data_access.processors.diamond_feature_extractor_v3 import (
+from src.data_access.processors.advanced_feature_extractor import (
     AdvancedFeatureExtractor,
     FeatureExtractionConfig,
     SmartRecursiveExtractor,
     XGDataAggregator,
     FeatureExtractionError,
     DataValidationError,
-    create_feature_extractor,
-    extract_match_features
 )
 from src.schemas.match_features import MatchFeatures, WeatherCondition
 

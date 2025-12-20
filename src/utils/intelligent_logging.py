@@ -116,15 +116,11 @@ class IntelligentLogFilter(logging.Filter):
         """更新日志统计"""
         self.stats.total_logs += 1
         level_name = record.levelname
-        self.stats.logs_by_level[level_name] = (
-            self.stats.logs_by_level.get(level_name, 0) + 1
-        )
+        self.stats.logs_by_level[level_name] = self.stats.logs_by_level.get(level_name, 0) + 1
 
         # 小时统计
         current_hour = datetime.now().strftime("%Y-%m-%d %H")
-        self.stats.logs_by_hour[current_hour] = (
-            self.stats.logs_by_hour.get(current_hour, 0) + 1
-        )
+        self.stats.logs_by_hour[current_hour] = self.stats.logs_by_hour.get(current_hour, 0) + 1
 
         # 清理旧统计
         self._cleanup_old_stats()
@@ -195,18 +191,14 @@ class IntelligentLogFilter(logging.Filter):
 
         # 清理小时统计
         hours_to_remove = [
-            hour
-            for hour in self.stats.logs_by_hour.keys()
-            if datetime.strptime(hour, "%Y-%m-%d %H") < cutoff_time
+            hour for hour in self.stats.logs_by_hour.keys() if datetime.strptime(hour, "%Y-%m-%d %H") < cutoff_time
         ]
         for hour in hours_to_remove:
             del self.stats.logs_by_hour[hour]
 
         # 清理小时计数器
         hours_to_remove = [
-            hour
-            for hour in self._hourly_counters.keys()
-            if datetime.strptime(hour, "%Y-%m-%d %H") < cutoff_time
+            hour for hour in self._hourly_counters.keys() if datetime.strptime(hour, "%Y-%m-%d %H") < cutoff_time
         ]
         for hour in hours_to_remove:
             del self._hourly_counters[hour]
@@ -428,9 +420,7 @@ def setup_intelligent_logging(config: Optional[LoggingConfig] = None) -> logging
     # 控制台处理器
     console_handler = logging.StreamHandler()
     console_handler.setLevel(getattr(logging, config.console_level.upper()))
-    console_formatter = logging.Formatter(
-        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-    )
+    console_formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
     console_handler.setFormatter(console_formatter)
     console_handler.addFilter(intelligent_filter)
 
@@ -461,9 +451,7 @@ def setup_intelligent_logging(config: Optional[LoggingConfig] = None) -> logging
         file_handler.setFormatter(json_formatter)
     else:
         # 生产环境使用简洁格式
-        file_formatter = logging.Formatter(
-            "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
-        )
+        file_formatter = logging.Formatter("%(asctime)s [%(levelname)s] %(name)s: %(message)s")
         file_handler.setFormatter(file_formatter)
 
     # 添加处理器

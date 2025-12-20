@@ -9,11 +9,11 @@ import asyncio
 from datetime import datetime, timedelta
 from unittest.mock import patch, AsyncMock
 
-# 导入MCP工具
-from mcp__postgres__execute_sql import execute_sql
-from mcp__redis__redis_get import redis_get
-from mcp__redis__redis_set import redis_set
-from mcp__system_monitor__get_system_metrics import get_system_metrics
+# 导入MCP工具 (暂时注释掉，MCP工具未安装)
+# from mcp__postgres__execute_sql import execute_sql
+# from mcp__redis__redis_get import redis_get
+# from mcp__redis__redis_set import redis_set
+# from mcp__system_monitor__get_system_metrics import get_system_metrics
 
 # 导入项目模块
 from tests.factories.prediction_factory import MatchFactory, PredictionFactory

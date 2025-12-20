@@ -67,9 +67,7 @@ class PredictionService(ServiceLifecycle):
     5. 错误处理和降级策略
     """
 
-    def __init__(
-        self, inference_service: Any = None, explainability_service: Any = None
-    ):
+    def __init__(self, inference_service: Any = None, explainability_service: Any = None):
         """
         初始化预测服务
 
@@ -156,10 +154,7 @@ class PredictionService(ServiceLifecycle):
                 request_id=request_id,
             )
 
-            self.logger.info(
-                f"单场比赛预测完成: match_id={match_id}, "
-                f"processing_time={processing_time:.2f}ms"
-            )
+            self.logger.info(f"单场比赛预测完成: match_id={match_id}, " f"processing_time={processing_time:.2f}ms")
 
             return response
 
@@ -167,9 +162,7 @@ class PredictionService(ServiceLifecycle):
             processing_time = (datetime.now() - start_time).total_seconds() * 1000
             error_message = str(e)
 
-            self.logger.error(
-                f"单场比赛预测失败: match_id={match_id}, error={error_message}"
-            )
+            self.logger.error(f"单场比赛预测失败: match_id={match_id}, error={error_message}")
 
             return PredictionResponse(
                 success=False,
@@ -241,9 +234,7 @@ class PredictionService(ServiceLifecycle):
             processing_time = (datetime.now() - start_time).total_seconds() * 1000
             error_message = str(e)
 
-            self.logger.error(
-                f"批量比赛预测失败: match_ids={match_ids}, error={error_message}"
-            )
+            self.logger.error(f"批量比赛预测失败: match_ids={match_ids}, error={error_message}")
 
             return PredictionResponse(
                 success=False,
@@ -277,9 +268,7 @@ class PredictionService(ServiceLifecycle):
             prediction_result = await self.inference_service.predict(match_id)
 
             # 4. 获取特征数据
-            features_data = await self.inference_service._get_features_for_match(
-                match_id
-            )
+            features_data = await self.inference_service._get_features_for_match(match_id)
 
             if not features_data:
                 raise ValueError(f"无法获取比赛 {match_id} 的特征数据")
@@ -289,10 +278,8 @@ class PredictionService(ServiceLifecycle):
 
             features_df = pd.DataFrame([features_data])
 
-            contributions_list = (
-                await self.explainability_service.get_shap_contributions(
-                    features_df, self.inference_service.model
-                )
+            contributions_list = await self.explainability_service.get_shap_contributions(
+                features_df, self.inference_service.model
             )
 
             if not contributions_list:
@@ -306,9 +293,7 @@ class PredictionService(ServiceLifecycle):
                 "feature_contributions": contributions,
                 "top_positive_contributors": [
                     {"feature": k, "contribution": v}
-                    for k, v in sorted(
-                        contributions.items(), key=lambda x: x[1], reverse=True
-                    )[:5]
+                    for k, v in sorted(contributions.items(), key=lambda x: x[1], reverse=True)[:5]
                     if v > 0
                 ],
                 "top_negative_contributors": [
@@ -328,18 +313,14 @@ class PredictionService(ServiceLifecycle):
                 request_id=request_id,
             )
 
-            self.logger.info(
-                f"预测解释完成: match_id={match_id}, processing_time={processing_time:.2f}ms"
-            )
+            self.logger.info(f"预测解释完成: match_id={match_id}, processing_time={processing_time:.2f}ms")
             return response
 
         except Exception as e:
             processing_time = (datetime.now() - start_time).total_seconds() * 1000
             error_message = str(e)
 
-            self.logger.error(
-                f"预测解释失败: match_id={match_id}, error={error_message}"
-            )
+            self.logger.error(f"预测解释失败: match_id={match_id}, error={error_message}")
 
             return PredictionResponse(
                 success=False,
@@ -366,17 +347,13 @@ class PredictionService(ServiceLifecycle):
                 },
             }
 
-            response = PredictionResponse(
-                success=True, data=health_data, request_id="health_check"
-            )
+            response = PredictionResponse(success=True, data=health_data, request_id="health_check")
 
             return response
 
         except Exception as e:
             self.logger.error(f"服务健康检查失败: {e}")
-            return PredictionResponse(
-                success=False, error=str(e), request_id="health_check"
-            )
+            return PredictionResponse(success=False, error=str(e), request_id="health_check")
 
     # 私有方法
     def _validate_single_request(self, match_id: str) -> None:
@@ -414,16 +391,12 @@ class PredictionService(ServiceLifecycle):
         # 根据请求参数过滤数据
         if not include_features:
             # 移除特征相关字段
-            response_data = {
-                k: v for k, v in response_data.items() if not k.startswith("feature_")
-            }
+            response_data = {k: v for k, v in response_data.items() if not k.startswith("feature_")}
 
         if not include_metadata:
             # 移除元数据字段
             metadata_fields = ["model_version", "processed_at", "data_quality"]
-            response_data = {
-                k: v for k, v in response_data.items() if k not in metadata_fields
-            }
+            response_data = {k: v for k, v in response_data.items() if k not in metadata_fields}
 
         return response_data
 
@@ -468,16 +441,10 @@ class PredictionService(ServiceLifecycle):
 
         return processed_results
 
-    async def _build_batch_response(
-        self, results: List[PredictionResponse]
-    ) -> Dict[str, Any]:
+    async def _build_batch_response(self, results: List[PredictionResponse]) -> Dict[str, Any]:
         """构建批量响应数据"""
         successful_results = [r.data for r in results if r.success]
-        failed_results = [
-            {"match_id": r.request_id, "error": r.error}
-            for r in results
-            if not r.success
-        ]
+        failed_results = [{"match_id": r.request_id, "error": r.error} for r in results if not r.success]
 
         # 转换为标准格式
         if successful_results:

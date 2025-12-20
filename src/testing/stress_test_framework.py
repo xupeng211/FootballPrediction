@@ -296,9 +296,7 @@ class StressTestFramework:
         """测试混合工作负载"""
         self.logger.info("⚡ 开始混合工作负载测试")
 
-        test_duration_seconds = (
-            self.config.test_duration_minutes * 60 - 300
-        )  # 预留5分钟清理
+        test_duration_seconds = self.config.test_duration_minutes * 60 - 300  # 预留5分钟清理
         test_file = Path(self.config.output_dir) / "mixed_workload.csv"
 
         # 生成测试数据
@@ -310,29 +308,21 @@ class StressTestFramework:
 
         # 读取任务
         for i in range(self.config.concurrent_readers):
-            task = asyncio.create_task(
-                self._continuous_read_task(test_file, test_duration_seconds)
-            )
+            task = asyncio.create_task(self._continuous_read_task(test_file, test_duration_seconds))
             tasks.append(task)
 
         # 写入任务
         for i in range(self.config.concurrent_writers):
-            task = asyncio.create_task(
-                self._continuous_write_task(test_duration_seconds)
-            )
+            task = asyncio.create_task(self._continuous_write_task(test_duration_seconds))
             tasks.append(task)
 
         # 预测任务
         for i in range(self.config.concurrent_predictors):
-            task = asyncio.create_task(
-                self._continuous_prediction_task(test_duration_seconds)
-            )
+            task = asyncio.create_task(self._continuous_prediction_task(test_duration_seconds))
             tasks.append(task)
 
         # 监控资源使用
-        monitor_task = asyncio.create_task(
-            self._monitor_resources(test_duration_seconds)
-        )
+        monitor_task = asyncio.create_task(self._monitor_resources(test_duration_seconds))
         tasks.append(monitor_task)
 
         # 等待所有任务完成
@@ -367,8 +357,7 @@ class StressTestFramework:
                 current_resources = ResourceUsage.current()
                 if (
                     current_resources.cpu_percent > self.config.max_cpu_usage_percent
-                    or current_resources.memory_usage_mb
-                    > self.config.max_memory_usage_mb
+                    or current_resources.memory_usage_mb > self.config.max_memory_usage_mb
                 ):
                     error_count += 1
                     self.logger.warning(
@@ -414,9 +403,7 @@ class StressTestFramework:
         for size_mb in memory_test_sizes:
             try:
                 # 分配内存
-                large_array = np.random.rand(
-                    size_mb * 1024 * 256 // 8
-                )  # 假设每个元素8字节
+                large_array = np.random.rand(size_mb * 1024 * 256 // 8)  # 假设每个元素8字节
                 memory_usage = psutil.virtual_memory().used / 1024 / 1024
 
                 self.logger.info(f"分配 {size_mb}MB内存: 实际使用 {memory_usage:.1f}MB")
@@ -472,9 +459,7 @@ class StressTestFramework:
                 await asyncio.gather(*tasks)
                 completion_time = time.time() - start_time
 
-                self.logger.info(
-                    f"并发数 {level}: {len(tasks)} 任务完成, 耗时 {completion_time:.1f}s"
-                )
+                self.logger.info(f"并发数 {level}: {len(tasks)} 任务完成, 耗时 {completion_time:.1f}s")
                 max_successful_level = level
 
             except Exception as e:
@@ -487,9 +472,7 @@ class StressTestFramework:
         }
 
     # 数据生成方法
-    async def _generate_large_dataset(
-        self, file_path: Path, target_size_gb: float
-    ) -> None:
+    async def _generate_large_dataset(self, file_path: Path, target_size_gb: float) -> None:
         """生成大型数据集"""
         target_size_bytes = target_size_bytes = target_size_gb * 1024 * 1024 * 1024
         chunk_size = self.config.chunk_size
@@ -512,9 +495,7 @@ class StressTestFramework:
 
             while rows_generated < target_rows:
                 # 生成数据块
-                chunk_data = self._generate_data_chunk(
-                    min(chunk_size, target_rows - rows_generated), rows_generated
-                )
+                chunk_data = self._generate_data_chunk(min(chunk_size, target_rows - rows_generated), rows_generated)
 
                 # 写入数据
                 for row in chunk_data:
@@ -527,9 +508,7 @@ class StressTestFramework:
                     elapsed = time.time() - chunk_start_time
                     progress = rows_generated / target_rows
                     rate = rows_generated / elapsed if elapsed > 0 else 0
-                    eta_seconds = (
-                        (target_rows - rows_generated) / rate if rate > 0 else 0
-                    )
+                    eta_seconds = (target_rows - rows_generated) / rate if rate > 0 else 0
 
                     self.logger.info(
                         f"生成进度: {progress:.1%}, "
@@ -578,9 +557,7 @@ class StressTestFramework:
 
             # 生成日期
             days_ago = random.randint(0, 365 * 3)
-            match_date = (datetime.now() - timedelta(days=days_ago)).strftime(
-                "%Y-%m-%d"
-            )
+            match_date = (datetime.now() - timedelta(days=days_ago)).strftime("%Y-%m-%d")
 
             # 生成状态
             status = random.choice(["SCHEDULED", "FINISHED"])
@@ -670,9 +647,7 @@ class StressTestFramework:
         """测试流式处理器读取"""
         from ..data.streaming.streaming_data_processor import StreamingDataProcessor
 
-        processor = StreamingDataProcessor(
-            StreamingConfig(chunk_size=self.config.chunk_size)
-        )
+        processor = StreamingDataProcessor(StreamingConfig(chunk_size=self.config.chunk_size))
 
         read_times = []
         total_rows = 0
@@ -780,20 +755,14 @@ class StressTestFramework:
         """测试并行预测"""
         # 分割数据
         chunk_size = len(features) // 4
-        feature_chunks = [
-            features[i : i + chunk_size] for i in range(0, len(features), chunk_size)
-        ]
+        feature_chunks = [features[i : i + chunk_size] for i in range(0, len(features), chunk_size)]
 
         start_time = time.time()
 
         # 并行预测
         with ThreadPoolExecutor(max_workers=4) as executor:
-            futures = [
-                executor.submit(self._predict_chunk, chunk) for chunk in feature_chunks
-            ]
-            results = await asyncio.gather(
-                *[asyncio.wrap_future(future) for future in futures]
-            )
+            futures = [executor.submit(self._predict_chunk, chunk) for chunk in feature_chunks]
+            results = await asyncio.gather(*[asyncio.wrap_future(future) for future in futures])
 
         prediction_time = (time.time() - start_time) * 1000
         total_rows = len(features)
@@ -817,9 +786,7 @@ class StressTestFramework:
         return predictions
 
     # 持续任务方法
-    async def _continuous_read_task(
-        self, test_file: Path, duration_seconds: int
-    ) -> None:
+    async def _continuous_read_task(self, test_file: Path, duration_seconds: int) -> None:
         """持续读取任务"""
         start_time = time.time()
         operation_count = 0
@@ -884,12 +851,8 @@ class StressTestFramework:
             self._resource_history.append(current_resources)
 
             # 更新峰值指标
-            self._metrics.peak_memory_mb = max(
-                self._metrics.peak_memory_mb, current_resources.memory_usage_mb
-            )
-            self._metrics.peak_cpu_percent = max(
-                self._metrics.peak_cpu_percent, current_resources.cpu_percent
-            )
+            self._metrics.peak_memory_mb = max(self._metrics.peak_memory_mb, current_resources.memory_usage_mb)
+            self._metrics.peak_cpu_percent = max(self._metrics.peak_cpu_percent, current_resources.cpu_percent)
 
             await asyncio.sleep(1)  # 每秒监控一次
 
@@ -968,9 +931,7 @@ class StressTestFramework:
         self.logger.info("📊 生成测试报告")
 
         total_time = (datetime.now() - self._start_time).total_seconds()
-        success_rate = 1.0 - (
-            self._metrics.total_errors / max(self._metrics.total_rows_processed, 1)
-        )
+        success_rate = 1.0 - (self._metrics.total_errors / max(self._metrics.total_rows_processed, 1))
 
         report = {
             "test_config": {
@@ -1008,8 +969,7 @@ class StressTestFramework:
         # 保存报告
         if self.config.generate_reports:
             report_file = (
-                Path(self.config.output_dir)
-                / f"stress_test_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+                Path(self.config.output_dir) / f"stress_test_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
             )
             with open(report_file, "w") as f:
                 json.dump(report, f, indent=2, default=str)

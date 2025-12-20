@@ -33,6 +33,7 @@ logger = logging.getLogger(__name__)
 
 class PredictionStatus(str, Enum):
     """预测状态枚举"""
+
     PENDING = "pending"
     PROCESSING = "processing"
     COMPLETED = "completed"
@@ -63,6 +64,7 @@ class ModelProtocol(Protocol):
 @dataclass
 class PredictionRequest:
     """预测请求模型 - 严格类型安全"""
+
     match_id: str
     home_team: str
     away_team: str
@@ -90,6 +92,7 @@ class PredictionRequest:
 @dataclass
 class PredictionResponse:
     """预测响应模型 - 完整类型安全"""
+
     success: bool
     match_id: Optional[str] = None
     prediction: Optional[str] = None
@@ -118,6 +121,7 @@ class PredictionResponse:
 @dataclass
 class BatchPredictionRequest:
     """批量预测请求"""
+
     requests: List[PredictionRequest]
     batch_id: Optional[str] = None
 
@@ -133,6 +137,7 @@ class BatchPredictionRequest:
 @dataclass
 class BatchPredictionResponse:
     """批量预测响应"""
+
     batch_id: str
     responses: List[PredictionResponse]
     total_count: int
@@ -146,11 +151,7 @@ class BatchPredictionResponse:
 class CoreInferenceService(ServiceLifecycle):
     """核心推理服务 - 工业级纯净实现"""
 
-    def __init__(
-        self,
-        model_service: ModelProtocol,
-        cache_service: Optional[Any] = None
-    ) -> None:
+    def __init__(self, model_service: ModelProtocol, cache_service: Optional[Any] = None) -> None:
         self.model_service = model_service
         self.cache_service = cache_service
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
@@ -189,10 +190,7 @@ class CoreInferenceService(ServiceLifecycle):
         """检查初始化状态"""
         return self._initialized
 
-    async def predict_single_match(
-        self,
-        request: PredictionRequest
-    ) -> PredictionResponse:
+    async def predict_single_match(self, request: PredictionRequest) -> PredictionResponse:
         """单场比赛预测 - 核心业务逻辑"""
         if not self._initialized:
             raise RuntimeError("推理服务未初始化")
@@ -209,11 +207,7 @@ class CoreInferenceService(ServiceLifecycle):
                     cached_result = await self.cache_service.get(cache_key)
                     if cached_result:
                         self._performance_stats["cache_hits"] += 1
-                        return PredictionResponse(
-                            success=True,
-                            match_id=request.match_id,
-                            **cached_result
-                        )
+                        return PredictionResponse(success=True, match_id=request.match_id, **cached_result)
                 except Exception as e:
                     self.logger.warning(f"缓存读取失败: {e}")
 
@@ -253,13 +247,10 @@ class CoreInferenceService(ServiceLifecycle):
                 success=False,
                 match_id=request.match_id,
                 error=str(e),
-                processing_time_ms=(time.time() - start_time) * 1000
+                processing_time_ms=(time.time() - start_time) * 1000,
             )
 
-    async def predict_batch_matches(
-        self,
-        batch_request: BatchPredictionRequest
-    ) -> BatchPredictionResponse:
+    async def predict_batch_matches(self, batch_request: BatchPredictionRequest) -> BatchPredictionResponse:
         """批量比赛预测 - 高并发优化"""
         if not self._initialized:
             raise RuntimeError("推理服务未初始化")
@@ -270,6 +261,7 @@ class CoreInferenceService(ServiceLifecycle):
 
         # 并发预测（避免过度并发导致资源耗尽）
         import asyncio
+
         semaphore = asyncio.Semaphore(10)  # 限制并发数
 
         async def predict_with_semaphore(request: PredictionRequest) -> PredictionResponse:
@@ -284,9 +276,7 @@ class CoreInferenceService(ServiceLifecycle):
         for i, result in enumerate(results):
             if isinstance(result, Exception):
                 error_response = PredictionResponse(
-                    success=False,
-                    match_id=batch_request.requests[i].match_id,
-                    error=str(result)
+                    success=False, match_id=batch_request.requests[i].match_id, error=str(result)
                 )
                 responses.append(error_response)
                 errors.append(f"预测{i+1}失败: {result}")
@@ -304,7 +294,7 @@ class CoreInferenceService(ServiceLifecycle):
             success_count=success_count,
             failed_count=failed_count,
             processing_time_ms=(time.time() - start_time) * 1000,
-            errors=errors
+            errors=errors,
         )
 
     def _extract_features(self, request: PredictionRequest) -> Dict[str, Any]:
@@ -320,21 +310,20 @@ class CoreInferenceService(ServiceLifecycle):
         }
 
         # 模拟更复杂的特征（实际应该从特征工程服务获取）
-        features.update({
-            "elo_difference": 0,  # 从历史数据计算
-            "home_form_avg": 1.0,  # 从历史数据计算
-            "away_form_avg": 0.8,  # 从历史数据计算
-            "h2h_advantage": 0.1,  # 从历史数据计算
-            "venue_advantage": 0.05,  # 从场地数据计算
-        })
+        features.update(
+            {
+                "elo_difference": 0,  # 从历史数据计算
+                "home_form_avg": 1.0,  # 从历史数据计算
+                "away_form_avg": 0.8,  # 从历史数据计算
+                "h2h_advantage": 0.1,  # 从历史数据计算
+                "venue_advantage": 0.05,  # 从场地数据计算
+            }
+        )
 
         return features
 
     def _build_response(
-        self,
-        request: PredictionRequest,
-        prediction_result: Dict[str, Any],
-        start_time: float
+        self, request: PredictionRequest, prediction_result: Dict[str, Any], start_time: float
     ) -> PredictionResponse:
         """构建预测响应 - 完整类型安全"""
 
@@ -353,13 +342,17 @@ class CoreInferenceService(ServiceLifecycle):
             probabilities=probabilities,
             confidence=confidence,
             features=features if request.include_features else None,
-            metadata={
-                **metadata,
-                "processing_time_ms": (time.time() - start_time) * 1000,
-                "model_version": "core_inference_v1",
-                "request_timestamp": datetime.now().isoformat(),
-            } if request.include_metadata else None,
-            processing_time_ms=(time.time() - start_time) * 1000
+            metadata=(
+                {
+                    **metadata,
+                    "processing_time_ms": (time.time() - start_time) * 1000,
+                    "model_version": "core_inference_v1",
+                    "request_timestamp": datetime.now().isoformat(),
+                }
+                if request.include_metadata
+                else None
+            ),
+            processing_time_ms=(time.time() - start_time) * 1000,
         )
 
         return response
@@ -409,8 +402,7 @@ class CoreInferenceService(ServiceLifecycle):
 
 # 便捷函数
 async def create_core_inference_service(
-    model_service: ModelProtocol,
-    cache_service: Optional[Any] = None
+    model_service: ModelProtocol, cache_service: Optional[Any] = None
 ) -> CoreInferenceService:
     """创建核心推理服务实例"""
     service = CoreInferenceService(model_service, cache_service)
@@ -419,27 +411,11 @@ async def create_core_inference_service(
 
 
 # 类型安全的工厂函数
-def create_prediction_request(
-    match_id: str,
-    home_team: str,
-    away_team: str,
-    **kwargs
-) -> PredictionRequest:
+def create_prediction_request(match_id: str, home_team: str, away_team: str, **kwargs) -> PredictionRequest:
     """创建预测请求 - 类型安全"""
-    return PredictionRequest(
-        match_id=match_id,
-        home_team=home_team,
-        away_team=away_team,
-        **kwargs
-    )
+    return PredictionRequest(match_id=match_id, home_team=home_team, away_team=away_team, **kwargs)
 
 
-def create_batch_request(
-    requests: List[PredictionRequest],
-    batch_id: Optional[str] = None
-) -> BatchPredictionRequest:
+def create_batch_request(requests: List[PredictionRequest], batch_id: Optional[str] = None) -> BatchPredictionRequest:
     """创建批量预测请求 - 类型安全"""
-    return BatchPredictionRequest(
-        requests=requests,
-        batch_id=batch_id
-    )
+    return BatchPredictionRequest(requests=requests, batch_id=batch_id)

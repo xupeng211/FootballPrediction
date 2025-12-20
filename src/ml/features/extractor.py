@@ -34,6 +34,7 @@ from .venue_analyzer import VenueAnalyzer
 
 # 导入足球业务逻辑常量
 from ...constants import SCORING, FOOTBALL, MATH, VALIDATOR, STATISTICAL, PROBABILITY
+
 VALIDATION = VALIDATOR  # 创建别名以兼容现有代码
 
 logger = logging.getLogger(__name__)
@@ -114,9 +115,7 @@ class MatchFeatureSet:
         for name, value in self.features.items():
             try:
                 # 将 float 转换为高精度 Decimal
-                decimal_features[name] = Decimal(str(value)).quantize(
-                    Decimal("0.000001"), rounding=ROUND_HALF_UP
-                )
+                decimal_features[name] = Decimal(str(value)).quantize(Decimal("0.000001"), rounding=ROUND_HALF_UP)
             except (ValueError, TypeError):
                 # 处理异常值
                 decimal_features[name] = Decimal("0")
@@ -204,16 +203,12 @@ class MatchFeatureExtractor:
         self.venue_analyzer = venue_analyzer or VenueAnalyzer()
 
         # 使用业务常量替代魔法数字
-        self.min_history_days = min_history_days or int(
-            STATISTICAL.MEDIUM_TERM_WINDOW * 3
-        )  # 15天
+        self.min_history_days = min_history_days or int(STATISTICAL.MEDIUM_TERM_WINDOW * 3)  # 15天
         self.max_history_days = max_history_days or 365  # 一年
 
         # 验证配置合理性
         if self.min_history_days >= self.max_history_days:
-            raise ValueError(
-                f"最小历史天数({self.min_history_days})不能大于等于最大历史天数({self.max_history_days})"
-            )
+            raise ValueError(f"最小历史天数({self.min_history_days})不能大于等于最大历史天数({self.max_history_days})")
 
         self.feature_weights = feature_weights or {}
         self.precision_context = precision_context
@@ -269,9 +264,7 @@ class MatchFeatureExtractor:
             self.logger.info(f"开始提取比赛 {match_id} 的特征")
 
             # 1. 提取H2H特征
-            h2h_features = await self._extract_h2h_features(
-                home_team_id, away_team_id, historical_matches, match_date
-            )
+            h2h_features = await self._extract_h2h_features(home_team_id, away_team_id, historical_matches, match_date)
 
             # 2. 提取场馆特征
             venue_features = await self._extract_venue_features(
@@ -303,14 +296,10 @@ class MatchFeatureExtractor:
 
             # 生成特征向量
             feature_names = self._get_feature_names()
-            feature_vector = self._create_feature_vector(
-                weighted_features, feature_names
-            )
+            feature_vector = self._create_feature_vector(weighted_features, feature_names)
 
             # 计算特征完整性
-            feature_completeness = self._calculate_feature_completeness(
-                weighted_features
-            )
+            feature_completeness = self._calculate_feature_completeness(weighted_features)
 
             # 创建特征集合
             feature_set = MatchFeatureSet(
@@ -330,9 +319,7 @@ class MatchFeatureExtractor:
             )
 
             extraction_time = (datetime.now() - start_time).total_seconds()
-            self.logger.info(
-                f"特征提取完成，耗时 {extraction_time:.2f}秒，特征数: {len(weighted_features)}"
-            )
+            self.logger.info(f"特征提取完成，耗时 {extraction_time:.2f}秒，特征数: {len(weighted_features)}")
 
             return feature_set
 
@@ -417,26 +404,14 @@ class MatchFeatureExtractor:
             # 从VenueStats提取特征
             features.update(
                 {
-                    "home_venue_goals_rolling_3": float(
-                        venue_stats.home_goals_rolling_3
-                    ),
-                    "home_venue_goals_rolling_5": float(
-                        venue_stats.home_goals_rolling_5
-                    ),
-                    "away_venue_goals_rolling_3": float(
-                        venue_stats.away_goals_rolling_3
-                    ),
-                    "away_venue_goals_rolling_5": float(
-                        venue_stats.away_goals_rolling_5
-                    ),
+                    "home_venue_goals_rolling_3": float(venue_stats.home_goals_rolling_3),
+                    "home_venue_goals_rolling_5": float(venue_stats.home_goals_rolling_5),
+                    "away_venue_goals_rolling_3": float(venue_stats.away_goals_rolling_3),
+                    "away_venue_goals_rolling_5": float(venue_stats.away_goals_rolling_5),
                     "home_venue_advantage_3": float(venue_stats.home_advantage_3),
                     "home_venue_advantage_5": float(venue_stats.home_advantage_5),
-                    "venue_home_vs_away_diff_3": float(
-                        venue_stats.home_away_goal_diff_3
-                    ),
-                    "venue_home_vs_away_diff_5": float(
-                        venue_stats.home_away_goal_diff_5
-                    ),
+                    "venue_home_vs_away_diff_3": float(venue_stats.home_away_goal_diff_3),
+                    "venue_home_vs_away_diff_5": float(venue_stats.home_away_goal_diff_5),
                 }
             )
 
@@ -470,9 +445,7 @@ class MatchFeatureExtractor:
 
             # 计算最近5场比赛的形态
             for team_id, prefix in [(home_team_id, "home"), (away_team_id, "away")]:
-                team_matches = self._get_recent_matches(
-                    team_id, historical_matches, match_date, 5
-                )
+                team_matches = self._get_recent_matches(team_id, historical_matches, match_date, 5)
 
                 if not team_matches.empty:
                     # 计算形态指标
@@ -481,27 +454,13 @@ class MatchFeatureExtractor:
                     features.update(
                         {
                             f"{prefix}_recent_matches": float(len(team_matches)),
-                            f"{prefix}_recent_win_rate": float(
-                                recent_form.get("win_rate", 0.0)
-                            ),
-                            f"{prefix}_recent_draw_rate": float(
-                                recent_form.get("draw_rate", 0.0)
-                            ),
-                            f"{prefix}_recent_loss_rate": float(
-                                recent_form.get("loss_rate", 0.0)
-                            ),
-                            f"{prefix}_recent_avg_goals_scored": float(
-                                recent_form.get("avg_goals_scored", 0.0)
-                            ),
-                            f"{prefix}_recent_avg_goals_conceded": float(
-                                recent_form.get("avg_goals_conceded", 0.0)
-                            ),
-                            f"{prefix}_recent_points_per_game": float(
-                                recent_form.get("points_per_game", 0.0)
-                            ),
-                            f"{prefix}_recent_momentum": float(
-                                recent_form.get("momentum", 0.0)
-                            ),  # 近期趋势
+                            f"{prefix}_recent_win_rate": float(recent_form.get("win_rate", 0.0)),
+                            f"{prefix}_recent_draw_rate": float(recent_form.get("draw_rate", 0.0)),
+                            f"{prefix}_recent_loss_rate": float(recent_form.get("loss_rate", 0.0)),
+                            f"{prefix}_recent_avg_goals_scored": float(recent_form.get("avg_goals_scored", 0.0)),
+                            f"{prefix}_recent_avg_goals_conceded": float(recent_form.get("avg_goals_conceded", 0.0)),
+                            f"{prefix}_recent_points_per_game": float(recent_form.get("points_per_game", 0.0)),
+                            f"{prefix}_recent_momentum": float(recent_form.get("momentum", 0.0)),  # 近期趋势
                         }
                     )
                 else:
@@ -557,15 +516,9 @@ class MatchFeatureExtractor:
                         "home_league_position": float(home_rank.get("position", 20)),
                         "home_league_points": float(home_rank.get("points", 0)),
                         "home_league_goals_for": float(home_rank.get("goals_for", 0)),
-                        "home_league_goals_against": float(
-                            home_rank.get("goals_against", 0)
-                        ),
-                        "home_league_goal_difference": float(
-                            home_rank.get("goal_difference", 0)
-                        ),
-                        "home_league_matches_played": float(
-                            home_rank.get("matches_played", 0)
-                        ),
+                        "home_league_goals_against": float(home_rank.get("goals_against", 0)),
+                        "home_league_goal_difference": float(home_rank.get("goal_difference", 0)),
+                        "home_league_matches_played": float(home_rank.get("matches_played", 0)),
                     }
                 )
 
@@ -576,15 +529,9 @@ class MatchFeatureExtractor:
                         "away_league_position": float(away_rank.get("position", 20)),
                         "away_league_points": float(away_rank.get("points", 0)),
                         "away_league_goals_for": float(away_rank.get("goals_for", 0)),
-                        "away_league_goals_against": float(
-                            away_rank.get("goals_against", 0)
-                        ),
-                        "away_league_goal_difference": float(
-                            away_rank.get("goal_difference", 0)
-                        ),
-                        "away_league_matches_played": float(
-                            away_rank.get("matches_played", 0)
-                        ),
+                        "away_league_goals_against": float(away_rank.get("goals_against", 0)),
+                        "away_league_goal_difference": float(away_rank.get("goal_difference", 0)),
+                        "away_league_matches_played": float(away_rank.get("matches_played", 0)),
                     }
                 )
 
@@ -592,16 +539,10 @@ class MatchFeatureExtractor:
             if not home_stats.empty and not away_stats.empty:
                 features.update(
                     {
-                        "position_difference": float(
-                            home_rank.get("position", 20)
-                            - away_rank.get("position", 20)
-                        ),
-                        "points_difference": float(
-                            home_rank.get("points", 0) - away_rank.get("points", 0)
-                        ),
+                        "position_difference": float(home_rank.get("position", 20) - away_rank.get("position", 20)),
+                        "points_difference": float(home_rank.get("points", 0) - away_rank.get("points", 0)),
                         "goal_difference_difference": float(
-                            home_rank.get("goal_difference", 0)
-                            - away_rank.get("goal_difference", 0)
+                            home_rank.get("goal_difference", 0) - away_rank.get("goal_difference", 0)
                         ),
                     }
                 )
@@ -631,10 +572,7 @@ class MatchFeatureExtractor:
         """获取球队最近的比赛"""
         team_matches = (
             historical_matches[
-                (
-                    (historical_matches["home_team_id"] == team_id)
-                    | (historical_matches["away_team_id"] == team_id)
-                )
+                ((historical_matches["home_team_id"] == team_id) | (historical_matches["away_team_id"] == team_id))
                 & (historical_matches["match_date"] < match_date)
             ]
             .sort_values("match_date", ascending=False)
@@ -643,9 +581,7 @@ class MatchFeatureExtractor:
 
         return team_matches
 
-    def _calculate_recent_form(
-        self, team_matches: pd.DataFrame, team_id: int
-    ) -> Dict[str, float]:
+    def _calculate_recent_form(self, team_matches: pd.DataFrame, team_id: int) -> Dict[str, float]:
         """
         计算球队近期形态 (金融级精度版本)
 
@@ -694,9 +630,7 @@ class MatchFeatureExtractor:
 
             for i, (_, match) in enumerate(team_matches.iterrows()):
                 # 使用业务常量进行权重分配
-                weight = (
-                    momentum_weights[i] if i < len(momentum_weights) else Decimal("1")
-                )
+                weight = momentum_weights[i] if i < len(momentum_weights) else Decimal("1")
                 recent_weight_sum += weight
 
                 # 数据有效性检查
@@ -706,12 +640,8 @@ class MatchFeatureExtractor:
 
                 # 精确提取比赛数据
                 is_home = match["home_team_id"] == team_id
-                team_score = Decimal(
-                    str(match["home_score"] if is_home else match["away_score"])
-                )
-                opponent_score = Decimal(
-                    str(match["away_score"] if is_home else match["home_score"])
-                )
+                team_score = Decimal(str(match["home_score"] if is_home else match["away_score"]))
+                opponent_score = Decimal(str(match["away_score"] if is_home else match["home_score"]))
 
                 # 累计进球统计
                 goals_scored += team_score
@@ -733,30 +663,16 @@ class MatchFeatureExtractor:
 
             # 金融级安全除法计算
             if total_matches > 0:
-                win_rate = MATH.safe_divide(
-                    wins, total_matches, SCORING.SMOOTHING_EPSILON
-                )
-                draw_rate = MATH.safe_divide(
-                    draws, total_matches, SCORING.SMOOTHING_EPSILON
-                )
-                loss_rate = MATH.safe_divide(
-                    losses, total_matches, SCORING.SMOOTHING_EPSILON
-                )
-                avg_goals_scored = MATH.safe_divide(
-                    goals_scored, total_matches, SCORING.SMOOTHING_EPSILON
-                )
-                avg_goals_conceded = MATH.safe_divide(
-                    goals_conceded, total_matches, SCORING.SMOOTHING_EPSILON
-                )
-                points_per_game = MATH.safe_divide(
-                    total_points, total_matches, SCORING.SMOOTHING_EPSILON
-                )
+                win_rate = MATH.safe_divide(wins, total_matches, SCORING.SMOOTHING_EPSILON)
+                draw_rate = MATH.safe_divide(draws, total_matches, SCORING.SMOOTHING_EPSILON)
+                loss_rate = MATH.safe_divide(losses, total_matches, SCORING.SMOOTHING_EPSILON)
+                avg_goals_scored = MATH.safe_divide(goals_scored, total_matches, SCORING.SMOOTHING_EPSILON)
+                avg_goals_conceded = MATH.safe_divide(goals_conceded, total_matches, SCORING.SMOOTHING_EPSILON)
+                points_per_game = MATH.safe_divide(total_points, total_matches, SCORING.SMOOTHING_EPSILON)
 
                 # 动量计算：考虑权重分布的归一化
                 if recent_weight_sum > 0:
-                    momentum = MATH.safe_divide(
-                        momentum, recent_weight_sum, SCORING.SMOOTHING_EPSILON
-                    )
+                    momentum = MATH.safe_divide(momentum, recent_weight_sum, SCORING.SMOOTHING_EPSILON)
                 else:
                     momentum = Decimal("0")
             else:
@@ -764,12 +680,8 @@ class MatchFeatureExtractor:
                 win_rate = SCORING.DEFAULT_H2H_WIN_RATE  # 0.5
                 draw_rate = SCORING.DEFAULT_H2H_DRAW_RATE  # 0.25
                 loss_rate = SCORING.DEFAULT_H2H_LOSS_RATE  # 0.25
-                avg_goals_scored = SCORING.DEFAULT_AVG_TOTAL_GOALS / Decimal(
-                    "2"
-                )  # 1.25
-                avg_goals_conceded = SCORING.DEFAULT_AVG_TOTAL_GOALS / Decimal(
-                    "2"
-                )  # 1.25
+                avg_goals_scored = SCORING.DEFAULT_AVG_TOTAL_GOALS / Decimal("2")  # 1.25
+                avg_goals_conceded = SCORING.DEFAULT_AVG_TOTAL_GOALS / Decimal("2")  # 1.25
                 points_per_game = Decimal("1")  # 平均每场1分
                 momentum = Decimal("0")
 
@@ -787,9 +699,7 @@ class MatchFeatureExtractor:
             # 验证概率总和
             prob_sum = win_rate + draw_rate + loss_rate
             if abs(float(prob_sum) - 1.0) > float(PROBABILITY.PROBABILITY_EPSILON * 10):
-                self.logger.warning(
-                    f"形态概率总和不等于1: {prob_sum} (队伍: {team_id})"
-                )
+                self.logger.warning(f"形态概率总和不等于1: {prob_sum} (队伍: {team_id})")
 
             # 验证数值范围
             for name, value in stats.items():
@@ -856,9 +766,7 @@ class MatchFeatureExtractor:
 
             return weighted_features
 
-    def apply_precision_weights_high(
-        self, features: Dict[str, float]
-    ) -> Dict[str, float]:
+    def apply_precision_weights_high(self, features: Dict[str, float]) -> Dict[str, float]:
         """
         应用高精度权重计算 (新增方法)
 
@@ -885,9 +793,7 @@ class MatchFeatureExtractor:
                 weighted_value = decimal_value * weight
 
                 # 金融级舍入
-                weighted_value = weighted_value.quantize(
-                    Decimal("0.000001"), rounding=ROUND_HALF_UP
-                )
+                weighted_value = weighted_value.quantize(Decimal("0.000001"), rounding=ROUND_HALF_UP)
 
                 weighted_features[name] = float(weighted_value)
 
@@ -974,9 +880,7 @@ class MatchFeatureExtractor:
 
         return self._feature_names_cache
 
-    def _create_feature_vector(
-        self, features: Dict[str, float], feature_names: List[str]
-    ) -> np.ndarray[Any, Any]:
+    def _create_feature_vector(self, features: Dict[str, float], feature_names: List[str]) -> np.ndarray[Any, Any]:
         """创建特征向量"""
         vector = []
         for name in feature_names:
@@ -996,9 +900,7 @@ class MatchFeatureExtractor:
     # 默认特征方法
     def _get_default_h2h_features(self) -> Dict[str, float]:
         """获取默认H2H特征"""
-        return {
-            name: 0.0 for name in self._get_feature_names() if name.startswith("h2h_")
-        }
+        return {name: 0.0 for name in self._get_feature_names() if name.startswith("h2h_")}
 
     def _get_default_venue_features(self) -> Dict[str, float]:
         """获取默认场馆特征"""
@@ -1013,10 +915,7 @@ class MatchFeatureExtractor:
         return {
             name: 0.0
             for name in self._get_feature_names()
-            if any(
-                x in name
-                for x in ["league", "position_difference", "points_difference"]
-            )
+            if any(x in name for x in ["league", "position_difference", "points_difference"])
         }
 
     async def extract_batch_features(
@@ -1040,9 +939,7 @@ class MatchFeatureExtractor:
 
         for match_data in matches_data:
             try:
-                feature_set = await self.extract_features(
-                    match_data, historical_matches, team_stats
-                )
+                feature_set = await self.extract_features(match_data, historical_matches, team_stats)
                 feature_sets.append(feature_set)
             except Exception as e:
                 self.logger.error(f"比赛 {match_data.get('id')} 特征提取失败: {str(e)}")
@@ -1072,9 +969,7 @@ class MatchFeatureExtractor:
             "h2h": len([n for n in feature_names if n.startswith("h2h_")]),
             "venue": len([n for n in feature_names if "venue" in n]),
             "form": len([n for n in feature_names if "recent" in n]),
-            "ranking": len(
-                [n for n in feature_names if "league" in n or "difference" in n]
-            ),
+            "ranking": len([n for n in feature_names if "league" in n or "difference" in n]),
         }
 
         # 计算精度质量指标
@@ -1126,9 +1021,7 @@ class MatchFeatureExtractor:
 
             # 精度上下文评分
             context_scores = {"high": 1.0, "medium": 0.8, "low": 0.6}
-            quality_scores["precision_context_score"] = context_scores.get(
-                self.precision_context, 0.5
-            )
+            quality_scores["precision_context_score"] = context_scores.get(self.precision_context, 0.5)
 
             # 计算稳定性评分
             try:
@@ -1143,10 +1036,9 @@ class MatchFeatureExtractor:
                     initial_weighted = self._apply_feature_weights(initial)
                     perturbed_weighted = self._apply_feature_weights(perturbed)
 
-                    change_ratio = abs(
-                        perturbed_weighted["test_feature"]
-                        - initial_weighted["test_feature"]
-                    ) / (abs(initial_weighted["test_feature"]) + 1e-10)
+                    change_ratio = abs(perturbed_weighted["test_feature"] - initial_weighted["test_feature"]) / (
+                        abs(initial_weighted["test_feature"]) + 1e-10
+                    )
 
                     stability_scores.append(min(1.0, 1.0 - change_ratio))
 
@@ -1191,7 +1083,6 @@ class MatchFeatureExtractor:
         return {
             "weights_valid": all(-10 <= w <= 10 for w in self.feature_weights.values()),
             "history_range_valid": self.min_history_days < self.max_history_days,
-            "precision_context_valid": self.precision_context
-            in ["high", "medium", "low"],
+            "precision_context_valid": self.precision_context in ["high", "medium", "low"],
             "features_configured": len(self._get_feature_names()) > 0,
         }

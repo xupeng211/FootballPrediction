@@ -104,16 +104,12 @@ class EnhancedDatabaseManager(DatabaseManager):
 
             await session.close()
 
-    async def execute_query_with_stats(
-        self, query: str, params: Dict = None, use_cache: bool = True
-    ):
+    async def execute_query_with_stats(self, query: str, params: Dict = None, use_cache: bool = True):
         """
         执行带有统计和缓存的查询
         """
         if self.db_optimizer:
-            return await self.db_optimizer.execute_query(
-                query, params, use_cache=use_cache
-            )
+            return await self.db_optimizer.execute_query(query, params, use_cache=use_cache)
         else:
             # 降级到标准查询
             async with self.get_async_session_with_stats() as session:
@@ -186,9 +182,7 @@ class EnhancedDatabaseManager(DatabaseManager):
         """更新查询统计信息"""
         self.query_stats["total_queries"] += 1
         self.query_stats["total_time"] += execution_time
-        self.query_stats["avg_time"] = (
-            self.query_stats["total_time"] / self.query_stats["total_queries"]
-        )
+        self.query_stats["avg_time"] = self.query_stats["total_time"] / self.query_stats["total_queries"]
 
     async def cleanup(self):
         """清理资源"""

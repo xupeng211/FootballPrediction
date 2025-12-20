@@ -144,19 +144,13 @@ class BaseXGBoostTrainer(ABC):
             metrics.training_time_seconds = time.time() - start_time
             metrics.model_params = params
 
-            self.logger.info(
-                f"✅ 训练完成，耗时: {metrics.training_time_seconds:.2f}秒"
-            )
+            self.logger.info(f"✅ 训练完成，耗时: {metrics.training_time_seconds:.2f}秒")
 
-            return TrainingResult(
-                model=self.model, metrics=metrics, status="success", message="训练成功"
-            )
+            return TrainingResult(model=self.model, metrics=metrics, status="success", message="训练成功")
 
         except Exception as e:
             self.logger.error(f"❌ 训练失败: {e}")
-            return TrainingResult(
-                model=None, metrics=TrainingMetrics(), status="failed", message=str(e)
-            )
+            return TrainingResult(model=None, metrics=TrainingMetrics(), status="failed", message=str(e))
 
     # === 模板方法步骤 (可被子类重写) ===
 
@@ -206,9 +200,7 @@ class BaseXGBoostTrainer(ABC):
             return [(X_train, y_train), (X_val, y_val)]
         return None
 
-    def _execute_training(
-        self, X_train: pd.DataFrame, y_train: pd.Series, eval_set: Optional[list]
-    ) -> None:
+    def _execute_training(self, X_train: pd.DataFrame, y_train: pd.Series, eval_set: Optional[list]) -> None:
         """执行训练"""
         self.model.fit(
             X_train,
@@ -359,9 +351,7 @@ class HyperparameterOptimizationTrainer(BaseXGBoostTrainer):
 
         self.logger.info(f"✅ 超参数优化完成，最佳得分: {best_score:.4f}")
 
-    def _evaluate_params_with_cv(
-        self, params: Dict[str, Any], X: pd.DataFrame, y: pd.Series
-    ) -> float:
+    def _evaluate_params_with_cv(self, params: Dict[str, Any], X: pd.DataFrame, y: pd.Series) -> float:
         """使用交叉验证评估参数"""
         if X is None or y is None:
             return 0.0
@@ -380,9 +370,7 @@ class HyperparameterOptimizationTrainer(BaseXGBoostTrainer):
             temp_model = xgb.XGBClassifier(**temp_params)
 
             # 交叉验证
-            cv = StratifiedKFold(
-                n_splits=3, shuffle=True, random_state=self.config.random_state
-            )
+            cv = StratifiedKFold(n_splits=3, shuffle=True, random_state=self.config.random_state)
             scores = []
 
             for train_idx, val_idx in cv.split(X, y):
@@ -434,9 +422,7 @@ class EnhancedXGBoostTrainer(BaseXGBoostTrainer):
             "min_child_weight": 3,
         }
 
-    def _execute_training(
-        self, X_train: pd.DataFrame, y_train: pd.Series, eval_set: Optional[list]
-    ) -> None:
+    def _execute_training(self, X_train: pd.DataFrame, y_train: pd.Series, eval_set: Optional[list]) -> None:
         """执行增强训练"""
         # 特征分析
         if self.feature_analyzer is None:
@@ -474,9 +460,7 @@ class UnifiedXGBoostTrainingFactory:
     """
 
     @staticmethod
-    def create_trainer(
-        training_type: str = "basic", config: Optional[TrainingConfig] = None
-    ) -> BaseXGBoostTrainer:
+    def create_trainer(training_type: str = "basic", config: Optional[TrainingConfig] = None) -> BaseXGBoostTrainer:
         """
         创建训练器
 
@@ -494,9 +478,7 @@ class UnifiedXGBoostTrainingFactory:
         }
 
         if training_type not in trainers:
-            raise ValueError(
-                f"未知的训练类型: {training_type}，可用选项: {list(trainers.keys())}"
-            )
+            raise ValueError(f"未知的训练类型: {training_type}，可用选项: {list(trainers.keys())}")
 
         return trainers[training_type](config)
 

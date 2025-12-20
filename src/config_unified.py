@@ -33,6 +33,7 @@ logger = logging.getLogger(__name__)
 
 class Environment(str, Enum):
     """环境枚举"""
+
     DEVELOPMENT = "development"
     TESTING = "testing"
     STAGING = "staging"
@@ -41,6 +42,7 @@ class Environment(str, Enum):
 
 class LogLevel(str, Enum):
     """日志级别枚举"""
+
     DEBUG = "DEBUG"
     INFO = "INFO"
     WARNING = "WARNING"
@@ -51,6 +53,7 @@ class LogLevel(str, Enum):
 @dataclass
 class DatabaseConfig:
     """数据库配置"""
+
     host: str
     port: int
     name: str
@@ -74,6 +77,7 @@ class DatabaseConfig:
 @dataclass
 class RedisConfig:
     """Redis配置"""
+
     host: str
     port: int
     db: int = 0
@@ -94,6 +98,7 @@ class RedisConfig:
 @dataclass
 class FotMobAPIConfig:
     """FotMob API配置"""
+
     base_url: str = "https://www.fotmob.com/api"
     headers: Dict[str, str] = field(default_factory=dict)
     timeout: int = 30
@@ -125,16 +130,18 @@ class UnifiedSettings(BaseSettings):
 
         if docker_env:
             # Docker环境自动配置
-            env_config.update({
-                "db_host": "db",
-                "db_port": int(os.getenv("DB_PORT", 5432)),
-                "db_name": os.getenv("DB_NAME", "football_prediction"),
-                "db_user": os.getenv("DB_USER", "football_user"),
-                "db_password": os.getenv("DB_PASSWORD", "football_pass"),
-                "redis_host": os.getenv("REDIS_HOST", "redis"),
-                "redis_port": int(os.getenv("REDIS_PORT", 6379)),
-                "environment": "monitoring" if monitoring_mode else "production"
-            })
+            env_config.update(
+                {
+                    "db_host": "db",
+                    "db_port": int(os.getenv("DB_PORT", 5432)),
+                    "db_name": os.getenv("DB_NAME", "football_prediction"),
+                    "db_user": os.getenv("DB_USER", "football_user"),
+                    "db_password": os.getenv("DB_PASSWORD", "football_pass"),
+                    "redis_host": os.getenv("REDIS_HOST", "redis"),
+                    "redis_port": int(os.getenv("REDIS_PORT", 6379)),
+                    "environment": "monitoring" if monitoring_mode else "production",
+                }
+            )
 
         # 自动注入所有FOOTBALL_前缀的环境变量
         for key, value in os.environ.items():
@@ -155,188 +162,86 @@ class UnifiedSettings(BaseSettings):
         super().__init__(**auto_env)
 
     # === 环境配置 ===
-    environment: Environment = Field(
-        default=Environment.DEVELOPMENT,
-        description="运行环境"
-    )
+    environment: Environment = Field(default=Environment.DEVELOPMENT, description="运行环境")
 
-    debug: bool = Field(
-        default=False,
-        description="调试模式"
-    )
+    debug: bool = Field(default=False, description="调试模式")
 
-    log_level: LogLevel = Field(
-        default=LogLevel.INFO,
-        description="日志级别"
-    )
+    log_level: LogLevel = Field(default=LogLevel.INFO, description="日志级别")
 
     # === 应用配置 ===
-    app_name: str = Field(
-        default="Football Prediction System",
-        description="应用名称"
-    )
+    app_name: str = Field(default="Football Prediction System", description="应用名称")
 
-    app_version: str = Field(
-        default="1.0.0",
-        description="应用版本"
-    )
+    app_version: str = Field(default="1.0.0", description="应用版本")
 
-    host: str = Field(
-        default="0.0.0.0",
-        description="服务监听地址"
-    )
+    host: str = Field(default="0.0.0.0", description="服务监听地址")
 
-    port: int = Field(
-        default=8000,
-        description="服务端口"
-    )
+    port: int = Field(default=8000, description="服务端口")
 
-    workers: int = Field(
-        default=1,
-        description="工作进程数"
-    )
+    workers: int = Field(default=1, description="工作进程数")
 
     # === 安全配置 ===
-    secret_key: SecretStr = Field(
-        default="dev-secret-key-2024-production-ready",
-        description="应用密钥"
-    )
+    secret_key: SecretStr = Field(default="dev-secret-key-2024-production-ready", description="应用密钥")
 
-    allowed_hosts: List[str] = Field(
-        default=["localhost", "127.0.0.1"],
-        description="允许的主机列表"
-    )
+    allowed_hosts: List[str] = Field(default=["localhost", "127.0.0.1"], description="允许的主机列表")
 
     cors_origins: List[str] = Field(
-        default=["http://localhost:3000", "http://localhost:8080"],
-        description="CORS允许的源"
+        default=["http://localhost:3000", "http://localhost:8080"], description="CORS允许的源"
     )
 
     # === 数据库配置 ===
-    db_host: str = Field(
-        default="localhost",
-        description="数据库主机"
-    )
+    db_host: str = Field(default="localhost", description="数据库主机")
 
-    db_port: int = Field(
-        default=5432,
-        description="数据库端口"
-    )
+    db_port: int = Field(default=5432, description="数据库端口")
 
-    db_name: str = Field(
-        default="football_prediction",
-        description="数据库名称"
-    )
+    db_name: str = Field(default="football_prediction", description="数据库名称")
 
-    db_user: str = Field(
-        default="football_user",
-        description="数据库用户名"
-    )
+    db_user: str = Field(default="football_user", description="数据库用户名")
 
-    db_password: SecretStr = Field(
-        description="数据库密码"
-    )
+    db_password: SecretStr = Field(description="数据库密码")
 
-    db_ssl_mode: bool = Field(
-        default=False,
-        description="数据库SSL模式"
-    )
+    db_ssl_mode: bool = Field(default=False, description="数据库SSL模式")
 
-    db_pool_size: int = Field(
-        default=10,
-        description="数据库连接池大小"
-    )
+    db_pool_size: int = Field(default=10, description="数据库连接池大小")
 
     # === Redis配置 ===
-    redis_host: str = Field(
-        default="localhost",
-        description="Redis主机"
-    )
+    redis_host: str = Field(default="localhost", description="Redis主机")
 
-    redis_port: int = Field(
-        default=6379,
-        description="Redis端口"
-    )
+    redis_port: int = Field(default=6379, description="Redis端口")
 
-    redis_db: int = Field(
-        default=0,
-        description="Redis数据库"
-    )
+    redis_db: int = Field(default=0, description="Redis数据库")
 
-    redis_password: Optional[SecretStr] = Field(
-        default=None,
-        description="Redis密码"
-    )
+    redis_password: Optional[SecretStr] = Field(default=None, description="Redis密码")
 
     # === 外部API配置 ===
-    fotmob_base_url: str = Field(
-        default="https://www.fotmob.com/api",
-        description="FotMob API基础URL"
-    )
+    fotmob_base_url: str = Field(default="https://www.fotmob.com/api", description="FotMob API基础URL")
 
-    fotmob_x_mas_header: Optional[str] = Field(
-        default=None,
-        description="FotMob X-MAS Header"
-    )
+    fotmob_x_mas_header: Optional[str] = Field(default=None, description="FotMob X-MAS Header")
 
-    fotmob_x_foo_header: Optional[str] = Field(
-        default=None,
-        description="FotMob X-FOO Header"
-    )
+    fotmob_x_foo_header: Optional[str] = Field(default=None, description="FotMob X-FOO Header")
 
     # === 模型配置 ===
-    model_path: str = Field(
-        default="models/football_prediction_model.pkl",
-        description="模型文件路径"
-    )
+    model_path: str = Field(default="data/models/xgb_football_v2_real_scores.joblib", description="模型文件路径")
 
-    model_version: str = Field(
-        default="xgboost_v2",
-        description="模型版本"
-    )
+    model_version: str = Field(default="xgboost_v2", description="模型版本")
 
     # === 监控配置 ===
-    enable_metrics: bool = Field(
-        default=True,
-        description="启用指标收集"
-    )
+    enable_metrics: bool = Field(default=True, description="启用指标收集")
 
-    metrics_port: int = Field(
-        default=9090,
-        description="指标端口"
-    )
+    metrics_port: int = Field(default=9090, description="指标端口")
 
-    enable_tracing: bool = Field(
-        default=False,
-        description="启用链路追踪"
-    )
+    enable_tracing: bool = Field(default=False, description="启用链路追踪")
 
     # === 缓存配置 ===
-    cache_ttl_seconds: int = Field(
-        default=300,
-        description="缓存TTL（秒）"
-    )
+    cache_ttl_seconds: int = Field(default=300, description="缓存TTL（秒）")
 
-    cache_max_size: int = Field(
-        default=1000,
-        description="缓存最大条目数"
-    )
+    cache_max_size: int = Field(default=1000, description="缓存最大条目数")
 
     # === 业务配置 ===
-    default_confidence_threshold: float = Field(
-        default=0.6,
-        description="默认置信度阈值"
-    )
+    default_confidence_threshold: float = Field(default=0.6, description="默认置信度阈值")
 
-    max_batch_size: int = Field(
-        default=100,
-        description="最大批量处理大小"
-    )
+    max_batch_size: int = Field(default=100, description="最大批量处理大小")
 
-    prediction_timeout_seconds: int = Field(
-        default=30,
-        description="预测超时时间（秒）"
-    )
+    prediction_timeout_seconds: int = Field(default=30, description="预测超时时间（秒）")
 
     class Config:
         # 禁用.env文件自动加载，避免解析错误
@@ -596,6 +501,7 @@ def is_development() -> bool:
 @dataclass
 class ConfigAccessor:
     """类型安全的配置访问器"""
+
     _settings: UnifiedSettings = field(default_factory=get_settings)
 
     @property
@@ -620,6 +526,8 @@ class ConfigAccessor:
 
 # 全局配置访问器（延迟初始化）
 config = None
+
+
 def get_config() -> ConfigAccessor:
     """获取配置访问器（延迟初始化）"""
     global config

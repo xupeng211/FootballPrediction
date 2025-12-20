@@ -112,13 +112,10 @@ class EloRatingSystem:
         }
 
         logger.info(
-            f"Elo评级系统初始化完成: 初始评分={initial_rating}, "
-            f"主场优势={home_advantage}, K因子={base_k_factor}"
+            f"Elo评级系统初始化完成: 初始评分={initial_rating}, " f"主场优势={home_advantage}, K因子={base_k_factor}"
         )
 
-    def get_team_rating(
-        self, team_id: str, as_of_date: Optional[datetime] = None
-    ) -> float:
+    def get_team_rating(self, team_id: str, as_of_date: Optional[datetime] = None) -> float:
         """
         获取球队Elo评分
 
@@ -225,9 +222,7 @@ class EloRatingSystem:
         old_away_rating = self.team_ratings[away_team_id]
 
         # 计算预期得分
-        expected_home, expected_away, _ = self.calculate_expected_score(
-            home_team_id, away_team_id
-        )
+        expected_home, expected_away, _ = self.calculate_expected_score(home_team_id, away_team_id)
 
         # 确定实际得分
         if home_goals > away_goals:
@@ -241,28 +236,18 @@ class EloRatingSystem:
             actual_away = 0.5
 
         # 计算K因子
-        home_k_factor = home_k_factor_override or self._calculate_k_factor(
-            home_team_id, competition_type
-        )
-        away_k_factor = away_k_factor_override or self._calculate_k_factor(
-            away_team_id, competition_type
-        )
+        home_k_factor = home_k_factor_override or self._calculate_k_factor(home_team_id, competition_type)
+        away_k_factor = away_k_factor_override or self._calculate_k_factor(away_team_id, competition_type)
 
         # 应用净胜球调整
         goal_multiplier = 1.0
         if self.enable_goal_margin:
             goal_diff = abs(home_goals - away_goals)
-            goal_multiplier = self.GOAL_MARGIN_MULTIPLIER.get(
-                min(goal_diff, 5), self.GOAL_MARGIN_MULTIPLIER[5]
-            )
+            goal_multiplier = self.GOAL_MARGIN_MULTIPLIER.get(min(goal_diff, 5), self.GOAL_MARGIN_MULTIPLIER[5])
 
         # 计算评分变化
-        home_rating_change = (
-            home_k_factor * goal_multiplier * (actual_home - expected_home)
-        )
-        away_rating_change = (
-            away_k_factor * goal_multiplier * (actual_away - expected_away)
-        )
+        home_rating_change = home_k_factor * goal_multiplier * (actual_home - expected_home)
+        away_rating_change = away_k_factor * goal_multiplier * (actual_away - expected_away)
 
         # 更新评分
         new_home_rating = old_home_rating + home_rating_change
@@ -356,9 +341,7 @@ class EloRatingSystem:
 
         return base_k
 
-    def _update_statistics(
-        self, home_change: float, away_change: float, match_date: datetime
-    ) -> None:
+    def _update_statistics(self, home_change: float, away_change: float, match_date: datetime) -> None:
         """更新统计信息"""
         self.stats["total_updates"] += 1
 
@@ -394,9 +377,7 @@ class EloRatingSystem:
         cutoff_date = datetime.now() - timedelta(days=days)
 
         # 筛选指定时间范围内的记录
-        recent_history = [
-            (date, rating) for date, rating in history if date >= cutoff_date
-        ]
+        recent_history = [(date, rating) for date, rating in history if date >= cutoff_date]
 
         if len(recent_history) < 2:
             return {"error": f"球队 {team_id} 在过去{days}天内记录不足"}
@@ -427,9 +408,7 @@ class EloRatingSystem:
             "trend_slope": trend_slope,
             "volatility": volatility,
             "current_rating": self.get_team_rating(team_id),
-            "performance_classification": self._classify_performance(
-                change, trend_slope
-            ),
+            "performance_classification": self._classify_performance(change, trend_slope),
         }
 
     def _classify_performance(self, rating_change: float, trend_slope: float) -> str:
@@ -454,9 +433,7 @@ class EloRatingSystem:
         else:
             return "AVERAGE"
 
-    def get_top_teams(
-        self, limit: int = 20, min_matches: int = 10
-    ) -> List[Dict[str, Any]]:
+    def get_top_teams(self, limit: int = 20, min_matches: int = 10) -> List[Dict[str, Any]]:
         """
         获取评分最高的球队
 
@@ -482,9 +459,7 @@ class EloRatingSystem:
                         "current_rating": rating,
                         "match_count": match_count,
                         "rating_change_30d": trend.get("rating_change", 0),
-                        "trend_classification": trend.get(
-                            "performance_classification", "UNKNOWN"
-                        ),
+                        "trend_classification": trend.get("performance_classification", "UNKNOWN"),
                         "volatility": trend.get("volatility", 0),
                     }
                 )
@@ -509,9 +484,7 @@ class EloRatingSystem:
             Dict[str, Any]: 预测结果
         """
         # 获取基本预期
-        expected_home, expected_away, home_win_prob = self.calculate_expected_score(
-            home_team_id, away_team_id
-        )
+        expected_home, expected_away, home_win_prob = self.calculate_expected_score(home_team_id, away_team_id)
 
         # 使用泊松分布模拟进球数
         home_rating = self.get_team_rating(home_team_id)
@@ -540,14 +513,10 @@ class EloRatingSystem:
         score_matrix = np.zeros((6, 6))  # 0-5球的矩阵
         for h_goals in range(6):
             for a_goals in range(6):
-                prob = (np.sum(home_sim == h_goals) * np.sum(away_sim == a_goals)) / (
-                    num_simulations**2
-                )
+                prob = (np.sum(home_sim == h_goals) * np.sum(away_sim == a_goals)) / (num_simulations**2)
                 score_matrix[h_goals, a_goals] = prob
 
-        most_likely_score = np.unravel_index(
-            np.argmax(score_matrix), score_matrix.shape
-        )
+        most_likely_score = np.unravel_index(np.argmax(score_matrix), score_matrix.shape)
 
         return {
             "teams": {
@@ -561,9 +530,7 @@ class EloRatingSystem:
                 "draw": float(draws),
                 "away_win": float(away_wins),
                 "over_2_5": float(np.sum(home_sim + away_sim > 2.5) / num_simulations),
-                "both_teams_score": float(
-                    np.sum((home_sim > 0) & (away_sim > 0)) / num_simulations
-                ),
+                "both_teams_score": float(np.sum((home_sim > 0) & (away_sim > 0)) / num_simulations),
             },
             "expected_goals": {
                 "home": exp_home_goals,
@@ -645,24 +612,10 @@ class EloRatingSystem:
             "statistics": self.stats,
             "team_count": len(self.team_ratings),
             "rating_distribution": {
-                "average": (
-                    np.mean(list(self.team_ratings.values()))
-                    if self.team_ratings
-                    else 0
-                ),
-                "std_dev": (
-                    np.std(list(self.team_ratings.values())) if self.team_ratings else 0
-                ),
-                "min": (
-                    min(self.team_ratings.values())
-                    if self.team_ratings
-                    else self.initial_rating
-                ),
-                "max": (
-                    max(self.team_ratings.values())
-                    if self.team_ratings
-                    else self.initial_rating
-                ),
+                "average": (np.mean(list(self.team_ratings.values())) if self.team_ratings else 0),
+                "std_dev": (np.std(list(self.team_ratings.values())) if self.team_ratings else 0),
+                "min": (min(self.team_ratings.values()) if self.team_ratings else self.initial_rating),
+                "max": (max(self.team_ratings.values()) if self.team_ratings else self.initial_rating),
             },
         }
 

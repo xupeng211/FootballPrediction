@@ -71,12 +71,8 @@ class PerformanceMonitor:
                 existing = self._metrics[function_name]
                 existing.call_count += 1
                 existing.total_time_seconds += metrics.execution_time_seconds
-                existing.avg_time_seconds = (
-                    existing.total_time_seconds / existing.call_count
-                )
-                existing.memory_peak_mb = max(
-                    existing.memory_peak_mb, metrics.memory_peak_mb
-                )
+                existing.avg_time_seconds = existing.total_time_seconds / existing.call_count
+                existing.memory_peak_mb = max(existing.memory_peak_mb, metrics.memory_peak_mb)
                 existing.last_called = metrics.last_called
             else:
                 self._metrics[function_name] = metrics
@@ -253,14 +249,10 @@ async def _monitor_function_execution(
 
         # 性能警告
         if execution_time_ms > 5000:  # 5秒警告阈值
-            logger.warning(
-                f"[PERF WARNING] {function_name} 执行时间过长: {execution_time_ms:.1f}ms"
-            )
+            logger.warning(f"[PERF WARNING] {function_name} 执行时间过长: {execution_time_ms:.1f}ms")
 
         if track_memory and memory_peak > 1024:  # 1GB内存警告阈值
-            logger.warning(
-                f"[PERF WARNING] {function_name} 内存使用过高: {memory_peak:.1f}MB"
-            )
+            logger.warning(f"[PERF WARNING] {function_name} 内存使用过高: {memory_peak:.1f}MB")
 
     # 注意：finally块中的return语句不会影响函数的返回值
     # 这里只是为了监控，实际的返回值在try块中已经返回
@@ -412,9 +404,7 @@ def log_slow_functions(min_time_ms: float = 1000.0) -> None:
     metrics = _global_monitor.get_all_metrics()
 
     slow_functions = [
-        (name, metrics)
-        for name, metrics in metrics.items()
-        if metrics.avg_time_seconds * 1000 >= min_time_ms
+        (name, metrics) for name, metrics in metrics.items() if metrics.avg_time_seconds * 1000 >= min_time_ms
     ]
 
     if slow_functions:
@@ -430,11 +420,7 @@ def log_memory_intensive_functions(threshold_mb: float = 100.0) -> None:
     """记录内存密集函数"""
     metrics = _global_monitor.get_all_metrics()
 
-    memory_intensive = [
-        (name, metrics)
-        for name, metrics in metrics.items()
-        if metrics.memory_peak_mb >= threshold_mb
-    ]
+    memory_intensive = [(name, metrics) for name, metrics in metrics.items() if metrics.memory_peak_mb >= threshold_mb]
 
     if memory_intensive:
         logger.info("💾 内存密集函数统计:")

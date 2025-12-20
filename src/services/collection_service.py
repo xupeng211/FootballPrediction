@@ -115,9 +115,7 @@ def database_transaction(retry_on_deadlock: bool = True, max_retries: int = 3):
                         async with conn.transaction():
 
                             # 将事务上下文传递给被装饰的函数
-                            result = await func(
-                                self, *args, transaction_ctx=transaction_ctx, **kwargs
-                            )
+                            result = await func(self, *args, transaction_ctx=transaction_ctx, **kwargs)
 
                             # 标记事务为已提交
                             transaction_ctx.status = TransactionStatus.COMMITTED
@@ -127,16 +125,10 @@ def database_transaction(retry_on_deadlock: bool = True, max_retries: int = 3):
 
                 except Exception as e:
                     error_msg = str(e)
-                    logger.error(
-                        f"❌ 事务 {transaction_id} 失败 (尝试 {attempt + 1}): {error_msg}"
-                    )
+                    logger.error(f"❌ 事务 {transaction_id} 失败 (尝试 {attempt + 1}): {error_msg}")
 
                     # 检查是否是死锁错误，如果是且允许重试，则重试
-                    if (
-                        retry_on_deadlock
-                        and "deadlock" in error_msg.lower()
-                        and attempt < max_retries
-                    ):
+                    if retry_on_deadlock and "deadlock" in error_msg.lower() and attempt < max_retries:
                         wait_time = (attempt + 1) * 0.1  # 指数退避
                         logger.warning(f"🔄 检测到死锁，{wait_time}s后重试...")
                         await asyncio.sleep(wait_time)
@@ -146,9 +138,7 @@ def database_transaction(retry_on_deadlock: bool = True, max_retries: int = 3):
                     raise e
 
             # 所有重试都失败了
-            raise RuntimeError(
-                f"事务 {transaction_id} 在 {max_retries} 次重试后仍然失败"
-            )
+            raise RuntimeError(f"事务 {transaction_id} 在 {max_retries} 次重试后仍然失败")
 
         return wrapper
 
@@ -202,9 +192,7 @@ class FotMobCollectionTask:
             "status": self.status.value,
             "created_at": self.created_at.isoformat(),
             "started_at": self.started_at.isoformat() if self.started_at else None,
-            "completed_at": (
-                self.completed_at.isoformat() if self.completed_at else None
-            ),
+            "completed_at": (self.completed_at.isoformat() if self.completed_at else None),
             "duration_seconds": self.duration_seconds,
             "retry_count": self.retry_count,
             "max_retries": self.max_retries,
@@ -233,18 +221,10 @@ class CollectionStats:
     def update(self, tasks: List[FotMobCollectionTask]) -> None:
         """更新统计信息"""
         self.total_tasks = len(tasks)
-        self.successful_tasks = len(
-            [t for t in tasks if t.status == CollectionStatus.SUCCESS]
-        )
-        self.failed_tasks = len(
-            [t for t in tasks if t.status == CollectionStatus.FAILED]
-        )
-        self.running_tasks = len(
-            [t for t in tasks if t.status == CollectionStatus.RUNNING]
-        )
-        self.pending_tasks = len(
-            [t for t in tasks if t.status == CollectionStatus.PENDING]
-        )
+        self.successful_tasks = len([t for t in tasks if t.status == CollectionStatus.SUCCESS])
+        self.failed_tasks = len([t for t in tasks if t.status == CollectionStatus.FAILED])
+        self.running_tasks = len([t for t in tasks if t.status == CollectionStatus.RUNNING])
+        self.pending_tasks = len([t for t in tasks if t.status == CollectionStatus.PENDING])
 
         # 计算成功率
         if self.total_tasks > 0:
@@ -253,9 +233,7 @@ class CollectionStats:
         # 计算平均执行时长
         completed_tasks = [t for t in tasks if t.duration_seconds is not None]
         if completed_tasks:
-            self.avg_duration = sum(t.duration_seconds for t in completed_tasks) / len(
-                completed_tasks
-            )
+            self.avg_duration = sum(t.duration_seconds for t in completed_tasks) / len(completed_tasks)
 
         # 统计数据点
         self.total_data_points = sum(t.data_points_collected for t in tasks)
@@ -284,9 +262,7 @@ class CircuitBreaker:
         self.state = "CLOSED"  # CLOSED, OPEN, HALF_OPEN
         self.half_open_calls = 0
 
-        logger.info(
-            f"熔断器初始化: 失败阈值={failure_threshold}, 恢复超时={recovery_timeout}s"
-        )
+        logger.info(f"熔断器初始化: 失败阈值={failure_threshold}, 恢复超时={recovery_timeout}s")
 
     def call_allowed(self) -> bool:
         """检查是否允许调用"""
@@ -416,9 +392,7 @@ class FotMobCollectionService(BaseService):
         except Exception as e:
             self.logger.error(f"❌ FotMob数据收集服务关闭失败: {e}")
 
-    def create_match_collection_task(
-        self, match_id: str, priority: int = 5, task_id: Optional[str] = None
-    ) -> str:
+    def create_match_collection_task(self, match_id: str, priority: int = 5, task_id: Optional[str] = None) -> str:
         """创建比赛数据收集任务"""
         if task_id is None:
             task_id = f"match_{match_id}_{int(time.time())}"
@@ -434,9 +408,7 @@ class FotMobCollectionService(BaseService):
         self.logger.info(f"已创建比赛收集任务: {task_id} (match_id: {match_id})")
         return task_id
 
-    def create_league_collection_task(
-        self, league_id: str, priority: int = 3, task_id: Optional[str] = None
-    ) -> str:
+    def create_league_collection_task(self, league_id: str, priority: int = 3, task_id: Optional[str] = None) -> str:
         """创建联赛数据收集任务"""
         if task_id is None:
             task_id = f"league_{league_id}_{int(time.time())}"
@@ -506,9 +478,7 @@ class FotMobCollectionService(BaseService):
             # 熔断器调用成功
             self.circuit_breaker.call_succeeded()
 
-            self.logger.info(
-                f"✅ 任务执行成功: {task_id} (数据点: {task.data_points_collected})"
-            )
+            self.logger.info(f"✅ 任务执行成功: {task_id} (数据点: {task.data_points_collected})")
             return task.to_dict()
 
         except Exception as e:
@@ -525,9 +495,7 @@ class FotMobCollectionService(BaseService):
             # 如果还有重试机会，则重新调度
             if task.retry_count < task.max_retries:
                 task.status = CollectionStatus.RETRY
-                self.logger.warning(
-                    f"⚠️ 任务将重试: {task_id} (第{task.retry_count + 1}次)"
-                )
+                self.logger.warning(f"⚠️ 任务将重试: {task_id} (第{task.retry_count + 1}次)")
 
             self.logger.error(f"❌ 任务执行失败: {task_id}, 错误: {error_msg}")
             return task.to_dict()
@@ -536,9 +504,7 @@ class FotMobCollectionService(BaseService):
             # 更新统计信息
             self.stats.update(self.tasks)
 
-    async def _transform_data(
-        self, raw_data: Dict[str, Any], task: FotMobCollectionTask
-    ) -> Dict[str, Any]:
+    async def _transform_data(self, raw_data: Dict[str, Any], task: FotMobCollectionTask) -> Dict[str, Any]:
         """数据清洗和转换 (ETL的Transform阶段)"""
         try:
             if not raw_data:
@@ -637,9 +603,7 @@ class FotMobCollectionService(BaseService):
             self.logger.error(f"联赛数据处理失败: {e}")
             return {"error": str(e)}
 
-    async def _load_data(
-        self, data: Dict[str, Any], task: FotMobCollectionTask
-    ) -> None:
+    async def _load_data(self, data: Dict[str, Any], task: FotMobCollectionTask) -> None:
         """数据入库 (ETL的Load阶段)"""
         try:
             if not data.get("processed_data"):
@@ -724,9 +688,7 @@ class FotMobCollectionService(BaseService):
                 rows_affected=1,
             )
 
-            self.logger.info(
-                f"✅ 比赛数据已保存 (事务 {transaction_ctx.transaction_id}): {task.match_id}"
-            )
+            self.logger.info(f"✅ 比赛数据已保存 (事务 {transaction_ctx.transaction_id}): {task.match_id}")
 
             # 记录事务摘要（用于调试）
             if self.settings.application.debug:
@@ -862,9 +824,7 @@ class FotMobCollectionService(BaseService):
                 "total_matches": len(matches_data),
                 "successful_count": successful_count,
                 "failed_count": failed_count,
-                "success_rate": (
-                    successful_count / len(matches_data) if matches_data else 0
-                ),
+                "success_rate": (successful_count / len(matches_data) if matches_data else 0),
                 "duration_seconds": duration,
                 "errors": errors,
                 "status": "completed" if failed_count == 0 else "partial_success",
@@ -878,19 +838,13 @@ class FotMobCollectionService(BaseService):
             return result
 
         except Exception as e:
-            transaction_ctx.add_operation(
-                operation_type="ERROR", description="批量保存事务失败", error=str(e)
-            )
+            transaction_ctx.add_operation(operation_type="ERROR", description="批量保存事务失败", error=str(e))
 
             transaction_ctx.status = TransactionStatus.FAILED
-            self.logger.error(
-                f"❌ 批量保存事务失败 (事务 {transaction_ctx.transaction_id}): {e}"
-            )
+            self.logger.error(f"❌ 批量保存事务失败 (事务 {transaction_ctx.transaction_id}): {e}")
             raise
 
-    async def _save_league_data(
-        self, data: Dict[str, Any], task: FotMobCollectionTask
-    ) -> None:
+    async def _save_league_data(self, data: Dict[str, Any], task: FotMobCollectionTask) -> None:
         """保存联赛数据到数据库"""
         try:
             # 暂时使用通用SQL，实际应该有具体的League模型
@@ -909,19 +863,13 @@ class FotMobCollectionService(BaseService):
         else:
             return 1
 
-    async def execute_all_tasks(
-        self, max_concurrent: Optional[int] = None
-    ) -> List[Dict[str, Any]]:
+    async def execute_all_tasks(self, max_concurrent: Optional[int] = None) -> List[Dict[str, Any]]:
         """执行所有待处理的任务"""
         if max_concurrent is None:
             max_concurrent = self.max_concurrent_tasks
 
         # 过滤出待处理的任务
-        pending_tasks = [
-            t
-            for t in self.tasks
-            if t.status in [CollectionStatus.PENDING, CollectionStatus.RETRY]
-        ]
+        pending_tasks = [t for t in self.tasks if t.status in [CollectionStatus.PENDING, CollectionStatus.RETRY]]
 
         if not pending_tasks:
             self.logger.info("没有待处理的任务")
@@ -930,9 +878,7 @@ class FotMobCollectionService(BaseService):
         # 按优先级排序
         pending_tasks.sort(key=lambda t: t.priority)
 
-        self.logger.info(
-            f"🚀 开始执行 {len(pending_tasks)} 个任务，最大并发数: {max_concurrent}"
-        )
+        self.logger.info(f"🚀 开始执行 {len(pending_tasks)} 个任务，最大并发数: {max_concurrent}")
 
         # 创建信号量控制并发数
         semaphore = asyncio.Semaphore(max_concurrent)
@@ -967,15 +913,11 @@ class FotMobCollectionService(BaseService):
     @retry(
         stop=stop_after_attempt(3),  # 最多重试3次
         wait=wait_exponential(multiplier=1, min=4, max=10),  # 指数退避: 4s, 8s, 10s
-        retry=retry_if_exception_type(
-            (aiohttp.ClientError, asyncio.TimeoutError, RetryError)
-        ),
+        retry=retry_if_exception_type((aiohttp.ClientError, asyncio.TimeoutError, RetryError)),
         before_sleep=before_sleep_log(logger, logging.WARNING),
         reraise=True,
     )
-    async def fetch_fotmob_data(
-        self, match_id: str, timeout: float = 10.0
-    ) -> Dict[str, Any]:
+    async def fetch_fotmob_data(self, match_id: str, timeout: float = 10.0) -> Dict[str, Any]:
         """
         从FotMob API获取比赛数据 (网络健壮性版本)
 
@@ -1016,9 +958,7 @@ class FotMobCollectionService(BaseService):
             # 使用现有的HTTP会话或创建新的
             session = self.http_session
             if not session:
-                session = aiohttp.ClientSession(
-                    headers=headers, timeout=request_timeout
-                )
+                session = aiohttp.ClientSession(headers=headers, timeout=request_timeout)
 
             async with session.get(url, headers=headers) as response:
                 # 记录响应状态
@@ -1028,18 +968,14 @@ class FotMobCollectionService(BaseService):
 
                     # 验证响应数据
                     if not data or not isinstance(data, dict):
-                        error_msg = (
-                            f"FotMob API返回空数据或无效格式 (match_id: {match_id})"
-                        )
+                        error_msg = f"FotMob API返回空数据或无效格式 (match_id: {match_id})"
                         logger.error(f"❌ {error_msg}")
                         self.circuit_breaker.call_failed()
                         raise ValueError(error_msg)
 
                     # 成功获取数据
                     self.circuit_breaker.call_succeeded()
-                    logger.info(
-                        f"✅ FotMob数据获取成功 (match_id: {match_id}, 数据大小: {len(str(data))} 字符)"
-                    )
+                    logger.info(f"✅ FotMob数据获取成功 (match_id: {match_id}, 数据大小: {len(str(data))} 字符)")
                     return data
 
                 elif response.status == 429:
@@ -1110,9 +1046,7 @@ class FotMobCollectionService(BaseService):
         Returns:
             Dict[str, Any]: 批量获取结果
         """
-        logger.info(
-            f"🚀 开始批量获取FotMob数据: {len(match_ids)}场比赛, 最大并发数: {max_concurrent}"
-        )
+        logger.info(f"🚀 开始批量获取FotMob数据: {len(match_ids)}场比赛, 最大并发数: {max_concurrent}")
 
         # 创建信号量控制并发
         semaphore = asyncio.Semaphore(max_concurrent)
@@ -1125,9 +1059,7 @@ class FotMobCollectionService(BaseService):
                     data = await self.fetch_fotmob_data(match_id, timeout)
                     return match_id, data
                 except Exception as e:
-                    logger.error(
-                        f"❌ 批量获取失败: match_id={match_id}, error={str(e)}"
-                    )
+                    logger.error(f"❌ 批量获取失败: match_id={match_id}, error={str(e)}")
                     return match_id, None
 
         # 并发执行所有请求
@@ -1331,9 +1263,7 @@ class FotMobCollectionService(BaseService):
                     daily_matches = await collector.collect_matches_by_date(date_str)
                     if daily_matches:
                         all_matches.extend(daily_matches)
-                        logger.info(
-                            f"📊 {date_str}: 获取到 {len(daily_matches)} 场比赛"
-                        )
+                        logger.info(f"📊 {date_str}: 获取到 {len(daily_matches)} 场比赛")
 
                 logger.info(f"📊 总共获取到 {len(all_matches)} 场比赛")
 
@@ -1346,20 +1276,13 @@ class FotMobCollectionService(BaseService):
                             continue
 
                         # 计算比赛开始时间
-                        kickoff_time = self._parse_kickoff_time(
-                            match_data.get("time", {})
-                        )
+                        kickoff_time = self._parse_kickoff_time(match_data.get("time", {}))
                         if not kickoff_time:
                             continue
 
                         # 检查是否在时间窗口内
-                        hours_until_kickoff = (
-                            kickoff_time - collection_time
-                        ).total_seconds() / 3600
-                        if (
-                            hours_until_kickoff <= 0
-                            or hours_until_kickoff > hours_ahead
-                        ):
+                        hours_until_kickoff = (kickoff_time - collection_time).total_seconds() / 3600
+                        if hours_until_kickoff <= 0 or hours_until_kickoff > hours_ahead:
                             continue
 
                         match_info.update(
@@ -1393,9 +1316,7 @@ class FotMobCollectionService(BaseService):
                         continue
 
                 # 7. 生成统计摘要
-                summary = self._generate_collection_summary(
-                    upcoming_matches, collection_time, time.time() - start_time
-                )
+                summary = self._generate_collection_summary(upcoming_matches, collection_time, time.time() - start_time)
 
                 # 8. 构建最终返回结果
                 result = {
@@ -1407,8 +1328,7 @@ class FotMobCollectionService(BaseService):
 
                 processing_time = (time.time() - start_time) * 1000
                 logger.info(
-                    f"✅ 即将来临比赛数据收集完成: {len(upcoming_matches)} 场比赛, "
-                    f"耗时: {processing_time:.1f}ms"
+                    f"✅ 即将来临比赛数据收集完成: {len(upcoming_matches)} 场比赛, " f"耗时: {processing_time:.1f}ms"
                 )
 
                 return result
@@ -1430,18 +1350,12 @@ class FotMobCollectionService(BaseService):
                 },
             }
 
-    def _extract_basic_match_info(
-        self, match_data: Dict[str, Any]
-    ) -> Optional[Dict[str, Any]]:
+    def _extract_basic_match_info(self, match_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """从FotMob数据中提取基本比赛信息"""
         try:
             # FotMob数据结构中的基本信息
-            home_team_info = match_data.get("home", {}) or match_data.get(
-                "homeTeam", {}
-            )
-            away_team_info = match_data.get("away", {}) or match_data.get(
-                "awayTeam", {}
-            )
+            home_team_info = match_data.get("home", {}) or match_data.get("homeTeam", {})
+            away_team_info = match_data.get("away", {}) or match_data.get("awayTeam", {})
 
             if not home_team_info or not away_team_info:
                 return None
@@ -1490,9 +1404,7 @@ class FotMobCollectionService(BaseService):
                 # 时间戳格式
                 from datetime import datetime
 
-                return datetime.fromtimestamp(
-                    time_str / 1000 if time_str > 1e10 else time_str
-                )
+                return datetime.fromtimestamp(time_str / 1000 if time_str > 1e10 else time_str)
 
             return None
 
@@ -1532,37 +1444,23 @@ class FotMobCollectionService(BaseService):
                                 break
 
                         elif isinstance(source_data, dict):
-                            odds_data["home_win"] = source_data.get(
-                                "homeOdds"
-                            ) or source_data.get("home")
-                            odds_data["draw"] = source_data.get(
-                                "drawOdds"
-                            ) or source_data.get("draw")
-                            odds_data["away_win"] = source_data.get(
-                                "awayOdds"
-                            ) or source_data.get("away")
+                            odds_data["home_win"] = source_data.get("homeOdds") or source_data.get("home")
+                            odds_data["draw"] = source_data.get("drawOdds") or source_data.get("draw")
+                            odds_data["away_win"] = source_data.get("awayOdds") or source_data.get("away")
                             break
 
             # 计算隐含概率和庄家赔率
             if odds_data["home_win"] and odds_data["away_win"]:
                 try:
                     home_win_decimal = float(odds_data["home_win"])
-                    draw_decimal = (
-                        float(odds_data["draw"]) if odds_data["draw"] else None
-                    )
+                    draw_decimal = float(odds_data["draw"]) if odds_data["draw"] else None
                     away_win_decimal = float(odds_data["away_win"])
 
-                    odds_data["home_win_probability"] = round(
-                        1.0 / home_win_decimal * 100, 1
-                    )
-                    odds_data["away_win_probability"] = round(
-                        1.0 / away_win_decimal * 100, 1
-                    )
+                    odds_data["home_win_probability"] = round(1.0 / home_win_decimal * 100, 1)
+                    odds_data["away_win_probability"] = round(1.0 / away_win_decimal * 100, 1)
 
                     if draw_decimal and draw_decimal > 0:
-                        odds_data["draw_probability"] = round(
-                            1.0 / draw_decimal * 100, 1
-                        )
+                        odds_data["draw_probability"] = round(1.0 / draw_decimal * 100, 1)
 
                     # 计算庄家赔率 (应该 > 100%)
                     total_probability = (
@@ -1581,9 +1479,7 @@ class FotMobCollectionService(BaseService):
             logger.warning(f"提取赔率数据失败: {e}")
             return odds_data
 
-    async def _extract_real_time_features(
-        self, match_id: str, home_team: str, away_team: str
-    ) -> Dict[str, Any]:
+    async def _extract_real_time_features(self, match_id: str, home_team: str, away_team: str) -> Dict[str, Any]:
         """
         实时特征提取 - 与历史回测逻辑100%一致
 
@@ -1600,24 +1496,16 @@ class FotMobCollectionService(BaseService):
 
         try:
             # 1. Elo评级特征 (使用Sprint 5实现的Elo系统)
-            features["elo_features"] = await self._extract_elo_features(
-                home_team, away_team
-            )
+            features["elo_features"] = await self._extract_elo_features(home_team, away_team)
 
             # 2. 泊松分布特征 (使用Sprint 5实现的泊松系统)
-            features["poisson_features"] = await self._extract_poisson_features(
-                home_team, away_team
-            )
+            features["poisson_features"] = await self._extract_poisson_features(home_team, away_team)
 
             # 3. 历史交锋特征 (使用现有H2H计算器)
-            features["h2h_features"] = await self._extract_h2h_features(
-                home_team, away_team
-            )
+            features["h2h_features"] = await self._extract_h2h_features(home_team, away_team)
 
             # 4. 主客场特征 (使用场馆分析器)
-            features["venue_features"] = await self._extract_venue_features(
-                home_team, away_team
-            )
+            features["venue_features"] = await self._extract_venue_features(home_team, away_team)
 
             # 5. 市场情绪特征 (使用Sprint 5实现的赔率分析器)
             features["market_features"] = await self._extract_market_features(match_id)
@@ -1628,9 +1516,7 @@ class FotMobCollectionService(BaseService):
             logger.error(f"实时特征提取失败 {home_team} vs {away_team}: {e}")
             return features
 
-    async def _extract_elo_features(
-        self, home_team: str, away_team: str
-    ) -> Dict[str, Any]:
+    async def _extract_elo_features(self, home_team: str, away_team: str) -> Dict[str, Any]:
         """提取Elo评级特征"""
         try:
             # 使用Sprint 5实现的Elo评级系统
@@ -1651,9 +1537,7 @@ class FotMobCollectionService(BaseService):
             away_trend = elo_system.get_team_recent_trend(away_team, matches=5)
 
             # 获取历史交锋Elo优势
-            h2h_advantage = elo_system.get_head_to_head_elo_advantage(
-                home_team, away_team
-            )
+            h2h_advantage = elo_system.get_head_to_head_elo_advantage(home_team, away_team)
 
             return {
                 "home_elo": round(home_elo, 1),
@@ -1668,9 +1552,7 @@ class FotMobCollectionService(BaseService):
             logger.warning(f"Elo特征提取失败: {e}")
             return {}
 
-    async def _extract_poisson_features(
-        self, home_team: str, away_team: str
-    ) -> Dict[str, Any]:
+    async def _extract_poisson_features(self, home_team: str, away_team: str) -> Dict[str, Any]:
         """提取泊松分布特征"""
         try:
             # 使用Sprint 5实现的泊松特征计算器
@@ -1679,9 +1561,7 @@ class FotMobCollectionService(BaseService):
             calculator = PoissonFeatureCalculator()
 
             # 计算比赛概率
-            probabilities = calculator.calculate_match_probabilities(
-                home_team, away_team
-            )
+            probabilities = calculator.calculate_match_probabilities(home_team, away_team)
 
             # 提取关键特征
             expected_goals = probabilities.get("expected_goals", {})
@@ -1690,15 +1570,11 @@ class FotMobCollectionService(BaseService):
             return {
                 "expected_home_goals": round(expected_goals.get("home", 0), 2),
                 "expected_away_goals": round(expected_goals.get("away", 0), 2),
-                "total_expected_goals": round(
-                    expected_goals.get("home", 0) + expected_goals.get("away", 0), 2
-                ),
+                "total_expected_goals": round(expected_goals.get("home", 0) + expected_goals.get("away", 0), 2),
                 "home_win_probability": round(probs.get("home_win", 0) * 100, 1),
                 "draw_probability": round(probs.get("draw", 0) * 100, 1),
                 "away_win_probability": round(probs.get("away_win", 0) * 100, 1),
-                "both_teams_to_score_probability": round(
-                    probs.get("both_teams_score", 0) * 100, 1
-                ),
+                "both_teams_to_score_probability": round(probs.get("both_teams_score", 0) * 100, 1),
                 "over_2_5_goals_probability": round(probs.get("over_2_5", 0) * 100, 1),
                 "most_likely_score": probabilities.get("most_likely_score", "0-0"),
             }
@@ -1707,9 +1583,7 @@ class FotMobCollectionService(BaseService):
             logger.warning(f"泊松特征提取失败: {e}")
             return {}
 
-    async def _extract_h2h_features(
-        self, home_team: str, away_team: str
-    ) -> Dict[str, Any]:
+    async def _extract_h2h_features(self, home_team: str, away_team: str) -> Dict[str, Any]:
         """提取历史交锋特征"""
         try:
             # 使用现有的H2H计算器
@@ -1728,24 +1602,16 @@ class FotMobCollectionService(BaseService):
                 "away_wins_last_5": recent_form.get("away_wins_last_5", 0),
                 "draws_last_5": recent_form.get("draws_last_5", 0),
                 "home_team_h2h_advantage": recent_form.get("home_advantage", 0.0),
-                "average_goals_in_h2h": historical_stats.get(
-                    "average_goals_per_meeting", 0.0
-                ),
-                "clean_sheets_home_last_10": recent_form.get(
-                    "home_clean_sheets_last_10", 0
-                ),
-                "clean_sheets_away_last_10": recent_form.get(
-                    "away_clean_sheets_last_10", 0
-                ),
+                "average_goals_in_h2h": historical_stats.get("average_goals_per_meeting", 0.0),
+                "clean_sheets_home_last_10": recent_form.get("home_clean_sheets_last_10", 0),
+                "clean_sheets_away_last_10": recent_form.get("away_clean_sheets_last_10", 0),
             }
 
         except Exception as e:
             logger.warning(f"H2H特征提取失败: {e}")
             return {}
 
-    async def _extract_venue_features(
-        self, home_team: str, away_team: str
-    ) -> Dict[str, Any]:
+    async def _extract_venue_features(self, home_team: str, away_team: str) -> Dict[str, Any]:
         """提取主客场特征"""
         try:
             # 使用现有的场馆分析器
@@ -1790,15 +1656,9 @@ class FotMobCollectionService(BaseService):
             return {
                 "market_confidence": market_data.get("confidence_level", 0.0),
                 "odds_stability_index": market_data.get("stability_index", 0.0),
-                "volume_weighted_home_probability": market_data.get(
-                    "volume_home_prob", 0.0
-                ),
-                "volume_weighted_away_probability": market_data.get(
-                    "volume_away_prob", 0.0
-                ),
-                "steam_signals_detected": market_analysis.get("steam_signals", {}).get(
-                    "steam_detected", False
-                ),
+                "volume_weighted_home_probability": market_data.get("volume_home_prob", 0.0),
+                "volume_weighted_away_probability": market_data.get("volume_away_prob", 0.0),
+                "steam_signals_detected": market_analysis.get("steam_signals", {}).get("steam_detected", False),
                 "market_efficiency_score": market_data.get("efficiency_score", 0.0),
             }
 
@@ -1816,11 +1676,7 @@ class FotMobCollectionService(BaseService):
             features = match_info.get("real_time_features", {})
 
             for feature_name, feature_data in features.items():
-                if (
-                    feature_data
-                    and isinstance(feature_data, dict)
-                    and len(feature_data) > 0
-                ):
+                if feature_data and isinstance(feature_data, dict) and len(feature_data) > 0:
                     feature_coverage[f"{feature_name}_available"] = True
                     quality_scores.append(1.0)
                 else:
@@ -1828,9 +1684,7 @@ class FotMobCollectionService(BaseService):
                     quality_scores.append(0.0)
 
             # 计算完整性评分
-            completeness_score = (
-                sum(quality_scores) / len(quality_scores) if quality_scores else 0.0
-            )
+            completeness_score = sum(quality_scores) / len(quality_scores) if quality_scores else 0.0
 
             # 确定置信度等级
             if completeness_score >= 0.8:
@@ -1880,17 +1734,13 @@ class FotMobCollectionService(BaseService):
                     high_confidence_matches += 1
 
                 # Elo差异统计
-                elo_features = match.get("real_time_features", {}).get(
-                    "elo_features", {}
-                )
+                elo_features = match.get("real_time_features", {}).get("elo_features", {})
                 elo_diff = elo_features.get("elo_difference")
                 if elo_diff is not None:
                     elo_differences.append(abs(elo_diff))
 
             # 计算平均Elo差异
-            avg_elo_difference = (
-                sum(elo_differences) / len(elo_differences) if elo_differences else 0.0
-            )
+            avg_elo_difference = sum(elo_differences) / len(elo_differences) if elo_differences else 0.0
 
             return {
                 "total_matches": len(matches),
@@ -1922,9 +1772,7 @@ class FotMobCollectionService(BaseService):
             "avg_duration": self.stats.avg_duration,
             "total_data_points": self.stats.total_data_points,
             "last_collection_time": (
-                self.stats.last_collection_time.isoformat()
-                if self.stats.last_collection_time
-                else None
+                self.stats.last_collection_time.isoformat() if self.stats.last_collection_time else None
             ),
             "circuit_breaker": self.circuit_breaker.get_state(),
             "max_concurrent_tasks": self.max_concurrent_tasks,

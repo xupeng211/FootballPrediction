@@ -135,9 +135,7 @@ class ModelRegistry:
             current_accuracy = registry["models"][current_best]["accuracy"]
             if metadata.accuracy > current_accuracy:
                 registry["current_best"] = metadata.version
-                logger.info(
-                    f"新模型 {metadata.version} 成为最佳模型 (准确率: {metadata.accuracy:.4f})"
-                )
+                logger.info(f"新模型 {metadata.version} 成为最佳模型 (准确率: {metadata.accuracy:.4f})")
 
         # 保存注册表
         self._save_registry(registry)
@@ -171,10 +169,7 @@ class ModelRegistry:
     def list_models(self) -> List[ModelMetadata]:
         """列出所有注册的模型"""
         registry = self._load_registry()
-        return [
-            ModelMetadata.from_dict(model_data)
-            for model_data in registry["models"].values()
-        ]
+        return [ModelMetadata.from_dict(model_data) for model_data in registry["models"].values()]
 
     def switch_current_best(self, version: str) -> bool:
         """切换当前最佳模型"""
@@ -209,9 +204,7 @@ class RetrainingService:
         self.min_samples = 1000  # 最少训练样本数
         self.test_size = 0.2  # 测试集比例
 
-    def execute_pipeline(
-        self, description: str = "Scheduled retraining"
-    ) -> Dict[str, Any]:
+    def execute_pipeline(self, description: str = "Scheduled retraining") -> Dict[str, Any]:
         """
         执行完整的重训练流水线
 
@@ -251,9 +244,7 @@ class RetrainingService:
 
             # 5. 模型注册
             logger.info("💾 步骤 5/5: 注册新模型...")
-            result = self._register_model_if_improved(
-                model, metrics, feature_count, start_time, description
-            )
+            result = self._register_model_if_improved(model, metrics, feature_count, start_time, description)
 
             return result
 
@@ -297,14 +288,10 @@ class RetrainingService:
         logger.info(f"预处理后特征维度: {X_transformed.shape[1]}")
         return X_transformed
 
-    def _train_model(
-        self, X: pd.DataFrame, y: pd.Series
-    ) -> Tuple[xgb.XGBClassifier, int]:
+    def _train_model(self, X: pd.DataFrame, y: pd.Series) -> Tuple[xgb.XGBClassifier, int]:
         """训练 XGBoost 模型"""
         # 分割训练集和测试集
-        X_train, X_test, y_train, y_test = train_test_split(
-            X, y, test_size=self.test_size, random_state=42, stratify=y
-        )
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=self.test_size, random_state=42, stratify=y)
 
         # 训练模型
         model = xgb.XGBClassifier(
@@ -324,14 +311,10 @@ class RetrainingService:
 
         return model, feature_count
 
-    def _evaluate_model(
-        self, model: xgb.XGBClassifier, X: pd.DataFrame, y: pd.Series
-    ) -> Dict[str, float]:
+    def _evaluate_model(self, model: xgb.XGBClassifier, X: pd.DataFrame, y: pd.Series) -> Dict[str, float]:
         """评估模型性能"""
         # 分割训练集和测试集
-        _, X_test, _, y_test = train_test_split(
-            X, y, test_size=self.test_size, random_state=42, stratify=y
-        )
+        _, X_test, _, y_test = train_test_split(X, y, test_size=self.test_size, random_state=42, stratify=y)
 
         # 预测
         y_pred = model.predict(X_test)
@@ -405,13 +388,9 @@ class RetrainingService:
 
             if improvement > self.improvement_threshold:
                 should_deploy = True
-                logger.info(
-                    f"新模型性能提升 {improvement:.4f}，超过阈值 {self.improvement_threshold}"
-                )
+                logger.info(f"新模型性能提升 {improvement:.4f}，超过阈值 {self.improvement_threshold}")
             else:
-                logger.info(
-                    f"新模型性能提升 {improvement:.4f}，未达到阈值 {self.improvement_threshold}"
-                )
+                logger.info(f"新模型性能提升 {improvement:.4f}，未达到阈值 {self.improvement_threshold}")
 
         # 注册模型
         self.registry.register_model(metadata)

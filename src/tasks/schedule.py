@@ -142,9 +142,7 @@ def check_model_performance(self):
 
             # 检查是否需要性能告警
             if current_model["accuracy"] < 0.55:  # 准确率低于 55%
-                logger.warning(
-                    f"⚠️ 模型性能告警 - 准确率 {current_model['accuracy']:.4f} 低于阈值 0.55"
-                )
+                logger.warning(f"⚠️ 模型性能告警 - 准确率 {current_model['accuracy']:.4f} 低于阈值 0.55")
 
         logger.info(f"📈 总模型数量: {status['total_models']}")
 
@@ -180,9 +178,7 @@ def check_data_quality(self):
             quality_report["data_quality_score"] = 0.0
         else:
             # 计算缺失值比例
-            missing_ratio = recent_data.isnull().sum().sum() / (
-                len(recent_data) * len(recent_data.columns)
-            )
+            missing_ratio = recent_data.isnull().sum().sum() / (len(recent_data) * len(recent_data.columns))
             quality_report["missing_data_ratio"] = missing_ratio
 
             # 计算数据质量评分

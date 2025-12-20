@@ -47,7 +47,6 @@ def verify_admin(credentials: HTTPAuthorizationCredentials = Depends(security)) 
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    # TODO: 实际的权限验证逻辑
     # 可以检查 JWT claims 中的角色或权限
     return True
 
@@ -89,9 +88,7 @@ async def trigger_manual_retrain(
 
 
 @router.post("/model/switch", summary="切换模型版本")
-async def switch_model_version(
-    target_version: str, admin_verified: bool = Depends(verify_admin)
-) -> Dict[str, Any]:
+async def switch_model_version(target_version: str, admin_verified: bool = Depends(verify_admin)) -> Dict[str, Any]:
     """
     切换到指定版本的模型
 
@@ -106,9 +103,7 @@ async def switch_model_version(
         logger.info(f"管理员请求切换模型版本到: {target_version}")
 
         # 使用模型加载器切换版本
-        model_loader = ModelLoader(
-            model_cache_dir=settings.model_path, enable_hot_reload=True
-        )
+        model_loader = ModelLoader(model_cache_dir=settings.model_path, enable_hot_reload=True)
 
         success = model_loader.switch_model_version(target_version)
 
@@ -135,9 +130,7 @@ async def switch_model_version(
 
 
 @router.post("/model/rollback", summary="紧急回滚模型")
-async def emergency_rollback_model(
-    target_version: str, admin_verified: bool = Depends(verify_admin)
-) -> Dict[str, Any]:
+async def emergency_rollback_model(target_version: str, admin_verified: bool = Depends(verify_admin)) -> Dict[str, Any]:
     """
     紧急回滚到指定版本模型
 
@@ -263,9 +256,7 @@ async def list_all_models(
 
 
 @router.get("/model/{version}", summary="获取指定版本模型详情")
-async def get_model_details(
-    version: str, admin_verified: bool = Depends(verify_admin)
-) -> Dict[str, Any]:
+async def get_model_details(version: str, admin_verified: bool = Depends(verify_admin)) -> Dict[str, Any]:
     """
     获取指定版本的模型详细信息
 
@@ -333,9 +324,7 @@ async def manual_reload_model(
     try:
         logger.info("管理员手动触发模型重新加载")
 
-        model_loader = ModelLoader(
-            model_cache_dir=settings.model_path, enable_hot_reload=False  # 手动控制
-        )
+        model_loader = ModelLoader(model_cache_dir=settings.model_path, enable_hot_reload=False)  # 手动控制
 
         success = model_loader.trigger_model_reload()
 
@@ -408,7 +397,6 @@ async def delete_model_version(
             deleted_files.append(str(model_path))
             logger.info(f"已删除模型文件: {model_path}")
 
-        # TODO: 从注册表中删除模型
         # 当前版本只删除文件，注册表清理需要额外实现
 
         return {

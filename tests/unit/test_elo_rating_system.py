@@ -15,11 +15,7 @@ import math
 from datetime import datetime, timedelta
 from typing import Dict, Any
 
-from src.ml.features.elo_rating_system import (
-    EloRatingSystem,
-    TeamRating,
-    HeadToHeadRecord,
-)
+from src.ml.features.elo_rating_system import EloRatingSystem
 
 
 class TestEloRatingSystem:

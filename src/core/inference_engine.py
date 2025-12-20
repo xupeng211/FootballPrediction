@@ -7,6 +7,7 @@ Football Prediction Inference Engine
 - 加载训练好的XGBoost模型
 - 实时足球比赛预测
 - 概率输出和推荐建议
+- 凯利公式金融风险控制
 - Docker容器化部署
 """
 
@@ -21,8 +22,15 @@ import sys
 import os
 
 # 添加项目路径
-sys.path.append('/app' if os.getenv('DOCKER_ENV') else '.')
-sys.path.append('src')
+sys.path.append("/app" if os.getenv("DOCKER_ENV") else ".")
+sys.path.append("src")
+
+# 导入凯利公式模块
+from strategy.kelly_criterion_v1 import (
+    KellyCriterionV1,
+    calculate_kelly_for_prediction,
+    format_kelly_output
+)
 
 logger = logging.getLogger(__name__)
 
@@ -41,13 +49,16 @@ class FootballPredictionInference:
         if model_path is None:
             # 获取项目根目录的models文件夹
             project_root = Path(__file__).parent.parent.parent
-            self.model_path = project_root / "models" / "xgb_football_v2_real_scores.joblib"
+            self.model_path = project_root / "data/models" / "xgb_football_v2_real_scores.joblib"
         else:
             self.model_path = Path(model_path)
         self.model = None
         self.scaler = None
         self.label_encoder = None
         self.feature_names = []
+
+        # 初始化凯利公式计算器
+        self.kelly_calculator = KellyCriterionV1()
         self.is_loaded = False
 
     def load_model(self) -> bool:
@@ -60,23 +71,23 @@ class FootballPredictionInference:
             logger.info("✅ XGBoost模型加载成功")
 
             # 加载元数据 - 使用pathlib处理路径
-            metadata_path = self.model_path.with_suffix('.json').with_name(
-                self.model_path.stem.replace('_metadata', '') + '_metadata.json'
+            metadata_path = self.model_path.with_suffix(".json").with_name(
+                self.model_path.stem.replace("_metadata", "") + "_metadata.json"
             )
-            with open(metadata_path, 'r') as f:
+            with open(metadata_path, "r") as f:
                 metadata = json.load(f)
 
             # 重建标准化器和标签编码器
             from sklearn.preprocessing import StandardScaler, LabelEncoder
 
             self.scaler = StandardScaler()
-            self.scaler.mean_ = np.array(metadata['scaler_mean'])
-            self.scaler.scale_ = np.array(metadata['scaler_scale'])
+            self.scaler.mean_ = np.array(metadata["scaler_mean"])
+            self.scaler.scale_ = np.array(metadata["scaler_scale"])
 
             self.label_encoder = LabelEncoder()
-            self.label_encoder.classes_ = np.array(metadata['label_encoder_classes'])
+            self.label_encoder.classes_ = np.array(metadata["label_encoder_classes"])
 
-            self.feature_names = metadata['feature_names']
+            self.feature_names = metadata["feature_names"]
             self.is_loaded = True
 
             logger.info(f"✅ 模型组件加载完成")
@@ -108,29 +119,32 @@ class FootballPredictionInference:
                     feature_dict[feature_name] = match_features[feature_name]
                 else:
                     # 使用默认值
-                    if 'xg' in feature_name.lower():
+                    if "xg" in feature_name.lower():
                         feature_dict[feature_name] = 1.0  # 默认xG
-                    elif 'possession' in feature_name.lower():
+                    elif "possession" in feature_name.lower():
                         feature_dict[feature_name] = 50.0  # 默认控球率
-                    elif 'odds' in feature_name.lower():
+                    elif "odds" in feature_name.lower():
                         feature_dict[feature_name] = 2.0  # 默认赔率
                     else:
                         feature_dict[feature_name] = 0.0
 
             # 创建衍生特征
-            if 'home_xg' in feature_dict and 'away_xg' in feature_dict:
-                feature_dict['xg_difference'] = feature_dict['home_xg'] - feature_dict['away_xg']
-                feature_dict['xg_total'] = feature_dict['home_xg'] + feature_dict['away_xg']
+            if "home_xg" in feature_dict and "away_xg" in feature_dict:
+                feature_dict["xg_difference"] = feature_dict["home_xg"] - feature_dict["away_xg"]
+                feature_dict["xg_total"] = feature_dict["home_xg"] + feature_dict["away_xg"]
 
-            if 'home_possession' in feature_dict and 'away_possession' in feature_dict:
-                feature_dict['possession_difference'] = feature_dict['home_possession'] - feature_dict['away_possession']
+            if "home_possession" in feature_dict and "away_possession" in feature_dict:
+                feature_dict["possession_difference"] = (
+                    feature_dict["home_possession"] - feature_dict["away_possession"]
+                )
 
-            if 'home_opening_odds' in feature_dict and 'home_current_odds' in feature_dict:
-                if feature_dict['home_opening_odds'] > 0 and feature_dict['home_current_odds'] > 0:
-                    feature_dict['odds_movement'] = (feature_dict['home_current_odds'] -
-                                                    feature_dict['home_opening_odds']) / feature_dict['home_opening_odds']
+            if "home_opening_odds" in feature_dict and "home_current_odds" in feature_dict:
+                if feature_dict["home_opening_odds"] > 0 and feature_dict["home_current_odds"] > 0:
+                    feature_dict["odds_movement"] = (
+                        feature_dict["home_current_odds"] - feature_dict["home_opening_odds"]
+                    ) / feature_dict["home_opening_odds"]
                 else:
-                    feature_dict['odds_movement'] = 0.0
+                    feature_dict["odds_movement"] = 0.0
 
             # 构建特征向量
             feature_vector = []
@@ -162,42 +176,81 @@ class FootballPredictionInference:
         """
         if not self.is_loaded:
             if not self.load_model():
-                return {'error': '模型加载失败'}
+                return {"error": "模型加载失败"}
 
         try:
             # 准备特征
             features = self.prepare_features(match_features)
             if features is None:
-                return {'error': '特征准备失败'}
+                return {"error": "特征准备失败"}
 
             # 预测概率
             probabilities = self.model.predict_proba(features)[0]
             predicted_class = self.model.predict(features)[0]
 
             # 解析结果
-            class_names = ['客胜(Away Win)', '平局(Draw)', '主胜(Home Win)']
-            result_map = {0: '客胜', 1: '平局', 2: '主胜'}
+            class_names = ["客胜(Away Win)", "平局(Draw)", "主胜(Home Win)"]
+            result_map = {0: "客胜", 1: "平局", 2: "主胜"}
+
+            # 🎰 凯利公式金融风险控制计算
+            # 获取市场赔率（如果没有提供，使用模拟赔率）
+            home_odds = match_features.get("home_current_odds", 2.1)
+            draw_odds = match_features.get("draw_odds", 3.2)
+            away_odds = match_features.get("away_current_odds", 3.8)
+
+            # 计算凯利公式建议
+            kelly_recommendations = calculate_kelly_for_prediction(
+                float(probabilities[2]),  # home_win
+                float(probabilities[1]),  # draw
+                float(probabilities[0]),  # away_win
+                home_odds,
+                draw_odds,
+                away_odds
+            )
+
+            # 获取最佳投注建议
+            best_bet = max(kelly_recommendations.items(), key=lambda x: x[1].recommended_stake_percent)
+            best_outcome, best_kelly = best_bet
 
             results = {
-                'home_team': home_team,
-                'away_team': away_team,
-                'predicted_class': int(predicted_class),
-                'predicted_result': result_map[int(predicted_class)],
-                'probabilities': {
-                    'away_win': float(probabilities[0]),
-                    'draw': float(probabilities[1]),
-                    'home_win': float(probabilities[2])
+                "home_team": home_team,
+                "away_team": away_team,
+                "predicted_class": int(predicted_class),
+                "predicted_result": result_map[int(predicted_class)],
+                "probabilities": {
+                    "away_win": float(probabilities[0]),
+                    "draw": float(probabilities[1]),
+                    "home_win": float(probabilities[2]),
                 },
-                'confidence': float(np.max(probabilities)),
-                'recommendation': self._generate_recommendation(probabilities),
-                'model_version': 'v2.0_real_scores'
+                "confidence": float(np.max(probabilities)),
+                "recommendation": self._generate_recommendation(probabilities),
+                "model_version": "v2.0_real_scores",
+                # 🎰 凯利公式相关
+                "market_odds": {
+                    "home": home_odds,
+                    "draw": draw_odds,
+                    "away": away_odds
+                },
+                "kelly_recommendations": {
+                    "home": kelly_recommendations["home"].recommended_stake_percent,
+                    "draw": kelly_recommendations["draw"].recommended_stake_percent,
+                    "away": kelly_recommendations["away"].recommended_stake_percent
+                },
+                "best_bet": {
+                    "outcome": best_outcome,
+                    "stake_percent": best_kelly.recommended_stake_percent,
+                    "edge": best_kelly.edge,
+                    "risk_level": best_kelly.risk_level,
+                    "confidence": best_kelly.confidence
+                },
+                "kelly_summary": f"[KELLY] Recommended Stake: {best_kelly.recommended_stake_percent:.1f}%"
             }
 
             return results
 
         except Exception as e:
             logger.error(f"❌ 预测失败: {e}")
-            return {'error': f'预测失败: {e}'}
+            return {"error": f"预测失败: {e}"}
 
     def _generate_recommendation(self, probabilities: np.ndarray) -> str:
         """生成投注建议"""
@@ -237,9 +290,7 @@ class FootballPredictionInference:
         results = []
         for match in matches:
             result = self.predict_match(
-                match.get('home_team', ''),
-                match.get('away_team', ''),
-                match.get('features', {})
+                match.get("home_team", ""), match.get("away_team", ""), match.get("features", {})
             )
             results.append(result)
 
@@ -255,20 +306,22 @@ class FootballPredictionInference:
         Returns:
             格式化的日志字符串
         """
-        if 'error' in prediction:
+        if "error" in prediction:
             return f"[PREDICT_ERROR] {prediction.get('home_team', 'Unknown')} vs {prediction.get('away_team', 'Unknown')} - {prediction['error']}"
 
-        probs = prediction['probabilities']
-        home_win_pct = probs['home_win'] * 100
-        draw_pct = probs['draw'] * 100
-        away_win_pct = probs['away_win'] * 100
+        probs = prediction["probabilities"]
+        home_win_pct = probs["home_win"] * 100
+        draw_pct = probs["draw"] * 100
+        away_win_pct = probs["away_win"] * 100
 
-        log_line = (f"[PREDICT] {prediction['home_team']} vs {prediction['away_team']} | "
-                   f"Home Win: {home_win_pct:.1f}% | "
-                   f"Draw: {draw_pct:.1f}% | "
-                   f"Away Win: {away_win_pct:.1f}% | "
-                   f"Recommendation: {prediction['recommendation']} | "
-                   f"Confidence: {prediction['confidence']:.1f}")
+        log_line = (
+            f"[PREDICT] {prediction['home_team']} vs {prediction['away_team']} | "
+            f"Home Win: {home_win_pct:.1f}% | "
+            f"Draw: {draw_pct:.1f}% | "
+            f"Away Win: {away_win_pct:.1f}% | "
+            f"Recommendation: {prediction['recommendation']} | "
+            f"Confidence: {prediction['confidence']:.1f}"
+        )
 
         return log_line
 

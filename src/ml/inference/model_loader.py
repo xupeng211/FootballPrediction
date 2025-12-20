@@ -65,9 +65,7 @@ class ModelLoader:
             enable_hot_reload: 是否启用热更新功能
             reload_interval: 热更新检查间隔（秒）
         """
-        self.model_cache_dir = (
-            Path(model_cache_dir) if model_cache_dir else Path("models")
-        )
+        self.model_cache_dir = Path(model_cache_dir) if model_cache_dir else Path("models")
         self.loaded_models: Dict[str, Any] = {}  # 存储加载的模型对象
         self.model_metadata: Dict[str, ModelMetadata] = {}  # 存储模型元数据
         self.model_paths: Dict[str, Path] = {}  # 存储模型路径
@@ -185,9 +183,7 @@ class ModelLoader:
         except Exception as e:
             raise ModelLoadError(f"模型文件读取失败: {str(e)}") from e
 
-    def _parse_model_data(
-        self, model_data: Any, model_name: str
-    ) -> tuple[Any, ModelMetadata]:
+    def _parse_model_data(self, model_data: Any, model_name: str) -> tuple[Any, ModelMetadata]:
         """
         解析模型数据和元数据
 
@@ -242,9 +238,7 @@ class ModelLoader:
                 raise ModelLoadError(f"模型缺少必要方法: {method}")
 
         # 记录可选方法的可用性
-        available_methods = [
-            method for method in optional_methods if hasattr(model, method)
-        ]
+        available_methods = [method for method in optional_methods if hasattr(model, method)]
         if available_methods:
             logger.info(f"模型 {model_name} 支持高级方法: {available_methods}")
 
@@ -362,9 +356,7 @@ class ModelLoader:
             "model_path": str(model_path),
             "metadata": {
                 "model_version": metadata.model_version,
-                "feature_count": (
-                    len(metadata.feature_names) if metadata.feature_names else None
-                ),
+                "feature_count": (len(metadata.feature_names) if metadata.feature_names else None),
                 "feature_names": metadata.feature_names,
                 "created_at": metadata.created_at,
                 "description": metadata.description,
@@ -434,9 +426,7 @@ class ModelLoader:
             return
 
         self._stop_reload.clear()
-        self._reload_thread = threading.Thread(
-            target=self._hot_reload_worker, daemon=True
-        )
+        self._reload_thread = threading.Thread(target=self._hot_reload_worker, daemon=True)
         self._reload_thread.start()
         logger.info("热更新监听线程已启动")
 
@@ -472,9 +462,7 @@ class ModelLoader:
             if current_version == self._current_version:
                 return
 
-            logger.info(
-                f"检测到模型版本更新: {self._current_version} -> {current_version}"
-            )
+            logger.info(f"检测到模型版本更新: {self._current_version} -> {current_version}")
 
             # 加载新模型
             self._load_current_best_model()
@@ -511,10 +499,7 @@ class ModelLoader:
                 return
 
             # 如果当前已加载的模型版本相同，无需重新加载
-            if (
-                self._current_version == current_version
-                and "xgboost_v2" in self.loaded_models
-            ):
+            if self._current_version == current_version and "xgboost_v2" in self.loaded_models:
                 logger.info(f"模型版本 {current_version} 已是最新版本")
                 return
 
@@ -532,9 +517,7 @@ class ModelLoader:
                 try:
                     from src.main import cache_operations_total
 
-                    cache_operations_total.labels(
-                        cache_type="model", operation="hot_reload"
-                    ).inc()
+                    cache_operations_total.labels(cache_type="model", operation="hot_reload").inc()
                 except ImportError:
                     pass
 

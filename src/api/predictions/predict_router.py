@@ -52,9 +52,7 @@ router = APIRouter(
 class BatchPredictionRequest(BaseModel):
     """批量预测请求模型 - Sprint 3 精简版本"""
 
-    match_ids: list[str] = Field(
-        ..., description="比赛ID列表", min_items=1, max_items=100
-    )
+    match_ids: list[str] = Field(..., description="比赛ID列表", min_items=1, max_items=100)
     include_features: bool = Field(default=False, description="是否包含特征信息")
     include_metadata: bool = Field(default=True, description="是否包含元数据")
 

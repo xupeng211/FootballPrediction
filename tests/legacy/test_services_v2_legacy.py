@@ -23,7 +23,7 @@ import sys
 
 sys.path.append("/home/user/projects/FootballPrediction/src")
 
-from services.inference_service import (
+from services.prediction_service import (
     InferenceService,
     PredictionRequest,
     PredictionResponse,
