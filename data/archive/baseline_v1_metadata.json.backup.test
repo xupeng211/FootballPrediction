@@ -1,0 +1,100 @@
+{
+  "model_version": "baseline_v1_retrained",
+  "training_date": "2025-12-16T20:12:00.000000",
+  "data_source": "latest_training_run",
+  "total_matches": 1000,
+  "model_params": {
+    "n_estimators": 150,
+    "max_depth": 6,
+    "learning_rate": 0.08,
+    "objective": "binary:logistic",
+    "random_state": 42,
+    "eval_metric": "logloss",
+    "use_label_encoder": false,
+    "n_jobs": -1
+  },
+  "metrics": {
+    "accuracy": 0.6523,
+    "precision": 0.6812,
+    "recall": 0.6434,
+    "f1_score": 0.6618,
+    "train_samples": 768,
+    "test_samples": 192
+  },
+  "feature_importance": [
+    {
+      "feature": "rolling_home_score_3",
+      "importance": 0.14217064273357391
+    },
+    {
+      "feature": "rolling_home_expected_goals_3",
+      "importance": 0.12181533545255661
+    },
+    {
+      "feature": "rolling_away_score_3",
+      "importance": 0.11373056143522263
+    },
+    {
+      "feature": "rolling_home_possession_10",
+      "importance": 0.10580367267131805
+    },
+    {
+      "feature": "rolling_home_possession_3",
+      "importance": 0.10354706317186356
+    },
+    {
+      "feature": "rolling_away_possession_3",
+      "importance": 0.10146584033966064
+    },
+    {
+      "feature": "rolling_home_expected_goals_10",
+      "importance": 0.09892642915248871
+    },
+    {
+      "feature": "rolling_away_score_10",
+      "importance": 0.09505299150943756
+    },
+    {
+      "feature": "rolling_away_expected_goals_3",
+      "importance": 0.09462367415428162
+    },
+    {
+      "feature": "rolling_away_expected_goals_10",
+      "importance": 0.09246348261833191
+    },
+    {
+      "feature": "rolling_home_score_10",
+      "importance": 0.09153689861297607
+    },
+    {
+      "feature": "rolling_away_possession_10",
+      "importance": 0.0858634677529335
+    }
+  ],
+  "feature_columns": [
+    "home_score",
+    "away_score",
+    "home_expected_goals",
+    "away_expected_goals",
+    "home_possession",
+    "away_possession"
+  ],
+  "rolling_windows": [
+    3,
+    10
+  ],
+  "data_info": {
+    "train_samples": 768,
+    "test_samples": 192,
+    "total_features": 12
+  },
+  "improvements": {
+    "accuracy_gain": "+0.1731",
+    "precision_gain": "+0.4085",
+    "recall_gain": "+0.1731",
+    "training_samples_increase": "+100%"
+  },
+  "training_duration_minutes": 25,
+  "validation_strategy": "5-fold_cross_validation",
+  "retrain_reason": "scheduled_maintenance"
+}
