@@ -47,11 +47,12 @@ class V3ROIBacktest:
         self.model_path = self.models_dir / "xgb_football_v3.0_global.joblib"
         self.metadata_path = self.models_dir / "xgb_football_v3.0_global_metadata.json"
 
-        # V3.1 风控参数 - 保守模式
-        self.kelly_fraction = 0.2  # V3.1：0.2x保守凯利，大幅降低风险
-        self.min_edge = 10.0  # V3.1：提高边际要求至10%，确保高质量投注
-        self.min_confidence = 55.0  # V3.1：提高置信度要求至55%
-        self.max_drawdown_limit = 25.0  # V3.1：设置最大回撤限制25%
+        # V3.3 硬化策略参数 - 风险控制优先
+        self.kelly_fraction = 0.2  # V3.3：锁定0.2x保守凯利，严禁调整
+        self.min_edge = 10.0  # V3.3：提高边际要求至10%，确保高质量投注
+        self.min_confidence = 55.0  # V3.3：提高置信度要求至55%
+        self.max_drawdown_limit = 20.0  # V3.3：硬止损线-20%，触及立即停止
+        self.STOP_LOSS_LINE = -20.0  # V3.3：硬编码止损线
 
         logger.info("🛡️ V3.1 风险控制ROI回测器初始化完成")
         logger.info(f"💰 保守策略: {self.kelly_fraction}x凯利, 边际>{self.min_edge}%, 置信度>{self.min_confidence}%")
@@ -167,52 +168,129 @@ class V3ROIBacktest:
         logger.info(f"📋 特征列: {available_features[:10]}...")  # 显示前10个特征
         return X_final
 
-    def calculate_betting_odds(self, df: pd.DataFrame) -> pd.DataFrame:
-        """计算赔率数据（基于xG数据模拟）"""
-        logger.info("💰 计算赔率数据...")
+    def load_real_odds_from_database(self, df: pd.DataFrame) -> pd.DataFrame:
+        """V3.4: 从数据库加载真实赔率数据，彻底拒绝模拟赔率
+
+        Args:
+            df: 原始数据框
+
+        Returns:
+            pd.DataFrame: 包含真实赔率的数据框
+        """
+        logger.info("🎯 V3.4: 从数据库加载真实赔率数据...")
 
         odds_df = df.copy()
 
-        # 基于xG和控球率计算胜率
-        def calculate_probabilities(row):
-            home_xg = row.get("home_xg", 1.0)
-            away_xg = row.get("away_xg", 1.0)
-            home_possession = row.get("home_possession", 50)
-            away_possession = row.get("away_possession", 50)
+        # 从数据库查询真实赔率
+        try:
+            import psycopg2
+            from psycopg2.extras import RealDictCursor
 
-            # 简化的概率计算
-            home_strength = home_xg * (home_possession / 50)
-            away_strength = away_xg * (away_possession / 50)
-            total_strength = home_strength + away_strength
+            # V3.4: 强制使用配置中指定的数据库
+            db = self.settings.database
+            db_config = {
+                "host": db.host,
+                "port": db.port,
+                "database": db.name,
+                "user": db.user,
+                "password": db.password.get_secret_value(),
+            }
 
-            if total_strength > 0:
-                home_prob = home_strength / total_strength * 0.9  # 留10%给平局
-                away_prob = away_strength / total_strength * 0.9
-                draw_prob = 0.1
-            else:
-                home_prob = away_prob = draw_prob = 1 / 3
+            conn = psycopg2.connect(**db_config)
 
-            # 归一化
-            total = home_prob + away_prob + draw_prob
-            return home_prob / total, draw_prob / total, away_prob / total
+            # 构建外部ID列表
+            external_ids = df["external_id"].tolist()
+            placeholders = ",".join(["%s"] * len(external_ids))
 
-        # 计算概率
-        odds_df[["home_prob", "draw_prob", "away_prob"]] = odds_df.apply(
-            calculate_probabilities, axis=1, result_type="expand"
-        )
+            query = f"""
+            SELECT
+                external_id,
+                home_opening_odds,
+                away_opening_odds,
+                draw_odds,
+                home_current_odds,
+                away_current_odds,
+                draw_current_odds
+            FROM match_features_training
+            WHERE external_id IN ({placeholders})
+              AND home_opening_odds IS NOT NULL
+            """
 
-        # 计算赔率（加入5%的庄家优势）
-        odds_df["home_odds"] = np.round(1 / (odds_df["home_prob"] * 0.95), 2)
-        odds_df["draw_odds"] = np.round(1 / (odds_df["draw_prob"] * 0.95), 2)
-        odds_df["away_odds"] = np.round(1 / (odds_df["away_prob"] * 0.95), 2)
+            cursor = conn.cursor()
+            cursor.execute(query, external_ids)
+            results = cursor.fetchall()
+            conn.close()
 
-        # 确保最小赔率
-        odds_df["home_odds"] = odds_df["home_odds"].clip(lower=1.1)
-        odds_df["draw_odds"] = odds_df["draw_odds"].clip(lower=2.5)
-        odds_df["away_odds"] = odds_df["away_odds"].clip(lower=1.1)
+            # 转换为字典便于快速查找
+            odds_dict = {
+                row[0]: {
+                    "home_opening_odds": row[1],
+                    "away_opening_odds": row[2],
+                    "draw_odds": row[3],
+                    "home_current_odds": row[4],
+                    "away_current_odds": row[5],
+                    "draw_current_odds": row[6],
+                }
+                for row in results
+            }
 
-        logger.info("✅ 赔率数据计算完成")
-        return odds_df
+            # 将赔率数据合并到数据框
+            def fill_odds(row):
+                odds_data = odds_dict.get(row["external_id"])
+                if odds_data:
+                    return pd.Series({
+                        "home_odds": odds_data["home_opening_odds"],
+                        "away_odds": odds_data["away_opening_odds"],
+                        "draw_odds": odds_data["draw_odds"]
+                    })
+                else:
+                    # V3.4: 无真实赔率的比赛直接跳过，不使用模拟赔率
+                    return pd.Series({
+                        "home_odds": None,
+                        "away_odds": None,
+                        "draw_odds": None
+                    })
+
+            odds_data = odds_df.apply(fill_odds, axis=1)
+
+            # 合并赔率数据
+            odds_df["home_odds"] = odds_data["home_odds"]
+            odds_df["away_odds"] = odds_data["away_odds"]
+            odds_df["draw_odds"] = odds_data["draw_odds"]
+
+            # V3.4: 过滤掉没有真实赔率的比赛
+            matches_with_odds = odds_df.dropna(subset=["home_odds", "away_odds", "draw_odds"])
+            matches_skipped = len(odds_df) - len(matches_with_odds)
+
+            logger.info(f"✅ 加载真实赔率完成:")
+            logger.info(f"   • 总比赛数: {len(odds_df)}")
+            logger.info(f"   • 有赔率数据: {len(matches_with_odds)}")
+            logger.info(f"   • 跳过无赔率: {matches_skipped}")
+            logger.info(f"   • 真实赔率覆盖率: {len(matches_with_odds)/len(odds_df)*100:.1f}%")
+
+            if len(matches_with_odds) == 0:
+                logger.error("🚨 没有找到任何真实赔率数据！")
+                raise ValueError("V3.4: 数据库中缺少真实赔率数据")
+
+            return matches_with_odds
+
+        except Exception as e:
+            logger.error(f"❌ 加载真实赔率数据失败: {e}")
+            logger.error("🚨 V3.4: 禁止使用模拟赔率！")
+            raise
+
+    def calculate_betting_odds(self, df: pd.DataFrame) -> pd.DataFrame:
+        """V3.4: 已禁用 - 彻底拒绝模拟赔率
+
+        Args:
+            df: 数据框
+
+        Returns:
+            抛出异常，强制使用真实赔率
+        """
+        logger.error("🚨 V3.4: calculate_betting_odds 已被彻底禁用！")
+        logger.error("🚨 请使用 load_real_odds_from_database 加载真实赔率数据")
+        raise ValueError("V3.4: 模拟赔率功能已永久禁用，只能使用数据库中的真实赔率")
 
     def run_model_predictions(self, X: pd.DataFrame) -> np.ndarray:
         """运行模型预测"""
@@ -393,15 +471,17 @@ class V3ROIBacktest:
                     kelly_fraction = self.kelly_fraction * max(best_edge / 100, 0.15)
                     stake = min(kelly_fraction * 100, 5)  # V3.1：最大投注降低至5单位
 
-                    # V3.1 动态风险控制：如果当前回撤过大，暂停投注
+                    # V3.3 硬化风险控制：触及-20%立即强制止损
                     current_drawdown = 0
                     if profit_series and cumulative_profit < 0:
                         peak = max(profit_series)
                         current_drawdown = (peak - cumulative_profit) / max(peak, 1) * 100
 
-                    if current_drawdown > self.max_drawdown_limit:
-                        logger.warning(f"🚨 回撤过大({current_drawdown:.1f}%)，暂停投注")
-                        continue  # 跳过本次投注
+                    # V3.3: 硬止损线，但只在真实亏损时触发
+                    if cumulative_profit < 0 and current_drawdown >= abs(self.STOP_LOSS_LINE):
+                        logger.error(f"🛑 V3.3 硬止损触发！回撤{current_drawdown:.1f}% ≥ {abs(self.STOP_LOSS_LINE)}%")
+                        logger.error("💀 投资组合已破产，立即停止所有投注活动")
+                        break  # 强制终止回测
 
                     # 使用真实比赛结果！
                     won = actual_result == best_idx
@@ -513,8 +593,8 @@ class V3ROIBacktest:
             # 3. 准备特征
             X = self.prepare_backtest_features(df)
 
-            # 4. 计算赔率
-            df_with_odds = self.calculate_betting_odds(df)
+            # 4. V3.4: 彻底禁用模拟赔率，使用数据库真实赔率
+            df_with_odds = self.load_real_odds_from_database(df)
 
             # 5. 运行预测
             y_pred_proba = self.run_model_predictions(X)

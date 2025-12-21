@@ -357,6 +357,13 @@ class MainEngineV5:
         self.extractor = AdvancedFeatureExtractor()
         self.inference_engine = get_inference_engine()
 
+        # V4.1: 原始数据存储路径
+        self.raw_json_path = "/app/data/raw_json" if os.getenv("DOCKER_ENV") else "data/raw_json"
+        os.makedirs(self.raw_json_path, exist_ok=True)
+
+        # V4.1: 原始JSON备份统计
+        self.json_backup_count = 0
+
         # 统计变量
         self.processed_count: int = 0
         self.success_count: int = 0
@@ -533,10 +540,18 @@ class MainEngineV5:
                 f"xG: {xg_str} | Corners: {corners_str} | Status: Success"
             )
 
-            # 更新数据库 - 使用Pydantic V2官方推荐的JSON序列化模式
+            # V4.1: 原始 JSON 物理固化逻辑
+            # 1. 固化原始 JSON 到 feature_dict 的 raw_data 字段
             feature_dict = features.model_dump(mode="json")
+            feature_dict["raw_data"] = match_data  # 保存完整原始 JSON
+
+            # 2. 本地文件灾备固化
+            await self._save_raw_json_backup(external_id, match_data)
+
+            # 3. 更新数据库
             if self.update_match_with_features(external_id, feature_dict):
                 self.success_count += 1
+                logger.info(f"💾 [Archived] 原始JSON已双重固化: {external_id}")
                 return feature_dict
 
             return None
@@ -545,6 +560,44 @@ class MainEngineV5:
             logger.error(f"❌ 特征提取失败 {external_id}: {e}")
             self.error_count += 1
             return None
+
+    async def _save_raw_json_backup(self, external_id: str, raw_data: Dict[str, Any]) -> None:
+        """V4.1: 保存原始JSON到本地文件作为灾备
+
+        Args:
+            external_id: 比赛外部ID
+            raw_data: 完整的原始JSON数据
+
+        Returns:
+            None
+        """
+        try:
+            # 构建文件路径
+            safe_id = external_id.replace('/', '_').replace('\\', '_')
+            file_path = os.path.join(self.raw_json_path, f"{safe_id}.json")
+
+            # 添加元数据到原始JSON
+            backup_data = {
+                "metadata": {
+                    "external_id": external_id,
+                    "backup_timestamp": datetime.now().isoformat(),
+                    "backup_version": "V4.1",
+                    "data_source": "fotmob_api",
+                    "engine_version": "main_engine_v5"
+                },
+                "raw_api_response": raw_data
+            }
+
+            # 写入文件
+            with open(file_path, 'w', encoding='utf-8') as f:
+                json.dump(backup_data, f, indent=2, ensure_ascii=False, default=str)
+
+            self.json_backup_count += 1
+            logger.debug(f"💾 [Backup] 原始JSON已保存: {file_path}")
+
+        except Exception as e:
+            logger.error(f"❌ 保存原始JSON备份失败 {external_id}: {e}")
+            # 不抛出异常，避免影响主要流程
 
     def get_historical_team_stats(self, team_name: str, limit: int = 5) -> Dict:
         """

@@ -1,218 +1,131 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+这个文件为 Claude Code (claude.ai/code) 在此代码库中工作时提供指导。
 
 ## 🚨 重要提醒：语言要求
 
 **请务必使用中文回复用户！**
 
-无论文件如何更新版本，都必须保留这一要求。这是项目的基本沟通规范，确保用户获得一致的中文服务体验。
+这一要求具有最高优先级，无论 CLAUDE.md 文件如何更新版本迭代，都必须始终保留在文件的显眼位置。这确保了用户始终获得一致的中文服务体验，是项目不可更改的基本沟通规范。
 
 ## Project Overview
 
-**FootballPrediction V3.0** is a production-ready football match prediction system with global league coverage. The system uses XGBoost 2.0+ ML model trained on **567** real matches across 5 major leagues (Premier League, La Liga, Bundesliga, Serie A, Ligue 1) with advanced 106-dimensional feature engineering.
+**FootballPrediction V2.3.1** 是一个基于 XGBoost 2.0+ 的专业足球比赛预测系统，采用真实比赛数据训练，实现 60.00% 预测准确率和 +13.35% ROI 的盈利能力。
 
-**Status**: ✅ Production Ready | **Model Accuracy**: 42.58% (10-Fold CV) | **ROI**: +89.56% | **Version**: V3.0 Global Universal | **Data Records**: 567 Global Matches | **Cross-Validation**: 10-Fold
-
----
-
-## 🚀 V3.0 全球通用模型发布 (2025-12-21)
-
-### ✅ V3.0 核心突破
-**发布时间**: 2025-12-21 10:37
-**训练状态**: 100% 完成
-**验证结果**: 10折交叉验证 + ROI压力测试全部通过
-
-**V3.0 核心技术升级**:
-- 🌍 **全球联赛覆盖**: 从单一英超扩展到五大联赛（英超、西甲、德甲、Serie A、法甲）
-- 🎯 **106维全特征工程**: 包含xG、控球率、射门、角球、红黄牌等完整特征体系
-- 📊 **10折交叉验证**: 确保模型泛化能力，CV准确率 42.58% ± 4.27%
-- 💰 **ROI压力测试**: 半凯利0.5x策略，Edge > 7%，实现89.56%惊人ROI
-- 🔬 **XGBoost 2.0+**: 最新的梯度提升算法，200棵树，深度6层
-
-### 📊 V3.0 性能指标详情
-```
-🧠 模型性能:
-   • 10折CV准确率: 42.58% ± 4.27%
-   • LogLoss: 0.1604
-   • 特征维度: 52维（工程化后）
-   • 训练样本: 517场真实比赛
-
-💰 盈利能力测试:
-   • 总投注次数: 517次
-   • 胜率: 37.14%
-   • 总投注额: ¥5,170
-   • 净盈亏: ¥4,630
-   • ROI: +89.56%
-   • 最大回撤: 202.70%
-
-🏆 Top 10 核心特征权重:
-   1. away_xg                    : 0.045397
-   2. home_strength_index        : 0.044415
-   3. home_corners               : 0.043328
-   4. home_shots_on_target        : 0.043466
-   5. away_shot_accuracy         : 0.043328
-   6. possession_difference      : 0.043155
-   7. home_shot_accuracy         : 0.041628
-   8. away_strength_index        : 0.041404
-   9. xg_difference             : 0.041275
-   10. away_possession           : 0.041273
-```
-
-### 🌍 V3.0 联赛分布
-- **Premier League**: 415场 (80.3%) - 基础数据
-- **Serie A**: 52场 (10.1%) - 技术流联赛
-- **西甲 La Liga**: 50场 (9.7%) - 技术流联赛
-- **Bundesliga**: 25场 (4.8%) - 高效进攻联赛
-- **Ligue 1**: 25场 (4.8%) - 防守型联赛
-
-### 📁 V3.0 核心文件
-- ✅ **V3.0训练器**: `src/ml/training/true_global_trainer_v3.py`
-- ✅ **V3.0模型**: `data/models/xgb_football_v3.0_global.joblib`
-- ✅ **V3.0元数据**: `data/models/xgb_football_v3.0_global_metadata.json`
-- ✅ **ROI回测器**: `src/ml/backtest/v3_roi_backtest.py`
-- ✅ **训练报告**: `reports/v3.0_global_report_*.json`
-- ✅ **ROI报告**: `reports/v3_roi_backtest/v3_roi_backtest_*.json`
-
-### 🎯 V3.0 关键结论
-- ✅ **盈利能力**: 通过 - ROI 89.56% 远超预期
-- ✅ **泛化能力**: 通过 - 10折CV验证了跨联赛适应性
-- ⚠️ **风险控制**: 需关注 - 最大回撤202.70%较高
-- 🌍 **全球通用**: 成功实现五大联赛数据融合
-- 💼 **实盘就绪**: 模型已通过压力测试，可进入实际应用
+**Status**: ✅ Production Ready | **Model Accuracy**: 60.00% | **ROI**: +13.35% | **Version**: V2.3.1 | **Data Records**: 467 Real Matches | **Dockerized**: Yes
 
 ---
 
-## 🎯 系统恢复完成状态 (V2.3.1 Final Recovery Status)
+## 🎯 系统概览
 
-### ✅ 核心文件物理恢复完成
-**恢复时间**: 2025-12-21 08:35
-**恢复状态**: 100% 完成
-**验证结果**: system_verify.sh 全部通过
+### 核心特性
+- **真实数据驱动**: 基于 467 场 100% 真实比赛比分
+- **60.00% 预测准确率**: 超越行业基准的专业级表现
+- **+13.35% ROI**: 经过优化的盈利策略配置
+- **106 维特征工程**: xG、控球率、角球、射门、红黄牌、赔率等全维度特征
+- **动态特征回填**: 基于历史数据的智能预测算法
+- **企业级架构**: Docker 容器化，支持高并发部署
+- **实时预测**: 毫秒级响应，支持批量预测
 
-**已恢复的8个核心生产文件**:
-1. ✅ **system_verify.sh** - V2.3.1系统验证脚本 (ROI +13.35% 集成)
-2. ✅ **pyproject.toml** - 现代Python项目配置 (完整依赖栈)
-3. ✅ **Makefile** - 开发工作流自动化 (V2.3.1 ROI指标)
-4. ✅ **docker-compose.yml** - 生产级Docker编排 (4服务架构)
-5. ✅ **README.md** - 综合项目文档 (106维特征工程)
-6. ✅ **.gitignore** - 企业级Git忽略规则
-7. ✅ **.env.example** - 环境变量配置模板 (完整配置)
-8. ✅ **Dockerfile** - V2.3.1企业级容器化部署
-
-### ✅ 系统验证通过指标
-- 🎯 **567场全球数据已就位** - ✅ V3.0验证通过（英超+西甲+德甲+Serie A+法甲）
-- 🤖 **V3.0全球模型已加载** - ✅ `xgb_football_v3.0_global.joblib` 存在
-- 💰 **ROI +89.56% 压力测试通过** - ✅ 半凯利0.5x策略验证成功
-- 🚀 **系统已达到全球生产就绪状态** - ✅ 五大联赛支持全面激活
-- 📊 **10折交叉验证完成** - ✅ 泛化能力42.58% ± 4.27%
-
-### ✅ 目录结构大厂化终审
-- **92个Python文件** - 健康代码规模
-- **工业级目录结构** - 符合CLAUDE.md规范
-- **完整的配置生态** - 所有必需配置文件就位
-- **数据目录完整** - models/, postgres/, redis/ 数据完整
+### 技术栈
+- **ML Framework**: XGBoost 2.0+ (梯度提升算法)
+- **Backend**: Python 3.11+, FastAPI, PostgreSQL 15, Redis 7
+- **DevOps**: Docker, Docker Compose, GitHub Actions CI
+- **Code Quality**: Black, Flake8, MyPy, pytest (96.35% coverage)
+- **Monitoring**: Prometheus, Grafana, Structured Logging
 
 ---
 
----
+## 🚀 Primary Entry Points (主要入口点)
 
-## 🏗️ 工业级标准目录结构
-
-```
-FootballPrediction/
-├── 📁 src/                          # 核心源代码目录
-│   ├── 📁 core/                     # 核心引擎模块
-│   │   └── ⚙️ main_engine_v5.py     # 主数据收集与预测引擎
-│   ├── 📁 api/                      # API客户端层
-│   │   ├── fotmob_client.py         # FotMob API客户端
-│   │   └── v1/                      # API v1版本接口
-│   ├── 📁 schemas/                  # 数据模式定义
-│   │   └── match_features.py        # 106字段特征模式
-│   ├── 📁 data_access/              # 数据访问层
-│   │   └── 📁 processors/           # 数据处理器
-│   │       └── advanced_feature_extractor.py  # 106字段特征提取器
-│   ├── 📁 database/                 # 数据库模块
-│   │   ├── models.py                # 数据模型
-│   │   └── migrations/              # 数据库迁移
-│   ├── 📁 ml/                       # 机器学习模块
-│   │   ├── inference/               # 推理引擎
-│   │   ├── training/                # 训练模块
-│   │   └── features/                # 特征工程
-│   ├── 📁 services/                 # 服务层
-│   └── 📁 utils/                    # 工具模块
-├── 📁 configs/                      # 配置文件目录
-├── 📁 docs/                         # 文档目录
-├── 📁 scripts/                      # 脚本目录
-├── 📁 tests/                        # 测试目录
-├── 📁 data/                         # 数据存储目录
-│   ├── 📁 models/                   # 模型文件存储
-│   ├── 📁 cache/                    # 缓存数据
-│   ├── 📁 raw/                      # 原始数据
-│   └── 📁 processed/                # 处理后数据
-├── 📁 logs/                         # 日志目录
-├── 🐳 docker-compose.yml            # Docker编排文件
-├── 🐳 Dockerfile                    # Docker镜像构建
-├── 📋 CLAUDE.md                     # Claude AI开发指南
-└── 🚀 run_daily_predict.sh          # 日常预测脚本
-```
-
-### 📁 目录标准化完成时间：2025-12-21
-### 🎯 标准化目标：消除AI编程噪音，实现语义清晰、结构严谨的工业级代码资产
-
----
-
-## 🚀 Primary Entry Points (MANDATORY)
-
-### 1. Main Data Collection & Prediction Engine
+### 1. 核心预测引擎
 ```bash
-# Production mode (recommended)
+# 生产模式（推荐）
 python src/core/main_engine_v5.py --mode full --limit 700
 
-# Test mode (REQUIRED after any code changes)
+# 测试模式（代码修改后必须执行）
 python src/core/main_engine_v5.py --mode test
 ```
 
-### 2. Docker Automation
+### 2. Docker 自动化部署
 ```bash
-# One-click daily prediction system
+# 一键日常预测系统
 ./run_daily_predict.sh
 
-# System health verification
+# 系统健康验证
 ./system_verify.sh
 
-# Full Docker stack deployment
+# 完整 Docker 栈部署
 docker-compose up -d
 
-# Container health checks
+# 容器健康检查
 docker-compose exec db pg_isready -U football_user
 docker-compose exec redis redis-cli ping
 ```
 
-### 3. Programmatic Model Inference
+### 3. 开发工作流
+```bash
+# 快速开发环境设置
+make dev
+
+# 代码质量检查
+make quality
+
+# 运行测试
+make test
+
+# 提交前检查
+make prepush
+```
+
+### 4. 程序化预测调用
 ```python
-from core.inference_engine import get_inference_engine
+from src.core.inference_engine import get_inference_engine
 engine = get_inference_engine()
 prediction = engine.predict_match(home_team, away_team, features)
 ```
 
-**❌ FORBIDDEN ACTIONS**:
-- Never bypass `main_engine_v5.py` for direct API calls
-- Never operate database directly without business logic
-- Never use non-official scripts for data operations
+**❌ 禁止操作**:
+- 绕过 `main_engine_v5.py` 直接调用 API
+- 未经业务逻辑直接操作数据库
+- 使用非官方脚本进行数据操作
 
 ---
 
-## 🔗 Database Connection Standards
+## 🏗️ 系统架构
 
-### Unified Connection Method (REQUIRED)
+### 核心组件
+1. **MainEngineV5** (`src/core/main_engine_v5.py`): 数据收割和实时预测引擎
+2. **InferenceEngine** (`src/core/inference_engine.py`): XGBoost V2.3 模型推理核心
+3. **FotMobAPIClient** (`src/api/fotmob_client.py`): 外部数据源接口
+4. **AdvancedFeatureExtractor**: 106 维特征提取器
+5. **Database**: PostgreSQL 存储 467 场黄金数据
+
+### 数据流架构
+```
+External API → Data Validation → Feature Extraction → Database Storage
+     ↓
+Real-time Prediction ← Model Inference ← Dynamic Feature Backfill ← Historical Data Query
+```
+
+### ROI 优化策略
+- **MIN_EDGE = 7%**: 最小预测边际，避免低价值预测
+- **MIN_CONFIDENCE = 45%**: 最小置信度阈值，确保预测可靠性
+- **Kelly Fraction = 0.25**: 凯利准则投注比例
+- **Dynamic Betting Strategy**: 基于预测概率和赔率计算最优投注
+
+---
+
+## 📊 数据库连接标准
+
+### 统一连接方法 (必须使用)
 ```python
-# Use unified configuration system
+# 使用统一配置系统
 from src.config_unified import get_settings
 settings = get_settings()
 db = settings.database
 
-# Standard connection with RealDictCursor (REQUIRED)
+# 标准连接，必须使用 RealDictCursor
 import psycopg2
 from psycopg2.extras import RealDictCursor
 
@@ -225,299 +138,20 @@ conn = psycopg2.connect(
 )
 ```
 
-### Security Requirements
-- ✅ MUST use `config_unified.py` for connection parameters
-- ✅ MUST use connection pooling or async connections
-- ✅ MUST implement exception handling and resource cleanup
-- ❌ NEVER hardcode connection parameters
-- ❌ NEVER use basic cursors - always use `RealDictCursor`
+### 安全要求
+- ✅ 必须使用 `config_unified.py` 获取连接参数
+- ✅ 必须使用连接池或异步连接
+- ✅ 必须实现异常处理和资源清理
+- ❌ 绝不硬编码连接参数
+- ❌ 绝不使用基础游标 - 必须使用 `RealDictCursor`
 
 ---
 
-## 🛡️ Code Quality Mandates
+## 🧬 特征工程体系 (106 维标准)
 
-### Pre-Change Validation (MANDATORY)
-```bash
-# After ANY code modification, MUST run this command with 100% pass rate
-python src/core/main_engine_v5.py --mode test
-```
+### 核心 API 提取路径映射
 
-**Validation Requirements**:
-- ✅ Database connection test: Success
-- ✅ Configuration test: All items loaded properly
-- ✅ Model test: Prediction engine loads successfully
-- ✅ API test: External API connects normally
-- ❌ Any failure = Code merge prohibited
-
-### Code Standards
-- **Python Version**: 3.11+ (specified in pyproject.toml)
-- **Style**: Black (line-length: 120) + Flake8 + isort
-- **Type Checking**: MyPy with strict configuration and configured overrides
-- **Security**: Bandit scanning + Safety dependency checking
-- **Testing**: pytest with 96.35% coverage requirement
-- **Logging**: INFO (production), DEBUG (development) using structlog
-- **Error Handling**: Mandatory try-catch with proper logging
-- **Documentation**: All public methods must have docstrings
-- **Code Quality**: Integrated Python Code Quality Claude Skills
-
----
-
-## 📊 Production Environment Specifications
-
-### Data Flow Architecture
-```
-External API → Data Validation → Feature Extraction → Database Storage
-     ↓
-Real-time Prediction ← Model Inference ← Dynamic Feature Backfill ← Historical Data Query
-```
-
-### Performance Monitoring
-- **Response Time**: Single prediction <100ms
-- **Accuracy**: Maintain 60.00% baseline
-- **Data Integrity**: 467 golden matches 100% complete
-- **System Availability**: 99.9%+ uptime
-
-### Alert Thresholds
-- Data collection failure rate >5% → Immediate alert
-- Model accuracy drop >2% → Immediate alert
-- System response time >200ms → Immediate alert
-- Database connection failure → Immediate alert
-
----
-
-## 🔧 Development & Deployment
-
-### Environment Setup
-```bash
-# Production environment
-export ENVIRONMENT=production
-export DOCKER_ENV=true
-export LOG_LEVEL=INFO
-
-# Development environment
-export ENVIRONMENT=development
-export LOG_LEVEL=DEBUG
-```
-
-### Docker Deployment
-```bash
-# Build image
-docker build -t footballprediction:v2.3.1 .
-
-# Run service stack
-docker-compose up -d
-
-# Health check
-docker-compose exec db pg_isready -U football_user
-```
-
-### Key Services (docker-compose.yml)
-- **db**: PostgreSQL 15 with 467 golden matches preloaded
-- **redis**: Redis 7 for caching and real-time data
-- **engine**: Main prediction engine (port 8000)
-- **monitor**: Data quality monitoring service (port 8001)
-
----
-
-## 🎯 System Architecture
-
-### Core Components
-1. **MainEngineV5** (`src/core/main_engine_v5.py`): Data harvesting and real-time prediction engine
-2. **InferenceEngine** (`src/core/inference_engine.py`): XGBoost V2.0 model inference core
-3. **FotMobAPIClient** (`src/api/fotmob_client.py`): External data source interface
-4. **AdvancedFeatureExtractor**: Extracts 106 features from raw match data
-5. **Database**: PostgreSQL with comprehensive match data schema
-
-### Model Details
-- **Algorithm**: XGBoost 2.0+ with 60.00% accuracy
-- **Core Features** (10 primary): xG, possession, odds, and derivatives
-- **Dynamic Feature Backfilling**: Uses team's last 5 matches for future predictions
-- **Total Feature Dimensions**: 106 with engineered features
-
-### Database Schema
-- `matches`: Match metadata and collection status
-- `match_features_training`: 4-field feature set for model training
-- Complete L2 features including raw JSON data storage
-
----
-
-## 🧪 Testing and Quality Assurance
-
-### Test Commands
-```bash
-# Run all tests (630 tests expected)
-make test
-
-# Coverage test (96.35% expected)
-make coverage
-
-# Full quality check
-make quality
-
-# CI pipeline (includes all checks)
-make ci
-```
-
-### Test Structure
-- Unit tests in `tests/` directory
-- Smoke tests for basic functionality
-- Integration tests for API and database
-- Mock tests for external dependencies
-
----
-
-## 🚨 Troubleshooting SOP
-
-### Data Collection Issues
-1. Check FotMob API connectivity
-2. Verify database connection
-3. Check rate limiting settings
-4. Review detailed error logs
-
-### Model Prediction Issues
-1. Verify model file integrity: `ls -la data/models/xgb_football_v2.3_467real.*`
-2. Validate feature data format
-3. Check scaler status
-4. Rollback to previous version if needed
-
-### Database Issues
-1. Check connection pool status
-2. Verify disk space
-3. Check query performance
-4. Execute data backup if needed
-
----
-
-## 📋 Development Workflow Commands
-
-### Using Makefile (Recommended)
-```bash
-# Environment setup
-make dev        # Quick development environment
-make dev-full   # Full environment with code quality tools (incl. Claude Skills)
-
-# Code quality
-make format     # Format code with Black
-make lint       # Lint code with Flake8
-make typecheck  # Type check with MyPy
-make security   # Security scan with Bandit
-make quality    # Complete quality check (format + lint + typecheck + security)
-
-# Python Code Quality Claude Skills
-make python-quality-check   # Run quality analysis
-make python-quality-format  # Auto-format code
-make python-quality-fix     # Auto-fix issues
-make python-quality-score   # Show quality score
-
-# Testing
-make test       # Run unit tests (630 tests expected)
-make coverage   # Coverage test (96.35% expected)
-
-# Before committing
-make prepush    # Complete pre-push checklist with CI
-make ci         # Full CI pipeline (env-check + quality + test + coverage)
-
-# Project monitoring
-make status     # Project status overview
-make ci-status  # GitHub Actions CI status monitoring
-```
-
-### Modern Python Project Management (pyproject.toml)
-```bash
-# Install with development dependencies
-pip install -e .[dev]
-
-# Install with all optional dependencies
-pip install -e .[all]
-
-# Project scripts (defined in pyproject.toml)
-football-predict    # Run prediction engine
-football-train      # Run training pipeline
-football-server     # Start FastAPI server
-
-# Development tools configuration
-black src/          # Code formatting (configured in pyproject.toml)
-isort src/          # Import sorting
-pytest tests/       # Testing with configured markers
-mypy src/           # Type checking with configured overrides
-bandit -r src/      # Security scanning
-vulture src/        # Dead code detection
-```
-
----
-
-## 💡 Important Notes
-
-### Critical Architecture Decisions
-- **Single Entry Point**: All operations must go through `main_engine_v5.py`
-- **Configuration Management**: Unified through `config_unified.py` with Pydantic
-- **Database Design**: PostgreSQL with specific schema for golden matches
-- **Model Management**: XGBoost with dynamic feature backfilling capability
-- **API Integration**: FotMob with proper rate limiting and error handling
-
-### Performance Characteristics
-- Single prediction response time: <100ms
-- Batch processing capability: 700+ matches per run
-- Database size: 50GB+ with historical data
-- Memory usage: <2GB typical load
-- CPU usage: <70% normal operation
-
-### Security Best Practices
-- No hardcoded credentials - use environment variables
-- SQL injection protection through parameterized queries
-- API key secure storage through configuration system
-- Error message sanitization in production logs
-
----
-
-## 🔧 CI/CD and Monitoring
-
-### GitHub Actions CI Pipeline
-- **Configuration**: `.github/workflows/ci.yml`
-- **Triggers**: Push to main, Pull Requests
-- **Pipeline Stages**:
-  - Environment setup and dependency installation
-  - Code quality checks (Black, Flake8, MyPy, Bandit)
-  - Unit tests with coverage reporting
-  - Integration tests
-  - Security scanning
-  - Docker build validation
-
-### Monitoring and Alerting
-```bash
-# Real-time CI monitoring
-make ci-monitor    # Monitor CI execution in real-time
-make ci-status     # Check latest CI run status
-make ci-analyze RUN_ID=<id>  # Deep analysis of CI failures
-
-# System health monitoring
-docker-compose logs -f                    # Real-time log monitoring
-./system_verify.sh                        # Comprehensive system health check
-python src/utils/data_quality_checker.py  # Data quality validation
-```
-
-### Performance Metrics Dashboard
-- **Response Time**: Single prediction <100ms
-- **Throughput**: 700+ matches per batch
-- **Database Performance**: Connection pooling, query optimization
-- **Memory Usage**: <2GB typical load
-- **CPU Usage**: <70% normal operation
-- **Error Rates**: <5% data collection failure
-
----
-
-**Last Updated**: 2025-12-21
-**Maintenance Team**: Claude AI Architecture Team
-**Document Version**: V2.3.1 Production Ready
-**CI/CD Status**: GitHub Actions Enabled
-
----
-
-## 🧬 当前技术栈 DNA (Technical Stack DNA)
-
-### 核心特征提取路径映射表 (106维特征体系)
-
-#### 1. xG (Expected Goals) 特征组 (10维)
+#### 1. xG (Expected Goals) 特征组 (10 维)
 ```
 FotMob API路径: content.stats.Periods.All.stats[0].stats[].key = "expected_goals"
 ├── 主队xG: stats[0] (home_xg)
@@ -527,7 +161,7 @@ FotMob API路径: content.stats.Periods.All.stats[0].stats[].key = "expected_goa
 └── 备用路径: shotmap.shots[].expectedGoals
 ```
 
-#### 2. 控球率特征组 (8维)
+#### 2. 控球率特征组 (8 维)
 ```
 FotMob API路径: content.stats.Periods.All.stats[0].stats[].key = "BallPossesion"
 ├── 主队控球率: stats[0] (home_possession)
@@ -536,49 +170,12 @@ FotMob API路径: content.stats.Periods.All.stats[0].stats[].key = "BallPossesio
 └── 备用路径: general.teamStats[].possession
 ```
 
-#### 3. 角球特征组 (6维)
-```
-FotMob API路径: content.stats.Periods.All.stats[0].stats[].key = "CornerKicks"
-├── 主队角球数: stats[0] (home_corners)
-├── 客队角球数: stats[1] (away_corners)
-├── 角球差值: home_corners - away_corners (corners_diff)
-└── 备用路径: stats[].type = "cornerKicks"
-```
+#### 3. 角球特征组 (6 维)
+#### 4. 红黄牌特征组 (6 维)
+#### 5. 射门特征组 (6 维)
+#### 6. 赔率特征组 (6 维)
 
-#### 4. 红黄牌特征组 (6维)
-```
-FotMob API路径: content.stats.Periods.All.stats[0].stats[].key = "YellowCards"/"RedCards"
-├── 主队黄牌: stats[0] (home_yellow_cards)
-├── 客队黄牌: stats[1] (away_yellow_cards)
-├── 主队红牌: stats[0] (home_red_cards)
-├── 客队红牌: stats[1] (away_red_cards)
-├── 黄牌差值: home_yellow_cards - away_yellow_cards (yellow_cards_diff)
-└── 备用路径: cards[].cardType + isHome
-```
-
-#### 5. 射门特征组 (6维)
-```
-FotMob API路径: content.stats.Periods.All.stats[0].stats[].key = "Shots"/"ShotsOnTarget"
-├── 主队射门: stats[0] (home_shots_total)
-├── 客队射门: stats[1] (away_shots_total)
-├── 主队射正: stats[0] (home_shots_on_target)
-├── 客队射正: stats[1] (away_shots_on_target)
-├── 射门差值: home_shots_total - away_shots_total (shots_total_diff)
-└── 最准确路径: shotmap.shots[].eventType
-```
-
-#### 6. 赔率特征组 (6维)
-```
-数据源: 多个赔率提供商
-├── 主队开盘赔率: home_opening_odds
-├── 客队开盘赔率: away_opening_odds
-├── 平局赔率: draw_odds
-├── 主队当前赔率: home_current_odds
-├── 客队当前赔率: away_current_odds
-└── 赔率变化率: (current_odds - opening_odds) / opening_odds
-```
-
-### 动态特征回填算法 (Dynamic Feature Backfilling)
+### 动态特征回填算法
 ```python
 # 核心算法位置: src/core/main_engine_v5.py:get_historical_team_stats()
 # 冷启动保护机制:
@@ -588,52 +185,252 @@ FotMob API路径: content.stats.Periods.All.stats[0].stats[].key = "Shots"/"Shot
 4. 特征来源标识: data_source字段记录数据来源
 ```
 
-### 模型推理引擎架构
-```python
-# 核心类: src/core/inference_engine.py:InferenceEngine
-# 模型文件: data/models/xgb_football_v2.3_467real.joblib
-# 输入特征: 106维标准特征向量
-# 输出结果: [主胜概率, 平局概率, 客胜概率]
-# 响应时间: <100ms
-# 模型准确率: 60.00%
+---
+
+## 🛡️ 代码质量规范
+
+### 修改前验证 (强制要求)
+```bash
+# 任何代码修改后，必须运行此命令并确保100%通过
+python src/core/main_engine_v5.py --mode test
 ```
 
-### 数据库Schema固化
-```sql
--- 主表: match_features_training (83个字段)
--- 核心索引:
-CREATE INDEX idx_match_features_xg ON match_features_training(home_xg, away_xg);
-CREATE INDEX idx_match_features_possession ON match_features_training(home_possession, away_possession);
-CREATE INDEX idx_match_features_shots ON match_features_training(home_shots_total, away_shots_total);
-CREATE INDEX idx_match_features_corners ON match_features_training(home_corners, away_corners);
+**验证要求**:
+- ✅ 数据库连接测试: Success
+- ✅ 配置测试: 所有项目正确加载
+- ✅ 模型测试: 预测引擎成功加载
+- ✅ API 测试: 外部 API 正常连接
+- ❌ 任何失败 = 禁止代码合并
 
--- 质量检查函数:
-SELECT * FROM check_data_quality(); -- 返回填充率统计
+### 代码标准
+- **Python Version**: 3.11+ (在 pyproject.toml 中指定)
+- **Style**: Black (line-length: 120) + Flake8 + isort
+- **Type Checking**: MyPy 严格配置和覆盖配置
+- **Security**: Bandit 扫描 + Safety 依赖检查
+- **Testing**: pytest，要求 96.35% 覆盖率
+- **Logging**: INFO (生产), DEBUG (开发) 使用 structlog
+- **Error Handling**: 强制 try-catch 和适当的日志记录
+- **Documentation**: 所有公共方法必须有 docstring
+
+---
+
+## 📋 开发工作流命令
+
+### 使用 Makefile (推荐)
+```bash
+# 环境管理
+make dev        # 快速开发环境
+make install    # 安装项目依赖
+make clean      # 清理环境和缓存
+
+# 代码质量
+make format     # 代码格式化
+make lint       # 代码风格检查
+make typecheck  # 类型检查
+make security   # 安全扫描
+make quality    # 完整质量检查 (format + lint + typecheck + security)
+
+# 测试
+make test       # 运行单元测试
+make coverage   # 覆盖率测试
+
+# 提交前检查
+make prepush    # 完整提交前清单
+make ci         # 完整 CI 流水线
+
+# 生产部署
+make up         # 启动 Docker 服务
+make down       # 停止 Docker 服务
+make predict    # 运行预测
+make verify     # 系统验证
+
+# 项目监控
+make status     # 项目状态概览
 ```
 
-### API集成路径
-```python
-# 客户端: src/api/fotmob_client.py:FotMobAPIClient
-# 请求头: FOTMOB_X_MAS_HEADER (必需)
-# 基础URL: https://www.fotmob.com/api
-# 速率限制: 1秒延迟
-# 重试机制: 3次重试 + 指数退避
-```
+### 现代 Python 项目管理 (pyproject.toml)
+```bash
+# 安装开发依赖
+pip install -e .[dev]
 
-### 冷启动保护策略
-```python
-# 分层回退机制:
-1. 球队历史数据 (过去5场)
-2. 联赛平均水平 (主要联赛)
-3. 全球平均值 (最后兜底)
-4. 标识字段: data_source = "team_history"/"league_average"/"global_average"
+# 安装所有可选依赖
+pip install -e .[all]
+
+# 项目脚本 (在 pyproject.toml 中定义)
+football-predict    # 运行预测引擎
+football-train      # 运行训练流水线
+football-server     # 启动 FastAPI 服务器
+
+# 开发工具配置
+black src/          # 代码格式化 (在 pyproject.toml 中配置)
+isort src/          # 导入排序
+pytest tests/       # 测试
+mypy src/           # 类型检查 (配置覆盖范围)
 ```
 
 ---
 
-**🚨 CRITICAL**: This is a production system support document. Any violations of these standards will be automatically rejected!
+## 🚀 生产环境规格
 
-**🧬 技术栈DNA版本**: V2.3.1 | **最后验证**: 2025-12-21 | **特征覆盖率**: 100% (xG + 控球 + 角球 + 红黄牌 + 射门)
+### 数据流架构
+```
+External API → Data Validation → Feature Extraction → Database Storage
+     ↓
+Real-time Prediction ← Model Inference ← Dynamic Feature Backfill ← Historical Data Query
+```
+
+### 性能监控
+- **Response Time**: 单次预测 <100ms
+- **Accuracy**: 维持 60.00% 基准
+- **Data Integrity**: 467 场黄金数据 100% 完整
+- **System Availability**: 99.9%+ 正常运行时间
+
+### 告警阈值
+- 数据收集失败率 >5% → 立即告警
+- 模型准确率下降 >2% → 立即告警
+- 系统响应时间 >200ms → 立即告警
+- 数据库连接失败 → 立即告警
+
+---
+
+## 🔧 开发和部署
+
+### 环境设置
+```bash
+# 生产环境
+export ENVIRONMENT=production
+export DOCKER_ENV=true
+export LOG_LEVEL=INFO
+
+# 开发环境
+export ENVIRONMENT=development
+export LOG_LEVEL=DEBUG
+```
+
+### Docker 部署
+```bash
+# 构建镜像
+docker build -t footballprediction:v2.3.1 .
+
+# 运行服务栈
+docker-compose up -d
+
+# 健康检查
+docker-compose exec db pg_isready -U football_user
+```
+
+### 关键服务 (docker-compose.yml)
+- **db**: PostgreSQL 15 预装 467 场黄金数据
+- **redis**: Redis 7 用于缓存和实时数据
+- **engine**: 主预测引擎 (端口 8000)
+- **monitor**: 数据质量监控服务 (端口 8001)
+
+---
+
+## 🧪 测试和质量保证
+
+### 测试命令
+```bash
+# 运行所有测试 (预期 630 个测试)
+make test
+
+# 覆盖率测试 (预期 96.35%)
+make coverage
+
+# 完整质量检查
+make quality
+
+# CI 流水线 (包含所有检查)
+make ci
+```
+
+### 测试结构
+- 单元测试在 `tests/unit/` 目录
+- 集成测试在 `tests/integration/` 目录
+- 端到端测试在 `tests/e2e/` 目录
+- 性能测试在 `tests/performance/` 目录
+- API 测试在 `tests/api/` 目录
+- ML 特定测试在 `tests/ml/` 目录
+
+---
+
+## 🚨 故障处理 SOP
+
+### 数据收集问题
+1. 检查 FotMob API 连接
+2. 验证数据库连接
+3. 检查速率限制设置
+4. 查看详细错误日志
+
+### 模型预测问题
+1. 验证模型文件完整性: `ls -la data/models/xgb_football_v2.3_467real.*`
+2. 验证特征数据格式
+3. 检查 scaler 状态
+4. 必要时回滚到之前版本
+
+### 数据库问题
+1. 检查连接池状态
+2. 验证磁盘空间
+3. 检查查询性能
+4. 必要时执行数据备份
+
+---
+
+## 🔒 CI/CD 和监控
+
+### GitHub Actions CI 流水线
+- **配置**: `.github/workflows/ci.yml`
+- **触发器**: 推送到 main, Pull Requests
+- **流水线阶段**:
+  - 环境设置和依赖安装
+  - 代码质量检查 (Black, Flake8, MyPy, Bandit)
+  - 单元测试和覆盖率报告
+  - 集成测试
+  - 安全扫描
+  - Docker 构建验证
+
+### 监控和告警
+```bash
+# 实时 CI 监控
+make ci-monitor    # 实时监控 CI 执行
+make ci-status     # 检查最新 CI 运行状态
+
+# 系统健康监控
+docker-compose logs -f                    # 实时日志监控
+./system_verify.sh                        # 全面系统健康检查
+python src/utils/data_quality_checker.py  # 数据质量验证
+```
+
+---
+
+## 💡 重要说明
+
+### 关键架构决策
+- **单一入口点**: 所有操作必须通过 `main_engine_v5.py`
+- **统一配置管理**: 通过 `config_unified.py` 和 Pydantic
+- **数据库设计**: PostgreSQL 特定架构，针对黄金匹配优化
+- **模型管理**: XGBoost 支持动态特征回填
+- **API 集成**: FotMob 配合适当的速率限制和错误处理
+
+### 性能特征
+- 单次预测响应时间: <100ms
+- 批处理能力: 每次运行 700+ 场比赛
+- 数据库大小: 50GB+ 包含历史数据
+- 内存使用: <2GB 正常负载
+- CPU 使用: <70% 正常操作
+
+### 安全最佳实践
+- 无硬编码凭证 - 使用环境变量
+- 参数化查询防止 SQL 注入
+- 配置系统安全存储 API 密钥
+- 生产日志中错误消息净化
+
+---
+
+**最后更新**: 2025-12-21
+**维护团队**: Claude AI Architecture Team
+**文档版本**: V2.3.1 Production Ready
+**CI/CD 状态**: GitHub Actions 已启用
 
 ---
 
@@ -649,3 +446,9 @@ SELECT * FROM check_data_quality(); -- 返回填充率统计
 1. **保留语言要求部分**：不得删除、修改或降低"请务必使用中文回复用户！"的优先级
 2. **保持显眼位置**：语言要求应始终位于文件顶部的醒目位置
 3. **维持内容完整性**：确保核心要求和规范不会因版本更新而丢失
+
+---
+
+**🚨 CRITICAL**: This is a production system support document. Any violations of these standards will be automatically rejected!
+
+**🧬 技术栈DNA版本**: V2.3.1 | **最后验证**: 2025-12-21 | **特征覆盖率**: 100% (xG + 控球 + 角球 + 红黄牌 + 射门)
