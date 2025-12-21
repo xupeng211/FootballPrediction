@@ -1,0 +1,25 @@
+{
+  "feature_names": [
+    "home_possession",
+    "away_possession",
+    "home_opening_odds",
+    "home_current_odds"
+  ],
+  "label_encoder_classes": [
+    0,
+    1,
+    2
+  ],
+  "scaler_mean": [
+    50.90120481927711,
+    49.09879518072289,
+    760475377.2338132,
+    760475377.2338132
+  ],
+  "scaler_scale": [
+    11.252946002231301,
+    11.252946002231301,
+    15425035752.209236,
+    15425035752.209236
+  ]
+}

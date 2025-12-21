@@ -1,0 +1,39 @@
+{
+  "model_name": "xgb_v5_realistic_20251221_125313",
+  "model_version": "V5.0",
+  "feature_count": 12,
+  "feature_names": [
+    "home_xg",
+    "away_xg",
+    "home_possession",
+    "away_possession",
+    "home_shots_total",
+    "away_shots_total",
+    "home_shots_on_target",
+    "away_shots_on_target",
+    "home_corners",
+    "away_corners",
+    "home_yellow_cards",
+    "away_yellow_cards"
+  ],
+  "training_date": "2025-12-21T12:53:13.496743",
+  "physical_features_only": true,
+  "training_stats": {
+    "cv_accuracy_mean": 0.4238846945778998,
+    "cv_accuracy_std": 0.02102026884538614,
+    "cv_scores": [
+      0.43617021276595747,
+      0.4574468085106383,
+      0.40860215053763443,
+      0.3978494623655914,
+      0.41935483870967744
+    ],
+    "feature_count": 12,
+    "sample_count": 467
+  },
+  "evaluation_results": {
+    "accuracy": 0.9764453961456103,
+    "top_10_features": [
+      [
+        "away_shots_total",
+        

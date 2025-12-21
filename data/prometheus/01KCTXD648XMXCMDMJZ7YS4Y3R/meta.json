@@ -1,0 +1,17 @@
+{
+	"ulid": "01KCTXD648XMXCMDMJZ7YS4Y3R",
+	"minTime": 1766124004543,
+	"maxTime": 1766131200000,
+	"stats": {
+		"numSamples": 475500,
+		"numSeries": 1474,
+		"numChunks": 4020
+	},
+	"compaction": {
+		"level": 1,
+		"sources": [
+			"01KCTXD648XMXCMDMJZ7YS4Y3R"
+		]
+	},
+	"version": 1
+}

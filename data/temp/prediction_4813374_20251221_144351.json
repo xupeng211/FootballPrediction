@@ -1,0 +1,13 @@
+{
+  "match_id": "4813374",
+  "home_team": "Liverpool",
+  "away_team": "AFC Bournemouth",
+  "match_time": "2025-08-15T19:00:00.000Z",
+  "home_win_prob": 0.4537177541729893,
+  "draw_prob": 0.21677866897897244,
+  "away_win_prob": 0.32950357684803816,
+  "recommendation": "推荐: 主胜 (45.4%)",
+  "features": {
+    "home_team": "Liverpool",
+    "away_team": "AFC Bournemouth",
+    "match_time": 

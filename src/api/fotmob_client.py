@@ -134,7 +134,7 @@ class FotMobAPIClient:
 
     async def __aenter__(self):
         """异步上下文管理器入口"""
-        self.session = aiohttp.ClientSession(timeout=self.timeout)
+        self.session = aiohttp.ClientSession(timeout=self.timeout, headers={"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"})
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
@@ -271,10 +271,15 @@ class FotMobAPIClient:
             logger.info(f"获取比赛详情 - Match ID: {match_id}")
             async with self.session.get(url, params=params) as response:
                 if response.status == 200:
-                    data = await response.json()
-                    logger.info(f"成功获取比赛 {match_id} 的数据")
-                    self.circuit_breaker.record_success()
-                    return data
+                    try:
+                        data = await response.json()
+                        logger.info(f"成功获取比赛 {match_id} 的数据")
+                        self.circuit_breaker.record_success()
+                        return data
+                    except Exception as e:
+                        text = await response.text()
+                        logger.error(f"JSON解析失败: {e}, Response: {text[:200]}")
+                        return None
                 else:
                     error_msg = f"API请求失败 - Status: {response.status}, Match ID: {match_id}"
                     logger.error(error_msg)

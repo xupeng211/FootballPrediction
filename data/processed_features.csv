@@ -1,0 +1,380 @@
+id,fotmob_id,home_team_name,away_team_name,home_score,away_score,match_date,match_result,result_numeric,home_xg,away_xg,xg_difference,total_xg,has_xg_data,has_events,has_shotmap,has_lineups,home_lineup_count,away_lineup_count,total_lineup_players,has_odds
+10338,4813751,Tottenham Hotspur,Crystal Palace,0,0,2023-09-17,Draw,1,0.58,0.37,0.20999999999999996,0.95,True,True,True,True,0,0,0,False
+10333,4813746,Manchester City,Aston Villa,0,0,2023-09-17,Draw,1,2.28,1.43,0.8499999999999999,3.71,True,True,True,True,0,0,0,False
+10331,4813744,Leeds United,AFC Bournemouth,0,0,2023-09-17,Draw,1,1.39,0.24,1.15,1.63,True,True,True,True,0,0,0,False
+10340,4813753,Wolverhampton Wanderers,Fulham,0,0,2023-09-17,Draw,1,1.74,1.72,0.020000000000000018,3.46,True,True,True,True,0,0,0,False
+10339,4813752,West Ham United,Everton,0,0,2023-09-17,Draw,1,0.89,1.31,-0.42000000000000004,2.2,True,True,True,True,0,0,0,False
+10335,4813748,Newcastle United,Brighton & Hove Albion,0,0,2023-09-17,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10334,4813747,Manchester United,Brentford,0,0,2023-09-17,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10337,4813750,Sunderland,Chelsea,0,0,2023-09-17,Draw,1,0.81,1.18,-0.3699999999999999,1.99,True,True,True,True,0,0,0,False
+10336,4813749,Nottingham Forest,Burnley,0,0,2023-09-17,Draw,1,2.75,2.3,0.4500000000000002,5.05,True,True,True,True,0,0,0,False
+10332,4813745,Liverpool,Arsenal,0,0,2023-09-17,Draw,1,1.29,1.12,0.16999999999999993,2.41,True,True,True,True,0,0,0,False
+10328,4813741,Crystal Palace,Tottenham Hotspur,0,0,2023-09-16,Draw,1,3.07,0.5,2.57,3.57,True,True,True,True,0,0,0,False
+10326,4813739,Burnley,Nottingham Forest,0,0,2023-09-16,Draw,1,0.1,3.68,-3.58,3.7800000000000002,True,True,True,True,0,0,0,False
+10327,4813740,Chelsea,Sunderland,0,0,2023-09-16,Draw,1,1.22,0.89,0.32999999999999996,2.11,True,True,True,True,0,0,0,False
+10329,4813742,Everton,West Ham United,0,0,2023-09-16,Draw,1,1.93,1.12,0.8099999999999998,3.05,True,True,True,True,0,0,0,False
+10325,4813738,Brighton & Hove Albion,Newcastle United,0,0,2023-09-16,Draw,1,0.7,0.54,0.15999999999999992,1.24,True,True,True,True,0,0,0,False
+10321,4813734,AFC Bournemouth,Leeds United,0,0,2023-09-16,Draw,1,2.77,0.49,2.2800000000000002,3.26,True,True,True,True,0,0,0,False
+10323,4813736,Aston Villa,Manchester City,0,0,2023-09-16,Draw,1,0.42,2.42,-2.0,2.84,True,True,True,True,0,0,0,False
+10324,4813737,Brentford,Manchester United,0,0,2023-09-16,Draw,1,1.19,0.41,0.78,1.5999999999999999,True,True,True,True,0,0,0,False
+10322,4813735,Arsenal,Liverpool,0,0,2023-09-16,Draw,1,2.22,0.72,1.5000000000000002,2.9400000000000004,True,True,True,True,0,0,0,False
+10330,4813743,Fulham,Wolverhampton Wanderers,0,0,2023-09-16,Draw,1,1.75,0.52,1.23,2.27,True,True,True,True,0,0,0,False
+10314,4813727,Manchester United,Brentford,0,0,2023-09-15,Draw,1,2.03,1.53,0.4999999999999998,3.5599999999999996,True,True,True,True,0,0,0,False
+10317,4813730,Sunderland,Chelsea,0,0,2023-09-15,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10318,4813731,Tottenham Hotspur,Crystal Palace,0,0,2023-09-15,Draw,1,3.45,0.3,3.1500000000000004,3.75,True,True,True,True,0,0,0,False
+10319,4813732,West Ham United,Everton,0,0,2023-09-15,Draw,1,1.84,0.71,1.1300000000000001,2.55,True,True,True,True,0,0,0,False
+10312,4813725,Liverpool,Arsenal,0,0,2023-09-15,Draw,1,0.56,0.92,-0.36,1.48,True,True,True,True,0,0,0,False
+10320,4813733,Wolverhampton Wanderers,Fulham,0,0,2023-09-15,Draw,1,1.68,0.53,1.15,2.21,True,True,True,True,0,0,0,False
+10315,4813728,Newcastle United,Brighton & Hove Albion,0,0,2023-09-15,Draw,1,1.12,0.88,0.2400000000000001,2.0,True,True,True,True,0,0,0,False
+10311,4813724,Leeds United,AFC Bournemouth,0,0,2023-09-15,Draw,1,0.65,0.83,-0.17999999999999994,1.48,True,True,True,True,0,0,0,False
+10313,4813726,Manchester City,Aston Villa,0,0,2023-09-15,Draw,1,1.16,0.4,0.7599999999999999,1.56,True,True,True,True,0,0,0,False
+10316,4813729,Nottingham Forest,Burnley,0,0,2023-09-15,Draw,1,1.0,1.95,-0.95,2.95,True,True,True,True,0,0,0,False
+10303,4813716,Aston Villa,Manchester City,0,0,2023-09-14,Draw,1,0.44,1.87,-1.4300000000000002,2.31,True,True,True,True,0,0,0,False
+10304,4813717,Brentford,Manchester United,0,0,2023-09-14,Draw,1,0.75,0.32,0.43,1.07,True,True,True,True,0,0,0,False
+10305,4813718,Brighton & Hove Albion,Newcastle United,0,0,2023-09-14,Draw,1,0.35,2.37,-2.02,2.72,True,True,True,True,0,0,0,False
+10307,4813720,Chelsea,Sunderland,0,0,2023-09-14,Draw,1,2.38,0.81,1.5699999999999998,3.19,True,True,True,True,0,0,0,False
+10308,4813721,Crystal Palace,Tottenham Hotspur,0,0,2023-09-14,Draw,1,0.45,2.63,-2.1799999999999997,3.08,True,True,True,True,0,0,0,False
+10306,4813719,Burnley,Nottingham Forest,0,0,2023-09-14,Draw,1,2.35,1.67,0.6800000000000002,4.02,True,True,True,True,0,0,0,False
+10301,4813714,AFC Bournemouth,Leeds United,0,0,2023-09-14,Draw,1,0.87,1.15,-0.2799999999999999,2.02,True,True,True,True,0,0,0,False
+10309,4813722,Everton,West Ham United,0,0,2023-09-14,Draw,1,2.75,1.34,1.41,4.09,True,True,True,True,0,0,0,False
+10310,4813723,Fulham,Wolverhampton Wanderers,0,0,2023-09-14,Draw,1,0.91,1.45,-0.5399999999999999,2.36,True,True,True,True,0,0,0,False
+10302,4813715,Arsenal,Liverpool,0,0,2023-09-14,Draw,1,4.44,2.03,2.4100000000000006,6.470000000000001,True,True,True,True,0,0,0,False
+10297,4813710,Sunderland,Chelsea,0,0,2023-09-13,Draw,1,0.49,1.62,-1.1300000000000001,2.1100000000000003,True,True,True,True,0,0,0,False
+10293,4813706,Manchester City,Aston Villa,0,0,2023-09-13,Draw,1,0.61,2.04,-1.4300000000000002,2.65,True,True,True,True,0,0,0,False
+10294,4813707,Manchester United,Brentford,0,0,2023-09-13,Draw,1,1.81,2.28,-0.46999999999999975,4.09,True,True,True,True,0,0,0,False
+10295,4813708,Newcastle United,Brighton & Hove Albion,0,0,2023-09-13,Draw,1,2.03,0.41,1.6199999999999999,2.44,True,True,True,True,0,0,0,False
+10296,4813709,Nottingham Forest,Burnley,0,0,2023-09-13,Draw,1,1.11,0.92,0.19000000000000006,2.0300000000000002,True,True,True,True,0,0,0,False
+10298,4813711,Tottenham Hotspur,Crystal Palace,0,0,2023-09-13,Draw,1,2.02,2.08,-0.06000000000000005,4.1,True,True,True,True,0,0,0,False
+10299,4813712,West Ham United,Everton,0,0,2023-09-13,Draw,1,1.68,1.66,0.020000000000000018,3.34,True,True,True,True,0,0,0,False
+10300,4813713,Wolverhampton Wanderers,Fulham,0,0,2023-09-13,Draw,1,0.73,1.19,-0.45999999999999996,1.92,True,True,True,True,0,0,0,False
+10291,4813704,Leeds United,AFC Bournemouth,0,0,2023-09-13,Draw,1,1.32,1.22,0.10000000000000009,2.54,True,True,True,True,0,0,0,False
+10292,4813705,Liverpool,Arsenal,0,0,2023-09-13,Draw,1,1.84,0.82,1.02,2.66,True,True,True,True,0,0,0,False
+10283,4813696,Aston Villa,Manchester City,0,0,2023-09-12,Draw,1,1.01,0.6,0.41000000000000003,1.6099999999999999,True,True,True,True,0,0,0,False
+10282,4813695,Arsenal,Liverpool,0,0,2023-09-12,Draw,1,1.04,0.78,0.26,1.82,True,True,True,True,0,0,0,False
+10285,4813698,Brighton & Hove Albion,Newcastle United,0,0,2023-09-12,Draw,1,0.66,2.31,-1.65,2.97,True,True,True,True,0,0,0,False
+10286,4813699,Burnley,Nottingham Forest,0,0,2023-09-12,Draw,1,0.9,0.7,0.20000000000000007,1.6,True,True,True,True,0,0,0,False
+10288,4813701,Crystal Palace,Tottenham Hotspur,0,0,2023-09-12,Draw,1,0.89,0.87,0.020000000000000018,1.76,True,True,True,True,0,0,0,False
+10289,4813702,Everton,West Ham United,0,0,2023-09-12,Draw,1,0.46,0.14,0.32,0.6000000000000001,True,True,False,True,0,0,0,False
+10290,4813703,Fulham,Wolverhampton Wanderers,0,0,2023-09-12,Draw,1,0.85,1.1,-0.2500000000000001,1.9500000000000002,True,True,True,True,0,0,0,False
+10287,4813700,Chelsea,Sunderland,0,0,2023-09-12,Draw,1,1.78,0.48,1.3,2.26,True,True,True,True,0,0,0,False
+10284,4813697,Brentford,Manchester United,0,0,2023-09-12,Draw,1,1.84,0.43,1.4100000000000001,2.27,True,True,True,True,0,0,0,False
+10281,4813694,AFC Bournemouth,Leeds United,0,0,2023-09-12,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10274,4813687,Manchester United,Brentford,0,0,2023-09-11,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10272,4813685,Liverpool,Arsenal,0,0,2023-09-11,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10280,4813693,Wolverhampton Wanderers,Fulham,0,0,2023-09-11,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10278,4813691,Tottenham Hotspur,Crystal Palace,0,0,2023-09-11,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10279,4813692,West Ham United,Everton,0,0,2023-09-11,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10273,4813686,Manchester City,Aston Villa,0,0,2023-09-11,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10271,4813684,Leeds United,AFC Bournemouth,0,0,2023-09-11,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10277,4813690,Sunderland,Chelsea,0,0,2023-09-11,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10276,4813689,Nottingham Forest,Burnley,0,0,2023-09-11,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10275,4813688,Newcastle United,Brighton & Hove Albion,0,0,2023-09-11,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10270,4813683,Fulham,Wolverhampton Wanderers,0,0,2023-09-10,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10261,4813674,AFC Bournemouth,Leeds United,0,0,2023-09-10,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10264,4813677,Brentford,Manchester United,0,0,2023-09-10,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10263,4813676,Aston Villa,Manchester City,0,0,2023-09-10,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10266,4813679,Burnley,Nottingham Forest,0,0,2023-09-10,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10267,4813680,Chelsea,Sunderland,0,0,2023-09-10,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10268,4813681,Crystal Palace,Tottenham Hotspur,0,0,2023-09-10,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10262,4813675,Arsenal,Liverpool,0,0,2023-09-10,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10265,4813678,Brighton & Hove Albion,Newcastle United,0,0,2023-09-10,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10269,4813682,Everton,West Ham United,0,0,2023-09-10,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10260,4813673,Wolverhampton Wanderers,Fulham,0,0,2023-09-09,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10259,4813672,West Ham United,Everton,0,0,2023-09-09,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10253,4813666,Manchester City,Aston Villa,0,0,2023-09-09,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10252,4813665,Liverpool,Arsenal,0,0,2023-09-09,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10258,4813671,Tottenham Hotspur,Crystal Palace,0,0,2023-09-09,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10257,4813670,Sunderland,Chelsea,0,0,2023-09-09,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10256,4813669,Nottingham Forest,Burnley,0,0,2023-09-09,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10255,4813668,Newcastle United,Brighton & Hove Albion,0,0,2023-09-09,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10254,4813667,Manchester United,Brentford,0,0,2023-09-09,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10251,4813664,Leeds United,AFC Bournemouth,0,0,2023-09-09,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10249,4813662,Everton,West Ham United,0,0,2023-09-08,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10241,4813654,AFC Bournemouth,Leeds United,0,0,2023-09-08,Draw,1,0.94,0.49,0.44999999999999996,1.43,True,True,True,True,0,0,0,False
+10242,4813655,Arsenal,Liverpool,0,0,2023-09-08,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10243,4813656,Aston Villa,Manchester City,0,0,2023-09-08,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10244,4813657,Brentford,Manchester United,0,0,2023-09-08,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10245,4813658,Brighton & Hove Albion,Newcastle United,0,0,2023-09-08,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10246,4813659,Burnley,Nottingham Forest,0,0,2023-09-08,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10247,4813660,Chelsea,Sunderland,0,0,2023-09-08,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10248,4813661,Crystal Palace,Tottenham Hotspur,0,0,2023-09-08,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10250,4813663,Fulham,Wolverhampton Wanderers,0,0,2023-09-08,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10240,4813653,Wolverhampton Wanderers,Fulham,0,0,2023-09-07,Draw,1,0.99,1.91,-0.9199999999999999,2.9,True,True,True,True,0,0,0,False
+10232,4813645,Liverpool,Arsenal,0,0,2023-09-07,Draw,1,1.28,1.7,-0.41999999999999993,2.98,True,True,True,True,0,0,0,False
+10237,4813650,Sunderland,Chelsea,0,0,2023-09-07,Draw,1,3.1,1.54,1.56,4.640000000000001,True,True,True,True,0,0,0,False
+10236,4813649,Nottingham Forest,Burnley,0,0,2023-09-07,Draw,1,0.86,0.45,0.41,1.31,True,True,True,True,0,0,0,False
+10234,4813647,Manchester United,Brentford,0,0,2023-09-07,Draw,1,0.89,2.0,-1.1099999999999999,2.89,True,True,True,True,0,0,0,False
+10233,4813646,Manchester City,Aston Villa,0,0,2023-09-07,Draw,1,0.79,1.26,-0.47,2.05,True,True,True,True,0,0,0,False
+10231,4813644,Leeds United,AFC Bournemouth,0,0,2023-09-07,Draw,1,4.05,0.65,3.4,4.7,True,True,True,True,0,0,0,False
+10235,4813648,Newcastle United,Brighton & Hove Albion,0,0,2023-09-07,Draw,1,3.06,0.95,2.1100000000000003,4.01,True,True,True,True,0,0,0,False
+10238,4813651,Tottenham Hotspur,Crystal Palace,0,0,2023-09-07,Draw,1,0.29,1.24,-0.95,1.53,True,True,True,True,0,0,0,False
+10239,4813652,West Ham United,Everton,0,0,2023-09-07,Draw,1,1.83,1.19,0.6400000000000001,3.02,True,True,True,True,0,0,0,False
+10229,4813642,Everton,West Ham United,0,0,2023-09-06,Draw,1,2.16,0.17,1.9900000000000002,2.33,True,True,True,True,0,0,0,False
+10228,4813641,Crystal Palace,Tottenham Hotspur,0,0,2023-09-06,Draw,1,1.93,1.58,0.34999999999999987,3.51,True,True,True,True,0,0,0,False
+10227,4813640,Chelsea,Sunderland,0,0,2023-09-06,Draw,1,2.24,2.49,-0.25,4.73,True,True,True,True,0,0,0,False
+10225,4813638,Brighton & Hove Albion,Newcastle United,0,0,2023-09-06,Draw,1,1.79,1.27,0.52,3.06,True,True,True,True,0,0,0,False
+10226,4813639,Burnley,Nottingham Forest,0,0,2023-09-06,Draw,1,1.71,0.21,1.5,1.92,True,True,True,True,0,0,0,False
+10230,4813643,Fulham,Wolverhampton Wanderers,0,0,2023-09-06,Draw,1,1.93,0.07,1.8599999999999999,2.0,True,True,True,True,0,0,0,False
+10224,4813637,Brentford,Manchester United,0,0,2023-09-06,Draw,1,0.44,1.72,-1.28,2.16,True,True,True,True,0,0,0,False
+10223,4813636,Aston Villa,Manchester City,0,0,2023-09-06,Draw,1,1.22,1.91,-0.69,3.13,True,True,True,True,0,0,0,False
+10221,4813634,AFC Bournemouth,Leeds United,0,0,2023-09-06,Draw,1,1.8,0.79,1.01,2.59,True,True,True,True,0,0,0,False
+10222,4813635,Arsenal,Liverpool,0,0,2023-09-06,Draw,1,1.79,1.58,0.20999999999999996,3.37,True,True,True,True,0,0,0,False
+10216,4813629,Nottingham Forest,Burnley,0,0,2023-09-05,Draw,1,0.5,1.44,-0.94,1.94,True,True,True,True,0,0,0,False
+10213,4813626,Manchester City,Aston Villa,0,0,2023-09-05,Draw,1,1.77,0.35,1.42,2.12,True,True,True,True,0,0,0,False
+10217,4813630,Sunderland,Chelsea,0,0,2023-09-05,Draw,1,0.91,2.17,-1.2599999999999998,3.08,True,True,True,True,0,0,0,False
+10212,4813625,Liverpool,Arsenal,0,0,2023-09-05,Draw,1,2.21,2.41,-0.20000000000000018,4.62,True,True,True,True,0,0,0,False
+10211,4813624,Leeds United,AFC Bournemouth,0,0,2023-09-05,Draw,1,3.31,0.17,3.14,3.48,True,True,True,True,0,0,0,False
+10220,4813633,Wolverhampton Wanderers,Fulham,0,0,2023-09-05,Draw,1,2.04,0.75,1.29,2.79,True,True,True,True,0,0,0,False
+10219,4813632,West Ham United,Everton,0,0,2023-09-05,Draw,1,1.45,0.41,1.04,1.8599999999999999,True,True,True,True,0,0,0,False
+10218,4813631,Tottenham Hotspur,Crystal Palace,0,0,2023-09-05,Draw,1,0.91,0.74,0.17000000000000004,1.65,True,True,True,True,0,0,0,False
+10215,4813628,Newcastle United,Brighton & Hove Albion,0,0,2023-09-05,Draw,1,0.95,0.59,0.36,1.54,True,True,True,True,0,0,0,False
+10214,4813627,Manchester United,Brentford,0,0,2023-09-05,Draw,1,2.79,0.96,1.83,3.75,True,True,True,True,0,0,0,False
+10201,4813614,AFC Bournemouth,Leeds United,0,0,2023-09-04,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10204,4813617,Brentford,Manchester United,0,0,2023-09-04,Draw,1,0.75,0.39,0.36,1.1400000000000001,True,True,False,True,0,0,0,False
+10203,4813616,Aston Villa,Manchester City,0,0,2023-09-04,Draw,1,0.44,1.91,-1.47,2.35,True,True,True,True,0,0,0,False
+10205,4813618,Brighton & Hove Albion,Newcastle United,0,0,2023-09-04,Draw,1,3.02,1.06,1.96,4.08,True,True,True,True,0,0,0,False
+10202,4813615,Arsenal,Liverpool,0,0,2023-09-04,Draw,1,1.7,1.61,0.08999999999999986,3.31,True,True,True,True,0,0,0,False
+10209,4813622,Everton,West Ham United,0,0,2023-09-04,Draw,1,0.92,0.63,0.29000000000000004,1.55,True,True,True,True,0,0,0,False
+10207,4813620,Chelsea,Sunderland,0,0,2023-09-04,Draw,1,2.55,0.69,1.8599999999999999,3.2399999999999998,True,True,True,True,0,0,0,False
+10206,4813619,Burnley,Nottingham Forest,0,0,2023-09-04,Draw,1,1.44,0.4,1.04,1.8399999999999999,True,True,True,True,0,0,0,False
+10208,4813621,Crystal Palace,Tottenham Hotspur,0,0,2023-09-04,Draw,1,1.51,0.61,0.9,2.12,True,True,True,True,0,0,0,False
+10210,4813623,Fulham,Wolverhampton Wanderers,0,0,2023-09-04,Draw,1,2.35,0.44,1.9100000000000001,2.79,True,True,True,True,0,0,0,False
+10197,4813610,Sunderland,Chelsea,0,0,2023-09-03,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10191,4813604,Leeds United,AFC Bournemouth,0,0,2023-09-03,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10200,4813613,Wolverhampton Wanderers,Fulham,0,0,2023-09-03,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10199,4813612,West Ham United,Everton,0,0,2023-09-03,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10198,4813611,Tottenham Hotspur,Crystal Palace,0,0,2023-09-03,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10196,4813609,Nottingham Forest,Burnley,0,0,2023-09-03,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10195,4813608,Newcastle United,Brighton & Hove Albion,0,0,2023-09-03,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10194,4813607,Manchester United,Brentford,0,0,2023-09-03,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10193,4813606,Manchester City,Aston Villa,0,0,2023-09-03,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10192,4813605,Liverpool,Arsenal,0,0,2023-09-03,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10184,4813597,Brentford,Manchester United,0,0,2023-09-02,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10185,4813598,Brighton & Hove Albion,Newcastle United,0,0,2023-09-02,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10186,4813599,Burnley,Nottingham Forest,0,0,2023-09-02,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10188,4813601,Crystal Palace,Tottenham Hotspur,0,0,2023-09-02,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10189,4813602,Everton,West Ham United,0,0,2023-09-02,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10190,4813603,Fulham,Wolverhampton Wanderers,0,0,2023-09-02,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10182,4813595,Arsenal,Liverpool,0,0,2023-09-02,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10187,4813600,Chelsea,Sunderland,0,0,2023-09-02,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10181,4813594,AFC Bournemouth,Leeds United,0,0,2023-09-02,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10183,4813596,Aston Villa,Manchester City,0,0,2023-09-02,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10178,4813591,Tottenham Hotspur,Crystal Palace,0,0,2023-09-01,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10179,4813592,West Ham United,Everton,0,0,2023-09-01,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10177,4813590,Sunderland,Chelsea,0,0,2023-09-01,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10180,4813593,Wolverhampton Wanderers,Fulham,0,0,2023-09-01,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10171,4813584,Leeds United,AFC Bournemouth,0,0,2023-09-01,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10173,4813586,Manchester City,Aston Villa,0,0,2023-09-01,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10174,4813587,Manchester United,Brentford,0,0,2023-09-01,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10175,4813588,Newcastle United,Brighton & Hove Albion,0,0,2023-09-01,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10172,4813585,Liverpool,Arsenal,0,0,2023-09-01,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10176,4813589,Nottingham Forest,Burnley,0,0,2023-09-01,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10167,4813580,Chelsea,Sunderland,0,0,2023-08-31,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10169,4813582,Everton,West Ham United,0,0,2023-08-31,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10170,4813583,Fulham,Wolverhampton Wanderers,0,0,2023-08-31,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10168,4813581,Crystal Palace,Tottenham Hotspur,0,0,2023-08-31,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10162,4813575,Arsenal,Liverpool,0,0,2023-08-31,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10164,4813577,Brentford,Manchester United,0,0,2023-08-31,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10163,4813576,Aston Villa,Manchester City,0,0,2023-08-31,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10165,4813578,Brighton & Hove Albion,Newcastle United,0,0,2023-08-31,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10166,4813579,Burnley,Nottingham Forest,0,0,2023-08-31,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10161,4813574,AFC Bournemouth,Leeds United,0,0,2023-08-31,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10158,4813571,Tottenham Hotspur,Crystal Palace,0,0,2023-08-30,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10159,4813572,West Ham United,Everton,0,0,2023-08-30,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10160,4813573,Wolverhampton Wanderers,Fulham,0,0,2023-08-30,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10155,4813568,Newcastle United,Brighton & Hove Albion,0,0,2023-08-30,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10154,4813567,Manchester United,Brentford,0,0,2023-08-30,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10156,4813569,Nottingham Forest,Burnley,0,0,2023-08-30,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10153,4813566,Manchester City,Aston Villa,0,0,2023-08-30,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10152,4813565,Liverpool,Arsenal,0,0,2023-08-30,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10157,4813570,Sunderland,Chelsea,0,0,2023-08-30,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10151,4813564,Leeds United,AFC Bournemouth,0,0,2023-08-30,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10149,4813562,Everton,West Ham United,0,0,2023-08-29,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10145,4813558,Brighton & Hove Albion,Newcastle United,0,0,2023-08-29,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10150,4813563,Fulham,Wolverhampton Wanderers,0,0,2023-08-29,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10142,4813555,Arsenal,Liverpool,0,0,2023-08-29,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10143,4813556,Aston Villa,Manchester City,0,0,2023-08-29,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10141,4813554,AFC Bournemouth,Leeds United,0,0,2023-08-29,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10148,4813561,Crystal Palace,Tottenham Hotspur,0,0,2023-08-29,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10147,4813560,Chelsea,Sunderland,0,0,2023-08-29,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10146,4813559,Burnley,Nottingham Forest,0,0,2023-08-29,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10144,4813557,Brentford,Manchester United,0,0,2023-08-29,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10131,4813544,Leeds United,AFC Bournemouth,0,0,2023-08-28,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10140,4813553,Wolverhampton Wanderers,Fulham,0,0,2023-08-28,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10132,4813545,Liverpool,Arsenal,0,0,2023-08-28,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10138,4813551,Tottenham Hotspur,Crystal Palace,0,0,2023-08-28,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10136,4813549,Nottingham Forest,Burnley,0,0,2023-08-28,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10137,4813550,Sunderland,Chelsea,0,0,2023-08-28,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10139,4813552,West Ham United,Everton,0,0,2023-08-28,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10135,4813548,Newcastle United,Brighton & Hove Albion,0,0,2023-08-28,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10134,4813547,Manchester United,Brentford,0,0,2023-08-28,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10133,4813546,Manchester City,Aston Villa,0,0,2023-08-28,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10124,4813537,Brentford,Manchester United,0,0,2023-08-27,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10123,4813536,Aston Villa,Manchester City,0,0,2023-08-27,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10121,4813534,AFC Bournemouth,Leeds United,0,0,2023-08-27,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10128,4813541,Crystal Palace,Tottenham Hotspur,0,0,2023-08-27,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10122,4813535,Arsenal,Liverpool,0,0,2023-08-27,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10130,4813543,Fulham,Wolverhampton Wanderers,0,0,2023-08-27,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10129,4813542,Everton,West Ham United,0,0,2023-08-27,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10127,4813540,Chelsea,Sunderland,0,0,2023-08-27,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10126,4813539,Burnley,Nottingham Forest,0,0,2023-08-27,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10125,4813538,Brighton & Hove Albion,Newcastle United,0,0,2023-08-27,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10114,4813527,Manchester United,Brentford,0,0,2023-08-26,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10111,4813524,Leeds United,AFC Bournemouth,0,0,2023-08-26,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10116,4813529,Nottingham Forest,Burnley,0,0,2023-08-26,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10112,4813525,Liverpool,Arsenal,0,0,2023-08-26,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10120,4813533,Wolverhampton Wanderers,Fulham,0,0,2023-08-26,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10119,4813532,West Ham United,Everton,0,0,2023-08-26,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10118,4813531,Tottenham Hotspur,Crystal Palace,0,0,2023-08-26,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10117,4813530,Sunderland,Chelsea,0,0,2023-08-26,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10115,4813528,Newcastle United,Brighton & Hove Albion,0,0,2023-08-26,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10113,4813526,Manchester City,Aston Villa,0,0,2023-08-26,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10105,4813518,Brighton & Hove Albion,Newcastle United,0,0,2023-08-25,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10109,4813522,Everton,West Ham United,0,0,2023-08-25,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10108,4813521,Crystal Palace,Tottenham Hotspur,0,0,2023-08-25,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10107,4813520,Chelsea,Sunderland,0,0,2023-08-25,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10104,4813517,Brentford,Manchester United,0,0,2023-08-25,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10103,4813516,Aston Villa,Manchester City,0,0,2023-08-25,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10102,4813515,Arsenal,Liverpool,0,0,2023-08-25,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10106,4813519,Burnley,Nottingham Forest,0,0,2023-08-25,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10101,4813514,AFC Bournemouth,Leeds United,0,0,2023-08-25,Draw,1,0.91,0.74,0.17000000000000004,1.65,True,True,True,True,0,0,0,False
+10110,4813523,Fulham,Wolverhampton Wanderers,0,0,2023-08-25,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10098,4813511,Tottenham Hotspur,Crystal Palace,0,0,2023-08-24,Draw,1,1.45,0.41,1.04,1.8599999999999999,True,True,True,True,0,0,0,False
+10096,4813509,Nottingham Forest,Burnley,0,0,2023-08-24,Draw,1,0.91,2.17,-1.2599999999999998,3.08,True,True,True,True,0,0,0,False
+10094,4813507,Manchester United,Brentford,0,0,2023-08-24,Draw,1,2.21,2.41,-0.20000000000000018,4.62,True,True,True,True,0,0,0,False
+10093,4813506,Manchester City,Aston Villa,0,0,2023-08-24,Draw,1,1.77,0.35,1.42,2.12,True,True,True,True,0,0,0,False
+10092,4813505,Liverpool,Arsenal,0,0,2023-08-24,Draw,1,0.5,1.44,-0.94,1.94,True,True,True,True,0,0,0,False
+10100,4813513,Wolverhampton Wanderers,Fulham,0,0,2023-08-24,Draw,1,2.04,0.75,1.29,2.79,True,True,True,True,0,0,0,False
+10099,4813512,West Ham United,Everton,0,0,2023-08-24,Draw,1,1.8,0.79,1.01,2.59,True,True,True,True,0,0,0,False
+10097,4813510,Sunderland,Chelsea,0,0,2023-08-24,Draw,1,2.79,0.96,1.83,3.75,True,True,True,True,0,0,0,False
+10095,4813508,Newcastle United,Brighton & Hove Albion,0,0,2023-08-24,Draw,1,0.95,0.59,0.36,1.54,True,True,True,True,0,0,0,False
+10091,4813504,Leeds United,AFC Bournemouth,0,0,2023-08-24,Draw,1,0.29,1.24,-0.95,1.53,True,True,True,True,0,0,0,False
+10081,4813494,AFC Bournemouth,Leeds United,0,0,2023-08-23,Draw,1,1.79,1.27,0.52,3.06,True,True,True,True,0,0,0,False
+10082,4813495,Arsenal,Liverpool,0,0,2023-08-23,Draw,1,0.94,0.49,0.44999999999999996,1.43,True,True,True,True,0,0,0,False
+10084,4813497,Brentford,Manchester United,0,0,2023-08-23,Draw,1,0.79,1.26,-0.47,2.05,True,True,True,True,0,0,0,False
+10090,4813503,Fulham,Wolverhampton Wanderers,0,0,2023-08-23,Draw,1,0.86,0.45,0.41,1.31,True,True,True,True,0,0,0,False
+10089,4813502,Everton,West Ham United,0,0,2023-08-23,Draw,1,1.28,1.7,-0.41999999999999993,2.98,True,True,True,True,0,0,0,False
+10088,4813501,Crystal Palace,Tottenham Hotspur,0,0,2023-08-23,Draw,1,0.89,2.0,-1.1099999999999999,2.89,True,True,True,True,0,0,0,False
+10087,4813500,Chelsea,Sunderland,0,0,2023-08-23,Draw,1,3.1,1.54,1.56,4.640000000000001,True,True,True,True,0,0,0,False
+10086,4813499,Burnley,Nottingham Forest,0,0,2023-08-23,Draw,1,0.99,1.91,-0.9199999999999999,2.9,True,True,True,True,0,0,0,False
+10085,4813498,Brighton & Hove Albion,Newcastle United,0,0,2023-08-23,Draw,1,1.83,1.19,0.6400000000000001,3.02,True,True,True,True,0,0,0,False
+10083,4813496,Aston Villa,Manchester City,0,0,2023-08-23,Draw,1,3.06,0.95,2.1100000000000003,4.01,True,True,True,True,0,0,0,False
+10080,4813493,Wolverhampton Wanderers,Fulham,0,0,2023-08-22,Draw,1,2.24,2.49,-0.25,4.73,True,True,True,True,0,0,0,False
+10075,4813488,Newcastle United,Brighton & Hove Albion,0,0,2023-08-22,Draw,1,0.44,1.72,-1.28,2.16,True,True,True,True,0,0,0,False
+10078,4813491,Tottenham Hotspur,Crystal Palace,0,0,2023-08-22,Draw,1,1.93,1.58,0.34999999999999987,3.51,True,True,True,True,0,0,0,False
+10077,4813490,Sunderland,Chelsea,0,0,2023-08-22,Draw,1,1.79,1.58,0.20999999999999996,3.37,True,True,True,True,0,0,0,False
+10076,4813489,Nottingham Forest,Burnley,0,0,2023-08-22,Draw,1,2.16,0.17,1.9900000000000002,2.33,True,True,True,True,0,0,0,False
+10079,4813492,West Ham United,Everton,0,0,2023-08-22,Draw,1,1.71,0.21,1.5,1.92,True,True,True,True,0,0,0,False
+10071,4813484,Leeds United,AFC Bournemouth,0,0,2023-08-22,Draw,1,3.02,1.06,1.96,4.08,True,True,True,True,0,0,0,False
+10073,4813486,Manchester City,Aston Villa,0,0,2023-08-22,Draw,1,1.93,0.07,1.8599999999999999,2.0,True,True,True,True,0,0,0,False
+10074,4813487,Manchester United,Brentford,0,0,2023-08-22,Draw,1,1.22,1.91,-0.69,3.13,True,True,True,True,0,0,0,False
+10072,4813485,Liverpool,Arsenal,0,0,2023-08-22,Draw,1,4.05,0.65,3.4,4.7,True,True,True,True,0,0,0,False
+10067,4813480,Chelsea,Sunderland,0,0,2023-08-21,Draw,1,1.51,0.61,0.9,2.12,True,True,True,True,0,0,0,False
+10068,4813481,Crystal Palace,Tottenham Hotspur,0,0,2023-08-21,Draw,1,2.55,0.69,1.8599999999999999,3.2399999999999998,True,True,True,True,0,0,0,False
+10069,4813482,Everton,West Ham United,0,0,2023-08-21,Draw,1,0.44,1.91,-1.47,2.35,True,True,True,True,0,0,0,False
+10063,4813476,Aston Villa,Manchester City,0,0,2023-08-21,Draw,1,2.35,0.44,1.9100000000000001,2.79,True,True,True,True,0,0,0,False
+10062,4813475,Arsenal,Liverpool,0,0,2023-08-21,Draw,1,1.7,1.61,0.08999999999999986,3.31,True,True,True,True,0,0,0,False
+10064,4813477,Brentford,Manchester United,0,0,2023-08-21,Draw,1,3.31,0.17,3.14,3.48,True,True,True,True,0,0,0,False
+10066,4813479,Burnley,Nottingham Forest,0,0,2023-08-21,Draw,1,1.44,0.4,1.04,1.8399999999999999,True,True,True,True,0,0,0,False
+10065,4813478,Brighton & Hove Albion,Newcastle United,0,0,2023-08-21,Draw,1,0.75,0.39,0.36,1.1400000000000001,True,True,False,True,0,0,0,False
+10070,4813483,Fulham,Wolverhampton Wanderers,0,0,2023-08-21,Draw,1,0.92,0.63,0.29000000000000004,1.55,True,True,True,True,0,0,0,False
+10061,4813474,AFC Bournemouth,Leeds United,0,0,2023-08-21,Draw,1,1.75,0.52,1.23,2.27,True,True,True,True,0,0,0,False
+10052,4813465,Liverpool,Arsenal,0,0,2023-08-20,Draw,1,3.07,0.5,2.57,3.57,True,True,True,True,0,0,0,False
+10056,4813469,Nottingham Forest,Burnley,0,0,2023-08-20,Draw,1,1.19,0.41,0.78,1.5999999999999999,True,True,True,True,0,0,0,False
+10060,4813473,Wolverhampton Wanderers,Fulham,0,0,2023-08-20,Draw,1,0.1,3.68,-3.58,3.7800000000000002,True,True,True,True,0,0,0,False
+10058,4813471,Tottenham Hotspur,Crystal Palace,0,0,2023-08-20,Draw,1,1.93,1.12,0.8099999999999998,3.05,True,True,True,True,0,0,0,False
+10059,4813472,West Ham United,Everton,0,0,2023-08-20,Draw,1,1.22,0.89,0.32999999999999996,2.11,True,True,True,True,0,0,0,False
+10055,4813468,Newcastle United,Brighton & Hove Albion,0,0,2023-08-20,Draw,1,1.39,0.24,1.15,1.63,True,True,True,True,0,0,0,False
+10054,4813467,Manchester United,Brentford,0,0,2023-08-20,Draw,1,0.7,0.54,0.15999999999999992,1.24,True,True,True,True,0,0,0,False
+10051,4813464,Leeds United,AFC Bournemouth,0,0,2023-08-20,Draw,1,2.28,1.43,0.8499999999999999,3.71,True,True,True,True,0,0,0,False
+10057,4813470,Sunderland,Chelsea,0,0,2023-08-20,Draw,1,2.22,0.72,1.5000000000000002,2.9400000000000004,True,True,True,True,0,0,0,False
+10053,4813466,Manchester City,Aston Villa,0,0,2023-08-20,Draw,1,0.42,2.42,-2.0,2.84,True,True,True,True,0,0,0,False
+10042,4813455,Arsenal,Liverpool,0,0,2023-08-19,Draw,1,0.58,0.37,0.20999999999999996,0.95,True,True,True,True,0,0,0,False
+10048,4813461,Crystal Palace,Tottenham Hotspur,0,0,2023-08-19,Draw,1,1.49,0.65,0.84,2.14,True,True,True,True,0,0,0,False
+10041,4813454,AFC Bournemouth,Leeds United,0,0,2023-08-19,Draw,1,0.35,2.37,-2.02,2.72,True,True,True,True,0,0,0,False
+10050,4813463,Fulham,Wolverhampton Wanderers,0,0,2023-08-19,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10049,4813462,Everton,West Ham United,0,0,2023-08-19,Draw,1,1.29,1.12,0.16999999999999993,2.41,True,True,True,True,0,0,0,False
+10047,4813460,Chelsea,Sunderland,0,0,2023-08-19,Draw,1,1.74,1.72,0.020000000000000018,3.46,True,True,True,True,0,0,0,False
+10046,4813459,Burnley,Nottingham Forest,0,0,2023-08-19,Draw,1,0.89,1.31,-0.42000000000000004,2.2,True,True,True,True,0,0,0,False
+10045,4813458,Brighton & Hove Albion,Newcastle United,0,0,2023-08-19,Draw,1,2.75,2.3,0.4500000000000002,5.05,True,True,True,True,0,0,0,False
+10044,4813457,Brentford,Manchester United,0,0,2023-08-19,Draw,1,0.81,1.18,-0.3699999999999999,1.99,True,True,True,True,0,0,0,False
+10043,4813456,Aston Villa,Manchester City,0,0,2023-08-19,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10034,4813447,Manchester United,Brentford,0,0,2023-08-18,Draw,1,4.44,2.03,2.4100000000000006,6.470000000000001,True,True,True,True,0,0,0,False
+10039,4813452,West Ham United,Everton,0,0,2023-08-18,Draw,1,0.65,0.83,-0.17999999999999994,1.48,True,True,True,True,0,0,0,False
+10032,4813445,Liverpool,Arsenal,0,0,2023-08-18,Draw,1,0.91,1.45,-0.5399999999999999,2.36,True,True,True,True,0,0,0,False
+10040,4813453,Wolverhampton Wanderers,Fulham,0,0,2023-08-18,Draw,1,0.75,0.32,0.43,1.07,True,True,True,True,0,0,0,False
+10038,4813451,Tottenham Hotspur,Crystal Palace,0,0,2023-08-18,Draw,1,2.35,1.67,0.6800000000000002,4.02,True,True,True,True,0,0,0,False
+10037,4813450,Sunderland,Chelsea,0,0,2023-08-18,Draw,1,2.38,0.81,1.5699999999999998,3.19,True,True,True,True,0,0,0,False
+10036,4813449,Nottingham Forest,Burnley,0,0,2023-08-18,Draw,1,2.75,1.34,1.41,4.09,True,True,True,True,0,0,0,False
+10035,4813448,Newcastle United,Brighton & Hove Albion,0,0,2023-08-18,Draw,1,0.44,1.87,-1.4300000000000002,2.31,True,True,True,True,0,0,0,False
+10033,4813446,Manchester City,Aston Villa,0,0,2023-08-18,Draw,1,0.45,2.63,-2.1799999999999997,3.08,True,True,True,True,0,0,0,False
+10031,4813444,Leeds United,AFC Bournemouth,0,0,2023-08-18,Draw,1,0.56,0.92,-0.36,1.48,True,True,True,True,0,0,0,False
+10028,4813441,Crystal Palace,Tottenham Hotspur,0,0,2023-08-17,Draw,1,1.68,0.53,1.15,2.21,True,True,True,True,0,0,0,False
+10024,4813437,Brentford,Manchester United,0,0,2023-08-17,Draw,1,1.16,0.4,0.7599999999999999,1.56,True,True,True,True,0,0,0,False
+10029,4813442,Everton,West Ham United,0,0,2023-08-17,Draw,1,1.84,0.71,1.1300000000000001,2.55,True,True,True,True,0,0,0,False
+10022,4813435,Arsenal,Liverpool,0,0,2023-08-17,Draw,1,1.12,0.88,0.2400000000000001,2.0,True,True,True,True,0,0,0,False
+10023,4813436,Aston Villa,Manchester City,0,0,2023-08-17,Draw,1,2.77,0.49,2.2800000000000002,3.26,True,True,True,True,0,0,0,False
+10026,4813439,Burnley,Nottingham Forest,0,0,2023-08-17,Draw,1,1.0,1.95,-0.95,2.95,True,True,True,True,0,0,0,False
+10025,4813438,Brighton & Hove Albion,Newcastle United,0,0,2023-08-17,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10027,4813440,Chelsea,Sunderland,0,0,2023-08-17,Draw,1,2.03,1.53,0.4999999999999998,3.5599999999999996,True,True,True,True,0,0,0,False
+10021,4813434,AFC Bournemouth,Leeds United,0,0,2023-08-17,Draw,1,0.87,1.15,-0.2799999999999999,2.02,True,True,True,True,0,0,0,False
+10030,4813443,Fulham,Wolverhampton Wanderers,0,0,2023-08-17,Draw,1,3.45,0.3,3.1500000000000004,3.75,True,True,True,True,0,0,0,False
+10018,4813431,Tottenham Hotspur,Crystal Palace,0,0,2023-08-16,Draw,1,2.03,0.41,1.6199999999999999,2.44,True,True,True,True,0,0,0,False
+10019,4813432,West Ham United,Everton,0,0,2023-08-16,Draw,1,0.61,2.04,-1.4300000000000002,2.65,True,True,True,True,0,0,0,False
+10011,4813424,Leeds United,AFC Bournemouth,0,0,2023-08-16,Draw,1,1.78,0.48,1.3,2.26,True,True,True,True,0,0,0,False
+10012,4813425,Liverpool,Arsenal,0,0,2023-08-16,Draw,1,1.11,0.92,0.19000000000000006,2.0300000000000002,True,True,True,True,0,0,0,False
+10014,4813427,Manchester United,Brentford,0,0,2023-08-16,Draw,1,1.81,2.28,-0.46999999999999975,4.09,True,True,True,True,0,0,0,False
+10015,4813428,Newcastle United,Brighton & Hove Albion,0,0,2023-08-16,Draw,1,0.49,1.62,-1.1300000000000001,2.1100000000000003,True,True,True,True,0,0,0,False
+10016,4813429,Nottingham Forest,Burnley,0,0,2023-08-16,Draw,1,0.73,1.19,-0.45999999999999996,1.92,True,True,True,True,0,0,0,False
+10017,4813430,Sunderland,Chelsea,0,0,2023-08-16,Draw,1,1.84,0.82,1.02,2.66,True,True,True,True,0,0,0,False
+10020,4813433,Wolverhampton Wanderers,Fulham,0,0,2023-08-16,Draw,1,1.68,1.66,0.020000000000000018,3.34,True,True,True,True,0,0,0,False
+10013,4813426,Manchester City,Aston Villa,0,0,2023-08-16,Draw,1,2.02,2.08,-0.06000000000000005,4.1,True,True,True,True,0,0,0,False
+10002,4813415,Arsenal,Liverpool,0,0,2023-08-15,Draw,1,0.46,0.14,0.32,0.6000000000000001,True,True,False,True,0,0,0,False
+10006,4813419,Burnley,Nottingham Forest,0,0,2023-08-15,Draw,1,1.01,0.6,0.41000000000000003,1.6099999999999999,True,True,True,True,0,0,0,False
+10008,4813421,Crystal Palace,Tottenham Hotspur,0,0,2023-08-15,Draw,1,1.84,0.43,1.4100000000000001,2.27,True,True,True,True,0,0,0,False
+10004,4813417,Brentford,Manchester United,0,0,2023-08-15,Draw,1,1.32,1.22,0.10000000000000009,2.54,True,True,True,True,0,0,0,False
+10007,4813420,Chelsea,Sunderland,0,0,2023-08-15,Draw,1,0.9,0.7,0.20000000000000007,1.6,True,True,True,True,0,0,0,False
+10009,4813422,Everton,West Ham United,0,0,2023-08-15,Draw,1,1.04,0.78,0.26,1.82,True,True,True,True,0,0,0,False
+10010,4813423,Fulham,Wolverhampton Wanderers,0,0,2023-08-15,Draw,1,0.66,2.31,-1.65,2.97,True,True,True,True,0,0,0,False
+10005,4813418,Brighton & Hove Albion,Newcastle United,0,0,2023-08-15,Draw,1,0.85,1.1,-0.2500000000000001,1.9500000000000002,True,True,True,True,0,0,0,False
+10001,4813414,AFC Bournemouth,Leeds United,0,0,2023-08-15,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10003,4813416,Aston Villa,Manchester City,0,0,2023-08-15,Draw,1,0.89,0.87,0.020000000000000018,1.76,True,True,True,True,0,0,0,False
+9995,4813408,Newcastle United,Brighton & Hove Albion,0,0,2023-08-14,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+9994,4813407,Manchester United,Brentford,0,0,2023-08-14,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+9996,4813409,Nottingham Forest,Burnley,0,0,2023-08-14,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+9997,4813410,Sunderland,Chelsea,0,0,2023-08-14,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+9993,4813406,Manchester City,Aston Villa,0,0,2023-08-14,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+9998,4813411,Tottenham Hotspur,Crystal Palace,0,0,2023-08-14,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+9991,4813404,Leeds United,AFC Bournemouth,0,0,2023-08-14,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+10000,4813413,Wolverhampton Wanderers,Fulham,0,0,2023-08-14,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+9992,4813405,Liverpool,Arsenal,0,0,2023-08-14,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+9999,4813412,West Ham United,Everton,0,0,2023-08-14,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+9986,4813399,Burnley,Nottingham Forest,0,0,2023-08-13,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+9984,4813397,Brentford,Manchester United,0,0,2023-08-13,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+9988,4813401,Crystal Palace,Tottenham Hotspur,0,0,2023-08-13,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+9989,4813402,Everton,West Ham United,0,0,2023-08-13,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+9990,4813403,Fulham,Wolverhampton Wanderers,0,0,2023-08-13,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+9981,4813394,AFC Bournemouth,Leeds United,0,0,2023-08-13,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+9982,4813395,Arsenal,Liverpool,0,0,2023-08-13,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+9983,4813396,Aston Villa,Manchester City,0,0,2023-08-13,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+9985,4813398,Brighton & Hove Albion,Newcastle United,0,0,2023-08-13,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+9987,4813400,Chelsea,Sunderland,0,0,2023-08-13,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+9972,4813385,Liverpool,Arsenal,0,0,2023-08-12,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+9973,4813386,Manchester City,Aston Villa,0,0,2023-08-12,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+9975,4813388,Newcastle United,Brighton & Hove Albion,0,0,2023-08-12,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+9976,4813389,Nottingham Forest,Burnley,0,0,2023-08-12,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+9977,4813390,Sunderland,Chelsea,0,0,2023-08-12,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+9978,4813391,Tottenham Hotspur,Crystal Palace,0,0,2023-08-12,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+9979,4813392,West Ham United,Everton,0,0,2023-08-12,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+9974,4813387,Manchester United,Brentford,0,0,2023-08-12,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+9980,4813393,Wolverhampton Wanderers,Fulham,0,0,2023-08-12,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+9963,4813376,Aston Villa,Manchester City,0,0,2023-08-11,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+9964,4813377,Brentford,Manchester United,0,0,2023-08-11,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+9968,4813381,Crystal Palace,Tottenham Hotspur,0,0,2023-08-11,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+9966,4813379,Burnley,Nottingham Forest,0,0,2023-08-11,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+9967,4813380,Chelsea,Sunderland,0,0,2023-08-11,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+9969,4813382,Everton,West Ham United,0,0,2023-08-11,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+9961,4813374,AFC Bournemouth,Leeds United,0,0,2023-08-11,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+9970,4813383,Fulham,Wolverhampton Wanderers,0,0,2023-08-11,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+9965,4813378,Brighton & Hove Albion,Newcastle United,0,0,2023-08-11,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False
+9962,4813375,Arsenal,Liverpool,0,0,2023-08-11,Draw,1,0.0,0.0,0.0,0.0,False,True,False,True,0,0,0,False

@@ -1,0 +1,99 @@
+{
+  "report_info": {
+    "version": "V4.1",
+    "generated_at": "2025-12-21T11:54:48.041307",
+    "matches_analyzed": 5,
+    "total_hidden_fields_found": 15,
+    "unique_hidden_fields": 3
+  },
+  "top_20_fields": [
+    {
+      "rank": 1,
+      "field": "simulated",
+      "frequency": 5,
+      "types": [
+        "bool"
+      ],
+      "sample_values": [
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "rank": 2,
+      "field": "away_odds",
+      "frequency": 5,
+      "types": [
+        "float"
+      ],
+      "sample_values": [
+        2.69,
+        2.69,
+        2.69
+      ]
+    },
+    {
+      "rank": 3,
+      "field": "home_odds",
+      "frequency": 5,
+      "types": [
+        "float"
+      ],
+      "sample_values": [
+        2.15,
+        2.15,
+        2.15
+      ]
+    }
+  ],
+  "field_type_distribution": {
+    "bool": [
+      {
+        "field": "simulated",
+        "frequency": 5
+      }
+    ],
+    "float": [
+      {
+        "field": "away_odds",
+        "frequency": 5
+      },
+      {
+        "field": "home_odds",
+        "frequency": 5
+      }
+    ]
+  },
+  "analysis_summary": {
+    "fields_160d_current": 84,
+    "hidden_fields_discovered": 3,
+    "expansion_potential": "-81+",
+    "data_quality_score": 100.0
+  },
+  "implementation_readiness": {
+    "immediate": [
+      {
+        "field": "simulated",
+        "frequency": 5,
+        "readiness": "HIGH",
+        "complexity": "LOW"
+      },
+      {
+        "field": "away_odds",
+        "frequency": 5,
+        "readiness": "HIGH",
+        "complexity": "LOW"
+      },
+      {
+        "field": "home_odds",
+        "frequency": 5,
+        "readiness": "HIGH",
+        "complexity": "LOW"
+      }
+    ],
+    "medium": [],
+    "complex": [],
+    "research": []
+  }
+}

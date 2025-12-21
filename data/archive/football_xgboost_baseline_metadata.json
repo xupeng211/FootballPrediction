@@ -1,0 +1,60 @@
+{
+  "model_name": "football_xgboost_baseline",
+  "version": "v1.0.0",
+  "training_date": "2025-12-10T20:56:09.150791",
+  "performance": {
+    "accuracy": 0.5552631578947368,
+    "log_loss": 1.039553333915188,
+    "classification_report": {
+      "Away": {
+        "precision": 0.5433070866141733,
+        "recall": 0.5609756097560976,
+        "f1-score": 0.552,
+        "support": 123.0
+      },
+      "Draw": {
+        "precision": 0.3333333333333333,
+        "recall": 0.0975609756097561,
+        "f1-score": 0.1509433962264151,
+        "support": 82.0
+      },
+      "Home": {
+        "precision": 0.5851528384279476,
+        "recall": 0.7657142857142857,
+        "f1-score": 0.6633663366336634,
+        "support": 175.0
+      },
+      "accuracy": 0.5552631578947368,
+      "macro avg": {
+        "precision": 0.48726441945848475,
+        "recall": 0.47475029036004646,
+        "f1-score": 0.4554365776200262,
+        "support": 380.0
+      },
+      "weighted avg": {
+        "precision": 0.5172680308204407,
+        "recall": 0.5552631578947368,
+        "f1-score": 0.5167433352669925,
+        "support": 380.0
+      }
+    }
+  },
+  "model_params": {
+    "n_estimators": 100,
+    "max_depth": 6,
+    "learning_rate": 0.1,
+    "objective": "multi:softprob",
+    "eval_metric": "mlogloss"
+  },
+  "dataset_info": {
+    "training_samples": 52,
+    "feature_count": 52,
+    "target_classes": [
+      "Away",
+      "Draw",
+      "Home"
+    ]
+  },
+  "data_leakage_safe": true,
+  "feature_engineering": "rolling_features_time_series_safe"
+}

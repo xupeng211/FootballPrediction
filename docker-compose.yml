@@ -1,224 +1,38 @@
-# FootballPrediction V2.3.1 - 生产级Docker编排
-# ROI +13.35% 盈利版 - 467场黄金数据支持
-
-version: '3.8'
-
 services:
-  # ================================
-  # PostgreSQL 数据库服务
-  # ================================
+  app:
+    build: .
+    container_name: football_prediction_app
+    environment:
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_NAME=football_db
+      - DB_USER=football_user
+      - DB_PASSWORD=football_pass
+      - REDIS_HOST=redis
+      - DOCKER_ENV=true
+    volumes:
+      - .:/app
+    depends_on:
+      - db
+    command: tail -f /dev/null  # Keep running for manual exec commands
+
   db:
     image: postgres:15-alpine
-    container_name: footballprediction-db
-    restart: unless-stopped
-
-    # 数据持久化到物理目录
-    volumes:
-      - ./data/postgres:/var/lib/postgresql/data
-      - ./logs/postgres:/var/log/postgresql
-      # 数据库初始化脚本（467场黄金数据）
-      - ./database/seed_data.sql:/docker-entrypoint-initdb.d/01-seed-data.sql:ro
-
-    # 环境变量
+    container_name: football_prediction_db
     environment:
-      POSTGRES_DB: football_prediction
-      POSTGRES_USER: football_user
-      POSTGRES_PASSWORD: football_pass
-      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=C --lc-ctype=C"
-      # 性能优化
-      shared_preload_libraries: pg_stat_statements
-      max_connections: 200
-      shared_buffers: 256MB
-      effective_cache_size: 1GB
-
-    # 端口映射
+      - POSTGRES_DB=football_db
+      - POSTGRES_USER=football_user
+      - POSTGRES_PASSWORD=football_pass
     ports:
       - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
 
-    # 健康检查
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U football_user -d football_prediction"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
-
-    networks:
-      - football-net
-
-  # ================================
-  # Redis 缓存服务
-  # ================================
   redis:
     image: redis:7-alpine
-    container_name: footballprediction-redis
-    restart: unless-stopped
-
-    # 端口映射
+    container_name: football_prediction_redis
     ports:
       - "6379:6379"
 
-    # 数据持久化
-    volumes:
-      - ./data/redis:/data
-
-    # Redis配置
-    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
-
-    # 健康检查
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
-
-    networks:
-      - football-net
-
-  # ================================
-  # 数据采集引擎 (Engine)
-  # ================================
-  engine:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: footballprediction-engine
-    restart: unless-stopped
-
-    # 卷挂载 - 解决权限问题
-    volumes:
-      - ./:/app:ro
-      - ./logs:/app/logs
-      - ./data/models:/app/data/models:ro
-
-    # 端口映射
-    ports:
-      - "8000:8000"
-
-    # 环境配置
-    environment:
-      # Docker环境检测
-      - DOCKER_ENV=true
-      - ENVIRONMENT=production
-      - PYTHONPATH=/app
-      - PYTHONUNBUFFERED=1
-      - TZ=UTC
-
-      # 数据库连接
-      - DB_HOST=db
-      - DB_PORT=5432
-      - DB_NAME=football_prediction
-      - DB_USER=football_user
-      - DB_PASSWORD=football_pass
-
-      # Redis配置
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-      - REDIS_DB=0
-
-      # 日志配置
-      - LOG_LEVEL=INFO
-      - LOG_FILE=/app/logs/engine.log
-
-      # 预测配置 (ROI +13.35%)
-      - MIN_EDGE=7
-      - MIN_CONFIDENCE=45
-      - MODEL_VERSION=v2.3.1_real_scores
-
-    # 依赖关系
-    depends_on:
-      db:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-
-    networks:
-      - football-net
-
-    # 健康检查
-    healthcheck:
-      test: ["CMD", "python", "-c", "import src.core.main_engine_v5; print('OK')"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
-
-  # ================================
-  # 数据质量监控服务
-  # ================================
-  monitor:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: footballprediction-monitor
-    restart: unless-stopped
-
-    # 卷挂载
-    volumes:
-      - ./:/app:ro
-      - ./logs:/app/logs
-
-    # 端口映射
-    ports:
-      - "8001:8000"
-
-    # 环境配置
-    environment:
-      - DOCKER_ENV=true
-      - ENVIRONMENT=monitoring
-      - DB_HOST=db
-      - DB_PORT=5432
-      - DB_NAME=football_prediction
-      - DB_USER=football_user
-      - DB_PASSWORD=football_pass
-      - PYTHONPATH=/app
-      - PYTHONUNBUFFERED=1
-      - TZ=UTC
-      - MONITORING_MODE=true
-      - HEALTH_CHECK_INTERVAL=300  # 5分钟
-
-    # 依赖关系
-    depends_on:
-      db:
-        condition: service_healthy
-
-    # 健康检查
-    healthcheck:
-      test: ["CMD", "python", "-c", "import src.core.main_engine_v5; print('OK')"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
-
-    networks:
-      - football-net
-
-    # 数据质量监控命令 - 简化版本
-    command: >
-      bash -c "
-      echo '🔍 Starting Football Prediction V2.3.1 Data Quality Monitor...' &&
-      python scripts/monitor_health.py || tail -f /dev/null
-      "
-
-# ================================
-# 网络配置
-# ================================
-networks:
-  football-net:
-    driver: bridge
-    ipam:
-      config:
-        - subnet: 172.20.0.0/16
-
-# ================================
-# 存储卷配置
-# ================================
 volumes:
   postgres_data:
-    driver: local
-  redis_data:
-    driver: local
-  models_data:
-    driver: local
-

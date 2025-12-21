@@ -1,22 +1,10 @@
-# FootballPrediction V2.0 - Git Ignore Configuration
-# 保护敏感信息和临时文件，确保代码库清洁和安全
-
-# ========================================
-# 敏感配置文件 (必须排除)
-# ========================================
-.env
-.env.local
-.env.production
-.env.*.local
-
-# ========================================
-# Python 标准排除
-# ========================================
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
 .Python
+env/
 build/
 develop-eggs/
 dist/
@@ -32,191 +20,54 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
-MANIFEST
 
-# ========================================
-# PyCharm / IDE 配置
-# ========================================
-.vscode/
+# Virtual Environment
+venv/
+.venv/
+
+# Environment Variables
+.env
+.env.*
+!.env.example
+
+# IDEs
 .idea/
+.vscode/
 *.swp
 *.swo
-*~
 
-# ========================================
-# Jupyter Notebook
-# ========================================
-.ipynb_checkpoints
+# Project Data - Exclude sensitive and large files
+data/postgres/
+data/redis/
+data/raw_json/
+data/models/*.pkl
+data/models/*.joblib
+data/models/baseline_*
+data/models/v1_*
+data/models/v2_*
+data/models/v3_*
+data/models/v4_*
+data/models/v5_*
+data/models/v6_*
+data/models/*_backup*
+data/harvested_matches_*.csv
+data/failed_matches_*.json
+data/prediction_*.json
+!data/.gitkeep
+!data/production/
+!data/final_v7_solid_features.csv
+!data/lightgbm_v7.model
+!data/lightgbm_v7_scaler.pkl
+!data/lightgbm_v7_encoder.pkl 
 
-# ========================================
-# 数据文件和缓存 (排除大文件和临时数据)
-# ========================================
-data/
-!data/archive/
-!data/archive/gold_dataset_with_real_scores.csv
+# Logs
 logs/
 *.log
-*.csv
-!database/seed_data.sql
 
-# ========================================
-# 模型和缓存文件
-# ========================================
-*.pkl
-*.joblib
-*.model
-*.h5
-.cache/
-.mypy_cache/
+# Docker
+docker-compose.override.yml
+
+# Testing
 .pytest_cache/
 .coverage
 htmlcov/
-
-# ========================================
-# 数据库文件 (PostgreSQL, Redis)
-# ========================================
-*.db
-*.sqlite
-*.sqlite3
-*.dump
-
-# ========================================
-# 操作系统临时文件
-# ========================================
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
-
-# ========================================
-# Docker 相关 (排除容器镜像和临时文件)
-# ========================================
-.dockerignore
-docker-compose.override.yml
-
-# ========================================
-# 测试和覆盖率报告
-# ========================================
-.coverage.*
-htmlcov/
-.tox/
-.nox/
-coverage.xml
-*.cover
-.hypothesis/
-
-# ========================================
-# 文档构建输出
-# ========================================
-site/
-docs/_build/
-docs/build/
-
-# ========================================
-# 监控和日志
-# ========================================
-.monitoring/
-*.pid
-*.seed
-*.prof
-
-# ========================================
-# 备份和临时文件
-# ========================================
-*.bak
-*.backup
-*.tmp
-*.temp
-archive/
-temp/
-*.old
-
-# ========================================
-# AI/ML 训练文件
-# ========================================
-models/
-!models/xgb_football_v2_real_scores.joblib
-!models/xgb_football_v2_real_scores_metadata.json
-!models/xgb_football_v1_metadata.json
-*.pth
-*.pt
-*.ckpt
-
-# ========================================
-# 配置文件 (保留模板)
-# ========================================
-config/local/
-config/production/
-*.conf
-*.ini
-!config/fotmob_leagues.json
-!config/team_mapping.json
-
-# ========================================
-# 安全和证书文件
-# ========================================
-*.pem
-*.key
-*.crt
-*.p12
-*.pfx
-certs/
-
-# ========================================
-# 开发工具配置
-# ========================================
-.fabricrc
-.hushlogin
-.editorconfig
-
-# ========================================
-# Node.js (如果有前端组件)
-# ========================================
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# ========================================
-# 特定于项目的排除
-# ========================================
-# 保留重要文档，排除临时报告
-*.md
-!CLAUDE.md
-!README.md
-!PROJECT_FINAL_REPORT.md
-!model_comparison_report.txt
-# 排除临时JSON文件和报告
-extreme_performance_report*.json
-*_report*.json
-temp_*.json
-*_backup.json
-
-# ========================================
-# 构建产物
-# ========================================
-bin/
-obj/
-out/
-target/
-build/
-
-# ========================================
-# 包管理器
-# ========================================
-*.tgz
-*.tar.gz
-*.zip
-
-# ========================================
-# 实验性文件和草稿
-# ========================================
-draft/
-experimental/
-scratch/
-work/
-*.draft
-*.wip

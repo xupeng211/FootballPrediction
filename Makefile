@@ -248,6 +248,76 @@ prepush: ## 提交前完整检查
 	fi
 
 # -------------------------------
+# 🗄️ 数据库管理
+# -------------------------------
+.PHONY: db-reset
+db-reset: ## 重置数据库（清空所有数据）
+	@echo "$(BLUE)>>> 重置数据库...$(RESET)"
+	docker-compose exec -T db psql -U football_user -d football_db -c "TRUNCATE TABLE match_features_training RESTART IDENTITY CASCADE;" 2>/dev/null || echo "表不存在或已为空"
+	@echo "$(GREEN)✅ 数据库重置完成$(RESET)"
+
+.PHONY: db-drop
+db-drop: ## 删除并重建数据库
+	@echo "$(BLUE)>>> 删除并重建数据库...$(RESET)"
+	docker-compose exec -T db psql -U postgres -c "DROP DATABASE IF EXISTS football_db;" 2>/dev/null || docker-compose exec -T db psql -U football_user -c "DROP DATABASE IF EXISTS football_db;" 2>/dev/null || true
+	docker-compose exec -T db psql -U postgres -c "CREATE DATABASE football_db OWNER football_user;" 2>/dev/null || echo "数据库已存在"
+	@echo "$(GREEN)✅ 数据库重建完成$(RESET)"
+
+.PHONY: db-stats
+db-stats: ## 显示数据库统计信息
+	@echo "$(BLUE)>>> 数据库统计信息:$(RESET)"
+	@docker-compose exec -T db psql -U football_user -d football_db -c "SELECT COUNT(*) as total_matches FROM match_features_training;" 2>/dev/null || echo "数据库或表不存在"
+	@docker-compose exec -T db psql -U football_user -d football_db -c "SELECT league_name, COUNT(*) as count FROM match_features_training GROUP BY league_name;" 2>/dev/null || echo "无数据"
+
+# -------------------------------
+# 🌾 赛季收割
+# -------------------------------
+.PHONY: harvest-season
+harvest-season: ## 一键收割英超整个赛季数据（380场）
+	@echo "$(BLUE)>>> 开始英超赛季全量收割...$(RESET)"
+	@echo "$(YELLOW)目标: 380场比赛，180维特征，V7.0固化版$(RESET)"
+	@mkdir -p /app/logs
+	docker-compose exec -T app python src/scripts/season_reharvest.py
+	@echo "$(GREEN)✅ 赛季收割完成$(RESET)"
+
+.PHONY: harvest-watch
+harvest-watch: ## 实时监控收割进度
+	@echo "$(BLUE)>>> 实时监控收割进度:$(RESET)"
+	@docker-compose exec -T db psql -U football_user -d football_db -c "SELECT COUNT(*) as total FROM match_features_training;" 2>/dev/null || echo "数据库连接失败"
+	@echo ""
+	@echo "$(YELLOW)实时日志:$(RESET)"
+	@docker-compose logs -f app | grep -E "(收割|成功|失败|进度)" || true
+
+.PHONY: db-quality-report
+db-quality-report: ## 显示数据质量报告（前5场比赛）
+	@echo "$(BLUE)>>> 数据质量报告:$(RESET)"
+	@docker-compose exec -T db psql -U football_user -d football_db -c "
+		SELECT
+			external_id,
+			home_team || ' vs ' || away_team as match,
+			match_time,
+			home_xg,
+			away_xg,
+			home_possession,
+			home_total_shots,
+			home_red_cards,
+			away_red_cards,
+			rating_diff,
+			home_xg_per_shot
+		FROM match_features_training
+		ORDER BY match_time ASC
+		LIMIT 5;
+	" 2>/dev/null || echo "数据库连接失败或无数据"
+
+# -------------------------------
+# 🎯 一键重置 + 收割
+# -------------------------------
+.PHONY: season-full-reset
+season-full-reset: db-drop harvest-season ## 一键重置并收割整个赛季（完整流程）
+	@echo "$(GREEN)🎉 英超赛季数据收割完成！$(RESET)"
+	@$(MAKE) db-quality-report
+
+# -------------------------------
 # 🎉 默认目标
 # -------------------------------
 .DEFAULT_GOAL := help
