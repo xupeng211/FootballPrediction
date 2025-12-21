@@ -150,6 +150,103 @@ class FotMobAPIClient:
             f"API请求重试 {retry_state.attempt_number}/3 - Match ID: {retry_state.kwargs.get('match_id', 'unknown')}"
         ),
     )
+    async def extract_betting_odds(self, match_data: Dict[str, Any]) -> Dict[str, Any]:
+        """V3.3: 从FotMob API数据中提取真实赔率数据
+
+        Args:
+            match_data: FotMob API返回的比赛数据
+
+        Returns:
+            Dict[str, Any]: 包含主胜、平局、客胜赔率的字典
+        """
+        odds_data = {
+            "home_odds": None,
+            "draw_odds": None,
+            "away_odds": None,
+            "bookmaker": "FotMob",
+            "extracted_at": datetime.now().isoformat()
+        }
+
+        try:
+            # 路径1: 从通用赔率模块提取
+            if "betting" in match_data:
+                betting_data = match_data["betting"]
+                if "odds" in betting_data:
+                    odds_list = betting_data["odds"]
+                    for odds_item in odds_list:
+                        if odds_item.get("type") == "1X2":
+                            odds_data["home_odds"] = odds_item.get("home")
+                            odds_data["draw_odds"] = odds_item.get("draw")
+                            odds_data["away_odds"] = odds_item.get("away")
+                            break
+
+            # 路径2: 从特定博彩公司数据提取
+            if "bettingOffers" in match_data:
+                for offer in match_data["bettingOffers"]:
+                    if offer.get("bettingType") == "1X2":
+                        outcomes = offer.get("outcomes", [])
+                        for outcome in outcomes:
+                            outcome_type = outcome.get("outcomeType")
+                            if outcome_type == "HOME":
+                                odds_data["home_odds"] = outcome.get("odds")
+                            elif outcome_type == "DRAW":
+                                odds_data["draw_odds"] = outcome.get("odds")
+                            elif outcome_type == "AWAY":
+                                odds_data["away_odds"] = outcome.get("odds")
+
+            # 路径3: 从平均赔率模块提取
+            if "averageOdds" in match_data:
+                avg_odds = match_data["averageOdds"]
+                odds_data["home_odds"] = avg_odds.get("home")
+                odds_data["draw_odds"] = avg_odds.get("draw")
+                odds_data["away_odds"] = avg_odds.get("away")
+
+            # 验证赔率完整性
+            if all([odds_data["home_odds"], odds_data["draw_odds"], odds_data["away_odds"]]):
+                logger.info(f"✅ 成功提取真实赔率: 主胜={odds_data['home_odds']}, 平局={odds_data['draw_odds']}, 客胜={odds_data['away_odds']}")
+                return odds_data
+            else:
+                logger.warning("⚠️ 赔率数据不完整，使用模拟赔率")
+                # 返回模拟赔率作为备用
+                return self._generate_fallback_odds(match_data)
+
+        except Exception as e:
+            logger.error(f"❌ 赔率提取失败: {e}")
+            return self._generate_fallback_odds(match_data)
+
+    def _generate_fallback_odds(self, match_data: Dict[str, Any]) -> Dict[str, Any]:
+        """生成备用赔率（V3.3: 仅作为最后备用方案）"""
+        # 基于xG生成备用赔率，保持与现有逻辑一致
+        home_xg = match_data.get("home_xg", 1.5)
+        away_xg = match_data.get("away_xg", 1.2)
+
+        # 简化概率计算
+        total_xg = home_xg + away_xg
+        if total_xg > 0:
+            home_prob = home_xg / total_xg * 0.9
+            away_prob = away_xg / total_xg * 0.9
+            draw_prob = 0.1
+        else:
+            home_prob = away_prob = draw_prob = 1/3
+
+        # 归一化
+        total = home_prob + away_prob + draw_prob
+        home_prob /= total
+        away_prob /= total
+        draw_prob /= total
+
+        # V3.3: 应用7%抽水
+        PAYOUT_RATIO = 0.93
+
+        return {
+            "home_odds": round(1 / (home_prob * PAYOUT_RATIO), 2),
+            "draw_odds": round(1 / (draw_prob * PAYOUT_RATIO), 2),
+            "away_odds": round(1 / (away_prob * PAYOUT_RATIO), 2),
+            "bookmaker": "Fallback_Simulator_V3.3",
+            "extracted_at": datetime.now().isoformat(),
+            "warning": "使用模拟赔率，非真实市场数据"
+        }
+
     async def get_match_details(self, match_id: str) -> Optional[Dict[str, Any]]:
         """获取比赛详情（带重试机制和熔断器保护）
 

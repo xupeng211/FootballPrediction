@@ -396,6 +396,15 @@ class BulletproofFeatureExtractor:
             home_score, away_score = self.extract_team_scores(raw_data)
             match_time = self.extract_match_time(raw_data)
 
+            # 🚨 新增：提取阵容和评分特征
+            lineup_features = self.extract_lineup_features(raw_data)
+
+            # 🚨 新增：提取战术统计特征
+            tactical_features = self.extract_tactical_features(raw_data)
+
+            # 🚨 新增：提取shotmap细节特征
+            shotmap_features = self.extract_shotmap_features(raw_data)
+
             # 提取核心特征
             home_xg = self.extract_feature_value(raw_data, 'xg', 'home')
             away_xg = self.extract_feature_value(raw_data, 'xg', 'away')
@@ -411,8 +420,6 @@ class BulletproofFeatureExtractor:
             away_red = self.extract_feature_value(raw_data, 'red_cards', 'away')
             home_passes = self.extract_feature_value(raw_data, 'passes', 'home')
             away_passes = self.extract_feature_value(raw_data, 'passes', 'away')
-            home_rating = self.extract_feature_value(raw_data, 'rating', 'home')
-            away_rating = self.extract_feature_value(raw_data, 'rating', 'away')
 
             # 计算派生特征
             xg_total = (home_xg or 0) + (away_xg or 0)
@@ -422,7 +429,7 @@ class BulletproofFeatureExtractor:
             corners_diff = (home_corners or 0) - (away_corners or 0)
             shots_total = (home_shots or 0) + (away_shots or 0)
 
-            # 计算填充率
+            # 🚨 计算填充率 - 包含所有新特征
             feature_dict = {
                 'home_xg': home_xg, 'away_xg': away_xg,
                 'home_possession': home_possession, 'away_possession': away_possession,
@@ -431,11 +438,20 @@ class BulletproofFeatureExtractor:
                 'home_yellow_cards': home_yellow, 'away_yellow_cards': away_yellow,
                 'home_red_cards': home_red, 'away_red_cards': away_red,
                 'home_passes': home_passes, 'away_passes': away_passes,
-                'home_avg_rating': home_rating, 'away_avg_rating': away_rating,
+                # 'home_avg_rating': home_rating, 'away_avg_rating': away_rating,  # 注释掉，使用阵容特征中的评分
                 'xg_total': xg_total, 'xg_diff': xg_diff,
                 'possession_diff': possession_diff, 'corners_total': corners_total,
                 'corners_diff': corners_diff, 'shots_total': shots_total
             }
+
+            # 🚨 添加阵容特征
+            feature_dict.update(lineup_features)
+
+            # 🚨 添加战术特征
+            feature_dict.update(tactical_features)
+
+            # 🚨 添加shotmap特征
+            feature_dict.update(shotmap_features)
 
             non_null_count = sum(1 for v in feature_dict.values() if v is not None)
             total_count = len(feature_dict)
@@ -471,8 +487,8 @@ class BulletproofFeatureExtractor:
                 'away_red_cards': int(away_red) if away_red else None,
                 'home_passes': int(home_passes) if home_passes else None,
                 'away_passes': int(away_passes) if away_passes else None,
-                'home_avg_rating': home_rating,
-                'away_avg_rating': away_rating,
+                # 'home_avg_rating': home_rating,
+                # 'away_avg_rating': away_rating,
                 'data_source': "fotmob_api_v2",  # 使用现有的枚举值
                 'feature_version': "2.0",  # 使用现有的枚举值
                 'extraction_confidence': fill_rate / 100.0,
@@ -514,6 +530,292 @@ class BulletproofFeatureExtractor:
             'method_usage': self.extraction_stats['method_usage'],
             'extraction_quality': 'excellent' if success_rate > 70 else 'good' if success_rate > 50 else 'poor'
         }
+
+    def extract_lineup_features(self, raw_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        提取阵容和评分特征 - 专项硬编码映射
+
+        Args:
+            raw_data: 原始API数据
+
+        Returns:
+            Dict[str, Any]: 阵容特征字典
+        """
+        lineup_features = {}
+
+        try:
+            content = raw_data.get('content', {})
+            lineup_data = content.get('lineup', {})
+
+            if not lineup_data:
+                logger.warning("未找到阵容数据")
+                return lineup_features
+
+            # 提取主队阵容特征
+            home_lineup = lineup_data.get('home', {})
+            if home_lineup:
+                home_players = home_lineup.get('players', [])
+                home_formation = home_lineup.get('formation', '')
+
+                # 阵容基础特征
+                lineup_features['home_lineup_count'] = len(home_players)
+                lineup_features['home_formation'] = home_formation
+
+                # 计算主队平均评分
+                home_ratings = []
+                home_total_passes = 0
+                home_total_pass_accuracy = 0
+                home_total_tackles = 0
+                home_total_interceptions = 0
+                home_total_clearances = 0
+
+                for player in home_players:
+                    # 球员评分
+                    rating = player.get('rating')
+                    if rating is not None:
+                        home_ratings.append(float(rating))
+
+                    # 球员统计数据
+                    player_stats = player.get('stats', {})
+
+                    # 传球数据
+                    passes = player_stats.get('passes')
+                    pass_accuracy = player_stats.get('passAccuracy')
+                    if passes is not None:
+                        home_total_passes += passes
+                    if pass_accuracy is not None:
+                        home_total_pass_accuracy += pass_accuracy
+
+                    # 防守数据
+                    tackles = player_stats.get('tackles')
+                    interceptions = player_stats.get('interceptions')
+                    clearances = player_stats.get('clearances')
+
+                    if tackles is not None:
+                        home_total_tackles += tackles
+                    if interceptions is not None:
+                        home_total_interceptions += interceptions
+                    if clearances is not None:
+                        home_total_clearances += clearances
+
+                # 计算主队阵容特征
+                if home_ratings:
+                    lineup_features['home_avg_rating'] = sum(home_ratings) / len(home_ratings)
+                    lineup_features['home_best_player_rating'] = max(home_ratings)
+                    lineup_features['home_worst_player_rating'] = min(home_ratings)
+
+                lineup_features['home_total_passes'] = home_total_passes
+                lineup_features['home_pass_accuracy'] = home_total_pass_accuracy / len(home_players) if home_players else 0
+                lineup_features['home_total_tackles'] = home_total_tackles
+                lineup_features['home_total_interceptions'] = home_total_interceptions
+                lineup_features['home_total_clearances'] = home_total_clearances
+
+            # 提取客队阵容特征
+            away_lineup = lineup_data.get('away', {})
+            if away_lineup:
+                away_players = away_lineup.get('players', [])
+                away_formation = away_lineup.get('formation', '')
+
+                # 阵容基础特征
+                lineup_features['away_lineup_count'] = len(away_players)
+                lineup_features['away_formation'] = away_formation
+
+                # 计算客队平均评分
+                away_ratings = []
+                away_total_passes = 0
+                away_total_pass_accuracy = 0
+                away_total_tackles = 0
+                away_total_interceptions = 0
+                away_total_clearances = 0
+
+                for player in away_players:
+                    # 球员评分
+                    rating = player.get('rating')
+                    if rating is not None:
+                        away_ratings.append(float(rating))
+
+                    # 球员统计数据
+                    player_stats = player.get('stats', {})
+
+                    # 传球数据
+                    passes = player_stats.get('passes')
+                    pass_accuracy = player_stats.get('passAccuracy')
+                    if passes is not None:
+                        away_total_passes += passes
+                    if pass_accuracy is not None:
+                        away_total_pass_accuracy += pass_accuracy
+
+                    # 防守数据
+                    tackles = player_stats.get('tackles')
+                    interceptions = player_stats.get('interceptions')
+                    clearances = player_stats.get('clearances')
+
+                    if tackles is not None:
+                        away_total_tackles += tackles
+                    if interceptions is not None:
+                        away_total_interceptions += interceptions
+                    if clearances is not None:
+                        away_total_clearances += clearances
+
+                # 计算客队阵容特征
+                if away_ratings:
+                    lineup_features['away_avg_rating'] = sum(away_ratings) / len(away_ratings)
+                    lineup_features['away_best_player_rating'] = max(away_ratings)
+                    lineup_features['away_worst_player_rating'] = min(away_ratings)
+
+                lineup_features['away_total_passes'] = away_total_passes
+                lineup_features['away_pass_accuracy'] = away_total_pass_accuracy / len(away_players) if away_players else 0
+                lineup_features['away_total_tackles'] = away_total_tackles
+                lineup_features['away_total_interceptions'] = away_total_interceptions
+                lineup_features['away_total_clearances'] = away_total_clearances
+
+            logger.info(f"✅ 阵容特征提取完成: {len(lineup_features)}个特征")
+
+        except Exception as e:
+            logger.error(f"❌ 阵容特征提取失败: {e}")
+
+        return lineup_features
+
+    def extract_tactical_features(self, raw_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        提取战术统计特征 - 专项硬编码映射
+
+        Args:
+            raw_data: 原始API数据
+
+        Returns:
+            Dict[str, Any]: 战术特征字典
+        """
+        tactical_features = {}
+
+        try:
+            content = raw_data.get('content', {})
+            stats_data = content.get('stats', {})
+            periods_data = stats_data.get('Periods', {})
+            all_stats = periods_data.get('All', {})
+            stats_array = all_stats.get('stats', [])
+
+            if len(stats_array) >= 2:
+                # 主队和客队统计数据
+                home_stats = stats_array[0].get('stats', [])
+                away_stats = stats_array[1].get('stats', [])
+
+                # 硬编码映射战术特征
+                tactical_mappings = {
+                    'big_chances_created': 'big_chances',
+                    'big_chances_missed': 'big_chances_missed',
+                    'clearances': 'clearances',
+                    'interceptions': 'interceptions',
+                    'tackles': 'tackles',
+                    'aerial_won': 'aerial_won',
+                    'passes': 'passes',
+                    'pass_accuracy': 'pass_accuracy'
+                }
+
+                # 提取主队战术统计
+                for stat in home_stats:
+                    key = stat.get('key')
+                    value = stat.get('value')
+                    if key in tactical_mappings and value is not None:
+                        tactical_features[f'home_{tactical_mappings[key]}'] = value
+
+                # 提取客队战术统计
+                for stat in away_stats:
+                    key = stat.get('key')
+                    value = stat.get('value')
+                    if key in tactical_mappings and value is not None:
+                        tactical_features[f'away_{tactical_mappings[key]}'] = value
+
+            logger.info(f"✅ 战术特征提取完成: {len(tactical_features)}个特征")
+
+        except Exception as e:
+            logger.error(f"❌ 战术特征提取失败: {e}")
+
+        return tactical_features
+
+    def extract_shotmap_features(self, raw_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        提取shotmap细节特征 - 专项硬编码映射
+
+        Args:
+            raw_data: 原始API数据
+
+        Returns:
+            Dict[str, Any]: 射门细节特征字典
+        """
+        shotmap_features = {}
+
+        try:
+            content = raw_data.get('content', {})
+            shotmap_data = content.get('shotmap', {})
+            shots = shotmap_data.get('shots', [])
+
+            home_shots = []
+            away_shots = []
+            home_xg_total = 0
+            away_xg_total = 0
+            home_goals = 0
+            away_goals = 0
+            home_shots_on_target = 0
+            away_shots_on_target = 0
+            home_shots_box = 0
+            away_shots_box = 0
+
+            for shot in shots:
+                team = shot.get('team')
+                player = shot.get('player', 'Unknown')
+                xg = shot.get('expectedGoals', 0)
+                is_goal = shot.get('isGoal', False)
+                shot_x = shot.get('x', 0)
+
+                # 计算是否在禁区内 (x > 66)
+                in_box = 1 if shot_x > 66 else 0
+
+                shot_data = {
+                    'player': player,
+                    'xg': xg,
+                    'is_goal': is_goal,
+                    'in_box': in_box
+                }
+
+                if team == 'home':
+                    home_shots.append(shot_data)
+                    home_xg_total += xg
+                    if is_goal:
+                        home_goals += 1
+                    home_shots_box += in_box
+                elif team == 'away':
+                    away_shots.append(shot_data)
+                    away_xg_total += xg
+                    if is_goal:
+                        away_goals += 1
+                    away_shots_box += in_box
+
+            # 计算射门特征
+            shotmap_features['home_shots_from_shotmap'] = len(home_shots)
+            shotmap_features['away_shots_from_shotmap'] = len(away_shots)
+            shotmap_features['home_xg_from_shotmap'] = home_xg_total
+            shotmap_features['away_xg_from_shotmap'] = away_xg_total
+            shotmap_features['home_goals_shotmap'] = home_goals
+            shotmap_features['away_goals_shotmap'] = away_goals
+            shotmap_features['home_shots_in_box'] = home_shots_box
+            shotmap_features['away_shots_in_box'] = away_shots_box
+
+            # 计算射门精度
+            if len(home_shots) > 0:
+                home_on_target = sum(1 for s in home_shots if s['xg'] > 0.1)  # 假设xg>0.1为射正
+                shotmap_features['home_shot_precision'] = (home_on_target / len(home_shots)) * 100
+
+            if len(away_shots) > 0:
+                away_on_target = sum(1 for s in away_shots if s['xg'] > 0.1)
+                shotmap_features['away_shot_precision'] = (away_on_target / len(away_shots)) * 100
+
+            logger.info(f"✅ Shotmap特征提取完成: {len(shotmap_features)}个特征")
+
+        except Exception as e:
+            logger.error(f"❌ Shotmap特征提取失败: {e}")
+
+        return shotmap_features
 
 
 # 全局实例
