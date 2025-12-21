@@ -470,3 +470,12 @@ async def fetch_match_data(match_id: str) -> Optional[Dict[str, Any]]:
     """
     async with FotMobAPIClient() as client:
         return await client.get_match_details(match_id)
+
+
+def get_api_client() -> FotMobAPIClient:
+    """获取API客户端实例
+
+    Returns:
+        FotMobAPIClient: API客户端实例
+    """
+    return FotMobAPIClient()

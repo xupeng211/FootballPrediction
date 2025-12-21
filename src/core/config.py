@@ -119,6 +119,41 @@ class HarvestConfig:
     max_workers: int = 4
     save_interval: int = 10  # 每收割N场保存一次
 
+@dataclass
+class StrategyConfig:
+    """策略配置"""
+    # 策略模式: SANDBOX (沙盒模式) | LIVE (实战模式)
+    mode: str = os.getenv('STRATEGY_MODE', 'SANDBOX')
+
+    # 风控参数
+    max_single_bet_pct: float = float(os.getenv('MAX_SINGLE_BET_PCT', '0.02'))  # 2%
+    max_daily_bets: int = int(os.getenv('MAX_DAILY_BETS', '5'))
+    max_consecutive_losses: int = int(os.getenv('MAX_CONSECUTIVE_LOSSES', '5'))
+    max_total_exposure: float = float(os.getenv('MAX_TOTAL_EXPOSURE', '0.20'))  # 20%
+
+    # Kelly公式参数
+    kelly_fraction: float = float(os.getenv('KELLY_FRACTION', '0.25'))
+    max_kelly_pct: float = float(os.getenv('MAX_KELLY_PCT', '0.05'))  # 5%
+    min_kelly_pct: float = float(os.getenv('MIN_KELLY_PCT', '0.01'))  # 1%
+
+    # 期望收益阈值
+    min_edge_threshold: float = float(os.getenv('MIN_EDGE_THRESHOLD', '0.05'))  # 5%
+    min_expected_value: float = float(os.getenv('MIN_EXPECTED_VALUE', '0.0'))
+    confidence_threshold: float = float(os.getenv('CONFIDENCE_THRESHOLD', '0.6'))
+
+    # 市场参数保护
+    min_odds: float = float(os.getenv('MIN_ODDS', '1.01'))
+    max_odds: float = float(os.getenv('MAX_ODDS', '100.0'))
+    odds_range_factor: float = float(os.getenv('ODDS_RANGE_FACTOR', '10.0'))
+
+    def is_live_mode(self) -> bool:
+        """检查是否为实战模式"""
+        return self.mode.upper() == 'LIVE'
+
+    def is_sandbox_mode(self) -> bool:
+        """检查是否为沙盒模式"""
+        return self.mode.upper() == 'SANDBOX'
+
 class Config:
     """主配置类"""
 
@@ -129,6 +164,7 @@ class Config:
         self.model = ModelConfig()
         self.logging = LoggingConfig()
         self.harvest = HarvestConfig()
+        self.strategy = StrategyConfig()
 
         # 确保目录存在
         self._ensure_directories()

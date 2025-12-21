@@ -1,0 +1,20 @@
+{
+  "match_id": "4147463",
+  "prediction": 1.0,
+  "raw_prediction": 0.0017919835844388023,
+  "probabilities": {
+    "home_win": 0.0017919835844388023,
+    "draw": 0.9198707929141816,
+    "away_win": 0.07833722350137952
+  },
+  "model_info": {
+    "type": "LightGBM",
+    "features_count": 23,
+    "test_data_shape": [
+      1,
+      30
+    ]
+  },
+  "status": "success",
+  "timestamp": "2025-12-21T07:35:40.312806"
+}

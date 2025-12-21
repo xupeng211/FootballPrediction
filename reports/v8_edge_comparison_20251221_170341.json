@@ -1,0 +1,2454 @@
+{
+  "direct_edge": {
+    "bets": [
+      {
+        "match_id": "match_0",
+        "outcome": "home_win",
+        "edge": 0.12031622268874831,
+        "odds": 2.6382448606906275,
+        "stake_fraction": 0.03875167428054491,
+        "stake_amount": 38.751674280544904,
+        "won": true,
+        "profit": 63.48473123325986
+      },
+      {
+        "match_id": "match_1",
+        "outcome": "away_win",
+        "edge": 0.03204767589209995,
+        "odds": 5.633475090045678,
+        "stake_fraction": 0.01,
+        "stake_amount": 10.0,
+        "won": false,
+        "profit": -10.0
+      },
+      {
+        "match_id": "match_2",
+        "outcome": "home_win",
+        "edge": 0.10026648813861805,
+        "odds": 2.384845769221265,
+        "stake_fraction": 0.03453382540447388,
+        "stake_amount": 34.53382540447388,
+        "won": true,
+        "profit": 47.82402200641149
+      },
+      {
+        "match_id": "match_3",
+        "outcome": "home_win",
+        "edge": 0.042591245742361616,
+        "odds": 1.9895254410940633,
+        "stake_fraction": 0.017126667683981807,
+        "stake_amount": 17.126667683981807,
+        "won": false,
+        "profit": -17.126667683981807
+      },
+      {
+        "match_id": "match_4",
+        "outcome": "draw",
+        "edge": 0.08808471703022291,
+        "odds": 3.586035563512375,
+        "stake_fraction": 0.024429279498637643,
+        "stake_amount": 24.429279498637644,
+        "won": false,
+        "profit": -24.429279498637644
+      },
+      {
+        "match_id": "match_5",
+        "outcome": "home_win",
+        "edge": 0.07664537380884451,
+        "odds": 3.19594561416539,
+        "stake_fraction": 0.022309700631046193,
+        "stake_amount": 22.309700631046194,
+        "won": false,
+        "profit": -22.309700631046194
+      },
+      {
+        "match_id": "match_7",
+        "outcome": "away_win",
+        "edge": 0.07891223623195961,
+        "odds": 7.081243078002278,
+        "stake_fraction": 0.018377713879209463,
+        "stake_amount": 18.377713879209463,
+        "won": true,
+        "profit": 111.75934531744893
+      },
+      {
+        "match_id": "match_10",
+        "outcome": "home_win",
+        "edge": 0.12403582258750756,
+        "odds": 1.7730233406085292,
+        "stake_fraction": 0.05,
+        "stake_amount": 50.0,
+        "won": false,
+        "profit": -50.0
+      },
+      {
+        "match_id": "match_12",
+        "outcome": "draw",
+        "edge": 0.060382575112445935,
+        "odds": 3.952745280406062,
+        "stake_fraction": 0.016166442827175553,
+        "stake_amount": 16.166442827175555,
+        "won": false,
+        "profit": -16.166442827175555
+      },
+      {
+        "match_id": "match_13",
+        "outcome": "home_win",
+        "edge": 0.09418207673339135,
+        "odds": 2.0268686825076325,
+        "stake_fraction": 0.0371799637161537,
+        "stake_amount": 37.1799637161537,
+        "won": false,
+        "profit": -37.1799637161537
+      },
+      {
+        "match_id": "match_14",
+        "outcome": "draw",
+        "edge": 0.1113290714069089,
+        "odds": 3.641393137970839,
+        "stake_fraction": 0.03069538652540099,
+        "stake_amount": 30.69538652540099,
+        "won": false,
+        "profit": -30.69538652540099
+      },
+      {
+        "match_id": "match_15",
+        "outcome": "home_win",
+        "edge": 0.056849770421697254,
+        "odds": 2.5020706922164604,
+        "stake_fraction": 0.018939474043191656,
+        "stake_amount": 18.939474043191655,
+        "won": false,
+        "profit": -18.939474043191655
+      },
+      {
+        "match_id": "match_16",
+        "outcome": "draw",
+        "edge": 0.12474345375000534,
+        "odds": 3.272456164343054,
+        "stake_fraction": 0.03592742430775641,
+        "stake_amount": 35.92742430775641,
+        "won": false,
+        "profit": -35.92742430775641
+      },
+      {
+        "match_id": "match_17",
+        "outcome": "draw",
+        "edge": 0.0461619329206881,
+        "odds": 4.188400681498952,
+        "stake_fraction": 0.012128003385912113,
+        "stake_amount": 12.128003385912113,
+        "won": true,
+        "profit": 38.66893426086378
+      },
+      {
+        "match_id": "match_18",
+        "outcome": "draw",
+        "edge": 0.04578941693397884,
+        "odds": 4.040798582582967,
+        "stake_fraction": 0.012169553886529013,
+        "stake_amount": 12.169553886529012,
+        "won": true,
+        "profit": 37.005162208824466
+      },
+      {
+        "match_id": "match_19",
+        "outcome": "home_win",
+        "edge": 0.06641802683159675,
+        "odds": 2.0119110708992256,
+        "stake_fraction": 0.02641085117707523,
+        "stake_amount": 26.41085117707523,
+        "won": true,
+        "profit": 26.72543269795427
+      },
+      {
+        "match_id": "match_20",
+        "outcome": "home_win",
+        "edge": 0.10647463768062754,
+        "odds": 3.509915480432242,
+        "stake_fraction": 0.029779248104744107,
+        "stake_amount": 29.779248104744106,
+        "won": false,
+        "profit": -29.779248104744106
+      },
+      {
+        "match_id": "match_21",
+        "outcome": "home_win",
+        "edge": 0.12056903259860363,
+        "odds": 3.5886163702513754,
+        "stake_fraction": 0.03342913296084151,
+        "stake_amount": 33.429132960841514,
+        "won": true,
+        "profit": 86.53520082574417
+      },
+      {
+        "match_id": "match_22",
+        "outcome": "draw",
+        "edge": 0.08619168898990681,
+        "odds": 3.5317012735686433,
+        "stake_fraction": 0.024047331409491654,
+        "stake_amount": 24.047331409491655,
+        "won": false,
+        "profit": -24.047331409491655
+      },
+      {
+        "match_id": "match_24",
+        "outcome": "draw",
+        "edge": 0.1161967533457402,
+        "odds": 3.2205838664870785,
+        "stake_fraction": 0.033704774209269615,
+        "stake_amount": 33.704774209269615,
+        "won": false,
+        "profit": -33.704774209269615
+      },
+      {
+        "match_id": "match_25",
+        "outcome": "home_win",
+        "edge": 0.07735290800940786,
+        "odds": 3.230582689104419,
+        "stake_fraction": 0.022406249881497357,
+        "stake_amount": 22.406249881497356,
+        "won": true,
+        "profit": 49.97899311341594
+      },
+      {
+        "match_id": "match_26",
+        "outcome": "draw",
+        "edge": 0.20868125740719207,
+        "odds": 3.868356619048448,
+        "stake_fraction": 0.05,
+        "stake_amount": 50.0,
+        "won": true,
+        "profit": 143.4178309524224
+      },
+      {
+        "match_id": "match_29",
+        "outcome": "home_win",
+        "edge": 0.06554388836170777,
+        "odds": 2.490417602462053,
+        "stake_fraction": 0.02190414995638254,
+        "stake_amount": 21.90414995638254,
+        "won": false,
+        "profit": -21.90414995638254
+      },
+      {
+        "match_id": "match_30",
+        "outcome": "home_win",
+        "edge": 0.09338874624447308,
+        "odds": 3.4350183853775658,
+        "stake_fraction": 0.026348224905692788,
+        "stake_amount": 26.34822490569279,
+        "won": false,
+        "profit": -26.34822490569279
+      },
+      {
+        "match_id": "match_31",
+        "outcome": "away_win",
+        "edge": 0.14773180886257478,
+        "odds": 7.456597868751521,
+        "stake_fraction": 0.03412251199483447,
+        "stake_amount": 34.122511994834476,
+        "won": true,
+        "profit": 220.31533822229648
+      },
+      {
+        "match_id": "match_32",
+        "outcome": "away_win",
+        "edge": 0.12384971243036921,
+        "odds": 6.791747713216981,
+        "stake_fraction": 0.02904670724044115,
+        "stake_amount": 29.04670724044115,
+        "won": true,
+        "profit": 168.23120023630815
+      },
+      {
+        "match_id": "match_33",
+        "outcome": "away_win",
+        "edge": 0.03586642790685818,
+        "odds": 5.688529312648383,
+        "stake_fraction": 0.01,
+        "stake_amount": 10.0,
+        "won": false,
+        "profit": -10.0
+      },
+      {
+        "match_id": "match_35",
+        "outcome": "home_win",
+        "edge": 0.1350122619692504,
+        "odds": 4.722194658088861,
+        "stake_fraction": 0.03425689631047059,
+        "stake_amount": 34.25689631047059,
+        "won": true,
+        "profit": 127.51083644953762
+      },
+      {
+        "match_id": "match_37",
+        "outcome": "draw",
+        "edge": 0.16288538762690988,
+        "odds": 4.012132783591002,
+        "stake_fraction": 0.04339236352567054,
+        "stake_amount": 43.39236352567054,
+        "won": false,
+        "profit": -43.39236352567054
+      },
+      {
+        "match_id": "match_38",
+        "outcome": "draw",
+        "edge": 0.1077810651020365,
+        "odds": 3.352848324779802,
+        "stake_fraction": 0.030717965094852924,
+        "stake_amount": 30.717965094852925,
+        "won": false,
+        "profit": -30.717965094852925
+      },
+      {
+        "match_id": "match_39",
+        "outcome": "away_win",
+        "edge": 0.0564939341100158,
+        "odds": 5.10073780134629,
+        "stake_fraction": 0.014054092664355172,
+        "stake_amount": 14.054092664355172,
+        "won": false,
+        "profit": -14.054092664355172
+      },
+      {
+        "match_id": "match_40",
+        "outcome": "home_win",
+        "edge": 0.06937744371211713,
+        "odds": 2.6771453463247368,
+        "stake_fraction": 0.022148766173523782,
+        "stake_amount": 22.148766173523782,
+        "won": false,
+        "profit": -22.148766173523782
+      },
+      {
+        "match_id": "match_41",
+        "outcome": "home_win",
+        "edge": 0.09764679683456545,
+        "odds": 3.2907242814848585,
+        "stake_fraction": 0.02805476747681189,
+        "stake_amount": 28.05476747681189,
+        "won": false,
+        "profit": -28.05476747681189
+      },
+      {
+        "match_id": "match_42",
+        "outcome": "away_win",
+        "edge": 0.12987135156054636,
+        "odds": 3.663273969476136,
+        "stake_fraction": 0.035727029738965535,
+        "stake_amount": 35.727029738965534,
+        "won": false,
+        "profit": -35.727029738965534
+      },
+      {
+        "match_id": "match_44",
+        "outcome": "away_win",
+        "edge": 0.10954592281237638,
+        "odds": 4.175344432034751,
+        "stake_fraction": 0.028808966627514417,
+        "stake_amount": 28.80896662751442,
+        "won": true,
+        "profit": 91.47839177335287
+      },
+      {
+        "match_id": "match_45",
+        "outcome": "draw",
+        "edge": 0.14578760703592075,
+        "odds": 4.2621025621856985,
+        "stake_fraction": 0.03809578157876129,
+        "stake_amount": 38.09578157876129,
+        "won": false,
+        "profit": -38.09578157876129
+      },
+      {
+        "match_id": "match_46",
+        "outcome": "away_win",
+        "edge": 0.109466151011787,
+        "odds": 4.736439016030091,
+        "stake_fraction": 0.02775261399222549,
+        "stake_amount": 27.75261399222549,
+        "won": true,
+        "profit": 103.69594971737395
+      },
+      {
+        "match_id": "match_47",
+        "outcome": "home_win",
+        "edge": 0.06327225946040449,
+        "odds": 2.9000874982057447,
+        "stake_fraction": 0.019314383028952505,
+        "stake_amount": 19.314383028952506,
+        "won": false,
+        "profit": -19.314383028952506
+      },
+      {
+        "match_id": "match_50",
+        "outcome": "draw",
+        "edge": 0.0775634689680044,
+        "odds": 4.357907176594491,
+        "stake_fraction": 0.02013244442331705,
+        "stake_amount": 20.13244442331705,
+        "won": false,
+        "profit": -20.13244442331705
+      },
+      {
+        "match_id": "match_51",
+        "outcome": "home_win",
+        "edge": 0.13545298554439703,
+        "odds": 4.287202058979656,
+        "stake_fraction": 0.03533182981158958,
+        "stake_amount": 35.331829811589586,
+        "won": false,
+        "profit": -35.331829811589586
+      },
+      {
+        "match_id": "match_52",
+        "outcome": "draw",
+        "edge": 0.1627169226799241,
+        "odds": 3.770398628030758,
+        "stake_fraction": 0.04429020833481017,
+        "stake_amount": 44.29020833481017,
+        "won": false,
+        "profit": -44.29020833481017
+      },
+      {
+        "match_id": "match_53",
+        "outcome": "draw",
+        "edge": 0.13619422261013003,
+        "odds": 3.1302329410008705,
+        "stake_fraction": 0.040025636049730064,
+        "stake_amount": 40.02563604973006,
+        "won": true,
+        "profit": 85.26392839764694
+      },
+      {
+        "match_id": "match_54",
+        "outcome": "draw",
+        "edge": 0.14300483076918102,
+        "odds": 3.951051919359482,
+        "stake_fraction": 0.03829275299303351,
+        "stake_amount": 38.29275299303351,
+        "won": false,
+        "profit": -38.29275299303351
+      },
+      {
+        "match_id": "match_55",
+        "outcome": "away_win",
+        "edge": 0.05627118891312288,
+        "odds": 4.687912357886552,
+        "stake_fraction": 0.01430589321542182,
+        "stake_amount": 14.30589321542182,
+        "won": false,
+        "profit": -14.30589321542182
+      },
+      {
+        "match_id": "match_56",
+        "outcome": "draw",
+        "edge": 0.07851856722884548,
+        "odds": 4.056535229801609,
+        "stake_fraction": 0.020841463304712607,
+        "stake_amount": 20.841463304712608,
+        "won": false,
+        "profit": -20.841463304712608
+      },
+      {
+        "match_id": "match_57",
+        "outcome": "away_win",
+        "edge": 0.10515270703003637,
+        "odds": 2.757663877959187,
+        "stake_fraction": 0.03299559437758324,
+        "stake_amount": 32.99559437758324,
+        "won": true,
+        "profit": 57.99516436927131
+      },
+      {
+        "match_id": "match_58",
+        "outcome": "draw",
+        "edge": 0.16152177369750462,
+        "odds": 4.1704406849199875,
+        "stake_fraction": 0.04249358644257446,
+        "stake_amount": 42.49358644257446,
+        "won": true,
+        "profit": 134.72339530570247
+      },
+      {
+        "match_id": "match_59",
+        "outcome": "home_win",
+        "edge": 0.145176360428762,
+        "odds": 4.796663403412201,
+        "stake_fraction": 0.03668284812835269,
+        "stake_amount": 36.68284812835269,
+        "won": false,
+        "profit": -36.68284812835269
+      },
+      {
+        "match_id": "match_60",
+        "outcome": "draw",
+        "edge": 0.12479373240995878,
+        "odds": 3.148853608970372,
+        "stake_fraction": 0.03657365890683153,
+        "stake_amount": 36.573658906831525,
+        "won": false,
+        "profit": -36.573658906831525
+      },
+      {
+        "match_id": "match_61",
+        "outcome": "draw",
+        "edge": 0.15215112692144367,
+        "odds": 3.709121051407474,
+        "stake_fraction": 0.04166273393848541,
+        "stake_amount": 41.66273393848541,
+        "won": false,
+        "profit": -41.66273393848541
+      },
+      {
+        "match_id": "match_62",
+        "outcome": "home_win",
+        "edge": 0.09089050889837591,
+        "odds": 4.194487035711053,
+        "stake_fraction": 0.02386856211852235,
+        "stake_amount": 23.86856211852235,
+        "won": false,
+        "profit": -23.86856211852235
+      },
+      {
+        "match_id": "match_64",
+        "outcome": "draw",
+        "edge": 0.10528988661473396,
+        "odds": 4.120517077645497,
+        "stake_fraction": 0.02780621064421275,
+        "stake_amount": 27.80621064421275,
+        "won": false,
+        "profit": -27.80621064421275
+      },
+      {
+        "match_id": "match_65",
+        "outcome": "draw",
+        "edge": 0.18342104787177999,
+        "odds": 3.6920800583603324,
+        "stake_fraction": 0.05,
+        "stake_amount": 50.0,
+        "won": false,
+        "profit": -50.0
+      },
+      {
+        "match_id": "match_66",
+        "outcome": "home_win",
+        "edge": 0.06839894428287785,
+        "odds": 1.9731768065808426,
+        "stake_fraction": 0.02773662700157627,
+        "stake_amount": 27.73662700157627,
+        "won": false,
+        "profit": -27.73662700157627
+      },
+      {
+        "match_id": "match_67",
+        "outcome": "draw",
+        "edge": 0.0346380583048268,
+        "odds": 3.065022953443845,
+        "stake_fraction": 0.010282349994218355,
+        "stake_amount": 10.282349994218356,
+        "won": false,
+        "profit": -10.282349994218356
+      },
+      {
+        "match_id": "match_69",
+        "outcome": "draw",
+        "edge": 0.06333786054520407,
+        "odds": 3.5081408406058325,
+        "stake_fraction": 0.017718154557983753,
+        "stake_amount": 17.718154557983752,
+        "won": false,
+        "profit": -17.718154557983752
+      },
+      {
+        "match_id": "match_70",
+        "outcome": "away_win",
+        "edge": 0.05694609012464846,
+        "odds": 6.8969086933573305,
+        "stake_fraction": 0.013320605912579928,
+        "stake_amount": 13.320605912579927,
+        "won": false,
+        "profit": -13.320605912579927
+      },
+      {
+        "match_id": "match_71",
+        "outcome": "draw",
+        "edge": 0.043037416571689024,
+        "odds": 3.244305233890025,
+        "stake_fraction": 0.012442738512410192,
+        "stake_amount": 12.442738512410193,
+        "won": false,
+        "profit": -12.442738512410193
+      },
+      {
+        "match_id": "match_72",
+        "outcome": "away_win",
+        "edge": 0.10596892461633478,
+        "odds": 6.11494531621551,
+        "stake_fraction": 0.025337286683897314,
+        "stake_amount": 25.337286683897315,
+        "won": false,
+        "profit": -25.337286683897315
+      },
+      {
+        "match_id": "match_73",
+        "outcome": "away_win",
+        "edge": 0.07738147544525481,
+        "odds": 3.320239275828924,
+        "stake_fraction": 0.022146424006475623,
+        "stake_amount": 22.146424006475623,
+        "won": false,
+        "profit": -22.146424006475623
+      },
+      {
+        "match_id": "match_74",
+        "outcome": "home_win",
+        "edge": 0.11800428795844065,
+        "odds": 2.5230227343818057,
+        "stake_fraction": 0.03909692147760755,
+        "stake_amount": 39.09692147760755,
+        "won": true,
+        "profit": 59.5455002547366
+      },
+      {
+        "match_id": "match_75",
+        "outcome": "draw",
+        "edge": 0.055560162835386784,
+        "odds": 3.118225238039809,
+        "stake_fraction": 0.016357948991602807,
+        "stake_amount": 16.357948991602807,
+        "won": true,
+        "profit": 34.64982039658091
+      },
+      {
+        "match_id": "match_76",
+        "outcome": "away_win",
+        "edge": 0.037133706224034016,
+        "odds": 8.395452777112226,
+        "stake_fraction": 0.01,
+        "stake_amount": 10.0,
+        "won": false,
+        "profit": -10.0
+      },
+      {
+        "match_id": "match_77",
+        "outcome": "home_win",
+        "edge": 0.1403653791210549,
+        "odds": 3.2855521530208796,
+        "stake_fraction": 0.04035591775678558,
+        "stake_amount": 40.35591775678558,
+        "won": true,
+        "profit": 92.23555471615482
+      },
+      {
+        "match_id": "match_78",
+        "outcome": "away_win",
+        "edge": 0.12229272536874136,
+        "odds": 3.308967743195895,
+        "stake_fraction": 0.035051393391280265,
+        "stake_amount": 35.051393391280264,
+        "won": false,
+        "profit": -35.051393391280264
+      },
+      {
+        "match_id": "match_80",
+        "outcome": "home_win",
+        "edge": 0.06278801847006382,
+        "odds": 2.2327282959872576,
+        "stake_fraction": 0.022744441892576017,
+        "stake_amount": 22.744441892576017,
+        "won": true,
+        "profit": 28.03771709741643
+      },
+      {
+        "match_id": "match_82",
+        "outcome": "draw",
+        "edge": 0.03575646535420307,
+        "odds": 3.237747278896517,
+        "stake_fraction": 0.010347048524676791,
+        "stake_amount": 10.34704852467679,
+        "won": true,
+        "profit": 23.15407968070571
+      },
+      {
+        "match_id": "match_83",
+        "outcome": "away_win",
+        "edge": 0.11714233717131728,
+        "odds": 4.7916137243033425,
+        "stake_fraction": 0.029607490177031928,
+        "stake_amount": 29.607490177031927,
+        "won": false,
+        "profit": -29.607490177031927
+      },
+      {
+        "match_id": "match_84",
+        "outcome": "draw",
+        "edge": 0.04493863101277351,
+        "odds": 4.2729825432826924,
+        "stake_fraction": 0.011733761686612096,
+        "stake_amount": 11.733761686612096,
+        "won": false,
+        "profit": -11.733761686612096
+      },
+      {
+        "match_id": "match_85",
+        "outcome": "home_win",
+        "edge": 0.07389821815117353,
+        "odds": 2.5073694439147727,
+        "stake_fraction": 0.024584568156136376,
+        "stake_amount": 24.584568156136374,
+        "won": false,
+        "profit": -24.584568156136374
+      },
+      {
+        "match_id": "match_87",
+        "outcome": "home_win",
+        "edge": 0.12687929271500978,
+        "odds": 4.036630549190321,
+        "stake_fraction": 0.033732442635778105,
+        "stake_amount": 33.732442635778106,
+        "won": false,
+        "profit": -33.732442635778106
+      },
+      {
+        "match_id": "match_88",
+        "outcome": "draw",
+        "edge": 0.0963052786685537,
+        "odds": 4.033987394053954,
+        "stake_fraction": 0.025609485450808052,
+        "stake_amount": 25.60948545080805,
+        "won": true,
+        "profit": 77.69885602595976
+      },
+      {
+        "match_id": "match_89",
+        "outcome": "draw",
+        "edge": 0.15929768984894926,
+        "odds": 3.7893410111165804,
+        "stake_fraction": 0.04328142501867256,
+        "stake_amount": 43.281425018672564,
+        "won": false,
+        "profit": -43.281425018672564
+      },
+      {
+        "match_id": "match_90",
+        "outcome": "home_win",
+        "edge": 0.062490511755413924,
+        "odds": 3.129956254303449,
+        "stake_fraction": 0.01836587654871295,
+        "stake_amount": 18.36587654871295,
+        "won": false,
+        "profit": -18.36587654871295
+      },
+      {
+        "match_id": "match_91",
+        "outcome": "home_win",
+        "edge": 0.06217813039239517,
+        "odds": 1.869391353874577,
+        "stake_fraction": 0.026739456020032682,
+        "stake_amount": 26.739456020032684,
+        "won": false,
+        "profit": -26.739456020032684
+      },
+      {
+        "match_id": "match_92",
+        "outcome": "home_win",
+        "edge": 0.15703526301304505,
+        "odds": 4.786468880813688,
+        "stake_fraction": 0.03970160184920413,
+        "stake_amount": 39.701601849204124,
+        "won": false,
+        "profit": -39.701601849204124
+      },
+      {
+        "match_id": "match_94",
+        "outcome": "draw",
+        "edge": 0.07425526223788864,
+        "odds": 3.440601257231218,
+        "stake_fraction": 0.02093604990612438,
+        "stake_amount": 20.936049906124378,
+        "won": false,
+        "profit": -20.936049906124378
+      },
+      {
+        "match_id": "match_95",
+        "outcome": "draw",
+        "edge": 0.08678401454073284,
+        "odds": 4.304555294858578,
+        "stake_fraction": 0.022609189798192354,
+        "stake_amount": 22.609189798192354,
+        "won": true,
+        "profit": 74.71331786007909
+      },
+      {
+        "match_id": "match_96",
+        "outcome": "draw",
+        "edge": 0.034851879135086805,
+        "odds": 4.429417130016682,
+        "stake_fraction": 0.01,
+        "stake_amount": 10.0,
+        "won": false,
+        "profit": -10.0
+      },
+      {
+        "match_id": "match_97",
+        "outcome": "away_win",
+        "edge": 0.05536115289044394,
+        "odds": 5.371013865379567,
+        "stake_fraction": 0.013605334091162938,
+        "stake_amount": 13.605334091162938,
+        "won": false,
+        "profit": -13.605334091162938
+      },
+      {
+        "match_id": "match_98",
+        "outcome": "home_win",
+        "edge": 0.09743579769090943,
+        "odds": 3.137608014187031,
+        "stake_fraction": 0.028603498646590977,
+        "stake_amount": 28.603498646590978,
+        "won": true,
+        "profit": 61.143067940740764
+      },
+      {
+        "match_id": "match_99",
+        "outcome": "away_win",
+        "edge": 0.0463617613755507,
+        "odds": 4.850230822651923,
+        "stake_fraction": 0.011680611078857287,
+        "stake_amount": 11.680611078857288,
+        "won": false,
+        "profit": -11.680611078857288
+      },
+      {
+        "match_id": "match_101",
+        "outcome": "away_win",
+        "edge": 0.056756459479548355,
+        "odds": 4.080495657946199,
+        "stake_fraction": 0.01503618327585003,
+        "stake_amount": 15.03618327585003,
+        "won": true,
+        "profit": 46.31889729333927
+      },
+      {
+        "match_id": "match_102",
+        "outcome": "draw",
+        "edge": 0.19243688768929612,
+        "odds": 3.3147357117274443,
+        "stake_fraction": 0.05,
+        "stake_amount": 50.0,
+        "won": false,
+        "profit": -50.0
+      },
+      {
+        "match_id": "match_103",
+        "outcome": "away_win",
+        "edge": 0.1417125918533633,
+        "odds": 4.202672198649414,
+        "stake_fraction": 0.0371921653569065,
+        "stake_amount": 37.1921653569065,
+        "won": false,
+        "profit": -37.1921653569065
+      },
+      {
+        "match_id": "match_104",
+        "outcome": "home_win",
+        "edge": 0.13038325834840614,
+        "odds": 2.3059867051375917,
+        "stake_fraction": 0.04604366325341243,
+        "stake_amount": 46.043663253412426,
+        "won": false,
+        "profit": -46.043663253412426
+      },
+      {
+        "match_id": "match_106",
+        "outcome": "away_win",
+        "edge": 0.16343693482562588,
+        "odds": 3.5693942366117626,
+        "stake_fraction": 0.04540921318367769,
+        "stake_amount": 45.409213183677686,
+        "won": false,
+        "profit": -45.409213183677686
+      },
+      {
+        "match_id": "match_107",
+        "outcome": "away_win",
+        "edge": 0.03277109455555954,
+        "odds": 2.632716149692631,
+        "stake_fraction": 0.01056852287469172,
+        "stake_amount": 10.56852287469172,
+        "won": true,
+        "profit": 17.25539797590516
+      },
+      {
+        "match_id": "match_108",
+        "outcome": "home_win",
+        "edge": 0.13822606587355785,
+        "odds": 3.4628421640922897,
+        "stake_fraction": 0.03887013598047348,
+        "stake_amount": 38.87013598047348,
+        "won": false,
+        "profit": -38.87013598047348
+      },
+      {
+        "match_id": "match_109",
+        "outcome": "away_win",
+        "edge": 0.09630974477656021,
+        "odds": 4.814340233114747,
+        "stake_fraction": 0.024311825940088235,
+        "stake_amount": 24.311825940088234,
+        "won": false,
+        "profit": -24.311825940088234
+      },
+      {
+        "match_id": "match_110",
+        "outcome": "home_win",
+        "edge": 0.16927072190247833,
+        "odds": 3.3496974102085653,
+        "stake_fraction": 0.0482620184469231,
+        "stake_amount": 48.2620184469231,
+        "won": false,
+        "profit": -48.2620184469231
+      },
+      {
+        "match_id": "match_111",
+        "outcome": "away_win",
+        "edge": 0.12327957706657994,
+        "odds": 6.917925906082934,
+        "stake_fraction": 0.02882222567211335,
+        "stake_amount": 28.82222567211335,
+        "won": false,
+        "profit": -28.82222567211335
+      },
+      {
+        "match_id": "match_112",
+        "outcome": "draw",
+        "edge": 0.1641924138762812,
+        "odds": 3.6444607476858435,
+        "stake_fraction": 0.04525631987266563,
+        "stake_amount": 45.25631987266563,
+        "won": false,
+        "profit": -45.25631987266563
+      },
+      {
+        "match_id": "match_114",
+        "outcome": "draw",
+        "edge": 0.21851133306049217,
+        "odds": 4.0528124597723485,
+        "stake_fraction": 0.05,
+        "stake_amount": 50.0,
+        "won": true,
+        "profit": 152.64062298861742
+      },
+      {
+        "match_id": "match_115",
+        "outcome": "draw",
+        "edge": 0.09287526223742598,
+        "odds": 4.378606171898132,
+        "stake_fraction": 0.024072897269407593,
+        "stake_amount": 24.072897269407594,
+        "won": false,
+        "profit": -24.072897269407594
+      },
+      {
+        "match_id": "match_116",
+        "outcome": "home_win",
+        "edge": 0.13522395875200144,
+        "odds": 4.389613176919833,
+        "stake_fraction": 0.03502351685524428,
+        "stake_amount": 35.02351685524428,
+        "won": false,
+        "profit": -35.02351685524428
+      },
+      {
+        "match_id": "match_117",
+        "outcome": "home_win",
+        "edge": 0.11404331398334158,
+        "odds": 4.086127110744735,
+        "stake_fraction": 0.03019937030098891,
+        "stake_amount": 30.19937030098891,
+        "won": true,
+        "profit": 93.19909541330125
+      },
+      {
+        "match_id": "match_118",
+        "outcome": "draw",
+        "edge": 0.03601488149943388,
+        "odds": 3.963130731159085,
+        "stake_fraction": 0.01,
+        "stake_amount": 10.0,
+        "won": true,
+        "profit": 29.63130731159085
+      },
+      {
+        "match_id": "match_119",
+        "outcome": "away_win",
+        "edge": 0.0480894303556752,
+        "odds": 2.824409476160351,
+        "stake_fraction": 0.014889666445449269,
+        "stake_amount": 14.889666445449269,
+        "won": false,
+        "profit": -14.889666445449269
+      },
+      {
+        "match_id": "match_120",
+        "outcome": "home_win",
+        "edge": 0.171441689725981,
+        "odds": 4.4817061799278095,
+        "stake_fraction": 0.04413648025624761,
+        "stake_amount": 44.13648025624761,
+        "won": false,
+        "profit": -44.13648025624761
+      },
+      {
+        "match_id": "match_121",
+        "outcome": "home_win",
+        "edge": 0.1325803836433449,
+        "odds": 4.650527178073981,
+        "stake_fraction": 0.033779706181404315,
+        "stake_amount": 33.779706181404315,
+        "won": false,
+        "profit": -33.779706181404315
+      },
+      {
+        "match_id": "match_122",
+        "outcome": "draw",
+        "edge": 0.03138874457076868,
+        "odds": 3.3110598876661625,
+        "stake_fraction": 0.01,
+        "stake_amount": 10.0,
+        "won": false,
+        "profit": -10.0
+      },
+      {
+        "match_id": "match_123",
+        "outcome": "away_win",
+        "edge": 0.09395306480771715,
+        "odds": 3.1265538235235715,
+        "stake_fraction": 0.027626793242373805,
+        "stake_amount": 27.626793242373804,
+        "won": true,
+        "profit": 58.74986280126518
+      },
+      {
+        "match_id": "match_124",
+        "outcome": "draw",
+        "edge": 0.16540291501799337,
+        "odds": 3.1366958720842173,
+        "stake_fraction": 0.04856270352238387,
+        "stake_amount": 48.56270352238387,
+        "won": false,
+        "profit": -48.56270352238387
+      },
+      {
+        "match_id": "match_125",
+        "outcome": "draw",
+        "edge": 0.035695063886640954,
+        "odds": 3.3162630586304678,
+        "stake_fraction": 0.010221137992220342,
+        "stake_amount": 10.221137992220342,
+        "won": false,
+        "profit": -10.221137992220342
+      },
+      {
+        "match_id": "match_126",
+        "outcome": "home_win",
+        "edge": 0.16367126060364462,
+        "odds": 3.645310992911848,
+        "stake_fraction": 0.04510869588497474,
+        "stake_amount": 45.108695884974736,
+        "won": true,
+        "profit": 119.32652910044112
+      },
+      {
+        "match_id": "match_127",
+        "outcome": "away_win",
+        "edge": 0.07035605438389259,
+        "odds": 3.4478759457863544,
+        "stake_fraction": 0.01981954583672613,
+        "stake_amount": 19.81954583672613,
+        "won": true,
+        "profit": 48.51578951013198
+      },
+      {
+        "match_id": "match_128",
+        "outcome": "home_win",
+        "edge": 0.10328329698678645,
+        "odds": 3.547955228352799,
+        "stake_fraction": 0.028763811033106948,
+        "stake_amount": 28.763811033106947,
+        "won": false,
+        "profit": -28.763811033106947
+      },
+      {
+        "match_id": "match_129",
+        "outcome": "draw",
+        "edge": 0.08498574975890319,
+        "odds": 4.023550221097859,
+        "stake_fraction": 0.02261873673184375,
+        "stake_amount": 22.61873673184375,
+        "won": true,
+        "profit": 68.38888644652044
+      },
+      {
+        "match_id": "match_130",
+        "outcome": "draw",
+        "edge": 0.11976508890499721,
+        "odds": 3.4642429288833405,
+        "stake_fraction": 0.03367325173206271,
+        "stake_amount": 33.67325173206271,
+        "won": false,
+        "profit": -33.67325173206271
+      },
+      {
+        "match_id": "match_131",
+        "outcome": "draw",
+        "edge": 0.17467377782268653,
+        "odds": 4.026218825013505,
+        "stake_fraction": 0.04647878380062543,
+        "stake_amount": 46.47878380062543,
+        "won": true,
+        "profit": 140.6549705011854
+      },
+      {
+        "match_id": "match_132",
+        "outcome": "home_win",
+        "edge": 0.0893927899530742,
+        "odds": 1.8468589952870929,
+        "stake_fraction": 0.03899016935698385,
+        "stake_amount": 38.99016935698385,
+        "won": false,
+        "profit": -38.99016935698385
+      },
+      {
+        "match_id": "match_133",
+        "outcome": "home_win",
+        "edge": 0.12727093028347197,
+        "odds": 3.99734536375558,
+        "stake_fraction": 0.033946429347871586,
+        "stake_amount": 33.946429347871586,
+        "won": true,
+        "profit": 101.74917262189926
+      },
+      {
+        "match_id": "match_134",
+        "outcome": "home_win",
+        "edge": 0.10333294025282608,
+        "odds": 3.4958628647210195,
+        "stake_fraction": 0.028946926022128908,
+        "stake_amount": 28.946926022128906,
+        "won": false,
+        "profit": -28.946926022128906
+      },
+      {
+        "match_id": "match_135",
+        "outcome": "home_win",
+        "edge": 0.10991892431729516,
+        "odds": 2.4565951915012003,
+        "stake_fraction": 0.0370763685763038,
+        "stake_amount": 37.0763685763038,
+        "won": false,
+        "profit": -37.0763685763038
+      },
+      {
+        "match_id": "match_137",
+        "outcome": "away_win",
+        "edge": 0.03897802593456101,
+        "odds": 4.490932684867445,
+        "stake_fraction": 0.010028706163251487,
+        "stake_amount": 10.028706163251487,
+        "won": false,
+        "profit": -10.028706163251487
+      },
+      {
+        "match_id": "match_138",
+        "outcome": "away_win",
+        "edge": 0.05273758313485241,
+        "odds": 5.07206815344087,
+        "stake_fraction": 0.013137727848768897,
+        "stake_amount": 13.137727848768897,
+        "won": false,
+        "profit": -13.137727848768897
+      },
+      {
+        "match_id": "match_139",
+        "outcome": "draw",
+        "edge": 0.07088957248631036,
+        "odds": 4.320997091825095,
+        "stake_fraction": 0.018447088514957587,
+        "stake_amount": 18.44708851495759,
+        "won": false,
+        "profit": -18.44708851495759
+      },
+      {
+        "match_id": "match_140",
+        "outcome": "home_win",
+        "edge": 0.09136478561989614,
+        "odds": 2.6869239577419877,
+        "stake_fraction": 0.029105073794156996,
+        "stake_amount": 29.105073794156997,
+        "won": false,
+        "profit": -29.105073794156997
+      },
+      {
+        "match_id": "match_141",
+        "outcome": "home_win",
+        "edge": 0.07680387369762703,
+        "odds": 2.6728955918210078,
+        "stake_fraction": 0.02454292263603856,
+        "stake_amount": 24.54292263603856,
+        "won": true,
+        "profit": 41.05774708823294
+      },
+      {
+        "match_id": "match_142",
+        "outcome": "home_win",
+        "edge": 0.19416610945836876,
+        "odds": 3.983825335702528,
+        "stake_fraction": 0.05,
+        "stake_amount": 50.0,
+        "won": true,
+        "profit": 149.1912667851264
+      },
+      {
+        "match_id": "match_144",
+        "outcome": "away_win",
+        "edge": 0.1175845085124626,
+        "odds": 4.406037007602988,
+        "stake_fraction": 0.030421377975063224,
+        "stake_amount": 30.421377975063223,
+        "won": false,
+        "profit": -30.421377975063223
+      },
+      {
+        "match_id": "match_145",
+        "outcome": "home_win",
+        "edge": 0.12252875723086093,
+        "odds": 2.3824860773233367,
+        "stake_fraction": 0.04223160912252458,
+        "stake_amount": 42.231609122524574,
+        "won": true,
+        "profit": 58.38461163485144
+      },
+      {
+        "match_id": "match_146",
+        "outcome": "draw",
+        "edge": 0.07295181542159701,
+        "odds": 4.390115072421017,
+        "stake_fraction": 0.018894158906182124,
+        "stake_amount": 18.894158906182124,
+        "won": true,
+        "profit": 64.05337288856582
+      },
+      {
+        "match_id": "match_148",
+        "outcome": "home_win",
+        "edge": 0.09004237077151411,
+        "odds": 3.9633446768863765,
+        "stake_fraction": 0.024085551280958423,
+        "stake_amount": 24.085551280958423,
+        "won": false,
+        "profit": -24.085551280958423
+      },
+      {
+        "match_id": "match_149",
+        "outcome": "draw",
+        "edge": 0.15040240971706303,
+        "odds": 3.356478549146341,
+        "stake_fraction": 0.04284549605920396,
+        "stake_amount": 42.84549605920396,
+        "won": false,
+        "profit": -42.84549605920396
+      },
+      {
+        "match_id": "match_150",
+        "outcome": "away_win",
+        "edge": 0.09559445042090148,
+        "odds": 5.73994387753334,
+        "stake_fraction": 0.023152458957179215,
+        "stake_amount": 23.152458957179213,
+        "won": false,
+        "profit": -23.152458957179213
+      },
+      {
+        "match_id": "match_151",
+        "outcome": "home_win",
+        "edge": 0.13501254582205507,
+        "odds": 2.9917828016455426,
+        "stake_fraction": 0.04055946383944008,
+        "stake_amount": 40.55946383944008,
+        "won": false,
+        "profit": -40.55946383944008
+      },
+      {
+        "match_id": "match_153",
+        "outcome": "home_win",
+        "edge": 0.0681590091841704,
+        "odds": 2.8725326643888573,
+        "stake_fraction": 0.02091167582572556,
+        "stake_amount": 20.91167582572556,
+        "won": true,
+        "profit": 39.15779605078194
+      },
+      {
+        "match_id": "match_154",
+        "outcome": "away_win",
+        "edge": 0.11471640965367877,
+        "odds": 5.551498674793502,
+        "stake_fraction": 0.02798410113558298,
+        "stake_amount": 27.98410113558298,
+        "won": true,
+        "profit": 127.36959923389325
+      },
+      {
+        "match_id": "match_155",
+        "outcome": "home_win",
+        "edge": 0.04390189444721887,
+        "odds": 2.100436525928276,
+        "stake_fraction": 0.016759375117360736,
+        "stake_amount": 16.759375117360737,
+        "won": true,
+        "profit": 18.44262853087724
+      },
+      {
+        "match_id": "match_156",
+        "outcome": "draw",
+        "edge": 0.04661867165053113,
+        "odds": 3.2292271448813126,
+        "stake_fraction": 0.013506230650194155,
+        "stake_amount": 13.506230650194155,
+        "won": true,
+        "profit": 30.10845599044079
+      },
+      {
+        "match_id": "match_157",
+        "outcome": "home_win",
+        "edge": 0.11882897329037334,
+        "odds": 3.0352822113467433,
+        "stake_fraction": 0.03544269849262883,
+        "stake_amount": 35.44269849262883,
+        "won": true,
+        "profit": 72.13589376417349
+      },
+      {
+        "match_id": "match_158",
+        "outcome": "draw",
+        "edge": 0.20876288494995854,
+        "odds": 3.1241129147302873,
+        "stake_fraction": 0.05,
+        "stake_amount": 50.0,
+        "won": false,
+        "profit": -50.0
+      },
+      {
+        "match_id": "match_159",
+        "outcome": "away_win",
+        "edge": 0.08857633876375046,
+        "odds": 6.579036739786419,
+        "stake_fraction": 0.02089059506802213,
+        "stake_amount": 20.89059506802213,
+        "won": false,
+        "profit": -20.89059506802213
+      },
+      {
+        "match_id": "match_160",
+        "outcome": "home_win",
+        "edge": 0.13363411428999256,
+        "odds": 4.289827545001498,
+        "stake_fraction": 0.03485090306962138,
+        "stake_amount": 34.85090306962138,
+        "won": true,
+        "profit": 114.65346088661768
+      },
+      {
+        "match_id": "match_161",
+        "outcome": "draw",
+        "edge": 0.11840282439319744,
+        "odds": 2.989646466138449,
+        "stake_fraction": 0.03558246065844566,
+        "stake_amount": 35.58246065844566,
+        "won": false,
+        "profit": -35.58246065844566
+      },
+      {
+        "match_id": "match_163",
+        "outcome": "home_win",
+        "edge": 0.12835349982052996,
+        "odds": 3.0336229325626505,
+        "stake_fraction": 0.03829383651172416,
+        "stake_amount": 38.29383651172416,
+        "won": true,
+        "profit": 77.87522410604718
+      },
+      {
+        "match_id": "match_164",
+        "outcome": "home_win",
+        "edge": 0.07609692696031145,
+        "odds": 1.995813126819549,
+        "stake_fraction": 0.03050276033678745,
+        "stake_amount": 30.50276033678745,
+        "won": false,
+        "profit": -30.50276033678745
+      },
+      {
+        "match_id": "match_165",
+        "outcome": "draw",
+        "edge": 0.14391086545902962,
+        "odds": 4.327884087300585,
+        "stake_fraction": 0.03743096383594287,
+        "stake_amount": 37.43096383594287,
+        "won": true,
+        "profit": 124.56590892195793
+      },
+      {
+        "match_id": "match_166",
+        "outcome": "draw",
+        "edge": 0.07317937205090505,
+        "odds": 4.351952123329059,
+        "stake_fraction": 0.019002247756720672,
+        "stake_amount": 19.00224775672067,
+        "won": false,
+        "profit": -19.00224775672067
+      },
+      {
+        "match_id": "match_167",
+        "outcome": "away_win",
+        "edge": 0.06953432883466337,
+        "odds": 2.9825924803561765,
+        "stake_fraction": 0.02092135104553834,
+        "stake_amount": 20.92135104553834,
+        "won": false,
+        "profit": -20.92135104553834
+      }
+    ],
+    "performance": {
+      "total_bets": 142,
+      "winning_bets": 48,
+      "losing_bets": 94,
+      "winning_rate": 0.338,
+      "total_staked": 4044.53,
+      "total_returns": 5234.9,
+      "net_profit": 1190.38,
+      "roi": 0.2943,
+      "avg_stake": 28.48,
+      "avg_edge": 0.1013,
+      "max_drawdown_pct": 0.524,
+      "sharpe_ratio": 0.1404,
+      "profit_factor": 1.4494,
+      "initial_capital": 1000.0,
+      "final_capital": 2190.38
+    }
+  },
+  "dewigged_edge": {
+    "bets": [
+      {
+        "match_id": "match_0",
+        "outcome": "draw",
+        "edge": 0.038383638388262475,
+        "odds": 4.362003522487166,
+        "stake_fraction": 0.01,
+        "stake_amount": 10.0,
+        "won": false,
+        "profit": -10.0
+      },
+      {
+        "match_id": "match_2",
+        "outcome": "home_win",
+        "edge": 0.04806442517638726,
+        "odds": 2.384845769221265,
+        "stake_fraction": 0.016554369241625604,
+        "stake_amount": 16.554369241625604,
+        "won": true,
+        "profit": 22.925248206391856
+      },
+      {
+        "match_id": "match_4",
+        "outcome": "draw",
+        "edge": 0.03974516075044887,
+        "odds": 3.586035563512375,
+        "stake_fraction": 0.011022861552224268,
+        "stake_amount": 11.022861552224269,
+        "won": false,
+        "profit": -11.022861552224269
+      },
+      {
+        "match_id": "match_6",
+        "outcome": "home_win",
+        "edge": 0.0690936858640735,
+        "odds": 1.645742837129823,
+        "stake_fraction": 0.03521849010578688,
+        "stake_amount": 35.21849010578688,
+        "won": true,
+        "profit": 22.74208772033942
+      },
+      {
+        "match_id": "match_7",
+        "outcome": "away_win",
+        "edge": 0.04099418708559291,
+        "odds": 7.081243078002278,
+        "stake_fraction": 0.01,
+        "stake_amount": 10.0,
+        "won": true,
+        "profit": 60.81243078002278
+      },
+      {
+        "match_id": "match_8",
+        "outcome": "home_win",
+        "edge": 0.07422850979824425,
+        "odds": 1.401659676688082,
+        "stake_fraction": 0.05,
+        "stake_amount": 50.0,
+        "won": false,
+        "profit": -50.0
+      },
+      {
+        "match_id": "match_10",
+        "outcome": "home_win",
+        "edge": 0.09797788915768801,
+        "odds": 1.7730233406085292,
+        "stake_fraction": 0.04494484841903606,
+        "stake_amount": 44.944848419036056,
+        "won": false,
+        "profit": -44.944848419036056
+      },
+      {
+        "match_id": "match_13",
+        "outcome": "home_win",
+        "edge": 0.036736642946438636,
+        "odds": 2.0268686825076325,
+        "stake_fraction": 0.014502409579142624,
+        "stake_amount": 14.502409579142624,
+        "won": false,
+        "profit": -14.502409579142624
+      },
+      {
+        "match_id": "match_14",
+        "outcome": "draw",
+        "edge": 0.06947890047206451,
+        "odds": 3.641393137970839,
+        "stake_fraction": 0.019156557028621138,
+        "stake_amount": 19.156557028621137,
+        "won": false,
+        "profit": -19.156557028621137
+      },
+      {
+        "match_id": "match_17",
+        "outcome": "draw",
+        "edge": 0.03009268563223555,
+        "odds": 4.188400681498952,
+        "stake_fraction": 0.01,
+        "stake_amount": 10.0,
+        "won": true,
+        "profit": 31.88400681498952
+      },
+      {
+        "match_id": "match_19",
+        "outcome": "home_win",
+        "edge": 0.061905027391508494,
+        "odds": 2.0119110708992256,
+        "stake_fraction": 0.024616275784514897,
+        "stake_amount": 24.616275784514897,
+        "won": true,
+        "profit": 24.909481990659145
+      },
+      {
+        "match_id": "match_23",
+        "outcome": "draw",
+        "edge": 0.04323235679845655,
+        "odds": 3.001794852263525,
+        "stake_fraction": 0.012965830733562387,
+        "stake_amount": 12.965830733562388,
+        "won": false,
+        "profit": -12.965830733562388
+      },
+      {
+        "match_id": "match_26",
+        "outcome": "draw",
+        "edge": 0.05442847559406694,
+        "odds": 3.868356619048448,
+        "stake_fraction": 0.014680793345624752,
+        "stake_amount": 14.680793345624751,
+        "won": true,
+        "profit": 42.10975076580517
+      },
+      {
+        "match_id": "match_28",
+        "outcome": "away_win",
+        "edge": 0.03783786654311952,
+        "odds": 5.233700364151668,
+        "stake_fraction": 0.01,
+        "stake_amount": 10.0,
+        "won": true,
+        "profit": 42.337003641516674
+      },
+      {
+        "match_id": "match_30",
+        "outcome": "draw",
+        "edge": 0.03770740900642516,
+        "odds": 4.399982918053453,
+        "stake_fraction": 0.01,
+        "stake_amount": 10.0,
+        "won": false,
+        "profit": -10.0
+      },
+      {
+        "match_id": "match_31",
+        "outcome": "away_win",
+        "edge": 0.11161026879618616,
+        "odds": 7.456597868751521,
+        "stake_fraction": 0.0257793007820495,
+        "stake_amount": 25.7793007820495,
+        "won": true,
+        "profit": 166.44657848728522
+      },
+      {
+        "match_id": "match_32",
+        "outcome": "away_win",
+        "edge": 0.04197860493141711,
+        "odds": 6.791747713216981,
+        "stake_fraction": 0.01,
+        "stake_amount": 10.0,
+        "won": true,
+        "profit": 57.91747713216981
+      },
+      {
+        "match_id": "match_33",
+        "outcome": "away_win",
+        "edge": 0.05697590188975074,
+        "odds": 5.688529312648383,
+        "stake_fraction": 0.01382561850003014,
+        "stake_amount": 13.82561850003014,
+        "won": false,
+        "profit": -13.82561850003014
+      },
+      {
+        "match_id": "match_35",
+        "outcome": "home_win",
+        "edge": 0.042799250788136844,
+        "odds": 4.722194658088861,
+        "stake_fraction": 0.010859528423788314,
+        "stake_amount": 10.859528423788314,
+        "won": true,
+        "profit": 40.42127868838901
+      },
+      {
+        "match_id": "match_37",
+        "outcome": "draw",
+        "edge": 0.07432451246863397,
+        "odds": 4.012132783591002,
+        "stake_fraction": 0.01979991152609925,
+        "stake_amount": 19.79991152609925,
+        "won": false,
+        "profit": -19.79991152609925
+      },
+      {
+        "match_id": "match_38",
+        "outcome": "draw",
+        "edge": 0.06080947939390996,
+        "odds": 3.352848324779802,
+        "stake_fraction": 0.017330905606563814,
+        "stake_amount": 17.330905606563814,
+        "won": false,
+        "profit": -17.330905606563814
+      },
+      {
+        "match_id": "match_42",
+        "outcome": "away_win",
+        "edge": 0.03203999029338067,
+        "odds": 3.663273969476136,
+        "stake_fraction": 0.01,
+        "stake_amount": 10.0,
+        "won": false,
+        "profit": -10.0
+      },
+      {
+        "match_id": "match_43",
+        "outcome": "draw",
+        "edge": 0.035974916977557364,
+        "odds": 4.046996972516704,
+        "stake_fraction": 0.01,
+        "stake_amount": 10.0,
+        "won": true,
+        "profit": 30.469969725167037
+      },
+      {
+        "match_id": "match_44",
+        "outcome": "away_win",
+        "edge": 0.030719933638819252,
+        "odds": 4.175344432034751,
+        "stake_fraction": 0.01,
+        "stake_amount": 10.0,
+        "won": true,
+        "profit": 31.753444320347512
+      },
+      {
+        "match_id": "match_46",
+        "outcome": "away_win",
+        "edge": 0.07913436190187387,
+        "odds": 4.736439016030091,
+        "stake_fraction": 0.020062689507985915,
+        "stake_amount": 20.062689507985915,
+        "won": true,
+        "profit": 74.96301584413612
+      },
+      {
+        "match_id": "match_49",
+        "outcome": "home_win",
+        "edge": 0.03505696616656839,
+        "odds": 1.6631526634270415,
+        "stake_fraction": 0.017584212464831463,
+        "stake_amount": 17.584212464831463,
+        "won": false,
+        "profit": -17.584212464831463
+      },
+      {
+        "match_id": "match_50",
+        "outcome": "draw",
+        "edge": 0.08859497223880974,
+        "odds": 4.357907176594491,
+        "stake_fraction": 0.02299579142752007,
+        "stake_amount": 22.995791427520068,
+        "won": false,
+        "profit": -22.995791427520068
+      },
+      {
+        "match_id": "match_51",
+        "outcome": "home_win",
+        "edge": 0.058858469906503896,
+        "odds": 4.287202058979656,
+        "stake_fraction": 0.015352761944295024,
+        "stake_amount": 15.352761944295024,
+        "won": false,
+        "profit": -15.352761944295024
+      },
+      {
+        "match_id": "match_54",
+        "outcome": "draw",
+        "edge": 0.06045040292503295,
+        "odds": 3.951051919359482,
+        "stake_fraction": 0.01618695211264502,
+        "stake_amount": 16.18695211264502,
+        "won": false,
+        "profit": -16.18695211264502
+      },
+      {
+        "match_id": "match_55",
+        "outcome": "away_win",
+        "edge": 0.05334461989756381,
+        "odds": 4.687912357886552,
+        "stake_fraction": 0.013561867993406527,
+        "stake_amount": 13.561867993406528,
+        "won": false,
+        "profit": -13.561867993406528
+      },
+      {
+        "match_id": "match_57",
+        "outcome": "away_win",
+        "edge": 0.07919071562707702,
+        "odds": 2.757663877959187,
+        "stake_fraction": 0.024849048636999896,
+        "stake_amount": 24.849048636999896,
+        "won": true,
+        "profit": 43.67627519090569
+      },
+      {
+        "match_id": "match_60",
+        "outcome": "draw",
+        "edge": 0.037832028793119477,
+        "odds": 3.148853608970372,
+        "stake_fraction": 0.011087541738775356,
+        "stake_amount": 11.087541738775355,
+        "won": false,
+        "profit": -11.087541738775355
+      },
+      {
+        "match_id": "match_61",
+        "outcome": "away_win",
+        "edge": 0.04397580100631876,
+        "odds": 7.093302209547805,
+        "stake_fraction": 0.010238574609215215,
+        "stake_amount": 10.238574609215215,
+        "won": true,
+        "profit": 62.38672928895113
+      },
+      {
+        "match_id": "match_62",
+        "outcome": "home_win",
+        "edge": 0.04262191833579149,
+        "odds": 4.194487035711053,
+        "stake_fraction": 0.011192850801901537,
+        "stake_amount": 11.192850801901537,
+        "won": false,
+        "profit": -11.192850801901537
+      },
+      {
+        "match_id": "match_63",
+        "outcome": "away_win",
+        "edge": 0.03493760948440691,
+        "odds": 5.994634090942805,
+        "stake_fraction": 0.01,
+        "stake_amount": 10.0,
+        "won": false,
+        "profit": -10.0
+      },
+      {
+        "match_id": "match_64",
+        "outcome": "draw",
+        "edge": 0.03111556902562973,
+        "odds": 4.120517077645497,
+        "stake_fraction": 0.01,
+        "stake_amount": 10.0,
+        "won": false,
+        "profit": -10.0
+      },
+      {
+        "match_id": "match_65",
+        "outcome": "draw",
+        "edge": 0.06916227225772653,
+        "odds": 3.6920800583603324,
+        "stake_fraction": 0.01897065768164176,
+        "stake_amount": 18.970657681641757,
+        "won": false,
+        "profit": -18.970657681641757
+      },
+      {
+        "match_id": "match_67",
+        "outcome": "draw",
+        "edge": 0.07223408384772634,
+        "odds": 3.065022953443845,
+        "stake_fraction": 0.021442776182709313,
+        "stake_amount": 21.442776182709313,
+        "won": false,
+        "profit": -21.442776182709313
+      },
+      {
+        "match_id": "match_68",
+        "outcome": "home_win",
+        "edge": 0.0598419813448019,
+        "odds": 1.4613091404528304,
+        "stake_fraction": 0.03791281232196111,
+        "stake_amount": 37.912812321961106,
+        "won": false,
+        "profit": -37.912812321961106
+      },
+      {
+        "match_id": "match_69",
+        "outcome": "draw",
+        "edge": 0.04783736289060425,
+        "odds": 3.5081408406058325,
+        "stake_fraction": 0.013382040094915419,
+        "stake_amount": 13.38204009491542,
+        "won": false,
+        "profit": -13.38204009491542
+      },
+      {
+        "match_id": "match_70",
+        "outcome": "away_win",
+        "edge": 0.0698181948752521,
+        "odds": 6.8969086933573305,
+        "stake_fraction": 0.01633159813826079,
+        "stake_amount": 16.33159813826079,
+        "won": false,
+        "profit": -16.33159813826079
+      },
+      {
+        "match_id": "match_71",
+        "outcome": "draw",
+        "edge": 0.041172246290702985,
+        "odds": 3.244305233890025,
+        "stake_fraction": 0.01190349085453162,
+        "stake_amount": 11.90349085453162,
+        "won": false,
+        "profit": -11.90349085453162
+      },
+      {
+        "match_id": "match_72",
+        "outcome": "away_win",
+        "edge": 0.09854339429453352,
+        "odds": 6.11494531621551,
+        "stake_fraction": 0.02356183419889163,
+        "stake_amount": 23.561834198891628,
+        "won": false,
+        "profit": -23.561834198891628
+      },
+      {
+        "match_id": "match_76",
+        "outcome": "away_win",
+        "edge": 0.03210525186018384,
+        "odds": 8.395452777112226,
+        "stake_fraction": 0.01,
+        "stake_amount": 10.0,
+        "won": false,
+        "profit": -10.0
+      },
+      {
+        "match_id": "match_77",
+        "outcome": "home_win",
+        "edge": 0.06286728644099099,
+        "odds": 3.2855521530208796,
+        "stake_fraction": 0.018074735074215684,
+        "stake_amount": 18.074735074215685,
+        "won": true,
+        "profit": 41.310749664155665
+      },
+      {
+        "match_id": "match_78",
+        "outcome": "away_win",
+        "edge": 0.09859847065842287,
+        "odds": 3.308967743195895,
+        "stake_fraction": 0.028260174694825786,
+        "stake_amount": 28.260174694825785,
+        "won": false,
+        "profit": -28.260174694825785
+      },
+      {
+        "match_id": "match_79",
+        "outcome": "draw",
+        "edge": 0.06827748812608891,
+        "odds": 3.3491098163404334,
+        "stake_fraction": 0.01946854967166958,
+        "stake_amount": 19.468549671669578,
+        "won": false,
+        "profit": -19.468549671669578
+      },
+      {
+        "match_id": "match_80",
+        "outcome": "away_win",
+        "edge": 0.03530283592433614,
+        "odds": 7.0536550895354155,
+        "stake_fraction": 0.01,
+        "stake_amount": 10.0,
+        "won": false,
+        "profit": -10.0
+      },
+      {
+        "match_id": "match_82",
+        "outcome": "draw",
+        "edge": 0.054525383907518044,
+        "odds": 3.237747278896517,
+        "stake_fraction": 0.015778315544587317,
+        "stake_amount": 15.778315544587317,
+        "won": true,
+        "profit": 35.307882675470886
+      },
+      {
+        "match_id": "match_83",
+        "outcome": "away_win",
+        "edge": 0.04077066253505657,
+        "odds": 4.7916137243033425,
+        "stake_fraction": 0.010304702976451613,
+        "stake_amount": 10.304702976451614,
+        "won": false,
+        "profit": -10.304702976451614
+      },
+      {
+        "match_id": "match_86",
+        "outcome": "home_win",
+        "edge": 0.03398342347531297,
+        "odds": 1.9007595074434573,
+        "stake_fraction": 0.01434218894885943,
+        "stake_amount": 14.34218894885943,
+        "won": true,
+        "profit": 12.918863053235617
+      },
+      {
+        "match_id": "match_88",
+        "outcome": "draw",
+        "edge": 0.05551798114300838,
+        "odds": 4.033987394053954,
+        "stake_fraction": 0.014763333329145546,
+        "stake_amount": 14.763333329145546,
+        "won": true,
+        "profit": 44.79176721484418
+      },
+      {
+        "match_id": "match_89",
+        "outcome": "draw",
+        "edge": 0.042742627553884305,
+        "odds": 3.7893410111165804,
+        "stake_fraction": 0.0116132370238933,
+        "stake_amount": 11.613237023893301,
+        "won": false,
+        "profit": -11.613237023893301
+      },
+      {
+        "match_id": "match_90",
+        "outcome": "home_win",
+        "edge": 0.0396546627661567,
+        "odds": 3.129956254303449,
+        "stake_fraction": 0.011654451539692842,
+        "stake_amount": 11.654451539692841,
+        "won": false,
+        "profit": -11.654451539692841
+      },
+      {
+        "match_id": "match_91",
+        "outcome": "home_win",
+        "edge": 0.04220685107696831,
+        "odds": 1.869391353874577,
+        "stake_fraction": 0.018150887313503034,
+        "stake_amount": 18.150887313503034,
+        "won": false,
+        "profit": -18.150887313503034
+      },
+      {
+        "match_id": "match_92",
+        "outcome": "home_win",
+        "edge": 0.08165541593634296,
+        "odds": 4.786468880813688,
+        "stake_fraction": 0.020644094518226408,
+        "stake_amount": 20.644094518226407,
+        "won": false,
+        "profit": -20.644094518226407
+      },
+      {
+        "match_id": "match_93",
+        "outcome": "draw",
+        "edge": 0.030911210406193657,
+        "odds": 4.080993666090205,
+        "stake_fraction": 0.01,
+        "stake_amount": 10.0,
+        "won": true,
+        "profit": 30.809936660902046
+      },
+      {
+        "match_id": "match_96",
+        "outcome": "draw",
+        "edge": 0.03662128074369422,
+        "odds": 4.429417130016682,
+        "stake_fraction": 0.01,
+        "stake_amount": 10.0,
+        "won": false,
+        "profit": -10.0
+      },
+      {
+        "match_id": "match_97",
+        "outcome": "away_win",
+        "edge": 0.05824250568004394,
+        "odds": 5.371013865379567,
+        "stake_fraction": 0.014313443754532666,
+        "stake_amount": 14.313443754532665,
+        "won": false,
+        "profit": -14.313443754532665
+      },
+      {
+        "match_id": "match_101",
+        "outcome": "away_win",
+        "edge": 0.06181317210698484,
+        "odds": 4.080495657946199,
+        "stake_fraction": 0.016375830930701347,
+        "stake_amount": 16.375830930701348,
+        "won": true,
+        "profit": 50.445676077286564
+      },
+      {
+        "match_id": "match_102",
+        "outcome": "draw",
+        "edge": 0.11656208865338347,
+        "odds": 3.3147357117274443,
+        "stake_fraction": 0.03338372635246275,
+        "stake_amount": 33.38372635246275,
+        "won": false,
+        "profit": -33.38372635246275
+      },
+      {
+        "match_id": "match_103",
+        "outcome": "away_win",
+        "edge": 0.10763596485375193,
+        "odds": 4.202672198649414,
+        "stake_fraction": 0.02824882779176907,
+        "stake_amount": 28.24882779176907,
+        "won": false,
+        "profit": -28.24882779176907
+      },
+      {
+        "match_id": "match_104",
+        "outcome": "home_win",
+        "edge": 0.03152479973149802,
+        "odds": 2.3059867051375917,
+        "stake_fraction": 0.011132696646448734,
+        "stake_amount": 11.132696646448734,
+        "won": false,
+        "profit": -11.132696646448734
+      },
+      {
+        "match_id": "match_106",
+        "outcome": "away_win",
+        "edge": 0.07969926806133854,
+        "odds": 3.5693942366117626,
+        "stake_fraction": 0.0221435935386433,
+        "stake_amount": 22.143593538643298,
+        "won": false,
+        "profit": -22.143593538643298
+      },
+      {
+        "match_id": "match_108",
+        "outcome": "home_win",
+        "edge": 0.06901489400989275,
+        "odds": 3.4628421640922897,
+        "stake_fraction": 0.01940747063796504,
+        "stake_amount": 19.40747063796504,
+        "won": false,
+        "profit": -19.40747063796504
+      },
+      {
+        "match_id": "match_109",
+        "outcome": "away_win",
+        "edge": 0.04848160962297354,
+        "odds": 4.814340233114747,
+        "stake_fraction": 0.012238392461568486,
+        "stake_amount": 12.238392461568486,
+        "won": false,
+        "profit": -12.238392461568486
+      },
+      {
+        "match_id": "match_110",
+        "outcome": "home_win",
+        "edge": 0.051826030220309294,
+        "odds": 3.3496974102085653,
+        "stake_fraction": 0.014776500025588538,
+        "stake_amount": 14.776500025588538,
+        "won": false,
+        "profit": -14.776500025588538
+      },
+      {
+        "match_id": "match_111",
+        "outcome": "away_win",
+        "edge": 0.074116721441248,
+        "odds": 6.917925906082934,
+        "stake_fraction": 0.017328165153447147,
+        "stake_amount": 17.32816515344715,
+        "won": false,
+        "profit": -17.32816515344715
+      },
+      {
+        "match_id": "match_112",
+        "outcome": "draw",
+        "edge": 0.08860349786963917,
+        "odds": 3.6444607476858435,
+        "stake_fraction": 0.0244217631421563,
+        "stake_amount": 24.4217631421563,
+        "won": false,
+        "profit": -24.4217631421563
+      },
+      {
+        "match_id": "match_113",
+        "outcome": "home_win",
+        "edge": 0.05760495560160006,
+        "odds": 1.7157511446830989,
+        "stake_fraction": 0.027617355346773287,
+        "stake_amount": 27.617355346773287,
+        "won": true,
+        "profit": 19.76715370257288
+      },
+      {
+        "match_id": "match_114",
+        "outcome": "draw",
+        "edge": 0.06299015689327492,
+        "odds": 4.0528124597723485,
+        "stake_fraction": 0.01672472816879926,
+        "stake_amount": 16.72472816879926,
+        "won": true,
+        "profit": 51.05745854001595
+      },
+      {
+        "match_id": "match_115",
+        "outcome": "draw",
+        "edge": 0.03065502707869444,
+        "odds": 4.378606171898132,
+        "stake_fraction": 0.01,
+        "stake_amount": 10.0,
+        "won": false,
+        "profit": -10.0
+      },
+      {
+        "match_id": "match_116",
+        "outcome": "home_win",
+        "edge": 0.04586732368399171,
+        "odds": 4.389613176919833,
+        "stake_fraction": 0.011879810345572006,
+        "stake_amount": 11.879810345572006,
+        "won": false,
+        "profit": -11.879810345572006
+      },
+      {
+        "match_id": "match_117",
+        "outcome": "home_win",
+        "edge": 0.03302624285565331,
+        "odds": 4.086127110744735,
+        "stake_fraction": 0.01,
+        "stake_amount": 10.0,
+        "won": true,
+        "profit": 30.861271107447344
+      },
+      {
+        "match_id": "match_118",
+        "outcome": "draw",
+        "edge": 0.03400136654162711,
+        "odds": 3.963130731159085,
+        "stake_fraction": 0.01,
+        "stake_amount": 10.0,
+        "won": true,
+        "profit": 29.63130731159085
+      },
+      {
+        "match_id": "match_120",
+        "outcome": "away_win",
+        "edge": 0.07496100471508937,
+        "odds": 8.316512935999869,
+        "stake_fraction": 0.01704129196139779,
+        "stake_amount": 17.041291961397793,
+        "won": false,
+        "profit": -17.041291961397793
+      },
+      {
+        "match_id": "match_124",
+        "outcome": "draw",
+        "edge": 0.05156097564262163,
+        "odds": 3.1366958720842173,
+        "stake_fraction": 0.015138429532424495,
+        "stake_amount": 15.138429532424496,
+        "won": false,
+        "profit": -15.138429532424496
+      },
+      {
+        "match_id": "match_125",
+        "outcome": "draw",
+        "edge": 0.055449462755050194,
+        "odds": 3.3162630586304678,
+        "stake_fraction": 0.015877730663649604,
+        "stake_amount": 15.877730663649604,
+        "won": false,
+        "profit": -15.877730663649604
+      },
+      {
+        "match_id": "match_126",
+        "outcome": "home_win",
+        "edge": 0.06410248472109864,
+        "odds": 3.645310992911848,
+        "stake_fraction": 0.017666995892196904,
+        "stake_amount": 17.666995892196905,
+        "won": true,
+        "profit": 46.73469844535693
+      },
+      {
+        "match_id": "match_128",
+        "outcome": "home_win",
+        "edge": 0.061680419151220245,
+        "odds": 3.547955228352799,
+        "stake_fraction": 0.01717764607316425,
+        "stake_amount": 17.17764607316425,
+        "won": false,
+        "profit": -17.17764607316425
+      },
+      {
+        "match_id": "match_129",
+        "outcome": "draw",
+        "edge": 0.09319806289588559,
+        "odds": 4.023550221097859,
+        "stake_fraction": 0.024804422559548147,
+        "stake_amount": 24.804422559548147,
+        "won": true,
+        "profit": 74.99741731412652
+      },
+      {
+        "match_id": "match_132",
+        "outcome": "home_win",
+        "edge": 0.04120736656429369,
+        "odds": 1.8468589952870929,
+        "stake_fraction": 0.017973286234164245,
+        "stake_amount": 17.973286234164245,
+        "won": false,
+        "profit": -17.973286234164245
+      },
+      {
+        "match_id": "match_137",
+        "outcome": "away_win",
+        "edge": 0.08358990607227337,
+        "odds": 4.490932684867445,
+        "stake_fraction": 0.02150695388268287,
+        "stake_amount": 21.50695388268287,
+        "won": false,
+        "profit": -21.50695388268287
+      },
+      {
+        "match_id": "match_139",
+        "outcome": "draw",
+        "edge": 0.060783552282848596,
+        "odds": 4.320997091825095,
+        "stake_fraction": 0.01581727086070089,
+        "stake_amount": 15.81727086070089,
+        "won": false,
+        "profit": -15.81727086070089
+      },
+      {
+        "match_id": "match_142",
+        "outcome": "home_win",
+        "edge": 0.04665863274714327,
+        "odds": 3.983825335702528,
+        "stake_fraction": 0.012459163815199958,
+        "stake_amount": 12.459163815199958,
+        "won": true,
+        "profit": 37.1759686534618
+      },
+      {
+        "match_id": "match_144",
+        "outcome": "away_win",
+        "edge": 0.09585934368916482,
+        "odds": 4.406037007602988,
+        "stake_fraction": 0.024800659233954213,
+        "stake_amount": 24.800659233954214,
+        "won": false,
+        "profit": -24.800659233954214
+      },
+      {
+        "match_id": "match_146",
+        "outcome": "draw",
+        "edge": 0.06757567548098875,
+        "odds": 4.390115072421017,
+        "stake_fraction": 0.017501765286466204,
+        "stake_amount": 17.501765286466203,
+        "won": true,
+        "profit": 59.332998291624016
+      },
+      {
+        "match_id": "match_147",
+        "outcome": "draw",
+        "edge": 0.04496328030917679,
+        "odds": 2.971204193040549,
+        "stake_fraction": 0.013554667493012535,
+        "stake_amount": 13.554667493012534,
+        "won": false,
+        "profit": -13.554667493012534
+      },
+      {
+        "match_id": "match_148",
+        "outcome": "home_win",
+        "edge": 0.04672338193940462,
+        "odds": 3.9633446768863765,
+        "stake_fraction": 0.012498098418321035,
+        "stake_amount": 12.498098418321035,
+        "won": false,
+        "profit": -12.498098418321035
+      },
+      {
+        "match_id": "match_150",
+        "outcome": "away_win",
+        "edge": 0.04364501652913491,
+        "odds": 5.73994387753334,
+        "stake_fraction": 0.010570586989380962,
+        "stake_amount": 10.570586989380962,
+        "won": false,
+        "profit": -10.570586989380962
+      },
+      {
+        "match_id": "match_154",
+        "outcome": "away_win",
+        "edge": 0.060741260123369,
+        "odds": 5.551498674793502,
+        "stake_fraction": 0.01481731838999027,
+        "stake_amount": 14.81731838999027,
+        "won": true,
+        "profit": 67.4410050160341
+      },
+      {
+        "match_id": "match_156",
+        "outcome": "draw",
+        "edge": 0.03057189169793184,
+        "odds": 3.2292271448813126,
+        "stake_fraction": 0.01,
+        "stake_amount": 10.0,
+        "won": true,
+        "profit": 22.292271448813125
+      },
+      {
+        "match_id": "match_157",
+        "outcome": "away_win",
+        "edge": 0.04602419724123519,
+        "odds": 5.93298019186584,
+        "stake_fraction": 0.01107081885425098,
+        "stake_amount": 11.07081885425098,
+        "won": false,
+        "profit": -11.07081885425098
+      },
+      {
+        "match_id": "match_158",
+        "outcome": "draw",
+        "edge": 0.06824452770069539,
+        "odds": 3.1241129147302873,
+        "stake_fraction": 0.020074602331249726,
+        "stake_amount": 20.074602331249725,
+        "won": false,
+        "profit": -20.074602331249725
+      },
+      {
+        "match_id": "match_159",
+        "outcome": "away_win",
+        "edge": 0.0678859814376575,
+        "odds": 6.579036739786419,
+        "stake_fraction": 0.0160108056937408,
+        "stake_amount": 16.0108056937408,
+        "won": false,
+        "profit": -16.0108056937408
+      },
+      {
+        "match_id": "match_161",
+        "outcome": "draw",
+        "edge": 0.06296850768716705,
+        "odds": 2.989646466138449,
+        "stake_fraction": 0.018923319261870422,
+        "stake_amount": 18.92331926187042,
+        "won": false,
+        "profit": -18.92331926187042
+      },
+      {
+        "match_id": "match_163",
+        "outcome": "draw",
+        "edge": 0.03251852196876215,
+        "odds": 3.5832688426245043,
+        "stake_fraction": 0.01,
+        "stake_amount": 10.0,
+        "won": false,
+        "profit": -10.0
+      },
+      {
+        "match_id": "match_165",
+        "outcome": "away_win",
+        "edge": 0.04764479364835536,
+        "odds": 6.56969656679014,
+        "stake_fraction": 0.011239816514364133,
+        "stake_amount": 11.239816514364133,
+        "won": false,
+        "profit": -11.239816514364133
+      },
+      {
+        "match_id": "match_166",
+        "outcome": "draw",
+        "edge": 0.08504179537506482,
+        "odds": 4.351952123329059,
+        "stake_fraction": 0.02208252435220695,
+        "stake_amount": 22.08252435220695,
+        "won": false,
+        "profit": -22.08252435220695
+      }
+    ],
+    "performance": {
+      "total_bets": 99,
+      "winning_bets": 31,
+      "losing_bets": 68,
+      "winning_rate": 0.3131,
+      "total_staked": 1659.53,
+      "total_returns": 1904.42,
+      "net_profit": 244.89,
+      "roi": 0.1476,
+      "avg_stake": 16.76,
+      "avg_edge": 0.0567,
+      "max_drawdown_pct": 0.3066,
+      "sharpe_ratio": 0.1381,
+      "profit_factor": 1.2101,
+      "initial_capital": 1000.0,
+      "final_capital": 1244.89
+    }
+  }
+}

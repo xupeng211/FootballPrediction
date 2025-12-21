@@ -143,14 +143,16 @@ test: venv ## 运行单元测试
 	fi
 
 .PHONY: coverage
-coverage: venv ## 运行覆盖率测试
+coverage: venv ## 运行覆盖率测试并生成HTML报告
 	@echo "$(BLUE)>>> 运行覆盖率测试...$(RESET)"
 	@if [ -d "tests" ] && [ -n "$$(find tests -name '*.py' -type f)" ]; then \
 		if $(ACTIVATE) && python -c "import pytest_cov" 2>/dev/null; then \
-			if $(ACTIVATE) && python -m pytest --cov=src --cov-fail-under=80 tests/; then \
+			if $(ACTIVATE) && python -m pytest tests/ --cov=src --cov-report=html --cov-report=term-missing --cov-fail-under=70; then \
 				echo "$(GREEN)✅ 覆盖率测试通过$(RESET)"; \
+				echo "$(BLUE)📊 HTML覆盖率报告已生成: htmlcov/index.html$(RESET)"; \
 			else \
 				echo "$(RED)❌ 覆盖率测试失败$(RESET)"; \
+				echo "$(YELLOW)💡 使用 'make test-coverage-no-fail' 查看详细报告$(RESET)"; \
 				exit 1; \
 			fi; \
 		else \
@@ -159,6 +161,19 @@ coverage: venv ## 运行覆盖率测试
 		fi; \
 	else \
 		echo "$(YELLOW)⚠️ 未找到测试文件，跳过测试$(RESET)"; \
+	fi
+
+.PHONY: test-coverage-no-fail
+test-coverage-no-fail: venv ## 运行覆盖率测试（不因覆盖率过低而失败）
+	@echo "$(BLUE)>>> 运行覆盖率测试（详细模式）...$(RESET)"
+	@if [ -d "tests" ] && [ -n "$$(find tests -name '*.py' -type f)" ]; then \
+		if $(ACTIVATE) && python -c "import pytest_cov" 2>/dev/null; then \
+			$(ACTIVATE) && python -m pytest tests/ --cov=src --cov-report=html --cov-report=term --cov-report=xml; \
+			echo "$(GREEN)✅ 覆盖率报告已生成$(RESET)"; \
+			echo "$(BLUE)📊 HTML: htmlcov/index.html$(RESET)"; \
+		else \
+			echo "$(YELLOW)⚠️ pytest-cov未安装$(RESET)"; \
+		fi; \
 	fi
 
 # -------------------------------

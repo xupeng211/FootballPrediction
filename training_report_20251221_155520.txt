@@ -1,0 +1,6 @@
+FootballPrediction V7.0 训练报告
+训练时间: 2025-12-21 15:55:20.036368
+模型路径: /home/user/projects/FootballPrediction/lightgbm_v7.model
+特征数量: 30
+树数量: 441
+最佳迭代数: 147
