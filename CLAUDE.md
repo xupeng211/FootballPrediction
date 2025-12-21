@@ -170,10 +170,11 @@ FotMob API路径: content.stats.Periods.All.stats[0].stats[].key = "BallPossesio
 └── 备用路径: general.teamStats[].possession
 ```
 
-#### 3. 角球特征组 (6 维)
-#### 4. 红黄牌特征组 (6 维)
-#### 5. 射门特征组 (6 维)
-#### 6. 赔率特征组 (6 维)
+#### 3-6. 其他特征组
+- **角球特征组 (6 维)**: home_corners, away_corners, corners_diff 等
+- **红黄牌特征组 (6 维)**: home_yellow_cards, away_yellow_cards 等
+- **射门特征组 (6 维)**: home_shots_total, away_shots_total 等
+- **赔率特征组 (6 维)**: home_odds, away_odds, odds_movement 等
 
 ### 动态特征回填算法
 ```python
@@ -248,6 +249,47 @@ make verify     # 系统验证
 make status     # 项目状态概览
 ```
 
+### 运行单个测试
+```bash
+# 运行单个测试文件
+pytest tests/unit/test_specific.py -v
+
+# 运行特定测试函数
+pytest tests/unit/test_engine.py::test_prediction -v
+
+# 运行带关键字匹配的测试
+pytest tests/ -k "test_inference" -v
+
+# 快速调试单个测试
+pytest tests/unit/test_specific.py -v -s --tb=short
+```
+
+### 代码目录结构（关键模块）
+```
+src/
+├── core/
+│   ├── main_engine_v5.py       # 主入口，数据收割和预测
+│   ├── inference_engine.py     # XGBoost 推理核心
+│   └── league_harvester.py     # 联赛数据收集
+├── api/
+│   ├── health.py               # 健康检查端点
+│   └── predictions/            # 预测 API 路由
+├── ml/
+│   ├── features/               # 特征工程模块 (extractor, elo, h2h, poisson)
+│   ├── models/                 # 模型定义 (xgboost_classifier)
+│   └── inference/              # 推理缓存和加载
+├── services/
+│   ├── inference_service.py    # 推理服务
+│   └── prediction_service.py   # 预测服务
+├── data_access/
+│   └── processors/             # 特征提取器 (bulletproof, advanced)
+├── database/
+│   ├── connection.py           # 数据库连接
+│   └── schema_manager.py       # Schema 管理
+├── config_unified.py           # 统一配置入口 (Pydantic Settings)
+└── main.py                     # FastAPI 应用入口
+```
+
 ### 现代 Python 项目管理 (pyproject.toml)
 ```bash
 # 安装开发依赖
@@ -271,13 +313,6 @@ mypy src/           # 类型检查 (配置覆盖范围)
 ---
 
 ## 🚀 生产环境规格
-
-### 数据流架构
-```
-External API → Data Validation → Feature Extraction → Database Storage
-     ↓
-Real-time Prediction ← Model Inference ← Dynamic Feature Backfill ← Historical Data Query
-```
 
 ### 性能监控
 - **Response Time**: 单次预测 <100ms
