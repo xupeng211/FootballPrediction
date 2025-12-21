@@ -156,9 +156,7 @@ class TestInferenceServiceErrorHandling:
             mock_loader_class.return_value = mock_loader
 
             # 启动初始化但立即取消
-            task = asyncio.create_task(
-                service._load_model_async("test_model", "/fake/path")
-            )
+            task = asyncio.create_task(service._load_model_async("test_model", "/fake/path"))
 
             # 等待一小段时间后取消
             await asyncio.sleep(0.1)
@@ -186,9 +184,7 @@ class TestInferenceServiceErrorHandling:
         )
 
         # 预测应该返回错误结果
-        request = PredictionRequest(
-            match_id="match_1", home_team="Team A", away_team="Team B"
-        )
+        request = PredictionRequest(match_id="match_1", home_team="Team A", away_team="Team B")
         result = await service.predict_match(request)
 
         assert result.success is False
@@ -203,15 +199,11 @@ class TestInferenceServiceErrorHandling:
         service = InferenceService()
         service.is_initialized = True
         service.feature_extractor = Mock()
-        service.feature_extractor.extract_features_from_match = AsyncMock(
-            return_value=[1.0, 2.0, 3.0]
-        )
+        service.feature_extractor.extract_features_from_match = AsyncMock(return_value=[1.0, 2.0, 3.0])
 
         # 模拟预测器失败
         service.predictor = Mock()
-        service.predictor.predict.side_effect = PredictionError(
-            "Model inference failed"
-        )
+        service.predictor.predict.side_effect = PredictionError("Model inference failed")
 
         # 预测应该返回错误结果
         result = await service.predict_match("match_1", "Team A", "Team B")
@@ -253,9 +245,7 @@ class TestInferenceServiceErrorHandling:
             return [1.0, 2.0, 3.0]
 
         service.feature_extractor = Mock()
-        service.feature_extractor.extract_features_from_match = AsyncMock(
-            side_effect=timeout_feature_extraction
-        )
+        service.feature_extractor.extract_features_from_match = AsyncMock(side_effect=timeout_feature_extraction)
 
         # 应该有超时机制（这里假设服务有超时设置）
         start_time = time.time()
@@ -279,22 +269,14 @@ class TestInferenceServiceErrorHandling:
 
         # 模拟缓存服务连接失败
         service.cache_manager = Mock()
-        service.cache_manager.get = AsyncMock(
-            side_effect=ConnectionError("Cache connection failed")
-        )
-        service.cache_manager.set = AsyncMock(
-            side_effect=ConnectionError("Cache connection failed")
-        )
+        service.cache_manager.get = AsyncMock(side_effect=ConnectionError("Cache connection failed"))
+        service.cache_manager.set = AsyncMock(side_effect=ConnectionError("Cache connection failed"))
 
         # 即使缓存失败，预测也应该正常工作
         service.feature_extractor = Mock()
-        service.feature_extractor.extract_features_from_match = AsyncMock(
-            return_value=[1.0, 2.0, 3.0]
-        )
+        service.feature_extractor.extract_features_from_match = AsyncMock(return_value=[1.0, 2.0, 3.0])
         service.predictor = Mock()
-        service.predictor.predict.return_value = Mock(
-            success=True, prediction={"result": "HOME_WIN"}
-        )
+        service.predictor.predict.return_value = Mock(success=True, prediction={"result": "HOME_WIN"})
 
         # 预测应该成功，即使缓存失败
         result = await service.predict_match("match_1", "Team A", "Team B")
@@ -321,9 +303,7 @@ class TestInferenceServiceErrorHandling:
             return Mock(success=True, prediction={"result": "HOME_WIN"})
 
         service.feature_extractor = Mock()
-        service.feature_extractor.extract_features_from_match = AsyncMock(
-            return_value=[1.0, 2.0, 3.0]
-        )
+        service.feature_extractor.extract_features_from_match = AsyncMock(return_value=[1.0, 2.0, 3.0])
         service.predictor = Mock()
         service.predictor.predict = AsyncMock(side_effect=conflicting_predict)
 
@@ -370,9 +350,7 @@ class TestInferenceServiceErrorHandling:
             await asyncio.sleep(0.2)  # 超过正常响应时间
             return {"status": "healthy"}
 
-        with patch.object(
-            service, "_perform_health_check", side_effect=slow_health_check
-        ):
+        with patch.object(service, "_perform_health_check", side_effect=slow_health_check):
             health = await service.health_check()
 
             # 应该仍然返回健康状态，但可能有性能警告
@@ -385,9 +363,7 @@ class TestInferenceServiceErrorHandling:
         service = InferenceService()
         # 模拟无效的模型状态
         service.model_loader = Mock()
-        service.model_loader.get_model_info.side_effect = Exception(
-            "Model state invalid"
-        )
+        service.model_loader.get_model_info.side_effect = Exception("Model state invalid")
 
         model_info = service.get_model_info()
 
@@ -410,9 +386,7 @@ class TestInferenceServiceErrorHandling:
             return Mock(success=True, prediction={"result": "HOME_WIN"})
 
         service.feature_extractor = Mock()
-        service.feature_extractor.extract_features_from_match = AsyncMock(
-            return_value=[1.0, 2.0, 3.0]
-        )
+        service.feature_extractor.extract_features_from_match = AsyncMock(return_value=[1.0, 2.0, 3.0])
         service.predictor = Mock()
         service.predictor.predict = AsyncMock(side_effect=inconsistent_predict)
 
@@ -437,9 +411,7 @@ class TestInferenceServiceErrorHandling:
         service = InferenceService()
 
         # 测试各种回退机制
-        with patch.object(
-            service, "_fallback_prediction", return_value={"result": "DRAW"}
-        ) as mock_fallback:
+        with patch.object(service, "_fallback_prediction", return_value={"result": "DRAW"}) as mock_fallback:
             # 模拟主要预测失败
             with patch.object(
                 service,
@@ -462,9 +434,7 @@ class TestInferenceServiceErrorHandling:
 
         # 模拟资源耗尽
         service.feature_extractor = Mock()
-        service.feature_extractor.extract_features_from_match = AsyncMock(
-            side_effect=MemoryError("Memory exhausted")
-        )
+        service.feature_extractor.extract_features_from_match = AsyncMock(side_effect=MemoryError("Memory exhausted"))
 
         result = await service.predict_match("match_1", "Team A", "Team B")
 
@@ -481,10 +451,7 @@ class TestInferenceServiceErrorHandling:
             service = InferenceService(model_path="", model_name="")  # 空配置
 
         # 应该抛出配置错误
-        assert (
-            "config" in str(exc_info.value).lower()
-            or "invalid" in str(exc_info.value).lower()
-        )
+        assert "config" in str(exc_info.value).lower() or "invalid" in str(exc_info.value).lower()
 
     @pytest.mark.asyncio
     async def test_service_lifecycle_state_consistency(self):

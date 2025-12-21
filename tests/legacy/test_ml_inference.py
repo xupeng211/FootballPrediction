@@ -347,9 +347,7 @@ class TestMatchPredictor(unittest.TestCase):
         features = np.array([[1.0, 2.0, 3.0]])
         mock_model = Mock()
         mock_model.predict.return_value = np.array([2])  # Away win
-        mock_model.predict_proba.return_value = np.array(
-            [[0.1, 0.3, 0.6]]
-        )  # Probabilities
+        mock_model.predict_proba.return_value = np.array([[0.1, 0.3, 0.6]])  # Probabilities
 
         self.mock_model_loader.get_model.return_value = mock_model
         self.mock_cache_manager.get.return_value = None  # 缓存未命中
@@ -592,7 +590,5 @@ if __name__ == "__main__":
     print(f"总测试数: {result.testsRun}")
     print(f"失败: {len(result.failures)}")
     print(f"错误: {len(result.errors)}")
-    print(
-        f"成功率: {((result.testsRun - len(result.failures) - len(result.errors)) / result.testsRun * 100):.1f}%"
-    )
+    print(f"成功率: {((result.testsRun - len(result.failures) - len(result.errors)) / result.testsRun * 100):.1f}%")
     print(f"{'='*60}")

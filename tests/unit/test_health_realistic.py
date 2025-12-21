@@ -184,11 +184,7 @@ class TestHealthCheckRealisticErrorHandling:
             assert hasattr(result, "status")
 
             # 检查整体状态是否反映了部分失败
-            failed_checks = [
-                name
-                for name, check in result.checks.items()
-                if check.status in ["unhealthy", "degraded"]
-            ]
+            failed_checks = [name for name, check in result.checks.items() if check.status in ["unhealthy", "degraded"]]
 
             # 如果有失败的服务，整体状态应该反映这一点
             if failed_checks:
@@ -248,9 +244,7 @@ class TestHealthCheckRealisticPerformance:
         successful_results = [r for r in results if not isinstance(r, Exception)]
         exceptions = [r for r in results if isinstance(r, Exception)]
 
-        assert (
-            len(successful_results) >= 3
-        ), f"成功结果太少: {len(successful_results)}/5"
+        assert len(successful_results) >= 3, f"成功结果太少: {len(successful_results)}/5"
 
         # 验证成功结果的一致性
         for result in successful_results:

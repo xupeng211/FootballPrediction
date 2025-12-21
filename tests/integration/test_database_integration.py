@@ -49,9 +49,7 @@ class TestDatabaseIntegration:
     @pytest.fixture(scope="class")
     async def test_session_factory(self, test_engine):
         """创建测试会话工厂"""
-        return sessionmaker(
-            bind=test_engine, class_=AsyncSession, expire_on_commit=False
-        )
+        return sessionmaker(bind=test_engine, class_=AsyncSession, expire_on_commit=False)
 
     @pytest.mark.asyncio
     async def test_database_manager_initialization(self, test_database_config):

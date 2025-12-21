@@ -66,9 +66,7 @@ class TestDatabaseConnectionConfig:
         from src.database.db_pool import DatabasePoolConfig
 
         # 测试标准URL
-        config = DatabasePoolConfig.from_url(
-            "postgresql+asyncpg://user:pass@hostname:1234/dbname"
-        )
+        config = DatabasePoolConfig.from_url("postgresql+asyncpg://user:pass@hostname:1234/dbname")
 
         assert config.host == "hostname"
         assert config.port == 1234
@@ -415,9 +413,7 @@ class TestDatabaseConfigRealistic:
         assert config.username == "env-test-user"
         assert config.password == "env-test-pass"
 
-    @patch.dict(
-        os.environ, {"TEST_DB_HOST": "test-env-host", "TEST_DB_NAME": "test-env-db"}
-    )
+    @patch.dict(os.environ, {"TEST_DB_HOST": "test-env-host", "TEST_DB_NAME": "test-env-db"})
     def test_get_database_config_test_environment(self):
         """测试测试环境配置"""
         from src.database.config import get_database_config
@@ -435,11 +431,7 @@ class TestDatabaseConfigRealistic:
 
         assert isinstance(
             config,
-            type(
-                get_test_database_config.__code__.co_globals["get_database_config"](
-                    "test"
-                )
-            ),
+            type(get_test_database_config.__code__.co_globals["get_database_config"]("test")),
         )
 
     def test_get_production_database_config(self):

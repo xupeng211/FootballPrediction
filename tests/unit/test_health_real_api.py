@@ -16,9 +16,7 @@ class TestHealthCheckCore:
     @patch("src.api.health._get_database_service_check")
     @patch("src.api.health._get_redis_service_check")
     @patch("src.api.health._get_filesystem_service_check")
-    async def test_health_check_success(
-        self, mock_filesystem, mock_redis, mock_database
-    ):
+    async def test_health_check_success(self, mock_filesystem, mock_redis, mock_database):
         """测试健康检查成功场景"""
         from src.api.health import health_check
         from src.api.schemas import HealthStatus
@@ -57,25 +55,19 @@ class TestHealthCheckCore:
     @patch("src.api.health._get_database_service_check")
     @patch("src.api.health._get_redis_service_check")
     @patch("src.api.health._get_filesystem_service_check")
-    async def test_health_check_degraded(
-        self, mock_filesystem, mock_redis, mock_database
-    ):
+    async def test_health_check_degraded(self, mock_filesystem, mock_redis, mock_database):
         """测试健康检查降级场景"""
         from src.api.health import health_check
         from src.api.schemas import HealthStatus
 
         # Mock部分服务失败
-        mock_database.return_value = Mock(
-            status=HealthStatus.HEALTHY, response_time_ms=10.0
-        )
+        mock_database.return_value = Mock(status=HealthStatus.HEALTHY, response_time_ms=10.0)
         mock_redis.return_value = Mock(
             status=HealthStatus.UNHEALTHY,
             response_time_ms=5.0,
             details={"error": "Connection timeout"},
         )
-        mock_filesystem.return_value = Mock(
-            status=HealthStatus.HEALTHY, response_time_ms=2.0
-        )
+        mock_filesystem.return_value = Mock(status=HealthStatus.HEALTHY, response_time_ms=2.0)
 
         result = await health_check()
 
@@ -87,9 +79,7 @@ class TestHealthCheckCore:
     @patch("src.api.health._get_database_service_check")
     @patch("src.api.health._get_redis_service_check")
     @patch("src.api.health._get_filesystem_service_check")
-    async def test_health_check_unhealthy(
-        self, mock_filesystem, mock_redis, mock_database
-    ):
+    async def test_health_check_unhealthy(self, mock_filesystem, mock_redis, mock_database):
         """测试健康检查不健康场景"""
         from src.api.health import health_check
         from src.api.schemas import HealthStatus
@@ -105,9 +95,7 @@ class TestHealthCheckCore:
             response_time_ms=5.0,
             details={"error": "Redis down"},
         )
-        mock_filesystem.return_value = Mock(
-            status=HealthStatus.HEALTHY, response_time_ms=2.0
-        )
+        mock_filesystem.return_value = Mock(status=HealthStatus.HEALTHY, response_time_ms=2.0)
 
         result = await health_check()
 
@@ -230,9 +218,7 @@ class TestFilesystemServiceCheck:
     @patch("src.api.health.os.path.exists")
     @patch("src.api.health.os.access")
     @patch("src.api.health.os.statvfs")
-    async def test_filesystem_service_check_success(
-        self, mock_statvfs, mock_access, mock_exists
-    ):
+    async def test_filesystem_service_check_success(self, mock_statvfs, mock_access, mock_exists):
         """测试文件系统服务检查成功"""
         from src.api.health import _get_filesystem_service_check
         from src.api.schemas import HealthStatus
@@ -240,9 +226,7 @@ class TestFilesystemServiceCheck:
         # Mock文件系统检查
         mock_exists.return_value = True
         mock_access.return_value = True
-        mock_statvfs.return_value = Mock(
-            f_frsize=4096, f_bavail=1000000  # 块大小  # 可用块数
-        )
+        mock_statvfs.return_value = Mock(f_frsize=4096, f_bavail=1000000)  # 块大小  # 可用块数
 
         result = await _get_filesystem_service_check()
 
@@ -325,9 +309,7 @@ class TestHealthCheckPerformance:
     @patch("src.api.health._get_database_service_check")
     @patch("src.api.health._get_redis_service_check")
     @patch("src.api.health._get_filesystem_service_check")
-    async def test_health_check_performance(
-        self, mock_filesystem, mock_redis, mock_database
-    ):
+    async def test_health_check_performance(self, mock_filesystem, mock_redis, mock_database):
         """测试健康检查性能"""
         from src.api.health import health_check
         from src.api.schemas import HealthStatus
@@ -355,9 +337,7 @@ class TestHealthCheckPerformance:
         from src.api.health import _get_database_service_check
         from src.api.schemas import HealthStatus
 
-        mock_database.return_value = Mock(
-            status=HealthStatus.HEALTHY, response_time_ms=10.0
-        )
+        mock_database.return_value = Mock(status=HealthStatus.HEALTHY, response_time_ms=10.0)
 
         # 并发执行多个健康检查
         tasks = [_get_database_service_check() for _ in range(10)]

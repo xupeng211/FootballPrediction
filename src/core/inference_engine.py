@@ -26,11 +26,7 @@ sys.path.append("/app" if os.getenv("DOCKER_ENV") else ".")
 sys.path.append("src")
 
 # 导入凯利公式模块
-from strategy.kelly_criterion_v1 import (
-    KellyCriterionV1,
-    calculate_kelly_for_prediction,
-    format_kelly_output
-)
+from strategy.kelly_criterion_v1 import KellyCriterionV1, calculate_kelly_for_prediction, format_kelly_output
 
 logger = logging.getLogger(__name__)
 
@@ -205,7 +201,7 @@ class FootballPredictionInference:
                 float(probabilities[0]),  # away_win
                 home_odds,
                 draw_odds,
-                away_odds
+                away_odds,
             )
 
             # 获取最佳投注建议
@@ -226,24 +222,20 @@ class FootballPredictionInference:
                 "recommendation": self._generate_recommendation(probabilities),
                 "model_version": "v2.0_real_scores",
                 # 🎰 凯利公式相关
-                "market_odds": {
-                    "home": home_odds,
-                    "draw": draw_odds,
-                    "away": away_odds
-                },
+                "market_odds": {"home": home_odds, "draw": draw_odds, "away": away_odds},
                 "kelly_recommendations": {
                     "home": kelly_recommendations["home"].recommended_stake_percent,
                     "draw": kelly_recommendations["draw"].recommended_stake_percent,
-                    "away": kelly_recommendations["away"].recommended_stake_percent
+                    "away": kelly_recommendations["away"].recommended_stake_percent,
                 },
                 "best_bet": {
                     "outcome": best_outcome,
                     "stake_percent": best_kelly.recommended_stake_percent,
                     "edge": best_kelly.edge,
                     "risk_level": best_kelly.risk_level,
-                    "confidence": best_kelly.confidence
+                    "confidence": best_kelly.confidence,
                 },
-                "kelly_summary": f"[KELLY] Recommended Stake: {best_kelly.recommended_stake_percent:.1f}%"
+                "kelly_summary": f"[KELLY] Recommended Stake: {best_kelly.recommended_stake_percent:.1f}%",
             }
 
             return results

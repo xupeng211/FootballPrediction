@@ -23,12 +23,12 @@ import sys
 
 sys.path.append("/home/user/projects/FootballPrediction/src")
 
-from services.prediction_service import (
-    InferenceService,
+from src.services.prediction_service import (
     PredictionRequest,
     PredictionResponse,
 )
-from services.collection_service import (
+from src.services.inference_service import InferenceService
+from src.services.collection_service import (
     FotMobCollectionService,
     FotMobCollectionTask,
     CollectionStats,
@@ -132,9 +132,7 @@ class TestInferenceService(unittest.TestCase):
         self.mock_feature_extractor = Mock()
 
         # 创建服务实例
-        with patch(
-            "services.inference_service.MatchPredictor"
-        ) as mock_predictor_class:
+        with patch("services.inference_service.MatchPredictor") as mock_predictor_class:
             mock_predictor_class.return_value = self.mock_match_predictor
             self.inference_service = InferenceService("/mock/model/path")
 
@@ -262,12 +260,8 @@ class TestInferenceService(unittest.TestCase):
     def test_batch_predict_success(self):
         """测试批量预测成功"""
         requests = [
-            PredictionRequest(
-                match_id=1, home_team="A", away_team="B", match_date="2024-01-01"
-            ),
-            PredictionRequest(
-                match_id=2, home_team="C", away_team="D", match_date="2024-01-02"
-            ),
+            PredictionRequest(match_id=1, home_team="A", away_team="B", match_date="2024-01-01"),
+            PredictionRequest(match_id=2, home_team="C", away_team="D", match_date="2024-01-02"),
         ]
 
         # Mock 预测结果
@@ -300,12 +294,8 @@ class TestInferenceService(unittest.TestCase):
     def test_batch_predict_partial_failure(self):
         """测试批量预测部分失败"""
         requests = [
-            PredictionRequest(
-                match_id=1, home_team="A", away_team="B", match_date="2024-01-01"
-            ),
-            PredictionRequest(
-                match_id=2, home_team="C", away_team="D", match_date="2024-01-02"
-            ),
+            PredictionRequest(match_id=1, home_team="A", away_team="B", match_date="2024-01-01"),
+            PredictionRequest(match_id=2, home_team="C", away_team="D", match_date="2024-01-02"),
         ]
 
         # Mock 预测结果（第一个成功，第二个失败）
@@ -335,9 +325,7 @@ class TestInferenceService(unittest.TestCase):
             "cache_misses": 30,
             "cache_hit_rate": 0.7,
         }
-        self.mock_match_predictor.get_prediction_stats.return_value = (
-            mock_predictor_stats
-        )
+        self.mock_match_predictor.get_prediction_stats.return_value = mock_predictor_stats
 
         # Mock 模型加载器统计信息
         self.mock_model_loader.list_loaded_models.return_value = ["model1", "model2"]
@@ -361,9 +349,7 @@ class TestInferenceService(unittest.TestCase):
 
         # 验证结果
         self.assertTrue(result)
-        self.mock_model_loader.load_model.assert_called_once_with(
-            "new_model", "/mock/new_model.pkl"
-        )
+        self.mock_model_loader.load_model.assert_called_once_with("new_model", "/mock/new_model.pkl")
 
     def test_unload_model(self):
         """测试卸载模型"""
@@ -512,9 +498,7 @@ class TestCollectionService(unittest.TestCase):
         )
 
         # Mock 数据收集器
-        with patch.object(
-            self.collection_service, "_execute_fotmob_collection"
-        ) as mock_execute:
+        with patch.object(self.collection_service, "_execute_fotmob_collection") as mock_execute:
             mock_execute.return_value = {"status": "success", "data": "collected_data"}
 
             # 执行任务
@@ -533,9 +517,7 @@ class TestCollectionService(unittest.TestCase):
         )
 
         # Mock 数据收集器抛出异常
-        with patch.object(
-            self.collection_service, "_execute_fotmob_collection"
-        ) as mock_execute:
+        with patch.object(self.collection_service, "_execute_fotmob_collection") as mock_execute:
             mock_execute.side_effect = Exception("Collection failed")
 
             # 执行任务
@@ -568,16 +550,12 @@ class TestCollectionService(unittest.TestCase):
         self.assertEqual(len(all_tasks), 3)
 
         # 测试按状态筛选
-        pending_tasks = self.collection_service.get_tasks(
-            status=CollectionStatus.PENDING
-        )
+        pending_tasks = self.collection_service.get_tasks(status=CollectionStatus.PENDING)
         self.assertEqual(len(pending_tasks), 1)
         self.assertEqual(pending_tasks[0].task_id, task2.task_id)
 
         # 测试按数据源类型筛选
-        fotmob_tasks = self.collection_service.get_tasks(
-            source_type=DataSourceType.FOTMOB
-        )
+        fotmob_tasks = self.collection_service.get_tasks(source_type=DataSourceType.FOTMOB)
         self.assertEqual(len(fotmob_tasks), 2)
 
     def test_get_stats(self):
@@ -622,9 +600,7 @@ class TestCollectionService(unittest.TestCase):
         new_task.created_at = recent_time
 
         # 清理24小时前的已完成任务
-        cleared_count = self.collection_service.clear_completed_tasks(
-            older_than_hours=24
-        )
+        cleared_count = self.collection_service.clear_completed_tasks(older_than_hours=24)
 
         # 验证结果
         self.assertEqual(cleared_count, 1)
@@ -633,9 +609,7 @@ class TestCollectionService(unittest.TestCase):
 
     def test_collect_match_data(self):
         """测试收集比赛数据"""
-        with patch.object(
-            self.collection_service, "create_collection_task"
-        ) as mock_create_task:
+        with patch.object(self.collection_service, "create_collection_task") as mock_create_task:
             mock_create_task.return_value = Mock(task_id="mock_task_id")
 
             # 执行测试
@@ -765,9 +739,7 @@ class TestServiceIntegration(unittest.TestCase):
         )
 
         # Mock 执行成功
-        with patch.object(
-            self.collection_service, "_execute_fotmob_collection"
-        ) as mock_execute:
+        with patch.object(self.collection_service, "_execute_fotmob_collection") as mock_execute:
             mock_execute.return_value = {"status": "success"}
 
             # 执行任务
@@ -810,7 +782,5 @@ if __name__ == "__main__":
     print(f"总测试数: {result.testsRun}")
     print(f"失败: {len(result.failures)}")
     print(f"错误: {len(result.errors)}")
-    print(
-        f"成功率: {((result.testsRun - len(result.failures) - len(result.errors)) / result.testsRun * 100):.1f}%"
-    )
+    print(f"成功率: {((result.testsRun - len(result.failures) - len(result.errors)) / result.testsRun * 100):.1f}%")
     print(f"{'='*60}")

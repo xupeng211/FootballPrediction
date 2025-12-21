@@ -322,9 +322,7 @@ def create_mock_notification_service() -> AsyncMock:
         return_value={"sent": True, "channel": "email", "message_id": "alert_001"}
     )
 
-    notification_service.send_report = AsyncMock(
-        return_value={"sent": True, "channel": "slack", "recipients": 5}
-    )
+    notification_service.send_report = AsyncMock(return_value={"sent": True, "channel": "slack", "recipients": 5})
 
     return notification_service
 

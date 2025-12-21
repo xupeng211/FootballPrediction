@@ -441,9 +441,7 @@ class TestRetrainingService:
         assert service.min_samples == 1000
         assert service.test_size == 0.2
 
-    def test_execute_pipeline_success(
-        self, service, sample_training_data, sample_model_metrics
-    ):
+    def test_execute_pipeline_success(self, service, sample_training_data, sample_model_metrics):
         """测试成功执行训练流水线"""
         X, y = sample_training_data
 
@@ -484,9 +482,7 @@ class TestRetrainingService:
 
     def test_execute_pipeline_exception(self, service):
         """测试流水线执行异常"""
-        with patch.object(
-            service, "_fetch_training_data", side_effect=Exception("Database error")
-        ):
+        with patch.object(service, "_fetch_training_data", side_effect=Exception("Database error")):
             result = service.execute_pipeline()
 
             assert result["status"] == "failed"
@@ -510,9 +506,7 @@ class TestRetrainingService:
 
     def test_fetch_training_data_empty(self, service):
         """测试获取空训练数据"""
-        with patch.object(
-            service.data_loader, "load_recent_matches", return_value=pd.DataFrame()
-        ):
+        with patch.object(service.data_loader, "load_recent_matches", return_value=pd.DataFrame()):
             with pytest.raises(ValueError, match="无法获取训练数据"):
                 service._fetch_training_data()
 
@@ -527,9 +521,7 @@ class TestRetrainingService:
             }
         )
 
-        with patch.object(
-            service.feature_transformer, "transform", return_value=X
-        ) as mock_transform:
+        with patch.object(service.feature_transformer, "transform", return_value=X) as mock_transform:
             result = service._preprocess_data(X)
 
             # feature_2应该被移除
@@ -538,13 +530,9 @@ class TestRetrainingService:
 
     def test_preprocess_data_fills_missing_values(self, service):
         """测试数据预处理填充缺失值"""
-        X = pd.DataFrame(
-            {"feature_1": [1, 2, np.nan, 4, 5], "feature_2": [np.nan, 2, 3, 4, np.nan]}
-        )
+        X = pd.DataFrame({"feature_1": [1, 2, np.nan, 4, 5], "feature_2": [np.nan, 2, 3, 4, np.nan]})
 
-        with patch.object(
-            service.feature_transformer, "transform", return_value=X
-        ) as mock_transform:
+        with patch.object(service.feature_transformer, "transform", return_value=X) as mock_transform:
             result = service._preprocess_data(X)
 
             # 检查缺失值是否被填充
@@ -589,9 +577,7 @@ class TestRetrainingService:
         assert 0 <= metrics["accuracy"] <= 1
         assert metrics["log_loss"] >= 0
 
-    def test_register_model_if_improved_first_model(
-        self, service, sample_model_metrics
-    ):
+    def test_register_model_if_improved_first_model(self, service, sample_model_metrics):
         """测试注册第一个模型"""
         model = Mock()
         model.save_model = Mock()
@@ -609,22 +595,16 @@ class TestRetrainingService:
         ):
 
             mock_datetime.now.return_value.strftime.return_value = "20240101_120000"
-            mock_datetime.now.return_value = datetime(
-                2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc
-            )
+            mock_datetime.now.return_value = datetime(2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
 
-            result = service._register_model_if_improved(
-                model, sample_model_metrics, 15, 0.0, "First model"
-            )
+            result = service._register_model_if_improved(model, sample_model_metrics, 15, 0.0, "First model")
 
             assert result["status"] == "success"
             assert result["should_deploy"] is True
             assert result["improvement"] == 0.0
             model.save_model.assert_called_once()
 
-    def test_register_model_if_improved_better_model(
-        self, service, sample_model_metrics
-    ):
+    def test_register_model_if_improved_better_model(self, service, sample_model_metrics):
         """测试注册性能更好的模型"""
         model = Mock()
         model.save_model = Mock()
@@ -643,9 +623,7 @@ class TestRetrainingService:
         )
 
         with (
-            patch.object(
-                service.registry, "get_current_best", return_value=current_metadata
-            ),
+            patch.object(service.registry, "get_current_best", return_value=current_metadata),
             patch.object(
                 service,
                 "_fetch_training_data",
@@ -658,13 +636,9 @@ class TestRetrainingService:
         ):
 
             mock_datetime.now.return_value.strftime.return_value = "20240101_120000"
-            mock_datetime.now.return_value = datetime(
-                2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc
-            )
+            mock_datetime.now.return_value = datetime(2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
 
-            result = service._register_model_if_improved(
-                model, sample_model_metrics, 15, 0.0, "Better model"
-            )
+            result = service._register_model_if_improved(model, sample_model_metrics, 15, 0.0, "Better model")
 
             improvement = sample_model_metrics["accuracy"] - 0.6400
             assert result["status"] == "success"
@@ -672,9 +646,7 @@ class TestRetrainingService:
             assert result["improvement"] == improvement
             assert improvement > service.improvement_threshold
 
-    def test_register_model_if_improved_insufficient_improvement(
-        self, service, sample_model_metrics
-    ):
+    def test_register_model_if_improved_insufficient_improvement(self, service, sample_model_metrics):
         """测试注册性能提升不足的模型"""
         model = Mock()
         model.save_model = Mock()
@@ -693,9 +665,7 @@ class TestRetrainingService:
         )
 
         with (
-            patch.object(
-                service.registry, "get_current_best", return_value=current_metadata
-            ),
+            patch.object(service.registry, "get_current_best", return_value=current_metadata),
             patch.object(
                 service,
                 "_fetch_training_data",
@@ -708,13 +678,9 @@ class TestRetrainingService:
         ):
 
             mock_datetime.now.return_value.strftime.return_value = "20240101_120000"
-            mock_datetime.now.return_value = datetime(
-                2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc
-            )
+            mock_datetime.now.return_value = datetime(2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
 
-            result = service._register_model_if_improved(
-                model, sample_model_metrics, 15, 0.0, "Slightly better model"
-            )
+            result = service._register_model_if_improved(model, sample_model_metrics, 15, 0.0, "Slightly better model")
 
             improvement = sample_model_metrics["accuracy"] - 0.6520
             assert result["status"] == "trained_not_deployed"
@@ -723,9 +689,7 @@ class TestRetrainingService:
 
     def test_rollback_model_success(self, service):
         """测试成功回滚模型"""
-        with patch.object(
-            service.registry, "switch_current_best", return_value=True
-        ) as mock_switch:
+        with patch.object(service.registry, "switch_current_best", return_value=True) as mock_switch:
             result = service.rollback_model("v2.1.20240101_110000")
 
             assert result["status"] == "success"
@@ -734,9 +698,7 @@ class TestRetrainingService:
 
     def test_rollback_model_failure(self, service):
         """测试回滚模型失败"""
-        with patch.object(
-            service.registry, "switch_current_best", return_value=False
-        ) as mock_switch:
+        with patch.object(service.registry, "switch_current_best", return_value=False) as mock_switch:
             result = service.rollback_model("nonexistent")
 
             assert result["status"] == "failed"

@@ -435,9 +435,7 @@ class TestInferenceIntegration:
         cache_key = "test_cache_key"
 
         # 第一次预测（无缓存）
-        result1 = predictor.predict(
-            features=features, model_name="test_model", use_cache=False
-        )
+        result1 = predictor.predict(features=features, model_name="test_model", use_cache=False)
 
         # 手动缓存结果
         cache.set(cache_key, result1)

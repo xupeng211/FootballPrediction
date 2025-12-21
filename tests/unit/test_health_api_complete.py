@@ -44,9 +44,7 @@ class TestHealthCheck:
         """
         # 执行健康检查
         with patch("src.api.health.datetime") as mock_datetime:
-            mock_datetime.utcnow.return_value.isoformat.return_value = (
-                "2024-01-01T00:00:00"
-            )
+            mock_datetime.utcnow.return_value.isoformat.return_value = "2024-01-01T00:00:00"
 
             response = await health_check()
 
@@ -184,9 +182,7 @@ class TestReadinessCheck:
         assert error_detail["ready"] is False
         assert "database" in error_detail["checks"]
         assert error_detail["checks"]["database"]["status"] == "unhealthy"
-        assert (
-            "数据库连接异常" in error_detail["checks"]["database"]["details"]["error"]
-        )
+        assert "数据库连接异常" in error_detail["checks"]["database"]["details"]["error"]
 
     @pytest.mark.asyncio
     async def test_readiness_check_timestamp_format(self, mock_db_session):
@@ -200,9 +196,7 @@ class TestReadinessCheck:
             with patch("src.api.health._check_database") as mock_check_db:
                 mock_check_db.return_value = {"healthy": True, "message": "正常"}
 
-                with patch(
-                    "src.api.health.get_db_session", return_value=mock_db_session
-                ):
+                with patch("src.api.health.get_db_session", return_value=mock_db_session):
                     response = await readiness_check(mock_db_session)
 
         assert response["timestamp"] == test_time.isoformat()
@@ -358,11 +352,7 @@ class TestSchemaValidation:
         测试HealthCheckResponse schema验证
         """
         # 创建测试用的ServiceCheck
-        checks = {
-            "database": ServiceCheck(
-                status="healthy", response_time_ms=1.0, details={"message": "正常"}
-            )
-        }
+        checks = {"database": ServiceCheck(status="healthy", response_time_ms=1.0, details={"message": "正常"})}
 
         # 测试有效数据
         valid_data = {

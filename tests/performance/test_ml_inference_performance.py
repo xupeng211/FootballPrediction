@@ -195,9 +195,7 @@ class TestMLInferencePerformance:
         end_time = time.perf_counter()
 
         # 分析结果
-        successful_results = [
-            r for r in results if isinstance(r, dict) and r.get("success")
-        ]
+        successful_results = [r for r in results if isinstance(r, dict) and r.get("success")]
         latencies = [r["latency_ms"] for r in successful_results]
 
         total_time = end_time - start_time
@@ -336,18 +334,14 @@ class TestMLInferencePerformance:
 
             # 模拟一些特征工程计算
             normalized = [(x - mean_val) / (variance**0.5 + 1e-8) for x in features]
-            interactions = [
-                normalized[i] * normalized[i + 1] for i in range(len(normalized) - 1)
-            ]
+            interactions = [normalized[i] * normalized[i + 1] for i in range(len(normalized) - 1)]
 
             return {
                 "mean": mean_val,
                 "variance": variance,
                 "max_feature": max(features),
                 "min_feature": min(features),
-                "avg_interaction": (
-                    sum(interactions) / len(interactions) if interactions else 0
-                ),
+                "avg_interaction": (sum(interactions) / len(interactions) if interactions else 0),
             }
 
         # 性能测试
@@ -375,12 +369,8 @@ class TestMLInferencePerformance:
         print(f"性能比率: {simple_throughput/complex_throughput:.2f}x")
 
         # 性能要求：特征处理吞吐量 > 100,000 次/秒
-        assert (
-            simple_throughput > 100000
-        ), f"简单特征处理吞吐量过低: {simple_throughput:.0f} 次/秒"
-        assert (
-            complex_throughput > 50000
-        ), f"复杂特征处理吞吐量过低: {complex_throughput:.0f} 次/秒"
+        assert simple_throughput > 100000, f"简单特征处理吞吐量过低: {simple_throughput:.0f} 次/秒"
+        assert complex_throughput > 50000, f"复杂特征处理吞吐量过低: {complex_throughput:.0f} 次/秒"
 
 
 class TestModelLoadingPerformance:
@@ -431,10 +421,7 @@ class TestModelLoadingPerformance:
         with ThreadPoolExecutor(max_workers=5) as executor:
             start_time = time.perf_counter()
             futures = [
-                executor.submit(
-                    mock_loader.load_model, f"model_{i}", f"/path/to/model_{i}.pkl"
-                )
-                for i in range(5)
+                executor.submit(mock_loader.load_model, f"model_{i}", f"/path/to/model_{i}.pkl") for i in range(5)
             ]
             results = [f.result() for f in futures]
             concurrent_time = time.perf_counter() - start_time

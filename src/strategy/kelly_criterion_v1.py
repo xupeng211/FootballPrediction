@@ -12,17 +12,20 @@ from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
 
+
 @dataclass
 class KellyRecommendation:
     """凯利公式建议结果"""
+
     recommended_stake_percent: float  # 建议仓位百分比
-    edge: float                        # 边缘优势
-    implied_probability: float         # 隐含概率
-    model_probability: float           # 模型概率
-    odds: float                        # 市场赔率
-    stake_category: str                # 仓位分类
-    risk_level: str                    # 风险等级
-    confidence: str                    # 建议信心
+    edge: float  # 边缘优势
+    implied_probability: float  # 隐含概率
+    model_probability: float  # 模型概率
+    odds: float  # 市场赔率
+    stake_category: str  # 仓位分类
+    risk_level: str  # 风险等级
+    confidence: str  # 建议信心
+
 
 class KellyCriterionV1:
     """凯利公式计算器 V1.0"""
@@ -39,10 +42,7 @@ class KellyCriterionV1:
         self.min_edge_percent = min_edge_percent
 
     def calculate_kelly_stake(
-        self,
-        model_probability: float,
-        market_odds: float,
-        outcome: str = "win"
+        self, model_probability: float, market_odds: float, outcome: str = "win"
     ) -> KellyRecommendation:
         """
         计算凯利公式建议仓位
@@ -80,9 +80,7 @@ class KellyCriterionV1:
             recommended_stake_percent = 0.0
 
         # 分类风险等级和仓位建议
-        stake_category, risk_level, confidence = self._classify_recommendation(
-            recommended_stake_percent, edge_percent
-        )
+        stake_category, risk_level, confidence = self._classify_recommendation(recommended_stake_percent, edge_percent)
 
         logger.info(
             f"🎰 [KELLY] 凯利公式计算: "
@@ -101,12 +99,10 @@ class KellyCriterionV1:
             odds=market_odds,
             stake_category=stake_category,
             risk_level=risk_level,
-            confidence=confidence
+            confidence=confidence,
         )
 
-    def _classify_recommendation(
-        self, stake_percent: float, edge_percent: float
-    ) -> Tuple[str, str, str]:
+    def _classify_recommendation(self, stake_percent: float, edge_percent: float) -> Tuple[str, str, str]:
         """分类建议的仓位、风险等级和信心度"""
 
         # 仓位分类
@@ -152,9 +148,7 @@ class KellyCriterionV1:
         return stake_category, risk_level, confidence
 
     def calculate_multi_outcome_kelly(
-        self,
-        probabilities: Dict[str, float],
-        odds: Dict[str, float]
+        self, probabilities: Dict[str, float], odds: Dict[str, float]
     ) -> Dict[str, KellyRecommendation]:
         """
         计算多结果凯利公式建议 (如胜平负)
@@ -191,21 +185,18 @@ class KellyCriterionV1:
         total_stake = sum(rec.recommended_stake_percent for rec in recommendations.values())
 
         if total_stake > self.max_stake_percent:
-            logger.warning(
-                f"⚠️ [KELLY] 总仓位过高: {total_stake:.1f}% > {self.max_stake_percent}%"
-            )
+            logger.warning(f"⚠️ [KELLY] 总仓位过高: {total_stake:.1f}% > {self.max_stake_percent}%")
             return False
 
         # 检查是否有正边缘优势
         positive_edge_count = sum(1 for rec in recommendations.values() if rec.edge > self.min_edge_percent)
 
         if positive_edge_count == 0:
-            logger.warning(
-                f"⚠️ [KELLY] 没有发现足够的边缘优势 (< {self.min_edge_percent}%)"
-            )
+            logger.warning(f"⚠️ [KELLY] 没有发现足够的边缘优势 (< {self.min_edge_percent}%)")
             return False
 
         return True
+
 
 def format_kelly_output(recommendation: KellyRecommendation, outcome: str = "") -> str:
     """格式化凯利公式输出为日志格式"""
@@ -228,13 +219,9 @@ def format_kelly_output(recommendation: KellyRecommendation, outcome: str = "") 
 # 全局凯利公式实例
 kelly_calculator = KellyCriterionV1()
 
+
 def calculate_kelly_for_prediction(
-    home_prob: float,
-    draw_prob: float,
-    away_prob: float,
-    home_odds: float,
-    draw_odds: float,
-    away_odds: float
+    home_prob: float, draw_prob: float, away_prob: float, home_odds: float, draw_odds: float, away_odds: float
 ) -> Dict[str, KellyRecommendation]:
     """
     为足球预测计算凯利公式建议

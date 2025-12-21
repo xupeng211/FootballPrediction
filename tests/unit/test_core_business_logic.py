@@ -59,9 +59,7 @@ class TestMatchPredictionLogic:
         }
 
         # 按重要性排序
-        sorted_features = sorted(
-            feature_importance.items(), key=lambda x: x[1], reverse=True
-        )
+        sorted_features = sorted(feature_importance.items(), key=lambda x: x[1], reverse=True)
 
         # 验证排序正确
         assert sorted_features[0][0] == "home_form"
@@ -156,16 +154,8 @@ class TestMatchPredictionLogic:
             "total_away_goals": 28,
         }
 
-        home_matches = (
-            team_performance["home_wins"]
-            + team_performance["home_draws"]
-            + team_performance["home_losses"]
-        )
-        away_matches = (
-            team_performance["away_wins"]
-            + team_performance["away_draws"]
-            + team_performance["away_losses"]
-        )
+        home_matches = team_performance["home_wins"] + team_performance["home_draws"] + team_performance["home_losses"]
+        away_matches = team_performance["away_wins"] + team_performance["away_draws"] + team_performance["away_losses"]
 
         # 计算主客场胜率
         home_win_rate = team_performance["home_wins"] / home_matches
@@ -211,10 +201,7 @@ class TestMatchPredictionLogic:
 
         # 验证计算
         assert wins + draws + losses == total_matches
-        assert (
-            abs(win_rate + (draws / total_matches) + (losses / total_matches) - 1.0)
-            < 0.01
-        )
+        assert abs(win_rate + (draws / total_matches) + (losses / total_matches) - 1.0) < 0.01
         assert 0 <= win_rate <= 1
         assert avg_goals_scored >= 0
         assert avg_goals_conceded >= 0
@@ -424,14 +411,14 @@ class TestPredictionScoringMetrics:
         ]  # 修改为3个匹配
 
         # 计算准确率
-        correct_predictions = sum(
-            1 for pred, actual in zip(predictions, actual_results) if pred == actual
-        )
+        correct_predictions = sum(1 for pred, actual in zip(predictions, actual_results) if pred == actual)
         total_predictions = len(predictions)
         accuracy = correct_predictions / total_predictions
 
         # 验证计算 (手动验证: 第1、3、4、5个预测正确)
-        expected_correct = 4  # "HOME_WIN" vs "HOME_WIN", "AWAY_WIN" vs "AWAY_WIN", "HOME_WIN" vs "HOME_WIN", "DRAW" vs "DRAW"
+        expected_correct = (
+            4  # "HOME_WIN" vs "HOME_WIN", "AWAY_WIN" vs "AWAY_WIN", "HOME_WIN" vs "HOME_WIN", "DRAW" vs "DRAW"
+        )
         expected_accuracy = expected_correct / total_predictions  # 4/5 = 0.8
 
         assert correct_predictions == expected_correct
@@ -445,18 +432,10 @@ class TestPredictionScoringMetrics:
         predictions = [1, 0, 1, 0, 0, 1, 1, 0]
 
         # 计算混淆矩阵
-        tp = sum(
-            1 for true, pred in zip(true_labels, predictions) if true == 1 and pred == 1
-        )
-        fp = sum(
-            1 for true, pred in zip(true_labels, predictions) if true == 0 and pred == 1
-        )
-        fn = sum(
-            1 for true, pred in zip(true_labels, predictions) if true == 1 and pred == 0
-        )
-        tn = sum(
-            1 for true, pred in zip(true_labels, predictions) if true == 0 and pred == 0
-        )
+        tp = sum(1 for true, pred in zip(true_labels, predictions) if true == 1 and pred == 1)
+        fp = sum(1 for true, pred in zip(true_labels, predictions) if true == 0 and pred == 1)
+        fn = sum(1 for true, pred in zip(true_labels, predictions) if true == 1 and pred == 0)
+        tn = sum(1 for true, pred in zip(true_labels, predictions) if true == 0 and pred == 0)
 
         # 计算精确率和召回率
         precision = tp / (tp + fp) if (tp + fp) > 0 else 0
@@ -479,19 +458,12 @@ class TestPredictionScoringMetrics:
         actual_outcomes = [1, 0, 1, 0, 1]  # 实际结果
 
         # 计算Brier分数
-        brier_score = sum(
-            (prob - outcome) ** 2
-            for prob, outcome in zip(predicted_probs, actual_outcomes)
-        ) / len(actual_outcomes)
+        brier_score = sum((prob - outcome) ** 2 for prob, outcome in zip(predicted_probs, actual_outcomes)) / len(
+            actual_outcomes
+        )
 
         # 验证计算
-        expected_score = (
-            (0.8 - 1) ** 2
-            + (0.3 - 0) ** 2
-            + (0.6 - 1) ** 2
-            + (0.2 - 0) ** 2
-            + (0.7 - 1) ** 2
-        ) / 5
+        expected_score = ((0.8 - 1) ** 2 + (0.3 - 0) ** 2 + (0.6 - 1) ** 2 + (0.2 - 0) ** 2 + (0.7 - 1) ** 2) / 5
         assert abs(brier_score - expected_score) < 0.01
         assert 0 <= brier_score <= 1
 
@@ -506,8 +478,7 @@ class TestPredictionScoringMetrics:
         # 计算对数损失
         epsilon = 1e-15  # 避免log(0)
         log_loss = -sum(
-            outcome * math.log(prob + epsilon)
-            + (1 - outcome) * math.log(1 - prob + epsilon)
+            outcome * math.log(prob + epsilon) + (1 - outcome) * math.log(1 - prob + epsilon)
             for prob, outcome in zip(predicted_probs, actual_outcomes)
         ) / len(actual_outcomes)
 
@@ -523,9 +494,7 @@ class TestPredictionScoringMetrics:
         actual_outcomes = [1, 1, 1, 0, 1, 0, 0, 0]
 
         # 简化的AUC计算（正确计算排名对）
-        sorted_pairs = sorted(
-            zip(predicted_probs, actual_outcomes), key=lambda x: x[0], reverse=True
-        )
+        sorted_pairs = sorted(zip(predicted_probs, actual_outcomes), key=lambda x: x[0], reverse=True)
 
         # 分离正样本和负样本
         positive_scores = [prob for prob, outcome in sorted_pairs if outcome == 1]

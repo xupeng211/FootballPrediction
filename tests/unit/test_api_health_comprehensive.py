@@ -322,9 +322,7 @@ class TestHealthCheckConfiguration:
         from src.api.health import FeatureFlags, is_feature_enabled
 
         # 测试功能开关
-        flags = FeatureFlags(
-            detailed_checks=True, metrics_collection=False, caching=True
-        )
+        flags = FeatureFlags(detailed_checks=True, metrics_collection=False, caching=True)
 
         assert is_feature_enabled(flags, "detailed_checks") == True
         assert is_feature_enabled(flags, "metrics_collection") == False

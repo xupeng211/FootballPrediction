@@ -26,17 +26,13 @@ class TestInputValidationEdgeCases:
 
         # 应该能处理空数据而不崩溃
         try:
-            h2h_stats = h2h_calc.calculate_h2h_for_match(
-                empty_df, 1, 2, pd.Timestamp.now()
-            )
+            h2h_stats = h2h_calc.calculate_h2h_for_match(empty_df, 1, 2, pd.Timestamp.now())
             assert h2h_stats is not None
         except Exception as e:
             assert isinstance(e, (ValueError, KeyError))
 
         try:
-            venue_stats = venue_analyzer.calculate_venue_features_for_match(
-                empty_df, 1, 2, pd.Timestamp.now()
-            )
+            venue_stats = venue_analyzer.calculate_venue_features_for_match(empty_df, 1, 2, pd.Timestamp.now())
             assert venue_stats is not None
         except Exception as e:
             assert isinstance(e, (ValueError, KeyError))
@@ -59,9 +55,7 @@ class TestInputValidationEdgeCases:
         h2h_calc = H2HCalculator(min_matches=0)
 
         try:
-            stats = h2h_calc.calculate_h2h_for_match(
-                extreme_data, 1, 2, pd.Timestamp.now()
-            )
+            stats = h2h_calc.calculate_h2h_for_match(extreme_data, 1, 2, pd.Timestamp.now())
             # 应该处理极值或返回默认值
             assert stats is not None
         except Exception as e:
@@ -86,9 +80,7 @@ class TestInputValidationEdgeCases:
         h2h_calc = H2HCalculator(min_matches=0)
 
         try:
-            stats = h2h_calc.calculate_h2h_for_match(
-                invalid_data, 1, 2, pd.Timestamp.now()
-            )
+            stats = h2h_calc.calculate_h2h_for_match(invalid_data, 1, 2, pd.Timestamp.now())
             # 如果能处理，验证结果
             assert stats is not None
         except Exception as e:
@@ -172,9 +164,7 @@ class TestBoundaryConditions:
         h2h_calc = H2HCalculator(min_matches=0)
 
         try:
-            stats = h2h_calc.calculate_h2h_for_match(
-                large_data, 1, 2, pd.Timestamp.now()
-            )
+            stats = h2h_calc.calculate_h2h_for_match(large_data, 1, 2, pd.Timestamp.now())
             # 应该能处理大数据量或优雅降级
             assert stats is not None
         except MemoryError:
@@ -260,9 +250,7 @@ class TestErrorHandling:
             with patch("src.services.inference_service.Path.exists", return_value=True):
                 with patch("src.services.inference_service.ModelLoader") as mock_loader:
                     mock_loader_instance = Mock()
-                    mock_loader_instance.load_model.side_effect = Exception(
-                        "Model load failed"
-                    )
+                    mock_loader_instance.load_model.side_effect = Exception("Model load failed")
                     mock_loader.return_value = mock_loader_instance
 
                     service = InferenceService()
@@ -312,9 +300,7 @@ class TestErrorHandling:
                 mock_session.return_value = mock_session_instance
 
                 # 模拟超时异常
-                mock_session_instance.get.side_effect = asyncio.TimeoutError(
-                    "Request timeout"
-                )
+                mock_session_instance.get.side_effect = asyncio.TimeoutError("Request timeout")
 
                 service = FotMobCollectionService()
 

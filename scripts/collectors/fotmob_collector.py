@@ -97,9 +97,7 @@ class FotMobCollector:
                         return None
                 else:
                     response_text = await response.text()
-                    logger.error(
-                        f"❌ L2请求失败，状态码: {response.status}, URL: {full_url}"
-                    )
+                    logger.error(f"❌ L2请求失败，状态码: {response.status}, URL: {full_url}")
                     logger.error(f"🔍 响应内容: {response_text[:200]}...")
                     self.stats["failed_requests"] += 1
                     return None
@@ -136,9 +134,7 @@ class FotMobCollector:
             )
 
             # 解析数据库URL
-            parsed = urllib.parse.urlparse(
-                db_url.replace("postgresql+asyncpg://", "postgresql://")
-            )
+            parsed = urllib.parse.urlparse(db_url.replace("postgresql+asyncpg://", "postgresql://"))
 
             conn = await asyncpg.connect(
                 host=parsed.hostname or "localhost",
@@ -161,9 +157,7 @@ class FotMobCollector:
                 """
 
                 # 执行保存
-                await conn.execute(
-                    query, match_id, "fotmob", json.dumps(data, ensure_ascii=False)
-                )
+                await conn.execute(query, match_id, "fotmob", json.dumps(data, ensure_ascii=False))
 
                 data_size = len(json.dumps(data, ensure_ascii=False))
                 logger.info(f"📊 原始数据已保存: {match_id} (大小: {data_size} 字节)")
@@ -209,15 +203,9 @@ class FotMobCollector:
                 if "preMatchOdds" in betting:
                     pre_odds = betting["preMatchOdds"]
                     if isinstance(pre_odds, dict):
-                        odds_data["pre_match_home_odds"] = (
-                            pre_odds.get("home") or odds_data["pre_match_home_odds"]
-                        )
-                        odds_data["pre_match_draw_odds"] = (
-                            pre_odds.get("draw") or odds_data["pre_match_draw_odds"]
-                        )
-                        odds_data["pre_match_away_odds"] = (
-                            pre_odds.get("away") or odds_data["pre_match_away_odds"]
-                        )
+                        odds_data["pre_match_home_odds"] = pre_odds.get("home") or odds_data["pre_match_home_odds"]
+                        odds_data["pre_match_draw_odds"] = pre_odds.get("draw") or odds_data["pre_match_draw_odds"]
+                        odds_data["pre_match_away_odds"] = pre_odds.get("away") or odds_data["pre_match_away_odds"]
 
                 # 检查matchOdds
                 if "matchOdds" in betting and not odds_data["pre_match_home_odds"]:
@@ -234,51 +222,27 @@ class FotMobCollector:
                     betting_odds = general["bettingOdds"]
                     if isinstance(betting_odds, dict):
                         # 尝试多个可能的字段名
-                        home_odds = (
-                            betting_odds.get("homeWin")
-                            or betting_odds.get("home")
-                            or betting_odds.get("1")
-                        )
+                        home_odds = betting_odds.get("homeWin") or betting_odds.get("home") or betting_odds.get("1")
                         draw_odds = betting_odds.get("draw") or betting_odds.get("X")
-                        away_odds = (
-                            betting_odds.get("awayWin")
-                            or betting_odds.get("away")
-                            or betting_odds.get("2")
-                        )
+                        away_odds = betting_odds.get("awayWin") or betting_odds.get("away") or betting_odds.get("2")
 
-                        odds_data["pre_match_home_odds"] = (
-                            home_odds or odds_data["pre_match_home_odds"]
-                        )
-                        odds_data["pre_match_draw_odds"] = (
-                            draw_odds or odds_data["pre_match_draw_odds"]
-                        )
-                        odds_data["pre_match_away_odds"] = (
-                            away_odds or odds_data["pre_match_away_odds"]
-                        )
+                        odds_data["pre_match_home_odds"] = home_odds or odds_data["pre_match_home_odds"]
+                        odds_data["pre_match_draw_odds"] = draw_odds or odds_data["pre_match_draw_odds"]
+                        odds_data["pre_match_away_odds"] = away_odds or odds_data["pre_match_away_odds"]
 
             # 4. 计算隐含概率 (如果有赔率数据)
             if odds_data["pre_match_home_odds"]:
                 try:
                     home_odds = float(odds_data["pre_match_home_odds"])
-                    draw_odds = (
-                        float(odds_data["pre_match_draw_odds"])
-                        if odds_data["pre_match_draw_odds"]
-                        else None
-                    )
+                    draw_odds = float(odds_data["pre_match_draw_odds"]) if odds_data["pre_match_draw_odds"] else None
                     away_odds = float(odds_data["pre_match_away_odds"])
 
                     # 转换为隐含概率 (考虑bookmaker margin)
                     if home_odds > 0 and away_odds > 0:
-                        odds_data["home_win_probability"] = round(
-                            1.0 / home_odds * 100, 2
-                        )
-                        odds_data["away_win_probability"] = round(
-                            1.0 / away_odds * 100, 2
-                        )
+                        odds_data["home_win_probability"] = round(1.0 / home_odds * 100, 2)
+                        odds_data["away_win_probability"] = round(1.0 / away_odds * 100, 2)
                         if draw_odds and draw_odds > 0:
-                            odds_data["draw_probability"] = round(
-                                1.0 / draw_odds * 100, 2
-                            )
+                            odds_data["draw_probability"] = round(1.0 / draw_odds * 100, 2)
                 except (ValueError, TypeError) as e:
                     logger.warning(f"赔率数据转换失败: {e}")
 
@@ -357,10 +321,7 @@ class FotMobCollector:
                             rating_info = stat_details["FotMob rating"]
                             if isinstance(rating_info, dict) and "stat" in rating_info:
                                 stat_value = rating_info["stat"]
-                                if (
-                                    isinstance(stat_value, dict)
-                                    and "value" in stat_value
-                                ):
+                                if isinstance(stat_value, dict) and "value" in stat_value:
                                     player_rating = float(stat_value["value"])
                                     break
 
@@ -385,22 +346,14 @@ class FotMobCollector:
                 home_team_id = team_ids[0]
                 away_team_id = team_ids[1]
 
-                ratings_data["home_team_ratings"] = ratings_data["team_ratings"][
-                    home_team_id
-                ]
-                ratings_data["away_team_ratings"] = ratings_data["team_ratings"][
-                    away_team_id
-                ]
+                ratings_data["home_team_ratings"] = ratings_data["team_ratings"][home_team_id]
+                ratings_data["away_team_ratings"] = ratings_data["team_ratings"][away_team_id]
 
                 # 计算主队统计
                 home_ratings = [p["rating"] for p in ratings_data["home_team_ratings"]]
                 if home_ratings:
-                    ratings_data["avg_home_rating"] = round(
-                        sum(home_ratings) / len(home_ratings), 2
-                    )
-                    best_home = max(
-                        ratings_data["home_team_ratings"], key=lambda x: x["rating"]
-                    )
+                    ratings_data["avg_home_rating"] = round(sum(home_ratings) / len(home_ratings), 2)
+                    best_home = max(ratings_data["home_team_ratings"], key=lambda x: x["rating"])
                     ratings_data["best_home_player"] = {
                         "name": best_home["player_name"],
                         "rating": best_home["rating"],
@@ -409,42 +362,29 @@ class FotMobCollector:
                 # 计算客队统计
                 away_ratings = [p["rating"] for p in ratings_data["away_team_ratings"]]
                 if away_ratings:
-                    ratings_data["avg_away_rating"] = round(
-                        sum(away_ratings) / len(away_ratings), 2
-                    )
-                    best_away = max(
-                        ratings_data["away_team_ratings"], key=lambda x: x["rating"]
-                    )
+                    ratings_data["avg_away_rating"] = round(sum(away_ratings) / len(away_ratings), 2)
+                    best_away = max(ratings_data["away_team_ratings"], key=lambda x: x["rating"])
                     ratings_data["best_away_player"] = {
                         "name": best_away["player_name"],
                         "rating": best_away["rating"],
                     }
 
             # 计算总评分球员数
-            ratings_data["total_players_rated"] = len(
-                ratings_data["home_team_ratings"]
-            ) + len(ratings_data["away_team_ratings"])
+            ratings_data["total_players_rated"] = len(ratings_data["home_team_ratings"]) + len(
+                ratings_data["away_team_ratings"]
+            )
 
             if ratings_data["total_players_rated"] > 0:
-                logger.info(
-                    f"✅ 成功提取 {ratings_data['total_players_rated']} 名球员评分"
-                )
+                logger.info(f"✅ 成功提取 {ratings_data['total_players_rated']} 名球员评分")
                 logger.debug(f"   主队平均评分: {ratings_data['avg_home_rating']}")
                 logger.debug(f"   客队平均评分: {ratings_data['avg_away_rating']}")
 
                 # 显示评分前3名的球员
-                all_players = (
-                    ratings_data["home_team_ratings"]
-                    + ratings_data["away_team_ratings"]
-                )
-                top_players = sorted(
-                    all_players, key=lambda x: x["rating"], reverse=True
-                )[:3]
+                all_players = ratings_data["home_team_ratings"] + ratings_data["away_team_ratings"]
+                top_players = sorted(all_players, key=lambda x: x["rating"], reverse=True)[:3]
                 logger.debug("   评分前3名球员:")
                 for i, player in enumerate(top_players, 1):
-                    logger.debug(
-                        f"     {i}. {player['player_name']}: {player['rating']}"
-                    )
+                    logger.debug(f"     {i}. {player['player_name']}: {player['rating']}")
             else:
                 logger.debug("⚠️ 未找到有效球员评分数据")
 
@@ -512,8 +452,7 @@ class FotMobCollector:
                                     "player": event.get("nameStr", ""),
                                     "player_id": event.get("playerId"),
                                     "score": event.get("newScore", []),
-                                    "isPenalty": event.get("goalDescription")
-                                    == "Penalty",
+                                    "isPenalty": event.get("goalDescription") == "Penalty",
                                     "ownGoal": event.get("ownGoal", False),
                                 }
                                 standardized_event.update(goal_info)
@@ -612,9 +551,7 @@ class FotMobCollector:
             has_events = events_data["total_events"] > 0
 
             # 至少需要一个关键特征
-            quality_score = sum(
-                [has_xg, has_lineups, has_odds, has_ratings, has_events]
-            )
+            quality_score = sum([has_xg, has_lineups, has_odds, has_ratings, has_events])
 
             logger.info(
                 f"📊 数据质量评估 {match_id}: xG={has_xg}, lineups={has_lineups}, odds={has_odds}, ratings={has_ratings}, events={has_events}, score={quality_score}/5"
@@ -664,11 +601,7 @@ class FotMobCollector:
                     else:
                         logger.info(f"🔍 L1数据结构: {list(data.keys())}")
                         for _key, value in data.items():
-                            if (
-                                isinstance(value, list)
-                                and value
-                                and isinstance(value[0], dict)
-                            ):
+                            if isinstance(value, list) and value and isinstance(value[0], dict):
                                 matches.extend(value)
                                 break
 
@@ -676,9 +609,7 @@ class FotMobCollector:
                     return matches
                 else:
                     response_text = await response.text()
-                    logger.error(
-                        f"❌ L1请求失败，状态码: {response.status}, URL: {full_url}"
-                    )
+                    logger.error(f"❌ L1请求失败，状态码: {response.status}, URL: {full_url}")
                     logger.error(f"🔍 响应内容: {response_text[:200]}...")
                     return []
 
@@ -727,9 +658,7 @@ class FotMobCollector:
 
         # 添加成功率
         if stats["requests_made"] > 0:
-            stats["success_rate"] = (
-                stats["successful_requests"] / stats["requests_made"]
-            )
+            stats["success_rate"] = stats["successful_requests"] / stats["requests_made"]
         else:
             stats["success_rate"] = 0.0
 
@@ -791,9 +720,7 @@ class FotMobCollector:
                             deep_stats["away_coach"] = away_team["managerName"]
 
                 # 从lineups中查找教练信息（备用数据源）
-                if (
-                    not deep_stats["home_coach"] or not deep_stats["away_coach"]
-                ) and "lineups" in content_data:
+                if (not deep_stats["home_coach"] or not deep_stats["away_coach"]) and "lineups" in content_data:
                     lineups = content_data["lineups"]
                     if isinstance(lineups, dict):
                         # 主队教练
@@ -839,18 +766,9 @@ class FotMobCollector:
 
                     for player in player_ratings:
                         if isinstance(player, dict):
-                            rating = (
-                                player.get("rating")
-                                or player.get("averageRating")
-                                or player.get("score")
-                            )
-                            is_home = (
-                                player.get("isHome") or player.get("team") == "home"
-                            )
-                            is_bench = (
-                                player.get("position") == "bench"
-                                or player.get("substitute") is True
-                            )
+                            rating = player.get("rating") or player.get("averageRating") or player.get("score")
+                            is_home = player.get("isHome") or player.get("team") == "home"
+                            is_bench = player.get("position") == "bench" or player.get("substitute") is True
 
                             if rating and is_bench:
                                 try:
@@ -864,29 +782,15 @@ class FotMobCollector:
 
                     # 计算平均板凳评分
                     if home_bench_ratings:
-                        deep_stats["home_bench_rating"] = sum(home_bench_ratings) / len(
-                            home_bench_ratings
-                        )
-                        logger.info(
-                            f"🏠 主队板凳评分: {deep_stats['home_bench_rating']:.2f}"
-                        )
+                        deep_stats["home_bench_rating"] = sum(home_bench_ratings) / len(home_bench_ratings)
+                        logger.info(f"🏠 主队板凳评分: {deep_stats['home_bench_rating']:.2f}")
 
                     if away_bench_ratings:
-                        deep_stats["away_bench_rating"] = sum(away_bench_ratings) / len(
-                            away_bench_ratings
-                        )
-                        logger.info(
-                            f"✈️ 客队板凳评分: {deep_stats['away_bench_rating']:.2f}"
-                        )
+                        deep_stats["away_bench_rating"] = sum(away_bench_ratings) / len(away_bench_ratings)
+                        logger.info(f"✈️ 客队板凳评分: {deep_stats['away_bench_rating']:.2f}")
 
             # 记录提取结果摘要
-            extracted_count = sum(
-                [
-                    1
-                    for v in deep_stats.values()
-                    if v is not None and v != [] and v != ""
-                ]
-            )
+            extracted_count = sum([1 for v in deep_stats.values() if v is not None and v != [] and v != ""])
 
             logger.info(f"📊 深度统计提取完成: {extracted_count}/6 项数据成功提取")
 
@@ -933,9 +837,7 @@ class FotMobCollector:
 
                         if has_football_stats or len(stats_data) > 10:
                             detailed_stats = stats_data
-                            logger.info(
-                                f"📊 从 '{source_key}' 提取到完整统计数据: {len(stats_data)} 个字段"
-                            )
+                            logger.info(f"📊 从 '{source_key}' 提取到完整统计数据: {len(stats_data)} 个字段")
 
                             # 检查包含的关键指标
                             key_stats = []
@@ -945,10 +847,7 @@ class FotMobCollector:
                                 key_stats.append("Passes")
                             if "tackles" in str(stats_data).lower():
                                 key_stats.append("Tackles")
-                            if (
-                                "xg" in str(stats_data).lower()
-                                or "expected goals" in str(stats_data).lower()
-                            ):
+                            if "xg" in str(stats_data).lower() or "expected goals" in str(stats_data).lower():
                                 key_stats.append("xG")
 
                             if key_stats:
@@ -965,9 +864,7 @@ class FotMobCollector:
             if deep_stats["match_shotmap"]:
                 logger.info(f"🎯 射图谱数据: {len(deep_stats['match_shotmap'])} 个射门")
             if deep_stats["match_momentum"]:
-                logger.info(
-                    f"📈 势头数据: {len(deep_stats['match_momentum'])} 个数据点"
-                )
+                logger.info(f"📈 势头数据: {len(deep_stats['match_momentum'])} 个数据点")
             if detailed_stats:
                 logger.info(f"📊 详细统计: {len(detailed_stats)} 个字段")
 

@@ -28,15 +28,14 @@ from datetime import datetime
 from typing import Dict, Any, Optional, List, Tuple
 from dataclasses import dataclass
 
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
+
 
 @dataclass
 class PipelineConfig:
     """流水线配置"""
+
     league_id: int = 47
     season: str = "2024/25"
     concurrent_limit: int = 3
@@ -45,9 +44,11 @@ class PipelineConfig:
     batch_size: int = 50
     auto_extract_features: bool = True
 
+
 @dataclass
 class PipelineStats:
     """流水线统计"""
+
     l1_matches_found: int = 0
     l1_matches_saved: int = 0
     l2_attempts: int = 0
@@ -56,6 +57,7 @@ class PipelineStats:
     features_extracted: int = 0
     start_time: float = 0
     total_requests: int = 0
+
 
 class MasterCollector:
     """全能采集器 - 企业级自动化数据采集流水线"""
@@ -67,21 +69,21 @@ class MasterCollector:
 
         # FotMob API Headers (最新版本)
         self.headers = {
-            'accept': '*/*',
-            'accept-language': 'en-US,en;q=0.9',
-            'cache-control': 'no-cache',
-            'pragma': 'no-cache',
-            'priority': 'u=1, i',
-            'referer': 'https://www.fotmob.com/',
-            'sec-ch-ua': '"Chromium";v="131", "Not_A Brand";v="24"',
-            'sec-ch-ua-mobile': '?0',
-            'sec-ch-ua-platform': '"Linux"',
-            'sec-fetch-dest': 'empty',
-            'sec-fetch-mode': 'cors',
-            'sec-fetch-site': 'same-origin',
-            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
-            'x-mas': 'Q29udGVudC1UeXBlOiBhcHBsaWNhdGlvbi9qc29uOyBjaGFyc2V0PXV0Zi04',
-            'x-foo': 'aHR0cHM6Ly93d3cuZm90bW9iLmNvbS8=',
+            "accept": "*/*",
+            "accept-language": "en-US,en;q=0.9",
+            "cache-control": "no-cache",
+            "pragma": "no-cache",
+            "priority": "u=1, i",
+            "referer": "https://www.fotmob.com/",
+            "sec-ch-ua": '"Chromium";v="131", "Not_A Brand";v="24"',
+            "sec-ch-ua-mobile": "?0",
+            "sec-ch-ua-platform": '"Linux"',
+            "sec-fetch-dest": "empty",
+            "sec-fetch-mode": "cors",
+            "sec-fetch-site": "same-origin",
+            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+            "x-mas": "Q29udGVudC1UeXBlOiBhcHBsaWNhdGlvbi9qc29uOyBjaGFyc2V0PXV0Zi04",
+            "x-foo": "aHR0cHM6Ly93d3cuZm90bW9iLmNvbS8=",
         }
 
         # 数据库连接池
@@ -90,13 +92,13 @@ class MasterCollector:
     async def initialize(self):
         """初始化连接池"""
         self.db_pool = await asyncpg.create_pool(
-            host='localhost',
+            host="localhost",
             port=5432,
-            database='football_prediction_dev',
-            user='football_user',
-            password='football_pass',
+            database="football_prediction_dev",
+            user="football_user",
+            password="football_pass",
             min_size=2,
-            max_size=10
+            max_size=10,
         )
         logger.info("✅ 数据库连接池初始化完成")
 
@@ -114,16 +116,16 @@ class MasterCollector:
                     return await self.db_pool.acquire()
                 else:
                     return await asyncpg.connect(
-                        host='localhost',
+                        host="localhost",
                         port=5432,
-                        database='football_prediction_dev',
-                        user='football_user',
-                        password='football_pass'
+                        database="football_prediction_dev",
+                        user="football_user",
+                        password="football_pass",
                     )
             except Exception as e:
                 logger.warning(f"数据库连接失败 (尝试 {attempt + 1}/{self.config.retry_attempts}): {e}")
                 if attempt < self.config.retry_attempts - 1:
-                    await asyncio.sleep(5 ** attempt)  # 指数退避
+                    await asyncio.sleep(5**attempt)  # 指数退避
                 else:
                     raise
 
@@ -154,7 +156,7 @@ class MasterCollector:
     async def process_l1_data(self, data: Dict) -> bool:
         """处理L1数据并保存到数据库"""
         try:
-            matches = data.get('matches', [])
+            matches = data.get("matches", [])
             self.stats.l1_matches_found = len(matches)
 
             logger.info(f"📊 找到 {len(matches)} 场比赛")
@@ -164,12 +166,12 @@ class MasterCollector:
                 saved_count = 0
                 for match in matches:
                     # 提取比赛信息
-                    external_id = str(match.get('id', ''))
-                    home_team = match.get('home', {}).get('name', '')
-                    away_team = match.get('away', {}).get('name', '')
-                    match_time = match.get('status', {}).get('startTimeStr', '')
-                    status = match.get('status', {}).get('reason', {}).get('short', 'Fixture')
-                    round_info = match.get('round', {}).get('roundNumber', '')
+                    external_id = str(match.get("id", ""))
+                    home_team = match.get("home", {}).get("name", "")
+                    away_team = match.get("away", {}).get("name", "")
+                    match_time = match.get("status", {}).get("startTimeStr", "")
+                    status = match.get("status", {}).get("reason", {}).get("short", "Fixture")
+                    round_info = match.get("round", {}).get("roundNumber", "")
 
                     if not all([external_id, home_team, away_team]):
                         continue
@@ -179,7 +181,7 @@ class MasterCollector:
                     if match_time:
                         try:
                             # 尝试多种时间格式
-                            for fmt in ['%Y-%m-%dT%H:%M:%S.%fZ', '%Y-%m-%dT%H:%M:%SZ', '%Y-%m-%d %H:%M:%S']:
+                            for fmt in ["%Y-%m-%dT%H:%M:%S.%fZ", "%Y-%m-%dT%H:%M:%SZ", "%Y-%m-%d %H:%M:%S"]:
                                 try:
                                     match_time_parsed = datetime.strptime(match_time, fmt)
                                     break
@@ -189,23 +191,31 @@ class MasterCollector:
                             logger.warning(f"时间解析失败: {match_time}")
 
                     # 检查是否已存在
-                    existing = await conn.fetchval(
-                        "SELECT id FROM matches WHERE external_id = $1", external_id
-                    )
+                    existing = await conn.fetchval("SELECT id FROM matches WHERE external_id = $1", external_id)
 
                     if existing:
                         logger.debug(f"⏭️ 比赛已存在: {external_id}")
                         continue
 
                     # 插入新记录
-                    await conn.execute("""
+                    await conn.execute(
+                        """
                         INSERT INTO matches (
                             external_id, league_name, season, match_time, status,
                             home_team, away_team, league_id, round_info,
                             collection_status, created_at, updated_at
                         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'pending', NOW(), NOW())
-                    """, external_id, "Premier League", self.config.season, match_time_parsed, status,
-                        home_team, away_team, str(self.config.league_id), round_info)
+                    """,
+                        external_id,
+                        "Premier League",
+                        self.config.season,
+                        match_time_parsed,
+                        status,
+                        home_team,
+                        away_team,
+                        str(self.config.league_id),
+                        round_info,
+                    )
 
                     saved_count += 1
                     self.stats.l1_matches_saved = saved_count
@@ -224,13 +234,16 @@ class MasterCollector:
         """获取待采集L2数据的比赛"""
         conn = await self.get_database_connection()
         try:
-            matches = await conn.fetch("""
+            matches = await conn.fetch(
+                """
                 SELECT id, external_id, home_team, away_team, match_time
                 FROM matches
                 WHERE collection_status = 'pending'
                 ORDER BY match_time
                 LIMIT $1
-            """, self.config.batch_size)
+            """,
+                self.config.batch_size,
+            )
 
             return [dict(match) for match in matches]
         finally:
@@ -261,9 +274,9 @@ class MasterCollector:
     async def process_single_l2_match(self, match: Dict) -> bool:
         """处理单场比赛的L2采集"""
         async with self.semaphore:
-            external_id = match['external_id']
-            home_team = match['home_team']
-            away_team = match['away_team']
+            external_id = match["external_id"]
+            home_team = match["home_team"]
+            away_team = match["away_team"]
 
             self.stats.l2_attempts += 1
 
@@ -332,30 +345,39 @@ class MasterCollector:
             # 使用事务确保数据一致性
             async with conn.transaction():
                 # 检查并更新raw_match_data表
-                existing = await conn.fetchval(
-                    "SELECT id FROM raw_match_data WHERE external_id = $1", external_id
-                )
+                existing = await conn.fetchval("SELECT id FROM raw_match_data WHERE external_id = $1", external_id)
 
                 if existing:
-                    await conn.execute("""
+                    await conn.execute(
+                        """
                         UPDATE raw_match_data
                         SET raw_match_data = $1, updated_at = CURRENT_TIMESTAMP
                         WHERE external_id = $2
-                    """, l2_json, external_id)
+                    """,
+                        l2_json,
+                        external_id,
+                    )
                 else:
-                    await conn.execute("""
+                    await conn.execute(
+                        """
                         INSERT INTO raw_match_data (external_id, raw_match_data, created_at, updated_at)
                         VALUES ($1, $2, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-                    """, external_id, l2_json)
+                    """,
+                        external_id,
+                        l2_json,
+                    )
 
                 # 更新matches表状态
-                await conn.execute("""
+                await conn.execute(
+                    """
                     UPDATE matches
                     SET collection_status = 'completed',
                         l2_collected_at = CURRENT_TIMESTAMP,
                         updated_at = CURRENT_TIMESTAMP
                     WHERE external_id = $1
-                """, external_id)
+                """,
+                    external_id,
+                )
 
             return True
 
@@ -410,7 +432,8 @@ class MasterCollector:
             # 使用事务确保数据一致性
             async with conn.transaction():
                 # 更新raw_match_data表，添加L3赔率数据
-                await conn.execute("""
+                await conn.execute(
+                    """
                     UPDATE raw_match_data
                     SET raw_odds_data = $1,
                         odds_data_source = 'fotmob_matchodds',
@@ -418,15 +441,21 @@ class MasterCollector:
                         odds_parse_status = 'completed',
                         updated_at = CURRENT_TIMESTAMP
                     WHERE external_id = $2
-                """, odds_json, external_id)
+                """,
+                    odds_json,
+                    external_id,
+                )
 
                 # 更新matches表状态
-                await conn.execute("""
+                await conn.execute(
+                    """
                     UPDATE matches
                     SET l2_collected_at = l2_collected_at,
                         updated_at = CURRENT_TIMESTAMP
                     WHERE external_id = $1
-                """, external_id)
+                """,
+                    external_id,
+                )
 
             logger.info(f"✅ 成功保存赔率数据: {external_id}")
             return True
@@ -441,7 +470,8 @@ class MasterCollector:
         """获取待采集L3赔率的比赛"""
         conn = await self.get_database_connection()
         try:
-            matches = await conn.fetch("""
+            matches = await conn.fetch(
+                """
                 SELECT id, external_id, home_team, away_team
                 FROM matches
                 WHERE collection_status = 'completed'
@@ -457,7 +487,9 @@ class MasterCollector:
                 )
                 ORDER BY match_time
                 LIMIT $1
-            """, self.config.batch_size)
+            """,
+                self.config.batch_size,
+            )
 
             return [dict(match) for match in matches]
         finally:
@@ -488,9 +520,9 @@ class MasterCollector:
     async def process_single_l3_match(self, match: Dict) -> bool:
         """处理单场比赛的L3赔率采集"""
         async with self.semaphore:
-            external_id = match['external_id']
-            home_team = match['home_team']
-            away_team = match['away_team']
+            external_id = match["external_id"]
+            home_team = match["home_team"]
+            away_team = match["away_team"]
 
             try:
                 # 采集L3赔率数据
@@ -517,9 +549,9 @@ class MasterCollector:
 
         try:
             # 调用最终收割特征提取器
-            result = subprocess.run([
-                sys.executable, "scripts/final_harvest_extractor.py"
-            ], capture_output=True, text=True, timeout=1800)  # 30分钟超时
+            result = subprocess.run(
+                [sys.executable, "scripts/final_harvest_extractor.py"], capture_output=True, text=True, timeout=1800
+            )  # 30分钟超时
 
             if result.returncode == 0:
                 logger.info("✅ 特征提取完成!")
@@ -637,14 +669,20 @@ class MasterCollector:
         elapsed = time.time() - self.stats.start_time
         rate = self.stats.l2_attempts / elapsed if elapsed > 0 else 0
 
-        print("\n" + "="*80)
+        print("\n" + "=" * 80)
         print(f"📊 全能采集器进度报告 - {datetime.now().strftime('%H:%M:%S')}")
-        print("="*80)
-        print(f"🏃 L2采集: {self.stats.l2_attempts} | ✅ 成功: {self.stats.l2_successful} | ❌ 失败: {self.stats.l2_failed}")
-        print(f"📈 成功率: {(self.stats.l2_successful/self.stats.l2_attempts*100):.1f}%" if self.stats.l2_attempts > 0 else "📈 成功率: 0%")
+        print("=" * 80)
+        print(
+            f"🏃 L2采集: {self.stats.l2_attempts} | ✅ 成功: {self.stats.l2_successful} | ❌ 失败: {self.stats.l2_failed}"
+        )
+        print(
+            f"📈 成功率: {(self.stats.l2_successful/self.stats.l2_attempts*100):.1f}%"
+            if self.stats.l2_attempts > 0
+            else "📈 成功率: 0%"
+        )
         print(f"⚡ 采集速率: {rate:.2f} 场/秒")
         print(f"🔢 总请求次数: {self.stats.total_requests}")
-        print("="*80)
+        print("=" * 80)
 
     async def generate_final_report(self):
         """生成最终报告"""
@@ -653,35 +691,40 @@ class MasterCollector:
         # 获取数据库统计
         conn = await self.get_database_connection()
         try:
-            total_matches = await conn.fetchval('SELECT COUNT(*) FROM matches')
-            completed_matches = await conn.fetchval("SELECT COUNT(*) FROM matches WHERE collection_status = 'completed'")
-            raw_data_count = await conn.fetchval('SELECT COUNT(*) FROM raw_match_data WHERE raw_match_data IS NOT NULL')
-            feature_count = await conn.fetchval('SELECT COUNT(*) FROM match_features_training')
+            total_matches = await conn.fetchval("SELECT COUNT(*) FROM matches")
+            completed_matches = await conn.fetchval(
+                "SELECT COUNT(*) FROM matches WHERE collection_status = 'completed'"
+            )
+            raw_data_count = await conn.fetchval("SELECT COUNT(*) FROM raw_match_data WHERE raw_match_data IS NOT NULL")
+            feature_count = await conn.fetchval("SELECT COUNT(*) FROM match_features_training")
 
         finally:
             await self.release_database_connection(conn)
 
-        print("\n" + "🎉"*20)
+        print("\n" + "🎉" * 20)
         print("🏆 全能采集器最终报告")
         print(f"📊 L1数据: 找到{self.stats.l1_matches_found}, 保存{self.stats.l1_matches_saved}")
         print(f"📦 L2采集: 尝试{self.stats.l2_attempts}, 成功{self.stats.l2_successful}, 失败{self.stats.l2_failed}")
         print(f"💰 L3赔率: 成功{total_l3_successful}, 失败{total_l3_failed}")
         print(f"🎯 特征提取: {'✅ 成功' if self.stats.features_extracted > 0 else '❌ 失败/跳过'}")
         print(f"⏱️ 总耗时: {elapsed:.1f}秒")
-        print(f"📈 数据库状态: 总比赛{total_matches}, 已完成{completed_matches}, L2数据{raw_data_count}, 特征{feature_count}")
-        print("🎉"*20)
+        print(
+            f"📈 数据库状态: 总比赛{total_matches}, 已完成{completed_matches}, L2数据{raw_data_count}, 特征{feature_count}"
+        )
+        print("🎉" * 20)
+
 
 async def main():
     """主函数"""
     import argparse
 
-    parser = argparse.ArgumentParser(description='全能采集器 - 自动化数据采集流水线')
-    parser.add_argument('--league', type=int, default=47, help='联赛ID (默认: 47)')
-    parser.add_argument('--season', type=str, default='2024/25', help='赛季 (默认: 2024/25)')
-    parser.add_argument('--concurrent', type=int, default=3, help='并发数 (默认: 3)')
-    parser.add_argument('--delay', type=float, default=2.0, help='请求间隔秒数 (默认: 2.0)')
-    parser.add_argument('--batch-size', type=int, default=50, help='批处理大小 (默认: 50)')
-    parser.add_argument('--no-features', action='store_true', help='跳过特征提取')
+    parser = argparse.ArgumentParser(description="全能采集器 - 自动化数据采集流水线")
+    parser.add_argument("--league", type=int, default=47, help="联赛ID (默认: 47)")
+    parser.add_argument("--season", type=str, default="2024/25", help="赛季 (默认: 2024/25)")
+    parser.add_argument("--concurrent", type=int, default=3, help="并发数 (默认: 3)")
+    parser.add_argument("--delay", type=float, default=2.0, help="请求间隔秒数 (默认: 2.0)")
+    parser.add_argument("--batch-size", type=int, default=50, help="批处理大小 (默认: 50)")
+    parser.add_argument("--no-features", action="store_true", help="跳过特征提取")
 
     args = parser.parse_args()
 
@@ -692,7 +735,7 @@ async def main():
         concurrent_limit=args.concurrent,
         request_delay=args.delay,
         batch_size=args.batch_size,
-        auto_extract_features=not args.no_features
+        auto_extract_features=not args.no_features,
     )
 
     # 创建并运行全能采集器
@@ -717,6 +760,7 @@ async def main():
         sys.exit(1)
     finally:
         await collector.cleanup()
+
 
 if __name__ == "__main__":
     asyncio.run(main())

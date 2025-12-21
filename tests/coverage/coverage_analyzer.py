@@ -33,9 +33,7 @@ import re
 import coverage
 
 # 设置日志
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -95,9 +93,7 @@ class CoverageAnalyzer:
         module_analyses = {}
         for module_path in self.core_modules:
             if Path(module_path).exists():
-                analysis = await self._analyze_module_coverage(
-                    module_path, coverage_data
-                )
+                analysis = await self._analyze_module_coverage(module_path, coverage_data)
                 module_analyses[module_path] = analysis
 
         # 3. 生成改进建议
@@ -110,9 +106,7 @@ class CoverageAnalyzer:
         risk_analysis = await self._identify_risk_areas(module_analyses)
 
         # 6. 生成测试用例建议
-        test_case_suggestions = await self._generate_test_case_suggestions(
-            module_analyses
-        )
+        test_case_suggestions = await self._generate_test_case_suggestions(module_analyses)
 
         analysis_report = {
             "timestamp": datetime.now().isoformat(),
@@ -143,9 +137,7 @@ class CoverageAnalyzer:
         logger.info("📊 收集覆盖率数据")
 
         # 创建Coverage对象
-        cov = coverage.Coverage(
-            source=["src"], config_file="tests/coverage/.coveragerc"
-        )
+        cov = coverage.Coverage(source=["src"], config_file="tests/coverage/.coveragerc")
 
         # 开始覆盖率收集
         cov.start()
@@ -176,9 +168,7 @@ class CoverageAnalyzer:
 
         return cov.get_data()
 
-    async def _analyze_module_coverage(
-        self, module_path: str, coverage_data
-    ) -> ModuleAnalysis:
+    async def _analyze_module_coverage(self, module_path: str, coverage_data) -> ModuleAnalysis:
         """分析单个模块的覆盖率"""
         logger.info(f"🔍 分析模块: {module_path}")
 
@@ -227,9 +217,7 @@ class CoverageAnalyzer:
         # 计算总体覆盖率
         total_lines = len(executed_lines) + len(missing_lines)
         covered_lines = len(executed_lines)
-        coverage_percentage = (
-            (covered_lines / total_lines * 100) if total_lines > 0 else 0
-        )
+        coverage_percentage = (covered_lines / total_lines * 100) if total_lines > 0 else 0
 
         # 分析函数覆盖率
         functions_coverage = []
@@ -247,9 +235,7 @@ class CoverageAnalyzer:
 
                 # 分析函数覆盖率
                 func_start = node.lineno
-                func_end = (
-                    node.end_lineno if hasattr(node, "end_lineno") else func_start
-                )
+                func_end = node.end_lineno if hasattr(node, "end_lineno") else func_start
 
                 # 计算函数内的行数
                 func_lines = set()
@@ -259,9 +245,7 @@ class CoverageAnalyzer:
                 # 计算已覆盖的行数
                 func_covered = len(func_lines & executed_lines)
                 func_total = len(func_lines)
-                func_coverage = (
-                    (func_covered / func_total * 100) if func_total > 0 else 0
-                )
+                func_coverage = (func_covered / func_total * 100) if func_total > 0 else 0
 
                 # 识别缺失的分支
                 missing_branches = self._identify_missing_branches(node, missing_lines)
@@ -285,9 +269,7 @@ class CoverageAnalyzer:
                 functions_coverage.append(func_coverage_data)
 
         untested_functions = total_functions - tested_functions
-        average_complexity = (
-            sum(complexity_scores) / len(complexity_scores) if complexity_scores else 0
-        )
+        average_complexity = sum(complexity_scores) / len(complexity_scores) if complexity_scores else 0
 
         # 生成改进建议
         improvement_suggestions = self._generate_module_improvements(
@@ -359,33 +341,23 @@ class CoverageAnalyzer:
         suggestions = []
 
         if coverage < 50:
-            suggestions.append(
-                f"{module_name}: 覆盖率过低({coverage:.1f}%)，需要大幅增加测试用例"
-            )
+            suggestions.append(f"{module_name}: 覆盖率过低({coverage:.1f}%)，需要大幅增加测试用例")
         elif coverage < 75:
-            suggestions.append(
-                f"{module_name}: 覆盖率偏低({coverage:.1f}%)，建议增加关键功能测试"
-            )
+            suggestions.append(f"{module_name}: 覆盖率偏低({coverage:.1f}%)，建议增加关键功能测试")
         elif coverage < 90:
-            suggestions.append(
-                f"{module_name}: 覆盖率接近目标({coverage:.1f}%)，补充边界条件测试"
-            )
+            suggestions.append(f"{module_name}: 覆盖率接近目标({coverage:.1f}%)，补充边界条件测试")
 
         # 高复杂度函数建议
         high_complexity_functions = [f for f in functions if f.complexity > 10]
         if high_complexity_functions:
             func_names = [f.name for f in high_complexity_functions[:3]]
-            suggestions.append(
-                f"{module_name}: 高复杂度函数 {', '.join(func_names)} 建议重构或增加详细测试"
-            )
+            suggestions.append(f"{module_name}: 高复杂度函数 {', '.join(func_names)} 建议重构或增加详细测试")
 
         # 未测试函数建议
         untested_functions = [f for f in functions if not f.is_tested]
         if untested_functions:
             func_names = [f.name for f in untested_functions[:5]]
-            suggestions.append(
-                f"{module_name}: 未测试函数 {', '.join(func_names)} 需要添加测试用例"
-            )
+            suggestions.append(f"{module_name}: 未测试函数 {', '.join(func_names)} 需要添加测试用例")
 
         # 缺失分支建议
         functions_with_missing_branches = [f for f in functions if f.missing_branches]
@@ -394,9 +366,7 @@ class CoverageAnalyzer:
 
         return suggestions
 
-    async def _generate_improvement_plan(
-        self, module_analyses: Dict[str, ModuleAnalysis]
-    ) -> Dict[str, Any]:
+    async def _generate_improvement_plan(self, module_analyses: Dict[str, ModuleAnalysis]) -> Dict[str, Any]:
         """生成覆盖率改进计划"""
         logger.info("📋 生成覆盖率改进计划")
 
@@ -420,12 +390,8 @@ class CoverageAnalyzer:
                         "module": module_path,
                         "priority": priority,
                         "description": suggestion,
-                        "estimated_effort": self._estimate_improvement_effort(
-                            analysis, suggestion
-                        ),
-                        "expected_coverage_gain": self._estimate_coverage_gain(
-                            analysis, suggestion
-                        ),
+                        "estimated_effort": self._estimate_improvement_effort(analysis, suggestion),
+                        "expected_coverage_gain": self._estimate_coverage_gain(analysis, suggestion),
                     }
                 )
 
@@ -441,33 +407,23 @@ class CoverageAnalyzer:
         phases = {
             "phase_1": {
                 "name": "紧急修复 (0-1周)",
-                "tasks": [imp for imp in improvements if imp["priority"] == "high"][
-                    :10
-                ],
+                "tasks": [imp for imp in improvements if imp["priority"] == "high"][:10],
                 "target_coverage_gain": sum(
-                    imp["expected_coverage_gain"]
-                    for imp in improvements
-                    if imp["priority"] == "high"
+                    imp["expected_coverage_gain"] for imp in improvements if imp["priority"] == "high"
                 ),
             },
             "phase_2": {
                 "name": "中期改进 (1-3周)",
-                "tasks": [imp for imp in improvements if imp["priority"] == "medium"][
-                    :15
-                ],
+                "tasks": [imp for imp in improvements if imp["priority"] == "medium"][:15],
                 "target_coverage_gain": sum(
-                    imp["expected_coverage_gain"]
-                    for imp in improvements[:15]
-                    if imp["priority"] == "medium"
+                    imp["expected_coverage_gain"] for imp in improvements[:15] if imp["priority"] == "medium"
                 ),
             },
             "phase_3": {
                 "name": "长期优化 (3-6周)",
                 "tasks": [imp for imp in improvements if imp["priority"] == "low"],
                 "target_coverage_gain": sum(
-                    imp["expected_coverage_gain"]
-                    for imp in improvements
-                    if imp.get("priority") == "low"
+                    imp["expected_coverage_gain"] for imp in improvements if imp.get("priority") == "low"
                 ),
             },
         }
@@ -477,14 +433,10 @@ class CoverageAnalyzer:
             "phases": phases,
             "priority_modules": priority_modules,
             "total_improvements": len(improvements),
-            "estimated_total_effort": sum(
-                imp["estimated_effort"] for imp in improvements
-            ),
+            "estimated_total_effort": sum(imp["estimated_effort"] for imp in improvements),
         }
 
-    def _estimate_improvement_effort(
-        self, analysis: ModuleAnalysis, suggestion: str
-    ) -> int:
+    def _estimate_improvement_effort(self, analysis: ModuleAnalysis, suggestion: str) -> int:
         """估算改进工作量（人日）"""
         base_effort = 1
 
@@ -499,9 +451,7 @@ class CoverageAnalyzer:
         else:
             return base_effort
 
-    def _estimate_coverage_gain(
-        self, analysis: ModuleAnalysis, suggestion: str
-    ) -> float:
+    def _estimate_coverage_gain(self, analysis: ModuleAnalysis, suggestion: str) -> float:
         """估算覆盖率提升幅度"""
         if analysis.coverage_percentage < 30:
             return 15.0
@@ -514,9 +464,7 @@ class CoverageAnalyzer:
         else:
             return 1.0
 
-    async def _analyze_complexity(
-        self, module_analyses: Dict[str, ModuleAnalysis]
-    ) -> Dict[str, Any]:
+    async def _analyze_complexity(self, module_analyses: Dict[str, ModuleAnalysis]) -> Dict[str, Any]:
         """分析代码复杂度"""
         logger.info("🔢 分析代码复杂度")
 
@@ -524,24 +472,16 @@ class CoverageAnalyzer:
 
         for module_path, analysis in module_analyses.items():
             # 统计复杂度分布
-            low_complexity = len(
-                [f for f in analysis.functions_coverage if f.complexity <= 5]
-            )
-            medium_complexity = len(
-                [f for f in analysis.functions_coverage if 6 <= f.complexity <= 10]
-            )
-            high_complexity = len(
-                [f for f in analysis.functions_coverage if f.complexity > 10]
-            )
+            low_complexity = len([f for f in analysis.functions_coverage if f.complexity <= 5])
+            medium_complexity = len([f for f in analysis.functions_coverage if 6 <= f.complexity <= 10])
+            high_complexity = len([f for f in analysis.functions_coverage if f.complexity > 10])
 
             complexity_data.append(
                 {
                     "module": module_path,
                     "average_complexity": analysis.average_complexity,
                     "max_complexity": (
-                        max([f.complexity for f in analysis.functions_coverage])
-                        if analysis.functions_coverage
-                        else 0
+                        max([f.complexity for f in analysis.functions_coverage]) if analysis.functions_coverage else 0
                     ),
                     "low_complexity_functions": low_complexity,
                     "medium_complexity_functions": medium_complexity,
@@ -556,9 +496,7 @@ class CoverageAnalyzer:
             all_functions.extend(analysis.functions_coverage)
 
         if all_functions:
-            global_avg_complexity = sum(f.complexity for f in all_functions) / len(
-                all_functions
-            )
+            global_avg_complexity = sum(f.complexity for f in all_functions) / len(all_functions)
             global_max_complexity = max(f.complexity for f in all_functions)
         else:
             global_avg_complexity = 0
@@ -587,14 +525,10 @@ class CoverageAnalyzer:
             "global_max_complexity": global_max_complexity,
             "total_functions_analyzed": len(all_functions),
             "complexity_hotspots": complexity_hotspots[:10],  # 前10个最复杂的函数
-            "recommendations": self._generate_complexity_recommendations(
-                global_avg_complexity, complexity_hotspots
-            ),
+            "recommendations": self._generate_complexity_recommendations(global_avg_complexity, complexity_hotspots),
         }
 
-    def _generate_complexity_recommendations(
-        self, avg_complexity: float, hotspots: List[Dict]
-    ) -> List[str]:
+    def _generate_complexity_recommendations(self, avg_complexity: float, hotspots: List[Dict]) -> List[str]:
         """生成复杂度改进建议"""
         recommendations = []
 
@@ -609,15 +543,12 @@ class CoverageAnalyzer:
         # 具体函数建议
         for hotspot in hotspots[:3]:
             recommendations.append(
-                f"函数 {hotspot['function']} (复杂度: {hotspot['complexity']}) "
-                f"建议重构以提高可维护性和测试覆盖率"
+                f"函数 {hotspot['function']} (复杂度: {hotspot['complexity']}) " f"建议重构以提高可维护性和测试覆盖率"
             )
 
         return recommendations
 
-    async def _identify_risk_areas(
-        self, module_analyses: Dict[str, ModuleAnalysis]
-    ) -> Dict[str, Any]:
+    async def _identify_risk_areas(self, module_analyses: Dict[str, ModuleAnalysis]) -> Dict[str, Any]:
         """识别高风险代码区域"""
         logger.info("⚠️ 识别高风险代码区域")
 
@@ -700,9 +631,7 @@ class CoverageAnalyzer:
 
         return factors
 
-    async def _generate_test_case_suggestions(
-        self, module_analyses: Dict[str, ModuleAnalysis]
-    ) -> Dict[str, Any]:
+    async def _generate_test_case_suggestions(self, module_analyses: Dict[str, ModuleAnalysis]) -> Dict[str, Any]:
         """生成测试用例建议"""
         logger.info("🧪 生成测试用例建议")
 
@@ -714,9 +643,7 @@ class CoverageAnalyzer:
             for func in analysis.functions_coverage:
                 if not func.is_tested or func.coverage_percentage < 80:
                     # 基于函数特征生成测试建议
-                    test_suggestions = self._generate_function_test_suggestions(
-                        module_name, func
-                    )
+                    test_suggestions = self._generate_function_test_suggestions(module_name, func)
                     suggestions.extend(test_suggestions)
 
         # 按模块分组建议
@@ -738,9 +665,7 @@ class CoverageAnalyzer:
             "priority_suggestions": suggestions[:10],  # 前10个优先建议
         }
 
-    def _generate_function_test_suggestions(
-        self, module_name: str, func: FunctionCoverage
-    ) -> List[Dict[str, Any]]:
+    def _generate_function_test_suggestions(self, module_name: str, func: FunctionCoverage) -> List[Dict[str, Any]]:
         """为单个函数生成测试建议"""
         suggestions = []
 
@@ -798,9 +723,7 @@ class CoverageAnalyzer:
 
         return suggestions
 
-    def _generate_test_templates(
-        self, suggestions_by_module: Dict[str, List[Dict]]
-    ) -> List[Dict[str, Any]]:
+    def _generate_test_templates(self, suggestions_by_module: Dict[str, List[Dict]]) -> List[Dict[str, Any]]:
         """生成测试模板"""
         templates = []
 
@@ -811,24 +734,18 @@ class CoverageAnalyzer:
                 template = {
                     "template_name": f"test_{module_name}_basic.py",
                     "module": module_name,
-                    "template_content": self._generate_basic_test_template(
-                        module_name, basic_tests
-                    ),
+                    "template_content": self._generate_basic_test_template(module_name, basic_tests),
                     "description": f"{module_name} 模块基础测试模板",
                 }
                 templates.append(template)
 
             # 边界条件测试模板
-            boundary_tests = [
-                s for s in module_suggestions if s["type"] == "boundary_test"
-            ]
+            boundary_tests = [s for s in module_suggestions if s["type"] == "boundary_test"]
             if boundary_tests:
                 template = {
                     "template_name": f"test_{module_name}_boundary.py",
                     "module": module_name,
-                    "template_content": self._generate_boundary_test_template(
-                        module_name, boundary_tests
-                    ),
+                    "template_content": self._generate_boundary_test_template(module_name, boundary_tests),
                     "description": f"{module_name} 模块边界条件测试模板",
                 }
                 templates.append(template)
@@ -874,9 +791,7 @@ class Test{module_name.title().replace("_", "")}:
 '''
         return template
 
-    def _generate_boundary_test_template(
-        self, module_name: str, tests: List[Dict]
-    ) -> str:
+    def _generate_boundary_test_template(self, module_name: str, tests: List[Dict]) -> str:
         """生成边界条件测试模板"""
         template = f'''"""
 {module_name} 模块边界条件测试
@@ -910,19 +825,13 @@ class Test{module_name.title().replace("_", "")}Boundary:
 
         return template
 
-    async def _generate_analysis_summary(
-        self, module_analyses: Dict[str, ModuleAnalysis]
-    ) -> Dict[str, Any]:
+    async def _generate_analysis_summary(self, module_analyses: Dict[str, ModuleAnalysis]) -> Dict[str, Any]:
         """生成分析摘要"""
         logger.info("📋 生成分析摘要")
 
         total_modules = len(module_analyses)
-        total_functions = sum(
-            analysis.total_functions for analysis in module_analyses.values()
-        )
-        tested_functions = sum(
-            analysis.tested_functions for analysis in module_analyses.values()
-        )
+        total_functions = sum(analysis.total_functions for analysis in module_analyses.values())
+        tested_functions = sum(analysis.tested_functions for analysis in module_analyses.values())
 
         # 计算覆盖率分布
         coverage_ranges = {
@@ -947,40 +856,25 @@ class Test{module_name.title().replace("_", "")}Boundary:
         for analysis in module_analyses.values():
             all_functions.extend(analysis.functions_coverage)
 
-        avg_complexity = (
-            sum(f.complexity for f in all_functions) / len(all_functions)
-            if all_functions
-            else 0
-        )
+        avg_complexity = sum(f.complexity for f in all_functions) / len(all_functions) if all_functions else 0
 
         return {
             "modules_analyzed": total_modules,
             "total_functions": total_functions,
             "tested_functions": tested_functions,
             "untested_functions": total_functions - tested_functions,
-            "function_test_coverage": (
-                (tested_functions / total_functions * 100) if total_functions > 0 else 0
-            ),
+            "function_test_coverage": ((tested_functions / total_functions * 100) if total_functions > 0 else 0),
             "coverage_distribution": coverage_ranges,
             "average_complexity": avg_complexity,
-            "high_complexity_functions": len(
-                [f for f in all_functions if f.complexity > 10]
-            ),
-            "overall_assessment": self._generate_overall_assessment(
-                coverage_ranges, avg_complexity
-            ),
+            "high_complexity_functions": len([f for f in all_functions if f.complexity > 10]),
+            "overall_assessment": self._generate_overall_assessment(coverage_ranges, avg_complexity),
         }
 
-    def _generate_overall_assessment(
-        self, coverage_ranges: Dict[str, int], avg_complexity: float
-    ) -> Dict[str, Any]:
+    def _generate_overall_assessment(self, coverage_ranges: Dict[str, int], avg_complexity: float) -> Dict[str, Any]:
         """生成总体评估"""
         total_modules = sum(coverage_ranges.values())
 
-        if (
-            coverage_ranges["excellent"] + coverage_ranges["good"]
-            >= total_modules * 0.8
-        ):
+        if coverage_ranges["excellent"] + coverage_ranges["good"] >= total_modules * 0.8:
             quality_level = "优秀"
             color = "#28a745"
         elif coverage_ranges["good"] + coverage_ranges["fair"] >= total_modules * 0.8:
@@ -1006,10 +900,7 @@ class Test{module_name.title().replace("_", "")}Boundary:
         output_dir = Path("coverage_reports")
         output_dir.mkdir(exist_ok=True)
 
-        report_file = (
-            output_dir
-            / f"coverage_deep_analysis_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-        )
+        report_file = output_dir / f"coverage_deep_analysis_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
         with open(report_file, "w", encoding="utf-8") as f:
             json.dump(report_data, f, indent=2, default=str, ensure_ascii=False)
 
@@ -1026,14 +917,10 @@ async def main():
     deep_parser = subparsers.add_parser("deep-analysis", help="执行深度覆盖率分析")
 
     # 改进计划命令
-    improvement_parser = subparsers.add_parser(
-        "improvement-plan", help="生成覆盖率改进计划"
-    )
+    improvement_parser = subparsers.add_parser("improvement-plan", help="生成覆盖率改进计划")
 
     # 复杂度分析命令
-    complexity_parser = subparsers.add_parser(
-        "complexity-analysis", help="执行代码复杂度分析"
-    )
+    complexity_parser = subparsers.add_parser("complexity-analysis", help="执行代码复杂度分析")
 
     args = parser.parse_args()
 

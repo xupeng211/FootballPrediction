@@ -222,9 +222,7 @@ class TestPredictionAPIExtended:
             assert data["away_team"] == case["away"]
             assert data["prediction"] in ["HOME_WIN", "DRAW", "AWAY_WIN"]
             assert "probabilities" in data
-            assert all(
-                key in data["probabilities"] for key in ["HOME_WIN", "DRAW", "AWAY_WIN"]
-            )
+            assert all(key in data["probabilities"] for key in ["HOME_WIN", "DRAW", "AWAY_WIN"])
             assert data["model_version"] == "xgboost_v2"
             assert data["processing_time_ms"] >= 0
 
@@ -358,10 +356,7 @@ class TestPredictionAPIExtended:
         """测试批量预测大小限制"""
         # 创建大量比赛（测试性能和限制）
         large_batch = {
-            "matches": [
-                {"home_team": f"Team {i}", "away_team": f"Opponent {i}"}
-                for i in range(100)
-            ],
+            "matches": [{"home_team": f"Team {i}", "away_team": f"Opponent {i}"} for i in range(100)],
             "model_version": "xgboost_v2",
         }
 
@@ -457,9 +452,7 @@ class TestPredictionAPIExtended:
                 # 模型可能不存在，这是可接受的
                 pass
             else:
-                pytest.fail(
-                    f"模型 {model_version} 测试失败，状态码: {response.status_code}"
-                )
+                pytest.fail(f"模型 {model_version} 测试失败，状态码: {response.status_code}")
 
     def test_api_error_handling(self, api_client):
         """测试API错误处理"""

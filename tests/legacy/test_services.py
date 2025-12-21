@@ -330,9 +330,7 @@ class TestInferenceService:
 
                     # 模拟加载失败
                     if "missing" in new_model_path:
-                        raise FileNotFoundError(
-                            f"Model file not found: {new_model_path}"
-                        )
+                        raise FileNotFoundError(f"Model file not found: {new_model_path}")
 
                     return {"success": True, "model_path": new_model_path}
 
@@ -707,9 +705,7 @@ class TestExplainabilityService:
 
                 feature_importance = [
                     {"feature": feature, "importance": score, "rank": idx + 1}
-                    for idx, (feature, score) in enumerate(
-                        zip(self.feature_names, importance_scores)
-                    )
+                    for idx, (feature, score) in enumerate(zip(self.feature_names, importance_scores))
                 ]
 
                 # 按重要性排序
@@ -778,9 +774,7 @@ class TestExplainabilityService:
                 }
 
                 # 按贡献度排序
-                sorted_features = sorted(
-                    shap_values.items(), key=lambda x: abs(x[1]), reverse=True
-                )
+                sorted_features = sorted(shap_values.items(), key=lambda x: abs(x[1]), reverse=True)
 
                 for feature, contribution in sorted_features:
                     explanation["feature_contributions"].append(
@@ -808,16 +802,10 @@ class TestExplainabilityService:
 
                 return explanation
 
-            def _generate_explanation_text(
-                self, predicted_class, positive_factors, negative_factors
-            ):
+            def _generate_explanation_text(self, predicted_class, positive_factors, negative_factors):
                 """生成解释文本"""
-                positive_text = (
-                    ", ".join(positive_factors[:2]) if positive_factors else "无"
-                )
-                negative_text = (
-                    ", ".join(negative_factors[:2]) if negative_factors else "无"
-                )
+                positive_text = ", ".join(positive_factors[:2]) if positive_factors else "无"
+                negative_text = ", ".join(negative_factors[:2]) if negative_factors else "无"
 
                 return f"预测{predicted_class}的主要原因: {positive_text}对结果有积极影响，而{negative_text}对结果有消极影响。"
 
@@ -838,16 +826,12 @@ class TestExplainabilityService:
 
         # 验证特征贡献
         contributions = explanation["feature_contributions"]
-        home_form_contrib = next(
-            c for c in contributions if c["feature"] == "home_form"
-        )
+        home_form_contrib = next(c for c in contributions if c["feature"] == "home_form")
         assert home_form_contrib["contribution"] == 0.15
         assert home_form_contrib["impact"] == "positive"
         assert home_form_contrib["magnitude"] == 0.15
 
-        away_form_contrib = next(
-            c for c in contributions if c["feature"] == "away_form"
-        )
+        away_form_contrib = next(c for c in contributions if c["feature"] == "away_form")
         assert away_form_contrib["contribution"] == -0.08
         assert away_form_contrib["impact"] == "negative"
         assert away_form_contrib["magnitude"] == 0.08
@@ -884,9 +868,7 @@ class TestExplainabilityService:
                             {
                                 "feature": feature,
                                 "contribution": contribution,
-                                "impact": (
-                                    "positive" if contribution > 0 else "negative"
-                                ),
+                                "impact": ("positive" if contribution > 0 else "negative"),
                             }
                             for feature, contribution in shap_values.items()
                         ],
@@ -899,9 +881,7 @@ class TestExplainabilityService:
                 return {
                     "explanations": explanations,
                     "total_count": len(explanations),
-                    "avg_contributions": self._calculate_avg_contributions(
-                        explanations
-                    ),
+                    "avg_contributions": self._calculate_avg_contributions(explanations),
                 }
 
             def _calculate_avg_contributions(self, explanations):
@@ -922,8 +902,7 @@ class TestExplainabilityService:
                         feature_counts[feature] += 1
 
                 avg_contributions = {
-                    feature: feature_sums[feature] / feature_counts[feature]
-                    for feature in feature_sums
+                    feature: feature_sums[feature] / feature_counts[feature] for feature in feature_sums
                 }
 
                 return avg_contributions

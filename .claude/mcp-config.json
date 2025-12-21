@@ -11,18 +11,7 @@
         "POSTGRES_USER": "${DB_USER:-football_user}",
         "POSTGRES_PASSWORD": "${DB_PASSWORD:-football_pass}"
       },
-      "description": "PostgreSQL database server for football prediction system"
-    },
-    "redis": {
-      "command": "python",
-      "args": ["mcp_servers/redis_server.py"],
-      "env": {
-        "REDIS_HOST": "${REDIS_HOST:-localhost}",
-        "REDIS_PORT": "${REDIS_PORT:-6379}",
-        "REDIS_DB": "${REDIS_DB:-0}",
-        "REDIS_PASSWORD": "${REDIS_PASSWORD:-}"
-      },
-      "description": "Redis cache server for performance optimization"
+      "description": "PostgreSQL database server (READ-ONLY) for football prediction system"
     },
     "filesystem": {
       "command": "python",
@@ -30,18 +19,25 @@
       "env": {
         "PROJECT_ROOT": "/home/user/projects/FootballPrediction"
       },
-      "description": "File system access for project management"
-    },
-    "system_monitor": {
-      "command": "python",
-      "args": ["mcp_servers/system_monitor_server.py"],
-      "description": "System performance monitoring and infrastructure analysis"
+      "description": "File system access (PROJECT ROOT ONLY) for project management"
     },
     "git": {
       "command": "git",
-      "args": ["log", "--oneline", "-5"],
+      "args": ["log", "--oneline", "-10"],
       "cwd": "/home/user/projects/FootballPrediction",
-      "description": "Git version control for code management"
+      "description": "Git version control (READ-ONLY LOG) for code management"
+    },
+    "pytest": {
+      "command": "python",
+      "args": ["mcp_servers/pytest_server.py"],
+      "cwd": "/home/user/projects/FootballPrediction",
+      "description": "Pytest test runner (RESTRICTED READ-ONLY MODE) for safe test execution"
+    },
+    "docker": {
+      "command": "docker-compose",
+      "args": ["ps"],
+      "cwd": "/home/user/projects/FootballPrediction",
+      "description": "Docker status monitoring (READ-ONLY PS COMMAND ONLY)"
     }
   }
 }

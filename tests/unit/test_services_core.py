@@ -312,9 +312,7 @@ class TestInferenceService:
             PredictionRequest,
         )
 
-        request = PredictionRequest(
-            match_id="match_123", home_team="Team A", away_team="Team B"
-        )
+        request = PredictionRequest(match_id="match_123", home_team="Team A", away_team="Team B")
 
         response = PredictionResponse(
             request=request,
@@ -356,9 +354,7 @@ class TestInferenceService:
         service.is_initialized = True
         service.feature_extractor = mock_extractor_instance
 
-        request = PredictionRequest(
-            match_id="match_123", home_team="Team A", away_team="Team B"
-        )
+        request = PredictionRequest(match_id="match_123", home_team="Team A", away_team="Team B")
 
         response = await service.predict_match(request)
 
@@ -376,9 +372,7 @@ class TestInferenceService:
         service = InferenceService()
         service.is_initialized = False
 
-        request = PredictionRequest(
-            match_id="match_123", home_team="Team A", away_team="Team B"
-        )
+        request = PredictionRequest(match_id="match_123", home_team="Team A", away_team="Team B")
 
         response = await service.predict_match(request)
 
@@ -390,13 +384,9 @@ class TestInferenceService:
         from src.services.inference_service import InferenceService
 
         service = InferenceService()
-        service.predict_match = AsyncMock(
-            return_value=Mock(to_dict=Mock(return_value={"test": "result"}))
-        )
+        service.predict_match = AsyncMock(return_value=Mock(to_dict=Mock(return_value={"test": "result"})))
 
-        result = await service.predict_match_simple(
-            match_id="match_123", home_team="Team A", away_team="Team B"
-        )
+        result = await service.predict_match_simple(match_id="match_123", home_team="Team A", away_team="Team B")
 
         assert result["test"] == "result"
 
@@ -413,9 +403,7 @@ class TestInferenceService:
         # 模拟单个预测
         service.predict_match = AsyncMock(
             return_value=PredictionResponse(
-                request=PredictionRequest(
-                    match_id="test", home_team="A", away_team="B"
-                ),
+                request=PredictionRequest(match_id="test", home_team="A", away_team="B"),
                 prediction={"test": "result"},
                 success=True,
             )
@@ -735,9 +723,7 @@ class TestServicesIntegration:
 
         # 测试未初始化的推理服务
         inference_service.is_initialized = False
-        response = await inference_service.predict_match_simple(
-            match_id="test", home_team="A", away_team="B"
-        )
+        response = await inference_service.predict_match_simple(match_id="test", home_team="A", away_team="B")
         assert response["success"] is False
 
     def test_services_configuration_integration(self):
@@ -799,9 +785,7 @@ class TestServicesIntegration:
         assert len(collection_service.tasks) == 5
 
         # 测试并发预测请求（模拟）
-        inference_service.predict_match_simple = AsyncMock(
-            return_value={"success": True, "test": "result"}
-        )
+        inference_service.predict_match_simple = AsyncMock(return_value={"success": True, "test": "result"})
 
         predictions = []
         for i in range(3):

@@ -220,9 +220,7 @@ def sample_prediction_request():
 # 标记支持
 def pytest_configure(config):
     """配置pytest标记"""
-    config.addinivalue_line(
-        "markers", "slow: marks tests as slow (deselect with '-m \"not slow\"')"
-    )
+    config.addinivalue_line("markers", "slow: marks tests as slow (deselect with '-m \"not slow\"')")
     config.addinivalue_line("markers", "integration: marks tests as integration tests")
     config.addinivalue_line("markers", "unit: marks tests as unit tests")
     config.addinivalue_line("markers", "e2e: marks tests as end-to-end tests")

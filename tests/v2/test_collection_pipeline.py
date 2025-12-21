@@ -27,9 +27,7 @@ class TestFotMobCollectionTask:
 
     def test_task_creation(self):
         """测试任务创建"""
-        task = FotMobCollectionTask(
-            task_id="test-123", match_id="match-456", league_id="league-789"
-        )
+        task = FotMobCollectionTask(task_id="test-123", match_id="match-456", league_id="league-789")
 
         assert task.task_id == "test-123"
         assert task.match_id == "match-456"
@@ -61,9 +59,7 @@ class TestCircuitBreaker:
 
     def test_circuit_breaker_initial_state(self):
         """测试熔断器初始状态"""
-        breaker = CircuitBreaker(
-            failure_threshold=3, recovery_timeout=60, half_open_max_calls=2
-        )
+        breaker = CircuitBreaker(failure_threshold=3, recovery_timeout=60, half_open_max_calls=2)
 
         # 验证熔断器初始化
         assert breaker is not None
@@ -75,9 +71,7 @@ class TestCircuitBreaker:
 
     def test_circuit_breaker_success(self):
         """测试熔断器允许调用"""
-        breaker = CircuitBreaker(
-            failure_threshold=3, recovery_timeout=60, half_open_max_calls=2
-        )
+        breaker = CircuitBreaker(failure_threshold=3, recovery_timeout=60, half_open_max_calls=2)
 
         # 测试初始状态允许调用
         assert breaker.call_allowed() is True
@@ -142,9 +136,7 @@ class TestFotMobCollectionService:
         mock_aiohttp_session.get.return_value.__aenter__.return_value = mock_response
 
         with patch("aiohttp.ClientSession") as mock_session_class:
-            mock_session_class.return_value.__aenter__.return_value = (
-                mock_aiohttp_session
-            )
+            mock_session_class.return_value.__aenter__.return_value = mock_aiohttp_session
 
             with pytest.raises(Exception):  # 应该抛出适当异常
                 await service.process_single_match("non-existent-match")

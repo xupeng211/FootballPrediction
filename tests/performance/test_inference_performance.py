@@ -175,9 +175,7 @@ class TestMatchPredictorPerformance:
         print(f"总内存增长: {total_memory_increase:.2f}MB")
 
         # 总内存增长应控制在合理范围
-        assert (
-            total_memory_increase < 100
-        ), f"总内存增长过多: {total_memory_increase:.2f}MB"
+        assert total_memory_increase < 100, f"总内存增长过多: {total_memory_increase:.2f}MB"
 
 
 class TestCachePerformance:
@@ -208,9 +206,7 @@ class TestCachePerformance:
 
         # 缓存访问应该很快
         assert avg_cache_time < 100, f"缓存访问过慢: {avg_cache_time:.2f}μs"
-        assert (
-            max(cache_times) < 1000
-        ), f"缓存访问最大时间过长: {max(cache_times):.2f}μs"
+        assert max(cache_times) < 1000, f"缓存访问最大时间过长: {max(cache_times):.2f}μs"
 
     def test_cache_write_performance(self):
         """测试缓存写入性能"""

@@ -22,14 +22,15 @@ DEFAULT_API_CONFIG = {"base_url": "https://www.fotmob.com/api", "timeout": 10, "
 CIRCUIT_BREAKER_CONFIG = {
     "failure_threshold": 5,  # 连续失败次数阈值
     "recovery_timeout": 60,  # 熔断恢复时间（秒）
-    "expected_exception": Exception  # 触发熔断的异常类型
+    "expected_exception": Exception,  # 触发熔断的异常类型
 }
 
 
 class CircuitState(Enum):
     """熔断器状态枚举"""
+
     CLOSED = "CLOSED"  # 正常状态
-    OPEN = "OPEN"      # 熔断状态
+    OPEN = "OPEN"  # 熔断状态
     HALF_OPEN = "HALF_OPEN"  # 半开状态（试探性恢复）
 
 

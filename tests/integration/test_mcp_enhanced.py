@@ -18,6 +18,7 @@ from unittest.mock import patch, AsyncMock
 # 导入项目模块
 from tests.factories.prediction_factory import MatchFactory, PredictionFactory
 
+
 class TestMCPDatabaseIntegration:
     """MCP数据库集成测试"""
 
@@ -62,14 +63,18 @@ class TestMCPDatabaseIntegration:
                 away_team = EXCLUDED.away_team,
                 match_date = EXCLUDED.match_date
                 """,
-                [test_match.match_id, test_match.home_team, test_match.away_team,
-                 test_match.match_date, datetime.now()]
+                [
+                    test_match.match_id,
+                    test_match.home_team,
+                    test_match.away_team,
+                    test_match.match_date,
+                    datetime.now(),
+                ],
             )
 
             # 2. 通过PostgreSQL MCP验证数据插入
             result = await execute_sql(
-                "SELECT home_team, away_team FROM test_matches WHERE match_id = $1",
-                [test_match.match_id]
+                "SELECT home_team, away_team FROM test_matches WHERE match_id = $1", [test_match.match_id]
             )
 
             assert len(result) == 1, "测试数据插入失败"
@@ -77,11 +82,7 @@ class TestMCPDatabaseIntegration:
             assert result[0]["away_team"] == test_match.away_team
 
             # 3. 通过Redis MCP设置处理标记
-            await redis_set(
-                f"match_processed:{test_match.match_id}",
-                "true",
-                ttl=3600
-            )
+            await redis_set(f"match_processed:{test_match.match_id}", "true", ttl=3600)
 
             # 4. 验证Redis缓存
             processed = await redis_get(f"match_processed:{test_match.match_id}")
@@ -89,6 +90,7 @@ class TestMCPDatabaseIntegration:
 
         except Exception as e:
             pytest.skip(f"MCP数据库操作失败: {e}")
+
 
 class TestMCPSystemMonitoring:
     """MCP系统监控集成测试"""
@@ -105,15 +107,14 @@ class TestMCPSystemMonitoring:
 
             # 2. 执行预测负载测试
             from src.services.inference_service import InferenceService
+
             service = InferenceService()
 
             # 模拟预测负载（如果服务可用）
             prediction_tasks = []
             for i in range(10):
                 try:
-                    task = service.predict_single_match(
-                        f"Team{i}", f"Team{i+1}"
-                    )
+                    task = service.predict_single_match(f"Team{i}", f"Team{i+1}")
                     if asyncio.iscoroutine(task):
                         prediction_tasks.append(task)
                 except Exception:
@@ -169,6 +170,7 @@ class TestMCPSystemMonitoring:
         except Exception as e:
             pytest.skip(f"资源监控检查失败: {e}")
 
+
 class TestMCPEnhancedE2E:
     """MCP增强的端到端测试"""
 
@@ -187,16 +189,12 @@ class TestMCPEnhancedE2E:
                 INSERT INTO preprocessing_queue (match_id, home_team, away_team, status, created_at)
                 VALUES ($1, $2, $3, 'pending', $4)
                 """,
-                [test_match.match_id, test_match.home_team, test_match.away_team, datetime.now()]
+                [test_match.match_id, test_match.home_team, test_match.away_team, datetime.now()],
             )
 
             # 2. 通过Redis MCP缓存预测结果
             prediction_cache_key = f"prediction:{test_match.match_id}"
-            await redis_set(
-                prediction_cache_key,
-                str(test_prediction),
-                ttl=1800  # 30分钟
-            )
+            await redis_set(prediction_cache_key, str(test_prediction), ttl=1800)  # 30分钟
 
             # 3. 模拟状态更新
             await execute_sql(
@@ -205,14 +203,13 @@ class TestMCPEnhancedE2E:
                 SET status = 'completed', processed_at = $1
                 WHERE match_id = $2
                 """,
-                [datetime.now(), test_match.match_id]
+                [datetime.now(), test_match.match_id],
             )
 
             # 4. 验证管道完整性
             # 检查预处理状态
             queue_result = await execute_sql(
-                "SELECT status FROM preprocessing_queue WHERE match_id = $1",
-                [test_match.match_id]
+                "SELECT status FROM preprocessing_queue WHERE match_id = $1", [test_match.match_id]
             )
             assert len(queue_result) == 1
             assert queue_result[0]["status"] == "completed"
@@ -231,6 +228,7 @@ class TestMCPEnhancedE2E:
         except Exception as e:
             pytest.skip(f"MCP E2E测试失败: {e}")
 
+
 class TestMCPFallbackBehavior:
     """MCP降级行为测试"""
 
@@ -239,7 +237,7 @@ class TestMCPFallbackBehavior:
         """测试数据库不可用时的降级行为"""
 
         # 模拟PostgreSQL MCP不可用的情况
-        with patch('mcp__postgres__execute_sql.execute_sql', side_effect=Exception("Database unavailable")):
+        with patch("mcp__postgres__execute_sql.execute_sql", side_effect=Exception("Database unavailable")):
 
             try:
                 # 尝试执行数据库查询
@@ -262,7 +260,7 @@ class TestMCPFallbackBehavior:
         """测试缓存不可用时的降级行为"""
 
         # 模拟Redis MCP不可用的情况
-        with patch('mcp__redis__redis_get.redis_get', side_effect=Exception("Cache unavailable")):
+        with patch("mcp__redis__redis_get.redis_get", side_effect=Exception("Cache unavailable")):
 
             try:
                 # 尝试获取缓存数据
@@ -278,6 +276,7 @@ class TestMCPFallbackBehavior:
                 except Exception as db_error:
                     # 如果数据库也不可用，应该有适当的错误处理
                     pytest.skip("数据库和缓存都不可用，跳过测试")
+
 
 if __name__ == "__main__":
     # 直接运行测试演示

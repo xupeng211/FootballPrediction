@@ -109,15 +109,11 @@ class TestPredictionServiceCoverage:
         }
 
     @pytest.mark.asyncio
-    async def test_normal_prediction_flow(
-        self, prediction_service, realistic_prediction_data
-    ):
+    async def test_normal_prediction_flow(self, prediction_service, realistic_prediction_data):
         """测试场景1：正常预测流程覆盖"""
         # Arrange
         match_id = "test_normal_flow"
-        prediction_service.inference_service.predict.return_value = (
-            realistic_prediction_data
-        )
+        prediction_service.inference_service.predict.return_value = realistic_prediction_data
 
         # Act
         response = await prediction_service.predict_single_match(
@@ -134,15 +130,11 @@ class TestPredictionServiceCoverage:
         assert abs(sum(preds.values()) - 1.0) < 0.01  # 概率和应为1
 
     @pytest.mark.asyncio
-    async def test_data_degradation_handling(
-        self, prediction_service, degraded_data_scenario
-    ):
+    async def test_data_degradation_handling(self, prediction_service, degraded_data_scenario):
         """测试场景2：数据缺失降级处理"""
         # Arrange
         match_id = "degraded_test"
-        prediction_service.inference_service.predict.return_value = (
-            degraded_data_scenario
-        )
+        prediction_service.inference_service.predict.return_value = degraded_data_scenario
 
         # Act
         response = await prediction_service.predict_single_match(match_id=match_id)
@@ -156,15 +148,11 @@ class TestPredictionServiceCoverage:
             assert response.data["data_quality"] < 0.8
 
     @pytest.mark.asyncio
-    async def test_extreme_probability_risk_control(
-        self, prediction_service, extreme_probability_data
-    ):
+    async def test_extreme_probability_risk_control(self, prediction_service, extreme_probability_data):
         """测试场景3：极端概率风控处理"""
         # Arrange
         match_id = "extreme_test"
-        prediction_service.inference_service.predict.return_value = (
-            extreme_probability_data
-        )
+        prediction_service.inference_service.predict.return_value = extreme_probability_data
 
         # Act
         response = await prediction_service.predict_single_match(match_id=match_id)
@@ -180,9 +168,7 @@ class TestPredictionServiceCoverage:
     async def test_batch_prediction_coverage(self, prediction_service):
         """测试场景4：批量预测覆盖"""
         # Arrange
-        batch_request = PredictionRequest(
-            match_id="", batch_mode=True, match_ids=["match_1", "match_2", "match_3"]
-        )
+        batch_request = PredictionRequest(match_id="", batch_mode=True, match_ids=["match_1", "match_2", "match_3"])
 
         batch_results = [
             {"match_id": "match_1", "predictions": {"home_win": 0.60}},
@@ -214,9 +200,7 @@ class TestPredictionServiceCoverage:
         """测试场景6：错误传播覆盖"""
         # Arrange
         match_id = "error_test"
-        prediction_service.inference_service.predict.side_effect = Exception(
-            "Inference failed"
-        )
+        prediction_service.inference_service.predict.side_effect = Exception("Inference failed")
 
         # Act & Assert
         with pytest.raises(Exception):
@@ -238,9 +222,7 @@ class TestPredictionServiceCoverage:
         prediction_service.inference_service.predict.side_effect = mock_predict
 
         # Act - 并发执行
-        tasks = [
-            prediction_service.predict_single_match(match_id) for match_id in match_ids
-        ]
+        tasks = [prediction_service.predict_single_match(match_id) for match_id in match_ids]
         responses = await asyncio.gather(*tasks, return_exceptions=True)
 
         # Assert
@@ -248,15 +230,11 @@ class TestPredictionServiceCoverage:
         assert all(not isinstance(r, Exception) for r in responses)
 
     @pytest.mark.asyncio
-    async def test_response_format_validation(
-        self, prediction_service, realistic_prediction_data
-    ):
+    async def test_response_format_validation(self, prediction_service, realistic_prediction_data):
         """测试场景8：响应格式验证"""
         # Arrange
         match_id = "format_validation_test"
-        prediction_service.inference_service.predict.return_value = (
-            realistic_prediction_data
-        )
+        prediction_service.inference_service.predict.return_value = realistic_prediction_data
 
         # Act
         response = await prediction_service.predict_single_match(match_id=match_id)
@@ -272,15 +250,11 @@ class TestPredictionServiceCoverage:
                 assert field in response.data
 
     @pytest.mark.asyncio
-    async def test_performance_timing_coverage(
-        self, prediction_service, realistic_prediction_data
-    ):
+    async def test_performance_timing_coverage(self, prediction_service, realistic_prediction_data):
         """测试场景9：性能计时覆盖"""
         # Arrange
         match_id = "performance_test"
-        prediction_service.inference_service.predict.return_value = (
-            realistic_prediction_data
-        )
+        prediction_service.inference_service.predict.return_value = realistic_prediction_data
 
         # Act
         start_time = datetime.now()
@@ -295,20 +269,14 @@ class TestPredictionServiceCoverage:
         assert response_time < 2.0
 
     @pytest.mark.asyncio
-    async def test_metadata_inclusion_coverage(
-        self, prediction_service, realistic_prediction_data
-    ):
+    async def test_metadata_inclusion_coverage(self, prediction_service, realistic_prediction_data):
         """测试场景10：元数据包含覆盖"""
         # Arrange
         match_id = "metadata_test"
-        prediction_service.inference_service.predict.return_value = (
-            realistic_prediction_data
-        )
+        prediction_service.inference_service.predict.return_value = realistic_prediction_data
 
         # Act
-        response = await prediction_service.predict_single_match(
-            match_id=match_id, include_metadata=True
-        )
+        response = await prediction_service.predict_single_match(match_id=match_id, include_metadata=True)
 
         # Assert
         assert response.success is True
@@ -366,15 +334,11 @@ class TestPredictionServiceEdgeCases:
         ]
 
         for malformed_response in malformed_responses:
-            prediction_service.inference_service.predict.return_value = (
-                malformed_response
-            )
+            prediction_service.inference_service.predict.return_value = malformed_response
 
             # Act & Assert - 应该能处理或优雅失败
             try:
-                response = await prediction_service.predict_single_match(
-                    match_id=match_id
-                )
+                response = await prediction_service.predict_single_match(match_id=match_id)
                 # 如果成功响应，检查是否有效
                 if response.success:
                     assert response.data is not None

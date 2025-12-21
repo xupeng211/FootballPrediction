@@ -61,9 +61,7 @@ class TestHealthEndpoint:
             from src.config_unified import ConfigurationError
 
             # 模拟健康检查失败
-            mock_health_check.side_effect = ConfigurationError(
-                "Database connection failed"
-            )
+            mock_health_check.side_effect = ConfigurationError("Database connection failed")
 
             app = FastAPI()
             app.include_router(router, prefix="/health")
@@ -272,9 +270,7 @@ class TestModelManagementEndpoints:
             # 测试模型加载请求
             model_data = {"model_name": "new_model", "model_path": "/path/to/model.pkl"}
 
-            response = client.post(
-                "/models/api/v1/models/reload", json=model_data
-            )  # 修正路由
+            response = client.post("/models/api/v1/models/reload", json=model_data)  # 修正路由
 
             # 应该有响应（成功或失败）
             assert response.status_code in [200, 400, 500]
@@ -354,9 +350,7 @@ class TestAPISchemas:
             from src.api.schemas import PredictionResponse, PredictionRequest
 
             request = PredictionRequest(home_team="A", away_team="B")
-            response = PredictionResponse(
-                success=True, prediction={"predicted_class": 1, "confidence": 0.7}
-            )
+            response = PredictionResponse(success=True, prediction={"predicted_class": 1, "confidence": 0.7})
 
             assert response.success is True
             assert "predicted_class" in response.prediction

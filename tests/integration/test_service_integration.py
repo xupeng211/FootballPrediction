@@ -105,9 +105,7 @@ class TestServiceIntegration:
                         "match_id": "test_match_123",
                         "home_team": "Manchester United",
                         "away_team": "Arsenal",
-                        "kickoff_time": (
-                            datetime.now() + timedelta(hours=24)
-                        ).isoformat(),
+                        "kickoff_time": (datetime.now() + timedelta(hours=24)).isoformat(),
                         "hours_until_kickoff": 24.0,
                         "league": "Premier League",
                         "venue": "Old Trafford",
@@ -227,9 +225,7 @@ class TestServiceIntegration:
     # ========== 基础集成测试 ==========
 
     @pytest.mark.asyncio
-    async def test_single_match_prediction_integration(
-        self, prediction_service, mock_inference_service
-    ):
+    async def test_single_match_prediction_integration(self, prediction_service, mock_inference_service):
         """测试单场比赛预测的完整集成"""
         # 执行预测
         response = await prediction_service.predict_single_match(
@@ -272,9 +268,7 @@ class TestServiceIntegration:
             assert "data_quality" in metadata
 
     @pytest.mark.asyncio
-    async def test_batch_prediction_integration(
-        self, prediction_service, mock_inference_service
-    ):
+    async def test_batch_prediction_integration(self, prediction_service, mock_inference_service):
         """测试批量预测的完整集成"""
         match_ids = ["match_1", "match_2", "match_3"]
 
@@ -324,9 +318,7 @@ class TestServiceIntegration:
             assert "probabilities" in result
 
     @pytest.mark.asyncio
-    async def test_service_health_integration(
-        self, prediction_service, mock_inference_service
-    ):
+    async def test_service_health_integration(self, prediction_service, mock_inference_service):
         """测试服务健康检查集成"""
         response = await prediction_service.get_service_health()
 
@@ -361,9 +353,7 @@ class TestServiceIntegration:
     ):
         """测试从数据收集到预测的完整工作流程"""
         # 1. 模拟数据收集服务获取即将到来的比赛
-        upcoming_data = await mock_collection_service.get_upcoming_matches(
-            hours_ahead=48
-        )
+        upcoming_data = await mock_collection_service.get_upcoming_matches(hours_ahead=48)
         assert upcoming_data["collection_time"] is not None
         assert len(upcoming_data["matches"]) > 0
 
@@ -386,9 +376,7 @@ class TestServiceIntegration:
         # 确保每个比赛都有预测结果
         for match in matches:
             match_id = match["match_id"]
-            prediction_result = next(
-                (r for r in batch_results if r.get("match_id") == match_id), None
-            )
+            prediction_result = next((r for r in batch_results if r.get("match_id") == match_id), None)
             assert prediction_result is not None, f"Missing prediction for {match_id}"
 
             # 验证预测结果包含必要的字段
@@ -403,28 +391,14 @@ class TestServiceIntegration:
             # 比较Elo特征
             if "elo_features" in collection_features:
                 collection_elo = collection_features["elo_features"]
-                assert (
-                    abs(
-                        prediction_features.get("home_elo", 0)
-                        - collection_elo.get("home_elo", 0)
-                    )
-                    < 50
-                )
-                assert (
-                    abs(
-                        prediction_features.get("away_elo", 0)
-                        - collection_elo.get("away_elo", 0)
-                    )
-                    < 50
-                )
+                assert abs(prediction_features.get("home_elo", 0) - collection_elo.get("home_elo", 0)) < 50
+                assert abs(prediction_features.get("away_elo", 0) - collection_elo.get("away_elo", 0)) < 50
 
     @pytest.mark.asyncio
     async def test_real_time_features_integration(self, mock_collection_service):
         """测试实时特征提取的集成"""
         # 获取即将到来的比赛数据
-        upcoming_data = await mock_collection_service.get_upcoming_matches(
-            hours_ahead=24
-        )
+        upcoming_data = await mock_collection_service.get_upcoming_matches(hours_ahead=24)
 
         assert "matches" in upcoming_data
         matches = upcoming_data["matches"]
@@ -444,9 +418,7 @@ class TestServiceIntegration:
                 "market_features",
             ]
             for feature_type in required_features:
-                assert (
-                    feature_type in real_time_features
-                ), f"Missing {feature_type} for {match_id}"
+                assert feature_type in real_time_features, f"Missing {feature_type} for {match_id}"
 
             # 验证特征数据的完整性
             elo_features = real_time_features["elo_features"]
@@ -472,14 +444,10 @@ class TestServiceIntegration:
             assert data_quality["confidence_level"] in ["high", "medium", "low"]
 
     @pytest.mark.asyncio
-    async def test_odds_to_prediction_integration(
-        self, prediction_service, mock_collection_service
-    ):
+    async def test_odds_to_prediction_integration(self, prediction_service, mock_collection_service):
         """测试赔率数据到预测的集成"""
         # 获取包含赔率的比赛数据
-        upcoming_data = await mock_collection_service.get_upcoming_matches(
-            hours_ahead=48
-        )
+        upcoming_data = await mock_collection_service.get_upcoming_matches(hours_ahead=48)
         matches = upcoming_data["matches"]
 
         for match in matches:
@@ -517,9 +485,7 @@ class TestServiceIntegration:
     # ========== 错误处理和降级测试 ==========
 
     @pytest.mark.asyncio
-    async def test_inference_service_failure_handling(
-        self, prediction_service, mock_inference_service
-    ):
+    async def test_inference_service_failure_handling(self, prediction_service, mock_inference_service):
         """测试推理服务失败的处理"""
         # 配置推理服务抛出异常
         mock_inference_service.predict.side_effect = Exception("Model inference failed")
@@ -537,18 +503,14 @@ class TestServiceIntegration:
     async def test_collection_service_failure_handling(self, mock_collection_service):
         """测试数据收集服务失败的处理"""
         # 配置收集服务抛出异常
-        mock_collection_service.get_upcoming_matches.side_effect = Exception(
-            "Data collection failed"
-        )
+        mock_collection_service.get_upcoming_matches.side_effect = Exception("Data collection failed")
 
         # 尝试获取数据
         with pytest.raises(Exception, match="Data collection failed"):
             await mock_collection_service.get_upcoming_matches()
 
     @pytest.mark.asyncio
-    async def test_partial_batch_prediction_failure(
-        self, prediction_service, mock_inference_service
-    ):
+    async def test_partial_batch_prediction_failure(self, prediction_service, mock_inference_service):
         """测试批量预测中部分失败的处理"""
         match_ids = ["match_1", "match_2", "match_3", "match_4", "match_5"]
 
@@ -566,9 +528,7 @@ class TestServiceIntegration:
         mock_inference_service.predict.side_effect = mock_predict_with_failures
 
         # 执行批量预测
-        response = await prediction_service.predict_batch_matches(
-            match_ids, max_concurrent=3
-        )
+        response = await prediction_service.predict_batch_matches(match_ids, max_concurrent=3)
 
         # 验证部分成功处理
         assert response.success is True  # 批量操作本身成功
@@ -586,9 +546,7 @@ class TestServiceIntegration:
         assert "match_4" in error_match_ids
 
     @pytest.mark.asyncio
-    async def test_service_timeout_handling(
-        self, prediction_service, mock_inference_service
-    ):
+    async def test_service_timeout_handling(self, prediction_service, mock_inference_service):
         """测试服务超时处理"""
         import asyncio
 
@@ -613,9 +571,7 @@ class TestServiceIntegration:
     # ========== 性能和并发测试 ==========
 
     @pytest.mark.asyncio
-    async def test_concurrent_prediction_performance(
-        self, prediction_service, mock_inference_service
-    ):
+    async def test_concurrent_prediction_performance(self, prediction_service, mock_inference_service):
         """测试并发预测性能"""
         match_ids = [f"match_{i}" for i in range(20)]
 
@@ -649,19 +605,13 @@ class TestServiceIntegration:
             assert response.data["successful_count"] == len(match_ids)
 
             # 验证性能提升
-            expected_max_time = (
-                len(match_ids) / max_concurrent
-            ) * 0.02  # 20ms + buffer
+            expected_max_time = (len(match_ids) / max_concurrent) * 0.02  # 20ms + buffer
             assert duration < expected_max_time + 1  # 允许1秒缓冲
 
-            print(
-                f"Concurrent {max_concurrent}: {duration:.2f}s for {len(match_ids)} predictions"
-            )
+            print(f"Concurrent {max_concurrent}: {duration:.2f}s for {len(match_ids)} predictions")
 
     @pytest.mark.asyncio
-    async def test_memory_usage_during_batch_processing(
-        self, prediction_service, mock_inference_service
-    ):
+    async def test_memory_usage_during_batch_processing(self, prediction_service, mock_inference_service):
         """测试批量处理时的内存使用"""
         import psutil
         import os
@@ -679,9 +629,7 @@ class TestServiceIntegration:
                 "prediction": "HOME_WIN",
                 "probabilities": {"home_win": 0.6, "draw": 0.25, "away_win": 0.15},
                 "confidence": 0.75,
-                "features": {
-                    f"feature_{i}": i * 0.1 for i in range(1000)
-                },  # 1000个特征
+                "features": {f"feature_{i}": i * 0.1 for i in range(1000)},  # 1000个特征
             }
 
         mock_inference_service.predict.side_effect = memory_heavy_predict
@@ -708,9 +656,7 @@ class TestServiceIntegration:
     async def test_feature_consistency_across_services(self, mock_collection_service):
         """测试跨服务特征一致性"""
         # 获取即将到来的比赛数据
-        upcoming_data = await mock_collection_service.get_upcoming_matches(
-            hours_ahead=48
-        )
+        upcoming_data = await mock_collection_service.get_upcoming_matches(hours_ahead=48)
         matches = upcoming_data["matches"]
 
         for match in matches:
@@ -732,26 +678,19 @@ class TestServiceIntegration:
             assert abs(prob_sum - 100) < 1.0  # 允许1%的误差
 
             # 验证预期进球数的合理性
-            expected_total = (
-                poisson_features["expected_home_goals"]
-                + poisson_features["expected_away_goals"]
-            )
+            expected_total = poisson_features["expected_home_goals"] + poisson_features["expected_away_goals"]
             assert 1.0 <= expected_total <= 5.0  # 合理的进球数范围
 
             # 验证历史交锋特征
             h2h_features = features["h2h_features"]
             last_5_total = (
-                h2h_features["home_wins_last_5"]
-                + h2h_features["away_wins_last_5"]
-                + h2h_features["draws_last_5"]
+                h2h_features["home_wins_last_5"] + h2h_features["away_wins_last_5"] + h2h_features["draws_last_5"]
             )
             assert last_5_total == 5  # 最近5场比赛总和应该是5
 
             # 验证主客场特征
             venue_features = features["venue_features"]
-            assert (
-                0 <= venue_features["home_advantage_score"] <= 1.0
-            )  # 优势分数在0-1之间
+            assert 0 <= venue_features["home_advantage_score"] <= 1.0  # 优势分数在0-1之间
 
             # 验证市场特征
             market_features = features["market_features"]
@@ -762,9 +701,7 @@ class TestServiceIntegration:
     @pytest.mark.asyncio
     async def test_data_quality_validation(self, mock_collection_service):
         """测试数据质量验证"""
-        upcoming_data = await mock_collection_service.get_upcoming_matches(
-            hours_ahead=48
-        )
+        upcoming_data = await mock_collection_service.get_upcoming_matches(hours_ahead=48)
 
         # 验证整体数据质量
         assert "summary" in upcoming_data
@@ -811,9 +748,7 @@ class TestServiceIntegration:
         """测试端到端预测工作流程"""
         # 1. 数据收集阶段
         collection_start = time.time()
-        upcoming_data = await mock_collection_service.get_upcoming_matches(
-            hours_ahead=48
-        )
+        upcoming_data = await mock_collection_service.get_upcoming_matches(hours_ahead=48)
         collection_time = time.time() - collection_start
 
         assert upcoming_data["summary"]["data_collection_status"] == "success"
@@ -828,8 +763,7 @@ class TestServiceIntegration:
                 match.get("match_id")
                 and match.get("home_team")
                 and match.get("away_team")
-                and match.get("data_quality", {}).get("confidence_level")
-                in ["high", "medium"]
+                and match.get("data_quality", {}).get("confidence_level") in ["high", "medium"]
             ):
                 valid_matches.append(match)
 
@@ -883,9 +817,7 @@ class TestServiceIntegration:
     # ========== 服务健康和监控测试 ==========
 
     @pytest.mark.asyncio
-    async def test_service_health_monitoring(
-        self, prediction_service, mock_inference_service
-    ):
+    async def test_service_health_monitoring(self, prediction_service, mock_inference_service):
         """测试服务健康监控"""
         # 获取预测服务健康状态
         health_response = await prediction_service.get_service_health()
@@ -918,16 +850,12 @@ class TestServiceIntegration:
         assert "error" in health_data["inference_service"]
 
     @pytest.mark.asyncio
-    async def test_service_metrics_collection(
-        self, prediction_service, mock_inference_service
-    ):
+    async def test_service_metrics_collection(self, prediction_service, mock_inference_service):
         """测试服务指标收集"""
         # 执行多次预测以生成指标
         match_ids = [f"metrics_test_{i}" for i in range(10)]
 
-        await prediction_service.predict_batch_matches(
-            match_ids=match_ids, include_features=True, max_concurrent=3
-        )
+        await prediction_service.predict_batch_matches(match_ids=match_ids, include_features=True, max_concurrent=3)
 
         # 验证推理服务调用次数
         assert mock_inference_service.predict.call_count == len(match_ids)
@@ -959,9 +887,7 @@ class TestServiceIntegrationEdgeCases:
         assert len(batch_data["results"]) == 0
 
     @pytest.mark.asyncio
-    async def test_large_batch_prediction(
-        self, prediction_service, mock_inference_service
-    ):
+    async def test_large_batch_prediction(self, prediction_service, mock_inference_service):
         """测试大批量预测"""
         # 创建大量比赛ID
         match_ids = [f"large_batch_{i}" for i in range(100)]
@@ -976,9 +902,7 @@ class TestServiceIntegrationEdgeCases:
 
         # 执行大批量预测
         start_time = time.time()
-        response = await prediction_service.predict_batch_matches(
-            match_ids=match_ids, max_concurrent=20
-        )
+        response = await prediction_service.predict_batch_matches(match_ids=match_ids, max_concurrent=20)
         duration = time.time() - start_time
 
         # 验证结果
@@ -1011,9 +935,7 @@ class TestServiceIntegrationEdgeCases:
             await service.initialize()
 
     @pytest.mark.asyncio
-    async def test_network_simulation_delays(
-        self, prediction_service, mock_inference_service
-    ):
+    async def test_network_simulation_delays(self, prediction_service, mock_inference_service):
         """测试网络延迟模拟"""
         import random
 
@@ -1034,9 +956,7 @@ class TestServiceIntegrationEdgeCases:
         match_ids = [f"delay_test_{i}" for i in range(10)]
         start_time = time.time()
 
-        response = await prediction_service.predict_batch_matches(
-            match_ids=match_ids, max_concurrent=5
-        )
+        response = await prediction_service.predict_batch_matches(match_ids=match_ids, max_concurrent=5)
 
         duration = time.time() - start_time
 

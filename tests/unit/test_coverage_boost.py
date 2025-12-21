@@ -39,9 +39,7 @@ class TestInferenceServiceCoverage:
         )
 
         # 测试PredictionRequest
-        request = PredictionRequest(
-            match_id="123", home_team="Team A", away_team="Team B", use_cache=False
-        )
+        request = PredictionRequest(match_id="123", home_team="Team A", away_team="Team B", use_cache=False)
         assert request.match_id == "123"
         assert request.home_team == "Team A"
         assert request.away_team == "Team B"
@@ -53,9 +51,7 @@ class TestInferenceServiceCoverage:
         assert request_dict["home_team"] == "Team A"
 
         # 测试PredictionResponse
-        response = PredictionResponse(
-            request=request, prediction={"test": "data"}, success=True
-        )
+        response = PredictionResponse(request=request, prediction={"test": "data"}, success=True)
         assert response.request == request
         assert response.success is True
 

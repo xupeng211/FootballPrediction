@@ -77,9 +77,7 @@ class TestInferenceServiceEnhanced:
 
     @patch("src.services.dependency_injection.ServiceContainer")
     @patch("src.services.inference_service.Path.exists")
-    async def test_inference_service_async_initialization(
-        self, mock_path_exists, mock_container_class
-    ):
+    async def test_inference_service_async_initialization(self, mock_path_exists, mock_container_class):
         """测试推理服务的异步初始化"""
         from src.services.inference_service import InferenceService
 
@@ -225,9 +223,7 @@ class TestInferenceServiceEnhanced:
         mock_container_class.return_value = mock_container
 
         # Mock特征提取失败
-        mock_services["feature_extractor"].extract_features.side_effect = Exception(
-            "Feature extraction failed"
-        )
+        mock_services["feature_extractor"].extract_features.side_effect = Exception("Feature extraction failed")
 
         # 创建并初始化服务
         service = InferenceService()

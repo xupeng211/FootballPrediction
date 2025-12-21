@@ -35,6 +35,7 @@
 ├── context_lock.skill.md            # 核心模块冻结
 ├── change_impact.skill.md           # 变更影响分析
 ├── CLAUDE.md                        # 项目级上下文（位于根目录）
+├── mcp-config.json                  # MCP服务器配置
 ├── settings.local.json              # 本地工具权限
 └── README.md                        # 本文件
 ```
@@ -384,7 +385,53 @@ To add a new skill:
 
 ---
 
+## 🤖 MCP (Model Context Protocol) 服务器配置
+
+本项目已启用最小权限、工程导向的 MCP 服务器，用于后端开发、测试与运维辅助。
+
+### 已启用 MCP 列表
+
+| MCP 服务器 | 权限级别 | 允许行为 | 禁止行为 |
+|-----------|----------|----------|----------|
+| **postgres** | READ-ONLY | SELECT / DESCRIBE / EXPLAIN | INSERT / UPDATE / DELETE / DDL |
+| **filesystem** | PROJECT ROOT | 读 / diff / 受控写 | 访问 home / root / 系统目录 |
+| **git** | READ-ONLY | commit history / diff / blame | commit / push / reset / rebase |
+| **pytest** | RESTRICTED | 运行 pytest / 列出测试 | 修改测试 / 运行任意 shell 命令 |
+| **docker** | READ-ONLY | docker compose ps / logs | build / push / prune / 文件访问 |
+
+### 人工介入边界
+
+**必须人工确认的情况：**
+1. 任何可能导致生产环境数据修改的操作
+2. 超出 MCP 权限范围的系统变更请求
+3. 测试执行失败时的源码修复决策
+4. 数据库结构变更或数据迁移操作
+5. Docker 容器重建或配置修改
+
+**MCP 自动化范围：**
+1. ✅ 代码文件只读分析和差异检查
+2. ✅ 测试用例执行和结果收集
+3. ✅ 数据库只读查询和性能分析
+4. ✅ Git 历史查询和代码审计
+5. ✅ Docker 服务状态监控
+
+### 重要声明
+
+**MCP 不拥有生产环境控制权。**
+- 所有 MCP 服务器均在严格权限限制下运行
+- 禁止任何不可逆或高风险自动化操作
+- 单人开发模式下，MCP 仅作为"能力补充"，不执行"系统接管"
+- 遵循最小权限原则（Least Privilege）
+
+### MCP 配置文件
+
+- 主配置：`.claude/mcp-config.json`
+- 实现文件：`mcp_servers/` 目录
+- 严格与 Claude Skills 约束兼容
+
+---
+
 **记住：约束体系的目的是保护系统，而不是限制创新。合理的约束带来更高的开发效率和更好的系统质量。**
 
-最后更新：2025-01-20
-版本：v1.0
+最后更新：2025-12-21
+版本：v1.1 (新增 MCP 配置)

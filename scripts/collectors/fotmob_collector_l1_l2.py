@@ -33,6 +33,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class CollectionStats:
     """采集统计信息"""
+
     l1_matches_found: int = 0
     l1_matches_saved: int = 0
     l2_attempts: int = 0
@@ -110,10 +111,7 @@ class FotMobL1L2Collector:
         # 初始化数据库连接池
         if not self.db_pool:
             self.db_pool = await asyncpg.create_pool(
-                settings.database.get_connection_string(),
-                min_size=2,
-                max_size=10,
-                command_timeout=60
+                settings.database.get_connection_string(), min_size=2, max_size=10, command_timeout=60
             )
 
         # 初始化L2并发控制信号量
@@ -322,7 +320,7 @@ class FotMobL1L2Collector:
                         first_item = value[0]
                         if isinstance(first_item, dict):
                             # 检查是否包含比赛关键字段
-                            if any(key in first_item for key in ['id', 'matchId', 'homeTeam', 'awayTeam']):
+                            if any(key in first_item for key in ["id", "matchId", "homeTeam", "awayTeam"]):
                                 matches.extend(value)
                                 break
 
@@ -354,36 +352,22 @@ class FotMobL1L2Collector:
             home_team = match.get("homeTeam", {})
             away_team = match.get("awayTeam", {})
 
-            home_team_name = (
-                home_team.get("name") or
-                home_team.get("shortName") or
-                str(home_team.get("id", ""))
-            )
-            away_team_name = (
-                away_team.get("name") or
-                away_team.get("shortName") or
-                str(away_team.get("id", ""))
-            )
+            home_team_name = home_team.get("name") or home_team.get("shortName") or str(home_team.get("id", ""))
+            away_team_name = away_team.get("name") or away_team.get("shortName") or str(away_team.get("id", ""))
 
             if not home_team_name or not away_team_name:
                 return None
 
             # 提取联赛信息
             tournament = match.get("tournament", {})
-            league_name = (
-                tournament.get("name") or
-                tournament.get("leagueName") or
-                "Unknown League"
-            )
+            league_name = tournament.get("name") or tournament.get("leagueName") or "Unknown League"
 
             # 解析比赛时间
             match_time = None
             start_time = match.get("startTime") or match.get("utcTime")
             if start_time:
                 try:
-                    match_time = datetime.fromisoformat(
-                        start_time.replace("Z", "+00:00")
-                    )
+                    match_time = datetime.fromisoformat(start_time.replace("Z", "+00:00"))
                 except ValueError:
                     logger.warning(f"⚠️ 时间格式解析失败: {start_time}")
 
@@ -454,7 +438,7 @@ class FotMobL1L2Collector:
                         match["venue_name"],
                         match["result_score"],
                         match.get("round_info"),
-                        datetime.now()
+                        datetime.now(),
                     )
 
                     logger.info(f"✅ L1索引保存成功: {match['home_team']} vs {match['away_team']}")
@@ -624,7 +608,7 @@ class FotMobL1L2Collector:
             "successful": successful,
             "failed": failed,
             "total": len(match_ids),
-            "success_rate": round(successful / len(match_ids) * 100, 2) if match_ids else 0
+            "success_rate": round(successful / len(match_ids) * 100, 2) if match_ids else 0,
         }
 
     async def _collect_and_save_l2(self, match_id: str) -> bool:
@@ -657,7 +641,7 @@ class FotMobL1L2Collector:
 
         try:
             async with self.db_pool.acquire() as conn:
-                placeholders = ','.join([f'${i+2}' for i in range(len(match_ids))])
+                placeholders = ",".join([f"${i+2}" for i in range(len(match_ids))])
                 query = f"""
                     UPDATE matches
                     SET collection_status = $1, updated_at = NOW()
@@ -772,9 +756,7 @@ class FotMobL1L2Collector:
             logger.error(f"❌ 批量处理失败: {e}")
             return {"error": str(e), "date": date_str}
 
-    async def process_date_range(
-        self, start_date: str, end_date: str
-    ) -> List[Dict[str, Any]]:
+    async def process_date_range(self, start_date: str, end_date: str) -> List[Dict[str, Any]]:
         """
         处理日期范围
 
@@ -814,13 +796,9 @@ class FotMobL1L2Collector:
             "l2_attempts": self.stats.l2_attempts,
             "l2_successful": self.stats.l2_successful,
             "l2_failed": self.stats.l2_failed,
-            "l2_success_rate": (
-                round(self.stats.l2_successful / max(self.stats.l2_attempts, 1) * 100, 2)
-            ),
+            "l2_success_rate": (round(self.stats.l2_successful / max(self.stats.l2_attempts, 1) * 100, 2)),
             "total_bytes_saved": self.stats.total_bytes_saved,
-            "avg_data_size_per_match": (
-                round(self.stats.total_bytes_saved / max(self.stats.l2_successful, 1), 2)
-            ),
+            "avg_data_size_per_match": (round(self.stats.total_bytes_saved / max(self.stats.l2_successful, 1), 2)),
         }
 
     def _log_stats(self):
@@ -834,6 +812,7 @@ class FotMobL1L2Collector:
 # ===============================================================
 # 高阶数据解析功能
 # ===============================================================
+
 
 class AdvancedDataParser:
     """高阶数据解析器 - 用于解析L2原始JSON数据"""
@@ -907,7 +886,7 @@ class AdvancedDataParser:
                     home_lineup = lineup["home"]
                     lineup_data["home_lineup"] = {
                         "formation": home_lineup.get("formation", ""),
-                        "players": home_lineup.get("players", [])
+                        "players": home_lineup.get("players", []),
                     }
 
                 # 客队阵容
@@ -915,12 +894,11 @@ class AdvancedDataParser:
                     away_lineup = lineup["away"]
                     lineup_data["away_lineup"] = {
                         "formation": away_lineup.get("formation", ""),
-                        "players": away_lineup.get("players", [])
+                        "players": away_lineup.get("players", []),
                     }
 
             # 检查是否有有效的阵容数据
-            if (lineup_data["home_lineup"].get("players") or
-                lineup_data["away_lineup"].get("players")):
+            if lineup_data["home_lineup"].get("players") or lineup_data["away_lineup"].get("players"):
                 return lineup_data
 
             return None
@@ -964,7 +942,7 @@ class AdvancedDataParser:
                                 "title": stat_title,
                                 "home": home_value,
                                 "away": away_value,
-                                "diff": home_value - away_value
+                                "diff": home_value - away_value,
                             }
 
             return stats_data if stats_data else None
@@ -990,7 +968,7 @@ class AdvancedDataParser:
             "xg_data": None,
             "lineup_data": None,
             "match_stats": None,
-            "parse_status": "success"
+            "parse_status": "success",
         }
 
         try:
@@ -1004,7 +982,9 @@ class AdvancedDataParser:
             result["match_stats"] = AdvancedDataParser.parse_match_stats(raw_data)
 
             # 统计解析结果
-            parsed_sections = sum(1 for data in [result["xg_data"], result["lineup_data"], result["match_stats"]] if data)
+            parsed_sections = sum(
+                1 for data in [result["xg_data"], result["lineup_data"], result["match_stats"]] if data
+            )
             result["parsed_sections"] = parsed_sections
             result["total_sections"] = 3
 
@@ -1022,6 +1002,7 @@ class AdvancedDataParser:
 # 便捷函数
 # ===============================================================
 
+
 async def create_fotmob_l1_l2_collector(**kwargs) -> FotMobL1L2Collector:
     """创建FotMob L1/L2采集器实例"""
     return FotMobL1L2Collector(**kwargs)
@@ -1031,13 +1012,11 @@ async def create_fotmob_l1_l2_collector(**kwargs) -> FotMobL1L2Collector:
 # 主函数示例
 # ===============================================================
 
+
 async def main():
     """主函数：演示正规化L1/L2采集流程"""
     # 配置日志
-    logging.basicConfig(
-        level=logging.INFO,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-    )
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 
     try:
         # 创建采集器（带L2并发控制）
@@ -1076,44 +1055,46 @@ async def main():
                 demo_match_id = first_5_match_ids[0]
                 async with collector.db_pool.acquire() as conn:
                     row = await conn.fetchrow(
-                        "SELECT raw_data FROM raw_match_data WHERE external_id = $1",
-                        demo_match_id
+                        "SELECT raw_data FROM raw_match_data WHERE external_id = $1", demo_match_id
                     )
                     if row:
                         raw_data = json.loads(row["raw_data"])
                         parser_result = AdvancedDataParser.comprehensive_parse(raw_data)
 
-                        print("\n" + "="*60)
+                        print("\n" + "=" * 60)
                         print("🧠 高阶解析演示结果")
-                        print("="*60)
+                        print("=" * 60)
                         print(f"比赛ID: {parser_result['match_id']}")
                         print(f"解析状态: {parser_result['parse_status']}")
-                        print(f"解析成功部分: {parser_result.get('parsed_sections', 0)}/{parser_result.get('total_sections', 3)}")
+                        print(
+                            f"解析成功部分: {parser_result.get('parsed_sections', 0)}/{parser_result.get('total_sections', 3)}"
+                        )
 
-                        if parser_result.get('xg_data'):
+                        if parser_result.get("xg_data"):
                             print(f"\n📊 xG数据: {parser_result['xg_data']}")
-                        if parser_result.get('lineup_data'):
-                            home_formation = parser_result['lineup_data'].get('home_lineup', {}).get('formation', '')
-                            away_formation = parser_result['lineup_data'].get('away_lineup', {}).get('formation', '')
+                        if parser_result.get("lineup_data"):
+                            home_formation = parser_result["lineup_data"].get("home_lineup", {}).get("formation", "")
+                            away_formation = parser_result["lineup_data"].get("away_lineup", {}).get("formation", "")
                             print(f"👥 阵容: 主队 {home_formation} vs 客队 {away_formation}")
-                        if parser_result.get('match_stats'):
-                            stats_count = len(parser_result['match_stats'])
+                        if parser_result.get("match_stats"):
+                            stats_count = len(parser_result["match_stats"])
                             print(f"📈 比赛统计: {stats_count} 项数据")
 
             # 5. 输出完整统计
-            print("\n" + "="*60)
+            print("\n" + "=" * 60)
             print("📊 正规化采集系统统计报告")
-            print("="*60)
+            print("=" * 60)
             stats = collector.get_stats()
             for key, value in stats.items():
                 print(f"{key:25} : {value}")
-            print("="*60)
+            print("=" * 60)
 
             logger.info("🎉 正规化采集系统演示完成！")
 
     except Exception as e:
         logger.error(f"❌ 主函数执行失败: {e}")
         import traceback
+
         traceback.print_exc()
         return 1
 
@@ -1122,4 +1103,5 @@ async def main():
 
 if __name__ == "__main__":
     import sys
+
     sys.exit(asyncio.run(main()))

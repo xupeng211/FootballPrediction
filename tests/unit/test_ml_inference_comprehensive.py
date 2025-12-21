@@ -44,9 +44,7 @@ class TestModelLoaderCore:
         from src.ml.inference.model_loader import ModelLoader
 
         with tempfile.TemporaryDirectory() as temp_dir:
-            loader = ModelLoader(
-                model_cache_dir=temp_dir, enable_hot_reload=False, reload_interval=60
-            )
+            loader = ModelLoader(model_cache_dir=temp_dir, enable_hot_reload=False, reload_interval=60)
 
             assert loader.model_cache_dir == Path(temp_dir)
             assert loader.enable_hot_reload is False
@@ -349,9 +347,7 @@ class TestMatchPredictorCore:
 
         model_loader = ModelLoader()
         cache_manager = PredictionCache(default_ttl=1800)
-        predictor = MatchPredictor(
-            model_loader, cache_manager, default_model_name="custom_model"
-        )
+        predictor = MatchPredictor(model_loader, cache_manager, default_model_name="custom_model")
 
         assert predictor.cache_manager == cache_manager
         assert predictor.default_model_name == "custom_model"
@@ -415,9 +411,7 @@ class TestMatchPredictorCore:
         from src.ml.inference.model_loader import ModelLoader
 
         predictor = MatchPredictor(ModelLoader())
-        df = pd.DataFrame(
-            [[1.0, 2.5, -3.2, 0.0, 4.1]], columns=["f1", "f2", "f3", "f4", "f5"]
-        )
+        df = pd.DataFrame([[1.0, 2.5, -3.2, 0.0, 4.1]], columns=["f1", "f2", "f3", "f4", "f5"])
 
         result = predictor._convert_features_to_list(df)
 

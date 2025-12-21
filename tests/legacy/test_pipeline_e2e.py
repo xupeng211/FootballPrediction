@@ -118,9 +118,7 @@ def sample_team_stats():
 @pytest.mark.asyncio
 @pytest.mark.integration
 @pytest.mark.e2e
-async def test_full_prediction_pipeline(
-    temp_dir, sample_historical_data, sample_team_stats
-):
+async def test_full_prediction_pipeline(temp_dir, sample_historical_data, sample_team_stats):
     """
     完整的预测流水线测试
 
@@ -208,9 +206,7 @@ async def test_full_prediction_pipeline(
         )
 
         # 运行训练流水线
-        metrics = await pipeline.run_pipeline(
-            dataset_path=str(dataset_path), model_output_path=str(model_path)
-        )
+        metrics = await pipeline.run_pipeline(dataset_path=str(dataset_path), model_output_path=str(model_path))
 
         logger.info(f"模型训练完成，准确率: {metrics.get('test_accuracy', 0):.3f}")
         assert metrics.get("test_accuracy", 0) > 0, "模型准确率应该大于0"
@@ -237,18 +233,14 @@ async def test_full_prediction_pipeline(
 
         # 验证概率和为1（允许小误差）
         prob_sum = (
-            prediction_result["away_win_prob"]
-            + prediction_result["draw_prob"]
-            + prediction_result["home_win_prob"]
+            prediction_result["away_win_prob"] + prediction_result["draw_prob"] + prediction_result["home_win_prob"]
         )
         assert abs(prob_sum - 1.0) < 0.01, f"概率和应该接近1.0，实际为: {prob_sum}"
 
         # 验证概率在合理范围内
         for prob_key in ["away_win_prob", "draw_prob", "home_win_prob"]:
             prob = prediction_result[prob_key]
-            assert (
-                0.0 <= prob <= 1.0
-            ), f"概率 {prob_key} 应该在[0,1]范围内，实际为: {prob}"
+            assert 0.0 <= prob <= 1.0, f"概率 {prob_key} 应该在[0,1]范围内，实际为: {prob}"
 
         # 步骤5: 测试预测器的其他功能
         logger.info("步骤5: 测试预测器功能")
@@ -265,9 +257,7 @@ async def test_full_prediction_pipeline(
 
         # 再次预测（测试不同接口）
         prediction_result_2 = predictor.predict(feature_set.feature_vector)
-        assert (
-            "predicted_outcome" in prediction_result_2
-        ), "预测结果应该包含预测结果描述"
+        assert "predicted_outcome" in prediction_result_2, "预测结果应该包含预测结果描述"
 
         logger.info("端到端流水线测试完成！")
 
@@ -287,9 +277,7 @@ async def test_full_prediction_pipeline(
 
 @pytest.mark.asyncio
 @pytest.mark.integration
-async def test_feature_extractor_standalone(
-    temp_dir, sample_historical_data, sample_team_stats
-):
+async def test_feature_extractor_standalone(temp_dir, sample_historical_data, sample_team_stats):
     """
     独立测试特征提取器
     """
@@ -308,9 +296,7 @@ async def test_feature_extractor_standalone(
         "season": "2024",
     }
 
-    feature_set = await feature_extractor.extract_features(
-        test_match, sample_historical_data, sample_team_stats
-    )
+    feature_set = await feature_extractor.extract_features(test_match, sample_historical_data, sample_team_stats)
 
     # 验证特征集
     assert feature_set.match_id == 123
@@ -414,9 +400,7 @@ async def test_minimal_pipeline_smoke():
             "season": "2024",
         }
 
-        feature_set = await feature_extractor.extract_features(
-            test_match, minimal_matches
-        )
+        feature_set = await feature_extractor.extract_features(test_match, minimal_matches)
         logger.info("✅ 特征提取成功")
 
         assert len(feature_set.features) > 0, "应该提取到特征"

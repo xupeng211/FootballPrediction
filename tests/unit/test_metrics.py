@@ -57,18 +57,8 @@ class TestMetricsManager:
         counter.labels(model_name="xgboost_v2", prediction_type="batch").inc(5)
 
         # 验证计数器值
-        assert (
-            counter.labels(
-                model_name="xgboost_v2", prediction_type="single"
-            )._value.get()
-            == 1.0
-        )
-        assert (
-            counter.labels(
-                model_name="xgboost_v2", prediction_type="batch"
-            )._value.get()
-            == 5.0
-        )
+        assert counter.labels(model_name="xgboost_v2", prediction_type="single")._value.get() == 1.0
+        assert counter.labels(model_name="xgboost_v2", prediction_type="batch")._value.get() == 5.0
 
     def test_model_inference_latency_histogram(self):
         """测试模型推理延迟直方图"""
@@ -98,20 +88,9 @@ class TestMetricsManager:
         counter.labels(model_name="neural_net", result_type="correct").inc(3)
 
         # 验证计数
-        assert (
-            counter.labels(model_name="xgboost_v2", result_type="correct")._value.get()
-            == 1.0
-        )
-        assert (
-            counter.labels(
-                model_name="xgboost_v2", result_type="incorrect"
-            )._value.get()
-            == 1.0
-        )
-        assert (
-            counter.labels(model_name="neural_net", result_type="correct")._value.get()
-            == 3.0
-        )
+        assert counter.labels(model_name="xgboost_v2", result_type="correct")._value.get() == 1.0
+        assert counter.labels(model_name="xgboost_v2", result_type="incorrect")._value.get() == 1.0
+        assert counter.labels(model_name="neural_net", result_type="correct")._value.get() == 3.0
 
     def test_data_collection_counter(self):
         """测试数据收集计数器"""
@@ -124,14 +103,9 @@ class TestMetricsManager:
         counter.labels(data_source="odds_portal", status="success").inc(5)
 
         # 验证计数
-        assert (
-            counter.labels(data_source="fotmob", status="success")._value.get() == 1.0
-        )
+        assert counter.labels(data_source="fotmob", status="success")._value.get() == 1.0
         assert counter.labels(data_source="fotmob", status="error")._value.get() == 2.0
-        assert (
-            counter.labels(data_source="odds_portal", status="success")._value.get()
-            == 5.0
-        )
+        assert counter.labels(data_source="odds_portal", status="success")._value.get() == 5.0
 
     def test_feature_computation_latency_histogram(self):
         """测试特征计算延迟直方图"""
@@ -161,26 +135,16 @@ class TestMetricsManager:
         counter.labels(cache_type="features", operation="set").inc(5)
 
         # 验证计数
-        assert (
-            counter.labels(cache_type="prediction", operation="hit")._value.get()
-            == 10.0
-        )
-        assert (
-            counter.labels(cache_type="prediction", operation="miss")._value.get()
-            == 3.0
-        )
-        assert (
-            counter.labels(cache_type="features", operation="set")._value.get() == 5.0
-        )
+        assert counter.labels(cache_type="prediction", operation="hit")._value.get() == 10.0
+        assert counter.labels(cache_type="prediction", operation="miss")._value.get() == 3.0
+        assert counter.labels(cache_type="features", operation="set")._value.get() == 5.0
 
     def test_generate_metrics_output(self):
         """测试指标数据生成"""
         manager = MetricsManager()
 
         # 添加一些指标数据
-        manager.prediction_requests_total.labels(
-            model_name="test_model", prediction_type="single"
-        ).inc()
+        manager.prediction_requests_total.labels(model_name="test_model", prediction_type="single").inc()
 
         # 生成指标数据
         metrics_output = manager.generate_metrics()
@@ -231,9 +195,7 @@ class TestGlobalMetrics:
         from src.core.metrics import prediction_requests_total, model_inference_latency
 
         # 使用全局指标
-        prediction_requests_total.labels(
-            model_name="global_test", prediction_type="batch"
-        ).inc()
+        prediction_requests_total.labels(model_name="global_test", prediction_type="batch").inc()
 
         model_inference_latency.labels(model_name="global_test").observe(0.025)  # 25ms
 
@@ -259,9 +221,7 @@ class TestMetricsIntegration:
         # 模拟预测请求
         def simulate_prediction_request(model_name: str, prediction_type: str):
             # 记录请求开始
-            prediction_requests_total.labels(
-                model_name=model_name, prediction_type=prediction_type
-            ).inc()
+            prediction_requests_total.labels(model_name=model_name, prediction_type=prediction_type).inc()
 
             # 模拟推理延迟
             start_time = time.time()
@@ -269,32 +229,22 @@ class TestMetricsIntegration:
             inference_time = time.time() - start_time
 
             # 记录推理延迟
-            model_inference_latency.labels(model_name=model_name).observe(
-                inference_time
-            )
+            model_inference_latency.labels(model_name=model_name).observe(inference_time)
 
             # 模拟缓存命中/未命中
             if prediction_type == "single":
-                cache_operations_total.labels(
-                    cache_type="prediction", operation="hit"
-                ).inc()
+                cache_operations_total.labels(cache_type="prediction", operation="hit").inc()
             else:
-                cache_operations_total.labels(
-                    cache_type="prediction", operation="miss"
-                ).inc()
+                cache_operations_total.labels(cache_type="prediction", operation="miss").inc()
 
             # 模拟预测结果
             import random
 
             if random.random() > 0.3:  # 70%准确率
-                prediction_accuracy_total.labels(
-                    model_name=model_name, result_type="correct"
-                ).inc()
+                prediction_accuracy_total.labels(model_name=model_name, result_type="correct").inc()
                 return True
             else:
-                prediction_accuracy_total.labels(
-                    model_name=model_name, result_type="incorrect"
-                ).inc()
+                prediction_accuracy_total.labels(model_name=model_name, result_type="incorrect").inc()
                 return False
 
         # 执行多个预测请求
@@ -321,9 +271,7 @@ class TestMetricsIntegration:
         def increment_counter(thread_id: int):
             """在多个线程中递增计数器"""
             for i in range(100):
-                prediction_requests_total.labels(
-                    model_name=f"model_{thread_id}", prediction_type="thread_test"
-                ).inc()
+                prediction_requests_total.labels(model_name=f"model_{thread_id}", prediction_type="thread_test").inc()
 
         # 创建多个线程
         threads = []
@@ -357,9 +305,9 @@ class TestMetricsIntegration:
 
         # 创建大量指标观察
         for i in range(1000):
-            feature_computation_latency.labels(
-                feature_type=f"feature_{i % 10}"  # 循环使用10种特征类型
-            ).observe(0.1 + i * 0.001)
+            feature_computation_latency.labels(feature_type=f"feature_{i % 10}").observe(  # 循环使用10种特征类型
+                0.1 + i * 0.001
+            )
 
         # 检查内存增长
         final_memory = process.memory_info().rss / 1024 / 1024  # MB

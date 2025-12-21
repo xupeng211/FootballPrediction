@@ -29,38 +29,37 @@ class TestFeatureExtractorCoverage:
     def sample_match_data(self):
         """示例比赛数据"""
         return {
-            'content': {
-                'stats': {
-                    'Periods': {
-                        'All': {
-                            'stats': [{
-                                'key': 'top_stats',
-                                'stats': [
-                                    {'key': 'expected_goals', 'stats': [1.5, 0.8]},
-                                    {'key': 'BallPossesion', 'stats': [55, 45]},
-                                    {'key': 'CornerKicks', 'stats': [7, 3]},
-                                    {'key': 'YellowCards', 'stats': [2, 4]},
-                                    {'key': 'Shots', 'stats': [12, 15]}
-                                ]
-                            }]
+            "content": {
+                "stats": {
+                    "Periods": {
+                        "All": {
+                            "stats": [
+                                {
+                                    "key": "top_stats",
+                                    "stats": [
+                                        {"key": "expected_goals", "stats": [1.5, 0.8]},
+                                        {"key": "BallPossesion", "stats": [55, 45]},
+                                        {"key": "CornerKicks", "stats": [7, 3]},
+                                        {"key": "YellowCards", "stats": [2, 4]},
+                                        {"key": "Shots", "stats": [12, 15]},
+                                    ],
+                                }
+                            ]
                         }
                     }
                 }
             },
-            'general': {
-                'homeTeam': {'name': 'Manchester United'},
-                'awayTeam': {'name': 'Liverpool'}
-            }
+            "general": {"homeTeam": {"name": "Manchester United"}, "awayTeam": {"name": "Liverpool"}},
         }
 
     def test_extractor_initialization(self, extractor):
         """测试提取器初始化"""
         assert extractor is not None
-        assert hasattr(extractor, 'extract_complete_features')
+        assert hasattr(extractor, "extract_complete_features")
 
     def test_complete_feature_extraction(self, extractor, sample_match_data):
         """测试完整特征提取"""
-        features = extractor.extract_complete_features(sample_match_data, 'test_match')
+        features = extractor.extract_complete_features(sample_match_data, "test_match")
 
         # 验证核心特征
         assert features.home_xg == 1.5
@@ -77,41 +76,41 @@ class TestFeatureExtractorCoverage:
     def test_extract_xg_features(self, extractor, sample_match_data):
         """测试XG特征提取"""
         xg_features = extractor._extract_xg_features(sample_match_data)
-        assert xg_features['home_xg'] == 1.5
-        assert xg_features['away_xg'] == 0.8
-        assert xg_features['xg_difference'] == 0.7
-        assert xg_features['total_xg'] == 2.3
+        assert xg_features["home_xg"] == 1.5
+        assert xg_features["away_xg"] == 0.8
+        assert xg_features["xg_difference"] == 0.7
+        assert xg_features["total_xg"] == 2.3
 
     def test_extract_possession_features(self, extractor, sample_match_data):
         """测试控球率特征提取"""
         possession_features = extractor._extract_possession_features(sample_match_data)
-        assert possession_features['home_possession'] == 55.0
-        assert possession_features['away_possession'] == 45.0
-        assert possession_features['possession_difference'] == 10.0
+        assert possession_features["home_possession"] == 55.0
+        assert possession_features["away_possession"] == 45.0
+        assert possession_features["possession_difference"] == 10.0
 
     def test_extract_corners_features(self, extractor, sample_match_data):
         """测试角球特征提取"""
         corners_features = extractor._extract_corners_features(sample_match_data)
-        assert corners_features['home_corners'] == 7
-        assert corners_features['away_corners'] == 3
-        assert corners_features['corners_difference'] == 4
+        assert corners_features["home_corners"] == 7
+        assert corners_features["away_corners"] == 3
+        assert corners_features["corners_difference"] == 4
 
     def test_extract_cards_features(self, extractor, sample_match_data):
         """测试牌数特征提取"""
         cards_features = extractor._extract_cards_features(sample_match_data)
-        assert cards_features['home_yellow_cards'] == 2
-        assert cards_features['away_yellow_cards'] == 4
+        assert cards_features["home_yellow_cards"] == 2
+        assert cards_features["away_yellow_cards"] == 4
 
     def test_extract_shots_features(self, extractor, sample_match_data):
         """测试射门特征提取"""
         shots_features = extractor._extract_shots_features(sample_match_data)
-        assert shots_features['home_shots_total'] == 12
-        assert shots_features['away_shots_total'] == 15
+        assert shots_features["home_shots_total"] == 12
+        assert shots_features["away_shots_total"] == 15
 
     def test_empty_data_handling(self, extractor):
         """测试空数据处理"""
-        empty_data = {'content': {'stats': {}}, 'general': {}}
-        features = extractor.extract_complete_features(empty_data, 'empty_test')
+        empty_data = {"content": {"stats": {}}, "general": {}}
+        features = extractor.extract_complete_features(empty_data, "empty_test")
 
         # 验证默认值处理
         assert features.home_xg == 0.0
@@ -121,10 +120,10 @@ class TestFeatureExtractorCoverage:
 
     def test_malformed_data_handling(self, extractor):
         """测试异常数据处理"""
-        malformed_data = {'invalid': 'data'}
+        malformed_data = {"invalid": "data"}
 
         with pytest.raises(Exception):
-            extractor.extract_complete_features(malformed_data, 'malformed_test')
+            extractor.extract_complete_features(malformed_data, "malformed_test")
 
 
 class TestFotMobClientCoverage:
@@ -194,20 +193,20 @@ class TestFotMobClientCoverage:
     async def test_get_match_data_method(self, client):
         """测试获取比赛数据方法"""
         # Mock响应数据
-        mock_data = {'test': 'data'}
+        mock_data = {"test": "data"}
 
-        with patch.object(client, 'get_match_details', return_value=mock_data):
-            result = await client.get_match_data('test_match')
+        with patch.object(client, "get_match_details", return_value=mock_data):
+            result = await client.get_match_data("test_match")
             assert result == mock_data
 
     @pytest.mark.asyncio
     async def test_get_multiple_matches_method(self, client):
         """测试批量获取比赛数据方法"""
         # Mock响应数据
-        mock_data = [{'match': 'data1'}, {'match': 'data2'}]
+        mock_data = [{"match": "data1"}, {"match": "data2"}]
 
-        with patch.object(client, 'get_match_details', side_effect=mock_data):
-            results = await client.get_multiple_matches(['match1', 'match2'])
+        with patch.object(client, "get_match_details", side_effect=mock_data):
+            results = await client.get_multiple_matches(["match1", "match2"])
             assert len(results) == 2
             assert results[0] == mock_data[0]
             assert results[1] == mock_data[1]
@@ -225,44 +224,44 @@ class TestMainEngineCoverage:
     def test_engine_initialization(self, engine):
         """测试引擎初始化"""
         assert engine is not None
-        assert hasattr(engine, 'collect_match_data')
-        assert hasattr(engine, 'process_predictions')
+        assert hasattr(engine, "collect_match_data")
+        assert hasattr(engine, "process_predictions")
 
-    @patch('src.core.main_engine_v5.get_settings')
+    @patch("src.core.main_engine_v5.get_settings")
     def test_database_connection_config(self, mock_settings):
         """测试数据库连接配置"""
         # Mock配置
-        mock_settings.return_value.database.host = 'localhost'
+        mock_settings.return_value.database.host = "localhost"
         mock_settings.return_value.database.port = 5432
-        mock_settings.return_value.database.name = 'test_db'
-        mock_settings.return_value.database.user = 'test_user'
-        mock_settings.return_value.database.password.get_secret_value.return_value = 'test_pass'
+        mock_settings.return_value.database.name = "test_db"
+        mock_settings.return_value.database.user = "test_user"
+        mock_settings.return_value.database.password.get_secret_value.return_value = "test_pass"
 
         # 这里只测试配置获取，不测试实际连接
         settings = get_settings()
-        assert settings.database.host == 'localhost'
+        assert settings.database.host == "localhost"
 
     def test_data_validation_schema(self):
         """测试数据验证模式"""
         # 创建有效的特征数据
         valid_data = {
-            'home_team': 'Team A',
-            'away_team': 'Team B',
-            'home_xg': 1.5,
-            'away_xg': 0.8,
-            'home_possession': 55.0,
-            'away_possession': 45.0,
-            'home_corners': 7,
-            'away_corners': 3,
-            'home_yellow_cards': 2,
-            'away_yellow_cards': 4,
-            'home_shots_total': 12,
-            'away_shots_total': 15
+            "home_team": "Team A",
+            "away_team": "Team B",
+            "home_xg": 1.5,
+            "away_xg": 0.8,
+            "home_possession": 55.0,
+            "away_possession": 45.0,
+            "home_corners": 7,
+            "away_corners": 3,
+            "home_yellow_cards": 2,
+            "away_yellow_cards": 4,
+            "home_shots_total": 12,
+            "away_shots_total": 15,
         }
 
         # 验证可以创建MatchFeatures对象
         features = MatchFeatures(**valid_data)
-        assert features.home_team == 'Team A'
+        assert features.home_team == "Team A"
         assert features.home_xg == 1.5
         assert features.home_possession == 55.0
 
@@ -270,9 +269,9 @@ class TestMainEngineCoverage:
         """测试配置系统初始化"""
         settings = get_settings()
         assert settings is not None
-        assert hasattr(settings, 'database')
-        assert hasattr(settings, 'model')
-        assert hasattr(settings, 'logging')
+        assert hasattr(settings, "database")
+        assert hasattr(settings, "model")
+        assert hasattr(settings, "logging")
 
 
 class TestSystemIntegrationCoverage:
@@ -282,33 +281,32 @@ class TestSystemIntegrationCoverage:
         """测试端到端特征处理流水线"""
         # 创建测试数据
         test_data = {
-            'content': {
-                'stats': {
-                    'Periods': {
-                        'All': {
-                            'stats': [{
-                                'key': 'top_stats',
-                                'stats': [
-                                    {'key': 'expected_goals', 'stats': [2.1, 0.9]},
-                                    {'key': 'BallPossesion', 'stats': [60, 40]},
-                                    {'key': 'CornerKicks', 'stats': [8, 2]},
-                                    {'key': 'YellowCards', 'stats': [1, 3]},
-                                    {'key': 'Shots', 'stats': [15, 10]}
-                                ]
-                            }]
+            "content": {
+                "stats": {
+                    "Periods": {
+                        "All": {
+                            "stats": [
+                                {
+                                    "key": "top_stats",
+                                    "stats": [
+                                        {"key": "expected_goals", "stats": [2.1, 0.9]},
+                                        {"key": "BallPossesion", "stats": [60, 40]},
+                                        {"key": "CornerKicks", "stats": [8, 2]},
+                                        {"key": "YellowCards", "stats": [1, 3]},
+                                        {"key": "Shots", "stats": [15, 10]},
+                                    ],
+                                }
+                            ]
                         }
                     }
                 }
             },
-            'general': {
-                'homeTeam': {'name': 'Arsenal'},
-                'awayTeam': {'name': 'Chelsea'}
-            }
+            "general": {"homeTeam": {"name": "Arsenal"}, "awayTeam": {"name": "Chelsea"}},
         }
 
         # 提取特征
         extractor = AdvancedFeatureExtractor()
-        features = extractor.extract_complete_features(test_data, 'pipeline_test')
+        features = extractor.extract_complete_features(test_data, "pipeline_test")
 
         # 验证流水线完整性
         assert features.home_xg == 2.1

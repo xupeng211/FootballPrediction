@@ -40,9 +40,7 @@ class TestBasicFunctionality:
             from src.api.schemas import HealthCheckResponse, ServiceCheck
 
             # 创建测试数据
-            service_check = ServiceCheck(
-                status="healthy", response_time_ms=1.5, details={"message": "ok"}
-            )
+            service_check = ServiceCheck(status="healthy", response_time_ms=1.5, details={"message": "ok"})
 
             health_response = HealthCheckResponse(
                 status="healthy",

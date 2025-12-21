@@ -347,9 +347,7 @@ class TestMatchPredictor:
         assert predictor.OUTCOME_MAP[1] == "DRAW"
         assert predictor.OUTCOME_MAP[2] == "HOME_WIN"
 
-    async def test_predictor_with_different_models(
-        self, mock_model_loader, mock_cache_manager
-    ):
+    async def test_predictor_with_different_models(self, mock_model_loader, mock_cache_manager):
         """测试使用不同模型预测"""
         predictor = MatchPredictor(
             model_loader=mock_model_loader,
@@ -400,9 +398,7 @@ class TestInferenceIntegration:
         cache_manager = PredictionCache()
 
         # 创建预测器
-        predictor = MatchPredictor(
-            model_loader=model_loader, cache_manager=cache_manager
-        )
+        predictor = MatchPredictor(model_loader=model_loader, cache_manager=cache_manager)
 
         # 执行预测
         features = np.array([[1.0, 2.0, 3.0, 4.0, 5.0]])

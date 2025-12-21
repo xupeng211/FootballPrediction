@@ -104,19 +104,13 @@ class TestConfigurationBasics:
             database="production_db",
         )
         custom_conn_str = custom_settings.get_connection_string()
-        expected_custom = (
-            "postgresql://prod_user:prod_secret@prod-db.example.com:5432/production_db"
-        )
+        expected_custom = "postgresql://prod_user:prod_secret@prod-db.example.com:5432/production_db"
         assert custom_conn_str == expected_custom
 
         # 测试URL覆盖
-        url_settings = MockDatabaseSettings(
-            url="postgresql://override:pass@override-host:9999/override_db"
-        )
+        url_settings = MockDatabaseSettings(url="postgresql://override:pass@override-host:9999/override_db")
         url_conn_str = url_settings.get_connection_string()
-        assert (
-            url_conn_str == "postgresql://override:pass@override-host:9999/override_db"
-        )
+        assert url_conn_str == "postgresql://override:pass@override-host:9999/override_db"
 
     def test_fotmob_settings_creation(self):
         """测试FotMob设置创建"""
@@ -162,9 +156,7 @@ class TestConfigurationBasics:
         assert headers == expected_headers
 
         # 测试自定义头
-        custom_settings = MockFotMobSettings(
-            x_mas_header="custom-mas-token", x_foo_header="custom-foo-token"
-        )
+        custom_settings = MockFotMobSettings(x_mas_header="custom-mas-token", x_foo_header="custom-foo-token")
         custom_headers = custom_settings.get_headers()
         assert custom_headers["X-MAS"] == "custom-mas-token"
         assert custom_headers["X-FOO"] == "custom-foo-token"
@@ -577,9 +569,7 @@ class TestConfigurationIntegration:
 
             # 验证FotMob配置
             fotmob_config = config.get("fotmob", {})
-            if not fotmob_config.get("x_mas_header") and not fotmob_config.get(
-                "x_foo_header"
-            ):
+            if not fotmob_config.get("x_mas_header") and not fotmob_config.get("x_foo_header"):
                 warnings.append("FotMob API请求头未配置，可能影响数据获取")
 
             return {"valid": len(issues) == 0, "issues": issues, "warnings": warnings}

@@ -36,9 +36,7 @@ import coverage
 import pytest
 
 # 设置日志
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -135,9 +133,7 @@ class CoverageReportGenerator:
         )
 
         # 8. 生成覆盖率徽章
-        badge_data = await self._generate_coverage_badge(
-            coverage_data["overall_coverage"]
-        )
+        badge_data = await self._generate_coverage_badge(coverage_data["overall_coverage"])
 
         # 9. 保存报告
         report_file = await self._save_coverage_report(
@@ -160,8 +156,7 @@ class CoverageReportGenerator:
             "success": True,
             "report_file": str(report_file),
             "overall_coverage": coverage_data["overall_coverage"],
-            "core_coverage_met": core_coverage["average_coverage"]
-            >= self.thresholds.core_algorithms_min,
+            "core_coverage_met": core_coverage["average_coverage"] >= self.thresholds.core_algorithms_min,
             "integration_coverage_met": integration_coverage["average_coverage"]
             >= self.thresholds.integration_tests_min,
             "regressions_detected": len(regression_detection["regressions"]),
@@ -231,16 +226,12 @@ class CoverageReportGenerator:
                     "total_statements": file_statements,
                     "covered_statements": covered_file_statements,
                     "coverage_percentage": (
-                        (covered_file_statements / file_statements * 100)
-                        if file_statements > 0
-                        else 0
+                        (covered_file_statements / file_statements * 100) if file_statements > 0 else 0
                     ),
                     "missing_lines": list(analysis[2]),
                 }
 
-        overall_coverage = (
-            (covered_statements / total_statements * 100) if total_statements > 0 else 0
-        )
+        overall_coverage = (covered_statements / total_statements * 100) if total_statements > 0 else 0
 
         return {
             "overall_coverage": overall_coverage,
@@ -250,9 +241,7 @@ class CoverageReportGenerator:
             "raw_data": coverage_data,
         }
 
-    async def _analyze_core_algorithm_coverage(
-        self, coverage_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    async def _analyze_core_algorithm_coverage(self, coverage_data: Dict[str, Any]) -> Dict[str, Any]:
         """分析核心算法覆盖率"""
         logger.info("🎯 分析核心算法覆盖率")
 
@@ -263,9 +252,7 @@ class CoverageReportGenerator:
         for module in self.core_algorithm_modules:
             # 转换模块路径为文件路径
             file_path = module.replace(".", "/") + ".py"
-            matching_files = [
-                f for f in coverage_data["file_analysis"].keys() if file_path in f
-            ]
+            matching_files = [f for f in coverage_data["file_analysis"].keys() if file_path in f]
 
             if matching_files:
                 file_data = coverage_data["file_analysis"][matching_files[0]]
@@ -281,9 +268,7 @@ class CoverageReportGenerator:
                     "error": "File not found",
                 }
 
-        average_coverage = (
-            (covered_statements / total_statements * 100) if total_statements > 0 else 0
-        )
+        average_coverage = (covered_statements / total_statements * 100) if total_statements > 0 else 0
 
         # 检查是否达到阈值
         threshold_met = average_coverage >= self.thresholds.core_algorithms_min
@@ -295,11 +280,8 @@ class CoverageReportGenerator:
                 detailed_analysis[module] = {
                     "status": "below_threshold",
                     "coverage": data["coverage_percentage"],
-                    "gap": self.thresholds.core_algorithms_min
-                    - data["coverage_percentage"],
-                    "priority": (
-                        "high" if data["coverage_percentage"] < 70 else "medium"
-                    ),
+                    "gap": self.thresholds.core_algorithms_min - data["coverage_percentage"],
+                    "priority": ("high" if data["coverage_percentage"] < 70 else "medium"),
                 }
             else:
                 detailed_analysis[module] = {
@@ -319,9 +301,7 @@ class CoverageReportGenerator:
             "detailed_analysis": detailed_analysis,
         }
 
-    async def _analyze_integration_coverage(
-        self, coverage_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    async def _analyze_integration_coverage(self, coverage_data: Dict[str, Any]) -> Dict[str, Any]:
         """分析集成测试覆盖率"""
         logger.info("🔗 分析集成测试覆盖率")
 
@@ -331,9 +311,7 @@ class CoverageReportGenerator:
 
         for module in self.integration_modules:
             file_path = module.replace(".", "/") + ".py"
-            matching_files = [
-                f for f in coverage_data["file_analysis"].keys() if file_path in f
-            ]
+            matching_files = [f for f in coverage_data["file_analysis"].keys() if file_path in f]
 
             if matching_files:
                 file_data = coverage_data["file_analysis"][matching_files[0]]
@@ -341,9 +319,7 @@ class CoverageReportGenerator:
                 total_statements += file_data["total_statements"]
                 covered_statements += file_data["covered_statements"]
 
-        average_coverage = (
-            (covered_statements / total_statements * 100) if total_statements > 0 else 0
-        )
+        average_coverage = (covered_statements / total_statements * 100) if total_statements > 0 else 0
         threshold_met = average_coverage >= self.thresholds.integration_tests_min
 
         return {
@@ -355,9 +331,7 @@ class CoverageReportGenerator:
             "module_coverage": integration_files_coverage,
         }
 
-    async def _analyze_performance_coverage(
-        self, coverage_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    async def _analyze_performance_coverage(self, coverage_data: Dict[str, Any]) -> Dict[str, Any]:
         """分析性能测试覆盖率"""
         logger.info("⚡ 分析性能测试覆盖率")
 
@@ -367,9 +341,7 @@ class CoverageReportGenerator:
 
         for module in self.performance_modules:
             file_path = module.replace(".", "/") + ".py"
-            matching_files = [
-                f for f in coverage_data["file_analysis"].keys() if file_path in f
-            ]
+            matching_files = [f for f in coverage_data["file_analysis"].keys() if file_path in f]
 
             if matching_files:
                 file_data = coverage_data["file_analysis"][matching_files[0]]
@@ -377,9 +349,7 @@ class CoverageReportGenerator:
                 total_statements += file_data["total_statements"]
                 covered_statements += file_data["covered_statements"]
 
-        average_coverage = (
-            (covered_statements / total_statements * 100) if total_statements > 0 else 0
-        )
+        average_coverage = (covered_statements / total_statements * 100) if total_statements > 0 else 0
         threshold_met = average_coverage >= self.thresholds.performance_tests_min
 
         return {
@@ -426,11 +396,7 @@ class CoverageReportGenerator:
         # 计算变化率
         if len(coverage_values) >= 2:
             latest_change = coverage_values[-1] - coverage_values[-2]
-            change_rate = (
-                (latest_change / coverage_values[-2] * 100)
-                if coverage_values[-2] > 0
-                else 0
-            )
+            change_rate = (latest_change / coverage_values[-2] * 100) if coverage_values[-2] > 0 else 0
         else:
             change_rate = 0
 
@@ -438,27 +404,17 @@ class CoverageReportGenerator:
             "trend": trend,
             "data_points": len(coverage_values),
             "latest_coverage": coverage_values[-1] if coverage_values else 0,
-            "average_coverage": (
-                sum(coverage_values) / len(coverage_values) if coverage_values else 0
-            ),
+            "average_coverage": (sum(coverage_values) / len(coverage_values) if coverage_values else 0),
             "highest_coverage": max(coverage_values) if coverage_values else 0,
             "lowest_coverage": min(coverage_values) if coverage_values else 0,
-            "recent_change": (
-                coverage_values[-1] - coverage_values[-2]
-                if len(coverage_values) >= 2
-                else 0
-            ),
+            "recent_change": (coverage_values[-1] - coverage_values[-2] if len(coverage_values) >= 2 else 0),
             "change_rate_percent": change_rate,
             "time_span_days": (
-                (sorted_data[-1]["timestamp"] - sorted_data[0]["timestamp"]).days
-                if len(sorted_data) > 1
-                else 0
+                (sorted_data[-1]["timestamp"] - sorted_data[0]["timestamp"]).days if len(sorted_data) > 1 else 0
             ),
         }
 
-    async def _detect_coverage_regressions(
-        self, coverage_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    async def _detect_coverage_regressions(self, coverage_data: Dict[str, Any]) -> Dict[str, Any]:
         """检测覆盖率回归"""
         logger.info("🔍 检测覆盖率回归")
 
@@ -475,22 +431,15 @@ class CoverageReportGenerator:
         regressions = []
 
         # 检查总体覆盖率回归
-        if (
-            coverage_data["overall_coverage"] < latest_data["overall_coverage"] - 5
-        ):  # 5%阈值
+        if coverage_data["overall_coverage"] < latest_data["overall_coverage"] - 5:  # 5%阈值
             regressions.append(
                 {
                     "type": "overall",
                     "current_coverage": coverage_data["overall_coverage"],
                     "previous_coverage": latest_data["overall_coverage"],
-                    "regression_amount": latest_data["overall_coverage"]
-                    - coverage_data["overall_coverage"],
+                    "regression_amount": latest_data["overall_coverage"] - coverage_data["overall_coverage"],
                     "severity": (
-                        "high"
-                        if latest_data["overall_coverage"]
-                        - coverage_data["overall_coverage"]
-                        > 10
-                        else "medium"
+                        "high" if latest_data["overall_coverage"] - coverage_data["overall_coverage"] > 10 else "medium"
                     ),
                 }
             )
@@ -498,19 +447,11 @@ class CoverageReportGenerator:
         # 检查模块级别回归
         for module in self.core_algorithm_modules:
             file_path = module.replace(".", "/") + ".py"
-            matching_files = [
-                f for f in coverage_data["file_analysis"].keys() if file_path in f
-            ]
+            matching_files = [f for f in coverage_data["file_analysis"].keys() if file_path in f]
 
             if matching_files and "module_coverage" in latest_data:
-                current_coverage = coverage_data["file_analysis"][matching_files[0]][
-                    "coverage_percentage"
-                ]
-                previous_coverage = (
-                    latest_data.get("module_coverage", {})
-                    .get(module, {})
-                    .get("coverage_percentage", 0)
-                )
+                current_coverage = coverage_data["file_analysis"][matching_files[0]]["coverage_percentage"]
+                previous_coverage = latest_data.get("module_coverage", {}).get(module, {}).get("coverage_percentage", 0)
 
                 if current_coverage < previous_coverage - 10:  # 10%阈值
                     regressions.append(
@@ -520,11 +461,7 @@ class CoverageReportGenerator:
                             "current_coverage": current_coverage,
                             "previous_coverage": previous_coverage,
                             "regression_amount": previous_coverage - current_coverage,
-                            "severity": (
-                                "high"
-                                if previous_coverage - current_coverage > 20
-                                else "medium"
-                            ),
+                            "severity": ("high" if previous_coverage - current_coverage > 20 else "medium"),
                         }
                     )
 
@@ -532,9 +469,7 @@ class CoverageReportGenerator:
             "regressions": regressions,
             "regression_count": len(regressions),
             "latest_comparison_date": latest_data["timestamp"].isoformat(),
-            "overall_regression_detected": any(
-                r["type"] == "overall" for r in regressions
-            ),
+            "overall_regression_detected": any(r["type"] == "overall" for r in regressions),
         }
 
     async def _generate_html_report(self, report_data: Dict[str, Any]) -> str:
@@ -686,20 +621,10 @@ class CoverageReportGenerator:
 
         # 生成核心算法模块行
         core_module_rows = ""
-        for module, analysis in report_data["core_coverage"][
-            "detailed_analysis"
-        ].items():
-            status_class = (
-                "status-pass"
-                if analysis["status"] == "meets_threshold"
-                else "status-fail"
-            )
-            status_text = (
-                "✅ 达标" if analysis["status"] == "meets_threshold" else "❌ 未达标"
-            )
-            priority_text = {"high": "高", "medium": "中", "low": "低"}.get(
-                analysis["priority"], "低"
-            )
+        for module, analysis in report_data["core_coverage"]["detailed_analysis"].items():
+            status_class = "status-pass" if analysis["status"] == "meets_threshold" else "status-fail"
+            status_text = "✅ 达标" if analysis["status"] == "meets_threshold" else "❌ 未达标"
+            priority_text = {"high": "高", "medium": "中", "low": "低"}.get(analysis["priority"], "低")
 
             module_name = module.split(".")[-1] if "." in module else module
             core_module_rows += f"""
@@ -713,9 +638,7 @@ class CoverageReportGenerator:
 
         # 生成集成测试模块行
         integration_module_rows = ""
-        for module, data in report_data["integration_coverage"][
-            "module_coverage"
-        ].items():
+        for module, data in report_data["integration_coverage"]["module_coverage"].items():
             module_name = module.split(".")[-1] if "." in module else module
             integration_module_rows += f"""
                     <tr>
@@ -743,9 +666,7 @@ class CoverageReportGenerator:
         if report_data["regression_detection"]["regressions"]:
             regression_rows = ""
             for regression in report_data["regression_detection"]["regressions"]:
-                severity_class = (
-                    "high" if regression["severity"] == "high" else "medium"
-                )
+                severity_class = "high" if regression["severity"] == "high" else "medium"
                 regression_rows += f"""
                     <div class="regression-alert">
                         <strong>{regression['type'].title()} 回归检测到:</strong><br>
@@ -780,10 +701,7 @@ class CoverageReportGenerator:
         )
 
         # 保存HTML报告
-        html_file = (
-            self.output_dir
-            / f"coverage_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.html"
-        )
+        html_file = self.output_dir / f"coverage_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.html"
         with open(html_file, "w", encoding="utf-8") as f:
             f.write(html_content)
 
@@ -866,10 +784,7 @@ class CoverageReportGenerator:
         logger.info("💾 保存覆盖率报告")
 
         # 保存完整的JSON报告
-        report_file = (
-            self.output_dir
-            / f"coverage_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-        )
+        report_file = self.output_dir / f"coverage_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
         with open(report_file, "w", encoding="utf-8") as f:
             json.dump(report_data, f, indent=2, default=str)
 
@@ -879,9 +794,7 @@ class CoverageReportGenerator:
                 "timestamp": datetime.now(),
                 "overall_coverage": report_data["overall_coverage"],
                 "core_coverage": report_data["core_coverage"]["average_coverage"],
-                "integration_coverage": report_data["integration_coverage"][
-                    "average_coverage"
-                ],
+                "integration_coverage": report_data["integration_coverage"]["average_coverage"],
                 "module_coverage": report_data["core_coverage"]["module_coverage"],
             }
         )
@@ -920,9 +833,7 @@ class CoverageReportGenerator:
 
         # 只保留最近30天的数据
         cutoff_date = datetime.now() - timedelta(days=30)
-        filtered_data = [
-            item for item in existing_data if item["timestamp"] > cutoff_date
-        ]
+        filtered_data = [item for item in existing_data if item["timestamp"] > cutoff_date]
 
         # 保存更新后的数据
         with open(history_file, "w", encoding="utf-8") as f:
@@ -942,10 +853,7 @@ class CoverageReportGenerator:
         trend_analysis = await self._analyze_coverage_trends()
 
         # 保存趋势分析报告
-        trend_report_file = (
-            self.output_dir
-            / f"coverage_trend_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-        )
+        trend_report_file = self.output_dir / f"coverage_trend_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
         with open(trend_report_file, "w", encoding="utf-8") as f:
             json.dump(trend_analysis, f, indent=2, default=str)
 
@@ -987,21 +895,15 @@ async def main():
 
     # 完整报告命令
     full_parser = subparsers.add_parser("full-report", help="生成完整覆盖率报告")
-    full_parser.add_argument(
-        "--output-dir", default="coverage_reports", help="输出目录"
-    )
+    full_parser.add_argument("--output-dir", default="coverage_reports", help="输出目录")
 
     # 趋势分析命令
     trend_parser = subparsers.add_parser("trend-analysis", help="生成覆盖率趋势分析")
-    trend_parser.add_argument(
-        "--output-dir", default="coverage_reports", help="输出目录"
-    )
+    trend_parser.add_argument("--output-dir", default="coverage_reports", help="输出目录")
 
     # 徽章生成命令
     badge_parser = subparsers.add_parser("badge-generation", help="生成覆盖率徽章")
-    badge_parser.add_argument(
-        "--output-dir", default="coverage_reports", help="输出目录"
-    )
+    badge_parser.add_argument("--output-dir", default="coverage_reports", help="输出目录")
 
     args = parser.parse_args()
 
@@ -1014,12 +916,8 @@ async def main():
             print(f"\n✅ 覆盖率报告生成完成!")
             print(f"报告文件: {result['report_file']}")
             print(f"总体覆盖率: {result['overall_coverage']:.1f}%")
-            print(
-                f"核心算法覆盖率达标: {'是' if result['core_coverage_met'] else '否'}"
-            )
-            print(
-                f"集成测试覆盖率达标: {'是' if result['integration_coverage_met'] else '否'}"
-            )
+            print(f"核心算法覆盖率达标: {'是' if result['core_coverage_met'] else '否'}")
+            print(f"集成测试覆盖率达标: {'是' if result['integration_coverage_met'] else '否'}")
             print(f"检测到回归: {result['regressions_detected']} 个")
             print(f"徽章生成: {'是' if result['badge_generated'] else '否'}")
 

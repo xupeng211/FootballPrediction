@@ -150,9 +150,7 @@ class TestPoissonFeatureCalculator:
 
     # ========== 球队λ值计算测试 ==========
 
-    def test_calculate_team_lambdas_sufficient_data(
-        self, calculator, sample_matches_data
-    ):
+    def test_calculate_team_lambdas_sufficient_data(self, calculator, sample_matches_data):
         """测试数据充足时的λ值计算"""
         attack_lambda, defense_lambda, details = calculator.calculate_team_lambdas(
             team_id="team_test", matches_data=sample_matches_data, is_home_team=True
@@ -166,13 +164,9 @@ class TestPoissonFeatureCalculator:
         assert "defense_lambda" in details
         assert "venue_factor" in details
 
-    def test_calculate_team_lambdas_insufficient_data(
-        self, calculator, sample_matches_data
-    ):
+    def test_calculate_team_lambdas_insufficient_data(self, calculator, sample_matches_data):
         """测试数据不足时的默认值使用"""
-        insufficient_data = sample_matches_data[
-            :2
-        ]  # 只有2场比赛，少于MIN_GAMES_FOR_LAMBDA(5)
+        insufficient_data = sample_matches_data[:2]  # 只有2场比赛，少于MIN_GAMES_FOR_LAMBDA(5)
 
         attack_lambda, defense_lambda, details = calculator.calculate_team_lambdas(
             team_id="team_insufficient",
@@ -182,10 +176,7 @@ class TestPoissonFeatureCalculator:
 
         assert details["status"] == "insufficient_data"
         assert attack_lambda == calculator.home_lambda_default
-        assert (
-            defense_lambda
-            == calculator.league_avg_goals - calculator.home_lambda_default
-        )
+        assert defense_lambda == calculator.league_avg_goals - calculator.home_lambda_default
         assert details["matches_used"] == 2
 
     def test_calculate_team_lambdas_away_team(self, calculator, sample_matches_data):
@@ -204,22 +195,18 @@ class TestPoissonFeatureCalculator:
     def test_team_strength_adjustment(self, calculator, strong_team_data):
         """测试球队实力调整"""
         # 启用实力调整
-        attack_lambda_enabled, defense_lambda_enabled, _ = (
-            calculator.calculate_team_lambdas(
-                team_id="strong_team", matches_data=strong_team_data, is_home_team=True
-            )
+        attack_lambda_enabled, defense_lambda_enabled, _ = calculator.calculate_team_lambdas(
+            team_id="strong_team", matches_data=strong_team_data, is_home_team=True
         )
 
         # 禁用实力调整
         calculator.disable_strength = calculator.enable_team_strength_adjustment
         calculator.enable_team_strength_adjustment = False
 
-        attack_lambda_disabled, defense_lambda_disabled, _ = (
-            calculator.calculate_team_lambdas(
-                team_id="strong_team_no_adjust",
-                matches_data=strong_team_data,
-                is_home_team=True,
-            )
+        attack_lambda_disabled, defense_lambda_disabled, _ = calculator.calculate_team_lambdas(
+            team_id="strong_team_no_adjust",
+            matches_data=strong_team_data,
+            is_home_team=True,
         )
 
         # 强队的λ值在启用调整后应该稍微保守（降低）
@@ -291,9 +278,7 @@ class TestPoissonFeatureCalculator:
             "defense_lambda": 1.5,
         }
 
-        result = calculator.calculate_match_probabilities(
-            home_team_id="home_team", away_team_id="away_team"
-        )
+        result = calculator.calculate_match_probabilities(home_team_id="home_team", away_team_id="away_team")
 
         # 验证结果结构
         assert "match_info" in result
@@ -450,22 +435,15 @@ class TestPoissonFeatureCalculator:
         }
 
         # 测试数据充足的球队
-        metrics_confident = calculator._calculate_confidence_metrics(
-            "confident_team", "confident_team", 1.5, 1.3
-        )
+        metrics_confident = calculator._calculate_confidence_metrics("confident_team", "confident_team", 1.5, 1.3)
         assert metrics_confident["data_sufficiency_confidence"] >= 1.0
         assert metrics_confident["stability_confidence"] >= 0
         assert metrics_confident["overall_confidence"] >= 0.5
 
         # 测试数据不足的球队
-        metrics_limited = calculator._calculate_confidence_metrics(
-            "limited_team", "limited_team", 1.5, 1.3
-        )
+        metrics_limited = calculator._calculate_confidence_metrics("limited_team", "limited_team", 1.5, 1.3)
         assert metrics_limited["data_sufficiency_confidence"] <= 1.0
-        assert (
-            metrics_limited["overall_confidence"]
-            < metrics_confident["overall_confidence"]
-        )
+        assert metrics_limited["overall_confidence"] < metrics_confident["overall_confidence"]
 
     def test_matrix_entropy_calculation(self, calculator):
         """测试矩阵熵计算"""
@@ -513,10 +491,7 @@ class TestPoissonFeatureCalculator:
 
         probs = result["probabilities"]
         assert all(0 <= p <= 1 for p in probs.values())
-        assert (
-            abs(sum([probs["home_win"], probs["draw"], probs["away_win"]]) - 1.0)
-            < 0.001
-        )
+        assert abs(sum([probs["home_win"], probs["draw"], probs["away_win"]]) - 1.0) < 0.001
 
     def test_zero_goals_scenario(self, calculator):
         """测试零进球场景"""
@@ -566,9 +541,7 @@ class TestPoissonFeatureCalculator:
     def test_invalid_input_handling(self, calculator):
         """测试无效输入处理"""
         # 测试空比赛数据 - 现在返回默认值而不是异常
-        result = calculator.calculate_team_lambdas(
-            team_id="empty_team", matches_data=[], is_home_team=True
-        )
+        result = calculator.calculate_team_lambdas(team_id="empty_team", matches_data=[], is_home_team=True)
         # 验证返回合理的默认值 (tuple格式: attack_lambda, defense_lambda, metadata)
         attack_lambda, defense_lambda, metadata = result
         assert attack_lambda > 0
@@ -679,9 +652,7 @@ class TestPoissonFeatureCalculator:
     def test_team_stats_retrieval(self, calculator, sample_matches_data):
         """测试球队统计信息获取"""
         # 先计算球队λ值
-        calculator.calculate_team_lambdas(
-            team_id="stats_team", matches_data=sample_matches_data, is_home_team=True
-        )
+        calculator.calculate_team_lambdas(team_id="stats_team", matches_data=sample_matches_data, is_home_team=True)
 
         stats = calculator.get_team_stats("stats_team")
 
@@ -734,10 +705,7 @@ class TestPoissonFeatureCalculator:
 
         updated_stats = calculator.stats
 
-        assert (
-            updated_stats["total_calculations"]
-            == initial_stats["total_calculations"] + 5
-        )
+        assert updated_stats["total_calculations"] == initial_stats["total_calculations"] + 5
         assert updated_stats["avg_lambda_home"] != initial_stats["avg_lambda_home"]
         assert updated_stats["avg_lambda_away"] != initial_stats["avg_lambda_away"]
         assert updated_stats["last_updated"] is not None
@@ -773,7 +741,7 @@ class TestPoissonFeatureCalculator:
         start_time = time.time()
         results = []
         for i, home_team in enumerate(teams):
-            for away_team in teams[i + 1:]:
+            for away_team in teams[i + 1 :]:
                 result = calculator.calculate_match_probabilities(
                     home_team, away_team, home_attack_lambda=1.5, away_attack_lambda=1.3
                 )
@@ -835,9 +803,7 @@ class TestPoissonFeatureCalculator:
         assert abs(expected_value - lambda_val) < 0.1
 
         # 验证方差等于λ
-        variance = sum(
-            (goals - lambda_val) ** 2 * prob for goals, prob in distribution.items()
-        )
+        variance = sum((goals - lambda_val) ** 2 * prob for goals, prob in distribution.items())
         assert abs(variance - lambda_val) < 0.2
 
     # ========== 辅助方法测试 ==========
@@ -909,9 +875,7 @@ class TestPoissonFeatureCalculatorEdgeCases:
 
     def test_minimal_configuration(self, minimal_calculator):
         """测试最小配置下的计算"""
-        result = minimal_calculator.calculate_match_probabilities(
-            "min_home", "min_away"
-        )
+        result = minimal_calculator.calculate_match_probabilities("min_home", "min_away")
 
         assert result is not None
         assert result["expected_goals"]["total"] > 0
