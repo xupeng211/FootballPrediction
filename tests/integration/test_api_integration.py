@@ -153,9 +153,7 @@ class TestPredictionIntegration:
     @pytest.fixture
     def mock_prediction_service(self):
         """Mock预测服务"""
-        with patch(
-            "src.services.inference_service.InferenceService"
-        ) as mock_service_class:
+        with patch("src.services.inference_service.InferenceService") as mock_service_class:
             mock_service = Mock()
             mock_service.predict_match.return_value = {
                 "prediction": "HOME_WIN",
@@ -357,15 +355,11 @@ class TestCORSIntegration:
 
         # 检查CORS头
         assert "access-control-allow-origin" in response.headers
-        assert (
-            "http://localhost:3000" in response.headers["access-control-allow-origin"]
-        )
+        assert "http://localhost:3000" in response.headers["access-control-allow-origin"]
 
     def test_cors_invalid_origin(self, client_with_cors):
         """测试无效Origin的CORS处理"""
-        response = client_with_cors.get(
-            "/test-cors", headers={"Origin": "http://malicious-site.com"}
-        )
+        response = client_with_cors.get("/test-cors", headers={"Origin": "http://malicious-site.com"})
 
         # 应该返回200但没有CORS头
         assert response.status_code == 200

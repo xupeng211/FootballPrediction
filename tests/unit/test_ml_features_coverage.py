@@ -70,9 +70,7 @@ class TestAdvancedFeatureTransformer:
             }
 
             # 模拟特征转换
-            with patch.object(
-                transformer, "transform_match_features"
-            ) as mock_transform:
+            with patch.object(transformer, "transform_match_features") as mock_transform:
                 mock_transform.return_value = {
                     "home_attack_strength": 1.5,
                     "away_defense_strength": 0.8,
@@ -254,9 +252,7 @@ class TestVenueAnalyzer:
             team_id = "team_a"
             venue_id = "stadium_a"
 
-            with patch.object(
-                analyzer, "calculate_venue_features_for_match"
-            ) as mock_advantage:
+            with patch.object(analyzer, "calculate_venue_features_for_match") as mock_advantage:
                 mock_advantage.return_value = {
                     "home_win_rate": 0.65,
                     "away_win_rate": 0.25,
@@ -452,9 +448,7 @@ class TestFeatureIntegration:
 
             # Mock所有特征组件
             with (
-                patch(
-                    "advanced_feature_transformer.AdvancedFeatureTransformer"
-                ) as MockTransformer,
+                patch("advanced_feature_transformer.AdvancedFeatureTransformer") as MockTransformer,
                 patch("h2h_calculator.H2HCalculator") as MockH2H,
                 patch("venue_analyzer.VenueAnalyzer") as MockVenue,
                 patch("extractor.MatchFeatureExtractor") as MockExtractor,
@@ -497,13 +491,9 @@ class TestFeatureIntegration:
 
                 # 模拟集成处理
                 raw_features = extractor.extract_features_from_match(match_data)
-                transformed_features = transformer.transform_match_features(
-                    raw_features
-                )
+                transformed_features = transformer.transform_match_features(raw_features)
                 h2h_features = h2h_calc.calculate_head_to_head("Team A", "Team B")
-                venue_features = venue_analyzer.analyze_home_advantage(
-                    "Team A", "Stadium A"
-                )
+                venue_features = venue_analyzer.analyze_home_advantage("Team A", "Stadium A")
 
                 # 集成所有特征
                 integrated_features = {
@@ -540,10 +530,7 @@ class TestFeatureIntegration:
 
             # 模拟特征验证
             def validate_features(features):
-                return all(
-                    isinstance(v, (int, float)) and 0 <= v <= 10
-                    for v in features.values()
-                )
+                return all(isinstance(v, (int, float)) and 0 <= v <= 10 for v in features.values())
 
             assert validate_features(valid_features) is True
 

@@ -224,11 +224,7 @@ class TestHealthAPISchema:
     @pytest.mark.asyncio
     async def test_get_database_service_check(self):
         """测试数据库服务检查函数"""
-        result = (
-            await router._get_database_service_check()
-            if hasattr(router, "_get_database_service_check")
-            else None
-        )
+        result = await router._get_database_service_check() if hasattr(router, "_get_database_service_check") else None
 
         if result is None:
             # 如果函数不在router上，从模块导入测试

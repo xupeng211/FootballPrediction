@@ -481,9 +481,7 @@ class TestCryptoUtils:
         assert hash_value == hash_value2
 
         # 验证与标准MD5一致
-        expected_hash = hashlib.md5(
-            text.encode("utf-8"), usedforsecurity=False
-        ).hexdigest()
+        expected_hash = hashlib.md5(text.encode("utf-8"), usedforsecurity=False).hexdigest()
         assert hash_value == expected_hash
 
     def test_crypto_utils_hash_string_sha256(self):
@@ -904,9 +902,7 @@ class TestUtilsIntegration:
         flat_data = DictUtils.flatten_dict(base_data)
 
         # 转换时间戳为字符串
-        flat_data["created_at"] = TimeUtils.format_datetime(
-            flat_data["created_at"], "%Y-%m-%d %H:%M:%S"
-        )
+        flat_data["created_at"] = TimeUtils.format_datetime(flat_data["created_at"], "%Y-%m-%d %H:%M:%S")
 
         # 验证扁平化结果
         assert "created_at" in flat_data

@@ -238,9 +238,7 @@ class TestHealthCheckPerformanceOptimized:
         successful_results = [r for r in results if not isinstance(r, Exception)]
         exceptions = [r for r in results if isinstance(r, Exception)]
 
-        assert (
-            len(successful_results) >= 2
-        ), f"成功结果太少: {len(successful_results)}/3"
+        assert len(successful_results) >= 2, f"成功结果太少: {len(successful_results)}/3"
 
         # 如果有异常，记录但不强制失败
         if exceptions:
@@ -357,9 +355,7 @@ class TestHealthCheckIntegrationOptimized:
             from src.database.connection import get_db_session
 
             # 测试响应模式可用
-            service = ServiceCheck(
-                service_name="test", status="healthy", response_time_ms=10.0
-            )
+            service = ServiceCheck(service_name="test", status="healthy", response_time_ms=10.0)
 
             assert service.service_name == "test"
             assert service.status == "healthy"

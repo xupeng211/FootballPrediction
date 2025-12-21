@@ -55,8 +55,7 @@ class EnhancedTestSuite:
                 "method": "GET",
                 "path": "/health",
                 "expected_status": 200,
-                "validator": lambda r: "status" in r.json()
-                and r.json()["status"] == "healthy",
+                "validator": lambda r: "status" in r.json() and r.json()["status"] == "healthy",
             },
             {
                 "name": "Root Endpoint",
@@ -70,9 +69,7 @@ class EnhancedTestSuite:
                 "method": "GET",
                 "path": "/metrics",
                 "expected_status": 200,
-                "validator": lambda r: r.headers.get("content-type", "").startswith(
-                    "text/plain"
-                ),
+                "validator": lambda r: r.headers.get("content-type", "").startswith("text/plain"),
             },
             {
                 "name": "Database Health",
@@ -88,9 +85,7 @@ class EnhancedTestSuite:
             for test_case in test_cases:
                 start_time = time.time()
                 try:
-                    response = await client.request(
-                        test_case["method"], test_case["path"]
-                    )
+                    response = await client.request(test_case["method"], test_case["path"])
                     end_time = time.time()
 
                     test_result = {
@@ -105,9 +100,7 @@ class EnhancedTestSuite:
                     # 自定义验证
                     try:
                         if "validator" in test_case:
-                            test_result["validation_passed"] = test_case["validator"](
-                                response
-                            )
+                            test_result["validation_passed"] = test_case["validator"](response)
                     except Exception as e:
                         test_result["validation_passed"] = False
                         test_result["validation_error"] = str(e)
@@ -115,9 +108,7 @@ class EnhancedTestSuite:
                     results.append(test_result)
 
                     if test_result["passed"]:
-                        logger.info(
-                            f"✅ {test_case['name']}: {test_result['response_time_ms']:.2f}ms"
-                        )
+                        logger.info(f"✅ {test_case['name']}: {test_result['response_time_ms']:.2f}ms")
                     else:
                         logger.error(
                             f"❌ {test_case['name']}: {response.status_code} != {test_case['expected_status']}"
@@ -177,12 +168,8 @@ class EnhancedTestSuite:
         async def single_request():
             start_time = time.time()
             try:
-                async with AsyncClient(
-                    app=enhanced_app, base_url=self.base_url
-                ) as client:
-                    response = await client.request(
-                        test_case["method"], test_case["path"]
-                    )
+                async with AsyncClient(app=enhanced_app, base_url=self.base_url) as client:
+                    response = await client.request(test_case["method"], test_case["path"])
                     end_time = time.time()
                     return {
                         "success": True,
@@ -213,9 +200,7 @@ class EnhancedTestSuite:
             min_response_time = min(response_times)
             p95_response_time = sorted(response_times)[int(len(response_times) * 0.95)]
         else:
-            avg_response_time = max_response_time = min_response_time = (
-                p95_response_time
-            ) = 0
+            avg_response_time = max_response_time = min_response_time = p95_response_time = 0
 
         performance_result = {
             "name": test_case["name"],
@@ -234,13 +219,9 @@ class EnhancedTestSuite:
         }
 
         if performance_result["meets_target"]:
-            logger.info(
-                f"✅ {test_case['name']}: {avg_response_time:.2f}ms <= {test_case['target_time_ms']}ms"
-            )
+            logger.info(f"✅ {test_case['name']}: {avg_response_time:.2f}ms <= {test_case['target_time_ms']}ms")
         else:
-            logger.warning(
-                f"⚠️ {test_case['name']}: {avg_response_time:.2f}ms > {test_case['target_time_ms']}ms"
-            )
+            logger.warning(f"⚠️ {test_case['name']}: {avg_response_time:.2f}ms > {test_case['target_time_ms']}ms")
 
         return performance_result
 
@@ -278,8 +259,7 @@ class EnhancedTestSuite:
                     # 检查响应是否包含恶意内容
                     response_text = response.text.lower()
                     contains_malicious = any(
-                        indicator in response_text
-                        for indicator in ["sql", "script", "alert", "drop", "select"]
+                        indicator in response_text for indicator in ["sql", "script", "alert", "drop", "select"]
                     )
 
                     result = {
@@ -297,9 +277,7 @@ class EnhancedTestSuite:
                     results.append(result)
 
                 except Exception as e:
-                    results.append(
-                        {"name": test_case["name"], "passed": False, "error": str(e)}
-                    )
+                    results.append({"name": test_case["name"], "passed": False, "error": str(e)})
                     logger.error(f"❌ {test_case['name']}: {str(e)}")
 
         self.test_results["security_tests"] = results
@@ -336,16 +314,13 @@ class EnhancedTestSuite:
                     coverage_result = {
                         "overall_coverage": coverage_data["totals"]["percent_covered"],
                         "files": coverage_data["files"],
-                        "meets_target": coverage_data["totals"]["percent_covered"]
-                        >= 80.0,
+                        "meets_target": coverage_data["totals"]["percent_covered"] >= 80.0,
                         "lines_covered": coverage_data["totals"]["covered_lines"],
                         "lines_missing": coverage_data["totals"]["missing_lines"],
                         "total_lines": coverage_data["totals"]["num_statements"],
                     }
 
-                    logger.info(
-                        f"✅ 覆盖率分析完成: {coverage_result['overall_coverage']:.2f}%"
-                    )
+                    logger.info(f"✅ 覆盖率分析完成: {coverage_result['overall_coverage']:.2f}%")
                     return coverage_result
 
                 except Exception as e:
@@ -379,9 +354,7 @@ class EnhancedTestSuite:
         end_time = time.time()
 
         # 计算总体统计
-        total_tests = (
-            len(functional_results) + len(performance_results) + len(security_results)
-        )
+        total_tests = len(functional_results) + len(performance_results) + len(security_results)
 
         passed_tests = (
             sum(1 for r in functional_results if r.get("passed", False))
@@ -400,9 +373,7 @@ class EnhancedTestSuite:
             "test_results": self.test_results,
         }
 
-        logger.info(
-            f"✅ 测试套件完成: {passed_tests}/{total_tests} 通过 ({overall_summary['success_rate']:.1%})"
-        )
+        logger.info(f"✅ 测试套件完成: {passed_tests}/{total_tests} 通过 ({overall_summary['success_rate']:.1%})")
         logger.info(f"📊 覆盖率: {overall_summary['overall_coverage']:.1f}%")
 
         return overall_summary
@@ -422,9 +393,7 @@ class EnhancedTestSuite:
         report.append(f"- 失败测试数: {results['failed_tests']}")
         report.append(f"- 成功率: {results['success_rate']:.1%}")
         report.append(f"- 代码覆盖率: {results['overall_coverage']:.1f}%")
-        report.append(
-            f"- 覆盖率达标: {'✅' if results['coverage_meets_target'] else '❌'}"
-        )
+        report.append(f"- 覆盖率达标: {'✅' if results['coverage_meets_target'] else '❌'}")
         report.append("")
 
         # 功能测试结果
@@ -432,9 +401,7 @@ class EnhancedTestSuite:
             report.append("## 功能测试结果")
             for test in results["test_results"]["functional_tests"]:
                 status = "✅" if test.get("passed", False) else "❌"
-                report.append(
-                    f"- {status} {test['name']}: {test.get('response_time_ms', 0):.2f}ms"
-                )
+                report.append(f"- {status} {test['name']}: {test.get('response_time_ms', 0):.2f}ms")
             report.append("")
 
         # 性能测试结果

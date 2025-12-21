@@ -116,9 +116,7 @@ class TestDatabaseManager:
 
     @patch("src.database.connection.create_async_engine")
     @patch("src.database.connection.async_sessionmaker")
-    def test_manager_initialization(
-        self, mock_sessionmaker, mock_create_engine, mock_config
-    ):
+    def test_manager_initialization(self, mock_sessionmaker, mock_create_engine, mock_config):
         """测试管理器初始化"""
         mock_engine = AsyncMock()
         mock_create_engine.return_value = mock_engine

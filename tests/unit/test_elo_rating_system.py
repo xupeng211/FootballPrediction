@@ -93,9 +93,7 @@ class TestEloRatingSystem:
         assert k_factor == 40.0 * 1.5 * 0.9
 
         # 杯重限制
-        k_factor_limited = elo_system._calculate_k_factor(
-            "league", weight=3.0, confidence=0.5
-        )
+        k_factor_limited = elo_system._calculate_k_factor("league", weight=3.0, confidence=0.5)
         assert k_factor_limited == 40.0 * 2.0 * 0.5  # 最大2.0倍权重
 
     def test_basic_rating_update(self, elo_system, sample_teams):
@@ -307,19 +305,14 @@ class TestEloRatingSystem:
         )
 
         # 高评级主队应该有更高的胜率
-        assert (
-            probabilities["probabilities"]["home_win"]
-            > probabilities["probabilities"]["away_win"]
-        )
+        assert probabilities["probabilities"]["home_win"] > probabilities["probabilities"]["away_win"]
 
     def test_head_to_head_record_tracking(self, elo_system, sample_teams):
         """测试历史交锋记录跟踪"""
         # 添加历史交锋记录
         match_date = datetime.utcnow() - timedelta(days=30)
 
-        record = elo_system._add_h2h_record(
-            sample_teams["team_a"], sample_teams["team_b"], 2, 1, match_date
-        )
+        record = elo_system._add_h2h_record(sample_teams["team_a"], sample_teams["team_b"], 2, 1, match_date)
 
         # 验证记录存储
         assert record.home_team == sample_teams["team_a"]
@@ -329,9 +322,7 @@ class TestEloRatingSystem:
         assert record.match_date == match_date
 
         # 获取H2H记录
-        h2h_record = elo_system.get_head_to_head_record(
-            sample_teams["team_a"], sample_teams["team_b"]
-        )
+        h2h_record = elo_system.get_head_to_head_record(sample_teams["team_a"], sample_teams["team_b"])
 
         assert h2h_record.total_matches == 1
         assert h2h_record.home_wins == 1
@@ -357,9 +348,7 @@ class TestEloRatingSystem:
         k_with_h2h = elo_system._calculate_k_factor("league", confidence=1.0)
 
         # 无H2H记录的球队
-        k_without_h2h = elo_system._calculate_k_factor(
-            "league", team_id=sample_teams["team_c"], confidence=1.0
-        )
+        k_without_h2h = elo_system._calculate_k_factor("league", team_id=sample_teams["team_c"], confidence=1.0)
 
         # H2H记录应该调整K因子
         assert abs(k_with_h2h - 40.0) < 5.0  # 允许一些调整
@@ -389,14 +378,10 @@ class TestEloRatingSystem:
         """测试系统统计信息"""
         # 添加一些评级
         for team in sample_teams.values():
-            elo_system.team_ratings[team] = TeamRating(
-                team_id=team, rating=1500.0, last_updated=datetime.utcnow()
-            )
+            elo_system.team_ratings[team] = TeamRating(team_id=team, rating=1500.0, last_updated=datetime.utcnow())
 
         # 添加一些比赛记录
-        elo_system._add_h2h_record(
-            sample_teams["team_a"], sample_teams["team_b"], 2, 1, datetime.utcnow()
-        )
+        elo_system._add_h2h_record(sample_teams["team_a"], sample_teams["team_b"], 2, 1, datetime.utcnow())
 
         stats = elo_system.get_system_stats()
 
@@ -417,9 +402,7 @@ class TestEloRatingSystem:
 
         # 测试无效概率
         with pytest.raises(ValueError):
-            elo_system._validate_probabilities(
-                {"home_win": 1.5, "draw": 0.3, "away_win": 0.2}
-            )
+            elo_system._validate_probabilities({"home_win": 1.5, "draw": 0.3, "away_win": 0.2})
 
     def test_numerical_precision(self, elo_system, sample_teams):
         """测试数值精度和一致性"""
@@ -460,12 +443,8 @@ class TestEloRatingSystem:
         )
 
         # 结果应该完全相同
-        assert (
-            result1["ratings"]["home"]["after"] == result2["ratings"]["home"]["after"]
-        )
-        assert (
-            result1["ratings"]["away"]["after"] == result2["ratings"]["away"]["after"]
-        )
+        assert result1["ratings"]["home"]["after"] == result2["ratings"]["home"]["after"]
+        assert result1["ratings"]["away"]["after"] == result2["ratings"]["away"]["after"]
 
     def test_configuration_variations(self):
         """测试不同配置的影响"""
@@ -489,12 +468,8 @@ class TestEloRatingSystem:
         )
 
         # 相同比分，不同主场优势
-        result_no_adv = elo_no_home_advantage.update_ratings(
-            team_a, team_b, 1, 0, datetime.utcnow(), "league"
-        )
-        result_high_adv = elo_high_home_advantage.update_ratings(
-            team_a, team_b, 1, 0, datetime.utcnow(), "league"
-        )
+        result_no_adv = elo_no_home_advantage.update_ratings(team_a, team_b, 1, 0, datetime.utcnow(), "league")
+        result_high_adv = elo_high_home_advantage.update_ratings(team_a, team_b, 1, 0, datetime.utcnow(), "league")
 
         # 高主场优势应该给主队更多收益
         home_rating_high_adv = result_high_adv["ratings"]["home"]["after"]
@@ -506,25 +481,13 @@ class TestEloRatingSystem:
         elo_low_k = EloRatingSystem(base_k_factor=20.0)
         elo_high_k = EloRatingSystem(base_k_factor=80.0)
 
-        elo_low_k.team_ratings[team_a] = TeamRating(
-            team_id=team_a, rating=1500.0, last_updated=datetime.utcnow()
-        )
-        elo_low_k.team_ratings[team_b] = TeamRating(
-            team_id=team_b, rating=1500.0, last_updated=datetime.utcnow()
-        )
-        elo_high_k.team_ratings[team_a] = TeamRating(
-            team_id=team_a, rating=1500.0, last_updated=datetime.utcnow()
-        )
-        elo_high_k.team_ratings[team_b] = TeamRating(
-            team_id=team_b, rating=1500.0, last_updated=datetime.utcnow()
-        )
+        elo_low_k.team_ratings[team_a] = TeamRating(team_id=team_a, rating=1500.0, last_updated=datetime.utcnow())
+        elo_low_k.team_ratings[team_b] = TeamRating(team_id=team_b, rating=1500.0, last_updated=datetime.utcnow())
+        elo_high_k.team_ratings[team_a] = TeamRating(team_id=team_a, rating=1500.0, last_updated=datetime.utcnow())
+        elo_high_k.team_ratings[team_b] = TeamRating(team_id=team_b, rating=1500.0, last_updated=datetime.utcnow())
 
-        result_low_k = elo_low_k.update_ratings(
-            team_a, team_b, 3, 0, datetime.utcnow(), "league"
-        )
-        result_high_k = elo_high_k.update_ratings(
-            team_a, team_b, 3, 0, datetime.utcnow(), "league"
-        )
+        result_low_k = elo_low_k.update_ratings(team_a, team_b, 3, 0, datetime.utcnow(), "league")
+        result_high_k = elo_high_k.update_ratings(team_a, team_b, 3, 0, datetime.utcnow(), "league")
 
         # 高K因子应该产生更大的评级变化
         rating_change_low_k = result_low_k["ratings"]["home"]["after"] - 1500.0
@@ -538,9 +501,7 @@ class TestEloRatingSystem:
 
         # 初始化所有球队
         for team in teams:
-            elo_system.team_ratings[team] = TeamRating(
-                team_id=team, rating=1500.0, last_updated=datetime.utcnow()
-            )
+            elo_system.team_ratings[team] = TeamRating(team_id=team, rating=1500.0, last_updated=datetime.utcnow())
 
         # 模拟一个赛季
         season_matches = [
@@ -635,9 +596,7 @@ class TestKellyCriterion:
         expected_f = (odds * probability - (1 - probability)) / (odds - 1)
         # expected_f = (2.0 * 0.6 - 0.4) / 1.0  # = 0.2
 
-        result = kelly_system.calculate_kelly_fraction(
-            decimal_odds=odds, predicted_prob=probability
-        )
+        result = kelly_system.calculate_kelly_fraction(decimal_odds=odds, predicted_prob=probability)
 
         assert result["kelly_fraction"] == expected_f
         assert result["edge"] == odds * probability - 1
@@ -649,9 +608,7 @@ class TestKellyCriterion:
         odds = 2.5
         probability = 0.6
 
-        result = kelly_system.calculate_kelly_fraction(
-            decimal_odds=odds, predicted_prob=probability
-        )
+        result = kelly_system.calculate_kelly_fraction(decimal_odds=odds, predicted_prob=probability)
 
         # 分数Kelly应该是完整凯利的25%
         full_kelly = (odds * probability - (1 - probability)) / (odds - 1)
@@ -666,9 +623,7 @@ class TestKellyCriterion:
         odds = 1.1  # 低赔率
         probability = 0.55  # 略高概率
 
-        result = kelly_system.calculate_kelly_fraction(
-            decimal_odds=odds, predicted_prob=probability
-        )
+        result = kelly_system.calculate_kelly_fraction(decimal_odds=odds, predicted_prob=probability)
 
         # 优势5%以下不应该投注
         assert result["should_bet"] is False
@@ -679,9 +634,7 @@ class TestKellyCriterion:
         odds = 3.0
         probability = 0.7
 
-        result = kelly_system.calculate_kelly_fraction(
-            decimal_odds=odds, predicted_prob=probability
-        )
+        result = kelly_system.calculate_kelly_fraction(decimal_odds=odds, predicted_prob=probability)
 
         assert result["should_bet"] is True
         assert result["kelly_fraction"] > 0.0
@@ -692,9 +645,7 @@ class TestKellyCriterion:
         odds = 5.0
         probability = 0.8
 
-        result = kelly_system.calculate_kelly_fraction(
-            decimal_odds=odds, predicted_prob=probability
-        )
+        result = kelly_system.calculate_kelly_fraction(decimal_odds=odds, predicted_prob=probability)
 
         # 投注比例应该被限制在最大值
         max_allowed = kelly_system.max_stake_percentage
@@ -829,13 +780,9 @@ class TestKellyCriterion:
     def test_confidence_weighting(self, kelly_system):
         """测试置信度权重"""
         # 高置信度预测应该获得更高权重
-        high_confidence_kelly = kelly._adjust_kelly_for_confidence(
-            kelly_fraction=0.15, confidence=0.9
-        )
+        high_confidence_kelly = kelly._adjust_kelly_for_confidence(kelly_fraction=0.15, confidence=0.9)
 
-        low_confidence_kelly = kelly._adjust_kelly_for_confidence(
-            kelly_fraction=0.15, confidence=0.3
-        )
+        low_confidence_kelly = kelly._adjust_kelly_for_confidence(kelly_fraction=0.15, confidence=0.3)
 
         assert high_confidence_kelly > low_confidence_kelly
 
@@ -843,9 +790,7 @@ class TestKellyCriterion:
         """测试极端值的鲁棒性"""
         # 极端赔率
         with pytest.raises(ValueError):
-            kelly_system.calculate_kelly_fraction(
-                decimal_odds=0.0, predicted_prob=0.6  # 无效赔率
-            )
+            kelly_system.calculate_kelly_fraction(decimal_odds=0.0, predicted_prob=0.6)  # 无效赔率
 
         # 无效概率
         with pytest.raises(ValueError):
@@ -856,15 +801,11 @@ class TestKellyCriterion:
 
         # 超出概率范围
         with pytest.raises(ValueError):
-            kelly_system.calculate_kelly_fraction(
-                decimal_odds=2.0, predicted_prob=1.5  # 概率超过100%
-            )
+            kelly_system.calculate_kelly_fraction(decimal_odds=2.0, predicted_prob=1.5)  # 概率超过100%
 
         # 负数赔率
         with pytest.raises(ValueError):
-            kelly_system.calculate_kelly_fraction(
-                decimal_odds=-1.0, predicted_prob=0.6  # 负数赔率
-            )
+            kelly_system.calculate_kelly_fraction(decimal_odds=-1.0, predicted_prob=0.6)  # 负数赔率
 
     def test_comprehensive_betting_scenario(self, kelly_system):
         """测试综合投注场景"""
@@ -898,9 +839,7 @@ class TestKellyCriterion:
 
         # 执行投注序列
         for match in matches:
-            recommendations = kelly_system.generate_bet_recommendation(
-                match["outcomes"]
-            )
+            recommendations = kelly_system.generate_bet_recommendation(match["outcomes"])
 
             for rec in recommendations:
                 if rec.should_bet:
@@ -931,10 +870,7 @@ class TestKellyCriterion:
         final_portfolio = kelly_system.get_portfolio_state()
 
         assert final_portfolio["performance"]["total_bets"] == len(matches)
-        assert (
-            final_portfolio["bankroll"]["total"]
-            == 10000.0 + final_portfolio["performance"]["total_profit"]
-        )
+        assert final_portfolio["bankroll"]["total"] == 10000.0 + final_portfolio["performance"]["total_profit"]
 
         # 验证性能指标
         assert final_portfolio["performance"]["win_rate"] >= 0.0
@@ -956,10 +892,7 @@ class TestKellyCriterion:
         # 资金不足时应该限制投注
         assert result["stake_limited"] is True
         assert result["bankroll_exhausted"] is True
-        assert (
-            result["reasoning"]
-            and "insufficient bankroll" in result["reasoning"].lower()
-        )
+        assert result["reasoning"] and "insufficient bankroll" in result["reasoning"].lower()
 
     def test_portfolio_state_persistence(self, kelly_system):
         """测试投资组合状态持久化"""
@@ -1022,9 +955,7 @@ class TestKellyCriterion:
         )
 
         # 激进策略应该产生更高的投注比例
-        assert (
-            aggressive_result["kelly_fraction"] > conservative_result["kelly_fraction"]
-        )
+        assert aggressive_result["kelly_fraction"] > conservative_result["kelly_fraction"]
 
         # 保守策略应该有更严格的最大投注限制
         assert conservative_kelly["max_stake_percentage"] == 0.05
@@ -1034,9 +965,7 @@ class TestKellyCriterion:
         """测试错误处理和恢复机制"""
         # 测试无效赔率处理
         with pytest.raises(ValueError):
-            kelly_system.calculate_kelly_fraction(
-                decimal_odds="invalid", predicted_prob=0.5
-            )
+            kelly_system.calculate_kelly_fraction(decimal_odds="invalid", predicted_prob=0.5)
 
         # 测试概率验证错误处理
         outcomes = {"home": {"odds": 2.5, "probability": 0.6, "confidence": 0.8}}
@@ -1066,9 +995,7 @@ class TestKellyCriterion:
         for i in range(100):
             odds = 2.0 + (i * 0.01)
             prob = 0.5 + (i * 0.001)
-            kelly_system.calculate_kelly_fraction(
-                decimal_odds=odds, predicted_prob=prob
-            )
+            kelly_system.calculate_kelly_fraction(decimal_odds=odds, predicted_prob=prob)
 
         calculation_time = time.time() - start_time
         print(f"100次凯利计算耗时: {calculation_time:.4f}s")
@@ -1180,9 +1107,7 @@ class TestKellyCriterion:
         ]
 
         for prob, odds, description in edge_cases:
-            result = kelly_system.calculate_kelly_fraction(
-                decimal_odds=odds, predicted_prob=prob
-            )
+            result = kelly_system.calculate_kelly_fraction(decimal_odds=odds, predicted_prob=prob)
 
             # 验证结果的合理性
             if prob <= 0.05:
@@ -1192,11 +1117,7 @@ class TestKellyCriterion:
             else:
                 # 合理范围内的投注
                 if result["should_bet"]:
-                    assert (
-                        0.0
-                        < result["kelly_fraction"]
-                        <= kelly_system.max_stake_percentage
-                    )
+                    assert 0.0 < result["kelly_fraction"] <= kelly_system.max_stake_percentage
 
     def test_integration_consistency(self):
         """测试集成一致性"""

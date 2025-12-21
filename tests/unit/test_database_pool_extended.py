@@ -95,9 +95,7 @@ class TestDatabasePoolConfig:
 
         with patch.dict(
             os.environ,
-            {
-                "DATABASE_URL": "postgresql://defaultuser:defaultpass@defaulthost:5433/defaultdb"
-            },
+            {"DATABASE_URL": "postgresql://defaultuser:defaultpass@defaulthost:5433/defaultdb"},
         ):
             config = DatabasePoolConfig.from_url()
 
@@ -366,9 +364,7 @@ class TestDatabasePoolOperations:
             assert results[0]["id"] == 1
             assert results[1]["name"] == "test2"
             assert pool._stats["total_queries_executed"] == 1
-            mock_conn.fetch.assert_called_once_with(
-                "SELECT * FROM test WHERE id = $1", 1
-            )
+            mock_conn.fetch.assert_called_once_with("SELECT * FROM test WHERE id = $1", 1)
 
     @pytest.mark.asyncio
     async def test_database_pool_fetchrow_query(self):
@@ -392,9 +388,7 @@ class TestDatabasePoolOperations:
             assert result["id"] == 1
             assert result["name"] == "test"
             assert pool._stats["total_queries_executed"] == 1
-            mock_conn.fetchrow.assert_called_once_with(
-                "SELECT * FROM test WHERE id = $1", 1
-            )
+            mock_conn.fetchrow.assert_called_once_with("SELECT * FROM test WHERE id = $1", 1)
 
     @pytest.mark.asyncio
     async def test_database_pool_fetchval_query(self):

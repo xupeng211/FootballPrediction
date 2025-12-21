@@ -277,9 +277,7 @@ class TestMockBestPractices:
 
             # 验证调用
             mock_path_class.assert_called_once_with("/test")
-            mock_path_instance.mkdir.assert_called_once_with(
-                parents=True, exist_ok=True
-            )
+            mock_path_instance.mkdir.assert_called_once_with(parents=True, exist_ok=True)
 
     def test_import_mocking_best_practice(self):
         """演示正确的导入Mock方法"""

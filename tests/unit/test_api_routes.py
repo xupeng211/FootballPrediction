@@ -177,9 +177,7 @@ class TestModelManagementAPI:
     async def test_get_model_info_no_model_loaded(self):
         """测试获取模型信息 - 未加载模型"""
         mock_inference_service = AsyncMock()
-        mock_inference_service.get_model_info.side_effect = RuntimeError(
-            "No model loaded"
-        )
+        mock_inference_service.get_model_info.side_effect = RuntimeError("No model loaded")
 
         async def mock_get_model_info_logic():
             """模拟获取模型信息API逻辑"""
@@ -235,9 +233,7 @@ class TestModelManagementAPI:
                     "total_size_mb": sum(m["size"] for m in models) / (1024 * 1024),
                 }
             except FileNotFoundError:
-                raise HTTPException(
-                    status_code=404, detail="Models directory not found"
-                )
+                raise HTTPException(status_code=404, detail="Models directory not found")
 
         result = mock_list_models_logic()
 
@@ -325,9 +321,7 @@ class TestMonitoringAPI:
                     "uptime_seconds": 86400,  # 24小时
                 }
             except Exception as e:
-                raise HTTPException(
-                    status_code=500, detail=f"Failed to get metrics: {str(e)}"
-                )
+                raise HTTPException(status_code=500, detail=f"Failed to get metrics: {str(e)}")
 
         result = await mock_get_metrics_logic()
 
@@ -403,9 +397,7 @@ class TestMonitoringAPI:
                 # 模拟系统指标获取失败
                 raise Exception("Failed to get system metrics")
             except Exception as e:
-                raise HTTPException(
-                    status_code=500, detail=f"Monitoring system error: {str(e)}"
-                )
+                raise HTTPException(status_code=500, detail=f"Monitoring system error: {str(e)}")
 
         with pytest.raises(HTTPException) as exc_info:
             await mock_get_metrics_logic()
@@ -470,9 +462,7 @@ class TestHealthCheckAPI:
                 # 模拟数据库连接检查
                 db_start_time = asyncio.get_event_loop().time()
                 await asyncio.sleep(0.01)  # 模拟查询延迟
-                db_response_time = (
-                    asyncio.get_event_loop().time() - db_start_time
-                ) * 1000
+                db_response_time = (asyncio.get_event_loop().time() - db_start_time) * 1000
 
                 checks["database"] = {
                     "status": "healthy",
@@ -503,9 +493,7 @@ class TestHealthCheckAPI:
                 checks["external_api"] = {"status": "degraded", "error": str(e)}
 
             # 确定整体状态
-            all_healthy = all(
-                check.get("status") == "healthy" for check in checks.values()
-            )
+            all_healthy = all(check.get("status") == "healthy" for check in checks.values())
             overall_status = "healthy" if all_healthy else "unhealthy"
 
             return {
@@ -549,9 +537,7 @@ class TestHealthCheckAPI:
 
             # 计算整体状态
             overall_status = (
-                "healthy"
-                if all(check.get("status") == "healthy" for check in checks.values())
-                else "unhealthy"
+                "healthy" if all(check.get("status") == "healthy" for check in checks.values()) else "unhealthy"
             )
 
             return {

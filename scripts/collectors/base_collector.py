@@ -128,9 +128,7 @@ class BaseCollector(ABC):
                     )
                 else:
                     error_text = await response.text()
-                    logger.error(
-                        f"API request failed: {response.status} - {error_text}"
-                    )
+                    logger.error(f"API request failed: {response.status} - {error_text}")
                     return CollectionResult(
                         success=False,
                         error=f"HTTP {response.status}: {error_text}",
@@ -141,9 +139,7 @@ class BaseCollector(ABC):
         except TimeoutError:
             response_time = asyncio.get_event_loop().time() - start_time
             logger.error(f"Request timeout after {response_time:.2f}s")
-            return CollectionResult(
-                success=False, error="Request timeout", response_time=response_time
-            )
+            return CollectionResult(success=False, error="Request timeout", response_time=response_time)
 
         except aiohttp.ClientError as e:
             response_time = asyncio.get_event_loop().time() - start_time
@@ -163,16 +159,12 @@ class BaseCollector(ABC):
                 response_time=response_time,
             )
 
-    async def get(
-        self, endpoint: str, params: dict[str, Any] | None = None
-    ) -> CollectionResult:
+    async def get(self, endpoint: str, params: dict[str, Any] | None = None) -> CollectionResult:
         """GET请求."""
         url = self._build_url(endpoint, **(params or {}))
         return await self._make_request("GET", url)
 
-    async def post(
-        self, endpoint: str, data: dict[str, Any] | None = None
-    ) -> CollectionResult:
+    async def post(self, endpoint: str, data: dict[str, Any] | None = None) -> CollectionResult:
         """POST请求."""
         url = self._build_url(endpoint)
         return await self._make_request("POST", url, json=data)

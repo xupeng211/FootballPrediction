@@ -86,10 +86,7 @@ class TestServicePerformance:
 
             # 模拟批量预测
             service.batch_predict = AsyncMock(
-                return_value=[
-                    Mock(success=True, prediction={"result": "HOME_WIN"})
-                    for _ in range(100)
-                ]
+                return_value=[Mock(success=True, prediction={"result": "HOME_WIN"}) for _ in range(100)]
             )
 
             # 创建100个预测请求
@@ -184,9 +181,7 @@ class TestMemoryPerformance:
             before_memory = process.memory_info().rss / 1024 / 1024
 
             # 处理大数据
-            stats = h2h_calc.calculate_h2h_for_match(
-                large_data, 1, 2, pd.Timestamp.now()
-            )
+            stats = h2h_calc.calculate_h2h_for_match(large_data, 1, 2, pd.Timestamp.now())
 
             # 记录处理后内存
             after_memory = process.memory_info().rss / 1024 / 1024
@@ -284,18 +279,14 @@ class TestConcurrencyPerformance:
             service.is_initialized = True
 
             # 模拟异步操作
-            service.predict_match = AsyncMock(
-                return_value=Mock(success=True, prediction={"result": "HOME_WIN"})
-            )
+            service.predict_match = AsyncMock(return_value=Mock(success=True, prediction={"result": "HOME_WIN"}))
 
             # 创建并发任务
             tasks = []
             start_time = time.time()
 
             for i in range(100):
-                task = service.predict_match_simple(
-                    f"match_{i}", f"Team_{i}", f"Team_{i+1}"
-                )
+                task = service.predict_match_simple(f"match_{i}", f"Team_{i}", f"Team_{i+1}")
                 tasks.append(task)
 
             # 并发执行
@@ -304,9 +295,7 @@ class TestConcurrencyPerformance:
 
             # 验证异步并发性能
             successful_results = [r for r in results if not isinstance(r, Exception)]
-            assert (
-                len(successful_results) >= 90
-            ), f"异步并发成功率过低: {len(successful_results)}/100"
+            assert len(successful_results) >= 90, f"异步并发成功率过低: {len(successful_results)}/100"
             assert execution_time < 3.0, f"异步并发执行时间过长: {execution_time}s"
 
         except ImportError:
@@ -342,17 +331,13 @@ class TestConcurrencyPerformance:
             # 测试进程池执行
             start_time = time.time()
             with ProcessPoolExecutor(max_workers=2) as executor:
-                futures = [
-                    executor.submit(cpu_intensive_task, test_data) for _ in range(5)
-                ]
+                futures = [executor.submit(cpu_intensive_task, test_data) for _ in range(5)]
                 results = [future.result() for future in futures]
             parallel_time = time.time() - start_time
 
             # 进程池应该更快（至少不慢太多）
             assert len(results) == 5, "进程池结果不完整"
-            assert (
-                parallel_time <= serial_time * 1.2
-            ), f"进程池性能不佳: {parallel_time}s vs {serial_time}s"
+            assert parallel_time <= serial_time * 1.2, f"进程池性能不佳: {parallel_time}s vs {serial_time}s"
 
         except ImportError:
             pytest.skip("进程池测试模块不可用")
@@ -395,20 +380,14 @@ class TestLoadTesting:
 
             # 启动多个负载工作线程
             with ThreadPoolExecutor(max_workers=4) as executor:
-                futures = [
-                    executor.submit(load_worker, i, 25)  # 每个线程25个请求
-                    for i in range(4)
-                ]
+                futures = [executor.submit(load_worker, i, 25) for i in range(4)]  # 每个线程25个请求
 
                 results = [future.result() for future in futures]
 
             # 分析负载测试结果
             total_requests = sum(len(r["results"]) for r in results)
             total_time = max(r["execution_time"] for r in results)
-            successful_requests = sum(
-                len([res for res in r["results"] if res.get("success")])
-                for r in results
-            )
+            successful_requests = sum(len([res for res in r["results"] if res.get("success")]) for r in results)
 
             # 验证负载性能
             assert total_requests == 100, f"总请求数不正确: {total_requests}"

@@ -34,9 +34,7 @@ from src.ml.inference.predictor import MatchPredictor
 from src.database.db_pool import DatabasePool
 
 # 设置日志
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -181,9 +179,7 @@ class FotMobAPIMocker:
                     "capacity": 74140,
                 },
             },
-            "header": {
-                "status": {"finished": False, "started": False, "cancelled": False}
-            },
+            "header": {"status": {"finished": False, "started": False, "cancelled": False}},
             "content": {
                 "stats": {
                     "statsPeriod": [
@@ -239,9 +235,7 @@ class FotMobAPIMocker:
             ],
         }
 
-    async def simulate_api_response(
-        self, scenario: APITestScenario, match_id: str
-    ) -> Dict[str, Any]:
+    async def simulate_api_response(self, scenario: APITestScenario, match_id: str) -> Dict[str, Any]:
         """模拟API响应"""
         self.request_count += 1
 
@@ -346,9 +340,7 @@ class LiveAPIStressTest:
             try:
                 result = await self._run_scenario(scenario_name, scenario)
                 all_results[scenario_name] = result
-                logger.info(
-                    f"✅ 场景 '{scenario.name}' 完成: 成功率 {result['success_rate']:.1f}%"
-                )
+                logger.info(f"✅ 场景 '{scenario.name}' 完成: 成功率 {result['success_rate']:.1f}%")
             except Exception as e:
                 logger.error(f"❌ 场景 '{scenario.name}' 失败: {e}")
                 all_results[scenario_name] = {"success": False, "error": str(e)}
@@ -359,9 +351,7 @@ class LiveAPIStressTest:
         logger.info("🎉 真实API压力测试完成")
         return comprehensive_report
 
-    async def _run_scenario(
-        self, scenario_name: str, scenario: APITestScenario
-    ) -> Dict[str, Any]:
+    async def _run_scenario(self, scenario_name: str, scenario: APITestScenario) -> Dict[str, Any]:
         """运行单个测试场景"""
         self.mocker.reset_counters()
 
@@ -388,9 +378,7 @@ class LiveAPIStressTest:
         tasks = []
         for i in range(config.total_requests):
             match_id = f"test_match_{scenario_name}_{i}"
-            task = self._execute_single_request(
-                collection_service, match_id, scenario, response_times
-            )
+            task = self._execute_single_request(collection_service, match_id, scenario, response_times)
             tasks.append(task)
 
             # 控制并发数量
@@ -419,24 +407,12 @@ class LiveAPIStressTest:
         execution_time = time.time() - start_time
 
         # 计算指标
-        success_rate = (
-            (success_count / config.total_requests) * 100
-            if config.total_requests > 0
-            else 0
-        )
-        avg_response_time = (
-            sum(response_times) / len(response_times) if response_times else 0
-        )
-        p95_response_time = (
-            sorted(response_times)[int(len(response_times) * 0.95)]
-            if response_times
-            else 0
-        )
+        success_rate = (success_count / config.total_requests) * 100 if config.total_requests > 0 else 0
+        avg_response_time = sum(response_times) / len(response_times) if response_times else 0
+        p95_response_time = sorted(response_times)[int(len(response_times) * 0.95)] if response_times else 0
 
         # 验证系统优雅降级
-        degradation_analysis = await self._analyze_graceful_degradation(
-            scenario, success_rate
-        )
+        degradation_analysis = await self._analyze_graceful_degradation(scenario, success_rate)
 
         return {
             "scenario": scenario_name,
@@ -455,9 +431,7 @@ class LiveAPIStressTest:
             "api_stats": self.mocker.get_stats(),
         }
 
-    async def _create_mock_collection_service(
-        self, scenario: APITestScenario
-    ) -> CollectionService:
+    async def _create_mock_collection_service(self, scenario: APITestScenario) -> CollectionService:
         """创建模拟的CollectionService"""
         collection_service = MagicMock(spec=CollectionService)
 
@@ -466,9 +440,7 @@ class LiveAPIStressTest:
             return await self.mocker.simulate_api_response(scenario, match_id)
 
         collection_service.get_match_data = mock_get_match_data
-        collection_service.get_upcoming_matches = AsyncMock(
-            return_value={"matches": []}
-        )
+        collection_service.get_upcoming_matches = AsyncMock(return_value={"matches": []})
 
         return collection_service
 
@@ -542,9 +514,7 @@ class LiveAPIStressTest:
                     if result.get("error_type") == "timeout":
                         timeout_count += 1
 
-    async def _analyze_graceful_degradation(
-        self, scenario: APITestScenario, success_rate: float
-    ) -> Dict[str, Any]:
+    async def _analyze_graceful_degradation(self, scenario: APITestScenario, success_rate: float) -> Dict[str, Any]:
         """分析优雅降级情况"""
         analysis = {
             "degraded_successfully": False,
@@ -565,17 +535,13 @@ class LiveAPIStressTest:
 
         return analysis
 
-    async def _generate_comprehensive_report(
-        self, scenario_results: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    async def _generate_comprehensive_report(self, scenario_results: Dict[str, Any]) -> Dict[str, Any]:
         """生成综合报告"""
         logger.info("📊 生成综合压力测试报告")
 
         # 统计分析
         total_scenarios = len(scenario_results)
-        successful_scenarios = sum(
-            1 for r in scenario_results.values() if r.get("success", False)
-        )
+        successful_scenarios = sum(1 for r in scenario_results.values() if r.get("success", False))
 
         # 性能分析
         response_times = []
@@ -598,21 +564,13 @@ class LiveAPIStressTest:
             "test_summary": {
                 "total_scenarios": total_scenarios,
                 "successful_scenarios": successful_scenarios,
-                "overall_success_rate": (
-                    (successful_scenarios / total_scenarios * 100)
-                    if total_scenarios > 0
-                    else 0
-                ),
+                "overall_success_rate": ((successful_scenarios / total_scenarios * 100) if total_scenarios > 0 else 0),
             },
             "performance_metrics": {
-                "avg_response_time_ms": (
-                    sum(response_times) / len(response_times) if response_times else 0
-                ),
+                "avg_response_time_ms": (sum(response_times) / len(response_times) if response_times else 0),
                 "max_response_time_ms": max(response_times) if response_times else 0,
                 "min_response_time_ms": min(response_times) if response_times else 0,
-                "avg_success_rate": (
-                    sum(success_rates) / len(success_rates) if success_rates else 0
-                ),
+                "avg_success_rate": (sum(success_rates) / len(success_rates) if success_rates else 0),
                 "total_errors": sum(error_counts),
             },
             "scenario_results": scenario_results,
@@ -620,10 +578,7 @@ class LiveAPIStressTest:
             "production_readiness": {
                 "ready": successful_scenarios >= total_scenarios * 0.8,
                 "critical_issues": [],
-                "performance_acceptable": (
-                    sum(response_times) / len(response_times) if response_times else 0
-                )
-                < 3000,
+                "performance_acceptable": (sum(response_times) / len(response_times) if response_times else 0) < 3000,
             },
         }
 
@@ -640,37 +595,23 @@ class LiveAPIStressTest:
         recommendations = []
 
         # 分析失败场景
-        failed_scenarios = [
-            name
-            for name, result in scenario_results.items()
-            if not result.get("success", False)
-        ]
+        failed_scenarios = [name for name, result in scenario_results.items() if not result.get("success", False)]
         if failed_scenarios:
-            recommendations.append(
-                f"需要优化以下场景的处理: {', '.join(failed_scenarios)}"
-            )
+            recommendations.append(f"需要优化以下场景的处理: {', '.join(failed_scenarios)}")
 
         # 分析响应时间
         slow_scenarios = [
-            name
-            for name, result in scenario_results.items()
-            if result.get("avg_response_time_ms", 0) > 5000
+            name for name, result in scenario_results.items() if result.get("avg_response_time_ms", 0) > 5000
         ]
         if slow_scenarios:
-            recommendations.append(
-                f"以下场景响应时间过长，需要优化: {', '.join(slow_scenarios)}"
-            )
+            recommendations.append(f"以下场景响应时间过长，需要优化: {', '.join(slow_scenarios)}")
 
         # 分析成功率
         low_success_scenarios = [
-            name
-            for name, result in scenario_results.items()
-            if result.get("success_rate", 0) < 80
+            name for name, result in scenario_results.items() if result.get("success_rate", 0) < 80
         ]
         if low_success_scenarios:
-            recommendations.append(
-                f"以下场景成功率过低，需要增强错误处理: {', '.join(low_success_scenarios)}"
-            )
+            recommendations.append(f"以下场景成功率过低，需要增强错误处理: {', '.join(low_success_scenarios)}")
 
         # 通用建议
         if scenario_results.get("extreme_load", {}).get("success_rate", 0) < 60:
@@ -705,15 +646,11 @@ class LiveAPIStressTest:
             )
 
             # 执行错误请求
-            collection_service = await self._create_mock_collection_service(
-                error_scenario
-            )
+            collection_service = await self._create_mock_collection_service(error_scenario)
             error_results = []
             for j in range(5):
                 try:
-                    result = await collection_service.get_match_data(
-                        f"recovery_test_{i}_{j}"
-                    )
+                    result = await collection_service.get_match_data(f"recovery_test_{i}_{j}")
                 except Exception:
                     error_results.append(False)
                 else:
@@ -721,17 +658,13 @@ class LiveAPIStressTest:
 
             # 然后恢复正常
             normal_scenario = self.mocker.scenarios["normal"]
-            collection_service = await self._create_mock_collection_service(
-                normal_scenario
-            )
+            collection_service = await self._create_mock_collection_service(normal_scenario)
 
             recovery_time = time.time()
             recovery_results_i = []
             for j in range(5):
                 try:
-                    result = await collection_service.get_match_data(
-                        f"recovery_test_{i}_{j}"
-                    )
+                    result = await collection_service.get_match_data(f"recovery_test_{i}_{j}")
                     recovery_results_i.append(True)
                 except Exception:
                     recovery_results_i.append(False)
@@ -749,12 +682,8 @@ class LiveAPIStressTest:
                 }
             )
 
-        avg_recovery_rate = sum(r["recovery_rate"] for r in recovery_results) / len(
-            recovery_results
-        )
-        avg_recovery_time = sum(
-            r["recovery_time_seconds"] for r in recovery_results
-        ) / len(recovery_results)
+        avg_recovery_rate = sum(r["recovery_rate"] for r in recovery_results) / len(recovery_results)
+        avg_recovery_time = sum(r["recovery_time_seconds"] for r in recovery_results) / len(recovery_results)
 
         return {
             "recovery_capability": avg_recovery_rate > 0.8,
@@ -858,16 +787,10 @@ async def main():
 
         # 输出摘要
         print(f"\n🎯 压力测试完成!")
-        print(
-            f"📊 总体成功率: {comprehensive_report['test_summary']['overall_success_rate']:.1f}%"
-        )
-        print(
-            f"⚡ 平均响应时间: {comprehensive_report['performance_metrics']['avg_response_time_ms']:.0f}ms"
-        )
+        print(f"📊 总体成功率: {comprehensive_report['test_summary']['overall_success_rate']:.1f}%")
+        print(f"⚡ 平均响应时间: {comprehensive_report['performance_metrics']['avg_response_time_ms']:.0f}ms")
         print(f"🔄 恢复能力: {'✅' if recovery_test['recovery_capability'] else '❌'}")
-        print(
-            f"🛡️ 生产就绪: {'✅' if final_report['production_readiness']['ready'] else '❌'}"
-        )
+        print(f"🛡️ 生产就绪: {'✅' if final_report['production_readiness']['ready'] else '❌'}")
 
         if comprehensive_report["recommendations"]:
             print(f"\n💡 改进建议:")

@@ -444,23 +444,49 @@ class AdvancedFeatureExtractor:
             all_stats = periods.get("All", {}).get("stats", [])
 
             if isinstance(all_stats, list) and len(all_stats) > 0:
-                # 查找Top stats部分
-                top_stats = None
+                # 支持两种API结构:
+                # 1. 英超/意甲: stats[0].stats[].stats[]
+                # 2. 西甲/德甲: 直接在stats[].stats[]
+
+                xg_extracted = False
+
+                # 方法1: 查找top_stats组 (适用于英超/意甲)
                 for period_stats in all_stats:
                     if isinstance(period_stats, dict) and period_stats.get("key") == "top_stats":
                         top_stats = period_stats.get("stats", [])
-                        break
+                        if isinstance(top_stats, list):
+                            for stat_item in top_stats:
+                                if isinstance(stat_item, dict) and stat_item.get("key") == "expected_goals":
+                                    xg_values = stat_item.get("stats", [])
+                                    if isinstance(xg_values, list) and len(xg_values) >= 2:
+                                        home_xg = float(xg_values[0])
+                                        away_xg = float(xg_values[1])
+                                        logger.debug(f"从FotMob API v1提取xG: 主队={home_xg}, 客队={away_xg}")
+                                        xg_extracted = True
+                                        break
+                        if xg_extracted:
+                            break
 
-                if top_stats and isinstance(top_stats, list):
-                    # 查找Expected goals (xG)统计项
-                    for stat_item in top_stats:
-                        if isinstance(stat_item, dict) and stat_item.get("key") == "expected_goals":
-                            xg_values = stat_item.get("stats", [])
-                            if isinstance(xg_values, list) and len(xg_values) >= 2:
-                                home_xg = float(xg_values[0])
-                                away_xg = float(xg_values[1])
-                                logger.debug(f"从FotMob新API提取xG: 主队={home_xg}, 客队={away_xg}")
-                                break
+                # 方法2: 直接查找expected_goals组 (适用于西甲/德甲)
+                if not xg_extracted:
+                    for period_stats in all_stats:
+                        if isinstance(period_stats, dict) and period_stats.get("key") == "expected_goals":
+                            stats_list = period_stats.get("stats", [])
+                            if isinstance(stats_list, list) and len(stats_list) >= 1:
+                                # 西甲/德甲结构: stats[0].stats[0] = [home_xg, away_xg]
+                                first_stat = stats_list[0]
+                                if isinstance(first_stat, dict):
+                                    xg_values = first_stat.get("stats", [])
+                                    if isinstance(xg_values, list) and len(xg_values) >= 2:
+                                        home_xg = float(xg_values[0])
+                                        away_xg = float(xg_values[1])
+                                        logger.debug(
+                                            f"从FotMob API v2(西甲/德甲)提取xG: 主队={home_xg}, 客队={away_xg}"
+                                        )
+                                        xg_extracted = True
+                                        break
+                        if xg_extracted:
+                            break
 
         except (KeyError, TypeError, ValueError, AttributeError) as e:
             logger.debug(f"FotMob新API xG提取失败: {e}")
@@ -540,24 +566,43 @@ class AdvancedFeatureExtractor:
             all_stats = periods.get("All", {}).get("stats", [])
 
             if isinstance(all_stats, list) and len(all_stats) > 0:
-                # 查找Top stats部分
-                top_stats = None
+                # 支持两种API结构:
+                # 1. 英超/意甲: stats[0].stats[].stats[]
+                # 2. 西甲/德甲: 直接在stats[].stats[]
+
+                possession_extracted = False
+
+                # 方法1: 查找top_stats组 (适用于英超/意甲)
                 for period_stats in all_stats:
                     if isinstance(period_stats, dict) and period_stats.get("key") == "top_stats":
                         top_stats = period_stats.get("stats", [])
-                        break
+                        if isinstance(top_stats, list):
+                            for stat_item in top_stats:
+                                if isinstance(stat_item, dict) and "Ball possession" in stat_item.get("title", ""):
+                                    possession_values = stat_item.get("stats", [])
+                                    if isinstance(possession_values, list) and len(possession_values) >= 2:
+                                        home_possession = float(possession_values[0])
+                                        away_possession = float(possession_values[1])
+                                        logger.debug(
+                                            f"从FotMob API v1提取控球率: 主队={home_possession}%, 客队={away_possession}%"
+                                        )
+                                        possession_extracted = True
+                                        break
+                        if possession_extracted:
+                            break
 
-                if top_stats and isinstance(top_stats, list):
-                    # 查找Ball possession统计项
-                    for stat_item in top_stats:
-                        if isinstance(stat_item, dict) and stat_item.get("key") == "BallPossesion":
+                # 方法2: 直接在all_stats中查找Ball possession (适用于西甲/德甲)
+                if not possession_extracted:
+                    for stat_item in all_stats:
+                        if isinstance(stat_item, dict) and "Ball possession" in stat_item.get("title", ""):
                             possession_values = stat_item.get("stats", [])
                             if isinstance(possession_values, list) and len(possession_values) >= 2:
                                 home_possession = float(possession_values[0])
                                 away_possession = float(possession_values[1])
                                 logger.debug(
-                                    f"从FotMob新API提取控球率: 主队={home_possession}%, 客队={away_possession}%"
+                                    f"从FotMob API v2(西甲/德甲)提取控球率: 主队={home_possession}%, 客队={away_possession}%"
                                 )
+                                possession_extracted = True
                                 break
 
         except (KeyError, TypeError, ValueError, AttributeError) as e:

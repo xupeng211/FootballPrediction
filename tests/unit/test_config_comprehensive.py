@@ -371,9 +371,7 @@ class TestConfigUtilityFunctions:
         # 测试开发环境
         dev_settings = UnifiedSettings(
             environment="development",
-            database=DatabaseConfig(
-                host="localhost", port=5432, name="test", user="test", password="test"
-            ),
+            database=DatabaseConfig(host="localhost", port=5432, name="test", user="test", password="test"),
             api=APIConfig(host="0.0.0.0", port=8000),
             redis=RedisConfig(enabled=False),
         )
@@ -383,9 +381,7 @@ class TestConfigUtilityFunctions:
         # 测试生产环境
         prod_settings = UnifiedSettings(
             environment="production",
-            database=DatabaseConfig(
-                host="localhost", port=5432, name="test", user="test", password="test"
-            ),
+            database=DatabaseConfig(host="localhost", port=5432, name="test", user="test", password="test"),
             api=APIConfig(host="0.0.0.0", port=8000),
             redis=RedisConfig(enabled=False),
         )
@@ -419,9 +415,7 @@ class TestConfigUtilityFunctions:
 
         settings = UnifiedSettings(
             environment="test",
-            database=DatabaseConfig(
-                host="localhost", port=5432, name="test", user="test", password="test"
-            ),
+            database=DatabaseConfig(host="localhost", port=5432, name="test", user="test", password="test"),
             api=APIConfig(host="0.0.0.0", port=8000),
             redis=RedisConfig(enabled=False),
         )

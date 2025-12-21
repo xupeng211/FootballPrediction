@@ -82,9 +82,7 @@ class TestEndToEndPredictionWorkflow:
         away_team = "Arsenal"
 
         # Mock数据收集
-        with patch.object(
-            collection_service, "create_match_collection_task"
-        ) as mock_collect:
+        with patch.object(collection_service, "create_match_collection_task") as mock_collect:
             mock_collect.return_value = f"task_{match_id}_{int(time.time())}"
 
             task_id = collection_service.create_match_collection_task(match_id)
@@ -146,9 +144,7 @@ class TestEndToEndPredictionWorkflow:
                 model_info={
                     "name": "xgboost_v2",
                     "version": "2.0",
-                    "accuracy": complete_system["loader"].get_model_metadata()[
-                        "accuracy"
-                    ],
+                    "accuracy": complete_system["loader"].get_model_metadata()["accuracy"],
                 },
             )
 
@@ -436,9 +432,7 @@ class TestEndToEndPredictionWorkflow:
                 minute = context.get("minute", 0)
                 score = context.get("score", {})
                 pred_result = pred.prediction.get("prediction", "N/A")
-                print(
-                    f"   - 第{minute}分钟 ({score['home']}:{score['away']}): {pred_result}"
-                )
+                print(f"   - 第{minute}分钟 ({score['home']}:{score['away']}): {pred_result}")
 
     @pytest.mark.asyncio
     async def test_error_handling_and_recovery_workflow(self, complete_system):
@@ -568,12 +562,8 @@ class TestEndToEndPredictionWorkflow:
         stress_end_time = time.perf_counter()
 
         # 分析结果
-        successful_results = [
-            r for r in results if isinstance(r, dict) and r.get("success")
-        ]
-        failed_results = [
-            r for r in results if isinstance(r, dict) and not r.get("success")
-        ]
+        successful_results = [r for r in results if isinstance(r, dict) and r.get("success")]
+        failed_results = [r for r in results if isinstance(r, dict) and not r.get("success")]
 
         total_time = stress_end_time - stress_start_time
         success_rate = len(successful_results) / concurrent_requests * 100
@@ -582,12 +572,8 @@ class TestEndToEndPredictionWorkflow:
         if successful_results:
             processing_times = [r["processing_time_ms"] for r in successful_results]
             avg_processing_time = sum(processing_times) / len(processing_times)
-            p95_processing_time = sorted(processing_times)[
-                int(len(processing_times) * 0.95)
-            ]
-            p99_processing_time = sorted(processing_times)[
-                int(len(processing_times) * 0.99)
-            ]
+            p95_processing_time = sorted(processing_times)[int(len(processing_times) * 0.95)]
+            p99_processing_time = sorted(processing_times)[int(len(processing_times) * 0.99)]
         else:
             avg_processing_time = p95_processing_time = p99_processing_time = 0
 
@@ -606,9 +592,7 @@ class TestEndToEndPredictionWorkflow:
         assert success_rate >= 95, f"并发成功率过低: {success_rate:.1f}%"
         assert throughput > 50, f"并发吞吐量过低: {throughput:.2f} 请求/秒"
         if successful_results:
-            assert (
-                p99_processing_time < 200
-            ), f"P99处理时间过长: {p99_processing_time:.2f}ms"
+            assert p99_processing_time < 200, f"P99处理时间过长: {p99_processing_time:.2f}ms"
 
 
 if __name__ == "__main__":

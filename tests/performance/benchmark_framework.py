@@ -218,9 +218,7 @@ class BenchmarkDatabase:
 
     def save_result(self, result: BenchmarkResult):
         """保存测试结果"""
-        additional_metrics_json = (
-            json.dumps(result.additional_metrics) if result.additional_metrics else None
-        )
+        additional_metrics_json = json.dumps(result.additional_metrics) if result.additional_metrics else None
 
         self.conn.execute(
             """
@@ -313,9 +311,7 @@ class BenchmarkDatabase:
         days_back: int = 7,
     ) -> Dict[str, Any]:
         """获取性能统计"""
-        results = self.get_historical_results(
-            benchmark_name, test_name, environment, days_back
-        )
+        results = self.get_historical_results(benchmark_name, test_name, environment, days_back)
 
         if not results:
             return {}
@@ -331,9 +327,7 @@ class BenchmarkDatabase:
             "median_ms": statistics.median(execution_times),
             "min_ms": min(execution_times),
             "max_ms": max(execution_times),
-            "std_ms": (
-                statistics.stdev(execution_times) if len(execution_times) > 1 else 0
-            ),
+            "std_ms": (statistics.stdev(execution_times) if len(execution_times) > 1 else 0),
             "p95_ms": np.percentile(execution_times, 95),
             "p99_ms": np.percentile(execution_times, 99),
         }
@@ -496,9 +490,7 @@ class PerformanceBenchmarkFramework:
 
         return results
 
-    async def _run_prediction_benchmark(
-        self, dataset_size: int, size_label: str
-    ) -> BenchmarkResult:
+    async def _run_prediction_benchmark(self, dataset_size: int, size_label: str) -> BenchmarkResult:
         """运行单个预测基准测试"""
         # 预热
         for _ in range(self.config.warmup_iterations):
@@ -580,9 +572,7 @@ class PerformanceBenchmarkFramework:
                 predictions = await self._simulate_batch_prediction(batch_size, 100)
 
                 execution_time = (time.time() - start_time) * 1000
-                memory_usage = (
-                    psutil.Process().memory_info().rss / 1024 / 1024 - start_memory
-                )
+                memory_usage = psutil.Process().memory_info().rss / 1024 / 1024 - start_memory
                 throughput = (batch_size * 100) / (execution_time / 1000)
 
                 result = BenchmarkResult(
@@ -632,9 +622,7 @@ class PerformanceBenchmarkFramework:
 
         return results
 
-    async def _simulate_batch_prediction(
-        self, batch_size: int, num_batches: int
-    ) -> List[np.ndarray]:
+    async def _simulate_batch_prediction(self, batch_size: int, num_batches: int) -> List[np.ndarray]:
         """模拟批量预测"""
         results = []
 
@@ -668,9 +656,7 @@ class PerformanceBenchmarkFramework:
 
         for scenario_name, match_count, description in test_scenarios:
             try:
-                result = await self._run_collection_benchmark(
-                    scenario_name, match_count, description
-                )
+                result = await self._run_collection_benchmark(scenario_name, match_count, description)
                 results.append(result)
 
                 # 检查性能目标
@@ -765,9 +751,7 @@ class PerformanceBenchmarkFramework:
 
         for scenario_name, data_points, description in workflow_scenarios:
             try:
-                result = await self._run_end_to_end_benchmark(
-                    scenario_name, data_points, description
-                )
+                result = await self._run_end_to_end_benchmark(scenario_name, data_points, description)
                 results.append(result)
 
                 # 检查端到端性能目标
@@ -827,9 +811,7 @@ class PerformanceBenchmarkFramework:
 
                 elif stage_name == "feature_extraction":
                     features = np.random.rand(13)
-                    workflow_data["stages"][stage_name] = {
-                        "features": features.tolist()
-                    }
+                    workflow_data["stages"][stage_name] = {"features": features.tolist()}
                     await asyncio.sleep(0.002 * time_ratio)
 
                 elif stage_name == "model_prediction":
@@ -980,8 +962,7 @@ class PerformanceBenchmarkFramework:
                 # 检查内存限制
                 if result.memory_peak_mb > self.config.max_memory_mb:
                     self.logger.warning(
-                        f"内存使用超限: {result.memory_peak_mb:.2f}MB > "
-                        f"{self.config.max_memory_mb}MB"
+                        f"内存使用超限: {result.memory_peak_mb:.2f}MB > " f"{self.config.max_memory_mb}MB"
                     )
 
             except Exception as e:
@@ -1004,9 +985,7 @@ class PerformanceBenchmarkFramework:
 
         return results
 
-    async def _run_memory_benchmark(
-        self, size: int, size_label: str
-    ) -> BenchmarkResult:
+    async def _run_memory_benchmark(self, size: int, size_label: str) -> BenchmarkResult:
         """运行内存使用基准测试"""
         start_time = time.time()
         start_memory = psutil.Process().memory_info().rss / 1024 / 1024
@@ -1099,9 +1078,7 @@ class PerformanceBenchmarkFramework:
 
         return results
 
-    async def _run_scalability_benchmark(
-        self, factor: int, test_size: int
-    ) -> BenchmarkResult:
+    async def _run_scalability_benchmark(self, factor: int, test_size: int) -> BenchmarkResult:
         """运行可扩展性基准测试"""
         start_time = time.time()
         start_memory = psutil.Process().memory_info().rss / 1024 / 1024
@@ -1112,9 +1089,7 @@ class PerformanceBenchmarkFramework:
 
         while processed_count < test_size:
             # 处理批次
-            batch_data = np.random.rand(
-                min(batch_size, test_size - processed_count), 13
-            )
+            batch_data = np.random.rand(min(batch_size, test_size - processed_count), 13)
 
             # 模拟预测计算
             probabilities = 1.0 / (1.0 + np.exp(-batch_data))
@@ -1128,9 +1103,7 @@ class PerformanceBenchmarkFramework:
         throughput = test_size / (execution_time / 1000)
 
         # 计算扩展性指标
-        efficiency = (1.0 / factor) * (
-            throughput / (self.config.medium_dataset_size / 100)
-        )  # 相对效率
+        efficiency = (1.0 / factor) * (throughput / (self.config.medium_dataset_size / 100))  # 相对效率
 
         return BenchmarkResult(
             benchmark_name=self.config.benchmark_name,
@@ -1147,8 +1120,7 @@ class PerformanceBenchmarkFramework:
                 "scaling_factor": factor,
                 "efficiency_score": efficiency,
                 "linear_scaling_expected": factor,
-                "actual_throughput_ratio": throughput
-                / (self.config.medium_dataset_size / 100),
+                "actual_throughput_ratio": throughput / (self.config.medium_dataset_size / 100),
             },
         )
 
@@ -1235,9 +1207,7 @@ class PerformanceBenchmarkFramework:
                 current_time = result.execution_time_ms
 
                 if historical_avg > 0:
-                    regression_percent = (
-                        (current_time - historical_avg) / historical_avg
-                    ) * 100
+                    regression_percent = ((current_time - historical_avg) / historical_avg) * 100
 
                     if regression_percent > self.config.regression_threshold_percent:
                         regressions.append(
@@ -1246,9 +1216,7 @@ class PerformanceBenchmarkFramework:
                                 "current_time_ms": current_time,
                                 "historical_avg_ms": historical_avg,
                                 "regression_percent": regression_percent,
-                                "severity": (
-                                    "high" if regression_percent > 50 else "medium"
-                                ),
+                                "severity": ("high" if regression_percent > 50 else "medium"),
                             }
                         )
 
@@ -1258,9 +1226,7 @@ class PerformanceBenchmarkFramework:
         if report.regression_detected:
             self.logger.warning(f"检测到 {len(regressions)} 个性能回归")
             for regression in regressions:
-                self.logger.warning(
-                    f"  - {regression['test_name']}: {regression['regression_percent']:.1f}% 回归"
-                )
+                self.logger.warning(f"  - {regression['test_name']}: {regression['regression_percent']:.1f}% 回归")
 
     async def _save_results(self, report: BenchmarkReport):
         """保存测试结果"""
@@ -1287,9 +1253,7 @@ class PerformanceBenchmarkFramework:
 
         # 保存原始数据（如果启用）
         if self.config.save_raw_data:
-            raw_data_file = (
-                self.output_dir / f"benchmark_raw_data_{report.report_id}.json"
-            )
+            raw_data_file = self.output_dir / f"benchmark_raw_data_{report.report_id}.json"
             with open(raw_data_file, "w", encoding="utf-8") as f:
                 raw_data = {
                     "config": asdict(self.config),
@@ -1357,7 +1321,9 @@ class PerformanceBenchmarkFramework:
         if report.regression_detected:
             regression_html = "<h3 class='regression'>⚠️ 检测到性能回归</h3><ul>"
             for regression in report.regression_details:
-                regression_html += f"<li><strong>{regression['test_name']}</strong>: {regression['regression_percent']:.1f}% 回归</li>"
+                regression_html += (
+                    f"<li><strong>{regression['test_name']}</strong>: {regression['regression_percent']:.1f}% 回归</li>"
+                )
             regression_html += "</ul>"
             regression_section = regression_html
 
@@ -1451,9 +1417,7 @@ async def run_performance_benchmark(
     return await framework.run_comprehensive_benchmark()
 
 
-def create_benchmark_config(
-    benchmark_name: str, environment: str = "development", **kwargs
-) -> BenchmarkConfig:
+def create_benchmark_config(benchmark_name: str, environment: str = "development", **kwargs) -> BenchmarkConfig:
     """
     创建基准测试配置
 
@@ -1465,9 +1429,7 @@ def create_benchmark_config(
     Returns:
         BenchmarkConfig: 基准测试配置
     """
-    return BenchmarkConfig(
-        benchmark_name=benchmark_name, environment=environment, **kwargs
-    )
+    return BenchmarkConfig(benchmark_name=benchmark_name, environment=environment, **kwargs)
 
 
 # CLI入口
@@ -1475,14 +1437,10 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(description="足球预测系统性能基准测试")
-    parser.add_argument(
-        "--benchmark-name", default="football_prediction_system", help="基准测试名称"
-    )
+    parser.add_argument("--benchmark-name", default="football_prediction_system", help="基准测试名称")
     parser.add_argument("--environment", default="development", help="测试环境")
     parser.add_argument("--output-dir", default="benchmark_results", help="输出目录")
-    parser.add_argument(
-        "--enable-regression-detection", action="store_true", help="启用回归检测"
-    )
+    parser.add_argument("--enable-regression-detection", action="store_true", help="启用回归检测")
     parser.add_argument("--generate-html", action="store_true", help="生成HTML报告")
 
     args = parser.parse_args()

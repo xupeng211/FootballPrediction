@@ -47,9 +47,7 @@ class TestMLComponentsIntegration:
         h2h_stats = h2h_calc.calculate_h2h_for_match(test_data, 1, 2, match_date)
 
         # 计算场馆特征
-        venue_stats = venue_analyzer.calculate_venue_features_for_match(
-            test_data, 1, 2, match_date
-        )
+        venue_stats = venue_analyzer.calculate_venue_features_for_match(test_data, 1, 2, match_date)
 
         # 验证结果存在且格式正确
         assert h2h_stats is not None
@@ -78,9 +76,7 @@ class TestMLComponentsIntegration:
         venue_analyzer = VenueAnalyzer(windows=[3])
 
         # 初始化特征提取器
-        extractor = MatchFeatureExtractor(
-            h2h_calculator=h2h_calc, venue_analyzer=venue_analyzer
-        )
+        extractor = MatchFeatureExtractor(h2h_calculator=h2h_calc, venue_analyzer=venue_analyzer)
 
         # 验证组件集成
         assert extractor.h2h_calculator is h2h_calc
@@ -112,9 +108,7 @@ class TestServiceIntegration:
 
     @patch("src.services.collection_service.get_db_pool")
     @patch("src.services.collection_service.aiohttp.ClientSession")
-    async def test_collection_service_inference_integration(
-        self, mock_session, mock_db_pool
-    ):
+    async def test_collection_service_inference_integration(self, mock_session, mock_db_pool):
         """测试收集服务与推理服务集成"""
         from src.services.collection_service import FotMobCollectionService
         from src.services.inference_service import InferenceService
@@ -133,9 +127,7 @@ class TestServiceIntegration:
 
         # 模拟推理服务处理
         inference_service.feature_extractor = Mock()
-        inference_service.feature_extractor.extract_features_from_match = AsyncMock(
-            return_value=[1.0, 2.0, 3.0]
-        )
+        inference_service.feature_extractor.extract_features_from_match = AsyncMock(return_value=[1.0, 2.0, 3.0])
 
         # 验证服务协作
         assert task_id is not None

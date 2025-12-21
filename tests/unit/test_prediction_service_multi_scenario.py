@@ -59,9 +59,7 @@ class TestPredictionServiceMultiScenario:
         return loader
 
     @pytest.fixture
-    def prediction_service(
-        self, mock_inference_service, mock_cache_manager, mock_model_loader
-    ):
+    def prediction_service(self, mock_inference_service, mock_cache_manager, mock_model_loader):
         """创建预测服务实例"""
         with (
             patch(
@@ -135,15 +133,11 @@ class TestPredictionServiceMultiScenario:
         }
 
     @pytest.mark.asyncio
-    async def test_normal_prediction_scenario(
-        self, prediction_service, sample_prediction_data
-    ):
+    async def test_normal_prediction_scenario(self, prediction_service, sample_prediction_data):
         """测试场景1：正常预测流程"""
         # Arrange
         match_id = "test_match_001"
-        prediction_service.inference_service.predict.return_value = (
-            sample_prediction_data
-        )
+        prediction_service.inference_service.predict.return_value = sample_prediction_data
 
         # Act
         response = await prediction_service.predict_single_match(
@@ -193,9 +187,7 @@ class TestPredictionServiceMultiScenario:
         assert "features" not in response.data or response.data.get("features") is None
 
     @pytest.mark.asyncio
-    async def test_extreme_odds_risk_control(
-        self, prediction_service, extreme_odds_data
-    ):
+    async def test_extreme_odds_risk_control(self, prediction_service, extreme_odds_data):
         """测试场景3：极端赔率时的风控表现"""
         # Arrange
         match_id = "extreme_odds_match"
@@ -216,9 +208,7 @@ class TestPredictionServiceMultiScenario:
             assert response.data["risk_warning"] is True
 
     @pytest.mark.asyncio
-    async def test_kelly_criterion_generation(
-        self, prediction_service, sample_prediction_data
-    ):
+    async def test_kelly_criterion_generation(self, prediction_service, sample_prediction_data):
         """测试场景4：Kelly 建议生成"""
         # Arrange
         match_id = "kelly_test_match"
@@ -229,14 +219,10 @@ class TestPredictionServiceMultiScenario:
             "draw": 3.40,
             "away_win": 4.20,
         }
-        prediction_service.inference_service.predict.return_value = (
-            sample_data_with_odds
-        )
+        prediction_service.inference_service.predict.return_value = sample_data_with_odds
 
         # Act
-        response = await prediction_service.predict_single_match(
-            match_id=match_id, include_explanation=True
-        )
+        response = await prediction_service.predict_single_match(match_id=match_id, include_explanation=True)
 
         # Assert
         assert response.success is True
@@ -296,9 +282,7 @@ class TestPredictionServiceMultiScenario:
         prediction_service.inference_service.predict.side_effect = mock_predict
 
         # Act - 并发执行多个预测
-        tasks = [
-            prediction_service.predict_single_match(match_id) for match_id, _ in matches
-        ]
+        tasks = [prediction_service.predict_single_match(match_id) for match_id, _ in matches]
         responses = await asyncio.gather(*tasks)
 
         # Assert
@@ -340,9 +324,7 @@ class TestPredictionServiceMultiScenario:
         match_id = "error_match"
 
         # 模拟推理服务错误
-        prediction_service.inference_service.predict.side_effect = Exception(
-            "Model inference failed"
-        )
+        prediction_service.inference_service.predict.side_effect = Exception("Model inference failed")
 
         # Act & Assert
         with pytest.raises(Exception):
@@ -359,15 +341,11 @@ class TestPredictionServiceMultiScenario:
             PredictionRequest(match_id="test", batch_mode=True, match_ids=None)
 
     @pytest.mark.asyncio
-    async def test_performance_monitoring(
-        self, prediction_service, sample_prediction_data
-    ):
+    async def test_performance_monitoring(self, prediction_service, sample_prediction_data):
         """测试场景10：性能监控"""
         # Arrange
         match_id = "performance_test"
-        prediction_service.inference_service.predict.return_value = (
-            sample_prediction_data
-        )
+        prediction_service.inference_service.predict.return_value = sample_prediction_data
 
         # Act
         start_time = datetime.now()
@@ -386,9 +364,7 @@ class TestPredictionServiceMultiScenario:
             assert "response_time_ms" in response.data["performance"]
 
     @pytest.mark.asyncio
-    async def test_feature_importance_analysis(
-        self, prediction_service, sample_prediction_data
-    ):
+    async def test_feature_importance_analysis(self, prediction_service, sample_prediction_data):
         """测试场景11：特征重要性分析"""
         # Arrange
         match_id = "feature_importance_test"
@@ -401,9 +377,7 @@ class TestPredictionServiceMultiScenario:
             "h2h_history": 0.18,
             "venue_advantage": 0.10,
         }
-        prediction_service.inference_service.predict.return_value = (
-            sample_data_with_importance
-        )
+        prediction_service.inference_service.predict.return_value = sample_data_with_importance
 
         # Act
         response = await prediction_service.predict_single_match(
@@ -414,14 +388,10 @@ class TestPredictionServiceMultiScenario:
         assert response.success is True
         if "feature_importance" in response.data:
             importance = response.data["feature_importance"]
-            assert sum(importance.values()) == pytest.approx(
-                1.0, rel=1e-2
-            )  # 重要性总和应该为1
+            assert sum(importance.values()) == pytest.approx(1.0, rel=1e-2)  # 重要性总和应该为1
 
     @pytest.mark.asyncio
-    async def test_model_version_compatibility(
-        self, prediction_service, sample_prediction_data
-    ):
+    async def test_model_version_compatibility(self, prediction_service, sample_prediction_data):
         """测试场景12：模型版本兼容性"""
         # Arrange
         match_id = "version_test"
@@ -442,9 +412,7 @@ class TestPredictionServiceMultiScenario:
         assert response.data["metadata"]["model_version"] == "xgboost_v1"
 
         # 验证版本兼容性处理
-        assert (
-            "version_compatibility" in response.data or "predictions" in response.data
-        )
+        assert "version_compatibility" in response.data or "predictions" in response.data
 
 
 class TestPredictionServiceEdgeCases:

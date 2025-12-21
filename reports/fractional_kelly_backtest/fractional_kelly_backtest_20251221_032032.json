@@ -1,0 +1,32 @@
+{
+  "summary": {
+    "total_matches": 52,
+    "skipped_bets": 28,
+    "placed_bets": 24,
+    "won_bets": 10,
+    "lost_bets": 14,
+    "win_rate": 41.66666666666667,
+    "initial_bankroll": 10000.0,
+    "final_bankroll": 9918.759135305861,
+    "total_profit": -81.24086469413851,
+    "roi_percent": -0.812408646941385
+  },
+  "performance_metrics": {
+    "total_bets": 24,
+    "avg_stake_percent": 3.846717723661561,
+    "max_profit": 805.4433789789533,
+    "max_loss": -755.8119953437432,
+    "profit_volatility": 454.4958526273094,
+    "sharpe_ratio": -0.007447892009035154,
+    "avg_edge": 19.136203481142275
+  },
+  "backtest_date": "2025-12-21T03:20:32.559869",
+  "model_version": "v2.1_simple",
+  "strategy": "fractional_kelly_0.5x",
+  "risk_controls": [
+    "Edge >= 5%",
+    "Win Probability >= 40%",
+    "Max Stake 12.5%"
+  ],
+  "initial_bankroll": 10000.0
+}

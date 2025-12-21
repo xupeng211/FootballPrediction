@@ -243,6 +243,26 @@ class UnifiedSettings(BaseSettings):
 
     prediction_timeout_seconds: int = Field(default=30, description="预测超时时间（秒）")
 
+    # === V3.2 三联赛原生支持配置 ===
+    supported_leagues: Dict[str, Any] = Field(
+        default_factory=lambda: {
+            "serie_a": {"id": 135, "name": "Serie A", "country": "Italy", "active": True, "priority": 1},
+            "la_liga": {"id": 87, "name": "La Liga", "country": "Spain", "active": True, "priority": 2},
+            "bundesliga": {"id": 54, "name": "Bundesliga", "country": "Germany", "active": True, "priority": 3},
+        },
+        description="V3.2 三联赛原生支持配置",
+    )
+
+    # === ROI 配置 (V2.3.1) ===
+    min_edge: float = Field(default=7.0, description="最小边际值 (%)")
+    min_confidence: float = Field(default=45.0, description="最小置信度 (%)")
+    target_roi: float = Field(default=13.35, description="目标ROI (%)")
+
+    # === 数据收集配置 ===
+    data_retention_days: int = Field(default=365, description="数据保留天数")
+    harvest_batch_size: int = Field(default=50, description="数据收集批量大小")
+    harvest_delay_seconds: float = Field(default=1.0, description="数据收集间隔（秒）")
+
     class Config:
         # 禁用.env文件自动加载，避免解析错误
         env_file = None

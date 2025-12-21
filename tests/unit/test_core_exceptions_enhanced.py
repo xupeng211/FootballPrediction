@@ -21,9 +21,7 @@ class TestBaseExceptions:
         assert exc.error_code is None
 
         # 测试带错误码的异常
-        exc_with_code = FootballPredictionException(
-            "Error with code", error_code="FP001"
-        )
+        exc_with_code = FootballPredictionException("Error with code", error_code="FP001")
         assert str(exc_with_code) == "Error with code"
         assert exc_with_code.error_code == "FP001"
 
@@ -46,9 +44,7 @@ class TestBaseExceptions:
         assert exc.field is None
 
         # 测试带字段的验证异常
-        exc_with_field = ValidationException(
-            "Invalid field value", field="team_name", value="invalid_value"
-        )
+        exc_with_field = ValidationException("Invalid field value", field="team_name", value="invalid_value")
         assert exc_with_field.field == "team_name"
         assert exc_with_field.value == "invalid_value"
 
@@ -151,9 +147,7 @@ class TestAPIServiceExceptions:
         """测试认证异常"""
         from src.core.exceptions import AuthenticationException
 
-        exc = AuthenticationException(
-            "Authentication failed", auth_type="api_key", service="external_service"
-        )
+        exc = AuthenticationException("Authentication failed", auth_type="api_key", service="external_service")
         assert "Authentication failed" in str(exc)
         assert exc.auth_type == "api_key"
         assert exc.service == "external_service"
@@ -192,9 +186,7 @@ class TestDatabaseExceptions:
         """测试事务异常"""
         from src.core.exceptions import DatabaseTransactionException
 
-        exc = DatabaseTransactionException(
-            "Transaction rollback", operation="insert_match", transaction_id="txn_12345"
-        )
+        exc = DatabaseTransactionException("Transaction rollback", operation="insert_match", transaction_id="txn_12345")
         assert "Transaction rollback" in str(exc)
         assert exc.operation == "insert_match"
         assert exc.transaction_id == "txn_12345"
@@ -228,9 +220,7 @@ class TestUtilityFunctions:
         from src.core.exceptions import create_error_response
 
         # 测试基本错误响应
-        response = create_error_response(
-            error_code="VAL001", message="Validation failed", status_code=400
-        )
+        response = create_error_response(error_code="VAL001", message="Validation failed", status_code=400)
         assert response["error_code"] == "VAL001"
         assert response["message"] == "Validation failed"
         assert response["status_code"] == 400
@@ -300,9 +290,7 @@ class TestExceptionHandlingPatterns:
             return "success"
 
         # 测试重试成功
-        result = retry_with_backoff(
-            failing_function, max_attempts=3, backoff_factor=0.1
-        )
+        result = retry_with_backoff(failing_function, max_attempts=3, backoff_factor=0.1)
         assert result == "success"
         assert call_count == 3
 

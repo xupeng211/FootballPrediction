@@ -28,24 +28,16 @@ class TestConfigExtended:
 
         assert config.host == "localhost"
         assert config.port == 5432
-        assert (
-            config.get_connection_string()
-            == "postgresql+asyncpg://testuser:testpass@localhost:5432/testdb"
-        )
+        assert config.get_connection_string() == "postgresql+asyncpg://testuser:testpass@localhost:5432/testdb"
 
     def test_database_settings_url_override(self):
         """测试数据库URL覆盖"""
         from src.config_unified import DatabaseSettings
 
-        config = DatabaseSettings(
-            url="postgresql+asyncpg://override:pass@host:1234/overridedb"
-        )
+        config = DatabaseSettings(url="postgresql+asyncpg://override:pass@host:1234/overridedb")
 
         # URL应该覆盖其他配置
-        assert (
-            config.get_connection_string()
-            == "postgresql+asyncpg://override:pass@host:1234/overridedb"
-        )
+        assert config.get_connection_string() == "postgresql+asyncpg://override:pass@host:1234/overridedb"
 
     def test_database_settings_from_env(self):
         """测试从环境变量加载数据库配置"""
@@ -308,9 +300,7 @@ LOG_LEVEL=DEBUG
             # 临时修改环境变量指向测试文件
             with patch.dict(os.environ, {"ENV_FILE_PATH": env_file_path}):
                 with patch("src.config.DatabaseSettings.model_config") as mock_config:
-                    mock_config.return_value = Mock(
-                        env_file=env_file_path, env_file_encoding="utf-8"
-                    )
+                    mock_config.return_value = Mock(env_file=env_file_path, env_file_encoding="utf-8")
 
                     settings = UnifiedSettings()
 
@@ -373,9 +363,7 @@ LOG_LEVEL=DEBUG
         from pydantic import ValidationError
 
         # 测试极值
-        config = DatabasePoolSettings(
-            min_size=100, max_size=100, timeout=600.0, max_retries=10
-        )
+        config = DatabasePoolSettings(min_size=100, max_size=100, timeout=600.0, max_retries=10)
 
         assert config.min_size == 100
         assert config.max_size == 100

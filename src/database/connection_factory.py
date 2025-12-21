@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 
 class DatabaseConnectionError(Exception):
     """数据库连接异常"""
+
     pass
 
 
@@ -28,7 +29,7 @@ def get_db_connection(
     database: Optional[str] = None,
     user: Optional[str] = None,
     password: Optional[str] = None,
-    cursor_factory: Any = RealDictCursor
+    cursor_factory: Any = RealDictCursor,
 ) -> psycopg2.extensions.connection:
     """
     获取数据库连接
@@ -53,23 +54,25 @@ def get_db_connection(
 
         # 使用传入参数或默认配置
         connection_params = {
-            'host': host or db_config.host,
-            'port': port or db_config.port,
-            'database': database or db_config.name,
-            'user': user or db_config.user,
-            'password': password or db_config.password.get_secret_value(),
-            'cursor_factory': cursor_factory,
-            'connect_timeout': 10,
-            'application_name': 'football_prediction'
+            "host": host or db_config.host,
+            "port": port or db_config.port,
+            "database": database or db_config.name,
+            "user": user or db_config.user,
+            "password": password or db_config.password.get_secret_value(),
+            "cursor_factory": cursor_factory,
+            "connect_timeout": 10,
+            "application_name": "football_prediction",
         }
 
-        logger.info(f"正在连接数据库: {connection_params['host']}:{connection_params['port']}/{connection_params['database']}")
+        logger.info(
+            f"正在连接数据库: {connection_params['host']}:{connection_params['port']}/{connection_params['database']}"
+        )
 
         conn = psycopg2.connect(**connection_params)
 
         # 设置连接参数
         conn.autocommit = False
-        conn.set_client_encoding('UTF8')
+        conn.set_client_encoding("UTF8")
 
         logger.info("数据库连接成功建立")
         return conn
@@ -90,7 +93,7 @@ def get_db_cursor(
     port: Optional[int] = None,
     database: Optional[str] = None,
     user: Optional[str] = None,
-    password: Optional[str] = None
+    password: Optional[str] = None,
 ):
     """
     获取数据库游标的上下文管理器
@@ -152,9 +155,7 @@ def get_test_db_connection():
     Returns:
         测试数据库连接对象
     """
-    return get_db_connection(
-        database="football_prediction_test"  # 使用测试数据库
-    )
+    return get_db_connection(database="football_prediction_test")  # 使用测试数据库
 
 
 def test_connection():
@@ -186,17 +187,14 @@ def get_connection_info() -> Dict[str, Any]:
         db_config = settings.database
 
         return {
-            'host': db_config.host,
-            'port': db_config.port,
-            'database': db_config.name,
-            'user': db_config.user,
-            'connection_established': test_connection()
+            "host": db_config.host,
+            "port": db_config.port,
+            "database": db_config.name,
+            "user": db_config.user,
+            "connection_established": test_connection(),
         }
     except Exception as e:
-        return {
-            'error': str(e),
-            'connection_established': False
-        }
+        return {"error": str(e), "connection_established": False}
 
 
 # 向后兼容的函数名

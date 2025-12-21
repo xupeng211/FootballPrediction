@@ -30,9 +30,7 @@ class TestPerformanceBoundaries:
         service.is_initialized = True
 
         # 模拟快速预测
-        with patch(
-            "src.services.inference_service.MatchPredictor"
-        ) as mock_predictor_class:
+        with patch("src.services.inference_service.MatchPredictor") as mock_predictor_class:
             mock_predictor = Mock()
             mock_predictor_class.return_value = mock_predictor
             mock_predictor.predict = AsyncMock(return_value={"result": "HOME_WIN"})
@@ -59,24 +57,18 @@ class TestPerformanceBoundaries:
                 execution_time = time.time() - start_time
 
                 # 验证性能指标
-                successful_results = [
-                    r for r in results if hasattr(r, "success") and r.success
-                ]
+                successful_results = [r for r in results if hasattr(r, "success") and r.success]
                 success_rate = len(successful_results) / len(results)
                 qps = len(successful_results) / execution_time
 
                 # 性能断言
-                assert (
-                    success_rate >= 0.9
-                ), f"并发{concurrency}时成功率过低: {success_rate}"
+                assert success_rate >= 0.9, f"并发{concurrency}时成功率过低: {success_rate}"
                 assert qps >= 50, f"并发{concurrency}时QPS过低: {qps}"
 
                 # 验证内存使用合理
                 process = psutil.Process()
                 memory_mb = process.memory_info().rss / 1024 / 1024
-                assert (
-                    memory_mb < 500
-                ), f"并发{concurrency}时内存使用过高: {memory_mb}MB"
+                assert memory_mb < 500, f"并发{concurrency}时内存使用过高: {memory_mb}MB"
 
     @pytest.mark.asyncio
     async def test_memory_boundary_stress(self):
@@ -96,9 +88,7 @@ class TestPerformanceBoundaries:
         # 创建大特征向量的请求
         large_features = [float(i) for i in range(5000)]  # 较大的特征向量
 
-        with patch(
-            "src.services.inference_service.MatchPredictor"
-        ) as mock_predictor_class:
+        with patch("src.services.inference_service.MatchPredictor") as mock_predictor_class:
             mock_predictor = Mock()
             mock_predictor_class.return_value = mock_predictor
             mock_predictor.predict = AsyncMock(return_value={"result": "HOME_WIN"})
@@ -151,9 +141,7 @@ class TestPerformanceBoundaries:
                 total += i**2
             return {"result": "HOME_WIN", "calculation": total}
 
-        with patch(
-            "src.services.inference_service.MatchPredictor"
-        ) as mock_predictor_class:
+        with patch("src.services.inference_service.MatchPredictor") as mock_predictor_class:
             mock_predictor = Mock()
             mock_predictor_class.return_value = mock_predictor
             mock_predictor.predict = AsyncMock(side_effect=cpu_intensive_predict)
@@ -181,14 +169,10 @@ class TestPerformanceBoundaries:
             end_cpu = process.cpu_percent()
 
             # 验证CPU利用率合理
-            assert (
-                execution_time < 10.0
-            ), f"CPU密集型任务执行时间过长: {execution_time}s"
+            assert execution_time < 10.0, f"CPU密集型任务执行时间过长: {execution_time}s"
 
             # 验证所有请求都成功
-            successful_results = [
-                r for r in results if hasattr(r, "success") and r.success
-            ]
+            successful_results = [r for r in results if hasattr(r, "success") and r.success]
             assert len(successful_results) == 10
 
     @pytest.mark.asyncio
@@ -209,13 +193,9 @@ class TestPerformanceBoundaries:
             return [1.0, 2.0, 3.0]
 
         service.feature_extractor = Mock()
-        service.feature_extractor.extract_features_from_match = AsyncMock(
-            side_effect=io_intensive_feature_extraction
-        )
+        service.feature_extractor.extract_features_from_match = AsyncMock(side_effect=io_intensive_feature_extraction)
 
-        with patch(
-            "src.services.inference_service.MatchPredictor"
-        ) as mock_predictor_class:
+        with patch("src.services.inference_service.MatchPredictor") as mock_predictor_class:
             mock_predictor = Mock()
             mock_predictor_class.return_value = mock_predictor
             mock_predictor.predict = AsyncMock(return_value={"result": "HOME_WIN"})
@@ -226,9 +206,7 @@ class TestPerformanceBoundaries:
             tasks = []
 
             for i in range(num_requests):
-                request = PredictionRequest(
-                    match_id=f"match_{i}", home_team="Team A", away_team="Team B"
-                )
+                request = PredictionRequest(match_id=f"match_{i}", home_team="Team A", away_team="Team B")
                 tasks.append(service.predict_match(request))
 
             start_time = time.time()
@@ -236,9 +214,7 @@ class TestPerformanceBoundaries:
             execution_time = time.time() - start_time
 
             # IO密集型任务应该能高效并发
-            successful_results = [
-                r for r in results if hasattr(r, "success") and r.success
-            ]
+            successful_results = [r for r in results if hasattr(r, "success") and r.success]
             assert len(successful_results) >= 18  # 至少90%成功
 
             # 并发IO应该比串行快很多
@@ -274,9 +250,7 @@ class TestErrorRecoveryMechanisms:
                 # 模拟恢复
                 return {"result": "HOME_WIN", "recovered": True}
 
-        with patch(
-            "src.services.inference_service.MatchPredictor"
-        ) as mock_predictor_class:
+        with patch("src.services.inference_service.MatchPredictor") as mock_predictor_class:
             mock_predictor = Mock()
             mock_predictor_class.return_value = mock_predictor
             mock_predictor.predict = AsyncMock(side_effect=circuit_breaker_predict)
@@ -296,9 +270,7 @@ class TestErrorRecoveryMechanisms:
 
             # 验证恢复机制
             failed_results = [r for r in results if not r.success]
-            recovered_results = [
-                r for r in results if r.success and hasattr(r, "prediction")
-            ]
+            recovered_results = [r for r in results if r.success and hasattr(r, "prediction")]
 
             assert len(failed_results) == recovery_point  # 前5个失败
             assert len(recovered_results) == 5  # 后5个恢复成功
@@ -328,14 +300,10 @@ class TestErrorRecoveryMechanisms:
             # 模拟特定场景的失败
             if scenario_name == "feature_extraction_failed":
                 service.feature_extractor = Mock()
-                service.feature_extractor.extract_features_from_match = AsyncMock(
-                    side_effect=exception
-                )
+                service.feature_extractor.extract_features_from_match = AsyncMock(side_effect=exception)
             else:
                 # 模拟预测器失败
-                with patch(
-                    "src.services.inference_service.MatchPredictor"
-                ) as mock_predictor_class:
+                with patch("src.services.inference_service.MatchPredictor") as mock_predictor_class:
                     mock_predictor = Mock()
                     mock_predictor_class.return_value = mock_predictor
                     mock_predictor.predict = AsyncMock(side_effect=exception)
@@ -433,9 +401,7 @@ class TestErrorRecoveryMechanisms:
                 # 恢复后的正常响应
                 return {"result": "HOME_WIN", "recovered": True}
 
-        with patch(
-            "src.services.inference_service.MatchPredictor"
-        ) as mock_predictor_class:
+        with patch("src.services.inference_service.MatchPredictor") as mock_predictor_class:
             mock_predictor = Mock()
             mock_predictor_class.return_value = mock_predictor
             mock_predictor.predict = AsyncMock(side_effect=resource_aware_predict)
@@ -496,9 +462,7 @@ class TestErrorRecoveryMechanisms:
                 # 第3次尝试成功
                 return {"result": "HOME_WIN", "attempts": attempt_count}
 
-        with patch(
-            "src.services.inference_service.MatchPredictor"
-        ) as mock_predictor_class:
+        with patch("src.services.inference_service.MatchPredictor") as mock_predictor_class:
             mock_predictor = Mock()
             mock_predictor_class.return_value = mock_predictor
             mock_predictor.predict = AsyncMock(side_effect=retry_predict)
@@ -553,8 +517,7 @@ class TestErrorRecoveryMechanisms:
 
         # 验证成功率计算
         success_rate = (
-            updated_stats["request_stats"]["successful_predictions"]
-            / updated_stats["request_stats"]["total_requests"]
+            updated_stats["request_stats"]["successful_predictions"] / updated_stats["request_stats"]["total_requests"]
         )
         assert success_rate == 0.95
 

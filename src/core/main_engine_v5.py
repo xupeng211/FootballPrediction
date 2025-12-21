@@ -852,7 +852,7 @@ async def main():
     import argparse
 
     parser = argparse.ArgumentParser(description="MainEngineV5 - 真实L2特征收割引擎")
-    parser.add_argument("--mode", choices=["full", "test"], default="full", help="运行模式")
+    parser.add_argument("--mode", choices=["full", "test", "standby"], default="full", help="运行模式")
     parser.add_argument("--limit", type=int, default=700, help="处理上限")
 
     args = parser.parse_args()
@@ -871,12 +871,35 @@ async def main():
 
     if args.mode == "full":
         await engine.run_full_extraction(args.limit)
-    else:
+    elif args.mode == "test":
+        # 测试模式
+        matches = engine.get_matches_from_db(5)
+        logger.info(f"测试模式，找到 {len(matches)} 场比赛")
+    elif args.mode == "standby":
+        # 待机模式 - 仅初始化，不执行数据采集
+        logger.info("🚀 MainEngineV5 进入待机模式")
+        logger.info("✅ 数据库连接正常")
+        logger.info("✅ 模型加载完成")
+        logger.info("🔄 准备接收数据采集指令")
+
+        # 保持容器运行
+        import time
+
+        try:
+            while True:
+                await asyncio.sleep(300)  # 每5分钟检查一次
+                logger.debug("MainEngineV5 待机中...")
+        except KeyboardInterrupt:
+            logger.info("👋 MainEngineV5 待机模式结束")
+    elif args.mode == "test":
         # 测试模式
         matches = engine.get_matches_from_db(5)
         logger.info(f"测试模式，找到 {len(matches)} 场比赛")
         for match in matches:
             logger.info(f"  {match['external_id']}: {match['home_team']} vs {match['away_team']}")
+    else:
+        logger.error(f"未知运行模式: {args.mode}")
+        return
 
 
 if __name__ == "__main__":

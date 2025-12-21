@@ -292,17 +292,13 @@ class TestAPIQuickCoverage:
         from src.api.schemas import HealthCheckResponse, ServiceCheck
 
         # 测试服务检查
-        service = ServiceCheck(
-            service_name="test_service", status="healthy", response_time_ms=10.0
-        )
+        service = ServiceCheck(service_name="test_service", status="healthy", response_time_ms=10.0)
         assert service.service_name == "test_service"
         assert service.status == "healthy"
         assert service.response_time_ms == 10.0
 
         # 测试健康检查响应
-        health = HealthCheckResponse(
-            status="healthy", services=[service], total_response_time_ms=10.0
-        )
+        health = HealthCheckResponse(status="healthy", services=[service], total_response_time_ms=10.0)
         assert health.status == "healthy"
         assert len(health.services) == 1
         assert health.total_response_time_ms == 10.0

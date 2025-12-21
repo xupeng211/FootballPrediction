@@ -69,9 +69,7 @@ class TestDatabaseComprehensive:
             get_production_database_config,
         )
 
-        config = DatabaseConfig(
-            host="localhost", database="test", username="user", password="pass"
-        )
+        config = DatabaseConfig(host="localhost", database="test", username="user", password="pass")
 
         # 测试所有配置函数
         config_func = get_database_config()
@@ -99,9 +97,7 @@ class TestDatabaseComprehensive:
         mock_create_engine.return_value = mock_engine
 
         manager = DatabaseManager()
-        config = DatabaseConfig(
-            host="localhost", database="test", username="user", password="pass"
-        )
+        config = DatabaseConfig(host="localhost", database="test", username="user", password="pass")
 
         # 测试初始化
         manager.initialize(config)
@@ -522,9 +518,7 @@ class TestAPIComprehensive:
         assert ServiceStatus.DEGRADED is not None
 
         # 测试响应类可以实例化
-        health_response = HealthResponse(
-            status=ServiceStatus.HEALTHY, timestamp=datetime.now(), services={}
-        )
+        health_response = HealthResponse(status=ServiceStatus.HEALTHY, timestamp=datetime.now(), services={})
         assert health_response.status == ServiceStatus.HEALTHY
 
 

@@ -78,9 +78,7 @@ class TestDataPipelineWorkflow:
         collection_tasks = []
 
         for match_id in match_ids:
-            with patch.object(
-                collection_service, "create_match_collection_task"
-            ) as mock_create:
+            with patch.object(collection_service, "create_match_collection_task") as mock_create:
                 mock_create.return_value = f"task_{match_id}_{int(time.time())}"
 
                 task_id = collection_service.create_match_collection_task(match_id)
@@ -108,9 +106,7 @@ class TestDataPipelineWorkflow:
                 "away_score",
                 "date",
             ]
-            assert all(
-                field in data for field in required_fields
-            ), f"缺少必需字段: {match_id}"
+            assert all(field in data for field in required_fields), f"缺少必需字段: {match_id}"
 
             # 数据清洗
             cleaned_match = {
@@ -194,9 +190,7 @@ class TestDataPipelineWorkflow:
         print(f"   - 收集任务数: {len(collection_tasks)}")
         print(f"   - 生成特征数: {len(features_data)}")
         print(f"   - 管道处理时间: {total_pipeline_time:.3f}s")
-        print(
-            f"   - 平均处理时间: {(total_pipeline_time/len(match_ids))*1000:.2f}ms/比赛"
-        )
+        print(f"   - 平均处理时间: {(total_pipeline_time/len(match_ids))*1000:.2f}ms/比赛")
 
         # 打印特征示例
         sample_match = match_ids[0]
@@ -204,9 +198,7 @@ class TestDataPipelineWorkflow:
         print(
             f"   - 示例特征 ({sample_features['metadata']['home_team']} vs {sample_features['metadata']['away_team']}):"
         )
-        print(
-            f"     * 特征向量: {[f'{f:.2f}' for f in sample_features['features'][:6]]}..."
-        )
+        print(f"     * 特征向量: {[f'{f:.2f}' for f in sample_features['features'][:6]]}...")
         print(f"     * 最终结果: {sample_features['metadata']['final_score']}")
 
     @pytest.mark.asyncio
@@ -238,9 +230,7 @@ class TestDataPipelineWorkflow:
         batch_start_time = time.perf_counter()
 
         # 步骤1: 批量创建收集任务
-        with patch.object(
-            collection_service, "create_match_collection_task"
-        ) as mock_create:
+        with patch.object(collection_service, "create_match_collection_task") as mock_create:
             task_ids = []
             for i, match in enumerate(batch_matches):
                 mock_create.return_value = f"batch_task_{i}_{int(time.time())}"
@@ -309,9 +299,7 @@ class TestDataPipelineWorkflow:
 
         # 性能断言
         assert throughput > 10, f"批量吞吐量过低: {throughput:.2f} 任务/秒"
-        assert (
-            batch_processing_time < 5.0
-        ), f"批量处理时间过长: {batch_processing_time:.3f}s"
+        assert batch_processing_time < 5.0, f"批量处理时间过长: {batch_processing_time:.3f}s"
 
     @pytest.mark.asyncio
     async def test_data_quality_validation_workflow(self, data_pipeline_system):
@@ -411,17 +399,11 @@ class TestDataPipelineWorkflow:
 
             # 简单的日期格式验证
             has_valid_date = (
-                isinstance(test_data.get("date"), str)
-                and len(test_data["date"]) >= 8  # 最基本的日期长度检查
+                isinstance(test_data.get("date"), str) and len(test_data["date"]) >= 8  # 最基本的日期长度检查
             )
 
             # 综合验证结果
-            validation_passed = (
-                has_required_fields
-                and has_valid_scores
-                and has_valid_teams
-                and has_valid_date
-            )
+            validation_passed = has_required_fields and has_valid_scores and has_valid_teams and has_valid_date
 
             validation_end_time = time.perf_counter()
             validation_time = (validation_end_time - validation_start_time) * 1000
@@ -443,9 +425,7 @@ class TestDataPipelineWorkflow:
             )
 
         # 验证验证结果
-        correct_validations = sum(
-            1 for r in validation_results if r["validation_correct"]
-        )
+        correct_validations = sum(1 for r in validation_results if r["validation_correct"])
         total_cases = len(validation_results)
         validation_accuracy = correct_validations / total_cases * 100
 
@@ -456,30 +436,22 @@ class TestDataPipelineWorkflow:
 
         for result in validation_results:
             status = "✓" if result["validation_correct"] else "✗"
-            print(
-                f"   - {status} {result['case_name']}: {'通过' if result['validation_passed'] else '失败'}"
-            )
+            print(f"   - {status} {result['case_name']}: {'通过' if result['validation_passed'] else '失败'}")
             if not result["validation_correct"]:
                 print(
                     f"     预期: {'通过' if result['expected_result'] else '失败'}, 实际: {'通过' if result['validation_passed'] else '失败'}"
                 )
 
         # 性能统计
-        avg_validation_time = sum(
-            r["validation_time_ms"] for r in validation_results
-        ) / len(validation_results)
+        avg_validation_time = sum(r["validation_time_ms"] for r in validation_results) / len(validation_results)
         print(f"   - 平均验证时间: {avg_validation_time:.3f}ms")
 
         # 质量断言
-        assert (
-            validation_accuracy >= 75
-        ), f"数据质量验证准确率过低: {validation_accuracy:.1f}%"
+        assert validation_accuracy >= 75, f"数据质量验证准确率过低: {validation_accuracy:.1f}%"
         assert avg_validation_time < 10, f"验证时间过长: {avg_validation_time:.3f}ms"
 
     @pytest.mark.asyncio
-    async def test_error_recovery_and_data_integrity_workflow(
-        self, data_pipeline_system
-    ):
+    async def test_error_recovery_and_data_integrity_workflow(self, data_pipeline_system):
         """测试错误恢复和数据完整性工作流"""
         collection_service = data_pipeline_system["collection_service"]
 
@@ -557,10 +529,7 @@ class TestDataPipelineWorkflow:
                 print(f"处理失败: {match.get('id', 'unknown')} - {e}")
 
         # 数据完整性检查
-        total_processed = (
-            workflow_results["successful_processing"]
-            + workflow_results["recovered_data"]
-        )
+        total_processed = workflow_results["successful_processing"] + workflow_results["recovered_data"]
         expected_total = len(reliable_matches) + len(problematic_matches)
 
         if total_processed != expected_total:
@@ -577,16 +546,12 @@ class TestDataPipelineWorkflow:
 
         # 恢复率统计
         recovery_rate = (
-            workflow_results["recovered_data"] / len(problematic_matches) * 100
-            if problematic_matches
-            else 100
+            workflow_results["recovered_data"] / len(problematic_matches) * 100 if problematic_matches else 100
         )
         print(f"   - 数据恢复率: {recovery_rate:.1f}%")
 
         # 断言
-        assert (
-            workflow_results["successful_processing"] >= len(reliable_matches) * 0.8
-        ), "可靠数据处理失败率过高"
+        assert workflow_results["successful_processing"] >= len(reliable_matches) * 0.8, "可靠数据处理失败率过高"
         assert workflow_results["data_integrity_violations"] == 0, "数据完整性检查失败"
 
     def _attempt_data_recovery(self, incomplete_data: Dict) -> Dict:

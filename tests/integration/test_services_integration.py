@@ -82,9 +82,7 @@ class TestCoreServiceIntegration:
         async def mock_extract_features(request):
             return mock_features
 
-        mock_inference_service.extract_features = AsyncMock(
-            side_effect=mock_extract_features
-        )
+        mock_inference_service.extract_features = AsyncMock(side_effect=mock_extract_features)
         print("✅ 特征提取成功，提取了{}个特征".format(len(mock_features)))
 
         # 3. 模拟MatchPredictor计算
@@ -116,9 +114,7 @@ class TestCoreServiceIntegration:
 
         mock_cache_service = mock_services["cache_service"]
         # 缓存键生成
-        cache_key = (
-            f"pred_{prediction_request['home_team']}_{prediction_request['away_team']}"
-        )
+        cache_key = f"pred_{prediction_request['home_team']}_{prediction_request['away_team']}"
         mock_cache_service.generate_cache_key.return_value = cache_key
 
         # 模拟缓存操作
@@ -140,22 +136,16 @@ class TestCoreServiceIntegration:
         # 实际执行工作流程
         try:
             # 步骤1: 特征提取
-            features_result = await mock_inference_service.extract_features(
-                prediction_request
-            )
+            features_result = await mock_inference_service.extract_features(prediction_request)
             print(f"✅ 特征提取验证成功: {len(features_result)}个特征")
 
             # 步骤2: 预测计算
-            prediction_result = await mock_inference_service.predict_match(
-                features_result
-            )
+            prediction_result = await mock_inference_service.predict_match(features_result)
             print(f"✅ 预测计算验证成功: {prediction_result['predicted_class']}")
 
             # 步骤3: 缓存操作
             cache_key_result = mock_cache_service.generate_cache_key(prediction_request)
-            cache_result = await mock_cache_service.set(
-                cache_key_result, prediction_result
-            )
+            cache_result = await mock_cache_service.set(cache_key_result, prediction_result)
             print(f"✅ 缓存操作验证成功: {cache_key_result}")
 
             # 验证数据完整性
@@ -207,9 +197,7 @@ class TestCoreServiceIntegration:
         # 模拟特征提取失败
         mock_inference_service = AsyncMock()
         mock_inference_service.is_initialized = True
-        mock_inference_service.extract_features.side_effect = Exception(
-            "特征提取服务不可用"
-        )
+        mock_inference_service.extract_features.side_effect = Exception("特征提取服务不可用")
 
         # 模拟降级处理
         mock_cache_service = mock_services["cache_service"]
@@ -274,9 +262,7 @@ class TestCoreServiceIntegration:
 
         # 验证批量结果
         assert len(results) == 3, "批量预测结果数量不正确"
-        assert all(
-            r["predicted_class"] == "HOME_WIN" for r in results
-        ), "批量预测结果不一致"
+        assert all(r["predicted_class"] == "HOME_WIN" for r in results), "批量预测结果不一致"
 
         print(f"✅ 批量预测完成，处理了{len(batch_requests)}个请求")
 

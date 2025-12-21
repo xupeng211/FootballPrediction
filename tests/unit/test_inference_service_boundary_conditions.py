@@ -90,9 +90,7 @@ class TestInferenceServiceBoundaryConditions:
                 return_value=[1.0, 2.0, 3.0, 4.0, 5.0]  # 正常特征
             )
             service.predictor = Mock()
-            service.predictor.predict.return_value = Mock(
-                success=True, prediction={"result": "HOME_WIN"}
-            )
+            service.predictor.predict.return_value = Mock(success=True, prediction={"result": "HOME_WIN"})
 
             # 应该能处理特殊字符或给出明确错误
             result = await service.predict_match("test_match", team_name, "Normal Team")
@@ -120,9 +118,7 @@ class TestInferenceServiceBoundaryConditions:
 
         for features in boundary_features:
             service.feature_extractor = Mock()
-            service.feature_extractor.extract_features_from_match = AsyncMock(
-                return_value=features
-            )
+            service.feature_extractor.extract_features_from_match = AsyncMock(return_value=features)
 
             # 预测器应该处理边界值或给出错误
             service.predictor = Mock()
@@ -130,13 +126,9 @@ class TestInferenceServiceBoundaryConditions:
                 # 测试预测器是否能处理这些特征
                 if any(np.isnan(x) or np.isinf(x) for x in features):
                     # NaN和无穷大应该触发错误
-                    service.predictor.predict.side_effect = ValueError(
-                        "Invalid feature values"
-                    )
+                    service.predictor.predict.side_effect = ValueError("Invalid feature values")
                 else:
-                    service.predictor.predict.return_value = Mock(
-                        success=True, prediction={"result": "HOME_WIN"}
-                    )
+                    service.predictor.predict.return_value = Mock(success=True, prediction={"result": "HOME_WIN"})
             except:
                 # 如果模拟失败，直接返回错误结果
                 pass
@@ -167,10 +159,7 @@ class TestInferenceServiceBoundaryConditions:
 
         # 创建大量并发请求
         num_requests = 100
-        tasks = [
-            service.predict_match(f"match_{i}", f"Team_{i}", f"Team_{i+1}")
-            for i in range(num_requests)
-        ]
+        tasks = [service.predict_match(f"match_{i}", f"Team_{i}", f"Team_{i+1}") for i in range(num_requests)]
 
         start_time = time.time()
         results = await asyncio.gather(*tasks, return_exceptions=True)
@@ -197,17 +186,13 @@ class TestInferenceServiceBoundaryConditions:
         large_features = [1.0] * 10000  # 大特征向量
 
         service.feature_extractor = Mock()
-        service.feature_extractor.extract_features_from_match = AsyncMock(
-            return_value=large_features
-        )
+        service.feature_extractor.extract_features_from_match = AsyncMock(return_value=large_features)
 
         # 测试多次大特征请求
         for i in range(10):
             service.predictor = Mock()
             try:
-                service.predictor.predict.return_value = Mock(
-                    success=True, prediction={"result": "HOME_WIN"}
-                )
+                service.predictor.predict.return_value = Mock(success=True, prediction={"result": "HOME_WIN"})
 
                 result = await service.predict_match(f"match_{i}", "Team A", "Team B")
                 # 在内存压力下可能成功或失败
@@ -238,22 +223,16 @@ class TestInferenceServiceBoundaryConditions:
         for match_time in time_boundaries:
             # 模拟特征提取器处理时间
             service.feature_extractor = Mock()
-            service.feature_extractor.extract_features_from_match = AsyncMock(
-                return_value=[1.0, 2.0, 3.0]
-            )
+            service.feature_extractor.extract_features_from_match = AsyncMock(return_value=[1.0, 2.0, 3.0])
 
             try:
                 # 测试时间处理
                 service.feature_extractor.current_time = match_time
 
                 service.predictor = Mock()
-                service.predictor.predict.return_value = Mock(
-                    success=True, prediction={"result": "HOME_WIN"}
-                )
+                service.predictor.predict.return_value = Mock(success=True, prediction={"result": "HOME_WIN"})
 
-                result = await service.predict_match(
-                    "test_match", "Team A", "Team B", match_time=match_time
-                )
+                result = await service.predict_match("test_match", "Team A", "Team B", match_time=match_time)
 
                 # 应该能处理极端时间或给出错误
                 assert result is not None
@@ -285,13 +264,9 @@ class TestInferenceServiceBoundaryConditions:
 
             try:
                 service.feature_extractor = Mock()
-                service.feature_extractor.extract_features_from_match = AsyncMock(
-                    return_value=[1.0, 2.0, 3.0]
-                )
+                service.feature_extractor.extract_features_from_match = AsyncMock(return_value=[1.0, 2.0, 3.0])
                 service.predictor = Mock()
-                service.predictor.predict.return_value = Mock(
-                    success=True, prediction={"result": "HOME_WIN"}
-                )
+                service.predictor.predict.return_value = Mock(success=True, prediction={"result": "HOME_WIN"})
 
                 results = await service.batch_predict(requests)
 
@@ -334,23 +309,19 @@ class TestInferenceServiceBoundaryConditions:
                 await asyncio.sleep(delay)
                 return [1.0, 2.0, 3.0]
 
-            service.feature_extractor.extract_features_from_match.side_effect = (
-                lambda: delayed_response(timeout_value * 2)
+            service.feature_extractor.extract_features_from_match.side_effect = lambda: delayed_response(
+                timeout_value * 2
             )  # 延迟是超时的2倍
 
             # 模拟超时机制
             with patch("asyncio.wait_for") as mock_wait_for:
                 if timeout_value < 1.0:  # 短超时会超时
-                    mock_wait_for.side_effect = asyncio.TimeoutError(
-                        f"Timeout: {description}"
-                    )
+                    mock_wait_for.side_effect = asyncio.TimeoutError(f"Timeout: {description}")
                 else:
                     mock_wait_for.side_effect = lambda coro, timeout: coro
 
                 service.predictor = Mock()
-                service.predictor.predict.return_value = Mock(
-                    success=True, prediction={"result": "HOME_WIN"}
-                )
+                service.predictor.predict.return_value = Mock(success=True, prediction={"result": "HOME_WIN"})
 
                 result = await service.predict_match("test_match", "Team A", "Team B")
 
@@ -379,9 +350,7 @@ class TestInferenceServiceBoundaryConditions:
             return Mock(success=True, prediction={"result": "HOME_WIN"})
 
         service.feature_extractor = Mock()
-        service.feature_extractor.extract_features_from_match = AsyncMock(
-            return_value=[1.0, 2.0, 3.0]
-        )
+        service.feature_extractor.extract_features_from_match = AsyncMock(return_value=[1.0, 2.0, 3.0])
         service.predictor = Mock()
         service.predictor.predict = AsyncMock(side_effect=failing_predict)
 
@@ -466,9 +435,7 @@ class TestInferenceServiceBoundaryConditions:
 
         for confidence in confidence_boundaries:
             service.feature_extractor = Mock()
-            service.feature_extractor.extract_features_from_match = AsyncMock(
-                return_value=[1.0, 2.0, 3.0]
-            )
+            service.feature_extractor.extract_features_from_match = AsyncMock(return_value=[1.0, 2.0, 3.0])
             service.predictor = Mock()
 
             # 模拟预测器返回边界置信度

@@ -34,9 +34,7 @@ class TestH2HCalculator:
         """测试H2H统计数据结构"""
         from src.ml.features.h2h_calculator import H2HStats
 
-        stats = H2HStats(
-            home_win_rate=0.6, avg_goal_diff=1.2, avg_total_goals=2.8, matches_count=10
-        )
+        stats = H2HStats(home_win_rate=0.6, avg_goal_diff=1.2, avg_total_goals=2.8, matches_count=10)
 
         stats_dict = stats.to_dict()
 
@@ -319,9 +317,7 @@ class TestVenueAnalyzer:
         analyzer = VenueAnalyzer()
         match_date = pd.to_datetime("2024-03-15")
 
-        stats = analyzer.calculate_venue_features_for_match(
-            empty_data, 1, 2, match_date
-        )
+        stats = analyzer.calculate_venue_features_for_match(empty_data, 1, 2, match_date)
 
         assert stats is not None
         assert isinstance(stats, VenueStats)
@@ -345,9 +341,7 @@ class TestVenueAnalyzer:
         analyzer = VenueAnalyzer(windows=[3, 5])  # 需要3场和5场滚动
         match_date = pd.to_datetime("2024-03-15")
 
-        stats = analyzer.calculate_venue_features_for_match(
-            limited_data, 1, 2, match_date
-        )
+        stats = analyzer.calculate_venue_features_for_match(limited_data, 1, 2, match_date)
 
         assert stats is not None
         assert isinstance(stats, VenueStats)
@@ -497,9 +491,7 @@ class TestMatchFeatureExtractor:
 
         # 测试特征提取
         try:
-            feature_set = await extractor.extract_features(
-                match_data=match_data, historical_matches=historical_matches
-            )
+            feature_set = await extractor.extract_features(match_data=match_data, historical_matches=historical_matches)
 
             assert feature_set is not None
             assert feature_set.match_id == 123
@@ -714,13 +706,9 @@ class TestMLFeaturesIntegration:
         extractor = FeatureExtractor()
 
         # 生成特征
-        features1 = extractor.extract_basic_features(
-            {"home_team_id": 1, "away_team_id": 2, "league_id": "test"}
-        )
+        features1 = extractor.extract_basic_features({"home_team_id": 1, "away_team_id": 2, "league_id": "test"})
 
-        features2 = extractor.extract_basic_features(
-            {"home_team_id": 1, "away_team_id": 2, "league_id": "test"}
-        )
+        features2 = extractor.extract_basic_features({"home_team_id": 1, "away_team_id": 2, "league_id": "test"})
 
         # 验证特征一致性
         if features1 is not None and features2 is not None:

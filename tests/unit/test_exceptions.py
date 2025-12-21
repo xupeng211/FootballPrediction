@@ -54,9 +54,7 @@ class TestBaseApplicationError:
         error_code = "TEST_001"
         details = {"key": "value", "number": 42}
 
-        error = BaseApplicationError(
-            message=message, error_code=error_code, details=details
-        )
+        error = BaseApplicationError(message=message, error_code=error_code, details=details)
 
         assert error.message == message
         assert error.error_code == error_code
@@ -68,9 +66,7 @@ class TestBaseApplicationError:
         error_code = "ERR_001"
         details = {"user_id": 123, "action": "test"}
 
-        error = BaseApplicationError(
-            message=message, error_code=error_code, details=details
-        )
+        error = BaseApplicationError(message=message, error_code=error_code, details=details)
 
         result = error.to_dict()
 
@@ -451,9 +447,7 @@ class TestExceptionHierarchy:
                 assert isinstance(e, exception_class)
                 assert e.message == "Test message"
             except Exception:
-                pytest.fail(
-                    f"{exception_class.__name__} 应该继承自 BaseApplicationError"
-                )
+                pytest.fail(f"{exception_class.__name__} 应该继承自 BaseApplicationError")
 
     def test_exception_polymorphism(self):
         """测试异常多态性"""
@@ -569,9 +563,7 @@ class TestExceptionUsagePatterns:
         def safe_operation(might_fail: bool = True):
             """可能失败的安全操作"""
             if might_fail:
-                raise DatabaseError(
-                    "Connection failed", details={"retry_count": 0, "max_retries": 3}
-                )
+                raise DatabaseError("Connection failed", details={"retry_count": 0, "max_retries": 3})
             return "success"
 
         # 模拟重试逻辑

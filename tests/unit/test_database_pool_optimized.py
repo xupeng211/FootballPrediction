@@ -283,9 +283,7 @@ class TestDatabasePoolCore:
         result = await pool.executemany("INSERT INTO test VALUES ($1)", args_list)
 
         assert result == "INSERT 0 3"
-        mock_conn.executemany.assert_called_once_with(
-            "INSERT INTO test VALUES ($1)", args_list
-        )
+        mock_conn.executemany.assert_called_once_with("INSERT INTO test VALUES ($1)", args_list)
 
         # 验证统计信息
         stats = pool.get_stats()
