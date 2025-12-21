@@ -34,5 +34,5 @@ RUN useradd -m appuser && chown -R appuser:appuser /app
 USER appuser
 
 # Default command (can be overridden in docker-compose)
-# Using a placeholder command to keep the container running or run the harvester
-CMD ["python", "src/core/main_engine_v5.py", "--mode", "test"]
+# Using a placeholder command to keep the container running for CLI access
+CMD ["tail", "-f", "/dev/null"]

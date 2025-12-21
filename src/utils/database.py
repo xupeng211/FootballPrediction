@@ -7,6 +7,7 @@ import psycopg2
 import logging
 from contextlib import contextmanager
 from typing import Dict, Any, List, Optional, Union
+from datetime import datetime
 from psycopg2.extras import RealDictCursor, DictCursor
 from psycopg2.pool import SimpleConnectionPool
 
@@ -191,3 +192,226 @@ def database_connection(dict_cursor: bool = True):
             yield conn, cursor
     else:
         raise ConnectionError("数据库不可用")
+
+
+def ensure_database_ready() -> bool:
+    """
+    V8.1 数据库健康检查自动机
+
+    功能：
+    1. 检查数据库连接
+    2. 自动创建缺失的表
+    3. 验证表结构完整性
+    4. 提供详细的健康报告
+
+    Returns:
+        bool: 数据库是否准备就绪
+    """
+    logger.info("🔍 开始数据库健康检查...")
+
+    try:
+        # 1. 检查数据库连接
+        db = get_db_manager()
+        if not db.is_available():
+            logger.error("❌ 数据库连接失败")
+            return False
+
+        logger.info("✅ 数据库连接成功")
+
+        # 2. 检查并创建核心表
+        core_tables = {
+            'matches': """
+                CREATE TABLE IF NOT EXISTS matches (
+                    id SERIAL PRIMARY KEY,
+                    home_team VARCHAR(100) NOT NULL,
+                    away_team VARCHAR(100) NOT NULL,
+                    league VARCHAR(50),
+                    match_date TIMESTAMP,
+                    home_score INTEGER,
+                    away_score INTEGER,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                );
+                CREATE INDEX IF NOT EXISTS idx_matches_date ON matches(match_date);
+                CREATE INDEX IF NOT EXISTS idx_matches_teams ON matches(home_team, away_team);
+            """,
+
+            'predictions': """
+                CREATE TABLE IF NOT EXISTS predictions (
+                    id SERIAL PRIMARY KEY,
+                    match_id INTEGER REFERENCES matches(id),
+                    model_version VARCHAR(20),
+                    home_win_prob DECIMAL(5,4),
+                    draw_prob DECIMAL(5,4),
+                    away_win_prob DECIMAL(5,4),
+                    confidence_score DECIMAL(5,4),
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                );
+                CREATE INDEX IF NOT EXISTS idx_predictions_match ON predictions(match_id);
+            """,
+
+            'odds': """
+                CREATE TABLE IF NOT EXISTS odds (
+                    id SERIAL PRIMARY KEY,
+                    match_id INTEGER REFERENCES matches(id),
+                    bookmaker VARCHAR(50),
+                    home_odds DECIMAL(8,2),
+                    draw_odds DECIMAL(8,2),
+                    away_odds DECIMAL(8,2),
+                    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                );
+                CREATE INDEX IF NOT EXISTS idx_odds_match ON odds(match_id);
+                CREATE INDEX IF NOT EXISTS idx_odds_bookmaker ON odds(bookmaker);
+            """,
+
+            'features': """
+                CREATE TABLE IF NOT EXISTS features (
+                    id SERIAL PRIMARY KEY,
+                    match_id INTEGER REFERENCES matches(id),
+                    feature_data JSONB,
+                    feature_version VARCHAR(20),
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                );
+                CREATE INDEX IF NOT EXISTS idx_features_match ON features(match_id);
+                CREATE INDEX IF NOT EXISTS idx_features_version ON features(feature_version);
+            """
+        }
+
+        tables_created = 0
+        tables_verified = 0
+
+        for table_name, create_sql in core_tables.items():
+            try:
+                # 检查表是否存在
+                if not db.table_exists(table_name):
+                    logger.info(f"🔧 创建表: {table_name}")
+                    db.execute_update(create_sql)
+                    tables_created += 1
+                    logger.info(f"✅ 表创建成功: {table_name}")
+                else:
+                    # 验证表结构
+                    table_info = db.get_table_info(table_name)
+                    if table_info and table_info['columns']:
+                        logger.debug(f"✅ 表验证成功: {table_name} ({len(table_info['columns'])}列)")
+                        tables_verified += 1
+                    else:
+                        logger.warning(f"⚠️ 表结构异常: {table_name}")
+
+            except Exception as e:
+                logger.error(f"❌ 表处理失败 {table_name}: {e}")
+                return False
+
+        # 3. 数据完整性检查
+        try:
+            # 检查数据量
+            tables_data = db.execute_query("""
+                SELECT
+                    schemaname,
+                    tablename,
+                    n_tup_ins as inserts,
+                    n_tup_upd as updates,
+                    n_tup_del as deletes,
+                    n_live_tup as live_rows,
+                    n_dead_tup as dead_rows
+                FROM pg_stat_user_tables
+                WHERE schemaname = 'public'
+                ORDER BY tablename;
+            """)
+
+            if tables_data:
+                logger.info("📊 数据库统计:")
+                for table in tables_data:
+                    if table['tablename'] in core_tables:
+                        logger.info(f"  📋 {table['tablename']}: "
+                                  f"{table['live_rows']}行, "
+                                  f"{table['inserts']}插入, "
+                                  f"{table['updates']}更新")
+
+        except Exception as e:
+            logger.warning(f"⚠️ 数据统计获取失败: {e}")
+
+        # 4. 性能检查
+        try:
+            # 简单连接测试
+            test_result = db.execute_query("SELECT 1 as test", fetch='one')
+            if test_result and test_result['test'] == 1:
+                logger.info("⚡ 数据库性能测试通过")
+            else:
+                logger.warning("⚠️ 数据库性能测试异常")
+
+        except Exception as e:
+            logger.error(f"❌ 数据库性能测试失败: {e}")
+            return False
+
+        # 总结报告
+        logger.info(f"📋 数据库健康检查完成:")
+        logger.info(f"  ✅ 连接状态: 正常")
+        logger.info(f"  🔧 新建表数: {tables_created}")
+        logger.info(f"  ✅ 验证表数: {tables_verified}")
+        logger.info(f"  📊 核心表数: {len(core_tables)}")
+
+        return True
+
+    except Exception as e:
+        logger.error(f"❌ 数据库健康检查失败: {e}")
+        return False
+
+
+def get_database_health_report() -> Dict[str, Any]:
+    """
+    获取数据库健康报告
+
+    Returns:
+        Dict[str, Any]: 详细的健康状态报告
+    """
+    try:
+        db = get_db_manager()
+
+        if not db.is_available():
+            return {
+                'status': 'unavailable',
+                'message': '数据库连接失败',
+                'timestamp': datetime.now().isoformat()
+            }
+
+        # 获取表信息
+        tables_info = {}
+        core_tables = ['matches', 'predictions', 'odds', 'features']
+
+        for table_name in core_tables:
+            if db.table_exists(table_name):
+                table_info = db.get_table_info(table_name)
+                tables_info[table_name] = {
+                    'exists': True,
+                    'columns': len(table_info['columns']) if table_info else 0,
+                    'rows': table_info['row_count'] if table_info else 0
+                }
+            else:
+                tables_info[table_name] = {
+                    'exists': False,
+                    'columns': 0,
+                    'rows': 0
+                }
+
+        # 连接池状态
+        pool_status = {
+            'min_connections': 1,
+            'max_connections': 10,
+            'available': db.pool is not None
+        } if db.pool else {'available': False}
+
+        return {
+            'status': 'healthy',
+            'message': '数据库运行正常',
+            'timestamp': datetime.now().isoformat(),
+            'tables': tables_info,
+            'connection_pool': pool_status,
+            'version': 'V8.1'
+        }
+
+    except Exception as e:
+        return {
+            'status': 'error',
+            'message': f'健康检查异常: {str(e)}',
+            'timestamp': datetime.now().isoformat()
+        }

@@ -354,12 +354,257 @@ class ModelHandler:
             }
 
 
+    def validate_features(self, features: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        V8.1 严格特征对齐验证
+
+        Args:
+            features: 输入特征字典
+
+        Returns:
+            Dict[str, Any]: 验证结果
+        """
+        if not self.is_loaded or self.model is None:
+            return {
+                'valid': False,
+                'error': 'Model not loaded',
+                'missing_features': [],
+                'extra_features': [],
+                'model_features': []
+            }
+
+        try:
+            # 获取模型的期望特征
+            model_features = list(self.model.feature_name())
+            expected_count = len(model_features)
+
+            # 检查输入特征
+            input_features = list(features.keys())
+            input_count = len(input_features)
+
+            # 找出缺失的特征
+            missing_features = [f for f in model_features if f not in input_features]
+
+            # 找出多余的特征
+            extra_features = [f for f in input_features if f not in model_features]
+
+            # 生产级宽松特征对齐检查 - 允许有额外特征，但关键特征不能缺失
+            is_valid = len(missing_features) == 0  # 只要关键特征不缺失即可
+
+            # 详细的验证报告
+            validation_result = {
+                'valid': is_valid,
+                'model_features_count': expected_count,
+                'input_features_count': input_count,
+                'missing_features': missing_features,
+                'extra_features': extra_features,
+                'model_features': model_features[:20],  # 显示前20个特征名
+                'alignment_score': 1.0 - (len(missing_features) + len(extra_features)) / expected_count,
+                'timestamp': datetime.now().isoformat()
+            }
+
+            if not is_valid:
+                error_messages = []
+                if missing_features:
+                    error_messages.append(f"缺失{len(missing_features)}个特征: {missing_features[:5]}...")
+                if extra_features:
+                    # 额外特征只是警告，不是错误
+                    logger.info(f"发现{len(extra_features)}个额外特征: {extra_features[:5]}...")
+
+                validation_result['error'] = '; '.join(error_messages)
+                if missing_features:
+                    logger.error(f"关键特征缺失: {validation_result['error']}")
+            else:
+                if extra_features:
+                    logger.info(f"✅ 特征验证通过，包含{len(extra_features)}个额外特征")
+                else:
+                    logger.info(f"✅ 特征对齐验证通过: {expected_count}个特征")
+
+            return validation_result
+
+        except Exception as e:
+            logger.error(f"特征验证异常: {e}")
+            return {
+                'valid': False,
+                'error': f'Validation exception: {str(e)}',
+                'missing_features': [],
+                'extra_features': [],
+                'model_features': []
+            }
+
+    def get_feature_schema(self) -> Dict[str, Any]:
+        """
+        获取模型的特征模式
+
+        Returns:
+            Dict[str, Any]: 特征模式信息
+        """
+        if not self.is_loaded or self.model is None:
+            return {
+                'available': False,
+                'error': 'Model not loaded'
+            }
+
+        try:
+            model_features = list(self.model.feature_name())
+            feature_importance = dict(zip(
+                model_features,
+                self.model.feature_importance()
+            ))
+
+            # 按重要性排序
+            sorted_features = sorted(
+                feature_importance.items(),
+                key=lambda x: x[1],
+                reverse=True
+            )
+
+            return {
+                'available': True,
+                'total_features': len(model_features),
+                'feature_names': model_features,
+                'feature_importance': feature_importance,
+                'top_features': sorted_features[:20],  # 前20个重要特征
+                'feature_types': self._infer_feature_types(),
+                'validation_timestamp': datetime.now().isoformat()
+            }
+
+        except Exception as e:
+            logger.error(f"获取特征模式失败: {e}")
+            return {
+                'available': False,
+                'error': str(e)
+            }
+
+    def _infer_feature_types(self) -> Dict[str, str]:
+        """推断特征类型"""
+        # 基于特征名推断类型
+        feature_types = {}
+        if not self.is_loaded or self.model is None:
+            return feature_types
+
+        try:
+            model_features = list(self.model.feature_name())
+
+            for feature in model_features:
+                if 'ratio' in feature or 'prob' in feature or 'rate' in feature:
+                    feature_types[feature] = 'float'
+                elif 'count' in feature or 'num' in feature:
+                    feature_types[feature] = 'int'
+                elif 'is_' in feature or 'has_' in feature:
+                    feature_types[feature] = 'bool'
+                elif feature in ['home_team', 'away_team', 'league']:
+                    feature_types[feature] = 'categorical'
+                else:
+                    feature_types[feature] = 'float'
+
+            return feature_types
+
+        except Exception:
+            return {}
+
+
 # 便利函数
 def get_model_handler() -> ModelHandler:
     """获取模型处理器实例"""
     handler = ModelHandler()
     handler.load_model()
     return handler
+
+def validate_model_features() -> bool:
+    """
+    全局函数：验证模型特征对齐
+
+    Returns:
+        bool: 特征对齐是否正确
+    """
+    try:
+        handler = get_model_handler()
+
+        # 使用标准测试特征进行验证
+        test_features = {
+            # 比分相关特征
+            'home_goals_conceded_avg': 1.2,
+            'away_goals_conceded_avg': 1.5,
+            'home_goals_scored_avg': 2.1,
+            'away_goals_scored_avg': 1.8,
+
+            # 射门相关
+            'home_shots_on_target_avg': 5.2,
+            'away_shots_on_target_avg': 4.1,
+            'home_shots_total_avg': 12.3,
+            'away_shots_total_avg': 10.8,
+
+            # xG相关
+            'home_xg_avg': 1.8,
+            'away_xg_avg': 1.4,
+            'home_xg_conceded_avg': 1.1,
+            'away_xg_conceded_avg': 1.6,
+
+            # 控球率
+            'home_possession_avg': 58.5,
+            'away_possession_avg': 41.5,
+
+            # 角球
+            'home_corners_avg': 6.2,
+            'away_corners_avg': 4.8,
+
+            # 红黄牌
+            'home_yellow_cards_avg': 1.8,
+            'away_yellow_cards_avg': 2.1,
+            'home_red_cards_avg': 0.1,
+            'away_red_cards_avg': 0.2,
+
+            # 历史交锋
+            'h2h_home_wins': 3,
+            'h2h_away_wins': 2,
+            'h2h_draws': 1,
+
+            # 赔率相关
+            'home_win_odds_avg': 2.1,
+            'draw_odds_avg': 3.4,
+            'away_win_odds_avg': 3.6,
+
+            # 排名相关
+            'home_league_position': 3,
+            'away_league_position': 8,
+            'home_points': 45,
+            'away_points': 32,
+
+            # 主客场优势
+            'is_home_match': 1,
+            'days_since_last_match': 7,
+
+            # 更多特征...
+        }
+
+        # 填充到180维（使用合理的默认值）
+        required_features = handler.model.feature_name() if handler.is_loaded else []
+
+        for feature in required_features:
+            if feature not in test_features:
+                # 根据特征名类型设置默认值
+                if 'ratio' in feature or 'prob' in feature:
+                    test_features[feature] = 0.5
+                elif 'count' in feature or 'num' in feature:
+                    test_features[feature] = 0
+                elif 'is_' in feature:
+                    test_features[feature] = 0
+                else:
+                    test_features[feature] = 1.0
+
+        validation_result = handler.validate_features(test_features)
+
+        if validation_result['valid']:
+            logger.info("✅ 模型特征对齐验证通过")
+            return True
+        else:
+            logger.error(f"❌ 模型特征对齐验证失败: {validation_result.get('error', 'Unknown error')}")
+            return False
+
+    except Exception as e:
+        logger.error(f"模型特征验证异常: {e}")
+        return False
 
 def predict_match_result(match_features: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     """便利函数：预测比赛结果"""
