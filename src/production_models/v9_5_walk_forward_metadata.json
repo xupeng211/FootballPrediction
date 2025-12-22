@@ -1,0 +1,13 @@
+{
+  "version": "V9.5",
+  "validation_method": "Walk-Forward Validation",
+  "training_date": "2025-12-22T12:54:35.013544",
+  "train_period": "2019-2022",
+  "cal_period": "2023",
+  "test_period": "2024-2025",
+  "model_type": "LightGBM + Isotonic Regression",
+  "test_brier_score": 0.06678869607281272,
+  "test_auc_score": 0.9423396017699115,
+  "test_accuracy": 0.9069767441860465,
+  "status": "FAILED"
+}

@@ -94,7 +94,7 @@ class MasterCollector:
         self.db_pool = await asyncpg.create_pool(
             host="localhost",
             port=5432,
-            database="football_prediction_dev",
+            database="football_db",
             user="football_user",
             password="football_pass",
             min_size=2,
@@ -118,7 +118,7 @@ class MasterCollector:
                     return await asyncpg.connect(
                         host="localhost",
                         port=5432,
-                        database="football_prediction_dev",
+                        database="football_db",
                         user="football_user",
                         password="football_pass",
                     )
@@ -156,7 +156,9 @@ class MasterCollector:
     async def process_l1_data(self, data: Dict) -> bool:
         """处理L1数据并保存到数据库"""
         try:
-            matches = data.get("matches", [])
+            # FotMob API返回的数据结构: data.fixtures.allMatches
+            fixtures = data.get("fixtures", {})
+            matches = fixtures.get("allMatches", [])
             self.stats.l1_matches_found = len(matches)
 
             logger.info(f"📊 找到 {len(matches)} 场比赛")
@@ -165,28 +167,23 @@ class MasterCollector:
             try:
                 saved_count = 0
                 for match in matches:
-                    # 提取比赛信息
+                    # 提取比赛信息 (FotMob API结构)
                     external_id = str(match.get("id", ""))
                     home_team = match.get("home", {}).get("name", "")
                     away_team = match.get("away", {}).get("name", "")
-                    match_time = match.get("status", {}).get("startTimeStr", "")
+                    match_time = match.get("status", {}).get("utcTime", "")
                     status = match.get("status", {}).get("reason", {}).get("short", "Fixture")
-                    round_info = match.get("round", {}).get("roundNumber", "")
+                    round_info = match.get("round", "")
 
                     if not all([external_id, home_team, away_team]):
                         continue
 
-                    # 解析时间
+                    # 解析时间 (FotMob格式: 2023-08-11T19:00:00Z)
                     match_time_parsed = None
                     if match_time:
                         try:
-                            # 尝试多种时间格式
-                            for fmt in ["%Y-%m-%dT%H:%M:%S.%fZ", "%Y-%m-%dT%H:%M:%SZ", "%Y-%m-%d %H:%M:%S"]:
-                                try:
-                                    match_time_parsed = datetime.strptime(match_time, fmt)
-                                    break
-                                except ValueError:
-                                    continue
+                            # 直接解析ISO 8601格式
+                            match_time_parsed = datetime.fromisoformat(match_time.replace('Z', '+00:00'))
                         except Exception:
                             logger.warning(f"时间解析失败: {match_time}")
 

@@ -1,0 +1,87 @@
+{
+  "overall_success": true,
+  "total_leagues": 6,
+  "total_matches_collected": 0,
+  "total_duration_seconds": 15.736489,
+  "detailed_results": [
+    {
+      "league_id": 47,
+      "league_name": "Premier League",
+      "season": "2023/24",
+      "success": false,
+      "duration_seconds": 2.471734,
+      "l1_matches_found": 380,
+      "l1_matches_saved": 0,
+      "l2_successful": 0,
+      "l2_failed": 0,
+      "features_extracted": 0,
+      "total_requests": 0
+    },
+    {
+      "league_id": 87,
+      "league_name": "La Liga",
+      "season": "2023/24",
+      "success": false,
+      "duration_seconds": 2.888976,
+      "l1_matches_found": 380,
+      "l1_matches_saved": 0,
+      "l2_successful": 0,
+      "l2_failed": 0,
+      "features_extracted": 0,
+      "total_requests": 0
+    },
+    {
+      "league_id": 54,
+      "league_name": "Bundesliga",
+      "season": "2023/24",
+      "success": false,
+      "duration_seconds": 3.254863,
+      "l1_matches_found": 306,
+      "l1_matches_saved": 0,
+      "l2_successful": 0,
+      "l2_failed": 0,
+      "features_extracted": 0,
+      "total_requests": 0
+    },
+    {
+      "league_id": 47,
+      "league_name": "Premier League",
+      "season": "2024/25",
+      "success": false,
+      "duration_seconds": 1.589868,
+      "l1_matches_found": 380,
+      "l1_matches_saved": 0,
+      "l2_successful": 0,
+      "l2_failed": 0,
+      "features_extracted": 0,
+      "total_requests": 0
+    },
+    {
+      "league_id": 87,
+      "league_name": "La Liga",
+      "season": "2024/25",
+      "success": false,
+      "duration_seconds": 2.231177,
+      "l1_matches_found": 380,
+      "l1_matches_saved": 0,
+      "l2_successful": 0,
+      "l2_failed": 0,
+      "features_extracted": 0,
+      "total_requests": 0
+    },
+    {
+      "league_id": 54,
+      "league_name": "Bundesliga",
+      "season": "2024/25",
+      "success": false,
+      "duration_seconds": 3.11925,
+      "l1_matches_found": 306,
+      "l1_matches_saved": 0,
+      "l2_successful": 0,
+      "l2_failed": 0,
+      "features_extracted": 0,
+      "total_requests": 0
+    }
+  ],
+  "timestamp": "2025-12-22T13:29:13.618839"
+}

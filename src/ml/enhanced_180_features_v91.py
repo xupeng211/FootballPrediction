@@ -1,8 +1,13 @@
 #!/usr/bin/env python3
 """
-V9.1 180维精细特征提取器 - 精算级
+V9.2 181维精细特征提取器 - 精算级
 激活 JSON 中的细腻数据，提取门将、关键传球、前锋转换率等特征
 目标: 增强模型的"触觉"，区分运气球和实力球
+
+V9.2 更新:
+- 正式确认为 181 维特征系统
+- 修复 possession 特征重复问题
+- 重新命名为 possession_index 以避免冲突
 """
 
 import pandas as pd
@@ -118,7 +123,7 @@ class AdvancedFeatureExtractorV91:
             'home_penalty_committed', 'away_penalty_committed',
             'home_penalty_missed', 'away_penalty_missed',
             'home_error_leading_to_goal', 'away_error_leading_to_goal',
-            'home_possession', 'away_possession',
+            'home_possession_index', 'away_possession_index',
             'home_saves_made', 'away_saves_made',
             'home_big_chances_missed', 'away_big_chances_missed'
         ])
@@ -147,17 +152,17 @@ class AdvancedFeatureExtractorV91:
         ])
 
         # 总计检查
-        print(f"✅ {len(self.feature_names)}维特征名称列表已构建")
+        print(f"✅ {len(self.feature_names)}维精细特征名称列表已构建 (V9.2)")
 
     def extract_features_from_json(self, match_data: Dict) -> np.ndarray:
         """
-        从 JSON 数据中提取180维特征
+        从 JSON 数据中提取181维精细特征
 
         Args:
             match_data: 比赛数据字典
 
         Returns:
-            180维特征向量
+            181维特征向量
         """
         features = []
 
@@ -327,8 +332,8 @@ class AdvancedFeatureExtractorV91:
             match_data.get('away_penalty_missed', 0.2),
             match_data.get('home_error_leading_to_goal', 0.2),
             match_data.get('away_error_leading_to_goal', 0.2),
-            match_data.get('home_possession', 50),
-            match_data.get('away_possession', 50),
+            match_data.get('home_possession_index', 50),
+            match_data.get('away_possession_index', 50),
             match_data.get('home_saves_made', 3),
             match_data.get('away_saves_made', 3),
             match_data.get('home_big_chances_missed', 1),
@@ -391,9 +396,9 @@ class AdvancedFeatureExtractorV91:
             df: 比赛数据 DataFrame
 
         Returns:
-            特征矩阵 (n_samples, 180) 和特征名称列表
+            特征矩阵 (n_samples, 181) 和特征名称列表
         """
-        print(f"🔧 从 DataFrame 提取 180 维特征...")
+        print(f"🔧 从 DataFrame 提取 181 维精细特征...")
         print(f"  数据量: {len(df)} 行")
 
         features_list = []
@@ -409,9 +414,9 @@ class AdvancedFeatureExtractorV91:
 
 
 def main():
-    """演示 180 维特征提取"""
+    """演示 181 维特征提取"""
     print("=" * 60)
-    print("🎯 V9.1 180维精细特征提取器演示")
+    print("🎯 V9.2 181维精细特征提取器演示")
     print("=" * 60)
 
     # 创建示例数据
