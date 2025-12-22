@@ -366,11 +366,11 @@ class StrategyEngine:
             'daily_bet_check': True,
             'total_exposure_check': True,
             'consecutive_loss_check': True,
-            'warnings': []
+            'warnings': []  # type: List[str]
         }
 
         # 单场下注限制
-        current_exposure = sum(pos['stake_pct'] for pos in self.portfolio.active_positions)
+        current_exposure = sum(pos.get('stake_pct', 0.0) for pos in self.portfolio.active_positions)
         if current_exposure > self.params.max_single_bet_pct:
             constraints['single_bet_check'] = False
             constraints['warnings'].append(f"单场下注超限 ({current_exposure:.2%} > {self.params.max_single_bet_pct:.1%})")
@@ -469,7 +469,7 @@ class StrategyEngine:
 
         return recommendation
 
-    def _update_risk_metrics(self, recommendation: BettingRecommendation):
+    def _update_risk_metrics(self, recommendation: BettingRecommendation) -> None:
         """更新风险统计"""
         self.risk_metrics['total_recommendations'] += 1
 
@@ -547,7 +547,7 @@ class StrategyEngine:
             'version': 'V7.1-FINANCIAL-GRADE'
         }
 
-    def reset_daily_limits(self):
+    def reset_daily_limits(self) -> None:
         """重置每日限制"""
         self.portfolio.daily_bets = 0
         self.portfolio.active_positions.clear()
