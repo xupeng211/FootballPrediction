@@ -1,0 +1,28 @@
+{
+  "timestamp": "2025-12-22T14:25:54.459451",
+  "unit_tests": {
+    "passed": 0,
+    "failed": 2,
+    "errors": [
+      {
+        "file": "tests/test_strategy_engine.py",
+        "error": ""
+      },
+      {
+        "file": "tests/test_backtester_math.py",
+        "error": ""
+      }
+    ]
+  },
+  "type_checks": {
+    "passed": 0,
+    "failed": 0,
+    "errors": []
+  },
+  "leak_checks": {
+    "passed": 0,
+    "failed": 0,
+    "errors": []
+  },
+  "overall_status": "FAILED"
+}
