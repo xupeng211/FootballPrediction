@@ -1,4 +1,0 @@
-Method,Brier_Score,Improvement
-Raw (Uncalibrated),4.769304133549248e-10,0.0
-Platt Scaling,0.2488125524397363,-52169571282.43426
-Isotonic Regression,0.24881101346833512,-52169248599.846176

@@ -415,14 +415,14 @@ class FootballPredictionCLI:
             trades_df = None
             trade_file = None
 
-            # 尝试读取 V9.1 校准后数据
+            # 尝试读取标准化回测报告数据
             for filename in [
-                'simple_calibrated_trades_v91.csv',
-                'real_odds_backtest_trades.csv',
-                'backtest_trades.csv'
+                'reports/V9_4_BACKTEST_RESULTS_bets.csv',
+                'reports/V9_5_REALISTIC_BACKTEST_RESULTS_bets.csv',
+                'reports/standard_backtest_bets.csv'
             ]:
                 try:
-                    trades_df = pd.read_csv(f'/home/user/projects/FootballPrediction/{filename}')
+                    trades_df = pd.read_csv(filename)
                     trade_file = filename
                     print(f"\n💰 使用交易数据: {filename}")
                     break
@@ -915,8 +915,8 @@ def create_parser() -> argparse.ArgumentParser:
 
     # production-flow命令
     production_parser = subparsers.add_parser('production-flow', help='生产级盈利流水线')
-    production_parser.add_argument('--data', default='data/combined_multi_season_odds.csv',
-                                  help='数据文件路径 (默认: data/combined_multi_season_odds.csv)')
+    production_parser.add_argument('--data', default='data/SEED_REAL_DATA_172.csv',
+                                  help='数据文件路径 (默认: data/SEED_REAL_DATA_172.csv)')
     production_parser.add_argument('--skip-leak-check', action='store_true', help='跳过防作弊检测')
     production_parser.add_argument('--skip-train', action='store_true', help='跳过训练阶段')
     production_parser.add_argument('--output-dir', default='reports', help='输出目录 (默认: reports)')
