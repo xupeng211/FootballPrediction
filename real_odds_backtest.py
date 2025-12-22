@@ -1,25 +1,21 @@
 #!/usr/bin/env python3
 """
-V9.0 真实赔率回测系统 - 财务验证
-核心功能:
-1. 基于xG和评分估算庄家赔率
-2. De-wigging (去水) 计算真实概率
-3. Kelly Criterion 动态仓位管理
-4. 计算真实ROI和最大回撤
+V9.0 真实赔率回测 - 最终版本
+使用真实 Bet365 收盘赔率进行回测
+严格禁用任何 estimate_market_odds 函数
 """
 
 import pandas as pd
 import numpy as np
 from pathlib import Path
-from typing import Dict, Tuple, List
 import warnings
 warnings.filterwarnings('ignore')
 
 
-class OddsBacktester:
-    """赔率回测器 - 基于真实数据的盈利性验证"""
+class RealOddsBacktester:
+    """真实赔率回测器 - 绝对不使用模拟赔率"""
 
-    def __init__(self, initial_capital: float = 10000.0):
+    def __init__(self, initial_capital: float = 1000.0):
         self.initial_capital = initial_capital
         self.capital = initial_capital
         self.capital_history = [initial_capital]
@@ -33,102 +29,27 @@ class OddsBacktester:
         self.max_single_bet_pct = 0.02  # 硬上限：单笔不得超过总资金的2%
         self.max_bet_fraction = self.max_single_bet_pct  # 同步最大投注比例
 
-    def estimate_market_odds(self, home_xg: float, away_xg: float,
-                           home_rating: float, away_rating: float) -> Dict[str, float]:
+    def calculate_edge(self, our_prob: float, real_odds: float) -> float:
         """
-        基于真实概率分布估算庄家开盘赔率（更保守、更真实）
-
-        原则:
-        1. 不使用浮夸的xG直接转换
-        2. 考虑英超真实赔率分布
-        3. 庄家抽水率 4-6%
+        计算真实优势（Edge）
+        Edge = 我们的概率 - (1 / 真实赔率)
         """
-        # 基于评分差异计算真实概率（更保守）
-        rating_diff = (home_rating - away_rating) / 10.0
-        xg_diff = home_xg - away_xg
+        true_prob = 1 / real_odds
+        edge = our_prob - true_prob
+        return edge
 
-        # 权重：评分占70%，xG占30%（xG有噪声）
-        combined_advantage = rating_diff * 0.7 + xg_diff * 0.3
-
-        # 使用更保守的sigmoid函数
-        home_advantage_prob = 1 / (1 + np.exp(-combined_advantage * 1.5))
-
-        # 主场优势调整（英超主场优势约6-8%）
-        home_advantage = 0.07
-        home_win_prob = home_advantage_prob + home_advantage
-        home_win_prob = np.clip(home_win_prob, 0.15, 0.80)
-
-        # 平局概率基于实力差距，实力越接近平局概率越高
-        closeness = 1 - min(abs(rating_diff) * 2, 0.8)
-        draw_prob = 0.25 * closeness + 0.15  # 基础25%±10%
-
-        # 客胜概率
-        away_win_prob = 1 - home_win_prob - draw_prob
-        away_win_prob = max(0.15, away_win_prob)
-
-        # 归一化确保和为1
-        total = home_win_prob + draw_prob + away_win_prob
-        home_win_prob /= total
-        draw_prob /= total
-        away_win_prob /= total
-
-        # 庄家赔率（含4-5%抽水，更真实）
-        margin = 0.045  # 4.5% 抽水
-        home_odds = (1 / home_win_prob) * (1 + margin)
-        draw_odds = (1 / draw_prob) * (1 + margin)
-        away_odds = (1 / away_win_prob) * (1 + margin)
-
-        return {
-            'home_win': round(home_odds, 2),
-            'draw': round(draw_odds, 2),
-            'away_win': round(away_odds, 2),
-            'home_prob': home_win_prob,
-            'draw_prob': draw_prob,
-            'away_prob': away_win_prob
-        }
-
-    def dewig_odds(self, odds: Dict[str, float]) -> Dict[str, float]:
-        """
-        De-wigging (去水) - 移除庄家抽水，得到真实概率
-
-        方法: 归一化隐含概率
-        """
-        implied_probs = np.array([
-            1 / odds['home_win'],
-            1 / odds['draw'],
-            1 / odds['away_win']
-        ])
-
-        # 移除抽水（归一化）
-        total_implied = implied_probs.sum()
-        real_probs = implied_probs / total_implied
-
-        return {
-            'home_win': real_probs[0],
-            'draw': real_probs[1],
-            'away_win': real_probs[2]
-        }
-
-    def kelly_criterion(self, true_prob: float, odds: float,
-                       bankroll: float) -> float:
+    def kelly_criterion(self, our_prob: float, odds: float, bankroll: float) -> float:
         """
         凯利公式计算最优投注额（严格风控版）
-
-        f = (bp - q) / b
-        b = 赔率 - 1
-        p = 胜率
-        q = 败率 = 1 - p
-
-        严格限制：单笔投注不得超过总资金的2%
         """
-        if true_prob <= (1 / odds):
+        if our_prob <= (1 / odds):
             return 0  # 没有优势，不投注
 
         b = odds - 1  # 净赔率
-        q = 1 - true_prob
+        q = 1 - our_prob
 
         # Kelly公式原始值
-        kelly_f = (b * true_prob - q) / b
+        kelly_f = (b * our_prob - q) / b
 
         # 如果凯利公式为负或零，不投注
         if kelly_f <= 0:
@@ -147,66 +68,56 @@ class OddsBacktester:
         # 取最小值：凯利建议额 vs 硬上限
         final_bet = min(bet_amount, max_bet)
 
-        # 如果凯利建议额超过硬上限，打印警告
-        if bet_amount > max_bet:
-            print(f"⚠️ 凯利建议 ${bet_amount:.0f} 超过2%上限 ${max_bet:.0f}，使用上限")
-
         return final_bet
 
-    def backtest_match(self, match_data: Dict, prediction: Dict) -> Dict:
-        """回测单场比赛"""
-        # 估算市场赔率（从增强特征中获取）
-        home_xg = match_data.get('home_avg_xg', match_data.get('home_xg', 1.2))
-        away_xg = match_data.get('away_avg_xg', match_data.get('away_xg', 1.0))
-        home_rating = match_data.get('home_avg_rating', 6.5)
-        away_rating = match_data.get('away_avg_rating', 6.0)
+    def backtest_match(self, match_data: dict, prediction: dict) -> dict:
+        """回测单场比赛（使用真实赔率）"""
+        # 获取真实赔率
+        home_odds = match_data.get('real_home_odds')
+        draw_odds = match_data.get('real_draw_odds')
+        away_odds = match_data.get('real_away_odds')
 
-        market_odds = self.estimate_market_odds(
-            home_xg,
-            away_xg,
-            home_rating,
-            away_rating
-        )
-
-        # 我们的预测概率
-        our_probs = prediction
-
-        # 去水得到真实概率
-        real_probs = self.dewig_odds(market_odds)
-
-        # 找到最佳投注机会
-        best_bet = None
-        best_edge = 0
-
-        for outcome, prob in [('home_win', our_probs['home_win']),
-                              ('draw', our_probs['draw']),
-                              ('away_win', our_probs['away_win'])]:
-            true_prob = real_probs[outcome]
-            odds = market_odds[outcome]
-            edge = prob - true_prob
-
-            if edge > best_edge and edge > self.min_edge:
-                best_edge = edge
-                best_bet = {
-                    'outcome': outcome,
-                    'odds': odds,
-                    'true_prob': true_prob,
-                    'our_prob': prob,
-                    'edge': edge
-                }
-
-        # 如果没有优势，跳过
-        if best_bet is None:
+        # 检查是否有真实赔率
+        if pd.isna(home_odds) or pd.isna(draw_odds) or pd.isna(away_odds):
             return {
                 'bet_placed': False,
                 'capital': self.capital,
                 'p&l': 0
             }
 
+        # 我们的预测概率
+        our_probs = prediction
+
+        # 计算每种结果的Edge
+        edges = {
+            'home_win': self.calculate_edge(our_probs['home_win'], home_odds),
+            'draw': self.calculate_edge(our_probs['draw'], draw_odds),
+            'away_win': self.calculate_edge(our_probs['away_win'], away_odds)
+        }
+
+        # 找到最大Edge
+        best_outcome = max(edges, key=edges.get)
+        best_edge = edges[best_outcome]
+
+        # 如果没有优势，跳过
+        if best_edge <= self.min_edge:
+            return {
+                'bet_placed': False,
+                'capital': self.capital,
+                'p&l': 0
+            }
+
+        # 获取最佳结果的赔率
+        best_odds = {
+            'home_win': home_odds,
+            'draw': draw_odds,
+            'away_win': away_odds
+        }[best_outcome]
+
         # 使用Kelly公式计算投注额
         bet_amount = self.kelly_criterion(
-            best_bet['our_prob'],
-            best_bet['odds'],
+            our_probs[best_outcome],
+            best_odds,
             self.capital
         )
 
@@ -220,12 +131,15 @@ class OddsBacktester:
         # 记录交易
         self.total_bets += 1
 
-        # 假设我们预测正确（基于63.38%胜率）
-        is_win = np.random.random() < best_bet['our_prob']
+        # 获取实际比赛结果
+        actual_result = match_data.get('actual_result', '')
+        is_win = (best_outcome == 'home_win' and actual_result == 'H') or \
+                 (best_outcome == 'draw' and actual_result == 'D') or \
+                 (best_outcome == 'away_win' and actual_result == 'A')
 
         if is_win:
             # 胜了！
-            winnings = bet_amount * (best_bet['odds'] - 1)
+            winnings = bet_amount * (best_odds - 1)
             self.capital += winnings
             self.winning_bets += 1
             pnl = winnings
@@ -238,11 +152,11 @@ class OddsBacktester:
 
         trade_record = {
             'match': f"{match_data['home_team']} vs {match_data['away_team']}",
-            'bet_on': best_bet['outcome'],
-            'odds': best_bet['odds'],
-            'our_prob': best_bet['our_prob'],
-            'true_prob': best_bet['true_prob'],
-            'edge': best_bet['edge'],
+            'bet_on': best_outcome,
+            'odds': best_odds,
+            'our_prob': our_probs[best_outcome],
+            'true_prob': 1 / best_odds,
+            'edge': best_edge,
             'bet_amount': bet_amount,
             'result': 'WIN' if is_win else 'LOSS',
             'p&l': pnl,
@@ -258,7 +172,7 @@ class OddsBacktester:
             'trade': trade_record
         }
 
-    def calculate_metrics(self) -> Dict:
+    def calculate_metrics(self) -> dict:
         """计算回测指标"""
         if not self.trades:
             return {}
@@ -297,19 +211,25 @@ class OddsBacktester:
             'capital_history': self.capital_history
         }
 
-    def run_backtest(self, data_path: str, model_path: str = None) -> Dict:
+    def run_backtest(self, data_path: str, model_path: str = None) -> dict:
         """运行完整回测"""
-        print("🚀 开始真实赔率回测...")
+        print("🚀 开始真实赔率回测（禁用模拟）...")
         print("=" * 60)
 
         # 加载数据
         df = pd.read_csv(data_path)
-        print(f"📊 加载数据: {len(df)} 场比赛")
+        print(f"📊 加载数据: {len(df)} 场比赛（含真实赔率）")
+
+        # 过滤有真实赔率的数据
+        df_with_odds = df[
+            df['real_home_odds'].notna() &
+            df['real_draw_odds'].notna() &
+            df['real_away_odds'].notna()
+        ]
+        print(f"📊 有真实赔率: {len(df_with_odds)} 场比赛")
 
         # 加载模型
         scaler = None
-        predictions = None
-
         if model_path and Path(model_path).exists():
             try:
                 import joblib
@@ -328,7 +248,7 @@ class OddsBacktester:
 
                 # 预测每场比赛
                 predictions = []
-                for _, row in df.iterrows():
+                for _, row in df_with_odds.iterrows():
                     # 构建完整的特征向量（15维，与训练时一致）
                     features = np.array([
                         row.get('home_avg_xg', 1.2),
@@ -366,7 +286,7 @@ class OddsBacktester:
         if predictions is None:
             print("⚠️ 使用启发式预测（基于评分差异）")
             predictions = []
-            for _, row in df.iterrows():
+            for _, row in df_with_odds.iterrows():
                 rating_diff = row.get('home_avg_rating', 6.5) - row.get('away_avg_rating', 6.0)
                 xg_diff = row.get('home_avg_xg', 1.2) - row.get('away_avg_xg', 1.0)
 
@@ -388,14 +308,14 @@ class OddsBacktester:
                 })
 
         # 回测每场比赛
-        for idx, (_, row) in enumerate(df.iterrows()):
+        for idx, (_, row) in enumerate(df_with_odds.iterrows()):
             match_data = row.to_dict()
             prediction = predictions[idx]
 
             result = self.backtest_match(match_data, prediction)
 
-            if result['bet_placed'] and (idx + 1) % 50 == 0:
-                print(f"  进度: {idx + 1}/{len(df)}, 资金: {result['capital']:.0f}")
+            if result['bet_placed'] and (idx + 1) % 20 == 0:
+                print(f"  进度: {idx + 1}/{len(df_with_odds)}, 资金: ${result['capital']:.0f}")
 
         # 计算指标
         metrics = self.calculate_metrics()
@@ -405,20 +325,20 @@ class OddsBacktester:
 
 def main():
     print("=" * 60)
-    print("💰 V9.0 真实赔率回测系统")
+    print("💰 V9.0 真实赔率回测 - 最终版本")
     print("=" * 60)
 
-    backtester = OddsBacktester(initial_capital=10000)
+    backtester = RealOddsBacktester(initial_capital=1000)
 
     # 运行回测
-    data_path = "/home/user/projects/FootballPrediction/data/multi_season_v85.csv"
+    data_path = "/home/user/projects/FootballPrediction/data/merged_real_odds.csv"
     model_path = "/home/user/projects/FootballPrediction/lightgbm_v85_prematch.model"
 
     metrics = backtester.run_backtest(data_path, model_path)
 
     # 显示结果
     print("\n" + "=" * 60)
-    print("📊 回测结果")
+    print("📊 真实赔率回测结果")
     print("=" * 60)
     print(f"  💰 初始资金: ${backtester.initial_capital:,.0f}")
     print(f"  💰 最终资金: ${metrics['final_capital']:,.0f}")
@@ -428,15 +348,20 @@ def main():
     print(f"  🎯 总投注次数: {metrics['total_bets']}")
     print(f"  ✅ 胜出次数: {metrics['winning_bets']}")
     print(f"  🏆 投注胜率: {metrics['win_rate']:.2f}%")
-    print(f"  💸 平均投注: ${metrics['avg_bet']:.0f}")
+    print(f"  💸 平均投注: ${metrics['avg_bet']:,.0f}")
     print(f"  📊 平均收益: ${metrics['avg_pnl']:.2f}")
+    print("\n⚠️  风控参数:")
+    print(f"  - 单笔最大投注: 2% 资金 (${backtester.initial_capital * 0.02:.0f})")
+    print(f"  - 凯利系数: {backtester.kelly_fraction*100:.0f}%")
+    print(f"  - 最小优势阈值: {backtester.min_edge*100:.0f}%")
+    print(f"\n✅ 基于真实赔率，无模拟数据")
     print("=" * 60)
 
     # 保存交易记录
     if backtester.trades:
         trades_df = pd.DataFrame(backtester.trades)
-        trades_df.to_csv('/home/user/projects/FootballPrediction/backtest_trades.csv', index=False)
-        print(f"\n✅ 交易记录已保存: backtest_trades.csv")
+        trades_df.to_csv('/home/user/projects/FootballPrediction/real_odds_backtest_trades.csv', index=False)
+        print(f"\n✅ 真实赔率交易记录已保存: real_odds_backtest_trades.csv")
 
     return metrics
 
