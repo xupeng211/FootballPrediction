@@ -1,0 +1,37 @@
+{
+  "version": "V17.0",
+  "model_type": "XGBoost",
+  "features": [
+    "home_rolling_xg",
+    "home_rolling_xg_std",
+    "home_rolling_shots_on_target",
+    "home_rolling_shots_on_target_std",
+    "home_rolling_possession",
+    "home_rolling_possession_std",
+    "home_rolling_team_rating",
+    "home_rolling_team_rating_std",
+    "away_rolling_xg",
+    "away_rolling_xg_std",
+    "away_rolling_shots_on_target",
+    "away_rolling_shots_on_target_std",
+    "away_rolling_possession",
+    "away_rolling_possession_std",
+    "away_rolling_team_rating",
+    "away_rolling_team_rating_std"
+  ],
+  "feature_count": 16,
+  "label_mapping": {
+    "A": 0,
+    "D": 1,
+    "H": 2
+  },
+  "reverse_mapping": {
+    "0": "A",
+    "1": "D",
+    "2": "H"
+  },
+  "creation_date": "2025-12-23T00:29:17.100097",
+  "description": "V17.0 Rolling Features Model - No Data Leakage",
+  "training_data": "Premier League 23/24 Season",
+  "notes": "Uses 10-match rolling averages (xG, shots, possession, rating)"
+}

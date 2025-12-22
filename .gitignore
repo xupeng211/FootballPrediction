@@ -24,19 +24,29 @@ wheels/
 # Virtual Environment
 venv/
 .venv/
+env/
 
-# Environment Variables
+# Environment Variables (SENSITIVE)
 .env
 .env.*
 !.env.example
+*.key
+*.pem
+secrets/
 
 # IDEs
 .idea/
 .vscode/
 *.swp
 *.swo
+*.sublime-project
+*.sublime-workspace
 
 # Project Data - Exclude sensitive and large files
+data/*.csv
+data/*.json
+data/*.pkl
+data/*.joblib
 data/postgres/
 data/redis/
 data/raw_json/
@@ -53,16 +63,26 @@ data/models/*_backup*
 data/harvested_matches_*.csv
 data/failed_matches_*.json
 data/prediction_*.json
+data/*FINAL*.csv
+data/*GOLDEN*.csv
+data/*ROLLING*.csv
+data/*GRAND*.csv
+data/*REAL*.csv
+data/*TOTAL*.csv
+data/*bridged*.csv
 !data/.gitkeep
 !data/production/
-!data/final_v7_solid_features.csv
-!data/lightgbm_v7.model
-!data/lightgbm_v7_scaler.pkl
-!data/lightgbm_v7_encoder.pkl 
 
-# Logs
+# Production Models (exclude large binary files)
+src/production_models/*.pkl
+src/production_models/*.joblib
+!src/production_models/.gitkeep
+!src/production_models/v17.0_rolling_metadata.json
+
+# Logs (SENSITIVE - may contain API keys)
 logs/
 *.log
+*log*
 
 # Docker
 docker-compose.override.yml
@@ -71,3 +91,90 @@ docker-compose.override.yml
 .pytest_cache/
 .coverage
 htmlcov/
+.pytest_cache/
+
+# Coverage
+.coverage
+coverage.xml
+*.cover
+.hypothesis/
+
+# MyPy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Archives and backups
+archive/
+backup/
+*.bak
+*backup*
+*_old.*
+*_backup.*
+
+# Temporary files
+*.tmp
+*.temp
+temp/
+tmp/
+
+# Reports (may contain sensitive data)
+reports/*.json
+reports/*.html
+!reports/.gitkeep
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Documentation builds
+docs/_build/
+docs/.doctrees/
+
+# Sensitive configuration
+config_local.py
+config_secrets.py
+.secrets
+local_config.py
+
+# Data cleaning and analysis scripts (development only)
+*_cleaning*.txt
+*_cleaning*.json
+*_report*.txt
+analyze_*.py
+audit_*.py
+extract_*.py
+investigate_*.py
+simple_*.py
+verify_*.py
+factory_pipeline_report_*.txt
+real_flight_report_*.txt
+
+# Root level test scripts (keep tests/ directory)
+/test_*.py
+test_*.py
+!tests/test_*.py
+
+# Prediction smoke test files
+prediction_smoke_test_*.json
+
+# Legacy version scripts (keep archive/)
+/v14_*.py
+/v16_*.py
+/v17_*.py
+/v131_*.py
+/cli.py
