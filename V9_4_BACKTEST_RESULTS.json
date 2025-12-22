@@ -1,0 +1,12 @@
+{
+  "version": "V9.4",
+  "backtest_date": "2025-12-22T12:49:06.786220",
+  "initial_capital": 10000,
+  "final_capital": 361787.3381294678,
+  "total_return": 351787.3381294678,
+  "roi_percent": 3517.873381294678,
+  "total_matches": 2188,
+  "total_bets": 971,
+  "winning_bets": 133,
+  "win_rate_percent": 13.697219361483008
+}

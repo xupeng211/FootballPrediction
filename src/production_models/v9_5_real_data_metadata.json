@@ -1,0 +1,14 @@
+{
+  "version": "V9.5",
+  "validation_method": "Real Data Walk-Forward Validation",
+  "training_date": "2025-12-22T12:55:25.366561",
+  "data_source": "Only labeled matches (288 total)",
+  "model_type": "LightGBM + Isotonic Regression",
+  "train_size": 1140,
+  "cal_size": 512,
+  "test_size": 536,
+  "test_brier_score": 0.06437146018873162,
+  "test_auc_score": 0.9399981146304676,
+  "test_accuracy": 0.8899253731343284,
+  "status": "FAILED"
+}

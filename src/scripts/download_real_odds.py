@@ -18,8 +18,9 @@ def download_odds_data():
     print("📊 从 football-data.co.uk 下载真实赔率数据")
     print("=" * 60)
 
-    # 数据源URLs
+    # 数据源URLs - 扩展到三个赛季
     urls = {
+        "22/23": "https://www.football-data.co.uk/mmz4281/2223/E0.csv",  # 英超
         "23/24": "https://www.football-data.co.uk/mmz4281/2324/E0.csv",  # 英超
         "24/25": "https://www.football-data.co.uk/mmz4281/2425/E0.csv",  # 英超
     }

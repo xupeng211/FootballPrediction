@@ -1,0 +1,175 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>FootballPrediction V9.2 - 交易分析报告</title>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; background-color: #f5f5f5; }
+        .container { max-width: 1200px; margin: 0 auto; background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        h1 { color: #2c3e50; text-align: center; border-bottom: 3px solid #3498db; padding-bottom: 10px; }
+        h2 { color: #34495e; border-left: 4px solid #3498db; padding-left: 10px; }
+        .metric { display: inline-block; margin: 10px; padding: 15px; background-color: #ecf0f1; border-radius: 5px; min-width: 150px; }
+        .metric-value { font-size: 24px; font-weight: bold; color: #2c3e50; }
+        .metric-label { font-size: 14px; color: #7f8c8d; }
+        .chart { text-align: center; margin: 20px 0; }
+        .positive { color: #27ae60; }
+        .negative { color: #e74c3c; }
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        th, td { border: 1px solid #bdc3c7; padding: 12px; text-align: left; }
+        th { background-color: #3498db; color: white; }
+        tr:nth-child(even) { background-color: #f8f9fa; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>⚽ FootballPrediction V9.2 交易分析报告</h1>
+
+        <h2>📊 核心指标</h2>
+        <div class="metric">
+            <div class="metric-value">122</div>
+            <div class="metric-label">总交易次数</div>
+        </div>
+        <div class="metric">
+            <div class="metric-value">27</div>
+            <div class="metric-label">胜出次数</div>
+        </div>
+        <div class="metric">
+            <div class="metric-value">22.1%</div>
+            <div class="metric-label">胜率</div>
+        </div>
+        <div class="metric">
+            <div class="metric-value">$1.17</div>
+            <div class="metric-label">平均收益</div>
+        </div>
+        <div class="metric">
+            <div class="metric-value $positive">$142.64</div>
+            <div class="metric-label">总收益</div>
+        </div>
+        <div class="metric">
+            <div class="metric-value">$241.69</div>
+            <div class="metric-label">最大盈利</div>
+        </div>
+        <div class="metric">
+            <div class="metric-value">$-27.95</div>
+            <div class="metric-label">最大亏损</div>
+        </div>
+        <div class="metric">
+            <div class="metric-value">0.2377</div>
+            <div class="metric-label">Brier Score</div>
+        </div>
+
+        <h2>📈 资金曲线与校准曲线</h2>
+        <div class="chart">
+            <img src="V9_2_TRADE_ANALYSIS.png" alt="交易分析图表" style="max-width: 100%; height: auto;">
+        </div>
+
+        <h2>🎯 校准信息</h2>
+        <ul>
+            <li>概率校准方法: Platt Scaling + Isotonic Regression</li>
+            <li>去水逻辑: Shin's Method (移除 3.3% 庄家抽水)</li>
+            <li>特征工程: 181维精细特征</li>
+            <li>风险控制: 凯利公式 + 2% 上限</li>
+        </ul>
+
+        <h2>📋 交易记录 (最近10笔)</h2>
+        <table>
+            <tr>
+                <th>比赛</th>
+                <th>投注</th>
+                <th>赔率</th>
+                <th>结果</th>
+                <th>收益</th>
+            </tr>
+
+            <tr>
+                <td>Arsenal vs Wolverhampton Wanderers</td>
+                <td>away_win</td>
+                <td>13.0</td>
+                <td class="negative">LOSS</td>
+                <td class="negative">$-24.14</td>
+            </tr>
+
+            <tr>
+                <td>Arsenal vs Wolverhampton Wanderers</td>
+                <td>away_win</td>
+                <td>13.0</td>
+                <td class="negative">LOSS</td>
+                <td class="negative">$-23.65</td>
+            </tr>
+
+            <tr>
+                <td>West Ham United vs Aston Villa</td>
+                <td>draw</td>
+                <td>3.6</td>
+                <td class="negative">LOSS</td>
+                <td class="negative">$-23.18</td>
+            </tr>
+
+            <tr>
+                <td>West Ham United vs Aston Villa</td>
+                <td>draw</td>
+                <td>3.6</td>
+                <td class="negative">LOSS</td>
+                <td class="negative">$-22.72</td>
+            </tr>
+
+            <tr>
+                <td>AFC Bournemouth vs Burnley</td>
+                <td>draw</td>
+                <td>3.5</td>
+                <td class="negative">LOSS</td>
+                <td class="negative">$-22.26</td>
+            </tr>
+
+            <tr>
+                <td>Wolverhampton Wanderers vs Brentford</td>
+                <td>draw</td>
+                <td>3.7</td>
+                <td class="positive">WIN</td>
+                <td class="positive">$58.90</td>
+            </tr>
+
+            <tr>
+                <td>AFC Bournemouth vs Burnley</td>
+                <td>draw</td>
+                <td>3.5</td>
+                <td class="negative">LOSS</td>
+                <td class="negative">$-20.94</td>
+            </tr>
+
+            <tr>
+                <td>Wolverhampton Wanderers vs Brentford</td>
+                <td>draw</td>
+                <td>3.7</td>
+                <td class="positive">WIN</td>
+                <td class="positive">$60.95</td>
+            </tr>
+
+            <tr>
+                <td>Everton vs Arsenal</td>
+                <td>home_win</td>
+                <td>5.25</td>
+                <td class="negative">LOSS</td>
+                <td class="negative">$-23.79</td>
+            </tr>
+
+            <tr>
+                <td>Everton vs Arsenal</td>
+                <td>home_win</td>
+                <td>5.25</td>
+                <td class="negative">LOSS</td>
+                <td class="negative">$-23.32</td>
+            </tr>
+
+        </table>
+
+        <h2>📝 报告信息</h2>
+        <p><strong>生成时间:</strong> 2025-12-22 12:36:56</p>
+        <p><strong>数据源:</strong> simple_calibrated_trades_v91.csv</p>
+        <p><strong>系统版本:</strong> V9.2 Production Ready</p>
+        <p><strong>校准状态:</strong> ✅ 已校准</p>
+
+    </div>
+</body>
+</html>
