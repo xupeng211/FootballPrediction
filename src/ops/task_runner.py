@@ -420,7 +420,7 @@ class TaskRunner:
         logger.info("✅ 任务调度器已启动")
         logger.info(f"📋 已注册 {len(self.tasks)} 个任务:")
 
-        for job_id, job in self.scheduler.get_jobs().items():
+        for job in self.scheduler.get_jobs():
             logger.info(f"   • {job.name}: {job.next_run_time}")
 
     def stop(self):
