@@ -1,0 +1,134 @@
+{
+  "version": "V19.3",
+  "creation_date": "2025-12-23T10:52:03.733960",
+  "parent_version": "V19.0",
+  "feature_count": 43,
+  "v18_features": 26,
+  "v19_new_features": 13,
+  "feature_columns": [
+    "home_rolling_xg",
+    "home_rolling_xg_std",
+    "home_rolling_shots_on_target",
+    "home_rolling_shots_on_target_std",
+    "home_rolling_possession",
+    "home_rolling_possession_std",
+    "home_rolling_team_rating",
+    "home_rolling_team_rating_std",
+    "away_rolling_xg",
+    "away_rolling_xg_std",
+    "away_rolling_shots_on_target",
+    "away_rolling_shots_on_target_std",
+    "away_rolling_possession",
+    "away_rolling_possession_std",
+    "away_rolling_team_rating",
+    "away_rolling_team_rating_std",
+    "home_table_position",
+    "away_table_position",
+    "table_position_diff",
+    "home_points",
+    "away_points",
+    "points_diff",
+    "home_recent_form_points",
+    "away_recent_form_points",
+    "home_win_rate_last10",
+    "away_loss_rate_last10",
+    "elo_raw_elo_gap",
+    "elo_adjusted_elo_gap",
+    "elo_home_elo_effective",
+    "elo_away_elo_effective",
+    "elo_adjustment_factor",
+    "elo_fatigue_impact",
+    "elo_schedule_impact",
+    "home_fatigue_index",
+    "away_fatigue_index",
+    "fatigue_diff",
+    "home_rest_days",
+    "away_rest_days",
+    "home_relegation_incentive",
+    "away_relegation_incentive",
+    "incentive_diff",
+    "home_desperation",
+    "away_desperation"
+  ],
+  "v19_3_improvements": {
+    "scaling_audit": {
+      "status": "passed",
+      "description": "StandardScaler.fit() 仅在训练集调用，测试集仅使用 transform()",
+      "file": "src/core/pipeline_v19.py",
+      "line": 642
+    },
+    "secondary_sort_key": {
+      "status": "implemented",
+      "description": "使用 ['match_time', 'id'] 进行确定性排序，确保多场比赛同时开始时顺序稳定",
+      "file": "src/ml/features/standings_calculator.py",
+      "line": 103
+    },
+    "latency_mechanism": {
+      "status": "implemented",
+      "description": "模拟真实下注窗口时延（默认 120 分钟），排除开球前未结束的比赛",
+      "default_latency_minutes": 120,
+      "file": "src/ml/features/standings_calculator.py",
+      "line": 68
+    },
+    "audit_tests": {
+      "status": "all_passed",
+      "file": "tests/test_standings_leakage_audit.py",
+      "tests": {
+        "SEC-001": {
+          "name": "时空回溯攻击测试",
+          "status": "PASSED",
+          "description": "未来数据不影响过去预测"
+        },
+        "SEC-002": {
+          "name": "比赛日边界完整性测试",
+          "status": "PASSED",
+          "description": "max(referenced_time) < current_match_time"
+        },
+        "SEC-003": {
+          "name": "累计逻辑压力测试",
+          "status": "PASSED",
+          "description": "50 场比赛零误差验证"
+        },
+        "SEC-004": {
+          "name": "Pipeline 索引错位风险检测",
+          "status": "PASSED",
+          "description": "检测 pandas 索引使用问题"
+        },
+        "SEC-005": {
+          "name": "NaN 传播完整性测试",
+          "status": "PASSED",
+          "description": "验证无数据时正确返回 None/NaN"
+        }
+      }
+    }
+  },
+  "metrics": {
+    "test_accuracy": 0.6166666666666667,
+    "test_f1_macro": 0.46318213216670506,
+    "precision": 0.4463,
+    "recall": 0.5237,
+    "brier_score_before": 0.23979495465755463,
+    "brier_score_after": 0.16407305002212524,
+    "brier_improvement": 0.316,
+    "roi_fixed": 16.446191787719727,
+    "roi_kelly": 13.156953811645508,
+    "win_rate": 0.6166666666666667,
+    "max_drawdown": 0.1283,
+    "total_bets": 180,
+    "high_confidence_failures": 6,
+    "home_favorite_losses": 18
+  },
+  "training_config": {
+    "train_size": 500,
+    "calib_size": 80,
+    "test_size": 180,
+    "latency_minutes": 120,
+    "probability_calibration": "isotonic"
+  },
+  "model_files": {
+    "model": "src/production_models/v19.0_reconstruction.pkl",
+    "calibrator": "src/production_models/v19.0_calibrator.pkl",
+    "metadata": "src/production_models/v19.3_hardened_metadata.json"
+  },
+  "description": "V19.3 Hardened - Production-ready model with time leakage audit, deterministic sorting, and betting window latency simulation"
+}

@@ -1,13 +1,17 @@
 #!/usr/bin/env python3
 """
-V17.0 生产流水线入口
+V17.0/V18.0 生产流水线入口
 英超 23/24 赛季全量 380 场工业化采集和滚动特征建模
 
+V17.0: 16维滚动特征（基线）
+V18.0: 24维特征（16维滚动 + 8维赛前）+ 平局优化
+
 Usage:
-    python factory_run.py --harvest           # L2 数据采集
-    python factory_run.py --parse             # L3 特征解析
-    python factory_run.py --production        # 完整 V17.0 闭环流程
-    python factory_run.py --report            # 生成报告
+    python factory_run.py --harvest              # L2 数据采集
+    python factory_run.py --parse                # L3 特征解析
+    python factory_run.py --production           # 完整 V17.0 闭环流程
+    python factory_run.py --v18                  # 完整 V18.0 增强流程（推荐）
+    python factory_run.py --report               # 生成报告
 """
 
 import argparse
@@ -23,6 +27,7 @@ logger = logging.getLogger(__name__)
 
 from src.api.collectors.fotmob_core import FotMobCoreCollector
 from src.core.pipeline import V17ProductionPipeline
+from src.core.pipeline_v18 import V18ProductionPipeline
 
 
 class V17FactoryRunner:
@@ -35,11 +40,19 @@ class V17FactoryRunner:
         self.rejected_count = 0
         self.total_data_size = 0
 
-    def load_match_ids(self):
-        """动态读取比赛ID清单"""
+    def load_match_ids(self, season: str = None):
+        """
+        动态读取比赛ID清单
+
+        Args:
+            season: 赛季标识，如 "2324" 或 "2223"。默认使用 2324
+        """
         import csv
 
-        manifest_file = "data/production/harvest_manifest.csv"
+        if season is None:
+            season = "2324"
+
+        manifest_file = f"data/production/harvest_manifest_{season}.csv"
         match_ids = []
 
         try:
@@ -50,11 +63,13 @@ class V17FactoryRunner:
                     if match_id:
                         match_ids.append(match_id)
 
-            logger.info(f"📋 动态加载了 {len(match_ids)} 个比赛ID")
+            # 转换赛季标识为可读格式
+            season_readable = f"{season[:2]}/{season[2:]}"
+            logger.info(f"📋 [{season_readable}] 动态加载了 {len(match_ids)} 个比赛ID")
             return match_ids
 
         except Exception as e:
-            logger.error(f"❌ 加载清单失败: {e}")
+            logger.error(f"❌ 加载清单失败 ({manifest_file}): {e}")
             return []
 
     def extract_match_info(self, l2_data: dict, match_id: str) -> dict:
@@ -96,21 +111,27 @@ class V17FactoryRunner:
             'collection_date': datetime.now(timezone.utc).isoformat()
         }
 
-    def harvest_matches(self, target_count: int = None):
+    def harvest_matches(self, target_count: int = None, season: str = None):
         """
         Phase 1: L1/L2 工业化收割比赛数据
 
         Args:
             target_count: 目标收割数量（可选）
+            season: 赛季标识，如 "2223" 或 "2324"。默认使用 "2324"
         """
+        if season is None:
+            season = "2324"
+
+        season_readable = f"{season[:2]}/{season[2:]}"
         logger.info("🚀 V17.0 L1/L2 工业化生产启动")
         logger.info("=" * 60)
+        logger.info(f"📅 赛季: {season_readable}")
         logger.info(f"🎯 100KB 哨兵已开启 (阈值: {self.collector.min_response_size:,} bytes)")
 
         # 加载比赛ID
-        match_ids = self.load_match_ids()
+        match_ids = self.load_match_ids(season)
         if not match_ids:
-            logger.error("❌ 没有可收割的比赛ID")
+            logger.error(f"❌ 没有可收割的比赛ID (赛季: {season_readable})")
             return False
 
         # 限制目标数量
@@ -253,23 +274,44 @@ class V17FactoryRunner:
 def main():
     """主函数"""
     parser = argparse.ArgumentParser(
-        description="V17.0 生产流水线 - 英超23/24赛季全量380场",
+        description="V17.0/V18.0/V18.1 生产流水线 - 英超22/23+23/24赛季全量760场",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 示例:
-  python factory_run.py --harvest              # L1/L2 数据采集
+  python factory_run.py --harvest --season 2324  # L1/L2 23/24赛季数据采集
+  python factory_run.py --harvest --season 2223  # L1/L2 22/23赛季数据采集
   python factory_run.py --parse                # L3 特征解析
-  python factory_run.py --production           # 完整闭环流程 (推荐)
+  python factory_run.py --production           # 完整 V17.0 闭环流程
+  python factory_run.py --v18                  # 完整 V18.0 增强流程（单赛季推荐）
+  python factory_run.py --v18-multi            # V18.1 融合训练（双赛季760场）
   python factory_run.py --report               # 生成报告
+
+通用参数:
+  --season      赛季选择 (2223=22/23赛季, 2324=23/24赛季, 默认: 2324)
+  --target      目标收割数量（用于测试）
+
+V18.0/V18.1 参数:
+  --draw-opt    平局优化方法 (scale_weight|smote)，默认: scale_weight
+  --scale-weight Draw 类别权重，默认: 2.0
+  --recent-window 近期走势窗口，默认: 5 场
+  --v18-multi    启用 V18.1 双赛季融合训练模式（22/23+23/24，760场数据）
         """
     )
 
     parser.add_argument('--harvest', action='store_true', help='执行 L1/L2 工业化生产')
+    parser.add_argument('--season', type=str, default='2324', choices=['2223', '2324'],
+                        help='赛季标识 (2223=22/23赛季, 2324=23/24赛季, 默认: 2324)')
     parser.add_argument('--target', type=int, help='目标收割数量')
     parser.add_argument('--parse', action='store_true', help='执行 L3 特征解析')
     parser.add_argument('--production', action='store_true', help='执行完整 V17.0 闭环流程')
+    parser.add_argument('--v18', action='store_true', help='执行完整 V18.0 增强流程（推荐）')
+    parser.add_argument('--v18-multi', action='store_true', help='执行 V18.1 融合训练（22/23+23/24 双赛季，760场）')
     parser.add_argument('--train-size', type=int, default=300, help='训练集大小 (默认: 300)')
     parser.add_argument('--window', type=int, default=10, help='滚动窗口大小 (默认: 10)')
+    parser.add_argument('--recent-window', type=int, default=5, help='近期走势窗口 (V18, 默认: 5)')
+    parser.add_argument('--draw-opt', type=str, default='scale_weight',
+                        choices=['scale_weight', 'smote'], help='平局优化方法 (V18)')
+    parser.add_argument('--scale-weight', type=float, default=2.0, help='Draw 类别权重 (V18, 默认: 2.0)')
     parser.add_argument('--report', action='store_true', help='生成最终报告')
 
     args = parser.parse_args()
@@ -277,8 +319,43 @@ def main():
 
     success = True
 
-    # 完整生产流水线（推荐）
-    if args.production:
+    # V18.1 融合训练（双赛季 760场）
+    if args.v18_multi:
+        logger.info("🚀 启动 V18.1 融合训练流水线（22/23 + 23/24 双赛季）")
+        pipeline = V18ProductionPipeline()
+        # 多赛季训练使用更大的训练集
+        multi_train_size = args.train_size * 2 if args.train_size == 300 else args.train_size
+        results = pipeline.run_full_pipeline_v18(
+            train_size=multi_train_size,
+            rolling_window=args.window,
+            recent_window=args.recent_window,
+            draw_optimization=args.draw_opt,
+            scale_weight=args.scale_weight,
+            save_model=True,
+            seasons=['22/23', '23/24']  # V18.1 双赛季融合训练
+        )
+        success = results['metrics']['accuracy'] > 0
+        if not success:
+            sys.exit(1)
+
+    # V18.0 增强版流水线（推荐）
+    elif args.v18:
+        logger.info("🚀 启动 V18.0 增强版流水线")
+        pipeline = V18ProductionPipeline()
+        results = pipeline.run_full_pipeline_v18(
+            train_size=args.train_size,
+            rolling_window=args.window,
+            recent_window=args.recent_window,
+            draw_optimization=args.draw_opt,
+            scale_weight=args.scale_weight,
+            save_model=True
+        )
+        success = results['metrics']['accuracy'] > 0
+        if not success:
+            sys.exit(1)
+
+    # V17.0 完整生产流水线
+    elif args.production:
         success = factory.run_production_pipeline(
             train_size=args.train_size,
             rolling_window=args.window
@@ -288,7 +365,7 @@ def main():
 
     # L1/L2 采集
     if args.harvest:
-        success = factory.harvest_matches(args.target)
+        success = factory.harvest_matches(args.target, args.season)
         if not success:
             sys.exit(1)
 
@@ -299,7 +376,7 @@ def main():
             sys.exit(1)
 
     # 生成报告
-    if args.report or (not args.harvest and not args.parse and not args.production):
+    if args.report or (not args.harvest and not args.parse and not args.production and not args.v18):
         success = factory.generate_final_report()
         if not success:
             sys.exit(1)
