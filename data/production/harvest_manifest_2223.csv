@@ -1,0 +1,381 @@
+match_id,external_id,home_team,away_team,match_date,home_score,away_score,actual_result,round_name,league_name,season_id,is_finished,venue,status,collection_date,is_matched
+3900932,3900932,Crystal Palace,Arsenal,2022-08-05T19:00:00Z,0,2,A,1,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802765,True
+3900933,3900933,Fulham,Liverpool,2022-08-06T11:30:00Z,2,2,D,1,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802783,True
+3900934,3900934,AFC Bournemouth,Aston Villa,2022-08-06T14:00:00Z,2,0,H,1,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802785,True
+3900935,3900935,Leeds United,Wolverhampton Wanderers,2022-08-06T14:00:00Z,2,1,H,1,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802787,True
+3900937,3900937,Newcastle United,Nottingham Forest,2022-08-06T14:00:00Z,2,0,H,1,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802789,True
+3900938,3900938,Tottenham Hotspur,Southampton,2022-08-06T14:00:00Z,4,1,H,1,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802790,True
+3900939,3900939,Everton,Chelsea,2022-08-06T16:30:00Z,0,1,A,1,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802792,True
+3900936,3900936,Leicester City,Brentford,2022-08-07T13:00:00Z,2,2,D,1,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802798,True
+3900940,3900940,Manchester United,Brighton & Hove Albion,2022-08-07T13:00:00Z,1,2,A,1,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802800,True
+3900941,3900941,West Ham United,Manchester City,2022-08-07T15:30:00Z,0,2,A,1,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802802,True
+3900943,3900943,Aston Villa,Everton,2022-08-13T11:30:00Z,2,1,H,2,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802803,True
+3900942,3900942,Arsenal,Leicester City,2022-08-13T14:00:00Z,4,2,H,2,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802805,True
+3900945,3900945,Brighton & Hove Albion,Newcastle United,2022-08-13T14:00:00Z,0,0,D,2,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802807,True
+3900948,3900948,Manchester City,AFC Bournemouth,2022-08-13T14:00:00Z,4,0,H,2,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802808,True
+3900950,3900950,Southampton,Leeds United,2022-08-13T14:00:00Z,2,2,D,2,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802810,True
+3900951,3900951,Wolverhampton Wanderers,Fulham,2022-08-13T14:00:00Z,0,0,D,2,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802811,True
+3900944,3900944,Brentford,Manchester United,2022-08-13T16:30:00Z,4,0,H,2,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802812,True
+3900949,3900949,Nottingham Forest,West Ham United,2022-08-14T13:00:00Z,1,0,H,2,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802813,True
+3900946,3900946,Chelsea,Tottenham Hotspur,2022-08-14T15:30:00Z,2,2,D,2,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802815,True
+3900947,3900947,Liverpool,Crystal Palace,2022-08-15T19:00:00Z,1,1,D,2,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802816,True
+3900960,3900960,Tottenham Hotspur,Wolverhampton Wanderers,2022-08-20T11:30:00Z,1,0,H,3,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802817,True
+3900953,3900953,Crystal Palace,Aston Villa,2022-08-20T14:00:00Z,3,1,H,3,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802819,True
+3900954,3900954,Everton,Nottingham Forest,2022-08-20T14:00:00Z,1,1,D,3,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802820,True
+3900955,3900955,Fulham,Brentford,2022-08-20T14:00:00Z,3,2,H,3,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802821,True
+3900957,3900957,Leicester City,Southampton,2022-08-20T14:00:00Z,1,2,A,3,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802822,True
+3900952,3900952,AFC Bournemouth,Arsenal,2022-08-20T16:30:00Z,0,3,A,3,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802824,True
+3900956,3900956,Leeds United,Chelsea,2022-08-21T13:00:00Z,3,0,H,3,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802825,True
+3900961,3900961,West Ham United,Brighton & Hove Albion,2022-08-21T13:00:00Z,0,2,A,3,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802826,True
+3900959,3900959,Newcastle United,Manchester City,2022-08-21T15:30:00Z,3,3,D,3,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802827,True
+3900958,3900958,Manchester United,Liverpool,2022-08-22T19:00:00Z,2,1,H,3,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802828,True
+3900970,3900970,Southampton,Manchester United,2022-08-27T11:30:00Z,0,1,A,4,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802830,True
+3900964,3900964,Brentford,Everton,2022-08-27T14:00:00Z,1,1,D,4,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802831,True
+3900965,3900965,Brighton & Hove Albion,Leeds United,2022-08-27T14:00:00Z,1,0,H,4,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802833,True
+3900966,3900966,Chelsea,Leicester City,2022-08-27T14:00:00Z,2,1,H,4,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802834,True
+3900967,3900967,Liverpool,AFC Bournemouth,2022-08-27T14:00:00Z,9,0,H,4,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802835,True
+3900968,3900968,Manchester City,Crystal Palace,2022-08-27T14:00:00Z,4,2,H,4,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802837,True
+3900962,3900962,Arsenal,Fulham,2022-08-27T16:30:00Z,2,1,H,4,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802838,True
+3900963,3900963,Aston Villa,West Ham United,2022-08-28T13:00:00Z,0,1,A,4,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802839,True
+3900971,3900971,Wolverhampton Wanderers,Newcastle United,2022-08-28T13:00:00Z,1,1,D,4,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802840,True
+3900969,3900969,Nottingham Forest,Tottenham Hotspur,2022-08-28T15:30:00Z,0,2,A,4,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802841,True
+3900978,3900978,Crystal Palace,Brentford,2022-08-30T18:30:00Z,1,1,D,5,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802843,True
+3900974,3900974,Fulham,Brighton & Hove Albion,2022-08-30T18:30:00Z,2,1,H,5,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802844,True
+3900979,3900979,Southampton,Chelsea,2022-08-30T18:45:00Z,2,1,H,5,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802845,True
+3900975,3900975,Leeds United,Everton,2022-08-30T19:00:00Z,1,1,D,5,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802847,True
+3900973,3900973,AFC Bournemouth,Wolverhampton Wanderers,2022-08-31T18:30:00Z,0,0,D,5,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802848,True
+3900972,3900972,Arsenal,Aston Villa,2022-08-31T18:30:00Z,2,1,H,5,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802849,True
+3900981,3900981,Manchester City,Nottingham Forest,2022-08-31T18:30:00Z,6,0,H,5,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802851,True
+3900977,3900977,West Ham United,Tottenham Hotspur,2022-08-31T18:45:00Z,1,1,D,5,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802852,True
+3900980,3900980,Liverpool,Newcastle United,2022-08-31T19:00:00Z,2,1,H,5,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802853,True
+3900976,3900976,Leicester City,Manchester United,2022-09-01T19:00:00Z,0,1,A,5,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802854,True
+3900986,3900986,Everton,Liverpool,2022-09-03T11:30:00Z,0,0,D,6,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802855,True
+3900983,3900983,Brentford,Leeds United,2022-09-03T14:00:00Z,5,2,H,6,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802857,True
+3900985,3900985,Chelsea,West Ham United,2022-09-03T14:00:00Z,2,1,H,6,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802858,True
+3900988,3900988,Newcastle United,Crystal Palace,2022-09-03T14:00:00Z,0,0,D,6,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802860,True
+3900989,3900989,Nottingham Forest,AFC Bournemouth,2022-09-03T14:00:00Z,2,3,A,6,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802861,True
+3900990,3900990,Tottenham Hotspur,Fulham,2022-09-03T14:00:00Z,2,1,H,6,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802862,True
+3900991,3900991,Wolverhampton Wanderers,Southampton,2022-09-03T14:00:00Z,1,0,H,6,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802863,True
+3900982,3900982,Aston Villa,Manchester City,2022-09-03T16:30:00Z,1,1,D,6,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802864,True
+3900984,3900984,Brighton & Hove Albion,Leicester City,2022-09-04T13:00:00Z,5,2,H,6,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802866,True
+3900987,3900987,Manchester United,Arsenal,2022-09-04T15:30:00Z,3,1,H,6,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802867,True
+3901002,3901002,Aston Villa,Southampton,2022-09-16T19:00:00Z,1,0,H,8,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802868,True
+3901009,3901009,Nottingham Forest,Fulham,2022-09-16T19:00:00Z,2,3,A,8,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802870,True
+3901011,3901011,Wolverhampton Wanderers,Manchester City,2022-09-17T11:30:00Z,0,3,A,8,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802871,True
+3901008,3901008,Newcastle United,AFC Bournemouth,2022-09-17T14:00:00Z,1,1,D,8,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802872,True
+3901010,3901010,Tottenham Hotspur,Leicester City,2022-09-17T16:30:00Z,6,2,H,8,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802873,True
+3901003,3901003,Brentford,Arsenal,2022-09-18T11:00:00Z,0,3,A,8,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802874,True
+3901006,3901006,Everton,West Ham United,2022-09-18T13:15:00Z,1,0,H,8,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802876,True
+3901012,3901012,Arsenal,Tottenham Hotspur,2022-10-01T11:30:00Z,3,1,H,9,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802877,True
+3901013,3901013,AFC Bournemouth,Brentford,2022-10-01T14:00:00Z,0,0,D,9,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802879,True
+3901014,3901014,Crystal Palace,Chelsea,2022-10-01T14:00:00Z,1,2,A,9,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802880,True
+3901015,3901015,Fulham,Newcastle United,2022-10-01T14:00:00Z,1,4,A,9,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802881,True
+3901018,3901018,Liverpool,Brighton & Hove Albion,2022-10-01T14:00:00Z,3,3,D,9,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802883,True
+3901020,3901020,Southampton,Everton,2022-10-01T14:00:00Z,1,2,A,9,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802884,True
+3901021,3901021,West Ham United,Wolverhampton Wanderers,2022-10-01T16:30:00Z,2,0,H,9,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802885,True
+3901019,3901019,Manchester City,Manchester United,2022-10-02T13:00:00Z,6,3,H,9,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802886,True
+3901016,3901016,Leeds United,Aston Villa,2022-10-02T15:30:00Z,0,0,D,9,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802887,True
+3901017,3901017,Leicester City,Nottingham Forest,2022-10-03T19:00:00Z,4,0,H,9,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802889,True
+3901023,3901023,AFC Bournemouth,Leicester City,2022-10-08T14:00:00Z,2,1,H,10,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802890,True
+3901025,3901025,Chelsea,Wolverhampton Wanderers,2022-10-08T14:00:00Z,3,0,H,10,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802891,True
+3901028,3901028,Manchester City,Southampton,2022-10-08T14:00:00Z,4,0,H,10,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802893,True
+3901029,3901029,Newcastle United,Brentford,2022-10-08T14:00:00Z,5,1,H,10,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802894,True
+3901024,3901024,Brighton & Hove Albion,Tottenham Hotspur,2022-10-08T16:30:00Z,0,1,A,10,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802895,True
+3901026,3901026,Crystal Palace,Leeds United,2022-10-09T13:00:00Z,2,1,H,10,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802897,True
+3901031,3901031,West Ham United,Fulham,2022-10-09T13:00:00Z,3,1,H,10,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802898,True
+3901022,3901022,Arsenal,Liverpool,2022-10-09T15:30:00Z,3,2,H,10,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802899,True
+3901027,3901027,Everton,Manchester United,2022-10-09T18:00:00Z,1,2,A,10,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802900,True
+3901030,3901030,Nottingham Forest,Aston Villa,2022-10-10T19:00:00Z,1,1,D,10,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802902,True
+3901033,3901033,Brentford,Brighton & Hove Albion,2022-10-14T19:00:00Z,2,0,H,11,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802903,True
+3901036,3901036,Leicester City,Crystal Palace,2022-10-15T11:30:00Z,0,0,D,11,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802904,True
+3901034,3901034,Fulham,AFC Bournemouth,2022-10-15T14:00:00Z,2,2,D,11,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802905,True
+3901041,3901041,Wolverhampton Wanderers,Nottingham Forest,2022-10-15T14:00:00Z,1,0,H,11,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802906,True
+3901040,3901040,Tottenham Hotspur,Everton,2022-10-15T16:30:00Z,2,0,H,11,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802908,True
+3901032,3901032,Aston Villa,Chelsea,2022-10-16T13:00:00Z,0,2,A,11,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802910,True
+3901035,3901035,Leeds United,Arsenal,2022-10-16T13:00:00Z,0,1,A,11,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802911,True
+3901038,3901038,Manchester United,Newcastle United,2022-10-16T13:00:00Z,0,0,D,11,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802912,True
+3901039,3901039,Southampton,West Ham United,2022-10-16T13:00:00Z,1,1,D,11,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802913,True
+3901037,3901037,Liverpool,Manchester City,2022-10-16T15:30:00Z,1,0,H,11,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802915,True
+3901045,3901045,Brighton & Hove Albion,Nottingham Forest,2022-10-18T18:30:00Z,0,0,D,12,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802916,True
+3901048,3901048,Crystal Palace,Wolverhampton Wanderers,2022-10-18T19:15:00Z,2,1,H,12,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802917,True
+3901043,3901043,AFC Bournemouth,Southampton,2022-10-19T18:30:00Z,0,1,A,12,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802919,True
+3901044,3901044,Brentford,Chelsea,2022-10-19T18:30:00Z,0,0,D,12,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802920,True
+3901050,3901050,Liverpool,West Ham United,2022-10-19T18:30:00Z,1,0,H,12,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802921,True
+3901049,3901049,Newcastle United,Everton,2022-10-19T18:30:00Z,1,0,H,12,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802923,True
+3901051,3901051,Manchester United,Tottenham Hotspur,2022-10-19T19:15:00Z,2,0,H,12,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802924,True
+3901046,3901046,Fulham,Aston Villa,2022-10-20T18:30:00Z,3,0,H,12,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802925,True
+3901047,3901047,Leicester City,Leeds United,2022-10-20T19:15:00Z,2,0,H,12,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802926,True
+3901057,3901057,Nottingham Forest,Liverpool,2022-10-22T11:30:00Z,1,0,H,13,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802927,True
+3901054,3901054,Everton,Crystal Palace,2022-10-22T14:00:00Z,3,0,H,13,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802929,True
+3901056,3901056,Manchester City,Brighton & Hove Albion,2022-10-22T14:00:00Z,3,1,H,13,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802930,True
+3901053,3901053,Chelsea,Manchester United,2022-10-22T16:30:00Z,1,1,D,13,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802933,True
+3901052,3901052,Aston Villa,Brentford,2022-10-23T13:00:00Z,4,0,H,13,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802934,True
+3901055,3901055,Leeds United,Fulham,2022-10-23T13:00:00Z,2,3,A,13,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802935,True
+3901058,3901058,Southampton,Arsenal,2022-10-23T13:00:00Z,1,1,D,13,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802937,True
+3901061,3901061,Wolverhampton Wanderers,Leicester City,2022-10-23T13:00:00Z,0,4,A,13,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802938,True
+3901059,3901059,Tottenham Hotspur,Newcastle United,2022-10-23T15:30:00Z,1,2,A,13,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802939,True
+3901060,3901060,West Ham United,AFC Bournemouth,2022-10-24T19:00:00Z,2,0,H,13,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802940,True
+3901068,3901068,Leicester City,Manchester City,2022-10-29T11:30:00Z,0,1,A,14,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802942,True
+3901063,3901063,AFC Bournemouth,Tottenham Hotspur,2022-10-29T14:00:00Z,2,3,A,14,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802944,True
+3901064,3901064,Brentford,Wolverhampton Wanderers,2022-10-29T14:00:00Z,1,1,D,14,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802945,True
+3901065,3901065,Brighton & Hove Albion,Chelsea,2022-10-29T14:00:00Z,4,1,H,14,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802946,True
+3901066,3901066,Crystal Palace,Southampton,2022-10-29T14:00:00Z,1,0,H,14,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802947,True
+3901071,3901071,Newcastle United,Aston Villa,2022-10-29T14:00:00Z,4,0,H,14,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802949,True
+3901067,3901067,Fulham,Everton,2022-10-29T16:30:00Z,0,0,D,14,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802950,True
+3901069,3901069,Liverpool,Leeds United,2022-10-29T18:45:00Z,1,2,A,14,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802951,True
+3901062,3901062,Arsenal,Nottingham Forest,2022-10-30T14:00:00Z,5,0,H,14,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802952,True
+3901070,3901070,Manchester United,West Ham United,2022-10-30T16:15:00Z,1,0,H,14,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802953,True
+3901075,3901075,Leeds United,AFC Bournemouth,2022-11-05T15:00:00Z,4,3,H,15,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802954,True
+3901076,3901076,Manchester City,Fulham,2022-11-05T15:00:00Z,2,1,H,15,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802956,True
+3901077,3901077,Nottingham Forest,Brentford,2022-11-05T15:00:00Z,2,2,D,15,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802957,True
+3901081,3901081,Wolverhampton Wanderers,Brighton & Hove Albion,2022-11-05T15:00:00Z,2,3,A,15,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802958,True
+3901074,3901074,Everton,Leicester City,2022-11-05T17:30:00Z,0,2,A,15,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802959,True
+3901073,3901073,Chelsea,Arsenal,2022-11-06T12:00:00Z,0,1,A,15,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802961,True
+3901072,3901072,Aston Villa,Manchester United,2022-11-06T14:00:00Z,3,1,H,15,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802962,True
+3901078,3901078,Southampton,Newcastle United,2022-11-06T14:00:00Z,1,4,A,15,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802963,True
+3901080,3901080,West Ham United,Crystal Palace,2022-11-06T14:00:00Z,1,2,A,15,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802964,True
+3901079,3901079,Tottenham Hotspur,Liverpool,2022-11-06T16:30:00Z,1,2,A,15,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802966,True
+3901086,3901086,Manchester City,Brentford,2022-11-12T12:30:00Z,1,2,A,16,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802967,True
+3901082,3901082,AFC Bournemouth,Everton,2022-11-12T15:00:00Z,3,0,H,16,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802968,True
+3901085,3901085,Liverpool,Southampton,2022-11-12T15:00:00Z,3,1,H,16,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802969,True
+3901088,3901088,Nottingham Forest,Crystal Palace,2022-11-12T15:00:00Z,1,0,H,16,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802970,True
+3901089,3901089,Tottenham Hotspur,Leeds United,2022-11-12T15:00:00Z,4,3,H,16,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802972,True
+3901090,3901090,West Ham United,Leicester City,2022-11-12T15:00:00Z,0,2,A,16,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802973,True
+3901087,3901087,Newcastle United,Chelsea,2022-11-12T17:30:00Z,1,0,H,16,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802974,True
+3901091,3901091,Wolverhampton Wanderers,Arsenal,2022-11-12T19:45:00Z,0,2,A,16,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802975,True
+3901083,3901083,Brighton & Hove Albion,Aston Villa,2022-11-13T14:00:00Z,1,2,A,16,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802977,True
+3901084,3901084,Fulham,Manchester United,2022-11-13T16:30:00Z,1,2,A,16,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802978,True
+3901094,3901094,Brentford,Tottenham Hotspur,2022-12-26T12:30:00Z,2,2,D,17,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802979,True
+3901096,3901096,Crystal Palace,Fulham,2022-12-26T15:00:00Z,0,3,A,17,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802980,True
+3901097,3901097,Everton,Wolverhampton Wanderers,2022-12-26T15:00:00Z,1,2,A,17,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802981,True
+3901099,3901099,Leicester City,Newcastle United,2022-12-26T15:00:00Z,0,3,A,17,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802982,True
+3901101,3901101,Southampton,Brighton & Hove Albion,2022-12-26T15:00:00Z,1,3,A,17,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802984,True
+3901093,3901093,Aston Villa,Liverpool,2022-12-26T17:30:00Z,1,3,A,17,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802985,True
+3901092,3901092,Arsenal,West Ham United,2022-12-26T20:00:00Z,3,1,H,17,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802986,True
+3901095,3901095,Chelsea,AFC Bournemouth,2022-12-27T17:30:00Z,2,0,H,17,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802988,True
+3901100,3901100,Manchester United,Nottingham Forest,2022-12-27T20:00:00Z,3,0,H,17,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802989,True
+3901098,3901098,Leeds United,Manchester City,2022-12-28T20:00:00Z,1,3,A,17,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802990,True
+3901110,3901110,West Ham United,Brentford,2022-12-30T19:45:00Z,0,2,A,18,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802991,True
+3901105,3901105,Liverpool,Leicester City,2022-12-30T20:00:00Z,2,1,H,18,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802992,True
+3901111,3901111,Wolverhampton Wanderers,Manchester United,2022-12-31T12:30:00Z,0,1,A,18,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802993,True
+3901102,3901102,AFC Bournemouth,Crystal Palace,2022-12-31T15:00:00Z,0,2,A,18,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802995,True
+3901104,3901104,Fulham,Southampton,2022-12-31T15:00:00Z,2,1,H,18,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802996,True
+3901106,3901106,Manchester City,Everton,2022-12-31T15:00:00Z,1,1,D,18,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802997,True
+3901107,3901107,Newcastle United,Leeds United,2022-12-31T15:00:00Z,0,0,D,18,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.802999,True
+3901103,3901103,Brighton & Hove Albion,Arsenal,2022-12-31T17:30:00Z,2,4,A,18,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803000,True
+3901109,3901109,Tottenham Hotspur,Aston Villa,2023-01-01T14:00:00Z,0,2,A,18,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803001,True
+3901108,3901108,Nottingham Forest,Chelsea,2023-01-01T16:30:00Z,1,1,D,18,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803002,True
+3901114,3901114,Brentford,Liverpool,2023-01-02T17:30:00Z,3,1,H,19,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803003,True
+3901112,3901112,Arsenal,Newcastle United,2023-01-03T19:45:00Z,0,0,D,19,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803005,True
+3901117,3901117,Everton,Brighton & Hove Albion,2023-01-03T19:45:00Z,1,4,A,19,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803006,True
+3901119,3901119,Leicester City,Fulham,2023-01-03T19:45:00Z,0,1,A,19,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803008,True
+3901120,3901120,Manchester United,AFC Bournemouth,2023-01-03T20:00:00Z,3,0,H,19,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803009,True
+3901121,3901121,Southampton,Nottingham Forest,2023-01-04T19:30:00Z,0,1,A,19,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803011,True
+3901118,3901118,Leeds United,West Ham United,2023-01-04T19:45:00Z,2,2,D,19,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803012,True
+3901113,3901113,Aston Villa,Wolverhampton Wanderers,2023-01-04T20:00:00Z,1,1,D,19,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803014,True
+3901116,3901116,Crystal Palace,Tottenham Hotspur,2023-01-04T20:00:00Z,0,4,A,19,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803015,True
+3901115,3901115,Chelsea,Manchester City,2023-01-05T20:00:00Z,0,1,A,19,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803016,True
+3900995,3900995,Fulham,Chelsea,2023-01-12T20:00:00Z,2,1,H,7,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803017,True
+3901122,3901122,Aston Villa,Leeds United,2023-01-13T20:00:00Z,2,1,H,20,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803018,True
+3901127,3901127,Manchester United,Manchester City,2023-01-14T12:30:00Z,2,1,H,20,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803020,True
+3901124,3901124,Brighton & Hove Albion,Liverpool,2023-01-14T15:00:00Z,3,0,H,20,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803021,True
+3901126,3901126,Everton,Southampton,2023-01-14T15:00:00Z,1,2,A,20,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803022,True
+3901129,3901129,Nottingham Forest,Leicester City,2023-01-14T15:00:00Z,2,0,H,20,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803024,True
+3901131,3901131,Wolverhampton Wanderers,West Ham United,2023-01-14T15:00:00Z,1,0,H,20,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803025,True
+3901123,3901123,Brentford,AFC Bournemouth,2023-01-14T17:30:00Z,2,0,H,20,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803026,True
+3901125,3901125,Chelsea,Crystal Palace,2023-01-15T14:00:00Z,1,0,H,20,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803027,True
+3901128,3901128,Newcastle United,Fulham,2023-01-15T14:00:00Z,1,0,H,20,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803028,True
+3901130,3901130,Tottenham Hotspur,Arsenal,2023-01-15T16:30:00Z,0,2,A,20,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803030,True
+3900994,3900994,Crystal Palace,Manchester United,2023-01-18T20:00:00Z,1,1,D,7,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803031,True
+3900999,3900999,Manchester City,Tottenham Hotspur,2023-01-19T20:00:00Z,4,2,H,7,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803032,True
+3901138,3901138,Liverpool,Chelsea,2023-01-21T12:30:00Z,0,0,D,21,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803033,True
+3901133,3901133,AFC Bournemouth,Nottingham Forest,2023-01-21T15:00:00Z,1,1,D,21,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803034,True
+3901137,3901137,Leicester City,Brighton & Hove Albion,2023-01-21T15:00:00Z,2,2,D,21,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803036,True
+3901140,3901140,Southampton,Aston Villa,2023-01-21T15:00:00Z,0,1,A,21,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803037,True
+3901141,3901141,West Ham United,Everton,2023-01-21T15:00:00Z,2,0,H,21,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803038,True
+3901134,3901134,Crystal Palace,Newcastle United,2023-01-21T17:30:00Z,0,0,D,21,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803039,True
+3901136,3901136,Leeds United,Brentford,2023-01-22T14:00:00Z,0,0,D,21,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803041,True
+3901139,3901139,Manchester City,Wolverhampton Wanderers,2023-01-22T14:00:00Z,3,0,H,21,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803042,True
+3901132,3901132,Arsenal,Manchester United,2023-01-22T16:30:00Z,3,2,H,21,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803043,True
+3901135,3901135,Fulham,Tottenham Hotspur,2023-01-23T20:15:00Z,0,1,A,21,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803044,True
+3901145,3901145,Chelsea,Fulham,2023-02-03T20:00:00Z,0,0,D,22,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803045,True
+3901146,3901146,Everton,Arsenal,2023-02-04T12:30:00Z,1,0,H,22,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803046,True
+3901142,3901142,Aston Villa,Leicester City,2023-02-04T15:00:00Z,2,4,A,22,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803049,True
+3901143,3901143,Brentford,Southampton,2023-02-04T15:00:00Z,3,0,H,22,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803050,True
+3901144,3901144,Brighton & Hove Albion,AFC Bournemouth,2023-02-04T15:00:00Z,1,0,H,22,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803051,True
+3901147,3901147,Manchester United,Crystal Palace,2023-02-04T15:00:00Z,2,1,H,22,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803052,True
+3901151,3901151,Wolverhampton Wanderers,Liverpool,2023-02-04T15:00:00Z,3,0,H,22,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803053,True
+3901148,3901148,Newcastle United,West Ham United,2023-02-04T17:30:00Z,1,1,D,22,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803054,True
+3901149,3901149,Nottingham Forest,Leeds United,2023-02-05T14:00:00Z,1,0,H,22,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803055,True
+3901150,3901150,Tottenham Hotspur,Manchester City,2023-02-05T16:30:00Z,1,0,H,22,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803057,True
+3901007,3901007,Manchester United,Leeds United,2023-02-08T20:00:00Z,2,2,D,8,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803058,True
+3901161,3901161,West Ham United,Chelsea,2023-02-11T12:30:00Z,1,1,D,23,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803059,True
+3901152,3901152,Arsenal,Brentford,2023-02-11T15:00:00Z,1,1,D,23,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803061,True
+3901154,3901154,Crystal Palace,Brighton & Hove Albion,2023-02-11T15:00:00Z,1,1,D,23,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803062,True
+3901155,3901155,Fulham,Nottingham Forest,2023-02-11T15:00:00Z,2,0,H,23,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803063,True
+3901157,3901157,Leicester City,Tottenham Hotspur,2023-02-11T15:00:00Z,4,1,H,23,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803064,True
+3901160,3901160,Southampton,Wolverhampton Wanderers,2023-02-11T15:00:00Z,1,2,A,23,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803065,True
+3901153,3901153,AFC Bournemouth,Newcastle United,2023-02-11T17:30:00Z,1,1,D,23,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803067,True
+3901156,3901156,Leeds United,Manchester United,2023-02-12T14:00:00Z,0,2,A,23,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803068,True
+3901159,3901159,Manchester City,Aston Villa,2023-02-12T16:30:00Z,3,1,H,23,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803070,True
+3901158,3901158,Liverpool,Everton,2023-02-13T20:00:00Z,2,0,H,23,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803071,True
+3901042,3901042,Arsenal,Manchester City,2023-02-15T19:30:00Z,1,3,A,12,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803072,True
+3901162,3901162,Aston Villa,Arsenal,2023-02-18T12:30:00Z,2,4,A,24,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803074,True
+3901163,3901163,Brentford,Crystal Palace,2023-02-18T15:00:00Z,1,1,D,24,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803075,True
+3901164,3901164,Brighton & Hove Albion,Fulham,2023-02-18T15:00:00Z,0,1,A,24,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803077,True
+3901165,3901165,Chelsea,Southampton,2023-02-18T15:00:00Z,0,1,A,24,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803078,True
+3901166,3901166,Everton,Leeds United,2023-02-18T15:00:00Z,1,0,H,24,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803079,True
+3901169,3901169,Nottingham Forest,Manchester City,2023-02-18T15:00:00Z,1,1,D,24,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803080,True
+3901171,3901171,Wolverhampton Wanderers,AFC Bournemouth,2023-02-18T15:00:00Z,0,1,A,24,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803081,True
+3901168,3901168,Newcastle United,Liverpool,2023-02-18T17:30:00Z,0,2,A,24,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803083,True
+3901167,3901167,Manchester United,Leicester City,2023-02-19T14:00:00Z,3,0,H,24,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803084,True
+3901170,3901170,Tottenham Hotspur,West Ham United,2023-02-19T16:30:00Z,2,0,H,24,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803085,True
+3901175,3901175,Fulham,Wolverhampton Wanderers,2023-02-24T20:00:00Z,1,1,D,25,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803087,True
+3901174,3901174,Everton,Aston Villa,2023-02-25T15:00:00Z,0,2,A,25,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803088,True
+3901176,3901176,Leeds United,Southampton,2023-02-25T15:00:00Z,1,0,H,25,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803089,True
+3901177,3901177,Leicester City,Arsenal,2023-02-25T15:00:00Z,0,1,A,25,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803090,True
+3901181,3901181,West Ham United,Nottingham Forest,2023-02-25T15:00:00Z,4,0,H,25,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803092,True
+3901172,3901172,AFC Bournemouth,Manchester City,2023-02-25T17:30:00Z,1,4,A,25,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803093,True
+3901173,3901173,Crystal Palace,Liverpool,2023-02-25T19:45:00Z,0,0,D,25,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803094,True
+3901180,3901180,Tottenham Hotspur,Chelsea,2023-02-26T13:30:00Z,2,0,H,25,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803096,True
+3900992,3900992,Arsenal,Everton,2023-03-01T19:45:00Z,4,0,H,7,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803097,True
+3900998,3900998,Liverpool,Wolverhampton Wanderers,2023-03-01T20:00:00Z,2,0,H,7,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803098,True
+3901188,3901188,Manchester City,Newcastle United,2023-03-04T12:30:00Z,2,0,H,26,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803100,True
+3901182,3901182,Arsenal,AFC Bournemouth,2023-03-04T15:00:00Z,3,2,H,26,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803101,True
+3901183,3901183,Aston Villa,Crystal Palace,2023-03-04T15:00:00Z,1,0,H,26,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803102,True
+3901185,3901185,Brighton & Hove Albion,West Ham United,2023-03-04T15:00:00Z,4,0,H,26,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803103,True
+3901186,3901186,Chelsea,Leeds United,2023-03-04T15:00:00Z,1,0,H,26,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803105,True
+3901191,3901191,Wolverhampton Wanderers,Tottenham Hotspur,2023-03-04T15:00:00Z,1,0,H,26,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803106,True
+3901190,3901190,Southampton,Leicester City,2023-03-04T17:30:00Z,1,0,H,26,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803107,True
+3901189,3901189,Nottingham Forest,Everton,2023-03-05T14:00:00Z,2,2,D,26,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803108,True
+3901187,3901187,Liverpool,Manchester United,2023-03-05T16:30:00Z,7,0,H,26,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803109,True
+3901184,3901184,Brentford,Fulham,2023-03-06T20:00:00Z,3,2,H,26,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803110,True
+3901192,3901192,AFC Bournemouth,Liverpool,2023-03-11T12:30:00Z,1,0,H,27,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803112,True
+3901194,3901194,Everton,Brentford,2023-03-11T15:00:00Z,1,0,H,27,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803113,True
+3901196,3901196,Leeds United,Brighton & Hove Albion,2023-03-11T15:00:00Z,2,2,D,27,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803125,True
+3901197,3901197,Leicester City,Chelsea,2023-03-11T15:00:00Z,1,3,A,27,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803127,True
+3901200,3901200,Tottenham Hotspur,Nottingham Forest,2023-03-11T15:00:00Z,3,1,H,27,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803128,True
+3901193,3901193,Crystal Palace,Manchester City,2023-03-11T17:30:00Z,0,1,A,27,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803130,True
+3901195,3901195,Fulham,Arsenal,2023-03-12T14:00:00Z,0,3,A,27,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803131,True
+3901198,3901198,Manchester United,Southampton,2023-03-12T14:00:00Z,0,0,D,27,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803132,True
+3901201,3901201,West Ham United,Aston Villa,2023-03-12T14:00:00Z,1,1,D,27,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803133,True
+3901199,3901199,Newcastle United,Wolverhampton Wanderers,2023-03-12T16:30:00Z,2,1,H,27,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803134,True
+3901004,3901004,Brighton & Hove Albion,Crystal Palace,2023-03-15T19:30:00Z,1,0,H,8,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803136,True
+3901000,3901000,Southampton,Brentford,2023-03-15T19:30:00Z,0,2,A,7,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803137,True
+3901209,3901209,Nottingham Forest,Newcastle United,2023-03-17T20:00:00Z,1,2,A,28,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803138,True
+3901203,3901203,Aston Villa,AFC Bournemouth,2023-03-18T15:00:00Z,3,0,H,28,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803139,True
+3901204,3901204,Brentford,Leicester City,2023-03-18T15:00:00Z,1,1,D,28,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803141,True
+3901210,3901210,Southampton,Tottenham Hotspur,2023-03-18T15:00:00Z,3,3,D,28,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803142,True
+3901211,3901211,Wolverhampton Wanderers,Leeds United,2023-03-18T15:00:00Z,2,4,A,28,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803143,True
+3901206,3901206,Chelsea,Everton,2023-03-18T17:30:00Z,2,2,D,28,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803144,True
+3901202,3901202,Arsenal,Crystal Palace,2023-03-19T14:00:00Z,4,1,H,28,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803145,True
+3901218,3901218,Manchester City,Liverpool,2023-04-01T11:30:00Z,4,1,H,29,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803147,True
+3901213,3901213,AFC Bournemouth,Fulham,2023-04-01T14:00:00Z,2,1,H,29,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803149,True
+3901212,3901212,Arsenal,Leeds United,2023-04-01T14:00:00Z,4,1,H,29,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803150,True
+3901214,3901214,Brighton & Hove Albion,Brentford,2023-04-01T14:00:00Z,3,3,D,29,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803151,True
+3901216,3901216,Crystal Palace,Leicester City,2023-04-01T14:00:00Z,2,1,H,29,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803152,True
+3901220,3901220,Nottingham Forest,Wolverhampton Wanderers,2023-04-01T14:00:00Z,1,1,D,29,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803153,True
+3901215,3901215,Chelsea,Aston Villa,2023-04-01T16:30:00Z,0,2,A,29,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803155,True
+3901221,3901221,West Ham United,Southampton,2023-04-02T13:00:00Z,1,0,H,29,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803156,True
+3901219,3901219,Newcastle United,Manchester United,2023-04-02T15:30:00Z,2,0,H,29,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803157,True
+3901217,3901217,Everton,Tottenham Hotspur,2023-04-03T19:00:00Z,1,1,D,29,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803159,True
+3900993,3900993,AFC Bournemouth,Brighton & Hove Albion,2023-04-04T18:45:00Z,0,2,A,7,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803160,True
+3900996,3900996,Leeds United,Nottingham Forest,2023-04-04T18:45:00Z,2,1,H,7,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803161,True
+3900997,3900997,Leicester City,Aston Villa,2023-04-04T18:45:00Z,1,2,A,7,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803162,True
+3901005,3901005,Chelsea,Liverpool,2023-04-04T19:00:00Z,0,0,D,8,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803164,True
+3901178,3901178,Manchester United,Brentford,2023-04-05T19:00:00Z,1,0,H,25,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803165,True
+3901001,3901001,West Ham United,Newcastle United,2023-04-05T19:00:00Z,1,5,A,7,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803166,True
+3901228,3901228,Manchester United,Everton,2023-04-08T11:30:00Z,2,0,H,30,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803167,True
+3901222,3901222,Aston Villa,Nottingham Forest,2023-04-08T14:00:00Z,2,0,H,30,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803168,True
+3901223,3901223,Brentford,Newcastle United,2023-04-08T14:00:00Z,1,2,A,30,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803169,True
+3901224,3901224,Fulham,West Ham United,2023-04-08T14:00:00Z,0,1,A,30,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803171,True
+3901226,3901226,Leicester City,AFC Bournemouth,2023-04-08T14:00:00Z,0,1,A,30,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803172,True
+3901230,3901230,Tottenham Hotspur,Brighton & Hove Albion,2023-04-08T14:00:00Z,2,1,H,30,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803174,True
+3901231,3901231,Wolverhampton Wanderers,Chelsea,2023-04-08T14:00:00Z,1,0,H,30,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803175,True
+3901229,3901229,Southampton,Manchester City,2023-04-08T16:30:00Z,1,4,A,30,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803176,True
+3901225,3901225,Leeds United,Crystal Palace,2023-04-09T13:00:00Z,1,5,A,30,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803177,True
+3901227,3901227,Liverpool,Arsenal,2023-04-09T15:30:00Z,2,2,D,30,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803178,True
+3901232,3901232,Aston Villa,Newcastle United,2023-04-15T11:30:00Z,3,0,H,31,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803179,True
+3901233,3901233,Chelsea,Brighton & Hove Albion,2023-04-15T14:00:00Z,1,2,A,31,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803180,True
+3901234,3901234,Everton,Fulham,2023-04-15T14:00:00Z,1,3,A,31,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803182,True
+3901238,3901238,Southampton,Crystal Palace,2023-04-15T14:00:00Z,0,2,A,31,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803183,True
+3901241,3901241,Wolverhampton Wanderers,Brentford,2023-04-15T14:00:00Z,2,0,H,31,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803185,True
+3901239,3901239,Tottenham Hotspur,AFC Bournemouth,2023-04-15T14:15:00Z,2,3,A,31,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803186,True
+3901236,3901236,Manchester City,Leicester City,2023-04-15T16:30:00Z,3,1,H,31,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803187,True
+3901240,3901240,West Ham United,Arsenal,2023-04-16T13:00:00Z,2,2,D,31,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803189,True
+3901237,3901237,Nottingham Forest,Manchester United,2023-04-16T15:30:00Z,0,2,A,31,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803190,True
+3901235,3901235,Leeds United,Liverpool,2023-04-17T19:00:00Z,1,6,A,31,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803191,True
+3901242,3901242,Arsenal,Southampton,2023-04-21T19:00:00Z,3,3,D,32,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803192,True
+3901247,3901247,Fulham,Leeds United,2023-04-22T11:30:00Z,2,1,H,32,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803209,True
+3901244,3901244,Brentford,Aston Villa,2023-04-22T14:00:00Z,1,1,D,32,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803215,True
+3901246,3901246,Crystal Palace,Everton,2023-04-22T14:00:00Z,0,0,D,32,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803217,True
+3901248,3901248,Leicester City,Wolverhampton Wanderers,2023-04-22T14:00:00Z,2,1,H,32,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803219,True
+3901249,3901249,Liverpool,Nottingham Forest,2023-04-22T14:00:00Z,3,2,H,32,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803223,True
+3901243,3901243,AFC Bournemouth,West Ham United,2023-04-23T13:00:00Z,0,4,A,32,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803225,True
+3901251,3901251,Newcastle United,Tottenham Hotspur,2023-04-23T13:00:00Z,6,1,H,32,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803226,True
+3901257,3901257,Wolverhampton Wanderers,Crystal Palace,2023-04-25T18:30:00Z,2,0,H,33,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803227,True
+3901258,3901258,Aston Villa,Fulham,2023-04-25T18:45:00Z,1,0,H,33,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803228,True
+3901253,3901253,Leeds United,Leicester City,2023-04-25T19:00:00Z,1,1,D,33,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803229,True
+3901254,3901254,Nottingham Forest,Brighton & Hove Albion,2023-04-26T18:30:00Z,3,1,H,33,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803230,True
+3901259,3901259,Chelsea,Brentford,2023-04-26T18:45:00Z,0,2,A,33,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803232,True
+3901256,3901256,West Ham United,Liverpool,2023-04-26T18:45:00Z,1,2,A,33,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803233,True
+3901261,3901261,Manchester City,Arsenal,2023-04-26T19:00:00Z,4,1,H,33,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803234,True
+3901252,3901252,Everton,Newcastle United,2023-04-27T18:45:00Z,1,4,A,33,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803237,True
+3901260,3901260,Southampton,AFC Bournemouth,2023-04-27T18:45:00Z,0,1,A,33,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803238,True
+3901255,3901255,Tottenham Hotspur,Manchester United,2023-04-27T19:15:00Z,2,2,D,33,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803240,True
+3901266,3901266,Crystal Palace,West Ham United,2023-04-29T11:45:00Z,4,3,H,34,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803241,True
+3901264,3901264,Brentford,Nottingham Forest,2023-04-29T14:00:00Z,2,1,H,34,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803242,True
+3901265,3901265,Brighton & Hove Albion,Wolverhampton Wanderers,2023-04-29T14:00:00Z,6,0,H,34,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803243,True
+3901263,3901263,AFC Bournemouth,Leeds United,2023-04-30T13:00:00Z,4,1,H,34,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803244,True
+3901267,3901267,Fulham,Manchester City,2023-04-30T13:00:00Z,1,2,A,34,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803246,True
+3901270,3901270,Manchester United,Aston Villa,2023-04-30T13:00:00Z,1,0,H,34,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803247,True
+3901271,3901271,Newcastle United,Southampton,2023-04-30T13:00:00Z,3,1,H,34,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803248,True
+3901269,3901269,Liverpool,Tottenham Hotspur,2023-04-30T15:30:00Z,4,3,H,34,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803250,True
+3901268,3901268,Leicester City,Everton,2023-05-01T19:00:00Z,2,2,D,34,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803251,True
+3901262,3901262,Arsenal,Chelsea,2023-05-02T19:00:00Z,3,1,H,34,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803253,True
+3901207,3901207,Liverpool,Fulham,2023-05-03T19:00:00Z,1,0,H,28,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803254,True
+3901208,3901208,Manchester City,West Ham United,2023-05-03T19:00:00Z,3,0,H,28,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803255,True
+3901205,3901205,Brighton & Hove Albion,Manchester United,2023-05-04T19:00:00Z,1,0,H,28,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803256,True
+3901272,3901272,AFC Bournemouth,Chelsea,2023-05-06T14:00:00Z,1,3,A,35,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803258,True
+3901276,3901276,Manchester City,Leeds United,2023-05-06T14:00:00Z,2,1,H,35,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803259,True
+3901279,3901279,Tottenham Hotspur,Crystal Palace,2023-05-06T14:00:00Z,1,0,H,35,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803260,True
+3901281,3901281,Wolverhampton Wanderers,Aston Villa,2023-05-06T14:00:00Z,1,0,H,35,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803261,True
+3901275,3901275,Liverpool,Brentford,2023-05-06T16:30:00Z,1,0,H,35,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803263,True
+3901277,3901277,Newcastle United,Arsenal,2023-05-07T15:30:00Z,0,2,A,35,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803264,True
+3901280,3901280,West Ham United,Manchester United,2023-05-07T18:00:00Z,1,0,H,35,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803265,True
+3901274,3901274,Fulham,Leicester City,2023-05-08T14:00:00Z,5,3,H,35,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803266,True
+3901273,3901273,Brighton & Hove Albion,Everton,2023-05-08T16:30:00Z,1,5,A,35,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803267,True
+3901278,3901278,Nottingham Forest,Southampton,2023-05-08T19:00:00Z,4,3,H,35,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803268,True
+3901288,3901288,Leeds United,Newcastle United,2023-05-13T11:30:00Z,2,2,D,36,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803270,True
+3901283,3901283,Aston Villa,Tottenham Hotspur,2023-05-13T14:00:00Z,2,1,H,36,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803271,True
+3901285,3901285,Chelsea,Nottingham Forest,2023-05-13T14:00:00Z,2,2,D,36,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803272,True
+3901286,3901286,Crystal Palace,AFC Bournemouth,2023-05-13T14:00:00Z,2,0,H,36,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803274,True
+3901290,3901290,Manchester United,Wolverhampton Wanderers,2023-05-13T14:00:00Z,2,0,H,36,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803275,True
+3901291,3901291,Southampton,Fulham,2023-05-13T14:00:00Z,0,2,A,36,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803276,True
+3901284,3901284,Brentford,West Ham United,2023-05-14T13:00:00Z,2,0,H,36,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803278,True
+3901287,3901287,Everton,Manchester City,2023-05-14T13:00:00Z,0,3,A,36,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803279,True
+3901282,3901282,Arsenal,Brighton & Hove Albion,2023-05-14T15:30:00Z,0,3,A,36,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803280,True
+3901289,3901289,Leicester City,Liverpool,2023-05-15T19:00:00Z,0,3,A,36,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803281,True
+3901179,3901179,Newcastle United,Brighton & Hove Albion,2023-05-18T18:30:00Z,4,1,H,25,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803283,True
+3901299,3901299,Tottenham Hotspur,Brentford,2023-05-20T11:30:00Z,1,3,A,37,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803284,True
+3901292,3901292,AFC Bournemouth,Manchester United,2023-05-20T14:00:00Z,0,1,A,37,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803285,True
+3901294,3901294,Fulham,Crystal Palace,2023-05-20T14:00:00Z,2,2,D,37,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803286,True
+3901295,3901295,Liverpool,Aston Villa,2023-05-20T14:00:00Z,1,1,D,37,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803288,True
+3901301,3901301,Wolverhampton Wanderers,Everton,2023-05-20T14:00:00Z,1,1,D,37,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803289,True
+3901298,3901298,Nottingham Forest,Arsenal,2023-05-20T16:30:00Z,1,0,H,37,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803290,True
+3901300,3901300,West Ham United,Leeds United,2023-05-21T12:30:00Z,3,1,H,37,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803292,True
+3901293,3901293,Brighton & Hove Albion,Southampton,2023-05-21T13:00:00Z,3,1,H,37,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803293,True
+3901296,3901296,Manchester City,Chelsea,2023-05-21T15:00:00Z,1,0,H,37,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803294,True
+3901297,3901297,Newcastle United,Leicester City,2023-05-22T19:00:00Z,0,0,D,37,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803296,True
+3901245,3901245,Brighton & Hove Albion,Manchester City,2023-05-24T19:00:00Z,1,1,D,32,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803297,True
+3901250,3901250,Manchester United,Chelsea,2023-05-25T19:00:00Z,4,1,H,32,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803298,True
+3901302,3901302,Arsenal,Wolverhampton Wanderers,2023-05-28T15:30:00Z,5,0,H,38,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803299,True
+3901303,3901303,Aston Villa,Brighton & Hove Albion,2023-05-28T15:30:00Z,2,1,H,38,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803302,True
+3901304,3901304,Brentford,Manchester City,2023-05-28T15:30:00Z,1,0,H,38,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803303,True
+3901305,3901305,Chelsea,Newcastle United,2023-05-28T15:30:00Z,1,1,D,38,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803304,True
+3901306,3901306,Crystal Palace,Nottingham Forest,2023-05-28T15:30:00Z,1,1,D,38,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803305,True
+3901307,3901307,Everton,AFC Bournemouth,2023-05-28T15:30:00Z,1,0,H,38,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803306,True
+3901308,3901308,Leeds United,Tottenham Hotspur,2023-05-28T15:30:00Z,1,4,A,38,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803307,True
+3901309,3901309,Leicester City,West Ham United,2023-05-28T15:30:00Z,2,1,H,38,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803309,True
+3901310,3901310,Manchester United,Fulham,2023-05-28T15:30:00Z,2,1,H,38,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803310,True
+3901311,3901311,Southampton,Liverpool,2023-05-28T15:30:00Z,4,4,D,38,Premier League,2022/2023,True,,Finished,2025-12-22T18:35:01.803311,True

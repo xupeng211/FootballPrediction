@@ -7,7 +7,7 @@
 
 import logging
 from contextlib import asynccontextmanager, contextmanager
-from typing import AsyncGenerator, Generator, Optional
+from typing import AsyncGenerator, Generator, Optional, Any
 
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
@@ -16,9 +16,14 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
-from .config import DatabaseConfig, get_database_config
-
 logger = logging.getLogger(__name__)
+
+
+def get_database_config():
+    """获取数据库配置（从 config_unified.py）"""
+    from src.config_unified import get_settings
+    settings = get_settings()
+    return settings.database
 
 
 class DatabaseManager:
@@ -39,10 +44,10 @@ class DatabaseManager:
 
     def __init__(self) -> None:
         if not hasattr(self, "_initialized"):
-            self._config: Optional[DatabaseConfig] = None
+            self._config = None
             self._initialized = True
 
-    def initialize(self, config: Optional[DatabaseConfig] = None) -> None:
+    def initialize(self, config: Optional[Any] = None) -> None:
         """
         初始化数据库连接
 
@@ -53,7 +58,7 @@ class DatabaseManager:
             config = get_database_config()
 
         self._config = config
-        logger.info(f"初始化数据库连接到 {config.host}:{config.port}/{config.database}")
+        logger.info(f"初始化数据库连接到 {config.host}:{config.port}/{config.name}")
 
         # 创建异步引擎
         self._async_engine = create_async_engine(
@@ -150,7 +155,7 @@ class DatabaseManager:
 _db_manager = DatabaseManager()
 
 
-def initialize_database(config: Optional[DatabaseConfig] = None) -> None:
+def initialize_database(config: Optional[Any] = None) -> None:
     """
     初始化数据库连接
 

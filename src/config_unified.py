@@ -264,8 +264,8 @@ class UnifiedSettings(BaseSettings):
     harvest_delay_seconds: float = Field(default=1.0, description="数据收集间隔（秒）")
 
     class Config:
-        # 禁用.env文件自动加载，避免解析错误
-        env_file = None
+        # 启用.env文件自动加载，支持环境变量配置
+        env_file = ".env"
         env_file_encoding = "utf-8"
         case_sensitive = False
 

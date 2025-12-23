@@ -1,26 +1,63 @@
 """
-FootballPrediction V7.0 数据库连接工具
+FootballPrediction 数据库连接工具
 提供统一的数据库连接管理和操作
 """
 
 import psycopg2
 import logging
+import os
 from contextlib import contextmanager
 from typing import Dict, Any, List, Optional, Union
 from datetime import datetime
 from psycopg2.extras import RealDictCursor, DictCursor
 from psycopg2.pool import SimpleConnectionPool
-
-from src.core.config import get_config
+from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass
+class DBConfig:
+    """数据库配置"""
+    host: str = "localhost"
+    port: int = 5432
+    name: str = "football_db"
+    user: str = "football_user"
+    password: str = "football_pass"
+
+
+def get_db_config() -> DBConfig:
+    """获取数据库配置"""
+    try:
+        from src.config_unified import get_settings
+        settings = get_settings()
+        db = settings.database
+        return DBConfig(
+            host=db.host,
+            port=db.port,
+            name=db.name,
+            user=db.user,
+            password=db.password.get_secret_value()
+        )
+    except Exception:
+        # 默认配置
+        return DBConfig(
+            host=os.getenv("DB_HOST", "localhost"),
+            port=int(os.getenv("DB_PORT", 5432)),
+            name=os.getenv("DB_NAME", "football_db"),
+            user=os.getenv("DB_USER", "football_user"),
+            password=os.getenv("DB_PASSWORD", "football_pass")
+        )
+
 
 class DatabaseManager:
     """数据库管理器"""
 
     def __init__(self, config=None):
-        self.config = config or get_config()
-        self.db_config = self.config.database
+        if config is None:
+            self.db_config = get_db_config()
+        else:
+            self.db_config = config
         self.pool = None
         self.available = False
         self._initialize()

@@ -314,15 +314,17 @@ class V3ROIBacktest:
             import psycopg2
             from psycopg2.extras import RealDictCursor
 
-            # 强制使用生产数据库
+            # 使用统一配置系统
+            db = self.settings.database
             db_config = {
-                "host": "localhost",
-                "port": 5432,
-                "database": "football_prediction",
-                "user": "football_user",
-                "password": "football_pass",
+                "host": db.host,
+                "port": db.port,
+                "database": db.name,
+                "user": db.user,
+                "password": db.password.get_secret_value(),
             }
 
+            logger.info(f"🔧 连接数据库: {db.host}:{db.port}/{db.name}")
             conn = psycopg2.connect(**db_config)
 
             # 查询真实比分

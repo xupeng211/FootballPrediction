@@ -106,9 +106,12 @@ class FotMobCoreCollector:
             if 'conn' in locals():
                 conn.close()
 
-    def _load_match_ids_from_manifest(self) -> List[int]:
+    def _load_match_ids_from_manifest(self, manifest_path: str = None) -> List[int]:
         """
         从harvest_manifest.csv加载比赛ID列表
+
+        Args:
+            manifest_path: manifest文件路径（可选，默认使用标准路径）
 
         Returns:
             比赛ID列表
@@ -116,7 +119,8 @@ class FotMobCoreCollector:
         import csv
         import os
 
-        manifest_path = "data/production/harvest_manifest.csv"
+        if manifest_path is None:
+            manifest_path = "data/production/harvest_manifest.csv"
 
         if not os.path.exists(manifest_path):
             logger.error(f"❌ 找不到harvest manifest文件: {manifest_path}")
@@ -133,7 +137,7 @@ class FotMobCoreCollector:
                         match_id = int(row['match_id'])
                         match_ids.append(match_id)
 
-            logger.info(f"📋 从manifest文件读取到 {len(match_ids)} 场已验证比赛")
+            logger.info(f"📋 从manifest文件读取到 {len(match_ids)} 场已验证比赛 ({manifest_path})")
             return match_ids
 
         except Exception as e:
@@ -147,39 +151,19 @@ class FotMobCoreCollector:
         Returns:
             psycopg2连接对象
         """
-        try:
-            from src.config_unified import get_settings
-            settings = get_settings()
-            db = settings.database
+        from src.config_unified import get_settings
+        settings = get_settings()
+        db = settings.database
 
-            conn = psycopg2.connect(
-                host=db.host,
-                port=db.port,
-                database=db.name,
-                user=db.user,
-                password=db.password.get_secret_value()
-            )
-        except Exception:
-            # 备用直接连接
-            conn = psycopg2.connect(
-                host="localhost",
-                port="5432",
-                database="football_db",
-                user="football_user",
-                password="football_pass"
-            )
-            logger.info("使用统一配置连接数据库")
-            return conn
-        except Exception as e:
-            logger.warning(f"统一配置连接失败: {e}")
-            # 回退到Docker配置
-            return psycopg2.connect(
-                host='db',
-                port=5432,
-                database='football_db',
-                user='football_user',
-                password='football_pass'
-            )
+        logger.debug(f"🔧 连接数据库: {db.host}:{db.port}/{db.name}")
+
+        return psycopg2.connect(
+            host=db.host,
+            port=db.port,
+            database=db.name,
+            user=db.user,
+            password=db.password.get_secret_value()
+        )
 
     def _log_hollow_match(self, match_id: int, content_size: int, reason: str) -> None:
         """

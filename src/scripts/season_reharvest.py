@@ -39,51 +39,36 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 class DatabaseManager:
-    """数据库管理类"""
+    """数据库管理类 - 使用统一配置系统"""
 
     def __init__(self):
         self.conn = None
         self.db_available = False
-        # Try local first, then Docker
+        # 使用统一配置系统
         try:
-            self._connect_local()
+            self._connect_from_config()
             self.db_available = True
-        except Exception:
-            try:
-                self._connect_docker()
-                self.db_available = True
-            except Exception as e:
-                logger.warning(f"⚠️ 数据库不可用，仅保存到 CSV: {e}")
-                self.db_available = False
-
-    def _connect_local(self):
-        """连接本地数据库"""
-        try:
-            self.conn = psycopg2.connect(
-                host='localhost',
-                port=5432,
-                database='football_db',
-                user='football_user',
-                password='football_pass'
-            )
-            logger.info("✅ 本地数据库连接成功")
         except Exception as e:
-            logger.error(f"❌ 本地数据库连接失败: {e}")
-            raise
+            logger.warning(f"⚠️ 数据库不可用，仅保存到 CSV: {e}")
+            self.db_available = False
 
-    def _connect_docker(self):
-        """连接 Docker 数据库"""
+    def _connect_from_config(self):
+        """使用统一配置系统连接数据库"""
         try:
+            from src.config_unified import get_settings
+            settings = get_settings()
+            db = settings.database
+
             self.conn = psycopg2.connect(
-                host='localhost',
-                port=5432,
-                database='football_db',
-                user='football_user',
-                password='football_pass'
+                host=db.host,
+                port=db.port,
+                database=db.name,
+                user=db.user,
+                password=db.password.get_secret_value()
             )
-            logger.info("✅ Docker 数据库连接成功")
+            logger.info(f"✅ 数据库连接成功: {db.host}:{db.port}/{db.name}")
         except Exception as e:
-            logger.error(f"❌ Docker 数据库连接失败: {e}")
+            logger.error(f"❌ 数据库连接失败: {e}")
             raise
 
     def _connect(self):
