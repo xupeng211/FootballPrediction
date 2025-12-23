@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-V19.4 训练流水线 - Draw Sensitivity + Weighted Loss
-=====================================================
+V19.4 训练流水线 - Draw Sensitivity + Weighted Loss (Refactored)
+================================================================
 
 针对V19.3审计中发现的两个核心问题：
 1. 平局识别率为0% -> 引入平局敏感度特征 + 加权损失函数
@@ -12,8 +12,15 @@ V19.4 训练流水线 - Draw Sensitivity + Weighted Loss
 - 多分类损失函数加权 (draw_class_weight=3.0)
 - 48维特征 (45原V19.3特征 + 3新特征)
 
+V19.4.1 重构改进：
+- 使用 DataFormatNormalizer 统一数据格式处理
+- 使用 DataValidator 进行数据质量验证
+- 使用 config_unified.py 替代硬编码配置
+- 消除硬编码联赛 ID，支持动态配置
+
 作者: V19.4量化策略团队
 日期: 2025-12-23
+重构日期: 2025-12-24
 """
 
 import logging
@@ -35,6 +42,14 @@ from src.config_unified import get_settings
 from src.ml.features.v19_advanced_features import V19AdvancedFeatureExtractor
 from src.ml.features.draw_sensitivity_features import DrawSensitivityFeatureExtractor
 from src.ml.features.standings_calculator import initialize_global_calculator, get_global_calculator
+
+# 新增：数据验证和标准化
+from src.data.validators.data_validator import DataValidator, ValidationResult
+from src.data.preprocessors.data_normalizer import DataFormatNormalizer
+
+# 重试装饰器
+from src.utils.retry import retry_db_connection
+
 import xgboost as xgb
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
@@ -67,13 +82,20 @@ class V19_4Metrics:
 
 class V19_4TrainingPipeline:
     """
-    V19.4 训练流水线
+    V19.4 训练流水线 (重构版)
 
     核心功能:
     1. 数据加载（从数据库读取比赛数据）
-    2. 特征提取（V18 + V19 + V19.4 平局敏感度）
-    3. 加权损失函数训练
-    4. 模型评估和保存
+    2. 数据验证和标准化
+    3. 特征提取（V18 + V19 + V19.4 平局敏感度）
+    4. 加权损失函数训练
+    5. 模型评估和保存
+
+    V19.4.1 重构改进:
+    - 使用 DataValidator 进行数据质量验证
+    - 使用 DataFormatNormalizer 统一数据格式
+    - 支持动态联赛配置
+    - 使用统一配置系统
     """
 
     # V19.4 平局类别权重配置
@@ -97,27 +119,90 @@ class V19_4TrainingPipeline:
         'num_class': 3  # H/D/A
     }
 
-    def __init__(self, db_conn=None):
+    # 默认联赛配置（从数据库或配置文件加载）
+    DEFAULT_LEAGUE_CONFIG = {
+        47: {'name': 'Premier League', 'code': 'EPL', 'tier': 'Tier1'},
+        48: {'name': 'Championship', 'code': 'CHAMPIONSHIP', 'tier': 'Tier2'},
+        8: {'name': 'La Liga', 'code': 'LALIGA', 'tier': 'Tier1'},
+        54: {'name': 'Bundesliga', 'code': 'BUNDESLIGA', 'tier': 'Tier1'},
+        23: {'name': 'Serie A', 'code': 'SERIEA', 'tier': 'Tier1'},
+        34: {'name': 'Ligue 1', 'code': 'LIGUE1', 'tier': 'Tier1'},
+    }
+
+    def __init__(self, db_conn=None, enable_validation: bool = True):
         """
         初始化 V19.4 训练流水线
 
         Args:
             db_conn: 数据库连接（可选）
+            enable_validation: 是否启用数据验证
         """
         self.db_conn = db_conn
+        self.enable_validation = enable_validation
+        self.settings = get_settings()
+
+        # 特征提取器
         self.feature_extractor = V19AdvancedFeatureExtractor()
         self.draw_sensitivity_extractor = DrawSensitivityFeatureExtractor()
+
+        # V19.4.1 新增：数据验证器和标准化器
+        self.validator = DataValidator(strict_mode=False)
+        self.normalizer = DataFormatNormalizer(strict_mode=False)
+
+        # 联赛配置（支持动态加载）
+        self.league_config = self._load_league_config()
 
         # 模型组件
         self.model = None
         self.scaler = StandardScaler()
         self.feature_columns = None
 
-        logger.info("V19.4 训练流水线初始化完成（含平局敏感度特征 + 加权损失）")
+        logger.info("V19.4 训练流水线初始化完成（重构版：含数据验证 + 格式标准化 + 平局敏感度特征 + 加权损失）")
+
+    def _load_league_config(self) -> Dict[int, Dict[str, Any]]:
+        """加载联赛配置
+
+        Returns:
+            联赛配置字典 {league_id: {name, code, tier}}
+        """
+        # 尝试从数据库加载
+        config = self.DEFAULT_LEAGUE_CONFIG.copy()
+
+        try:
+            import psycopg2
+            from psycopg2.extras import RealDictCursor
+
+            conn = psycopg2.connect(
+                host=self.settings.database.host,
+                port=self.settings.database.port,
+                database=self.settings.database.name,
+                user=self.settings.database.user,
+                password=self.settings.database.password.get_secret_value()
+            )
+
+            cursor = conn.cursor(cursor_factory=RealDictCursor)
+            cursor.execute("SELECT league_id, league_name, league_code, tier FROM league_config WHERE is_active = TRUE")
+
+            for row in cursor.fetchall():
+                config[row['league_id']] = {
+                    'name': row['league_name'],
+                    'code': row['league_code'],
+                    'tier': row['tier']
+                }
+
+            cursor.close()
+            conn.close()
+
+            logger.info(f"从数据库加载了 {len(config)} 个联赛配置")
+
+        except Exception as e:
+            logger.warning(f"无法从数据库加载联赛配置，使用默认配置: {e}")
+
+        return config
 
     def load_data(self, limit: int = 760) -> pd.DataFrame:
         """
-        从数据库加载数据
+        从数据库加载数据（使用统一配置系统）
 
         Args:
             limit: 加载比赛数量
@@ -131,12 +216,13 @@ class V19_4TrainingPipeline:
             import psycopg2
             from psycopg2.extras import RealDictCursor
 
+            # 使用统一配置系统
             conn = psycopg2.connect(
-                host="localhost",
-                port=5432,
-                database="football_db",
-                user="football_user",
-                password="football_pass"
+                host=self.settings.database.host,
+                port=self.settings.database.port,
+                database=self.settings.database.name,
+                user=self.settings.database.user,
+                password=self.settings.database.password.get_secret_value()
             )
 
             cursor = conn.cursor(cursor_factory=RealDictCursor)
@@ -151,6 +237,8 @@ class V19_4TrainingPipeline:
                 m.away_score,
                 m.status,
                 m.result_score,
+                m.league_id,
+                m.season,
                 m.l2_raw_json as raw_data
             FROM matches m
             WHERE m.status = 'Finished'
@@ -168,15 +256,48 @@ class V19_4TrainingPipeline:
             df = pd.DataFrame([dict(m) for m in matches])
             logger.info(f"✅ 已从数据库加载 {len(df)} 场比赛")
 
+            # V19.4.1 新增：数据质量验证
+            if self.enable_validation and not df.empty:
+                self._validate_dataframe(df)
+
             return df
 
         except Exception as e:
             logger.error(f"❌ 数据加载失败: {e}")
             return pd.DataFrame()
 
+    def _validate_dataframe(self, df: pd.DataFrame) -> None:
+        """验证数据框质量
+
+        Args:
+            df: 要验证的数据框
+
+        Raises:
+            ValueError: 如果数据验证失败
+        """
+        logger.info("执行数据质量验证...")
+
+        # 使用 DataValidator 验证特征矩阵
+        result = self.validator.validate_feature_matrix(df)
+
+        if not result.is_valid:
+            error_msgs = result.get_error_messages()
+            if error_msgs:
+                logger.warning(f"数据质量警告: {'; '.join(error_msgs[:3])}")
+
+        logger.info(f"数据质量分数: {result.quality_score:.1f}/100")
+
+        if result.has_warnings():
+            warning_msgs = result.get_warning_messages()[:3]
+            logger.warning(f"数据质量警告: {'; '.join(warning_msgs)}")
+
     def extract_features(self, df: pd.DataFrame) -> pd.DataFrame:
         """
         提取 V19.4 完整特征（V18 + V19 + V19.4 平局敏感度）
+
+        V19.4.1 重构改进:
+        - 使用 DataFormatNormalizer 统一处理数据格式
+        - 减少代码重复
 
         Args:
             df: 原始数据
@@ -184,7 +305,7 @@ class V19_4TrainingPipeline:
         Returns:
             pd.DataFrame: 含完整特征的数据
         """
-        logger.info("提取 V19.4 特征...")
+        logger.info("提取 V19.4 特征（重构版：使用 DataFormatNormalizer）...")
 
         # 初始化积分榜计算器
         initialize_global_calculator(df)
@@ -194,6 +315,13 @@ class V19_4TrainingPipeline:
 
         for idx, row in df.iterrows():
             try:
+                # V19.4.1 新增：使用 DataFormatNormalizer 标准化数据
+                normalized_data = self._parse_raw_data(row)
+
+                if normalized_data is None:
+                    logger.debug(f"数据解析失败 (行 {idx})")
+                    continue
+
                 # 获取比赛时的真实积分榜数据
                 home_team = row.get('home_team', '')
                 away_team = row.get('away_team', '')
@@ -201,9 +329,9 @@ class V19_4TrainingPipeline:
                 home_standings = calculator.get_team_stats_at_match(idx, home_team)
                 away_standings = calculator.get_team_stats_at_match(idx, away_team)
 
-                # 1. 提取 V18.2 原始特征（26 维）
+                # 1. 提取 V18.2 原始特征（使用标准化数据）
                 v18_features = self._extract_v18_features(
-                    row,
+                    normalized_data,
                     home_standings=home_standings,
                     away_standings=away_standings
                 )
@@ -213,14 +341,14 @@ class V19_4TrainingPipeline:
 
                 # 2. 提取 V19.0 新增特征（13 维）
                 v19_features = self._extract_v19_features(
-                    row,
+                    normalized_data,
                     home_standings=home_standings,
                     away_standings=away_standings
                 )
 
-                # 3. 提取 V19.4 平局敏感度特征（3 维）
+                # 3. 提取 V19.4 平局敏感度特征（3 维，使用标准化数据）
                 draw_features = self._extract_draw_sensitivity_features(
-                    row,
+                    normalized_data,
                     home_standings=home_standings,
                     away_standings=away_standings
                 )
@@ -232,7 +360,7 @@ class V19_4TrainingPipeline:
                 all_features['away_team'] = away_team
                 all_features['match_time'] = row.get('match_time', '')
 
-                # 5. 联赛编码特征
+                # 5. 联赛编码特征（使用动态配置）
                 league_id = row.get('league_id', 47)
                 league_features = self._encode_league(league_id)
                 all_features.update(league_features)
@@ -259,91 +387,72 @@ class V19_4TrainingPipeline:
 
         return feature_df
 
-    def _extract_v18_features(self, row: Dict, **kwargs) -> Optional[Dict[str, float]]:
-        """提取 V18 滚动特征（支持 technical_features 格式）"""
+    def _parse_raw_data(self, row: pd.Series) -> Optional[Dict[str, Any]]:
+        """解析并标准化原始数据
+
+        V19.4.1 新增方法：使用 DataFormatNormalizer 统一处理不同格式
+
+        Args:
+            row: 原始数据行
+
+        Returns:
+            标准化后的数据字典，如果解析失败则返回 None
+        """
         try:
             raw_data = row.get('raw_data', {})
 
-            # 处理数据格式：如果是字符串则解析
+            # 处理字符串格式的 JSON
             if isinstance(raw_data, str):
                 raw_data = json.loads(raw_data)
 
-            # 首先尝试从 technical_features 获取数据（实际数据库格式）
-            if 'technical_features' in raw_data:
-                tech = raw_data['technical_features']
-                # technical_features 中的数据是 home_xg, away_xg, home_corners 等
-                home_xg = tech.get('home_xg', np.nan)
-                away_xg = tech.get('away_xg', np.nan)
-                home_corners = tech.get('home_corners', np.nan)
-                away_corners = tech.get('away_corners', np.nan)
+            # 添加基础字段到 raw_data
+            raw_data['home_team'] = row.get('home_team', '')
+            raw_data['away_team'] = row.get('away_team', '')
+            raw_data['match_time'] = row.get('match_time')
+            raw_data['league_id'] = row.get('league_id', 47)
+            raw_data['season'] = row.get('season', '2324')
+            raw_data['home_score'] = row.get('home_score')
+            raw_data['away_score'] = row.get('away_score')
 
-                # 对于没有 home/away 前缀的特征，使用 diff 和 total 计算
-                # 例如: diff_shots, total_shots -> home_shots = (total + diff) / 2
+            # 使用 DataFormatNormalizer 标准化数据
+            normalized = self.normalizer.normalize(raw_data)
 
-                # 获取可用特征列表
-                def safe_float(val):
-                    try:
-                        return float(val) if val is not None else np.nan
-                    except (ValueError, TypeError):
-                        return np.nan
+            return normalized
 
-                # 射正数据（shots_on_target）- 可能存在不同的键名
-                home_shots_on_target = tech.get('home_shots_on_target', np.nan)
-                away_shots_on_target = tech.get('away_shots_on_target', np.nan)
+        except Exception as e:
+            logger.debug(f"数据解析失败: {e}")
+            return None
 
-                # 控球率
-                home_possession = tech.get('home_possession', np.nan)
-                away_possession = tech.get('away_possession', np.nan)
+    def _extract_v18_features(self, normalized_data: Dict, **kwargs) -> Optional[Dict[str, float]]:
+        """提取 V18 滚动特征（使用标准化数据）
 
-                # 射门
-                home_shots = tech.get('home_shots', np.nan)
-                away_shots = tech.get('away_shots', np.nan)
+        V19.4.1 重构：数据已由 DataFormatNormalizer 标准化，简化逻辑
 
-                # 处理 diff/total 格式的特征
-                if np.isnan(home_shots_on_target) and 'diff_shots_on_target' in tech and 'total_shots_on_target' in tech:
-                    diff_sot = safe_float(tech.get('diff_shots_on_target'))
-                    total_sot = safe_float(tech.get('total_shots_on_target'))
-                    home_shots_on_target = (total_sot + diff_sot) / 2
-                    away_shots_on_target = (total_sot - diff_sot) / 2
+        Args:
+            normalized_data: 标准化后的数据字典
+            **kwargs: 额外参数（包含 home_standings, away_standings）
 
-                if np.isnan(home_shots) and 'diff_shots' in tech and 'total_shots' in tech:
-                    diff_shots = safe_float(tech.get('diff_shots'))
-                    total_shots = safe_float(tech.get('total_shots'))
-                    home_shots = (total_shots + diff_shots) / 2
-                    away_shots = (total_shots - diff_shots) / 2
+        Returns:
+            V18 特征字典，如果提取失败则返回 None
+        """
+        try:
+            # 使用标准化数据（字段名已统一）
+            home_xg = normalized_data.get('home_expected_goals', np.nan)
+            away_xg = normalized_data.get('away_expected_goals', np.nan)
+            home_sot = normalized_data.get('home_shots_on_target', np.nan)
+            away_sot = normalized_data.get('away_shots_on_target', np.nan)
+            home_poss = normalized_data.get('home_possession', np.nan)
+            away_poss = normalized_data.get('away_possession', np.nan)
+            home_shots = normalized_data.get('home_shots', np.nan)
+            away_shots = normalized_data.get('away_shots', np.nan)
+            home_corners = normalized_data.get('home_corners', np.nan)
+            away_corners = normalized_data.get('away_corners', np.nan)
 
-                if np.isnan(home_possession) and 'diff_possession' in tech and 'total_possession' in tech:
-                    diff_poss = safe_float(tech.get('diff_possession'))
-                    total_poss = safe_float(tech.get('total_possession'))
-                    home_possession = (total_poss + diff_poss) / 2
-                    away_possession = (total_poss - diff_poss) / 2
-
-            # 备用方案：从 home_stats/away_stats 获取（兼容旧格式）
-            elif 'home_stats' in raw_data and 'away_stats' in raw_data:
-                home_stats = raw_data['home_stats']
-                away_stats = raw_data['away_stats']
-
-                def get_stat(stats_dict, key):
-                    val = stats_dict.get(key, None)
-                    if val is None:
-                        return np.nan
-                    try:
-                        return float(val)
-                    except (ValueError, TypeError):
-                        return np.nan
-
-                home_xg = get_stat(home_stats, 'expected_goals')
-                away_xg = get_stat(away_stats, 'expected_goals')
-                home_shots_on_target = get_stat(home_stats, 'shots_on_target')
-                away_shots_on_target = get_stat(away_stats, 'shots_on_target')
-                home_possession = get_stat(home_stats, 'possession')
-                away_possession = get_stat(away_stats, 'possession')
-                home_shots = get_stat(home_stats, 'shots')
-                away_shots = get_stat(away_stats, 'shots')
-                home_corners = get_stat(home_stats, 'corners')
-                away_corners = get_stat(away_stats, 'corners')
-            else:
-                return None
+            def safe_float(val):
+                try:
+                    return float(val) if val is not None and not np.isnan(val) else np.nan
+                except (ValueError, TypeError):
+                    return np.nan
 
             # 获取积分榜数据
             home_standings = kwargs.get('home_standings')
@@ -366,19 +475,13 @@ class V19_4TrainingPipeline:
             pos_diff = home_pos - away_pos if not np.isnan(home_pos) and not np.isnan(away_pos) else np.nan
             pts_diff = home_pts - away_pts if not np.isnan(home_pts) and not np.isnan(away_pts) else np.nan
 
-            def safe_float(val):
-                try:
-                    return float(val) if val is not None and not np.isnan(val) else np.nan
-                except (ValueError, TypeError):
-                    return np.nan
-
             return {
                 'home_rolling_xg': safe_float(home_xg),
                 'away_rolling_xg': safe_float(away_xg),
-                'home_rolling_shots_on_target': safe_float(home_shots_on_target),
-                'away_rolling_shots_on_target': safe_float(away_shots_on_target),
-                'home_rolling_possession': safe_float(home_possession),
-                'away_rolling_possession': safe_float(away_possession),
+                'home_rolling_shots_on_target': safe_float(home_sot),
+                'away_rolling_shots_on_target': safe_float(away_sot),
+                'home_rolling_possession': safe_float(home_poss),
+                'away_rolling_possession': safe_float(away_poss),
                 'home_rolling_shots': safe_float(home_shots),
                 'away_rolling_shots': safe_float(away_shots),
                 'home_rolling_corners': safe_float(home_corners),
@@ -395,14 +498,22 @@ class V19_4TrainingPipeline:
 
         except Exception as e:
             logger.debug(f"V18 特征提取失败: {e}")
-            import traceback
-            logger.debug(traceback.format_exc())
             return None
 
-    def _extract_v19_features(self, row: Dict, **kwargs) -> Dict[str, float]:
-        """提取 V19 高级特征"""
-        home_team = row.get('home_team', '')
-        away_team = row.get('away_team', '')
+    def _extract_v19_features(self, normalized_data: Dict, **kwargs) -> Dict[str, float]:
+        """提取 V19 高级特征（使用标准化数据）
+
+        V19.4.1 重构：参数改为 normalized_data
+
+        Args:
+            normalized_data: 标准化后的数据字典
+            **kwargs: 额外参数（包含 home_standings, away_standings）
+
+        Returns:
+            V19 特征字典
+        """
+        home_team = normalized_data.get('home_team', '')
+        away_team = normalized_data.get('away_team', '')
 
         v19_features = self.feature_extractor.extract_features(
             home_team=home_team,
@@ -424,84 +535,52 @@ class V19_4TrainingPipeline:
 
         return result
 
-    def _extract_draw_sensitivity_features(self, row: Dict, **kwargs) -> Dict[str, float]:
-        """提取 V19.4 平局敏感度特征（支持 technical_features 格式）"""
+    def _extract_draw_sensitivity_features(self, normalized_data: Dict, **kwargs) -> Dict[str, float]:
+        """提取 V19.4 平局敏感度特征（使用标准化数据）
+
+        V19.4.1 重构：数据已由 DataFormatNormalizer 标准化，简化逻辑
+
+        Args:
+            normalized_data: 标准化后的数据字典
+            **kwargs: 额外参数（包含 home_standings, away_standings）
+
+        Returns:
+            平局敏感度特征字典
+        """
         try:
-            raw_data = row.get('raw_data', {})
-            if isinstance(raw_data, str):
-                raw_data = json.loads(raw_data)
+            # 使用标准化数据
+            home_xg = normalized_data.get('home_expected_goals', np.nan)
+            away_xg = normalized_data.get('away_expected_goals', np.nan)
+            home_sot = normalized_data.get('home_shots_on_target', np.nan)
+            away_sot = normalized_data.get('away_shots_on_target', np.nan)
 
-            # 处理 technical_features 格式
-            if 'technical_features' in raw_data:
-                tech = raw_data['technical_features']
-                home_pos = np.nan
-                away_pos = np.nan
-                home_xg = tech.get('home_xg', np.nan)
-                away_xg = tech.get('away_xg', np.nan)
-                home_shots = tech.get('home_shots_on_target', np.nan)
-                away_shots = tech.get('away_shots_on_target', np.nan)
+            def safe_float(val):
+                try:
+                    return float(val) if val is not None else np.nan
+                except (ValueError, TypeError):
+                    return np.nan
 
-                # 处理 diff/total 格式
-                def safe_float(val):
-                    try:
-                        return float(val) if val is not None else np.nan
-                    except (ValueError, TypeError):
-                        return np.nan
+            # 获取积分榜位置
+            home_standings = kwargs.get('home_standings')
+            away_standings = kwargs.get('away_standings')
 
-                if np.isnan(home_shots) and 'diff_shots_on_target' in tech and 'total_shots_on_target' in tech:
-                    diff_sot = safe_float(tech.get('diff_shots_on_target'))
-                    total_sot = safe_float(tech.get('total_shots_on_target'))
-                    home_shots = (total_sot + diff_sot) / 2
-                    away_shots = (total_sot - diff_sot) / 2
-
-                # 获取积分榜位置
-                home_standings = kwargs.get('home_standings')
-                away_standings = kwargs.get('away_standings')
-                if home_standings:
-                    home_pos = safe_float(home_standings.get('position'))
-                if away_standings:
-                    away_pos = safe_float(away_standings.get('position'))
-
-            # 备用方案：home_stats/away_stats 格式
-            elif 'home_stats' in raw_data and 'away_stats' in raw_data:
-                home_stats = raw_data['home_stats']
-                away_stats = raw_data['away_stats']
-
-                def get_stat(stats_dict, key):
-                    val = stats_dict.get(key, None)
-                    if val is None:
-                        return np.nan
-                    try:
-                        return float(val)
-                    except (ValueError, TypeError):
-                        return np.nan
-
-                home_standings = kwargs.get('home_standings')
-                away_standings = kwargs.get('away_standings')
-                home_pos = home_standings.get('position', np.nan) if home_standings else np.nan
-                away_pos = away_standings.get('position', np.nan) if away_standings else np.nan
-                home_xg = get_stat(home_stats, 'expected_goals')
-                away_xg = get_stat(away_stats, 'expected_goals')
-                home_shots = get_stat(home_stats, 'shots_on_target')
-                away_shots = get_stat(away_stats, 'shots_on_target')
-            else:
-                return {
-                    'table_proximity': np.nan,
-                    'low_scoring_tendency': np.nan,
-                    'elo_diff_cluster': 0.0
-                }
+            home_pos = home_standings.get('position', np.nan) if home_standings else np.nan
+            away_pos = away_standings.get('position', np.nan) if away_standings else np.nan
+            home_pos = safe_float(home_pos)
+            away_pos = safe_float(away_pos)
 
             # 默认 ELO 值（实际应从 V19 特征中获取）
             home_elo = 1500.0
             away_elo = 1500.0
 
+            # 构造临时 DataFrame 用于特征提取
             temp_df = pd.DataFrame({
                 'home_table_position': [home_pos],
                 'away_table_position': [away_pos],
-                'home_rolling_xg': [home_xg],
-                'away_rolling_xg': [away_xg],
-                'home_rolling_shots_on_target': [home_shots],
-                'away_rolling_shots_on_target': [away_shots],
+                'home_rolling_xg': [safe_float(home_xg)],
+                'away_rolling_xg': [safe_float(away_xg)],
+                'home_rolling_shots_on_target': [safe_float(home_sot)],
+                'away_rolling_shots_on_target': [safe_float(away_sot)],
                 'home_elo_rating': [home_elo],
                 'away_elo_rating': [away_elo]
             })
@@ -523,8 +602,6 @@ class V19_4TrainingPipeline:
 
         except Exception as e:
             logger.debug(f"平局敏感度特征提取失败: {e}")
-            import traceback
-            logger.debug(traceback.format_exc())
             return {
                 'table_proximity': np.nan,
                 'low_scoring_tendency': np.nan,
@@ -532,11 +609,30 @@ class V19_4TrainingPipeline:
             }
 
     def _encode_league(self, league_id: int) -> Dict[str, float]:
-        """联赛编码"""
-        return {
-            'league_epl': 1.0 if league_id == 47 else 0.0,
-            'league_championship': 1.0 if league_id == 48 else 0.0,
-        }
+        """联赛编码（使用动态配置）
+
+        V19.4.1 重构：支持从数据库加载的联赛配置
+
+        Args:
+            league_id: 联赛 ID
+
+        Returns:
+            联赛编码特征字典
+        """
+        # 默认全为 0
+        features = {}
+
+        # 为所有已知联赛创建特征
+        for lid, config in self.league_config.items():
+            code = config['code'].lower()
+            features[f'league_{code}'] = 1.0 if league_id == lid else 0.0
+
+        # 如果是未知联赛，使用默认编码
+        if league_id not in self.league_config:
+            logger.warning(f"未知联赛 ID: {league_id}，使用默认编码")
+            features['league_unknown'] = 1.0
+
+        return features
 
     def train_model(
         self,

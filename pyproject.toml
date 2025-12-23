@@ -36,13 +36,15 @@ dependencies = [
     "scikit-learn>=1.5.0",
     "numpy>=1.24.0",
     "pandas>=2.0.0",
+    "joblib>=1.3.0",
 
     # Data processing
     "psycopg2-binary>=2.9.0",
     "asyncpg>=0.29.0",  # Async PostgreSQL driver for FastAPI
+    "sqlalchemy>=2.0.0",  # ORM for database models
+    "alembic>=1.12.0",  # Database migration tool
     "redis>=4.5.0",
     "aiohttp>=3.8.0",
-    "asyncio-mqtt>=0.13.0",
     "brotli>=1.0.0",  # Added for FotMob API response decompression
 
     # Configuration & validation
@@ -56,6 +58,7 @@ dependencies = [
     # Web framework
     "fastapi>=0.104.0",
     "uvicorn[standard]>=0.24.0",
+    "python-multipart>=0.0.16",
 
     # Monitoring & logging
     "prometheus-client>=0.17.0",
@@ -65,7 +68,13 @@ dependencies = [
     "click>=8.1.0",
     "rich>=13.0.0",
     "typer>=0.9.0",
-    "httpx>=0.25.0"
+    "httpx>=0.25.0",
+    "requests>=2.31.0",
+
+    # V19.4 新增 - 实时巡检和运维调度
+    "apscheduler>=3.10.0",
+    "beautifulsoup4>=4.12.0",
+    "lxml>=4.9.0"
 ]
 
 [project.optional-dependencies]

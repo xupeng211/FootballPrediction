@@ -42,6 +42,11 @@ import os
 # 添加项目根目录到 Python 路径
 sys.path.insert(0, str(Path(__file__).parent))
 
+# V19.4.1 修复：强制加载 .env 文件以确保环境变量正确
+from dotenv import load_dotenv
+env_path = Path(__file__).parent / ".env"
+load_dotenv(env_path, override=True)
+
 from src.config_unified import get_settings
 from src.core.pipeline_v19_4 import V19_4TrainingPipeline
 from src.ops.market_live_monitor import MarketLiveMonitor
@@ -76,7 +81,7 @@ def validate_environment():
     settings = get_settings()
 
     # 检查必需的环境变量
-    if not settings.database.db_password:
+    if not settings.database.password:
         logger.warning("⚠️  DB_PASSWORD 未设置，使用默认值（仅开发环境）")
 
     if settings.environment == "production":
@@ -375,7 +380,7 @@ def health_check():
             port=settings.database.port,
             database=settings.database.name,
             user=settings.database.user,
-            password=settings.database.db_password.get_secret_value()
+            password=settings.database.password.get_secret_value()
         )
         conn.close()
         checks.append(("数据库", "✅"))

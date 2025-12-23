@@ -65,13 +65,32 @@ class DatabaseConfig:
     pool_timeout: int = 30
     pool_recycle: int = 3600
 
+    # 新增：异步连接属性（用于 SQLAlchemy async）
+    async_url: Optional[str] = None
+    async_pool_size: int = 10
+    async_max_overflow: int = 20
+    echo: bool = False
+    echo_pool: bool = False
+
     def get_connection_string(self) -> str:
-        """获取连接字符串"""
+        """获取同步连接字符串"""
         password = self.password.get_secret_value()
         if self.ssl_mode:
             return f"postgresql://{self.user}:{password}@{self.host}:{self.port}/{self.name}?sslmode=require"
         else:
             return f"postgresql://{self.user}:{password}@{self.host}:{self.port}/{self.name}"
+
+    def get_async_url(self) -> str:
+        """获取异步连接字符串（用于 SQLAlchemy async）"""
+        if self.async_url:
+            return self.async_url
+        password = self.password.get_secret_value()
+        prefix = "postgresql+asyncpg://"
+        if self.ssl_mode:
+            prefix += f"{self.user}:{password}@{self.host}:{self.port}/{self.name}?ssl=require"
+        else:
+            prefix += f"{self.user}:{password}@{self.host}:{self.port}/{self.name}"
+        return prefix
 
 
 @dataclass
@@ -268,6 +287,8 @@ class UnifiedSettings(BaseSettings):
         env_file = ".env"
         env_file_encoding = "utf-8"
         case_sensitive = False
+        # 允许额外字段（用于向后兼容）
+        extra = "ignore"
 
     # === 验证器 ===
     @validator("port")
@@ -358,6 +379,15 @@ class UnifiedSettings(BaseSettings):
             password=self.db_password,
             ssl_mode=self.db_ssl_mode,
             pool_size=self.db_pool_size,
+            max_overflow=self.db_pool_size,  # 使用 pool_size 作为 max_overflow 默认值
+            pool_timeout=30,
+            pool_recycle=3600,
+            # 异步连接属性
+            async_url=None,  # 可以从环境变量 DB_ASYNC_URL 读取
+            async_pool_size=self.db_pool_size,
+            async_max_overflow=self.db_pool_size,
+            echo=False,
+            echo_pool=False,
         )
 
     @property
@@ -435,7 +465,11 @@ class UnifiedSettings(BaseSettings):
         }
 
     def validate_integrity(self) -> List[str]:
-        """验证配置完整性"""
+        """验证配置完整性（已弃用，请使用 validate_environment）"""
+        return self._validate_config_basic()
+
+    def _validate_config_basic(self) -> List[str]:
+        """基础配置验证"""
         errors = []
 
         # 检查必需的配置
@@ -459,6 +493,66 @@ class UnifiedSettings(BaseSettings):
                 errors.append("生产环境allowed_hosts不应包含localhost")
 
         return errors
+
+    def validate_environment(self) -> Dict[str, Any]:
+        """验证环境配置完整性（新增方法）
+
+        Returns:
+            包含验证结果的字典：
+            - valid: bool - 是否所有检查都通过
+            - issues: List[str] - 严重问题列表
+            - warnings: List[str] - 警告列表
+            - environment: str - 当前环境
+            - score: float - 健康分数 (0-100)
+        """
+        issues = []
+        warnings = []
+
+        # === 必需配置检查 ===
+        if not self.db_password.get_secret_value():
+            issues.append("DB_PASSWORD 未设置（开发环境可使用默认值）")
+
+        if not self.secret_key.get_secret_value():
+            issues.append("SECRET_KEY 未设置")
+
+        # === 生产环境特殊检查 ===
+        if self.is_production:
+            if len(self.secret_key.get_secret_value()) < 32:
+                issues.append("生产环境 SECRET_KEY 必须至少 32 字符")
+
+            if self.db_password.get_secret_value() in ["football_pass", "password", "123456"]:
+                issues.append("生产环境使用了不安全的默认数据库密码")
+
+            if self.debug:
+                issues.append("生产环境不应启用 debug 模式")
+
+            if "localhost" in self.allowed_hosts or "127.0.0.1" in self.allowed_hosts:
+                warnings.append("生产环境 allowed_hosts 包含 localhost，请确认是否正确")
+
+        # === 可选配置警告 ===
+        if not self.redis_host or self.redis_host == "localhost":
+            warnings.append("REDIS_HOST 未配置或为 localhost，缓存功能可能不可用")
+
+        if not self.enable_metrics:
+            warnings.append("ENABLE_METRICS 为 False，监控指标收集已禁用")
+
+        # === 数据库连接检查 ===
+        if self.db_host == "localhost" and self.environment in ["production", "staging"]:
+            warnings.append(f"{self.environment.value} 环境使用 localhost 作为数据库主机，请确认")
+
+        # === 计算健康分数 ===
+        score = 100.0
+        score -= len(issues) * 25  # 每个严重问题扣 25 分
+        score -= len(warnings) * 5  # 每个警告扣 5 分
+        score = max(0, score)
+
+        return {
+            "valid": len(issues) == 0,
+            "issues": issues,
+            "warnings": warnings,
+            "environment": self.environment.value,
+            "score": score,
+        }
 
 
 # === 全局设置实例 ===

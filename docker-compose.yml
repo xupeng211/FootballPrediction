@@ -29,6 +29,12 @@ services:
     volumes:
       - ./logs:/app/logs
       - ./data:/app/data
+      # V19.4 新增挂载 - 持久化 ops 运维模块
+      - ./src/ops:/app/src/ops
+      # V19.4 新增挂载 - 持久化生产模型文件
+      - ./src/production_models:/app/src/production_models
+      # V19.4 新增挂载 - 统一生产入口
+      - ./main_production.py:/app/main_production.py
     command: >
       uvicorn src.main:app
       --host 0.0.0.0
