@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
 """
-工业级特征锻造器 V12.0
+工业级特征锻造器 V12.1
 废弃基于文件大小的伪特征，从playerStats提取真正的185维技术特征
+
+V12.1 更新:
+- C-01: 统一 NaN 填充机制
+- C-03: 使用 SafeExpressionEvaluator 替换 eval()
 """
 
 import pandas as pd
@@ -248,21 +252,60 @@ class IndustrialFeatureForge:
                 feature_type = feature_def['type']
 
                 if feature_type == 'numeric':
-                    # 直接从player_stats获取
-                    value = tech_metrics.get(feature_name, 0)
-                    features[feature_name] = float(value)
+                    # C-01 修复: 统一使用 NaN 填充缺失值
+                    # 模型需要能区分"真0"和"数据缺失"
+                    value = tech_metrics.get(feature_name, None)
+                    if value is None:
+                        features[feature_name] = np.nan
+                    else:
+                        try:
+                            features[feature_name] = float(value)
+                        except (ValueError, TypeError):
+                            features[feature_name] = np.nan
 
                 elif feature_type == 'derived':
-                    # 计算衍生指标
-                    home_val = tech_metrics.get(f"home_{feature_name.split('_')[1]}", 0)
-                    away_val = tech_metrics.get(f"away_{feature_name.split('_')[1]}", 0)
+                    # C-01 修复: derived 类型也需要 NaN 安全处理
+                    metric_name = feature_name.split('_')[1]
+                    home_val = tech_metrics.get(f"home_{metric_name}", None)
+                    away_val = tech_metrics.get(f"away_{metric_name}", None)
+
+                    # 处理 None/NaN 值
+                    if home_val is None:
+                        home_val = np.nan
+                    else:
+                        try:
+                            home_val = float(home_val)
+                        except (ValueError, TypeError):
+                            home_val = np.nan
+
+                    if away_val is None:
+                        away_val = np.nan
+                    else:
+                        try:
+                            away_val = float(away_val)
+                        except (ValueError, TypeError):
+                            away_val = np.nan
 
                     if feature_name.startswith('total_'):
-                        features[feature_name] = float(home_val + away_val)
+                        # 如果任一值为 NaN，总计为 NaN
+                        if np.isnan(home_val) or np.isnan(away_val):
+                            features[feature_name] = np.nan
+                        else:
+                            features[feature_name] = float(home_val + away_val)
                     elif feature_name.startswith('diff_'):
-                        features[feature_name] = float(home_val - away_val)
+                        # 如果任一值为 NaN，差值为 NaN
+                        if np.isnan(home_val) or np.isnan(away_val):
+                            features[feature_name] = np.nan
+                        else:
+                            features[feature_name] = float(home_val - away_val)
                     elif feature_name.startswith('ratio_'):
-                        features[feature_name] = float(home_val / (away_val + 1e-6))
+                        # C-01 修复: ratio 计算必须处理 NaN
+                        if np.isnan(home_val) or np.isnan(away_val):
+                            features[feature_name] = np.nan
+                        else:
+                            # 使用小的 epsilon 避免除零，但仅当分母为 0 时
+                            denominator = away_val if abs(away_val) > 1e-10 else 1e-10
+                            features[feature_name] = float(home_val / denominator)
 
                 elif feature_type == 'derived_formula':
                     # 复杂公式计算
@@ -271,8 +314,15 @@ class IndustrialFeatureForge:
                     )
 
                 else:
-                    # 其他类型特征
-                    features[feature_name] = tech_metrics.get(feature_name, 0)
+                    # 其他类型特征 - C-01 修复: 使用 NaN 填充
+                    value = tech_metrics.get(feature_name, None)
+                    if value is None:
+                        features[feature_name] = np.nan
+                    else:
+                        try:
+                            features[feature_name] = float(value)
+                        except (ValueError, TypeError):
+                            features[feature_name] = np.nan
 
         except Exception as e:
             logger.error(f"❌ 单场比赛特征锻造失败: {e}")
@@ -299,33 +349,42 @@ class IndustrialFeatureForge:
 
     def _calculate_derived_feature(self, formula: str, tech_metrics: Dict) -> float:
         """
-        计算衍生特征
+        计算衍生特征 (C-03 修复版)
+
+        使用 SafeExpressionEvaluator 替代不安全的 eval()
 
         Args:
             formula: 计算公式
             tech_metrics: 技术指标
 
         Returns:
-            计算结果
+            计算结果 (NaN 表示缺失值)
         """
         try:
-            # 替换公式中的变量
-            expression = formula
+            # C-03: 使用安全求值器
+            from src.utils.safe_eval import safe_eval
 
-            # 简单的变量替换（可以扩展为更复杂的表达式解析）
-            for metric_name, metric_value in tech_metrics.items():
-                if metric_name in expression:
-                    expression = expression.replace(metric_name, str(metric_value))
+            # 确保所有指标值都是数字类型
+            safe_metrics = {}
+            for key, value in tech_metrics.items():
+                if value is None:
+                    safe_metrics[key] = np.nan
+                elif isinstance(value, (int, float)):
+                    safe_metrics[key] = float(value)
+                else:
+                    try:
+                        safe_metrics[key] = float(value)
+                    except (ValueError, TypeError):
+                        safe_metrics[key] = np.nan
 
-            # 安全评估数学表达式
-            # 这里使用简单的eval，生产环境应该使用更安全的表达式解析器
-            result = eval(expression, {"__builtins__": {}}, {})
+            # 使用安全求值器计算
+            result = safe_eval(formula, safe_metrics)
 
-            return float(result)
+            return float(result) if not np.isnan(result) else np.nan
 
         except Exception as e:
             logger.error(f"❌ 衍生特征计算失败: {formula} -> {e}")
-            return 0.0
+            return np.nan  # C-01: 失败时返回 NaN 而非 0
 
     def get_database_connection(self):
         """获取数据库连接"""

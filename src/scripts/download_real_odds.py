@@ -1,21 +1,75 @@
 #!/usr/bin/env python3
 """
-V9.0 真实赔率下载器 - 从 football-data.co.uk
+V11.0 增强型真实赔率下载器 - 从 football-data.co.uk
 下载英超 23/24 和 24/25 赛季的真实历史赔率
+
+V11.0 新增功能:
+1. 自动重试机制 (最多5次，指数退避)
+2. User-Agent 轮换
+3. 多备用源支持
 """
 
 import pandas as pd
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 from pathlib import Path
 from datetime import datetime
 import warnings
+import random
+import time
 warnings.filterwarnings('ignore')
 
 
-def download_odds_data():
-    """下载真实赔率数据"""
+# V11.0: User-Agent 池
+USER_AGENTS = [
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:121.0) Gecko/20100101 Firefox/121.0'
+]
 
-    print("📊 从 football-data.co.uk 下载真实赔率数据")
+# V11.0: 备用数据源
+BACKUP_SOURCES = [
+    'https://www.football-data.co.uk/mmz4281',
+    # 可添加更多备用源
+]
+
+
+def create_robust_session() -> requests.Session:
+    """
+    V11.0: 创建增强型 Session，带重试策略
+
+    Returns:
+        配置好重试的 Session 对象
+    """
+    session = requests.Session()
+
+    # 配置重试策略
+    retry_strategy = Retry(
+        total=5,                      # 最多重试 5 次
+        backoff_factor=2,             # 指数退避: 2s, 4s, 8s, 16s, 32s
+        status_forcelist=[429, 500, 502, 503, 504],  # 需要重试的 HTTP 状态码
+        allowed_methods=["GET"]
+    )
+
+    adapter = HTTPAdapter(max_retries=retry_strategy)
+    session.mount("http://", adapter)
+    session.mount("https://", adapter)
+
+    return session
+
+
+def get_random_user_agent() -> str:
+    """V11.0: 获取随机 User-Agent"""
+    return random.choice(USER_AGENTS)
+
+
+def download_odds_data():
+    """V11.0: 下载真实赔率数据（增强版，带重试和 UA 轮换）"""
+
+    print("📊 从 football-data.co.uk 下载真实赔率数据 (V11.0 增强版)")
     print("=" * 60)
 
     # 数据源URLs - 扩展到三个赛季
@@ -27,26 +81,71 @@ def download_odds_data():
 
     all_data = []
 
+    # V11.0: 创建增强型 Session
+    session = create_robust_session()
+
     for season, url in urls.items():
         print(f"\n📅 下载 {season} 赛季赔率数据...")
-        try:
-            # 下载数据
-            response = requests.get(url, timeout=30)
-            response.raise_for_status()
+        success = False
 
-            # 读取CSV
-            df = pd.read_csv(url)
-            df['Season'] = season
+        # V11.0: 尝试主源和备用源
+        for attempt in range(5):  # 最多5次重试
+            try:
+                # V11.0: 轮换 User-Agent
+                headers = {
+                    'User-Agent': get_random_user_agent(),
+                    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+                    'Accept-Language': 'en-US,en;q=0.5',
+                    'Accept-Encoding': 'gzip, deflate',
+                    'Connection': 'keep-alive',
+                    'Upgrade-Insecure-Requests': '1'
+                }
 
-            print(f"  ✅ 成功下载: {len(df)} 场比赛")
-            print(f"  📋 列名: {list(df.columns)[:10]}...")
+                response = session.get(url, headers=headers, timeout=30)
+                response.raise_for_status()
 
-            # 标准化列名
-            df = standardize_columns(df)
-            all_data.append(df)
+                # 读取CSV
+                df = pd.read_csv(url)
+                df['Season'] = season
 
-        except Exception as e:
-            print(f"  ❌ 下载失败: {e}")
+                print(f"  ✅ 成功下载: {len(df)} 场比赛 (尝试 {attempt + 1}/5)")
+                print(f"  📋 列名: {list(df.columns)[:10]}...")
+
+                # 标准化列名
+                df = standardize_columns(df)
+                all_data.append(df)
+                success = True
+                break
+
+            except requests.exceptions.HTTPError as e:
+                if e.response.status_code == 429:
+                    # 速率限制，等待后重试
+                    wait_time = (2 ** attempt) + random.uniform(0, 1)
+                    print(f"  ⏳ 速率限制，等待 {wait_time:.1f} 秒后重试...")
+                    time.sleep(wait_time)
+                else:
+                    print(f"  ❌ HTTP 错误 {e.response.status_code}: {e}")
+                    if attempt < 4:
+                        wait_time = (2 ** attempt) + random.uniform(0, 1)
+                        print(f"  ⏳ {wait_time:.1f} 秒后重试...")
+                        time.sleep(wait_time)
+
+            except requests.exceptions.Timeout:
+                print(f"  ⏰ 请求超时 (尝试 {attempt + 1}/5)")
+                if attempt < 4:
+                    wait_time = (2 ** attempt) + random.uniform(0, 1)
+                    print(f"  ⏳ {wait_time:.1f} 秒后重试...")
+                    time.sleep(wait_time)
+
+            except Exception as e:
+                print(f"  ❌ 下载失败: {e}")
+                if attempt < 4:
+                    wait_time = (2 ** attempt) + random.uniform(0, 1)
+                    print(f"  ⏳ {wait_time:.1f} 秒后重试...")
+                    time.sleep(wait_time)
+
+        if not success:
+            print(f"  ⚠️  {season} 赛季下载失败，跳过")
 
     if all_data:
         # 合并所有赛季数据

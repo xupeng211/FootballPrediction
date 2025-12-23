@@ -249,13 +249,14 @@ class FatigueIndexFeature:
         ]
 
         if not recent_matches:
+            # H-01 修复: 冷启动返回 NaN，让模型知道"数据缺失"
             return {
-                'fatigue_index': 0.0,
+                'fatigue_index': np.nan,
                 'matches_played': 0,
-                'competition_fatigue': 0.0,
-                'travel_fatigue': 0.0,
-                'accumulation_fatigue': 0.0,
-                'rest_days': 999,  # 无近期比赛
+                'competition_fatigue': np.nan,
+                'travel_fatigue': np.nan,
+                'accumulation_fatigue': np.nan,
+                'rest_days': np.nan,  # 无近期比赛
             }
 
         # 按时间排序
