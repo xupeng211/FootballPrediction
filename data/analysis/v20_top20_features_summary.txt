@@ -1,0 +1,59 @@
+============================================================
+V20.3 特征重要性分析报告
+============================================================
+
+数据集规模:
+  总比赛数: 1442
+  训练集: 1153
+  测试集: 289
+
+模型性能:
+  测试集准确率: 0.917
+
+------------------------------------------------------------
+Top 20 通用特征重要性
+------------------------------------------------------------
+ 1. meta_home_team_rating                         | 15.57%
+ 2. meta_away_starting_11_avg_rating              | 12.73%
+ 3. meta_home_starting_11_avg_rating              | 11.34%
+ 4. meta_away_team_rating                         | 9.90%
+ 5. meta_home_DF_count                            | 1.51%
+ 6. meta_away_MF_count                            | 1.32%
+ 7. meta_home_MF_avg_rating                       | 1.28%
+ 8. meta_home_GK_avg_rating                       | 1.27%
+ 9. meta_away_GK_max_rating                       | 1.24%
+10. meta_home_GK_max_rating                       | 1.18%
+11. meta_away_bench_strength_avg_rating           | 1.17%
+12. meta_away_GK_avg_rating                       | 1.14%
+13. meta_stadium_capacity                         | 1.10%
+14. meta_home_DF_max_rating                       | 1.08%
+15. meta_home_FW_max_rating                       | 1.06%
+16. meta_away_GK_min_rating                       | 1.04%
+17. meta_attendance                               | 1.03%
+18. meta_home_bench_strength_avg_rating           | 1.03%
+19. meta_away_DF_avg_rating                       | 1.01%
+20. meta_away_subs_count                          | 1.00%
+
+------------------------------------------------------------
+Top 20 平局预测特征重要性
+------------------------------------------------------------
+ 1. meta_away_team_rating                         | 10.27%
+ 2. meta_home_team_rating                         | 8.66%
+ 3. meta_away_starting_11_avg_rating              | 7.70%
+ 4. meta_home_starting_11_avg_rating              | 7.32%
+ 5. meta_away_subs_count                          | 3.61%
+ 6. meta_home_GK_min_rating                       | 2.35%
+ 7. meta_home_GK_max_rating                       | 2.10%
+ 8. meta_home_GK_avg_rating                       | 1.95%
+ 9. meta_away_GK_avg_rating                       | 1.78%
+10. meta_away_market_value                        | 1.72%
+11. meta_away_bench_strength_avg_rating           | 1.71%
+12. meta_away_FW_max_rating                       | 1.69%
+13. meta_stadium_capacity                         | 1.61%
+14. meta_home_team_id                             | 1.59%
+15. meta_away_unavailable_count                   | 1.58%
+16. meta_home_FW_max_rating                       | 1.55%
+17. meta_away_DF_avg_rating                       | 1.54%
+18. meta_home_DF_count                            | 1.48%
+19. meta_home_bench_strength_avg_rating           | 1.44%
+20. meta_wind_speed                               | 1.42%

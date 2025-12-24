@@ -108,6 +108,7 @@ dmypy.json
 # Archives and backups
 archive/
 backup/
+data/backups/
 *.bak
 *backup*
 *_old.*

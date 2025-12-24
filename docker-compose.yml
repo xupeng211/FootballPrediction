@@ -35,6 +35,8 @@ services:
       - ./src/production_models:/app/src/production_models
       # V19.4 新增挂载 - 统一生产入口
       - ./main_production.py:/app/main_production.py
+      # 热修复挂载 - config_unified.py
+      - ./src/config_unified.py:/app/src/config_unified.py:ro
     command: >
       uvicorn src.main:app
       --host 0.0.0.0

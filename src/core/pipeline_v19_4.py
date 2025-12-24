@@ -25,9 +25,8 @@ V19.4.1 重构改进：
 
 import logging
 import sys
-import os
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Any
+from typing import Dict, Optional, Any
 from dataclasses import dataclass
 from datetime import datetime
 import numpy as np
@@ -44,17 +43,14 @@ from src.ml.features.draw_sensitivity_features import DrawSensitivityFeatureExtr
 from src.ml.features.standings_calculator import initialize_global_calculator, get_global_calculator
 
 # 新增：数据验证和标准化
-from src.data.validators.data_validator import DataValidator, ValidationResult
+from src.data.validators.data_validator import DataValidator
 from src.data.preprocessors.data_normalizer import DataFormatNormalizer
 
 # 重试装饰器
-from src.utils.retry import retry_db_connection
 
 import xgboost as xgb
-from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
-from sklearn.utils import class_weight
-from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
+from sklearn.metrics import classification_report, accuracy_score
 
 logging.basicConfig(
     level=logging.INFO,
@@ -802,7 +798,7 @@ def main():
         return
 
     # 3. 训练模型
-    metrics = pipeline.train_model(feature_df, train_size=600, test_size=160)
+    pipeline.train_model(feature_df, train_size=600, test_size=160)
 
     # 4. 保存模型
     pipeline.save_model()

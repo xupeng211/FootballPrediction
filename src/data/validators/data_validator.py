@@ -1,16 +1,35 @@
 """
-数据验证器 - 特征提取前的数据质量验证
+V20.0 数据验证器 - 金融量化级清洗准则
+========================================
 
-提供比赛数据和特征矩阵的验证功能，确保数据质量符合要求。
+核心升级：
+1. 特征熔断机制 - 自动剔除异常比赛
+2. 离群值检测 - xG vs Score 偏差检测
+3. 时间旅行防护 - 数据泄露检测
+
+作者: Feature Engineering Team
+日期: 2025-12-24
+版本: V20.0
 """
 
-from dataclasses import dataclass
-from typing import Dict, List, Any, Optional
+from dataclasses import dataclass, field
+from typing import Dict, List, Any, Optional, Set, Tuple
 from enum import Enum
 import pandas as pd
+import numpy as np
 import logging
+from datetime import datetime
+from collections import defaultdict
 
 logger = logging.getLogger(__name__)
+
+
+class MatchStatus(Enum):
+    """比赛状态分类"""
+    READY = "ready"              # 可以处理
+    OUTLIER = "outlier"          # 离群值，标记审查
+    INVALID = "invalid"          # 无效数据，拒绝处理
+    MISSING_FEATURES = "missing"  # 缺失关键特征
 
 
 class ValidationSeverity(Enum):
@@ -51,8 +70,116 @@ class ValidationResult:
         return [f"[{i.severity.value.upper()}] {i.field}: {i.message}" for i in self.issues if i.severity == ValidationSeverity.WARNING]
 
 
+class SanitizationProtocol:
+    """
+    V20.0 特征熔断与清洗准则
+
+    金融量化级硬标准：
+    1. total_shots < 2 → 立即剔除
+    2. possession == 0 → 立即剔除
+    3. xG vs Score 偏差超过5倍且样本极端偏离 → 标记 OUTLIER
+    """
+
+    # 硬标准阈值
+    MIN_TOTAL_SHOTS = 2
+    MIN_POSSESSION = 1  # 至少1%
+    MAX_POSSESSION = 99  # 最多99%
+
+    # xG 离群值检测参数
+    XG_OUTLIER_THRESHOLD = 5.0  # 偏差倍数
+    XG_DEVIATION_STD = 3.0      # 标准差倍数
+
+    @classmethod
+    def check_basic_validity(cls, features: Dict[str, Any]) -> Tuple[bool, str, MatchStatus]:
+        """
+        检查基本有效性
+
+        Args:
+            features: 特征字典
+
+        Returns:
+            (是否有效, 原因说明, 状态)
+        """
+        # 检1: total_shots 熔断
+        total_shots = cls._get_numeric(features, 'shots_total')
+        if total_shots is not None and total_shots < cls.MIN_TOTAL_SHOTS:
+            return False, f"total_shots={total_shots} < {cls.MIN_TOTAL_SHOTS}", MatchStatus.INVALID
+
+        # 检2: possession 熔断
+        home_poss = cls._get_numeric(features, 'possession')
+        if home_poss is not None and (home_poss < cls.MIN_POSSESSION or home_poss > cls.MAX_POSSESSION):
+            return False, f"possession={home_poss} 超出范围", MatchStatus.INVALID
+
+        return True, "", MatchStatus.READY
+
+    @classmethod
+    def check_outlier(cls, features: Dict[str, Any], league_context: Optional[Dict] = None) -> Tuple[bool, str]:
+        """
+        检查离群值
+
+        Args:
+            features: 特征字典
+            league_context: 联赛统计上下文（用于计算均值和标准差）
+
+        Returns:
+            (是否离群, 原因说明)
+        """
+        home_score = cls._get_numeric(features, 'home_score')
+        away_score = cls._get_numeric(features, 'away_score')
+        home_xg = cls._get_numeric(features, 'xg')
+        away_xg = cls._get_numeric(features, 'xg_away')
+
+        # 需要比分和xG数据
+        if None in [home_score, away_score, home_xg, away_xg]:
+            return False, ""
+
+        # 计算实际进球 vs xG 的偏差
+        actual_goals = home_score + away_score
+        expected_goals = home_xg + away_xg
+
+        if expected_goals < 0.1:  # 避免除零
+            return False, ""
+
+        deviation_ratio = abs(actual_goals - expected_goals) / expected_goals
+
+        # 偏差超过5倍
+        if deviation_ratio > cls.XG_OUTLIER_THRESHOLD:
+            # 检查是否在联赛统计的极端
+            is_extreme = False
+            if league_context:
+                league_mean_xg = league_context.get('mean_total_xg', 2.5)
+                league_std_xg = league_context.get('std_total_xg', 1.0)
+
+                # xG 极端偏离均值
+                if abs(expected_goals - league_mean_xg) > cls.XG_DEVIATION_STD * league_std_xg:
+                    is_extreme = True
+
+            if is_extreme:
+                return True, (f"xG偏差: 实际={actual_goals}, 预期={expected_goals:.2f}, "
+                             f"偏差比={deviation_ratio:.1f}x, 极端偏离")
+
+        return False, ""
+
+    @classmethod
+    def _get_numeric(cls, data: Dict, key: str, default: Optional[float] = None) -> Optional[float]:
+        """安全获取数值"""
+        if key in data:
+            try:
+                return float(data[key])
+            except (ValueError, TypeError):
+                pass
+        # 尝试嵌套键
+        for nested_key in [f'home_{key}', f'away_{key}']:
+            if nested_key in data:
+                try:
+                    return float(data[nested_key])
+                except (ValueError, TypeError):
+                    pass
+        return default
+
+
 class DataValidator:
-    """数据验证器 - 特征提取前验证数据质量"""
+    """V20.0 数据验证器 - 金融量化级"""
 
     # 定义数据质量规则
     REQUIRED_FIELDS = [
@@ -94,13 +221,23 @@ class DataValidator:
     SUPPORTED_FORMATS = ['technical_features', 'home_stats_away_stats', 'normalized']
     SUPPORTED_LEAGUES = [47, 48, 8, 54, 23, 34, 13, 61, 57, 55]  # 扩展的联赛支持
 
-    def __init__(self, strict_mode: bool = False):
+    def __init__(self, strict_mode: bool = False, enable_sanitization: bool = True):
         """初始化数据验证器
 
         Args:
             strict_mode: 严格模式，如果有警告也会视为失败
+            enable_sanitization: 启用金融量化级清洗准则
         """
         self.strict_mode = strict_mode
+        self.enable_sanitization = enable_sanitization
+        self.sanitization = SanitizationProtocol()
+
+        # 统计信息（用于离群值检测）
+        self.league_statistics: Dict[int, Dict] = defaultdict(lambda: {
+            'total_xg': [],
+            'total_shots': [],
+            'match_count': 0
+        })
 
     def validate_match_data(self, match_data: Dict) -> ValidationResult:
         """验证单场比赛数据
@@ -367,3 +504,164 @@ def validate_batch(match_data_list: List[Dict], validator: Optional[DataValidato
     results['average_quality_score'] = total_score / len(match_data_list) if match_data_list else 0
 
     return results
+
+
+# ============================================
+# V20.0 新增方法
+# ============================================
+
+class FeatureForgeValidator(DataValidator):
+    """
+    V20.0 特征加工厂专用验证器
+
+    继承 DataValidator 并添加金融量化级功能：
+    1. 特征熔断检测
+    2. 离群值标记
+    3. 时间旅行防护
+    4. 跨赛季特征对齐
+    """
+
+    def __init__(self, strict_mode: bool = False, enable_sanitization: bool = True):
+        super().__init__(strict_mode, enable_sanitization)
+
+        # 被熔断的比赛记录
+        self.filtered_matches: Dict[MatchStatus, List[int]] = {
+            MatchStatus.INVALID: [],
+            MatchStatus.OUTLIER: [],
+            MatchStatus.MISSING_FEATURES: [],
+        }
+
+        # 联赛统计上下文
+        self.league_contexts: Dict[int, Dict] = {}
+
+    def apply_sanitization(self, match_id: int, features: Dict[str, Any],
+                          league_id: int) -> Tuple[bool, str, MatchStatus]:
+        """
+        应用金融量化级清洗准则
+
+        Args:
+            match_id: 比赛 ID
+            features: 特征字典
+            league_id: 联赛 ID
+
+        Returns:
+            (是否通过, 原因, 状态)
+        """
+        # 1. 基本有效性检查（熔断）
+        is_valid, reason, status = self.sanitization.check_basic_validity(features)
+        if not is_valid:
+            self.filtered_matches[status].append(match_id)
+            return False, f"熔断: {reason}", status
+
+        # 2. 离群值检测
+        league_context = self.league_contexts.get(league_id)
+        is_outlier, outlier_reason = self.sanitization.check_outlier(features, league_context)
+
+        if is_outlier:
+            self.filtered_matches[MatchStatus.OUTLIER].append(match_id)
+            # 离群值不立即拒绝，而是标记审查
+            return True, f"离群值: {outlier_reason}", MatchStatus.OUTLIER
+
+        return True, "", MatchStatus.READY
+
+    def update_league_context(self, league_id: int, features_list: List[Dict[str, Any]]):
+        """
+        更新联赛统计上下文（用于离群值检测）
+
+        Args:
+            league_id: 联赛 ID
+            features_list: 特征列表
+        """
+        total_xg_list = []
+        total_shots_list = []
+
+        for features in features_list:
+            home_xg = self.sanitization._get_numeric(features, 'xg')
+            away_xg = self.sanitization._get_numeric(features, 'xg_away')
+            total_shots = self.sanitization._get_numeric(features, 'shots_total')
+
+            if home_xg is not None and away_xg is not None:
+                total_xg_list.append(home_xg + away_xg)
+
+            if total_shots is not None:
+                total_shots_list.append(total_shots)
+
+        if total_xg_list:
+            xg_array = np.array(total_xg_list)
+            self.league_contexts[league_id] = {
+                'mean_total_xg': float(np.mean(xg_array)),
+                'std_total_xg': float(np.std(xg_array)),
+                'median_total_xg': float(np.median(xg_array)),
+            }
+
+        if total_shots_list:
+            shots_array = np.array(total_shots_list)
+            self.league_contexts[league_id]['mean_total_shots'] = float(np.mean(shots_array))
+            self.league_contexts[league_id]['std_total_shots'] = float(np.std(shots_array))
+
+    def check_leakage(self, match_id: int, features: Dict[str, Any],
+                     match_time: datetime, historical_matches: List[Dict]) -> Tuple[bool, str]:
+        """
+        时间旅行防护 - 检测数据泄露
+
+        Args:
+            match_id: 当前比赛 ID
+            features: 特征字典
+            match_time: 当前比赛时间
+            historical_matches: 历史比赛列表（按时间排序）
+
+        Returns:
+            (是否泄露, 泄露说明)
+        """
+        # 检查是否有未来数据混入
+        for hist_match in historical_matches:
+            hist_time = hist_match.get('match_time')
+            if hist_time and hist_time > match_time:
+                return True, (f"时间旅行: Match {match_id} 的特征包含 "
+                             f"来自未来比赛 {hist_match.get('id')} 的数据 "
+                             f"(历史时间: {hist_time} > 当前时间: {match_time})")
+
+        return False, ""
+
+    def get_filtering_report(self) -> Dict[str, Any]:
+        """获取过滤报告"""
+        return {
+            'invalid_count': len(self.filtered_matches[MatchStatus.INVALID]),
+            'outlier_count': len(self.filtered_matches[MatchStatus.OUTLIER]),
+            'missing_count': len(self.filtered_matches[MatchStatus.MISSING_FEATURES]),
+            'invalid_ids': self.filtered_matches[MatchStatus.INVALID][:10],  # 样本
+            'outlier_ids': self.filtered_matches[MatchStatus.OUTLIER][:10],
+        }
+
+    def estimate_missing_xg(self, match_data: Dict) -> Optional[float]:
+        """
+        智能补齐 - 估算缺失的 xG
+
+        策略：
+        1. 根据比分推算保守 xG
+        2. 使用联赛平均值
+
+        Args:
+            match_data: 比赛数据
+
+        Returns:
+            估算的总 xG
+        """
+        home_score = match_data.get('home_score')
+        away_score = match_data.get('away_score')
+        league_id = match_data.get('league_id')
+
+        if home_score is None or away_score is None:
+            return None
+
+        # 策略1: 基于比分的保守估算 (进球 * 0.12)
+        total_goals = home_score + away_score
+        estimated_xg = total_goals * 0.12  # 保守系数
+
+        # 策略2: 如果有联赛统计，使用均值调整
+        if league_id in self.league_contexts:
+            league_mean = self.league_contexts[league_id].get('mean_total_xg', 2.5)
+            # 混合估算值和联赛均值
+            estimated_xg = (estimated_xg * 0.6) + (league_mean * 0.4)
+
+        return max(0.5, estimated_xg)  # 最小值 0.5

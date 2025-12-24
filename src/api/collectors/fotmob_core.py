@@ -11,6 +11,7 @@ import gzip
 import logging
 import time
 import os
+import random
 import numpy as np
 from datetime import datetime
 from typing import Dict, List, Optional, Any, Tuple
@@ -20,13 +21,37 @@ import brotli
 logger = logging.getLogger(__name__)
 
 
+# V11.2: 隐身模式 - 随机 User-Agent 池
+STEALTH_USER_AGENTS = [
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.1 Safari/605.1.15',
+]
+
+# V11.2: 多语言 Accept-Language 池
+STEALTH_LANGUAGES = [
+    'en-US,en;q=0.9,en-GB;q=0.8',
+    'fr-FR,fr;q=0.9,en;q=0.8',
+    'de-DE,de;q=0.9,en;q=0.8',
+    'es-ES,es;q=0.9,en;q=0.8',
+    'en-GB,en;q=0.9',
+]
+
+# V11.2: 备用端点配置
+FALLBACK_ENDPOINTS = {
+    'team_matches': 'https://www.fotmob.com/api/teams?tab=matches&id={}',
+}
+
+
 # V11.0: 联赛质量等级配置
 LEAGUE_QUALITY_TIERS = {
     'tier_1_premium': {
         'name': 'Tier 1 Premium',
         'description': '五大联赛 + 欧冠',
         'min_response_size': 102400,  # 100KB
-        'leagues': [47, 87, 94, 118, 126],  # FotMob league IDs
+        'leagues': [47, 87, 94, 118, 126, 53],  # FotMob league IDs - 添加法甲 53
         'expected_features': ['expected_goals', 'expected_assists', 'big_chance']
     },
     'tier_2_standard': {
@@ -72,15 +97,43 @@ class FotMobCoreCollector:
     """
 
     def __init__(self):
-        """初始化核心采集器"""
+        """初始化核心采集器 - V11.2 隐身模式版"""
         self.base_url = "https://www.fotmob.com/api"
+
+        # V11.2: 动态生成随机 Headers（隐身模式）
+        self._refresh_stealth_headers()
+
+        self.session = requests.Session()
+        self.session.headers.update(self.headers)
+
+        # V11.0 新增属性
+        self.consecutive_failures = 0  # 连续失败计数器
+        self.max_consecutive_failures = 50  # V11.4: 提高到50以跳过manifest中的问题比赛
+        self.circuit_breaker_timeout = 60  # V11.4: 降低到60秒，快速恢复
+        self.hollow_matches_log = "data/logs/hollow_matches.log"  # 空心场次日志路径
+
+        # V11.2: 回退策略计数器
+        self.fallback_attempts = {}  # {match_id: attempt_count}
+        self.max_fallback_attempts = 2
+
+        # V11.0: 联赛分级哨兵配置（不再使用硬编码的 100KB）
+        # self.min_response_size 已废弃，改用 _get_league_tier() 动态获取
+
+    def _refresh_stealth_headers(self) -> None:
+        """
+        V11.2: 刷新隐身模式 Headers
+
+        随机选择 User-Agent 和语言，降低被检测风险
+        """
         self.headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'User-Agent': random.choice(STEALTH_USER_AGENTS),
             'Accept': 'application/json, text/plain, */*',
-            'Accept-Language': 'en-US,en;q=0.9,en-GB;q=0.8',
-            'Accept-Encoding': 'gzip, deflate, br',  # 恢复支持所有编码
+            'Accept-Language': random.choice(STEALTH_LANGUAGES),
+            'Accept-Encoding': 'gzip, deflate, br',
             'Cache-Control': 'no-cache',
             'Pragma': 'no-cache',
+            'Referer': 'https://www.fotmob.com/',
+            'Origin': 'https://www.fotmob.com',
             'Sec-Ch-Ua': '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
             'Sec-Ch-Ua-Mobile': '?0',
             'Sec-Ch-Ua-Platform': '"Windows"',
@@ -88,17 +141,7 @@ class FotMobCoreCollector:
             'Sec-Fetch-Mode': 'cors',
             'Sec-Fetch-Site': 'same-origin'
         }
-        self.session = requests.Session()
-        self.session.headers.update(self.headers)
-
-        # V11.0 新增属性
-        self.consecutive_failures = 0  # 连续失败计数器
-        self.max_consecutive_failures = 5  # 最大连续失败次数
-        self.circuit_breaker_timeout = 1800  # 熔断超时时间（30分钟）
-        self.hollow_matches_log = "data/logs/hollow_matches.log"  # 空心场次日志路径
-
-        # V11.0: 联赛分级哨兵配置（不再使用硬编码的 100KB）
-        # self.min_response_size 已废弃，改用 _get_league_tier() 动态获取
+        logger.debug(f"🕵️ 隐身模式: UA={self.headers['User-Agent'][:50]}..., Lang={self.headers['Accept-Language'][:10]}")
 
     def get_missing_match_ids(self, limit: int = 100) -> List[int]:
         """
@@ -242,32 +285,46 @@ class FotMobCoreCollector:
         # 默认使用最宽松的标准
         return LEAGUE_QUALITY_TIERS['tier_default']
 
-    def _validate_response_size(self, match_id: int, content: bytes, league_id: int = None) -> bool:
+    def _validate_response_size(self, match_id: int, content: bytes, league_id: int = None, season: str = None) -> bool:
         """
-        V11.0联赛感知哨兵检查：验证响应大小
+        V11.3 联赛+赛季感知哨兵检查：验证响应大小
+
+        赛季自适应阈值:
+        - 2122, 2223 (旧赛季): 30KB - FotMob 对旧比赛存储较少数据
+        - 2324 (上一赛季): 50KB
+        - 2425 (当前赛季): 100KB - 标准完整数据
 
         Args:
             match_id: 比赛ID
             content: 响应内容字节
             league_id: 联赛ID（可选，用于动态阈值）
+            season: 赛季代码（可选，用于赛季自适应阈值）
 
         Returns:
             bool: 响应大小是否通过验证
         """
         content_size = len(content)
 
-        # V11.0: 根据联赛等级动态确定阈值
+        # V11.3: 根据联赛等级动态确定基准阈值
         tier_config = self._get_league_tier(league_id) if league_id else LEAGUE_QUALITY_TIERS['tier_default']
-        min_size = tier_config['min_response_size']
+        base_min_size = tier_config['min_response_size']
+
+        # V11.4: 严格数据质量底线 - 五大联赛必须有完整统计数据
+        season_multiplier = 0.8  # 80KB 底线 - 确保 xG/Shots/Stats 完整
+        # 对于所有赛季，统一使用高质量标准
+        # 拒绝任何低于 80KB 的响应 - 这些数据不完整，不可用于训练
+
+        min_size = int(base_min_size * season_multiplier)
 
         if content_size < min_size:
             tier_name = tier_config['name']
-            reason = f"响应过小 ({content_size} < {min_size} bytes, tier={tier_name})"
+            season_info = f", season={season}" if season else ""
+            reason = f"响应过小 ({content_size} < {min_size} bytes, tier={tier_name}{season_info})"
             self._log_hollow_match(match_id, content_size, reason)
             logger.warning(f"🛡️  哨兵拦截: MatchID {match_id} - {reason}")
             return False
 
-        logger.debug(f"✅ 响应大小验证通过: MatchID {match_id}, 大小: {content_size} bytes (tier={tier_config['name']})")
+        logger.debug(f"✅ 响应大小验证通过: MatchID {match_id}, 大小: {content_size} bytes (tier={tier_config['name']}, season={season})")
         return True
 
     def _check_circuit_breaker(self) -> bool:
@@ -952,18 +1009,21 @@ class FotMobCoreCollector:
             logger.error(f"❌ 提取比赛基础信息失败: {e}")
             return None
 
-    def upsert_match_data(self, match_info: Dict, l2_json: Dict) -> bool:
+    def upsert_match_data(self, match_info: Dict, l2_json: Dict, league_id: int = None, season: str = None) -> bool:
         """
-        数据库UPSERT操作 - V10.6黄金逻辑
+        数据库UPSERT操作 - V11.1 修正版
 
         功能：
         1. 插入新记录或更新现有记录
         2. 同步真实赔率数据
         3. 自动更新时间戳
+        4. V11.1: 正确存储 league_id 和 season
 
         Args:
             match_info: 比赛基础信息
             l2_json: L2数据JSON
+            league_id: 联赛ID
+            season: 赛季代码 (如 '2223')
 
         Returns:
             bool: 操作是否成功
@@ -973,16 +1033,18 @@ class FotMobCoreCollector:
             conn = self.get_database_connection()
 
             with conn.cursor() as cur:
-                # 使用ON CONFLICT实现UPSERT（仅更新实际存在的列）
-                # 使用 external_id 进行冲突检测
+                # V11.1: 添加 league_id 和 season 字段
                 query = """
                 INSERT INTO matches (
-                    id, external_id, home_team, away_team, match_time, l2_raw_json
+                    id, external_id, home_team, away_team, match_time, l2_raw_json, league_id, season
                 ) VALUES (
-                    %s, %s, %s, %s, %s, %s
+                    %s, %s, %s, %s, %s, %s, %s, %s
                 )
-                ON CONFLICT (external_id) DO UPDATE SET
-                    l2_raw_json = EXCLUDED.l2_raw_json
+                ON CONFLICT (id) DO UPDATE SET
+                    l2_raw_json = EXCLUDED.l2_raw_json,
+                    league_id = COALESCE(EXCLUDED.league_id, matches.league_id),
+                    season = COALESCE(EXCLUDED.season, matches.season),
+                    updated_at = NOW()
                 """
 
                 # 序列化 JSON 时处理 NaN 值（Python NaN -> JSON null）
@@ -1011,13 +1073,15 @@ class FotMobCoreCollector:
                     match_info['home_team'],
                     match_info['away_team'],
                     match_info['match_date'],
-                    serialize_json(l2_json)     # l2_raw_json（清理 NaN）
+                    serialize_json(l2_json),  # l2_raw_json（清理 NaN）
+                    league_id,                  # V11.1: 联赛ID
+                    season                      # V11.1: 赛季代码
                 )
 
                 cur.execute(query, params)
                 conn.commit()
 
-                logger.info(f"UPSERT成功: {match_info['match_id']} {match_info['home_team']} vs {match_info['away_team']}")
+                logger.info(f"UPSERT成功: {match_info['match_id']} {match_info['home_team']} vs {match_info['away_team']} (league={league_id}, season={season})")
                 return True
 
         except Exception as e:
@@ -1130,13 +1194,14 @@ class FotMobCoreCollector:
             self._increment_failure()
             return None
 
-    def harvest_match_with_league(self, match_id: int, league_id: int = None) -> bool:
+    def harvest_match_with_league(self, match_id: int, league_id: int = None, season: str = None) -> bool:
         """
-        V11.0: 联赛感知的比赛采集
+        V11.1: 联赛感知的比赛采集（修正版）
 
         Args:
             match_id: 比赛 ID
-            league_id: 联赛 ID (用于动态哨兵阈值)
+            league_id: 联赛 ID (用于动态哨兵阈值和数据库存储)
+            season: 赛季代码 (如 '2223')
 
         Returns:
             bool: 采集是否成功
@@ -1151,8 +1216,8 @@ class FotMobCoreCollector:
             response = self.session.get(url, timeout=30)
             response.raise_for_status()
 
-            # V11.0: 联赛感知的哨兵检查
-            if not self._validate_response_size(match_id, response.content, league_id):
+            # V11.3: 联赛+赛季感知的哨兵检查
+            if not self._validate_response_size(match_id, response.content, league_id, season):
                 self._increment_failure()
                 return False
 
@@ -1176,13 +1241,13 @@ class FotMobCoreCollector:
                         'league_id': league_id
                     }
 
-                    # 数据库 UPSERT
-                    success = self.upsert_match_data(match_info, l2_json)
+                    # V11.1: 数据库 UPSERT - 传递 league_id 和 season
+                    success = self.upsert_match_data(match_info, l2_json, league_id, season)
 
                     if success:
                         self._reset_failure_count()
                         tier_info = self._get_league_tier(league_id) if league_id else LEAGUE_QUALITY_TIERS['tier_default']
-                        logger.info(f"✅ 采集成功: {match_id} (tier={tier_info['name']})")
+                        logger.info(f"✅ 采集成功: {match_id} (league={league_id}, season={season}, tier={tier_info['name']})")
                         return True
 
             self._increment_failure()
@@ -1197,9 +1262,189 @@ class FotMobCoreCollector:
             self._increment_failure()
             return False
 
+    def smart_fetch(self, match_id: int, league_id: int = None, season: str = None) -> Optional[Dict]:
+        """
+        V11.2: 智能获取 - 支持故障回退策略
+
+        策略:
+        1. 标准端点: matchDetails
+        2. 回退端点: 通过球队比赛列表获取
+        3. 隐身模式: 动态刷新 Headers
+
+        Args:
+            match_id: 比赛 ID
+            league_id: 联赛 ID
+            season: 赛季代码
+
+        Returns:
+            解析后的 JSON 数据或 None
+        """
+        # 尝试 1: 标准端点
+        url = f"{self.base_url}/matchDetails?matchId={match_id}"
+
+        try:
+            # V11.2: 每次请求前刷新隐身 Headers
+            self._refresh_stealth_headers()
+            self.session.headers.update(self.headers)
+
+            response = self.session.get(url, timeout=30)
+
+            if response.status_code == 200:
+                # 尝试解码
+                content_encoding = response.headers.get('content-encoding', '').lower()
+                decoded_data = self.adaptive_decode_response(response.content, content_encoding)
+
+                if decoded_data:
+                    logger.debug(f"✅ 标准端点成功: {match_id}")
+                    return decoded_data
+
+            # 响应为空或失败，尝试回退策略
+            logger.warning(f"⚠️ 标准端点失败: {match_id} (status={response.status_code})")
+
+        except Exception as e:
+            logger.warning(f"⚠️ 标准端点异常: {match_id} - {e}")
+
+        # 尝试 2: 回退策略 - 通过已知球队获取
+        if match_id not in self.fallback_attempts:
+            self.fallback_attempts[match_id] = 0
+
+        if self.fallback_attempts[match_id] < self.max_fallback_attempts:
+            self.fallback_attempts[match_id] += 1
+            logger.info(f"🔄 回退策略 {self.fallback_attempts[match_id]}/{self.max_fallback_attempts}: {match_id}")
+
+            return self._fallback_fetch_via_team(match_id, league_id)
+
+        logger.error(f"❌ 所有策略失败: {match_id}")
+        return None
+
+    def _fallback_fetch_via_team(self, match_id: int, league_id: int = None) -> Optional[Dict]:
+        """
+        V11.2: 通过球队比赛列表回退获取
+
+        当标准端点失败时，尝试从已知球队的比赛列表中获取数据
+
+        Args:
+            match_id: 比赛 ID
+            league_id: 联赛 ID（用于筛选）
+
+        Returns:
+            解析后的 JSON 数据或 None
+        """
+        # 知道的球队 ID 池（按联赛分类）
+        TEAM_IDS_BY_LEAGUE = {
+            34: [9825, 4199, 4019, 4504, 4475],  # Ligue 1: PSG, Marseille, Lyon, Monaco, Lille
+            87: [3787, 8631, 8633, 3785, 4484],  # La Liga: Real Madrid, Barcelona, Atletico, Sevilla, Athletic
+            55: [9857, 8628, 8636, 4023, 4031],  # Serie A: Inter, Milan, Juventus, Roma, Lazio
+            54: [9823, 9810, 8019, 8035, 9845],  # Bundesliga: Bayern, Dortmund, Leverkusen, Frankfurt, Wolfsburg
+            47: [9825, 8456, 8650, 8586, 10260], # Premier League: Arsenal, Man City, Liverpool, Spurs, Man Utd
+        }
+
+        if league_id and league_id in TEAM_IDS_BY_LEAGUE:
+            team_ids = TEAM_IDS_BY_LEAGUE[league_id]
+
+            for team_id in team_ids:
+                try:
+                    # 使用球队比赛列表端点
+                    team_url = FALLBACK_ENDPOINTS['team_matches'].format(team_id)
+
+                    # 刷新 Headers
+                    self._refresh_stealth_headers()
+                    response = self.session.get(team_url, timeout=30)
+
+                    if response.status_code == 200:
+                        data = response.json()
+                        if 'fixtures' in data and 'allMatches' in data['fixtures']:
+                            # 查找目标比赛
+                            for match in data['fixtures']['allMatches']:
+                                if match.get('id') == match_id:
+                                    logger.info(f"✅ 回退成功: {match_id} (via team {team_id})")
+                                    return match
+
+                except Exception as e:
+                    logger.debug(f"球队 {team_id} 回退失败: {e}")
+                    continue
+
+        logger.warning(f"⚠️ 球队回退策略失败: {match_id}")
+        return None
+
+    def discover_ligue_matches(self, league_id: int, season_code: str) -> List[int]:
+        """
+        V11.2: 智能联赛比赛发现
+
+        支持多种发现策略，即使主端点失败也能获取比赛 ID
+
+        Args:
+            league_id: 联赛 ID
+            season_code: 赛季代码
+
+        Returns:
+            比赛 ID 列表
+        """
+        discovered_ids = []
+
+        # 策略 1: 标准端点
+        try:
+            self._refresh_stealth_headers()
+            url = f"{self.base_url}/leagues"
+            params = {
+                'tab': 'fixtures',
+                'seasonId': season_code,
+                'id': league_id
+            }
+
+            response = self.session.get(url, params=params, timeout=30)
+
+            if response.status_code == 200 and response.content:
+                data = response.json()
+                if 'fixtures' in data and 'allMatches' in data['fixtures']:
+                    matches = data['fixtures']['allMatches']
+                    discovered_ids = [m.get('id') for m in matches if m.get('id')]
+                    logger.info(f"✅ 标准发现成功: {len(discovered_ids)} 场比赛")
+                    return discovered_ids
+
+        except Exception as e:
+            logger.warning(f"⚠️ 标准发现失败: {e}")
+
+        # 策略 2: 通过球队聚合
+        logger.info(f"🔄 尝试球队聚合发现...")
+
+        TEAM_IDS_BY_LEAGUE = {
+            34: [9825, 4199, 4019, 4504, 4475],  # Ligue 1
+        }
+
+        if league_id in TEAM_IDS_BY_LEAGUE:
+            all_match_ids = set()
+
+            for team_id in TEAM_IDS_BY_LEAGUE[league_id]:
+                try:
+                    team_url = FALLBACK_ENDPOINTS['team_matches'].format(team_id)
+                    response = self.session.get(team_url, timeout=30)
+
+                    if response.status_code == 200:
+                        data = response.json()
+                        if 'fixtures' in data and 'allMatches' in data['fixtures']:
+                            for match in data['fixtures']['allMatches']:
+                                # 筛选指定联赛的比赛
+                                if match.get('leagueId') == league_id:
+                                    all_match_ids.add(match.get('id'))
+
+                    # 避免频繁请求
+                    time.sleep(1)
+
+                except Exception as e:
+                    logger.debug(f"球队 {team_id} 发现失败: {e}")
+                    continue
+
+            discovered_ids = list(all_match_ids)
+            logger.info(f"✅ 球队聚合发现: {len(discovered_ids)} 场比赛")
+            return discovered_ids
+
+        logger.error(f"❌ 所有发现策略失败: league_id={league_id}, season={season_code}")
+        return []
+
     def health_check(self) -> Dict[str, Any]:
         """
-        V11.0: 系统健康检查
+        V11.2: 系统健康检查（包含隐身模式状态）
 
         Returns:
             Dict: 健康状态报告

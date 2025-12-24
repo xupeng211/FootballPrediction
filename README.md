@@ -1,4 +1,12 @@
-# FootballPrediction V17.0
+# FootballPrediction V19.4.1
+
+> **"以年化 25% 的真实收益率为北极星指标，构建一个可验证、可复制、可持续的体育预测系统，在无杠杆、不赌心态的前提下，通过数据科学实现长期价值。"**
+>
+> **📌 核心约束**: 单笔下注 ≤ 5% 本金 | 严禁杠杆 | EV 区间 6%-10% | 最大回撤 < 15%
+>
+> **📖 完整愿景**: 详见 [docs/PROJECT_VISION.md](docs/PROJECT_VISION.md)
+
+---
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
@@ -6,7 +14,7 @@
 [![Model Accuracy](https://img.shields.io/badge/accuracy-65.52%25-green.svg)](https://github.com/xupeng211/FootballPrediction)
 [![No Data Leakage](https://img.shields.io/badge/data%20leakage-none-brightgreen.svg)](https://github.com/xupeng211/FootballPrediction)
 
-**V17.0 生产版本 | 65.52% 真实预测准确率 | 无数据泄露 | 16 维滚动特征**
+**V19.4.1 生产版本 | 65.52% 真实预测准确率 | 无数据泄露 | 48 维特征 | 平局敏感度**
 
 ---
 

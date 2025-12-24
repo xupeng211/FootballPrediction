@@ -1,0 +1,226 @@
+# ============================================
+# FootballPrediction V19.4.1 - Production Docker Compose
+# ============================================
+# 生产级容器编排配置 - Boxing Day Ready
+# 生成时间: 2025-12-24
+# 安全等级: 企业级 (数据库端口不暴露)
+# ============================================
+
+services:
+  # ============================================
+  # predictor-app: 核心预测应用服务
+  # ============================================
+  predictor-app:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+      args:
+        BUILD_DATE: "${BUILD_DATE:-2025-12-24}"
+        VERSION: "V19.4.1"
+    image: football-prediction:${VERSION:-v19.4.1}
+    container_name: football_predictor_app
+    restart: unless-stopped
+
+    # 环境变量配置
+    environment:
+      # 数据库配置（通过内部网络访问）
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_NAME=football_db
+      - DB_USER=football_user
+      - DB_PASSWORD=${DB_PASSWORD:-football_prod_pass_change_me}
+      # Redis 配置
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=0
+      # Docker 环境标识
+      - DOCKER_ENV=true
+      - ENVIRONMENT=production
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - TZ=UTC
+      # 安全配置
+      - SECRET_KEY=${SECRET_KEY:-change-this-secret-key-in-production-min-32-chars}
+      # API 配置
+      - API_HOST=0.0.0.0
+      - API_PORT=8000
+      - API_WORKERS=2
+      # 监控配置
+      - ENABLE_METRICS=true
+
+    # 端口映射 - 仅暴露 API 端口
+    ports:
+      - "${API_PORT:-8000}:8000"
+
+    # 数据卷挂载 - 生产级持久化
+    volumes:
+      # 日志持久化 - 容器外可实时查看
+      - ./logs:/app/logs
+      # 生产数据持久化
+      - ./data/production:/app/data/production
+      # 风控数据持久化
+      - ./data/risk:/app/data/risk
+      # V19.4.1 Boxing Day 脚本挂载
+      - ./src/ops:/app/src/ops:ro
+      # 生产模型文件持久化
+      - ./src/production_models:/app/src/production_models:ro
+      # 统一生产入口
+      - ./main_production.py:/app/main_production.py:ro
+      # 验证脚本挂载
+      - ./verify_ready.sh:/app/verify_ready.sh:ro
+      - ./system_verify.sh:/app/system_verify.sh:ro
+      # 配置文件
+      - ./.env:/app/.env:ro
+
+    # 健康检查
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+    # 服务依赖
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+    # 资源限制
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+    # 网络配置
+    networks:
+      - football_internal_network
+
+  # ============================================
+  # db: PostgreSQL 15 数据库服务
+  # ============================================
+  db:
+    image: postgres:15-alpine
+    container_name: football_prediction_db
+    restart: unless-stopped
+
+    # 环境变量
+    environment:
+      - POSTGRES_DB=football_db
+      - POSTGRES_USER=football_user
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-football_prod_pass_change_me}
+      - PGDATA=/var/lib/postgresql/data/pgdata
+      - TZ=UTC
+
+    # 数据卷挂载 - 数据永不丢失
+    volumes:
+      # PostgreSQL 数据目录
+      - postgres_data:/var/lib/postgresql/data
+      # 初始化脚本（如果存在）
+      - ./database/init:/docker-entrypoint-initdb.d:ro
+
+    # 安全配置 - 端口不暴露到宿主机
+    # 只能通过内部网络访问
+
+    # 健康检查
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U football_user -d football_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+    # 资源限制
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+
+    # 网络配置 - 仅内部网络
+    networks:
+      - football_internal_network
+
+  # ============================================
+  # redis: Redis 7 缓存服务
+  # ============================================
+  redis:
+    image: redis:7-alpine
+    container_name: football_prediction_redis
+    restart: unless-stopped
+
+    # Redis 配置命令
+    command: >
+      redis-server
+      --maxmemory 512mb
+      --maxmemory-policy allkeys-lru
+      --save 900 1
+      --save 300 10
+      --save 60 10000
+      --appendonly yes
+      --appendfsync everysec
+      --requirepass ${REDIS_PASSWORD:-redis_prod_pass_change_me}
+
+    # 数据卷挂载
+    volumes:
+      - redis_data:/data
+
+    # 安全配置 - 端口不暴露到宿主机
+    # 只能通过内部网络访问
+
+    # 健康检查
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-redis_prod_pass_change_me}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+    # 资源限制
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.1'
+          memory: 128M
+
+    # 网络配置 - 仅内部网络
+    networks:
+      - football_internal_network
+
+# ============================================
+# 数据卷定义 - 数据持久化
+# ============================================
+volumes:
+  # PostgreSQL 数据卷 - 数据库数据永不丢失
+  postgres_data:
+    driver: local
+
+  # Redis 数据卷 - 缓存持久化
+  redis_data:
+    driver: local
+
+# ============================================
+# 网络配置 - 内部桥接网络
+# ============================================
+networks:
+  football_internal_network:
+    driver: bridge
+    driver_opts:
+      com.docker.network.bridge.name: football_br
+      com.docker.network.bridge.enable_icc: "true"
+      com.docker.network.bridge.enable_ip_masquerade: "true"
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.20.0.0/16
+          gateway: 172.20.0.1
