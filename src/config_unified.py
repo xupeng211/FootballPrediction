@@ -24,8 +24,8 @@ from typing import Dict, Any, List, Optional, Union, Literal
 from pathlib import Path
 from dataclasses import dataclass, field
 
-from pydantic import Field, validator, SecretStr
-from pydantic_settings import BaseSettings
+from pydantic import Field, validator, SecretStr, ConfigDict
+from pydantic_settings import BaseSettings, SettingsConfigDict
 import logging
 
 logger = logging.getLogger(__name__)
@@ -282,13 +282,15 @@ class UnifiedSettings(BaseSettings):
     harvest_batch_size: int = Field(default=50, description="数据收集批量大小")
     harvest_delay_seconds: float = Field(default=1.0, description="数据收集间隔（秒）")
 
-    class Config:
+    # Pydantic V2 配置
+    model_config = SettingsConfigDict(
         # 启用.env文件自动加载，支持环境变量配置
-        env_file = ".env"
-        env_file_encoding = "utf-8"
-        case_sensitive = False
-        # 允许额外字段（用于向后兼容）
+        env_file = ".env",
+        env_file_encoding = "utf-8",
+        case_sensitive = False,
+        # 允许额外字段（用于向后兼容）- Pydantic V2 语法
         extra = "ignore"
+    )
 
     # === 验证器 ===
     @validator("port")
@@ -371,6 +373,13 @@ class UnifiedSettings(BaseSettings):
     @property
     def database(self) -> DatabaseConfig:
         """获取数据库配置"""
+        # 构建异步 URL
+        password = self.db_password.get_secret_value()
+        if self.db_ssl_mode:
+            async_url = f"postgresql+asyncpg://{self.db_user}:{password}@{self.db_host}:{self.db_port}/{self.db_name}?ssl=require"
+        else:
+            async_url = f"postgresql+asyncpg://{self.db_user}:{password}@{self.db_host}:{self.db_port}/{self.db_name}"
+
         return DatabaseConfig(
             host=self.db_host,
             port=self.db_port,
@@ -382,8 +391,8 @@ class UnifiedSettings(BaseSettings):
             max_overflow=self.db_pool_size,  # 使用 pool_size 作为 max_overflow 默认值
             pool_timeout=30,
             pool_recycle=3600,
-            # 异步连接属性
-            async_url=None,  # 可以从环境变量 DB_ASYNC_URL 读取
+            # 异步连接属性 - 现在动态构建
+            async_url=async_url,
             async_pool_size=self.db_pool_size,
             async_max_overflow=self.db_pool_size,
             echo=False,

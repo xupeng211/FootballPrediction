@@ -1,55 +1,65 @@
-# Base image
+# ============================================
+# FootballPrediction V20.3 - Production Dockerfile
+# ============================================
+# 工业化部署镜像 - 优化体积和安全性
+# 生成时间: 2025-12-24
+# 状态: V20.3 Production Ready
+# ============================================
+
 FROM python:3.11-slim
 
-# Set environment variables
-# PYTHONDONTWRITEBYTECODE: Prevents Python from writing pyc files to disc
-# PYTHONUNBUFFERED: Prevents Python from buffering stdout and stderr
-# PYTHONPATH: Adds the src directory to the Python path
+# 元数据标签
+LABEL org.opencontainers.image.version="V20.3"
+LABEL org.opencontainers.image.title="FootballPrediction"
+LABEL org.opencontainers.image.description="Professional football prediction system - V20.3"
+
+# 环境变量
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    PYTHONPATH=/app/src \
-    TZ=UTC
+    PYTHONPATH=/app/src:/app \
+    TZ=UTC \
+    LOG_DIR=/app/logs \
+    DATA_DIR=/app/data
 
-# Set working directory
+# 工作目录
 WORKDIR /app
 
-# Install system dependencies
-# libpq-dev and gcc for building Python extensions
-# curl for healthchecks
+# 安装系统依赖
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     libpq-dev \
     curl \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
 
-# Install Python dependencies using pyproject.toml
-# First copy pyproject.toml and src directory (required for editable install)
-COPY pyproject.toml .
+# 复制应用代码（必须在安装依赖之前，因为 pyproject.toml 引用了 src）
 COPY src/ ./src/
-RUN pip install --no-cache-dir --upgrade pip && \
+COPY pyproject.toml requirements.txt requirements-dev.txt ./
+COPY main_production.py ./
+COPY factory_run.py ./
+COPY verify_ready.sh ./
+COPY system_verify.sh ./
+
+# 安装 Python 依赖
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
     pip install --no-cache-dir -e .[all]
 
-# Copy remaining project files
-COPY . .
+# 创建非 root 用户
+RUN useradd -r -m -d /app -s /sbin/nologin appuser
 
-# Create a non-root user for security BEFORE creating directories
-RUN useradd -m appuser
-
-# Create necessary directories and set ownership
-RUN mkdir -p logs data models && \
+# 创建目录并设置权限
+RUN mkdir -p /app/logs /app/data /app/data/production /app/data/backups && \
     chown -R appuser:appuser /app
 
-# Switch to non-root user
+# 切换到非 root 用户
 USER appuser
 
-# Expose port
+# 暴露端口
 EXPOSE 8000
 
-# Health check - probes the /health endpoint
-# Interval: 30s, Timeout: 10s, Retries: 3, Start period: 40s
+# 健康检查
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD curl -f http://localhost:8000/health/quick || exit 1
+    CMD curl -f http://localhost:8000/health || exit 1
 
-# Default command - production FastAPI server
-# Can be overridden in docker-compose for development
-CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# 默认命令
+CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "2"]

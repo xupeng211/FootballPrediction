@@ -17,18 +17,44 @@ V19.4 自动止损哨兵系统 (Auto-Stop Loss Sentinel)
 
 import logging
 import json
-import numpy as np
 import pandas as pd
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Tuple
-from dataclasses import dataclass, field
+from typing import Dict, List, Optional
+from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
 
 logger = logging.getLogger(__name__)
+
+
+# ============================================
+# V19.4.1 愿景红线系统 (Vision Guardrails)
+# ============================================
+
+class VisionViolationException(Exception):
+    """项目愿景违背异常 - 当操作严重违反项目愿景时抛出"""
+    pass
+
+
+class VisionLimits:
+    """项目愿景硬性约束 - 从 docs/PROJECT_VISION.md 提取"""
+
+    # 财务约束
+    MAX_STAKE_PCT = 0.05  # 单笔下注 ≤ 5% 本金
+    MAX_DAILY_LOSS_PCT = 0.10  # 单日最大亏损 10%
+    MAX_DRAWDOWN_PCT = 0.15  # 最大回撤 15%
+
+    # EV 约束
+    MIN_EV = 0.06  # 最小期望收益 6%
+    MAX_EV = 0.10  # 最大期望收益 10%
+
+    # 执行约束
+    MAX_CONSECUTIVE_LOSSES = 5  # 连续亏损熔断
+    LEVERAGE_ENABLED = False  # 严禁杠杆
+
+    # 愿景参数
+    TARGET_ANNUAL_RETURN = 0.25  # 目标年化收益 25%
+    TARGET_EXECUTION_RATE = 0.05  # 目标执行率 < 5%
 
 
 class RiskLevel(Enum):
@@ -69,6 +95,16 @@ class RiskMetrics:
     alert_cooldown_minutes: int = 60      # 告警冷却时间（分钟）
     is_emergency_stopped: bool = False   # 是否已紧急熔断
 
+    def __post_init__(self):
+        """初始化后处理：确保 current_balance 和 max_balance 与 initial_balance 同步"""
+        if self.current_balance == 1000.0 and self.initial_balance != 1000.0:
+            self.current_balance = self.initial_balance
+        if self.max_balance == 1000.0 and self.initial_balance != 1000.0:
+            self.max_balance = self.initial_balance
+        # 确保当前余额不超过历史最高
+        if self.current_balance > self.max_balance:
+            self.max_balance = self.current_balance
+
 
 @dataclass
 class BetRecord:
@@ -96,16 +132,22 @@ class RiskMonitor:
     4. 发送告警通知
     """
 
-    def __init__(self, initial_balance: float = 1000.0, config_path: str = None):
+    def __init__(self, initial_balance: float = 1000.0, config_path: str = None, load_state: bool = True):
         """
         初始化风控监控系统
 
         Args:
             initial_balance: 初始资金（默认1000单位）
             config_path: 配置文件路径
+            load_state: 是否从磁盘加载历史状态（默认True，测试时可设为False）
+
+        Raises:
+            VisionViolationException: 如果配置违反项目愿景
         """
+        # V19.4.1 修复：先创建 metrics，再进行愿景校验
         self.metrics = RiskMetrics(initial_balance=initial_balance)
         self.bet_records: List[BetRecord] = []
+        self._initial_balance_provided = initial_balance  # 记录显式传入的初始余额
 
         # 加载配置
         if config_path and Path(config_path).exists():
@@ -114,14 +156,56 @@ class RiskMonitor:
                 self.metrics.max_consecutive_losses = config.get('max_consecutive_losses', 5)
                 self.metrics.max_drawdown_pct_limit = config.get('max_drawdown_pct_limit', 0.15)
 
+                # V19.4.1 愿景校验：配置文件中的阈值不能违背愿景
+                if self.metrics.max_drawdown_pct_limit > VisionLimits.MAX_DRAWDOWN_PCT:
+                    logger.critical(
+                        f"VIOLATION: 配置的回撤限制 ({self.metrics.max_drawdown_pct_limit:.0%}) "
+                        f"超过愿景上限 ({VisionLimits.MAX_DRAWDOWN_PCT:.0%})"
+                    )
+                    raise VisionViolationException(
+                        f"Max drawdown limit exceeds vision constraint: "
+                        f"{self.metrics.max_drawdown_pct_limit:.0%} > {VisionLimits.MAX_DRAWDOWN_PCT:.0%}"
+                    )
+
+        # V19.4.1 愿景校验：初始化时检查配置是否符合愿景（在 metrics 创建后调用）
+        self._verify_vision_compliance(initial_balance)
+
         # 数据存储路径
         self.data_dir = Path("/home/user/projects/FootballPrediction/data/risk")
         self.data_dir.mkdir(parents=True, exist_ok=True)
 
-        # 加载历史数据
-        self._load_state()
+        # 加载历史数据（仅在 load_state=True 时）
+        if load_state:
+            self._load_state()
 
         logger.info(f"风控监控系统初始化完成，初始资金: {initial_balance}")
+        logger.info(f"V19.4.1 愿景红线已激活：单笔下注≤{VisionLimits.MAX_STAKE_PCT:.0%}，严禁杠杆")
+
+    def _verify_vision_compliance(self, initial_balance: float):
+        """
+        V19.4.1 愿景校验：验证初始配置符合项目愿景
+
+        Args:
+            initial_balance: 初始资金
+
+        Raises:
+            VisionViolationException: 如果配置违反愿景
+        """
+        # 检查杠杆是否被禁用
+        if VisionLimits.LEVERAGE_ENABLED:
+            logger.critical("VIOLATION: 杠杆已被配置为启用，但项目愿景严禁使用杠杆！")
+            raise VisionViolationException(
+                "Leverage is strictly forbidden by project vision (docs/PROJECT_VISION.md)"
+            )
+
+        # 检查最大连续亏损次数
+        if self.metrics.max_consecutive_losses > VisionLimits.MAX_CONSECUTIVE_LOSSES:
+            logger.warning(
+                f"WARNING: 连续亏损限制 ({self.metrics.max_consecutive_losses}) "
+                f"大于愿景推荐值 ({VisionLimits.MAX_CONSECUTIVE_LOSSES})"
+            )
+
+        logger.info("✅ 愿景合规性检查通过")
 
     def _load_state(self):
         """加载历史状态"""
@@ -181,6 +265,10 @@ class RiskMonitor:
 
         Returns:
             BetRecord: 下注记录
+
+        Raises:
+            RuntimeError: 如果系统已熔断
+            VisionViolationException: 如果下注违反愿景红线
         """
         # 检查是否已熔断
         if self.metrics.is_emergency_stopped:
@@ -190,8 +278,27 @@ class RiskMonitor:
         # 检查风险状态
         risk_level = self.check_risk_level()
         if risk_level == RiskLevel.EMERGENCY:
-            logger.error(f"风险等级为紧急，禁止新下注！")
+            logger.error("风险等级为紧急，禁止新下注！")
             raise RuntimeError(f"Risk level is {risk_level.value} - no new bets allowed")
+
+        # V19.4.1 愿景校验：检查下注金额是否符合愿景
+        stake_pct = stake / self.metrics.current_balance
+        if stake_pct > VisionLimits.MAX_STAKE_PCT:
+            logger.critical(
+                f"VIOLATION: 下注金额 ({stake:.2f}, {stake_pct:.1%}) "
+                f"超过愿景上限 ({VisionLimits.MAX_STAKE_PCT:.0%})"
+            )
+            raise VisionViolationException(
+                f"Stake exceeds vision limit: {stake_pct:.1%} > {VisionLimits.MAX_STAKE_PCT:.0%} "
+                f"(docs/PROJECT_VISION.md - 原则一: 单笔下注 ≤ 5% 本金)"
+            )
+
+        # V19.4.1 愿景校验：检查杠杆（虽然本系统不使用杠杆，但作为防护性检查）
+        if VisionLimits.LEVERAGE_ENABLED:
+            logger.critical("VIOLATION: 系统检测到杠杆已启用，但项目愿景严禁使用杠杆！")
+            raise VisionViolationException(
+                "Leverage is strictly forbidden by project vision (docs/PROJECT_VISION.md)"
+            )
 
         record = BetRecord(
             match_id=match_id,
@@ -206,6 +313,12 @@ class RiskMonitor:
 
         self.bet_records.append(record)
         self.metrics.total_bets += 1
+
+        logger.info(
+            f"✅ 下注记录已创建: {home_team} vs {away_team} | "
+            f"预测: {prediction} | 赔率: {odds:.2f} | "
+            f"下注: {stake:.2f} ({stake_pct:.1%}) [愿景合规]"
+        )
 
         self._save_state()
         return record
@@ -352,7 +465,7 @@ class RiskMonitor:
 
     def _send_emergency_alert(self):
         """发送紧急熔断告警"""
-        subject = f"🚨 EMERGENCY - V19.4 策略熔断触发"
+        subject = "🚨 EMERGENCY - V19.4 策略熔断触发"
         message = self._generate_alert_message(RiskLevel.EMERGENCY)
         self._send_email(subject, message)
 

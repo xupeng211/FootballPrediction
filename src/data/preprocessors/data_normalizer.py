@@ -4,7 +4,7 @@
 支持多种数据格式的标准化处理，确保特征提取器能够接收一致的数据格式。
 """
 
-from typing import Dict, Any, Optional, Union
+from typing import Dict, Any, Optional
 import logging
 import pandas as pd
 

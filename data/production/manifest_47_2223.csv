@@ -1,0 +1,381 @@
+match_id,league_id,league_name,season_id,home_team,away_team,status,collection_date
+3900932,47,Premier League,2223,Crystal Palace,Arsenal,,2025-12-24T10:12:40.606483
+3900933,47,Premier League,2223,Fulham,Liverpool,,2025-12-24T10:12:40.606483
+3900934,47,Premier League,2223,AFC Bournemouth,Aston Villa,,2025-12-24T10:12:40.606483
+3900935,47,Premier League,2223,Leeds United,Wolverhampton Wanderers,,2025-12-24T10:12:40.606483
+3900937,47,Premier League,2223,Newcastle United,Nottingham Forest,,2025-12-24T10:12:40.606483
+3900938,47,Premier League,2223,Tottenham Hotspur,Southampton,,2025-12-24T10:12:40.606483
+3900939,47,Premier League,2223,Everton,Chelsea,,2025-12-24T10:12:40.606483
+3900936,47,Premier League,2223,Leicester City,Brentford,,2025-12-24T10:12:40.606483
+3900940,47,Premier League,2223,Manchester United,Brighton & Hove Albion,,2025-12-24T10:12:40.606483
+3900941,47,Premier League,2223,West Ham United,Manchester City,,2025-12-24T10:12:40.606483
+3900943,47,Premier League,2223,Aston Villa,Everton,,2025-12-24T10:12:40.606483
+3900942,47,Premier League,2223,Arsenal,Leicester City,,2025-12-24T10:12:40.606483
+3900945,47,Premier League,2223,Brighton & Hove Albion,Newcastle United,,2025-12-24T10:12:40.606483
+3900948,47,Premier League,2223,Manchester City,AFC Bournemouth,,2025-12-24T10:12:40.606483
+3900950,47,Premier League,2223,Southampton,Leeds United,,2025-12-24T10:12:40.606483
+3900951,47,Premier League,2223,Wolverhampton Wanderers,Fulham,,2025-12-24T10:12:40.606483
+3900944,47,Premier League,2223,Brentford,Manchester United,,2025-12-24T10:12:40.606483
+3900949,47,Premier League,2223,Nottingham Forest,West Ham United,,2025-12-24T10:12:40.606483
+3900946,47,Premier League,2223,Chelsea,Tottenham Hotspur,,2025-12-24T10:12:40.606483
+3900947,47,Premier League,2223,Liverpool,Crystal Palace,,2025-12-24T10:12:40.606483
+3900960,47,Premier League,2223,Tottenham Hotspur,Wolverhampton Wanderers,,2025-12-24T10:12:40.606483
+3900953,47,Premier League,2223,Crystal Palace,Aston Villa,,2025-12-24T10:12:40.606483
+3900954,47,Premier League,2223,Everton,Nottingham Forest,,2025-12-24T10:12:40.606483
+3900955,47,Premier League,2223,Fulham,Brentford,,2025-12-24T10:12:40.606483
+3900957,47,Premier League,2223,Leicester City,Southampton,,2025-12-24T10:12:40.606483
+3900952,47,Premier League,2223,AFC Bournemouth,Arsenal,,2025-12-24T10:12:40.606483
+3900956,47,Premier League,2223,Leeds United,Chelsea,,2025-12-24T10:12:40.606483
+3900961,47,Premier League,2223,West Ham United,Brighton & Hove Albion,,2025-12-24T10:12:40.606483
+3900959,47,Premier League,2223,Newcastle United,Manchester City,,2025-12-24T10:12:40.606483
+3900958,47,Premier League,2223,Manchester United,Liverpool,,2025-12-24T10:12:40.606483
+3900970,47,Premier League,2223,Southampton,Manchester United,,2025-12-24T10:12:40.606483
+3900964,47,Premier League,2223,Brentford,Everton,,2025-12-24T10:12:40.606483
+3900965,47,Premier League,2223,Brighton & Hove Albion,Leeds United,,2025-12-24T10:12:40.606483
+3900966,47,Premier League,2223,Chelsea,Leicester City,,2025-12-24T10:12:40.606483
+3900967,47,Premier League,2223,Liverpool,AFC Bournemouth,,2025-12-24T10:12:40.606483
+3900968,47,Premier League,2223,Manchester City,Crystal Palace,,2025-12-24T10:12:40.606483
+3900962,47,Premier League,2223,Arsenal,Fulham,,2025-12-24T10:12:40.606483
+3900963,47,Premier League,2223,Aston Villa,West Ham United,,2025-12-24T10:12:40.606483
+3900971,47,Premier League,2223,Wolverhampton Wanderers,Newcastle United,,2025-12-24T10:12:40.606483
+3900969,47,Premier League,2223,Nottingham Forest,Tottenham Hotspur,,2025-12-24T10:12:40.606483
+3900978,47,Premier League,2223,Crystal Palace,Brentford,,2025-12-24T10:12:40.606483
+3900974,47,Premier League,2223,Fulham,Brighton & Hove Albion,,2025-12-24T10:12:40.606483
+3900979,47,Premier League,2223,Southampton,Chelsea,,2025-12-24T10:12:40.606483
+3900975,47,Premier League,2223,Leeds United,Everton,,2025-12-24T10:12:40.606483
+3900973,47,Premier League,2223,AFC Bournemouth,Wolverhampton Wanderers,,2025-12-24T10:12:40.606483
+3900972,47,Premier League,2223,Arsenal,Aston Villa,,2025-12-24T10:12:40.606483
+3900981,47,Premier League,2223,Manchester City,Nottingham Forest,,2025-12-24T10:12:40.606483
+3900977,47,Premier League,2223,West Ham United,Tottenham Hotspur,,2025-12-24T10:12:40.606483
+3900980,47,Premier League,2223,Liverpool,Newcastle United,,2025-12-24T10:12:40.606483
+3900976,47,Premier League,2223,Leicester City,Manchester United,,2025-12-24T10:12:40.606483
+3900986,47,Premier League,2223,Everton,Liverpool,,2025-12-24T10:12:40.606483
+3900983,47,Premier League,2223,Brentford,Leeds United,,2025-12-24T10:12:40.606483
+3900985,47,Premier League,2223,Chelsea,West Ham United,,2025-12-24T10:12:40.606483
+3900988,47,Premier League,2223,Newcastle United,Crystal Palace,,2025-12-24T10:12:40.606483
+3900989,47,Premier League,2223,Nottingham Forest,AFC Bournemouth,,2025-12-24T10:12:40.606483
+3900990,47,Premier League,2223,Tottenham Hotspur,Fulham,,2025-12-24T10:12:40.606483
+3900991,47,Premier League,2223,Wolverhampton Wanderers,Southampton,,2025-12-24T10:12:40.606483
+3900982,47,Premier League,2223,Aston Villa,Manchester City,,2025-12-24T10:12:40.606483
+3900984,47,Premier League,2223,Brighton & Hove Albion,Leicester City,,2025-12-24T10:12:40.606483
+3900987,47,Premier League,2223,Manchester United,Arsenal,,2025-12-24T10:12:40.606483
+3901002,47,Premier League,2223,Aston Villa,Southampton,,2025-12-24T10:12:40.606483
+3901009,47,Premier League,2223,Nottingham Forest,Fulham,,2025-12-24T10:12:40.606483
+3901011,47,Premier League,2223,Wolverhampton Wanderers,Manchester City,,2025-12-24T10:12:40.606483
+3901008,47,Premier League,2223,Newcastle United,AFC Bournemouth,,2025-12-24T10:12:40.606483
+3901010,47,Premier League,2223,Tottenham Hotspur,Leicester City,,2025-12-24T10:12:40.606483
+3901003,47,Premier League,2223,Brentford,Arsenal,,2025-12-24T10:12:40.606483
+3901006,47,Premier League,2223,Everton,West Ham United,,2025-12-24T10:12:40.606483
+3901012,47,Premier League,2223,Arsenal,Tottenham Hotspur,,2025-12-24T10:12:40.606483
+3901013,47,Premier League,2223,AFC Bournemouth,Brentford,,2025-12-24T10:12:40.606483
+3901014,47,Premier League,2223,Crystal Palace,Chelsea,,2025-12-24T10:12:40.606483
+3901015,47,Premier League,2223,Fulham,Newcastle United,,2025-12-24T10:12:40.606483
+3901018,47,Premier League,2223,Liverpool,Brighton & Hove Albion,,2025-12-24T10:12:40.606483
+3901020,47,Premier League,2223,Southampton,Everton,,2025-12-24T10:12:40.606483
+3901021,47,Premier League,2223,West Ham United,Wolverhampton Wanderers,,2025-12-24T10:12:40.606483
+3901019,47,Premier League,2223,Manchester City,Manchester United,,2025-12-24T10:12:40.606483
+3901016,47,Premier League,2223,Leeds United,Aston Villa,,2025-12-24T10:12:40.606483
+3901017,47,Premier League,2223,Leicester City,Nottingham Forest,,2025-12-24T10:12:40.606483
+3901023,47,Premier League,2223,AFC Bournemouth,Leicester City,,2025-12-24T10:12:40.606483
+3901025,47,Premier League,2223,Chelsea,Wolverhampton Wanderers,,2025-12-24T10:12:40.606483
+3901028,47,Premier League,2223,Manchester City,Southampton,,2025-12-24T10:12:40.606483
+3901029,47,Premier League,2223,Newcastle United,Brentford,,2025-12-24T10:12:40.606483
+3901024,47,Premier League,2223,Brighton & Hove Albion,Tottenham Hotspur,,2025-12-24T10:12:40.606483
+3901026,47,Premier League,2223,Crystal Palace,Leeds United,,2025-12-24T10:12:40.606483
+3901031,47,Premier League,2223,West Ham United,Fulham,,2025-12-24T10:12:40.606483
+3901022,47,Premier League,2223,Arsenal,Liverpool,,2025-12-24T10:12:40.606483
+3901027,47,Premier League,2223,Everton,Manchester United,,2025-12-24T10:12:40.606483
+3901030,47,Premier League,2223,Nottingham Forest,Aston Villa,,2025-12-24T10:12:40.606483
+3901033,47,Premier League,2223,Brentford,Brighton & Hove Albion,,2025-12-24T10:12:40.606483
+3901036,47,Premier League,2223,Leicester City,Crystal Palace,,2025-12-24T10:12:40.606483
+3901034,47,Premier League,2223,Fulham,AFC Bournemouth,,2025-12-24T10:12:40.606483
+3901041,47,Premier League,2223,Wolverhampton Wanderers,Nottingham Forest,,2025-12-24T10:12:40.606483
+3901040,47,Premier League,2223,Tottenham Hotspur,Everton,,2025-12-24T10:12:40.606483
+3901032,47,Premier League,2223,Aston Villa,Chelsea,,2025-12-24T10:12:40.606483
+3901035,47,Premier League,2223,Leeds United,Arsenal,,2025-12-24T10:12:40.606483
+3901038,47,Premier League,2223,Manchester United,Newcastle United,,2025-12-24T10:12:40.606483
+3901039,47,Premier League,2223,Southampton,West Ham United,,2025-12-24T10:12:40.606483
+3901037,47,Premier League,2223,Liverpool,Manchester City,,2025-12-24T10:12:40.606483
+3901045,47,Premier League,2223,Brighton & Hove Albion,Nottingham Forest,,2025-12-24T10:12:40.606483
+3901048,47,Premier League,2223,Crystal Palace,Wolverhampton Wanderers,,2025-12-24T10:12:40.606483
+3901043,47,Premier League,2223,AFC Bournemouth,Southampton,,2025-12-24T10:12:40.606483
+3901044,47,Premier League,2223,Brentford,Chelsea,,2025-12-24T10:12:40.606483
+3901050,47,Premier League,2223,Liverpool,West Ham United,,2025-12-24T10:12:40.606483
+3901049,47,Premier League,2223,Newcastle United,Everton,,2025-12-24T10:12:40.606483
+3901051,47,Premier League,2223,Manchester United,Tottenham Hotspur,,2025-12-24T10:12:40.606483
+3901046,47,Premier League,2223,Fulham,Aston Villa,,2025-12-24T10:12:40.606483
+3901047,47,Premier League,2223,Leicester City,Leeds United,,2025-12-24T10:12:40.606483
+3901057,47,Premier League,2223,Nottingham Forest,Liverpool,,2025-12-24T10:12:40.606483
+3901054,47,Premier League,2223,Everton,Crystal Palace,,2025-12-24T10:12:40.606483
+3901056,47,Premier League,2223,Manchester City,Brighton & Hove Albion,,2025-12-24T10:12:40.606483
+3901053,47,Premier League,2223,Chelsea,Manchester United,,2025-12-24T10:12:40.606483
+3901052,47,Premier League,2223,Aston Villa,Brentford,,2025-12-24T10:12:40.606483
+3901055,47,Premier League,2223,Leeds United,Fulham,,2025-12-24T10:12:40.606483
+3901058,47,Premier League,2223,Southampton,Arsenal,,2025-12-24T10:12:40.606483
+3901061,47,Premier League,2223,Wolverhampton Wanderers,Leicester City,,2025-12-24T10:12:40.606483
+3901059,47,Premier League,2223,Tottenham Hotspur,Newcastle United,,2025-12-24T10:12:40.606483
+3901060,47,Premier League,2223,West Ham United,AFC Bournemouth,,2025-12-24T10:12:40.606483
+3901068,47,Premier League,2223,Leicester City,Manchester City,,2025-12-24T10:12:40.606483
+3901063,47,Premier League,2223,AFC Bournemouth,Tottenham Hotspur,,2025-12-24T10:12:40.606483
+3901064,47,Premier League,2223,Brentford,Wolverhampton Wanderers,,2025-12-24T10:12:40.606483
+3901065,47,Premier League,2223,Brighton & Hove Albion,Chelsea,,2025-12-24T10:12:40.606483
+3901066,47,Premier League,2223,Crystal Palace,Southampton,,2025-12-24T10:12:40.606483
+3901071,47,Premier League,2223,Newcastle United,Aston Villa,,2025-12-24T10:12:40.606483
+3901067,47,Premier League,2223,Fulham,Everton,,2025-12-24T10:12:40.606483
+3901069,47,Premier League,2223,Liverpool,Leeds United,,2025-12-24T10:12:40.606483
+3901062,47,Premier League,2223,Arsenal,Nottingham Forest,,2025-12-24T10:12:40.606483
+3901070,47,Premier League,2223,Manchester United,West Ham United,,2025-12-24T10:12:40.606483
+3901075,47,Premier League,2223,Leeds United,AFC Bournemouth,,2025-12-24T10:12:40.606483
+3901076,47,Premier League,2223,Manchester City,Fulham,,2025-12-24T10:12:40.606483
+3901077,47,Premier League,2223,Nottingham Forest,Brentford,,2025-12-24T10:12:40.606483
+3901081,47,Premier League,2223,Wolverhampton Wanderers,Brighton & Hove Albion,,2025-12-24T10:12:40.606483
+3901074,47,Premier League,2223,Everton,Leicester City,,2025-12-24T10:12:40.606483
+3901073,47,Premier League,2223,Chelsea,Arsenal,,2025-12-24T10:12:40.606483
+3901072,47,Premier League,2223,Aston Villa,Manchester United,,2025-12-24T10:12:40.606483
+3901078,47,Premier League,2223,Southampton,Newcastle United,,2025-12-24T10:12:40.606483
+3901080,47,Premier League,2223,West Ham United,Crystal Palace,,2025-12-24T10:12:40.606483
+3901079,47,Premier League,2223,Tottenham Hotspur,Liverpool,,2025-12-24T10:12:40.606483
+3901086,47,Premier League,2223,Manchester City,Brentford,,2025-12-24T10:12:40.606483
+3901082,47,Premier League,2223,AFC Bournemouth,Everton,,2025-12-24T10:12:40.606483
+3901085,47,Premier League,2223,Liverpool,Southampton,,2025-12-24T10:12:40.606483
+3901088,47,Premier League,2223,Nottingham Forest,Crystal Palace,,2025-12-24T10:12:40.606483
+3901089,47,Premier League,2223,Tottenham Hotspur,Leeds United,,2025-12-24T10:12:40.606483
+3901090,47,Premier League,2223,West Ham United,Leicester City,,2025-12-24T10:12:40.606483
+3901087,47,Premier League,2223,Newcastle United,Chelsea,,2025-12-24T10:12:40.606483
+3901091,47,Premier League,2223,Wolverhampton Wanderers,Arsenal,,2025-12-24T10:12:40.606483
+3901083,47,Premier League,2223,Brighton & Hove Albion,Aston Villa,,2025-12-24T10:12:40.606483
+3901084,47,Premier League,2223,Fulham,Manchester United,,2025-12-24T10:12:40.606483
+3901094,47,Premier League,2223,Brentford,Tottenham Hotspur,,2025-12-24T10:12:40.606483
+3901096,47,Premier League,2223,Crystal Palace,Fulham,,2025-12-24T10:12:40.606483
+3901097,47,Premier League,2223,Everton,Wolverhampton Wanderers,,2025-12-24T10:12:40.606483
+3901099,47,Premier League,2223,Leicester City,Newcastle United,,2025-12-24T10:12:40.606483
+3901101,47,Premier League,2223,Southampton,Brighton & Hove Albion,,2025-12-24T10:12:40.606483
+3901093,47,Premier League,2223,Aston Villa,Liverpool,,2025-12-24T10:12:40.606483
+3901092,47,Premier League,2223,Arsenal,West Ham United,,2025-12-24T10:12:40.606483
+3901095,47,Premier League,2223,Chelsea,AFC Bournemouth,,2025-12-24T10:12:40.606483
+3901100,47,Premier League,2223,Manchester United,Nottingham Forest,,2025-12-24T10:12:40.606483
+3901098,47,Premier League,2223,Leeds United,Manchester City,,2025-12-24T10:12:40.606483
+3901110,47,Premier League,2223,West Ham United,Brentford,,2025-12-24T10:12:40.606483
+3901105,47,Premier League,2223,Liverpool,Leicester City,,2025-12-24T10:12:40.606483
+3901111,47,Premier League,2223,Wolverhampton Wanderers,Manchester United,,2025-12-24T10:12:40.606483
+3901102,47,Premier League,2223,AFC Bournemouth,Crystal Palace,,2025-12-24T10:12:40.606483
+3901104,47,Premier League,2223,Fulham,Southampton,,2025-12-24T10:12:40.606483
+3901106,47,Premier League,2223,Manchester City,Everton,,2025-12-24T10:12:40.606483
+3901107,47,Premier League,2223,Newcastle United,Leeds United,,2025-12-24T10:12:40.606483
+3901103,47,Premier League,2223,Brighton & Hove Albion,Arsenal,,2025-12-24T10:12:40.606483
+3901109,47,Premier League,2223,Tottenham Hotspur,Aston Villa,,2025-12-24T10:12:40.606483
+3901108,47,Premier League,2223,Nottingham Forest,Chelsea,,2025-12-24T10:12:40.606483
+3901114,47,Premier League,2223,Brentford,Liverpool,,2025-12-24T10:12:40.606483
+3901112,47,Premier League,2223,Arsenal,Newcastle United,,2025-12-24T10:12:40.606483
+3901117,47,Premier League,2223,Everton,Brighton & Hove Albion,,2025-12-24T10:12:40.606483
+3901119,47,Premier League,2223,Leicester City,Fulham,,2025-12-24T10:12:40.606483
+3901120,47,Premier League,2223,Manchester United,AFC Bournemouth,,2025-12-24T10:12:40.606483
+3901121,47,Premier League,2223,Southampton,Nottingham Forest,,2025-12-24T10:12:40.606483
+3901118,47,Premier League,2223,Leeds United,West Ham United,,2025-12-24T10:12:40.606483
+3901113,47,Premier League,2223,Aston Villa,Wolverhampton Wanderers,,2025-12-24T10:12:40.606483
+3901116,47,Premier League,2223,Crystal Palace,Tottenham Hotspur,,2025-12-24T10:12:40.606483
+3901115,47,Premier League,2223,Chelsea,Manchester City,,2025-12-24T10:12:40.606483
+3900995,47,Premier League,2223,Fulham,Chelsea,,2025-12-24T10:12:40.606483
+3901122,47,Premier League,2223,Aston Villa,Leeds United,,2025-12-24T10:12:40.606483
+3901127,47,Premier League,2223,Manchester United,Manchester City,,2025-12-24T10:12:40.606483
+3901124,47,Premier League,2223,Brighton & Hove Albion,Liverpool,,2025-12-24T10:12:40.606483
+3901126,47,Premier League,2223,Everton,Southampton,,2025-12-24T10:12:40.606483
+3901129,47,Premier League,2223,Nottingham Forest,Leicester City,,2025-12-24T10:12:40.606483
+3901131,47,Premier League,2223,Wolverhampton Wanderers,West Ham United,,2025-12-24T10:12:40.606483
+3901123,47,Premier League,2223,Brentford,AFC Bournemouth,,2025-12-24T10:12:40.606483
+3901125,47,Premier League,2223,Chelsea,Crystal Palace,,2025-12-24T10:12:40.606483
+3901128,47,Premier League,2223,Newcastle United,Fulham,,2025-12-24T10:12:40.606483
+3901130,47,Premier League,2223,Tottenham Hotspur,Arsenal,,2025-12-24T10:12:40.606483
+3900994,47,Premier League,2223,Crystal Palace,Manchester United,,2025-12-24T10:12:40.606483
+3900999,47,Premier League,2223,Manchester City,Tottenham Hotspur,,2025-12-24T10:12:40.606483
+3901138,47,Premier League,2223,Liverpool,Chelsea,,2025-12-24T10:12:40.606483
+3901133,47,Premier League,2223,AFC Bournemouth,Nottingham Forest,,2025-12-24T10:12:40.606483
+3901137,47,Premier League,2223,Leicester City,Brighton & Hove Albion,,2025-12-24T10:12:40.606483
+3901140,47,Premier League,2223,Southampton,Aston Villa,,2025-12-24T10:12:40.606483
+3901141,47,Premier League,2223,West Ham United,Everton,,2025-12-24T10:12:40.606483
+3901134,47,Premier League,2223,Crystal Palace,Newcastle United,,2025-12-24T10:12:40.606483
+3901136,47,Premier League,2223,Leeds United,Brentford,,2025-12-24T10:12:40.606483
+3901139,47,Premier League,2223,Manchester City,Wolverhampton Wanderers,,2025-12-24T10:12:40.606483
+3901132,47,Premier League,2223,Arsenal,Manchester United,,2025-12-24T10:12:40.606483
+3901135,47,Premier League,2223,Fulham,Tottenham Hotspur,,2025-12-24T10:12:40.606483
+3901145,47,Premier League,2223,Chelsea,Fulham,,2025-12-24T10:12:40.606483
+3901146,47,Premier League,2223,Everton,Arsenal,,2025-12-24T10:12:40.606483
+3901142,47,Premier League,2223,Aston Villa,Leicester City,,2025-12-24T10:12:40.606483
+3901143,47,Premier League,2223,Brentford,Southampton,,2025-12-24T10:12:40.606483
+3901144,47,Premier League,2223,Brighton & Hove Albion,AFC Bournemouth,,2025-12-24T10:12:40.606483
+3901147,47,Premier League,2223,Manchester United,Crystal Palace,,2025-12-24T10:12:40.606483
+3901151,47,Premier League,2223,Wolverhampton Wanderers,Liverpool,,2025-12-24T10:12:40.606483
+3901148,47,Premier League,2223,Newcastle United,West Ham United,,2025-12-24T10:12:40.606483
+3901149,47,Premier League,2223,Nottingham Forest,Leeds United,,2025-12-24T10:12:40.606483
+3901150,47,Premier League,2223,Tottenham Hotspur,Manchester City,,2025-12-24T10:12:40.606483
+3901007,47,Premier League,2223,Manchester United,Leeds United,,2025-12-24T10:12:40.606483
+3901161,47,Premier League,2223,West Ham United,Chelsea,,2025-12-24T10:12:40.606483
+3901152,47,Premier League,2223,Arsenal,Brentford,,2025-12-24T10:12:40.606483
+3901154,47,Premier League,2223,Crystal Palace,Brighton & Hove Albion,,2025-12-24T10:12:40.606483
+3901155,47,Premier League,2223,Fulham,Nottingham Forest,,2025-12-24T10:12:40.606483
+3901157,47,Premier League,2223,Leicester City,Tottenham Hotspur,,2025-12-24T10:12:40.606483
+3901160,47,Premier League,2223,Southampton,Wolverhampton Wanderers,,2025-12-24T10:12:40.606483
+3901153,47,Premier League,2223,AFC Bournemouth,Newcastle United,,2025-12-24T10:12:40.606483
+3901156,47,Premier League,2223,Leeds United,Manchester United,,2025-12-24T10:12:40.606483
+3901159,47,Premier League,2223,Manchester City,Aston Villa,,2025-12-24T10:12:40.606483
+3901158,47,Premier League,2223,Liverpool,Everton,,2025-12-24T10:12:40.606483
+3901042,47,Premier League,2223,Arsenal,Manchester City,,2025-12-24T10:12:40.606483
+3901162,47,Premier League,2223,Aston Villa,Arsenal,,2025-12-24T10:12:40.606483
+3901163,47,Premier League,2223,Brentford,Crystal Palace,,2025-12-24T10:12:40.606483
+3901164,47,Premier League,2223,Brighton & Hove Albion,Fulham,,2025-12-24T10:12:40.606483
+3901165,47,Premier League,2223,Chelsea,Southampton,,2025-12-24T10:12:40.606483
+3901166,47,Premier League,2223,Everton,Leeds United,,2025-12-24T10:12:40.606483
+3901169,47,Premier League,2223,Nottingham Forest,Manchester City,,2025-12-24T10:12:40.606483
+3901171,47,Premier League,2223,Wolverhampton Wanderers,AFC Bournemouth,,2025-12-24T10:12:40.606483
+3901168,47,Premier League,2223,Newcastle United,Liverpool,,2025-12-24T10:12:40.606483
+3901167,47,Premier League,2223,Manchester United,Leicester City,,2025-12-24T10:12:40.606483
+3901170,47,Premier League,2223,Tottenham Hotspur,West Ham United,,2025-12-24T10:12:40.606483
+3901175,47,Premier League,2223,Fulham,Wolverhampton Wanderers,,2025-12-24T10:12:40.606483
+3901174,47,Premier League,2223,Everton,Aston Villa,,2025-12-24T10:12:40.606483
+3901176,47,Premier League,2223,Leeds United,Southampton,,2025-12-24T10:12:40.606483
+3901177,47,Premier League,2223,Leicester City,Arsenal,,2025-12-24T10:12:40.606483
+3901181,47,Premier League,2223,West Ham United,Nottingham Forest,,2025-12-24T10:12:40.606483
+3901172,47,Premier League,2223,AFC Bournemouth,Manchester City,,2025-12-24T10:12:40.606483
+3901173,47,Premier League,2223,Crystal Palace,Liverpool,,2025-12-24T10:12:40.606483
+3901180,47,Premier League,2223,Tottenham Hotspur,Chelsea,,2025-12-24T10:12:40.606483
+3900992,47,Premier League,2223,Arsenal,Everton,,2025-12-24T10:12:40.606483
+3900998,47,Premier League,2223,Liverpool,Wolverhampton Wanderers,,2025-12-24T10:12:40.606483
+3901188,47,Premier League,2223,Manchester City,Newcastle United,,2025-12-24T10:12:40.606483
+3901182,47,Premier League,2223,Arsenal,AFC Bournemouth,,2025-12-24T10:12:40.606483
+3901183,47,Premier League,2223,Aston Villa,Crystal Palace,,2025-12-24T10:12:40.606483
+3901185,47,Premier League,2223,Brighton & Hove Albion,West Ham United,,2025-12-24T10:12:40.606483
+3901186,47,Premier League,2223,Chelsea,Leeds United,,2025-12-24T10:12:40.606483
+3901191,47,Premier League,2223,Wolverhampton Wanderers,Tottenham Hotspur,,2025-12-24T10:12:40.606483
+3901190,47,Premier League,2223,Southampton,Leicester City,,2025-12-24T10:12:40.606483
+3901189,47,Premier League,2223,Nottingham Forest,Everton,,2025-12-24T10:12:40.606483
+3901187,47,Premier League,2223,Liverpool,Manchester United,,2025-12-24T10:12:40.606483
+3901184,47,Premier League,2223,Brentford,Fulham,,2025-12-24T10:12:40.606483
+3901192,47,Premier League,2223,AFC Bournemouth,Liverpool,,2025-12-24T10:12:40.606483
+3901194,47,Premier League,2223,Everton,Brentford,,2025-12-24T10:12:40.606483
+3901196,47,Premier League,2223,Leeds United,Brighton & Hove Albion,,2025-12-24T10:12:40.606483
+3901197,47,Premier League,2223,Leicester City,Chelsea,,2025-12-24T10:12:40.606483
+3901200,47,Premier League,2223,Tottenham Hotspur,Nottingham Forest,,2025-12-24T10:12:40.606483
+3901193,47,Premier League,2223,Crystal Palace,Manchester City,,2025-12-24T10:12:40.606483
+3901195,47,Premier League,2223,Fulham,Arsenal,,2025-12-24T10:12:40.606483
+3901198,47,Premier League,2223,Manchester United,Southampton,,2025-12-24T10:12:40.606483
+3901201,47,Premier League,2223,West Ham United,Aston Villa,,2025-12-24T10:12:40.606483
+3901199,47,Premier League,2223,Newcastle United,Wolverhampton Wanderers,,2025-12-24T10:12:40.606483
+3901004,47,Premier League,2223,Brighton & Hove Albion,Crystal Palace,,2025-12-24T10:12:40.606483
+3901000,47,Premier League,2223,Southampton,Brentford,,2025-12-24T10:12:40.606483
+3901209,47,Premier League,2223,Nottingham Forest,Newcastle United,,2025-12-24T10:12:40.606483
+3901203,47,Premier League,2223,Aston Villa,AFC Bournemouth,,2025-12-24T10:12:40.606483
+3901204,47,Premier League,2223,Brentford,Leicester City,,2025-12-24T10:12:40.606483
+3901210,47,Premier League,2223,Southampton,Tottenham Hotspur,,2025-12-24T10:12:40.606483
+3901211,47,Premier League,2223,Wolverhampton Wanderers,Leeds United,,2025-12-24T10:12:40.606483
+3901206,47,Premier League,2223,Chelsea,Everton,,2025-12-24T10:12:40.606483
+3901202,47,Premier League,2223,Arsenal,Crystal Palace,,2025-12-24T10:12:40.606483
+3901218,47,Premier League,2223,Manchester City,Liverpool,,2025-12-24T10:12:40.606483
+3901213,47,Premier League,2223,AFC Bournemouth,Fulham,,2025-12-24T10:12:40.606483
+3901212,47,Premier League,2223,Arsenal,Leeds United,,2025-12-24T10:12:40.606483
+3901214,47,Premier League,2223,Brighton & Hove Albion,Brentford,,2025-12-24T10:12:40.606483
+3901216,47,Premier League,2223,Crystal Palace,Leicester City,,2025-12-24T10:12:40.606483
+3901220,47,Premier League,2223,Nottingham Forest,Wolverhampton Wanderers,,2025-12-24T10:12:40.606483
+3901215,47,Premier League,2223,Chelsea,Aston Villa,,2025-12-24T10:12:40.606483
+3901221,47,Premier League,2223,West Ham United,Southampton,,2025-12-24T10:12:40.606483
+3901219,47,Premier League,2223,Newcastle United,Manchester United,,2025-12-24T10:12:40.606483
+3901217,47,Premier League,2223,Everton,Tottenham Hotspur,,2025-12-24T10:12:40.606483
+3900993,47,Premier League,2223,AFC Bournemouth,Brighton & Hove Albion,,2025-12-24T10:12:40.606483
+3900996,47,Premier League,2223,Leeds United,Nottingham Forest,,2025-12-24T10:12:40.606483
+3900997,47,Premier League,2223,Leicester City,Aston Villa,,2025-12-24T10:12:40.606483
+3901005,47,Premier League,2223,Chelsea,Liverpool,,2025-12-24T10:12:40.606483
+3901178,47,Premier League,2223,Manchester United,Brentford,,2025-12-24T10:12:40.606483
+3901001,47,Premier League,2223,West Ham United,Newcastle United,,2025-12-24T10:12:40.606483
+3901228,47,Premier League,2223,Manchester United,Everton,,2025-12-24T10:12:40.606483
+3901222,47,Premier League,2223,Aston Villa,Nottingham Forest,,2025-12-24T10:12:40.606483
+3901223,47,Premier League,2223,Brentford,Newcastle United,,2025-12-24T10:12:40.606483
+3901224,47,Premier League,2223,Fulham,West Ham United,,2025-12-24T10:12:40.606483
+3901226,47,Premier League,2223,Leicester City,AFC Bournemouth,,2025-12-24T10:12:40.606483
+3901230,47,Premier League,2223,Tottenham Hotspur,Brighton & Hove Albion,,2025-12-24T10:12:40.606483
+3901231,47,Premier League,2223,Wolverhampton Wanderers,Chelsea,,2025-12-24T10:12:40.606483
+3901229,47,Premier League,2223,Southampton,Manchester City,,2025-12-24T10:12:40.606483
+3901225,47,Premier League,2223,Leeds United,Crystal Palace,,2025-12-24T10:12:40.606483
+3901227,47,Premier League,2223,Liverpool,Arsenal,,2025-12-24T10:12:40.606483
+3901232,47,Premier League,2223,Aston Villa,Newcastle United,,2025-12-24T10:12:40.606483
+3901233,47,Premier League,2223,Chelsea,Brighton & Hove Albion,,2025-12-24T10:12:40.606483
+3901234,47,Premier League,2223,Everton,Fulham,,2025-12-24T10:12:40.606483
+3901238,47,Premier League,2223,Southampton,Crystal Palace,,2025-12-24T10:12:40.606483
+3901241,47,Premier League,2223,Wolverhampton Wanderers,Brentford,,2025-12-24T10:12:40.606483
+3901239,47,Premier League,2223,Tottenham Hotspur,AFC Bournemouth,,2025-12-24T10:12:40.606483
+3901236,47,Premier League,2223,Manchester City,Leicester City,,2025-12-24T10:12:40.606483
+3901240,47,Premier League,2223,West Ham United,Arsenal,,2025-12-24T10:12:40.606483
+3901237,47,Premier League,2223,Nottingham Forest,Manchester United,,2025-12-24T10:12:40.606483
+3901235,47,Premier League,2223,Leeds United,Liverpool,,2025-12-24T10:12:40.606483
+3901242,47,Premier League,2223,Arsenal,Southampton,,2025-12-24T10:12:40.606483
+3901247,47,Premier League,2223,Fulham,Leeds United,,2025-12-24T10:12:40.606483
+3901244,47,Premier League,2223,Brentford,Aston Villa,,2025-12-24T10:12:40.606483
+3901246,47,Premier League,2223,Crystal Palace,Everton,,2025-12-24T10:12:40.606483
+3901248,47,Premier League,2223,Leicester City,Wolverhampton Wanderers,,2025-12-24T10:12:40.606483
+3901249,47,Premier League,2223,Liverpool,Nottingham Forest,,2025-12-24T10:12:40.606483
+3901243,47,Premier League,2223,AFC Bournemouth,West Ham United,,2025-12-24T10:12:40.606483
+3901251,47,Premier League,2223,Newcastle United,Tottenham Hotspur,,2025-12-24T10:12:40.606483
+3901257,47,Premier League,2223,Wolverhampton Wanderers,Crystal Palace,,2025-12-24T10:12:40.606483
+3901258,47,Premier League,2223,Aston Villa,Fulham,,2025-12-24T10:12:40.606483
+3901253,47,Premier League,2223,Leeds United,Leicester City,,2025-12-24T10:12:40.606483
+3901254,47,Premier League,2223,Nottingham Forest,Brighton & Hove Albion,,2025-12-24T10:12:40.606483
+3901259,47,Premier League,2223,Chelsea,Brentford,,2025-12-24T10:12:40.606483
+3901256,47,Premier League,2223,West Ham United,Liverpool,,2025-12-24T10:12:40.606483
+3901261,47,Premier League,2223,Manchester City,Arsenal,,2025-12-24T10:12:40.606483
+3901252,47,Premier League,2223,Everton,Newcastle United,,2025-12-24T10:12:40.606483
+3901260,47,Premier League,2223,Southampton,AFC Bournemouth,,2025-12-24T10:12:40.606483
+3901255,47,Premier League,2223,Tottenham Hotspur,Manchester United,,2025-12-24T10:12:40.606483
+3901266,47,Premier League,2223,Crystal Palace,West Ham United,,2025-12-24T10:12:40.606483
+3901264,47,Premier League,2223,Brentford,Nottingham Forest,,2025-12-24T10:12:40.606483
+3901265,47,Premier League,2223,Brighton & Hove Albion,Wolverhampton Wanderers,,2025-12-24T10:12:40.606483
+3901263,47,Premier League,2223,AFC Bournemouth,Leeds United,,2025-12-24T10:12:40.606483
+3901267,47,Premier League,2223,Fulham,Manchester City,,2025-12-24T10:12:40.606483
+3901270,47,Premier League,2223,Manchester United,Aston Villa,,2025-12-24T10:12:40.606483
+3901271,47,Premier League,2223,Newcastle United,Southampton,,2025-12-24T10:12:40.606483
+3901269,47,Premier League,2223,Liverpool,Tottenham Hotspur,,2025-12-24T10:12:40.606483
+3901268,47,Premier League,2223,Leicester City,Everton,,2025-12-24T10:12:40.606483
+3901262,47,Premier League,2223,Arsenal,Chelsea,,2025-12-24T10:12:40.606483
+3901207,47,Premier League,2223,Liverpool,Fulham,,2025-12-24T10:12:40.606483
+3901208,47,Premier League,2223,Manchester City,West Ham United,,2025-12-24T10:12:40.606483
+3901205,47,Premier League,2223,Brighton & Hove Albion,Manchester United,,2025-12-24T10:12:40.606483
+3901272,47,Premier League,2223,AFC Bournemouth,Chelsea,,2025-12-24T10:12:40.606483
+3901276,47,Premier League,2223,Manchester City,Leeds United,,2025-12-24T10:12:40.606483
+3901279,47,Premier League,2223,Tottenham Hotspur,Crystal Palace,,2025-12-24T10:12:40.606483
+3901281,47,Premier League,2223,Wolverhampton Wanderers,Aston Villa,,2025-12-24T10:12:40.606483
+3901275,47,Premier League,2223,Liverpool,Brentford,,2025-12-24T10:12:40.606483
+3901277,47,Premier League,2223,Newcastle United,Arsenal,,2025-12-24T10:12:40.606483
+3901280,47,Premier League,2223,West Ham United,Manchester United,,2025-12-24T10:12:40.606483
+3901274,47,Premier League,2223,Fulham,Leicester City,,2025-12-24T10:12:40.606483
+3901273,47,Premier League,2223,Brighton & Hove Albion,Everton,,2025-12-24T10:12:40.606483
+3901278,47,Premier League,2223,Nottingham Forest,Southampton,,2025-12-24T10:12:40.606483
+3901288,47,Premier League,2223,Leeds United,Newcastle United,,2025-12-24T10:12:40.606483
+3901283,47,Premier League,2223,Aston Villa,Tottenham Hotspur,,2025-12-24T10:12:40.606483
+3901285,47,Premier League,2223,Chelsea,Nottingham Forest,,2025-12-24T10:12:40.606483
+3901286,47,Premier League,2223,Crystal Palace,AFC Bournemouth,,2025-12-24T10:12:40.606483
+3901290,47,Premier League,2223,Manchester United,Wolverhampton Wanderers,,2025-12-24T10:12:40.606483
+3901291,47,Premier League,2223,Southampton,Fulham,,2025-12-24T10:12:40.606483
+3901284,47,Premier League,2223,Brentford,West Ham United,,2025-12-24T10:12:40.606483
+3901287,47,Premier League,2223,Everton,Manchester City,,2025-12-24T10:12:40.606483
+3901282,47,Premier League,2223,Arsenal,Brighton & Hove Albion,,2025-12-24T10:12:40.606483
+3901289,47,Premier League,2223,Leicester City,Liverpool,,2025-12-24T10:12:40.606483
+3901179,47,Premier League,2223,Newcastle United,Brighton & Hove Albion,,2025-12-24T10:12:40.606483
+3901299,47,Premier League,2223,Tottenham Hotspur,Brentford,,2025-12-24T10:12:40.606483
+3901292,47,Premier League,2223,AFC Bournemouth,Manchester United,,2025-12-24T10:12:40.606483
+3901294,47,Premier League,2223,Fulham,Crystal Palace,,2025-12-24T10:12:40.606483
+3901295,47,Premier League,2223,Liverpool,Aston Villa,,2025-12-24T10:12:40.606483
+3901301,47,Premier League,2223,Wolverhampton Wanderers,Everton,,2025-12-24T10:12:40.606483
+3901298,47,Premier League,2223,Nottingham Forest,Arsenal,,2025-12-24T10:12:40.606483
+3901300,47,Premier League,2223,West Ham United,Leeds United,,2025-12-24T10:12:40.606483
+3901293,47,Premier League,2223,Brighton & Hove Albion,Southampton,,2025-12-24T10:12:40.606483
+3901296,47,Premier League,2223,Manchester City,Chelsea,,2025-12-24T10:12:40.606483
+3901297,47,Premier League,2223,Newcastle United,Leicester City,,2025-12-24T10:12:40.606483
+3901245,47,Premier League,2223,Brighton & Hove Albion,Manchester City,,2025-12-24T10:12:40.606483
+3901250,47,Premier League,2223,Manchester United,Chelsea,,2025-12-24T10:12:40.606483
+3901302,47,Premier League,2223,Arsenal,Wolverhampton Wanderers,,2025-12-24T10:12:40.606483
+3901303,47,Premier League,2223,Aston Villa,Brighton & Hove Albion,,2025-12-24T10:12:40.606483
+3901304,47,Premier League,2223,Brentford,Manchester City,,2025-12-24T10:12:40.606483
+3901305,47,Premier League,2223,Chelsea,Newcastle United,,2025-12-24T10:12:40.606483
+3901306,47,Premier League,2223,Crystal Palace,Nottingham Forest,,2025-12-24T10:12:40.606483
+3901307,47,Premier League,2223,Everton,AFC Bournemouth,,2025-12-24T10:12:40.606483
+3901308,47,Premier League,2223,Leeds United,Tottenham Hotspur,,2025-12-24T10:12:40.606483
+3901309,47,Premier League,2223,Leicester City,West Ham United,,2025-12-24T10:12:40.606483
+3901310,47,Premier League,2223,Manchester United,Fulham,,2025-12-24T10:12:40.606483
+3901311,47,Premier League,2223,Southampton,Liverpool,,2025-12-24T10:12:40.606483

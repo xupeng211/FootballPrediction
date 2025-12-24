@@ -1,0 +1,15 @@
+{
+  "current_balance": 1000000.0,
+  "initial_balance": 1000000.0,
+  "max_balance": 1000000.0,
+  "consecutive_losses": 0,
+  "current_drawdown": 0.0,
+  "max_drawdown": 0.0,
+  "max_drawdown_pct": 0.0,
+  "total_bets": 1,
+  "winning_bets": 0,
+  "losing_bets": 0,
+  "total_profit": 0.0,
+  "total_loss": 0.0,
+  "is_emergency_stopped": false
+}
