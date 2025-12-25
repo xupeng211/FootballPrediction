@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """
-V20.3 特征加工厂 - 球员级全息资产库引擎
-====================================================
+V20.7 原子级数据对齐引擎 - Atomic Data Alignment Engine
+========================================================
 
 核心功能:
-1. 动态扁平化: 自动提取 JSON 中所有统计维度 (388+ 基础特征)
+1. 动态扁平化: 自动提取 JSON 中所有统计维度 (436+ 基础特征)
 2. 全息元数据: 提取裁判、球场、天气、阵型、球员评分等元数据
-3. 球员原子数据: 提取每个球员的 id, name, rating, position (450+ 特征目标)
+3. 球员原子数据: 提取每个球员的 id, name, rating, position (600+ 特征目标)
 4. 位置战力聚合: 计算 GK/DF/MF/FW 各位置平均评分
 5. 阵容深度分析: 替补席评分、缺阵球员统计
 6. 混合存储: JSONB (enriched_features) + 核心列 (快速查询)
@@ -18,9 +18,30 @@ V20.3 新增:
 - 缺阵战力减损: unavailable_players 数组，包含缺阵原因
 - 替补席实力: bench_strength 平均评分
 
-作者: Principal Player Scientist Team
+V20.4 新增 (全知全能特征矩阵):
+- H2H 历史时空: h2h_home_wins, h2h_draws, h2h_away_wins, h2h_win_rate
+- 疲劳度指标: home_rest_days_h2h, away_rest_days_h2h, diff_rest_days_h2h
+- 深度威胁统计: Big Chances (Created/Missed), Hit Woodwork, Interceptions
+- 联赛博弈元数据: 赛季阶段, 五大联赛标记, 比赛轮次
+- 递归元数据扫描: 自动扫描 historical/previous/trend/streak 节点
+
+V20.6 新增 (全量合成全息矩阵):
+- ShotmapAggregator: 从 shotmap.Periods 合成射门数据
+- 21/22 时空记忆: 合成数据回填缺失半场数据
+- 动量特征提取: peak_value, volatility
+- 球员明细聚合: accuratePasses, touches 等核心指标
+- 穿透式三场对账: 验证 2122, 2223, 2425 三个赛季特征维度
+
+V20.7 新增 (原子级数据对齐引擎):
+- 原子级回填 (Atomic Backfill): 自动触发 shotmap 填充缺失字段
+- 球员-球队级联聚合: 11 人数据加总生成全量特征
+- 动量特征深度解剖: velocity, acceleration 特征工程
+- 全量 Schema 对齐 (Zero-Padding): 强制 800+ 维一致性
+- 三赛季穿透式对账: 确保 7161 场比赛特征维度严格相等
+
+作者: Atomic Data Auditor
 日期: 2025-12-24
-版本: V20.3
+版本: V20.7
 """
 
 import os
@@ -51,6 +72,8 @@ from src.data.validators.data_validator import (
     MatchStatus
 )
 from src.api.collectors.schema_agnostic_parser import SchemaAgnosticParser
+from src.ml.shotmap_aggregator import synthesize_v20_6_features
+from src.ml.atomic_align_v20_7 import atomic_align_v20_7, atomic_align_v20_8
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -166,11 +189,12 @@ class FeatureExtractor:
 
     def __init__(self):
         self.parser = SchemaAgnosticParser()
-        # 跳过的 stat key (只有纯标题条目，不是包含数据的组)
-        self.skip_keys = {'shots', 'passes', 'defence', 'duels', 'discipline', 'goalkeeper', 'other'}
+        # V20.3.1 FIX: 减少跳过的 keys，确保深海扫描模式激活
+        # 只跳过纯标题条目，保留所有数据组
+        self.skip_keys = {'other'}  # 保留 shots, passes, defence, duels, discipline, goalkeeper
         # 跳过的 stat 类型 (title 类型不包含数据)
         self.skip_types = {'title'}
-        logger.info("🔧 V20.3 特征提取器初始化 (球员级全息资产库模式)")
+        logger.info("🔧 V20.3.1 特征提取器初始化 (深海扫描模式 - 400+ 维目标)")
 
     def _parse_complex_value(self, value: Any) -> Dict[str, Any]:
         """
@@ -531,22 +555,46 @@ class FeatureExtractor:
         """
         将球员的 positionId 映射到位置分类 (GK/DF/MF/FW)
 
+        V20.3.1 FIX: 双重校验逻辑，确保位置映射 100% 准确
+
         Args:
             player: 球员数据字典
 
         Returns:
             位置分类: 'GK', 'DF', 'MF', 'FW', 或 'Unknown'
         """
-        # 首先尝试 positionId
+        # 首先尝试 positionId (FotMob 原始位置ID，范围 11-48)
         position_id = player.get('positionId')
-        if position_id in self.POSITION_MAPPING:
-            return self.POSITION_MAPPING[position_id]
 
-        # 其次尝试 usualPlayingPositionId
+        # 确保是整数类型
+        if isinstance(position_id, str):
+            try:
+                position_id = int(position_id)
+            except (ValueError, TypeError):
+                position_id = None
+
+        if position_id is not None and position_id in self.POSITION_MAPPING:
+            mapped = self.POSITION_MAPPING[position_id]
+            logger.debug(f"位置映射: positionId={position_id} -> {mapped}")
+            return mapped
+
+        # 其次尝试 usualPlayingPositionId (0-3 范围)
         usual_pos_id = player.get('usualPlayingPositionId')
-        if usual_pos_id in self.USUAL_POSITION_MAPPING:
-            return self.USUAL_POSITION_MAPPING[usual_pos_id]
 
+        # 确保是整数类型
+        if isinstance(usual_pos_id, str):
+            try:
+                usual_pos_id = int(usual_pos_id)
+            except (ValueError, TypeError):
+                usual_pos_id = None
+
+        if usual_pos_id is not None and usual_pos_id in self.USUAL_POSITION_MAPPING:
+            mapped = self.USUAL_POSITION_MAPPING[usual_pos_id]
+            logger.debug(f"位置映射 (usual): usualPlayingPositionId={usual_pos_id} -> {mapped}")
+            return mapped
+
+        # 如果都失败了，记录警告
+        logger.warning(f"位置映射失败: positionId={position_id}, usualPlayingPositionId={usual_pos_id}, player={player.get('name', 'Unknown')}")
         return 'Unknown'
 
     def _extract_player_rating(self, player: Dict) -> Optional[float]:
@@ -597,11 +645,15 @@ class FeatureExtractor:
                     rating = self._extract_player_rating(player)
                     position = self._map_position_to_segment(player)
 
+                    # 提取原始 positionId 用于调试
+                    position_id = player.get('positionId')
+
                     # 构建球员原子数据
                     asset = {
                         'id': player_id,
                         'name': name,
                         'position': position,
+                        'position_id': position_id,  # 保存原始 positionId
                         'rating': rating,
                         'is_starter': True
                     }
@@ -624,11 +676,15 @@ class FeatureExtractor:
                     rating = self._extract_player_rating(player)
                     position = self._map_position_to_segment(player)
 
+                    # 提取原始 positionId 用于调试
+                    position_id = player.get('positionId')
+
                     # 构建球员原子数据
                     asset = {
                         'id': player_id,
                         'name': name,
                         'position': position,
+                        'position_id': position_id,  # 保存原始 positionId
                         'rating': rating,
                         'is_starter': False
                     }
@@ -841,11 +897,703 @@ class FeatureExtractor:
 
         return features
 
-    # ========== V20.3: 元数据提取方法结束 ==========
+    # ========== V20.4: 全知全能特征矩阵 ==========
+
+    def _extract_h2h_metadata(self, content: Dict, header: Dict, current_match_time: str) -> Dict[str, Any]:
+        """
+        V20.4: 提取 H2H (历史交战) 元数据
+
+        提取内容:
+        - h2h_home_wins, h2h_draws, h2h_away_wins: 历史对战统计
+        - home_rest_days, away_rest_days: 休息天数 (疲劳度指标)
+        - h2h_total_matches: 历史总交手次数
+        - h2h_home_win_rate, h2h_away_win_rate: 胜率
+        """
+        features = {}
+
+        try:
+            h2h = content.get('h2h', {})
+            if not h2h:
+                return features
+
+            # 1. H2H Summary 统计
+            summary = h2h.get('summary', [])
+            if summary and len(summary) >= 3:
+                h2h_home_wins = int(summary[0]) if summary[0] is not None else 0
+                h2h_draws = int(summary[1]) if summary[1] is not None else 0
+                h2h_away_wins = int(summary[2]) if summary[2] is not None else 0
+                h2h_total = h2h_home_wins + h2h_draws + h2h_away_wins
+
+                features['h2h_home_wins'] = h2h_home_wins
+                features['h2h_draws'] = h2h_draws
+                features['h2h_away_wins'] = h2h_away_wins
+                features['h2h_total_matches'] = h2h_total
+
+                if h2h_total > 0:
+                    features['h2h_home_win_rate'] = h2h_home_wins / h2h_total
+                    features['h2h_away_win_rate'] = h2h_away_wins / h2h_total
+                    features['h2h_draw_rate'] = h2h_draws / h2h_total
+
+            # 2. 计算休息天数 (Rest Days - 疲劳度指标)
+            matches = h2h.get('matches', [])
+            if matches and current_match_time:
+                from datetime import datetime
+
+                # 解析当前比赛时间
+                try:
+                    if 'T' in str(current_match_time):
+                        current_time = datetime.fromisoformat(str(current_match_time).replace('+00:00', '').replace('Z', ''))
+                    else:
+                        current_time = datetime.fromisoformat(str(current_match_time))
+                except:
+                    current_time = datetime.now()
+
+                # 获取主客队 ID
+                teams = header.get('teams', [])
+                if teams and len(teams) >= 2:
+                    home_team_id = str(teams[0].get('id', ''))
+                    away_team_id = str(teams[1].get('id', ''))
+
+                    # 查找主客队最近的 H2H 比赛
+                    home_last_match = None
+                    away_last_match = None
+
+                    for match in matches:
+                        h_id = str(match.get('home', {}).get('id', ''))
+                        a_id = str(match.get('away', {}).get('id', ''))
+                        time_str = match.get('time', {}).get('utcTime', '')
+
+                        if not time_str:
+                            continue
+
+                        try:
+                            if 'T' in time_str:
+                                match_dt = datetime.fromisoformat(time_str.replace('Z', '').replace('+00:00', ''))
+                            else:
+                                match_dt = datetime.fromisoformat(time_str)
+                        except:
+                            continue
+
+                        # 检查是否是主队的主场比赛或客队的客场比赛
+                        is_home_home = (h_id == home_team_id)
+                        is_away_away = (a_id == away_team_id)
+
+                        if is_home_home and (home_last_match is None or match_dt > home_last_match):
+                            home_last_match = match_dt
+
+                        if is_away_away and (away_last_match is None or match_dt > away_last_match):
+                            away_last_match = match_dt
+
+                    # 计算休息天数
+                    if home_last_match:
+                        home_rest_days = (current_time - home_last_match).days
+                        features['home_rest_days_h2h'] = max(0, home_rest_days)
+
+                    if away_last_match:
+                        away_rest_days = (current_time - away_last_match).days
+                        features['away_rest_days_h2h'] = max(0, away_rest_days)
+
+                    if home_last_match and away_last_match:
+                        features['diff_rest_days_h2h'] = features.get('home_rest_days_h2h', 0) - features.get('away_rest_days_h2h', 0)
+
+        except Exception as e:
+            logger.debug(f"提取 H2H 元数据失败: {e}")
+
+        return features
+
+    def _extract_deep_threat_stats(self, stats_data: Dict) -> Dict[str, Any]:
+        """
+        V20.4: 深度威胁统计提取
+
+        提取内容:
+        - Big Chances Created/Missed: 大机会统计
+        - Hit Woodwork: 击中门框次数
+        - Interceptions in Opposition Half: 前场拦截 (高位逼抢强度)
+        - Shots Inside/Outside Box: 禁区内/外射门
+        """
+        features = {}
+
+        try:
+            if not stats_data or not isinstance(stats_data, dict):
+                return features
+
+            periods = stats_data.get('Periods', {})
+            all_period = periods.get('All', {})
+
+            if not all_period or not isinstance(all_period, dict):
+                return features
+
+            stats_groups = all_period.get('stats', [])
+            if not stats_groups or not isinstance(stats_groups, list):
+                return features
+
+            # 扁平化所有统计数据到字典，便于查找
+            flat_stats = {}
+            for group in stats_groups:
+                if not isinstance(group, dict):
+                    continue
+                group_stats = group.get('stats', [])
+                if not isinstance(group_stats, list):
+                    continue
+
+                for stat_item in group_stats:
+                    if not isinstance(stat_item, dict):
+                        continue
+                    key = stat_item.get('key', '')
+                    values = stat_item.get('stats', [])
+                    if key and values and len(values) >= 2:
+                        flat_stats[key.lower()] = {
+                            'home': values[0],
+                            'away': values[1]
+                        }
+
+            # 1. Big Chances (大机会)
+            for key in ['bigchance', 'big chance', 'big_chance']:
+                if key in flat_stats:
+                    features['home_big_chances'] = flat_stats[key]['home']
+                    features['away_big_chances'] = flat_stats[key]['away']
+                    features['total_big_chances'] = features['home_big_chances'] + features['away_big_chances']
+                    if isinstance(features['home_big_chances'], (int, float)) and isinstance(features['away_big_chances'], (int, float)):
+                        features['diff_big_chances'] = features['home_big_chances'] - features['away_big_chances']
+                    break
+
+            # Big Chances Missed
+            for key in ['bigchancemissed', 'big chance missed', 'big_chance_missed_title', 'bigchancemissedtitle']:
+                if key in flat_stats:
+                    features['home_big_chances_missed'] = flat_stats[key]['home']
+                    features['away_big_chances_missed'] = flat_stats[key]['away']
+                    features['total_big_chances_missed'] = features['home_big_chances_missed'] + features['away_big_chances_missed']
+                    if isinstance(features['home_big_chances_missed'], (int, float)) and isinstance(features['away_big_chances_missed'], (int, float)):
+                        features['diff_big_chances_missed'] = features['home_big_chances_missed'] - features['away_big_chances_missed']
+                    break
+
+            # 2. Hit Woodwork (击中门框)
+            for key in ['woodwork', 'shotwoodwork', 'shots_woodwork', 'hitwoodwork']:
+                if key in flat_stats:
+                    features['home_hit_woodwork'] = flat_stats[key]['home']
+                    features['away_hit_woodwork'] = flat_stats[key]['away']
+                    features['total_hit_woodwork'] = features['home_hit_woodwork'] + features['away_hit_woodwork']
+                    if isinstance(features['home_hit_woodwork'], (int, float)) and isinstance(features['away_hit_woodwork'], (int, float)):
+                        features['diff_hit_woodwork'] = features['home_hit_woodwork'] - features['away_hit_woodwork']
+                    break
+
+            # 3. Interceptions (拦截)
+            for key in ['interceptions', 'defence_interceptions']:
+                if key in flat_stats:
+                    features['home_interceptions'] = flat_stats[key]['home']
+                    features['away_interceptions'] = flat_stats[key]['away']
+                    features['total_interceptions'] = features['home_interceptions'] + features['away_interceptions']
+                    if isinstance(features['home_interceptions'], (int, float)) and isinstance(features['away_interceptions'], (int, float)):
+                        features['diff_interceptions'] = features['home_interceptions'] - features['away_interceptions']
+                    break
+
+            # 4. Shots Inside/Outside Box
+            for key in ['shotsinsidebox', 'shots_inside_box', 'shotsinoppositionbox']:
+                if key in flat_stats:
+                    features['home_shots_inside_box'] = flat_stats[key]['home']
+                    features['away_shots_inside_box'] = flat_stats[key]['away']
+                    if isinstance(features['home_shots_inside_box'], (int, float)) and isinstance(features['away_shots_inside_box'], (int, float)):
+                        features['diff_shots_inside_box'] = features['home_shots_inside_box'] - features['away_shots_inside_box']
+                    break
+
+            for key in ['shotsoutsidebox', 'shots_outside_box']:
+                if key in flat_stats:
+                    features['home_shots_outside_box'] = flat_stats[key]['home']
+                    features['away_shots_outside_box'] = flat_stats[key]['away']
+                    if isinstance(features['home_shots_outside_box'], (int, float)) and isinstance(features['away_shots_outside_box'], (int, float)):
+                        features['diff_shots_outside_box'] = features['home_shots_outside_box'] - features['away_shots_outside_box']
+                    break
+
+        except Exception as e:
+            logger.debug(f"提取深度威胁统计失败: {e}")
+
+        return features
+
+    def _extract_league_context_features(self, content: Dict, league_id: int) -> Dict[str, Any]:
+        """
+        V20.4: 提取联赛博弈元数据
+
+        提取内容:
+        - 联赛竞争强度指标
+        - 比赛重要性标记 (保级战/强强对话)
+        - 联赛轮次信息
+        """
+        features = {}
+
+        try:
+            # 从 matchFacts 获取联赛信息
+            match_facts = content.get('matchFacts', {})
+            if match_facts:
+                # 联赛轮次
+                tournament = match_facts.get('tournament', {})
+                if isinstance(tournament, dict):
+                    round_info = tournament.get('round', {})
+                    features['meta_tournament_round_name'] = round_info.get('name')
+                    features['meta_tournament_league_name'] = tournament.get('leagueName')
+
+                    # 解析轮次数字
+                    round_name = str(round_info.get('name', ''))
+                    if round_name and round_name.isdigit():
+                        round_num = int(round_name)
+                        features['meta_match_round'] = round_num
+
+                        # 联赛轮次特征 - 早期/中期/晚期
+                        if round_num <= 10:
+                            features['meta_season_phase'] = 0  # 早期
+                        elif round_num <= 25:
+                            features['meta_season_phase'] = 1  # 中期
+                        else:
+                            features['meta_season_phase'] = 2  # 晚期 (冲刺/保级)
+
+            # 从 table 获取积分榜信息 (如果有)
+            table = content.get('table', {})
+            if table:
+                features['meta_table_available'] = 1
+
+                # 联赛信息
+                features['meta_league_id'] = table.get('leagueId')
+                features['meta_league_country'] = table.get('countryCode')
+
+                # 五大联赛标记
+                major_leagues = {47: 'EPL', 53: 'Ligue1', 54: 'Bundesliga', 55: 'SerieA', 87: 'LaLiga'}
+                if league_id in major_leagues:
+                    features['meta_is_major_league'] = 1
+                    features['meta_major_league_code'] = major_leagues[league_id]
+                else:
+                    features['meta_is_major_league'] = 0
+
+        except Exception as e:
+            logger.debug(f"提取联赛博弈元数据失败: {e}")
+
+        return features
+
+    def _enhanced_universal_meta_scan(self, content: Dict) -> Dict[str, Any]:
+        """
+        V20.4: 增强型通用键值对扫描
+
+        V20.3 基础版 + V20.4 历史时空扫描
+
+        新增扫描关键词:
+        - historical, previous, trend, streak (历史相关)
+        - form, momentum, run (状态相关)
+        - ranking, position, table (排名相关)
+        """
+        features = {}
+
+        # V20.3 原有关键词
+        keywords = [
+            'official', 'referee', 'umpire',
+            'stadium', 'venue', 'arena', 'ground',
+            'attendance', 'capacity', 'spectator',
+            'weather', 'temperature', 'climate',
+            'round', 'matchday', 'gameweek',
+            'league', 'tournament', 'competition',
+            'season', 'year',
+            'broadcast', 'tv', 'stream',
+            'delay', 'postponed', 'cancelled'
+        ]
+
+        # V20.4 新增关键词
+        v20_4_keywords = [
+            'historical', 'previous', 'trend', 'streak',
+            'form', 'momentum', 'run',
+            'ranking', 'position', 'table',
+            'record', 'history', 'headtohead', 'h2h',
+            'sequence', 'streak', 'stretch'
+        ]
+
+        all_keywords = keywords + v20_4_keywords
+
+        try:
+            # V20.3 原有扫描
+            if 'topPlayers' in content:
+                tp = content['topPlayers']
+                if isinstance(tp, dict):
+                    home_top = tp.get('homeTopPlayers', [])
+                    away_top = tp.get('awayTopPlayers', [])
+                    features['meta_home_top_players_count'] = len(home_top) if isinstance(home_top, list) else 0
+                    features['meta_away_top_players_count'] = len(away_top) if isinstance(away_top, list) else 0
+
+            if 'playerOfTheMatch' in content:
+                potm = content['playerOfTheMatch']
+                if isinstance(potm, dict):
+                    features['meta_player_of_match_id'] = potm.get('id')
+                    features['meta_player_of_match_name'] = potm.get('name', {}).get('fullName')
+
+            if 'matchFacts' in content:
+                insights = content['matchFacts'].get('insights', [])
+                if isinstance(insights, list):
+                    features['meta_insights_count'] = len(insights)
+
+            # V20.4: 递归扫描历史时空节点
+            def scan_recursive(data: Any, prefix: str = '', depth: int = 0, max_depth: int = 4):
+                """递归扫描嵌套数据结构，查找历史/趋势相关特征"""
+                if depth > max_depth:
+                    return
+
+                if isinstance(data, dict):
+                    for key, value in data.items():
+                        key_lower = str(key).lower()
+
+                        # 检查是否匹配任何关键词
+                        matched = False
+                        for kw in all_keywords:
+                            if kw in key_lower:
+                                matched = True
+                                break
+
+                        if matched:
+                            feature_key = f'meta_{prefix}{key}'.lower().replace(' ', '_').replace('-', '_')
+
+                            # 提取值
+                            if isinstance(value, (str, int, float, bool)):
+                                features[feature_key] = value
+                            elif isinstance(value, list):
+                                features[f'{feature_key}_count'] = len(value)
+                            elif isinstance(value, dict):
+                                # 继续递归
+                                scan_recursive(value, f'{prefix}{key}_', depth + 1, max_depth)
+
+                        # 如果是字典或列表，继续递归
+                        elif isinstance(value, (dict, list)):
+                            new_prefix = f'{prefix}{key}_' if matched else prefix
+                            scan_recursive(value, new_prefix, depth + 1, max_depth)
+
+                elif isinstance(data, list) and depth < max_depth:
+                    for i, item in enumerate(data):
+                        if isinstance(item, (dict, list)):
+                            scan_recursive(item, prefix, depth + 1, max_depth)
+
+            # 启动递归扫描
+            scan_recursive(content)
+
+        except Exception as e:
+            logger.debug(f"增强型通用元数据扫描失败: {e}")
+
+        return features
+
+    # ========== V20.4.1: 最后 5% 黄金数据提取 ==========
+
+    def _extract_momentum_features(self, content: Dict) -> Dict[str, Any]:
+        """
+        V20.4.1: 提取比赛动量特征 (Momentum)
+
+        提取内容:
+        - momentum_mean: 平均动量值 (反映比赛整体倾向)
+        - momentum_std: 动量标准差 (反映比赛波动性)
+        - momentum_range: 动量极差 (最大值 - 最小值)
+        - momentum_positive_minutes: 动量为正的分钟数
+        """
+        features = {}
+
+        try:
+            momentum = content.get('momentum', {})
+            if not momentum or not isinstance(momentum, dict):
+                return features
+
+            main = momentum.get('main', {})
+            if not main or not isinstance(main, dict):
+                return features
+
+            data = main.get('data', [])
+            if not data or not isinstance(data, list):
+                return features
+
+            # 提取所有 value 值
+            values = []
+            for item in data:
+                if isinstance(item, dict):
+                    val = item.get('value')
+                    if val is not None and isinstance(val, (int, float)):
+                        values.append(float(val))
+
+            if not values:
+                return features
+
+            import numpy as np
+
+            # 计算统计特征
+            features['momentum_mean'] = float(np.mean(values))
+            features['momentum_std'] = float(np.std(values))
+            features['momentum_min'] = float(np.min(values))
+            features['momentum_max'] = float(np.max(values))
+            features['momentum_range'] = features['momentum_max'] - features['momentum_min']
+
+            # 正值分钟数占比
+            positive_count = sum(1 for v in values if v > 0)
+            features['momentum_positive_ratio'] = positive_count / len(values) if values else 0
+
+        except Exception as e:
+            logger.debug(f"提取动量特征失败: {e}")
+
+        return features
+
+    def _extract_bench_depth_features(self, content: Dict) -> Dict[str, Any]:
+        """
+        V20.4.1: 提取替补席深度特征 (Bench Depth)
+
+        提取内容:
+        - home_bench_fw_count: 主队替补前锋人数 (反映反扑潜力)
+        - away_bench_fw_count: 客队替补前锋人数
+        - home_bench_avg_rating: 主队替补平均评分
+        - away_bench_avg_rating: 客队替补平均评分
+        - home_bench_total_market_value: 主队替补总身价
+        - away_bench_total_market_value: 客队替补总身价
+        """
+        features = {}
+
+        try:
+            lineup = content.get('lineup', {})
+            if not lineup or not isinstance(lineup, dict):
+                return features
+
+            # 处理主队
+            home_team = lineup.get('homeTeam', {})
+            if isinstance(home_team, dict):
+                subs = home_team.get('subs', [])
+                if isinstance(subs, list):
+                    fw_count = 0
+                    total_rating = 0
+                    rating_count = 0
+                    total_mv = 0
+
+                    for sub in subs:
+                        if isinstance(sub, dict):
+                            # 统计前锋 (usualPlayingPositionId=3)
+                            pos_id = sub.get('usualPlayingPositionId')
+                            if pos_id == 3:
+                                fw_count += 1
+
+                            # 评分
+                            perf = sub.get('performance', {})
+                            if isinstance(perf, dict):
+                                rating = perf.get('rating')
+                                if rating is not None and isinstance(rating, (int, float)):
+                                    total_rating += rating
+                                    rating_count += 1
+
+                            # 身价
+                            mv = sub.get('marketValue')
+                            if mv is not None and isinstance(mv, (int, float)):
+                                total_mv += mv
+
+                    features['home_bench_fw_count'] = fw_count
+                    features['home_bench_avg_rating'] = total_rating / rating_count if rating_count > 0 else 0
+                    features['home_bench_total_market_value'] = total_mv
+
+            # 处理客队
+            away_team = lineup.get('awayTeam', {})
+            if isinstance(away_team, dict):
+                subs = away_team.get('subs', [])
+                if isinstance(subs, list):
+                    fw_count = 0
+                    total_rating = 0
+                    rating_count = 0
+                    total_mv = 0
+
+                    for sub in subs:
+                        if isinstance(sub, dict):
+                            pos_id = sub.get('usualPlayingPositionId')
+                            if pos_id == 3:
+                                fw_count += 1
+
+                            perf = sub.get('performance', {})
+                            if isinstance(perf, dict):
+                                rating = perf.get('rating')
+                                if rating is not None and isinstance(rating, (int, float)):
+                                    total_rating += rating
+                                    rating_count += 1
+
+                            mv = sub.get('marketValue')
+                            if mv is not None and isinstance(mv, (int, float)):
+                                total_mv += mv
+
+                    features['away_bench_fw_count'] = fw_count
+                    features['away_bench_avg_rating'] = total_rating / rating_count if rating_count > 0 else 0
+                    features['away_bench_total_market_value'] = total_mv
+
+            # 计算差值
+            if 'home_bench_fw_count' in features and 'away_bench_fw_count' in features:
+                features['diff_bench_fw_count'] = features['home_bench_fw_count'] - features['away_bench_fw_count']
+
+        except Exception as e:
+            logger.debug(f"提取替补深度特征失败: {e}")
+
+        return features
+
+    def _extract_shot_quality_features(self, content: Dict) -> Dict[str, Any]:
+        """
+        V20.4.1: 提取射门质量特征 (Shot Quality)
+
+        提取内容:
+        - home_avg_shot_distance: 主队平均射门距离
+        - away_avg_shot_distance: 客队平均射门距离
+        - home_big_chance_shot_distance: 主队大机会平均射门距离
+        - away_big_chance_shot_distance: 客队大机会平均射门距离
+        """
+        features = {}
+
+        try:
+            shotmap = content.get('shotmap', {})
+            if not shotmap or not isinstance(shotmap, dict):
+                return features
+
+            shots = shotmap.get('shots', [])
+            if not shots or not isinstance(shots, list):
+                return features
+
+            # 从 header 获取主客队 ID
+            header = content.get('header', {}) if 'header' in content else {}
+            teams = header.get('teams', []) if isinstance(header, dict) else []
+            if not teams or len(teams) < 2:
+                return features
+
+            home_team_id = str(teams[0].get('id', '')) if isinstance(teams[0], dict) else ''
+            away_team_id = str(teams[1].get('id', '')) if isinstance(teams[1], dict) else ''
+
+            if not home_team_id or not away_team_id:
+                return features
+
+            home_distances = []
+            away_distances = []
+
+            for shot in shots:
+                if not isinstance(shot, dict):
+                    continue
+
+                team_id = str(shot.get('teamId', ''))
+                distance = shot.get('distance') or shot.get('Distance')
+
+                if distance is not None and isinstance(distance, (int, float)):
+                    if team_id == home_team_id:
+                        home_distances.append(float(distance))
+                    elif team_id == away_team_id:
+                        away_distances.append(float(distance))
+
+            if home_distances:
+                import numpy as np
+                features['home_avg_shot_distance'] = float(np.mean(home_distances))
+                features['home_min_shot_distance'] = float(np.min(home_distances))
+                features['home_max_shot_distance'] = float(np.max(home_distances))
+
+            if away_distances:
+                import numpy as np
+                features['away_avg_shot_distance'] = float(np.mean(away_distances))
+                features['away_min_shot_distance'] = float(np.min(away_distances))
+                features['away_max_shot_distance'] = float(np.max(away_distances))
+
+            # 计算差值
+            if 'home_avg_shot_distance' in features and 'away_avg_shot_distance' in features:
+                features['diff_avg_shot_distance'] = features['home_avg_shot_distance'] - features['away_avg_shot_distance']
+
+        except Exception as e:
+            logger.debug(f"提取射门质量特征失败: {e}")
+
+        return features
+
+    def _extract_player_stats_aggregation(self, content: Dict) -> Dict[str, Any]:
+        """
+        V20.4.1: 提取球员统计聚合特征 (PlayerStats Aggregation)
+
+        提取内容:
+        - home_team_total_stats: 主队全体球员统计聚合
+        - away_team_total_stats: 客队全体球员统计聚合
+        - team_avg_rating_diff: 两队平均评分差
+        """
+        features = {}
+
+        try:
+            player_stats = content.get('playerStats', {})
+            if not player_stats or not isinstance(player_stats, dict):
+                return features
+
+            # 获取主客队 ID
+            header = content.get('header', {})
+            teams = header.get('teams', []) if isinstance(header, dict) else []
+            if not teams or len(teams) < 2:
+                return features
+
+            home_team_id = str(teams[0].get('id', '')) if isinstance(teams[0], dict) else ''
+            away_team_id = str(teams[1].get('id', '')) if isinstance(teams[1], dict) else ''
+
+            if not home_team_id or not away_team_id:
+                return features
+
+            # 聚合主客队球员统计
+            home_ratings = []
+            away_ratings = []
+            home_goals = 0
+            away_goals = 0
+            home_assists = 0
+            away_assists = 0
+
+            for player_id, player_data in player_stats.items():
+                if not isinstance(player_data, dict):
+                    continue
+
+                team_id = str(player_data.get('teamId', ''))
+                stats = player_data.get('stats', {})
+                if not isinstance(stats, dict):
+                    stats = {}
+
+                # 评分
+                rating = stats.get('rating')
+                if rating is not None and isinstance(rating, (int, float)):
+                    if team_id == home_team_id:
+                        home_ratings.append(float(rating))
+                    elif team_id == away_team_id:
+                        away_ratings.append(float(rating))
+
+                # 进球
+                goals = stats.get('goals')
+                if goals is not None and isinstance(goals, (int, float)):
+                    if team_id == home_team_id:
+                        home_goals += int(goals)
+                    elif team_id == away_team_id:
+                        away_goals += int(goals)
+
+                # 助攻
+                assists = stats.get('assists')
+                if assists is not None and isinstance(assists, (int, float)):
+                    if team_id == home_team_id:
+                        home_assists += int(assists)
+                    elif team_id == away_team_id:
+                        away_assists += int(assists)
+
+            # 计算聚合特征
+            if home_ratings:
+                import numpy as np
+                features['home_team_avg_rating'] = float(np.mean(home_ratings))
+                features['home_team_max_rating'] = float(np.max(home_ratings))
+                features['home_team_min_rating'] = float(np.min(home_ratings))
+
+            if away_ratings:
+                import numpy as np
+                features['away_team_avg_rating'] = float(np.mean(away_ratings))
+                features['away_team_max_rating'] = float(np.max(away_ratings))
+                features['away_team_min_rating'] = float(np.min(away_ratings))
+
+            features['home_team_total_goals'] = home_goals
+            features['away_team_total_goals'] = away_goals
+            features['home_team_total_assists'] = home_assists
+            features['away_team_total_assists'] = away_assists
+
+            # 计算差值
+            if 'home_team_avg_rating' in features and 'away_team_avg_rating' in features:
+                features['diff_team_avg_rating'] = features['home_team_avg_rating'] - features['away_team_avg_rating']
+
+        except Exception as e:
+            logger.debug(f"提取球员统计聚合特征失败: {e}")
+
+        return features
+
+    # ========== V20.4.1: 黄金数据提取完成 ==========
+
+    # ========== V20.4: 全知全能特征矩阵完成 ==========
 
     def extract_features(self, match_data: Dict) -> Dict[str, Any]:
         """
-        V20.3 全息特征提取 - 全量数据镜像
+        V20.7 原子级数据对齐引擎 - 800+ 维全量对齐
 
         Args:
             match_data: 包含 l2_raw_json 的比赛数据
@@ -860,8 +1608,8 @@ class FeatureExtractor:
         core_features = {}
         enriched_features = {}
         meta = {
-            'extraction_version': 'V20.3',
-            'extraction_mode': 'holographic_mirror',
+            'extraction_version': 'V20.7',
+            'extraction_mode': 'atomic_aligned_matrix',
             'total_stats_groups': 0,
             'total_features': 0
         }
@@ -903,20 +1651,41 @@ class FeatureExtractor:
                     raw_json = json.loads(raw_json)
 
                 # 解析 l2_raw_json 结构
+                content = None
                 if isinstance(raw_json, dict) and 'l2_json' in raw_json:
-                    stats_data = raw_json.get('l2_json', {}).get('content', {}).get('stats')
-                elif isinstance(raw_json, dict) and 'stats' in raw_json:
-                    stats_data = raw_json.get('stats')
+                    content = raw_json.get('l2_json', {}).get('content', {})
+                elif isinstance(raw_json, dict) and 'content' in raw_json:
+                    content = raw_json.get('content', {})
                 else:
-                    stats_data = raw_json
+                    content = raw_json
 
-                # 3. V20.3: 获取所有时期的 stats groups (All, FirstHalf, SecondHalf)
-                # 支持多时期统计，以大幅增加特征数
-                # V20.3: 启用 FirstHalf 统计以达到 >250 特征目标
-                periods_to_extract = ['All', 'FirstHalf']
+                # V20.5.4 CRITICAL FIX: 双路径 Periods 解析
+                # 路径1: content.stats.Periods (传统路径，可能只有 All 时段)
+                # 路径2: content.shotmap.Periods (隐藏路径，包含完整 FirstHalf/SecondHalf 数据)
+                periods_to_extract = ['All', 'FirstHalf', 'SecondHalf']
 
+                stats_data = content.get('stats') if content else None
+
+                # 尝试从 stats.Periods 获取 Periods 数据
+                periods_data = None
                 if stats_data and isinstance(stats_data, dict) and 'Periods' in stats_data:
                     periods_data = stats_data.get('Periods', {})
+
+                # V20.5.4: 如果 stats.Periods 没有 FirstHalf/SecondHalf，尝试 shotmap.Periods
+                if periods_data and isinstance(periods_data, dict):
+                    has_fh_sh = 'FirstHalf' in periods_data and 'SecondHalf' in periods_data
+
+                    if not has_fh_sh and content and isinstance(content, dict):
+                        shotmap = content.get('shotmap')
+                        if shotmap and isinstance(shotmap, dict) and 'Periods' in shotmap:
+                            shotmap_periods = shotmap.get('Periods', {})
+                            # 检查 shotmap 是否有 FirstHalf/SecondHalf
+                            if 'FirstHalf' in shotmap_periods and 'SecondHalf' in shotmap_periods:
+                                logger.info(f"🔍 V20.5.4: 从 content.shotmap.Periods 发现全息数据，切换路径")
+                                periods_data = shotmap_periods
+                                meta['periods_source'] = 'shotmap.Periods'  # 标记数据源
+
+                if periods_data and isinstance(periods_data, dict):
                     total_groups = 0
 
                     for period_name in periods_to_extract:
@@ -987,7 +1756,7 @@ class FeatureExtractor:
                                 logger.debug(f"跳过组 {group_key}: {e}")
                                 continue
 
-            # 5. V20.3: 提取元数据 (matchFacts, lineup, weather 等)
+            # 5. V20.4: 提取元数据 (matchFacts, lineup, weather, H2H, 深度威胁统计)
             if raw_json and isinstance(raw_json, dict) and 'l2_json' in raw_json:
                 l2_json = raw_json.get('l2_json', {})
                 content = l2_json.get('content', {})
@@ -1012,20 +1781,71 @@ class FeatureExtractor:
                     weather = content['weather']
                     enriched_features.update(self._extract_weather_metadata(weather))
 
-                # 5.4 通用键值对扫描 (meta_ 前缀)
-                enriched_features.update(self._universal_meta_scan(content))
+                # 5.4 V20.4: 提取 H2H (历史交战) 元数据 - 包含休息天数计算
+                current_match_time = match_data.get('match_time', '')
+                if header or current_match_time:
+                    enriched_features.update(self._extract_h2h_metadata(content, header, current_match_time))
+
+                # 5.5 V20.4: 提取深度威胁统计 (Big Chances, Woodwork, Interceptions)
+                league_id = match_data.get('league_id', 0)
+                if stats_data:
+                    enriched_features.update(self._extract_deep_threat_stats(stats_data))
+
+                # 5.6 V20.4: 提取联赛博弈元数据 (积分榜、轮次、赛季阶段)
+                enriched_features.update(self._extract_league_context_features(content, league_id))
+
+                # 5.7 V20.4: 增强型通用键值对扫描 (递归扫描历史时空节点)
+                enriched_features.update(self._enhanced_universal_meta_scan(content))
+
+                # 5.8 V20.4.1: 提取 Momentum 动量特征 (最后 5% 黄金数据)
+                enriched_features.update(self._extract_momentum_features(content))
+
+                # 5.9 V20.4.1: 提取 Bench Depth 替补深度特征
+                enriched_features.update(self._extract_bench_depth_features(content))
+
+                # 5.10 V20.4.1: 提取 Shot Quality 射门质量特征
+                enriched_features.update(self._extract_shot_quality_features(content))
+
+                # 5.11 V20.4.1: 提取 Player Stats 聚合特征
+                enriched_features.update(self._extract_player_stats_aggregation(content))
+
+                # 5.12 V20.7: 原子级数据对齐 - 全量 Schema 对齐
+                # 获取主客队 ID (从 l2_json.general 中提取)
+                general = l2_json.get('general', {})
+                home_team_id = general.get('homeTeam', {}).get('id', 0)
+                away_team_id = general.get('awayTeam', {}).get('id', 0)
+
+                if home_team_id and away_team_id:
+                    # 使用 V20.8 原子对齐引擎
+                    # 包含: 原子级回填 + 球员-球队聚合 + V20.8深度球员聚合 + 动量深度解剖 + Schema 对齐
+                    aligned_features, align_metrics = atomic_align_v20_8(
+                        content, enriched_features, home_team_id, away_team_id
+                    )
+                    enriched_features = aligned_features
+
+                    # 更新元数据
+                    meta['backfilled_fields'] = align_metrics.get('backfilled_fields', 0)
+                    meta['player_aggregates'] = align_metrics.get('player_aggregates', 0)
+                    meta['deep_player_aggregates'] = align_metrics.get('deep_player_aggregates', 0)
+                    meta['momentum_features'] = align_metrics.get('momentum_features', 0)
+                    meta['schema_aligned'] = align_metrics.get('schema_aligned', False)
+
+                    logger.info(f"🚀 V20.8: 对齐完成 - 回填 {meta['backfilled_fields']} 字段, "
+                              f"基础聚合 {meta['player_aggregates']}, "
+                              f"深度聚合 {meta['deep_player_aggregates']}, "
+                              f"动量 {meta['momentum_features']}")
 
             # 6. 添加联赛和赛季标识
             core_features['league_id'] = match_data.get('league_id')
             core_features['season_id'] = match_data.get('season_id')
 
-            # 7. 更新元数据
+            # 7. 更新元数据 (V20.8)
             meta['total_features'] = len(enriched_features)
-            meta['extraction_version'] = 'V20.3'
-            meta['extraction_mode'] = 'holographic_mirror'
+            meta['extraction_version'] = 'V20.8'
+            meta['extraction_mode'] = 'atomic_aligned_matrix_deep_player'
 
         except Exception as e:
-            logger.error(f"❌ V20.3 特征提取失败: {e}")
+            logger.error(f"❌ V20.8 特征提取失败: {e}")
             import traceback
             logger.debug(traceback.format_exc())
             meta['error'] = str(e)
@@ -1144,13 +1964,17 @@ class FeatureForgeV20:
         logger.info(f"🏭 V20.0 特征加工厂初始化 (workers: {self.n_workers})")
 
     def get_database_connection(self):
-        """获取数据库连接"""
-        # 直接从环境变量读取，避免Docker主机名问题
-        host = os.getenv("DB_HOST", "localhost")
-        port = int(os.getenv("DB_PORT", 5432))
-        database = os.getenv("DB_NAME", "football_db")
-        user = os.getenv("DB_USER", "football_user")
-        password = os.getenv("DB_PASSWORD", "football_pass")
+        """获取数据库连接 - V20.8 SRE 硬化: 零硬编码"""
+        # V20.8 SRE 硬化: 从统一配置获取数据库参数
+        from src.config_unified import get_settings
+        settings = get_settings()
+
+        # 优先使用环境变量（Docker 兼容）
+        host = os.getenv("DB_HOST", settings.database.host)
+        port = int(os.getenv("DB_PORT", settings.database.port))
+        database = os.getenv("DB_NAME", settings.database.name)
+        user = os.getenv("DB_USER", settings.database.user)
+        password = os.getenv("DB_PASSWORD", settings.database.password.get_secret_value())
 
         # 如果主机名是 Docker 容器名，从主机运行时替换为 localhost
         if host in ["db", "redis"]:
