@@ -62,15 +62,21 @@ class V17MLEngine:
         初始化 ML 引擎
 
         Args:
-            db_config: 数据库配置
+            db_config: 数据库配置（如未提供，从 config_unified 获取）
         """
-        self.db_config = db_config or {
-            'host': 'localhost',
-            'port': 5432,
-            'database': 'football_db',
-            'user': 'football_user',
-            'password': 'football_pass'
-        }
+        if db_config is None:
+            # V20.8 SRE 硬化: 从统一配置获取数据库参数，零硬编码
+            from src.config_unified import get_settings
+            settings = get_settings()
+            db_config = {
+                'host': settings.database.host,
+                'port': settings.database.port,
+                'database': settings.database.name,
+                'user': settings.database.user,
+                'password': settings.database.password.get_secret_value()
+            }
+
+        self.db_config = db_config
 
         self.label_mapping = {'A': 0, 'D': 1, 'H': 2}
         self.reverse_mapping = {0: 'A', 1: 'D', 2: 'H'}

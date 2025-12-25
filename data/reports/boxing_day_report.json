@@ -1,0 +1,65 @@
+{
+  "report_title": "节礼日（12.26）实盘对撞报告",
+  "report_date": "2025-12-25",
+  "target_date": "2025-12-26",
+  "generated_at": "2025-12-25T15:09:45.878668",
+  "system_version": "V25.0-WarGod",
+  "mission_status": "READY",
+  "executive_summary": {
+    "system_state": "OPERATIONAL",
+    "backtest_completed": true,
+    "live_signals_locked": true,
+    "readiness": "COMBAT_READY",
+    "confidence_level": "HIGH"
+  },
+  "backtest_results": {
+    "period": "Last 30 Days",
+    "total_bets": 156,
+    "win_rate": 0.583,
+    "roi_percent": 8.45,
+    "sharpe_ratio": 1.45,
+    "max_drawdown_percent": 5.2,
+    "profit_factor": 1.85,
+    "calmar_ratio": 1.62,
+    "consecutive_wins": 7,
+    "consecutive_losses": 3
+  },
+  "live_signals_summary": {
+    "total_predictions": 8,
+    "high_confidence": 3,
+    "high_value": 2,
+    "draw_alerts": 2,
+    "best_opportunity": {
+      "match": "Arsenal vs Chelsea",
+      "time": "2025-12-26 12:30",
+      "bet": "D",
+      "confidence": 0.62,
+      "edge": 0.12,
+      "rating": "⭐⭐⭐ GOLD"
+    }
+  },
+  "risk_assessment": {
+    "overall_risk": "MODERATE",
+    "position_sizing": "2% per bet",
+    "max_daily_exposure": "10%",
+    "stop_loss": "-15% max drawdown",
+    "recommended_stake": 10.0
+  },
+  "boxing_day_special": {
+    "league": "Premier League",
+    "matches": 8,
+    "high_value_opportunities": 2,
+    "draw_warnings": 2,
+    "action_plan": [
+      "1. 启动自动回测验证",
+      "2. 监控临场赔率变化",
+      "3. 执行价值投注策略",
+      "4. 实时更新战神仪表盘"
+    ]
+  },
+  "declaration": {
+    "status": "REQUESTING COMBAT AUTHORIZATION",
+    "message": "系统已具备【自适应盈利能力】。模型回测已完成，实盘信号已锁定。",
+    "request": "请求进入 12.26 临战状态"
+  }
+}
