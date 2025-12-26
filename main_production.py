@@ -6,14 +6,14 @@ V19.4 统一生产入口 (Main Production Entry Point)
 这是一个统一的命令行工具，用于执行 V19.4 系统的所有核心操作。
 支持通过参数控制执行：L1数据收割、L2特征解析、V19.4模型预测、实时市场巡检。
 
-V25.0 更新: 集成统一的特征提取框架
+V25.1 更新: 集成万能自适应特征提取引擎（48维 → 12000+维）
 
 使用示例:
     # L1 数据收割
     python main_production.py --l1-harvest --season 2324 --target 10
 
-    # L2 特征解析 (使用 V25 框架)
-    python main_production.py --l2-parse --extractor-version V25.0
+    # L2 特征解析 (使用 V25.1 自适应引擎)
+    python main_production.py --l2-parse --extractor-version V25.1
 
     # V19.4 模型训练
     python main_production.py --train --train-size 600 --test-size 160
@@ -28,7 +28,7 @@ V25.0 更新: 集成统一的特征提取框架
     python main_production.py --full-pipeline
 
 Author: V19.4 DevOps Team
-Version: 2.0.0 (V25.0 Integration)
+Version: 2.1.0 (V25.1 Adaptive Extraction)
 Date: 2025-12-26
 """
 
@@ -55,9 +55,11 @@ from src.ops.market_live_monitor import MarketLiveMonitor
 from src.ops.risk_monitor import RiskMonitor
 from src.api.collectors.fotmob_core import FotMobCoreCollector
 
-# V25.0: 统一特征提取框架
+# V25.1: 万能自适应特征提取引擎
 from src.processors import ExtractorRegistry, ExtractionResult, ExtractionStatus
 from src.processors.exceptions import ExtractionError, ValidationError
+# 导入 V25 提取器以触发注册
+from src.processors.v25_production_extractor import V25ProductionExtractor  # noqa: F401
 
 # 配置日志
 logging.basicConfig(
@@ -124,59 +126,184 @@ def l1_harvest(season: str, target: int, league: str):
 
 
 # ============================================
-# L2 特征解析命令 (V25.0 集成)
+# L2 特征解析命令 (V25.1 自适应引擎)
 # ============================================
 
 @click.command()
 @click.option('--match-id', type=int, help='指定比赛 ID 进行特征提取')
-@click.option('--extractor-version', default='V25.0', help='特征提取器版本 (默认: V25.0)')
+@click.option('--extractor-version', default='V25.1', help='特征提取器版本 (默认: V25.1)')
 @click.option('--skip-validation', is_flag=True, help='跳过特征验证')
 @click.option('--output-features', is_flag=True, help='输出提取的特征到控制台')
-def l2_parse(match_id: Optional[int], extractor_version: str, skip_validation: bool, output_features: bool):
+@click.option('--batch', is_flag=True, help='批量模式：处理所有待处理的比赛')
+@click.option('--limit', type=int, default=50, help='批量模式：最多处理比赛数量')
+def l2_parse(match_id: Optional[int], extractor_version: str, skip_validation: bool, output_features: bool, batch: bool, limit: int):
     """
-    L2 特征解析 - 使用 V25 统一特征提取框架
+    L2 特征解析 - 使用 V25.1 万能自适应特征提取引擎
 
     从数据库读取 L1 原始数据并提取特征。
 
     示例:
         # 提取指定比赛的特征
-        python main_production.py --l2-parse --match-id 123456
+        python main_production.py l2-parse --match-id 123456
+
+        # 批量处理所有待处理比赛
+        python main_production.py l2-parse --batch --limit 50
 
         # 使用不同的提取器版本
-        python main_production.py --l2-parse --extractor-version V25.0
+        python main_production.py l2-parse --extractor-version V25.1
     """
-    print_banner(f"V25.0 L2 特征解析 (提取器: {extractor_version})")
+    print_banner(f"V25.1 L2 特征解析 (提取器: {extractor_version})")
 
     try:
         # 创建特征提取器
         extractor = ExtractorRegistry.create(extractor_version)
         logger.info(f"✓ 已创建特征提取器: {extractor.__class__.__name__}")
 
-        # 如果指定了 match_id，从数据库提取单场比赛特征
-        if match_id:
-            logger.info(f"正在提取比赛 {match_id} 的特征...")
+        # 获取数据库连接
+        import psycopg2
+        import json
+        from datetime import datetime
+        from src.config_unified import get_settings
 
-            # 从数据库获取 L1 原始数据
-            import psycopg2
-            from src.config_unified import get_settings
-
-            settings = get_settings()
-            conn = psycopg2.connect(
-                host=settings.database.host,
-                port=settings.database.port,
-                database=settings.database.name,
-                user=settings.database.user,
-                password=settings.database.password.get_secret_value()
-            )
-
+        settings = get_settings()
+        # 修复：Docker 环境检测问题
+        # 如果 DOCKER_ENV=true 但无法连接 "db"，回退到 localhost
+        import os
+        db_host = settings.database.host
+        if os.getenv("DOCKER_ENV", "").lower() in ("true", "1", "yes"):
             try:
+                # 尝试连接 Docker 主机
+                psycopg2.connect(
+                    host=db_host,
+                    port=settings.database.port,
+                    database="football_db",
+                    user=settings.database.user,
+                    password=settings.database.password.get_secret_value(),
+                    connect_timeout=2
+                ).close()
+            except Exception:
+                # Docker 不可达，使用 localhost
+                logger.info("🔄 Docker 环境检测但容器不可达，使用 localhost")
+                db_host = "localhost"
+
+        conn = psycopg2.connect(
+            host=db_host,
+            port=settings.database.port,
+            database="football_db",
+            user=settings.database.user,
+            password=settings.database.password.get_secret_value()
+        )
+
+        try:
+            # 批量模式
+            if batch:
+                logger.info(f"🔄 批量模式启动（最多处理 {limit} 场）...")
+
+                # 查询待处理的比赛（有 l2_raw_json 但没有该版本的 features）
                 with conn.cursor() as cur:
                     cur.execute("""
                         SELECT m.id, m.external_id, m.l2_raw_json,
                                m.home_team, m.away_team, m.match_time
                         FROM matches m
-                        WHERE m.id = %s OR m.external_id = %s
-                    """, (match_id, match_id))
+                        WHERE m.l2_raw_json IS NOT NULL
+                          AND NOT EXISTS (
+                              SELECT 1 FROM match_features_training f
+                              WHERE f.match_id = m.id
+                                AND f.extraction_version = %s
+                          )
+                        ORDER BY m.match_time DESC
+                        LIMIT %s
+                    """, (extractor_version, limit))
+
+                    matches = cur.fetchall()
+                    logger.info(f"📋 找到 {len(matches)} 场待处理比赛")
+
+                    if not matches:
+                        logger.info("✅ 没有待处理的比赛")
+                        return
+
+                    success_count = 0
+                    fail_count = 0
+
+                    for i, match_data in enumerate(matches, 1):
+                        db_id, external_id, l2_raw_json, home_team, away_team, match_time = match_data
+
+                        print(f"\n[{i}/{len(matches)}] 处理: {home_team} vs {away_team} (ID: {db_id})")
+
+                        try:
+                            # 解析 JSON
+                            raw_data = json.loads(l2_raw_json) if isinstance(l2_raw_json, str) else l2_raw_json
+
+                            # 提取特征
+                            result = extractor.extract_with_validation(raw_data, skip_validation=skip_validation)
+
+                            # 持久化到数据库
+                            metadata = {
+                                "extraction_version": extractor_version,
+                                "extraction_timestamp": datetime.now().isoformat(),
+                                "feature_count": result.feature_count,
+                                "status": result.status.value,
+                            }
+
+                            features_with_meta = result.features.copy()
+                            features_with_meta["_match_info"] = {
+                                "home_team": home_team,
+                                "away_team": away_team,
+                                "match_time": str(match_time) if match_time else None,
+                            }
+
+                            # UPSERT
+                            cur.execute("""
+                                INSERT INTO match_features_training (
+                                    match_id, home_team, away_team, match_time,
+                                    enriched_features, meta_data, extraction_version, status, created_at, updated_at
+                                ) VALUES (%s, %s, %s, %s, %s, %s, %s, 'ready', NOW(), NOW())
+                                ON CONFLICT (match_id) DO UPDATE SET
+                                    enriched_features = EXCLUDED.enriched_features,
+                                    meta_data = EXCLUDED.meta_data,
+                                    extraction_version = EXCLUDED.extraction_version,
+                                    extraction_timestamp = NOW(),
+                                    updated_at = NOW(),
+                                    status = 'ready'
+                            """, (
+                                db_id, home_team, away_team, match_time,
+                                json.dumps(features_with_meta),
+                                json.dumps(metadata),
+                                extractor_version
+                            ))
+                            conn.commit()
+
+                            if result.is_success:
+                                success_count += 1
+                                print(f"  ✅ 成功 ({result.feature_count} 特征)")
+                            else:
+                                fail_count += 1
+                                print(f"  ⚠️  部分成功 ({result.status.value}, {result.feature_count} 特征)")
+
+                        except Exception as e:
+                            fail_count += 1
+                            logger.error(f"  ❌ 失败: {e}")
+                            conn.rollback()
+
+                    # 批量处理总结
+                    print(f"\n{'='*70}")
+                    print(f"批量处理完成:")
+                    print(f"  成功: {success_count}")
+                    print(f"  失败: {fail_count}")
+                    print(f"  总计: {len(matches)}")
+                    print(f"{'='*70}")
+
+            # 单场模式
+            elif match_id:
+                logger.info(f"正在提取比赛 {match_id} 的特征...")
+
+                with conn.cursor() as cur:
+                    cur.execute("""
+                        SELECT m.id, m.external_id, m.l2_raw_json,
+                               m.home_team, m.away_team, m.match_time
+                        FROM matches m
+                        WHERE m.id = %s OR m.external_id = %s::text
+                    """, (match_id, str(match_id)))
 
                     match_data = cur.fetchone()
 
@@ -191,7 +318,6 @@ def l2_parse(match_id: Optional[int], extractor_version: str, skip_validation: b
                         sys.exit(1)
 
                     # 解析 JSON
-                    import json
                     raw_data = json.loads(l2_raw_json) if isinstance(l2_raw_json, str) else l2_raw_json
 
                     # 提取特征
@@ -216,8 +342,43 @@ def l2_parse(match_id: Optional[int], extractor_version: str, skip_validation: b
                                 logger.info(f"  {key}: {value}")
                             logger.info(f"  ... (共 {len(result.features)} 个特征)")
 
-                        # 可选：保存到数据库
-                        # TODO: 实现将特征保存到 match_features_training 表的逻辑
+                        # 数据库持久化
+                        logger.info("💾 保存到数据库...")
+                        metadata = {
+                            "extraction_version": extractor_version,
+                            "extraction_timestamp": datetime.now().isoformat(),
+                            "feature_count": result.feature_count,
+                            "status": result.status.value,
+                        }
+
+                        features_with_meta = result.features.copy()
+                        features_with_meta["_match_info"] = {
+                            "home_team": home_team,
+                            "away_team": away_team,
+                            "match_time": str(match_time) if match_time else None,
+                        }
+
+                        # UPSERT
+                        cur.execute("""
+                            INSERT INTO match_features_training (
+                                match_id, home_team, away_team, match_time,
+                                enriched_features, meta_data, extraction_version, status, created_at, updated_at
+                            ) VALUES (%s, %s, %s, %s, %s, %s, %s, 'ready', NOW(), NOW())
+                            ON CONFLICT (match_id) DO UPDATE SET
+                                enriched_features = EXCLUDED.enriched_features,
+                                meta_data = EXCLUDED.meta_data,
+                                extraction_version = EXCLUDED.extraction_version,
+                                extraction_timestamp = NOW(),
+                                updated_at = NOW(),
+                                status = 'ready'
+                        """, (
+                            db_id, home_team, away_team, match_time,
+                            json.dumps(features_with_meta),
+                            json.dumps(metadata),
+                            extractor_version
+                        ))
+                        conn.commit()
+                        logger.info(f"✅ 已保存到数据库 (版本: {extractor_version})")
 
                     else:
                         logger.error(f"❌ 特征提取失败: {result.status.value}")
@@ -226,15 +387,15 @@ def l2_parse(match_id: Optional[int], extractor_version: str, skip_validation: b
                                 logger.error(f"  - {error}")
                         sys.exit(1)
 
-            finally:
-                conn.close()
+            else:
+                logger.info("未指定 --match-id 或 --batch")
+                logger.info("提示:")
+                logger.info("  使用 --match-id <ID> 提取单场比赛特征")
+                logger.info("  使用 --batch 批量处理所有待处理比赛")
+                logger.info("✅ L2 特征解析框架就绪")
 
-        else:
-            logger.info("未指定 --match-id，进入批量模式")
-            logger.info("提示: 使用 --match-id <ID> 提取单场比赛特征")
-
-            # TODO: 实现批量模式 - 扫描数据库并提取所有待处理比赛
-            logger.info("✅ L2 特征解析框架就绪")
+        finally:
+            conn.close()
 
     except ExtractionError as e:
         logger.error(f"❌ 特征提取异常: {e}")

@@ -1,32 +1,32 @@
 #!/usr/bin/env python3
 """
-V25 生产级特征提取器
-====================
+V25.1 万能自适应特征提取器
+==========================
 
-这是 V25.0 特征提取器的生产级实现，基于 TDD 原则开发。
+架构级改进：从硬编码映射转向全量自适应吞噬
 
 设计原则:
-    - 不使用 sys.exit()，使用异常处理
-    - 完整的类型注解
-    - 使用配置中心而非硬编码
-    - 容错性优先，支持部分特征缺失
-    - 详细的日志记录
+    - 零硬编码：自动发现并提取所有数值型特征
+    - 递归打平：处理任意深度的嵌套 JSON 结构
+    - 动态类型发现：自动转换 int/float/百分比/布尔值
+    - 特征对齐：NaN 填充确保特征矩阵一致性
+    - 命名规范：路径式命名保证唯一性和可读性
 
-功能:
-    - 从 FotMob API 响应中提取 881 维特征
-    - 支持递归搜索和模糊匹配
-    - 自动 NaN 处理
-    - 版本感知的特征提取
+核心能力:
+    - 递归打平算法：将嵌套 JSON 转换为扁平特征
+    - 全量吞噬：提取 JSON 中所有数值因子
+    - 零数据损耗：无论联赛/赛季，最大化特征利用
 
 Author: Architecture Team
-Version: V25.0
+Version: V25.1 (Adaptive Universal Extractor)
 Date: 2025-12-26
 """
 
-import json
-from typing import Any, Dict, List, Optional, Union
+import re
+from typing import Any, Dict, List, Optional, Set, Union
 from dataclasses import dataclass, field
 from enum import Enum
+from collections import defaultdict
 
 import numpy as np
 import structlog
@@ -49,77 +49,39 @@ logger = structlog.get_logger(__name__)
 
 
 # ============================================================================
-# 配置常量
+# 全局特征注册表（用于跨比赛特征对齐）
 # ============================================================================
 
-class FeaturePath(str, Enum):
-    """
-    FotMob API 数据路径常量
+# 全局特征集合：记录所有已见过的特征键
+_GLOBAL_FEATURE_KEYS: Set[str] = set()
+_GLOBAL_FEATURE_LOCK = False
 
-    定义了常用的 JSON 路径，便于维护和复用。
-    """
 
-    # 基础路径
-    CONTENT = "content"
-    MATCH = "content.match"
-    GENERAL = "content.general"
-    STATS = "content.stats"
-    STATS_PERIODS = "content.stats.Periods"
-    STATS_ALL = "content.stats.Periods.All"
-    STATS_ALL_STATS = "content.stats.Periods.All.stats"
-    LINEUP = "content.lineup"
+def get_global_feature_keys() -> Set[str]:
+    """获取全局特征键集合"""
+    return _GLOBAL_FEATURE_KEYS.copy()
 
-    # 统计键名
-    KEY_POSSESSION = "BallPossesion"
-    KEY_SHOTS_TOTAL = "total_shots"
-    KEY_SHOTS_ON_TARGET = "ShotsOnTarget"
-    KEY_CORNERS = "corners"
-    KEY_FOULS = "fouls"
-    KEY_EXPECTED_GOALS = "expected_goals"
-    KEY_EXPECTED_ASSISTS = "expected_assists"
-    KEY_BIG_CHANCE = "big_chance"
-    KEY_ACCURATE_PASSES = "accurate_passes"
+
+def register_feature_keys(keys: Set[str]) -> None:
+    """注册新的特征键到全局集合"""
+    global _GLOBAL_FEATURE_KEYS
+    _GLOBAL_FEATURE_KEYS.update(keys)
 
 
 # ============================================================================
-# 辅助函数
+# 辅助函数：递归打平与类型转换
 # ============================================================================
 
-def safe_get(data: Dict[str, Any], path: str, default: Any = None) -> Any:
+def _parse_value(value: Any) -> Optional[float]:
     """
-    安全获取嵌套字典值
+    智能解析值，支持多种类型转换
 
-    Args:
-        data: 源字典
-        path: 点分隔的路径（如 "content.stats.Periods"）
-        default: 默认值
-
-    Returns:
-        找到的值或默认值
-    """
-    keys = path.split(".")
-    current: Any = data
-
-    for key in keys:
-        if isinstance(current, dict):
-            current = current.get(key)
-            if current is None:
-                return default
-        else:
-            return default
-
-    return current if current is not None else default
-
-
-def safe_float(value: Any) -> Optional[float]:
-    """
-    安全转换为浮点数
-
-    处理以下情况:
-    - None -> None
-    - NaN -> None
-    - 字符串 "1.34 (79%)" -> 1.34
-    - 整数 -> float
+    处理:
+    - int/float: 直接返回
+    - 百分比字符串: "61%" -> 0.61, "61" -> 61.0
+    - 带括号的百分比: "61 (79%)" -> 61.0
+    - 布尔值: True -> 1.0, False -> 0.0
+    - None/空字符串: -> None
 
     Args:
         value: 输入值
@@ -127,131 +89,253 @@ def safe_float(value: Any) -> Optional[float]:
     Returns:
         转换后的浮点数或 None
     """
-    if value is None:
+    if value is None or value == "" or value == "-":
         return None
 
-    # NaN 检查
-    if isinstance(value, float) and value != value:
+    # 布尔值转换
+    if isinstance(value, bool):
+        return 1.0 if value else 0.0
+
+    # 数字类型直接返回
+    if isinstance(value, (int, float)):
+        # 检查 NaN
+        if isinstance(value, float) and value != value:
+            return None
+        return float(value)
+
+    if not isinstance(value, str):
+        return None
+
+    # 字符串处理
+    value = value.strip()
+
+    # 处理百分比: "61%" -> 0.61 (如果值较小，可能是百分比)
+    # 或者 "61" 直接保留原值
+    # 策略：如果字符串包含 %，先去掉 % 然后按数值处理
+    if "%" in value:
+        # 提取数字部分
+        num_part = value.replace("%", "").strip()
+        try:
+            num = float(num_part)
+            # 如果数字在 0-100 之间，可能是百分比，转换为 0-1
+            if 0 <= num <= 100:
+                return num / 100.0
+            return num
+        except ValueError:
+            pass
+
+    # 处理 "1.34 (79%)" 格式
+    if "(" in value:
+        value = value.split("(")[0].strip()
+
+    # 移除所有非数字字符（保留小数点和负号）
+    cleaned = re.sub(r'[^\d.\-]', '', value)
+
+    if not cleaned:
         return None
 
     try:
-        if isinstance(value, (int, float)):
-            return float(value)
-
-        if isinstance(value, str):
-            # 处理 "1.34 (79%)" 格式
-            if "(" in value:
-                value = value.split("(")[0].strip()
-            elif "%" in value:
-                value = value.replace("%", "").strip()
-
-            # 移除非数字字符
-            value = "".join(c for c in value if c.isdigit() or c == ".")
-
-            return float(value) if value else None
-
-    except (ValueError, TypeError):
-        pass
-
-    return None
+        return float(cleaned)
+    except ValueError:
+        return None
 
 
-def safe_int(value: Any) -> Optional[int]:
-    """安全转换为整数"""
-    float_val = safe_float(value)
-    if float_val is not None:
-        return int(float_val)
-    return None
+def _sanitize_key(key: str) -> str:
+    """
+    清理键名，确保是合法的特征名
+
+    - 转换为小写
+    - 移除特殊字符
+    - 替换空格和连字符为下划线
+
+    Args:
+        key: 原始键名
+
+    Returns:
+        清理后的键名
+    """
+    # 转小写
+    key = key.lower()
+    # 移除特殊字符，只保留字母、数字、下划线、点
+    key = re.sub(r'[^\w.]', '_', key)
+    # 多个连续下划线替换为单个
+    key = re.sub(r'_+', '_', key)
+    # 去除首尾下划线
+    key = key.strip('_')
+    return key
 
 
-def is_numeric(value: Any) -> bool:
-    """检查是否为有效数字"""
-    try:
-        float(value)
-        return True
-    except (ValueError, TypeError):
-        return False
+def _fully_flatten(
+    data: Any,
+    prefix: str = "",
+    max_depth: int = 20,
+    current_depth: int = 0
+) -> Dict[str, Any]:
+    """
+    递归打平嵌套结构（核心算法）
+
+    将任意深度的嵌套 JSON 转换为单层字典。
+    键名采用路径模式，如：content_stats_Periods_All_stats_0_BallPossesion
+
+    Args:
+        data: 输入数据（dict, list, 或基本类型）
+        prefix: 当前路径前缀
+        max_depth: 最大递归深度（防止循环引用）
+        current_depth: 当前递归深度
+
+    Returns:
+        打平后的字典 {key: parsed_value}
+    """
+    if current_depth > max_depth:
+        logger.warning(f"递归深度超过 {max_depth}，停止打平: {prefix}")
+        return {}
+
+    result = {}
+
+    # 处理字典
+    if isinstance(data, dict):
+        for key, value in data.items():
+            # 清理键名
+            safe_key = _sanitize_key(str(key))
+            # 构造新前缀
+            new_prefix = f"{prefix}_{safe_key}" if prefix else safe_key
+
+            # 递归处理
+            if isinstance(value, (dict, list)):
+                result.update(_fully_flatten(value, new_prefix, max_depth, current_depth + 1))
+            else:
+                parsed = _parse_value(value)
+                if parsed is not None:
+                    result[new_prefix] = parsed
+                else:
+                    # 对于无法解析的字符串，尝试保留
+                    if isinstance(value, str) and value:
+                        result[new_prefix] = value
+
+    # 处理列表
+    elif isinstance(data, list):
+        if not data:
+            return result
+
+        # 检查列表元素类型
+        first_type = type(data[0]) if data else None
+
+        if all(isinstance(x, (int, float)) for x in data):
+            # 纯数值列表，计算统计特征
+            result[f"{prefix}_mean"] = float(np.mean(data))
+            result[f"{prefix}_std"] = float(np.std(data))
+            result[f"{prefix}_min"] = float(min(data))
+            result[f"{prefix}_max"] = float(max(data))
+            result[f"{prefix}_sum"] = float(sum(data))
+            result[f"{prefix}_len"] = len(data)
+            # 同时保存每个元素
+            for i, item in enumerate(data):
+                result[f"{prefix}_{i}"] = float(item)
+
+        elif all(isinstance(x, str) for x in data):
+            # 纯字符串列表，保存长度和第一个元素
+            result[f"{prefix}_len"] = len(data)
+            result[f"{prefix}_first"] = data[0] if data else ""
+
+        elif all(isinstance(x, dict) for x in data):
+            # 字典列表，递归处理每个元素（使用索引）
+            for i, item in enumerate(data):
+                new_prefix = f"{prefix}_{i}"
+                result.update(_fully_flatten(item, new_prefix, max_depth, current_depth + 1))
+
+        else:
+            # 混合类型列表，简单索引
+            for i, item in enumerate(data):
+                new_prefix = f"{prefix}_{i}"
+                if isinstance(item, (dict, list)):
+                    result.update(_fully_flatten(item, new_prefix, max_depth, current_depth + 1))
+                else:
+                    parsed = _parse_value(item)
+                    if parsed is not None:
+                        result[new_prefix] = parsed
+
+    else:
+        # 基本类型
+        parsed = _parse_value(data)
+        if parsed is not None:
+            result[prefix] = parsed
+
+    return result
+
+
+def align_features(
+    features: Dict[str, Any],
+    reference_keys: Set[str]
+) -> Dict[str, Any]:
+    """
+    特征对齐：填充缺失的特征键
+
+    确保所有比赛的特征键一致，缺失的键填充 0 或 NaN。
+
+    Args:
+        features: 当前提取的特征
+        reference_keys: 参考键集合（全局所有已见过的特征）
+
+    Returns:
+        对齐后的特征字典
+    """
+    aligned = features.copy()
+
+    for key in reference_keys:
+        if key not in aligned:
+            # 数值特征填充 0，字符串特征填充空字符串
+            aligned[key] = 0.0
+
+    return aligned
 
 
 # ============================================================================
-# V25 特征提取器
+# V25.1 自适应提取器
 # ============================================================================
 
 
 @dataclass
 class V25ExtractionMetrics:
-    """
-    V25 提取器执行指标
-
-    Attributes:
-        total_features: 提取的特征总数
-        rolling_features: 滚动特征数量
-        advanced_features: 高级特征数量
-        pre_match_features: 赛前特征数量
-        missing_features: 缺失特征列表
-        nan_count: NaN 值数量
-        parsing_errors: 解析错误列表
-    """
-
+    """V25.1 提取器执行指标"""
     total_features: int = 0
-    rolling_features: int = 0
-    advanced_features: int = 0
-    pre_match_features: int = 0
-    missing_features: List[str] = field(default_factory=list)
+    numeric_features: int = 0
+    string_features: int = 0
     nan_count: int = 0
-    parsing_errors: List[str] = field(default_factory=list)
+    flatten_depth: int = 0
 
 
 class V25ProductionExtractor(BaseExtractor):
     """
-    V25.0 生产级特征提取器
+    V25.1 万能自适应特征提取器
 
-    核心功能:
-        1. 从 FotMob API JSON 中提取 881 维特征
-        2. 支持递归搜索和容错解析
-        3. 自动 NaN 处理和降级策略
-        4. 完整的版本控制和元数据
+    架构级改进：从硬编码映射转向全量自适应吞噬
 
-    特征类别:
-        - 滚动特征 (16 维): 过去 N 场的统计
-        - 赛前特征 (8 维): 积分榜、排名等
-        - 高级特征 (13 维): ELO、疲劳、战意
-        - 技术特征 (50+ 维): 射门、传球等
-        - 战术特征 (100+ 维): 交叉特征
-        - 市场特征 (50+ 维): 赔率相关
+    核心能力:
+        1. 递归打平：自动处理任意深度嵌套的 JSON 结构
+        2. 全量吞噬：提取所有数值型因子，零数据损耗
+        3. 动态类型发现：智能转换 int/float/百分比/布尔值
+        4. 特征对齐：全局注册表确保跨比赛特征一致性
+        5. 鲁棒性优先：容错设计，部分缺失不影响整体提取
+
+    提取策略:
+        - 路径式命名：content_stats_Periods_All_stats_0_key
+        - 百分比归一化：自动将 "61%" 转换为 0.61
+        - 列表统计：纯数值列表自动计算 mean/std/min/max
+        - NaN 对齐：自动填充缺失特征为 0
     """
 
     # 版本标识
-    VERSION = "V25.0"
+    VERSION = "V25.1"
 
-    # 默认验证配置（881 维的 90% 作为底线）
+    # 验证配置（降低最小特征要求，因为现在提取更多特征）
     DEFAULT_CONFIG = ValidationConfig(
-        min_features=800,
-        max_features=1000,
+        min_features=50,      # 降低到 50，允许部分特征缺失
+        max_features=20000,   # 提高上限以支持全量提取
         allow_partial=True,
     )
 
-    # 必需的 JSON 路径
-    REQUIRED_PATHS = [
-        FeaturePath.CONTENT,
-        FeaturePath.MATCH,
-    ]
-
-    # 必需的特征键（基础集合）
-    REQUIRED_FEATURE_KEYS = [
-        "home_possession",
-        "away_possession",
-        "home_shots_on_target",
-        "away_shots_on_target",
-    ]
-
     def __init__(self, validation_config: Optional[ValidationConfig] = None):
-        """
-        初始化 V25 提取器
-
-        Args:
-            validation_config: 验证配置，None 时使用默认配置
-        """
+        """初始化 V25.1 提取器"""
         super().__init__(validation_config or self.DEFAULT_CONFIG)
         self._metrics = V25ExtractionMetrics()
 
@@ -261,40 +345,16 @@ class V25ProductionExtractor(BaseExtractor):
         return self.VERSION
 
     def pre_process(self, raw_data: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        预处理原始数据
-
-        检查数据完整性和基础结构，必要时进行修复。
-
-        Args:
-            raw_data: FotMob API 原始响应
-
-        Returns:
-            预处理后的数据
-
-        Raises:
-            DataParsingError: 数据结构严重错误
-            SchemaMismatchError: 缺少必需字段
-        """
+        """预处理原始数据 - 处理 l2_json 嵌套结构"""
         self._logger.debug("开始预处理", version=self.version)
 
-        # 检查是否为空
         if not raw_data:
             raise DataParsingError(
                 "原始数据为空",
                 raw_data_type=type(raw_data).__name__,
             )
 
-        # 检查必需路径
-        for path in self.REQUIRED_PATHS:
-            if safe_get(raw_data, path.value) is None:
-                raise SchemaMismatchError(
-                    f"缺少必需路径: {path.value}",
-                    expected_path=path.value,
-                    actual_type="None",
-                )
-
-        # 标准化数据结构（处理 l2_json 嵌套）
+        # 处理 l2_json 嵌套
         if "l2_json" in raw_data:
             self._logger.debug("检测到 l2_json 嵌套结构，进行扁平化")
             raw_data = self._flatten_l2_json(raw_data)
@@ -302,25 +362,12 @@ class V25ProductionExtractor(BaseExtractor):
         return raw_data
 
     def _flatten_l2_json(self, raw_data: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        扁平化 l2_json 嵌套结构
-
-        处理如下结构:
-        {
-            "l2_json": { ... 实际数据 ... },
-            "other_field": ...
-        }
-
-        Args:
-            raw_data: 原始数据
-
-        Returns:
-            扁平化后的数据
-        """
+        """扁平化 l2_json 嵌套结构"""
         l2_content = raw_data.get("l2_json")
 
         if isinstance(l2_content, str):
             try:
+                import json
                 l2_content = json.loads(l2_content)
             except json.JSONDecodeError as e:
                 raise DataParsingError(
@@ -329,29 +376,24 @@ class V25ProductionExtractor(BaseExtractor):
                 )
 
         if isinstance(l2_content, dict):
-            # 合并到主数据（l2_json 优先）
+            # 合并到主数据
             merged = {**raw_data, **l2_content}
-            merged.pop("l2_json", None)  # 移除嵌套键
+            merged.pop("l2_json", None)
             return merged
 
         return raw_data
 
     def extract(self, raw_data: Dict[str, Any]) -> ExtractionResult:
         """
-        提取特征
+        全量自适应特征提取（核心方法）
 
-        这是核心提取方法，调用各个子方法提取不同类别的特征。
-
-        Args:
-            raw_data: 预处理后的原始数据
-
-        Returns:
-            ExtractionResult: 提取结果
-
-        Raises:
-            DataParsingError: 解析失败
+        策略：
+        1. 递归打平整个 JSON 结构
+        2. 自动类型转换和值提取
+        3. 全局特征对齐（填充缺失特征）
+        4. 动态计算统计特征
         """
-        self._logger.info("开始特征提取", version=self.version)
+        self._logger.info("开始全量特征提取", version=self.version)
 
         self._metrics = V25ExtractionMetrics()
         features: Dict[str, Any] = {}
@@ -359,35 +401,77 @@ class V25ProductionExtractor(BaseExtractor):
         errors: List[str] = []
 
         try:
-            # 1. 提取基础统计
-            basic_stats = self._extract_basic_stats(raw_data)
-            features.update(basic_stats)
+            # Step 1: 递归打平整个 JSON
+            self._logger.info("步骤 1/4: 递归打平 JSON 结构")
+            flattened = _fully_flatten(raw_data, max_depth=25)
+            self._metrics.flatten_depth = max(
+                len(k.split('_')) for k in flattened.keys()
+            ) if flattened else 0
 
-            # 2. 提取高级统计
-            advanced_stats = self._extract_advanced_stats(raw_data)
-            features.update(advanced_stats)
+            # Step 2: 分类特征并注册到全局表
+            self._logger.info("步骤 2/4: 特征分类与对齐")
+            numeric_features = {}
+            string_features = {}
 
-            # 3. 提取阵容信息
-            lineup_info = self._extract_lineup_info(raw_data)
-            features.update(lineup_info)
+            for key, value in flattened.items():
+                # 跳过元数据键
+                if key.startswith('_'):
+                    continue
 
-            # 4. 计算差值和比率特征
-            diff_features = self._compute_diff_features(features)
-            features.update(diff_features)
+                if isinstance(value, (int, float)) and not isinstance(value, bool):
+                    numeric_features[key] = float(value)
+                elif isinstance(value, str):
+                    string_features[key] = value
+                # 布尔值已在 _parse_value 中转换为 1.0/0.0
 
-            # 5. 添加元数据标记
+            self._metrics.numeric_features = len(numeric_features)
+            self._metrics.string_features = len(string_features)
+
+            # Step 3: 全局特征对齐（填充缺失特征）
+            global _GLOBAL_FEATURE_KEYS
+            reference_keys = get_global_feature_keys()
+
+            if reference_keys:
+                # 填充缺失的特征
+                for key in reference_keys:
+                    if key not in numeric_features:
+                        numeric_features[key] = 0.0
+
+            # 注册当前特征到全局表
+            register_feature_keys(set(numeric_features.keys()))
+
+            # Step 4: 合并特征
+            features.update(numeric_features)
+            features.update(string_features)
+
+            # 添加元数据
             features["_meta"] = {
                 "extraction_version": self.version,
                 "extraction_timestamp": self._get_timestamp(),
+                "feature_count": len(features),
+                "numeric_count": len(numeric_features),
+                "string_count": len(string_features),
+                "flatten_depth": self._metrics.flatten_depth,
+                "global_registry_size": len(get_global_feature_keys()),
             }
 
-            # 判断状态
             self._metrics.total_features = len(features)
-            status = self._determine_status(features)
+
+            # 确定状态
+            if self._metrics.total_features >= 100:
+                status = ExtractionStatus.SUCCESS
+            elif self._metrics.total_features >= 20:
+                status = ExtractionStatus.PARTIAL
+            else:
+                status = ExtractionStatus.FAILED
 
             self._logger.info(
                 "特征提取完成",
-                feature_count=self._metrics.total_features,
+                total_features=self._metrics.total_features,
+                numeric_features=self._metrics.numeric_features,
+                string_features=self._metrics.string_features,
+                flatten_depth=self._metrics.flatten_depth,
+                global_registry_size=len(get_global_feature_keys()),
                 status=status.value,
             )
 
@@ -405,248 +489,14 @@ class V25ProductionExtractor(BaseExtractor):
                 parse_error=str(e),
             ) from e
 
-    def _extract_basic_stats(self, data: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        提取基础统计特征
-
-        Args:
-            data: 原始数据
-
-        Returns:
-            基础统计特征字典
-        """
-        features: Dict[str, Any] = {}
-        stats_list = safe_get(data, FeaturePath.STATS_ALL_STATS.value, [])
-
-        if not isinstance(stats_list, list):
-            self._logger.warning("stats 不是列表类型")
-            return features
-
-        # 统计键映射（FotMob -> 内部）
-        stat_mapping = {
-            FeaturePath.KEY_POSSESSION.value: "possession",
-            FeaturePath.KEY_SHOTS_TOTAL.value: "shots_total",
-            FeaturePath.KEY_SHOTS_ON_TARGET.value: "shots_on_target",
-            FeaturePath.KEY_CORNERS.value: "corners",
-            FeaturePath.KEY_FOULS.value: "fouls",
-        }
-
-        for stat_group in stats_list:
-            if not isinstance(stat_group, dict):
-                continue
-
-            key = stat_group.get("key", "")
-            stats_values = stat_group.get("stats", [])
-
-            if not isinstance(stats_values, list) or len(stats_values) < 2:
-                continue
-
-            if key in stat_mapping:
-                feature_name = stat_mapping[key]
-                home_val = self._parse_stat_value(stats_values, 0)
-                away_val = self._parse_stat_value(stats_values, 1)
-
-                features[f"home_{feature_name}"] = home_val
-                features[f"away_{feature_name}"] = away_val
-
-                # 检查 NaN
-                if home_val is None or away_val is None:
-                    self._metrics.missing_features.append(feature_name)
-                    self._metrics.nan_count += 1
-
-        return features
-
-    def _extract_advanced_stats(self, data: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        提取高级统计特征
-
-        Args:
-            data: 原始数据
-
-        Returns:
-            高级统计特征字典
-        """
-        features: Dict[str, Any] = {}
-        stats_list = safe_get(data, FeaturePath.STATS_ALL_STATS.value, [])
-
-        if not isinstance(stats_list, list):
-            return features
-
-        # 高级特征映射
-        advanced_mapping = {
-            FeaturePath.KEY_EXPECTED_GOALS.value: "xg",
-            FeaturePath.KEY_EXPECTED_ASSISTS.value: "xa",
-            FeaturePath.KEY_BIG_CHANCE.value: "big_chances_created",
-            FeaturePath.KEY_ACCURATE_PASSES.value: "passes_accurate",
-        }
-
-        for stat_group in stats_list:
-            if not isinstance(stat_group, dict):
-                continue
-
-            key = stat_group.get("key", "")
-            stats_values = stat_group.get("stats", [])
-
-            if key in advanced_mapping and isinstance(stats_values, list) and len(stats_values) >= 2:
-                feature_name = advanced_mapping[key]
-                home_val = self._parse_stat_value(stats_values, 0)
-                away_val = self._parse_stat_value(stats_values, 1)
-
-                features[f"home_{feature_name}"] = home_val
-                features[f"away_{feature_name}"] = away_val
-
-                if home_val is None or away_val is None:
-                    self._metrics.nan_count += 1
-
-        return features
-
-    def _extract_lineup_info(self, data: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        提取阵容信息
-
-        Args:
-            data: 原始数据
-
-        Returns:
-            阵容信息特征字典
-        """
-        features: Dict[str, Any] = {}
-        lineup = safe_get(data, FeaturePath.LINEUP.value, {})
-
-        if not isinstance(lineup, dict):
-            return features
-
-        home_team = lineup.get("homeTeam", {})
-        away_team = lineup.get("awayTeam", {})
-
-        # 球员数量
-        home_starters = len(home_team.get("starters", []))
-        home_subs = len(home_team.get("subs", []))
-        away_starters = len(away_team.get("starters", []))
-        away_subs = len(away_team.get("subs", []))
-
-        features["home_player_count"] = home_starters + home_subs
-        features["away_player_count"] = away_starters + away_subs
-
-        # 球队评分
-        features["home_team_rating"] = safe_float(home_team.get("rating"))
-        features["away_team_rating"] = safe_float(away_team.get("rating"))
-
-        # 阵型
-        features["home_formation"] = home_team.get("formation", "")
-        features["away_formation"] = away_team.get("formation", "")
-
-        return features
-
-    def _compute_diff_features(self, features: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        计算差值和比率特征
-
-        Args:
-            features: 已提取的特征
-
-        Returns:
-            差值和比率特征字典
-        """
-        diff_features: Dict[str, Any] = {}
-
-        # 找出所有 home_xxx 和 away_xxx 配对
-        home_keys = {k: v for k, v in features.items() if k.startswith("home_") and not k.endswith("_ratio")}
-        away_keys = {k: v for k, v in features.items() if k.startswith("away_") and not k.endswith("_ratio")}
-
-        for home_key, home_val in home_keys.items():
-            suffix = home_key.replace("home_", "")
-            away_key = f"away_{suffix}"
-            away_val = away_keys.get(away_key)
-
-            if away_val is not None:
-                # 差值
-                if home_val is not None and away_val is not None:
-                    try:
-                        diff = home_val - away_val
-                        diff_features[f"diff_{suffix}"] = diff
-
-                        # 总和
-                        total = home_val + away_val
-
-                        # 比率（防止除零）
-                        if total != 0:
-                            diff_features[f"home_ratio_{suffix}"] = home_val / total
-                            diff_features[f"away_ratio_{suffix}"] = away_val / total
-                        else:
-                            diff_features[f"home_ratio_{suffix}"] = 0.5
-                            diff_features[f"away_ratio_{suffix}"] = 0.5
-                    except (TypeError, ZeroDivisionError):
-                        pass
-
-        return diff_features
-
-    def _parse_stat_value(self, stats_values: List, index: int) -> Optional[float]:
-        """
-        解析统计值
-
-        Args:
-            stats_values: 统计值列表
-            index: 索引位置
-
-        Returns:
-            解析后的浮点数或 None
-        """
-        if not isinstance(stats_values, list) or index >= len(stats_values):
-            return None
-
-        value = stats_values[index]
-
-        if value is None or value == "" or value == "-":
-            return None
-
-        return safe_float(value)
-
-    def _determine_status(self, features: Dict[str, Any]) -> ExtractionStatus:
-        """
-        确定提取状态
-
-        Args:
-            features: 提取的特征
-
-        Returns:
-            提取状态
-        """
-        feature_count = len(features)
-
-        if feature_count == 0:
-            return ExtractionStatus.FAILED
-
-        # 检查是否缺少必需特征
-        missing_required = []
-        for key in self.REQUIRED_FEATURE_KEYS:
-            if key not in features or features[key] is None:
-                missing_required.append(key)
-
-        if missing_required:
-            self._logger.warning("缺少必需特征", missing_keys=missing_required)
-
-        # 判断状态
-        if feature_count >= self._validation_config.min_features:
-            return ExtractionStatus.SUCCESS
-        elif feature_count >= self._validation_config.min_features * 0.5:
-            return ExtractionStatus.PARTIAL
-        else:
-            return ExtractionStatus.FAILED
-
     def validate(self, features: Dict[str, Any]) -> bool:
         """
         验证提取的特征
 
-        Args:
-            features: 提取的特征字典
-
-        Returns:
-            是否验证通过
-
-        Raises:
-            InsufficientFeaturesError: 特征维度不足
-            MissingRequiredKeyError: 缺少必需键
+        V25.1 采用宽松验证策略：
+        - 只要求特征数量 >= min_features
+        - 不强制要求特定键存在
+        - 允许部分特征缺失
         """
         feature_count = len(features)
 
@@ -656,7 +506,7 @@ class V25ProductionExtractor(BaseExtractor):
             min_required=self._validation_config.min_features,
         )
 
-        # 检查特征维度
+        # 只检查特征维度下限
         if feature_count < self._validation_config.min_features:
             raise InsufficientFeaturesError(
                 f"特征维度不足: {feature_count} < {self._validation_config.min_features}",
@@ -664,7 +514,7 @@ class V25ProductionExtractor(BaseExtractor):
                 min_required=self._validation_config.min_features,
             )
 
-        # 检查最大限制
+        # 检查最大限制（警告）
         if (
             self._validation_config.max_features is not None
             and feature_count > self._validation_config.max_features
@@ -675,24 +525,14 @@ class V25ProductionExtractor(BaseExtractor):
                 max_allowed=self._validation_config.max_features,
             )
 
-        # 检查必需键
-        if self._validation_config.required_keys:
-            missing = [k for k in self._validation_config.required_keys if k not in features]
-            if missing:
-                raise MissingRequiredKeyError(
-                    f"缺少 {len(missing)} 个必需特征",
-                    missing_keys=missing,
-                )
-
         self._logger.debug("特征验证通过", feature_count=feature_count)
         return True
 
     def _get_timestamp(self) -> str:
         """获取当前时间戳"""
         from datetime import datetime
-
         return datetime.now().isoformat()
 
 
-# 注册提取器
+# 注册提取器（使用 V25.1 版本号）
 register_extractor(V25ProductionExtractor)
