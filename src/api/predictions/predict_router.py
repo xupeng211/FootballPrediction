@@ -27,7 +27,7 @@ from datetime import datetime
 from typing import Dict, Any
 
 from fastapi import APIRouter, HTTPException, Query, Depends, Path, status
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 
 # 导入服务层
 from src.services.prediction_service import PredictionService
@@ -56,7 +56,8 @@ class BatchPredictionRequest(BaseModel):
     include_features: bool = Field(default=False, description="是否包含特征信息")
     include_metadata: bool = Field(default=True, description="是否包含元数据")
 
-    @validator("match_ids")
+    @field_validator("match_ids")
+    @classmethod
     def validate_match_ids(cls, v):
         if not v:
             raise ValueError("比赛ID列表不能为空")
