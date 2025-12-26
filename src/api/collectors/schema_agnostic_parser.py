@@ -3,7 +3,21 @@
 V20.0 Schema-Agnostic 递归解析器
 ==============================
 
-核心功能：
+⚠️  DEPRECATED - 此文件已被弃用 ⚠️
+
+此模块已被 V25 统一特征提取框架取代:
+    - 新框架位置: src/processors/v25_production_extractor.py
+    - 新入口: ExtractorRegistry.create("V25.0")
+
+保留原因:
+    - 被 backfill_v20.5_hardened.py 和 backfill_v20.8_scorched_earth.py 引用
+    - 用于历史数据回填任务
+
+计划:
+    - V26.0 将完全移除此文件
+    - 回填脚本将迁移到 V25 框架
+
+核心功能（旧版）：
 - 深度优先搜索 JSON 结构中的任意 key
 - 自动定位并提取 xG、shots 等关键特征
 - 容错性：无论数据嵌套在列表、字典还是混合结构中
@@ -12,6 +26,7 @@ V20.0 Schema-Agnostic 递归解析器
 作者: Data Architecture Team
 日期: 2025-12-24
 版本: V20.0
+弃用日期: 2025-12-26
 """
 
 import json

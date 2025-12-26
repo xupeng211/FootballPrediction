@@ -6,12 +6,14 @@ V19.4 统一生产入口 (Main Production Entry Point)
 这是一个统一的命令行工具，用于执行 V19.4 系统的所有核心操作。
 支持通过参数控制执行：L1数据收割、L2特征解析、V19.4模型预测、实时市场巡检。
 
+V25.0 更新: 集成统一的特征提取框架
+
 使用示例:
     # L1 数据收割
     python main_production.py --l1-harvest --season 2324 --target 10
 
-    # L2 特征解析
-    python main_production.py --l2-parse
+    # L2 特征解析 (使用 V25 框架)
+    python main_production.py --l2-parse --extractor-version V25.0
 
     # V19.4 模型训练
     python main_production.py --train --train-size 600 --test-size 160
@@ -26,8 +28,8 @@ V19.4 统一生产入口 (Main Production Entry Point)
     python main_production.py --full-pipeline
 
 Author: V19.4 DevOps Team
-Version: 1.0.0
-Date: 2025-12-23
+Version: 2.0.0 (V25.0 Integration)
+Date: 2025-12-26
 """
 
 import asyncio
@@ -52,6 +54,10 @@ from src.core.pipeline_v19_4 import V19_4TrainingPipeline
 from src.ops.market_live_monitor import MarketLiveMonitor
 from src.ops.risk_monitor import RiskMonitor
 from src.api.collectors.fotmob_core import FotMobCoreCollector
+
+# V25.0: 统一特征提取框架
+from src.processors import ExtractorRegistry, ExtractionResult, ExtractionStatus
+from src.processors.exceptions import ExtractionError, ValidationError
 
 # 配置日志
 logging.basicConfig(
@@ -118,25 +124,132 @@ def l1_harvest(season: str, target: int, league: str):
 
 
 # ============================================
-# L2 特征解析命令
+# L2 特征解析命令 (V25.0 集成)
 # ============================================
 
 @click.command()
-@click.option('--source', default='data/l1_raw/', help='L1 数据源目录')
-@click.option('--output', default='data/l2_features/', help='L2 特征输出目录')
-def l2_parse(source: str, output: str):
-    """L2 特征解析 - 解析原始数据并提取特征"""
-    print_banner(f"V19.4 L2 特征解析")
+@click.option('--match-id', type=int, help='指定比赛 ID 进行特征提取')
+@click.option('--extractor-version', default='V25.0', help='特征提取器版本 (默认: V25.0)')
+@click.option('--skip-validation', is_flag=True, help='跳过特征验证')
+@click.option('--output-features', is_flag=True, help='输出提取的特征到控制台')
+def l2_parse(match_id: Optional[int], extractor_version: str, skip_validation: bool, output_features: bool):
+    """
+    L2 特征解析 - 使用 V25 统一特征提取框架
+
+    从数据库读取 L1 原始数据并提取特征。
+
+    示例:
+        # 提取指定比赛的特征
+        python main_production.py --l2-parse --match-id 123456
+
+        # 使用不同的提取器版本
+        python main_production.py --l2-parse --extractor-version V25.0
+    """
+    print_banner(f"V25.0 L2 特征解析 (提取器: {extractor_version})")
 
     try:
-        logger.info(f"从 {source} 解析数据...")
-        logger.info(f"特征输出到 {output}...")
+        # 创建特征提取器
+        extractor = ExtractorRegistry.create(extractor_version)
+        logger.info(f"✓ 已创建特征提取器: {extractor.__class__.__name__}")
 
-        # TODO: 实现具体的解析逻辑
-        logger.info(f"✅ L2 特征解析完成 (模拟)")
+        # 如果指定了 match_id，从数据库提取单场比赛特征
+        if match_id:
+            logger.info(f"正在提取比赛 {match_id} 的特征...")
 
+            # 从数据库获取 L1 原始数据
+            import psycopg2
+            from src.config_unified import get_settings
+
+            settings = get_settings()
+            conn = psycopg2.connect(
+                host=settings.database.host,
+                port=settings.database.port,
+                database=settings.database.name,
+                user=settings.database.user,
+                password=settings.database.password.get_secret_value()
+            )
+
+            try:
+                with conn.cursor() as cur:
+                    cur.execute("""
+                        SELECT m.id, m.external_id, m.l2_raw_json,
+                               m.home_team, m.away_team, m.match_time
+                        FROM matches m
+                        WHERE m.id = %s OR m.external_id = %s
+                    """, (match_id, match_id))
+
+                    match_data = cur.fetchone()
+
+                    if not match_data:
+                        logger.error(f"❌ 未找到比赛 ID {match_id}")
+                        sys.exit(1)
+
+                    db_id, external_id, l2_raw_json, home_team, away_team, match_time = match_data
+
+                    if not l2_raw_json:
+                        logger.error(f"❌ 比赛 {match_id} 没有 L2 原始数据，请先运行 L1 数据收割")
+                        sys.exit(1)
+
+                    # 解析 JSON
+                    import json
+                    raw_data = json.loads(l2_raw_json) if isinstance(l2_raw_json, str) else l2_raw_json
+
+                    # 提取特征
+                    result = extractor.extract_with_validation(raw_data, skip_validation=skip_validation)
+
+                    # 处理结果
+                    logger.info(f"比赛: {home_team} vs {away_team}")
+                    logger.info(f"状态: {result.status.value}")
+                    logger.info(f"特征数量: {result.feature_count}")
+
+                    if result.is_success:
+                        logger.info(f"✅ 特征提取成功")
+
+                        if result.warnings:
+                            logger.warning(f"警告: {len(result.warnings)} 条")
+                            for warning in result.warnings[:3]:
+                                logger.warning(f"  - {warning}")
+
+                        if output_features:
+                            logger.info("提取的特征:")
+                            for key, value in list(result.features.items())[:10]:
+                                logger.info(f"  {key}: {value}")
+                            logger.info(f"  ... (共 {len(result.features)} 个特征)")
+
+                        # 可选：保存到数据库
+                        # TODO: 实现将特征保存到 match_features_training 表的逻辑
+
+                    else:
+                        logger.error(f"❌ 特征提取失败: {result.status.value}")
+                        if result.errors:
+                            for error in result.errors[:3]:
+                                logger.error(f"  - {error}")
+                        sys.exit(1)
+
+            finally:
+                conn.close()
+
+        else:
+            logger.info("未指定 --match-id，进入批量模式")
+            logger.info("提示: 使用 --match-id <ID> 提取单场比赛特征")
+
+            # TODO: 实现批量模式 - 扫描数据库并提取所有待处理比赛
+            logger.info("✅ L2 特征解析框架就绪")
+
+    except ExtractionError as e:
+        logger.error(f"❌ 特征提取异常: {e}")
+        sys.exit(1)
+    except ValidationError as e:
+        logger.error(f"❌ 特征验证失败: {e}")
+        sys.exit(1)
+    except KeyError as e:
+        logger.error(f"❌ 未找到指定版本的提取器: {extractor_version}")
+        logger.info(f"可用版本: {', '.join(ExtractorRegistry.list_versions())}")
+        sys.exit(1)
     except Exception as e:
         logger.error(f"❌ L2 特征解析失败: {e}")
+        import traceback
+        traceback.print_exc()
         sys.exit(1)
 
 

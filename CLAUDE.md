@@ -27,13 +27,16 @@
 
 ## ⚠️ 当前系统状态
 
-**当前版本**: V30.0 (Full Blood Cloud-Native)
+**当前版本**: V51.0 (Industrial Grade L1 & Historical Database Rebuild)
 **系统状态**: ✅ Production Ready
 **架构**: 归一化部署架构 - Docker Compose Profiles
 **代码规范**: 正常开发流程已恢复
 
 **版本演进**:
-- V30.0: Cloud-Native 归一化部署 (当前)
+- V51.0: Industrial Grade L1 & Historical Database Rebuild (最新)
+- V34.0: 全息收割机 + 全局 Manifest (实验性)
+- V32.0: Full Blood 进度监控
+- V30.0: Cloud-Native 归一化部署 (Docker 基线)
 - V29.0: 服务解耦与配置优化
 - V19.4.1: Boxing Day Production (稳定基线)
 
@@ -77,7 +80,8 @@
 | 属性 | 值 |
 |------|-----|
 | **状态** | ✅ Production Ready |
-| **版本** | V30.0 (Full Blood Cloud-Native) |
+| **版本** | V51.0 (Industrial Grade) |
+| **Docker 基线** | V30.0 (Full Blood Cloud-Native) |
 | **基线版本** | V19.4.1 (65.52% 准确率) |
 | **数据量** | 761 场英超 22/23 + 23/24 赛季 |
 | **特征维度** | 48 维（滚动 + 赛前 + 高级动态 + 平局敏感度） |
@@ -192,13 +196,15 @@ python main_production.py --full-pipeline
 #### 生产版本（推荐使用）
 | 版本 | 核心特性 | 特征维度 | 准确率 | 状态 |
 |------|----------|----------|--------|------|
-| **V30.0** | Cloud-Native 归一化部署 | 48 维 | 65.52% | **当前 Docker** |
+| **V51.0** | Industrial Grade L1 & Historical Database Rebuild | 48 维 | 65.52% | **最新生产** |
+| **V30.0** | Cloud-Native 归一化部署 | 48 维 | 65.52% | **Docker 基线** |
 | **V19.4.1** | Boxing Day 生产版 + 风控集成 | 48 维 | 65.52% | **本地生产** |
 | V17.0 | 滚动特征（基线） | 16 维 | 65.52% | 生产基线 |
 
 #### 实验性版本（研发中）
 | 版本 | 核心特性 | 特征维度 | 状态 |
 |------|----------|----------|------|
+| V34.0 | 全息收割机 + 全局 Manifest | 800+ 维 | 实验性 |
 | V18.0 | 赛前特征 + 平局优化 | 24 维 | 验证中 |
 | V19.0 | 高级动态特征（ELO/疲劳/战意） | 39 维 | 实验中 |
 | V20.x | 数据中台 + 高维特征引擎 | 800+ 维 | 实验性 |
@@ -741,6 +747,7 @@ docker-compose exec redis redis-cli ping
 | `db` | 5432 | default | PostgreSQL 15 |
 | `redis` | 6379 | default | Redis 7 |
 | `harvester` | - | harvester | V20.8 焦土收割机 |
+| `holographic_harvester` | - | holographic | V34.0 全息收割服务 |
 | `dashboard` | - | dashboard/dev | 战神仪表盘 |
 | `pgadmin` | 5050 | dev | PostgreSQL 管理 |
 | `redis-commander` | 8081 | dev | Redis 管理 |
@@ -787,6 +794,8 @@ alembic history
 **系统验证脚本**:
 - `system_verify.sh` - 完整系统健康检查（6 步验证）
 - `verify_ready.sh` - Boxing Day 一键验收（4 步验收）
+- `check_full_blood_progress.sh` - V32.0 进度哨所（Full Blood 数据监控）
+- `deploy_harvester.sh` - V20.8 焦土收割机部署脚本
 
 ---
 
@@ -847,10 +856,10 @@ make db-drop
 
 **🚨 CRITICAL**: This is a production system support document. Any violations of these standards will be automatically rejected!
 
-**🧬 技术栈DNA版本**: V30.0 (Full Blood Cloud-Native) | **最后验证**: 2025-12-26 |
+**🧬 技术栈DNA版本**: V51.0 (Industrial Grade) | **最后验证**: 2025-12-26 |
 **基线准确率**: V19.4.1: 65.52% | **数据集**: 英超22/23+23/24赛季 761场有效数据 |
-**生产状态**: V30.0 Production | **API版本**: V11.0 多联赛增强版 |
-**统一入口**: main_production.py |
+**生产状态**: V51.0 Production | **API版本**: V11.0 多联赛增强版 |
+**Docker 基线**: V30.0 (Full Blood Cloud-Native) | **统一入口**: docker-compose up -d |
 **项目愿景**: 年化 25% 收益率 | 详见: docs/PROJECT_VISION.md |
 
 ---
@@ -898,9 +907,11 @@ ruff check src/ --select=C901 --show-source  # 复杂度分析
 
 | 版本号 | 入口文件 | 流水线 | 特征维度 | 状态 |
 |--------|----------|--------|----------|------|
-| **V30.0** | `docker-compose up -d` | `src/ops/data_pipeline_v25.py` | 48 维 | **当前 Cloud-Native** |
+| **V51.0** | `docker-compose up -d` | L1 工业级重建 | 48 维 | **最新生产** |
+| **V30.0** | `docker-compose up -d` | `src/ops/data_pipeline_v25.py` | 48 维 | **Cloud-Native 基线** |
+| V34.0 | `docker-compose --profile holographic up -d` | `src/ml/miners_v34/` | 800+ 维 | **全息收割** |
 | V29.0 | `docker-compose up -d` | `src/ops/data_pipeline_v25.py` | 48 维 | 服务解耦优化 |
-| **V19.4.1** | `main_production.py` | `src/core/pipeline_v19_4.py` | 48 维 | **生产基线** |
+| **V19.4.1** | `main_production.py` | `src/core/pipeline_v19_4.py` | 48 维 | **本地生产基线** |
 | V19.3 | - | `src/core/pipeline_v19_3_hardened.py` | 45 维 | 生产级 |
 | V19.0 | - | `src/core/pipeline_v19.py` | 39 维 | 实验中 |
 | V18.0 | `main_production.py --v18` | `src/core/pipeline_v18.py` | 24 维 | 验证中 |
@@ -1070,6 +1081,7 @@ PYTHONDEVMODE=1           # 开发者模式（代码修改实时生效）
 
 | 版本系列 | 核心特性 | 特征维度 | 文件位置 | 状态 |
 |---------|----------|----------|----------|------|
+| **V51** | Industrial Grade L1 & Historical Database Rebuild | 48+ | 工业级数据重建 | **最新生产** |
 | **V34** | 全息收割机 + 全局 Manifest | 800+ | `src/ml/miners_v34/` | 研发中 |
 | **V38** | 战神模型 + 拳击日报告 | 48+ | `src/ml/models/v38_*.py` | 实验中 |
 | **V39** | 差分训练 + 暴力强制 | 48+ | `src/ml/models/v39_*.py` | 实验中 |
@@ -1082,18 +1094,21 @@ PYTHONDEVMODE=1           # 开发者模式（代码修改实时生效）
 #### 版本切换指南
 
 ```bash
-# 使用 V19.4.1 生产版本（推荐）
+# 使用 V51.0 最新生产版本（推荐）
+docker-compose up -d
+
+# 使用 V19.4.1 本地生产版本
 python main_production.py --full-pipeline
 
-# 使用 V30.0 Docker 版本
+# 使用 V30.0 Docker 基线版本
 docker-compose up -d
+
+# 使用 V34.0 全息收割机
+docker-compose --profile holographic up -d
 
 # 实验性版本 - 直接运行
 python src/ml/models/v38_1_real_trainer.py
 python src/ml/models/v39_0_final.py
-
-# 实验性版本 - Docker 模式
-docker-compose --profile holographic up -d
 ```
 
 #### 实验性版本测试策略
