@@ -1,0 +1,46 @@
+{
+  "version": "V39.0",
+  "name": "\u66b4\u529b\u6e05\u573a",
+  "timestamp": "2025-12-26T11:30:01.006931",
+  "asset_recovery": {
+    "v38_2_existing": 700,
+    "v39_0_api_backfill": 6544,
+    "total": 7244,
+    "draw_samples": 2527,
+    "draw_percentage": 0.349
+  },
+  "training": {
+    "total_samples": 6303,
+    "train_samples": 5042,
+    "test_samples": 1261,
+    "features": 152,
+    "draw_samples": 1586,
+    "draw_percentage": 0.252
+  },
+  "performance": {
+    "test_accuracy": 0.9056,
+    "f1_score": 0.8253,
+    "draw_recall": 0.8864,
+    "auc_score": 0.9609
+  },
+  "comparison": {
+    "v38_2_vs_v39_0": {
+      "samples": "+332%",
+      "auc": "+85%",
+      "f1": "+146%",
+      "draw_recall": "+108%"
+    }
+  },
+  "boxing_day_fixtures": {
+    "count": 1,
+    "matches": [
+      {
+        "match_id": 4813551,
+        "league": "Premier League",
+        "home_team": "Manchester United",
+        "away_team": "Newcastle United",
+        "kickoff": "2025-12-26T20:00:00Z"
+      }
+    ]
+  }
+}

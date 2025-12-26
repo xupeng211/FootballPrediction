@@ -1,39 +1,95 @@
 # ============================================
-# FootballPrediction V29.0 - Unified Docker Compose
+# FootballPrediction V30.0 - Unified Docker Compose
 # ============================================
-# 归一化部署编排 - 单一工业级入口
+# 归一化服务编排 - 服务解耦与生产级配置
 # 生成时间: 2025-12-25
-# 状态: V29.0 Cloud-Native Ready
+# 状态: V30.0 Production Ready
+# ============================================
+# 核心服务:
+#   1. db - PostgreSQL 数据库
+#   2. pipeline_worker - V25.0 数据流水线
+#   3. predictor_api - FastAPI 预测服务
 # ============================================
 # 使用方式:
 #   docker-compose up -d                    # 启动核心服务
 #   docker-compose --profile api up -d     # 启动 + API
 #   docker-compose --profile dev up -d     # 启动 + 开发工具
-#   docker-compose --profile all up -d     # 启动所有服务
 # ============================================
 
 services:
   # ============================================
-  # prediction_worker - V29.0 核心预测引擎
+  # db - PostgreSQL 15 数据库
   # ============================================
-  prediction_worker:
+  db:
+    image: postgres:15-alpine
+    container_name: football_prediction_db
+    restart: always
+    env_file:
+      - .env
+    environment:
+      # PostgreSQL 性能优化
+      - POSTGRES_DB=${DB_NAME:-football_db}
+      - POSTGRES_USER=${DB_USER:-football_user}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-football_pass}
+      - PGDATA=/var/lib/postgresql/data/pgdata
+      # 连接池配置
+      - MAX_CONNECTIONS=100
+      - SHARED_BUFFERS=256MB
+      - EFFECTIVE_CACHE_SIZE=1GB
+      - MAINTENANCE_WORK_MEM=256MB
+      - WORK_MEM=16MB
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      # 使用命名卷 (Docker Volume) 而非绑定挂载
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-football_user} -d ${DB_NAME:-football_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - football_network
+    # 资源限制
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+  # ============================================
+  # pipeline_worker - V30.0 Full Blood 数据流水线
+  # ============================================
+  pipeline_worker:
     build:
       context: .
-      dockerfile: deploy/Dockerfile
-      target: production
-    image: footballprediction:v29.0
+      dockerfile: deploy/docker/Dockerfile
+      target: runner
+    image: footballprediction:v30.0-fullblood
     container_name: football_prediction_worker
-    restart: unless-stopped
+    restart: always
     env_file:
       - .env
     environment:
       - DOCKER_ENV=true
       - PIPELINE_MODE=${PIPELINE_MODE:-loop}
+      - BATCH_SIZE=${BATCH_SIZE:-50}
+      - HEARTBEAT_INTERVAL=${HEARTBEAT_INTERVAL:-1800}
+      # 连接池配置 (高并发保护)
+      - DB_POOL_MIN=2
+      - DB_POOL_MAX=20
+      - DB_POOL_TIMEOUT=30
+      - DB_POOL_RECYCLE=3600
     volumes:
-      - ./data:/app/data
-      - ./logs:/app/logs
+      # 使用命名卷进行数据持久化
+      - app_data:/app/data
+      - app_logs:/app/logs
+      # 开发模式: 实时挂载源代码 (可选)
       - ./src:/app/src:ro
-    command: python src/ops/data_pipeline_v25.py --mode ${PIPELINE_MODE:-loop}
     depends_on:
       db:
         condition: service_healthy
@@ -47,29 +103,51 @@ services:
       start_period: 40s
     networks:
       - football_network
+    # 资源限制
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    # 日志配置
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   # ============================================
-  # api - FastAPI 服务 (profile: api)
+  # predictor_api - FastAPI 预测服务
   # ============================================
-  api:
+  predictor_api:
     build:
       context: .
-      dockerfile: deploy/Dockerfile
-      target: production
-    image: footballprediction:v29.0
+      dockerfile: deploy/docker/Dockerfile
+      target: runner
+    image: footballprediction:v30.0-fullblood
     container_name: football_prediction_api
-    restart: unless-stopped
+    restart: always
     env_file:
       - .env
     environment:
       - DOCKER_ENV=true
+      - API_WORKERS=${API_WORKERS:-2}
     ports:
       - "${API_PORT:-8000}:8000"
     volumes:
-      - ./data:/app/data
-      - ./logs:/app/logs
+      - app_data:/app/data
+      - app_logs:/app/logs
       - ./src:/app/src:ro
-    command: uvicorn src.main:app --host 0.0.0.0 --port 8000 --workers 2
+    command: >
+      uvicorn src.main:app
+      --host 0.0.0.0
+      --port 8000
+      --workers ${API_WORKERS:-2}
+      --loop uvloop
+      --timeout-keep-alive 300
     depends_on:
       db:
         condition: service_healthy
@@ -85,96 +163,27 @@ services:
       - football_network
     profiles:
       - api
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   # ============================================
-  # harvester - V20.8 数据回填 (profile: harvester)
-  # ============================================
-  harvester:
-    build:
-      context: .
-      dockerfile: deploy/Dockerfile
-      target: production
-    image: footballprediction:v29.0
-    container_name: football_prediction_harvester
-    restart: on-failure
-    env_file:
-      - .env
-    environment:
-      - DOCKER_ENV=true
-      - HARVEST_MODE=scorched_earth
-    volumes:
-      - ./data:/app/data
-      - ./logs:/app/logs
-      - ./src:/app/src:ro
-    command: python src/ops/backfill_v20.8_scorched_earth.py
-    depends_on:
-      db:
-        condition: service_healthy
-    networks:
-      - football_network
-    profiles:
-      - harvester
-
-  # ============================================
-  # dashboard - 战神仪表盘 (profile: dashboard)
-  # ============================================
-  dashboard:
-    build:
-      context: .
-      dockerfile: deploy/Dockerfile
-      target: production
-    image: footballprediction:v29.0
-    container_name: football_prediction_dashboard
-    restart: unless-stopped
-    env_file:
-      - .env
-    environment:
-      - DOCKER_ENV=true
-    volumes:
-      - ./data:/app/data
-      - ./logs:/app/logs
-      - ./src:/app/src:ro
-    command: python src/ops/wargod_dashboard.py --interval 30
-    networks:
-      - football_network
-    profiles:
-      - dashboard
-      - dev
-
-  # ============================================
-  # db - PostgreSQL 15
-  # ============================================
-  db:
-    image: postgres:15-alpine
-    container_name: football_prediction_db
-    restart: unless-stopped
-    env_file:
-      - .env
-    environment:
-      - POSTGRES_DB=${DB_NAME:-football_db}
-      - POSTGRES_USER=${DB_USER:-football_user}
-      - POSTGRES_PASSWORD=${DB_PASSWORD:-football_pass}
-      - PGDATA=/var/lib/postgresql/data/pgdata
-    ports:
-      - "${DB_PORT:-5432}:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-football_user} -d ${DB_NAME:-football_db}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
-    networks:
-      - football_network
-
-  # ============================================
-  # redis - Redis 7
+  # redis - Redis 7 缓存服务
   # ============================================
   redis:
     image: redis:7-alpine
     container_name: football_prediction_redis
-    restart: unless-stopped
+    restart: always
     command: >
       redis-server
       --maxmemory 512mb
@@ -194,9 +203,119 @@ services:
       start_period: 5s
     networks:
       - football_network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.1'
+          memory: 128M
 
   # ============================================
-  # pgadmin - PostgreSQL 管理 (profile: dev)
+  # harvester - V20.8 数据回填服务 (可选)
+  # ============================================
+  harvester:
+    build:
+      context: .
+      dockerfile: deploy/docker/Dockerfile
+      target: runner
+    image: footballprediction:v30.0
+    restart: on-failure
+    env_file:
+      - .env
+    environment:
+      - DOCKER_ENV=true
+      - HARVEST_MODE=scorched_earth
+    volumes:
+      - app_data:/app/data
+      - app_logs:/app/logs
+      - ./src:/app/src:ro
+    command: python src/ops/backfill_v20.8_scorched_earth.py
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - football_network
+    profiles:
+      - harvester
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+
+  # ============================================
+  # holographic_harvester - V34.0 全息收割服务 (可扩展)
+  # ============================================
+  holographic_harvester:
+    build:
+      context: .
+      dockerfile: deploy/docker/Dockerfile
+      target: runner
+    image: footballprediction:v34.0-holographic
+    restart: on-failure
+    env_file:
+      - .env
+    environment:
+      - DOCKER_ENV=true
+      - HARVEST_CONCURRENCY=10
+    volumes:
+      - app_data:/app/data
+      - app_logs:/app/logs
+      - ./src:/app/src:ro
+    command: python src/ops/holographic_harvester_v34.py
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - football_network
+    profiles:
+      - holographic
+    deploy:
+      mode: replicated
+      replicas: 1  # 使用 docker-compose up --scale holographic_harvester=5 调整
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ============================================
+  # dashboard - 战神仪表盘 (可选)
+  # ============================================
+  dashboard:
+    build:
+      context: .
+      dockerfile: deploy/docker/Dockerfile
+      target: runner
+    image: footballprediction:v30.0
+    container_name: football_prediction_dashboard
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - DOCKER_ENV=true
+    volumes:
+      - app_data:/app/data
+      - app_logs:/app/logs
+      - ./src:/app/src:ro
+    command: python src/ops/wargod_dashboard.py --interval 30
+    networks:
+      - football_network
+    profiles:
+      - dashboard
+      - dev
+
+  # ============================================
+  # pgadmin - PostgreSQL 管理 (开发环境)
   # ============================================
   pgadmin:
     image: dpage/pgadmin4:latest
@@ -214,10 +333,9 @@ services:
       - football_network
     profiles:
       - dev
-      - all
 
   # ============================================
-  # redis-commander - Redis 管理 (profile: dev)
+  # redis-commander - Redis 管理 (开发环境)
   # ============================================
   redis-commander:
     image: rediscommander/redis-commander:latest
@@ -231,10 +349,9 @@ services:
       - football_network
     profiles:
       - dev
-      - all
 
 # ============================================
-# 数据卷
+# 数据卷 - Docker Volume 管理
 # ============================================
 volumes:
   postgres_data:
@@ -243,6 +360,10 @@ volumes:
     driver: local
   pgadmin_data:
     driver: local
+  app_data:
+    driver: local
+  app_logs:
+    driver: local
 
 # ============================================
 # 网络
@@ -250,3 +371,6 @@ volumes:
 networks:
   football_network:
     driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

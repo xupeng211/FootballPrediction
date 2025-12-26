@@ -24,8 +24,9 @@ from typing import Dict, Any, List, Optional, Union, Literal
 from pathlib import Path
 from dataclasses import dataclass, field
 
-from pydantic import Field, validator, SecretStr, ConfigDict
+from pydantic import Field, field_validator, SecretStr, ConfigDict
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import ValidationInfo
 import logging
 
 logger = logging.getLogger(__name__)
@@ -293,21 +294,24 @@ class UnifiedSettings(BaseSettings):
     )
 
     # === 验证器 ===
-    @validator("port")
+    @field_validator("port")
+    @classmethod
     def validate_port(cls, v: int) -> int:
         """验证端口范围"""
         if not 1 <= v <= 65535:
             raise ValueError("端口必须在1-65535范围内")
         return v
 
-    @validator("workers")
+    @field_validator("workers")
+    @classmethod
     def validate_workers(cls, v: int) -> int:
         """验证工作进程数"""
         if v < 1:
             raise ValueError("工作进程数必须大于0")
         return v
 
-    @validator("secret_key")
+    @field_validator("secret_key")
+    @classmethod
     def validate_secret_key(cls, v: SecretStr) -> SecretStr:
         """验证密钥强度"""
         secret = v.get_secret_value()
@@ -315,26 +319,29 @@ class UnifiedSettings(BaseSettings):
             raise ValueError("密钥长度必须至少32个字符")
         return v
 
-    @validator("default_confidence_threshold")
+    @field_validator("default_confidence_threshold")
+    @classmethod
     def validate_confidence_threshold(cls, v: float) -> float:
         """验证置信度阈值"""
         if not 0.0 <= v <= 1.0:
             raise ValueError("置信度阈值必须在0.0-1.0之间")
         return v
 
-    @validator("max_batch_size")
+    @field_validator("max_batch_size")
+    @classmethod
     def validate_batch_size(cls, v: int) -> int:
         """验证批量大小"""
         if not 1 <= v <= 1000:
             raise ValueError("批量大小必须在1-1000之间")
         return v
 
-    @validator("db_host")
-    def validate_db_host(cls, v: str, values: Dict[str, Any]) -> str:
+    @field_validator("db_host")
+    @classmethod
+    def validate_db_host(cls, v: str, info: ValidationInfo) -> str:
         """自动适配Docker环境的数据库主机"""
         # 检查是否在Docker环境中
         docker_env = os.getenv("DOCKER_ENV", "").lower() in ("true", "1", "yes")
-        environment = values.get("environment", "development")
+        environment = info.data.get("environment", "development")
 
         # 如果明确设置了DOCKER_ENV=true，自动使用db作为主机名
         if docker_env:
@@ -349,12 +356,13 @@ class UnifiedSettings(BaseSettings):
         # 否则使用原设置
         return v
 
-    @validator("redis_host")
-    def validate_redis_host(cls, v: str, values: Dict[str, Any]) -> str:
+    @field_validator("redis_host")
+    @classmethod
+    def validate_redis_host(cls, v: str, info: ValidationInfo) -> str:
         """自动适配Docker环境的Redis主机"""
         # 检查是否在Docker环境中
         docker_env = os.getenv("DOCKER_ENV", "").lower() in ("true", "1", "yes")
-        environment = values.get("environment", "development")
+        environment = info.data.get("environment", "development")
 
         # 如果明确设置了DOCKER_ENV=true，自动使用redis作为主机名
         if docker_env:

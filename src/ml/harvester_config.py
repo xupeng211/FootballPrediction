@@ -15,7 +15,7 @@ V20.8 Harvester 专用配置 - Pydantic BaseSettings
 
 import os
 from typing import Optional
-from pydantic import Field, validator
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -71,7 +71,8 @@ class HarvesterSettings(BaseSettings):
     target_features: int = Field(default=881, alias='TARGET_FEATURES')
     dimension_fuse_count: int = Field(default=5, alias='DIMENSION_FUSE_COUNT')
 
-    @validator('db_host')
+    @field_validator('db_host')
+    @classmethod
     def validate_db_host(cls, v):
         """
         自动探测数据库主机

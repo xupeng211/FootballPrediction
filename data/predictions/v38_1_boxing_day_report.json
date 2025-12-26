@@ -1,0 +1,30 @@
+{
+  "version": "V38.1",
+  "name": "\u63a5\u9aa8\u624b\u672f Boxing Day \u5168\u606f\u900f\u89c6\u5355",
+  "timestamp": "2025-12-26T10:49:45.904828",
+  "training": {
+    "matches": 760,
+    "features": 30000,
+    "train_accuracy": 1.0,
+    "test_accuracy": 0.7763,
+    "f1_score": 0.2273,
+    "auc_score": 0.7273,
+    "draw_samples": 169,
+    "draw_percentage": 0.222
+  },
+  "boxing_day_fixture": {
+    "match_id": 4813551,
+    "home_team": "Manchester United",
+    "away_team": "Newcastle United",
+    "kickoff": "2025-12-26T20:00:00Z",
+    "draw_probability": 0.474,
+    "confidence": "MEDIUM"
+  },
+  "top_factors": [
+    "Momentum \u52a8\u91cf\u6ce2\u52a8",
+    "\u4f20\u7403\u7cbe\u5ea6\u5dee\u503c",
+    "\u6bd4\u8d5b\u65f6\u95f4\u5206\u5e03",
+    "\u7403\u5458\u8dd1\u52a8\u8ddd\u79bb",
+    "\u5c04\u95e8\u4f4d\u7f6e\u5206\u5e03"
+  ]
+}

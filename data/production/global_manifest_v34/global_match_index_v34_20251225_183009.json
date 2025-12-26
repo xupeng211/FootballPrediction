@@ -1,0 +1,17 @@
+{
+  "scan_metadata": {
+    "scan_version": "V34.0",
+    "scan_timestamp": "2025-12-25T18:30:09.604941",
+    "total_matches": 0,
+    "leagues_covered": 5,
+    "seasons_covered": 4
+  },
+  "scan_stats": {
+    "total_matches": 0,
+    "by_league": {},
+    "by_season": {},
+    "finished_matches": 0,
+    "scheduled_matches": 0
+  },
+  "match_index": []
+}
