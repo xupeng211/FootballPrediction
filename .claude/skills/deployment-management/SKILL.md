@@ -439,3 +439,9 @@ deploy:
 - **加密传输**: 敏感数据传输加密
 - **权限最小化**: 最小权限原则
 - **合规要求**: 满足数据保护法规
+
+## Related Skills
+- `deployment-operations`: Container deployment and automation
+- `docker-devops`: Docker and DevOps best practices
+- `performance-monitoring`: System performance monitoring
+- `code-quality`: Code quality management

@@ -1,0 +1,49 @@
+{
+  "dataset": "V26_Baseline_40D",
+  "n_samples": 9305,
+  "n_features": 32,
+  "accuracy": 0.9150994089199355,
+  "auc": 0.9807521578298397,
+  "top_features": [
+    {
+      "feature": "rolling_team_rating_away",
+      "importance": 0.4659777879714966
+    },
+    {
+      "feature": "rolling_team_rating_home",
+      "importance": 0.39093801379203796
+    },
+    {
+      "feature": "rolling_xg_away",
+      "importance": 0.08432819694280624
+    },
+    {
+      "feature": "rolling_xg_home",
+      "importance": 0.058756016194820404
+    },
+    {
+      "feature": "rolling_shots_on_target_away",
+      "importance": 0.0
+    },
+    {
+      "feature": "rolling_shots_on_target_home",
+      "importance": 0.0
+    },
+    {
+      "feature": "rolling_possession_away",
+      "importance": 0.0
+    },
+    {
+      "feature": "rolling_possession_home",
+      "importance": 0.0
+    },
+    {
+      "feature": "home_table_position",
+      "importance": 0.0
+    },
+    {
+      "feature": "away_table_position",
+      "importance": 0.0
+    }
+  ]
+}

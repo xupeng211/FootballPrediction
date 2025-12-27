@@ -744,6 +744,12 @@ CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
    - 自动化扩缩容
    - 备份和恢复策略
 
+## Related Skills
+- `deployment-management`: Deployment management (Docker, production)
+- `deployment-operations`: Container deployment and automation
+- `code-quality`: Code quality management
+- `performance-monitoring`: System performance monitoring
+
 ---
-*Last updated: 2025-12-18*
+*Last updated: 2025-12-28*
 *Target: 足球预测系统容器化和CI/CD优化*

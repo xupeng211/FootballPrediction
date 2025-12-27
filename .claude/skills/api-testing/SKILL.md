@@ -267,6 +267,12 @@ jobs:
 5. **断言清晰**: 使用清晰的断言信息
 6. **测试维护**: 定期更新和重构测试
 
+## Related Skills
+- `fastapi-development`: FastAPI async API development
+- `code-quality`: Code quality management
+- `performance-monitoring`: System performance monitoring
+- `football-prediction`: Football prediction system
+
 ---
-*Last updated: 2025-12-18*
+*Last updated: 2025-12-28*
 *Target: API测试覆盖率和质量提升*

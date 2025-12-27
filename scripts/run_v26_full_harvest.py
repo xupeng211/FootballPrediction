@@ -92,7 +92,7 @@ def get_candidates(
     )
     cur = conn.cursor()
 
-    # 构建查询
+    # 构建查询 - 排除已有特征的比赛
     limit_clause = f"LIMIT {limit}" if limit else ""
 
     cur.execute(f"""
@@ -106,6 +106,9 @@ def get_candidates(
         FROM matches m
         INNER JOIN raw_match_data r ON r.match_id = m.match_id
         WHERE UPPER(m.status) = 'FINISHED'
+        AND NOT EXISTS (
+            SELECT 1 FROM match_features_training f WHERE f.match_id = m.match_id
+        )
         ORDER BY m.match_date DESC
         {limit_clause};
     """)
@@ -138,11 +141,10 @@ def get_progress(settings) -> dict:
     )
     cur = conn.cursor()
 
-    # 已处理数量
+    # 已处理数量（有特征数据的比赛）
     cur.execute("""
-        SELECT COUNT(*) as count
-        FROM match_features_training
-        WHERE UPPER(status) = 'COMPLETED';
+        SELECT COUNT(DISTINCT match_id) as count
+        FROM match_features_training;
     """)
     processed = cur.fetchone()[0]
 

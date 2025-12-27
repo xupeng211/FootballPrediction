@@ -16,10 +16,11 @@ description: Optimize and maintain XGBoost machine learning models for football 
 - **部署优化**: 模型压缩、推理加速、内存优化
 
 ## 当前应用场景：足球赛果预测系统
-- **目标**: 提升模型准确率从 58.69% 到 65%+
+- **目标**: 提升模型准确率（当前 V19.4.1 基线：65.52%）
 - **模型**: XGBoost 2.0+ classifier
-- **当前特征**: 12+ 专业特征（含Phase 5高级特征）
+- **当前特征**: 48 维生产特征（V25.1 自适应引擎可扩展至 12061 维）
 - **响应时间目标**: <100ms
+- **数据量**: 13,129+ 场历史比赛数据
 
 ## 工具和库
 - **XGBoost 2.0+**: 高性能梯度提升框架
@@ -181,6 +182,12 @@ param_space:
 3. **容器化部署**: Docker + Kubernetes
 4. **监控告警**: Prometheus + Grafana
 
+## 相关技能
+- `feature-engineering`: 特征工程专项（V25.1 自适应引擎）
+- `football-prediction`: 足球预测系统
+- `v26-harvest`: V26.1 收割流水线
+- `data-engineering`: 数据管道工程
+
 ---
-*Last updated: 2025-12-18*
+*Last updated: 2025-12-28*
 *Target: 足球赛果预测系统优化*

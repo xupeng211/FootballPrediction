@@ -241,3 +241,8 @@ metrics.collection_duration.observe(time.time() - start)
 - 监控API调用成本
 - 优化数据收集策略
 - 避免不必要的重复收集
+
+## 相关技能
+- `v26-harvest`: V26.1 收割流水线
+- `data-engineering`: ETL 数据管道
+- `database-operations`: 数据库操作
