@@ -179,4 +179,8 @@ prediction_smoke_test_*.json
 /v16_*.py
 /v17_*.py
 /v131_*.py
-/cli.py
+
+# V35+ Production Artifacts (exclude large generated files)
+models/v*/
+data/processed/*.parquet
+*.parquet
