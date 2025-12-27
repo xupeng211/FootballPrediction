@@ -25,11 +25,11 @@ async def fetch_match_details(session, match_id: int) -> tuple:
         async with session.get(url) as response:
             if response.status == 200:
                 data = await response.json()
-                header = data.get('header', {})
-                teams = header.get('teams', [])
+                header = data.get("header", {})
+                teams = header.get("teams", [])
                 if len(teams) >= 2:
-                    home_score = teams[0].get('score')
-                    away_score = teams[1].get('score')
+                    home_score = teams[0].get("score")
+                    away_score = teams[1].get("score")
                     return (home_score, away_score)
     except:
         pass
@@ -60,35 +60,35 @@ async def demo_rich_l1_scan():
         async with session.get(url) as response:
             if response.status == 200:
                 data = await response.json()
-                fixtures = data.get('fixtures', {})
-                all_matches = fixtures.get('allMatches', [])
+                fixtures = data.get("fixtures", {})
+                all_matches = fixtures.get("allMatches", [])
 
                 print(f"  总比赛数: {len(all_matches)}")
 
                 for match_data in all_matches:
-                    match_id = match_data.get('id')
+                    match_id = match_data.get("id")
                     if not match_id:
                         continue
 
-                    home_team = match_data.get('home', {})
-                    away_team = match_data.get('away', {})
-                    status_obj = match_data.get('status', {})
+                    home_team = match_data.get("home", {})
+                    away_team = match_data.get("away", {})
+                    status_obj = match_data.get("status", {})
 
-                    is_finished = status_obj.get('finished', False)
-                    is_started = status_obj.get('started', False)
+                    is_finished = status_obj.get("finished", False)
+                    is_started = status_obj.get("started", False)
 
-                    status = 'finished' if is_finished else ('ongoing' if is_started else 'scheduled')
+                    status = "finished" if is_finished else ("ongoing" if is_started else "scheduled")
 
                     match_info = {
-                        'match_id': match_id,
-                        'league_id': league_id,
-                        'season_name': season_name,
-                        'home_team': home_team.get('name', 'Unknown'),
-                        'away_team': away_team.get('name', 'Unknown'),
-                        'status': status,
-                        'match_time_utc': status_obj.get('utcTime', ''),
-                        'home_score': None,
-                        'away_score': None,
+                        "match_id": match_id,
+                        "league_id": league_id,
+                        "season_name": season_name,
+                        "home_team": home_team.get("name", "Unknown"),
+                        "away_team": away_team.get("name", "Unknown"),
+                        "status": status,
+                        "match_time_utc": status_obj.get("utcTime", ""),
+                        "home_score": None,
+                        "away_score": None,
                     }
 
                     matches.append(match_info)
@@ -106,11 +106,11 @@ async def demo_rich_l1_scan():
         fetched_count = 0
 
         for match_info, idx in to_fetch:
-            home_score, away_score = await fetch_match_details(session, match_info['match_id'])
+            home_score, away_score = await fetch_match_details(session, match_info["match_id"])
 
             if home_score is not None and away_score is not None:
-                matches[idx]['home_score'] = home_score
-                matches[idx]['away_score'] = away_score
+                matches[idx]["home_score"] = home_score
+                matches[idx]["away_score"] = away_score
                 fetched_count += 1
 
             if (fetched_count + 1) % 10 == 0:
@@ -122,9 +122,9 @@ async def demo_rich_l1_scan():
 
     # 统计和展示
     total = len(matches)
-    finished = [m for m in matches if m['status'] == 'finished']
-    with_score = [m for m in finished if m['home_score'] is not None]
-    without_score = [m for m in finished if m['home_score'] is None]
+    finished = [m for m in matches if m["status"] == "finished"]
+    with_score = [m for m in finished if m["home_score"] is not None]
+    without_score = [m for m in finished if m["home_score"] is None]
 
     print("\n" + "=" * 70)
     print("📊 Rich L1 数据分布表")
@@ -144,9 +144,15 @@ async def demo_rich_l1_scan():
 
     count = 0
     for match in matches:
-        if match['status'] == 'finished' and match['home_score'] is not None:
-            result_code = 'H' if match['home_score'] > match['away_score'] else ('A' if match['home_score'] < match['away_score'] else 'D')
-            print(f"  {match['home_team']:20s} {match['home_score']:2d} - {match['away_score']:2d} {match['away_team']:20s} [{result_code}]")
+        if match["status"] == "finished" and match["home_score"] is not None:
+            result_code = (
+                "H"
+                if match["home_score"] > match["away_score"]
+                else ("A" if match["home_score"] < match["away_score"] else "D")
+            )
+            print(
+                f"  {match['home_team']:20s} {match['home_score']:2d} - {match['away_score']:2d} {match['away_team']:20s} [{result_code}]"
+            )
             count += 1
             if count >= 10:
                 break
@@ -157,23 +163,28 @@ async def demo_rich_l1_scan():
     output_dir = Path("data/production/v50_phase1_results")
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     output_file = output_dir / f"v50_phase1_demo_{timestamp}.json"
 
-    with open(output_file, 'w', encoding='utf-8') as f:
-        json.dump({
-            'metadata': {
-                'version': 'V50.0-Demo',
-                'league': league_name,
-                'season': season_name,
-                'timestamp': datetime.now().isoformat(),
-                'total_matches': len(matches),
-                'finished_matches': len(finished),
-                'matches_with_score': len(with_score),
-                'score_coverage': coverage if finished else 0,
+    with open(output_file, "w", encoding="utf-8") as f:
+        json.dump(
+            {
+                "metadata": {
+                    "version": "V50.0-Demo",
+                    "league": league_name,
+                    "season": season_name,
+                    "timestamp": datetime.now().isoformat(),
+                    "total_matches": len(matches),
+                    "finished_matches": len(finished),
+                    "matches_with_score": len(with_score),
+                    "score_coverage": coverage if finished else 0,
+                },
+                "matches": matches,
             },
-            'matches': matches,
-        }, f, indent=2, ensure_ascii=False)
+            f,
+            indent=2,
+            ensure_ascii=False,
+        )
 
     print(f"\n💾 数据已保存: {output_file}")
     print("\n✅ V50.0 Rich L1 演示完成！")

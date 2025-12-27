@@ -10,7 +10,7 @@ __author__ = "FootballPrediction Team"
 __email__ = "football@prediction.com"
 
 # 导入核心模块
-from . import core, ml, services, utils, api, database
+from . import api, core, database, ml, services, utils
 
 __all__ = [
     "core",

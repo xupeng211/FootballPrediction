@@ -4,12 +4,9 @@
 """
 
 import logging
-from typing import Optional
 
-from src.core.config import get_config, Config
-from src.logic.strategy_engine import (
-    StrategyEngine, StrategyMode, BettingParameters
-)
+from src.core.config import Config, get_config
+from src.logic.strategy_engine import BettingParameters, StrategyEngine, StrategyMode
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +15,7 @@ class StrategyFactory:
     """策略工厂类"""
 
     @staticmethod
-    def create_engine(config: Optional[Config] = None) -> StrategyEngine:
+    def create_engine(config: Config | None = None) -> StrategyEngine:
         """
         根据配置创建策略引擎
 
@@ -53,21 +50,23 @@ class StrategyFactory:
             confidence_threshold=config.strategy.confidence_threshold,
             min_odds=config.strategy.min_odds,
             max_odds=config.strategy.max_odds,
-            odds_range_factor=config.strategy.odds_range_factor
+            odds_range_factor=config.strategy.odds_range_factor,
         )
 
         # 创建策略引擎
         engine = StrategyEngine(params=betting_params, mode=mode)
 
         logger.info(f"✅ 策略引擎创建完成 - 模式: {mode.value}")
-        logger.info(f"   风控参数: 单场{config.strategy.max_single_bet_pct:.1%} | "
-                   f"每日{config.strategy.max_daily_bets}次 | "
-                   f"Kelly系数{config.strategy.kelly_fraction:.2f}")
+        logger.info(
+            f"   风控参数: 单场{config.strategy.max_single_bet_pct:.1%} | "
+            f"每日{config.strategy.max_daily_bets}次 | "
+            f"Kelly系数{config.strategy.kelly_fraction:.2f}"
+        )
 
         return engine
 
     @staticmethod
-    def get_current_mode(config: Optional[Config] = None) -> str:
+    def get_current_mode(config: Config | None = None) -> str:
         """获取当前策略模式"""
         if config is None:
             config = get_config()
@@ -75,7 +74,7 @@ class StrategyFactory:
         return config.strategy.mode
 
     @staticmethod
-    def switch_mode(new_mode: str, config: Optional[Config] = None) -> bool:
+    def switch_mode(new_mode: str, config: Config | None = None) -> bool:
         """
         切换策略模式
 
@@ -86,7 +85,7 @@ class StrategyFactory:
         Returns:
             bool: 切换是否成功
         """
-        if new_mode.upper() not in ['SANDBOX', 'LIVE']:
+        if new_mode.upper() not in ["SANDBOX", "LIVE"]:
             logger.error(f"无效的策略模式: {new_mode}")
             return False
 
@@ -98,7 +97,7 @@ class StrategyFactory:
 
         logger.warning(f"⚠️ 策略模式切换: {old_mode} → {new_mode.upper()}")
 
-        if new_mode.upper() == 'LIVE':
+        if new_mode.upper() == "LIVE":
             logger.warning("🚨 警告: 已切换到实战模式！将进行真实下注！")
         else:
             logger.info("✅ 已切换到沙盒模式，仅进行分析和建议")
@@ -107,7 +106,7 @@ class StrategyFactory:
 
 
 # 全局策略引擎实例（延迟加载）
-_strategy_engine: Optional[StrategyEngine] = None
+_strategy_engine: StrategyEngine | None = None
 
 
 def get_strategy_engine() -> StrategyEngine:
@@ -146,12 +145,12 @@ def is_sandbox_mode() -> bool:
 
 def switch_to_live_mode() -> bool:
     """切换到实战模式"""
-    return StrategyFactory.switch_mode('LIVE')
+    return StrategyFactory.switch_mode("LIVE")
 
 
 def switch_to_sandbox_mode() -> bool:
     """切换到沙盒模式"""
-    return StrategyFactory.switch_mode('SANDBOX')
+    return StrategyFactory.switch_mode("SANDBOX")
 
 
 # 便利函数
@@ -166,19 +165,19 @@ def get_strategy_info() -> dict:
     engine = get_strategy_engine()
 
     return {
-        'mode': config.strategy.mode,
-        'is_live': config.strategy.is_live_mode(),
-        'risk_parameters': {
-            'max_single_bet_pct': config.strategy.max_single_bet_pct,
-            'max_daily_bets': config.strategy.max_daily_bets,
-            'max_consecutive_losses': config.strategy.max_consecutive_losses,
-            'kelly_fraction': config.strategy.kelly_fraction,
+        "mode": config.strategy.mode,
+        "is_live": config.strategy.is_live_mode(),
+        "risk_parameters": {
+            "max_single_bet_pct": config.strategy.max_single_bet_pct,
+            "max_daily_bets": config.strategy.max_daily_bets,
+            "max_consecutive_losses": config.strategy.max_consecutive_losses,
+            "kelly_fraction": config.strategy.kelly_fraction,
         },
-        'portfolio_status': {
-            'current_capital': engine.portfolio.current_capital,
-            'consecutive_losses': engine.portfolio.consecutive_losses,
-            'daily_bets': engine.portfolio.daily_bets,
-            'risk_level': engine.portfolio.risk_level.value,
+        "portfolio_status": {
+            "current_capital": engine.portfolio.current_capital,
+            "consecutive_losses": engine.portfolio.consecutive_losses,
+            "daily_bets": engine.portfolio.daily_bets,
+            "risk_level": engine.portfolio.risk_level.value,
         },
-        'system_metrics': engine.risk_metrics
+        "system_metrics": engine.risk_metrics,
     }

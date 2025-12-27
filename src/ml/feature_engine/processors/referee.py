@@ -17,12 +17,12 @@ RefereeProcessor - 裁判因子处理器（V21.0 深度爆破版）
 版本: V21.0-deep-blowout
 """
 
-from typing import Any, Dict, Optional
-import logging
 import hashlib
+import logging
+from typing import Any
 
-from ..base import BaseProcessor, ProcessorResult, ProcessorConfig
-from ..models import MatchData, MatchContext
+from ..base import BaseProcessor, ProcessorConfig, ProcessorResult
+from ..models import MatchContext, MatchData
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +38,7 @@ class RefereeProcessorConfig(ProcessorConfig):
         enable_name_hashing: 是否启用裁判姓名哈希
         default_strictness: 默认严格度评分
     """
+
     enable_strictness_analysis: bool = True
     enable_home_bias_analysis: bool = True
     enable_penalty_bias: bool = True
@@ -81,28 +82,38 @@ class RefereeProcessor(BaseProcessor[MatchData]):
 
     # 已知"点球狂人"型裁判名单（英超）
     KNOWN_PENALTY_REFEREES = {
-        "michael oliver", "anthony taylor", "paul tierney",
-        "chris kavanagh", "stuart attwell", "robert jones",
-        "david coote", "jarred gillett", "darren england",
-        "michael salisbury", "thomas Bramall", "john brooks",
+        "michael oliver",
+        "anthony taylor",
+        "paul tierney",
+        "chris kavanagh",
+        "stuart attwell",
+        "robert jones",
+        "david coote",
+        "jarred gillett",
+        "darren england",
+        "michael salisbury",
+        "thomas Bramall",
+        "john brooks",
     }
 
     # 已知严格裁判名单（高黄牌率）
     KNOWN_STRICT_REFEREES = {
-        "michael oliver", "anthony taylor", "paul tierney",
-        "andrew madley", "robert jones", "david coote",
+        "michael oliver",
+        "anthony taylor",
+        "paul tierney",
+        "andrew madley",
+        "robert jones",
+        "david coote",
     }
 
-    def __init__(self, config: Optional[RefereeProcessorConfig] = None) -> None:
+    def __init__(self, config: RefereeProcessorConfig | None = None) -> None:
         super().__init__(config or RefereeProcessorConfig())
         self.config: RefereeProcessorConfig = self.config
 
         # 裁判数据库（预留，可从外部加载）
-        self._referee_db: Dict[str, Dict[str, float]] = {}
+        self._referee_db: dict[str, dict[str, float]] = {}
 
-    def process(
-        self, data: MatchData, context: Any
-    ) -> ProcessorResult:
+    def process(self, data: MatchData, context: Any) -> ProcessorResult:
         """
         提取裁判特征
 
@@ -113,7 +124,7 @@ class RefereeProcessor(BaseProcessor[MatchData]):
         Returns:
             ProcessorResult: 包含裁判特征的处理器结果
         """
-        features: Dict[str, float] = {}
+        features: dict[str, float] = {}
         warnings: list[str] = []
 
         try:
@@ -128,9 +139,7 @@ class RefereeProcessor(BaseProcessor[MatchData]):
 
             # 裁判严格度（基于历史数据库或名单）
             if self.config.enable_strictness_analysis:
-                strictness = self._compute_referee_strictness(
-                    referee_name, match_context.referee_strictness
-                )
+                strictness = self._compute_referee_strictness(referee_name, match_context.referee_strictness)
                 features["ref_is_strict"] = strictness
 
                 # 二分类特征（便于决策树切分）
@@ -146,15 +155,11 @@ class RefereeProcessor(BaseProcessor[MatchData]):
 
             # 裁判主场偏向度（国籍匹配分析）
             if self.config.enable_home_bias_analysis:
-                home_advantage = self._compute_home_advantage(
-                    referee_name, data.home_team, data.league_id
-                )
+                home_advantage = self._compute_home_advantage(referee_name, data.home_team, data.league_id)
                 features["ref_home_advantage"] = home_advantage
 
                 # 裁判国籍与主队匹配度
-                nationality_match = self._compute_nationality_match(
-                    referee_name, data.home_team
-                )
+                nationality_match = self._compute_nationality_match(referee_name, data.home_team)
                 features["ref_nationality_match"] = nationality_match
 
             # 裁判风格编码（综合编码）
@@ -210,9 +215,7 @@ class RefereeProcessor(BaseProcessor[MatchData]):
 
         return hash_int
 
-    def _compute_referee_strictness(
-        self, referee_name: str, provided_strictness: Optional[float]
-    ) -> float:
+    def _compute_referee_strictness(self, referee_name: str, provided_strictness: float | None) -> float:
         """
         计算裁判严格度
 
@@ -239,9 +242,7 @@ class RefereeProcessor(BaseProcessor[MatchData]):
 
         # 查询裁判数据库
         if name_lower in self._referee_db:
-            return self._referee_db[name_lower].get(
-                "strictness", self.config.default_strictness
-            )
+            return self._referee_db[name_lower].get("strictness", self.config.default_strictness)
 
         # 使用默认值
         logger.debug(f"Referee strictness not found for {referee_name}, using default")
@@ -275,9 +276,7 @@ class RefereeProcessor(BaseProcessor[MatchData]):
         # 默认中等偏向
         return 0.3
 
-    def _compute_home_advantage(
-        self, referee_name: str, home_team: str, league_id: str
-    ) -> float:
+    def _compute_home_advantage(self, referee_name: str, home_team: str, league_id: str) -> float:
         """
         计算裁判主场偏向度
 
@@ -303,9 +302,7 @@ class RefereeProcessor(BaseProcessor[MatchData]):
         # 默认无偏向
         return 0.0
 
-    def _compute_nationality_match(
-        self, referee_name: str, home_team: str
-    ) -> float:
+    def _compute_nationality_match(self, referee_name: str, home_team: str) -> float:
         """
         计算裁判国籍与主队匹配度
 
@@ -324,19 +321,36 @@ class RefereeProcessor(BaseProcessor[MatchData]):
         name_lower = referee_name.lower().strip()
 
         # 英格兰/英国裁判特征
-        english_suffixes = ["smith", "jones", "taylor", "brown", "wilson",
-                           "evans", "thomas", "johnson", "roberts", "walker"]
+        english_suffixes = [
+            "smith",
+            "jones",
+            "taylor",
+            "brown",
+            "wilson",
+            "evans",
+            "thomas",
+            "johnson",
+            "roberts",
+            "walker",
+        ]
 
         # 检查裁判姓名是否包含英国姓氏特征
-        has_english_name = any(
-            name_lower.endswith(suffix) for suffix in english_suffixes
-        )
+        has_english_name = any(name_lower.endswith(suffix) for suffix in english_suffixes)
 
         # 检查主队是否为英格兰球队（简化判断）
         is_english_team = any(
             keyword in home_team.lower()
-            for keyword in ["united", "city", "liverpool", "chelsea", "arsenal",
-                          "tottenham", "newcastle", "aston villa", "everton"]
+            for keyword in [
+                "united",
+                "city",
+                "liverpool",
+                "chelsea",
+                "arsenal",
+                "tottenham",
+                "newcastle",
+                "aston villa",
+                "everton",
+            ]
         )
 
         # 如果裁判和主队都是英格兰背景，返回高匹配度
@@ -346,9 +360,7 @@ class RefereeProcessor(BaseProcessor[MatchData]):
         # 默认无匹配
         return 0.0
 
-    def _encode_referee_style(
-        self, strictness: float, home_bias: float, penalty_bias: float
-    ) -> int:
+    def _encode_referee_style(self, strictness: float, home_bias: float, penalty_bias: float) -> int:
         """
         将裁判风格编码为整数
 
@@ -407,17 +419,31 @@ class RefereeProcessor(BaseProcessor[MatchData]):
 
         # 顶级裁判（英超主裁）
         elite_referees = {
-            "michael oliver", "anthony taylor", "paul tierney",
-            "andrew madley", "craig pawson", "michael jones",
-            "chris kavanagh", "stuart attwell", "robert jones",
-            "david coote", "jarred gillett", "darran england",
+            "michael oliver",
+            "anthony taylor",
+            "paul tierney",
+            "andrew madley",
+            "craig pawson",
+            "michael jones",
+            "chris kavanagh",
+            "stuart attwell",
+            "robert jones",
+            "david coote",
+            "jarred gillett",
+            "darran england",
         }
 
         # 资深裁判
         senior_referees = {
-            "thomas Bramall", "michael salisbury", "john brooks",
-            "neil swarbrick", "kevin friend", "martin atkinson",
-            "mike dean", "jon moss", "lee mason",
+            "thomas Bramall",
+            "michael salisbury",
+            "john brooks",
+            "neil swarbrick",
+            "kevin friend",
+            "martin atkinson",
+            "mike dean",
+            "jon moss",
+            "lee mason",
         }
 
         if name_lower in elite_referees:
@@ -438,7 +464,7 @@ class RefereeProcessor(BaseProcessor[MatchData]):
         logger.info(f"Loading referee database from {db_path}")
         pass
 
-    def get_feature_schema(self) -> Dict[str, type]:
+    def get_feature_schema(self) -> dict[str, type]:
         """获取输出特征的 Schema"""
         return {
             "ref_is_strict": float,

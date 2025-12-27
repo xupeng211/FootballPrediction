@@ -4,9 +4,10 @@ V9.0 真实赔率合并器 - 简化版
 基于球队名称合并预测数据和真实赔率
 """
 
-import pandas as pd
-import numpy as np
 from difflib import SequenceMatcher
+
+import numpy as np
+import pandas as pd
 
 
 def similarity(a, b):
@@ -45,14 +46,11 @@ def merge_odds_and_predictions():
     merged_data = []
 
     for idx, pred_row in pred_df.iterrows():
-        pred_home = pred_row['home_team']
-        pred_away = pred_row['away_team']
+        pred_home = pred_row["home_team"]
+        pred_away = pred_row["away_team"]
 
         # 在赔率数据中找到匹配的比赛
-        matches = odds_df[
-            (odds_df['home_team'] == pred_home) &
-            (odds_df['away_team'] == pred_away)
-        ]
+        matches = odds_df[(odds_df["home_team"] == pred_home) & (odds_df["away_team"] == pred_away)]
 
         if len(matches) > 0:
             # 取第一个匹配（如果有多个，取最新的）
@@ -60,13 +58,13 @@ def merge_odds_and_predictions():
 
             # 合并数据
             merged_row = pred_row.copy()
-            merged_row['real_home_odds'] = match['b365_home_odds']
-            merged_row['real_draw_odds'] = match['b365_draw_odds']
-            merged_row['real_away_odds'] = match['b365_away_odds']
-            merged_row['real_match_date'] = match['match_date']
-            merged_row['actual_home_goals'] = match.get('FTHG', np.nan)
-            merged_row['actual_away_goals'] = match.get('FTAG', np.nan)
-            merged_row['actual_result'] = match.get('FTR', np.nan)
+            merged_row["real_home_odds"] = match["b365_home_odds"]
+            merged_row["real_draw_odds"] = match["b365_draw_odds"]
+            merged_row["real_away_odds"] = match["b365_away_odds"]
+            merged_row["real_match_date"] = match["match_date"]
+            merged_row["actual_home_goals"] = match.get("FTHG", np.nan)
+            merged_row["actual_away_goals"] = match.get("FTAG", np.nan)
+            merged_row["actual_result"] = match.get("FTR", np.nan)
 
             merged_data.append(merged_row)
 
@@ -81,14 +79,14 @@ def merge_odds_and_predictions():
         print(f"✅ 合并数据已保存: {output_path}")
 
         # 显示赔率覆盖
-        print(f"\n📊 赔率覆盖统计:")
+        print("\n📊 赔率覆盖统计:")
         print(f"  Bet365 主胜赔率: {merged_df['real_home_odds'].notna().sum()}")
         print(f"  Bet365 平局赔率: {merged_df['real_draw_odds'].notna().sum()}")
         print(f"  Bet365 客胜赔率: {merged_df['real_away_odds'].notna().sum()}")
 
         # 显示样本
-        print(f"\n📋 样本数据:")
-        sample_cols = ['home_team', 'away_team', 'real_home_odds', 'real_draw_odds', 'real_away_odds']
+        print("\n📋 样本数据:")
+        sample_cols = ["home_team", "away_team", "real_home_odds", "real_draw_odds", "real_away_odds"]
         print(merged_df[sample_cols].head())
 
         return merged_df
@@ -105,7 +103,7 @@ def main():
         print("✅ 真实赔率数据合并完成")
         print("=" * 60)
         print(f"  📊 可用比赛: {len(merged_df)}")
-        print(f"  💰 Bet365 赔率覆盖: ✅")
+        print("  💰 Bet365 赔率覆盖: ✅")
         print(f"  📅 数据范围: {merged_df['match_time'].min()} ~ {merged_df['match_time'].max()}")
     else:
         print("\n❌ 数据合并失败")

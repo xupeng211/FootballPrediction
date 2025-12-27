@@ -12,23 +12,22 @@ Author: V19.4 Production Team
 Version: 1.0.0
 """
 
-import os
-import sys
+import asyncio
+import json
 import logging
+import sys
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, List, Any, Optional, Tuple
-import asyncio
+from typing import Any
+
 import numpy as np
 import pandas as pd
-import json
 
 # 添加项目路径
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from src.config_unified import get_settings
-from src.api.collectors.fotmob_core import FotMobCoreCollector, LEAGUE_QUALITY_TIERS, LEAGUE_ID_TO_TIER
-from src.ops.market_price_verifier import MarketPriceVerifier, PriceCheckResult
+from src.api.collectors.fotmob_core import LEAGUE_ID_TO_TIER, LEAGUE_QUALITY_TIERS, FotMobCoreCollector
+from src.ops.market_price_verifier import MarketPriceVerifier
 
 # 配置日志
 log_dir = Path(__file__).parent.parent.parent / "logs"
@@ -37,10 +36,7 @@ log_dir.mkdir(parents=True, exist_ok=True)
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    handlers=[
-        logging.FileHandler(log_dir / "daily_workflow.log"),
-        logging.StreamHandler()
-    ]
+    handlers=[logging.FileHandler(log_dir / "daily_workflow.log"), logging.StreamHandler()],
 )
 logger = logging.getLogger(__name__)
 
@@ -61,11 +57,11 @@ class L1DailyScheduleTask:
         # V11.0: 定义所有支持的联赛 ID
         self.all_leagues = []
         for tier_config in LEAGUE_QUALITY_TIERS.values():
-            self.all_leagues.extend(tier_config['leagues'])
+            self.all_leagues.extend(tier_config["leagues"])
 
         logger.info(f"L1 每日调度初始化完成，支持 {len(self.all_leagues)} 个联赛")
 
-    def get_today_matches(self) -> List[Dict[str, Any]]:
+    def get_today_matches(self) -> list[dict[str, Any]]:
         """
         获取今日所有比赛
 
@@ -81,17 +77,14 @@ class L1DailyScheduleTask:
         # V19.4: 尝试从数据库获取今日/近期未采集的比赛
         try:
             import psycopg2
+
             from src.config_unified import get_settings
 
             settings = get_settings()
             db = settings.database
 
             conn = psycopg2.connect(
-                host=db.host,
-                port=db.port,
-                database=db.name,
-                user=db.user,
-                password=db.password.get_secret_value()
+                host=db.host, port=db.port, database=db.name, user=db.user, password=db.password.get_secret_value()
             )
 
             cursor = conn.cursor()
@@ -122,15 +115,17 @@ class L1DailyScheduleTask:
                 league_id = self._assign_league_id(match_id)
                 tier_info = self._get_league_tier(league_id)
 
-                matches.append({
-                    'match_id': match_id,
-                    'league_id': league_id,
-                    'home_team': row[1],
-                    'away_team': row[2],
-                    'match_time': str(row[3]),
-                    'tier': tier_info['name'],
-                    'tier_level': self._get_tier_level(tier_info['name'])
-                })
+                matches.append(
+                    {
+                        "match_id": match_id,
+                        "league_id": league_id,
+                        "home_team": row[1],
+                        "away_team": row[2],
+                        "match_time": str(row[3]),
+                        "tier": tier_info["name"],
+                        "tier_level": self._get_tier_level(tier_info["name"]),
+                    }
+                )
 
             logger.info(f"✅ 从数据库找到 {len(matches)} 场待采集比赛")
 
@@ -142,7 +137,7 @@ class L1DailyScheduleTask:
         # 按联赛等级统计
         tier_stats = {}
         for match in matches:
-            tier = match.get('tier', 'Unknown')
+            tier = match.get("tier", "Unknown")
             tier_stats[tier] = tier_stats.get(tier, 0) + 1
 
         logger.info("📊 联赛分布:")
@@ -159,8 +154,8 @@ class L1DailyScheduleTask:
         """
         # 模拟联赛分布: 70% Tier 1, 20% Tier 2, 10% Tier 3
         tier_1_leagues = [47, 87, 94]  # 英超、西甲、德甲
-        tier_2_leagues = [48, 78]      # 英冠、葡超
-        tier_3_leagues = [49, 96]      # 意乙、德乙
+        tier_2_leagues = [48, 78]  # 英冠、葡超
+        tier_3_leagues = [49, 96]  # 意乙、德乙
 
         mod = match_id % 10
         if mod < 7:
@@ -170,27 +165,51 @@ class L1DailyScheduleTask:
         else:
             return tier_3_leagues[match_id % len(tier_3_leagues)]
 
-    def _generate_demo_matches(self) -> List[Dict[str, Any]]:
+    def _generate_demo_matches(self) -> list[dict[str, Any]]:
         """生成演示用的比赛数据"""
         demo_matches = [
             # Tier 1: 英超
-            {'match_id': 4030001, 'league_id': 47, 'home_team': 'Arsenal', 'away_team': 'Chelsea', 'match_time': '2024-12-23 15:00:00'},
-            {'match_id': 4030002, 'league_id': 47, 'home_team': 'Liverpool', 'away_team': 'Manchester City', 'match_time': '2024-12-23 17:30:00'},
+            {
+                "match_id": 4030001,
+                "league_id": 47,
+                "home_team": "Arsenal",
+                "away_team": "Chelsea",
+                "match_time": "2024-12-23 15:00:00",
+            },
+            {
+                "match_id": 4030002,
+                "league_id": 47,
+                "home_team": "Liverpool",
+                "away_team": "Manchester City",
+                "match_time": "2024-12-23 17:30:00",
+            },
             # Tier 2: 英冠
-            {'match_id': 4030101, 'league_id': 48, 'home_team': 'Leeds United', 'away_team': 'Southampton', 'match_time': '2024-12-23 15:00:00'},
+            {
+                "match_id": 4030101,
+                "league_id": 48,
+                "home_team": "Leeds United",
+                "away_team": "Southampton",
+                "match_time": "2024-12-23 15:00:00",
+            },
             # Tier 3: 意乙
-            {'match_id': 4030201, 'league_id': 49, 'home_team': 'Brescia', 'away_team': 'Palermo', 'match_time': '2024-12-23 15:00:00'},
+            {
+                "match_id": 4030201,
+                "league_id": 49,
+                "home_team": "Brescia",
+                "away_team": "Palermo",
+                "match_time": "2024-12-23 15:00:00",
+            },
         ]
 
         for match in demo_matches:
-            tier_info = self._get_league_tier(match['league_id'])
-            match['tier'] = tier_info['name']
-            match['tier_level'] = self._get_tier_level(tier_info['name'])
+            tier_info = self._get_league_tier(match["league_id"])
+            match["tier"] = tier_info["name"]
+            match["tier_level"] = self._get_tier_level(tier_info["name"])
 
         logger.info("📋 使用演示数据进行测试")
         return demo_matches
 
-    def _fetch_league_matches(self, league_id: int, date_str: str) -> List[Dict]:
+    def _fetch_league_matches(self, league_id: int, date_str: str) -> list[dict]:
         """
         获取指定联赛的比赛列表
 
@@ -212,21 +231,23 @@ class L1DailyScheduleTask:
 
             # 解析比赛数据
             matches = []
-            leagues_data = data.get('leagues', [])
+            leagues_data = data.get("leagues", [])
 
             for league in leagues_data:
-                for match in league.get('matches', []):
+                for match in league.get("matches", []):
                     # 检查比赛日期是否为今日
-                    match_time = match.get('status', {}).get('utcTime', '')
-                    if date_str in match_time.replace('-', '').replace(':', '').split('T')[0]:
-                        matches.append({
-                            'match_id': match.get('id'),
-                            'league_id': league_id,
-                            'home_team': match.get('home', {}).get('name'),
-                            'away_team': match.get('away', {}).get('name'),
-                            'match_time': match_time,
-                            'status': match.get('status', {}).get('stage', 'Unknown')
-                        })
+                    match_time = match.get("status", {}).get("utcTime", "")
+                    if date_str in match_time.replace("-", "").replace(":", "").split("T")[0]:
+                        matches.append(
+                            {
+                                "match_id": match.get("id"),
+                                "league_id": league_id,
+                                "home_team": match.get("home", {}).get("name"),
+                                "away_team": match.get("away", {}).get("name"),
+                                "match_time": match_time,
+                                "status": match.get("status", {}).get("stage", "Unknown"),
+                            }
+                        )
 
             return matches
 
@@ -234,17 +255,17 @@ class L1DailyScheduleTask:
             logger.error(f"获取联赛 {league_id} 数据失败: {e}")
             return []
 
-    def _get_league_tier(self, league_id: int) -> Dict:
+    def _get_league_tier(self, league_id: int) -> dict:
         """获取联赛等级配置"""
         if league_id in LEAGUE_ID_TO_TIER:
             return LEAGUE_ID_TO_TIER[league_id]
-        return LEAGUE_QUALITY_TIERS['tier_default']
+        return LEAGUE_QUALITY_TIERS["tier_default"]
 
     def _get_tier_level(self, tier_name: str) -> int:
         """获取联赛等级数字 (1=最高, 3=最低)"""
-        if 'tier_1' in tier_name:
+        if "tier_1" in tier_name:
             return 1
-        elif 'tier_2' in tier_name:
+        elif "tier_2" in tier_name:
             return 2
         else:
             return 3
@@ -264,7 +285,7 @@ class L2IncrementalHarvestTask:
         self.collector = FotMobCoreCollector()
         logger.info("L2 增量采集任务初始化完成")
 
-    async def harvest_matches(self, matches: List[Dict[str, Any]]) -> Dict[str, Any]:
+    async def harvest_matches(self, matches: list[dict[str, Any]]) -> dict[str, Any]:
         """
         批量采集比赛数据
 
@@ -278,38 +299,29 @@ class L2IncrementalHarvestTask:
         logger.info("📥 L2 增量采集: 开始采集比赛数据")
         logger.info("=" * 60)
 
-        result = {
-            'total': len(matches),
-            'success': 0,
-            'failed': 0,
-            'skipped': 0,
-            'by_tier': {}
-        }
+        result = {"total": len(matches), "success": 0, "failed": 0, "skipped": 0, "by_tier": {}}
 
         for match in matches:
-            match_id = match.get('match_id')
-            tier = match.get('tier', 'Unknown')
-            league_id = match.get('league_id')
+            match_id = match.get("match_id")
+            tier = match.get("tier", "Unknown")
+            league_id = match.get("league_id")
 
             if not match_id:
                 continue
 
             try:
                 # 使用 V11.0 容错采集器（带联赛分级哨兵）
-                success = self.collector.harvest_match_with_league(
-                    match_id=match_id,
-                    league_id=league_id
-                )
+                success = self.collector.harvest_match_with_league(match_id=match_id, league_id=league_id)
 
                 if success:
-                    result['success'] += 1
-                    result['by_tier'][tier] = result['by_tier'].get(tier, 0) + 1
+                    result["success"] += 1
+                    result["by_tier"][tier] = result["by_tier"].get(tier, 0) + 1
                 else:
-                    result['failed'] += 1
+                    result["failed"] += 1
 
             except Exception as e:
                 logger.error(f"采集比赛 {match_id} 失败: {e}")
-                result['failed'] += 1
+                result["failed"] += 1
 
         logger.info(f"✅ 采集完成: {result['success']}/{result['total']} 成功")
 
@@ -345,18 +357,18 @@ class V19PredictionTask:
             model_path = model_dir / "v19.0_reconstruction.pkl"
             if model_path.exists():
                 model_data = joblib.load(model_path)
-                self.model = model_data['model']
-                self.scaler = model_data['scaler']
-                self.feature_columns = model_data['feature_columns']
+                self.model = model_data["model"]
+                self.scaler = model_data["scaler"]
+                self.feature_columns = model_data["feature_columns"]
                 logger.info(f"✅ 模型加载成功: {model_path}")
             else:
                 # 尝试加载备用模型
                 fallback_path = model_dir / "v18.2_final_beast_model.pkl"
                 if fallback_path.exists():
                     model_data = joblib.load(fallback_path)
-                    self.model = model_data['model']
-                    self.scaler = model_data.get('scaler')
-                    self.feature_columns = model_data.get('feature_names')
+                    self.model = model_data["model"]
+                    self.scaler = model_data.get("scaler")
+                    self.feature_columns = model_data.get("feature_names")
                     logger.info(f"✅ 备用模型加载成功: {fallback_path}")
                 else:
                     logger.error("❌ 找不到可用的模型文件")
@@ -366,6 +378,7 @@ class V19PredictionTask:
             calibrator_path = model_dir / "v19.0_calibrator.pkl"
             if calibrator_path.exists():
                 from src.ml.v19_probability_calibrator import V19ProbabilityCalibrator
+
                 self.calibrator = V19ProbabilityCalibrator()
                 self.calibrator.load(str(calibrator_path))
                 logger.info(f"✅ 校准器加载成功: {calibrator_path}")
@@ -375,10 +388,11 @@ class V19PredictionTask:
         except Exception as e:
             logger.error(f"❌ 模型加载失败: {e}")
             import traceback
+
             logger.error(traceback.format_exc())
             return False
 
-    async def predict_matches(self, matches: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    async def predict_matches(self, matches: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """
         对比赛列表进行预测
 
@@ -399,7 +413,7 @@ class V19PredictionTask:
         predictions = []
 
         for match in matches:
-            match_id = match.get('match_id')
+            match_id = match.get("match_id")
             try:
                 # 提取特征（简化版，实际应使用完整特征提取器）
                 features = self._extract_match_features(match)
@@ -420,21 +434,18 @@ class V19PredictionTask:
 
         return predictions
 
-    def _extract_match_features(self, match: Dict) -> Optional[np.ndarray]:
+    def _extract_match_features(self, match: dict) -> np.ndarray | None:
         """从数据库提取比赛特征"""
         try:
             import psycopg2
+
             from src.config_unified import get_settings
 
             settings = get_settings()
             db = settings.database
 
             conn = psycopg2.connect(
-                host=db.host,
-                port=db.port,
-                database=db.name,
-                user=db.user,
-                password=db.password.get_secret_value()
+                host=db.host, port=db.port, database=db.name, user=db.user, password=db.password.get_secret_value()
             )
 
             cursor = conn.cursor()
@@ -446,7 +457,7 @@ class V19PredictionTask:
                 LIMIT 1
             """
 
-            cursor.execute(query, (match.get('match_id'),))
+            cursor.execute(query, (match.get("match_id"),))
             row = cursor.fetchone()
 
             cursor.close()
@@ -472,14 +483,14 @@ class V19PredictionTask:
             logger.debug(f"特征提取失败: {e}")
             return None
 
-    def _realtime_feature_extraction(self, match: Dict) -> Optional[np.ndarray]:
+    def _realtime_feature_extraction(self, match: dict) -> np.ndarray | None:
         """实时特征提取（简化版）"""
         # 这里应该调用完整的特征提取器
         # 简化起见，返回随机特征用于演示
         n_features = len(self.feature_columns) if self.feature_columns else 39
         return np.random.rand(1, n_features)
 
-    def _get_column_index(self, cursor, column_name: str) -> Optional[int]:
+    def _get_column_index(self, cursor, column_name: str) -> int | None:
         """获取列索引"""
         try:
             # 简化处理，返回固定索引
@@ -487,7 +498,7 @@ class V19PredictionTask:
         except:
             return None
 
-    def _predict_single(self, features: np.ndarray, match: Dict) -> Dict[str, Any]:
+    def _predict_single(self, features: np.ndarray, match: dict) -> dict[str, Any]:
         """单场比赛预测"""
         # 标准化特征
         if self.scaler is not None:
@@ -512,25 +523,25 @@ class V19PredictionTask:
         estimated_roi = self._calculate_roi(calibrated_proba, pred_class)
 
         return {
-            'match_id': match.get('match_id'),
-            'home_team': match.get('home_team'),
-            'away_team': match.get('away_team'),
-            'match_time': match.get('match_time'),
-            'tier': match.get('tier', 'Unknown'),
-            'prediction': self._class_to_label(pred_class),
-            'prediction_code': pred_class,
-            'confidence': confidence,
-            'probability_home': float(calibrated_proba[2]),
-            'probability_draw': float(calibrated_proba[1]),
-            'probability_away': float(calibrated_proba[0]),
-            'estimated_roi': estimated_roi,
-            'recommended': confidence > 0.60 and estimated_roi > 5.0
+            "match_id": match.get("match_id"),
+            "home_team": match.get("home_team"),
+            "away_team": match.get("away_team"),
+            "match_time": match.get("match_time"),
+            "tier": match.get("tier", "Unknown"),
+            "prediction": self._class_to_label(pred_class),
+            "prediction_code": pred_class,
+            "confidence": confidence,
+            "probability_home": float(calibrated_proba[2]),
+            "probability_draw": float(calibrated_proba[1]),
+            "probability_away": float(calibrated_proba[0]),
+            "estimated_roi": estimated_roi,
+            "recommended": confidence > 0.60 and estimated_roi > 5.0,
         }
 
     def _class_to_label(self, pred_class: int) -> str:
         """将预测类转换为标签"""
-        labels = {0: 'Away', 1: 'Draw', 2: 'Home'}
-        return labels.get(pred_class, 'Unknown')
+        labels = {0: "Away", 1: "Draw", 2: "Home"}
+        return labels.get(pred_class, "Unknown")
 
     def _calculate_roi(self, probabilities: np.ndarray, pred_class: int) -> float:
         """计算预估 ROI"""
@@ -565,10 +576,7 @@ class MarketPriceVerificationTask:
         self.verifier = MarketPriceVerifier()
         logger.info("市场价格验证任务初始化完成")
 
-    def verify_predictions(
-        self,
-        predictions: List[Dict[str, Any]]
-    ) -> List[Dict[str, Any]]:
+    def verify_predictions(self, predictions: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """
         验证预测结果的市场价格
 
@@ -587,33 +595,33 @@ class MarketPriceVerificationTask:
         safe_count = 0
 
         for pred in predictions:
-            match_id = pred.get('match_id')
-            home_team = pred.get('home_team')
-            away_team = pred.get('away_team')
-            prediction = pred.get('prediction', 'Unknown')
-            prediction_code = pred.get('prediction_code', -1)
+            match_id = pred.get("match_id")
+            home_team = pred.get("home_team")
+            away_team = pred.get("away_team")
+            prediction = pred.get("prediction", "Unknown")
+            prediction_code = pred.get("prediction_code", -1)
 
             # 转换预测代码到 H/D/A
-            if prediction == 'Home':
-                pred_label = 'H'
-            elif prediction == 'Draw':
-                pred_label = 'D'
-            elif prediction == 'Away':
-                pred_label = 'A'
+            if prediction == "Home":
+                pred_label = "H"
+            elif prediction == "Draw":
+                pred_label = "D"
+            elif prediction == "Away":
+                pred_label = "A"
             else:
-                pred_label = 'N/A'
+                pred_label = "N/A"
 
             # 获取预估赔率（基于概率）
-            prob_h = pred.get('probability_home', 0)
-            prob_d = pred.get('probability_draw', 0)
-            prob_a = pred.get('probability_away', 0)
+            prob_h = pred.get("probability_home", 0)
+            prob_d = pred.get("probability_draw", 0)
+            prob_a = pred.get("probability_away", 0)
 
             # 估算历史赔率（简化版：使用概率的倒数作为参考）
-            if pred_label == 'H' and prob_h > 0:
+            if pred_label == "H" and prob_h > 0:
                 historical_odds = 1 / prob_h
-            elif pred_label == 'D' and prob_d > 0:
+            elif pred_label == "D" and prob_d > 0:
                 historical_odds = 1 / prob_d
-            elif pred_label == 'A' and prob_a > 0:
+            elif pred_label == "A" and prob_a > 0:
                 historical_odds = 1 / prob_a
             else:
                 historical_odds = None
@@ -624,15 +632,15 @@ class MarketPriceVerificationTask:
                 home_team=home_team,
                 away_team=away_team,
                 prediction=pred_label,
-                historical_odds=historical_odds
+                historical_odds=historical_odds,
             )
 
             # 添加价格状态到预测结果
-            pred['price_status'] = price_check.recommendation
-            pred['price_deprecated'] = price_check.is_deprecated
-            pred['historical_odds'] = price_check.historical_odds
-            pred['live_odds'] = price_check.live_odds
-            pred['odds_diff_pct'] = price_check.odds_diff_pct
+            pred["price_status"] = price_check.recommendation
+            pred["price_deprecated"] = price_check.is_deprecated
+            pred["historical_odds"] = price_check.historical_odds
+            pred["live_odds"] = price_check.live_odds
+            pred["odds_diff_pct"] = price_check.odds_diff_pct
 
             # 统计
             if price_check.is_deprecated:
@@ -668,10 +676,7 @@ class BettingOpportunityGenerator:
         logger.info("盈利机会清单生成器初始化完成")
 
     def generate_daily_picks(
-        self,
-        predictions: List[Dict[str, Any]],
-        min_confidence: float = 0.60,
-        min_roi: float = 5.0
+        self, predictions: list[dict[str, Any]], min_confidence: float = 0.60, min_roi: float = 5.0
     ) -> str:
         """
         生成每日投注清单
@@ -689,10 +694,7 @@ class BettingOpportunityGenerator:
         logger.info("=" * 60)
 
         # 筛选符合条件的预测
-        filtered = [
-            p for p in predictions
-            if p['confidence'] >= min_confidence and p['estimated_roi'] >= min_roi
-        ]
+        filtered = [p for p in predictions if p["confidence"] >= min_confidence and p["estimated_roi"] >= min_roi]
 
         logger.info(f"📊 筛选结果: {len(filtered)}/{len(predictions)} 场比赛符合条件")
 
@@ -704,15 +706,26 @@ class BettingOpportunityGenerator:
         df = pd.DataFrame(filtered)
 
         # 添加推荐理由列
-        df['reason'] = df.apply(self._generate_reason, axis=1)
+        df["reason"] = df.apply(self._generate_reason, axis=1)
 
         # 重新排列列
         columns = [
-            'match_id', 'home_team', 'away_team', 'match_time', 'tier',
-            'prediction', 'confidence', 'estimated_roi',
-            'probability_home', 'probability_draw', 'probability_away',
-            'price_status', 'historical_odds', 'live_odds', 'odds_diff_pct',
-            'reason'
+            "match_id",
+            "home_team",
+            "away_team",
+            "match_time",
+            "tier",
+            "prediction",
+            "confidence",
+            "estimated_roi",
+            "probability_home",
+            "probability_draw",
+            "probability_away",
+            "price_status",
+            "historical_odds",
+            "live_odds",
+            "odds_diff_pct",
+            "reason",
         ]
 
         df = df[[c for c in columns if c in df.columns]]
@@ -736,16 +749,16 @@ class BettingOpportunityGenerator:
         """生成推荐理由"""
         reasons = []
 
-        if row['confidence'] > 0.70:
+        if row["confidence"] > 0.70:
             reasons.append(f"高置信度 ({row['confidence']:.1%})")
 
-        if row['estimated_roi'] > 10.0:
+        if row["estimated_roi"] > 10.0:
             reasons.append(f"高 ROI ({row['estimated_roi']:.1f}%)")
 
-        pred = row['prediction']
-        if pred == 'Home' and row['probability_home'] > 0.65:
+        pred = row["prediction"]
+        if pred == "Home" and row["probability_home"] > 0.65:
             reasons.append("主场优势明显")
-        elif pred == 'Away' and row['probability_away'] > 0.65:
+        elif pred == "Away" and row["probability_away"] > 0.65:
             reasons.append("客场实力优势")
 
         return "; ".join(reasons) if reasons else "综合分析推荐"
@@ -784,7 +797,7 @@ class DailyPredictionWorkflow:
 
         logger.info("V19.4 每日预测流水线初始化完成 (含价格验证)")
 
-    async def run_daily_workflow(self) -> Dict[str, Any]:
+    async def run_daily_workflow(self) -> dict[str, Any]:
         """
         执行完整的每日预测流程
 
@@ -796,11 +809,7 @@ class DailyPredictionWorkflow:
         logger.info("=" * 80)
 
         start_time = datetime.now()
-        result = {
-            'success': False,
-            'stages': {},
-            'final_output': None
-        }
+        result = {"success": False, "stages": {}, "final_output": None}
 
         try:
             # Stage 1: L1 - 获取今日比赛
@@ -809,41 +818,41 @@ class DailyPredictionWorkflow:
 
             if not matches:
                 logger.warning("⚠️ 没有今日比赛，工作流结束")
-                result['stages']['l1'] = {'status': 'no_matches', 'count': 0}
+                result["stages"]["l1"] = {"status": "no_matches", "count": 0}
                 return result
 
-            result['stages']['l1'] = {'status': 'success', 'count': len(matches)}
+            result["stages"]["l1"] = {"status": "success", "count": len(matches)}
 
             # Stage 2: L2 - 增量采集
             logger.info("\n📍 Stage 2: L2 增量采集")
             harvest_result = await self.l2_task.harvest_matches(matches)
-            result['stages']['l2'] = harvest_result
+            result["stages"]["l2"] = harvest_result
 
             # Stage 3: V19 - 预测
             logger.info("\n📍 Stage 3: V19 预测")
             predictions = await self.v19_task.predict_matches(matches)
-            result['stages']['v19'] = {'status': 'success', 'count': len(predictions)}
+            result["stages"]["v19"] = {"status": "success", "count": len(predictions)}
 
             # Stage 4: Price Verify - 价格验证 (V19.4 新增)
             logger.info("\n📍 Stage 4: 市场价格验证")
             verified_predictions = self.price_verifier.verify_predictions(predictions)
-            result['stages']['price_verify'] = {
-                'status': 'success',
-                'original_count': len(predictions),
-                'verified_count': len(verified_predictions),
-                'deprecated_count': len(predictions) - len(verified_predictions)
+            result["stages"]["price_verify"] = {
+                "status": "success",
+                "original_count": len(predictions),
+                "verified_count": len(verified_predictions),
+                "deprecated_count": len(predictions) - len(verified_predictions),
             }
 
             # Stage 5: Export - 生成清单
             logger.info("\n📍 Stage 5: 生成盈利机会清单")
             output_path = self.exporter.generate_daily_picks(verified_predictions)  # 使用验证后的预测
-            result['stages']['export'] = {'status': 'success', 'path': output_path}
-            result['final_output'] = output_path
+            result["stages"]["export"] = {"status": "success", "path": output_path}
+            result["final_output"] = output_path
 
             # 完成
             elapsed = (datetime.now() - start_time).total_seconds()
-            result['success'] = True
-            result['elapsed_seconds'] = elapsed
+            result["success"] = True
+            result["elapsed_seconds"] = elapsed
 
             logger.info("\n" + "=" * 80)
             logger.info("✅ V19.4 每日预测流水线完成")
@@ -854,8 +863,9 @@ class DailyPredictionWorkflow:
         except Exception as e:
             logger.error(f"❌ 流水线执行失败: {e}")
             import traceback
+
             logger.error(traceback.format_exc())
-            result['error'] = str(e)
+            result["error"] = str(e)
 
         return result
 
@@ -863,6 +873,7 @@ class DailyPredictionWorkflow:
 # ============================================================================
 # TaskRunner 集成
 # ============================================================================
+
 
 class DailyPredictionTask:
     """
@@ -879,7 +890,7 @@ class DailyPredictionTask:
         self.last_status = None
         self.run_count = 0
 
-    async def execute(self) -> Dict[str, Any]:
+    async def execute(self) -> dict[str, Any]:
         """执行每日预测任务"""
         logger.info("=" * 60)
         logger.info("📅 开始执行每日预测任务")
@@ -890,23 +901,24 @@ class DailyPredictionTask:
 
         result = await self.workflow.run_daily_workflow()
 
-        self.last_status = "success" if result.get('success') else "error"
+        self.last_status = "success" if result.get("success") else "error"
 
         return result
 
-    def get_info(self) -> Dict[str, Any]:
+    def get_info(self) -> dict[str, Any]:
         """获取任务信息"""
         return {
             "name": self.name,
             "last_run": self.last_run.isoformat() if self.last_run else None,
             "last_status": self.last_status,
-            "run_count": self.run_count
+            "run_count": self.run_count,
         }
 
 
 # ============================================================================
 # CLI 入口
 # ============================================================================
+
 
 def main():
     """CLI 入口函数"""
@@ -937,11 +949,7 @@ def main():
             runner = TaskRunner()
 
             # 注册每日预测任务（每天 08:00 UTC 执行）
-            runner.register_task(
-                DailyPredictionTask(),
-                cron_expression="0 8 * * *",
-                job_id="daily_prediction"
-            )
+            runner.register_task(DailyPredictionTask(), cron_expression="0 8 * * *", job_id="daily_prediction")
 
             runner.start()
 

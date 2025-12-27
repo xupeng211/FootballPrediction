@@ -20,13 +20,12 @@
 
 import logging
 import time
-from datetime import datetime
-from typing import Dict, Any, List, Optional, Protocol, Union, Callable
 from dataclasses import dataclass, field
-from pathlib import Path
+from datetime import datetime
 from enum import Enum
+from typing import Any, Protocol
 
-from .dependency_injection import injectable, ServiceLifecycle
+from .dependency_injection import ServiceLifecycle, injectable
 
 logger = logging.getLogger(__name__)
 
@@ -43,11 +42,11 @@ class PredictionStatus(str, Enum):
 class ModelProtocol(Protocol):
     """模型协议接口 - 类型安全"""
 
-    async def predict(self, features: Dict[str, Any]) -> Dict[str, Any]:
+    async def predict(self, features: dict[str, Any]) -> dict[str, Any]:
         """预测方法"""
         ...
 
-    async def predict_proba(self, features: Dict[str, Any]) -> Dict[str, float]:
+    async def predict_proba(self, features: dict[str, Any]) -> dict[str, float]:
         """概率预测方法"""
         ...
 
@@ -56,7 +55,7 @@ class ModelProtocol(Protocol):
         """是否已训练"""
         ...
 
-    def get_model_info(self) -> Dict[str, Any]:
+    def get_model_info(self) -> dict[str, Any]:
         """获取模型信息"""
         ...
 
@@ -72,7 +71,7 @@ class PredictionRequest:
     include_metadata: bool = True
     include_explanation: bool = False
     batch_mode: bool = False
-    match_ids: Optional[List[str]] = None
+    match_ids: list[str] | None = None
 
     def __post_init__(self) -> None:
         """严格验证"""
@@ -94,15 +93,15 @@ class PredictionResponse:
     """预测响应模型 - 完整类型安全"""
 
     success: bool
-    match_id: Optional[str] = None
-    prediction: Optional[str] = None
-    probabilities: Optional[Dict[str, float]] = None
-    confidence: Optional[float] = None
-    features: Optional[Dict[str, Any]] = None
-    metadata: Optional[Dict[str, Any]] = None
-    error: Optional[str] = None
-    request_id: Optional[str] = None
-    processing_time_ms: Optional[float] = None
+    match_id: str | None = None
+    prediction: str | None = None
+    probabilities: dict[str, float] | None = None
+    confidence: float | None = None
+    features: dict[str, Any] | None = None
+    metadata: dict[str, Any] | None = None
+    error: str | None = None
+    request_id: str | None = None
+    processing_time_ms: float | None = None
 
     def __post_init__(self) -> None:
         """响应验证"""
@@ -122,8 +121,8 @@ class PredictionResponse:
 class BatchPredictionRequest:
     """批量预测请求"""
 
-    requests: List[PredictionRequest]
-    batch_id: Optional[str] = None
+    requests: list[PredictionRequest]
+    batch_id: str | None = None
 
     def __post_init__(self) -> None:
         """批量请求验证"""
@@ -139,19 +138,19 @@ class BatchPredictionResponse:
     """批量预测响应"""
 
     batch_id: str
-    responses: List[PredictionResponse]
+    responses: list[PredictionResponse]
     total_count: int
     success_count: int
     failed_count: int
     processing_time_ms: float
-    errors: List[str] = field(default_factory=list)
+    errors: list[str] = field(default_factory=list)
 
 
 @injectable("core_inference", ["model_service", "cache_service"])
 class CoreInferenceService(ServiceLifecycle):
     """核心推理服务 - 工业级纯净实现"""
 
-    def __init__(self, model_service: ModelProtocol, cache_service: Optional[Any] = None) -> None:
+    def __init__(self, model_service: ModelProtocol, cache_service: Any | None = None) -> None:
         self.model_service = model_service
         self.cache_service = cache_service
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
@@ -279,7 +278,7 @@ class CoreInferenceService(ServiceLifecycle):
                     success=False, match_id=batch_request.requests[i].match_id, error=str(result)
                 )
                 responses.append(error_response)
-                errors.append(f"预测{i+1}失败: {result}")
+                errors.append(f"预测{i + 1}失败: {result}")
             else:
                 responses.append(result)
 
@@ -297,7 +296,7 @@ class CoreInferenceService(ServiceLifecycle):
             errors=errors,
         )
 
-    def _extract_features(self, request: PredictionRequest) -> Dict[str, Any]:
+    def _extract_features(self, request: PredictionRequest) -> dict[str, Any]:
         """特征提取 - 类型安全实现"""
         # 简化的特征提取逻辑
         # 实际实现应该调用专业的特征工程服务
@@ -323,7 +322,7 @@ class CoreInferenceService(ServiceLifecycle):
         return features
 
     def _build_response(
-        self, request: PredictionRequest, prediction_result: Dict[str, Any], start_time: float
+        self, request: PredictionRequest, prediction_result: dict[str, Any], start_time: float
     ) -> PredictionResponse:
         """构建预测响应 - 完整类型安全"""
 
@@ -371,7 +370,7 @@ class CoreInferenceService(ServiceLifecycle):
         new_avg = ((current_avg * (total - 1)) + (processing_time * 1000)) / total
         self._performance_stats["avg_processing_time_ms"] = new_avg
 
-    def get_performance_stats(self) -> Dict[str, Any]:
+    def get_performance_stats(self) -> dict[str, Any]:
         """获取性能统计"""
         stats = self._performance_stats.copy()
 
@@ -389,7 +388,7 @@ class CoreInferenceService(ServiceLifecycle):
 
         return stats
 
-    async def health_check(self) -> Dict[str, Any]:
+    async def health_check(self) -> dict[str, Any]:
         """健康检查"""
         return {
             "service": "core_inference",
@@ -402,7 +401,7 @@ class CoreInferenceService(ServiceLifecycle):
 
 # 便捷函数
 async def create_core_inference_service(
-    model_service: ModelProtocol, cache_service: Optional[Any] = None
+    model_service: ModelProtocol, cache_service: Any | None = None
 ) -> CoreInferenceService:
     """创建核心推理服务实例"""
     service = CoreInferenceService(model_service, cache_service)
@@ -416,6 +415,6 @@ def create_prediction_request(match_id: str, home_team: str, away_team: str, **k
     return PredictionRequest(match_id=match_id, home_team=home_team, away_team=away_team, **kwargs)
 
 
-def create_batch_request(requests: List[PredictionRequest], batch_id: Optional[str] = None) -> BatchPredictionRequest:
+def create_batch_request(requests: list[PredictionRequest], batch_id: str | None = None) -> BatchPredictionRequest:
     """创建批量预测请求 - 类型安全"""
     return BatchPredictionRequest(requests=requests, batch_id=batch_id)

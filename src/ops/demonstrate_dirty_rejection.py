@@ -7,8 +7,8 @@ V35.2 脏数据拦截演示
 
 import json
 import sys
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 
 # Add src to path
 project_root = Path(__file__).parent.parent.parent
@@ -23,30 +23,30 @@ def validate_payload(l2_data: dict, match_id: int) -> tuple:
         (is_valid, reason): 是否通过校验及原因
     """
     # 检查 1: 必须有 content
-    content = l2_data.get('content')
+    content = l2_data.get("content")
     if not content or not isinstance(content, dict):
         return False, "Missing or invalid 'content' field"
 
     # 检查 2: 必须有 stats 或 shotmap
-    has_stats = bool(content.get('stats'))
-    has_shotmap = bool(content.get('shotmap'))
+    has_stats = bool(content.get("stats"))
+    has_shotmap = bool(content.get("shotmap"))
 
     if not (has_stats or has_shotmap):
         return False, f"Missing both 'stats' and 'shotmap' (has_stats={has_stats}, has_shotmap={has_shotmap})"
 
     # 检查 3: 关键字段不能为空
-    general = l2_data.get('general', {})
-    if not general.get('homeTeam') or not general.get('awayTeam'):
+    general = l2_data.get("general", {})
+    if not general.get("homeTeam") or not general.get("awayTeam"):
         return False, "Missing home_team or away_team in general data"
 
     # 检查 4: match_id 必须存在且匹配
-    api_match_id = general.get('matchId') or general.get('id')
+    api_match_id = general.get("matchId") or general.get("id")
     if api_match_id and int(api_match_id) != match_id:
         return False, f"Match ID mismatch: requested={match_id}, response={api_match_id}"
 
     # 检查 5: stats 数据质量检查
     if has_stats:
-        stats = content['stats']
+        stats = content["stats"]
         if not isinstance(stats, dict):
             return False, "Invalid 'stats' format (not a dict)"
 
@@ -66,11 +66,7 @@ def demonstrate_dirty_data_rejection():
 
     # 案例 1: 缺失 content 的脏数据
     dirty_data_1 = {
-        "general": {
-            "matchId": 4813374,
-            "homeTeam": {"name": "Liverpool"},
-            "awayTeam": {"name": "Chelsea"}
-        },
+        "general": {"matchId": 4813374, "homeTeam": {"name": "Liverpool"}, "awayTeam": {"name": "Chelsea"}},
         # 缺失 content 字段
     }
 
@@ -86,16 +82,9 @@ def demonstrate_dirty_data_rejection():
     dirty_data_2 = {
         "content": {
             # 只有基本信息，没有 stats 和 shotmap
-            "matchFacts": {
-                "homeTeam": "Liverpool",
-                "awayTeam": "Chelsea"
-            }
+            "matchFacts": {"homeTeam": "Liverpool", "awayTeam": "Chelsea"}
         },
-        "general": {
-            "matchId": 4813375,
-            "homeTeam": {"name": "Liverpool"},
-            "awayTeam": {"name": "Chelsea"}
-        }
+        "general": {"matchId": 4813375, "homeTeam": {"name": "Liverpool"}, "awayTeam": {"name": "Chelsea"}},
     }
 
     print("\n" + "=" * 70)
@@ -109,15 +98,11 @@ def demonstrate_dirty_data_rejection():
 
     # 案例 3: 缺失 homeTeam 的脏数据
     dirty_data_3 = {
-        "content": {
-            "stats": {
-                "possession": {"home": 55, "away": 45}
-            }
-        },
+        "content": {"stats": {"possession": {"home": 55, "away": 45}}},
         "general": {
             "matchId": 4813376,
             # 缺失 homeTeam 和 awayTeam
-        }
+        },
     }
 
     print("\n" + "=" * 70)
@@ -135,19 +120,11 @@ def demonstrate_dirty_data_rejection():
             "stats": {
                 "possession": {"home": 55, "away": 45},
                 "totalShots": {"home": 15, "away": 8},
-                "shotsOnTarget": {"home": 6, "away": 2}
+                "shotsOnTarget": {"home": 6, "away": 2},
             },
-            "shotmap": {
-                "shots": [
-                    {"x": 80, "y": 40, "expectedGoals": 0.5}
-                ]
-            }
+            "shotmap": {"shots": [{"x": 80, "y": 40, "expectedGoals": 0.5}]},
         },
-        "general": {
-            "matchId": 4813377,
-            "homeTeam": {"name": "Liverpool"},
-            "awayTeam": {"name": "Chelsea"}
-        }
+        "general": {"matchId": 4813377, "homeTeam": {"name": "Liverpool"}, "awayTeam": {"name": "Chelsea"}},
     }
 
     print("\n" + "=" * 70)
@@ -171,21 +148,21 @@ def demonstrate_dirty_data_rejection():
         (4813376, dirty_data_3, "Missing home_team or awayTeam"),
     ]:
         log_entry = {
-            'timestamp': timestamp,
-            'match_id': case_id,
-            'rejection_reason': reason,
-            'data_preview': {
-                'has_content': 'content' in data,
-                'has_stats': bool(data.get('content', {}).get('stats')),
-                'has_shotmap': bool(data.get('content', {}).get('shotmap')),
-                'has_general': bool(data.get('general')),
-            }
+            "timestamp": timestamp,
+            "match_id": case_id,
+            "rejection_reason": reason,
+            "data_preview": {
+                "has_content": "content" in data,
+                "has_stats": bool(data.get("content", {}).get("stats")),
+                "has_shotmap": bool(data.get("content", {}).get("shotmap")),
+                "has_general": bool(data.get("general")),
+            },
         }
-        with open(bad_matches_log, 'a', encoding='utf-8') as f:
-            f.write(json.dumps(log_entry, ensure_ascii=False) + '\n')
+        with open(bad_matches_log, "a", encoding="utf-8") as f:
+            f.write(json.dumps(log_entry, ensure_ascii=False) + "\n")
 
     print(f"\n💾 脏数据日志: {bad_matches_log}")
-    print(f"   已记录: 3 条被拦截的脏数据")
+    print("   已记录: 3 条被拦截的脏数据")
 
     print("\n" + "=" * 70)
     print("✅ 脏数据拦截演示完成")

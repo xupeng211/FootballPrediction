@@ -29,15 +29,16 @@ Version: 1.0.0
 
 import logging
 import os
-import numpy as np
-from datetime import datetime, timedelta
-from typing import Dict, Any, Optional, List, Tuple, Union
-from decimal import Decimal, ROUND_HALF_UP, ROUND_HALF_EVEN, getcontext, Context
 from dataclasses import dataclass
+from datetime import datetime, timedelta
+from decimal import Context, Decimal
 from enum import Enum
+from typing import Any
 
-from ...constants import FOOTBALL, MATH, PROBABILITY, ODDS
+import numpy as np
+
 from ...config_secure import get_settings
+from ...constants import MATH
 
 logger = logging.getLogger(__name__)
 
@@ -64,7 +65,7 @@ class ProductionSafetyValidator:
         self.daily_stake_total = Decimal("0")
         self.high_value_bets_count = 0
 
-    def validate_stake_amount(self, bankroll: Decimal, stake_amount: Decimal) -> Dict[str, Any]:
+    def validate_stake_amount(self, bankroll: Decimal, stake_amount: Decimal) -> dict[str, Any]:
         """
         验证投注金额安全性
 
@@ -160,7 +161,7 @@ class ProductionSafetyValidator:
         self.daily_stake_total = Decimal("0")
         self.high_value_bets_count = 0
 
-    def log_bet_decision(self, decision_data: Dict[str, Any]):
+    def log_bet_decision(self, decision_data: dict[str, Any]):
         """记录投注决策（审计日志）"""
         if not self.config.audit_log_enabled:
             return
@@ -261,15 +262,15 @@ class KellyCriterion:
 
     def __init__(
         self,
-        initial_bankroll: Union[float, str, Decimal],
+        initial_bankroll: float | str | Decimal,
         kelly_strategy: KellyStrategy = KellyStrategy.FRACTIONAL_KELLY,
-        fraction_multiplier: Union[float, str, Decimal] = DEFAULT_FRACTION,
-        min_edge_threshold: Union[float, str, Decimal] = MIN_EDGE_THRESHOLD,
-        max_stake_percentage: Union[float, str, Decimal] = MAX_STAKE_PERCENTAGE,
+        fraction_multiplier: float | str | Decimal = DEFAULT_FRACTION,
+        min_edge_threshold: float | str | Decimal = MIN_EDGE_THRESHOLD,
+        max_stake_percentage: float | str | Decimal = MAX_STAKE_PERCENTAGE,
         enable_dynamic_adjustment: bool = True,
         enable_risk_management: bool = True,
-        precision_context: Optional[Context] = None,
-        production_safety_config: Optional[ProductionSafetyConfig] = None,
+        precision_context: Context | None = None,
+        production_safety_config: ProductionSafetyConfig | None = None,
     ):
         """
         初始化凯利准则系统
@@ -309,12 +310,12 @@ class KellyCriterion:
         )
 
         # 历史记录
-        self.bet_history: List[Dict[str, Any]] = []
-        self.performance_history: List[Tuple[datetime, Decimal]] = []
+        self.bet_history: list[dict[str, Any]] = []
+        self.performance_history: list[tuple[datetime, Decimal]] = []
 
         # 动态调整参数
-        self.volatility_history: List[Decimal] = []
-        self.confidence_adjustments: Dict[str, Decimal] = {}
+        self.volatility_history: list[Decimal] = []
+        self.confidence_adjustments: dict[str, Decimal] = {}
 
         # 生产环境安全验证器
         settings = get_settings()
@@ -352,7 +353,7 @@ class KellyCriterion:
             f"安全控制={'启用' if self.safety_validator.config.enabled else '禁用'}"
         )
 
-    def get_safety_status(self) -> Dict[str, Any]:
+    def get_safety_status(self) -> dict[str, Any]:
         """
         获取安全系统状态
 
@@ -414,11 +415,11 @@ class KellyCriterion:
 
     def calculate_kelly_fraction(
         self,
-        decimal_odds: Union[float, str, Decimal],
-        predicted_prob: Union[float, str, Decimal],
+        decimal_odds: float | str | Decimal,
+        predicted_prob: float | str | Decimal,
         outcome: str = "unknown",
-        confidence: Union[float, str, Decimal] = Decimal("1.0"),
-    ) -> Dict[str, Any]:
+        confidence: float | str | Decimal = Decimal("1.0"),
+    ) -> dict[str, Any]:
         """
         计算凯利投注比例
 
@@ -504,10 +505,10 @@ class KellyCriterion:
 
     def generate_bet_recommendation(
         self,
-        outcomes: Dict[str, Dict[str, Union[float, str, Decimal]]],
-        bankroll: Optional[Union[float, str, Decimal]] = None,
-        max_concurrent_bets: Optional[int] = None,
-    ) -> List[BetRecommendation]:
+        outcomes: dict[str, dict[str, float | str | Decimal]],
+        bankroll: float | str | Decimal | None = None,
+        max_concurrent_bets: int | None = None,
+    ) -> list[BetRecommendation]:
         """
         生成投注建议
 
@@ -625,8 +626,8 @@ class KellyCriterion:
     def place_bet(
         self,
         recommendation: BetRecommendation,
-        actual_stake: Optional[Union[float, str, Decimal]] = None,
-    ) -> Dict[str, Any]:
+        actual_stake: float | str | Decimal | None = None,
+    ) -> dict[str, Any]:
         """
         执行投注
 
@@ -685,8 +686,8 @@ class KellyCriterion:
         self,
         bet_id: int,
         actual_outcome: str,
-        result_profit_loss: Optional[Union[float, str, Decimal]] = None,
-    ) -> Dict[str, Any]:
+        result_profit_loss: float | str | Decimal | None = None,
+    ) -> dict[str, Any]:
         """
         结算投注
 
@@ -774,7 +775,7 @@ class KellyCriterion:
             "current_drawdown": float(self.portfolio.current_drawdown),
         }
 
-    def _validate_inputs(self, odds: Decimal, prob: Decimal) -> Dict[str, Any]:
+    def _validate_inputs(self, odds: Decimal, prob: Decimal) -> dict[str, Any]:
         """验证输入参数"""
         if odds <= Decimal("1"):
             return {"valid": False, "error": f"赔率必须大于1，当前值: {odds}"}
@@ -945,7 +946,7 @@ class KellyCriterion:
         if self.kelly_strategy != KellyStrategy.FULL_KELLY:
             reasoning_parts.append(f"应用{self.kelly_strategy.value}策略")
             if self.kelly_strategy == KellyStrategy.DYNAMIC_KELLY:
-                reasoning_parts.append(f"动态调整基于历史表现和当前风险")
+                reasoning_parts.append("动态调整基于历史表现和当前风险")
 
         # 风险控制
         if final_kelly != full_kelly:
@@ -998,7 +999,7 @@ class KellyCriterion:
             self.portfolio.current_drawdown = (historical_peak - current_bankroll) / historical_peak
             self.portfolio.max_drawdown = max(self.portfolio.max_drawdown, self.portfolio.current_drawdown)
 
-    def get_performance_report(self, days: int = 30) -> Dict[str, Any]:
+    def get_performance_report(self, days: int = 30) -> dict[str, Any]:
         """获取业绩报告"""
         cutoff_date = datetime.now() - timedelta(days=days)
 
@@ -1064,7 +1065,7 @@ class KellyCriterion:
             },
         }
 
-    def _calculate_max_consecutive_losses(self, settled_bets: List[Dict[str, Any]]) -> int:
+    def _calculate_max_consecutive_losses(self, settled_bets: list[dict[str, Any]]) -> int:
         """计算最大连续亏损"""
         max_consecutive = 0
         current_consecutive = 0
@@ -1078,7 +1079,7 @@ class KellyCriterion:
 
         return max_consecutive
 
-    def get_portfolio_state(self) -> Dict[str, Any]:
+    def get_portfolio_state(self) -> dict[str, Any]:
         """获取投资组合状态"""
         return {
             "bankroll": {
@@ -1138,7 +1139,7 @@ class KellyCriterion:
         else:
             return "LOW"
 
-    def get_system_stats(self) -> Dict[str, Any]:
+    def get_system_stats(self) -> dict[str, Any]:
         """获取系统统计信息"""
         return {
             "configuration": {

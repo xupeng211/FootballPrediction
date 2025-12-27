@@ -2,9 +2,8 @@
 服务管理器 - 负责统一管理足球预测系统服务的生命周期
 """
 
-from typing import Dict
-
 from src.core import logger
+
 from .base_service import BaseService
 
 
@@ -12,7 +11,7 @@ class ServiceManager:
     """服务管理器 - 负责统一管理足球预测系统服务的生命周期"""
 
     def __init__(self) -> None:
-        self.services: Dict[str, BaseService] = {}
+        self.services: dict[str, BaseService] = {}
         self.logger = logger
 
     def register_service(self, service: BaseService) -> None:

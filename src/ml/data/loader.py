@@ -7,13 +7,13 @@ Phase 2: AI Modeling - 数据加载器实现
 """
 
 import logging
-from typing import Optional, List, Any, Dict
 from datetime import datetime
+from typing import Any
 
 import pandas as pd
+from sqlalchemy import text
 
 from src.database import get_async_db_session
-from sqlalchemy import text
 
 logger = logging.getLogger(__name__)
 
@@ -27,8 +27,8 @@ class DataLoader:
     def __init__(
         self,
         batch_size: int = 1000,
-        selected_columns: Optional[List[str]] = None,
-        max_records: Optional[int] = None,
+        selected_columns: list[str] | None = None,
+        max_records: int | None = None,
     ):
         """
         初始化 DataLoader。
@@ -45,8 +45,8 @@ class DataLoader:
     async def load_raw_data(
         self,
         db_session=None,
-        start_date: Optional[datetime] = None,
-        end_date: Optional[datetime] = None,
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
         limit: int = 50000,
     ) -> pd.DataFrame:
         """
@@ -110,9 +110,7 @@ class DataLoader:
             # 即使出错也返回空 DataFrame 以保持类型安全，但记录错误
             return pd.DataFrame()
 
-    async def _execute_query(
-        self, session, query: str, params: Dict[str, Any]
-    ) -> List[Any]:
+    async def _execute_query(self, session, query: str, params: dict[str, Any]) -> list[Any]:
         """
         执行数据库查询。
 
@@ -127,7 +125,7 @@ class DataLoader:
         result = await session.execute(text(query), params)
         return result.fetchall()
 
-    def _process_records(self, records: List[Any]) -> pd.DataFrame:
+    def _process_records(self, records: list[Any]) -> pd.DataFrame:
         """
         将数据库记录转换为 DataFrame 并进行预处理。
 
@@ -159,9 +157,7 @@ class DataLoader:
         # 应用列选择过滤
         if self.selected_columns:
             # 确保只选择存在的列
-            available_columns = [
-                col for col in self.selected_columns if col in df.columns
-            ]
+            available_columns = [col for col in self.selected_columns if col in df.columns]
             if available_columns:
                 df = df[available_columns]
 
@@ -209,9 +205,7 @@ class DataLoader:
 
         # 应用列选择过滤
         if self.selected_columns:
-            expected_columns = [
-                col for col in self.selected_columns if col in expected_columns
-            ]
+            expected_columns = [col for col in self.selected_columns if col in expected_columns]
 
         return pd.DataFrame(columns=expected_columns)
 
@@ -291,7 +285,7 @@ class DataLoader:
 
         return df
 
-    async def get_data_summary(self) -> Dict[str, Any]:
+    async def get_data_summary(self) -> dict[str, Any]:
         """
         获取数据摘要信息。
 

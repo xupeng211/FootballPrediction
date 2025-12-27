@@ -21,23 +21,22 @@ Sprint: 实时化、可观测性与策略调优
 """
 
 import asyncio
+import hashlib
+import json
 import logging
 import smtplib
-import json
-import hashlib
 import time
-from datetime import datetime, timedelta
-from typing import Dict, Any, List, Optional, Union, Callable
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
-from enum import Enum
-from email.mime.text import MIMEText
+from datetime import datetime, timedelta
 from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 from email.utils import formataddr
-from pathlib import Path
+from enum import Enum
+from typing import Any
+
 import aiohttp
 import jinja2
-from concurrent.futures import ThreadPoolExecutor
-import pickle
 
 logger = logging.getLogger(__name__)
 
@@ -76,26 +75,26 @@ class AlertConfig:
     """告警配置"""
 
     # Telegram配置
-    telegram_bot_token: Optional[str] = None
-    telegram_chat_ids: List[str] = field(default_factory=list)
+    telegram_bot_token: str | None = None
+    telegram_chat_ids: list[str] = field(default_factory=list)
 
     # 邮件配置
-    smtp_server: Optional[str] = None
+    smtp_server: str | None = None
     smtp_port: int = 587
-    smtp_username: Optional[str] = None
-    smtp_password: Optional[str] = None
-    email_from: Optional[str] = None
-    email_to: List[str] = field(default_factory=list)
+    smtp_username: str | None = None
+    smtp_password: str | None = None
+    email_from: str | None = None
+    email_to: list[str] = field(default_factory=list)
     use_tls: bool = True
 
     # Slack配置
-    slack_webhook_url: Optional[str] = None
+    slack_webhook_url: str | None = None
 
     # 企业微信配置
-    wechat_work_webhook_url: Optional[str] = None
+    wechat_work_webhook_url: str | None = None
 
     # 通用Webhook配置
-    webhook_urls: List[str] = field(default_factory=list)
+    webhook_urls: list[str] = field(default_factory=list)
 
     # 告警策略
     enable_rate_limit: bool = True
@@ -125,11 +124,11 @@ class Alert:
     source: str  # 告警来源 (如 "backtester", "collector", "model")
     timestamp: datetime = field(default_factory=datetime.utcnow)
     status: AlertStatus = AlertStatus.ACTIVE
-    metadata: Dict[str, Any] = field(default_factory=dict)
-    tags: List[str] = field(default_factory=list)
-    resolved_at: Optional[datetime] = None
-    acknowledged_at: Optional[datetime] = None
-    acknowledged_by: Optional[str] = None
+    metadata: dict[str, Any] = field(default_factory=dict)
+    tags: list[str] = field(default_factory=list)
+    resolved_at: datetime | None = None
+    acknowledged_at: datetime | None = None
+    acknowledged_by: str | None = None
 
     def __post_init__(self):
         """生成告警ID"""
@@ -149,7 +148,7 @@ class Alert:
         self.acknowledged_at = datetime.utcnow()
         self.acknowledged_by = user
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典格式"""
         return {
             "id": self.id,
@@ -173,7 +172,7 @@ class NotificationResult:
 
     success: bool
     channel: NotificationChannel
-    error_message: Optional[str] = None
+    error_message: str | None = None
     response_time_ms: float = 0.0
     attempt_count: int = 1
 
@@ -183,10 +182,10 @@ class AlertAggregator:
 
     def __init__(self, window_minutes: int = 5):
         self.window_minutes = window_minutes
-        self.alert_buffer: List[Alert] = []
+        self.alert_buffer: list[Alert] = []
         self.lock = asyncio.Lock()
 
-    async def add_alert(self, alert: Alert) -> Optional[Alert]:
+    async def add_alert(self, alert: Alert) -> Alert | None:
         """
         添加告警到聚合器
 
@@ -218,7 +217,7 @@ class AlertAggregator:
         cutoff_time = datetime.utcnow() - timedelta(minutes=self.window_minutes)
         self.alert_buffer = [alert for alert in self.alert_buffer if alert.timestamp >= cutoff_time]
 
-    def _find_similar_alerts(self, alert: Alert) -> List[Alert]:
+    def _find_similar_alerts(self, alert: Alert) -> list[Alert]:
         """查找相似的告警"""
         similar = []
         title_prefix = alert.title.split(":")[0] if ":" in alert.title else alert.title
@@ -230,7 +229,6 @@ class AlertAggregator:
                 and existing_alert.level == alert.level
                 and existing_alert.status == AlertStatus.ACTIVE
             ):
-
                 # 检查标题是否相似
                 existing_prefix = (
                     existing_alert.title.split(":")[0] if ":" in existing_alert.title else existing_alert.title
@@ -240,7 +238,7 @@ class AlertAggregator:
 
         return similar
 
-    def _aggregate_alerts(self, alerts: List[Alert]) -> Alert:
+    def _aggregate_alerts(self, alerts: list[Alert]) -> Alert:
         """聚合多个告警"""
         if not alerts:
             raise ValueError("告警列表不能为空")
@@ -261,8 +259,8 @@ class AlertAggregator:
         aggregated_message = f"""
 告警聚合报告:
 - 告警次数: {count}
-- 涉及来源: {', '.join(sources)}
-- 时间范围: {earliest_time.strftime('%H:%M:%S')} - {base_alert.timestamp.strftime('%H:%M:%S')}
+- 涉及来源: {", ".join(sources)}
+- 时间范围: {earliest_time.strftime("%H:%M:%S")} - {base_alert.timestamp.strftime("%H:%M:%S")}
 
 最新告警内容:
 {base_alert.message}
@@ -290,7 +288,7 @@ class RateLimiter:
 
     def __init__(self, max_alerts_per_hour: int = 10):
         self.max_alerts_per_hour = max_alerts_per_hour
-        self.alert_history: List[datetime] = []
+        self.alert_history: list[datetime] = []
 
     def can_send_alert(self) -> bool:
         """检查是否可以发送告警"""
@@ -326,11 +324,11 @@ class AlertNotifier:
         self.template_env = jinja2.Environment(loader=jinja2.FileSystemLoader(config.templates_dir), autoescape=True)
 
         # HTTP会话
-        self.http_session: Optional[aiohttp.ClientSession] = None
+        self.http_session: aiohttp.ClientSession | None = None
 
         # 告警历史
-        self.alert_history: Dict[str, Alert] = {}
-        self.cooldown_cache: Dict[str, datetime] = {}
+        self.alert_history: dict[str, Alert] = {}
+        self.cooldown_cache: dict[str, datetime] = {}
 
         # 统计信息
         self.stats = {
@@ -383,11 +381,11 @@ class AlertNotifier:
         message: str,
         level: AlertLevel = AlertLevel.INFO,
         source: str = "unknown",
-        channels: Optional[List[NotificationChannel]] = None,
-        metadata: Optional[Dict[str, Any]] = None,
-        tags: Optional[List[str]] = None,
+        channels: list[NotificationChannel] | None = None,
+        metadata: dict[str, Any] | None = None,
+        tags: list[str] | None = None,
         force_send: bool = False,
-    ) -> List[NotificationResult]:
+    ) -> list[NotificationResult]:
         """
         发送告警
 
@@ -490,7 +488,7 @@ class AlertNotifier:
 
         return datetime.utcnow() - last_sent < cooldown_time
 
-    def _get_available_channels(self) -> List[NotificationChannel]:
+    def _get_available_channels(self) -> list[NotificationChannel]:
         """获取可用的通知渠道"""
         channels = []
 
@@ -556,11 +554,11 @@ class AlertNotifier:
             }
 
             text = f"""
-{emoji_map.get(alert.level, '🔔')} *{alert.title}*
+{emoji_map.get(alert.level, "🔔")} *{alert.title}*
 
 来源: {alert.source}
 级别: {alert.level.value.upper()}
-时间: {alert.timestamp.strftime('%Y-%m-%d %H:%M:%S')}
+时间: {alert.timestamp.strftime("%Y-%m-%d %H:%M:%S")}
 
 {alert.message}
             """.strip()
@@ -620,7 +618,7 @@ class AlertNotifier:
         <h2 class="level-{alert.level.value}">{alert.title}</h2>
         <p><strong>来源:</strong> {alert.source}</p>
         <p><strong>级别:</strong> {alert.level.value.upper()}</p>
-        <p><strong>时间:</strong> {alert.timestamp.strftime('%Y-%m-%d %H:%M:%S')}</p>
+        <p><strong>时间:</strong> {alert.timestamp.strftime("%Y-%m-%d %H:%M:%S")}</p>
     </div>
 
     <div class="alert-content">
@@ -646,7 +644,7 @@ class AlertNotifier:
             if result:
                 logger.info(f"✅ 邮件告警发送成功: {', '.join(self.config.email_to)}")
             else:
-                logger.error(f"❌ 邮件告警发送失败")
+                logger.error("❌ 邮件告警发送失败")
 
             return NotificationResult(success=result, channel=NotificationChannel.EMAIL)
 
@@ -747,11 +745,11 @@ class AlertNotifier:
                 "msgtype": "markdown",
                 "markdown": {
                     "content": f"""
-{emoji_map.get(alert.level, '🔔')} **{alert.title}**
+{emoji_map.get(alert.level, "🔔")} **{alert.title}**
 
 > **来源**: {alert.source}
 > **级别**: {alert.level.value.upper()}
-> **时间**: {alert.timestamp.strftime('%Y-%m-%d %H:%M:%S')}
+> **时间**: {alert.timestamp.strftime("%Y-%m-%d %H:%M:%S")}
 
 {alert.message}
                     """.strip()
@@ -855,10 +853,10 @@ class AlertNotifier:
     def get_alert_history(
         self,
         hours: int = 24,
-        level: Optional[AlertLevel] = None,
-        source: Optional[str] = None,
-        status: Optional[AlertStatus] = None,
-    ) -> List[Alert]:
+        level: AlertLevel | None = None,
+        source: str | None = None,
+        status: AlertStatus | None = None,
+    ) -> list[Alert]:
         """获取告警历史"""
         cutoff_time = datetime.utcnow() - timedelta(hours=hours)
 
@@ -885,7 +883,7 @@ class AlertNotifier:
         # 按时间倒序排列
         return sorted(filtered_alerts, key=lambda a: a.timestamp, reverse=True)
 
-    def get_statistics(self) -> Dict[str, Any]:
+    def get_statistics(self) -> dict[str, Any]:
         """获取统计信息"""
         return {
             **self.stats,
@@ -927,13 +925,13 @@ class AlertNotifier:
 
 # 便捷函数
 async def create_notifier(
-    telegram_bot_token: Optional[str] = None,
-    telegram_chat_ids: Optional[List[str]] = None,
-    smtp_server: Optional[str] = None,
-    smtp_username: Optional[str] = None,
-    smtp_password: Optional[str] = None,
-    email_from: Optional[str] = None,
-    email_to: Optional[List[str]] = None,
+    telegram_bot_token: str | None = None,
+    telegram_chat_ids: list[str] | None = None,
+    smtp_server: str | None = None,
+    smtp_username: str | None = None,
+    smtp_password: str | None = None,
+    email_from: str | None = None,
+    email_to: list[str] | None = None,
     **kwargs,
 ) -> AlertNotifier:
     """

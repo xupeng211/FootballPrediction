@@ -23,21 +23,19 @@ from typing import Dict, List
 import logging
 
 # Configure logging for audit trail
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - [AUDIT] %(message)s'
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - [AUDIT] %(message)s")
 logger = logging.getLogger(__name__)
 
 import sys
 from pathlib import Path
+
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from src.ml.features.standings_calculator import (
     StandingsCalculator,
     TeamStandings,
     initialize_global_calculator,
-    get_global_calculator
+    get_global_calculator,
 )
 
 
@@ -75,15 +73,17 @@ class TestTimeLeakageAudit:
 
         # 10 场比赛：Arsenal vs various opponents
         for i in range(10):
-            match_date = base_date + timedelta(days=i*7)  # 每周一场
-            clean_data.append({
-                'home_team': 'Arsenal',
-                'away_team': f'Team_{i}',
-                'match_time': match_date,
-                'home_score': 2,
-                'away_score': 1,
-                'id': i
-            })
+            match_date = base_date + timedelta(days=i * 7)  # 每周一场
+            clean_data.append(
+                {
+                    "home_team": "Arsenal",
+                    "away_team": f"Team_{i}",
+                    "match_time": match_date,
+                    "home_score": 2,
+                    "away_score": 1,
+                    "id": i,
+                }
+            )
 
         df_clean = pd.DataFrame(clean_data)
 
@@ -93,12 +93,9 @@ class TestTimeLeakageAudit:
 
         # 提取第 5 场比赛（索引 5）的积分榜
         target_match_idx = 5
-        target_home_team = 'Arsenal'
+        target_home_team = "Arsenal"
 
-        baseline_standings = calculator.get_team_stats_at_match(
-            target_match_idx,
-            target_home_team
-        )
+        baseline_standings = calculator.get_team_stats_at_match(target_match_idx, target_home_team)
 
         logger.info(f"[SEC-001] 基准积分榜 (Match {target_match_idx}):")
         logger.info(f"  Position: {baseline_standings['position']}")
@@ -108,18 +105,15 @@ class TestTimeLeakageAudit:
 
         # Step 3: 恶意插入未来数据（12 月的大比分比赛）
         future_match = {
-            'home_team': 'Arsenal',
-            'away_team': 'Team_Future',
-            'match_time': datetime(2024, 12, 1),  # 12 月的未来数据
-            'home_score': 10,  # 假大比分
-            'away_score': 0,
-            'id': 999
+            "home_team": "Arsenal",
+            "away_team": "Team_Future",
+            "match_time": datetime(2024, 12, 1),  # 12 月的未来数据
+            "home_score": 10,  # 假大比分
+            "away_score": 0,
+            "id": 999,
         }
 
-        df_corrupted = pd.concat([
-            df_clean,
-            pd.DataFrame([future_match])
-        ], ignore_index=True)
+        df_corrupted = pd.concat([df_clean, pd.DataFrame([future_match])], ignore_index=True)
 
         logger.info(f"[SEC-001] 已注入恶意未来数据: {future_match}")
 
@@ -129,16 +123,12 @@ class TestTimeLeakageAudit:
 
         # 关键：必须找到同一场比赛在 corrupted DataFrame 中的索引
         # 因为排序后索引会变化！
-        df_sorted = df_corrupted.sort_values('match_time').reset_index(drop=True)
+        df_sorted = df_corrupted.sort_values("match_time").reset_index(drop=True)
         target_match_in_corrupted = df_sorted[
-            (df_sorted['home_team'] == target_home_team) &
-            (df_sorted['id'] == target_match_idx)
+            (df_sorted["home_team"] == target_home_team) & (df_sorted["id"] == target_match_idx)
         ].index[0]
 
-        corrupted_standings = calculator_corrupted.get_team_stats_at_match(
-            target_match_in_corrupted,
-            target_home_team
-        )
+        corrupted_standings = calculator_corrupted.get_team_stats_at_match(target_match_in_corrupted, target_home_team)
 
         logger.info(f"[SEC-001] 被攻击后的积分榜 (Match {target_match_idx}):")
         logger.info(f"  Position: {corrupted_standings['position']}")
@@ -147,17 +137,20 @@ class TestTimeLeakageAudit:
         logger.info(f"  Won: {corrupted_standings['won']}")
 
         # Step 5: 断言 - 两次结果必须完全相同
-        assert baseline_standings['points'] == corrupted_standings['points'], \
-            f"[SEC-001-FAIL] 数据泄露！积分被未来数据影响: " \
+        assert baseline_standings["points"] == corrupted_standings["points"], (
+            f"[SEC-001-FAIL] 数据泄露！积分被未来数据影响: "
             f"{baseline_standings['points']} -> {corrupted_standings['points']}"
+        )
 
-        assert baseline_standings['played'] == corrupted_standings['played'], \
-            f"[SEC-001-FAIL] 数据泄露！比赛场次被未来数据影响: " \
+        assert baseline_standings["played"] == corrupted_standings["played"], (
+            f"[SEC-001-FAIL] 数据泄露！比赛场次被未来数据影响: "
             f"{baseline_standings['played']} -> {corrupted_standings['played']}"
+        )
 
-        assert baseline_standings['won'] == corrupted_standings['won'], \
-            f"[SEC-001-FAIL] 数据泄露！胜场数被未来数据影响: " \
+        assert baseline_standings["won"] == corrupted_standings["won"], (
+            f"[SEC-001-FAIL] 数据泄露！胜场数被未来数据影响: "
             f"{baseline_standings['won']} -> {corrupted_standings['won']}"
+        )
 
         logger.info("[SEC-001-PASS] ✅ 时空回溯攻击测试通过 - 未来数据未泄露")
 
@@ -189,21 +182,23 @@ class TestTimeLeakageAudit:
         test_matches = []
         for i in range(5):
             # 每场比赛相隔 3 小时（大于 2 小时时延）
-            match_time = base_time + timedelta(hours=i*3)
-            test_matches.append({
-                'home_team': f'Team_{i % 2}',  # Team_0 vs Team_1 交替
-                'away_team': f'Team_{(i + 1) % 2}',
-                'match_time': match_time,
-                'home_score': 1,
-                'away_score': 0,
-            })
+            match_time = base_time + timedelta(hours=i * 3)
+            test_matches.append(
+                {
+                    "home_team": f"Team_{i % 2}",  # Team_0 vs Team_1 交替
+                    "away_team": f"Team_{(i + 1) % 2}",
+                    "match_time": match_time,
+                    "home_score": 1,
+                    "away_score": 0,
+                }
+            )
 
         df = pd.DataFrame(test_matches)
         calculator.initialize_from_dataframe(df)
 
         # 测试每一场比赛的边界
         for target_idx in range(1, len(test_matches)):
-            target_match_time = df.iloc[target_idx]['match_time']
+            target_match_time = df.iloc[target_idx]["match_time"]
 
             # 获取该比赛时的积分榜
             standings = calculator.get_standings_at_match(target_idx)
@@ -211,7 +206,7 @@ class TestTimeLeakageAudit:
             # 验证：计算积分榜时引用的所有比赛时间必须 < 目标比赛时间
             max_referenced_time = None
             for i in range(target_idx):
-                match_time = df.iloc[i]['match_time']
+                match_time = df.iloc[i]["match_time"]
                 if max_referenced_time is None or match_time > max_referenced_time:
                     max_referenced_time = match_time
 
@@ -220,16 +215,17 @@ class TestTimeLeakageAudit:
             logger.info(f"  Time gap: {(target_match_time - max_referenced_time).total_seconds()}s")
 
             # 核心断言：引用的最新时间必须严格小于目标比赛时间
-            assert max_referenced_time < target_match_time, \
-                f"[SEC-002-FAIL] 边界破坏！引用时间 {max_referenced_time} " \
-                f">= 目标比赛时间 {target_match_time}"
+            assert max_referenced_time < target_match_time, (
+                f"[SEC-002-FAIL] 边界破坏！引用时间 {max_referenced_time} >= 目标比赛时间 {target_match_time}"
+            )
 
             # 验证积分统计的正确性
             expected_played = target_idx  # 每支球队应该参与了 target_idx 场比赛
             for team_name, team_standings in standings.items():
-                assert team_standings.played == expected_played, \
-                    f"[SEC-002-FAIL] {team_name} 的比赛场次不正确: " \
+                assert team_standings.played == expected_played, (
+                    f"[SEC-002-FAIL] {team_name} 的比赛场次不正确: "
                     f"expected {expected_played}, got {team_standings.played}"
+                )
 
         logger.info("[SEC-002-PASS] ✅ 比赛日边界完整性测试通过 - 无时间泄露")
 
@@ -254,7 +250,7 @@ class TestTimeLeakageAudit:
         np.random.seed(42)
 
         # 创建 2 支球队的简单场景，便于手动验证
-        teams = ['Team_A', 'Team_B']
+        teams = ["Team_A", "Team_B"]
         n_matches = 50
 
         test_matches = []
@@ -265,60 +261,68 @@ class TestTimeLeakageAudit:
             home_score = np.random.randint(0, 4)  # 0-3 球
             away_score = np.random.randint(0, 4)
 
-            test_matches.append({
-                'home_team': teams[i % 2],
-                'away_team': teams[(i + 1) % 2],
-                'match_time': match_time,
-                'home_score': home_score,
-                'away_score': away_score,
-            })
+            test_matches.append(
+                {
+                    "home_team": teams[i % 2],
+                    "away_team": teams[(i + 1) % 2],
+                    "match_time": match_time,
+                    "home_score": home_score,
+                    "away_score": away_score,
+                }
+            )
 
         df = pd.DataFrame(test_matches)
 
         # 手动计算预期积分榜
         manual_standings_history = []
-        current_standings = {team: {
-            'position': 0, 'points': 0, 'played': 0,
-            'won': 0, 'drawn': 0, 'lost': 0,
-            'goals_for': 0, 'goals_against': 0
-        } for team in teams}
+        current_standings = {
+            team: {
+                "position": 0,
+                "points": 0,
+                "played": 0,
+                "won": 0,
+                "drawn": 0,
+                "lost": 0,
+                "goals_for": 0,
+                "goals_against": 0,
+            }
+            for team in teams
+        }
 
         for match_idx, match in enumerate(test_matches):
             # 记录当前比赛前的积分榜状态
-            manual_standings_history.append({
-                team: dict(current_standings[team]) for team in teams
-            })
+            manual_standings_history.append({team: dict(current_standings[team]) for team in teams})
 
             # 更新积分榜（为下一场比赛做准备）
-            home = match['home_team']
-            away = match['away_team']
-            home_goals = match['home_score']
-            away_goals = match['away_score']
+            home = match["home_team"]
+            away = match["away_team"]
+            home_goals = match["home_score"]
+            away_goals = match["away_score"]
 
             # 更新主队
-            current_standings[home]['played'] += 1
-            current_standings[home]['goals_for'] += home_goals
-            current_standings[home]['goals_against'] += away_goals
+            current_standings[home]["played"] += 1
+            current_standings[home]["goals_for"] += home_goals
+            current_standings[home]["goals_against"] += away_goals
 
             # 更新客队
-            current_standings[away]['played'] += 1
-            current_standings[away]['goals_for'] += away_goals
-            current_standings[away]['goals_against'] += home_goals
+            current_standings[away]["played"] += 1
+            current_standings[away]["goals_for"] += away_goals
+            current_standings[away]["goals_against"] += home_goals
 
             # 更新胜负平和积分
             if home_goals > away_goals:
-                current_standings[home]['won'] += 1
-                current_standings[home]['points'] += 3
-                current_standings[away]['lost'] += 1
+                current_standings[home]["won"] += 1
+                current_standings[home]["points"] += 3
+                current_standings[away]["lost"] += 1
             elif home_goals < away_goals:
-                current_standings[away]['won'] += 1
-                current_standings[away]['points'] += 3
-                current_standings[home]['lost'] += 1
+                current_standings[away]["won"] += 1
+                current_standings[away]["points"] += 3
+                current_standings[home]["lost"] += 1
             else:
-                current_standings[home]['drawn'] += 1
-                current_standings[home]['points'] += 1
-                current_standings[away]['drawn'] += 1
-                current_standings[away]['points'] += 1
+                current_standings[home]["drawn"] += 1
+                current_standings[home]["points"] += 1
+                current_standings[away]["drawn"] += 1
+                current_standings[away]["points"] += 1
 
         # 使用 StandingsCalculator 计算
         calculator = StandingsCalculator()
@@ -335,28 +339,31 @@ class TestTimeLeakageAudit:
                 if team not in calculated:
                     continue
 
-                exp_pts = expected[team]['points']
+                exp_pts = expected[team]["points"]
                 calc_pts = calculated[team].points
 
                 if exp_pts != calc_pts:
-                    errors.append(
-                        f"Match[{match_idx}] {team}: "
-                        f"expected {exp_pts} points, got {calc_pts}"
-                    )
+                    errors.append(f"Match[{match_idx}] {team}: expected {exp_pts} points, got {calc_pts}")
 
                 # 验证其他统计
-                assert expected[team]['played'] == calculated[team].played, \
+                assert expected[team]["played"] == calculated[team].played, (
                     f"[SEC-003-FAIL] Match[{match_idx}] {team}: played mismatch"
-                assert expected[team]['won'] == calculated[team].won, \
+                )
+                assert expected[team]["won"] == calculated[team].won, (
                     f"[SEC-003-FAIL] Match[{match_idx}] {team}: won mismatch"
-                assert expected[team]['drawn'] == calculated[team].drawn, \
+                )
+                assert expected[team]["drawn"] == calculated[team].drawn, (
                     f"[SEC-003-FAIL] Match[{match_idx}] {team}: drawn mismatch"
-                assert expected[team]['lost'] == calculated[team].lost, \
+                )
+                assert expected[team]["lost"] == calculated[team].lost, (
                     f"[SEC-003-FAIL] Match[{match_idx}] {team}: lost mismatch"
-                assert expected[team]['goals_for'] == calculated[team].goals_for, \
+                )
+                assert expected[team]["goals_for"] == calculated[team].goals_for, (
                     f"[SEC-003-FAIL] Match[{match_idx}] {team}: goals_for mismatch"
-                assert expected[team]['goals_against'] == calculated[team].goals_against, \
+                )
+                assert expected[team]["goals_against"] == calculated[team].goals_against, (
                     f"[SEC-003-FAIL] Match[{match_idx}] {team}: goals_against mismatch"
+                )
 
         # 打印错误报告
         if errors:
@@ -364,8 +371,7 @@ class TestTimeLeakageAudit:
             for error in errors[:10]:  # 只显示前 10 个
                 logger.error(f"  {error}")
 
-        assert len(errors) == 0, \
-            f"[SEC-003-FAIL] 累计逻辑存在误差，共 {len(errors)} 处错误"
+        assert len(errors) == 0, f"[SEC-003-FAIL] 累计逻辑存在误差，共 {len(errors)} 处错误"
 
         logger.info(f"[SEC-003-PASS] ✅ 累计逻辑压力测试通过 - {n_matches} 场比赛零误差")
 
@@ -392,26 +398,30 @@ class TestTimeLeakageAudit:
 
         # 第 1 批：1 月的比赛
         for i in range(5):
-            matches.append({
-                'id': 100 + i,
-                'home_team': 'Team_A',
-                'away_team': 'Team_B',
-                'match_time': base_date + timedelta(days=i),
-                'home_score': 1,
-                'away_score': 0,
-            })
+            matches.append(
+                {
+                    "id": 100 + i,
+                    "home_team": "Team_A",
+                    "away_team": "Team_B",
+                    "match_time": base_date + timedelta(days=i),
+                    "home_score": 1,
+                    "away_score": 0,
+                }
+            )
 
         # 第 2 批：2 月的比赛（时间更晚）
         feb_date = datetime(2024, 2, 1)
         for i in range(5):
-            matches.append({
-                'id': 200 + i,
-                'home_team': 'Team_A',
-                'away_team': 'Team_C',
-                'match_time': feb_date + timedelta(days=i),
-                'home_score': 2,
-                'away_score': 1,
-            })
+            matches.append(
+                {
+                    "id": 200 + i,
+                    "home_team": "Team_A",
+                    "away_team": "Team_C",
+                    "match_time": feb_date + timedelta(days=i),
+                    "home_score": 2,
+                    "away_score": 1,
+                }
+            )
 
         # 创建 DataFrame 并故意乱序
         df = pd.DataFrame(matches)
@@ -420,7 +430,7 @@ class TestTimeLeakageAudit:
         df_shuffled = df.sample(frac=1, random_state=42).reset_index(drop=True)
 
         logger.info(f"[SEC-004] 创建了 {len(df_shuffled)} 场乱序比赛")
-        logger.info(f"[SEC-004] 原始索引范围: 0-{len(df_shuffled)-1}")
+        logger.info(f"[SEC-004] 原始索引范围: 0-{len(df_shuffled) - 1}")
         logger.info(f"[SEC-004] 时间范围: {df_shuffled['match_time'].min()} 到 {df_shuffled['match_time'].max()}")
 
         # 初始化计算器（会进行排序）
@@ -434,8 +444,8 @@ class TestTimeLeakageAudit:
             # idx 是原始 DataFrame 的乱序索引
             # 但 calculator.get_team_stats_at_match(idx) 期望的是 sorted 索引
 
-            team = row['home_team']
-            match_time = row['match_time']
+            team = row["home_team"]
+            match_time = row["match_time"]
 
             try:
                 standings = calculator.get_team_stats_at_match(idx, team)
@@ -444,30 +454,25 @@ class TestTimeLeakageAudit:
                 # 如果 idx 错位，played 数会异常
 
                 # 找到这场比赛在排序后的 DataFrame 中的真实位置
-                df_sorted = df_shuffled.sort_values('match_time').reset_index(drop=True)
-                true_idx = df_sorted[
-                    (df_sorted['home_team'] == team) &
-                    (df_sorted['match_time'] == match_time)
-                ].index
+                df_sorted = df_shuffled.sort_values("match_time").reset_index(drop=True)
+                true_idx = df_sorted[(df_sorted["home_team"] == team) & (df_sorted["match_time"] == match_time)].index
 
                 if len(true_idx) > 0:
                     true_idx = true_idx[0]
 
                     if idx != true_idx:
-                        risks_detected.append({
-                            'iterrows_idx': idx,
-                            'true_sorted_idx': true_idx,
-                            'match_time': match_time,
-                            'team': team,
-                            'risk': 'INDEX_MISMATCH'
-                        })
+                        risks_detected.append(
+                            {
+                                "iterrows_idx": idx,
+                                "true_sorted_idx": true_idx,
+                                "match_time": match_time,
+                                "team": team,
+                                "risk": "INDEX_MISMATCH",
+                            }
+                        )
 
             except Exception as e:
-                risks_detected.append({
-                    'iterrows_idx': idx,
-                    'error': str(e),
-                    'risk': 'EXCEPTION'
-                })
+                risks_detected.append({"iterrows_idx": idx, "error": str(e), "risk": "EXCEPTION"})
 
         # 报告风险
         if risks_detected:
@@ -477,7 +482,7 @@ class TestTimeLeakageAudit:
 
         # 检测是否存在严重泄露风险
         # 如果使用错误的索引，会导致查看错误的比赛数量
-        severe_risks = [r for r in risks_detected if r.get('risk') == 'INDEX_MISMATCH']
+        severe_risks = [r for r in risks_detected if r.get("risk") == "INDEX_MISMATCH"]
 
         if len(severe_risks) > 0:
             logger.error(f"[SEC-004-FAIL] 发现严重索引错位风险！")
@@ -513,31 +518,37 @@ class TestTimeLeakageAudit:
         test_data = []
 
         # 第 0 场：ExistingTeam vs OldTeam (NewTeam 未出现)
-        test_data.append({
-            'home_team': 'ExistingTeam',
-            'away_team': 'OldTeam',
-            'match_time': base_date,
-            'home_score': 1,
-            'away_score': 0,
-        })
+        test_data.append(
+            {
+                "home_team": "ExistingTeam",
+                "away_team": "OldTeam",
+                "match_time": base_date,
+                "home_score": 1,
+                "away_score": 0,
+            }
+        )
 
         # 第 1 场：NewTeam 首次登场
-        test_data.append({
-            'home_team': 'NewTeam',
-            'away_team': 'ExistingTeam',
-            'match_time': base_date + timedelta(days=7),
-            'home_score': 1,
-            'away_score': 0,
-        })
+        test_data.append(
+            {
+                "home_team": "NewTeam",
+                "away_team": "ExistingTeam",
+                "match_time": base_date + timedelta(days=7),
+                "home_score": 1,
+                "away_score": 0,
+            }
+        )
 
         # 第 2 场：NewTeam 的第二场比赛
-        test_data.append({
-            'home_team': 'OldTeam',
-            'away_team': 'NewTeam',
-            'match_time': base_date + timedelta(days=14),
-            'home_score': 0,
-            'away_score': 2,
-        })
+        test_data.append(
+            {
+                "home_team": "OldTeam",
+                "away_team": "NewTeam",
+                "match_time": base_date + timedelta(days=14),
+                "home_score": 0,
+                "away_score": 2,
+            }
+        )
 
         df = pd.DataFrame(test_data)
 
@@ -547,7 +558,7 @@ class TestTimeLeakageAudit:
 
         # 测试 1: 查询 NewTeam 在首场比赛前（match_idx=1）的积分榜
         # 应该返回 None（没有历史数据）
-        standings_before_first = calculator.get_team_stats_at_match(1, 'NewTeam')
+        standings_before_first = calculator.get_team_stats_at_match(1, "NewTeam")
 
         if standings_before_first is None:
             logger.info("[SEC-005] NewTeam 首场比赛前积分榜: None ✅")
@@ -557,7 +568,7 @@ class TestTimeLeakageAudit:
 
         # 测试 2: 查询 NewTeam 在首场比赛后（match_idx=2）的积分榜
         # 应该看到第一场比赛的结果（1胜3分）
-        standings_after_first = calculator.get_team_stats_at_match(2, 'NewTeam')
+        standings_after_first = calculator.get_team_stats_at_match(2, "NewTeam")
 
         if standings_after_first is not None:
             logger.info(f"[SEC-005] NewTeam 首场比赛后积分榜:")
@@ -565,20 +576,22 @@ class TestTimeLeakageAudit:
             logger.info(f"  Points: {standings_after_first['points']}")
             logger.info(f"  Won: {standings_after_first['won']}")
 
-            assert standings_after_first['played'] == 1, \
+            assert standings_after_first["played"] == 1, (
                 f"[SEC-005-FAIL] 首场比赛后 played 应该是 1，实际 {standings_after_first['played']}"
-            assert standings_after_first['points'] == 3, \
+            )
+            assert standings_after_first["points"] == 3, (
                 f"[SEC-005-FAIL] 首场比赛后 points 应该是 3，实际 {standings_after_first['points']}"
-            assert standings_after_first['won'] == 1, \
+            )
+            assert standings_after_first["won"] == 1, (
                 f"[SEC-005-FAIL] 首场比赛后 won 应该是 1，实际 {standings_after_first['won']}"
+            )
         else:
             logger.error("[SEC-005-FAIL] 首场比赛后积分榜返回 None（意外）")
             assert False, "[SEC-005-FAIL] 首场比赛后应返回有效数据"
 
         # 测试 3: 验证不存在的球队返回 None
-        standings_ghost = calculator.get_team_stats_at_match(2, 'GhostTeam')
-        assert standings_ghost is None, \
-            "[SEC-005-FAIL] 不存在的球队应返回 None"
+        standings_ghost = calculator.get_team_stats_at_match(2, "GhostTeam")
+        assert standings_ghost is None, "[SEC-005-FAIL] 不存在的球队应返回 None"
 
         logger.info("[SEC-005-PASS] ✅ NaN 传播完整性检查完成")
 
@@ -631,13 +644,8 @@ def main():
     print(TestAuditReport.generate_report())
 
     # 运行测试
-    pytest.main([
-        __file__,
-        '-v',
-        '--tb=short',
-        '--color=yes'
-    ])
+    pytest.main([__file__, "-v", "--tb=short", "--color=yes"])
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -11,21 +11,21 @@ L2 特征提取器 - 统一抽象基类
     - 单一职责: 每个提取器只负责一种特征提取策略
 
 Author: Architecture Team
-Version: V25.0
-Date: 2025-12-26
+Version: V26.0 (Stable)
+Date: 2025-12-27
 """
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Optional
 from dataclasses import dataclass, field
 from enum import Enum
+from typing import Any
 
 import structlog
 
 from src.processors.exceptions import (
     ExtractionError,
-    ValidationError,
     InsufficientFeaturesError,
+    ValidationError,
 )
 
 logger = structlog.get_logger(__name__)
@@ -54,8 +54,8 @@ class ExtractionResult:
     """
 
     status: ExtractionStatus
-    features: Dict[str, Any]
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    features: dict[str, Any]
+    metadata: dict[str, Any] = field(default_factory=dict)
     errors: list[str] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
 
@@ -88,7 +88,7 @@ class ValidationConfig:
     """
 
     min_features: int = 800  # 881 维的 90% 作为底线
-    max_features: Optional[int] = None
+    max_features: int | None = None
     required_keys: list[str] = field(default_factory=list)
     allow_partial: bool = True
 
@@ -112,7 +112,7 @@ class BaseExtractor(ABC):
     # 类级别的默认验证配置
     DEFAULT_VALIDATION_CONFIG = ValidationConfig()
 
-    def __init__(self, validation_config: Optional[ValidationConfig] = None):
+    def __init__(self, validation_config: ValidationConfig | None = None):
         """
         初始化提取器
 
@@ -123,7 +123,7 @@ class BaseExtractor(ABC):
         self._logger = logger.bind(extractor=self.__class__.__name__)
 
     @abstractmethod
-    def extract(self, raw_data: Dict[str, Any]) -> ExtractionResult:
+    def extract(self, raw_data: dict[str, Any]) -> ExtractionResult:
         """
         从原始数据中提取特征
 
@@ -139,7 +139,7 @@ class BaseExtractor(ABC):
         pass
 
     @abstractmethod
-    def validate(self, features: Dict[str, Any]) -> bool:
+    def validate(self, features: dict[str, Any]) -> bool:
         """
         验证提取的特征
 
@@ -155,7 +155,7 @@ class BaseExtractor(ABC):
         """
         pass
 
-    def pre_process(self, raw_data: Dict[str, Any]) -> Dict[str, Any]:
+    def pre_process(self, raw_data: dict[str, Any]) -> dict[str, Any]:
         """
         预处理原始数据（可选重写）
 
@@ -169,7 +169,7 @@ class BaseExtractor(ABC):
         """
         return raw_data
 
-    def post_process(self, features: Dict[str, Any]) -> Dict[str, Any]:
+    def post_process(self, features: dict[str, Any]) -> dict[str, Any]:
         """
         后处理提取的特征（可选重写）
 
@@ -199,9 +199,7 @@ class BaseExtractor(ABC):
         """获取验证配置"""
         return self._validation_config
 
-    def extract_with_validation(
-        self, raw_data: Dict[str, Any], skip_validation: bool = False
-    ) -> ExtractionResult:
+    def extract_with_validation(self, raw_data: dict[str, Any], skip_validation: bool = False) -> ExtractionResult:
         """
         提取特征并验证（完整流程）
 
@@ -295,7 +293,7 @@ class ExtractorRegistry:
     用于管理所有可用的特征提取器，支持按版本号查找。
     """
 
-    _extractors: Dict[str, type[BaseExtractor]] = {}
+    _extractors: dict[str, type[BaseExtractor]] = {}
 
     @classmethod
     def register(cls, extractor_class: type[BaseExtractor]) -> None:
@@ -327,9 +325,7 @@ class ExtractorRegistry:
         """
         if version not in cls._extractors:
             available = ", ".join(cls._extractors.keys())
-            raise KeyError(
-                f"未找到版本 {version} 的提取器。可用版本: {available}"
-            )
+            raise KeyError(f"未找到版本 {version} 的提取器。可用版本: {available}")
         return cls._extractors[version]
 
     @classmethod

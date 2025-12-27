@@ -12,17 +12,14 @@
 - Alert System (告警系统)
 """
 
-import logging
 import asyncio
+import logging
 import time
-import psutil
-from typing import Dict, Any, List, Optional, Callable
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-import pandas as pd
+from typing import Any
 
 from .connection import get_connection
-from ..constants import FOOTBALL, MATH
 
 logger = logging.getLogger(__name__)
 
@@ -35,9 +32,9 @@ class DatabaseMetrics:
     active_connections: int
     total_connections: int
     database_size_mb: float
-    table_size_mb: Dict[str, float]
-    index_size_mb: Dict[str, float]
-    query_performance: Dict[str, float] = field(default_factory=dict)
+    table_size_mb: dict[str, float]
+    index_size_mb: dict[str, float]
+    query_performance: dict[str, float] = field(default_factory=dict)
     cache_hit_ratio: float = 0.0
     rows_inserted: int = 0
     rows_updated: int = 0
@@ -53,9 +50,9 @@ class QueryPerformance:
     query_text: str
     execution_time_ms: float
     rows_returned: int
-    plan_json: Optional[Dict[str, Any]] = None
-    index_usage: List[str] = field(default_factory=list)
-    recommendations: List[str] = field(default_factory=list)
+    plan_json: dict[str, Any] | None = None
+    index_usage: list[str] = field(default_factory=list)
+    recommendations: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -83,10 +80,10 @@ class DatabasePerformanceMonitor:
 
     def __init__(self):
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
-        self._metrics_history: List[DatabaseMetrics] = []
-        self._alerts: List[PerformanceAlert] = []
+        self._metrics_history: list[DatabaseMetrics] = []
+        self._alerts: list[PerformanceAlert] = []
         self._running = False
-        self._monitor_task: Optional[asyncio.Task] = None
+        self._monitor_task: asyncio.Task | None = None
 
         # 性能阈值配置
         self._thresholds = {
@@ -204,7 +201,7 @@ class DatabasePerformanceMonitor:
                 recommendations=[f"分析失败: {str(e)}"],
             )
 
-    async def get_optimization_recommendations(self) -> List[str]:
+    async def get_optimization_recommendations(self) -> list[str]:
         """获取优化建议"""
         recommendations = []
 
@@ -223,7 +220,7 @@ class DatabasePerformanceMonitor:
         # 缓存命中率建议
         if latest_metrics.cache_hit_ratio < self._thresholds["cache_hit_ratio_warning"]:
             recommendations.append(
-                f"缓存命中率过低 ({latest_metrics.cache_hit_ratio:.1%})，" "考虑增加shared_buffers或优化查询"
+                f"缓存命中率过低 ({latest_metrics.cache_hit_ratio:.1%})，考虑增加shared_buffers或优化查询"
             )
 
         # 死元组建议
@@ -373,7 +370,7 @@ class DatabasePerformanceMonitor:
         except Exception as e:
             self.logger.warning(f"收集性能指标失败: {e}")
 
-    def _extract_index_usage(self, plan_data: Dict[str, Any]) -> List[str]:
+    def _extract_index_usage(self, plan_data: dict[str, Any]) -> list[str]:
         """从执行计划中提取使用的索引"""
         indexes = []
 
@@ -388,7 +385,7 @@ class DatabasePerformanceMonitor:
         extract_from_node(plan_data.get("Plan", {}))
         return list(set(indexes))
 
-    def _generate_query_recommendations(self, plan_data: Dict[str, Any], execution_time: float) -> List[str]:
+    def _generate_query_recommendations(self, plan_data: dict[str, Any], execution_time: float) -> list[str]:
         """生成查询优化建议"""
         recommendations = []
 
@@ -490,16 +487,16 @@ class DatabasePerformanceMonitor:
         log_level = logging.WARNING if level == "WARNING" else logging.ERROR
         self.logger.log(log_level, f"[{level}] {message}")
 
-    def get_recent_metrics(self, count: int = 10) -> List[DatabaseMetrics]:
+    def get_recent_metrics(self, count: int = 10) -> list[DatabaseMetrics]:
         """获取最近的性能指标"""
         return self._metrics_history[-count:] if self._metrics_history else []
 
-    def get_recent_alerts(self, hours: int = 24) -> List[PerformanceAlert]:
+    def get_recent_alerts(self, hours: int = 24) -> list[PerformanceAlert]:
         """获取最近的告警"""
         cutoff_time = datetime.now() - timedelta(hours=hours)
         return [alert for alert in self._alerts if alert.timestamp >= cutoff_time]
 
-    def get_performance_summary(self) -> Dict[str, Any]:
+    def get_performance_summary(self) -> dict[str, Any]:
         """获取性能摘要"""
         if not self._metrics_history:
             return {"status": "no_data"}

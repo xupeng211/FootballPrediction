@@ -10,19 +10,16 @@ Purpose: 消除过度自信，实现真实概率预测
 """
 
 import logging
-import numpy as np
-import pandas as pd
-from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Any, Union
 from dataclasses import dataclass
-import joblib
-import json
+from typing import Any
 
+import joblib
+import numpy as np
+import xgboost as xgb
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.isotonic import IsotonicRegression
-from sklearn.metrics import brier_score_loss, log_loss
+from sklearn.metrics import log_loss
 from sklearn.model_selection import train_test_split
-import xgboost as xgb
 
 logger = logging.getLogger(__name__)
 
@@ -30,13 +27,14 @@ logger = logging.getLogger(__name__)
 @dataclass
 class CalibrationResult:
     """校准结果"""
+
     brier_score_before: float
     brier_score_after: float
     brier_score_improvement: float
     log_loss_before: float
     log_loss_after: float
-    calibration_data: Dict[str, Any]
-    reliability_diagram: List[Dict[str, float]]
+    calibration_data: dict[str, Any]
+    reliability_diagram: list[dict[str, float]]
 
 
 class V19ProbabilityCalibrator:
@@ -54,7 +52,7 @@ class V19ProbabilityCalibrator:
     - Isotonic Regression: 更灵活，适合大多数情况，本系统采用此方法
     """
 
-    def __init__(self, method: str = 'isotonic', n_bins: int = 10):
+    def __init__(self, method: str = "isotonic", n_bins: int = 10):
         """
         初始化概率校准器
 
@@ -65,26 +63,22 @@ class V19ProbabilityCalibrator:
         self.method = method
         self.n_bins = n_bins
 
-        self.calibrators: Dict[str, Any] = {}  # 每个类别的校准器
+        self.calibrators: dict[str, Any] = {}  # 每个类别的校准器
         self.is_fitted = False
 
         # 校准统计
         self.stats = {
-            'brier_score_before': None,
-            'brier_score_after': None,
-            'brier_score_improvement_pct': None,
-            'log_loss_before': None,
-            'log_loss_after': None,
+            "brier_score_before": None,
+            "brier_score_after": None,
+            "brier_score_improvement_pct": None,
+            "log_loss_before": None,
+            "log_loss_after": None,
         }
 
         logger.info(f"V19.0 概率校准器初始化完成 (方法: {method})")
 
     def fit(
-        self,
-        model: xgb.XGBClassifier,
-        X_calib: np.ndarray,
-        y_calib: np.ndarray,
-        class_names: List[str] = None
+        self, model: xgb.XGBClassifier, X_calib: np.ndarray, y_calib: np.ndarray, class_names: list[str] = None
     ) -> CalibrationResult:
         """
         拟合概率校准器
@@ -99,9 +93,9 @@ class V19ProbabilityCalibrator:
             CalibrationResult: 校准结果
         """
         if class_names is None:
-            class_names = ['Away', 'Draw', 'Home']
+            class_names = ["Away", "Draw", "Home"]
 
-        logger.info(f"开始拟合概率校准器...")
+        logger.info("开始拟合概率校准器...")
         logger.info(f"  校准集大小: {len(X_calib)}")
         logger.info(f"  类别分布: {np.bincount(y_calib)}")
 
@@ -119,16 +113,12 @@ class V19ProbabilityCalibrator:
         calibrated_proba = np.zeros_like(raw_proba)
 
         for class_idx, class_name in enumerate(class_names):
-            if self.method == 'isotonic':
+            if self.method == "isotonic":
                 # Isotonic Regression
-                calibrator = IsotonicRegression(out_of_bounds='clip')
+                calibrator = IsotonicRegression(out_of_bounds="clip")
             else:
                 # Platt Scaling 使用 sklearn 的 CalibratedClassifierCV
-                calibrator = CalibratedClassifierCV(
-                    base_estimator=model,
-                    method='sigmoid',
-                    cv='prefit'
-                )
+                calibrator = CalibratedClassifierCV(base_estimator=model, method="sigmoid", cv="prefit")
                 calibrator.fit(X_calib, y_calib)
                 self.calibrators[class_name] = calibrator
                 continue
@@ -140,7 +130,7 @@ class V19ProbabilityCalibrator:
             self.calibrators[class_name] = calibrator
 
             # 应用校准
-            if self.method == 'isotonic':
+            if self.method == "isotonic":
                 calibrated_proba[:, class_idx] = calibrator.predict(raw_proba[:, class_idx])
 
         # 归一化校准后的概率
@@ -157,11 +147,11 @@ class V19ProbabilityCalibrator:
         logger.info(f"  改进幅度: {improvement:.1f}%")
 
         # 存储统计
-        self.stats['brier_score_before'] = brier_before
-        self.stats['brier_score_after'] = brier_after
-        self.stats['brier_score_improvement_pct'] = improvement
-        self.stats['log_loss_before'] = log_loss_before
-        self.stats['log_loss_after'] = log_loss_after
+        self.stats["brier_score_before"] = brier_before
+        self.stats["brier_score_after"] = brier_after
+        self.stats["brier_score_improvement_pct"] = improvement
+        self.stats["log_loss_before"] = log_loss_before
+        self.stats["log_loss_after"] = log_loss_after
 
         # 生成可靠性图表数据
         reliability_diagram = self._generate_reliability_diagram(y_calib, calibrated_proba)
@@ -170,9 +160,9 @@ class V19ProbabilityCalibrator:
 
         # 校准数据
         calibration_data = {
-            'raw_proba_mean': raw_proba.mean(axis=0).tolist(),
-            'calibrated_proba_mean': calibrated_proba.mean(axis=0).tolist(),
-            'class_names': class_names,
+            "raw_proba_mean": raw_proba.mean(axis=0).tolist(),
+            "calibrated_proba_mean": calibrated_proba.mean(axis=0).tolist(),
+            "class_names": class_names,
         }
 
         return CalibrationResult(
@@ -182,7 +172,7 @@ class V19ProbabilityCalibrator:
             log_loss_before=log_loss_before,
             log_loss_after=log_loss_after,
             calibration_data=calibration_data,
-            reliability_diagram=reliability_diagram
+            reliability_diagram=reliability_diagram,
         )
 
     def predict_proba(self, X: np.ndarray) -> np.ndarray:
@@ -199,7 +189,7 @@ class V19ProbabilityCalibrator:
             raise ValueError("校准器尚未拟合，请先调用 fit() 方法")
 
         # 首先使用模型获取原始概率
-        if hasattr(self, '_model') and self._model is not None:
+        if hasattr(self, "_model") and self._model is not None:
             raw_proba = self._model.predict_proba(X)
         else:
             raise ValueError("未找到基础模型")
@@ -210,7 +200,7 @@ class V19ProbabilityCalibrator:
         for class_idx, (class_name, calibrator) in enumerate(self.calibrators.items()):
             if isinstance(calibrator, IsotonicRegression):
                 calibrated_proba[:, class_idx] = calibrator.predict(raw_proba[:, class_idx])
-            elif hasattr(calibrator, 'predict_proba'):
+            elif hasattr(calibrator, "predict_proba"):
                 # CalibratedClassifierCV
                 calibrated_proba = calibrator.predict_proba(X)
                 break
@@ -246,11 +236,8 @@ class V19ProbabilityCalibrator:
         return np.mean((y_proba - y_one_hot) ** 2)
 
     def _generate_reliability_diagram(
-        self,
-        y_true: np.ndarray,
-        y_proba: np.ndarray,
-        n_bins: int = None
-    ) -> List[Dict[str, float]]:
+        self, y_true: np.ndarray, y_proba: np.ndarray, n_bins: int = None
+    ) -> list[dict[str, float]]:
         """
         生成可靠性图表数据
 
@@ -288,38 +275,40 @@ class V19ProbabilityCalibrator:
                 avg_actual = class_actual[mask].mean()
                 count = mask.sum()
 
-                reliability_data.append({
-                    'class': class_idx,
-                    'bin': i,
-                    'predicted': avg_predicted,
-                    'actual': avg_actual,
-                    'count': count,
-                })
+                reliability_data.append(
+                    {
+                        "class": class_idx,
+                        "bin": i,
+                        "predicted": avg_predicted,
+                        "actual": avg_actual,
+                        "count": count,
+                    }
+                )
 
         return reliability_data
 
     def save(self, path: str):
         """保存校准器"""
         save_data = {
-            'calibrators': self.calibrators,
-            'method': self.method,
-            'n_bins': self.n_bins,
-            'is_fitted': self.is_fitted,
-            'stats': self.stats,
+            "calibrators": self.calibrators,
+            "method": self.method,
+            "n_bins": self.n_bins,
+            "is_fitted": self.is_fitted,
+            "stats": self.stats,
         }
 
         joblib.dump(save_data, path)
         logger.info(f"✅ 校准器已保存: {path}")
 
-    def load(self, path: str) -> 'V19ProbabilityCalibrator':
+    def load(self, path: str) -> "V19ProbabilityCalibrator":
         """加载校准器"""
         save_data = joblib.load(path)
 
-        self.calibrators = save_data['calibrators']
-        self.method = save_data['method']
-        self.n_bins = save_data['n_bins']
-        self.is_fitted = save_data['is_fitted']
-        self.stats = save_data['stats']
+        self.calibrators = save_data["calibrators"]
+        self.method = save_data["method"]
+        self.n_bins = save_data["n_bins"]
+        self.is_fitted = save_data["is_fitted"]
+        self.stats = save_data["stats"]
 
         logger.info(f"✅ 校准器已加载: {path}")
         return self
@@ -351,12 +340,8 @@ class V19ProbabilityCalibrator:
 
 
 def calibrate_xgboost_model(
-    model_path: str,
-    X_calib: np.ndarray,
-    y_calib: np.ndarray,
-    output_path: str = None,
-    method: str = 'isotonic'
-) -> Tuple[V19ProbabilityCalibrator, CalibrationResult]:
+    model_path: str, X_calib: np.ndarray, y_calib: np.ndarray, output_path: str = None, method: str = "isotonic"
+) -> tuple[V19ProbabilityCalibrator, CalibrationResult]:
     """
     校准 XGBoost 模型
 
@@ -415,13 +400,13 @@ def main():
         learning_rate=0.1,
         random_state=42,
         use_label_encoder=False,
-        eval_metric='mlogloss'
+        eval_metric="mlogloss",
     )
     model.fit(X_train, y_train)
 
     # 校准
     print("\n进行概率校准...")
-    calibrator = V19ProbabilityCalibrator(method='isotonic')
+    calibrator = V19ProbabilityCalibrator(method="isotonic")
     calibrator.set_base_model(model)
     result = calibrator.fit(model, X_calib, y_calib)
 

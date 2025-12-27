@@ -22,18 +22,18 @@ Phase 5 Advanced Features 核心组件之一
 """
 
 import logging
-import pandas as pd
-import numpy as np
-from typing import Dict, List, Optional, Any
 from dataclasses import dataclass
 from datetime import datetime
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import ROUND_HALF_UP, Decimal
+from typing import Any
 
-from .h2h_calculator import H2HCalculator
-from .venue_analyzer import VenueAnalyzer
+import numpy as np
+import pandas as pd
 
 # 导入足球业务逻辑常量
-from ...constants import SCORING, FOOTBALL, MATH, VALIDATOR, STATISTICAL, PROBABILITY
+from ...constants import FOOTBALL, MATH, PROBABILITY, SCORING, STATISTICAL, VALIDATOR
+from .h2h_calculator import H2HCalculator
+from .venue_analyzer import VenueAnalyzer
 
 VALIDATION = VALIDATOR  # 创建别名以兼容现有代码
 
@@ -64,8 +64,8 @@ class MatchFeatureSet:
     season: str
 
     # 特征向量 (支持高精度)
-    features: Dict[str, float]
-    feature_names: List[str]
+    features: dict[str, float]
+    feature_names: list[str]
     feature_vector: np.ndarray[Any, Any]
 
     # 元数据 (增强版)
@@ -77,7 +77,7 @@ class MatchFeatureSet:
     business_validation_passed: bool = True  # 业务验证状态
     calculation_context: str = "standard"  # 计算上下文
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """
         转换为字典 (向后兼容版本)
 
@@ -104,7 +104,7 @@ class MatchFeatureSet:
             "calculation_context": self.calculation_context,
         }
 
-    def to_decimal_dict(self) -> Dict[str, Decimal]:
+    def to_decimal_dict(self) -> dict[str, Decimal]:
         """
         转换为 Decimal 格式字典 (金融级精度)
 
@@ -175,11 +175,11 @@ class MatchFeatureExtractor:
 
     def __init__(
         self,
-        h2h_calculator: Optional[H2HCalculator] = None,
-        venue_analyzer: Optional[VenueAnalyzer] = None,
-        min_history_days: Optional[int] = None,
-        max_history_days: Optional[int] = None,
-        feature_weights: Optional[Dict[str, float]] = None,
+        h2h_calculator: H2HCalculator | None = None,
+        venue_analyzer: VenueAnalyzer | None = None,
+        min_history_days: int | None = None,
+        max_history_days: int | None = None,
+        feature_weights: dict[str, float] | None = None,
         precision_context: str = "medium",  # high, medium, low
     ):
         """
@@ -224,8 +224,8 @@ class MatchFeatureExtractor:
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
 
         # 特征名称缓存和质量指标
-        self._feature_names_cache: Optional[List[str]] = None
-        self._precision_quality_cache: Optional[Dict[str, float]] = None
+        self._feature_names_cache: list[str] | None = None
+        self._precision_quality_cache: dict[str, float] | None = None
 
         self.logger.info(
             f"MatchFeatureExtractor 初始化完成 (精度: {precision_context}, "
@@ -234,9 +234,9 @@ class MatchFeatureExtractor:
 
     async def extract_features(
         self,
-        match_data: Dict[str, Any],
+        match_data: dict[str, Any],
         historical_matches: pd.DataFrame,
-        team_stats: Optional[pd.DataFrame] = None,
+        team_stats: pd.DataFrame | None = None,
     ) -> MatchFeatureSet:
         """
         为单场比赛提取特征
@@ -333,7 +333,7 @@ class MatchFeatureExtractor:
         away_team_id: int,
         historical_matches: pd.DataFrame,
         match_date: datetime,
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """
         提取H2H历史交锋特征
 
@@ -375,7 +375,7 @@ class MatchFeatureExtractor:
         away_team_id: int,
         historical_matches: pd.DataFrame,
         match_date: datetime,
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """
         提取场馆相关特征
 
@@ -427,7 +427,7 @@ class MatchFeatureExtractor:
         away_team_id: int,
         historical_matches: pd.DataFrame,
         match_date: datetime,
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """
         提取球队近期形态特征
 
@@ -489,7 +489,7 @@ class MatchFeatureExtractor:
         away_team_id: int,
         team_stats: pd.DataFrame,
         match_date: datetime,
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """
         提取联赛排名特征
 
@@ -581,7 +581,7 @@ class MatchFeatureExtractor:
 
         return team_matches
 
-    def _calculate_recent_form(self, team_matches: pd.DataFrame, team_id: int) -> Dict[str, float]:
+    def _calculate_recent_form(self, team_matches: pd.DataFrame, team_id: int) -> dict[str, float]:
         """
         计算球队近期形态 (金融级精度版本)
 
@@ -718,7 +718,7 @@ class MatchFeatureExtractor:
 
             return stats
 
-    def _apply_feature_weights(self, features: Dict[str, float]) -> Dict[str, float]:
+    def _apply_feature_weights(self, features: dict[str, float]) -> dict[str, float]:
         """
         应用特征权重 (金融级精度版本)
 
@@ -766,7 +766,7 @@ class MatchFeatureExtractor:
 
             return weighted_features
 
-    def apply_precision_weights_high(self, features: Dict[str, float]) -> Dict[str, float]:
+    def apply_precision_weights_high(self, features: dict[str, float]) -> dict[str, float]:
         """
         应用高精度权重计算 (新增方法)
 
@@ -799,7 +799,7 @@ class MatchFeatureExtractor:
 
             return weighted_features
 
-    def _get_feature_names(self) -> List[str]:
+    def _get_feature_names(self) -> list[str]:
         """获取特征名称列表（缓存）"""
         if self._feature_names_cache is None:
             # 合并所有可能的特征名称
@@ -880,7 +880,7 @@ class MatchFeatureExtractor:
 
         return self._feature_names_cache
 
-    def _create_feature_vector(self, features: Dict[str, float], feature_names: List[str]) -> np.ndarray[Any, Any]:
+    def _create_feature_vector(self, features: dict[str, float], feature_names: list[str]) -> np.ndarray[Any, Any]:
         """创建特征向量"""
         vector = []
         for name in feature_names:
@@ -889,7 +889,7 @@ class MatchFeatureExtractor:
 
         return np.array(vector, dtype=np.float32)
 
-    def _calculate_feature_completeness(self, features: Dict[str, float]) -> float:
+    def _calculate_feature_completeness(self, features: dict[str, float]) -> float:
         """计算特征完整性"""
         if not features:
             return 0.0
@@ -898,19 +898,19 @@ class MatchFeatureExtractor:
         return non_zero_features / len(features)
 
     # 默认特征方法
-    def _get_default_h2h_features(self) -> Dict[str, float]:
+    def _get_default_h2h_features(self) -> dict[str, float]:
         """获取默认H2H特征"""
         return {name: 0.0 for name in self._get_feature_names() if name.startswith("h2h_")}
 
-    def _get_default_venue_features(self) -> Dict[str, float]:
+    def _get_default_venue_features(self) -> dict[str, float]:
         """获取默认场馆特征"""
         return {name: 0.0 for name in self._get_feature_names() if "venue" in name}
 
-    def _get_default_form_features(self) -> Dict[str, float]:
+    def _get_default_form_features(self) -> dict[str, float]:
         """获取默认形态特征"""
         return {name: 0.0 for name in self._get_feature_names() if "recent" in name}
 
-    def _get_default_ranking_features(self) -> Dict[str, float]:
+    def _get_default_ranking_features(self) -> dict[str, float]:
         """获取默认排名特征"""
         return {
             name: 0.0
@@ -920,10 +920,10 @@ class MatchFeatureExtractor:
 
     async def extract_batch_features(
         self,
-        matches_data: List[Dict[str, Any]],
+        matches_data: list[dict[str, Any]],
         historical_matches: pd.DataFrame,
-        team_stats: Optional[pd.DataFrame] = None,
-    ) -> List[MatchFeatureSet]:
+        team_stats: pd.DataFrame | None = None,
+    ) -> list[MatchFeatureSet]:
         """
         批量提取特征
 
@@ -948,7 +948,7 @@ class MatchFeatureExtractor:
         self.logger.info(f"批量特征提取完成: {len(feature_sets)}/{len(matches_data)}")
         return feature_sets
 
-    def get_feature_importance_info(self) -> Dict[str, Any]:
+    def get_feature_importance_info(self) -> dict[str, Any]:
         """
         获取特征重要性信息 (金融级精度版本)
 
@@ -998,7 +998,7 @@ class MatchFeatureExtractor:
             },
         }
 
-    def _calculate_precision_quality(self) -> Dict[str, float]:
+    def _calculate_precision_quality(self) -> dict[str, float]:
         """
         计算精度质量指标 (新增方法)
 
@@ -1073,7 +1073,7 @@ class MatchFeatureExtractor:
         else:
             return "unstable"
 
-    def _check_business_validation_status(self) -> Dict[str, bool]:
+    def _check_business_validation_status(self) -> dict[str, bool]:
         """
         检查业务验证状态
 

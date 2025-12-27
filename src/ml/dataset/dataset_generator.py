@@ -30,9 +30,10 @@ import logging
 import warnings
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import List, Dict, Any, Optional
-import pandas as pd
+from typing import Any
+
 import numpy as np
+import pandas as pd
 
 # 导入M1模块 - 数据库访问
 from src.database import DatabasePool, get_db_pool
@@ -41,7 +42,7 @@ from src.database import DatabasePool, get_db_pool
 from src.ml.features.extractor import MatchFeatureExtractor
 
 # 导入内部模块 - 标签定义
-from .target_labels import score_to_label, label_to_numeric
+from .target_labels import label_to_numeric, score_to_label
 
 # 设置日志
 logger = logging.getLogger(__name__)
@@ -75,8 +76,8 @@ class ClassificationDatasetGenerator:
 
     def __init__(
         self,
-        feature_extractor: Optional[MatchFeatureExtractor] = None,
-        db_pool: Optional[DatabasePool] = None,
+        feature_extractor: MatchFeatureExtractor | None = None,
+        db_pool: DatabasePool | None = None,
         min_completeness_score: float = 0.8,
     ):
         """
@@ -266,7 +267,7 @@ class ClassificationDatasetGenerator:
             self.logger.error(f"数据库查询失败: {e}")
             raise Exception(f"获取比赛数据失败: {e}") from e
 
-    async def _extract_features_batch(self, raw_match_data: pd.DataFrame) -> List[Dict[str, Any]]:
+    async def _extract_features_batch(self, raw_match_data: pd.DataFrame) -> list[dict[str, Any]]:
         """
         批量提取特征
 
@@ -287,7 +288,7 @@ class ClassificationDatasetGenerator:
         # 批量处理（控制并发数）
         semaphore = asyncio.Semaphore(5)  # 限制并发数
 
-        async def extract_single_features(match_id: str) -> Optional[Dict[str, Any]]:
+        async def extract_single_features(match_id: str) -> dict[str, Any] | None:
             async with semaphore:
                 try:
                     feature_set = await self.feature_extractor.extract_features(match_id, historical_data)
@@ -356,7 +357,7 @@ class ClassificationDatasetGenerator:
         return pd.DataFrame(mock_data)
 
     def _merge_features_and_raw_data(
-        self, features_data: List[Dict[str, Any]], raw_match_data: pd.DataFrame
+        self, features_data: list[dict[str, Any]], raw_match_data: pd.DataFrame
     ) -> pd.DataFrame:
         """
         合并特征数据和原始比赛数据
@@ -462,7 +463,7 @@ class ClassificationDatasetGenerator:
         final_size = len(data_filtered)
         total_filtered = initial_size - final_size
         self.logger.info(
-            f"过滤完成: {final_size}/{initial_size} 场比赛保留 (过滤率: {total_filtered/initial_size*100:.1f}%)"
+            f"过滤完成: {final_size}/{initial_size} 场比赛保留 (过滤率: {total_filtered / initial_size * 100:.1f}%)"
         )
 
         return data_filtered
@@ -491,8 +492,8 @@ class ClassificationDatasetGenerator:
             feature_col = []
             for vec in filtered_data["feature_vector"]:
                 feature_col.append(vec[i] if i < len(vec) else 0.0)
-            filtered_data[f"feature_{i+1:03d}_{name}"] = feature_col
-            feature_columns.append(f"feature_{i+1:03d}_{name}")
+            filtered_data[f"feature_{i + 1:03d}_{name}"] = feature_col
+            feature_columns.append(f"feature_{i + 1:03d}_{name}")
 
         # 选择最终列
         final_columns = [
@@ -574,7 +575,7 @@ class ClassificationDatasetGenerator:
             self.logger.error(f"保存数据集失败: {e}")
             raise Exception(f"保存数据集失败: {e}") from e
 
-    def get_statistics(self) -> Dict[str, Any]:
+    def get_statistics(self) -> dict[str, Any]:
         """获取处理统计信息"""
         return {
             "total_matches_processed": self.stats["total_matches_processed"],
@@ -602,7 +603,7 @@ class ClassificationDatasetGenerator:
 async def create_classification_dataset(
     league_id: str,
     start_date: str,
-    output_path: Optional[str] = None,
+    output_path: str | None = None,
     min_completeness_score: float = 0.8,
 ) -> pd.DataFrame:
     """
@@ -639,7 +640,7 @@ if __name__ == "__main__":
             logger.info(">>> dataset = await generator.generate_dataset('premier_league', '2024-01-01')")
             logger.info(">>> await generator.save_dataset_to_parquet(dataset, 'training_data.parquet')")
 
-        except Exception as e:
+        except Exception:
             return False
 
         return True

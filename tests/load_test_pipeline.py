@@ -13,45 +13,45 @@ V20.5 流水线压力测试桩
 版本: V20.5
 """
 
-import os
-import sys
 import logging
+import sys
+import threading
 import time
 import tracemalloc
-import threading
-import psutil
-from typing import List, Dict, Any
-from dataclasses import dataclass
 from concurrent.futures import ThreadPoolExecutor
+from dataclasses import dataclass
+from typing import Any
+
+import psutil
 
 # 加载环境变量
 from dotenv import load_dotenv
+
 load_dotenv(override=True)
 
-from src.ml.feature_forge_v20 import FeatureExtractor, ForgeMetrics
-from src.ml.fault_tolerance import CircuitBreaker, CheckpointTracker, ProcessingResult
 from src.config_unified import get_settings
+from src.ml.fault_tolerance import CheckpointTracker, CircuitBreaker, ProcessingResult
+from src.ml.feature_forge_v20 import FeatureExtractor
 
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
 @dataclass
 class LoadTestConfig:
     """压力测试配置"""
+
     num_matches: int = 500
     num_workers: int = 4
     memory_threshold_percent: float = 10.0  # 内存波动阈值 ±10%
-    db_connection_threshold: float = 0.8    # DB 连接数阈值 80%
-    max_memory_mb: int = 2048               # 最大内存 2GB
+    db_connection_threshold: float = 0.8  # DB 连接数阈值 80%
+    max_memory_mb: int = 2048  # 最大内存 2GB
 
 
 @dataclass
 class LoadTestResult:
     """压力测试结果"""
+
     success: bool
     total_matches: int
     processed: int
@@ -61,7 +61,7 @@ class LoadTestResult:
     db_connections_used: int
     db_connections_max: int
     circuit_breaker_trips: int
-    errors: List[str]
+    errors: list[str]
 
 
 class MemoryMonitor:
@@ -71,7 +71,7 @@ class MemoryMonitor:
         self.interval = interval_seconds
         self._running = False
         self._thread = None
-        self._snapshots: List[tuple] = []  # (timestamp, memory_mb)
+        self._snapshots: list[tuple] = []  # (timestamp, memory_mb)
         self._lock = threading.Lock()
 
     def start(self):
@@ -91,7 +91,7 @@ class MemoryMonitor:
                 self._snapshots.append((time.time(), memory_mb))
             time.sleep(self.interval)
 
-    def stop(self) -> List[tuple]:
+    def stop(self) -> list[tuple]:
         """停止监控并返回快照"""
         self._running = False
         if self._thread:
@@ -99,7 +99,7 @@ class MemoryMonitor:
         logger.info(f"内存监控器已停止，采集 {len(self._snapshots)} 个快照")
         return self._snapshots.copy()
 
-    def get_stats(self) -> Dict[str, float]:
+    def get_stats(self) -> dict[str, float]:
         """获取内存统计"""
         with self._lock:
             if not self._snapshots:
@@ -107,13 +107,13 @@ class MemoryMonitor:
 
             memories = [m[1] for m in self._snapshots]
             return {
-                'min_mb': min(memories),
-                'max_mb': max(memories),
-                'avg_mb': sum(memories) / len(memories),
-                'initial_mb': memories[0],
-                'final_mb': memories[-1],
-                'growth_mb': memories[-1] - memories[0],
-                'growth_percent': ((memories[-1] - memories[0]) / memories[0] * 100) if memories[0] > 0 else 0,
+                "min_mb": min(memories),
+                "max_mb": max(memories),
+                "avg_mb": sum(memories) / len(memories),
+                "initial_mb": memories[0],
+                "final_mb": memories[-1],
+                "growth_mb": memories[-1] - memories[0],
+                "growth_percent": ((memories[-1] - memories[0]) / memories[0] * 100) if memories[0] > 0 else 0,
             }
 
 
@@ -129,23 +129,25 @@ class DatabaseConnectionMonitor:
         """获取活跃连接数"""
         try:
             import psycopg2
-            from psycopg2.extras import RealDictCursor
 
             conn = psycopg2.connect(
                 host=self.settings.database.host,
                 port=self.settings.database.port,
                 database=self.settings.database.name,
                 user=self.settings.database.user,
-                password=self.settings.database.password.get_secret_value()
+                password=self.settings.database.password.get_secret_value(),
             )
 
             cur = conn.cursor()
-            cur.execute("""
+            cur.execute(
+                """
                 SELECT COUNT(*) as count
                 FROM pg_stat_activity
                 WHERE datname = %s
                 AND state = 'active'
-            """, (self.settings.database.name,))
+            """,
+                (self.settings.database.name,),
+            )
 
             count = cur.fetchone()[0]
             cur.close()
@@ -163,64 +165,52 @@ class MockMatchDataGenerator:
     def __init__(self):
         self.extractor = FeatureExtractor()
 
-    def generate_match_data(self, match_id: int) -> Dict[str, Any]:
+    def generate_match_data(self, match_id: int) -> dict[str, Any]:
         """生成模拟比赛数据"""
         # 基于真实 JSON 结构生成模拟数据
         return {
-            'match_id': match_id,
-            'league_id': 54,
-            'season_id': '2324',
-            'home_team': f'HomeTeam_{match_id % 20}',
-            'away_team': f'AwayTeam_{match_id % 20}',
-            'home_score': (match_id % 5),
-            'away_score': (match_id % 4),
-            'l2_raw_json': self._generate_mock_l2_json(match_id)
+            "match_id": match_id,
+            "league_id": 54,
+            "season_id": "2324",
+            "home_team": f"HomeTeam_{match_id % 20}",
+            "away_team": f"AwayTeam_{match_id % 20}",
+            "home_score": (match_id % 5),
+            "away_score": (match_id % 4),
+            "l2_raw_json": self._generate_mock_l2_json(match_id),
         }
 
-    def _generate_mock_l2_json(self, match_id: int) -> Dict[str, Any]:
+    def _generate_mock_l2_json(self, match_id: int) -> dict[str, Any]:
         """生成模拟 L2 JSON"""
         return {
-            'content': {
-                'matchStats': {
-                    'stats': [
-                        {
-                            'title': 'Total Shots',
-                            'stats': [['shots', '12', '8']]
-                        },
-                        {
-                            'title': 'Possession',
-                            'stats': [['possession', '55%', '45%']]
-                        }
+            "content": {
+                "matchStats": {
+                    "stats": [
+                        {"title": "Total Shots", "stats": [["shots", "12", "8"]]},
+                        {"title": "Possession", "stats": [["possession", "55%", "45%"]]},
                     ]
                 },
-                'lineup': {
-                    'homeTeam': {
-                        'formation': '4-3-3',
-                        'players': [
-                            {'id': i, 'name': f'Player_{i}', 'positionId': 11 + (i % 37)}
+                "lineup": {
+                    "homeTeam": {
+                        "formation": "4-3-3",
+                        "players": [
+                            {"id": i, "name": f"Player_{i}", "positionId": 11 + (i % 37)}
                             for i in range(match_id * 11, (match_id + 1) * 11)
-                        ]
+                        ],
                     },
-                    'awayTeam': {
-                        'formation': '4-4-2',
-                        'players': [
-                            {'id': i, 'name': f'Player_{i}', 'positionId': 11 + (i % 37)}
+                    "awayTeam": {
+                        "formation": "4-4-2",
+                        "players": [
+                            {"id": i, "name": f"Player_{i}", "positionId": 11 + (i % 37)}
                             for i in range((match_id + 1) * 11, (match_id + 2) * 11)
-                        ]
-                    }
-                }
+                        ],
+                    },
+                },
             },
-            'header': {
-                'match': {
-                    'time': {
-                        'utcTime': '2024-01-01T12:00:00.000Z'
-                    }
-                }
-            }
+            "header": {"match": {"time": {"utcTime": "2024-01-01T12:00:00.000Z"}}},
         }
 
 
-def simulate_extraction(extractor: FeatureExtractor, match_data: Dict[str, Any]) -> ProcessingResult:
+def simulate_extraction(extractor: FeatureExtractor, match_data: dict[str, Any]) -> ProcessingResult:
     """模拟特征提取"""
     try:
         # 模拟处理延迟
@@ -228,28 +218,15 @@ def simulate_extraction(extractor: FeatureExtractor, match_data: Dict[str, Any])
 
         # 调用特征提取
         features = extractor.extract_features(
-            content=match_data['l2_raw_json']['content'],
-            header=match_data['l2_raw_json']['header']
+            content=match_data["l2_raw_json"]["content"], header=match_data["l2_raw_json"]["header"]
         )
 
-        if features and features.get('enriched_features'):
-            return ProcessingResult(
-                match_id=match_data['match_id'],
-                success=True,
-                duration=0.01
-            )
+        if features and features.get("enriched_features"):
+            return ProcessingResult(match_id=match_data["match_id"], success=True, duration=0.01)
         else:
-            return ProcessingResult(
-                match_id=match_data['match_id'],
-                success=False,
-                error="No features extracted"
-            )
+            return ProcessingResult(match_id=match_data["match_id"], success=False, error="No features extracted")
     except Exception as e:
-        return ProcessingResult(
-            match_id=match_data['match_id'],
-            success=False,
-            error=str(e)
-        )
+        return ProcessingResult(match_id=match_data["match_id"], success=False, error=str(e))
 
 
 def run_load_test(config: LoadTestConfig = None) -> LoadTestResult:
@@ -257,10 +234,10 @@ def run_load_test(config: LoadTestConfig = None) -> LoadTestResult:
     config = config or LoadTestConfig()
     errors = []
 
-    logger.info(f"{'='*60}")
-    logger.info(f"V20.5 压力测试开始")
+    logger.info(f"{'=' * 60}")
+    logger.info("V20.5 压力测试开始")
     logger.info(f"配置: {config.num_matches} 场比赛, {config.num_workers} 个工作线程")
-    logger.info(f"{'='*60}")
+    logger.info(f"{'=' * 60}")
 
     # 初始化监控器
     memory_monitor = MemoryMonitor(interval_seconds=0.5)
@@ -293,10 +270,7 @@ def run_load_test(config: LoadTestConfig = None) -> LoadTestResult:
                     if not circuit_breaker.can_execute():
                         errors.append(f"Circuit breaker OPEN at match {md['match_id']}")
                         return ProcessingResult(
-                            match_id=md['match_id'],
-                            success=False,
-                            error="Circuit breaker is OPEN",
-                            error_code=503
+                            match_id=md["match_id"], success=False, error="Circuit breaker is OPEN", error_code=503
                         )
 
                     # 模拟处理
@@ -305,10 +279,10 @@ def run_load_test(config: LoadTestConfig = None) -> LoadTestResult:
                     # 更新熔断器
                     if result.success:
                         circuit_breaker.record_success()
-                        checkpoint_tracker.record_success(md['match_id'])
+                        checkpoint_tracker.record_success(md["match_id"])
                     else:
                         circuit_breaker.record_failure(error_code=result.error_code)
-                        checkpoint_tracker.record_failure(md['match_id'])
+                        checkpoint_tracker.record_failure(md["match_id"])
 
                     return result
 
@@ -340,31 +314,33 @@ def run_load_test(config: LoadTestConfig = None) -> LoadTestResult:
         db_connections = db_monitor.get_active_connections()
 
         # 输出结果
-        logger.info(f"{'='*60}")
-        logger.info(f"压力测试完成")
-        logger.info(f"{'='*60}")
+        logger.info(f"{'=' * 60}")
+        logger.info("压力测试完成")
+        logger.info(f"{'=' * 60}")
         logger.info(f"总耗时: {duration:.2f}s")
-        logger.info(f"处理速率: {progress['processed']/duration:.2f} 场/秒")
+        logger.info(f"处理速率: {progress['processed'] / duration:.2f} 场/秒")
         logger.info(f"成功: {progress['successful']}/{progress['processed']}")
         logger.info(f"失败: {progress['failed']}")
         logger.info(f"跳过: {progress['skipped']}")
-        logger.info(f"成功率: {progress['success_rate']*100:.1f}%")
+        logger.info(f"成功率: {progress['success_rate'] * 100:.1f}%")
         logger.info(f"熔断次数: {circuit_breaker.trip_count}")
-        logger.info(f"{'='*60}")
-        logger.info(f"内存统计:")
+        logger.info(f"{'=' * 60}")
+        logger.info("内存统计:")
         logger.info(f"  初始: {memory_stats.get('initial_mb', 0):.2f} MB")
         logger.info(f"  最终: {memory_stats.get('final_mb', 0):.2f} MB")
         logger.info(f"  峰值: {memory_stats.get('max_mb', 0):.2f} MB")
         logger.info(f"  增长: {memory_stats.get('growth_mb', 0):.2f} MB ({memory_stats.get('growth_percent', 0):.2f}%)")
-        logger.info(f"{'='*60}")
-        logger.info(f"数据库连接: {db_connections}/{db_monitor.max_connections} ({db_connections/db_monitor.max_connections*100:.1f}%)")
-        logger.info(f"{'='*60}")
+        logger.info(f"{'=' * 60}")
+        logger.info(
+            f"数据库连接: {db_connections}/{db_monitor.max_connections} ({db_connections / db_monitor.max_connections * 100:.1f}%)"
+        )
+        logger.info(f"{'=' * 60}")
 
     # 验证结果
     success = True
 
     # 内存增长检查
-    if abs(memory_stats.get('growth_percent', 0)) > config.memory_threshold_percent:
+    if abs(memory_stats.get("growth_percent", 0)) > config.memory_threshold_percent:
         success = False
         errors.append(
             f"内存增长 {memory_stats.get('growth_percent', 0):.2f}% 超过阈值 ±{config.memory_threshold_percent}%"
@@ -378,23 +354,21 @@ def run_load_test(config: LoadTestConfig = None) -> LoadTestResult:
         )
 
     # 峰值内存检查
-    if memory_stats.get('max_mb', 0) > config.max_memory_mb:
+    if memory_stats.get("max_mb", 0) > config.max_memory_mb:
         success = False
-        errors.append(
-            f"峰值内存 {memory_stats.get('max_mb', 0):.2f} MB 超过阈值 {config.max_memory_mb} MB"
-        )
+        errors.append(f"峰值内存 {memory_stats.get('max_mb', 0):.2f} MB 超过阈值 {config.max_memory_mb} MB")
 
     return LoadTestResult(
         success=success,
         total_matches=config.num_matches,
-        processed=progress['processed'],
+        processed=progress["processed"],
         duration=duration,
-        memory_growth_percent=memory_stats.get('growth_percent', 0),
-        peak_memory_mb=memory_stats.get('max_mb', 0),
+        memory_growth_percent=memory_stats.get("growth_percent", 0),
+        peak_memory_mb=memory_stats.get("max_mb", 0),
         db_connections_used=db_connections,
         db_connections_max=db_monitor.max_connections,
         circuit_breaker_trips=circuit_breaker.trip_count,
-        errors=errors
+        errors=errors,
     )
 
 
@@ -402,22 +376,19 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(description="V20.5 流水线压力测试")
-    parser.add_argument('--matches', type=int, default=500, help='测试比赛数量 (默认: 500)')
-    parser.add_argument('--workers', type=int, default=4, help='工作线程数 (默认: 4)')
+    parser.add_argument("--matches", type=int, default=500, help="测试比赛数量 (默认: 500)")
+    parser.add_argument("--workers", type=int, default=4, help="工作线程数 (默认: 4)")
 
     args = parser.parse_args()
 
-    config = LoadTestConfig(
-        num_matches=args.matches,
-        num_workers=args.workers
-    )
+    config = LoadTestConfig(num_matches=args.matches, num_workers=args.workers)
 
     result = run_load_test(config)
 
     # 输出最终结果
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("最终结果: " + ("✅ 通过" if result.success else "❌ 失败"))
-    print("="*60)
+    print("=" * 60)
 
     if result.errors:
         print("\n错误列表:")

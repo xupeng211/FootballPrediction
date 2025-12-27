@@ -3,14 +3,14 @@ pytest配置和fixture定义
 全局测试配置和共享fixture
 """
 
-import pytest
-import json
-import tempfile
 import shutil
+import tempfile
+from collections.abc import Generator
 from pathlib import Path
-from unittest.mock import Mock, patch
-from typing import Dict, Any, Generator
+from typing import Any
+from unittest.mock import Mock
 
+import pytest
 from tests.data.generators.test_data_generator import (
     TestDataGenerator,
     create_test_data_generator,
@@ -25,7 +25,7 @@ def test_data_generator() -> TestDataGenerator:
 
 
 @pytest.fixture(scope="session")
-def sample_match_data(test_data_generator: TestDataGenerator) -> Dict[str, Any]:
+def sample_match_data(test_data_generator: TestDataGenerator) -> dict[str, Any]:
     """示例比赛数据"""
     return test_data_generator.generate_match_data()
 
@@ -37,25 +37,25 @@ def sample_features(test_data_generator: TestDataGenerator) -> list:
 
 
 @pytest.fixture(scope="session")
-def sample_prediction_result(test_data_generator: TestDataGenerator) -> Dict[str, Any]:
+def sample_prediction_result(test_data_generator: TestDataGenerator) -> dict[str, Any]:
     """示例预测结果"""
     return test_data_generator.generate_prediction_result()
 
 
 @pytest.fixture(scope="session")
-def sample_model_info(test_data_generator: TestDataGenerator) -> Dict[str, Any]:
+def sample_model_info(test_data_generator: TestDataGenerator) -> dict[str, Any]:
     """示例模型信息"""
     return test_data_generator.generate_model_info()
 
 
 @pytest.fixture(scope="session")
-def sample_health_check(test_data_generator: TestDataGenerator) -> Dict[str, Any]:
+def sample_health_check(test_data_generator: TestDataGenerator) -> dict[str, Any]:
     """示例健康检查数据"""
     return test_data_generator.generate_health_check_data()
 
 
 @pytest.fixture(scope="session")
-def sample_config_data(test_data_generator: TestDataGenerator) -> Dict[str, Any]:
+def sample_config_data(test_data_generator: TestDataGenerator) -> dict[str, Any]:
     """示例配置数据"""
     return test_data_generator.generate_config_data()
 
@@ -323,5 +323,5 @@ def pytest_runtest_makereport(item, call):
     # 添加测试元数据到报告
     if rep.when == "call" and rep.passed:
         # 为通过的测试添加执行时间信息
-        setattr(rep, "duration", call.duration)
-        setattr(rep, "nodeid", item.nodeid)
+        rep.duration = call.duration
+        rep.nodeid = item.nodeid

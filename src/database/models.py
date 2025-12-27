@@ -4,8 +4,7 @@ Football Prediction数据库模型定义
 包含所有业务数据模型，使用SQLAlchemy ORM。
 """
 
-from sqlalchemy import Column, Float, Integer, String, DateTime, Text, Boolean
-from sqlalchemy.orm import relationship
+from sqlalchemy import Boolean, Column, DateTime, Float, String
 
 from src.database.base import BaseModel
 

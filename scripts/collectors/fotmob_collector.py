@@ -6,9 +6,10 @@ Senior Backend Engineer Refactored Version
 
 import asyncio
 import json
-from typing import Any, Optional
-import aiohttp
 import logging
+from typing import Any
+
+import aiohttp
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +24,7 @@ class FotMobCollector:
     ):
         self.max_retries = max_retries
         self.timeout = timeout
-        self.client: Optional[aiohttp.ClientSession] = None
+        self.client: aiohttp.ClientSession | None = None
 
         # 统计信息
         self.stats = {
@@ -60,7 +61,7 @@ class FotMobCollector:
 
         logger.info("🔐 HTTP客户端初始化完成 - 已加载FotMob关键鉴权头")
 
-    async def collect_match_data(self, match_id: str) -> Optional[dict[str, Any]]:
+    async def collect_match_data(self, match_id: str) -> dict[str, Any] | None:
         """采集单场比赛详情数据 - L2详情采集."""
         try:
             if not self.client:
@@ -123,9 +124,10 @@ class FotMobCollector:
         """
         try:
             # 使用asyncpg直接连接，避免ORM开销
-            import asyncpg
-            import urllib.parse
             import os
+            import urllib.parse
+
+            import asyncpg
 
             # 从环境变量获取数据库URL
             db_url = os.getenv(

@@ -6,12 +6,12 @@
 
 from .data_normalizer import (
     DataFormatNormalizer,
-    normalize_match_data,
     detect_data_format,
+    normalize_match_data,
 )
 
 __all__ = [
-    'DataFormatNormalizer',
-    'normalize_match_data',
-    'detect_data_format',
+    "DataFormatNormalizer",
+    "normalize_match_data",
+    "detect_data_format",
 ]

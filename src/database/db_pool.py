@@ -31,19 +31,20 @@ V30.0 数据库连接池实现 (同步 + 异步双模支持)
 """
 
 import asyncio
-import os
 import logging
+import os
+import threading
 import time
 import urllib.parse
-import threading
-from typing import Optional, Dict, Any, List, Tuple, AsyncContextManager, ContextManager
 from contextlib import asynccontextmanager, contextmanager
 from dataclasses import dataclass, field
+from typing import Any, AsyncContextManager, ContextManager, Optional
+
 import asyncpg
-from asyncpg import Connection, Pool
 
 # psycopg2 同步连接池
 import psycopg2
+from asyncpg import Connection, Pool
 from psycopg2 import pool as psycopg2_pool
 from psycopg2.extras import RealDictCursor, RealDictRow
 
@@ -85,7 +86,7 @@ class DatabasePoolConfig:
     retry_delay: float = field(default_factory=lambda: float(os.getenv("DB_RETRY_DELAY", "1.0")))
 
     @classmethod
-    def from_url(cls, db_url: Optional[str] = None) -> "DatabasePoolConfig":
+    def from_url(cls, db_url: str | None = None) -> "DatabasePoolConfig":
         """从数据库URL创建配置对象
 
         Args:
@@ -123,16 +124,16 @@ class DatabasePool:
     _instance: Optional["DatabasePool"] = None
     _lock = asyncio.Lock()
 
-    def __init__(self, config: Optional[DatabasePoolConfig] = None):
+    def __init__(self, config: DatabasePoolConfig | None = None):
         """初始化数据库连接池
 
         Args:
             config: 数据库配置，如果为None则使用默认配置
         """
         self.config = config or DatabasePoolConfig.from_url()
-        self._pool: Optional[Pool] = None
+        self._pool: Pool | None = None
         self._is_initialized = False
-        self._health_check_task: Optional[asyncio.Task[None]] = None
+        self._health_check_task: asyncio.Task[None] | None = None
 
         # 统计信息
         self._stats = {
@@ -147,7 +148,7 @@ class DatabasePool:
         }
 
     @classmethod
-    async def get_instance(cls, config: Optional[DatabasePoolConfig] = None) -> "DatabasePool":
+    async def get_instance(cls, config: DatabasePoolConfig | None = None) -> "DatabasePool":
         """
         获取数据库连接池单例实例
 
@@ -263,7 +264,7 @@ class DatabasePool:
             finally:
                 self._stats["total_connections_released"] += 1
 
-    async def execute(self, query: str, *args, timeout: Optional[float] = None) -> str:
+    async def execute(self, query: str, *args, timeout: float | None = None) -> str:
         """
         执行SQL语句（非查询）
 
@@ -288,8 +289,8 @@ class DatabasePool:
     async def executemany(
         self,
         query: str,
-        args_list: List[Tuple[Any, ...]],
-        timeout: Optional[float] = None,
+        args_list: list[tuple[Any, ...]],
+        timeout: float | None = None,
     ) -> str:
         """
         批量执行SQL语句
@@ -312,7 +313,7 @@ class DatabasePool:
                 logger.error(f"批量SQL执行失败: {query} - {e}")
                 raise
 
-    async def fetch(self, query: str, *args, timeout: Optional[float] = None) -> List[asyncpg.Record]:
+    async def fetch(self, query: str, *args, timeout: float | None = None) -> list[asyncpg.Record]:
         """
         执行查询并返回所有结果
 
@@ -334,7 +335,7 @@ class DatabasePool:
                 logger.error(f"查询执行失败: {query} - {e}")
                 raise
 
-    async def fetchrow(self, query: str, *args, timeout: Optional[float] = None) -> Optional[asyncpg.Record]:
+    async def fetchrow(self, query: str, *args, timeout: float | None = None) -> asyncpg.Record | None:
         """
         执行查询并返回第一行结果
 
@@ -356,7 +357,7 @@ class DatabasePool:
                 logger.error(f"查询执行失败: {query} - {e}")
                 raise
 
-    async def fetchval(self, query: str, *args, column: int = 0, timeout: Optional[float] = None) -> Any:
+    async def fetchval(self, query: str, *args, column: int = 0, timeout: float | None = None) -> Any:
         """
         执行查询并返回单个值
 
@@ -432,7 +433,7 @@ class DatabasePool:
         except Exception as e:
             logger.error(f"💔 健康检查失败: {e}")
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """
         获取连接池统计信息
 
@@ -455,7 +456,7 @@ class DatabasePool:
 
         return stats
 
-    def get_pool_info(self) -> Dict[str, Any]:
+    def get_pool_info(self) -> dict[str, Any]:
         """
         获取连接池信息
 
@@ -486,10 +487,10 @@ class DatabasePool:
 
 
 # 全局连接池实例
-_global_pool: Optional[DatabasePool] = None
+_global_pool: DatabasePool | None = None
 
 
-async def get_db_pool(config: Optional[DatabasePoolConfig] = None) -> DatabasePool:
+async def get_db_pool(config: DatabasePoolConfig | None = None) -> DatabasePool:
     """
     获取全局数据库连接池实例
 
@@ -508,7 +509,7 @@ async def get_db_pool(config: Optional[DatabasePoolConfig] = None) -> DatabasePo
 
 
 async def init_global_db_pool(
-    config: Optional[DatabasePoolConfig] = None,
+    config: DatabasePoolConfig | None = None,
 ) -> DatabasePool:
     """
     初始化全局数据库连接池
@@ -531,13 +532,13 @@ async def execute_query(query: str, *args) -> str:
     return await pool.execute(query, *args)
 
 
-async def fetch_query(query: str, *args) -> List[asyncpg.Record]:
+async def fetch_query(query: str, *args) -> list[asyncpg.Record]:
     """执行查询的便捷函数"""
     pool = await get_db_pool()
     return await pool.fetch(query, *args)
 
 
-async def fetchrow_query(query: str, *args) -> Optional[asyncpg.Record]:
+async def fetchrow_query(query: str, *args) -> asyncpg.Record | None:
     """执行单行查询的便捷函数"""
     pool = await get_db_pool()
     return await pool.fetchrow(query, *args)
@@ -552,6 +553,7 @@ async def fetchval_query(query: str, *args) -> Any:
 # ============================================
 # 同步连接池 - SyncDatabasePool (高并发保护)
 # ============================================
+
 
 class SyncDatabasePool:
     """
@@ -583,14 +585,14 @@ class SyncDatabasePool:
     _instance: Optional["SyncDatabasePool"] = None
     _lock = threading.Lock()
 
-    def __init__(self, config: Optional[DatabasePoolConfig] = None):
+    def __init__(self, config: DatabasePoolConfig | None = None):
         """初始化同步数据库连接池
 
         Args:
             config: 数据库配置，如果为None则使用默认配置
         """
         self.config = config or DatabasePoolConfig.from_url()
-        self._pool: Optional[psycopg2_pool.ThreadedConnectionPool] = None
+        self._pool: psycopg2_pool.ThreadedConnectionPool | None = None
         self._is_initialized = False
 
         # 统计信息
@@ -608,7 +610,7 @@ class SyncDatabasePool:
         self._connection_leak_threshold = 300  # 5分钟未释放视为泄漏
 
     @classmethod
-    def get_instance(cls, config: Optional[DatabasePoolConfig] = None) -> "SyncDatabasePool":
+    def get_instance(cls, config: DatabasePoolConfig | None = None) -> "SyncDatabasePool":
         """
         获取同步数据库连接池单例实例
 
@@ -704,9 +706,9 @@ class SyncDatabasePool:
     def fetch_all(
         self,
         query: str,
-        params: Optional[Tuple[Any, ...]] = None,
-        conn: Optional[psycopg2.extensions.connection] = None,
-    ) -> List[RealDictRow]:
+        params: tuple[Any, ...] | None = None,
+        conn: psycopg2.extensions.connection | None = None,
+    ) -> list[RealDictRow]:
         """
         执行查询并返回所有结果
 
@@ -740,9 +742,9 @@ class SyncDatabasePool:
     def fetch_one(
         self,
         query: str,
-        params: Optional[Tuple[Any, ...]] = None,
-        conn: Optional[psycopg2.extensions.connection] = None,
-    ) -> Optional[RealDictRow]:
+        params: tuple[Any, ...] | None = None,
+        conn: psycopg2.extensions.connection | None = None,
+    ) -> RealDictRow | None:
         """
         执行查询并返回第一行结果
 
@@ -776,8 +778,8 @@ class SyncDatabasePool:
     def execute(
         self,
         query: str,
-        params: Optional[Tuple[Any, ...]] = None,
-        conn: Optional[psycopg2.extensions.connection] = None,
+        params: tuple[Any, ...] | None = None,
+        conn: psycopg2.extensions.connection | None = None,
     ) -> str:
         """
         执行SQL语句（非查询）
@@ -814,8 +816,8 @@ class SyncDatabasePool:
     def executemany(
         self,
         query: str,
-        params_list: List[Tuple[Any, ...]],
-        conn: Optional[psycopg2.extensions.connection] = None,
+        params_list: list[tuple[Any, ...]],
+        conn: psycopg2.extensions.connection | None = None,
     ) -> str:
         """
         批量执行SQL语句
@@ -860,7 +862,7 @@ class SyncDatabasePool:
             self._is_initialized = False
             logger.info("🔒 同步数据库连接池已关闭")
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """
         获取连接池统计信息
 
@@ -882,7 +884,7 @@ class SyncDatabasePool:
 
         return stats
 
-    def get_pool_info(self) -> Dict[str, Any]:
+    def get_pool_info(self) -> dict[str, Any]:
         """
         获取连接池信息
 
@@ -917,10 +919,10 @@ class SyncDatabasePool:
 # 全局同步连接池实例
 # ============================================
 
-_global_sync_pool: Optional[SyncDatabasePool] = None
+_global_sync_pool: SyncDatabasePool | None = None
 
 
-def get_sync_db_pool(config: Optional[DatabasePoolConfig] = None) -> SyncDatabasePool:
+def get_sync_db_pool(config: DatabasePoolConfig | None = None) -> SyncDatabasePool:
     """
     获取全局同步数据库连接池实例
 
@@ -939,7 +941,7 @@ def get_sync_db_pool(config: Optional[DatabasePoolConfig] = None) -> SyncDatabas
 
 
 def init_global_sync_db_pool(
-    config: Optional[DatabasePoolConfig] = None,
+    config: DatabasePoolConfig | None = None,
 ) -> SyncDatabasePool:
     """
     初始化全局同步数据库连接池
@@ -956,19 +958,19 @@ def init_global_sync_db_pool(
 
 
 # 便捷函数，用于快速执行同步SQL
-def execute_sync_query(query: str, params: Optional[Tuple[Any, ...]] = None) -> str:
+def execute_sync_query(query: str, params: tuple[Any, ...] | None = None) -> str:
     """执行同步SQL语句的便捷函数"""
     pool = get_sync_db_pool()
     return pool.execute(query, params)
 
 
-def fetch_sync_all(query: str, params: Optional[Tuple[Any, ...]] = None) -> List[RealDictRow]:
+def fetch_sync_all(query: str, params: tuple[Any, ...] | None = None) -> list[RealDictRow]:
     """执行同步查询的便捷函数"""
     pool = get_sync_db_pool()
     return pool.fetch_all(query, params)
 
 
-def fetch_sync_one(query: str, params: Optional[Tuple[Any, ...]] = None) -> Optional[RealDictRow]:
+def fetch_sync_one(query: str, params: tuple[Any, ...] | None = None) -> RealDictRow | None:
     """执行同步单行查询的便捷函数"""
     pool = get_sync_db_pool()
     return pool.fetch_one(query, params)

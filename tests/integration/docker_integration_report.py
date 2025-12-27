@@ -4,13 +4,12 @@ Docker 容器集成测试报告生成器
 生成《V19.3 Docker 容器集成测试报告》
 """
 
-import os
-import sys
 import json
+import os
 import subprocess
+import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, Any, Optional
 
 # 添加项目路径
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
@@ -19,7 +18,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 class IntegrationTestReport:
     """集成测试报告生成器"""
 
-    def __init__(self, output_dir: Optional[Path] = None):
+    def __init__(self, output_dir: Path | None = None):
         self.output_dir = output_dir or Path("logs")
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -28,9 +27,9 @@ class IntegrationTestReport:
                 "title": "V19.3 Docker 容器集成测试报告",
                 "generated_at": datetime.now().isoformat(),
                 "version": "V19.3",
-                "environment": self._detect_environment()
+                "environment": self._detect_environment(),
             },
-            "sections": {}
+            "sections": {},
         }
 
     def _detect_environment(self) -> str:
@@ -47,11 +46,7 @@ class IntegrationTestReport:
         print("\n🔍 执行连通性检查...")
 
         script_path = Path(__file__).parent / "docker_connectivity_check.py"
-        result = subprocess.run(
-            [sys.executable, str(script_path)],
-            capture_output=True,
-            text=True
-        )
+        result = subprocess.run([sys.executable, str(script_path)], capture_output=True, text=True)
 
         output = result.stdout
         return_code = result.returncode
@@ -67,35 +62,27 @@ class IntegrationTestReport:
         except:
             pass
 
-        return {
-            "overall_status": "OK" if return_code == 0 else "Fail",
-            "error": output,
-            "return_code": return_code
-        }
+        return {"overall_status": "OK" if return_code == 0 else "Fail", "error": output, "return_code": return_code}
 
     def run_smoke_test(self) -> dict:
         """运行冒烟测试"""
         print("\n🚀 执行冒烟测试...")
 
         script_path = Path(__file__).parent / "docker_smoke_test.py"
-        result = subprocess.run(
-            [sys.executable, str(script_path)],
-            capture_output=True,
-            text=True
-        )
+        result = subprocess.run([sys.executable, str(script_path)], capture_output=True, text=True)
 
         return_code = result.returncode
 
         # 尝试读取生成的报告文件
         report_path = Path("logs") / "docker_smoke_test_report.json"
         if report_path.exists():
-            with open(report_path, "r") as f:
+            with open(report_path) as f:
                 return json.load(f)
 
         return {
             "overall_status": "OK" if return_code == 0 else "Fail",
             "error": result.stdout + result.stderr,
-            "return_code": return_code
+            "return_code": return_code,
         }
 
     def check_logs_persistence(self) -> dict:
@@ -105,24 +92,16 @@ class IntegrationTestReport:
         log_files = {
             "connectivity": self.output_dir / "docker_connectivity.log",
             "smoke_test": self.output_dir / "docker_smoke_test.log",
-            "task_runner": self.output_dir / "task_runner.log"
+            "task_runner": self.output_dir / "task_runner.log",
         }
 
-        result = {
-            "log_dir_exists": self.output_dir.exists(),
-            "log_files": {},
-            "total_size_bytes": 0
-        }
+        result = {"log_dir_exists": self.output_dir.exists(), "log_files": {}, "total_size_bytes": 0}
 
         for name, path in log_files.items():
             exists = path.exists()
             size = path.stat().st_size if exists else 0
 
-            result["log_files"][name] = {
-                "path": str(path),
-                "exists": exists,
-                "size_bytes": size
-            }
+            result["log_files"][name] = {"path": str(path), "exists": exists, "size_bytes": size}
             result["total_size_bytes"] += size
 
         return result
@@ -135,7 +114,7 @@ class IntegrationTestReport:
             "phase_times": {},
             "prediction_throughput": None,
             "database_latency": None,
-            "total_test_time_ms": smoke_test_result.get("total_test_time_ms", 0)
+            "total_test_time_ms": smoke_test_result.get("total_test_time_ms", 0),
         }
 
         # 提取各阶段耗时
@@ -163,35 +142,27 @@ class IntegrationTestReport:
         print("\n⚖️ 对比本地基准...")
 
         # 本地基准值 (从用户提供的 +16.45% ROI)
-        baseline = {
-            "roi_percentage": 16.45,
-            "accuracy": 65.52,
-            "brier_score": 0.21
-        }
+        baseline = {"roi_percentage": 16.45, "accuracy": 65.52, "brier_score": 0.21}
 
         # 当前值 (从冒烟测试中提取)
         current = {
             "roi_percentage": 16.45,  # 需要从实际测试中获取
             "accuracy": 65.52,
-            "brier_score": 0.21
+            "brier_score": 0.21,
         }
 
         comparison = {
             "roi_deviation": abs(current["roi_percentage"] - baseline["roi_percentage"]),
             "accuracy_deviation": abs(current["accuracy"] - baseline["accuracy"]),
             "brier_score_deviation": abs(current["brier_score"] - baseline["brier_score"]),
-            "within_tolerance": True
+            "within_tolerance": True,
         }
 
         # 检查是否在容差范围内 (0.01%)
         if comparison["roi_deviation"] > 0.01:
             comparison["within_tolerance"] = False
 
-        return {
-            "baseline": baseline,
-            "current": current,
-            "deviation": comparison
-        }
+        return {"baseline": baseline, "current": current, "deviation": comparison}
 
     def generate_report(self) -> dict:
         """生成完整报告"""
@@ -223,9 +194,9 @@ class IntegrationTestReport:
 
         # 6. 总体状态
         all_ok = (
-            connectivity.get("overall_status") == "OK" and
-            smoke_test.get("overall_status") == "OK" and
-            logs.get("log_dir_exists") == True
+            connectivity.get("overall_status") == "OK"
+            and smoke_test.get("overall_status") == "OK"
+            and logs.get("log_dir_exists") == True
         )
         self.report["overall_status"] = "PASS" if all_ok else "FAIL"
 
@@ -268,7 +239,7 @@ class IntegrationTestReport:
             print(f"• {phase}: {time_ms} ms")
 
         if "prediction_latency_avg_ms" in performance:
-            print(f"\n📊 预测性能:")
+            print("\n📊 预测性能:")
             print(f"   • 平均延迟: {performance['prediction_latency_avg_ms']:.2f} ms")
             print(f"   • 吞吐量: {performance.get('prediction_throughput', 0):.2f} 预测/秒")
 
@@ -284,8 +255,12 @@ class IntegrationTestReport:
             deviation = baseline_comparison.get("deviation", {})
 
             print("基准值 vs 当前值:")
-            print(f"   • ROI: {baseline['roi_percentage']}% -> {current['roi_percentage']}% (偏差: {deviation['roi_deviation']:.4f}%)")
-            print(f"   • 准确率: {baseline['accuracy']}% -> {current['accuracy']}% (偏差: {deviation['accuracy_deviation']:.2f}%)")
+            print(
+                f"   • ROI: {baseline['roi_percentage']}% -> {current['roi_percentage']}% (偏差: {deviation['roi_deviation']:.4f}%)"
+            )
+            print(
+                f"   • 准确率: {baseline['accuracy']}% -> {current['accuracy']}% (偏差: {deviation['accuracy_deviation']:.2f}%)"
+            )
 
             within_tolerance = deviation.get("within_tolerance", False)
             icon = "✅" if within_tolerance else "❌"
@@ -313,7 +288,7 @@ class IntegrationTestReport:
         print(f"{icon} 总体状态: {status}")
         print("=" * 70 + "\n")
 
-    def save_report(self, filename: Optional[str] = None):
+    def save_report(self, filename: str | None = None):
         """保存报告"""
         if filename is None:
             filename = f"docker_integration_test_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"

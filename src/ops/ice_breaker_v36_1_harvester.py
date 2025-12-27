@@ -11,25 +11,23 @@ V36.1 最后灌顶 - 历史与当下完美对接收割器
 """
 
 import asyncio
-import aiohttp
 import csv
 import json
 import logging
+import os
 import random
 import time
-import os
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Set
-from collections import defaultdict
 
+import aiohttp
 import psycopg2
-from psycopg2.extras import RealDictCursor
 
 # Add src to path
 project_root = Path(__file__).parent.parent.parent
 import sys
+
 sys.path.insert(0, str(project_root))
 
 from src.ml.miners_v34.greedy_miner import GreedyMiner
@@ -42,26 +40,27 @@ logger = logging.getLogger(__name__)
 # ============================================================
 
 UA_POOL = [
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0',
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0',
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:120.0) Gecko/20100101 Firefox/120.0',
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.1 Safari/605.1.15',
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:120.0) Gecko/20100101 Firefox/120.0",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.1 Safari/605.1.15",
 ]
 
 LANGUAGE_POOL = [
-    'en-US,en;q=0.9,en-GB;q=0.8',
-    'en-GB,en;q=0.9',
-    'fr-FR,fr;q=0.9,en;q=0.8',
-    'de-DE,de;q=0.9,en;q=0.8',
+    "en-US,en;q=0.9,en-GB;q=0.8",
+    "en-GB,en;q=0.9",
+    "fr-FR,fr;q=0.9,en;q=0.8",
+    "de-DE,de;q=0.9,en;q=0.8",
 ]
 
 
 @dataclass
 class HarvestStats:
     """收割统计"""
+
     phase: str = "INIT"
     total_targets: int = 0
     processed: int = 0
@@ -96,69 +95,65 @@ class LastAnointingHarvester:
 
     def __init__(self, concurrency: int = 3):
         self.concurrency = concurrency
-        self.session: Optional[aiohttp.ClientSession] = None
+        self.session: aiohttp.ClientSession | None = None
         self.miner = GreedyMiner()
         self.stats = HarvestStats()
         self.db_conn = None
-        self.harvested_ids: Set[int] = set()
+        self.harvested_ids: set[int] = set()
 
         # 日志文件
         self.bad_matches_log = Path("data/logs/v36_bad_matches.log")
         self.bad_matches_log.parent.mkdir(parents=True, exist_ok=True)
 
-    def _get_random_headers(self) -> Dict[str, str]:
+    def _get_random_headers(self) -> dict[str, str]:
         return {
-            'User-Agent': random.choice(UA_POOL),
-            'Accept': 'application/json, text/plain, */*',
-            'Accept-Language': random.choice(LANGUAGE_POOL),
-            'Accept-Encoding': 'gzip, deflate, br',
-            'Cache-Control': 'no-cache',
-            'Pragma': 'no-cache',
-            'Referer': 'https://www.fotmob.com/',
-            'Origin': 'https://www.fotmob.com',
-            'Sec-Ch-Ua': '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
-            'Sec-Ch-Ua-Mobile': '?0',
-            'Sec-Ch-Ua-Platform': '"Windows"',
-            'Sec-Fetch-Dest': 'empty',
-            'Sec-Fetch-Mode': 'cors',
-            'Sec-Fetch-Site': 'same-site',
+            "User-Agent": random.choice(UA_POOL),
+            "Accept": "application/json, text/plain, */*",
+            "Accept-Language": random.choice(LANGUAGE_POOL),
+            "Accept-Encoding": "gzip, deflate, br",
+            "Cache-Control": "no-cache",
+            "Pragma": "no-cache",
+            "Referer": "https://www.fotmob.com/",
+            "Origin": "https://www.fotmob.com",
+            "Sec-Ch-Ua": '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
+            "Sec-Ch-Ua-Mobile": "?0",
+            "Sec-Ch-Ua-Platform": '"Windows"',
+            "Sec-Fetch-Dest": "empty",
+            "Sec-Fetch-Mode": "cors",
+            "Sec-Fetch-Site": "same-site",
         }
 
-    def validate_payload(self, data: Dict, match_id: int) -> tuple[bool, str]:
+    def validate_payload(self, data: dict, match_id: int) -> tuple[bool, str]:
         """V36.1 零容忍数据校验"""
-        content = data.get('content')
+        content = data.get("content")
         if not content or not isinstance(content, dict):
             return False, "Missing or invalid 'content' field"
 
-        has_stats = bool(content.get('stats'))
-        has_shotmap = bool(content.get('shotmap'))
+        has_stats = bool(content.get("stats"))
+        has_shotmap = bool(content.get("shotmap"))
 
         if not (has_stats or has_shotmap):
-            return False, f"Missing both 'stats' and 'shotmap'"
+            return False, "Missing both 'stats' and 'shotmap'"
 
-        if 'header' not in data:
+        if "header" not in data:
             return False, "Missing 'header' field"
 
         return True, "OK"
 
-    def _log_dirty_match(self, match_id: int, reason: str, l2_data: Dict):
+    def _log_dirty_match(self, match_id: int, reason: str, l2_data: dict):
         """记录脏数据"""
         timestamp = datetime.now().isoformat()
         log_entry = {
-            'timestamp': timestamp,
-            'phase': self.stats.phase,
-            'match_id': match_id,
-            'rejection_reason': reason,
+            "timestamp": timestamp,
+            "phase": self.stats.phase,
+            "match_id": match_id,
+            "rejection_reason": reason,
         }
 
-        with open(self.bad_matches_log, 'a', encoding='utf-8') as f:
-            f.write(json.dumps(log_entry, ensure_ascii=False) + '\n')
+        with open(self.bad_matches_log, "a", encoding="utf-8") as f:
+            f.write(json.dumps(log_entry, ensure_ascii=False) + "\n")
 
-    async def fetch_match_details(
-        self,
-        match_id: int,
-        max_retries: int = 3
-    ) -> Optional[Dict]:
+    async def fetch_match_details(self, match_id: int, max_retries: int = 3) -> dict | None:
         """V35.2: 带指数退避的数据获取"""
         url = f"https://www.fotmob.com/api/matchDetails?matchId={match_id}"
 
@@ -166,18 +161,14 @@ class LastAnointingHarvester:
             try:
                 # V35.2: 随机延迟
                 if attempt > 0:
-                    delay = random.uniform(1.0, 2.0) * (1.5 ** attempt)
+                    delay = random.uniform(1.0, 2.0) * (1.5**attempt)
                     await asyncio.sleep(delay)
                 else:
                     await asyncio.sleep(random.uniform(0.3, 0.7))
 
                 headers = self._get_random_headers()
 
-                async with self.session.get(
-                    url,
-                    headers=headers,
-                    timeout=aiohttp.ClientTimeout(total=30)
-                ) as response:
+                async with self.session.get(url, headers=headers, timeout=aiohttp.ClientTimeout(total=30)) as response:
                     if response.status != 200:
                         logger.warning(f"HTTP {response.status}: Match {match_id}")
                         continue
@@ -201,17 +192,17 @@ class LastAnointingHarvester:
                         return None
 
                     # 判断数据版本
-                    content = data.get('content', {})
-                    is_legacy = not bool(content.get('stats'))
+                    content = data.get("content", {})
+                    is_legacy = not bool(content.get("stats"))
 
                     return {
-                        'match_id': match_id,
-                        'l2_json': data,
-                        'is_legacy': is_legacy,
-                        'size': size,
+                        "match_id": match_id,
+                        "l2_json": data,
+                        "is_legacy": is_legacy,
+                        "size": size,
                     }
 
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 logger.warning(f"⏰ 超时: Match {match_id}")
                 self.stats.retry_count += 1
             except Exception as e:
@@ -221,22 +212,24 @@ class LastAnointingHarvester:
         self.stats.failed_harvests += 1
         return None
 
-    def load_manifest(self, manifest_path: str) -> List[Dict]:
+    def load_manifest(self, manifest_path: str) -> list[dict]:
         """加载 manifest 文件"""
         matches = []
 
-        with open(manifest_path, 'r', encoding='utf-8') as f:
+        with open(manifest_path, encoding="utf-8") as f:
             reader = csv.DictReader(f)
             for row in reader:
-                match_id = row.get('match_id') or row.get('id')
+                match_id = row.get("match_id") or row.get("id")
                 if match_id:
-                    matches.append({
-                        'match_id': int(match_id),
-                        'home_team': row.get('home_team') or row.get('home'),
-                        'away_team': row.get('away_team') or row.get('away'),
-                        'league_id': int(row.get('league_id', 47)),
-                        'season': row.get('season', '2223'),
-                    })
+                    matches.append(
+                        {
+                            "match_id": int(match_id),
+                            "home_team": row.get("home_team") or row.get("home"),
+                            "away_team": row.get("away_team") or row.get("away"),
+                            "league_id": int(row.get("league_id", 47)),
+                            "season": row.get("season", "2223"),
+                        }
+                    )
 
         logger.info(f"✓ 加载 manifest: {len(matches)} 场比赛")
         return matches
@@ -245,56 +238,47 @@ class LastAnointingHarvester:
         """连接数据库"""
         import socket
 
-        is_docker = os.getenv('DOCKER_ENV', 'false').lower() == 'true'
-        db_host_env = os.getenv('DB_HOST', 'db')
-        db_port = int(os.getenv('DB_PORT', 5432))
-        db_name = os.getenv('DB_NAME', 'football_db')
-        db_user = os.getenv('DB_USER', 'football_user')
-        db_pass = os.getenv('DB_PASSWORD', 'football_pass')
+        is_docker = os.getenv("DOCKER_ENV", "false").lower() == "true"
+        db_host_env = os.getenv("DB_HOST", "db")
+        db_port = int(os.getenv("DB_PORT", 5432))
+        db_name = os.getenv("DB_NAME", "football_db")
+        db_user = os.getenv("DB_USER", "football_user")
+        db_pass = os.getenv("DB_PASSWORD", "football_pass")
 
-        if not is_docker and db_host_env in ['db', 'database', 'postgres']:
+        if not is_docker and db_host_env in ["db", "database", "postgres"]:
             try:
-                socket.create_connection(('localhost', 5432), timeout=1)
-                db_host = 'localhost'
+                socket.create_connection(("localhost", 5432), timeout=1)
+                db_host = "localhost"
             except:
                 db_host = db_host_env
         else:
             db_host = db_host_env
 
-        self.db_conn = psycopg2.connect(
-            host=db_host,
-            port=db_port,
-            database=db_name,
-            user=db_user,
-            password=db_pass
-        )
+        self.db_conn = psycopg2.connect(host=db_host, port=db_port, database=db_name, user=db_user, password=db_pass)
         logger.info(f"✓ 数据库连接成功 (host={db_host})")
 
     def save_to_database(
-        self,
-        match_info: Dict,
-        holographic_features: Dict,
-        extraction_version: str,
-        extraction_hash: str
+        self, match_info: dict, holographic_features: dict, extraction_version: str, extraction_hash: str
     ):
         """保存到数据库"""
         cursor = self.db_conn.cursor()
 
         enriched_data = {
-            'holographic_features': holographic_features,
-            'raw_match_info': match_info,
+            "holographic_features": holographic_features,
+            "raw_match_info": match_info,
         }
 
-        match_time = match_info.get('match_time')
+        match_time = match_info.get("match_time")
         if match_time:
             try:
-                match_time = datetime.fromisoformat(match_time.replace('Z', '+00:00'))
+                match_time = datetime.fromisoformat(match_time.replace("Z", "+00:00"))
             except:
                 match_time = datetime.now()
         else:
             match_time = datetime.now()
 
-        cursor.execute("""
+        cursor.execute(
+            """
             INSERT INTO match_features_training (
                 match_id, league_id, season_id, home_team, away_team,
                 match_time, home_score, away_score, total_goals,
@@ -309,30 +293,32 @@ class LastAnointingHarvester:
                 extraction_logic_hash = EXCLUDED.extraction_logic_hash,
                 extraction_timestamp = EXCLUDED.extraction_timestamp,
                 updated_at = CURRENT_TIMESTAMP
-        """, (
-            int(match_info['match_id']),
-            match_info.get('league_id'),
-            match_info.get('season', ''),
-            match_info['home_team'],
-            match_info['away_team'],
-            match_time,
-            match_info.get('home_score'),
-            match_info.get('away_score'),
-            (match_info.get('home_score') or 0) + (match_info.get('away_score') or 0),
-            json.dumps(enriched_data),
-            extraction_version,
-            extraction_hash,
-            datetime.now(),
-            datetime.now(),
-            datetime.now(),
-        ))
+        """,
+            (
+                int(match_info["match_id"]),
+                match_info.get("league_id"),
+                match_info.get("season", ""),
+                match_info["home_team"],
+                match_info["away_team"],
+                match_time,
+                match_info.get("home_score"),
+                match_info.get("away_score"),
+                (match_info.get("home_score") or 0) + (match_info.get("away_score") or 0),
+                json.dumps(enriched_data),
+                extraction_version,
+                extraction_hash,
+                datetime.now(),
+                datetime.now(),
+                datetime.now(),
+            ),
+        )
 
         self.db_conn.commit()
         cursor.close()
 
-    async def harvest_single_match(self, match_info: Dict) -> bool:
+    async def harvest_single_match(self, match_info: dict) -> bool:
         """收割单场比赛"""
-        match_id = match_info['match_id']
+        match_id = match_info["match_id"]
 
         # 跳过已收割
         if match_id in self.harvested_ids:
@@ -346,29 +332,21 @@ class LastAnointingHarvester:
                 return False
 
             # 使用 GreedyMiner 提取全息特征
-            holographic_features = self.miner.extract_all_features(
-                l2_data['l2_json'],
-                match_id=match_id
-            )
+            holographic_features = self.miner.extract_all_features(l2_data["l2_json"], match_id=match_id)
 
             # 确定数据版本
-            extraction_version = 'V36.1-HOLOGRAPHIC' if not l2_data['is_legacy'] else 'V36.1-LEGACY'
+            extraction_version = "V36.1-HOLOGRAPHIC" if not l2_data["is_legacy"] else "V36.1-LEGACY"
 
-            if not l2_data['is_legacy']:
+            if not l2_data["is_legacy"]:
                 self.stats.holographic_data += 1
             else:
                 self.stats.legacy_data += 1
 
             # 计算版本指纹
-            extraction_hash = self.miner.get_extraction_hash(l2_data['l2_json'])
+            extraction_hash = self.miner.get_extraction_hash(l2_data["l2_json"])
 
             # 存储到数据库
-            self.save_to_database(
-                match_info,
-                holographic_features,
-                extraction_version,
-                extraction_hash
-            )
+            self.save_to_database(match_info, holographic_features, extraction_version, extraction_hash)
 
             self.harvested_ids.add(match_id)
             self.stats.successful_harvests += 1
@@ -382,17 +360,17 @@ class LastAnointingHarvester:
             self.stats.processed += 1
             return False
 
-    async def harvest_batch(self, matches: List[Dict], batch_size: int = 50):
+    async def harvest_batch(self, matches: list[dict], batch_size: int = 50):
         """批量收割"""
         semaphore = asyncio.Semaphore(self.concurrency)
 
-        async def harvest_with_semaphore(match_info: Dict):
+        async def harvest_with_semaphore(match_info: dict):
             async with semaphore:
                 return await self.harvest_single_match(match_info)
 
         # 分批处理
         for i in range(0, len(matches), batch_size):
-            batch = matches[i:i + batch_size]
+            batch = matches[i : i + batch_size]
             tasks = [harvest_with_semaphore(m) for m in batch]
             await asyncio.gather(*tasks, return_exceptions=True)
 
@@ -406,17 +384,20 @@ class LastAnointingHarvester:
         rate = self.stats.get_rate()
         progress = (total - remaining) / total * 100
 
-        print(f"\r💧 [{self.stats.phase}] {progress:.1f}% "
-              f"| 成功: {self.stats.successful_harvests} "
-              f"| 拒绝: {self.stats.rejected_dirty} "
-              f"| 失败: {self.stats.failed_harvests} "
-              f"| 全息: {self.stats.holographic_data} "
-              f"| 速度: {rate:.1f} 场/分", end='', flush=True)
+        print(
+            f"\r💧 [{self.stats.phase}] {progress:.1f}% "
+            f"| 成功: {self.stats.successful_harvests} "
+            f"| 拒绝: {self.stats.rejected_dirty} "
+            f"| 失败: {self.stats.failed_harvests} "
+            f"| 全息: {self.stats.holographic_data} "
+            f"| 速度: {rate:.1f} 场/分",
+            end="",
+            flush=True,
+        )
 
     async def __aenter__(self):
         self.session = aiohttp.ClientSession(
-            timeout=aiohttp.ClientTimeout(total=60),
-            connector=aiohttp.TCPConnector(limit=5)
+            timeout=aiohttp.ClientTimeout(total=60), connector=aiohttp.TCPConnector(limit=5)
         )
         return self
 
@@ -427,10 +408,7 @@ class LastAnointingHarvester:
 
 async def main():
     """主函数"""
-    logging.basicConfig(
-        level=logging.INFO,
-        format='%(asctime)s - %(levelname)s - %(message)s'
-    )
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
     print("\n" + "=" * 70)
     print("🧊 V36.1【最后灌顶】收割器启动")
@@ -448,16 +426,16 @@ async def main():
         print("-" * 70)
 
         historical_manifests = [
-            'data/production/manifest_47_2223.csv',  # 英超 22/23
-            'data/production/manifest_87_2223.csv',  # 西甲 22/23
-            'data/production/manifest_54_2223.csv',  # 德甲 22/23
-            'data/production/manifest_55_2223.csv',  # 意甲 22/23
-            'data/production/manifest_53_2223.csv',  # 法甲 22/23
-            'data/production/manifest_47_2324.csv',  # 英甲 23/24
-            'data/production/manifest_87_2324.csv',  # 西甲 23/24
-            'data/production/manifest_54_2324.csv',  # 德甲 23/24
-            'data/production/manifest_55_2324.csv',  # 意甲 23/24
-            'data/production/manifest_53_2324.csv',  # 法甲 23/24
+            "data/production/manifest_47_2223.csv",  # 英超 22/23
+            "data/production/manifest_87_2223.csv",  # 西甲 22/23
+            "data/production/manifest_54_2223.csv",  # 德甲 22/23
+            "data/production/manifest_55_2223.csv",  # 意甲 22/23
+            "data/production/manifest_53_2223.csv",  # 法甲 22/23
+            "data/production/manifest_47_2324.csv",  # 英甲 23/24
+            "data/production/manifest_87_2324.csv",  # 西甲 23/24
+            "data/production/manifest_54_2324.csv",  # 德甲 23/24
+            "data/production/manifest_55_2324.csv",  # 意甲 23/24
+            "data/production/manifest_53_2324.csv",  # 法甲 23/24
         ]
 
         all_matches = []
@@ -494,8 +472,8 @@ async def main():
         print("-" * 70)
 
         current_manifests = [
-            'data/production/manifest_47_2425.csv',  # 英超 24/25
-            'data/production/manifest_87_2425.csv',  # 西甲 24/25
+            "data/production/manifest_47_2425.csv",  # 英超 24/25
+            "data/production/manifest_87_2425.csv",  # 西甲 24/25
         ]
 
         current_matches = []
@@ -506,7 +484,7 @@ async def main():
                 current_matches.extend(matches)
 
         # 过滤已收割的比赛
-        pending_matches = [m for m in current_matches if m['match_id'] not in harvester.harvested_ids]
+        pending_matches = [m for m in current_matches if m["match_id"] not in harvester.harvested_ids]
 
         print(f"\n🚀 开始收割 {len(pending_matches):,} 场当前赛季比赛...\n")
 

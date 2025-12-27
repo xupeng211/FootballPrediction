@@ -4,13 +4,13 @@ V8.5 多赛季收割脚本 - 收割 23/24 + 24/25 赛季数据
 目标: 500+ 场比赛，消除小样本偏差
 """
 
-import sys
 import json
-import pandas as pd
-from datetime import datetime
-from pathlib import Path
-import time
 import random
+import sys
+import time
+from pathlib import Path
+
+import pandas as pd
 
 # 添加项目根目录到路径
 project_root = Path(__file__).parent.parent.parent
@@ -34,7 +34,7 @@ class MultiSeasonHarvester:
 
     def __init__(self):
         self.config = get_config()
-        self.logger = setup_logger('multi_season_harvest')
+        self.logger = setup_logger("multi_season_harvest")
         self.api_client = get_api_client()
         self.feature_extractor = BulletproofFeatureExtractor()
 
@@ -49,10 +49,7 @@ class MultiSeasonHarvester:
 
         try:
             # 获取赛季比赛列表
-            matches = self.api_client.get_season_matches(
-                league_id=self.LEAGUE_ID,
-                season=season_id
-            )
+            matches = self.api_client.get_season_matches(league_id=self.LEAGUE_ID, season=season_id)
 
             if not matches:
                 self.logger.warning(f"⚠️ {season_name} 赛季未获取到比赛")
@@ -63,9 +60,9 @@ class MultiSeasonHarvester:
             season_data = []
 
             for i, match in enumerate(matches, 1):
-                match_id = match['match_id']
-                home_team = match['home_team']
-                away_team = match['away_team']
+                match_id = match["match_id"]
+                home_team = match["home_team"]
+                away_team = match["away_team"]
 
                 self.logger.info(f"[{season_name}][{i}/{len(matches)}] {home_team} vs {away_team}")
 
@@ -81,29 +78,33 @@ class MultiSeasonHarvester:
                         raise ValueError("特征提取失败")
 
                     # 添加元数据
-                    features.update({
-                        'external_id': match_id,
-                        'season': season_name,
-                        'league_id': self.LEAGUE_ID,
-                        'is_real_data': True,
-                        'data_source': 'fotmob_api'
-                    })
+                    features.update(
+                        {
+                            "external_id": match_id,
+                            "season": season_name,
+                            "league_id": self.LEAGUE_ID,
+                            "is_real_data": True,
+                            "data_source": "fotmob_api",
+                        }
+                    )
 
                     season_data.append(features)
-                    self.logger.info(f"  ✅ 成功")
+                    self.logger.info("  ✅ 成功")
 
                 except Exception as e:
-                    self.failed_matches.append({
-                        'match_id': match_id,
-                        'season': season_name,
-                        'teams': f"{home_team} vs {away_team}",
-                        'error': str(e)
-                    })
+                    self.failed_matches.append(
+                        {
+                            "match_id": match_id,
+                            "season": season_name,
+                            "teams": f"{home_team} vs {away_team}",
+                            "error": str(e),
+                        }
+                    )
                     self.logger.warning(f"  ❌ 失败: {e}")
 
                 # 进度报告
                 if i % 50 == 0:
-                    self.logger.info(f"  📊 {season_name} 进度: {i}/{len(matches)} ({i/len(matches)*100:.1f}%)")
+                    self.logger.info(f"  📊 {season_name} 进度: {i}/{len(matches)} ({i / len(matches) * 100:.1f}%)")
 
             return season_data
 
@@ -132,9 +133,9 @@ class MultiSeasonHarvester:
             df = pd.DataFrame(self.all_matches)
 
             # 按时间排序
-            if 'match_time' in df.columns:
-                df['match_time'] = pd.to_datetime(df['match_time'])
-                df = df.sort_values('match_time')
+            if "match_time" in df.columns:
+                df["match_time"] = pd.to_datetime(df["match_time"])
+                df = df.sort_values("match_time")
 
             # 保存
             output_path = self.config.paths.data_dir / "multi_season_v85.csv"
@@ -147,7 +148,7 @@ class MultiSeasonHarvester:
             # 保存失败列表
             if self.failed_matches:
                 failed_path = self.config.paths.data_dir / "failed_matches_v85.json"
-                with open(failed_path, 'w', encoding='utf-8') as f:
+                with open(failed_path, "w", encoding="utf-8") as f:
                     json.dump(self.failed_matches, f, indent=2, ensure_ascii=False)
                 self.logger.info(f"  失败记录: {failed_path} ({len(self.failed_matches)} 场)")
 

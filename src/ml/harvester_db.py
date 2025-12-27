@@ -14,11 +14,11 @@ V20.8 Harvester 数据库连接管理器 - 自愈连接
 版本: V20.8
 """
 
-import time
 import logging
+import time
+
 import psycopg2
 from psycopg2.extras import RealDictCursor
-from typing import Optional
 
 from src.ml.harvester_config import get_harvester_settings
 
@@ -27,6 +27,7 @@ logger = logging.getLogger(__name__)
 
 class DatabaseConnectionError(Exception):
     """数据库连接错误"""
+
     pass
 
 
@@ -42,7 +43,7 @@ class HarvesterConnectionManager:
 
     def __init__(self):
         self.settings = get_harvester_settings()
-        self._conn: Optional[psycopg2.extensions.connection] = None
+        self._conn: psycopg2.extensions.connection | None = None
 
     def connect(self) -> psycopg2.extensions.connection:
         """
@@ -65,10 +66,7 @@ class HarvesterConnectionManager:
             try:
                 logger.debug(f"数据库连接尝试 {attempt}/{retry_attempts}...")
 
-                self._conn = psycopg2.connect(
-                    **db_params,
-                    cursor_factory=RealDictCursor
-                )
+                self._conn = psycopg2.connect(**db_params, cursor_factory=RealDictCursor)
 
                 # 设置自动提交为 False（手动控制事务）
                 self._conn.autocommit = False
@@ -161,7 +159,7 @@ class HarvesterConnectionManager:
 
 
 # ==================== 单例模式 ====================
-_connection_manager: Optional[HarvesterConnectionManager] = None
+_connection_manager: HarvesterConnectionManager | None = None
 
 
 def get_connection_manager() -> HarvesterConnectionManager:

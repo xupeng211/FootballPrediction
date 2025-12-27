@@ -12,12 +12,13 @@
 - Configuration Externalization (配置外部化)
 """
 
+import asyncio
 import logging
 from abc import ABC, abstractmethod
-from typing import Dict, Any, TypeVar, Type, Optional, Callable
-from dataclasses import dataclass, field
+from collections.abc import Callable
 from contextlib import asynccontextmanager
-import asyncio
+from dataclasses import dataclass, field
+from typing import Any, TypeVar
 
 logger = logging.getLogger(__name__)
 
@@ -48,12 +49,12 @@ class ServiceLifecycle(ABC):
 class ServiceDescriptor:
     """服务描述符"""
 
-    service_type: Type[T]
-    factory: Optional[Callable[[], T]] = None
+    service_type: type[T]
+    factory: Callable[[], T] | None = None
     singleton: bool = True
     lazy: bool = True
     dependencies: list[str] = field(default_factory=list)
-    config: Dict[str, Any] = field(default_factory=dict)
+    config: dict[str, Any] = field(default_factory=dict)
 
 
 class DIContainer:
@@ -64,20 +65,20 @@ class DIContainer:
     """
 
     def __init__(self):
-        self._services: Dict[str, ServiceDescriptor] = {}
-        self._instances: Dict[str, Any] = {}
+        self._services: dict[str, ServiceDescriptor] = {}
+        self._instances: dict[str, Any] = {}
         self._initializing: set[str] = set()
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
 
     def register(
         self,
         service_name: str,
-        service_type: Type[T],
-        factory: Optional[Callable[[], T]] = None,
+        service_type: type[T],
+        factory: Callable[[], T] | None = None,
         singleton: bool = True,
         lazy: bool = True,
-        dependencies: Optional[list[str]] = None,
-        config: Optional[Dict[str, Any]] = None,
+        dependencies: list[str] | None = None,
+        config: dict[str, Any] | None = None,
     ) -> None:
         """
         注册服务
@@ -212,7 +213,7 @@ class DIContainer:
         except Exception as e:
             self.logger.error(f"关闭服务失败 {service_name}: {e}")
 
-    def get_service_info(self) -> Dict[str, Any]:
+    def get_service_info(self) -> dict[str, Any]:
         """获取服务信息"""
         return {
             "registered_services": list(self._services.keys()),
@@ -223,7 +224,7 @@ class DIContainer:
 
 
 # 全局依赖注入容器
-_container: Optional[DIContainer] = None
+_container: DIContainer | None = None
 
 
 def get_container() -> DIContainer:
@@ -245,7 +246,7 @@ async def container_context():
 
 
 # 依赖注入装饰器
-def injectable(service_name: str, dependencies: Optional[list[str]] = None):
+def injectable(service_name: str, dependencies: list[str] | None = None):
     """
     可注入服务装饰器
 
@@ -254,7 +255,7 @@ def injectable(service_name: str, dependencies: Optional[list[str]] = None):
         dependencies: 依赖服务列表
     """
 
-    def decorator(cls: Type[T]) -> Type[T]:
+    def decorator(cls: type[T]) -> type[T]:
         original_init = cls.__init__
 
         def __init__(self, *args, **kwargs):

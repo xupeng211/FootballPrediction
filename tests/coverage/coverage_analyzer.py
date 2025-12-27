@@ -22,13 +22,12 @@ import ast
 import asyncio
 import json
 import logging
+import subprocess
 import sys
+from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, Any, List, Set, Optional, Tuple
-from dataclasses import dataclass
-import subprocess
-import re
+from typing import Any
 
 import coverage
 
@@ -49,7 +48,7 @@ class FunctionCoverage:
     coverage_percentage: float
     complexity: int
     is_tested: bool
-    missing_branches: List[str]
+    missing_branches: list[str]
 
 
 @dataclass
@@ -63,8 +62,8 @@ class ModuleAnalysis:
     untested_functions: int
     average_complexity: float
     coverage_percentage: float
-    functions_coverage: List[FunctionCoverage]
-    improvement_suggestions: List[str]
+    functions_coverage: list[FunctionCoverage]
+    improvement_suggestions: list[str]
 
 
 class CoverageAnalyzer:
@@ -82,7 +81,7 @@ class CoverageAnalyzer:
             "src/services/collection_service.py",
         ]
 
-    async def deep_coverage_analysis(self) -> Dict[str, Any]:
+    async def deep_coverage_analysis(self) -> dict[str, Any]:
         """执行深度覆盖率分析"""
         logger.info("🔍 开始深度覆盖率分析")
 
@@ -132,7 +131,7 @@ class CoverageAnalyzer:
             "improvement_suggestions": len(improvement_plan["improvements"]),
         }
 
-    async def _run_coverage_collection(self) -> Dict[str, Any]:
+    async def _run_coverage_collection(self) -> dict[str, Any]:
         """收集覆盖率数据"""
         logger.info("📊 收集覆盖率数据")
 
@@ -191,7 +190,7 @@ class CoverageAnalyzer:
 
         # 获取AST分析
         try:
-            with open(abs_path, "r", encoding="utf-8") as f:
+            with open(abs_path, encoding="utf-8") as f:
                 source_code = f.read()
 
             tree = ast.parse(source_code)
@@ -304,7 +303,7 @@ class CoverageAnalyzer:
 
         return complexity
 
-    def _identify_missing_branches(self, node, missing_lines: Set[int]) -> List[str]:
+    def _identify_missing_branches(self, node, missing_lines: set[int]) -> list[str]:
         """识别缺失的分支"""
         missing_branches = []
 
@@ -335,8 +334,8 @@ class CoverageAnalyzer:
         return missing_branches
 
     def _generate_module_improvements(
-        self, module_name: str, coverage: float, functions: List[FunctionCoverage]
-    ) -> List[str]:
+        self, module_name: str, coverage: float, functions: list[FunctionCoverage]
+    ) -> list[str]:
         """为模块生成改进建议"""
         suggestions = []
 
@@ -366,7 +365,7 @@ class CoverageAnalyzer:
 
         return suggestions
 
-    async def _generate_improvement_plan(self, module_analyses: Dict[str, ModuleAnalysis]) -> Dict[str, Any]:
+    async def _generate_improvement_plan(self, module_analyses: dict[str, ModuleAnalysis]) -> dict[str, Any]:
         """生成覆盖率改进计划"""
         logger.info("📋 生成覆盖率改进计划")
 
@@ -464,7 +463,7 @@ class CoverageAnalyzer:
         else:
             return 1.0
 
-    async def _analyze_complexity(self, module_analyses: Dict[str, ModuleAnalysis]) -> Dict[str, Any]:
+    async def _analyze_complexity(self, module_analyses: dict[str, ModuleAnalysis]) -> dict[str, Any]:
         """分析代码复杂度"""
         logger.info("🔢 分析代码复杂度")
 
@@ -528,7 +527,7 @@ class CoverageAnalyzer:
             "recommendations": self._generate_complexity_recommendations(global_avg_complexity, complexity_hotspots),
         }
 
-    def _generate_complexity_recommendations(self, avg_complexity: float, hotspots: List[Dict]) -> List[str]:
+    def _generate_complexity_recommendations(self, avg_complexity: float, hotspots: list[dict]) -> list[str]:
         """生成复杂度改进建议"""
         recommendations = []
 
@@ -543,12 +542,12 @@ class CoverageAnalyzer:
         # 具体函数建议
         for hotspot in hotspots[:3]:
             recommendations.append(
-                f"函数 {hotspot['function']} (复杂度: {hotspot['complexity']}) " f"建议重构以提高可维护性和测试覆盖率"
+                f"函数 {hotspot['function']} (复杂度: {hotspot['complexity']}) 建议重构以提高可维护性和测试覆盖率"
             )
 
         return recommendations
 
-    async def _identify_risk_areas(self, module_analyses: Dict[str, ModuleAnalysis]) -> Dict[str, Any]:
+    async def _identify_risk_areas(self, module_analyses: dict[str, ModuleAnalysis]) -> dict[str, Any]:
         """识别高风险代码区域"""
         logger.info("⚠️ 识别高风险代码区域")
 
@@ -607,7 +606,7 @@ class CoverageAnalyzer:
         total_score = base_score + coverage_penalty + size_penalty
         return min(total_score, 10)  # 最高10分
 
-    def _identify_risk_factors(self, func: FunctionCoverage) -> List[str]:
+    def _identify_risk_factors(self, func: FunctionCoverage) -> list[str]:
         """识别函数的风险因素"""
         factors = []
 
@@ -631,7 +630,7 @@ class CoverageAnalyzer:
 
         return factors
 
-    async def _generate_test_case_suggestions(self, module_analyses: Dict[str, ModuleAnalysis]) -> Dict[str, Any]:
+    async def _generate_test_case_suggestions(self, module_analyses: dict[str, ModuleAnalysis]) -> dict[str, Any]:
         """生成测试用例建议"""
         logger.info("🧪 生成测试用例建议")
 
@@ -665,7 +664,7 @@ class CoverageAnalyzer:
             "priority_suggestions": suggestions[:10],  # 前10个优先建议
         }
 
-    def _generate_function_test_suggestions(self, module_name: str, func: FunctionCoverage) -> List[Dict[str, Any]]:
+    def _generate_function_test_suggestions(self, module_name: str, func: FunctionCoverage) -> list[dict[str, Any]]:
         """为单个函数生成测试建议"""
         suggestions = []
 
@@ -723,7 +722,7 @@ class CoverageAnalyzer:
 
         return suggestions
 
-    def _generate_test_templates(self, suggestions_by_module: Dict[str, List[Dict]]) -> List[Dict[str, Any]]:
+    def _generate_test_templates(self, suggestions_by_module: dict[str, list[dict]]) -> list[dict[str, Any]]:
         """生成测试模板"""
         templates = []
 
@@ -752,7 +751,7 @@ class CoverageAnalyzer:
 
         return templates
 
-    def _generate_basic_test_template(self, module_name: str, tests: List[Dict]) -> str:
+    def _generate_basic_test_template(self, module_name: str, tests: list[dict]) -> str:
         """生成基础测试模板"""
         template = f'''"""
 {module_name} 模块基础测试
@@ -791,7 +790,7 @@ class Test{module_name.title().replace("_", "")}:
 '''
         return template
 
-    def _generate_boundary_test_template(self, module_name: str, tests: List[Dict]) -> str:
+    def _generate_boundary_test_template(self, module_name: str, tests: list[dict]) -> str:
         """生成边界条件测试模板"""
         template = f'''"""
 {module_name} 模块边界条件测试
@@ -825,7 +824,7 @@ class Test{module_name.title().replace("_", "")}Boundary:
 
         return template
 
-    async def _generate_analysis_summary(self, module_analyses: Dict[str, ModuleAnalysis]) -> Dict[str, Any]:
+    async def _generate_analysis_summary(self, module_analyses: dict[str, ModuleAnalysis]) -> dict[str, Any]:
         """生成分析摘要"""
         logger.info("📋 生成分析摘要")
 
@@ -870,7 +869,7 @@ class Test{module_name.title().replace("_", "")}Boundary:
             "overall_assessment": self._generate_overall_assessment(coverage_ranges, avg_complexity),
         }
 
-    def _generate_overall_assessment(self, coverage_ranges: Dict[str, int], avg_complexity: float) -> Dict[str, Any]:
+    def _generate_overall_assessment(self, coverage_ranges: dict[str, int], avg_complexity: float) -> dict[str, Any]:
         """生成总体评估"""
         total_modules = sum(coverage_ranges.values())
 
@@ -895,7 +894,7 @@ class Test{module_name.title().replace("_", "")}Boundary:
             ],
         }
 
-    async def _save_analysis_report(self, report_data: Dict[str, Any]) -> Path:
+    async def _save_analysis_report(self, report_data: dict[str, Any]) -> Path:
         """保存分析报告"""
         output_dir = Path("coverage_reports")
         output_dir.mkdir(exist_ok=True)
@@ -930,7 +929,7 @@ async def main():
         if args.command == "deep-analysis":
             result = await analyzer.deep_coverage_analysis()
 
-            print(f"\n✅ 深度覆盖率分析完成!")
+            print("\n✅ 深度覆盖率分析完成!")
             print(f"分析报告: {result['report_file']}")
             print(f"分析模块数: {result['modules_analyzed']}")
             print(f"高风险区域: {result['high_risk_areas']} 个")
@@ -942,7 +941,7 @@ async def main():
             analysis_result = await analyzer.deep_coverage_analysis()
             improvement_plan = analysis_result["improvement_plan"]
 
-            print(f"\n📋 覆盖率改进计划:")
+            print("\n📋 覆盖率改进计划:")
             print(f"总改进任务: {improvement_plan['total_improvements']} 个")
             print(f"预估工作量: {improvement_plan['estimated_total_effort']} 人日")
 
@@ -957,14 +956,14 @@ async def main():
             analysis_result = await analyzer.deep_coverage_analysis()
             complexity_analysis = analysis_result["complexity_analysis"]
 
-            print(f"\n🔢 代码复杂度分析:")
+            print("\n🔢 代码复杂度分析:")
             print(f"平均复杂度: {complexity_analysis['global_average_complexity']:.1f}")
             print(f"最高复杂度: {complexity_analysis['global_max_complexity']}")
             print(f"分析函数数: {complexity_analysis['total_functions_analyzed']}")
             print(f"复杂度热点: {len(complexity_analysis['complexity_hotspots'])} 个")
 
             if complexity_analysis["recommendations"]:
-                print(f"\n📝 改进建议:")
+                print("\n📝 改进建议:")
                 for rec in complexity_analysis["recommendations"]:
                     print(f"  • {rec}")
 

@@ -11,17 +11,15 @@ V19.4 FotMob 网页抓取器 - 绕过 API 限制
 日期: 2025-12-23
 """
 
-import logging
-import re
 import json
+import logging
 import time
-from typing import Dict, List, Optional
 from dataclasses import dataclass
-from datetime import datetime, timedelta
 
 try:
     import requests
     from bs4 import BeautifulSoup
+
     HAS_DEPS = True
 except ImportError:
     HAS_DEPS = False
@@ -32,6 +30,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class ScrapedMatch:
     """抓取的比赛数据"""
+
     match_id: str
     home_team: str
     away_team: str
@@ -51,33 +50,31 @@ class FotMobWebScraper:
     def __init__(self):
         self.base_url = "https://www.fotmob.com"
         self.session = requests.Session()
-        self.session.headers.update({
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-            'Accept-Language': 'en-US,en;q=0.9',
-            'Accept-Encoding': 'gzip, deflate, br',
-            'DNT': '1',
-            'Connection': 'keep-alive',
-            'Upgrade-Insecure-Requests': '1'
-        })
+        self.session.headers.update(
+            {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+                "Accept-Language": "en-US,en;q=0.9",
+                "Accept-Encoding": "gzip, deflate, br",
+                "DNT": "1",
+                "Connection": "keep-alive",
+                "Upgrade-Insecure-Requests": "1",
+            }
+        )
 
         # 联赛映射 (使用 URL 简化名称)
         self.league_urls = {
-            47: 'premier-league',         # 英超
-            48: 'championship',           # 英冠
-            55: 'serie-a',                # 意甲
-            56: 'serie-b',                # 意乙
-            87: 'la-liga',                # 西甲
-            94: 'bundesliga',             # 德甲
+            47: "premier-league",  # 英超
+            48: "championship",  # 英冠
+            55: "serie-a",  # 意甲
+            56: "serie-b",  # 意乙
+            87: "la-liga",  # 西甲
+            94: "bundesliga",  # 德甲
         }
 
         logger.info("FotMob 网页抓取器初始化完成")
 
-    def scrape_league_fixtures(
-        self,
-        league_id: int,
-        date_str: str = None
-    ) -> List[ScrapedMatch]:
+    def scrape_league_fixtures(self, league_id: int, date_str: str = None) -> list[ScrapedMatch]:
         """
         抓取指定联赛的 fixtures
 
@@ -108,10 +105,10 @@ class FotMobWebScraper:
             response.raise_for_status()
 
             # 解析 HTML
-            soup = BeautifulSoup(response.text, 'html.parser')
+            soup = BeautifulSoup(response.text, "html.parser")
 
             # FotMob 将数据存储在 __NEXT_DATA__ script 标签中
-            script_tag = soup.find('script', {'id': '__NEXT_DATA__'})
+            script_tag = soup.find("script", {"id": "__NEXT_DATA__"})
 
             if not script_tag:
                 logger.warning("未找到 __NEXT_DATA__ 标签")
@@ -139,19 +136,15 @@ class FotMobWebScraper:
             logger.error(f"抓取失败: {e}")
             return []
 
-    def _extract_matches_from_data(
-        self,
-        data: dict,
-        league_id: int
-    ) -> List[ScrapedMatch]:
+    def _extract_matches_from_data(self, data: dict, league_id: int) -> list[ScrapedMatch]:
         """从 JSON 数据中提取比赛信息"""
         matches = []
 
         try:
             # 导航到 pageProps.fixtures.allMatches
-            page_props = data.get('props', {}).get('pageProps', {})
-            fixtures = page_props.get('fixtures', {})
-            matches_data = fixtures.get('allMatches', [])
+            page_props = data.get("props", {}).get("pageProps", {})
+            fixtures = page_props.get("fixtures", {})
+            matches_data = fixtures.get("allMatches", [])
 
             if not matches_data:
                 logger.warning("未在数据中找到 allMatches 数组")
@@ -165,37 +158,43 @@ class FotMobWebScraper:
                     continue
 
                 # 提取比赛信息
-                match_id = str(match.get('id', ''))
+                match_id = str(match.get("id", ""))
                 if not match_id:
                     continue
 
-                home = match.get('home', {})
-                away = match.get('away', {})
-                status = match.get('status', {})
+                home = match.get("home", {})
+                away = match.get("away", {})
+                status = match.get("status", {})
 
                 # 获取比赛时间
-                utc_time = status.get('utcTime', '')
-                start_time = status.get('startTime', {})
-                uts_time = start_time.get('uts', '') if isinstance(start_time, dict) else ''
+                utc_time = status.get("utcTime", "")
+                start_time = status.get("startTime", {})
+                uts_time = start_time.get("uts", "") if isinstance(start_time, dict) else ""
 
                 # 获取比赛状态
-                stage = status.get('stage', {}).get('id', '') if isinstance(status.get('stage'), dict) else status.get('stage', '')
-                stage_str = str(stage).lower() if stage else ''
+                stage = (
+                    status.get("stage", {}).get("id", "")
+                    if isinstance(status.get("stage"), dict)
+                    else status.get("stage", "")
+                )
+                stage_str = str(stage).lower() if stage else ""
 
                 # 只返回未完成的比赛（未来和进行中的）
                 # 跳过已完成的比赛（我们只关心未来的）
-                if stage_str in ['finished', 'ft', 'played', 'postponed']:
+                if stage_str in ["finished", "ft", "played", "postponed"]:
                     continue
 
-                matches.append(ScrapedMatch(
-                    match_id=match_id,
-                    home_team=home.get('name', 'Unknown'),
-                    away_team=away.get('name', 'Unknown'),
-                    league_id=league_id,
-                    league_name=self._get_league_name(league_id),
-                    match_time=utc_time or uts_time,
-                    status=stage_str
-                ))
+                matches.append(
+                    ScrapedMatch(
+                        match_id=match_id,
+                        home_team=home.get("name", "Unknown"),
+                        away_team=away.get("name", "Unknown"),
+                        league_id=league_id,
+                        league_name=self._get_league_name(league_id),
+                        match_time=utc_time or uts_time,
+                        status=stage_str,
+                    )
+                )
 
         except Exception as e:
             logger.error(f"解析比赛数据失败: {e}")
@@ -210,15 +209,11 @@ class FotMobWebScraper:
             55: "Serie A",
             56: "Serie B",
             87: "La Liga",
-            94: "Bundesliga"
+            94: "Bundesliga",
         }
         return names.get(league_id, f"League {league_id}")
 
-    def scrape_multiple_leagues(
-        self,
-        league_ids: List[int],
-        max_matches: int = 50
-    ) -> List[ScrapedMatch]:
+    def scrape_multiple_leagues(self, league_ids: list[int], max_matches: int = 50) -> list[ScrapedMatch]:
         """
         抓取多个联赛的比赛
 
@@ -251,10 +246,7 @@ class FotMobWebScraper:
 # ============================================
 
 if __name__ == "__main__":
-    logging.basicConfig(
-        level=logging.INFO,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-    )
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 
     print("=" * 70)
     print("FotMob 网页抓取器测试")

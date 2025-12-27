@@ -17,11 +17,11 @@ LineupProcessor - 阵容稳定性处理器（V23.0 扩展版）
 版本: V23.0-final
 """
 
-from typing import Any, Dict, Optional, List
 import logging
+from typing import Any
 
-from ..base import BaseProcessor, ProcessorResult, ProcessorConfig
-from ..models import MatchData, LineupInfo, PlayerStats, HomeAway
+from ..base import BaseProcessor, ProcessorConfig, ProcessorResult
+from ..models import LineupInfo, MatchData, PlayerStats
 
 logger = logging.getLogger(__name__)
 
@@ -37,6 +37,7 @@ class LineupProcessorConfig(ProcessorConfig):
         enable_diversity_analysis: 是否启用多样性分析（V23.0）
         min_starter_count: 最少首发人数（默认 11）
     """
+
     enable_value_analysis: bool = True
     enable_formation_analysis: bool = True
     enable_player_aggregation: bool = True
@@ -77,15 +78,13 @@ class LineupProcessor(BaseProcessor[MatchData]):
     processor_version = "23.0.0"
     priority = 30
 
-    def __init__(self, config: Optional[LineupProcessorConfig] = None) -> None:
+    def __init__(self, config: LineupProcessorConfig | None = None) -> None:
         super().__init__(config or LineupProcessorConfig())
         self.config: LineupProcessorConfig = self.config
 
-    def process(
-        self, data: MatchData, context: Any
-    ) -> ProcessorResult:
+    def process(self, data: MatchData, context: Any) -> ProcessorResult:
         """提取阵容特征"""
-        features: Dict[str, float] = {}
+        features: dict[str, float] = {}
 
         try:
             # 主队阵容分析
@@ -118,9 +117,7 @@ class LineupProcessor(BaseProcessor[MatchData]):
             logger.error(f"LineupProcessor failed: {e}")
             return ProcessorResult.failure_result(str(e))
 
-    def _analyze_lineup(
-        self, lineup: LineupInfo, prefix: str
-    ) -> Dict[str, float]:
+    def _analyze_lineup(self, lineup: LineupInfo, prefix: str) -> dict[str, float]:
         """分析单队阵容特征"""
         features = {}
 
@@ -172,9 +169,7 @@ class LineupProcessor(BaseProcessor[MatchData]):
         except (ValueError, AttributeError):
             return -1.0
 
-    def _aggregate_player_stats(
-        self, players: list[PlayerStats], prefix: str
-    ) -> Dict[str, float]:
+    def _aggregate_player_stats(self, players: list[PlayerStats], prefix: str) -> dict[str, float]:
         """聚合球员统计数据"""
         features = {}
 
@@ -198,9 +193,7 @@ class LineupProcessor(BaseProcessor[MatchData]):
 
         return features
 
-    def _analyze_diversity(
-        self, players: List[PlayerStats], prefix: str
-    ) -> Dict[str, float]:
+    def _analyze_diversity(self, players: list[PlayerStats], prefix: str) -> dict[str, float]:
         """
         阵容多样性分析（V23.0 核心扩展）
 
@@ -250,6 +243,7 @@ class LineupProcessor(BaseProcessor[MatchData]):
                 # 评分统计
                 ratings = [p.team_rating or 0 for p in pos_players]
                 import statistics
+
                 features[f"{prefix}_{pos_name}_avg_rating"] = round(statistics.mean(ratings), 2) if ratings else 0.0
                 features[f"{prefix}_{pos_name}_max_rating"] = round(max(ratings), 2) if ratings else 0.0
                 features[f"{prefix}_{pos_name}_min_rating"] = round(min(ratings), 2) if ratings else 0.0
@@ -274,7 +268,22 @@ class LineupProcessor(BaseProcessor[MatchData]):
 
             else:
                 # 填充默认值
-                for metric in ["touches", "passes", "xg", "shots", "avg_rating", "max_rating", "min_rating", "avg_age", "total_age", "total_value", "avg_value", "total_minutes", "avg_minutes", "count"]:
+                for metric in [
+                    "touches",
+                    "passes",
+                    "xg",
+                    "shots",
+                    "avg_rating",
+                    "max_rating",
+                    "min_rating",
+                    "avg_age",
+                    "total_age",
+                    "total_value",
+                    "avg_value",
+                    "total_minutes",
+                    "avg_minutes",
+                    "count",
+                ]:
                     features[f"{prefix}_{pos_name}_{metric}"] = 0.0
 
         # 阵容多样性评分（熵）
@@ -292,16 +301,12 @@ class LineupProcessor(BaseProcessor[MatchData]):
             features[f"{prefix}_bench_count"] = float(len(bench_players))
             bench_values = [p.market_value or 0 for p in bench_players]
             features[f"{prefix}_bench_total_value"] = round(sum(bench_values), 2)
-            features[f"{prefix}_bench_avg_value"] = round(
-                statistics.mean(bench_values), 2
-            ) if bench_values else 0.0
+            features[f"{prefix}_bench_avg_value"] = round(statistics.mean(bench_values), 2) if bench_values else 0.0
 
             # 替补出场时间
             bench_minutes = [p.minutes_played or 0 for p in bench_players]
             features[f"{prefix}_bench_total_minutes"] = float(sum(bench_minutes))
-            features[f"{prefix}_bench_avg_minutes"] = round(
-                statistics.mean(bench_minutes), 1
-            ) if bench_minutes else 0.0
+            features[f"{prefix}_bench_avg_minutes"] = round(statistics.mean(bench_minutes), 1) if bench_minutes else 0.0
         else:
             features[f"{prefix}_bench_count"] = 0.0
             features[f"{prefix}_bench_total_value"] = 0.0
@@ -311,18 +316,17 @@ class LineupProcessor(BaseProcessor[MatchData]):
 
         return features
 
-    def _calculate_entropy(self, ratios: List[float]) -> float:
+    def _calculate_entropy(self, ratios: list[float]) -> float:
         """计算熵"""
         import math
+
         entropy = 0.0
         for r in ratios:
             if r > 0:
                 entropy -= r * math.log(r)
         return entropy
 
-    def _compute_comparison_features(
-        self, features: Dict[str, float]
-    ) -> Dict[str, float]:
+    def _compute_comparison_features(self, features: dict[str, float]) -> dict[str, float]:
         """计算阵容对比特征（V23.0 扩展：位置级深度对比）"""
         comparison_features = {}
 
@@ -331,9 +335,7 @@ class LineupProcessor(BaseProcessor[MatchData]):
         away_value = features.get("away_total_value", 0)
 
         if home_value > 0 and away_value > 0:
-            comparison_features["lineup_value_ratio"] = round(
-                home_value / (home_value + away_value), 4
-            )
+            comparison_features["lineup_value_ratio"] = round(home_value / (home_value + away_value), 4)
             comparison_features["diff_lineup_value"] = round(home_value - away_value, 2)
         else:
             comparison_features["lineup_value_ratio"] = 0.5
@@ -342,9 +344,7 @@ class LineupProcessor(BaseProcessor[MatchData]):
         # 稳定性对比
         home_stability = features.get("home_lineup_stability", 0.5)
         away_stability = features.get("away_lineup_stability", 0.5)
-        comparison_features["diff_lineup_stability"] = round(
-            home_stability - away_stability, 4
-        )
+        comparison_features["diff_lineup_stability"] = round(home_stability - away_stability, 4)
 
         # 聚合数据对比
         home_touches = features.get("home_agg_touches", 0)
@@ -352,18 +352,25 @@ class LineupProcessor(BaseProcessor[MatchData]):
 
         if home_touches > 0 or away_touches > 0:
             total = home_touches + away_touches
-            comparison_features["home_touches_ratio"] = round(
-                home_touches / total if total > 0 else 0.5, 4
-            )
+            comparison_features["home_touches_ratio"] = round(home_touches / total if total > 0 else 0.5, 4)
         else:
             comparison_features["home_touches_ratio"] = 0.5
 
         # V23.0 扩展：位置级深度对比（50+ 维）
         position_metrics = [
-            "touches", "passes", "xg", "shots",
-            "avg_rating", "max_rating", "min_rating",
-            "avg_age", "total_age", "total_value", "avg_value",
-            "total_minutes", "avg_minutes"
+            "touches",
+            "passes",
+            "xg",
+            "shots",
+            "avg_rating",
+            "max_rating",
+            "min_rating",
+            "avg_age",
+            "total_age",
+            "total_value",
+            "avg_value",
+            "total_minutes",
+            "avg_minutes",
         ]
 
         for pos in ["gk", "df", "mf", "fw"]:
@@ -380,9 +387,7 @@ class LineupProcessor(BaseProcessor[MatchData]):
                 away_val = features.get(f"away_{pos}_{metric}", 0.0)
                 total = home_val + away_val
                 if total > 0:
-                    comparison_features[f"home_{pos}_{metric}_ratio"] = round(
-                        home_val / total, 4
-                    )
+                    comparison_features[f"home_{pos}_{metric}_ratio"] = round(home_val / total, 4)
                 else:
                     comparison_features[f"home_{pos}_{metric}_ratio"] = 0.5
 
@@ -399,7 +404,7 @@ class LineupProcessor(BaseProcessor[MatchData]):
 
         return comparison_features
 
-    def get_feature_schema(self) -> Dict[str, type]:
+    def get_feature_schema(self) -> dict[str, type]:
         """获取输出特征的 Schema（V23.0 动态生成）"""
         schema = {
             "home_lineup_stability": float,
@@ -421,7 +426,22 @@ class LineupProcessor(BaseProcessor[MatchData]):
         # V23.0: 动态生成位置分组特征 Schema（约 70 维）
         for prefix in ["home", "away"]:
             for pos in ["gk", "df", "mf", "fw"]:
-                for metric in ["touches", "passes", "xg", "shots", "avg_rating", "max_rating", "min_rating", "avg_age", "total_age", "total_value", "avg_value", "total_minutes", "avg_minutes", "count"]:
+                for metric in [
+                    "touches",
+                    "passes",
+                    "xg",
+                    "shots",
+                    "avg_rating",
+                    "max_rating",
+                    "min_rating",
+                    "avg_age",
+                    "total_age",
+                    "total_value",
+                    "avg_value",
+                    "total_minutes",
+                    "avg_minutes",
+                    "count",
+                ]:
                     schema[f"{prefix}_{pos}_{metric}"] = float
 
         # 替补深度特征
@@ -435,10 +455,19 @@ class LineupProcessor(BaseProcessor[MatchData]):
 
         # V23.0: 位置级对比特征（动态生成）
         position_metrics = [
-            "touches", "passes", "xg", "shots",
-            "avg_rating", "max_rating", "min_rating",
-            "avg_age", "total_age", "total_value", "avg_value",
-            "total_minutes", "avg_minutes"
+            "touches",
+            "passes",
+            "xg",
+            "shots",
+            "avg_rating",
+            "max_rating",
+            "min_rating",
+            "avg_age",
+            "total_age",
+            "total_value",
+            "avg_value",
+            "total_minutes",
+            "avg_minutes",
         ]
         for pos in ["gk", "df", "mf", "fw"]:
             for metric in position_metrics:

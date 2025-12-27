@@ -18,15 +18,14 @@ V25.0 战神仪表盘 - Prediction Dashboard
 日期: 2025-12-25
 """
 
+import argparse
+import json
 import os
 import sys
-import json
 import time
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
 from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
-import argparse
 
 # 添加项目路径
 project_root = Path(__file__).parent.parent.parent
@@ -38,6 +37,7 @@ sys.path.insert(0, str(src_root))
 # ============================================================================
 # 样式定义
 # ============================================================================
+
 
 class DashboardStyles:
     """终端仪表盘样式"""
@@ -99,9 +99,11 @@ class DashboardStyles:
 # 数据模型
 # ============================================================================
 
+
 @dataclass
 class DashboardData:
     """仪表盘数据"""
+
     # 流水线健康
     health_score: float = 0.0
     health_status: str = "unknown"
@@ -114,17 +116,17 @@ class DashboardData:
     roi: float = 0.0
     sharpe_ratio: float = 0.0
     max_drawdown: float = 0.0
-    equity_curve: List[float] = None
+    equity_curve: list[float] = None
 
     # 实盘信号
     total_predictions: int = 0
     high_confidence_count: int = 0
     high_value_count: int = 0
-    predictions: List[Dict] = None
+    predictions: list[dict] = None
 
     # 平局预警
     draw_alert_count: int = 0
-    high_risk_draws: List[Dict] = None
+    high_risk_draws: list[dict] = None
 
     def __post_init__(self):
         if self.equity_curve is None:
@@ -138,6 +140,7 @@ class DashboardData:
 # ============================================================================
 # 仪表盘视图
 # ============================================================================
+
 
 class WarGodDashboard:
     """
@@ -179,7 +182,7 @@ class WarGodDashboard:
 
         try:
             if os.path.exists(health_path):
-                with open(health_path, 'r') as f:
+                with open(health_path) as f:
                     health_data = json.load(f)
                     self.data.health_score = health_data.get("health_score", 0)
                     self.data.health_status = health_data.get("health_status", "unknown")
@@ -194,7 +197,7 @@ class WarGodDashboard:
 
         try:
             if os.path.exists(backtest_path):
-                with open(backtest_path, 'r') as f:
+                with open(backtest_path) as f:
                     backtest_data = json.load(f)
 
                     perf = backtest_data.get("performance_metrics", {})
@@ -215,7 +218,7 @@ class WarGodDashboard:
 
         try:
             if os.path.exists(prediction_path):
-                with open(prediction_path, 'r') as f:
+                with open(prediction_path) as f:
                     pred_data = json.load(f)
 
                     self.data.total_predictions = pred_data.get("total_predictions", 0)
@@ -251,7 +254,7 @@ class WarGodDashboard:
             self.load_data()
 
         # 清屏
-        os.system('clear' if os.name == 'posix' else 'cls')
+        os.system("clear" if os.name == "posix" else "cls")
 
         # 渲染各个模块
         self._render_header()
@@ -283,8 +286,10 @@ class WarGodDashboard:
         print(f"┌─ {DashboardStyles.colorize('流水线健康度', DashboardStyles.INFO)} " + "─" * 64 + "┐")
 
         # 健康分数
-        score_color = DashboardStyles.SUCCESS if self.data.health_score >= 90 else (
-            DashboardStyles.WARNING if self.data.health_score >= 70 else DashboardStyles.ERROR
+        score_color = (
+            DashboardStyles.SUCCESS
+            if self.data.health_score >= 90
+            else (DashboardStyles.WARNING if self.data.health_score >= 70 else DashboardStyles.ERROR)
         )
         score_text = f"{self.data.health_score:.1f}/100"
 
@@ -310,7 +315,7 @@ class WarGodDashboard:
             heartbeat_time = datetime.fromisoformat(self.data.last_heartbeat).strftime("%H:%M:%S")
             print(f"│ 最后心跳: {heartbeat_time}" + " " * (57 - len(heartbeat_time)) + "│")
         else:
-            print(f"│ 最后心跳: --:--:--" + " " * 50 + "│")
+            print("│ 最后心跳: --:--:--" + " " * 50 + "│")
 
         print("└" + "─" * 76 + "┘")
 
@@ -322,15 +327,17 @@ class WarGodDashboard:
         roi_color = DashboardStyles.SUCCESS if self.data.roi > 0 else DashboardStyles.ERROR
         roi_text = f"{self.data.roi:+.2f}%"
 
-        print(f"│  ROI: {roi_color}{roi_text}{DashboardStyles.RESET}  "
-              f"胜率: {self.data.win_rate:.1%}  "
-              f"夏普: {self.data.sharpe_ratio:.3f}  "
-              f"回撤: {self.data.max_drawdown:.1%}" + " " * 10 + "│")
+        print(
+            f"│  ROI: {roi_color}{roi_text}{DashboardStyles.RESET}  "
+            f"胜率: {self.data.win_rate:.1%}  "
+            f"夏普: {self.data.sharpe_ratio:.3f}  "
+            f"回撤: {self.data.max_drawdown:.1%}" + " " * 10 + "│"
+        )
 
         # 简单的资金曲线可视化
         if self.data.equity_curve and len(self.data.equity_curve) > 1:
-            print(f"│" + " " * 76 + "│")
-            print(f"│  资金曲线:" + " " * 67 + "│")
+            print("│" + " " * 76 + "│")
+            print("│  资金曲线:" + " " * 67 + "│")
 
             # 归一化并绘制曲线
             curve = self.data.equity_curve
@@ -364,7 +371,7 @@ class WarGodDashboard:
                     print(f"│    {color}{symbol}{DashboardStyles.RESET}")
                 else:
                     if i == 0:
-                        print(f"│    ", end="")
+                        print("│    ", end="")
 
             # 补齐最后一行
             print(DashboardStyles.RESET + " " * (73 - (len(curve) % 30) * 2) + "│")
@@ -375,18 +382,18 @@ class WarGodDashboard:
         """渲染实盘信号模块"""
         print(f"┌─ {DashboardStyles.colorize('实盘信号摘要', DashboardStyles.INFO)} " + "─" * 63 + "┐")
 
-        print(f"│  总信号: {self.data.total_predictions}  "
-              f"高置信: {DashboardStyles.GREEN}{self.data.high_confidence_count}{DashboardStyles.RESET}  "
-              f"高价值: {DashboardStyles.HIGHLIGHT}{self.data.high_value_count}{DashboardStyles.RESET}  "
-              + " " * 20 + "│")
+        print(
+            f"│  总信号: {self.data.total_predictions}  "
+            f"高置信: {DashboardStyles.GREEN}{self.data.high_confidence_count}{DashboardStyles.RESET}  "
+            f"高价值: {DashboardStyles.HIGHLIGHT}{self.data.high_value_count}{DashboardStyles.RESET}  " + " " * 20 + "│"
+        )
 
         # 显示前5个高价值信号
         if self.data.predictions:
-            high_value = [p for p in self.data.predictions
-                          if p.get("edge", 0) > 0.08 and p.get("confidence", 0) > 0.60]
+            high_value = [p for p in self.data.predictions if p.get("edge", 0) > 0.08 and p.get("confidence", 0) > 0.60]
 
             if high_value:
-                print(f"│" + "─" * 76 + "│")
+                print("│" + "─" * 76 + "│")
                 for pred in high_value[:3]:  # 只显示前3个
                     match_time = pred.get("match_time", "")[:16]
                     home = pred.get("home_team", "")[:15]
@@ -399,11 +406,7 @@ class WarGodDashboard:
                     bet_emoji = {"H": "🏠", "D": "🤝", "A": "✈️"}.get(bet, "❓")
 
                     print(f"│  {bet_emoji} {home} vs {away}")
-                    print(f"│     时间: {match_time}  "
-                          f"投注: {bet}  "
-                          f"置信: {conf:.1%}  "
-                          f"优势: +{edge:.1%}  "
-                          f"{rating}")
+                    print(f"│     时间: {match_time}  投注: {bet}  置信: {conf:.1%}  优势: +{edge:.1%}  {rating}")
 
         print("└" + "─" * 76 + "┘")
 
@@ -412,8 +415,10 @@ class WarGodDashboard:
         print(f"┌─ {DashboardStyles.colorize('高危平局预警 (12.26)', DashboardStyles.ERROR)} " + "─" * 57 + "┐")
 
         if self.data.high_risk_draws:
-            print(f"│  ⚠️  检测到 {DashboardStyles.colorize(str(self.data.draw_alert_count), DashboardStyles.ERROR)} 场高危平局信号")
-            print(f"│" + "─" * 76 + "│")
+            print(
+                f"│  ⚠️  检测到 {DashboardStyles.colorize(str(self.data.draw_alert_count), DashboardStyles.ERROR)} 场高危平局信号"
+            )
+            print("│" + "─" * 76 + "│")
 
             for pred in self.data.high_risk_draws[:5]:
                 match_time = pred.get("match_time", "")[:16]
@@ -422,11 +427,13 @@ class WarGodDashboard:
                 conf = pred.get("confidence", 0)
 
                 print(f"│  🤝 {home} vs {away}")
-                print(f"│     时间: {match_time}  "
-                      f"平局概率: {conf:.1%}  "
-                      f"风险等级: {DashboardStyles.colorize('HIGH', DashboardStyles.ERROR)}")
+                print(
+                    f"│     时间: {match_time}  "
+                    f"平局概率: {conf:.1%}  "
+                    f"风险等级: {DashboardStyles.colorize('HIGH', DashboardStyles.ERROR)}"
+                )
         else:
-            print(f"│  ✅ 当前无高危平局信号" + " " * 52 + "│")
+            print("│  ✅ 当前无高危平局信号" + " " * 52 + "│")
 
         print("└" + "─" * 76 + "┘")
 
@@ -454,23 +461,13 @@ class WarGodDashboard:
 # 主程序入口
 # ============================================================================
 
+
 def main():
     """主程序入口"""
-    parser = argparse.ArgumentParser(
-        description='V25.0 战神仪表盘 - War God Dashboard'
-    )
-    parser.add_argument(
-        '--data-path', type=str, default='data',
-        help='数据目录路径（默认: data）'
-    )
-    parser.add_argument(
-        '--once', action='store_true',
-        help='只显示一次，不进入交互模式'
-    )
-    parser.add_argument(
-        '--interval', type=int, default=30,
-        help='刷新间隔（秒，默认: 30）'
-    )
+    parser = argparse.ArgumentParser(description="V25.0 战神仪表盘 - War God Dashboard")
+    parser.add_argument("--data-path", type=str, default="data", help="数据目录路径（默认: data）")
+    parser.add_argument("--once", action="store_true", help="只显示一次，不进入交互模式")
+    parser.add_argument("--interval", type=int, default=30, help="刷新间隔（秒，默认: 30）")
 
     args = parser.parse_args()
 

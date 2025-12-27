@@ -11,11 +11,11 @@ L2 特征提取器 - 自定义异常
     - 支持异常链追踪
 
 Author: Architecture Team
-Version: V25.0
-Date: 2025-12-26
+Version: V26.0 (Stable)
+Date: 2025-12-27
 """
 
-from typing import Any, Dict, Optional
+from typing import Any
 
 
 class ExtractionError(Exception):
@@ -33,8 +33,8 @@ class ExtractionError(Exception):
     def __init__(
         self,
         message: str,
-        context: Optional[Dict[str, Any]] = None,
-        extractor_version: Optional[str] = None,
+        context: dict[str, Any] | None = None,
+        extractor_version: str | None = None,
     ):
         self.message = message
         self.context = context or {}
@@ -50,7 +50,7 @@ class ExtractionError(Exception):
             parts.append(f"Context: {self.context}")
         return " | ".join(parts)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典（用于日志记录）"""
         return {
             "error_type": self.__class__.__name__,
@@ -70,8 +70,8 @@ class ValidationError(ExtractionError):
     def __init__(
         self,
         message: str,
-        feature_count: Optional[int] = None,
-        required_keys: Optional[list[str]] = None,
+        feature_count: int | None = None,
+        required_keys: list[str] | None = None,
         **kwargs: Any,
     ):
         context = kwargs.get("context", {})
@@ -138,8 +138,8 @@ class DataParsingError(ExtractionError):
     def __init__(
         self,
         message: str,
-        raw_data_type: Optional[str] = None,
-        parse_error: Optional[str] = None,
+        raw_data_type: str | None = None,
+        parse_error: str | None = None,
         **kwargs: Any,
     ):
         context = kwargs.get("context", {})
@@ -161,8 +161,8 @@ class SchemaMismatchError(DataParsingError):
     def __init__(
         self,
         message: str,
-        expected_path: Optional[str] = None,
-        actual_type: Optional[str] = None,
+        expected_path: str | None = None,
+        actual_type: str | None = None,
         **kwargs: Any,
     ):
         context = kwargs.get("context", {})
@@ -195,7 +195,7 @@ class CircuitBreakerOpenError(ExtractionError):
         self,
         message: str,
         failure_count: int,
-        last_error: Optional[str] = None,
+        last_error: str | None = None,
         **kwargs: Any,
     ):
         context = kwargs.get("context", {})
@@ -219,7 +219,7 @@ class RateLimitError(ExtractionError):
     def __init__(
         self,
         message: str,
-        retry_after: Optional[float] = None,
+        retry_after: float | None = None,
         **kwargs: Any,
     ):
         context = kwargs.get("context", {})

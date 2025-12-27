@@ -13,19 +13,18 @@
 - Zero Copy Optimization (零拷贝优化)
 """
 
-import logging
-import pandas as pd
-import numpy as np
-from typing import Iterator, Dict, Any, Optional, Union, Callable, Generator
-from pathlib import Path
-from dataclasses import dataclass, field
-from contextlib import contextmanager
 import gc
-import psutil
+import logging
 import time
+from collections.abc import Callable, Iterator
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from contextlib import contextmanager
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Any
 
-from src.constants import FOOTBALL, SCORING, MATH, VALIDATION
+import pandas as pd
+import psutil
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +32,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class StreamingConfig:
     """流式处理配置"""
+
     # 数据分片配置
     chunk_size: int = 10000  # 每次处理的行数
     max_memory_usage_mb: float = 1024.0  # 最大内存使用(MB)
@@ -44,19 +44,22 @@ class StreamingConfig:
     prefetch_chunks: int = 2
 
     # 类型优化配置
-    categorical_columns: list[str] = field(default_factory=lambda: ['home_team_id', 'away_team_id', 'league_id'])
-    numeric_columns: list[str] = field(default_factory=lambda: ['home_score', 'away_score', 'home_odds', 'draw_odds', 'away_odds'])
-    datetime_columns: list[str] = field(default_factory=lambda: ['match_date'])
-    boolean_columns: list[str] = field(default_factory=lambda: ['status'])
+    categorical_columns: list[str] = field(default_factory=lambda: ["home_team_id", "away_team_id", "league_id"])
+    numeric_columns: list[str] = field(
+        default_factory=lambda: ["home_score", "away_score", "home_odds", "draw_odds", "away_odds"]
+    )
+    datetime_columns: list[str] = field(default_factory=lambda: ["match_date"])
+    boolean_columns: list[str] = field(default_factory=lambda: ["status"])
 
     # 精度配置
     use_decimal_for_precision: bool = True
-    precision_columns: list[str] = field(default_factory=lambda: ['home_odds', 'draw_odds', 'away_odds'])
+    precision_columns: list[str] = field(default_factory=lambda: ["home_odds", "draw_odds", "away_odds"])
 
 
 @dataclass
 class MemoryStats:
     """内存统计信息"""
+
     current_usage_mb: float
     peak_usage_mb: float
     processed_rows: int
@@ -75,7 +78,7 @@ class StreamingDataProcessor:
     - 类型优化减少内存占用
     """
 
-    def __init__(self, config: Optional[StreamingConfig] = None):
+    def __init__(self, config: StreamingConfig | None = None):
         self.config = config or StreamingConfig()
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
 
@@ -85,7 +88,7 @@ class StreamingDataProcessor:
             peak_usage_mb=0.0,
             processed_rows=0,
             processing_rate_rows_per_sec=0.0,
-            gc_collections=0
+            gc_collections=0,
         )
         self._start_time = time.time()
         self._last_gc_time = time.time()
@@ -104,20 +107,14 @@ class StreamingDataProcessor:
             memory_delta = end_memory - start_memory
 
             self.logger.info(
-                f"{operation_name}: 内存变化 {memory_delta:+.1f}MB, "
-                f"耗时 {duration:.2f}s, 当前内存 {end_memory:.1f}MB"
+                f"{operation_name}: 内存变化 {memory_delta:+.1f}MB, 耗时 {duration:.2f}s, 当前内存 {end_memory:.1f}MB"
             )
 
             # 更新峰值内存
-            self._memory_stats.peak_usage_mb = max(
-                self._memory_stats.peak_usage_mb, end_memory
-            )
+            self._memory_stats.peak_usage_mb = max(self._memory_stats.peak_usage_mb, end_memory)
 
     def stream_csv_file(
-        self,
-        file_path: Union[str, Path],
-        columns: Optional[list[str]] = None,
-        filters: Optional[Dict[str, Any]] = None
+        self, file_path: str | Path, columns: list[str] | None = None, filters: dict[str, Any] | None = None
     ) -> Iterator[pd.DataFrame]:
         """
         流式读取CSV文件
@@ -144,8 +141,8 @@ class StreamingDataProcessor:
                 usecols=columns,
                 dtype=self._get_optimal_dtypes(),
                 parse_dates=self.config.datetime_columns,
-                engine='c',  # 使用C引擎提高性能
-                low_memory=False  # 禁用低内存模式以获得更好的类型推断
+                engine="c",  # 使用C引擎提高性能
+                low_memory=False,  # 禁用低内存模式以获得更好的类型推断
             )
 
             for chunk_idx, chunk in enumerate(reader):
@@ -168,11 +165,7 @@ class StreamingDataProcessor:
                 if chunk_idx % self.config.memory_check_interval == 0:
                     self._force_gc_if_needed()
 
-    def stream_json_file(
-        self,
-        file_path: Union[str, Path],
-        lines_per_chunk: int = 1000
-    ) -> Iterator[pd.DataFrame]:
+    def stream_json_file(self, file_path: str | Path, lines_per_chunk: int = 1000) -> Iterator[pd.DataFrame]:
         """
         流式读取JSON Lines文件
 
@@ -192,7 +185,7 @@ class StreamingDataProcessor:
         with self.memory_monitor("json_streaming"):
             chunk = []
 
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, encoding="utf-8") as f:
                 for line_num, line in enumerate(f):
                     if line.strip():  # 跳过空行
                         chunk.append(line)
@@ -218,10 +211,10 @@ class StreamingDataProcessor:
 
     def process_with_streaming(
         self,
-        data_source: Union[str, Path, Iterator[pd.DataFrame]],
+        data_source: str | Path | Iterator[pd.DataFrame],
         processor_func: Callable[[pd.DataFrame], Any],
-        output_handler: Optional[Callable[[Any], None]] = None,
-        parallel: bool = None
+        output_handler: Callable[[Any], None] | None = None,
+        parallel: bool = None,
     ) -> list[Any]:
         """
         使用流式处理数据
@@ -240,7 +233,7 @@ class StreamingDataProcessor:
 
         # 获取数据迭代器
         if isinstance(data_source, (str, Path)):
-            if Path(data_source).suffix == '.csv':
+            if Path(data_source).suffix == ".csv":
                 data_iter = self.stream_csv_file(data_source)
             else:
                 data_iter = self.stream_json_file(data_source)
@@ -260,7 +253,7 @@ class StreamingDataProcessor:
         self,
         data_iter: Iterator[pd.DataFrame],
         processor_func: Callable[[pd.DataFrame], Any],
-        output_handler: Optional[Callable[[Any], None]]
+        output_handler: Callable[[Any], None] | None,
     ) -> list[Any]:
         """顺序处理数据"""
         results = []
@@ -282,7 +275,7 @@ class StreamingDataProcessor:
         self,
         data_iter: Iterator[pd.DataFrame],
         processor_func: Callable[[pd.DataFrame], Any],
-        output_handler: Optional[Callable[[Any], None]]
+        output_handler: Callable[[Any], None] | None,
     ) -> list[Any]:
         """并行处理数据"""
         results = []
@@ -332,24 +325,24 @@ class StreamingDataProcessor:
 
         return results
 
-    def _get_optimal_dtypes(self) -> Dict[str, str]:
+    def _get_optimal_dtypes(self) -> dict[str, str]:
         """获取最优数据类型"""
         dtypes = {}
 
         # 分类列使用category类型减少内存
         for col in self.config.categorical_columns:
-            dtypes[col] = 'category'
+            dtypes[col] = "category"
 
         # 数值列使用合适的数据类型
         for col in self.config.numeric_columns:
-            if col in ['home_score', 'away_score']:
-                dtypes[col] = 'int8'  # 比分通常很小
+            if col in ["home_score", "away_score"]:
+                dtypes[col] = "int8"  # 比分通常很小
             else:
-                dtypes[col] = 'float32'  # 使用float32而不是float64
+                dtypes[col] = "float32"  # 使用float32而不是float64
 
         # 布尔列
         for col in self.config.boolean_columns:
-            dtypes[col] = 'boolean'
+            dtypes[col] = "boolean"
 
         return dtypes
 
@@ -361,14 +354,14 @@ class StreamingDataProcessor:
                 chunk[col] = chunk[col].astype(dtype, copy=False)
 
         # 删除不必要的列
-        chunk = chunk.drop(columns=[col for col in chunk.columns if col.startswith('Unnamed:')], errors='ignore')
+        chunk = chunk.drop(columns=[col for col in chunk.columns if col.startswith("Unnamed:")], errors="ignore")
 
         # 重置索引以节省内存
         chunk.reset_index(drop=True, inplace=True)
 
         return chunk
 
-    def _apply_filters(self, chunk: pd.DataFrame, filters: Dict[str, Any]) -> pd.DataFrame:
+    def _apply_filters(self, chunk: pd.DataFrame, filters: dict[str, Any]) -> pd.DataFrame:
         """应用过滤器"""
         for column, condition in filters.items():
             if column not in chunk.columns:
@@ -376,22 +369,23 @@ class StreamingDataProcessor:
 
             if isinstance(condition, dict):
                 # 范围过滤
-                if 'min' in condition:
-                    chunk = chunk[chunk[column] >= condition['min']]
-                if 'max' in condition:
-                    chunk = chunk[chunk[column] <= condition['max']]
-                if 'values' in condition:
-                    chunk = chunk[chunk[column].isin(condition['values'])]
+                if "min" in condition:
+                    chunk = chunk[chunk[column] >= condition["min"]]
+                if "max" in condition:
+                    chunk = chunk[chunk[column] <= condition["max"]]
+                if "values" in condition:
+                    chunk = chunk[chunk[column].isin(condition["values"])]
             else:
                 # 简单值过滤
                 chunk = chunk[chunk[column] == condition]
 
         return chunk
 
-    def _process_json_chunk(self, chunk_lines: list[str]) -> Optional[pd.DataFrame]:
+    def _process_json_chunk(self, chunk_lines: list[str]) -> pd.DataFrame | None:
         """处理JSON分片"""
         try:
             import json
+
             data = [json.loads(line) for line in chunk_lines if line.strip()]
             return pd.DataFrame(data)
         except json.JSONDecodeError as e:
@@ -413,9 +407,7 @@ class StreamingDataProcessor:
 
         # 内存使用警告
         if current_memory > self.config.max_memory_usage_mb:
-            self.logger.warning(
-                f"内存使用过高: {current_memory:.1f}MB > {self.config.max_memory_usage_mb}MB"
-            )
+            self.logger.warning(f"内存使用过高: {current_memory:.1f}MB > {self.config.max_memory_usage_mb}MB")
             self._force_gc_if_needed()
 
     def _force_gc_if_needed(self) -> None:
@@ -437,9 +429,7 @@ class StreamingDataProcessor:
         # 计算处理速率
         elapsed_time = time.time() - self._start_time
         if elapsed_time > 0:
-            self._memory_stats.processing_rate_rows_per_sec = (
-                self._memory_stats.processed_rows / elapsed_time
-            )
+            self._memory_stats.processing_rate_rows_per_sec = self._memory_stats.processed_rows / elapsed_time
 
     def get_memory_stats(self) -> MemoryStats:
         """获取内存统计信息"""
@@ -449,9 +439,7 @@ class StreamingDataProcessor:
 
 # 便捷函数
 def create_streaming_processor(
-    chunk_size: int = 10000,
-    max_memory_mb: float = 1024.0,
-    enable_parallel: bool = True
+    chunk_size: int = 10000, max_memory_mb: float = 1024.0, enable_parallel: bool = True
 ) -> StreamingDataProcessor:
     """
     创建流式数据处理器
@@ -465,9 +453,7 @@ def create_streaming_processor(
         StreamingDataProcessor: 流式处理器实例
     """
     config = StreamingConfig(
-        chunk_size=chunk_size,
-        max_memory_usage_mb=max_memory_mb,
-        enable_parallel_processing=enable_parallel
+        chunk_size=chunk_size, max_memory_usage_mb=max_memory_mb, enable_parallel_processing=enable_parallel
     )
     return StreamingDataProcessor(config)
 
@@ -480,14 +466,14 @@ def streaming_memory_monitor(max_memory_mb: float = 1024.0):
     Args:
         max_memory_mb: 最大内存使用限制(MB)
     """
+
     def decorator(func):
         def wrapper(*args, **kwargs):
-            processor = StreamingDataProcessor(
-                StreamingConfig(max_memory_usage_mb=max_memory_mb)
-            )
+            processor = StreamingDataProcessor(StreamingConfig(max_memory_usage_mb=max_memory_mb))
 
             with processor.memory_monitor(func.__name__):
                 return func(*args, **kwargs)
 
         return wrapper
+
     return decorator

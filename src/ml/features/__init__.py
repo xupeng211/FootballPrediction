@@ -15,9 +15,9 @@
 """
 
 from .advanced_feature_transformer import AdvancedFeatureTransformer
+from .extractor import MatchFeatureExtractor, MatchFeatureSet
 from .h2h_calculator import H2HCalculator
 from .venue_analyzer import VenueAnalyzer
-from .extractor import MatchFeatureExtractor, MatchFeatureSet
 
 __all__ = [
     "AdvancedFeatureTransformer",

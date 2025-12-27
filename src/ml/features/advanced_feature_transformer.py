@@ -26,10 +26,11 @@ Phase 8 特征 (新增)：
 """
 
 import logging
-import pandas as pd
-import numpy as np
-from typing import Dict, List, Optional, Any
 from dataclasses import dataclass
+from typing import Any
+
+import numpy as np
+import pandas as pd
 
 from .h2h_calculator import H2HCalculator
 from .venue_analyzer import VenueAnalyzer
@@ -52,9 +53,9 @@ class AdvancedFeatureConfig:
     enable_discipline_features: bool = True
 
     # 配置参数
-    venue_windows: List[int] = None
+    venue_windows: list[int] = None
     h2h_min_matches: int = 1
-    points_windows: List[int] = None
+    points_windows: list[int] = None
 
     def __post_init__(self) -> None:
         if self.venue_windows is None:
@@ -75,7 +76,7 @@ class AdvancedFeatureTransformer:
     重点验证 home_xi_rating 是否能成为Top 3特征。
     """
 
-    def __init__(self, config: Optional[AdvancedFeatureConfig] = None):
+    def __init__(self, config: AdvancedFeatureConfig | None = None):
         """
         初始化高级特征转换器
 
@@ -89,8 +90,8 @@ class AdvancedFeatureTransformer:
         self.venue_analyzer = VenueAnalyzer(windows=self.config.venue_windows)
 
         # 特征名称记录
-        self.feature_names: List[str] = []
-        self.feature_types: Dict[str, str] = {}
+        self.feature_names: list[str] = []
+        self.feature_types: dict[str, str] = {}
 
         logger.info("AdvancedFeatureTransformer Phase 8升级版 初始化完成")
         logger.info(
@@ -193,7 +194,7 @@ class AdvancedFeatureTransformer:
             logger.error(f"预测特征转换失败: {str(e)}")
             return match_data
 
-    def get_feature_importance_groups(self) -> Dict[str, List[str]]:
+    def get_feature_importance_groups(self) -> dict[str, list[str]]:
         """
         获取按类型分组的特征名称
 
@@ -206,7 +207,7 @@ class AdvancedFeatureTransformer:
             "points": [name for name in self.feature_names if "points_" in name],
         }
 
-    def get_advanced_feature_names(self) -> List[str]:
+    def get_advanced_feature_names(self) -> list[str]:
         """
         获取所有高级特征的名称
 
@@ -448,7 +449,7 @@ class AdvancedFeatureTransformer:
             self.feature_names.extend(discipline_features)
             self.feature_types["discipline"] = discipline_features
 
-    def analyze_feature_correlation(self, df: pd.DataFrame) -> Dict[str, Dict[str, float]]:
+    def analyze_feature_correlation(self, df: pd.DataFrame) -> dict[str, dict[str, float]]:
         """
         分析高级特征与目标变量的相关性
 
@@ -488,7 +489,7 @@ class AdvancedFeatureTransformer:
         else:
             return "very_weak"
 
-    def generate_feature_report(self, df: pd.DataFrame) -> Dict[str, Any]:
+    def generate_feature_report(self, df: pd.DataFrame) -> dict[str, Any]:
         """
         生成特征工程报告
 

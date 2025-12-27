@@ -7,14 +7,14 @@ MLOps 模型重训练服务
 import json
 import logging
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Any
+from typing import Any
 
 import numpy as np
 import pandas as pd
 import xgboost as xgb
-from sklearn.metrics import accuracy_score, log_loss, classification_report
+from sklearn.metrics import accuracy_score, classification_report, log_loss
 from sklearn.model_selection import train_test_split
 
 from src.config_unified import get_settings
@@ -49,7 +49,7 @@ class ModelMetadata:
         self.created_at = created_at
         self.description = description
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典格式"""
         return {
             "version": self.version,
@@ -64,7 +64,7 @@ class ModelMetadata:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "ModelMetadata":
+    def from_dict(cls, data: dict[str, Any]) -> "ModelMetadata":
         """从字典创建实例"""
         return cls(
             version=data["version"],
@@ -97,22 +97,22 @@ class ModelRegistry:
         registry = {
             "models": {},
             "current_best": None,
-            "last_updated": datetime.now(timezone.utc).isoformat(),
+            "last_updated": datetime.now(UTC).isoformat(),
         }
         self._save_registry(registry)
 
-    def _load_registry(self) -> Dict[str, Any]:
+    def _load_registry(self) -> dict[str, Any]:
         """加载模型注册表"""
         try:
-            with open(self.registry_file, "r", encoding="utf-8") as f:
+            with open(self.registry_file, encoding="utf-8") as f:
                 return json.load(f)
         except (FileNotFoundError, json.JSONDecodeError):
             self._init_registry()
             return self._load_registry()
 
-    def _save_registry(self, registry: Dict[str, Any]):
+    def _save_registry(self, registry: dict[str, Any]):
         """保存模型注册表"""
-        registry["last_updated"] = datetime.now(timezone.utc).isoformat()
+        registry["last_updated"] = datetime.now(UTC).isoformat()
         with open(self.registry_file, "w", encoding="utf-8") as f:
             json.dump(registry, f, indent=2, ensure_ascii=False)
 
@@ -146,7 +146,7 @@ class ModelRegistry:
 
         return True
 
-    def get_current_best(self) -> Optional[ModelMetadata]:
+    def get_current_best(self) -> ModelMetadata | None:
         """获取当前最佳模型"""
         registry = self._load_registry()
         current_best = registry.get("current_best")
@@ -156,7 +156,7 @@ class ModelRegistry:
 
         return ModelMetadata.from_dict(registry["models"][current_best])
 
-    def get_model_metadata(self, version: str) -> Optional[ModelMetadata]:
+    def get_model_metadata(self, version: str) -> ModelMetadata | None:
         """获取指定版本的模型元数据"""
         registry = self._load_registry()
         model_data = registry["models"].get(version)
@@ -166,7 +166,7 @@ class ModelRegistry:
 
         return ModelMetadata.from_dict(model_data)
 
-    def list_models(self) -> List[ModelMetadata]:
+    def list_models(self) -> list[ModelMetadata]:
         """列出所有注册的模型"""
         registry = self._load_registry()
         return [ModelMetadata.from_dict(model_data) for model_data in registry["models"].values()]
@@ -204,7 +204,7 @@ class RetrainingService:
         self.min_samples = 1000  # 最少训练样本数
         self.test_size = 0.2  # 测试集比例
 
-    def execute_pipeline(self, description: str = "Scheduled retraining") -> Dict[str, Any]:
+    def execute_pipeline(self, description: str = "Scheduled retraining") -> dict[str, Any]:
         """
         执行完整的重训练流水线
 
@@ -256,7 +256,7 @@ class RetrainingService:
                 "training_time": time.time() - start_time,
             }
 
-    def _fetch_training_data(self) -> Tuple[pd.DataFrame, pd.Series]:
+    def _fetch_training_data(self) -> tuple[pd.DataFrame, pd.Series]:
         """获取训练数据"""
         # 获取最近 6 个月的比赛数据
         df = self.data_loader.load_recent_matches(months=6)
@@ -288,7 +288,7 @@ class RetrainingService:
         logger.info(f"预处理后特征维度: {X_transformed.shape[1]}")
         return X_transformed
 
-    def _train_model(self, X: pd.DataFrame, y: pd.Series) -> Tuple[xgb.XGBClassifier, int]:
+    def _train_model(self, X: pd.DataFrame, y: pd.Series) -> tuple[xgb.XGBClassifier, int]:
         """训练 XGBoost 模型"""
         # 分割训练集和测试集
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=self.test_size, random_state=42, stratify=y)
@@ -311,7 +311,7 @@ class RetrainingService:
 
         return model, feature_count
 
-    def _evaluate_model(self, model: xgb.XGBClassifier, X: pd.DataFrame, y: pd.Series) -> Dict[str, float]:
+    def _evaluate_model(self, model: xgb.XGBClassifier, X: pd.DataFrame, y: pd.Series) -> dict[str, float]:
         """评估模型性能"""
         # 分割训练集和测试集
         _, X_test, _, y_test = train_test_split(X, y, test_size=self.test_size, random_state=42, stratify=y)
@@ -342,18 +342,18 @@ class RetrainingService:
     def _register_model_if_improved(
         self,
         model: xgb.XGBClassifier,
-        metrics: Dict[str, float],
+        metrics: dict[str, float],
         feature_count: int,
         start_time: float,
         description: str,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """如果模型性能有提升则注册新模型"""
         training_time = time.time() - start_time
         accuracy = metrics["accuracy"]
         log_loss = metrics["log_loss"]
 
         # 生成版本号
-        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+        timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
         version = f"v2.1.{timestamp}"
 
         # 保存模型文件
@@ -369,7 +369,7 @@ class RetrainingService:
             feature_count=feature_count,
             training_time=training_time,
             model_path=str(model_path),
-            created_at=datetime.now(timezone.utc),
+            created_at=datetime.now(UTC),
             description=description,
         )
 
@@ -414,7 +414,7 @@ class RetrainingService:
 
         return result
 
-    def rollback_model(self, target_version: str) -> Dict[str, Any]:
+    def rollback_model(self, target_version: str) -> dict[str, Any]:
         """回滚到指定版本"""
         if self.registry.switch_current_best(target_version):
             logger.info(f"✅ 成功回滚到模型版本 {target_version}")
@@ -430,7 +430,7 @@ class RetrainingService:
                 "reason": f"Model version {target_version} not found",
             }
 
-    def get_training_status(self) -> Dict[str, Any]:
+    def get_training_status(self) -> dict[str, Any]:
         """获取训练状态和历史"""
         models = self.registry.list_models()
         current_best = self.registry.get_current_best()

@@ -10,14 +10,13 @@
 预期数据量: 760+ 场比赛
 """
 
-import os
-import sys
 import json
 import logging
-from pathlib import Path
-from datetime import datetime
-from typing import Dict, List, Optional
+import os
+import sys
 from dataclasses import dataclass
+from datetime import datetime
+from pathlib import Path
 
 import pandas as pd
 import psycopg2
@@ -26,16 +25,14 @@ from dotenv import load_dotenv
 # 加载环境变量
 load_dotenv()
 
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
 @dataclass
 class DBConfig:
     """数据库配置"""
+
     host: str
     port: int
     name: str
@@ -50,11 +47,11 @@ class DataMigration:
         """初始化迁移工具"""
         # 直接使用环境变量，不依赖 config_unified
         self.db_config = DBConfig(
-            host=os.getenv('DB_HOST', 'db'),
-            port=int(os.getenv('DB_PORT', 5432)),
-            name=os.getenv('DB_NAME', 'football_db'),
-            user=os.getenv('DB_USER', 'football_user'),
-            password=os.getenv('DB_PASSWORD', 'football_pass')
+            host=os.getenv("DB_HOST", "db"),
+            port=int(os.getenv("DB_PORT", 5432)),
+            name=os.getenv("DB_NAME", "football_db"),
+            user=os.getenv("DB_USER", "football_user"),
+            password=os.getenv("DB_PASSWORD", "football_pass"),
         )
 
         # 数据源路径
@@ -73,7 +70,7 @@ class DataMigration:
             port=self.db_config.port,
             database=self.db_config.name,
             user=self.db_config.user,
-            password=self.db_config.password
+            password=self.db_config.password,
         )
 
     def load_manifests(self) -> pd.DataFrame:
@@ -82,13 +79,10 @@ class DataMigration:
 
         dfs = []
 
-        for path, season in [
-            (self.manifest_2324, "2023/2024"),
-            (self.manifest_2223, "2022/2023")
-        ]:
+        for path, season in [(self.manifest_2324, "2023/2024"), (self.manifest_2223, "2022/2023")]:
             if path.exists():
                 df = pd.read_csv(path)
-                df['season'] = season
+                df["season"] = season
                 dfs.append(df)
                 logger.info(f"  ✓ {season}: {len(df)} 场比赛")
             else:
@@ -102,7 +96,7 @@ class DataMigration:
 
         return combined
 
-    def create_l2_raw_json(self, row: pd.Series) -> Optional[Dict]:
+    def create_l2_raw_json(self, row: pd.Series) -> dict | None:
         """
         为每场比赛创建模拟的 L2 原始 JSON 数据
 
@@ -111,27 +105,27 @@ class DataMigration:
         """
         try:
             # 从 actual_result 推断主客队得分
-            result = row.get('actual_result', 'D')
-            home_score = row.get('home_score', 0)
-            away_score = row.get('away_score', 0)
+            result = row.get("actual_result", "D")
+            home_score = row.get("home_score", 0)
+            away_score = row.get("away_score", 0)
 
             # 如果分数缺失，根据结果推断
             if pd.isna(home_score) or pd.isna(away_score):
-                if result == 'H':
+                if result == "H":
                     home_score, away_score = 1, 0
-                elif result == 'A':
+                elif result == "A":
                     home_score, away_score = 0, 1
                 else:
                     home_score, away_score = 0, 0
 
             l2_data = {
-                "match_id": str(row.get('external_id', row.get('match_id'))),
-                "fotmob_id": str(row.get('external_id', row.get('match_id'))),
-                "home_team": row.get('home_team', ''),
-                "away_team": row.get('away_team', ''),
+                "match_id": str(row.get("external_id", row.get("match_id"))),
+                "fotmob_id": str(row.get("external_id", row.get("match_id"))),
+                "home_team": row.get("home_team", ""),
+                "away_team": row.get("away_team", ""),
                 "home_score": int(home_score) if not pd.isna(home_score) else 0,
                 "away_score": int(away_score) if not pd.isna(away_score) else 0,
-                "status": row.get('status', 'Finished'),
+                "status": row.get("status", "Finished"),
                 "home_stats": {
                     "possession": 50.0,
                     "shots": 12,
@@ -141,7 +135,7 @@ class DataMigration:
                     "big_chances_created": 2,
                     "passes": 400,
                     "tackles": 15,
-                    "fouls": 10
+                    "fouls": 10,
                 },
                 "away_stats": {
                     "possession": 50.0,
@@ -152,14 +146,14 @@ class DataMigration:
                     "big_chances_created": 1,
                     "passes": 380,
                     "tackles": 12,
-                    "fouls": 12
+                    "fouls": 12,
                 },
                 "events": [],
                 "shot_map": [],
                 "data_source": "fotmob_v2",
-                "collected_at": row.get('collection_date', datetime.now().isoformat()),
+                "collected_at": row.get("collection_date", datetime.now().isoformat()),
                 "data_completeness_score": 0.6,
-                "migration_note": "这是从 harvest_manifest 迁移的简化数据，需要完整 L2 采集"
+                "migration_note": "这是从 harvest_manifest 迁移的简化数据，需要完整 L2 采集",
             }
 
             return l2_data
@@ -168,7 +162,7 @@ class DataMigration:
             logger.warning(f"创建 L2 数据失败 (match_id={row.get('match_id')}): {e}")
             return None
 
-    def prepare_match_data(self, df: pd.DataFrame) -> List[Dict]:
+    def prepare_match_data(self, df: pd.DataFrame) -> list[dict]:
         """准备 matches 表的数据"""
         logger.info("准备 matches 表数据...")
 
@@ -177,20 +171,20 @@ class DataMigration:
         for idx, row in df.iterrows():
             try:
                 # 解析比赛时间
-                match_date = row.get('match_date', '')
+                match_date = row.get("match_date", "")
                 if isinstance(match_date, str):
                     # 处理 ISO 格式时间
-                    match_date = match_date.replace('Z', '').replace('T', ' ')
+                    match_date = match_date.replace("Z", "").replace("T", " ")
 
                 # 推断得分
-                home_score = row.get('home_score', 0)
-                away_score = row.get('away_score', 0)
+                home_score = row.get("home_score", 0)
+                away_score = row.get("away_score", 0)
 
                 if pd.isna(home_score) or pd.isna(away_score):
-                    result = row.get('actual_result', 'D')
-                    if result == 'H':
+                    result = row.get("actual_result", "D")
+                    if result == "H":
                         home_score, away_score = 1, 0
-                    elif result == 'A':
+                    elif result == "A":
                         home_score, away_score = 0, 1
                     else:
                         home_score, away_score = 0, 0
@@ -199,15 +193,15 @@ class DataMigration:
                 l2_json = self.create_l2_raw_json(row)
 
                 match_record = {
-                    'external_id': str(row.get('external_id', row.get('match_id'))),
-                    'match_time': match_date,
-                    'home_team': row.get('home_team', ''),
-                    'away_team': row.get('away_team', ''),
-                    'home_score': int(home_score) if not pd.isna(home_score) else 0,
-                    'away_score': int(away_score) if not pd.isna(away_score) else 0,
-                    'result_score': row.get('actual_result', 'D'),
-                    'status': row.get('status', 'Finished'),
-                    'l2_raw_json': json.dumps(l2_json) if l2_json else None
+                    "external_id": str(row.get("external_id", row.get("match_id"))),
+                    "match_time": match_date,
+                    "home_team": row.get("home_team", ""),
+                    "away_team": row.get("away_team", ""),
+                    "home_score": int(home_score) if not pd.isna(home_score) else 0,
+                    "away_score": int(away_score) if not pd.isna(away_score) else 0,
+                    "result_score": row.get("actual_result", "D"),
+                    "status": row.get("status", "Finished"),
+                    "l2_raw_json": json.dumps(l2_json) if l2_json else None,
                 }
 
                 matches.append(match_record)
@@ -226,7 +220,7 @@ class DataMigration:
             conn.commit()
             logger.info("  ✓ 已清空 matches 表")
 
-    def import_matches(self, matches: List[Dict]) -> int:
+    def import_matches(self, matches: list[dict]) -> int:
         """导入比赛数据到数据库"""
         logger.info(f"开始导入 {len(matches)} 条比赛记录...")
 
@@ -255,15 +249,15 @@ class DataMigration:
 
                 data_tuples = [
                     (
-                        m['external_id'],
-                        m['match_time'],
-                        m['home_team'],
-                        m['away_team'],
-                        m['home_score'],
-                        m['away_score'],
-                        m['result_score'],
-                        m['status'],
-                        m['l2_raw_json']
+                        m["external_id"],
+                        m["match_time"],
+                        m["home_team"],
+                        m["away_team"],
+                        m["home_score"],
+                        m["away_score"],
+                        m["result_score"],
+                        m["status"],
+                        m["l2_raw_json"],
                     )
                     for m in matches
                 ]
@@ -288,7 +282,7 @@ class DataMigration:
         finally:
             conn.close()
 
-    def verify_import(self) -> Dict:
+    def verify_import(self) -> dict:
         """验证导入结果"""
         logger.info("验证导入结果...")
 
@@ -323,11 +317,11 @@ class DataMigration:
                 year_counts = dict(cur.fetchall())
 
                 return {
-                    'total_matches': total,
-                    'status_distribution': status_counts,
-                    'result_distribution': result_counts,
-                    'with_l2_data': with_l2,
-                    'year_distribution': year_counts
+                    "total_matches": total,
+                    "status_distribution": status_counts,
+                    "result_distribution": result_counts,
+                    "with_l2_data": with_l2,
+                    "year_distribution": year_counts,
                 }
 
         finally:
@@ -369,7 +363,7 @@ def main():
     result = migration.run()
 
     # 检查是否达到目标
-    if result['total_matches'] >= 760:
+    if result["total_matches"] >= 760:
         logger.info("✅ 迁移成功！数据量达到预期 (≥760)")
         return 0
     else:

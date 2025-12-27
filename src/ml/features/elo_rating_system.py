@@ -24,12 +24,10 @@ Version: 1.0.0
 """
 
 import logging
-import numpy as np
 from datetime import datetime, timedelta
-from typing import Dict, Any, Optional, List, Tuple, Union
-from decimal import Decimal, ROUND_HALF_UP
+from typing import Any
 
-from ...constants import FOOTBALL, MATH, PROBABILITY
+import numpy as np
 
 logger = logging.getLogger(__name__)
 
@@ -97,10 +95,10 @@ class EloRatingSystem:
         self.rating_decay_days = rating_decay_days
 
         # 存储球队当前评分
-        self.team_ratings: Dict[str, float] = {}
+        self.team_ratings: dict[str, float] = {}
 
         # 存储评分历史（用于趋势分析）
-        self.rating_history: Dict[str, List[Tuple[datetime, float]]] = {}
+        self.rating_history: dict[str, list[tuple[datetime, float]]] = {}
 
         # 统计信息
         self.stats = {
@@ -112,10 +110,10 @@ class EloRatingSystem:
         }
 
         logger.info(
-            f"Elo评级系统初始化完成: 初始评分={initial_rating}, " f"主场优势={home_advantage}, K因子={base_k_factor}"
+            f"Elo评级系统初始化完成: 初始评分={initial_rating}, 主场优势={home_advantage}, K因子={base_k_factor}"
         )
 
-    def get_team_rating(self, team_id: str, as_of_date: Optional[datetime] = None) -> float:
+    def get_team_rating(self, team_id: str, as_of_date: datetime | None = None) -> float:
         """
         获取球队Elo评分
 
@@ -149,9 +147,9 @@ class EloRatingSystem:
         self,
         home_team_id: str,
         away_team_id: str,
-        home_rating_override: Optional[float] = None,
-        away_rating_override: Optional[float] = None,
-    ) -> Tuple[float, float, float]:
+        home_rating_override: float | None = None,
+        away_rating_override: float | None = None,
+    ) -> tuple[float, float, float]:
         """
         计算比赛预期得分
 
@@ -188,11 +186,11 @@ class EloRatingSystem:
         away_team_id: str,
         home_goals: int,
         away_goals: int,
-        match_date: Optional[datetime] = None,
+        match_date: datetime | None = None,
         competition_type: str = "league",
-        home_k_factor_override: Optional[float] = None,
-        away_k_factor_override: Optional[float] = None,
-    ) -> Dict[str, Any]:
+        home_k_factor_override: float | None = None,
+        away_k_factor_override: float | None = None,
+    ) -> dict[str, Any]:
         """
         更新球队Elo评分
 
@@ -359,7 +357,7 @@ class EloRatingSystem:
 
         self.stats["last_updated"] = match_date.isoformat()
 
-    def get_rating_trend(self, team_id: str, days: int = 30) -> Dict[str, Any]:
+    def get_rating_trend(self, team_id: str, days: int = 30) -> dict[str, Any]:
         """
         获取球队评分趋势
 
@@ -433,7 +431,7 @@ class EloRatingSystem:
         else:
             return "AVERAGE"
 
-    def get_top_teams(self, limit: int = 20, min_matches: int = 10) -> List[Dict[str, Any]]:
+    def get_top_teams(self, limit: int = 20, min_matches: int = 10) -> list[dict[str, Any]]:
         """
         获取评分最高的球队
 
@@ -471,7 +469,7 @@ class EloRatingSystem:
 
     def predict_match_probabilities(
         self, home_team_id: str, away_team_id: str, num_simulations: int = 10000
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         基于Elo评分预测比赛概率
 
@@ -549,7 +547,7 @@ class EloRatingSystem:
             },
         }
 
-    def export_ratings(self, format: str = "dict") -> Union[Dict[str, Any], str]:
+    def export_ratings(self, format: str = "dict") -> dict[str, Any] | str:
         """
         导出所有球队评分
 
@@ -598,7 +596,7 @@ class EloRatingSystem:
                 "ratings": export_data,
             }
 
-    def get_system_stats(self) -> Dict[str, Any]:
+    def get_system_stats(self) -> dict[str, Any]:
         """获取系统统计信息"""
         return {
             "configuration": {

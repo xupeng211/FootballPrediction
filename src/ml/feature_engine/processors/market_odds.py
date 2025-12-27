@@ -16,12 +16,11 @@ MarketOddsProcessor - 市场赔率与偏见处理器
 版本: V23.0-alpha
 """
 
-from typing import Any, Dict, Optional
 import logging
 import statistics
-from decimal import Decimal
+from typing import Any
 
-from ..base import BaseProcessor, ProcessorResult, ProcessorConfig
+from ..base import BaseProcessor, ProcessorConfig, ProcessorResult
 from ..models import MatchData
 
 logger = logging.getLogger(__name__)
@@ -37,6 +36,7 @@ class MarketOddsProcessorConfig(ProcessorConfig):
         overround_threshold: 抽水率阈值（超过则警告）
         min_bookmakers: 最少博彩公司数量（确保数据可靠性）
     """
+
     enable_bias_analysis: bool = True
     enable_margin_calculation: bool = True
     overround_threshold: float = 0.08  # 8% 抽水率阈值
@@ -77,13 +77,11 @@ class MarketOddsProcessor(BaseProcessor[MatchData]):
     processor_version = "23.0.0"
     priority = 55  # 在 LineupValueProcessor 之后执行
 
-    def __init__(self, config: Optional[MarketOddsProcessorConfig] = None) -> None:
+    def __init__(self, config: MarketOddsProcessorConfig | None = None) -> None:
         super().__init__(config or MarketOddsProcessorConfig())
         self.config: MarketOddsProcessorConfig = self.config
 
-    def process(
-        self, data: MatchData, context: Any
-    ) -> ProcessorResult:
+    def process(self, data: MatchData, context: Any) -> ProcessorResult:
         """
         提取市场赔率特征
 
@@ -94,7 +92,7 @@ class MarketOddsProcessor(BaseProcessor[MatchData]):
         Returns:
             ProcessorResult: 包含赔率特征的处理器结果
         """
-        features: Dict[str, float] = {}
+        features: dict[str, float] = {}
         warnings: list[str] = []
 
         try:
@@ -120,28 +118,20 @@ class MarketOddsProcessor(BaseProcessor[MatchData]):
 
             # 4. 抽水率计算
             if self.config.enable_margin_calculation:
-                margin_features = self._compute_margin_features(
-                    home_odds, draw_odds, away_odds
-                )
+                margin_features = self._compute_margin_features(home_odds, draw_odds, away_odds)
                 features.update(margin_features)
 
             # 5. 平局偏见分析
             if self.config.enable_bias_analysis:
-                bias_features = self._analyze_draw_bias(
-                    home_odds, draw_odds, away_odds
-                )
+                bias_features = self._analyze_draw_bias(home_odds, draw_odds, away_odds)
                 features.update(bias_features)
 
             # 6. 隐含概率计算
-            prob_features = self._compute_implied_probabilities(
-                home_odds, draw_odds, away_odds
-            )
+            prob_features = self._compute_implied_probabilities(home_odds, draw_odds, away_odds)
             features.update(prob_features)
 
             # 7. 市场信心度
-            confidence_features = self._compute_market_confidence(
-                odds_data, home_odds, draw_odds, away_odds
-            )
+            confidence_features = self._compute_market_confidence(odds_data, home_odds, draw_odds, away_odds)
             features.update(confidence_features)
 
             # 8. 价值投注指数
@@ -153,7 +143,7 @@ class MarketOddsProcessor(BaseProcessor[MatchData]):
                 metadata={
                     "feature_count": len(features),
                     "odds_source": odds_data.get("source", "unknown"),
-                }
+                },
             )
 
             # 添加警告
@@ -166,9 +156,7 @@ class MarketOddsProcessor(BaseProcessor[MatchData]):
             logger.error(f"MarketOddsProcessor failed for match {data.match_id}: {e}")
             return ProcessorResult.failure_result(str(e))
 
-    def _extract_odds_data(
-        self, data: MatchData, context: Any
-    ) -> Optional[Dict[str, Any]]:
+    def _extract_odds_data(self, data: MatchData, context: Any) -> dict[str, Any] | None:
         """
         提取赔率数据
 
@@ -208,9 +196,7 @@ class MarketOddsProcessor(BaseProcessor[MatchData]):
 
         return None
 
-    def _parse_odds(
-        self, odds_data: Dict[str, Any]
-    ) -> tuple[Optional[float], Optional[float], Optional[float]]:
+    def _parse_odds(self, odds_data: dict[str, Any]) -> tuple[float | None, float | None, float | None]:
         """
         解析赔率数据
 
@@ -265,9 +251,7 @@ class MarketOddsProcessor(BaseProcessor[MatchData]):
 
         return None, None, None
 
-    def _extract_provider_odds(
-        self, provider: Dict[str, Any], outcome: str
-    ) -> Optional[float]:
+    def _extract_provider_odds(self, provider: dict[str, Any], outcome: str) -> float | None:
         """从单个博彩公司数据中提取赔率"""
         # 常见字段名变体
         possible_keys = [
@@ -297,7 +281,7 @@ class MarketOddsProcessor(BaseProcessor[MatchData]):
         home_odds: float,
         draw_odds: float,
         away_odds: float,
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """
         计算抽水率特征
 
@@ -344,7 +328,7 @@ class MarketOddsProcessor(BaseProcessor[MatchData]):
         home_odds: float,
         draw_odds: float,
         away_odds: float,
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """
         分析平局偏见
 
@@ -389,7 +373,7 @@ class MarketOddsProcessor(BaseProcessor[MatchData]):
         home_odds: float,
         draw_odds: float,
         away_odds: float,
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """计算隐含概率（未经抽水调整）"""
         features = {}
 
@@ -416,9 +400,7 @@ class MarketOddsProcessor(BaseProcessor[MatchData]):
         # 领先优势
         sorted_probs = sorted(probs.values(), reverse=True)
         if len(sorted_probs) >= 2:
-            features["odds_favorite_margin"] = round(
-                sorted_probs[0] - sorted_probs[1], 4
-            )
+            features["odds_favorite_margin"] = round(sorted_probs[0] - sorted_probs[1], 4)
         else:
             features["odds_favorite_margin"] = 0.0
 
@@ -426,11 +408,11 @@ class MarketOddsProcessor(BaseProcessor[MatchData]):
 
     def _compute_market_confidence(
         self,
-        odds_data: Dict[str, Any],
+        odds_data: dict[str, Any],
         home_odds: float,
         draw_odds: float,
         away_odds: float,
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """
         计算市场信心度
 
@@ -507,7 +489,7 @@ class MarketOddsProcessor(BaseProcessor[MatchData]):
 
         return features
 
-    def _compute_value_indices(self, features: Dict[str, float]) -> Dict[str, float]:
+    def _compute_value_indices(self, features: dict[str, float]) -> dict[str, float]:
         """
         计算价值投注指数
 
@@ -582,7 +564,7 @@ class MarketOddsProcessor(BaseProcessor[MatchData]):
             metadata={"feature_count": len(default_features), "default_values": True},
         ).with_warning("using_default_odds_values")
 
-    def get_feature_schema(self) -> Dict[str, type]:
+    def get_feature_schema(self) -> dict[str, type]:
         """获取输出特征的 Schema"""
         return {
             # 基础赔率

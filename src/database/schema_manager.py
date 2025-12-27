@@ -5,11 +5,11 @@ Database Schema Manager - 生产级数据库架构管理
 """
 
 import logging
-import re
-from typing import Dict, List, Tuple, Optional, Any
-import psycopg2
-from psycopg2.extras import RealDictCursor, execute_values
 from datetime import datetime
+from typing import Any
+
+import psycopg2
+from psycopg2.extras import execute_values
 
 from src.config_unified import get_settings
 
@@ -32,7 +32,7 @@ class SchemaManager:
                 port=self.settings.database.port,
                 database=self.settings.database.name,
                 user=self.settings.database.user,
-                password=self.settings.database.password.get_secret_value()
+                password=self.settings.database.password.get_secret_value(),
             )
         return self.conn
 
@@ -320,15 +320,13 @@ class SchemaManager:
             "CREATE INDEX IF NOT EXISTS idx_match_features_data_source ON match_features_training(data_source);",
             "CREATE INDEX IF NOT EXISTS idx_match_features_processing_status ON match_features_training(processing_status);",
             "CREATE INDEX IF NOT EXISTS idx_match_features_created_at ON match_features_training(created_at DESC);",
-
             "CREATE INDEX IF NOT EXISTS idx_matches_external_id ON matches(external_id);",
             "CREATE INDEX IF NOT EXISTS idx_matches_league_season ON matches(league_name, season);",
             "CREATE INDEX IF NOT EXISTS idx_matches_match_time ON matches(match_time DESC);",
             "CREATE INDEX IF NOT EXISTS idx_matches_status ON matches(status);",
             "CREATE INDEX IF NOT EXISTS idx_matches_collection_status ON matches(collection_status);",
-
             "CREATE INDEX IF NOT EXISTS idx_raw_match_external_id ON raw_match_data(external_id);",
-            "CREATE INDEX IF NOT EXISTS idx_raw_match_created_at ON raw_match_data(created_at DESC);"
+            "CREATE INDEX IF NOT EXISTS idx_raw_match_created_at ON raw_match_data(created_at DESC);",
         ]
 
         for index_sql in indexes:
@@ -366,7 +364,7 @@ class SchemaManager:
 
         logger.info("✅ 创建时间戳触发器")
 
-    def align_external_ids(self) -> Dict[str, Any]:
+    def align_external_ids(self) -> dict[str, Any]:
         """
         强制对齐所有external_id为FotMob数字格式
 
@@ -434,10 +432,10 @@ class SchemaManager:
             result = self._verify_alignment(cursor)
 
             return {
-                'updated_records': updated_count,
-                'created_matches': created_count,
-                'verification': result,
-                'timestamp': datetime.now().isoformat()
+                "updated_records": updated_count,
+                "created_matches": created_count,
+                "verification": result,
+                "timestamp": datetime.now().isoformat(),
             }
 
         except Exception as e:
@@ -446,7 +444,7 @@ class SchemaManager:
             logger.error(f"❌ ID对齐失败: {e}")
             raise
 
-    def _verify_alignment(self, cursor) -> Dict[str, Any]:
+    def _verify_alignment(self, cursor) -> dict[str, Any]:
         """验证ID对齐结果"""
         cursor.execute("""
             SELECT
@@ -460,14 +458,14 @@ class SchemaManager:
 
         result = cursor.fetchone()
         return {
-            'total_features': result[0],
-            'linked_matches': result[1],
-            'link_rate': result[2],
-            'numeric_ids': result[3],
-            'fully_aligned': result[2] >= 99.0
+            "total_features": result[0],
+            "linked_matches": result[1],
+            "link_rate": result[2],
+            "numeric_ids": result[3],
+            "fully_aligned": result[2] >= 99.0,
         }
 
-    def bulk_insert_features(self, features_list: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def bulk_insert_features(self, features_list: list[dict[str, Any]]) -> dict[str, Any]:
         """
         批量插入特征数据 - 原子性操作
 
@@ -478,7 +476,7 @@ class SchemaManager:
             Dict: 插入结果统计
         """
         if not features_list:
-            return {'success': True, 'inserted_count': 0, 'errors': []}
+            return {"success": True, "inserted_count": 0, "errors": []}
 
         try:
             conn = self.get_connection()
@@ -496,10 +494,10 @@ class SchemaManager:
 
             # 使用execute_values进行高性能批量插入
             insert_query = f"""
-                INSERT INTO {table_name} ({', '.join(field_names)})
+                INSERT INTO {table_name} ({", ".join(field_names)})
                 VALUES %s
                 ON CONFLICT (external_id) DO UPDATE SET
-                    {', '.join([f"{field} = EXCLUDED.{field}" for field in field_names if field != 'external_id'])},
+                    {", ".join([f"{field} = EXCLUDED.{field}" for field in field_names if field != "external_id"])},
                     updated_at = CURRENT_TIMESTAMP
             """
 
@@ -511,23 +509,19 @@ class SchemaManager:
             logger.info(f"✅ 批量插入完成: {inserted_count} 条记录")
 
             return {
-                'success': True,
-                'inserted_count': inserted_count,
-                'field_count': len(field_names),
-                'table_name': table_name
+                "success": True,
+                "inserted_count": inserted_count,
+                "field_count": len(field_names),
+                "table_name": table_name,
             }
 
         except Exception as e:
             if conn:
                 conn.rollback()
             logger.error(f"❌ 批量插入失败: {e}")
-            return {
-                'success': False,
-                'inserted_count': 0,
-                'error': str(e)
-            }
+            return {"success": False, "inserted_count": 0, "error": str(e)}
 
-    def validate_features_data(self, features: Dict[str, Any]) -> Tuple[bool, List[str]]:
+    def validate_features_data(self, features: dict[str, Any]) -> tuple[bool, list[str]]:
         """
         验证特征数据的完整性
 
@@ -540,29 +534,29 @@ class SchemaManager:
         errors = []
 
         # 必需字段检查
-        required_fields = ['external_id', 'home_team', 'away_team', 'match_time']
+        required_fields = ["external_id", "home_team", "away_team", "match_time"]
         for field in required_fields:
             if not features.get(field):
                 errors.append(f"Missing required field: {field}")
 
         # 数据类型检查
-        if features.get('home_xg') is not None:
+        if features.get("home_xg") is not None:
             try:
-                float(features['home_xg'])
+                float(features["home_xg"])
             except (ValueError, TypeError):
                 errors.append("Invalid home_xg value")
 
-        if features.get('away_xg') is not None:
+        if features.get("away_xg") is not None:
             try:
-                float(features['away_xg'])
+                float(features["away_xg"])
             except (ValueError, TypeError):
                 errors.append("Invalid away_xg value")
 
         # 逻辑一致性检查
-        if features.get('home_score') is not None and features.get('away_score') is not None:
+        if features.get("home_score") is not None and features.get("away_score") is not None:
             try:
-                home_score = int(features['home_score'])
-                away_score = int(features['away_score'])
+                home_score = int(features["home_score"])
+                away_score = int(features["away_score"])
                 if home_score < 0 or away_score < 0:
                     errors.append("Negative score values not allowed")
             except (ValueError, TypeError):
@@ -570,7 +564,7 @@ class SchemaManager:
 
         return len(errors) == 0, errors
 
-    def get_schema_statistics(self) -> Dict[str, Any]:
+    def get_schema_statistics(self) -> dict[str, Any]:
         """获取Schema统计信息"""
         try:
             conn = self.get_connection()
@@ -592,14 +586,14 @@ class SchemaManager:
             """)
 
             result = cursor.fetchone()
-            stats['match_features'] = {
-                'total_records': result[0],
-                'home_xg_count': result[1],
-                'away_xg_count': result[2],
-                'home_possession_count': result[3],
-                'away_possession_count': result[4],
-                'avg_quality_score': float(result[5]) if result[5] else 0.0,
-                'latest_record': str(result[6]) if result[6] else None
+            stats["match_features"] = {
+                "total_records": result[0],
+                "home_xg_count": result[1],
+                "away_xg_count": result[2],
+                "home_possession_count": result[3],
+                "away_possession_count": result[4],
+                "avg_quality_score": float(result[5]) if result[5] else 0.0,
+                "latest_record": str(result[6]) if result[6] else None,
             }
 
             # matches统计
@@ -613,11 +607,11 @@ class SchemaManager:
             """)
 
             result = cursor.fetchone()
-            stats['matches'] = {
-                'total_records': result[0],
-                'with_scores': result[1],
-                'unique_leagues': result[2],
-                'unique_seasons': result[3]
+            stats["matches"] = {
+                "total_records": result[0],
+                "with_scores": result[1],
+                "unique_leagues": result[2],
+                "unique_seasons": result[3],
             }
 
             return stats
@@ -629,6 +623,7 @@ class SchemaManager:
 
 # 全局Schema管理器实例
 _schema_manager = None
+
 
 def get_schema_manager() -> SchemaManager:
     """获取全局Schema管理器实例"""

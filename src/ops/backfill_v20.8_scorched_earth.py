@@ -16,46 +16,44 @@ V20.8 焦土收割执行器 - Scorched Earth Harvester
 版本: V20.8
 """
 
+import json
+import logging
 import os
 import sys
-import json
 import time
-import logging
-import signal
+from collections import defaultdict
+from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Any, Tuple
-from dataclasses import dataclass, field
-from collections import defaultdict
+from typing import Any
 
 # 添加项目路径
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from dotenv import load_dotenv
-if os.getenv('DB_HOST'):
+
+if os.getenv("DB_HOST"):
     load_dotenv(override=False)
 else:
     load_dotenv(override=True)
 
+# V20.8 Docker 容器原生日志配置 - 权限脱钩版（强制 /tmp）
+import os
+
 import psycopg2
 from psycopg2.extras import RealDictCursor
 
+from src.api.collectors.fotmob_core import FotMobCoreCollector
 from src.config_unified import get_settings
 from src.ml.fault_tolerance import CircuitBreaker, CircuitBreakerConfig
-from src.api.collectors.fotmob_core import FotMobCoreCollector
 
-# V20.8 Docker 容器原生日志配置 - 权限脱钩版（强制 /tmp）
-import os
 # V20.8 强制锁定 /tmp 目录，彻底避开容器权限陷阱
-log_path = '/tmp/harvester.log'  # 强制路径，忽略环境变量
+log_path = "/tmp/harvester.log"  # 强制路径，忽略环境变量
 
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler(log_path),
-        logging.StreamHandler(sys.stdout)
-    ]
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    handlers=[logging.FileHandler(log_path), logging.StreamHandler(sys.stdout)],
 )
 logger = logging.getLogger(__name__)
 
@@ -66,59 +64,57 @@ TARGET_FEATURES = 881  # 目标维度（与熔断阈值一致，确保100%对齐
 DIMENSION_FUSE_COUNT = 5  # 前5场维度检查熔断机制
 
 # 五大联赛配置
-LEAGUES = {
-    47: "Premier_League",
-    53: "Serie_A",
-    54: "Bundesliga",
-    55: "Ligue_1",
-    87: "LaLiga"
-}
+LEAGUES = {47: "Premier_League", 53: "Serie_A", 54: "Bundesliga", 55: "Ligue_1", 87: "LaLiga"}
 
 SEASONS = ["2122", "2223", "2324", "2425"]
 
 # 深度球员聚合指标 - 攻克最后 200 维
 DEEP_PLAYER_METRICS = [
     # 进攻端
-    'touches_in_box',           # 禁区内触球
-    'key_passes_segment',        # 关键传球分段
-    'shot_assists',              # 射门助攻
-    'goal_contribution',         # 进球贡献
-
+    "touches_in_box",  # 禁区内触球
+    "key_passes_segment",  # 关键传球分段
+    "shot_assists",  # 射门助攻
+    "goal_contribution",  # 进球贡献
     # 防守端
-    'ball_recoveries',           # 夺回球权分布
-    'aerial_duels_won',          # 空中对垒成功率
-    'possession_recovered',      # 拦截恢复球权
-    'clearances_headed',         # 头球解围
-
+    "ball_recoveries",  # 夺回球权分布
+    "aerial_duels_won",  # 空中对垒成功率
+    "possession_recovered",  # 拦截恢复球权
+    "clearances_headed",  # 头球解围
     # 组织端
-    'progressive_passes',        # 向前推进传球
-    'passes_final_third',        # 前场三分之一传球
-    'crosses_successful',        # 成功传中
-
+    "progressive_passes",  # 向前推进传球
+    "passes_final_third",  # 前场三分之一传球
+    "crosses_successful",  # 成功传中
     # 压迫端
-    'pressures',                 # 压迫次数
-    'pressures_successful',      # 成功压迫
-    'fouls_conceded',            # 犯规次数
+    "pressures",  # 压迫次数
+    "pressures_successful",  # 成功压迫
+    "fouls_conceded",  # 犯规次数
 ]
 
 # 位置聚合映射
 POSITION_GROUPS = {
-    'GK': ['Goalkeeper'],           # 门将
-    'DF': ['Centre-Back', 'Left-Back', 'Right-Back', 'Wing-Back'],  # 后卫
-    'MF': ['Central-Midfield', 'Defensive-Midfield', 'Attacking-Midfield',
-           'Left-Midfield', 'Right-Midfield', 'Winger'],  # 中场
-    'FW': ['Centre-Forward', 'Second-Striker', 'Wing-back']  # 前锋
+    "GK": ["Goalkeeper"],  # 门将
+    "DF": ["Centre-Back", "Left-Back", "Right-Back", "Wing-Back"],  # 后卫
+    "MF": [
+        "Central-Midfield",
+        "Defensive-Midfield",
+        "Attacking-Midfield",
+        "Left-Midfield",
+        "Right-Midfield",
+        "Winger",
+    ],  # 中场
+    "FW": ["Centre-Forward", "Second-Striker", "Wing-back"],  # 前锋
 }
 
 
 @dataclass
 class V20_8Metrics:
     """V20.8 执行指标"""
+
     total_matches: int = 0
     forced_overwrites: int = 0  # 强制覆盖的记录数
-    dimension_passed: int = 0   # 维度达标的记录数
-    dimension_failed: int = 0   # 维度不达标的记录数
-    critical_errors: int = 0    # 严重错误数
+    dimension_passed: int = 0  # 维度达标的记录数
+    dimension_failed: int = 0  # 维度不达标的记录数
+    critical_errors: int = 0  # 严重错误数
     first_batch_matches: list = field(default_factory=list)  # 前5场维度记录
     dimension_fuse_triggered: bool = False  # 维度熔断是否触发
 
@@ -137,11 +133,7 @@ class V20_8DeepPlayerAggregator:
         self.home_team_id = home_team_id
         self.away_team_id = away_team_id
 
-    def extract_deep_aggregates(
-        self,
-        content: Dict,
-        features: Dict
-    ) -> Dict[str, Any]:
+    def extract_deep_aggregates(self, content: dict, features: dict) -> dict[str, Any]:
         """
         提取深度球员聚合特征
 
@@ -149,7 +141,7 @@ class V20_8DeepPlayerAggregator:
             新增的深度聚合特征字典
         """
         aggregated = {}
-        player_stats = content.get('content', {}).get('playerStats', {})
+        player_stats = content.get("content", {}).get("playerStats", {})
 
         if not player_stats:
             logger.debug("playerStats 不可用，跳过深度聚合")
@@ -159,7 +151,7 @@ class V20_8DeepPlayerAggregator:
         home_stats = player_stats.get(str(self.home_team_id), {})
         away_stats = player_stats.get(str(self.away_team_id), {})
 
-        for team_side, team_stats in [('home', home_stats), ('away', away_stats)]:
+        for team_side, team_stats in [("home", home_stats), ("away", away_stats)]:
             if not team_stats:
                 continue
 
@@ -176,8 +168,8 @@ class V20_8DeepPlayerAggregator:
                             player_count += 1
 
                 if player_count > 0:
-                    aggregated[f'{team_side}_team_total_{metric}'] = total
-                    aggregated[f'{team_side}_team_avg_{metric}'] = round(total / player_count, 3)
+                    aggregated[f"{team_side}_team_total_{metric}"] = total
+                    aggregated[f"{team_side}_team_avg_{metric}"] = round(total / player_count, 3)
 
             # 2. 位置级联聚合（GK/DF/MF/FW）
             position_aggregates = self._aggregate_by_position(team_stats, team_side)
@@ -185,25 +177,21 @@ class V20_8DeepPlayerAggregator:
 
         return aggregated
 
-    def _extract_metric_value(self, player_data: Dict, metric: str) -> Optional[float]:
+    def _extract_metric_value(self, player_data: dict, metric: str) -> float | None:
         """从球员数据中提取指标值"""
         # 尝试直接获取
         if metric in player_data:
             return float(player_data.get(metric, 0))
 
         # 尝试从 stats 子节点获取
-        stats = player_data.get('stats', {})
+        stats = player_data.get("stats", {})
         if isinstance(stats, dict):
             if metric in stats:
                 return float(stats.get(metric, 0))
 
         return None
 
-    def _aggregate_by_position(
-        self,
-        team_stats: Dict,
-        team_side: str
-    ) -> Dict[str, Any]:
+    def _aggregate_by_position(self, team_stats: dict, team_side: str) -> dict[str, Any]:
         """
         按位置聚合 (GK/DF/MF/FW)
 
@@ -219,7 +207,7 @@ class V20_8DeepPlayerAggregator:
             if not isinstance(player_data, dict):
                 continue
 
-            position = player_data.get('position', 'Unknown')
+            position = player_data.get("position", "Unknown")
             position_groups[position].append(player_data)
 
         # 为每个位置组计算聚合
@@ -245,8 +233,8 @@ class V20_8DeepPlayerAggregator:
                         player_count += 1
 
                 if player_count > 0:
-                    aggregated[f'{team_side}_{position_group}_{metric}_total'] = total
-                    aggregated[f'{team_side}_{position_group}_{metric}_avg'] = round(total / player_count, 3)
+                    aggregated[f"{team_side}_{position_group}_{metric}_total"] = total
+                    aggregated[f"{team_side}_{position_group}_{metric}_avg"] = round(total / player_count, 3)
 
         return aggregated
 
@@ -272,9 +260,7 @@ class V20_8ScorchedEarthHarvester:
 
         # 初始化熔断器
         cb_config = CircuitBreakerConfig(
-            failure_threshold=20,
-            timeout_seconds=300,
-            error_codes={403, 429, 500, 502, 503}
+            failure_threshold=20, timeout_seconds=300, error_codes={403, 429, 500, 502, 503}
         )
         self.circuit_breaker = CircuitBreaker(cb_config)
 
@@ -285,11 +271,11 @@ class V20_8ScorchedEarthHarvester:
         # 数据库连接
         self.db_conn = None
 
-        logger.info("="*70)
+        logger.info("=" * 70)
         logger.info("V20.8 焦土收割执行器初始化完成")
         logger.info(f"🎯 目标维度: {TARGET_FEATURES} 维")
         logger.info(f"🔒 维度死结: {MIN_FEATURES} 维（前5场熔断）")
-        logger.info("="*70)
+        logger.info("=" * 70)
 
     def _get_db_connection(self):
         """
@@ -302,28 +288,25 @@ class V20_8ScorchedEarthHarvester:
         """
         if self.db_conn is None or self.db_conn.closed:
             # V20.8 环境感知逻辑
-            db_host = os.getenv('DB_HOST', os.getenv('FOOTBALL_DB_HOST', self.settings.database.host))
+            db_host = os.getenv("DB_HOST", os.getenv("FOOTBALL_DB_HOST", self.settings.database.host))
 
             # Docker 容器内自动探测
-            if db_host == 'db':
+            if db_host == "db":
                 try:
                     import socket
-                    socket.gethostbyname('db')
+
+                    socket.gethostbyname("db")
                     logger.debug("✓ Docker 容器环境: 'db' 主机可解析")
                 except socket.gaierror:
                     logger.info("✗ 非 Docker 环境，自动切换到 localhost")
-                    db_host = 'localhost'
+                    db_host = "localhost"
 
             # V20.8 显式密码注入（无视 .env 挂载状态）
-            db_password = os.getenv('POSTGRES_PASSWORD',
-                                    os.getenv('DB_PASSWORD',
-                                             self.settings.database.password.get_secret_value()))
-            db_name = os.getenv('DB_NAME',
-                                os.getenv('FOOTBALL_DB_NAME',
-                                         self.settings.database.name))
-            db_user = os.getenv('POSTGRES_USER',
-                                os.getenv('DB_USER',
-                                         self.settings.database.user))
+            db_password = os.getenv(
+                "POSTGRES_PASSWORD", os.getenv("DB_PASSWORD", self.settings.database.password.get_secret_value())
+            )
+            db_name = os.getenv("DB_NAME", os.getenv("FOOTBALL_DB_NAME", self.settings.database.name))
+            db_user = os.getenv("POSTGRES_USER", os.getenv("DB_USER", self.settings.database.user))
 
             self.db_conn = psycopg2.connect(
                 host=db_host,
@@ -331,7 +314,7 @@ class V20_8ScorchedEarthHarvester:
                 database=db_name,
                 user=db_user,
                 password=db_password,
-                cursor_factory=RealDictCursor
+                cursor_factory=RealDictCursor,
             )
             logger.info(f"✓ 数据库连接已建立: {db_host}/{db_name} (user={db_user})")
 
@@ -356,7 +339,7 @@ class V20_8ScorchedEarthHarvester:
             "SELECT match_id, league_id, season_id, home_team, away_team, "
             "COALESCE((meta_data->>'extraction_version')::text, 'V0.0') as current_version "
             "FROM match_features_training WHERE match_id = %s",
-            (match_id,)
+            (match_id,),
         )
         result = cur.fetchone()
         cur.close()
@@ -364,11 +347,13 @@ class V20_8ScorchedEarthHarvester:
         if not result:
             return True  # 不存在，需要插入
 
-        current_version = result.get('current_version', 'V0.0')
+        current_version = result.get("current_version", "V0.0")
 
         # V20.8 修复: 检查标签完整性 - 如果 league_id/season_id 为 NULL，强制覆盖
-        if result.get('league_id') is None or result.get('season_id') is None:
-            logger.info(f"  🔄 标签修复: 检测到 NULL 标签 (league_id={result.get('league_id')}, season_id={result.get('season_id')})，强制覆盖")
+        if result.get("league_id") is None or result.get("season_id") is None:
+            logger.info(
+                f"  🔄 标签修复: 检测到 NULL 标签 (league_id={result.get('league_id')}, season_id={result.get('season_id')})，强制覆盖"
+            )
             self.metrics.forced_overwrites += 1
             return True
 
@@ -389,9 +374,10 @@ class V20_8ScorchedEarthHarvester:
              0: v1 == v2
              1: v1 > v2
         """
+
         # 简单版本比较: V20.8 -> 20.8
         def parse_version(v):
-            parts = v.replace('V', '').split('.')
+            parts = v.replace("V", "").split(".")
             return tuple(int(p) for p in parts if p.isdigit())
 
         v1_parsed = parse_version(v1)
@@ -417,7 +403,8 @@ class V20_8ScorchedEarthHarvester:
         try:
             # 解析日期
             from datetime import datetime
-            dt = datetime.fromisoformat(date_str.replace('Z', '+00:00'))
+
+            dt = datetime.fromisoformat(date_str.replace("Z", "+00:00"))
             year = dt.year
 
             # 赛季规则：8月1日之后跨年
@@ -428,7 +415,7 @@ class V20_8ScorchedEarthHarvester:
         except Exception:
             return "unknown"
 
-    def _validate_feature_count(self, features: Dict, match_id: int) -> bool:
+    def _validate_feature_count(self, features: dict, match_id: int) -> bool:
         """
         V20.8 维度死结 - 验证特征数量
 
@@ -451,29 +438,22 @@ class V20_8ScorchedEarthHarvester:
 
         # V20.8 维度死结熔断机制
         if len(self.metrics.first_batch_matches) < DIMENSION_FUSE_COUNT:
-            self.metrics.first_batch_matches.append({
-                'match_id': match_id,
-                'feature_count': feature_count
-            })
+            self.metrics.first_batch_matches.append({"match_id": match_id, "feature_count": feature_count})
 
             if feature_count < MIN_FEATURES:
                 # 触发熔断
                 error_msg = (
-                    f"\n{'='*70}\n"
+                    f"\n{'=' * 70}\n"
                     f"🚨 V20.8 维度死结熔断触发！\n"
-                    f"{'='*70}\n"
+                    f"{'=' * 70}\n"
                     f"Match {match_id}: {feature_count} < {MIN_FEATURES} 维\n"
                     f"前 {DIMENSION_FUSE_COUNT} 场维度记录:\n"
                 )
                 for i, record in enumerate(self.metrics.first_batch_matches, 1):
-                    status = "✓" if record['feature_count'] >= MIN_FEATURES else "✗"
+                    status = "✓" if record["feature_count"] >= MIN_FEATURES else "✗"
                     error_msg += f"  {status} {i}. Match {record['match_id']}: {record['feature_count']} 维\n"
 
-                error_msg += (
-                    f"{'='*70}\n"
-                    f"💀 维度主权已锁死在 {MIN_FEATURES} 维，系统拒绝执行。\n"
-                    f"{'='*70}\n"
-                )
+                error_msg += f"{'=' * 70}\n💀 维度主权已锁死在 {MIN_FEATURES} 维，系统拒绝执行。\n{'=' * 70}\n"
 
                 logger.error(error_msg)
                 self.metrics.dimension_fuse_triggered = True
@@ -492,7 +472,7 @@ class V20_8ScorchedEarthHarvester:
         logger.debug(f"  ✓ 维度验证通过: {feature_count} >= {MIN_FEATURES}")
         return True
 
-    def harvest_match(self, match_id: int) -> Optional[Dict]:
+    def harvest_match(self, match_id: int) -> dict | None:
         """
         收割单场比赛 - V20.8 强制覆盖逻辑
 
@@ -520,40 +500,41 @@ class V20_8ScorchedEarthHarvester:
 
             # 2. 构造 match_data 结构（V20.8 修复：包含 general 字段以触发 atomic_align_v20_8）
             # V20.8 修复：API 响应结构已改变，从根级别的 content.general 提取字段
-            general = content.get('general', {})
-            match_info = content.get('content', {}).get('match', {})
+            general = content.get("general", {})
+            match_info = content.get("content", {}).get("match", {})
 
             # V20.8 关键修复：确保 l2_json 包含 general 字段
             l2_json = {
-                'l2_json': content,
-                'general': {
-                    'homeTeam': {'id': general.get('homeTeam', {}).get('id')},
-                    'awayTeam': {'id': general.get('awayTeam', {}).get('id')}
-                }
+                "l2_json": content,
+                "general": {
+                    "homeTeam": {"id": general.get("homeTeam", {}).get("id")},
+                    "awayTeam": {"id": general.get("awayTeam", {}).get("id")},
+                },
             }
 
             # V20.8 修复：从 general 提取 league_id, season_id, team names
-            league_id = general.get('leagueId')
+            league_id = general.get("leagueId")
 
             # V20.8 修复：从 matchTimeUTCDate 推断赛季 (如 2025-08 -> 2526)
-            match_time_str = general.get('matchTimeUTCDate', '')
+            match_time_str = general.get("matchTimeUTCDate", "")
             season_id = self._infer_season_from_date(match_time_str)
 
-            home_team = general.get('homeTeam', {}).get('name', 'Unknown')
-            away_team = general.get('awayTeam', {}).get('name', 'Unknown')
+            home_team = general.get("homeTeam", {}).get("name", "Unknown")
+            away_team = general.get("awayTeam", {}).get("name", "Unknown")
 
             match_data = {
-                'match_id': match_id,
-                'league_id': league_id,
-                'season_id': season_id,
-                'home_team': home_team,
-                'away_team': away_team,
-                'player_stats': l2_json,
-                'l2_raw_json': l2_json,
+                "match_id": match_id,
+                "league_id": league_id,
+                "season_id": season_id,
+                "home_team": home_team,
+                "away_team": away_team,
+                "player_stats": l2_json,
+                "l2_raw_json": l2_json,
             }
 
             # 3. 提取基础特征
             from src.ml.feature_forge_v20 import FeatureExtractor
+
             extractor = FeatureExtractor()
             extracted = extractor.extract_features(match_data)
 
@@ -563,11 +544,11 @@ class V20_8ScorchedEarthHarvester:
                 return None
 
             # 合并 core 和 enriched
-            features = {**extracted.get('enriched', {}), **extracted.get('core', {})}
+            features = {**extracted.get("enriched", {}), **extracted.get("core", {})}
 
             # 4. 获取球队 ID 用于深度聚合
-            home_id = match_info.get('homeTeam')
-            away_id = match_info.get('awayTeam')
+            home_id = match_info.get("homeTeam")
+            away_id = match_info.get("awayTeam")
 
             if home_id and away_id:
                 self.deep_aggregator = V20_8DeepPlayerAggregator(home_id, away_id)
@@ -576,10 +557,10 @@ class V20_8ScorchedEarthHarvester:
                 logger.info(f"  ✓ 深度聚合: +{len(deep_features)} 维")
 
             # 5. 注入版本号
-            features['_meta'] = {
-                'extraction_version': V20_8_VERSION,
-                'extraction_timestamp': datetime.now().isoformat(),
-                'feature_count': len(features)
+            features["_meta"] = {
+                "extraction_version": V20_8_VERSION,
+                "extraction_timestamp": datetime.now().isoformat(),
+                "feature_count": len(features),
             }
 
             # 6. 严苛质量门禁
@@ -602,7 +583,7 @@ class V20_8ScorchedEarthHarvester:
             logger.error(f"  ❌ Match {match_id} 处理失败: {e}")
             return None
 
-    def _save_to_database(self, match_id: int, content: Dict, features: Dict):
+    def _save_to_database(self, match_id: int, content: dict, features: dict):
         """
         V20.8 保存到数据库 - 修复标签丢失问题
 
@@ -614,44 +595,47 @@ class V20_8ScorchedEarthHarvester:
         cur = conn.cursor()
 
         # V20.8 修复：从根级别的 content.general 提取标签信息（API 响应结构）
-        general = content.get('general', {})
-        match_info = content.get('content', {}).get('match', {})
+        general = content.get("general", {})
+        match_info = content.get("content", {}).get("match", {})
 
-        league_id = general.get('leagueId')
-        home_team = general.get('homeTeam', {}).get('name', 'Unknown')
-        away_team = general.get('awayTeam', {}).get('name', 'Unknown')
+        league_id = general.get("leagueId")
+        home_team = general.get("homeTeam", {}).get("name", "Unknown")
+        away_team = general.get("awayTeam", {}).get("name", "Unknown")
 
         # V20.8 修复：从日期推断赛季
-        match_time_str = general.get('matchTimeUTCDate', '')
+        match_time_str = general.get("matchTimeUTCDate", "")
         season_id = self._infer_season_from_date(match_time_str)
 
         # ==================== V20.8 SRE 质量看门狗 ====================
         # 我们宁可停机，也不要匿名数据
 
         # V20.8 调试日志: 追踪质量检查值
-        logger.debug(f"🔍 质量检查 Match {match_id}: league_id={league_id}, season_id={season_id}, home={home_team}, away={away_team}")
+        logger.debug(
+            f"🔍 质量检查 Match {match_id}: league_id={league_id}, season_id={season_id}, home={home_team}, away={away_team}"
+        )
 
         assert league_id is not None, f"🚨 质量看门狗触发: Match {match_id} league_id 为 NULL，系统拒绝执行"
-        assert season_id is not None and season_id != 'unknown', \
+        assert season_id is not None and season_id != "unknown", (
             f"🚨 质量看门狗触发: Match {match_id} season_id 为 {season_id}，系统拒绝执行"
-        assert home_team is not None and home_team != 'Unknown', \
+        )
+        assert home_team is not None and home_team != "Unknown", (
             f"🚨 质量看门狗触发: Match {match_id} home_team 为 {home_team}，系统拒绝执行"
-        assert away_team is not None and away_team != 'Unknown', \
+        )
+        assert away_team is not None and away_team != "Unknown", (
             f"🚨 质量看门狗触发: Match {match_id} away_team 为 {away_team}，系统拒绝执行"
+        )
 
         # V20.8 质量看门狗通过确认
         logger.debug(f"✅ 质量看门狗通过: Match {match_id}")
         # ==============================================================
 
         # 检查是否需要更新或插入
-        cur.execute(
-            "SELECT match_id FROM match_features_training WHERE match_id = %s",
-            (match_id,)
-        )
+        cur.execute("SELECT match_id FROM match_features_training WHERE match_id = %s", (match_id,))
 
         if cur.fetchone():
             # V20.8 修复: UPDATE 包含完整字段
-            cur.execute("""
+            cur.execute(
+                """
                 UPDATE match_features_training
                 SET league_id = %s,
                     season_id = %s,
@@ -661,47 +645,47 @@ class V20_8ScorchedEarthHarvester:
                     meta_data = %s,
                     updated_at = NOW()
                 WHERE match_id = %s
-            """, (
-                league_id,
-                season_id,
-                home_team,
-                away_team,
-                json.dumps(features),
-                json.dumps(features.get('_meta', {})),
-                match_id
-            ))
+            """,
+                (
+                    league_id,
+                    season_id,
+                    home_team,
+                    away_team,
+                    json.dumps(features),
+                    json.dumps(features.get("_meta", {})),
+                    match_id,
+                ),
+            )
         else:
             # V20.8 SRE 修复: INSERT 必须使用经过质量看门狗验证的变量
             # 严禁使用 match_info (可能为 NULL)，必须使用 league_id/season_id
-            cur.execute("""
+            cur.execute(
+                """
                 INSERT INTO match_features_training (
                     match_id, league_id, season_id, home_team, away_team,
                     enriched_features, meta_data, status, created_at, updated_at
                 ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW())
-            """, (
-                match_id,
-                league_id,        # 使用质量看门狗验证的变量
-                season_id,        # 使用质量看门狗验证的变量
-                home_team,        # 使用质量看门狗验证的变量
-                away_team,        # 使用质量看门狗验证的变量
-                json.dumps(features),
-                json.dumps(features.get('_meta', {})),
-                'completed'
-            ))
+            """,
+                (
+                    match_id,
+                    league_id,  # 使用质量看门狗验证的变量
+                    season_id,  # 使用质量看门狗验证的变量
+                    home_team,  # 使用质量看门狗验证的变量
+                    away_team,  # 使用质量看门狗验证的变量
+                    json.dumps(features),
+                    json.dumps(features.get("_meta", {})),
+                    "completed",
+                ),
+            )
 
         conn.commit()
         cur.close()
 
-    def harvest_season(
-        self,
-        league_id: int,
-        season: str,
-        match_ids: List[int]
-    ):
+    def harvest_season(self, league_id: int, season: str, match_ids: list[int]):
         """收割整个赛季"""
-        logger.info(f"\n{'='*70}")
+        logger.info(f"\n{'=' * 70}")
         logger.info(f"开始收割: {LEAGUES[league_id]} {season} ({len(match_ids)} 场)")
-        logger.info(f"{'='*70}\n")
+        logger.info(f"{'=' * 70}\n")
 
         success_count = 0
         fail_count = 0
@@ -712,7 +696,7 @@ class V20_8ScorchedEarthHarvester:
                 break
 
             # 使用 print 代替 logger.info 支持 end 参数
-            print(f"[{i}/{len(match_ids)}] ", end='', flush=True)
+            print(f"[{i}/{len(match_ids)}] ", end="", flush=True)
 
             try:
                 result = self.harvest_match(match_id)
@@ -734,15 +718,15 @@ class V20_8ScorchedEarthHarvester:
                 logger.error(f"  ❌ 处理失败: {e}")
                 fail_count += 1
 
-        logger.info(f"\n{'='*70}")
+        logger.info(f"\n{'=' * 70}")
         logger.info(f"收割完成: 成功 {success_count}, 失败 {fail_count}")
-        logger.info(f"{'='*70}\n")
+        logger.info(f"{'=' * 70}\n")
 
     def print_final_report(self):
         """打印最终报告"""
-        logger.info("\n" + "="*70)
+        logger.info("\n" + "=" * 70)
         logger.info("V20.8 焦土收割计划 - 最终报告")
-        logger.info("="*70)
+        logger.info("=" * 70)
         logger.info(f"总处理场次: {self.metrics.total_matches}")
         logger.info(f"强制覆盖记录: {self.metrics.forced_overwrites}")
         logger.info(f"维度验证通过: {self.metrics.dimension_passed}")
@@ -753,18 +737,19 @@ class V20_8ScorchedEarthHarvester:
         if self.metrics.first_batch_matches:
             logger.info("\n前5场维度死结验证:")
             for i, record in enumerate(self.metrics.first_batch_matches, 1):
-                status = "✓" if record['feature_count'] >= MIN_FEATURES else "✗"
+                status = "✓" if record["feature_count"] >= MIN_FEATURES else "✗"
                 logger.info(f"  {status} {i}. Match {record['match_id']}: {record['feature_count']} 维")
 
         # 熔断状态
         if self.metrics.dimension_fuse_triggered:
             logger.info("\n🚨 维度熔断已触发，系统已终止执行")
 
-        logger.info("="*70)
+        logger.info("=" * 70)
 
 
 class CriticalError(Exception):
     """严重错误 - 维度不达标"""
+
     pass
 
 
@@ -773,7 +758,7 @@ if __name__ == "__main__":
     logger.info("🚀 V20.8 焦土收割计划启动...")
 
     # V20.8 修复: 从清单文件加载比赛 ID，按联赛分组
-    def load_match_ids_by_league(season: str) -> Dict[int, List[int]]:
+    def load_match_ids_by_league(season: str) -> dict[int, list[int]]:
         """
         从清单文件加载比赛 ID，按联赛分组
 
@@ -786,14 +771,15 @@ if __name__ == "__main__":
             return {}
 
         import csv
+
         matches_by_league = defaultdict(list)
         total_matches = 0
 
-        with open(manifest_file, 'r') as f:
+        with open(manifest_file) as f:
             reader = csv.DictReader(f)
             for row in reader:
-                match_id = row.get('match_id')
-                league_id = row.get('league_id')
+                match_id = row.get("match_id")
+                league_id = row.get("league_id")
                 if match_id and league_id:
                     matches_by_league[int(league_id)].append(int(match_id))
                     total_matches += 1

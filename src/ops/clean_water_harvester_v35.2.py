@@ -12,17 +12,17 @@ V35.2 净水收割器 (Clean Water Harvester)
 """
 
 import asyncio
-import aiohttp
 import json
 import logging
+import os
+import random
 import sys
 import time
-import random
-import os
-from pathlib import Path
-from datetime import datetime
-from typing import Dict, List, Optional, Any, Tuple
 from dataclasses import dataclass
+from datetime import datetime
+from pathlib import Path
+
+import aiohttp
 
 # Add src to path
 project_root = Path(__file__).parent.parent.parent
@@ -30,7 +30,7 @@ sys.path.insert(0, str(project_root))
 
 import psycopg2
 from psycopg2.extras import RealDictCursor
-from src.config_unified import get_settings
+
 from src.ml.miners_v34.greedy_miner import GreedyMiner
 
 logger = logging.getLogger(__name__)
@@ -39,43 +39,38 @@ logger = logging.getLogger(__name__)
 # V35.2: 扩展 UA 池 - 模拟真实浏览器
 UA_POOL = [
     # Chrome 120 (Windows)
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0',
-
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0",
     # Chrome 119 (Windows)
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
-
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
     # Chrome 120 (Mac)
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
     # Firefox 121 (Windows)
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0',
-
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0",
     # Firefox 120 (Mac)
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:120.0) Gecko/20100101 Firefox/120.0',
-
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:120.0) Gecko/20100101 Firefox/120.0",
     # Safari 17 (Mac)
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.1 Safari/605.1.15',
-
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.1 Safari/605.1.15",
     # Edge 120 (Windows)
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0',
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0",
 ]
 
 
 # V35.2: Accept-Language 池
 LANGUAGE_POOL = [
-    'en-US,en;q=0.9,en-GB;q=0.8',
-    'en-GB,en;q=0.9',
-    'fr-FR,fr;q=0.9,en;q=0.8',
-    'de-DE,de;q=0.9,en;q=0.8',
-    'es-ES,es;q=0.9,en;q=0.8',
-    'it-IT,it;q=0.9,en;q=0.8',
+    "en-US,en;q=0.9,en-GB;q=0.8",
+    "en-GB,en;q=0.9",
+    "fr-FR,fr;q=0.9,en;q=0.8",
+    "de-DE,de;q=0.9,en;q=0.8",
+    "es-ES,es;q=0.9,en;q=0.8",
+    "it-IT,it;q=0.9,en;q=0.8",
 ]
 
 
 @dataclass
 class HarvestStats:
     """收割统计"""
+
     total_matches: int = 0
     successful_harvests: int = 0
     failed_harvests: int = 0
@@ -112,36 +107,36 @@ class CleanWaterHarvester:
     def __init__(self, concurrency: int = 3):
         """初始化净水收割器"""
         self.concurrency = concurrency
-        self.session: Optional[aiohttp.ClientSession] = None
+        self.session: aiohttp.ClientSession | None = None
         self.miner = GreedyMiner()
         self.stats = HarvestStats()
         self.db_conn = None
-        self.match_index: List[Dict] = []
+        self.match_index: list[dict] = []
 
         # V35.2: 脏数据日志
         self.bad_matches_log = Path("data/logs/bad_matches_v35.2.log")
         self.bad_matches_log.parent.mkdir(parents=True, exist_ok=True)
 
-    def _get_random_headers(self) -> Dict[str, str]:
+    def _get_random_headers(self) -> dict[str, str]:
         """V35.2: 生成随机请求头"""
         return {
-            'User-Agent': random.choice(UA_POOL),
-            'Accept': 'application/json, text/plain, */*',
-            'Accept-Language': random.choice(LANGUAGE_POOL),
-            'Accept-Encoding': 'gzip, deflate, br',
-            'Cache-Control': 'no-cache',
-            'Pragma': 'no-cache',
-            'Referer': 'https://www.fotmob.com/',
-            'Origin': 'https://www.fotmob.com',
-            'Sec-Ch-Ua': '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
-            'Sec-Ch-Ua-Mobile': '?0',
-            'Sec-Ch-Ua-Platform': '"Windows"',
-            'Sec-Fetch-Dest': 'empty',
-            'Sec-Fetch-Mode': 'cors',
-            'Sec-Fetch-Site': 'same-site',
+            "User-Agent": random.choice(UA_POOL),
+            "Accept": "application/json, text/plain, */*",
+            "Accept-Language": random.choice(LANGUAGE_POOL),
+            "Accept-Encoding": "gzip, deflate, br",
+            "Cache-Control": "no-cache",
+            "Pragma": "no-cache",
+            "Referer": "https://www.fotmob.com/",
+            "Origin": "https://www.fotmob.com",
+            "Sec-Ch-Ua": '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
+            "Sec-Ch-Ua-Mobile": "?0",
+            "Sec-Ch-Ua-Platform": '"Windows"',
+            "Sec-Fetch-Dest": "empty",
+            "Sec-Fetch-Mode": "cors",
+            "Sec-Fetch-Site": "same-site",
         }
 
-    def validate_payload(self, l2_data: Dict, match_id: int) -> Tuple[bool, str]:
+    def validate_payload(self, l2_data: dict, match_id: int) -> tuple[bool, str]:
         """
         V35.2: 零容忍数据校验
 
@@ -154,30 +149,30 @@ class CleanWaterHarvester:
             (is_valid, reason): 是否通过校验及原因
         """
         # 检查 1: 必须有 content
-        content = l2_data.get('content')
+        content = l2_data.get("content")
         if not content or not isinstance(content, dict):
             return False, "Missing or invalid 'content' field"
 
         # 检查 2: 必须有 stats 或 shotmap
-        has_stats = bool(content.get('stats'))
-        has_shotmap = bool(content.get('shotmap'))
+        has_stats = bool(content.get("stats"))
+        has_shotmap = bool(content.get("shotmap"))
 
         if not (has_stats or has_shotmap):
             return False, f"Missing both 'stats' and 'shotmap' (has_stats={has_stats}, has_shotmap={has_shotmap})"
 
         # 检查 3: 关键字段不能为空
-        general = l2_data.get('general', {})
-        if not general.get('homeTeam') or not general.get('awayTeam'):
+        general = l2_data.get("general", {})
+        if not general.get("homeTeam") or not general.get("awayTeam"):
             return False, "Missing home_team or away_team in general data"
 
         # 检查 4: match_id 必须存在且匹配
-        api_match_id = general.get('matchId') or general.get('id')
+        api_match_id = general.get("matchId") or general.get("id")
         if api_match_id and int(api_match_id) != match_id:
             return False, f"Match ID mismatch: requested={match_id}, response={api_match_id}"
 
         # 检查 5: stats 数据质量检查
         if has_stats:
-            stats = content['stats']
+            stats = content["stats"]
             if not isinstance(stats, dict):
                 return False, "Invalid 'stats' format (not a dict)"
 
@@ -187,31 +182,27 @@ class CleanWaterHarvester:
 
         return True, "OK"
 
-    def _log_dirty_match(self, match_id: int, reason: str, l2_data: Dict):
+    def _log_dirty_match(self, match_id: int, reason: str, l2_data: dict):
         """记录脏数据到日志文件"""
         timestamp = datetime.now().isoformat()
         log_entry = {
-            'timestamp': timestamp,
-            'match_id': match_id,
-            'rejection_reason': reason,
-            'data_preview': {
-                'has_content': bool(l2_data.get('content')),
-                'has_stats': bool(l2_data.get('content', {}).get('stats')),
-                'has_shotmap': bool(l2_data.get('content', {}).get('shotmap')),
-                'has_general': bool(l2_data.get('general')),
-            }
+            "timestamp": timestamp,
+            "match_id": match_id,
+            "rejection_reason": reason,
+            "data_preview": {
+                "has_content": bool(l2_data.get("content")),
+                "has_stats": bool(l2_data.get("content", {}).get("stats")),
+                "has_shotmap": bool(l2_data.get("content", {}).get("shotmap")),
+                "has_general": bool(l2_data.get("general")),
+            },
         }
 
-        with open(self.bad_matches_log, 'a', encoding='utf-8') as f:
-            f.write(json.dumps(log_entry, ensure_ascii=False) + '\n')
+        with open(self.bad_matches_log, "a", encoding="utf-8") as f:
+            f.write(json.dumps(log_entry, ensure_ascii=False) + "\n")
 
         logger.warning(f"🚫 脏数据拦截: MatchID {match_id} - {reason}")
 
-    async def fetch_match_l2_with_retry(
-        self,
-        match_id: int,
-        max_retries: int = 3
-    ) -> Optional[Dict]:
+    async def fetch_match_l2_with_retry(self, match_id: int, max_retries: int = 3) -> dict | None:
         """
         V35.2: 带指数退避的 L2 数据获取
 
@@ -228,7 +219,7 @@ class CleanWaterHarvester:
             try:
                 # V35.2: 随机延迟 (1-3 秒)
                 if attempt > 0:
-                    delay = random.uniform(1.0, 3.0) * (2 ** attempt)  # 指数退避
+                    delay = random.uniform(1.0, 3.0) * (2**attempt)  # 指数退避
                     logger.info(f"⏳ 重试 {attempt + 1}/{max_retries}: MatchID {match_id}, 延迟 {delay:.1f}s")
                     await asyncio.sleep(delay)
                 else:
@@ -253,16 +244,16 @@ class CleanWaterHarvester:
                         return None  # 不重试脏数据
 
                     # 判断是否为 LEGACY_DATA
-                    content = data.get('content', {})
-                    is_legacy = not bool(content.get('stats'))
+                    content = data.get("content", {})
+                    is_legacy = not bool(content.get("stats"))
 
                     return {
-                        'match_id': match_id,
-                        'l2_json': data,
-                        'is_legacy': is_legacy,
+                        "match_id": match_id,
+                        "l2_json": data,
+                        "is_legacy": is_legacy,
                     }
 
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 logger.warning(f"超时: MatchID {match_id} (尝试 {attempt + 1}/{max_retries})")
                 self.stats.retry_count += 1
             except Exception as e:
@@ -272,9 +263,9 @@ class CleanWaterHarvester:
         logger.error(f"❌ 达到最大重试次数: MatchID {match_id}")
         return None
 
-    async def harvest_single_match(self, match_info: Dict) -> bool:
+    async def harvest_single_match(self, match_info: dict) -> bool:
         """收割单场比赛"""
-        match_id = match_info['match_id']
+        match_id = match_info["match_id"]
 
         try:
             # 获取 L2 JSON (带重试)
@@ -284,29 +275,21 @@ class CleanWaterHarvester:
                 return False
 
             # 使用 GreedyMiner 提取全息特征
-            holographic_features = self.miner.extract_all_features(
-                l2_data['l2_json'],
-                match_id=match_id
-            )
+            holographic_features = self.miner.extract_all_features(l2_data["l2_json"], match_id=match_id)
 
             # 确定数据版本
-            extraction_version = 'V35.2-HOLOGRAPHIC' if not l2_data['is_legacy'] else 'V35.2-LEGACY'
+            extraction_version = "V35.2-HOLOGRAPHIC" if not l2_data["is_legacy"] else "V35.2-LEGACY"
 
-            if not l2_data['is_legacy']:
+            if not l2_data["is_legacy"]:
                 self.stats.holographic_data += 1
             else:
                 self.stats.legacy_data += 1
 
             # 计算版本指纹
-            extraction_hash = self.miner.get_extraction_hash(l2_data['l2_json'])
+            extraction_hash = self.miner.get_extraction_hash(l2_data["l2_json"])
 
             # 存储到数据库
-            self.save_to_database(
-                match_info,
-                holographic_features,
-                extraction_version,
-                extraction_hash
-            )
+            self.save_to_database(match_info, holographic_features, extraction_version, extraction_hash)
 
             self.stats.successful_harvests += 1
             return True
@@ -316,26 +299,28 @@ class CleanWaterHarvester:
             self.stats.failed_harvests += 1
             return False
 
-    def save_to_database(self, match_info: Dict, holographic_features: Dict,
-                        extraction_version: str, extraction_hash: str):
+    def save_to_database(
+        self, match_info: dict, holographic_features: dict, extraction_version: str, extraction_hash: str
+    ):
         """保存到数据库"""
         cursor = self.db_conn.cursor()
 
         enriched_data = {
-            'holographic_features': holographic_features,
-            'raw_match_info': match_info,
+            "holographic_features": holographic_features,
+            "raw_match_info": match_info,
         }
 
-        match_time = match_info.get('match_time')
+        match_time = match_info.get("match_time")
         if match_time:
             try:
-                match_time = datetime.fromisoformat(match_time.replace('Z', '+00:00'))
+                match_time = datetime.fromisoformat(match_time.replace("Z", "+00:00"))
             except:
                 match_time = datetime.now()
         else:
             match_time = datetime.now()
 
-        cursor.execute("""
+        cursor.execute(
+            """
             INSERT INTO match_features_training (
                 match_id, league_id, season_id, home_team, away_team,
                 match_time, home_score, away_score, total_goals,
@@ -350,23 +335,25 @@ class CleanWaterHarvester:
                 extraction_logic_hash = EXCLUDED.extraction_logic_hash,
                 extraction_timestamp = EXCLUDED.extraction_timestamp,
                 updated_at = CURRENT_TIMESTAMP
-        """, (
-            int(match_info['match_id']),
-            match_info.get('league_id'),
-            match_info.get('season', ''),
-            match_info['home_team'],
-            match_info['away_team'],
-            match_time,
-            match_info.get('home_score'),
-            match_info.get('away_score'),
-            (match_info.get('home_score') or 0) + (match_info.get('away_score') or 0),
-            json.dumps(enriched_data),
-            extraction_version,
-            extraction_hash,
-            datetime.now(),
-            datetime.now(),
-            datetime.now(),
-        ))
+        """,
+            (
+                int(match_info["match_id"]),
+                match_info.get("league_id"),
+                match_info.get("season", ""),
+                match_info["home_team"],
+                match_info["away_team"],
+                match_time,
+                match_info.get("home_score"),
+                match_info.get("away_score"),
+                (match_info.get("home_score") or 0) + (match_info.get("away_score") or 0),
+                json.dumps(enriched_data),
+                extraction_version,
+                extraction_hash,
+                datetime.now(),
+                datetime.now(),
+                datetime.now(),
+            ),
+        )
 
         self.db_conn.commit()
         cursor.close()
@@ -375,42 +362,36 @@ class CleanWaterHarvester:
         """连接数据库"""
         import socket
 
-        is_docker = os.getenv('DOCKER_ENV', 'false').lower() == 'true'
-        db_host_env = os.getenv('DB_HOST', 'db')
-        db_port = int(os.getenv('DB_PORT', 5432))
-        db_name = os.getenv('DB_NAME', 'football_db')
-        db_user = os.getenv('DB_USER', 'football_user')
-        db_pass = os.getenv('DB_PASSWORD', 'football_pass')
+        is_docker = os.getenv("DOCKER_ENV", "false").lower() == "true"
+        db_host_env = os.getenv("DB_HOST", "db")
+        db_port = int(os.getenv("DB_PORT", 5432))
+        db_name = os.getenv("DB_NAME", "football_db")
+        db_user = os.getenv("DB_USER", "football_user")
+        db_pass = os.getenv("DB_PASSWORD", "football_pass")
 
-        if not is_docker and db_host_env in ['db', 'database', 'postgres']:
+        if not is_docker and db_host_env in ["db", "database", "postgres"]:
             try:
-                socket.create_connection(('localhost', 5432), timeout=1)
-                db_host = 'localhost'
+                socket.create_connection(("localhost", 5432), timeout=1)
+                db_host = "localhost"
             except:
                 db_host = db_host_env
         else:
             db_host = db_host_env
 
-        self.db_conn = psycopg2.connect(
-            host=db_host,
-            port=db_port,
-            database=db_name,
-            user=db_user,
-            password=db_pass
-        )
+        self.db_conn = psycopg2.connect(host=db_host, port=db_port, database=db_name, user=db_user, password=db_pass)
         logger.info(f"✓ 数据库连接成功 (host={db_host})")
 
     def load_match_index(self, index_file: Path) -> int:
         """加载比赛索引"""
-        with open(index_file, 'r', encoding='utf-8') as f:
+        with open(index_file, encoding="utf-8") as f:
             data = json.load(f)
 
-        self.match_index = data.get('match_index', [])
+        self.match_index = data.get("match_index", [])
         self.stats.total_matches = len(self.match_index)
         logger.info(f"✓ 加载比赛索引: {self.stats.total_matches:,} 场")
         return self.stats.total_matches
 
-    def filter_harvested_matches(self) -> List[Dict]:
+    def filter_harvested_matches(self) -> list[dict]:
         """过滤已收割的比赛"""
         cursor = self.db_conn.cursor(cursor_factory=RealDictCursor)
 
@@ -425,8 +406,7 @@ class CleanWaterHarvester:
             harvested_keys.add(f"{row['match_id']}_{row['league_id']}_{row['season_id']}")
 
         pending_matches = [
-            m for m in self.match_index
-            if f"{m['match_id']}_{m['league_id']}_{m['season']}" not in harvested_keys
+            m for m in self.match_index if f"{m['match_id']}_{m['league_id']}_{m['season']}" not in harvested_keys
         ]
 
         logger.info(f"✓ 已收割: {len(harvested_keys):,} 场")
@@ -435,11 +415,11 @@ class CleanWaterHarvester:
         cursor.close()
         return pending_matches
 
-    async def harvest_batch(self, matches: List[Dict]) -> None:
+    async def harvest_batch(self, matches: list[dict]) -> None:
         """批量收割"""
         semaphore = asyncio.Semaphore(self.concurrency)
 
-        async def harvest_with_semaphore(match_info: Dict):
+        async def harvest_with_semaphore(match_info: dict):
             async with semaphore:
                 return await self.harvest_single_match(match_info)
 
@@ -450,10 +430,7 @@ class CleanWaterHarvester:
         """异步上下文管理器入口"""
         timeout = aiohttp.ClientTimeout(total=60)
         connector = aiohttp.TCPConnector(limit=5)  # V35.2: 降低连接池
-        self.session = aiohttp.ClientSession(
-            timeout=timeout,
-            connector=connector
-        )
+        self.session = aiohttp.ClientSession(timeout=timeout, connector=connector)
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
@@ -466,19 +443,20 @@ class CleanWaterHarvester:
         elapsed = self.stats.get_elapsed()
         rate = self.stats.get_rate()
 
-        print(f"\r💧 收割中: {self.stats.successful_harvests}/{self.stats.total_matches} "
-              f"| 成功: {self.stats.successful_harvests} | 拒绝: {self.stats.rejected_dirty} | "
-              f"全息: {self.stats.holographic_data} | 遗留: {self.stats.legacy_data} | "
-              f"重试: {self.stats.retry_count} | "
-              f"速度: {rate:.1f} 场/分", end='', flush=True)
+        print(
+            f"\r💧 收割中: {self.stats.successful_harvests}/{self.stats.total_matches} "
+            f"| 成功: {self.stats.successful_harvests} | 拒绝: {self.stats.rejected_dirty} | "
+            f"全息: {self.stats.holographic_data} | 遗留: {self.stats.legacy_data} | "
+            f"重试: {self.stats.retry_count} | "
+            f"速度: {rate:.1f} 场/分",
+            end="",
+            flush=True,
+        )
 
 
 async def main():
     """主函数"""
-    logging.basicConfig(
-        level=logging.INFO,
-        format='%(asctime)s - %(levelname)s - %(message)s'
-    )
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
     # 查找最新索引文件
     index_dir = Path("data/production/global_manifest_v34")
@@ -491,10 +469,10 @@ async def main():
 
     index_file = index_files[-1]
     print(f"📂 使用索引文件: {index_file}")
-    print(f"🎯 V35.2 净水收割模式 - 慢速生产")
-    print(f"   - 并发度: 3 (稳健模式)")
-    print(f"   - 随机延迟: 1-3 秒/请求")
-    print(f"   - 零容忍校验: 启用")
+    print("🎯 V35.2 净水收割模式 - 慢速生产")
+    print("   - 并发度: 3 (稳健模式)")
+    print("   - 随机延迟: 1-3 秒/请求")
+    print("   - 零容忍校验: 启用")
 
     async with CleanWaterHarvester(concurrency=3) as harvester:
         harvester.load_match_index(index_file)
@@ -511,7 +489,7 @@ async def main():
         # 分批收割
         batch_size = 50
         for i in range(0, len(pending_matches), batch_size):
-            batch = pending_matches[i:i + batch_size]
+            batch = pending_matches[i : i + batch_size]
             remaining = len(pending_matches) - i
 
             await harvester.harvest_batch(batch)

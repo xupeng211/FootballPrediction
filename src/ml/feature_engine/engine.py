@@ -14,28 +14,29 @@ FeatureEngine - 特征引擎主编排器
 版本: V24.0-alpha
 """
 
-from typing import Any, Dict, List, Optional, Callable
 import logging
-from datetime import datetime
+from collections.abc import Callable
 from dataclasses import dataclass, field
+from datetime import datetime
+from typing import Any
 
-from .base import BaseProcessor, ProcessorResult, ProcessorConfig
-from .models import MatchData, FeatureVector, ProcessingContext
+from .base import BaseProcessor, ProcessorResult
+from .models import FeatureVector, MatchData, ProcessingContext
 from .processors import (
-    AtomicProcessor,
-    TacticalProcessor,
-    LineupProcessor,
-    RefereeProcessor,
-    ContextProcessor,
-    # V22.0 新增
-    LineupValueProcessor,
     AdvancedPassingProcessor,
-    # V23.0 新增
-    MarketOddsProcessor,
-    InjuryImpactProcessor,
+    AtomicProcessor,
+    ContextProcessor,
     # V24.0 新增
     HistoricalRollingProcessor,
+    InjuryImpactProcessor,
+    LineupProcessor,
+    # V22.0 新增
+    LineupValueProcessor,
+    # V23.0 新增
+    MarketOddsProcessor,
+    RefereeProcessor,
     TacticalCrossProcessor,
+    TacticalProcessor,
 )
 
 logger = logging.getLogger(__name__)
@@ -52,10 +53,11 @@ class EngineConfig:
         enable_checkpoint: 是否启用断点续传
         progress_callback: 进度回调函数
     """
+
     enable_parallel: bool = False
     fail_fast: bool = False
     enable_checkpoint: bool = True
-    progress_callback: Optional[Callable[[str, float], None]] = None
+    progress_callback: Callable[[str, float], None] | None = None
 
 
 @dataclass
@@ -71,19 +73,20 @@ class EngineResult:
         errors: 错误列表
         warnings: 警告列表
     """
+
     success: bool
-    feature_vector: Optional[FeatureVector] = None
-    processor_results: Dict[str, ProcessorResult] = field(default_factory=dict)
-    metadata: Dict[str, Any] = field(default_factory=dict)
-    errors: List[str] = field(default_factory=list)
-    warnings: List[str] = field(default_factory=list)
+    feature_vector: FeatureVector | None = None
+    processor_results: dict[str, ProcessorResult] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
+    errors: list[str] = field(default_factory=list)
+    warnings: list[str] = field(default_factory=list)
 
     @classmethod
     def success_result(
         cls,
         feature_vector: FeatureVector,
-        processor_results: Dict[str, ProcessorResult],
-        metadata: Dict[str, Any] | None = None,
+        processor_results: dict[str, ProcessorResult],
+        metadata: dict[str, Any] | None = None,
     ) -> "EngineResult":
         """创建成功结果"""
         return cls(
@@ -96,8 +99,8 @@ class EngineResult:
     @classmethod
     def failure_result(
         cls,
-        errors: List[str] | str,
-        processor_results: Dict[str, ProcessorResult] | None = None,
+        errors: list[str] | str,
+        processor_results: dict[str, ProcessorResult] | None = None,
     ) -> "EngineResult":
         """创建失败结果"""
         if isinstance(errors, str):
@@ -135,8 +138,8 @@ class FeatureEngine:
 
     def __init__(
         self,
-        config: Optional[EngineConfig] = None,
-        processors: Optional[List[BaseProcessor]] = None,
+        config: EngineConfig | None = None,
+        processors: list[BaseProcessor] | None = None,
     ) -> None:
         """
         初始化特征引擎
@@ -157,13 +160,11 @@ class FeatureEngine:
         self.processors.sort(key=lambda p: p.priority)
 
         # 记录处理器信息
-        logger.info(
-            f"{self.engine_name} v{self.engine_version} initialized with {len(self.processors)} processors"
-        )
+        logger.info(f"{self.engine_name} v{self.engine_version} initialized with {len(self.processors)} processors")
         for proc in self.processors:
             logger.debug(f"  - {proc.processor_name} (priority={proc.priority})")
 
-    def _create_default_processors(self) -> List[BaseProcessor[MatchData]]:
+    def _create_default_processors(self) -> list[BaseProcessor[MatchData]]:
         """
         创建默认处理器集合
 
@@ -205,9 +206,7 @@ class FeatureEngine:
             InjuryImpactProcessor(),
         ]
 
-    def register_processor(
-        self, processor: BaseProcessor[MatchData]
-    ) -> None:
+    def register_processor(self, processor: BaseProcessor[MatchData]) -> None:
         """
         注册新处理器
 
@@ -225,7 +224,7 @@ class FeatureEngine:
     def extract_features(
         self,
         data: MatchData,
-        context: Optional[ProcessingContext] = None,
+        context: ProcessingContext | None = None,
     ) -> EngineResult:
         """
         提取特征（主入口方法）
@@ -247,10 +246,10 @@ class FeatureEngine:
         start_time = datetime.now()
 
         # 存储各处理器结果
-        processor_results: Dict[str, ProcessorResult] = {}
-        all_features: Dict[str, Any] = {}
-        all_errors: List[str] = []
-        all_warnings: List[str] = []
+        processor_results: dict[str, ProcessorResult] = {}
+        all_features: dict[str, Any] = {}
+        all_errors: list[str] = []
+        all_warnings: list[str] = []
 
         logger.info(f"Starting feature extraction for match {data.match_id}")
 
@@ -260,10 +259,7 @@ class FeatureEngine:
                 processor_name = processor.processor_name
 
                 # 检查是否已完成（断点续传）
-                if (
-                    self.config.enable_checkpoint
-                    and context.is_completed(processor_name)
-                ):
+                if self.config.enable_checkpoint and context.is_completed(processor_name):
                     logger.debug(f"Skipping completed processor: {processor_name}")
                     continue
 
@@ -346,8 +342,8 @@ class FeatureEngine:
 
     def extract_features_batch(
         self,
-        data_list: List[MatchData],
-    ) -> List[EngineResult]:
+        data_list: list[MatchData],
+    ) -> list[EngineResult]:
         """
         批量提取特征
 
@@ -369,13 +365,11 @@ class FeatureEngine:
 
         # 统计
         success_count = sum(1 for r in results if r.success)
-        logger.info(
-            f"Batch extraction completed: {success_count}/{len(data_list)} successful"
-        )
+        logger.info(f"Batch extraction completed: {success_count}/{len(data_list)} successful")
 
         return results
 
-    def get_processor_info(self) -> List[Dict[str, Any]]:
+    def get_processor_info(self) -> list[dict[str, Any]]:
         """
         获取处理器信息
 
@@ -416,6 +410,7 @@ class FeatureEngine:
 # 便捷函数
 # ============================================================================
 
+
 def create_default_engine() -> FeatureEngine:
     """
     创建默认配置的特征引擎
@@ -426,7 +421,7 @@ def create_default_engine() -> FeatureEngine:
     return FeatureEngine()
 
 
-def extract_features_simple(data: MatchData) -> Dict[str, Any]:
+def extract_features_simple(data: MatchData) -> dict[str, Any]:
     """
     简单特征提取接口（一行代码提取特征）
 

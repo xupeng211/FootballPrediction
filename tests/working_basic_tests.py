@@ -3,11 +3,12 @@
 专注于核心功能，避免复杂依赖
 """
 
-import pytest
 import asyncio
 import time
-from unittest.mock import Mock, patch, MagicMock
 from pathlib import Path
+from unittest.mock import Mock, patch
+
+import pytest
 
 
 class TestBasicFunctionality:
@@ -77,7 +78,6 @@ class TestBasicFunctionality:
     @patch("pathlib.Path.mkdir")
     def test_path_operations_with_mock(self, mock_mkdir, mock_exists):
         """测试路径操作（使用正确的Mock）"""
-        from pathlib import Path
 
         # 设置Mock返回值
         mock_exists.return_value = True
@@ -222,7 +222,7 @@ class TestErrorHandling:
     def test_file_not_found_error(self):
         """文件不存在错误处理"""
         with pytest.raises(FileNotFoundError):
-            with open("/nonexistent/file.txt", "r"):
+            with open("/nonexistent/file.txt"):
                 pass
 
     def test_value_error(self):

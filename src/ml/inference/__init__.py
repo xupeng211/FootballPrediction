@@ -8,24 +8,29 @@
 
 import logging
 import warnings
-from pathlib import Path
-from typing import Dict, Any, Optional, Union, List
 from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Union
 
 # Import numpy and pandas for type annotations
 import numpy as np
 import pandas as pd
 
-# 导入重构后的组件，使用别名避免循环引用
-from .model_loader import (
-    ModelLoader as _InternalModelLoader,
-    ModelLoadError,
-    ModelMetadata,
+from .cache_manager import (
+    CacheEntry,
+    CacheStats,
 )
 from .cache_manager import (
     PredictionCache as _InternalPredictionCache,
-    CacheEntry,
-    CacheStats,
+)
+
+# 导入重构后的组件，使用别名避免循环引用
+from .model_loader import (
+    ModelLoader as _InternalModelLoader,
+)
+from .model_loader import (
+    ModelLoadError,
+    ModelMetadata,
 )
 from .predictor import MatchPredictor, PredictionError
 
@@ -44,7 +49,7 @@ class Predictor:
     内部使用重构后的 MatchPredictor 实现。
     """
 
-    def __init__(self, model_path: Union[str, Path], feature_names: Optional[List[str]] = None):
+    def __init__(self, model_path: str | Path, feature_names: list[str] | None = None):
         """
         初始化兼容性预测器
 
@@ -89,7 +94,7 @@ class Predictor:
         # 模型在初始化时已经加载，直接返回成功
         return True
 
-    def predict(self, features: Union[List[float], "np.ndarray", "pd.DataFrame"]) -> Dict[str, Any]:
+    def predict(self, features: Union[list[float], "np.ndarray", "pd.DataFrame"]) -> dict[str, Any]:
         """
         执行预测（兼容性方法）
 
@@ -121,7 +126,7 @@ class Predictor:
         except Exception as e:
             raise PredictionError(f"预测失败: {str(e)}") from e
 
-    def get_model_info(self) -> Dict[str, Any]:
+    def get_model_info(self) -> dict[str, Any]:
         """
         获取模型信息（兼容性方法）
 
@@ -161,7 +166,7 @@ class ModelLoader:
     内部使用重构后的 ModelLoader 实现。
     """
 
-    def __init__(self, model_cache_dir: Optional[Union[str, Path]] = None):
+    def __init__(self, model_cache_dir: str | Path | None = None):
         """
         初始化兼容性模型加载器
 
@@ -173,7 +178,7 @@ class ModelLoader:
 
         logger.info(f"兼容性模型加载器初始化完成，缓存目录: {model_cache_dir}")
 
-    def load_model(self, model_name: str, model_path: Optional[Union[str, Path]] = None) -> bool:
+    def load_model(self, model_name: str, model_path: str | Path | None = None) -> bool:
         """
         加载模型（兼容性方法）
 
@@ -196,7 +201,7 @@ class ModelLoader:
             logger.error(f"模型 {model_name} 加载失败: {str(e)}")
             return False
 
-    def get_model(self, model_name: str) -> Optional[Predictor]:
+    def get_model(self, model_name: str) -> Predictor | None:
         """
         获取已加载的模型（兼容性方法）
 
@@ -225,7 +230,7 @@ class ModelLoader:
             return True
         return False
 
-    def list_loaded_models(self) -> List[str]:
+    def list_loaded_models(self) -> list[str]:
         """
         获取已加载模型列表（兼容性方法）
 
@@ -262,7 +267,7 @@ class PredictionCache:
         features_hash = hashlib.sha256(features.tobytes(), usedforsecurity=False).hexdigest()
         return f"{model_name}:{features_hash}"
 
-    def get(self, features: "np.ndarray", model_name: str) -> Optional[Dict[str, Any]]:
+    def get(self, features: "np.ndarray", model_name: str) -> dict[str, Any] | None:
         """
         获取缓存（兼容性方法）
 
@@ -280,8 +285,8 @@ class PredictionCache:
         self,
         features: "np.ndarray",
         model_name: str,
-        result: Dict[str, Any],
-        ttl: Optional[int] = None,
+        result: dict[str, Any],
+        ttl: int | None = None,
     ) -> None:
         """
         设置缓存（兼容性方法）
@@ -332,7 +337,7 @@ class HotReloadManager:
         self.enabled = False
         logger.info("兼容性热重载已禁用")
 
-    def check_and_reload(self) -> List[str]:
+    def check_and_reload(self) -> list[str]:
         """
         检查并重载更新的模型（兼容性方法）
 
@@ -374,7 +379,7 @@ def _get_global_hot_reload_manager():
     return _global_hot_reload_manager
 
 
-def get_predictor(model_path: Union[str, Path], feature_names: Optional[List[str]] = None) -> Predictor:
+def get_predictor(model_path: str | Path, feature_names: list[str] | None = None) -> Predictor:
     """
     获取预测器实例（兼容性函数）
 
@@ -404,11 +409,11 @@ def get_hot_reload_manager() -> HotReloadManager:
 
 
 def predict_match(
-    features: Union[List[float], "np.ndarray", "pd.DataFrame"],
-    model_path: Union[str, Path],
-    feature_names: Optional[List[str]] = None,
+    features: Union[list[float], "np.ndarray", "pd.DataFrame"],
+    model_path: str | Path,
+    feature_names: list[str] | None = None,
     use_cache: bool = True,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     便捷函数：执行单次预测（兼容性函数）
 

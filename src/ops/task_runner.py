@@ -4,19 +4,18 @@
 支持 Cron 和 APScheduler 调度数据采集（L2）和特征增量更新（L3）
 """
 
-import os
-import sys
+import asyncio
 import logging
 import signal
+import sys
+from abc import ABC, abstractmethod
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, Any, Optional, Callable
-from abc import ABC, abstractmethod
+from typing import Any
 
-import asyncio
+from apscheduler.events import EVENT_JOB_ERROR, EVENT_JOB_EXECUTED
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
-from apscheduler.events import EVENT_JOB_EXECUTED, EVENT_JOB_ERROR
 
 # 添加项目路径
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -28,10 +27,7 @@ log_dir.mkdir(parents=True, exist_ok=True)
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    handlers=[
-        logging.FileHandler(log_dir / "task_runner.log"),
-        logging.StreamHandler()
-    ]
+    handlers=[logging.FileHandler(log_dir / "task_runner.log"), logging.StreamHandler()],
 )
 logger = logging.getLogger(__name__)
 
@@ -46,7 +42,7 @@ class BaseTask(ABC):
         self.run_count = 0
 
     @abstractmethod
-    async def execute(self) -> Dict[str, Any]:
+    async def execute(self) -> dict[str, Any]:
         """
         执行任务
 
@@ -55,13 +51,13 @@ class BaseTask(ABC):
         """
         pass
 
-    def get_info(self) -> Dict[str, Any]:
+    def get_info(self) -> dict[str, Any]:
         """获取任务信息"""
         return {
             "name": self.name,
             "last_run": self.last_run.isoformat() if self.last_run else None,
             "last_status": self.last_status,
-            "run_count": self.run_count
+            "run_count": self.run_count,
         }
 
 
@@ -71,18 +67,14 @@ class L2DataHarvestTask(BaseTask):
     def __init__(self):
         super().__init__("L2数据采集")
 
-    async def execute(self) -> Dict[str, Any]:
+    async def execute(self) -> dict[str, Any]:
         """执行 L2 数据采集"""
         logger.info("=" * 60)
         logger.info("📥 开始执行 L2 数据采集任务")
         logger.info("=" * 60)
 
         start_time = datetime.now()
-        result = {
-            "status": "unknown",
-            "message": "",
-            "data": {}
-        }
+        result = {"status": "unknown", "message": "", "data": {}}
 
         try:
             # 导入采集器
@@ -129,7 +121,7 @@ class L2DataHarvestTask(BaseTask):
                 "total_matches": len(matches),
                 "success_count": success_count,
                 "fail_count": fail_count,
-                "elapsed_seconds": round(elapsed, 2)
+                "elapsed_seconds": round(elapsed, 2),
             }
 
             logger.info(f"✅ L2 数据采集完成: {success_count}/{len(matches)} 成功")
@@ -148,23 +140,19 @@ class L3FeatureUpdateTask(BaseTask):
     def __init__(self):
         super().__init__("L3特征更新")
 
-    async def execute(self) -> Dict[str, Any]:
+    async def execute(self) -> dict[str, Any]:
         """执行 L3 特征更新"""
         logger.info("=" * 60)
         logger.info("🔧 开始执行 L3 特征更新任务")
         logger.info("=" * 60)
 
         start_time = datetime.now()
-        result = {
-            "status": "unknown",
-            "message": "",
-            "data": {}
-        }
+        result = {"status": "unknown", "message": "", "data": {}}
 
         try:
             # 导入特征提取器
-            from src.ml.features.industrial_feature_forge import IndustrialFeatureForge
             from src.config_unified import get_settings
+            from src.ml.features.industrial_feature_forge import IndustrialFeatureForge
 
             settings = get_settings()
 
@@ -173,11 +161,7 @@ class L3FeatureUpdateTask(BaseTask):
 
             db = settings.database
             conn = psycopg2.connect(
-                host=db.host,
-                port=db.port,
-                database=db.name,
-                user=db.user,
-                password=db.password.get_secret_value()
+                host=db.host, port=db.port, database=db.name, user=db.user, password=db.password.get_secret_value()
             )
 
             cursor = conn.cursor()
@@ -229,7 +213,7 @@ class L3FeatureUpdateTask(BaseTask):
                 "total_matches": len(matches),
                 "success_count": success_count,
                 "fail_count": fail_count,
-                "elapsed_seconds": round(elapsed, 2)
+                "elapsed_seconds": round(elapsed, 2),
             }
 
             logger.info(f"✅ L3 特征更新完成: {success_count}/{len(matches)} 成功")
@@ -248,19 +232,16 @@ class HealthCheckTask(BaseTask):
     def __init__(self):
         super().__init__("健康检查")
 
-    async def execute(self) -> Dict[str, Any]:
+    async def execute(self) -> dict[str, Any]:
         """执行健康检查"""
         logger.info("🔍 执行健康检查...")
 
         start_time = datetime.now()
-        result = {
-            "status": "unknown",
-            "message": "",
-            "checks": {}
-        }
+        result = {"status": "unknown", "message": "", "checks": {}}
 
         try:
             import psycopg2
+
             from src.config_unified import get_settings
 
             settings = get_settings()
@@ -273,7 +254,7 @@ class HealthCheckTask(BaseTask):
                 database=db.name,
                 user=db.user,
                 password=db.password.get_secret_value(),
-                connect_timeout=5
+                connect_timeout=5,
             )
             conn.close()
 
@@ -281,14 +262,10 @@ class HealthCheckTask(BaseTask):
 
             # 检查 Redis
             import redis
+
             redis_config = settings.redis
 
-            r = redis.Redis(
-                host=redis_config.host,
-                port=redis_config.port,
-                db=redis_config.db,
-                socket_timeout=2
-            )
+            r = redis.Redis(host=redis_config.host, port=redis_config.port, db=redis_config.db, socket_timeout=2)
             r.ping()
             r.close()
 
@@ -315,14 +292,11 @@ class TaskRunner:
 
     def __init__(self):
         self.scheduler = AsyncIOScheduler()
-        self.tasks: Dict[str, BaseTask] = {}
+        self.tasks: dict[str, BaseTask] = {}
         self.running = False
 
         # 注册任务监听器
-        self.scheduler.add_listener(
-            self._job_executed_listener,
-            EVENT_JOB_EXECUTED | EVENT_JOB_ERROR
-        )
+        self.scheduler.add_listener(self._job_executed_listener, EVENT_JOB_EXECUTED | EVENT_JOB_ERROR)
 
         # 注册信号处理器
         signal.signal(signal.SIGINT, self._signal_handler)
@@ -341,12 +315,7 @@ class TaskRunner:
         self.stop()
         sys.exit(0)
 
-    def register_task(
-        self,
-        task: BaseTask,
-        cron_expression: str,
-        job_id: Optional[str] = None
-    ):
+    def register_task(self, task: BaseTask, cron_expression: str, job_id: str | None = None):
         """
         注册定时任务
 
@@ -370,16 +339,10 @@ class TaskRunner:
         # 添加任务
         self.scheduler.add_job(
             self._run_task,
-            trigger=CronTrigger(
-                minute=minute,
-                hour=hour,
-                day=day,
-                month=month,
-                day_of_week=day_of_week
-            ),
+            trigger=CronTrigger(minute=minute, hour=hour, day=day, month=month, day_of_week=day_of_week),
             id=job_id,
             name=task.name,
-            args=[task]
+            args=[task],
         )
 
         logger.info(f"✅ 已注册任务: {task.name} - {cron_expression}")
@@ -433,7 +396,7 @@ class TaskRunner:
         self.running = False
         logger.info("✅ 任务调度器已停止")
 
-    def get_status(self) -> Dict[str, Any]:
+    def get_status(self) -> dict[str, Any]:
         """获取调度器状态"""
         return {
             "running": self.running,
@@ -442,10 +405,10 @@ class TaskRunner:
                 {
                     "id": job.id,
                     "name": job.name,
-                    "next_run_time": job.next_run_time.isoformat() if job.next_run_time else None
+                    "next_run_time": job.next_run_time.isoformat() if job.next_run_time else None,
                 }
                 for job in self.scheduler.get_jobs()
-            ]
+            ],
         }
 
 
@@ -464,27 +427,27 @@ def create_default_scheduler() -> TaskRunner:
     runner.register_task(
         L2DataHarvestTask(),
         cron_expression="0 */6 * * *",  # 每 6 小时
-        job_id="l2_harvest"
+        job_id="l2_harvest",
     )
 
     # 注册 L3 特征更新任务（每 2 小时）
     runner.register_task(
         L3FeatureUpdateTask(),
         cron_expression="0 */2 * * *",  # 每 2 小时
-        job_id="l3_feature_update"
+        job_id="l3_feature_update",
     )
 
     # 注册健康检查任务（每 30 分钟）
     runner.register_task(
         HealthCheckTask(),
         cron_expression="*/30 * * * *",  # 每 30 分钟
-        job_id="health_check"
+        job_id="health_check",
     )
 
     return runner
 
 
-async def run_once(task: BaseTask) -> Dict[str, Any]:
+async def run_once(task: BaseTask) -> dict[str, Any]:
     """运行单个任务一次（用于测试）"""
     logger.info(f"🧪 测试运行任务: {task.name}")
     return await task.execute()
@@ -507,7 +470,7 @@ def main():
         task_map = {
             "l2_harvest": L2DataHarvestTask(),
             "l3_feature_update": L3FeatureUpdateTask(),
-            "health_check": HealthCheckTask()
+            "health_check": HealthCheckTask(),
         }
 
         task = task_map.get(args.test)
@@ -523,7 +486,7 @@ def main():
         # 显示状态
         runner.start()
         status = runner.get_status()
-        print(f"\n调度器状态:")
+        print("\n调度器状态:")
         print(f"运行中: {status['running']}")
         print(f"任务: {status['tasks']}")
         print(f"定时任务: {status['jobs']}")
@@ -541,6 +504,7 @@ def main():
     # 保持运行
     try:
         import asyncio
+
         asyncio.Event().wait()
     except KeyboardInterrupt:
         print("\n\n🛑 收到停止信号...")

@@ -14,6 +14,7 @@ from src.api.collectors.fotmob_core import FotMobCoreCollector
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
+
 class TestParserIntegrity:
     """解析引擎完整性测试套件"""
 
@@ -27,22 +28,10 @@ class TestParserIntegrity:
         """构造真实的L2 JSON样本"""
         return {
             "header": {
-                "teams": [
-                    {"name": "Manchester City", "id": 8456},
-                    {"name": "Chelsea", "id": 8455}
-                ],
-                "status": {
-                    "utcTime": "2024-12-22T15:00:00Z",
-                    "finished": True,
-                    "scoreStr": "3-1"
-                },
-                "league": {
-                    "name": "Premier League",
-                    "id": 2
-                },
-                "venue": {
-                    "name": "Etihad Stadium"
-                }
+                "teams": [{"name": "Manchester City", "id": 8456}, {"name": "Chelsea", "id": 8455}],
+                "status": {"utcTime": "2024-12-22T15:00:00Z", "finished": True, "scoreStr": "3-1"},
+                "league": {"name": "Premier League", "id": 2},
+                "venue": {"name": "Etihad Stadium"},
             },
             "content": {
                 "stats": {
@@ -67,7 +56,7 @@ class TestParserIntegrity:
                                         {"key": "clearances", "value": {"home": 8, "away": 15}},
                                         {"key": "blocks", "value": {"home": 5, "away": 8}},
                                         {"key": "key_passes", "value": {"home": 14, "away": 8}},
-                                        {"key": "big_chances_created", "value": {"home": 4, "away": 1}}
+                                        {"key": "big_chances_created", "value": {"home": 4, "away": 1}},
                                     ]
                                 }
                             ]
@@ -96,8 +85,8 @@ class TestParserIntegrity:
                                 "blocks": 1,
                                 "big_chances_created": 2,
                                 "dribbles_completed": 4,
-                                "fouls": 1
-                            }
+                                "fouls": 1,
+                            },
                         },
                         {
                             "name": "Erling Haaland",
@@ -119,9 +108,9 @@ class TestParserIntegrity:
                                 "blocks": 0,
                                 "big_chances_created": 2,
                                 "dribbles_completed": 2,
-                                "fouls": 2
-                            }
-                        }
+                                "fouls": 2,
+                            },
+                        },
                     ],
                     "away": [
                         {
@@ -144,12 +133,12 @@ class TestParserIntegrity:
                                 "blocks": 1,
                                 "big_chances_created": 0,
                                 "dribbles_completed": 1,
-                                "fouls": 3
-                            }
+                                "fouls": 3,
+                            },
                         }
-                    ]
-                }
-            }
+                    ],
+                },
+            },
         }
 
     def test_parse_match_score_accuracy(self, collector, real_l2_json_sample):
@@ -158,32 +147,30 @@ class TestParserIntegrity:
 
         # 创建模拟数据库记录
         mock_record = (1, 12345)  # id, external_id
-        mock_record_dict = {
-            'id': 1,
-            'external_id': 12345,
-            'l2_raw_json': json.dumps(real_l2_json_sample)
-        }
+        mock_record_dict = {"id": 1, "external_id": 12345, "l2_raw_json": json.dumps(real_l2_json_sample)}
 
         # 解析比分
         result = collector._parse_match_score(mock_record)
 
         # 验证比分提取准确性
         assert result is not None, "比分解析结果不应该为空"
-        assert 'result_score' in result, "应该包含result_score字段"
-        assert 'actual_result' in result, "应该包含actual_result字段"
+        assert "result_score" in result, "应该包含result_score字段"
+        assert "actual_result" in result, "应该包含actual_result字段"
 
         # 验证具体比分值
         expected_score = "3-1"
         expected_result = "H"  # Home win
 
-        assert result['result_score'] == expected_score, f"比分应该是{expected_score}，实际是{result['result_score']}"
-        assert result['actual_result'] == expected_result, f"结果应该是{expected_result}，实际是{result['actual_result']}"
+        assert result["result_score"] == expected_score, f"比分应该是{expected_score}，实际是{result['result_score']}"
+        assert result["actual_result"] == expected_result, (
+            f"结果应该是{expected_result}，实际是{result['actual_result']}"
+        )
 
         # 验证提取的原始数据
-        assert 'home_score' in result, "应该包含home_score字段"
-        assert 'away_score' in result, "应该包含away_score字段"
-        assert result['home_score'] == 3, f"主队比分应该是3，实际是{result['home_score']}"
-        assert result['away_score'] == 1, f"客队比分应该是1，实际是{result['away_score']}"
+        assert "home_score" in result, "应该包含home_score字段"
+        assert "away_score" in result, "应该包含away_score字段"
+        assert result["home_score"] == 3, f"主队比分应该是3，实际是{result['home_score']}"
+        assert result["away_score"] == 1, f"客队比分应该是1，实际是{result['away_score']}"
 
         logger.success(f"✅ 比分提取准确: {result['result_score']} ({result['actual_result']})")
 
@@ -193,11 +180,7 @@ class TestParserIntegrity:
 
         # 创建模拟数据库记录
         mock_record = (1, 12345)
-        mock_record_dict = {
-            'id': 1,
-            'external_id': 12345,
-            'l2_raw_json': json.dumps(real_l2_json_sample)
-        }
+        mock_record_dict = {"id": 1, "external_id": 12345, "l2_raw_json": json.dumps(real_l2_json_sample)}
 
         # 提取技术特征
         features = collector._parse_technical_features(mock_record)
@@ -207,11 +190,31 @@ class TestParserIntegrity:
 
         # 验证核心指标存在且非空
         core_metrics = [
-            'home_shots', 'away_shots', 'total_shots', 'diff_shots', 'ratio_shots',
-            'home_shotsontarget', 'away_shotsontarget', 'total_shotsontarget', 'diff_shotsontarget', 'ratio_shotsontarget',
-            'home_xg', 'away_xg', 'total_xg', 'diff_xg', 'ratio_xg',
-            'home_passes', 'away_passes', 'total_passes', 'diff_passes', 'ratio_passes',
-            'home_possession', 'away_possession', 'total_possession', 'diff_possession', 'ratio_possession'
+            "home_shots",
+            "away_shots",
+            "total_shots",
+            "diff_shots",
+            "ratio_shots",
+            "home_shotsontarget",
+            "away_shotsontarget",
+            "total_shotsontarget",
+            "diff_shotsontarget",
+            "ratio_shotsontarget",
+            "home_xg",
+            "away_xg",
+            "total_xg",
+            "diff_xg",
+            "ratio_xg",
+            "home_passes",
+            "away_passes",
+            "total_passes",
+            "diff_passes",
+            "ratio_passes",
+            "home_possession",
+            "away_possession",
+            "total_possession",
+            "diff_possession",
+            "ratio_possession",
         ]
 
         for metric in core_metrics:
@@ -219,17 +222,19 @@ class TestParserIntegrity:
             assert features[metric] >= 0, f"{metric}应该是非负数，实际是{features[metric]}"
 
         # 验证主队指标与预期值一致
-        assert features['home_shots'] == 18, f"主队射门应该是18，实际是{features['home_shots']}"
-        assert features['away_shots'] == 12, f"客队射门应该是12，实际是{features['away_shots']}"
-        assert features['home_xg'] == pytest.approx(2.3, rel=1e-2), f"主队xG应该是2.3，实际是{features['home_xg']}"
-        assert features['away_xg'] == pytest.approx(0.8, rel=1e-2), f"客队xG应该是0.8，实际是{features['away_xg']}"
-        assert features['home_possession'] == 65, f"主队控球率应该是65，实际是{features['home_possession']}"
-        assert features['away_possession'] == 35, f"客队控球率应该是35，实际是{features['away_possession']}"
+        assert features["home_shots"] == 18, f"主队射门应该是18，实际是{features['home_shots']}"
+        assert features["away_shots"] == 12, f"客队射门应该是12，实际是{features['away_shots']}"
+        assert features["home_xg"] == pytest.approx(2.3, rel=1e-2), f"主队xG应该是2.3，实际是{features['home_xg']}"
+        assert features["away_xg"] == pytest.approx(0.8, rel=1e-2), f"客队xG应该是0.8，实际是{features['away_xg']}"
+        assert features["home_possession"] == 65, f"主队控球率应该是65，实际是{features['home_possession']}"
+        assert features["away_possession"] == 35, f"客队控球率应该是35，实际是{features['away_possession']}"
 
         # 验证衍生计算正确性
-        assert features['total_shots'] == 30, f"总射门应该是30，实际是{features['total_shots']}"
-        assert features['diff_shots'] == 6, f"射门差值应该是6，实际是{features['diff_shots']}"
-        assert features['ratio_shots'] == pytest.approx(1.5, rel=1e-2), f"射门比率应该是1.5，实际是{features['ratio_shots']}"
+        assert features["total_shots"] == 30, f"总射门应该是30，实际是{features['total_shots']}"
+        assert features["diff_shots"] == 6, f"射门差值应该是6，实际是{features['diff_shots']}"
+        assert features["ratio_shots"] == pytest.approx(1.5, rel=1e-2), (
+            f"射门比率应该是1.5，实际是{features['ratio_shots']}"
+        )
 
         logger.success(f"✅ 技术特征提取成功: 提取了{len(features)}个维度指标")
 
@@ -238,29 +243,29 @@ class TestParserIntegrity:
         logger.info("🧪 测试球员统计数据完整性")
 
         # 检查JSON中的球员统计数据结构
-        player_stats = real_l2_json_sample['content']['playerStats']
+        player_stats = real_l2_json_sample["content"]["playerStats"]
 
         # 验证主客队数据存在
-        assert 'home' in player_stats, "应该包含主队球员统计"
-        assert 'away' in player_stats, "应该包含客队球员统计"
-        assert len(player_stats['home']) > 0, "主队球员数据不应该为空"
-        assert len(player_stats['away']) > 0, "客队球员数据不应该为空"
+        assert "home" in player_stats, "应该包含主队球员统计"
+        assert "away" in player_stats, "应该包含客队球员统计"
+        assert len(player_stats["home"]) > 0, "主队球员数据不应该为空"
+        assert len(player_stats["away"]) > 0, "客队球员数据不应该为空"
 
         # 验证球员数据结构完整性
-        home_players = player_stats['home']
+        home_players = player_stats["home"]
         for player in home_players:
-            assert 'name' in player, "球员应该有姓名"
-            assert 'stats' in player, "球员应该有统计数据"
-            assert isinstance(player['stats'], dict), "球员统计数据应该是字典类型"
+            assert "name" in player, "球员应该有姓名"
+            assert "stats" in player, "球员应该有统计数据"
+            assert isinstance(player["stats"], dict), "球员统计数据应该是字典类型"
 
             # 验证核心技术指标存在
-            core_player_metrics = ['shots', 'passes', 'expected_goals', 'touches', 'tackles']
+            core_player_metrics = ["shots", "passes", "expected_goals", "touches", "tackles"]
             for metric in core_player_metrics:
-                assert metric in player['stats'], f"球员统计应该包含{metric}"
+                assert metric in player["stats"], f"球员统计应该包含{metric}"
 
         logger.success(f"✅ 球员统计数据完整: 主队{len(home_players)}名球员, 客队{len(player_stats['away'])}名球员")
 
-    @patch('src.api.collectors.fotmob_core.psycopg2.connect')
+    @patch("src.api.collectors.fotmob_core.psycopg2.connect")
     def test_parse_raw_json_to_db_integration(self, mock_connect, collector, real_l2_json_sample):
         """测试: parse_raw_json_to_db集成测试"""
         logger.info("🧪 测试parse_raw_json_to_db集成功能")
@@ -272,13 +277,11 @@ class TestParserIntegrity:
         mock_connect.return_value = mock_conn
 
         # 模拟查询返回未解析的记录
-        mock_cursor.fetchall.return_value = [
-            (1, 12345, json.dumps(real_l2_json_sample))
-        ]
+        mock_cursor.fetchall.return_value = [(1, 12345, json.dumps(real_l2_json_sample))]
         mock_cursor.fetchone.return_value = None  # ID冲突测试
 
         # 执行解析
-        with patch.object(collector, 'get_database_connection', return_value=mock_conn):
+        with patch.object(collector, "get_database_connection", return_value=mock_conn):
             processed_count = collector.parse_raw_json_to_db(limit=1)
 
         # 验证解析执行
@@ -296,11 +299,7 @@ class TestParserIntegrity:
 
         # 创建模拟记录
         mock_record = (1, 12345)
-        mock_record_dict = {
-            'id': 1,
-            'external_id': 12345,
-            'l2_raw_json': json.dumps(real_l2_json_sample)
-        }
+        mock_record_dict = {"id": 1, "external_id": 12345, "l2_raw_json": json.dumps(real_l2_json_sample)}
 
         # 提取特征
         features = collector._parse_technical_features(mock_record)
@@ -314,11 +313,11 @@ class TestParserIntegrity:
 
         # 检查是否包含预期的特征命名模式
         expected_patterns = [
-            lambda name: name.startswith('home_'),
-            lambda name: name.startswith('away_'),
-            lambda name: name.startswith('total_'),
-            lambda name: name.startswith('diff_'),
-            lambda name: name.startswith('ratio_')
+            lambda name: name.startswith("home_"),
+            lambda name: name.startswith("away_"),
+            lambda name: name.startswith("total_"),
+            lambda name: name.startswith("diff_"),
+            lambda name: name.startswith("ratio_"),
         ]
 
         pattern_matches = 0
@@ -338,22 +337,23 @@ class TestParserIntegrity:
 
         # 创建模拟记录
         mock_record = (1, 12345)
-        mock_record_dict = {
-            'id': 1,
-            'external_id': 12345,
-            'l2_raw_json': json.dumps(real_l2_json_sample)
-        }
+        mock_record_dict = {"id": 1, "external_id": 12345, "l2_raw_json": json.dumps(real_l2_json_sample)}
 
         # 提取特征
         features = collector._parse_technical_features(mock_record)
 
         # 验证所有特征值都是数值类型
         for feature_name, feature_value in features.items():
-            assert isinstance(feature_value, (int, float)), f"特征{feature_name}应该是数值类型，实际是{type(feature_value)}"
+            assert isinstance(feature_value, (int, float)), (
+                f"特征{feature_name}应该是数值类型，实际是{type(feature_value)}"
+            )
             assert not isinstance(feature_value, bool), f"特征{feature_name}不应该是布尔类型"
-            assert not (isinstance(feature_value, float) and (feature_value != feature_value)), f"特征{feature_name}不应该是NaN"
+            assert not (isinstance(feature_value, float) and (feature_value != feature_value)), (
+                f"特征{feature_name}不应该是NaN"
+            )
 
         logger.success(f"✅ 数据类型一致性验证通过: {len(features)}个特征全部为数值类型")
+
 
 if __name__ == "__main__":
     # 直接运行测试

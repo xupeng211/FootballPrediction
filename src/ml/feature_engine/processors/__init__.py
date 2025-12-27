@@ -21,17 +21,19 @@ V24.0 新增:
 """
 
 from .atomic import AtomicProcessor
-from .tactical import TacticalProcessor
-from .lineup import LineupProcessor
-from .referee import RefereeProcessor
 from .context import ContextProcessor
-from .lineup_value import LineupValueProcessor
-from .passing_dna import AdvancedPassingProcessor
-# V23.0 新增
-from .market_odds import MarketOddsProcessor
-from .injury_impact import InjuryImpactProcessor
+
 # V24.0 新增
 from .history import HistoricalRollingProcessor
+from .injury_impact import InjuryImpactProcessor
+from .lineup import LineupProcessor
+from .lineup_value import LineupValueProcessor
+
+# V23.0 新增
+from .market_odds import MarketOddsProcessor
+from .passing_dna import AdvancedPassingProcessor
+from .referee import RefereeProcessor
+from .tactical import TacticalProcessor
 from .tactical_cross import TacticalCrossProcessor
 
 __all__ = [

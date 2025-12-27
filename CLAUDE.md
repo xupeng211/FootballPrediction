@@ -27,18 +27,16 @@
 
 ## ⚠️ 当前系统状态
 
-**当前版本**: V51.0 (Industrial Grade L1 & Historical Database Rebuild)
+**当前版本**: V25.1.0 (万能自适应特征提取引擎)
 **系统状态**: ✅ Production Ready
-**架构**: 归一化部署架构 - Docker Compose Profiles
-**代码规范**: 正常开发流程已恢复
+**架构**: Cloud-Native 归一化部署 - Docker Compose Profiles
+**基线准确率**: 65.52% (V19.4.1)
 
 **版本演进**:
-- V51.0: Industrial Grade L1 & Historical Database Rebuild (最新)
-- V34.0: 全息收割机 + 全局 Manifest (实验性)
-- V32.0: Full Blood 进度监控
+- **V25.1.0**: 万能自适应特征提取引擎 (48维 → 12061维，当前版本)
 - V30.0: Cloud-Native 归一化部署 (Docker 基线)
-- V29.0: 服务解耦与配置优化
-- V19.4.1: Boxing Day Production (稳定基线)
+- V19.4.1: Boxing Day Production (本地生产基线)
+- V17.0: 滚动特征 (生产基线)
 
 **实验性分支**: v34/v38/v39/v40 系列正在研发中（详见 `src/ml/miners_v34/`、`src/ml/models/v38_*.py`、`src/ml/features/v40_*.py`）
 
@@ -73,18 +71,18 @@
 
 ### 🎯 项目概览
 
-**FootballPrediction V19.4** - 基于 XGBoost 2.0+ 的专业足球比赛预测系统
+**FootballPrediction** - 基于 XGBoost 2.0+ 的专业足球比赛预测系统
 
 **项目愿景**: 以年化 25% 的真实收益率为北极星指标，构建可验证、可复制、可持续的体育预测系统
 
 | 属性 | 值 |
 |------|-----|
 | **状态** | ✅ Production Ready |
-| **版本** | V51.0 (Industrial Grade) |
-| **Docker 基线** | V30.0 (Full Blood Cloud-Native) |
+| **版本** | V25.1.0 (万能自适应特征提取引擎) |
+| **Docker 基线** | V30.0 (Cloud-Native) |
 | **基线版本** | V19.4.1 (65.52% 准确率) |
 | **数据量** | 761 场英超 22/23 + 23/24 赛季 |
-| **特征维度** | 48 维（滚动 + 赛前 + 高级动态 + 平局敏感度） |
+| **特征维度** | 48 维 → 12061 维 (V25.1 自适应引擎) |
 
 **核心风险约束**（详见 `docs/PROJECT_VISION.md`）:
 - 单笔下注 ≤ 5% 本金
@@ -196,18 +194,29 @@ python main_production.py --full-pipeline
 #### 生产版本（推荐使用）
 | 版本 | 核心特性 | 特征维度 | 准确率 | 状态 |
 |------|----------|----------|--------|------|
-| **V51.0** | Industrial Grade L1 & Historical Database Rebuild | 48 维 | 65.52% | **最新生产** |
+| **V25.1.0** | 万能自适应特征提取引擎 | 48 → 12061 维 | 65.52% | **当前版本** |
 | **V30.0** | Cloud-Native 归一化部署 | 48 维 | 65.52% | **Docker 基线** |
 | **V19.4.1** | Boxing Day 生产版 + 风控集成 | 48 维 | 65.52% | **本地生产** |
 | V17.0 | 滚动特征（基线） | 16 维 | 65.52% | 生产基线 |
+
+#### 🌟 V25.1 万能自适应特征提取引擎
+
+**核心突破**（2025-12-25）:
+- **零硬编码**: 自动发现并提取所有数值型特征
+- **递归打平**: 处理任意深度的嵌套 JSON 结构
+- **全量吞噬**: 48 维 → 12061 维（251 倍增长）
+- **动态类型发现**: 自动转换 int/float/百分比/布尔值
+- **特征对齐**: NaN 填充确保特征矩阵一致性
+
+**核心文件**: `src/processors/v25_production_extractor.py`
 
 #### 实验性版本（研发中）
 | 版本 | 核心特性 | 特征维度 | 状态 |
 |------|----------|----------|------|
 | V34.0 | 全息收割机 + 全局 Manifest | 800+ 维 | 实验性 |
-| V18.0 | 赛前特征 + 平局优化 | 24 维 | 验证中 |
-| V19.0 | 高级动态特征（ELO/疲劳/战意） | 39 维 | 实验中 |
-| V20.x | 数据中台 + 高维特征引擎 | 800+ 维 | 实验性 |
+| V38.x | 战神模型 + 拳击日报告 | 48+ 维 | 实验中 |
+| V39.x | 差分训练 + 暴力强制 | 48+ 维 | 实验中 |
+| V40.x | 抗泄漏特征引擎 | 800+ 维 | 实验中 |
 
 ### 🔄 V30.0 Cloud-Native 架构
 
@@ -272,7 +281,7 @@ XGBoost 训练（24维/39维/48维特征数据集）
 
 ```
 FootballPrediction/
-├── main_production.py         # V19.4 统一生产入口
+├── main_production.py         # ⭐ 统一生产入口（强烈推荐）
 ├── docker-compose.yml         # V30.0 服务编排
 │
 ├── src/
@@ -294,6 +303,12 @@ FootballPrediction/
 │   │   ├── data/              # 数据加载器
 │   │   │   └── postgres_loader.py   # PostgreSQL 数据加载
 │   │   └── backtest/          # 回测引擎
+│   │
+│   ├── processors/            # V25.1 万能自适应特征提取引擎
+│   │   ├── base_extractor.py      # 基础提取器抽象类
+│   │   ├── v25_production_extractor.py  # V25.1 自适应提取器 (12061维)
+│   │   ├── exceptions.py          # 异常定义
+│   │   └── __init__.py            # 提取器注册表
 │   │
 │   ├── api/                   # 数据采集层
 │   │   ├── collectors/        # FotMob API 采集器
@@ -351,9 +366,12 @@ FootballPrediction/
 
 ### 🎯 主要入口点
 
-#### 统一生产入口（推荐）
+#### ⭐ 统一生产入口（强烈推荐）
+
+**`main_production.py`** 是系统的统一命令行入口，支持所有核心操作：
+
 ```bash
-# 完整流程
+# 完整流程（一键执行）
 python main_production.py --full-pipeline
 
 # 分步执行
@@ -383,6 +401,35 @@ docker-compose up -d            # Docker 模式
 > 版本演进详见 [🏗️ 系统架构](#🏗️-系统架构) 章节
 
 ### 🧬 特征体系
+
+#### 🌟 V25.1 万能自适应特征提取引擎（重大架构升级）
+
+**48 维 → 12061 维（251 倍增长）**
+
+V25.1 是系统架构的重大突破，实现了从硬编码映射向全量自适应吞噬的转变：
+
+**核心设计原则**:
+- **零硬编码**: 自动发现并提取所有数值型特征
+- **递归打平**: 处理任意深度的嵌套 JSON 结构
+- **动态类型发现**: 自动转换 int/float/百分比/布尔值
+- **特征对齐**: NaN 填充确保特征矩阵一致性
+- **命名规范**: 路径式命名保证唯一性和可读性
+
+**核心能力**:
+- **递归打平算法**: 将嵌套 JSON 转换为扁平特征
+- **全量吞噬**: 提取 JSON 中所有数值因子
+- **零数据损耗**: 无论联赛/赛季，最大化特征利用
+- **跨比赛对齐**: 全局特征注册表确保特征一致性
+
+**使用方式**:
+```bash
+# L2 特征解析（使用 V25.1 自适应引擎）
+python main_production.py l2-parse --extractor-version V25.1
+```
+
+**文件位置**: `src/processors/v25_production_extractor.py`
+
+---
 
 #### V17.0 滚动特征（16 维）
 ```
@@ -856,10 +903,10 @@ make db-drop
 
 **🚨 CRITICAL**: This is a production system support document. Any violations of these standards will be automatically rejected!
 
-**🧬 技术栈DNA版本**: V51.0 (Industrial Grade) | **最后验证**: 2025-12-26 |
+**🧬 技术栈DNA版本**: V25.1.0 (万能自适应特征提取引擎) | **最后验证**: 2025-12-27 |
 **基线准确率**: V19.4.1: 65.52% | **数据集**: 英超22/23+23/24赛季 761场有效数据 |
-**生产状态**: V51.0 Production | **API版本**: V11.0 多联赛增强版 |
-**Docker 基线**: V30.0 (Full Blood Cloud-Native) | **统一入口**: docker-compose up -d |
+**生产状态**: V25.1.0 Production | **API版本**: V11.0 多联赛增强版 |
+**Docker 基线**: V30.0 (Cloud-Native) | **统一入口**: docker-compose up -d |
 **项目愿景**: 年化 25% 收益率 | 详见: docs/PROJECT_VISION.md |
 
 ---
@@ -907,16 +954,13 @@ ruff check src/ --select=C901 --show-source  # 复杂度分析
 
 | 版本号 | 入口文件 | 流水线 | 特征维度 | 状态 |
 |--------|----------|--------|----------|------|
-| **V51.0** | `docker-compose up -d` | L1 工业级重建 | 48 维 | **最新生产** |
+| **V25.1.0** | `main_production.py` | V25.1 自适应引擎 | 48 → 12061 维 | **当前版本** |
 | **V30.0** | `docker-compose up -d` | `src/ops/data_pipeline_v25.py` | 48 维 | **Cloud-Native 基线** |
-| V34.0 | `docker-compose --profile holographic up -d` | `src/ml/miners_v34/` | 800+ 维 | **全息收割** |
-| V29.0 | `docker-compose up -d` | `src/ops/data_pipeline_v25.py` | 48 维 | 服务解耦优化 |
+| V34.0 | `docker-compose --profile holographic up -d` | `src/ml/miners_v34/` | 800+ 维 | 全息收割 |
 | **V19.4.1** | `main_production.py` | `src/core/pipeline_v19_4.py` | 48 维 | **本地生产基线** |
-| V19.3 | - | `src/core/pipeline_v19_3_hardened.py` | 45 维 | 生产级 |
 | V19.0 | - | `src/core/pipeline_v19.py` | 39 维 | 实验中 |
 | V18.0 | `main_production.py --v18` | `src/core/pipeline_v18.py` | 24 维 | 验证中 |
 | V17.0 | `main_production.py --v17` | `src/core/pipeline.py` | 16 维 | 生产基线 |
-| V20.x | - | `src/ml/feature_forge_v20.py` | 800+ 维 | 实验性 |
 
 ### D. MCP 服务器使用说明
 
@@ -1081,27 +1125,22 @@ PYTHONDEVMODE=1           # 开发者模式（代码修改实时生效）
 
 | 版本系列 | 核心特性 | 特征维度 | 文件位置 | 状态 |
 |---------|----------|----------|----------|------|
-| **V51** | Industrial Grade L1 & Historical Database Rebuild | 48+ | 工业级数据重建 | **最新生产** |
 | **V34** | 全息收割机 + 全局 Manifest | 800+ | `src/ml/miners_v34/` | 研发中 |
 | **V38** | 战神模型 + 拳击日报告 | 48+ | `src/ml/models/v38_*.py` | 实验中 |
 | **V39** | 差分训练 + 暴力强制 | 48+ | `src/ml/models/v39_*.py` | 实验中 |
 | **V40** | 抗泄漏特征引擎 | 800+ | `src/ml/features/v40_*.py` | 实验中 |
-| **V43** | 容错滚动特征 | 48+ | `src/ml/features/v43_*.py` | 实验中 |
-| **V44** | Docker 导入工具 | - | `src/ops/v44_*.py` | 实验中 |
-| **V45** | 纯源重建 | - | `src/ops/v45_*.py` | 实验中 |
-| **V46** | 全球雷达扫描 | - | `src/ops/v46_*.py` | 实验中 |
 
 #### 版本切换指南
 
 ```bash
-# 使用 V51.0 最新生产版本（推荐）
-docker-compose up -d
-
-# 使用 V19.4.1 本地生产版本
+# 使用 V25.1.0 当前版本（推荐）
 python main_production.py --full-pipeline
 
 # 使用 V30.0 Docker 基线版本
 docker-compose up -d
+
+# 使用 V19.4.1 本地生产版本
+python main_production.py --full-pipeline
 
 # 使用 V34.0 全息收割机
 docker-compose --profile holographic up -d

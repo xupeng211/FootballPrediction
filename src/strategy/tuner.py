@@ -14,27 +14,25 @@ Sprint: 实时化、可观测性与策略调优
 """
 
 import asyncio
+import hashlib
+import json
 import logging
 import time
-from datetime import datetime, timedelta
-from typing import Dict, Any, List, Optional, Tuple, Callable, Union
+from collections.abc import Callable
 from dataclasses import dataclass, field
+from datetime import datetime
 from enum import Enum
-from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
-import json
-import pickle
-import hashlib
 from pathlib import Path
+from typing import Any
+
 import numpy as np
-from scipy import stats, optimize
 import optuna
 
-from ..testing.backtester import BacktestEngine, BacktestConfig, BacktestResult
-from ..strategy.kelly_criterion import KellyCriterion, KellyStrategy
 from ..ml.features.elo_rating_system import EloRatingSystem
 from ..ml.features.poisson_features import PoissonFeatureCalculator
-from ..ml.features.odds_movement_features import OddsMovementAnalyzer
 from ..ml.inference.predictor import MatchPredictor
+from ..strategy.kelly_criterion import KellyCriterion, KellyStrategy
+from ..testing.backtester import BacktestConfig, BacktestEngine, BacktestResult
 
 logger = logging.getLogger(__name__)
 
@@ -67,9 +65,9 @@ class ParameterSpace:
 
     name: str
     param_type: str  # "categorical", "int", "float", "bool"
-    low: Optional[Union[float, int]] = None
-    high: Optional[Union[float, int]] = None
-    choices: Optional[List[Any]] = None
+    low: float | int | None = None
+    high: float | int | None = None
+    choices: list[Any] | None = None
     default: Any = None
 
     def sample(self) -> Any:
@@ -102,7 +100,7 @@ class OptimizationConfig:
     random_seed: int = 42
 
     # 回测配置
-    backtest_config: Optional[BacktestConfig] = None
+    backtest_config: BacktestConfig | None = None
 
     # 优化范围
     optimize_kelly_parameters: bool = True
@@ -116,25 +114,25 @@ class OptimizationConfig:
 class OptimizationResult:
     """优化结果"""
 
-    best_params: Dict[str, Any]
+    best_params: dict[str, Any]
     best_score: float
     best_trial_number: int
     n_trials_completed: int
     optimization_time_seconds: float
 
     # 详细结果
-    trial_history: List[Dict[str, Any]] = field(default_factory=list)
-    parameter_importance: Dict[str, float] = field(default_factory=dict)
-    convergence_curve: List[float] = field(default_factory=list)
+    trial_history: list[dict[str, Any]] = field(default_factory=list)
+    parameter_importance: dict[str, float] = field(default_factory=dict)
+    convergence_curve: list[float] = field(default_factory=list)
 
     # 性能指标
-    final_backtest_result: Optional[BacktestResult] = None
+    final_backtest_result: BacktestResult | None = None
     improvement_over_baseline: float = 0.0
 
     # 元数据
     optimization_id: str = field(default="")
     timestamp: datetime = field(default_factory=datetime.utcnow)
-    config: Optional[OptimizationConfig] = None
+    config: OptimizationConfig | None = None
 
 
 class HyperparameterTuner:
@@ -150,14 +148,14 @@ class HyperparameterTuner:
         self.optimization_id = self._generate_optimization_id()
 
         # 初始化组件
-        self.backtest_engine: Optional[BacktestEngine] = None
-        self.study: Optional[optuna.Study] = None
+        self.backtest_engine: BacktestEngine | None = None
+        self.study: optuna.Study | None = None
 
         # 定义参数空间
         self.parameter_spaces = self._define_parameter_spaces()
 
         # 结果存储
-        self.results_cache: Dict[str, OptimizationResult] = {}
+        self.results_cache: dict[str, OptimizationResult] = {}
         self.current_best_score = float("-inf")
         self.trials_without_improvement = 0
 
@@ -178,7 +176,7 @@ class HyperparameterTuner:
         ).hexdigest()[:8]
         return f"opt_{timestamp}_{config_hash}"
 
-    def _define_parameter_spaces(self) -> Dict[str, ParameterSpace]:
+    def _define_parameter_spaces(self) -> dict[str, ParameterSpace]:
         """定义参数搜索空间"""
         spaces = {}
 
@@ -461,7 +459,7 @@ class HyperparameterTuner:
             logger.error(f"❌ 参数优化失败: {e}")
             raise
 
-    def _create_objective_function(self) -> Callable[[Dict[str, Any]], float]:
+    def _create_objective_function(self) -> Callable[[dict[str, Any]], float]:
         """创建优化目标函数"""
 
         def objective(trial) -> float:
@@ -501,7 +499,7 @@ class HyperparameterTuner:
 
         return objective
 
-    async def _evaluate_parameters(self, params: Dict[str, Any]) -> float:
+    async def _evaluate_parameters(self, params: dict[str, Any]) -> float:
         """
         评估给定参数的性能
 
@@ -533,7 +531,7 @@ class HyperparameterTuner:
             logger.warning(f"⚠️ 参数评估失败: {e}")
             return float("-inf")
 
-    def _create_custom_backtest_config(self, params: Dict[str, Any]) -> BacktestConfig:
+    def _create_custom_backtest_config(self, params: dict[str, Any]) -> BacktestConfig:
         """根据参数创建定制化回测配置"""
         base_config = self.config.backtest_config or BacktestConfig()
 
@@ -555,7 +553,7 @@ class HyperparameterTuner:
 
         return base_config
 
-    async def _inject_parameters_to_components(self, engine: BacktestEngine, params: Dict[str, Any]) -> None:
+    async def _inject_parameters_to_components(self, engine: BacktestEngine, params: dict[str, Any]) -> None:
         """将参数注入到回测引擎的各组件中"""
         try:
             # 1. Kelly准则参数
@@ -594,7 +592,7 @@ class HyperparameterTuner:
         except Exception as e:
             logger.warning(f"⚠️ 参数注入失败: {e}")
 
-    async def _update_kelly_parameters(self, kelly_system: KellyCriterion, params: Dict[str, Any]) -> None:
+    async def _update_kelly_parameters(self, kelly_system: KellyCriterion, params: dict[str, Any]) -> None:
         """更新Kelly准则参数"""
         try:
             if "kelly_strategy" in params:
@@ -613,7 +611,7 @@ class HyperparameterTuner:
         except Exception as e:
             logger.warning(f"⚠️ Kelly参数更新失败: {e}")
 
-    async def _update_elo_parameters(self, elo_system: EloRatingSystem, params: Dict[str, Any]) -> None:
+    async def _update_elo_parameters(self, elo_system: EloRatingSystem, params: dict[str, Any]) -> None:
         """更新Elo评级参数"""
         try:
             if "elo_initial_rating" in params:
@@ -631,7 +629,7 @@ class HyperparameterTuner:
         except Exception as e:
             logger.warning(f"⚠️ Elo参数更新失败: {e}")
 
-    async def _update_poisson_parameters(self, poisson_calc: PoissonFeatureCalculator, params: Dict[str, Any]) -> None:
+    async def _update_poisson_parameters(self, poisson_calc: PoissonFeatureCalculator, params: dict[str, Any]) -> None:
         """更新泊松参数"""
         try:
             if "poisson_home_lambda_default" in params:
@@ -649,7 +647,7 @@ class HyperparameterTuner:
         except Exception as e:
             logger.warning(f"⚠️ 泊松参数更新失败: {e}")
 
-    async def _update_model_weights(self, predictor: MatchPredictor, params: Dict[str, Any]) -> None:
+    async def _update_model_weights(self, predictor: MatchPredictor, params: dict[str, Any]) -> None:
         """更新模型权重"""
         try:
             # 标准化权重
@@ -680,7 +678,7 @@ class HyperparameterTuner:
         except Exception as e:
             logger.warning(f"⚠️ 模型权重更新失败: {e}")
 
-    async def _update_strategy_parameters(self, engine: BacktestEngine, params: Dict[str, Any]) -> None:
+    async def _update_strategy_parameters(self, engine: BacktestEngine, params: dict[str, Any]) -> None:
         """更新策略参数"""
         try:
             # 这里可以添加更多策略特定的参数更新逻辑
@@ -697,7 +695,7 @@ class HyperparameterTuner:
         except Exception as e:
             logger.warning(f"⚠️ 策略参数更新失败: {e}")
 
-    def _calculate_objective_score(self, backtest_result: BacktestResult, params: Dict[str, Any]) -> float:
+    def _calculate_objective_score(self, backtest_result: BacktestResult, params: dict[str, Any]) -> float:
         """
         根据目标指标计算得分
 
@@ -858,7 +856,7 @@ class HyperparameterTuner:
             logger.error(f"❌ 优化结果收集失败: {e}")
             raise
 
-    async def _run_validation_backtest(self, best_params: Dict[str, Any]) -> BacktestResult:
+    async def _run_validation_backtest(self, best_params: dict[str, Any]) -> BacktestResult:
         """运行验证回测"""
         try:
             # 使用最佳参数创建验证配置
@@ -904,7 +902,7 @@ class HyperparameterTuner:
             logger.warning(f"⚠️ 改进程度计算失败: {e}")
             return 0.0
 
-    def save_results(self, result: OptimizationResult, filepath: Optional[str] = None) -> str:
+    def save_results(self, result: OptimizationResult, filepath: str | None = None) -> str:
         """
         保存优化结果
 
@@ -978,7 +976,7 @@ class HyperparameterTuner:
             OptimizationResult: 加载的优化结果
         """
         try:
-            with open(filepath, "r", encoding="utf-8") as f:
+            with open(filepath, encoding="utf-8") as f:
                 data = json.load(f)
 
             # 重构OptimizationResult对象
@@ -1019,9 +1017,9 @@ class HyperparameterTuner:
 
 ## 基本信息
 - **优化ID**: {result.optimization_id}
-- **优化时间**: {result.timestamp.strftime('%Y-%m-%d %H:%M:%S')}
-- **优化策略**: {result.config.strategy.value if result.config else 'N/A'}
-- **目标指标**: {result.config.objective_metric.value if result.config else 'N/A'}
+- **优化时间**: {result.timestamp.strftime("%Y-%m-%d %H:%M:%S")}
+- **优化策略**: {result.config.strategy.value if result.config else "N/A"}
+- **目标指标**: {result.config.objective_metric.value if result.config else "N/A"}
 - **总试验次数**: {result.n_trials_completed}
 - **优化耗时**: {result.optimization_time_seconds:.1f} 秒
 
@@ -1061,8 +1059,8 @@ class HyperparameterTuner:
 
             report += f"""
 ## 优化统计
-- **收敛曲线最佳值**: {(max(result.convergence_curve) if result.convergence_curve else 'N/A'):.4f}
-- **早期停止触发**: {'是' if len(result.trial_history) < result.config.n_trials else '否'}
+- **收敛曲线最佳值**: {(max(result.convergence_curve) if result.convergence_curve else "N/A"):.4f}
+- **早期停止触发**: {"是" if len(result.trial_history) < result.config.n_trials else "否"}
 """
 
             return report

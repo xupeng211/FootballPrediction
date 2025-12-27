@@ -9,16 +9,14 @@
 - 异常检测机制
 """
 
-import asyncio
-import json
 import logging
-from datetime import datetime, timedelta
-from typing import Dict, List, Tuple, Optional, Any, Union
 from dataclasses import dataclass, field
+from datetime import datetime
 from enum import Enum
-import numpy as np
+from typing import Any
+
 import asyncpg
-from pathlib import Path
+import numpy as np
 
 from src.config_unified import get_settings
 
@@ -40,12 +38,12 @@ class TableStructureValidation:
     """表结构验证结果"""
 
     table_name: str
-    expected_columns: List[str]
-    actual_columns: List[str]
-    missing_columns: List[str] = field(default_factory=list)
-    extra_columns: List[str] = field(default_factory=list)
+    expected_columns: list[str]
+    actual_columns: list[str]
+    missing_columns: list[str] = field(default_factory=list)
+    extra_columns: list[str] = field(default_factory=list)
     is_valid: bool = False
-    details: Dict[str, Any] = field(default_factory=dict)
+    details: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -55,10 +53,10 @@ class DataIntegrityResult:
     table_name: str
     total_records: int
     valid_records: int
-    missing_values: Dict[str, int] = field(default_factory=dict)
-    null_percentages: Dict[str, float] = field(default_factory=dict)
+    missing_values: dict[str, int] = field(default_factory=dict)
+    null_percentages: dict[str, float] = field(default_factory=dict)
     integrity_score: float = 0.0
-    issues: List[str] = field(default_factory=list)
+    issues: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -70,8 +68,8 @@ class DataConsistencyResult:
     inconsistent_count: int
     total_checked: int
     consistency_rate: float
-    details: Dict[str, Any] = field(default_factory=dict)
-    recommendations: List[str] = field(default_factory=list)
+    details: dict[str, Any] = field(default_factory=dict)
+    recommendations: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -79,7 +77,7 @@ class AnomalyDetectionResult:
     """异常检测结果"""
 
     anomaly_type: str
-    detected_anomalies: List[Dict[str, Any]]
+    detected_anomalies: list[dict[str, Any]]
     anomaly_count: int
     severity: str  # low, medium, high, critical
     affected_records: int
@@ -92,12 +90,12 @@ class DataQualityReport:
     timestamp: str
     overall_score: float
     quality_level: DataQualityLevel
-    table_validations: List[TableStructureValidation] = field(default_factory=list)
-    integrity_results: List[DataIntegrityResult] = field(default_factory=list)
-    consistency_results: List[DataConsistencyResult] = field(default_factory=list)
-    anomaly_results: List[AnomalyDetectionResult] = field(default_factory=list)
-    summary: Dict[str, Any] = field(default_factory=dict)
-    recommendations: List[str] = field(default_factory=list)
+    table_validations: list[TableStructureValidation] = field(default_factory=list)
+    integrity_results: list[DataIntegrityResult] = field(default_factory=list)
+    consistency_results: list[DataConsistencyResult] = field(default_factory=list)
+    anomaly_results: list[AnomalyDetectionResult] = field(default_factory=list)
+    summary: dict[str, Any] = field(default_factory=dict)
+    recommendations: list[str] = field(default_factory=list)
 
 
 class DataQualityChecker:
@@ -385,7 +383,7 @@ class DataQualityChecker:
         """通用完整性检查"""
         # 获取所有列
         columns = await self.conn.fetch(
-            f"""
+            """
             SELECT column_name FROM information_schema.columns
             WHERE table_name = $1
         """,
@@ -413,7 +411,7 @@ class DataQualityChecker:
             issues=[],
         )
 
-    async def check_data_consistency(self) -> List[DataConsistencyResult]:
+    async def check_data_consistency(self) -> list[DataConsistencyResult]:
         """检查数据一致性"""
         results = []
 
@@ -557,7 +555,7 @@ class DataQualityChecker:
             details={"extreme_inconsistencies": extreme_inconsistency},
         )
 
-    async def detect_anomalies(self) -> List[AnomalyDetectionResult]:
+    async def detect_anomalies(self) -> list[AnomalyDetectionResult]:
         """检测数据异常"""
         anomalies = []
 
@@ -682,10 +680,10 @@ class DataQualityChecker:
 
     async def calculate_quality_score(
         self,
-        integrity_results: List[DataIntegrityResult],
-        consistency_results: List[DataConsistencyResult],
-        anomaly_results: List[AnomalyDetectionResult],
-    ) -> Tuple[float, DataQualityLevel]:
+        integrity_results: list[DataIntegrityResult],
+        consistency_results: list[DataConsistencyResult],
+        anomaly_results: list[AnomalyDetectionResult],
+    ) -> tuple[float, DataQualityLevel]:
         """计算数据质量总分"""
         # 完整性分数 (40%)
         if integrity_results:
@@ -737,11 +735,11 @@ class DataQualityChecker:
 
     async def generate_summary(
         self,
-        table_validations: List[TableStructureValidation],
-        integrity_results: List[DataIntegrityResult],
-        consistency_results: List[DataConsistencyResult],
-        anomaly_results: List[AnomalyDetectionResult],
-    ) -> Dict[str, Any]:
+        table_validations: list[TableStructureValidation],
+        integrity_results: list[DataIntegrityResult],
+        consistency_results: list[DataConsistencyResult],
+        anomaly_results: list[AnomalyDetectionResult],
+    ) -> dict[str, Any]:
         """生成数据质量摘要"""
         summary = {
             "tables_checked": len(table_validations),
@@ -780,11 +778,11 @@ class DataQualityChecker:
 
     async def generate_recommendations(
         self,
-        table_validations: List[TableStructureValidation],
-        integrity_results: List[DataIntegrityResult],
-        consistency_results: List[DataConsistencyResult],
-        anomaly_results: List[AnomalyDetectionResult],
-    ) -> List[str]:
+        table_validations: list[TableStructureValidation],
+        integrity_results: list[DataIntegrityResult],
+        consistency_results: list[DataConsistencyResult],
+        anomaly_results: list[AnomalyDetectionResult],
+    ) -> list[str]:
         """生成改进建议"""
         recommendations = []
 
@@ -886,7 +884,7 @@ class DataQualityChecker:
 
         return report
 
-    async def get_quick_health_status(self) -> Dict[str, Any]:
+    async def get_quick_health_status(self) -> dict[str, Any]:
         """获取快速健康状态"""
         try:
             # 获取关键指标

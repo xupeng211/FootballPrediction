@@ -109,14 +109,10 @@ def complex_nested_data() -> Dict[str, Any]:
                     "string": "test",
                     "boolean": True,
                     "percentage": "75%",
-                    "nested_list": [1, 2, 3, 4, 5]
+                    "nested_list": [1, 2, 3, 4, 5],
                 }
             },
-            "array": [
-                {"id": 1, "value": "a"},
-                {"id": 2, "value": "b"},
-                {"id": 3, "value": "c"}
-            ]
+            "array": [{"id": 1, "value": "a"}, {"id": 2, "value": "b"}, {"id": 3, "value": "c"}],
         },
         "simple_list": [10, 20, 30, 40, 50],
         "mixed_types": {
@@ -126,8 +122,8 @@ def complex_nested_data() -> Dict[str, Any]:
             "percent": "61%",
             "parenthesized": "1.34 (79%)",
             "empty": None,
-            "dash": "-"
-        }
+            "dash": "-",
+        },
     }
 
 
@@ -173,7 +169,7 @@ def full_match_data() -> Dict[str, Any]:
                     "subs": [12, 13, 14, 15, 16, 17, 18],
                     "rating": 7.12,
                 },
-            }
+            },
         },
         "l2_json": {},
     }
@@ -220,7 +216,8 @@ class TestParseValue:
     def test_nan(self):
         """测试 NaN 处理"""
         import math
-        assert _parse_value(float('nan')) is None
+
+        assert _parse_value(float("nan")) is None
 
     def test_boolean(self):
         """测试布尔值转换"""
@@ -317,6 +314,7 @@ class TestFullyFlatten:
         assert "values_len" in result
 
         import numpy as np
+
         assert result["values_mean"] == 3.0
         assert result["values_min"] == 1.0
         assert result["values_max"] == 5.0
@@ -325,12 +323,7 @@ class TestFullyFlatten:
 
     def test_dict_list(self):
         """测试字典列表"""
-        data = {
-            "items": [
-                {"id": 1, "name": "a"},
-                {"id": 2, "name": "b"}
-            ]
-        }
+        data = {"items": [{"id": 1, "name": "a"}, {"id": 2, "name": "b"}]}
         result = _fully_flatten(data)
 
         # 验证路径命名
@@ -381,7 +374,7 @@ class TestFullyFlatten:
             "float_val": 3.14,
             "bool_val": True,
             "percent_val": "75%",
-            "nested": {"bool_false": False}
+            "nested": {"bool_false": False},
         }
         result = _fully_flatten(data)
 
@@ -543,9 +536,7 @@ class TestExtractWithValidation:
 
         class FailingExtractor(MockExtractor):
             def extract(self, raw_data: Dict[str, Any]) -> ExtractionResult:
-                raise SchemaMismatchError(
-                    "Missing content field", expected_path="content", actual_type="None"
-                )
+                raise SchemaMismatchError("Missing content field", expected_path="content", actual_type="None")
 
         extractor = FailingExtractor()
 
@@ -741,18 +732,19 @@ class TestV25ProductionExtractor:
         """测试全局特征对齐机制"""
         # 清空全局注册表
         from src.processors.v25_production_extractor import _GLOBAL_FEATURE_KEYS
+
         _GLOBAL_FEATURE_KEYS.clear()
 
         # 第一次提取
         extractor1 = V25ProductionExtractor()
         result1 = extractor1.extract_with_validation(minimal_match_data)
-        keys1 = set(k for k in result1.features.keys() if not k.startswith('_'))
+        keys1 = set(k for k in result1.features.keys() if not k.startswith("_"))
 
         # 第二次提取（不同数据）
         different_data = {
             "content": {
                 "match": {"matchId": 999},
-                "stats": {"Periods": {"All": {"stats": [{"key": "custom_stat", "stats": [1, 2]}]}}}
+                "stats": {"Periods": {"All": {"stats": [{"key": "custom_stat", "stats": [1, 2]}]}}},
             }
         }
         extractor2 = V25ProductionExtractor()
@@ -826,8 +818,7 @@ class TestIntegration:
 
         # V25.1 应该提取大量特征（自适应吞噬）
         # 完整数据应该产生 100+ 特征
-        assert result.feature_count >= 50, \
-            f"V25.1 自适应引擎应该提取至少 50 个特征，实际: {result.feature_count}"
+        assert result.feature_count >= 50, f"V25.1 自适应引擎应该提取至少 50 个特征，实际: {result.feature_count}"
 
     def test_feature_key_consistency(self, minimal_match_data):
         """测试特征键一致性（路径命名规范）"""
@@ -836,10 +827,10 @@ class TestIntegration:
 
         # 所有特征键应该是小写、只包含字母数字下划线和点
         import re
+
         for key in result.features.keys():
             # 元数据键可以包含下划线和点
             if key.startswith("_"):
                 continue
             # 验证键名格式
-            assert re.match(r'^[a-z0-9._]+$', key), \
-                f"特征键 '{key}' 不符合命名规范"
+            assert re.match(r"^[a-z0-9._]+$", key), f"特征键 '{key}' 不符合命名规范"

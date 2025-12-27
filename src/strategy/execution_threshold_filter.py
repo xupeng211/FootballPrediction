@@ -13,11 +13,9 @@ V19.4 执行阈值过滤器 (Execution Threshold Filter)
 日期: 2025-12-23
 """
 
-import numpy as np
-import pandas as pd
-from typing import Dict, List, Tuple, Optional
-from datetime import datetime
 import logging
+
+import pandas as pd
 
 logger = logging.getLogger(__name__)
 
@@ -49,8 +47,8 @@ class ExecutionThresholdFilter:
         model_prob_a: float,
         market_prob_h: float,
         market_prob_d: float,
-        market_prob_a: float
-    ) -> Dict[str, float]:
+        market_prob_a: float,
+    ) -> dict[str, float]:
         """
         计算置信度差距
 
@@ -76,21 +74,21 @@ class ExecutionThresholdFilter:
         gap_a = model_prob_a - market_prob_a
 
         # 确定预测结果
-        prediction_probs = {'H': model_prob_h, 'D': model_prob_d, 'A': model_prob_a}
+        prediction_probs = {"H": model_prob_h, "D": model_prob_d, "A": model_prob_a}
         prediction = max(prediction_probs, key=prediction_probs.get)
 
         # 检查是否有足够的置信度差距支持
-        gap_map = {'H': gap_h, 'D': gap_d, 'A': gap_a}
+        gap_map = {"H": gap_h, "D": gap_d, "A": gap_a}
         has_confidence_gap = gap_map[prediction] >= self.threshold
 
         return {
-            'gap_h': gap_h,
-            'gap_d': gap_d,
-            'gap_a': gap_a,
-            'max_gap': max(gap_h, gap_d, gap_a),
-            'prediction': prediction,
-            'gap_for_prediction': gap_map[prediction],
-            'has_confidence_gap': has_confidence_gap
+            "gap_h": gap_h,
+            "gap_d": gap_d,
+            "gap_a": gap_a,
+            "max_gap": max(gap_h, gap_d, gap_a),
+            "prediction": prediction,
+            "gap_for_prediction": gap_map[prediction],
+            "has_confidence_gap": has_confidence_gap,
         }
 
     def should_execute(
@@ -100,8 +98,8 @@ class ExecutionThresholdFilter:
         model_prob_a: float,
         market_prob_h: float,
         market_prob_d: float,
-        market_prob_a: float
-    ) -> Tuple[bool, str, float]:
+        market_prob_a: float,
+    ) -> tuple[bool, str, float]:
         """
         判断是否应该执行下注
 
@@ -117,21 +115,17 @@ class ExecutionThresholdFilter:
             Tuple[bool, str, float]: (是否执行, 预测结果, 置信度差距)
         """
         gap_info = self.calculate_confidence_gap(
-            model_prob_h, model_prob_d, model_prob_a,
-            market_prob_h, market_prob_d, market_prob_a
+            model_prob_h, model_prob_d, model_prob_a, market_prob_h, market_prob_d, market_prob_a
         )
 
-        should_bet = gap_info['has_confidence_gap']
-        prediction = gap_info['prediction']
-        gap = gap_info['gap_for_prediction']
+        should_bet = gap_info["has_confidence_gap"]
+        prediction = gap_info["prediction"]
+        gap = gap_info["gap_for_prediction"]
 
         return should_bet, prediction, gap
 
     def filter_execution_signals(
-        self,
-        df: pd.DataFrame,
-        model_prob_col_prefix: str = 'model_prob_',
-        market_prob_col_prefix: str = 'market_prob_'
+        self, df: pd.DataFrame, model_prob_col_prefix: str = "model_prob_", market_prob_col_prefix: str = "market_prob_"
     ) -> pd.DataFrame:
         """
         对数据框应用执行阈值过滤
@@ -150,29 +144,28 @@ class ExecutionThresholdFilter:
 
         for idx, row in df.iterrows():
             # 获取模型和市场概率
-            model_prob_h = row.get(f'{model_prob_col_prefix}h', 0)
-            model_prob_d = row.get(f'{model_prob_col_prefix}d', 0)
-            model_prob_a = row.get(f'{model_prob_col_prefix}a', 0)
+            model_prob_h = row.get(f"{model_prob_col_prefix}h", 0)
+            model_prob_d = row.get(f"{model_prob_col_prefix}d", 0)
+            model_prob_a = row.get(f"{model_prob_col_prefix}a", 0)
 
-            market_prob_h = row.get(f'{market_prob_col_prefix}h', 0)
-            market_prob_d = row.get(f'{market_prob_col_prefix}d', 0)
-            market_prob_a = row.get(f'{market_prob_col_prefix}a', 0)
+            market_prob_h = row.get(f"{market_prob_col_prefix}h", 0)
+            market_prob_d = row.get(f"{market_prob_col_prefix}d", 0)
+            market_prob_a = row.get(f"{market_prob_col_prefix}a", 0)
 
             # 计算置信度差距
             gap_info = self.calculate_confidence_gap(
-                model_prob_h, model_prob_d, model_prob_a,
-                market_prob_h, market_prob_d, market_prob_a
+                model_prob_h, model_prob_d, model_prob_a, market_prob_h, market_prob_d, market_prob_a
             )
 
             # 添加到结果
             result_row = row.copy()
-            result_row['gap_h'] = gap_info['gap_h']
-            result_row['gap_d'] = gap_info['gap_d']
-            result_row['gap_a'] = gap_info['gap_a']
-            result_row['max_gap'] = gap_info['max_gap']
-            result_row['confidence_gap'] = gap_info['gap_for_prediction']
-            result_row['has_confidence_gap'] = gap_info['has_confidence_gap']
-            result_row['filtered_prediction'] = gap_info['prediction'] if gap_info['has_confidence_gap'] else None
+            result_row["gap_h"] = gap_info["gap_h"]
+            result_row["gap_d"] = gap_info["gap_d"]
+            result_row["gap_a"] = gap_info["gap_a"]
+            result_row["max_gap"] = gap_info["max_gap"]
+            result_row["confidence_gap"] = gap_info["gap_for_prediction"]
+            result_row["has_confidence_gap"] = gap_info["has_confidence_gap"]
+            result_row["filtered_prediction"] = gap_info["prediction"] if gap_info["has_confidence_gap"] else None
 
             results.append(result_row)
 
@@ -180,22 +173,19 @@ class ExecutionThresholdFilter:
 
         # 统计过滤效果
         total_count = len(result_df)
-        filtered_count = result_df['has_confidence_gap'].sum()
+        filtered_count = result_df["has_confidence_gap"].sum()
         filter_rate = (total_count - filtered_count) / total_count * 100 if total_count > 0 else 0
 
-        logger.info(f"执行阈值过滤完成:")
+        logger.info("执行阈值过滤完成:")
         logger.info(f"  总场次: {total_count}")
-        logger.info(f"  通过过滤: {filtered_count} ({filtered_count/total_count*100:.1f}%)")
+        logger.info(f"  通过过滤: {filtered_count} ({filtered_count / total_count * 100:.1f}%)")
         logger.info(f"  被过滤: {total_count - filtered_count} ({filter_rate:.1f}%)")
 
         return result_df
 
     def calculate_filtered_yield(
-        self,
-        df: pd.DataFrame,
-        result_col: str = 'result_score',
-        odds_col_prefix: str = 'b365_'
-    ) -> Dict[str, float]:
+        self, df: pd.DataFrame, result_col: str = "result_score", odds_col_prefix: str = "b365_"
+    ) -> dict[str, float]:
         """
         计算阈值过滤后的理论执行绩效 (Yield)
 
@@ -208,38 +198,33 @@ class ExecutionThresholdFilter:
             Dict: 绩效统计
         """
         # 只选择通过过滤的比赛
-        filtered_df = df[df['has_confidence_gap'] == True].copy()
+        filtered_df = df[df["has_confidence_gap"] == True].copy()
 
         if len(filtered_df) == 0:
             logger.warning("没有通过过滤的比赛，无法计算 Yield")
-            return {
-                'total_bets': 0,
-                'total_yield': 0.0,
-                'yield_percentage': 0.0,
-                'avg_return': 0.0
-            }
+            return {"total_bets": 0, "total_yield": 0.0, "yield_percentage": 0.0, "avg_return": 0.0}
 
         total_bets = len(filtered_df)
         total_yield = 0.0
 
         for idx, row in filtered_df.iterrows():
-            prediction = row['filtered_prediction']
+            prediction = row["filtered_prediction"]
             actual = row.get(result_col, None)
 
             if prediction is None or actual is None:
                 continue
 
             # 获取对应结果的市场赔率
-            if prediction == 'H':
-                odds = row.get(f'{odds_col_prefix}home_odds', 1.0)
-            elif prediction == 'D':
-                odds = row.get(f'{odds_col_prefix}draw_odds', 1.0)
+            if prediction == "H":
+                odds = row.get(f"{odds_col_prefix}home_odds", 1.0)
+            elif prediction == "D":
+                odds = row.get(f"{odds_col_prefix}draw_odds", 1.0)
             else:  # 'A'
-                odds = row.get(f'{odds_col_prefix}away_odds', 1.0)
+                odds = row.get(f"{odds_col_prefix}away_odds", 1.0)
 
             # 计算收益（下注1单位）
             if prediction == actual:
-                total_yield += (odds - 1)  # 净收益
+                total_yield += odds - 1  # 净收益
             else:
                 total_yield -= 1  # 损失本金
 
@@ -247,18 +232,15 @@ class ExecutionThresholdFilter:
         avg_return = ((total_yield + total_bets) / total_bets) if total_bets > 0 else 0
 
         return {
-            'total_bets': total_bets,
-            'total_yield': total_yield,
-            'yield_percentage': yield_pct,
-            'avg_return': avg_return
+            "total_bets": total_bets,
+            "total_yield": total_yield,
+            "yield_percentage": yield_pct,
+            "avg_return": avg_return,
         }
 
     def compare_execution_modes(
-        self,
-        df: pd.DataFrame,
-        result_col: str = 'result_score',
-        odds_col_prefix: str = 'b365_'
-    ) -> Dict[str, Dict]:
+        self, df: pd.DataFrame, result_col: str = "result_score", odds_col_prefix: str = "b365_"
+    ) -> dict[str, dict]:
         """
         对比全量执行 vs 阈值过滤执行的绩效
 
@@ -279,54 +261,53 @@ class ExecutionThresholdFilter:
 
         # 3. 计算改进指标
         improvement = {
-            'yield_improvement': filtered_yield['yield_percentage'] - full_execution_yield['yield_percentage'],
-            'yield_improvement_pct': (
-                (filtered_yield['yield_percentage'] - full_execution_yield['yield_percentage']) /
-                abs(full_execution_yield['yield_percentage']) * 100
-                if full_execution_yield['yield_percentage'] != 0 else 0
+            "yield_improvement": filtered_yield["yield_percentage"] - full_execution_yield["yield_percentage"],
+            "yield_improvement_pct": (
+                (filtered_yield["yield_percentage"] - full_execution_yield["yield_percentage"])
+                / abs(full_execution_yield["yield_percentage"])
+                * 100
+                if full_execution_yield["yield_percentage"] != 0
+                else 0
             ),
-            'bet_reduction': full_execution_yield['total_bets'] - filtered_yield['total_bets'],
-            'bet_reduction_pct': (
-                (full_execution_yield['total_bets'] - filtered_yield['total_bets']) /
-                full_execution_yield['total_bets'] * 100
-                if full_execution_yield['total_bets'] > 0 else 0
-            )
+            "bet_reduction": full_execution_yield["total_bets"] - filtered_yield["total_bets"],
+            "bet_reduction_pct": (
+                (full_execution_yield["total_bets"] - filtered_yield["total_bets"])
+                / full_execution_yield["total_bets"]
+                * 100
+                if full_execution_yield["total_bets"] > 0
+                else 0
+            ),
         }
 
         return {
-            'full_execution': full_execution_yield,
-            'filtered_execution': filtered_yield,
-            'improvement': improvement
+            "full_execution": full_execution_yield,
+            "filtered_execution": filtered_yield,
+            "improvement": improvement,
         }
 
-    def _calculate_full_yield(
-        self,
-        df: pd.DataFrame,
-        result_col: str,
-        odds_col_prefix: str
-    ) -> Dict[str, float]:
+    def _calculate_full_yield(self, df: pd.DataFrame, result_col: str, odds_col_prefix: str) -> dict[str, float]:
         """计算全量执行的 Yield"""
         total_bets = len(df)
         total_yield = 0.0
 
         for idx, row in df.iterrows():
-            prediction = row.get('predicted_result', None)
+            prediction = row.get("predicted_result", None)
             actual = row.get(result_col, None)
 
             if prediction is None or actual is None:
                 continue
 
             # 获取对应结果的市场赔率
-            if prediction == 'H':
-                odds = row.get(f'{odds_col_prefix}home_odds', 1.0)
-            elif prediction == 'D':
-                odds = row.get(f'{odds_col_prefix}draw_odds', 1.0)
+            if prediction == "H":
+                odds = row.get(f"{odds_col_prefix}home_odds", 1.0)
+            elif prediction == "D":
+                odds = row.get(f"{odds_col_prefix}draw_odds", 1.0)
             else:  # 'A'
-                odds = row.get(f'{odds_col_prefix}away_odds', 1.0)
+                odds = row.get(f"{odds_col_prefix}away_odds", 1.0)
 
             # 计算收益
             if prediction == actual:
-                total_yield += (odds - 1)
+                total_yield += odds - 1
             else:
                 total_yield -= 1
 
@@ -334,18 +315,18 @@ class ExecutionThresholdFilter:
         avg_return = ((total_yield + total_bets) / total_bets) if total_bets > 0 else 0
 
         return {
-            'total_bets': total_bets,
-            'total_yield': total_yield,
-            'yield_percentage': yield_pct,
-            'avg_return': avg_return
+            "total_bets": total_bets,
+            "total_yield": total_yield,
+            "yield_percentage": yield_pct,
+            "avg_return": avg_return,
         }
 
 
 def apply_execution_threshold_filter(
     df: pd.DataFrame,
     threshold: float = 0.05,
-    model_prob_col_prefix: str = 'model_prob_',
-    market_prob_col_prefix: str = 'market_prob_'
+    model_prob_col_prefix: str = "model_prob_",
+    market_prob_col_prefix: str = "market_prob_",
 ) -> pd.DataFrame:
     """
     应用执行阈值过滤的便捷函数
@@ -369,19 +350,21 @@ def apply_execution_threshold_filter(
 
 if __name__ == "__main__":
     # 测试数据
-    test_data = pd.DataFrame({
-        'model_prob_h': [0.55, 0.40, 0.30, 0.60],
-        'model_prob_d': [0.25, 0.35, 0.40, 0.25],
-        'model_prob_a': [0.20, 0.25, 0.30, 0.15],
-        'market_prob_h': [0.50, 0.42, 0.28, 0.58],
-        'market_prob_d': [0.28, 0.33, 0.38, 0.27],
-        'market_prob_a': [0.22, 0.25, 0.34, 0.15],
-        'predicted_result': ['H', 'D', 'A', 'H'],
-        'result_score': ['H', 'D', 'H', 'A'],
-        'b365_home_odds': [2.0, 2.4, 3.2, 1.8],
-        'b365_draw_odds': [3.6, 3.0, 2.6, 3.8],
-        'b365_away_odds': [4.5, 4.0, 2.9, 5.0]
-    })
+    test_data = pd.DataFrame(
+        {
+            "model_prob_h": [0.55, 0.40, 0.30, 0.60],
+            "model_prob_d": [0.25, 0.35, 0.40, 0.25],
+            "model_prob_a": [0.20, 0.25, 0.30, 0.15],
+            "market_prob_h": [0.50, 0.42, 0.28, 0.58],
+            "market_prob_d": [0.28, 0.33, 0.38, 0.27],
+            "market_prob_a": [0.22, 0.25, 0.34, 0.15],
+            "predicted_result": ["H", "D", "A", "H"],
+            "result_score": ["H", "D", "H", "A"],
+            "b365_home_odds": [2.0, 2.4, 3.2, 1.8],
+            "b365_draw_odds": [3.6, 3.0, 2.6, 3.8],
+            "b365_away_odds": [4.5, 4.0, 2.9, 5.0],
+        }
+    )
 
     # 测试执行阈值过滤
     print("=" * 60)
@@ -394,7 +377,7 @@ if __name__ == "__main__":
     filtered_df = filter_engine.filter_execution_signals(test_data)
 
     print("\n过滤结果:")
-    print(filtered_df[['predicted_result', 'confidence_gap', 'has_confidence_gap', 'filtered_prediction']])
+    print(filtered_df[["predicted_result", "confidence_gap", "has_confidence_gap", "filtered_prediction"]])
 
     # 计算绩效对比
     comparison = filter_engine.compare_execution_modes(test_data)
@@ -411,4 +394,6 @@ if __name__ == "__main__":
 
     print("\n改进指标:")
     print(f"  Yield 提升: {comparison['improvement']['yield_improvement']:.2f}个百分点")
-    print(f"  下注减少: {comparison['improvement']['bet_reduction']}场 ({comparison['improvement']['bet_reduction_pct']:.1f}%)")
+    print(
+        f"  下注减少: {comparison['improvement']['bet_reduction']}场 ({comparison['improvement']['bet_reduction_pct']:.1f}%)"
+    )

@@ -19,15 +19,12 @@ from datetime import datetime
 # 添加荷甲和英冠配置
 PHASE1_LEAGUES = [
     # (league_id, league_name, fotmob_code_prefix)
-    (29, "Eredivisie", "24"),   # 荷甲 - 使用 2024 作为基准
+    (29, "Eredivisie", "24"),  # 荷甲 - 使用 2024 作为基准
     (48, "Championship", "24"),  # 英冠 - 使用 2024 作为基准
 ]
 
 
-async def fetch_match_details(
-    session,
-    match_id: int
-) -> tuple:
+async def fetch_match_details(session, match_id: int) -> tuple:
     """
     获取比赛详情（包括比分）
 
@@ -46,12 +43,12 @@ async def fetch_match_details(
                 data = await response.json()
 
                 # 从 header.teams 提取比分
-                header = data.get('header', {})
-                teams = header.get('teams', [])
+                header = data.get("header", {})
+                teams = header.get("teams", [])
 
                 if len(teams) >= 2:
-                    home_score = teams[0].get('score')
-                    away_score = teams[1].get('score')
+                    home_score = teams[0].get("score")
+                    away_score = teams[1].get("score")
                     return (home_score, away_score)
     except Exception:
         pass  # 静默失败
@@ -59,11 +56,7 @@ async def fetch_match_details(
     return (None, None)
 
 
-async def scan_single_league(
-    league_id: int,
-    league_name: str,
-    season_code_prefix: str
-) -> list[dict]:
+async def scan_single_league(league_id: int, league_name: str, season_code_prefix: str) -> list[dict]:
     """
     扫描单个联赛的所有赛季（带 Rich L1 比分）
 
@@ -96,28 +89,28 @@ async def scan_single_league(
                         data = await response.json()
 
                         # 解析比赛
-                        fixtures = data.get('fixtures', {})
-                        all_matches = fixtures.get('allMatches', [])
+                        fixtures = data.get("fixtures", {})
+                        all_matches = fixtures.get("allMatches", [])
 
                         for match_data in all_matches:
-                            match_id = match_data.get('id')
+                            match_id = match_data.get("id")
                             if not match_id:
                                 continue
 
-                            home_team = match_data.get('home', {})
-                            away_team = match_data.get('away', {})
-                            status_obj = match_data.get('status', {})
+                            home_team = match_data.get("home", {})
+                            away_team = match_data.get("away", {})
+                            status_obj = match_data.get("status", {})
 
                             # 判断状态
-                            is_finished = status_obj.get('finished', False)
-                            is_started = status_obj.get('started', False)
+                            is_finished = status_obj.get("finished", False)
+                            is_started = status_obj.get("started", False)
 
                             if is_finished:
-                                status = 'finished'
+                                status = "finished"
                             elif is_started:
-                                status = 'ongoing'
+                                status = "ongoing"
                             else:
-                                status = 'scheduled'
+                                status = "scheduled"
 
                             # 构建赛季名称
                             if len(season_code) == 4:
@@ -126,18 +119,18 @@ async def scan_single_league(
                                 season_name = season_code
 
                             match_info = {
-                                'match_id': match_id,
-                                'league_id': league_id,
-                                'season_id': season_code,
-                                'season_name': season_name,
-                                'home_team': home_team.get('name', 'Unknown'),
-                                'away_team': away_team.get('name', 'Unknown'),
-                                'home_team_id': home_team.get('id', 0),
-                                'away_team_id': away_team.get('id', 0),
-                                'status': status,
-                                'match_time_utc': status_obj.get('utcTime', ''),
-                                'home_score': None,  # 初始为 None
-                                'away_score': None,  # 初始为 None
+                                "match_id": match_id,
+                                "league_id": league_id,
+                                "season_id": season_code,
+                                "season_name": season_name,
+                                "home_team": home_team.get("name", "Unknown"),
+                                "away_team": away_team.get("name", "Unknown"),
+                                "home_team_id": home_team.get("id", 0),
+                                "away_team_id": away_team.get("id", 0),
+                                "status": status,
+                                "match_time_utc": status_obj.get("utcTime", ""),
+                                "home_score": None,  # 初始为 None
+                                "away_score": None,  # 初始为 None
                             }
 
                             matches.append(match_info)
@@ -159,11 +152,11 @@ async def scan_single_league(
 
             fetched_count = 0
             for match_info, idx in finished_matches_to_fetch:
-                home_score, away_score = await fetch_match_details(session, match_info['match_id'])
+                home_score, away_score = await fetch_match_details(session, match_info["match_id"])
 
                 if home_score is not None and away_score is not None:
-                    matches[idx]['home_score'] = home_score
-                    matches[idx]['away_score'] = away_score
+                    matches[idx]["home_score"] = home_score
+                    matches[idx]["away_score"] = away_score
                     fetched_count += 1
 
                 # 避免请求过快
@@ -186,19 +179,19 @@ def print_score_distribution(matches: list[dict], league_name: str):
     print("=" * 70)
 
     total = len(matches)
-    finished = [m for m in matches if m['status'] == 'finished']
-    ongoing = [m for m in matches if m['status'] == 'ongoing']
-    scheduled = [m for m in matches if m['status'] == 'scheduled']
+    finished = [m for m in matches if m["status"] == "finished"]
+    ongoing = [m for m in matches if m["status"] == "ongoing"]
+    scheduled = [m for m in matches if m["status"] == "scheduled"]
 
     # 比分统计
-    finished_with_score = [m for m in finished if m['home_score'] is not None]
-    finished_without_score = [m for m in finished if m['home_score'] is None]
+    finished_with_score = [m for m in finished if m["home_score"] is not None]
+    finished_without_score = [m for m in finished if m["home_score"] is None]
 
     print("\n📈 总体统计:")
     print(f"   总比赛数: {total:,}")
-    print(f"   已完赛: {len(finished):,} ({len(finished)/total*100:.1f}%)")
-    print(f"   进行中: {len(ongoing):,} ({len(ongoing)/total*100:.1f}%)")
-    print(f"   未开始: {len(scheduled):,} ({len(scheduled)/total*100:.1f}%)")
+    print(f"   已完赛: {len(finished):,} ({len(finished) / total * 100:.1f}%)")
+    print(f"   进行中: {len(ongoing):,} ({len(ongoing) / total * 100:.1f}%)")
+    print(f"   未开始: {len(scheduled):,} ({len(scheduled) / total * 100:.1f}%)")
 
     print("\n🎯 比分统计 (Rich L1 核心指标):")
     print(f"   已完赛带比分: {len(finished_with_score):,}")
@@ -210,14 +203,14 @@ def print_score_distribution(matches: list[dict], league_name: str):
     # 按赛季统计
     season_stats = {}
     for match in matches:
-        season = match['season_name']
+        season = match["season_name"]
         if season not in season_stats:
-            season_stats[season] = {'total': 0, 'finished': 0, 'with_score': 0}
-        season_stats[season]['total'] += 1
-        if match['status'] == 'finished':
-            season_stats[season]['finished'] += 1
-        if match['home_score'] is not None:
-            season_stats[season]['with_score'] += 1
+            season_stats[season] = {"total": 0, "finished": 0, "with_score": 0}
+        season_stats[season]["total"] += 1
+        if match["status"] == "finished":
+            season_stats[season]["finished"] += 1
+        if match["home_score"] is not None:
+            season_stats[season]["with_score"] += 1
 
     print("\n📅 按赛季分布:")
     for season in sorted(season_stats.keys()):
@@ -225,15 +218,15 @@ def print_score_distribution(matches: list[dict], league_name: str):
         print(f"   {season:6s}: {stats['total']:4d} 场 | 完赛 {stats['finished']:4d} | 带比分 {stats['with_score']:4d}")
 
     # 结果分布
-    home_wins = sum(1 for m in finished_with_score if m['home_score'] > m['away_score'])
-    draws = sum(1 for m in finished_with_score if m['home_score'] == m['away_score'])
-    away_wins = sum(1 for m in finished_with_score if m['home_score'] < m['away_score'])
+    home_wins = sum(1 for m in finished_with_score if m["home_score"] > m["away_score"])
+    draws = sum(1 for m in finished_with_score if m["home_score"] == m["away_score"])
+    away_wins = sum(1 for m in finished_with_score if m["home_score"] < m["away_score"])
 
     if finished_with_score:
         print("\n🏆 结果分布 (已完赛带比分):")
-        print(f"   主胜: {home_wins} ({home_wins/len(finished_with_score)*100:.1f}%)")
-        print(f"   平局: {draws} ({draws/len(finished_with_score)*100:.1f}%)")
-        print(f"   客胜: {away_wins} ({away_wins/len(finished_with_score)*100:.1f}%)")
+        print(f"   主胜: {home_wins} ({home_wins / len(finished_with_score) * 100:.1f}%)")
+        print(f"   平局: {draws} ({draws / len(finished_with_score) * 100:.1f}%)")
+        print(f"   客胜: {away_wins} ({away_wins / len(finished_with_score) * 100:.1f}%)")
 
     print("=" * 70)
 
@@ -257,20 +250,25 @@ async def main():
             continue
 
         # 保存结果
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         output_file = output_dir / f"v50_phase1_{league_name}_{timestamp}.json"
 
-        with open(output_file, 'w', encoding='utf-8') as f:
-            json.dump({
-                'metadata': {
-                    'version': 'V50.0-Phase1-Simple',
-                    'league': league_name,
-                    'league_id': league_id,
-                    'timestamp': datetime.now().isoformat(),
-                    'total_matches': len(matches),
+        with open(output_file, "w", encoding="utf-8") as f:
+            json.dump(
+                {
+                    "metadata": {
+                        "version": "V50.0-Phase1-Simple",
+                        "league": league_name,
+                        "league_id": league_id,
+                        "timestamp": datetime.now().isoformat(),
+                        "total_matches": len(matches),
+                    },
+                    "matches": matches,
                 },
-                'matches': matches,
-            }, f, indent=2, ensure_ascii=False)
+                f,
+                indent=2,
+                ensure_ascii=False,
+            )
 
         print(f"💾 数据已保存: {output_file}")
 
@@ -286,8 +284,10 @@ async def main():
         print("=" * 70)
 
         total_matches = sum(len(m) for m in all_matches_by_league.values())
-        total_finished = sum(len([x for x in m if x['status'] == 'finished']) for m in all_matches_by_league.values())
-        total_with_score = sum(len([x for x in m if x['home_score'] is not None]) for m in all_matches_by_league.values())
+        total_finished = sum(len([x for x in m if x["status"] == "finished"]) for m in all_matches_by_league.values())
+        total_with_score = sum(
+            len([x for x in m if x["home_score"] is not None]) for m in all_matches_by_league.values()
+        )
 
         print("\n📊 联赛汇总:")
         for league_name, matches in all_matches_by_league.items():

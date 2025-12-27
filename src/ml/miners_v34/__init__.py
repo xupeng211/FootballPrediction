@@ -7,6 +7,6 @@ V34.0 Holographic Mining Package
 
 from .greedy_miner import GreedyMiner
 
-__all__ = ['GreedyMiner']
+__all__ = ["GreedyMiner"]
 
-__version__ = '34.0.0'
+__version__ = "34.0.0"

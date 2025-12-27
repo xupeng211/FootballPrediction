@@ -4,10 +4,11 @@
 提高测试数据质量和覆盖率
 """
 
+from datetime import UTC, datetime, timedelta
+from typing import Any
+
 import factory
 from factory import fuzzy
-from datetime import datetime, timedelta, timezone
-from typing import Dict, Any
 
 
 # 模拟项目中的模型和枚举
@@ -59,9 +60,7 @@ class MatchFactory(factory.Factory):
     )
 
     # 时间和场地
-    match_date = fuzzy.FuzzyDateTime(
-        datetime.now(timezone.utc) - timedelta(days=30), datetime.now(timezone.utc) + timedelta(days=30)
-    )
+    match_date = fuzzy.FuzzyDateTime(datetime.now(UTC) - timedelta(days=30), datetime.now(UTC) + timedelta(days=30))
     venue = fuzzy.FuzzyChoice(
         [
             "Old Trafford",
@@ -171,7 +170,9 @@ class PredictionFactory(factory.Factory):
         lambda o: (
             "HOME_WIN"
             if o.home_win_prob > max(o.draw_prob, o.away_prob)
-            else "DRAW" if o.draw_prob > o.away_prob else "AWAY_WIN"
+            else "DRAW"
+            if o.draw_prob > o.away_prob
+            else "AWAY_WIN"
         )
     )
 
@@ -241,7 +242,7 @@ class PerformanceTestDataFactory(factory.Factory):
 
 
 # 使用示例和便捷函数
-def create_test_match_with_outcome(home_team: str, away_team: str, outcome: str) -> Dict[str, Any]:
+def create_test_match_with_outcome(home_team: str, away_team: str, outcome: str) -> dict[str, Any]:
     """创建指定结果的测试比赛"""
     match = MatchFactory(home_team=home_team, away_team=away_team)
 
@@ -258,7 +259,7 @@ def create_test_match_with_outcome(home_team: str, away_team: str, outcome: str)
     return factory.build(dict, **match.__dict__)
 
 
-def create_edge_case_match(edge_case_type: str) -> Dict[str, Any]:
+def create_edge_case_match(edge_case_type: str) -> dict[str, Any]:
     """创建边界情况测试数据"""
     if edge_case_type == "extreme_elo_diff":
         match = MatchFactory()

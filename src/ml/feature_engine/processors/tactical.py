@@ -18,11 +18,11 @@ TacticalProcessor - 战术聚合处理器（V23.0 高频化版）
 版本: V23.0-final
 """
 
-from typing import Any, Dict, Optional, List
 import logging
 import statistics
+from typing import Any
 
-from ..base import BaseProcessor, ProcessorResult, ProcessorConfig
+from ..base import BaseProcessor, ProcessorConfig, ProcessorResult
 from ..models import MatchData, TeamStats
 
 logger = logging.getLogger(__name__)
@@ -40,6 +40,7 @@ class TacticalProcessorConfig(ProcessorConfig):
         min_momentum_samples: 最小动量样本数
         time_segments: 时间分段数量（V23.0）
     """
+
     enable_momentum_analysis: bool = True
     enable_shot_aggregation: bool = True
     enable_highfreq_momentum: bool = True  # V23.0 新增
@@ -98,15 +99,13 @@ class TacticalProcessor(BaseProcessor[MatchData]):
     processor_version = "23.0.0"
     priority = 20
 
-    def __init__(self, config: Optional[TacticalProcessorConfig] = None) -> None:
+    def __init__(self, config: TacticalProcessorConfig | None = None) -> None:
         super().__init__(config or TacticalProcessorConfig())
         self.config: TacticalProcessorConfig = self.config
 
-    def process(
-        self, data: MatchData, context: Any
-    ) -> ProcessorResult:
+    def process(self, data: MatchData, context: Any) -> ProcessorResult:
         """提取战术聚合特征"""
-        features: Dict[str, float] = {}
+        features: dict[str, float] = {}
         warnings: list[str] = []
 
         try:
@@ -156,7 +155,7 @@ class TacticalProcessor(BaseProcessor[MatchData]):
                     "feature_count": len(features),
                     "momentum_enabled": self.config.enable_momentum_analysis,
                     "highfreq_enabled": self.config.enable_highfreq_momentum,
-                }
+                },
             )
 
             for warning in warnings:
@@ -168,9 +167,7 @@ class TacticalProcessor(BaseProcessor[MatchData]):
             logger.error(f"TacticalProcessor failed: {e}")
             return ProcessorResult.failure_result(str(e))
 
-    def _analyze_momentum(
-        self, stats: Optional[TeamStats]
-    ) -> Optional[Dict[str, float]]:
+    def _analyze_momentum(self, stats: TeamStats | None) -> dict[str, float] | None:
         """分析球队动量（聚合维度）"""
         if stats is None or not stats.momentum_scores:
             return None
@@ -182,9 +179,7 @@ class TacticalProcessor(BaseProcessor[MatchData]):
 
         features = {}
         features["momentum_mean"] = round(statistics.mean(momentum_scores), 4)
-        features["momentum_std"] = round(
-            statistics.stdev(momentum_scores) if len(momentum_scores) > 1 else 0.0, 4
-        )
+        features["momentum_std"] = round(statistics.stdev(momentum_scores) if len(momentum_scores) > 1 else 0.0, 4)
         features["momentum_max"] = round(max(momentum_scores), 4)
         features["momentum_min"] = round(min(momentum_scores), 4)
         features["momentum_velocity_mean"] = round(self._compute_velocity(momentum_scores), 4)
@@ -201,9 +196,7 @@ class TacticalProcessor(BaseProcessor[MatchData]):
 
         return features
 
-    def _analyze_highfreq_momentum(
-        self, stats: Optional[TeamStats], prefix: str
-    ) -> Dict[str, float]:
+    def _analyze_highfreq_momentum(self, stats: TeamStats | None, prefix: str) -> dict[str, float]:
         """
         高频动量分析（V23.0 核心爆破）
 
@@ -221,7 +214,18 @@ class TacticalProcessor(BaseProcessor[MatchData]):
         if stats is None or not stats.momentum_scores:
             # 无数据，填充默认值
             for seg in range(1, 7):
-                for metric in ["mean", "std", "max", "min", "velocity", "acceleration", "volatility", "neg_velocity", "trend", "dominance"]:
+                for metric in [
+                    "mean",
+                    "std",
+                    "max",
+                    "min",
+                    "velocity",
+                    "acceleration",
+                    "volatility",
+                    "neg_velocity",
+                    "trend",
+                    "dominance",
+                ]:
                     features[f"{prefix}_m{seg}_{metric}"] = 0.0
             return features
 
@@ -241,15 +245,11 @@ class TacticalProcessor(BaseProcessor[MatchData]):
 
             if len(segment_scores) >= 3:  # 至少 3 个采样点
                 # 1. 平均动量
-                features[f"{prefix}_m{seg_num}_mean"] = round(
-                    statistics.mean(segment_scores), 4
-                )
+                features[f"{prefix}_m{seg_num}_mean"] = round(statistics.mean(segment_scores), 4)
 
                 # 2. 标准差
                 if len(segment_scores) > 1:
-                    features[f"{prefix}_m{seg_num}_std"] = round(
-                        statistics.stdev(segment_scores), 4
-                    )
+                    features[f"{prefix}_m{seg_num}_std"] = round(statistics.stdev(segment_scores), 4)
                 else:
                     features[f"{prefix}_m{seg_num}_std"] = 0.0
 
@@ -260,48 +260,47 @@ class TacticalProcessor(BaseProcessor[MatchData]):
                 features[f"{prefix}_m{seg_num}_min"] = round(min(segment_scores), 4)
 
                 # 5. 动量速度
-                features[f"{prefix}_m{seg_num}_velocity"] = round(
-                    self._compute_velocity(segment_scores), 4
-                )
+                features[f"{prefix}_m{seg_num}_velocity"] = round(self._compute_velocity(segment_scores), 4)
 
                 # 6. 动量加速度
-                features[f"{prefix}_m{seg_num}_acceleration"] = round(
-                    self._compute_acceleration(segment_scores), 4
-                )
+                features[f"{prefix}_m{seg_num}_acceleration"] = round(self._compute_acceleration(segment_scores), 4)
 
                 # 7. 波动率
-                features[f"{prefix}_m{seg_num}_volatility"] = round(
-                    self._compute_volatility(segment_scores), 4
-                )
+                features[f"{prefix}_m{seg_num}_volatility"] = round(self._compute_volatility(segment_scores), 4)
 
                 # 8. 负向速度
                 neg_scores = [s for s in segment_scores if s < 0]
                 if neg_scores:
-                    features[f"{prefix}_m{seg_num}_neg_velocity"] = round(
-                        self._compute_velocity(neg_scores), 4
-                    )
+                    features[f"{prefix}_m{seg_num}_neg_velocity"] = round(self._compute_velocity(neg_scores), 4)
                 else:
                     features[f"{prefix}_m{seg_num}_neg_velocity"] = 0.0
 
                 # 9. 线性趋势（简单线性回归斜率）
-                features[f"{prefix}_m{seg_num}_trend"] = round(
-                    self._compute_linear_trend(segment_scores), 4
-                )
+                features[f"{prefix}_m{seg_num}_trend"] = round(self._compute_linear_trend(segment_scores), 4)
 
                 # 10. 支配度（正值占比）
                 positive_count = sum(1 for s in segment_scores if s > 0)
-                features[f"{prefix}_m{seg_num}_dominance"] = round(
-                    positive_count / len(segment_scores), 4
-                )
+                features[f"{prefix}_m{seg_num}_dominance"] = round(positive_count / len(segment_scores), 4)
 
             else:
                 # 数据不足，填充默认值
-                for metric in ["mean", "std", "max", "min", "velocity", "acceleration", "volatility", "neg_velocity", "trend", "dominance"]:
+                for metric in [
+                    "mean",
+                    "std",
+                    "max",
+                    "min",
+                    "velocity",
+                    "acceleration",
+                    "volatility",
+                    "neg_velocity",
+                    "trend",
+                    "dominance",
+                ]:
                     features[f"{prefix}_m{seg_num}_{metric}"] = 0.0
 
         return features
 
-    def _compute_highfreq_cross_features(self, features: Dict[str, float]) -> Dict[str, float]:
+    def _compute_highfreq_cross_features(self, features: dict[str, float]) -> dict[str, float]:
         """
         计算高频动量交叉特征（V23.0 扩展）
 
@@ -353,28 +352,25 @@ class TacticalProcessor(BaseProcessor[MatchData]):
 
         # 主客队对比
         cross_features["diff_fh_sh_momentum"] = round(
-            features.get("home_fh_sh_momentum_diff", 0) - features.get("away_fh_sh_momentum_diff", 0),
-            4
+            features.get("home_fh_sh_momentum_diff", 0) - features.get("away_fh_sh_momentum_diff", 0), 4
         )
         cross_features["diff_opening_momentum"] = round(
-            features.get("home_m1_mean", 0) - features.get("away_m1_mean", 0),
-            4
+            features.get("home_m1_mean", 0) - features.get("away_m1_mean", 0), 4
         )
         cross_features["diff_closing_momentum"] = round(
-            features.get("home_m6_mean", 0) - features.get("away_m6_mean", 0),
-            4
+            features.get("home_m6_mean", 0) - features.get("away_m6_mean", 0), 4
         )
 
         return cross_features
 
-    def _compute_velocity(self, values: List[float]) -> float:
+    def _compute_velocity(self, values: list[float]) -> float:
         """计算速度（一阶差分均值）"""
         if len(values) < 2:
             return 0.0
         diffs = [values[i] - values[i - 1] for i in range(1, len(values))]
         return statistics.mean(diffs) if diffs else 0.0
 
-    def _compute_acceleration(self, values: List[float]) -> float:
+    def _compute_acceleration(self, values: list[float]) -> float:
         """计算加速度（二阶差分均值）"""
         if len(values) < 3:
             return 0.0
@@ -382,7 +378,7 @@ class TacticalProcessor(BaseProcessor[MatchData]):
         accels = [diffs[i] - diffs[i - 1] for i in range(1, len(diffs))]
         return statistics.mean(accels) if accels else 0.0
 
-    def _compute_volatility(self, values: List[float]) -> float:
+    def _compute_volatility(self, values: list[float]) -> float:
         """计算波动率（标准差 / 均值）"""
         if len(values) < 2:
             return 0.0
@@ -391,7 +387,7 @@ class TacticalProcessor(BaseProcessor[MatchData]):
             return 0.0
         return statistics.stdev(values) / abs(mean_val)
 
-    def _compute_linear_trend(self, values: List[float]) -> float:
+    def _compute_linear_trend(self, values: list[float]) -> float:
         """计算线性趋势（简单线性回归斜率）"""
         if len(values) < 2:
             return 0.0
@@ -411,7 +407,7 @@ class TacticalProcessor(BaseProcessor[MatchData]):
         slope = (n * sum_xy - sum_x * sum_y) / denominator
         return slope
 
-    def _aggregate_shot_data(self, data: MatchData) -> Dict[str, float]:
+    def _aggregate_shot_data(self, data: MatchData) -> dict[str, float]:
         """聚合射门数据"""
         features = {}
 
@@ -432,7 +428,7 @@ class TacticalProcessor(BaseProcessor[MatchData]):
 
         return features
 
-    def _compute_pressure_scores(self, features: Dict[str, float]) -> Dict[str, float]:
+    def _compute_pressure_scores(self, features: dict[str, float]) -> dict[str, float]:
         """计算战术压迫感评分"""
         pressure_scores = {}
 
@@ -455,7 +451,7 @@ class TacticalProcessor(BaseProcessor[MatchData]):
 
         return pressure_scores
 
-    def _compute_tempo_metrics(self, features: Dict[str, float]) -> Dict[str, float]:
+    def _compute_tempo_metrics(self, features: dict[str, float]) -> dict[str, float]:
         """计算比赛节奏指标"""
         tempo_metrics = {}
 
@@ -478,7 +474,7 @@ class TacticalProcessor(BaseProcessor[MatchData]):
 
         return tempo_metrics
 
-    def get_feature_schema(self) -> Dict[str, type]:
+    def get_feature_schema(self) -> dict[str, type]:
         """
         获取输出特征的 Schema（V23.0 动态生成）
 
@@ -503,7 +499,18 @@ class TacticalProcessor(BaseProcessor[MatchData]):
         # V23.0: 动态生成高频动量特征 Schema（120 维）
         for prefix in ["home", "away"]:
             for seg in range(1, 7):  # m1 到 m6
-                for metric in ["mean", "std", "max", "min", "velocity", "acceleration", "volatility", "neg_velocity", "trend", "dominance"]:
+                for metric in [
+                    "mean",
+                    "std",
+                    "max",
+                    "min",
+                    "velocity",
+                    "acceleration",
+                    "volatility",
+                    "neg_velocity",
+                    "trend",
+                    "dominance",
+                ]:
                     schema[f"{prefix}_m{seg}_{metric}"] = float
 
         # 高频交叉特征

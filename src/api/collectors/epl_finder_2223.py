@@ -4,48 +4,67 @@
 使用较大步长快速定位 22/23 赛季的 ID 范围
 """
 
-import requests
 import logging
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+import requests
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 # 已知英超球队名单
 EPL_TEAMS = {
-    'Arsenal', 'Aston Villa', 'Bournemouth', 'Brentford', 'Brighton',
-    'Chelsea', 'Crystal Palace', 'Everton', 'Fulham', 'Leeds United',
-    'Leicester City', 'Liverpool', 'Manchester City', 'Manchester United',
-    'Newcastle United', 'Nottingham Forest', 'Southampton', 'Tottenham',
-    'West Ham United', 'Wolverhampton Wanderers',
-    'AFC Bournemouth', 'Brighton & Hove Albion', 'Wolves'
+    "Arsenal",
+    "Aston Villa",
+    "Bournemouth",
+    "Brentford",
+    "Brighton",
+    "Chelsea",
+    "Crystal Palace",
+    "Everton",
+    "Fulham",
+    "Leeds United",
+    "Leicester City",
+    "Liverpool",
+    "Manchester City",
+    "Manchester United",
+    "Newcastle United",
+    "Nottingham Forest",
+    "Southampton",
+    "Tottenham",
+    "West Ham United",
+    "Wolverhampton Wanderers",
+    "AFC Bournemouth",
+    "Brighton & Hove Albion",
+    "Wolves",
 }
+
 
 def is_epl_match(match_id: int) -> tuple:
     """检查是否为英超比赛，返回 (is_epl, home_team, away_team)"""
     url = f"https://www.fotmob.com/api/matchDetails?matchId={match_id}"
     headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-        'Accept': 'application/json',
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+        "Accept": "application/json",
     }
 
     try:
         response = requests.get(url, headers=headers, timeout=5)
-        if 'application/json' not in response.headers.get('Content-Type', ''):
-            return False, '', ''
+        if "application/json" not in response.headers.get("Content-Type", ""):
+            return False, "", ""
 
         data = response.json()
-        if 'header' in data and data['header'].get('teams'):
-            teams = data['header']['teams']
-            home_team = teams[0].get('name', '')
-            away_team = teams[1].get('name', '')
+        if "header" in data and data["header"].get("teams"):
+            teams = data["header"]["teams"]
+            home_team = teams[0].get("name", "")
+            away_team = teams[1].get("name", "")
 
             if home_team in EPL_TEAMS and away_team in EPL_TEAMS:
                 return True, home_team, away_team
 
-        return False, '', ''
+        return False, "", ""
 
-    except Exception as e:
-        return False, '', ''
+    except Exception:
+        return False, "", ""
 
 
 def find_epl_range():

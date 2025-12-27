@@ -4,7 +4,7 @@
 定义项目中所有自定义异常类，提供清晰的错误分类和处理。
 """
 
-from typing import Optional, Any, Dict
+from typing import Any
 
 
 class BaseApplicationError(Exception):
@@ -13,15 +13,15 @@ class BaseApplicationError(Exception):
     def __init__(
         self,
         message: str,
-        error_code: Optional[str] = None,
-        details: Optional[Dict[str, Any]] = None,
+        error_code: str | None = None,
+        details: dict[str, Any] | None = None,
     ):
         self.message = message
         self.error_code = error_code
         self.details = details or {}
         super().__init__(self.message)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典格式"""
         return {
             "error_type": self.__class__.__name__,

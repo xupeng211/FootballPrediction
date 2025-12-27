@@ -19,37 +19,24 @@ Version: 1.0.0 (Sprint 7 Performance Testing)
 """
 
 import asyncio
+import gc
+import hashlib
 import json
 import logging
-import time
-import statistics
-import hashlib
-from datetime import datetime, timedelta
-from pathlib import Path
-from typing import Dict, Any, List, Optional, Callable, Union, Tuple
-from dataclasses import dataclass, field, asdict
-from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor, as_completed
-import numpy as np
-import pandas as pd
-import psutil
-import sys
-import traceback
-import subprocess
-import tempfile
-import gc
 import sqlite3
-from contextlib import asynccontextmanager
+import statistics
+import sys
+import time
+import traceback
+from dataclasses import asdict, dataclass, field
+from datetime import datetime
+from pathlib import Path
+from typing import Any
+
+import numpy as np
+import psutil
 
 # 导入项目模块
-from src.testing.stress_test_framework import (
-    StressTestFramework,
-    StressTestConfig,
-    ResourceUsage,
-    PerformanceMetrics,
-)
-from src.services.prediction_service import PredictionService
-from src.services.collection_service import FotMobCollectionService
-from src.ml.inference.predictor import Predictor
 
 logger = logging.getLogger(__name__)
 
@@ -115,11 +102,11 @@ class BenchmarkResult:
 
     # 错误信息
     success: bool
-    error_message: Optional[str] = None
-    error_traceback: Optional[str] = None
+    error_message: str | None = None
+    error_traceback: str | None = None
 
     # 附加指标
-    additional_metrics: Dict[str, Any] = field(default_factory=dict)
+    additional_metrics: dict[str, Any] = field(default_factory=dict)
 
     # 元数据
     python_version: str = sys.version
@@ -152,18 +139,18 @@ class BenchmarkReport:
     p99_execution_time_ms: float
 
     # 详细结果
-    test_results: List[BenchmarkResult] = field(default_factory=list)
+    test_results: list[BenchmarkResult] = field(default_factory=list)
 
     # 回归检测结果
     regression_detected: bool = False
-    regression_details: List[Dict[str, Any]] = field(default_factory=list)
+    regression_details: list[dict[str, Any]] = field(default_factory=list)
 
     # 趋势分析
     performance_trend: str = "stable"  # improving, degrading, stable
     trend_change_percent: float = 0.0
 
     # 系统信息
-    system_info: Dict[str, Any] = field(default_factory=dict)
+    system_info: dict[str, Any] = field(default_factory=dict)
 
 
 class BenchmarkDatabase:
@@ -252,17 +239,15 @@ class BenchmarkDatabase:
     def get_historical_results(
         self,
         benchmark_name: str,
-        test_name: Optional[str] = None,
-        environment: Optional[str] = None,
+        test_name: str | None = None,
+        environment: str | None = None,
         days_back: int = 30,
-    ) -> List[BenchmarkResult]:
+    ) -> list[BenchmarkResult]:
         """获取历史结果"""
-        query = """
+        query = f"""
             SELECT * FROM benchmark_results
-            WHERE benchmark_name = ? AND timestamp >= datetime('now', '-{} days')
-        """.format(
-            days_back
-        )
+            WHERE benchmark_name = ? AND timestamp >= datetime('now', '-{days_back} days')
+        """
 
         params = [benchmark_name]
 
@@ -307,9 +292,9 @@ class BenchmarkDatabase:
         self,
         benchmark_name: str,
         test_name: str,
-        environment: Optional[str] = None,
+        environment: str | None = None,
         days_back: int = 7,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """获取性能统计"""
         results = self.get_historical_results(benchmark_name, test_name, environment, days_back)
 
@@ -342,7 +327,7 @@ class PerformanceBenchmarkFramework:
 
         # 初始化组件
         self.db = BenchmarkDatabase()
-        self.results: List[BenchmarkResult] = []
+        self.results: list[BenchmarkResult] = []
         self.start_time = None
 
         # 创建输出目录
@@ -446,7 +431,7 @@ class PerformanceBenchmarkFramework:
         except Exception as e:
             self.logger.warning(f"服务初始化失败（将使用模拟）: {e}")
 
-    async def _benchmark_prediction_performance(self) -> List[BenchmarkResult]:
+    async def _benchmark_prediction_performance(self) -> list[BenchmarkResult]:
         """基准测试：预测性能"""
         self.logger.info("🤖 测试预测性能")
         results = []
@@ -466,8 +451,7 @@ class PerformanceBenchmarkFramework:
                 # 检查是否达到性能目标
                 if result.execution_time_ms > self.config.target_prediction_time_ms:
                     self.logger.warning(
-                        f"预测性能未达标: {result.execution_time_ms:.2f}ms > "
-                        f"{self.config.target_prediction_time_ms}ms"
+                        f"预测性能未达标: {result.execution_time_ms:.2f}ms > {self.config.target_prediction_time_ms}ms"
                     )
 
             except Exception as e:
@@ -551,7 +535,7 @@ class PerformanceBenchmarkFramework:
 
         return predictions
 
-    async def _benchmark_batch_prediction_performance(self) -> List[BenchmarkResult]:
+    async def _benchmark_batch_prediction_performance(self) -> list[BenchmarkResult]:
         """基准测试：批量预测性能"""
         self.logger.info("📦 测试批量预测性能")
         results = []
@@ -598,8 +582,7 @@ class PerformanceBenchmarkFramework:
                 # 检查性能目标
                 if execution_time > self.config.target_batch_prediction_time_ms:
                     self.logger.warning(
-                        f"批量预测性能未达标: {execution_time:.2f}ms > "
-                        f"{self.config.target_batch_prediction_time_ms}ms"
+                        f"批量预测性能未达标: {execution_time:.2f}ms > {self.config.target_batch_prediction_time_ms}ms"
                     )
 
             except Exception as e:
@@ -622,7 +605,7 @@ class PerformanceBenchmarkFramework:
 
         return results
 
-    async def _simulate_batch_prediction(self, batch_size: int, num_batches: int) -> List[np.ndarray]:
+    async def _simulate_batch_prediction(self, batch_size: int, num_batches: int) -> list[np.ndarray]:
         """模拟批量预测"""
         results = []
 
@@ -642,7 +625,7 @@ class PerformanceBenchmarkFramework:
 
         return results
 
-    async def _benchmark_data_collection_performance(self) -> List[BenchmarkResult]:
+    async def _benchmark_data_collection_performance(self) -> list[BenchmarkResult]:
         """基准测试：数据收集性能"""
         self.logger.info("📊 测试数据收集性能")
         results = []
@@ -737,7 +720,7 @@ class PerformanceBenchmarkFramework:
             },
         )
 
-    async def _benchmark_end_to_end_workflow(self) -> List[BenchmarkResult]:
+    async def _benchmark_end_to_end_workflow(self) -> list[BenchmarkResult]:
         """基准测试：端到端工作流性能"""
         self.logger.info("🔄 测试端到端工作流性能")
         results = []
@@ -858,7 +841,7 @@ class PerformanceBenchmarkFramework:
             },
         )
 
-    async def _benchmark_concurrent_load(self) -> List[BenchmarkResult]:
+    async def _benchmark_concurrent_load(self) -> list[BenchmarkResult]:
         """基准测试：并发负载性能"""
         self.logger.info("⚡ 测试并发负载性能")
         results = []
@@ -941,7 +924,7 @@ class PerformanceBenchmarkFramework:
             },
         )
 
-    async def _benchmark_memory_usage(self) -> List[BenchmarkResult]:
+    async def _benchmark_memory_usage(self) -> list[BenchmarkResult]:
         """基准测试：内存使用性能"""
         self.logger.info("💾 测试内存使用性能")
         results = []
@@ -961,9 +944,7 @@ class PerformanceBenchmarkFramework:
 
                 # 检查内存限制
                 if result.memory_peak_mb > self.config.max_memory_mb:
-                    self.logger.warning(
-                        f"内存使用超限: {result.memory_peak_mb:.2f}MB > " f"{self.config.max_memory_mb}MB"
-                    )
+                    self.logger.warning(f"内存使用超限: {result.memory_peak_mb:.2f}MB > {self.config.max_memory_mb}MB")
 
             except Exception as e:
                 self.logger.error(f"内存使用测试失败 ({size_label}): {e}")
@@ -1042,7 +1023,7 @@ class PerformanceBenchmarkFramework:
             },
         )
 
-    async def _benchmark_scalability(self) -> List[BenchmarkResult]:
+    async def _benchmark_scalability(self) -> list[BenchmarkResult]:
         """基准测试：可扩展性性能"""
         self.logger.info("📈 测试可扩展性性能")
         results = []
@@ -1393,7 +1374,7 @@ class PerformanceBenchmarkFramework:
 
 # 便捷函数
 async def run_performance_benchmark(
-    config: Optional[BenchmarkConfig] = None,
+    config: BenchmarkConfig | None = None,
 ) -> BenchmarkReport:
     """
     运行性能基准测试
@@ -1457,7 +1438,7 @@ if __name__ == "__main__":
     # 运行基准测试
     async def main():
         report = await run_performance_benchmark(config)
-        print(f"\n基准测试完成!")
+        print("\n基准测试完成!")
         print(f"报告ID: {report.report_id}")
         print(f"成功率: {report.success_rate:.1%}")
         print(f"平均执行时间: {report.avg_execution_time_ms:.2f}ms")

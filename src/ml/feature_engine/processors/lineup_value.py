@@ -20,12 +20,12 @@ LineupValueProcessor - 阵容价值处理器（V23.0 全量平铺版）
 版本: V23.0-final
 """
 
-from typing import Any, Dict, Optional, List
 import logging
 from dataclasses import dataclass
+from typing import Any
 
-from ..base import BaseProcessor, ProcessorResult, ProcessorConfig
-from ..models import MatchData, LineupInfo, PlayerStats, HomeAway
+from ..base import BaseProcessor, ProcessorConfig, ProcessorResult
+from ..models import LineupInfo, MatchData, PlayerStats
 
 logger = logging.getLogger(__name__)
 
@@ -46,6 +46,7 @@ class LineupValueProcessorConfig(ProcessorConfig):
         veteran_threshold: 老将年龄阈值
         player_feature_count: 每个球员的特征维度数
     """
+
     enable_market_value: bool = True
     enable_age_analysis: bool = True
     enable_efficiency_ratio: bool = True
@@ -109,25 +110,23 @@ class LineupValueProcessor(BaseProcessor[MatchData]):
 
     # 球员特征字段定义（10 个核心维度）
     PLAYER_FEATURE_FIELDS = [
-        "team_rating",      # 球员评分
-        "market_value",     # 市场身价
-        "age",              # 年龄
-        "minutes_played",   # 出场时间
-        "expected_goals",   # 预期进球
-        "total_shots",      # 总射门数
-        "touches",          # 触球数
+        "team_rating",  # 球员评分
+        "market_value",  # 市场身价
+        "age",  # 年龄
+        "minutes_played",  # 出场时间
+        "expected_goals",  # 预期进球
+        "total_shots",  # 总射门数
+        "touches",  # 触球数
         "accurate_passes",  # 成功传球数
-        "key_passes",       # 关键传球
+        "key_passes",  # 关键传球
         "big_chances_created",  # 创造机会数
     ]
 
-    def __init__(self, config: Optional[LineupValueProcessorConfig] = None) -> None:
+    def __init__(self, config: LineupValueProcessorConfig | None = None) -> None:
         super().__init__(config or LineupValueProcessorConfig())
         self.config: LineupValueProcessorConfig = self.config
 
-    def process(
-        self, data: MatchData, context: Any
-    ) -> ProcessorResult:
+    def process(self, data: MatchData, context: Any) -> ProcessorResult:
         """
         提取阵容价值特征
 
@@ -138,7 +137,7 @@ class LineupValueProcessor(BaseProcessor[MatchData]):
         Returns:
             ProcessorResult: 包含阵容价值特征的处理器结果
         """
-        features: Dict[str, float] = {}
+        features: dict[str, float] = {}
 
         try:
             # 1. 传统聚合特征（保留向后兼容）
@@ -149,16 +148,12 @@ class LineupValueProcessor(BaseProcessor[MatchData]):
             if self.config.enable_player_flattening:
                 # 主队球员平铺
                 if data.home_lineup and data.home_lineup.players:
-                    home_player_features = self._flatten_player_features(
-                        data.home_lineup.players, "home"
-                    )
+                    home_player_features = self._flatten_player_features(data.home_lineup.players, "home")
                     features.update(home_player_features)
 
                 # 客队球员平铺
                 if data.away_lineup and data.away_lineup.players:
-                    away_player_features = self._flatten_player_features(
-                        data.away_lineup.players, "away"
-                    )
+                    away_player_features = self._flatten_player_features(data.away_lineup.players, "away")
                     features.update(away_player_features)
 
             # 3. 计算对比特征
@@ -184,33 +179,27 @@ class LineupValueProcessor(BaseProcessor[MatchData]):
             logger.error(f"LineupValueProcessor failed for match {data.match_id}: {e}")
             return ProcessorResult.failure_result(str(e))
 
-    def _extract_aggregate_features(self, data: MatchData) -> Dict[str, float]:
+    def _extract_aggregate_features(self, data: MatchData) -> dict[str, float]:
         """提取传统聚合特征（向后兼容）"""
         features = {}
 
         # 主队阵容价值分析
         if data.home_lineup and data.home_lineup.players:
-            home_features = self._analyze_team_value(
-                data.home_lineup, "home", data.home_stats
-            )
+            home_features = self._analyze_team_value(data.home_lineup, "home", data.home_stats)
             features.update(home_features)
         else:
             features.update(self._get_default_features("home"))
 
         # 客队阵容价值分析
         if data.away_lineup and data.away_lineup.players:
-            away_features = self._analyze_team_value(
-                data.away_lineup, "away", data.away_stats
-            )
+            away_features = self._analyze_team_value(data.away_lineup, "away", data.away_stats)
             features.update(away_features)
         else:
             features.update(self._get_default_features("away"))
 
         return features
 
-    def _analyze_team_value(
-        self, lineup: LineupInfo, prefix: str, team_stats: Any
-    ) -> Dict[str, float]:
+    def _analyze_team_value(self, lineup: LineupInfo, prefix: str, team_stats: Any) -> dict[str, float]:
         """
         分析单队阵容价值特征（聚合维度）
 
@@ -234,9 +223,7 @@ class LineupValueProcessor(BaseProcessor[MatchData]):
         if self.config.enable_market_value:
             squad_value = self._calculate_squad_value(starters)
             features[f"{prefix}_squad_value"] = squad_value
-            features[f"{prefix}_avg_player_value"] = round(
-                squad_value / len(starters), 2
-            ) if len(starters) > 0 else 0.0
+            features[f"{prefix}_avg_player_value"] = round(squad_value / len(starters), 2) if len(starters) > 0 else 0.0
 
         # ========== 年龄维度 ==========
         if self.config.enable_age_analysis:
@@ -251,9 +238,7 @@ class LineupValueProcessor(BaseProcessor[MatchData]):
 
         return features
 
-    def _flatten_player_features(
-        self, players: List[PlayerStats], prefix: str
-    ) -> Dict[str, float]:
+    def _flatten_player_features(self, players: list[PlayerStats], prefix: str) -> dict[str, float]:
         """
         平铺球员级别特征（V23.0 核心爆破）
 
@@ -269,10 +254,7 @@ class LineupValueProcessor(BaseProcessor[MatchData]):
         features = {}
 
         # 提取首发球员并按球衣号码排序（保持位置一致性）
-        starters = [
-            p for p in players
-            if p.is_starter is True
-        ]
+        starters = [p for p in players if p.is_starter is True]
         starters.sort(key=lambda p: p.jersey_number or 999)
 
         # 限制为前 11 人
@@ -290,36 +272,16 @@ class LineupValueProcessor(BaseProcessor[MatchData]):
                 continue
 
             # 提取球员的 10 个核心维度
-            features[f"{prefix}_p{p_num}_team_rating"] = float(
-                player.team_rating or 0.0
-            )
-            features[f"{prefix}_p{p_num}_market_value"] = float(
-                player.market_value or 0.0
-            )
-            features[f"{prefix}_p{p_num}_age"] = float(
-                player.age or self.config.default_age
-            )
-            features[f"{prefix}_p{p_num}_minutes_played"] = float(
-                player.minutes_played or 0
-            )
-            features[f"{prefix}_p{p_num}_expected_goals"] = float(
-                player.expected_goals or 0.0
-            )
-            features[f"{prefix}_p{p_num}_total_shots"] = float(
-                player.total_shots or 0
-            )
-            features[f"{prefix}_p{p_num}_touches"] = float(
-                player.touches or 0
-            )
-            features[f"{prefix}_p{p_num}_accurate_passes"] = float(
-                player.accurate_passes or 0
-            )
-            features[f"{prefix}_p{p_num}_key_passes"] = float(
-                player.key_passes or 0
-            )
-            features[f"{prefix}_p{p_num}_big_chances_created"] = float(
-                player.big_chances_created or 0
-            )
+            features[f"{prefix}_p{p_num}_team_rating"] = float(player.team_rating or 0.0)
+            features[f"{prefix}_p{p_num}_market_value"] = float(player.market_value or 0.0)
+            features[f"{prefix}_p{p_num}_age"] = float(player.age or self.config.default_age)
+            features[f"{prefix}_p{p_num}_minutes_played"] = float(player.minutes_played or 0)
+            features[f"{prefix}_p{p_num}_expected_goals"] = float(player.expected_goals or 0.0)
+            features[f"{prefix}_p{p_num}_total_shots"] = float(player.total_shots or 0)
+            features[f"{prefix}_p{p_num}_touches"] = float(player.touches or 0)
+            features[f"{prefix}_p{p_num}_accurate_passes"] = float(player.accurate_passes or 0)
+            features[f"{prefix}_p{p_num}_key_passes"] = float(player.key_passes or 0)
+            features[f"{prefix}_p{p_num}_big_chances_created"] = float(player.big_chances_created or 0)
 
         # 如果不足 11 人，填充剩余位置
         for position_idx in range(len(starters) + 1, 12):
@@ -329,7 +291,7 @@ class LineupValueProcessor(BaseProcessor[MatchData]):
 
         return features
 
-    def _compute_player_cross_features(self, features: Dict[str, float]) -> Dict[str, float]:
+    def _compute_player_cross_features(self, features: dict[str, float]) -> dict[str, float]:
         """
         计算球员级别交叉特征（V23.0 扩展）
 
@@ -357,19 +319,14 @@ class LineupValueProcessor(BaseProcessor[MatchData]):
 
             # 核心球员总身价（前5名）
             player_values_sorted = sorted(player_values, reverse=True)
-            cross_features[f"{prefix}_top5_value"] = round(
-                sum(player_values_sorted[:5]), 2
-            )
+            cross_features[f"{prefix}_top5_value"] = round(sum(player_values_sorted[:5]), 2)
 
             # 关键球员总 xG（前3名）
             player_xgs_sorted = sorted(player_xgs, reverse=True)
-            cross_features[f"{prefix}_top3_xg"] = round(
-                sum(player_xgs_sorted[:3]), 4
-            )
+            cross_features[f"{prefix}_top3_xg"] = round(sum(player_xgs_sorted[:3]), 4)
 
             # 阵容深度评分（身高的方差）
             if player_values:
-                import statistics
                 mean_value = sum(player_values) / len(player_values)
                 variance = sum((v - mean_value) ** 2 for v in player_values) / len(player_values)
                 cross_features[f"{prefix}_lineup_variance"] = round(variance, 4)
@@ -380,28 +337,23 @@ class LineupValueProcessor(BaseProcessor[MatchData]):
 
         # 主客队对比
         cross_features["diff_top5_value"] = round(
-            cross_features.get("home_top5_value", 0) - cross_features.get("away_top5_value", 0),
-            2
+            cross_features.get("home_top5_value", 0) - cross_features.get("away_top5_value", 0), 2
         )
         cross_features["diff_top3_xg"] = round(
-            cross_features.get("home_top3_xg", 0) - cross_features.get("away_top3_xg", 0),
-            4
+            cross_features.get("home_top3_xg", 0) - cross_features.get("away_top3_xg", 0), 4
         )
         cross_features["diff_star_rating"] = round(
-            cross_features.get("home_star_rating", 0) - cross_features.get("away_star_rating", 0),
-            2
+            cross_features.get("home_star_rating", 0) - cross_features.get("away_star_rating", 0), 2
         )
 
         return cross_features
 
-    def _calculate_squad_value(self, players: List[PlayerStats]) -> float:
+    def _calculate_squad_value(self, players: list[PlayerStats]) -> float:
         """计算阵容总价值"""
         total_value = sum(p.market_value or 0.0 for p in players)
         return round(total_value, 2)
 
-    def _analyze_age_structure(
-        self, players: List[PlayerStats], prefix: str
-    ) -> Dict[str, float]:
+    def _analyze_age_structure(self, players: list[PlayerStats], prefix: str) -> dict[str, float]:
         """分析年龄结构特征"""
         features = {}
 
@@ -432,10 +384,7 @@ class LineupValueProcessor(BaseProcessor[MatchData]):
         features[f"{prefix}_veteran_ratio"] = round(veteran_count / len(ages), 4)
 
         # 黄金期球员
-        prime_count = sum(
-            1 for age in ages
-            if self.config.u23_threshold <= age < self.config.veteran_threshold
-        )
+        prime_count = sum(1 for age in ages if self.config.u23_threshold <= age < self.config.veteran_threshold)
         features[f"{prefix}_prime_count"] = float(prime_count)
         features[f"{prefix}_prime_ratio"] = round(prime_count / len(ages), 4)
 
@@ -443,15 +392,16 @@ class LineupValueProcessor(BaseProcessor[MatchData]):
         ratios = [
             features[f"{prefix}_u23_ratio"],
             features[f"{prefix}_prime_ratio"],
-            features[f"{prefix}_veteran_ratio"]
+            features[f"{prefix}_veteran_ratio"],
         ]
         features[f"{prefix}_age_balance_entropy"] = round(self._calculate_entropy(ratios), 4)
 
         return features
 
-    def _calculate_entropy(self, ratios: List[float]) -> float:
+    def _calculate_entropy(self, ratios: list[float]) -> float:
         """计算熵（衡量分布均衡程度）"""
         import math
+
         entropy = 0.0
         for r in ratios:
             if r > 0:
@@ -472,7 +422,7 @@ class LineupValueProcessor(BaseProcessor[MatchData]):
         efficiency = xg / squad_value if squad_value > 0 else 0.0
         return round(efficiency, 4)
 
-    def _compute_comparison_features(self, features: Dict[str, float]) -> Dict[str, float]:
+    def _compute_comparison_features(self, features: dict[str, float]) -> dict[str, float]:
         """计算对比特征"""
         comparison_features = {}
 
@@ -482,9 +432,7 @@ class LineupValueProcessor(BaseProcessor[MatchData]):
 
         if home_value > 0 and away_value > 0:
             comparison_features["value_gap_ratio"] = round(home_value / away_value, 4)
-            comparison_features["home_value_share"] = round(
-                home_value / (home_value + away_value), 4
-            )
+            comparison_features["home_value_share"] = round(home_value / (home_value + away_value), 4)
             comparison_features["diff_squad_value"] = round(home_value - away_value, 2)
             comparison_features["value_disparity_index"] = round(
                 abs(home_value - away_value) / (home_value + away_value), 4
@@ -503,26 +451,18 @@ class LineupValueProcessor(BaseProcessor[MatchData]):
         # 效率对比
         home_efficiency = features.get("home_value_efficiency", 0)
         away_efficiency = features.get("away_value_efficiency", 0)
-        comparison_features["diff_value_efficiency"] = round(
-            home_efficiency - away_efficiency, 4
-        )
+        comparison_features["diff_value_efficiency"] = round(home_efficiency - away_efficiency, 4)
 
         # 综合财富评分
-        home_wealth = self._calculate_wealth_score(
-            features, "home", home_value, home_age
-        )
-        away_wealth = self._calculate_wealth_score(
-            features, "away", away_value, away_age
-        )
+        home_wealth = self._calculate_wealth_score(features, "home", home_value, home_age)
+        away_wealth = self._calculate_wealth_score(features, "away", away_value, away_age)
         comparison_features["home_wealth_score"] = round(home_wealth, 4)
         comparison_features["away_wealth_score"] = round(away_wealth, 4)
         comparison_features["diff_wealth_score"] = round(home_wealth - away_wealth, 4)
 
         return comparison_features
 
-    def _calculate_wealth_score(
-        self, features: Dict[str, float], prefix: str, value: float, age: float
-    ) -> float:
+    def _calculate_wealth_score(self, features: dict[str, float], prefix: str, value: float, age: float) -> float:
         """计算综合财富评分"""
         # 身价分（归一化到 0-50）
         value_score = min(value / 10, 50)
@@ -543,7 +483,7 @@ class LineupValueProcessor(BaseProcessor[MatchData]):
 
         return value_score + age_score + stability_score
 
-    def _get_default_features(self, prefix: str) -> Dict[str, float]:
+    def _get_default_features(self, prefix: str) -> dict[str, float]:
         """获取默认特征值（数据缺失时）"""
         return {
             f"{prefix}_squad_value": 0.0,
@@ -552,7 +492,7 @@ class LineupValueProcessor(BaseProcessor[MatchData]):
             f"{prefix}_value_efficiency": 0.0,
         }
 
-    def _get_default_age_features(self, prefix: str) -> Dict[str, float]:
+    def _get_default_age_features(self, prefix: str) -> dict[str, float]:
         """获取默认年龄特征"""
         return {
             f"{prefix}_age_average": self.config.default_age,
@@ -566,7 +506,7 @@ class LineupValueProcessor(BaseProcessor[MatchData]):
             f"{prefix}_age_balance_entropy": 0.0,
         }
 
-    def get_feature_schema(self) -> Dict[str, type]:
+    def get_feature_schema(self) -> dict[str, type]:
         """
         获取输出特征的 Schema（V23.0 动态生成）
 

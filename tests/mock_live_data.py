@@ -15,23 +15,18 @@ Version: 1.0.0 (Sprint 8 - Production Readiness)
 """
 
 import asyncio
-import aiohttp
 import json
 import logging
 import random
 import time
-from datetime import datetime, timedelta
+from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
-from typing import Dict, Any, List, Optional, Tuple
-from dataclasses import dataclass, asdict
-from unittest.mock import AsyncMock, MagicMock, patch
-import pytest
+from typing import Any
+from unittest.mock import AsyncMock, MagicMock
 
 from src.config_unified import get_settings
 from src.services.collection_service import CollectionService
-from src.services.inference_service import InferenceService
-from src.ml.inference.predictor import MatchPredictor
-from src.database.db_pool import DatabasePool
 
 # 设置日志
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
@@ -45,8 +40,8 @@ class APITestScenario:
     name: str
     description: str
     error_rate: float  # 0.0 - 1.0
-    latency_ms: Tuple[int, int]  # (min, max) in milliseconds
-    response_size_kb: Tuple[int, int]  # (min, max) in KB
+    latency_ms: tuple[int, int]  # (min, max) in milliseconds
+    response_size_kb: tuple[int, int]  # (min, max) in KB
     timeout_rate: float  # 0.0 - 1.0
     partial_data_rate: float  # 0.0 - 1.0
     rate_limit_rate: float  # 0.0 - 1.0
@@ -150,7 +145,7 @@ class FotMobAPIMocker:
         self.sample_match_data = self._generate_sample_match_data()
         self.sample_odds_data = self._generate_sample_odds_data()
 
-    def _generate_sample_match_data(self) -> Dict[str, Any]:
+    def _generate_sample_match_data(self) -> dict[str, Any]:
         """生成示例比赛数据"""
         return {
             "matchId": "test_match_123",
@@ -197,7 +192,7 @@ class FotMobAPIMocker:
             },
         }
 
-    def _generate_sample_odds_data(self) -> Dict[str, Any]:
+    def _generate_sample_odds_data(self) -> dict[str, Any]:
         """生成示例赔率数据"""
         return {
             "matchId": "test_match_123",
@@ -235,7 +230,7 @@ class FotMobAPIMocker:
             ],
         }
 
-    async def simulate_api_response(self, scenario: APITestScenario, match_id: str) -> Dict[str, Any]:
+    async def simulate_api_response(self, scenario: APITestScenario, match_id: str) -> dict[str, Any]:
         """模拟API响应"""
         self.request_count += 1
 
@@ -246,7 +241,7 @@ class FotMobAPIMocker:
         # 模拟超时
         if random.random() < scenario.timeout_rate:
             self.timeout_count += 1
-            raise asyncio.TimeoutError(f"API timeout after {latency}ms")
+            raise TimeoutError(f"API timeout after {latency}ms")
 
         # 模拟频率限制
         if random.random() < scenario.rate_limit_rate:
@@ -307,7 +302,7 @@ class FotMobAPIMocker:
         self.timeout_count = 0
         self.rate_limit_count = 0
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """获取统计信息"""
         return {
             "total_requests": self.request_count,
@@ -328,7 +323,7 @@ class LiveAPIStressTest:
         self.mocker = FotMobAPIMocker()
         self.test_results = []
 
-    async def run_all_scenarios(self) -> Dict[str, Any]:
+    async def run_all_scenarios(self) -> dict[str, Any]:
         """运行所有测试场景"""
         logger.info("🚀 开始Sprint 8 真实API压力测试")
 
@@ -351,7 +346,7 @@ class LiveAPIStressTest:
         logger.info("🎉 真实API压力测试完成")
         return comprehensive_report
 
-    async def _run_scenario(self, scenario_name: str, scenario: APITestScenario) -> Dict[str, Any]:
+    async def _run_scenario(self, scenario_name: str, scenario: APITestScenario) -> dict[str, Any]:
         """运行单个测试场景"""
         self.mocker.reset_counters()
 
@@ -436,7 +431,7 @@ class LiveAPIStressTest:
         collection_service = MagicMock(spec=CollectionService)
 
         # 模拟API调用方法
-        async def mock_get_match_data(match_id: str) -> Dict[str, Any]:
+        async def mock_get_match_data(match_id: str) -> dict[str, Any]:
             return await self.mocker.simulate_api_response(scenario, match_id)
 
         collection_service.get_match_data = mock_get_match_data
@@ -449,8 +444,8 @@ class LiveAPIStressTest:
         service: CollectionService,
         match_id: str,
         scenario: APITestScenario,
-        response_times: List[float],
-    ) -> Dict[str, Any]:
+        response_times: list[float],
+    ) -> dict[str, Any]:
         """执行单个API请求"""
         start_time = time.time()
 
@@ -466,7 +461,7 @@ class LiveAPIStressTest:
                 "data": result,
             }
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             response_time = (time.time() - start_time) * 1000
             response_times.append(response_time)
 
@@ -492,7 +487,7 @@ class LiveAPIStressTest:
 
     async def _process_batch_results(
         self,
-        batch_results: List,
+        batch_results: list,
         success_count: int,
         error_count: int,
         timeout_count: int,
@@ -514,7 +509,7 @@ class LiveAPIStressTest:
                     if result.get("error_type") == "timeout":
                         timeout_count += 1
 
-    async def _analyze_graceful_degradation(self, scenario: APITestScenario, success_rate: float) -> Dict[str, Any]:
+    async def _analyze_graceful_degradation(self, scenario: APITestScenario, success_rate: float) -> dict[str, Any]:
         """分析优雅降级情况"""
         analysis = {
             "degraded_successfully": False,
@@ -535,7 +530,7 @@ class LiveAPIStressTest:
 
         return analysis
 
-    async def _generate_comprehensive_report(self, scenario_results: Dict[str, Any]) -> Dict[str, Any]:
+    async def _generate_comprehensive_report(self, scenario_results: dict[str, Any]) -> dict[str, Any]:
         """生成综合报告"""
         logger.info("📊 生成综合压力测试报告")
 
@@ -590,7 +585,7 @@ class LiveAPIStressTest:
         logger.info(f"📄 压力测试报告已保存: {report_file}")
         return report
 
-    def _generate_recommendations(self, scenario_results: Dict[str, Any]) -> List[str]:
+    def _generate_recommendations(self, scenario_results: dict[str, Any]) -> list[str]:
         """生成改进建议"""
         recommendations = []
 
@@ -625,7 +620,7 @@ class LiveAPIStressTest:
 
         return recommendations
 
-    async def test_system_recovery(self) -> Dict[str, Any]:
+    async def test_system_recovery(self) -> dict[str, Any]:
         """测试系统恢复能力"""
         logger.info("🔄 测试系统恢复能力")
 
@@ -699,7 +694,7 @@ class APIResilienceValidator:
     def __init__(self):
         self.settings = get_settings()
 
-    async def validate_circuit_breaker(self) -> Dict[str, Any]:
+    async def validate_circuit_breaker(self) -> dict[str, Any]:
         """验证熔断器功能"""
         logger.info("🔌 验证熔断器功能")
 
@@ -714,7 +709,7 @@ class APIResilienceValidator:
             "validation_passed": True,
         }
 
-    async def validate_rate_limiting(self) -> Dict[str, Any]:
+    async def validate_rate_limiting(self) -> dict[str, Any]:
         """验证限流功能"""
         logger.info("⚡ 验证限流功能")
 
@@ -725,7 +720,7 @@ class APIResilienceValidator:
             "validation_passed": True,
         }
 
-    async def validate_fallback_mechanisms(self) -> Dict[str, Any]:
+    async def validate_fallback_mechanisms(self) -> dict[str, Any]:
         """验证降级机制"""
         logger.info("🔄 验证降级机制")
 
@@ -786,14 +781,14 @@ async def main():
             json.dump(final_report, f, indent=2, default=str)
 
         # 输出摘要
-        print(f"\n🎯 压力测试完成!")
+        print("\n🎯 压力测试完成!")
         print(f"📊 总体成功率: {comprehensive_report['test_summary']['overall_success_rate']:.1f}%")
         print(f"⚡ 平均响应时间: {comprehensive_report['performance_metrics']['avg_response_time_ms']:.0f}ms")
         print(f"🔄 恢复能力: {'✅' if recovery_test['recovery_capability'] else '❌'}")
         print(f"🛡️ 生产就绪: {'✅' if final_report['production_readiness']['ready'] else '❌'}")
 
         if comprehensive_report["recommendations"]:
-            print(f"\n💡 改进建议:")
+            print("\n💡 改进建议:")
             for rec in comprehensive_report["recommendations"]:
                 print(f"   • {rec}")
 

@@ -25,9 +25,7 @@ logger = logging.getLogger(__name__)
 class LeagueMetadata:
     """联赛元数据实体."""
 
-    def __init__(
-        self, league_id: int, name: str, country: str, tier: str = "unknown"
-    ) -> None:
+    def __init__(self, league_id: int, name: str, country: str, tier: str = "unknown") -> None:
         """初始化联赛元数据."""
         self.league_id = league_id
         self.name = name
@@ -54,9 +52,7 @@ class LeagueMetadata:
             "tier": self.tier,
             "season_aliases": self.season_aliases,
             "available_seasons": self.available_seasons,
-            "last_updated": self.last_updated.isoformat()
-            if self.last_updated
-            else None,
+            "last_updated": self.last_updated.isoformat() if self.last_updated else None,
         }
 
 
@@ -168,14 +164,10 @@ class MetadataManager:
                 aliases = target_info.get("aliases", [target_name])
                 if any(alias.lower() in league_name.lower() for alias in aliases):
                     if league_id not in found_ids:
-                        metadata = self._create_metadata(
-                            league_id, league_name, target_info
-                        )
+                        metadata = self._create_metadata(league_id, league_name, target_info)
                         discovered.append(metadata)
                         found_ids.add(league_id)
-                        logger.info(
-                            f"✅ 发现联赛 (popular): {league_name} (ID: {league_id})"
-                        )
+                        logger.info(f"✅ 发现联赛 (popular): {league_name} (ID: {league_id})")
                     break
 
         # 2. 从 countries 列表中查找（补充 popular 中遗漏的）
@@ -194,24 +186,16 @@ class MetadataManager:
                 for target_name, target_info in self.BIG_FIVE_LEAGUES.items():
                     if target_info["country"] == country_name:
                         aliases = target_info.get("aliases", [target_name])
-                        if any(
-                            alias.lower() in league_name.lower() for alias in aliases
-                        ):
-                            metadata = self._create_metadata(
-                                league_id, league_name, target_info
-                            )
+                        if any(alias.lower() in league_name.lower() for alias in aliases):
+                            metadata = self._create_metadata(league_id, league_name, target_info)
                             discovered.append(metadata)
                             found_ids.add(league_id)
-                            logger.info(
-                                f"✅ 发现联赛 (countries): {league_name} (ID: {league_id})"
-                            )
+                            logger.info(f"✅ 发现联赛 (countries): {league_name} (ID: {league_id})")
                             break
 
         return discovered
 
-    def _create_metadata(
-        self, league_id: int, league_name: str, target_info: dict
-    ) -> LeagueMetadata:
+    def _create_metadata(self, league_id: int, league_name: str, target_info: dict) -> LeagueMetadata:
         """创建联赛元数据并获取可用赛季
 
         Args:
@@ -254,9 +238,7 @@ class MetadataManager:
         """
         try:
             url = f"https://www.fotmob.com/api/leagues?id={league_id}"
-            headers = {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-            }
+            headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
             response = requests.get(url, headers=headers, timeout=15)
             response.raise_for_status()
             data = response.json()
@@ -389,9 +371,7 @@ class MetadataManager:
         """获取联赛元数据"""
         return self.leagues.get(league_id)
 
-    def convert_season_format(
-        self, league_id: int, season: str, target_format: str = "storage"
-    ) -> str | None:
+    def convert_season_format(self, league_id: int, season: str, target_format: str = "storage") -> str | None:
         """转换赛季格式
 
         Args:

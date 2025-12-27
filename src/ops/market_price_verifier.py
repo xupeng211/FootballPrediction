@@ -16,15 +16,11 @@ V19.4 市场价格验证器 (Market Price Verifier)
 """
 
 import logging
-import json
-import numpy as np
-import pandas as pd
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Tuple
 from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
-import requests
-from bs4 import BeautifulSoup
+
+import pandas as pd
 
 logger = logging.getLogger(__name__)
 
@@ -32,6 +28,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class PriceCheckResult:
     """价格检查结果"""
+
     match_id: str
     home_team: str
     away_team: str
@@ -39,13 +36,13 @@ class PriceCheckResult:
 
     # 价格数据
     historical_odds: float  # 回测用平均价格
-    live_odds: float       # 当前市场价格
-    odds_diff_pct: float   # 价格偏离百分比
+    live_odds: float  # 当前市场价格
+    odds_diff_pct: float  # 价格偏离百分比
 
     # 判断结果
-    is_deprecated: bool     # 是否贬值
-    is_safe: bool          # 是否安全
-    recommendation: str     # 建议
+    is_deprecated: bool  # 是否贬值
+    is_safe: bool  # 是否安全
+    recommendation: str  # 建议
 
     timestamp: datetime
 
@@ -89,21 +86,16 @@ class MarketPriceVerifier:
             return pd.DataFrame()
 
         df = pd.read_csv(path)
-        df['match_date'] = pd.to_datetime(df['match_date']).dt.tz_localize(None)
+        df["match_date"] = pd.to_datetime(df["match_date"]).dt.tz_localize(None)
 
         # 计算平均赔率（使用 Bet365 作为主要基准）
-        df['avg_home_odds'] = df[['b365_home_odds', 'ps_home_odds']].mean(axis=1, skipna=True)
-        df['avg_draw_odds'] = df[['b365_draw_odds', 'ps_draw_odds']].mean(axis=1, skipna=True)
-        df['avg_away_odds'] = df[['b365_away_odds', 'ps_away_odds']].mean(axis=1, skipna=True)
+        df["avg_home_odds"] = df[["b365_home_odds", "ps_home_odds"]].mean(axis=1, skipna=True)
+        df["avg_draw_odds"] = df[["b365_draw_odds", "ps_draw_odds"]].mean(axis=1, skipna=True)
+        df["avg_away_odds"] = df[["b365_away_odds", "ps_away_odds"]].mean(axis=1, skipna=True)
 
         return df
 
-    def get_historical_odds(
-        self,
-        home_team: str,
-        away_team: str,
-        prediction: str
-    ) -> Optional[float]:
+    def get_historical_odds(self, home_team: str, away_team: str, prediction: str) -> float | None:
         """
         获取历史平均赔率
 
@@ -121,8 +113,7 @@ class MarketPriceVerifier:
         # 查找匹配的比赛（考虑球队名称标准化）
         # 简化处理：直接匹配
         matches = self.historical_odds[
-            (self.historical_odds['home_team'] == home_team) &
-            (self.historical_odds['away_team'] == away_team)
+            (self.historical_odds["home_team"] == home_team) & (self.historical_odds["away_team"] == away_team)
         ]
 
         if len(matches) == 0:
@@ -132,19 +123,14 @@ class MarketPriceVerifier:
         # 使用最新的赔率
         latest = matches.iloc[-1]
 
-        if prediction == 'H':
-            return latest['avg_home_odds']
-        elif prediction == 'D':
-            return latest['avg_draw_odds']
+        if prediction == "H":
+            return latest["avg_home_odds"]
+        elif prediction == "D":
+            return latest["avg_draw_odds"]
         else:  # 'A'
-            return latest['avg_away_odds']
+            return latest["avg_away_odds"]
 
-    def fetch_live_odds(
-        self,
-        home_team: str,
-        away_team: str,
-        prediction: str
-    ) -> Optional[float]:
+    def fetch_live_odds(self, home_team: str, away_team: str, prediction: str) -> float | None:
         """
         获取实时市场赔率
 
@@ -168,11 +154,7 @@ class MarketPriceVerifier:
 
         try:
             conn = psycopg2.connect(
-                host="localhost",
-                port=5432,
-                database="football_db",
-                user="football_user",
-                password="football_pass"
+                host="localhost", port=5432, database="football_db", user="football_user", password="football_pass"
             )
 
             cursor = conn.cursor(cursor_factory=RealDictCursor)
@@ -202,12 +184,12 @@ class MarketPriceVerifier:
             conn.close()
 
             if result:
-                if prediction == 'H':
-                    return float(result['b365_home_odds']) if result['b365_home_odds'] else None
-                elif prediction == 'D':
-                    return float(result['b365_draw_odds']) if result['b365_draw_odds'] else None
+                if prediction == "H":
+                    return float(result["b365_home_odds"]) if result["b365_home_odds"] else None
+                elif prediction == "D":
+                    return float(result["b365_draw_odds"]) if result["b365_draw_odds"] else None
                 else:
-                    return float(result['b365_away_odds']) if result['b365_away_odds'] else None
+                    return float(result["b365_away_odds"]) if result["b365_away_odds"] else None
 
         except Exception as e:
             logger.debug(f"获取实时赔率失败: {e}")
@@ -215,12 +197,7 @@ class MarketPriceVerifier:
         return None
 
     def verify_price(
-        self,
-        match_id: str,
-        home_team: str,
-        away_team: str,
-        prediction: str,
-        historical_odds: float = None
+        self, match_id: str, home_team: str, away_team: str, prediction: str, historical_odds: float = None
     ) -> PriceCheckResult:
         """
         验证价格是否贬值
@@ -252,7 +229,7 @@ class MarketPriceVerifier:
                 is_deprecated=False,
                 is_safe=True,
                 recommendation="NO_HISTORICAL_DATA",
-                timestamp=datetime.now()
+                timestamp=datetime.now(),
             )
 
         # 获取实时赔率
@@ -290,7 +267,7 @@ class MarketPriceVerifier:
             is_deprecated=is_deprecated,
             is_safe=is_safe,
             recommendation=recommendation,
-            timestamp=datetime.now()
+            timestamp=datetime.now(),
         )
 
         # 记录日志
@@ -303,10 +280,7 @@ class MarketPriceVerifier:
 
         return result
 
-    def batch_verify(
-        self,
-        predictions: List[Dict]
-    ) -> List[PriceCheckResult]:
+    def batch_verify(self, predictions: list[dict]) -> list[PriceCheckResult]:
         """
         批量验证价格
 
@@ -320,17 +294,17 @@ class MarketPriceVerifier:
 
         for pred in predictions:
             result = self.verify_price(
-                match_id=pred.get('match_id', ''),
-                home_team=pred.get('home_team', ''),
-                away_team=pred.get('away_team', ''),
-                prediction=pred.get('prediction', ''),
-                historical_odds=pred.get('odds')
+                match_id=pred.get("match_id", ""),
+                home_team=pred.get("home_team", ""),
+                away_team=pred.get("away_team", ""),
+                prediction=pred.get("prediction", ""),
+                historical_odds=pred.get("odds"),
             )
             results.append(result)
 
         return results
 
-    def generate_price_report(self, results: List[PriceCheckResult]) -> pd.DataFrame:
+    def generate_price_report(self, results: list[PriceCheckResult]) -> pd.DataFrame:
         """
         生成价格验证报告
 
@@ -343,18 +317,20 @@ class MarketPriceVerifier:
         report_data = []
 
         for r in results:
-            report_data.append({
-                'match_id': r.match_id,
-                'home_team': r.home_team,
-                'away_team': r.away_team,
-                'prediction': r.prediction,
-                'historical_odds': r.historical_odds,
-                'live_odds': r.live_odds,
-                'odds_diff_pct': r.odds_diff_pct,
-                'is_deprecated': r.is_deprecated,
-                'recommendation': r.recommendation,
-                'timestamp': r.timestamp
-            })
+            report_data.append(
+                {
+                    "match_id": r.match_id,
+                    "home_team": r.home_team,
+                    "away_team": r.away_team,
+                    "prediction": r.prediction,
+                    "historical_odds": r.historical_odds,
+                    "live_odds": r.live_odds,
+                    "odds_diff_pct": r.odds_diff_pct,
+                    "is_deprecated": r.is_deprecated,
+                    "recommendation": r.recommendation,
+                    "timestamp": r.timestamp,
+                }
+            )
 
         df = pd.DataFrame(report_data)
 
@@ -372,12 +348,9 @@ class MarketPriceVerifier:
 # 便捷函数
 # ============================================
 
+
 def verify_prediction_price(
-    match_id: str,
-    home_team: str,
-    away_team: str,
-    prediction: str,
-    historical_odds: float = None
+    match_id: str, home_team: str, away_team: str, prediction: str, historical_odds: float = None
 ) -> PriceCheckResult:
     """
     验证单个预测的价格
@@ -398,7 +371,7 @@ def verify_prediction_price(
         home_team=home_team,
         away_team=away_team,
         prediction=prediction,
-        historical_odds=historical_odds
+        historical_odds=historical_odds,
     )
 
 
@@ -417,11 +390,7 @@ if __name__ == "__main__":
 
     # 测试价格验证
     result = verifier.verify_price(
-        match_id="test_001",
-        home_team="Manchester City",
-        away_team="Liverpool",
-        prediction="H",
-        historical_odds=1.80
+        match_id="test_001", home_team="Manchester City", away_team="Liverpool", prediction="H", historical_odds=1.80
     )
 
     print("\n价格验证结果:")

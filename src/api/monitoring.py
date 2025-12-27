@@ -9,7 +9,7 @@ import os
 import sys
 import time
 from datetime import datetime
-from typing import Any, Dict
+from typing import Any
 
 import psutil
 from fastapi import APIRouter, Depends
@@ -30,7 +30,7 @@ router = APIRouter(tags=["监控"])
     description="获取系统性能指标、资源使用情况和业务统计",
     response_model=MetricsResponse,
 )
-async def get_metrics(db: Session = Depends(get_db_session)) -> Dict[str, Any]:
+async def get_metrics(db: Session = Depends(get_db_session)) -> dict[str, Any]:
     """
     获取应用性能指标和系统监控数据
 
@@ -95,7 +95,7 @@ async def get_metrics(db: Session = Depends(get_db_session)) -> Dict[str, Any]:
         }
 
 
-async def _get_database_metrics(db: Session) -> Dict[str, Any]:
+async def _get_database_metrics(db: Session) -> dict[str, Any]:
     """获取数据库性能指标"""
     try:
         # 数据库连接测试
@@ -131,7 +131,7 @@ async def _get_database_metrics(db: Session) -> Dict[str, Any]:
         return {"healthy": False, "error": str(e)}
 
 
-async def _get_business_metrics(db: Session) -> Dict[str, Any]:
+async def _get_business_metrics(db: Session) -> dict[str, Any]:
     """获取业务指标统计"""
     try:
         # 最近24小时的业务活动统计
@@ -177,9 +177,9 @@ async def _get_business_metrics(db: Session) -> Dict[str, Any]:
     "/status",
     summary="服务状态检查",
     description="快速检查所有关键服务的运行状态",
-    response_model=Dict[str, Any],
+    response_model=dict[str, Any],
 )
-async def get_service_status(db: Session = Depends(get_db_session)) -> Dict[str, Any]:
+async def get_service_status(db: Session = Depends(get_db_session)) -> dict[str, Any]:
     """
     快速服务状态检查，用于负载均衡器和监控系统
 

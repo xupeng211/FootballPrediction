@@ -8,12 +8,13 @@ import asyncio
 import functools
 import logging
 import time
-from typing import Callable, Any, TypeVar, Optional, ParamSpec
+from collections.abc import Callable
+from typing import ParamSpec, TypeVar
 
 logger = logging.getLogger(__name__)
 
-T = TypeVar('T')
-P = ParamSpec('P')
+T = TypeVar("T")
+P = ParamSpec("P")
 
 
 class RetryConfig:
@@ -39,7 +40,7 @@ def with_retry(
     base_delay: float = 1.0,
     max_delay: float = 30.0,
     exponential: bool = True,
-    exceptions: Optional[tuple] = None,
+    exceptions: tuple | None = None,
 ) -> Callable:
     """连接重试装饰器
 
@@ -75,14 +76,10 @@ def with_retry(
                     return await func(*args, **kwargs)
                 except config.exceptions as e:
                     if attempt == config.max_attempts - 1:
-                        logger.error(
-                            f"函数 {func.__name__} 达到最大重试次数 ({config.max_attempts}) 后失败: {e}"
-                        )
+                        logger.error(f"函数 {func.__name__} 达到最大重试次数 ({config.max_attempts}) 后失败: {e}")
                         raise
 
-                    delay = _calculate_delay(
-                        attempt, config.base_delay, config.max_delay, config.exponential
-                    )
+                    delay = _calculate_delay(attempt, config.base_delay, config.max_delay, config.exponential)
                     logger.warning(
                         f"函数 {func.__name__} 执行失败 ({attempt + 1}/{config.max_attempts}): {e}. "
                         f"{delay:.1f}秒后重试..."
@@ -97,14 +94,10 @@ def with_retry(
                     return func(*args, **kwargs)
                 except config.exceptions as e:
                     if attempt == config.max_attempts - 1:
-                        logger.error(
-                            f"函数 {func.__name__} 达到最大重试次数 ({config.max_attempts}) 后失败: {e}"
-                        )
+                        logger.error(f"函数 {func.__name__} 达到最大重试次数 ({config.max_attempts}) 后失败: {e}")
                         raise
 
-                    delay = _calculate_delay(
-                        attempt, config.base_delay, config.max_delay, config.exponential
-                    )
+                    delay = _calculate_delay(attempt, config.base_delay, config.max_delay, config.exponential)
                     logger.warning(
                         f"函数 {func.__name__} 执行失败 ({attempt + 1}/{config.max_attempts}): {e}. "
                         f"{delay:.1f}秒后重试..."
@@ -135,7 +128,7 @@ def _calculate_delay(attempt: int, base_delay: float, max_delay: float, exponent
     """
     if exponential:
         # 指数退避：base_delay * 2^attempt
-        delay = base_delay * (2 ** attempt)
+        delay = base_delay * (2**attempt)
     else:
         # 固定延迟
         delay = base_delay
@@ -144,6 +137,7 @@ def _calculate_delay(attempt: int, base_delay: float, max_delay: float, exponent
 
 
 # === 便捷函数 ===
+
 
 def retry_on_connection_error(max_attempts: int = 3) -> Callable:
     """仅在连接错误时重试的装饰器
@@ -186,6 +180,7 @@ def retry_on_timeout(max_attempts: int = 3) -> Callable:
 
 
 # === 数据库特定装饰器 ===
+
 
 def retry_db_connection(
     max_attempts: int = 3,

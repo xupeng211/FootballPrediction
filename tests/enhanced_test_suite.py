@@ -8,10 +8,9 @@ import asyncio
 import json
 import logging
 import time
-from typing import Dict, List, Any
-import pytest
+from typing import Any
+
 from httpx import AsyncClient
-from fastapi.testclient import TestClient
 
 # 导入测试组件
 try:
@@ -19,8 +18,9 @@ try:
 
     sys.path.append("src")
     sys.path.append(".claude/skills/api-testing")
-    from main import app
     from enhanced_main import app as enhanced_app
+
+    from main import app
 
     API_TESTING_ENABLED = True
 except ImportError as e:
@@ -161,7 +161,7 @@ class EnhancedTestSuite:
         self.test_results["performance_tests"] = results
         return results
 
-    async def _run_concurrent_test(self, test_case: Dict) -> Dict:
+    async def _run_concurrent_test(self, test_case: dict) -> dict:
         """运行并发测试"""
         logger.info(f"🚀 运行 {test_case['name']}")
 
@@ -283,7 +283,7 @@ class EnhancedTestSuite:
         self.test_results["security_tests"] = results
         return results
 
-    def run_coverage_analysis(self) -> Dict[str, Any]:
+    def run_coverage_analysis(self) -> dict[str, Any]:
         """运行覆盖率分析"""
         logger.info("📊 开始覆盖率分析...")
 
@@ -308,7 +308,7 @@ class EnhancedTestSuite:
             if result.returncode == 0:
                 # 读取覆盖率报告
                 try:
-                    with open("coverage.json", "r") as f:
+                    with open("coverage.json") as f:
                         coverage_data = json.load(f)
 
                     coverage_result = {
@@ -339,7 +339,7 @@ class EnhancedTestSuite:
             logger.error(f"覆盖率分析失败: {e}")
             return {"error": str(e), "meets_target": False}
 
-    async def run_full_test_suite(self) -> Dict[str, Any]:
+    async def run_full_test_suite(self) -> dict[str, Any]:
         """运行完整测试套件"""
         logger.info("🚀 开始完整测试套件...")
 
@@ -378,7 +378,7 @@ class EnhancedTestSuite:
 
         return overall_summary
 
-    def generate_test_report(self, results: Dict[str, Any]) -> str:
+    def generate_test_report(self, results: dict[str, Any]) -> str:
         """生成测试报告"""
         report = []
         report.append("# 增强测试套件报告")

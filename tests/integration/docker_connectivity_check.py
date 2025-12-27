@@ -4,10 +4,10 @@ Docker 容器内连通性验证脚本
 验证 app 容器与 db、redis 的连接状态
 """
 
+import logging
 import os
 import sys
 import time
-import logging
 from datetime import datetime
 from pathlib import Path
 
@@ -21,10 +21,7 @@ log_dir.mkdir(parents=True, exist_ok=True)
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    handlers=[
-        logging.FileHandler(log_dir / "docker_connectivity.log"),
-        logging.StreamHandler()
-    ]
+    handlers=[logging.FileHandler(log_dir / "docker_connectivity.log"), logging.StreamHandler()],
 )
 logger = logging.getLogger(__name__)
 
@@ -33,10 +30,7 @@ class ConnectivityChecker:
     """容器内连通性检查器"""
 
     def __init__(self):
-        self.results = {
-            "timestamp": datetime.now().isoformat(),
-            "checks": {}
-        }
+        self.results = {"timestamp": datetime.now().isoformat(), "checks": {}}
 
     def check_database(self) -> dict:
         """检查数据库连通性"""
@@ -45,6 +39,7 @@ class ConnectivityChecker:
 
         try:
             import psycopg2
+
             from src.config_unified import get_settings
 
             settings = get_settings()
@@ -59,7 +54,7 @@ class ConnectivityChecker:
                 database=db.name,
                 user=db.user,
                 password=db.password.get_secret_value(),
-                connect_timeout=10
+                connect_timeout=10,
             )
 
             cursor = conn.cursor()
@@ -83,7 +78,7 @@ class ConnectivityChecker:
                 "database": db.name,
                 "match_count": match_count,
                 "feature_count": feature_count,
-                "response_time_ms": round(elapsed, 2)
+                "response_time_ms": round(elapsed, 2),
             }
 
             logger.info(f"✅ 数据库连接成功: {match_count} 场比赛, {feature_count} 条特征")
@@ -92,11 +87,7 @@ class ConnectivityChecker:
         except Exception as e:
             elapsed = (time.time() - start_time) * 1000
             logger.error(f"❌ 数据库连接失败: {e}")
-            return {
-                "status": "Fail",
-                "error": str(e),
-                "response_time_ms": round(elapsed, 2)
-            }
+            return {"status": "Fail", "error": str(e), "response_time_ms": round(elapsed, 2)}
 
     def check_redis(self) -> dict:
         """检查 Redis 连通性"""
@@ -105,6 +96,7 @@ class ConnectivityChecker:
 
         try:
             import redis
+
             from src.config_unified import get_settings
 
             settings = get_settings()
@@ -118,7 +110,7 @@ class ConnectivityChecker:
                 port=redis_config.port,
                 db=redis_config.db,
                 password=redis_config.password.get_secret_value() if redis_config.password else None,
-                socket_timeout=5
+                socket_timeout=5,
             )
 
             # 写入测试
@@ -146,7 +138,7 @@ class ConnectivityChecker:
                 "write_latency_ms": round(write_time, 2),
                 "read_latency_ms": round(read_time, 2),
                 "total_time_ms": round(total_elapsed, 2),
-                "data_matched": (retrieved.decode() == test_value)
+                "data_matched": (retrieved.decode() == test_value),
             }
 
             logger.info(f"✅ Redis 连接成功: 写入 {write_time:.2f}ms, 读取 {read_time:.2f}ms")
@@ -155,11 +147,7 @@ class ConnectivityChecker:
         except Exception as e:
             elapsed = (time.time() - start_time) * 1000
             logger.error(f"❌ Redis 连接失败: {e}")
-            return {
-                "status": "Fail",
-                "error": str(e),
-                "response_time_ms": round(elapsed, 2)
-            }
+            return {"status": "Fail", "error": str(e), "response_time_ms": round(elapsed, 2)}
 
     def check_model_files(self) -> dict:
         """检查模型文件是否存在"""
@@ -167,8 +155,9 @@ class ConnectivityChecker:
         start_time = time.time()
 
         try:
-            from src.config_unified import get_settings
             from pathlib import Path
+
+            from src.config_unified import get_settings
 
             settings = get_settings()
 
@@ -198,11 +187,7 @@ class ConnectivityChecker:
         except Exception as e:
             elapsed = (time.time() - start_time) * 1000
             logger.error(f"❌ 模型文件检查失败: {e}")
-            return {
-                "status": "Fail",
-                "error": str(e),
-                "response_time_ms": round(elapsed, 2)
-            }
+            return {"status": "Fail", "error": str(e), "response_time_ms": round(elapsed, 2)}
 
     def check_filesystem(self) -> dict:
         """检查文件系统权限"""
@@ -240,7 +225,7 @@ class ConnectivityChecker:
             result = {
                 "status": "OK" if all_ok else "Partial",
                 "directories": results,
-                "check_time_ms": round(elapsed, 2)
+                "check_time_ms": round(elapsed, 2),
             }
 
             logger.info(f"✅ 文件系统检查完成: {results}")
@@ -249,11 +234,7 @@ class ConnectivityChecker:
         except Exception as e:
             elapsed = (time.time() - start_time) * 1000
             logger.error(f"❌ 文件系统检查失败: {e}")
-            return {
-                "status": "Fail",
-                "error": str(e),
-                "response_time_ms": round(elapsed, 2)
-            }
+            return {"status": "Fail", "error": str(e), "response_time_ms": round(elapsed, 2)}
 
     def run_all_checks(self) -> dict:
         """运行所有检查"""
@@ -267,10 +248,7 @@ class ConnectivityChecker:
         self.results["checks"]["filesystem"] = self.check_filesystem()
 
         # 计算总体状态
-        all_ok = all(
-            check.get("status") in ["OK", "Partial"]
-            for check in self.results["checks"].values()
-        )
+        all_ok = all(check.get("status") in ["OK", "Partial"] for check in self.results["checks"].values())
         self.results["overall_status"] = "OK" if all_ok else "Fail"
 
         logger.info("=" * 60)

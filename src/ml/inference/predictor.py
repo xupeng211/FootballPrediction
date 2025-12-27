@@ -17,18 +17,18 @@ Phase 5 Advanced Features 核心组件之一
 """
 
 import logging
+from datetime import datetime
+from decimal import Decimal
+from typing import Any
+
 import numpy as np
 import pandas as pd
-from datetime import datetime
-from typing import Dict, Any, Optional, Union, List
-from decimal import Decimal, ROUND_HALF_UP, getcontext
-
-from .model_loader import ModelLoader
-from .cache_manager import PredictionCache
 
 # 导入足球业务逻辑常量
-from ...constants import PROBABILITY, STATISTICAL, VALIDATOR, FOOTBALL
+from ...constants import FOOTBALL, PROBABILITY, VALIDATOR
 from ...constants.football_logic import PrecisionContext
+from .cache_manager import PredictionCache
+from .model_loader import ModelLoader
 
 logger = logging.getLogger(__name__)
 
@@ -79,7 +79,7 @@ class MatchPredictor:
     def __init__(
         self,
         model_loader: ModelLoader,
-        cache_manager: Optional[PredictionCache] = None,
+        cache_manager: PredictionCache | None = None,
         default_model_name: str = "xgboost_model",
         precision_context: str = "medium",  # high, medium, low
         enable_stability_checks: bool = True,
@@ -136,12 +136,12 @@ class MatchPredictor:
 
     def predict(
         self,
-        features: Union[np.ndarray, pd.DataFrame, List[float]],
-        model_name: Optional[str] = None,
+        features: np.ndarray | pd.DataFrame | list[float],
+        model_name: str | None = None,
         use_cache: bool = True,
-        additional_params: Optional[Dict[str, Any]] = None,
+        additional_params: dict[str, Any] | None = None,
         enable_ensemble: bool = False,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         执行足球比赛预测
 
@@ -210,7 +210,7 @@ class MatchPredictor:
             logger.error(error_msg)
             raise PredictionError(error_msg) from e
 
-    def _convert_features_to_list(self, features: Union[np.ndarray, pd.DataFrame, List[float]]) -> List[float]:
+    def _convert_features_to_list(self, features: np.ndarray | pd.DataFrame | list[float]) -> list[float]:
         """
         将各种格式的特征转换为统一列表格式
 
@@ -256,10 +256,10 @@ class MatchPredictor:
 
     def _execute_prediction(
         self,
-        feature_list: List[float],
+        feature_list: list[float],
         model_name: str,
-        additional_params: Optional[Dict[str, Any]],
-    ) -> Dict[str, Any]:
+        additional_params: dict[str, Any] | None,
+    ) -> dict[str, Any]:
         """
         执行核心预测逻辑 (金融级精度版本)
 
@@ -370,12 +370,12 @@ class MatchPredictor:
 
             # 尝试恢复：使用默认概率分布
             if self.enable_stability_checks:
-                logger.warning(f"启用预测恢复机制，使用默认概率分布")
+                logger.warning("启用预测恢复机制，使用默认概率分布")
                 return self._create_fallback_result(feature_list, model_name)
 
             raise PredictionError(error_msg) from e
 
-    def _enrich_result(self, result: Dict[str, Any], model_name: str, prediction_time: datetime) -> Dict[str, Any]:
+    def _enrich_result(self, result: dict[str, Any], model_name: str, prediction_time: datetime) -> dict[str, Any]:
         """
         增强预测结果信息
 
@@ -406,7 +406,7 @@ class MatchPredictor:
 
         return enriched_result
 
-    def _enrich_cached_result(self, cached_result: Dict[str, Any], prediction_time: datetime) -> Dict[str, Any]:
+    def _enrich_cached_result(self, cached_result: dict[str, Any], prediction_time: datetime) -> dict[str, Any]:
         """
         增强缓存结果信息
 
@@ -428,7 +428,7 @@ class MatchPredictor:
 
         return enriched_result
 
-    def _normalize_probabilities_financial(self, raw_probabilities: np.ndarray, model_name: str) -> List[Decimal]:
+    def _normalize_probabilities_financial(self, raw_probabilities: np.ndarray, model_name: str) -> list[Decimal]:
         """
         金融级概率归一化处理 (核心算法)
 
@@ -521,7 +521,7 @@ class MatchPredictor:
                 SCORING.DEFAULT_H2H_WIN_RATE,  # 0.5
             ][: len(raw_probabilities)]
 
-    def _validate_and_correct_probabilities(self, probabilities: List[Decimal], model_name: str) -> List[Decimal]:
+    def _validate_and_correct_probabilities(self, probabilities: list[Decimal], model_name: str) -> list[Decimal]:
         """
         验证和修正概率分布 (业务规则版本)
 
@@ -548,7 +548,7 @@ class MatchPredictor:
 
         return final_probs
 
-    def _check_numerical_stability(self, feature_list: List[float]) -> None:
+    def _check_numerical_stability(self, feature_list: list[float]) -> None:
         """
         数值稳定性检查
 
@@ -562,7 +562,7 @@ class MatchPredictor:
         for i, value in enumerate(feature_list):
             if abs(value) > float(VALIDATION.MAX_FEATURE_VALUE):
                 self._prediction_stats["stability_warnings"] += 1
-                logger.warning(f"特征值超出合理范围: 特征{i}={value}, " f"阈值={float(VALIDATION.MAX_FEATURE_VALUE)}")
+                logger.warning(f"特征值超出合理范围: 特征{i}={value}, 阈值={float(VALIDATION.MAX_FEATURE_VALUE)}")
 
             # 检查无效数值
             if not (-float("inf") < value < float("inf")):
@@ -574,7 +574,7 @@ class MatchPredictor:
             if feature_std > float(VALIDATION.STABILITY_THRESHOLD):
                 self._prediction_stats["stability_warnings"] += 1
                 logger.warning(
-                    f"特征数值分布不稳定: 标准差={feature_std:.4f}, " f"阈值={float(VALIDATION.STABILITY_THRESHOLD)}"
+                    f"特征数值分布不稳定: 标准差={feature_std:.4f}, 阈值={float(VALIDATION.STABILITY_THRESHOLD)}"
                 )
 
     def _validate_feature_range(self, feature_array: np.ndarray, model_name: str) -> None:
@@ -590,7 +590,7 @@ class MatchPredictor:
             if abs(value) > float(VALIDATION.OVERFLOW_THRESHOLD):
                 raise NumericalStabilityError(f"特征值溢出风险: 特征{i}={value} (模型: {model_name})")
 
-    def _validate_probability_distribution(self, probabilities: List[float], model_name: str) -> None:
+    def _validate_probability_distribution(self, probabilities: list[float], model_name: str) -> None:
         """
         验证概率分布的有效性
 
@@ -615,7 +615,7 @@ class MatchPredictor:
         if abs(prob_sum - 1.0) > float(PROBABILITY.PROBABILITY_EPSILON * 10):
             logger.warning(f"概率总和异常: {prob_sum:.8f} (模型: {model_name})")
 
-    def _create_fallback_result(self, feature_list: List[float], model_name: str) -> Dict[str, Any]:
+    def _create_fallback_result(self, feature_list: list[float], model_name: str) -> dict[str, Any]:
         """
         创建回退预测结果 (安全恢复机制)
 
@@ -649,7 +649,7 @@ class MatchPredictor:
             "precision_context": self.precision_context,
         }
 
-    def _calculate_confidence(self, probabilities: List[float]) -> float:
+    def _calculate_confidence(self, probabilities: list[float]) -> float:
         """
         计算预测置信度 (增强版本)
 
@@ -677,7 +677,7 @@ class MatchPredictor:
 
         return float(max_prob)
 
-    def get_prediction_stats(self) -> Dict[str, Any]:
+    def get_prediction_stats(self) -> dict[str, Any]:
         """
         获取预测统计信息 (金融级精度版本)
 
@@ -835,9 +835,9 @@ class MatchPredictor:
 
     def validate_features(
         self,
-        features: Union[np.ndarray, pd.DataFrame, List[float]],
-        model_name: Optional[str] = None,
-    ) -> Dict[str, Any]:
+        features: np.ndarray | pd.DataFrame | list[float],
+        model_name: str | None = None,
+    ) -> dict[str, Any]:
         """
         验证特征数据的有效性
 
@@ -885,7 +885,7 @@ class MatchPredictor:
         except Exception as e:
             return {"valid": False, "error": f"特征验证失败: {str(e)}"}
 
-    def get_model_info(self, model_name: Optional[str] = None) -> Dict[str, Any]:
+    def get_model_info(self, model_name: str | None = None) -> dict[str, Any]:
         """
         获取模型信息
 
@@ -898,7 +898,7 @@ class MatchPredictor:
         model_name = model_name or self.default_model_name
         return self.model_loader.get_model_info(model_name)
 
-    def list_available_models(self) -> List[str]:
+    def list_available_models(self) -> list[str]:
         """
         获取可用模型列表
 
@@ -920,10 +920,10 @@ class MatchPredictor:
 
     def _execute_ensemble_prediction(
         self,
-        feature_list: List[float],
+        feature_list: list[float],
         model_name: str,
-        additional_params: Optional[Dict[str, Any]],
-    ) -> Dict[str, Any]:
+        additional_params: dict[str, Any] | None,
+    ) -> dict[str, Any]:
         """
         执行模型融合预测
 
@@ -1053,9 +1053,9 @@ class MatchPredictor:
 
     def _weighted_ensemble(
         self,
-        model_predictions: Dict[str, Dict[str, Any]],
-        model_weights: Dict[str, float],
-    ) -> List[float]:
+        model_predictions: dict[str, dict[str, Any]],
+        model_weights: dict[str, float],
+    ) -> list[float]:
         """
         加权融合模型预测
 
@@ -1098,8 +1098,8 @@ class MatchPredictor:
 
     def _calculate_ensemble_confidence(
         self,
-        model_predictions: Dict[str, Dict[str, Any]],
-        model_weights: Dict[str, float],
+        model_predictions: dict[str, dict[str, Any]],
+        model_weights: dict[str, float],
     ) -> float:
         """
         计算融合置信度
@@ -1152,7 +1152,7 @@ class MatchPredictor:
 
     def _validate_ensemble_probabilities(
         self,
-        probabilities: List[float],
+        probabilities: list[float],
     ) -> None:
         """
         验证融合概率的有效性
@@ -1177,7 +1177,7 @@ class MatchPredictor:
             if not (0.0 <= p <= 1.0):
                 raise ProbabilityNormalizationError(f"无效概率值: {p} (索引: {i})")
 
-    def get_ensemble_models(self) -> Dict[str, Any]:
+    def get_ensemble_models(self) -> dict[str, Any]:
         """
         获取可用的融合模型信息
 
@@ -1209,8 +1209,8 @@ class MatchPredictor:
 
     def update_ensemble_weights(
         self,
-        new_weights: Dict[str, float],
-    ) -> Dict[str, Any]:
+        new_weights: dict[str, float],
+    ) -> dict[str, Any]:
         """
         更新融合模型权重
 

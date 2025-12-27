@@ -15,11 +15,11 @@ from fastapi.responses import JSONResponse, Response
 from prometheus_client import CONTENT_TYPE_LATEST
 
 from src.api.health import router as health_router
-from src.api.monitoring import router as monitoring_router
 from src.api.model_management import router as model_management_router
+from src.api.monitoring import router as monitoring_router
 from src.api.schemas import RootResponse
-from src.database.connection import initialize_database
 from src.core.metrics import get_metrics
+from src.database.connection import initialize_database
 
 # Prometheus指标通过独立模块管理，避免重复注册
 
@@ -29,7 +29,7 @@ def get_version() -> str:
     try:
         version_file = Path(__file__).parent.parent / "VERSION.txt"
         if version_file.exists():
-            with open(version_file, "r", encoding="utf-8") as f:
+            with open(version_file, encoding="utf-8") as f:
                 return f.read().strip()
         else:
             return "1.0.0"  # 默认版本

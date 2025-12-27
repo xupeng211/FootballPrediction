@@ -5,38 +5,37 @@
 静默收割模式：随机延迟 1-3 秒防止 IP 被封
 """
 
+import json
+import logging
 import os
+import random
 import sys
 import time
-import logging
-import requests
-import random
-import json
+from datetime import UTC, datetime
+from typing import Any
+
 import pandas as pd
-from typing import Dict, List, Any, Optional
-from datetime import datetime, timezone
 import psycopg2
-from psycopg2.extras import RealDictCursor
+import requests
 from dotenv import load_dotenv
+from psycopg2.extras import RealDictCursor
 
 # Add src to path
-sys.path.insert(0, '/home/user/projects/FootballPrediction/src')
+sys.path.insert(0, "/home/user/projects/FootballPrediction/src")
 
 from data_access.processors.bulletproof_feature_extractor import BulletproofFeatureExtractor
 
 # Setup logging
-log_dir = '/home/user/projects/FootballPrediction/logs'
+log_dir = "/home/user/projects/FootballPrediction/logs"
 os.makedirs(log_dir, exist_ok=True)
 
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler(f'{log_dir}/season_reharvest.log'),
-        logging.StreamHandler()
-    ]
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    handlers=[logging.FileHandler(f"{log_dir}/season_reharvest.log"), logging.StreamHandler()],
 )
 logger = logging.getLogger(__name__)
+
 
 class DatabaseManager:
     """数据库管理类 - 使用统一配置系统"""
@@ -56,15 +55,12 @@ class DatabaseManager:
         """使用统一配置系统连接数据库"""
         try:
             from src.config_unified import get_settings
+
             settings = get_settings()
             db = settings.database
 
             self.conn = psycopg2.connect(
-                host=db.host,
-                port=db.port,
-                database=db.name,
-                user=db.user,
-                password=db.password.get_secret_value()
+                host=db.host, port=db.port, database=db.name, user=db.user, password=db.password.get_secret_value()
             )
             logger.info(f"✅ 数据库连接成功: {db.host}:{db.port}/{db.name}")
         except Exception as e:
@@ -80,16 +76,16 @@ class DatabaseManager:
         try:
             # Connect to default postgres database
             conn = psycopg2.connect(
-                host=os.getenv('DB_HOST', 'db'),
-                port=int(os.getenv('DB_PORT', '5432')),
-                user=os.getenv('DB_USER', 'football_user'),
-                password=os.getenv('DB_PASSWORD', 'football_pass')
+                host=os.getenv("DB_HOST", "db"),
+                port=int(os.getenv("DB_PORT", "5432")),
+                user=os.getenv("DB_USER", "football_user"),
+                password=os.getenv("DB_PASSWORD", "football_pass"),
             )
             conn.autocommit = True
             cur = conn.cursor()
 
             # Create database
-            cur.execute("SELECT 1 FROM pg_database WHERE datname = %s", (os.getenv('DB_NAME', 'football_db'),))
+            cur.execute("SELECT 1 FROM pg_database WHERE datname = %s", (os.getenv("DB_NAME", "football_db"),))
             if not cur.fetchone():
                 cur.execute(f"CREATE DATABASE {os.getenv('DB_NAME', 'football_db')} OWNER football_user")
                 logger.info("✅ 数据库创建成功")
@@ -199,24 +195,24 @@ class DatabaseManager:
             logger.error(f"❌ 清空表失败: {e}")
             return False
 
-    def insert_match_features(self, features: Dict[str, Any]) -> bool:
+    def insert_match_features(self, features: dict[str, Any]) -> bool:
         """插入比赛特征数据"""
         try:
             with self.conn.cursor() as cur:
                 # Prepare insert/update query
                 columns = list(features.keys())
-                placeholders = ', '.join(['%s'] * len(columns))
-                columns_str = ', '.join(columns)
+                placeholders = ", ".join(["%s"] * len(columns))
+                columns_str = ", ".join(columns)
 
                 # ON CONFLICT clause for upsert
-                update_cols = [f"{col} = EXCLUDED.{col}" for col in columns if col != 'external_id']
-                conflict_cols = 'external_id'
+                update_cols = [f"{col} = EXCLUDED.{col}" for col in columns if col != "external_id"]
+                conflict_cols = "external_id"
 
                 query = f"""
                     INSERT INTO match_features_training ({columns_str})
                     VALUES ({placeholders})
                     ON CONFLICT ({conflict_cols}) DO UPDATE SET
-                        {', '.join(update_cols)},
+                        {", ".join(update_cols)},
                         updated_at = NOW()
                     RETURNING id;
                 """
@@ -229,11 +225,11 @@ class DatabaseManager:
             self.conn.rollback()
             return False
 
-    def get_data_quality_report(self, limit: int = 5) -> List[Dict]:
+    def get_data_quality_report(self, limit: int = 5) -> list[dict]:
         """获取数据质量报告"""
         try:
             with self.conn.cursor(cursor_factory=RealDictCursor) as cur:
-                query = f"""
+                query = """
                     SELECT
                         external_id,
                         home_team,
@@ -280,24 +276,23 @@ class SeasonReharvester:
         self.base_url = "https://www.fotmob.com/api"
         self.session = requests.Session()
         # 设置 UA 伪装
-        self.session.headers.update({
-            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-        })
+        self.session.headers.update(
+            {
+                "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+            }
+        )
         # 收割数据存储
         self.harvested_data = []
         self.failed_matches = []
 
-    def get_season_matches(self) -> List[Dict]:
+    def get_season_matches(self) -> list[dict]:
         """获取赛季所有比赛"""
         try:
             logger.info(f"🔍 获取英超 {self.season} 赛季比赛列表...")
 
             # 使用 FotMob API 获取联赛比赛
             url = f"{self.base_url}/leagues"
-            params = {
-                "id": self.league_id,
-                "tab": "results"
-            }
+            params = {"id": self.league_id, "tab": "results"}
 
             response = self.session.get(url, params=params, timeout=10)
             response.raise_for_status()
@@ -305,8 +300,8 @@ class SeasonReharvester:
             data = response.json()
 
             # 提取比赛数据 - 正确路径：fixtures.allMatches
-            fixtures = data.get('fixtures', {})
-            matches_data = fixtures.get('allMatches', []) or []
+            fixtures = data.get("fixtures", {})
+            matches_data = fixtures.get("allMatches", []) or []
 
             if not matches_data:
                 logger.warning("⚠️ 未获取到比赛数据")
@@ -315,29 +310,32 @@ class SeasonReharvester:
             # 过滤已完成的比赛
             matches = []
             for match in matches_data:
-                match_id = match.get('id')
-                status = match.get('status', {})
+                match_id = match.get("id")
+                status = match.get("status", {})
 
                 if match_id and isinstance(status, dict):
-                    finished = status.get('finished', False)
+                    finished = status.get("finished", False)
 
                     if finished:
-                        matches.append({
-                            'match_id': str(match_id),
-                            'home_team': match.get('home', {}).get('name', 'Unknown'),
-                            'away_team': match.get('away', {}).get('name', 'Unknown'),
-                            'status': 'finished'
-                        })
+                        matches.append(
+                            {
+                                "match_id": str(match_id),
+                                "home_team": match.get("home", {}).get("name", "Unknown"),
+                                "away_team": match.get("away", {}).get("name", "Unknown"),
+                                "status": "finished",
+                            }
+                        )
 
             logger.info(f"✅ 获取到 {len(matches)} 场已完成的比赛")
             return matches
         except Exception as e:
             logger.error(f"❌ 获取比赛列表失败: {e}")
             import traceback
+
             logger.error(traceback.format_exc())
             return []
 
-    def harvest_match(self, match_id: str) -> Optional[Dict[str, Any]]:
+    def harvest_match(self, match_id: str) -> dict[str, Any] | None:
         """收割单场比赛 - 静默模式"""
         try:
             # Get match data from FotMob API
@@ -357,16 +355,16 @@ class SeasonReharvester:
             features = self.feature_extractor.extract(match_data)
 
             # Add metadata
-            features['external_id'] = match_id
-            features['league_id'] = self.league_id
-            features['league_name'] = 'Premier League'
-            features['is_real_data'] = True
-            features['feature_version'] = 'v7.0'
-            features['data_source'] = 'fotmob_api'
+            features["external_id"] = match_id
+            features["league_id"] = self.league_id
+            features["league_name"] = "Premier League"
+            features["is_real_data"] = True
+            features["feature_version"] = "v7.0"
+            features["data_source"] = "fotmob_api"
 
             # Ensure required fields
-            if 'match_time' not in features:
-                features['match_time'] = datetime.now(timezone.utc)
+            if "match_time" not in features:
+                features["match_time"] = datetime.now(UTC)
 
             # Store in memory
             self.harvested_data.append(features)
@@ -375,19 +373,11 @@ class SeasonReharvester:
 
         except requests.exceptions.RequestException as e:
             logger.error(f"❌ API 请求失败 - 比赛 {match_id}: {e}")
-            self.failed_matches.append({
-                'match_id': match_id,
-                'error': str(e),
-                'timestamp': datetime.now().isoformat()
-            })
+            self.failed_matches.append({"match_id": match_id, "error": str(e), "timestamp": datetime.now().isoformat()})
             return None
         except Exception as e:
             logger.error(f"❌ 收割比赛 {match_id} 失败: {e}")
-            self.failed_matches.append({
-                'match_id': match_id,
-                'error': str(e),
-                'timestamp': datetime.now().isoformat()
-            })
+            self.failed_matches.append({"match_id": match_id, "error": str(e), "timestamp": datetime.now().isoformat()})
             return None
 
     def save_harvested_data(self):
@@ -419,7 +409,7 @@ class SeasonReharvester:
             # 保存失败列表
             if self.failed_matches:
                 failed_filename = f"/home/user/projects/FootballPrediction/data/failed_matches_{timestamp}.json"
-                with open(failed_filename, 'w') as f:
+                with open(failed_filename, "w") as f:
                     json.dump(self.failed_matches, f, indent=2)
                 logger.info(f"⚠️ 失败列表已保存到: {failed_filename} ({len(self.failed_matches)} 场)")
 
@@ -464,9 +454,9 @@ class SeasonReharvester:
             logger.info("-" * 60)
 
             for i, match in enumerate(matches, 1):
-                match_id = match['match_id']
-                home_team = match['home_team']
-                away_team = match['away_team']
+                match_id = match["match_id"]
+                home_team = match["home_team"]
+                away_team = match["away_team"]
 
                 logger.info(f"[{i}/{total_matches}] 收割中: {home_team} vs {away_team}")
 
@@ -490,9 +480,9 @@ class SeasonReharvester:
                 # Progress report every 50 matches
                 if i % 50 == 0:
                     logger.info("=" * 60)
-                    logger.info(f"📊 进度报告: {i}/{total_matches} ({i/total_matches*100:.1f}%)")
+                    logger.info(f"📊 进度报告: {i}/{total_matches} ({i / total_matches * 100:.1f}%)")
                     logger.info(f"  成功: {success_count}, 失败: {failure_count}")
-                    logger.info(f"  成功率: {success_count/i*100:.1f}%")
+                    logger.info(f"  成功率: {success_count / i * 100:.1f}%")
                     logger.info("=" * 60)
 
                 # 静默延迟：随机 1-3 秒
@@ -507,8 +497,8 @@ class SeasonReharvester:
             logger.info("=" * 60)
             logger.info("🎉 全量收割完成!")
             logger.info(f"  总计: {total_matches} 场")
-            logger.info(f"  成功: {success_count} 场 ({success_count/total_matches*100:.1f}%)")
-            logger.info(f"  失败: {failure_count} 场 ({failure_count/total_matches*100:.1f}%)")
+            logger.info(f"  成功: {success_count} 场 ({success_count / total_matches * 100:.1f}%)")
+            logger.info(f"  失败: {failure_count} 场 ({failure_count / total_matches * 100:.1f}%)")
             logger.info(f"  收割数据: {len(self.harvested_data)} 场比赛")
             logger.info("=" * 60)
 

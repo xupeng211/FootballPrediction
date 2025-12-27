@@ -20,6 +20,7 @@ __all__ = [
 # 配置现在通过 config_unified.py 管理
 from src.config_unified import get_settings
 
+
 def get_database_config():
     """获取数据库配置（兼容旧代码）"""
     settings = get_settings()

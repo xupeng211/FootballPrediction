@@ -6,11 +6,12 @@ Database Connection Factory
 提供统一的数据库连接管理，支持测试和生产环境
 """
 
-import psycopg2
-from psycopg2.extras import RealDictCursor
-from typing import Optional, Dict, Any
 import logging
 from contextlib import contextmanager
+from typing import Any
+
+import psycopg2
+from psycopg2.extras import RealDictCursor
 
 from src.config_unified import get_settings
 
@@ -24,11 +25,11 @@ class DatabaseConnectionError(Exception):
 
 
 def get_db_connection(
-    host: Optional[str] = None,
-    port: Optional[int] = None,
-    database: Optional[str] = None,
-    user: Optional[str] = None,
-    password: Optional[str] = None,
+    host: str | None = None,
+    port: int | None = None,
+    database: str | None = None,
+    user: str | None = None,
+    password: str | None = None,
     cursor_factory: Any = RealDictCursor,
 ) -> psycopg2.extensions.connection:
     """
@@ -89,11 +90,11 @@ def get_db_connection(
 
 @contextmanager
 def get_db_cursor(
-    host: Optional[str] = None,
-    port: Optional[int] = None,
-    database: Optional[str] = None,
-    user: Optional[str] = None,
-    password: Optional[str] = None,
+    host: str | None = None,
+    port: int | None = None,
+    database: str | None = None,
+    user: str | None = None,
+    password: str | None = None,
 ):
     """
     获取数据库游标的上下文管理器
@@ -175,7 +176,7 @@ def test_connection():
         return False
 
 
-def get_connection_info() -> Dict[str, Any]:
+def get_connection_info() -> dict[str, Any]:
     """
     获取数据库连接信息（不包含敏感信息）
 

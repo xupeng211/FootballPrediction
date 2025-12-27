@@ -4,17 +4,14 @@
 Financial Logic Recovery - 使用半凯利策略重新回测52场意甲比赛
 """
 
-import sys
-import os
-import logging
-import joblib
 import json
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
+import logging
+import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Tuple, Optional
+
+import joblib
+import numpy as np
 
 # 添加项目路径 - 修复路径计算
 project_root = Path(__file__).parent.parent.parent.parent  # 从src/ml/backtest回到根目录
@@ -22,7 +19,6 @@ sys.path.insert(0, str(project_root))
 sys.path.insert(0, str(project_root / "src"))
 
 from src.ml.strategy.fractional_kelly import calculate_fractional_kelly_for_prediction
-from src.config_unified import get_settings
 
 # 配置日志
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
@@ -48,9 +44,9 @@ class FractionalKellyBacktester:
         self.model_path = self.project_root / "data" / "models" / "xgb_football_v2.3_467real.joblib"
         self._load_model()
 
-        logger.info(f"🎰 半凯利回测器初始化完成")
+        logger.info("🎰 半凯利回测器初始化完成")
         logger.info(f"💰 初始资金: ${self.initial_bankroll:,.2f}")
-        logger.info(f"⚠️ 使用半凯利策略降低风险")
+        logger.info("⚠️ 使用半凯利策略降低风险")
 
     def _load_model(self):
         """加载模型"""
@@ -66,7 +62,7 @@ class FractionalKellyBacktester:
             logger.error(f"❌ 模型加载失败: {e}")
             raise
 
-    def prepare_match_features(self, match_data: Dict) -> Optional[np.ndarray]:
+    def prepare_match_features(self, match_data: dict) -> np.ndarray | None:
         """准备比赛特征数据"""
         try:
             # 构建特征向量 - 基于V2.1模型的特征名
@@ -99,7 +95,7 @@ class FractionalKellyBacktester:
             logger.warning(f"⚠️ 特征准备失败: {e}")
             return None
 
-    def predict_match_with_fractional_kelly(self, match_data: Dict) -> Optional[Dict]:
+    def predict_match_with_fractional_kelly(self, match_data: dict) -> dict | None:
         """
         预测比赛并计算半凯利建议
 
@@ -197,7 +193,7 @@ class FractionalKellyBacktester:
             logger.warning(f"⚠️ 预测失败: {e}")
             return None
 
-    def simulate_fractional_bet(self, prediction: Dict, actual_result: str) -> Dict:
+    def simulate_fractional_bet(self, prediction: dict, actual_result: str) -> dict:
         """
         模拟半凯利投注结果
 
@@ -266,7 +262,7 @@ class FractionalKellyBacktester:
         self.betting_history.append(bet_result)
         return bet_result
 
-    def run_fractional_backtest_on_mock_data(self) -> Dict:
+    def run_fractional_backtest_on_mock_data(self) -> dict:
         """
         在模拟意甲数据上运行半凯利回测
 
@@ -335,7 +331,7 @@ class FractionalKellyBacktester:
 
         return backtest_results
 
-    def _create_mock_serie_a_data(self) -> List[Dict]:
+    def _create_mock_serie_a_data(self) -> list[dict]:
         """创建52场模拟意甲比赛数据"""
         matches = []
         serie_a_teams = [
@@ -395,7 +391,7 @@ class FractionalKellyBacktester:
 
         return matches
 
-    def _calculate_performance_metrics(self) -> Dict:
+    def _calculate_performance_metrics(self) -> dict:
         """计算性能指标"""
         if not self.betting_history:
             return {}
@@ -420,7 +416,7 @@ class FractionalKellyBacktester:
             "avg_edge": np.mean(edges) if edges else 0,
         }
 
-    def _save_backtest_results(self, results: Dict):
+    def _save_backtest_results(self, results: dict):
         """保存回测结果"""
         output_dir = self.project_root / "reports" / "fractional_kelly_backtest"
         output_dir.mkdir(parents=True, exist_ok=True)
@@ -443,37 +439,37 @@ class FractionalKellyBacktester:
 
         logger.info(f"📋 半凯利回测结果保存: {results_path}")
 
-    def generate_report(self, results: Dict) -> str:
+    def generate_report(self, results: dict) -> str:
         """生成回测报告"""
         summary = results["summary"]
         metrics = results["performance_metrics"]
 
         report = f"""
 🎰 半凯利公式降噪回测报告
-{'='*60}
+{"=" * 60}
 
 📊 总体统计:
-• 比赛场次: {summary['total_matches']}
-• 跳过投注: {summary['skipped_bets']} ({summary['skipped_bets']/summary['total_matches']:.1%})
-• 实际投注: {summary['placed_bets']}
-• 赢投注数: {summary['won_bets']}
-• 输投注数: {summary['lost_bets']}
-• 胜率: {summary['win_rate']:.2f}% (基于实际投注)
+• 比赛场次: {summary["total_matches"]}
+• 跳过投注: {summary["skipped_bets"]} ({summary["skipped_bets"] / summary["total_matches"]:.1%})
+• 实际投注: {summary["placed_bets"]}
+• 赢投注数: {summary["won_bets"]}
+• 输投注数: {summary["lost_bets"]}
+• 胜率: {summary["win_rate"]:.2f}% (基于实际投注)
 
 💰 资金表现:
-• 初始资金: ${summary['initial_bankroll']:,.2f}
-• 最终资金: ${summary['final_bankroll']:,.2f}
-• 总盈亏: ${summary['total_profit']:,.2f}
-• 投资回报率: {summary['roi_percent']:.2f}
+• 初始资金: ${summary["initial_bankroll"]:,.2f}
+• 最终资金: ${summary["final_bankroll"]:,.2f}
+• 总盈亏: ${summary["total_profit"]:,.2f}
+• 投资回报率: {summary["roi_percent"]:.2f}
 
 📈 投注指标:
-• 实际投注次数: {metrics.get('total_bets', 0)}
-• 平均投注比例: {metrics.get('avg_stake_percent', 0):.2f}% (半凯利后)
-• 平均边缘优势: {metrics.get('avg_edge', 0):.1f}%
-• 最大单笔盈利: ${metrics.get('max_profit', 0):,.2f}
-• 最大单笔亏损: ${metrics.get('max_loss', 0):,.2f}
-• 盈利波动率: {metrics.get('profit_volatility', 0):.2f}
-• 夏普比率: {metrics.get('sharpe_ratio', 0):.3f}
+• 实际投注次数: {metrics.get("total_bets", 0)}
+• 平均投注比例: {metrics.get("avg_stake_percent", 0):.2f}% (半凯利后)
+• 平均边缘优势: {metrics.get("avg_edge", 0):.1f}%
+• 最大单笔盈利: ${metrics.get("max_profit", 0):,.2f}
+• 最大单笔亏损: ${metrics.get("max_loss", 0):,.2f}
+• 盈利波动率: {metrics.get("profit_volatility", 0):.2f}
+• 夏普比率: {metrics.get("sharpe_ratio", 0):.3f}
 
 🎯 风控改进效果:
 • 投注过滤: Edge < 5% 或 胜率 < 40% 自动跳过
@@ -481,14 +477,14 @@ class FractionalKellyBacktester:
 • 最大仓位: 限制在12.5%以内
 
 🏆 投资建议:
-{'✅ 半凯利策略显著改善' if summary['roi_percent'] > -10 else '⚠️ 仍需优化，但风险已控制'}
+{"✅ 半凯利策略显著改善" if summary["roi_percent"] > -10 else "⚠️ 仍需优化，但风险已控制"}
 
 策略对比:
 • 全凯利回测: -24.44% ROI
-• 半凯利回测: {summary['roi_percent']:.2f}% ROI
-• 改善幅度: {summary['roi_percent'] - (-24.44):+.2f}个百分点
+• 半凯利回测: {summary["roi_percent"]:.2f}% ROI
+• 改善幅度: {summary["roi_percent"] - (-24.44):+.2f}个百分点
 
-回测时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+回测时间: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
 使用模型: V2.1 Simple XGBoost
 策略版本: Fractional Kelly V2.0 (0.5x)
         """

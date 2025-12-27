@@ -10,21 +10,23 @@ V10.2 - 系统重启版本
 """
 
 import json
+import logging
+from dataclasses import dataclass
+from datetime import datetime
+
+import numpy as np
 import psycopg2
 from psycopg2.extras import RealDictCursor
+
 from src.config_unified import get_settings
-from datetime import datetime, timedelta
-import pandas as pd
-import numpy as np
-from typing import Dict, List, Optional, Tuple
-from dataclasses import dataclass
-import logging
 
 logger = logging.getLogger(__name__)
+
 
 @dataclass
 class PlayerMatchStats:
     """球员单场比赛统计"""
+
     player_id: str
     player_name: str
     team_name: str
@@ -56,47 +58,47 @@ class PlayerMatchStats:
     red_cards: float = 0.0
 
     @classmethod
-    def from_l2_data(cls, player_data: Dict) -> 'PlayerMatchStats':
+    def from_l2_data(cls, player_data: dict) -> "PlayerMatchStats":
         """从 L2 数据创建球员统计对象"""
         player = cls(
-            player_id=str(player_data.get('id', '')),
-            player_name=player_data.get('name', 'Unknown'),
-            team_name=player_data.get('teamName', 'Unknown'),
-            is_goalkeeper=player_data.get('isGoalkeeper', False),
-            position=str(player_data.get('usualPosition', 'Unknown')),
-            shirt_number=player_data.get('shirtNumber', 0)
+            player_id=str(player_data.get("id", "")),
+            player_name=player_data.get("name", "Unknown"),
+            team_name=player_data.get("teamName", "Unknown"),
+            is_goalkeeper=player_data.get("isGoalkeeper", False),
+            position=str(player_data.get("usualPosition", "Unknown")),
+            shirt_number=player_data.get("shirtNumber", 0),
         )
 
         # 解析统计数据
-        stats_list = player_data.get('stats', [])
+        stats_list = player_data.get("stats", [])
         if isinstance(stats_list, list):
             for stat_group in stats_list:
-                if isinstance(stat_group, dict) and 'stats' in stat_group:
-                    stats = stat_group['stats']
+                if isinstance(stat_group, dict) and "stats" in stat_group:
+                    stats = stat_group["stats"]
                     if isinstance(stats, dict):
                         player._extract_stat_values(stats)
 
         return player
 
-    def _extract_stat_values(self, stats: Dict):
+    def _extract_stat_values(self, stats: dict):
         """提取统计数值"""
         # 定义统计映射 - 使用实际的键名
         stat_mapping = {
-            'Minutes played': 'minutes_played',
-            'FotMob rating': 'rating',
-            'Goals': 'goals',
-            'Assists': 'assists',
-            'Total shots': 'total_shots',
-            'Expected goals (xG)': 'expected_goals',
-            'Expected assists (xA)': 'expected_assists',
-            'Accurate passes': 'accurate_passes',
-            'Chances created': 'chances_created',
-            'Touches': 'touches',
-            'Touches in opposition box': 'touches_opp_box',
-            'Tackles': 'tackles',
-            'Interceptions': 'interceptions',
-            'Clearances': 'clearances',
-            'Defensive actions': 'defensive_actions'
+            "Minutes played": "minutes_played",
+            "FotMob rating": "rating",
+            "Goals": "goals",
+            "Assists": "assists",
+            "Total shots": "total_shots",
+            "Expected goals (xG)": "expected_goals",
+            "Expected assists (xA)": "expected_assists",
+            "Accurate passes": "accurate_passes",
+            "Chances created": "chances_created",
+            "Touches": "touches",
+            "Touches in opposition box": "touches_opp_box",
+            "Tackles": "tackles",
+            "Interceptions": "interceptions",
+            "Clearances": "clearances",
+            "Defensive actions": "defensive_actions",
         }
 
         for stat_key, stat_value in stats.items():
@@ -104,28 +106,29 @@ class PlayerMatchStats:
                 attr_name = stat_mapping[stat_key]
                 if isinstance(stat_value, dict):
                     # 检查嵌套的 stat 结构
-                    if 'stat' in stat_value:
-                        stat_info = stat_value['stat']
+                    if "stat" in stat_value:
+                        stat_info = stat_value["stat"]
                         if isinstance(stat_info, dict):
-                            if 'value' in stat_info:
-                                setattr(self, attr_name, float(stat_info['value']))
-                            elif 'values' in stat_info:
+                            if "value" in stat_info:
+                                setattr(self, attr_name, float(stat_info["value"]))
+                            elif "values" in stat_info:
                                 # 处理多值情况
-                                values = stat_info['values']
-                                if isinstance(values, dict) and 'value' in values:
-                                    setattr(self, attr_name, float(values['value']))
+                                values = stat_info["values"]
+                                if isinstance(values, dict) and "value" in values:
+                                    setattr(self, attr_name, float(values["value"]))
                                 else:
                                     setattr(self, attr_name, float(values) if values else 0.0)
-                    elif 'value' in stat_value:
-                        setattr(self, attr_name, float(stat_value['value']))
-                    elif 'total' in stat_value and 'value' in stat_value:
+                    elif "value" in stat_value:
+                        setattr(self, attr_name, float(stat_value["value"]))
+                    elif "total" in stat_value and "value" in stat_value:
                         # 处理分数类型的统计 (如 11/25)
-                        value = float(stat_value.get('value', 0))
-                        total = float(stat_value.get('total', 1))
+                        value = float(stat_value.get("value", 0))
+                        total = float(stat_value.get("total", 1))
                         setattr(self, attr_name, value / total if total > 0 else 0.0)
                         # 同时保存总数值
-                        if attr_name == 'accurate_passes':
+                        if attr_name == "accurate_passes":
                             self.total_passes = total
+
 
 class L3PreMatchExtractor:
     """L3 级赛前特征提取器"""
@@ -136,10 +139,22 @@ class L3PreMatchExtractor:
 
         # 关键球员特征列表 (用于构建 181 维特征)
         self.key_player_features = [
-            'minutes_played', 'rating', 'goals', 'assists', 'total_shots',
-            'shots_on_target', 'expected_goals', 'expected_assists',
-            'accurate_passes', 'chances_created', 'touches', 'touches_opp_box',
-            'tackles', 'interceptions', 'clearances', 'defensive_actions'
+            "minutes_played",
+            "rating",
+            "goals",
+            "assists",
+            "total_shots",
+            "shots_on_target",
+            "expected_goals",
+            "expected_assists",
+            "accurate_passes",
+            "chances_created",
+            "touches",
+            "touches_opp_box",
+            "tackles",
+            "interceptions",
+            "clearances",
+            "defensive_actions",
         ]
 
     def get_db_connection(self):
@@ -149,18 +164,20 @@ class L3PreMatchExtractor:
             port=self.db_config.port,
             database=self.db_config.name,
             user=self.db_config.user,
-            password=self.db_config.password.get_secret_value()
+            password=self.db_config.password.get_secret_value(),
         )
 
-    def extract_player_historical_stats(self, team_name: str, match_time: datetime,
-                                      lookback_matches: int = 5) -> List[PlayerMatchStats]:
+    def extract_player_historical_stats(
+        self, team_name: str, match_time: datetime, lookback_matches: int = 5
+    ) -> list[PlayerMatchStats]:
         """提取球队过去 N 场比赛的球员统计数据"""
 
         conn = self.get_db_connection()
         try:
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
                 # 查询该球队过去 N 场有 L2 数据的比赛
-                cur.execute("""
+                cur.execute(
+                    """
                     SELECT external_id, home_team, away_team, match_time, l2_raw_json
                     FROM matches
                     WHERE l2_raw_json IS NOT NULL
@@ -168,7 +185,9 @@ class L3PreMatchExtractor:
                     AND (home_team = %s OR away_team = %s)
                     ORDER BY match_time DESC
                     LIMIT %s
-                """, (match_time, team_name, team_name, lookback_matches))
+                """,
+                    (match_time, team_name, team_name, lookback_matches),
+                )
 
                 historical_matches = cur.fetchall()
                 all_player_stats = []
@@ -176,17 +195,17 @@ class L3PreMatchExtractor:
                 for match in historical_matches:
                     try:
                         # 解析 L2 数据
-                        if isinstance(match['l2_raw_json'], str):
-                            l2_data = json.loads(match['l2_raw_json'])
+                        if isinstance(match["l2_raw_json"], str):
+                            l2_data = json.loads(match["l2_raw_json"])
                         else:
-                            l2_data = match['l2_raw_json']
+                            l2_data = match["l2_raw_json"]
 
                         # 提取球员统计
-                        content = l2_data.get('content', {})
-                        player_stats = content.get('playerStats', {})
+                        content = l2_data.get("content", {})
+                        player_stats = content.get("playerStats", {})
 
                         for player_id, player_data in player_stats.items():
-                            if player_data.get('teamName') == team_name:
+                            if player_data.get("teamName") == team_name:
                                 player_stat = PlayerMatchStats.from_l2_data(player_data)
                                 all_player_stats.append(player_stat)
 
@@ -238,22 +257,25 @@ class L3PreMatchExtractor:
         for i in range(len(self.key_player_features)):
             feature_column = player_matrix[:, i]
 
-            team_features.extend([
-                np.mean(feature_column),    # 平均值
-                np.std(feature_column),     # 标准差
-                np.max(feature_column),     # 最大值
-                np.min(feature_column),     # 最小值
-                np.median(feature_column),  # 中位数
-                np.sum(feature_column)      # 总和
-            ])
+            team_features.extend(
+                [
+                    np.mean(feature_column),  # 平均值
+                    np.std(feature_column),  # 标准差
+                    np.max(feature_column),  # 最大值
+                    np.min(feature_column),  # 最小值
+                    np.median(feature_column),  # 中位数
+                    np.sum(feature_column),  # 总和
+                ]
+            )
 
         return np.array(team_features)
 
-    def _calculate_player_average(self, player_matches: List[PlayerMatchStats]) -> PlayerMatchStats:
+    def _calculate_player_average(self, player_matches: list[PlayerMatchStats]) -> PlayerMatchStats:
         """计算球员多场比赛的平均统计"""
         if not player_matches:
-            return PlayerMatchStats(player_id='', player_name='Unknown', team_name='',
-                                   is_goalkeeper=False, position='Unknown')
+            return PlayerMatchStats(
+                player_id="", player_name="Unknown", team_name="", is_goalkeeper=False, position="Unknown"
+            )
 
         avg_player = PlayerMatchStats(
             player_id=player_matches[0].player_id,
@@ -261,7 +283,7 @@ class L3PreMatchExtractor:
             team_name=player_matches[0].team_name,
             is_goalkeeper=player_matches[0].is_goalkeeper,
             position=player_matches[0].position,
-            shirt_number=player_matches[0].shirt_number
+            shirt_number=player_matches[0].shirt_number,
         )
 
         # 计算各指标的平均值
@@ -318,15 +340,19 @@ class L3PreMatchExtractor:
         logger.info(f"L3 特征提取完成: {len(combined_features)} 维")
         return combined_features
 
-    def get_feature_names(self) -> List[str]:
+    def get_feature_names(self) -> list[str]:
         """获取特征名称列表"""
-        home_prefix = [f"home_{feature}_{stat}"
-                      for feature in self.key_player_features
-                      for stat in ['mean', 'std', 'max', 'min', 'median', 'sum']]
+        home_prefix = [
+            f"home_{feature}_{stat}"
+            for feature in self.key_player_features
+            for stat in ["mean", "std", "max", "min", "median", "sum"]
+        ]
 
-        away_prefix = [f"away_{feature}_{stat}"
-                      for feature in self.key_player_features
-                      for stat in ['mean', 'std', 'max', 'min', 'median', 'sum']]
+        away_prefix = [
+            f"away_{feature}_{stat}"
+            for feature in self.key_player_features
+            for stat in ["mean", "std", "max", "min", "median", "sum"]
+        ]
 
         diff_prefix = [f"diff_{feature}" for feature in home_prefix]
 
@@ -340,6 +366,7 @@ class L3PreMatchExtractor:
                 feature_names.append(f"feature_{i}")
 
         return feature_names
+
 
 # 全局实例
 l3_extractor = L3PreMatchExtractor()

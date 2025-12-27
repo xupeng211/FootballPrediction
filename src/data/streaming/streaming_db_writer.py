@@ -13,17 +13,17 @@
 - Retry Logic (重试逻辑)
 """
 
-import logging
 import asyncio
+import logging
 import time
-from typing import Dict, Any, List, Optional, Union, Callable
-from dataclasses import dataclass, field
 from contextlib import asynccontextmanager
-import pandas as pd
+from dataclasses import dataclass
 from decimal import Decimal
+from typing import Any
+
+import pandas as pd
 
 from src.database.connection import get_connection
-from src.constants import FOOTBALL, MATH
 
 logger = logging.getLogger(__name__)
 
@@ -31,6 +31,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class BatchWriteConfig:
     """批量写入配置"""
+
     # 批量大小配置
     batch_size: int = 1000
     max_queue_size: int = 10000
@@ -54,6 +55,7 @@ class BatchWriteConfig:
 @dataclass
 class WriteStats:
     """写入统计信息"""
+
     total_rows: int = 0
     successful_batches: int = 0
     failed_batches: int = 0
@@ -74,7 +76,7 @@ class StreamingDBWriter:
     - 性能监控和优化
     """
 
-    def __init__(self, config: Optional[BatchWriteConfig] = None):
+    def __init__(self, config: BatchWriteConfig | None = None):
         self.config = config or BatchWriteConfig()
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
 
@@ -83,10 +85,10 @@ class StreamingDBWriter:
         self._stats = WriteStats()
         self._start_time = time.time()
         self._running = False
-        self._writer_tasks: List[asyncio.Task] = []
+        self._writer_tasks: list[asyncio.Task] = []
 
         # 连接池
-        self._connection_pool: List[Any] = []
+        self._connection_pool: list[Any] = []
 
     async def __aenter__(self):
         """异步上下文管理器入口"""
@@ -137,11 +139,7 @@ class StreamingDBWriter:
         self.logger.info("✅ 流式数据库写入器已停止")
 
     async def write_dataframe(
-        self,
-        df: pd.DataFrame,
-        table_name: str,
-        conflict_columns: Optional[List[str]] = None,
-        on_conflict: str = "UPDATE"
+        self, df: pd.DataFrame, table_name: str, conflict_columns: list[str] | None = None, on_conflict: str = "UPDATE"
     ) -> None:
         """
         异步写入DataFrame
@@ -156,31 +154,24 @@ class StreamingDBWriter:
             return
 
         # 分片处理
-        chunks = [df[i:i + self.config.batch_size]
-                for i in range(0, len(df), self.config.batch_size)]
+        chunks = [df[i : i + self.config.batch_size] for i in range(0, len(df), self.config.batch_size)]
 
         for chunk in chunks:
             write_task = {
-                'data': chunk,
-                'table_name': table_name,
-                'conflict_columns': conflict_columns,
-                'on_conflict': on_conflict,
-                'timestamp': time.time()
+                "data": chunk,
+                "table_name": table_name,
+                "conflict_columns": conflict_columns,
+                "on_conflict": on_conflict,
+                "timestamp": time.time(),
             }
 
             try:
-                await asyncio.wait_for(
-                    self._write_queue.put(write_task),
-                    timeout=self.config.write_timeout_seconds
-                )
-            except asyncio.TimeoutError:
+                await asyncio.wait_for(self._write_queue.put(write_task), timeout=self.config.write_timeout_seconds)
+            except TimeoutError:
                 self.logger.error("写入队列已满，丢弃数据块")
                 self._stats.failed_batches += 1
 
-    async def write_matches_batch(
-        self,
-        matches_df: pd.DataFrame
-    ) -> None:
+    async def write_matches_batch(self, matches_df: pd.DataFrame) -> None:
         """
         批量写入比赛数据 (专用优化)
 
@@ -194,17 +185,9 @@ class StreamingDBWriter:
         processed_df = self._preprocess_matches_data(matches_df)
 
         # 使用专用的冲突处理
-        await self.write_dataframe(
-            processed_df,
-            "matches",
-            conflict_columns=["match_id"],
-            on_conflict="UPDATE"
-        )
+        await self.write_dataframe(processed_df, "matches", conflict_columns=["match_id"], on_conflict="UPDATE")
 
-    async def write_odds_batch(
-        self,
-        odds_df: pd.DataFrame
-    ) -> None:
+    async def write_odds_batch(self, odds_df: pd.DataFrame) -> None:
         """
         批量写入赔率数据 (专用优化)
 
@@ -219,10 +202,7 @@ class StreamingDBWriter:
 
         # 使用专用的冲突处理
         await self.write_dataframe(
-            processed_df,
-            "odds",
-            conflict_columns=["match_id", "bookmaker", "timestamp"],
-            on_conflict="UPDATE"
+            processed_df, "odds", conflict_columns=["match_id", "bookmaker", "timestamp"], on_conflict="UPDATE"
         )
 
     async def _batch_writer_worker(self, worker_id: int) -> None:
@@ -231,10 +211,7 @@ class StreamingDBWriter:
         while self._running:
             try:
                 # 获取写入任务 (带超时)
-                write_task = await asyncio.wait_for(
-                    self._write_queue.get(),
-                    timeout=1.0
-                )
+                write_task = await asyncio.wait_for(self._write_queue.get(), timeout=1.0)
 
                 # 执行写入
                 await self._execute_batch_write(write_task, worker_id)
@@ -242,21 +219,20 @@ class StreamingDBWriter:
                 # 标记任务完成
                 self._write_queue.task_done()
 
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 # 超时继续循环，检查_running状态
                 continue
             except Exception as e:
                 self.logger.error(f"写入工作器 {worker_id} 异常: {e}")
                 self._stats.failed_batches += 1
 
-
-    async def _execute_batch_write(self, write_task: Dict[str, Any], worker_id: int) -> None:
+    async def _execute_batch_write(self, write_task: dict[str, Any], worker_id: int) -> None:
         """执行批量写入"""
         start_time = time.time()
-        data = write_task['data']
-        table_name = write_task['table_name']
-        conflict_columns = write_task.get('conflict_columns')
-        on_conflict = write_task.get('on_conflict', 'UPDATE')
+        data = write_task["data"]
+        table_name = write_task["table_name"]
+        conflict_columns = write_task.get("conflict_columns")
+        on_conflict = write_task.get("on_conflict", "UPDATE")
 
         # 重试逻辑
         for attempt in range(self.config.max_retries + 1):
@@ -267,9 +243,7 @@ class StreamingDBWriter:
                 with self._transaction_context(conn):
                     if conflict_columns:
                         # 批量Upsert
-                        await self._batch_upsert(
-                            conn, data, table_name, conflict_columns, on_conflict
-                        )
+                        await self._batch_upsert(conn, data, table_name, conflict_columns, on_conflict)
                     else:
                         # 批量插入
                         await self._batch_insert(conn, data, table_name)
@@ -278,18 +252,14 @@ class StreamingDBWriter:
                 batch_time = (time.time() - start_time) * 1000
                 self._update_stats(len(data), batch_time, attempt > 0)
 
-                self.logger.info(
-                    f"工作器 {worker_id}: 写入 {len(data)} 行到 {table_name}, "
-                    f"耗时 {batch_time:.1f}ms"
-                )
+                self.logger.info(f"工作器 {worker_id}: 写入 {len(data)} 行到 {table_name}, 耗时 {batch_time:.1f}ms")
                 return
 
             except Exception as e:
                 if attempt < self.config.max_retries:
                     delay = self._calculate_retry_delay(attempt)
                     self.logger.warning(
-                        f"写入失败 (尝试 {attempt + 1}/{self.config.max_retries + 1}): {e}, "
-                        f"{delay}秒后重试"
+                        f"写入失败 (尝试 {attempt + 1}/{self.config.max_retries + 1}): {e}, {delay}秒后重试"
                     )
                     await asyncio.sleep(delay)
                 else:
@@ -298,12 +268,7 @@ class StreamingDBWriter:
                     raise
 
     async def _batch_upsert(
-        self,
-        conn,
-        data: pd.DataFrame,
-        table_name: str,
-        conflict_columns: List[str],
-        on_conflict: str
+        self, conn, data: pd.DataFrame, table_name: str, conflict_columns: list[str], on_conflict: str
     ) -> None:
         """批量Upsert操作"""
         # 构建列名和占位符
@@ -311,8 +276,8 @@ class StreamingDBWriter:
         values = data.values.tolist()
 
         # 构建SQL语句
-        placeholders = ', '.join(['$%d' % (i + 1) for i in range(len(columns))])
-        conflict_cols = ', '.join(conflict_columns)
+        placeholders = ", ".join(["$%d" % (i + 1) for i in range(len(columns))])
+        conflict_cols = ", ".join(conflict_columns)
 
         # 更新子句
         update_clauses = []
@@ -320,10 +285,10 @@ class StreamingDBWriter:
             if col not in conflict_columns:
                 update_clauses.append(f"{col} = EXCLUDED.{col}")
 
-        update_clause = ', '.join(update_clauses) if update_clauses else "NOTHING"
+        update_clause = ", ".join(update_clauses) if update_clauses else "NOTHING"
 
         sql = f"""
-        INSERT INTO {table_name} ({', '.join(columns)})
+        INSERT INTO {table_name} ({", ".join(columns)})
         VALUES ({placeholders})
         ON CONFLICT ({conflict_cols}) DO {on_conflict}
         SET {update_clause}
@@ -337,7 +302,7 @@ class StreamingDBWriter:
         columns = data.columns.tolist()
         values = data.values.tolist()
 
-        placeholders = ', '.join(['$%d' % (i + 1) for i in range(len(columns))])
+        placeholders = ", ".join(["$%d" % (i + 1) for i in range(len(columns))])
         sql = f"INSERT INTO {table_name} ({', '.join(columns)}) VALUES ({placeholders})"
 
         await conn.executemany(sql, values)
@@ -348,21 +313,21 @@ class StreamingDBWriter:
         processed_df = df.copy()
 
         # 确保必要列存在
-        required_columns = ['match_id', 'home_team_id', 'away_team_id', 'match_date']
+        required_columns = ["match_id", "home_team_id", "away_team_id", "match_date"]
         for col in required_columns:
             if col not in processed_df.columns:
                 self.logger.warning(f"缺少必要列: {col}")
                 continue
 
         # 数据类型转换
-        if 'match_date' in processed_df.columns:
-            processed_df['match_date'] = pd.to_datetime(processed_df['match_date'])
+        if "match_date" in processed_df.columns:
+            processed_df["match_date"] = pd.to_datetime(processed_df["match_date"])
 
         # 数值精度处理
-        numeric_columns = ['home_score', 'away_score', 'home_xg', 'away_xg']
+        numeric_columns = ["home_score", "away_score", "home_xg", "away_xg"]
         for col in numeric_columns:
             if col in processed_df.columns:
-                processed_df[col] = pd.to_numeric(processed_df[col], errors='coerce')
+                processed_df[col] = pd.to_numeric(processed_df[col], errors="coerce")
 
         return processed_df
 
@@ -371,23 +336,23 @@ class StreamingDBWriter:
         processed_df = df.copy()
 
         # 确保必要列存在
-        required_columns = ['match_id', 'bookmaker', 'home_odds', 'draw_odds', 'away_odds']
+        required_columns = ["match_id", "bookmaker", "home_odds", "draw_odds", "away_odds"]
         for col in required_columns:
             if col not in processed_df.columns:
                 self.logger.warning(f"缺少必要列: {col}")
 
         # 赔率精度处理 (使用Decimal确保精度)
-        odds_columns = ['home_odds', 'draw_odds', 'away_odds']
+        odds_columns = ["home_odds", "draw_odds", "away_odds"]
         for col in odds_columns:
             if col in processed_df.columns:
                 # 转换为Decimal确保精度
                 processed_df[col] = processed_df[col].apply(
-                    lambda x: Decimal(str(x)) if pd.notna(x) and x != '' else None
+                    lambda x: Decimal(str(x)) if pd.notna(x) and x != "" else None
                 )
 
         # 时间戳处理
-        if 'timestamp' in processed_df.columns:
-            processed_df['timestamp'] = pd.to_datetime(processed_df['timestamp'])
+        if "timestamp" in processed_df.columns:
+            processed_df["timestamp"] = pd.to_datetime(processed_df["timestamp"])
 
         return processed_df
 
@@ -399,7 +364,6 @@ class StreamingDBWriter:
             conn = await get_connection()
             self._connection_pool.append(conn)
 
-
     async def _get_connection(self) -> Any:
         """获取数据库连接"""
         # 简化版连接获取，实际项目中应该使用连接池
@@ -409,7 +373,7 @@ class StreamingDBWriter:
         """关闭连接池"""
         for conn in self._connection_pool:
             try:
-                if hasattr(conn, 'close'):
+                if hasattr(conn, "close"):
                     await conn.close()
             except Exception as e:
                 self.logger.warning(f"关闭连接失败: {e}")
@@ -434,7 +398,7 @@ class StreamingDBWriter:
     def _calculate_retry_delay(self, attempt: int) -> float:
         """计算重试延迟"""
         if self.config.exponential_backoff:
-            return self.config.retry_delay_seconds * (2 ** attempt)
+            return self.config.retry_delay_seconds * (2**attempt)
         else:
             return self.config.retry_delay_seconds
 
@@ -456,9 +420,7 @@ class StreamingDBWriter:
         if self._stats.avg_batch_time_ms == 0:
             self._stats.avg_batch_time_ms = batch_time_ms
         else:
-            self._stats.avg_batch_time_ms = (
-                alpha * batch_time_ms + (1 - alpha) * self._stats.avg_batch_time_ms
-            )
+            self._stats.avg_batch_time_ms = alpha * batch_time_ms + (1 - alpha) * self._stats.avg_batch_time_ms
 
     async def _flush_remaining_data(self) -> None:
         """刷新剩余数据"""
@@ -492,9 +454,7 @@ class StreamingDBWriter:
 
 # 便捷函数
 async def create_streaming_writer(
-    batch_size: int = 1000,
-    max_concurrent: int = 3,
-    enable_transactions: bool = True
+    batch_size: int = 1000, max_concurrent: int = 3, enable_transactions: bool = True
 ) -> StreamingDBWriter:
     """
     创建流式数据库写入器
@@ -508,9 +468,7 @@ async def create_streaming_writer(
         StreamingDBWriter: 流式写入器实例
     """
     config = BatchWriteConfig(
-        batch_size=batch_size,
-        max_concurrent_batches=max_concurrent,
-        use_transactions=enable_transactions
+        batch_size=batch_size, max_concurrent_batches=max_concurrent, use_transactions=enable_transactions
     )
 
     writer = StreamingDBWriter(config)
