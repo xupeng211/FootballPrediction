@@ -5,13 +5,12 @@ SQLAlchemy基础模型
 """
 
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any
 
 from sqlalchemy import Column, DateTime, Integer
 from sqlalchemy.orm import DeclarativeBase
 
 # 导入数据库连接工厂
-from .connection_factory import get_db_connection, get_db_cursor, test_connection
 
 
 class Base(DeclarativeBase):
@@ -46,7 +45,7 @@ class BaseModel(Base, TimestampMixin):
 
     id = Column(Integer, primary_key=True, autoincrement=True, comment="主键ID")
 
-    def to_dict(self, exclude_fields: Optional[set] = None) -> Dict[str, Any]:
+    def to_dict(self, exclude_fields: set | None = None) -> dict[str, Any]:
         """
         将模型对象转换为字典
 
@@ -72,7 +71,7 @@ class BaseModel(Base, TimestampMixin):
         return result
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]):
+    def from_dict(cls, data: dict[str, Any]):
         """
         从字典创建模型实例
 
@@ -87,7 +86,7 @@ class BaseModel(Base, TimestampMixin):
         filtered_data = {key: value for key, value in data.items() if key in valid_columns}
         return cls(**filtered_data)
 
-    def update_from_dict(self, data: Dict[str, Any], exclude_fields: Optional[set] = None) -> None:
+    def update_from_dict(self, data: dict[str, Any], exclude_fields: set | None = None) -> None:
         """
         从字典更新模型对象
 

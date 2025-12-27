@@ -9,32 +9,28 @@ Purpose: 分析模型预测错误但赔率极低的场次，确定问题根源
 
 import logging
 import sys
-import os
-from pathlib import Path
-from typing import Dict, List, Any, Optional, Tuple
 from dataclasses import dataclass
-from datetime import datetime
+from pathlib import Path
+from typing import Any
+
 import numpy as np
 import pandas as pd
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from src.config_unified import get_settings
-from src.ml.features.elo_rating_system import EloRatingSystem
-import xgboost as xgb
 import joblib
 
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
+from src.config_unified import get_settings
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
 @dataclass
 class DiagnosticMatch:
     """诊断比赛数据结构"""
+
     match_id: str
     home_team: str
     away_team: str
@@ -42,13 +38,13 @@ class DiagnosticMatch:
 
     # 预测 vs 实际
     predicted_result: str  # H/D/A
-    predicted_prob: Dict[str, float]  # {H: 0.6, D: 0.25, A: 0.15}
+    predicted_prob: dict[str, float]  # {H: 0.6, D: 0.25, A: 0.15}
     actual_result: str
     actual_score: str
 
     # 市场信息
-    market_odds: Dict[str, float]  # {home: 1.5, draw: 4.0, away: 6.0}
-    market_implied_prob: Dict[str, float]
+    market_odds: dict[str, float]  # {home: 1.5, draw: 4.0, away: 6.0}
+    market_implied_prob: dict[str, float]
 
     # 关键指标
     model_confidence: float  # 预测最高概率
@@ -68,7 +64,7 @@ class V19DiagnosticAnalyzer:
             db_conn: 数据库连接（可选）
         """
         self.db_conn = db_conn
-        self.diagnostic_results: List[DiagnosticMatch] = []
+        self.diagnostic_results: list[DiagnosticMatch] = []
         self.patterns = {
             "home_favorite_loss": [],
             "away_upset_win": [],
@@ -88,7 +84,7 @@ class V19DiagnosticAnalyzer:
 
         logger.info("V19.0 诊断分析器初始化完成")
 
-    def load_test_matches(self, limit: int = 180) -> List[Dict]:
+    def load_test_matches(self, limit: int = 180) -> list[dict]:
         """
         加载测试集比赛数据（严格物理隔离）
 
@@ -108,34 +104,34 @@ class V19DiagnosticAnalyzer:
             df = pd.read_csv(csv_path)
 
             # 筛选英超比赛
-            if 'league' in df.columns:
-                df = df[df['league'] == 'Premier League'].copy()
+            if "league" in df.columns:
+                df = df[df["league"] == "Premier League"].copy()
 
             matches = []
             for _, row in df.head(limit).iterrows():
                 match = {
-                    'id': row.get('external_id', ''),
-                    'home_team': row['home_team'],
-                    'away_team': row['away_team'],
-                    'home_score': row['home_score'],
-                    'away_score': row['away_score'],
-                    'status': row.get('match_status', 'Finished'),
-                    'raw_data': {
-                        'stats': {
-                            'home': {
-                                'xg': row.get('home_xg', 1.2),
-                                'possession': row.get('home_possession', 50),
-                                'rating': 6.8,
-                                'shots_on_target': row.get('home_xg', 1.2) * 4,  # 估算
+                    "id": row.get("external_id", ""),
+                    "home_team": row["home_team"],
+                    "away_team": row["away_team"],
+                    "home_score": row["home_score"],
+                    "away_score": row["away_score"],
+                    "status": row.get("match_status", "Finished"),
+                    "raw_data": {
+                        "stats": {
+                            "home": {
+                                "xg": row.get("home_xg", 1.2),
+                                "possession": row.get("home_possession", 50),
+                                "rating": 6.8,
+                                "shots_on_target": row.get("home_xg", 1.2) * 4,  # 估算
                             },
-                            'away': {
-                                'xg': row.get('away_xg', 1.0),
-                                'possession': row.get('away_possession', 50),
-                                'rating': 6.6,
-                                'shots_on_target': row.get('away_xg', 1.0) * 4,  # 估算
-                            }
+                            "away": {
+                                "xg": row.get("away_xg", 1.0),
+                                "possession": row.get("away_possession", 50),
+                                "rating": 6.6,
+                                "shots_on_target": row.get("away_xg", 1.0) * 4,  # 估算
+                            },
                         }
-                    }
+                    },
                 }
                 matches.append(match)
 
@@ -155,7 +151,7 @@ class V19DiagnosticAnalyzer:
                 port=db_config.port,
                 database=db_config.name,
                 user=db_config.user,
-                password=db_config.password.get_secret_value()
+                password=db_config.password.get_secret_value(),
             )
 
             cursor = conn.cursor(cursor_factory=RealDictCursor)
@@ -192,10 +188,8 @@ class V19DiagnosticAnalyzer:
             return []
 
     def analyze_prediction_errors(
-        self,
-        matches: List[Dict],
-        model_path: str = "src/production_models/v18.2_final_beast.pkl"
-    ) -> Dict[str, Any]:
+        self, matches: list[dict], model_path: str = "src/production_models/v18.2_final_beast.pkl"
+    ) -> dict[str, Any]:
         """
         分析预测错误模式
 
@@ -212,12 +206,13 @@ class V19DiagnosticAnalyzer:
         # 加载模型
         try:
             model_data = joblib.load(model_path)
-            model = model_data['model'] if isinstance(model_data, dict) else model_data
+            model = model_data["model"] if isinstance(model_data, dict) else model_data
 
             # 尝试加载元数据
-            metadata_path = model_path.replace('.pkl', '_metadata.json')
+            metadata_path = model_path.replace(".pkl", "_metadata.json")
             if Path(metadata_path).exists():
                 import json
+
                 with open(metadata_path) as f:
                     metadata = json.load(f)
                     logger.info(f"模型版本: {metadata.get('version', 'Unknown')}")
@@ -243,14 +238,10 @@ class V19DiagnosticAnalyzer:
             "patterns": self.patterns,
             "stats": self.stats,
             "top_failures": self._get_top_failures(n=10),
-            "recommendations": self._generate_recommendations()
+            "recommendations": self._generate_recommendations(),
         }
 
-    def _diagnose_single_match(
-        self,
-        match: Dict,
-        model
-    ) -> Optional[DiagnosticMatch]:
+    def _diagnose_single_match(self, match: dict, model) -> DiagnosticMatch | None:
         """
         诊断单场比赛
 
@@ -273,7 +264,7 @@ class V19DiagnosticAnalyzer:
             predicted_prob = {"H": 0.5, "D": 0.25, "A": 0.25}  # 默认
 
             try:
-                if hasattr(model, 'predict_proba'):
+                if hasattr(model, "predict_proba"):
                     proba = model.predict_proba([features])[0]
                     if len(proba) == 3:
                         predicted_prob = {"H": proba[2], "D": proba[1], "A": proba[0]}
@@ -282,15 +273,15 @@ class V19DiagnosticAnalyzer:
                         # 二分类
                         predicted_prob = {"H": proba[1], "D": 0.0, "A": proba[0]}
                         predicted_result = max(predicted_prob, key=predicted_prob.get)
-                elif hasattr(model, 'predict'):
+                elif hasattr(model, "predict"):
                     pred = model.predict([features])[0]
                     predicted_result = {2: "H", 1: "D", 0: "A"}.get(pred, "H")
             except Exception as e:
                 logger.debug(f"预测失败: {e}")
 
             # 实际结果
-            home_score = match.get('home_score', 0)
-            away_score = match.get('away_score', 0)
+            home_score = match.get("home_score", 0)
+            away_score = match.get("away_score", 0)
 
             if home_score > away_score:
                 actual_result = "H"
@@ -301,11 +292,7 @@ class V19DiagnosticAnalyzer:
 
             # 估算市场赔率（基于特征）
             market_odds = self._estimate_market_odds(features, match)
-            market_implied_prob = {
-                "H": 1 / market_odds["H"],
-                "D": 1 / market_odds["D"],
-                "A": 1 / market_odds["A"]
-            }
+            market_implied_prob = {"H": 1 / market_odds["H"], "D": 1 / market_odds["D"], "A": 1 / market_odds["A"]}
 
             # 归一化市场概率
             total_prob = sum(market_implied_prob.values())
@@ -319,18 +306,13 @@ class V19DiagnosticAnalyzer:
             was_favorite = market_odds[predicted_result] < 2.0
 
             # 确定错误类型
-            error_type = self._classify_error(
-                predicted_result,
-                actual_result,
-                model_confidence,
-                was_favorite
-            )
+            error_type = self._classify_error(predicted_result, actual_result, model_confidence, was_favorite)
 
             return DiagnosticMatch(
-                match_id=str(match.get('id', '')),
-                home_team=match.get('home_team', 'Unknown'),
-                away_team=match.get('away_team', 'Unknown'),
-                match_date=str(match.get('match_time', '')),
+                match_id=str(match.get("id", "")),
+                home_team=match.get("home_team", "Unknown"),
+                away_team=match.get("away_team", "Unknown"),
+                match_date=str(match.get("match_time", "")),
                 predicted_result=predicted_result,
                 predicted_prob=predicted_prob,
                 actual_result=actual_result,
@@ -340,14 +322,14 @@ class V19DiagnosticAnalyzer:
                 model_confidence=model_confidence,
                 edge=edge,
                 error_type=error_type,
-                was_favorite=was_favorite
+                was_favorite=was_favorite,
             )
 
         except Exception as e:
             logger.debug(f"诊断比赛失败: {e}")
             return None
 
-    def _extract_features(self, match: Dict) -> Optional[np.ndarray]:
+    def _extract_features(self, match: dict) -> np.ndarray | None:
         """
         从比赛数据中提取特征
 
@@ -358,57 +340,56 @@ class V19DiagnosticAnalyzer:
             np.ndarray: 特征向量
         """
         try:
-            raw_data = match.get('raw_data', '{}')
+            raw_data = match.get("raw_data", "{}")
             if isinstance(raw_data, str):
                 import json
+
                 raw_data = json.loads(raw_data)
 
-            stats = raw_data.get('stats', {})
+            stats = raw_data.get("stats", {})
 
             # 提取 L2 数据
-            home_stats = stats.get('home', {})
-            away_stats = stats.get('away', {})
+            home_stats = stats.get("home", {})
+            away_stats = stats.get("away", {})
 
             # 构建 26 维特征（与 V18.2 一致）
             features = [
-                home_stats.get('xg', 1.2),  # home_rolling_xg
-                home_stats.get('xg_std', 0.4),  # home_rolling_xg_std
-                home_stats.get('shots_on_target', 5.0),  # home_rolling_shots_on_target
-                home_stats.get('shots_on_target_std', 2.0),  # home_rolling_shots_on_target_std
-                home_stats.get('possession', 50.0),  # home_rolling_possession
-                home_stats.get('possession_std', 10.0),  # home_rolling_possession_std
-                home_stats.get('rating', 6.8),  # home_rolling_team_rating
-                home_stats.get('rating_std', 0.5),  # home_rolling_team_rating_std
-
-                away_stats.get('xg', 1.0),  # away_rolling_xg
-                away_stats.get('xg_std', 0.3),  # away_rolling_xg_std
-                away_stats.get('shots_on_target', 4.0),  # away_rolling_shots_on_target
-                away_stats.get('shots_on_target_std', 1.8),  # away_rolling_shots_on_target_std
-                away_stats.get('possession', 50.0),  # away_rolling_possession
-                away_stats.get('possession_std', 10.0),  # away_rolling_possession_std
-                away_stats.get('rating', 6.6),  # away_rolling_team_rating
-                away_stats.get('rating_std', 0.4),  # away_rolling_team_rating_std
-
+                home_stats.get("xg", 1.2),  # home_rolling_xg
+                home_stats.get("xg_std", 0.4),  # home_rolling_xg_std
+                home_stats.get("shots_on_target", 5.0),  # home_rolling_shots_on_target
+                home_stats.get("shots_on_target_std", 2.0),  # home_rolling_shots_on_target_std
+                home_stats.get("possession", 50.0),  # home_rolling_possession
+                home_stats.get("possession_std", 10.0),  # home_rolling_possession_std
+                home_stats.get("rating", 6.8),  # home_rolling_team_rating
+                home_stats.get("rating_std", 0.5),  # home_rolling_team_rating_std
+                away_stats.get("xg", 1.0),  # away_rolling_xg
+                away_stats.get("xg_std", 0.3),  # away_rolling_xg_std
+                away_stats.get("shots_on_target", 4.0),  # away_rolling_shots_on_target
+                away_stats.get("shots_on_target_std", 1.8),  # away_rolling_shots_on_target_std
+                away_stats.get("possession", 50.0),  # away_rolling_possession
+                away_stats.get("possession_std", 10.0),  # away_rolling_possession_std
+                away_stats.get("rating", 6.6),  # away_rolling_team_rating
+                away_stats.get("rating_std", 0.4),  # away_rolling_team_rating_std
                 # 赛前特征
-                home_stats.get('table_position', 10),  # home_table_position
-                away_stats.get('table_position', 10),  # away_table_position
-                home_stats.get('table_position', 10) - away_stats.get('table_position', 10),  # table_position_diff
-                home_stats.get('points', 30),  # home_points
-                away_stats.get('points', 30),  # away_points
-                home_stats.get('points', 30) - away_stats.get('points', 30),  # points_diff
-                home_stats.get('recent_form_points', 6),  # home_recent_form_points
-                away_stats.get('recent_form_points', 6),  # away_recent_form_points
-                home_stats.get('win_rate_last10', 0.3),  # home_win_rate_last10
-                away_stats.get('loss_rate_last10', 0.3),  # away_loss_rate_last10
+                home_stats.get("table_position", 10),  # home_table_position
+                away_stats.get("table_position", 10),  # away_table_position
+                home_stats.get("table_position", 10) - away_stats.get("table_position", 10),  # table_position_diff
+                home_stats.get("points", 30),  # home_points
+                away_stats.get("points", 30),  # away_points
+                home_stats.get("points", 30) - away_stats.get("points", 30),  # points_diff
+                home_stats.get("recent_form_points", 6),  # home_recent_form_points
+                away_stats.get("recent_form_points", 6),  # away_recent_form_points
+                home_stats.get("win_rate_last10", 0.3),  # home_win_rate_last10
+                away_stats.get("loss_rate_last10", 0.3),  # away_loss_rate_last10
             ]
 
             return np.array(features)
 
-        except Exception as E:
+        except Exception:
             logger.debug(f"特征提取失败: {e}")
             return None
 
-    def _estimate_market_odds(self, features: np.ndarray, match: Dict) -> Dict[str, float]:
+    def _estimate_market_odds(self, features: np.ndarray, match: dict) -> dict[str, float]:
         """
         基于特征估算市场赔率
 
@@ -454,16 +435,10 @@ class V19DiagnosticAnalyzer:
         return {
             "H": round((1 / home_prob) * margin, 2),
             "D": round((1 / draw_prob) * margin, 2),
-            "A": round((1 / away_prob) * margin, 2)
+            "A": round((1 / away_prob) * margin, 2),
         }
 
-    def _classify_error(
-        self,
-        predicted: str,
-        actual: str,
-        confidence: float,
-        was_favorite: bool
-    ) -> str:
+    def _classify_error(self, predicted: str, actual: str, confidence: float, was_favorite: bool) -> str:
         """
         分类错误类型
 
@@ -535,13 +510,10 @@ class V19DiagnosticAnalyzer:
             if diag.actual_result == "D" and diag.predicted_result != "D":
                 self.patterns["draw_surprise"].append(diag)
 
-    def _get_top_failures(self, n: int = 10) -> List[Dict]:
+    def _get_top_failures(self, n: int = 10) -> list[dict]:
         """获取最严重的预测失败"""
         # 按置信度和是否为热门排序
-        failures = [
-            d for d in self.diagnostic_results
-            if d.predicted_result != d.actual_result
-        ]
+        failures = [d for d in self.diagnostic_results if d.predicted_result != d.actual_result]
 
         # 排序：高置信度 + 热门优先
         failures.sort(key=lambda x: (x.model_confidence, int(x.was_favorite)), reverse=True)
@@ -556,12 +528,12 @@ class V19DiagnosticAnalyzer:
                 "score": x.actual_score,
                 "confidence": f"{x.model_confidence:.1%}",
                 "market_odds": x.market_odds,
-                "error_type": x.error_type
+                "error_type": x.error_type,
             }
             for x in top_n
         ]
 
-    def _generate_recommendations(self) -> List[str]:
+    def _generate_recommendations(self) -> list[str]:
         """生成改进建议"""
         recommendations = []
 
@@ -583,8 +555,7 @@ class V19DiagnosticAnalyzer:
 
         if draw_accuracy < 0.2:
             recommendations.append(
-                f"⚠️ 平局预测失败：准确率仅 {draw_accuracy:.1%}。"
-                f"建议：引入 Relegation_Incentive（保级队平局意愿更强）。"
+                f"⚠️ 平局预测失败：准确率仅 {draw_accuracy:.1%}。建议：引入 Relegation_Incentive（保级队平局意愿更强）。"
             )
 
         # 分析高置信度失败

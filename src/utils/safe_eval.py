@@ -10,10 +10,11 @@ Version: 1.0.0
 """
 
 import ast
-import operator
 import logging
+import operator
+from typing import Any
+
 import numpy as np
-from typing import Dict, Any, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -58,13 +59,13 @@ class SafeExpressionEvaluator:
 
     # 支持的函数
     FUNCTIONS = {
-        'abs': abs,
-        'min': min,
-        'max': max,
-        'round': round,
-        'float': float,
-        'int': int,
-        'pow': pow,
+        "abs": abs,
+        "min": min,
+        "max": max,
+        "round": round,
+        "float": float,
+        "int": int,
+        "pow": pow,
     }
 
     def __init__(self, allow_nan_propagation: bool = True):
@@ -78,7 +79,7 @@ class SafeExpressionEvaluator:
         """
         self.allow_nan_propagation = allow_nan_propagation
 
-    def evaluate(self, expr: str, context: Dict[str, Any]) -> float:
+    def evaluate(self, expr: str, context: dict[str, Any]) -> float:
         """
         安全计算表达式
 
@@ -95,7 +96,7 @@ class SafeExpressionEvaluator:
             ValueError: 表达式语法错误或不支持的运算
         """
         try:
-            tree = ast.parse(expr, mode='eval')
+            tree = ast.parse(expr, mode="eval")
             result = self._eval_node(tree.body, context)
 
             # 确保返回浮点数或 NaN
@@ -114,7 +115,7 @@ class SafeExpressionEvaluator:
             logger.error(f"表达式计算失败: {expr}, 错误: {e}")
             return np.nan
 
-    def _eval_node(self, node: ast.AST, context: Dict[str, Any]) -> Any:
+    def _eval_node(self, node: ast.AST, context: dict[str, Any]) -> Any:
         """
         递归求值 AST 节点
 
@@ -207,7 +208,7 @@ class SafeExpressionEvaluator:
         # 下标访问 (如 array[0])
         elif isinstance(node, ast.Subscript):
             value = self._eval_node(node.value, context)
-            slice_val = self._eval_node(node.slice, context) if hasattr(node.slice, 'value') else None
+            slice_val = self._eval_node(node.slice, context) if hasattr(node.slice, "value") else None
 
             if isinstance(value, dict):
                 return value.get(slice_val, np.nan) if slice_val is not None else value
@@ -258,7 +259,7 @@ class SafeExpressionEvaluator:
 
 
 # 全局单例
-_global_evaluator: Optional[SafeExpressionEvaluator] = None
+_global_evaluator: SafeExpressionEvaluator | None = None
 
 
 def get_global_evaluator() -> SafeExpressionEvaluator:
@@ -269,7 +270,7 @@ def get_global_evaluator() -> SafeExpressionEvaluator:
     return _global_evaluator
 
 
-def safe_eval(expr: str, context: Dict[str, Any]) -> float:
+def safe_eval(expr: str, context: dict[str, Any]) -> float:
     """
     安全表达式求值的便捷函数
 

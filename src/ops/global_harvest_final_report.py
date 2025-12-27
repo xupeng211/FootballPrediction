@@ -5,8 +5,8 @@
 """
 
 import json
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 
 
 def generate_final_report():
@@ -20,33 +20,33 @@ def generate_final_report():
         print("❌ 未找到索引文件")
         return
 
-    with open(index_files[-1], 'r') as f:
+    with open(index_files[-1]) as f:
         index_data = json.load(f)
 
-    scan_stats = index_data.get('scan_stats', {})
-    match_index = index_data.get('match_index', [])
+    scan_stats = index_data.get("scan_stats", {})
+    match_index = index_data.get("match_index", [])
 
     # 按联赛和赛季统计
     league_season_stats = {}
     for match in match_index:
-        league_id = match.get('league_id')
-        season = match.get('season')
+        league_id = match.get("league_id")
+        season = match.get("season")
 
         key = f"{league_id}_{season}"
         if key not in league_season_stats:
             league_season_stats[key] = {
-                'league_id': league_id,
-                'season': season,
-                'total': 0,
-                'finished': 0,
-                'scheduled': 0,
+                "league_id": league_id,
+                "season": season,
+                "total": 0,
+                "finished": 0,
+                "scheduled": 0,
             }
 
-        league_season_stats[key]['total'] += 1
-        if match.get('is_finished'):
-            league_season_stats[key]['finished'] += 1
-        if match.get('is_scheduled'):
-            league_season_stats[key]['scheduled'] += 1
+        league_season_stats[key]["total"] += 1
+        if match.get("is_finished"):
+            league_season_stats[key]["finished"] += 1
+        if match.get("is_scheduled"):
+            league_season_stats[key]["scheduled"] += 1
 
     # 联赛名称映射
     league_names = {
@@ -58,13 +58,13 @@ def generate_final_report():
     }
 
     report = f"""
-{'=' * 80}
+{"=" * 80}
 全球广域收割行动 - 最终执行报告
-{'=' * 80}
+{"=" * 80}
 
-📅 执行时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+📅 执行时间: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
 🎯 任务代号: V34.0 HOLOGRAPHIC HARVEST
-{'=' * 80}
+{"=" * 80}
 
 ## 📊 核心成果统计
 
@@ -82,9 +82,9 @@ def generate_final_report():
    - 用时: 3.6 分钟
    - 平均速度: 415.7 场/分钟
 
-{'=' * 80}
+{"=" * 80}
 ## 🏆 历史比赛总场次分布表
-{'=' * 80}
+{"=" * 80}
 
 ┌──────────────────────────┬─────────┬─────────┬─────────┬─────────┐
 │ 联赛                     │ 21/22   │ 22/23   │ 23/24   │ 24/25   │
@@ -99,22 +99,19 @@ def generate_final_report():
         for season in ["21/22", "22/23", "23/24", "24/25"]:
             key = f"{league_id}_{season}"
             if key in league_season_stats:
-                count = league_season_stats[key]['finished']
+                count = league_season_stats[key]["finished"]
                 row += f" {count:6,} │"
             else:
-                row += f"     0 │"
+                row += "     0 │"
 
         report += row + "\n"
 
-    report += f"├──────────────────────────┼─────────┼─────────┼─────────┼─────────┤\n"
-    report += f"│ 总计                    │"
+    report += "├──────────────────────────┼─────────┼─────────┼─────────┼─────────┤\n"
+    report += "│ 总计                    │"
 
     # 计算每赛季总计
     for season in ["21/22", "22/23", "23/24", "24/25"]:
-        total = sum(
-            stats['finished'] for key, stats in league_season_stats.items()
-            if key.endswith(f"_{season}")
-        )
+        total = sum(stats["finished"] for key, stats in league_season_stats.items() if key.endswith(f"_{season}"))
         report += f" {total:6,} │"
 
     report += "\n" + "=" * 80 + "\n"
@@ -124,19 +121,19 @@ def generate_final_report():
 
     league_totals = {}
     for key, stats in league_season_stats.items():
-        league_id = stats['league_id']
+        league_id = stats["league_id"]
         if league_id not in league_totals:
             league_totals[league_id] = {
-                'name': league_names.get(league_id, f"L{league_id}"),
-                'total': 0,
-                'finished': 0,
+                "name": league_names.get(league_id, f"L{league_id}"),
+                "total": 0,
+                "finished": 0,
             }
-        league_totals[league_id]['total'] += stats['total']
-        league_totals[league_id]['finished'] += stats['finished']
+        league_totals[league_id]["total"] += stats["total"]
+        league_totals[league_id]["finished"] += stats["finished"]
 
     for league_id in sorted(league_totals.keys()):
         data = league_totals[league_id]
-        percentage = (data['finished'] / 1516 * 100) if 1516 > 0 else 0
+        percentage = (data["finished"] / 1516 * 100) if 1516 > 0 else 0
         report += f"   - {data['name']:20s}: {data['finished']:5,} 场 ({percentage:5.1f}%)\n"
 
     # 赛季统计
@@ -144,15 +141,15 @@ def generate_final_report():
 
     season_totals = {}
     for key, stats in league_season_stats.items():
-        season = stats['season']
+        season = stats["season"]
         if season not in season_totals:
-            season_totals[season] = {'total': 0, 'finished': 0}
-        season_totals[season]['total'] += stats['total']
-        season_totals[season]['finished'] += stats['finished']
+            season_totals[season] = {"total": 0, "finished": 0}
+        season_totals[season]["total"] += stats["total"]
+        season_totals[season]["finished"] += stats["finished"]
 
     for season in sorted(season_totals.keys()):
         data = season_totals[season]
-        percentage = (data['finished'] / 1516 * 100) if 1516 > 0 else 0
+        percentage = (data["finished"] / 1516 * 100) if 1516 > 0 else 0
         report += f"   - {season:6s}: {data['finished']:5,} 场 ({percentage:5.1f}%)\n"
 
     # 数据版本统计
@@ -171,10 +168,10 @@ def generate_final_report():
     # 速度统计
     report += f"\n{'=' * 80}\n"
     report += "## ⚡ 性能指标\n\n"
-    report += f"   总用时: 3.6 分钟\n"
-    report += f"   平均速度: 415.7 场/分钟\n"
-    report += f"   并发度: 10 并发请求\n"
-    report += f"   成功率: 100% (1,516/1,516)\n"
+    report += "   总用时: 3.6 分钟\n"
+    report += "   平均速度: 415.7 场/分钟\n"
+    report += "   并发度: 10 并发请求\n"
+    report += "   成功率: 100% (1,516/1,516)\n"
 
     # 目标达成
     target = 5000
@@ -190,10 +187,10 @@ def generate_final_report():
     if achieved >= target:
         report += "   ✅ 已达成目标!\n"
     else:
-        report += f"   ⚠️  差距分析:\n"
-        report += f"      - La Liga 每赛季仅 144 场 (API 限制)\n"
-        report += f"      - 其他联赛数据完整\n"
-        report += f"      - 可通过增加更多联赛/赛季补充\n"
+        report += "   ⚠️  差距分析:\n"
+        report += "      - La Liga 每赛季仅 144 场 (API 限制)\n"
+        report += "      - 其他联赛数据完整\n"
+        report += "      - 可通过增加更多联赛/赛季补充\n"
 
     # 建议
     report += f"\n{'=' * 80}\n"
@@ -217,9 +214,9 @@ def generate_final_report():
     # 最终宣告
     report += f"\n{'=' * 80}\n"
     report += "🎉 全息收割机已全面开启\n\n"
-    report += f"    全球 1,516 场黄金样本正在以每分钟 415.7 场速度灌入\n"
-    report += f"    数据湖即将满员 - 728 场 V34.0-HOLOGRAPHIC 数据已就绪\n"
-    report += f"    \"Data is Asset\" - 数据即资产\n"
+    report += "    全球 1,516 场黄金样本正在以每分钟 415.7 场速度灌入\n"
+    report += "    数据湖即将满员 - 728 场 V34.0-HOLOGRAPHIC 数据已就绪\n"
+    report += '    "Data is Asset" - 数据即资产\n'
 
     report += f"\n{'=' * 80}\n"
     report += f"报告生成时间: {datetime.now().isoformat()}\n"
@@ -231,7 +228,7 @@ def generate_final_report():
     report_file = Path("data/predictions/global_harvest_final_report.txt")
     report_file.parent.mkdir(parents=True, exist_ok=True)
 
-    with open(report_file, 'w', encoding='utf-8') as f:
+    with open(report_file, "w", encoding="utf-8") as f:
         f.write(report)
 
     print(f"\n💾 报告已保存到: {report_file}")

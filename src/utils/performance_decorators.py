@@ -12,19 +12,20 @@
 - Statistical Analysis (统计分析)
 """
 
-import functools
-import time
-import logging
-import psutil
 import asyncio
-import threading
-from typing import Callable, Any, Dict, List, Optional, Union
-from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+import functools
 import gc
-import numpy as np
-import pandas as pd
+import logging
+import threading
+import time
+from collections.abc import Callable
 from contextlib import contextmanager
+from dataclasses import dataclass, field
+from datetime import datetime
+from typing import Any
+
+import pandas as pd
+import psutil
 
 logger = logging.getLogger(__name__)
 
@@ -50,16 +51,16 @@ class PerformanceMonitor:
     """全局性能监控器"""
 
     def __init__(self):
-        self._metrics: Dict[str, PerformanceMetrics] = {}
+        self._metrics: dict[str, PerformanceMetrics] = {}
         self._lock = threading.Lock()
         self._process = psutil.Process()
 
-    def get_metrics(self, function_name: str) -> Optional[PerformanceMetrics]:
+    def get_metrics(self, function_name: str) -> PerformanceMetrics | None:
         """获取函数性能指标"""
         with self._lock:
             return self._metrics.get(function_name)
 
-    def get_all_metrics(self) -> Dict[str, PerformanceMetrics]:
+    def get_all_metrics(self) -> dict[str, PerformanceMetrics]:
         """获取所有性能指标"""
         with self._lock:
             return self._metrics.copy()
@@ -77,7 +78,7 @@ class PerformanceMonitor:
             else:
                 self._metrics[function_name] = metrics
 
-    def reset_metrics(self, function_name: Optional[str] = None) -> None:
+    def reset_metrics(self, function_name: str | None = None) -> None:
         """重置性能指标"""
         with self._lock:
             if function_name:
@@ -85,7 +86,7 @@ class PerformanceMonitor:
             else:
                 self._metrics.clear()
 
-    def get_performance_summary(self) -> Dict[str, Any]:
+    def get_performance_summary(self) -> dict[str, Any]:
         """获取性能摘要"""
         with self._lock:
             if not self._metrics:
@@ -288,7 +289,7 @@ def monitor_dataframe_operations(min_rows: int = 1000):
             logger.info(
                 f"[DF PERF] {function_name} DataFrame操作:\n"
                 f"  数据量: {rows:,} 行 x {cols} 列\n"
-                f"  耗时: {execution_time*1000:.1f}ms\n"
+                f"  耗时: {execution_time * 1000:.1f}ms\n"
                 f"  处理速度: {rows_per_sec:.0f} 行/秒"
             )
 
@@ -359,13 +360,11 @@ def performance_context(operation_name: str):
         memory_delta = memory_end - memory_start
 
         logger.info(
-            f"[PERF CTX] {operation_name}:\n"
-            f"  耗时: {execution_time*1000:.1f}ms\n"
-            f"  内存变化: {memory_delta:+.1f}MB"
+            f"[PERF CTX] {operation_name}:\n  耗时: {execution_time * 1000:.1f}ms\n  内存变化: {memory_delta:+.1f}MB"
         )
 
 
-def _extract_dataframe_info(args: tuple, kwargs: dict) -> Optional[Dict[str, Any]]:
+def _extract_dataframe_info(args: tuple, kwargs: dict) -> dict[str, Any] | None:
     """从参数中提取DataFrame信息"""
     # 检查位置参数
     for arg in args:
@@ -389,12 +388,12 @@ def _extract_dataframe_info(args: tuple, kwargs: dict) -> Optional[Dict[str, Any
 
 
 # 便捷函数
-def get_performance_stats() -> Dict[str, Any]:
+def get_performance_stats() -> dict[str, Any]:
     """获取性能统计"""
     return _global_monitor.get_performance_summary()
 
 
-def reset_performance_stats(function_name: Optional[str] = None) -> None:
+def reset_performance_stats(function_name: str | None = None) -> None:
     """重置性能统计"""
     _global_monitor.reset_metrics(function_name)
 
@@ -411,7 +410,7 @@ def log_slow_functions(min_time_ms: float = 1000.0) -> None:
         logger.info("🐌 慢函数统计:")
         for name, metric in slow_functions:
             logger.info(
-                f"  {name}: {metric.avg_time_seconds*1000:.1f}ms "
+                f"  {name}: {metric.avg_time_seconds * 1000:.1f}ms "
                 f"(调用 {metric.call_count} 次, 峰值内存 {metric.memory_peak_mb:.1f}MB)"
             )
 
@@ -427,5 +426,5 @@ def log_memory_intensive_functions(threshold_mb: float = 100.0) -> None:
         for name, metric in memory_intensive:
             logger.info(
                 f"  {name}: {metric.memory_peak_mb:.1f}MB "
-                f"(调用 {metric.call_count} 次, 平均耗时 {metric.avg_time_seconds*1000:.1f}ms)"
+                f"(调用 {metric.call_count} 次, 平均耗时 {metric.avg_time_seconds * 1000:.1f}ms)"
             )

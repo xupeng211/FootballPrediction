@@ -120,9 +120,13 @@ COPY pyproject.toml ./
 # 2. 源代码
 COPY src/ ./src/
 
-# 3. 入口脚本 (如果存在)
+# 3. Scripts 目录 (确保执行权限)
+COPY scripts/ ./scripts/
+RUN chmod -R 755 ./scripts && \
+    find ./scripts -name "*.sh" -exec chmod +x {} \;
+
+# 4. 入口脚本 (如果存在)
 COPY main_production.py ./
-COPY factory_run.py ./
 
 # ============================================
 # 创建运行时目录并设置权限
@@ -135,6 +139,7 @@ RUN mkdir -p /app/logs \
              /app/data/monitoring \
              /app/models \
              /app/tmp && \
+    chmod -R a+rX /app && \
     chown -R appuser:appuser /app
 
 # ============================================

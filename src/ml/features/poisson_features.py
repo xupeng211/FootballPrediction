@@ -30,15 +30,14 @@ Version: 1.0.0
 """
 
 import logging
+from datetime import datetime
+from typing import Any
+
 import numpy as np
 import pandas as pd
-from datetime import datetime, timedelta
-from typing import Dict, Any, Optional, List, Tuple, Union
-from decimal import Decimal, ROUND_HALF_UP, getcontext
 from scipy import stats
-from scipy.special import factorial
 
-from ...constants import FOOTBALL, MATH, PROBABILITY, STATISTICAL
+from ...constants import STATISTICAL
 
 logger = logging.getLogger(__name__)
 
@@ -99,7 +98,7 @@ class PoissonFeatureCalculator:
         self.max_goals_calc = max_goals_calc
 
         # 存储球队历史数据
-        self.team_data: Dict[str, Dict[str, Any]] = {}
+        self.team_data: dict[str, dict[str, Any]] = {}
 
         # 统计信息
         self.stats = {
@@ -117,9 +116,9 @@ class PoissonFeatureCalculator:
     def calculate_team_lambdas(
         self,
         team_id: str,
-        matches_data: List[Dict[str, Any]],
+        matches_data: list[dict[str, Any]],
         is_home_team: bool = True,
-    ) -> Tuple[float, float, Dict[str, Any]]:
+    ) -> tuple[float, float, dict[str, Any]]:
         """
         计算球队的进攻和防守λ值
 
@@ -255,11 +254,11 @@ class PoissonFeatureCalculator:
         self,
         home_team_id: str,
         away_team_id: str,
-        home_attack_lambda: Optional[float] = None,
-        home_defense_lambda: Optional[float] = None,
-        away_attack_lambda: Optional[float] = None,
-        away_defense_lambda: Optional[float] = None,
-    ) -> Dict[str, Any]:
+        home_attack_lambda: float | None = None,
+        home_defense_lambda: float | None = None,
+        away_attack_lambda: float | None = None,
+        away_defense_lambda: float | None = None,
+    ) -> dict[str, Any]:
         """
         计算比赛概率分布
 
@@ -420,7 +419,7 @@ class PoissonFeatureCalculator:
                 btts_prob += score_matrix[home_goals, away_goals]
         return btts_prob
 
-    def _get_top_probable_scores(self, score_matrix: np.ndarray, top_n: int = 5) -> List[Dict[str, Any]]:
+    def _get_top_probable_scores(self, score_matrix: np.ndarray, top_n: int = 5) -> list[dict[str, Any]]:
         """获取最可能的比分"""
         scores = []
         for home_goals in range(self.max_goals_calc + 1):
@@ -439,7 +438,7 @@ class PoissonFeatureCalculator:
         scores.sort(key=lambda x: x["probability"], reverse=True)
         return scores[:top_n]
 
-    def _calculate_goals_distribution(self, exp_goals: float) -> Dict[int, float]:
+    def _calculate_goals_distribution(self, exp_goals: float) -> dict[int, float]:
         """计算进球数分布"""
         distribution = {}
         for goals in range(self.max_goals_calc + 1):
@@ -448,7 +447,7 @@ class PoissonFeatureCalculator:
 
     def _extract_model_features(
         self, exp_home_goals: float, exp_away_goals: float, score_matrix: np.ndarray
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """
         提取用于机器学习模型的特征
 
@@ -506,7 +505,7 @@ class PoissonFeatureCalculator:
         away_team_id: str,
         exp_home_goals: float,
         exp_away_goals: float,
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """计算预测置信度指标"""
         metrics = {}
 
@@ -580,7 +579,7 @@ class PoissonFeatureCalculator:
 
         return pd.DataFrame(features_list)
 
-    def get_team_stats(self, team_id: str) -> Dict[str, Any]:
+    def get_team_stats(self, team_id: str) -> dict[str, Any]:
         """获取球队统计信息"""
         team_data = self.team_data.get(team_id, {})
         if not team_data:
@@ -606,7 +605,7 @@ class PoissonFeatureCalculator:
             },
         }
 
-    def get_system_stats(self) -> Dict[str, Any]:
+    def get_system_stats(self) -> dict[str, Any]:
         """获取系统统计信息"""
         return {
             "configuration": {

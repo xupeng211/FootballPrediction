@@ -5,20 +5,18 @@
 """
 
 import asyncio
-import aiohttp
+import logging
+import os
+import sys
+from datetime import datetime
+
 import psycopg2
 from psycopg2.extras import RealDictCursor
-import json
-import logging
-from datetime import datetime, timedelta
-from typing import Dict, Any, List, Optional
-import sys
-import os
 
 # 添加项目路径
 sys.path.append("/app" if os.getenv("DOCKER_ENV") else ".")
-from src.config_unified import get_settings
 from src.api.fotmob_client import FotMobAPIClient
+from src.config_unified import get_settings
 
 # 设置日志
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -44,7 +42,7 @@ class LeagueHarvester:
             cursor_factory=RealDictCursor,
         )
 
-    async def get_league_matches(self, league_id: int, limit: int = 50) -> List[Dict]:
+    async def get_league_matches(self, league_id: int, limit: int = 50) -> list[dict]:
         """获取指定联赛的比赛数据"""
         try:
             logger.info(f"🏆 正在获取联赛ID {league_id} 的比赛数据...")
@@ -147,7 +145,7 @@ class LeagueHarvester:
 
         return harvested_count
 
-    def get_league_config(self, league_id: int) -> Optional[Dict]:
+    def get_league_config(self, league_id: int) -> dict | None:
         """从配置中获取联赛信息"""
         leagues = self.settings.supported_leagues
         for league_key, league_config in leagues.items():

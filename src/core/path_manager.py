@@ -3,11 +3,11 @@ V8.1 防弹级路径管理系统
 解决所有导入混乱问题，实现零手动干预的自动化部署
 """
 
-import sys
-import os
-from pathlib import Path
-from typing import Optional, Dict, Any
 import logging
+import os
+import sys
+from pathlib import Path
+from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -23,10 +23,10 @@ class PathManager:
     4. 提供路径验证和修复功能
     """
 
-    _instance: Optional['PathManager'] = None
+    _instance: Optional["PathManager"] = None
     _initialized: bool = False
 
-    def __new__(cls) -> 'PathManager':
+    def __new__(cls) -> "PathManager":
         if cls._instance is None:
             cls._instance = super().__new__(cls)
         return cls._instance
@@ -58,7 +58,7 @@ class PathManager:
         current = Path(__file__).resolve().parent
 
         # 向上查找项目根目录标志文件
-        root_markers = ['pyproject.toml', 'requirements.txt', 'Dockerfile', 'docker-compose.yml']
+        root_markers = ["pyproject.toml", "requirements.txt", "Dockerfile", "docker-compose.yml"]
 
         while current.parent != current:
             if any((current / marker).exists() for marker in root_markers):
@@ -70,10 +70,7 @@ class PathManager:
 
     def _configure_pythonpath(self) -> None:
         """配置PYTHONPATH环境变量"""
-        paths_to_add = [
-            str(self.project_root),
-            str(self.src_path)
-        ]
+        paths_to_add = [str(self.project_root), str(self.src_path)]
 
         for path in paths_to_add:
             if path not in sys.path:
@@ -83,12 +80,12 @@ class PathManager:
     def _validate_paths(self) -> None:
         """验证关键路径存在性"""
         critical_paths = {
-            'project_root': self.project_root,
-            'src_path': self.src_path,
-            'config': self.src_path / 'core',
-            'ml': self.src_path / 'ml',
-            'api': self.src_path / 'api',
-            'database': self.src_path / 'database'
+            "project_root": self.project_root,
+            "src_path": self.src_path,
+            "config": self.src_path / "core",
+            "ml": self.src_path / "ml",
+            "api": self.src_path / "api",
+            "database": self.src_path / "database",
         }
 
         missing_paths = []
@@ -112,13 +109,13 @@ class PathManager:
         Returns:
             str: 绝对导入路径
         """
-        if module_path.startswith('..'):
+        if module_path.startswith(".."):
             # 处理相对导入
-            parts = module_path.split('.')
+            parts = module_path.split(".")
             current_level = 0
 
             for part in parts:
-                if part == '':
+                if part == "":
                     current_level += 1
                 else:
                     break
@@ -127,9 +124,9 @@ class PathManager:
             if current_level > 0:
                 # 相对导入，转换为基于src的绝对导入
                 remaining_parts = [p for p in parts if p]
-                absolute_path = '.'.join(remaining_parts)
+                absolute_path = ".".join(remaining_parts)
                 return absolute_path
-        elif '.' not in module_path:
+        elif "." not in module_path:
             # 简单模块名，假设在src下
             return f"{module_path}"
         else:
@@ -153,14 +150,14 @@ class PathManager:
             logger.error(f"模块导入失败: {module_name} - {e}")
             return False
 
-    def get_path_info(self) -> Dict[str, Any]:
+    def get_path_info(self) -> dict[str, Any]:
         """获取路径信息用于调试"""
         return {
-            'project_root': str(self.project_root),
-            'src_path': str(self.src_path),
-            'python_path': sys.path[:5],  # 只显示前5个
-            'working_directory': os.getcwd(),
-            'initialized': self._initialized
+            "project_root": str(self.project_root),
+            "src_path": str(self.src_path),
+            "python_path": sys.path[:5],  # 只显示前5个
+            "working_directory": os.getcwd(),
+            "initialized": self._initialized,
         }
 
 
@@ -181,9 +178,9 @@ def ensure_system_ready() -> bool:
 
         # 测试关键模块导入
         critical_modules = [
-            'src.core.config',
-            'src.utils.database',
-            'src.models.model_handler'  # 修正模块路径
+            "src.core.config",
+            "src.utils.database",
+            "src.models.model_handler",  # 修正模块路径
         ]
 
         importable_modules = []
@@ -218,15 +215,15 @@ def auto_fix_imports(file_path: str) -> bool:
         bool: 是否修复成功
     """
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, encoding="utf-8") as f:
             content = f.read()
 
-        lines = content.split('\n')
+        lines = content.split("\n")
         fixed_lines = []
         changes_made = False
 
         for line in lines:
-            if line.strip().startswith('from ') and '..' in line:
+            if line.strip().startswith("from ") and ".." in line:
                 # 修复相对导入
                 parts = line.split()
                 if len(parts) >= 2:
@@ -246,8 +243,8 @@ def auto_fix_imports(file_path: str) -> bool:
                 fixed_lines.append(line)
 
         if changes_made:
-            with open(file_path, 'w', encoding='utf-8') as f:
-                f.write('\n'.join(fixed_lines))
+            with open(file_path, "w", encoding="utf-8") as f:
+                f.write("\n".join(fixed_lines))
             logger.info(f"自动修复导入完成: {file_path}")
 
         return changes_made
@@ -260,6 +257,7 @@ def auto_fix_imports(file_path: str) -> bool:
 # 自动执行系统准备
 if __name__ == "__main__":
     import json
+
     success = ensure_system_ready()
     print(f"系统准备状态: {'✅ 就绪' if success else '❌ 失败'}")
     print(json.dumps(path_manager.get_path_info(), indent=2, ensure_ascii=False))

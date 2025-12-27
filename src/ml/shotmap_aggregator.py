@@ -20,9 +20,9 @@ V20.6 ShotmapAggregator - 全量射门数据合成引擎
 """
 
 import logging
-from typing import Dict, List, Optional, Any, Tuple
-from dataclasses import dataclass, field
-from collections import defaultdict
+from dataclasses import dataclass
+from typing import Any
+
 import numpy as np
 
 logger = logging.getLogger(__name__)
@@ -31,6 +31,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class ShotmapMetrics:
     """射门聚合指标"""
+
     total_shots: int = 0
     sum_expected_goals: float = 0.0
     avg_distance: float = 0.0
@@ -59,9 +60,9 @@ class ShotmapAggregator:
 
     # 时段映射
     PERIOD_MAP = {
-        'All': 'all',
-        'FirstHalf': 'FH',
-        'SecondHalf': 'SH',
+        "All": "all",
+        "FirstHalf": "FH",
+        "SecondHalf": "SH",
     }
 
     # V20.7 点球精度锁定值
@@ -76,7 +77,7 @@ class ShotmapAggregator:
         self.home_team_id = home_team_id
         self.away_team_id = away_team_id
 
-    def extract_shotmap_periods(self, content: Dict) -> Dict[str, List]:
+    def extract_shotmap_periods(self, content: dict) -> dict[str, list]:
         """
         从 content 中提取 shotmap.Periods 数据
 
@@ -86,16 +87,16 @@ class ShotmapAggregator:
         Returns:
             {'All': [...], 'FirstHalf': [...], 'SecondHalf': [...]}
         """
-        periods_data = {'All': [], 'FirstHalf': [], 'SecondHalf': []}
+        periods_data = {"All": [], "FirstHalf": [], "SecondHalf": []}
 
-        shotmap = content.get('shotmap', {})
-        periods = shotmap.get('Periods', {})
+        shotmap = content.get("shotmap", {})
+        periods = shotmap.get("Periods", {})
 
         if not periods:
             logger.debug("No shotmap.Periods found")
             return periods_data
 
-        for period_name in ['All', 'FirstHalf', 'SecondHalf']:
+        for period_name in ["All", "FirstHalf", "SecondHalf"]:
             period_events = periods.get(period_name, [])
             if isinstance(period_events, list):
                 periods_data[period_name] = period_events
@@ -103,11 +104,7 @@ class ShotmapAggregator:
 
         return periods_data
 
-    def aggregate_period(
-        self,
-        shots: List[Dict],
-        team_id: int
-    ) -> ShotmapMetrics:
+    def aggregate_period(self, shots: list[dict], team_id: int) -> ShotmapMetrics:
         """
         聚合单支球队在单个时段的射门数据
 
@@ -121,7 +118,7 @@ class ShotmapAggregator:
         metrics = ShotmapMetrics()
 
         # 过滤该球队的射门
-        team_shots = [s for s in shots if s.get('teamId') == team_id]
+        team_shots = [s for s in shots if s.get("teamId") == team_id]
 
         if not team_shots:
             return metrics
@@ -134,12 +131,12 @@ class ShotmapAggregator:
 
         for shot in team_shots:
             # V20.7 点球 xG 锁死逻辑
-            situation = shot.get('situation', '')
-            if situation == 'Penalty':
+            situation = shot.get("situation", "")
+            if situation == "Penalty":
                 # 点球 xG 强制锁定为 0.789，确保与官方统计口径对齐
                 xg = self.PENALTY_XG_LOCKED
             else:
-                xg = shot.get('expectedGoals', 0) or 0
+                xg = shot.get("expectedGoals", 0) or 0
 
             metrics.sum_expected_goals += xg
             if xg > 0:
@@ -147,8 +144,8 @@ class ShotmapAggregator:
 
             # 射正计数 (排除被封堵的射门，与官方统计口径对齐)
             # 点球只有在非Blocked且OnTarget时才计入射正
-            is_blocked = shot.get('isBlocked', False)
-            is_on_target = shot.get('isOnTarget', False)
+            is_blocked = shot.get("isBlocked", False)
+            is_on_target = shot.get("isOnTarget", False)
 
             if is_on_target and not is_blocked:
                 metrics.shots_on_target_count += 1
@@ -158,10 +155,10 @@ class ShotmapAggregator:
                 metrics.big_chance_count += 1
 
             # 距离计算 (基于球场坐标)
-            x = shot.get('x', 0) or 0
-            y = shot.get('y', 0) or 0
+            x = shot.get("x", 0) or 0
+            y = shot.get("y", 0) or 0
             # 假设球门位置在 (100, 34)，计算欧几里得距离
-            distance = np.sqrt((100 - x)**2 + (34 - y)**2)
+            distance = np.sqrt((100 - x) ** 2 + (34 - y) ** 2)
             distances.append(distance)
 
         # 平均距离
@@ -174,8 +171,8 @@ class ShotmapAggregator:
 
             # 找到峰值时间
             for shot in team_shots:
-                if shot.get('expectedGoals', 0) == metrics.peak_xg:
-                    metrics.peak_minute = shot.get('min', 0)
+                if shot.get("expectedGoals", 0) == metrics.peak_xg:
+                    metrics.peak_minute = shot.get("min", 0)
                     break
 
             # 波动率 (标准差)
@@ -184,11 +181,7 @@ class ShotmapAggregator:
 
         return metrics
 
-    def synthesize_period_features(
-        self,
-        shots: List[Dict],
-        period_name: str
-    ) -> Dict[str, Any]:
+    def synthesize_period_features(self, shots: list[dict], period_name: str) -> dict[str, Any]:
         """
         合成单个时段的特征
 
@@ -210,57 +203,53 @@ class ShotmapAggregator:
             合成特征字典
         """
         features = {}
-        period_code = self.PERIOD_MAP.get(period_name, 'unknown')
+        period_code = self.PERIOD_MAP.get(period_name, "unknown")
 
         # 聚合主队数据
         home_metrics = self.aggregate_period(shots, self.home_team_id)
         away_metrics = self.aggregate_period(shots, self.away_team_id)
 
         # 生成主队特征
-        features[f'home_{period_code}_synth_total_shots'] = home_metrics.total_shots
-        features[f'home_{period_code}_synth_xg'] = round(home_metrics.sum_expected_goals, 3)
-        features[f'home_{period_code}_synth_avg_distance'] = round(home_metrics.avg_distance, 2)
-        features[f'home_{period_code}_synth_shots_on_target'] = home_metrics.shots_on_target_count
-        features[f'home_{period_code}_synth_big_chances'] = home_metrics.big_chance_count
-        features[f'home_{period_code}_synth_peak_xg'] = round(home_metrics.peak_xg, 3)
-        features[f'home_{period_code}_synth_peak_minute'] = home_metrics.peak_minute
-        features[f'home_{period_code}_synth_volatility'] = round(home_metrics.volatility, 4)
+        features[f"home_{period_code}_synth_total_shots"] = home_metrics.total_shots
+        features[f"home_{period_code}_synth_xg"] = round(home_metrics.sum_expected_goals, 3)
+        features[f"home_{period_code}_synth_avg_distance"] = round(home_metrics.avg_distance, 2)
+        features[f"home_{period_code}_synth_shots_on_target"] = home_metrics.shots_on_target_count
+        features[f"home_{period_code}_synth_big_chances"] = home_metrics.big_chance_count
+        features[f"home_{period_code}_synth_peak_xg"] = round(home_metrics.peak_xg, 3)
+        features[f"home_{period_code}_synth_peak_minute"] = home_metrics.peak_minute
+        features[f"home_{period_code}_synth_volatility"] = round(home_metrics.volatility, 4)
 
         # 生成客队特征
-        features[f'away_{period_code}_synth_total_shots'] = away_metrics.total_shots
-        features[f'away_{period_code}_synth_xg'] = round(away_metrics.sum_expected_goals, 3)
-        features[f'away_{period_code}_synth_avg_distance'] = round(away_metrics.avg_distance, 2)
-        features[f'away_{period_code}_synth_shots_on_target'] = away_metrics.shots_on_target_count
-        features[f'away_{period_code}_synth_big_chances'] = away_metrics.big_chance_count
-        features[f'away_{period_code}_synth_peak_xg'] = round(away_metrics.peak_xg, 3)
-        features[f'away_{period_code}_synth_peak_minute'] = away_metrics.peak_minute
-        features[f'away_{period_code}_synth_volatility'] = round(away_metrics.volatility, 4)
+        features[f"away_{period_code}_synth_total_shots"] = away_metrics.total_shots
+        features[f"away_{period_code}_synth_xg"] = round(away_metrics.sum_expected_goals, 3)
+        features[f"away_{period_code}_synth_avg_distance"] = round(away_metrics.avg_distance, 2)
+        features[f"away_{period_code}_synth_shots_on_target"] = away_metrics.shots_on_target_count
+        features[f"away_{period_code}_synth_big_chances"] = away_metrics.big_chance_count
+        features[f"away_{period_code}_synth_peak_xg"] = round(away_metrics.peak_xg, 3)
+        features[f"away_{period_code}_synth_peak_minute"] = away_metrics.peak_minute
+        features[f"away_{period_code}_synth_volatility"] = round(away_metrics.volatility, 4)
 
         # 生成差值特征
-        features[f'diff_{period_code}_synth_total_shots'] = (
-            home_metrics.total_shots - away_metrics.total_shots
-        )
-        features[f'diff_{period_code}_synth_xg'] = round(
+        features[f"diff_{period_code}_synth_total_shots"] = home_metrics.total_shots - away_metrics.total_shots
+        features[f"diff_{period_code}_synth_xg"] = round(
             home_metrics.sum_expected_goals - away_metrics.sum_expected_goals, 3
         )
-        features[f'diff_{period_code}_synth_shots_on_target'] = (
+        features[f"diff_{period_code}_synth_shots_on_target"] = (
             home_metrics.shots_on_target_count - away_metrics.shots_on_target_count
         )
-        features[f'diff_{period_code}_synth_big_chances'] = (
+        features[f"diff_{period_code}_synth_big_chances"] = (
             home_metrics.big_chance_count - away_metrics.big_chance_count
         )
 
         # 生成总计特征
-        features[f'total_{period_code}_synth_total_shots'] = (
-            home_metrics.total_shots + away_metrics.total_shots
-        )
-        features[f'total_{period_code}_synth_xg'] = round(
+        features[f"total_{period_code}_synth_total_shots"] = home_metrics.total_shots + away_metrics.total_shots
+        features[f"total_{period_code}_synth_xg"] = round(
             home_metrics.sum_expected_goals + away_metrics.sum_expected_goals, 3
         )
 
         return features
 
-    def synthesize_all_features(self, content: Dict) -> Dict[str, Any]:
+    def synthesize_all_features(self, content: dict) -> dict[str, Any]:
         """
         合成所有时段的特征 (All + FirstHalf + SecondHalf)
 
@@ -282,15 +271,12 @@ class ShotmapAggregator:
             return all_features
 
         # 为每个时段合成特征
-        for period_name in ['All', 'FirstHalf', 'SecondHalf']:
+        for period_name in ["All", "FirstHalf", "SecondHalf"]:
             shots = periods_data.get(period_name, [])
             if shots:
                 period_features = self.synthesize_period_features(shots, period_name)
                 all_features.update(period_features)
-                logger.debug(
-                    f"Synthesized {len(period_features)} features for {period_name} "
-                    f"({len(shots)} shots)"
-                )
+                logger.debug(f"Synthesized {len(period_features)} features for {period_name} ({len(shots)} shots)")
 
         logger.info(f"🎯 ShotmapAggregator: Synthesized {len(all_features)} features")
         return all_features
@@ -308,24 +294,24 @@ class PlayerStatsExtractor:
 
     # 核心球员指标
     CORE_PLAYER_STATS = [
-        'accuratePasses',
-        'touches',
-        'totalPasses',
-        'accurateLongBalls',
-        'accurateCrosses',
-        'aerialsWon',
-        'tackles',
-        'interceptions',
-        'clearances',
-        'dribblesSucceeded',
-        'keyPasses',
-        'bigChanceCreated',
+        "accuratePasses",
+        "touches",
+        "totalPasses",
+        "accurateLongBalls",
+        "accurateCrosses",
+        "aerialsWon",
+        "tackles",
+        "interceptions",
+        "clearances",
+        "dribblesSucceeded",
+        "keyPasses",
+        "bigChanceCreated",
     ]
 
     def __init__(self):
         pass
 
-    def extract_player_stats(self, content: Dict) -> Dict[str, Any]:
+    def extract_player_stats(self, content: dict) -> dict[str, Any]:
         """
         从 content 中提取球员统计数据
 
@@ -338,7 +324,7 @@ class PlayerStatsExtractor:
         features = {}
 
         # 从 stats 中提取球员数据
-        stats = content.get('stats', [])
+        stats = content.get("stats", [])
         if not stats:
             return features
 
@@ -347,32 +333,34 @@ class PlayerStatsExtractor:
             # 跳过非字典类型
             if not isinstance(stat_group, dict):
                 continue
-            stats_data = stat_group.get('stats', [])
+            stats_data = stat_group.get("stats", [])
             if not isinstance(stats_data, list):
                 continue
 
             # 查找球员相关统计
             for stat_item in stats_data:
-                stat_key = stat_item.get('key', '').lower()
+                stat_key = stat_item.get("key", "").lower()
 
                 # 检查是否是核心球员指标
                 if any(core.lower() in stat_key for core in self.CORE_PLAYER_STATS):
-                    values = stat_item.get('stats', [])
+                    values = stat_item.get("stats", [])
                     if len(values) >= 2:
                         home_val = values[0]
                         away_val = values[1]
 
                         # 生成特征
                         normalized_key = self._normalize_key(stat_key)
-                        features[f'home_player_{normalized_key}'] = home_val
-                        features[f'away_player_{normalized_key}'] = away_val
-                        features[f'diff_player_{normalized_key}'] = (
-                            home_val - away_val if isinstance(home_val, (int, float))
-                            and isinstance(away_val, (int, float)) else None
+                        features[f"home_player_{normalized_key}"] = home_val
+                        features[f"away_player_{normalized_key}"] = away_val
+                        features[f"diff_player_{normalized_key}"] = (
+                            home_val - away_val
+                            if isinstance(home_val, (int, float)) and isinstance(away_val, (int, float))
+                            else None
                         )
-                        features[f'total_player_{normalized_key}'] = (
-                            home_val + away_val if isinstance(home_val, (int, float))
-                            and isinstance(away_val, (int, float)) else None
+                        features[f"total_player_{normalized_key}"] = (
+                            home_val + away_val
+                            if isinstance(home_val, (int, float)) and isinstance(away_val, (int, float))
+                            else None
                         )
 
         logger.info(f"👤 PlayerStatsExtractor: Extracted {len(features)} player stats")
@@ -380,7 +368,7 @@ class PlayerStatsExtractor:
 
     def _normalize_key(self, key: str) -> str:
         """标准化特征键名"""
-        return key.lower().replace(' ', '_').replace('-', '_')
+        return key.lower().replace(" ", "_").replace("-", "_")
 
 
 class MomentumExtractor:
@@ -393,7 +381,7 @@ class MomentumExtractor:
     3. 生成动量强度特征
     """
 
-    def extract_momentum_features(self, content: Dict) -> Dict[str, Any]:
+    def extract_momentum_features(self, content: dict) -> dict[str, Any]:
         """
         从 content 中提取动量特征
 
@@ -406,47 +394,41 @@ class MomentumExtractor:
         features = {}
 
         # 查找 momentum 数据
-        momentum = content.get('momentum', {})
+        momentum = content.get("momentum", {})
         if not momentum:
             return features
 
         # 提取主客队动量数据
-        home_momentum = momentum.get('home', [])
-        away_momentum = momentum.get('away', [])
+        home_momentum = momentum.get("home", [])
+        away_momentum = momentum.get("away", [])
 
         if home_momentum:
-            home_values = [m.get('value', 0) for m in home_momentum if isinstance(m, dict)]
+            home_values = [m.get("value", 0) for m in home_momentum if isinstance(m, dict)]
             if home_values:
-                features['home_momentum_peak'] = max(home_values)
-                features['home_momentum_avg'] = round(np.mean(home_values), 2)
+                features["home_momentum_peak"] = max(home_values)
+                features["home_momentum_avg"] = round(np.mean(home_values), 2)
                 if len(home_values) > 1:
-                    features['home_momentum_volatility'] = round(np.std(home_values), 4)
-                features['home_momentum_range'] = round(max(home_values) - min(home_values), 2)
+                    features["home_momentum_volatility"] = round(np.std(home_values), 4)
+                features["home_momentum_range"] = round(max(home_values) - min(home_values), 2)
 
         if away_momentum:
-            away_values = [m.get('value', 0) for m in away_momentum if isinstance(m, dict)]
+            away_values = [m.get("value", 0) for m in away_momentum if isinstance(m, dict)]
             if away_values:
-                features['away_momentum_peak'] = max(away_values)
-                features['away_momentum_avg'] = round(np.mean(away_values), 2)
+                features["away_momentum_peak"] = max(away_values)
+                features["away_momentum_avg"] = round(np.mean(away_values), 2)
                 if len(away_values) > 1:
-                    features['away_momentum_volatility'] = round(np.std(away_values), 4)
-                features['away_momentum_range'] = round(max(away_values) - min(away_values), 2)
+                    features["away_momentum_volatility"] = round(np.std(away_values), 4)
+                features["away_momentum_range"] = round(max(away_values) - min(away_values), 2)
 
         # 差值特征
-        if 'home_momentum_peak' in features and 'away_momentum_peak' in features:
-            features['diff_momentum_peak'] = round(
-                features['home_momentum_peak'] - features['away_momentum_peak'], 2
-            )
+        if "home_momentum_peak" in features and "away_momentum_peak" in features:
+            features["diff_momentum_peak"] = round(features["home_momentum_peak"] - features["away_momentum_peak"], 2)
 
         logger.info(f"📈 MomentumExtractor: Extracted {len(features)} momentum features")
         return features
 
 
-def synthesize_v20_6_features(
-    content: Dict,
-    home_team_id: int,
-    away_team_id: int
-) -> Dict[str, Any]:
+def synthesize_v20_6_features(content: dict, home_team_id: int, away_team_id: int) -> dict[str, Any]:
     """
     V20.6 全量特征合成 - 统一入口
 
@@ -480,26 +462,26 @@ def synthesize_v20_6_features(
 
 
 # ==================== 测试代码 ====================
-if __name__ == '__main__':
+if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
 
     # 测试用例：读取实际数据
     import json
 
-    test_file = '/home/user/projects/FootballPrediction/data/backfill_stats/raw_json_match_3609929.json'
-    with open(test_file, 'r') as f:
+    test_file = "/home/user/projects/FootballPrediction/data/backfill_stats/raw_json_match_3609929.json"
+    with open(test_file) as f:
         data = json.load(f)
 
-    content = data.get('content', {})
+    content = data.get("content", {})
 
     # 获取主客队 ID (从 general 中提取)
-    general = data.get('general', {})
-    home_team_id = general.get('homeTeam', {}).get('id', 0)
-    away_team_id = general.get('awayTeam', {}).get('id', 0)
+    general = data.get("general", {})
+    home_team_id = general.get("homeTeam", {}).get("id", 0)
+    away_team_id = general.get("awayTeam", {}).get("id", 0)
 
-    print(f"\n{'='*60}")
-    print(f"V20.6 ShotmapAggregator 测试")
-    print(f"{'='*60}")
+    print(f"\n{'=' * 60}")
+    print("V20.6 ShotmapAggregator 测试")
+    print(f"{'=' * 60}")
     print(f"Match ID: {data.get('matchId', 'N/A')}")
     print(f"Home Team ID: {home_team_id}")
     print(f"Away Team ID: {away_team_id}")
@@ -507,23 +489,23 @@ if __name__ == '__main__':
     # 执行合成
     features = synthesize_v20_6_features(content, home_team_id, away_team_id)
 
-    print(f"\n{'='*60}")
-    print(f"合成结果统计")
-    print(f"{'='*60}")
+    print(f"\n{'=' * 60}")
+    print("合成结果统计")
+    print(f"{'=' * 60}")
     print(f"总特征数: {len(features)}")
 
     # 按前缀分类统计
     feature_categories = {}
     for key in features.keys():
-        prefix = key.split('_')[0] if '_' in key else 'other'
+        prefix = key.split("_")[0] if "_" in key else "other"
         feature_categories[prefix] = feature_categories.get(prefix, 0) + 1
 
-    print(f"\n特征分类统计:")
+    print("\n特征分类统计:")
     for category, count in sorted(feature_categories.items()):
         print(f"  {category}: {count}")
 
     # 显示部分特征
-    print(f"\n关键合成特征预览:")
-    critical_keys = [k for k in features.keys() if 'synth' in k][:10]
+    print("\n关键合成特征预览:")
+    critical_keys = [k for k in features.keys() if "synth" in k][:10]
     for key in critical_keys:
         print(f"  {key}: {features[key]}")

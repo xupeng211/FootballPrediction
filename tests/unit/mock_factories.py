@@ -3,9 +3,8 @@
 Mock工厂函数 - 标准化Mock对象创建
 """
 
-import asyncio
+from typing import Any
 from unittest.mock import AsyncMock, MagicMock
-from typing import Dict, Any, Optional
 
 
 def create_mock_di_container():

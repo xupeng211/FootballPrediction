@@ -4,14 +4,15 @@ FotMob API客户端 - 真实数据采集，集成Tenacity重试机制
 FotMob API Client - Real Data Collection with Tenacity Retry
 """
 
-import aiohttp
 import asyncio
 import logging
 import time
-from typing import Dict, Any, Optional, List
-from datetime import datetime
+from datetime import UTC, datetime
 from enum import Enum
-from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type, AsyncRetrying
+from typing import Any
+
+import aiohttp
+from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 
 logger = logging.getLogger(__name__)
 
@@ -101,12 +102,12 @@ class FotMobAPIClient:
 
     def __init__(
         self,
-        base_url: Optional[str] = None,
-        timeout: Optional[int] = None,
-        max_retries: Optional[int] = None,
-        retry_delay: Optional[float] = None,
-        circuit_breaker_failure_threshold: Optional[int] = None,
-        circuit_breaker_recovery_timeout: Optional[int] = None,
+        base_url: str | None = None,
+        timeout: int | None = None,
+        max_retries: int | None = None,
+        retry_delay: float | None = None,
+        circuit_breaker_failure_threshold: int | None = None,
+        circuit_breaker_recovery_timeout: int | None = None,
     ):
         """
         初始化API客户端
@@ -134,7 +135,12 @@ class FotMobAPIClient:
 
     async def __aenter__(self):
         """异步上下文管理器入口"""
-        self.session = aiohttp.ClientSession(timeout=self.timeout, headers={"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"})
+        self.session = aiohttp.ClientSession(
+            timeout=self.timeout,
+            headers={
+                "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+            },
+        )
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
@@ -150,7 +156,7 @@ class FotMobAPIClient:
             f"API请求重试 {retry_state.attempt_number}/3 - Match ID: {retry_state.kwargs.get('match_id', 'unknown')}"
         ),
     )
-    async def extract_betting_odds(self, match_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def extract_betting_odds(self, match_data: dict[str, Any]) -> dict[str, Any]:
         """V3.3: 从FotMob API数据中提取真实赔率数据
 
         Args:
@@ -164,7 +170,7 @@ class FotMobAPIClient:
             "draw_odds": None,
             "away_odds": None,
             "bookmaker": "FotMob",
-            "extracted_at": datetime.now().isoformat()
+            "extracted_at": datetime.now().isoformat(),
         }
 
         try:
@@ -203,7 +209,9 @@ class FotMobAPIClient:
 
             # 验证赔率完整性
             if all([odds_data["home_odds"], odds_data["draw_odds"], odds_data["away_odds"]]):
-                logger.info(f"✅ 成功提取真实赔率: 主胜={odds_data['home_odds']}, 平局={odds_data['draw_odds']}, 客胜={odds_data['away_odds']}")
+                logger.info(
+                    f"✅ 成功提取真实赔率: 主胜={odds_data['home_odds']}, 平局={odds_data['draw_odds']}, 客胜={odds_data['away_odds']}"
+                )
                 return odds_data
             else:
                 logger.warning("⚠️ 赔率数据不完整，使用模拟赔率")
@@ -214,7 +222,7 @@ class FotMobAPIClient:
             logger.error(f"❌ 赔率提取失败: {e}")
             return self._generate_fallback_odds(match_data)
 
-    def _generate_fallback_odds(self, match_data: Dict[str, Any]) -> Dict[str, Any]:
+    def _generate_fallback_odds(self, match_data: dict[str, Any]) -> dict[str, Any]:
         """生成备用赔率（V3.3: 仅作为最后备用方案）"""
         # 基于xG生成备用赔率，保持与现有逻辑一致
         home_xg = match_data.get("home_xg", 1.5)
@@ -227,7 +235,7 @@ class FotMobAPIClient:
             away_prob = away_xg / total_xg * 0.9
             draw_prob = 0.1
         else:
-            home_prob = away_prob = draw_prob = 1/3
+            home_prob = away_prob = draw_prob = 1 / 3
 
         # 归一化
         total = home_prob + away_prob + draw_prob
@@ -244,10 +252,10 @@ class FotMobAPIClient:
             "away_odds": round(1 / (away_prob * PAYOUT_RATIO), 2),
             "bookmaker": "Fallback_Simulator_V3.3",
             "extracted_at": datetime.now().isoformat(),
-            "warning": "使用模拟赔率，非真实市场数据"
+            "warning": "使用模拟赔率，非真实市场数据",
         }
 
-    async def get_match_details(self, match_id: str) -> Optional[Dict[str, Any]]:
+    async def get_match_details(self, match_id: str) -> dict[str, Any] | None:
         """获取比赛详情（带重试机制和熔断器保护）
 
         Args:
@@ -288,7 +296,7 @@ class FotMobAPIClient:
                     )
                     self.circuit_breaker.record_failure(exc)
                     raise exc
-        except asyncio.TimeoutError as e:
+        except TimeoutError as e:
             error_msg = f"API请求超时 - Match ID: {match_id}"
             logger.error(error_msg)
             self.circuit_breaker.record_failure(e)
@@ -305,12 +313,12 @@ class FotMobAPIClient:
             self.circuit_breaker.record_failure(e)
             return None
 
-    async def get_match_data(self, match_id: str) -> Dict[str, Any]:
+    async def get_match_data(self, match_id: str) -> dict[str, Any]:
         """实现DataClientProtocol接口"""
         data = await self.get_match_details(match_id)
         return data if data is not None else {}
 
-    async def get_multiple_matches(self, match_ids: List[str]) -> List[Dict[str, Any]]:
+    async def get_multiple_matches(self, match_ids: list[str]) -> list[dict[str, Any]]:
         """批量获取比赛数据（实现DataClientProtocol接口）"""
         tasks = [self.get_match_details(match_id) for match_id in match_ids]
         results = await asyncio.gather(*tasks, return_exceptions=True)
@@ -327,7 +335,7 @@ class FotMobAPIClient:
 
         return matches
 
-    async def get_matches_by_date(self, date_str: str) -> Optional[List[Dict[str, Any]]]:
+    async def get_matches_by_date(self, date_str: str) -> list[dict[str, Any]] | None:
         """根据日期获取比赛列表
 
         Args:
@@ -359,7 +367,7 @@ class FotMobAPIClient:
 
     async def get_league_matches(
         self, league_id: str, season_id: str = None, fetch_history: bool = True
-    ) -> Optional[List[Dict[str, Any]]]:
+    ) -> list[dict[str, Any]] | None:
         """获取联赛比赛列表（L1索引同步）- 支持历史赛果抓取
 
         Args:
@@ -418,7 +426,7 @@ class FotMobAPIClient:
 
                     # 过滤比赛 - 只保留2025-08-01至今的完场比赛
                     filtered_matches = []
-                    from datetime import datetime, timezone
+                    from datetime import datetime
 
                     for match in matches:
                         # 检查比赛状态和时间
@@ -435,12 +443,10 @@ class FotMobAPIClient:
                                     match_time = datetime.fromisoformat(match_time_str.replace("Z", "+00:00"))
                                 else:
                                     # 处理其他时间格式
-                                    match_time = datetime.strptime(match_time_str[:10], "%Y-%m-%d").replace(
-                                        tzinfo=timezone.utc
-                                    )
+                                    match_time = datetime.strptime(match_time_str[:10], "%Y-%m-%d").replace(tzinfo=UTC)
 
                                 # 检查是否在2025-08-01之后
-                                cutoff_date = datetime(2025, 8, 1, tzinfo=timezone.utc)
+                                cutoff_date = datetime(2025, 8, 1, tzinfo=UTC)
                                 if match_time >= cutoff_date:
                                     filtered_matches.append(match)
 
@@ -459,7 +465,7 @@ class FotMobAPIClient:
 
 
 # 便捷函数
-async def fetch_match_data(match_id: str) -> Optional[Dict[str, Any]]:
+async def fetch_match_data(match_id: str) -> dict[str, Any] | None:
     """获取比赛数据的便捷函数
 
     Args:

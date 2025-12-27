@@ -27,6 +27,7 @@ from src.ml.feature_forge_v20 import FeatureExtractor
 
 # ==================== 测试数据 ====================
 
+
 class V20_8TestData:
     """V20.8 测试数据生成器"""
 
@@ -56,7 +57,7 @@ class V20_8TestData:
                     "awayTeam": 2667,
                     "status": "played",
                     "homeScore": 3,
-                    "awayScore": 1
+                    "awayScore": 1,
                 },
                 "stats": {
                     "2665": {
@@ -76,7 +77,7 @@ class V20_8TestData:
                             {"key": "Possession", "value": "42%"},
                             {"key": "Passes", "value": "420"},
                         ]
-                    }
+                    },
                 },
                 "playerStats": {
                     "2665": {
@@ -90,7 +91,7 @@ class V20_8TestData:
                                 "shots_on_target": 2,
                                 "touches": 45,
                                 "passes": 28,
-                            }
+                            },
                         },
                         "12346": {
                             "id": 12346,
@@ -100,8 +101,8 @@ class V20_8TestData:
                                 "expected_goals": 0.12,
                                 "total_shots": 1,
                                 "passes": 52,
-                            }
-                        }
+                            },
+                        },
                     },
                     "2667": {
                         "54321": {
@@ -111,9 +112,9 @@ class V20_8TestData:
                             "stats": {
                                 "saves": 3,
                                 "touches": 25,
-                            }
+                            },
                         }
-                    }
+                    },
                 },
                 # V20.8 关键：缺失 FirstHalf / SecondHalf 统计
                 # 测试 V20.8 引擎的回填能力
@@ -141,7 +142,7 @@ class V20_8TestData:
                     "awayTeam": 2667,
                     "status": "played",
                     "homeScore": 3,
-                    "awayScore": 1
+                    "awayScore": 1,
                 },
                 "stats": {
                     "2665": {
@@ -161,7 +162,7 @@ class V20_8TestData:
                             {"key": "Possession", "value": "42%"},
                             {"key": "Passes", "value": "420"},
                         ]
-                    }
+                    },
                 },
                 "playerStats": {
                     "2665": {
@@ -175,7 +176,7 @@ class V20_8TestData:
                                 "shots_on_target": 2,
                                 "touches": 45,
                                 "passes": 28,
-                            }
+                            },
                         }
                     },
                     "2667": {
@@ -186,9 +187,9 @@ class V20_8TestData:
                             "stats": {
                                 "saves": 3,
                                 "touches": 25,
-                            }
+                            },
                         }
-                    }
+                    },
                 },
                 # FirstHalf / SecondHalf 统计存在
                 "FirstHalf": {
@@ -203,7 +204,7 @@ class V20_8TestData:
                             {"key": "ExpectedGoals (xG)", "value": 0.35},
                             {"key": "TotalShots", "value": 3},
                         ]
-                    }
+                    },
                 },
                 "SecondHalf": {
                     "2665": {
@@ -217,13 +218,14 @@ class V20_8TestData:
                             {"key": "ExpectedGoals (xG)", "value": 0.50},
                             {"key": "TotalShots", "value": 5},
                         ]
-                    }
-                }
+                    },
+                },
             }
         }
 
 
 # ==================== 测试用例 ====================
+
 
 class TestV20_8AtomicFeatureExtraction:
     """V20.8 原子级特征提取测试"""
@@ -238,13 +240,13 @@ class TestV20_8AtomicFeatureExtraction:
         """最小化比赛数据（缺失 H1/H2）"""
         json_data = V20_8TestData.create_minimal_match_json()
         return {
-            'match_id': 1234567,
-            'league_id': 47,
-            'season_id': 2324,
-            'home_team': 2665,
-            'away_team': 2667,
-            'player_stats': {'l2_json': json_data},
-            'l2_raw_json': {'l2_json': json_data},
+            "match_id": 1234567,
+            "league_id": 47,
+            "season_id": 2324,
+            "home_team": 2665,
+            "away_team": 2667,
+            "player_stats": {"l2_json": json_data},
+            "l2_raw_json": {"l2_json": json_data},
         }
 
     @pytest.fixture
@@ -252,13 +254,13 @@ class TestV20_8AtomicFeatureExtraction:
         """完整比赛数据（包含 H1/H2）"""
         json_data = V20_8TestData.create_full_match_json()
         return {
-            'match_id': 1234567,
-            'league_id': 47,
-            'season_id': 2324,
-            'home_team': 2665,
-            'away_team': 2667,
-            'player_stats': {'l2_json': json_data},
-            'l2_raw_json': {'l2_json': json_data},
+            "match_id": 1234567,
+            "league_id": 47,
+            "season_id": 2324,
+            "home_team": 2665,
+            "away_team": 2667,
+            "player_stats": {"l2_json": json_data},
+            "l2_raw_json": {"l2_json": json_data},
         }
 
     def test_extractor_returns_valid_structure(self, extractor, minimal_match_data):
@@ -270,18 +272,18 @@ class TestV20_8AtomicFeatureExtraction:
         assert isinstance(result, dict), "提取结果应为字典"
 
         # 验证必需的键
-        assert 'core' in result, "结果应包含 'core' 键"
-        assert 'enriched' in result, "结果应包含 'enriched' 键"
-        assert '_meta' in result, "结果应包含 '_meta' 键"
+        assert "core" in result, "结果应包含 'core' 键"
+        assert "enriched" in result, "结果应包含 'enriched' 键"
+        assert "_meta" in result, "结果应包含 '_meta' 键"
 
     def test_core_features_present(self, extractor, minimal_match_data):
         """测试：核心特征存在"""
         result = extractor.extract_features(minimal_match_data)
-        core = result.get('core', {})
+        core = result.get("core", {})
 
         # 验证比分特征
-        assert 'home_score' in core, "应包含 home_score"
-        assert 'away_score' in core, "应包含 away_score"
+        assert "home_score" in core, "应包含 home_score"
+        assert "away_score" in core, "应包含 away_score"
 
     def test_dimension_meets_minimum_threshold(self, extractor, minimal_match_data):
         """
@@ -296,10 +298,10 @@ class TestV20_8AtomicFeatureExtraction:
         result = extractor.extract_features(minimal_match_data)
 
         # 合并 core 和 enriched
-        features = {**result.get('enriched', {}), **result.get('core', {})}
+        features = {**result.get("enriched", {}), **result.get("core", {})}
 
         # 移除 _meta 供计数
-        feature_count = len([k for k in features.keys() if not k.startswith('_')])
+        feature_count = len([k for k in features.keys() if not k.startswith("_")])
 
         # V20.8 维度死结：881 维
         MIN_FEATURES = 881
@@ -317,11 +319,11 @@ class TestV20_8AtomicFeatureExtraction:
     def test_missing_half_time_stats_handling(self, extractor, minimal_match_data):
         """测试：缺失 H1/H2 统计的处理"""
         result = extractor.extract_features(minimal_match_data)
-        enriched = result.get('enriched', {})
+        enriched = result.get("enriched", {})
 
         # 验证引擎能够处理缺失数据
         # V20.8 应该回填这些字段为 0.0 或 -1.0
-        half_time_keys = [k for k in enriched.keys() if 'FirstHalf' in k or 'SecondHalf' in k]
+        half_time_keys = [k for k in enriched.keys() if "FirstHalf" in k or "SecondHalf" in k]
 
         print(f"\n半场统计特征数量: {len(half_time_keys)}")
 
@@ -334,11 +336,11 @@ class TestV20_8AtomicFeatureExtraction:
         minimal_result = extractor.extract_features(minimal_match_data)
         full_result = extractor.extract_features(full_match_data)
 
-        minimal_features = {**minimal_result.get('enriched', {}), **minimal_result.get('core', {})}
-        full_features = {**full_result.get('enriched', {}), **full_result.get('core', {})}
+        minimal_features = {**minimal_result.get("enriched", {}), **minimal_result.get("core", {})}
+        full_features = {**full_result.get("enriched", {}), **full_result.get("core", {})}
 
-        minimal_count = len([k for k in minimal_features.keys() if not k.startswith('_')])
-        full_count = len([k for k in full_features.keys() if not k.startswith('_')])
+        minimal_count = len([k for k in minimal_features.keys() if not k.startswith("_")])
+        full_count = len([k for k in full_features.keys() if not k.startswith("_")])
 
         print(f"\n最小化数据特征: {minimal_count}")
         print(f"完整数据特征: {full_count}")
@@ -349,19 +351,19 @@ class TestV20_8AtomicFeatureExtraction:
     def test_meta_info_correct(self, extractor, minimal_match_data):
         """测试：元数据正确"""
         result = extractor.extract_features(minimal_match_data)
-        meta = result.get('_meta', {})
+        meta = result.get("_meta", {})
 
-        assert 'extraction_version' in meta, "应包含 extraction_version"
-        assert 'total_features' in meta, "应包含 total_features"
+        assert "extraction_version" in meta, "应包含 extraction_version"
+        assert "total_features" in meta, "应包含 total_features"
 
         # 验证版本号
-        version = meta.get('extraction_version', '')
-        assert version.startswith('V20.'), f"版本号应为 V20.x，实际: {version}"
+        version = meta.get("extraction_version", "")
+        assert version.startswith("V20."), f"版本号应为 V20.x，实际: {version}"
 
     def test_zero_padding_for_missing_stats(self, extractor, minimal_match_data):
         """测试：缺失统计数据的零填充"""
         result = extractor.extract_features(minimal_match_data)
-        enriched = result.get('enriched', {})
+        enriched = result.get("enriched", {})
 
         # 验证所有特征值都是有效的（非 None）
         for key, value in enriched.items():
@@ -373,6 +375,7 @@ class TestV20_8AtomicFeatureExtraction:
 
 
 # ==================== 集成测试 ====================
+
 
 class TestV20_8HarvesterIntegration:
     """V20.8 Harvester 集成测试（无数据库）"""

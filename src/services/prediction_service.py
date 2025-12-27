@@ -13,11 +13,11 @@
 """
 
 import logging
-from datetime import datetime
-from typing import Dict, Any, List, Optional
 from dataclasses import dataclass, field
+from datetime import datetime
+from typing import Any
 
-from .dependency_injection import injectable, ServiceLifecycle
+from .dependency_injection import ServiceLifecycle, injectable
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +31,7 @@ class PredictionRequest:
     include_metadata: bool = True
     include_explanation: bool = False
     batch_mode: bool = False
-    match_ids: Optional[List[str]] = None
+    match_ids: list[str] | None = None
 
     def __post_init__(self):
         """初始化后验证"""
@@ -47,11 +47,11 @@ class PredictionResponse:
     """预测响应模型"""
 
     success: bool
-    data: Optional[Dict[str, Any]] = None
-    error: Optional[str] = None
-    processing_time_ms: Optional[float] = None
+    data: dict[str, Any] | None = None
+    error: str | None = None
+    processing_time_ms: float | None = None
     timestamp: datetime = field(default_factory=datetime.now)
-    request_id: Optional[str] = None
+    request_id: str | None = None
 
 
 @injectable("prediction_service", ["inference_service", "explainability_service"])
@@ -154,7 +154,7 @@ class PredictionService(ServiceLifecycle):
                 request_id=request_id,
             )
 
-            self.logger.info(f"单场比赛预测完成: match_id={match_id}, " f"processing_time={processing_time:.2f}ms")
+            self.logger.info(f"单场比赛预测完成: match_id={match_id}, processing_time={processing_time:.2f}ms")
 
             return response
 
@@ -173,7 +173,7 @@ class PredictionService(ServiceLifecycle):
 
     async def predict_batch_matches(
         self,
-        match_ids: List[str],
+        match_ids: list[str],
         include_features: bool = False,
         include_metadata: bool = True,
         include_explanation: bool = False,
@@ -364,7 +364,7 @@ class PredictionService(ServiceLifecycle):
         if len(match_id) > 100:  # 防止过长的ID
             raise ValueError("match_id 过长")
 
-    def _validate_batch_request(self, match_ids: List[str]) -> None:
+    def _validate_batch_request(self, match_ids: list[str]) -> None:
         """验证批量请求"""
         if not match_ids or not isinstance(match_ids, list):
             raise ValueError("无效的 match_ids")
@@ -380,11 +380,11 @@ class PredictionService(ServiceLifecycle):
 
     async def _build_single_response(
         self,
-        prediction_result: Dict[str, Any],
+        prediction_result: dict[str, Any],
         include_features: bool,
         include_metadata: bool,
         include_explanation: bool,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """构建单场比赛响应数据"""
         response_data = prediction_result.copy()
 
@@ -402,12 +402,12 @@ class PredictionService(ServiceLifecycle):
 
     async def _predict_batch_concurrent(
         self,
-        match_ids: List[str],
+        match_ids: list[str],
         include_features: bool,
         include_metadata: bool,
         include_explanation: bool,
         max_concurrent: int,
-    ) -> List[PredictionResponse]:
+    ) -> list[PredictionResponse]:
         """并发执行批量预测"""
         import asyncio
 
@@ -426,7 +426,7 @@ class PredictionService(ServiceLifecycle):
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
         # 处理异常结果
-        processed_results: List[PredictionResponse] = []
+        processed_results: list[PredictionResponse] = []
         for i, result in enumerate(results):
             if isinstance(result, Exception):
                 error_response = PredictionResponse(
@@ -441,7 +441,7 @@ class PredictionService(ServiceLifecycle):
 
         return processed_results
 
-    async def _build_batch_response(self, results: List[PredictionResponse]) -> Dict[str, Any]:
+    async def _build_batch_response(self, results: list[PredictionResponse]) -> dict[str, Any]:
         """构建批量响应数据"""
         successful_results = [r.data for r in results if r.success]
         failed_results = [{"match_id": r.request_id, "error": r.error} for r in results if not r.success]

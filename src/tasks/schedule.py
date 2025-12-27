@@ -5,6 +5,7 @@ Celery Beat 调度任务配置
 """
 
 import logging
+
 from celery import Celery
 from celery.schedules import crontab
 
@@ -214,6 +215,7 @@ def system_health_check(self):
 
     try:
         import redis
+
         from src.database.connection import test_database_connection
 
         health_status = {

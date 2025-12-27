@@ -17,52 +17,55 @@ import json
 import logging
 import threading
 import time
-from collections import deque
-from dataclasses import dataclass, field, asdict
+from collections.abc import Callable
+from dataclasses import asdict, dataclass, field
 from datetime import datetime
-from pathlib import Path
-from typing import Dict, List, Optional, Set, Any, Callable
 from enum import Enum
+from pathlib import Path
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
 
 class CircuitState(Enum):
     """熔断器状态"""
-    CLOSED = "closed"           # 正常运行
-    OPEN = "open"               # 熔断开启（拒绝请求）
-    HALF_OPEN = "half_open"     # 半开（试探性恢复）
+
+    CLOSED = "closed"  # 正常运行
+    OPEN = "open"  # 熔断开启（拒绝请求）
+    HALF_OPEN = "half_open"  # 半开（试探性恢复）
 
 
 @dataclass
 class CircuitBreakerConfig:
     """熔断器配置"""
-    failure_threshold: int = 20        # 失败阈值（连续失败次数）
-    success_threshold: int = 5         # 成功阈值（半开状态下连续成功次数）
-    timeout_seconds: int = 300         # 熔断超时（秒）
-    error_codes: Set[int] = field(default_factory=lambda: {403, 429, 500, 502, 503})
+
+    failure_threshold: int = 20  # 失败阈值（连续失败次数）
+    success_threshold: int = 5  # 成功阈值（半开状态下连续成功次数）
+    timeout_seconds: int = 300  # 熔断超时（秒）
+    error_codes: set[int] = field(default_factory=lambda: {403, 429, 500, 502, 503})
     monitored_exceptions: tuple = field(default_factory=lambda: (Exception,))
 
 
 @dataclass
 class ProgressSnapshot:
     """进度快照"""
+
     total_matches: int = 0
     processed: int = 0
     successful: int = 0
     failed: int = 0
     skipped: int = 0
-    successful_ids: List[int] = field(default_factory=list)
-    failed_ids: List[int] = field(default_factory=list)
-    skipped_ids: List[int] = field(default_factory=list)
+    successful_ids: list[int] = field(default_factory=list)
+    failed_ids: list[int] = field(default_factory=list)
+    skipped_ids: list[int] = field(default_factory=list)
     last_update: str = field(default_factory=lambda: datetime.now().isoformat())
     circuit_breaker_trips: int = 0
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
         return asdict(self)
 
     @classmethod
-    def from_dict(cls, data: Dict) -> 'ProgressSnapshot':
+    def from_dict(cls, data: dict) -> "ProgressSnapshot":
         return cls(**data)
 
 
@@ -81,7 +84,7 @@ class CircuitBreaker:
         self._state = CircuitState.CLOSED
         self._failure_count = 0
         self._success_count = 0
-        self._last_failure_time: Optional[float] = None
+        self._last_failure_time: float | None = None
         self._trip_count = 0
         self._lock = threading.Lock()
 
@@ -119,7 +122,7 @@ class CircuitBreaker:
                 # CLOSED 状态下重置失败计数
                 self._failure_count = 0
 
-    def record_failure(self, error_code: Optional[int] = None, exception: Optional[Exception] = None):
+    def record_failure(self, error_code: int | None = None, exception: Exception | None = None):
         """
         记录失败
 
@@ -157,8 +160,7 @@ class CircuitBreaker:
         self._state = CircuitState.OPEN
         self._trip_count += 1
         logger.error(
-            f"🔴 熔断器已触发！连续失败 {self._failure_count} 次。"
-            f"系统将在 {self.config.timeout_seconds} 秒后尝试恢复。"
+            f"🔴 熔断器已触发！连续失败 {self._failure_count} 次。系统将在 {self.config.timeout_seconds} 秒后尝试恢复。"
         )
 
     def _transition_to_closed(self):
@@ -298,7 +300,7 @@ class CheckpointTracker:
         """加载快照"""
         if self.checkpoint_file.exists():
             try:
-                with open(self.checkpoint_file, 'r', encoding='utf-8') as f:
+                with open(self.checkpoint_file, encoding="utf-8") as f:
                     data = json.load(f)
                 snapshot = ProgressSnapshot.from_dict(data)
                 logger.info(f"从快照恢复: {snapshot.processed} 场已处理")
@@ -311,7 +313,7 @@ class CheckpointTracker:
     def _save_snapshot(self):
         """保存快照"""
         self._snapshot.last_update = datetime.now().isoformat()
-        with open(self.checkpoint_file, 'w', encoding='utf-8') as f:
+        with open(self.checkpoint_file, "w", encoding="utf-8") as f:
             json.dump(self._snapshot.to_dict(), f, indent=2, ensure_ascii=False)
 
     def set_total(self, total: int):
@@ -350,32 +352,35 @@ class CheckpointTracker:
         """检查是否已处理"""
         return match_id in self._snapshot.successful_ids
 
-    def get_failed_ids(self) -> List[int]:
+    def get_failed_ids(self) -> list[int]:
         """获取失败的 Match ID 列表"""
         return self._snapshot.failed_ids.copy()
 
-    def get_successful_ids(self) -> List[int]:
+    def get_successful_ids(self) -> list[int]:
         """获取成功的 Match ID 列表"""
         return self._snapshot.successful_ids.copy()
 
-    def get_progress(self) -> Dict[str, Any]:
+    def get_progress(self) -> dict[str, Any]:
         """获取进度摘要"""
         with self._lock:
             return {
-                'total_matches': self._snapshot.total_matches,
-                'processed': self._snapshot.processed,
-                'successful': self._snapshot.successful,
-                'failed': self._snapshot.failed,
-                'skipped': self._snapshot.skipped,
-                'remaining': self._snapshot.total_matches - self._snapshot.processed,
-                'success_rate': self._snapshot.successful / self._snapshot.processed if self._snapshot.processed > 0 else 0,
-                'last_update': self._snapshot.last_update,
+                "total_matches": self._snapshot.total_matches,
+                "processed": self._snapshot.processed,
+                "successful": self._snapshot.successful,
+                "failed": self._snapshot.failed,
+                "skipped": self._snapshot.skipped,
+                "remaining": self._snapshot.total_matches - self._snapshot.processed,
+                "success_rate": self._snapshot.successful / self._snapshot.processed
+                if self._snapshot.processed > 0
+                else 0,
+                "last_update": self._snapshot.last_update,
             }
 
     def create_backup(self):
         """创建备份"""
-        backup_file = self.checkpoint_file.with_suffix(f'.bak.{int(time.time())}')
+        backup_file = self.checkpoint_file.with_suffix(f".bak.{int(time.time())}")
         import shutil
+
         shutil.copy2(self.checkpoint_file, backup_file)
         logger.info(f"创建快照备份: {backup_file}")
 
@@ -390,11 +395,12 @@ class CheckpointTracker:
 @dataclass
 class ProcessingResult:
     """处理结果"""
+
     match_id: int
     success: bool
-    error: Optional[str] = None
+    error: str | None = None
     duration: float = 0.0
-    error_code: Optional[int] = None
+    error_code: int | None = None
 
 
 class FaultTolerantProcessor:
@@ -405,10 +411,7 @@ class FaultTolerantProcessor:
     """
 
     def __init__(
-        self,
-        circuit_breaker: CircuitBreaker = None,
-        checkpoint_tracker: CheckpointTracker = None,
-        max_retries: int = 2
+        self, circuit_breaker: CircuitBreaker = None, checkpoint_tracker: CheckpointTracker = None, max_retries: int = 2
     ):
         self.circuit_breaker = circuit_breaker or CircuitBreaker()
         self.checkpoint_tracker = checkpoint_tracker or CheckpointTracker()
@@ -416,10 +419,7 @@ class FaultTolerantProcessor:
         logger.info("容错处理器初始化完成")
 
     def process_with_retry(
-        self,
-        match_id: int,
-        processor_func: Callable[[int], ProcessingResult],
-        skip_if_processed: bool = True
+        self, match_id: int, processor_func: Callable[[int], ProcessingResult], skip_if_processed: bool = True
     ) -> ProcessingResult:
         """
         带重试和容错的处理函数
@@ -441,12 +441,7 @@ class FaultTolerantProcessor:
         # 检查熔断器
         if not self.circuit_breaker.can_execute():
             logger.error(f"熔断器已开启，拒绝处理 Match {match_id}")
-            return ProcessingResult(
-                match_id=match_id,
-                success=False,
-                error="Circuit breaker is OPEN",
-                error_code=503
-            )
+            return ProcessingResult(match_id=match_id, success=False, error="Circuit breaker is OPEN", error_code=503)
 
         # 执行处理（带重试）
         last_error = None
@@ -473,7 +468,7 @@ class FaultTolerantProcessor:
                 logger.warning(f"Match {match_id} 处理异常 (attempt {attempt + 1}/{self.max_retries + 1}): {e}")
 
                 if attempt < self.max_retries:
-                    time.sleep(2 ** attempt)  # 指数退避
+                    time.sleep(2**attempt)  # 指数退避
                 else:
                     # 最后一次尝试失败
                     self.circuit_breaker.record_failure(exception=e)
@@ -482,19 +477,15 @@ class FaultTolerantProcessor:
         self.checkpoint_tracker.record_failure(match_id)
         logger.error(f"✗ Match {match_id} 处理失败: {last_error}")
 
-        return ProcessingResult(
-            match_id=match_id,
-            success=False,
-            error=last_error
-        )
+        return ProcessingResult(match_id=match_id, success=False, error=last_error)
 
-    def get_system_status(self) -> Dict[str, Any]:
+    def get_system_status(self) -> dict[str, Any]:
         """获取系统状态"""
         return {
-            'circuit_breaker': {
-                'state': self.circuit_breaker.state.value,
-                'failure_count': self.circuit_breaker.failure_count,
-                'trip_count': self.circuit_breaker.trip_count,
+            "circuit_breaker": {
+                "state": self.circuit_breaker.state.value,
+                "failure_count": self.circuit_breaker.failure_count,
+                "trip_count": self.circuit_breaker.trip_count,
             },
-            'progress': self.checkpoint_tracker.get_progress(),
+            "progress": self.checkpoint_tracker.get_progress(),
         }

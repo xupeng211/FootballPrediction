@@ -5,25 +5,23 @@ V3.0 全球模型盈利能力回测器 - 半凯利0.5x策略
 维持Edge > 7%的策略，验证ROI表现
 """
 
-import sys
-import os
-import logging
-import joblib
 import json
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
+import logging
+import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Tuple, Optional
+
+import joblib
+import numpy as np
+import pandas as pd
 
 # 添加项目路径
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 sys.path.insert(0, str(project_root / "src"))
 
+
 from src.config_unified import get_settings
-from sklearn.preprocessing import StandardScaler
 
 # 配置日志
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
@@ -72,12 +70,12 @@ class V3ROIBacktest:
 
         # 加载元数据
         if self.metadata_path.exists():
-            with open(self.metadata_path, "r", encoding="utf-8") as f:
+            with open(self.metadata_path, encoding="utf-8") as f:
                 self.metadata = json.load(f)
         else:
             self.metadata = {}
 
-        logger.info(f"✅ V3.0模型加载完成")
+        logger.info("✅ V3.0模型加载完成")
         logger.info(f"📊 模型类型: {type(self.model).__name__}")
         logger.info(f"🔢 特征数量: {len(self.feature_names)}")
         logger.info(f"📈 训练准确率: {self.metadata.get('cv_mean_accuracy', 'N/A')}")
@@ -88,7 +86,6 @@ class V3ROIBacktest:
 
         try:
             import psycopg2
-            from psycopg2.extras import RealDictCursor
 
             db = self.settings.database
             conn = psycopg2.connect(
@@ -184,7 +181,6 @@ class V3ROIBacktest:
         # 从数据库查询真实赔率
         try:
             import psycopg2
-            from psycopg2.extras import RealDictCursor
 
             # V3.4: 强制使用配置中指定的数据库
             db = self.settings.database
@@ -238,18 +234,16 @@ class V3ROIBacktest:
             def fill_odds(row):
                 odds_data = odds_dict.get(row["external_id"])
                 if odds_data:
-                    return pd.Series({
-                        "home_odds": odds_data["home_opening_odds"],
-                        "away_odds": odds_data["away_opening_odds"],
-                        "draw_odds": odds_data["draw_odds"]
-                    })
+                    return pd.Series(
+                        {
+                            "home_odds": odds_data["home_opening_odds"],
+                            "away_odds": odds_data["away_opening_odds"],
+                            "draw_odds": odds_data["draw_odds"],
+                        }
+                    )
                 else:
                     # V3.4: 无真实赔率的比赛直接跳过，不使用模拟赔率
-                    return pd.Series({
-                        "home_odds": None,
-                        "away_odds": None,
-                        "draw_odds": None
-                    })
+                    return pd.Series({"home_odds": None, "away_odds": None, "draw_odds": None})
 
             odds_data = odds_df.apply(fill_odds, axis=1)
 
@@ -262,11 +256,11 @@ class V3ROIBacktest:
             matches_with_odds = odds_df.dropna(subset=["home_odds", "away_odds", "draw_odds"])
             matches_skipped = len(odds_df) - len(matches_with_odds)
 
-            logger.info(f"✅ 加载真实赔率完成:")
+            logger.info("✅ 加载真实赔率完成:")
             logger.info(f"   • 总比赛数: {len(odds_df)}")
             logger.info(f"   • 有赔率数据: {len(matches_with_odds)}")
             logger.info(f"   • 跳过无赔率: {matches_skipped}")
-            logger.info(f"   • 真实赔率覆盖率: {len(matches_with_odds)/len(odds_df)*100:.1f}%")
+            logger.info(f"   • 真实赔率覆盖率: {len(matches_with_odds) / len(odds_df) * 100:.1f}%")
 
             if len(matches_with_odds) == 0:
                 logger.error("🚨 没有找到任何真实赔率数据！")
@@ -312,7 +306,6 @@ class V3ROIBacktest:
         try:
             # 连接数据库获取真实比分
             import psycopg2
-            from psycopg2.extras import RealDictCursor
 
             # 使用统一配置系统
             db = self.settings.database
@@ -415,7 +408,7 @@ class V3ROIBacktest:
             logger.error(f"❌ 加载真实比赛结果失败: {e}")
             raise
 
-    def backtest_strategy(self, df: pd.DataFrame, y_pred_proba: np.ndarray, real_results: pd.Series) -> Dict:
+    def backtest_strategy(self, df: pd.DataFrame, y_pred_proba: np.ndarray, real_results: pd.Series) -> dict:
         """执行真实结果回测策略"""
         logger.info(f"💰 执行真实结果回测策略: {self.kelly_fraction}x凯利")
 
@@ -542,7 +535,7 @@ class V3ROIBacktest:
 
         return results
 
-    def generate_roi_report(self, results: Dict):
+    def generate_roi_report(self, results: dict):
         """生成ROI报告"""
         logger.info("📊 生成ROI报告...")
 

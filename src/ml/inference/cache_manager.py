@@ -10,11 +10,11 @@ import asyncio
 import hashlib
 import logging
 import time
-from datetime import datetime
-from typing import Dict, Any, Optional, List
-from dataclasses import dataclass
-from threading import RLock
 from collections import OrderedDict
+from dataclasses import dataclass
+from datetime import datetime
+from threading import RLock
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 class CacheEntry:
     """缓存条目"""
 
-    result: Dict[str, Any]
+    result: dict[str, Any]
     timestamp: float
     ttl: float
     access_count: int = 0
@@ -56,7 +56,7 @@ class CacheStats:
     total_requests: int = 0
     memory_usage_mb: float = 0.0
     cleanup_count: int = 0
-    last_cleanup_time: Optional[datetime] = None
+    last_cleanup_time: datetime | None = None
 
     @property
     def hit_rate(self) -> float:
@@ -114,7 +114,7 @@ class PredictionCache:
         self._stats = CacheStats()
 
         # 后台清理任务
-        self._cleanup_task: Optional[asyncio.Task[None]] = None
+        self._cleanup_task: asyncio.Task[None] | None = None
         self._stop_event = asyncio.Event()
 
         logger.info(
@@ -129,7 +129,7 @@ class PredictionCache:
         self,
         features_hash: str,
         model_name: str,
-        additional_params: Optional[Dict] = None,
+        additional_params: dict | None = None,
     ) -> str:
         """
         生成缓存键
@@ -152,7 +152,7 @@ class PredictionCache:
 
         return ":".join(key_parts)
 
-    def _hash_features(self, features: List[float]) -> str:
+    def _hash_features(self, features: list[float]) -> str:
         """
         计算特征数据的哈希值
 
@@ -168,10 +168,10 @@ class PredictionCache:
 
     def get(
         self,
-        features: List[float],
+        features: list[float],
         model_name: str,
-        additional_params: Optional[Dict] = None,
-    ) -> Optional[Dict[str, Any]]:
+        additional_params: dict | None = None,
+    ) -> dict[str, Any] | None:
         """
         获取缓存结果
 
@@ -218,11 +218,11 @@ class PredictionCache:
 
     def set(
         self,
-        features: List[float],
+        features: list[float],
         model_name: str,
-        result: Dict[str, Any],
-        ttl: Optional[int] = None,
-        additional_params: Optional[Dict] = None,
+        result: dict[str, Any],
+        ttl: int | None = None,
+        additional_params: dict | None = None,
     ) -> bool:
         """
         设置缓存结果
@@ -269,9 +269,9 @@ class PredictionCache:
 
     def delete(
         self,
-        features: List[float],
+        features: list[float],
         model_name: str,
-        additional_params: Optional[Dict] = None,
+        additional_params: dict | None = None,
     ) -> bool:
         """
         删除特定缓存条目
@@ -300,7 +300,7 @@ class PredictionCache:
                 logger.error(f"缓存删除异常: {e}")
                 return False
 
-    def clear(self, pattern: Optional[str] = None) -> int:
+    def clear(self, pattern: str | None = None) -> int:
         """
         清空缓存
 
@@ -378,7 +378,7 @@ class PredictionCache:
                 try:
                     await asyncio.wait_for(self._stop_event.wait(), timeout=self.cleanup_interval)
                     break  # 收到停止信号
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     pass  # 正常超时，继续执行清理
 
                 # 执行清理
@@ -400,7 +400,7 @@ class PredictionCache:
             self._stop_event.set()
             try:
                 await asyncio.wait_for(self._cleanup_task, timeout=5.0)
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 self._cleanup_task.cancel()
                 logger.warning("清理任务强制停止")
 
@@ -431,7 +431,7 @@ class PredictionCache:
 
             return self._stats
 
-    def get_cache_keys(self, pattern: Optional[str] = None) -> List[str]:
+    def get_cache_keys(self, pattern: str | None = None) -> list[str]:
         """
         获取缓存键列表
 
@@ -447,7 +447,7 @@ class PredictionCache:
                 keys = [key for key in keys if pattern in key]
             return keys
 
-    def get_cache_info(self) -> Dict[str, Any]:
+    def get_cache_info(self) -> dict[str, Any]:
         """
         获取缓存详细信息
 

@@ -5,16 +5,17 @@ ML数据模块测试配置文件
 提供测试所需的fixtures和配置
 """
 
-import pytest
-import pandas as pd
-from datetime import datetime, timezone
-from typing import List, Dict, Any
 import asyncio
+from datetime import UTC, datetime
+from typing import Any
 from unittest.mock import AsyncMock, Mock
+
+import pandas as pd
+import pytest
 
 
 @pytest.fixture
-def sample_match_data() -> List[Dict[str, Any]]:
+def sample_match_data() -> list[dict[str, Any]]:
     """示例比赛数据fixture"""
     return [
         {
@@ -25,7 +26,7 @@ def sample_match_data() -> List[Dict[str, Any]]:
             "away_score": 1,
             "home_team_name": "Manchester United",
             "away_team_name": "Liverpool",
-            "match_date": datetime(2024, 1, 15, 15, 0, 0, tzinfo=timezone.utc),
+            "match_date": datetime(2024, 1, 15, 15, 0, 0, tzinfo=UTC),
             "status": "FT",
             "home_expected_goals": 1.5,
             "away_expected_goals": 0.8,
@@ -46,7 +47,7 @@ def sample_match_data() -> List[Dict[str, Any]]:
             "away_score": 1,
             "home_team_name": "Arsenal",
             "away_team_name": "Chelsea",
-            "match_date": datetime(2024, 1, 16, 17, 30, 0, tzinfo=timezone.utc),
+            "match_date": datetime(2024, 1, 16, 17, 30, 0, tzinfo=UTC),
             "status": "FT",
             "home_expected_goals": 1.2,
             "away_expected_goals": 1.1,

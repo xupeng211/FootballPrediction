@@ -4,16 +4,15 @@
 专门用于构建英超量化母库的完整赛季数据采集
 """
 
-import requests
-import json
 import csv
 import logging
-import time
-from datetime import datetime, timezone
-from typing import List, Dict, Optional
 import os
+from datetime import UTC, datetime
+
+import requests
 
 logger = logging.getLogger(__name__)
+
 
 class PremierLeagueL1Harvester:
     """
@@ -29,12 +28,12 @@ class PremierLeagueL1Harvester:
         """初始化L1采集器"""
         self.base_url = "https://www.fotmob.com/api"
         self.headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            'Accept': 'application/json, text/plain, */*',
-            'Accept-Language': 'en-US,en;q=0.9,en-GB;q=0.8',
-            'Accept-Encoding': 'gzip, deflate, br',
-            'Cache-Control': 'no-cache',
-            'Pragma': 'no-cache'
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Accept": "application/json, text/plain, */*",
+            "Accept-Language": "en-US,en;q=0.9,en-GB;q=0.8",
+            "Accept-Encoding": "gzip, deflate, br",
+            "Cache-Control": "no-cache",
+            "Pragma": "no-cache",
         }
         self.session = requests.Session()
         self.session.headers.update(self.headers)
@@ -46,7 +45,7 @@ class PremierLeagueL1Harvester:
 
         logger.info("🏆 初始化英超24/25赛季L1采集器")
 
-    def get_season_matches(self) -> List[Dict]:
+    def get_season_matches(self) -> list[dict]:
         """
         获取英超24/25赛季所有比赛
 
@@ -78,7 +77,7 @@ class PremierLeagueL1Harvester:
             logger.error(f"❌ 解析英超数据异常: {e}")
             return []
 
-    def _parse_season_data(self, data: Dict) -> List[Dict]:
+    def _parse_season_data(self, data: dict) -> list[dict]:
         """
         解析赛季数据中的比赛信息
 
@@ -92,8 +91,8 @@ class PremierLeagueL1Harvester:
 
         try:
             # 数据在 fixtures.allMatches 中
-            if 'fixtures' in data and 'allMatches' in data['fixtures']:
-                all_matches = data['fixtures']['allMatches']
+            if "fixtures" in data and "allMatches" in data["fixtures"]:
+                all_matches = data["fixtures"]["allMatches"]
                 logger.info(f"📊 找到 {len(all_matches)} 场比赛数据")
 
                 for match in all_matches:
@@ -110,7 +109,7 @@ class PremierLeagueL1Harvester:
             logger.error(f"❌ 解析比赛数据失败: {e}")
             return []
 
-    def _extract_match_info(self, match: Dict) -> Optional[Dict]:
+    def _extract_match_info(self, match: dict) -> dict | None:
         """
         提取单场比赛的基础信息
 
@@ -122,73 +121,73 @@ class PremierLeagueL1Harvester:
         """
         try:
             # 提取基础信息 - 处理可能的字符串类型
-            home_data = match.get('home')
+            home_data = match.get("home")
             if isinstance(home_data, str):
                 home_team = home_data
             else:
-                home_team = home_data.get('name', 'Unknown Home') if home_data else 'Unknown Home'
+                home_team = home_data.get("name", "Unknown Home") if home_data else "Unknown Home"
 
-            away_data = match.get('away')
+            away_data = match.get("away")
             if isinstance(away_data, str):
                 away_team = away_data
             else:
-                away_team = away_data.get('name', 'Unknown Away') if away_data else 'Unknown Away'
+                away_team = away_data.get("name", "Unknown Away") if away_data else "Unknown Away"
 
             # 提取时间信息
-            status = match.get('status', {})
-            match_time_str = status.get('utcTime', '')
+            status = match.get("status", {})
+            match_time_str = status.get("utcTime", "")
 
             # 提取比分信息
             home_score = None
             away_score = None
             actual_result = None
 
-            if status.get('finished'):
-                score_str = status.get('scoreStr', '')
-                if score_str and '-' in score_str:
+            if status.get("finished"):
+                score_str = status.get("scoreStr", "")
+                if score_str and "-" in score_str:
                     try:
-                        home_score, away_score = map(int, score_str.split('-'))
+                        home_score, away_score = map(int, score_str.split("-"))
                         # 确定比赛结果
                         if home_score > away_score:
-                            actual_result = 'H'
+                            actual_result = "H"
                         elif home_score < away_score:
-                            actual_result = 'A'
+                            actual_result = "A"
                         else:
-                            actual_result = 'D'
+                            actual_result = "D"
                     except ValueError:
                         logger.warning(f"⚠️ 无法解析比分: {score_str}")
 
             # 提取比赛ID - 处理字符串类型
-            match_id = match.get('id')
+            match_id = match.get("id")
 
             # 提取其他有用信息 - round字段是字符串
-            round_info = match.get('round', '')
-            round_name = str(round_info) if round_info else ''
+            round_info = match.get("round", "")
+            round_name = str(round_info) if round_info else ""
 
             # 尝试从 venue 字段获取场地信息
-            venue_data = match.get('venue')
+            venue_data = match.get("venue")
             if isinstance(venue_data, str):
                 venue_name = venue_data
             else:
-                venue_name = venue_data.get('name', '') if venue_data else ''
+                venue_name = venue_data.get("name", "") if venue_data else ""
 
             match_info = {
-                'match_id': match_id,
-                'external_id': str(match_id) if match_id else '',
-                'home_team': home_team,
-                'away_team': away_team,
-                'match_date': match_time_str,
-                'home_score': home_score,
-                'away_score': away_score,
-                'actual_result': actual_result,
-                'round_name': round_name,
-                'stage_name': 'Premier League',  # 英超没有stage信息，使用固定值
-                'status': status.get('statusStr', ''),
-                'venue': venue_name,
-                'league_name': 'Premier League',
-                'season_id': self.season_id,
-                'is_finished': status.get('finished', False),
-                'collection_date': datetime.now(timezone.utc).isoformat()
+                "match_id": match_id,
+                "external_id": str(match_id) if match_id else "",
+                "home_team": home_team,
+                "away_team": away_team,
+                "match_date": match_time_str,
+                "home_score": home_score,
+                "away_score": away_score,
+                "actual_result": actual_result,
+                "round_name": round_name,
+                "stage_name": "Premier League",  # 英超没有stage信息，使用固定值
+                "status": status.get("statusStr", ""),
+                "venue": venue_name,
+                "league_name": "Premier League",
+                "season_id": self.season_id,
+                "is_finished": status.get("finished", False),
+                "collection_date": datetime.now(UTC).isoformat(),
             }
 
             return match_info
@@ -197,7 +196,7 @@ class PremierLeagueL1Harvester:
             logger.error(f"❌ 提取比赛信息失败 {match.get('id', 'unknown')}: {e}")
             return None
 
-    def save_manifest_csv(self, matches: List[Dict]) -> bool:
+    def save_manifest_csv(self, matches: list[dict]) -> bool:
         """
         保存创世纪级清单到CSV文件
 
@@ -217,19 +216,31 @@ class PremierLeagueL1Harvester:
 
             # 定义CSV字段
             fieldnames = [
-                'match_id', 'external_id', 'home_team', 'away_team', 'match_date',
-                'home_score', 'away_score', 'actual_result', 'round_name', 'stage_name',
-                'status', 'venue', 'league_name', 'season_id', 'is_finished',
-                'collection_date'
+                "match_id",
+                "external_id",
+                "home_team",
+                "away_team",
+                "match_date",
+                "home_score",
+                "away_score",
+                "actual_result",
+                "round_name",
+                "stage_name",
+                "status",
+                "venue",
+                "league_name",
+                "season_id",
+                "is_finished",
+                "collection_date",
             ]
 
             # 写入CSV文件
-            with open(self.output_file, 'w', newline='', encoding='utf-8') as csvfile:
+            with open(self.output_file, "w", newline="", encoding="utf-8") as csvfile:
                 writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
                 writer.writeheader()
 
                 # 按日期排序
-                sorted_matches = sorted(matches, key=lambda x: x['match_date'] or '')
+                sorted_matches = sorted(matches, key=lambda x: x["match_date"] or "")
 
                 for match in sorted_matches:
                     writer.writerow(match)
@@ -262,10 +273,10 @@ class PremierLeagueL1Harvester:
                 return False
 
             # Step 2: 验证数据质量
-            finished_matches = [m for m in matches if m.get('is_finished', False)]
-            unfinished_matches = [m for m in matches if not m.get('is_finished', False)]
+            finished_matches = [m for m in matches if m.get("is_finished", False)]
+            unfinished_matches = [m for m in matches if not m.get("is_finished", False)]
 
-            logger.info(f"📊 数据质量统计:")
+            logger.info("📊 数据质量统计:")
             logger.info(f"   总比赛数: {len(matches)}")
             logger.info(f"   已完成比赛: {len(finished_matches)}")
             logger.info(f"   未完成比赛: {len(unfinished_matches)}")
@@ -289,7 +300,7 @@ class PremierLeagueL1Harvester:
             logger.error(f"❌ 数据采集流程异常: {e}")
             return False
 
-    def validate_manifest_quality(self) -> Dict:
+    def validate_manifest_quality(self) -> dict:
         """
         验证创世纪清单数据质量
 
@@ -297,35 +308,32 @@ class PremierLeagueL1Harvester:
             质量报告
         """
         if not os.path.exists(self.output_file):
-            return {
-                'status': 'error',
-                'message': '创世纪清单文件不存在'
-            }
+            return {"status": "error", "message": "创世纪清单文件不存在"}
 
         try:
-            with open(self.output_file, 'r', encoding='utf-8') as csvfile:
+            with open(self.output_file, encoding="utf-8") as csvfile:
                 reader = csv.DictReader(csvfile)
                 matches = list(reader)
 
             total_matches = len(matches)
-            finished_matches = len([m for m in matches if m.get('is_finished') == 'True'])
+            finished_matches = len([m for m in matches if m.get("is_finished") == "True"])
 
             # 统计结果分布
             results = {}
             for match in matches:
-                result = match.get('actual_result', 'N/A')
+                result = match.get("actual_result", "N/A")
                 results[result] = results.get(result, 0) + 1
 
             report = {
-                'status': 'success',
-                'total_matches': total_matches,
-                'finished_matches': finished_matches,
-                'completion_rate': round(finished_matches / total_matches * 100, 2) if total_matches > 0 else 0,
-                'result_distribution': results,
-                'file_size_mb': round(os.path.getsize(self.output_file) / 1024 / 1024, 2)
+                "status": "success",
+                "total_matches": total_matches,
+                "finished_matches": finished_matches,
+                "completion_rate": round(finished_matches / total_matches * 100, 2) if total_matches > 0 else 0,
+                "result_distribution": results,
+                "file_size_mb": round(os.path.getsize(self.output_file) / 1024 / 1024, 2),
             }
 
-            logger.info(f"📊 创世纪清单质量报告:")
+            logger.info("📊 创世纪清单质量报告:")
             logger.info(f"   总比赛数: {report['total_matches']}")
             logger.info(f"   已完成比赛: {report['finished_matches']}")
             logger.info(f"   完成率: {report['completion_rate']}%")
@@ -335,10 +343,8 @@ class PremierLeagueL1Harvester:
             return report
 
         except Exception as e:
-            return {
-                'status': 'error',
-                'message': f'验证失败: {e}'
-            }
+            return {"status": "error", "message": f"验证失败: {e}"}
+
 
 def main():
     """主函数"""
@@ -353,6 +359,7 @@ def main():
         logger.info(f"\n🎯 最终状态: {report['status']}")
 
     return 0 if success else 1
+
 
 if __name__ == "__main__":
     main()

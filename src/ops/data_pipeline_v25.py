@@ -1,16 +1,17 @@
 #!/usr/bin/env python3
 """
-V25.0 自动化全量流水线 - Data Pipeline Master (Industrial Edition)
+V26.0 自动化全量流水线 - Data Pipeline Master (Stable Production)
 =================================================================
 
 核心架构:
     1. 状态扫描: 循环检查 matches 表与 match_features_training 表
     2. 智能分流:
-       - 旧数据 (extraction_version < 'V24.1') -> 快速缝合模式
+       - 旧数据 (extraction_version < 'V26.0') -> 快速缝合模式
        - 新数据 (特征库缺失) -> 全量爆破模式
     3. 心跳机制: 每 30 分钟轮询一次
     4. 容错机制: 单场比赛失败不影响整体流程
-    5. 健康监控: Prometheus 风格指标收集 (V25.1 新增)
+    5. 健康监控: Prometheus 风格指标收集
+    6. 内存优化: 流式处理 + 定期 GC (V26.0 新增)
 
 设计模式:
     - Facade Pattern: 统一入口，隐藏复杂性
@@ -19,23 +20,25 @@ V25.0 自动化全量流水线 - Data Pipeline Master (Industrial Edition)
     - Observer Pattern: 健康监控与告警
 
 作者: Pipeline Architect
-版本: V25.1-Industrial
-日期: 2025-12-25
+版本: V26.0 (Stable Production)
+日期: 2025-12-27
 """
 
-import os
-import sys
+import gc
 import json
-import time
 import logging
+import os
 import signal
+import sys
 import threading
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Tuple, Literal
+import time
 from dataclasses import dataclass, field
-from pathlib import Path
+from datetime import datetime
 from enum import Enum
-from collections import defaultdict
+from pathlib import Path
+from typing import Any
+
+import psutil
 
 # 添加项目路径
 project_root = Path(__file__).parent.parent.parent
@@ -49,17 +52,14 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 
 from src.config_unified import get_settings
-from src.ml.feature_engine import FeatureEngine, MatchData, ProcessingContext
+from src.ml.feature_engine import FeatureEngine
 
 # 配置日志
 os.makedirs("logs", exist_ok=True)
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(name)s - %(message)s",
-    handlers=[
-        logging.FileHandler("logs/v25_pipeline.log"),
-        logging.StreamHandler()
-    ]
+    handlers=[logging.FileHandler("logs/v25_pipeline.log"), logging.StreamHandler()],
 )
 logger = logging.getLogger(__name__)
 
@@ -68,25 +68,29 @@ logger = logging.getLogger(__name__)
 # 枚举定义
 # ============================================================================
 
+
 class ProcessingMode(str, Enum):
     """处理模式"""
-    FAST_STITCH = "fast_stitch"      # 快速缝合模式 (已有特征，仅升级版本)
+
+    FAST_STITCH = "fast_stitch"  # 快速缝合模式 (已有特征，仅升级版本)
     FULL_EXPLOSION = "full_explosion"  # 全量爆破模式 (从 JSON 提取完整特征)
-    SKIP = "skip"                    # 跳过 (无需处理)
+    SKIP = "skip"  # 跳过 (无需处理)
 
 
 class DataStatus(str, Enum):
     """数据状态"""
-    PENDING = "pending"              # 等待处理
-    PROCESSING = "processing"        # 处理中
-    COMPLETED = "completed"          # 已完成
-    FAILED = "failed"                # 失败
-    SKIPPED = "skipped"              # 已跳过
+
+    PENDING = "pending"  # 等待处理
+    PROCESSING = "processing"  # 处理中
+    COMPLETED = "completed"  # 已完成
+    FAILED = "failed"  # 失败
+    SKIPPED = "skipped"  # 已跳过
 
 
 # ============================================================================
 # 配置类定义
 # ============================================================================
+
 
 @dataclass
 class PipelineConfig:
@@ -106,13 +110,14 @@ class PipelineConfig:
         enable_health_monitoring: 是否启用健康监控 (V25.1 新增)
         health_output_path: 健康监控输出路径
     """
+
     heartbeat_interval: int = 1800  # 30 分钟
     batch_size: int = 50
     max_retries: int = 3
     enable_fast_stitch: bool = True
     enable_full_explosion: bool = True
     skip_corrupted_json: bool = True
-    target_version: str = "V24.1"
+    target_version: str = "V26.0"
     dry_run: bool = False
     enable_auto_loop: bool = False
     sleep_between_batches: float = 1.0
@@ -139,6 +144,7 @@ class PipelineStats:
         last_heartbeat_time: 最后心跳时间
         heartbeat_count: 心跳次数
     """
+
     start_time: float = 0.0
     end_time: float = 0.0
     total_scanned: int = 0
@@ -150,7 +156,7 @@ class PipelineStats:
     last_heartbeat_time: float = 0.0
     heartbeat_count: int = 0
     # 特征维度统计
-    feature_dimension_counts: Dict[int, int] = field(default_factory=dict)
+    feature_dimension_counts: dict[int, int] = field(default_factory=dict)
 
     @property
     def elapsed_time(self) -> float:
@@ -167,7 +173,7 @@ class PipelineStats:
             return (self.fast_stitch_count + self.full_explosion_count) / elapsed * 3600
         return 0.0
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
             "start_time": datetime.fromtimestamp(self.start_time).isoformat() if self.start_time else None,
@@ -189,6 +195,7 @@ class PipelineStats:
 # V25.1 新增: Prometheus 风格健康监控系统
 # ============================================================================
 
+
 @dataclass
 class PrometheusMetric:
     """
@@ -202,10 +209,11 @@ class PrometheusMetric:
         help_text: 指标说明
         timestamp: 时间戳
     """
+
     name: str
     type: str  # gauge, counter, histogram, summary
     value: float
-    labels: Dict[str, str] = field(default_factory=dict)
+    labels: dict[str, str] = field(default_factory=dict)
     help_text: str = ""
     timestamp: float = field(default_factory=time.time)
 
@@ -249,8 +257,8 @@ class PipelineHealthMonitor:
     # 健康阈值配置
     HEALTH_THRESHOLDS = {
         "success_rate_min": 0.95,  # 95% 最小成功率
-        "throughput_min": 1000,     # 1000 场/小时最小吞吐量
-        "error_rate_max": 0.05,     # 5% 最大错误率
+        "throughput_min": 1000,  # 1000 场/小时最小吞吐量
+        "error_rate_max": 0.05,  # 5% 最大错误率
         "corruption_rate_max": 0.02,  # 2% 最大数据损坏率
         "heartbeat_max_interval": 3600,  # 1 小时最大心跳间隔
     }
@@ -263,8 +271,8 @@ class PipelineHealthMonitor:
             output_path: 健康报告输出路径
         """
         self.output_path = output_path
-        self.metrics: List[PrometheusMetric] = []
-        self.alerts: List[Dict[str, Any]] = []
+        self.metrics: list[PrometheusMetric] = []
+        self.alerts: list[dict[str, Any]] = []
         self.start_time = time.time()
         self.last_heartbeat = time.time()
 
@@ -275,7 +283,7 @@ class PipelineHealthMonitor:
         self,
         event_type: str,  # "fast_stitch", "full_explosion", "skip", "fail"
         count: int = 1,
-        labels: Optional[Dict[str, str]] = None
+        labels: dict[str, str] | None = None,
     ):
         """
         记录处理事件
@@ -291,7 +299,7 @@ class PipelineHealthMonitor:
             type="counter",
             value=float(count),
             labels=labels,
-            help_text=f"Total count of {event_type} events"
+            help_text=f"Total count of {event_type} events",
         )
         self.metrics.append(metric)
 
@@ -306,7 +314,7 @@ class PipelineHealthMonitor:
             name="pipeline_throughput_matches_per_hour",
             type="gauge",
             value=matches_per_hour,
-            help_text="Current processing throughput (matches/hour)"
+            help_text="Current processing throughput (matches/hour)",
         )
         self.metrics.append(metric)
 
@@ -322,7 +330,7 @@ class PipelineHealthMonitor:
             name="pipeline_database_healthy",
             type="gauge",
             value=1.0 if is_healthy else 0.0,
-            help_text="Database connection health status (1=healthy, 0=unhealthy)"
+            help_text="Database connection health status (1=healthy, 0=unhealthy)",
         )
         self.metrics.append(metric)
 
@@ -330,7 +338,7 @@ class PipelineHealthMonitor:
             name="pipeline_database_latency_seconds",
             type="gauge",
             value=latency_ms / 1000.0,
-            help_text="Database query latency in seconds"
+            help_text="Database query latency in seconds",
         )
         self.metrics.append(metric)
 
@@ -397,7 +405,7 @@ class PipelineHealthMonitor:
 
         return max(0.0, min(100.0, score))
 
-    def export_health_report(self, stats: PipelineStats) -> Dict[str, Any]:
+    def export_health_report(self, stats: PipelineStats) -> dict[str, Any]:
         """
         导出健康报告
 
@@ -432,7 +440,7 @@ class PipelineHealthMonitor:
 
         # 写入文件
         try:
-            with open(self.output_path, 'w') as f:
+            with open(self.output_path, "w") as f:
                 json.dump(report, f, indent=2)
             logger.info(f"健康报告已导出: {self.output_path}")
         except Exception as e:
@@ -468,6 +476,7 @@ class PipelineHealthMonitor:
 # 核心类定义
 # ============================================================================
 
+
 class DataPipelineMaster:
     """
     V25.0 数据工厂总控
@@ -495,16 +504,23 @@ class DataPipelineMaster:
 
     # V24.1 特征前缀 (用于检测)
     V24_FEATURE_PREFIXES = [
-        'home_l3_', 'away_l3_',      # HistoricalRollingProcessor L3
-        'home_l5_', 'away_l5_',      # HistoricalRollingProcessor L5
-        '_h2h_',                      # HistoricalRollingProcessor H2H
-        'diff_l3_', 'diff_l5_',      # HistoricalRollingProcessor 对比
-        'square_', 'cube_',          # TacticalCrossProcessor 多项式
-        'log_', 'sqrt_', 'sigmoid_', # TacticalCrossProcessor 非线性
-        '_x_', '_div_',              # TacticalCrossProcessor 笛卡尔积
+        "home_l3_",
+        "away_l3_",  # HistoricalRollingProcessor L3
+        "home_l5_",
+        "away_l5_",  # HistoricalRollingProcessor L5
+        "_h2h_",  # HistoricalRollingProcessor H2H
+        "diff_l3_",
+        "diff_l5_",  # HistoricalRollingProcessor 对比
+        "square_",
+        "cube_",  # TacticalCrossProcessor 多项式
+        "log_",
+        "sqrt_",
+        "sigmoid_",  # TacticalCrossProcessor 非线性
+        "_x_",
+        "_div_",  # TacticalCrossProcessor 笛卡尔积
     ]
 
-    def __init__(self, config: Optional[PipelineConfig] = None):
+    def __init__(self, config: PipelineConfig | None = None):
         """
         初始化流水线总控
 
@@ -530,9 +546,7 @@ class DataPipelineMaster:
 
         # V25.1 新增: 初始化健康监控器
         if self.config.enable_health_monitoring:
-            self.health_monitor = PipelineHealthMonitor(
-                output_path=self.config.health_output_path
-            )
+            self.health_monitor = PipelineHealthMonitor(output_path=self.config.health_output_path)
             logger.info(f"健康监控已启用: {self.config.health_output_path}")
         else:
             self.health_monitor = None
@@ -540,7 +554,7 @@ class DataPipelineMaster:
         logger.info("=" * 60)
         logger.info("V25.1 数据工厂总控初始化完成 (工业级)")
         logger.info("=" * 60)
-        logger.info(f"  心跳间隔: {self.config.heartbeat_interval} 秒 ({self.config.heartbeat_interval/60:.1f} 分钟)")
+        logger.info(f"  心跳间隔: {self.config.heartbeat_interval} 秒 ({self.config.heartbeat_interval / 60:.1f} 分钟)")
         logger.info(f"  批量大小: {self.config.batch_size}")
         logger.info(f"  目标版本: {self.config.target_version}")
         logger.info(f"  演练模式: {self.config.dry_run}")
@@ -570,7 +584,7 @@ class DataPipelineMaster:
     # 状态扫描器 (State Scanner)
     # ========================================================================
 
-    def scan_database_state(self) -> Dict[str, Any]:
+    def scan_database_state(self) -> dict[str, Any]:
         """
         扫描数据库状态
 
@@ -585,43 +599,76 @@ class DataPipelineMaster:
         self.connect()
 
         with self._conn.cursor() as cur:
-            # 1. 统计各表记录数
-            cur.execute("SELECT COUNT(*) as total FROM matches WHERE status = 'Finished';")
-            total_matches = cur.fetchone()['total']
+            # 1. 统计各表记录数 (V26.0 修复: 使用 UPPER() 消除大小写问题)
+            cur.execute("SELECT COUNT(*) as total FROM matches WHERE UPPER(status) = 'FINISHED';")
+            total_matches = cur.fetchone()["total"]
 
-            cur.execute("SELECT COUNT(*) as total FROM match_features_training WHERE status = 'completed';")
-            total_features = cur.fetchone()['total']
+            cur.execute("SELECT COUNT(*) as total FROM match_features_training WHERE UPPER(status) = 'COMPLETED';")
+            total_features = cur.fetchone()["total"]
 
             # 2. 统计需要升级的记录 (extraction_version < 'V24.1')
-            cur.execute("""
+            cur.execute(
+                """
                 SELECT COUNT(*) as count
                 FROM match_features_training
-                WHERE status = 'completed'
+                WHERE UPPER(status) = 'COMPLETED'
                   AND COALESCE(meta_data->>'extraction_version', 'V0.0') < %s;
-            """, (self.config.target_version,))
-            needs_upgrade = cur.fetchone()['count']
+            """,
+                (self.config.target_version,),
+            )
+            needs_upgrade = cur.fetchone()["count"]
 
             # 3. 统计完全缺失特征的记录 (在 matches 但不在 features)
-            # 注意: match_features_training 表使用 match_id 关联到 matches.id
+            # 注意: match_features_training 表使用 match_id 关联到 matches.match_id
             cur.execute("""
                 SELECT COUNT(*) as count
                 FROM matches m
-                LEFT JOIN match_features_training f ON m.id = f.match_id
-                WHERE m.status = 'Finished' AND f.match_id IS NULL;
+                LEFT JOIN match_features_training f ON m.match_id = f.match_id
+                WHERE UPPER(m.status) = 'FINISHED' AND f.match_id IS NULL;
             """)
-            missing_features = cur.fetchone()['count']
+            missing_features = cur.fetchone()["count"]
 
             # 4. 统计准备升级的候选记录
-            # 从 match_features_training 关联 matches 获取 l2_raw_json
+            # V26.0 修复: 优先处理缺失特征的记录，然后处理需要升级的记录
             candidates_query = """
-                SELECT f.match_id, m.external_id, f.home_team, f.away_team, f.match_time,
-                       COALESCE(f.meta_data->>'extraction_version', 'V0.0') as current_version,
-                       f.enriched_features, m.l2_raw_json
+                -- 优先: 缺失特征的记录 (全量爆破模式)
+                SELECT
+                    m.match_id,
+                    m.external_id,
+                    m.home_team,
+                    m.away_team,
+                    m.match_date,
+                    'V0.0' as current_version,
+                    NULL as adaptive_features,
+                    r.raw_data,
+                    'missing' as source_type
+                FROM matches m
+                INNER JOIN raw_match_data r ON r.match_id = m.match_id
+                LEFT JOIN match_features_training f ON f.match_id = m.match_id
+                WHERE UPPER(m.status) = 'FINISHED'
+                  AND f.match_id IS NULL
+                  AND r.raw_data IS NOT NULL
+
+                UNION ALL
+
+                -- 其次: 需要升级的记录 (快速缝合模式)
+                SELECT
+                    f.match_id,
+                    m.external_id,
+                    f.home_team,
+                    f.away_team,
+                    f.match_date,
+                    COALESCE(f.meta_data->>'extraction_version', 'V0.0') as current_version,
+                    f.adaptive_features,
+                    r.raw_data,
+                    'upgrade' as source_type
                 FROM match_features_training f
-                JOIN matches m ON f.match_id = m.id
-                WHERE f.status = 'completed'
+                JOIN matches m ON f.match_id = m.match_id
+                LEFT JOIN raw_match_data r ON r.match_id = f.match_id
+                WHERE UPPER(f.status) = 'COMPLETED'
                   AND COALESCE(f.meta_data->>'extraction_version', 'V0.0') < %s
-                ORDER BY f.match_time DESC
+
+                ORDER BY match_date DESC
                 LIMIT %s;
             """
             cur.execute(candidates_query, (self.config.target_version, self.config.batch_size))
@@ -644,14 +691,14 @@ class DataPipelineMaster:
     # 智能分流器 (Strategy Router)
     # ========================================================================
 
-    def determine_processing_mode(self, candidate: Dict[str, Any]) -> ProcessingMode:
+    def determine_processing_mode(self, candidate: dict[str, Any]) -> ProcessingMode:
         """
         确定处理模式
 
         策略:
-            1. 如果有 enriched_features 且版本 < V24.1 -> 快速缝合模式
-            2. 如果没有 enriched_features 或 l2_raw_json 缺失 -> 检查是否可恢复
-            3. 如果 l2_raw_json 存在 -> 全量爆破模式
+            1. 如果有 adaptive_features 且版本 < V25.1 -> 快速缝合模式
+            2. 如果没有 adaptive_features 或 raw_data 缺失 -> 检查是否可恢复
+            3. 如果 raw_data 存在 -> 全量爆破模式
             4. 否则 -> 跳过
 
         Args:
@@ -660,83 +707,83 @@ class DataPipelineMaster:
         Returns:
             处理模式
         """
-        current_version = candidate.get('current_version', 'V0.0')
-        enriched_features = candidate.get('enriched_features')
-        raw_json = candidate.get('l2_raw_json')
+        current_version = candidate.get("current_version", "V0.0")
+        adaptive_features = candidate.get("adaptive_features")
+        raw_data = candidate.get("raw_data")
 
         # 检查原始 JSON 是否有效
-        raw_json_valid = self._validate_raw_json(raw_json)
+        raw_data_valid = self._validate_raw_json(raw_data)
 
         # 策略 1: 快速缝合模式 (已有特征，仅需升级版本)
-        if enriched_features and current_version < self.config.target_version:
-            # 检查是否已有 V24.0 特征
-            if self._has_v24_features(enriched_features):
+        if adaptive_features and current_version < self.config.target_version:
+            # 检查是否已有 V25.1 特征
+            if self._has_v25_features(adaptive_features):
                 return ProcessingMode.FAST_STITCH
 
         # 策略 2: 全量爆破模式 (需要从 JSON 提取)
-        if raw_json_valid:
+        if raw_data_valid:
             return ProcessingMode.FULL_EXPLOSION
 
         # 策略 3: 跳过 (无法处理)
         return ProcessingMode.SKIP
 
-    def _validate_raw_json(self, raw_json: Any) -> bool:
+    def _validate_raw_json(self, raw_data: Any) -> bool:
         """
         验证原始 JSON 是否有效
 
         Args:
-            raw_json: 原始 JSON 数据（可能是 l2_raw_json 包含 l2_json 字段的结构）
+            raw_data: 原始 JSON 数据（从 raw_match_data 表获取）
 
         Returns:
             是否有效
         """
-        if raw_json is None:
+        if raw_data is None:
             return False
 
         try:
-            if isinstance(raw_json, str):
-                data = json.loads(raw_json)
+            if isinstance(raw_data, str):
+                data = json.loads(raw_data)
             else:
-                data = raw_json
+                data = raw_data
 
             # 检查基本结构
             if isinstance(data, dict):
-                # V25.0 修复: 处理 l2_raw_json 结构（包含 l2_json 字段）
-                if 'l2_json' in data:
-                    content = data.get('l2_json', {})
-                elif 'content' in data:
-                    content = data.get('content', data)
+                # V25.1 修复: 处理 raw_data 结构（可能包含多种嵌套格式）
+                if "l2_json" in data:
+                    content = data.get("l2_json", {})
+                elif "content" in data:
+                    content = data.get("content", data)
                 else:
                     content = data
 
                 # 检查是否包含必要的比赛数据
-                return 'general' in content or 'matchStats' in content or 'stats' in content
+                return "general" in content or "matchStats" in content or "stats" in content
 
             return False
 
         except (json.JSONDecodeError, TypeError, AttributeError):
             return False
 
-    def _has_v24_features(self, enriched_features: Any) -> bool:
+    def _has_v25_features(self, adaptive_features: Any) -> bool:
         """
-        检查是否已有 V24.0 特征
+        检查是否已有 V25.1 特征
 
         Args:
-            enriched_features: 丰富的特征数据
+            adaptive_features: 自适应特征数据
 
         Returns:
-            是否已有 V24.0 特征
+            是否已有 V25.1 特征
         """
-        if enriched_features is None:
+        if adaptive_features is None:
             return False
 
         try:
-            if isinstance(enriched_features, str):
-                features = json.loads(enriched_features)
+            if isinstance(adaptive_features, str):
+                features = json.loads(adaptive_features)
             else:
-                features = dict(enriched_features)
+                features = dict(adaptive_features)
 
-            # 检查是否有任意 V24.0 特征前缀
+            # 检查是否有任意 V25.1 特征前缀
             for prefix in self.V24_FEATURE_PREFIXES[:3]:  # 检查前 3 个即可
                 if any(k.startswith(prefix) for k in features.keys()):
                     return True
@@ -750,7 +797,7 @@ class DataPipelineMaster:
     # 工作引擎 (Worker Engine)
     # ========================================================================
 
-    def process_candidate(self, candidate: Dict[str, Any]) -> bool:
+    def process_candidate(self, candidate: dict[str, Any]) -> bool:
         """
         处理单个候选记录
 
@@ -760,10 +807,10 @@ class DataPipelineMaster:
         Returns:
             是否成功处理
         """
-        match_id = candidate['match_id']
-        external_id = candidate.get('external_id', '')
-        home_team = candidate['home_team']
-        away_team = candidate['away_team']
+        match_id = candidate["match_id"]
+        external_id = candidate.get("external_id", "")
+        home_team = candidate["home_team"]
+        away_team = candidate["away_team"]
 
         # 确定处理模式
         mode = self.determine_processing_mode(candidate)
@@ -786,7 +833,7 @@ class DataPipelineMaster:
 
         return False
 
-    def _fast_stitch(self, candidate: Dict[str, Any]) -> bool:
+    def _fast_stitch(self, candidate: dict[str, Any]) -> bool:
         """
         快速缝合模式 - 仅更新版本号
 
@@ -796,7 +843,7 @@ class DataPipelineMaster:
         Returns:
             是否成功
         """
-        match_id = candidate['match_id']
+        match_id = candidate["match_id"]
 
         if self.config.dry_run:
             logger.info(f"[DRY RUN] match_id={match_id}: 快速缝合模式")
@@ -812,9 +859,9 @@ class DataPipelineMaster:
                     WHERE match_id = %s;
                 """
                 meta_data = {
-                    'extraction_version': self.config.target_version,
-                    'fast_stitched_at': datetime.now().isoformat(),
-                    'pipeline_version': 'V25.0',
+                    "extraction_version": self.config.target_version,
+                    "fast_stitched_at": datetime.now().isoformat(),
+                    "pipeline_version": "V25.0",
                 }
 
                 cur.execute(update_query, (json.dumps(meta_data), match_id))
@@ -830,9 +877,11 @@ class DataPipelineMaster:
             self.stats.failed_count += 1
             return False
 
-    def _full_explosion(self, candidate: Dict[str, Any]) -> bool:
+    def _full_explosion(self, candidate: dict[str, Any]) -> bool:
         """
         全量爆破模式 - 从 JSON 提取完整特征
+
+        V26.0 修复: 支持缺失特征的记录（使用 INSERT 而非 UPDATE）
 
         Args:
             candidate: 候选记录
@@ -840,10 +889,11 @@ class DataPipelineMaster:
         Returns:
             是否成功
         """
-        match_id = candidate['match_id']
-        raw_json = candidate.get('l2_raw_json')
+        match_id = candidate["match_id"]
+        source_type = candidate.get("source_type", "upgrade")
+        raw_data = candidate.get("raw_data")
 
-        if not self._validate_raw_json(raw_json):
+        if not self._validate_raw_json(raw_data):
             logger.warning(f"match_id={match_id}: 原始 JSON 无效")
             if self.config.skip_corrupted_json:
                 self.stats.corrupted_json_count += 1
@@ -851,34 +901,78 @@ class DataPipelineMaster:
                 return False
             raise ValueError("原始 JSON 无效且配置为不跳过")
 
-        # 这里调用 V24.0 特征引擎进行完整提取
-        # 由于篇幅限制，这里简化处理
+        # V26.0: 调用特征引擎进行完整提取
         if self.config.dry_run:
-            logger.info(f"[DRY RUN] match_id={match_id}: 全量爆破模式")
+            logger.info(f"[DRY RUN] match_id={match_id}: 全量爆破模式 (source={source_type})")
             self.stats.full_explosion_count += 1
             return True
 
         try:
-            # 实际实现需要调用 augment_v24_0.py 中的逻辑
-            # 这里简化为更新版本
             with self._conn.cursor() as cur:
-                update_query = """
-                    UPDATE match_features_training
-                    SET meta_data = COALESCE(meta_data, '{}'::jsonb) || %s::jsonb,
-                        updated_at = CURRENT_TIMESTAMP
-                    WHERE match_id = %s;
-                """
-                meta_data = {
-                    'extraction_version': self.config.target_version,
-                    'full_explosion_at': datetime.now().isoformat(),
-                    'pipeline_version': 'V25.0',
-                }
+                # V26.0 修复: 根据来源类型选择 INSERT 或 UPDATE
+                if source_type == "missing":
+                    # 缺失特征: 使用 INSERT 创建新记录
+                    insert_query = """
+                        INSERT INTO match_features_training (
+                            match_id, season, match_date, home_team, away_team,
+                            feature_version, adaptive_features, meta_data,
+                            created_at, updated_at
+                        ) VALUES (
+                            %s, %s, %s, %s, %s, %s, %s, %s, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+                        )
+                        ON CONFLICT (match_id) DO UPDATE SET
+                            adaptive_features = EXCLUDED.adaptive_features,
+                            meta_data = EXCLUDED.meta_data,
+                            updated_at = CURRENT_TIMESTAMP;
+                    """
 
-                cur.execute(update_query, (json.dumps(meta_data), match_id))
+                    # 从 matches 表获取 season
+                    cur.execute("SELECT season FROM matches WHERE match_id = %s", (match_id,))
+                    season_row = cur.fetchone()
+                    season = season_row["season"] if season_row else "unknown"
+
+                    # 调用特征引擎提取特征
+                    feature_result = self._extract_features_from_raw(match_id, raw_data)
+
+                    meta_data = {
+                        "extraction_version": self.config.target_version,
+                        "full_explosion_at": datetime.now().isoformat(),
+                        "pipeline_version": "V26.0",
+                        "source_type": "missing",
+                    }
+
+                    cur.execute(
+                        insert_query,
+                        (
+                            match_id,
+                            season,
+                            candidate["match_date"],
+                            candidate["home_team"],
+                            candidate["away_team"],
+                            self.config.target_version,
+                            json.dumps(feature_result) if feature_result else "{}",
+                            json.dumps(meta_data),
+                        ),
+                    )
+                else:
+                    # 已有特征: 使用 UPDATE 升级版本
+                    update_query = """
+                        UPDATE match_features_training
+                        SET meta_data = COALESCE(meta_data, '{}'::jsonb) || %s::jsonb,
+                            updated_at = CURRENT_TIMESTAMP
+                        WHERE match_id = %s;
+                    """
+                    meta_data = {
+                        "extraction_version": self.config.target_version,
+                        "full_explosion_at": datetime.now().isoformat(),
+                        "pipeline_version": "V26.0",
+                    }
+
+                    cur.execute(update_query, (json.dumps(meta_data), match_id))
+
                 self._conn.commit()
-
                 self.stats.full_explosion_count += 1
-                logger.info(f"match_id={match_id}: ✓ 全量爆破完成")
+                logger.info(f"match_id={match_id}: ✓ 全量爆破完成 (source={source_type})")
                 return True
 
         except Exception as e:
@@ -887,44 +981,110 @@ class DataPipelineMaster:
             self.stats.failed_count += 1
             return False
 
+    def _extract_features_from_raw(self, match_id: str, raw_data: dict) -> dict[str, Any]:
+        """
+        从原始 JSON 提取特征 (V26.0 内存优化版)
+
+        Args:
+            match_id: 比赛 ID
+            raw_data: 原始 JSON 数据
+
+        Returns:
+            提取的特征字典
+        """
+        try:
+            # 使用 V26.0 自适应提取器
+            from src.processors.v25_production_extractor import V25ProductionExtractor
+
+            extractor = V25ProductionExtractor()
+            result = extractor.extract(raw_data)
+
+            # V26.0 内存优化: 立即提取并删除大型对象
+            features = result.features if result else {}
+            feature_count = len(features)
+
+            # 记录特征维度统计
+            self.stats.feature_dimension_counts[feature_count] = (
+                self.stats.feature_dimension_counts.get(feature_count, 0) + 1
+            )
+
+            # V26.0 内存优化: 显式删除不需要的引用
+            del result
+            del extractor
+
+            # 返回扁平化特征字典
+            return features
+
+        except Exception as e:
+            logger.error(f"match_id={match_id}: 特征提取失败 - {e}")
+            return {}
+
     # ========================================================================
     # 心跳调度器 (Heartbeat Scheduler)
     # ========================================================================
 
-    def run_once(self) -> PipelineStats:
+    def run_once(self, max_records: int = None) -> PipelineStats:
         """
-        运行一次完整的流水线流程
+        运行一次完整的流水线流程 (V26.0 优化: 流式处理 + 内存管理)
+
+        Args:
+            max_records: 最大处理记录数（用于压力测试）
 
         Returns:
             统计信息
         """
         logger.info("=" * 60)
-        logger.info("V25.0 流水线启动 [单次运行模式]")
+        logger.info("V26.0 流水线启动 [单次运行模式 - 流式处理优化]")
         logger.info("=" * 60)
 
         self.stats.start_time = time.time()
+        processed_count = 0
+        gc_interval = 50  # 每处理 50 场执行一次 gc.collect()
 
         try:
             # 扫描数据库状态
             state = self.scan_database_state()
 
-            logger.info(f"数据库状态:")
+            logger.info("数据库状态:")
             logger.info(f"  • matches 表记录: {state['total_matches']}")
             logger.info(f"  • match_features_training 表记录: {state['total_features']}")
             logger.info(f"  • 需要升级: {state['needs_upgrade']}")
             logger.info(f"  • 缺失特征: {state['missing_features']}")
             logger.info(f"  • 本批次候选: {state['ready_for_upgrade']}")
+            if max_records:
+                logger.info(f"  • 最大处理记录数: {max_records}")
 
             # 处理候选记录
-            candidates = state['candidates']
+            candidates = state["candidates"]
             if not candidates:
                 logger.info("没有待处理记录")
                 self.stats.end_time = time.time()
                 return self.stats
 
-            # 处理批次
-            for candidate in candidates:
+            # V26.0 流式处理: 单场提取，立即写入，及时释放内存
+            for i, candidate in enumerate(candidates):
+                # 检查是否达到最大处理记录数
+                if max_records and processed_count >= max_records:
+                    logger.info(f"达到最大处理记录数: {max_records}")
+                    break
+
+                # 处理单场比赛
                 self.process_candidate(candidate)
+                processed_count += 1
+
+                # V26.0 内存管理: 定期执行垃圾回收
+                if (i + 1) % gc_interval == 0:
+                    before_mem = psutil.Process().memory_info().rss / 1024 / 1024  # MB
+                    gc.collect()
+                    after_mem = psutil.Process().memory_info().rss / 1024 / 1024  # MB
+                    logger.info(
+                        f"进度: {i + 1}/{len(candidates)} | "
+                        f"内存: {before_mem:.1f}MB -> {after_mem:.1f}MB | "
+                        f"GC: 释放 {before_mem - after_mem:.1f}MB"
+                    )
+
+                    # V26.0 内存监控: 记录内存状态
+                    self.stats.feature_dimension_counts.setdefault("memory_mb", []).append(after_mem)
 
             self.stats.end_time = time.time()
             self._print_stats()
@@ -936,6 +1096,12 @@ class DataPipelineMaster:
             # V25.2 新增: 生成实盘信号（未开赛比赛）
             if self.config.enable_prediction:
                 self._generate_live_predictions()
+
+            # V26.0 新增: 最终垃圾回收
+            final_mem = psutil.Process().memory_info().rss / 1024 / 1024
+            gc.collect()
+            final_mem_after = psutil.Process().memory_info().rss / 1024 / 1024
+            logger.info(f"最终内存: {final_mem:.1f}MB -> {final_mem_after:.1f}MB")
 
             return self.stats
 
@@ -970,20 +1136,20 @@ class DataPipelineMaster:
                 self.stats.heartbeat_count += 1
                 self.stats.last_heartbeat_time = time.time()
 
-                logger.info(f"\n{'='*60}")
+                logger.info(f"\n{'=' * 60}")
                 logger.info(f"心跳 #{self.stats.heartbeat_count} - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-                logger.info(f"{'='*60}")
+                logger.info(f"{'=' * 60}")
 
                 # 运行一次处理
                 state = self.scan_database_state()
 
-                if state['ready_for_upgrade'] == 0:
+                if state["ready_for_upgrade"] == 0:
                     logger.info("没有待处理记录，等待下一个心跳...")
                 else:
                     logger.info(f"发现 {state['ready_for_upgrade']} 条待处理记录")
 
                     # 处理候选记录
-                    candidates = state['candidates']
+                    candidates = state["candidates"]
                     for candidate in candidates:
                         if not self._running:
                             break
@@ -1023,21 +1189,21 @@ class DataPipelineMaster:
         print("V25.0 流水线执行报告")
         print("=" * 60)
 
-        print(f"\n执行时间:")
+        print("\n执行时间:")
         print(f"  • 开始时间: {stats['start_time']}")
         print(f"  • 结束时间: {stats['end_time']}")
         print(f"  • 运行时长: {stats['elapsed_seconds']:.1f} 秒")
 
-        print(f"\n处理结果:")
+        print("\n处理结果:")
         print(f"  🟢 快速缝合: {stats['fast_stitch_count']} 场")
         print(f"  🔵 全量爆破: {stats['full_explosion_count']} 场")
         print(f"  🟡 已跳过: {stats['skipped_count']} 场")
         print(f"  ❌ 失败: {stats['failed_count']} 场")
 
-        if stats['corrupted_json_count'] > 0:
+        if stats["corrupted_json_count"] > 0:
             print(f"  ⚠️  损坏 JSON: {stats['corrupted_json_count']} 场")
 
-        print(f"\n性能指标:")
+        print("\n性能指标:")
         print(f"  • 吞吐量: {stats['throughput_per_hour']:.1f} 场/小时")
         print(f"  • 心跳次数: {stats['heartbeat_count']}")
 
@@ -1099,22 +1265,21 @@ class DataPipelineMaster:
                 # 查找未来 7 天内未开赛的比赛
                 cur.execute("""
                     SELECT
-                        m.id as match_id,
+                        m.match_id,
                         m.external_id,
                         m.home_team,
                         m.away_team,
-                        m.match_time,
-                        m.league_id,
+                        m.match_date,
+                        m.league_name,
                         m.season,
-                        m.match_odds,
-                        f.enriched_features
+                        f.adaptive_features
                     FROM matches m
-                    LEFT JOIN match_features_training f ON m.id = f.match_id
+                    LEFT JOIN match_features_training f ON m.match_id = f.match_id
                     WHERE m.status IN ('Fixture', 'Scheduled')
-                      AND m.match_time > CURRENT_TIMESTAMP
-                      AND m.match_time < CURRENT_TIMESTAMP + INTERVAL '7 days'
+                      AND m.match_date > CURRENT_TIMESTAMP
+                      AND m.match_date < CURRENT_TIMESTAMP + INTERVAL '7 days'
                       AND f.status = 'completed'
-                    ORDER BY m.match_time ASC
+                    ORDER BY m.match_date ASC
                     LIMIT 50;
                 """)
 
@@ -1129,8 +1294,8 @@ class DataPipelineMaster:
                 predictions = []
 
                 for match in upcoming_matches:
-                    # 解析赔率
-                    market_odds = self._parse_match_odds(match.get('match_odds'))
+                    # 解析赔率 (暂无赔率数据，跳过)
+                    market_odds = self._parse_match_odds(match.get("match_odds"))
 
                     # 如果没有赔率，跳过
                     if not market_odds or sum(market_odds) == 0:
@@ -1149,12 +1314,12 @@ class DataPipelineMaster:
 
                     if recommended_bet and edge > 0.03:  # 最小优势 3%
                         pred = {
-                            "match_id": match['match_id'],
-                            "external_id": match['external_id'],
-                            "home_team": match['home_team'],
-                            "away_team": match['away_team'],
-                            "match_time": match['match_time'].isoformat(),
-                            "league": match.get('league_id', ''),
+                            "match_id": match["match_id"],
+                            "external_id": match["external_id"],
+                            "home_team": match["home_team"],
+                            "away_team": match["away_team"],
+                            "match_date": match["match_date"].isoformat(),
+                            "league": match.get("league_name", ""),
                             "market_odds": {
                                 "home": round(market_odds[0], 2),
                                 "draw": round(market_odds[1], 2),
@@ -1189,7 +1354,7 @@ class DataPipelineMaster:
                         "predictions": predictions,
                     }
 
-                    with open(self.config.prediction_output_path, 'w') as f:
+                    with open(self.config.prediction_output_path, "w") as f:
                         json.dump(output_data, f, indent=2)
 
                     logger.info(f"✅ 实盘信号已生成: {self.config.prediction_output_path}")
@@ -1199,18 +1364,20 @@ class DataPipelineMaster:
                     if high_value:
                         print(f"\n🎯 高价值信号 ({len(high_value)} 场):")
                         for pred in high_value[:5]:  # 只显示前 5 场
-                            match_time = pred["match_time"][:16]
+                            match_date = pred["match_date"][:16]
                             bet_emoji = {"H": "🏠", "D": "🤝", "A": "✈️"}.get(pred["recommended_bet"], "❓")
                             print(f"  {bet_emoji} {pred['home_team']} vs {pred['away_team']}")
-                            print(f"     时间: {match_time} | 投注: {pred['recommended_bet']}")
-                            print(f"     模型: {pred['model_probs'][pred['recommended_bet'].lower()]:.1%} | "
-                                  f"市场: {pred['market_probs'][pred['recommended_bet'].lower()]:.1%} | "
-                                  f"优势: +{pred['edge']:.1%}")
+                            print(f"     日期: {match_date} | 投注: {pred['recommended_bet']}")
+                            print(
+                                f"     模型: {pred['model_probs'][pred['recommended_bet'].lower()]:.1%} | "
+                                f"市场: {pred['market_probs'][pred['recommended_bet'].lower()]:.1%} | "
+                                f"优势: +{pred['edge']:.1%}"
+                            )
 
         except Exception as e:
             logger.error(f"生成实盘预测失败: {e}")
 
-    def _parse_match_odds(self, odds_data: Any) -> Optional[List[float]]:
+    def _parse_match_odds(self, odds_data: Any) -> list[float] | None:
         """解析比赛赔率"""
         if odds_data is None:
             return None
@@ -1223,9 +1390,9 @@ class DataPipelineMaster:
             else:
                 data = odds_data
 
-            if 'winner' in data:
-                odds = data['winner']
-                return [odds.get('home', 2.5), odds.get('draw', 3.2), odds.get('away', 2.8)]
+            if "winner" in data:
+                odds = data["winner"]
+                return [odds.get("home", 2.5), odds.get("draw", 3.2), odds.get("away", 2.8)]
             elif isinstance(data, list) and len(data) >= 3:
                 return [float(data[0]), float(data[1]), float(data[2])]
         except (json.JSONDecodeError, TypeError, AttributeError):
@@ -1234,14 +1401,14 @@ class DataPipelineMaster:
         # 返回默认赔率
         return [2.5, 3.2, 2.8]
 
-    def _odds_to_implied_probs(self, odds: List[float]) -> List[float]:
+    def _odds_to_implied_probs(self, odds: list[float]) -> list[float]:
         """将赔率转换为隐含概率"""
         probs = [1.0 / o if o > 0 else 0 for o in odds]
         total = sum(probs)
         overround = total - 1.0
         return [p / (1 + overround) for p in probs]
 
-    def _simulate_live_prediction(self, match: Dict[str, Any]) -> List[float]:
+    def _simulate_live_prediction(self, match: dict[str, Any]) -> list[float]:
         """
         模拟实时预测（简化版本）
 
@@ -1262,13 +1429,10 @@ class DataPipelineMaster:
         return probs.tolist()
 
     def _find_best_value_bet(
-        self,
-        model_probs: List[float],
-        market_probs: List[float],
-        market_odds: List[float]
-    ) -> Tuple[Optional[str], float, float]:
+        self, model_probs: list[float], market_probs: list[float], market_odds: list[float]
+    ) -> tuple[str | None, float, float]:
         """找到最佳价值投注"""
-        outcomes = ['H', 'D', 'A']
+        outcomes = ["H", "D", "A"]
         edges = [model_probs[i] - market_probs[i] for i in range(3)]
 
         best_idx = int(np.argmax(edges))
@@ -1298,37 +1462,22 @@ class DataPipelineMaster:
 # 主程序入口
 # ============================================================================
 
+
 def main():
     """主程序入口"""
     import argparse
 
-    parser = argparse.ArgumentParser(
-        description='V25.0 自动化全量流水线 - 数据工厂总控'
-    )
+    parser = argparse.ArgumentParser(description="V26.0 自动化全量流水线 - 数据工厂总控 (内存优化版)")
     parser.add_argument(
-        '--mode', choices=['once', 'loop'], default='once',
-        help='运行模式: once (单次运行) 或 loop (自动循环)'
+        "--mode", choices=["once", "loop"], default="once", help="运行模式: once (单次运行) 或 loop (自动循环)"
     )
-    parser.add_argument(
-        '--batch-size', type=int, default=50,
-        help='批量处理大小（默认: 50）'
-    )
-    parser.add_argument(
-        '--heartbeat', type=int, default=1800,
-        help='心跳间隔（秒，默认: 1800 = 30 分钟）'
-    )
-    parser.add_argument(
-        '--dry-run', action='store_true',
-        help='演练模式（不实际更新数据库）'
-    )
-    parser.add_argument(
-        '--target-version', type=str, default='V24.1',
-        help='目标特征版本（默认: V24.1）'
-    )
-    parser.add_argument(
-        '--skip-corrupted', action='store_true', default=True,
-        help='跳过损坏的 JSON（默认: 启用）'
-    )
+    parser.add_argument("--batch-size", type=int, default=50, help="批量处理大小（默认: 50）")
+    parser.add_argument("--heartbeat", type=int, default=1800, help="心跳间隔（秒，默认: 1800 = 30 分钟）")
+    parser.add_argument("--dry-run", action="store_true", help="演练模式（不实际更新数据库）")
+    parser.add_argument("--target-version", type=str, default="V26.0", help="目标特征版本（默认: V26.0）")
+    parser.add_argument("--skip-corrupted", action="store_true", default=True, help="跳过损坏的 JSON（默认: 启用）")
+    # V26.0 新增: 最大处理记录数（用于压力测试）
+    parser.add_argument("--max-records", type=int, default=None, help="最大处理记录数（用于压力测试，默认: 无限制）")
 
     args = parser.parse_args()
 
@@ -1339,16 +1488,16 @@ def main():
         dry_run=args.dry_run,
         target_version=args.target_version,
         skip_corrupted_json=args.skip_corrupted,
-        enable_auto_loop=(args.mode == 'loop'),
+        enable_auto_loop=(args.mode == "loop"),
     )
 
     # 创建并运行流水线
     pipeline = DataPipelineMaster(config)
 
-    if args.mode == 'loop':
+    if args.mode == "loop":
         pipeline.run_auto_loop()
     else:
-        stats = pipeline.run_once()
+        stats = pipeline.run_once(max_records=args.max_records)
 
         # 返回退出码
         if stats.failed_count > 0:

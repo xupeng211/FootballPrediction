@@ -5,18 +5,16 @@
 """
 
 import asyncio
-import json
 import logging
 import time
 from datetime import datetime
-from pathlib import Path
-from typing import Dict, List, Any, Optional, Tuple, Union
+from typing import Any
 
 import numpy as np
 import pandas as pd
 import xgboost as xgb
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
-from sklearn.model_selection import train_test_split, StratifiedKFold, cross_val_score
+from sklearn.model_selection import train_test_split
 
 logger = logging.getLogger(__name__)
 
@@ -72,7 +70,7 @@ class EnhancedXGBooostOptimizer:
         y_val: pd.Series,
         n_trials: int = 100,
         use_optuna: bool = True,
-    ) -> Tuple[Dict[str, Any], float]:
+    ) -> tuple[dict[str, Any], float]:
         """
         超参数优化
         支持Optuna自动调优和网格搜索
@@ -106,9 +104,7 @@ class EnhancedXGBooostOptimizer:
             "gamma": [0, 0.1, 0.2],
         }
 
-        best_params = self._manual_grid_search(
-            X_train, y_train, X_val, y_val, param_grid
-        )
+        best_params = self._manual_grid_search(X_train, y_train, X_val, y_val, param_grid)
         return best_params, self.best_score
 
     def _manual_grid_search(
@@ -117,8 +113,8 @@ class EnhancedXGBooostOptimizer:
         y_train: pd.Series,
         X_val: pd.DataFrame,
         y_val: pd.Series,
-        param_grid: Dict[str, List],
-    ) -> Dict[str, Any]:
+        param_grid: dict[str, list],
+    ) -> dict[str, Any]:
         """手动网格搜索（降级方案）"""
         from itertools import product
 
@@ -157,9 +153,7 @@ class EnhancedXGBooostOptimizer:
                     best_params = params.copy()
 
                 if (i + 1) % 10 == 0:
-                    logger.info(
-                        f"进度: {i + 1}/{total_combinations}, 当前最佳: {best_score:.4f}"
-                    )
+                    logger.info(f"进度: {i + 1}/{total_combinations}, 当前最佳: {best_score:.4f}")
 
             except Exception as e:
                 logger.warning(f"参数组合 {params} 失败: {e}")
@@ -171,9 +165,7 @@ class EnhancedXGBooostOptimizer:
 
         return best_params
 
-    def enhance_features(
-        self, df: pd.DataFrame, target_col: str = "target"
-    ) -> Tuple[pd.DataFrame, List[str]]:
+    def enhance_features(self, df: pd.DataFrame, target_col: str = "target") -> tuple[pd.DataFrame, list[str]]:
         """
         特征工程增强
         """
@@ -182,12 +174,8 @@ class EnhancedXGBooostOptimizer:
         if ML_ENGINEERING_ENABLED and self.feature_analyzer:
             try:
                 # 使用特征分析器
-                analysis_results = self.feature_analyzer.analyze_feature_quality(
-                    df, target_col
-                )
-                suggestions = self.feature_analyzer.suggest_feature_engineering(
-                    analysis_results
-                )
+                analysis_results = self.feature_analyzer.analyze_feature_quality(df, target_col)
+                suggestions = self.feature_analyzer.suggest_feature_engineering(analysis_results)
 
                 # 应用建议
                 df_enhanced = self._apply_feature_suggestions(df, suggestions)
@@ -196,9 +184,7 @@ class EnhancedXGBooostOptimizer:
                 X = df_enhanced.drop(columns=[target_col])
                 y = df_enhanced[target_col]
 
-                X_selected, selected_features = self.feature_analyzer.optimize_features(
-                    X, y, k=20
-                )
+                X_selected, selected_features = self.feature_analyzer.optimize_features(X, y, k=20)
 
                 logger.info(f"✅ 特征工程完成: {len(selected_features)} 个特征")
                 return X_selected, selected_features
@@ -210,9 +196,7 @@ class EnhancedXGBooostOptimizer:
         # 基础特征处理
         return self._basic_feature_engineering(df, target_col)
 
-    def _apply_feature_suggestions(
-        self, df: pd.DataFrame, suggestions: Dict
-    ) -> pd.DataFrame:
+    def _apply_feature_suggestions(self, df: pd.DataFrame, suggestions: dict) -> pd.DataFrame:
         """应用特征工程建议"""
         df_enhanced = df.copy()
 
@@ -240,15 +224,11 @@ class EnhancedXGBooostOptimizer:
         if len(numeric_cols) >= 2:
             col1, col2 = numeric_cols[0], numeric_cols[1]
             df_enhanced[f"{col1}_x_{col2}"] = df_enhanced[col1] * df_enhanced[col2]
-            df_enhanced[f"{col1}_div_{col2}"] = df_enhanced[col1] / (
-                df_enhanced[col2] + 1e-8
-            )
+            df_enhanced[f"{col1}_div_{col2}"] = df_enhanced[col1] / (df_enhanced[col2] + 1e-8)
 
         return df_enhanced
 
-    def _basic_feature_engineering(
-        self, df: pd.DataFrame, target_col: str
-    ) -> Tuple[pd.DataFrame, List[str]]:
+    def _basic_feature_engineering(self, df: pd.DataFrame, target_col: str) -> tuple[pd.DataFrame, list[str]]:
         """基础特征工程"""
         # 分离特征和目标
         if target_col in df.columns:
@@ -284,7 +264,7 @@ class EnhancedXGBooostOptimizer:
         y_train: pd.Series,
         X_val: pd.DataFrame,
         y_val: pd.Series,
-        params: Optional[Dict[str, Any]] = None,
+        params: dict[str, Any] | None = None,
     ) -> xgb.XGBClassifier:
         """
         训练最终模型
@@ -340,22 +320,18 @@ class EnhancedXGBooostOptimizer:
             {"feature": X_train.columns, "importance": self.model.feature_importances_}
         ).sort_values("importance", ascending=False)
 
-        logger.info(
-            f"✅ 模型训练完成: 准确率 {accuracy:.4f}, 用时 {training_time:.2f}s"
-        )
+        logger.info(f"✅ 模型训练完成: 准确率 {accuracy:.4f}, 用时 {training_time:.2f}s")
 
         # 检查是否达到目标
         if accuracy >= self.target_accuracy:
-            logger.info(
-                f"🎉 达到目标准确率: {accuracy:.4f} >= {self.target_accuracy:.4f}"
-            )
+            logger.info(f"🎉 达到目标准确率: {accuracy:.4f} >= {self.target_accuracy:.4f}")
         else:
             gap = self.target_accuracy - accuracy
             logger.info(f"📈 还需提升: {gap:.4f} 准确率")
 
         return self.model
 
-    def evaluate_model(self, X_test: pd.DataFrame, y_test: pd.Series) -> Dict[str, Any]:
+    def evaluate_model(self, X_test: pd.DataFrame, y_test: pd.Series) -> dict[str, Any]:
         """
         全面评估模型
         """
@@ -374,9 +350,7 @@ class EnhancedXGBooostOptimizer:
         accuracy = accuracy_score(y_test, y_pred)
 
         # 详细报告
-        class_report = classification_report(
-            y_test, y_pred, target_names=["HOME", "DRAW", "AWAY"], output_dict=True
-        )
+        class_report = classification_report(y_test, y_pred, target_names=["HOME", "DRAW", "AWAY"], output_dict=True)
 
         # 混淆矩阵
         conf_matrix = confusion_matrix(y_test, y_pred)
@@ -394,18 +368,12 @@ class EnhancedXGBooostOptimizer:
             "classification_report": class_report,
             "confusion_matrix": conf_matrix.tolist(),
             "feature_importance": (
-                self.feature_importance.to_dict("records")
-                if self.feature_importance is not None
-                else None
+                self.feature_importance.to_dict("records") if self.feature_importance is not None else None
             ),
-            "training_history": (
-                self.training_history[-1] if self.training_history else None
-            ),
+            "training_history": (self.training_history[-1] if self.training_history else None),
         }
 
-        logger.info(
-            f"✅ 评估完成: 准确率 {accuracy:.4f}, 推理时间 {avg_inference_time:.2f}ms"
-        )
+        logger.info(f"✅ 评估完成: 准确率 {accuracy:.4f}, 推理时间 {avg_inference_time:.2f}ms")
 
         return results
 
@@ -442,7 +410,7 @@ class EnhancedXGBooostOptimizer:
 
         logger.info(f"✅ 模型已从 {filepath} 加载")
 
-    def _get_default_params(self) -> Dict[str, Any]:
+    def _get_default_params(self) -> dict[str, Any]:
         """默认参数"""
         return {
             "max_depth": 6,
@@ -456,18 +424,14 @@ class EnhancedXGBooostOptimizer:
             "reg_lambda": 1,
         }
 
-    def get_optimization_report(self) -> Dict[str, Any]:
+    def get_optimization_report(self) -> dict[str, Any]:
         """获取优化报告"""
         return {
             "target_accuracy": self.target_accuracy,
             "target_latency_ms": self.target_latency_ms,
             "best_score": self.best_score,
             "best_params": self.best_params,
-            "feature_count": (
-                len(self.feature_importance)
-                if self.feature_importance is not None
-                else 0
-            ),
+            "feature_count": (len(self.feature_importance) if self.feature_importance is not None else 0),
             "training_history": self.training_history,
             "ml_engineering_enabled": ML_ENGINEERING_ENABLED,
         }
@@ -476,7 +440,7 @@ class EnhancedXGBooostOptimizer:
 # 便捷函数
 async def quick_optimize_pipeline(
     df: pd.DataFrame, target_col: str = "target", target_accuracy: float = 0.65
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """快速优化流水线"""
     optimizer = EnhancedXGBooostOptimizer(target_accuracy=target_accuracy)
 
@@ -487,17 +451,11 @@ async def quick_optimize_pipeline(
     y = df[target_col]
 
     # 数据分割
-    X_train, X_temp, y_train, y_temp = train_test_split(
-        X, y, test_size=0.3, random_state=42, stratify=y
-    )
-    X_val, X_test, y_val, y_test = train_test_split(
-        X_temp, y_temp, test_size=0.5, random_state=42, stratify=y_temp
-    )
+    X_train, X_temp, y_train, y_temp = train_test_split(X, y, test_size=0.3, random_state=42, stratify=y)
+    X_val, X_test, y_val, y_test = train_test_split(X_temp, y_temp, test_size=0.5, random_state=42, stratify=y_temp)
 
     # 超参数优化
-    best_params, best_score = optimizer.optimize_hyperparameters(
-        X_train, y_train, X_val, y_val
-    )
+    best_params, best_score = optimizer.optimize_hyperparameters(X_train, y_train, X_val, y_val)
 
     # 训练最终模型
     model = optimizer.train_model(X_train, y_train, X_val, y_val, best_params)

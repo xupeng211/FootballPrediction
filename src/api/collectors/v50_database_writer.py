@@ -31,10 +31,11 @@ logger = logging.getLogger(__name__)
 @dataclass
 class UpsertResult:
     """UPSERT 结果"""
+
     inserted: int  # 新插入记录数
-    updated: int   # 更新记录数
-    failed: int    # 失败记录数
-    total: int     # 总处理记录数
+    updated: int  # 更新记录数
+    failed: int  # 失败记录数
+    total: int  # 总处理记录数
 
     def success_rate(self) -> float:
         """成功率"""
@@ -45,18 +46,18 @@ class UpsertResult:
     def to_dict(self) -> dict:
         """转换为字典"""
         return {
-            'inserted': self.inserted,
-            'updated': self.updated,
-            'failed': self.failed,
-            'total': self.total,
-            'success_rate': self.success_rate(),
+            "inserted": self.inserted,
+            "updated": self.updated,
+            "failed": self.failed,
+            "total": self.total,
+            "success_rate": self.success_rate(),
         }
 
 
 class RichL1DatabaseWriter:
     """
     Rich L1 数据库写入器
-    
+
     核心功能：
     1. Rich L1 数据 UPSERT 到 matches 表
     2. 智能字段映射
@@ -89,15 +90,10 @@ class RichL1DatabaseWriter:
         RETURNING (xmax = 0) AS inserted;
     """
 
-    def __init__(
-        self,
-        batch_size: int = 100,
-        retry_count: int = 3,
-        retry_delay: float = 1.0
-    ):
+    def __init__(self, batch_size: int = 100, retry_count: int = 3, retry_delay: float = 1.0):
         """
         初始化数据库写入器
-        
+
         Args:
             batch_size: 批量写入大小
             retry_count: 重试次数
@@ -112,11 +108,11 @@ class RichL1DatabaseWriter:
         db = settings.database
 
         self.db_config = {
-            'host': db.host,
-            'port': db.port,
-            'database': db.name,
-            'user': db.user,
-            'password': db.password.get_secret_value(),
+            "host": db.host,
+            "port": db.port,
+            "database": db.name,
+            "user": db.user,
+            "password": db.password.get_secret_value(),
         }
 
         # 连接池（单连接模式）
@@ -150,20 +146,15 @@ class RichL1DatabaseWriter:
         """上下文管理器退出"""
         self.close()
 
-    def _execute_with_retry(
-        self,
-        sql: str,
-        params: dict,
-        cursor: RealDictCursor
-    ) -> tuple | None:
+    def _execute_with_retry(self, sql: str, params: dict, cursor: RealDictCursor) -> tuple | None:
         """
         带重试机制的 SQL 执行
-        
+
         Args:
             sql: SQL 语句
             params: 参数字典
             cursor: 数据库游标
-            
+
         Returns:
             查询结果，失败返回 None
         """
@@ -172,11 +163,9 @@ class RichL1DatabaseWriter:
                 cursor.execute(sql, params)
                 return cursor.fetchone()
             except psycopg2.OperationalError as e:
-                logger.warning(
-                    f"数据库操作异常 (尝试 {attempt + 1}/{self.retry_count}): {e}"
-                )
+                logger.warning(f"数据库操作异常 (尝试 {attempt + 1}/{self.retry_count}): {e}")
                 if attempt < self.retry_count - 1:
-                    time.sleep(self.retry_delay * (2 ** attempt))
+                    time.sleep(self.retry_delay * (2**attempt))
                 else:
                     raise
             except Exception as e:
@@ -188,60 +177,58 @@ class RichL1DatabaseWriter:
     def _prepare_match_data(self, rich_match: dict) -> dict:
         """
         准备比赛数据用于数据库写入
-        
+
         Args:
             rich_match: Rich L1 比赛数据
-            
+
         Returns:
             数据库参数字典
         """
         # 计算结果代码
-        home_score = rich_match.get('home_score')
-        away_score = rich_match.get('away_score')
+        home_score = rich_match.get("home_score")
+        away_score = rich_match.get("away_score")
 
         actual_result = None
         if home_score is not None and away_score is not None:
             if home_score > away_score:
-                actual_result = 'H'
+                actual_result = "H"
             elif home_score < away_score:
-                actual_result = 'A'
+                actual_result = "A"
             else:
-                actual_result = 'D'
+                actual_result = "D"
 
         # 解析 UTC 时间
-        match_time_utc = rich_match.get('match_time_utc', '')
+        match_time_utc = rich_match.get("match_time_utc", "")
         match_time = None
         if match_time_utc:
             try:
                 # FotMob 时间格式: 2024-12-26T15:00:00Z
-                match_time = datetime.fromisoformat(
-                    match_time_utc.replace('Z', '+00:00')
-                )
+                match_time = datetime.fromisoformat(match_time_utc.replace("Z", "+00:00"))
             except:
                 pass
 
         return {
-            'match_id': rich_match['match_id'],
-            'league_id': rich_match['league_id'],
-            'season_name': rich_match['season_name'],
-            'home_team': rich_match['home_team'],
-            'away_team': rich_match['away_team'],
-            'home_team_id': rich_match['home_team_id'],
-            'away_team_id': rich_match['away_team_id'],
-            'match_time_utc': match_time,
-            'home_score': home_score,
-            'away_score': away_score,
-            'actual_result': actual_result,
-            'status': rich_match['status'],
+            "match_id": rich_match["match_id"],
+            "league_id": rich_match["league_id"],
+            "season_name": rich_match["season_name"],
+            "home_team": rich_match["home_team"],
+            "away_team": rich_match["away_team"],
+            "home_team_id": rich_match["home_team_id"],
+            "away_team_id": rich_match["away_team_id"],
+            "match_time_utc": match_time,
+            "home_score": home_score,
+            "away_score": away_score,
+            "actual_result": actual_result,
+            "status": rich_match["status"],
         }
 
     def upsert_match(self, rich_match: dict) -> UpsertResult:
         """
         单场比赛 UPSERT
-        
+
         Args:
             rich_match: Rich L1 比赛数据
-            
+
         Returns:
             UpsertResult 对象
         """
@@ -252,11 +239,7 @@ class RichL1DatabaseWriter:
 
         try:
             with self.conn.cursor(cursor_factory=RealDictCursor) as cursor:
-                result = self._execute_with_retry(
-                    self.MATCHES_UPSERT_SQL,
-                    params,
-                    cursor
-                )
+                result = self._execute_with_retry(self.MATCHES_UPSERT_SQL, params, cursor)
 
                 if result:
                     # xmax = 0 表示新插入，否则是更新
@@ -279,10 +262,10 @@ class RichL1DatabaseWriter:
     def upsert_batch(self, rich_matches: list[dict]) -> UpsertResult:
         """
         批量比赛 UPSERT
-        
+
         Args:
             rich_matches: Rich L1 比赛数据列表
-            
+
         Returns:
             UpsertResult 对象
         """
@@ -299,7 +282,7 @@ class RichL1DatabaseWriter:
 
         # 分批处理
         for i in range(0, len(rich_matches), self.batch_size):
-            batch = rich_matches[i:i + self.batch_size]
+            batch = rich_matches[i : i + self.batch_size]
 
             try:
                 with self.conn.cursor(cursor_factory=RealDictCursor) as cursor:
@@ -307,11 +290,7 @@ class RichL1DatabaseWriter:
                         params = self._prepare_match_data(rich_match)
 
                         try:
-                            result = self._execute_with_retry(
-                                self.MATCHES_UPSERT_SQL,
-                                params,
-                                cursor
-                            )
+                            result = self._execute_with_retry(self.MATCHES_UPSERT_SQL, params, cursor)
 
                             if result:
                                 is_inserted = result[0] if result[0] is not None else True
@@ -320,10 +299,7 @@ class RichL1DatabaseWriter:
                                 else:
                                     total_updated += 1
                         except Exception as e:
-                            logger.error(
-                                f"批量 UPSERT 失败 "
-                                f"(match_id={rich_match.get('match_id')}): {e}"
-                            )
+                            logger.error(f"批量 UPSERT 失败 (match_id={rich_match.get('match_id')}): {e}")
                             total_failed += 1
 
                     # 提交事务
@@ -334,25 +310,18 @@ class RichL1DatabaseWriter:
                 self.conn.rollback()
                 total_failed += len(batch)
 
-        logger.info(
-            f"✓ 批量 UPSERT 完成: "
-            f"插入 {total_inserted}, 更新 {total_updated}, 失败 {total_failed}"
-        )
+        logger.info(f"✓ 批量 UPSERT 完成: 插入 {total_inserted}, 更新 {total_updated}, 失败 {total_failed}")
 
         return UpsertResult(total_inserted, total_updated, total_failed, total_count)
 
-    def update_scores_by_status(
-        self,
-        league_id: int,
-        season: str
-    ) -> UpsertResult:
+    def update_scores_by_status(self, league_id: int, season: str) -> UpsertResult:
         """
         根据状态批量更新比分（针对已完赛但缺比分的比赛）
-        
+
         Args:
             league_id: 联赛 ID
             season: 赛季名称
-            
+
         Returns:
             UpsertResult 对象
         """
@@ -360,18 +329,14 @@ class RichL1DatabaseWriter:
         logger.warning("update_scores_by_status 功能待实现")
         return UpsertResult(0, 0, 0, 0)
 
-    def get_match_coverage_stats(
-        self,
-        league_id: int | None = None,
-        season: str | None = None
-    ) -> dict:
+    def get_match_coverage_stats(self, league_id: int | None = None, season: str | None = None) -> dict:
         """
         获取比赛覆盖率统计
-        
+
         Args:
             league_id: 联赛 ID（可选）
             season: 赛季名称（可选）
-            
+
         Returns:
             统计数据字典
         """
@@ -391,10 +356,10 @@ class RichL1DatabaseWriter:
         params = {}
         if league_id is not None:
             sql += " AND league_id = %(league_id)s"
-            params['league_id'] = league_id
+            params["league_id"] = league_id
         if season is not None:
             sql += " AND season = %(season)s"
-            params['season'] = season
+            params["season"] = season
 
         try:
             with self.conn.cursor(cursor_factory=RealDictCursor) as cursor:
@@ -402,15 +367,15 @@ class RichL1DatabaseWriter:
                 result = cursor.fetchone()
 
                 if result:
-                    total = result['total_matches'] or 0
-                    with_score = result['matches_with_score'] or 0
+                    total = result["total_matches"] or 0
+                    with_score = result["matches_with_score"] or 0
 
                     return {
-                        'total_matches': total,
-                        'finished_matches': result['finished_matches'] or 0,
-                        'matches_with_score': with_score,
-                        'matches_with_result': result['matches_with_result'] or 0,
-                        'score_coverage': (with_score / total * 100) if total > 0 else 0,
+                        "total_matches": total,
+                        "finished_matches": result["finished_matches"] or 0,
+                        "matches_with_score": with_score,
+                        "matches_with_result": result["matches_with_result"] or 0,
+                        "score_coverage": (with_score / total * 100) if total > 0 else 0,
                     }
         except Exception as e:
             logger.error(f"获取统计数据失败: {e}")
@@ -422,10 +387,10 @@ class RichL1DatabaseWriter:
 def quick_upsert_matches(rich_matches: list[dict]) -> UpsertResult:
     """
     快速批量 UPSERT 比赛
-    
+
     Args:
         rich_matches: Rich L1 比赛数据列表
-        
+
     Returns:
         UpsertResult 对象
     """
@@ -435,24 +400,21 @@ def quick_upsert_matches(rich_matches: list[dict]) -> UpsertResult:
 
 if __name__ == "__main__":
     # 测试代码
-    logging.basicConfig(
-        level=logging.INFO,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-    )
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 
     # 测试单场比赛 UPSERT
     test_match = {
-        'match_id': 123456,
-        'league_id': 47,
-        'season_name': '24/25',
-        'home_team': 'Test Home',
-        'away_team': 'Test Away',
-        'home_team_id': 1,
-        'away_team_id': 2,
-        'status': 'finished',
-        'match_time_utc': '2024-12-26T15:00:00Z',
-        'home_score': 2,
-        'away_score': 1,
+        "match_id": 123456,
+        "league_id": 47,
+        "season_name": "24/25",
+        "home_team": "Test Home",
+        "away_team": "Test Away",
+        "home_team_id": 1,
+        "away_team_id": 2,
+        "status": "finished",
+        "match_time_utc": "2024-12-26T15:00:00Z",
+        "home_score": 2,
+        "away_score": 1,
     }
 
     print("\n" + "=" * 60)

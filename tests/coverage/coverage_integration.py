@@ -18,23 +18,20 @@ Author: Football Prediction Team
 Version: 1.0.0 (Sprint 7 Testing Coverage)
 """
 
-import asyncio
 import argparse
+import asyncio
 import json
 import logging
-import sys
 import time
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
-from typing import Dict, Any, List, Optional
-import subprocess
-import os
+from typing import Any
+
+import pytest
+from coverage_analyzer import CoverageAnalyzer
+from generate_coverage_report import CoverageReportGenerator
 
 import coverage
-import pytest
-
-from generate_coverage_report import CoverageReportGenerator
-from coverage_analyzer import CoverageAnalyzer
 
 # 设置日志
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
@@ -59,7 +56,7 @@ class CoverageIntegration:
             "performance_tests": 70.0,
         }
 
-    async def run_complete_coverage_suite(self) -> Dict[str, Any]:
+    async def run_complete_coverage_suite(self) -> dict[str, Any]:
         """运行完整的覆盖率测试套件"""
         logger.info("🚀 开始运行完整覆盖率测试套件")
         start_time = time.time()
@@ -115,9 +112,10 @@ class CoverageIntegration:
 
         # 检查依赖
         try:
-            import coverage
             import pytest
             import pytest_asyncio
+
+            import coverage
         except ImportError as e:
             logger.error(f"缺少依赖: {e}")
             raise
@@ -132,7 +130,7 @@ class CoverageIntegration:
         (self.output_dir / "htmlcov").mkdir(exist_ok=True)
         (self.output_dir / "xml").mkdir(exist_ok=True)
 
-    async def _run_test_suite(self) -> Dict[str, Any]:
+    async def _run_test_suite(self) -> dict[str, Any]:
         """运行测试套件"""
         logger.info("🧪 运行测试套件")
 
@@ -166,16 +164,16 @@ class CoverageIntegration:
                     [
                         "--tb=short",
                         "--json-report",
-                        f'--json-report-file={self.output_dir}/{suite["name"].lower().replace(" ", "_")}_results.json',
+                        f"--json-report-file={self.output_dir}/{suite['name'].lower().replace(' ', '_')}_results.json",
                         "-v",
                         *suite["tests"],
                     ]
                 )
 
                 # 读取结果
-                result_file = self.output_dir / f'{suite["name"].lower().replace(" ", "_")}_results.json'
+                result_file = self.output_dir / f"{suite['name'].lower().replace(' ', '_')}_results.json"
                 if result_file.exists():
-                    with open(result_file, "r") as f:
+                    with open(result_file) as f:
                         result_data = json.load(f)
 
                     suite_results[suite["name"]] = {
@@ -216,7 +214,7 @@ class CoverageIntegration:
             "suite_results": suite_results,
         }
 
-    async def _generate_coverage_reports(self) -> Dict[str, Any]:
+    async def _generate_coverage_reports(self) -> dict[str, Any]:
         """生成覆盖率报告"""
         logger.info("📊 生成覆盖率报告")
 
@@ -247,7 +245,7 @@ class CoverageIntegration:
         except Exception as e:
             logger.error(f"XML报告生成失败: {e}")
 
-    async def _generate_markdown_report(self, coverage_result: Dict[str, Any]):
+    async def _generate_markdown_report(self, coverage_result: dict[str, Any]):
         """生成Markdown格式的覆盖率报告"""
         logger.info("📝 生成Markdown覆盖率报告")
 
@@ -263,9 +261,9 @@ class CoverageIntegration:
 
 | 指标 | 覆盖率 | 目标 | 状态 |
 |------|--------|------|------|
-| 总体覆盖率 | {overall_coverage:.1f}% | {self.coverage_targets['overall']:.1f}% | {'✅' if overall_coverage >= self.coverage_targets['overall'] else '❌'} |
-| 核心算法覆盖率 | {core_coverage:.1f}% | {self.coverage_targets['core_algorithms']:.1f}% | {'✅' if core_coverage >= self.coverage_targets['core_algorithms'] else '❌'} |
-| 集成测试覆盖率 | {integration_coverage:.1f}% | {self.coverage_targets['integration_tests']:.1f}% | {'✅' if integration_coverage >= self.coverage_targets['integration_tests'] else '❌'} |
+| 总体覆盖率 | {overall_coverage:.1f}% | {self.coverage_targets["overall"]:.1f}% | {"✅" if overall_coverage >= self.coverage_targets["overall"] else "❌"} |
+| 核心算法覆盖率 | {core_coverage:.1f}% | {self.coverage_targets["core_algorithms"]:.1f}% | {"✅" if core_coverage >= self.coverage_targets["core_algorithms"] else "❌"} |
+| 集成测试覆盖率 | {integration_coverage:.1f}% | {self.coverage_targets["integration_tests"]:.1f}% | {"✅" if integration_coverage >= self.coverage_targets["integration_tests"] else "❌"} |
 
 ## 🎯 核心算法模块详情
 
@@ -276,12 +274,12 @@ class CoverageIntegration:
             status = "✅ 达标" if analysis["status"] == "meets_threshold" else "❌ 未达标"
             priority = {"high": "高", "medium": "中", "low": "低"}.get(analysis["priority"], "低")
 
-            markdown_content += f"""### {module.split('.')[-1]}
+            markdown_content += f"""### {module.split(".")[-1]}
 
-- 覆盖率: {analysis['coverage']:.1f}%
+- 覆盖率: {analysis["coverage"]:.1f}%
 - 状态: {status}
 - 优先级: {priority}
-- 差距: {analysis['gap']:.1f}%
+- 差距: {analysis["gap"]:.1f}%
 
 """
 
@@ -290,10 +288,10 @@ class CoverageIntegration:
             trend = coverage_result["trend_analysis"]
             markdown_content += f"""## 📈 覆盖率趋势
 
-- 趋势方向: {trend.get('trend', 'N/A')}
-- 数据点数: {trend.get('data_points', 0)}
-- 最新覆盖率: {trend.get('latest_coverage', 0):.1f}%
-- 变化幅度: {trend.get('change_rate_percent', 0):.2f}%
+- 趋势方向: {trend.get("trend", "N/A")}
+- 数据点数: {trend.get("data_points", 0)}
+- 最新覆盖率: {trend.get("latest_coverage", 0):.1f}%
+- 变化幅度: {trend.get("change_rate_percent", 0):.2f}%
 
 """
 
@@ -301,22 +299,22 @@ class CoverageIntegration:
         if coverage_result.get("regressions_detected", 0) > 0:
             markdown_content += f"""## ⚠️ 回归检测
 
-检测到 {coverage_result['regressions_detected']} 个覆盖率回归，请查看详细报告。
+检测到 {coverage_result["regressions_detected"]} 个覆盖率回归，请查看详细报告。
 
 """
 
         markdown_content += f"""
 ## 📈 生成信息
 
-- 生成时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+- 生成时间: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
 - 报告版本: Sprint 7 v1.0.0
 - 系统版本: Football Prediction v2.0
 
 ## 🔗 相关文件
 
-- [HTML详细报告]({coverage_result.get('html_report', '#')})
-- [完整JSON报告]({coverage_result.get('report_file', '#')})
-- [覆盖率徽章]({coverage_result.get('badge_data', {}).get('svg_file', '#')})
+- [HTML详细报告]({coverage_result.get("html_report", "#")})
+- [完整JSON报告]({coverage_result.get("report_file", "#")})
+- [覆盖率徽章]({coverage_result.get("badge_data", {}).get("svg_file", "#")})
 """
 
         # 保存Markdown报告
@@ -328,10 +326,10 @@ class CoverageIntegration:
 
     async def _generate_integration_report(
         self,
-        test_results: Dict[str, Any],
-        coverage_report: Dict[str, Any],
-        deep_analysis: Dict[str, Any],
-    ) -> Dict[str, Any]:
+        test_results: dict[str, Any],
+        coverage_report: dict[str, Any],
+        deep_analysis: dict[str, Any],
+    ) -> dict[str, Any]:
         """生成集成报告"""
         logger.info("🔗 生成集成报告")
 
@@ -384,7 +382,7 @@ class CoverageIntegration:
 
         return integration_report
 
-    async def _assess_coverage_targets(self, coverage_report: Dict[str, Any]) -> Dict[str, Any]:
+    async def _assess_coverage_targets(self, coverage_report: dict[str, Any]) -> dict[str, Any]:
         """评估覆盖率目标达成情况"""
         logger.info("🎯 评估覆盖率目标达成情况")
 
@@ -449,10 +447,10 @@ class CoverageIntegration:
 
     async def _generate_recommendations(
         self,
-        test_results: Dict[str, Any],
-        coverage_report: Dict[str, Any],
-        deep_analysis: Dict[str, Any],
-    ) -> List[Dict[str, Any]]:
+        test_results: dict[str, Any],
+        coverage_report: dict[str, Any],
+        deep_analysis: dict[str, Any],
+    ) -> list[dict[str, Any]]:
         """生成改进建议"""
         recommendations = []
 
@@ -522,8 +520,8 @@ class CoverageIntegration:
         return recommendations
 
     async def _generate_ci_output(
-        self, integration_report: Dict[str, Any], target_assessment: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, integration_report: dict[str, Any], target_assessment: dict[str, Any]
+    ) -> dict[str, Any]:
         """生成CI/CD输出格式"""
         logger.info("🔧 生成CI/CD输出")
 
@@ -563,7 +561,7 @@ class CoverageIntegration:
 
         return ci_output
 
-    async def _generate_github_actions_output(self, ci_output: Dict[str, Any]):
+    async def _generate_github_actions_output(self, ci_output: dict[str, Any]):
         """生成GitHub Actions输出格式"""
         logger.info("📝 生成GitHub Actions输出")
 
@@ -587,7 +585,7 @@ class CoverageIntegration:
             f.write(f"- Test Success Rate: {ci_output['metrics']['test_success_rate']:.1f}%\n")
             f.write(f"- Grade: {ci_output['grade']}\n")
 
-    async def _generate_env_vars(self, ci_output: Dict[str, Any]):
+    async def _generate_env_vars(self, ci_output: dict[str, Any]):
         """生成环境变量文件"""
         logger.info("🔧 生成环境变量文件")
 
@@ -601,7 +599,7 @@ class CoverageIntegration:
             f.write(f"COVERAGE_GRADE={ci_output['grade']}\n")
             f.write(f"TARGETS_MET={str(ci_output['success']).lower()}\n")
 
-    async def run_ci_mode(self) -> Dict[str, Any]:
+    async def run_ci_mode(self) -> dict[str, Any]:
         """运行CI模式（简化版本，专注于关键指标）"""
         logger.info("🚀 运行CI模式")
 
@@ -720,7 +718,7 @@ async def main():
         if args.command == "run-all":
             result = await integration.run_complete_coverage_suite()
 
-            print(f"\n🎉 Sprint 7 覆盖率测试完成!")
+            print("\n🎉 Sprint 7 覆盖率测试完成!")
             print(f"执行时间: {result['execution_time']:.2f}秒")
             print(f"测试成功率: {result['test_results']['test_summary']['success_rate']:.1f}%")
             print(f"总体覆盖率: {result['coverage_report']['overall_coverage']:.1f}%")
@@ -731,7 +729,7 @@ async def main():
 
             # 输出关键文件路径
             if "artifacts" in result["ci_output"]:
-                print(f"\n📁 生成的文件:")
+                print("\n📁 生成的文件:")
                 for artifact_type, file_path in result["ci_output"]["artifacts"].items():
                     if file_path:
                         print(f"  {artifact_type}: {file_path}")
@@ -741,7 +739,7 @@ async def main():
         elif args.command == "ci-mode":
             result = await integration.run_ci_mode()
 
-            print(f"\n🚀 CI模式执行完成!")
+            print("\n🚀 CI模式执行完成!")
             print(f"成功率: {'✅' if result['success'] else '❌'}")
             print(f"覆盖率: {result['overall_coverage']:.1f}%")
             print(f"目标达成: {'✅' if result['target_met'] else '❌'}")
@@ -752,7 +750,7 @@ async def main():
             return result
 
         elif args.command == "watch-mode":
-            print(f"👁️ 启动监控模式...")
+            print("👁️ 启动监控模式...")
             await integration.run_watch_mode(args.interval)
 
         else:

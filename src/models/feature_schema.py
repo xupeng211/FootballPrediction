@@ -15,12 +15,11 @@ Version: V25.0
 Date: 2025-12-26
 """
 
-from typing import Any, Dict, List, Optional, Union
-from enum import Enum
 from datetime import datetime
+from enum import Enum
+from typing import Any, Union
 
-from pydantic import BaseModel, Field, field_validator, model_validator
-from pydantic import ConfigDict
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
 class MatchOutcome(str, Enum):
@@ -47,6 +46,7 @@ class FeatureCategory(str, Enum):
 # 基础统计特征
 # ============================================================================
 
+
 class TeamStats(BaseModel):
     """
     球队基础统计
@@ -64,20 +64,20 @@ class TeamStats(BaseModel):
         clearances: 解围数
     """
 
-    possession: Optional[float] = Field(default=None, ge=0, le=100)
-    shots_total: Optional[int] = Field(default=None, ge=0)
-    shots_on_target: Optional[int] = Field(default=None, ge=0)
-    corners: Optional[int] = Field(default=None, ge=0)
-    fouls: Optional[int] = Field(default=None, ge=0)
-    offsides: Optional[int] = Field(default=None, ge=0)
-    saves: Optional[int] = Field(default=None, ge=0)
-    tackles: Optional[int] = Field(default=None, ge=0)
-    interceptions: Optional[int] = Field(default=None, ge=0)
-    clearances: Optional[int] = Field(default=None, ge=0)
+    possession: float | None = Field(default=None, ge=0, le=100)
+    shots_total: int | None = Field(default=None, ge=0)
+    shots_on_target: int | None = Field(default=None, ge=0)
+    corners: int | None = Field(default=None, ge=0)
+    fouls: int | None = Field(default=None, ge=0)
+    offsides: int | None = Field(default=None, ge=0)
+    saves: int | None = Field(default=None, ge=0)
+    tackles: int | None = Field(default=None, ge=0)
+    interceptions: int | None = Field(default=None, ge=0)
+    clearances: int | None = Field(default=None, ge=0)
 
     @field_validator("*", mode="before")
     @classmethod
-    def handle_nan(cls, v: Any) -> Optional[float]:
+    def handle_nan(cls, v: Any) -> float | None:
         """处理 NaN 值"""
         if isinstance(v, float) and v != v:  # NaN check
             return None
@@ -99,19 +99,20 @@ class AdvancedStats(BaseModel):
         aerial_duels_won: 赢下空中对抗次数
     """
 
-    expected_goals: Optional[float] = Field(default=None, ge=0)
-    expected_assists: Optional[float] = Field(default=None, ge=0)
-    big_chances_created: Optional[int] = Field(default=None, ge=0)
-    big_chances_missed: Optional[int] = Field(default=None, ge=0)
-    accurate_passes: Optional[int] = Field(default=None, ge=0)
-    pass_accuracy: Optional[float] = Field(default=None, ge=0, le=100)
-    duels_won: Optional[int] = Field(default=None, ge=0)
-    aerial_duels_won: Optional[int] = Field(default=None, ge=0)
+    expected_goals: float | None = Field(default=None, ge=0)
+    expected_assists: float | None = Field(default=None, ge=0)
+    big_chances_created: int | None = Field(default=None, ge=0)
+    big_chances_missed: int | None = Field(default=None, ge=0)
+    accurate_passes: int | None = Field(default=None, ge=0)
+    pass_accuracy: float | None = Field(default=None, ge=0, le=100)
+    duels_won: int | None = Field(default=None, ge=0)
+    aerial_duels_won: int | None = Field(default=None, ge=0)
 
 
 # ============================================================================
 # 滚动特征
 # ============================================================================
+
 
 class RollingFeatures(BaseModel):
     """
@@ -128,19 +129,20 @@ class RollingFeatures(BaseModel):
         rolling_team_rating_std: 滚动评分标准差
     """
 
-    rolling_xg: Optional[float] = None
-    rolling_xg_std: Optional[float] = None
-    rolling_shots_on_target: Optional[float] = None
-    rolling_shots_on_target_std: Optional[float] = None
-    rolling_possession: Optional[float] = None
-    rolling_possession_std: Optional[float] = None
-    rolling_team_rating: Optional[float] = None
-    rolling_team_rating_std: Optional[float] = None
+    rolling_xg: float | None = None
+    rolling_xg_std: float | None = None
+    rolling_shots_on_target: float | None = None
+    rolling_shots_on_target_std: float | None = None
+    rolling_possession: float | None = None
+    rolling_possession_std: float | None = None
+    rolling_team_rating: float | None = None
+    rolling_team_rating_std: float | None = None
 
 
 # ============================================================================
 # 赛前特征
 # ============================================================================
+
 
 class PreMatchFeatures(BaseModel):
     """
@@ -157,19 +159,20 @@ class PreMatchFeatures(BaseModel):
         away_recent_form_points: 客队近期状态积分
     """
 
-    home_table_position: Optional[int] = Field(default=None, ge=1)
-    away_table_position: Optional[int] = Field(default=None, ge=1)
-    table_position_diff: Optional[int] = None
-    home_points: Optional[int] = Field(default=None, ge=0)
-    away_points: Optional[int] = Field(default=None, ge=0)
-    points_diff: Optional[int] = None
-    home_recent_form_points: Optional[int] = None
-    away_recent_form_points: Optional[int] = None
+    home_table_position: int | None = Field(default=None, ge=1)
+    away_table_position: int | None = Field(default=None, ge=1)
+    table_position_diff: int | None = None
+    home_points: int | None = Field(default=None, ge=0)
+    away_points: int | None = Field(default=None, ge=0)
+    points_diff: int | None = None
+    home_recent_form_points: int | None = None
+    away_recent_form_points: int | None = None
 
 
 # ============================================================================
 # 高级动态特征
 # ============================================================================
+
 
 class AdvancedDynamicFeatures(BaseModel):
     """
@@ -191,24 +194,25 @@ class AdvancedDynamicFeatures(BaseModel):
         home_desperation: 主队绝望指数
     """
 
-    raw_elo_gap: Optional[float] = None
-    adjusted_elo_gap: Optional[float] = None
-    fatigue_impact: Optional[float] = None
-    schedule_impact: Optional[float] = None
-    home_fatigue_index: Optional[float] = Field(default=None, ge=0, le=1)
-    away_fatigue_index: Optional[float] = Field(default=None, ge=0, le=1)
-    fatigue_diff: Optional[float] = None
-    home_rest_days: Optional[int] = Field(default=None, ge=0)
-    away_rest_days: Optional[int] = Field(default=None, ge=0)
-    home_relegation_incentive: Optional[float] = Field(default=None, ge=0, le=1)
-    away_relegation_incentive: Optional[float] = Field(default=None, ge=0, le=1)
-    incentive_diff: Optional[float] = None
-    home_desperation: Optional[float] = Field(default=None, ge=0, le=1)
+    raw_elo_gap: float | None = None
+    adjusted_elo_gap: float | None = None
+    fatigue_impact: float | None = None
+    schedule_impact: float | None = None
+    home_fatigue_index: float | None = Field(default=None, ge=0, le=1)
+    away_fatigue_index: float | None = Field(default=None, ge=0, le=1)
+    fatigue_diff: float | None = None
+    home_rest_days: int | None = Field(default=None, ge=0)
+    away_rest_days: int | None = Field(default=None, ge=0)
+    home_relegation_incentive: float | None = Field(default=None, ge=0, le=1)
+    away_relegation_incentive: float | None = Field(default=None, ge=0, le=1)
+    incentive_diff: float | None = None
+    home_desperation: float | None = Field(default=None, ge=0, le=1)
 
 
 # ============================================================================
 # 平局敏感度特征
 # ============================================================================
+
 
 class DrawSensitivityFeatures(BaseModel):
     """
@@ -220,14 +224,15 @@ class DrawSensitivityFeatures(BaseModel):
         elo_diff_cluster: ELO 差距聚类
     """
 
-    table_proximity: Optional[float] = Field(default=None, ge=0)
-    low_scoring_tendency: Optional[float] = Field(default=None, ge=0, le=1)
-    elo_diff_cluster: Optional[str] = None
+    table_proximity: float | None = Field(default=None, ge=0)
+    low_scoring_tendency: float | None = Field(default=None, ge=0, le=1)
+    elo_diff_cluster: str | None = None
 
 
 # ============================================================================
 # 完整特征输出
 # ============================================================================
+
 
 class FeatureMetadata(BaseModel):
     """特征元数据"""
@@ -237,11 +242,11 @@ class FeatureMetadata(BaseModel):
     feature_count: int
     extraction_timestamp: datetime = Field(default_factory=datetime.now)
     validation_passed: bool = True
-    warnings: List[str] = Field(default_factory=list)
-    data_source: Optional[str] = None
-    match_id: Optional[int] = None
-    league_id: Optional[int] = None
-    season: Optional[str] = None
+    warnings: list[str] = Field(default_factory=list)
+    data_source: str | None = None
+    match_id: int | None = None
+    league_id: int | None = None
+    season: str | None = None
 
 
 class FeatureOutput(BaseModel):
@@ -264,38 +269,38 @@ class FeatureOutput(BaseModel):
     )
 
     # 元数据
-    metadata: Optional[FeatureMetadata] = None
+    metadata: FeatureMetadata | None = None
 
     # 主队特征
-    home_team_stats: Optional[TeamStats] = None
-    home_rolling: Optional[RollingFeatures] = None
+    home_team_stats: TeamStats | None = None
+    home_rolling: RollingFeatures | None = None
 
     # 客队特征
-    away_team_stats: Optional[TeamStats] = None
-    away_rolling: Optional[RollingFeatures] = None
+    away_team_stats: TeamStats | None = None
+    away_rolling: RollingFeatures | None = None
 
     # 赛前特征
-    pre_match: Optional[PreMatchFeatures] = None
+    pre_match: PreMatchFeatures | None = None
 
     # 高级特征
-    home_advanced: Optional[AdvancedStats] = None
-    away_advanced: Optional[AdvancedStats] = None
-    advanced_dynamic: Optional[AdvancedDynamicFeatures] = None
-    draw_sensitivity: Optional[DrawSensitivityFeatures] = None
+    home_advanced: AdvancedStats | None = None
+    away_advanced: AdvancedStats | None = None
+    advanced_dynamic: AdvancedDynamicFeatures | None = None
+    draw_sensitivity: DrawSensitivityFeatures | None = None
 
     # 差异特征（主队 - 客队）
-    diff_possession: Optional[float] = None
-    diff_shots_total: Optional[int] = None
-    diff_shots_on_target: Optional[int] = None
-    diff_expected_goals: Optional[float] = None
-    diff_team_rating: Optional[float] = None
+    diff_possession: float | None = None
+    diff_shots_total: int | None = None
+    diff_shots_on_target: int | None = None
+    diff_expected_goals: float | None = None
+    diff_team_rating: float | None = None
 
     # 比率特征
-    ratio_home_possession: Optional[float] = Field(default=None, ge=0, le=1)
-    ratio_away_possession: Optional[float] = Field(default=None, ge=0, le=1)
+    ratio_home_possession: float | None = Field(default=None, ge=0, le=1)
+    ratio_away_possession: float | None = Field(default=None, ge=0, le=1)
 
     # 扩展字段（用于 881 维的其余部分）
-    extended_features: Dict[str, Any] = Field(default_factory=dict)
+    extended_features: dict[str, Any] = Field(default_factory=dict)
 
     @model_validator(mode="after")
     def validate_feature_count(self) -> "FeatureOutput":
@@ -337,7 +342,7 @@ class FeatureOutput(BaseModel):
 
         return count
 
-    def to_flat_dict(self) -> Dict[str, Any]:
+    def to_flat_dict(self) -> dict[str, Any]:
         """
         转换为扁平字典
 
@@ -346,7 +351,7 @@ class FeatureOutput(BaseModel):
         Returns:
             扁平化的特征字典
         """
-        flat_dict: Dict[str, Any] = {}
+        flat_dict: dict[str, Any] = {}
 
         # 展开嵌套字段
         for field_name in self.model_fields:
@@ -371,7 +376,7 @@ class FeatureOutput(BaseModel):
         return flat_dict
 
     @classmethod
-    def from_raw_dict(cls, raw_dict: Dict[str, Any]) -> "FeatureOutput":
+    def from_raw_dict(cls, raw_dict: dict[str, Any]) -> "FeatureOutput":
         """
         从原始字典创建实例
 
@@ -392,8 +397,8 @@ class FeatureOutput(BaseModel):
 
         # 分离已知字段和扩展字段
         known_fields = set(cls.model_fields) - {"metadata", "extended_features"}
-        known_dict: Dict[str, Any] = {}
-        extended_dict: Dict[str, Any] = {}
+        known_dict: dict[str, Any] = {}
+        extended_dict: dict[str, Any] = {}
 
         for key, value in raw_dict.items():
             if key in known_fields:
@@ -414,7 +419,7 @@ class FeatureOutput(BaseModel):
 # ============================================================================
 
 # 原始特征字典（用于训练）
-FeatureDict = Dict[str, Any]
+FeatureDict = dict[str, Any]
 
 # 特征集合（支持多种格式）
 FeatureData = Union[FeatureOutput, FeatureDict, str]  # str 支持 JSON

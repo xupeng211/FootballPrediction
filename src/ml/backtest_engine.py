@@ -19,17 +19,15 @@ V25.0 自动化策略回测引擎 - Quant Trading Backtester
 日期: 2025-12-25
 """
 
-import os
-import sys
 import json
 import logging
-import time
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Tuple, Callable
+import os
+import sys
 from dataclasses import dataclass, field
-from pathlib import Path
+from datetime import datetime, timedelta
 from enum import Enum
-import statistics
+from pathlib import Path
+from typing import Any
 
 # 添加项目路径
 project_root = Path(__file__).parent.parent.parent
@@ -38,17 +36,13 @@ src_root = Path(__file__).parent.parent
 sys.path.insert(0, str(src_root))
 
 import numpy as np
-import pandas as pd
 
 # 配置日志
 os.makedirs("logs", exist_ok=True)
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(name)s - %(message)s",
-    handlers=[
-        logging.FileHandler("logs/v25_backtest.log"),
-        logging.StreamHandler()
-    ]
+    handlers=[logging.FileHandler("logs/v25_backtest.log"), logging.StreamHandler()],
 )
 logger = logging.getLogger(__name__)
 
@@ -57,8 +51,10 @@ logger = logging.getLogger(__name__)
 # 枚举定义
 # ============================================================================
 
+
 class BetOutcome(str, Enum):
     """投注结果"""
+
     HOME_WIN = "H"
     DRAW = "D"
     AWAY_WIN = "A"
@@ -68,6 +64,7 @@ class BetOutcome(str, Enum):
 
 class StrategyType(str, Enum):
     """策略类型"""
+
     LEVEL_STAKING = "level_staking"  # 等额投注
     KELLY_CRITERION = "kelly"  # 凯利公式
     FIXED_PROFIT = "fixed_profit"  # 固定利润
@@ -77,6 +74,7 @@ class StrategyType(str, Enum):
 # ============================================================================
 # 数据模型定义
 # ============================================================================
+
 
 @dataclass
 class BacktestConfig:
@@ -95,8 +93,9 @@ class BacktestConfig:
         enable_kelly: 是否启用凯利公式
         kelly_fraction: 凯利分数（保守凯利建议 0.25）
     """
-    start_date: Optional[datetime] = None
-    end_date: Optional[datetime] = None
+
+    start_date: datetime | None = None
+    end_date: datetime | None = None
     initial_bankroll: float = 1000.0
     strategy_type: StrategyType = StrategyType.LEVEL_STAKING
     stake_per_bet: float = 10.0  # 等额投注: 每注 10 单位
@@ -128,6 +127,7 @@ class MatchPrediction:
         edge: 优势 (Model Prob - Market Prob)
         actual_result: 实际结果（用于回测验证）
     """
+
     match_id: int
     external_id: str
     home_team: str
@@ -135,13 +135,13 @@ class MatchPrediction:
     match_time: datetime
     league: str
     season: str
-    model_probs: List[float]  # [Home, Draw, Away]
-    market_odds: List[float]  # [Home, Draw, Away]
-    market_probs: List[float]  # [Home, Draw, Away]
-    recommended_bet: Optional[str] = None
+    model_probs: list[float]  # [Home, Draw, Away]
+    market_odds: list[float]  # [Home, Draw, Away]
+    market_probs: list[float]  # [Home, Draw, Away]
+    recommended_bet: str | None = None
     confidence: float = 0.0
     edge: float = 0.0
-    actual_result: Optional[str] = None
+    actual_result: str | None = None
 
 
 @dataclass
@@ -159,6 +159,7 @@ class BetRecord:
         profit: 盈亏
         timestamp: 投注时间
     """
+
     prediction: MatchPrediction
     bet_outcome: str
     stake: float
@@ -198,6 +199,7 @@ class BacktestMetrics:
         consecutive_losses: 最大连续亏损
         calmar_ratio: 卡玛比率 (年化收益/最大回撤)
     """
+
     total_bets: int = 0
     winning_bets: int = 0
     losing_bets: int = 0
@@ -220,13 +222,14 @@ class BacktestMetrics:
     consecutive_wins: int = 0
     consecutive_losses: int = 0
     calmar_ratio: float = 0.0
-    equity_curve: List[float] = field(default_factory=list)
-    drawdown_curve: List[float] = field(default_factory=list)
+    equity_curve: list[float] = field(default_factory=list)
+    drawdown_curve: list[float] = field(default_factory=list)
 
 
 # ============================================================================
 # 核心回测引擎
 # ============================================================================
+
 
 class AutoBacktester:
     """
@@ -252,7 +255,7 @@ class AutoBacktester:
         └─────────────────────────────────────────────────────┘
     """
 
-    def __init__(self, config: Optional[BacktestConfig] = None):
+    def __init__(self, config: BacktestConfig | None = None):
         """
         初始化回测引擎
 
@@ -260,9 +263,9 @@ class AutoBacktester:
             config: 回测配置
         """
         self.config = config or BacktestConfig()
-        self.predictions: List[MatchPrediction] = []
-        self.bet_records: List[BetRecord] = []
-        self.equity_curve: List[float] = [self.config.initial_bankroll]
+        self.predictions: list[MatchPrediction] = []
+        self.bet_records: list[BetRecord] = []
+        self.equity_curve: list[float] = [self.config.initial_bankroll]
         self.model = None
 
         logger.info("=" * 60)
@@ -276,11 +279,7 @@ class AutoBacktester:
     # 数据加载与模型推理
     # ========================================================================
 
-    def load_historical_predictions(
-        self,
-        days_back: int = 30,
-        min_confidence: float = 0.55
-    ) -> List[MatchPrediction]:
+    def load_historical_predictions(self, days_back: int = 30, min_confidence: float = 0.55) -> list[MatchPrediction]:
         """
         加载历史预测数据
 
@@ -293,6 +292,7 @@ class AutoBacktester:
         """
         import psycopg2
         from psycopg2.extras import RealDictCursor
+
         from src.config_unified import get_settings
 
         settings = get_settings()
@@ -319,7 +319,8 @@ class AutoBacktester:
 
             with conn.cursor() as cur:
                 # 获取已完成的比赛（有实际结果）
-                cur.execute("""
+                cur.execute(
+                    """
                     SELECT
                         m.id as match_id,
                         m.external_id,
@@ -341,7 +342,9 @@ class AutoBacktester:
                       AND f.status = 'completed'
                       AND m.actual_result IS NOT NULL
                     ORDER BY m.match_time ASC
-                """, (start_date, end_date))
+                """,
+                    (start_date, end_date),
+                )
 
                 rows = cur.fetchall()
 
@@ -349,7 +352,7 @@ class AutoBacktester:
 
                 for row in rows:
                     # 解析赔率
-                    market_odds = self._parse_odds(row.get('match_odds'))
+                    market_odds = self._parse_odds(row.get("match_odds"))
 
                     # 如果没有赔率，使用默认值
                     if not market_odds or sum(market_odds) == 0:
@@ -362,27 +365,25 @@ class AutoBacktester:
                     market_probs = self._odds_to_implied_probs(market_odds)
 
                     # 找到最佳投注
-                    recommended_bet, confidence, edge = self._find_best_bet(
-                        model_probs, market_probs, market_odds
-                    )
+                    recommended_bet, confidence, edge = self._find_best_bet(model_probs, market_probs, market_odds)
 
                     # 只保留高置信度预测
                     if confidence >= min_confidence:
                         pred = MatchPrediction(
-                            match_id=row['match_id'],
-                            external_id=row['external_id'],
-                            home_team=row['home_team'],
-                            away_team=row['away_team'],
-                            match_time=row['match_time'],
-                            league=row.get('league_id', ''),
-                            season=row.get('season', ''),
+                            match_id=row["match_id"],
+                            external_id=row["external_id"],
+                            home_team=row["home_team"],
+                            away_team=row["away_team"],
+                            match_time=row["match_time"],
+                            league=row.get("league_id", ""),
+                            season=row.get("season", ""),
                             model_probs=model_probs,
                             market_odds=market_odds,
                             market_probs=market_probs,
                             recommended_bet=recommended_bet,
                             confidence=confidence,
                             edge=edge,
-                            actual_result=row.get('actual_result')
+                            actual_result=row.get("actual_result"),
                         )
                         predictions.append(pred)
 
@@ -395,7 +396,7 @@ class AutoBacktester:
         self.predictions = predictions
         return predictions
 
-    def _parse_odds(self, odds_data: Any) -> Optional[List[float]]:
+    def _parse_odds(self, odds_data: Any) -> list[float] | None:
         """解析赔率数据"""
         if odds_data is None:
             return None
@@ -409,9 +410,9 @@ class AutoBacktester:
                 data = odds_data
 
             # 尝试提取赔率（多种格式兼容）
-            if 'winner' in data:
-                odds = data['winner']
-                return [odds.get('home', 1.0), odds.get('draw', 1.0), odds.get('away', 1.0)]
+            if "winner" in data:
+                odds = data["winner"]
+                return [odds.get("home", 1.0), odds.get("draw", 1.0), odds.get("away", 1.0)]
             elif isinstance(data, list) and len(data) >= 3:
                 return [float(data[0]), float(data[1]), float(data[2])]
 
@@ -420,18 +421,18 @@ class AutoBacktester:
 
         return None
 
-    def _simulate_model_prediction(self, row: Dict[str, Any]) -> List[float]:
+    def _simulate_model_prediction(self, row: dict[str, Any]) -> list[float]:
         """
         模拟模型预测（简化版本，实际应加载真实模型）
 
         基于实际结果添加噪声来模拟模型预测
         """
-        actual_result = row.get('actual_result', 'D')
+        actual_result = row.get("actual_result", "D")
 
         # 基础概率（模拟模型的倾向）
-        if actual_result == 'H':
+        if actual_result == "H":
             base_probs = [0.55, 0.25, 0.20]
-        elif actual_result == 'A':
+        elif actual_result == "A":
             base_probs = [0.25, 0.25, 0.50]
         else:  # Draw
             base_probs = [0.35, 0.40, 0.25]
@@ -446,7 +447,7 @@ class AutoBacktester:
 
         return probs.tolist()
 
-    def _odds_to_implied_probs(self, odds: List[float]) -> List[float]:
+    def _odds_to_implied_probs(self, odds: list[float]) -> list[float]:
         """
         将赔率转换为隐含概率（考虑抽水）
 
@@ -469,11 +470,8 @@ class AutoBacktester:
         return adjusted_probs
 
     def _find_best_bet(
-        self,
-        model_probs: List[float],
-        market_probs: List[float],
-        market_odds: List[float]
-    ) -> Tuple[Optional[str], float, float]:
+        self, model_probs: list[float], market_probs: list[float], market_odds: list[float]
+    ) -> tuple[str | None, float, float]:
         """
         找到最佳投注
 
@@ -482,7 +480,7 @@ class AutoBacktester:
         Returns:
             (投注选择, 置信度, 优势)
         """
-        outcomes = ['H', 'D', 'A']
+        outcomes = ["H", "D", "A"]
         edges = [model_probs[i] - market_probs[i] for i in range(3)]
 
         # 找到最大优势
@@ -531,7 +529,7 @@ class AutoBacktester:
 
             # 确定投注结果
             bet_outcome = pred.recommended_bet
-            bet_idx = {'H': 0, 'D': 1, 'A': 2}[bet_outcome]
+            bet_idx = {"H": 0, "D": 1, "A": 2}[bet_outcome]
             odds = pred.market_odds[bet_idx]
 
             # 计算投注金额（等额投注）
@@ -543,8 +541,10 @@ class AutoBacktester:
             # 判断实际结果
             actual = pred.actual_result
             if actual == bet_outcome:
-                outcome = BetOutcome.HOME_WIN if bet_outcome == 'H' else (
-                    BetOutcome.DRAW if bet_outcome == 'D' else BetOutcome.AWAY_WIN
+                outcome = (
+                    BetOutcome.HOME_WIN
+                    if bet_outcome == "H"
+                    else (BetOutcome.DRAW if bet_outcome == "D" else BetOutcome.AWAY_WIN)
                 )
                 profit = stake * (odds - 1)
                 bankroll += profit
@@ -552,8 +552,10 @@ class AutoBacktester:
                 losing_streak = 0
                 max_consecutive_wins = max(max_consecutive_wins, winning_streak)
             else:
-                outcome = BetOutcome.HOME_WIN if actual == 'H' else (
-                    BetOutcome.DRAW if actual == 'D' else BetOutcome.AWAY_WIN
+                outcome = (
+                    BetOutcome.HOME_WIN
+                    if actual == "H"
+                    else (BetOutcome.DRAW if actual == "D" else BetOutcome.AWAY_WIN)
                 )
                 profit = -stake
                 bankroll += profit
@@ -570,26 +572,19 @@ class AutoBacktester:
                 expected_value=ev,
                 outcome=outcome,
                 profit=profit,
-                timestamp=datetime.now()
+                timestamp=datetime.now(),
             )
             self.bet_records.append(bet_record)
 
             self.equity_curve.append(bankroll)
 
         # 计算指标
-        metrics = self._calculate_metrics(
-            bankroll,
-            max_consecutive_wins,
-            max_consecutive_losses
-        )
+        metrics = self._calculate_metrics(bankroll, max_consecutive_wins, max_consecutive_losses)
 
         return metrics
 
     def _calculate_metrics(
-        self,
-        final_bankroll: float,
-        max_consecutive_wins: int,
-        max_consecutive_losses: int
+        self, final_bankroll: float, max_consecutive_wins: int, max_consecutive_losses: int
     ) -> BacktestMetrics:
         """计算回测指标"""
         if not self.bet_records:
@@ -677,7 +672,7 @@ class AutoBacktester:
     # 报告生成
     # ========================================================================
 
-    def generate_report(self, metrics: BacktestMetrics) -> Dict[str, Any]:
+    def generate_report(self, metrics: BacktestMetrics) -> dict[str, Any]:
         """
         生成回测报告
 
@@ -730,11 +725,11 @@ class AutoBacktester:
 
         return report
 
-    def save_report(self, report: Dict[str, Any], output_path: str = "data/backtest/backtest_report.json"):
+    def save_report(self, report: dict[str, Any], output_path: str = "data/backtest/backtest_report.json"):
         """保存报告到文件"""
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
 
-        with open(output_path, 'w') as f:
+        with open(output_path, "w") as f:
             json.dump(report, f, indent=2)
 
         logger.info(f"回测报告已保存: {output_path}")
@@ -745,26 +740,26 @@ class AutoBacktester:
         print("V25.0 策略回测报告")
         print("=" * 60)
 
-        print(f"\n投注统计:")
+        print("\n投注统计:")
         print(f"  • 总投注: {metrics.total_bets} 笔")
         print(f"  🟢 获胜: {metrics.winning_bets} 笔")
         print(f"  🔴 失败: {metrics.losing_bets} 笔")
         print(f"  • 胜率: {metrics.win_rate * 100:.1f}%")
 
-        print(f"\n资金分析:")
+        print("\n资金分析:")
         print(f"  • 初始资金: {self.config.initial_bankroll:.2f}")
         print(f"  • 最终资金: {self.config.initial_bankroll + metrics.net_profit:.2f}")
         print(f"  • 总投注: {metrics.total_staked:.2f}")
         print(f"  • 总回报: {metrics.total_returns:.2f}")
 
-        print(f"\n核心指标:")
+        print("\n核心指标:")
         roi_color = "🟢" if metrics.roi > 0 else "🔴"
         print(f"  {roi_color} ROI: {metrics.roi:.2f}%")
         print(f"  📈 夏普比率: {metrics.sharpe_ratio:.4f}")
         print(f"  📉 最大回撤: {metrics.max_drawdown * 100:.2f}%")
         print(f"  💰 盈利因子: {metrics.profit_factor:.2f}")
 
-        print(f"\n风险统计:")
+        print("\n风险统计:")
         print(f"  • 最大连胜: {metrics.consecutive_wins} 连")
         print(f"  • 最大连败: {metrics.consecutive_losses} 连")
         print(f"  • 最大单笔盈利: {metrics.largest_win:.2f}")
@@ -777,33 +772,17 @@ class AutoBacktester:
 # 主程序入口
 # ============================================================================
 
+
 def main():
     """主程序入口"""
     import argparse
 
-    parser = argparse.ArgumentParser(
-        description='V25.0 自动化策略回测引擎 - Quant Trading Backtester'
-    )
-    parser.add_argument(
-        '--days-back', type=int, default=30,
-        help='回溯天数（默认: 30）'
-    )
-    parser.add_argument(
-        '--initial-bankroll', type=float, default=1000.0,
-        help='初始资金（默认: 1000）'
-    )
-    parser.add_argument(
-        '--stake', type=float, default=10.0,
-        help='每注金额（默认: 10）'
-    )
-    parser.add_argument(
-        '--min-confidence', type=float, default=0.55,
-        help='最小置信度（默认: 0.55）'
-    )
-    parser.add_argument(
-        '--output', type=str, default='data/backtest/backtest_report.json',
-        help='报告输出路径'
-    )
+    parser = argparse.ArgumentParser(description="V25.0 自动化策略回测引擎 - Quant Trading Backtester")
+    parser.add_argument("--days-back", type=int, default=30, help="回溯天数（默认: 30）")
+    parser.add_argument("--initial-bankroll", type=float, default=1000.0, help="初始资金（默认: 1000）")
+    parser.add_argument("--stake", type=float, default=10.0, help="每注金额（默认: 10）")
+    parser.add_argument("--min-confidence", type=float, default=0.55, help="最小置信度（默认: 0.55）")
+    parser.add_argument("--output", type=str, default="data/backtest/backtest_report.json", help="报告输出路径")
 
     args = parser.parse_args()
 

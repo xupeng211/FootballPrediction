@@ -4,14 +4,12 @@ Docker 容器内全链路冒烟测试
 完整运行数据加载、特征提取、模型推理流程
 """
 
-import os
-import sys
-import time
 import json
 import logging
+import sys
+import time
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, Any, Optional
 
 # 添加项目路径
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
@@ -23,10 +21,7 @@ log_dir.mkdir(parents=True, exist_ok=True)
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    handlers=[
-        logging.FileHandler(log_dir / "docker_smoke_test.log"),
-        logging.StreamHandler()
-    ]
+    handlers=[logging.FileHandler(log_dir / "docker_smoke_test.log"), logging.StreamHandler()],
 )
 logger = logging.getLogger(__name__)
 
@@ -35,11 +30,7 @@ class SmokeTest:
     """全链路冒烟测试"""
 
     def __init__(self):
-        self.results = {
-            "timestamp": datetime.now().isoformat(),
-            "phases": {},
-            "metrics": {}
-        }
+        self.results = {"timestamp": datetime.now().isoformat(), "phases": {}, "metrics": {}}
 
     def phase1_model_loading(self) -> dict:
         """阶段1: 模型加载测试"""
@@ -48,16 +39,11 @@ class SmokeTest:
         logger.info("=" * 60)
 
         start_time = time.time()
-        phase_result = {
-            "name": "模型加载",
-            "status": "unknown",
-            "steps": {}
-        }
+        phase_result = {"name": "模型加载", "status": "unknown", "steps": {}}
 
         try:
             # 1.1 检查模型文件
             logger.info("1.1 检查模型文件...")
-            from pathlib import Path
             from src.config_unified import get_settings
 
             settings = get_settings()
@@ -66,17 +52,10 @@ class SmokeTest:
             step_start = time.time()
             if model_path.exists():
                 file_size = model_path.stat().st_size
-                phase_result["steps"]["file_check"] = {
-                    "status": "OK",
-                    "path": str(model_path),
-                    "size_bytes": file_size
-                }
+                phase_result["steps"]["file_check"] = {"status": "OK", "path": str(model_path), "size_bytes": file_size}
                 logger.info(f"✅ 模型文件存在: {file_size} bytes")
             else:
-                phase_result["steps"]["file_check"] = {
-                    "status": "Fail",
-                    "error": "模型文件不存在"
-                }
+                phase_result["steps"]["file_check"] = {"status": "Fail", "error": "模型文件不存在"}
                 raise FileNotFoundError("模型文件不存在")
 
             # 1.2 加载模型
@@ -94,7 +73,7 @@ class SmokeTest:
                 "model_type": type(model).__name__,
                 "feature_count": len(feature_names),
                 "has_scaler": scaler is not None,
-                "load_time_ms": round((time.time() - step_start) * 1000, 2)
+                "load_time_ms": round((time.time() - step_start) * 1000, 2),
             }
             logger.info(f"✅ 模型加载成功: {type(model).__name__}, {len(feature_names)} 维特征")
 
@@ -103,6 +82,7 @@ class SmokeTest:
             step_start = time.time()
 
             import numpy as np
+
             X_test = np.random.randn(1, len(feature_names))
             if scaler:
                 X_test = scaler.transform(X_test)
@@ -114,7 +94,7 @@ class SmokeTest:
                 "status": "OK",
                 "prediction": int(prediction[0]),
                 "prediction_proba_shape": list(prediction_proba.shape),
-                "inference_time_ms": round((time.time() - step_start) * 1000, 2)
+                "inference_time_ms": round((time.time() - step_start) * 1000, 2),
             }
             logger.info(f"✅ 模型推理成功: 预测结果={prediction[0]}")
 
@@ -137,15 +117,12 @@ class SmokeTest:
         logger.info("=" * 60)
 
         start_time = time.time()
-        phase_result = {
-            "name": "数据加载",
-            "status": "unknown",
-            "steps": {}
-        }
+        phase_result = {"name": "数据加载", "status": "unknown", "steps": {}}
 
         try:
             import pandas as pd
             import psycopg2
+
             from src.config_unified import get_settings
 
             settings = get_settings()
@@ -156,17 +133,13 @@ class SmokeTest:
             step_start = time.time()
 
             conn = psycopg2.connect(
-                host=db.host,
-                port=db.port,
-                database=db.name,
-                user=db.user,
-                password=db.password.get_secret_value()
+                host=db.host, port=db.port, database=db.name, user=db.user, password=db.password.get_secret_value()
             )
 
             phase_result["steps"]["db_connect"] = {
                 "status": "OK",
                 "host": db.host,
-                "connect_time_ms": round((time.time() - step_start) * 1000, 2)
+                "connect_time_ms": round((time.time() - step_start) * 1000, 2),
             }
             logger.info(f"✅ 数据库连接成功: {db.host}")
 
@@ -193,7 +166,7 @@ class SmokeTest:
                 "status": "OK",
                 "record_count": len(df),
                 "column_count": len(df.columns),
-                "load_time_ms": round((time.time() - step_start) * 1000, 2)
+                "load_time_ms": round((time.time() - step_start) * 1000, 2),
             }
             logger.info(f"✅ 数据加载成功: {len(df)} 场比赛")
 
@@ -206,7 +179,7 @@ class SmokeTest:
             data_quality = {
                 col: {
                     "null_count": int(null_counts[col]),
-                    "null_percentage": round(null_counts[col] / len(df) * 100, 2)
+                    "null_percentage": round(null_counts[col] / len(df) * 100, 2),
                 }
                 for col in critical_columns
             }
@@ -214,9 +187,9 @@ class SmokeTest:
             phase_result["steps"]["data_quality"] = {
                 "status": "OK",
                 "quality_metrics": data_quality,
-                "check_time_ms": round((time.time() - step_start) * 1000, 2)
+                "check_time_ms": round((time.time() - step_start) * 1000, 2),
             }
-            logger.info(f"✅ 数据质量检查完成")
+            logger.info("✅ 数据质量检查完成")
 
             # 保存数据供后续阶段使用
             self.test_data = df
@@ -240,17 +213,12 @@ class SmokeTest:
         logger.info("=" * 60)
 
         start_time = time.time()
-        phase_result = {
-            "name": "特征工程",
-            "status": "unknown",
-            "steps": {}
-        }
+        phase_result = {"name": "特征工程", "status": "unknown", "steps": {}}
 
         try:
-            if not hasattr(self, 'test_data') or self.test_data is None:
+            if not hasattr(self, "test_data") or self.test_data is None:
                 raise ValueError("测试数据未加载，请先运行数据加载阶段")
 
-            import numpy as np
             from sklearn.preprocessing import StandardScaler
 
             # 3.1 特征选择
@@ -258,10 +226,14 @@ class SmokeTest:
             step_start = time.time()
 
             feature_columns = [
-                "home_xg", "away_xg",
-                "home_possession", "away_possession",
-                "home_shots_on_target", "away_shots_on_target",
-                "home_corners", "away_corners"
+                "home_xg",
+                "away_xg",
+                "home_possession",
+                "away_possession",
+                "home_shots_on_target",
+                "away_shots_on_target",
+                "home_corners",
+                "away_corners",
             ]
 
             available_features = [col for col in feature_columns if col in self.test_data.columns]
@@ -270,7 +242,7 @@ class SmokeTest:
                 "status": "OK",
                 "requested_features": len(feature_columns),
                 "available_features": len(available_features),
-                "features": available_features
+                "features": available_features,
             }
             logger.info(f"✅ 特征选择: {len(available_features)}/{len(feature_columns)} 可用")
 
@@ -286,7 +258,7 @@ class SmokeTest:
                 "status": "OK",
                 "sample_count": len(X),
                 "feature_count": X_scaled.shape[1],
-                "scaling_time_ms": round((time.time() - step_start) * 1000, 2)
+                "scaling_time_ms": round((time.time() - step_start) * 1000, 2),
             }
             logger.info(f"✅ 特征标准化完成: {X_scaled.shape}")
 
@@ -297,21 +269,23 @@ class SmokeTest:
             # 计算衍生特征
             self.test_data["xg_diff"] = self.test_data["home_xg"] - self.test_data["away_xg"]
             self.test_data["possession_diff"] = self.test_data["home_possession"] - self.test_data["away_possession"]
-            self.test_data["shots_diff"] = self.test_data["home_shots_on_target"] - self.test_data["away_shots_on_target"]
+            self.test_data["shots_diff"] = (
+                self.test_data["home_shots_on_target"] - self.test_data["away_shots_on_target"]
+            )
 
             derived_features = {
                 "xg_diff": self.test_data["xg_diff"].describe().to_dict(),
                 "possession_diff": self.test_data["possession_diff"].describe().to_dict(),
-                "shots_diff": self.test_data["shots_diff"].describe().to_dict()
+                "shots_diff": self.test_data["shots_diff"].describe().to_dict(),
             }
 
             phase_result["steps"]["derived_features"] = {
                 "status": "OK",
                 "derived_feature_count": 3,
                 "statistics": derived_features,
-                "compute_time_ms": round((time.time() - step_start) * 1000, 2)
+                "compute_time_ms": round((time.time() - step_start) * 1000, 2),
             }
-            logger.info(f"✅ 衍生特征计算完成")
+            logger.info("✅ 衍生特征计算完成")
 
             phase_result["status"] = "OK"
             phase_result["total_time_ms"] = round((time.time() - start_time) * 1000, 2)
@@ -332,19 +306,15 @@ class SmokeTest:
         logger.info("=" * 60)
 
         start_time = time.time()
-        phase_result = {
-            "name": "模型预测",
-            "status": "unknown",
-            "steps": {},
-            "predictions": []
-        }
+        phase_result = {"name": "模型预测", "status": "unknown", "steps": {}, "predictions": []}
 
         try:
-            if not hasattr(self, 'test_data') or self.test_data is None:
+            if not hasattr(self, "test_data") or self.test_data is None:
                 raise ValueError("测试数据未加载")
 
             import joblib
             import numpy as np
+
             from src.config_unified import get_settings
 
             settings = get_settings()
@@ -360,7 +330,7 @@ class SmokeTest:
 
             phase_result["steps"]["model_reload"] = {
                 "status": "OK",
-                "load_time_ms": round((time.time() - step_start) * 1000, 2)
+                "load_time_ms": round((time.time() - step_start) * 1000, 2),
             }
 
             # 4.2 批量预测
@@ -369,10 +339,14 @@ class SmokeTest:
 
             # 准备特征
             feature_columns = [
-                "home_xg", "away_xg",
-                "home_possession", "away_possession",
-                "home_shots_on_target", "away_shots_on_target",
-                "home_corners", "away_corners"
+                "home_xg",
+                "away_xg",
+                "home_possession",
+                "away_possession",
+                "home_shots_on_target",
+                "away_shots_on_target",
+                "home_corners",
+                "away_corners",
             ]
             available_features = [col for col in feature_columns if col in self.test_data.columns]
             X = self.test_data[available_features].fillna(0).values
@@ -394,13 +368,13 @@ class SmokeTest:
             pred_dist = {
                 "away_win": int(np.sum(predictions == 0)),
                 "draw": int(np.sum(predictions == 1)),
-                "home_win": int(np.sum(predictions == 2))
+                "home_win": int(np.sum(predictions == 2)),
             }
 
             avg_confidence = {
                 "away_win": round(float(np.mean(prediction_proba[:, 0])), 4),
                 "draw": round(float(np.mean(prediction_proba[:, 1])), 4),
-                "home_win": round(float(np.mean(prediction_proba[:, 2])), 4)
+                "home_win": round(float(np.mean(prediction_proba[:, 2])), 4),
             }
 
             phase_result["steps"]["batch_prediction"] = {
@@ -409,7 +383,7 @@ class SmokeTest:
                 "prediction_distribution": pred_dist,
                 "average_confidence": avg_confidence,
                 "predictions_per_second": round(len(predictions) / (predict_time / 1000), 2),
-                "total_time_ms": round(predict_time, 2)
+                "total_time_ms": round(predict_time, 2),
             }
             logger.info(f"✅ 预测完成: {pred_dist}")
             logger.info(f"   平均置信度: {avg_confidence}")
@@ -417,15 +391,17 @@ class SmokeTest:
             # 保存前5个预测结果
             for i in range(min(5, len(self.test_data))):
                 row = self.test_data.iloc[i]
-                phase_result["predictions"].append({
-                    "match": f"{row['home_team']} vs {row['away_team']}",
-                    "prediction": int(predictions[i]),
-                    "confidence": {
-                        "away_win": round(float(prediction_proba[i, 0]), 4),
-                        "draw": round(float(prediction_proba[i, 1]), 4),
-                        "home_win": round(float(prediction_proba[i, 2]), 4)
+                phase_result["predictions"].append(
+                    {
+                        "match": f"{row['home_team']} vs {row['away_team']}",
+                        "prediction": int(predictions[i]),
+                        "confidence": {
+                            "away_win": round(float(prediction_proba[i, 0]), 4),
+                            "draw": round(float(prediction_proba[i, 1]), 4),
+                            "home_win": round(float(prediction_proba[i, 2]), 4),
+                        },
                     }
-                })
+                )
 
             phase_result["status"] = "OK"
             phase_result["total_time_ms"] = round((time.time() - start_time) * 1000, 2)
@@ -446,33 +422,22 @@ class SmokeTest:
         logger.info("=" * 60)
 
         start_time = time.time()
-        phase_result = {
-            "name": "性能指标",
-            "status": "unknown",
-            "steps": {},
-            "metrics": {}
-        }
+        phase_result = {"name": "性能指标", "status": "unknown", "steps": {}, "metrics": {}}
 
         try:
             # 5.1 计算总体耗时
             logger.info("5.1 计算总体耗时...")
-            total_time = sum(
-                phase.get("total_time_ms", 0)
-                for phase in self.results["phases"].values()
-            )
+            total_time = sum(phase.get("total_time_ms", 0) for phase in self.results["phases"].values())
 
             phase_result["steps"]["total_time"] = {
                 "status": "OK",
                 "total_time_ms": total_time,
-                "total_time_seconds": round(total_time / 1000, 2)
+                "total_time_seconds": round(total_time / 1000, 2),
             }
 
             # 5.2 计算各阶段耗时占比
             logger.info("5.2 计算各阶段耗时占比...")
-            phase_times = {
-                name: phase.get("total_time_ms", 0)
-                for name, phase in self.results["phases"].items()
-            }
+            phase_times = {name: phase.get("total_time_ms", 0) for name, phase in self.results["phases"].items()}
 
             phase_percentages = {
                 name: round(time_ms / total_time * 100, 2) if total_time > 0 else 0
@@ -482,7 +447,7 @@ class SmokeTest:
             phase_result["steps"]["phase_breakdown"] = {
                 "status": "OK",
                 "phase_times_ms": phase_times,
-                "phase_percentages": phase_percentages
+                "phase_percentages": phase_percentages,
             }
 
             # 5.3 计算关键指标
@@ -532,16 +497,13 @@ class SmokeTest:
         self.phase5_performance_metrics()
 
         # 计算总体状态
-        all_ok = all(
-            phase.get("status") == "OK"
-            for phase in self.results["phases"].values()
-        )
+        all_ok = all(phase.get("status") == "OK" for phase in self.results["phases"].values())
         self.results["overall_status"] = "OK" if all_ok else "Fail"
         self.results["total_test_time_ms"] = round((time.time() - overall_start) * 1000, 2)
 
         logger.info("=" * 60)
         logger.info(f"📊 冒烟测试完成: {self.results['overall_status']}")
-        logger.info(f"总耗时: {self.results['total_test_time_ms']/1000:.2f} 秒")
+        logger.info(f"总耗时: {self.results['total_test_time_ms'] / 1000:.2f} 秒")
         logger.info("=" * 60)
 
         return self.results
@@ -587,10 +549,10 @@ class SmokeTest:
 
         print("\n" + "=" * 70)
         print(f"总体状态: {self.results['overall_status']}")
-        print(f"总测试时间: {self.results['total_test_time_ms']/1000:.2f} 秒")
+        print(f"总测试时间: {self.results['total_test_time_ms'] / 1000:.2f} 秒")
         print("=" * 70 + "\n")
 
-    def save_report(self, output_path: Optional[Path] = None):
+    def save_report(self, output_path: Path | None = None):
         """保存测试报告"""
         if output_path is None:
             output_path = Path("logs") / "docker_smoke_test_report.json"

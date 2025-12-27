@@ -11,22 +11,21 @@ Football Prediction Inference Engine
 - Docker容器化部署
 """
 
-import joblib
-import numpy as np
-import pandas as pd
 import json
 import logging
-from pathlib import Path
-from typing import Dict, List, Tuple, Optional
-import sys
 import os
+import sys
+from pathlib import Path
+
+import joblib
+import numpy as np
 
 # 添加项目路径
 sys.path.append("/app" if os.getenv("DOCKER_ENV") else ".")
 sys.path.append("src")
 
 # 导入凯利公式模块
-from strategy.kelly_criterion_v1 import KellyCriterionV1, calculate_kelly_for_prediction, format_kelly_output
+from strategy.kelly_criterion_v1 import KellyCriterionV1, calculate_kelly_for_prediction
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +33,7 @@ logger = logging.getLogger(__name__)
 class FootballPredictionInference:
     """足球预测推理引擎"""
 
-    def __init__(self, model_path: Optional[str] = None):
+    def __init__(self, model_path: str | None = None):
         """
         初始化推理引擎
 
@@ -70,11 +69,11 @@ class FootballPredictionInference:
             metadata_path = self.model_path.with_suffix(".json").with_name(
                 self.model_path.stem.replace("_metadata", "") + "_metadata.json"
             )
-            with open(metadata_path, "r") as f:
+            with open(metadata_path) as f:
                 metadata = json.load(f)
 
             # 重建标准化器和标签编码器
-            from sklearn.preprocessing import StandardScaler, LabelEncoder
+            from sklearn.preprocessing import LabelEncoder, StandardScaler
 
             self.scaler = StandardScaler()
             self.scaler.mean_ = np.array(metadata["scaler_mean"])
@@ -86,7 +85,7 @@ class FootballPredictionInference:
             self.feature_names = metadata["feature_names"]
             self.is_loaded = True
 
-            logger.info(f"✅ 模型组件加载完成")
+            logger.info("✅ 模型组件加载完成")
             logger.info(f"📊 特征数量: {len(self.feature_names)}")
             logger.info(f"🏷️ 标签类别: {metadata['label_encoder_classes']}")
             logger.info(f"🎯 模型版本: {metadata['version']}")
@@ -97,7 +96,7 @@ class FootballPredictionInference:
             logger.error(f"❌ 模型加载失败: {e}")
             return False
 
-    def prepare_features(self, match_features: Dict) -> np.ndarray:
+    def prepare_features(self, match_features: dict) -> np.ndarray:
         """
         准备预测特征
 
@@ -158,7 +157,7 @@ class FootballPredictionInference:
             logger.error(f"❌ 特征准备失败: {e}")
             return None
 
-    def predict_match(self, home_team: str, away_team: str, match_features: Dict) -> Dict:
+    def predict_match(self, home_team: str, away_team: str, match_features: dict) -> dict:
         """
         预测单场比赛结果
 
@@ -269,7 +268,7 @@ class FootballPredictionInference:
             else:
                 return "谨慎看好客胜"
 
-    def predict_batch(self, matches: List[Dict]) -> List[Dict]:
+    def predict_batch(self, matches: list[dict]) -> list[dict]:
         """
         批量预测比赛
 
@@ -288,7 +287,7 @@ class FootballPredictionInference:
 
         return results
 
-    def format_prediction_log(self, prediction: Dict) -> str:
+    def format_prediction_log(self, prediction: dict) -> str:
         """
         格式化预测日志输出
 
@@ -330,7 +329,7 @@ def get_inference_engine() -> FootballPredictionInference:
     return _inference_engine
 
 
-def predict_match_from_features(home_team: str, away_team: str, features: Dict) -> Dict:
+def predict_match_from_features(home_team: str, away_team: str, features: dict) -> dict:
     """
     便捷函数：从特征预测比赛
 

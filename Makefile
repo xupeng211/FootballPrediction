@@ -1,9 +1,9 @@
 # ============================================
-# FootballPrediction V29.0 - Makefile 指挥塔
+# FootballPrediction V51.0 - Makefile 指挥塔
 # ============================================
 # 归一化部署命令中心
-# 生成时间: 2025-12-25
-# 状态: V29.0 Cloud-Native Ready
+# 生成时间: 2025-12-26
+# 状态: V51.0 Industrial Grade Ready
 # ============================================
 
 .PHONY: help up down restart logs test clean build db-reset db-shell lint format security
@@ -24,7 +24,7 @@ NC     := \033[0m # No Color
 # ============================================
 help: ## 显示帮助信息
 	@echo ""
-	@echo "$(BLUE)FootballPrediction V29.0 - Makefile 指挥塔$(NC)"
+	@echo "$(BLUE)FootballPrediction V51.0 - Makefile 指挥塔$(NC)"
 	@echo ""
 	@echo "$(GREEN)使用方法:$(NC)"
 	@echo "  make <target>"
@@ -36,8 +36,11 @@ help: ## 显示帮助信息
 # ============================================
 # Docker 命令
 # ============================================
-up: ## 启动核心服务 (prediction_worker + db + redis)
+up: ## 启动核心服务 (db + redis)
 	docker-compose up -d
+
+up-pipeline: ## 启动核心服务 + 数据流水线
+	docker-compose --profile pipeline up -d
 
 up-api: ## 启动核心服务 + API
 	docker-compose --profile api up -d
@@ -52,13 +55,13 @@ down: ## 停止所有服务
 	docker-compose down
 
 restart: ## 重启核心服务
-	docker-compose restart prediction_worker
+	docker-compose restart pipeline_worker
 
 logs: ## 查看核心服务日志
-	docker-compose logs -f prediction_worker
+	docker-compose logs -f pipeline_worker
 
 logs-api: ## 查看 API 日志
-	docker-compose logs -f api
+	docker-compose logs -f predictor_api
 
 logs-all: ## 查看所有服务日志
 	docker-compose logs -f

@@ -17,29 +17,28 @@ L2 特征提取器模块
     >>> features = result.features
 
 Author: Architecture Team
-Version: V25.0
-Date: 2025-12-26
+Version: V26.0 (Stable)
+Date: 2025-12-27
 """
 
 from src.processors.base_extractor import (
     BaseExtractor,
     ExtractionResult,
     ExtractionStatus,
-    ValidationConfig,
     ExtractorRegistry,
+    ValidationConfig,
     register_extractor,
 )
-
 from src.processors.exceptions import (
+    CircuitBreakerOpenError,
+    ConfigurationError,
+    DataParsingError,
     ExtractionError,
-    ValidationError,
     InsufficientFeaturesError,
     MissingRequiredKeyError,
-    DataParsingError,
-    SchemaMismatchError,
-    ConfigurationError,
-    CircuitBreakerOpenError,
     RateLimitError,
+    SchemaMismatchError,
+    ValidationError,
 )
 
 __all__ = [
@@ -66,4 +65,4 @@ __all__ = [
 ]
 
 # 版本信息
-__version__ = "V25.0"
+__version__ = "V26.0 (Stable)"

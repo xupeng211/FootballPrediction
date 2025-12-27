@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 """
-统一配置系统 - 工业级纯净架构
+V26.0 统一配置系统 - 工业级纯净架构
+=====================================
+
+Version: V26.0 (Stable)
 
 合并config.py和config_secure.py的功能，提供类型安全的统一配置接口。
 
@@ -18,16 +21,15 @@
 5. External API Settings (外部API设置)
 """
 
-import os
-from enum import Enum
-from typing import Dict, Any, List, Optional, Union, Literal
-from pathlib import Path
-from dataclasses import dataclass, field
-
-from pydantic import Field, field_validator, SecretStr, ConfigDict
-from pydantic_settings import BaseSettings, SettingsConfigDict
-from pydantic import ValidationInfo
 import logging
+import os
+from dataclasses import dataclass, field
+from enum import Enum
+from pathlib import Path
+from typing import Any
+
+from pydantic import Field, SecretStr, ValidationInfo, field_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 logger = logging.getLogger(__name__)
 
@@ -67,7 +69,7 @@ class DatabaseConfig:
     pool_recycle: int = 3600
 
     # 新增：异步连接属性（用于 SQLAlchemy async）
-    async_url: Optional[str] = None
+    async_url: str | None = None
     async_pool_size: int = 10
     async_max_overflow: int = 20
     echo: bool = False
@@ -101,7 +103,7 @@ class RedisConfig:
     host: str
     port: int
     db: int = 0
-    password: Optional[SecretStr] = None
+    password: SecretStr | None = None
     max_connections: int = 20
     socket_timeout: int = 5
     socket_connect_timeout: int = 5
@@ -120,7 +122,7 @@ class FotMobAPIConfig:
     """FotMob API配置"""
 
     base_url: str = "https://www.fotmob.com/api"
-    headers: Dict[str, str] = field(default_factory=dict)
+    headers: dict[str, str] = field(default_factory=dict)
     timeout: int = 30
     retry_attempts: int = 3
     retry_delay: float = 1.0
@@ -140,7 +142,7 @@ class UnifiedSettings(BaseSettings):
 
     # === 环境自动检测和注入 ===
     @classmethod
-    def auto_inject_env_vars(cls) -> Dict[str, Any]:
+    def auto_inject_env_vars(cls) -> dict[str, Any]:
         """自动注入环境变量"""
         env_config = {}
 
@@ -202,9 +204,9 @@ class UnifiedSettings(BaseSettings):
     # === 安全配置 ===
     secret_key: SecretStr = Field(default="dev-secret-key-2024-production-ready", description="应用密钥")
 
-    allowed_hosts: List[str] = Field(default=["localhost", "127.0.0.1"], description="允许的主机列表")
+    allowed_hosts: list[str] = Field(default=["localhost", "127.0.0.1"], description="允许的主机列表")
 
-    cors_origins: List[str] = Field(
+    cors_origins: list[str] = Field(
         default=["http://localhost:3000", "http://localhost:8080"], description="CORS允许的源"
     )
 
@@ -230,14 +232,14 @@ class UnifiedSettings(BaseSettings):
 
     redis_db: int = Field(default=0, description="Redis数据库")
 
-    redis_password: Optional[SecretStr] = Field(default=None, description="Redis密码")
+    redis_password: SecretStr | None = Field(default=None, description="Redis密码")
 
     # === 外部API配置 ===
     fotmob_base_url: str = Field(default="https://www.fotmob.com/api", description="FotMob API基础URL")
 
-    fotmob_x_mas_header: Optional[str] = Field(default=None, description="FotMob X-MAS Header")
+    fotmob_x_mas_header: str | None = Field(default=None, description="FotMob X-MAS Header")
 
-    fotmob_x_foo_header: Optional[str] = Field(default=None, description="FotMob X-FOO Header")
+    fotmob_x_foo_header: str | None = Field(default=None, description="FotMob X-FOO Header")
 
     # === 模型配置 ===
     model_path: str = Field(default="data/models/xgb_football_v2_real_scores.joblib", description="模型文件路径")
@@ -264,7 +266,7 @@ class UnifiedSettings(BaseSettings):
     prediction_timeout_seconds: int = Field(default=30, description="预测超时时间（秒）")
 
     # === V3.2 三联赛原生支持配置 ===
-    supported_leagues: Dict[str, Any] = Field(
+    supported_leagues: dict[str, Any] = Field(
         default_factory=lambda: {
             "serie_a": {"id": 135, "name": "Serie A", "country": "Italy", "active": True, "priority": 1},
             "la_liga": {"id": 87, "name": "La Liga", "country": "Spain", "active": True, "priority": 2},
@@ -283,14 +285,33 @@ class UnifiedSettings(BaseSettings):
     harvest_batch_size: int = Field(default=50, description="数据收集批量大小")
     harvest_delay_seconds: float = Field(default=1.0, description="数据收集间隔（秒）")
 
+    # === V26.0 流水线配置 (标准化参数) ===
+    # 比赛状态常量 (统一大小写处理)
+    match_status_finished: str = Field(default="FINISHED", description="比赛完成状态")
+    match_status_scheduled: str = Field(default="SCHEDULED", description="比赛计划状态")
+    match_status_live: str = Field(default="LIVE", description="比赛进行中状态")
+    match_status_postponed: str = Field(default="POSTPONED", description="比赛推迟状态")
+
+    # 特征提取状态常量
+    feature_status_pending: str = Field(default="PENDING", description="特征待提取状态")
+    feature_status_processing: str = Field(default="PROCESSING", description="特征提取中状态")
+    feature_status_completed: str = Field(default="COMPLETED", description="特征提取完成状态")
+    feature_status_failed: str = Field(default="FAILED", description="特征提取失败状态")
+
+    # 流水线处理参数
+    pipeline_batch_size: int = Field(default=50, description="流水线批次处理大小")
+    pipeline_gc_interval: int = Field(default=50, description="GC调用间隔（记录数）")
+    max_l2_concurrency: int = Field(default=2, description="L2解析最大并发数")
+    pipeline_target_version: str = Field(default="V26.0", description="目标特征版本")
+
     # Pydantic V2 配置
     model_config = SettingsConfigDict(
         # 启用.env文件自动加载，支持环境变量配置
-        env_file = ".env",
-        env_file_encoding = "utf-8",
-        case_sensitive = False,
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=False,
         # 允许额外字段（用于向后兼容）- Pydantic V2 语法
-        extra = "ignore"
+        extra="ignore",
     )
 
     # === 验证器 ===
@@ -446,7 +467,7 @@ class UnifiedSettings(BaseSettings):
         """获取模型文件路径"""
         return Path(self.model_path)
 
-    def get_log_config(self) -> Dict[str, Any]:
+    def get_log_config(self) -> dict[str, Any]:
         """获取日志配置"""
         return {
             "version": 1,
@@ -481,11 +502,11 @@ class UnifiedSettings(BaseSettings):
             },
         }
 
-    def validate_integrity(self) -> List[str]:
+    def validate_integrity(self) -> list[str]:
         """验证配置完整性（已弃用，请使用 validate_environment）"""
         return self._validate_config_basic()
 
-    def _validate_config_basic(self) -> List[str]:
+    def _validate_config_basic(self) -> list[str]:
         """基础配置验证"""
         errors = []
 
@@ -511,7 +532,7 @@ class UnifiedSettings(BaseSettings):
 
         return errors
 
-    def validate_environment(self) -> Dict[str, Any]:
+    def validate_environment(self) -> dict[str, Any]:
         """验证环境配置完整性（新增方法）
 
         Returns:
@@ -573,7 +594,7 @@ class UnifiedSettings(BaseSettings):
 
 
 # === 全局设置实例 ===
-_settings_instance: Optional[UnifiedSettings] = None
+_settings_instance: UnifiedSettings | None = None
 
 
 def get_settings() -> UnifiedSettings:

@@ -12,18 +12,19 @@ Purpose: 引入高级动态特征，提升模型对"稳胆翻车"的识别能力
 """
 
 import logging
-import numpy as np
-import pandas as pd
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Tuple, Any
 from dataclasses import dataclass
+from datetime import datetime, timedelta
 from enum import Enum
+from typing import Any
+
+import numpy as np
 
 logger = logging.getLogger(__name__)
 
 
 class CompetitionLevel(Enum):
     """比赛级别枚举"""
+
     LOW = 1  # 联赛杯、足总杯早期
     MEDIUM = 2  # 英超联赛
     HIGH = 3  # 欧联杯
@@ -33,12 +34,13 @@ class CompetitionLevel(Enum):
 @dataclass
 class MatchSchedule:
     """比赛赛程数据结构"""
+
     team: str
     match_date: datetime
     competition: str
     is_home: bool
     days_rest: int  # 距离上场比赛的休息天数
-    travel_distance: Optional[int] = None  # 客场旅行距离（公里）
+    travel_distance: int | None = None  # 客场旅行距离（公里）
 
 
 class EloRelativeGapFeature:
@@ -67,7 +69,7 @@ class EloRelativeGapFeature:
     def __init__(self):
         """初始化 ELO 相对差距特征"""
         # 存储 ELO 评分（需要从历史数据中初始化）
-        self.team_elos: Dict[str, float] = {}
+        self.team_elos: dict[str, float] = {}
 
         logger.info("ELO Relative Gap 特征提取器初始化完成")
 
@@ -79,7 +81,7 @@ class EloRelativeGapFeature:
         away_fatigue: float = 0.0,
         home_schedule_density: float = 0.0,
         away_schedule_density: float = 0.0,
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """
         计算调整后的 ELO 相对差距
 
@@ -126,22 +128,17 @@ class EloRelativeGapFeature:
         adjustment_factor = adjusted_elo_gap / max(abs(raw_elo_gap), 1.0)
 
         return {
-            'raw_elo_gap': raw_elo_gap,
-            'adjusted_elo_gap': adjusted_elo_gap,
-            'home_elo_effective': home_elo_effective,
-            'away_elo_effective': away_elo_effective,
-            'adjustment_factor': adjustment_factor,
-            'fatigue_impact': abs(home_fatigue_penalty - away_fatigue_penalty),
-            'schedule_impact': abs(home_density_penalty - away_density_penalty),
+            "raw_elo_gap": raw_elo_gap,
+            "adjusted_elo_gap": adjusted_elo_gap,
+            "home_elo_effective": home_elo_effective,
+            "away_elo_effective": away_elo_effective,
+            "adjustment_factor": adjustment_factor,
+            "fatigue_impact": abs(home_fatigue_penalty - away_fatigue_penalty),
+            "schedule_impact": abs(home_density_penalty - away_density_penalty),
         }
 
     def update_elos_from_result(
-        self,
-        home_team: str,
-        away_team: str,
-        home_goals: int,
-        away_goals: int,
-        k_factor: float = 20.0
+        self, home_team: str, away_team: str, home_goals: int, away_goals: int, k_factor: float = 20.0
     ):
         """
         根据比赛结果更新 ELO 评分
@@ -211,16 +208,11 @@ class FatigueIndexFeature:
     def __init__(self):
         """初始化疲劳度特征"""
         # 存储球队赛程历史
-        self.team_schedules: Dict[str, List[MatchSchedule]] = {}
+        self.team_schedules: dict[str, list[MatchSchedule]] = {}
 
         logger.info("Fatigue Index 特征提取器初始化完成")
 
-    def calculate_fatigue(
-        self,
-        team: str,
-        match_date: datetime,
-        lookback_days: int = 7
-    ) -> Dict[str, float]:
+    def calculate_fatigue(self, team: str, match_date: datetime, lookback_days: int = 7) -> dict[str, float]:
         """
         计算球队疲劳度指数
 
@@ -243,20 +235,17 @@ class FatigueIndexFeature:
 
         # 筛选回溯窗口内的比赛
         cutoff_date = match_date - timedelta(days=lookback_days)
-        recent_matches = [
-            s for s in schedules
-            if cutoff_date <= s.match_date < match_date
-        ]
+        recent_matches = [s for s in schedules if cutoff_date <= s.match_date < match_date]
 
         if not recent_matches:
             # H-01 修复: 冷启动返回 NaN，让模型知道"数据缺失"
             return {
-                'fatigue_index': np.nan,
-                'matches_played': 0,
-                'competition_fatigue': np.nan,
-                'travel_fatigue': np.nan,
-                'accumulation_fatigue': np.nan,
-                'rest_days': np.nan,  # 无近期比赛
+                "fatigue_index": np.nan,
+                "matches_played": 0,
+                "competition_fatigue": np.nan,
+                "travel_fatigue": np.nan,
+                "accumulation_fatigue": np.nan,
+                "rest_days": np.nan,  # 无近期比赛
             }
 
         # 按时间排序
@@ -269,11 +258,8 @@ class FatigueIndexFeature:
         # 比赛级别疲劳
         competition_fatigue = 0.0
         for match in recent_matches:
-            multiplier = self.COMPETITION_MULTIPLIER.get(
-                match.competition.lower().replace(" ", "_"),
-                1.0
-            )
-            competition_fatigue += (self.BASE_FATIGUE_PER_MATCH * multiplier)
+            multiplier = self.COMPETITION_MULTIPLIER.get(match.competition.lower().replace(" ", "_"), 1.0)
+            competition_fatigue += self.BASE_FATIGUE_PER_MATCH * multiplier
 
         # 旅行疲劳
         travel_fatigue = 0.0
@@ -298,21 +284,16 @@ class FatigueIndexFeature:
         rest_days = (match_date - last_match.match_date).days
 
         return {
-            'fatigue_index': fatigue_index,
-            'matches_played': matches_played,
-            'competition_fatigue': min(competition_fatigue, 1.0),
-            'travel_fatigue': min(travel_fatigue, 1.0),
-            'accumulation_fatigue': min(accumulation_fatigue, 1.0),
-            'rest_days': rest_days,
+            "fatigue_index": fatigue_index,
+            "matches_played": matches_played,
+            "competition_fatigue": min(competition_fatigue, 1.0),
+            "travel_fatigue": min(travel_fatigue, 1.0),
+            "accumulation_fatigue": min(accumulation_fatigue, 1.0),
+            "rest_days": rest_days,
         }
 
     def add_match_schedule(
-        self,
-        team: str,
-        match_date: datetime,
-        competition: str,
-        is_home: bool,
-        travel_distance: Optional[int] = None
+        self, team: str, match_date: datetime, competition: str, is_home: bool, travel_distance: int | None = None
     ):
         """添加比赛赛程记录"""
         if team not in self.team_schedules:
@@ -324,7 +305,7 @@ class FatigueIndexFeature:
             competition=competition,
             is_home=is_home,
             days_rest=0,  # 将在计算时动态确定
-            travel_distance=travel_distance
+            travel_distance=travel_distance,
         )
 
         self.team_schedules[team].append(schedule)
@@ -355,7 +336,7 @@ class RelegationIncentiveFeature:
     def __init__(self):
         """初始化保级战意特征"""
         # 存储积分榜数据 {season: {team: points}}
-        self.standings: Dict[str, Dict[str, int]] = {}
+        self.standings: dict[str, dict[str, int]] = {}
 
         logger.info("Relegation Incentive 特征提取器初始化完成")
 
@@ -365,8 +346,8 @@ class RelegationIncentiveFeature:
         team_points: int,
         relegation_zone_points: int,
         games_remaining: int,
-        opponent_safe: bool = False
-    ) -> Dict[str, float]:
+        opponent_safe: bool = False,
+    ) -> dict[str, float]:
         """
         计算保级战意指数
 
@@ -418,23 +399,23 @@ class RelegationIncentiveFeature:
 
         # 计算最终战意指数
         incentive_index = (
-            base_incentive *
-            relegation_multiplier *
-            last_games_multiplier *
-            opponent_multiplier *
-            (1 + desperation_level)  # 绝望程度加成
+            base_incentive
+            * relegation_multiplier
+            * last_games_multiplier
+            * opponent_multiplier
+            * (1 + desperation_level)  # 绝望程度加成
         )
 
         # 归一化到 0-1
         incentive_index = min(incentive_index / 1.5, 1.0)
 
         return {
-            'incentive_index': incentive_index,
-            'is_relegation_battle': in_relegation_zone,
-            'points_from_safety': max(0, points_from_danger),
-            'last_5_games': is_last_games,
-            'desperation_level': desperation_level,
-            'games_remaining': games_remaining,
+            "incentive_index": incentive_index,
+            "is_relegation_battle": in_relegation_zone,
+            "points_from_safety": max(0, points_from_danger),
+            "last_5_games": is_last_games,
+            "desperation_level": desperation_level,
+            "games_remaining": games_remaining,
         }
 
     def update_standings(self, season: str, team: str, points: int):
@@ -473,9 +454,9 @@ class V19AdvancedFeatureExtractor:
         away_points: int,
         relegation_zone_points: int,
         games_remaining: int,
-        home_recent_matches: Optional[List[Dict]] = None,
-        away_recent_matches: Optional[List[Dict]] = None,
-    ) -> Dict[str, Any]:
+        home_recent_matches: list[dict] | None = None,
+        away_recent_matches: list[dict] | None = None,
+    ) -> dict[str, Any]:
         """
         提取 V19.0 高级特征
 
@@ -501,16 +482,12 @@ class V19AdvancedFeatureExtractor:
         away_fatigue = 0.0
 
         if home_recent_matches:
-            home_fatigue_data = self.fatigue_feature.calculate_fatigue(
-                home_team, match_date, lookback_days=7
-            )
-            home_fatigue = home_fatigue_data['fatigue_index']
+            home_fatigue_data = self.fatigue_feature.calculate_fatigue(home_team, match_date, lookback_days=7)
+            home_fatigue = home_fatigue_data["fatigue_index"]
 
         if away_recent_matches:
-            away_fatigue_data = self.fatigue_feature.calculate_fatigue(
-                away_team, match_date, lookback_days=7
-            )
-            away_fatigue = away_fatigue_data['fatigue_index']
+            away_fatigue_data = self.fatigue_feature.calculate_fatigue(away_team, match_date, lookback_days=7)
+            away_fatigue = away_fatigue_data["fatigue_index"]
 
         elo_gap_data = self.elo_feature.calculate_elo_gap(
             home_team=home_team,
@@ -521,17 +498,17 @@ class V19AdvancedFeatureExtractor:
             away_schedule_density=0.0,
         )
 
-        features.update({f'elo_{k}': v for k, v in elo_gap_data.items()})
+        features.update({f"elo_{k}": v for k, v in elo_gap_data.items()})
 
         # 2. 疲劳度特征（主队和客队）
         home_fatigue_data = self.fatigue_feature.calculate_fatigue(home_team, match_date)
         away_fatigue_data = self.fatigue_feature.calculate_fatigue(away_team, match_date)
 
-        features['home_fatigue_index'] = home_fatigue_data['fatigue_index']
-        features['away_fatigue_index'] = away_fatigue_data['fatigue_index']
-        features['fatigue_diff'] = home_fatigue_data['fatigue_index'] - away_fatigue_data['fatigue_index']
-        features['home_rest_days'] = home_fatigue_data['rest_days']
-        features['away_rest_days'] = away_fatigue_data['rest_days']
+        features["home_fatigue_index"] = home_fatigue_data["fatigue_index"]
+        features["away_fatigue_index"] = away_fatigue_data["fatigue_index"]
+        features["fatigue_diff"] = home_fatigue_data["fatigue_index"] - away_fatigue_data["fatigue_index"]
+        features["home_rest_days"] = home_fatigue_data["rest_days"]
+        features["away_rest_days"] = away_fatigue_data["rest_days"]
 
         # 3. 保级战意特征（主队和客队）
         home_incentive_data = self.relegation_feature.calculate_incentive(
@@ -539,7 +516,7 @@ class V19AdvancedFeatureExtractor:
             team_points=home_points,
             relegation_zone_points=relegation_zone_points,
             games_remaining=games_remaining,
-            opponent_safe=False  # 可根据对手积分判断
+            opponent_safe=False,  # 可根据对手积分判断
         )
 
         away_incentive_data = self.relegation_feature.calculate_incentive(
@@ -547,14 +524,14 @@ class V19AdvancedFeatureExtractor:
             team_points=away_points,
             relegation_zone_points=relegation_zone_points,
             games_remaining=games_remaining,
-            opponent_safe=False
+            opponent_safe=False,
         )
 
-        features['home_relegation_incentive'] = home_incentive_data['incentive_index']
-        features['away_relegation_incentive'] = away_incentive_data['incentive_index']
-        features['incentive_diff'] = home_incentive_data['incentive_index'] - away_incentive_data['incentive_index']
-        features['home_desperation'] = home_incentive_data['desperation_level']
-        features['away_desperation'] = away_incentive_data['desperation_level']
+        features["home_relegation_incentive"] = home_incentive_data["incentive_index"]
+        features["away_relegation_incentive"] = away_incentive_data["incentive_index"]
+        features["incentive_diff"] = home_incentive_data["incentive_index"] - away_incentive_data["incentive_index"]
+        features["home_desperation"] = home_incentive_data["desperation_level"]
+        features["away_desperation"] = away_incentive_data["desperation_level"]
 
         return features
 

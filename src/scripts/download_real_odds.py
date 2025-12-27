@@ -9,30 +9,30 @@ V11.0 新增功能:
 3. 多备用源支持
 """
 
+import random
+import time
+import warnings
+
 import pandas as pd
 import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
-from pathlib import Path
-from datetime import datetime
-import warnings
-import random
-import time
-warnings.filterwarnings('ignore')
+
+warnings.filterwarnings("ignore")
 
 
 # V11.0: User-Agent 池
 USER_AGENTS = [
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-    'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0',
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:121.0) Gecko/20100101 Firefox/121.0'
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:121.0) Gecko/20100101 Firefox/121.0",
 ]
 
 # V11.0: 备用数据源
 BACKUP_SOURCES = [
-    'https://www.football-data.co.uk/mmz4281',
+    "https://www.football-data.co.uk/mmz4281",
     # 可添加更多备用源
 ]
 
@@ -48,10 +48,10 @@ def create_robust_session() -> requests.Session:
 
     # 配置重试策略
     retry_strategy = Retry(
-        total=5,                      # 最多重试 5 次
-        backoff_factor=2,             # 指数退避: 2s, 4s, 8s, 16s, 32s
+        total=5,  # 最多重试 5 次
+        backoff_factor=2,  # 指数退避: 2s, 4s, 8s, 16s, 32s
         status_forcelist=[429, 500, 502, 503, 504],  # 需要重试的 HTTP 状态码
-        allowed_methods=["GET"]
+        allowed_methods=["GET"],
     )
 
     adapter = HTTPAdapter(max_retries=retry_strategy)
@@ -93,12 +93,12 @@ def download_odds_data():
             try:
                 # V11.0: 轮换 User-Agent
                 headers = {
-                    'User-Agent': get_random_user_agent(),
-                    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-                    'Accept-Language': 'en-US,en;q=0.5',
-                    'Accept-Encoding': 'gzip, deflate',
-                    'Connection': 'keep-alive',
-                    'Upgrade-Insecure-Requests': '1'
+                    "User-Agent": get_random_user_agent(),
+                    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+                    "Accept-Language": "en-US,en;q=0.5",
+                    "Accept-Encoding": "gzip, deflate",
+                    "Connection": "keep-alive",
+                    "Upgrade-Insecure-Requests": "1",
                 }
 
                 response = session.get(url, headers=headers, timeout=30)
@@ -106,7 +106,7 @@ def download_odds_data():
 
                 # 读取CSV
                 df = pd.read_csv(url)
-                df['Season'] = season
+                df["Season"] = season
 
                 print(f"  ✅ 成功下载: {len(df)} 场比赛 (尝试 {attempt + 1}/5)")
                 print(f"  📋 列名: {list(df.columns)[:10]}...")
@@ -120,27 +120,27 @@ def download_odds_data():
             except requests.exceptions.HTTPError as e:
                 if e.response.status_code == 429:
                     # 速率限制，等待后重试
-                    wait_time = (2 ** attempt) + random.uniform(0, 1)
+                    wait_time = (2**attempt) + random.uniform(0, 1)
                     print(f"  ⏳ 速率限制，等待 {wait_time:.1f} 秒后重试...")
                     time.sleep(wait_time)
                 else:
                     print(f"  ❌ HTTP 错误 {e.response.status_code}: {e}")
                     if attempt < 4:
-                        wait_time = (2 ** attempt) + random.uniform(0, 1)
+                        wait_time = (2**attempt) + random.uniform(0, 1)
                         print(f"  ⏳ {wait_time:.1f} 秒后重试...")
                         time.sleep(wait_time)
 
             except requests.exceptions.Timeout:
                 print(f"  ⏰ 请求超时 (尝试 {attempt + 1}/5)")
                 if attempt < 4:
-                    wait_time = (2 ** attempt) + random.uniform(0, 1)
+                    wait_time = (2**attempt) + random.uniform(0, 1)
                     print(f"  ⏳ {wait_time:.1f} 秒后重试...")
                     time.sleep(wait_time)
 
             except Exception as e:
                 print(f"  ❌ 下载失败: {e}")
                 if attempt < 4:
-                    wait_time = (2 ** attempt) + random.uniform(0, 1)
+                    wait_time = (2**attempt) + random.uniform(0, 1)
                     print(f"  ⏳ {wait_time:.1f} 秒后重试...")
                     time.sleep(wait_time)
 
@@ -168,85 +168,96 @@ def standardize_columns(df: pd.DataFrame) -> pd.DataFrame:
 
     # 赔率数据常见列名映射
     column_mapping = {
-        'Date': 'match_date',
-        'HomeTeam': 'home_team',
-        'AwayTeam': 'away_team',
-        'B365H': 'b365_home_odds',  # Bet365 主胜赔率
-        'B365D': 'b365_draw_odds',  # Bet365 平局赔率
-        'B365A': 'b365_away_odds',  # Bet365 客胜赔率
-        'BWH': 'bw_home_odds',      # Betway
-        'BWD': 'bw_draw_odds',
-        'BWA': 'bw_away_odds',
-        'IWH': 'iw_home_odds',      # Interwetten
-        'IWD': 'iw_draw_odds',
-        'IWA': 'iw_away_odds',
-        'PSH': 'ps_home_odds',      # Pinnacle
-        'PSD': 'ps_draw_odds',
-        'PSA': 'ps_away_odds',
-        'WHH': 'wh_home_odds',      # William Hill
-        'WHD': 'wh_draw_odds',
-        'WHA': 'wh_away_odds',
-        'VCH': 'vc_home_odds',      # VC Bet
-        'VCD': 'vc_draw_odds',
-        'VCA': 'vc_away_odds',
-        'MaxH': 'max_home_odds',    # 最高赔率
-        'MaxD': 'max_draw_odds',
-        'MaxA': 'max_away_odds',
-        'AvgH': 'avg_home_odds',    # 平均赔率
-        'AvgD': 'avg_draw_odds',
-        'AvgA': 'avg_away_odds',
+        "Date": "match_date",
+        "HomeTeam": "home_team",
+        "AwayTeam": "away_team",
+        "B365H": "b365_home_odds",  # Bet365 主胜赔率
+        "B365D": "b365_draw_odds",  # Bet365 平局赔率
+        "B365A": "b365_away_odds",  # Bet365 客胜赔率
+        "BWH": "bw_home_odds",  # Betway
+        "BWD": "bw_draw_odds",
+        "BWA": "bw_away_odds",
+        "IWH": "iw_home_odds",  # Interwetten
+        "IWD": "iw_draw_odds",
+        "IWA": "iw_away_odds",
+        "PSH": "ps_home_odds",  # Pinnacle
+        "PSD": "ps_draw_odds",
+        "PSA": "ps_away_odds",
+        "WHH": "wh_home_odds",  # William Hill
+        "WHD": "wh_draw_odds",
+        "WHA": "wh_away_odds",
+        "VCH": "vc_home_odds",  # VC Bet
+        "VCD": "vc_draw_odds",
+        "VCA": "vc_away_odds",
+        "MaxH": "max_home_odds",  # 最高赔率
+        "MaxD": "max_draw_odds",
+        "MaxA": "max_away_odds",
+        "AvgH": "avg_home_odds",  # 平均赔率
+        "AvgD": "avg_draw_odds",
+        "AvgA": "avg_away_odds",
     }
 
     # 重命名列
     df = df.rename(columns=column_mapping)
 
     # 处理日期格式
-    if 'match_date' in df.columns:
+    if "match_date" in df.columns:
         # 尝试多种日期格式
-        for date_format in ['%d/%m/%y', '%d/%m/%Y', '%Y-%m-%d']:
+        for date_format in ["%d/%m/%y", "%d/%m/%Y", "%Y-%m-%d"]:
             try:
-                df['match_date'] = pd.to_datetime(df['match_date'], format=date_format)
+                df["match_date"] = pd.to_datetime(df["match_date"], format=date_format)
                 break
             except:
                 continue
 
         # 如果还是字符串，尝试自动解析
-        if df['match_date'].dtype == 'object':
-            df['match_date'] = pd.to_datetime(df['match_date'], errors='coerce')
+        if df["match_date"].dtype == "object":
+            df["match_date"] = pd.to_datetime(df["match_date"], errors="coerce")
 
     # 标准化球队名称（英超）
     team_name_mapping = {
         # 赔率数据 -> 预测数据
-        'Bournemouth': 'AFC Bournemouth',
-        'Ipswich': 'Ipswich Town',  # 24/25新升级
-        'Leicester': 'Leicester City',
-        'Luton': 'Luton Town',
-        'Sheffield United': 'Sheffield United',
-        'Southampton': 'Southampton',
-        'West Ham': 'West Ham United',
-        'Wolves': 'Wolverhampton Wanderers',
-        'Nott\'m Forest': 'Nottingham Forest',
+        "Bournemouth": "AFC Bournemouth",
+        "Ipswich": "Ipswich Town",  # 24/25新升级
+        "Leicester": "Leicester City",
+        "Luton": "Luton Town",
+        "Sheffield United": "Sheffield United",
+        "Southampton": "Southampton",
+        "West Ham": "West Ham United",
+        "Wolves": "Wolverhampton Wanderers",
+        "Nott'm Forest": "Nottingham Forest",
     }
 
-    if 'home_team' in df.columns:
-        df['home_team'] = df['home_team'].replace(team_name_mapping)
-    if 'away_team' in df.columns:
-        df['away_team'] = df['away_team'].replace(team_name_mapping)
+    if "home_team" in df.columns:
+        df["home_team"] = df["home_team"].replace(team_name_mapping)
+    if "away_team" in df.columns:
+        df["away_team"] = df["away_team"].replace(team_name_mapping)
 
     # 过滤掉不在预测数据中的球队
     valid_teams = {
-        'AFC Bournemouth', 'Arsenal', 'Aston Villa', 'Brentford',
-        'Brighton & Hove Albion', 'Burnley', 'Chelsea', 'Crystal Palace',
-        'Everton', 'Fulham', 'Leeds United', 'Liverpool', 'Manchester City',
-        'Manchester United', 'Newcastle United', 'Nottingham Forest',
-        'Sunderland', 'Tottenham Hotspur', 'West Ham United',
-        'Wolverhampton Wanderers'
+        "AFC Bournemouth",
+        "Arsenal",
+        "Aston Villa",
+        "Brentford",
+        "Brighton & Hove Albion",
+        "Burnley",
+        "Chelsea",
+        "Crystal Palace",
+        "Everton",
+        "Fulham",
+        "Leeds United",
+        "Liverpool",
+        "Manchester City",
+        "Manchester United",
+        "Newcastle United",
+        "Nottingham Forest",
+        "Sunderland",
+        "Tottenham Hotspur",
+        "West Ham United",
+        "Wolverhampton Wanderers",
     }
 
-    df = df[
-        (df['home_team'].isin(valid_teams)) &
-        (df['away_team'].isin(valid_teams))
-    ]
+    df = df[(df["home_team"].isin(valid_teams)) & (df["away_team"].isin(valid_teams))]
 
     print(f"  🔍 过滤后保留: {len(df)} 场比赛")
 
@@ -274,32 +285,30 @@ def merge_with_predictions(real_odds_path: str, predictions_path: str) -> pd.Dat
     print(f"  预测数据: {len(pred_df)} 场")
 
     # 确保日期格式一致
-    if 'match_time' in pred_df.columns:
-        pred_df['match_time'] = pd.to_datetime(pred_df['match_time'])
-    if 'match_date' in odds_df.columns:
-        odds_df['match_date'] = pd.to_datetime(odds_df['match_date'])
+    if "match_time" in pred_df.columns:
+        pred_df["match_time"] = pd.to_datetime(pred_df["match_time"])
+    if "match_date" in odds_df.columns:
+        odds_df["match_date"] = pd.to_datetime(odds_df["match_date"])
 
     # 创建合并键
     # 方法1: 基于日期和球队名称
     merged_df = pd.merge(
         pred_df,
         odds_df,
-        left_on=['home_team', 'away_team'],
-        right_on=['home_team', 'away_team'],
-        how='inner',
-        suffixes=('_pred', '_odds')
+        left_on=["home_team", "away_team"],
+        right_on=["home_team", "away_team"],
+        how="inner",
+        suffixes=("_pred", "_odds"),
     )
 
     # 进一步筛选日期范围（允许误差±3天）
-    if 'match_time' in merged_df.columns and 'match_date' in merged_df.columns:
+    if "match_time" in merged_df.columns and "match_date" in merged_df.columns:
         # 转换为naive datetime以便比较
-        match_time = merged_df['match_time'].dt.tz_localize(None)
-        match_date = merged_df['match_date'].dt.tz_localize(None)
+        match_time = merged_df["match_time"].dt.tz_localize(None)
+        match_date = merged_df["match_date"].dt.tz_localize(None)
 
-        merged_df['date_diff'] = abs(
-            (match_time - match_date).dt.days
-        )
-        merged_df = merged_df[merged_df['date_diff'] <= 3]
+        merged_df["date_diff"] = abs((match_time - match_date).dt.days)
+        merged_df = merged_df[merged_df["date_diff"] <= 3]
 
     print(f"  ✅ 合并成功: {len(merged_df)} 场比赛")
 
@@ -319,10 +328,7 @@ def main():
     if odds_df is not None:
         # 合并数据
         pred_path = "/home/user/projects/FootballPrediction/data/multi_season_v85.csv"
-        merged_df = merge_with_predictions(
-            "/home/user/projects/FootballPrediction/data/real_odds_raw.csv",
-            pred_path
-        )
+        merged_df = merge_with_predictions("/home/user/projects/FootballPrediction/data/real_odds_raw.csv", pred_path)
 
         print("\n" + "=" * 60)
         print("✅ 真实赔率数据接入完成")

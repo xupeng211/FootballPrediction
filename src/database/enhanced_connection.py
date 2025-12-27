@@ -3,21 +3,18 @@
 集成了性能优化器的生产级数据库连接
 """
 
-import asyncio
 import logging
 import time
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator, Optional, Dict, Any
+from typing import Any
 
-from sqlalchemy.ext.asyncio import (
-    AsyncEngine,
-    AsyncSession,
-    async_sessionmaker,
-    create_async_engine,
-)
 from sqlalchemy import text
+from sqlalchemy.ext.asyncio import (
+    AsyncSession,
+)
 
-from .connection import DatabaseManager, get_database_config
+from .connection import DatabaseManager
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +37,7 @@ class EnhancedDatabaseManager(DatabaseManager):
 
     def __init__(self):
         super().__init__()
-        self.db_optimizer: Optional[DatabaseConnectionOptimizer] = None
+        self.db_optimizer: DatabaseConnectionOptimizer | None = None
         self.query_stats = {
             "total_queries": 0,
             "successful_queries": 0,
@@ -104,7 +101,7 @@ class EnhancedDatabaseManager(DatabaseManager):
 
             await session.close()
 
-    async def execute_query_with_stats(self, query: str, params: Dict = None, use_cache: bool = True):
+    async def execute_query_with_stats(self, query: str, params: dict = None, use_cache: bool = True):
         """
         执行带有统计和缓存的查询
         """
@@ -116,7 +113,7 @@ class EnhancedDatabaseManager(DatabaseManager):
                 result = await session.execute(text(query), params or {})
                 return result.fetchall()
 
-    async def get_connection_stats(self) -> Dict[str, Any]:
+    async def get_connection_stats(self) -> dict[str, Any]:
         """获取连接统计信息"""
         stats = {"query_stats": self.query_stats, "engine_stats": {}}
 
@@ -137,7 +134,7 @@ class EnhancedDatabaseManager(DatabaseManager):
 
         return stats
 
-    async def health_check(self) -> Dict[str, Any]:
+    async def health_check(self) -> dict[str, Any]:
         """增强的健康检查"""
         health = {"status": "healthy", "timestamp": time.time(), "database": "unknown"}
 
@@ -191,7 +188,7 @@ class EnhancedDatabaseManager(DatabaseManager):
 
 
 # 全局增强数据库管理器实例
-enhanced_db_manager: Optional[EnhancedDatabaseManager] = None
+enhanced_db_manager: EnhancedDatabaseManager | None = None
 
 
 def get_enhanced_database_manager() -> EnhancedDatabaseManager:

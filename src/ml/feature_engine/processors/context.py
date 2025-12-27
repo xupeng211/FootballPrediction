@@ -23,12 +23,11 @@ ContextProcessor - 比赛上下文处理器（V21.0 深度爆破版）
 版本: V21.0-deep-blowout
 """
 
-from typing import Any, Dict, Optional
-from datetime import datetime
 import logging
+from typing import Any
 
-from ..base import BaseProcessor, ProcessorResult, ProcessorConfig
-from ..models import MatchData, MatchContext
+from ..base import BaseProcessor, ProcessorConfig, ProcessorResult
+from ..models import MatchContext, MatchData
 
 logger = logging.getLogger(__name__)
 
@@ -44,6 +43,7 @@ class ContextProcessorConfig(ProcessorConfig):
         enable_schedule_context: 是否启用赛程背景分析
         enable_attendance_analysis: 是否启用上座率分析（球场压力）
     """
+
     enable_time_encoding: bool = True
     enable_venue_analysis: bool = True
     enable_weather_features: bool = True
@@ -104,19 +104,28 @@ class ContextProcessor(BaseProcessor[MatchData]):
 
     # 极端天气条件定义
     EXTREME_WEATHER_CONDITIONS = {
-        "heavy rain", "torrential rain", "storm", "thunderstorm",
-        "heavy snow", "blizzard", "strong wind", "gale",
-        "extreme heat", "freezing", "ice", "hail",
-        "fog", "mist", "smog",
+        "heavy rain",
+        "torrential rain",
+        "storm",
+        "thunderstorm",
+        "heavy snow",
+        "blizzard",
+        "strong wind",
+        "gale",
+        "extreme heat",
+        "freezing",
+        "ice",
+        "hail",
+        "fog",
+        "mist",
+        "smog",
     }
 
-    def __init__(self, config: Optional[ContextProcessorConfig] = None) -> None:
+    def __init__(self, config: ContextProcessorConfig | None = None) -> None:
         super().__init__(config or ContextProcessorConfig())
         self.config: ContextProcessorConfig = self.config
 
-    def process(
-        self, data: MatchData, context: Any
-    ) -> ProcessorResult:
+    def process(self, data: MatchData, context: Any) -> ProcessorResult:
         """
         提取比赛上下文特征
 
@@ -127,7 +136,7 @@ class ContextProcessor(BaseProcessor[MatchData]):
         Returns:
             ProcessorResult: 包含上下文特征的处理器结果
         """
-        features: Dict[str, float] = {}
+        features: dict[str, float] = {}
 
         try:
             match_context = data.context or MatchContext()
@@ -164,9 +173,7 @@ class ContextProcessor(BaseProcessor[MatchData]):
             logger.error(f"ContextProcessor failed for match {data.match_id}: {e}")
             return ProcessorResult.failure_result(str(e))
 
-    def _encode_time_features(
-        self, match_context: MatchContext
-    ) -> Dict[str, float]:
+    def _encode_time_features(self, match_context: MatchContext) -> dict[str, float]:
         """
         编码时间特征（深度爆破版）
 
@@ -260,9 +267,7 @@ class ContextProcessor(BaseProcessor[MatchData]):
 
         return features
 
-    def _analyze_venue_pressure(
-        self, match_context: MatchContext
-    ) -> Dict[str, float]:
+    def _analyze_venue_pressure(self, match_context: MatchContext) -> dict[str, float]:
         """
         分析场地因素（深度爆破版 - 球场压力建模）
 
@@ -280,15 +285,11 @@ class ContextProcessor(BaseProcessor[MatchData]):
         features = {}
 
         # 是否中立场地
-        features["is_neutral_venue"] = (
-            1.0 if match_context.is_neutral else 0.0
-        )
+        features["is_neutral_venue"] = 1.0 if match_context.is_neutral else 0.0
 
         # 场地容量归一化（假设最大容量为 90,000）
         capacity = match_context.venue_capacity or 0
-        features["venue_capacity_normalized"] = round(
-            min(capacity / 90000.0, 1.0), 4
-        )
+        features["venue_capacity_normalized"] = round(min(capacity / 90000.0, 1.0), 4)
 
         # 场地规模分类
         if capacity >= 75000:
@@ -340,9 +341,7 @@ class ContextProcessor(BaseProcessor[MatchData]):
 
         return features
 
-    def _extract_weather_features(
-        self, match_context: MatchContext
-    ) -> Dict[str, float]:
+    def _extract_weather_features(self, match_context: MatchContext) -> dict[str, float]:
         """
         提取天气特征（深度爆破版 - 极端天气检测）
 
@@ -361,9 +360,7 @@ class ContextProcessor(BaseProcessor[MatchData]):
         # 温度归一化（假设范围 -10°C 到 40°C）
         temp = match_context.weather_temperature
         if temp is not None:
-            features["weather_temp_normalized"] = round(
-                (temp + 10) / 50.0, 4
-            )  # 映射到 [0, 1]
+            features["weather_temp_normalized"] = round((temp + 10) / 50.0, 4)  # 映射到 [0, 1]
 
             # 极端温度标记
             if temp < 0 or temp > 35:
@@ -380,10 +377,7 @@ class ContextProcessor(BaseProcessor[MatchData]):
             condition_lower = condition.lower()
 
             # 检测极端天气
-            is_extreme = any(
-                extreme in condition_lower
-                for extreme in self.EXTREME_WEATHER_CONDITIONS
-            )
+            is_extreme = any(extreme in condition_lower for extreme in self.EXTREME_WEATHER_CONDITIONS)
             features["is_extreme_weather"] = 1.0 if is_extreme else 0.0
 
             # 天气状况编码
@@ -432,9 +426,7 @@ class ContextProcessor(BaseProcessor[MatchData]):
 
         return features
 
-    def _analyze_schedule_context(
-        self, match_context: MatchContext
-    ) -> Dict[str, float]:
+    def _analyze_schedule_context(self, match_context: MatchContext) -> dict[str, float]:
         """
         分析赛程背景（深度爆破版）
 
@@ -451,9 +443,7 @@ class ContextProcessor(BaseProcessor[MatchData]):
         features = {}
 
         # 是否杯赛
-        features["is_cup_match"] = (
-            1.0 if match_context.is_cup_match else 0.0
-        )
+        features["is_cup_match"] = 1.0 if match_context.is_cup_match else 0.0
 
         # 休息天数
         days_since_last = match_context.days_since_last_match or 0
@@ -472,9 +462,7 @@ class ContextProcessor(BaseProcessor[MatchData]):
         features["fatigue_level"] = fatigue_level
 
         # 是否为背靠背比赛（休息天数 <= 2）
-        features["is_back_to_back"] = (
-            1.0 if days_since_last <= 2 else 0.0
-        )
+        features["is_back_to_back"] = 1.0 if days_since_last <= 2 else 0.0
 
         # 比赛重要性评分（新: 综合杯赛和赛程）
         importance_score = 0.5  # 默认普通联赛
@@ -490,7 +478,7 @@ class ContextProcessor(BaseProcessor[MatchData]):
 
         return features
 
-    def get_feature_schema(self) -> Dict[str, type]:
+    def get_feature_schema(self) -> dict[str, type]:
         """获取输出特征的 Schema"""
         return {
             # 时间特征

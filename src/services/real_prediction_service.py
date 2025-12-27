@@ -5,10 +5,11 @@
 复用 PostgresDataLoader 获取比赛数据并应用相同的特征工程。
 """
 
-import logging
-from typing import Dict, Any, Optional, List
-from pathlib import Path
 import json
+import logging
+from pathlib import Path
+from typing import Any
+
 import pandas as pd
 from xgboost import XGBClassifier
 
@@ -66,7 +67,7 @@ class RealPredictionService:
             # 加载特征信息
             info_path = str(self.model_path).replace(".json", "_info.json")
             if Path(info_path).exists():
-                with open(info_path, "r", encoding="utf-8") as f:
+                with open(info_path, encoding="utf-8") as f:
                     model_info = json.load(f)
                     self.feature_names = model_info.get("feature_names", [])
 
@@ -107,7 +108,7 @@ class RealPredictionService:
         # 加载模型
         return await self.load_model()
 
-    async def get_match_data(self, match_id: int) -> Optional[pd.DataFrame]:
+    async def get_match_data(self, match_id: int) -> pd.DataFrame | None:
         """
         获取特定比赛的数据
 
@@ -208,7 +209,7 @@ class RealPredictionService:
 
         return current_match_features
 
-    async def predict_match(self, match_id: int) -> Optional[Dict[str, Any]]:
+    async def predict_match(self, match_id: int) -> dict[str, Any] | None:
         """
         预测特定比赛的结果
 
@@ -322,7 +323,7 @@ class RealPredictionService:
             traceback.print_exc()
             return None
 
-    async def predict_batch(self, match_ids: List[int]) -> List[Dict[str, Any]]:
+    async def predict_batch(self, match_ids: list[int]) -> list[dict[str, Any]]:
         """
         批量预测多场比赛
 
@@ -342,7 +343,7 @@ class RealPredictionService:
 
         return results
 
-    async def get_model_info(self) -> Dict[str, Any]:
+    async def get_model_info(self) -> dict[str, Any]:
         """
         获取模型信息
 

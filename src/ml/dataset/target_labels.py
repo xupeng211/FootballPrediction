@@ -18,9 +18,8 @@ M4模块: 比赛结果标签定义
 - 性能优化: 高效的转换逻辑
 """
 
-from enum import Enum
-from typing import Union, Tuple
 import logging
+from enum import Enum
 
 logger = logging.getLogger(__name__)
 
@@ -72,7 +71,7 @@ class MatchOutcome(str, Enum):
             raise ValueError(f"team_side必须是'home'或'away'，当前值: {team_side}")
 
 
-def score_to_label(home_score: Union[int, float, str], away_score: Union[int, float, str]) -> MatchOutcome:
+def score_to_label(home_score: int | float | str, away_score: int | float | str) -> MatchOutcome:
     """
     将比分转换为比赛结果标签
 
@@ -186,7 +185,7 @@ def numeric_to_label(numeric_label: int) -> MatchOutcome:
     return mapping[numeric_label]
 
 
-def validate_scores(home_score: Union[int, float, str], away_score: Union[int, float, str]) -> Tuple[int, int]:
+def validate_scores(home_score: int | float | str, away_score: int | float | str) -> tuple[int, int]:
     """
     验证并标准化比分输入
 
@@ -241,7 +240,7 @@ def get_label_probabilities() -> dict[MatchOutcome, float]:
 
 # 便捷函数用于批量处理
 def batch_scores_to_labels(
-    score_pairs: list[Tuple[Union[int, float, str], Union[int, float, str]]],
+    score_pairs: list[tuple[int | float | str, int | float | str]],
 ) -> list[MatchOutcome]:
     """
     批量将比分对转换为标签
@@ -315,5 +314,5 @@ if __name__ == "__main__":
     batch_scores: list[tuple[int | float | str, int | float | str]] = [(2, 1), (0, 0), (1, 3)]
     try:
         batch_results = batch_scores_to_labels(batch_scores)
-    except Exception as e:
+    except Exception:
         pass

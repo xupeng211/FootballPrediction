@@ -20,14 +20,13 @@ V21.0 增量特征补完脚本（Surgical Feature Augmentor）
 版本: V21.0-deep-blowout
 """
 
-import os
-import sys
 import json
 import logging
+import sys
+from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple
 from pathlib import Path
-from dataclasses import dataclass, field
+from typing import Any
 
 # 添加项目路径
 project_root = Path(__file__).parent.parent  # src 目录
@@ -36,22 +35,19 @@ sys.path.insert(0, str(project_root))
 import psycopg2
 from psycopg2.extras import RealDictCursor
 
+from config_unified import get_settings
 from ml.feature_engine import (
     FeatureEngine,
-    MatchData,
     MatchContext,
+    MatchData,
     TeamStats,
 )
-from config_unified import get_settings
 
 # 配置日志
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler('logs/v21_augmentation.log'),
-        logging.StreamHandler()
-    ]
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    handlers=[logging.FileHandler("logs/v21_augmentation.log"), logging.StreamHandler()],
 )
 logger = logging.getLogger(__name__)
 
@@ -59,6 +55,7 @@ logger = logging.getLogger(__name__)
 # ============================================================================
 # 数据类定义
 # ============================================================================
+
 
 @dataclass
 class AugmentationConfig:
@@ -73,6 +70,7 @@ class AugmentationConfig:
         sleep_between_batches: 批次间休眠秒数（避免干扰 Docker）
         max_retries: 单场比赛最大重试次数
     """
+
     batch_size: int = 50
     dry_run: bool = False
     enable_referee_features: bool = True
@@ -94,6 +92,7 @@ class AugmentationStats:
         missing_raw_json: 原始 JSON 缺失的场数
         processing_errors: 处理错误的场数
     """
+
     total_scanned: int = 0
     v20_candidates: int = 0
     v21_upgraded: int = 0
@@ -101,21 +100,22 @@ class AugmentationStats:
     missing_raw_json: int = 0
     processing_errors: int = 0
 
-    def to_dict(self) -> Dict[str, int]:
+    def to_dict(self) -> dict[str, int]:
         """转换为字典"""
         return {
-            'total_scanned': self.total_scanned,
-            'v20_candidates': self.v20_candidates,
-            'v21_upgraded': self.v21_upgraded,
-            'v20_maintained': self.v20_maintained,
-            'missing_raw_json': self.missing_raw_json,
-            'processing_errors': self.processing_errors,
+            "total_scanned": self.total_scanned,
+            "v20_candidates": self.v20_candidates,
+            "v21_upgraded": self.v21_upgraded,
+            "v20_maintained": self.v20_maintained,
+            "missing_raw_json": self.missing_raw_json,
+            "processing_errors": self.processing_errors,
         }
 
 
 # ============================================================================
 # 核心类定义
 # ============================================================================
+
 
 class SurgicalAugmentor:
     """
@@ -130,19 +130,19 @@ class SurgicalAugmentor:
 
     # V21.0 新因子列表
     V21_FEATURES = [
-        'ref_is_strict',
-        'ref_penalty_bias',
-        'ref_home_advantage',
-        'ref_name_hash',
-        'ref_experience_level',
-        'kickoff_time_slot',
-        'is_early_kickoff',
-        'stadium_attendance_rate',
-        'stadium_pressure',
-        'adverse_weather_score',
+        "ref_is_strict",
+        "ref_penalty_bias",
+        "ref_home_advantage",
+        "ref_name_hash",
+        "ref_experience_level",
+        "kickoff_time_slot",
+        "is_early_kickoff",
+        "stadium_attendance_rate",
+        "stadium_pressure",
+        "adverse_weather_score",
     ]
 
-    def __init__(self, config: Optional[AugmentationConfig] = None):
+    def __init__(self, config: AugmentationConfig | None = None):
         """
         初始化补完器
 
@@ -187,7 +187,7 @@ class SurgicalAugmentor:
             self._conn.close()
             logger.info("数据库连接已关闭")
 
-    def scan_candidates(self) -> List[Dict[str, Any]]:
+    def scan_candidates(self) -> list[dict[str, Any]]:
         """
         扫描需要升级的记录
 
@@ -208,7 +208,7 @@ class SurgicalAugmentor:
                 WHERE status = 'completed'
                   AND enriched_features IS NOT NULL
             """)
-            total_count = cur.fetchone()['total']
+            total_count = cur.fetchone()["total"]
             self.stats.total_scanned = total_count
             logger.info(f"数据库总记录数: {total_count}")
 
@@ -247,7 +247,7 @@ class SurgicalAugmentor:
 
             return candidates
 
-    def fetch_raw_json(self, match_id: int) -> Optional[Dict[str, Any]]:
+    def fetch_raw_json(self, match_id: int) -> dict[str, Any] | None:
         """
         获取原始 JSON 数据
 
@@ -259,18 +259,21 @@ class SurgicalAugmentor:
         """
         with self._conn.cursor() as cur:
             try:
-                cur.execute("""
+                cur.execute(
+                    """
                     SELECT l2_raw_json
                     FROM matches
                     WHERE id = %s
                       AND l2_raw_json IS NOT NULL;
-                """, (match_id,))
+                """,
+                    (match_id,),
+                )
 
                 result = cur.fetchone()
                 if result is None:
                     return None
 
-                raw_json = result['l2_raw_json']
+                raw_json = result["l2_raw_json"]
 
                 # 处理字符串类型的 JSON
                 if isinstance(raw_json, str):
@@ -281,9 +284,7 @@ class SurgicalAugmentor:
                 logger.error(f"获取原始 JSON 失败 (match_id={match_id}): {e}")
                 return None
 
-    def extract_v21_features(
-        self, raw_json: Dict[str, Any], match_info: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def extract_v21_features(self, raw_json: dict[str, Any], match_info: dict[str, Any]) -> dict[str, Any]:
         """
         从原始 JSON 提取 V21.0 新因子
 
@@ -307,15 +308,14 @@ class SurgicalAugmentor:
         # 只返回 V21.0 新因子
         all_features = result.feature_vector.to_dict()
         v21_features = {
-            k: v for k, v in all_features.items()
-            if k in self.V21_FEATURES or k.startswith('ref_') or k.startswith('stadium_')
+            k: v
+            for k, v in all_features.items()
+            if k in self.V21_FEATURES or k.startswith("ref_") or k.startswith("stadium_")
         }
 
         return v21_features
 
-    def _build_match_data(
-        self, raw_json: Dict[str, Any], match_info: Dict[str, Any]
-    ) -> MatchData:
+    def _build_match_data(self, raw_json: dict[str, Any], match_info: dict[str, Any]) -> MatchData:
         """
         从原始 JSON 构建 MatchData 对象
 
@@ -328,22 +328,22 @@ class SurgicalAugmentor:
         """
         # 解析裁判信息
         referee_name = self._extract_referee_name(raw_json)
-        referee_id = raw_json.get('referee', {}).get('id')
+        referee_id = raw_json.get("referee", {}).get("id")
 
         # 解析比赛时间
-        match_time = match_info.get('match_time')
+        match_time = match_info.get("match_time")
         if isinstance(match_time, str):
-            match_time = datetime.fromisoformat(match_time.replace('Z', '+00:00'))
+            match_time = datetime.fromisoformat(match_time.replace("Z", "+00:00"))
 
         # 解析场地信息
-        venue_info = raw_json.get('venue', {})
-        venue = venue_info.get('name')
-        venue_capacity = venue_info.get('capacity')
+        venue_info = raw_json.get("venue", {})
+        venue = venue_info.get("name")
+        venue_capacity = venue_info.get("capacity")
 
         # 解析天气信息（如果有）
-        weather = raw_json.get('weather', {})
-        weather_temp = weather.get('temperature')
-        weather_condition = weather.get('condition')
+        weather = raw_json.get("weather", {})
+        weather_temp = weather.get("temperature")
+        weather_condition = weather.get("condition")
 
         # 构建上下文
         context = MatchContext(
@@ -357,37 +357,37 @@ class SurgicalAugmentor:
         )
 
         # 解析球队统计
-        general = raw_json.get('general', {})
-        home_team_data = general.get('homeTeam', {})
-        away_team_data = general.get('awayTeam', {})
+        general = raw_json.get("general", {})
+        home_team_data = general.get("homeTeam", {})
+        away_team_data = general.get("awayTeam", {})
 
         home_stats = TeamStats(
-            shots_total=home_team_data.get('shotsTotal'),
-            shots_on_target=home_team_data.get('shotsOnTarget'),
-            possession=home_team_data.get('possessionPercent'),
-            corners=home_team_data.get('corners'),
-            expected_goals=home_team_data.get('expectedGoals'),
-            team_rating=home_team_data.get('rating'),
+            shots_total=home_team_data.get("shotsTotal"),
+            shots_on_target=home_team_data.get("shotsOnTarget"),
+            possession=home_team_data.get("possessionPercent"),
+            corners=home_team_data.get("corners"),
+            expected_goals=home_team_data.get("expectedGoals"),
+            team_rating=home_team_data.get("rating"),
         )
 
         away_stats = TeamStats(
-            shots_total=away_team_data.get('shotsTotal'),
-            shots_on_target=away_team_data.get('shotsOnTarget'),
-            possession=away_team_data.get('possessionPercent'),
-            corners=away_team_data.get('corners'),
-            expected_goals=away_team_data.get('expectedGoals'),
-            team_rating=away_team_data.get('rating'),
+            shots_total=away_team_data.get("shotsTotal"),
+            shots_on_target=away_team_data.get("shotsOnTarget"),
+            possession=away_team_data.get("possessionPercent"),
+            corners=away_team_data.get("corners"),
+            expected_goals=away_team_data.get("expectedGoals"),
+            team_rating=away_team_data.get("rating"),
         )
 
         # 构建 MatchData
         match_data = MatchData(
-            match_id=str(match_info['match_id']),
-            league_id=str(match_info.get('league_id', '')),
-            season=match_info.get('season_id', '2324'),
-            home_team=match_info['home_team'],
-            away_team=match_info['away_team'],
-            home_score=match_info.get('home_score'),
-            away_score=match_info.get('away_score'),
+            match_id=str(match_info["match_id"]),
+            league_id=str(match_info.get("league_id", "")),
+            season=match_info.get("season_id", "2324"),
+            home_team=match_info["home_team"],
+            away_team=match_info["away_team"],
+            home_score=match_info.get("home_score"),
+            away_score=match_info.get("away_score"),
             home_stats=home_stats,
             away_stats=away_stats,
             context=context,
@@ -395,7 +395,7 @@ class SurgicalAugmentor:
 
         return match_data
 
-    def _extract_referee_name(self, raw_json: Dict[str, Any]) -> Optional[str]:
+    def _extract_referee_name(self, raw_json: dict[str, Any]) -> str | None:
         """
         从原始 JSON 提取裁判姓名
 
@@ -406,23 +406,20 @@ class SurgicalAugmentor:
             裁判姓名，如果不存在则返回 None
         """
         # 尝试多种路径
-        referee = raw_json.get('referee')
+        referee = raw_json.get("referee")
         if referee and isinstance(referee, dict):
-            return referee.get('name')
+            return referee.get("name")
 
         # 尝试 matchFacts 路径
-        match_facts = raw_json.get('matchFacts', {})
-        info = match_facts.get('info', {})
-        referee_info = info.get('referee')
+        match_facts = raw_json.get("matchFacts", {})
+        info = match_facts.get("info", {})
+        referee_info = info.get("referee")
         if referee_info:
-            return referee_info.get('name') if isinstance(referee_info, dict) else referee_info
+            return referee_info.get("name") if isinstance(referee_info, dict) else referee_info
 
         return None
 
-    def merge_and_update(
-        self, match_id: int, enriched_features: Dict[str, Any],
-        v21_features: Dict[str, Any]
-    ) -> bool:
+    def merge_and_update(self, match_id: int, enriched_features: dict[str, Any], v21_features: dict[str, Any]) -> bool:
         """
         深度合并特征并更新数据库
 
@@ -444,9 +441,9 @@ class SurgicalAugmentor:
 
             # 更新 meta_data 中的版本
             meta_data = {
-                'extraction_version': 'V21.0',
-                'augmented_at': datetime.now().isoformat(),
-                'new_feature_count': len(v21_features),
+                "extraction_version": "V21.0",
+                "augmented_at": datetime.now().isoformat(),
+                "new_feature_count": len(v21_features),
             }
 
             # 执行数据库更新
@@ -459,10 +456,7 @@ class SurgicalAugmentor:
                     WHERE match_id = %s;
                 """
 
-                cur.execute(
-                    update_query,
-                    (json.dumps(merged_features), json.dumps(meta_data), match_id)
-                )
+                cur.execute(update_query, (json.dumps(merged_features), json.dumps(meta_data), match_id))
 
             self._conn.commit()
             return True
@@ -472,7 +466,7 @@ class SurgicalAugmentor:
             self._conn.rollback()
             return False
 
-    def process_batch(self, candidates: List[Dict[str, Any]]) -> None:
+    def process_batch(self, candidates: list[dict[str, Any]]) -> None:
         """
         处理一批候选记录
 
@@ -482,7 +476,7 @@ class SurgicalAugmentor:
         logger.info(f"开始处理 {len(candidates)} 条记录...")
 
         for candidate in candidates:
-            match_id = candidate['match_id']
+            match_id = candidate["match_id"]
 
             try:
                 # 1. 获取原始 JSON
@@ -504,7 +498,7 @@ class SurgicalAugmentor:
                     continue
 
                 # 3. 深度合并并更新
-                enriched_features = candidate['enriched_features']
+                enriched_features = candidate["enriched_features"]
                 if isinstance(enriched_features, str):
                     enriched_features = json.loads(enriched_features)
 
@@ -550,7 +544,7 @@ class SurgicalAugmentor:
                 self.process_batch(candidates)
 
                 # 打印当前统计
-                logger.info(f"\n当前统计:")
+                logger.info("\n当前统计:")
                 logger.info(f"  🟢 成功晋升: {self.stats.v21_upgraded}")
                 logger.info(f"  🟡 维持原版: {self.stats.v20_maintained}")
                 logger.info(f"  ⚠️  原始缺失: {self.stats.missing_raw_json}")
@@ -559,6 +553,7 @@ class SurgicalAugmentor:
                 # 批次间休眠（避免干扰 Docker）
                 if candidates and self.config.sleep_between_batches > 0:
                     import time
+
                     logger.info(f"休眠 {self.config.sleep_between_batches} 秒...")
                     time.sleep(self.config.sleep_between_batches)
 
@@ -588,19 +583,19 @@ class SurgicalAugmentor:
         print("最终统计报告")
         print("=" * 60)
 
-        print(f"\n扫描记录:")
+        print("\n扫描记录:")
         print(f"  • 总记录数: {stats['total_scanned']}")
 
-        print(f"\n处理结果:")
+        print("\n处理结果:")
         print(f"  🟢 成功晋升至 V21.0: {stats['v21_upgraded']} 场")
         print(f"  🟡 维持 V20.8 版本: {stats['v20_maintained']} 场")
 
-        print(f"\n失败原因:")
+        print("\n失败原因:")
         print(f"  ⚠️  原始 JSON 缺失: {stats['missing_raw_json']} 场")
         print(f"  ❌ 处理错误: {stats['processing_errors']} 场")
 
-        if stats['v21_upgraded'] > 0:
-            success_rate = stats['v21_upgraded'] / max(stats['v20_candidates'], 1) * 100
+        if stats["v21_upgraded"] > 0:
+            success_rate = stats["v21_upgraded"] / max(stats["v20_candidates"], 1) * 100
             print(f"\n成功率: {success_rate:.1f}%")
 
         print("\n" + "=" * 60)
@@ -610,33 +605,17 @@ class SurgicalAugmentor:
 # 主程序入口
 # ============================================================================
 
+
 def main():
     """主程序入口"""
     import argparse
 
-    parser = argparse.ArgumentParser(
-        description='V21.0 增量特征补完脚本'
-    )
-    parser.add_argument(
-        '--batch-size', type=int, default=50,
-        help='批量处理大小（默认: 50）'
-    )
-    parser.add_argument(
-        '--dry-run', action='store_true',
-        help='演练模式（不实际更新数据库）'
-    )
-    parser.add_argument(
-        '--no-referee', action='store_true',
-        help='禁用裁判因子'
-    )
-    parser.add_argument(
-        '--no-context', action='store_true',
-        help='禁用上下文因子'
-    )
-    parser.add_argument(
-        '--sleep', type=float, default=1.0,
-        help='批次间休眠秒数（默认: 1.0）'
-    )
+    parser = argparse.ArgumentParser(description="V21.0 增量特征补完脚本")
+    parser.add_argument("--batch-size", type=int, default=50, help="批量处理大小（默认: 50）")
+    parser.add_argument("--dry-run", action="store_true", help="演练模式（不实际更新数据库）")
+    parser.add_argument("--no-referee", action="store_true", help="禁用裁判因子")
+    parser.add_argument("--no-context", action="store_true", help="禁用上下文因子")
+    parser.add_argument("--sleep", type=float, default=1.0, help="批次间休眠秒数（默认: 1.0）")
 
     args = parser.parse_args()
 

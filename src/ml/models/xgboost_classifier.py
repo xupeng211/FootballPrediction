@@ -24,18 +24,18 @@ M4模块: XGBoost分类器模型
 - 外部: xgboost, scikit-learn, pandas, numpy
 """
 
+import dataclasses
 import json
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, Any, List, Optional, Tuple, Union
-import dataclasses
+from typing import Any
 
 import numpy as np
 import pandas as pd
 import xgboost as xgb
 from sklearn.base import BaseEstimator, ClassifierMixin
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
 from sklearn.model_selection import train_test_split
 
 logger = logging.getLogger(__name__)
@@ -116,16 +116,16 @@ class XGBoostModelConfig:
             max_bin=128,
         )
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典格式"""
         return dataclasses.asdict(self)
 
     @classmethod
-    def from_dict(cls, config_dict: Dict[str, Any]) -> "XGBoostModelConfig":
+    def from_dict(cls, config_dict: dict[str, Any]) -> "XGBoostModelConfig":
         """从字典创建配置"""
         return cls(**config_dict)
 
-    def save_to_file(self, file_path: Union[str, Path]) -> None:
+    def save_to_file(self, file_path: str | Path) -> None:
         """保存配置到文件"""
         file_path = Path(file_path)
         file_path.parent.mkdir(parents=True, exist_ok=True)
@@ -136,9 +136,9 @@ class XGBoostModelConfig:
         logger.info(f"模型配置已保存到: {file_path}")
 
     @classmethod
-    def load_from_file(cls, file_path: Union[str, Path]) -> "XGBoostModelConfig":
+    def load_from_file(cls, file_path: str | Path) -> "XGBoostModelConfig":
         """从文件加载配置"""
-        with open(file_path, "r", encoding="utf-8") as f:
+        with open(file_path, encoding="utf-8") as f:
             config_dict = json.load(f)
 
         return cls.from_dict(config_dict)
@@ -175,7 +175,7 @@ class XGBoostClassifier(BaseEstimator, ClassifierMixin):
         classifier.save_model("models/xgboost_classifier.pkl")
     """
 
-    def __init__(self, config: Optional[XGBoostModelConfig] = None):
+    def __init__(self, config: XGBoostModelConfig | None = None):
         """
         初始化XGBoost分类器
 
@@ -183,10 +183,10 @@ class XGBoostClassifier(BaseEstimator, ClassifierMixin):
             config: 模型配置，如果为None则使用默认配置
         """
         self.config = config or XGBoostModelConfig.create_default()
-        self.model: Optional[xgb.XGBClassifier] = None
-        self.feature_names: Optional[List[str]] = None
-        self.classes_: Optional[np.ndarray] = None
-        self.training_history: Dict[str, Any] = {}
+        self.model: xgb.XGBClassifier | None = None
+        self.feature_names: list[str] | None = None
+        self.classes_: np.ndarray | None = None
+        self.training_history: dict[str, Any] = {}
         self.is_trained: bool = False
 
         # 设置sklearn兼容的估计器类型
@@ -225,9 +225,7 @@ class XGBoostClassifier(BaseEstimator, ClassifierMixin):
                 verbosity=1,
             )
 
-            self.logger.info(
-                f"XGBoost模型初始化成功: {self.config.model_name} v{self.config.model_version}"
-            )
+            self.logger.info(f"XGBoost模型初始化成功: {self.config.model_name} v{self.config.model_version}")
 
         except Exception as e:
             self.logger.error(f"模型初始化失败: {e}")
@@ -235,11 +233,11 @@ class XGBoostClassifier(BaseEstimator, ClassifierMixin):
 
     def train(
         self,
-        X: Union[pd.DataFrame, np.ndarray],
-        y: Union[pd.Series, np.ndarray],
-        X_val: Optional[Union[pd.DataFrame, np.ndarray]] = None,
-        y_val: Optional[Union[pd.Series, np.ndarray]] = None,
-    ) -> Dict[str, float]:
+        X: pd.DataFrame | np.ndarray,
+        y: pd.Series | np.ndarray,
+        X_val: pd.DataFrame | np.ndarray | None = None,
+        y_val: pd.Series | np.ndarray | None = None,
+    ) -> dict[str, float]:
         """
         训练XGBoost分类器
 
@@ -298,25 +296,19 @@ class XGBoostClassifier(BaseEstimator, ClassifierMixin):
             training_time = (datetime.now() - start_time).total_seconds()
 
             # 计算训练指标
-            train_metrics = self._calculate_metrics_after_training(
-                X_train, y_train, prefix="train"
-            )
+            train_metrics = self._calculate_metrics_after_training(X_train, y_train, prefix="train")
 
             # 计算验证指标
             val_metrics = {}
             if X_val is not None and y_val is not None:
-                val_metrics = self._calculate_metrics_after_training(
-                    X_val, y_val, prefix="val"
-                )
+                val_metrics = self._calculate_metrics_after_training(X_val, y_val, prefix="val")
 
             # 合并指标
             all_metrics = {**train_metrics, **val_metrics}
             all_metrics["training_time_seconds"] = training_time
             all_metrics["n_features"] = X_train.shape[1]
             all_metrics["n_samples"] = X_train.shape[0]
-            all_metrics["n_estimators_used"] = getattr(
-                self.model, "best_iteration", self.model.n_estimators
-            )
+            all_metrics["n_estimators_used"] = getattr(self.model, "best_iteration", self.model.n_estimators)
 
             # 记录训练历史
             self.training_history = {
@@ -341,7 +333,7 @@ class XGBoostClassifier(BaseEstimator, ClassifierMixin):
             self.logger.error(f"模型训练失败: {e}")
             raise
 
-    def predict(self, X: Union[pd.DataFrame, np.ndarray]) -> np.ndarray:
+    def predict(self, X: pd.DataFrame | np.ndarray) -> np.ndarray:
         """
         预测分类标签
 
@@ -364,7 +356,7 @@ class XGBoostClassifier(BaseEstimator, ClassifierMixin):
             self.logger.error(f"预测失败: {e}")
             raise
 
-    def predict_proba(self, X: Union[pd.DataFrame, np.ndarray]) -> np.ndarray:
+    def predict_proba(self, X: pd.DataFrame | np.ndarray) -> np.ndarray:
         """
         预测分类概率
 
@@ -387,9 +379,7 @@ class XGBoostClassifier(BaseEstimator, ClassifierMixin):
             self.logger.error(f"概率预测失败: {e}")
             raise
 
-    def evaluate(
-        self, X: Union[pd.DataFrame, np.ndarray], y: Union[pd.Series, np.ndarray]
-    ) -> Dict[str, float]:
+    def evaluate(self, X: pd.DataFrame | np.ndarray, y: pd.Series | np.ndarray) -> dict[str, float]:
         """
         评估模型性能
 
@@ -420,9 +410,7 @@ class XGBoostClassifier(BaseEstimator, ClassifierMixin):
 
         try:
             # 获取特征重要性分数
-            importance_scores = self.model.get_booster().get_score(
-                importance_type=importance_type
-            )
+            importance_scores = self.model.get_booster().get_score(importance_type=importance_type)
 
             # 转换为DataFrame
             importance_df = pd.DataFrame(
@@ -437,9 +425,9 @@ class XGBoostClassifier(BaseEstimator, ClassifierMixin):
 
             # 映射到实际特征名称
             if self.feature_names:
-                importance_df["feature_display_name"] = importance_df[
-                    "feature_name"
-                ].apply(lambda x: self.feature_names[int(x)] if x.isdigit() else x)
+                importance_df["feature_display_name"] = importance_df["feature_name"].apply(
+                    lambda x: self.feature_names[int(x)] if x.isdigit() else x
+                )
             else:
                 importance_df["feature_display_name"] = importance_df["feature_name"]
 
@@ -452,9 +440,7 @@ class XGBoostClassifier(BaseEstimator, ClassifierMixin):
             self.logger.error(f"获取特征重要性失败: {e}")
             raise
 
-    def save_model(
-        self, model_path: Union[str, Path], include_config: bool = True
-    ) -> None:
+    def save_model(self, model_path: str | Path, include_config: bool = True) -> None:
         """
         保存模型到文件
 
@@ -478,9 +464,7 @@ class XGBoostClassifier(BaseEstimator, ClassifierMixin):
             # 保存额外信息
             metadata = {
                 "feature_names": self.feature_names,
-                "classes": (
-                    self.classes_.tolist() if self.classes_ is not None else None
-                ),
+                "classes": (self.classes_.tolist() if self.classes_ is not None else None),
                 "training_history": self.training_history,
                 "model_config": self.config.to_dict(),
                 "saved_at": datetime.now().isoformat(),
@@ -504,7 +488,7 @@ class XGBoostClassifier(BaseEstimator, ClassifierMixin):
             raise
 
     @classmethod
-    def load_model(cls, model_path: Union[str, Path]) -> "XGBoostClassifier":
+    def load_model(cls, model_path: str | Path) -> "XGBoostClassifier":
         """
         从文件加载模型
 
@@ -520,7 +504,7 @@ class XGBoostClassifier(BaseEstimator, ClassifierMixin):
             # 加载元数据
             metadata_path = model_path.with_suffix(".json")
             if metadata_path.exists():
-                with open(metadata_path, "r", encoding="utf-8") as f:
+                with open(metadata_path, encoding="utf-8") as f:
                     metadata = json.load(f)
 
                 # 重建配置
@@ -550,9 +534,7 @@ class XGBoostClassifier(BaseEstimator, ClassifierMixin):
             # 恢复元数据
             if metadata:
                 classifier.feature_names = metadata.get("feature_names")
-                classifier.classes_ = (
-                    np.array(metadata["classes"]) if metadata.get("classes") else None
-                )
+                classifier.classes_ = np.array(metadata["classes"]) if metadata.get("classes") else None
                 classifier.training_history = metadata.get("training_history", {})
 
             logger.info(f"模型已从 {model_path} 加载")
@@ -563,8 +545,8 @@ class XGBoostClassifier(BaseEstimator, ClassifierMixin):
             raise
 
     def _validate_training_data(
-        self, X: Union[pd.DataFrame, np.ndarray], y: Union[pd.Series, np.ndarray]
-    ) -> Tuple[np.ndarray, np.ndarray]:
+        self, X: pd.DataFrame | np.ndarray, y: pd.Series | np.ndarray
+    ) -> tuple[np.ndarray, np.ndarray]:
         """验证和预处理训练数据"""
         # 转换为numpy数组
         if isinstance(X, pd.DataFrame):
@@ -579,16 +561,12 @@ class XGBoostClassifier(BaseEstimator, ClassifierMixin):
 
         # 验证形状
         if X_array.shape[0] != y_array.shape[0]:
-            raise ValueError(
-                f"特征和标签的样本数不匹配: X={X_array.shape[0]}, y={y_array.shape[0]}"
-            )
+            raise ValueError(f"特征和标签的样本数不匹配: X={X_array.shape[0]}, y={y_array.shape[0]}")
 
         # 验证标签范围
         unique_labels = np.unique(y_array)
         if not all(label in [0, 1, 2] for label in unique_labels):
-            logger.warning(
-                f"检测到非标准标签: {unique_labels}，期望: [0, 1, 2] (AWAY_WIN, DRAW, HOME_WIN)"
-            )
+            logger.warning(f"检测到非标准标签: {unique_labels}，期望: [0, 1, 2] (AWAY_WIN, DRAW, HOME_WIN)")
 
         # 处理NaN值
         if np.isnan(X_array).any():
@@ -599,10 +577,10 @@ class XGBoostClassifier(BaseEstimator, ClassifierMixin):
 
     def _calculate_metrics_after_training(
         self,
-        X: Union[pd.DataFrame, np.ndarray],
-        y: Union[pd.Series, np.ndarray],
+        X: pd.DataFrame | np.ndarray,
+        y: pd.Series | np.ndarray,
         prefix: str = "",
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """计算训练后的性能指标（模型已训练完成）"""
         y_pred = self.model.predict(X)  # 直接使用model，不调用self.predict
         self.model.predict_proba(X)
@@ -639,10 +617,10 @@ class XGBoostClassifier(BaseEstimator, ClassifierMixin):
 
     def _calculate_metrics(
         self,
-        X: Union[pd.DataFrame, np.ndarray],
-        y: Union[pd.Series, np.ndarray],
+        X: pd.DataFrame | np.ndarray,
+        y: pd.Series | np.ndarray,
         prefix: str = "",
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """计算性能指标"""
         y_pred = self.predict(X)
         self.predict_proba(X)
@@ -677,7 +655,7 @@ class XGBoostClassifier(BaseEstimator, ClassifierMixin):
 
         return metrics
 
-    def get_model_info(self) -> Dict[str, Any]:
+    def get_model_info(self) -> dict[str, Any]:
         """获取模型信息"""
         info = {
             "model_name": self.config.model_name,
@@ -691,9 +669,7 @@ class XGBoostClassifier(BaseEstimator, ClassifierMixin):
         }
 
         if self.is_trained:
-            info["n_estimators"] = getattr(
-                self.model, "best_iteration", self.model.n_estimators
-            )
+            info["n_estimators"] = getattr(self.model, "best_iteration", self.model.n_estimators)
             info["model_params"] = self.model.get_params()
 
         return info
@@ -717,9 +693,7 @@ def create_xgboost_classifier(config_type: str = "default") -> XGBoostClassifier
     }
 
     if config_type not in config_map:
-        raise ValueError(
-            f"未知的配置类型: {config_type}，可用选项: {list(config_map.keys())}"
-        )
+        raise ValueError(f"未知的配置类型: {config_type}，可用选项: {list(config_map.keys())}")
 
     config = config_map[config_type]()
     return XGBoostClassifier(config)
@@ -744,9 +718,7 @@ if __name__ == "__main__":
         y = np.random.choice([0, 1, 2], n_samples, p=[0.28, 0.26, 0.46])  # 基于先验概率
 
         # 分割数据
-        X_train, X_test, y_train, y_test = train_test_split(
-            X, y, test_size=0.2, random_state=42, stratify=y
-        )
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
 
         # 训练模型
         metrics = classifier.train(X_train, y_train, X_test, y_test)
@@ -765,7 +737,7 @@ if __name__ == "__main__":
             # 处理特征重要性
             pass
 
-    except Exception as e:
+    except Exception:
         import traceback
 
         traceback.print_exc()

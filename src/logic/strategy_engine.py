@@ -366,7 +366,7 @@ class StrategyEngine:
             'daily_bet_check': True,
             'total_exposure_check': True,
             'consecutive_loss_check': True,
-            'warnings': []  # type: List[str]
+            'warnings': []
         }
 
         # 单场下注限制

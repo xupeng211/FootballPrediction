@@ -7,37 +7,36 @@ V36.0 纯净破冰收割器 - 直接从 Manifest 收割历史数据
 """
 
 import asyncio
-import aiohttp
 import csv
-import json
 import logging
 import random
 import time
 from dataclasses import dataclass, field
-from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Set
+
+import aiohttp
 
 logger = logging.getLogger(__name__)
 
 # V35.2 继承: UA 池
 UA_POOL = [
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0',
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0",
 ]
 
 LANGUAGE_POOL = [
-    'en-US,en;q=0.9,en-GB;q=0.8',
-    'en-GB,en;q=0.9',
-    'fr-FR,fr;q=0.9,en;q=0.8',
+    "en-US,en;q=0.9,en-GB;q=0.8",
+    "en-GB,en;q=0.9",
+    "fr-FR,fr;q=0.9,en;q=0.8",
 ]
 
 
 @dataclass
 class HarvestStats:
     """收割统计"""
+
     total_targets: int = 0
     successful_harvests: int = 0
     failed_harvests: int = 0
@@ -69,59 +68,55 @@ class IceBreakerHarvester:
 
     def __init__(self, concurrency: int = 3):
         self.concurrency = concurrency
-        self.session: Optional[aiohttp.ClientSession] = None
+        self.session: aiohttp.ClientSession | None = None
         self.stats = HarvestStats()
-        self.harvested_ids: Set[int] = set()
+        self.harvested_ids: set[int] = set()
 
-    def _get_random_headers(self) -> Dict[str, str]:
+    def _get_random_headers(self) -> dict[str, str]:
         return {
-            'User-Agent': random.choice(UA_POOL),
-            'Accept': 'application/json, text/plain, */*',
-            'Accept-Language': random.choice(LANGUAGE_POOL),
-            'Accept-Encoding': 'gzip, deflate, br',
-            'Cache-Control': 'no-cache',
-            'Referer': 'https://www.fotmob.com/',
-            'Origin': 'https://www.fotmob.com',
+            "User-Agent": random.choice(UA_POOL),
+            "Accept": "application/json, text/plain, */*",
+            "Accept-Language": random.choice(LANGUAGE_POOL),
+            "Accept-Encoding": "gzip, deflate, br",
+            "Cache-Control": "no-cache",
+            "Referer": "https://www.fotmob.com/",
+            "Origin": "https://www.fotmob.com",
         }
 
-    def validate_payload(self, data: Dict, match_id: int) -> tuple[bool, str]:
+    def validate_payload(self, data: dict, match_id: int) -> tuple[bool, str]:
         """零容忍数据校验"""
         # 检查 1: 必须有 content
-        if 'content' not in data:
+        if "content" not in data:
             return False, "Missing 'content' field"
 
-        content = data['content']
+        content = data["content"]
 
         # 检查 2: 必须有 stats 或 shotmap
-        has_stats = 'stats' in content
-        has_shotmap = 'shotmap' in content
+        has_stats = "stats" in content
+        has_shotmap = "shotmap" in content
 
         if not (has_stats or has_shotmap):
-            return False, f"Missing both 'stats' and 'shotmap'"
+            return False, "Missing both 'stats' and 'shotmap'"
 
         # 检查 3: 必须有 header
-        if 'header' not in data:
+        if "header" not in data:
             return False, "Missing 'header' field"
 
         # 检查 4: header 必须有球队信息
-        header = data['header']
-        if 'teams' not in header or len(header['teams']) < 2:
+        header = data["header"]
+        if "teams" not in header or len(header["teams"]) < 2:
             return False, "Invalid header structure"
 
         return True, "OK"
 
-    async def fetch_match_details(
-        self,
-        match_id: int,
-        max_retries: int = 3
-    ) -> Optional[Dict]:
+    async def fetch_match_details(self, match_id: int, max_retries: int = 3) -> dict | None:
         """获取比赛详情"""
         url = f"https://www.fotmob.com/api/matchDetails?matchId={match_id}"
 
         for attempt in range(max_retries):
             try:
                 if attempt > 0:
-                    delay = random.uniform(1.0, 2.0) * (1.5 ** attempt)
+                    delay = random.uniform(1.0, 2.0) * (1.5**attempt)
                     await asyncio.sleep(delay)
 
                 # 首次请求也加随机延迟
@@ -130,11 +125,7 @@ class IceBreakerHarvester:
 
                 headers = self._get_random_headers()
 
-                async with self.session.get(
-                    url,
-                    headers=headers,
-                    timeout=aiohttp.ClientTimeout(total=30)
-                ) as response:
+                async with self.session.get(url, headers=headers, timeout=aiohttp.ClientTimeout(total=30)) as response:
                     if response.status != 200:
                         logger.warning(f"HTTP {response.status}: Match {match_id}")
                         continue
@@ -169,7 +160,7 @@ class IceBreakerHarvester:
 
                     return data
 
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 logger.warning(f"⏰ 超时: Match {match_id}")
             except Exception as e:
                 logger.warning(f"❌ 错误: Match {match_id} - {e}")
@@ -177,33 +168,35 @@ class IceBreakerHarvester:
         self.stats.failed_harvests += 1
         return None
 
-    def load_manifest(self, manifest_path: str) -> List[Dict]:
+    def load_manifest(self, manifest_path: str) -> list[dict]:
         """加载 manifest 文件"""
         matches = []
 
-        with open(manifest_path, 'r', encoding='utf-8') as f:
+        with open(manifest_path, encoding="utf-8") as f:
             reader = csv.DictReader(f)
             for row in reader:
-                match_id = row.get('match_id') or row.get('id')
+                match_id = row.get("match_id") or row.get("id")
                 if match_id:
-                    matches.append({
-                        'match_id': int(match_id),
-                        'home_team': row.get('home_team') or row.get('home'),
-                        'away_team': row.get('away_team') or row.get('away'),
-                        'league_id': int(row.get('league_id', 47)),
-                        'season': row.get('season', '2223'),
-                    })
+                    matches.append(
+                        {
+                            "match_id": int(match_id),
+                            "home_team": row.get("home_team") or row.get("home"),
+                            "away_team": row.get("away_team") or row.get("away"),
+                            "league_id": int(row.get("league_id", 47)),
+                            "season": row.get("season", "2223"),
+                        }
+                    )
 
         logger.info(f"✓ 加载 manifest: {len(matches)} 场比赛")
         return matches
 
-    async def harvest_batch(self, matches: List[Dict]) -> None:
+    async def harvest_batch(self, matches: list[dict]) -> None:
         """批量收割"""
         semaphore = asyncio.Semaphore(self.concurrency)
 
-        async def harvest_with_semaphore(match_info: Dict):
+        async def harvest_with_semaphore(match_info: dict):
             async with semaphore:
-                match_id = match_info['match_id']
+                match_id = match_info["match_id"]
 
                 # 跳过已收割
                 if match_id in self.harvested_ids:
@@ -225,17 +218,20 @@ class IceBreakerHarvester:
         rate = self.stats.get_rate()
         progress = (total - remaining) / total * 100
 
-        print(f"\r💧 收割中: {progress:.1f}% "
-              f"| 成功: {self.stats.successful_harvests} "
-              f"| 拒绝: {self.stats.rejected_dirty} "
-              f"| 失败: {self.stats.failed_harvests} "
-              f"| 高质量: {self.stats.high_quality_data} "
-              f"| 速度: {rate:.1f} 场/分", end='', flush=True)
+        print(
+            f"\r💧 收割中: {progress:.1f}% "
+            f"| 成功: {self.stats.successful_harvests} "
+            f"| 拒绝: {self.stats.rejected_dirty} "
+            f"| 失败: {self.stats.failed_harvests} "
+            f"| 高质量: {self.stats.high_quality_data} "
+            f"| 速度: {rate:.1f} 场/分",
+            end="",
+            flush=True,
+        )
 
     async def __aenter__(self):
         self.session = aiohttp.ClientSession(
-            timeout=aiohttp.ClientTimeout(total=60),
-            connector=aiohttp.TCPConnector(limit=5)
+            timeout=aiohttp.ClientTimeout(total=60), connector=aiohttp.TCPConnector(limit=5)
         )
         return self
 
@@ -246,7 +242,7 @@ class IceBreakerHarvester:
 
 async def main():
     """主函数"""
-    logging.basicConfig(level=logging.INFO, format='%(levelname)s - %(message)s')
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s - %(message)s")
 
     print("\n" + "=" * 70)
     print("🧊 V36.0 纯净破冰收割器")
@@ -256,8 +252,8 @@ async def main():
 
     # 目标 manifest 文件
     manifests = [
-        'data/production/manifest_47_2223.csv',  # 英超 22/23
-        'data/production/manifest_47_2324.csv',  # 英超 23/24
+        "data/production/manifest_47_2223.csv",  # 英超 22/23
+        "data/production/manifest_47_2324.csv",  # 英超 23/24
     ]
 
     all_matches = []
@@ -277,7 +273,7 @@ async def main():
 
                 batch_size = 50
                 for i in range(0, len(matches), batch_size):
-                    batch = matches[i:i + batch_size]
+                    batch = matches[i : i + batch_size]
                     remaining = len(matches) - i
 
                     await harvester.harvest_batch(batch)
@@ -288,7 +284,9 @@ async def main():
     print("收割完成统计")
     print(f"{'=' * 70}")
     print(f"总目标: {sum(m['match_id'] for m in all_matches) % 1000000} 场")
-    print(f"成功收割: {sum(h.stats.successful_harvests for h in [all_matches[0] if all_matches else None] if h) or 0} 场")
+    print(
+        f"成功收割: {sum(h.stats.successful_harvests for h in [all_matches[0] if all_matches else None] if h) or 0} 场"
+    )
     print(f"拒绝脏数据: {sum(h.stats.rejected_dirty for h in [all_matches[0] if all_matches else None] if h) or 0}")
     print(f"失败: {sum(h.stats.failed_harvests for h in [all_matches[0] if all_matches else None] if h) or 0}")
     print(f"{'=' * 70}\n")

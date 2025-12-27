@@ -5,11 +5,9 @@ V33.0 Environment Miner - 环境与裁判深度建模器
 从 general 和 matchFacts 中提取环境与裁判因子
 """
 
-import numpy as np
-from typing import Dict, List, Any, Optional
+import logging
 from dataclasses import dataclass
 from datetime import datetime
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -17,6 +15,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class EnvironmentFeatures:
     """环境特征数据类"""
+
     # 基础信息
     league_id: int
     match_round: int
@@ -69,7 +68,9 @@ class EnvironmentMiner:
         """初始化环境采矿器"""
         pass
 
-    def extract_features(self, json_data: Dict, previous_matches: Optional[List[Dict]] = None) -> Optional[EnvironmentFeatures]:
+    def extract_features(
+        self, json_data: dict, previous_matches: list[dict] | None = None
+    ) -> EnvironmentFeatures | None:
         """
         从 FotMob JSON 中提取环境特征
 
@@ -82,23 +83,21 @@ class EnvironmentMiner:
         """
         try:
             # 提取 general 数据
-            general = json_data.get('general', {})
+            general = json_data.get("general", {})
 
             # 提取 weather 数据
-            content = json_data.get('content', {})
-            weather = content.get('weather', {})
+            content = json_data.get("content", {})
+            weather = content.get("weather", {})
 
             # 提取 matchFacts 数据 (包含裁判信息)
-            match_facts = content.get('matchFacts', {})
+            match_facts = content.get("matchFacts", {})
 
             # 解析比赛时间
-            match_time_str = general.get('matchTimeUTCDate', '')
+            match_time_str = general.get("matchTimeUTCDate", "")
             match_time = self._parse_match_time(match_time_str)
 
             # 计算特征
-            features = self._calculate_environment_features(
-                general, weather, match_facts, match_time, previous_matches
-            )
+            features = self._calculate_environment_features(general, weather, match_facts, match_time, previous_matches)
 
             return features
 
@@ -106,28 +105,28 @@ class EnvironmentMiner:
             logger.error(f"环境特征提取失败: {e}")
             return None
 
-    def _parse_match_time(self, time_str: str) -> Optional[datetime]:
+    def _parse_match_time(self, time_str: str) -> datetime | None:
         """解析比赛时间"""
         try:
-            return datetime.fromisoformat(time_str.replace('Z', '+00:00'))
+            return datetime.fromisoformat(time_str.replace("Z", "+00:00"))
         except:
             return None
 
     def _calculate_environment_features(
         self,
-        general: Dict,
-        weather: Dict,
-        match_facts: Dict,
-        match_time: Optional[datetime],
-        previous_matches: Optional[List[Dict]]
+        general: dict,
+        weather: dict,
+        match_facts: dict,
+        match_time: datetime | None,
+        previous_matches: list[dict] | None,
     ) -> EnvironmentFeatures:
         """计算环境特征"""
 
         # 基础信息
-        league_id = general.get('leagueId', 0)
-        match_round = general.get('matchRound', 0)
-        country_code = general.get('countryCode', '')
-        coverage_level = general.get('coverageLevel', '')
+        league_id = general.get("leagueId", 0)
+        match_round = general.get("matchRound", 0)
+        country_code = general.get("countryCode", "")
+        coverage_level = general.get("coverageLevel", "")
 
         # 时间特征
         match_hour = match_time.hour if match_time else 0
@@ -136,26 +135,26 @@ class EnvironmentMiner:
         is_night_match = match_hour >= 19 or match_hour <= 4
 
         # 天气特征
-        weather_temperature = float(weather.get('temperature', 15))
-        weather_wind_speed = float(weather.get('windSpeed', 0))
-        weather_precipitation = float(weather.get('precipitation', 0))
-        weather_humidity = float(weather.get('relativeHumidity', 50))
-        weather_cloud_cover = float(weather.get('cloudCover', 0))
+        weather_temperature = float(weather.get("temperature", 15))
+        weather_wind_speed = float(weather.get("windSpeed", 0))
+        weather_precipitation = float(weather.get("precipitation", 0))
+        weather_humidity = float(weather.get("relativeHumidity", 50))
+        weather_cloud_cover = float(weather.get("cloudCover", 0))
         is_bad_weather = weather_precipitation > 5 or weather_wind_speed > 20
 
         # 场地特征 (从 matchFacts 或 infoBox 获取)
-        info_box = match_facts.get('infoBox', {})
-        venue_capacity = int(info_box.get('capacity', 0))
-        attendance = int(info_box.get('attendance', 0))
+        info_box = match_facts.get("infoBox", {})
+        venue_capacity = int(info_box.get("capacity", 0))
+        attendance = int(info_box.get("attendance", 0))
         attendance_fill_ratio = attendance / venue_capacity if venue_capacity > 0 else 0.0
 
         # 裁判特征
-        referee_info = match_facts.get('referee', {})
-        referee_name = referee_info.get('name', 'Unknown')
+        referee_info = match_facts.get("referee", {})
+        referee_name = referee_info.get("name", "Unknown")
 
         # 从历史数据或缓存获取裁判倾向
-        referee_yellow = self._get_referee_tendency(referee_name, 'yellow')
-        referee_red = self._get_referee_tendency(referee_name, 'red')
+        referee_yellow = self._get_referee_tendency(referee_name, "yellow")
+        referee_red = self._get_referee_tendency(referee_name, "red")
 
         # 赛程密集度 (需要历史数据)
         days_since_last_home, days_since_last_away = self._calculate_fatigue(previous_matches)
@@ -197,12 +196,12 @@ class EnvironmentMiner:
             return self._referee_stats[key]
 
         # 默认值 (每场平均掏牌数)
-        if card_type == 'yellow':
+        if card_type == "yellow":
             return 3.5  # 平均每场 3.5 张黄牌
         else:  # red
             return 0.3  # 平均每场 0.3 张红牌
 
-    def _calculate_fatigue(self, previous_matches: Optional[List[Dict]]) -> tuple:
+    def _calculate_fatigue(self, previous_matches: list[dict] | None) -> tuple:
         """
         计算疲劳度 (距上场比赛天数)
 
@@ -219,7 +218,7 @@ class EnvironmentMiner:
         # 实际应用中需要更复杂的计算
         return 7, 7
 
-    def to_feature_dict(self, features: EnvironmentFeatures) -> Dict[str, float]:
+    def to_feature_dict(self, features: EnvironmentFeatures) -> dict[str, float]:
         """
         将 EnvironmentFeatures 转换为特征字典
 
@@ -233,22 +232,22 @@ class EnvironmentMiner:
             return {}
 
         return {
-            'env_league_id': features.league_id,
-            'env_match_round': features.match_round,
-            'env_match_hour': features.match_hour,
-            'env_day_of_week': features.match_day_of_week,
-            'env_is_weekend': float(features.is_weekend),
-            'env_is_night_match': float(features.is_night_match),
-            'env_weather_temp': features.weather_temperature,
-            'env_weather_wind': features.weather_wind_speed,
-            'env_weather_rain': features.weather_precipitation,
-            'env_weather_humidity': features.weather_humidity,
-            'env_is_bad_weather': float(features.is_bad_weather),
-            'env_venue_capacity': features.venue_capacity,
-            'env_attendance_ratio': features.attendance_fill_ratio,
-            'env_referee_yellow': features.referee_yellow_tendency,
-            'env_referee_red': features.referee_red_tendency,
-            'env_fatigue_home': features.days_since_last_match_home,
-            'env_fatigue_away': features.days_since_last_match_away,
-            'env_fatigue_diff': features.days_since_last_match_home - features.days_since_last_match_away,
+            "env_league_id": features.league_id,
+            "env_match_round": features.match_round,
+            "env_match_hour": features.match_hour,
+            "env_day_of_week": features.match_day_of_week,
+            "env_is_weekend": float(features.is_weekend),
+            "env_is_night_match": float(features.is_night_match),
+            "env_weather_temp": features.weather_temperature,
+            "env_weather_wind": features.weather_wind_speed,
+            "env_weather_rain": features.weather_precipitation,
+            "env_weather_humidity": features.weather_humidity,
+            "env_is_bad_weather": float(features.is_bad_weather),
+            "env_venue_capacity": features.venue_capacity,
+            "env_attendance_ratio": features.attendance_fill_ratio,
+            "env_referee_yellow": features.referee_yellow_tendency,
+            "env_referee_red": features.referee_red_tendency,
+            "env_fatigue_home": features.days_since_last_match_home,
+            "env_fatigue_away": features.days_since_last_match_away,
+            "env_fatigue_diff": features.days_since_last_match_home - features.days_since_last_match_away,
         }

@@ -16,18 +16,19 @@ Data Models - Pydantic 数据模型定义
 """
 
 from datetime import datetime
-from decimal import Decimal
-from typing import Any, Optional, Dict
-from pydantic import BaseModel, Field, field_validator, ConfigDict
 from enum import Enum
+from typing import Any
 
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 # ============================================================================
 # 枚举类型定义
 # ============================================================================
 
+
 class MatchStatus(str, Enum):
     """比赛状态枚举"""
+
     SCHEDULED = "scheduled"
     LIVE = "live"
     FINISHED = "finished"
@@ -37,14 +38,16 @@ class MatchStatus(str, Enum):
 
 class HomeAway(str, Enum):
     """主客队标识"""
+
     HOME = "home"
     AWAY = "away"
 
 
 class LeagueTier(str, Enum):
     """联赛等级（用于哨兵机制）"""
-    TOP_5 = "top_5"          # 五大联赛
-    TOP_TIER = "top_tier"    # 顶级联赛
+
+    TOP_5 = "top_5"  # 五大联赛
+    TOP_TIER = "top_tier"  # 顶级联赛
     SECOND_TIER = "second_tier"  # 次级联赛
 
 
@@ -52,37 +55,37 @@ class LeagueTier(str, Enum):
 # 基础数据模型
 # ============================================================================
 
+
 class TeamStats(BaseModel):
     """
     球队统计数据模型
 
     对应 FotMob API 的 teamData 结构
     """
+
     model_config = ConfigDict(str_strip_whitespace=True)
 
     # 基础统计
-    shots_total: Optional[int] = Field(None, alias="shotsTotal")
-    shots_on_target: Optional[int] = Field(None, alias="shotsOnTarget")
-    possession: Optional[float] = Field(None, ge=0, le=100)
-    corners: Optional[int] = None
-    offsides: Optional[int] = None
-    fouls: Optional[int] = None
+    shots_total: int | None = Field(None, alias="shotsTotal")
+    shots_on_target: int | None = Field(None, alias="shotsOnTarget")
+    possession: float | None = Field(None, ge=0, le=100)
+    corners: int | None = None
+    offsides: int | None = None
+    fouls: int | None = None
 
     # 高级统计
-    expected_goals: Optional[float] = Field(None, ge=0, alias="expectedGoals")
-    expected_goals_from_shots: Optional[float] = Field(
-        None, ge=0, alias="expectedGoalsFromShots"
-    )
-    total_passes: Optional[int] = Field(None, ge=0, alias="totalPasses")
-    accurate_passes: Optional[int] = Field(None, ge=0, alias="accuratePasses")
-    team_rating: Optional[float] = Field(None, ge=0, le=10, alias="teamRating")
+    expected_goals: float | None = Field(None, ge=0, alias="expectedGoals")
+    expected_goals_from_shots: float | None = Field(None, ge=0, alias="expectedGoalsFromShots")
+    total_passes: int | None = Field(None, ge=0, alias="totalPasses")
+    accurate_passes: int | None = Field(None, ge=0, alias="accuratePasses")
+    team_rating: float | None = Field(None, ge=0, le=10, alias="teamRating")
 
     # 动量指标
-    momentum_scores: Optional[list[float]] = Field(default_factory=list)
+    momentum_scores: list[float] | None = Field(default_factory=list)
 
     @field_validator("possession")
     @classmethod
-    def validate_possession(cls, v: Optional[float]) -> Optional[float]:
+    def validate_possession(cls, v: float | None) -> float | None:
         if v is not None and (v < 0 or v > 100):
             raise ValueError("控球率必须在 0-100 之间")
         return v
@@ -99,57 +102,58 @@ class PlayerStats(BaseModel):
         - 新增年龄字段（age）
         - 新增高级传球字段（final_third_passes, long_passes, crosses 等）
     """
+
     model_config = ConfigDict(str_strip_whitespace=True)
 
-    player_id: Optional[str] = Field(None, alias="playerId")
-    player_name: Optional[str] = Field(None, alias="playerName")
-    team_id: Optional[str] = Field(None, alias="teamId")
-    jersey_number: Optional[int] = Field(None, ge=1, le=99, alias="jerseyNumber")
-    is_starter: Optional[bool] = Field(None, alias="isStarter")
+    player_id: str | None = Field(None, alias="playerId")
+    player_name: str | None = Field(None, alias="playerName")
+    team_id: str | None = Field(None, alias="teamId")
+    jersey_number: int | None = Field(None, ge=1, le=99, alias="jerseyNumber")
+    is_starter: bool | None = Field(None, alias="isStarter")
 
     # 场上表现
-    minutes_played: Optional[int] = Field(None, ge=0, le=120, alias="minutesPlayed")
-    expected_goals: Optional[float] = Field(None, ge=0, alias="expectedGoals")
-    total_shots: Optional[int] = Field(None, ge=0, alias="totalShots")
-    touches: Optional[int] = Field(None, ge=0)
-    accurate_passes: Optional[int] = Field(None, ge=0, alias="accuratePasses")
+    minutes_played: int | None = Field(None, ge=0, le=120, alias="minutesPlayed")
+    expected_goals: float | None = Field(None, ge=0, alias="expectedGoals")
+    total_shots: int | None = Field(None, ge=0, alias="totalShots")
+    touches: int | None = Field(None, ge=0)
+    accurate_passes: int | None = Field(None, ge=0, alias="accuratePasses")
 
     # ========== V22.0 新增：身价与年龄 ==========
-    market_value: Optional[float] = Field(None, ge=0, alias="marketValue")  # 百万欧元
-    age: Optional[int] = Field(None, ge=16, le=50)  # 球员年龄
+    market_value: float | None = Field(None, ge=0, alias="marketValue")  # 百万欧元
+    age: int | None = Field(None, ge=16, le=50)  # 球员年龄
 
     # ========== V22.0 新增：高级传球数据 ==========
     # 区域传球
-    final_third_passes: Optional[int] = Field(None, ge=0, alias="finalThirdPasses")
-    accurate_final_third_passes: Optional[int] = Field(None, ge=0, alias="accurateFinalThirdPasses")
-    middle_third_passes: Optional[int] = Field(None, ge=0, alias="middleThirdPasses")
-    accurate_middle_third_passes: Optional[int] = Field(None, ge=0, alias="accurateMiddleThirdPasses")
-    defensive_third_passes: Optional[int] = Field(None, ge=0, alias="defensiveThirdPasses")
-    accurate_defensive_third_passes: Optional[int] = Field(None, ge=0, alias="accurateDefensiveThirdPasses")
+    final_third_passes: int | None = Field(None, ge=0, alias="finalThirdPasses")
+    accurate_final_third_passes: int | None = Field(None, ge=0, alias="accurateFinalThirdPasses")
+    middle_third_passes: int | None = Field(None, ge=0, alias="middleThirdPasses")
+    accurate_middle_third_passes: int | None = Field(None, ge=0, alias="accurateMiddleThirdPasses")
+    defensive_third_passes: int | None = Field(None, ge=0, alias="defensiveThirdPasses")
+    accurate_defensive_third_passes: int | None = Field(None, ge=0, alias="accurateDefensiveThirdPasses")
 
     # 传球 DNA（短中长传）
-    short_passes: Optional[int] = Field(None, ge=0, alias="shortPasses")
-    medium_passes: Optional[int] = Field(None, ge=0, alias="mediumPasses")
-    long_passes: Optional[int] = Field(None, ge=0, alias="longPasses")
-    accurate_long_passes: Optional[int] = Field(None, ge=0, alias="accurateLongPasses")
+    short_passes: int | None = Field(None, ge=0, alias="shortPasses")
+    medium_passes: int | None = Field(None, ge=0, alias="mediumPasses")
+    long_passes: int | None = Field(None, ge=0, alias="longPasses")
+    accurate_long_passes: int | None = Field(None, ge=0, alias="accurateLongPasses")
 
     # 传中与直塞
-    crosses: Optional[int] = Field(None, ge=0, alias="crosses")
-    accurate_crosses: Optional[int] = Field(None, ge=0, alias="accurateCrosses")
-    through_balls: Optional[int] = Field(None, ge=0, alias="throughBalls")
-    accurate_through_balls: Optional[int] = Field(None, ge=0, alias="accurateThroughBalls")
+    crosses: int | None = Field(None, ge=0, alias="crosses")
+    accurate_crosses: int | None = Field(None, ge=0, alias="accurateCrosses")
+    through_balls: int | None = Field(None, ge=0, alias="throughBalls")
+    accurate_through_balls: int | None = Field(None, ge=0, alias="accurateThroughBalls")
 
     # 纵向推进
-    forward_passes: Optional[int] = Field(None, ge=0, alias="forwardPasses")
-    backward_passes: Optional[int] = Field(None, ge=0, alias="backwardPasses")
-    vertical_progression: Optional[float] = Field(None, ge=0, alias="verticalProgression")
+    forward_passes: int | None = Field(None, ge=0, alias="forwardPasses")
+    backward_passes: int | None = Field(None, ge=0, alias="backwardPasses")
+    vertical_progression: float | None = Field(None, ge=0, alias="verticalProgression")
 
     # 创造机会
-    key_passes: Optional[int] = Field(None, ge=0, alias="keyPasses")
-    big_chances_created: Optional[int] = Field(None, ge=0, alias="bigChancesCreated")
+    key_passes: int | None = Field(None, ge=0, alias="keyPasses")
+    big_chances_created: int | None = Field(None, ge=0, alias="bigChancesCreated")
 
     # ========== V23.0 新增：球员评分 ==========
-    team_rating: Optional[float] = Field(None, ge=0, le=10, alias="teamRating")  # 球员评分
+    team_rating: float | None = Field(None, ge=0, le=10, alias="teamRating")  # 球员评分
 
 
 class MatchContext(BaseModel):
@@ -162,43 +166,42 @@ class MatchContext(BaseModel):
     V23.0 新增:
         - odds: 市场赔率信息（支持 MarketOddsProcessor）
     """
+
     model_config = ConfigDict(str_strip_whitespace=True)
 
     # 时间信息（从 matchTimeUTCDate 解析）
-    match_time: Optional[datetime] = Field(None, alias="matchTime")
-    kickoff_time: Optional[str] = Field(None, alias="kickoffTime")  # "12:30"
+    match_time: datetime | None = Field(None, alias="matchTime")
+    kickoff_time: str | None = Field(None, alias="kickoffTime")  # "12:30"
 
     # 场地信息（从 venue.* 解析）
-    venue: Optional[str] = None  # 体育场名称
-    venue_capacity: Optional[int] = Field(None, ge=0, alias="venueCapacity")
-    venue_attendance: Optional[int] = Field(None, ge=0, alias="venueAttendance")  # V21.0 新增: 观众人数
-    is_neutral: Optional[bool] = Field(None, alias="isNeutral")
+    venue: str | None = None  # 体育场名称
+    venue_capacity: int | None = Field(None, ge=0, alias="venueCapacity")
+    venue_attendance: int | None = Field(None, ge=0, alias="venueAttendance")  # V21.0 新增: 观众人数
+    is_neutral: bool | None = Field(None, alias="isNeutral")
 
     # 裁判信息（从 matchFacts.info.referee 解析）
-    referee_id: Optional[str] = Field(None, alias="refereeId")
-    referee_name: Optional[str] = Field(None, alias="refereeName")
-    referee_nationality: Optional[str] = Field(None, alias="refereeNationality")  # V21.0 新增
-    referee_strictness: Optional[float] = Field(
-        None, ge=0, le=1, alias="refereeStrictness"
-    )  # 历史场均黄牌数
+    referee_id: str | None = Field(None, alias="refereeId")
+    referee_name: str | None = Field(None, alias="refereeName")
+    referee_nationality: str | None = Field(None, alias="refereeNationality")  # V21.0 新增
+    referee_strictness: float | None = Field(None, ge=0, le=1, alias="refereeStrictness")  # 历史场均黄牌数
 
     # 天气信息（预留，需要天气 API）
-    weather_temperature: Optional[float] = Field(None, alias="weatherTemperature")
-    weather_condition: Optional[str] = Field(None, alias="weatherCondition")
-    weather_wind_speed: Optional[float] = Field(None, ge=0, alias="weatherWindSpeed")  # V21.0 新增
-    weather_humidity: Optional[float] = Field(None, ge=0, le=100, alias="weatherHumidity")  # V21.0 新增
+    weather_temperature: float | None = Field(None, alias="weatherTemperature")
+    weather_condition: str | None = Field(None, alias="weatherCondition")
+    weather_wind_speed: float | None = Field(None, ge=0, alias="weatherWindSpeed")  # V21.0 新增
+    weather_humidity: float | None = Field(None, ge=0, le=100, alias="weatherHumidity")  # V21.0 新增
 
     # 赛程背景
-    is_cup_match: Optional[bool] = Field(None, alias="isCupMatch")
-    days_since_last_match: Optional[int] = Field(None, ge=0, alias="daysSinceLastMatch")
+    is_cup_match: bool | None = Field(None, alias="isCupMatch")
+    days_since_last_match: int | None = Field(None, ge=0, alias="daysSinceLastMatch")
 
     # V21.0 新增: 比赛重要性（用于权重调整）
-    match_importance: Optional[float] = Field(default=0.5, ge=0, le=1)
+    match_importance: float | None = Field(default=0.5, ge=0, le=1)
 
     # ========== V23.0 新增：市场赔率信息 ==========
     # 赔率数据（支持多种来源）
     # 格式: {"home": 2.50, "draw": 3.20, "away": 2.80} 或 {"providers": [...]}
-    odds: Optional[Dict[str, Any]] = None
+    odds: dict[str, Any] | None = None
 
 
 class LineupInfo(BaseModel):
@@ -207,20 +210,21 @@ class LineupInfo(BaseModel):
 
     用于分析阵容稳定性和首发预测
     """
+
     model_config = ConfigDict(str_strip_whitespace=True)
 
     # 阵容统计
-    formation: Optional[str] = None  # "4-3-3"
-    starters_count: Optional[int] = Field(None, ge=11, le=11, alias="startersCount")
-    substitutes_count: Optional[int] = Field(None, ge=0, alias="substitutesCount")
+    formation: str | None = None  # "4-3-3"
+    starters_count: int | None = Field(None, ge=11, le=11, alias="startersCount")
+    substitutes_count: int | None = Field(None, ge=0, alias="substitutesCount")
 
     # 阵容稳定性指标
     unchanged_lineup: bool = Field(False, alias="unchangedLineup")
-    changes_from_last_match: Optional[int] = Field(None, ge=0, alias="changesFromLastMatch")
+    changes_from_last_match: int | None = Field(None, ge=0, alias="changesFromLastMatch")
 
     # 阵容价值（预估，单位：百万欧元）
-    total_market_value: Optional[float] = Field(None, ge=0, alias="totalMarketValue")
-    avg_market_value: Optional[float] = Field(None, ge=0, alias="avgMarketValue")
+    total_market_value: float | None = Field(None, ge=0, alias="totalMarketValue")
+    avg_market_value: float | None = Field(None, ge=0, alias="avgMarketValue")
 
     # 球员列表
     players: list[PlayerStats] = Field(default_factory=list)
@@ -229,6 +233,7 @@ class LineupInfo(BaseModel):
 # ============================================================================
 # 核心数据模型
 # ============================================================================
+
 
 class MatchData(BaseModel):
     """
@@ -253,6 +258,7 @@ class MatchData(BaseModel):
         away_lineup: 客队阵容（可选）
         raw_data: 原始 JSON 数据（用于调试）
     """
+
     model_config = ConfigDict(
         frozen=True,  # 不可变
         str_strip_whitespace=True,
@@ -270,22 +276,20 @@ class MatchData(BaseModel):
 
     # 比赛状态
     status: MatchStatus = MatchStatus.SCHEDULED
-    home_score: Optional[int] = Field(None, ge=0)
-    away_score: Optional[int] = Field(None, ge=0)
+    home_score: int | None = Field(None, ge=0)
+    away_score: int | None = Field(None, ge=0)
 
     # 统计数据
-    home_stats: Optional[TeamStats] = None
-    away_stats: Optional[TeamStats] = None
+    home_stats: TeamStats | None = None
+    away_stats: TeamStats | None = None
 
     # V21.0 新增字段
-    context: Optional[MatchContext] = None
-    home_lineup: Optional[LineupInfo] = None
-    away_lineup: Optional[LineupInfo] = None
+    context: MatchContext | None = None
+    home_lineup: LineupInfo | None = None
+    away_lineup: LineupInfo | None = None
 
     # 元数据
-    raw_data: Optional[dict[str, Any]] = Field(
-        default_factory=dict, exclude=True
-    )  # 不导出到 JSON
+    raw_data: dict[str, Any] | None = Field(default_factory=dict, exclude=True)  # 不导出到 JSON
 
     @field_validator("season")
     @classmethod
@@ -294,11 +298,11 @@ class MatchData(BaseModel):
             raise ValueError("season 必须是 4 位数字，如 '2324'")
         return v
 
-    def get_team_stats(self, side: HomeAway) -> Optional[TeamStats]:
+    def get_team_stats(self, side: HomeAway) -> TeamStats | None:
         """获取指定球队的统计数据"""
         return self.home_stats if side == HomeAway.HOME else self.away_stats
 
-    def get_team_lineup(self, side: HomeAway) -> Optional[LineupInfo]:
+    def get_team_lineup(self, side: HomeAway) -> LineupInfo | None:
         """获取指定球队的阵容信息"""
         return self.home_lineup if side == HomeAway.HOME else self.away_lineup
 
@@ -307,12 +311,14 @@ class MatchData(BaseModel):
 # 特征向量模型
 # ============================================================================
 
+
 class FeatureVector(BaseModel):
     """
     特征向量模型
 
     用于标准化特征输出，确保所有特征都有明确的类型和范围约束。
     """
+
     model_config = ConfigDict(
         str_strip_whitespace=True,
         # 允许额外字段（便于扩展）
@@ -345,6 +351,7 @@ class FeatureVector(BaseModel):
 # 处理上下文模型
 # ============================================================================
 
+
 class ProcessingContext(BaseModel):
     """
     处理上下文模型
@@ -359,14 +366,15 @@ class ProcessingContext(BaseModel):
         metadata: 元数据（只读）
         options: 配置选项
     """
+
     model_config = ConfigDict(
         str_strip_whitespace=True,
         arbitrary_types_allowed=True,  # 允许任意类型的缓存
     )
 
     # 追踪信息
-    match_id: Optional[str] = None
-    session_id: Optional[str] = Field(default_factory=lambda: f"session_{datetime.now().timestamp()}")
+    match_id: str | None = None
+    session_id: str | None = Field(default_factory=lambda: f"session_{datetime.now().timestamp()}")
 
     # 共享状态
     cache: dict[str, Any] = Field(default_factory=dict)

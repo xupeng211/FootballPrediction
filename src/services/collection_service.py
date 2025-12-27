@@ -16,12 +16,13 @@ FotMob 数据收集服务 (FotMob Collection Service)
 import asyncio
 import logging
 import time
-from datetime import datetime
-from typing import Dict, Any, List, Optional, Callable, AsyncContextManager
+from collections.abc import Callable
 from dataclasses import dataclass, field
+from datetime import datetime
 from enum import Enum
-from contextlib import asynccontextmanager
 from functools import wraps
+from typing import Any
+
 from src.config_unified import get_settings
 
 settings = get_settings()
@@ -29,17 +30,18 @@ settings = get_settings()
 
 import aiohttp
 from tenacity import (
+    RetryError,
+    before_sleep_log,
     retry,
+    retry_if_exception_type,
     stop_after_attempt,
     wait_exponential,
-    retry_if_exception_type,
-    before_sleep_log,
-    RetryError,
 )
 
-from .__init__ import BaseService
 from src.config_unified import get_settings
 from src.database.db_pool import get_db_pool
+
+from .__init__ import BaseService
 
 logger = logging.getLogger(__name__)
 
@@ -60,7 +62,7 @@ class TransactionContext:
     transaction_id: str
     connection: Any
     started_at: datetime
-    operations: List[Dict[str, Any]] = field(default_factory=list)
+    operations: list[dict[str, Any]] = field(default_factory=list)
     status: TransactionStatus = TransactionStatus.ACTIVE
 
     def add_operation(self, operation_type: str, description: str, **kwargs):
@@ -74,7 +76,7 @@ class TransactionContext:
             }
         )
 
-    def get_summary(self) -> Dict[str, Any]:
+    def get_summary(self) -> dict[str, Any]:
         """获取事务摘要"""
         return {
             "transaction_id": self.transaction_id,
@@ -113,7 +115,6 @@ def database_transaction(retry_on_deadlock: bool = True, max_retries: int = 3):
 
                         # 开始事务
                         async with conn.transaction():
-
                             # 将事务上下文传递给被装饰的函数
                             result = await func(self, *args, transaction_ctx=transaction_ctx, **kwargs)
 
@@ -160,28 +161,28 @@ class FotMobCollectionTask:
     """FotMob数据收集任务"""
 
     task_id: str
-    match_id: Optional[str] = None
-    league_id: Optional[str] = None
+    match_id: str | None = None
+    league_id: str | None = None
     collection_type: str = "match"  # match, league, fixtures
     priority: int = 5
     max_retries: int = 3
     retry_count: int = 0
     status: CollectionStatus = CollectionStatus.PENDING
     created_at: datetime = field(default_factory=datetime.now)
-    started_at: Optional[datetime] = None
-    completed_at: Optional[datetime] = None
-    result: Optional[Dict[str, Any]] = None
-    error: Optional[str] = None
+    started_at: datetime | None = None
+    completed_at: datetime | None = None
+    result: dict[str, Any] | None = None
+    error: str | None = None
     data_points_collected: int = 0
 
     @property
-    def duration_seconds(self) -> Optional[float]:
+    def duration_seconds(self) -> float | None:
         """获取任务执行时长"""
         if self.started_at and self.completed_at:
             return (self.completed_at - self.started_at).total_seconds()
         return None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典格式"""
         return {
             "task_id": self.task_id,
@@ -214,11 +215,11 @@ class CollectionStats:
     avg_duration: float = 0.0
     success_rate: float = 0.0
     total_data_points: int = 0
-    last_collection_time: Optional[datetime] = None
+    last_collection_time: datetime | None = None
     circuit_breaker_trips: int = 0
-    last_error: Optional[str] = None
+    last_error: str | None = None
 
-    def update(self, tasks: List[FotMobCollectionTask]) -> None:
+    def update(self, tasks: list[FotMobCollectionTask]) -> None:
         """更新统计信息"""
         self.total_tasks = len(tasks)
         self.successful_tasks = len([t for t in tasks if t.status == CollectionStatus.SUCCESS])
@@ -303,7 +304,7 @@ class CircuitBreaker:
                 self.state = "OPEN"
                 logger.warning(f"熔断器触发! 失败次数: {self.failure_count}")
 
-    def get_state(self) -> Dict[str, Any]:
+    def get_state(self) -> dict[str, Any]:
         """获取熔断器状态"""
         return {
             "state": self.state,
@@ -329,7 +330,7 @@ class FotMobCollectionService(BaseService):
         super().__init__("FotMobCollectionService")
         self.settings = get_settings()
         self.db_pool = None
-        self.tasks: List[FotMobCollectionTask] = []
+        self.tasks: list[FotMobCollectionTask] = []
         self.is_running = False
         self.max_concurrent_tasks = self.settings.fotmob_api.max_concurrent_requests
         self.stats = CollectionStats()
@@ -342,7 +343,7 @@ class FotMobCollectionService(BaseService):
         )
 
         # HTTP会话
-        self.http_session: Optional[aiohttp.ClientSession] = None
+        self.http_session: aiohttp.ClientSession | None = None
 
         logger.info("🚀 FotMob数据收集服务初始化完成")
 
@@ -392,7 +393,7 @@ class FotMobCollectionService(BaseService):
         except Exception as e:
             self.logger.error(f"❌ FotMob数据收集服务关闭失败: {e}")
 
-    def create_match_collection_task(self, match_id: str, priority: int = 5, task_id: Optional[str] = None) -> str:
+    def create_match_collection_task(self, match_id: str, priority: int = 5, task_id: str | None = None) -> str:
         """创建比赛数据收集任务"""
         if task_id is None:
             task_id = f"match_{match_id}_{int(time.time())}"
@@ -408,7 +409,7 @@ class FotMobCollectionService(BaseService):
         self.logger.info(f"已创建比赛收集任务: {task_id} (match_id: {match_id})")
         return task_id
 
-    def create_league_collection_task(self, league_id: str, priority: int = 3, task_id: Optional[str] = None) -> str:
+    def create_league_collection_task(self, league_id: str, priority: int = 3, task_id: str | None = None) -> str:
         """创建联赛数据收集任务"""
         if task_id is None:
             task_id = f"league_{league_id}_{int(time.time())}"
@@ -424,7 +425,7 @@ class FotMobCollectionService(BaseService):
         self.logger.info(f"已创建联赛收集任务: {task_id} (league_id: {league_id})")
         return task_id
 
-    async def execute_task(self, task_id: str) -> Dict[str, Any]:
+    async def execute_task(self, task_id: str) -> dict[str, Any]:
         """执行单个收集任务"""
         # 查找任务
         task = next((t for t in self.tasks if t.task_id == task_id), None)
@@ -504,7 +505,7 @@ class FotMobCollectionService(BaseService):
             # 更新统计信息
             self.stats.update(self.tasks)
 
-    async def _transform_data(self, raw_data: Dict[str, Any], task: FotMobCollectionTask) -> Dict[str, Any]:
+    async def _transform_data(self, raw_data: dict[str, Any], task: FotMobCollectionTask) -> dict[str, Any]:
         """数据清洗和转换 (ETL的Transform阶段)"""
         try:
             if not raw_data:
@@ -546,7 +547,7 @@ class FotMobCollectionService(BaseService):
             self.logger.error(f"数据转换失败: {e}")
             raise
 
-    def _process_match_data(self, raw_data: Dict[str, Any]) -> Dict[str, Any]:
+    def _process_match_data(self, raw_data: dict[str, Any]) -> dict[str, Any]:
         """处理比赛数据"""
         processed = {}
 
@@ -588,7 +589,7 @@ class FotMobCollectionService(BaseService):
             self.logger.error(f"比赛数据处理失败: {e}")
             return {"error": str(e)}
 
-    def _process_league_data(self, raw_data: Dict[str, Any]) -> Dict[str, Any]:
+    def _process_league_data(self, raw_data: dict[str, Any]) -> dict[str, Any]:
         """处理联赛数据"""
         processed = {}
 
@@ -603,7 +604,7 @@ class FotMobCollectionService(BaseService):
             self.logger.error(f"联赛数据处理失败: {e}")
             return {"error": str(e)}
 
-    async def _load_data(self, data: Dict[str, Any], task: FotMobCollectionTask) -> None:
+    async def _load_data(self, data: dict[str, Any], task: FotMobCollectionTask) -> None:
         """数据入库 (ETL的Load阶段)"""
         try:
             if not data.get("processed_data"):
@@ -624,7 +625,7 @@ class FotMobCollectionService(BaseService):
     @database_transaction(retry_on_deadlock=True, max_retries=3)
     async def _save_match_data(
         self,
-        data: Dict[str, Any],
+        data: dict[str, Any],
         task: FotMobCollectionTask,
         *,
         transaction_ctx: TransactionContext,
@@ -710,8 +711,8 @@ class FotMobCollectionService(BaseService):
 
     @database_transaction(retry_on_deadlock=True, max_retries=3)
     async def batch_save_match_data(
-        self, matches_data: List[Dict[str, Any]], *, transaction_ctx: TransactionContext
-    ) -> Dict[str, Any]:
+        self, matches_data: list[dict[str, Any]], *, transaction_ctx: TransactionContext
+    ) -> dict[str, Any]:
         """
         批量保存比赛数据 (单个事务)
 
@@ -844,7 +845,7 @@ class FotMobCollectionService(BaseService):
             self.logger.error(f"❌ 批量保存事务失败 (事务 {transaction_ctx.transaction_id}): {e}")
             raise
 
-    async def _save_league_data(self, data: Dict[str, Any], task: FotMobCollectionTask) -> None:
+    async def _save_league_data(self, data: dict[str, Any], task: FotMobCollectionTask) -> None:
         """保存联赛数据到数据库"""
         try:
             # 暂时使用通用SQL，实际应该有具体的League模型
@@ -854,7 +855,7 @@ class FotMobCollectionService(BaseService):
             self.logger.error(f"联赛数据保存失败: {e}")
             raise
 
-    def _count_data_points(self, data: Dict[str, Any]) -> int:
+    def _count_data_points(self, data: dict[str, Any]) -> int:
         """计算收集的数据点数量"""
         if isinstance(data, dict):
             return len(data)
@@ -863,7 +864,7 @@ class FotMobCollectionService(BaseService):
         else:
             return 1
 
-    async def execute_all_tasks(self, max_concurrent: Optional[int] = None) -> List[Dict[str, Any]]:
+    async def execute_all_tasks(self, max_concurrent: int | None = None) -> list[dict[str, Any]]:
         """执行所有待处理的任务"""
         if max_concurrent is None:
             max_concurrent = self.max_concurrent_tasks
@@ -883,7 +884,7 @@ class FotMobCollectionService(BaseService):
         # 创建信号量控制并发数
         semaphore = asyncio.Semaphore(max_concurrent)
 
-        async def execute_with_semaphore(task: FotMobCollectionTask) -> Dict[str, Any]:
+        async def execute_with_semaphore(task: FotMobCollectionTask) -> dict[str, Any]:
             async with semaphore:
                 return await self.execute_task(task.task_id)
 
@@ -917,7 +918,7 @@ class FotMobCollectionService(BaseService):
         before_sleep=before_sleep_log(logger, logging.WARNING),
         reraise=True,
     )
-    async def fetch_fotmob_data(self, match_id: str, timeout: float = 10.0) -> Dict[str, Any]:
+    async def fetch_fotmob_data(self, match_id: str, timeout: float = 10.0) -> dict[str, Any]:
         """
         从FotMob API获取比赛数据 (网络健壮性版本)
 
@@ -1004,12 +1005,12 @@ class FotMobCollectionService(BaseService):
                         message=error_msg,
                     )
 
-        except asyncio.TimeoutError as e:
+        except TimeoutError as e:
             # 超时错误
             error_msg = f"FotMob API请求超时 ({timeout}s) (match_id: {match_id})"
             logger.error(f"⏰ {error_msg}")
             self.circuit_breaker.call_failed()
-            raise asyncio.TimeoutError(error_msg) from e
+            raise TimeoutError(error_msg) from e
 
         except aiohttp.ClientError as e:
             # 网络连接错误
@@ -1033,8 +1034,8 @@ class FotMobCollectionService(BaseService):
             raise RuntimeError(error_msg) from e
 
     async def fetch_fotmob_data_batch(
-        self, match_ids: List[str], timeout: float = 10.0, max_concurrent: int = 5
-    ) -> Dict[str, Any]:
+        self, match_ids: list[str], timeout: float = 10.0, max_concurrent: int = 5
+    ) -> dict[str, Any]:
         """
         批量获取FotMob数据 (并发版本)
 
@@ -1053,7 +1054,7 @@ class FotMobCollectionService(BaseService):
 
         async def fetch_with_semaphore(
             match_id: str,
-        ) -> tuple[str, Optional[Dict[str, Any]]]:
+        ) -> tuple[str, dict[str, Any] | None]:
             async with semaphore:
                 try:
                     data = await self.fetch_fotmob_data(match_id, timeout)
@@ -1106,7 +1107,7 @@ class FotMobCollectionService(BaseService):
 
         return summary
 
-    async def get_upcoming_matches(self, hours_ahead: int = 48) -> Dict[str, Any]:
+    async def get_upcoming_matches(self, hours_ahead: int = 48) -> dict[str, Any]:
         """
         获取未来24-48小时的即将到来的比赛和初盘赔率
 
@@ -1234,7 +1235,6 @@ class FotMobCollectionService(BaseService):
         """
         import time
         from datetime import datetime, timedelta
-        import json
 
         start_time = time.time()
         collection_time = datetime.utcnow()
@@ -1328,7 +1328,7 @@ class FotMobCollectionService(BaseService):
 
                 processing_time = (time.time() - start_time) * 1000
                 logger.info(
-                    f"✅ 即将来临比赛数据收集完成: {len(upcoming_matches)} 场比赛, " f"耗时: {processing_time:.1f}ms"
+                    f"✅ 即将来临比赛数据收集完成: {len(upcoming_matches)} 场比赛, 耗时: {processing_time:.1f}ms"
                 )
 
                 return result
@@ -1350,7 +1350,7 @@ class FotMobCollectionService(BaseService):
                 },
             }
 
-    def _extract_basic_match_info(self, match_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    def _extract_basic_match_info(self, match_data: dict[str, Any]) -> dict[str, Any] | None:
         """从FotMob数据中提取基本比赛信息"""
         try:
             # FotMob数据结构中的基本信息
@@ -1376,7 +1376,7 @@ class FotMobCollectionService(BaseService):
             logger.warning(f"提取基本信息失败: {e}")
             return None
 
-    def _parse_kickoff_time(self, time_data: Dict[str, Any]) -> Optional[datetime]:
+    def _parse_kickoff_time(self, time_data: dict[str, Any]) -> datetime | None:
         """解析比赛开始时间"""
         try:
             # FotMob时间格式可能是多种情况
@@ -1412,7 +1412,7 @@ class FotMobCollectionService(BaseService):
             logger.warning(f"解析比赛时间失败: {e}")
             return None
 
-    def _extract_initial_odds(self, match_data: Dict[str, Any]) -> Dict[str, Any]:
+    def _extract_initial_odds(self, match_data: dict[str, Any]) -> dict[str, Any]:
         """提取初盘赔率数据"""
         odds_data = {
             "home_win": None,
@@ -1479,7 +1479,7 @@ class FotMobCollectionService(BaseService):
             logger.warning(f"提取赔率数据失败: {e}")
             return odds_data
 
-    async def _extract_real_time_features(self, match_id: str, home_team: str, away_team: str) -> Dict[str, Any]:
+    async def _extract_real_time_features(self, match_id: str, home_team: str, away_team: str) -> dict[str, Any]:
         """
         实时特征提取 - 与历史回测逻辑100%一致
 
@@ -1516,7 +1516,7 @@ class FotMobCollectionService(BaseService):
             logger.error(f"实时特征提取失败 {home_team} vs {away_team}: {e}")
             return features
 
-    async def _extract_elo_features(self, home_team: str, away_team: str) -> Dict[str, Any]:
+    async def _extract_elo_features(self, home_team: str, away_team: str) -> dict[str, Any]:
         """提取Elo评级特征"""
         try:
             # 使用Sprint 5实现的Elo评级系统
@@ -1552,7 +1552,7 @@ class FotMobCollectionService(BaseService):
             logger.warning(f"Elo特征提取失败: {e}")
             return {}
 
-    async def _extract_poisson_features(self, home_team: str, away_team: str) -> Dict[str, Any]:
+    async def _extract_poisson_features(self, home_team: str, away_team: str) -> dict[str, Any]:
         """提取泊松分布特征"""
         try:
             # 使用Sprint 5实现的泊松特征计算器
@@ -1583,7 +1583,7 @@ class FotMobCollectionService(BaseService):
             logger.warning(f"泊松特征提取失败: {e}")
             return {}
 
-    async def _extract_h2h_features(self, home_team: str, away_team: str) -> Dict[str, Any]:
+    async def _extract_h2h_features(self, home_team: str, away_team: str) -> dict[str, Any]:
         """提取历史交锋特征"""
         try:
             # 使用现有的H2H计算器
@@ -1611,7 +1611,7 @@ class FotMobCollectionService(BaseService):
             logger.warning(f"H2H特征提取失败: {e}")
             return {}
 
-    async def _extract_venue_features(self, home_team: str, away_team: str) -> Dict[str, Any]:
+    async def _extract_venue_features(self, home_team: str, away_team: str) -> dict[str, Any]:
         """提取主客场特征"""
         try:
             # 使用现有的场馆分析器
@@ -1639,7 +1639,7 @@ class FotMobCollectionService(BaseService):
             logger.warning(f"场馆特征提取失败: {e}")
             return {}
 
-    async def _extract_market_features(self, match_id: str) -> Dict[str, Any]:
+    async def _extract_market_features(self, match_id: str) -> dict[str, Any]:
         """提取市场情绪特征"""
         try:
             # 使用Sprint 5实现的赔率变动分析器
@@ -1666,7 +1666,7 @@ class FotMobCollectionService(BaseService):
             logger.warning(f"市场特征提取失败: {e}")
             return {}
 
-    def _calculate_data_quality(self, match_info: Dict[str, Any]) -> Dict[str, Any]:
+    def _calculate_data_quality(self, match_info: dict[str, Any]) -> dict[str, Any]:
         """计算数据质量指标"""
         try:
             quality_scores = []
@@ -1712,10 +1712,10 @@ class FotMobCollectionService(BaseService):
 
     def _generate_collection_summary(
         self,
-        matches: List[Dict[str, Any]],
+        matches: list[dict[str, Any]],
         collection_time: datetime,
         processing_time: float,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """生成收集统计摘要"""
         try:
             # 按联赛统计比赛数量
@@ -1760,7 +1760,7 @@ class FotMobCollectionService(BaseService):
                 "processing_time_ms": round(processing_time * 1000, 1),
             }
 
-    def get_service_status(self) -> Dict[str, Any]:
+    def get_service_status(self) -> dict[str, Any]:
         """获取服务状态"""
         return {
             "service_name": "FotMobCollectionService",

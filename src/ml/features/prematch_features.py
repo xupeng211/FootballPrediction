@@ -5,10 +5,8 @@ V18.0 赛前特征提取器
 """
 
 import logging
+
 import pandas as pd
-import numpy as np
-from typing import Dict, List, Optional, Tuple
-from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -38,27 +36,27 @@ class PrematchFeatureExtractor:
     # V18.0 赛前特征列表（8维）
     PREMATCH_FEATURES = [
         # 积分榜特征（6个）
-        'home_table_position',
-        'away_table_position',
-        'table_position_diff',
-        'home_points',
-        'away_points',
-        'points_diff',
+        "home_table_position",
+        "away_table_position",
+        "table_position_diff",
+        "home_points",
+        "away_points",
+        "points_diff",
         # 近期走势特征（2个）
-        'home_recent_form_points',
-        'away_recent_form_points',
+        "home_recent_form_points",
+        "away_recent_form_points",
     ]
 
     # 积分规则
     POINTS_MAP = {
-        'H': 3,  # 主场获胜
-        'A': 3,  # 客场获胜（作为主队时）
-        'D': 1,  # 平局
+        "H": 3,  # 主场获胜
+        "A": 3,  # 客场获胜（作为主队时）
+        "D": 1,  # 平局
     }
 
     def __init__(self):
         """初始化特征提取器"""
-        self.label_mapping = {'H': 3, 'D': 1, 'A': 0}  # 主场视角的积分
+        self.label_mapping = {"H": 3, "D": 1, "A": 0}  # 主场视角的积分
 
     def _get_match_points(self, row: pd.Series, team: str) -> int:
         """
@@ -71,27 +69,23 @@ class PrematchFeatureExtractor:
         Returns:
             积分值 (3/1/0)
         """
-        home_team = row['home_team']
-        away_team = row['away_team']
-        result = row['actual_result']
+        home_team = row["home_team"]
+        away_team = row["away_team"]
+        result = row["actual_result"]
 
         if team == home_team:
             return self.POINTS_MAP.get(result, 0)
         elif team == away_team:
             # 客队视角: H=0, D=1, A=3
-            if result == 'H':
+            if result == "H":
                 return 0
-            elif result == 'D':
+            elif result == "D":
                 return 1
-            elif result == 'A':
+            elif result == "A":
                 return 3
         return 0
 
-    def calculate_table_position(
-        self,
-        df: pd.DataFrame,
-        match_idx: int
-    ) -> Dict[str, int]:
+    def calculate_table_position(self, df: pd.DataFrame, match_idx: int) -> dict[str, int]:
         """
         计算指定比赛时的积分榜排名
 
@@ -108,26 +102,26 @@ class PrematchFeatureExtractor:
         if len(before_matches) == 0:
             # 第一场比赛，没有历史数据
             return {
-                'home_table_position': 10,  # 默认中间位置
-                'away_table_position': 10,
-                'table_position_diff': 0,
-                'home_points': 0,
-                'away_points': 0,
-                'points_diff': 0,
+                "home_table_position": 10,  # 默认中间位置
+                "away_table_position": 10,
+                "table_position_diff": 0,
+                "home_points": 0,
+                "away_points": 0,
+                "points_diff": 0,
             }
 
         current_match = df.iloc[match_idx]
-        home_team = current_match['home_team']
-        away_team = current_match['away_team']
+        home_team = current_match["home_team"]
+        away_team = current_match["away_team"]
 
         # 计算每支球队在当前比赛前的积分
         team_points = {}
         team_played = {}
 
         for _, row in before_matches.iterrows():
-            home = row['home_team']
-            away = row['away_team']
-            result = row['actual_result']
+            home = row["home_team"]
+            away = row["away_team"]
+            result = row["actual_result"]
 
             # 主队积分
             if home not in team_points:
@@ -140,20 +134,16 @@ class PrematchFeatureExtractor:
             if away not in team_points:
                 team_points[away] = 0
                 team_played[away] = 0
-            if result == 'H':
+            if result == "H":
                 team_points[away] += 0
-            elif result == 'D':
+            elif result == "D":
                 team_points[away] += 1
-            elif result == 'A':
+            elif result == "A":
                 team_points[away] += 3
             team_played[away] += 1
 
         # 计算排名（按积分排序，积分相同按比赛场次排序）
-        sorted_teams = sorted(
-            team_points.keys(),
-            key=lambda t: (team_points[t], -team_played[t]),
-            reverse=True
-        )
+        sorted_teams = sorted(team_points.keys(), key=lambda t: (team_points[t], -team_played[t]), reverse=True)
 
         # 获取主客队排名
         home_pos = sorted_teams.index(home_team) + 1 if home_team in sorted_teams else 20
@@ -164,20 +154,15 @@ class PrematchFeatureExtractor:
         away_pts = team_points.get(away_team, 0)
 
         return {
-            'home_table_position': home_pos,
-            'away_table_position': away_pos,
-            'table_position_diff': home_pos - away_pos,
-            'home_points': home_pts,
-            'away_points': away_pts,
-            'points_diff': home_pts - away_pts,
+            "home_table_position": home_pos,
+            "away_table_position": away_pos,
+            "table_position_diff": home_pos - away_pos,
+            "home_points": home_pts,
+            "away_points": away_pts,
+            "points_diff": home_pts - away_pts,
         }
 
-    def calculate_recent_form(
-        self,
-        df: pd.DataFrame,
-        match_idx: int,
-        window: int = 5
-    ) -> Dict[str, float]:
+    def calculate_recent_form(self, df: pd.DataFrame, match_idx: int, window: int = 5) -> dict[str, float]:
         """
         计算近 N 场走势特征
 
@@ -190,17 +175,17 @@ class PrematchFeatureExtractor:
             近期走势特征字典
         """
         current_match = df.iloc[match_idx]
-        home_team = current_match['home_team']
-        away_team = current_match['away_team']
-        match_time = current_match['match_time']
+        home_team = current_match["home_team"]
+        away_team = current_match["away_team"]
+        match_time = current_match["match_time"]
 
         # 获取主队近 N 场比赛
         home_recent = []
         for i in range(match_idx - 1, max(-1, match_idx - window - 1), -1):
             row = df.iloc[i]
-            if row['match_time'] >= match_time:
+            if row["match_time"] >= match_time:
                 continue
-            if row['home_team'] == home_team or row['away_team'] == home_team:
+            if row["home_team"] == home_team or row["away_team"] == home_team:
                 points = self._get_match_points(row, home_team)
                 home_recent.append(points)
 
@@ -208,9 +193,9 @@ class PrematchFeatureExtractor:
         away_recent = []
         for i in range(match_idx - 1, max(-1, match_idx - window - 1), -1):
             row = df.iloc[i]
-            if row['match_time'] >= match_time:
+            if row["match_time"] >= match_time:
                 continue
-            if row['home_team'] == away_team or row['away_team'] == away_team:
+            if row["home_team"] == away_team or row["away_team"] == away_team:
                 points = self._get_match_points(row, away_team)
                 away_recent.append(points)
 
@@ -219,10 +204,10 @@ class PrematchFeatureExtractor:
         away_recent_points = sum(away_recent) if away_recent else 0
 
         # 计算加权积分（最近比赛权重更高）
-        weights = [1.0, 0.9, 0.8, 0.7, 0.6][:len(home_recent)]
+        weights = [1.0, 0.9, 0.8, 0.7, 0.6][: len(home_recent)]
         home_weighted = sum(p * w for p, w in zip(home_recent, weights))
 
-        weights = [1.0, 0.9, 0.8, 0.7, 0.6][:len(away_recent)]
+        weights = [1.0, 0.9, 0.8, 0.7, 0.6][: len(away_recent)]
         away_weighted = sum(p * w for p, w in zip(away_recent, weights))
 
         # 计算连续不败场次
@@ -241,19 +226,15 @@ class PrematchFeatureExtractor:
                 break
 
         return {
-            'home_recent_form_points': home_recent_points,
-            'away_recent_form_points': away_recent_points,
-            'home_recent_form_weighted': home_weighted,
-            'away_recent_form_weighted': away_weighted,
-            'home_unbeaten_streak': home_unbeaten,
-            'away_unbeaten_streak': away_unbeaten,
+            "home_recent_form_points": home_recent_points,
+            "away_recent_form_points": away_recent_points,
+            "home_recent_form_weighted": home_weighted,
+            "away_recent_form_weighted": away_weighted,
+            "home_unbeaten_streak": home_unbeaten,
+            "away_unbeaten_streak": away_unbeaten,
         }
 
-    def extract_prematch_features(
-        self,
-        df: pd.DataFrame,
-        recent_window: int = 5
-    ) -> pd.DataFrame:
+    def extract_prematch_features(self, df: pd.DataFrame, recent_window: int = 5) -> pd.DataFrame:
         """
         提取完整的赛前特征数据集
 
@@ -281,7 +262,7 @@ class PrematchFeatureExtractor:
 
                 # 合并特征
                 features = {
-                    'match_id': df.iloc[idx]['external_id'],
+                    "match_id": df.iloc[idx]["external_id"],
                     **table_features,
                     **form_features,
                 }
@@ -304,8 +285,9 @@ class PrematchFeatureExtractor:
 
 def main():
     """测试函数"""
-    import sys
     import os
+    import sys
+
     sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
     from src.core.pipeline import V17ProductionPipeline
@@ -328,5 +310,5 @@ def main():
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
     sys.exit(main())

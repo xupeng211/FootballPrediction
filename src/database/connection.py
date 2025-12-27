@@ -6,8 +6,9 @@
 """
 
 import logging
+from collections.abc import AsyncGenerator, Generator
 from contextlib import asynccontextmanager, contextmanager
-from typing import AsyncGenerator, Generator, Optional, Any
+from typing import Any, Optional
 
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
@@ -22,6 +23,7 @@ logger = logging.getLogger(__name__)
 def get_database_config():
     """获取数据库配置（从 config_unified.py）"""
     from src.config_unified import get_settings
+
     settings = get_settings()
     return settings.database
 
@@ -34,8 +36,8 @@ class DatabaseManager:
     """
 
     _instance: Optional["DatabaseManager"] = None
-    _async_engine: Optional[AsyncEngine] = None
-    _async_session_factory: Optional[async_sessionmaker] = None
+    _async_engine: AsyncEngine | None = None
+    _async_session_factory: async_sessionmaker | None = None
 
     def __new__(cls) -> "DatabaseManager":
         if cls._instance is None:
@@ -47,7 +49,7 @@ class DatabaseManager:
             self._config = None
             self._initialized = True
 
-    def initialize(self, config: Optional[Any] = None) -> None:
+    def initialize(self, config: Any | None = None) -> None:
         """
         初始化数据库连接
 
@@ -155,7 +157,7 @@ class DatabaseManager:
 _db_manager = DatabaseManager()
 
 
-def initialize_database(config: Optional[Any] = None) -> None:
+def initialize_database(config: Any | None = None) -> None:
     """
     初始化数据库连接
 

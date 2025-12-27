@@ -13,18 +13,17 @@ Sprint 3 功能:
 """
 
 import logging
-from pathlib import Path
 
-from .dependency_injection import get_container, container_context
-from .inference_service import InferenceService
-from .prediction_service import PredictionService
+from ..ml.features.elo_rating_system import EloRatingSystem
+from ..ml.features.odds_movement_features import OddsMovementAnalyzer
+from ..ml.features.poisson_features import PoissonFeatureCalculator
+from ..strategy.kelly_criterion import KellyCriterion
 
 # Sprint 5 新增导入
-from ..testing.backtester import BacktestEngine, BacktestConfig
-from ..strategy.kelly_criterion import KellyCriterion
-from ..ml.features.elo_rating_system import EloRatingSystem
-from ..ml.features.poisson_features import PoissonFeatureCalculator
-from ..ml.features.odds_movement_features import OddsMovementAnalyzer
+from ..testing.backtester import BacktestConfig, BacktestEngine
+from .dependency_injection import container_context, get_container
+from .inference_service import InferenceService
+from .prediction_service import PredictionService
 
 logger = logging.getLogger(__name__)
 

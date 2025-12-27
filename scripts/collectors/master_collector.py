@@ -16,17 +16,16 @@ FootballPrediction Master Collector - Enterprise-grade Automated Pipeline
 """
 
 import asyncio
-import aiohttp
-import asyncpg
 import json
 import logging
-import time
-import os
 import subprocess
 import sys
-from datetime import datetime
-from typing import Dict, Any, Optional, List, Tuple
+import time
 from dataclasses import dataclass
+from datetime import datetime
+
+import aiohttp
+import asyncpg
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
@@ -153,7 +152,7 @@ class MasterCollector:
             logger.error(f"❌ L1数据采集异常: {e}")
             return False
 
-    async def process_l1_data(self, data: Dict) -> bool:
+    async def process_l1_data(self, data: dict) -> bool:
         """处理L1数据并保存到数据库"""
         try:
             # FotMob API返回的数据结构: data.fixtures.allMatches
@@ -183,7 +182,7 @@ class MasterCollector:
                     if match_time:
                         try:
                             # 直接解析ISO 8601格式
-                            match_time_parsed = datetime.fromisoformat(match_time.replace('Z', '+00:00'))
+                            match_time_parsed = datetime.fromisoformat(match_time.replace("Z", "+00:00"))
                         except Exception:
                             logger.warning(f"时间解析失败: {match_time}")
 
@@ -227,7 +226,7 @@ class MasterCollector:
             logger.error(f"❌ L1数据处理异常: {e}")
             return False
 
-    async def get_pending_matches(self) -> List[Dict]:
+    async def get_pending_matches(self) -> list[dict]:
         """获取待采集L2数据的比赛"""
         conn = await self.get_database_connection()
         try:
@@ -246,7 +245,7 @@ class MasterCollector:
         finally:
             await self.release_database_connection(conn)
 
-    async def collect_l2_batch(self) -> Tuple[int, int]:
+    async def collect_l2_batch(self) -> tuple[int, int]:
         """批量采集L2数据"""
         pending_matches = await self.get_pending_matches()
 
@@ -268,7 +267,7 @@ class MasterCollector:
 
         return successful, failed
 
-    async def process_single_l2_match(self, match: Dict) -> bool:
+    async def process_single_l2_match(self, match: dict) -> bool:
         """处理单场比赛的L2采集"""
         async with self.semaphore:
             external_id = match["external_id"]
@@ -300,7 +299,7 @@ class MasterCollector:
                 self.stats.l2_failed += 1
                 return False
 
-    async def fetch_l2_data(self, match_id: str) -> Optional[Dict]:
+    async def fetch_l2_data(self, match_id: str) -> dict | None:
         """采集单场比赛的L2数据"""
         url = f"https://www.fotmob.com/api/matchDetails?matchId={match_id}"
 
@@ -319,21 +318,21 @@ class MasterCollector:
                         logger.warning(f"⚠️ 比赛 {match_id} 数据不存在 (404)")
                         return None
                     elif response.status == 429:
-                        logger.warning(f"⚠️ 触发速率限制，等待10秒...")
+                        logger.warning("⚠️ 触发速率限制，等待10秒...")
                         await asyncio.sleep(10)
                         return await self.fetch_l2_data(match_id)
                     else:
                         logger.error(f"❌ 比赛 {match_id} 采集失败: HTTP {response.status}")
                         return None
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             logger.error(f"❌ 比赛 {match_id} 请求超时")
             return None
         except Exception as e:
             logger.error(f"❌ 比赛 {match_id} 采集异常: {e}")
             return None
 
-    async def save_l2_data(self, external_id: str, l2_data: Dict) -> bool:
+    async def save_l2_data(self, external_id: str, l2_data: dict) -> bool:
         """保存L2数据到数据库"""
         conn = await self.get_database_connection()
         try:
@@ -406,21 +405,21 @@ class MasterCollector:
                         logger.warning(f"⚠️ 比赛 {match_id} 赔率数据不存在 (404)")
                         return False
                     elif response.status == 429:
-                        logger.warning(f"⚠️ 触发速率限制，等待10秒...")
+                        logger.warning("⚠️ 触发速率限制，等待10秒...")
                         await asyncio.sleep(10)
                         return await self.collect_l3_odds(match_id)
                     else:
                         logger.error(f"❌ 比赛 {match_id} 赔率采集失败: HTTP {response.status}")
                         return False
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             logger.error(f"❌ 比赛 {match_id} 赔率请求超时")
             return False
         except Exception as e:
             logger.error(f"❌ 比赛 {match_id} 赔率采集异常: {e}")
             return False
 
-    async def save_l3_odds_data(self, external_id: str, odds_data: Dict) -> bool:
+    async def save_l3_odds_data(self, external_id: str, odds_data: dict) -> bool:
         """保存L3赔率数据到数据库"""
         conn = await self.get_database_connection()
         try:
@@ -463,7 +462,7 @@ class MasterCollector:
         finally:
             await self.release_database_connection(conn)
 
-    async def get_pending_l3_matches(self) -> List[Dict]:
+    async def get_pending_l3_matches(self) -> list[dict]:
         """获取待采集L3赔率的比赛"""
         conn = await self.get_database_connection()
         try:
@@ -492,7 +491,7 @@ class MasterCollector:
         finally:
             await self.release_database_connection(conn)
 
-    async def collect_l3_odds_batch(self) -> Tuple[int, int]:
+    async def collect_l3_odds_batch(self) -> tuple[int, int]:
         """批量采集L3赔率数据"""
         pending_matches = await self.get_pending_l3_matches()
 
@@ -514,7 +513,7 @@ class MasterCollector:
 
         return successful, failed
 
-    async def process_single_l3_match(self, match: Dict) -> bool:
+    async def process_single_l3_match(self, match: dict) -> bool:
         """处理单场比赛的L3赔率采集"""
         async with self.semaphore:
             external_id = match["external_id"]
@@ -673,7 +672,7 @@ class MasterCollector:
             f"🏃 L2采集: {self.stats.l2_attempts} | ✅ 成功: {self.stats.l2_successful} | ❌ 失败: {self.stats.l2_failed}"
         )
         print(
-            f"📈 成功率: {(self.stats.l2_successful/self.stats.l2_attempts*100):.1f}%"
+            f"📈 成功率: {(self.stats.l2_successful / self.stats.l2_attempts * 100):.1f}%"
             if self.stats.l2_attempts > 0
             else "📈 成功率: 0%"
         )

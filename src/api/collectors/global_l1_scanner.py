@@ -1,27 +1,27 @@
 #!/usr/bin/env python3
 """
-V35.1 全球广域 L1 扫描器 (The Big List Scanner - FIXED)
+V35.2 全球广域 L1 扫描器 (The Big List Scanner - FIX)
 ========================================================
-跨 5 年、7 大联赛的完整比赛索引生成器
+跨 5 年、6 大联赛的完整比赛索引生成器
 
-V35.1 修复:
-- 使用复合唯一键 (league_id + season + match_id) 去重
-- 新增法甲 (Ligue 1) 和荷甲 (Eredivisie)
-- 确保跨赛季数据不丢失
+V35.2 修复:
+- 修正 FotMob API league ID 错误 (ID 42/87 互换问题)
+- 移除数据不完整的联赛 (Champions League 只有 144 场)
+- 西甲使用正确 ID: 87
 
-目标: 5,000+ 场比赛的核心索引清单
-范围: 2021-2025 赛季 × 7 大联赛
+目标: 10,000+ 场比赛的核心索引清单
+范围: 2021-2025 赛季 × 6 大联赛
 """
 
 import asyncio
-import aiohttp
 import json
 import logging
-from pathlib import Path
-from datetime import datetime
-from typing import Dict, List, Optional, Tuple
-from dataclasses import dataclass, asdict
 import sys
+from dataclasses import dataclass
+from datetime import datetime
+from pathlib import Path
+
+import aiohttp
 
 # Add src to path
 project_root = Path(__file__).parent.parent.parent.parent
@@ -33,29 +33,32 @@ logger = logging.getLogger(__name__)
 @dataclass
 class LeagueConfig:
     """联赛配置"""
+
     league_id: int
     league_name: str
     fotmob_code: str  # FotMob API 中的赛季代码格式
 
 
-# 7 大联赛配置 (V35.2 修复: 移除硬码 season，由扫描循环动态注入)
+# 7 大联赛配置 (V35.3 最终版: 恢复欧冠)
+# V35.3 修正: 欧冠每赛季 ~144 场是正常的（小组赛+淘汰赛）
 LEAGUE_CONFIGS = [
-    LeagueConfig(47, "Premier League", ""),  # season_code 由扫描循环注入
-    LeagueConfig(42, "La Liga", ""),
-    LeagueConfig(54, "Serie A", ""),
-    LeagueConfig(53, "Bundesliga", ""),
-    LeagueConfig(87, "Champions League", ""),
-    LeagueConfig(61, "Ligue 1", ""),          # V35.1 新增: 法甲
-    LeagueConfig(12, "Eredivisie", ""),       # V35.1 新增: 荷甲
+    LeagueConfig(47, "Premier League", ""),  # 380 场/赛季
+    LeagueConfig(87, "La Liga", ""),  # 380 场/赛季
+    LeagueConfig(54, "Serie A", ""),  # 306 场/赛季
+    LeagueConfig(53, "Bundesliga", ""),  # 306 场/赛季
+    LeagueConfig(61, "Ligue 1", ""),  # 306 场/赛季
+    LeagueConfig(12, "Eredivisie", ""),  # 荷甲 (数据量待验证)
+    LeagueConfig(42, "Champions League", ""),  # 144 场/赛季 (V35.3 恢复)
 ]
 
-# 赛季映射 (FotMob 格式) - V35.1 扩展
+# 赛季映射 (FotMob 格式) - V36.0 修复
+# FotMob API 使用 YYYY/YYYY 格式（如 "2020/2021"）
 SEASONS = {
-    "20/21": "2021",
-    "21/22": "2122",
-    "22/23": "2223",
-    "23/24": "2324",
-    "24/25": "2425",
+    "20/21": "2020/2021",
+    "21/22": "2021/2022",
+    "22/23": "2022/2023",
+    "23/24": "2023/2024",
+    "24/25": "2024/2025",
 }
 
 
@@ -72,24 +75,21 @@ class GlobalL1Scanner:
 
     def __init__(self):
         """初始化扫描器"""
-        self.session: Optional[aiohttp.ClientSession] = None
+        self.session: aiohttp.ClientSession | None = None
         self.scan_stats = {
-            'total_matches': 0,
-            'by_league': {},
-            'by_season': {},
-            'finished_matches': 0,
-            'scheduled_matches': 0,
+            "total_matches": 0,
+            "by_league": {},
+            "by_season": {},
+            "finished_matches": 0,
+            "scheduled_matches": 0,
         }
-        self.match_index: List[Dict] = []
+        self.match_index: list[dict] = []
 
     async def __aenter__(self):
         """异步上下文管理器入口"""
         timeout = aiohttp.ClientTimeout(total=30)
         connector = aiohttp.TCPConnector(limit=10)
-        self.session = aiohttp.ClientSession(
-            timeout=timeout,
-            connector=connector
-        )
+        self.session = aiohttp.ClientSession(timeout=timeout, connector=connector)
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
@@ -97,12 +97,7 @@ class GlobalL1Scanner:
         if self.session:
             await self.session.close()
 
-    async def fetch_league_matches(
-        self,
-        league_id: int,
-        season_code: str,
-        season_name: str
-    ) -> List[Dict]:
+    async def fetch_league_matches(self, league_id: int, season_code: str, season_name: str) -> list[dict]:
         """
         获取指定联赛和赛季的所有比赛
 
@@ -137,12 +132,7 @@ class GlobalL1Scanner:
             logger.error(f"获取联赛 {league_id} 赛季 {season_name} 失败: {e}")
             return []
 
-    def _parse_league_matches(
-        self,
-        data: Dict,
-        league_id: int,
-        season_name: str
-    ) -> List[Dict]:
+    def _parse_league_matches(self, data: dict, league_id: int, season_name: str) -> list[dict]:
         """
         解析联赛比赛数据
 
@@ -158,68 +148,67 @@ class GlobalL1Scanner:
 
         try:
             # 导航到 matches 数据 - fixtures.allMatches 路径
-            fixtures = data.get('fixtures', {})
-            all_matches = fixtures.get('allMatches', [])
+            fixtures = data.get("fixtures", {})
+            all_matches = fixtures.get("allMatches", [])
 
             for match_data in all_matches:
                 # 提取基础信息
-                match_id = match_data.get('id')
+                match_id = match_data.get("id")
                 if not match_id:
                     continue
 
-                home_team = match_data.get('home', {})
-                away_team = match_data.get('away', {})
-                status_obj = match_data.get('status', {})
-                match_time = status_obj.get('utcTime', '')
+                home_team = match_data.get("home", {})
+                away_team = match_data.get("away", {})
+                status_obj = match_data.get("status", {})
+                match_time = status_obj.get("utcTime", "")
 
                 # 判断比赛状态 - API 使用布尔值
-                is_finished = status_obj.get('finished', False)
-                is_started = status_obj.get('started', False)
+                is_finished = status_obj.get("finished", False)
+                is_started = status_obj.get("started", False)
                 is_scheduled = not is_started and not is_finished
 
                 match_info = {
-                    'match_id': match_id,
-                    'league_id': league_id,
-                    'season': season_name,
-                    'home_team': home_team.get('name', 'Unknown'),
-                    'home_team_id': int(home_team.get('id', 0)),
-                    'away_team': away_team.get('name', 'Unknown'),
-                    'away_team_id': int(away_team.get('id', 0)),
-                    'status': 'finished' if is_finished else ('scheduled' if is_scheduled else 'ongoing'),
-                    'is_finished': is_finished,
-                    'is_scheduled': is_scheduled,
-                    'match_time': match_time,
-                    'home_score': status_obj.get('homeScore'),
-                    'away_score': status_obj.get('awayScore'),
+                    "match_id": match_id,
+                    "league_id": league_id,
+                    "season": season_name,
+                    "home_team": home_team.get("name", "Unknown"),
+                    "home_team_id": int(home_team.get("id", 0)),
+                    "away_team": away_team.get("name", "Unknown"),
+                    "away_team_id": int(away_team.get("id", 0)),
+                    "status": "finished" if is_finished else ("scheduled" if is_scheduled else "ongoing"),
+                    "is_finished": is_finished,
+                    "is_scheduled": is_scheduled,
+                    "match_time": match_time,
+                    "home_score": status_obj.get("homeScore"),
+                    "away_score": status_obj.get("awayScore"),
                 }
 
                 matches.append(match_info)
 
                 # 更新统计
-                self.scan_stats['total_matches'] += 1
+                self.scan_stats["total_matches"] += 1
                 league_name = next(
-                    (lc.league_name for lc in LEAGUE_CONFIGS if lc.league_id == league_id),
-                    str(league_id)
+                    (lc.league_name for lc in LEAGUE_CONFIGS if lc.league_id == league_id), str(league_id)
                 )
-                if league_name not in self.scan_stats['by_league']:
-                    self.scan_stats['by_league'][league_name] = 0
-                self.scan_stats['by_league'][league_name] += 1
+                if league_name not in self.scan_stats["by_league"]:
+                    self.scan_stats["by_league"][league_name] = 0
+                self.scan_stats["by_league"][league_name] += 1
 
-                if season_name not in self.scan_stats['by_season']:
-                    self.scan_stats['by_season'][season_name] = 0
-                self.scan_stats['by_season'][season_name] += 1
+                if season_name not in self.scan_stats["by_season"]:
+                    self.scan_stats["by_season"][season_name] = 0
+                self.scan_stats["by_season"][season_name] += 1
 
                 if is_finished:
-                    self.scan_stats['finished_matches'] += 1
+                    self.scan_stats["finished_matches"] += 1
                 if is_scheduled:
-                    self.scan_stats['scheduled_matches'] += 1
+                    self.scan_stats["scheduled_matches"] += 1
 
         except Exception as e:
             logger.error(f"解析比赛数据失败: {e}")
 
         return matches
 
-    async def scan_all(self) -> List[Dict]:
+    async def scan_all(self) -> list[dict]:
         """
         执行全量扫描
 
@@ -235,16 +224,14 @@ class GlobalL1Scanner:
         # 为每个联赛-赛季组合创建任务
         for league_config in LEAGUE_CONFIGS:
             for season_name, season_code in SEASONS.items():
-                task = self.fetch_league_matches(
-                    league_config.league_id,
-                    season_code,
-                    season_name
-                )
+                task = self.fetch_league_matches(league_config.league_id, season_code, season_name)
                 tasks.append(task)
-                task_info.append({
-                    'league': league_config.league_name,
-                    'season': season_name,
-                })
+                task_info.append(
+                    {
+                        "league": league_config.league_name,
+                        "season": season_name,
+                    }
+                )
 
         # 并发执行所有任务
         logger.info(f"🚀 启动 {len(tasks)} 个并发扫描任务...")
@@ -269,7 +256,7 @@ class GlobalL1Scanner:
                 unique_matches[unique_key] = match
 
         self.match_index = list(unique_matches.values())
-        self.scan_stats['total_matches'] = len(self.match_index)
+        self.scan_stats["total_matches"] = len(self.match_index)
 
         # 修正统计: 重新计算按赛季和按联赛的分布
         self._recalculate_stats()
@@ -281,33 +268,33 @@ class GlobalL1Scanner:
     def _recalculate_stats(self):
         """重新计算统计信息 (去重后)"""
         # 重置统计
-        self.scan_stats['by_league'] = {}
-        self.scan_stats['by_season'] = {}
-        self.scan_stats['finished_matches'] = 0
-        self.scan_stats['scheduled_matches'] = 0
+        self.scan_stats["by_league"] = {}
+        self.scan_stats["by_season"] = {}
+        self.scan_stats["finished_matches"] = 0
+        self.scan_stats["scheduled_matches"] = 0
 
         for match in self.match_index:
             league_name = next(
-                (lc.league_name for lc in LEAGUE_CONFIGS if lc.league_id == match['league_id']),
-                f"League_{match['league_id']}"
+                (lc.league_name for lc in LEAGUE_CONFIGS if lc.league_id == match["league_id"]),
+                f"League_{match['league_id']}",
             )
-            season = match['season']
+            season = match["season"]
 
             # 按联赛统计
-            if league_name not in self.scan_stats['by_league']:
-                self.scan_stats['by_league'][league_name] = 0
-            self.scan_stats['by_league'][league_name] += 1
+            if league_name not in self.scan_stats["by_league"]:
+                self.scan_stats["by_league"][league_name] = 0
+            self.scan_stats["by_league"][league_name] += 1
 
             # 按赛季统计
-            if season not in self.scan_stats['by_season']:
-                self.scan_stats['by_season'][season] = 0
-            self.scan_stats['by_season'][season] += 1
+            if season not in self.scan_stats["by_season"]:
+                self.scan_stats["by_season"][season] = 0
+            self.scan_stats["by_season"][season] += 1
 
             # 按状态统计
-            if match.get('is_finished'):
-                self.scan_stats['finished_matches'] += 1
-            if match.get('is_scheduled'):
-                self.scan_stats['scheduled_matches'] += 1
+            if match.get("is_finished"):
+                self.scan_stats["finished_matches"] += 1
+            if match.get("is_scheduled"):
+                self.scan_stats["scheduled_matches"] += 1
 
     def save_index(self, output_dir: Path) -> Path:
         """
@@ -320,23 +307,23 @@ class GlobalL1Scanner:
             保存的文件路径
         """
         output_dir.mkdir(parents=True, exist_ok=True)
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         output_file = output_dir / f"global_match_index_v35.1_{timestamp}.json"
 
         index_data = {
-            'scan_metadata': {
-                'scan_version': 'V35.1-FIXED',
-                'scan_timestamp': datetime.now().isoformat(),
-                'total_matches': len(self.match_index),
-                'leagues_covered': len(LEAGUE_CONFIGS),
-                'seasons_covered': len(SEASONS),
-                'dedup_method': 'composite_key (league_id + season + match_id)',
+            "scan_metadata": {
+                "scan_version": "V35.1-FIXED",
+                "scan_timestamp": datetime.now().isoformat(),
+                "total_matches": len(self.match_index),
+                "leagues_covered": len(LEAGUE_CONFIGS),
+                "seasons_covered": len(SEASONS),
+                "dedup_method": "composite_key (league_id + season + match_id)",
             },
-            'scan_stats': self.scan_stats,
-            'match_index': self.match_index,
+            "scan_stats": self.scan_stats,
+            "match_index": self.match_index,
         }
 
-        with open(output_file, 'w', encoding='utf-8') as f:
+        with open(output_file, "w", encoding="utf-8") as f:
             json.dump(index_data, f, indent=2, ensure_ascii=False)
 
         logger.info(f"💾 比赛索引已保存: {output_file}")
@@ -350,19 +337,19 @@ class GlobalL1Scanner:
         print("全球广域 L1 扫描摘要")
         print("=" * 70)
 
-        print(f"\n📊 总体统计:")
+        print("\n📊 总体统计:")
         print(f"   总比赛数: {self.scan_stats['total_matches']:,}")
         print(f"   已完成: {self.scan_stats['finished_matches']:,}")
         print(f"   未开始: {self.scan_stats['scheduled_matches']:,}")
 
-        print(f"\n🏆 按联赛分布:")
-        for league, count in sorted(self.scan_stats['by_league'].items()):
-            percentage = (count / self.scan_stats['total_matches'] * 100) if self.scan_stats['total_matches'] > 0 else 0
+        print("\n🏆 按联赛分布:")
+        for league, count in sorted(self.scan_stats["by_league"].items()):
+            percentage = (count / self.scan_stats["total_matches"] * 100) if self.scan_stats["total_matches"] > 0 else 0
             print(f"   {league:20s}: {count:5d} 场 ({percentage:5.1f}%)")
 
-        print(f"\n📅 按赛季分布:")
-        for season, count in sorted(self.scan_stats['by_season'].items()):
-            percentage = (count / self.scan_stats['total_matches'] * 100) if self.scan_stats['total_matches'] > 0 else 0
+        print("\n📅 按赛季分布:")
+        for season, count in sorted(self.scan_stats["by_season"].items()):
+            percentage = (count / self.scan_stats["total_matches"] * 100) if self.scan_stats["total_matches"] > 0 else 0
             print(f"   {season:6s}: {count:5d} 场 ({percentage:5.1f}%)")
 
         # 目标达成分析
@@ -370,13 +357,13 @@ class GlobalL1Scanner:
         achieved = len(self.match_index)
         percentage = (achieved / target * 100) if target > 0 else 0
 
-        print(f"\n🎯 目标达成:")
+        print("\n🎯 目标达成:")
         print(f"   目标: {target:,} 场")
         print(f"   实际: {achieved:,} 场")
         print(f"   达成率: {percentage:.1f}%")
 
         if achieved >= target:
-            print(f"   ✅ 已达成 5,000 场目标!")
+            print("   ✅ 已达成 5,000 场目标!")
         else:
             remaining = target - achieved
             print(f"   ⚠️  还需 {remaining:,} 场达成目标")
@@ -386,10 +373,7 @@ class GlobalL1Scanner:
 
 async def main():
     """主函数"""
-    logging.basicConfig(
-        level=logging.INFO,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-    )
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 
     async with GlobalL1Scanner() as scanner:
         # 执行全量扫描
@@ -402,9 +386,9 @@ async def main():
         output_dir = Path("data/production/global_manifest_v34")
         index_file = scanner.save_index(output_dir)
 
-        print(f"\n✅ 全球广域 L1 扫描完成!")
+        print("\n✅ 全球广域 L1 扫描完成!")
         print(f"   索引文件: {index_file}")
-        print(f"   可用于后续 L2 全息收割任务")
+        print("   可用于后续 L2 全息收割任务")
 
 
 if __name__ == "__main__":

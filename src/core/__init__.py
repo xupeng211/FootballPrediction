@@ -20,7 +20,7 @@ class Config:
         # 配置文件存储在用户主目录下，避免权限问题
         self.config_dir = Path.home() / ".footballprediction"
         self.config_file = self.config_dir / "config.json"
-        self._config: Dict[str, Any] = {}
+        self._config: dict[str, Any] = {}
         self._load_config()
 
     def _load_config(self) -> None:
@@ -29,7 +29,7 @@ class Config:
             import json
 
             try:
-                with open(self.config_file, "r", encoding="utf-8") as f:
+                with open(self.config_file, encoding="utf-8") as f:
                     self._config = json.load(f)
             except Exception as e:
                 # 配置文件损坏时记录警告，但不中断程序执行

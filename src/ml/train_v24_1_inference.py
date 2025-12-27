@@ -19,14 +19,14 @@ V24.1 实战训练脚本（Inference-Only Training）
 版本: V24.1-inference
 """
 
-import os
-import sys
 import json
 import logging
-from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple
-from pathlib import Path
+import os
+import sys
 from dataclasses import dataclass, field
+from datetime import datetime
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 
@@ -34,25 +34,19 @@ import pandas as pd
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-import psycopg2
-from psycopg2.extras import RealDictCursor
-from sklearn.model_selection import train_test_split, cross_val_score, StratifiedKFold
-from sklearn.preprocessing import StandardScaler, LabelEncoder
-from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
-from sklearn.calibration import CalibratedClassifierCV
-import xgboost as xgb
 import lightgbm as lgb
-
-from config_unified import get_settings
+import psycopg2
+import xgboost as xgb
+from psycopg2.extras import RealDictCursor
+from sklearn.metrics import accuracy_score, classification_report
+from sklearn.model_selection import StratifiedKFold, cross_val_score, train_test_split
+from sklearn.preprocessing import StandardScaler
 
 # 配置日志
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler('logs/v24_1_inference_training.log'),
-        logging.StreamHandler()
-    ]
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    handlers=[logging.FileHandler("logs/v24_1_inference_training.log"), logging.StreamHandler()],
 )
 logger = logging.getLogger(__name__)
 
@@ -60,6 +54,7 @@ logger = logging.getLogger(__name__)
 # ============================================================================
 # 数据类定义
 # ============================================================================
+
 
 @dataclass
 class InferenceTrainingConfig:
@@ -73,11 +68,12 @@ class InferenceTrainingConfig:
         cv_folds: 交叉验证折数
         ensemble_weights: 融合模型权重 [xgb, lgb]
     """
+
     target_feature_count: int = 100
     test_size: float = 0.2
     random_state: int = 42
     cv_folds: int = 5
-    ensemble_weights: List[float] = field(default_factory=lambda: [0.5, 0.5])
+    ensemble_weights: list[float] = field(default_factory=lambda: [0.5, 0.5])
 
 
 @dataclass
@@ -93,18 +89,20 @@ class TrainingResult:
         selected_features: 选中的特征列表
         test_predictions: 测试集预测结果
     """
+
     model_accuracy: float
     draw_precision: float
     draw_recall: float
-    feature_importance: Dict[str, float]
-    selected_features: List[str]
+    feature_importance: dict[str, float]
+    selected_features: list[str]
     test_predictions: np.ndarray
-    cv_scores: List[float]
+    cv_scores: list[float]
 
 
 # ============================================================================
 # 核心类定义
 # ============================================================================
+
 
 class InferenceFeatureFilter:
     """
@@ -118,42 +116,59 @@ class InferenceFeatureFilter:
 
     # 赛前特征前缀（保留）
     PRE_MATCH_PREFIXES = [
-        'home_l3_', 'away_l3_',           # L3 滚动历史
-        'home_l5_', 'away_l5_',           # L5 趋势
-        'h2h_',                           # 历史对战
-        'diff_l3_', 'diff_l5_',          # 历史对比
-        'ref_',                           # 裁判
-        'stadium_',                       # 球场
-        'kickoff_',                       # 开球时间
-        'weather_',                       # 天气
-        'odds_',                          # 赔率
-        'meta_',                          # 元数据（部分）
-        'lineup_',                        # 阵容
+        "home_l3_",
+        "away_l3_",  # L3 滚动历史
+        "home_l5_",
+        "away_l5_",  # L5 趋势
+        "h2h_",  # 历史对战
+        "diff_l3_",
+        "diff_l5_",  # 历史对比
+        "ref_",  # 裁判
+        "stadium_",  # 球场
+        "kickoff_",  # 开球时间
+        "weather_",  # 天气
+        "odds_",  # 赔率
+        "meta_",  # 元数据（部分）
+        "lineup_",  # 阵容
     ]
 
     # 赛前特征关键词（保留）
     PRE_MATCH_KEYWORDS = [
-        'history', 'rolling', 'trend', 'momentum',
-        'stability', 'value', 'rating',
-        'formation', 'bench', 'squad',
-        'attendance', 'capacity', 'venue',
-        'referee', 'coach',
-        'temperature', 'weather', 'wind',
-        'odds', 'bookmaker', 'market',
+        "history",
+        "rolling",
+        "trend",
+        "momentum",
+        "stability",
+        "value",
+        "rating",
+        "formation",
+        "bench",
+        "squad",
+        "attendance",
+        "capacity",
+        "venue",
+        "referee",
+        "coach",
+        "temperature",
+        "weather",
+        "wind",
+        "odds",
+        "bookmaker",
+        "market",
     ]
 
     # 赛后特征关键词（剔除）
     POST_MATCH_KEYWORDS = [
-        'expected_goals',          # 当场xG
-        'shots',                    # 当场射门
-        'possession',               # 当场控球
-        'passes',                   # 当场传球
-        'corners',                  # 当场角球
-        'fouls',                    # 当场犯规
-        'offsides',                 # 当场越位
-        'FirstHalf',                # 上半场数据
-        'SecondHalf',               # 下半场数据
-        'total_',                   # 当场总计
+        "expected_goals",  # 当场xG
+        "shots",  # 当场射门
+        "possession",  # 当场控球
+        "passes",  # 当场传球
+        "corners",  # 当场角球
+        "fouls",  # 当场犯规
+        "offsides",  # 当场越位
+        "FirstHalf",  # 上半场数据
+        "SecondHalf",  # 下半场数据
+        "total_",  # 当场总计
     ]
 
     @classmethod
@@ -180,9 +195,9 @@ class InferenceFeatureFilter:
                     return True
 
         # 特殊处理：meta_ 开头的大部分是赛前特征
-        if feature_name.startswith('meta_'):
+        if feature_name.startswith("meta_"):
             # 但要排除一些赛后 meta 数据
-            post_meta_keywords = ['score', 'winner', 'result']
+            post_meta_keywords = ["score", "winner", "result"]
             if not any(kw in feature_name.lower() for kw in post_meta_keywords):
                 return True
 
@@ -219,7 +234,7 @@ class InferenceTrainer:
         5. 验证模型在未见数据上的性能
     """
 
-    def __init__(self, config: Optional[InferenceTrainingConfig] = None):
+    def __init__(self, config: InferenceTrainingConfig | None = None):
         """
         初始化训练器
 
@@ -232,7 +247,7 @@ class InferenceTrainer:
         logger.info(f"  - 目标特征数: {self.config.target_feature_count}")
         logger.info(f"  - CV 折数: {self.config.cv_folds}")
 
-    def load_data(self) -> Tuple[pd.DataFrame, pd.Series]:
+    def load_data(self) -> tuple[pd.DataFrame, pd.Series]:
         """
         从数据库加载数据
 
@@ -288,13 +303,13 @@ class InferenceTrainer:
                 labels = []
 
                 for record in records:
-                    enriched = record['enriched_features']
+                    enriched = record["enriched_features"]
                     if isinstance(enriched, str):
                         enriched = json.loads(enriched)
 
                     # 构建标签（使用 xG 作为代理指标）
-                    home_xg = enriched.get('home_expected_goals', 0)
-                    away_xg = enriched.get('away_expected_goals', 0)
+                    home_xg = enriched.get("home_expected_goals", 0)
+                    away_xg = enriched.get("away_expected_goals", 0)
 
                     # 使用 xG 差值来生成标签
                     xg_diff = home_xg - away_xg
@@ -318,9 +333,7 @@ class InferenceTrainer:
         finally:
             conn.close()
 
-    def filter_pre_match_features(
-        self, X: pd.DataFrame
-    ) -> Tuple[pd.DataFrame, List[str]]:
+    def filter_pre_match_features(self, X: pd.DataFrame) -> tuple[pd.DataFrame, list[str]]:
         """
         过滤出真正的赛前特征
 
@@ -338,7 +351,7 @@ class InferenceTrainer:
 
         # 将所有值转换为 float
         for col in X.columns:
-            X[col] = pd.to_numeric(X[col], errors='coerce')
+            X[col] = pd.to_numeric(X[col], errors="coerce")
 
         # 过滤出赛前特征
         pre_match_features = []
@@ -353,14 +366,12 @@ class InferenceTrainer:
         X_filtered = X[pre_match_features]
 
         # 移除全 NaN 列
-        X_filtered = X_filtered.dropna(axis=1, how='all')
+        X_filtered = X_filtered.dropna(axis=1, how="all")
         logger.info(f"移除全 NaN 列后: {X_filtered.shape[1]}")
 
         return X_filtered, X_filtered.columns.tolist()
 
-    def train_ensemble(
-        self, X: np.ndarray, y: np.ndarray, feature_names: List[str]
-    ) -> TrainingResult:
+    def train_ensemble(self, X: np.ndarray, y: np.ndarray, feature_names: list[str]) -> TrainingResult:
         """
         训练 XGBoost + LightGBM 融合模型
 
@@ -376,10 +387,7 @@ class InferenceTrainer:
 
         # 划分训练集和测试集
         X_train, X_test, y_train, y_test = train_test_split(
-            X, y,
-            test_size=self.config.test_size,
-            random_state=self.config.random_state,
-            stratify=y
+            X, y, test_size=self.config.test_size, random_state=self.config.random_state, stratify=y
         )
 
         logger.info(f"训练集: {X_train.shape}, 测试集: {X_test.shape}")
@@ -398,7 +406,7 @@ class InferenceTrainer:
             subsample=0.8,
             colsample_bytree=0.8,
             random_state=self.config.random_state,
-            eval_metric='mlogloss',
+            eval_metric="mlogloss",
             use_label_encoder=False,
         )
         xgb_model.fit(X_train_scaled, y_train)
@@ -421,10 +429,7 @@ class InferenceTrainer:
         lgb_proba = lgb_model.predict_proba(X_test_scaled)
 
         # 加权融合
-        ensemble_proba = (
-            self.config.ensemble_weights[0] * xgb_proba +
-            self.config.ensemble_weights[1] * lgb_proba
-        )
+        ensemble_proba = self.config.ensemble_weights[0] * xgb_proba + self.config.ensemble_weights[1] * lgb_proba
         test_predictions = np.argmax(ensemble_proba, axis=1)
 
         # 计算准确率
@@ -432,8 +437,8 @@ class InferenceTrainer:
 
         # 计算平局预测指标
         report = classification_report(y_test, test_predictions, output_dict=True, zero_division=0)
-        draw_precision = report['1'].get('precision', 0.0)
-        draw_recall = report['1'].get('recall', 0.0)
+        draw_precision = report["1"].get("precision", 0.0)
+        draw_recall = report["1"].get("recall", 0.0)
 
         logger.info(f"测试集准确率: {accuracy:.4f}")
         logger.info(f"平局精确率: {draw_precision:.4f}")
@@ -441,22 +446,17 @@ class InferenceTrainer:
 
         # 提取特征重要性（使用 XGBoost）
         importance = xgb_model.feature_importances_
-        feature_importance = {
-            name: float(imp)
-            for name, imp in zip(feature_names, importance)
-        }
+        feature_importance = {name: float(imp) for name, imp in zip(feature_names, importance)}
 
         # 按重要性排序，选取黄金 100 强
-        sorted_features = sorted(
-            feature_importance.items(),
-            key=lambda x: x[1],
-            reverse=True
-        )[:self.config.target_feature_count]
+        sorted_features = sorted(feature_importance.items(), key=lambda x: x[1], reverse=True)[
+            : self.config.target_feature_count
+        ]
 
         selected_features = [f[0] for f in sorted_features]
         selected_importance = {f[0]: f[1] for f in sorted_features}
 
-        logger.info(f"黄金 100 强特征已筛选")
+        logger.info("黄金 100 强特征已筛选")
 
         # 交叉验证
         logger.info("执行交叉验证...")
@@ -472,7 +472,7 @@ class InferenceTrainer:
             cv_scores=cv_scores,
         )
 
-    def _cross_validate(self, X: np.ndarray, y: np.ndarray) -> List[float]:
+    def _cross_validate(self, X: np.ndarray, y: np.ndarray) -> list[float]:
         """
         执行交叉验证
 
@@ -489,22 +489,13 @@ class InferenceTrainer:
             learning_rate=0.05,
             subsample=0.8,
             random_state=self.config.random_state,
-            eval_metric='mlogloss',
+            eval_metric="mlogloss",
             use_label_encoder=False,
         )
 
-        cv = StratifiedKFold(
-            n_splits=self.config.cv_folds,
-            shuffle=True,
-            random_state=self.config.random_state
-        )
+        cv = StratifiedKFold(n_splits=self.config.cv_folds, shuffle=True, random_state=self.config.random_state)
 
-        scores = cross_val_score(
-            xgb_model, X, y,
-            cv=cv,
-            scoring='accuracy',
-            n_jobs=-1
-        )
+        scores = cross_val_score(xgb_model, X, y, cv=cv, scoring="accuracy", n_jobs=-1)
 
         logger.info(f"CV 分数: {scores}")
         logger.info(f"CV 平均: {scores.mean():.4f} (+/- {scores.std():.4f})")
@@ -519,40 +510,48 @@ class InferenceTrainer:
             result: 训练结果
         """
         # 创建输出目录
-        output_dir = Path('data/analysis')
+        output_dir = Path("data/analysis")
         output_dir.mkdir(parents=True, exist_ok=True)
 
         # 保存黄金 100 强名单
-        golden_features_file = output_dir / 'golden_100_pre_match_features_v24_1.json'
-        with open(golden_features_file, 'w') as f:
-            json.dump({
-                'version': 'V24.1-inference',
-                'selected_at': datetime.now().isoformat(),
-                'feature_count': len(result.selected_features),
-                'features': [
-                    {'name': name, 'importance': result.feature_importance[name]}
-                    for name in result.selected_features
-                ],
-            }, f, indent=2)
+        golden_features_file = output_dir / "golden_100_pre_match_features_v24_1.json"
+        with open(golden_features_file, "w") as f:
+            json.dump(
+                {
+                    "version": "V24.1-inference",
+                    "selected_at": datetime.now().isoformat(),
+                    "feature_count": len(result.selected_features),
+                    "features": [
+                        {"name": name, "importance": result.feature_importance[name]}
+                        for name in result.selected_features
+                    ],
+                },
+                f,
+                indent=2,
+            )
         logger.info(f"黄金 100 强名单已保存: {golden_features_file}")
 
         # 保存完整训练报告
-        report_file = output_dir / 'inference_training_report_v24_1.json'
-        with open(report_file, 'w') as f:
-            json.dump({
-                'version': 'V24.1-inference',
-                'generated_at': datetime.now().isoformat(),
-                'model_accuracy': result.model_accuracy,
-                'draw_precision': result.draw_precision,
-                'draw_recall': result.draw_precision,
-                'cv_scores': result.cv_scores,
-                'cv_mean': np.mean(result.cv_scores),
-                'cv_std': np.std(result.cv_scores),
-                'top_10_features': [
-                    {'name': name, 'importance': result.feature_importance[name]}
-                    for name in result.selected_features[:10]
-                ],
-            }, f, indent=2)
+        report_file = output_dir / "inference_training_report_v24_1.json"
+        with open(report_file, "w") as f:
+            json.dump(
+                {
+                    "version": "V24.1-inference",
+                    "generated_at": datetime.now().isoformat(),
+                    "model_accuracy": result.model_accuracy,
+                    "draw_precision": result.draw_precision,
+                    "draw_recall": result.draw_precision,
+                    "cv_scores": result.cv_scores,
+                    "cv_mean": np.mean(result.cv_scores),
+                    "cv_std": np.std(result.cv_scores),
+                    "top_10_features": [
+                        {"name": name, "importance": result.feature_importance[name]}
+                        for name in result.selected_features[:10]
+                    ],
+                },
+                f,
+                indent=2,
+            )
         logger.info(f"训练报告已保存: {report_file}")
 
     def print_results(self, result: TrainingResult) -> None:
@@ -566,18 +565,18 @@ class InferenceTrainer:
         print("  V24.1 实战训练报告（仅赛前特征）")
         print("=" * 70)
 
-        print(f"\n📊 模型性能:")
+        print("\n📊 模型性能:")
         print(f"  • 测试集准确率: {result.model_accuracy:.2%}")
         print(f"  • 平局预测精确率: {result.draw_precision:.2%}")
         print(f"  • 平局预测召回率: {result.draw_recall:.2%}")
         print(f"  • CV 平均准确率: {np.mean(result.cv_scores):.2%} (+/- {np.std(result.cv_scores):.2%})")
 
-        print(f"\n🏆 赛前黄金 10 强特征:")
+        print("\n🏆 赛前黄金 10 强特征:")
         for i, name in enumerate(result.selected_features[:10], 1):
             imp = result.feature_importance[name]
             print(f"  {i:2d}. {name:50s} ({imp:.4f})")
 
-        print(f"\n📋 完整黄金 100 强名单:")
+        print("\n📋 完整黄金 100 强名单:")
         for i, name in enumerate(result.selected_features, 1):
             print(f"  {i:3d}. {name}")
 
@@ -602,7 +601,8 @@ class InferenceTrainer:
 
         # 3. 填充缺失值
         from sklearn.impute import SimpleImputer
-        imputer = SimpleImputer(strategy='median')
+
+        imputer = SimpleImputer(strategy="median")
         X_processed = imputer.fit_transform(X_filtered)
 
         # 4. 训练模型
@@ -621,21 +621,14 @@ class InferenceTrainer:
 # 主程序入口
 # ============================================================================
 
+
 def main():
     """主程序入口"""
     import argparse
 
-    parser = argparse.ArgumentParser(
-        description='V24.1 实战训练脚本（仅赛前特征）'
-    )
-    parser.add_argument(
-        '--target-features', type=int, default=100,
-        help='目标特征数量（默认: 100）'
-    )
-    parser.add_argument(
-        '--cv-folds', type=int, default=5,
-        help='交叉验证折数（默认: 5）'
-    )
+    parser = argparse.ArgumentParser(description="V24.1 实战训练脚本（仅赛前特征）")
+    parser.add_argument("--target-features", type=int, default=100, help="目标特征数量（默认: 100）")
+    parser.add_argument("--cv-folds", type=int, default=5, help="交叉验证折数（默认: 5）")
 
     args = parser.parse_args()
 

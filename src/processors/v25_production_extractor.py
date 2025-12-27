@@ -1,9 +1,26 @@
 #!/usr/bin/env python3
 """
-V25.1 万能自适应特征提取器
-==========================
+V26.1 生产级"零缺陷"收割流水线 (Stable Production)
+=================================================
 
-架构级改进：从硬编码映射转向全量自适应吞噬
+V26.0 → V26.1 核心改进：
+    - 集成稀疏度过滤器: 自动剔除全零/低方差特征
+    - 维度硬限制: 强制控制在 8000 维以内
+    - 动态剪枝: 每处理 100 场触发一次特征剪枝
+    - 内存安全: 确保 Bulk Insert 不再 OOM
+
+V25.3 → V26.0 核心改进：
+    - 整合 V25.4b 极限维度能力：保留坐标特征，更高列表限制
+    - 排序稳定性修复：字典列表按 name/key/id 排序后，使用排序后索引
+    - 提高递归深度：15 → 25 层
+    - 提高列表限制：15 → 50 元素（针对 lineup/shots/events）
+    - 最小黑名单过滤：只过滤明显噪音，让模型决定特征价值
+    - 目标特征数：3,000 ~ 8,000 维 (V26.1 硬限制)
+
+V26.0 排序稳定性保证：
+    - 字典列表先按 name/key/id 排序
+    - 使用排序后的索引作为特征名后缀
+    - 确保不同比赛的特征列（如 shot_1, shot_2）逻辑含义一致
 
 设计原则:
     - 零硬编码：自动发现并提取所有数值型特征
@@ -11,22 +28,16 @@ V25.1 万能自适应特征提取器
     - 动态类型发现：自动转换 int/float/百分比/布尔值
     - 特征对齐：NaN 填充确保特征矩阵一致性
     - 命名规范：路径式命名保证唯一性和可读性
-
-核心能力:
-    - 递归打平算法：将嵌套 JSON 转换为扁平特征
-    - 全量吞噬：提取 JSON 中所有数值因子
-    - 零数据损耗：无论联赛/赛季，最大化特征利用
+    - 排序稳定：跨比赛特征语义一致性
 
 Author: Architecture Team
-Version: V25.1 (Adaptive Universal Extractor)
+Version: V26.0 (Stable Production)
 Date: 2025-12-26
 """
 
 import re
-from typing import Any, Dict, List, Optional, Set, Union
-from dataclasses import dataclass, field
-from enum import Enum
-from collections import defaultdict
+from dataclasses import dataclass
+from typing import Any
 
 import numpy as np
 import structlog
@@ -40,9 +51,7 @@ from src.processors.base_extractor import (
 )
 from src.processors.exceptions import (
     DataParsingError,
-    SchemaMismatchError,
     InsufficientFeaturesError,
-    MissingRequiredKeyError,
 )
 
 logger = structlog.get_logger(__name__)
@@ -53,26 +62,128 @@ logger = structlog.get_logger(__name__)
 # ============================================================================
 
 # 全局特征集合：记录所有已见过的特征键
-_GLOBAL_FEATURE_KEYS: Set[str] = set()
+_GLOBAL_FEATURE_KEYS: set[str] = set()
 _GLOBAL_FEATURE_LOCK = False
 
 
-def get_global_feature_keys() -> Set[str]:
+def get_global_feature_keys() -> set[str]:
     """获取全局特征键集合"""
     return _GLOBAL_FEATURE_KEYS.copy()
 
 
-def register_feature_keys(keys: Set[str]) -> None:
+def register_feature_keys(keys: set[str]) -> None:
     """注册新的特征键到全局集合"""
     global _GLOBAL_FEATURE_KEYS
     _GLOBAL_FEATURE_KEYS.update(keys)
 
 
 # ============================================================================
+# V26.0 最小黑名单 (只过滤明显噪音)
+# ============================================================================
+
+# V26.0: 最小黑名单 - 只过滤纯文本噪音，保留坐标和结构化数据
+FEATURE_BLACKLIST = {
+    # 只过滤纯文本噪音
+    "commentary",
+    "description",
+    "headline",
+    "summary",
+    "template",
+    "labeltemplate",
+    "defaulttext",
+    "textlabelid",
+    "texttemplateid",
+    "pollname",
+    # V26.0: 保留坐标特征 (x, y, shotmap, position, location 等)
+    # V26.0: 保留 id, url, image 等作为可能的特征
+    # 让模型决定哪些特征有用
+}
+
+# 白名单前缀：保留的核心数据路径
+FEATURE_WHITELIST_PREFIX = {
+    # V25.2: 顶层容器（必须允许进入以访问嵌套数据）
+    "content",
+    "general",  # FotMob JSON 顶层键
+    # 技术统计
+    "stats",
+    "stat",
+    "xg",
+    "xa",
+    "possession",
+    "pass",
+    "shot",
+    # 战术指标
+    "tactical",
+    "formation",
+    "lineup",
+    "player",
+    "team",
+    # 赔率数据
+    "odds",
+    "bet",
+    "price",
+    # 比赛信息
+    "match",
+    "score",
+    "winner",
+    "status",
+    # 其他核心数据
+    "h2h",
+    "table",
+    "momentum",
+    "playerstats",
+}
+
+
+def _should_skip_path(path: str) -> bool:
+    """
+    V26.0 路径过滤 - 最小过滤策略
+
+    只过滤明显的噪音关键词，保留大部分数据。
+    """
+    path_lower = path.lower()
+
+    # 只检查明显的噪音关键词
+    for blacklist_key in FEATURE_BLACKLIST:
+        if blacklist_key in path_lower:
+            return True
+
+    return False
+
+
+def _should_skip_value(key: str, value: Any) -> bool:
+    """
+    V26.0 值级别检查 - 最小过滤
+
+    只过滤明显的文本噪音，保留所有数值和结构化数据。
+    """
+    if value is None:
+        return False
+
+    key_lower = key.lower()
+
+    # 只检查 V26.0 的最小黑名单
+    for blacklist_key in FEATURE_BLACKLIST:
+        if blacklist_key in key_lower:
+            return True
+
+    # 检查值是否为长文本噪音
+    if isinstance(value, str):
+        val_lower = value.lower()
+        # 长文本描述（超过 100 字符）
+        if len(value) > 100:
+            if " " in val_lower and ("." in val_lower or "," in val_lower):
+                return True
+
+    return False
+
+
+# ============================================================================
 # 辅助函数：递归打平与类型转换
 # ============================================================================
 
-def _parse_value(value: Any) -> Optional[float]:
+
+def _parse_value(value: Any) -> float | None:
     """
     智能解析值，支持多种类型转换
 
@@ -129,7 +240,7 @@ def _parse_value(value: Any) -> Optional[float]:
         value = value.split("(")[0].strip()
 
     # 移除所有非数字字符（保留小数点和负号）
-    cleaned = re.sub(r'[^\d.\-]', '', value)
+    cleaned = re.sub(r"[^\d.\-]", "", value)
 
     if not cleaned:
         return None
@@ -157,31 +268,65 @@ def _sanitize_key(key: str) -> str:
     # 转小写
     key = key.lower()
     # 移除特殊字符，只保留字母、数字、下划线、点
-    key = re.sub(r'[^\w.]', '_', key)
+    key = re.sub(r"[^\w.]", "_", key)
     # 多个连续下划线替换为单个
-    key = re.sub(r'_+', '_', key)
+    key = re.sub(r"_+", "_", key)
     # 去除首尾下划线
-    key = key.strip('_')
+    key = key.strip("_")
     return key
+
+
+def _extract_semantic_key(item: dict[str, Any]) -> str | None:
+    """
+    从字典中提取语义化键名
+
+    优先级: type > name > key > id > title
+
+    Args:
+        item: 字典项
+
+    Returns:
+        语义化键名，如果找不到则返回 None
+    """
+    # 优先级顺序
+    priority_keys = ["type", "name", "key", "id", "title", "label"]
+
+    for key in priority_keys:
+        if key in item:
+            value = item[key]
+            if isinstance(value, str) and value:
+                # 清理并返回
+                return _sanitize_key(value)
+            elif isinstance(value, (int, float)):
+                # 对于数字类型，只在 type 字段时使用
+                if key == "type":
+                    return f"type_{int(value)}"
+
+    return None
 
 
 def _fully_flatten(
     data: Any,
     prefix: str = "",
-    max_depth: int = 20,
-    current_depth: int = 0
-) -> Dict[str, Any]:
+    max_depth: int = 25,  # V26.0: 提高到 25
+    current_depth: int = 0,
+    list_limit: int = 50,  # V26.0: 提高到 50
+) -> dict[str, Any]:
     """
-    递归打平嵌套结构（核心算法）
+    V26.0 递归打平算法（生产级稳定性版）
 
-    将任意深度的嵌套 JSON 转换为单层字典。
-    键名采用路径模式，如：content_stats_Periods_All_stats_0_BallPossesion
+    核心改进：
+        - max_depth: 15 → 25
+        - list_limit: 15 → 50 (对 lineup, shots, events 全量展开)
+        - 最小黑名单过滤
+        - V26.0 排序稳定性修复：使用排序后的索引作为特征名后缀
 
     Args:
         data: 输入数据（dict, list, 或基本类型）
         prefix: 当前路径前缀
-        max_depth: 最大递归深度（防止循环引用）
+        max_depth: 最大递归深度
         current_depth: 当前递归深度
+        list_limit: 列表展开限制
 
     Returns:
         打平后的字典 {key: parsed_value}
@@ -195,63 +340,157 @@ def _fully_flatten(
     # 处理字典
     if isinstance(data, dict):
         for key, value in data.items():
-            # 清理键名
             safe_key = _sanitize_key(str(key))
-            # 构造新前缀
             new_prefix = f"{prefix}_{safe_key}" if prefix else safe_key
+
+            # V26.0: 路径级别过滤
+            if _should_skip_path(new_prefix):
+                continue
+
+            # V26.0: 值级别过滤
+            if _should_skip_value(safe_key, value):
+                continue
 
             # 递归处理
             if isinstance(value, (dict, list)):
-                result.update(_fully_flatten(value, new_prefix, max_depth, current_depth + 1))
+                result.update(_fully_flatten(value, new_prefix, max_depth, current_depth + 1, list_limit))
             else:
                 parsed = _parse_value(value)
                 if parsed is not None:
                     result[new_prefix] = parsed
-                else:
-                    # 对于无法解析的字符串，尝试保留
-                    if isinstance(value, str) and value:
-                        result[new_prefix] = value
 
     # 处理列表
     elif isinstance(data, list):
         if not data:
             return result
 
-        # 检查列表元素类型
-        first_type = type(data[0]) if data else None
+        # V26.0: 动态列表限制
+        if any(
+            kw in prefix.lower()
+            for kw in [
+                "lineup",
+                "playerstats",
+                "substitutions",
+                "shots",
+                "matches",
+                "momentum",
+                "events",
+                "topplayers",
+                "stats",
+                "period",
+            ]
+        ):
+            limit = min(list_limit, len(data))
+        else:
+            limit = min(30, len(data))  # 提高默认限制
 
+        data = data[:limit]
+
+        # 纯数值列表
         if all(isinstance(x, (int, float)) for x in data):
-            # 纯数值列表，计算统计特征
             result[f"{prefix}_mean"] = float(np.mean(data))
             result[f"{prefix}_std"] = float(np.std(data))
             result[f"{prefix}_min"] = float(min(data))
             result[f"{prefix}_max"] = float(max(data))
             result[f"{prefix}_sum"] = float(sum(data))
             result[f"{prefix}_len"] = len(data)
-            # 同时保存每个元素
-            for i, item in enumerate(data):
-                result[f"{prefix}_{i}"] = float(item)
 
+        # 纯字符串列表
         elif all(isinstance(x, str) for x in data):
-            # 纯字符串列表，保存长度和第一个元素
             result[f"{prefix}_len"] = len(data)
-            result[f"{prefix}_first"] = data[0] if data else ""
 
+        # 字典列表 - V26.0 排序稳定性修复
         elif all(isinstance(x, dict) for x in data):
-            # 字典列表，递归处理每个元素（使用索引）
-            for i, item in enumerate(data):
-                new_prefix = f"{prefix}_{i}"
-                result.update(_fully_flatten(item, new_prefix, max_depth, current_depth + 1))
+            # V26.0: 排序稳定性 - 按 name/key/id 排序
+            def _sort_key(item: dict) -> tuple:
+                """排序键函数，确保跨比赛特征对齐"""
+                for key in ["name", "key", "id", "type"]:
+                    if key in item:
+                        val = item[key]
+                        if isinstance(val, str):
+                            return (0, val.lower())
+                        elif isinstance(val, (int, float)):
+                            return (1, val)
+                return (2, "")
+
+            sorted_data = sorted(data, key=_sort_key)
+
+            # V26.0: 排序稳定性修复 - 使用排序后的索引 i 作为特征名后缀
+            used_keys = {}
+            for i, item in enumerate(sorted_data):
+                semantic_key = _extract_semantic_key(item)
+
+                if semantic_key:
+                    base_key = semantic_key
+                    if base_key in used_keys:
+                        suffix = used_keys[base_key]
+                        unique_key = f"{base_key}_{suffix}"
+                        used_keys[base_key] = suffix + 1
+                    else:
+                        unique_key = base_key
+                        used_keys[base_key] = 1
+                    new_prefix = f"{prefix}_{unique_key}"
+                else:
+                    # V26.0 修复：使用排序后的索引 i（而非原始索引）
+                    # 这样确保不同比赛的特征列逻辑含义一致
+                    new_prefix = f"{prefix}_{i}"
+
+                result.update(_fully_flatten(item, new_prefix, max_depth, current_depth + 1, list_limit))
 
         else:
-            # 混合类型列表，简单索引
+            # 混合类型列表
+            used_keys = {}
+            dict_items = []
+            other_items = []
+
             for i, item in enumerate(data):
-                new_prefix = f"{prefix}_{i}"
-                if isinstance(item, (dict, list)):
-                    result.update(_fully_flatten(item, new_prefix, max_depth, current_depth + 1))
+                if isinstance(item, dict):
+                    dict_items.append((i, item))
+                else:
+                    other_items.append((i, item))
+
+            # 对字典元素排序
+            def _sort_key(item: dict) -> tuple:
+                for key in ["name", "key", "id", "type"]:
+                    if key in item:
+                        val = item[key]
+                        if isinstance(val, str):
+                            return (0, val.lower())
+                        elif isinstance(val, (int, float)):
+                            return (1, val)
+                return (2, "")
+
+            dict_items.sort(key=lambda x: _sort_key(x[1]))
+
+            # V26.0: 排序稳定性修复 - 处理字典元素（使用排序后的索引）
+            for sorted_idx, (original_i, item) in enumerate(dict_items):
+                semantic_key = _extract_semantic_key(item)
+
+                if semantic_key:
+                    base_key = semantic_key
+                    if base_key in used_keys:
+                        suffix = used_keys[base_key]
+                        unique_key = f"{base_key}_{suffix}"
+                        used_keys[base_key] = suffix + 1
+                    else:
+                        unique_key = base_key
+                        used_keys[base_key] = 1
+                    new_prefix = f"{prefix}_{unique_key}"
+                else:
+                    # V26.0 修复：使用排序后的索引
+                    new_prefix = f"{prefix}_{sorted_idx}"
+
+                result.update(_fully_flatten(item, new_prefix, max_depth, current_depth + 1, list_limit))
+
+            # 处理非字典元素
+            for i, item in other_items:
+                if isinstance(item, list):
+                    new_prefix = f"{prefix}_{i}"
+                    result.update(_fully_flatten(item, new_prefix, max_depth, current_depth + 1, list_limit))
                 else:
                     parsed = _parse_value(item)
                     if parsed is not None:
+                        new_prefix = f"{prefix}_{i}"
                         result[new_prefix] = parsed
 
     else:
@@ -263,10 +502,7 @@ def _fully_flatten(
     return result
 
 
-def align_features(
-    features: Dict[str, Any],
-    reference_keys: Set[str]
-) -> Dict[str, Any]:
+def align_features(features: dict[str, Any], reference_keys: set[str]) -> dict[str, Any]:
     """
     特征对齐：填充缺失的特征键
 
@@ -290,13 +526,14 @@ def align_features(
 
 
 # ============================================================================
-# V25.1 自适应提取器
+# V26.0 生产级自适应提取器
 # ============================================================================
 
 
 @dataclass
-class V25ExtractionMetrics:
-    """V25.1 提取器执行指标"""
+class V26ExtractionMetrics:
+    """V26.0 提取器执行指标"""
+
     total_features: int = 0
     numeric_features: int = 0
     string_features: int = 0
@@ -306,45 +543,44 @@ class V25ExtractionMetrics:
 
 class V25ProductionExtractor(BaseExtractor):
     """
-    V25.1 万能自适应特征提取器
+    V26.1 生产级"零缺陷"收割流水线 (Stable Production)
 
-    架构级改进：从硬编码映射转向全量自适应吞噬
+    V26.0 → V26.1 核心改进：
+        - 集成稀疏度过滤器: 自动剔除全零/低方差特征
+        - 维度硬限制: 强制控制在 8000 维以内
+        - 动态剪枝: 每处理 100 场触发一次特征剪枝
+        - 内存安全: 确保 Bulk Insert 不再 OOM
 
     核心能力:
         1. 递归打平：自动处理任意深度嵌套的 JSON 结构
-        2. 全量吞噬：提取所有数值型因子，零数据损耗
+        2. 最小过滤：保留坐标等结构化数据
         3. 动态类型发现：智能转换 int/float/百分比/布尔值
         4. 特征对齐：全局注册表确保跨比赛特征一致性
-        5. 鲁棒性优先：容错设计，部分缺失不影响整体提取
-
-    提取策略:
-        - 路径式命名：content_stats_Periods_All_stats_0_key
-        - 百分比归一化：自动将 "61%" 转换为 0.61
-        - 列表统计：纯数值列表自动计算 mean/std/min/max
-        - NaN 对齐：自动填充缺失特征为 0
+        5. 稀疏度过滤：自动剔除低价值特征
+        6. 排序稳定：确保不同比赛的特征列逻辑含义一致
     """
 
     # 版本标识
-    VERSION = "V25.1"
+    VERSION = "V26.1"
 
-    # 验证配置（降低最小特征要求，因为现在提取更多特征）
+    # 验证配置（V26.0 调整）
     DEFAULT_CONFIG = ValidationConfig(
-        min_features=50,      # 降低到 50，允许部分特征缺失
-        max_features=20000,   # 提高上限以支持全量提取
+        min_features=1000,  # V26.0: 提高下限
+        max_features=15000,  # V26.0: 提高上限
         allow_partial=True,
     )
 
-    def __init__(self, validation_config: Optional[ValidationConfig] = None):
-        """初始化 V25.1 提取器"""
+    def __init__(self, validation_config: ValidationConfig | None = None):
+        """初始化 V26.0 提取器"""
         super().__init__(validation_config or self.DEFAULT_CONFIG)
-        self._metrics = V25ExtractionMetrics()
+        self._metrics = V26ExtractionMetrics()
 
     @property
     def version(self) -> str:
         """返回版本号"""
         return self.VERSION
 
-    def pre_process(self, raw_data: Dict[str, Any]) -> Dict[str, Any]:
+    def pre_process(self, raw_data: dict[str, Any]) -> dict[str, Any]:
         """预处理原始数据 - 处理 l2_json 嵌套结构"""
         self._logger.debug("开始预处理", version=self.version)
 
@@ -361,13 +597,14 @@ class V25ProductionExtractor(BaseExtractor):
 
         return raw_data
 
-    def _flatten_l2_json(self, raw_data: Dict[str, Any]) -> Dict[str, Any]:
+    def _flatten_l2_json(self, raw_data: dict[str, Any]) -> dict[str, Any]:
         """扁平化 l2_json 嵌套结构"""
         l2_content = raw_data.get("l2_json")
 
         if isinstance(l2_content, str):
             try:
                 import json
+
                 l2_content = json.loads(l2_content)
             except json.JSONDecodeError as e:
                 raise DataParsingError(
@@ -383,30 +620,28 @@ class V25ProductionExtractor(BaseExtractor):
 
         return raw_data
 
-    def extract(self, raw_data: Dict[str, Any]) -> ExtractionResult:
+    def extract(self, raw_data: dict[str, Any]) -> ExtractionResult:
         """
-        全量自适应特征提取（核心方法）
+        V26.0 全量自适应特征提取（核心方法）
 
         策略：
-        1. 递归打平整个 JSON 结构
+        1. 递归打平整个 JSON 结构（V26.0: 更高深度和列表限制）
         2. 自动类型转换和值提取
         3. 全局特征对齐（填充缺失特征）
         4. 动态计算统计特征
         """
         self._logger.info("开始全量特征提取", version=self.version)
 
-        self._metrics = V25ExtractionMetrics()
-        features: Dict[str, Any] = {}
-        warnings: List[str] = []
-        errors: List[str] = []
+        self._metrics = V26ExtractionMetrics()
+        features: dict[str, Any] = {}
+        warnings: list[str] = []
+        errors: list[str] = []
 
         try:
-            # Step 1: 递归打平整个 JSON
+            # Step 1: 递归打平整个 JSON (V26.0: 使用更高参数)
             self._logger.info("步骤 1/4: 递归打平 JSON 结构")
-            flattened = _fully_flatten(raw_data, max_depth=25)
-            self._metrics.flatten_depth = max(
-                len(k.split('_')) for k in flattened.keys()
-            ) if flattened else 0
+            flattened = _fully_flatten(raw_data, max_depth=25, list_limit=50)
+            self._metrics.flatten_depth = max(len(k.split("_")) for k in flattened.keys()) if flattened else 0
 
             # Step 2: 分类特征并注册到全局表
             self._logger.info("步骤 2/4: 特征分类与对齐")
@@ -415,7 +650,7 @@ class V25ProductionExtractor(BaseExtractor):
 
             for key, value in flattened.items():
                 # 跳过元数据键
-                if key.startswith('_'):
+                if key.startswith("_"):
                     continue
 
                 if isinstance(value, (int, float)) and not isinstance(value, bool):
@@ -444,11 +679,21 @@ class V25ProductionExtractor(BaseExtractor):
             features.update(numeric_features)
             features.update(string_features)
 
+            # Step 4.5: V26.1 特征剪枝（控制维度）
+            from src.processors.v26_sparsity_filter import apply_sparsity_filter
+
+            features_before_prune = len(features)
+            features = apply_sparsity_filter(features)
+            features_after_prune = len(features)
+
             # 添加元数据
             features["_meta"] = {
                 "extraction_version": self.version,
                 "extraction_timestamp": self._get_timestamp(),
                 "feature_count": len(features),
+                "features_before_prune": features_before_prune,
+                "features_after_prune": features_after_prune,
+                "pruned_count": features_before_prune - features_after_prune,
                 "numeric_count": len(numeric_features),
                 "string_count": len(string_features),
                 "flatten_depth": self._metrics.flatten_depth,
@@ -457,10 +702,10 @@ class V25ProductionExtractor(BaseExtractor):
 
             self._metrics.total_features = len(features)
 
-            # 确定状态
-            if self._metrics.total_features >= 100:
+            # V26.0: 调整状态判断阈值
+            if self._metrics.total_features >= 3000:
                 status = ExtractionStatus.SUCCESS
-            elif self._metrics.total_features >= 20:
+            elif self._metrics.total_features >= 1000:
                 status = ExtractionStatus.PARTIAL
             else:
                 status = ExtractionStatus.FAILED
@@ -468,6 +713,9 @@ class V25ProductionExtractor(BaseExtractor):
             self._logger.info(
                 "特征提取完成",
                 total_features=self._metrics.total_features,
+                features_before_prune=features_before_prune,
+                features_after_prune=features_after_prune,
+                pruned_count=features_before_prune - features_after_prune,
                 numeric_features=self._metrics.numeric_features,
                 string_features=self._metrics.string_features,
                 flatten_depth=self._metrics.flatten_depth,
@@ -489,7 +737,7 @@ class V25ProductionExtractor(BaseExtractor):
                 parse_error=str(e),
             ) from e
 
-    def validate(self, features: Dict[str, Any]) -> bool:
+    def validate(self, features: dict[str, Any]) -> bool:
         """
         验证提取的特征
 
@@ -515,10 +763,7 @@ class V25ProductionExtractor(BaseExtractor):
             )
 
         # 检查最大限制（警告）
-        if (
-            self._validation_config.max_features is not None
-            and feature_count > self._validation_config.max_features
-        ):
+        if self._validation_config.max_features is not None and feature_count > self._validation_config.max_features:
             self._logger.warning(
                 "特征维度超过上限",
                 feature_count=feature_count,
@@ -531,6 +776,7 @@ class V25ProductionExtractor(BaseExtractor):
     def _get_timestamp(self) -> str:
         """获取当前时间戳"""
         from datetime import datetime
+
         return datetime.now().isoformat()
 
 

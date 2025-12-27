@@ -24,14 +24,15 @@ Sprint 3 改进:
 
 import logging
 from datetime import datetime
-from typing import Dict, Any
+from typing import Any
 
-from fastapi import APIRouter, HTTPException, Query, Depends, Path, status
+from fastapi import APIRouter, Depends, HTTPException, Path, Query, status
 from pydantic import BaseModel, Field, field_validator
+
+from src.services.dependency_injection import get_container
 
 # 导入服务层
 from src.services.prediction_service import PredictionService
-from src.services.dependency_injection import get_container
 
 logger = logging.getLogger(__name__)
 
@@ -86,14 +87,14 @@ async def get_prediction_service_dependency() -> PredictionService:
     "/match/{match_id}",
     summary="单场比赛预测",
     description="根据比赛ID预测1X2结果",
-    response_model=Dict[str, Any],
+    response_model=dict[str, Any],
 )
 async def predict_match(
     match_id: str = Path(..., description="比赛唯一标识符"),
     include_features: bool = Query(default=False, description="是否包含特征信息"),
     include_metadata: bool = Query(default=True, description="是否包含元数据"),
     prediction_service: PredictionService = Depends(get_prediction_service_dependency),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     单场比赛预测端点 - Sprint 3 精简版本
 
@@ -141,12 +142,12 @@ async def predict_match(
     "/batch",
     summary="批量比赛预测",
     description="批量预测多场比赛的1X2结果",
-    response_model=Dict[str, Any],
+    response_model=dict[str, Any],
 )
 async def predict_batch(
     request: BatchPredictionRequest,
     prediction_service: PredictionService = Depends(get_prediction_service_dependency),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     批量比赛预测端点 - Sprint 3 精简版本
 
@@ -195,11 +196,11 @@ async def predict_batch(
     "/health",
     summary="服务健康检查",
     description="检查预测服务的健康状态",
-    response_model=Dict[str, Any],
+    response_model=dict[str, Any],
 )
 async def health_check(
     prediction_service: PredictionService = Depends(get_prediction_service_dependency),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     服务健康检查端点 - Sprint 3 精简版本
 

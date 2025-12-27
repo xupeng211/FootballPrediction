@@ -5,12 +5,10 @@
 实现真实的连接检查，适配 Docker 容器环境。
 """
 
-import asyncio
 import logging
 import time
 from datetime import datetime
-from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 import psycopg2
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -92,7 +90,7 @@ async def health_check() -> HealthCheckResponse:
     summary="存活性检查",
     description="简单的存活性检查，仅返回基本状态",
 )
-async def liveness_check() -> Dict[str, Any]:
+async def liveness_check() -> dict[str, Any]:
     """存活性检查 - 用于K8s liveness probe"""
     return {
         "status": "alive",
@@ -105,9 +103,9 @@ async def liveness_check() -> Dict[str, Any]:
     summary="就绪性检查",
     description="检查服务是否就绪，包括依赖服务检查",
 )
-async def readiness_check(db: Session = Depends(get_db_session)) -> Dict[str, Any]:
+async def readiness_check(db: Session = Depends(get_db_session)) -> dict[str, Any]:
     """就绪性检查 - 用于K8s readiness probe"""
-    checks: Dict[str, Any] = {}
+    checks: dict[str, Any] = {}
 
     # 检查数据库
     try:
@@ -362,7 +360,7 @@ async def _get_filesystem_service_check() -> ServiceCheck:
         )
 
 
-async def _check_database(db: Session) -> Dict[str, Any]:
+async def _check_database(db: Session) -> dict[str, Any]:
     """检查数据库连接健康状态"""
     try:
         # 执行简单查询测试连接
@@ -385,7 +383,7 @@ async def _check_database(db: Session) -> Dict[str, Any]:
         }
 
 
-async def _check_redis() -> Dict[str, Any]:
+async def _check_redis() -> dict[str, Any]:
     """检查Redis连接健康状态"""
     try:
         import redis
@@ -420,7 +418,7 @@ async def _check_redis() -> Dict[str, Any]:
         }
 
 
-async def _check_filesystem() -> Dict[str, Any]:
+async def _check_filesystem() -> dict[str, Any]:
     """检查文件系统状态"""
     try:
         import os
@@ -445,7 +443,7 @@ async def _check_filesystem() -> Dict[str, Any]:
     description="轻量级健康检查，用于频繁探测",
     response_model=dict,
 )
-async def quick_health_check() -> Dict[str, Any]:
+async def quick_health_check() -> dict[str, Any]:
     """
     快速健康检查 - 最小化开销
 
@@ -484,7 +482,7 @@ async def quick_health_check() -> Dict[str, Any]:
     description="检查数据库中的数据质量，包括完整性、一致性和异常检测",
     response_model=dict,
 )
-async def data_quality_check(full_check: bool = False) -> Dict[str, Any]:
+async def data_quality_check(full_check: bool = False) -> dict[str, Any]:
     """
     数据质量检查端点
 

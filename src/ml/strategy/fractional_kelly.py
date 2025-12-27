@@ -10,7 +10,6 @@ Financial Logic Recovery - 降低风险，提高生存率
 """
 
 import logging
-from typing import Dict, Any, Optional, Tuple
 from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
@@ -135,7 +134,7 @@ class FractionalKellyCriterion:
 
     def _validate_bet_conditions(
         self, model_probability: float, market_odds: float, edge_percent: float
-    ) -> Tuple[bool, str]:
+    ) -> tuple[bool, str]:
         """
         验证投注条件
 
@@ -167,7 +166,7 @@ class FractionalKellyCriterion:
 
     def _classify_risk_and_confidence(
         self, stake_percent: float, edge_percent: float, model_probability: float
-    ) -> Tuple[str, str]:
+    ) -> tuple[str, str]:
         """
         分类风险等级和信心度
 
@@ -212,8 +211,8 @@ class FractionalKellyCriterion:
         return risk_level, confidence
 
     def calculate_multi_outcome_fractional_kelly(
-        self, probabilities: Dict[str, float], odds: Dict[str, float]
-    ) -> Dict[str, FractionalKellyRecommendation]:
+        self, probabilities: dict[str, float], odds: dict[str, float]
+    ) -> dict[str, FractionalKellyRecommendation]:
         """
         计算多结果半凯利公式建议
 
@@ -234,7 +233,7 @@ class FractionalKellyCriterion:
 
         return recommendations
 
-    def validate_total_position_risk(self, recommendations: Dict[str, FractionalKellyRecommendation]) -> bool:
+    def validate_total_position_risk(self, recommendations: dict[str, FractionalKellyRecommendation]) -> bool:
         """
         验证总仓位风险
 
@@ -299,7 +298,7 @@ fractional_kelly_calculator = FractionalKellyCriterion()
 
 def calculate_fractional_kelly_for_prediction(
     home_prob: float, draw_prob: float, away_prob: float, home_odds: float, draw_odds: float, away_odds: float
-) -> Dict[str, FractionalKellyRecommendation]:
+) -> dict[str, FractionalKellyRecommendation]:
     """
     为足球预测计算半凯利公式建议
 

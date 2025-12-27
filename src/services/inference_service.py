@@ -20,12 +20,11 @@ Sprint 3 改进:
 
 import logging
 import time
-from datetime import datetime
-from typing import Dict, Any, Optional, Protocol
 from dataclasses import dataclass
-from pathlib import Path
+from datetime import datetime
+from typing import Any, Protocol
 
-from .dependency_injection import injectable, ServiceLifecycle
+from .dependency_injection import ServiceLifecycle, injectable
 
 logger = logging.getLogger(__name__)
 
@@ -47,7 +46,7 @@ class ModelProtocol(Protocol):
         """是否已训练"""
         ...
 
-    def get_model_info(self) -> Dict[str, Any]:
+    def get_model_info(self) -> dict[str, Any]:
         """获取模型信息"""
         ...
 
@@ -63,11 +62,11 @@ class FeatureExtractorProtocol(Protocol):
 class DatabaseProtocol(Protocol):
     """数据库协议接口"""
 
-    async def fetchrow(self, query: str, *args) -> Optional[Dict[str, Any]]:
+    async def fetchrow(self, query: str, *args) -> dict[str, Any] | None:
         """查询单行数据"""
         ...
 
-    async def fetch(self, query: str, *args) -> list[Dict[str, Any]]:
+    async def fetch(self, query: str, *args) -> list[dict[str, Any]]:
         """查询多行数据"""
         ...
 
@@ -78,7 +77,7 @@ class InferenceServiceConfig:
 
     # 模型配置
     model_path: str = "models/football_xgboost_classifier.pkl"
-    fallback_model_path: Optional[str] = None
+    fallback_model_path: str | None = None
 
     # 缓存配置
     enable_cache: bool = True
@@ -91,7 +90,7 @@ class InferenceServiceConfig:
 
     # 降级策略
     enable_fallback: bool = True
-    default_probabilities: Dict[str, float] = None
+    default_probabilities: dict[str, float] = None
 
     # 监控配置
     enable_metrics: bool = True
@@ -133,7 +132,7 @@ class InferenceService(ServiceLifecycle):
         model_service: ModelProtocol,
         feature_extractor: FeatureExtractorProtocol,
         database_service: DatabaseProtocol,
-        config: Optional[InferenceServiceConfig] = None,
+        config: InferenceServiceConfig | None = None,
     ):
         """
         初始化推理服务 - 使用依赖注入
@@ -152,7 +151,7 @@ class InferenceService(ServiceLifecycle):
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
 
         # 缓存
-        self._prediction_cache: Dict[str, tuple[Dict[str, Any], float]] = {}
+        self._prediction_cache: dict[str, tuple[dict[str, Any], float]] = {}
 
         # 统计信息
         self.stats = {
@@ -205,7 +204,7 @@ class InferenceService(ServiceLifecycle):
         """检查是否已初始化"""
         return self._initialized
 
-    async def predict(self, match_id: str) -> Dict[str, Any]:
+    async def predict(self, match_id: str) -> dict[str, Any]:
         """
         进行比赛预测
 
@@ -222,7 +221,6 @@ class InferenceService(ServiceLifecycle):
         self.stats["total_requests"] += 1
 
         try:
-
             # 1. 检查缓存
             if self.config.enable_cache:
                 cached_result = self._get_from_cache(match_id)
@@ -269,7 +267,7 @@ class InferenceService(ServiceLifecycle):
             else:
                 raise RuntimeError(f"预测服务内部错误: {str(e)}")
 
-    async def _fetch_match_data(self, match_id: str) -> Dict[str, Any]:
+    async def _fetch_match_data(self, match_id: str) -> dict[str, Any]:
         """从数据库获取比赛数据"""
         try:
             query = """
@@ -298,7 +296,7 @@ class InferenceService(ServiceLifecycle):
             self.logger.error(f"获取比赛数据失败 {match_id}: {e}")
             raise RuntimeError(f"数据库查询失败: {str(e)}")
 
-    async def _get_historical_data(self, match_data: Dict[str, Any]) -> Any:
+    async def _get_historical_data(self, match_data: dict[str, Any]) -> Any:
         """获取历史数据用于特征提取"""
         try:
             match_date = match_data.get("match_date")
@@ -362,7 +360,7 @@ class InferenceService(ServiceLifecycle):
             self.logger.error(f"获取历史数据失败: {e}")
             return []
 
-    async def _perform_inference(self, match_id: str, features: Any) -> Dict[str, Any]:
+    async def _perform_inference(self, match_id: str, features: Any) -> dict[str, Any]:
         """执行模型推理"""
         try:
             # 使用模型服务进行预测
@@ -391,7 +389,7 @@ class InferenceService(ServiceLifecycle):
             self.logger.error(f"推理执行失败 {match_id}: {e}")
             raise RuntimeError(f"模型推理失败: {str(e)}")
 
-    def _get_from_cache(self, match_id: str) -> Optional[Dict[str, Any]]:
+    def _get_from_cache(self, match_id: str) -> dict[str, Any] | None:
         """从缓存获取结果"""
         if not self.config.enable_cache:
             return None
@@ -408,7 +406,7 @@ class InferenceService(ServiceLifecycle):
 
         return None
 
-    def _add_to_cache(self, match_id: str, result: Dict[str, Any]) -> None:
+    def _add_to_cache(self, match_id: str, result: dict[str, Any]) -> None:
         """添加结果到缓存"""
         if not self.config.enable_cache:
             return
@@ -423,7 +421,7 @@ class InferenceService(ServiceLifecycle):
 
         self._prediction_cache[match_id] = (result, time.time())
 
-    def _create_fallback_result(self, match_id: str, error_message: str) -> Dict[str, Any]:
+    def _create_fallback_result(self, match_id: str, error_message: str) -> dict[str, Any]:
         """创建降级结果"""
         return {
             "match_id": match_id,
@@ -447,7 +445,7 @@ class InferenceService(ServiceLifecycle):
         # 更新最后预测时间
         self.stats["last_prediction_time"] = datetime.now().isoformat()
 
-    def get_service_stats(self) -> Dict[str, Any]:
+    def get_service_stats(self) -> dict[str, Any]:
         """获取服务统计信息"""
         return {
             **self.stats,
@@ -462,7 +460,7 @@ class InferenceService(ServiceLifecycle):
             },
         }
 
-    async def health_check(self) -> Dict[str, Any]:
+    async def health_check(self) -> dict[str, Any]:
         """健康检查"""
         return {
             "status": "healthy" if self._initialized else "unhealthy",

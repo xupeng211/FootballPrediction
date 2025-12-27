@@ -14,10 +14,10 @@ BaseProcessor - 特征处理器抽象基类
 版本: V21.0-alpha
 """
 
+import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Any, Dict, Generic, TypeVar, Optional, Union
-import logging
+from typing import Any, Generic, Optional, TypeVar
 
 logger = logging.getLogger(__name__)
 
@@ -43,22 +43,18 @@ class ProcessorResult:
     """
 
     success: bool
-    data: Dict[str, Any] = field(default_factory=dict)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    data: dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
     errors: list[str] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
 
     @classmethod
-    def success_result(
-        cls, data: Dict[str, Any], metadata: Dict[str, Any] | None = None
-    ) -> "ProcessorResult":
+    def success_result(cls, data: dict[str, Any], metadata: dict[str, Any] | None = None) -> "ProcessorResult":
         """创建成功结果"""
         return cls(success=True, data=data, metadata=metadata or {})
 
     @classmethod
-    def failure_result(
-        cls, errors: list[str] | str, data: Dict[str, Any] | None = None
-    ) -> "ProcessorResult":
+    def failure_result(cls, errors: list[str] | str, data: dict[str, Any] | None = None) -> "ProcessorResult":
         """创建失败结果"""
         if isinstance(errors, str):
             errors = [errors]
@@ -139,7 +135,7 @@ class BaseProcessor(ABC, Generic[T]):
     # 处理器优先级（数字越小越先执行）
     priority: int = 100
 
-    def __init__(self, config: Optional[ProcessorConfig] = None) -> None:
+    def __init__(self, config: ProcessorConfig | None = None) -> None:
         """
         初始化处理器
 
@@ -159,9 +155,7 @@ class BaseProcessor(ABC, Generic[T]):
         pass
 
     @abstractmethod
-    def process(
-        self, data: T, context: "ProcessingContext"
-    ) -> ProcessorResult:
+    def process(self, data: T, context: "ProcessingContext") -> ProcessorResult:
         """
         核心处理方法（必须实现）
 
@@ -177,9 +171,7 @@ class BaseProcessor(ABC, Generic[T]):
         """
         raise NotImplementedError(f"{self.processor_name} must implement process()")
 
-    def pre_process(
-        self, data: T, context: "ProcessingContext"
-    ) -> tuple:
+    def pre_process(self, data: T, context: "ProcessingContext") -> tuple:
         """
         预处理钩子（可选重写）
 
@@ -194,9 +186,7 @@ class BaseProcessor(ABC, Generic[T]):
         """
         return data, context
 
-    def post_process(
-        self, result: ProcessorResult, context: "ProcessingContext"
-    ) -> ProcessorResult:
+    def post_process(self, result: ProcessorResult, context: "ProcessingContext") -> ProcessorResult:
         """
         后处理钩子（可选重写）
 
@@ -211,9 +201,7 @@ class BaseProcessor(ABC, Generic[T]):
         """
         return result
 
-    def execute(
-        self, data: T, context: Optional["ProcessingContext"] = None
-    ) -> ProcessorResult:
+    def execute(self, data: T, context: Optional["ProcessingContext"] = None) -> ProcessorResult:
         """
         执行完整处理流程（模板方法）
 
@@ -228,6 +216,7 @@ class BaseProcessor(ABC, Generic[T]):
         """
         if context is None:
             from .models import ProcessingContext
+
             context = ProcessingContext()
 
         if not self.config.enabled:
@@ -245,11 +234,13 @@ class BaseProcessor(ABC, Generic[T]):
             final_result = self.post_process(result, processed_context)
 
             # 记录元数据
-            final_result.metadata.update({
-                "processor": self.processor_name,
-                "version": self.processor_version,
-                "priority": self.priority,
-            })
+            final_result.metadata.update(
+                {
+                    "processor": self.processor_name,
+                    "version": self.processor_version,
+                    "priority": self.priority,
+                }
+            )
 
             return final_result
 
@@ -271,7 +262,7 @@ class BaseProcessor(ABC, Generic[T]):
         """
         return data is not None
 
-    def get_feature_schema(self) -> Dict[str, type]:
+    def get_feature_schema(self) -> dict[str, type]:
         """
         获取输出特征的 Schema（可选重写）
 

@@ -23,45 +23,43 @@ V19.4.1 重构改进：
 重构日期: 2025-12-24
 """
 
+import json
 import logging
 import sys
-from pathlib import Path
-from typing import Dict, Optional, Any
 from dataclasses import dataclass
 from datetime import datetime
+from pathlib import Path
+from typing import Any
+
+import joblib
 import numpy as np
 import pandas as pd
-import json
-import joblib
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
+# 重试装饰器
+import xgboost as xgb
+from sklearn.metrics import accuracy_score, classification_report
+from sklearn.preprocessing import StandardScaler
+
 from src.config_unified import get_settings
-from src.ml.features.v19_advanced_features import V19AdvancedFeatureExtractor
-from src.ml.features.draw_sensitivity_features import DrawSensitivityFeatureExtractor
-from src.ml.features.standings_calculator import initialize_global_calculator, get_global_calculator
+from src.data.preprocessors.data_normalizer import DataFormatNormalizer
 
 # 新增：数据验证和标准化
 from src.data.validators.data_validator import DataValidator
-from src.data.preprocessors.data_normalizer import DataFormatNormalizer
+from src.ml.features.draw_sensitivity_features import DrawSensitivityFeatureExtractor
+from src.ml.features.standings_calculator import get_global_calculator, initialize_global_calculator
+from src.ml.features.v19_advanced_features import V19AdvancedFeatureExtractor
 
-# 重试装饰器
-
-import xgboost as xgb
-from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import classification_report, accuracy_score
-
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
 @dataclass
 class V19_4Metrics:
     """V19.4 性能指标"""
+
     accuracy: float
     f1_macro: float
     precision_macro: float
@@ -99,30 +97,30 @@ class V19_4TrainingPipeline:
 
     # 模型参数
     MODEL_PARAMS = {
-        'n_estimators': 200,
-        'max_depth': 3,
-        'learning_rate': 0.01,
-        'min_child_weight': 5,
-        'gamma': 0.5,
-        'subsample': 0.7,
-        'colsample_bytree': 0.7,
-        'reg_alpha': 1.0,
-        'reg_lambda': 2.0,
-        'random_state': 42,
-        'use_label_encoder': False,
-        'eval_metric': 'mlogloss',
-        'objective': 'multi:softprob',  # 多分类
-        'num_class': 3  # H/D/A
+        "n_estimators": 200,
+        "max_depth": 3,
+        "learning_rate": 0.01,
+        "min_child_weight": 5,
+        "gamma": 0.5,
+        "subsample": 0.7,
+        "colsample_bytree": 0.7,
+        "reg_alpha": 1.0,
+        "reg_lambda": 2.0,
+        "random_state": 42,
+        "use_label_encoder": False,
+        "eval_metric": "mlogloss",
+        "objective": "multi:softprob",  # 多分类
+        "num_class": 3,  # H/D/A
     }
 
     # 默认联赛配置（从数据库或配置文件加载）
     DEFAULT_LEAGUE_CONFIG = {
-        47: {'name': 'Premier League', 'code': 'EPL', 'tier': 'Tier1'},
-        48: {'name': 'Championship', 'code': 'CHAMPIONSHIP', 'tier': 'Tier2'},
-        8: {'name': 'La Liga', 'code': 'LALIGA', 'tier': 'Tier1'},
-        54: {'name': 'Bundesliga', 'code': 'BUNDESLIGA', 'tier': 'Tier1'},
-        23: {'name': 'Serie A', 'code': 'SERIEA', 'tier': 'Tier1'},
-        34: {'name': 'Ligue 1', 'code': 'LIGUE1', 'tier': 'Tier1'},
+        47: {"name": "Premier League", "code": "EPL", "tier": "Tier1"},
+        48: {"name": "Championship", "code": "CHAMPIONSHIP", "tier": "Tier2"},
+        8: {"name": "La Liga", "code": "LALIGA", "tier": "Tier1"},
+        54: {"name": "Bundesliga", "code": "BUNDESLIGA", "tier": "Tier1"},
+        23: {"name": "Serie A", "code": "SERIEA", "tier": "Tier1"},
+        34: {"name": "Ligue 1", "code": "LIGUE1", "tier": "Tier1"},
     }
 
     def __init__(self, db_conn=None, enable_validation: bool = True):
@@ -155,7 +153,7 @@ class V19_4TrainingPipeline:
 
         logger.info("V19.4 训练流水线初始化完成（重构版：含数据验证 + 格式标准化 + 平局敏感度特征 + 加权损失）")
 
-    def _load_league_config(self) -> Dict[int, Dict[str, Any]]:
+    def _load_league_config(self) -> dict[int, dict[str, Any]]:
         """加载联赛配置
 
         Returns:
@@ -173,18 +171,14 @@ class V19_4TrainingPipeline:
                 port=self.settings.database.port,
                 database=self.settings.database.name,
                 user=self.settings.database.user,
-                password=self.settings.database.password.get_secret_value()
+                password=self.settings.database.password.get_secret_value(),
             )
 
             cursor = conn.cursor(cursor_factory=RealDictCursor)
             cursor.execute("SELECT league_id, league_name, league_code, tier FROM league_config WHERE is_active = TRUE")
 
             for row in cursor.fetchall():
-                config[row['league_id']] = {
-                    'name': row['league_name'],
-                    'code': row['league_code'],
-                    'tier': row['tier']
-                }
+                config[row["league_id"]] = {"name": row["league_name"], "code": row["league_code"], "tier": row["tier"]}
 
             cursor.close()
             conn.close()
@@ -218,7 +212,7 @@ class V19_4TrainingPipeline:
                 port=self.settings.database.port,
                 database=self.settings.database.name,
                 user=self.settings.database.user,
-                password=self.settings.database.password.get_secret_value()
+                password=self.settings.database.password.get_secret_value(),
             )
 
             cursor = conn.cursor(cursor_factory=RealDictCursor)
@@ -319,17 +313,15 @@ class V19_4TrainingPipeline:
                     continue
 
                 # 获取比赛时的真实积分榜数据
-                home_team = row.get('home_team', '')
-                away_team = row.get('away_team', '')
+                home_team = row.get("home_team", "")
+                away_team = row.get("away_team", "")
 
                 home_standings = calculator.get_team_stats_at_match(idx, home_team)
                 away_standings = calculator.get_team_stats_at_match(idx, away_team)
 
                 # 1. 提取 V18.2 原始特征（使用标准化数据）
                 v18_features = self._extract_v18_features(
-                    normalized_data,
-                    home_standings=home_standings,
-                    away_standings=away_standings
+                    normalized_data, home_standings=home_standings, away_standings=away_standings
                 )
 
                 if v18_features is None:
@@ -337,40 +329,36 @@ class V19_4TrainingPipeline:
 
                 # 2. 提取 V19.0 新增特征（13 维）
                 v19_features = self._extract_v19_features(
-                    normalized_data,
-                    home_standings=home_standings,
-                    away_standings=away_standings
+                    normalized_data, home_standings=home_standings, away_standings=away_standings
                 )
 
                 # 3. 提取 V19.4 平局敏感度特征（3 维，使用标准化数据）
                 draw_features = self._extract_draw_sensitivity_features(
-                    normalized_data,
-                    home_standings=home_standings,
-                    away_standings=away_standings
+                    normalized_data, home_standings=home_standings, away_standings=away_standings
                 )
 
                 # 4. 合并所有特征
                 all_features = {**v18_features, **v19_features, **draw_features}
-                all_features['match_id'] = row.get('id', idx)
-                all_features['home_team'] = home_team
-                all_features['away_team'] = away_team
-                all_features['match_time'] = row.get('match_time', '')
+                all_features["match_id"] = row.get("id", idx)
+                all_features["home_team"] = home_team
+                all_features["away_team"] = away_team
+                all_features["match_time"] = row.get("match_time", "")
 
                 # 5. 联赛编码特征（使用动态配置）
-                league_id = row.get('league_id', 47)
+                league_id = row.get("league_id", 47)
                 league_features = self._encode_league(league_id)
                 all_features.update(league_features)
 
                 # 6. 提取标签
-                home_score = row.get('home_score', 0)
-                away_score = row.get('away_score', 0)
+                home_score = row.get("home_score", 0)
+                away_score = row.get("away_score", 0)
 
                 if home_score > away_score:
-                    all_features['result'] = 2  # Home
+                    all_features["result"] = 2  # Home
                 elif home_score < away_score:
-                    all_features['result'] = 0  # Away
+                    all_features["result"] = 0  # Away
                 else:
-                    all_features['result'] = 1  # Draw
+                    all_features["result"] = 1  # Draw
 
                 features_list.append(all_features)
 
@@ -383,7 +371,7 @@ class V19_4TrainingPipeline:
 
         return feature_df
 
-    def _parse_raw_data(self, row: pd.Series) -> Optional[Dict[str, Any]]:
+    def _parse_raw_data(self, row: pd.Series) -> dict[str, Any] | None:
         """解析并标准化原始数据
 
         V19.4.1 新增方法：使用 DataFormatNormalizer 统一处理不同格式
@@ -395,20 +383,20 @@ class V19_4TrainingPipeline:
             标准化后的数据字典，如果解析失败则返回 None
         """
         try:
-            raw_data = row.get('raw_data', {})
+            raw_data = row.get("raw_data", {})
 
             # 处理字符串格式的 JSON
             if isinstance(raw_data, str):
                 raw_data = json.loads(raw_data)
 
             # 添加基础字段到 raw_data
-            raw_data['home_team'] = row.get('home_team', '')
-            raw_data['away_team'] = row.get('away_team', '')
-            raw_data['match_time'] = row.get('match_time')
-            raw_data['league_id'] = row.get('league_id', 47)
-            raw_data['season'] = row.get('season', '2324')
-            raw_data['home_score'] = row.get('home_score')
-            raw_data['away_score'] = row.get('away_score')
+            raw_data["home_team"] = row.get("home_team", "")
+            raw_data["away_team"] = row.get("away_team", "")
+            raw_data["match_time"] = row.get("match_time")
+            raw_data["league_id"] = row.get("league_id", 47)
+            raw_data["season"] = row.get("season", "2324")
+            raw_data["home_score"] = row.get("home_score")
+            raw_data["away_score"] = row.get("away_score")
 
             # 使用 DataFormatNormalizer 标准化数据
             normalized = self.normalizer.normalize(raw_data)
@@ -419,7 +407,7 @@ class V19_4TrainingPipeline:
             logger.debug(f"数据解析失败: {e}")
             return None
 
-    def _extract_v18_features(self, normalized_data: Dict, **kwargs) -> Optional[Dict[str, float]]:
+    def _extract_v18_features(self, normalized_data: dict, **kwargs) -> dict[str, float] | None:
         """提取 V18 滚动特征（使用标准化数据）
 
         V19.4.1 重构：数据已由 DataFormatNormalizer 标准化，简化逻辑
@@ -433,16 +421,16 @@ class V19_4TrainingPipeline:
         """
         try:
             # 使用标准化数据（字段名已统一）
-            home_xg = normalized_data.get('home_expected_goals', np.nan)
-            away_xg = normalized_data.get('away_expected_goals', np.nan)
-            home_sot = normalized_data.get('home_shots_on_target', np.nan)
-            away_sot = normalized_data.get('away_shots_on_target', np.nan)
-            home_poss = normalized_data.get('home_possession', np.nan)
-            away_poss = normalized_data.get('away_possession', np.nan)
-            home_shots = normalized_data.get('home_shots', np.nan)
-            away_shots = normalized_data.get('away_shots', np.nan)
-            home_corners = normalized_data.get('home_corners', np.nan)
-            away_corners = normalized_data.get('away_corners', np.nan)
+            home_xg = normalized_data.get("home_expected_goals", np.nan)
+            away_xg = normalized_data.get("away_expected_goals", np.nan)
+            home_sot = normalized_data.get("home_shots_on_target", np.nan)
+            away_sot = normalized_data.get("away_shots_on_target", np.nan)
+            home_poss = normalized_data.get("home_possession", np.nan)
+            away_poss = normalized_data.get("away_possession", np.nan)
+            home_shots = normalized_data.get("home_shots", np.nan)
+            away_shots = normalized_data.get("away_shots", np.nan)
+            home_corners = normalized_data.get("home_corners", np.nan)
+            away_corners = normalized_data.get("away_corners", np.nan)
 
             def safe_float(val):
                 try:
@@ -451,20 +439,20 @@ class V19_4TrainingPipeline:
                     return np.nan
 
             # 获取积分榜数据
-            home_standings = kwargs.get('home_standings')
-            away_standings = kwargs.get('away_standings')
+            home_standings = kwargs.get("home_standings")
+            away_standings = kwargs.get("away_standings")
 
             if home_standings is not None:
-                home_pos = safe_float(home_standings.get('position'))
-                home_pts = safe_float(home_standings.get('points'))
-                home_form_pts = safe_float(home_standings.get('form_points'))
+                home_pos = safe_float(home_standings.get("position"))
+                home_pts = safe_float(home_standings.get("points"))
+                home_form_pts = safe_float(home_standings.get("form_points"))
             else:
                 home_pos = home_pts = home_form_pts = np.nan
 
             if away_standings is not None:
-                away_pos = safe_float(away_standings.get('position'))
-                away_pts = safe_float(away_standings.get('points'))
-                away_form_pts = safe_float(away_standings.get('form_points'))
+                away_pos = safe_float(away_standings.get("position"))
+                away_pts = safe_float(away_standings.get("points"))
+                away_form_pts = safe_float(away_standings.get("form_points"))
             else:
                 away_pos = away_pts = away_form_pts = np.nan
 
@@ -472,31 +460,31 @@ class V19_4TrainingPipeline:
             pts_diff = home_pts - away_pts if not np.isnan(home_pts) and not np.isnan(away_pts) else np.nan
 
             return {
-                'home_rolling_xg': safe_float(home_xg),
-                'away_rolling_xg': safe_float(away_xg),
-                'home_rolling_shots_on_target': safe_float(home_sot),
-                'away_rolling_shots_on_target': safe_float(away_sot),
-                'home_rolling_possession': safe_float(home_poss),
-                'away_rolling_possession': safe_float(away_poss),
-                'home_rolling_shots': safe_float(home_shots),
-                'away_rolling_shots': safe_float(away_shots),
-                'home_rolling_corners': safe_float(home_corners),
-                'away_rolling_corners': safe_float(away_corners),
-                'home_table_position': home_pos,
-                'away_table_position': away_pos,
-                'table_position_diff': pos_diff,
-                'home_points': home_pts,
-                'away_points': away_pts,
-                'points_diff': pts_diff,
-                'home_recent_form_points': home_form_pts,
-                'away_recent_form_points': away_form_pts,
+                "home_rolling_xg": safe_float(home_xg),
+                "away_rolling_xg": safe_float(away_xg),
+                "home_rolling_shots_on_target": safe_float(home_sot),
+                "away_rolling_shots_on_target": safe_float(away_sot),
+                "home_rolling_possession": safe_float(home_poss),
+                "away_rolling_possession": safe_float(away_poss),
+                "home_rolling_shots": safe_float(home_shots),
+                "away_rolling_shots": safe_float(away_shots),
+                "home_rolling_corners": safe_float(home_corners),
+                "away_rolling_corners": safe_float(away_corners),
+                "home_table_position": home_pos,
+                "away_table_position": away_pos,
+                "table_position_diff": pos_diff,
+                "home_points": home_pts,
+                "away_points": away_pts,
+                "points_diff": pts_diff,
+                "home_recent_form_points": home_form_pts,
+                "away_recent_form_points": away_form_pts,
             }
 
         except Exception as e:
             logger.debug(f"V18 特征提取失败: {e}")
             return None
 
-    def _extract_v19_features(self, normalized_data: Dict, **kwargs) -> Dict[str, float]:
+    def _extract_v19_features(self, normalized_data: dict, **kwargs) -> dict[str, float]:
         """提取 V19 高级特征（使用标准化数据）
 
         V19.4.1 重构：参数改为 normalized_data
@@ -508,16 +496,20 @@ class V19_4TrainingPipeline:
         Returns:
             V19 特征字典
         """
-        home_team = normalized_data.get('home_team', '')
-        away_team = normalized_data.get('away_team', '')
+        home_team = normalized_data.get("home_team", "")
+        away_team = normalized_data.get("away_team", "")
 
         v19_features = self.feature_extractor.extract_features(
             home_team=home_team,
             away_team=away_team,
             match_date=datetime.now(),
             season="23/24",
-            home_points=kwargs.get('home_standings', {}).get('points', np.nan) if kwargs.get('home_standings') else np.nan,
-            away_points=kwargs.get('away_standings', {}).get('points', np.nan) if kwargs.get('away_standings') else np.nan,
+            home_points=kwargs.get("home_standings", {}).get("points", np.nan)
+            if kwargs.get("home_standings")
+            else np.nan,
+            away_points=kwargs.get("away_standings", {}).get("points", np.nan)
+            if kwargs.get("away_standings")
+            else np.nan,
             relegation_zone_points=30.0,
             games_remaining=5,
         )
@@ -531,7 +523,7 @@ class V19_4TrainingPipeline:
 
         return result
 
-    def _extract_draw_sensitivity_features(self, normalized_data: Dict, **kwargs) -> Dict[str, float]:
+    def _extract_draw_sensitivity_features(self, normalized_data: dict, **kwargs) -> dict[str, float]:
         """提取 V19.4 平局敏感度特征（使用标准化数据）
 
         V19.4.1 重构：数据已由 DataFormatNormalizer 标准化，简化逻辑
@@ -545,10 +537,10 @@ class V19_4TrainingPipeline:
         """
         try:
             # 使用标准化数据
-            home_xg = normalized_data.get('home_expected_goals', np.nan)
-            away_xg = normalized_data.get('away_expected_goals', np.nan)
-            home_sot = normalized_data.get('home_shots_on_target', np.nan)
-            away_sot = normalized_data.get('away_shots_on_target', np.nan)
+            home_xg = normalized_data.get("home_expected_goals", np.nan)
+            away_xg = normalized_data.get("away_expected_goals", np.nan)
+            home_sot = normalized_data.get("home_shots_on_target", np.nan)
+            away_sot = normalized_data.get("away_shots_on_target", np.nan)
 
             def safe_float(val):
                 try:
@@ -557,11 +549,11 @@ class V19_4TrainingPipeline:
                     return np.nan
 
             # 获取积分榜位置
-            home_standings = kwargs.get('home_standings')
-            away_standings = kwargs.get('away_standings')
+            home_standings = kwargs.get("home_standings")
+            away_standings = kwargs.get("away_standings")
 
-            home_pos = home_standings.get('position', np.nan) if home_standings else np.nan
-            away_pos = away_standings.get('position', np.nan) if away_standings else np.nan
+            home_pos = home_standings.get("position", np.nan) if home_standings else np.nan
+            away_pos = away_standings.get("position", np.nan) if away_standings else np.nan
             home_pos = safe_float(home_pos)
             away_pos = safe_float(away_pos)
 
@@ -570,41 +562,35 @@ class V19_4TrainingPipeline:
             away_elo = 1500.0
 
             # 构造临时 DataFrame 用于特征提取
-            temp_df = pd.DataFrame({
-                'home_table_position': [home_pos],
-                'away_table_position': [away_pos],
-                'home_rolling_xg': [safe_float(home_xg)],
-                'away_rolling_xg': [safe_float(away_xg)],
-                'home_rolling_shots_on_target': [safe_float(home_sot)],
-                'away_rolling_shots_on_target': [safe_float(away_sot)],
-                'home_elo_rating': [home_elo],
-                'away_elo_rating': [away_elo]
-            })
+            temp_df = pd.DataFrame(
+                {
+                    "home_table_position": [home_pos],
+                    "away_table_position": [away_pos],
+                    "home_rolling_xg": [safe_float(home_xg)],
+                    "away_rolling_xg": [safe_float(away_xg)],
+                    "home_rolling_shots_on_target": [safe_float(home_sot)],
+                    "away_rolling_shots_on_target": [safe_float(away_sot)],
+                    "home_elo_rating": [home_elo],
+                    "away_elo_rating": [away_elo],
+                }
+            )
 
             result_df = self.draw_sensitivity_extractor.extract(temp_df)
 
             if len(result_df) > 0:
                 return {
-                    'table_proximity': result_df.iloc[0]['table_proximity'],
-                    'low_scoring_tendency': result_df.iloc[0]['low_scoring_tendency'],
-                    'elo_diff_cluster': result_df.iloc[0]['elo_diff_cluster']
+                    "table_proximity": result_df.iloc[0]["table_proximity"],
+                    "low_scoring_tendency": result_df.iloc[0]["low_scoring_tendency"],
+                    "elo_diff_cluster": result_df.iloc[0]["elo_diff_cluster"],
                 }
             else:
-                return {
-                    'table_proximity': np.nan,
-                    'low_scoring_tendency': np.nan,
-                    'elo_diff_cluster': 0.0
-                }
+                return {"table_proximity": np.nan, "low_scoring_tendency": np.nan, "elo_diff_cluster": 0.0}
 
         except Exception as e:
             logger.debug(f"平局敏感度特征提取失败: {e}")
-            return {
-                'table_proximity': np.nan,
-                'low_scoring_tendency': np.nan,
-                'elo_diff_cluster': 0.0
-            }
+            return {"table_proximity": np.nan, "low_scoring_tendency": np.nan, "elo_diff_cluster": 0.0}
 
-    def _encode_league(self, league_id: int) -> Dict[str, float]:
+    def _encode_league(self, league_id: int) -> dict[str, float]:
         """联赛编码（使用动态配置）
 
         V19.4.1 重构：支持从数据库加载的联赛配置
@@ -620,22 +606,18 @@ class V19_4TrainingPipeline:
 
         # 为所有已知联赛创建特征
         for lid, config in self.league_config.items():
-            code = config['code'].lower()
-            features[f'league_{code}'] = 1.0 if league_id == lid else 0.0
+            code = config["code"].lower()
+            features[f"league_{code}"] = 1.0 if league_id == lid else 0.0
 
         # 如果是未知联赛，使用默认编码
         if league_id not in self.league_config:
             logger.warning(f"未知联赛 ID: {league_id}，使用默认编码")
-            features['league_unknown'] = 1.0
+            features["league_unknown"] = 1.0
 
         return features
 
     def train_model(
-        self,
-        feature_df: pd.DataFrame,
-        train_size: int = 600,
-        test_size: int = 160,
-        apply_draw_weight: bool = True
+        self, feature_df: pd.DataFrame, train_size: int = 600, test_size: int = 160, apply_draw_weight: bool = True
     ) -> V19_4Metrics:
         """
         训练 V19.4 模型（带加权损失函数）
@@ -652,11 +634,11 @@ class V19_4TrainingPipeline:
         logger.info("开始训练 V19.4 模型...")
 
         # 准备数据
-        exclude_cols = ['match_id', 'home_team', 'away_team', 'match_time', 'result', 'id']
+        exclude_cols = ["match_id", "home_team", "away_team", "match_time", "result", "id"]
         self.feature_columns = [c for c in feature_df.columns if c not in exclude_cols]
 
         X = feature_df[self.feature_columns].values
-        y = feature_df['result'].values
+        y = feature_df["result"].values
 
         # 处理 NaN 值
         X = np.nan_to_num(X, nan=0.0)
@@ -664,8 +646,8 @@ class V19_4TrainingPipeline:
         # 划分数据集（时间序列分割）
         X_train = X[:train_size]
         y_train = y[:train_size]
-        X_test = X[train_size:train_size + test_size]
-        y_test = y[train_size:train_size + test_size]
+        X_test = X[train_size : train_size + test_size]
+        y_test = y[train_size : train_size + test_size]
 
         logger.info(f"训练集: {len(X_train)} 场, 测试集: {len(X_test)} 场")
 
@@ -688,12 +670,7 @@ class V19_4TrainingPipeline:
         # 训练模型
         self.model = xgb.XGBClassifier(**self.MODEL_PARAMS)
 
-        self.model.fit(
-            X_train_scaled,
-            y_train,
-            sample_weight=sample_weights,
-            verbose=False
-        )
+        self.model.fit(X_train_scaled, y_train, sample_weight=sample_weights, verbose=False)
 
         # 预测和评估
         y_pred = self.model.predict(X_test_scaled)
@@ -712,22 +689,18 @@ class V19_4TrainingPipeline:
 
         # 分类报告
         report = classification_report(
-            y_test,
-            y_pred,
-            target_names=['Away', 'Draw', 'Home'],
-            output_dict=True,
-            zero_division=0
+            y_test, y_pred, target_names=["Away", "Draw", "Home"], output_dict=True, zero_division=0
         )
 
         metrics = V19_4Metrics(
             accuracy=accuracy,
-            f1_macro=report['macro avg']['f1-score'],
-            precision_macro=report['macro avg']['precision'],
-            recall_macro=report['macro avg']['recall'],
+            f1_macro=report["macro avg"]["f1-score"],
+            precision_macro=report["macro avg"]["precision"],
+            recall_macro=report["macro avg"]["recall"],
             home_win_accuracy=home_acc,
             draw_accuracy=draw_acc,
             away_win_accuracy=away_acc,
-            feature_count=len(self.feature_columns)
+            feature_count=len(self.feature_columns),
         )
 
         logger.info("训练完成:")
@@ -768,11 +741,11 @@ class V19_4TrainingPipeline:
             "scaler_mean": self.scaler.mean_.tolist(),
             "scaler_scale": self.scaler.scale_.tolist(),
             "scaler_n_features": self.scaler.n_features_in_,
-            "description": "V19.4 Draw Sensitivity + Weighted Loss - Address 0% Draw ID Rate"
+            "description": "V19.4 Draw Sensitivity + Weighted Loss - Address 0% Draw ID Rate",
         }
 
         metadata_path = output_dir / "v19.4_draw_sensitivity_metadata.json"
-        with open(metadata_path, 'w') as f:
+        with open(metadata_path, "w") as f:
             json.dump(metadata, f, indent=2)
         logger.info(f"✅ 元数据已保存: {metadata_path}")
 

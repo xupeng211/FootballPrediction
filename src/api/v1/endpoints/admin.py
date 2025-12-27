@@ -5,15 +5,15 @@
 """
 
 import logging
-from typing import Dict, Any
+from typing import Any
 
-from fastapi import APIRouter, HTTPException, Depends, status
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
-from src.services.mlops.retraining_service import RetrainingService
-from src.ml.inference.model_loader import ModelLoader
-from src.tasks.schedule import manual_retrain, emergency_rollback
 from src.config_unified import get_settings
+from src.ml.inference.model_loader import ModelLoader
+from src.services.mlops.retraining_service import RetrainingService
+from src.tasks.schedule import emergency_rollback, manual_retrain
 
 logger = logging.getLogger(__name__)
 
@@ -55,7 +55,7 @@ def verify_admin(credentials: HTTPAuthorizationCredentials = Depends(security)) 
 async def trigger_manual_retrain(
     description: str = "Manual retraining trigger",
     admin_verified: bool = Depends(verify_admin),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     手动触发模型重训练
 
@@ -88,7 +88,7 @@ async def trigger_manual_retrain(
 
 
 @router.post("/model/switch", summary="切换模型版本")
-async def switch_model_version(target_version: str, admin_verified: bool = Depends(verify_admin)) -> Dict[str, Any]:
+async def switch_model_version(target_version: str, admin_verified: bool = Depends(verify_admin)) -> dict[str, Any]:
     """
     切换到指定版本的模型
 
@@ -130,7 +130,7 @@ async def switch_model_version(target_version: str, admin_verified: bool = Depen
 
 
 @router.post("/model/rollback", summary="紧急回滚模型")
-async def emergency_rollback_model(target_version: str, admin_verified: bool = Depends(verify_admin)) -> Dict[str, Any]:
+async def emergency_rollback_model(target_version: str, admin_verified: bool = Depends(verify_admin)) -> dict[str, Any]:
     """
     紧急回滚到指定版本模型
 
@@ -165,7 +165,7 @@ async def emergency_rollback_model(target_version: str, admin_verified: bool = D
 @router.get("/model/status", summary="获取模型状态")
 async def get_model_status(
     admin_verified: bool = Depends(verify_admin),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     获取当前模型状态和历史
 
@@ -212,7 +212,7 @@ async def get_model_status(
 @router.get("/models", summary="获取所有模型列表")
 async def list_all_models(
     admin_verified: bool = Depends(verify_admin),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     获取所有注册的模型列表
 
@@ -256,7 +256,7 @@ async def list_all_models(
 
 
 @router.get("/model/{version}", summary="获取指定版本模型详情")
-async def get_model_details(version: str, admin_verified: bool = Depends(verify_admin)) -> Dict[str, Any]:
+async def get_model_details(version: str, admin_verified: bool = Depends(verify_admin)) -> dict[str, Any]:
     """
     获取指定版本的模型详细信息
 
@@ -311,7 +311,7 @@ async def get_model_details(version: str, admin_verified: bool = Depends(verify_
 @router.post("/model/reload", summary="手动重新加载模型")
 async def manual_reload_model(
     admin_verified: bool = Depends(verify_admin),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     手动触发模型重新加载
 
@@ -353,7 +353,7 @@ async def manual_reload_model(
 @router.delete("/model/{version}", summary="删除指定版本模型")
 async def delete_model_version(
     version: str, force: bool = False, admin_verified: bool = Depends(verify_admin)
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     删除指定版本的模型
 
@@ -419,7 +419,7 @@ async def delete_model_version(
 @router.get("/system/health", summary="获取系统健康状态")
 async def get_system_health(
     admin_verified: bool = Depends(verify_admin),
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     获取详细的系统健康状态
 
@@ -436,8 +436,9 @@ async def get_system_health(
         health_status = system_health_check.apply()
 
         # 获取额外系统信息
-        import psutil
         import os
+
+        import psutil
 
         system_info = {
             "cpu_count": psutil.cpu_count(),

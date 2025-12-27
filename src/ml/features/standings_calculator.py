@@ -7,11 +7,10 @@ V19.2 积分榜动态计算器
 """
 
 import logging
-import pandas as pd
-from typing import Dict, List, Optional, Tuple
-from dataclasses import dataclass
-from datetime import datetime
 from collections import defaultdict
+from dataclasses import dataclass
+
+import pandas as pd
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +21,7 @@ DEFAULT_LATENCY_MINUTES = 120  # 默认下注时延（2 小时）
 @dataclass
 class TeamStandings:
     """球队积分榜状态"""
+
     position: int
     points: int
     played: int
@@ -37,9 +37,9 @@ class TeamStandings:
         """计算最近5场得分"""
         form_points = 0
         for result in self.form:
-            if result == 'W':
+            if result == "W":
                 form_points += 3
-            elif result == 'D':
+            elif result == "D":
                 form_points += 1
         return form_points
 
@@ -70,7 +70,7 @@ class StandingsCalculator:
     POINTS_DRAW = 1
     POINTS_LOSS = 0
 
-    def __init__(self, latency_minutes: int = DEFAULT_LATENCY_MINUTES, league_id: Optional[str] = None):
+    def __init__(self, latency_minutes: int = DEFAULT_LATENCY_MINUTES, league_id: str | None = None):
         """
         初始化积分榜计算器
 
@@ -79,8 +79,8 @@ class StandingsCalculator:
                 模拟在比赛开球前 latency_minutes 分钟下注的场景
             league_id: 联赛标识符（可选）。如果提供，只计算该联赛的积分榜
         """
-        self.matches_cache: List[Dict] = []
-        self.standings_history: Dict[str, List[TeamStandings]] = defaultdict(list)
+        self.matches_cache: list[dict] = []
+        self.standings_history: dict[str, list[TeamStandings]] = defaultdict(list)
         self.is_initialized = False
         self.latency_minutes = latency_minutes
         self.league_id = league_id  # V19.3: 联赛隔离
@@ -113,55 +113,51 @@ class StandingsCalculator:
         logger.info(f"从 {len(df)} 场比赛初始化积分榜计算器...")
 
         # V19.3: 联赛隔离检查
-        if 'league_id' in df.columns:
-            unique_leagues = df['league_id'].dropna().unique()
+        if "league_id" in df.columns:
+            unique_leagues = df["league_id"].dropna().unique()
             if len(unique_leagues) > 1:
-                logger.warning(
-                    f"⚠️ DataFrame 中包含 {len(unique_leagues)} 个不同联赛: {unique_leagues}"
-                )
+                logger.warning(f"⚠️ DataFrame 中包含 {len(unique_leagues)} 个不同联赛: {unique_leagues}")
                 if self.league_id is not None:
                     logger.info(f"   只加载联赛 {self.league_id} 的比赛")
-                    df = df[df['league_id'] == self.league_id].copy()
+                    df = df[df["league_id"] == self.league_id].copy()
                 else:
-                    logger.warning(
-                        "   未指定 league_id，将跨联赛计算积分榜（可能导致同名球队混淆）"
-                    )
+                    logger.warning("   未指定 league_id，将跨联赛计算积分榜（可能导致同名球队混淆）")
             elif len(unique_leagues) == 1:
                 detected_league = unique_leagues[0]
                 if self.league_id is not None and self.league_id != detected_league:
-                    logger.warning(
-                        f"⚠️ 指定的联赛 {self.league_id} 与数据中的联赛 {detected_league} 不匹配"
-                    )
+                    logger.warning(f"⚠️ 指定的联赛 {self.league_id} 与数据中的联赛 {detected_league} 不匹配")
                 self.league_id = detected_league
                 logger.info(f"   检测到联赛: {detected_league}")
 
         # V19.2 加固：使用次要排序键确保确定性
         # 如果有多场比赛同时开始，id 决定它们的相对顺序
         # 如果没有 id 列，只按 match_time 排序
-        sort_keys = ['match_time']
-        if 'id' in df.columns:
-            sort_keys.append('id')
+        sort_keys = ["match_time"]
+        if "id" in df.columns:
+            sort_keys.append("id")
         df_sorted = df.sort_values(sort_keys).copy()
 
         self.matches_cache = []
         for _, row in df_sorted.iterrows():
-            self.matches_cache.append({
-                'home_team': row['home_team'],
-                'away_team': row['away_team'],
-                'match_time': pd.to_datetime(row['match_time']),
-                'home_score': int(row['home_score']) if pd.notna(row['home_score']) else None,
-                'away_score': int(row['away_score']) if pd.notna(row['away_score']) else None,
-                'id': row.get('id', None),  # 保留原始 id 用于调试
-                'league_id': row.get('league_id', None),  # V19.3: 联赛标识符
-            })
+            self.matches_cache.append(
+                {
+                    "home_team": row["home_team"],
+                    "away_team": row["away_team"],
+                    "match_time": pd.to_datetime(row["match_time"]),
+                    "home_score": int(row["home_score"]) if pd.notna(row["home_score"]) else None,
+                    "away_score": int(row["away_score"]) if pd.notna(row["away_score"]) else None,
+                    "id": row.get("id", None),  # 保留原始 id 用于调试
+                    "league_id": row.get("league_id", None),  # V19.3: 联赛标识符
+                }
+            )
 
         self.is_initialized = True
         logger.info(f"✅ 积分榜计算器初始化完成，已加载 {len(self.matches_cache)} 场比赛")
-        logger.info(f"   排序规则: ['match_time', 'id']（确定性排序）")
+        logger.info("   排序规则: ['match_time', 'id']（确定性排序）")
         if self.league_id:
             logger.info(f"   联赛隔离: {self.league_id}")
 
-    def get_standings_at_match(self, match_idx: int) -> Dict[str, TeamStandings]:
+    def get_standings_at_match(self, match_idx: int) -> dict[str, TeamStandings]:
         """
         获取指定比赛时的积分榜（不包含该场比赛结果）
 
@@ -182,7 +178,7 @@ class StandingsCalculator:
         if match_idx >= len(self.matches_cache):
             raise ValueError(f"match_idx {match_idx} 超出范围 (max: {len(self.matches_cache) - 1})")
 
-        target_match_time = self.matches_cache[match_idx]['match_time']
+        target_match_time = self.matches_cache[match_idx]["match_time"]
 
         # V19.2: 计算时延截止时间（只能使用此时之前的比赛结果）
         cutoff_time = target_match_time - pd.Timedelta(minutes=self.latency_minutes)
@@ -193,7 +189,7 @@ class StandingsCalculator:
 
         for i in range(match_idx):
             match = self.matches_cache[i]
-            match_time = match['match_time']
+            match_time = match["match_time"]
 
             # V19.2: 时延检查 - 只使用开球时间早于截止时间的比赛
             if match_time >= cutoff_time:
@@ -205,26 +201,42 @@ class StandingsCalculator:
                 )
                 continue
 
-            if match['home_score'] is None or match['away_score'] is None:
+            if match["home_score"] is None or match["away_score"] is None:
                 continue  # 跳过没有比分的比赛
 
-            home = match['home_team']
-            away = match['away_team']
-            home_goals = match['home_score']
-            away_goals = match['away_score']
+            home = match["home_team"]
+            away = match["away_team"]
+            home_goals = match["home_score"]
+            away_goals = match["away_score"]
 
             # 更新主队积分榜
             if home not in standings:
                 standings[home] = TeamStandings(
-                    position=0, points=0, played=0, won=0, drawn=0, lost=0,
-                    goals_for=0, goals_against=0, goal_difference=0, form=''
+                    position=0,
+                    points=0,
+                    played=0,
+                    won=0,
+                    drawn=0,
+                    lost=0,
+                    goals_for=0,
+                    goals_against=0,
+                    goal_difference=0,
+                    form="",
                 )
 
             # 更新客队积分榜
             if away not in standings:
                 standings[away] = TeamStandings(
-                    position=0, points=0, played=0, won=0, drawn=0, lost=0,
-                    goals_for=0, goals_against=0, goal_difference=0, form=''
+                    position=0,
+                    points=0,
+                    played=0,
+                    won=0,
+                    drawn=0,
+                    lost=0,
+                    goals_for=0,
+                    goals_against=0,
+                    goal_difference=0,
+                    form="",
                 )
 
             # 更新统计数据
@@ -243,8 +255,8 @@ class StandingsCalculator:
                 standings[away].points += self.POINTS_LOSS
 
                 # 更新走势
-                self._update_form(standings[home], 'W')
-                self._update_form(standings[away], 'L')
+                self._update_form(standings[home], "W")
+                self._update_form(standings[away], "L")
 
             elif home_goals < away_goals:
                 standings[away].won += 1
@@ -253,8 +265,8 @@ class StandingsCalculator:
                 standings[home].points += self.POINTS_LOSS
 
                 # 更新走势
-                self._update_form(standings[home], 'L')
-                self._update_form(standings[away], 'W')
+                self._update_form(standings[home], "L")
+                self._update_form(standings[away], "W")
 
             else:  # 平局
                 standings[home].drawn += 1
@@ -263,8 +275,8 @@ class StandingsCalculator:
                 standings[away].points += self.POINTS_DRAW
 
                 # 更新走势
-                self._update_form(standings[home], 'D')
-                self._update_form(standings[away], 'D')
+                self._update_form(standings[home], "D")
+                self._update_form(standings[away], "D")
 
         # 记录时延统计
         if excluded_matches > 0:
@@ -279,9 +291,7 @@ class StandingsCalculator:
 
         # 按积分、净胜球、进球数排序
         sorted_teams = sorted(
-            standings.items(),
-            key=lambda x: (x[1].points, x[1].goal_difference, x[1].goals_for),
-            reverse=True
+            standings.items(), key=lambda x: (x[1].points, x[1].goal_difference, x[1].goals_for), reverse=True
         )
 
         # 分配排名
@@ -296,11 +306,7 @@ class StandingsCalculator:
         if len(team.form) > 5:
             team.form = team.form[:5]
 
-    def get_team_stats_at_match(
-        self,
-        match_idx: int,
-        team_name: str
-    ) -> Optional[Dict]:
+    def get_team_stats_at_match(self, match_idx: int, team_name: str) -> dict | None:
         """
         获取指定球队在指定比赛时的积分榜统计
 
@@ -314,24 +320,24 @@ class StandingsCalculator:
 
         team = standings[team_name]
         return {
-            'position': team.position,
-            'points': team.points,
-            'played': team.played,
-            'won': team.won,
-            'drawn': team.drawn,
-            'lost': team.lost,
-            'goals_for': team.goals_for,
-            'goals_against': team.goals_against,
-            'goal_difference': team.goal_difference,
-            'form': team.form,
-            'form_points': team.get_form_points(),
-            'win_rate': team.won / team.played if team.played > 0 else 0.0,
-            'loss_rate': team.lost / team.played if team.played > 0 else 0.0,
+            "position": team.position,
+            "points": team.points,
+            "played": team.played,
+            "won": team.won,
+            "drawn": team.drawn,
+            "lost": team.lost,
+            "goals_for": team.goals_for,
+            "goals_against": team.goals_against,
+            "goal_difference": team.goal_difference,
+            "form": team.form,
+            "form_points": team.get_form_points(),
+            "win_rate": team.won / team.played if team.played > 0 else 0.0,
+            "loss_rate": team.lost / team.played if team.played > 0 else 0.0,
         }
 
 
 # 全局单例
-_global_calculator: Optional[StandingsCalculator] = None
+_global_calculator: StandingsCalculator | None = None
 
 
 def get_global_calculator() -> StandingsCalculator:
@@ -343,9 +349,7 @@ def get_global_calculator() -> StandingsCalculator:
 
 
 def initialize_global_calculator(
-    df: pd.DataFrame,
-    latency_minutes: int = DEFAULT_LATENCY_MINUTES,
-    league_id: Optional[str] = None
+    df: pd.DataFrame, latency_minutes: int = DEFAULT_LATENCY_MINUTES, league_id: str | None = None
 ) -> StandingsCalculator:
     """
     初始化全局积分榜计算器
@@ -359,9 +363,6 @@ def initialize_global_calculator(
         StandingsCalculator: 初始化后的计算器实例
     """
     global _global_calculator
-    _global_calculator = StandingsCalculator(
-        latency_minutes=latency_minutes,
-        league_id=league_id
-    )
+    _global_calculator = StandingsCalculator(latency_minutes=latency_minutes, league_id=league_id)
     _global_calculator.initialize_from_dataframe(df)
     return _global_calculator

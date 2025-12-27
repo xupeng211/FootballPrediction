@@ -6,8 +6,8 @@ PostgreSQL 数据加载器 - Phase 4 真实数据集成
 """
 
 import logging
-from typing import Optional, List, Dict, Any
 from datetime import datetime
+from typing import Any
 
 import pandas as pd
 from sqlalchemy import text
@@ -28,8 +28,8 @@ class PostgresDataLoader:
     def __init__(
         self,
         batch_size: int = 1000,
-        selected_columns: Optional[List[str]] = None,
-        max_records: Optional[int] = None,
+        selected_columns: list[str] | None = None,
+        max_records: int | None = None,
     ):
         """
         初始化 PostgresDataLoader
@@ -71,17 +71,14 @@ class PostgresDataLoader:
 
         # 初始化数据库连接
         self.db_manager = get_database_manager()
-        if (
-            not hasattr(self.db_manager, "_async_engine")
-            or self.db_manager._async_engine is None
-        ):
+        if not hasattr(self.db_manager, "_async_engine") or self.db_manager._async_engine is None:
             self.db_manager.initialize()
 
     async def load_data(
         self,
         limit: int = 50000,
-        start_date: Optional[datetime] = None,
-        end_date: Optional[datetime] = None,
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
         status_filter: str = "FT",  # 只加载已完赛的比赛
     ) -> pd.DataFrame:
         """
@@ -183,7 +180,7 @@ class PostgresDataLoader:
             # 返回空DataFrame而不是抛出异常
             return self._get_empty_dataframe()
 
-    def _process_records(self, records: List[Any]) -> pd.DataFrame:
+    def _process_records(self, records: list[Any]) -> pd.DataFrame:
         """
         将数据库记录转换为DataFrame并处理格式
 
@@ -211,9 +208,7 @@ class PostgresDataLoader:
 
         # 应用列选择过滤
         if self.selected_columns:
-            available_columns = [
-                col for col in self.selected_columns if col in df.columns
-            ]
+            available_columns = [col for col in self.selected_columns if col in df.columns]
             if available_columns:
                 df = df[available_columns]
 
@@ -323,7 +318,7 @@ class PostgresDataLoader:
 
         return pd.DataFrame(columns=columns)
 
-    async def get_data_summary(self) -> Dict[str, Any]:
+    async def get_data_summary(self) -> dict[str, Any]:
         """
         获取数据摘要信息
 

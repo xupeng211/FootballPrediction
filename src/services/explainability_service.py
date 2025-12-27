@@ -5,14 +5,14 @@ SHAP可解释性服务
 """
 
 import logging
-from typing import List, Dict, Any
-import pandas as pd
-import numpy as np
+from typing import Any
 
-from src.ml.models.xgboost_classifier import XGBoostClassifier
+import numpy as np
+import pandas as pd
 
 # from src.features.schemas import MatchFeatureSet  # 暂时注释掉，模块不存在
 from src.core.exceptions import ExplainabilityError
+from src.ml.models.xgboost_classifier import XGBoostClassifier
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +29,7 @@ class ExplainabilityService:
         """初始化SHAP解释器"""
         self._explainer_cache = {}
 
-    async def get_shap_contributions(self, features: pd.DataFrame, model: XGBoostClassifier) -> List[Dict[str, float]]:
+    async def get_shap_contributions(self, features: pd.DataFrame, model: XGBoostClassifier) -> list[dict[str, float]]:
         """
         计算SHAP特征贡献度
 
@@ -105,8 +105,9 @@ class ExplainabilityService:
             raise ExplainabilityError("特征数据为空")
 
         # 使用MatchFeatureSet的特征名称（而不是所有字段）
-        from src.features.schemas import create_empty_feature_set
         from datetime import datetime
+
+        from src.features.schemas import create_empty_feature_set
 
         # 创建一个空的特征集来获取标准的特征名称
         empty_feature_set = create_empty_feature_set(
@@ -148,7 +149,7 @@ class ExplainabilityService:
 
     async def _format_contributions(
         self, features: pd.DataFrame, shap_values: np.ndarray, model: XGBoostClassifier
-    ) -> List[Dict[str, float]]:
+    ) -> list[dict[str, float]]:
         """将SHAP值格式化为特征贡献度字典"""
         contributions_list = []
 
@@ -172,7 +173,7 @@ class ExplainabilityService:
         features: pd.DataFrame,
         model: XGBoostClassifier,
         shap_values: np.ndarray,
-        contributions_list: List[Dict[str, float]],
+        contributions_list: list[dict[str, float]],
     ):
         """验证SHAP值计算的一致性和正确性"""
         try:
@@ -206,7 +207,7 @@ class ExplainabilityService:
         except Exception as e:
             logger.warning(f"SHAP一致性验证失败（不影响功能）: {e}")
 
-    def get_feature_importance_ranking(self, contributions_list: List[Dict[str, float]]) -> Dict[str, float]:
+    def get_feature_importance_ranking(self, contributions_list: list[dict[str, float]]) -> dict[str, float]:
         """
         计算全局特征重要性排名
 
@@ -244,7 +245,7 @@ class ExplainabilityService:
         self._explainer_cache.clear()
         logger.info(f"已清除SHAP解释器缓存，清除数量: {cache_size}")
 
-    async def explain_single_prediction(self, features: Dict[str, Any], model: XGBoostClassifier) -> Dict[str, Any]:
+    async def explain_single_prediction(self, features: dict[str, Any], model: XGBoostClassifier) -> dict[str, Any]:
         """
         解释单个预测结果
 

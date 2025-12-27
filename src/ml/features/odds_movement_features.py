@@ -27,15 +27,12 @@ Version: 1.0.0
 """
 
 import logging
-import numpy as np
-import pandas as pd
 from datetime import datetime, timedelta
-from typing import Dict, Any, Optional, List, Tuple, Union
-from decimal import Decimal, ROUND_HALF_UP
+from typing import Any
+
+import numpy as np
 from scipy import stats
 from scipy.signal import savgol_filter
-
-from ...constants import FOOTBALL, MATH, PROBABILITY, ODDS
 
 logger = logging.getLogger(__name__)
 
@@ -94,10 +91,10 @@ class OddsMovementAnalyzer:
         self.smoothing_window = smoothing_window
 
         # 存储赔率历史数据
-        self.odds_history: Dict[str, List[Dict[str, Any]]] = {}
+        self.odds_history: dict[str, list[dict[str, Any]]] = {}
 
         # 存储分析结果
-        self.analysis_cache: Dict[str, Dict[str, Any]] = {}
+        self.analysis_cache: dict[str, dict[str, Any]] = {}
 
         # 统计信息
         self.stats = {
@@ -120,11 +117,11 @@ class OddsMovementAnalyzer:
         home_odds: float,
         draw_odds: float,
         away_odds: float,
-        timestamp: Optional[datetime] = None,
+        timestamp: datetime | None = None,
         bookmaker: str = "default",
-        volume: Optional[float] = None,
+        volume: float | None = None,
         market_importance: float = 1.0,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         添加赔率数据
 
@@ -172,7 +169,7 @@ class OddsMovementAnalyzer:
             "total_samples": len(self.odds_history[match_id]),
         }
 
-    def analyze_odds_movement(self, match_id: str, time_window_hours: Optional[int] = None) -> Dict[str, Any]:
+    def analyze_odds_movement(self, match_id: str, time_window_hours: int | None = None) -> dict[str, Any]:
         """
         分析赔率变动
 
@@ -213,7 +210,7 @@ class OddsMovementAnalyzer:
 
         return analysis_result
 
-    def _perform_comprehensive_analysis(self, match_id: str, odds_data: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def _perform_comprehensive_analysis(self, match_id: str, odds_data: list[dict[str, Any]]) -> dict[str, Any]:
         """执行综合分析"""
         # 基础统计
         basic_stats = self._calculate_basic_statistics(odds_data)
@@ -263,7 +260,7 @@ class OddsMovementAnalyzer:
             "model_features": model_features,
         }
 
-    def _calculate_basic_statistics(self, odds_data: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def _calculate_basic_statistics(self, odds_data: list[dict[str, Any]]) -> dict[str, Any]:
         """计算基础统计信息"""
         home_odds = [entry["home_odds"] for entry in odds_data]
         draw_odds = [entry["draw_odds"] for entry in odds_data]
@@ -299,7 +296,7 @@ class OddsMovementAnalyzer:
             },
         }
 
-    def _analyze_price_movements(self, odds_data: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def _analyze_price_movements(self, odds_data: list[dict[str, Any]]) -> dict[str, Any]:
         """分析价格变动"""
         movements = {"home": [], "draw": [], "away": []}
 
@@ -378,7 +375,7 @@ class OddsMovementAnalyzer:
             "summary": summary,
         }
 
-    def _detect_steam_signals(self, odds_data: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def _detect_steam_signals(self, odds_data: list[dict[str, Any]]) -> dict[str, Any]:
         """检测Market Steam信号"""
         steam_signals = []
 
@@ -403,7 +400,7 @@ class OddsMovementAnalyzer:
             "signal_count": len(steam_signals),
         }
 
-    def _detect_outcome_steam(self, odds_data: List[Dict[str, Any]], outcome: str) -> Optional[Dict[str, Any]]:
+    def _detect_outcome_steam(self, odds_data: list[dict[str, Any]], outcome: str) -> dict[str, Any] | None:
         """检测单个结果的Steam信号"""
         if len(odds_data) < 3:
             return None
@@ -456,7 +453,7 @@ class OddsMovementAnalyzer:
 
         return None
 
-    def _detect_cross_market_steam(self, odds_data: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+    def _detect_cross_market_steam(self, odds_data: list[dict[str, Any]]) -> dict[str, Any] | None:
         """检测跨市场Steam信号"""
         if len(odds_data) < 3:
             return None
@@ -497,7 +494,7 @@ class OddsMovementAnalyzer:
 
         return None
 
-    def _calculate_overall_steam_strength(self, steam_signals: List[Dict[str, Any]]) -> float:
+    def _calculate_overall_steam_strength(self, steam_signals: list[dict[str, Any]]) -> float:
         """计算整体Steam强度"""
         if not steam_signals:
             return 0.0
@@ -511,7 +508,7 @@ class OddsMovementAnalyzer:
         else:
             return total_strength / len(steam_signals)
 
-    def _analyze_trends(self, odds_data: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def _analyze_trends(self, odds_data: list[dict[str, Any]]) -> dict[str, Any]:
         """分析趋势"""
         if len(odds_data) < self.MIN_TREND_POINTS:
             return {"error": "数据点不足，无法进行趋势分析"}
@@ -550,7 +547,7 @@ class OddsMovementAnalyzer:
             "analysis_period_hours": self._get_time_range_hours(odds_data),
         }
 
-    def _detect_anomalies(self, odds_data: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def _detect_anomalies(self, odds_data: list[dict[str, Any]]) -> dict[str, Any]:
         """检测异常值"""
         anomalies = []
 
@@ -603,7 +600,7 @@ class OddsMovementAnalyzer:
             "anomaly_rate": len(anomalies) / len(odds_data) if odds_data else 0,
         }
 
-    def _analyze_market_sentiment(self, odds_data: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def _analyze_market_sentiment(self, odds_data: list[dict[str, Any]]) -> dict[str, Any]:
         """分析市场情绪"""
         if len(odds_data) < 2:
             return {"error": "数据不足，无法分析市场情绪"}
@@ -647,7 +644,7 @@ class OddsMovementAnalyzer:
             "market_consensus": self._calculate_market_consensus(odds_data),
         }
 
-    def _calculate_market_efficiency(self, odds_data: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def _calculate_market_efficiency(self, odds_data: list[dict[str, Any]]) -> dict[str, Any]:
         """计算市场效率指标"""
         if len(odds_data) < 3:
             return {"error": "数据不足，无法计算市场效率"}
@@ -686,10 +683,10 @@ class OddsMovementAnalyzer:
 
     def _generate_trading_signals(
         self,
-        movement_analysis: Dict[str, Any],
-        steam_signals: Dict[str, Any],
-        sentiment_analysis: Dict[str, Any],
-    ) -> Dict[str, Any]:
+        movement_analysis: dict[str, Any],
+        steam_signals: dict[str, Any],
+        sentiment_analysis: dict[str, Any],
+    ) -> dict[str, Any]:
         """生成交易信号"""
         signals = []
 
@@ -756,11 +753,11 @@ class OddsMovementAnalyzer:
 
     def _extract_odds_movement_features(
         self,
-        odds_data: List[Dict[str, Any]],
-        movement_analysis: Dict[str, Any],
-        steam_signals: Dict[str, Any],
-        sentiment_analysis: Dict[str, Any],
-    ) -> Dict[str, float]:
+        odds_data: list[dict[str, Any]],
+        movement_analysis: dict[str, Any],
+        steam_signals: dict[str, Any],
+        sentiment_analysis: dict[str, Any],
+    ) -> dict[str, float]:
         """提取用于机器学习的特征"""
         features = {}
 
@@ -821,7 +818,7 @@ class OddsMovementAnalyzer:
             return 0
         return ((curr_odds - prev_odds) / prev_odds) * 100
 
-    def _calculate_movement_weight(self, entry: Dict[str, Any]) -> float:
+    def _calculate_movement_weight(self, entry: dict[str, Any]) -> float:
         """计算变动权重"""
         volume_weight = entry.get("volume", 1.0) ** self.VOLUME_WEIGHT
 
@@ -840,14 +837,14 @@ class OddsMovementAnalyzer:
             return 0
         return 1.0 / odds
 
-    def _get_time_range_hours(self, odds_data: List[Dict[str, Any]]) -> float:
+    def _get_time_range_hours(self, odds_data: list[dict[str, Any]]) -> float:
         """获取数据时间范围（小时）"""
         if len(odds_data) < 2:
             return 0
         time_diff = odds_data[-1]["timestamp"] - odds_data[0]["timestamp"]
         return time_diff.total_seconds() / 3600
 
-    def _calculate_max_drawdown(self, values: List[float]) -> float:
+    def _calculate_max_drawdown(self, values: list[float]) -> float:
         """计算最大回撤"""
         if len(values) < 2:
             return 0
@@ -876,7 +873,7 @@ class OddsMovementAnalyzer:
         else:
             return "highly_inefficient"
 
-    def _calculate_market_consensus(self, odds_data: List[Dict[str, Any]]) -> float:
+    def _calculate_market_consensus(self, odds_data: list[dict[str, Any]]) -> float:
         """计算市场共识度"""
         if len(odds_data) < 2:
             return 0
@@ -898,7 +895,7 @@ class OddsMovementAnalyzer:
 
         return 0
 
-    def _update_analysis_stats(self, analysis_result: Dict[str, Any]) -> None:
+    def _update_analysis_stats(self, analysis_result: dict[str, Any]) -> None:
         """更新分析统计信息"""
         self.stats["total_analyses"] += 1
 
@@ -920,7 +917,7 @@ class OddsMovementAnalyzer:
 
         self.stats["last_updated"] = datetime.now().isoformat()
 
-    def get_system_stats(self) -> Dict[str, Any]:
+    def get_system_stats(self) -> dict[str, Any]:
         """获取系统统计信息"""
         return {
             "configuration": {

@@ -5,7 +5,8 @@ Prometheus 指标管理系统
 """
 
 from typing import Optional
-from prometheus_client import Counter, Histogram, CollectorRegistry, generate_latest
+
+from prometheus_client import CollectorRegistry, Counter, Histogram, generate_latest
 
 
 class MetricsManager:

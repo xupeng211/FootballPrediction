@@ -14,6 +14,7 @@ from src.api.collectors.fotmob_core import FotMobCoreCollector
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
+
 class TestSentryLogic:
     """100KB哨兵机制测试套件"""
 
@@ -28,11 +29,8 @@ class TestSentryLogic:
         # 构造约50KB的JSON数据
         base_data = {
             "header": {
-                "teams": [
-                    {"name": "Home Team"},
-                    {"name": "Away Team"}
-                ],
-                "status": {"utcTime": "2024-12-22T15:00:00Z"}
+                "teams": [{"name": "Home Team"}, {"name": "Away Team"}],
+                "status": {"utcTime": "2024-12-22T15:00:00Z"},
             }
         }
 
@@ -52,54 +50,33 @@ class TestSentryLogic:
         # 构造一个完整、真实的比赛数据结构
         valid_data = {
             "header": {
-                "teams": [
-                    {"name": "Manchester United"},
-                    {"name": "Liverpool"}
-                ],
-                "status": {
-                    "utcTime": "2024-12-22T15:00:00Z",
-                    "finished": True
-                },
-                "league": {
-                    "name": "Premier League"
-                }
+                "teams": [{"name": "Manchester United"}, {"name": "Liverpool"}],
+                "status": {"utcTime": "2024-12-22T15:00:00Z", "finished": True},
+                "league": {"name": "Premier League"},
             },
-            "content": {
-                "stats": {
-                    "Periods": {
-                        "All": {
-                            "stats": []
-                        }
-                    }
-                },
-                "playerStats": {
-                    "home": [],
-                    "away": []
-                }
-            }
+            "content": {"stats": {"Periods": {"All": {"stats": []}}}, "playerStats": {"home": [], "away": []}},
         }
 
         # 添加大量真实统计数据来达到120KB
         for i in range(2000):
-            valid_data["content"]["stats"]["Periods"]["All"]["stats"].append({
-                "stats": [
-                    {"key": "shots", "value": i * 2},
-                    {"key": "passes", "value": i * 10}
-                ]
-            })
+            valid_data["content"]["stats"]["Periods"]["All"]["stats"].append(
+                {"stats": [{"key": "shots", "value": i * 2}, {"key": "passes", "value": i * 10}]}
+            )
 
         # 添加详细的球员统计数据
         for team in ["home", "away"]:
             for player_idx in range(50):
-                valid_data["content"]["playerStats"][team].append({
-                    "name": f"Player_{team}_{player_idx}",
-                    "stats": {
-                        "shots": player_idx * 2,
-                        "passes": player_idx * 20,
-                        "xg": player_idx * 0.1,
-                        "xa": player_idx * 0.05
+                valid_data["content"]["playerStats"][team].append(
+                    {
+                        "name": f"Player_{team}_{player_idx}",
+                        "stats": {
+                            "shots": player_idx * 2,
+                            "passes": player_idx * 20,
+                            "xg": player_idx * 0.1,
+                            "xa": player_idx * 0.05,
+                        },
                     }
-                })
+                )
 
         json_str = json.dumps(valid_data)
         logger.info(f"🔬 120KB测试JSON大小: {len(json_str)} bytes")
@@ -113,55 +90,45 @@ class TestSentryLogic:
         # 基于120KB结构，但更加详细
         base_data = {
             "header": {
-                "teams": [
-                    {"name": "Real Madrid"},
-                    {"name": "Barcelona"}
-                ],
-                "status": {
-                    "utcTime": "2024-12-22T20:00:00Z",
-                    "finished": True
-                },
-                "league": {
-                    "name": "La Liga"
-                }
+                "teams": [{"name": "Real Madrid"}, {"name": "Barcelona"}],
+                "status": {"utcTime": "2024-12-22T20:00:00Z", "finished": True},
+                "league": {"name": "La Liga"},
             },
-            "content": {
-                "stats": {
-                    "Periods": {
-                        "All": {
-                            "stats": []
-                        }
-                    }
-                },
-                "playerStats": {
-                    "home": [],
-                    "away": []
-                }
-            }
+            "content": {"stats": {"Periods": {"All": {"stats": []}}}, "playerStats": {"home": [], "away": []}},
         }
 
         # 添加大量详细统计数据来达到500KB
         for i in range(10000):
-            base_data["content"]["stats"]["Periods"]["All"]["stats"].append({
-                "stats": [
-                    {"key": f"metric_{i}", "value": i * 3},
-                    {"key": f"passes_{i}", "value": i * 15},
-                    {"key": f"xg_{i}", "value": i * 0.2}
-                ]
-            })
+            base_data["content"]["stats"]["Periods"]["All"]["stats"].append(
+                {
+                    "stats": [
+                        {"key": f"metric_{i}", "value": i * 3},
+                        {"key": f"passes_{i}", "value": i * 15},
+                        {"key": f"xg_{i}", "value": i * 0.2},
+                    ]
+                }
+            )
 
         # 添加超详细的球员统计数据
         for team in ["home", "away"]:
             for player_idx in range(200):
-                player_stats = {
-                    "name": f"SuperPlayer_{team}_{player_idx}",
-                    "position": "Midfielder",
-                    "stats": {}
-                }
+                player_stats = {"name": f"SuperPlayer_{team}_{player_idx}", "position": "Midfielder", "stats": {}}
 
                 # 添加179个维度的技术指标
-                metrics = ["shots", "passes", "xg", "xa", "touches", "tackles", "interceptions",
-                          "aerial_duels_won", "clearances", "blocks", "key_passes", "dribbles_completed"]
+                metrics = [
+                    "shots",
+                    "passes",
+                    "xg",
+                    "xa",
+                    "touches",
+                    "tackles",
+                    "interceptions",
+                    "aerial_duels_won",
+                    "clearances",
+                    "blocks",
+                    "key_passes",
+                    "dribbles_completed",
+                ]
                 for j, metric in enumerate(metrics):
                     player_stats["stats"][metric] = player_idx * (j + 1) * 0.5
 
@@ -179,11 +146,11 @@ class TestSentryLogic:
 
         # 模拟HTTP响应
         mock_response = Mock()
-        mock_response.content = small_json_50kb.encode('utf-8')
-        mock_response.headers = {'Content-Encoding': 'utf-8'}
+        mock_response.content = small_json_50kb.encode("utf-8")
+        mock_response.headers = {"Content-Encoding": "utf-8"}
 
         # 验证50KB数据被拒绝
-        result = collector.adaptive_decode_response(mock_response.content, 'utf-8')
+        result = collector.adaptive_decode_response(mock_response.content, "utf-8")
 
         # 断言: 小数据应该被处理但后续会被size检查拒绝
         assert result is not None, "50KB数据应该能被解码"
@@ -200,11 +167,11 @@ class TestSentryLogic:
 
         # 模拟HTTP响应
         mock_response = Mock()
-        mock_response.content = valid_json_120kb.encode('utf-8')
-        mock_response.headers = {'Content-Encoding': 'utf-8'}
+        mock_response.content = valid_json_120kb.encode("utf-8")
+        mock_response.headers = {"Content-Encoding": "utf-8"}
 
         # 验证120KB数据被正确解码
-        result = collector.adaptive_decode_response(mock_response.content, 'utf-8')
+        result = collector.adaptive_decode_response(mock_response.content, "utf-8")
 
         # 断言: 有效数据应该被成功解码
         assert result is not None, "120KB有效数据应该被成功解码"
@@ -227,11 +194,11 @@ class TestSentryLogic:
 
         # 模拟HTTP响应
         mock_response = Mock()
-        mock_response.content = large_json_500kb.encode('utf-8')
-        mock_response.headers = {'Content-Encoding': 'utf-8'}
+        mock_response.content = large_json_500kb.encode("utf-8")
+        mock_response.headers = {"Content-Encoding": "utf-8"}
 
         # 验证500KB数据被正确解码
-        result = collector.adaptive_decode_response(mock_response.content, 'utf-8')
+        result = collector.adaptive_decode_response(mock_response.content, "utf-8")
 
         # 断言: 大数据应该被成功解码
         assert result is not None, "500KB大数据应该被成功解码"
@@ -262,7 +229,7 @@ class TestSentryLogic:
 
         logger.success(f"✅ 哨兵阈值设置正确: {actual_threshold} bytes")
 
-    @patch('src.api.collectors.fotmob_core.logger')
+    @patch("src.api.collectors.fotmob_core.logger")
     def test_size_validation_logging(self, mock_logger, collector):
         """测试: 大小验证的日志记录"""
         logger.info("🧪 测试大小验证日志记录")
@@ -281,6 +248,7 @@ class TestSentryLogic:
         assert f"response_too_small_{small_size}" in call_args
 
         logger.success("✅ 大小验证日志记录机制正常")
+
 
 if __name__ == "__main__":
     # 直接运行测试

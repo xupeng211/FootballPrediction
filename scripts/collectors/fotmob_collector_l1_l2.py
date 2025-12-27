@@ -17,13 +17,13 @@ FootballPrediction L1/L2 Data Collection Architecture
 import asyncio
 import json
 import logging
-import urllib.parse
-from datetime import datetime
-from typing import Any, Optional, Dict, List, Tuple
 from dataclasses import dataclass
+from datetime import datetime
+from typing import Any
 
 import aiohttp
 import asyncpg
+
 from src.config_unified import get_settings
 
 settings = get_settings()
@@ -56,8 +56,10 @@ class FotMobL1L2Collector:
         max_retries: int = 3,
         timeout: int = 30,
         batch_size: int = 50,
-        delay_between_requests: float = 2.0,
-        max_l2_concurrency: int = 5,  # L2并发控制
+        delay_between_requests: float = 3.0,  # V26.0 限流增强（防封禁）
+        max_l2_concurrency: int = 2,  # V26.0 并发限流（降低 API 压力）
+        silent_mode: bool = False,  # 静默生产模式
+        progress_interval: int = 500,  # V26.0 进度输出间隔（500 场）
     ):
         """初始化采集器"""
         self.max_retries = max_retries
@@ -65,14 +67,30 @@ class FotMobL1L2Collector:
         self.batch_size = batch_size
         self.delay_between_requests = delay_between_requests
         self.max_l2_concurrency = max_l2_concurrency
-        self.client: Optional[aiohttp.ClientSession] = None
-        self.db_pool: Optional[asyncpg.Pool] = None
+        self.silent_mode = silent_mode
+        self.progress_interval = progress_interval
+        self.client: aiohttp.ClientSession | None = None
+        self.db_pool: asyncpg.Pool | None = None
 
         # 采集统计
         self.stats = CollectionStats()
 
+        # 进度计数器（用于静默模式）
+        self._l1_saved_count = 0
+        self._l2_saved_count = 0
+        self._last_progress_output = 0
+
         # L2并发控制信号量
         self.l2_semaphore = None
+
+        # 专用进度日志器（独立于主日志器）
+        self.progress_logger = logging.getLogger("harvest_progress")
+        self.progress_logger.setLevel(logging.INFO)
+        if not self.progress_logger.handlers:
+            handler = logging.StreamHandler()
+            handler.setFormatter(logging.Formatter("%(asctime)s - %(message)s"))
+            self.progress_logger.addHandler(handler)
+        self.progress_logger.propagate = False
 
         # 最新认证头 (2024-12-20更新)
         self.headers = {
@@ -134,7 +152,7 @@ class FotMobL1L2Collector:
     # L1 采集逻辑：赛程底座数据
     # ===============================================================
 
-    async def collect_l1_matches_by_date(self, date_str: str) -> List[Dict[str, Any]]:
+    async def collect_l1_matches_by_date(self, date_str: str) -> list[dict[str, Any]]:
         """
         L1采集：按日期采集比赛列表 (已弃用 - 请使用 collect_season_matches)
 
@@ -147,10 +165,22 @@ class FotMobL1L2Collector:
         logger.warning("⚠️ collect_l1_matches_by_date已弃用，请使用collect_season_matches")
         return []
 
-    async def collect_season_matches(self) -> List[Dict[str, Any]]:
+    async def collect_season_matches(
+        self,
+        league_id: int = 47,
+        season_code: str = "2324",
+        league_name: str = "Premier League",
+        season_display: str = "23/24",
+    ) -> list[dict[str, Any]]:
         """
         L1采集：采集整个赛季的所有比赛数据
-        使用最新API端点: /api/leagues?id=47
+        使用最新API端点: /api/leagues?id={league_id}&season={season_code}
+
+        Args:
+            league_id: 联赛 ID (默认 47 = Premier League)
+            season_code: 赛季代码 (默认 "2324")
+            league_name: 联赛名称 (默认 "Premier League")
+            season_display: 赛季显示名称 (默认 "23/24")
 
         Returns:
             比赛列表
@@ -160,10 +190,10 @@ class FotMobL1L2Collector:
                 await self.initialize()
 
             # 使用最新API端点
-            url = f"https://www.fotmob.com/api/leagues"
-            params = {"id": 47}  # Premier League ID
+            url = "https://www.fotmob.com/api/leagues"
+            params = {"id": league_id, "season": season_code}
 
-            logger.info(f"🎯 L1赛季请求: {url}?id=47")
+            logger.info(f"🎯 L1赛季请求: {url}?id={league_id}&season={season_code}")
 
             async with self.client.get(url, params=params) as response:
                 self.stats.total_requests += 1
@@ -171,7 +201,9 @@ class FotMobL1L2Collector:
 
                 if response.status == 200:
                     data = await response.json()
-                    matches = self._parse_season_matches(data)
+                    matches = self._parse_season_matches(
+                        data, league_name=league_name, league_id=league_id, season_display=season_display
+                    )
                     self.stats.l1_matches_found = len(matches)
                     logger.info(f"✅ L1赛季采集成功，找到 {len(matches)} 场比赛")
                     return matches
@@ -185,8 +217,14 @@ class FotMobL1L2Collector:
             logger.error(f"❌ L1赛季采集异常: {e}")
             return []
 
-    def _parse_season_matches(self, data: Dict[str, Any]) -> List[Dict[str, Any]]:
-        """解析赛季比赛数据"""
+    def _parse_season_matches(
+        self,
+        data: dict[str, Any],
+        league_name: str = "Premier League",
+        league_id: int = 47,
+        season_display: str = "23/24",
+    ) -> list[dict[str, Any]]:
+        """解析赛季比赛数据（支持动态联赛和赛季参数）"""
         matches = []
 
         try:
@@ -197,10 +235,12 @@ class FotMobL1L2Collector:
                     raw_matches = matches_data["allMatches"]
                     logger.info(f"📊 从 allMatches 提取 {len(raw_matches)} 场比赛")
 
-                    # 标准化比赛数据
+                    # 标准化比赛数据（传递联赛和赛季参数）
                     for match in raw_matches:
                         if isinstance(match, dict):
-                            standardized = self._standardize_season_match(match)
+                            standardized = self._standardize_season_match(
+                                match, league_name=league_name, league_id=league_id, season_display=season_display
+                            )
                             if standardized:
                                 matches.append(standardized)
 
@@ -210,8 +250,25 @@ class FotMobL1L2Collector:
             logger.error(f"❌ L1赛季数据解析失败: {e}")
             return []
 
-    def _standardize_season_match(self, match: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-        """标准化赛季比赛数据"""
+    def _standardize_season_match(
+        self,
+        match: dict[str, Any],
+        league_name: str = "Premier League",
+        league_id: int = 47,
+        season_display: str = "23/24",
+    ) -> dict[str, Any] | None:
+        """
+        标准化赛季比赛数据（动态联赛和赛季支持）
+
+        Args:
+            match: 原始比赛数据
+            league_name: 联赛名称
+            league_id: 联赛 ID
+            season_display: 赛季显示名称
+
+        Returns:
+            标准化后的比赛数据
+        """
         try:
             # 提取基础信息
             match_id = str(match.get("id", ""))
@@ -251,16 +308,17 @@ class FotMobL1L2Collector:
             round_name = match.get("roundName", round_info)
 
             return {
+                "id": match_id,  # 添加 id 字段用于数据库主键
                 "external_id": match_id,
-                "league_name": "Premier League",
-                "season": "2024/25",
+                "league_name": league_name,  # ✅ 动态联赛名称
+                "season": season_display,  # ✅ 动态赛季名称
                 "match_time": match_time,
                 "status": status,
                 "home_team": home_name,
                 "away_team": away_name,
-                "league_id": "47",
-                "home_team_id": str(home.get("id", "")),
-                "away_team_id": str(away.get("id", "")),
+                "league_id": league_id,  # ✅ 动态联赛 ID
+                "home_team_id": int(home.get("id", 0) or 0),  # 确保是整数
+                "away_team_id": int(away.get("id", 0) or 0),  # 确保是整数
                 "round_info": str(round_name),
                 "venue_name": match.get("venue", {}).get("name") if match.get("venue") else None,
                 "result_score": result_score,
@@ -300,7 +358,7 @@ class FotMobL1L2Collector:
             logger.error(f"❌ 时间解析异常: {e}")
             return datetime.now()
 
-    def _parse_l1_matches(self, data: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def _parse_l1_matches(self, data: dict[str, Any]) -> list[dict[str, Any]]:
         """解析L1比赛数据"""
         matches = []
 
@@ -340,7 +398,7 @@ class FotMobL1L2Collector:
             logger.error(f"❌ L1数据解析失败: {e}")
             return []
 
-    def _standardize_l1_match(self, match: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    def _standardize_l1_match(self, match: dict[str, Any]) -> dict[str, Any] | None:
         """标准化L1比赛数据"""
         try:
             # 提取基础信息
@@ -394,7 +452,7 @@ class FotMobL1L2Collector:
             logger.error(f"❌ L1比赛数据标准化失败: {e}")
             return None
 
-    async def _save_l1_match_index(self, match: Dict[str, Any]) -> bool:
+    async def _save_l1_match_index(self, match: dict[str, Any]) -> bool:
         """
         保存单场L1比赛索引到数据库
 
@@ -407,15 +465,20 @@ class FotMobL1L2Collector:
         try:
             async with self.db_pool.acquire() as conn:
                 async with conn.transaction():
+                    # 使用 external_id + season 作为唯一标识符（避免不同赛季的 ID 冲突）
+                    external_id = match.get("external_id") or match.get("id", "")
+                    season = match.get("season", "unknown")
+                    unique_match_id = f"{external_id}_{season}"
+
                     query = """
                         INSERT INTO matches (
-                            external_id, league_name, season, match_time, status,
+                            match_id, external_id, league_name, season, match_date, status,
                             home_team, away_team, league_id, home_team_id, away_team_id,
                             venue_name, result_score, round_info, collection_status, l1_collected_at
-                        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, 'pending', $14)
-                        ON CONFLICT (external_id)
+                        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, 'pending', NOW())
+                        ON CONFLICT (match_id)
                         DO UPDATE SET
-                            match_time = EXCLUDED.match_time,
+                            match_date = EXCLUDED.match_date,
                             status = EXCLUDED.status,
                             result_score = EXCLUDED.result_score,
                             round_info = EXCLUDED.round_info,
@@ -425,30 +488,38 @@ class FotMobL1L2Collector:
 
                     await conn.execute(
                         query,
-                        match["external_id"],
-                        match["league_name"],
-                        match["season"],
-                        match["match_time"],
-                        match["status"],
-                        match["home_team"],
-                        match["away_team"],
-                        match["league_id"],
-                        match["home_team_id"],
-                        match["away_team_id"],
-                        match["venue_name"],
-                        match["result_score"],
-                        match.get("round_info"),
-                        datetime.now(),
+                        unique_match_id,  # $1 match_id (使用唯一复合键)
+                        external_id,  # $2 external_id (保留原始 FotMob ID)
+                        match.get("league_name"),  # $3
+                        season,  # $4
+                        match.get("match_time"),  # $5 match_date
+                        match.get("status"),  # $6
+                        match.get("home_team"),  # $7
+                        match.get("away_team"),  # $8
+                        match.get("league_id"),  # $9
+                        match.get("home_team_id"),  # $10
+                        match.get("away_team_id"),  # $11
+                        match.get("venue_name"),  # $12
+                        match.get("result_score"),  # $13
+                        match.get("round_info"),  # $14
                     )
 
-                    logger.info(f"✅ L1索引保存成功: {match['home_team']} vs {match['away_team']}")
+                    # 静默模式：只输出进度
+                    if not self.silent_mode:
+                        logger.info(
+                            f"✅ L1索引保存成功: {match.get('home_team', 'Unknown')} vs {match.get('away_team', 'Unknown')}"
+                        )
+                    else:
+                        self._l1_saved_count += 1
+                        if self._l1_saved_count % self.progress_interval == 0:
+                            self.progress_logger.info(f"⏳ L1保存进度: {self._l1_saved_count} 场")
                     return True
 
         except Exception as e:
             logger.error(f"❌ L1索引保存失败 {match.get('external_id', 'unknown')}: {e}")
             return False
 
-    async def save_all_l1_matches(self, matches: List[Dict[str, Any]]) -> int:
+    async def save_all_l1_matches(self, matches: list[dict[str, Any]]) -> int:
         """
         保存所有L1比赛到数据库
 
@@ -467,16 +538,51 @@ class FotMobL1L2Collector:
         logger.info(f"✅ L1索引保存完成: {saved_count}/{len(matches)} 场比赛")
         return saved_count
 
+    async def _filter_new_matches(self, match_ids: list[str]) -> list[str]:
+        """
+        过滤出需要采集 L2 的新比赛（已存在 raw_match_data 的跳过）
+
+        Args:
+            match_ids: 比赛ID列表（格式：{external_id}_{season}）
+
+        Returns:
+            需要采集的比赛ID列表（格式：{external_id}_{season}）
+        """
+        if not match_ids:
+            return []
+
+        try:
+            async with self.db_pool.acquire() as conn:
+                # V26.0 最终修复：raw_match_data.match_id 现在使用 {external_id}_{season} 格式
+                # 直接查询完整的 match_id
+                query = """
+                    SELECT DISTINCT match_id
+                    FROM raw_match_data
+                    WHERE match_id = ANY($1)
+                """
+                existing = await conn.fetch(query, match_ids)
+                existing_ids = set(row["match_id"] for row in existing)
+
+                # 返回不存在的比赛ID
+                new_matches = [mid for mid in match_ids if mid not in existing_ids]
+                logger.info(f"🔍 V26.0 过滤结果: {len(new_matches)}/{len(match_ids)} 场新比赛")
+                return new_matches
+
+        except Exception as e:
+            logger.error(f"❌ 过滤新比赛失败: {e}")
+            # 出错时返回全部，避免遗漏
+            return match_ids
+
     # ===============================================================
     # L2 采集逻辑：原始详情数据
     # ===============================================================
 
-    async def collect_l2_match_data(self, match_id: str) -> Optional[Dict[str, Any]]:
+    async def collect_l2_match_data(self, match_id: str) -> dict[str, Any] | None:
         """
         L2采集：获取单场比赛详情数据（带并发控制）
 
         Args:
-            match_id: 比赛ID
+            match_id: 比赛ID（格式：{external_id}_{season} 或原始 external_id）
 
         Returns:
             比赛详情数据
@@ -487,17 +593,19 @@ class FotMobL1L2Collector:
                 if not self.client:
                     await self.initialize()
 
-                url = "https://www.fotmob.com/api/matchDetails"
-                params = {"matchId": match_id}
+                # 从 match_id 中提取原始 external_id（移除 season 后缀）
+                external_id = match_id.rsplit("_", 1)[0] if "_" in match_id else match_id
 
-                full_url = f"{url}?matchId={match_id}"
-                logger.info(f"🎯 L2请求: {full_url} [并发: {self.l2_semaphore._value}/{self.max_l2_concurrency}]")
+                url = "https://www.fotmob.com/api/matchDetails"
+                params = {"matchId": external_id}  # 使用原始 ID 请求 API
+
+                if not self.silent_mode:
+                    full_url = f"{url}?matchId={external_id}"
+                    logger.info(f"🎯 L2请求: {full_url} [并发: {self.l2_semaphore._value}/{self.max_l2_concurrency}]")
 
                 async with self.client.get(url, params=params) as response:
                     self.stats.total_requests += 1
                     self.stats.l2_attempts += 1
-
-                    logger.info(f"🔍 L2响应状态码: {response.status}")
 
                     if response.status == 200:
                         data = await response.json()
@@ -505,7 +613,8 @@ class FotMobL1L2Collector:
                         self.stats.total_bytes_saved += data_size
                         self.stats.l2_successful += 1
 
-                        logger.info(f"✅ L2采集成功: {match_id}, 数据大小: {data_size} 字节")
+                        if not self.silent_mode:
+                            logger.info(f"✅ L2采集成功: {match_id}, 数据大小: {data_size} 字节")
                         return data
                     else:
                         response_text = await response.text()
@@ -519,12 +628,12 @@ class FotMobL1L2Collector:
                 self.stats.l2_failed += 1
                 return None
 
-    async def _save_l2_raw_data(self, match_id: str, data: Dict[str, Any]) -> bool:
+    async def _save_l2_raw_data(self, match_id: str, data: dict[str, Any]) -> bool:
         """
         保存L2原始数据并更新采集状态
 
         Args:
-            match_id: 比赛ID
+            match_id: 比赛ID（格式：{external_id}_{season}）
             data: 原始数据
 
         Returns:
@@ -533,40 +642,51 @@ class FotMobL1L2Collector:
         try:
             async with self.db_pool.acquire() as conn:
                 async with conn.transaction():
-                    # 1. 保存L2原始数据
+                    # 从 match_id 中提取原始 external_id（移除 season 后缀）
+                    external_id = match_id.rsplit("_", 1)[0] if "_" in match_id else match_id
+
+                    # 1. 保存L2原始数据（V26.0 修复：使用 match_id 作为主键，包含 season 后缀）
+                    # 这样可以正确区分不同赛季的同 ID 比赛
                     query = """
                         INSERT INTO raw_match_data
-                        (external_id, raw_data, source, collected_at, created_at, updated_at)
-                        VALUES ($1, $2, 'fotmob', NOW(), NOW(), NOW())
-                        ON CONFLICT (external_id)
+                        (match_id, external_id, raw_data, source, collected_at, created_at, updated_at)
+                        VALUES ($1, $2, $3, 'fotmob', NOW(), NOW(), NOW())
+                        ON CONFLICT (match_id)
                         DO UPDATE SET
                             raw_data = EXCLUDED.raw_data,
                             data_version = raw_match_data.data_version + 1,
                             updated_at = NOW()
                     """
 
-                    await conn.execute(query, match_id, json.dumps(data, ensure_ascii=False))
+                    # V26.0 最终修复：raw_match_data.match_id 使用完整格式 {external_id}_{season}
+                    await conn.execute(query, match_id, external_id, json.dumps(data, ensure_ascii=False))
 
-                    # 2. 更新matches表的L2采集状态
+                    # 2. 更新matches表的L2采集状态（使用 match_id 精确匹配）
                     update_query = """
                         UPDATE matches
                         SET collection_status = 'completed',
                             l2_collected_at = NOW(),
                             updated_at = NOW()
-                        WHERE external_id = $1
+                        WHERE match_id = $1
                     """
 
                     await conn.execute(update_query, match_id)
 
-                    data_size = len(json.dumps(data, ensure_ascii=False))
-                    logger.info(f"✅ L2数据保存成功: {match_id}, 大小: {data_size} 字节")
+                    # 静默模式：只输出进度
+                    if not self.silent_mode:
+                        data_size = len(json.dumps(data, ensure_ascii=False))
+                        logger.info(f"✅ L2数据保存成功: {match_id}, 大小: {data_size} 字节")
+                    else:
+                        self._l2_saved_count += 1
+                        if self._l2_saved_count % self.progress_interval == 0:
+                            self.progress_logger.info(f"⏳ L2保存进度: {self._l2_saved_count} 场")
                     return True
 
         except Exception as e:
             logger.error(f"❌ L2数据保存失败 {match_id}: {e}")
             return False
 
-    async def batch_collect_l2_concurrent(self, match_ids: List[str]) -> Dict[str, int]:
+    async def batch_collect_l2_concurrent(self, match_ids: list[str]) -> dict[str, int]:
         """
         批量并发采集L2数据
 
@@ -634,18 +754,18 @@ class FotMobL1L2Collector:
             logger.error(f"❌ L2采集和保存失败 {match_id}: {e}")
             return False
 
-    async def _update_collection_status_batch(self, match_ids: List[str], status: str) -> bool:
-        """批量更新采集状态"""
+    async def _update_collection_status_batch(self, match_ids: list[str], status: str) -> bool:
+        """批量更新采集状态（使用 match_id）"""
         if not match_ids:
             return True
 
         try:
             async with self.db_pool.acquire() as conn:
-                placeholders = ",".join([f"${i+2}" for i in range(len(match_ids))])
+                placeholders = ",".join([f"${i + 2}" for i in range(len(match_ids))])
                 query = f"""
                     UPDATE matches
                     SET collection_status = $1, updated_at = NOW()
-                    WHERE external_id IN ({placeholders})
+                    WHERE match_id IN ({placeholders})
                 """
 
                 await conn.execute(query, status, *match_ids)
@@ -660,7 +780,7 @@ class FotMobL1L2Collector:
     # 批量处理逻辑
     # ===============================================================
 
-    async def batch_process_matches(self, date_str: str) -> Dict[str, Any]:
+    async def batch_process_matches(self, date_str: str) -> dict[str, Any]:
         """
         批量处理L1->L2完整流程
 
@@ -691,7 +811,7 @@ class FotMobL1L2Collector:
             # 2. 保存L1索引数据
             l1_success = await self._save_l1_match_index(matches)
             if not l1_success:
-                logger.error(f"❌ L1索引保存失败，停止L2采集")
+                logger.error("❌ L1索引保存失败，停止L2采集")
                 return {"error": "L1 save failed"}
 
             # 3. 提取match_ids
@@ -756,7 +876,7 @@ class FotMobL1L2Collector:
             logger.error(f"❌ 批量处理失败: {e}")
             return {"error": str(e), "date": date_str}
 
-    async def process_date_range(self, start_date: str, end_date: str) -> List[Dict[str, Any]]:
+    async def process_date_range(self, start_date: str, end_date: str) -> list[dict[str, Any]]:
         """
         处理日期范围
 
@@ -767,7 +887,7 @@ class FotMobL1L2Collector:
         Returns:
             每日处理结果列表
         """
-        from datetime import date, timedelta
+        from datetime import timedelta
 
         start = datetime.strptime(start_date, "%Y-%m-%d").date()
         end = datetime.strptime(end_date, "%Y-%m-%d").date()
@@ -787,7 +907,7 @@ class FotMobL1L2Collector:
     # 统计和监控
     # ===============================================================
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """获取采集统计信息"""
         return {
             "total_requests": self.stats.total_requests,
@@ -818,7 +938,7 @@ class AdvancedDataParser:
     """高阶数据解析器 - 用于解析L2原始JSON数据"""
 
     @staticmethod
-    def parse_xg_data(raw_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    def parse_xg_data(raw_data: dict[str, Any]) -> dict[str, Any] | None:
         """
         解析xG (预期进球) 数据
 
@@ -861,7 +981,7 @@ class AdvancedDataParser:
             return None
 
     @staticmethod
-    def parse_lineup_data(raw_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    def parse_lineup_data(raw_data: dict[str, Any]) -> dict[str, Any] | None:
         """
         解析阵容数据
 
@@ -908,7 +1028,7 @@ class AdvancedDataParser:
             return None
 
     @staticmethod
-    def parse_match_stats(raw_data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    def parse_match_stats(raw_data: dict[str, Any]) -> dict[str, Any] | None:
         """
         解析比赛统计数据
 
@@ -952,7 +1072,7 @@ class AdvancedDataParser:
             return None
 
     @staticmethod
-    def comprehensive_parse(raw_data: Dict[str, Any]) -> Dict[str, Any]:
+    def comprehensive_parse(raw_data: dict[str, Any]) -> dict[str, Any]:
         """
         综合解析L2数据
 

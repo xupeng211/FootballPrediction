@@ -18,22 +18,20 @@ Author: Football Prediction Team
 Version: 1.0.0 (Sprint 7 Performance Testing)
 """
 
-import asyncio
 import argparse
+import asyncio
 import json
 import logging
-import sys
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
-from typing import Dict, Any, List, Optional
+from typing import Any
 
 # 导入基准测试框架
 from benchmark_framework import (
-    PerformanceBenchmarkFramework,
     BenchmarkConfig,
-    run_performance_benchmark,
-    create_benchmark_config,
     BenchmarkDatabase,
+    create_benchmark_config,
+    run_performance_benchmark,
 )
 
 # 设置日志
@@ -47,7 +45,7 @@ class BenchmarkRunner:
     def __init__(self):
         self.db = BenchmarkDatabase()
 
-    async def run_single_benchmark(self, config: BenchmarkConfig) -> Dict[str, Any]:
+    async def run_single_benchmark(self, config: BenchmarkConfig) -> dict[str, Any]:
         """运行单个基准测试"""
         logger.info(f"🚀 开始基准测试: {config.benchmark_name}")
 
@@ -85,7 +83,7 @@ class BenchmarkRunner:
                 "timestamp": datetime.now().isoformat(),
             }
 
-    async def run_multiple_benchmarks(self, configs: List[BenchmarkConfig]) -> Dict[str, Any]:
+    async def run_multiple_benchmarks(self, configs: list[BenchmarkConfig]) -> dict[str, Any]:
         """运行多个基准测试"""
         logger.info(f"🚀 开始批量基准测试: {len(configs)} 个测试")
 
@@ -107,7 +105,7 @@ class BenchmarkRunner:
             "timestamp": datetime.now().isoformat(),
         }
 
-    async def compare_environments(self, benchmark_name: str, environments: List[str]) -> Dict[str, Any]:
+    async def compare_environments(self, benchmark_name: str, environments: list[str]) -> dict[str, Any]:
         """比较不同环境的性能"""
         logger.info(f"🔄 比较环境性能: {benchmark_name}")
 
@@ -128,7 +126,7 @@ class BenchmarkRunner:
         comparison_report = await self._generate_comparison_report(benchmark_name, comparison_results)
         return comparison_report
 
-    async def analyze_performance_trends(self, benchmark_name: str, environment: str, days: int = 30) -> Dict[str, Any]:
+    async def analyze_performance_trends(self, benchmark_name: str, environment: str, days: int = 30) -> dict[str, Any]:
         """分析性能趋势"""
         logger.info(f"📈 分析性能趋势: {benchmark_name} ({environment}, {days}天)")
 
@@ -157,8 +155,8 @@ class BenchmarkRunner:
         }
 
     async def check_regressions(
-        self, benchmark_name: Optional[str] = None, environment: Optional[str] = None
-    ) -> Dict[str, Any]:
+        self, benchmark_name: str | None = None, environment: str | None = None
+    ) -> dict[str, Any]:
         """检查性能回归"""
         logger.info("🔍 检查性能回归")
 
@@ -216,7 +214,7 @@ class BenchmarkRunner:
             "timestamp": datetime.now().isoformat(),
         }
 
-    async def generate_performance_report(self, output_dir: str = "performance_reports") -> Dict[str, Any]:
+    async def generate_performance_report(self, output_dir: str = "performance_reports") -> dict[str, Any]:
         """生成性能报告"""
         logger.info("📊 生成性能报告")
 
@@ -284,8 +282,8 @@ class BenchmarkRunner:
         }
 
     async def _generate_comparison_report(
-        self, benchmark_name: str, comparison_results: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, benchmark_name: str, comparison_results: dict[str, Any]
+    ) -> dict[str, Any]:
         """生成环境对比报告"""
         successful_results = {k: v for k, v in comparison_results.items() if v.get("success", False)}
 
@@ -331,7 +329,7 @@ class BenchmarkRunner:
             "comparison_metrics": comparison_metrics,
         }
 
-    async def _analyze_trends(self, historical_results: List) -> Dict[str, Any]:
+    async def _analyze_trends(self, historical_results: list) -> dict[str, Any]:
         """分析趋势数据"""
         if len(historical_results) < 3:
             return {
@@ -436,7 +434,7 @@ async def main():
             )
 
             result = await runner.run_single_benchmark(config)
-            print(f"\n✅ 基准测试完成!")
+            print("\n✅ 基准测试完成!")
             print(f"测试名称: {result['benchmark_name']}")
             print(f"环境: {result['environment']}")
             print(f"成功率: {result['summary']['success_rate']:.1%}")
@@ -451,7 +449,7 @@ async def main():
             # 环境对比
             result = await runner.compare_environments(args.benchmark_name, args.environments)
 
-            print(f"\n🔄 环境对比完成!")
+            print("\n🔄 环境对比完成!")
             print(f"基准测试: {result['benchmark_name']}")
             print(f"对比环境: {', '.join(result['environments_compared'])}")
 
@@ -468,7 +466,7 @@ async def main():
             # 趋势分析
             result = await runner.analyze_performance_trends(args.benchmark_name, args.environment, args.days)
 
-            print(f"\n📈 趋势分析完成!")
+            print("\n📈 趋势分析完成!")
             print(f"基准测试: {result['benchmark_name']}")
             print(f"环境: {result['environment']}")
             print(f"分析周期: {result['analysis_period_days']} 天")
@@ -486,7 +484,7 @@ async def main():
             # 回归检查
             result = await runner.check_regressions(args.benchmark_name, args.environment)
 
-            print(f"\n🔍 回归检查完成!")
+            print("\n🔍 回归检查完成!")
             print(f"检查总数: {result['total_checks']}")
             print(f"发现回归: {result['regressions_detected']} 个")
 
@@ -504,7 +502,7 @@ async def main():
             # 生成报告
             result = await runner.generate_performance_report(args.output_dir)
 
-            print(f"\n📊 性能报告已生成!")
+            print("\n📊 性能报告已生成!")
             print(f"报告文件: {result['report_file']}")
             print(f"分析的基准测试: {result['summary']['benchmarks_analyzed']}")
             print(f"发现的回归: {result['summary']['regressions_detected']} 个")

@@ -17,7 +17,8 @@ from typing import Tuple, Dict, Any
 # 导入回测器模块
 import sys
 import os
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+
+sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 from src.ml.standard_backtester import StandardBacktester
 
@@ -40,9 +41,7 @@ class TestBacktesterMath:
         # 测试用例1: 赔率 (2.0, 3.0, 4.0)
         home_odds, draw_odds, away_odds = 2.0, 3.0, 4.0
 
-        adj_home_odds, adj_draw_odds, adj_away_odds = backtester.shin_method(
-            home_odds, draw_odds, away_odds
-        )
+        adj_home_odds, adj_draw_odds, adj_away_odds = backtester.shin_method(home_odds, draw_odds, away_odds)
 
         # 计算调整后的隐含概率
         adj_home_prob = 1 / adj_home_odds
@@ -68,17 +67,15 @@ class TestBacktesterMath:
         """
         test_cases = [
             # (home_odds, draw_odds, away_odds, expected_sum_error_tolerance)
-            (2.0, 3.0, 4.0, 1e-10),    # 标准案例
-            (1.5, 3.5, 5.0, 1e-10),    # 低主胜赔率
-            (3.0, 3.2, 2.5, 1e-10),    # 均衡赔率
-            (10.0, 6.0, 1.4, 1e-10),   # 极端赔率
-            (1.8, 2.1, 4.5, 1e-10),   # 实际赔率范围
+            (2.0, 3.0, 4.0, 1e-10),  # 标准案例
+            (1.5, 3.5, 5.0, 1e-10),  # 低主胜赔率
+            (3.0, 3.2, 2.5, 1e-10),  # 均衡赔率
+            (10.0, 6.0, 1.4, 1e-10),  # 极端赔率
+            (1.8, 2.1, 4.5, 1e-10),  # 实际赔率范围
         ]
 
         for home_odds, draw_odds, away_odds, tolerance in test_cases:
-            adj_home_odds, adj_draw_odds, adj_away_odds = backtester.shin_method(
-                home_odds, draw_odds, away_odds
-            )
+            adj_home_odds, adj_draw_odds, adj_away_odds = backtester.shin_method(home_odds, draw_odds, away_odds)
 
             # 计算隐含概率
             adj_home_prob = 1 / adj_home_odds
@@ -86,8 +83,9 @@ class TestBacktesterMath:
             adj_away_prob = 1 / adj_away_odds
             total_prob = adj_home_prob + adj_draw_prob + adj_away_prob
 
-            assert abs(total_prob - 1.0) < tolerance, \
+            assert abs(total_prob - 1.0) < tolerance, (
                 f"赔率 ({home_odds}, {draw_odds}, {away_odds}) 概率总和: {total_prob}"
+            )
 
     def test_shin_method_water_removal_amount(self, backtester: StandardBacktester):
         """
@@ -111,9 +109,7 @@ class TestBacktesterMath:
         norm_away = original_away_prob / original_total
 
         # 应用Shin's Method调整
-        adj_home_odds, adj_draw_odds, adj_away_odds = backtester.shin_method(
-            home_odds, draw_odds, away_odds
-        )
+        adj_home_odds, adj_draw_odds, adj_away_odds = backtester.shin_method(home_odds, draw_odds, away_odds)
 
         # 验证调整符合预期的去水量
         adj_home_prob = 1 / adj_home_odds
@@ -153,7 +149,7 @@ class TestBacktesterMath:
         assert large_away > 1.0
 
         # 验证概率总和
-        total_prob = 1/large_home + 1/large_draw + 1/large_away
+        total_prob = 1 / large_home + 1 / large_draw + 1 / large_away
         assert abs(total_prob - 1.0) < 1e-10
 
     # ==================== Kelly 公式验证 ====================
@@ -164,9 +160,9 @@ class TestBacktesterMath:
         """
         test_cases = [
             # (true_prob, odds, expected_kelly_fraction)
-            (0.6, 2.0, 0.1),   # f = (1*0.6-0.4)/1 * 0.25 = 0.05
-            (0.7, 2.5, 0.06), # f = (1.5*0.7-0.3)/1.5 * 0.25 ≈ 0.06
-            (0.8, 1.8, 0.11), # f = (0.8*0.8-0.2)/0.8 * 0.25 = 0.15 * 0.25 = 0.0375
+            (0.6, 2.0, 0.1),  # f = (1*0.6-0.4)/1 * 0.25 = 0.05
+            (0.7, 2.5, 0.06),  # f = (1.5*0.7-0.3)/1.5 * 0.25 ≈ 0.06
+            (0.8, 1.8, 0.11),  # f = (0.8*0.8-0.2)/0.8 * 0.25 = 0.15 * 0.25 = 0.0375
         ]
 
         for true_prob, odds, expected_kelly in test_cases:
@@ -181,8 +177,9 @@ class TestBacktesterMath:
             # 应用最大投注限制
             theoretical = min(theoretical, backtester.MAX_BET)
 
-            assert abs(kelly - theoretical) < 1e-4, \
+            assert abs(kelly - theoretical) < 1e-4, (
                 f"Kelly计算错误: true_prob={true_prob}, odds={odds}, expected={theoretical}, got={kelly}"
+            )
 
     def test_kelly_formula_zero_edge(self, backtester: StandardBacktester):
         """
@@ -190,8 +187,8 @@ class TestBacktesterMath:
         """
         # 当隐含概率等于真实概率时，边际为0
         test_cases = [
-            (0.5, 2.0),   # 隐含概率=0.5
-            (0.4, 2.5),   # 隐含概率=0.4
+            (0.5, 2.0),  # 隐含概率=0.5
+            (0.4, 2.5),  # 隐含概率=0.4
             (0.25, 4.0),  # 隐含概率=0.25
         ]
 
@@ -204,9 +201,9 @@ class TestBacktesterMath:
         测试负边际时Kelly公式返回0
         """
         test_cases = [
-            (0.3, 2.0),   # 隐含概率=0.5 > 真实概率
-            (0.2, 3.0),   # 隐含概率≈0.333 > 真实概率
-            (0.1, 5.0),   # 隐含概率=0.2 > 真实概率
+            (0.3, 2.0),  # 隐含概率=0.5 > 真实概率
+            (0.2, 3.0),  # 隐含概率≈0.333 > 真实概率
+            (0.1, 5.0),  # 隐含概率=0.2 > 真实概率
         ]
 
         for true_prob, odds in test_cases:
@@ -219,17 +216,18 @@ class TestBacktesterMath:
         """
         # 极端高优势场景
         extreme_cases = [
-            (0.95, 2.0),   # 95%概率，2倍赔率
-            (0.90, 1.5),   # 90%概率，1.5倍赔率
-            (0.99, 3.0),   # 99%概率，3倍赔率
+            (0.95, 2.0),  # 95%概率，2倍赔率
+            (0.90, 1.5),  # 90%概率，1.5倍赔率
+            (0.99, 3.0),  # 99%概率，3倍赔率
         ]
 
         for true_prob, odds in extreme_cases:
             kelly = backtester.kelly_criterion(true_prob, odds)
 
             # 应该被限制在最大投注比例
-            assert kelly <= backtester.MAX_BET, \
+            assert kelly <= backtester.MAX_BET, (
                 f"Kelly超过最大限制: true_prob={true_prob}, odds={odds}, kelly={kelly}, max={backtester.MAX_BET}"
+            )
 
     def test_kelly_formula_monotonicity(self, backtester: StandardBacktester):
         """
@@ -241,8 +239,7 @@ class TestBacktesterMath:
         prev_kelly = 0
         for prob in np.linspace(0.51, 0.9, 10):
             kelly = backtester.kelly_criterion(prob, odds)
-            assert kelly >= prev_kelly - 1e-10, \
-                f"Kelly公式不单调: prob={prob}, kelly={kelly}, prev_kelly={prev_kelly}"
+            assert kelly >= prev_kelly - 1e-10, f"Kelly公式不单调: prob={prob}, kelly={kelly}, prev_kelly={prev_kelly}"
             prev_kelly = kelly
 
     # ==================== 数值精度测试 ====================
@@ -294,7 +291,7 @@ class TestBacktesterMath:
             odds = 2.0 + i * 1e-6
 
             kelly = backtester.kelly_criterion(prob, odds)
-            theoretical = max(0, ((odds-1) * prob - (1-prob)) / (odds-1)) * backtester.KELLY_FRACTION
+            theoretical = max(0, ((odds - 1) * prob - (1 - prob)) / (odds - 1)) * backtester.KELLY_FRACTION
             theoretical = min(theoretical, backtester.MAX_BET)
 
             error = abs(kelly - theoretical)
@@ -310,25 +307,19 @@ class TestBacktesterMath:
         测试Shin's Method和Kelly公式的集成
         """
         # 使用实际市场赔率
-        original_odds = {
-            'home': 2.10,
-            'draw': 3.40,
-            'away': 3.60
-        }
+        original_odds = {"home": 2.10, "draw": 3.40, "away": 3.60}
 
         # 应用Shin's Method去水
         adj_home, adj_draw, adj_away = backtester.shin_method(
-            original_odds['home'],
-            original_odds['draw'],
-            original_odds['away']
+            original_odds["home"], original_odds["draw"], original_odds["away"]
         )
 
         # 验证去水后的赔率更公平
-        adj_odds = {'home': adj_home, 'draw': adj_draw, 'away': adj_away}
+        adj_odds = {"home": adj_home, "draw": adj_draw, "away": adj_away}
 
         # 比较隐含概率
-        original_probs = {k: 1/v for k, v in original_odds.items()}
-        adj_probs = {k: 1/v for k, v in adj_odds.items()}
+        original_probs = {k: 1 / v for k, v in original_odds.items()}
+        adj_probs = {k: 1 / v for k, v in adj_odds.items()}
 
         original_sum = sum(original_probs.values())
         adj_sum = sum(adj_probs.values())
@@ -338,8 +329,8 @@ class TestBacktesterMath:
 
         # 测试Kelly公式在去水后的赔率上的表现
         model_prob = 0.52
-        original_kelly = backtester.kelly_criterion(model_prob, original_odds['home'])
-        adj_kelly = backtester.kelly_criterion(model_prob, adj_odds['home'])
+        original_kelly = backtester.kelly_criterion(model_prob, original_odds["home"])
+        adj_kelly = backtester.kelly_criterion(model_prob, adj_odds["home"])
 
         # 去水后的Kelly应该更保守（因为赔率更公平）
         # 但这取决于具体情况，所以我们只验证计算是合理的
@@ -364,7 +355,7 @@ def run_manual_verification():
     print(f"调整后赔率: home={adj_home:.6f}, draw={adj_draw:.6f}, away={adj_away:.6f}")
 
     # 验证概率总和
-    total_prob = 1/adj_home + 1/adj_draw + 1/adj_away
+    total_prob = 1 / adj_home + 1 / adj_draw + 1 / adj_away
     print(f"隐含概率总和: {total_prob:.10f} (应该接近1.0)")
 
     # 验证2: Kelly公式

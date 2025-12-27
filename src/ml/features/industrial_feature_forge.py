@@ -8,17 +8,16 @@ V12.1 更新:
 - C-03: 使用 SafeExpressionEvaluator 替换 eval()
 """
 
-import pandas as pd
-import numpy as np
 import json
-import psycopg2
-from psycopg2.extras import RealDictCursor
 import logging
-from typing import Dict, List, Optional, Tuple
 from datetime import datetime
-import re
+
+import numpy as np
+import pandas as pd
+import psycopg2
 
 logger = logging.getLogger(__name__)
+
 
 class IndustrialFeatureForge:
     """
@@ -37,7 +36,7 @@ class IndustrialFeatureForge:
         self.feature_count = len(self.feature_definitions)
         logger.info(f"🏭 初始化工业级特征锻造器，支持 {self.feature_count} 维特征")
 
-    def _build_feature_definitions(self) -> List[Dict]:
+    def _build_feature_definitions(self) -> list[dict]:
         """
         构建185维特征定义
 
@@ -46,32 +45,69 @@ class IndustrialFeatureForge:
         """
         # 基础技术指标 (14个指标 × 5种计算方式 = 70维)
         base_metrics = [
-            'shotsontarget', 'shotstotal', 'xg', 'xa', 'keypasses',
-            'successfulpasses', 'totalpasses', 'touches', 'aerialduelswon',
-            'tackles', 'interceptions', 'clearances', 'blocks', 'bigchancescreated'
+            "shotsontarget",
+            "shotstotal",
+            "xg",
+            "xa",
+            "keypasses",
+            "successfulpasses",
+            "totalpasses",
+            "touches",
+            "aerialduelswon",
+            "tackles",
+            "interceptions",
+            "clearances",
+            "blocks",
+            "bigchancescreated",
         ]
 
         # 高级技术指标 (15个指标 × 5种计算方式 = 75维)
         advanced_metrics = [
-            'expectedgoals', 'expectedassists', 'progressivepasses', 'progressivecarries',
-            'dribblescompleted', 'pressureevents', 'carrydistance', 'carriesintofinalthird',
-            'carriesintopenaltyarea', 'passesintofinalthird', 'passesintopenaltyarea',
-            'shotcreatingactions', 'goalcreatingactions', 'cornerkicks', 'fouls'
+            "expectedgoals",
+            "expectedassists",
+            "progressivepasses",
+            "progressivecarries",
+            "dribblescompleted",
+            "pressureevents",
+            "carrydistance",
+            "carriesintofinalthird",
+            "carriesintopenaltyarea",
+            "passesintofinalthird",
+            "passesintopenaltyarea",
+            "shotcreatingactions",
+            "goalcreatingactions",
+            "cornerkicks",
+            "fouls",
         ]
 
         # 时间序列指标 (20个维度)
         temporal_metrics = [
-            'first_half_xg', 'second_half_xg', 'first_half_shots', 'second_half_shots',
-            'home_xg_progression', 'away_xg_progression', 'momentum_shifts',
-            'critical_minutes', 'possession_control_periods', 'high_pressure_periods'
+            "first_half_xg",
+            "second_half_xg",
+            "first_half_shots",
+            "second_half_shots",
+            "home_xg_progression",
+            "away_xg_progression",
+            "momentum_shifts",
+            "critical_minutes",
+            "possession_control_periods",
+            "high_pressure_periods",
         ]
 
         # 位置分布指标 (20个维度)
         positional_metrics = [
-            'defensive_third_actions', 'middle_third_actions', 'attacking_third_actions',
-            'left_wing_actions', 'right_wing_actions', 'central_actions',
-            'box_actions', 'penalty_area_actions', 'set_piece_actions',
-            'counter_attack_actions', 'possession_buildup_actions', 'final_third_entries'
+            "defensive_third_actions",
+            "middle_third_actions",
+            "attacking_third_actions",
+            "left_wing_actions",
+            "right_wing_actions",
+            "central_actions",
+            "box_actions",
+            "penalty_area_actions",
+            "set_piece_actions",
+            "counter_attack_actions",
+            "possession_buildup_actions",
+            "final_third_entries",
         ]
 
         features = []
@@ -79,66 +115,52 @@ class IndustrialFeatureForge:
         # 构建基础指标特征
         for metric in base_metrics + advanced_metrics:
             # 主队、客队、总计、差值、比率
-            features.extend([
-                {'name': f'home_{metric}', 'type': 'numeric', 'source': 'player_stats'},
-                {'name': f'away_{metric}', 'type': 'numeric', 'source': 'player_stats'},
-                {'name': f'total_{metric}', 'type': 'derived', 'formula': 'home + away'},
-                {'name': f'diff_{metric}', 'type': 'derived', 'formula': 'home - away'},
-                {'name': f'ratio_{metric}', 'type': 'derived', 'formula': 'home / (away + 1e-6)'}
-            ])
+            features.extend(
+                [
+                    {"name": f"home_{metric}", "type": "numeric", "source": "player_stats"},
+                    {"name": f"away_{metric}", "type": "numeric", "source": "player_stats"},
+                    {"name": f"total_{metric}", "type": "derived", "formula": "home + away"},
+                    {"name": f"diff_{metric}", "type": "derived", "formula": "home - away"},
+                    {"name": f"ratio_{metric}", "type": "derived", "formula": "home / (away + 1e-6)"},
+                ]
+            )
 
         # 添加时间序列特征
         for metric in temporal_metrics:
-            features.append({
-                'name': metric,
-                'type': 'temporal',
-                'source': 'player_stats'
-            })
+            features.append({"name": metric, "type": "temporal", "source": "player_stats"})
 
         # 添加位置分布特征
         for metric in positional_metrics:
-            features.append({
-                'name': metric,
-                'type': 'positional',
-                'source': 'player_stats'
-            })
+            features.append({"name": metric, "type": "positional", "source": "player_stats"})
 
         # 添加衍生计算特征 (40维)
         derived_features = [
             # 射门效率
-            ('shot_accuracy', 'shotsontarget / (shotstotal + 1e-6)'),
-            ('xg_efficiency', 'xg / (shotstotal + 1e-6)'),
-            ('conversion_rate', 'goals / (shotsontarget + 1e-6)'),
-
+            ("shot_accuracy", "shotsontarget / (shotstotal + 1e-6)"),
+            ("xg_efficiency", "xg / (shotstotal + 1e-6)"),
+            ("conversion_rate", "goals / (shotsontarget + 1e-6)"),
             # 传球效率
-            ('pass_accuracy', 'successfulpasses / (totalpasses + 1e-6)'),
-            ('key_pass_rate', 'keypasses / (totalpasses + 1e-6)'),
-            ('progressive_pass_rate', 'progressivepasses / (totalpasses + 1e-6)'),
-
+            ("pass_accuracy", "successfulpasses / (totalpasses + 1e-6)"),
+            ("key_pass_rate", "keypasses / (totalpasses + 1e-6)"),
+            ("progressive_pass_rate", "progressivepasses / (totalpasses + 1e-6)"),
             # 控球指标
-            ('possession_domination', 'touches - (touches_away if exists else 0)'),
-            ('aerial_dominance', 'aerialduelswon - (aerialduelswon_away if exists else 0)'),
-
+            ("possession_domination", "touches - (touches_away if exists else 0)"),
+            ("aerial_dominance", "aerialduelswon - (aerialduelswon_away if exists else 0)"),
             # 创造力指标
-            ('chance_creation_rate', 'bigchancescreated / (keypasses + 1e-6)'),
-            ('assist_potential', 'xa / (keypasses + 1e-6)'),
-
+            ("chance_creation_rate", "bigchancescreated / (keypasses + 1e-6)"),
+            ("assist_potential", "xa / (keypasses + 1e-6)"),
             # 防守效率
-            ('defensive_efficiency', '(tackles + interceptions + blocks) / (touches_opponent + 1e-6)'),
-            ('pressing_efficiency', 'pressureevents / (touches_away + 1e-6)')
+            ("defensive_efficiency", "(tackles + interceptions + blocks) / (touches_opponent + 1e-6)"),
+            ("pressing_efficiency", "pressureevents / (touches_away + 1e-6)"),
         ]
 
         for name, formula in derived_features:
-            features.append({
-                'name': name,
-                'type': 'derived_formula',
-                'formula': formula
-            })
+            features.append({"name": name, "type": "derived_formula", "formula": formula})
 
         logger.info(f"🎯 特征定义构建完成: {len(features)} 维")
         return features
 
-    def forge_feature_matrix(self, match_ids: List[int] = None, limit: int = 1000) -> pd.DataFrame:
+    def forge_feature_matrix(self, match_ids: list[int] = None, limit: int = 1000) -> pd.DataFrame:
         """
         锻造特征矩阵
 
@@ -185,13 +207,11 @@ class IndustrialFeatureForge:
             for idx, row in df.iterrows():
                 try:
                     # 解析player_stats JSON
-                    if row['player_stats']:
-                        player_stats = json.loads(row['player_stats'])
+                    if row["player_stats"]:
+                        player_stats = json.loads(row["player_stats"])
 
                         # 锻造单场比赛的特征
-                        match_features = self._forge_match_features(
-                            row, player_stats
-                        )
+                        match_features = self._forge_match_features(row, player_stats)
 
                         if match_features:
                             features_data.append(match_features)
@@ -205,17 +225,19 @@ class IndustrialFeatureForge:
                 feature_df = pd.DataFrame(features_data)
 
                 # 添加基础信息
-                feature_df['match_id'] = df['id'].values[:len(feature_df)]
-                feature_df['external_id'] = df['external_id'].values[:len(feature_df)]
-                feature_df['home_team'] = df['home_team'].values[:len(feature_df)]
-                feature_df['away_team'] = df['away_team'].values[:len(feature_df)]
-                feature_df['match_time'] = df['match_time'].values[:len(feature_df)]
-                feature_df['actual_result'] = df['actual_result'].values[:len(feature_df)]
-                feature_df['home_score'] = df['home_score'].values[:len(feature_df)]
-                feature_df['away_score'] = df['away_score'].values[:len(feature_df)]
+                feature_df["match_id"] = df["id"].values[: len(feature_df)]
+                feature_df["external_id"] = df["external_id"].values[: len(feature_df)]
+                feature_df["home_team"] = df["home_team"].values[: len(feature_df)]
+                feature_df["away_team"] = df["away_team"].values[: len(feature_df)]
+                feature_df["match_time"] = df["match_time"].values[: len(feature_df)]
+                feature_df["actual_result"] = df["actual_result"].values[: len(feature_df)]
+                feature_df["home_score"] = df["home_score"].values[: len(feature_df)]
+                feature_df["away_score"] = df["away_score"].values[: len(feature_df)]
 
                 logger.info(f"🎉 特征锻造完成！输出 {len(feature_df)} 行 x {len(feature_df.columns)} 列")
-                logger.info(f"📈 技术特征维度: {len([col for col in feature_df.columns if col not in ['match_id', 'external_id', 'home_team', 'away_team', 'match_time', 'actual_result', 'home_score', 'away_score']])}")
+                logger.info(
+                    f"📈 技术特征维度: {len([col for col in feature_df.columns if col not in ['match_id', 'external_id', 'home_team', 'away_team', 'match_time', 'actual_result', 'home_score', 'away_score']])}"
+                )
 
                 return feature_df
             else:
@@ -229,7 +251,7 @@ class IndustrialFeatureForge:
             if conn:
                 conn.close()
 
-    def _forge_match_features(self, match_row: pd.Series, player_stats: Dict) -> Dict:
+    def _forge_match_features(self, match_row: pd.Series, player_stats: dict) -> dict:
         """
         锻造单场比赛的特征
 
@@ -248,10 +270,10 @@ class IndustrialFeatureForge:
 
             # 应用特征定义
             for feature_def in self.feature_definitions:
-                feature_name = feature_def['name']
-                feature_type = feature_def['type']
+                feature_name = feature_def["name"]
+                feature_type = feature_def["type"]
 
-                if feature_type == 'numeric':
+                if feature_type == "numeric":
                     # C-01 修复: 统一使用 NaN 填充缺失值
                     # 模型需要能区分"真0"和"数据缺失"
                     value = tech_metrics.get(feature_name, None)
@@ -263,9 +285,9 @@ class IndustrialFeatureForge:
                         except (ValueError, TypeError):
                             features[feature_name] = np.nan
 
-                elif feature_type == 'derived':
+                elif feature_type == "derived":
                     # C-01 修复: derived 类型也需要 NaN 安全处理
-                    metric_name = feature_name.split('_')[1]
+                    metric_name = feature_name.split("_")[1]
                     home_val = tech_metrics.get(f"home_{metric_name}", None)
                     away_val = tech_metrics.get(f"away_{metric_name}", None)
 
@@ -286,19 +308,19 @@ class IndustrialFeatureForge:
                         except (ValueError, TypeError):
                             away_val = np.nan
 
-                    if feature_name.startswith('total_'):
+                    if feature_name.startswith("total_"):
                         # 如果任一值为 NaN，总计为 NaN
                         if np.isnan(home_val) or np.isnan(away_val):
                             features[feature_name] = np.nan
                         else:
                             features[feature_name] = float(home_val + away_val)
-                    elif feature_name.startswith('diff_'):
+                    elif feature_name.startswith("diff_"):
                         # 如果任一值为 NaN，差值为 NaN
                         if np.isnan(home_val) or np.isnan(away_val):
                             features[feature_name] = np.nan
                         else:
                             features[feature_name] = float(home_val - away_val)
-                    elif feature_name.startswith('ratio_'):
+                    elif feature_name.startswith("ratio_"):
                         # C-01 修复: ratio 计算必须处理 NaN
                         if np.isnan(home_val) or np.isnan(away_val):
                             features[feature_name] = np.nan
@@ -307,11 +329,9 @@ class IndustrialFeatureForge:
                             denominator = away_val if abs(away_val) > 1e-10 else 1e-10
                             features[feature_name] = float(home_val / denominator)
 
-                elif feature_type == 'derived_formula':
+                elif feature_type == "derived_formula":
                     # 复杂公式计算
-                    features[feature_name] = self._calculate_derived_feature(
-                        feature_def['formula'], tech_metrics
-                    )
+                    features[feature_name] = self._calculate_derived_feature(feature_def["formula"], tech_metrics)
 
                 else:
                     # 其他类型特征 - C-01 修复: 使用 NaN 填充
@@ -329,7 +349,7 @@ class IndustrialFeatureForge:
 
         return features
 
-    def _extract_technical_metrics(self, player_stats: Dict) -> Dict:
+    def _extract_technical_metrics(self, player_stats: dict) -> dict:
         """
         从player_stats中提取技术指标
 
@@ -347,7 +367,7 @@ class IndustrialFeatureForge:
 
         return metrics
 
-    def _calculate_derived_feature(self, formula: str, tech_metrics: Dict) -> float:
+    def _calculate_derived_feature(self, formula: str, tech_metrics: dict) -> float:
         """
         计算衍生特征 (C-03 修复版)
 
@@ -390,24 +410,17 @@ class IndustrialFeatureForge:
         """获取数据库连接"""
         try:
             from src.config_unified import get_settings
+
             settings = get_settings()
             db = settings.database
 
             return psycopg2.connect(
-                host=db.host,
-                port=db.port,
-                database=db.name,
-                user=db.user,
-                password=db.password.get_secret_value()
+                host=db.host, port=db.port, database=db.name, user=db.user, password=db.password.get_secret_value()
             )
         except Exception:
             # 备用直接连接
             return psycopg2.connect(
-                host="localhost",
-                port="5432",
-                database="football_db",
-                user="football_user",
-                password="football_pass"
+                host="localhost", port="5432", database="football_db", user="football_user", password="football_pass"
             )
 
     def save_feature_matrix(self, feature_df: pd.DataFrame, filename: str = None) -> str:
@@ -430,7 +443,7 @@ class IndustrialFeatureForge:
 
         return filename
 
-    def generate_feature_report(self, feature_df: pd.DataFrame) -> Dict:
+    def generate_feature_report(self, feature_df: pd.DataFrame) -> dict:
         """
         生成特征质量报告
 
@@ -441,26 +454,27 @@ class IndustrialFeatureForge:
             质量报告字典
         """
         report = {
-            'total_matches': len(feature_df),
-            'total_features': len(feature_df.columns),
-            'numeric_features': len(feature_df.select_dtypes(include=[np.number]).columns),
-            'missing_values': feature_df.isnull().sum().sum(),
-            'result_distribution': feature_df['actual_result'].value_counts().to_dict(),
-            'feature_stats': {}
+            "total_matches": len(feature_df),
+            "total_features": len(feature_df.columns),
+            "numeric_features": len(feature_df.select_dtypes(include=[np.number]).columns),
+            "missing_values": feature_df.isnull().sum().sum(),
+            "result_distribution": feature_df["actual_result"].value_counts().to_dict(),
+            "feature_stats": {},
         }
 
         # 技术特征统计
         numeric_cols = feature_df.select_dtypes(include=[np.number]).columns
         for col in numeric_cols:
-            if col not in ['match_id', 'home_score', 'away_score']:
-                report['feature_stats'][col] = {
-                    'mean': feature_df[col].mean(),
-                    'std': feature_df[col].std(),
-                    'min': feature_df[col].min(),
-                    'max': feature_df[col].max()
+            if col not in ["match_id", "home_score", "away_score"]:
+                report["feature_stats"][col] = {
+                    "mean": feature_df[col].mean(),
+                    "std": feature_df[col].std(),
+                    "min": feature_df[col].min(),
+                    "max": feature_df[col].max(),
                 }
 
         return report
+
 
 def main():
     """测试工业级特征锻造器"""
@@ -490,7 +504,9 @@ def main():
         logger.error("❌ 特征锻造失败")
         return False
 
+
 if __name__ == "__main__":
     import logging
+
     logging.basicConfig(level=logging.INFO)
     main()

@@ -19,21 +19,18 @@ Author: Football Prediction Team
 Version: 1.0.0 (Sprint 7 Testing Coverage)
 """
 
-import asyncio
 import argparse
+import asyncio
 import json
 import logging
-import subprocess
-import sys
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, Any, List, Optional, Tuple
-import xml.etree.ElementTree as ET
-from dataclasses import dataclass
-import re
+from typing import Any
+
+import pytest
 
 import coverage
-import pytest
 
 # 设置日志
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
@@ -50,8 +47,8 @@ class CoverageMetrics:
     coverage_percentage: float
     file_path: str
     module_name: str
-    function_coverage: Dict[str, float]
-    line_coverage: Dict[int, bool]
+    function_coverage: dict[str, float]
+    line_coverage: dict[int, bool]
 
 
 @dataclass
@@ -98,7 +95,7 @@ class CoverageReportGenerator:
             "src/utils/intelligent_logging",
         ]
 
-    async def generate_full_coverage_report(self) -> Dict[str, Any]:
+    async def generate_full_coverage_report(self) -> dict[str, Any]:
         """生成完整的覆盖率报告"""
         logger.info("🔍 开始生成完整覆盖率报告")
 
@@ -163,7 +160,7 @@ class CoverageReportGenerator:
             "badge_generated": badge_data["generated"],
         }
 
-    async def _run_coverage_tests(self) -> Dict[str, Any]:
+    async def _run_coverage_tests(self) -> dict[str, Any]:
         """运行覆盖率测试"""
         logger.info("🧪 运行覆盖率测试")
 
@@ -241,7 +238,7 @@ class CoverageReportGenerator:
             "raw_data": coverage_data,
         }
 
-    async def _analyze_core_algorithm_coverage(self, coverage_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def _analyze_core_algorithm_coverage(self, coverage_data: dict[str, Any]) -> dict[str, Any]:
         """分析核心算法覆盖率"""
         logger.info("🎯 分析核心算法覆盖率")
 
@@ -301,7 +298,7 @@ class CoverageReportGenerator:
             "detailed_analysis": detailed_analysis,
         }
 
-    async def _analyze_integration_coverage(self, coverage_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def _analyze_integration_coverage(self, coverage_data: dict[str, Any]) -> dict[str, Any]:
         """分析集成测试覆盖率"""
         logger.info("🔗 分析集成测试覆盖率")
 
@@ -331,7 +328,7 @@ class CoverageReportGenerator:
             "module_coverage": integration_files_coverage,
         }
 
-    async def _analyze_performance_coverage(self, coverage_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def _analyze_performance_coverage(self, coverage_data: dict[str, Any]) -> dict[str, Any]:
         """分析性能测试覆盖率"""
         logger.info("⚡ 分析性能测试覆盖率")
 
@@ -361,7 +358,7 @@ class CoverageReportGenerator:
             "module_coverage": performance_files_coverage,
         }
 
-    async def _analyze_coverage_trends(self) -> Dict[str, Any]:
+    async def _analyze_coverage_trends(self) -> dict[str, Any]:
         """分析覆盖率趋势"""
         logger.info("📈 分析覆盖率趋势")
 
@@ -414,7 +411,7 @@ class CoverageReportGenerator:
             ),
         }
 
-    async def _detect_coverage_regressions(self, coverage_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def _detect_coverage_regressions(self, coverage_data: dict[str, Any]) -> dict[str, Any]:
         """检测覆盖率回归"""
         logger.info("🔍 检测覆盖率回归")
 
@@ -472,7 +469,7 @@ class CoverageReportGenerator:
             "overall_regression_detected": any(r["type"] == "overall" for r in regressions),
         }
 
-    async def _generate_html_report(self, report_data: Dict[str, Any]) -> str:
+    async def _generate_html_report(self, report_data: dict[str, Any]) -> str:
         """生成HTML覆盖率报告"""
         logger.info("📄 生成HTML覆盖率报告")
 
@@ -630,7 +627,7 @@ class CoverageReportGenerator:
             core_module_rows += f"""
                     <tr>
                         <td>{module_name}</td>
-                        <td>{analysis['coverage']:.1f}%</td>
+                        <td>{analysis["coverage"]:.1f}%</td>
                         <td><span class="status-badge {status_class}">{status_text}</span></td>
                         <td>{priority_text}</td>
                     </tr>
@@ -643,9 +640,9 @@ class CoverageReportGenerator:
             integration_module_rows += f"""
                     <tr>
                         <td>{module_name}</td>
-                        <td>{data['coverage_percentage']:.1f}%</td>
-                        <td>{data['total_statements']}</td>
-                        <td>{data['covered_statements']}</td>
+                        <td>{data["coverage_percentage"]:.1f}%</td>
+                        <td>{data["total_statements"]}</td>
+                        <td>{data["covered_statements"]}</td>
                     </tr>
             """
 
@@ -669,10 +666,10 @@ class CoverageReportGenerator:
                 severity_class = "high" if regression["severity"] == "high" else "medium"
                 regression_rows += f"""
                     <div class="regression-alert">
-                        <strong>{regression['type'].title()} 回归检测到:</strong><br>
-                        当前覆盖率: {regression['current_coverage']:.1f}%<br>
-                        之前覆盖率: {regression['previous_coverage']:.1f}%<br>
-                        回退幅度: {regression['regression_amount']:.1f}% (严重程度: {severity_class})
+                        <strong>{regression["type"].title()} 回归检测到:</strong><br>
+                        当前覆盖率: {regression["current_coverage"]:.1f}%<br>
+                        之前覆盖率: {regression["previous_coverage"]:.1f}%<br>
+                        回退幅度: {regression["regression_amount"]:.1f}% (严重程度: {severity_class})
                     </div>
                 """
 
@@ -707,7 +704,7 @@ class CoverageReportGenerator:
 
         return str(html_file)
 
-    async def _generate_coverage_badge(self, overall_coverage: float) -> Dict[str, Any]:
+    async def _generate_coverage_badge(self, overall_coverage: float) -> dict[str, Any]:
         """生成覆盖率徽章"""
         logger.info("🏆 生成覆盖率徽章")
 
@@ -779,7 +776,7 @@ class CoverageReportGenerator:
             "status": status,
         }
 
-    async def _save_coverage_report(self, report_data: Dict[str, Any]) -> Path:
+    async def _save_coverage_report(self, report_data: dict[str, Any]) -> Path:
         """保存覆盖率报告"""
         logger.info("💾 保存覆盖率报告")
 
@@ -801,7 +798,7 @@ class CoverageReportGenerator:
 
         return report_file
 
-    async def _load_historical_coverage_data(self) -> List[Dict[str, Any]]:
+    async def _load_historical_coverage_data(self) -> list[dict[str, Any]]:
         """加载历史覆盖率数据"""
         history_file = self.output_dir / "coverage_history.json"
 
@@ -809,7 +806,7 @@ class CoverageReportGenerator:
             return []
 
         try:
-            with open(history_file, "r", encoding="utf-8") as f:
+            with open(history_file, encoding="utf-8") as f:
                 data = json.load(f)
 
             # 转换时间戳字符串为datetime对象
@@ -821,7 +818,7 @@ class CoverageReportGenerator:
             logger.warning(f"加载历史覆盖率数据失败: {e}")
             return []
 
-    async def _update_historical_coverage_data(self, new_data: Dict[str, Any]):
+    async def _update_historical_coverage_data(self, new_data: dict[str, Any]):
         """更新历史覆盖率数据"""
         logger.info("📝 更新历史覆盖率数据")
 
@@ -846,7 +843,7 @@ class CoverageReportGenerator:
 
             json.dump(json_data, f, indent=2)
 
-    async def generate_trend_analysis_only(self) -> Dict[str, Any]:
+    async def generate_trend_analysis_only(self) -> dict[str, Any]:
         """仅生成趋势分析报告"""
         logger.info("📈 生成覆盖率趋势分析报告")
 
@@ -863,7 +860,7 @@ class CoverageReportGenerator:
             "trend_analysis": trend_analysis,
         }
 
-    async def generate_badge_only(self) -> Dict[str, Any]:
+    async def generate_badge_only(self) -> dict[str, Any]:
         """仅生成覆盖率徽章"""
         logger.info("🏆 生成覆盖率徽章")
 
@@ -913,7 +910,7 @@ async def main():
         if args.command == "full-report":
             result = await generator.generate_full_coverage_report()
 
-            print(f"\n✅ 覆盖率报告生成完成!")
+            print("\n✅ 覆盖率报告生成完成!")
             print(f"报告文件: {result['report_file']}")
             print(f"总体覆盖率: {result['overall_coverage']:.1f}%")
             print(f"核心算法覆盖率达标: {'是' if result['core_coverage_met'] else '否'}")
@@ -926,7 +923,7 @@ async def main():
         elif args.command == "trend-analysis":
             result = await generator.generate_trend_analysis_only()
 
-            print(f"\n📈 趋势分析报告生成完成!")
+            print("\n📈 趋势分析报告生成完成!")
             print(f"报告文件: {result['trend_report_file']}")
 
             trend = result["trend_analysis"]
@@ -944,7 +941,7 @@ async def main():
         elif args.command == "badge-generation":
             result = await generator.generate_badge_only()
 
-            print(f"\n🏆 覆盖率徽章生成完成!")
+            print("\n🏆 覆盖率徽章生成完成!")
             print(f"SVG文件: {result['badge_data']['svg_file']}")
             print(f"JSON文件: {result['badge_data']['json_file']}")
             print(f"覆盖率: {result['coverage_used']:.1f}%")

@@ -14,6 +14,7 @@ import json
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
+
 class TestHistoricalFilter:
     """V13.0历史过滤器测试套件"""
 
@@ -22,26 +23,15 @@ class TestHistoricalFilter:
         """构造未来赛项JSON - 2025-12-30"""
         return {
             "header": {
-                "teams": [
-                    {"name": "Manchester United"},
-                    {"name": "Liverpool"}
-                ],
+                "teams": [{"name": "Manchester United"}, {"name": "Liverpool"}],
                 "status": {
                     "utcTime": "2025-12-30T15:00:00Z",  # 未来日期
                     "finished": False,
-                    "liveTime": {}
+                    "liveTime": {},
                 },
-                "league": {
-                    "name": "Premier League"
-                }
+                "league": {"name": "Premier League"},
             },
-            "content": {
-                "stats": {
-                    "Periods": {
-                        "All": {"stats": []}
-                    }
-                }
-            }
+            "content": {"stats": {"Periods": {"All": {"stats": []}}}},
         }
 
     @pytest.fixture
@@ -49,21 +39,16 @@ class TestHistoricalFilter:
         """构造历史赛项JSON - 2024-05-10"""
         return {
             "header": {
-                "teams": [
-                    {"name": "Manchester City"},
-                    {"name": "Chelsea"}
-                ],
+                "teams": [{"name": "Manchester City"}, {"name": "Chelsea"}],
                 "status": {
                     "utcTime": "2024-05-10T15:00:00Z",  # 历史日期
                     "finished": True,
                     "liveTime": {
                         "firstHalfStartTime": "2024-05-10T15:00:00Z",
-                        "secondHalfStartTime": "2024-05-10T16:00:00Z"
-                    }
+                        "secondHalfStartTime": "2024-05-10T16:00:00Z",
+                    },
                 },
-                "league": {
-                    "name": "Premier League"
-                }
+                "league": {"name": "Premier League"},
             },
             "content": {
                 "stats": {
@@ -74,7 +59,7 @@ class TestHistoricalFilter:
                                     "stats": [
                                         {"key": "homeScore", "value": 3},
                                         {"key": "awayScore", "value": 1},
-                                        {"key": "expected_goals", "value": {"home": 2.5, "away": 0.8}}
+                                        {"key": "expected_goals", "value": {"home": 2.5, "away": 0.8}},
                                     ]
                                 }
                             ]
@@ -82,20 +67,10 @@ class TestHistoricalFilter:
                     }
                 },
                 "playerStats": {
-                    "home": [
-                        {
-                            "name": "Kevin De Bruyne",
-                            "stats": {"shots": 3, "passes": 85}
-                        }
-                    ],
-                    "away": [
-                        {
-                            "name": "Mason Mount",
-                            "stats": {"shots": 1, "passes": 45}
-                        }
-                    ]
-                }
-            }
+                    "home": [{"name": "Kevin De Bruyne", "stats": {"shots": 3, "passes": 85}}],
+                    "away": [{"name": "Mason Mount", "stats": {"shots": 1, "passes": 45}}],
+                },
+            },
         }
 
     @pytest.fixture
@@ -108,13 +83,13 @@ class TestHistoricalFilter:
         logger.info("🧪 测试未来赛项拒绝逻辑")
 
         # 模拟当前时间
-        with patch('datetime.datetime') as mock_datetime:
+        with patch("datetime.datetime") as mock_datetime:
             mock_datetime.now.return_value = current_time_mock
             mock_datetime.side_effect = lambda *args, **kw: datetime(*args, **kw)
 
             # 解析比赛时间
             match_time_str = future_match_json["header"]["status"]["utcTime"]
-            match_time = datetime.fromisoformat(match_time_str.replace('Z', '+00:00'))
+            match_time = datetime.fromisoformat(match_time_str.replace("Z", "+00:00"))
 
             # 验证是未来时间
             time_difference = match_time - current_time_mock
@@ -135,13 +110,13 @@ class TestHistoricalFilter:
         logger.info("🧪 测试历史赛项接受逻辑")
 
         # 模拟当前时间
-        with patch('datetime.datetime') as mock_datetime:
+        with patch("datetime.datetime") as mock_datetime:
             mock_datetime.now.return_value = current_time_mock
             mock_datetime.side_effect = lambda *args, **kw: datetime(*args, **kw)
 
             # 解析比赛时间
             match_time_str = historical_match_json["header"]["status"]["utcTime"]
-            match_time = datetime.fromisoformat(match_time_str.replace('Z', '+00:00'))
+            match_time = datetime.fromisoformat(match_time_str.replace("Z", "+00:00"))
 
             # 验证是历史时间
             time_difference = current_time_mock - match_time
@@ -161,13 +136,13 @@ class TestHistoricalFilter:
         """测试: 时间边界条件"""
         logger.info("🧪 测试时间边界条件")
 
-        with patch('datetime.datetime') as mock_datetime:
+        with patch("datetime.datetime") as mock_datetime:
             mock_datetime.now.return_value = current_time_mock
             mock_datetime.side_effect = lambda *args, **kw: datetime(*args, **kw)
 
             # 测试边界1: 当前时间（应该被接受）
             current_time_iso = current_time_mock.isoformat()
-            current_match_time = datetime.fromisoformat(current_time_iso.replace('+00:00', ''))
+            current_match_time = datetime.fromisoformat(current_time_iso.replace("+00:00", ""))
             should_accept_current = not self._should_reject_future_match(current_match_time, current_time_mock)
             assert should_accept_current, "当前时间的比赛应该被接受"
 
@@ -222,7 +197,7 @@ class TestHistoricalFilter:
         """测试: 过滤逻辑边界情况"""
         logger.info("🧪 测试过滤逻辑边界情况")
 
-        with patch('datetime.datetime') as mock_datetime:
+        with patch("datetime.datetime") as mock_datetime:
             mock_datetime.now.return_value = current_time_mock
             mock_datetime.side_effect = lambda *args, **kw: datetime(*args, **kw)
 
@@ -255,12 +230,12 @@ class TestHistoricalFilter:
             "2024-05-10T15:00:00Z",
             "2024-05-10T15:00:00+00:00",
             "2024-12-22T20:30:00+08:00",
-            "2024-01-01T00:00:00-05:00"
+            "2024-01-01T00:00:00-05:00",
         ]
 
         for date_str in valid_formats:
             try:
-                parsed_time = datetime.fromisoformat(date_str.replace('Z', '+00:00'))
+                parsed_time = datetime.fromisoformat(date_str.replace("Z", "+00:00"))
                 assert isinstance(parsed_time, datetime), f"日期格式{date_str}应该能正确解析"
                 logger.info(f"✅ 日期格式解析成功: {date_str}")
             except Exception as e:
@@ -271,7 +246,7 @@ class TestHistoricalFilter:
             "invalid-date",
             "2024-13-32T25:70:00Z",  # 无效日期时间
             "",
-            None
+            None,
         ]
 
         for date_str in invalid_formats:
@@ -291,7 +266,7 @@ class TestHistoricalFilter:
             return True
 
         try:
-            datetime.fromisoformat(time_str.replace('Z', '+00:00'))
+            datetime.fromisoformat(time_str.replace("Z", "+00:00"))
             return False
         except (ValueError, AttributeError):
             return True
@@ -306,6 +281,7 @@ class TestHistoricalFilter:
         rejected_count = 0
 
         import time
+
         start_time = time.time()
 
         current_time = datetime(2024, 12, 22, 12, 0, 0, tzinfo=timezone.utc)
@@ -336,6 +312,7 @@ class TestHistoricalFilter:
         assert processing_time < 1.0, f"处理时间应该小于1秒，实际是{processing_time:.3f}秒"
 
         logger.success(f"✅ 大数据集过滤性能测试通过: {large_dataset_size}条记录，耗时{processing_time:.3f}秒")
+
 
 if __name__ == "__main__":
     # 直接运行测试

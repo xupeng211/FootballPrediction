@@ -12,9 +12,9 @@ import logging
 import pickle
 import threading
 import time
-from pathlib import Path
-from typing import Dict, Any, Optional, Union, List
 from dataclasses import dataclass
+from pathlib import Path
+from typing import Any
 
 # Import joblib for model loading
 import joblib
@@ -31,11 +31,11 @@ class ModelMetadata:
     """模型元数据"""
 
     model_version: str = "unknown"
-    feature_names: Optional[List[str]] = None
-    created_at: Optional[str] = None
-    description: Optional[str] = None
-    accuracy: Optional[float] = None
-    training_data_hash: Optional[str] = None
+    feature_names: list[str] | None = None
+    created_at: str | None = None
+    description: str | None = None
+    accuracy: float | None = None
+    training_data_hash: str | None = None
 
 
 class ModelLoader:
@@ -53,7 +53,7 @@ class ModelLoader:
 
     def __init__(
         self,
-        model_cache_dir: Optional[Union[str, Path]] = None,
+        model_cache_dir: str | Path | None = None,
         enable_hot_reload: bool = True,
         reload_interval: int = 30,
     ):
@@ -66,9 +66,9 @@ class ModelLoader:
             reload_interval: 热更新检查间隔（秒）
         """
         self.model_cache_dir = Path(model_cache_dir) if model_cache_dir else Path("models")
-        self.loaded_models: Dict[str, Any] = {}  # 存储加载的模型对象
-        self.model_metadata: Dict[str, ModelMetadata] = {}  # 存储模型元数据
-        self.model_paths: Dict[str, Path] = {}  # 存储模型路径
+        self.loaded_models: dict[str, Any] = {}  # 存储加载的模型对象
+        self.model_metadata: dict[str, ModelMetadata] = {}  # 存储模型元数据
+        self.model_paths: dict[str, Path] = {}  # 存储模型路径
 
         # 热更新相关配置
         self.enable_hot_reload = enable_hot_reload
@@ -92,7 +92,7 @@ class ModelLoader:
     def load_model(
         self,
         model_name: str,
-        model_path: Optional[Union[str, Path]] = None,
+        model_path: str | Path | None = None,
         validate_model: bool = True,
     ) -> bool:
         """
@@ -242,7 +242,7 @@ class ModelLoader:
         if available_methods:
             logger.info(f"模型 {model_name} 支持高级方法: {available_methods}")
 
-    def get_model(self, model_name: str) -> Optional[Any]:
+    def get_model(self, model_name: str) -> Any | None:
         """
         获取已加载的模型
 
@@ -254,7 +254,7 @@ class ModelLoader:
         """
         return self.loaded_models.get(model_name)
 
-    def get_model_metadata(self, model_name: str) -> Optional[ModelMetadata]:
+    def get_model_metadata(self, model_name: str) -> ModelMetadata | None:
         """
         获取模型元数据
 
@@ -266,7 +266,7 @@ class ModelLoader:
         """
         return self.model_metadata.get(model_name)
 
-    def get_model_path(self, model_name: str) -> Optional[Path]:
+    def get_model_path(self, model_name: str) -> Path | None:
         """
         获取模型文件路径
 
@@ -323,7 +323,7 @@ class ModelLoader:
         # 重新加载
         return self.load_model(model_name, model_path)
 
-    def list_loaded_models(self) -> List[str]:
+    def list_loaded_models(self) -> list[str]:
         """
         获取已加载模型名称列表
 
@@ -332,7 +332,7 @@ class ModelLoader:
         """
         return list(self.loaded_models.keys())
 
-    def get_model_info(self, model_name: str) -> Dict[str, Any]:
+    def get_model_info(self, model_name: str) -> dict[str, Any]:
         """
         获取模型的详细信息
 
@@ -398,7 +398,7 @@ class ModelLoader:
         """
         return self.model_cache_dir
 
-    def scan_available_models(self) -> List[str]:
+    def scan_available_models(self) -> list[str]:
         """
         扫描缓存目录中的可用模型文件
 
@@ -455,7 +455,7 @@ class ModelLoader:
                 return
 
             # 读取当前最佳版本
-            with open(self.current_best_file, "r", encoding="utf-8") as f:
+            with open(self.current_best_file, encoding="utf-8") as f:
                 current_version = f.read().strip()
 
             # 如果版本没有变化，无需更新
@@ -478,7 +478,7 @@ class ModelLoader:
                 return
 
             # 读取当前版本
-            with open(self.current_best_file, "r", encoding="utf-8") as f:
+            with open(self.current_best_file, encoding="utf-8") as f:
                 current_version = f.read().strip()
 
             if not current_version:
@@ -527,13 +527,13 @@ class ModelLoader:
         except Exception as e:
             logger.error(f"加载当前最佳模型失败: {str(e)}")
 
-    def _load_model_metadata(self, version: str) -> Optional[Dict[str, Any]]:
+    def _load_model_metadata(self, version: str) -> dict[str, Any] | None:
         """加载模型元数据"""
         try:
             if not self.registry_file.exists():
                 return None
 
-            with open(self.registry_file, "r", encoding="utf-8") as f:
+            with open(self.registry_file, encoding="utf-8") as f:
                 registry = json.load(f)
 
             models = registry.get("models", {})
@@ -558,7 +558,7 @@ class ModelLoader:
             logger.error(f"手动触发模型重载失败: {str(e)}")
             return False
 
-    def get_current_version(self) -> Optional[str]:
+    def get_current_version(self) -> str | None:
         """获取当前加载的模型版本"""
         return self._current_version
 

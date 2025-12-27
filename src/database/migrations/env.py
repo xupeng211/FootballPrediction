@@ -25,8 +25,8 @@ if project_root_alt not in sys.path:
 
 
 try:
-    from src.database.base import Base  # noqa: E402
     from src.config_unified import get_settings  # noqa: E402
+    from src.database.base import Base  # noqa: E402
     from src.database.models import Odds  # noqa: F401, E402
 
     # 提供兼容的 get_database_config 函数
@@ -34,7 +34,7 @@ try:
         """获取数据库配置（从 config_unified.py）"""
         return get_settings().database
 
-except ImportError as e:
+except ImportError:
     sys.exit(1)
 
 # this is the Alembic Config object, which provides
@@ -50,7 +50,7 @@ def setup_logging():
 
         if hasattr(context, "config") and context.config.config_file_name is not None:
             fileConfig(context.config.config_file_name)
-    except Exception as e:
+    except Exception:
         # 忽略日志配置错误，继续执行
         pass
 

@@ -22,14 +22,13 @@ HistoricalRollingProcessor - 历史追溯处理器（V24.0 时序引擎）
 版本: V24.0-alpha
 """
 
-from typing import Any, Dict, Optional, List, Union
 import logging
 import statistics
 from dataclasses import dataclass
-from datetime import datetime
+from typing import Any
 
-from ..base import BaseProcessor, ProcessorResult, ProcessorConfig
-from ..models import MatchData, TeamStats, HomeAway
+from ..base import BaseProcessor, ProcessorConfig, ProcessorResult
+from ..models import HomeAway, MatchData
 
 logger = logging.getLogger(__name__)
 
@@ -37,12 +36,13 @@ logger = logging.getLogger(__name__)
 @dataclass
 class MatchSnapshot:
     """比赛快照（用于历史统计）"""
+
     match_id: str
     date: str
     team_id: str
-    opponent_id: Optional[str]
+    opponent_id: str | None
     is_home: bool
-    stats: Dict[str, float]
+    stats: dict[str, float]
 
 
 class HistoricalRollingProcessorConfig(ProcessorConfig):
@@ -58,6 +58,7 @@ class HistoricalRollingProcessorConfig(ProcessorConfig):
         h2h_window: H2H 窗口大小（场数）
         min_matches: 最少历史比赛数量
     """
+
     enable_l3_stats: bool = True
     enable_l5_trend: bool = True
     enable_h2h_stats: bool = True
@@ -105,16 +106,16 @@ class HistoricalRollingProcessor(BaseProcessor[MatchData]):
 
     # 核心指标列表
     CORE_METRICS = [
-        "expected_goals",      # xG
-        "shots_total",         # 总射门
-        "shots_on_target",     # 射正
-        "possession",          # 控球率
-        "total_passes",        # 总传球
-        "accurate_passes",     # 成功传球
-        "team_rating",         # 评分
-        "corners",             # 角球
-        "fouls",               # 犯规
-        "offsides",            # 越位
+        "expected_goals",  # xG
+        "shots_total",  # 总射门
+        "shots_on_target",  # 射正
+        "possession",  # 控球率
+        "total_passes",  # 总传球
+        "accurate_passes",  # 成功传球
+        "team_rating",  # 评分
+        "corners",  # 角球
+        "fouls",  # 犯规
+        "offsides",  # 越位
     ]
 
     # 高级指标列表（用于 H2H）
@@ -124,15 +125,13 @@ class HistoricalRollingProcessor(BaseProcessor[MatchData]):
         "tempo_score",
     ]
 
-    def __init__(self, config: Optional[HistoricalRollingProcessorConfig] = None) -> None:
+    def __init__(self, config: HistoricalRollingProcessorConfig | None = None) -> None:
         super().__init__(config or HistoricalRollingProcessorConfig())
         self.config: HistoricalRollingProcessorConfig = self.config
 
-    def process(
-        self, data: MatchData, context: Any
-    ) -> ProcessorResult:
+    def process(self, data: MatchData, context: Any) -> ProcessorResult:
         """提取历史时序特征"""
-        features: Dict[str, float] = {}
+        features: dict[str, float] = {}
         warnings: list[str] = []
 
         try:
@@ -174,18 +173,10 @@ class HistoricalRollingProcessor(BaseProcessor[MatchData]):
 
             # 4. H2H 对战历史
             if self.config.enable_h2h_stats:
-                home_h2h = self._compute_h2h_stats(
-                    home_history,
-                    data.away_team,
-                    is_home=True
-                )
+                home_h2h = self._compute_h2h_stats(home_history, data.away_team, is_home=True)
                 features.update(home_h2h)
 
-                away_h2h = self._compute_h2h_stats(
-                    away_history,
-                    data.home_team,
-                    is_home=False
-                )
+                away_h2h = self._compute_h2h_stats(away_history, data.home_team, is_home=False)
                 features.update(away_h2h)
 
             # 5. 历史对比特征
@@ -201,7 +192,7 @@ class HistoricalRollingProcessor(BaseProcessor[MatchData]):
                     "l3_enabled": self.config.enable_l3_stats,
                     "l5_enabled": self.config.enable_l5_trend,
                     "h2h_enabled": self.config.enable_h2h_stats,
-                }
+                },
             )
 
             for warning in warnings:
@@ -213,9 +204,7 @@ class HistoricalRollingProcessor(BaseProcessor[MatchData]):
             logger.error(f"HistoricalRollingProcessor failed: {e}")
             return ProcessorResult.failure_result(str(e))
 
-    def _get_match_history(
-        self, context: Any, side: HomeAway, team_name: str
-    ) -> List[MatchSnapshot]:
+    def _get_match_history(self, context: Any, side: HomeAway, team_name: str) -> list[MatchSnapshot]:
         """
         获取历史比赛数据
 
@@ -239,9 +228,7 @@ class HistoricalRollingProcessor(BaseProcessor[MatchData]):
 
         return []
 
-    def _compute_l3_stats(
-        self, history: List[MatchSnapshot]
-    ) -> Dict[str, float]:
+    def _compute_l3_stats(self, history: list[MatchSnapshot]) -> dict[str, float]:
         """
         计算 L3 滚动统计（近 3 场）
 
@@ -255,22 +242,18 @@ class HistoricalRollingProcessor(BaseProcessor[MatchData]):
         prefix = history[0].team_id.replace(" ", "_").lower() if history else "unknown"
 
         # 取近 3 场
-        recent_3 = history[:self.config.l3_window]
+        recent_3 = history[: self.config.l3_window]
 
         for metric in self.CORE_METRICS:
             values = [match.stats.get(metric, 0.0) for match in recent_3]
 
             if values:
                 # 均值
-                features[f"{prefix}_l3_{metric}_mean"] = round(
-                    statistics.mean(values), 4
-                )
+                features[f"{prefix}_l3_{metric}_mean"] = round(statistics.mean(values), 4)
 
                 # 标准差
                 if len(values) > 1:
-                    features[f"{prefix}_l3_{metric}_std"] = round(
-                        statistics.stdev(values), 4
-                    )
+                    features[f"{prefix}_l3_{metric}_std"] = round(statistics.stdev(values), 4)
                 else:
                     features[f"{prefix}_l3_{metric}_std"] = 0.0
 
@@ -300,9 +283,7 @@ class HistoricalRollingProcessor(BaseProcessor[MatchData]):
 
         return features
 
-    def _compute_l5_trends(
-        self, history: List[MatchSnapshot]
-    ) -> Dict[str, float]:
+    def _compute_l5_trends(self, history: list[MatchSnapshot]) -> dict[str, float]:
         """
         计算 L5 趋势分析（近 5 场线性回归斜率）
 
@@ -316,7 +297,7 @@ class HistoricalRollingProcessor(BaseProcessor[MatchData]):
         prefix = history[0].team_id.replace(" ", "_").lower() if history else "unknown"
 
         # 取近 5 场，并反转时间顺序（从旧到新）
-        recent_5 = list(reversed(history[:self.config.l5_window]))
+        recent_5 = list(reversed(history[: self.config.l5_window]))
 
         if len(recent_5) < 2:
             # 数据不足，返回默认值
@@ -338,9 +319,7 @@ class HistoricalRollingProcessor(BaseProcessor[MatchData]):
 
         return features
 
-    def _compute_h2h_stats(
-        self, history: List[MatchSnapshot], opponent: str, is_home: bool
-    ) -> Dict[str, float]:
+    def _compute_h2h_stats(self, history: list[MatchSnapshot], opponent: str, is_home: bool) -> dict[str, float]:
         """
         计算 H2H 对战历史（对阵特定对手）
 
@@ -356,10 +335,7 @@ class HistoricalRollingProcessor(BaseProcessor[MatchData]):
         prefix = "home" if is_home else "away"
 
         # 筛选出对阵该对手的比赛
-        h2h_matches = [
-            m for m in history
-            if m.opponent_id and m.opponent_id == opponent
-        ][:self.config.h2h_window]
+        h2h_matches = [m for m in history if m.opponent_id and m.opponent_id == opponent][: self.config.h2h_window]
 
         if not h2h_matches:
             # 无对战记录，返回默认值
@@ -401,7 +377,7 @@ class HistoricalRollingProcessor(BaseProcessor[MatchData]):
 
         return features
 
-    def _compute_linear_slope(self, x: List[float], y: List[float]) -> float:
+    def _compute_linear_slope(self, x: list[float], y: list[float]) -> float:
         """计算线性回归斜率"""
         if len(x) < 2 or len(y) < 2:
             return 0.0
@@ -419,7 +395,7 @@ class HistoricalRollingProcessor(BaseProcessor[MatchData]):
         slope = (n * sum_xy - sum_x * sum_y) / denominator
         return slope
 
-    def _compute_comparison_features(self, features: Dict[str, float]) -> Dict[str, float]:
+    def _compute_comparison_features(self, features: dict[str, float]) -> dict[str, float]:
         """计算历史对比特征"""
         comparison = {}
 
@@ -440,7 +416,7 @@ class HistoricalRollingProcessor(BaseProcessor[MatchData]):
 
         return comparison
 
-    def _create_default_l3_features(self, prefix: str) -> Dict[str, float]:
+    def _create_default_l3_features(self, prefix: str) -> dict[str, float]:
         """创建默认 L3 特征"""
         defaults = {}
         for metric in self.CORE_METRICS:
@@ -451,14 +427,14 @@ class HistoricalRollingProcessor(BaseProcessor[MatchData]):
         defaults[f"{prefix}_l3_goals_scored_mean"] = 0.0
         return defaults
 
-    def _create_default_l5_features(self, prefix: str) -> Dict[str, float]:
+    def _create_default_l5_features(self, prefix: str) -> dict[str, float]:
         """创建默认 L5 特征"""
         defaults = {}
         for metric in self.CORE_METRICS:
             defaults[f"{prefix}_l5_{metric}_trend"] = 0.0
         return defaults
 
-    def get_feature_schema(self) -> Dict[str, type]:
+    def get_feature_schema(self) -> dict[str, type]:
         """获取输出特征的 Schema（V24.0 动态生成）"""
         schema = {}
 

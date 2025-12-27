@@ -19,16 +19,16 @@ V25.0 僵尸资产清理脚本 - Zombie Debt Cleanup
 日期: 2025-12-25
 """
 
-import os
-import sys
 import json
 import logging
+import os
+import sys
 import time
-from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple
 from dataclasses import dataclass, field
-from pathlib import Path
+from datetime import datetime
 from enum import Enum
+from pathlib import Path
+from typing import Any
 
 # 添加项目路径
 project_root = Path(__file__).parent.parent.parent
@@ -46,10 +46,7 @@ os.makedirs("logs", exist_ok=True)
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(name)s - %(message)s",
-    handlers=[
-        logging.FileHandler("logs/v25_zombie_cleanup.log"),
-        logging.StreamHandler()
-    ]
+    handlers=[logging.FileHandler("logs/v25_zombie_cleanup.log"), logging.StreamHandler()],
 )
 logger = logging.getLogger(__name__)
 
@@ -58,15 +55,18 @@ logger = logging.getLogger(__name__)
 # 枚举定义
 # ============================================================================
 
+
 class CleanupAction(str, Enum):
     """清理动作"""
+
     RETRY_HARVEST = "retry_harvest"  # 重新尝试收割
-    MARK_DELETED = "mark_deleted"    # 标记为已删除
-    SKIP = "skip"                    # 跳过
+    MARK_DELETED = "mark_deleted"  # 标记为已删除
+    SKIP = "skip"  # 跳过
 
 
 class ZombieStatus(str, Enum):
     """僵尸状态"""
+
     PENDING = "pending"
     RETRYING = "retrying"
     RECOVERED = "recovered"
@@ -77,6 +77,7 @@ class ZombieStatus(str, Enum):
 # ============================================================================
 # 配置类定义
 # ============================================================================
+
 
 @dataclass
 class CleanupConfig:
@@ -91,6 +92,7 @@ class CleanupConfig:
         harvest_timeout_seconds: 收割超时时间
         mark_as_deleted_status: 标记为删除的状态值
     """
+
     batch_size: int = 50
     max_retry_attempts: int = 3
     retry_delay_ms: int = 1000
@@ -115,6 +117,7 @@ class CleanupStats:
         harvest_success_count: 收割成功数量
         harvest_failed_count: 收割失败数量
     """
+
     start_time: float = 0.0
     end_time: float = 0.0
     total_zombies: int = 0
@@ -125,9 +128,9 @@ class CleanupStats:
     harvest_success_count: int = 0
     harvest_failed_count: int = 0
     # 详细记录
-    recovered_match_ids: List[int] = field(default_factory=list)
-    deleted_match_ids: List[int] = field(default_factory=list)
-    failed_match_ids: List[int] = field(default_factory=list)
+    recovered_match_ids: list[int] = field(default_factory=list)
+    deleted_match_ids: list[int] = field(default_factory=list)
+    failed_match_ids: list[int] = field(default_factory=list)
 
     @property
     def elapsed_time(self) -> float:
@@ -143,7 +146,7 @@ class CleanupStats:
             return 0.0
         return self.recovered_count / self.total_zombies
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
             "start_time": datetime.fromtimestamp(self.start_time).isoformat() if self.start_time else None,
@@ -167,6 +170,7 @@ class CleanupStats:
 # 核心类定义
 # ============================================================================
 
+
 class ZombieAssetCleaner:
     """
     僵尸资产清理器 (V25.0)
@@ -183,7 +187,7 @@ class ZombieAssetCleaner:
         - 策略 3: 标记为 DELETED_INVALID 并从训练集中隔离
     """
 
-    def __init__(self, config: Optional[CleanupConfig] = None):
+    def __init__(self, config: CleanupConfig | None = None):
         """
         初始化清理器
 
@@ -226,7 +230,7 @@ class ZombieAssetCleaner:
             self._conn.close()
             logger.info("数据库连接已关闭")
 
-    def scan_zombie_assets(self) -> List[Dict[str, Any]]:
+    def scan_zombie_assets(self) -> list[dict[str, Any]]:
         """
         扫描僵尸资产
 
@@ -250,7 +254,7 @@ class ZombieAssetCleaner:
                   AND COALESCE(f.meta_data->>'extraction_version', 'V0.0') < 'V24.1'
                   AND (m.l2_raw_json IS NULL OR jsonb_typeof(m.l2_raw_json) = 'null');
             """)
-            self.stats.total_zombies = cur.fetchone()['total']
+            self.stats.total_zombies = cur.fetchone()["total"]
 
             # 获取僵尸记录
             query = """
@@ -280,10 +284,7 @@ class ZombieAssetCleaner:
 
             return zombies
 
-    def attempt_harvest_recovery(
-        self,
-        zombie: Dict[str, Any]
-    ) -> Tuple[bool, Optional[Dict[str, Any]]]:
+    def attempt_harvest_recovery(self, zombie: dict[str, Any]) -> tuple[bool, dict[str, Any] | None]:
         """
         尝试通过重新收割恢复僵尸记录
 
@@ -296,10 +297,10 @@ class ZombieAssetCleaner:
         if not self.config.enable_auto_harvest:
             return False, None
 
-        match_id = zombie['match_id']
-        external_id = zombie['external_id']
-        league_id = zombie.get('league_id', '47')
-        season = zombie.get('season', '2324')
+        match_id = zombie["match_id"]
+        external_id = zombie["external_id"]
+        league_id = zombie.get("league_id", "47")
+        season = zombie.get("season", "2324")
 
         logger.info(f"尝试收割 match_id={match_id}, external_id={external_id}")
 
@@ -310,7 +311,7 @@ class ZombieAssetCleaner:
             collector = FotMobCollector()
             raw_data = collector.fetch_match_data(external_id)
 
-            if raw_data and 'content' in raw_data:
+            if raw_data and "content" in raw_data:
                 logger.info(f"match_id={match_id}: 收割成功")
                 self.stats.harvest_success_count += 1
                 return True, raw_data
@@ -328,11 +329,7 @@ class ZombieAssetCleaner:
             self.stats.harvest_failed_count += 1
             return False, None
 
-    def recover_zombie(
-        self,
-        zombie: Dict[str, Any],
-        raw_data: Dict[str, Any]
-    ) -> bool:
+    def recover_zombie(self, zombie: dict[str, Any], raw_data: dict[str, Any]) -> bool:
         """
         恢复僵尸记录（更新 l2_raw_json 和版本）
 
@@ -343,7 +340,7 @@ class ZombieAssetCleaner:
         Returns:
             是否成功恢复
         """
-        match_id = zombie['match_id']
+        match_id = zombie["match_id"]
 
         try:
             with self._conn.cursor() as cur:
@@ -359,7 +356,7 @@ class ZombieAssetCleaner:
                 # 构造 JSON 结构
                 l2_json = {
                     "l2_json": raw_data.get("content", raw_data),
-                    "league_id": zombie.get('league_id', ''),
+                    "league_id": zombie.get("league_id", ""),
                     "collected_at": datetime.now().isoformat(),
                     "recovered_by": "zombie_cleanup_v25",
                 }
@@ -396,7 +393,7 @@ class ZombieAssetCleaner:
             self.stats.failed_match_ids.append(match_id)
             return False
 
-    def mark_as_deleted(self, zombie: Dict[str, Any]) -> bool:
+    def mark_as_deleted(self, zombie: dict[str, Any]) -> bool:
         """
         标记僵尸记录为已删除（从训练集中隔离）
 
@@ -406,7 +403,7 @@ class ZombieAssetCleaner:
         Returns:
             是否成功标记
         """
-        match_id = zombie['match_id']
+        match_id = zombie["match_id"]
 
         try:
             with self._conn.cursor() as cur:
@@ -425,10 +422,7 @@ class ZombieAssetCleaner:
                     "deletion_reason": "No raw data available and harvest failed",
                 }
 
-                cur.execute(
-                    update_query,
-                    (self.config.mark_as_deleted_status, json.dumps(metadata), match_id)
-                )
+                cur.execute(update_query, (self.config.mark_as_deleted_status, json.dumps(metadata), match_id))
                 self._conn.commit()
 
                 self.stats.deleted_count += 1
@@ -443,7 +437,7 @@ class ZombieAssetCleaner:
             self.stats.failed_count += 1
             return False
 
-    def process_batch(self, zombies: List[Dict[str, Any]]) -> None:
+    def process_batch(self, zombies: list[dict[str, Any]]) -> None:
         """
         处理一批僵尸记录
 
@@ -453,8 +447,8 @@ class ZombieAssetCleaner:
         logger.info(f"开始处理 {len(zombies)} 条僵尸记录...")
 
         for zombie in zombies:
-            match_id = zombie['match_id']
-            missing_raw = zombie.get('missing_raw_json', True)
+            match_id = zombie["match_id"]
+            missing_raw = zombie.get("missing_raw_json", True)
 
             # 尝试重新收割
             harvest_success, raw_data = self.attempt_harvest_recovery(zombie)
@@ -501,7 +495,7 @@ class ZombieAssetCleaner:
                 self.process_batch(zombies)
 
                 # 打印当前统计
-                logger.info(f"\n当前统计:")
+                logger.info("\n当前统计:")
                 logger.info(f"  🔄 已恢复: {self.stats.recovered_count}")
                 logger.info(f"  🗑️  已删除: {self.stats.deleted_count}")
                 logger.info(f"  ❌ 失败: {self.stats.failed_count}")
@@ -535,26 +529,26 @@ class ZombieAssetCleaner:
         print("V25.0 僵尸资产清理报告")
         print("=" * 60)
 
-        print(f"\n执行时间:")
+        print("\n执行时间:")
         print(f"  • 开始时间: {stats['start_time']}")
         print(f"  • 结束时间: {stats['end_time']}")
         print(f"  • 运行时长: {stats['elapsed_seconds']:.1f} 秒")
 
-        print(f"\n清理结果:")
+        print("\n清理结果:")
         print(f"  🔄 已恢复: {stats['recovered_count']} 场")
         print(f"  🗑️  已删除: {stats['deleted_count']} 场")
         print(f"  ❌ 失败: {stats['failed_count']} 场")
         print(f"  ⏭️  已跳过: {stats['skipped_count']} 场")
 
-        print(f"\n收割统计:")
+        print("\n收割统计:")
         print(f"  ✅ 收割成功: {stats['harvest_success_count']}")
         print(f"  ❌ 收割失败: {stats['harvest_failed_count']}")
 
         print(f"\n恢复率: {stats['recovery_rate']}%")
 
-        if stats['recovered_match_ids']:
+        if stats["recovered_match_ids"]:
             print(f"\n已恢复比赛 ID (前10个): {stats['recovered_match_ids']}")
-        if stats['deleted_match_ids']:
+        if stats["deleted_match_ids"]:
             print(f"已删除比赛 ID (前10个): {stats['deleted_match_ids']}")
 
         print("\n" + "=" * 60)
@@ -564,28 +558,17 @@ class ZombieAssetCleaner:
 # 主程序入口
 # ============================================================================
 
+
 def main():
     """主程序入口"""
     import argparse
 
-    parser = argparse.ArgumentParser(
-        description='V25.0 僵尸资产清理脚本 - Zombie Debt Cleanup'
-    )
+    parser = argparse.ArgumentParser(description="V25.0 僵尸资产清理脚本 - Zombie Debt Cleanup")
+    parser.add_argument("--batch-size", type=int, default=50, help="批量处理大小（默认: 50）")
+    parser.add_argument("--no-harvest", action="store_true", help="禁用自动收割")
+    parser.add_argument("--max-retry", type=int, default=3, help="最大重试次数（默认: 3）")
     parser.add_argument(
-        '--batch-size', type=int, default=50,
-        help='批量处理大小（默认: 50）'
-    )
-    parser.add_argument(
-        '--no-harvest', action='store_true',
-        help='禁用自动收割'
-    )
-    parser.add_argument(
-        '--max-retry', type=int, default=3,
-        help='最大重试次数（默认: 3）'
-    )
-    parser.add_argument(
-        '--delete-status', type=str, default='DELETED_INVALID',
-        help='标记为删除的状态值（默认: DELETED_INVALID）'
+        "--delete-status", type=str, default="DELETED_INVALID", help="标记为删除的状态值（默认: DELETED_INVALID）"
     )
 
     args = parser.parse_args()

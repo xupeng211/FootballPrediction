@@ -7,9 +7,9 @@
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Any
 
-from fastapi import APIRouter, HTTPException, BackgroundTasks
+from fastapi import APIRouter, BackgroundTasks, HTTPException
 from pydantic import BaseModel, Field
 
 from src.services.inference_service import InferenceService
@@ -32,7 +32,7 @@ router = APIRouter(
 class ModelReloadRequest(BaseModel):
     """模型重载请求"""
 
-    model_path: Optional[str] = Field(None, description="新的模型文件路径，如果不提供则使用默认路径")
+    model_path: str | None = Field(None, description="新的模型文件路径，如果不提供则使用默认路径")
     backup_current: bool = Field(default=True, description="是否备份当前模型")
 
     class Config:
@@ -49,8 +49,8 @@ class ModelReloadResponse(BaseModel):
 
     success: bool = Field(..., description="是否重载成功")
     message: str = Field(..., description="重载结果信息")
-    previous_version: Optional[str] = Field(None, description="重载前的模型版本")
-    new_version: Optional[str] = Field(None, description="重载后的模型版本")
+    previous_version: str | None = Field(None, description="重载前的模型版本")
+    new_version: str | None = Field(None, description="重载后的模型版本")
     reload_time: str = Field(..., description="重载时间")
     model_path: str = Field(..., description="模型文件路径")
 
@@ -73,9 +73,9 @@ class ModelInfoResponse(BaseModel):
     is_loaded: bool = Field(..., description="模型是否已加载")
     model_version: str = Field(..., description="当前模型版本")
     model_path: str = Field(..., description="模型文件路径")
-    load_time: Optional[str] = Field(None, description="模型加载时间")
-    file_size_mb: Optional[float] = Field(None, description="模型文件大小(MB)")
-    last_modified: Optional[str] = Field(None, description="模型文件最后修改时间")
+    load_time: str | None = Field(None, description="模型加载时间")
+    file_size_mb: float | None = Field(None, description="模型文件大小(MB)")
+    last_modified: str | None = Field(None, description="模型文件最后修改时间")
     available_models: list[str] = Field(..., description="可用的模型文件列表")
 
     class Config:
@@ -96,7 +96,7 @@ class ModelInfoResponse(BaseModel):
 
 
 # 全局推理服务实例（在实际应用中应该通过依赖注入）
-_inference_service: Optional[InferenceService] = None
+_inference_service: InferenceService | None = None
 
 
 def get_inference_service() -> InferenceService:
@@ -120,7 +120,7 @@ def get_available_models() -> list[str]:
     return sorted(model_files)
 
 
-def get_model_metadata(model_path: str) -> Dict[str, Any]:
+def get_model_metadata(model_path: str) -> dict[str, Any]:
     """获取模型元数据"""
     model_path_obj = Path(model_path)
     metadata_path = model_path_obj.with_suffix("_metadata.json")
@@ -130,7 +130,7 @@ def get_model_metadata(model_path: str) -> Dict[str, Any]:
         try:
             import json
 
-            with open(metadata_path, "r") as f:
+            with open(metadata_path) as f:
                 metadata = json.load(f)
         except Exception as e:
             logger.warning(f"读取模型元数据失败 {metadata_path}: {e}")
@@ -285,4 +285,4 @@ async def list_models():
 async def log_model_reload(old_version: str, new_version: str, model_path: str, success: bool):
     """记录模型重载日志"""
     status = "成功" if success else "失败"
-    logger.info(f"模型重载{status}: {old_version} -> {new_version} " f"模型路径: {model_path} 时间: {datetime.now()}")
+    logger.info(f"模型重载{status}: {old_version} -> {new_version} 模型路径: {model_path} 时间: {datetime.now()}")

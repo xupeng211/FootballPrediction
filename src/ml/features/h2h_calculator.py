@@ -23,14 +23,14 @@ Phase 5 Advanced Features 核心组件之一
 """
 
 import logging
-import pandas as pd
-import numpy as np
-from typing import Dict, Any, Optional
 from dataclasses import dataclass
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import Decimal
+from typing import Any
+
+import pandas as pd
 
 # 导入足球业务逻辑常量
-from ...constants import SCORING, FOOTBALL, MATH, VALIDATOR
+from ...constants import SCORING
 
 logger = logging.getLogger(__name__)
 
@@ -48,7 +48,7 @@ class H2HStats:
     avg_total_goals: Decimal = SCORING.DEFAULT_AVG_TOTAL_GOALS  # 平均总进球数
     matches_count: int = 0  # 交锋场次
 
-    def to_dict(self) -> Dict[str, float]:
+    def to_dict(self) -> dict[str, float]:
         """
         转换为字典格式
 
@@ -65,7 +65,7 @@ class H2HStats:
             "h2h_matches_count": float(self.matches_count),
         }
 
-    def to_decimal_dict(self) -> Dict[str, Decimal]:
+    def to_decimal_dict(self) -> dict[str, Decimal]:
         """
         转换为 Decimal 格式字典
 
@@ -128,8 +128,7 @@ class H2HCalculator:
             stats = self._calculate_match_stats(past_matches, home_id)
 
             logger.info(
-                f"H2H统计完成: {home_id} vs {away_id}, "
-                f"场次: {stats.matches_count}, 主队胜率: {stats.home_win_rate:.3f}"
+                f"H2H统计完成: {home_id} vs {away_id}, 场次: {stats.matches_count}, 主队胜率: {stats.home_win_rate:.3f}"
             )
 
             return stats
@@ -335,7 +334,7 @@ class H2HCalculator:
 
         return True
 
-    def get_h2h_summary(self, df: pd.DataFrame, team1_id: int, team2_id: int) -> Dict[str, Any]:
+    def get_h2h_summary(self, df: pd.DataFrame, team1_id: int, team2_id: int) -> dict[str, Any]:
         """
         获取两队历史交锋的详细摘要 (金融级精度版本)
 
@@ -461,7 +460,7 @@ class H2HCalculator:
             logger.error(f"H2H摘要生成失败: {e}")
             return self._get_empty_h2h_summary(team1_id, team2_id)
 
-    def _get_empty_h2h_summary(self, team1_id: int, team2_id: int) -> Dict[str, Any]:
+    def _get_empty_h2h_summary(self, team1_id: int, team2_id: int) -> dict[str, Any]:
         """获取空的H2H摘要（无历史交锋记录时使用）"""
         return {
             "teams": [team1_id, team2_id],
@@ -479,7 +478,7 @@ class H2HCalculator:
             "form_balance": 0.0,
         }
 
-    def _validate_h2h_summary(self, summary: Dict[str, Any]) -> bool:
+    def _validate_h2h_summary(self, summary: dict[str, Any]) -> bool:
         """
         验证H2H摘要数据的业务合理性
 

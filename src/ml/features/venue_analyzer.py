@@ -16,9 +16,10 @@ Phase 5 Advanced Features 核心组件之一
 """
 
 import logging
-import pandas as pd
-from typing import Dict, List, Any
 from dataclasses import dataclass
+from typing import Any
+
+import pandas as pd
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +37,7 @@ class VenueStats:
     home_advantage_3: float = 0.0  # 主场优势指数(3场)
     home_advantage_5: float = 0.0  # 主场优势指数(5场)
 
-    def to_dict(self) -> Dict[str, float]:
+    def to_dict(self) -> dict[str, float]:
         """转换为字典格式"""
         return {
             "venue_home_goals_rolling_3": self.home_goals_rolling_3,
@@ -58,7 +59,7 @@ class VenueAnalyzer:
     专门设计用于改进像Napoli vs Juventus这样的案例预测。
     """
 
-    def __init__(self, windows: List[int] = [3, 5]):
+    def __init__(self, windows: list[int] = [3, 5]):
         """
         初始化场馆分析器
 
@@ -157,7 +158,7 @@ class VenueAnalyzer:
 
     def _calculate_team_venue_stats(
         self, df: pd.DataFrame, team_id: int, venue_type: str, match_date: pd.Timestamp
-    ) -> Dict[int, float]:
+    ) -> dict[int, float]:
         """
         计算特定球队在特定场馆类型的滚动统计
 
@@ -183,7 +184,7 @@ class VenueAnalyzer:
             goals_col = "away_score"
 
         if team_matches.empty:
-            return {window: 0.0 for window in self.windows}
+            return dict.fromkeys(self.windows, 0.0)
 
         # 计算各窗口的滚动平均
         venue_stats = {}
@@ -269,7 +270,7 @@ class VenueAnalyzer:
             logger.error(f"计算主场优势失败: {str(e)}")
             return 1.0  # 默认中性优势
 
-    def get_venue_summary(self, df: pd.DataFrame, team_id: int) -> Dict[str, Any]:
+    def get_venue_summary(self, df: pd.DataFrame, team_id: int) -> dict[str, Any]:
         """
         获取球队的场馆表现摘要
 

@@ -95,32 +95,18 @@ class MatchParser:
         home_stats = self.safe_get(stats_data, "home", {})
         result.update(
             {
-                "home_possession": self.safe_get(
-                    home_stats, "possession", self.default_values["possession"]
-                ),
-                "home_shots": self.safe_get(
-                    home_stats, "shots", self.default_values["shots"]
-                ),
+                "home_possession": self.safe_get(home_stats, "possession", self.default_values["possession"]),
+                "home_shots": self.safe_get(home_stats, "shots", self.default_values["shots"]),
                 "home_shots_on_target": self.safe_get(
                     home_stats,
                     "shots_on_target",
                     self.default_values["shots_on_target"],
                 ),
-                "home_corners": self.safe_get(
-                    home_stats, "corners", self.default_values["corners"]
-                ),
-                "home_fouls": self.safe_get(
-                    home_stats, "fouls", self.default_values["fouls"]
-                ),
-                "home_offsides": self.safe_get(
-                    home_stats, "offsides", self.default_values["offsides"]
-                ),
-                "home_yellow_cards": self.safe_get(
-                    home_stats, "yellow_cards", self.default_values["yellow_cards"]
-                ),
-                "home_red_cards": self.safe_get(
-                    home_stats, "red_cards", self.default_values["red_cards"]
-                ),
+                "home_corners": self.safe_get(home_stats, "corners", self.default_values["corners"]),
+                "home_fouls": self.safe_get(home_stats, "fouls", self.default_values["fouls"]),
+                "home_offsides": self.safe_get(home_stats, "offsides", self.default_values["offsides"]),
+                "home_yellow_cards": self.safe_get(home_stats, "yellow_cards", self.default_values["yellow_cards"]),
+                "home_red_cards": self.safe_get(home_stats, "red_cards", self.default_values["red_cards"]),
             }
         )
 
@@ -128,43 +114,27 @@ class MatchParser:
         away_stats = self.safe_get(stats_data, "away", {})
         result.update(
             {
-                "away_possession": self.safe_get(
-                    away_stats, "possession", self.default_values["possession"]
-                ),
-                "away_shots": self.safe_get(
-                    away_stats, "shots", self.default_values["shots"]
-                ),
+                "away_possession": self.safe_get(away_stats, "possession", self.default_values["possession"]),
+                "away_shots": self.safe_get(away_stats, "shots", self.default_values["shots"]),
                 "away_shots_on_target": self.safe_get(
                     away_stats,
                     "shots_on_target",
                     self.default_values["shots_on_target"],
                 ),
-                "away_corners": self.safe_get(
-                    away_stats, "corners", self.default_values["corners"]
-                ),
-                "away_fouls": self.safe_get(
-                    away_stats, "fouls", self.default_values["fouls"]
-                ),
-                "away_offsides": self.safe_get(
-                    away_stats, "offsides", self.default_values["offsides"]
-                ),
-                "away_yellow_cards": self.safe_get(
-                    away_stats, "yellow_cards", self.default_values["yellow_cards"]
-                ),
-                "away_red_cards": self.safe_get(
-                    away_stats, "red_cards", self.default_values["red_cards"]
-                ),
+                "away_corners": self.safe_get(away_stats, "corners", self.default_values["corners"]),
+                "away_fouls": self.safe_get(away_stats, "fouls", self.default_values["fouls"]),
+                "away_offsides": self.safe_get(away_stats, "offsides", self.default_values["offsides"]),
+                "away_yellow_cards": self.safe_get(away_stats, "yellow_cards", self.default_values["yellow_cards"]),
+                "away_red_cards": self.safe_get(away_stats, "red_cards", self.default_values["red_cards"]),
             }
         )
 
         # 计算差异统计
         result.update(
             {
-                "possession_diff": result["home_possession"]
-                - result["away_possession"],
+                "possession_diff": result["home_possession"] - result["away_possession"],
                 "shots_diff": result["home_shots"] - result["away_shots"],
-                "shots_on_target_diff": result["home_shots_on_target"]
-                - result["away_shots_on_target"],
+                "shots_on_target_diff": result["home_shots_on_target"] - result["away_shots_on_target"],
                 "corners_diff": result["home_corners"] - result["away_corners"],
             }
         )
@@ -224,9 +194,7 @@ class MatchParser:
                 "away_avg_rating": self._calculate_avg_rating(away_players),
                 "home_total_value": self._calculate_total_value(home_players),
                 "away_total_value": self._calculate_total_value(away_players),
-                "lineups_completeness": self._assess_lineup_completeness(
-                    home_players, away_players
-                ),
+                "lineups_completeness": self._assess_lineup_completeness(home_players, away_players),
             }
         )
 
@@ -303,29 +271,17 @@ class MatchParser:
         # 计算平均赔率
         result.update(
             {
-                "avg_home_odds": (
-                    sum(home_odds_list) / len(home_odds_list) if home_odds_list else 2.5
-                ),
-                "avg_draw_odds": (
-                    sum(draw_odds_list) / len(draw_odds_list) if draw_odds_list else 3.2
-                ),
-                "avg_away_odds": (
-                    sum(away_odds_list) / len(away_odds_list) if away_odds_list else 2.8
-                ),
+                "avg_home_odds": (sum(home_odds_list) / len(home_odds_list) if home_odds_list else 2.5),
+                "avg_draw_odds": (sum(draw_odds_list) / len(draw_odds_list) if draw_odds_list else 3.2),
+                "avg_away_odds": (sum(away_odds_list) / len(away_odds_list) if away_odds_list else 2.8),
                 "odds_completeness": len(home_odds_list) / len(bookmakers),
             }
         )
 
         # 计算隐含概率
-        total_home_prob = (
-            sum(1 / odds for odds in home_odds_list) if home_odds_list else 0
-        )
-        total_draw_prob = (
-            sum(1 / odds for odds in draw_odds_list) if draw_odds_list else 0
-        )
-        total_away_prob = (
-            sum(1 / odds for odds in away_odds_list) if away_odds_list else 0
-        )
+        total_home_prob = sum(1 / odds for odds in home_odds_list) if home_odds_list else 0
+        total_draw_prob = sum(1 / odds for odds in draw_odds_list) if draw_odds_list else 0
+        total_away_prob = sum(1 / odds for odds in away_odds_list) if away_odds_list else 0
 
         total_prob = total_home_prob + total_draw_prob + total_away_prob
 
@@ -474,13 +430,7 @@ class MatchParser:
                     # 处理不同格式的身价数据
                     if isinstance(value, str):
                         # 移除货币符号和单位
-                        value = (
-                            value.replace("€", "")
-                            .replace("m", "")
-                            .replace("M", "")
-                            .replace("万", "")
-                            .strip()
-                        )
+                        value = value.replace("€", "").replace("m", "").replace("M", "").replace("万", "").strip()
                     total_value += float(value)
                 except ValueError:
                     continue
