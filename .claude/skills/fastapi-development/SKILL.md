@@ -519,6 +519,12 @@ locust -f load_test.py --host=http://localhost:8000
 6. **版本控制**: API版本管理和向后兼容
 7. **安全防护**: 认证授权、限流、CORS配置
 
+## Related Skills
+- `api-testing`: API testing (FastAPI endpoints)
+- `code-quality`: Code quality management
+- `deployment-management`: Deployment management
+- `data-engineering`: Data pipeline engineering
+
 ---
-*Last updated: 2025-12-18*
+*Last updated: 2025-12-28*
 *Target: 足球预测API性能优化*

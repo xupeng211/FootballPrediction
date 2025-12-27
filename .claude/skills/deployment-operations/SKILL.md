@@ -197,3 +197,9 @@ assert dashboard['summary']['health_score'] >= 80
 5. **定期维护**: 使用监控仪表板跟踪系统状态
 
 该技能专注于解决容器化部署和运维中的实际问题，提供自动化、智能化的解决方案，显著提高部署效率和运维质量。
+
+## Related Skills
+- `deployment-management`: Deployment management (Docker, production)
+- `docker-devops`: Docker and DevOps best practices
+- `performance-monitoring`: System performance monitoring
+- `code-quality`: Code quality management

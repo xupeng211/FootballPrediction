@@ -500,3 +500,9 @@ DATABASE_CONFIG = {
 - **慢查询数**: 慢查询统计
 - **缓存命中率**: 查询缓存效果
 - **数据库大小**: 数据库存储使用情况
+
+## 相关技能
+- `data-engineering`: ETL 数据管道
+- `v26-harvest`: V26.1 收割流水线
+- `data-collection`: FotMob API 数据采集
+- `performance-monitoring`: 系统性能监控

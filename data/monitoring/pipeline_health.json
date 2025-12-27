@@ -1,12 +1,12 @@
 {
-  "timestamp": "2025-12-27T11:33:49.612400",
-  "health_score": 90.0,
-  "health_status": "healthy",
-  "uptime_seconds": 19.44101595878601,
+  "timestamp": "2025-12-27T11:38:16.304739",
+  "health_score": 86.73,
+  "health_status": "degraded",
+  "uptime_seconds": 215.19799709320068,
   "pipeline_stats": {
-    "start_time": "2025-12-27T11:33:30.171945",
-    "end_time": "2025-12-27T11:33:49.612330",
-    "elapsed_seconds": 19.44038486480713,
+    "start_time": "2025-12-27T11:34:41.107079",
+    "end_time": "2025-12-27T11:38:16.304664",
+    "elapsed_seconds": 215.197585105896,
     "total_scanned": 0,
     "fast_stitch_count": 0,
     "full_explosion_count": 50,
@@ -14,14 +14,14 @@
     "failed_count": 0,
     "corrupted_json_count": 0,
     "heartbeat_count": 0,
-    "throughput_per_hour": 9259.075952032897,
+    "throughput_per_hour": 836.4406129902633,
     "feature_dimension_counts": {
-      "5321": 1,
-      "7965": 1,
-      "10972": 1,
+      "4461": 1,
+      "7016": 1,
+      "9834": 1,
       "8001": 47,
       "memory_mb": [
-        284.22265625
+        258.80078125
       ]
     }
   },
@@ -57,7 +57,7 @@
     {
       "name": "pipeline_throughput_matches_per_hour",
       "type": "gauge",
-      "value": 9259.075952032897,
+      "value": 836.4406129902633,
       "labels": {},
       "help": "Current processing throughput (matches/hour)"
     },
@@ -79,7 +79,11 @@
   "alerts": [
     {
       "type": "health_degradation",
-      "message": "Missed heartbeat: 1766806430s since last"
+      "message": "Low throughput: 836 matches/hr"
+    },
+    {
+      "type": "health_degradation",
+      "message": "Missed heartbeat: 1766806696s since last"
     }
   ],
   "thresholds": {

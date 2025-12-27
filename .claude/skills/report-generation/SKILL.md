@@ -286,3 +286,8 @@ report_url = response.json()['report_url']
 - **模板引擎**: Jinja2
 - **任务队列**: Celery + Redis
 - **文件存储**: AWS S3 / 本地文件系统
+
+## Related Skills
+- `football-prediction`: Football prediction system
+- `feature-engineering`: Feature engineering for analysis
+- `data-engineering`: Data pipeline engineering

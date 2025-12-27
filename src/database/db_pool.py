@@ -654,7 +654,7 @@ class SyncDatabasePool:
                 user=self.config.user,
                 password=self.config.password,
                 database=self.config.database,
-                connect_timeout=self.config.timeout,
+                connect_timeout=int(self.config.timeout),
             )
 
             self._is_initialized = True

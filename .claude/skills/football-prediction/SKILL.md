@@ -17,18 +17,45 @@ description: Professional football match prediction and analysis using XGBoost 2
 
 ## 模型规格
 - **算法**: XGBoost 2.0+ classifier
-- **特征维度**: 12+ 专业特征
-- **当前准确率**: 67.2% (目标65%+)
+- **特征维度**: 48+ 专业特征（V25.1 自适应引擎可扩展至 12061 维）
+- **当前准确率**: 65.52% (V19.4.1 生产基线)
 - **响应时间**: <100ms (单次预测)
 - **缓存命中率**: >80%
 
 ## 关键特征工程
-### Phase 5 高级特征
-1. **主客场分离统计** - 解决场地偏见
-2. **历史交锋分析(H2H)** - "克星"效应建模
-3. **联赛形态特征** - 积分替代进球数
-4. **Elo评级系统** - 动态实力评估
-5. ** rolling统计** - 近期状态量化
+### V17.0 滚动特征（16维）
+主队/客队各 8 维:
+- `rolling_xg`, `rolling_xg_std`
+- `rolling_shots_on_target`, `rolling_shots_on_target_std`
+- `rolling_possession`, `rolling_possession_std`
+- `rolling_team_rating`, `rolling_team_rating_std`
+
+### V18.0 赛前特征（+8维）
+- `home_table_position`, `away_table_position`, `table_position_diff`
+- `home_points`, `away_points`, `points_diff`
+- `home_recent_form_points`, `away_recent_form_points`
+
+### V19.0 高级动态特征（+13维）
+ELO 相对差距:
+- `raw_elo_gap`, `adjusted_elo_gap`, `fatigue_impact`, `schedule_impact`
+
+疲劳度指数:
+- `home_fatigue_index`, `away_fatigue_index`, `fatigue_diff`
+- `home_rest_days`, `away_rest_days`
+
+保级战意:
+- `home_relegation_incentive`, `away_relegation_incentive`
+- `incentive_diff`, `home_desperation`
+
+### V19.4 平局敏感度特征（+3维）
+- `table_proximity`: 积分榜接近度
+- `low_scoring_tendency`: 低得分倾向
+- `elo_diff_cluster`: ELO 差距聚类
+
+### V25.1 万能自适应特征提取引擎
+- **零硬编码**: 自动发现并提取所有数值型特征
+- **48维 → 12061维**: 全量自适应吞噬（251倍增长）
+- 详见 `feature-engineering` 技能
 
 ## 使用场景
 
@@ -171,6 +198,12 @@ A: 支持50+主流足球联赛
 
 **Q: 如何提高预测精度？**
 A: 结合实时数据、伤病情况和专家分析
+
+## 相关技能
+- `feature-engineering`: 特征工程专项（V25.1 自适应引擎）
+- `v26-harvest`: V26.1 收割流水线（数据采集）
+- `machine-learning-engineering`: ML 模型优化
+- `data-engineering`: 数据管道工程
 
 ## 技术栈
 - **机器学习**: XGBoost 2.0+, scikit-learn, SHAP

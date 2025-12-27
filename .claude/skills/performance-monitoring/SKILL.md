@@ -352,3 +352,9 @@ curl "http://localhost:9090/api/v1/label/__name__/values"
 - **存储规划**: 监控数据存储容量规划
 - **网络带宽**: 指标传输带宽控制
 - **计算资源**: 监控系统资源占用
+
+## Related Skills
+- `deployment-management`: Deployment management
+- `docker-devops`: Docker and DevOps best practices
+- `database-operations`: Database operations
+- `data-engineering`: Data pipeline engineering

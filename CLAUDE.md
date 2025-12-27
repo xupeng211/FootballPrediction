@@ -16,6 +16,7 @@
 - [🚨 故障处理](#️-故障处理)
 - [🔬 实验性版本管理](#-实验性版本管理)
 - [📊 监控与可观测性](#-监控与可观测性)
+- [📝 附录](#-附录)
 
 ---
 
@@ -27,18 +28,31 @@
 
 ## ⚠️ 当前系统状态
 
-**当前版本**: V25.1.0 (万能自适应特征提取引擎)
+**当前版本**: V26.1 (生产级"零缺陷"收割流水线)
 **系统状态**: ✅ Production Ready
 **架构**: Cloud-Native 归一化部署 - Docker Compose Profiles
 **基线准确率**: 65.52% (V19.4.1)
+**数据量**: 13,129+ 场历史比赛数据
 
 **版本演进**:
-- **V25.1.0**: 万能自适应特征提取引擎 (48维 → 12061维，当前版本)
+- **V26.1**: 生产级"零缺陷"收割流水线 (当前版本，2025-12-27)
+  - 自动分批收割脚本: `scripts/auto_harvest_batches.py`
+  - 全量收割脚本: `scripts/run_v26_full_harvest.py`
+  - 流水线健康监控: `data/monitoring/pipeline_health.json`
+  - 核心特性: 4 进程并行提取、内存自适应、特征剪枝（8000 维）、幂等性保证
+- **V26.0**: Stable 版本 (config_unified.py 基准)
+- **V25.1**: 万能自适应特征提取引擎 (48维 → 12061维)
+- **V50.0**: Rich L1 扫描引擎 (重铸 L1 采集层，详见 `src/api/collectors/v50_*.py`)
 - V30.0: Cloud-Native 归一化部署 (Docker 基线)
 - V19.4.1: Boxing Day Production (本地生产基线)
 - V17.0: 滚动特征 (生产基线)
 
 **实验性分支**: v34/v38/v39/v40 系列正在研发中（详见 `src/ml/miners_v34/`、`src/ml/models/v38_*.py`、`src/ml/features/v40_*.py`）
+
+**注意**: 项目使用双版本编号系统：
+- **代码版本**: 25.1.0 (见 `pyproject.toml`) - PyPI 包版本
+- **架构版本**: V26.1 (见本文档) - 系统架构版本
+- **README 显示版本**: V51.0 - 历史遗留，实际以本文档为准
 
 ---
 
@@ -78,10 +92,10 @@
 | 属性 | 值 |
 |------|-----|
 | **状态** | ✅ Production Ready |
-| **版本** | V25.1.0 (万能自适应特征提取引擎) |
+| **版本** | V26.1 (生产级"零缺陷"收割流水线) |
 | **Docker 基线** | V30.0 (Cloud-Native) |
 | **基线版本** | V19.4.1 (65.52% 准确率) |
-| **数据量** | 761 场英超 22/23 + 23/24 赛季 |
+| **数据量** | 13,129+ 场历史比赛数据 |
 | **特征维度** | 48 维 → 12061 维 (V25.1 自适应引擎) |
 
 **核心风险约束**（详见 `docs/PROJECT_VISION.md`）:
@@ -124,7 +138,7 @@
    └─→ ./scripts/run_checks.sh
 ```
 
-### ⚡ 日常开发 Top 6 命令
+### ⚡ 日常开发 Top 7 命令
 
 ```bash
 # 1. 快速开发环境设置
@@ -147,6 +161,10 @@ make up-dev                        # 开发环境 (含管理工具)
 
 # 6. 快速测试（与 CI 一致）
 pytest tests/ml/test_backtest_engine.py tests/ops/test_signal_generator.py -v
+
+# 7. V26.1 全量特征收割（新增）
+python scripts/auto_harvest_batches.py           # 自动分批收割（推荐，支持断点续传）
+python scripts/run_v26_full_harvest.py --limit 100  # 单批收割（测试用）
 ```
 
 ### 📋 常用命令速查表
@@ -155,6 +173,8 @@ pytest tests/ml/test_backtest_engine.py tests/ops/test_signal_generator.py -v
 |------|------|------|
 | 环境准备 | `make dev` | ~2 分钟 |
 | V19.4 流程 | `python main_production.py --full-pipeline` | ~15 分钟 |
+| V26.1 自动收割 | `python scripts/auto_harvest_batches.py` | 视数据量 |
+| V26.1 单批收割 | `python scripts/run_v26_full_harvest.py --limit 100` | ~5 分钟 |
 | CI 完整检查 | `./scripts/run_checks.sh` | ~3 分钟 |
 | 质量检查 | `ruff check src/ tests/ --fix` | ~30 秒 |
 | 快速测试 | `pytest tests/ml/test_backtest_engine.py tests/ops/test_signal_generator.py -v` | ~2 分钟 |
@@ -194,7 +214,10 @@ python main_production.py --full-pipeline
 #### 生产版本（推荐使用）
 | 版本 | 核心特性 | 特征维度 | 准确率 | 状态 |
 |------|----------|----------|--------|------|
-| **V25.1.0** | 万能自适应特征提取引擎 | 48 → 12061 维 | 65.52% | **当前版本** |
+| **V26.1** | 生产级"零缺陷"收割流水线 | 48 → 12061 维 | 65.52% | **当前版本** |
+| **V26.0** | Stable 版本 | 48 维 | 65.52% | **配置基准** |
+| **V25.1.0** | 万能自适应特征提取引擎 | 48 → 12061 维 | 65.52% | **特征引擎** |
+| **V50.0** | Rich L1 扫描引擎 (重铸 L1 采集层) | - | - | **L1 采集** |
 | **V30.0** | Cloud-Native 归一化部署 | 48 维 | 65.52% | **Docker 基线** |
 | **V19.4.1** | Boxing Day 生产版 + 风控集成 | 48 维 | 65.52% | **本地生产** |
 | V17.0 | 滚动特征（基线） | 16 维 | 65.52% | 生产基线 |
@@ -217,6 +240,41 @@ python main_production.py --full-pipeline
 | V38.x | 战神模型 + 拳击日报告 | 48+ 维 | 实验中 |
 | V39.x | 差分训练 + 暴力强制 | 48+ 维 | 实验中 |
 | V40.x | 抗泄漏特征引擎 | 800+ 维 | 实验中 |
+
+### 🔄 V26.1 "零缺陷"收割流水线
+
+**生产级数据收割架构** - 高性能、容错、可监控：
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    V26.1 "零缺陷"收割流水线                    │
+├─────────────────────────────────────────────────────────────┤
+│                                                               │
+│  ┌───────────────────────────────────────────────────────┐  │
+│  │  自动分批收割 (auto_harvest_batches.py)               │  │
+│  │  - 批次大小: 200 场/批                                 │  │
+│  │  - 内存监控: 超过 7GB 自动等待                         │  │
+│  │  - 断点续传: 进度持久化                                │  │
+│  │  - 失败重试: 最多 2 次                                 │  │
+│  └───────────────────────────────────────────────────────┘  │
+│                           ↓                                  │
+│  ┌───────────────────────────────────────────────────────┐  │
+│  │  全量收割 (run_v26_full_harvest.py)                   │  │
+│  │  - 4 进程并行提取                                      │  │
+│  │  - 动态批次大小（内存自适应）                          │  │
+│  │  - 特征剪枝（控制在 8000 维）                          │  │
+│  │  - 幂等性保证（可重启不重不漏）                        │  │
+│  └───────────────────────────────────────────────────────┘  │
+│                           ↓                                  │
+│  ┌───────────────────────────────────────────────────────┐  │
+│  │  流水线健康监控 (pipeline_health.json)                │  │
+│  │  - health_score: 0-100 健康评分                       │  │
+│  │  - throughput_per_hour: 每小时处理场次                │  │
+│  │  - feature_dimension_counts: 特征维度分布             │  │
+│  │  - alerts: 告警信息列表                                │  │
+│  └───────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────┘
+```
 
 ### 🔄 V30.0 Cloud-Native 架构
 
@@ -312,7 +370,10 @@ FootballPrediction/
 │   │
 │   ├── api/                   # 数据采集层
 │   │   ├── collectors/        # FotMob API 采集器
-│   │   │   └── fotmob_core.py
+│   │   │   ├── fotmob_core.py
+│   │   │   ├── v50_rich_l1_scanner.py    # V50.0 Rich L1 扫描引擎
+│   │   │   ├── v50_database_writer.py    # V50.0 数据库 UPSERT 层
+│   │   │   └── v50_autonomous_season_discoverer.py  # V50.0 赛季发现器
 │   │   └── health.py          # 健康检查端点
 │   │
 │   ├── services/              # 业务服务层
@@ -334,9 +395,11 @@ FootballPrediction/
 │   └── v2/                    # V2 推理核心测试
 │
 ├── scripts/                   # 运维脚本
-│   ├── system_verify.sh       # 系统健康检查
-│   ├── run_checks.sh          # CI 质量门禁
-│   └── verify_ready.sh        # Boxing Day 验收
+│   ├── auto_harvest_batches.py    # V26.1 自动分批收割（支持断点续传）
+│   ├── run_v26_full_harvest.py    # V26.1 全量收割脚本
+│   ├── system_verify.sh           # 系统健康检查
+│   ├── run_checks.sh              # CI 质量门禁
+│   └── verify_ready.sh            # Boxing Day 验收
 │
 ├── deploy/                    # 部署配置
 │   └── docker/
@@ -428,6 +491,42 @@ python main_production.py l2-parse --extractor-version V25.1
 ```
 
 **文件位置**: `src/processors/v25_production_extractor.py`
+
+---
+
+#### 🌟 V50.0 Rich L1 扫描引擎（重铸 L1 采集层）
+
+**核心突破**（架构重构）:
+- **自治型赛季发现器**: 废弃硬编码 seasonId，API 自动嗅探联赛赛季
+- **Rich L1 多维扫描**: 扫描 ID 同时带回比分、状态、UTC 时间
+- **数据库 UPSERT 层**: 使用 ON CONFLICT DO UPDATE 实现「单表真相」
+- **智能去重和断点续传**: 容错优先，API 失败时返回部分数据
+
+**核心文件**:
+- `src/api/collectors/v50_autonomous_season_discoverer.py` - 自治型赛季发现器
+- `src/api/collectors/v50_rich_l1_scanner.py` - Rich L1 多维扫描引擎
+- `src/api/collectors/v50_database_writer.py` - 数据库 UPSERT 层
+
+**产出结构 (Rich L1 Tuple)**:
+```python
+{
+    'match_id': int,
+    'home_score': Optional[int],
+    'away_score': Optional[int],
+    'status': str,  # 'finished' | 'ongoing' | 'scheduled'
+    'match_time_utc': str,
+    'league_id': int,
+    'season_id': int,
+    'season_name': str,
+    'home_team': str,
+    'away_team': str,
+}
+```
+
+**架构优势**:
+- **身首合一**: 比分和状态第一时间进入数据库
+- **双阶段扫描**: 第一阶段扫描 ID，第二阶段获取比分
+- **容错优先**: API 失败时返回部分数据
 
 ---
 
@@ -865,9 +964,50 @@ alembic history
 |----------|------|
 | 应用日志 | `logs/app.log` |
 | 错误日志 | `logs/error.log` |
+| 流水线日志 | `logs/pipeline.log` |
+| 自动收割日志 | `logs/auto_harvest.log` |
 | Docker 日志 | `docker-compose logs -f app` |
 | 空心场次 | `data/logs/hollow_matches.log` |
 | Boxing Day 信号 | `logs/boxing_day/signal_execution.json` |
+
+### 流水线监控
+
+**V26.1 流水线健康状态监控**:
+
+```bash
+# 查看流水线健康状态
+cat data/monitoring/pipeline_health.json | jq '.health_status'
+
+# 实时监控收割进度
+tail -f logs/auto_harvest.log
+
+# 查看流水线处理日志
+tail -f logs/pipeline.log
+
+# 检查批次处理日志
+ls -la logs/v26_batch*.log
+
+# 使用监控脚本（V26.1 新增）
+./scripts/monitor_pipeline.sh     # 实时监控流水线状态
+./scripts/check_v26_progress.sh   # 检查 V26.1 收割进度
+```
+
+**健康指标说明**:
+- `health_score`: 健康评分（0-100）
+- `health_status`: 健康状态（healthy/degraded/critical）
+- `pipeline_stats`: 流水线统计信息
+  - `throughput_per_hour`: 每小时处理场次
+  - `feature_dimension_counts`: 特征维度分布
+- `prometheus_metrics`: Prometheus 指标快照
+- `alerts`: 告警信息列表
+
+**V26.1 收割脚本对比**:
+
+| 脚本 | 用途 | 特性 | 推荐场景 |
+|------|------|------|----------|
+| `auto_harvest_batches.py` | 自动分批收割 | 内存监控、断点续传、失败重试 | **生产环境**（推荐） |
+| `run_v26_full_harvest.py` | 全量收割 | 4 进程并行、特征剪枝、幂等性 | 大规模数据处理 |
+| `run_v26_full_pipeline.py` | 完整流水线 | L1+L2+训练一体化 | 端到端测试 |
 
 ### 应急恢复
 
@@ -903,11 +1043,16 @@ make db-drop
 
 **🚨 CRITICAL**: This is a production system support document. Any violations of these standards will be automatically rejected!
 
-**🧬 技术栈DNA版本**: V25.1.0 (万能自适应特征提取引擎) | **最后验证**: 2025-12-27 |
-**基线准确率**: V19.4.1: 65.52% | **数据集**: 英超22/23+23/24赛季 761场有效数据 |
-**生产状态**: V25.1.0 Production | **API版本**: V11.0 多联赛增强版 |
-**Docker 基线**: V30.0 (Cloud-Native) | **统一入口**: docker-compose up -d |
+**🧬 技术栈DNA版本**: V26.1 (生产级"零缺陷"收割流水线) | **最后验证**: 2025-12-27 |
+**基线准确率**: V19.4.1: 65.52% | **数据集**: 13,129+ 场历史比赛数据 |
+**生产状态**: V26.1 Production | **API版本**: V11.0 多联赛增强版 |
+**Docker 基线**: V30.0 (Cloud-Native) | **统一入口**: `main_production.py --full-pipeline` |
 **项目愿景**: 年化 25% 收益率 | 详见: docs/PROJECT_VISION.md |
+
+**版本说明**:
+- V26.1: 当前生产版本（零缺陷收割流水线）
+- V51.0: README 显示版本（历史遗留，实际以 V26.1 为准）
+- 代码版本 25.1.0: PyPI 包版本（见 pyproject.toml）
 
 ---
 
@@ -954,7 +1099,10 @@ ruff check src/ --select=C901 --show-source  # 复杂度分析
 
 | 版本号 | 入口文件 | 流水线 | 特征维度 | 状态 |
 |--------|----------|--------|----------|------|
-| **V25.1.0** | `main_production.py` | V25.1 自适应引擎 | 48 → 12061 维 | **当前版本** |
+| **V26.1** | `main_production.py` | V26.1 零缺陷收割流水线 | 48 → 12061 维 | **当前版本** |
+| **V26.0** | `src/config_unified.py` | 配置基准版本 | 48 维 | **配置基准** |
+| **V25.1.0** | `main_production.py` | V25.1 自适应引擎 | 48 → 12061 维 | **特征引擎** |
+| **V50.0** | - | Rich L1 扫描引擎 | - | **L1 采集** |
 | **V30.0** | `docker-compose up -d` | `src/ops/data_pipeline_v25.py` | 48 维 | **Cloud-Native 基线** |
 | V34.0 | `docker-compose --profile holographic up -d` | `src/ml/miners_v34/` | 800+ 维 | 全息收割 |
 | **V19.4.1** | `main_production.py` | `src/core/pipeline_v19_4.py` | 48 维 | **本地生产基线** |
@@ -1133,11 +1281,14 @@ PYTHONDEVMODE=1           # 开发者模式（代码修改实时生效）
 #### 版本切换指南
 
 ```bash
-# 使用 V25.1.0 当前版本（推荐）
+# 使用 V26.1 当前版本（推荐）
 python main_production.py --full-pipeline
 
 # 使用 V30.0 Docker 基线版本
 docker-compose up -d
+
+# 使用 V25.1.0 自适应特征提取引擎
+python main_production.py l2-parse --extractor-version V25.1
 
 # 使用 V19.4.1 本地生产版本
 python main_production.py --full-pipeline
@@ -1173,7 +1324,65 @@ python src/ml/models/v39_0_final.py
 - [ ] 文档更新完整
 - [ ] Context Lock 审批通过（P0/P1 模块）
 
-### H. 监控与可观测性
+### H. V26.1 数据流与工作流
+
+**V26.1 完整数据流**:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    V26.1 数据流架构                           │
+├─────────────────────────────────────────────────────────────┤
+│                                                               │
+│  ┌───────────────────────────────────────────────────────┐  │
+│  │  L1: FotMob API 数据采集                              │  │
+│  │  - v50_autonomous_season_discoverer.py (赛季发现)     │  │
+│  │  - v50_rich_l1_scanner.py (Rich L1 扫描)              │  │
+│  │  - 输出: matches 表 (match_id, home_score, status)   │  │
+│  └───────────────────────────────────────────────────────┘  │
+│                           ↓                                  │
+│  ┌───────────────────────────────────────────────────────┐  │
+│  │  L2: Schema-Agnostic 递归解析                          │  │
+│  │  - v25_production_extractor.py (自适应提取)           │  │
+│  │  - 输出: raw_match_data 表 (JSON 原始数据)           │  │
+│  └───────────────────────────────────────────────────────┘  │
+│                           ↓                                  │
+│  ┌───────────────────────────────────────────────────────┐  │
+│  │  L3: 特征提取 + 数据收割                               │  │
+│  │  - auto_harvest_batches.py (自动分批)                │  │
+│  │  - run_v26_full_harvest.py (全量收割)                │  │
+│  │  - 输出: 特征文件 (parquet/csv)                       │  │
+│  └───────────────────────────────────────────────────────┘  │
+│                           ↓                                  │
+│  ┌───────────────────────────────────────────────────────┐  │
+│  │  L4: 模型训练 + 预测                                   │  │
+│  │  - pipeline_v19_4.py (V19.4 流水线)                  │  │
+│  │  - XGBoost 2.0+ 训练                                   │  │
+│  │  - 输出: 模型文件 (.pkl)                               │  │
+│  └───────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**V26.1 关键工作流**:
+
+| 工作流 | 入口 | 输出 | 耗时 |
+|--------|------|------|------|
+| L1 数据收割 | `python main_production.py l1-harvest` | matches 表新增记录 | 视数据量 |
+| L2 特征解析 | `python main_production.py l2-parse` | raw_match_data 表 | ~10 分钟 |
+| V26.1 自动收割 | `python scripts/auto_harvest_batches.py` | 特征文件 + 健康报告 | 持续运行 |
+| V26.1 全量收割 | `python scripts/run_v26_full_harvest.py` | 完整特征数据集 | 1-3 小时 |
+| 模型训练 | `python main_production.py train` | 模型文件 + 评估报告 | ~5 分钟 |
+| 模型预测 | `python main_production.py predict` | 预测结果 | <1 秒 |
+
+**V26.1 数据文件说明**:
+
+| 文件路径 | 说明 | 格式 |
+|----------|------|------|
+| `data/processed/V26_Baseline_40D.parquet` | V26 基线特征数据（40 维） | Parquet |
+| `data/processed/V26_Gold_9305.parquet` | V26 黄金数据集（9305 场） | Parquet |
+| `data/processed/V26_Feature_Distribution.png` | 特征分布可视化 | PNG |
+| `data/monitoring/pipeline_health.json` | 流水线健康状态 | JSON |
+
+### I. 监控与可观测性
 
 项目使用 Prometheus + Grafana 构建完整的监控体系。
 

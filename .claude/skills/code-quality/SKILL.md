@@ -91,6 +91,11 @@ make prepush        # Complete pre-commit check
 - **Quality Metrics**: Grafana dashboard at http://localhost:3000
 - **CI Status**: Real-time monitoring available
 
+## Related Skills
+- `docker-devops`: Docker and DevOps best practices
+- `fastapi-development`: FastAPI async API development
+- `api-testing`: API testing (FastAPI endpoints)
+
 ## Integration with Development Environment
 This skill integrates with:
 - VS Code/Cursor IDE extensions

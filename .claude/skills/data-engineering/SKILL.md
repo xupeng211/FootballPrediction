@@ -575,6 +575,12 @@ def get_cache_performance_report(cache_manager: AdvancedCacheManager) -> dict:
 5. **故障恢复**: 实现重试机制和降级策略
 6. **容量规划**: 监控数据增长趋势，提前规划容量
 
+## 相关技能
+- `v26-harvest`: V26.1 收割流水线
+- `database-operations`: 数据库操作
+- `feature-engineering`: 特征工程专项
+- `data-collection`: FotMob API 数据采集
+
 ---
-*Last updated: 2025-12-18*
+*Last updated: 2025-12-28*
 *Target: 足球预测系统数据层优化*
