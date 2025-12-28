@@ -90,12 +90,15 @@ class MasterCollector:
 
     async def initialize(self):
         """初始化连接池"""
+        from src.config_unified import get_settings
+
+        settings = get_settings()
         self.db_pool = await asyncpg.create_pool(
-            host="localhost",
-            port=5432,
-            database="football_db",
-            user="football_user",
-            password="football_pass",
+            host=settings.database.host,
+            port=settings.database.port,
+            database=settings.database.name,
+            user=settings.database.user,
+            password=settings.database.password.get_secret_value(),
             min_size=2,
             max_size=10,
         )
@@ -114,12 +117,15 @@ class MasterCollector:
                 if self.db_pool:
                     return await self.db_pool.acquire()
                 else:
+                    from src.config_unified import get_settings
+
+                    settings = get_settings()
                     return await asyncpg.connect(
-                        host="localhost",
-                        port=5432,
-                        database="football_db",
-                        user="football_user",
-                        password="football_pass",
+                        host=settings.database.host,
+                        port=settings.database.port,
+                        database=settings.database.name,
+                        user=settings.database.user,
+                        password=settings.database.password.get_secret_value(),
                     )
             except Exception as e:
                 logger.warning(f"数据库连接失败 (尝试 {attempt + 1}/{self.config.retry_attempts}): {e}")

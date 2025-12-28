@@ -1,0 +1,2990 @@
+match_id,home_team,away_team,match_time
+2343,Saint-Etienne,Lorient,2020-08-30 21:00:00+08:00
+2354,Saint-Etienne,Strasbourg,2020-09-13 03:00:00+08:00
+2356,Cadiz,Osasuna,2020-09-13 03:00:00+08:00
+2370,Sheffield United,Wolverhampton Wanderers,2020-09-15 01:00:00+08:00
+2374,Marseille,Saint-Etienne,2020-09-18 03:00:00+08:00
+2375,Famalicao,Benfica,2020-09-19 02:00:00+08:00
+2378,Vitoria de Guimaraes,Cova da Piedade SAD,2020-09-19 04:15:00+08:00
+2387,Nacional,Boavista,2020-09-19 23:00:00+08:00
+2395,FC Porto,Braga,2020-09-20 04:00:00+08:00
+2404,SD Huesca,Cadiz,2020-09-20 22:00:00+08:00
+2405,Santa Clara,Maritimo,2020-09-20 23:00:00+08:00
+2406,Nantes,Saint-Etienne,2020-09-20 23:00:00+08:00
+2411,Moreirense,Farense,2020-09-21 01:30:00+08:00
+2415,Tondela,Rio Ave,2020-09-21 04:00:00+08:00
+2416,Aston Villa,Sheffield United,2020-09-22 01:00:00+08:00
+2417,Portimonense,Pacos de Ferreira,2020-09-22 02:45:00+08:00
+2421,Braga,Santa Clara,2020-09-26 03:30:00+08:00
+2431,Maritimo,Tondela,2020-09-26 22:30:00+08:00
+2432,Saint-Etienne,Rennes,2020-09-26 23:00:00+08:00
+2436,Benfica,Moreirense,2020-09-27 01:30:00+08:00
+2440,Boavista,FC Porto,2020-09-27 04:00:00+08:00
+2442,Sheffield United,Leeds United,2020-09-27 19:00:00+08:00
+2452,Farense,Nacional,2020-09-27 22:30:00+08:00
+2453,Gil Vicente,Portimonense,2020-09-27 23:00:00+08:00
+2457,Cadiz,Sevilla,2020-09-28 00:30:00+08:00
+2459,Pacos de Ferreira,Sporting CP,2020-09-28 01:30:00+08:00
+2463,Rio Ave,Vitoria de Guimaraes,2020-09-28 04:00:00+08:00
+2465,Cova da Piedade SAD,Famalicao,2020-09-29 02:45:00+08:00
+2473,Athletic Club,Cadiz,2020-10-02 01:00:00+08:00
+2476,Moreirense,Boavista,2020-10-03 02:00:00+08:00
+2479,Vitoria de Guimaraes,Pacos de Ferreira,2020-10-03 04:15:00+08:00
+2489,Santa Clara,Gil Vicente,2020-10-03 23:00:00+08:00
+2490,Lens,Saint-Etienne,2020-10-03 23:00:00+08:00
+2495,FC Porto,Maritimo,2020-10-04 01:30:00+08:00
+2499,Tondela,Braga,2020-10-04 04:00:00+08:00
+2506,Arsenal,Sheffield United,2020-10-04 21:00:00+08:00
+2513,Nacional,Cova da Piedade SAD,2020-10-04 22:30:00+08:00
+2517,Cadiz,Granada,2020-10-05 00:30:00+08:00
+2518,Famalicao,Rio Ave,2020-10-05 01:30:00+08:00
+2519,Benfica,Farense,2020-10-05 01:30:00+08:00
+2523,Portimonense,Sporting CP,2020-10-05 04:00:00+08:00
+2535,Maritimo,Portimonense,2020-10-17 22:30:00+08:00
+2536,Gil Vicente,Tondela,2020-10-17 22:30:00+08:00
+2539,Real Madrid,Cadiz,2020-10-18 00:30:00+08:00
+2541,Braga,Nacional,2020-10-18 01:00:00+08:00
+2546,Sporting CP,FC Porto,2020-10-18 03:30:00+08:00
+2548,Sheffield United,Fulham,2020-10-18 19:00:00+08:00
+2557,Pacos de Ferreira,Santa Clara,2020-10-18 22:00:00+08:00
+2558,Cova da Piedade SAD,Moreirense,2020-10-18 22:00:00+08:00
+2559,Saint-Etienne,Nice,2020-10-18 23:00:00+08:00
+2562,Farense,Famalicao,2020-10-19 00:30:00+08:00
+2568,Rio Ave,Benfica,2020-10-19 03:00:00+08:00
+2571,Boavista,Vitoria de Guimaraes,2020-10-20 03:15:00+08:00
+2572,Dynamo Kyiv,Juventus,2020-10-21 00:55:00+08:00
+2573,Zenit St. Petersburg,Club Brugge,2020-10-21 00:55:00+08:00
+2574,Lazio,Borussia Dortmund,2020-10-21 03:00:00+08:00
+2575,Barcelona,Ferencvaros,2020-10-21 03:00:00+08:00
+2576,Paris Saint-Germain,Manchester United,2020-10-21 03:00:00+08:00
+2577,Chelsea,Sevilla,2020-10-21 03:00:00+08:00
+2578,Rennes,FC Krasnodar,2020-10-21 03:00:00+08:00
+2579,RB Leipzig,Başakşehir,2020-10-21 03:00:00+08:00
+2580,Real Madrid,Shakhtar Donetsk,2020-10-22 00:55:00+08:00
+2581,Salzburg,Lokomotiv Moscow,2020-10-22 00:55:00+08:00
+2582,Ajax,Liverpool,2020-10-22 03:00:00+08:00
+2583,Inter,Borussia Mönchengladbach,2020-10-22 03:00:00+08:00
+2584,Bayern München,Atletico Madrid,2020-10-22 03:00:00+08:00
+2585,FC Midtjylland,Atalanta,2020-10-22 03:00:00+08:00
+2587,Manchester City,FC Porto,2020-10-22 03:00:00+08:00
+2592,Tondela,Portimonense,2020-10-24 03:30:00+08:00
+2600,Nacional,Pacos de Ferreira,2020-10-24 22:30:00+08:00
+2606,Santa Clara,Sporting CP,2020-10-25 01:00:00+08:00
+2609,Liverpool,Sheffield United,2020-10-25 03:00:00+08:00
+2610,FC Porto,Gil Vicente,2020-10-25 03:30:00+08:00
+2613,Metz,Saint-Etienne,2020-10-25 22:00:00+08:00
+2618,Moreirense,Maritimo,2020-10-25 23:00:00+08:00
+2619,Farense,Rio Ave,2020-10-25 23:00:00+08:00
+2620,Cadiz,Villarreal,2020-10-25 23:00:00+08:00
+2624,Famalicao,Boavista,2020-10-26 01:30:00+08:00
+2629,Vitoria de Guimaraes,Braga,2020-10-26 04:00:00+08:00
+2634,Benfica,Cova da Piedade SAD,2020-10-27 04:15:00+08:00
+2635,Shakhtar Donetsk,Inter,2020-10-28 01:55:00+08:00
+2636,Lokomotiv Moscow,Bayern München,2020-10-28 01:55:00+08:00
+2637,Atletico Madrid,Salzburg,2020-10-28 04:00:00+08:00
+2638,Borussia Mönchengladbach,Real Madrid,2020-10-28 04:00:00+08:00
+2639,FC Porto,Olympiacos,2020-10-28 04:00:00+08:00
+2640,Marseille,Manchester City,2020-10-28 04:00:00+08:00
+2641,Atalanta,Ajax,2020-10-28 04:00:00+08:00
+2642,Liverpool,FC Midtjylland,2020-10-28 04:00:00+08:00
+2643,FC Krasnodar,Chelsea,2020-10-29 01:55:00+08:00
+2644,Başakşehir,Paris Saint-Germain,2020-10-29 01:55:00+08:00
+2645,Sevilla,Rennes,2020-10-29 04:00:00+08:00
+2646,Ferencvaros,Dynamo Kyiv,2020-10-29 04:00:00+08:00
+2647,Club Brugge,Lazio,2020-10-29 04:00:00+08:00
+2648,Juventus,Barcelona,2020-10-29 04:00:00+08:00
+2649,Borussia Dortmund,Zenit St. Petersburg,2020-10-29 04:00:00+08:00
+2650,Manchester United,RB Leipzig,2020-10-29 04:00:00+08:00
+2651,Sporting CP,Gil Vicente,2020-10-29 05:45:00+08:00
+2653,Eibar,Cadiz,2020-10-31 04:00:00+08:00
+2655,Pacos de Ferreira,FC Porto,2020-10-31 04:30:00+08:00
+2656,Sheffield United,Manchester City,2020-10-31 20:30:00+08:00
+2664,Cova da Piedade SAD,Farense,2020-10-31 23:30:00+08:00
+2669,Rio Ave,Moreirense,2020-11-01 02:00:00+08:00
+2672,Maritimo,Nacional,2020-11-01 04:30:00+08:00
+2673,Saint-Etienne,Montpellier,2020-11-01 20:00:00+08:00
+2682,Portimonense,Santa Clara,2020-11-01 23:00:00+08:00
+2688,Gil Vicente,Vitoria de Guimaraes,2020-11-02 01:30:00+08:00
+2690,Sporting CP,Tondela,2020-11-02 04:00:00+08:00
+2694,Braga,Famalicao,2020-11-03 02:45:00+08:00
+2698,Boavista,Benfica,2020-11-03 05:00:00+08:00
+2699,Lokomotiv Moscow,Atletico Madrid,2020-11-04 01:55:00+08:00
+2700,Shakhtar Donetsk,Borussia Mönchengladbach,2020-11-04 01:55:00+08:00
+2701,Real Madrid,Inter,2020-11-04 04:00:00+08:00
+2702,Salzburg,Bayern München,2020-11-04 04:00:00+08:00
+2703,Manchester City,Olympiacos,2020-11-04 04:00:00+08:00
+2704,FC Porto,Marseille,2020-11-04 04:00:00+08:00
+2705,FC Midtjylland,Ajax,2020-11-04 04:00:00+08:00
+2706,Atalanta,Liverpool,2020-11-04 04:00:00+08:00
+2707,Zenit St. Petersburg,Lazio,2020-11-05 01:55:00+08:00
+2708,Başakşehir,Manchester United,2020-11-05 01:55:00+08:00
+2709,Sevilla,FC Krasnodar,2020-11-05 04:00:00+08:00
+2710,Ferencvaros,Juventus,2020-11-05 04:00:00+08:00
+2711,Barcelona,Dynamo Kyiv,2020-11-05 04:00:00+08:00
+2712,Club Brugge,Borussia Dortmund,2020-11-05 04:00:00+08:00
+2713,Chelsea,Rennes,2020-11-05 04:00:00+08:00
+2714,RB Leipzig,Paris Saint-Germain,2020-11-05 04:00:00+08:00
+2720,Cova da Piedade SAD,Rio Ave,2020-11-07 04:30:00+08:00
+2729,Tondela,Santa Clara,2020-11-07 23:00:00+08:00
+2733,Chelsea,Sheffield United,2020-11-08 01:30:00+08:00
+2735,Famalicao,Maritimo,2020-11-08 02:00:00+08:00
+2736,Atletico Madrid,Cadiz,2020-11-08 04:00:00+08:00
+2739,Vitoria de Guimaraes,Sporting CP,2020-11-08 04:30:00+08:00
+2749,Nacional,Gil Vicente,2020-11-08 23:00:00+08:00
+2750,Farense,Boavista,2020-11-08 23:00:00+08:00
+2756,FC Porto,Portimonense,2020-11-09 01:30:00+08:00
+2759,Lyon,Saint-Etienne,2020-11-09 04:00:00+08:00
+2761,Benfica,Braga,2020-11-09 04:00:00+08:00
+2774,Brest,Saint-Etienne,2020-11-22 00:00:00+08:00
+2787,Sheffield United,West Ham United,2020-11-22 22:00:00+08:00
+2789,Cadiz,Real Sociedad,2020-11-22 23:15:00+08:00
+2800,FC Krasnodar,Sevilla,2020-11-25 01:55:00+08:00
+2801,Rennes,Chelsea,2020-11-25 01:55:00+08:00
+2802,Dynamo Kyiv,Barcelona,2020-11-25 04:00:00+08:00
+2803,Lazio,Zenit St. Petersburg,2020-11-25 04:00:00+08:00
+2804,Manchester United,Başakşehir,2020-11-25 04:00:00+08:00
+2805,Borussia Dortmund,Club Brugge,2020-11-25 04:00:00+08:00
+2806,Juventus,Ferencvaros,2020-11-25 04:00:00+08:00
+2807,Paris Saint-Germain,RB Leipzig,2020-11-25 04:00:00+08:00
+2808,Olympiacos,Manchester City,2020-11-26 01:55:00+08:00
+2809,Borussia Mönchengladbach,Shakhtar Donetsk,2020-11-26 01:55:00+08:00
+2811,Bayern München,Salzburg,2020-11-26 04:00:00+08:00
+2812,Inter,Real Madrid,2020-11-26 04:00:00+08:00
+2813,Atletico Madrid,Lokomotiv Moscow,2020-11-26 04:00:00+08:00
+2814,Marseille,FC Porto,2020-11-26 04:00:00+08:00
+2815,Liverpool,Atalanta,2020-11-26 04:00:00+08:00
+2816,Ajax,FC Midtjylland,2020-11-26 04:00:00+08:00
+2817,Pacos de Ferreira,Famalicao,2020-11-28 03:00:00+08:00
+2822,Tondela,Vitoria de Guimaraes,2020-11-28 05:00:00+08:00
+2824,Elche,Cadiz,2020-11-28 21:00:00+08:00
+2836,Santa Clara,FC Porto,2020-11-29 02:00:00+08:00
+2837,West Bromwich Albion,Sheffield United,2020-11-29 04:00:00+08:00
+2840,Sporting CP,Moreirense,2020-11-29 04:30:00+08:00
+2849,Gil Vicente,Rio Ave,2020-11-29 23:00:00+08:00
+2850,Portimonense,Nacional,2020-11-29 23:00:00+08:00
+2856,Boavista,Cova da Piedade SAD,2020-11-30 01:30:00+08:00
+2859,Saint-Etienne,Lille,2020-11-30 04:00:00+08:00
+2860,Braga,Farense,2020-11-30 04:00:00+08:00
+2862,Maritimo,Benfica,2020-12-01 03:00:00+08:00
+2865,Shakhtar Donetsk,Real Madrid,2020-12-02 01:55:00+08:00
+2866,Lokomotiv Moscow,Salzburg,2020-12-02 01:55:00+08:00
+2867,Atletico Madrid,Bayern München,2020-12-02 04:00:00+08:00
+2868,Borussia Mönchengladbach,Inter,2020-12-02 04:00:00+08:00
+2870,Atalanta,FC Midtjylland,2020-12-02 04:00:00+08:00
+2871,Liverpool,Ajax,2020-12-02 04:00:00+08:00
+2872,FC Porto,Manchester City,2020-12-02 04:00:00+08:00
+2873,Moreirense,Pacos de Ferreira,2020-12-02 05:45:00+08:00
+2874,FC Krasnodar,Rennes,2020-12-03 01:55:00+08:00
+2875,Başakşehir,RB Leipzig,2020-12-03 01:55:00+08:00
+2876,Club Brugge,Zenit St. Petersburg,2020-12-03 04:00:00+08:00
+2877,Sevilla,Chelsea,2020-12-03 04:00:00+08:00
+2878,Borussia Dortmund,Lazio,2020-12-03 04:00:00+08:00
+2879,Juventus,Dynamo Kyiv,2020-12-03 04:00:00+08:00
+2880,Ferencvaros,Barcelona,2020-12-03 04:00:00+08:00
+2881,Manchester United,Paris Saint-Germain,2020-12-03 04:00:00+08:00
+2893,Moreirense,Gil Vicente,2020-12-05 23:30:00+08:00
+2894,Vitoria de Guimaraes,Portimonense,2020-12-05 23:30:00+08:00
+2899,Famalicao,Sporting CP,2020-12-06 02:00:00+08:00
+2902,Cadiz,Barcelona,2020-12-06 04:00:00+08:00
+2903,FC Porto,Tondela,2020-12-06 04:30:00+08:00
+2909,Dijon,Saint-Etienne,2020-12-06 22:00:00+08:00
+2911,Sheffield United,Leicester City,2020-12-06 22:15:00+08:00
+2913,Nacional,Santa Clara,2020-12-06 23:00:00+08:00
+2918,Rio Ave,Boavista,2020-12-07 01:30:00+08:00
+2921,Cova da Piedade SAD,Braga,2020-12-07 04:00:00+08:00
+2924,Benfica,Pacos de Ferreira,2020-12-07 04:00:00+08:00
+2928,Farense,Maritimo,2020-12-08 04:15:00+08:00
+2929,Zenit St. Petersburg,Borussia Dortmund,2020-12-09 01:55:00+08:00
+2930,Lazio,Club Brugge,2020-12-09 01:55:00+08:00
+2931,Dynamo Kyiv,Ferencvaros,2020-12-09 04:00:00+08:00
+2932,Barcelona,Juventus,2020-12-09 04:00:00+08:00
+2933,Chelsea,FC Krasnodar,2020-12-09 04:00:00+08:00
+2934,Rennes,Sevilla,2020-12-09 04:00:00+08:00
+2935,RB Leipzig,Manchester United,2020-12-09 04:00:00+08:00
+2936,Paris Saint-Germain,Başakşehir,2020-12-10 01:55:00+08:00
+2937,FC Midtjylland,Liverpool,2020-12-10 01:55:00+08:00
+2938,Ajax,Atalanta,2020-12-10 01:55:00+08:00
+2939,Manchester City,Marseille,2020-12-10 04:00:00+08:00
+2940,Olympiacos,FC Porto,2020-12-10 04:00:00+08:00
+2941,Real Madrid,Borussia Mönchengladbach,2020-12-10 04:00:00+08:00
+2942,Bayern München,Lokomotiv Moscow,2020-12-10 04:00:00+08:00
+2943,Salzburg,Atletico Madrid,2020-12-10 04:00:00+08:00
+2944,Inter,Shakhtar Donetsk,2020-12-10 04:00:00+08:00
+2947,Saint-Etienne,Angers,2020-12-12 04:00:00+08:00
+2965,Southampton,Sheffield United,2020-12-13 20:00:00+08:00
+2983,Celta Vigo,Cadiz,2020-12-15 04:00:00+08:00
+3007,Bordeaux,Saint-Etienne,2020-12-17 04:00:00+08:00
+3014,Sheffield United,Manchester United,2020-12-18 04:00:00+08:00
+3017,Portimonense,Famalicao,2020-12-19 04:30:00+08:00
+3025,Maritimo,Cova da Piedade SAD,2020-12-19 23:00:00+08:00
+3033,Tondela,Moreirense,2020-12-20 02:00:00+08:00
+3038,Sporting CP,Farense,2020-12-20 04:30:00+08:00
+3040,Brighton & Hove Albion,Sheffield United,2020-12-20 20:00:00+08:00
+3045,Saint-Etienne,Nimes,2020-12-20 22:00:00+08:00
+3048,Pacos de Ferreira,Boavista,2020-12-20 23:00:00+08:00
+3053,Gil Vicente,Benfica,2020-12-21 01:30:00+08:00
+3054,Cadiz,Getafe,2020-12-21 01:30:00+08:00
+3057,FC Porto,Nacional,2020-12-21 04:00:00+08:00
+3061,Santa Clara,Vitoria de Guimaraes,2020-12-22 04:15:00+08:00
+3066,Braga,Rio Ave,2020-12-23 04:15:00+08:00
+3077,Monaco,Saint-Etienne,2020-12-24 04:00:00+08:00
+3082,Real Betis,Cadiz,2020-12-24 05:00:00+08:00
+3087,Sheffield United,Everton,2020-12-27 04:00:00+08:00
+3091,Famalicao,Gil Vicente,2020-12-27 23:00:00+08:00
+3092,Nacional,Tondela,2020-12-27 23:00:00+08:00
+3094,Farense,Pacos de Ferreira,2020-12-28 01:30:00+08:00
+3096,Cova da Piedade SAD,Sporting CP,2020-12-28 04:00:00+08:00
+3099,Rio Ave,Maritimo,2020-12-29 02:45:00+08:00
+3100,Boavista,Braga,2020-12-29 05:00:00+08:00
+3103,Benfica,Portimonense,2020-12-30 02:00:00+08:00
+3106,Burnley,Sheffield United,2020-12-30 02:00:00+08:00
+3108,Moreirense,Santa Clara,2020-12-30 02:45:00+08:00
+3110,Cadiz,Real Valladolid,2020-12-30 04:30:00+08:00
+3112,Vitoria de Guimaraes,FC Porto,2020-12-30 05:00:00+08:00
+3129,Crystal Palace,Sheffield United,2021-01-02 23:00:00+08:00
+3134,Sporting CP,Braga,2021-01-03 02:00:00+08:00
+3138,Tondela,Famalicao,2021-01-03 21:00:00+08:00
+3142,Maritimo,Boavista,2021-01-03 23:00:00+08:00
+3148,Pacos de Ferreira,Rio Ave,2021-01-04 03:00:00+08:00
+3150,FC Porto,Moreirense,2021-01-04 05:00:00+08:00
+3151,Santa Clara,Benfica,2021-01-05 01:00:00+08:00
+3152,Gil Vicente,Cova da Piedade SAD,2021-01-05 03:00:00+08:00
+3154,Valencia,Cadiz,2021-01-05 04:00:00+08:00
+3155,Portimonense,Farense,2021-01-05 05:15:00+08:00
+3163,Saint-Etienne,Paris Saint-Germain,2021-01-07 04:00:00+08:00
+3167,Braga,Maritimo,2021-01-08 05:00:00+08:00
+3168,Nacional,Sporting CP,2021-01-09 02:00:00+08:00
+3169,Rio Ave,Portimonense,2021-01-09 03:00:00+08:00
+3170,Benfica,Tondela,2021-01-09 03:00:00+08:00
+3173,Famalicao,FC Porto,2021-01-09 05:00:00+08:00
+3180,Moreirense,Vitoria de Guimaraes,2021-01-10 01:00:00+08:00
+3193,Reims,Saint-Etienne,2021-01-10 04:00:00+08:00
+3194,Boavista,Santa Clara,2021-01-10 04:30:00+08:00
+3197,Farense,Gil Vicente,2021-01-10 23:00:00+08:00
+3198,Cadiz,Deportivo Alaves,2021-01-10 23:15:00+08:00
+3201,Cova da Piedade SAD,Pacos de Ferreira,2021-01-11 04:00:00+08:00
+3204,Sheffield United,Newcastle United,2021-01-13 02:00:00+08:00
+3212,Sporting CP,Rio Ave,2021-01-16 02:30:00+08:00
+3215,FC Porto,Benfica,2021-01-16 05:00:00+08:00
+3224,Pacos de Ferreira,Braga,2021-01-16 23:30:00+08:00
+3230,Tondela,Boavista,2021-01-17 04:30:00+08:00
+3232,Strasbourg,Saint-Etienne,2021-01-17 22:00:00+08:00
+3235,Sheffield United,Tottenham Hotspur,2021-01-17 22:00:00+08:00
+3237,Nacional,Moreirense,2021-01-17 23:00:00+08:00
+3241,Santa Clara,Famalicao,2021-01-18 01:30:00+08:00
+3244,Gil Vicente,Maritimo,2021-01-18 04:00:00+08:00
+3246,Portimonense,Cova da Piedade SAD,2021-01-19 04:15:00+08:00
+3250,Cadiz,Levante,2021-01-20 02:00:00+08:00
+3269,Vitoria de Guimaraes,Nacional,2021-01-22 04:15:00+08:00
+3280,Sevilla,Cadiz,2021-01-23 23:15:00+08:00
+3293,Maritimo,Pacos de Ferreira,2021-01-24 23:00:00+08:00
+3297,Moreirense,Portimonense,2021-01-25 01:30:00+08:00
+3300,Saint-Etienne,Lyon,2021-01-25 04:00:00+08:00
+3301,Famalicao,Vitoria de Guimaraes,2021-01-25 04:15:00+08:00
+3302,Cova da Piedade SAD,Tondela,2021-01-25 22:30:00+08:00
+3303,Rio Ave,Santa Clara,2021-01-26 00:30:00+08:00
+3304,Benfica,Nacional,2021-01-26 01:00:00+08:00
+3306,Farense,FC Porto,2021-01-26 04:15:00+08:00
+3309,Braga,Gil Vicente,2021-01-27 03:45:00+08:00
+3312,Boavista,Sporting CP,2021-01-27 05:15:00+08:00
+3317,Manchester United,Sheffield United,2021-01-28 04:15:00+08:00
+3330,Manchester City,Sheffield United,2021-01-30 23:00:00+08:00
+3334,Nacional,Famalicao,2021-01-30 23:30:00+08:00
+3339,Tondela,Farense,2021-01-31 02:00:00+08:00
+3342,Portimonense,Boavista,2021-01-31 04:30:00+08:00
+3344,Nice,Saint-Etienne,2021-01-31 20:00:00+08:00
+3352,Vitoria de Guimaraes,Maritimo,2021-01-31 23:00:00+08:00
+3353,Cadiz,Atletico Madrid,2021-01-31 23:15:00+08:00
+3361,Santa Clara,Cova da Piedade SAD,2021-02-02 01:00:00+08:00
+3362,FC Porto,Rio Ave,2021-02-02 03:00:00+08:00
+3363,Moreirense,Braga,2021-02-02 03:45:00+08:00
+3365,Sporting CP,Benfica,2021-02-02 05:30:00+08:00
+3367,Sheffield United,West Bromwich Albion,2021-02-03 02:00:00+08:00
+3370,Gil Vicente,Pacos de Ferreira,2021-02-03 04:15:00+08:00
+3381,Saint-Etienne,Nantes,2021-02-04 04:00:00+08:00
+3386,Farense,Santa Clara,2021-02-04 23:00:00+08:00
+3387,Cova da Piedade SAD,FC Porto,2021-02-05 03:00:00+08:00
+3389,Braga,Portimonense,2021-02-05 05:00:00+08:00
+3390,Famalicao,Moreirense,2021-02-05 05:30:00+08:00
+3391,Rio Ave,Nacional,2021-02-06 01:00:00+08:00
+3392,Maritimo,Sporting CP,2021-02-06 03:00:00+08:00
+3394,Benfica,Vitoria de Guimaraes,2021-02-06 03:00:00+08:00
+3396,Pacos de Ferreira,Tondela,2021-02-06 05:00:00+08:00
+3397,Boavista,Gil Vicente,2021-02-06 05:00:00+08:00
+3418,Real Sociedad,Cadiz,2021-02-07 21:00:00+08:00
+3419,Saint-Etienne,Metz,2021-02-07 22:00:00+08:00
+3429,Sheffield United,Chelsea,2021-02-08 03:15:00+08:00
+3432,Braga,FC Porto,2021-02-08 04:45:00+08:00
+3433,Farense,Moreirense,2021-02-09 01:00:00+08:00
+3434,Benfica,Famalicao,2021-02-09 03:00:00+08:00
+3435,Maritimo,Santa Clara,2021-02-09 03:00:00+08:00
+3438,Cova da Piedade SAD,Vitoria de Guimaraes,2021-02-09 05:00:00+08:00
+3439,Pacos de Ferreira,Portimonense,2021-02-09 23:00:00+08:00
+3440,Rio Ave,Tondela,2021-02-10 01:00:00+08:00
+3441,Boavista,Nacional,2021-02-10 03:00:00+08:00
+3443,Gil Vicente,Sporting CP,2021-02-10 05:00:00+08:00
+3446,Famalicao,Cova da Piedade SAD,2021-02-13 04:30:00+08:00
+3455,Nacional,Farense,2021-02-13 23:30:00+08:00
+3461,Vitoria de Guimaraes,Rio Ave,2021-02-14 02:00:00+08:00
+3465,FC Porto,Boavista,2021-02-14 04:30:00+08:00
+3471,Rennes,Saint-Etienne,2021-02-14 22:00:00+08:00
+3475,Portimonense,Gil Vicente,2021-02-14 23:00:00+08:00
+3481,Santa Clara,Braga,2021-02-15 01:30:00+08:00
+3485,Moreirense,Benfica,2021-02-15 04:15:00+08:00
+3486,West Ham United,Sheffield United,2021-02-16 02:00:00+08:00
+3489,Cadiz,Athletic Club,2021-02-16 04:00:00+08:00
+3490,Sporting CP,Pacos de Ferreira,2021-02-16 04:15:00+08:00
+3491,Tondela,Maritimo,2021-02-17 01:45:00+08:00
+3492,Barcelona,Paris Saint-Germain,2021-02-17 04:00:00+08:00
+3493,RB Leipzig,Liverpool,2021-02-17 04:00:00+08:00
+3497,FC Porto,Juventus,2021-02-18 04:00:00+08:00
+3498,Sevilla,Borussia Dortmund,2021-02-18 04:00:00+08:00
+3500,Vitoria de Guimaraes,Farense,2021-02-18 05:45:00+08:00
+3505,Boavista,Moreirense,2021-02-20 04:30:00+08:00
+3506,Saint-Etienne,Reims,2021-02-20 20:00:00+08:00
+3515,Cova da Piedade SAD,Nacional,2021-02-20 23:30:00+08:00
+3518,Gil Vicente,Santa Clara,2021-02-21 01:30:00+08:00
+3522,Fulham,Sheffield United,2021-02-21 04:00:00+08:00
+3523,Sporting CP,Portimonense,2021-02-21 04:30:00+08:00
+3527,Barcelona,Cadiz,2021-02-21 21:00:00+08:00
+3534,Rio Ave,Famalicao,2021-02-21 23:00:00+08:00
+3535,Pacos de Ferreira,Vitoria de Guimaraes,2021-02-21 23:00:00+08:00
+3541,Braga,Tondela,2021-02-22 02:00:00+08:00
+3545,Farense,Benfica,2021-02-22 04:15:00+08:00
+3546,Maritimo,FC Porto,2021-02-23 03:00:00+08:00
+3550,Atletico Madrid,Chelsea,2021-02-24 04:00:00+08:00
+3551,Lazio,Bayern München,2021-02-24 04:00:00+08:00
+3554,Atalanta,Real Madrid,2021-02-25 04:00:00+08:00
+3555,Borussia Mönchengladbach,Manchester City,2021-02-25 04:00:00+08:00
+3559,Vitoria de Guimaraes,Boavista,2021-02-27 04:30:00+08:00
+3569,Famalicao,Farense,2021-02-27 23:30:00+08:00
+3574,Santa Clara,Pacos de Ferreira,2021-02-28 02:00:00+08:00
+3577,FC Porto,Sporting CP,2021-02-28 04:30:00+08:00
+3586,Lorient,Saint-Etienne,2021-02-28 22:00:00+08:00
+3589,Portimonense,Maritimo,2021-02-28 23:00:00+08:00
+3590,Cadiz,Real Betis,2021-02-28 23:15:00+08:00
+3594,Tondela,Gil Vicente,2021-03-01 01:30:00+08:00
+3596,Sheffield United,Liverpool,2021-03-01 03:15:00+08:00
+3599,Nacional,Braga,2021-03-01 04:00:00+08:00
+3600,Benfica,Rio Ave,2021-03-02 03:00:00+08:00
+3603,Moreirense,Cova da Piedade SAD,2021-03-02 04:15:00+08:00
+3610,Saint-Etienne,Lens,2021-03-04 02:00:00+08:00
+3611,Sheffield United,Aston Villa,2021-03-04 02:00:00+08:00
+3621,Pacos de Ferreira,Nacional,2021-03-06 02:30:00+08:00
+3624,Sporting CP,Santa Clara,2021-03-06 04:45:00+08:00
+3632,Sheffield United,Southampton,2021-03-06 23:00:00+08:00
+3634,Portimonense,Tondela,2021-03-06 23:30:00+08:00
+3637,Cadiz,Eibar,2021-03-07 01:30:00+08:00
+3638,Gil Vicente,FC Porto,2021-03-07 02:00:00+08:00
+3641,Boavista,Famalicao,2021-03-07 04:30:00+08:00
+3649,Maritimo,Moreirense,2021-03-08 01:30:00+08:00
+3653,Rio Ave,Farense,2021-03-08 04:00:00+08:00
+3657,Cova da Piedade SAD,Benfica,2021-03-09 04:15:00+08:00
+3658,Borussia Dortmund,Sevilla,2021-03-10 04:00:00+08:00
+3659,Juventus,FC Porto,2021-03-10 04:00:00+08:00
+3660,Braga,Vitoria de Guimaraes,2021-03-10 05:45:00+08:00
+3665,Paris Saint-Germain,Barcelona,2021-03-11 04:00:00+08:00
+3666,Liverpool,RB Leipzig,2021-03-11 04:00:00+08:00
+3671,Nacional,Maritimo,2021-03-13 04:30:00+08:00
+3672,Angers,Saint-Etienne,2021-03-13 20:00:00+08:00
+3674,Deportivo Alaves,Cadiz,2021-03-13 21:00:00+08:00
+3681,Farense,Cova da Piedade SAD,2021-03-13 23:30:00+08:00
+3686,Benfica,Boavista,2021-03-14 02:00:00+08:00
+3687,Santa Clara,Portimonense,2021-03-14 02:00:00+08:00
+3690,Tondela,Sporting CP,2021-03-14 04:30:00+08:00
+3699,Leicester City,Sheffield United,2021-03-14 22:00:00+08:00
+3701,Moreirense,Rio Ave,2021-03-14 23:00:00+08:00
+3706,Vitoria de Guimaraes,Gil Vicente,2021-03-15 01:30:00+08:00
+3709,FC Porto,Pacos de Ferreira,2021-03-15 04:00:00+08:00
+3714,Famalicao,Braga,2021-03-16 04:15:00+08:00
+3715,Real Madrid,Atalanta,2021-03-17 04:00:00+08:00
+3716,Manchester City,Borussia Mönchengladbach,2021-03-17 04:00:00+08:00
+3718,Chelsea,Atletico Madrid,2021-03-18 04:00:00+08:00
+3719,Bayern München,Lazio,2021-03-18 04:00:00+08:00
+3722,Saint-Etienne,Monaco,2021-03-20 04:00:00+08:00
+3724,Gil Vicente,Nacional,2021-03-20 04:30:00+08:00
+3732,Santa Clara,Tondela,2021-03-20 23:30:00+08:00
+3733,Pacos de Ferreira,Moreirense,2021-03-20 23:30:00+08:00
+3737,Portimonense,FC Porto,2021-03-21 02:00:00+08:00
+3740,Sporting CP,Vitoria de Guimaraes,2021-03-21 04:30:00+08:00
+3749,Rio Ave,Cova da Piedade SAD,2021-03-21 23:00:00+08:00
+3751,Villarreal,Cadiz,2021-03-21 23:15:00+08:00
+3755,Boavista,Farense,2021-03-22 01:30:00+08:00
+3757,Maritimo,Famalicao,2021-03-22 01:30:00+08:00
+3760,Braga,Benfica,2021-03-22 04:00:00+08:00
+3763,Nacional,Portimonense,2021-04-03 03:30:00+08:00
+3772,Leeds United,Sheffield United,2021-04-03 22:00:00+08:00
+3778,Rio Ave,Gil Vicente,2021-04-04 01:00:00+08:00
+3782,FC Porto,Santa Clara,2021-04-04 03:30:00+08:00
+3792,Cova da Piedade SAD,Boavista,2021-04-04 22:00:00+08:00
+3794,Nimes,Saint-Etienne,2021-04-04 23:05:00+08:00
+3797,Vitoria de Guimaraes,Tondela,2021-04-05 00:30:00+08:00
+3798,Cadiz,Valencia,2021-04-05 00:30:00+08:00
+3800,Famalicao,Pacos de Ferreira,2021-04-05 03:00:00+08:00
+3804,Farense,Braga,2021-04-06 01:45:00+08:00
+3805,Benfica,Maritimo,2021-04-06 02:00:00+08:00
+3808,Moreirense,Sporting CP,2021-04-06 04:00:00+08:00
+3809,Real Madrid,Liverpool,2021-04-07 03:00:00+08:00
+3810,Manchester City,Borussia Dortmund,2021-04-07 03:00:00+08:00
+3811,Bayern München,Paris Saint-Germain,2021-04-08 03:00:00+08:00
+3812,FC Porto,Chelsea,2021-04-08 03:00:00+08:00
+3815,Portimonense,Vitoria de Guimaraes,2021-04-10 03:00:00+08:00
+3820,Getafe,Cadiz,2021-04-10 20:00:00+08:00
+3825,Maritimo,Farense,2021-04-10 22:00:00+08:00
+3828,Boavista,Rio Ave,2021-04-10 22:30:00+08:00
+3833,Tondela,FC Porto,2021-04-11 01:00:00+08:00
+3836,Pacos de Ferreira,Benfica,2021-04-11 03:30:00+08:00
+3840,Saint-Etienne,Bordeaux,2021-04-11 21:00:00+08:00
+3846,Gil Vicente,Moreirense,2021-04-11 22:00:00+08:00
+3848,Santa Clara,Nacional,2021-04-11 22:30:00+08:00
+3853,Braga,Cova da Piedade SAD,2021-04-12 00:30:00+08:00
+3854,Sheffield United,Arsenal,2021-04-12 02:00:00+08:00
+3855,Sporting CP,Famalicao,2021-04-12 03:00:00+08:00
+3862,Paris Saint-Germain,Bayern München,2021-04-14 03:00:00+08:00
+3863,Chelsea,FC Porto,2021-04-14 03:00:00+08:00
+3864,Liverpool,Real Madrid,2021-04-15 03:00:00+08:00
+3865,Borussia Dortmund,Manchester City,2021-04-15 03:00:00+08:00
+3866,Boavista,Pacos de Ferreira,2021-04-17 01:45:00+08:00
+3870,Farense,Sporting CP,2021-04-17 04:00:00+08:00
+3878,Moreirense,Tondela,2021-04-17 22:30:00+08:00
+3879,Vitoria de Guimaraes,Santa Clara,2021-04-17 22:30:00+08:00
+3882,Cova da Piedade SAD,Maritimo,2021-04-18 01:00:00+08:00
+3883,Benfica,Gil Vicente,2021-04-18 01:00:00+08:00
+3884,Wolverhampton Wanderers,Sheffield United,2021-04-18 03:15:00+08:00
+3885,Rio Ave,Braga,2021-04-18 03:30:00+08:00
+3886,Paris Saint-Germain,Saint-Etienne,2021-04-18 19:00:00+08:00
+3895,Famalicao,Portimonense,2021-04-18 22:00:00+08:00
+3901,Cadiz,Celta Vigo,2021-04-19 00:30:00+08:00
+3902,Nacional,FC Porto,2021-04-19 00:30:00+08:00
+3911,Pacos de Ferreira,Farense,2021-04-21 03:00:00+08:00
+3913,Santa Clara,Moreirense,2021-04-21 22:30:00+08:00
+3914,Maritimo,Rio Ave,2021-04-22 00:00:00+08:00
+3918,Braga,Boavista,2021-04-22 02:00:00+08:00
+3927,Cadiz,Real Madrid,2021-04-22 04:00:00+08:00
+3928,Sporting CP,Cova da Piedade SAD,2021-04-22 04:15:00+08:00
+3929,Tondela,Nacional,2021-04-22 22:00:00+08:00
+3930,Gil Vicente,Famalicao,2021-04-23 00:00:00+08:00
+3932,Portimonense,Benfica,2021-04-23 02:00:00+08:00
+3937,FC Porto,Vitoria de Guimaraes,2021-04-23 04:00:00+08:00
+3941,Saint-Etienne,Brest,2021-04-24 19:00:00+08:00
+3948,Real Valladolid,Cadiz,2021-04-24 22:15:00+08:00
+3953,Sheffield United,Brighton & Hove Albion,2021-04-25 03:00:00+08:00
+3964,Boavista,Maritimo,2021-04-25 22:00:00+08:00
+3970,Rio Ave,Pacos de Ferreira,2021-04-26 00:30:00+08:00
+3972,Braga,Sporting CP,2021-04-26 03:00:00+08:00
+3975,Cova da Piedade SAD,Gil Vicente,2021-04-27 00:00:00+08:00
+3976,Famalicao,Tondela,2021-04-27 02:00:00+08:00
+3977,Benfica,Santa Clara,2021-04-27 02:00:00+08:00
+3978,Nacional,Vitoria de Guimaraes,2021-04-27 02:00:00+08:00
+3981,Moreirense,FC Porto,2021-04-27 04:15:00+08:00
+3982,Real Madrid,Chelsea,2021-04-28 03:00:00+08:00
+3983,Farense,Portimonense,2021-04-28 04:45:00+08:00
+3985,Paris Saint-Germain,Manchester City,2021-04-29 03:00:00+08:00
+3987,Maritimo,Braga,2021-04-30 03:30:00+08:00
+3988,Pacos de Ferreira,Cova da Piedade SAD,2021-04-30 22:00:00+08:00
+3989,Vitoria de Guimaraes,Moreirense,2021-05-01 00:00:00+08:00
+3990,Tondela,Benfica,2021-05-01 02:00:00+08:00
+3994,FC Porto,Famalicao,2021-05-01 04:15:00+08:00
+3999,Gil Vicente,Farense,2021-05-01 22:30:00+08:00
+4003,Santa Clara,Boavista,2021-05-02 01:00:00+08:00
+4004,Portimonense,Rio Ave,2021-05-02 01:00:00+08:00
+4008,Sporting CP,Nacional,2021-05-02 03:30:00+08:00
+4017,Montpellier,Saint-Etienne,2021-05-02 23:05:00+08:00
+4018,Granada,Cadiz,2021-05-03 00:30:00+08:00
+4019,Tottenham Hotspur,Sheffield United,2021-05-03 02:15:00+08:00
+4026,Manchester City,Paris Saint-Germain,2021-05-05 03:00:00+08:00
+4027,Braga,Pacos de Ferreira,2021-05-06 02:00:00+08:00
+4028,Maritimo,Gil Vicente,2021-05-06 02:00:00+08:00
+4029,Chelsea,Real Madrid,2021-05-06 03:00:00+08:00
+4030,Rio Ave,Sporting CP,2021-05-06 04:15:00+08:00
+4031,Moreirense,Nacional,2021-05-06 22:00:00+08:00
+4032,Cova da Piedade SAD,Portimonense,2021-05-07 00:00:00+08:00
+4034,Benfica,FC Porto,2021-05-07 01:30:00+08:00
+4035,Farense,Vitoria de Guimaraes,2021-05-07 03:30:00+08:00
+4036,Famalicao,Santa Clara,2021-05-08 02:00:00+08:00
+4041,Boavista,Tondela,2021-05-08 04:15:00+08:00
+4049,Sheffield United,Crystal Palace,2021-05-08 22:00:00+08:00
+4053,Cadiz,SD Huesca,2021-05-09 00:30:00+08:00
+4058,Saint-Etienne,Marseille,2021-05-09 19:00:00+08:00
+4067,Pacos de Ferreira,Maritimo,2021-05-09 22:00:00+08:00
+4074,Gil Vicente,Braga,2021-05-10 03:00:00+08:00
+4077,Portimonense,Moreirense,2021-05-11 01:00:00+08:00
+4080,FC Porto,Farense,2021-05-11 03:15:00+08:00
+4081,Tondela,Cova da Piedade SAD,2021-05-11 23:00:00+08:00
+4082,Santa Clara,Rio Ave,2021-05-11 23:00:00+08:00
+4084,Nacional,Benfica,2021-05-12 01:00:00+08:00
+4085,Osasuna,Cadiz,2021-05-12 01:00:00+08:00
+4088,Sporting CP,Boavista,2021-05-12 03:30:00+08:00
+4095,Vitoria de Guimaraes,Famalicao,2021-05-13 03:15:00+08:00
+4102,Pacos de Ferreira,Gil Vicente,2021-05-15 02:00:00+08:00
+4104,Braga,Moreirense,2021-05-15 04:15:00+08:00
+4114,Farense,Tondela,2021-05-15 22:30:00+08:00
+4115,Boavista,Portimonense,2021-05-15 22:30:00+08:00
+4116,Benfica,Sporting CP,2021-05-16 01:00:00+08:00
+4118,Rio Ave,FC Porto,2021-05-16 03:30:00+08:00
+4121,Famalicao,Nacional,2021-05-16 22:00:00+08:00
+4124,Cova da Piedade SAD,Santa Clara,2021-05-17 00:00:00+08:00
+4131,Cadiz,Elche,2021-05-17 00:30:00+08:00
+4135,Everton,Sheffield United,2021-05-17 02:00:00+08:00
+4144,Lille,Saint-Etienne,2021-05-17 03:00:00+08:00
+4147,Maritimo,Vitoria de Guimaraes,2021-05-17 03:00:00+08:00
+4151,Tondela,Pacos de Ferreira,2021-05-19 03:15:00+08:00
+4154,FC Porto,Cova da Piedade SAD,2021-05-20 01:00:00+08:00
+4156,Newcastle United,Sheffield United,2021-05-20 01:00:00+08:00
+4158,Vitoria de Guimaraes,Benfica,2021-05-20 03:00:00+08:00
+4159,Nacional,Rio Ave,2021-05-20 03:00:00+08:00
+4160,Santa Clara,Farense,2021-05-20 03:00:00+08:00
+4161,Portimonense,Braga,2021-05-20 03:00:00+08:00
+4162,Gil Vicente,Boavista,2021-05-20 03:00:00+08:00
+4163,Moreirense,Famalicao,2021-05-20 03:00:00+08:00
+4166,Sporting CP,Maritimo,2021-05-20 04:45:00+08:00
+4167,Levante,Cadiz,2021-05-22 03:00:00+08:00
+4191,Sheffield United,Burnley,2021-05-23 23:00:00+08:00
+4202,Saint-Etienne,Dijon,2021-05-24 03:00:00+08:00
+4208,Sporting CP,Vizela,2021-08-07 03:15:00+08:00
+4209,Arouca,Estoril,2021-08-07 19:45:00+08:00
+4211,Moreirense,Benfica,2021-08-08 01:00:00+08:00
+4212,Troyes,Paris Saint-Germain,2021-08-08 03:00:00+08:00
+4213,Maritimo,Braga,2021-08-08 03:30:00+08:00
+4215,Saint-Etienne,Lorient,2021-08-08 21:00:00+08:00
+4219,Vitoria de Guimaraes,Portimonense,2021-08-08 22:30:00+08:00
+4220,Tondela,Santa Clara,2021-08-08 22:30:00+08:00
+4222,FC Porto,Cova da Piedade SAD,2021-08-09 01:00:00+08:00
+4224,Pacos de Ferreira,Famalicao,2021-08-09 03:30:00+08:00
+4225,Gil Vicente,Boavista,2021-08-10 03:15:00+08:00
+4230,Estoril,Vitoria de Guimaraes,2021-08-14 03:15:00+08:00
+4235,VfB Stuttgart,Greuther Fürth,2021-08-14 21:30:00+08:00
+4242,Vizela,Tondela,2021-08-14 22:30:00+08:00
+4246,Benfica,Arouca,2021-08-15 01:00:00+08:00
+4248,Cadiz,Levante,2021-08-15 01:30:00+08:00
+4250,Braga,Sporting CP,2021-08-15 03:30:00+08:00
+4255,Clermont Foot,Troyes,2021-08-15 21:00:00+08:00
+4260,Portimonense,Gil Vicente,2021-08-15 22:30:00+08:00
+4261,Lens,Saint-Etienne,2021-08-15 23:00:00+08:00
+4265,Famalicao,FC Porto,2021-08-16 01:00:00+08:00
+4268,Santa Clara,Moreirense,2021-08-16 03:30:00+08:00
+4271,Boavista,Pacos de Ferreira,2021-08-17 02:00:00+08:00
+4273,Cova da Piedade SAD,Maritimo,2021-08-17 04:15:00+08:00
+4274,Arouca,Famalicao,2021-08-21 02:00:00+08:00
+4276,Real Betis,Cadiz,2021-08-21 03:00:00+08:00
+4278,Moreirense,Braga,2021-08-21 04:15:00+08:00
+4280,Greuther Fürth,Arminia Bielefeld,2021-08-21 21:30:00+08:00
+4293,Gil Vicente,Benfica,2021-08-22 01:00:00+08:00
+4296,Saint-Etienne,Lille,2021-08-22 03:00:00+08:00
+4297,Sporting CP,Cova da Piedade SAD,2021-08-22 03:30:00+08:00
+4304,Strasbourg,Troyes,2021-08-22 21:00:00+08:00
+4307,Tondela,Portimonense,2021-08-22 22:30:00+08:00
+4312,Maritimo,FC Porto,2021-08-23 01:00:00+08:00
+4315,Vitoria de Guimaraes,Vizela,2021-08-23 03:30:00+08:00
+4318,Pacos de Ferreira,Estoril,2021-08-24 02:00:00+08:00
+4321,Boavista,Santa Clara,2021-08-24 04:15:00+08:00
+4322,Cova da Piedade SAD,Moreirense,2021-08-28 02:00:00+08:00
+4326,Estoril,Maritimo,2021-08-28 04:15:00+08:00
+4332,Mainz 05,Greuther Fürth,2021-08-28 21:30:00+08:00
+4339,Vizela,Boavista,2021-08-28 22:30:00+08:00
+4344,FC Porto,Arouca,2021-08-29 01:00:00+08:00
+4347,Marseille,Saint-Etienne,2021-08-29 03:00:00+08:00
+4348,Famalicao,Sporting CP,2021-08-29 03:30:00+08:00
+4350,Troyes,Monaco,2021-08-29 19:00:00+08:00
+4362,Benfica,Tondela,2021-08-30 01:00:00+08:00
+4363,Braga,Vitoria de Guimaraes,2021-08-30 01:00:00+08:00
+4364,Cadiz,Osasuna,2021-08-30 01:30:00+08:00
+4367,Santa Clara,Gil Vicente,2021-08-30 03:30:00+08:00
+4368,Portimonense,Pacos de Ferreira,2021-08-30 03:30:00+08:00
+4375,Greuther Fürth,Wolfsburg,2021-09-11 21:30:00+08:00
+4383,Pacos de Ferreira,Braga,2021-09-11 22:30:00+08:00
+4388,Santa Clara,Benfica,2021-09-12 01:00:00+08:00
+4391,Sporting CP,FC Porto,2021-09-12 03:30:00+08:00
+4392,Montpellier,Saint-Etienne,2021-09-12 19:00:00+08:00
+4397,Metz,Troyes,2021-09-12 21:00:00+08:00
+4400,Moreirense,Famalicao,2021-09-12 22:30:00+08:00
+4404,Cadiz,Real Sociedad,2021-09-13 00:30:00+08:00
+4405,Gil Vicente,Vizela,2021-09-13 01:00:00+08:00
+4406,Boavista,Portimonense,2021-09-13 01:00:00+08:00
+4410,Vitoria de Guimaraes,Cova da Piedade SAD,2021-09-13 03:30:00+08:00
+4411,Maritimo,Arouca,2021-09-14 02:00:00+08:00
+4415,Tondela,Estoril,2021-09-14 04:15:00+08:00
+4416,Young Boys,Manchester United,2021-09-15 00:45:00+08:00
+4417,Sevilla,Salzburg,2021-09-15 00:45:00+08:00
+4418,Barcelona,Bayern München,2021-09-15 03:00:00+08:00
+4419,Dynamo Kyiv,Benfica,2021-09-15 03:00:00+08:00
+4420,Malmö FF,Juventus,2021-09-15 03:00:00+08:00
+4421,Chelsea,Zenit St. Petersburg,2021-09-15 03:00:00+08:00
+4422,Villarreal,Atalanta,2021-09-15 03:00:00+08:00
+4424,Beşiktaş,Borussia Dortmund,2021-09-16 00:45:00+08:00
+4425,FC Sheriff,Shakhtar Donetsk,2021-09-16 00:45:00+08:00
+4426,Manchester City,RB Leipzig,2021-09-16 03:00:00+08:00
+4427,Inter,Real Madrid,2021-09-16 03:00:00+08:00
+4428,Atletico Madrid,FC Porto,2021-09-16 03:00:00+08:00
+4429,Club Brugge,Paris Saint-Germain,2021-09-16 03:00:00+08:00
+4430,Liverpool,Milan,2021-09-16 03:00:00+08:00
+4431,Sporting CP,Ajax,2021-09-16 03:00:00+08:00
+4432,Hertha BSC,Greuther Fürth,2021-09-18 02:30:00+08:00
+4434,Celta Vigo,Cadiz,2021-09-18 03:00:00+08:00
+4436,Portimonense,Santa Clara,2021-09-18 03:15:00+08:00
+4448,Famalicao,Maritimo,2021-09-18 22:30:00+08:00
+4453,Cova da Piedade SAD,Gil Vicente,2021-09-19 01:00:00+08:00
+4454,Saint-Etienne,Bordeaux,2021-09-19 03:00:00+08:00
+4456,Arouca,Vitoria de Guimaraes,2021-09-19 03:30:00+08:00
+4460,Troyes,Montpellier,2021-09-19 21:00:00+08:00
+4467,Vizela,Pacos de Ferreira,2021-09-19 22:30:00+08:00
+4472,FC Porto,Moreirense,2021-09-20 01:00:00+08:00
+4476,Estoril,Sporting CP,2021-09-20 03:30:00+08:00
+4477,Benfica,Boavista,2021-09-21 02:00:00+08:00
+4479,Braga,Tondela,2021-09-21 04:15:00+08:00
+4486,Monaco,Saint-Etienne,2021-09-23 01:00:00+08:00
+4493,Lyon,Troyes,2021-09-23 03:00:00+08:00
+4499,Cadiz,Barcelona,2021-09-24 04:00:00+08:00
+4500,Sporting CP,Maritimo,2021-09-25 02:00:00+08:00
+4501,Greuther Fürth,Bayern München,2021-09-25 02:30:00+08:00
+4502,Gil Vicente,FC Porto,2021-09-25 04:15:00+08:00
+4516,Moreirense,Arouca,2021-09-25 22:30:00+08:00
+4517,Saint-Etienne,Nice,2021-09-25 23:00:00+08:00
+4522,Vitoria de Guimaraes,Benfica,2021-09-26 01:00:00+08:00
+4526,Tondela,Famalicao,2021-09-26 03:30:00+08:00
+4530,Troyes,Angers,2021-09-26 21:00:00+08:00
+4538,Rayo Vallecano,Cadiz,2021-09-27 00:30:00+08:00
+4540,Santa Clara,Braga,2021-09-27 01:00:00+08:00
+4543,Portimonense,Vizela,2021-09-27 03:30:00+08:00
+4544,Pacos de Ferreira,Cova da Piedade SAD,2021-09-28 02:00:00+08:00
+4547,Boavista,Estoril,2021-09-28 04:15:00+08:00
+4548,Shakhtar Donetsk,Inter,2021-09-29 00:45:00+08:00
+4549,Ajax,Beşiktaş,2021-09-29 00:45:00+08:00
+4550,Milan,Atletico Madrid,2021-09-29 03:00:00+08:00
+4551,Borussia Dortmund,Sporting CP,2021-09-29 03:00:00+08:00
+4552,RB Leipzig,Club Brugge,2021-09-29 03:00:00+08:00
+4553,FC Porto,Liverpool,2021-09-29 03:00:00+08:00
+4554,Paris Saint-Germain,Manchester City,2021-09-29 03:00:00+08:00
+4555,Real Madrid,FC Sheriff,2021-09-29 03:00:00+08:00
+4556,Zenit St. Petersburg,Malmö FF,2021-09-30 00:45:00+08:00
+4557,Atalanta,Young Boys,2021-09-30 00:45:00+08:00
+4558,Juventus,Chelsea,2021-09-30 03:00:00+08:00
+4559,Wolfsburg,Sevilla,2021-09-30 03:00:00+08:00
+4560,Benfica,Barcelona,2021-09-30 03:00:00+08:00
+4561,Bayern München,Dynamo Kyiv,2021-09-30 03:00:00+08:00
+4562,Manchester United,Villarreal,2021-09-30 03:00:00+08:00
+4563,Salzburg,Lille,2021-09-30 03:00:00+08:00
+4564,Maritimo,Moreirense,2021-10-02 02:00:00+08:00
+4565,1. FC Köln,Greuther Fürth,2021-10-02 02:30:00+08:00
+4568,Famalicao,Vitoria de Guimaraes,2021-10-02 04:15:00+08:00
+4580,Vizela,Santa Clara,2021-10-02 22:30:00+08:00
+4583,Cadiz,Valencia,2021-10-03 00:30:00+08:00
+4585,FC Porto,Pacos de Ferreira,2021-10-03 01:00:00+08:00
+4588,Arouca,Sporting CP,2021-10-03 03:30:00+08:00
+4592,Nantes,Troyes,2021-10-03 21:00:00+08:00
+4600,Cova da Piedade SAD,Tondela,2021-10-03 22:30:00+08:00
+4606,Benfica,Portimonense,2021-10-04 01:00:00+08:00
+4607,Estoril,Gil Vicente,2021-10-04 01:00:00+08:00
+4609,Saint-Etienne,Lyon,2021-10-04 02:45:00+08:00
+4611,Braga,Boavista,2021-10-04 03:30:00+08:00
+4619,Greuther Fürth,Bochum,2021-10-16 21:30:00+08:00
+4631,Troyes,Nice,2021-10-17 19:00:00+08:00
+4633,Strasbourg,Saint-Etienne,2021-10-17 21:00:00+08:00
+4647,Espanyol,Cadiz,2021-10-19 03:00:00+08:00
+4649,Beşiktaş,Sporting CP,2021-10-20 00:45:00+08:00
+4650,Club Brugge,Manchester City,2021-10-20 00:45:00+08:00
+4651,Inter,FC Sheriff,2021-10-20 03:00:00+08:00
+4652,Shakhtar Donetsk,Real Madrid,2021-10-20 03:00:00+08:00
+4653,Paris Saint-Germain,RB Leipzig,2021-10-20 03:00:00+08:00
+4654,FC Porto,Milan,2021-10-20 03:00:00+08:00
+4655,Ajax,Borussia Dortmund,2021-10-20 03:00:00+08:00
+4656,Atletico Madrid,Liverpool,2021-10-20 03:00:00+08:00
+4657,Barcelona,Dynamo Kyiv,2021-10-21 00:45:00+08:00
+4658,Salzburg,Wolfsburg,2021-10-21 00:45:00+08:00
+4659,Manchester United,Atalanta,2021-10-21 03:00:00+08:00
+4660,Chelsea,Malmö FF,2021-10-21 03:00:00+08:00
+4661,Young Boys,Villarreal,2021-10-21 03:00:00+08:00
+4662,Zenit St. Petersburg,Juventus,2021-10-21 03:00:00+08:00
+4663,Benfica,Bayern München,2021-10-21 03:00:00+08:00
+4664,Lille,Sevilla,2021-10-21 03:00:00+08:00
+4668,Vitoria de Guimaraes,Maritimo,2021-10-23 03:15:00+08:00
+4669,Saint-Etienne,Angers,2021-10-23 04:00:00+08:00
+4673,RB Leipzig,Greuther Fürth,2021-10-23 21:30:00+08:00
+4680,Cadiz,Deportivo Alaves,2021-10-23 22:15:00+08:00
+4681,Santa Clara,Famalicao,2021-10-23 22:30:00+08:00
+4686,Tondela,FC Porto,2021-10-24 01:00:00+08:00
+4689,Sporting CP,Moreirense,2021-10-24 03:30:00+08:00
+4695,Reims,Troyes,2021-10-24 21:00:00+08:00
+4700,Pacos de Ferreira,Arouca,2021-10-24 22:30:00+08:00
+4705,Vizela,Benfica,2021-10-25 01:00:00+08:00
+4709,Portimonense,Estoril,2021-10-25 03:30:00+08:00
+4710,Gil Vicente,Braga,2021-10-26 02:00:00+08:00
+4712,Boavista,Cova da Piedade SAD,2021-10-26 04:15:00+08:00
+4715,Villarreal,Cadiz,2021-10-27 03:30:00+08:00
+4726,Arouca,Tondela,2021-10-30 03:15:00+08:00
+4729,Freiburg,Greuther Fürth,2021-10-30 21:30:00+08:00
+4740,Metz,Saint-Etienne,2021-10-30 23:00:00+08:00
+4741,FC Porto,Boavista,2021-10-31 00:00:00+08:00
+4745,Estoril,Benfica,2021-10-31 02:00:00+08:00
+4748,Sporting CP,Vitoria de Guimaraes,2021-10-31 04:15:00+08:00
+4750,Cadiz,Mallorca,2021-10-31 21:00:00+08:00
+4751,Troyes,Rennes,2021-10-31 22:00:00+08:00
+4758,Maritimo,Gil Vicente,2021-10-31 23:30:00+08:00
+4763,Cova da Piedade SAD,Santa Clara,2021-11-01 02:00:00+08:00
+4766,Famalicao,Vizela,2021-11-01 04:30:00+08:00
+4768,Braga,Portimonense,2021-11-02 03:00:00+08:00
+4771,Moreirense,Pacos de Ferreira,2021-11-02 05:15:00+08:00
+4772,Wolfsburg,Salzburg,2021-11-03 01:45:00+08:00
+4773,Malmö FF,Chelsea,2021-11-03 01:45:00+08:00
+4774,Bayern München,Benfica,2021-11-03 04:00:00+08:00
+4775,Sevilla,Lille,2021-11-03 04:00:00+08:00
+4776,Dynamo Kyiv,Barcelona,2021-11-03 04:00:00+08:00
+4777,Atalanta,Manchester United,2021-11-03 04:00:00+08:00
+4778,Villarreal,Young Boys,2021-11-03 04:00:00+08:00
+4779,Juventus,Zenit St. Petersburg,2021-11-03 04:00:00+08:00
+4780,Milan,FC Porto,2021-11-04 01:45:00+08:00
+4781,Real Madrid,Shakhtar Donetsk,2021-11-04 01:45:00+08:00
+4782,Manchester City,Club Brugge,2021-11-04 04:00:00+08:00
+4783,Sporting CP,Beşiktaş,2021-11-04 04:00:00+08:00
+4784,FC Sheriff,Inter,2021-11-04 04:00:00+08:00
+4785,RB Leipzig,Paris Saint-Germain,2021-11-04 04:00:00+08:00
+4786,Liverpool,Atletico Madrid,2021-11-04 04:00:00+08:00
+4787,Borussia Dortmund,Ajax,2021-11-04 04:00:00+08:00
+4788,Gil Vicente,Arouca,2021-11-06 03:00:00+08:00
+4790,Athletic Club,Cadiz,2021-11-06 04:00:00+08:00
+4792,Lens,Troyes,2021-11-06 04:00:00+08:00
+4793,Boavista,Famalicao,2021-11-06 05:15:00+08:00
+4804,Vizela,Estoril,2021-11-06 23:30:00+08:00
+4809,Portimonense,Cova da Piedade SAD,2021-11-07 02:00:00+08:00
+4812,Vitoria de Guimaraes,Moreirense,2021-11-07 04:30:00+08:00
+4819,Tondela,Maritimo,2021-11-07 22:00:00+08:00
+4820,Saint-Etienne,Clermont Foot,2021-11-07 22:00:00+08:00
+4828,Santa Clara,FC Porto,2021-11-08 01:00:00+08:00
+4831,Greuther Fürth,Eintracht Frankfurt,2021-11-08 02:30:00+08:00
+4832,Pacos de Ferreira,Sporting CP,2021-11-08 03:00:00+08:00
+4835,Benfica,Braga,2021-11-08 05:15:00+08:00
+4842,Borussia Mönchengladbach,Greuther Fürth,2021-11-20 22:30:00+08:00
+4860,Getafe,Cadiz,2021-11-21 21:00:00+08:00
+4865,Troyes,Saint-Etienne,2021-11-21 22:00:00+08:00
+4875,Dynamo Kyiv,Bayern München,2021-11-24 01:45:00+08:00
+4876,Villarreal,Manchester United,2021-11-24 01:50:00+08:00
+4877,Malmö FF,Zenit St. Petersburg,2021-11-24 04:00:00+08:00
+4878,Barcelona,Benfica,2021-11-24 04:00:00+08:00
+4879,Sevilla,Wolfsburg,2021-11-24 04:00:00+08:00
+4880,Chelsea,Juventus,2021-11-24 04:00:00+08:00
+4881,Young Boys,Atalanta,2021-11-24 04:00:00+08:00
+4882,Lille,Salzburg,2021-11-24 04:00:00+08:00
+4883,Inter,Shakhtar Donetsk,2021-11-25 01:45:00+08:00
+4884,Beşiktaş,Ajax,2021-11-25 01:45:00+08:00
+4885,FC Sheriff,Real Madrid,2021-11-25 04:00:00+08:00
+4886,Atletico Madrid,Milan,2021-11-25 04:00:00+08:00
+4887,Sporting CP,Borussia Dortmund,2021-11-25 04:00:00+08:00
+4888,Manchester City,Paris Saint-Germain,2021-11-25 04:00:00+08:00
+4889,Liverpool,FC Porto,2021-11-25 04:00:00+08:00
+4890,Club Brugge,RB Leipzig,2021-11-25 04:00:00+08:00
+4894,Moreirense,Gil Vicente,2021-11-27 04:15:00+08:00
+4901,Greuther Fürth,Hoffenheim,2021-11-27 22:30:00+08:00
+4906,Famalicao,Portimonense,2021-11-27 23:30:00+08:00
+4911,Arouca,Boavista,2021-11-28 02:00:00+08:00
+4914,Cova da Piedade SAD,Benfica,2021-11-28 04:30:00+08:00
+4915,Saint-Etienne,Paris Saint-Germain,2021-11-28 20:00:00+08:00
+4926,Maritimo,Pacos de Ferreira,2021-11-28 23:30:00+08:00
+4930,Cadiz,Atletico Madrid,2021-11-29 01:30:00+08:00
+4931,Sporting CP,Tondela,2021-11-29 02:00:00+08:00
+4932,Marseille,Troyes,2021-11-29 03:45:00+08:00
+4934,FC Porto,Vitoria de Guimaraes,2021-11-29 04:30:00+08:00
+4936,Estoril,Santa Clara,2021-11-30 04:15:00+08:00
+4939,Braga,Vizela,2021-12-01 04:15:00+08:00
+4943,Brest,Saint-Etienne,2021-12-02 02:00:00+08:00
+4944,Troyes,Lorient,2021-12-02 02:00:00+08:00
+4959,Portimonense,FC Porto,2021-12-04 03:00:00+08:00
+4962,Benfica,Sporting CP,2021-12-04 05:15:00+08:00
+4967,Bayer Leverkusen,Greuther Fürth,2021-12-04 22:30:00+08:00
+4978,Boavista,Maritimo,2021-12-05 02:00:00+08:00
+4979,Lille,Troyes,2021-12-05 02:00:00+08:00
+4982,Pacos de Ferreira,Vitoria de Guimaraes,2021-12-05 04:30:00+08:00
+4983,Saint-Etienne,Rennes,2021-12-05 20:00:00+08:00
+4993,Elche,Cadiz,2021-12-05 23:15:00+08:00
+4994,Santa Clara,Arouca,2021-12-05 23:30:00+08:00
+4999,Gil Vicente,Famalicao,2021-12-06 02:00:00+08:00
+5002,Braga,Estoril,2021-12-06 04:30:00+08:00
+5005,Paris Saint-Germain,Club Brugge,2021-12-08 01:45:00+08:00
+5006,RB Leipzig,Manchester City,2021-12-08 01:45:00+08:00
+5007,Ajax,Sporting CP,2021-12-08 04:00:00+08:00
+5008,Milan,Liverpool,2021-12-08 04:00:00+08:00
+5009,Real Madrid,Inter,2021-12-08 04:00:00+08:00
+5010,FC Porto,Atletico Madrid,2021-12-08 04:00:00+08:00
+5011,Borussia Dortmund,Beşiktaş,2021-12-08 04:00:00+08:00
+5012,Shakhtar Donetsk,FC Sheriff,2021-12-08 04:00:00+08:00
+5013,Zenit St. Petersburg,Chelsea,2021-12-09 01:45:00+08:00
+5014,Juventus,Malmö FF,2021-12-09 01:45:00+08:00
+5015,Bayern München,Barcelona,2021-12-09 04:00:00+08:00
+5016,Manchester United,Young Boys,2021-12-09 04:00:00+08:00
+5017,Salzburg,Sevilla,2021-12-09 04:00:00+08:00
+5019,Benfica,Dynamo Kyiv,2021-12-09 04:00:00+08:00
+5020,Atalanta,Villarreal,2021-12-10 02:00:00+08:00
+5025,Pacos de Ferreira,Gil Vicente,2021-12-11 04:15:00+08:00
+5037,Maritimo,Santa Clara,2021-12-11 23:30:00+08:00
+5042,Vitoria de Guimaraes,Tondela,2021-12-12 02:00:00+08:00
+5044,Reims,Saint-Etienne,2021-12-12 04:00:00+08:00
+5045,Sporting CP,Boavista,2021-12-12 04:30:00+08:00
+5053,Troyes,Bordeaux,2021-12-12 22:00:00+08:00
+5054,Greuther Fürth,Union Berlin,2021-12-12 22:30:00+08:00
+5056,Cova da Piedade SAD,Estoril,2021-12-12 23:30:00+08:00
+5057,Moreirense,Portimonense,2021-12-12 23:30:00+08:00
+5062,Famalicao,Benfica,2021-12-13 02:00:00+08:00
+5065,FC Porto,Braga,2021-12-13 04:30:00+08:00
+5066,Cadiz,Granada,2021-12-14 04:00:00+08:00
+5067,Arouca,Vizela,2021-12-14 04:15:00+08:00
+5080,Borussia Dortmund,Greuther Fürth,2021-12-16 03:30:00+08:00
+5084,Santa Clara,Vitoria de Guimaraes,2021-12-18 03:00:00+08:00
+5087,Estoril,Famalicao,2021-12-18 05:15:00+08:00
+5091,Greuther Fürth,Augsburg,2021-12-18 22:30:00+08:00
+5095,Portimonense,Arouca,2021-12-18 23:30:00+08:00
+5096,Tondela,Pacos de Ferreira,2021-12-18 23:30:00+08:00
+5101,Gil Vicente,Sporting CP,2021-12-19 04:30:00+08:00
+5109,Benfica,Maritimo,2021-12-20 01:00:00+08:00
+5110,Boavista,Moreirense,2021-12-20 01:00:00+08:00
+5112,Vizela,FC Porto,2021-12-20 03:00:00+08:00
+5113,Real Madrid,Cadiz,2021-12-20 04:00:00+08:00
+5114,Braga,Cova da Piedade SAD,2021-12-20 05:00:00+08:00
+5120,Saint-Etienne,Nantes,2021-12-23 04:00:00+08:00
+5125,Troyes,Brest,2021-12-23 04:00:00+08:00
+5139,Tondela,Gil Vicente,2021-12-29 01:00:00+08:00
+5140,Maritimo,Vizela,2021-12-29 03:00:00+08:00
+5142,Moreirense,Estoril,2021-12-29 05:00:00+08:00
+5143,Vitoria de Guimaraes,Boavista,2021-12-30 03:00:00+08:00
+5146,Sporting CP,Portimonense,2021-12-30 05:00:00+08:00
+5147,Pacos de Ferreira,Santa Clara,2021-12-31 01:00:00+08:00
+5148,Arouca,Braga,2021-12-31 03:00:00+08:00
+5150,FC Porto,Benfica,2021-12-31 05:00:00+08:00
+5164,Vizela,Cova da Piedade SAD,2022-01-03 02:30:00+08:00
+5169,Cadiz,Sevilla,2022-01-04 04:15:00+08:00
+5170,Tondela,Moreirense,2022-01-04 04:15:00+08:00
+5171,Santa Clara,Sporting CP,2022-01-08 02:30:00+08:00
+5176,Greuther Fürth,VfB Stuttgart,2022-01-08 22:30:00+08:00
+5181,Vizela,Moreirense,2022-01-08 23:30:00+08:00
+5184,Estoril,FC Porto,2022-01-09 02:00:00+08:00
+5187,Boavista,Tondela,2022-01-09 04:30:00+08:00
+5194,Portimonense,Maritimo,2022-01-09 23:30:00+08:00
+5197,Osasuna,Cadiz,2022-01-10 01:30:00+08:00
+5199,Benfica,Pacos de Ferreira,2022-01-10 02:00:00+08:00
+5200,Braga,Famalicao,2022-01-10 02:00:00+08:00
+5203,Cova da Piedade SAD,Arouca,2022-01-10 04:30:00+08:00
+5205,Gil Vicente,Vitoria de Guimaraes,2022-01-11 04:15:00+08:00
+5208,Famalicao,Cova da Piedade SAD,2022-01-14 02:00:00+08:00
+5221,Boavista,Gil Vicente,2022-01-15 23:30:00+08:00
+5222,Saint-Etienne,Lens,2022-01-16 00:00:00+08:00
+5225,Benfica,Moreirense,2022-01-16 02:00:00+08:00
+5226,Braga,Maritimo,2022-01-16 02:00:00+08:00
+5237,Santa Clara,Tondela,2022-01-16 23:30:00+08:00
+5238,Troyes,Lyon,2022-01-17 00:05:00+08:00
+5239,Arminia Bielefeld,Greuther Fürth,2022-01-17 00:30:00+08:00
+5240,Vizela,Sporting CP,2022-01-17 02:00:00+08:00
+5241,Famalicao,Pacos de Ferreira,2022-01-17 02:30:00+08:00
+5243,Cova da Piedade SAD,FC Porto,2022-01-17 04:30:00+08:00
+5244,Portimonense,Vitoria de Guimaraes,2022-01-18 04:15:00+08:00
+5247,Cadiz,Espanyol,2022-01-19 04:30:00+08:00
+5248,Montpellier,Troyes,2022-01-20 02:00:00+08:00
+5256,Arouca,Benfica,2022-01-22 03:00:00+08:00
+5260,Lyon,Saint-Etienne,2022-01-22 04:00:00+08:00
+5261,Pacos de Ferreira,Boavista,2022-01-22 05:15:00+08:00
+5263,Levante,Cadiz,2022-01-22 21:00:00+08:00
+5266,Greuther Fürth,Mainz 05,2022-01-22 22:30:00+08:00
+5273,Moreirense,Santa Clara,2022-01-22 23:30:00+08:00
+5278,Tondela,Vizela,2022-01-23 02:00:00+08:00
+5281,Sporting CP,Braga,2022-01-23 04:30:00+08:00
+5290,Angers,Troyes,2022-01-23 22:00:00+08:00
+5293,Vitoria de Guimaraes,Estoril,2022-01-23 23:30:00+08:00
+5294,Maritimo,Cova da Piedade SAD,2022-01-23 23:30:00+08:00
+5300,Gil Vicente,Portimonense,2022-01-24 02:00:00+08:00
+5303,FC Porto,Famalicao,2022-01-24 04:30:00+08:00
+5304,Angers,Saint-Etienne,2022-01-27 02:00:00+08:00
+5305,Estoril,Arouca,2022-01-28 04:15:00+08:00
+5306,Portimonense,Tondela,2022-01-30 23:30:00+08:00
+5307,Vizela,Vitoria de Guimaraes,2022-01-30 23:30:00+08:00
+5308,Braga,Moreirense,2022-01-31 02:00:00+08:00
+5309,FC Porto,Maritimo,2022-01-31 04:30:00+08:00
+5310,Estoril,Pacos de Ferreira,2022-02-01 03:00:00+08:00
+5311,Famalicao,Arouca,2022-02-01 05:15:00+08:00
+5313,Santa Clara,Boavista,2022-02-02 04:15:00+08:00
+5314,Benfica,Gil Vicente,2022-02-03 03:00:00+08:00
+5315,Cova da Piedade SAD,Sporting CP,2022-02-03 04:45:00+08:00
+5325,Mallorca,Cadiz,2022-02-05 23:15:00+08:00
+5326,Maritimo,Estoril,2022-02-05 23:30:00+08:00
+5327,Saint-Etienne,Montpellier,2022-02-06 00:00:00+08:00
+5330,Pacos de Ferreira,Portimonense,2022-02-06 02:00:00+08:00
+5334,Vitoria de Guimaraes,Braga,2022-02-06 04:30:00+08:00
+5337,Troyes,Metz,2022-02-06 22:00:00+08:00
+5343,Boavista,Vizela,2022-02-06 23:30:00+08:00
+5344,Gil Vicente,Santa Clara,2022-02-06 23:30:00+08:00
+5346,Wolfsburg,Greuther Fürth,2022-02-07 00:30:00+08:00
+5348,Arouca,FC Porto,2022-02-07 02:00:00+08:00
+5351,Sporting CP,Famalicao,2022-02-07 04:30:00+08:00
+5352,Tondela,Benfica,2022-02-08 03:00:00+08:00
+5354,Moreirense,Cova da Piedade SAD,2022-02-08 05:15:00+08:00
+5367,FC Porto,Sporting CP,2022-02-12 04:15:00+08:00
+5369,Cadiz,Celta Vigo,2022-02-12 21:00:00+08:00
+5373,Greuther Fürth,Hertha BSC,2022-02-12 22:30:00+08:00
+5379,Braga,Pacos de Ferreira,2022-02-12 23:30:00+08:00
+5384,Benfica,Santa Clara,2022-02-13 02:00:00+08:00
+5385,Portimonense,Boavista,2022-02-13 02:00:00+08:00
+5388,Estoril,Tondela,2022-02-13 04:30:00+08:00
+5393,Clermont Foot,Saint-Etienne,2022-02-13 22:00:00+08:00
+5396,Brest,Troyes,2022-02-13 22:00:00+08:00
+5400,Famalicao,Moreirense,2022-02-13 23:30:00+08:00
+5405,Cova da Piedade SAD,Vitoria de Guimaraes,2022-02-14 02:00:00+08:00
+5408,Vizela,Gil Vicente,2022-02-14 04:30:00+08:00
+5410,Arouca,Maritimo,2022-02-15 04:15:00+08:00
+5411,Sporting CP,Manchester City,2022-02-16 04:00:00+08:00
+5412,Paris Saint-Germain,Real Madrid,2022-02-16 04:00:00+08:00
+5415,Salzburg,Bayern München,2022-02-17 04:00:00+08:00
+5416,Inter,Liverpool,2022-02-17 04:00:00+08:00
+5420,Boavista,Benfica,2022-02-19 04:15:00+08:00
+5434,Gil Vicente,Cova da Piedade SAD,2022-02-19 23:30:00+08:00
+5438,Cadiz,Getafe,2022-02-20 01:30:00+08:00
+5439,Pacos de Ferreira,Vizela,2022-02-20 02:00:00+08:00
+5442,Vitoria de Guimaraes,Arouca,2022-02-20 04:30:00+08:00
+5445,Rennes,Troyes,2022-02-20 22:00:00+08:00
+5449,Saint-Etienne,Strasbourg,2022-02-20 22:00:00+08:00
+5450,Bayern München,Greuther Fürth,2022-02-20 22:30:00+08:00
+5452,Maritimo,Famalicao,2022-02-20 23:30:00+08:00
+5457,Sporting CP,Estoril,2022-02-21 02:00:00+08:00
+5460,Moreirense,FC Porto,2022-02-21 04:00:00+08:00
+5462,Tondela,Braga,2022-02-21 04:45:00+08:00
+5464,Santa Clara,Portimonense,2022-02-22 04:15:00+08:00
+5465,Villarreal,Juventus,2022-02-23 04:00:00+08:00
+5466,Chelsea,Lille,2022-02-23 04:00:00+08:00
+5470,Benfica,Ajax,2022-02-24 04:00:00+08:00
+5471,Atletico Madrid,Manchester United,2022-02-24 04:00:00+08:00
+5477,Cova da Piedade SAD,Pacos de Ferreira,2022-02-26 04:15:00+08:00
+5481,Greuther Fürth,1. FC Köln,2022-02-26 22:30:00+08:00
+5489,Famalicao,Tondela,2022-02-26 23:30:00+08:00
+5495,Maritimo,Sporting CP,2022-02-27 02:00:00+08:00
+5497,Paris Saint-Germain,Saint-Etienne,2022-02-27 04:00:00+08:00
+5498,Arouca,Moreirense,2022-02-27 04:30:00+08:00
+5508,Vizela,Portimonense,2022-02-27 23:30:00+08:00
+5509,Troyes,Marseille,2022-02-28 00:05:00+08:00
+5512,Estoril,Boavista,2022-02-28 02:00:00+08:00
+5513,Benfica,Vitoria de Guimaraes,2022-02-28 02:00:00+08:00
+5516,FC Porto,Gil Vicente,2022-02-28 04:30:00+08:00
+5517,Granada,Cadiz,2022-03-01 04:00:00+08:00
+5518,Braga,Santa Clara,2022-03-01 04:15:00+08:00
+5524,Gil Vicente,Estoril,2022-03-05 04:15:00+08:00
+5529,Bochum,Greuther Fürth,2022-03-05 22:30:00+08:00
+5538,Boavista,Braga,2022-03-05 23:30:00+08:00
+5543,Portimonense,Benfica,2022-03-06 02:00:00+08:00
+5546,Sporting CP,Arouca,2022-03-06 04:30:00+08:00
+5547,Saint-Etienne,Metz,2022-03-06 20:00:00+08:00
+5548,Cadiz,Rayo Vallecano,2022-03-06 21:00:00+08:00
+5549,Bordeaux,Troyes,2022-03-06 22:00:00+08:00
+5555,Moreirense,Maritimo,2022-03-06 23:30:00+08:00
+5560,Pacos de Ferreira,FC Porto,2022-03-07 02:00:00+08:00
+5563,Santa Clara,Vizela,2022-03-07 04:30:00+08:00
+5564,Vitoria de Guimaraes,Famalicao,2022-03-07 04:30:00+08:00
+5567,Tondela,Cova da Piedade SAD,2022-03-08 04:15:00+08:00
+5568,Liverpool,Inter,2022-03-09 04:00:00+08:00
+5569,Bayern München,Salzburg,2022-03-09 04:00:00+08:00
+5570,Real Madrid,Paris Saint-Germain,2022-03-10 04:00:00+08:00
+5571,Manchester City,Sporting CP,2022-03-10 04:00:00+08:00
+5576,Lille,Saint-Etienne,2022-03-12 04:00:00+08:00
+5577,Atletico Madrid,Cadiz,2022-03-12 04:00:00+08:00
+5578,Benfica,Vizela,2022-03-12 04:15:00+08:00
+5586,Famalicao,Santa Clara,2022-03-12 23:30:00+08:00
+5587,Estoril,Portimonense,2022-03-12 23:30:00+08:00
+5592,Arouca,Pacos de Ferreira,2022-03-13 02:00:00+08:00
+5594,Troyes,Nantes,2022-03-13 04:00:00+08:00
+5595,Cova da Piedade SAD,Boavista,2022-03-13 04:30:00+08:00
+5609,Maritimo,Vitoria de Guimaraes,2022-03-13 23:30:00+08:00
+5615,FC Porto,Tondela,2022-03-14 02:00:00+08:00
+5616,Greuther Fürth,RB Leipzig,2022-03-14 02:30:00+08:00
+5619,Braga,Gil Vicente,2022-03-14 04:30:00+08:00
+5622,Moreirense,Sporting CP,2022-03-15 04:15:00+08:00
+5623,Ajax,Benfica,2022-03-16 04:00:00+08:00
+5624,Manchester United,Atletico Madrid,2022-03-16 04:00:00+08:00
+5627,Lille,Chelsea,2022-03-17 04:00:00+08:00
+5628,Juventus,Villarreal,2022-03-17 04:00:00+08:00
+5634,Saint-Etienne,Troyes,2022-03-19 04:00:00+08:00
+5635,Vizela,Famalicao,2022-03-19 04:15:00+08:00
+5640,Greuther Fürth,Freiburg,2022-03-19 22:30:00+08:00
+5643,Tondela,Arouca,2022-03-19 23:30:00+08:00
+5647,Santa Clara,Cova da Piedade SAD,2022-03-20 02:00:00+08:00
+5650,Vitoria de Guimaraes,Sporting CP,2022-03-20 04:30:00+08:00
+5660,Cadiz,Villarreal,2022-03-20 23:15:00+08:00
+5661,Gil Vicente,Maritimo,2022-03-20 23:30:00+08:00
+5662,Pacos de Ferreira,Moreirense,2022-03-20 23:30:00+08:00
+5667,Benfica,Estoril,2022-03-21 02:00:00+08:00
+5671,Portimonense,Braga,2022-03-21 04:00:00+08:00
+5672,Boavista,FC Porto,2022-03-21 04:45:00+08:00
+5674,Braga,Benfica,2022-04-02 03:15:00+08:00
+5680,Eintracht Frankfurt,Greuther Fürth,2022-04-02 21:30:00+08:00
+5688,Cova da Piedade SAD,Portimonense,2022-04-02 22:30:00+08:00
+5694,Arouca,Gil Vicente,2022-04-03 01:00:00+08:00
+5695,Estoril,Vizela,2022-04-03 01:00:00+08:00
+5697,Famalicao,Boavista,2022-04-03 03:30:00+08:00
+5701,Troyes,Reims,2022-04-03 21:00:00+08:00
+5702,Saint-Etienne,Marseille,2022-04-03 21:00:00+08:00
+5708,Maritimo,Tondela,2022-04-03 22:30:00+08:00
+5713,Valencia,Cadiz,2022-04-04 00:30:00+08:00
+5714,Moreirense,Vitoria de Guimaraes,2022-04-04 01:00:00+08:00
+5717,Sporting CP,Pacos de Ferreira,2022-04-04 03:30:00+08:00
+5720,FC Porto,Santa Clara,2022-04-05 03:15:00+08:00
+5721,Manchester City,Atletico Madrid,2022-04-06 03:00:00+08:00
+5722,Benfica,Liverpool,2022-04-06 03:00:00+08:00
+5725,Villarreal,Bayern München,2022-04-07 03:00:00+08:00
+5726,Chelsea,Real Madrid,2022-04-07 03:00:00+08:00
+5728,Lorient,Saint-Etienne,2022-04-09 03:00:00+08:00
+5731,Gil Vicente,Moreirense,2022-04-09 03:15:00+08:00
+5733,Cadiz,Real Betis,2022-04-09 20:00:00+08:00
+5737,Greuther Fürth,Borussia Mönchengladbach,2022-04-09 21:30:00+08:00
+5742,Pacos de Ferreira,Maritimo,2022-04-09 22:30:00+08:00
+5747,Benfica,Cova da Piedade SAD,2022-04-10 01:00:00+08:00
+5748,Boavista,Arouca,2022-04-10 01:00:00+08:00
+5751,Tondela,Sporting CP,2022-04-10 03:30:00+08:00
+5756,Monaco,Troyes,2022-04-10 21:00:00+08:00
+5762,Santa Clara,Estoril,2022-04-10 22:30:00+08:00
+5763,Portimonense,Famalicao,2022-04-10 22:30:00+08:00
+5769,Vitoria de Guimaraes,FC Porto,2022-04-11 01:00:00+08:00
+5773,Vizela,Braga,2022-04-11 03:30:00+08:00
+5775,Real Madrid,Chelsea,2022-04-13 03:00:00+08:00
+5776,Bayern München,Villarreal,2022-04-13 03:00:00+08:00
+5777,Atletico Madrid,Manchester City,2022-04-14 03:00:00+08:00
+5778,Liverpool,Benfica,2022-04-14 03:00:00+08:00
+5779,Arouca,Santa Clara,2022-04-15 22:30:00+08:00
+5780,Famalicao,Gil Vicente,2022-04-16 01:00:00+08:00
+5783,Vitoria de Guimaraes,Pacos de Ferreira,2022-04-16 03:30:00+08:00
+5794,Moreirense,Tondela,2022-04-16 22:30:00+08:00
+5795,Saint-Etienne,Brest,2022-04-16 23:00:00+08:00
+5798,Maritimo,Boavista,2022-04-17 01:00:00+08:00
+5799,Cova da Piedade SAD,Vizela,2022-04-17 01:00:00+08:00
+5802,FC Porto,Portimonense,2022-04-17 03:30:00+08:00
+5806,Troyes,Strasbourg,2022-04-17 21:00:00+08:00
+5814,Hoffenheim,Greuther Fürth,2022-04-17 23:30:00+08:00
+5820,Sporting CP,Benfica,2022-04-18 03:30:00+08:00
+5821,Barcelona,Cadiz,2022-04-19 03:00:00+08:00
+5822,Estoril,Braga,2022-04-19 03:30:00+08:00
+5829,Troyes,Clermont Foot,2022-04-21 01:00:00+08:00
+5832,Bordeaux,Saint-Etienne,2022-04-21 01:00:00+08:00
+5846,Cadiz,Athletic Club,2022-04-22 02:00:00+08:00
+5850,Vizela,Arouca,2022-04-23 03:15:00+08:00
+5856,Greuther Fürth,Bayer Leverkusen,2022-04-23 21:30:00+08:00
+5860,Portimonense,Moreirense,2022-04-23 22:30:00+08:00
+5864,Santa Clara,Maritimo,2022-04-24 01:00:00+08:00
+5865,Benfica,Famalicao,2022-04-24 01:00:00+08:00
+5866,Saint-Etienne,Monaco,2022-04-24 01:00:00+08:00
+5868,Gil Vicente,Pacos de Ferreira,2022-04-24 03:30:00+08:00
+5870,Nice,Troyes,2022-04-24 21:00:00+08:00
+5881,Estoril,Cova da Piedade SAD,2022-04-25 01:00:00+08:00
+5884,Tondela,Vitoria de Guimaraes,2022-04-25 03:30:00+08:00
+5885,Braga,FC Porto,2022-04-26 01:00:00+08:00
+5887,Boavista,Sporting CP,2022-04-26 03:30:00+08:00
+5888,Manchester City,Real Madrid,2022-04-27 03:00:00+08:00
+5889,Liverpool,Villarreal,2022-04-28 03:00:00+08:00
+5891,Union Berlin,Greuther Fürth,2022-04-30 02:30:00+08:00
+5893,Sevilla,Cadiz,2022-04-30 03:00:00+08:00
+5894,Famalicao,Estoril,2022-04-30 03:15:00+08:00
+5904,Arouca,Portimonense,2022-04-30 22:00:00+08:00
+5909,Maritimo,Benfica,2022-05-01 00:00:00+08:00
+5913,FC Porto,Vizela,2022-05-01 02:00:00+08:00
+5914,Rennes,Saint-Etienne,2022-05-01 03:00:00+08:00
+5916,Cova da Piedade SAD,Braga,2022-05-01 04:00:00+08:00
+5917,Troyes,Lille,2022-05-01 19:00:00+08:00
+5926,Vitoria de Guimaraes,Santa Clara,2022-05-01 22:30:00+08:00
+5930,Moreirense,Boavista,2022-05-02 01:00:00+08:00
+5933,Sporting CP,Gil Vicente,2022-05-02 03:30:00+08:00
+5938,Pacos de Ferreira,Tondela,2022-05-03 03:15:00+08:00
+5939,Villarreal,Liverpool,2022-05-04 03:00:00+08:00
+5940,Real Madrid,Manchester City,2022-05-05 03:00:00+08:00
+5944,Boavista,Vitoria de Guimaraes,2022-05-07 03:15:00+08:00
+5946,Greuther Fürth,Borussia Dortmund,2022-05-07 21:30:00+08:00
+5955,Estoril,Moreirense,2022-05-07 22:30:00+08:00
+5960,Cadiz,Elche,2022-05-08 00:30:00+08:00
+5961,Benfica,FC Porto,2022-05-08 01:00:00+08:00
+5964,Portimonense,Sporting CP,2022-05-08 03:30:00+08:00
+5975,Vizela,Maritimo,2022-05-08 22:30:00+08:00
+5976,Gil Vicente,Tondela,2022-05-08 22:30:00+08:00
+5981,Braga,Arouca,2022-05-09 01:00:00+08:00
+5983,Paris Saint-Germain,Troyes,2022-05-09 02:45:00+08:00
+5985,Santa Clara,Pacos de Ferreira,2022-05-09 03:30:00+08:00
+5986,Cova da Piedade SAD,Famalicao,2022-05-10 03:15:00+08:00
+5991,Nice,Saint-Etienne,2022-05-12 01:00:00+08:00
+6001,Real Sociedad,Cadiz,2022-05-13 01:00:00+08:00
+6005,Pacos de Ferreira,Benfica,2022-05-14 03:15:00+08:00
+6011,Augsburg,Greuther Fürth,2022-05-14 21:30:00+08:00
+6015,Moreirense,Vizela,2022-05-14 22:30:00+08:00
+6016,Arouca,Cova da Piedade SAD,2022-05-14 22:30:00+08:00
+6017,Tondela,Boavista,2022-05-14 22:30:00+08:00
+6019,Maritimo,Portimonense,2022-05-15 01:00:00+08:00
+6020,FC Porto,Estoril,2022-05-15 01:00:00+08:00
+6022,Troyes,Lens,2022-05-15 03:00:00+08:00
+6026,Saint-Etienne,Reims,2022-05-15 03:00:00+08:00
+6031,Sporting CP,Santa Clara,2022-05-15 03:30:00+08:00
+6039,Famalicao,Braga,2022-05-16 01:00:00+08:00
+6047,Cadiz,Real Madrid,2022-05-16 01:30:00+08:00
+6049,Vitoria de Guimaraes,Gil Vicente,2022-05-16 03:30:00+08:00
+6062,Nantes,Saint-Etienne,2022-05-22 03:00:00+08:00
+6064,Lorient,Troyes,2022-05-22 03:00:00+08:00
+6079,Deportivo Alaves,Cadiz,2022-05-23 02:00:00+08:00
+6085,Liverpool,Real Madrid,2022-05-29 03:36:00+08:00
+6087,Lyon,AC Ajaccio,2022-08-06 03:00:00+08:00
+6089,Benfica,Arouca,2022-08-06 03:15:00+08:00
+6100,Rio Ave,Vizela,2022-08-06 22:30:00+08:00
+6104,Estoril,Famalicao,2022-08-07 01:00:00+08:00
+6106,FC Porto,Maritimo,2022-08-07 03:30:00+08:00
+6110,Montpellier,Troyes,2022-08-07 21:00:00+08:00
+6111,Lille,Auxerre,2022-08-07 21:00:00+08:00
+6115,Santa Clara,Casa Pia AC,2022-08-07 22:30:00+08:00
+6119,Braga,Sporting CP,2022-08-08 01:00:00+08:00
+6121,Chaves,Vitoria de Guimaraes,2022-08-08 03:30:00+08:00
+6122,Portimonense,Boavista,2022-08-08 03:30:00+08:00
+6123,Gil Vicente,Pacos de Ferreira,2022-08-09 03:15:00+08:00
+6127,Famalicao,Braga,2022-08-13 03:15:00+08:00
+6144,Casa Pia AC,Benfica,2022-08-14 01:00:00+08:00
+6147,Sporting CP,Rio Ave,2022-08-14 03:30:00+08:00
+6148,Auxerre,Angers,2022-08-14 21:00:00+08:00
+6149,AC Ajaccio,Lens,2022-08-14 21:00:00+08:00
+6150,Troyes,Toulouse,2022-08-14 21:00:00+08:00
+6154,Boavista,Santa Clara,2022-08-14 22:30:00+08:00
+6156,Cadiz,Real Sociedad,2022-08-14 23:30:00+08:00
+6159,Vizela,FC Porto,2022-08-15 01:00:00+08:00
+6162,Vitoria de Guimaraes,Estoril,2022-08-15 03:30:00+08:00
+6163,Almeria,Real Madrid,2022-08-15 04:00:00+08:00
+6164,Maritimo,Chaves,2022-08-15 22:30:00+08:00
+6166,Arouca,Gil Vicente,2022-08-16 01:00:00+08:00
+6170,Pacos de Ferreira,Portimonense,2022-08-16 03:30:00+08:00
+6173,Lyon,Troyes,2022-08-20 03:00:00+08:00
+6174,Estoril,Rio Ave,2022-08-20 03:15:00+08:00
+6186,Santa Clara,Arouca,2022-08-20 22:30:00+08:00
+6188,Osasuna,Cadiz,2022-08-20 23:30:00+08:00
+6191,Chaves,Vizela,2022-08-21 01:00:00+08:00
+6194,FC Porto,Sporting CP,2022-08-21 03:30:00+08:00
+6198,Montpellier,Auxerre,2022-08-21 21:00:00+08:00
+6204,Casa Pia AC,Boavista,2022-08-21 22:30:00+08:00
+6205,Rennes,AC Ajaccio,2022-08-21 23:05:00+08:00
+6209,Braga,Maritimo,2022-08-22 01:00:00+08:00
+6212,Portimonense,Vitoria de Guimaraes,2022-08-22 03:30:00+08:00
+6214,Elche,Almeria,2022-08-23 02:00:00+08:00
+6216,Gil Vicente,Famalicao,2022-08-23 03:15:00+08:00
+6220,AC Ajaccio,Lille,2022-08-27 03:00:00+08:00
+6221,Pacos de Ferreira,Estoril,2022-08-27 03:15:00+08:00
+6234,Maritimo,Portimonense,2022-08-27 22:30:00+08:00
+6235,Auxerre,Strasbourg,2022-08-27 23:00:00+08:00
+6239,Boavista,Benfica,2022-08-28 01:00:00+08:00
+6242,Sporting CP,Chaves,2022-08-28 03:30:00+08:00
+6243,Almeria,Sevilla,2022-08-28 04:00:00+08:00
+6246,Troyes,Angers,2022-08-28 21:00:00+08:00
+6252,Famalicao,Santa Clara,2022-08-28 22:30:00+08:00
+6257,Arouca,Braga,2022-08-29 01:00:00+08:00
+6260,Rio Ave,FC Porto,2022-08-29 03:30:00+08:00
+6262,Cadiz,Athletic Club,2022-08-30 02:00:00+08:00
+6263,Vitoria de Guimaraes,Casa Pia AC,2022-08-30 02:00:00+08:00
+6265,Vizela,Gil Vicente,2022-08-30 04:15:00+08:00
+6270,Benfica,Pacos de Ferreira,2022-08-31 03:15:00+08:00
+6272,Montpellier,AC Ajaccio,2022-09-01 01:00:00+08:00
+6273,Lyon,Auxerre,2022-09-01 01:00:00+08:00
+6274,Monaco,Troyes,2022-09-01 01:00:00+08:00
+6287,Benfica,Vizela,2022-09-03 02:00:00+08:00
+6289,Celta Vigo,Cadiz,2022-09-03 03:00:00+08:00
+6290,Estoril,Sporting CP,2022-09-03 04:15:00+08:00
+6305,Braga,Vitoria de Guimaraes,2022-09-03 22:30:00+08:00
+6306,Auxerre,Marseille,2022-09-03 23:00:00+08:00
+6313,Gil Vicente,FC Porto,2022-09-04 03:30:00+08:00
+6318,AC Ajaccio,Lorient,2022-09-04 21:00:00+08:00
+6323,Casa Pia AC,Arouca,2022-09-04 22:30:00+08:00
+6324,Troyes,Rennes,2022-09-04 23:10:00+08:00
+6328,Santa Clara,Maritimo,2022-09-05 01:00:00+08:00
+6331,Portimonense,Famalicao,2022-09-05 03:30:00+08:00
+6332,Boavista,Pacos de Ferreira,2022-09-06 02:00:00+08:00
+6333,Real Valladolid,Almeria,2022-09-06 03:00:00+08:00
+6334,Chaves,Rio Ave,2022-09-06 04:15:00+08:00
+6335,Borussia Dortmund,FC København,2022-09-07 00:45:00+08:00
+6336,Dinamo Zagreb,Chelsea,2022-09-07 00:45:00+08:00
+6337,Celtic,Real Madrid,2022-09-07 03:00:00+08:00
+6338,RB Leipzig,Shakhtar Donetsk,2022-09-07 03:00:00+08:00
+6339,Sevilla,Manchester City,2022-09-07 03:00:00+08:00
+6340,Salzburg,Milan,2022-09-07 03:00:00+08:00
+6341,Benfica,Maccabi Haifa,2022-09-07 03:00:00+08:00
+6342,Paris Saint-Germain,Juventus,2022-09-07 03:00:00+08:00
+6343,Eintracht Frankfurt,Sporting CP,2022-09-08 00:45:00+08:00
+6344,Ajax,Rangers,2022-09-08 00:45:00+08:00
+6346,Inter,Bayern München,2022-09-08 03:00:00+08:00
+6348,Atletico Madrid,FC Porto,2022-09-08 03:00:00+08:00
+6349,Club Brugge,Bayer Leverkusen,2022-09-08 03:00:00+08:00
+6350,Tottenham Hotspur,Marseille,2022-09-08 03:00:00+08:00
+6351,Barcelona,Viktoria Plzen,2022-09-08 03:00:00+08:00
+6353,Lens,Troyes,2022-09-10 03:00:00+08:00
+6355,Vitoria de Guimaraes,Santa Clara,2022-09-10 03:15:00+08:00
+6363,Famalicao,Benfica,2022-09-10 22:30:00+08:00
+6366,Cadiz,Barcelona,2022-09-11 00:30:00+08:00
+6367,Sporting CP,Portimonense,2022-09-11 01:00:00+08:00
+6370,FC Porto,Chaves,2022-09-11 03:30:00+08:00
+6373,AC Ajaccio,Nice,2022-09-11 21:00:00+08:00
+6379,Pacos de Ferreira,Casa Pia AC,2022-09-11 22:30:00+08:00
+6380,Rennes,Auxerre,2022-09-11 23:05:00+08:00
+6383,Maritimo,Gil Vicente,2022-09-12 01:00:00+08:00
+6384,Arouca,Boavista,2022-09-12 01:00:00+08:00
+6387,Rio Ave,Braga,2022-09-12 03:30:00+08:00
+6388,Almeria,Osasuna,2022-09-13 03:00:00+08:00
+6389,Vizela,Estoril,2022-09-13 03:15:00+08:00
+6390,Viktoria Plzen,Inter,2022-09-14 00:45:00+08:00
+6391,Sporting CP,Tottenham Hotspur,2022-09-14 00:45:00+08:00
+6392,Bayern München,Barcelona,2022-09-14 03:00:00+08:00
+6393,Liverpool,Ajax,2022-09-14 03:00:00+08:00
+6394,Bayer Leverkusen,Atletico Madrid,2022-09-14 03:00:00+08:00
+6395,FC Porto,Club Brugge,2022-09-14 03:00:00+08:00
+6396,Marseille,Eintracht Frankfurt,2022-09-14 03:00:00+08:00
+6397,Shakhtar Donetsk,Celtic,2022-09-15 00:45:00+08:00
+6398,Milan,Dinamo Zagreb,2022-09-15 00:45:00+08:00
+6399,FC København,Sevilla,2022-09-15 03:00:00+08:00
+6400,Real Madrid,RB Leipzig,2022-09-15 03:00:00+08:00
+6401,Juventus,Benfica,2022-09-15 03:00:00+08:00
+6402,Chelsea,Salzburg,2022-09-15 03:00:00+08:00
+6404,Maccabi Haifa,Paris Saint-Germain,2022-09-15 03:00:00+08:00
+6405,Manchester City,Borussia Dortmund,2022-09-15 03:00:00+08:00
+6407,Auxerre,Lorient,2022-09-17 03:00:00+08:00
+6408,Real Valladolid,Cadiz,2022-09-17 03:00:00+08:00
+6411,Portimonense,Chaves,2022-09-17 03:15:00+08:00
+6413,Mallorca,Almeria,2022-09-17 20:00:00+08:00
+6420,Santa Clara,Pacos de Ferreira,2022-09-17 22:30:00+08:00
+6421,Gil Vicente,Rio Ave,2022-09-17 22:30:00+08:00
+6426,Estoril,FC Porto,2022-09-18 01:00:00+08:00
+6429,Boavista,Sporting CP,2022-09-18 03:30:00+08:00
+6433,Brest,AC Ajaccio,2022-09-18 21:00:00+08:00
+6435,Clermont Foot,Troyes,2022-09-18 21:00:00+08:00
+6440,Arouca,Vitoria de Guimaraes,2022-09-18 22:30:00+08:00
+6445,Casa Pia AC,Famalicao,2022-09-19 01:00:00+08:00
+6446,Benfica,Maritimo,2022-09-19 01:00:00+08:00
+6450,Braga,Vizela,2022-09-19 03:30:00+08:00
+6451,Sporting CP,Gil Vicente,2022-10-01 02:00:00+08:00
+6454,Athletic Club,Almeria,2022-10-01 03:00:00+08:00
+6455,FC Porto,Braga,2022-10-01 04:15:00+08:00
+6457,Cadiz,Villarreal,2022-10-01 20:00:00+08:00
+6469,Vizela,Portimonense,2022-10-01 22:30:00+08:00
+6474,Chaves,Estoril,2022-10-02 01:00:00+08:00
+6477,Vitoria de Guimaraes,Benfica,2022-10-02 03:30:00+08:00
+6480,Auxerre,Brest,2022-10-02 21:00:00+08:00
+6482,AC Ajaccio,Clermont Foot,2022-10-02 21:00:00+08:00
+6483,Troyes,Reims,2022-10-02 21:00:00+08:00
+6487,Rio Ave,Santa Clara,2022-10-02 22:30:00+08:00
+6492,Pacos de Ferreira,Arouca,2022-10-03 01:00:00+08:00
+6495,Famalicao,Boavista,2022-10-03 03:30:00+08:00
+6498,Maritimo,Casa Pia AC,2022-10-04 03:15:00+08:00
+6499,Bayern München,Viktoria Plzen,2022-10-05 00:45:00+08:00
+6500,Marseille,Sporting CP,2022-10-05 01:05:00+08:00
+6502,Eintracht Frankfurt,Tottenham Hotspur,2022-10-05 03:00:00+08:00
+6503,Inter,Barcelona,2022-10-05 03:00:00+08:00
+6504,Ajax,Napoli,2022-10-05 03:00:00+08:00
+6505,Club Brugge,Atletico Madrid,2022-10-05 03:00:00+08:00
+6506,FC Porto,Bayer Leverkusen,2022-10-05 03:00:00+08:00
+6507,RB Leipzig,Celtic,2022-10-06 00:45:00+08:00
+6508,Salzburg,Dinamo Zagreb,2022-10-06 00:45:00+08:00
+6509,Benfica,Paris Saint-Germain,2022-10-06 03:00:00+08:00
+6510,Manchester City,FC København,2022-10-06 03:00:00+08:00
+6511,Chelsea,Milan,2022-10-06 03:00:00+08:00
+6512,Real Madrid,Shakhtar Donetsk,2022-10-06 03:00:00+08:00
+6513,Sevilla,Borussia Dortmund,2022-10-06 03:00:00+08:00
+6514,Juventus,Maccabi Haifa,2022-10-06 03:00:00+08:00
+6518,Gil Vicente,Estoril,2022-10-08 03:15:00+08:00
+6519,Almeria,Rayo Vallecano,2022-10-08 20:00:00+08:00
+6529,Santa Clara,Sporting CP,2022-10-08 22:30:00+08:00
+6530,Marseille,AC Ajaccio,2022-10-08 23:00:00+08:00
+6534,Portimonense,FC Porto,2022-10-09 01:00:00+08:00
+6535,Benfica,Rio Ave,2022-10-09 01:00:00+08:00
+6538,Pacos de Ferreira,Vitoria de Guimaraes,2022-10-09 03:30:00+08:00
+6544,Clermont Foot,Auxerre,2022-10-09 21:00:00+08:00
+6545,Nice,Troyes,2022-10-09 21:00:00+08:00
+6548,Cadiz,Espanyol,2022-10-09 22:15:00+08:00
+6549,Boavista,Maritimo,2022-10-09 22:30:00+08:00
+6554,Casa Pia AC,Vizela,2022-10-10 01:00:00+08:00
+6559,Braga,Chaves,2022-10-10 03:30:00+08:00
+6561,Arouca,Famalicao,2022-10-11 03:15:00+08:00
+6563,FC København,Manchester City,2022-10-12 00:45:00+08:00
+6564,Maccabi Haifa,Juventus,2022-10-12 00:45:00+08:00
+6565,Dinamo Zagreb,Salzburg,2022-10-12 03:00:00+08:00
+6566,Milan,Chelsea,2022-10-12 03:00:00+08:00
+6567,Celtic,RB Leipzig,2022-10-12 03:00:00+08:00
+6568,Paris Saint-Germain,Benfica,2022-10-12 03:00:00+08:00
+6569,Borussia Dortmund,Sevilla,2022-10-12 03:00:00+08:00
+6570,Shakhtar Donetsk,Real Madrid,2022-10-12 03:00:00+08:00
+6571,Atletico Madrid,Club Brugge,2022-10-13 00:45:00+08:00
+6572,Napoli,Ajax,2022-10-13 00:45:00+08:00
+6573,Tottenham Hotspur,Eintracht Frankfurt,2022-10-13 03:00:00+08:00
+6574,Barcelona,Inter,2022-10-13 03:00:00+08:00
+6576,Sporting CP,Marseille,2022-10-13 03:00:00+08:00
+6577,Bayer Leverkusen,FC Porto,2022-10-13 03:00:00+08:00
+6578,Viktoria Plzen,Bayern München,2022-10-13 03:00:00+08:00
+6584,Girona,Cadiz,2022-10-15 20:00:00+08:00
+6600,Auxerre,Nice,2022-10-16 21:00:00+08:00
+6607,Troyes,AC Ajaccio,2022-10-16 21:00:00+08:00
+6616,Real Betis,Almeria,2022-10-17 03:00:00+08:00
+6624,Cadiz,Real Betis,2022-10-20 01:00:00+08:00
+6632,Almeria,Girona,2022-10-21 01:00:00+08:00
+6638,AC Ajaccio,Paris Saint-Germain,2022-10-22 03:00:00+08:00
+6639,FC Porto,Benfica,2022-10-22 03:15:00+08:00
+6641,Rayo Vallecano,Cadiz,2022-10-22 20:00:00+08:00
+6650,Famalicao,Pacos de Ferreira,2022-10-22 22:30:00+08:00
+6655,Estoril,Braga,2022-10-23 01:00:00+08:00
+6658,Sporting CP,Casa Pia AC,2022-10-23 03:30:00+08:00
+6661,Troyes,Lorient,2022-10-23 21:00:00+08:00
+6666,Reims,Auxerre,2022-10-23 21:00:00+08:00
+6671,Vizela,Santa Clara,2022-10-23 22:30:00+08:00
+6672,Maritimo,Arouca,2022-10-23 22:30:00+08:00
+6677,Villarreal,Almeria,2022-10-24 00:30:00+08:00
+6678,Chaves,Gil Vicente,2022-10-24 01:00:00+08:00
+6681,Vitoria de Guimaraes,Boavista,2022-10-24 03:30:00+08:00
+6684,Rio Ave,Portimonense,2022-10-25 03:15:00+08:00
+6685,Salzburg,Chelsea,2022-10-26 00:45:00+08:00
+6686,Sevilla,FC København,2022-10-26 00:45:00+08:00
+6687,Borussia Dortmund,Manchester City,2022-10-26 03:00:00+08:00
+6688,Paris Saint-Germain,Maccabi Haifa,2022-10-26 03:00:00+08:00
+6689,RB Leipzig,Real Madrid,2022-10-26 03:00:00+08:00
+6690,Dinamo Zagreb,Milan,2022-10-26 03:00:00+08:00
+6691,Celtic,Shakhtar Donetsk,2022-10-26 03:00:00+08:00
+6692,Benfica,Juventus,2022-10-26 03:00:00+08:00
+6693,Inter,Viktoria Plzen,2022-10-27 00:45:00+08:00
+6694,Club Brugge,FC Porto,2022-10-27 00:45:00+08:00
+6695,Tottenham Hotspur,Sporting CP,2022-10-27 03:00:00+08:00
+6696,Eintracht Frankfurt,Marseille,2022-10-27 03:00:00+08:00
+6698,Ajax,Liverpool,2022-10-27 03:00:00+08:00
+6699,Barcelona,Bayern München,2022-10-27 03:00:00+08:00
+6700,Atletico Madrid,Bayer Leverkusen,2022-10-27 03:00:00+08:00
+6704,Pacos de Ferreira,Maritimo,2022-10-29 03:15:00+08:00
+6706,Almeria,Celta Vigo,2022-10-29 20:00:00+08:00
+6716,Cadiz,Atletico Madrid,2022-10-29 22:15:00+08:00
+6717,Santa Clara,FC Porto,2022-10-29 22:30:00+08:00
+6718,Paris Saint-Germain,Troyes,2022-10-29 23:00:00+08:00
+6722,Benfica,Chaves,2022-10-30 01:00:00+08:00
+6726,Arouca,Sporting CP,2022-10-30 03:30:00+08:00
+6727,Auxerre,AC Ajaccio,2022-10-30 20:00:00+08:00
+6736,Portimonense,Estoril,2022-10-30 23:30:00+08:00
+6737,Boavista,Vizela,2022-10-30 23:30:00+08:00
+6742,Casa Pia AC,Rio Ave,2022-10-31 02:00:00+08:00
+6746,Gil Vicente,Braga,2022-10-31 04:30:00+08:00
+6748,Vitoria de Guimaraes,Famalicao,2022-11-01 04:15:00+08:00
+6749,FC Porto,Atletico Madrid,2022-11-02 01:45:00+08:00
+6750,Bayer Leverkusen,Club Brugge,2022-11-02 01:45:00+08:00
+6751,Marseille,Tottenham Hotspur,2022-11-02 04:00:00+08:00
+6752,Viktoria Plzen,Barcelona,2022-11-02 04:00:00+08:00
+6753,Bayern München,Inter,2022-11-02 04:00:00+08:00
+6755,Sporting CP,Eintracht Frankfurt,2022-11-02 04:00:00+08:00
+6756,Rangers,Ajax,2022-11-02 04:00:00+08:00
+6757,Real Madrid,Celtic,2022-11-03 01:45:00+08:00
+6758,Shakhtar Donetsk,RB Leipzig,2022-11-03 01:45:00+08:00
+6759,Chelsea,Dinamo Zagreb,2022-11-03 04:00:00+08:00
+6760,Manchester City,Sevilla,2022-11-03 04:00:00+08:00
+6761,Maccabi Haifa,Benfica,2022-11-03 04:00:00+08:00
+6762,FC København,Borussia Dortmund,2022-11-03 04:00:00+08:00
+6763,Juventus,Paris Saint-Germain,2022-11-03 04:00:00+08:00
+6764,Milan,Salzburg,2022-11-03 04:00:00+08:00
+6766,Troyes,Auxerre,2022-11-05 04:00:00+08:00
+6768,Gil Vicente,Portimonense,2022-11-05 04:15:00+08:00
+6769,Getafe,Cadiz,2022-11-05 21:00:00+08:00
+6780,Vizela,Arouca,2022-11-05 23:30:00+08:00
+6781,AC Ajaccio,Strasbourg,2022-11-06 00:00:00+08:00
+6785,FC Porto,Pacos de Ferreira,2022-11-06 02:00:00+08:00
+6787,Barcelona,Almeria,2022-11-06 04:00:00+08:00
+6788,Sporting CP,Vitoria de Guimaraes,2022-11-06 04:30:00+08:00
+6801,Rio Ave,Boavista,2022-11-06 23:30:00+08:00
+6806,Braga,Casa Pia AC,2022-11-07 02:00:00+08:00
+6807,Maritimo,Famalicao,2022-11-07 02:00:00+08:00
+6810,Estoril,Benfica,2022-11-07 04:30:00+08:00
+6812,Chaves,Santa Clara,2022-11-08 04:15:00+08:00
+6822,Almeria,Getafe,2022-11-10 02:00:00+08:00
+6831,Real Madrid,Cadiz,2022-11-11 04:30:00+08:00
+6848,Arouca,Rio Ave,2022-11-13 02:00:00+08:00
+6851,Boavista,FC Porto,2022-11-13 04:30:00+08:00
+6852,Paris Saint-Germain,Auxerre,2022-11-13 20:00:00+08:00
+6854,Nantes,AC Ajaccio,2022-11-13 22:00:00+08:00
+6857,Brest,Troyes,2022-11-13 22:00:00+08:00
+6859,Vitoria de Guimaraes,Maritimo,2022-11-13 23:30:00+08:00
+6860,Pacos de Ferreira,Vizela,2022-11-13 23:30:00+08:00
+6864,Benfica,Gil Vicente,2022-11-14 02:00:00+08:00
+6865,Portimonense,Braga,2022-11-14 02:00:00+08:00
+6866,Casa Pia AC,Chaves,2022-11-14 02:00:00+08:00
+6868,Famalicao,Sporting CP,2022-11-14 04:30:00+08:00
+6869,Santa Clara,Estoril,2022-11-15 04:15:00+08:00
+6870,Rio Ave,Maritimo,2022-12-24 04:15:00+08:00
+6880,AC Ajaccio,Angers,2022-12-28 22:00:00+08:00
+6881,Troyes,Nantes,2022-12-28 22:00:00+08:00
+6882,Auxerre,Monaco,2022-12-29 00:00:00+08:00
+6884,Portimonense,Casa Pia AC,2022-12-29 03:00:00+08:00
+6888,FC Porto,Arouca,2022-12-29 05:15:00+08:00
+6891,Gil Vicente,Santa Clara,2022-12-30 01:00:00+08:00
+6897,Sporting CP,Pacos de Ferreira,2022-12-30 05:15:00+08:00
+6899,Chaves,Famalicao,2022-12-31 01:00:00+08:00
+6901,Cadiz,Almeria,2022-12-31 02:15:00+08:00
+6902,Vizela,Vitoria de Guimaraes,2022-12-31 03:00:00+08:00
+6906,Braga,Benfica,2022-12-31 05:15:00+08:00
+6918,Nantes,Auxerre,2023-01-01 22:00:00+08:00
+6919,Toulouse,AC Ajaccio,2023-01-01 22:00:00+08:00
+6924,Strasbourg,Troyes,2023-01-02 22:00:00+08:00
+6938,Santa Clara,Braga,2023-01-06 04:15:00+08:00
+6940,Benfica,Portimonense,2023-01-07 03:00:00+08:00
+6941,Valencia,Cadiz,2023-01-07 04:00:00+08:00
+6942,Famalicao,Vizela,2023-01-07 05:15:00+08:00
+6944,Arouca,Estoril,2023-01-07 23:30:00+08:00
+6946,Vitoria de Guimaraes,Rio Ave,2023-01-08 02:00:00+08:00
+6948,Casa Pia AC,FC Porto,2023-01-08 04:30:00+08:00
+6949,Almeria,Real Sociedad,2023-01-08 21:00:00+08:00
+6951,Pacos de Ferreira,Chaves,2023-01-08 23:30:00+08:00
+6953,Maritimo,Sporting CP,2023-01-09 02:00:00+08:00
+6955,Boavista,Gil Vicente,2023-01-09 04:30:00+08:00
+6959,Auxerre,Toulouse,2023-01-12 02:00:00+08:00
+6961,AC Ajaccio,Reims,2023-01-12 02:00:00+08:00
+6965,Troyes,Marseille,2023-01-12 04:00:00+08:00
+6970,Portimonense,Santa Clara,2023-01-14 04:15:00+08:00
+6978,Vizela,Maritimo,2023-01-14 23:30:00+08:00
+6979,Lens,Auxerre,2023-01-15 00:00:00+08:00
+6983,Rio Ave,Pacos de Ferreira,2023-01-15 02:00:00+08:00
+6986,Braga,Boavista,2023-01-15 04:30:00+08:00
+6987,Lille,Troyes,2023-01-15 20:00:00+08:00
+6995,Almeria,Atletico Madrid,2023-01-15 23:15:00+08:00
+6996,Chaves,Arouca,2023-01-15 23:30:00+08:00
+6997,Monaco,AC Ajaccio,2023-01-16 00:05:00+08:00
+6999,Benfica,Sporting CP,2023-01-16 02:00:00+08:00
+7001,FC Porto,Famalicao,2023-01-16 04:30:00+08:00
+7002,Estoril,Casa Pia AC,2023-01-17 03:00:00+08:00
+7003,Cadiz,Elche,2023-01-17 04:00:00+08:00
+7004,Gil Vicente,Vitoria de Guimaraes,2023-01-17 05:15:00+08:00
+7007,Arouca,Portimonense,2023-01-21 03:00:00+08:00
+7010,Sporting CP,Vizela,2023-01-21 05:15:00+08:00
+7023,Pacos de Ferreira,Braga,2023-01-21 23:30:00+08:00
+7027,Santa Clara,Benfica,2023-01-22 02:00:00+08:00
+7028,Sevilla,Cadiz,2023-01-22 04:00:00+08:00
+7029,Vitoria de Guimaraes,FC Porto,2023-01-22 04:30:00+08:00
+7035,Maritimo,Estoril,2023-01-22 23:30:00+08:00
+7039,Casa Pia AC,Gil Vicente,2023-01-23 02:00:00+08:00
+7041,Famalicao,Rio Ave,2023-01-23 04:30:00+08:00
+7042,Valencia,Almeria,2023-01-24 04:00:00+08:00
+7043,Boavista,Chaves,2023-01-24 04:15:00+08:00
+7054,Pacos de Ferreira,Benfica,2023-01-27 04:15:00+08:00
+7056,Almeria,Espanyol,2023-01-28 04:00:00+08:00
+7058,Cadiz,Mallorca,2023-01-28 21:00:00+08:00
+7065,Troyes,Lens,2023-01-29 00:00:00+08:00
+7074,Auxerre,Montpellier,2023-01-29 22:00:00+08:00
+7078,Casa Pia AC,Santa Clara,2023-01-29 23:30:00+08:00
+7079,Vizela,Rio Ave,2023-01-29 23:30:00+08:00
+7080,AC Ajaccio,Lyon,2023-01-30 00:05:00+08:00
+7083,Boavista,Portimonense,2023-01-30 02:00:00+08:00
+7086,Famalicao,Estoril,2023-01-30 04:30:00+08:00
+7088,Vitoria de Guimaraes,Chaves,2023-01-31 04:15:00+08:00
+7089,Pacos de Ferreira,Gil Vicente,2023-02-01 03:00:00+08:00
+7090,Arouca,Benfica,2023-02-01 05:15:00+08:00
+7091,Angers,AC Ajaccio,2023-02-02 02:00:00+08:00
+7095,Toulouse,Troyes,2023-02-02 02:00:00+08:00
+7096,Maritimo,FC Porto,2023-02-02 03:00:00+08:00
+7097,Monaco,Auxerre,2023-02-02 04:00:00+08:00
+7103,Sporting CP,Braga,2023-02-02 05:15:00+08:00
+7107,Athletic Club,Cadiz,2023-02-04 04:00:00+08:00
+7121,Santa Clara,Boavista,2023-02-04 23:30:00+08:00
+7126,Benfica,Casa Pia AC,2023-02-05 02:00:00+08:00
+7127,Troyes,Lyon,2023-02-05 02:00:00+08:00
+7130,Estoril,Vitoria de Guimaraes,2023-02-05 04:30:00+08:00
+7133,AC Ajaccio,Nantes,2023-02-05 22:00:00+08:00
+7136,Auxerre,Reims,2023-02-05 22:00:00+08:00
+7140,Braga,Famalicao,2023-02-05 23:30:00+08:00
+7141,Chaves,Maritimo,2023-02-05 23:30:00+08:00
+7146,FC Porto,Vizela,2023-02-06 02:00:00+08:00
+7149,Gil Vicente,Arouca,2023-02-06 04:30:00+08:00
+7150,Portimonense,Pacos de Ferreira,2023-02-07 03:00:00+08:00
+7151,Rayo Vallecano,Almeria,2023-02-07 04:00:00+08:00
+7152,Rio Ave,Sporting CP,2023-02-07 05:15:00+08:00
+7154,Estoril,Boavista,2023-02-10 02:00:00+08:00
+7156,Nice,AC Ajaccio,2023-02-11 04:00:00+08:00
+7157,Cadiz,Girona,2023-02-11 04:00:00+08:00
+7158,Vizela,Chaves,2023-02-11 04:15:00+08:00
+7170,Almeria,Real Betis,2023-02-11 23:15:00+08:00
+7175,Arouca,Santa Clara,2023-02-12 02:00:00+08:00
+7177,Vitoria de Guimaraes,Portimonense,2023-02-12 04:30:00+08:00
+7181,Reims,Troyes,2023-02-12 22:00:00+08:00
+7185,Angers,Auxerre,2023-02-12 22:00:00+08:00
+7188,Famalicao,Gil Vicente,2023-02-12 23:30:00+08:00
+7193,Sporting CP,FC Porto,2023-02-13 02:00:00+08:00
+7196,Maritimo,Braga,2023-02-13 04:30:00+08:00
+7197,Rio Ave,Estoril,2023-02-14 03:00:00+08:00
+7200,Boavista,Casa Pia AC,2023-02-14 05:15:00+08:00
+7201,Paris Saint-Germain,Bayern München,2023-02-15 04:00:00+08:00
+7202,Milan,Tottenham Hotspur,2023-02-15 04:00:00+08:00
+7204,Borussia Dortmund,Chelsea,2023-02-16 04:00:00+08:00
+7205,Club Brugge,Benfica,2023-02-16 04:00:00+08:00
+7208,Auxerre,Lyon,2023-02-18 04:00:00+08:00
+7209,Girona,Almeria,2023-02-18 04:00:00+08:00
+7210,Gil Vicente,Vizela,2023-02-18 04:15:00+08:00
+7228,Portimonense,Maritimo,2023-02-19 02:00:00+08:00
+7229,Estoril,Pacos de Ferreira,2023-02-19 02:00:00+08:00
+7232,FC Porto,Rio Ave,2023-02-19 04:30:00+08:00
+7236,Troyes,Montpellier,2023-02-19 22:00:00+08:00
+7237,Lorient,AC Ajaccio,2023-02-19 22:00:00+08:00
+7242,Santa Clara,Famalicao,2023-02-19 23:30:00+08:00
+7247,Braga,Arouca,2023-02-20 02:00:00+08:00
+7250,Barcelona,Cadiz,2023-02-20 04:00:00+08:00
+7251,Casa Pia AC,Vitoria de Guimaraes,2023-02-20 04:30:00+08:00
+7252,Chaves,Sporting CP,2023-02-21 03:00:00+08:00
+7254,Benfica,Boavista,2023-02-21 05:15:00+08:00
+7255,Eintracht Frankfurt,Napoli,2023-02-22 04:00:00+08:00
+7256,Liverpool,Real Madrid,2023-02-22 04:00:00+08:00
+7257,Inter,FC Porto,2023-02-23 04:00:00+08:00
+7258,RB Leipzig,Manchester City,2023-02-23 04:00:00+08:00
+7263,Famalicao,Portimonense,2023-02-25 04:15:00+08:00
+7274,Cadiz,Rayo Vallecano,2023-02-25 23:15:00+08:00
+7275,Arouca,Casa Pia AC,2023-02-25 23:30:00+08:00
+7280,Maritimo,Santa Clara,2023-02-26 02:00:00+08:00
+7284,Vizela,Benfica,2023-02-26 04:30:00+08:00
+7285,Lorient,Auxerre,2023-02-26 20:00:00+08:00
+7289,AC Ajaccio,Troyes,2023-02-26 22:00:00+08:00
+7294,Rio Ave,Chaves,2023-02-26 23:30:00+08:00
+7297,Almeria,Barcelona,2023-02-27 01:30:00+08:00
+7298,Pacos de Ferreira,Boavista,2023-02-27 02:00:00+08:00
+7301,FC Porto,Gil Vicente,2023-02-27 04:30:00+08:00
+7302,Sporting CP,Estoril,2023-02-28 03:00:00+08:00
+7304,Vitoria de Guimaraes,Braga,2023-02-28 05:15:00+08:00
+7307,Boavista,Arouca,2023-03-04 03:00:00+08:00
+7309,Nice,Auxerre,2023-03-04 04:00:00+08:00
+7310,Real Sociedad,Cadiz,2023-03-04 04:00:00+08:00
+7311,Benfica,Famalicao,2023-03-04 05:15:00+08:00
+7324,Almeria,Villarreal,2023-03-04 23:15:00+08:00
+7325,Estoril,Vizela,2023-03-04 23:30:00+08:00
+7330,Portimonense,Sporting CP,2023-03-05 02:00:00+08:00
+7333,Chaves,FC Porto,2023-03-05 04:30:00+08:00
+7334,Troyes,Monaco,2023-03-05 20:00:00+08:00
+7339,Reims,AC Ajaccio,2023-03-05 22:00:00+08:00
+7343,Gil Vicente,Maritimo,2023-03-05 23:30:00+08:00
+7348,Santa Clara,Vitoria de Guimaraes,2023-03-06 02:00:00+08:00
+7351,Braga,Rio Ave,2023-03-06 04:30:00+08:00
+7354,Casa Pia AC,Pacos de Ferreira,2023-03-07 04:15:00+08:00
+7355,Benfica,Club Brugge,2023-03-08 04:00:00+08:00
+7356,Chelsea,Borussia Dortmund,2023-03-08 04:10:00+08:00
+7357,Bayern München,Paris Saint-Germain,2023-03-09 04:00:00+08:00
+7358,Tottenham Hotspur,Milan,2023-03-09 04:10:00+08:00
+7361,Cadiz,Getafe,2023-03-11 04:00:00+08:00
+7362,FC Porto,Estoril,2023-03-11 04:15:00+08:00
+7374,Chaves,Portimonense,2023-03-11 23:30:00+08:00
+7375,Pacos de Ferreira,Santa Clara,2023-03-11 23:30:00+08:00
+7376,Auxerre,Rennes,2023-03-12 00:00:00+08:00
+7380,Vitoria de Guimaraes,Arouca,2023-03-12 02:00:00+08:00
+7383,Vizela,Braga,2023-03-12 04:30:00+08:00
+7388,Lorient,Troyes,2023-03-12 22:00:00+08:00
+7392,AC Ajaccio,Montpellier,2023-03-12 22:00:00+08:00
+7394,Sevilla,Almeria,2023-03-12 23:15:00+08:00
+7395,Rio Ave,Gil Vicente,2023-03-12 23:30:00+08:00
+7400,Maritimo,Benfica,2023-03-13 02:00:00+08:00
+7404,Sporting CP,Boavista,2023-03-13 04:30:00+08:00
+7406,Famalicao,Casa Pia AC,2023-03-14 04:15:00+08:00
+7407,Manchester City,RB Leipzig,2023-03-15 04:00:00+08:00
+7408,FC Porto,Inter,2023-03-15 04:00:00+08:00
+7411,Real Madrid,Liverpool,2023-03-16 04:00:00+08:00
+7412,Napoli,Eintracht Frankfurt,2023-03-16 04:00:00+08:00
+7417,Santa Clara,Rio Ave,2023-03-18 04:15:00+08:00
+7418,Almeria,Cadiz,2023-03-18 21:00:00+08:00
+7428,Portimonense,Vizela,2023-03-18 23:30:00+08:00
+7433,Benfica,Vitoria de Guimaraes,2023-03-19 02:00:00+08:00
+7434,Arouca,Pacos de Ferreira,2023-03-19 02:00:00+08:00
+7437,Estoril,Chaves,2023-03-19 04:30:00+08:00
+7438,AC Ajaccio,Monaco,2023-03-19 20:00:00+08:00
+7440,Strasbourg,Auxerre,2023-03-19 22:00:00+08:00
+7442,Troyes,Brest,2023-03-19 22:00:00+08:00
+7448,Casa Pia AC,Maritimo,2023-03-19 23:30:00+08:00
+7452,Braga,FC Porto,2023-03-20 02:00:00+08:00
+7456,Boavista,Famalicao,2023-03-20 04:30:00+08:00
+7460,Estoril,Gil Vicente,2023-04-01 03:15:00+08:00
+7474,Vizela,Casa Pia AC,2023-04-01 22:30:00+08:00
+7475,Auxerre,Troyes,2023-04-01 23:00:00+08:00
+7476,Cadiz,Sevilla,2023-04-02 00:30:00+08:00
+7479,Vitoria de Guimaraes,Pacos de Ferreira,2023-04-02 01:00:00+08:00
+7482,Sporting CP,Santa Clara,2023-04-02 03:30:00+08:00
+7484,Celta Vigo,Almeria,2023-04-02 20:00:00+08:00
+7487,Clermont Foot,AC Ajaccio,2023-04-02 21:00:00+08:00
+7492,Maritimo,Boavista,2023-04-02 22:30:00+08:00
+7493,Chaves,Braga,2023-04-02 22:30:00+08:00
+7498,Rio Ave,Benfica,2023-04-03 01:00:00+08:00
+7501,FC Porto,Portimonense,2023-04-03 03:30:00+08:00
+7504,Famalicao,Arouca,2023-04-04 03:15:00+08:00
+7511,Gil Vicente,Sporting CP,2023-04-06 03:15:00+08:00
+7512,Santa Clara,Vizela,2023-04-07 22:30:00+08:00
+7513,Benfica,FC Porto,2023-04-08 01:00:00+08:00
+7516,Boavista,Vitoria de Guimaraes,2023-04-08 03:30:00+08:00
+7531,Arouca,Maritimo,2023-04-08 22:30:00+08:00
+7536,Portimonense,Rio Ave,2023-04-09 01:00:00+08:00
+7537,Pacos de Ferreira,Famalicao,2023-04-09 01:00:00+08:00
+7540,Braga,Estoril,2023-04-09 03:30:00+08:00
+7543,AC Ajaccio,Auxerre,2023-04-09 21:00:00+08:00
+7545,Troyes,Clermont Foot,2023-04-09 21:00:00+08:00
+7549,Real Betis,Cadiz,2023-04-09 22:15:00+08:00
+7553,Almeria,Valencia,2023-04-10 00:30:00+08:00
+7554,Casa Pia AC,Sporting CP,2023-04-10 01:00:00+08:00
+7559,Gil Vicente,Chaves,2023-04-11 03:15:00+08:00
+7560,Benfica,Inter,2023-04-12 03:00:00+08:00
+7561,Manchester City,Bayern München,2023-04-12 03:00:00+08:00
+7562,Real Madrid,Chelsea,2023-04-13 03:00:00+08:00
+7567,Famalicao,Vitoria de Guimaraes,2023-04-15 03:15:00+08:00
+7580,Maritimo,Pacos de Ferreira,2023-04-15 22:30:00+08:00
+7581,Estoril,Portimonense,2023-04-15 22:30:00+08:00
+7586,Chaves,Benfica,2023-04-16 01:00:00+08:00
+7587,Cadiz,Real Madrid,2023-04-16 03:00:00+08:00
+7589,FC Porto,Santa Clara,2023-04-16 03:30:00+08:00
+7592,Strasbourg,AC Ajaccio,2023-04-16 21:00:00+08:00
+7593,Auxerre,Nantes,2023-04-16 21:00:00+08:00
+7599,Rio Ave,Casa Pia AC,2023-04-16 22:30:00+08:00
+7603,Atletico Madrid,Almeria,2023-04-17 00:30:00+08:00
+7604,Braga,Gil Vicente,2023-04-17 01:00:00+08:00
+7606,Marseille,Troyes,2023-04-17 02:45:00+08:00
+7608,Sporting CP,Arouca,2023-04-17 03:30:00+08:00
+7611,Vizela,Boavista,2023-04-18 03:15:00+08:00
+7613,Chelsea,Real Madrid,2023-04-19 03:00:00+08:00
+7614,Inter,Benfica,2023-04-20 03:00:00+08:00
+7615,Bayern München,Manchester City,2023-04-20 03:00:00+08:00
+7618,Espanyol,Cadiz,2023-04-22 03:00:00+08:00
+7620,Casa Pia AC,Braga,2023-04-22 03:15:00+08:00
+7631,Almeria,Athletic Club,2023-04-22 22:15:00+08:00
+7632,Famalicao,Maritimo,2023-04-22 22:30:00+08:00
+7633,Auxerre,Lille,2023-04-22 23:00:00+08:00
+7637,Boavista,Rio Ave,2023-04-23 01:00:00+08:00
+7640,Pacos de Ferreira,FC Porto,2023-04-23 03:30:00+08:00
+7645,AC Ajaccio,Brest,2023-04-23 21:00:00+08:00
+7646,Nantes,Troyes,2023-04-23 21:00:00+08:00
+7651,Portimonense,Gil Vicente,2023-04-23 22:30:00+08:00
+7655,Benfica,Estoril,2023-04-24 01:00:00+08:00
+7656,Santa Clara,Chaves,2023-04-24 01:00:00+08:00
+7660,Arouca,Vizela,2023-04-24 03:30:00+08:00
+7661,Vitoria de Guimaraes,Sporting CP,2023-04-25 03:15:00+08:00
+7663,Cadiz,Osasuna,2023-04-26 01:30:00+08:00
+7669,Getafe,Almeria,2023-04-27 01:30:00+08:00
+7685,Rio Ave,Arouca,2023-04-29 03:15:00+08:00
+7695,Braga,Portimonense,2023-04-29 22:30:00+08:00
+7696,Maritimo,Vitoria de Guimaraes,2023-04-29 22:30:00+08:00
+7697,Lille,AC Ajaccio,2023-04-29 23:00:00+08:00
+7698,Real Madrid,Almeria,2023-04-30 00:30:00+08:00
+7700,Chaves,Casa Pia AC,2023-04-30 01:00:00+08:00
+7701,Vizela,Pacos de Ferreira,2023-04-30 01:00:00+08:00
+7703,Gil Vicente,Benfica,2023-04-30 03:30:00+08:00
+7705,Cadiz,Valencia,2023-04-30 20:00:00+08:00
+7712,Troyes,Nice,2023-04-30 21:00:00+08:00
+7715,Estoril,Santa Clara,2023-04-30 22:30:00+08:00
+7720,FC Porto,Boavista,2023-05-01 01:00:00+08:00
+7721,Marseille,Auxerre,2023-05-01 02:45:00+08:00
+7723,Sporting CP,Famalicao,2023-05-01 03:30:00+08:00
+7727,Almeria,Elche,2023-05-03 01:30:00+08:00
+7737,Atletico Madrid,Cadiz,2023-05-04 04:00:00+08:00
+7745,Casa Pia AC,Portimonense,2023-05-06 03:15:00+08:00
+7755,Santa Clara,Gil Vicente,2023-05-06 22:30:00+08:00
+7760,Boavista,Estoril,2023-05-07 01:00:00+08:00
+7762,Benfica,Braga,2023-05-07 03:30:00+08:00
+7765,Auxerre,Clermont Foot,2023-05-07 21:00:00+08:00
+7766,AC Ajaccio,Toulouse,2023-05-07 21:00:00+08:00
+7768,Maritimo,Rio Ave,2023-05-07 22:30:00+08:00
+7772,Vitoria de Guimaraes,Vizela,2023-05-08 01:00:00+08:00
+7774,Troyes,Paris Saint-Germain,2023-05-08 02:45:00+08:00
+7775,Pacos de Ferreira,Sporting CP,2023-05-08 03:30:00+08:00
+7778,Famalicao,Chaves,2023-05-09 02:00:00+08:00
+7780,Arouca,FC Porto,2023-05-09 04:15:00+08:00
+7781,Real Madrid,Manchester City,2023-05-10 03:00:00+08:00
+7785,Mallorca,Cadiz,2023-05-13 03:00:00+08:00
+7786,Gil Vicente,Boavista,2023-05-13 03:15:00+08:00
+7799,Osasuna,Almeria,2023-05-13 22:15:00+08:00
+7800,Vizela,Famalicao,2023-05-13 22:30:00+08:00
+7801,Chaves,Pacos de Ferreira,2023-05-13 22:30:00+08:00
+7805,Portimonense,Benfica,2023-05-14 01:00:00+08:00
+7806,Paris Saint-Germain,AC Ajaccio,2023-05-14 03:00:00+08:00
+7808,Sporting CP,Maritimo,2023-05-14 03:30:00+08:00
+7811,Rennes,Troyes,2023-05-14 21:00:00+08:00
+7812,Brest,Auxerre,2023-05-14 21:00:00+08:00
+7818,Rio Ave,Vitoria de Guimaraes,2023-05-14 22:30:00+08:00
+7824,Braga,Santa Clara,2023-05-15 01:00:00+08:00
+7827,FC Porto,Casa Pia AC,2023-05-15 03:30:00+08:00
+7830,Estoril,Arouca,2023-05-16 03:15:00+08:00
+7832,Manchester City,Real Madrid,2023-05-18 03:00:00+08:00
+7836,Cadiz,Real Valladolid,2023-05-20 03:00:00+08:00
+7837,Maritimo,Vizela,2023-05-20 03:15:00+08:00
+7849,Santa Clara,Portimonense,2023-05-20 22:30:00+08:00
+7850,Arouca,Chaves,2023-05-20 22:30:00+08:00
+7853,Almeria,Mallorca,2023-05-21 00:30:00+08:00
+7856,Boavista,Braga,2023-05-21 01:00:00+08:00
+7859,Famalicao,FC Porto,2023-05-21 03:30:00+08:00
+7860,AC Ajaccio,Rennes,2023-05-21 19:00:00+08:00
+7864,Troyes,Strasbourg,2023-05-21 21:00:00+08:00
+7870,Vitoria de Guimaraes,Gil Vicente,2023-05-21 22:30:00+08:00
+7875,Casa Pia AC,Estoril,2023-05-22 01:00:00+08:00
+7876,Pacos de Ferreira,Rio Ave,2023-05-22 01:00:00+08:00
+7878,Auxerre,Paris Saint-Germain,2023-05-22 02:45:00+08:00
+7880,Sporting CP,Benfica,2023-05-22 03:30:00+08:00
+7883,Real Sociedad,Almeria,2023-05-24 01:30:00+08:00
+7887,Villarreal,Cadiz,2023-05-25 01:30:00+08:00
+7894,Rio Ave,Famalicao,2023-05-27 02:00:00+08:00
+7895,Vizela,Sporting CP,2023-05-27 04:15:00+08:00
+7896,Gil Vicente,Casa Pia AC,2023-05-27 19:45:00+08:00
+7906,Estoril,Maritimo,2023-05-27 22:30:00+08:00
+7907,Chaves,Boavista,2023-05-27 22:30:00+08:00
+7908,Portimonense,Arouca,2023-05-28 01:00:00+08:00
+7909,Benfica,Santa Clara,2023-05-28 01:00:00+08:00
+7911,FC Porto,Vitoria de Guimaraes,2023-05-28 01:00:00+08:00
+7916,Toulouse,Auxerre,2023-05-28 03:00:00+08:00
+7917,Angers,Troyes,2023-05-28 03:00:00+08:00
+7918,Lens,AC Ajaccio,2023-05-28 03:00:00+08:00
+7922,Braga,Pacos de Ferreira,2023-05-28 03:30:00+08:00
+7935,Cadiz,Celta Vigo,2023-05-29 01:00:00+08:00
+7936,Almeria,Real Valladolid,2023-05-29 01:00:00+08:00
+7944,AC Ajaccio,Marseille,2023-06-04 03:00:00+08:00
+7946,Auxerre,Lens,2023-06-04 03:00:00+08:00
+7951,Troyes,Lille,2023-06-04 03:00:00+08:00
+7958,Elche,Cadiz,2023-06-05 03:00:00+08:00
+7960,Espanyol,Almeria,2023-06-05 03:00:00+08:00
+7962,Manchester City,Inter,2023-06-11 03:00:00+08:00
+7963,Almeria,Rayo Vallecano,2023-08-12 01:30:00+08:00
+7966,Braga,Famalicao,2023-08-12 03:15:00+08:00
+7969,Sheffield United,Crystal Palace,2023-08-12 22:00:00+08:00
+7972,Brighton & Hove Albion,Luton Town,2023-08-12 22:00:00+08:00
+7973,Gil Vicente,Portimonense,2023-08-12 22:30:00+08:00
+7977,Farense,Casa Pia AC,2023-08-13 01:00:00+08:00
+7980,Sporting CP,Vizela,2023-08-13 03:30:00+08:00
+7987,Rio Ave,Chaves,2023-08-13 22:30:00+08:00
+7991,Estrela da Amadora,Vitoria de Guimaraes,2023-08-14 01:00:00+08:00
+7995,Arouca,Estoril,2023-08-14 03:30:00+08:00
+7996,Cadiz,Deportivo Alaves,2023-08-15 01:30:00+08:00
+7997,Moreirense,FC Porto,2023-08-15 01:45:00+08:00
+8000,Boavista,Benfica,2023-08-15 03:45:00+08:00
+8003,Nottingham Forest,Sheffield United,2023-08-19 02:45:00+08:00
+8005,Casa Pia AC,Sporting CP,2023-08-19 03:15:00+08:00
+8015,Vitoria de Guimaraes,Gil Vicente,2023-08-19 22:30:00+08:00
+8020,Chaves,Braga,2023-08-20 01:00:00+08:00
+8021,Almeria,Real Madrid,2023-08-20 01:30:00+08:00
+8024,Portimonense,Boavista,2023-08-20 03:30:00+08:00
+8025,Benfica,Estrela da Amadora,2023-08-20 03:30:00+08:00
+8033,Estoril,Rio Ave,2023-08-20 22:30:00+08:00
+8038,FC Porto,Farense,2023-08-21 01:00:00+08:00
+8039,Barcelona,Cadiz,2023-08-21 01:30:00+08:00
+8042,Vizela,Arouca,2023-08-21 03:30:00+08:00
+8045,Famalicao,Moreirense,2023-08-22 03:15:00+08:00
+8050,Chelsea,Luton Town,2023-08-26 03:00:00+08:00
+8051,Estrela da Amadora,Estoril,2023-08-26 03:15:00+08:00
+8063,Arouca,Portimonense,2023-08-26 22:30:00+08:00
+8066,Cadiz,Almeria,2023-08-27 01:00:00+08:00
+8068,Farense,Chaves,2023-08-27 01:00:00+08:00
+8072,Gil Vicente,Benfica,2023-08-27 03:30:00+08:00
+8074,Sheffield United,Manchester City,2023-08-27 21:00:00+08:00
+8080,Boavista,Casa Pia AC,2023-08-27 22:30:00+08:00
+8085,Vitoria de Guimaraes,Vizela,2023-08-28 01:00:00+08:00
+8089,Sporting CP,Famalicao,2023-08-28 03:30:00+08:00
+8091,Rio Ave,FC Porto,2023-08-29 03:15:00+08:00
+8093,Cadiz,Villarreal,2023-09-02 01:30:00+08:00
+8095,Luton Town,West Ham United,2023-09-02 03:00:00+08:00
+8097,Vizela,Gil Vicente,2023-09-02 03:15:00+08:00
+8098,Almeria,Celta Vigo,2023-09-02 04:00:00+08:00
+8099,Sheffield United,Everton,2023-09-02 19:30:00+08:00
+8111,Casa Pia AC,Rio Ave,2023-09-02 22:30:00+08:00
+8116,Famalicao,Farense,2023-09-03 01:00:00+08:00
+8117,Portimonense,Estrela da Amadora,2023-09-03 01:00:00+08:00
+8120,Benfica,Vitoria de Guimaraes,2023-09-03 03:30:00+08:00
+8130,Estoril,Boavista,2023-09-03 22:30:00+08:00
+8131,Chaves,Moreirense,2023-09-03 22:35:00+08:00
+8135,FC Porto,Arouca,2023-09-04 01:00:00+08:00
+8138,Braga,Sporting CP,2023-09-04 03:30:00+08:00
+8139,Moreirense,Braga,2023-09-10 01:00:00+08:00
+8140,Estrela da Amadora,FC Porto,2023-09-16 02:15:00+08:00
+8145,Athletic Club,Cadiz,2023-09-16 20:00:00+08:00
+8151,Fulham,Luton Town,2023-09-16 22:00:00+08:00
+8153,Tottenham Hotspur,Sheffield United,2023-09-16 22:00:00+08:00
+8157,Rio Ave,Famalicao,2023-09-16 22:30:00+08:00
+8162,Farense,Braga,2023-09-17 01:00:00+08:00
+8165,Vizela,Benfica,2023-09-17 03:30:00+08:00
+8173,Villarreal,Almeria,2023-09-17 22:15:00+08:00
+8174,Gil Vicente,Estoril,2023-09-17 22:30:00+08:00
+8175,Arouca,Casa Pia AC,2023-09-17 22:30:00+08:00
+8180,Vitoria de Guimaraes,Portimonense,2023-09-18 01:00:00+08:00
+8183,Sporting CP,Moreirense,2023-09-18 03:30:00+08:00
+8186,Boavista,Chaves,2023-09-19 03:15:00+08:00
+8187,Milan,Newcastle United,2023-09-20 00:45:00+08:00
+8188,Young Boys,RB Leipzig,2023-09-20 00:45:00+08:00
+8189,Feyenoord,Celtic,2023-09-20 03:00:00+08:00
+8190,Paris Saint-Germain,Borussia Dortmund,2023-09-20 03:00:00+08:00
+8191,Manchester City,FK Crvena Zvezda,2023-09-20 03:00:00+08:00
+8192,Barcelona,Royal Antwerp,2023-09-20 03:00:00+08:00
+8193,Lazio,Atletico Madrid,2023-09-20 03:00:00+08:00
+8194,Shakhtar Donetsk,FC Porto,2023-09-20 03:00:00+08:00
+8195,Galatasaray,FC København,2023-09-21 00:45:00+08:00
+8196,Real Madrid,Union Berlin,2023-09-21 00:45:00+08:00
+8197,Real Sociedad,Inter,2023-09-21 03:00:00+08:00
+8198,Arsenal,PSV Eindhoven,2023-09-21 03:00:00+08:00
+8199,Bayern München,Manchester United,2023-09-21 03:00:00+08:00
+8200,Benfica,Salzburg,2023-09-21 03:00:00+08:00
+8201,Sevilla,Lens,2023-09-21 03:00:00+08:00
+8202,Braga,Napoli,2023-09-21 03:00:00+08:00
+8206,Famalicao,Arouca,2023-09-23 03:15:00+08:00
+8214,Luton Town,Wolverhampton Wanderers,2023-09-23 22:00:00+08:00
+8217,Estoril,Vizela,2023-09-23 22:30:00+08:00
+8218,Moreirense,Farense,2023-09-23 22:30:00+08:00
+8223,Casa Pia AC,Vitoria de Guimaraes,2023-09-24 01:00:00+08:00
+8224,Almeria,Valencia,2023-09-24 03:00:00+08:00
+8227,FC Porto,Gil Vicente,2023-09-24 03:30:00+08:00
+8238,Chaves,Estrela da Amadora,2023-09-24 22:30:00+08:00
+8240,Sheffield United,Newcastle United,2023-09-24 23:30:00+08:00
+8243,Real Betis,Cadiz,2023-09-25 00:30:00+08:00
+8244,Portimonense,Benfica,2023-09-25 01:00:00+08:00
+8247,Braga,Boavista,2023-09-25 03:30:00+08:00
+8248,Sporting CP,Rio Ave,2023-09-26 03:15:00+08:00
+8249,Sevilla,Almeria,2023-09-27 01:00:00+08:00
+8256,Cadiz,Rayo Vallecano,2023-09-28 03:30:00+08:00
+8259,Estrela da Amadora,Braga,2023-09-29 03:15:00+08:00
+8264,Benfica,FC Porto,2023-09-30 03:15:00+08:00
+8272,West Ham United,Sheffield United,2023-09-30 22:00:00+08:00
+8275,Everton,Luton Town,2023-09-30 22:00:00+08:00
+8279,Vizela,Portimonense,2023-09-30 22:35:00+08:00
+8284,Boavista,Famalicao,2023-10-01 01:00:00+08:00
+8287,Farense,Sporting CP,2023-10-01 03:30:00+08:00
+8289,Almeria,Granada,2023-10-01 20:00:00+08:00
+8296,Arouca,Chaves,2023-10-01 22:30:00+08:00
+8299,Vitoria de Guimaraes,Estoril,2023-10-02 01:00:00+08:00
+8301,Atletico Madrid,Cadiz,2023-10-02 03:00:00+08:00
+8303,Rio Ave,Moreirense,2023-10-02 03:30:00+08:00
+8306,Gil Vicente,Casa Pia AC,2023-10-03 03:15:00+08:00
+8307,Salzburg,Real Sociedad,2023-10-04 00:45:00+08:00
+8308,Union Berlin,Braga,2023-10-04 00:45:00+08:00
+8309,Luton Town,Burnley,2023-10-04 02:30:00+08:00
+8310,Inter,Benfica,2023-10-04 03:00:00+08:00
+8311,Napoli,Real Madrid,2023-10-04 03:00:00+08:00
+8312,FC København,Bayern München,2023-10-04 03:00:00+08:00
+8313,Manchester United,Galatasaray,2023-10-04 03:00:00+08:00
+8314,PSV Eindhoven,Sevilla,2023-10-04 03:00:00+08:00
+8315,Lens,Arsenal,2023-10-04 03:00:00+08:00
+8316,Atletico Madrid,Feyenoord,2023-10-05 00:45:00+08:00
+8317,Royal Antwerp,Shakhtar Donetsk,2023-10-05 00:45:00+08:00
+8318,Borussia Dortmund,Milan,2023-10-05 03:00:00+08:00
+8319,FC Porto,Barcelona,2023-10-05 03:00:00+08:00
+8320,Celtic,Lazio,2023-10-05 03:00:00+08:00
+8321,FK Crvena Zvezda,Young Boys,2023-10-05 03:00:00+08:00
+8322,RB Leipzig,Manchester City,2023-10-05 03:00:00+08:00
+8323,Newcastle United,Paris Saint-Germain,2023-10-05 03:00:00+08:00
+8325,Athletic Club,Almeria,2023-10-07 03:00:00+08:00
+8327,Moreirense,Boavista,2023-10-07 03:15:00+08:00
+8328,Luton Town,Tottenham Hotspur,2023-10-07 19:30:00+08:00
+8329,Cadiz,Girona,2023-10-07 20:00:00+08:00
+8336,Fulham,Sheffield United,2023-10-07 22:00:00+08:00
+8339,Chaves,Gil Vicente,2023-10-07 22:30:00+08:00
+8340,Farense,Vizela,2023-10-07 22:30:00+08:00
+8345,Braga,Rio Ave,2023-10-08 01:00:00+08:00
+8348,Estoril,Benfica,2023-10-08 03:30:00+08:00
+8359,Casa Pia AC,Estrela da Amadora,2023-10-08 22:30:00+08:00
+8360,Famalicao,Vitoria de Guimaraes,2023-10-08 22:30:00+08:00
+8366,FC Porto,Portimonense,2023-10-09 01:00:00+08:00
+8370,Sporting CP,Arouca,2023-10-09 03:30:00+08:00
+8382,Nottingham Forest,Luton Town,2023-10-21 22:00:00+08:00
+8391,Sheffield United,Manchester United,2023-10-22 03:00:00+08:00
+8400,Girona,Almeria,2023-10-22 22:15:00+08:00
+8408,Valencia,Cadiz,2023-10-24 03:00:00+08:00
+8409,Inter,Salzburg,2023-10-25 00:45:00+08:00
+8410,Galatasaray,Bayern München,2023-10-25 00:45:00+08:00
+8411,Sevilla,Arsenal,2023-10-25 03:00:00+08:00
+8412,Union Berlin,Napoli,2023-10-25 03:00:00+08:00
+8413,Lens,PSV Eindhoven,2023-10-25 03:00:00+08:00
+8414,Braga,Real Madrid,2023-10-25 03:00:00+08:00
+8415,Benfica,Real Sociedad,2023-10-25 03:00:00+08:00
+8416,Manchester United,FC København,2023-10-25 03:00:00+08:00
+8417,Feyenoord,Lazio,2023-10-26 00:45:00+08:00
+8418,Barcelona,Shakhtar Donetsk,2023-10-26 00:45:00+08:00
+8419,Celtic,Atletico Madrid,2023-10-26 03:00:00+08:00
+8420,Newcastle United,Borussia Dortmund,2023-10-26 03:00:00+08:00
+8421,Young Boys,Manchester City,2023-10-26 03:00:00+08:00
+8422,RB Leipzig,FK Crvena Zvezda,2023-10-26 03:00:00+08:00
+8423,Royal Antwerp,FC Porto,2023-10-26 03:00:00+08:00
+8424,Paris Saint-Germain,Milan,2023-10-26 03:00:00+08:00
+8429,Arouca,Moreirense,2023-10-28 03:15:00+08:00
+8431,Almeria,Las Palmas,2023-10-28 20:00:00+08:00
+8438,Arsenal,Sheffield United,2023-10-28 22:00:00+08:00
+8440,Portimonense,Estoril,2023-10-28 22:30:00+08:00
+8445,Vitoria de Guimaraes,Chaves,2023-10-29 01:00:00+08:00
+8446,Benfica,Casa Pia AC,2023-10-29 01:00:00+08:00
+8448,Cadiz,Sevilla,2023-10-29 03:00:00+08:00
+8449,Gil Vicente,Braga,2023-10-29 03:30:00+08:00
+8456,Aston Villa,Luton Town,2023-10-29 22:00:00+08:00
+8461,Rio Ave,Farense,2023-10-29 23:30:00+08:00
+8466,Estrela da Amadora,Famalicao,2023-10-30 02:00:00+08:00
+8468,Vizela,FC Porto,2023-10-30 04:30:00+08:00
+8470,Boavista,Sporting CP,2023-10-31 04:15:00+08:00
+8474,FC Porto,Estoril,2023-11-04 04:15:00+08:00
+8485,Sheffield United,Wolverhampton Wanderers,2023-11-04 23:00:00+08:00
+8488,Chaves,Benfica,2023-11-04 23:30:00+08:00
+8493,Famalicao,Gil Vicente,2023-11-05 02:00:00+08:00
+8496,Braga,Portimonense,2023-11-05 04:30:00+08:00
+8498,Deportivo Alaves,Almeria,2023-11-05 21:00:00+08:00
+8505,Casa Pia AC,Vizela,2023-11-05 23:30:00+08:00
+8506,Moreirense,Vitoria de Guimaraes,2023-11-05 23:30:00+08:00
+8508,Luton Town,Liverpool,2023-11-06 00:30:00+08:00
+8511,Rio Ave,Boavista,2023-11-06 02:00:00+08:00
+8514,Sporting CP,Estrela da Amadora,2023-11-06 04:30:00+08:00
+8515,Getafe,Cadiz,2023-11-07 04:00:00+08:00
+8517,Farense,Arouca,2023-11-07 04:25:00+08:00
+8518,Shakhtar Donetsk,Barcelona,2023-11-08 01:45:00+08:00
+8519,Borussia Dortmund,Newcastle United,2023-11-08 01:45:00+08:00
+8520,FC Porto,Royal Antwerp,2023-11-08 04:00:00+08:00
+8521,Milan,Paris Saint-Germain,2023-11-08 04:00:00+08:00
+8522,FK Crvena Zvezda,RB Leipzig,2023-11-08 04:00:00+08:00
+8523,Lazio,Feyenoord,2023-11-08 04:00:00+08:00
+8524,Atletico Madrid,Celtic,2023-11-08 04:00:00+08:00
+8525,Manchester City,Young Boys,2023-11-08 04:00:00+08:00
+8526,Napoli,Union Berlin,2023-11-09 01:45:00+08:00
+8527,Real Sociedad,Benfica,2023-11-09 01:45:00+08:00
+8528,Salzburg,Inter,2023-11-09 04:00:00+08:00
+8529,PSV Eindhoven,Lens,2023-11-09 04:00:00+08:00
+8530,FC København,Manchester United,2023-11-09 04:00:00+08:00
+8531,Bayern München,Galatasaray,2023-11-09 04:00:00+08:00
+8532,Real Madrid,Braga,2023-11-09 04:00:00+08:00
+8533,Arsenal,Sevilla,2023-11-09 04:00:00+08:00
+8537,Estoril,Casa Pia AC,2023-11-11 04:15:00+08:00
+8544,Manchester United,Luton Town,2023-11-11 23:00:00+08:00
+8547,Almeria,Real Sociedad,2023-11-11 23:15:00+08:00
+8548,Portimonense,Chaves,2023-11-11 23:30:00+08:00
+8554,Vizela,Famalicao,2023-11-12 02:00:00+08:00
+8555,Estrela da Amadora,Moreirense,2023-11-12 02:00:00+08:00
+8558,Vitoria de Guimaraes,FC Porto,2023-11-12 04:30:00+08:00
+8563,Brighton & Hove Albion,Sheffield United,2023-11-12 22:00:00+08:00
+8568,Gil Vicente,Rio Ave,2023-11-12 23:30:00+08:00
+8569,Boavista,Farense,2023-11-12 23:30:00+08:00
+8574,Arouca,Braga,2023-11-13 02:00:00+08:00
+8578,Benfica,Sporting CP,2023-11-13 04:30:00+08:00
+8591,Luton Town,Crystal Palace,2023-11-25 23:00:00+08:00
+8592,Sheffield United,AFC Bournemouth,2023-11-25 23:00:00+08:00
+8596,Getafe,Almeria,2023-11-26 01:30:00+08:00
+8612,Cadiz,Real Madrid,2023-11-27 01:30:00+08:00
+8617,Lazio,Celtic,2023-11-29 01:45:00+08:00
+8618,Shakhtar Donetsk,Royal Antwerp,2023-11-29 01:45:00+08:00
+8619,Milan,Borussia Dortmund,2023-11-29 04:00:00+08:00
+8620,Paris Saint-Germain,Newcastle United,2023-11-29 04:00:00+08:00
+8621,Feyenoord,Atletico Madrid,2023-11-29 04:00:00+08:00
+8622,Young Boys,FK Crvena Zvezda,2023-11-29 04:00:00+08:00
+8623,Manchester City,RB Leipzig,2023-11-29 04:00:00+08:00
+8624,Barcelona,FC Porto,2023-11-29 04:00:00+08:00
+8625,Galatasaray,Manchester United,2023-11-30 01:45:00+08:00
+8626,Sevilla,PSV Eindhoven,2023-11-30 01:45:00+08:00
+8628,Arsenal,Lens,2023-11-30 04:00:00+08:00
+8629,Braga,Union Berlin,2023-11-30 04:00:00+08:00
+8630,Real Madrid,Napoli,2023-11-30 04:00:00+08:00
+8631,Benfica,Inter,2023-11-30 04:00:00+08:00
+8632,Mallorca,Cadiz,2023-11-30 04:00:00+08:00
+8633,Bayern München,FC København,2023-11-30 04:00:00+08:00
+8634,Real Sociedad,Salzburg,2023-11-30 04:00:00+08:00
+8638,Chaves,Vizela,2023-12-02 04:30:00+08:00
+8644,Brentford,Luton Town,2023-12-02 23:00:00+08:00
+8645,Burnley,Sheffield United,2023-12-02 23:00:00+08:00
+8647,Rio Ave,Estrela da Amadora,2023-12-02 23:30:00+08:00
+8648,Farense,Vitoria de Guimaraes,2023-12-02 23:30:00+08:00
+8653,Famalicao,FC Porto,2023-12-03 02:00:00+08:00
+8657,Casa Pia AC,Portimonense,2023-12-03 04:30:00+08:00
+8668,Almeria,Real Betis,2023-12-03 23:15:00+08:00
+8669,Braga,Estoril,2023-12-03 23:30:00+08:00
+8674,Moreirense,Benfica,2023-12-04 02:00:00+08:00
+8678,Boavista,Arouca,2023-12-04 04:30:00+08:00
+8679,Celta Vigo,Cadiz,2023-12-05 04:00:00+08:00
+8680,Sporting CP,Gil Vicente,2023-12-05 04:15:00+08:00
+8682,Luton Town,Arsenal,2023-12-06 04:15:00+08:00
+8686,Sheffield United,Liverpool,2023-12-07 03:30:00+08:00
+8693,Vizela,Braga,2023-12-08 23:30:00+08:00
+8694,Benfica,Farense,2023-12-09 02:00:00+08:00
+8705,Sheffield United,Brentford,2023-12-09 23:00:00+08:00
+8710,Portimonense,Famalicao,2023-12-09 23:30:00+08:00
+8715,Vitoria de Guimaraes,Sporting CP,2023-12-10 02:00:00+08:00
+8718,FC Porto,Casa Pia AC,2023-12-10 04:30:00+08:00
+8720,Atletico Madrid,Almeria,2023-12-10 21:00:00+08:00
+8724,Luton Town,Manchester City,2023-12-10 22:00:00+08:00
+8728,Estrela da Amadora,Boavista,2023-12-10 23:30:00+08:00
+8732,Cadiz,Osasuna,2023-12-11 01:30:00+08:00
+8733,Arouca,Rio Ave,2023-12-11 02:00:00+08:00
+8736,Estoril,Chaves,2023-12-11 04:30:00+08:00
+8739,Gil Vicente,Moreirense,2023-12-12 04:15:00+08:00
+8740,Lens,Sevilla,2023-12-13 01:45:00+08:00
+8741,PSV Eindhoven,Arsenal,2023-12-13 01:45:00+08:00
+8742,Inter,Real Sociedad,2023-12-13 04:00:00+08:00
+8743,Salzburg,Benfica,2023-12-13 04:00:00+08:00
+8744,Union Berlin,Real Madrid,2023-12-13 04:00:00+08:00
+8745,Napoli,Braga,2023-12-13 04:00:00+08:00
+8746,Manchester United,Bayern München,2023-12-13 04:00:00+08:00
+8747,FC København,Galatasaray,2023-12-13 04:00:00+08:00
+8748,FK Crvena Zvezda,Manchester City,2023-12-14 01:45:00+08:00
+8749,RB Leipzig,Young Boys,2023-12-14 01:45:00+08:00
+8750,Celtic,Feyenoord,2023-12-14 04:00:00+08:00
+8751,Atletico Madrid,Lazio,2023-12-14 04:00:00+08:00
+8752,Royal Antwerp,Barcelona,2023-12-14 04:00:00+08:00
+8753,Borussia Dortmund,Paris Saint-Germain,2023-12-14 04:00:00+08:00
+8754,FC Porto,Shakhtar Donetsk,2023-12-14 04:00:00+08:00
+8755,Newcastle United,Milan,2023-12-14 04:00:00+08:00
+8760,Farense,Estrela da Amadora,2023-12-16 04:15:00+08:00
+8767,Chelsea,Sheffield United,2023-12-16 23:00:00+08:00
+8769,AFC Bournemouth,Luton Town,2023-12-16 23:00:00+08:00
+8771,Rio Ave,Vizela,2023-12-16 23:30:00+08:00
+8776,Arouca,Gil Vicente,2023-12-17 02:00:00+08:00
+8779,Boavista,Vitoria de Guimaraes,2023-12-17 04:30:00+08:00
+8781,Almeria,Mallorca,2023-12-17 21:00:00+08:00
+8790,Chaves,Casa Pia AC,2023-12-17 23:30:00+08:00
+8791,Moreirense,Portimonense,2023-12-17 23:30:00+08:00
+8795,Las Palmas,Cadiz,2023-12-18 01:30:00+08:00
+8796,Famalicao,Estoril,2023-12-18 02:00:00+08:00
+8800,Braga,Benfica,2023-12-18 04:30:00+08:00
+8802,Sporting CP,FC Porto,2023-12-19 04:20:00+08:00
+8810,Barcelona,Almeria,2023-12-21 02:00:00+08:00
+8828,Cadiz,Real Sociedad,2023-12-22 02:00:00+08:00
+8832,Aston Villa,Sheffield United,2023-12-23 04:00:00+08:00
+8835,Luton Town,Newcastle United,2023-12-23 23:00:00+08:00
+8839,Vitoria de Guimaraes,Rio Ave,2023-12-23 23:30:00+08:00
+8840,Vizela,Moreirense,2023-12-23 23:30:00+08:00
+8844,Sheffield United,Luton Town,2023-12-26 23:00:00+08:00
+8852,Estrela da Amadora,Arouca,2023-12-29 04:15:00+08:00
+8854,Benfica,Famalicao,2023-12-30 02:45:00+08:00
+8855,FC Porto,Chaves,2023-12-30 04:45:00+08:00
+8856,Luton Town,Chelsea,2023-12-30 20:30:00+08:00
+8857,Manchester City,Sheffield United,2023-12-30 23:00:00+08:00
+8861,Gil Vicente,Boavista,2023-12-30 23:30:00+08:00
+8862,Estoril,Farense,2023-12-30 23:30:00+08:00
+8864,Casa Pia AC,Braga,2023-12-31 02:00:00+08:00
+8865,Portimonense,Sporting CP,2023-12-31 04:30:00+08:00
+8873,Granada,Cadiz,2024-01-04 00:00:00+08:00
+8877,Osasuna,Almeria,2024-01-05 00:00:00+08:00
+8880,Sporting CP,Estoril,2024-01-06 02:45:00+08:00
+8881,Boavista,FC Porto,2024-01-06 04:45:00+08:00
+8882,Estrela da Amadora,Vizela,2024-01-06 23:30:00+08:00
+8883,Farense,Gil Vicente,2024-01-06 23:30:00+08:00
+8884,Arouca,Benfica,2024-01-07 02:00:00+08:00
+8885,Braga,Vitoria de Guimaraes,2024-01-07 04:30:00+08:00
+8886,Rio Ave,Portimonense,2024-01-08 02:00:00+08:00
+8887,Famalicao,Chaves,2024-01-08 04:30:00+08:00
+8888,Moreirense,Casa Pia AC,2024-01-09 04:15:00+08:00
+8890,Burnley,Luton Town,2024-01-13 03:45:00+08:00
+8893,Portimonense,Farense,2024-01-13 04:15:00+08:00
+8902,Casa Pia AC,Famalicao,2024-01-13 23:30:00+08:00
+8907,Chaves,Sporting CP,2024-01-14 02:00:00+08:00
+8910,Estoril,Moreirense,2024-01-14 04:30:00+08:00
+8912,Almeria,Girona,2024-01-14 21:00:00+08:00
+8918,Cadiz,Valencia,2024-01-14 23:15:00+08:00
+8919,Gil Vicente,Estrela da Amadora,2024-01-14 23:30:00+08:00
+8923,Vizela,Boavista,2024-01-15 02:00:00+08:00
+8924,Benfica,Rio Ave,2024-01-15 02:00:00+08:00
+8926,FC Porto,Braga,2024-01-15 04:30:00+08:00
+8927,Vitoria de Guimaraes,Arouca,2024-01-16 04:15:00+08:00
+8928,Famalicao,Braga,2024-01-19 02:45:00+08:00
+8929,Vizela,Sporting CP,2024-01-19 04:45:00+08:00
+8930,Deportivo Alaves,Cadiz,2024-01-20 04:00:00+08:00
+8931,Benfica,Boavista,2024-01-20 04:15:00+08:00
+8940,Estoril,Arouca,2024-01-20 23:30:00+08:00
+8944,Casa Pia AC,Farense,2024-01-21 02:00:00+08:00
+8946,FC Porto,Moreirense,2024-01-21 04:30:00+08:00
+8948,Sheffield United,West Ham United,2024-01-21 22:00:00+08:00
+8950,Real Madrid,Almeria,2024-01-21 23:15:00+08:00
+8951,Portimonense,Gil Vicente,2024-01-21 23:30:00+08:00
+8955,Chaves,Rio Ave,2024-01-22 02:00:00+08:00
+8957,Vitoria de Guimaraes,Estrela da Amadora,2024-01-22 04:30:00+08:00
+8962,Almeria,Deportivo Alaves,2024-01-27 04:00:00+08:00
+8982,Cadiz,Athletic Club,2024-01-28 23:15:00+08:00
+8983,Boavista,Portimonense,2024-01-28 23:30:00+08:00
+8984,Moreirense,Famalicao,2024-01-28 23:30:00+08:00
+8988,Farense,FC Porto,2024-01-29 02:00:00+08:00
+8991,Arouca,Vizela,2024-01-29 04:30:00+08:00
+8992,Gil Vicente,Vitoria de Guimaraes,2024-01-29 04:30:00+08:00
+8993,Estrela da Amadora,Benfica,2024-01-30 02:45:00+08:00
+8995,Sporting CP,Casa Pia AC,2024-01-30 04:45:00+08:00
+8998,Luton Town,Brighton & Hove Albion,2024-01-31 03:45:00+08:00
+8999,Crystal Palace,Sheffield United,2024-01-31 04:00:00+08:00
+9002,Rio Ave,Estoril,2024-02-01 02:45:00+08:00
+9007,Braga,Chaves,2024-02-01 04:45:00+08:00
+9015,Valencia,Almeria,2024-02-03 21:00:00+08:00
+9021,Newcastle United,Luton Town,2024-02-03 23:00:00+08:00
+9025,Portimonense,Arouca,2024-02-03 23:30:00+08:00
+9027,Sheffield United,Aston Villa,2024-02-04 01:30:00+08:00
+9032,FC Porto,Rio Ave,2024-02-04 04:30:00+08:00
+9034,Villarreal,Cadiz,2024-02-04 21:00:00+08:00
+9043,Chaves,Farense,2024-02-04 23:30:00+08:00
+9044,Vizela,Vitoria de Guimaraes,2024-02-04 23:30:00+08:00
+9049,Estoril,Estrela da Amadora,2024-02-05 02:00:00+08:00
+9050,Benfica,Gil Vicente,2024-02-05 02:00:00+08:00
+9053,Braga,Moreirense,2024-02-05 04:30:00+08:00
+9056,Casa Pia AC,Boavista,2024-02-06 04:15:00+08:00
+9059,Cadiz,Real Betis,2024-02-10 04:00:00+08:00
+9061,Estrela da Amadora,Portimonense,2024-02-10 04:15:00+08:00
+9072,Luton Town,Sheffield United,2024-02-10 23:00:00+08:00
+9075,Farense,Famalicao,2024-02-10 23:30:00+08:00
+9080,Moreirense,Chaves,2024-02-11 02:00:00+08:00
+9083,Boavista,Estoril,2024-02-11 04:30:00+08:00
+9092,Rio Ave,Casa Pia AC,2024-02-11 23:30:00+08:00
+9097,Sporting CP,Braga,2024-02-12 02:00:00+08:00
+9100,Vitoria de Guimaraes,Benfica,2024-02-12 04:30:00+08:00
+9102,Almeria,Athletic Club,2024-02-13 04:00:00+08:00
+9103,Arouca,FC Porto,2024-02-13 04:15:00+08:00
+9104,Gil Vicente,Vizela,2024-02-13 23:30:00+08:00
+9105,FC København,Manchester City,2024-02-14 04:00:00+08:00
+9106,RB Leipzig,Real Madrid,2024-02-14 04:00:00+08:00
+9107,Paris Saint-Germain,Real Sociedad,2024-02-15 04:00:00+08:00
+9108,Lazio,Bayern München,2024-02-15 04:00:00+08:00
+9112,Famalicao,Rio Ave,2024-02-17 04:15:00+08:00
+9125,Osasuna,Cadiz,2024-02-17 23:15:00+08:00
+9126,Chaves,Boavista,2024-02-17 23:30:00+08:00
+9131,Portimonense,Vitoria de Guimaraes,2024-02-18 02:00:00+08:00
+9134,FC Porto,Estrela da Amadora,2024-02-18 04:30:00+08:00
+9137,Sheffield United,Brighton & Hove Albion,2024-02-18 22:00:00+08:00
+9142,Granada,Almeria,2024-02-18 23:15:00+08:00
+9143,Casa Pia AC,Arouca,2024-02-18 23:30:00+08:00
+9145,Luton Town,Manchester United,2024-02-19 00:30:00+08:00
+9148,Benfica,Vizela,2024-02-19 02:00:00+08:00
+9149,Estoril,Gil Vicente,2024-02-19 02:00:00+08:00
+9152,Braga,Farense,2024-02-19 04:30:00+08:00
+9155,Moreirense,Sporting CP,2024-02-20 04:15:00+08:00
+9157,PSV Eindhoven,Borussia Dortmund,2024-02-21 04:00:00+08:00
+9158,Inter,Atletico Madrid,2024-02-21 04:00:00+08:00
+9159,Liverpool,Luton Town,2024-02-22 03:30:00+08:00
+9160,Napoli,Barcelona,2024-02-22 04:00:00+08:00
+9161,FC Porto,Arsenal,2024-02-22 04:00:00+08:00
+9165,Arouca,Famalicao,2024-02-24 04:15:00+08:00
+9175,Farense,Moreirense,2024-02-24 23:30:00+08:00
+9180,Estrela da Amadora,Chaves,2024-02-25 02:00:00+08:00
+9183,Almeria,Atletico Madrid,2024-02-25 04:00:00+08:00
+9184,Vitoria de Guimaraes,Casa Pia AC,2024-02-25 04:30:00+08:00
+9186,Cadiz,Celta Vigo,2024-02-25 21:00:00+08:00
+9187,Wolverhampton Wanderers,Sheffield United,2024-02-25 21:30:00+08:00
+9193,Vizela,Estoril,2024-02-25 23:30:00+08:00
+9197,Benfica,Portimonense,2024-02-26 02:00:00+08:00
+9198,Gil Vicente,FC Porto,2024-02-26 02:00:00+08:00
+9202,Rio Ave,Sporting CP,2024-02-26 04:30:00+08:00
+9205,Boavista,Braga,2024-02-27 04:15:00+08:00
+9208,Celta Vigo,Almeria,2024-03-02 04:00:00+08:00
+9209,Chaves,Arouca,2024-03-02 04:15:00+08:00
+9222,Rayo Vallecano,Cadiz,2024-03-02 23:15:00+08:00
+9223,Moreirense,Rio Ave,2024-03-02 23:30:00+08:00
+9226,Luton Town,Aston Villa,2024-03-03 01:30:00+08:00
+9228,Estoril,Vitoria de Guimaraes,2024-03-03 02:00:00+08:00
+9231,Braga,Estrela da Amadora,2024-03-03 04:30:00+08:00
+9241,Portimonense,Vizela,2024-03-03 23:30:00+08:00
+9242,Casa Pia AC,Gil Vicente,2024-03-03 23:30:00+08:00
+9246,Sporting CP,Farense,2024-03-04 02:05:00+08:00
+9249,FC Porto,Benfica,2024-03-04 04:30:00+08:00
+9250,Sheffield United,Arsenal,2024-03-05 04:00:00+08:00
+9252,Famalicao,Boavista,2024-03-05 04:15:00+08:00
+9253,Bayern München,Lazio,2024-03-06 04:00:00+08:00
+9254,Real Sociedad,Paris Saint-Germain,2024-03-06 04:00:00+08:00
+9255,Manchester City,FC København,2024-03-07 04:00:00+08:00
+9256,Real Madrid,RB Leipzig,2024-03-07 04:00:00+08:00
+9257,Portimonense,FC Porto,2024-03-09 02:45:00+08:00
+9261,Estrela da Amadora,Casa Pia AC,2024-03-09 04:45:00+08:00
+9269,AFC Bournemouth,Sheffield United,2024-03-09 23:00:00+08:00
+9270,Crystal Palace,Luton Town,2024-03-09 23:00:00+08:00
+9271,Cadiz,Atletico Madrid,2024-03-09 23:15:00+08:00
+9272,Vizela,Farense,2024-03-09 23:30:00+08:00
+9277,Rio Ave,Braga,2024-03-10 02:00:00+08:00
+9278,Boavista,Moreirense,2024-03-10 02:00:00+08:00
+9281,Vitoria de Guimaraes,Famalicao,2024-03-10 04:30:00+08:00
+9296,Arouca,Sporting CP,2024-03-11 02:00:00+08:00
+9300,Benfica,Estoril,2024-03-11 04:30:00+08:00
+9302,Almeria,Sevilla,2024-03-12 04:00:00+08:00
+9303,Gil Vicente,Chaves,2024-03-12 04:15:00+08:00
+9304,Barcelona,Napoli,2024-03-13 04:00:00+08:00
+9305,Arsenal,FC Porto,2024-03-13 04:00:00+08:00
+9306,AFC Bournemouth,Luton Town,2024-03-14 03:30:00+08:00
+9307,Atletico Madrid,Inter,2024-03-14 04:00:00+08:00
+9308,Borussia Dortmund,PSV Eindhoven,2024-03-14 04:00:00+08:00
+9310,Real Sociedad,Cadiz,2024-03-16 04:00:00+08:00
+9312,Estoril,Portimonense,2024-03-16 04:15:00+08:00
+9319,Luton Town,Nottingham Forest,2024-03-16 23:00:00+08:00
+9322,Famalicao,Estrela da Amadora,2024-03-16 23:30:00+08:00
+9327,Farense,Rio Ave,2024-03-17 02:00:00+08:00
+9328,Braga,Gil Vicente,2024-03-17 02:00:00+08:00
+9331,FC Porto,Vizela,2024-03-17 04:30:00+08:00
+9339,Las Palmas,Almeria,2024-03-17 23:15:00+08:00
+9341,Moreirense,Arouca,2024-03-17 23:30:00+08:00
+9342,Chaves,Vitoria de Guimaraes,2024-03-17 23:30:00+08:00
+9346,Casa Pia AC,Benfica,2024-03-18 02:00:00+08:00
+9349,Sporting CP,Boavista,2024-03-18 04:30:00+08:00
+9350,Gil Vicente,Famalicao,2024-03-29 23:30:00+08:00
+9351,Benfica,Chaves,2024-03-30 02:00:00+08:00
+9352,Cadiz,Granada,2024-03-30 04:00:00+08:00
+9354,Estrela da Amadora,Sporting CP,2024-03-30 04:30:00+08:00
+9362,Sheffield United,Fulham,2024-03-30 23:00:00+08:00
+9366,Tottenham Hotspur,Luton Town,2024-03-30 23:00:00+08:00
+9367,Almeria,Osasuna,2024-03-30 23:15:00+08:00
+9368,Vitoria de Guimaraes,Moreirense,2024-03-30 23:30:00+08:00
+9369,Arouca,Farense,2024-03-30 23:30:00+08:00
+9374,Boavista,Rio Ave,2024-03-31 02:00:00+08:00
+9378,Estoril,FC Porto,2024-03-31 04:30:00+08:00
+9391,Vizela,Casa Pia AC,2024-04-01 01:00:00+08:00
+9396,Portimonense,Braga,2024-04-02 03:15:00+08:00
+9402,Arsenal,Luton Town,2024-04-04 02:30:00+08:00
+9406,Liverpool,Sheffield United,2024-04-05 02:30:00+08:00
+9410,Farense,Boavista,2024-04-06 03:15:00+08:00
+9419,Luton Town,AFC Bournemouth,2024-04-06 22:00:00+08:00
+9422,Rio Ave,Gil Vicente,2024-04-06 22:30:00+08:00
+9423,Famalicao,Vizela,2024-04-06 22:30:00+08:00
+9427,Braga,Arouca,2024-04-07 01:00:00+08:00
+9429,Sporting CP,Benfica,2024-04-07 03:30:00+08:00
+9435,Chaves,Portimonense,2024-04-07 22:30:00+08:00
+9439,Sheffield United,Chelsea,2024-04-08 00:30:00+08:00
+9441,Moreirense,Estrela da Amadora,2024-04-08 01:00:00+08:00
+9443,FC Porto,Vitoria de Guimaraes,2024-04-08 03:30:00+08:00
+9444,Casa Pia AC,Estoril,2024-04-09 03:15:00+08:00
+9445,Real Madrid,Manchester City,2024-04-10 03:00:00+08:00
+9446,Arsenal,Bayern München,2024-04-10 03:00:00+08:00
+9447,Atletico Madrid,Borussia Dortmund,2024-04-11 03:00:00+08:00
+9448,Paris Saint-Germain,Barcelona,2024-04-11 03:00:00+08:00
+9452,Gil Vicente,Sporting CP,2024-04-13 03:15:00+08:00
+9460,Brentford,Sheffield United,2024-04-13 22:00:00+08:00
+9462,Manchester City,Luton Town,2024-04-13 22:00:00+08:00
+9465,Vitoria de Guimaraes,Farense,2024-04-13 22:30:00+08:00
+9470,FC Porto,Famalicao,2024-04-14 01:00:00+08:00
+9471,Cadiz,Barcelona,2024-04-14 03:00:00+08:00
+9473,Estoril,Braga,2024-04-14 03:30:00+08:00
+9481,Estrela da Amadora,Rio Ave,2024-04-14 22:30:00+08:00
+9485,Portimonense,Casa Pia AC,2024-04-15 01:00:00+08:00
+9486,Arouca,Boavista,2024-04-15 01:00:00+08:00
+9488,Real Sociedad,Almeria,2024-04-15 03:00:00+08:00
+9489,Benfica,Moreirense,2024-04-15 03:30:00+08:00
+9492,Vizela,Chaves,2024-04-16 03:15:00+08:00
+9493,Borussia Dortmund,Atletico Madrid,2024-04-17 03:00:00+08:00
+9494,Barcelona,Paris Saint-Germain,2024-04-17 03:00:00+08:00
+9495,Famalicao,Sporting CP,2024-04-17 03:15:00+08:00
+9496,Bayern München,Arsenal,2024-04-18 03:00:00+08:00
+9497,Manchester City,Real Madrid,2024-04-18 03:00:00+08:00
+9501,Rio Ave,Arouca,2024-04-20 03:15:00+08:00
+9507,Sheffield United,Burnley,2024-04-20 22:00:00+08:00
+9508,Luton Town,Brentford,2024-04-20 22:00:00+08:00
+9510,Moreirense,Gil Vicente,2024-04-20 22:30:00+08:00
+9514,Boavista,Estrela da Amadora,2024-04-21 01:00:00+08:00
+9517,Girona,Cadiz,2024-04-21 03:00:00+08:00
+9518,Braga,Vizela,2024-04-21 03:30:00+08:00
+9527,Almeria,Villarreal,2024-04-21 22:15:00+08:00
+9528,Chaves,Estoril,2024-04-21 22:30:00+08:00
+9529,Famalicao,Portimonense,2024-04-21 22:30:00+08:00
+9534,Casa Pia AC,FC Porto,2024-04-22 01:00:00+08:00
+9539,Sporting CP,Vitoria de Guimaraes,2024-04-22 03:30:00+08:00
+9541,Farense,Benfica,2024-04-23 03:15:00+08:00
+9547,Manchester United,Sheffield United,2024-04-25 03:00:00+08:00
+9554,Gil Vicente,Arouca,2024-04-27 03:15:00+08:00
+9562,Wolverhampton Wanderers,Luton Town,2024-04-27 22:00:00+08:00
+9563,Newcastle United,Sheffield United,2024-04-27 22:00:00+08:00
+9565,Almeria,Getafe,2024-04-27 22:15:00+08:00
+9566,Vizela,Rio Ave,2024-04-27 22:30:00+08:00
+9567,Casa Pia AC,Chaves,2024-04-27 22:30:00+08:00
+9571,Benfica,Braga,2024-04-28 01:00:00+08:00
+9575,Vitoria de Guimaraes,Boavista,2024-04-28 03:30:00+08:00
+9577,Cadiz,Mallorca,2024-04-28 20:00:00+08:00
+9585,Portimonense,Moreirense,2024-04-28 22:30:00+08:00
+9590,Estoril,Famalicao,2024-04-29 01:00:00+08:00
+9595,FC Porto,Sporting CP,2024-04-29 03:30:00+08:00
+9597,Estrela da Amadora,Farense,2024-04-30 03:15:00+08:00
+9598,Bayern München,Real Madrid,2024-05-01 03:00:00+08:00
+9599,Borussia Dortmund,Paris Saint-Germain,2024-05-02 03:00:00+08:00
+9603,Luton Town,Everton,2024-05-04 03:00:00+08:00
+9606,Moreirense,Vizela,2024-05-04 03:15:00+08:00
+9616,Sheffield United,Nottingham Forest,2024-05-04 22:00:00+08:00
+9617,Real Madrid,Cadiz,2024-05-04 22:15:00+08:00
+9618,Boavista,Gil Vicente,2024-05-04 22:30:00+08:00
+9619,Rio Ave,Vitoria de Guimaraes,2024-05-04 22:30:00+08:00
+9624,Sporting CP,Portimonense,2024-05-05 01:00:00+08:00
+9628,Chaves,FC Porto,2024-05-05 03:30:00+08:00
+9634,Farense,Estoril,2024-05-05 22:30:00+08:00
+9638,Arouca,Estrela da Amadora,2024-05-06 01:00:00+08:00
+9639,Braga,Casa Pia AC,2024-05-06 01:00:00+08:00
+9641,Rayo Vallecano,Almeria,2024-05-06 03:00:00+08:00
+9643,Famalicao,Benfica,2024-05-06 03:30:00+08:00
+9646,Paris Saint-Germain,Borussia Dortmund,2024-05-08 03:00:00+08:00
+9647,Real Madrid,Bayern München,2024-05-09 03:00:00+08:00
+9652,Chaves,Famalicao,2024-05-11 03:15:00+08:00
+9659,Everton,Sheffield United,2024-05-11 22:00:00+08:00
+9664,West Ham United,Luton Town,2024-05-11 22:00:00+08:00
+9666,Vizela,Estrela da Amadora,2024-05-11 22:30:00+08:00
+9667,Portimonense,Rio Ave,2024-05-11 22:30:00+08:00
+9671,Estoril,Sporting CP,2024-05-12 01:00:00+08:00
+9673,Vitoria de Guimaraes,Braga,2024-05-12 03:30:00+08:00
+9674,Cadiz,Getafe,2024-05-12 20:00:00+08:00
+9677,Gil Vicente,Farense,2024-05-12 22:30:00+08:00
+9681,Casa Pia AC,Moreirense,2024-05-13 01:00:00+08:00
+9682,Benfica,Arouca,2024-05-13 01:00:00+08:00
+9689,Real Betis,Almeria,2024-05-13 03:00:00+08:00
+9692,FC Porto,Boavista,2024-05-13 03:30:00+08:00
+9699,Sevilla,Cadiz,2024-05-16 01:30:00+08:00
+9708,Almeria,Barcelona,2024-05-17 03:30:00+08:00
+9710,Famalicao,Casa Pia AC,2024-05-18 01:45:00+08:00
+9711,Rio Ave,Benfica,2024-05-18 03:45:00+08:00
+9721,Arouca,Vitoria de Guimaraes,2024-05-18 22:30:00+08:00
+9722,Farense,Portimonense,2024-05-18 22:30:00+08:00
+9723,Estrela da Amadora,Gil Vicente,2024-05-18 22:30:00+08:00
+9724,Boavista,Vizela,2024-05-18 22:30:00+08:00
+9725,Sporting CP,Chaves,2024-05-19 01:00:00+08:00
+9726,Moreirense,Estoril,2024-05-19 01:00:00+08:00
+9728,Braga,FC Porto,2024-05-19 03:30:00+08:00
+9730,Sheffield United,Tottenham Hotspur,2024-05-19 23:00:00+08:00
+9733,Luton Town,Fulham,2024-05-19 23:00:00+08:00
+9740,Cadiz,Las Palmas,2024-05-20 01:00:00+08:00
+9745,Mallorca,Almeria,2024-05-20 01:00:00+08:00
+9761,Almeria,Cadiz,2024-05-26 00:30:00+08:00
+9767,Borussia Dortmund,Real Madrid,2024-06-02 03:00:00+08:00
+9768,Sporting CP,Rio Ave,2024-08-10 03:15:00+08:00
+9769,AVS Futebol SAD,Nacional,2024-08-10 22:30:00+08:00
+9770,Casa Pia AC,Boavista,2024-08-11 01:00:00+08:00
+9771,FC Porto,Gil Vicente,2024-08-11 03:30:00+08:00
+9772,Estoril,Santa Clara,2024-08-11 22:30:00+08:00
+9773,Farense,Moreirense,2024-08-12 01:00:00+08:00
+9774,Famalicao,Benfica,2024-08-12 01:00:00+08:00
+9775,Braga,Estrela da Amadora,2024-08-12 03:30:00+08:00
+9776,Arouca,Vitoria de Guimaraes,2024-08-13 03:15:00+08:00
+9779,Santa Clara,FC Porto,2024-08-17 00:00:00+08:00
+9783,Gil Vicente,AVS Futebol SAD,2024-08-17 03:15:00+08:00
+9785,Ipswich Town,Liverpool,2024-08-17 19:30:00+08:00
+9790,Rio Ave,Farense,2024-08-17 22:30:00+08:00
+9793,Nacional,Sporting CP,2024-08-18 01:00:00+08:00
+9795,Osasuna,Leganes,2024-08-18 01:00:00+08:00
+9796,Monaco,Saint-Etienne,2024-08-18 03:00:00+08:00
+9798,Benfica,Casa Pia AC,2024-08-18 03:30:00+08:00
+9800,Auxerre,Nice,2024-08-18 21:00:00+08:00
+9801,Moreirense,Arouca,2024-08-18 22:30:00+08:00
+9806,Vitoria de Guimaraes,Estoril,2024-08-19 01:00:00+08:00
+9810,Boavista,Braga,2024-08-19 03:30:00+08:00
+9813,Estrela da Amadora,Famalicao,2024-08-20 03:15:00+08:00
+9818,Farense,Sporting CP,2024-08-24 03:15:00+08:00
+9825,Hoffenheim,Holstein Kiel,2024-08-24 21:30:00+08:00
+9828,Manchester City,Ipswich Town,2024-08-24 22:00:00+08:00
+9831,Casa Pia AC,Santa Clara,2024-08-24 22:30:00+08:00
+9836,FC Porto,Rio Ave,2024-08-25 01:00:00+08:00
+9839,Saint-Etienne,Le Havre,2024-08-25 03:00:00+08:00
+9841,Famalicao,Boavista,2024-08-25 03:30:00+08:00
+9843,Benfica,Estrela da Amadora,2024-08-25 03:30:00+08:00
+9848,Arouca,Nacional,2024-08-25 22:30:00+08:00
+9850,Nantes,Auxerre,2024-08-25 23:00:00+08:00
+9853,St. Pauli,FC Heidenheim,2024-08-25 23:30:00+08:00
+9855,Estoril,Gil Vicente,2024-08-26 01:00:00+08:00
+9856,Leganes,Las Palmas,2024-08-26 01:00:00+08:00
+9859,Braga,Moreirense,2024-08-26 03:30:00+08:00
+9860,AVS Futebol SAD,Vitoria de Guimaraes,2024-08-26 03:30:00+08:00
+9865,Real Valladolid,Leganes,2024-08-29 01:00:00+08:00
+9871,Union Berlin,St. Pauli,2024-08-31 02:30:00+08:00
+9873,Moreirense,Benfica,2024-08-31 03:15:00+08:00
+9883,Ipswich Town,Fulham,2024-08-31 22:00:00+08:00
+9885,Santa Clara,AVS Futebol SAD,2024-08-31 22:30:00+08:00
+9886,Brest,Saint-Etienne,2024-08-31 23:00:00+08:00
+9890,Estrela da Amadora,Casa Pia AC,2024-09-01 01:00:00+08:00
+9891,Boavista,Estoril,2024-09-01 01:00:00+08:00
+9897,Sporting CP,FC Porto,2024-09-01 03:30:00+08:00
+9898,Leganes,Mallorca,2024-09-01 03:30:00+08:00
+9903,Nacional,Farense,2024-09-01 22:30:00+08:00
+9909,Le Havre,Auxerre,2024-09-01 23:00:00+08:00
+9911,Rio Ave,Arouca,2024-09-02 01:00:00+08:00
+9915,Gil Vicente,Braga,2024-09-02 03:30:00+08:00
+9916,Vitoria de Guimaraes,Famalicao,2024-09-02 03:30:00+08:00
+9919,Saint-Etienne,Lille,2024-09-14 02:45:00+08:00
+9920,Real Betis,Leganes,2024-09-14 03:00:00+08:00
+9921,Arouca,Sporting CP,2024-09-14 03:15:00+08:00
+9932,Brighton & Hove Albion,Ipswich Town,2024-09-14 22:00:00+08:00
+9935,Casa Pia AC,Moreirense,2024-09-14 22:30:00+08:00
+9939,Holstein Kiel,Bayern München,2024-09-15 00:30:00+08:00
+9940,AVS Futebol SAD,Rio Ave,2024-09-15 01:00:00+08:00
+9941,Auxerre,Monaco,2024-09-15 01:00:00+08:00
+9945,Famalicao,Gil Vicente,2024-09-15 03:30:00+08:00
+9946,Benfica,Santa Clara,2024-09-15 03:30:00+08:00
+9950,Augsburg,St. Pauli,2024-09-15 21:30:00+08:00
+9952,FC Porto,Farense,2024-09-15 22:35:00+08:00
+9959,Estoril,Nacional,2024-09-16 01:00:00+08:00
+9962,Braga,Vitoria de Guimaraes,2024-09-16 03:30:00+08:00
+9964,Estrela da Amadora,Boavista,2024-09-17 03:15:00+08:00
+9965,Young Boys,Aston Villa,2024-09-18 00:45:00+08:00
+9966,Juventus,PSV Eindhoven,2024-09-18 00:45:00+08:00
+9968,Milan,Liverpool,2024-09-18 03:00:00+08:00
+9969,Sporting CP,Lille,2024-09-18 03:00:00+08:00
+9970,Real Madrid,VfB Stuttgart,2024-09-18 03:00:00+08:00
+9971,Bayern München,Dinamo Zagreb,2024-09-18 03:00:00+08:00
+9972,Bologna,Shakhtar Donetsk,2024-09-19 00:45:00+08:00
+9973,Sparta Prague,Salzburg,2024-09-19 00:45:00+08:00
+9975,Paris Saint-Germain,Girona,2024-09-19 03:00:00+08:00
+9976,Club Brugge,Borussia Dortmund,2024-09-19 03:00:00+08:00
+9977,Manchester City,Inter,2024-09-19 03:00:00+08:00
+9978,Celtic,Slovan Bratislava,2024-09-19 03:00:00+08:00
+9979,FK Crvena Zvezda,Benfica,2024-09-20 00:45:00+08:00
+9980,Feyenoord,Bayer Leverkusen,2024-09-20 00:45:00+08:00
+9981,Leganes,Athletic Club,2024-09-20 01:00:00+08:00
+9982,Atalanta,Arsenal,2024-09-20 03:00:00+08:00
+9983,Brest,Sturm Graz,2024-09-20 03:00:00+08:00
+9984,Monaco,Barcelona,2024-09-20 03:00:00+08:00
+9985,Atletico Madrid,RB Leipzig,2024-09-20 03:00:00+08:00
+9987,Nice,Saint-Etienne,2024-09-21 02:45:00+08:00
+9989,Nacional,Braga,2024-09-21 03:15:00+08:00
+9994,Bochum,Holstein Kiel,2024-09-21 21:30:00+08:00
+10000,Southampton,Ipswich Town,2024-09-21 22:00:00+08:00
+10003,Rio Ave,Estoril,2024-09-21 22:30:00+08:00
+10004,Santa Clara,Estrela da Amadora,2024-09-21 22:30:00+08:00
+10009,Vitoria de Guimaraes,FC Porto,2024-09-22 01:00:00+08:00
+10013,Moreirense,Famalicao,2024-09-22 03:30:00+08:00
+10014,Getafe,Leganes,2024-09-22 20:00:00+08:00
+10019,Gil Vicente,Casa Pia AC,2024-09-22 22:30:00+08:00
+10021,Montpellier,Auxerre,2024-09-22 23:00:00+08:00
+10026,Farense,Arouca,2024-09-23 01:00:00+08:00
+10027,St. Pauli,RB Leipzig,2024-09-23 01:30:00+08:00
+10030,Sporting CP,AVS Futebol SAD,2024-09-23 03:30:00+08:00
+10032,Boavista,Benfica,2024-09-24 03:15:00+08:00
+10041,Auxerre,Brest,2024-09-28 01:00:00+08:00
+10045,Estoril,Sporting CP,2024-09-28 03:15:00+08:00
+10050,Freiburg,St. Pauli,2024-09-28 21:30:00+08:00
+10058,Rayo Vallecano,Leganes,2024-09-28 22:15:00+08:00
+10059,Estrela da Amadora,Moreirense,2024-09-28 22:30:00+08:00
+10064,Casa Pia AC,Vitoria de Guimaraes,2024-09-29 01:00:00+08:00
+10068,Benfica,Gil Vicente,2024-09-29 03:30:00+08:00
+10071,Ipswich Town,Aston Villa,2024-09-29 21:00:00+08:00
+10072,Holstein Kiel,Eintracht Frankfurt,2024-09-29 21:30:00+08:00
+10074,Famalicao,Nacional,2024-09-29 22:30:00+08:00
+10075,Nantes,Saint-Etienne,2024-09-29 23:00:00+08:00
+10080,FC Porto,Arouca,2024-09-30 01:00:00+08:00
+10083,Braga,Rio Ave,2024-09-30 03:30:00+08:00
+10084,Santa Clara,Boavista,2024-09-30 03:30:00+08:00
+10087,AVS Futebol SAD,Farense,2024-10-01 03:15:00+08:00
+10088,Salzburg,Brest,2024-10-02 00:45:00+08:00
+10089,VfB Stuttgart,Sparta Prague,2024-10-02 00:45:00+08:00
+10090,PSV Eindhoven,Sporting CP,2024-10-02 03:00:00+08:00
+10091,Barcelona,Young Boys,2024-10-02 03:00:00+08:00
+10092,Arsenal,Paris Saint-Germain,2024-10-02 03:00:00+08:00
+10093,Bayer Leverkusen,Milan,2024-10-02 03:00:00+08:00
+10094,Borussia Dortmund,Celtic,2024-10-02 03:00:00+08:00
+10095,Slovan Bratislava,Manchester City,2024-10-02 03:00:00+08:00
+10096,Inter,FK Crvena Zvezda,2024-10-02 03:00:00+08:00
+10097,Shakhtar Donetsk,Atalanta,2024-10-03 00:45:00+08:00
+10098,Girona,Feyenoord,2024-10-03 00:45:00+08:00
+10099,Benfica,Atletico Madrid,2024-10-03 03:00:00+08:00
+10100,Dinamo Zagreb,Monaco,2024-10-03 03:00:00+08:00
+10101,Sturm Graz,Club Brugge,2024-10-03 03:00:00+08:00
+10103,RB Leipzig,Juventus,2024-10-03 03:00:00+08:00
+10104,Aston Villa,Bayern München,2024-10-03 03:00:00+08:00
+10105,Lille,Real Madrid,2024-10-03 03:00:00+08:00
+10108,Leganes,Valencia,2024-10-05 03:00:00+08:00
+10109,Rio Ave,Famalicao,2024-10-05 03:15:00+08:00
+10114,Bayer Leverkusen,Holstein Kiel,2024-10-05 21:30:00+08:00
+10117,West Ham United,Ipswich Town,2024-10-05 22:00:00+08:00
+10122,Gil Vicente,Estrela da Amadora,2024-10-05 22:30:00+08:00
+10123,Moreirense,Santa Clara,2024-10-05 22:30:00+08:00
+10124,Saint-Etienne,Auxerre,2024-10-05 23:00:00+08:00
+10126,St. Pauli,Mainz 05,2024-10-06 00:30:00+08:00
+10130,Arouca,AVS Futebol SAD,2024-10-06 01:00:00+08:00
+10133,Sporting CP,Casa Pia AC,2024-10-06 03:30:00+08:00
+10140,Vitoria de Guimaraes,Boavista,2024-10-06 22:30:00+08:00
+10141,Farense,Estoril,2024-10-06 22:30:00+08:00
+10151,FC Porto,Braga,2024-10-07 03:30:00+08:00
+10152,Borussia Dortmund,St. Pauli,2024-10-19 02:30:00+08:00
+10167,Ipswich Town,Everton,2024-10-19 22:15:00+08:00
+10172,Saint-Etienne,Lens,2024-10-20 01:00:00+08:00
+10178,Holstein Kiel,Union Berlin,2024-10-20 21:30:00+08:00
+10179,Atletico Madrid,Leganes,2024-10-20 22:15:00+08:00
+10182,Auxerre,Reims,2024-10-20 23:00:00+08:00
+10190,Milan,Club Brugge,2024-10-23 00:45:00+08:00
+10191,Monaco,FK Crvena Zvezda,2024-10-23 00:45:00+08:00
+10192,Aston Villa,Bologna,2024-10-23 03:00:00+08:00
+10193,Paris Saint-Germain,PSV Eindhoven,2024-10-23 03:00:00+08:00
+10194,Girona,Slovan Bratislava,2024-10-23 03:00:00+08:00
+10195,Arsenal,Shakhtar Donetsk,2024-10-23 03:00:00+08:00
+10196,Juventus,VfB Stuttgart,2024-10-23 03:00:00+08:00
+10197,Real Madrid,Borussia Dortmund,2024-10-23 03:00:00+08:00
+10198,Sturm Graz,Sporting CP,2024-10-23 03:00:00+08:00
+10199,Brest,Bayer Leverkusen,2024-10-24 00:45:00+08:00
+10200,Atalanta,Celtic,2024-10-24 00:45:00+08:00
+10201,Young Boys,Inter,2024-10-24 03:00:00+08:00
+10202,Benfica,Feyenoord,2024-10-24 03:00:00+08:00
+10203,Salzburg,Dinamo Zagreb,2024-10-24 03:00:00+08:00
+10204,RB Leipzig,Liverpool,2024-10-24 03:00:00+08:00
+10205,Barcelona,Bayern München,2024-10-24 03:00:00+08:00
+10206,Manchester City,Sparta Prague,2024-10-24 03:00:00+08:00
+10207,Atletico Madrid,Lille,2024-10-24 03:00:00+08:00
+10208,Casa Pia AC,Nacional,2024-10-26 01:45:00+08:00
+10213,Santa Clara,Gil Vicente,2024-10-26 03:45:00+08:00
+10216,St. Pauli,Wolfsburg,2024-10-26 21:30:00+08:00
+10218,VfB Stuttgart,Holstein Kiel,2024-10-26 21:30:00+08:00
+10219,Brentford,Ipswich Town,2024-10-26 22:00:00+08:00
+10224,Estoril,Arouca,2024-10-26 22:30:00+08:00
+10225,Angers,Saint-Etienne,2024-10-26 23:00:00+08:00
+10229,Boavista,Moreirense,2024-10-27 01:00:00+08:00
+10233,Famalicao,Sporting CP,2024-10-27 03:30:00+08:00
+10234,Leganes,Celta Vigo,2024-10-27 21:00:00+08:00
+10235,Lyon,Auxerre,2024-10-27 22:00:00+08:00
+10241,Braga,Farense,2024-10-27 23:30:00+08:00
+10248,Benfica,Rio Ave,2024-10-28 02:00:00+08:00
+10252,Estrela da Amadora,Vitoria de Guimaraes,2024-10-28 04:30:00+08:00
+10254,AVS Futebol SAD,FC Porto,2024-10-29 04:15:00+08:00
+10259,Sporting CP,Estrela da Amadora,2024-11-02 04:15:00+08:00
+10262,Holstein Kiel,FC Heidenheim,2024-11-02 22:30:00+08:00
+10264,Hoffenheim,St. Pauli,2024-11-02 22:30:00+08:00
+10267,Ipswich Town,Leicester City,2024-11-02 23:00:00+08:00
+10272,Girona,Leganes,2024-11-02 23:15:00+08:00
+10273,Rio Ave,Casa Pia AC,2024-11-02 23:30:00+08:00
+10277,Farense,Benfica,2024-11-03 02:00:00+08:00
+10279,Saint-Etienne,Strasbourg,2024-11-03 04:00:00+08:00
+10280,Gil Vicente,Boavista,2024-11-03 04:30:00+08:00
+10286,AVS Futebol SAD,Famalicao,2024-11-03 23:30:00+08:00
+10287,Auxerre,Rennes,2024-11-04 00:00:00+08:00
+10292,Arouca,Braga,2024-11-04 02:00:00+08:00
+10293,Vitoria de Guimaraes,Moreirense,2024-11-04 02:00:00+08:00
+10296,FC Porto,Estoril,2024-11-04 04:30:00+08:00
+10299,Nacional,Santa Clara,2024-11-05 04:15:00+08:00
+10300,PSV Eindhoven,Girona,2024-11-06 01:45:00+08:00
+10301,Slovan Bratislava,Dinamo Zagreb,2024-11-06 01:45:00+08:00
+10302,Celtic,RB Leipzig,2024-11-06 04:00:00+08:00
+10303,Liverpool,Bayer Leverkusen,2024-11-06 04:00:00+08:00
+10304,Lille,Juventus,2024-11-06 04:00:00+08:00
+10305,Borussia Dortmund,Sturm Graz,2024-11-06 04:00:00+08:00
+10307,Real Madrid,Milan,2024-11-06 04:00:00+08:00
+10308,Sporting CP,Manchester City,2024-11-06 04:00:00+08:00
+10309,Shakhtar Donetsk,Young Boys,2024-11-07 01:45:00+08:00
+10310,Club Brugge,Aston Villa,2024-11-07 01:45:00+08:00
+10311,Feyenoord,Salzburg,2024-11-07 04:00:00+08:00
+10312,Sparta Prague,Brest,2024-11-07 04:00:00+08:00
+10313,VfB Stuttgart,Atalanta,2024-11-07 04:00:00+08:00
+10314,FK Crvena Zvezda,Barcelona,2024-11-07 04:00:00+08:00
+10315,Paris Saint-Germain,Atletico Madrid,2024-11-07 04:00:00+08:00
+10316,Inter,Arsenal,2024-11-07 04:00:00+08:00
+10317,Bayern München,Benfica,2024-11-07 04:15:00+08:00
+10319,Marseille,Auxerre,2024-11-09 03:45:00+08:00
+10321,Moreirense,Gil Vicente,2024-11-09 04:15:00+08:00
+10323,St. Pauli,Bayern München,2024-11-09 22:30:00+08:00
+10326,Werder Bremen,Holstein Kiel,2024-11-09 22:30:00+08:00
+10332,Casa Pia AC,Farense,2024-11-09 23:30:00+08:00
+10333,Estoril,AVS Futebol SAD,2024-11-09 23:30:00+08:00
+10338,Famalicao,Arouca,2024-11-10 02:00:00+08:00
+10340,Leganes,Sevilla,2024-11-10 04:00:00+08:00
+10342,Boavista,Rio Ave,2024-11-10 04:30:00+08:00
+10344,Tottenham Hotspur,Ipswich Town,2024-11-10 22:00:00+08:00
+10350,Estrela da Amadora,Nacional,2024-11-10 23:30:00+08:00
+10355,Santa Clara,Vitoria de Guimaraes,2024-11-11 00:30:00+08:00
+10360,Braga,Sporting CP,2024-11-11 02:45:00+08:00
+10361,Lyon,Saint-Etienne,2024-11-11 03:45:00+08:00
+10363,Benfica,FC Porto,2024-11-11 04:45:00+08:00
+10386,Saint-Etienne,Montpellier,2024-11-24 02:00:00+08:00
+10392,Holstein Kiel,Mainz 05,2024-11-24 22:30:00+08:00
+10395,Auxerre,Angers,2024-11-25 00:00:00+08:00
+10396,Borussia Mönchengladbach,St. Pauli,2024-11-25 00:30:00+08:00
+10397,Ipswich Town,Manchester United,2024-11-25 00:30:00+08:00
+10398,Leganes,Real Madrid,2024-11-25 01:30:00+08:00
+10402,Slovan Bratislava,Milan,2024-11-27 01:45:00+08:00
+10403,Sparta Prague,Atletico Madrid,2024-11-27 01:45:00+08:00
+10404,Manchester City,Feyenoord,2024-11-27 04:00:00+08:00
+10405,Inter,RB Leipzig,2024-11-27 04:00:00+08:00
+10406,Sporting CP,Arsenal,2024-11-27 04:00:00+08:00
+10407,Bayern München,Paris Saint-Germain,2024-11-27 04:00:00+08:00
+10408,Bayer Leverkusen,Salzburg,2024-11-27 04:00:00+08:00
+10409,Barcelona,Brest,2024-11-27 04:00:00+08:00
+10410,Young Boys,Atalanta,2024-11-27 04:00:00+08:00
+10411,Sturm Graz,Girona,2024-11-28 01:45:00+08:00
+10412,FK Crvena Zvezda,VfB Stuttgart,2024-11-28 01:45:00+08:00
+10413,PSV Eindhoven,Shakhtar Donetsk,2024-11-28 04:00:00+08:00
+10414,Celtic,Club Brugge,2024-11-28 04:00:00+08:00
+10415,Monaco,Benfica,2024-11-28 04:00:00+08:00
+10416,Liverpool,Real Madrid,2024-11-28 04:00:00+08:00
+10418,Aston Villa,Juventus,2024-11-28 04:00:00+08:00
+10419,Dinamo Zagreb,Borussia Dortmund,2024-11-28 04:00:00+08:00
+10420,St. Pauli,Holstein Kiel,2024-11-30 03:30:00+08:00
+10424,Farense,Estrela da Amadora,2024-11-30 04:15:00+08:00
+10432,Nottingham Forest,Ipswich Town,2024-11-30 23:00:00+08:00
+10435,Deportivo Alaves,Leganes,2024-11-30 23:15:00+08:00
+10436,Rio Ave,Moreirense,2024-11-30 23:30:00+08:00
+10437,Rennes,Saint-Etienne,2024-12-01 00:00:00+08:00
+10442,Nacional,Boavista,2024-12-01 02:00:00+08:00
+10445,Sporting CP,Santa Clara,2024-12-01 04:30:00+08:00
+10453,Estoril,Famalicao,2024-12-01 23:30:00+08:00
+10455,Toulouse,Auxerre,2024-12-02 00:00:00+08:00
+10460,Arouca,Benfica,2024-12-02 02:00:00+08:00
+10463,AVS Futebol SAD,Braga,2024-12-02 04:30:00+08:00
+10464,Vitoria de Guimaraes,Gil Vicente,2024-12-03 02:45:00+08:00
+10466,FC Porto,Casa Pia AC,2024-12-03 04:45:00+08:00
+10468,Ipswich Town,Crystal Palace,2024-12-04 03:30:00+08:00
+10478,Moreirense,Sporting CP,2024-12-06 04:15:00+08:00
+10482,Auxerre,Paris Saint-Germain,2024-12-07 04:00:00+08:00
+10484,Braga,Estoril,2024-12-07 04:15:00+08:00
+10488,Bayer Leverkusen,St. Pauli,2024-12-07 22:30:00+08:00
+10490,Holstein Kiel,RB Leipzig,2024-12-07 22:30:00+08:00
+10495,Gil Vicente,Nacional,2024-12-07 23:30:00+08:00
+10501,Santa Clara,Rio Ave,2024-12-08 02:00:00+08:00
+10502,Benfica,Vitoria de Guimaraes,2024-12-08 02:00:00+08:00
+10505,Famalicao,FC Porto,2024-12-08 04:30:00+08:00
+10506,Leganes,Real Sociedad,2024-12-08 21:00:00+08:00
+10508,Ipswich Town,AFC Bournemouth,2024-12-08 22:00:00+08:00
+10513,Boavista,Farense,2024-12-08 23:30:00+08:00
+10519,Casa Pia AC,AVS Futebol SAD,2024-12-09 02:00:00+08:00
+10520,Saint-Etienne,Marseille,2024-12-09 03:45:00+08:00
+10524,Estrela da Amadora,Arouca,2024-12-10 04:15:00+08:00
+10525,Dinamo Zagreb,Celtic,2024-12-11 01:45:00+08:00
+10526,Girona,Liverpool,2024-12-11 01:45:00+08:00
+10527,Atalanta,Real Madrid,2024-12-11 04:00:00+08:00
+10528,Shakhtar Donetsk,Bayern München,2024-12-11 04:00:00+08:00
+10529,Bayer Leverkusen,Inter,2024-12-11 04:00:00+08:00
+10530,Salzburg,Paris Saint-Germain,2024-12-11 04:00:00+08:00
+10531,RB Leipzig,Aston Villa,2024-12-11 04:00:00+08:00
+10532,Brest,PSV Eindhoven,2024-12-11 04:00:00+08:00
+10533,Club Brugge,Sporting CP,2024-12-11 04:00:00+08:00
+10534,Atletico Madrid,Slovan Bratislava,2024-12-12 01:45:00+08:00
+10535,Lille,Sturm Graz,2024-12-12 01:45:00+08:00
+10536,Feyenoord,Sparta Prague,2024-12-12 04:00:00+08:00
+10537,Juventus,Manchester City,2024-12-12 04:00:00+08:00
+10538,Benfica,Bologna,2024-12-12 04:00:00+08:00
+10539,Arsenal,Monaco,2024-12-12 04:00:00+08:00
+10540,Borussia Dortmund,Barcelona,2024-12-12 04:00:00+08:00
+10541,VfB Stuttgart,Young Boys,2024-12-12 04:00:00+08:00
+10542,Milan,FK Crvena Zvezda,2024-12-12 04:00:00+08:00
+10544,Toulouse,Saint-Etienne,2024-12-14 03:45:00+08:00
+10549,Borussia Mönchengladbach,Holstein Kiel,2024-12-14 22:30:00+08:00
+10551,Wolverhampton Wanderers,Ipswich Town,2024-12-14 23:00:00+08:00
+10556,Farense,Gil Vicente,2024-12-14 23:30:00+08:00
+10558,St. Pauli,Werder Bremen,2024-12-15 01:30:00+08:00
+10561,Auxerre,Lens,2024-12-15 02:00:00+08:00
+10562,Nacional,Moreirense,2024-12-15 02:00:00+08:00
+10565,Sporting CP,Boavista,2024-12-15 04:30:00+08:00
+10571,Arouca,Santa Clara,2024-12-15 23:30:00+08:00
+10579,AVS Futebol SAD,Benfica,2024-12-16 02:00:00+08:00
+10584,Barcelona,Leganes,2024-12-16 04:00:00+08:00
+10585,Estoril,Casa Pia AC,2024-12-16 04:30:00+08:00
+10586,Braga,Famalicao,2024-12-17 02:45:00+08:00
+10588,FC Porto,Estrela da Amadora,2024-12-17 04:15:00+08:00
+10589,Rio Ave,Vitoria de Guimaraes,2024-12-17 04:45:00+08:00
+10593,Nacional,Benfica,2024-12-20 01:00:00+08:00
+10596,Casa Pia AC,Arouca,2024-12-21 04:15:00+08:00
+10599,Holstein Kiel,Augsburg,2024-12-21 22:30:00+08:00
+10600,VfB Stuttgart,St. Pauli,2024-12-21 22:30:00+08:00
+10606,Ipswich Town,Newcastle United,2024-12-21 23:00:00+08:00
+10608,Famalicao,Farense,2024-12-21 23:30:00+08:00
+10612,Boavista,AVS Futebol SAD,2024-12-22 02:00:00+08:00
+10614,Moreirense,FC Porto,2024-12-22 04:30:00+08:00
+10624,Santa Clara,Braga,2024-12-23 01:00:00+08:00
+10626,Leganes,Villarreal,2024-12-23 01:30:00+08:00
+10628,Gil Vicente,Sporting CP,2024-12-23 04:30:00+08:00
+10629,Vitoria de Guimaraes,Nacional,2024-12-24 02:45:00+08:00
+10630,Benfica,Estoril,2024-12-24 02:45:00+08:00
+10631,Estrela da Amadora,Rio Ave,2024-12-24 04:45:00+08:00
+10641,Arouca,Gil Vicente,2024-12-28 04:15:00+08:00
+10642,Arsenal,Ipswich Town,2024-12-28 04:15:00+08:00
+10643,AVS Futebol SAD,Estrela da Amadora,2024-12-28 23:30:00+08:00
+10644,Estoril,Moreirense,2024-12-29 02:00:00+08:00
+10645,FC Porto,Boavista,2024-12-29 04:30:00+08:00
+10651,Rio Ave,Nacional,2024-12-29 23:30:00+08:00
+10652,Farense,Vitoria de Guimaraes,2024-12-29 23:30:00+08:00
+10654,Braga,Casa Pia AC,2024-12-30 02:00:00+08:00
+10655,Sporting CP,Benfica,2024-12-30 04:30:00+08:00
+10656,Ipswich Town,Chelsea,2024-12-31 03:45:00+08:00
+10659,Famalicao,Santa Clara,2024-12-31 04:15:00+08:00
+10663,Vitoria de Guimaraes,Sporting CP,2025-01-04 04:15:00+08:00
+10670,Moreirense,AVS Futebol SAD,2025-01-04 23:30:00+08:00
+10671,Saint-Etienne,Reims,2025-01-05 00:00:00+08:00
+10674,Benfica,Braga,2025-01-05 02:00:00+08:00
+10676,Boavista,Arouca,2025-01-05 04:30:00+08:00
+10677,Fulham,Ipswich Town,2025-01-05 22:00:00+08:00
+10680,Strasbourg,Auxerre,2025-01-05 22:00:00+08:00
+10681,Santa Clara,Farense,2025-01-05 23:30:00+08:00
+10683,Casa Pia AC,Famalicao,2025-01-06 02:00:00+08:00
+10685,Estrela da Amadora,Estoril,2025-01-06 04:30:00+08:00
+10687,Gil Vicente,Rio Ave,2025-01-07 04:15:00+08:00
+10691,Auxerre,Lille,2025-01-11 04:05:00+08:00
+10693,Freiburg,Holstein Kiel,2025-01-11 22:30:00+08:00
+10697,St. Pauli,Eintracht Frankfurt,2025-01-11 22:30:00+08:00
+10701,Espanyol,Leganes,2025-01-12 01:30:00+08:00
+10709,Nacional,FC Porto,2025-01-12 23:30:00+08:00
+10713,Paris Saint-Germain,Saint-Etienne,2025-01-13 03:45:00+08:00
+10715,Holstein Kiel,Borussia Dortmund,2025-01-15 01:30:00+08:00
+10723,Bochum,St. Pauli,2025-01-16 01:30:00+08:00
+10732,Ipswich Town,Brighton & Hove Albion,2025-01-17 03:30:00+08:00
+10738,Benfica,Famalicao,2025-01-18 04:15:00+08:00
+10742,FC Heidenheim,St. Pauli,2025-01-18 22:30:00+08:00
+10745,Holstein Kiel,Hoffenheim,2025-01-18 22:30:00+08:00
+10749,Leganes,Atletico Madrid,2025-01-18 23:15:00+08:00
+10750,Santa Clara,Estoril,2025-01-18 23:30:00+08:00
+10756,Rio Ave,Sporting CP,2025-01-19 02:00:00+08:00
+10759,Vitoria de Guimaraes,Arouca,2025-01-19 04:30:00+08:00
+10763,Saint-Etienne,Nantes,2025-01-19 22:00:00+08:00
+10767,Moreirense,Farense,2025-01-19 23:30:00+08:00
+10768,Nacional,AVS Futebol SAD,2025-01-19 23:30:00+08:00
+10770,Angers,Auxerre,2025-01-20 00:15:00+08:00
+10772,Ipswich Town,Manchester City,2025-01-20 00:30:00+08:00
+10774,Estrela da Amadora,Braga,2025-01-20 02:00:00+08:00
+10777,Gil Vicente,FC Porto,2025-01-20 04:30:00+08:00
+10780,Boavista,Casa Pia AC,2025-01-21 04:15:00+08:00
+10781,Monaco,Aston Villa,2025-01-22 01:45:00+08:00
+10782,Atalanta,Sturm Graz,2025-01-22 01:45:00+08:00
+10783,Bologna,Borussia Dortmund,2025-01-22 04:00:00+08:00
+10784,Club Brugge,Juventus,2025-01-22 04:00:00+08:00
+10785,Atletico Madrid,Bayer Leverkusen,2025-01-22 04:00:00+08:00
+10787,Benfica,Barcelona,2025-01-22 04:00:00+08:00
+10788,FK Crvena Zvezda,PSV Eindhoven,2025-01-22 04:00:00+08:00
+10789,Slovan Bratislava,VfB Stuttgart,2025-01-22 04:00:00+08:00
+10790,RB Leipzig,Sporting CP,2025-01-23 01:45:00+08:00
+10791,Shakhtar Donetsk,Brest,2025-01-23 01:45:00+08:00
+10792,Celtic,Young Boys,2025-01-23 04:00:00+08:00
+10793,Milan,Girona,2025-01-23 04:00:00+08:00
+10794,Arsenal,Dinamo Zagreb,2025-01-23 04:00:00+08:00
+10795,Sparta Prague,Inter,2025-01-23 04:00:00+08:00
+10796,Paris Saint-Germain,Manchester City,2025-01-23 04:00:00+08:00
+10797,Real Madrid,Salzburg,2025-01-23 04:00:00+08:00
+10798,Feyenoord,Bayern München,2025-01-23 04:00:00+08:00
+10800,Auxerre,Saint-Etienne,2025-01-25 03:45:00+08:00
+10802,Arouca,Moreirense,2025-01-25 04:15:00+08:00
+10811,Liverpool,Ipswich Town,2025-01-25 23:00:00+08:00
+10815,Farense,Rio Ave,2025-01-25 23:30:00+08:00
+10816,Famalicao,Estrela da Amadora,2025-01-25 23:30:00+08:00
+10821,Casa Pia AC,Benfica,2025-01-26 02:00:00+08:00
+10825,Sporting CP,Nacional,2025-01-26 04:30:00+08:00
+10832,Estoril,Vitoria de Guimaraes,2025-01-26 23:30:00+08:00
+10836,St. Pauli,Union Berlin,2025-01-27 00:30:00+08:00
+10838,Athletic Club,Leganes,2025-01-27 01:30:00+08:00
+10839,FC Porto,Santa Clara,2025-01-27 02:00:00+08:00
+10843,Braga,Boavista,2025-01-27 04:30:00+08:00
+10845,AVS Futebol SAD,Gil Vicente,2025-01-28 04:15:00+08:00
+10846,Sporting CP,Bologna,2025-01-30 04:00:00+08:00
+10847,VfB Stuttgart,Paris Saint-Germain,2025-01-30 04:00:00+08:00
+10848,Bayern München,Slovan Bratislava,2025-01-30 04:00:00+08:00
+10849,Barcelona,Atalanta,2025-01-30 04:00:00+08:00
+10850,Inter,Monaco,2025-01-30 04:00:00+08:00
+10851,Manchester City,Club Brugge,2025-01-30 04:00:00+08:00
+10852,Juventus,Benfica,2025-01-30 04:00:00+08:00
+10853,Sturm Graz,RB Leipzig,2025-01-30 04:00:00+08:00
+10854,Borussia Dortmund,Shakhtar Donetsk,2025-01-30 04:00:00+08:00
+10855,Brest,Real Madrid,2025-01-30 04:00:00+08:00
+10856,PSV Eindhoven,Liverpool,2025-01-30 04:00:00+08:00
+10857,Aston Villa,Celtic,2025-01-30 04:00:00+08:00
+10858,Bayer Leverkusen,Sparta Prague,2025-01-30 04:00:00+08:00
+10859,Young Boys,FK Crvena Zvezda,2025-01-30 04:00:00+08:00
+10860,Lille,Feyenoord,2025-01-30 04:00:00+08:00
+10861,Dinamo Zagreb,Milan,2025-01-30 04:00:00+08:00
+10862,Girona,Arsenal,2025-01-30 04:00:00+08:00
+10863,Salzburg,Atletico Madrid,2025-01-30 04:00:00+08:00
+10866,Leganes,Rayo Vallecano,2025-02-01 04:00:00+08:00
+10867,Boavista,Famalicao,2025-02-01 04:15:00+08:00
+10872,St. Pauli,Augsburg,2025-02-01 22:30:00+08:00
+10874,Bayern München,Holstein Kiel,2025-02-01 22:30:00+08:00
+10875,Ipswich Town,Southampton,2025-02-01 23:00:00+08:00
+10880,Santa Clara,Casa Pia AC,2025-02-01 23:30:00+08:00
+10881,Nacional,Arouca,2025-02-01 23:30:00+08:00
+10886,Monaco,Auxerre,2025-02-02 02:00:00+08:00
+10887,Gil Vicente,Estoril,2025-02-02 02:00:00+08:00
+10889,Lille,Saint-Etienne,2025-02-02 04:05:00+08:00
+10890,Vitoria de Guimaraes,AVS Futebol SAD,2025-02-02 04:30:00+08:00
+10903,Sporting CP,Farense,2025-02-03 02:00:00+08:00
+10906,Estrela da Amadora,Benfica,2025-02-03 04:30:00+08:00
+10907,Moreirense,Braga,2025-02-04 02:45:00+08:00
+10910,Rio Ave,FC Porto,2025-02-04 04:45:00+08:00
+10915,FC Porto,Sporting CP,2025-02-08 04:15:00+08:00
+10923,AVS Futebol SAD,Santa Clara,2025-02-08 23:30:00+08:00
+10927,Benfica,Moreirense,2025-02-09 02:00:00+08:00
+10930,Saint-Etienne,Rennes,2025-02-09 04:05:00+08:00
+10931,Famalicao,Vitoria de Guimaraes,2025-02-09 04:30:00+08:00
+10934,Holstein Kiel,Bochum,2025-02-09 22:30:00+08:00
+10935,Valencia,Leganes,2025-02-09 23:15:00+08:00
+10936,Farense,Nacional,2025-02-09 23:30:00+08:00
+10937,Estoril,Boavista,2025-02-09 23:30:00+08:00
+10939,Auxerre,Toulouse,2025-02-10 00:15:00+08:00
+10940,RB Leipzig,St. Pauli,2025-02-10 00:30:00+08:00
+10942,Braga,Gil Vicente,2025-02-10 02:00:00+08:00
+10945,Casa Pia AC,Estrela da Amadora,2025-02-10 04:30:00+08:00
+10947,Arouca,Rio Ave,2025-02-11 04:15:00+08:00
+10949,Sporting CP,Borussia Dortmund,2025-02-12 04:00:00+08:00
+10950,Manchester City,Real Madrid,2025-02-12 04:00:00+08:00
+10951,Juventus,PSV Eindhoven,2025-02-12 04:00:00+08:00
+10952,Club Brugge,Atalanta,2025-02-13 01:45:00+08:00
+10954,Monaco,Benfica,2025-02-13 04:00:00+08:00
+10955,Feyenoord,Milan,2025-02-13 04:00:00+08:00
+10956,Celtic,Bayern München,2025-02-13 04:00:00+08:00
+10958,Brest,Auxerre,2025-02-15 03:45:00+08:00
+10961,Boavista,Estrela da Amadora,2025-02-15 04:15:00+08:00
+10963,Leganes,Deportivo Alaves,2025-02-15 21:00:00+08:00
+10965,St. Pauli,Freiburg,2025-02-15 22:30:00+08:00
+10969,Aston Villa,Ipswich Town,2025-02-15 23:00:00+08:00
+10974,Moreirense,Casa Pia AC,2025-02-15 23:30:00+08:00
+10975,Marseille,Saint-Etienne,2025-02-16 00:00:00+08:00
+10976,Nacional,Estoril,2025-02-16 01:00:00+08:00
+10981,Santa Clara,Benfica,2025-02-16 02:00:00+08:00
+10984,Sporting CP,Arouca,2025-02-16 04:30:00+08:00
+10990,Rio Ave,AVS Futebol SAD,2025-02-16 23:30:00+08:00
+10994,Eintracht Frankfurt,Holstein Kiel,2025-02-17 00:30:00+08:00
+10997,Farense,FC Porto,2025-02-17 02:00:00+08:00
+11001,Vitoria de Guimaraes,Braga,2025-02-17 04:30:00+08:00
+11003,Gil Vicente,Famalicao,2025-02-18 04:15:00+08:00
+11004,Milan,Feyenoord,2025-02-19 01:45:00+08:00
+11005,Bayern München,Celtic,2025-02-19 04:00:00+08:00
+11006,Atalanta,Club Brugge,2025-02-19 04:00:00+08:00
+11007,Benfica,Monaco,2025-02-19 04:00:00+08:00
+11008,Borussia Dortmund,Sporting CP,2025-02-20 01:45:00+08:00
+11010,PSV Eindhoven,Juventus,2025-02-20 04:00:00+08:00
+11012,Real Madrid,Manchester City,2025-02-20 04:00:00+08:00
+11017,Braga,Nacional,2025-02-22 04:15:00+08:00
+11021,Holstein Kiel,Bayer Leverkusen,2025-02-22 22:30:00+08:00
+11023,Mainz 05,St. Pauli,2025-02-22 22:30:00+08:00
+11026,Ipswich Town,Tottenham Hotspur,2025-02-22 23:00:00+08:00
+11030,Casa Pia AC,Gil Vicente,2025-02-22 23:30:00+08:00
+11035,Benfica,Boavista,2025-02-23 02:00:00+08:00
+11036,Saint-Etienne,Angers,2025-02-23 02:00:00+08:00
+11038,Auxerre,Marseille,2025-02-23 04:05:00+08:00
+11039,Estoril,Rio Ave,2025-02-23 04:30:00+08:00
+11045,Arouca,Farense,2025-02-23 23:30:00+08:00
+11046,Estrela da Amadora,Santa Clara,2025-02-23 23:30:00+08:00
+11053,AVS Futebol SAD,Sporting CP,2025-02-24 02:00:00+08:00
+11056,Real Sociedad,Leganes,2025-02-24 04:00:00+08:00
+11057,Famalicao,Moreirense,2025-02-24 04:30:00+08:00
+11059,FC Porto,Vitoria de Guimaraes,2025-02-25 04:15:00+08:00
+11065,Manchester United,Ipswich Town,2025-02-27 03:30:00+08:00
+11076,St. Pauli,Borussia Dortmund,2025-03-01 22:30:00+08:00
+11080,Nacional,Famalicao,2025-03-01 23:30:00+08:00
+11081,Saint-Etienne,Nice,2025-03-02 00:00:00+08:00
+11084,Arouca,FC Porto,2025-03-02 02:00:00+08:00
+11088,Vitoria de Guimaraes,Casa Pia AC,2025-03-02 04:30:00+08:00
+11089,Leganes,Getafe,2025-03-02 21:00:00+08:00
+11091,Union Berlin,Holstein Kiel,2025-03-02 22:30:00+08:00
+11093,Boavista,Santa Clara,2025-03-02 23:30:00+08:00
+11094,Moreirense,Estrela da Amadora,2025-03-02 23:30:00+08:00
+11097,Auxerre,Strasbourg,2025-03-03 00:15:00+08:00
+11100,Farense,AVS Futebol SAD,2025-03-03 02:00:00+08:00
+11103,Rio Ave,Braga,2025-03-03 04:30:00+08:00
+11104,Sporting CP,Estoril,2025-03-04 04:15:00+08:00
+11105,Club Brugge,Aston Villa,2025-03-05 01:45:00+08:00
+11107,Borussia Dortmund,Lille,2025-03-05 04:00:00+08:00
+11108,PSV Eindhoven,Arsenal,2025-03-05 04:00:00+08:00
+11109,Feyenoord,Inter,2025-03-06 01:45:00+08:00
+11112,Benfica,Barcelona,2025-03-06 04:00:00+08:00
+11115,Estrela da Amadora,Gil Vicente,2025-03-08 04:15:00+08:00
+11117,Celta Vigo,Leganes,2025-03-08 21:00:00+08:00
+11118,Holstein Kiel,VfB Stuttgart,2025-03-08 22:30:00+08:00
+11120,Wolfsburg,St. Pauli,2025-03-08 22:30:00+08:00
+11124,Crystal Palace,Ipswich Town,2025-03-08 23:00:00+08:00
+11127,AVS Futebol SAD,Arouca,2025-03-08 23:30:00+08:00
+11133,Estoril,Farense,2025-03-09 02:00:00+08:00
+11134,Benfica,Nacional,2025-03-09 02:00:00+08:00
+11137,Braga,FC Porto,2025-03-09 04:30:00+08:00
+11144,Santa Clara,Moreirense,2025-03-09 23:30:00+08:00
+11146,Reims,Auxerre,2025-03-10 00:15:00+08:00
+11147,Le Havre,Saint-Etienne,2025-03-10 00:15:00+08:00
+11152,Casa Pia AC,Sporting CP,2025-03-10 02:00:00+08:00
+11155,Boavista,Vitoria de Guimaraes,2025-03-10 04:30:00+08:00
+11158,Famalicao,Rio Ave,2025-03-11 04:15:00+08:00
+11159,Barcelona,Benfica,2025-03-12 01:45:00+08:00
+11160,Inter,Feyenoord,2025-03-12 04:00:00+08:00
+11163,Lille,Borussia Dortmund,2025-03-13 01:45:00+08:00
+11165,Aston Villa,Club Brugge,2025-03-13 04:00:00+08:00
+11166,Arsenal,PSV Eindhoven,2025-03-13 04:00:00+08:00
+11167,St. Pauli,Hoffenheim,2025-03-15 03:30:00+08:00
+11168,Nice,Auxerre,2025-03-15 03:45:00+08:00
+11175,Ipswich Town,Nottingham Forest,2025-03-15 23:00:00+08:00
+11180,Farense,Braga,2025-03-15 23:30:00+08:00
+11181,Gil Vicente,Santa Clara,2025-03-15 23:30:00+08:00
+11187,FC Porto,AVS Futebol SAD,2025-03-16 02:00:00+08:00
+11190,Sporting CP,Famalicao,2025-03-16 04:30:00+08:00
+11191,Leganes,Real Betis,2025-03-16 21:00:00+08:00
+11197,Nacional,Casa Pia AC,2025-03-16 23:30:00+08:00
+11198,Arouca,Estoril,2025-03-16 23:30:00+08:00
+11200,Montpellier,Saint-Etienne,2025-03-17 00:15:00+08:00
+11202,FC Heidenheim,Holstein Kiel,2025-03-17 00:30:00+08:00
+11205,Rio Ave,Benfica,2025-03-17 02:00:00+08:00
+11210,Vitoria de Guimaraes,Estrela da Amadora,2025-03-17 04:30:00+08:00
+11211,Moreirense,Boavista,2025-03-17 04:30:00+08:00
+11215,Gil Vicente,Benfica,2025-03-29 04:15:00+08:00
+11217,Bayern München,St. Pauli,2025-03-29 22:30:00+08:00
+11220,Holstein Kiel,Werder Bremen,2025-03-29 22:30:00+08:00
+11223,Casa Pia AC,Rio Ave,2025-03-29 23:30:00+08:00
+11227,Saint-Etienne,Paris Saint-Germain,2025-03-30 02:00:00+08:00
+11228,Estrela da Amadora,Sporting CP,2025-03-30 02:00:00+08:00
+11229,Real Madrid,Leganes,2025-03-30 04:00:00+08:00
+11231,Braga,Arouca,2025-03-30 04:30:00+08:00
+11236,Famalicao,AVS Futebol SAD,2025-03-30 22:30:00+08:00
+11237,Santa Clara,Nacional,2025-03-30 22:30:00+08:00
+11240,Auxerre,Montpellier,2025-03-30 23:15:00+08:00
+11244,Estoril,FC Porto,2025-03-31 01:00:00+08:00
+11247,Moreirense,Vitoria de Guimaraes,2025-03-31 03:30:00+08:00
+11252,Boavista,Gil Vicente,2025-04-02 03:15:00+08:00
+11257,AFC Bournemouth,Ipswich Town,2025-04-03 02:45:00+08:00
+11259,Benfica,Farense,2025-04-03 03:15:00+08:00
+11264,AVS Futebol SAD,Estoril,2025-04-05 03:15:00+08:00
+11269,Mainz 05,Holstein Kiel,2025-04-05 21:30:00+08:00
+11273,Ipswich Town,Wolverhampton Wanderers,2025-04-05 22:00:00+08:00
+11281,Arouca,Famalicao,2025-04-06 01:00:00+08:00
+11284,Vitoria de Guimaraes,Santa Clara,2025-04-06 03:30:00+08:00
+11288,Lens,Saint-Etienne,2025-04-06 21:00:00+08:00
+11290,St. Pauli,Borussia Mönchengladbach,2025-04-06 21:30:00+08:00
+11292,Gil Vicente,Moreirense,2025-04-06 22:30:00+08:00
+11294,Rennes,Auxerre,2025-04-06 23:15:00+08:00
+11299,Nacional,Estrela da Amadora,2025-04-07 01:00:00+08:00
+11302,FC Porto,Benfica,2025-04-07 03:30:00+08:00
+11303,Farense,Casa Pia AC,2025-04-08 01:45:00+08:00
+11305,Leganes,Osasuna,2025-04-08 03:00:00+08:00
+11306,Rio Ave,Boavista,2025-04-08 03:15:00+08:00
+11307,Sporting CP,Braga,2025-04-08 03:45:00+08:00
+11308,Bayern München,Inter,2025-04-09 03:00:00+08:00
+11309,Arsenal,Real Madrid,2025-04-09 03:00:00+08:00
+11310,Barcelona,Borussia Dortmund,2025-04-10 03:00:00+08:00
+11311,Paris Saint-Germain,Aston Villa,2025-04-10 03:00:00+08:00
+11315,Gil Vicente,Vitoria de Guimaraes,2025-04-12 03:15:00+08:00
+11318,Holstein Kiel,St. Pauli,2025-04-12 21:30:00+08:00
+11327,Boavista,Nacional,2025-04-12 22:30:00+08:00
+11328,Famalicao,Estoril,2025-04-12 22:30:00+08:00
+11333,Santa Clara,Sporting CP,2025-04-13 01:00:00+08:00
+11335,Leganes,Barcelona,2025-04-13 03:00:00+08:00
+11337,Casa Pia AC,FC Porto,2025-04-13 03:30:00+08:00
+11339,Chelsea,Ipswich Town,2025-04-13 21:00:00+08:00
+11342,Saint-Etienne,Brest,2025-04-13 21:00:00+08:00
+11345,Estrela da Amadora,Farense,2025-04-13 22:30:00+08:00
+11351,Benfica,Arouca,2025-04-14 01:00:00+08:00
+11352,Braga,AVS Futebol SAD,2025-04-14 01:00:00+08:00
+11353,Auxerre,Lyon,2025-04-14 02:45:00+08:00
+11355,Moreirense,Rio Ave,2025-04-14 03:30:00+08:00
+11358,Aston Villa,Paris Saint-Germain,2025-04-16 03:00:00+08:00
+11359,Borussia Dortmund,Barcelona,2025-04-16 03:00:00+08:00
+11361,Real Madrid,Arsenal,2025-04-17 03:00:00+08:00
+11362,Inter,Bayern München,2025-04-17 03:00:00+08:00
+11363,Rio Ave,Santa Clara,2025-04-18 22:30:00+08:00
+11364,Farense,Boavista,2025-04-18 22:30:00+08:00
+11365,FC Porto,Famalicao,2025-04-19 01:00:00+08:00
+11368,Sporting CP,Moreirense,2025-04-19 03:30:00+08:00
+11371,RB Leipzig,Holstein Kiel,2025-04-19 21:30:00+08:00
+11380,AVS Futebol SAD,Casa Pia AC,2025-04-19 22:30:00+08:00
+11381,Nacional,Gil Vicente,2025-04-19 22:30:00+08:00
+11383,Mallorca,Leganes,2025-04-20 00:30:00+08:00
+11386,Estoril,Braga,2025-04-20 01:00:00+08:00
+11388,Arouca,Estrela da Amadora,2025-04-20 01:00:00+08:00
+11391,Vitoria de Guimaraes,Benfica,2025-04-20 03:30:00+08:00
+11395,Ipswich Town,Arsenal,2025-04-20 21:00:00+08:00
+11396,Lille,Auxerre,2025-04-20 21:00:00+08:00
+11405,St. Pauli,Bayer Leverkusen,2025-04-21 01:30:00+08:00
+11406,Saint-Etienne,Lyon,2025-04-21 02:45:00+08:00
+11419,Leganes,Girona,2025-04-25 01:00:00+08:00
+11425,Famalicao,Braga,2025-04-26 03:30:00+08:00
+11431,Holstein Kiel,Borussia Mönchengladbach,2025-04-26 21:30:00+08:00
+11433,Newcastle United,Ipswich Town,2025-04-26 22:00:00+08:00
+11436,Santa Clara,Arouca,2025-04-26 22:30:00+08:00
+11437,Strasbourg,Saint-Etienne,2025-04-26 23:00:00+08:00
+11439,Gil Vicente,Farense,2025-04-27 01:00:00+08:00
+11442,Estrela da Amadora,FC Porto,2025-04-27 03:30:00+08:00
+11447,Moreirense,Nacional,2025-04-27 22:30:00+08:00
+11448,Lens,Auxerre,2025-04-27 23:15:00+08:00
+11452,Werder Bremen,St. Pauli,2025-04-27 23:30:00+08:00
+11453,Benfica,AVS Futebol SAD,2025-04-28 01:00:00+08:00
+11454,Vitoria de Guimaraes,Rio Ave,2025-04-28 01:00:00+08:00
+11456,Boavista,Sporting CP,2025-04-28 03:30:00+08:00
+11457,Arsenal,Paris Saint-Germain,2025-04-30 03:00:00+08:00
+11458,Casa Pia AC,Estoril,2025-04-30 03:30:00+08:00
+11459,Barcelona,Inter,2025-05-01 03:00:00+08:00
+11465,FC Porto,Moreirense,2025-05-03 03:15:00+08:00
+11470,St. Pauli,VfB Stuttgart,2025-05-03 21:30:00+08:00
+11473,Everton,Ipswich Town,2025-05-03 22:00:00+08:00
+11475,Farense,Famalicao,2025-05-03 22:30:00+08:00
+11476,Nacional,Vitoria de Guimaraes,2025-05-03 22:30:00+08:00
+11482,Braga,Santa Clara,2025-05-04 01:00:00+08:00
+11484,Saint-Etienne,Monaco,2025-05-04 03:05:00+08:00
+11485,Estoril,Benfica,2025-05-04 03:30:00+08:00
+11491,Augsburg,Holstein Kiel,2025-05-04 21:30:00+08:00
+11492,Sevilla,Leganes,2025-05-04 22:15:00+08:00
+11494,Auxerre,Le Havre,2025-05-04 23:15:00+08:00
+11499,Arouca,Casa Pia AC,2025-05-05 01:00:00+08:00
+11503,Sporting CP,Gil Vicente,2025-05-05 03:30:00+08:00
+11504,Rio Ave,Estrela da Amadora,2025-05-06 02:30:00+08:00
+11507,AVS Futebol SAD,Boavista,2025-05-06 03:15:00+08:00
+11508,Inter,Barcelona,2025-05-07 03:00:00+08:00
+11509,Paris Saint-Germain,Arsenal,2025-05-08 03:00:00+08:00
+11514,Holstein Kiel,Freiburg,2025-05-10 21:30:00+08:00
+11518,Ipswich Town,Brentford,2025-05-10 22:00:00+08:00
+11522,Nacional,Rio Ave,2025-05-10 22:30:00+08:00
+11523,Santa Clara,Famalicao,2025-05-10 22:30:00+08:00
+11528,Benfica,Sporting CP,2025-05-11 01:00:00+08:00
+11533,Auxerre,Nantes,2025-05-11 03:00:00+08:00
+11535,Reims,Saint-Etienne,2025-05-11 03:00:00+08:00
+11539,Gil Vicente,Arouca,2025-05-11 03:30:00+08:00
+11540,Casa Pia AC,Braga,2025-05-11 03:30:00+08:00
+11542,Leganes,Espanyol,2025-05-11 20:00:00+08:00
+11548,Estrela da Amadora,AVS Futebol SAD,2025-05-11 22:30:00+08:00
+11550,Eintracht Frankfurt,St. Pauli,2025-05-11 23:30:00+08:00
+11552,Moreirense,Estoril,2025-05-12 01:00:00+08:00
+11553,Vitoria de Guimaraes,Farense,2025-05-12 01:00:00+08:00
+11556,Boavista,FC Porto,2025-05-12 03:30:00+08:00
+11561,Villarreal,Leganes,2025-05-15 01:00:00+08:00
+11567,Famalicao,Casa Pia AC,2025-05-17 02:00:00+08:00
+11568,Rio Ave,Gil Vicente,2025-05-17 02:00:00+08:00
+11571,Borussia Dortmund,Holstein Kiel,2025-05-17 21:30:00+08:00
+11579,St. Pauli,Bochum,2025-05-17 21:30:00+08:00
+11580,Braga,Benfica,2025-05-18 01:00:00+08:00
+11581,Farense,Santa Clara,2025-05-18 01:00:00+08:00
+11582,FC Porto,Nacional,2025-05-18 01:00:00+08:00
+11583,Sporting CP,Vitoria de Guimaraes,2025-05-18 01:00:00+08:00
+11584,Estoril,Estrela da Amadora,2025-05-18 01:00:00+08:00
+11585,Arouca,Boavista,2025-05-18 01:00:00+08:00
+11586,AVS Futebol SAD,Moreirense,2025-05-18 01:00:00+08:00
+11590,Saint-Etienne,Toulouse,2025-05-18 03:00:00+08:00
+11595,Paris Saint-Germain,Auxerre,2025-05-18 03:00:00+08:00
+11599,Leicester City,Ipswich Town,2025-05-18 22:00:00+08:00
+11609,Las Palmas,Leganes,2025-05-19 01:00:00+08:00
+11617,Leganes,Real Valladolid,2025-05-25 00:30:00+08:00
+11624,Ipswich Town,West Ham United,2025-05-25 23:00:00+08:00
+11634,Paris Saint-Germain,Inter,2025-06-01 03:00:00+08:00

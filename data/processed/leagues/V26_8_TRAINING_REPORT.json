@@ -1,0 +1,62 @@
+{
+  "total_leagues": 5,
+  "leagues": {
+    "epl": {
+      "match_count": 1973,
+      "result_distribution": {
+        "home": 871,
+        "away": 659,
+        "draw": 443
+      },
+      "balance_score": 0.509,
+      "training_priority": "HIGH"
+    },
+    "bund": {
+      "match_count": 1537,
+      "result_distribution": {
+        "home": 671,
+        "away": 486,
+        "draw": 380
+      },
+      "balance_score": 0.566,
+      "training_priority": "HIGH"
+    },
+    "laliga": {
+      "match_count": 1952,
+      "result_distribution": {
+        "home": 877,
+        "away": 569,
+        "draw": 506
+      },
+      "balance_score": 0.577,
+      "training_priority": "HIGH"
+    },
+    "ligue1": {
+      "match_count": 1771,
+      "result_distribution": {
+        "home": 747,
+        "away": 594,
+        "draw": 430
+      },
+      "balance_score": 0.576,
+      "training_priority": "HIGH"
+    },
+    "seriea": {
+      "match_count": 148,
+      "result_distribution": {
+        "home": 64,
+        "away": 49,
+        "draw": 35
+      },
+      "balance_score": 0.547,
+      "training_priority": "LOW"
+    }
+  },
+  "training_recommendations": {
+    "epl": "\u6570\u636e\u91cf\u5145\u8db3\uff0c\u5f3a\u70c8\u5efa\u8bae\u8bad\u7ec3\u4e13\u9879\u6a21\u578b",
+    "bund": "\u6570\u636e\u91cf\u5145\u8db3\uff0c\u5f3a\u70c8\u5efa\u8bae\u8bad\u7ec3\u4e13\u9879\u6a21\u578b",
+    "laliga": "\u6570\u636e\u91cf\u5145\u8db3\uff0c\u5f3a\u70c8\u5efa\u8bae\u8bad\u7ec3\u4e13\u9879\u6a21\u578b",
+    "ligue1": "\u6570\u636e\u91cf\u5145\u8db3\uff0c\u5f3a\u70c8\u5efa\u8bae\u8bad\u7ec3\u4e13\u9879\u6a21\u578b",
+    "seriea": "\u6570\u636e\u91cf\u8f83\u5c11\uff0c\u5efa\u8bae\u4f7f\u7528\u901a\u7528\u6a21\u578b"
+  }
+}

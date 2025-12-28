@@ -167,24 +167,32 @@ class FotMobL1L2Collector:
 
     async def collect_season_matches(
         self,
-        league_id: int = 47,
-        season_code: str = "2324",
-        league_name: str = "Premier League",
-        season_display: str = "23/24",
+        league_id: int,
+        season_code: str,
+        league_name: str,
+        season_display: str,
     ) -> list[dict[str, Any]]:
         """
         L1采集：采集整个赛季的所有比赛数据
         使用最新API端点: /api/leagues?id={league_id}&season={season_code}
 
+        V35.4 修正: 移除硬编码默认值，强制要求显式传递 league_name
+
         Args:
-            league_id: 联赛 ID (默认 47 = Premier League)
-            season_code: 赛季代码 (默认 "2324")
-            league_name: 联赛名称 (默认 "Premier League")
-            season_display: 赛季显示名称 (默认 "23/24")
+            league_id: 联赛 ID (必须显式传递)
+            season_code: 赛季代码 (必须显式传递)
+            league_name: 联赛名称 (必须显式传递，严禁使用默认值)
+            season_display: 赛季显示名称 (必须显式传递)
 
         Returns:
             比赛列表
         """
+        # V35.4: 参数验证，防止硬编码默认值污染
+        if not league_name or league_name == "Premier League" and league_id != 47:
+            raise ValueError(
+                f"⚠️ league_name 必须显式传递且匹配 league_id! "
+                f"收到: league_id={league_id}, league_name='{league_name}'"
+            )
         try:
             if not self.client:
                 await self.initialize()
@@ -220,11 +228,15 @@ class FotMobL1L2Collector:
     def _parse_season_matches(
         self,
         data: dict[str, Any],
-        league_name: str = "Premier League",
-        league_id: int = 47,
-        season_display: str = "23/24",
+        league_name: str,
+        league_id: int,
+        season_display: str,
     ) -> list[dict[str, Any]]:
-        """解析赛季比赛数据（支持动态联赛和赛季参数）"""
+        """
+        解析赛季比赛数据
+
+        V35.4: 移除默认值，强制要求显式传递参数
+        """
         matches = []
 
         try:
@@ -253,18 +265,20 @@ class FotMobL1L2Collector:
     def _standardize_season_match(
         self,
         match: dict[str, Any],
-        league_name: str = "Premier League",
-        league_id: int = 47,
-        season_display: str = "23/24",
+        league_name: str,
+        league_id: int,
+        season_display: str,
     ) -> dict[str, Any] | None:
         """
-        标准化赛季比赛数据（动态联赛和赛季支持）
+        标准化赛季比赛数据
+
+        V35.4: 移除默认值，强制要求显式传递参数
 
         Args:
             match: 原始比赛数据
-            league_name: 联赛名称
-            league_id: 联赛 ID
-            season_display: 赛季显示名称
+            league_name: 联赛名称 (必须显式传递)
+            league_id: 联赛 ID (必须显式传递)
+            season_display: 赛季显示名称 (必须显式传递)
 
         Returns:
             标准化后的比赛数据
