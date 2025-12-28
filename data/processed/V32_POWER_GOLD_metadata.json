@@ -1,0 +1,101 @@
+{
+  "version": "V32.0_POWER_GOLD",
+  "timestamp": "2025-12-28T02:55:52.134950",
+  "total_matches": 9305,
+  "base_dataset": "V31_POWER_GOLD",
+  "new_features": [
+    "home_scoring_efficiency",
+    "away_scoring_efficiency",
+    "scoring_efficiency_diff",
+    "home_save_efficiency",
+    "away_save_efficiency",
+    "save_efficiency_diff",
+    "home_form_momentum",
+    "away_form_momentum",
+    "momentum_diff",
+    "relegation_battle",
+    "title_pressure",
+    "desperation_gap",
+    "is_six_pointer"
+  ],
+  "feature_quality": {
+    "home_scoring_efficiency": {
+      "fill_rate": 100.0,
+      "non_zero_rate": 97.45298226759806,
+      "mean": 1.0163137899518666,
+      "std": 0.4996760684045825
+    },
+    "away_scoring_efficiency": {
+      "fill_rate": 100.0,
+      "non_zero_rate": 97.80763030628694,
+      "mean": 1.0203862743308079,
+      "std": 0.518230083363892
+    },
+    "scoring_efficiency_diff": {
+      "fill_rate": 100.0,
+      "non_zero_rate": 99.32294465341215,
+      "mean": -0.004072484378941326,
+      "std": 0.71719466253009
+    },
+    "home_save_efficiency": {
+      "fill_rate": 100.0,
+      "non_zero_rate": 100.0,
+      "mean": 1.2758680328209615,
+      "std": 0.95343303520669
+    },
+    "away_save_efficiency": {
+      "fill_rate": 100.0,
+      "non_zero_rate": 100.0,
+      "mean": 1.2863094593059936,
+      "std": 0.9754106356568752
+    },
+    "save_efficiency_diff": {
+      "fill_rate": 100.0,
+      "non_zero_rate": 99.18323481998925,
+      "mean": -0.010441426485032067,
+      "std": 1.3412484739190014
+    },
+    "home_form_momentum": {
+      "fill_rate": 100.0,
+      "non_zero_rate": 96.56098871574422,
+      "mean": 6.674046211714132,
+      "std": 3.5508282940084035
+    },
+    "away_form_momentum": {
+      "fill_rate": 100.0,
+      "non_zero_rate": 96.9156367544331,
+      "mean": 6.811929070392262,
+      "std": 3.547959034990544
+    },
+    "momentum_diff": {
+      "fill_rate": 100.0,
+      "non_zero_rate": 90.91886082751209,
+      "mean": -0.13788285867813005,
+      "std": 4.8565414517274474
+    },
+    "relegation_battle": {
+      "fill_rate": 100.0,
+      "non_zero_rate": 100.0,
+      "mean": 0.9442683145262403,
+      "std": 0.1498711187576138
+    },
+    "title_pressure": {
+      "fill_rate": 100.0,
+      "non_zero_rate": 7.092960773777539,
+      "mean": 0.04775210460325989,
+      "std": 0.18750622847817314
+    },
+    "desperation_gap": {
+      "fill_rate": 100.0,
+      "non_zero_rate": 99.18323481998925,
+      "mean": 0.0023202579258463194,
+      "std": 0.7742613742036784
+    },
+    "is_six_pointer": {
+      "fill_rate": 100.0,
+      "non_zero_rate": 88.62976894142935,
+      "mean": 0.8862976894142934,
+      "std": 0.3174664177811242
+    }
+  }
+}

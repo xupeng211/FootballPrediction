@@ -1,7 +1,12 @@
 #!/usr/bin/env python3
 """
-V17.0 ML 训练引擎
-整合滚动特征工程和 XGBoost 模型训练
+V26.4 ML Engine - 统一机器学习引擎
+=====================================
+
+整合:
+- V17.0 滚动特征工程和 XGBoost 模型训练
+- V26.4 Predictor 类 (统一推理接口)
+- 特征适配层集成
 """
 
 import json
@@ -419,6 +424,219 @@ class V17MLEngine:
             "probabilities": {"Away": probabilities[0], "Draw": probabilities[1], "Home": probabilities[2]},
             "confidence": float(probabilities.max()),
         }
+
+
+# ============================================================================
+# V26.4 Predictor - 统一推理接口
+# ============================================================================
+
+class Predictor:
+    """
+    V26.4 统一推理类
+
+    职责:
+    - 加载和管理训练好的模型
+    - 集成特征适配层
+    - 提供统一的预测接口
+    - 支持多种模型类型
+    """
+
+    # 预测结果映射
+    LABEL_MAPPING = {0: "Away", 1: "Draw", 2: "Home"}
+
+    def __init__(self, model_path: str | None = None, model_type: str = "v26_mini"):
+        """
+        初始化预测器
+
+        Args:
+            model_path: 模型文件路径，为 None 则使用默认路径
+            model_type: 模型类型 (v26_mini, v19_rolling, v26_5_production)
+        """
+        import joblib
+
+        self.model_type = model_type
+        self.model = None
+        self.scaler = None
+        self.feature_names = []
+
+        # 加载特征适配器
+        from src.ml.feature_adapter import FeatureAdapterFactory, ModelType
+
+        if model_type == "v26_mini":
+            self.adapter = FeatureAdapterFactory.get_adapter(ModelType.V26_MINI)
+        elif model_type == "v19_rolling":
+            self.adapter = FeatureAdapterFactory.get_adapter(ModelType.V19_ROLLING)
+        elif model_type == "v26_5_production":
+            self.adapter = FeatureAdapterFactory.get_adapter(ModelType.V26_5_PRODUCTION)
+        else:
+            raise ValueError(f"不支持的模型类型: {model_type}")
+
+        # 加载模型
+        if model_path is None:
+            model_path = self._get_default_model_path(model_type)
+
+        if os.path.exists(model_path):
+            self._load_model(model_path)
+        else:
+            logger.warning(f"模型文件不存在: {model_path}，将创建新的微型模型")
+            self._create_mini_model()
+
+    def _get_default_model_path(self, model_type: str) -> str:
+        """获取默认模型路径"""
+        if model_type == "v26_mini":
+            return "model_zoo/v26.5_mini.pkl"
+        elif model_type == "v19_rolling":
+            return "model_zoo/v19.4_draw_sensitivity_model.pkl"
+        elif model_type == "v26_5_production":
+            return "model_zoo/v26.5_production.pkl"
+        return "model_zoo/v26.5_mini.pkl"
+
+    def _load_model(self, model_path: str):
+        """加载模型文件"""
+        import joblib
+
+        logger.info(f"加载模型: {model_path}")
+        model_data = joblib.load(model_path)
+
+        # 处理不同的模型格式
+        if isinstance(model_data, dict):
+            self.model = model_data.get("model")
+            self.scaler = model_data.get("scaler")
+            self.feature_names = model_data.get("feature_columns", [])
+        else:
+            self.model = model_data
+            self.scaler = None
+            self.feature_names = list(self.model.feature_names_in_) if hasattr(self.model, "feature_names_in_") else []
+
+        logger.info(f"✅ 模型加载成功，特征数: {len(self.feature_names)}")
+
+    def _create_mini_model(self):
+        """创建微型模型（用于测试）"""
+        import xgboost as xgb
+        import numpy as np
+        from sklearn.preprocessing import StandardScaler
+
+        logger.info("创建微型 V26.4 模型...")
+
+        # V26 微型特征集
+        mini_features = self.adapter.get_required_features()
+
+        # 创建简单的训练数据
+        np.random.seed(42)
+        n_samples = 100
+        X = np.random.randn(n_samples, len(mini_features))
+        y = np.random.randint(0, 3, n_samples)
+
+        # 训练微型模型
+        params = {
+            "n_estimators": 50,
+            "max_depth": 3,
+            "learning_rate": 0.1,
+            "objective": "multi:softprob",
+            "num_class": 3,
+            "random_state": 42,
+        }
+
+        self.model = xgb.XGBClassifier(**params)
+        self.model.fit(X, y)
+
+        # 创建 scaler
+        self.scaler = StandardScaler()
+        self.scaler.fit(X)
+
+        self.feature_names = mini_features
+
+        # 保存模型
+        self.save()
+
+        logger.info("✅ 微型模型创建完成")
+
+    def predict(self, raw_match_data: dict) -> dict:
+        """
+        对原始比赛数据进行预测
+
+        Args:
+            raw_match_data: V25.1 提取的原始特征字典
+
+        Returns:
+            预测结果字典，包含 prediction, probabilities, confidence
+        """
+        if self.model is None:
+            raise ValueError("模型未加载")
+
+        # 1. 特征适配
+        adaptation_result = self.adapter.adapt(raw_match_data)
+
+        if not adaptation_result.success:
+            raise ValueError(f"特征适配失败: {adaptation_result.errors}")
+
+        features_df = adaptation_result.features
+
+        # 2. 特征标准化
+        if self.scaler:
+            features_scaled = self.scaler.transform(features_df)
+        else:
+            features_scaled = features_df.values
+
+        # 3. 模型预测
+        prediction = self.model.predict(features_scaled)[0]
+        probabilities = self.model.predict_proba(features_scaled)[0]
+
+        return {
+            "prediction": self.LABEL_MAPPING[prediction],
+            "probabilities": {
+                "Away": float(probabilities[0]),
+                "Draw": float(probabilities[1]),
+                "Home": float(probabilities[2]),
+            },
+            "confidence": float(probabilities.max()),
+            "model_type": self.model_type,
+        }
+
+    def predict_batch(self, raw_match_data_list: list[dict]) -> list[dict]:
+        """
+        批量预测
+
+        Args:
+            raw_match_data_list: 原始比赛数据列表
+
+        Returns:
+            预测结果列表
+        """
+        return [self.predict(data) for data in raw_match_data_list]
+
+    def save(self, path: str | None = None):
+        """保存模型"""
+        import joblib
+
+        if path is None:
+            path = self._get_default_model_path(self.model_type)
+
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+
+        model_data = {
+            "model": self.model,
+            "scaler": self.scaler,
+            "feature_columns": self.feature_names,
+            "model_type": self.model_type,
+            "version": "26.4",
+        }
+
+        joblib.dump(model_data, path)
+        logger.info(f"✅ 模型已保存: {path}")
+
+    @classmethod
+    def create_v26_mini(cls) -> "Predictor":
+        """创建 V26.5 微型预测器"""
+        predictor = cls(model_type="v26_mini")
+        predictor._create_mini_model()
+        return predictor
+
+    @classmethod
+    def create_v26_5_production(cls) -> "Predictor":
+        """创建 V26.5 生产预测器（加载真实训练的模型）"""
+        predictor = cls(model_type="v26_5_production")
+        return predictor
 
 
 def main():

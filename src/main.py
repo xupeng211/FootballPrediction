@@ -178,6 +178,97 @@ async def root():
     }
 
 
+# ============================================================================
+# V26.4 预测端点
+# ============================================================================
+
+# 全局预测器实例
+_predictor: "Predictor | None" = None
+
+
+def get_predictor() -> "Predictor":
+    """获取预测器实例（单例模式）"""
+    global _predictor
+    if _predictor is None:
+        from src.ml.engine import Predictor
+
+        logger.info("初始化 V26.5 生产预测器...")
+        _predictor = Predictor.create_v26_5_production()
+    return _predictor
+
+
+@app.post("/predict", summary="预测比赛结果", tags=["预测"])
+async def predict_match(request: dict) -> dict:
+    """
+    V26.4 统一预测接口
+
+    输入原始比赛 JSON 数据，返回预测结果。
+
+    请求体示例:
+    ```json
+    {
+        "header": {
+            "teams": {
+                "home": {"name": "Arsenal", "score": 2},
+                "away": {"name": "Chelsea", "score": 1}
+            }
+        },
+        "content": {
+            "stats": {
+                "home": {
+                    "possession": {"percentage": 55},
+                    "shotsTotal": {"total": 15},
+                    "xg": 1.8
+                },
+                "away": {
+                    "possession": {"percentage": 45},
+                    "shotsTotal": {"total": 12},
+                    "xg": 1.2
+                }
+            }
+        }
+    }
+    ```
+
+    返回:
+    ```json
+    {
+        "prediction": "Home",
+        "probabilities": {"Away": 0.15, "Draw": 0.25, "Home": 0.60},
+        "confidence": 0.60,
+        "model_type": "v26_mini"
+    }
+    ```
+    """
+    try:
+        predictor = get_predictor()
+        result = predictor.predict(request)
+        logger.info(f"预测成功: {result['prediction']} (置信度: {result['confidence']:.2f})")
+        return result
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"预测失败: {e}")
+        raise HTTPException(status_code=500, detail=f"预测失败: {str(e)}")
+
+
+@app.post("/predict/batch", summary="批量预测", tags=["预测"])
+async def predict_batch(requests: list[dict]) -> list[dict]:
+    """
+    批量预测接口
+
+    输入多场比赛的原始数据，返回预测结果列表。
+    """
+    try:
+        predictor = get_predictor()
+        results = predictor.predict_batch(requests)
+        logger.info(f"批量预测完成: {len(results)} 场比赛")
+        return results
+    except Exception as e:
+        logger.error(f"批量预测失败: {e}")
+        raise HTTPException(status_code=500, detail=f"批量预测失败: {str(e)}")
+
+
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request, exc: HTTPException):
     """
