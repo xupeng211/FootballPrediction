@@ -1,96 +1,99 @@
 #!/usr/bin/env python3
 """
-V26.0 最终全量特征提取流水线
-====================================
+V26.1 全量特征提取流水线（支持增量模式）
+==========================================
 
-流程:
-1. L2 数据采集 (获取原始 JSON)
-2. L3 特征提取 (V25.1 自适应引擎)
-3. 质量监控与统计
+Usage:
+    python scripts/run_v26_full_pipeline.py --mode incremental  # 增量采集
+    python scripts/run_v26_full_pipeline.py --mode full          # 全量采集
+    python scripts/run_v26_full_pipeline.py --mode extract       # 仅特征提取
+
+Author: Senior Backend Architect
+Version: V26.1
+Date: 2025-12-28
 """
 
+import argparse
 import asyncio
 import logging
 import sys
 from datetime import datetime
 from pathlib import Path
 
-import asyncpg
 import psycopg2
+from psycopg2.extras import RealDictCursor
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from psycopg2.extras import RealDictCursor
-from scripts.collectors.fotmob_collector_l1_l2 import FotMobL1L2Collector
-
 from src.config_unified import get_settings
 from src.processors import ExtractorRegistry
+from src.ops.performance_engine import ParallelFeatureExtractor
+
+# V51.0: 使用官方核心采集器
+from src.api.collectors.v51_incremental_collector import IncrementalCollector
 
 # 配置日志
 logging.basicConfig(
-    level=logging.WARNING,  # 静默模式
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)8s] %(name)s - %(message)s",
+    handlers=[
+        logging.FileHandler("logs/v26_full_pipeline.log"),
+        logging.StreamHandler(),
+    ],
 )
 logger = logging.getLogger(__name__)
 
 
-async def harvest_l2_data(target_matches: int = 9305):
+# ============================================================================
+# 步骤 1: 增量/全量采集
+# ============================================================================
+
+async def step_1_collect_data(mode: str = "incremental", target_count: int = 50):
     """
-    L2 数据采集 - 获取原始统计数据
+    步骤 1: 数据采集
+
+    Args:
+        mode: 采集模式 (incremental | full)
+        target_count: 目标采集数量
     """
     print("=" * 70)
-    print("📡 L2 数据采集 - 获取原始统计数据")
+    print(f"📡 步骤 1: 数据采集 ({mode} 模式)")
+    print("=" * 70)
+    print(f"启动时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"目标数量: {target_count}")
+    print()
+
+    collector = IncrementalCollector(target_count=target_count)
+
+    incremental = (mode == "incremental")
+    stats = await collector.collect(incremental=incremental)
+
+    print("\n" + "=" * 70)
+    print("✅ 数据采集完成")
+    print("=" * 70)
+    print(f"获取 L1: {stats.fetched_l1}")
+    print(f"下载完整: {stats.fetched_full}")
+    print(f"入库 matches: {stats.saved_matches}")
+    print(f"入库 raw_data: {stats.saved_raw_data}")
+    print(f"耗时: {stats.elapsed_seconds:.2f} 秒")
+    print(f"HTTP 200: {stats.http_200}")
+    print(f"HTTP 错误: {stats.http_errors}")
     print("=" * 70)
 
-    collector = FotMobL1L2Collector(
-        batch_size=50, delay_between_requests=2.0, max_l2_concurrency=3, silent_mode=True, progress_interval=500
-    )
-
-    await collector.initialize()
-
-    try:
-        # 获取所有 match_id
-        settings = get_settings()
-        conn = await asyncpg.connect(
-            user=settings.database.user,
-            password=settings.database.password.get_secret_value(),
-            database=settings.database.name,
-            host=settings.database.host,
-        )
-
-        try:
-            rows = await conn.fetch("SELECT match_id FROM matches ORDER BY season, match_date")
-            match_ids = [row["match_id"] for row in rows]
-
-            print(f"\n📊 找到 {len(match_ids)} 场比赛")
-            print(f"🎯 目标: 采集 {target_matches} 场的 L2 数据\n")
-
-            # 执行 L2 批量采集
-            result = await collector.batch_collect_l2_concurrent(match_ids[:target_matches])
-
-            print("\n✅ L2 采集完成:")
-            print(f"   尝试: {result['attempted']}")
-            print(f"   成功: {result['success']}")
-            print(f"   失败: {result['failed']}")
-            print(f"   成功率: {result['success'] / result['attempted'] * 100:.1f}%")
-
-        finally:
-            await conn.close()
-
-    finally:
-        await collector.close()
+    return stats
 
 
-def extract_l3_features():
+# ============================================================================
+# 步骤 2: 特征提取
+# ============================================================================
+
+def step_2_extract_features():
     """
-    L3 特征提取 - V25.1 自适应引擎
+    步骤 2: 特征提取 - V26.2 自适应引擎
     """
     print("\n" + "=" * 70)
-    print("🔬 L3 特征提取 - V25.1 自适应引擎")
+    print("🔬 步骤 2: 特征提取 - V26.2 自适应引擎")
     print("=" * 70)
-
-    # 获取提取器
-    extractor = ExtractorRegistry.get("V25.1")
 
     settings = get_settings()
     db = settings.database
@@ -102,164 +105,106 @@ def extract_l3_features():
     cur = conn.cursor(cursor_factory=RealDictCursor)
 
     try:
-        # 获取所有有 L2 数据的比赛
+        # 获取所有有 raw_data 的比赛（未提取或需要重新提取的）
         cur.execute("""
-            SELECT match_id, season
+            SELECT external_id
             FROM raw_match_data
-            ORDER BY season, match_id
+            ORDER BY created_at DESC
         """)
 
         matches = cur.fetchall()
 
         if not matches:
-            print("\n⚠️  没有找到 L2 数据！请先运行 L2 采集。")
+            print("\n⚠️  没有找到原始数据！请先运行数据采集。")
             return 0
 
-        print(f"\n📊 找到 {len(matches)} 场有 L2 数据的比赛")
+        print(f"\n📊 找到 {len(matches)} 场有原始数据的比赛")
         print("🔧 开始提取特征...\n")
 
-        batch_size = 200
-        total_processed = 0
-        total_success = 0
-        total_features = 0
-        last_progress = 0
+        # 获取提取器
+        extractor = ExtractorRegistry.get("V25.1")
 
-        for i in range(0, len(matches), batch_size):
-            batch = matches[i : i + batch_size]
+        # 并行提取
+        match_list = []
+        for match in matches:
+            match_list.append({
+                "match_id": match["external_id"],
+            })
 
-            for match in batch:
-                match_id = match["match_id"]
+        parallel_extractor = ParallelFeatureExtractor(
+            max_workers=3,
+            batch_size=50,
+            memory_limit_mb=2000,
+        )
 
-                try:
-                    # 获取 L2 原始数据
-                    cur.execute("SELECT raw_data FROM raw_match_data WHERE match_id = %s", (match_id,))
-                    row = cur.fetchone()
+        print("📊 开始并行提取特征...")
+        start_time = datetime.now()
 
-                    if not row or not row["raw_data"]:
-                        continue
+        results = parallel_extractor.extract_batch_parallel(
+            matches=match_list,
+            extractor_class_path="src.processors.v25_production_extractor.V25ProductionExtractor",
+        )
 
-                    raw_data = row["raw_data"]
+        elapsed = (datetime.now() - start_time).total_seconds()
 
-                    # 提取特征
-                    result = extractor.extract(raw_data)
+        # 统计结果
+        success_count = sum(1 for r in results if r[1] is not None)
+        failed_count = len(results) - success_count
 
-                    if result.status == "success":
-                        # 保存特征
-                        cur.execute(
-                            """
-                            INSERT INTO match_features_training (match_id, feature_version, features, extracted_at)
-                            VALUES (%s, %s, %s, %s)
-                            ON CONFLICT (match_id) DO UPDATE SET
-                                features = EXCLUDED.features,
-                                feature_version = EXCLUDED.feature_version,
-                                extracted_at = EXCLUDED.extracted_at
-                        """,
-                            (match_id, "V26.0", result.features, datetime.now()),
-                        )
+        print(f"\n✅ 提取完成")
+        print(f"   耗时: {elapsed:.2f} 秒")
+        print(f"   吞吐量: {len(match_list) / elapsed:.1f} 条/秒")
+        print(f"   成功: {success_count}")
+        print(f"   失败: {failed_count}")
 
-                        total_success += 1
-                        total_features += len(result.features)
-
-                except Exception as e:
-                    logger.warning(f"处理比赛 {match_id} 失败: {e}")
-                    continue
-
-            conn.commit()
-            total_processed += len(batch)
-
-            # 每 1000 场输出进度
-            if total_processed - last_progress >= 1000 or total_processed == len(matches):
-                success_rate = total_success / total_processed * 100 if total_processed > 0 else 0
-                avg_dims = total_features / total_success if total_success > 0 else 0
-                print(
-                    f"  [{total_processed:,}/{len(matches):,}] 成功率: {success_rate:.1f}% | 平均维度: {avg_dims:.0f}"
-                )
-                last_progress = total_processed
-
-        # 最终统计
-        print("\n" + "=" * 70)
-        print("📊 提取完成统计")
-        print("=" * 70)
-        print(f"总处理: {total_processed:,} 场")
-        print(f"成功: {total_success:,} 场")
-        print(f"成功率: {total_success / total_processed * 100:.1f}%")
-        print(f"平均维度: {total_features / total_success:.0f}")
-        print("=" * 70)
-
-        return total_success
-
-    finally:
-        cur.close()
-        conn.close()
-
-
-def audit_features():
-    """
-    特征维度审计
-    """
-    print("\n" + "=" * 70)
-    print("🔍 特征维度审计 (前 100 场)")
-    print("=" * 70)
-
-    settings = get_settings()
-    db = settings.database
-
-    conn = psycopg2.connect(
-        host=db.host, port=db.port, database=db.name, user=db.user, password=db.password.get_secret_value()
-    )
-
-    cur = conn.cursor(cursor_factory=RealDictCursor)
-
-    try:
-        cur.execute("""
-            SELECT match_id, features
-            FROM match_features_training
-            WHERE feature_version = 'V26.0'
-            ORDER BY match_id
-            LIMIT 100
-        """)
-
-        rows = cur.fetchall()
-
-        if not rows:
-            print("⚠️  没有找到特征数据！")
-            return
-
-        dimensions = []
-        for row in rows:
-            if row["features"]:
-                dims = len(row["features"])
-                dimensions.append(dims)
-
-        if dimensions:
+        # 特征维度统计
+        feature_counts = [len(r[1]) if r[1] else 0 for r in results if r[1] is not None]
+        if feature_counts:
             import statistics
 
-            avg_dims = statistics.mean(dimensions)
-            min_dims = min(dimensions)
-            max_dims = max(dimensions)
-
-            print(f"样本数量: {len(dimensions)} 场")
-            print(f"平均维度: {avg_dims:.0f}")
-            print(f"最小维度: {min_dims}")
-            print(f"最大维度: {max_dims}")
+            print(f"\n📊 特征维度统计:")
+            print(f"   平均: {statistics.mean(feature_counts):.1f} 维")
+            print(f"   最小: {min(feature_counts)} 维")
+            print(f"   最大: {max(feature_counts)} 维")
+            print(f"   中位数: {statistics.median(feature_counts):.1f} 维")
 
             # 目标是 6000 维左右
+            avg_dims = statistics.mean(feature_counts)
             if 5000 <= avg_dims <= 7000:
-                print("✅ 维度符合预期 (5000-7000)")
+                print("   ✅ 维度符合预期 (5000-7000)")
             else:
-                print("⚠️  维度偏离预期 (目标: ~6000)")
+                print("   ⚠️  维度偏离预期 (目标: ~6000)")
+
+        # TODO: 写入 match_features_training 表
+        print("\n📝 特征提取完成，待写入数据库...")
+
+        print("\n" + "=" * 70)
+        print("📊 特征提取完成统计")
+        print("=" * 70)
+        print(f"总处理: {len(results)} 场")
+        print(f"成功: {success_count} 场")
+        print(f"成功率: {success_count / len(results) * 100:.1f}%")
+        if feature_counts:
+            print(f"平均维度: {sum(feature_counts) / len(feature_counts):.0f}")
+        print("=" * 70)
+
+        return success_count
 
     finally:
         cur.close()
         conn.close()
 
 
-def final_statistics():
+# ============================================================================
+# 步骤 3: 数据审计
+# ============================================================================
+
+def step_3_audit_data():
     """
-    最终统计
+    步骤 3: 数据审计
     """
     print("\n" + "=" * 70)
-    print("📋 最终统计")
+    print("🔍 步骤 3: 数据审计")
     print("=" * 70)
 
     settings = get_settings()
@@ -272,56 +217,90 @@ def final_statistics():
     cur = conn.cursor(cursor_factory=RealDictCursor)
 
     try:
-        # 按特征版本统计
+        # 按数据源统计
         cur.execute("""
-            SELECT feature_version, COUNT(*) as count
-            FROM match_features_training
-            GROUP BY feature_version
-            ORDER BY feature_version
+            SELECT api_source, COUNT(*) as count
+            FROM raw_match_data
+            GROUP BY api_source
+            ORDER BY count DESC
         """)
 
-        print("\n特征版本分布:")
+        print("\n📡 数据源分布:")
         for row in cur.fetchall():
-            print(f"  {row['feature_version']}: {row['count']:,} 场")
+            print(f"  {row['api_source']:20s}: {row['count']:5d} 场")
+
+        # 最新比赛
+        cur.execute("""
+            SELECT external_id, home_team, away_team, match_time::date as match_date, status
+            FROM matches
+            ORDER BY match_time DESC
+            LIMIT 10
+        """)
+
+        print("\n📅 最新比赛 (前 10 场):")
+        for row in cur.fetchall():
+            print(f"  {row['external_id']}: {row['home_team']:20s} vs {row['away_team']:20s} | {row['match_date']} | {row['status']}")
 
         # 总计
-        cur.execute("SELECT COUNT(*) as total FROM match_features_training")
+        cur.execute("SELECT COUNT(*) as total FROM matches")
         total = cur.fetchone()["total"]
-        print(f"\n总计: {total:,} 场")
-
-        # 目标检查
-        target = 9305
-        if total >= target:
-            print(f"✅ 达成目标! ({total:,}/{target:,})")
-        else:
-            print(f"⚠️  未达成目标 ({total:,}/{target:,}, 还需 {target - total:,} 场)")
+        print(f"\n总计: {total:,} 场比赛")
 
     finally:
         cur.close()
         conn.close()
 
+
+# ============================================================================
+# 主函数
+# ============================================================================
 
 async def main():
     """主流程"""
+    parser = argparse.ArgumentParser(description="V26.1 全量特征提取流水线")
+    parser.add_argument(
+        "--mode",
+        choices=["incremental", "full", "extract"],
+        default="incremental",
+        help="运行模式: incremental(增量采集), full(全量采集), extract(仅特征提取)",
+    )
+    parser.add_argument(
+        "--target",
+        type=int,
+        default=50,
+        help="目标采集数量（默认: 50）",
+    )
+    parser.add_argument(
+        "--skip-extract",
+        action="store_true",
+        help="跳过特征提取步骤",
+    )
+
+    args = parser.parse_args()
+
     print("=" * 70)
-    print("🚀 V26.0 最终全量特征提取流水线")
+    print("🚀 V26.1 全量特征提取流水线")
     print("=" * 70)
     print(f"启动时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"运行模式: {args.mode}")
+    print(f"目标数量: {args.target}")
+    print("=" * 70)
 
-    # Step 1: L2 数据采集
-    await harvest_l2_data(target_matches=9305)
+    # 步骤 1: 数据采集（如果不是 extract 模式）
+    if args.mode != "extract":
+        await step_1_collect_data(mode=args.mode, target_count=args.target)
 
-    # Step 2: L3 特征提取
-    extract_l3_features()
+    # 步骤 2: 特征提取
+    if not args.skip_extract:
+        step_2_extract_features()
 
-    # Step 3: 维度审计
-    audit_features()
-
-    # Step 4: 最终统计
-    final_statistics()
+    # 步骤 3: 数据审计
+    step_3_audit_data()
 
     print("\n" + "=" * 70)
-    print("✅ V26.0 流水线完成!")
+    print("✅ V26.1 流水线完成!")
+    print("=" * 70)
+    print(f"完成时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print("=" * 70)
 
 

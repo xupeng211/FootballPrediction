@@ -1,0 +1,124 @@
+{
+  "model_version": "V26.3",
+  "model_type": "XGBoost",
+  "model_description": "Prematch prediction model (Anti-Leakage)",
+  "feature_count": 30,
+  "num_classes": 3,
+  "classes": [
+    "Away",
+    "Draw",
+    "Home"
+  ],
+  "label_encoder": [
+    "away",
+    "draw",
+    "home"
+  ],
+  "feature_names": [
+    "rolling_xg_home",
+    "rolling_xg_away",
+    "rolling_shots_on_target_home",
+    "rolling_shots_on_target_away",
+    "rolling_possession_home",
+    "rolling_possession_away",
+    "rolling_team_rating_home",
+    "rolling_team_rating_away",
+    "home_table_position",
+    "away_table_position",
+    "table_position_diff",
+    "home_points",
+    "away_points",
+    "points_diff",
+    "home_recent_form_points",
+    "away_recent_form_points",
+    "raw_elo_gap",
+    "adjusted_elo_gap",
+    "fatigue_impact",
+    "schedule_impact",
+    "home_fatigue_index",
+    "away_fatigue_index",
+    "fatigue_diff",
+    "home_rest_days",
+    "away_rest_days",
+    "incentive_diff",
+    "home_desperation",
+    "table_proximity",
+    "low_scoring_tendency",
+    "elo_diff_cluster"
+  ],
+  "train_date": "2025-12-28T10:11:52.254981",
+  "split_type": "time_series",
+  "split_date": "2025-01-01",
+  "anti_leakage": true,
+  "allowed_prefixes": [
+    "rolling_",
+    "elo_",
+    "table_",
+    "fatigue_",
+    "incentive_",
+    "desperation"
+  ],
+  "blocked_keywords": [
+    "shotmap",
+    "matchfacts",
+    "ongoing",
+    "home_xg",
+    "away_xg",
+    "home_possession",
+    "away_possession",
+    "home_shots_on_target",
+    "away_shots_on_target",
+    "home_team_rating",
+    "away_team_rating"
+  ],
+  "metrics": {
+    "accuracy": 0.8174358974358974,
+    "f1_macro": 0.7950231390245959,
+    "f1_weighted": 0.8114304689370802,
+    "confusion_matrix": [
+      [
+        275,
+        6,
+        67
+      ],
+      [
+        25,
+        125,
+        70
+      ],
+      [
+        0,
+        10,
+        397
+      ]
+    ],
+    "classification_report": "              precision    recall  f1-score   support\n\n        Away       0.92      0.79      0.85       348\n        Draw       0.89      0.57      0.69       220\n        Home       0.74      0.98      0.84       407\n\n    accuracy                           0.82       975\n   macro avg       0.85      0.78      0.80       975\nweighted avg       0.84      0.82      0.81       975\n",
+    "feature_importance_top30": [
+      {
+        "rank": 1,
+        "feature": "rolling_team_rating_away",
+        "importance": 11.876197814941406
+      },
+      {
+        "rank": 2,
+        "feature": "rolling_team_rating_home",
+        "importance": 10.21356201171875
+      },
+      {
+        "rank": 3,
+        "feature": "rolling_xg_home",
+        "importance": 1.4282324314117432
+      },
+      {
+        "rank": 4,
+        "feature": "rolling_possession_home",
+        "importance": 1.3307753801345825
+      },
+      {
+        "rank": 5,
+        "feature": "rolling_xg_away",
+        "importance": 0.46141675114631653
+      }
+    ]
+  }
+}

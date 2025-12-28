@@ -1,31 +1,143 @@
 #!/usr/bin/env python3
 """
-V26.1 特征剪枝过滤器 - 维度治理核心模块
-==========================================
+V26.2 特征剪枝过滤器 - 维度治理核心模块 (Phase 1.3 + 2.1 优化版)
+=================================================================
 
 核心功能:
     1. 稀疏度检测: 自动剔除全零、全NaN或低方差特征
-    2. 维度控制: 强制将特征维度控制在 8000 以内
+    2. 维度控制: 强制将特征维度控制在 6000 以内 (Phase 1.3 优化)
     3. 智能降维: 基于特征重要性排序，保留高价值特征
+    4. 核心特征保护: 白名单机制保护滚动特征、赛前特征
+
+V26.2 → V26.1 核心改进:
+    - max_features: 8000 → 6000 (减少 25% 维度)
+    - sparsity_threshold: 0.95 → 0.90 (更激进的稀疏特征剪枝)
+    - 新增核心特征白名单机制 (保护滚动特征、赛前特征)
+    - 目标内存占用减少 40%
+
+Phase 2.1 多进程优化:
+    - 使用文件系统同步特征统计 (跨进程安全)
+    - 每个进程独立统计，主进程聚合
+    - 支持并发环境下的特征剪枝
 
 设计原则:
     - 在线学习: 随着处理比赛增加，动态更新特征统计
     - 增量过滤: 每处理 N 场比赛后触发一次剪枝
     - 内存安全: 确保特征维度不会导致 OOM
+    - 多进程安全: 支持 ProcessPoolExecutor 并发环境
 
 Author: Principal Architect & Performance Expert
-Version: V26.1 (Production)
-Date: 2025-12-27
+Version: V26.2 (Phase 1.3 + 2.1 Optimization)
+Date: 2025-12-28
 """
 
 import gc
+import json
 import logging
+import os
+import pickle
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any
 
 import numpy as np
 
 logger = logging.getLogger(__name__)
+
+
+# ============================================================================
+# Phase 2.1: 多进程安全支持
+# ============================================================================
+
+# 特征统计文件路径（用于跨进程同步)
+_STATS_FILE_PATH = Path("data/monitoring/feature_stats_registry.pkl")
+
+
+def save_registry_to_file(registry: "FeatureStatsRegistry", filepath: Path = _STATS_FILE_PATH) -> None:
+    """将注册表保存到文件（跨进程安全）"""
+    filepath.parent.mkdir(parents=True, exist_ok=True)
+    with open(filepath, "wb") as f:
+        pickle.dump(registry, f)
+
+
+def load_registry_from_file(filepath: Path = _STATS_FILE_PATH) -> "FeatureStatsRegistry | None":
+    """从文件加载注册表"""
+    if not filepath.exists():
+        return None
+    with open(filepath, "rb") as f:
+        return pickle.load(f)
+
+
+def merge_registries(
+    target: "FeatureStatsRegistry",
+    *sources: "FeatureStatsRegistry",
+) -> None:
+    """
+    合并多个注册表到一个目标注册表
+
+    Args:
+        target: 目标注册表
+        *sources: 源注册表（可多个）
+    """
+    for source in sources:
+        for key, source_stat in source.stats.items():
+            if key not in target.stats:
+                target.stats[key] = source_stat
+            else:
+                # 合并统计信息
+                target_stat = target.stats[key]
+                target_stat.count += source_stat.count
+                target_stat.nonzero_count += source_stat.nonzero_count
+                target_stat.nan_count += source_stat.nan_count
+                target_stat.sum_value += source_stat.sum_value
+                target_stat.sum_squared += source_stat.sum_squared
+                target_stat.min_value = min(target_stat.min_value, source_stat.min_value)
+                target_stat.max_value = max(target_stat.max_value, source_stat.max_value)
+                target_stat.unique_values.update(source_stat.unique_values)
+
+        target.processed_count += source.processed_count
+
+
+# ============================================================================
+# V26.2 核心特征白名单 (Phase 1.3 新增)
+# ============================================================================
+
+# 核心特征白名单：保护高价值特征不被剪枝
+CORE_FEATURE_WHITELIST = {
+    # 滚动特征 (V17.0 基线)
+    "rolling_xg", "rolling_xg_std",
+    "rolling_shots", "rolling_shots_std",
+    "rolling_shots_on_target", "rolling_shots_on_target_std",
+    "rolling_possession", "rolling_possession_std",
+    "rolling_team_rating", "rolling_team_rating_std",
+
+    # 赛前特征 (V18.0)
+    "table_position", "table_position_diff",
+    "points", "points_diff",
+    "recent_form_points",
+
+    # ELO 评级 (V19.0)
+    "elo_gap", "adjusted_elo_gap",
+
+    # 疲劳度 (V19.0)
+    "fatigue_index", "fatigue_diff",
+    "rest_days",
+
+    # 战意 (V19.0)
+    "relegation_incentive", "incentive_diff", "desperation",
+
+    # 平局敏感度 (V19.4)
+    "table_proximity", "low_scoring_tendency",
+}
+
+
+def is_core_feature(feature_key: str) -> bool:
+    """检查特征是否为核心特征（白名单保护）"""
+    key_lower = feature_key.lower()
+    for prefix in CORE_FEATURE_WHITELIST:
+        if prefix in key_lower:
+            return True
+    return False
 
 
 # ============================================================================
@@ -110,6 +222,11 @@ class FeatureStatsRegistry:
     """
     特征统计注册表 - 跨所有比赛追踪特征统计
 
+    V26.2 优化:
+        - max_features: 8000 → 6000 (减少 25% 维度)
+        - sparsity_threshold: 0.95 → 0.90 (更激进剪枝)
+        - 核心特征白名单保护机制
+
     设计:
         - 增量更新: 每处理一场比赛，更新统计信息
         - 定期剪枝: 每处理 N 场后触发剪枝
@@ -119,8 +236,8 @@ class FeatureStatsRegistry:
     def __init__(
         self,
         prune_interval: int = 100,
-        max_features: int = 8000,
-        sparsity_threshold: float = 0.95,
+        max_features: int = 6000,  # V26.2: 8000 → 6000
+        sparsity_threshold: float = 0.90,  # V26.2: 0.95 → 0.90
         min_variance: float = 1e-6,
     ):
         """
@@ -128,8 +245,8 @@ class FeatureStatsRegistry:
 
         Args:
             prune_interval: 剪枝触发间隔（每处理 N 场后触发）
-            max_features: 最大特征数（硬限制）
-            sparsity_threshold: 稀疏度阈值（超过则剔除）
+            max_features: 最大特征数（硬限制）V26.2: 6000
+            sparsity_threshold: 稀疏度阈值（超过则剔除）V26.2: 0.90
             min_variance: 最小方差阈值（低于则剔除）
         """
         self.prune_interval = prune_interval
@@ -140,6 +257,7 @@ class FeatureStatsRegistry:
         self.stats: dict[str, FeatureStats] = {}
         self.processed_count = 0
         self.pruned_keys: set[str] = set()
+        self.core_feature_count = 0  # V26.2: 核心特征计数
 
     def update(self, features: dict[str, float]) -> None:
         """
@@ -170,19 +288,26 @@ class FeatureStatsRegistry:
         """
         获取需要剪枝的特征键
 
-        剪枝策略:
-            1. 高稀疏度: sparsity > 0.95 (95% 以上值为零)
-            2. 低方差: variance < 1e-6 (几乎常量)
-            3. 低唯一值: unique_ratio < 0.01 (变化极小)
-            4. 特征数超限: 按方差排序，保留前 max_features 个
+        V26.2 剪枝策略 (Phase 1.3 优化):
+            1. 核心特征保护: 白名单特征永不剪枝
+            2. 高稀疏度: sparsity > 0.90 (90% 以上值为零，V26.2 更激进)
+            3. 低方差: variance < 1e-6 (几乎常量)
+            4. 低唯一值: unique_ratio < 0.01 (变化极小)
+            5. 特征数超限: 按方差排序，保留前 max_features 个
         """
         if not self.stats:
             return set()
 
         pruned = set()
+        self.core_feature_count = 0
 
         for key, stat in self.stats.items():
-            # 规则 1: 高稀疏度
+            # V26.2: 核心特征白名单保护
+            if is_core_feature(key):
+                self.core_feature_count += 1
+                continue
+
+            # 规则 1: 高稀疏度 (V26.2: 0.95 → 0.90)
             if stat.sparsity > self.sparsity_threshold:
                 pruned.add(key)
                 continue
@@ -239,7 +364,7 @@ class FeatureStatsRegistry:
         return pruned
 
     def get_stats_report(self) -> dict[str, Any]:
-        """获取统计报告"""
+        """获取统计报告（V26.2 增强版）"""
         if not self.stats:
             return {}
 
@@ -256,13 +381,16 @@ class FeatureStatsRegistry:
         avg_variance = np.mean(variances) if variances else 0.0
 
         return {
+            "version": "V26.2",  # V26.2: 添加版本标识
             "processed_matches": self.processed_count,
             "total_features": total_stats,
             "pruned_features": pruned_stats,
             "active_features": active_stats,
+            "core_features": self.core_feature_count,  # V26.2: 核心特征计数
             "avg_sparsity": avg_sparsity,
             "avg_variance": avg_variance,
             "max_features_limit": self.max_features,
+            "sparsity_threshold": self.sparsity_threshold,  # V26.2: 显示阈值
         }
 
     def reset(self) -> None:
@@ -280,13 +408,13 @@ _GLOBAL_REGISTRY: FeatureStatsRegistry | None = None
 
 
 def get_global_registry() -> FeatureStatsRegistry:
-    """获取全局特征统计注册表"""
+    """获取全局特征统计注册表（V26.2 优化版）"""
     global _GLOBAL_REGISTRY
     if _GLOBAL_REGISTRY is None:
         _GLOBAL_REGISTRY = FeatureStatsRegistry(
             prune_interval=100,
-            max_features=8000,
-            sparsity_threshold=0.95,
+            max_features=6000,  # V26.2: 8000 → 6000
+            sparsity_threshold=0.90,  # V26.2: 0.95 → 0.90
             min_variance=1e-6,
         )
     return _GLOBAL_REGISTRY

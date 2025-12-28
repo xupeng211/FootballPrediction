@@ -142,19 +142,24 @@ class MarketPriceVerifier:
         Returns:
             float: 实时赔率
         """
-        # TODO: 实现从赔率API获取实时价格
-        # 这里可以集成 oddsportal、bet365 等API
+        # 预留接口：可集成 oddsportal、bet365 等API
+        # 当前使用数据库查询最新赔率
 
-        # 当前使用模拟数据
         logger.debug(f"获取实时赔率: {home_team} vs {away_team}, 预测: {prediction}")
 
-        # 模拟：从数据库查询最新赔率
+        # 从数据库查询最新赔率（使用统一配置）
         import psycopg2
         from psycopg2.extras import RealDictCursor
+        from src.config_unified import get_settings
 
         try:
+            settings = get_settings()
             conn = psycopg2.connect(
-                host="localhost", port=5432, database="football_db", user="football_user", password="football_pass"
+                host=settings.database.host,
+                port=settings.database.port,
+                database=settings.database.name,
+                user=settings.database.user,
+                password=settings.database.password.get_secret_value(),
             )
 
             cursor = conn.cursor(cursor_factory=RealDictCursor)

@@ -418,9 +418,16 @@ class IndustrialFeatureForge:
                 host=db.host, port=db.port, database=db.name, user=db.user, password=db.password.get_secret_value()
             )
         except Exception:
-            # 备用直接连接
+            # 备用直接连接（使用统一配置）
+            from src.config_unified import get_settings
+
+            settings = get_settings()
             return psycopg2.connect(
-                host="localhost", port="5432", database="football_db", user="football_user", password="football_pass"
+                host=settings.database.host,
+                port=settings.database.port,
+                database=settings.database.name,
+                user=settings.database.user,
+                password=settings.database.password.get_secret_value(),
             )
 
     def save_feature_matrix(self, feature_df: pd.DataFrame, filename: str = None) -> str:

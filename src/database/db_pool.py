@@ -65,6 +65,13 @@ class DatabasePoolConfig:
     password: str = field(default_factory=lambda: os.getenv("DB_PASSWORD", "postgres"))
     database: str = field(default_factory=lambda: os.getenv("DB_NAME", "football_prediction"))
 
+    # SSL 安全配置（Phase 2.9 强制安全加固）
+    # 生产环境强制使用 SSL，开发环境可通过 DB_SSL_MODE=disable 禁用
+    ssl_mode: str = field(default_factory=lambda: os.getenv("DB_SSL_MODE", "require"))
+    ssl_cert: str | None = field(default_factory=lambda: os.getenv("DB_SSL_CERT", None))
+    ssl_key: str | None = field(default_factory=lambda: os.getenv("DB_SSL_KEY", None))
+    ssl_root_cert: str | None = field(default_factory=lambda: os.getenv("DB_SSL_ROOT_CERT", None))
+
     # 连接池配置
     min_size: int = field(default_factory=lambda: int(os.getenv("DB_POOL_MIN_SIZE", "5")))
     max_size: int = field(default_factory=lambda: int(os.getenv("DB_POOL_MAX_SIZE", "20")))
@@ -184,6 +191,31 @@ class DatabasePool:
         logger.info(f"   超时设置: {self.config.timeout}s")
 
         try:
+            # 构建 SSL 连接参数
+            ssl_context = None
+            if self.config.ssl_mode and self.config.ssl_mode.lower() != "disable":
+                import ssl
+
+                # 创建 SSL 上下文
+                ssl_context = ssl.create_ssl_context(ssl.PROTOCOL_TLS_CLIENT)
+                ssl_context.check_hostname = False
+                ssl_context.verify_mode = ssl.CERT_NONE
+
+                # 如果提供了证书文件，使用它们
+                if self.config.ssl_cert and self.config.ssl_key:
+                    ssl_context.load_cert_chain(
+                        certfile=self.config.ssl_cert,
+                        keyfile=self.config.ssl_key,
+                    )
+                if self.config.ssl_root_cert:
+                    ssl_context.load_verify_locations(cafile=self.config.ssl_root_cert)
+                    ssl_context.verify_mode = ssl.CERT_REQUIRED
+
+            # 记录 SSL 配置
+            logger.info(f"   SSL 模式: {self.config.ssl_mode}")
+            if self.config.ssl_mode.lower() == "disable":
+                logger.warning("⚠️ SSL 已禁用 - 仅用于开发环境")
+
             self._pool = await asyncpg.create_pool(
                 host=self.config.host,
                 port=self.config.port,
@@ -198,6 +230,7 @@ class DatabasePool:
                 command_timeout=self.config.command_timeout,
                 setup=self._setup_connection,
                 init=self._init_connection,
+                ssl=ssl_context,
             )
 
             self._is_initialized = True
@@ -646,6 +679,12 @@ class SyncDatabasePool:
         logger.info(f"   超时设置: {self.config.timeout}s")
 
         try:
+            # 构建 SSL 连接字符串
+            sslmode = self.config.ssl_mode if self.config.ssl_mode else "require"
+            logger.info(f"   SSL 模式: {sslmode}")
+            if sslmode.lower() == "disable":
+                logger.warning("⚠️ SSL 已禁用 - 仅用于开发环境")
+
             self._pool = psycopg2_pool.ThreadedConnectionPool(
                 minconn=self.config.min_size,
                 maxconn=self.config.max_size,
@@ -655,6 +694,10 @@ class SyncDatabasePool:
                 password=self.config.password,
                 database=self.config.database,
                 connect_timeout=int(self.config.timeout),
+                sslmode=sslmode,
+                sslcert=self.config.ssl_cert,
+                sslkey=self.config.ssl_key,
+                sslrootcert=self.config.ssl_root_cert,
             )
 
             self._is_initialized = True

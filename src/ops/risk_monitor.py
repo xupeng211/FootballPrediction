@@ -501,8 +501,12 @@ class RiskMonitor:
         return message
 
     def _send_email(self, subject: str, message: str):
-        """发送邮件告警"""
-        # TODO: 配置邮件服务器
+        """
+        发送邮件告警
+
+        Note: 需要配置邮件服务器（SMTP）后启用
+        当前为模拟模式，仅输出到日志
+        """
         logger.info(f"[邮件模拟] {subject}")
         logger.info(message)
 

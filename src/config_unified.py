@@ -151,14 +151,18 @@ class UnifiedSettings(BaseSettings):
         monitoring_mode = os.getenv("MONITORING_MODE", "").lower() in ("true", "1", "yes")
 
         if docker_env:
-            # Docker环境自动配置
+            # Docker环境自动配置（db_password必须通过环境变量显式设置）
+            db_password = os.getenv("DB_PASSWORD")
+            if not db_password:
+                logger.warning("🚨 Docker环境检测到DB_PASSWORD未设置，请通过环境变量配置")
+
             env_config.update(
                 {
                     "db_host": "db",
                     "db_port": int(os.getenv("DB_PORT", 5432)),
                     "db_name": os.getenv("DB_NAME", "football_prediction"),
                     "db_user": os.getenv("DB_USER", "football_user"),
-                    "db_password": os.getenv("DB_PASSWORD", "football_pass"),
+                    "db_password": db_password or "change-me-in-production",
                     "redis_host": os.getenv("REDIS_HOST", "redis"),
                     "redis_port": int(os.getenv("REDIS_PORT", 6379)),
                     "environment": "monitoring" if monitoring_mode else "production",
@@ -202,7 +206,11 @@ class UnifiedSettings(BaseSettings):
     workers: int = Field(default=1, description="工作进程数")
 
     # === 安全配置 ===
-    secret_key: SecretStr = Field(default="dev-secret-key-2024-production-ready", description="应用密钥")
+    # 生产环境必须通过环境变量设置，开发环境默认值不安全
+    secret_key: SecretStr = Field(
+        default=SecretStr("dev-secret-key-change-in-production-minimum-32-chars"),
+        description="应用密钥（生产环境必须通过环境变量设置）"
+    )
 
     allowed_hosts: list[str] = Field(default=["localhost", "127.0.0.1"], description="允许的主机列表")
 
@@ -221,7 +229,7 @@ class UnifiedSettings(BaseSettings):
 
     db_password: SecretStr = Field(description="数据库密码")
 
-    db_ssl_mode: bool = Field(default=False, description="数据库SSL模式")
+    db_ssl_mode: bool = Field(default=False, description="数据库SSL模式（生产环境建议启用，设置DB_SSL_MODE=true）")
 
     db_pool_size: int = Field(default=10, description="数据库连接池大小")
 
@@ -242,7 +250,11 @@ class UnifiedSettings(BaseSettings):
     fotmob_x_foo_header: str | None = Field(default=None, description="FotMob X-FOO Header")
 
     # === 模型配置 ===
-    model_path: str = Field(default="data/models/xgb_football_v2_real_scores.joblib", description="模型文件路径")
+    # 使用 model_zoo 目录中的 V19.4 生产模型
+    model_path: str = Field(
+        default="model_zoo/v19.4_draw_sensitivity_model.pkl",
+        description="模型文件路径（指向 model_zoo 目录）"
+    )
 
     model_version: str = Field(default="xgboost_v2", description="模型版本")
 

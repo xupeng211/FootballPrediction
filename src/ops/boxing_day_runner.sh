@@ -157,7 +157,7 @@ phase1_health_check() {
 
     # 5. 模型检查
     log "INFO" "检查生产模型..."
-    if [ ! -f "src/production_models/v19.4_draw_sensitivity_model.pkl" ]; then
+    if [ ! -f "model_zoo/v19.4_draw_sensitivity_model.pkl" ]; then
         log "ERROR" "V19.4.1 生产模型不存在"
         exit 1
     fi

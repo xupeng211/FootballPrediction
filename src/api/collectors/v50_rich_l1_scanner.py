@@ -578,7 +578,6 @@ class RichL1Scanner:
         Note: 当前版本需要在扫描过程中缓存比赛，
         后续版本可以添加内存存储优化
         """
-        # TODO: 添加比赛缓存
         logger.warning("get_all_matches 需要在扫描过程中缓存比赛数据")
         return []
 

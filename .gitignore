@@ -80,6 +80,14 @@ src/production_models/*.joblib
 !src/production_models/.gitkeep
 !src/production_models/v17.0_rolling_metadata.json
 
+# Model Zoo (exclude all model files)
+model_zoo/*.pkl
+model_zoo/*.joblib
+model_zoo/*.h5
+model_zoo/*.pt
+!model_zoo/.gitkeep
+!model_zoo/registry.md
+
 # Logs (SENSITIVE - may contain API keys)
 logs/
 *.log
@@ -165,6 +173,11 @@ simple_*.py
 verify_*.py
 factory_pipeline_report_*.txt
 real_flight_report_*.txt
+
+# Large processed data files (exclude from git)
+data/processed/*.tsv
+data/processed/V*.csv
+!data/processed/.gitkeep
 
 # Root level test scripts (keep tests/ directory)
 /test_*.py

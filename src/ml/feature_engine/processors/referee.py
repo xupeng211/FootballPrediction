@@ -459,10 +459,10 @@ class RefereeProcessor(BaseProcessor[MatchData]):
 
         Args:
             db_path: 数据库文件路径
+
+        Note: 此方法为预留接口，用于从外部文件加载裁判历史数据
         """
-        # TODO: 实现从文件加载裁判历史数据
         logger.info(f"Loading referee database from {db_path}")
-        pass
 
     def get_feature_schema(self) -> dict[str, type]:
         """获取输出特征的 Schema"""

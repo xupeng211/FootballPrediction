@@ -352,18 +352,19 @@ class V17MLEngine:
             "confusion_matrix": confusion_matrix(y_test, y_pred).tolist(),
         }
 
-    def save(self, output_dir: str = "src/production_models"):
-        """保存模型"""
+    def save(self, output_dir: str = "model_zoo"):
+        """保存模型到 model_zoo 目录"""
         import joblib
 
         os.makedirs(output_dir, exist_ok=True)
 
-        model_path = os.path.join(output_dir, "v17.0_rolling_model.pkl")
+        from datetime import datetime
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        model_path = os.path.join(output_dir, f"rolling_model_{timestamp}.pkl")
         joblib.dump(self.model, model_path)
         logger.info(f"✅ 模型已保存: {model_path}")
 
         metadata = {
-            "version": "V17.0",
             "model_type": "XGBoost",
             "features": self.ROLLING_FEATURES,
             "feature_count": len(self.ROLLING_FEATURES),
@@ -372,12 +373,12 @@ class V17MLEngine:
             "creation_date": datetime.now().isoformat(),
         }
 
-        metadata_path = os.path.join(output_dir, "v17.0_rolling_metadata.json")
+        metadata_path = model_path.replace(".pkl", "_metadata.json")
         with open(metadata_path, "w") as f:
             json.dump(metadata, f, indent=2)
         logger.info(f"✅ 元数据已保存: {metadata_path}")
 
-    def load(self, model_path: str = "src/production_models/v17.0_rolling_model.pkl"):
+    def load(self, model_path: str | None = None):
         """加载模型"""
         import joblib
 

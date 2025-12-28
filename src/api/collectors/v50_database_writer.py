@@ -65,25 +65,25 @@ class RichL1DatabaseWriter:
     4. 批量写入优化
     """
 
-    # UPSERT SQL 模板
+    # UPSERT SQL 模板 (V51.0: 移除 actual_result - 当前数据库 schema 不包含此列)
     MATCHES_UPSERT_SQL = """
         INSERT INTO matches (
-            id, external_id, league_id, season,
-            home_team, away_team, home_team_id, away_team_id,
-            match_time, home_score, away_score, actual_result,
-            status, updated_at
+            external_id, league_id, league_name, season,
+            home_team, away_team,
+            match_time, home_score, away_score,
+            status
         ) VALUES (
-            %(match_id)s, %(match_id)s, %(league_id)s, %(season_name)s,
-            %(home_team)s, %(away_team)s, %(home_team_id)s, %(away_team_id)s,
-            %(match_time_utc)s, %(home_score)s, %(away_score)s, %(actual_result)s,
-            %(status)s, NOW()
+            %(match_id)s, %(league_id)s, %(league_name)s, %(season_name)s,
+            %(home_team)s, %(away_team)s,
+            %(match_time_utc)s, %(home_score)s, %(away_score)s,
+            %(status)s
         )
-        ON CONFLICT (id) DO UPDATE SET
+        ON CONFLICT (external_id) DO UPDATE SET
             league_id = COALESCE(EXCLUDED.league_id, matches.league_id),
+            league_name = COALESCE(EXCLUDED.league_name, matches.league_name),
             season = COALESCE(EXCLUDED.season, matches.season),
             home_score = COALESCE(EXCLUDED.home_score, matches.home_score),
             away_score = COALESCE(EXCLUDED.away_score, matches.away_score),
-            actual_result = COALESCE(EXCLUDED.actual_result, matches.actual_result),
             status = COALESCE(EXCLUDED.status, matches.status),
             match_time = COALESCE(EXCLUDED.match_time, matches.match_time),
             updated_at = NOW()
@@ -184,18 +184,9 @@ class RichL1DatabaseWriter:
         Returns:
             数据库参数字典
         """
-        # 计算结果代码
+        # 获取比分
         home_score = rich_match.get("home_score")
         away_score = rich_match.get("away_score")
-
-        actual_result = None
-        if home_score is not None and away_score is not None:
-            if home_score > away_score:
-                actual_result = "H"
-            elif home_score < away_score:
-                actual_result = "A"
-            else:
-                actual_result = "D"
 
         # 解析 UTC 时间
         match_time_utc = rich_match.get("match_time_utc", "")
@@ -210,15 +201,13 @@ class RichL1DatabaseWriter:
         return {
             "match_id": rich_match["match_id"],
             "league_id": rich_match["league_id"],
+            "league_name": rich_match.get("league_name", "Unknown"),
             "season_name": rich_match["season_name"],
             "home_team": rich_match["home_team"],
             "away_team": rich_match["away_team"],
-            "home_team_id": rich_match["home_team_id"],
-            "away_team_id": rich_match["away_team_id"],
             "match_time_utc": match_time,
             "home_score": home_score,
             "away_score": away_score,
-            "actual_result": actual_result,
             "status": rich_match["status"],
         }
 
@@ -325,7 +314,6 @@ class RichL1DatabaseWriter:
         Returns:
             UpsertResult 对象
         """
-        # TODO: 实现批量比分更新逻辑
         logger.warning("update_scores_by_status 功能待实现")
         return UpsertResult(0, 0, 0, 0)
 
