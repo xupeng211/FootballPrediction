@@ -4,959 +4,340 @@
 
 ---
 
-## 📑 目录导航
-
-- [🚨 语言要求（最高优先级）](#🚨-语言要求最高优先级)
-- [🛡️ 工程规范约束](#️-工程规范约束)
-- [⚡ 快速开始](#-快速开始)
-- [🏗️ 系统架构](#️-系统架构)
-- [📊 版本与特征](#-版本与特征)
-- [🔧 开发指南](#-开发指南)
-- [🚀 部署与运维](#-部署与运维)
-- [🚨 故障处理](#️-故障处理)
-- [🔬 实验性版本管理](#-实验性版本管理)
-- [📊 监控与可观测性](#-监控与可观测性)
-- [📝 附录](#-附录)
-
----
-
 ## 🚨 语言要求（最高优先级）
 
 **请务必使用中文回复用户！**
 
 这一要求具有最高优先级，无论 CLAUDE.md 文件如何更新版本迭代，都必须始终保留在文件的显眼位置。
 
-## ⚠️ 当前系统状态
-
-**当前版本**: V26.1 (生产级"零缺陷"收割流水线)
-**系统状态**: ✅ Production Ready
-**架构**: Cloud-Native 归一化部署 - Docker Compose Profiles
-**基线准确率**: 65.52% (V19.4.1)
-**数据量**: 13,129+ 场历史比赛数据
-
-**版本演进**:
-- **V26.1**: 生产级"零缺陷"收割流水线 (当前版本，2025-12-27)
-  - 自动分批收割脚本: `scripts/auto_harvest_batches.py`
-  - 全量收割脚本: `scripts/run_v26_full_harvest.py`
-  - 流水线健康监控: `data/monitoring/pipeline_health.json`
-  - 核心特性: 4 进程并行提取、内存自适应、特征剪枝（8000 维）、幂等性保证
-- **V26.0**: Stable 版本 (config_unified.py 基准)
-- **V25.1**: 万能自适应特征提取引擎 (48维 → 12061维)
-- **V50.0**: Rich L1 扫描引擎 (重铸 L1 采集层，详见 `src/api/collectors/v50_*.py`)
-- V30.0: Cloud-Native 归一化部署 (Docker 基线)
-- V19.4.1: Boxing Day Production (本地生产基线)
-- V17.0: 滚动特征 (生产基线)
-
-**实验性分支**: v34/v38/v39/v40 系列正在研发中（详见 `src/ml/miners_v34/`、`src/ml/models/v38_*.py`、`src/ml/features/v40_*.py`）
-
-**注意**: 项目使用双版本编号系统：
-- **代码版本**: 25.1.0 (见 `pyproject.toml`) - PyPI 包版本
-- **架构版本**: V26.1 (见本文档) - 系统架构版本
-- **README 显示版本**: V51.0 - 历史遗留，实际以本文档为准
-
 ---
 
-## 🛡️ 工程规范约束
-
-**Claude Code 必须严格遵守以下定义在 `.claude/` 目录下的工程规范。**
-
-### 核心技能文件
-- **[.claude/context_lock.skill.md](.claude/context_lock.skill.md)** (🔒 核心资产冻结)
-- **[.claude/architecture_boundary.skill.md](.claude/architecture_boundary.skill.md)** (🏗️ 架构分层约束)
-- **[.claude/test_guard.skill.md](.claude/test_guard.skill.md)** (✅ 测试保护)
-- **[.claude/change_impact.skill.md](.claude/change_impact.skill.md)** (📊 变更影响分析)
-- **[.claude/minimal_change.skill.md](.claude/minimal_change.skill.md)** (🤏 最小修改原则)
-
-### 约束优先级金字塔
-1.  🔴 **Context Lock**: P0 核心模块修改需人工授权
-2.  🟠 **Architecture Boundary**: 架构正确性 > 代码简洁性
-3.  🟡 **Test Guard**: 功能正确性 > 性能优化
-4.  🟢 **Minimal Change**: 满足上述条件后，修改行数越少越好
-
-### 强制自检清单
-在生成业务代码前检查：
-- [ ] 我是否正在修改 P0 级别冻结文件？
-- [ ] 我的修改是否引入了架构层反向依赖？
-- [ ] 这个修改是否会破坏现有 API 契约？
-
----
-
-## ⚡ 快速开始
-
-### 🎯 项目概览
+## 📋 项目概览
 
 **FootballPrediction** - 基于 XGBoost 2.0+ 的专业足球比赛预测系统
 
 **项目愿景**: 以年化 25% 的真实收益率为北极星指标，构建可验证、可复制、可持续的体育预测系统
 
+### 当前系统状态
+
 | 属性 | 值 |
 |------|-----|
 | **状态** | ✅ Production Ready |
-| **版本** | V26.1 (生产级"零缺陷"收割流水线) |
-| **Docker 基线** | V30.0 (Cloud-Native) |
-| **基线版本** | V19.4.1 (65.52% 准确率) |
+| **生产版本** | **V26.1** (收割流水线) + **V50.0** (数据采集) |
+| **特征引擎** | **V25.1** (万能自适应特征提取) |
+| **基线准确率** | 65.52% |
 | **数据量** | 13,129+ 场历史比赛数据 |
-| **特征维度** | 48 维 → 12061 维 (V25.1 自适应引擎) |
+| **推理延迟** | <100ms |
 
-**核心风险约束**（详见 `docs/PROJECT_VISION.md`）:
-- 单笔下注 ≤ 5% 本金
-- 严禁杠杆（0%）
-- EV 区间 6%-10%
-- 最大回撤 < 15%
+### 核心技术栈
 
-### 🔧 技术栈
 - **ML**: XGBoost 2.0+, scikit-learn, Isotonic 回归
 - **Backend**: Python 3.11+, FastAPI, PostgreSQL 15, Redis 7
 - **DevOps**: Docker, Docker Compose
-- **Code Quality**: **Ruff** (主要，统一处理格式化+Lint), MyPy (类型检查), Bandit (安全扫描)
-- **Testing**: pytest (单元测试), pytest-cov (覆盖率)
-- **监控**: Prometheus, Grafana
+- **Code Quality**: Ruff (主要), MyPy, Bandit
+- **Testing**: pytest, pytest-cov
 
-> **注意**: Makefile 中保留 Black/Flake8 仅用于兼容性，日常开发请使用 Ruff
+---
 
-### 🎯 快速决策树
+## 🎯 唯一真理来源（Single Source of Truth）
 
-```
-你的目标是什么？
-│
-├─ 新机器环境设置？
-│  └─→ make dev && ./system_verify.sh
-│
-├─ 运行生产预测（推荐）？
-│  └─→ python main_production.py --full-pipeline
-│
-├─ 代码质量检查？
-│  └─→ ruff check src/ tests/ --fix && ruff format src/ tests/
-│
-├─ 运行测试？
-│  └─→ ./scripts/run_checks.sh
-│
-├─ 启动 Docker 服务？
-│  └─→ docker-compose up -d (核心服务) 或 make up-api (包含 API)
-│
-└─ 提交代码前检查？
-   └─→ ./scripts/run_checks.sh
-```
+### 当前生产版本
 
-### ⚡ 日常开发 Top 7 命令
-
-```bash
-# 1. 快速开发环境设置
-make dev
-
-# 2. 生产流程（推荐）
-python main_production.py --full-pipeline
-
-# 3. 代码质量检查（Ruff）
-ruff check src/ tests/ && ruff format src/ tests/
-
-# 4. Docker 服务启动（多模式）
-docker-compose up -d              # 核心服务 (pipeline_worker + db + redis)
-docker-compose --profile api up -d  # 核心服务 + API
-make up-api                        # 核心服务 + API (推荐)
-make up-dev                        # 开发环境 (含管理工具)
-
-# 5. 系统健康检查
-./system_verify.sh
-
-# 6. 快速测试（与 CI 一致）
-pytest tests/ml/test_backtest_engine.py tests/ops/test_signal_generator.py -v
-
-# 7. V26.1 全量特征收割（新增）
-python scripts/auto_harvest_batches.py           # 自动分批收割（推荐，支持断点续传）
-python scripts/run_v26_full_harvest.py --limit 100  # 单批收割（测试用）
-```
-
-### 📋 常用命令速查表
-
-| 操作 | 命令 | 耗时 |
+| 模块 | 版本 | 说明 |
 |------|------|------|
-| 环境准备 | `make dev` | ~2 分钟 |
-| V19.4 流程 | `python main_production.py --full-pipeline` | ~15 分钟 |
-| V26.1 自动收割 | `python scripts/auto_harvest_batches.py` | 视数据量 |
-| V26.1 单批收割 | `python scripts/run_v26_full_harvest.py --limit 100` | ~5 分钟 |
-| CI 完整检查 | `./scripts/run_checks.sh` | ~3 分钟 |
-| 质量检查 | `ruff check src/ tests/ --fix` | ~30 秒 |
-| 快速测试 | `pytest tests/ml/test_backtest_engine.py tests/ops/test_signal_generator.py -v` | ~2 分钟 |
-| 系统验证 | `./system_verify.sh` | ~30 秒 |
-| Docker 核心服务 | `docker-compose up -d` | ~1 分钟 |
-| Docker + API | `make up-api` | ~1 分钟 |
-| Docker 开发环境 | `make up-dev` | ~2 分钟 |
+| **收割流水线** | **V26.1** | `scripts/run_v26_full_pipeline.py` |
+| **数据采集** | **V50.0** | `src/api/collectors/v50_*.py` |
+| **特征引擎** | **V25.1** | `src/processors/v25_production_extractor.py` |
 
-### 🎯 常见场景命令
+### ⚠️ 强制命名规范
+
+**严禁创建任何带有 `_v1`, `_v2`, `_v17`, `_v18` 等版本后缀的新文件！**
+
+**正确做法**:
+- ✅ 直接修改现有文件
+- ✅ 使用类继承实现功能扩展
+- ✅ 使用策略模式实现算法切换
+- ✅ 通过配置控制行为差异
+
+**错误做法**:
+- ❌ `pipeline_v27.py` → 应修改 `pipeline.py` 或使用配置
+- ❌ `feature_extractor_v28.py` → 应继承 `BaseExtractor`
+- ❌ `model_v29.py` → 应使用 `model_zoo/` 管理版本
+
+### 版本管理
+
+- **历史版本**: 已删除或移至 `archive/`，Git 历史可恢复
+- **实验代码**: 统一存放于 `experiments/` 目录
+- **模型文件**: 统一存放于 `model_zoo/` 目录
+
+---
+
+## ⚡ 快速开始
+
+### 一键启动命令
 
 ```bash
-# 新机器环境设置
-make dev && ./system_verify.sh
+# 完整生产流水线（推荐）
+python scripts/run_v26_full_pipeline.py
 
-# 提交前检查（推荐使用 CI 脚本）
-./scripts/run_checks.sh
+# 自动分批收割（生产环境）
+python scripts/auto_harvest_batches.py
 
-# 提交前检查（手动执行）
-ruff check src/ tests/ --fix && pytest tests/ml/test_backtest_engine.py tests/ops/test_signal_generator.py -v
+# 全量特征收割
+python scripts/run_v26_full_harvest.py
 
-# 完整生产流程
-python main_production.py --full-pipeline
+# 启动 FastAPI 服务
+python src/main.py
 
-# 系统健康检查
-./system_verify.sh
+# 运行测试
+pytest tests/ -v
 
-# Boxing Day 实战检查（V19.4.1）
-./verify_ready.sh
+# 代码质量检查
+ruff check src/ tests/ --fix
+ruff format src/ tests/
+```
+
+### Docker 部署
+
+```bash
+# 核心服务 (db + redis + pipeline_worker)
+docker-compose up -d
+
+# 核心 + API
+docker-compose --profile api up -d
+
+# 开发环境 (含管理工具)
+docker-compose --profile dev up -d
 ```
 
 ---
 
-## 🏗️ 系统架构
+## 🏗️ 目录规范与架构
 
-### 📊 系统版本演进
-
-#### 生产版本（推荐使用）
-| 版本 | 核心特性 | 特征维度 | 准确率 | 状态 |
-|------|----------|----------|--------|------|
-| **V26.1** | 生产级"零缺陷"收割流水线 | 48 → 12061 维 | 65.52% | **当前版本** |
-| **V26.0** | Stable 版本 | 48 维 | 65.52% | **配置基准** |
-| **V25.1.0** | 万能自适应特征提取引擎 | 48 → 12061 维 | 65.52% | **特征引擎** |
-| **V50.0** | Rich L1 扫描引擎 (重铸 L1 采集层) | - | - | **L1 采集** |
-| **V30.0** | Cloud-Native 归一化部署 | 48 维 | 65.52% | **Docker 基线** |
-| **V19.4.1** | Boxing Day 生产版 + 风控集成 | 48 维 | 65.52% | **本地生产** |
-| V17.0 | 滚动特征（基线） | 16 维 | 65.52% | 生产基线 |
-
-#### 🌟 V25.1 万能自适应特征提取引擎
-
-**核心突破**（2025-12-25）:
-- **零硬编码**: 自动发现并提取所有数值型特征
-- **递归打平**: 处理任意深度的嵌套 JSON 结构
-- **全量吞噬**: 48 维 → 12061 维（251 倍增长）
-- **动态类型发现**: 自动转换 int/float/百分比/布尔值
-- **特征对齐**: NaN 填充确保特征矩阵一致性
-
-**核心文件**: `src/processors/v25_production_extractor.py`
-
-#### 实验性版本（研发中）
-| 版本 | 核心特性 | 特征维度 | 状态 |
-|------|----------|----------|------|
-| V34.0 | 全息收割机 + 全局 Manifest | 800+ 维 | 实验性 |
-| V38.x | 战神模型 + 拳击日报告 | 48+ 维 | 实验中 |
-| V39.x | 差分训练 + 暴力强制 | 48+ 维 | 实验中 |
-| V40.x | 抗泄漏特征引擎 | 800+ 维 | 实验中 |
-
-### 🔄 V26.1 "零缺陷"收割流水线
-
-**生产级数据收割架构** - 高性能、容错、可监控：
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    V26.1 "零缺陷"收割流水线                    │
-├─────────────────────────────────────────────────────────────┤
-│                                                               │
-│  ┌───────────────────────────────────────────────────────┐  │
-│  │  自动分批收割 (auto_harvest_batches.py)               │  │
-│  │  - 批次大小: 200 场/批                                 │  │
-│  │  - 内存监控: 超过 7GB 自动等待                         │  │
-│  │  - 断点续传: 进度持久化                                │  │
-│  │  - 失败重试: 最多 2 次                                 │  │
-│  └───────────────────────────────────────────────────────┘  │
-│                           ↓                                  │
-│  ┌───────────────────────────────────────────────────────┐  │
-│  │  全量收割 (run_v26_full_harvest.py)                   │  │
-│  │  - 4 进程并行提取                                      │  │
-│  │  - 动态批次大小（内存自适应）                          │  │
-│  │  - 特征剪枝（控制在 8000 维）                          │  │
-│  │  - 幂等性保证（可重启不重不漏）                        │  │
-│  └───────────────────────────────────────────────────────┘  │
-│                           ↓                                  │
-│  ┌───────────────────────────────────────────────────────┐  │
-│  │  流水线健康监控 (pipeline_health.json)                │  │
-│  │  - health_score: 0-100 健康评分                       │  │
-│  │  - throughput_per_hour: 每小时处理场次                │  │
-│  │  - feature_dimension_counts: 特征维度分布             │  │
-│  │  - alerts: 告警信息列表                                │  │
-│  └───────────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────────┘
-```
-
-### 🔄 V30.0 Cloud-Native 架构
-
-**归一化部署架构** - 服务解耦与 Docker Compose Profiles:
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    Docker Compose Orchestration              │
-├─────────────────────────────────────────────────────────────┤
-│                                                               │
-│  ┌───────────────────────────────────────────────────────┐  │
-│  │  Default Profile (核心服务)                            │  │
-│  │  - pipeline_worker: V30.0 Full Blood 流水线           │  │
-│  │  - db: PostgreSQL 15 (健康检查 + 资源限制)            │  │
-│  │  - redis: Redis 7 (LRU 缓存策略)                      │  │
-│  └───────────────────────────────────────────────────────┘  │
-│                                                               │
-│  ┌───────────────────────────────────────────────────────┐  │
-│  │  API Profile (按需启动)                                │  │
-│  │  - predictor_api: FastAPI 预测服务 (uvicorn workers)  │  │
-│  └───────────────────────────────────────────────────────┘  │
-│                                                               │
-│  ┌───────────────────────────────────────────────────────┐  │
-│  │  Dev Profile (开发工具)                                │  │
-│  │  - pgadmin: PostgreSQL Web 管理                       │  │
-│  │  - redis-commander: Redis Web 管理                    │  │
-│  │  - dashboard: 战神仪表盘                               │  │
-│  └───────────────────────────────────────────────────────┘  │
-│                                                               │
-│  ┌───────────────────────────────────────────────────────┐  │
-│  │  Data Volumes (持久化)                                 │  │
-│  │  - postgres_data, redis_data, app_data, app_logs      │  │
-│  └───────────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────────┘
-```
-
-**多阶段 Dockerfile 优化**:
-- Stage 1 (builder): 安装所有依赖 + 编译 C 扩展
-- Stage 2 (runner): 只拷贝必要代码，镜像体积缩小 70% (~350MB)
-
-### 🔄 数据流架构
-
-```
-FotMob API
-    ↓
-V11.0 哨兵机制（联赛分级动态哨兵）
-    ↓
-自适应解码 + 熔断机制
-    ↓
-PostgreSQL 存储
-    ↓
-L3 特征提取器（滚动特征 + 赛前特征）
-    ↓
-XGBoost 训练（24维/39维/48维特征数据集）
-    ↓
-概率校准（Isotonic 回归，V19+）
-    ↓
-模型评估 → 保存为生产模型 (.pkl)
-```
-
-### 📁 目录结构速查
+### 核心目录结构
 
 ```
 FootballPrediction/
-├── main_production.py         # ⭐ 统一生产入口（强烈推荐）
-├── docker-compose.yml         # V30.0 服务编排
+├── src/                      # ⭐ 生产代码（仅 V25/V26/V50）
+│   ├── api/
+│   │   └── collectors/       # V50.0 数据采集器
+│   ├── config_unified.py     # 统一配置管理
+│   ├── core/                 # 核心业务逻辑
+│   ├── database/             # 数据库层
+│   ├── main.py               # FastAPI 入口
+│   ├── ml/                   # 机器学习层
+│   │   ├── engine.py         # XGBoost 训练引擎
+│   │   ├── features/         # 特征工程
+│   │   ├── inference/        # 推理服务
+│   │   └── data/             # 数据加载器
+│   ├── ops/                  # 运维脚本
+│   ├── processors/           # V25.1 特征提取引擎
+│   └── services/             # 业务服务层
 │
-├── src/
-│   ├── config_unified.py      # 统一配置管理（Pydantic Settings）
-│   ├── main.py                # FastAPI 应用入口
-│   │
-│   ├── core/                  # 核心流水线
-│   │   ├── pipeline.py        # V17.0 滚动特征流水线
-│   │   ├── pipeline_v18.py    # V18.0 赛前特征流水线
-│   │   └── pipeline_v19_4.py  # V19.4 生产流水线
-│   │
-│   ├── ml/                    # 机器学习引擎
-│   │   ├── engine.py          # V17.0 ML 引擎
-│   │   ├── inference/         # 推理服务（predictor, model_loader）
-│   │   ├── features/          # 特征工程
-│   │   │   ├── extractor.py       # 钻石特征提取器
-│   │   │   ├── industrial_feature_forge.py  # 工业级特征锻造
-│   │   │   └── v19_advanced_features.py      # V19 高级动态特征
-│   │   ├── data/              # 数据加载器
-│   │   │   └── postgres_loader.py   # PostgreSQL 数据加载
-│   │   └── backtest/          # 回测引擎
-│   │
-│   ├── processors/            # V25.1 万能自适应特征提取引擎
-│   │   ├── base_extractor.py      # 基础提取器抽象类
-│   │   ├── v25_production_extractor.py  # V25.1 自适应提取器 (12061维)
-│   │   ├── exceptions.py          # 异常定义
-│   │   └── __init__.py            # 提取器注册表
-│   │
-│   ├── api/                   # 数据采集层
-│   │   ├── collectors/        # FotMob API 采集器
-│   │   │   ├── fotmob_core.py
-│   │   │   ├── v50_rich_l1_scanner.py    # V50.0 Rich L1 扫描引擎
-│   │   │   ├── v50_database_writer.py    # V50.0 数据库 UPSERT 层
-│   │   │   └── v50_autonomous_season_discoverer.py  # V50.0 赛季发现器
-│   │   └── health.py          # 健康检查端点
-│   │
-│   ├── services/              # 业务服务层
-│   │   └── inference_service.py  # 推理服务编排
-│   │
-│   ├── database/              # 数据库层
-│   │   ├── db_pool.py         # 连接池管理（同步+异步）
-│   │   └── migrations/        # Alembic 迁移文件
-│   │
-│   └── ops/                   # 运维脚本
-│       ├── data_pipeline_v25.py  # V25.0 数据流水线
-│       ├── market_live_monitor.py  # 实时市场监控
-│       └── risk_monitor.py        # 风险监控
+├── scripts/                  # 核心脚本
+│   ├── run_v26_full_pipeline.py      # ⭐ 完整流水线
+│   ├── auto_harvest_batches.py       # ⭐ 自动收割
+│   ├── run_v26_full_harvest.py        # ⭐ 全量收割
+│   └── collectors/                   # 数据采集器
 │
-├── tests/                     # 测试套件
-│   ├── unit/                  # 单元测试
-│   ├── integration/           # 集成测试
-│   ├── performance/           # 性能测试
-│   └── v2/                    # V2 推理核心测试
+├── experiments/              # 🔬 实验性代码（V33+）
+│   ├── ml/
+│   │   ├── miners_v33/       # V33.0 实验性挖掘器
+│   │   └── miners_v34/       # V34.0 全息收割机
+│   └── v3*_*.py              # 其他实验脚本
 │
-├── scripts/                   # 运维脚本
-│   ├── auto_harvest_batches.py    # V26.1 自动分批收割（支持断点续传）
-│   ├── run_v26_full_harvest.py    # V26.1 全量收割脚本
-│   ├── system_verify.sh           # 系统健康检查
-│   ├── run_checks.sh              # CI 质量门禁
-│   └── verify_ready.sh            # Boxing Day 验收
+├── model_zoo/                # 📦 历史模型仓库
+│   ├── registry.md           # 模型注册表
+│   └── v1*.pkl               # 历史模型文件
 │
-├── deploy/                    # 部署配置
-│   └── docker/
-│       └── Dockerfile         # V30.0 多阶段构建
+├── data/                     # 📊 数据目录
+│   ├── production/           # L1/L2 原始数据
+│   ├── processed/            # L3 特征数据
+│   └── models/               # 当前生产模型
 │
-├── data/                      # 数据目录
-│   ├── production/            # 生产数据
-│   └── models/                # 训练好的模型文件
-│
-└── .claude/                   # Claude Code 工程规范
-    ├── context_lock.skill.md          # 核心资产冻结
-    ├── architecture_boundary.skill.md # 架构分层约束
-    └── test_guard.skill.md            # 测试保护
+├── tests/                    # ✅ 测试套件
+├── archive/                  # 📦 历史归档
+├── docker-compose.yml        # Docker 编排
+├── pyproject.toml            # 项目配置
+└── CLAUDE.md                 # 本文档
 ```
 
-### 📁 核心组件
+### 目录职责说明
 
-| 组件 | 文件路径 | 职责 |
-|------|----------|------|
-| **统一生产入口** | `main_production.py` | L1/L2/训练/预测/监控 |
-| **ML 引擎** | `src/ml/engine.py` | XGBoost 训练/预测 |
-| **数据采集** | `src/api/collectors/fotmob_core.py` | 哨兵机制 API |
-| **特征锻造** | `src/ml/features/industrial_feature_forge.py` | 工业级特征提取 |
-| **统一配置** | `src/config_unified.py` | Pydantic Settings 管理 |
-
-> 其他实验性组件详见 `src/core/pipeline_*.py` 和 `src/ml/features/` 目录
-
-### 🎯 主要入口点
-
-#### ⭐ 统一生产入口（强烈推荐）
-
-**`main_production.py`** 是系统的统一命令行入口，支持所有核心操作：
-
-```bash
-# 完整流程（一键执行）
-python main_production.py --full-pipeline
-
-# 分步执行
-python main_production.py l1-harvest --season 2324 --target 10
-python main_production.py l2-parse
-python main_production.py train --train-size 600 --test-size 160
-python main_production.py predict
-python main_production.py health-check
-```
-
-#### FastAPI 服务
-```bash
-python src/main.py              # 启动服务
-docker-compose up -d            # Docker 模式
-```
-
-### ❌ 禁止操作
-- 绕过 `main_production.py` 直接调用底层流水线
-- 未经业务逻辑直接操作数据库
-- 使用非官方脚本进行数据操作
-- 硬编码数据库连接参数
+| 目录 | 职责 | 允许内容 | 禁止内容 |
+|------|------|----------|----------|
+| `src/` | 生产代码 | V25/V26/V50 相关代码 | ❌ 任何旧版本代码 |
+| `experiments/` | 实验性代码 | V33+ 研发代码 | ❌ 生产代码 |
+| `model_zoo/` | 历史模型 | .pkl/.json 模型文件 | ❌ 源代码 |
+| `data/` | 数据文件 | L1/L2/L3 数据 | ❌ 旧版本数据 |
+| `tests/` | 测试代码 | 测试脚本 | ❌ 已删除功能的测试 |
 
 ---
 
-## 📊 版本与特征
+## 📊 数据流架构
 
-> 版本演进详见 [🏗️ 系统架构](#🏗️-系统架构) 章节
+### L1/L2/L3 三层数据流
 
-### 🧬 特征体系
-
-#### 🌟 V25.1 万能自适应特征提取引擎（重大架构升级）
-
-**48 维 → 12061 维（251 倍增长）**
-
-V25.1 是系统架构的重大突破，实现了从硬编码映射向全量自适应吞噬的转变：
-
-**核心设计原则**:
-- **零硬编码**: 自动发现并提取所有数值型特征
-- **递归打平**: 处理任意深度的嵌套 JSON 结构
-- **动态类型发现**: 自动转换 int/float/百分比/布尔值
-- **特征对齐**: NaN 填充确保特征矩阵一致性
-- **命名规范**: 路径式命名保证唯一性和可读性
-
-**核心能力**:
-- **递归打平算法**: 将嵌套 JSON 转换为扁平特征
-- **全量吞噬**: 提取 JSON 中所有数值因子
-- **零数据损耗**: 无论联赛/赛季，最大化特征利用
-- **跨比赛对齐**: 全局特征注册表确保特征一致性
-
-**使用方式**:
-```bash
-# L2 特征解析（使用 V25.1 自适应引擎）
-python main_production.py l2-parse --extractor-version V25.1
 ```
-
-**文件位置**: `src/processors/v25_production_extractor.py`
-
----
-
-#### 🌟 V50.0 Rich L1 扫描引擎（重铸 L1 采集层）
-
-**核心突破**（架构重构）:
-- **自治型赛季发现器**: 废弃硬编码 seasonId，API 自动嗅探联赛赛季
-- **Rich L1 多维扫描**: 扫描 ID 同时带回比分、状态、UTC 时间
-- **数据库 UPSERT 层**: 使用 ON CONFLICT DO UPDATE 实现「单表真相」
-- **智能去重和断点续传**: 容错优先，API 失败时返回部分数据
-
-**核心文件**:
-- `src/api/collectors/v50_autonomous_season_discoverer.py` - 自治型赛季发现器
-- `src/api/collectors/v50_rich_l1_scanner.py` - Rich L1 多维扫描引擎
-- `src/api/collectors/v50_database_writer.py` - 数据库 UPSERT 层
-
-**产出结构 (Rich L1 Tuple)**:
-```python
-{
-    'match_id': int,
-    'home_score': Optional[int],
-    'away_score': Optional[int],
-    'status': str,  # 'finished' | 'ongoing' | 'scheduled'
-    'match_time_utc': str,
-    'league_id': int,
-    'season_id': int,
-    'season_name': str,
-    'home_team': str,
-    'away_team': str,
-}
-```
-
-**架构优势**:
-- **身首合一**: 比分和状态第一时间进入数据库
-- **双阶段扫描**: 第一阶段扫描 ID，第二阶段获取比分
-- **容错优先**: API 失败时返回部分数据
-
----
-
-#### V17.0 滚动特征（16 维）
-```
-主队/客队各 8 维:
-- rolling_xg, rolling_xg_std
-- rolling_shots_on_target, rolling_shots_on_target_std
-- rolling_possession, rolling_possession_std
-- rolling_team_rating, rolling_team_rating_std
-```
-
-#### V18.0 新增赛前特征（8 维）
-```
-- home_table_position, away_table_position, table_position_diff
-- home_points, away_points, points_diff
-- home_recent_form_points, away_recent_form_points
-```
-
-#### V19.0 高级动态特征（13 维）
-```
-ELO 相对差距:
-- raw_elo_gap, adjusted_elo_gap, fatigue_impact, schedule_impact
-
-疲劳度指数:
-- home_fatigue_index, away_fatigue_index, fatigue_diff
-- home_rest_days, away_rest_days
-
-保级战意:
-- home_relegation_incentive, away_relegation_incentive
-- incentive_diff, home_desperation
-```
-
-#### V19.4 平局敏感度特征（3 维）
-```
-- table_proximity: 积分榜接近度
-- low_scoring_tendency: 低得分倾向
-- elo_diff_cluster: ELO 差距聚类
-```
-
-#### V20.0 数据中台特性（架构重构）
-```
-动态联赛元数据管理:
-- 自动从 FotMob allLeagues API 抓取联赛信息
-- 维护赛季别名映射 (API格式 ↔ 存储格式)
-- 提供联赛ID动态查询
-- 支持五大联赛自动发现
-
-Schema-Agnostic 递归解析器:
-- 递归深度搜索核心数据字段
-- 防止循环引用
-- 容错性更强，支持 API 结构变化
-- 智能熔断机制（按ID跳过而非全局休眠）
-```
-
-#### V20.6 全量合成特征（66 维）
-```
-ShotmapAggregator 合成特征:
-- home_all_synth_total_shots, home_all_synth_xg
-- home_FH_synth_xg, home_SH_synth_shots
-- home_all_synth_peak_xg, home_all_synth_volatility
-- 共 66 个合成特征
-```
-
-#### V20.7 原子级数据对齐（800+ 维）
-```
-原子级回填 (Atomic Backfill):
-- 自动触发 shotmap 填充缺失字段
-- home_FirstHalf_expected_goals (回填)
-- away_SecondHalf_total_shots (回填)
-- 共 32+ 个字段自动回填
-
-球员-球队级联聚合:
-- home_team_total_accurate_passes (11人加总)
-- away_team_total_touches (11人加总)
-- 共 44 个聚合特征
-
-动量特征深度解剖:
-- home_momentum_velocity_mean (正向动量变化率)
-- home_momentum_neg_acceleration_mean (防线崩溃速度)
-- 共 15 个动量特征
-
-全量 Schema 对齐 (Zero-Padding):
-- 所有 270+ 个标准字段强制存在
-- 缺失字段统一填充 0.0 或 -1.0
-- 确保所有比赛特征数量严格相等
-```
-
-#### V20.8 焦土收割机（Scorched Earth 回填引擎）
-```
-全量历史数据回填:
-- 自动扫描并回填所有缺失的历史比赛数据
-- 支持 800+ 维特征的完整回填
-- 断点续传机制，支持大规模数据处理
-
-Docker 后台服务:
-- 独立容器运行 `src/ops/backfill_v20.8_scorched_earth.py`
-- 自动重启机制，保证数据采集稳定性
-- 独立日志输出到 `logs/` 目录
-```
-
-### 🔌 数据库连接标准
-
-```python
-# 必须使用统一配置
-from src.config_unified import get_settings
-settings = get_settings()
-db = settings.database
-
-# 必须使用 RealDictCursor
-import psycopg2
-from psycopg2.extras import RealDictCursor
-
-conn = psycopg2.connect(
-    host=db.host,
-    port=db.port,
-    database=db.name,
-    user=db.user,
-    password=db.password.get_secret_value()
-)
+┌─────────────────────────────────────────────────────────────┐
+│                    L1: 数据采集层                           │
+│  V50.0 Rich L1 扫描引擎 (src/api/collectors/v50_*.py)    │
+│  ┌────────────────────────────────────────────────────────┐ │
+│  │  FotMob API → 哨兵机制 → 熔断恢复 → PostgreSQL      │ │
+│  └────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────┘
+                          ↓
+┌─────────────────────────────────────────────────────────────┐
+│                    L2: 数据解析层                           │
+│  V25.1 万能自适应特征提取引擎 (src/processors/)           │
+│  ┌────────────────────────────────────────────────────────┐ │
+│  │  递归打平 (48维 → 12061维) + 零硬编码 + 类型转换      │ │
+│  └────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────┘
+                          ↓
+┌─────────────────────────────────────────────────────────────┐
+│                    L3: 特征工程层                           │
+│  工业级特征锻造 + V26.1 稀疏度过滤                       │
+│  ┌────────────────────────────────────────────────────────┐ │
+│  │  滚动特征 (16维) + 赛前特征 (8维) + 高级特征 (13维)   │ │
+│  └────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────┘
+                          ↓
+┌─────────────────────────────────────────────────────────────┐
+│                    L4: 模型训练层                           │
+│  XGBoost 2.0+ 训练 + 概率校准                              │
+└─────────────────────────────────────────────────────────────┘
+                          ↓
+┌─────────────────────────────────────────────────────────────┐
+│                    L5: 推理服务层                           │
+│  FastAPI + Redis 缓存 + <100ms 推理延迟                   │
+└─────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
 ## 🔧 开发指南
 
-### 📋 代码质量规范
+### 代码质量规范
 
-**修改前验证（强制）**:
+**提交代码前必须运行**:
 ```bash
-./system_verify.sh
-ruff check src/ tests/ --fix
-pytest tests/unit/utils tests/unit/cache tests/unit/core -v
-```
-
-**代码标准**:
-- **Python**: 3.11+
-- **代码风格**: Ruff (格式化 + Lint)
-- **行长度限制**: **严格 120 字符** (配置在 `pyproject.toml` 和 Ruff 中)
-- **类型检查**: MyPy 严格配置
-- **安全扫描**: Bandit
-- **测试框架**: pytest，目标覆盖率 40%
-
-### 🔨 开发工作流
-
-#### Makefile 命令
-```bash
-# 环境管理
-make venv | install | dev | clean | env-check
-
-# 代码质量（Black/Flake8/MyPy - Makefile 使用传统工具）
-make format | lint | typecheck | security | quality
-
-# 现代替代方案（Ruff - 推荐使用）
+# 代码格式化和检查
 ruff check src/ tests/ --fix
 ruff format src/ tests/
 
-# 测试
-make test | coverage | prepush
+# 运行测试
+pytest tests/ -v
 
-# Docker 部署
-make up | down | predict | verify
-
-# 数据库
-make db-reset | db-drop | db-stats | db-quality-report
-
-# 赛季收割
-make harvest-season | harvest-watch | season-full-reset
-```
-
-#### Ruff 命令（推荐使用）
-```bash
-# 代码检查和修复
-ruff check src/ tests/ --fix
-ruff format src/ tests/
-
-# 选择性修复
-ruff check src/ --select=I,F401,F841 --fix
-
-# 查看问题
-ruff check src/ --output-format=concise
-
-# 代码复杂度分析
-ruff check src/ --select=C901 --show-source
-```
-
-**Ruff 配置**: 项目使用 Black/Flake8 兼容配置（行长度 120 字符），详见 `pyproject.toml` 中 `[tool.black]` 和 `[tool.flake8]` 部分。Ruff 自动继承这些配置。
-
-### 🔌 Skills 使用说明
-
-项目配置了专业化技能，位于 `.claude/skills/` 目录。每个技能包含独立的 SKILL.md 配置文件。
-
-**可用 Skills**:
-
-| Skill | 描述 | 使用场景 |
-|-------|------|----------|
-| `code-quality` | 代码质量管理（Ruff/Black/Flake8/MyPy/Bandit） | 提交前检查、格式化代码 |
-| `data-collection` | 数据采集（FotMob API、历史数据） | 更新比赛数据、赛季收割 |
-| `data-engineering` | 数据管道工程（ETL、PostgreSQL、Redis） | 构建数据流、优化查询 |
-| `database-operations` | 数据库操作（迁移、查询优化、备份） | 数据库维护、性能调优 |
-| `deployment-management` | 部署管理（Docker、生产环境） | 部署到生产、服务编排 |
-| `deployment-operations` | 容器化部署和自动化运维 | Docker 容器管理、健康监控 |
-| `docker-devops` | Docker 和 DevOps 最佳实践 | 创建 Dockerfile、CI/CD 流水线 |
-| `fastapi-development` | FastAPI 异步 API 开发 | 创建 REST 端点、性能优化 |
-| `football-prediction` | 足球比赛预测（XGBoost 模型） | 预测比赛结果、分析准确率 |
-| `machine-learning-engineering` | ML 模型优化和特征工程 | 超参调优、模型部署 |
-| `performance-monitoring` | 系统性能监控（Prometheus/Grafana） | 检查系统健康、分析指标 |
-| `report-generation` | 专业分析报告生成（PDF/Word/Excel） | 生成比赛分析报告 |
-| `api-testing` | API 测试（FastAPI 端点、集成测试） | 接口测试、性能验证 |
-
-**使用方法**:
-```bash
-# 调用 Skill（Claude Code 自动处理）
-Skill: code-quality
-
-# 然后执行相关命令
-ruff check src/ tests/ --fix && ruff format src/ tests/
-```
-
-### 🔄 CI/CD 质量门禁
-
-项目配置了 GitHub Actions 质量门禁（`.github/workflows/quality-gates.yml`）：
-
-**质量门禁标准**:
-- 代码格式化：Black 检查通过
-- 代码风格：Flake8 检查通过
-- 测试执行：核心测试通过
-- 覆盖率：总体 ≥25%，推理服务 ≥90%
-- 安全扫描：Bandit 扫描无高危漏洞
-
-**自动化检查**:
-```bash
-# 本地运行质量门禁检查（模拟 CI）
-make quality
-
-# 运行安全扫描
+# 安全扫描
 bandit -r src/
-
-# 运行性能测试
-pytest tests/performance/ -v
 ```
 
-### 🧪 测试指南
+### 类型注解要求
 
-| 测试类型 | 命令 | 说明 |
-|---------|------|------|
-| **CI 完整检查** | `./scripts/run_checks.sh` | 导入排序 + 格式化 + Lint + 类型检查 + 单元测试 + 安全扫描 |
-| **Smart Tests** | `pytest tests/ml/test_backtest_engine.py tests/ops/test_signal_generator.py -v` | 核心测试套件（与 CI 一致） |
-| **全部测试** | `pytest tests/ -v` | 运行所有单元测试 |
-| **单文件测试** | `pytest tests/unit/test_specific.py -v` | 运行指定测试文件 |
-| **单函数测试** | `pytest tests/unit/test_engine.py::test_prediction -v` | 运行指定测试函数 |
-| **关键词过滤** | `pytest tests/ -k "test_inference" -v` | 运行匹配关键词的测试 |
-| **标记过滤** | `pytest -m "unit and api" -v` | 按标记运行测试 |
-| **覆盖率测试** | `pytest tests/ --cov=src --cov-report=html` | 生成覆盖率报告 |
-| **配置测试** | `pytest tests/unit/test_config*.py -v` | 配置相关测试 |
-| **数据库测试** | `pytest tests/unit/test_database*.py -v` | 数据库相关测试 |
-| **API 测试** | `pytest tests/unit/test_api_*.py -v` | API 相关测试 |
+**所有函数必须包含类型注解**:
+```python
+# ✅ 正确
+def predict_match(home_team: str, away_team: str) -> dict[str, float]:
+    ...
 
-**提交前检查（推荐）**:
-```bash
-# 使用 CI 脚本（推荐）
-./scripts/run_checks.sh
+def extract_features(match_data: dict) -> pd.DataFrame:
+    ...
 
-# 或手动执行核心测试
-pytest tests/ml/test_backtest_engine.py tests/ops/test_signal_generator.py -v
+# ❌ 错误
+def predict_match(home_team, away_team):
+    ...
 ```
 
-### 🏛️ 架构设计原则
+### 数据库连接标准
 
-**多版本流水线并存**: V17/V18/V19.4 流水线独立维护，各自入口文件明确
+**必须使用统一配置**:
+```python
+from src.config_unified import get_settings
+from psycopg2.extras import RealDictCursor
 
-**L1/L2/L3 数据流分层**:
-- L1: FotMob 哨兵机制数据收割
-- L2: Schema-Agnostic 递归解析
-- L3: 特征提取 + 模型训练
-
-**配置管理统一**: 所有配置通过 `src/config_unified.py` Pydantic Settings 管理
+settings = get_settings()
+conn = psycopg2.connect(
+    host=settings.database.host,
+    port=settings.database.port,
+    database=settings.database.name,
+    user=settings.database.user,
+    password=settings.database.password.get_secret_value(),
+    cursor_factory=RealDictCursor
+)
+```
 
 ---
 
 ## 🚀 部署与运维
 
-### 🔧 环境变量配置
+### 环境变量配置
 
 | 变量 | 必需 | 默认值 | 说明 |
 |------|------|--------|------|
-| `ENVIRONMENT` | 否 | development | 运行环境 |
-| `DOCKER_ENV` | 否 | false | Docker 环境标识 |
-| `DB_HOST` | 否 | localhost | 数据库主机（Docker 自动使用 "db"） |
+| `DB_HOST` | 是 | localhost | 数据库主机（Docker 使用 "db"） |
 | `DB_PASSWORD` | **是** | - | 数据库密码 |
 | `SECRET_KEY` | **是** | - | 应用密钥（≥32 字符） |
+| `REDIS_HOST` | 否 | localhost | Redis 主机 |
+| `ENVIRONMENT` | 否 | development | 运行环境 |
 
-### 🐳 Docker 部署
+### Docker 服务栈
 
-#### V30.0 Cloud-Native 架构
+| 服务 | Profile | 说明 |
+|------|---------|------|
+| `pipeline_worker` | default | V26.1 数据流水线 |
+| `predictor_api` | api | FastAPI 预测服务 |
+| `db` | default | PostgreSQL 15 |
+| `redis` | default | Redis 7 |
+| `pgadmin` | dev | PostgreSQL 管理 |
+| `redis-commander` | dev | Redis 管理 |
 
-**Docker Compose Profiles 多模式部署**:
-
-```bash
-# 核心服务 (pipeline_worker + db + redis)
-docker-compose up -d
-
-# 核心服务 + API (predictor_api)
-docker-compose --profile api up -d
-make up-api
-
-# 开发环境 (核心 + API + 管理工具)
-docker-compose --profile dev up -d
-make up-dev
-
-# 全部服务
-docker-compose --profile all up -d
-make up-all
-
-# 查看服务状态
-make ps
-docker-compose ps
-```
-
-**Dockerfile 多阶段构建**:
+### 健康检查
 
 ```bash
-# 使用新的 Dockerfile (deploy/docker/Dockerfile)
-# 构建生产镜像
-docker build -f deploy/docker/Dockerfile -t footballprediction:v30.0-fullblood .
-
-# 查看镜像大小 (~350MB, 优化 70%)
-docker images | grep footballprediction
-
-# 健康检查
+# 检查数据库连接
 docker-compose exec db pg_isready -U football_user
+
+# 检查 Redis 连接
 docker-compose exec redis redis-cli ping
+
+# 检查 API 健康
+curl http://localhost:8000/health
+
+# 系统健康检查
+./scripts/system_verify.sh
 ```
 
-### 🏭 V30.0 服务栈配置
+---
 
-**核心服务**:
-- `db` - PostgreSQL 15 数据库（默认启动）
-- `pipeline_worker` - V30.0 Full Blood 数据流水线（默认启动）
-- `redis` - Redis 7 缓存服务（默认启动）
+## 🛡️ 工程规范约束
 
-**可选服务** (via profiles):
-- `predictor_api` - FastAPI 预测服务 (`--profile api`)
-- `harvester` - V20.8 焦土回填服务 (`--profile harvester`)
-- `dashboard` - 战神仪表盘 (`--profile dashboard`)
-- `pgadmin` - PostgreSQL 管理工具 (`--profile dev`)
-- `redis-commander` - Redis 管理工具 (`--profile dev`)
+**Claude Code 必须严格遵守以下工程规范**：
 
-**数据卷** (Docker Volumes):
-- `postgres_data` - PostgreSQL 持久化数据
-- `redis_data` - Redis 持久化数据
-- `app_data` - 应用数据目录
-- `app_logs` - 应用日志目录
+### 核心规范文件
+- **[.claude/context_lock.skill.md](.claude/context_lock.skill.md)** - 核心资产冻结
+- **[.claude/architecture_boundary.skill.md](.claude/architecture_boundary.skill.md)** - 架构分层约束
+- **[.claude/test_guard.skill.md](.claude/test_guard.skill.md)** - 测试保护
+- **[.claude/minimal_change.skill.md](.claude/minimal_change.skill.md)** - 最小修改原则
 
-**网络**:
-- `football_network` - 内部桥接网络 (172.20.0.0/16)
-
-### 📊 服务栈
-
-| 服务 | 端口 | Profile | 说明 |
-|------|------|---------|------|
-| `pipeline_worker` | - | default | V30.0 Full Blood 数据流水线 |
-| `predictor_api` | 8000 | api | FastAPI 预测服务 |
-| `db` | 5432 | default | PostgreSQL 15 |
-| `redis` | 6379 | default | Redis 7 |
-| `harvester` | - | harvester | V20.8 焦土收割机 |
-| `holographic_harvester` | - | holographic | V34.0 全息收割服务 |
-| `dashboard` | - | dashboard/dev | 战神仪表盘 |
-| `pgadmin` | 5050 | dev | PostgreSQL 管理 |
-| `redis-commander` | 8081 | dev | Redis 管理 |
-
-### 🗄️ 数据库迁移
-
-项目使用 Alembic 进行数据库迁移管理：
-
-```bash
-# 运行所有迁移
-alembic upgrade head
-
-# 回滚一个版本
-alembic downgrade -1
-
-# 创建新迁移（自动生成）
-alembic revision --autogenerate -m "描述变更内容"
-
-# 查看当前版本
-alembic current
-
-# 查看迁移历史
-alembic history
-```
-
-**迁移文件位置**: `src/database/migrations/versions/`
-
-**注意事项**:
-- 迁移前确保已配置正确的数据库连接
-- 生产环境迁移前务必备份数据库
-- 复杂迁移需要人工审查自动生成的脚本
-
-### 🔍 V19.4 运维监控
-
-| 工具 | 文件 | 功能 |
-|------|------|------|
-| 实时市场监控 | `src/ops/market_live_monitor.py` | 赔率变化、异常检测 |
-| 风险监控 | `src/ops/risk_monitor.py` | 风险指标、熔断机制 |
-| 每日工作流 | `src/ops/daily_workflow.py` | 数据采集、自动训练 |
-| 周度 PNL 报告 | `src/ops/weekly_pnl_statement.py` | 盈亏统计、可视化 |
-| Boxing Day 脚本 | `src/ops/boxing_day_runner.sh` | 自动化实战执行 |
-| 财富路径模拟 | `src/analysis/yield_audit_v19_4.py` | 收益审计、愿景评分 |
-
-**系统验证脚本**:
-- `system_verify.sh` - 完整系统健康检查（6 步验证）
-- `verify_ready.sh` - Boxing Day 一键验收（4 步验收）
-- `check_full_blood_progress.sh` - V32.0 进度哨所（Full Blood 数据监控）
-- `deploy_harvester.sh` - V20.8 焦土收割机部署脚本
+### 优先级金字塔
+1. **Context Lock**: P0 核心模块修改需人工授权
+2. **Architecture Boundary**: 架构正确性 > 代码简洁性
+3. **Test Guard**: 功能正确性 > 性能优化
+4. **Minimal Change**: 满足上述条件后，修改行数越少越好
 
 ---
 
 ## 🚨 故障处理
 
-### 常见错误诊断
+### 常见问题诊断
 
-| 错误 | 原因 | 解决方案 |
+| 问题 | 原因 | 解决方案 |
 |------|------|----------|
 | `connection refused` | PostgreSQL 未启动 | `docker-compose up -d db` |
 | `db_password 不能为空` | 缺少环境变量 | 在 `.env` 中配置 |
-| `Model file not found` | 模型文件缺失 | 运行 `python main_production.py --full-pipeline` |
-| `100KB哨兵拒绝` | API 数据不足 | 等待熔断期结束或检查 API |
-| `Health check failed` | FastAPI 启动失败 | `docker-compose logs app --tail 100` |
-| `Module import error` | 依赖未安装 | `make install` 或 `pip install -r requirements.txt` |
+| `Module import error` | 依赖未安装 | `pip install -r requirements.txt` |
+| `导入路径错误` | 引用了已删除的旧代码 | 更新导入路径 |
 
 ### 日志位置
 
@@ -964,66 +345,284 @@ alembic history
 |----------|------|
 | 应用日志 | `logs/app.log` |
 | 错误日志 | `logs/error.log` |
-| 流水线日志 | `logs/pipeline.log` |
-| 自动收割日志 | `logs/auto_harvest.log` |
-| Docker 日志 | `docker-compose logs -f app` |
-| 空心场次 | `data/logs/hollow_matches.log` |
-| Boxing Day 信号 | `logs/boxing_day/signal_execution.json` |
+| 收割日志 | `logs/auto_harvest.log` |
 
-### 流水线监控
+---
 
-**V26.1 流水线健康状态监控**:
+## 🚨 灾难恢复 (Disaster Recovery)
 
+### 数据库故障恢复
+
+#### 1. 数据库连接失败
+
+**症状**: `connection refused` 或 `could not connect to server`
+
+**诊断步骤**:
 ```bash
-# 查看流水线健康状态
-cat data/monitoring/pipeline_health.json | jq '.health_status'
+# 检查数据库容器状态
+docker-compose ps db
 
-# 实时监控收割进度
-tail -f logs/auto_harvest.log
+# 检查数据库健康
+docker-compose exec db pg_isready -U football_user
 
-# 查看流水线处理日志
-tail -f logs/pipeline.log
-
-# 检查批次处理日志
-ls -la logs/v26_batch*.log
-
-# 使用监控脚本（V26.1 新增）
-./scripts/monitor_pipeline.sh     # 实时监控流水线状态
-./scripts/check_v26_progress.sh   # 检查 V26.1 收割进度
+# 查看数据库日志
+docker-compose logs --tail=100 db
 ```
 
-**健康指标说明**:
-- `health_score`: 健康评分（0-100）
-- `health_status`: 健康状态（healthy/degraded/critical）
-- `pipeline_stats`: 流水线统计信息
-  - `throughput_per_hour`: 每小时处理场次
-  - `feature_dimension_counts`: 特征维度分布
-- `prometheus_metrics`: Prometheus 指标快照
-- `alerts`: 告警信息列表
+**解决方案**:
 
-**V26.1 收割脚本对比**:
+1. **容器未运行**:
+   ```bash
+   docker-compose up -d db
+   # 等待数据库启动
+   docker-compose exec db pg_isready -U football_user
+   ```
 
-| 脚本 | 用途 | 特性 | 推荐场景 |
-|------|------|------|----------|
-| `auto_harvest_batches.py` | 自动分批收割 | 内存监控、断点续传、失败重试 | **生产环境**（推荐） |
-| `run_v26_full_harvest.py` | 全量收割 | 4 进程并行、特征剪枝、幂等性 | 大规模数据处理 |
-| `run_v26_full_pipeline.py` | 完整流水线 | L1+L2+训练一体化 | 端到端测试 |
+2. **容器崩溃/重启**:
+   ```bash
+   # 检查容器资源
+   docker stats db
 
-### 应急恢复
+   # 重启容器
+   docker-compose restart db
+   ```
+
+3. **数据损坏**:
+   ```bash
+   # 进入数据库容器
+   docker-compose exec db bash
+
+   # 运行 PostgreSQL 修复
+   psql -U football_user -d football_prediction -c "REINDEX DATABASE football_prediction;"
+   ```
+
+#### 2. 数据库备份与恢复
+
+**创建备份**:
+```bash
+# 完整备份
+docker-compose exec db pg_dump -U football_user football_prediction > backup_$(date +%Y%m%d).sql
+
+# 仅备份表结构
+docker-compose exec db pg_dump -U football_user --schema-only football_prediction > schema_$(date +%Y%m%d).sql
+
+# 仅备份数据
+docker-compose exec db pg_dump -U football_user --data-only football_prediction > data_$(date +%Y%m%d).sql
+```
+
+**恢复备份**:
+```bash
+# 恢复完整备份
+cat backup_20241228.sql | docker-compose exec -T db psql -U football_user football_prediction
+
+# 恢复时强制终止现有连接
+echo "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = 'football_prediction';" | docker-compose exec -T db psql -U football_user
+```
+
+#### 3. SSL 连接问题
+
+**症状**: `SSL error: sslv3 alert bad certificate` 或 `SSL SYSCALL error`
+
+**Phase 2.9 安全加固后**:
+- 生产环境默认启用 `sslmode=require`
+- 如需禁用（仅开发环境），设置 `DB_SSL_MODE=disable`
+
+**诊断**:
+```bash
+# 测试 SSL 连接
+docker-compose exec db psql "postgresql://football_user:password@db:5432/football_prediction?sslmode=require" -c "SELECT 1;"
+
+# 查看当前 SSL 配置
+docker-compose exec db psql -U football_user -c "SHOW ssl;"
+```
+
+### API 采集器封禁恢复
+
+#### 1. IP 被封禁
+
+**症状**: HTTP 429 Too Many Requests 或 403 Forbidden
+
+**立即措施**:
+1. **停止采集**: `docker-compose stop pipeline_worker`
+2. **检查状态**:
+   ```bash
+   # 测试 API 可访问性
+   curl -I https://www.fotmob.com/api/leagues?id=47&season=2425
+   ```
+
+**恢复策略**:
+
+1. **等待冷却期** (推荐):
+   - 暂停 6-24 小时
+   - 降低采集频率 (增加延迟到 2-5 秒)
+
+2. **更换 User-Agent**:
+   - 已内置多个 User-Agent 轮换
+   - 在 `.env` 中自定义:
+     ```bash
+     CUSTOM_USER_AGENT="Mozilla/5.0 (Windows NT 10.0; Win64; x64) ..."
+     ```
+
+3. **使用代理** (高级):
+   ```bash
+   # 在 .env 中配置
+   HTTP_PROXY=http://proxy.example.com:8080
+   HTTPS_PROXY=http://proxy.example.com:8080
+   ```
+
+#### 2. API 结构变更
+
+**症状**: JSON 解析错误或字段缺失
+
+**诊断**:
+```bash
+# 检查原始响应
+curl -s https://www.fotmob.com/api/leagues?id=47 | python -m json.tool
+```
+
+**临时方案**:
+1. 使用历史数据回退
+2. 切换到备用数据源（如配置的）
+
+#### 3. 断点续传机制
+
+V51.0 增量采集器支持断点续传：
+
+**工作原理**:
+```python
+# 采集器自动检查数据库最新时间
+latest_time = collector._get_latest_match_time()
+
+# 仅获取该时间之后的比赛
+matches = await collector._fetch_live_matches(since=latest_time)
+```
+
+**手动恢复**:
+```bash
+# 查看最新数据时间
+docker-compose exec db psql -U football_user -c "SELECT MAX(match_time) FROM matches;"
+
+# 从指定时间开始采集
+python -c "
+import asyncio
+from src.api.collectors.v51_incremental_collector import quick_incremental_collect
+from datetime import datetime
+
+# 指定起始时间（如最近一周）
+start_time = datetime(2024, 12, 20)
+asyncio.run(quick_incremental_collect(target_count=100))
+"
+```
+
+### Redis 缓存故障
+
+**诊断**:
+```bash
+# 检查 Redis 状态
+docker-compose exec redis redis-cli ping
+
+# 查看内存使用
+docker-compose exec redis redis-cli INFO memory
+```
+
+**恢复**:
+```bash
+# 重启 Redis
+docker-compose restart redis
+
+# 清空缓存（如数据损坏）
+docker-compose exec redis redis-cli FLUSHALL
+```
+
+### 系统级故障
+
+#### 1. 磁盘空间不足
+
+**症状**: `ERROR: could not write to file` 或 `No space left on device`
+
+**诊断**:
+```bash
+# 检查磁盘使用
+df -h
+
+# 查找大文件
+du -sh /var/lib/docker/* | sort -h
+```
+
+**解决方案**:
+```bash
+# 清理 Docker 未使用的资源
+docker system prune -a --volumes
+
+# 清理日志
+truncate -s 0 logs/*.log
+```
+
+#### 2. 内存溢出
+
+**症状**: `OutOfMemoryError` 或容器被 OOM Killer 终止
+
+**解决方案**:
+```bash
+# 在 docker-compose.yml 中增加内存限制
+services:
+  pipeline_worker:
+    mem_limit: 2g
+    memswap_limit: 2g
+
+# 重启服务
+docker-compose up -d pipeline_worker
+```
+
+### 紧急联系与升级
+
+**问题升级路径**:
+
+1. **Level 1** (操作员): 检查日志、重启服务
+2. **Level 2** (DevOps): 检查基础设施、网络配置
+3. **Level 3** (架构师): 代码级问题、API 封禁
+
+**关键日志文件**:
+| 组件 | 日志位置 |
+|------|----------|
+| 应用日志 | `logs/app.log` |
+| 错误日志 | `logs/error.log` |
+| 数据库 | `docker-compose logs db` |
+| Redis | `docker-compose logs redis` |
+| 采集器 | `logs/auto_harvest.log` |
+
+---
+
+## 📝 附录
+
+### 依赖管理
+
+- **生产依赖**: 见 `requirements.txt`
+- **开发依赖**: 见 `pyproject.toml` [project.optional-dependencies]
+- **Python 版本**: 3.11+ (支持 3.12)
+
+### 测试指南
 
 ```bash
-# 完全重置
-docker-compose down
-make clean
-make dev
-make db-drop
+# 运行所有测试
+pytest tests/ -v
 
-# 生成诊断报告
-./system_verify.sh > diagnostic_report.txt 2>&1
+# 运行特定测试
+pytest tests/ml/test_v26_feature_engine.py -v
 
-# Boxing Day 验收
-./verify_ready.sh
+# 生成覆盖率报告
+pytest tests/ --cov=src --cov-report=html
 ```
+
+### 技能调用
+
+项目配置了专业化技能（`.claude/skills/`），Claude Code 会自动调用：
+
+- `v26-harvest` - V26.1 收割流水线
+- `football-prediction` - 足球预测核心
+- `code-quality` - 代码质量管理
+- `feature-engineering` - V25.1 特征工程
+- `data-engineering` - 数据管道工程
 
 ---
 
@@ -1034,498 +633,12 @@ make db-drop
 
 这一要求具有最高优先级，无论 CLAUDE.md 文件如何更新版本迭代，都必须始终保留在文件的显眼位置。
 
-### 更新准则
-1. 保留语言要求部分，不得删除或降低优先级
-2. 保持显眼位置
-3. 确保核心要求和规范不会因版本更新而丢失
-
 ---
 
-**🚨 CRITICAL**: This is a production system support document. Any violations of these standards will be automatically rejected!
-
-**🧬 技术栈DNA版本**: V26.1 (生产级"零缺陷"收割流水线) | **最后验证**: 2025-12-27 |
-**基线准确率**: V19.4.1: 65.52% | **数据集**: 13,129+ 场历史比赛数据 |
-**生产状态**: V26.1 Production | **API版本**: V11.0 多联赛增强版 |
-**Docker 基线**: V30.0 (Cloud-Native) | **统一入口**: `main_production.py --full-pipeline` |
-**项目愿景**: 年化 25% 收益率 | 详见: docs/PROJECT_VISION.md |
-
-**版本说明**:
-- V26.1: 当前生产版本（零缺陷收割流水线）
-- V51.0: README 显示版本（历史遗留，实际以 V26.1 为准）
-- 代码版本 25.1.0: PyPI 包版本（见 pyproject.toml）
-
----
-
-## 📝 附录
-
-### A. Ruff 配置详解
-
-项目使用 Ruff 作为主要代码质量工具（替代 Black/Flake8）：
-
-```bash
-# 配置文件位置
-pyproject.toml  # [tool.ruff] 部分
-
-# 行长度: 120 字符（与 Black/Flake8 保持一致）
-
-# 常用 Ruff 命令
-ruff check src/ tests/ --fix          # 检查并自动修复问题
-ruff format src/ tests/               # 格式化代码
-ruff check src/ --select=I,F401       # 选择性检查（导入/未使用变量）
-ruff check src/ --output-format=concise  # 简洁输出
-ruff check src/ --select=C901 --show-source  # 复杂度分析
-```
-
-**Ruff 规则集**:
-- `F` - Pyflakes 错误
-- `E` - pycodestyle 错误
-- `W` - pycodestyle 警告
-- `I` - isort 导入排序
-- `C90` - 复杂度检查
-- `N` - 命名规范
-- `UP` - 代码升级建议
-
-### B. 工程规范文件速查
-
-| 文件 | 作用 |
-|------|------|
-| `.claude/context_lock.skill.md` | P0/P1/P2 核心模块冻结保护 |
-| `.claude/architecture_boundary.skill.md` | 层次职责边界约束 |
-| `.claude/test_guard.skill.md` | 测试保护准则 |
-| `.claude/minimal_change.skill.md` | 最小修改原则 |
-| `.claude/change_impact.skill.md` | 变更影响分析 |
-
-### C. 版本号映射
-
-| 版本号 | 入口文件 | 流水线 | 特征维度 | 状态 |
-|--------|----------|--------|----------|------|
-| **V26.1** | `main_production.py` | V26.1 零缺陷收割流水线 | 48 → 12061 维 | **当前版本** |
-| **V26.0** | `src/config_unified.py` | 配置基准版本 | 48 维 | **配置基准** |
-| **V25.1.0** | `main_production.py` | V25.1 自适应引擎 | 48 → 12061 维 | **特征引擎** |
-| **V50.0** | - | Rich L1 扫描引擎 | - | **L1 采集** |
-| **V30.0** | `docker-compose up -d` | `src/ops/data_pipeline_v25.py` | 48 维 | **Cloud-Native 基线** |
-| V34.0 | `docker-compose --profile holographic up -d` | `src/ml/miners_v34/` | 800+ 维 | 全息收割 |
-| **V19.4.1** | `main_production.py` | `src/core/pipeline_v19_4.py` | 48 维 | **本地生产基线** |
-| V19.0 | - | `src/core/pipeline_v19.py` | 39 维 | 实验中 |
-| V18.0 | `main_production.py --v18` | `src/core/pipeline_v18.py` | 24 维 | 验证中 |
-| V17.0 | `main_production.py --v17` | `src/core/pipeline.py` | 16 维 | 生产基线 |
-
-### D. MCP 服务器使用说明
-
-项目已配置多个 MCP (Model Context Protocol) 服务器，Claude Code 可直接使用以下专用工具：
-
-| MCP 服务器 | 可用工具 | 使用场景 |
-|-----------|----------|----------|
-| **postgres** | `execute_sql`, `get_table_info`, `get_schema_info`, `check_connection` | 数据库查询、表结构查看、Schema 分析 |
-| **pytest** | `run_pytest`, `list_tests` | 运行测试、列出可用测试 |
-| **filesystem** | `read_file`, `write_file`, `list_directory`, `search_files`, `git_status`, `git_diff` | 文件操作、目录遍历、Git 状态 |
-| **docker** | `run_command` | 在 Docker 容器内执行命令 |
-| **ide** | `getDiagnostics`, `executeCode` | 获取代码诊断、执行 Jupyter 代码 |
-
-#### PostgreSQL MCP 详细用法
-
-```bash
-# 查询比赛数据（Claude 会自动调用 mcp__postgres__execute_sql）
-用户指令: "查询最近 10 场比赛的数据"
-Claude 执行: SELECT * FROM matches ORDER BY match_date DESC LIMIT 10;
-
-# 查看表结构（Claude 会自动调用 mcp__postgres__get_table_info）
-用户指令: "查看 matches 表的结构"
-Claude 执行: 获取 matches 表的列信息、类型、约束
-
-# 检查数据库连接
-用户指令: "检查数据库连接状态"
-Claude 执行: mcp__postgres__check_connection()
-```
-
-#### Pytest MCP 详细用法
-
-```bash
-# 运行所有测试
-用户指令: "运行所有单元测试"
-Claude 执行: mcp__pytest__run_pytest(test_path="tests/", args=["-v"])
-
-# 运行特定测试文件
-用户指令: "运行回测引擎测试"
-Claude 执行: mcp__pytest__run_pytest(test_path="tests/ml/test_backtest_engine.py", args=["-v"])
-
-# 列出可用测试
-用户指令: "列出所有可用的测试"
-Claude 执行: mcp__pytest__list_tests(test_path="tests/")
-```
-
-#### Filesystem MCP 详细用法
-
-```bash
-# 搜索文件
-用户指令: "查找所有包含 'pipeline' 的文件"
-Claude 执行: mcp__filesystem__search_files(pattern="pipeline", file_type="name")
-
-# 读取文件
-用户指令: "读取 main_production.py 的内容"
-Claude 执行: mcp__filesystem__read_file(file_path="main_production.py")
-
-# 查看 Git 状态
-用户指令: "查看当前 Git 状态"
-Claude 执行: mcp__filesystem__git_status()
-
-# 查看 Git 差异
-用户指令: "查看我修改了哪些文件"
-Claude 执行: mcp__filesystem__git_diff()
-```
-
-#### Docker MCP 详细用法
-
-```bash
-# 在容器内执行命令
-用户指令: "在 pipeline_worker 容器中执行 Python 脚本"
-Claude 执行: mcp__docker__run_command(
-    command="python src/ops/data_pipeline_v25.py",
-    service="pipeline_worker"
-)
-
-# 在数据库容器中执行 SQL
-用户指令: "在数据库容器中查看表列表"
-Claude 执行: mcp__docker__run_command(
-    command="psql -U football_user -d football_db -c '\\dt'",
-    service="db"
-)
-```
-
-#### IDE MCP 详细用法
-
-```bash
-# 获取代码诊断
-用户指令: "检查当前文件是否有问题"
-Claude 执行: mcp__ide__getDiagnostics()
-
-# 执行 Jupyter 代码
-用户指令: "执行这段 Python 代码计算准确率"
-Claude 执行: mcp__ide__executeCode(code="import numpy as np; ...")
-```
-
-### E. 数据库 Schema 说明
-
-**核心表结构**:
-
-| 表名 | 用途 | 关键字段 |
-|------|------|----------|
-| `matches` | 比赛基础数据 | match_id, home_team, away_team, match_date, status |
-| `raw_match_data` | L2 原始数据（JSON） | match_id, raw_data, collected_at |
-| `odds` | 赔率数据 | match_id, home_odds, draw_odds, away_odds, bookmaker |
-| `predictions` | 预测结果 | match_id, predicted_result, confidence, model_version |
-
-**查看完整 Schema**:
-```bash
-# 使用 Alembic 查看迁移历史
-alembic history
-
-# 查看当前数据库版本
-alembic current
-
-# 使用 MCP 直接查询
-# Claude 可调用 get_table_info 查看任意表结构
-```
-
-**数据库迁移**:
-```bash
-# 运行所有迁移
-alembic upgrade head
-
-# 回滚一个版本
-alembic downgrade -1
-
-# 创建新迁移
-alembic revision --autogenerate -m "描述变更内容"
-```
-
-### F. 环境变量完整清单
-
-```bash
-# 数据库配置
-DB_HOST=localhost          # 数据库主机（Docker 自动使用 "db"）
-DB_PORT=5432              # 数据库端口
-DB_NAME=football_db       # 数据库名称
-DB_USER=football_user     # 数据库用户
-DB_PASSWORD=***           # 数据库密码（必需）
-
-# Redis 配置
-REDIS_HOST=localhost      # Redis 主机（Docker 自动使用 "redis"）
-REDIS_PORT=6379           # Redis 端口
-REDIS_DB=0                # Redis 数据库
-
-# 应用配置
-ENVIRONMENT=development   # 运行环境（development/production）
-DOCKER_ENV=false          # Docker 环境标识
-LOG_LEVEL=INFO            # 日志级别
-TZ=UTC                    # 时区
-SECRET_KEY=***            # 应用密钥（必需，≥32 字符）
-
-# 可选配置
-PYTHONDEVMODE=1           # 开发者模式（代码修改实时生效）
-```
-
-### G. 实验性版本管理指南
-
-项目采用多版本并存策略，允许在保证生产稳定性的同时进行创新实验。
-
-#### 实验性版本清单
-
-| 版本系列 | 核心特性 | 特征维度 | 文件位置 | 状态 |
-|---------|----------|----------|----------|------|
-| **V34** | 全息收割机 + 全局 Manifest | 800+ | `src/ml/miners_v34/` | 研发中 |
-| **V38** | 战神模型 + 拳击日报告 | 48+ | `src/ml/models/v38_*.py` | 实验中 |
-| **V39** | 差分训练 + 暴力强制 | 48+ | `src/ml/models/v39_*.py` | 实验中 |
-| **V40** | 抗泄漏特征引擎 | 800+ | `src/ml/features/v40_*.py` | 实验中 |
-
-#### 版本切换指南
-
-```bash
-# 使用 V26.1 当前版本（推荐）
-python main_production.py --full-pipeline
-
-# 使用 V30.0 Docker 基线版本
-docker-compose up -d
-
-# 使用 V25.1.0 自适应特征提取引擎
-python main_production.py l2-parse --extractor-version V25.1
-
-# 使用 V19.4.1 本地生产版本
-python main_production.py --full-pipeline
-
-# 使用 V34.0 全息收割机
-docker-compose --profile holographic up -d
-
-# 实验性版本 - 直接运行
-python src/ml/models/v38_1_real_trainer.py
-python src/ml/models/v39_0_final.py
-```
-
-#### 实验性版本测试策略
-
-1. **隔离测试**：实验性版本应在独立的数据库环境或测试分支中运行
-2. **A/B 对比**：使用相同的测试数据集对比实验版本与生产版本的准确率
-3. **回归测试**：确保实验性版本不会破坏现有功能
-4. **性能基准**：记录训练时间和推理延迟，确保性能可接受
-
-#### 版本集成流程
-
-```
-实验性版本 → 验证测试 → 性能评估 → 冻结保护 → 合并主分支
-     ↓           ↓           ↓           ↓           ↓
-  开发环境    测试环境    预生产环境   代码审查    生产发布
-```
-
-**集成前检查清单**:
-- [ ] 所有测试通过（pytest）
-- [ ] 代码质量检查通过（ruff check）
-- [ ] 性能基准达标（推理延迟 < 100ms）
-- [ ] 准确率不低于基线版本
-- [ ] 文档更新完整
-- [ ] Context Lock 审批通过（P0/P1 模块）
-
-### H. V26.1 数据流与工作流
-
-**V26.1 完整数据流**:
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    V26.1 数据流架构                           │
-├─────────────────────────────────────────────────────────────┤
-│                                                               │
-│  ┌───────────────────────────────────────────────────────┐  │
-│  │  L1: FotMob API 数据采集                              │  │
-│  │  - v50_autonomous_season_discoverer.py (赛季发现)     │  │
-│  │  - v50_rich_l1_scanner.py (Rich L1 扫描)              │  │
-│  │  - 输出: matches 表 (match_id, home_score, status)   │  │
-│  └───────────────────────────────────────────────────────┘  │
-│                           ↓                                  │
-│  ┌───────────────────────────────────────────────────────┐  │
-│  │  L2: Schema-Agnostic 递归解析                          │  │
-│  │  - v25_production_extractor.py (自适应提取)           │  │
-│  │  - 输出: raw_match_data 表 (JSON 原始数据)           │  │
-│  └───────────────────────────────────────────────────────┘  │
-│                           ↓                                  │
-│  ┌───────────────────────────────────────────────────────┐  │
-│  │  L3: 特征提取 + 数据收割                               │  │
-│  │  - auto_harvest_batches.py (自动分批)                │  │
-│  │  - run_v26_full_harvest.py (全量收割)                │  │
-│  │  - 输出: 特征文件 (parquet/csv)                       │  │
-│  └───────────────────────────────────────────────────────┘  │
-│                           ↓                                  │
-│  ┌───────────────────────────────────────────────────────┐  │
-│  │  L4: 模型训练 + 预测                                   │  │
-│  │  - pipeline_v19_4.py (V19.4 流水线)                  │  │
-│  │  - XGBoost 2.0+ 训练                                   │  │
-│  │  - 输出: 模型文件 (.pkl)                               │  │
-│  └───────────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────────┘
-```
-
-**V26.1 关键工作流**:
-
-| 工作流 | 入口 | 输出 | 耗时 |
-|--------|------|------|------|
-| L1 数据收割 | `python main_production.py l1-harvest` | matches 表新增记录 | 视数据量 |
-| L2 特征解析 | `python main_production.py l2-parse` | raw_match_data 表 | ~10 分钟 |
-| V26.1 自动收割 | `python scripts/auto_harvest_batches.py` | 特征文件 + 健康报告 | 持续运行 |
-| V26.1 全量收割 | `python scripts/run_v26_full_harvest.py` | 完整特征数据集 | 1-3 小时 |
-| 模型训练 | `python main_production.py train` | 模型文件 + 评估报告 | ~5 分钟 |
-| 模型预测 | `python main_production.py predict` | 预测结果 | <1 秒 |
-
-**V26.1 数据文件说明**:
-
-| 文件路径 | 说明 | 格式 |
-|----------|------|------|
-| `data/processed/V26_Baseline_40D.parquet` | V26 基线特征数据（40 维） | Parquet |
-| `data/processed/V26_Gold_9305.parquet` | V26 黄金数据集（9305 场） | Parquet |
-| `data/processed/V26_Feature_Distribution.png` | 特征分布可视化 | PNG |
-| `data/monitoring/pipeline_health.json` | 流水线健康状态 | JSON |
-
-### I. 监控与可观测性
-
-项目使用 Prometheus + Grafana 构建完整的监控体系。
-
-#### 监控架构
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                      监控数据流                               │
-├─────────────────────────────────────────────────────────────┤
-│                                                               │
-│  ┌───────────────────────────────────────────────────────┐  │
-│  │  应用层 (FastAPI + Pipeline Worker)                    │  │
-│  │  - prometheus_client 指标暴露                          │  │
-│  │  - /metrics 端点 (端口 8000)                          │  │
-│  └───────────────────────────────────────────────────────┘  │
-│                           ↓                                  │
-│  ┌───────────────────────────────────────────────────────┐  │
-│  │  Prometheus Server                                    │  │
-│  │  - 指标采集和存储 (15s 间隔)                          │  │
-│  │  - PromQL 查询引擎                                    │  │
-│  └───────────────────────────────────────────────────────┘  │
-│                           ↓                                  │
-│  ┌───────────────────────────────────────────────────────┐  │
-│  │  Grafana Dashboard                                    │  │
-│  │  - 战神仪表盘 (战神仪表盘)                             │  │
-│  │  - 实时可视化                                         │  │
-│  └───────────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────────┘
-```
-
-#### 核心监控指标
-
-| 指标类型 | 指标名称 | 描述 | 告警阈值 |
-|---------|----------|------|----------|
-| **预测准确率** | `prediction_accuracy` | 模型预测准确率 | < 60% |
-| **推理延迟** | `inference_latency_ms` | 单次预测响应时间 | > 100ms |
-| **API 请求** | `api_requests_total` | API 请求总数 | - |
-| **API 错误率** | `api_errors_total` | API 错误次数 | > 5% |
-| **数据库连接** | `db_connections_active` | 活跃数据库连接数 | > 80% |
-| **缓存命中率** | `cache_hit_ratio` | Redis 缓存命中率 | < 70% |
-| **系统资源** | `system_cpu_usage` | CPU 使用率 | > 80% |
-| **系统资源** | `system_memory_usage` | 内存使用率 | > 85% |
-
-#### Prometheus 配置
-
-**prometheus.yml** 示例:
-```yaml
-global:
-  scrape_interval: 15s
-  evaluation_interval: 15s
-
-scrape_configs:
-  - job_name: 'football-prediction-api'
-    static_configs:
-      - targets: ['localhost:8000']
-    metrics_path: '/metrics'
-
-  - job_name: 'postgres'
-    static_configs:
-      - targets: ['localhost:9187']
-
-  - job_name: 'redis'
-    static_configs:
-      - targets: ['localhost:9121']
-```
-
-#### Grafana 面板配置
-
-**战神仪表盘** (Wargod Dashboard):
-- **预测性能面板**: 准确率趋势、混淆矩阵、ROC 曲线
-- **系统健康面板**: CPU/内存/磁盘使用率、服务状态
-- **业务指标面板**: 预测次数、胜率统计、盈亏曲线
-- **数据质量面板**: 数据采集量、空心场次比例、数据新鲜度
-
-**启动 Grafana**:
-```bash
-# Docker 模式
-docker-compose --profile dashboard up -d
-
-# 访问 Dashboard
-# 默认地址: http://localhost:3000
-# 默认用户: admin / admin
-```
-
-#### 告警规则
-
-**alerting.yml** 示例:
-```yaml
-groups:
-  - name: football_prediction_alerts
-    rules:
-      - alert: LowPredictionAccuracy
-        expr: prediction_accuracy < 0.6
-        for: 5m
-        labels:
-          severity: warning
-        annotations:
-          summary: "预测准确率低于 60%"
-
-      - alert: HighInferenceLatency
-        expr: inference_latency_ms > 100
-        for: 5m
-        labels:
-          severity: critical
-        annotations:
-          summary: "推理延迟超过 100ms"
-
-      - alert: HighErrorRate
-        expr: rate(api_errors_total[5m]) / rate(api_requests_total[5m]) > 0.05
-        for: 5m
-        labels:
-          severity: warning
-        annotations:
-          summary: "API 错误率超过 5%"
-```
-
-#### 日志聚合
-
-项目使用 structlog 进行结构化日志记录：
-
-```python
-import structlog
-
-log = structlog.get_logger()
-log.info("prediction_made", match_id=123, result="home", confidence=0.75)
-```
-
-**日志级别**:
-- DEBUG: 详细调试信息
-- INFO: 一般信息（默认）
-- WARNING: 警告信息
-- ERROR: 错误信息
-- CRITICAL: 严重错误
-
-**日志查看**:
-```bash
-# 查看应用日志
-tail -f logs/app.log
-
-# 查看 Docker 日志
-docker-compose logs -f pipeline_worker
-docker-compose logs -f predictor_api
-
-# 过滤错误日志
-grep "ERROR" logs/app.log
-```
+**🚨 CRITICAL**: This is a production system support document.
+
+**🧬 当前版本**: V26.1 (收割流水线) + V50.0 (数据采集) + V25.1 (特征引擎) |
+**最后更新**: 2025-12-28 (Phase 1.2 重写) |
+**基线准确率**: 65.52% |
+**生产状态**: Production Ready |
+**项目愿景**: 年化 25% 收益率

@@ -1,6 +1,0 @@
-{
-  "timestamp": "2025-12-23T16:55:18.281097",
-  "test1_overfitting": {
-    "train_accuracy": 0.706,
-    "test_accuracy": 0.6277777777777778,
-    "roi_fixed": 

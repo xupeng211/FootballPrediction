@@ -99,11 +99,17 @@ class StrictOOSBacktest:
             print("✓ 数据库连接已关闭")
 
     def load_model(self):
-        """加载 V18.2 模型"""
-        print("\n=== 加载 V18.2 Final Beast 模型 ===")
+        """加载 V19.4 生产模型"""
+        print("\n=== 加载 V19.4 生产模型 ===")
 
-        model_path = Path("src/production_models/v18.2_final_beast.pkl")
-        metadata_path = Path("src/production_models/v18.2_final_beast_metadata.json")
+        model_path = Path("model_zoo/v19.4_draw_sensitivity_model.pkl")
+        metadata_path = Path("model_zoo/v19.4_draw_sensitivity_metadata.json")
+
+        # 备用：如果 V19.4 不存在，尝试其他可用模型
+        if not model_path.exists():
+            print(f"⚠️ V19.4 模型不存在，尝试备用模型...")
+            model_path = Path("model_zoo/v19.3_hardened_model.pkl")
+            metadata_path = Path("model_zoo/v19.3_hardened_metadata.json")
 
         if not model_path.exists():
             raise FileNotFoundError(f"模型文件不存在: {model_path}")

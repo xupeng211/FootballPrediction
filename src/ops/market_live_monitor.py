@@ -386,9 +386,15 @@ class MarketLiveMonitor:
             # 从数据库查询比赛信息
             import psycopg2
             from psycopg2.extras import RealDictCursor
+            from src.config_unified import get_settings
 
+            settings = get_settings()
             conn = psycopg2.connect(
-                host="localhost", port=5432, database="football_db", user="football_user", password="football_pass"
+                host=settings.database.host,
+                port=settings.database.port,
+                database=settings.database.name,
+                user=settings.database.user,
+                password=settings.database.password.get_secret_value(),
             )
 
             cursor = conn.cursor(cursor_factory=RealDictCursor)
@@ -418,7 +424,8 @@ class MarketLiveMonitor:
                     away_team=result["away_team"],
                     league="Premier League",
                     match_time=result["match_time"],
-                    home_lineup_confirmed=False,  # TODO: 从阵容API获取
+                    # Note: 阵容确认状态需从阵容API获取，当前默认为False
+                    home_lineup_confirmed=False,
                     away_lineup_confirmed=False,
                     data_quality_score=1.0,
                 )
@@ -525,10 +532,9 @@ class MarketLiveMonitor:
         获取模型预测
 
         从已训练的 V19.4 模型获取预测结果
+        Note: 生产环境应调用推理服务获取预测
         """
-        # TODO: 实际应调用推理服务获取预测
-        # 这里使用示例数据
-
+        # 示例数据（生产环境应调用推理服务）
         if self.target_match_id == "4813551":
             return ModelPrediction(
                 match_id="4813551",

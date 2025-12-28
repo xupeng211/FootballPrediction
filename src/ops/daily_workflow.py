@@ -351,37 +351,52 @@ class V19PredictionTask:
         try:
             import joblib
 
-            model_dir = Path("src/production_models")
+            model_dir = Path("model_zoo")
 
-            # 加载模型
-            model_path = model_dir / "v19.0_reconstruction.pkl"
-            if model_path.exists():
-                model_data = joblib.load(model_path)
-                self.model = model_data["model"]
-                self.scaler = model_data["scaler"]
-                self.feature_columns = model_data["feature_columns"]
-                logger.info(f"✅ 模型加载成功: {model_path}")
-            else:
-                # 尝试加载备用模型
-                fallback_path = model_dir / "v18.2_final_beast_model.pkl"
-                if fallback_path.exists():
-                    model_data = joblib.load(fallback_path)
-                    self.model = model_data["model"]
-                    self.scaler = model_data.get("scaler")
-                    self.feature_columns = model_data.get("feature_names")
-                    logger.info(f"✅ 备用模型加载成功: {fallback_path}")
-                else:
-                    logger.error("❌ 找不到可用的模型文件")
-                    return False
+            # 加载模型（使用 model_zoo 目录）
+            # 优先使用最新的 V19.4 模型
+            model_files = [
+                "v19.4_draw_sensitivity_model.pkl",
+                "v19.3_hardened_model.pkl",
+                "v19.1_final_model.pkl",
+            ]
 
-            # 加载校准器
-            calibrator_path = model_dir / "v19.0_calibrator.pkl"
-            if calibrator_path.exists():
-                from src.ml.v19_probability_calibrator import V19ProbabilityCalibrator
+            model_loaded = False
+            for model_file in model_files:
+                model_path = model_dir / model_file
+                if model_path.exists():
+                    model_data = joblib.load(model_path)
+                    self.model = model_data.get("model", model_data)
+                    # 某些模型格式不同，适配处理
+                    if isinstance(model_data, dict):
+                        self.scaler = model_data.get("scaler")
+                        self.feature_columns = model_data.get("feature_columns", model_data.get("feature_names"))
+                    logger.info(f"✅ 模型加载成功: {model_path}")
+                    model_loaded = True
+                    break
 
-                self.calibrator = V19ProbabilityCalibrator()
-                self.calibrator.load(str(calibrator_path))
-                logger.info(f"✅ 校准器加载成功: {calibrator_path}")
+            if not model_loaded:
+                logger.error(f"❌ 在 {model_dir} 中找不到可用的模型文件")
+                logger.error(f"   期望的模型: {model_files}")
+                return False
+
+            # 加载校准器（可选）
+            calibrator_files = [
+                "v19.4_draw_sensitivity_scaler.pkl",
+                "v19.1_calibrator.pkl",
+            ]
+            for calibrator_file in calibrator_files:
+                calibrator_path = model_dir / calibrator_file
+                if calibrator_path.exists():
+                    try:
+                        from src.ml.v19_probability_calibrator import V19ProbabilityCalibrator
+
+                        self.calibrator = V19ProbabilityCalibrator()
+                        self.calibrator.load(str(calibrator_path))
+                        logger.info(f"✅ 校准器加载成功: {calibrator_path}")
+                        break
+                    except Exception as e:
+                        logger.warning(f"⚠️ 校准器加载失败: {e}")
 
             return True
 

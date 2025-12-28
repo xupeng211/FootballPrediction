@@ -244,10 +244,14 @@ class FotMobCoreCollector:
         Returns:
             psycopg2连接对象
         """
-        logger.debug("🔧 连接数据库: localhost:5432/football_db")
+        logger.debug(f"🔧 连接数据库: {db.host}:{db.port}/{db.name}")
 
         return psycopg2.connect(
-            host="localhost", port=5432, database="football_db", user="football_user", password="football_pass"
+            host=db.host,
+            port=db.port,
+            database=db.name,
+            user=db.user,
+            password=db.password.get_secret_value(),
         )
 
     def _log_hollow_match(self, match_id: int, content_size: int, reason: str) -> None:
