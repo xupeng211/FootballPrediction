@@ -20,9 +20,8 @@ import functools
 import logging
 import random
 import time
-from typing import Any, Callable, TypeVar
-
-import aiohttp
+from collections.abc import Callable
+from typing import Any, TypeVar
 
 logger = logging.getLogger(__name__)
 
