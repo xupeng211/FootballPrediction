@@ -237,10 +237,16 @@ make up-api          # 启动核心服务 + API
 make up-dev          # 启动开发环境 (包含管理工具)
 make up-all          # 启动所有服务
 make down            # 停止所有服务
+make restart         # 重启核心服务 (pipeline_worker)
 make ps              # 查看容器状态
 make logs            # 查看核心服务日志
 make logs-api        # 查看 API 日志
 make logs-all        # 查看所有服务日志
+
+# === 镜像构建 ===
+make build           # 构建生产镜像
+make build-test      # 构建测试镜像
+make build-no-cache  # 无缓存构建
 
 # === 代码质量 ===
 make lint            # 运行 Lint 检查 (ruff/flake8)
@@ -822,17 +828,22 @@ pytest tests/ --cov=src --cov-report=html
 - `machine-learning-engineering` - ML 工程工具 (XGBoost 调优, SHAP 解释)
 - `data-collection` - 数据采集 (FotMob API L2 数据, 实时统计)
 
-#### 运维支撑技能 (3个)
+#### 运维支撑技能 (4个)
 - `performance-monitoring` - 性能监控 (Prometheus + Grafana)
 - `deployment-management` - 部署管理 (Docker, 蓝绿部署, 回滚)
+- `deployment-operations` - 部署运维 (容器化管理, 健康监控, 故障诊断)
 - `database-operations` - 数据库操作 (PostgreSQL 连接池, 查询优化)
 
-#### 开发工具技能 (5个)
+#### 开发工具技能 (6个)
 - `code-quality` - 代码质量管理 (Ruff, MyPy, Bandit, pytest)
 - `api-testing` - API 测试工具 (FastAPI endpoint 测试)
 - `data-engineering` - 数据管道工具 (ETL, 特征流水线)
 - `docker-devops` - Docker 运维 (容器编排, 健康监控)
 - `fastapi-development` - FastAPI 最佳实践 (异步/await, API 设计)
+- `feature-engineering` - 特征工程 (V25.1 自适应提取, 48→12061维)
+
+#### 数据采集技能 (1个)
+- `v26-harvest` - V26 生产级数据收割 (零缺陷, 批处理, 监控)
 
 #### 技能使用示例
 
@@ -863,6 +874,16 @@ User: "收集 FotMob 实时数据"
 
 **注意**: 约束技能优先级高于业务技能，任何操作都必须首先通过约束检查。
 
+#### 辅助技能文件
+
+除了技能目录外，项目还提供了 3 个辅助技能文件（`.claude/skills/*.md`）：
+
+| 文件 | 用途 |
+|------|------|
+| `async_testing.md` | 异步测试指南 (pytest-asyncio, 异步 mock) |
+| `dependency_injection_mock.md` | 依赖注入模拟 (FastAPI 依赖, Mock 策略) |
+| `naming_convention.md` | 命名规范 (文件名、变量名、类名规范) |
+
 ---
 
 ## 🔒 永久保留条款
@@ -877,7 +898,7 @@ User: "收集 FotMob 实时数据"
 **🚨 CRITICAL**: This is a production system support document.
 
 **🧬 当前版本**: V26.8 (联赛专项) + V50.0 (数据采集) + V25.1 (特征引擎) |
-**最后更新**: 2025-12-28 (Phase 8.1 ModelDispatcher) |
+**最后更新**: 2025-12-29 (技能目录补充 + Makefile 命令完善) |
 **基线准确率**: 56% (真赛前) |
 **生产状态**: Production Ready |
 **项目愿景**: 年化 25% 收益率 |

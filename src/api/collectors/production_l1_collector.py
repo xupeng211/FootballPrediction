@@ -18,8 +18,6 @@ Version: V36.0
 
 import asyncio
 import logging
-from datetime import datetime
-from typing import Any
 
 import aiohttp
 
@@ -34,7 +32,6 @@ from src.api.collectors.schemas.l1_match_schema import (
     L1MatchData,
     LeagueId,
 )
-from src.config_unified import get_settings
 
 logger = logging.getLogger(__name__)
 
@@ -150,7 +147,7 @@ class ProductionL1Collector:
         await self.rate_limiter.acquire()
 
         # 构建请求 URL
-        url = f"https://www.fotmob.com/api/leagues"
+        url = "https://www.fotmob.com/api/leagues"
         params = {"id": league_id, "season": season_code}
 
         async with self.concurrent_limiter:
@@ -210,16 +207,23 @@ class ProductionL1Collector:
             is_finished = status_obj.get("finished", False)
             is_started = status_obj.get("started", False)
 
+            # 提取比分（在确定状态之前提取，用于智能修复）
+            home_score = status_obj.get("homeScore")
+            away_score = status_obj.get("awayScore")
+
+            # V36.0 智能修复： FotMob API 有时返回 finished=True 但没有比分
+            # 这种情况下，将状态降级为 scheduled，避免 Pydantic 校验失败
             if is_finished:
-                status = "finished"
+                if home_score is None or away_score is None:
+                    # 数据不完整：finished 状态但没有比分
+                    # 降级为 scheduled，等待后续采集补充
+                    status = "scheduled"
+                else:
+                    status = "finished"
             elif is_started:
                 status = "ongoing"
             else:
                 status = "scheduled"
-
-            # 提取比分
-            home_score = status_obj.get("homeScore")
-            away_score = status_obj.get("awayScore")
 
             # V36.0 关键防御：Pydantic Schema 校验
             # 这将自动进行：

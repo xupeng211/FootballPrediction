@@ -26,14 +26,16 @@ class LeagueId(str, Enum):
     """
     FotMob League ID 枚举（白名单机制）
 
+    V36.2 修复：使用正确的 FotMob League ID（基于 config/target_leagues.json）
+
     只有在此列表中的 League ID 才被允许通过校验
     这是防止"Premier League"标签污染的第一道防线
     """
     PREMIER_LEAGUE = "47"
-    LA_LIGA = "55"
+    LA_LIGA = "87"  # V36.2 修复：从 55 改为 87
     BUNDESLIGA = "54"
-    LIGUE_1 = "61"
-    SERIE_A = "135"
+    LIGUE_1 = "53"  # V36.2 修复：从 61 改为 53
+    SERIE_A = "55"  # V36.2 修复：从 135 改为 55（135 是 EFL Cup）
     CHAMPIONS_LEAGUE = "42"
 
     @classmethod
@@ -41,10 +43,10 @@ class LeagueId(str, Enum):
         """获取 League ID 对应的英文名称"""
         mapping = {
             "47": "Premier League",
-            "55": "La Liga",
+            "87": "La Liga",  # V36.2 修复
             "54": "Bundesliga",
-            "61": "Ligue 1",
-            "135": "Serie A",
+            "53": "Ligue 1",  # V36.2 修复
+            "55": "Serie A",  # V36.2 修复
             "42": "Champions League",
         }
         return mapping.get(league_id, "Unknown League")
@@ -287,10 +289,14 @@ class L1CollectionSummary(BaseModel):
             league_name = LeagueId.get_league_name(league_id)
             rate = (stats["success"] / stats["attempted"] * 100) if stats["attempted"] > 0 else 0
             report += f"\n   [{league_name}]\n"
-            report += f"     尝试: {stats['attempted']} | 成功: {stats['success']} | 失败: {stats['failed']} | 成功率: {rate:.1f}%"
-
+            report += (
+                f"     尝试: {stats['attempted']} | "
+                f"成功: {stats['success']} | "
+                f"失败: {stats['failed']} | "
+                f"成功率: {rate:.1f}%"
+            )
         if self.error_distribution:
-            report += f"\n\n❌ 错误分布:\n"
+            report += "\n\n❌ 错误分布:\n"
             for error_type, count in sorted(self.error_distribution.items(), key=lambda x: -x[1]):
                 report += f"   {error_type}: {count} 次"
 
