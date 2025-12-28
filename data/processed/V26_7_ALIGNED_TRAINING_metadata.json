@@ -1,0 +1,35 @@
+{
+  "version": "26.7",
+  "description": "Fully aligned training set using dynamic SQL methods",
+  "total_matches": 9305,
+  "label_distribution": {
+    "home": 4051,
+    "away": 2985,
+    "draw": 2269
+  },
+  "feature_columns": [
+    "rolling_xg_home",
+    "rolling_xg_away",
+    "rolling_shots_on_target_home",
+    "rolling_shots_on_target_away",
+    "rolling_possession_home",
+    "rolling_possession_away",
+    "rolling_team_rating_home",
+    "rolling_team_rating_away",
+    "home_table_position",
+    "away_table_position",
+    "table_position_diff",
+    "home_points",
+    "away_points",
+    "points_diff",
+    "home_recent_form_points",
+    "raw_elo_gap",
+    "adjusted_elo_gap",
+    "home_fatigue_index",
+    "away_fatigue_index",
+    "fatigue_diff"
+  ],
+  "generation_time": "2025-12-28T12:55:40.016608",
+  "generation_duration_seconds": 368.25520730018616,
+  "errors": []
+}

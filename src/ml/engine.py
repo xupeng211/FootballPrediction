@@ -450,7 +450,7 @@ class Predictor:
 
         Args:
             model_path: 模型文件路径，为 None 则使用默认路径
-            model_type: 模型类型 (v26_mini, v19_rolling, v26_5_production)
+            model_type: 模型类型 (v26_mini, v19_rolling, v26_5_production, v26_6_pre_match, v26_7_aligned)
         """
         import joblib
 
@@ -468,6 +468,10 @@ class Predictor:
             self.adapter = FeatureAdapterFactory.get_adapter(ModelType.V19_ROLLING)
         elif model_type == "v26_5_production":
             self.adapter = FeatureAdapterFactory.get_adapter(ModelType.V26_5_PRODUCTION)
+        elif model_type == "v26_6_pre_match":
+            self.adapter = FeatureAdapterFactory.get_adapter(ModelType.V26_6_PRE_MATCH)
+        elif model_type == "v26_7_aligned":
+            self.adapter = FeatureAdapterFactory.get_adapter(ModelType.V26_6_PRE_MATCH)  # Reuse V26_6 adapter
         else:
             raise ValueError(f"不支持的模型类型: {model_type}")
 
@@ -489,6 +493,10 @@ class Predictor:
             return "model_zoo/v19.4_draw_sensitivity_model.pkl"
         elif model_type == "v26_5_production":
             return "model_zoo/v26.5_production.pkl"
+        elif model_type == "v26_6_pre_match":
+            return "model_zoo/v26.6_pre_match.pkl"
+        elif model_type == "v26_7_aligned":
+            return "model_zoo/v26.7_aligned_production.pkl"
         return "model_zoo/v26.5_mini.pkl"
 
     def _load_model(self, model_path: str):
@@ -636,6 +644,18 @@ class Predictor:
     def create_v26_5_production(cls) -> "Predictor":
         """创建 V26.5 生产预测器（加载真实训练的模型）"""
         predictor = cls(model_type="v26_5_production")
+        return predictor
+
+    @classmethod
+    def create_v26_6_pre_match(cls) -> "Predictor":
+        """创建 V26.6 真赛前预测器（无数据泄露）"""
+        predictor = cls(model_type="v26_6_pre_match")
+        return predictor
+
+    @classmethod
+    def create_v26_7_aligned(cls) -> "Predictor":
+        """创建 V26.7 对齐预测器（训练-推理完全对齐）"""
+        predictor = cls(model_type="v26_7_aligned")
         return predictor
 
 

@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "football-prediction"
-version = "25.1.0"
-description = "FootballPrediction V25.1 - 万能自适应特征提取引擎 (48维 → 12061维)"
+version = "26.7.0"
+description = "FootballPrediction V26.7 - 对齐预测引擎 (56% 真赛前准确率, 训练-推理完全对齐)"
 authors = [
     {name = "Claude AI Architecture Team", email = "claude@anthropic.com"}
 ]

@@ -192,8 +192,8 @@ def get_predictor() -> "Predictor":
     if _predictor is None:
         from src.ml.engine import Predictor
 
-        logger.info("初始化 V26.5 生产预测器...")
-        _predictor = Predictor.create_v26_5_production()
+        logger.info("初始化 V26.7 对齐预测器...")
+        _predictor = Predictor.create_v26_7_aligned()
     return _predictor
 
 

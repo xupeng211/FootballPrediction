@@ -650,9 +650,10 @@ class SchemaManager:
                 }
         """
         try:
-            from src.config_unified import get_settings
-            import psycopg2
             import numpy as np
+            import psycopg2
+
+            from src.config_unified import get_settings
 
             settings = get_settings()
             conn = psycopg2.connect(
@@ -714,7 +715,7 @@ class SchemaManager:
                 home_team, away_team, home_score, away_score, status = match
 
                 # 确定是主队还是客队
-                is_home = (home_team == team_name)
+                is_home = home_team == team_name
 
                 try:
                     if is_home:
@@ -740,7 +741,9 @@ class SchemaManager:
                 "rolling_xg": float(np.mean(xg_values)) if xg_values else 1.2,
                 "rolling_xg_std": float(np.std(xg_values)) if len(xg_values) > 1 else 0.5,
                 "rolling_shots_on_target": float(np.mean(shots_on_target_values)) if shots_on_target_values else 4.0,
-                "rolling_shots_on_target_std": float(np.std(shots_on_target_values)) if len(shots_on_target_values) > 1 else 2.0,
+                "rolling_shots_on_target_std": float(np.std(shots_on_target_values))
+                if len(shots_on_target_values) > 1
+                else 2.0,
                 "rolling_possession": float(np.mean(possession_proxy)) if possession_proxy else 50.0,
                 "rolling_possession_std": float(np.std(possession_proxy)) if len(possession_proxy) > 1 else 10.0,
                 "matches_count": len(matches),
@@ -758,6 +761,370 @@ class SchemaManager:
                 "rolling_possession_std": 10.0,
                 "matches_count": 0,
             }
+
+    @staticmethod
+    def get_team_standings(
+        team_name: str, before_match_time: str | None = None, league_name: str | None = None
+    ) -> dict[str, Any]:
+        """
+        获取球队在指定时间前的积分榜数据
+
+        Args:
+            team_name: 球队名称
+            before_match_time: 只统计此时间之前的比赛
+            league_name: 联赛名称（可选，用于过滤）
+
+        Returns:
+            Dict: 积分榜数据
+                {
+                    "position": int,           # 排名
+                    "points": int,             # 积分
+                    "played": int,             # 已赛场次
+                    "won": int,                # 胜场
+                    "drawn": int,              # 平场
+                    "lost": int,               # 负场
+                    "goals_for": int,          # 进球
+                    "goals_against": int,      # 失球
+                    "goal_diff": int,          # 净胜球
+                    "recent_form_points": int, # 最近5场积分
+                }
+        """
+        try:
+            import psycopg2
+
+            from src.config_unified import get_settings
+
+            settings = get_settings()
+            conn = psycopg2.connect(
+                host=settings.database.host,
+                port=settings.database.port,
+                database=settings.database.name,
+                user=settings.database.user,
+                password=settings.database.password.get_secret_value(),
+            )
+            cursor = conn.cursor()
+
+            # 时间过滤
+            time_filter = "AND m.match_time < %s" if before_match_time else ""
+            league_filter = "AND m.league_name = %s" if league_name else ""
+
+            # 获取所有球队的积分数据
+            query = f"""
+                SELECT
+                    m.home_team,
+                    m.away_team,
+                    m.home_score,
+                    m.away_score
+                FROM matches m
+                WHERE m.home_score IS NOT NULL
+                    AND m.away_score IS NOT NULL
+                    AND m.is_finished = true
+                    AND (m.home_team = %s OR m.away_team = %s)
+                    {time_filter}
+                    {league_filter}
+                ORDER BY m.match_time ASC
+            """
+
+            params = [team_name, team_name]
+            if before_match_time:
+                params.append(before_match_time)
+            if league_name:
+                params.append(league_name)
+
+            cursor.execute(query, params)
+            matches = cursor.fetchall()
+
+            # 计算积分
+            points = 0
+            played = 0
+            won = 0
+            drawn = 0
+            lost = 0
+            goals_for = 0
+            goals_against = 0
+
+            # 最近5场积分
+            recent_matches = matches[-5:] if len(matches) >= 5 else matches
+            recent_form_points = 0
+
+            for match in matches:
+                home_team, away_team, home_score, away_score = match
+
+                try:
+                    home_s = int(home_score) if home_score else 0
+                    away_s = int(away_score) if away_score else 0
+
+                    is_home = home_team == team_name
+                    team_score = home_s if is_home else away_s
+                    opponent_score = away_s if is_home else home_s
+
+                    played += 1
+                    goals_for += team_score
+                    goals_against += opponent_score
+
+                    if team_score > opponent_score:
+                        points += 3
+                        won += 1
+                    elif team_score == opponent_score:
+                        points += 1
+                        drawn += 1
+                    else:
+                        lost += 1
+
+                except (TypeError, ValueError):
+                    played += 1
+
+            # 计算最近5场积分
+            for match in recent_matches:
+                home_team, away_team, home_score, away_score = match
+                try:
+                    home_s = int(home_score) if home_score else 0
+                    away_s = int(away_score) if away_score else 0
+
+                    is_home = home_team == team_name
+                    team_score = home_s if is_home else away_s
+                    opponent_score = away_s if is_home else home_s
+
+                    if team_score > opponent_score:
+                        recent_form_points += 3
+                    elif team_score == opponent_score:
+                        recent_form_points += 1
+                except (TypeError, ValueError):
+                    pass
+
+            cursor.close()
+            conn.close()
+
+            if played == 0:
+                # 冷启动：返回默认值
+                return {
+                    "position": 10,
+                    "points": 30,
+                    "played": 0,
+                    "won": 0,
+                    "drawn": 0,
+                    "lost": 0,
+                    "goals_for": 0,
+                    "goals_against": 0,
+                    "goal_diff": 0,
+                    "recent_form_points": 6,
+                }
+
+            goal_diff = goals_for - goals_against
+
+            # 简化：不计算完整排名，返回一个估算值
+            # 实际应用中可以查询所有球队的积分来计算真实排名
+            estimated_position = max(1, min(20, 20 - points // 4))
+
+            return {
+                "position": estimated_position,
+                "points": points,
+                "played": played,
+                "won": won,
+                "drawn": drawn,
+                "lost": lost,
+                "goals_for": goals_for,
+                "goals_against": goals_against,
+                "goal_diff": goal_diff,
+                "recent_form_points": recent_form_points,
+            }
+
+        except Exception as e:
+            logger.error(f"❌ 获取球队积分榜失败 ({team_name}): {e}")
+            return {
+                "position": 10,
+                "points": 30,
+                "played": 0,
+                "won": 0,
+                "drawn": 0,
+                "lost": 0,
+                "goals_for": 0,
+                "goals_against": 0,
+                "goal_diff": 0,
+                "recent_form_points": 6,
+            }
+
+    @staticmethod
+    def get_elo_ratings(team_names: list[str], before_match_time: str | None = None) -> dict[str, float]:
+        """
+        计算球队的 ELO 评分
+
+        基于历史比赛结果，使用标准 ELO 算法计算球队实力分。
+        初始 ELO = 1500，K系数 = 20。
+
+        Args:
+            team_names: 需要计算 ELO 的球队列表
+            before_match_time: 只统计此时间之前的比赛
+
+        Returns:
+            Dict: {team_name: elo_rating}
+        """
+        try:
+            import psycopg2
+
+            from src.config_unified import get_settings
+
+            settings = get_settings()
+            conn = psycopg2.connect(
+                host=settings.database.host,
+                port=settings.database.port,
+                database=settings.database.name,
+                user=settings.database.user,
+                password=settings.database.password.get_secret_value(),
+            )
+            cursor = conn.cursor()
+
+            # 获取所有相关比赛（按时间顺序）
+            time_filter = "AND m.match_time < %s" if before_match_time else ""
+            placeholders = ",".join(["%s"] * len(team_names))
+
+            query = f"""
+                SELECT
+                    m.home_team,
+                    m.away_team,
+                    m.home_score,
+                    m.away_score,
+                    m.match_time
+                FROM matches m
+                WHERE m.home_score IS NOT NULL
+                    AND m.away_score IS NOT NULL
+                    AND m.is_finished = true
+                    AND (m.home_team IN ({placeholders}) OR m.away_team IN ({placeholders}))
+                    {time_filter}
+                ORDER BY m.match_time ASC
+            """
+
+            params = team_names + team_names
+            if before_match_time:
+                params.append(before_match_time)
+
+            cursor.execute(query, params)
+            matches = cursor.fetchall()
+
+            cursor.close()
+            conn.close()
+
+            # 初始化 ELO
+            elo_ratings = dict.fromkeys(team_names, 1500.0)
+
+            # K系数
+            k_factor = 20.0
+
+            # 逐场更新 ELO
+            for match in matches:
+                home_team, away_team, home_score, away_score, match_time = match
+
+                # 只处理目标球队的比赛
+                if home_team not in elo_ratings and away_team not in elo_ratings:
+                    continue
+
+                try:
+                    home_s = int(home_score) if home_score else 0
+                    away_s = int(away_score) if away_score else 0
+
+                    # 确定实际结果
+                    if home_s > away_s:
+                        actual_score = 1.0  # 主胜
+                    elif home_s < away_s:
+                        actual_score = 0.0  # 客胜
+                    else:
+                        actual_score = 0.5  # 平局
+
+                    # 获取当前 ELO（使用默认值 1500）
+                    home_elo = elo_ratings.get(home_team, 1500.0)
+                    away_elo = elo_ratings.get(away_team, 1500.0)
+
+                    # 计算预期结果
+                    expected_home = 1.0 / (1.0 + 10.0 ** ((away_elo - home_elo) / 400.0))
+
+                    # 更新 ELO
+                    if home_team in elo_ratings:
+                        elo_ratings[home_team] = home_elo + k_factor * (actual_score - expected_home)
+                    if away_team in elo_ratings:
+                        elo_ratings[away_team] = away_elo + k_factor * ((1 - actual_score) - (1 - expected_home))
+
+                except (TypeError, ValueError):
+                    continue
+
+            return elo_ratings
+
+        except Exception as e:
+            logger.error(f"❌ 计算 ELO 失败: {e}")
+            # 返回默认 ELO
+            return dict.fromkeys(team_names, 1500.0)
+
+    @staticmethod
+    def get_team_fatigue_index(team_name: str, match_time: str, lookback_days: int = 7) -> float:
+        """
+        计算球队疲劳度指数
+
+        基于最近 N 天的比赛场次计算疲劳度。
+        疲劳度 = 最近 N 天的比赛场次 / N 天
+
+        Args:
+            team_name: 球队名称
+            match_time: 比赛时间（用于计算之前的比赛）
+            lookback_days: 回溯天数
+
+        Returns:
+            float: 疲劳度指数 (0.0 - 1.0，越高越疲劳)
+        """
+        try:
+            from datetime import timedelta
+
+            import psycopg2
+
+            from src.config_unified import get_settings
+
+            settings = get_settings()
+            conn = psycopg2.connect(
+                host=settings.database.host,
+                port=settings.database.port,
+                database=settings.database.name,
+                user=settings.database.user,
+                password=settings.database.password.get_secret_value(),
+            )
+            cursor = conn.cursor()
+
+            # 查询最近 N 天的比赛
+            query = """
+                SELECT COUNT(*) as match_count
+                FROM matches m
+                WHERE (m.home_team = %s OR m.away_team = %s)
+                    AND m.home_score IS NOT NULL
+                    AND m.away_score IS NOT NULL
+                    AND m.is_finished = true
+                    AND m.match_time >= %s
+                    AND m.match_time < %s
+            """
+
+            # 计算时间窗口
+            try:
+                from datetime import datetime
+
+                match_dt = datetime.fromisoformat(match_time.replace("Z", "+00:00"))
+                start_time = match_dt - timedelta(days=lookback_days)
+            except (ValueError, TypeError):
+                # 时间解析失败，使用默认值
+                return 0.5
+
+            cursor.execute(query, (team_name, team_name, start_time, match_time))
+            result = cursor.fetchone()
+
+            cursor.close()
+            conn.close()
+
+            match_count = result[0] if result else 0
+
+            # 疲劳度 = 比赛场次 / 回溯天数
+            # 7天3场比赛 = 0.43，7天1场比赛 = 0.14
+            fatigue = min(1.0, match_count / lookback_days)
+
+            return fatigue
+
+        except Exception as e:
+            logger.error(f"❌ 计算疲劳度失败 ({team_name}): {e}")
+            return 0.5  # 默认中等疲劳度
 
 
 # 全局Schema管理器实例

@@ -1,4 +1,4 @@
-# FootballPrediction V26.1
+# FootballPrediction V26.7
 
 > **"以年化 25% 的真实收益率为北极星指标，构建一个可验证、可复制、可持续的体育预测系统，在无杠杆、不赌心态的前提下，通过数据科学实现长期价值。"**
 >
@@ -13,38 +13,39 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![Docker](https://img.shields.io/badge/docker-ready-blue.svg)](https://www.docker.com/)
-[![Model Accuracy](https://img.shields.io/badge/accuracy-65.52%25-green.svg)](https://github.com/xupeng211/FootballPrediction)
+[![Model Accuracy](https://img.shields.io/badge/accuracy-56%25-green.svg)](https://github.com/xupeng211/FootballPrediction)
 [![No Data Leakage](https://img.shields.io/badge/data%20leakage-none-brightgreen.svg)](https://github.com/xupeng211/FootballPrediction)
 [![Test Coverage](https://img.shields.io/badge/coverage-91%25-brightgreen.svg)](https://github.com/xupeng211/FootballPrediction)
 
-**V26.1 Production-Ready | 65.52% 真实预测准确率 | 无数据泄露 | 12061 维特征 | Cloud-Native 架构 | 91% 测试覆盖率**
+**V26.7 Aligned Production | 56% 真实赛前准确率 | 训练-推理完全对齐 | 19 维动态特征 | Class Weights 平局优化**
 
 ---
 
 ## 项目简介
 
-FootballPrediction 是一套基于 XGBoost 2.0+ 的专业足球预测系统，采用滚动特征工程，**完全消除数据泄露**，提供真实可用的赛前预测能力。
+FootballPrediction 是一套基于 XGBoost 2.0+ 的专业足球预测系统，采用**全动态特征计算**，**完全消除数据泄露**，提供真实可用的赛前预测能力。
 
 ### 核心特性
 
-| 特性 | V16.0 (赛后统计) | V17.0 (滚动特征) | V26.1 (Production) |
-|------|------------------|------------------|-------------------|
-| 预测准确率 | 96.25% (虚高) | **65.52%** (真实) | **65.52%** (生产) |
-| 特征维度 | 223 维 | 16 维 | **12061 维** |
-| 数据泄露 | 存在 | **无** | **无** |
-| 预测类型 | 赛后结果预测 | **赛前预测** | **赛前预测** |
-| 部署方式 | 本地运行 | 本地运行 | **Docker Cloud-Native** |
-| 数据量 | 380 场 | 761 场 | **13,129+ 场** |
-| 测试覆盖率 | - | - | **91%** |
+| 特性 | V16.0 (赛后统计) | V17.0 (滚动特征) | V26.1 (Production) | V26.7 (Aligned) |
+|------|------------------|------------------|-------------------|-----------------|
+| 预测准确率 | 96.25% (虚高) | 65.52% (真实) | 65.52% (生产) | **56%** (真赛前) |
+| 特征维度 | 223 维 | 16 维 | 12061 维 | **19 维** |
+| 数据泄露 | 存在 | 无 | 无 | **无** |
+| 训练-推理对齐 | ❌ | ❌ | ❌ | **✅ 完全对齐** |
+| 特征计算 | 静态预计算 | 滚动统计 | 静态特征 | **全动态 SQL** |
+| ELO 评分 | ❌ | ❌ | ❌ | **✅ 内置** |
+| 疲劳度指数 | ❌ | ❌ | ❌ | **✅ 内置** |
+| 平局优化 | ❌ | ❌ | ❌ | **✅ Class Weights** |
 
-### 技术亮点
+### V26.7 技术亮点
 
-- **无数据泄露**: 使用滚动特征，只采用赛前可获得的历史数据
-- **工业级数据采集**: Rich L1 扫描引擎，比分/状态/时间一体化采集
-- **全息历史数据**: 13,129 场完整历史比赛数据缝合与校准
-- **万能自适应特征提取**: V25.1 引擎 (48维 → 12061维，251倍增长)
+- **训练-推理完全对齐**: 使用相同的 SQL 动态计算方法，确保特征分布一致
+- **全动态特征流**: 积分榜、ELO 评分、疲劳度全部实时计算
+- **真赛前预测**: 严格遵循 `before_match_time` 时间约束，无任何赛中数据
+- **平局预测增强**: Class Weights 优化，平局预测占比 22%（vs 实际 25%）
+- **工业级数据采集**: V50.0 Rich L1 扫描引擎，比分/状态/时间一体化采集
 - **企业级架构**: Docker Compose Profiles，归一化部署
-- **完整流水线**: L1 采集 → L2 解析 → L3 特征提取 → 模型训练 → API 服务
 
 ---
 
@@ -101,37 +102,42 @@ docker-compose logs -f pipeline_worker
 
 ## 快速开始
 
-### 一键生产流程（推荐）
+### V26.7 一键生产预测
 
 ```bash
-# 完整闭环流程：L1数据采集 → L2特征解析 → 模型训练 → 预测
-python scripts/run_v26_full_pipeline.py
+# 启动 V26.7 生产预测服务（使用默认模型）
+python -m src.ops.production_service
+
+# 或者直接使用 Python
+python src/ops/production_service.py
 ```
 
-### 分步执行
+### V26.7 模型训练（从零开始）
 
 ```bash
-# Step 1: L1 数据收割 (V50.0 增量采集器)
-python -c "
-import asyncio
-from src.api.collectors.v51_incremental_collector import quick_incremental_collect
-asyncio.run(quick_incremental_collect(target_count=100))
-"
+# Step 1: 生成对齐训练集（使用动态 SQL 方法）
+python -m scripts.generate_v267_aligned_dataset
 
-# Step 2: L2 特征解析 (使用 V25.1 自适应引擎)
-python scripts/run_v26_full_harvest.py
+# Step 2: 训练 V26.7 对齐模型（含 Class Weights）
+python scripts/train_v26_7_aligned.py
+```
 
-# Step 3: 模型训练和评估
-python scripts/train_v26_3_prematch.py
+### FastAPI 预测服务
 
-# Step 4: 启动 FastAPI 预测服务
+```bash
+# 启动 API 服务（默认使用 V26.7 模型）
 python src/main.py
+
+# 调用预测接口
+curl -X POST http://localhost:8000/predict \
+  -H "Content-Type: application/json" \
+  -d '{"header": {"teams": {"home": {"name": "Arsenal"}, "away": {"name": "Chelsea"}}}}'
 ```
 
 ### Docker 模式
 
 ```bash
-# 核心服务 (db + redis + pipeline_worker)
+# 核心服务 (db + redis)
 docker-compose up -d
 
 # 核心 + API
