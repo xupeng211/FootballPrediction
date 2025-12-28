@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-V26.5 Production Service - 全自动生产预测服务
+V26.7 Production Service - 全自动生产预测服务
 ===============================================
 
 闭环流程:
@@ -13,20 +13,17 @@ V26.5 Production Service - 全自动生产预测服务
 
 Author: ML Team
 Date: 2025-12-28
+Version: 26.7 (Aligned)
 """
 
-import asyncio
 import csv
 import logging
-import os
 from datetime import datetime, timedelta
 from pathlib import Path
 
-import pandas as pd
 import psycopg2
 from psycopg2.extras import RealDictCursor
 
-from src.api.collectors.v51_incremental_collector import IncrementalCollector
 from src.config_unified import get_settings
 from src.ml.engine import Predictor
 
@@ -50,24 +47,24 @@ TARGET_LEAGUES = ["Premier League", "La Liga"]
 
 class ProductionService:
     """
-    V26.5 生产预测服务
+    V26.7 生产预测服务
 
     实现全自动闭环预测流程。
     """
 
-    def __init__(self, model_type: str = "v26_5_production"):
+    def __init__(self, model_type: str = "v26_7_aligned"):
         """
         初始化生产服务
 
         Args:
-            model_type: 模型类型 (v26_5_production, v26_mini)
+            model_type: 模型类型 (v26_7_aligned, v26_mini)
         """
         self.model_type = model_type
 
         # 初始化预测器
         logger.info(f"初始化 {model_type} 预测器...")
-        if model_type == "v26_5_production":
-            self.predictor = Predictor.create_v26_5_production()
+        if model_type == "v26_7_aligned":
+            self.predictor = Predictor.create_v26_7_aligned()
         else:
             self.predictor = Predictor.create_v26_mini()
 
@@ -188,7 +185,7 @@ class ProductionService:
             高置信度预测结果列表
         """
         logger.info("=" * 60)
-        logger.info(f"V26.5 生产预测: 未来 {hours_ahead} 小时")
+        logger.info(f"V26.7 生产预测: 未来 {hours_ahead} 小时")
         logger.info("=" * 60)
 
         # 1. 获取未来比赛
@@ -345,9 +342,8 @@ class ProductionService:
 # 便捷函数
 # ============================================================================
 
-def run_production_service(
-    hours_ahead: int = 24, min_confidence: float = HIGH_CONFIDENCE_THRESHOLD
-) -> int:
+
+def run_production_service(hours_ahead: int = 24, min_confidence: float = HIGH_CONFIDENCE_THRESHOLD) -> int:
     """
     运行生产预测服务
 
@@ -358,14 +354,14 @@ def run_production_service(
     Returns:
         高置信度预测数量
     """
-    service = ProductionService(model_type="v26_5_production")
+    service = ProductionService(model_type="v26_7_aligned")
     return service.run(hours_ahead=hours_ahead, min_confidence=min_confidence)
 
 
 def main():
     """主函数"""
     logger.info("=" * 60)
-    logger.info("V26.5 Production Service")
+    logger.info("V26.7 Production Service")
     logger.info("=" * 60)
 
     # 运行预测

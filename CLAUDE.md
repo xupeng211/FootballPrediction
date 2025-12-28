@@ -23,11 +23,12 @@
 | 属性 | 值 |
 |------|-----|
 | **状态** | ✅ Production Ready |
-| **生产版本** | **V26.1** (收割流水线) + **V50.0** (数据采集) |
-| **特征引擎** | **V25.1** (万能自适应特征提取) |
-| **基线准确率** | 65.52% |
-| **数据量** | 13,129+ 场历史比赛数据 |
+| **生产版本** | **V26.7** (对齐预测) + **V50.0** (数据采集) + **V25.1** (特征引擎) |
+| **基线准确率** | 56% (真赛前) |
+| **特征维度** | 19 维动态特征 |
+| **数据量** | 9,305 场对齐训练数据 |
 | **推理延迟** | <100ms |
+| **训练-推理对齐** | ✅ 完全对齐 |
 
 ### 核心技术栈
 
@@ -45,9 +46,10 @@
 
 | 模块 | 版本 | 说明 |
 |------|------|------|
-| **收割流水线** | **V26.1** | `scripts/run_v26_full_pipeline.py` |
+| **预测模型** | **V26.7** | `model_zoo/v26.7_aligned_production.pkl` |
 | **数据采集** | **V50.0** | `src/api/collectors/v50_*.py` |
 | **特征引擎** | **V25.1** | `src/processors/v25_production_extractor.py` |
+| **生产服务** | **V26.7** | `src/ops/production_service.py` |
 
 ### ⚠️ 强制命名规范
 
@@ -77,16 +79,13 @@
 ### 一键启动命令
 
 ```bash
-# 完整生产流水线（推荐）
-python scripts/run_v26_full_pipeline.py
+# V26.7 生产预测服务（推荐）
+python -m src.ops.production_service
 
-# 自动分批收割（生产环境）
-python scripts/auto_harvest_batches.py
+# V26.7 模型训练（从零开始）
+python scripts/train_v26_7_aligned.py
 
-# 全量特征收割
-python scripts/run_v26_full_harvest.py
-
-# 启动 FastAPI 服务
+# 启动 FastAPI 服务（默认使用 V26.7）
 python src/main.py
 
 # 运行测试
@@ -266,6 +265,123 @@ conn = psycopg2.connect(
     cursor_factory=RealDictCursor
 )
 ```
+
+---
+
+## 🧬 V26.7 技术实现细节
+
+### V26.7 核心特征映射
+
+V26.7 使用 19 维完全对齐的赛前特征：
+
+```python
+V26_7_FEATURES = [
+    # 滚动特征 (8个) - 最近 N 场历史平均值
+    "rolling_xg_home",              # 主队近期 xG
+    "rolling_xg_away",              # 客队近期 xG
+    "rolling_shots_on_target_home", # 主队近期射正数
+    "rolling_shots_on_target_away", # 客队近期射正数
+    "rolling_possession_home",      # 主队近期控球率
+    "rolling_possession_away",      # 客队近期控球率
+    "rolling_team_rating_home",     # 主队近期评分
+    "rolling_team_rating_away",     # 客队近期评分
+
+    # 积分榜特征 (7个) - 赛前已知
+    "home_table_position",          # 主队积分榜排名
+    "away_table_position",          # 客队积分榜排名
+    "table_position_diff",          # 排名差
+    "home_points",                  # 主队积分
+    "away_points",                  # 客队积分
+    "points_diff",                  # 积分差
+    "home_recent_form_points",      # 主队近期状态积分
+
+    # 高级特征 (4个) - 动态计算
+    "raw_elo_gap",                  # 原始 ELO 分差
+    "adjusted_elo_gap",             # 调整后 ELO 分差（主场优势）
+    "home_fatigue_index",           # 主队疲劳度
+    "away_fatigue_index",           # 客队疲劳度
+]
+```
+
+### 动态特征计算方法
+
+V26.7 的所有特征均通过 `src/database/schema_manager.py` 中的 SQL 方法动态计算：
+
+**1. 积分榜计算 (`get_team_standings`)**:
+```python
+ standings = SchemaManager.get_team_standings(
+     team_name="Arsenal",
+     before_match_time="2024-01-15T15:00:00Z",  # 关键：只统计此时间之前的比赛
+     league_name="Premier League"
+ )
+ # 返回: position, points, played, won, drawn, lost, recent_form_points
+```
+
+**2. ELO 评分算法 (`get_elo_ratings`)**:
+```python
+ elo_ratings = SchemaManager.get_elo_ratings(
+     team_names=["Arsenal", "Chelsea"],
+     before_match_time="2024-01-15T15:00:00Z"
+ )
+ # 算法参数:
+ # - 初始 ELO = 1500
+ # - K 系数 = 20
+ # - 公式: ELO_new = ELO_old + K * (actual - expected)
+```
+
+**3. 疲劳度指数 (`get_team_fatigue_index`)**:
+```python
+ fatigue = SchemaManager.get_team_fatigue_index(
+     team_name="Arsenal",
+     match_time="2024-01-15T15:00:00Z",
+     lookback_days=7  # 计算最近 7 天的比赛密度
+ )
+ # 返回: 0.0-1.0 (比赛场次 / 天数)
+```
+
+### 训练-推理对齐机制
+
+**关键**: 训练和推理使用完全相同的 SQL 计算方法：
+
+```python
+# 训练时 (scripts/generate_v267_aligned_dataset.py):
+for match in matches:
+    # 传入 match_time 作为 before_match_time
+    features = compute_features(
+        home_team=match["home_team"],
+        before_match_time=match["match_time"]  # 时间约束
+    )
+
+# 推理时 (src/ml/feature_adapter.py):
+def adapt(self, raw_features):
+    match_time = extract_match_time(raw_features)
+    # 使用相同的时间约束
+    features = compute_features(
+        home_team=home_team,
+        before_match_time=match_time
+    )
+```
+
+### Class Weights 平局优化
+
+V26.7 使用 Class Weights 增强平局预测：
+
+```python
+# 计算平衡权重
+class_weights = compute_class_weight(
+    class_weight="balanced",
+    classes=[0, 1, 2],  # Away, Draw, Home
+    y=y_train
+)
+
+# 平局权重额外提升 20%
+class_weights[1] *= 1.2
+
+# 训练时使用
+model.fit(X_train, y_train, sample_weight=sample_weights)
+```
+
+**效果**: 平局预测占比从 0% 提升到 22%（实际分布约 25%）
 
 ---
 
@@ -637,8 +753,8 @@ pytest tests/ --cov=src --cov-report=html
 
 **🚨 CRITICAL**: This is a production system support document.
 
-**🧬 当前版本**: V26.1 (收割流水线) + V50.0 (数据采集) + V25.1 (特征引擎) |
-**最后更新**: 2025-12-28 (Phase 1.2 重写) |
-**基线准确率**: 65.52% |
+**🧬 当前版本**: V26.7 (对齐预测) + V50.0 (数据采集) + V25.1 (特征引擎) |
+**最后更新**: 2025-12-28 (Phase 8.0 大厂级交付审计) |
+**基线准确率**: 56% (真赛前) |
 **生产状态**: Production Ready |
-**项目愿景**: 年化 25% 收益率
+**项目愿景**: 年化 25% 收益率 |
