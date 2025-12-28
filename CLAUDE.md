@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-这个文件为 Claude Code (claude.ai/code) 在此代码库中工作时提供指导。
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ---
 
@@ -23,12 +23,13 @@
 | 属性 | 值 |
 |------|-----|
 | **状态** | ✅ Production Ready |
-| **生产版本** | **V26.7** (对齐预测) + **V50.0** (数据采集) + **V25.1** (特征引擎) |
+| **生产版本** | **V26.8** (联赛专项) + **V50.0** (数据采集) + **V25.1** (特征引擎) |
 | **基线准确率** | 56% (真赛前) |
 | **特征维度** | 19 维动态特征 |
-| **数据量** | 9,305 场对齐训练数据 |
+| **数据量** | 9,305+ 场对齐训练数据 |
 | **推理延迟** | <100ms |
 | **训练-推理对齐** | ✅ 完全对齐 |
+| **模型分发** | ✅ ModelDispatcher (联赛专项 vs 通用) |
 
 ### 核心技术栈
 
@@ -46,10 +47,11 @@
 
 | 模块 | 版本 | 说明 |
 |------|------|------|
-| **预测模型** | **V26.7** | `model_zoo/v26.7_aligned_production.pkl` |
+| **预测模型** | **V26.8** | 联赛专项模型 (EPL/LaLiga/Ligue1/Bundesliga) + 通用 V26.7 |
+| **模型分发** | **ModelDispatcher** | `src/ml/engine.py:ModelDispatcher` |
 | **数据采集** | **V50.0** | `src/api/collectors/v50_*.py` |
 | **特征引擎** | **V25.1** | `src/processors/v25_production_extractor.py` |
-| **生产服务** | **V26.7** | `src/ops/production_service.py` |
+| **生产服务** | **V26.8** | `src/ops/production_service.py` (自动联赛检测) |
 
 ### ⚠️ 强制命名规范
 
@@ -79,13 +81,16 @@
 ### 一键启动命令
 
 ```bash
-# V26.7 生产预测服务（推荐）
+# V26.8 生产预测服务（联赛专项模型，推荐）
 python -m src.ops.production_service
 
-# V26.7 模型训练（从零开始）
+# V26.8 联赛专项模型训练
+python scripts/train_v26_8_league.py --league "Premier League"
+
+# V26.7 通用模型训练（从零开始）
 python scripts/train_v26_7_aligned.py
 
-# 启动 FastAPI 服务（默认使用 V26.7）
+# 启动 FastAPI 服务（默认使用 ModelDispatcher）
 python src/main.py
 
 # 运行测试
@@ -217,18 +222,66 @@ FootballPrediction/
 
 ## 🔧 开发指南
 
+### Makefile 命令参考
+
+项目使用 Makefile 作为统一命令入口，简化日常开发操作：
+
+```bash
+# 查看所有可用命令
+make help
+
+# === Docker 服务管理 ===
+make up              # 启动核心服务 (db + redis)
+make up-pipeline     # 启动核心服务 + 数据流水线
+make up-api          # 启动核心服务 + API
+make up-dev          # 启动开发环境 (包含管理工具)
+make up-all          # 启动所有服务
+make down            # 停止所有服务
+make ps              # 查看容器状态
+make logs            # 查看核心服务日志
+make logs-api        # 查看 API 日志
+make logs-all        # 查看所有服务日志
+
+# === 代码质量 ===
+make lint            # 运行 Lint 检查 (ruff/flake8)
+make format          # 格式化代码 (ruff/black + isort)
+make security        # 运行安全扫描 (bandit)
+make verify          # 运行完整验证 (lint + test + security)
+
+# === 测试 ===
+make test            # 运行全量测试门禁
+make test-unit       # 运行单元测试
+
+# === 数据库 ===
+make db-shell        # 进入 PostgreSQL Shell
+make db-backup       # 备份数据库
+make db-reset        # 重置数据库 (危险操作!)
+
+# === Redis ===
+make redis-shell     # 进入 Redis CLI
+
+# === 清理 ===
+make clean           # 清理垃圾文件 (.pyc, __pycache__)
+make clean-docker    # 清理 Docker 资源
+make clean-all       # 完全清理
+
+# === 部署 ===
+make deploy          # 部署到生产环境
+make health          # 检查服务健康状态
+make dashboard       # 启动战神仪表盘
+```
+
 ### 代码质量规范
 
 **提交代码前必须运行**:
 ```bash
-# 代码格式化和检查
+# 方式1: 使用 Makefile (推荐)
+make verify
+
+# 方式2: 直接运行命令
 ruff check src/ tests/ --fix
 ruff format src/ tests/
-
-# 运行测试
 pytest tests/ -v
-
-# 安全扫描
 bandit -r src/
 ```
 
@@ -265,6 +318,35 @@ conn = psycopg2.connect(
     cursor_factory=RealDictCursor
 )
 ```
+
+---
+
+## 🧬 V26.8 技术实现细节
+
+### ModelDispatcher 智能模型分发
+
+V26.8 引入 `ModelDispatcher`，实现联赛专项模型自动选择：
+
+```python
+from src.ml.engine import ModelDispatcher
+
+# 自动分发：优先使用联赛专项模型，回退到通用 V26.7
+dispatcher = ModelDispatcher()
+
+# 预测时自动选择最优模型
+prediction = dispatcher.predict(
+    home_team="Arsenal",
+    away_team="Chelsea",
+    league_name="Premier League"  # 自动检测并使用 EPL 专项模型
+)
+```
+
+**支持联赛专项模型**:
+- `model_zoo/v26.8_epl_production.pkl` - 英超专项
+- `model_zoo/v26.8_la_liga_production.pkl` - 西甲专项
+- `model_zoo/v26.8_ligue1_production.pkl` - 法甲专项
+- `model_zoo/v26.8_bund_production.pkl` - 德甲专项
+- `model_zoo/v26.7_aligned_production.pkl` - 通用回退模型
 
 ---
 
@@ -734,11 +816,52 @@ pytest tests/ --cov=src --cov-report=html
 
 项目配置了专业化技能（`.claude/skills/`），Claude Code 会自动调用：
 
-- `v26-harvest` - V26.1 收割流水线
-- `football-prediction` - 足球预测核心
-- `code-quality` - 代码质量管理
-- `feature-engineering` - V25.1 特征工程
-- `data-engineering` - 数据管道工程
+#### 核心业务技能 (4个)
+- `football-prediction` - 足球预测核心 (XGBoost 2.0+, 67.2% 准确率, <100ms 响应)
+- `report-generation` - 报告生成 (PDF/Word/Excel, 专业可视化)
+- `machine-learning-engineering` - ML 工程工具 (XGBoost 调优, SHAP 解释)
+- `data-collection` - 数据采集 (FotMob API L2 数据, 实时统计)
+
+#### 运维支撑技能 (3个)
+- `performance-monitoring` - 性能监控 (Prometheus + Grafana)
+- `deployment-management` - 部署管理 (Docker, 蓝绿部署, 回滚)
+- `database-operations` - 数据库操作 (PostgreSQL 连接池, 查询优化)
+
+#### 开发工具技能 (5个)
+- `code-quality` - 代码质量管理 (Ruff, MyPy, Bandit, pytest)
+- `api-testing` - API 测试工具 (FastAPI endpoint 测试)
+- `data-engineering` - 数据管道工具 (ETL, 特征流水线)
+- `docker-devops` - Docker 运维 (容器编排, 健康监控)
+- `fastapi-development` - FastAPI 最佳实践 (异步/await, API 设计)
+
+#### 技能使用示例
+
+```
+User: "预测曼联对阿森纳的比赛"
+→ Claude 自动加载 football-prediction 技能
+→ 运行: python -m src.ops.production_service
+
+User: "检查代码质量"
+→ Claude 自动加载 code-quality 技能
+→ 运行: make verify
+
+User: "收集 FotMob 实时数据"
+→ Claude 自动加载 data-collection 技能
+→ 运行 V50.0 采集器
+```
+
+#### 工程规范约束技能
+
+除了上述专业技能外，项目还配置了 4 个核心约束技能（`.claude/*.skill.md`）：
+
+| 技能 | 约束等级 | 核心目标 |
+|------|----------|----------|
+| `minimal_change` | 🔴 RED | 防止过度重构，保持系统稳定 |
+| `architecture_boundary` | 🔴 RED | 维护清晰的层次结构 |
+| `test_guard` | 🔴 RED | 确保测试的真实价值 |
+| `context_lock` | 🔴 RED | 保护核心模块不被破坏 |
+
+**注意**: 约束技能优先级高于业务技能，任何操作都必须首先通过约束检查。
 
 ---
 
@@ -753,8 +876,8 @@ pytest tests/ --cov=src --cov-report=html
 
 **🚨 CRITICAL**: This is a production system support document.
 
-**🧬 当前版本**: V26.7 (对齐预测) + V50.0 (数据采集) + V25.1 (特征引擎) |
-**最后更新**: 2025-12-28 (Phase 8.0 大厂级交付审计) |
+**🧬 当前版本**: V26.8 (联赛专项) + V50.0 (数据采集) + V25.1 (特征引擎) |
+**最后更新**: 2025-12-28 (Phase 8.1 ModelDispatcher) |
 **基线准确率**: 56% (真赛前) |
 **生产状态**: Production Ready |
 **项目愿景**: 年化 25% 收益率 |

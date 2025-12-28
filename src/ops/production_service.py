@@ -1,19 +1,25 @@
 #!/usr/bin/env python3
 """
-V26.7 Production Service - 全自动生产预测服务
-===============================================
+V26.8 Production Service - 全自动生产预测服务（联赛专项模型版）
+================================================================
 
 闭环流程:
 1. 使用 IncrementalCollector 抓取未来 24 小时内的英超/西甲比赛
-2. 自动将抓到的原始数据推送到 Predictor 进行批量预测
+2. 使用 ModelDispatcher 自动选择合适的模型（专项 vs 通用）进行预测
 3. 将预测出的"高价值（High Confidence）"比赛保存到 data/forecasts/today.csv
+
+V26.8 新增特性:
+- 自动联赛检测（支持英超、西甲、意甲、德甲、法甲）
+- 优先使用联赛专项模型，回退使用通用 V26.7 模型
+- today.csv 报告中标注模型来源（专项/通用）
 
 验收标准:
 - 运行一个命令，直接在 data/forecasts/ 下看到今晚真实英超比赛的预测概率
+- 报告中显示每场比赛使用了哪种模型
 
-Author: ML Team
+Author: ML Architect
 Date: 2025-12-28
-Version: 26.7 (Aligned)
+Version: 26.8 (League Specialized)
 """
 
 import csv
@@ -25,7 +31,7 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 
 from src.config_unified import get_settings
-from src.ml.engine import Predictor
+from src.ml.engine import ModelDispatcher, Predictor
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
@@ -47,26 +53,34 @@ TARGET_LEAGUES = ["Premier League", "La Liga"]
 
 class ProductionService:
     """
-    V26.7 生产预测服务
+    V26.8 生产预测服务
 
-    实现全自动闭环预测流程。
+    实现全自动闭环预测流程，支持联赛专项模型自动分发。
     """
 
-    def __init__(self, model_type: str = "v26_7_aligned"):
+    def __init__(self, model_type: str = "v26_7_aligned", use_model_dispatcher: bool = True):
         """
         初始化生产服务
 
         Args:
-            model_type: 模型类型 (v26_7_aligned, v26_mini)
+            model_type: 模型类型 (v26_7_aligned, v26_mini) - 仅在不使用 dispatcher 时有效
+            use_model_dispatcher: 是否使用模型分发器（默认True，启用联赛专项模型）
         """
         self.model_type = model_type
+        self.use_model_dispatcher = use_model_dispatcher
 
         # 初始化预测器
-        logger.info(f"初始化 {model_type} 预测器...")
-        if model_type == "v26_7_aligned":
-            self.predictor = Predictor.create_v26_7_aligned()
+        if use_model_dispatcher:
+            logger.info("初始化 V26.8 ModelDispatcher（联赛专项模型分发器）...")
+            self.predictor = ModelDispatcher()
+            self.model_version = "26.8"
         else:
-            self.predictor = Predictor.create_v26_mini()
+            logger.info(f"初始化 {model_type} 预测器...")
+            if model_type == "v26_7_aligned":
+                self.predictor = Predictor.create_v26_7_aligned()
+            else:
+                self.predictor = Predictor.create_v26_mini()
+            self.model_version = "26.7"
 
         # 数据库连接参数
         settings = get_settings()
@@ -214,12 +228,23 @@ class ProductionService:
 
             try:
                 raw_data = raw_data_map[external_id]
-                result = self.predictor.predict(raw_data)
+
+                # 添加联赛信息到原始数据（供 ModelDispatcher 使用）
+                if self.use_model_dispatcher:
+                    raw_data_with_league = {
+                        **raw_data,
+                        "league_id": match.get("league_id"),
+                        "league_name": match.get("league_name"),
+                    }
+                    result = self.predictor.predict(raw_data_with_league)
+                else:
+                    result = self.predictor.predict(raw_data)
 
                 # 提取置信度
                 confidence = result["confidence"]
                 is_high_confidence = confidence >= min_confidence
 
+                # 构建预测记录（V26.8 增强版）
                 prediction_record = {
                     "match_id": match["id"],
                     "external_id": external_id,
@@ -233,21 +258,33 @@ class ProductionService:
                     "prob_home": result["probabilities"]["Home"],
                     "confidence": confidence,
                     "high_confidence": is_high_confidence,
-                    "model_type": result["model_type"],
                     "forecast_time": datetime.now().isoformat(),
                 }
+
+                # V26.8 新增：模型来源标注
+                if self.use_model_dispatcher:
+                    prediction_record["model_source"] = result.get("model_source", "v26_7_aligned")
+                    prediction_record["model_type"] = result.get("model_type", "general")
+                    prediction_record["league_specific"] = result.get("league_specific", False)
+                    prediction_record["league_id"] = result.get("league_id")
+                else:
+                    prediction_record["model_source"] = self.model_type
+                    prediction_record["model_type"] = "single"
+                    prediction_record["league_specific"] = False
+                    prediction_record["league_id"] = None
 
                 predictions.append(prediction_record)
 
                 # 高亮高置信度预测
+                model_info = f" [{result.get('model_source', 'N/A')}]" if self.use_model_dispatcher else ""
                 if is_high_confidence:
                     logger.info(
-                        f"✨ 高置信度: {match['home_team']} vs {match['away_team']} "
+                        f"✨ 高置信度{model_info}: {match['home_team']} vs {match['away_team']} "
                         f"-> {result['prediction']} ({confidence:.2%})"
                     )
                 else:
                     logger.info(
-                        f"  低置信度: {match['home_team']} vs {match['away_team']} "
+                        f"  低置信度{model_info}: {match['home_team']} vs {match['away_team']} "
                         f"-> {result['prediction']} ({confidence:.2%})"
                     )
 
@@ -274,7 +311,7 @@ class ProductionService:
 
         logger.info(f"保存 {len(high_confidence_predictions)}/{len(predictions)} 条高置信度预测")
 
-        # 准备 CSV 数据
+        # 准备 CSV 数据（V26.8 增强版）
         fieldnames = [
             "match_id",
             "external_id",
@@ -287,8 +324,12 @@ class ProductionService:
             "prob_draw",
             "prob_home",
             "confidence",
-            "model_type",
             "forecast_time",
+            # V26.8 新增字段
+            "model_source",
+            "model_type",
+            "league_specific",
+            "league_id",
         ]
 
         # 写入 CSV
@@ -343,28 +384,36 @@ class ProductionService:
 # ============================================================================
 
 
-def run_production_service(hours_ahead: int = 24, min_confidence: float = HIGH_CONFIDENCE_THRESHOLD) -> int:
+def run_production_service(
+    hours_ahead: int = 24,
+    min_confidence: float = HIGH_CONFIDENCE_THRESHOLD,
+    use_model_dispatcher: bool = True,
+) -> int:
     """
     运行生产预测服务
 
     Args:
         hours_ahead: 向前查找的小时数
         min_confidence: 最小置信度阈值
+        use_model_dispatcher: 是否使用模型分发器（V26.8 联赛专项模型）
 
     Returns:
         高置信度预测数量
     """
-    service = ProductionService(model_type="v26_7_aligned")
+    service = ProductionService(
+        model_type="v26_7_aligned",
+        use_model_dispatcher=use_model_dispatcher
+    )
     return service.run(hours_ahead=hours_ahead, min_confidence=min_confidence)
 
 
 def main():
     """主函数"""
     logger.info("=" * 60)
-    logger.info("V26.7 Production Service")
+    logger.info("V26.8 Production Service (League Specialized Models)")
     logger.info("=" * 60)
 
-    # 运行预测
+    # 运行预测（默认启用 ModelDispatcher）
     high_conf_count = run_production_service(hours_ahead=24, min_confidence=HIGH_CONFIDENCE_THRESHOLD)
 
     if high_conf_count > 0:

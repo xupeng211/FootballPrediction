@@ -458,9 +458,15 @@ class MarketLiveMonitor:
         try:
             import psycopg2
             from psycopg2.extras import RealDictCursor
+            from src.config_unified import get_settings
 
+            settings = get_settings()
             conn = psycopg2.connect(
-                host="localhost", port=5432, database="football_db", user="football_user", password="football_pass"
+                host=settings.database.host,
+                port=settings.database.port,
+                database=settings.database.name,
+                user=settings.database.user,
+                password=settings.database.password.get_secret_value()
             )
 
             cursor = conn.cursor(cursor_factory=RealDictCursor)

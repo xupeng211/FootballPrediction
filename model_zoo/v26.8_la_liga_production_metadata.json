@@ -1,0 +1,132 @@
+{
+  "model": "XGBClassifier(base_score=None, booster=None, callbacks=None,\n              colsample_bylevel=None, colsample_bynode=None,\n              colsample_bytree=0.8, device=None, early_stopping_rounds=None,\n              enable_categorical=False, eval_metric='mlogloss',\n              feature_types=None, feature_weights=None, gamma=None,\n              grow_policy=None, importance_type=None,\n              interaction_constraints=None, learning_rate=0.05, max_bin=None,\n              max_cat_threshold=None, max_cat_to_onehot=None,\n              max_delta_step=None, max_depth=5, max_leaves=None,\n              min_child_weight=3, missing=nan, monotone_constraints=None,\n              multi_strategy=None, n_estimators=300, n_jobs=-1, num_class=3, ...)",
+  "feature_columns": [
+    "rolling_xg_home",
+    "rolling_xg_away",
+    "rolling_shots_on_target_home",
+    "rolling_shots_on_target_away",
+    "rolling_possession_home",
+    "rolling_possession_away",
+    "rolling_team_rating_home",
+    "rolling_team_rating_away",
+    "home_table_position",
+    "away_table_position",
+    "table_position_diff",
+    "home_points",
+    "away_points",
+    "points_diff",
+    "home_recent_form_points",
+    "raw_elo_gap",
+    "adjusted_elo_gap",
+    "home_fatigue_index",
+    "away_fatigue_index",
+    "fatigue_diff"
+  ],
+  "feature_count": 20,
+  "label_mapping": {
+    "away": 0,
+    "draw": 1,
+    "home": 2
+  },
+  "reverse_mapping": {
+    "0": "Away",
+    "1": "Draw",
+    "2": "Home"
+  },
+  "model_type": "v26_8_la_liga",
+  "version": "26.8",
+  "league": "laliga",
+  "league_name": "La Liga",
+  "league_id": 55,
+  "creation_date": "2025-12-28T17:47:37.488086",
+  "training_samples": 1640,
+  "anti_leakage": true,
+  "fully_aligned": true,
+  "class_weights": {
+    "0": 1.1508771929824562,
+    "1": 1.5255813953488373,
+    "2": 0.7437641723356009
+  },
+  "feature_importance": [
+    {
+      "feature": "adjusted_elo_gap",
+      "importance": 0.07821433991193771
+    },
+    {
+      "feature": "raw_elo_gap",
+      "importance": 0.0661349892616272
+    },
+    {
+      "feature": "points_diff",
+      "importance": 0.05557743087410927
+    },
+    {
+      "feature": "fatigue_diff",
+      "importance": 0.05017799511551857
+    },
+    {
+      "feature": "rolling_possession_home",
+      "importance": 0.05015474930405617
+    },
+    {
+      "feature": "home_points",
+      "importance": 0.04980216175317764
+    },
+    {
+      "feature": "away_fatigue_index",
+      "importance": 0.04938593879342079
+    },
+    {
+      "feature": "table_position_diff",
+      "importance": 0.048511579632759094
+    },
+    {
+      "feature": "rolling_team_rating_home",
+      "importance": 0.048302799463272095
+    },
+    {
+      "feature": "rolling_team_rating_away",
+      "importance": 0.048047807067632675
+    },
+    {
+      "feature": "away_points",
+      "importance": 0.04729829356074333
+    },
+    {
+      "feature": "rolling_shots_on_target_home",
+      "importance": 0.0467415377497673
+    },
+    {
+      "feature": "rolling_shots_on_target_away",
+      "importance": 0.046401266008615494
+    },
+    {
+      "feature": "home_recent_form_points",
+      "importance": 0.04638964682817459
+    },
+    {
+      "feature": "rolling_xg_home",
+      "importance": 0.046200189739465714
+    },
+    {
+      "feature": "home_table_position",
+      "importance": 0.045445363968610764
+    },
+    {
+      "feature": "rolling_possession_away",
+      "importance": 0.0449720099568367
+    },
+    {
+      "feature": "home_fatigue_index",
+      "importance": 0.04442303627729416
+    },
+    {
+      "feature": "rolling_xg_away",
+      "importance": 0.0440698117017746
+    },
+    {
+      "feature": "away_table_position",
+      "importance": 0.04374900087714195
+    }
+  ]
+}
