@@ -1,0 +1,107 @@
+{
+  "version": "V31.0_POWER_GOLD",
+  "timestamp": "2025-12-28T02:52:32.164292",
+  "total_matches": 9305,
+  "new_features": [
+    "home_elo_pre",
+    "away_elo_pre",
+    "elo_gap_pre",
+    "home_matches_pre",
+    "away_matches_pre",
+    "home_points_pre",
+    "away_points_pre",
+    "points_diff_pre",
+    "home_rank_pre",
+    "away_rank_pre",
+    "rank_diff_pre",
+    "home_rest_days_pre",
+    "away_rest_days_pre",
+    "rest_days_diff_pre"
+  ],
+  "feature_quality": {
+    "home_elo_pre": {
+      "fill_rate": 100.0,
+      "non_zero_rate": 100.0,
+      "mean": 1531.9641753329083,
+      "std": 104.20484173368044
+    },
+    "away_elo_pre": {
+      "fill_rate": 100.0,
+      "non_zero_rate": 100.0,
+      "mean": 1532.678898310139,
+      "std": 103.95757168499723
+    },
+    "elo_gap_pre": {
+      "fill_rate": 100.0,
+      "non_zero_rate": 99.51638903815153,
+      "mean": -0.7147229772307444,
+      "std": 143.637716110966
+    },
+    "home_matches_pre": {
+      "fill_rate": 100.0,
+      "non_zero_rate": 99.10800644814616,
+      "mean": 80.37485222998387,
+      "std": 56.365849951726126
+    },
+    "away_matches_pre": {
+      "fill_rate": 100.0,
+      "non_zero_rate": 99.10800644814616,
+      "mean": 80.33422890918861,
+      "std": 56.36141449867954
+    },
+    "home_points_pre": {
+      "fill_rate": 100.0,
+      "non_zero_rate": 98.19451907576571,
+      "mean": 120.44126813541106,
+      "std": 104.380177364261
+    },
+    "away_points_pre": {
+      "fill_rate": 100.0,
+      "non_zero_rate": 98.26974744760881,
+      "mean": 120.46426652337453,
+      "std": 104.23676170228195
+    },
+    "points_diff_pre": {
+      "fill_rate": 100.0,
+      "non_zero_rate": 97.99032778076302,
+      "mean": -0.022998387963460504,
+      "std": 111.93227106570748
+    },
+    "home_rank_pre": {
+      "fill_rate": 100.0,
+      "non_zero_rate": 100.0,
+      "mean": 52.10564212788823,
+      "std": 35.34153038216773
+    },
+    "away_rank_pre": {
+      "fill_rate": 100.0,
+      "non_zero_rate": 100.0,
+      "mean": 52.02063406770554,
+      "std": 35.289312244818184
+    },
+    "rank_diff_pre": {
+      "fill_rate": 100.0,
+      "non_zero_rate": 100.0,
+      "mean": -0.08500806018269748,
+      "std": 49.74655645845064
+    },
+    "home_rest_days_pre": {
+      "fill_rate": 100.0,
+      "non_zero_rate": 100.0,
+      "mean": 10.05137023105857,
+      "std": 29.40672592019375
+    },
+    "away_rest_days_pre": {
+      "fill_rate": 100.0,
+      "non_zero_rate": 100.0,
+      "mean": 9.7576571735626,
+      "std": 25.798187672817058
+    },
+    "rest_days_diff_pre": {
+      "fill_rate": 100.0,
+      "non_zero_rate": 66.1364857603439,
+      "mean": 0.29371305749596993,
+      "std": 33.5647727301061
+    }
+  }
+}

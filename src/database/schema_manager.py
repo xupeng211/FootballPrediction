@@ -623,6 +623,142 @@ class SchemaManager:
             logger.error(f"❌ 获取统计信息失败: {e}")
             return {}
 
+    @staticmethod
+    def get_team_rolling_stats(
+        team_name: str, n_matches: int = 5, before_match_time: str | None = None
+    ) -> dict[str, float]:
+        """
+        获取球队最近 N 场比赛的滚动统计数据
+
+        使用 matches 表的比分数据作为滚动特征的基础，避免解析复杂的 JSON 结构。
+
+        Args:
+            team_name: 球队名称
+            n_matches: 统计最近 N 场比赛
+            before_match_time: 只统计此时间之前的比赛（用于预测时的历史数据）
+
+        Returns:
+            Dict: 滚动统计指标
+                {
+                    "rolling_xg": float,           # 平均进球（作为 xG 代理）
+                    "rolling_xg_std": float,       # 进球标准差
+                    "rolling_shots_on_target": float,  # 估算射正
+                    "rolling_shots_on_target_std": float,  # 射正标准差
+                    "rolling_possession": float,   # 主场平均控球率（代理）
+                    "rolling_possession_std": float,  # 控球率标准差
+                    "matches_count": int,          # 实际统计的比赛场数
+                }
+        """
+        try:
+            from src.config_unified import get_settings
+            import psycopg2
+            import numpy as np
+
+            settings = get_settings()
+            conn = psycopg2.connect(
+                host=settings.database.host,
+                port=settings.database.port,
+                database=settings.database.name,
+                user=settings.database.user,
+                password=settings.database.password.get_secret_value(),
+            )
+            cursor = conn.cursor()
+
+            # 查询该球队最近 N 场比赛的比分
+            time_filter = "AND m.match_time < %s" if before_match_time else ""
+            query = f"""
+                SELECT
+                    m.home_team,
+                    m.away_team,
+                    m.home_score,
+                    m.away_score,
+                    m.status
+                FROM matches m
+                WHERE (m.home_team = %s OR m.away_team = %s)
+                    AND m.home_score IS NOT NULL
+                    AND m.away_score IS NOT NULL
+                    AND m.status IN ('finished', 'Finished')
+                    {time_filter}
+                ORDER BY m.match_time DESC
+                LIMIT %s
+            """
+
+            params = [team_name, team_name]
+            if before_match_time:
+                params.append(before_match_time)
+            params.append(n_matches)
+
+            cursor.execute(query, params)
+            matches = cursor.fetchall()
+
+            cursor.close()
+            conn.close()
+
+            if not matches:
+                # 冷启动：没有历史数据，返回默认值
+                return {
+                    "rolling_xg": 1.2,
+                    "rolling_xg_std": 0.5,
+                    "rolling_shots_on_target": 4.0,
+                    "rolling_shots_on_target_std": 2.0,
+                    "rolling_possession": 50.0,
+                    "rolling_possession_std": 10.0,
+                    "matches_count": 0,
+                }
+
+            # 从比分中提取统计指标
+            goals_values = []  # 进球数
+            possession_proxy = []  # 控球率代理（主场=55%，客场=45%）
+
+            for match in matches:
+                home_team, away_team, home_score, away_score, status = match
+
+                # 确定是主队还是客队
+                is_home = (home_team == team_name)
+
+                try:
+                    if is_home:
+                        goals = int(home_score) if home_score is not None else 0
+                        possession = 55.0  # 主场平均控球率
+                    else:
+                        goals = int(away_score) if away_score is not None else 0
+                        possession = 45.0  # 客场平均控球率
+
+                    goals_values.append(float(goals))
+                    possession_proxy.append(possession)
+
+                except (TypeError, ValueError):
+                    # 数据解析失败，使用默认值
+                    goals_values.append(1.0)
+                    possession_proxy.append(50.0)
+
+            # 使用进球数作为 xG 的代理指标
+            xg_values = goals_values  # 进球数作为 xG 代理
+            shots_on_target_values = [g * 3.0 + 2.0 for g in goals_values]  # 估算射正
+
+            return {
+                "rolling_xg": float(np.mean(xg_values)) if xg_values else 1.2,
+                "rolling_xg_std": float(np.std(xg_values)) if len(xg_values) > 1 else 0.5,
+                "rolling_shots_on_target": float(np.mean(shots_on_target_values)) if shots_on_target_values else 4.0,
+                "rolling_shots_on_target_std": float(np.std(shots_on_target_values)) if len(shots_on_target_values) > 1 else 2.0,
+                "rolling_possession": float(np.mean(possession_proxy)) if possession_proxy else 50.0,
+                "rolling_possession_std": float(np.std(possession_proxy)) if len(possession_proxy) > 1 else 10.0,
+                "matches_count": len(matches),
+            }
+
+        except Exception as e:
+            logger.error(f"❌ 获取球队滚动统计失败 ({team_name}): {e}")
+            # 出错时返回默认值
+            return {
+                "rolling_xg": 1.2,
+                "rolling_xg_std": 0.5,
+                "rolling_shots_on_target": 4.0,
+                "rolling_shots_on_target_std": 2.0,
+                "rolling_possession": 50.0,
+                "rolling_possession_std": 10.0,
+                "matches_count": 0,
+            }
+
 
 # 全局Schema管理器实例
 _schema_manager = None
