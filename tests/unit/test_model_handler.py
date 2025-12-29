@@ -17,7 +17,7 @@ import sys
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 
 try:
-    from src.models.model_handler import get_model_handler, ModelHandler
+    from src.ml.model_handler import get_model_handler, ModelHandler
 except ImportError:
     # 尝试其他可能的路径
     try:

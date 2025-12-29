@@ -23,13 +23,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | 属性 | 值 |
 |------|-----|
 | **状态** | ✅ Production Ready |
-| **生产版本** | **V26.8** (联赛专项) + **V50.0** (数据采集) + **V25.1** (特征引擎) |
+| **生产版本** | **V26.8** (联赛专项) + **V37.0** (数据采集基准) + **V25.1** (特征引擎) |
 | **基线准确率** | 56% (真赛前) |
 | **特征维度** | 19 维动态特征 |
 | **数据量** | 9,305+ 场对齐训练数据 |
 | **推理延迟** | <100ms |
 | **训练-推理对齐** | ✅ 完全对齐 |
 | **模型分发** | ✅ ModelDispatcher (联赛专项 vs 通用) |
+| **最后重构** | 2024-12-29 (目录结构标准化) |
 
 ### 核心技术栈
 
@@ -49,7 +50,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 |------|------|------|
 | **预测模型** | **V26.8** | 联赛专项模型 (EPL/LaLiga/Ligue1/Bundesliga) + 通用 V26.7 |
 | **模型分发** | **ModelDispatcher** | `src/ml/engine.py:ModelDispatcher` |
-| **数据采集** | **V50.0** | `src/api/collectors/v50_*.py` |
+| **数据采集基准** | **V37.0** | `experiments/marrow_cleaning_v37_harvester.py` |
 | **特征引擎** | **V25.1** | `src/processors/v25_production_extractor.py` |
 | **生产服务** | **V26.8** | `src/ops/production_service.py` (自动联赛检测) |
 
@@ -71,7 +72,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### 版本管理
 
 - **历史版本**: 已删除或移至 `archive/`，Git 历史可恢复
-- **实验代码**: 统一存放于 `experiments/` 目录
+- **实验代码**: 统一存放于 `experiments/` 目录（仅保留最新 V37.0）
 - **模型文件**: 统一存放于 `model_zoo/` 目录
 
 ---
@@ -101,39 +102,44 @@ docker-compose up -d
 
 ```
 FootballPrediction/
-├── src/                      # ⭐ 生产代码（仅 V25/V26/V50）
-│   ├── api/
-│   │   └── collectors/       # V50.0 数据采集器
-│   ├── config_unified.py     # 统一配置管理
+├── src/                      # ⭐ 生产代码（V25/V26/V37）
+│   ├── api/                  # FastAPI endpoints + 数据采集
+│   ├── config/               # 统一配置（合并后）
+│   ├── config_unified.py     # 全局配置管理
 │   ├── core/                 # 核心业务逻辑
-│   ├── database/             # 数据库层
+│   ├── database/             # 数据库层（统一）
 │   ├── main.py               # FastAPI 入口
-│   ├── ml/                   # 机器学习层
-│   │   ├── engine.py         # XGBoost 训练引擎
+│   ├── ml/                   # 机器学习层（合并后）
+│   │   ├── engine.py         # XGBoost 训练引擎 + ModelDispatcher
 │   │   ├── features/         # 特征工程
 │   │   ├── inference/        # 推理服务
-│   │   └── data/             # 数据加载器
+│   │   └── backtest_engine.py  # 回测引擎
 │   ├── ops/                  # 运维脚本
 │   ├── processors/           # V25.1 特征提取引擎
 │   └── services/             # 业务服务层
 │
 ├── scripts/                  # 核心脚本
-│   ├── run_v26_full_pipeline.py      # ⭐ 完整流水线
-│   ├── auto_harvest_batches.py       # ⭐ 自动收割
-│   ├── run_v26_full_harvest.py        # ⭐ 全量收割
-│   ├── collectors/                   # 数据采集器
-│   └── exploration/                  # 🔍 探索性脚本（非生产）
-│       └── l3_feature_explorer.py    # L3 特征探索工具
+│   ├── automate_v1_0_pipeline.py     # V1.0 流水线自动化
+│   ├── train_v27_0_epl_ewma.py       # V27.0 英超 EWMA 训练
+│   ├── cleanup_project.py            # 🆕 项目清理脚本
+│   ├── fix_imports.py                # 🆕 Import 路径修复脚本
+│   ├── run_checks.sh                 # CI 质量门禁
+│   ├── system_verify.sh              # 系统健康检查
+│   ├── run_all_tests.sh              # 全量测试执行
+│   ├── collectors/                   # 数据采集脚本
+│   ├── exploration/                  # 🔍 探索性脚本（非生产）
+│   ├── maintenance/                  # 维护工具
+│   ├── archive/                      # 历史归档脚本
+│   └── sql/                          # SQL 初始化脚本
 │
-├── experiments/              # 🔬 实验性代码（V33+）
-│   ├── ml/
-│   │   ├── miners_v33/       # V33.0 实验性挖掘器
-│   │   └── miners_v34/       # V34.0 全息收割机
-│   └── v3*_*.py              # 其他实验脚本
+├── experiments/              # 🔬 实验性代码（仅 V37.0）
+│   ├── marrow_cleaning_v37_harvester.py  # V37.0 采集器基准
+│   └── ml/                   # ML 实验代码
 │
-├── model_zoo/                # 📦 历史模型仓库
+├── model_zoo/                # 📦 模型仓库
 │   ├── registry.md           # 模型注册表
-│   └── v1*.pkl               # 历史模型文件
+│   ├── v26.8_*.pkl           # V26.8 联赛专项模型
+│   └── v26.7_*.pkl           # V26.7 通用模型
 │
 ├── data/                     # 📊 数据目录
 │   ├── production/           # L1/L2 原始数据
@@ -142,22 +148,34 @@ FootballPrediction/
 │
 ├── tests/                    # ✅ 测试套件
 ├── archive/                  # 📦 历史归档
+│   ├── cleanup_20251229_*/   # 🆕 2024-12-29 重构归档
+│   └── experiments_legacy/   # 🆕 V34-V36 实验归档
+│
+├── logs/                     # 日志目录
+├── docker/                   # Docker 配置
+├── deploy/                   # 部署脚本
+├── docs/                     # 文档
 ├── docker-compose.yml        # Docker 编排
+├── Makefile                  # 统一命令入口
 ├── pyproject.toml            # 项目配置
-└── CLAUDE.md                 # 本文档
+├── CHANGELOG.md              # 版本变更记录
+├── CLAUDE.md                 # 本文档
+└── README.md                 # 项目说明
 ```
 
 ### 目录职责说明
 
 | 目录 | 职责 | 允许内容 | 禁止内容 |
 |------|------|----------|----------|
-| `src/` | 生产代码 | V25/V26/V50 相关代码 | ❌ 任何旧版本代码 |
+| `src/` | 生产代码 | V25/V26/V37 相关代码 | ❌ 任何旧版本代码 |
 | `scripts/` | 核心脚本 | 流水线、收割脚本 | ❌ 一次性脚本 |
 | `scripts/exploration/` | 探索性脚本 | 特征探索、数据诊断 | ❌ 生产代码 |
-| `experiments/` | 实验性代码 | V33+ 研发代码 | ❌ 生产代码 |
-| `model_zoo/` | 历史模型 | .pkl/.json 模型文件 | ❌ 源代码 |
+| `experiments/` | 实验性代码 | 仅 V37.0 采集器基准 | ❌ 旧版本实验 |
+| `model_zoo/` | 模型仓库 | .pkl/.json 模型文件 | ❌ 源代码 |
 | `data/` | 数据文件 | L1/L2/L3 数据 | ❌ 旧版本数据 |
 | `tests/` | 测试代码 | 测试脚本 | ❌ 已删除功能的测试 |
+| `archive/` | 历史归档 | 重构后的历史代码 | ❌ 生产代码 |
+| **根目录** | 项目配置 | docker-compose.yml, Makefile, 等 | ❌ 临时文件、实验脚本 |
 
 ---
 
@@ -168,7 +186,7 @@ FootballPrediction/
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                    L1: 数据采集层                           │
-│  V50.0 Rich L1 扫描引擎 (src/api/collectors/v50_*.py)    │
+│  V37.0 数据采集基准 (experiments/marrow_cleaning_v37_*.py)│
 │  ┌────────────────────────────────────────────────────────┐ │
 │  │  FotMob API → 哨兵机制 → 熔断恢复 → PostgreSQL      │ │
 │  └────────────────────────────────────────────────────────┘ │
@@ -893,7 +911,7 @@ User: "收集 FotMob 实时数据"
 **🚨 CRITICAL**: This is a production system support document.
 
 **🧬 当前版本**: V26.8 (联赛专项) + V50.0 (数据采集) + V25.1 (特征引擎) |
-**最后更新**: 2025-12-29 (技能目录补充 + Makefile 命令完善) |
+**最后更新**: 2025-12-29 (scripts 目录结构同步 + 版本信息更新) |
 **基线准确率**: 56% (真赛前) |
 **生产状态**: Production Ready |
 **项目愿景**: 年化 25% 收益率 |
