@@ -3,11 +3,11 @@ Docker部署集成示例
 将 docker-devops Skill 应用于现有的足球预测系统
 """
 
-import os
-import sys
 import subprocess
-import yaml
 from pathlib import Path
+
+import yaml
+
 
 class DockerDeploymentManager:
     """Docker部署管理器"""
@@ -40,40 +40,34 @@ class DockerDeploymentManager:
 
         # 生产环境 docker-compose
         prod_compose = {
-            'version': '3.8',
-            'services': {
-                'app': {
-                    'image': 'football-prediction:latest',
-                    'restart': 'always',
-                    'deploy': {
-                        'replicas': 3,
-                        'resources': {
-                            'limits': {'cpus': '1.0', 'memory': '1G'},
-                            'reservations': {'cpus': '0.5', 'memory': '512M'}
-                        }
+            "version": "3.8",
+            "services": {
+                "app": {
+                    "image": "football-prediction:latest",
+                    "restart": "always",
+                    "deploy": {
+                        "replicas": 3,
+                        "resources": {
+                            "limits": {"cpus": "1.0", "memory": "1G"},
+                            "reservations": {"cpus": "0.5", "memory": "512M"},
+                        },
                     },
-                    'environment': [
-                        'DATABASE_URL=${DATABASE_URL}',
-                        'REDIS_URL=${REDIS_URL}',
-                        'ENVIRONMENT=production'
-                    ],
-                    'networks': ['production-network']
+                    "environment": ["DATABASE_URL=${DATABASE_URL}", "REDIS_URL=${REDIS_URL}", "ENVIRONMENT=production"],
+                    "networks": ["production-network"],
                 },
-                'nginx': {
-                    'image': 'nginx:alpine',
-                    'restart': 'always',
-                    'ports': ['80:80', '443:443'],
-                    'volumes': ['./nginx:/etc/nginx:ro'],
-                    'depends_on': ['app'],
-                    'networks': ['production-network']
-                }
+                "nginx": {
+                    "image": "nginx:alpine",
+                    "restart": "always",
+                    "ports": ["80:80", "443:443"],
+                    "volumes": ["./nginx:/etc/nginx:ro"],
+                    "depends_on": ["app"],
+                    "networks": ["production-network"],
+                },
             },
-            'networks': {
-                'production-network': {'external': True}
-            }
+            "networks": {"production-network": {"external": True}},
         }
 
-        with open(self.production_compose, 'w') as f:
+        with open(self.production_compose, "w") as f:
             yaml.dump(prod_compose, f)
 
     def _setup_environment_variables(self):
@@ -81,13 +75,13 @@ class DockerDeploymentManager:
         env_file = self.project_root / ".env.production"
 
         env_vars = {
-            'DATABASE_URL': 'postgresql://user:pass@postgres:5432/football',
-            'REDIS_URL': 'redis://redis:6379',
-            'SECRET_KEY': 'your-super-secret-key',
-            'ENVIRONMENT': 'production'
+            "DATABASE_URL": "postgresql://user:pass@postgres:5432/football",
+            "REDIS_URL": "redis://redis:6379",
+            "SECRET_KEY": "your-super-secret-key",
+            "ENVIRONMENT": "production",
         }
 
-        with open(env_file, 'w') as f:
+        with open(env_file, "w") as f:
             for key, value in env_vars.items():
                 f.write(f"{key}={value}\n")
 
@@ -98,16 +92,11 @@ class DockerDeploymentManager:
 
         # Prometheus配置
         prometheus_config = {
-            'global': {'scrape_interval': '15s'},
-            'scrape_configs': [
-                {
-                    'job_name': 'football-api',
-                    'static_configs': [{'targets': ['app:8000']}]
-                }
-            ]
+            "global": {"scrape_interval": "15s"},
+            "scrape_configs": [{"job_name": "football-api", "static_configs": [{"targets": ["app:8000"]}]}],
         }
 
-        with open(monitoring_dir / "prometheus.yml", 'w') as f:
+        with open(monitoring_dir / "prometheus.yml", "w") as f:
             yaml.dump(prometheus_config, f)
 
     def _setup_ssl(self):
@@ -121,20 +110,21 @@ class DockerDeploymentManager:
         # 这里应该放置真实的SSL证书
         # cert.pem 和 key.pem
 
-    def deploy(self, environment='development'):
+    def deploy(self, environment="development"):
         """部署应用"""
         print(f"🚀 部署到 {environment} 环境...")
 
-        if environment == 'production':
+        if environment == "production":
             compose_file = self.production_compose
         else:
             compose_file = self.docker_compose_file
 
         # 构建和启动
-        subprocess.run(['docker-compose', '-f', str(compose_file), 'build'], check=True)
-        subprocess.run(['docker-compose', '-f', str(compose_file), 'up', '-d'], check=True)
+        subprocess.run(["docker-compose", "-f", str(compose_file), "build"], check=True)
+        subprocess.run(["docker-compose", "-f", str(compose_file), "up", "-d"], check=True)
 
         print(f"✅ 部署到 {environment} 环境完成")
+
 
 def main():
     """主函数"""
@@ -147,7 +137,8 @@ def main():
     manager.setup_production_deployment()
 
     # 部署到开发环境
-    manager.deploy('development')
+    manager.deploy("development")
+
 
 if __name__ == "__main__":
     main()

@@ -4,27 +4,27 @@ Docker优化器
 专门为足球预测系统设计的Docker容器和部署优化工具
 """
 
-import os
-import sys
-import json
-import subprocess
 import logging
-from typing import Dict, List, Any, Optional
+import os
 from dataclasses import dataclass
-import yaml
+from typing import Any
+
 import docker
-from pathlib import Path
+import yaml
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 @dataclass
 class OptimizationResult:
     """优化结果"""
+
     success: bool
     message: str
-    recommendations: List[str]
-    metrics: Dict[str, Any]
+    recommendations: list[str]
+    metrics: dict[str, Any]
+
 
 class DockerOptimizer:
     """Docker优化器"""
@@ -49,13 +49,10 @@ class DockerOptimizer:
         """分析Dockerfile并提供优化建议"""
         if not os.path.exists(self.dockerfile_path):
             return OptimizationResult(
-                success=False,
-                message="Dockerfile不存在",
-                recommendations=["创建Dockerfile"],
-                metrics={}
+                success=False, message="Dockerfile不存在", recommendations=["创建Dockerfile"], metrics={}
             )
 
-        with open(self.dockerfile_path, 'r') as f:
+        with open(self.dockerfile_path) as f:
             content = f.read()
 
         recommendations = []
@@ -70,7 +67,7 @@ class DockerOptimizer:
             "has_user": "USER" in content,
             "uses_multistage": content.count("FROM") > 1,
             "uses_alpine": "alpine" in content,
-            "uses_slim": "slim" in content
+            "uses_slim": "slim" in content,
         }
 
         # 分析并提供建议
@@ -95,12 +92,7 @@ class DockerOptimizer:
         success = len(recommendations) == 0
         message = "Dockerfile已优化" if success else "Dockerfile需要优化"
 
-        return OptimizationResult(
-            success=success,
-            message=message,
-            recommendations=recommendations,
-            metrics=metrics
-        )
+        return OptimizationResult(success=success, message=message, recommendations=recommendations, metrics=metrics)
 
     def analyze_docker_compose(self) -> OptimizationResult:
         """分析docker-compose.yml并提供优化建议"""
@@ -109,18 +101,15 @@ class DockerOptimizer:
                 success=False,
                 message="docker-compose.yml不存在",
                 recommendations=["创建docker-compose.yml"],
-                metrics={}
+                metrics={},
             )
 
         try:
-            with open(self.compose_file, 'r') as f:
+            with open(self.compose_file) as f:
                 compose_config = yaml.safe_load(f)
         except Exception as e:
             return OptimizationResult(
-                success=False,
-                message=f"无法解析docker-compose.yml: {e}",
-                recommendations=[],
-                metrics={}
+                success=False, message=f"无法解析docker-compose.yml: {e}", recommendations=[], metrics={}
             )
 
         recommendations = []
@@ -133,7 +122,7 @@ class DockerOptimizer:
             "has_healthcheck": False,
             "has_environment_vars": False,
             "uses_custom_networks": "networks" in compose_config,
-            "version": compose_config.get("version", "")
+            "version": compose_config.get("version", ""),
         }
 
         # 分析每个服务
@@ -168,12 +157,7 @@ class DockerOptimizer:
         success = len(recommendations) == 0
         message = "docker-compose.yml已优化" if success else "docker-compose.yml需要优化"
 
-        return OptimizationResult(
-            success=success,
-            message=message,
-            recommendations=recommendations,
-            metrics=metrics
-        )
+        return OptimizationResult(success=success, message=message, recommendations=recommendations, metrics=metrics)
 
     def generate_optimized_dockerfile(self, base_image: str = "python:3.11-slim") -> str:
         """生成优化的Dockerfile模板"""
@@ -403,10 +387,7 @@ networks:
         """优化现有的Dockerfile"""
         if not os.path.exists(self.dockerfile_path):
             return OptimizationResult(
-                success=False,
-                message="Dockerfile不存在",
-                recommendations=["创建Dockerfile"],
-                metrics={}
+                success=False, message="Dockerfile不存在", recommendations=["创建Dockerfile"], metrics={}
             )
 
         # 备份原文件
@@ -416,23 +397,20 @@ networks:
         try:
             # 生成优化版本
             optimized_content = self.generate_optimized_dockerfile()
-            with open(self.dockerfile_path, 'w') as f:
+            with open(self.dockerfile_path, "w") as f:
                 f.write(optimized_content)
 
             return OptimizationResult(
                 success=True,
                 message="Dockerfile优化完成，原文件已备份",
                 recommendations=[f"原文件已备份至 {backup_path}"],
-                metrics={"original_lines": len(open(backup_path).readlines())}
+                metrics={"original_lines": len(open(backup_path).readlines())},
             )
         except Exception as e:
             # 恢复原文件
             os.replace(backup_path, self.dockerfile_path)
             return OptimizationResult(
-                success=False,
-                message=f"优化失败: {e}",
-                recommendations=["手动检查Dockerfile"],
-                metrics={}
+                success=False, message=f"优化失败: {e}", recommendations=["手动检查Dockerfile"], metrics={}
             )
 
     def optimize_existing_docker_compose(self) -> OptimizationResult:
@@ -442,7 +420,7 @@ networks:
                 success=False,
                 message="docker-compose.yml不存在",
                 recommendations=["创建docker-compose.yml"],
-                metrics={}
+                metrics={},
             )
 
         # 备份原文件
@@ -452,26 +430,23 @@ networks:
         try:
             # 生成优化版本
             optimized_content = self.generate_optimized_docker_compose()
-            with open(self.compose_file, 'w') as f:
+            with open(self.compose_file, "w") as f:
                 f.write(optimized_content)
 
             return OptimizationResult(
                 success=True,
                 message="docker-compose.yml优化完成，原文件已备份",
                 recommendations=[f"原文件已备份至 {backup_path}"],
-                metrics={"original_services": len(yaml.safe_load(open(backup_path)).get("services", {}))}
+                metrics={"original_services": len(yaml.safe_load(open(backup_path)).get("services", {}))},
             )
         except Exception as e:
             # 恢复原文件
             os.replace(backup_path, self.compose_file)
             return OptimizationResult(
-                success=False,
-                message=f"优化失败: {e}",
-                recommendations=["手动检查docker-compose.yml"],
-                metrics={}
+                success=False, message=f"优化失败: {e}", recommendations=["手动检查docker-compose.yml"], metrics={}
             )
 
-    def get_container_stats(self) -> Dict[str, Any]:
+    def get_container_stats(self) -> dict[str, Any]:
         """获取容器统计信息"""
         if not self.client:
             return {"error": "Docker客户端未初始化"}
@@ -482,7 +457,7 @@ networks:
                 "total_containers": len(containers),
                 "running_containers": len([c for c in containers if c.status == "running"]),
                 "stopped_containers": len([c for c in containers if c.status == "exited"]),
-                "containers": []
+                "containers": [],
             }
 
             for container in containers:
@@ -495,15 +470,19 @@ networks:
                         "image": container.image.tags[0] if container.image.tags else "unknown",
                         "cpu_usage": 0,
                         "memory_usage": 0,
-                        "memory_limit": 0
+                        "memory_limit": 0,
                     }
 
                     # 计算CPU使用率
                     if "cpu_stats" in container_stats and "precpu_stats" in container_stats:
-                        cpu_delta = container_stats["cpu_stats"]["cpu_usage"]["total_usage"] - \
-                                  container_stats["precpu_stats"]["cpu_usage"]["total_usage"]
-                        system_delta = container_stats["cpu_stats"]["system_cpu_usage"] - \
-                                       container_stats["precpu_stats"]["system_cpu_usage"]
+                        cpu_delta = (
+                            container_stats["cpu_stats"]["cpu_usage"]["total_usage"]
+                            - container_stats["precpu_stats"]["cpu_usage"]["total_usage"]
+                        )
+                        system_delta = (
+                            container_stats["cpu_stats"]["system_cpu_usage"]
+                            - container_stats["precpu_stats"]["system_cpu_usage"]
+                        )
                         if system_delta > 0:
                             c_info["cpu_usage"] = (cpu_delta / system_delta) * 100.0
 
@@ -525,12 +504,7 @@ networks:
     def cleanup_docker_resources(self) -> OptimizationResult:
         """清理Docker资源"""
         if not self.client:
-            return OptimizationResult(
-                success=False,
-                message="Docker客户端未初始化",
-                recommendations=[],
-                metrics={}
-            )
+            return OptimizationResult(success=False, message="Docker客户端未初始化", recommendations=[], metrics={})
 
         try:
             # 清理停止的容器
@@ -556,10 +530,10 @@ networks:
                 "containers_removed": container_count,
                 "images_removed": image_count,
                 "volumes_removed": volume_count,
-                "networks_removed": network_count
+                "networks_removed": network_count,
             }
 
-            message = f"Docker资源清理完成"
+            message = "Docker资源清理完成"
             recommendations = []
 
             if container_count == 0 and image_count == 0 and volume_count == 0:
@@ -567,22 +541,14 @@ networks:
             else:
                 recommendations.append("定期清理Docker资源以释放磁盘空间")
 
-            return OptimizationResult(
-                success=True,
-                message=message,
-                recommendations=recommendations,
-                metrics=metrics
-            )
+            return OptimizationResult(success=True, message=message, recommendations=recommendations, metrics=metrics)
 
         except Exception as e:
             return OptimizationResult(
-                success=False,
-                message=f"清理失败: {e}",
-                recommendations=["检查Docker权限"],
-                metrics={}
+                success=False, message=f"清理失败: {e}", recommendations=["检查Docker权限"], metrics={}
             )
 
-    def generate_production_configs(self) -> Dict[str, str]:
+    def generate_production_configs(self) -> dict[str, str]:
         """生成生产环境配置文件"""
         configs = {
             ".dockerignore": """# Python
@@ -730,12 +696,12 @@ http {
             proxy_pass http://app/health;
         }
     }
-}"""
+}""",
         }
 
         return configs
 
-    def run_optimization_audit(self) -> Dict[str, OptimizationResult]:
+    def run_optimization_audit(self) -> dict[str, OptimizationResult]:
         """运行完整的优化审计"""
         if not self.initialize():
             return {"error": "无法初始化Docker客户端"}
@@ -744,7 +710,7 @@ http {
             "dockerfile": self.analyze_dockerfile(),
             "docker_compose": self.analyze_docker_compose(),
             "container_stats": self.get_container_stats(),
-            "resource_cleanup": self.cleanup_docker_resources()
+            "resource_cleanup": self.cleanup_docker_resources(),
         }
 
         return results
@@ -780,7 +746,7 @@ async def main():
     configs = optimizer.generate_production_configs()
     for filename, content in configs.items():
         os.makedirs(os.path.dirname(filename), exist_ok=True)
-        with open(filename, 'w') as f:
+        with open(filename, "w") as f:
             f.write(content)
         print(f"  ✓ {filename}")
 

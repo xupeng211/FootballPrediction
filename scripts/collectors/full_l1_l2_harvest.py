@@ -46,11 +46,11 @@ logger = logging.getLogger(__name__)
 # 联赛配置 (V36.2 - 修复正确的 FotMob League ID)
 # 根据 config/target_leagues.json 官方映射
 LEAGUE_CONFIGS = [
-    {"id": 47, "name": "Premier League", "code": "PL"},    # ✅ 380 场/赛季
-    {"id": 87, "name": "La Liga", "code": "LL"},          # V36.2 修复：从 55 改为 87
-    {"id": 54, "name": "Bundesliga", "code": "BL"},       # ✅ 306 场/赛季
-    {"id": 53, "name": "Ligue 1", "code": "L1"},           # V36.2 修复：从 61 改为 53
-    {"id": 55, "name": "Serie A", "code": "SA"},           # V36.2 修复：从 135 改为 55（意甲）
+    {"id": 47, "name": "Premier League", "code": "PL"},  # ✅ 380 场/赛季
+    {"id": 87, "name": "La Liga", "code": "LL"},  # V36.2 修复：从 55 改为 87
+    {"id": 54, "name": "Bundesliga", "code": "BL"},  # ✅ 306 场/赛季
+    {"id": 53, "name": "Ligue 1", "code": "L1"},  # V36.2 修复：从 61 改为 53
+    {"id": 55, "name": "Serie A", "code": "SA"},  # V36.2 修复：从 135 改为 55（意甲）
 ]
 
 # 赛季配置 (FotMob API 格式)
@@ -147,16 +147,14 @@ class L1L2Harvester:
         try:
             async with self.db_pool.acquire() as conn:
                 # 检查是否已存在
-                existing = await conn.fetchval(
-                    "SELECT match_id FROM matches WHERE match_id = $1",
-                    match["match_id"]
-                )
+                existing = await conn.fetchval("SELECT match_id FROM matches WHERE match_id = $1", match["match_id"])
 
                 # 解析 match_time_utc 为 TIMESTAMP
                 match_date = None
                 if match.get("match_time_utc"):
                     try:
                         from datetime import datetime
+
                         # 尝试解析 ISO 格式时间
                         match_date = datetime.fromisoformat(match["match_time_utc"].replace("Z", "+00:00"))
                     except Exception:
@@ -244,7 +242,7 @@ class L1L2Harvester:
         saved_count = 0
         for match in matches:
             # L1MatchData 对象有 to_dict() 方法
-            match_dict = match.to_dict() if hasattr(match, 'to_dict') else match
+            match_dict = match.to_dict() if hasattr(match, "to_dict") else match
             if await self._save_l1_match_index(match_dict):
                 saved_count += 1
 
@@ -390,7 +388,7 @@ async def full_harvest(l2_limit: int = 10000, silent_mode: bool = True, season_f
             # V37.0: 提取纯数字 match_id（与 L1 一致，不再使用 {id}_{season} 格式）
             match_ids = []
             for m in all_matches[:l2_limit]:
-                match_id = m.match_id if hasattr(m, 'match_id') else m.get("match_id")
+                match_id = m.match_id if hasattr(m, "match_id") else m.get("match_id")
                 if match_id:
                     match_ids.append(str(match_id))
 
@@ -452,18 +450,17 @@ if __name__ == "__main__":
 
 可用赛季: {list(SEASONS.keys())}
         """,
-        formatter_class=argparse.RawDescriptionHelpFormatter
+        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    parser.add_argument("--season", type=str, default=None,
-                        help="赛季过滤 (格式: '23/24' 或 '2023/2024')，默认采集所有赛季")
+    parser.add_argument(
+        "--season", type=str, default=None, help="赛季过滤 (格式: '23/24' 或 '2023/2024')，默认采集所有赛季"
+    )
     parser.add_argument("--l2-limit", type=int, default=10000, help="L2 采集数量限制 (默认: 10000)")
     parser.add_argument("--verbose", action="store_true", help="启用详细日志输出")
 
     args = parser.parse_args()
 
-    exit_code = asyncio.run(full_harvest(
-        l2_limit=args.l2_limit,
-        silent_mode=not args.verbose,
-        season_filter=args.season
-    ))
+    exit_code = asyncio.run(
+        full_harvest(l2_limit=args.l2_limit, silent_mode=not args.verbose, season_filter=args.season)
+    )
     sys.exit(exit_code if exit_code is not None else 0)

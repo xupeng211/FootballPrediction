@@ -386,6 +386,7 @@ class MarketLiveMonitor:
             # 从数据库查询比赛信息
             import psycopg2
             from psycopg2.extras import RealDictCursor
+
             from src.config_unified import get_settings
 
             settings = get_settings()
@@ -458,6 +459,7 @@ class MarketLiveMonitor:
         try:
             import psycopg2
             from psycopg2.extras import RealDictCursor
+
             from src.config_unified import get_settings
 
             settings = get_settings()
@@ -466,7 +468,7 @@ class MarketLiveMonitor:
                 port=settings.database.port,
                 database=settings.database.name,
                 user=settings.database.user,
-                password=settings.database.password.get_secret_value()
+                password=settings.database.password.get_secret_value(),
             )
 
             cursor = conn.cursor(cursor_factory=RealDictCursor)

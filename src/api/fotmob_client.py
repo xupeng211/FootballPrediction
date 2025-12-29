@@ -7,7 +7,7 @@ FotMob API Client - Real Data Collection with Tenacity Retry
 import asyncio
 import logging
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
 from typing import Any
 
@@ -443,10 +443,10 @@ class FotMobAPIClient:
                                     match_time = datetime.fromisoformat(match_time_str.replace("Z", "+00:00"))
                                 else:
                                     # 处理其他时间格式
-                                    match_time = datetime.strptime(match_time_str[:10], "%Y-%m-%d").replace(tzinfo=timezone.utc)
+                                    match_time = datetime.strptime(match_time_str[:10], "%Y-%m-%d").replace(tzinfo=UTC)
 
                                 # 检查是否在2025-08-01之后
-                                cutoff_date = datetime(2025, 8, 1, tzinfo=timezone.utc)
+                                cutoff_date = datetime(2025, 8, 1, tzinfo=UTC)
                                 if match_time >= cutoff_date:
                                     filtered_matches.append(match)
 

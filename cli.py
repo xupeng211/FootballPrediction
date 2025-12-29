@@ -33,42 +33,40 @@ Date: 2025-12-26
 """
 
 import asyncio
-import click
 import logging
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
-import os
+
+import click
 
 # 添加项目根目录到 Python 路径
 sys.path.insert(0, str(Path(__file__).parent))
 
 # V19.4.1 修复：强制加载 .env 文件以确保环境变量正确
 from dotenv import load_dotenv
+
 env_path = Path(__file__).parent / ".env"
 load_dotenv(env_path, override=True)
 
+from src.api.collectors.fotmob_core import FotMobCoreCollector
 from src.config_unified import get_settings
 from src.core.pipeline_v19_4 import V19_4TrainingPipeline
 from src.ops.market_live_monitor import MarketLiveMonitor
 from src.ops.risk_monitor import RiskMonitor
-from src.api.collectors.fotmob_core import FotMobCoreCollector
 
 # V25.1: 万能自适应特征提取引擎
-from src.processors import ExtractorRegistry, ExtractionResult, ExtractionStatus
+from src.processors import ExtractorRegistry
 from src.processors.exceptions import ExtractionError, ValidationError
+
 # 导入 V25 提取器以触发注册
 from src.processors.v25_production_extractor import V25ProductionExtractor  # noqa: F401
 
 # 配置日志
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.StreamHandler(sys.stdout),
-        logging.FileHandler('logs/production.log')
-    ]
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    handlers=[logging.StreamHandler(sys.stdout), logging.FileHandler("logs/production.log")],
 )
 logger = logging.getLogger(__name__)
 
@@ -77,11 +75,12 @@ logger = logging.getLogger(__name__)
 # CLI 工具函数
 # ============================================
 
+
 def print_banner(title: str, width: int = 70):
     """打印标题横幅"""
-    click.echo(f"\n{'='*width}")
+    click.echo(f"\n{'=' * width}")
     click.echo(f"  {title}")
-    click.echo(f"{'='*width}\n")
+    click.echo(f"{'=' * width}\n")
 
 
 def validate_environment():
@@ -105,10 +104,11 @@ def validate_environment():
 # L1 数据收割命令
 # ============================================
 
+
 @click.command()
-@click.option('--season', default='2324', help='赛季代码 (如 2324)')
-@click.option('--target', default=10, type=int, help='目标比赛数量')
-@click.option('--league', default='EPL', help='联赛代码')
+@click.option("--season", default="2324", help="赛季代码 (如 2324)")
+@click.option("--target", default=10, type=int, help="目标比赛数量")
+@click.option("--league", default="EPL", help="联赛代码")
 def l1_harvest(season: str, target: int, league: str):
     """L1 数据收割 - 从 FotMob API 获取原始比赛数据"""
     print_banner(f"V19.4 L1 数据收割 - {league} {season} 赛季 (目标: {target}场)")
@@ -118,7 +118,7 @@ def l1_harvest(season: str, target: int, league: str):
         logger.info(f"开始收割 {league} {season} 赛季数据...")
 
         # TODO: 实现具体的收割逻辑
-        logger.info(f"✅ L1 数据收割完成 (模拟)")
+        logger.info("✅ L1 数据收割完成 (模拟)")
 
     except Exception as e:
         logger.error(f"❌ L1 数据收割失败: {e}")
@@ -129,14 +129,17 @@ def l1_harvest(season: str, target: int, league: str):
 # L2 特征解析命令 (V25.1 自适应引擎)
 # ============================================
 
+
 @click.command()
-@click.option('--match-id', type=int, help='指定比赛 ID 进行特征提取')
-@click.option('--extractor-version', default='V25.1', help='特征提取器版本 (默认: V25.1)')
-@click.option('--skip-validation', is_flag=True, help='跳过特征验证')
-@click.option('--output-features', is_flag=True, help='输出提取的特征到控制台')
-@click.option('--batch', is_flag=True, help='批量模式：处理所有待处理的比赛')
-@click.option('--limit', type=int, default=50, help='批量模式：最多处理比赛数量')
-def l2_parse(match_id: Optional[int], extractor_version: str, skip_validation: bool, output_features: bool, batch: bool, limit: int):
+@click.option("--match-id", type=int, help="指定比赛 ID 进行特征提取")
+@click.option("--extractor-version", default="V25.1", help="特征提取器版本 (默认: V25.1)")
+@click.option("--skip-validation", is_flag=True, help="跳过特征验证")
+@click.option("--output-features", is_flag=True, help="输出提取的特征到控制台")
+@click.option("--batch", is_flag=True, help="批量模式：处理所有待处理的比赛")
+@click.option("--limit", type=int, default=50, help="批量模式：最多处理比赛数量")
+def l2_parse(
+    match_id: int | None, extractor_version: str, skip_validation: bool, output_features: bool, batch: bool, limit: int
+):
     """
     L2 特征解析 - 使用 V25.1 万能自适应特征提取引擎
 
@@ -160,15 +163,18 @@ def l2_parse(match_id: Optional[int], extractor_version: str, skip_validation: b
         logger.info(f"✓ 已创建特征提取器: {extractor.__class__.__name__}")
 
         # 获取数据库连接
-        import psycopg2
         import json
         from datetime import datetime
+
+        import psycopg2
+
         from src.config_unified import get_settings
 
         settings = get_settings()
         # 修复：Docker 环境检测问题
         # 如果 DOCKER_ENV=true 但无法连接 "db"，回退到 localhost
         import os
+
         db_host = settings.database.host
         if os.getenv("DOCKER_ENV", "").lower() in ("true", "1", "yes"):
             try:
@@ -179,7 +185,7 @@ def l2_parse(match_id: Optional[int], extractor_version: str, skip_validation: b
                     database="football_db",
                     user=settings.database.user,
                     password=settings.database.password.get_secret_value(),
-                    connect_timeout=2
+                    connect_timeout=2,
                 ).close()
             except Exception:
                 # Docker 不可达，使用 localhost
@@ -191,7 +197,7 @@ def l2_parse(match_id: Optional[int], extractor_version: str, skip_validation: b
             port=settings.database.port,
             database="football_db",
             user=settings.database.user,
-            password=settings.database.password.get_secret_value()
+            password=settings.database.password.get_secret_value(),
         )
 
         try:
@@ -201,7 +207,8 @@ def l2_parse(match_id: Optional[int], extractor_version: str, skip_validation: b
 
                 # 查询待处理的比赛（有 l2_raw_json 但没有该版本的 features）
                 with conn.cursor() as cur:
-                    cur.execute("""
+                    cur.execute(
+                        """
                         SELECT m.id, m.external_id, m.l2_raw_json,
                                m.home_team, m.away_team, m.match_time
                         FROM matches m
@@ -213,7 +220,9 @@ def l2_parse(match_id: Optional[int], extractor_version: str, skip_validation: b
                           )
                         ORDER BY m.match_time DESC
                         LIMIT %s
-                    """, (extractor_version, limit))
+                    """,
+                        (extractor_version, limit),
+                    )
 
                     matches = cur.fetchall()
                     logger.info(f"📋 找到 {len(matches)} 场待处理比赛")
@@ -253,7 +262,8 @@ def l2_parse(match_id: Optional[int], extractor_version: str, skip_validation: b
                             }
 
                             # UPSERT
-                            cur.execute("""
+                            cur.execute(
+                                """
                                 INSERT INTO match_features_training (
                                     match_id, home_team, away_team, match_time,
                                     enriched_features, meta_data, extraction_version, status, created_at, updated_at
@@ -265,12 +275,17 @@ def l2_parse(match_id: Optional[int], extractor_version: str, skip_validation: b
                                     extraction_timestamp = NOW(),
                                     updated_at = NOW(),
                                     status = 'ready'
-                            """, (
-                                db_id, home_team, away_team, match_time,
-                                json.dumps(features_with_meta),
-                                json.dumps(metadata),
-                                extractor_version
-                            ))
+                            """,
+                                (
+                                    db_id,
+                                    home_team,
+                                    away_team,
+                                    match_time,
+                                    json.dumps(features_with_meta),
+                                    json.dumps(metadata),
+                                    extractor_version,
+                                ),
+                            )
                             conn.commit()
 
                             if result.is_success:
@@ -286,24 +301,27 @@ def l2_parse(match_id: Optional[int], extractor_version: str, skip_validation: b
                             conn.rollback()
 
                     # 批量处理总结
-                    print(f"\n{'='*70}")
-                    print(f"批量处理完成:")
+                    print(f"\n{'=' * 70}")
+                    print("批量处理完成:")
                     print(f"  成功: {success_count}")
                     print(f"  失败: {fail_count}")
                     print(f"  总计: {len(matches)}")
-                    print(f"{'='*70}")
+                    print(f"{'=' * 70}")
 
             # 单场模式
             elif match_id:
                 logger.info(f"正在提取比赛 {match_id} 的特征...")
 
                 with conn.cursor() as cur:
-                    cur.execute("""
+                    cur.execute(
+                        """
                         SELECT m.id, m.external_id, m.l2_raw_json,
                                m.home_team, m.away_team, m.match_time
                         FROM matches m
                         WHERE m.id = %s OR m.external_id = %s::text
-                    """, (match_id, str(match_id)))
+                    """,
+                        (match_id, str(match_id)),
+                    )
 
                     match_data = cur.fetchone()
 
@@ -329,7 +347,7 @@ def l2_parse(match_id: Optional[int], extractor_version: str, skip_validation: b
                     logger.info(f"特征数量: {result.feature_count}")
 
                     if result.is_success:
-                        logger.info(f"✅ 特征提取成功")
+                        logger.info("✅ 特征提取成功")
 
                         if result.warnings:
                             logger.warning(f"警告: {len(result.warnings)} 条")
@@ -359,7 +377,8 @@ def l2_parse(match_id: Optional[int], extractor_version: str, skip_validation: b
                         }
 
                         # UPSERT
-                        cur.execute("""
+                        cur.execute(
+                            """
                             INSERT INTO match_features_training (
                                 match_id, home_team, away_team, match_time,
                                 enriched_features, meta_data, extraction_version, status, created_at, updated_at
@@ -371,12 +390,17 @@ def l2_parse(match_id: Optional[int], extractor_version: str, skip_validation: b
                                 extraction_timestamp = NOW(),
                                 updated_at = NOW(),
                                 status = 'ready'
-                        """, (
-                            db_id, home_team, away_team, match_time,
-                            json.dumps(features_with_meta),
-                            json.dumps(metadata),
-                            extractor_version
-                        ))
+                        """,
+                            (
+                                db_id,
+                                home_team,
+                                away_team,
+                                match_time,
+                                json.dumps(features_with_meta),
+                                json.dumps(metadata),
+                                extractor_version,
+                            ),
+                        )
                         conn.commit()
                         logger.info(f"✅ 已保存到数据库 (版本: {extractor_version})")
 
@@ -403,13 +427,14 @@ def l2_parse(match_id: Optional[int], extractor_version: str, skip_validation: b
     except ValidationError as e:
         logger.error(f"❌ 特征验证失败: {e}")
         sys.exit(1)
-    except KeyError as e:
+    except KeyError:
         logger.error(f"❌ 未找到指定版本的提取器: {extractor_version}")
         logger.info(f"可用版本: {', '.join(ExtractorRegistry.list_versions())}")
         sys.exit(1)
     except Exception as e:
         logger.error(f"❌ L2 特征解析失败: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
 
@@ -418,11 +443,12 @@ def l2_parse(match_id: Optional[int], extractor_version: str, skip_validation: b
 # 模型训练命令
 # ============================================
 
+
 @click.command()
-@click.option('--train-size', default=600, type=int, help='训练集大小')
-@click.option('--test-size', default=160, type=int, help='测试集大小')
-@click.option('--data-limit', default=760, type=int, help='数据加载限制')
-@click.option('--apply-draw-weight', is_flag=True, default=True, help='应用平局类别权重')
+@click.option("--train-size", default=600, type=int, help="训练集大小")
+@click.option("--test-size", default=160, type=int, help="测试集大小")
+@click.option("--data-limit", default=760, type=int, help="数据加载限制")
+@click.option("--apply-draw-weight", is_flag=True, default=True, help="应用平局类别权重")
 def train(train_size: int, test_size: int, data_limit: int, apply_draw_weight: bool):
     """V19.4 模型训练 - 使用 48 维特征 + 加权损失函数"""
     print_banner(f"V19.4 模型训练 (训练集: {train_size}, 测试集: {test_size})")
@@ -449,10 +475,7 @@ def train(train_size: int, test_size: int, data_limit: int, apply_draw_weight: b
         # 3. 训练模型
         logger.info("训练模型...")
         metrics = pipeline.train_model(
-            feature_df,
-            train_size=train_size,
-            test_size=test_size,
-            apply_draw_weight=apply_draw_weight
+            feature_df, train_size=train_size, test_size=test_size, apply_draw_weight=apply_draw_weight
         )
 
         # 4. 保存模型
@@ -465,7 +488,7 @@ def train(train_size: int, test_size: int, data_limit: int, apply_draw_weight: b
         logger.info(f"平局准确率: {metrics.draw_accuracy * 100:.2f}%")
         logger.info(f"客胜准确率: {metrics.away_win_accuracy * 100:.2f}%")
         logger.info(f"F1 宏平均: {metrics.f1_macro:.4f}")
-        logger.info(f"✅ 模型已保存到: src/production_models/")
+        logger.info("✅ 模型已保存到: src/production_models/")
 
     except Exception as e:
         logger.error(f"❌ 模型训练失败: {e}")
@@ -476,11 +499,12 @@ def train(train_size: int, test_size: int, data_limit: int, apply_draw_weight: b
 # 模型预测命令
 # ============================================
 
+
 @click.command()
-@click.option('--model', default='v19.4', help='模型版本')
-@click.option('--match-id', help='特定比赛 ID')
-@click.option('--output', default='data/production/', help='预测结果输出目录')
-def predict(model: str, match_id: Optional[str], output: str):
+@click.option("--model", default="v19.4", help="模型版本")
+@click.option("--match-id", help="特定比赛 ID")
+@click.option("--output", default="data/production/", help="预测结果输出目录")
+def predict(model: str, match_id: str | None, output: str):
     """V19.4 模型预测 - 生成比赛预测结果"""
     print_banner(f"V19.4 模型预测 ({model})")
 
@@ -494,7 +518,7 @@ def predict(model: str, match_id: Optional[str], output: str):
             logger.info("预测所有待预测比赛...")
 
         logger.info(f"预测结果输出到: {output}")
-        logger.info(f"✅ 预测完成 (模拟)")
+        logger.info("✅ 预测完成 (模拟)")
 
     except Exception as e:
         logger.error(f"❌ 预测失败: {e}")
@@ -505,17 +529,18 @@ def predict(model: str, match_id: Optional[str], output: str):
 # 实时市场巡检命令
 # ============================================
 
+
 @click.command()
-@click.option('--match-id', required=True, help='目标比赛 ID')
-@click.option('--match-time', required=True, help='比赛时间 (格式: YYYY-MM-DD HH:MM)')
-@click.option('--initial-balance', default=1000.0, type=float, help='初始资金')
+@click.option("--match-id", required=True, help="目标比赛 ID")
+@click.option("--match-time", required=True, help="比赛时间 (格式: YYYY-MM-DD HH:MM)")
+@click.option("--initial-balance", default=1000.0, type=float, help="初始资金")
 def monitor(match_id: str, match_time: str, initial_balance: float):
     """实时市场巡检 - 开场前实时校准机制"""
     print_banner(f"V19.4 实时市场巡检 (比赛ID: {match_id})")
 
     try:
         # 解析比赛时间
-        match_dt = datetime.strptime(match_time, '%Y-%m-%d %H:%M')
+        match_dt = datetime.strptime(match_time, "%Y-%m-%d %H:%M")
 
         logger.info(f"目标比赛: {match_id}")
         logger.info(f"比赛时间: {match_dt}")
@@ -525,16 +550,13 @@ def monitor(match_id: str, match_time: str, initial_balance: float):
         logger.info(f"偏差阈值: {MarketLiveMonitor.DELTA_THRESHOLD:.2%}")
 
         # 创建监控实例
-        monitor_instance = MarketLiveMonitor(
-            target_match_id=match_id,
-            initial_balance=initial_balance
-        )
+        monitor_instance = MarketLiveMonitor(target_match_id=match_id, initial_balance=initial_balance)
 
         # 启动巡检
         logger.info("\n🚀 启动实时巡检...")
         asyncio.run(monitor_instance.start_monitoring(match_dt))
 
-    except ValueError as e:
+    except ValueError:
         logger.error(f"❌ 日期格式错误: {match_time} (应为: YYYY-MM-DD HH:MM)")
         sys.exit(1)
     except Exception as e:
@@ -546,8 +568,9 @@ def monitor(match_id: str, match_time: str, initial_balance: float):
 # 风控状态检查命令
 # ============================================
 
+
 @click.command()
-@click.option('--initial-balance', default=1000.0, type=float, help='初始资金')
+@click.option("--initial-balance", default=1000.0, type=float, help="初始资金")
 def risk_status(initial_balance: float):
     """风控状态检查 - 显示当前风险指标"""
     print_banner("V19.4 风控状态检查")
@@ -570,7 +593,7 @@ def risk_status(initial_balance: float):
         # 生成每日报告
         report = monitor.generate_daily_report()
         if not report.empty:
-            logger.info(f"\n今日报告:")
+            logger.info("\n今日报告:")
             logger.info(f"  下注次数: {report['total_bets'].iloc[0]}")
             logger.info(f"  盈亏: {report['profit'].iloc[0]:+.2f}")
 
@@ -583,10 +606,11 @@ def risk_status(initial_balance: float):
 # 完整流水线命令
 # ============================================
 
+
 @click.command()
-@click.option('--skip-harvest', is_flag=True, help='跳过数据收割')
-@click.option('--skip-train', is_flag=True, help='跳过模型训练')
-@click.option('--skip-predict', is_flag=True, help='跳过预测')
+@click.option("--skip-harvest", is_flag=True, help="跳过数据收割")
+@click.option("--skip-train", is_flag=True, help="跳过模型训练")
+@click.option("--skip-predict", is_flag=True, help="跳过预测")
 def full_pipeline(skip_harvest: bool, skip_train: bool, skip_predict: bool):
     """一键完整流程 - 从数据收割到预测输出"""
     print_banner("V19.4 完整流水线")
@@ -630,6 +654,7 @@ def full_pipeline(skip_harvest: bool, skip_train: bool, skip_predict: bool):
 # 系统健康检查命令
 # ============================================
 
+
 @click.command()
 def health_check():
     """系统健康检查 - 验证所有组件状态"""
@@ -648,13 +673,14 @@ def health_check():
     logger.info("🔍 检查数据库连接...")
     try:
         import psycopg2
+
         settings = get_settings()
         conn = psycopg2.connect(
             host=settings.database.host,
             port=settings.database.port,
             database=settings.database.name,
             user=settings.database.user,
-            password=settings.database.password.get_secret_value()
+            password=settings.database.password.get_secret_value(),
         )
         conn.close()
         checks.append(("数据库", "✅"))
@@ -666,13 +692,9 @@ def health_check():
     logger.info("🔍 检查 Redis 连接...")
     try:
         import redis
+
         settings = get_settings()
-        r = redis.Redis(
-            host=settings.redis.host,
-            port=settings.redis.port,
-            db=settings.redis.db,
-            decode_responses=True
-        )
+        r = redis.Redis(host=settings.redis.host, port=settings.redis.port, db=settings.redis.db, decode_responses=True)
         r.ping()
         checks.append(("Redis", "✅"))
     except Exception as e:
@@ -700,7 +722,7 @@ def health_check():
         checks.append(("数据目录", "❌"))
 
     # 显示检查结果
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     logger.info("健康检查结果:")
     for name, status in checks:
         logger.info(f"  {status} {name}")
@@ -718,11 +740,12 @@ def health_check():
 # V35.0 生产级流水线命令
 # ============================================
 
+
 @click.command()
-@click.option('--data-path', type=click.Path(exists=True), help='输入数据文件路径')
-@click.option('--skip-train', is_flag=True, help='跳过模型训练')
-@click.option('--skip-backtest', is_flag=True, help='跳过回测')
-def v35_pipeline(data_path: Optional[str], skip_train: bool, skip_backtest: bool):
+@click.option("--data-path", type=click.Path(exists=True), help="输入数据文件路径")
+@click.option("--skip-train", is_flag=True, help="跳过模型训练")
+@click.option("--skip-backtest", is_flag=True, help="跳过回测")
+def v35_pipeline(data_path: str | None, skip_train: bool, skip_backtest: bool):
     """
     V35.0 生产级完整流水线 - 特征生成 + 模型训练 + 回测
 
@@ -742,8 +765,9 @@ def v35_pipeline(data_path: Optional[str], skip_train: bool, skip_backtest: bool
 
     try:
         from pathlib import Path
+
         from src.data_engineering.feature_factory import FeatureFactory
-        from src.modeling import V35Trainer, BacktestEngine
+        from src.modeling import BacktestEngine, V35Trainer
 
         # 确定数据路径
         if data_path:
@@ -766,6 +790,7 @@ def v35_pipeline(data_path: Optional[str], skip_train: bool, skip_backtest: bool
         logger.info("=" * 70)
 
         import pandas as pd
+
         df = pd.read_parquet(input_path)
         logger.info(f"✅ 已加载 {len(df)} 场原始比赛")
 
@@ -785,7 +810,8 @@ def v35_pipeline(data_path: Optional[str], skip_train: bool, skip_backtest: bool
 
             # 使用生成的特征数据
             import tempfile
-            with tempfile.NamedTemporaryFile(suffix='.parquet', delete=False) as tmp:
+
+            with tempfile.NamedTemporaryFile(suffix=".parquet", delete=False) as tmp:
                 temp_path = Path(tmp.name)
                 df_features.to_parquet(temp_path, index=False)
 
@@ -819,9 +845,9 @@ def v35_pipeline(data_path: Optional[str], skip_train: bool, skip_backtest: bool
         logger.info("✅ V35.0 核心架构固化完成！")
         logger.info("")
         logger.info("📁 输出文件:")
-        logger.info(f"  特征数据: data/processed/V35_PRODUCTION_GOLD.parquet")
-        logger.info(f"  模型文件: models/v35/v35_model_*.pkl")
-        logger.info(f"  训练报告: models/v35/v35_training_report_*.json")
+        logger.info("  特征数据: data/processed/V35_PRODUCTION_GOLD.parquet")
+        logger.info("  模型文件: models/v35/v35_model_*.pkl")
+        logger.info("  训练报告: models/v35/v35_training_report_*.json")
         logger.info("")
         logger.info("🎯 核心指标:")
 
@@ -841,6 +867,7 @@ def v35_pipeline(data_path: Optional[str], skip_train: bool, skip_backtest: bool
     except Exception as e:
         logger.error(f"❌ V35.0 流水线执行失败: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
 
@@ -849,8 +876,9 @@ def v35_pipeline(data_path: Optional[str], skip_train: bool, skip_backtest: bool
 # CLI 主入口
 # ============================================
 
+
 @click.group()
-@click.version_option(version='1.0.0', prog_name='football-v194')
+@click.version_option(version="1.0.0", prog_name="football-v194")
 def main():
     """V19.4 足球预测系统 - 统一生产入口"""
     pass
@@ -868,5 +896,5 @@ main.add_command(health_check)
 main.add_command(v35_pipeline)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

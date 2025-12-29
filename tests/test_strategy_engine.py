@@ -9,24 +9,21 @@
 3. 余额衰减测试: 模拟余额从 $1000 到 $1 的全过程逻辑稳定性
 """
 
-import pytest
 import math
-from datetime import datetime
-from typing import Dict, Any
+import os
 
 # 导入策略引擎模块
 import sys
-import os
+
+import pytest
 
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 from src.logic.strategy_engine import (
-    StrategyEngine,
     BettingParameters,
-    PortfolioState,
-    StrategyMode,
     RiskLevel,
-    BettingRecommendation,
+    StrategyEngine,
+    StrategyMode,
 )
 
 
@@ -53,12 +50,12 @@ class TestStrategyEngine:
         return StrategyEngine(params=default_params, mode=StrategyMode.SANDBOX)
 
     @pytest.fixture
-    def sample_market_odds(self) -> Dict[str, float]:
+    def sample_market_odds(self) -> dict[str, float]:
         """示例市场赔率"""
         return {"home_win": 2.10, "draw": 3.40, "away_win": 3.60}
 
     @pytest.fixture
-    def sample_model_probs(self) -> Dict[str, float]:
+    def sample_model_probs(self) -> dict[str, float]:
         """示例模型概率"""
         return {"home_win": 0.52, "draw": 0.25, "away_win": 0.23}
 
@@ -67,8 +64,8 @@ class TestStrategyEngine:
     def test_zero_edge_no_bet(
         self,
         strategy_engine: StrategyEngine,
-        sample_market_odds: Dict[str, float],
-        sample_model_probs: Dict[str, float],
+        sample_market_odds: dict[str, float],
+        sample_model_probs: dict[str, float],
     ):
         """
         测试用例1: 零优势测试
@@ -95,7 +92,7 @@ class TestStrategyEngine:
         assert recommendation.kelly_fraction == 0.0
         assert recommendation.edge <= 0
 
-    def test_negative_edge_no_bet(self, strategy_engine: StrategyEngine, sample_market_odds: Dict[str, float]):
+    def test_negative_edge_no_bet(self, strategy_engine: StrategyEngine, sample_market_odds: dict[str, float]):
         """
         测试负优势场景 - 严格不下注
         """

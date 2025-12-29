@@ -5,49 +5,59 @@
 """
 
 import asyncio
-import json
-import time
-import logging
-from typing import Any, Dict, List, Optional, Callable, Union
-from dataclasses import dataclass, field
-from enum import Enum
 import hashlib
+import json
+import logging
 import pickle
+import time
 from collections import OrderedDict
+from collections.abc import Callable
+from dataclasses import dataclass
+from datetime import datetime
+from enum import Enum
+from typing import Any
+
 import aioredis
-from datetime import datetime, timedelta
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 class CacheLevel(Enum):
     """缓存级别"""
+
     L1_MEMORY = "l1_memory"
     L2_REDIS = "l2_redis"
     L3_DATABASE = "l3_database"
 
+
 class EvictionPolicy(Enum):
     """缓存淘汰策略"""
+
     LRU = "lru"
     LFU = "lfu"
     FIFO = "fifo"
     TTL = "ttl"
 
+
 @dataclass
 class CacheConfig:
     """缓存配置"""
-    ttl: int = 3600                    # 生存时间（秒）
-    max_size: int = 1000              # 最大缓存条目数
-    enable_l1: bool = True            # 启用内存缓存
-    enable_l2: bool = True            # 启用Redis缓存
+
+    ttl: int = 3600  # 生存时间（秒）
+    max_size: int = 1000  # 最大缓存条目数
+    enable_l1: bool = True  # 启用内存缓存
+    enable_l2: bool = True  # 启用Redis缓存
     eviction_policy: EvictionPolicy = EvictionPolicy.LRU
-    serialize_method: str = "json"    # json, pickle, msgpack
-    compression: bool = False         # 是否启用压缩
-    key_prefix: str = "football"      # 键前缀
+    serialize_method: str = "json"  # json, pickle, msgpack
+    compression: bool = False  # 是否启用压缩
+    key_prefix: str = "football"  # 键前缀
+
 
 @dataclass
 class CacheStats:
     """缓存统计信息"""
+
     l1_hits: int = 0
     l1_misses: int = 0
     l2_hits: int = 0
@@ -57,6 +67,7 @@ class CacheStats:
     errors: int = 0
     total_requests: int = 0
     total_bytes_cached: int = 0
+
 
 class LRUCache:
     """LRU内存缓存实现"""
@@ -68,7 +79,7 @@ class LRUCache:
         self.timestamps = {}
         self.stats = CacheStats()
 
-    def get(self, key: str) -> Optional[Any]:
+    def get(self, key: str) -> Any | None:
         """获取缓存值"""
         if key not in self.cache:
             self.stats.l1_misses += 1
@@ -129,10 +140,7 @@ class LRUCache:
 
     def cleanup_expired(self) -> int:
         """清理过期条目"""
-        expired_keys = [
-            key for key in self.cache.keys()
-            if self._is_expired(key)
-        ]
+        expired_keys = [key for key in self.cache.keys() if self._is_expired(key)]
 
         for key in expired_keys:
             self.remove(key)
@@ -140,16 +148,17 @@ class LRUCache:
 
         return len(expired_keys)
 
+
 class CacheStrategyManager:
     """缓存策略管理器"""
 
     def __init__(self, redis_url: str = "redis://localhost:6379"):
         self.redis_url = redis_url
-        self.redis_pool: Optional[aioredis.Redis] = None
-        self.l1_caches: Dict[str, LRUCache] = {}
-        self.configs: Dict[str, CacheConfig] = {}
+        self.redis_pool: aioredis.Redis | None = None
+        self.l1_caches: dict[str, LRUCache] = {}
+        self.configs: dict[str, CacheConfig] = {}
         self.global_stats = CacheStats()
-        self.background_tasks: List[asyncio.Task] = []
+        self.background_tasks: list[asyncio.Task] = []
 
     async def initialize(self):
         """初始化缓存管理器"""
@@ -158,10 +167,7 @@ class CacheStrategyManager:
         # 初始化Redis连接
         try:
             self.redis_pool = aioredis.from_url(
-                self.redis_url,
-                max_connections=20,
-                retry_on_timeout=True,
-                socket_keepalive=True
+                self.redis_url, max_connections=20, retry_on_timeout=True, socket_keepalive=True
             )
             await self.redis_pool.ping()
             logger.info("🔴 Redis连接已建立")
@@ -172,7 +178,7 @@ class CacheStrategyManager:
         # 启动后台任务
         self.background_tasks = [
             asyncio.create_task(self._cleanup_expired_task()),
-            asyncio.create_task(self._stats_report_task())
+            asyncio.create_task(self._stats_report_task()),
         ]
 
         logger.info("✅ 缓存策略管理器初始化完成")
@@ -182,15 +188,12 @@ class CacheStrategyManager:
         self.configs[cache_type] = config
 
         if config.enable_l1 and cache_type not in self.l1_caches:
-            self.l1_caches[cache_type] = LRUCache(
-                max_size=config.max_size,
-                ttl=config.ttl
-            )
+            self.l1_caches[cache_type] = LRUCache(max_size=config.max_size, ttl=config.ttl)
             logger.info(f"📝 注册L1缓存类型: {cache_type}")
 
         logger.info(f"⚙️  缓存配置已注册: {cache_type} - TTL: {config.ttl}s, MaxSize: {config.max_size}")
 
-    def _generate_key(self, cache_type: str, key_data: Union[str, Dict, Any]) -> str:
+    def _generate_key(self, cache_type: str, key_data: str | dict | Any) -> str:
         """生成缓存键"""
         config = self.configs.get(cache_type, CacheConfig())
         prefix = f"{config.key_prefix}:{cache_type}"
@@ -207,11 +210,7 @@ class CacheStrategyManager:
         return f"{prefix}:{key_hash}"
 
     async def get(
-        self,
-        cache_type: str,
-        key_data: Union[str, Dict, Any],
-        fallback_func: Optional[Callable] = None,
-        **kwargs
+        self, cache_type: str, key_data: str | dict | Any, fallback_func: Callable | None = None, **kwargs
     ) -> Any:
         """获取缓存值"""
         cache_key = self._generate_key(cache_type, key_data)
@@ -265,12 +264,7 @@ class CacheStrategyManager:
 
         return None
 
-    async def set(
-        self,
-        cache_type: str,
-        key_data: Union[str, Dict, Any],
-        value: Any
-    ) -> bool:
+    async def set(self, cache_type: str, key_data: str | dict | Any, value: Any) -> bool:
         """设置缓存值"""
         cache_key = self._generate_key(cache_type, key_data)
         config = self.configs.get(cache_type, CacheConfig())
@@ -295,6 +289,7 @@ class CacheStrategyManager:
                 # 压缩（如果启用）
                 if config.compression:
                     import gzip
+
                     serialized_value = gzip.compress(serialized_value.encode())
 
                 await self.redis_pool.setex(cache_key, config.ttl, serialized_value)
@@ -310,7 +305,7 @@ class CacheStrategyManager:
 
         return success
 
-    async def delete(self, cache_type: str, key_data: Union[str, Dict, Any]) -> bool:
+    async def delete(self, cache_type: str, key_data: str | dict | Any) -> bool:
         """删除缓存值"""
         cache_key = self._generate_key(cache_type, key_data)
         config = self.configs.get(cache_type, CacheConfig())
@@ -356,15 +351,15 @@ class CacheStrategyManager:
         logger.info(f"清空缓存类型 {cache_type}: {cleared_count} 个条目")
         return cleared_count
 
-    async def warm_up_cache(self, cache_type: str, warm_up_data: List[Dict]):
+    async def warm_up_cache(self, cache_type: str, warm_up_data: list[dict]):
         """缓存预热"""
         logger.info(f"🔥 开始缓存预热: {cache_type} - {len(warm_up_data)} 个条目")
 
         success_count = 0
         for item in warm_up_data:
             try:
-                key = item.get('key')
-                value = item.get('value')
+                key = item.get("key")
+                value = item.get("value")
                 if key and value:
                     await self.set(cache_type, key, value)
                     success_count += 1
@@ -373,7 +368,7 @@ class CacheStrategyManager:
 
         logger.info(f"✅ 缓存预热完成: {cache_type} - {success_count}/{len(warm_up_data)} 成功")
 
-    def get_cache_stats(self, cache_type: Optional[str] = None) -> Dict[str, Any]:
+    def get_cache_stats(self, cache_type: str | None = None) -> dict[str, Any]:
         """获取缓存统计信息"""
         stats = {
             "global": {
@@ -388,7 +383,7 @@ class CacheStrategyManager:
                 "total_bytes_cached": self.global_stats.total_bytes_cached,
                 "hit_rate": 0,
                 "l1_hit_rate": 0,
-                "l2_hit_rate": 0
+                "l2_hit_rate": 0,
             }
         }
 
@@ -409,7 +404,9 @@ class CacheStrategyManager:
                     "hits": l1_cache.stats.l1_hits,
                     "misses": l1_cache.stats.l1_misses,
                     "evictions": l1_cache.stats.l1_evictions,
-                    "hit_rate": l1_cache.stats.l1_hits / (l1_cache.stats.l1_hits + l1_cache.stats.l1_misses) if (l1_cache.stats.l1_hits + l1_cache.stats.l1_misses) > 0 else 0
+                    "hit_rate": l1_cache.stats.l1_hits / (l1_cache.stats.l1_hits + l1_cache.stats.l1_misses)
+                    if (l1_cache.stats.l1_hits + l1_cache.stats.l1_misses) > 0
+                    else 0,
                 }
         else:
             stats["l1_caches"] = {}
@@ -417,12 +414,14 @@ class CacheStrategyManager:
                 stats["l1_caches"][ct] = {
                     "size": l1_cache.size(),
                     "max_size": l1_cache.max_size,
-                    "hit_rate": l1_cache.stats.l1_hits / (l1_cache.stats.l1_hits + l1_cache.stats.l1_misses) if (l1_cache.stats.l1_hits + l1_cache.stats.l1_misses) > 0 else 0
+                    "hit_rate": l1_cache.stats.l1_hits / (l1_cache.stats.l1_hits + l1_cache.stats.l1_misses)
+                    if (l1_cache.stats.l1_hits + l1_cache.stats.l1_misses) > 0
+                    else 0,
                 }
 
         return stats
 
-    async def get_redis_info(self) -> Dict[str, Any]:
+    async def get_redis_info(self) -> dict[str, Any]:
         """获取Redis信息"""
         if not self.redis_pool:
             return {"error": "Redis not connected"}
@@ -435,23 +434,19 @@ class CacheStrategyManager:
                 "connected_clients": info.get("connected_clients"),
                 "keyspace_hits": info.get("keyspace_hits"),
                 "keyspace_misses": info.get("keyspace_misses"),
-                "uptime_in_seconds": info.get("uptime_in_seconds")
+                "uptime_in_seconds": info.get("uptime_in_seconds"),
             }
         except Exception as e:
             return {"error": str(e)}
 
-    async def health_check(self) -> Dict[str, Any]:
+    async def health_check(self) -> dict[str, Any]:
         """健康检查"""
-        health = {
-            "status": "healthy",
-            "components": {},
-            "stats": self.get_cache_stats()
-        }
+        health = {"status": "healthy", "components": {}, "stats": self.get_cache_stats()}
 
         # L1缓存健康检查
         health["components"]["l1_memory"] = {
             "status": "healthy" if self.l1_caches else "not_initialized",
-            "cache_types": list(self.l1_caches.keys())
+            "cache_types": list(self.l1_caches.keys()),
         }
 
         # Redis健康检查
@@ -460,20 +455,12 @@ class CacheStrategyManager:
                 start_time = time.time()
                 await self.redis_pool.ping()
                 response_time = time.time() - start_time
-                health["components"]["redis"] = {
-                    "status": "healthy",
-                    "response_time": f"{response_time:.3f}s"
-                }
+                health["components"]["redis"] = {"status": "healthy", "response_time": f"{response_time:.3f}s"}
             except Exception as e:
-                health["components"]["redis"] = {
-                    "status": "unhealthy",
-                    "error": str(e)
-                }
+                health["components"]["redis"] = {"status": "unhealthy", "error": str(e)}
                 health["status"] = "degraded"
         else:
-            health["components"]["redis"] = {
-                "status": "not_connected"
-            }
+            health["components"]["redis"] = {"status": "not_connected"}
             health["status"] = "degraded"
 
         return health
@@ -499,10 +486,12 @@ class CacheStrategyManager:
         while True:
             try:
                 stats = self.get_cache_stats()
-                logger.info(f"缓存统计报告 - 总请求: {stats['global']['total_requests']}, "
-                           f"命中率: {stats['global']['hit_rate']:.2%}, "
-                           f"L1命中率: {stats['global']['l1_hit_rate']:.2%}, "
-                           f"L2命中率: {stats['global']['l2_hit_rate']:.2%}")
+                logger.info(
+                    f"缓存统计报告 - 总请求: {stats['global']['total_requests']}, "
+                    f"命中率: {stats['global']['hit_rate']:.2%}, "
+                    f"L1命中率: {stats['global']['l1_hit_rate']:.2%}, "
+                    f"L2命中率: {stats['global']['l2_hit_rate']:.2%}"
+                )
 
                 await asyncio.sleep(3600)  # 每小时报告一次
 
@@ -535,31 +524,31 @@ class CacheStrategyManager:
 # 预定义的缓存配置
 CACHE_CONFIGS = {
     "match_data": CacheConfig(
-        ttl=1800,        # 30分钟
+        ttl=1800,  # 30分钟
         max_size=500,
-        serialize_method="json"
+        serialize_method="json",
     ),
     "team_stats": CacheConfig(
-        ttl=3600,        # 1小时
+        ttl=3600,  # 1小时
         max_size=200,
-        serialize_method="json"
+        serialize_method="json",
     ),
     "predictions": CacheConfig(
-        ttl=86400,       # 24小时
+        ttl=86400,  # 24小时
         max_size=1000,
-        serialize_method="json"
+        serialize_method="json",
     ),
     "features": CacheConfig(
-        ttl=7200,        # 2小时
+        ttl=7200,  # 2小时
         max_size=300,
         serialize_method="pickle",
-        compression=True
+        compression=True,
     ),
     "user_sessions": CacheConfig(
-        ttl=1800,        # 30分钟
+        ttl=1800,  # 30分钟
         max_size=1000,
-        serialize_method="json"
-    )
+        serialize_method="json",
+    ),
 }
 
 
@@ -585,16 +574,11 @@ async def main():
                 "match_id": match_id,
                 "home_team": "Team A",
                 "away_team": "Team B",
-                "date": datetime.now().isoformat()
+                "date": datetime.now().isoformat(),
             }
 
         # 获取缓存数据（首次会调用回退函数）
-        match_data = await manager.get(
-            "match_data",
-            {"match_id": 123},
-            fallback_func=fetch_match_data,
-            match_id=123
-        )
+        match_data = await manager.get("match_data", {"match_id": 123}, fallback_func=fetch_match_data, match_id=123)
         print(f"获取比赛数据: {match_data}")
 
         # 再次获取（从缓存）
@@ -603,12 +587,12 @@ async def main():
 
         # 缓存统计
         stats = manager.get_cache_stats()
-        print(f"\n📊 缓存统计:")
+        print("\n📊 缓存统计:")
         print(json.dumps(stats, indent=2))
 
         # 健康检查
         health = await manager.health_check()
-        print(f"\n💚 健康检查:")
+        print("\n💚 健康检查:")
         print(json.dumps(health, indent=2))
 
     finally:

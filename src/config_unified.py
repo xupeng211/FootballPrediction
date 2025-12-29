@@ -209,7 +209,7 @@ class UnifiedSettings(BaseSettings):
     # 生产环境必须通过环境变量设置，开发环境默认值不安全
     secret_key: SecretStr = Field(
         default=SecretStr("dev-secret-key-change-in-production-minimum-32-chars"),
-        description="应用密钥（生产环境必须通过环境变量设置）"
+        description="应用密钥（生产环境必须通过环境变量设置）",
     )
 
     allowed_hosts: list[str] = Field(default=["localhost", "127.0.0.1"], description="允许的主机列表")
@@ -252,8 +252,7 @@ class UnifiedSettings(BaseSettings):
     # === 模型配置 ===
     # 使用 model_zoo 目录中的 V19.4 生产模型
     model_path: str = Field(
-        default="model_zoo/v19.4_draw_sensitivity_model.pkl",
-        description="模型文件路径（指向 model_zoo 目录）"
+        default="model_zoo/v19.4_draw_sensitivity_model.pkl", description="模型文件路径（指向 model_zoo 目录）"
     )
 
     model_version: str = Field(default="xgboost_v2", description="模型版本")

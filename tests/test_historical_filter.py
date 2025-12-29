@@ -4,11 +4,11 @@ V13.0 历史过滤器测试 - TDD驱动开发
 在代码实现前，先编写测试逻辑来验证未来赛项和历史赛项的判定
 """
 
-import pytest
 import logging
-from datetime import datetime, timezone, timedelta
-from unittest.mock import Mock, patch
-import json
+from datetime import UTC, datetime, timedelta
+from unittest.mock import patch
+
+import pytest
 
 # 设置测试日志
 logging.basicConfig(level=logging.DEBUG)
@@ -76,7 +76,7 @@ class TestHistoricalFilter:
     @pytest.fixture
     def current_time_mock(self):
         """模拟当前时间: 2024-12-22"""
-        return datetime(2024, 12, 22, 12, 0, 0, tzinfo=timezone.utc)
+        return datetime(2024, 12, 22, 12, 0, 0, tzinfo=UTC)
 
     def test_is_future_match_rejection(self, future_match_json, current_time_mock):
         """测试: 未来赛项应该被拒绝"""
@@ -284,7 +284,7 @@ class TestHistoricalFilter:
 
         start_time = time.time()
 
-        current_time = datetime(2024, 12, 22, 12, 0, 0, tzinfo=timezone.utc)
+        current_time = datetime(2024, 12, 22, 12, 0, 0, tzinfo=UTC)
 
         for i in range(large_dataset_size):
             # 随机生成过去或未来的时间

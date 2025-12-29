@@ -4,13 +4,15 @@ Deployment & Operations Skill for Claude Code
 部署与运维专业技能 - 容器化部署和自动化运维专家
 """
 
-from typing import Dict, List, Any, Optional
-import subprocess
 import os
 import signal
-from pathlib import Path
+import subprocess
 from datetime import datetime
+from pathlib import Path
+from typing import Any
+
 import psutil
+
 
 class DeploymentOperationsSkill:
     """
@@ -29,7 +31,7 @@ class DeploymentOperationsSkill:
             "automation-ops",
             "permission-management",
             "network-configuration",
-            "resource-optimization"
+            "resource-optimization",
         ]
 
         # 实战经验常量
@@ -44,7 +46,7 @@ class DeploymentOperationsSkill:
             Docker Compose配置内容
         """
         template = f"""# FootballPrediction v2.3.0-{environment} - 容器化部署配置
-# Generated at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+# Generated at: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
 
 services:
   app:
@@ -128,7 +130,7 @@ networks:
 """
         return template
 
-    def fix_container_permissions(self, project_root: str) -> Dict[str, Any]:
+    def fix_container_permissions(self, project_root: str) -> dict[str, Any]:
         """
         修复容器权限问题
 
@@ -143,26 +145,23 @@ networks:
             for dir_name in directories:
                 dir_path = project_path / dir_name
                 if dir_path.exists():
-                    subprocess.run(['chown', '-R', f'{self.APPUSER_UID}:{self.APPUSER_GID}', str(dir_path)],
-                                  capture_output=True)
+                    subprocess.run(
+                        ["chown", "-R", f"{self.APPUSER_UID}:{self.APPUSER_GID}", str(dir_path)], capture_output=True
+                    )
                     permission_fixes.append(f"Fixed {dir_name} permissions to {self.APPUSER_UID}:{self.APPUSER_GID}")
 
             return {
-                'success': True,
-                'fixed_permissions': permission_fixes,
-                'appuser_uid': self.APPUSER_UID,
-                'appuser_gid': self.APPUSER_GID,
-                'timestamp': datetime.now().isoformat()
+                "success": True,
+                "fixed_permissions": permission_fixes,
+                "appuser_uid": self.APPUSER_UID,
+                "appuser_gid": self.APPUSER_GID,
+                "timestamp": datetime.now().isoformat(),
             }
 
         except Exception as e:
-            return {
-                'success': False,
-                'error': str(e),
-                'timestamp': datetime.now().isoformat()
-            }
+            return {"success": False, "error": str(e), "timestamp": datetime.now().isoformat()}
 
-    def cleanup_host_processes(self, process_names: List[str]) -> Dict[str, Any]:
+    def cleanup_host_processes(self, process_names: list[str]) -> dict[str, Any]:
         """
         清理宿主机"违章建筑"进程
 
@@ -173,55 +172,45 @@ networks:
             killed_processes = []
 
             for process_name in process_names:
-                result = subprocess.run(['pgrep', '-f', process_name], capture_output=True, text=True)
+                result = subprocess.run(["pgrep", "-f", process_name], capture_output=True, text=True)
 
                 if result.returncode == 0:
-                    pids = result.stdout.strip().split('\n')
+                    pids = result.stdout.strip().split("\n")
                     for pid in pids:
                         if pid and pid.isdigit():
                             try:
                                 os.kill(int(pid), signal.SIGTERM)
-                                killed_processes.append({
-                                    'process': process_name,
-                                    'pid': int(pid),
-                                    'signal': 'SIGTERM'
-                                })
+                                killed_processes.append({"process": process_name, "pid": int(pid), "signal": "SIGTERM"})
                             except (ProcessLookupError, ValueError):
                                 continue
                             except:
                                 try:
                                     os.kill(int(pid), signal.SIGKILL)
-                                    killed_processes.append({
-                                        'process': process_name,
-                                        'pid': int(pid),
-                                        'signal': 'SIGKILL'
-                                    })
+                                    killed_processes.append(
+                                        {"process": process_name, "pid": int(pid), "signal": "SIGKILL"}
+                                    )
                                 except:
                                     pass
 
             # 验证清理结果
             remaining_processes = []
             for process_name in process_names:
-                result = subprocess.run(['pgrep', '-f', process_name], capture_output=True, text=True)
+                result = subprocess.run(["pgrep", "-f", process_name], capture_output=True, text=True)
                 if result.returncode == 0:
-                    remaining_processes.extend([p for p in result.stdout.strip().split('\n') if p])
+                    remaining_processes.extend([p for p in result.stdout.strip().split("\n") if p])
 
             return {
-                'success': len(remaining_processes) == 0,
-                'killed_processes': killed_processes,
-                'remaining_processes': remaining_processes,
-                'total_killed': len(killed_processes),
-                'timestamp': datetime.now().isoformat()
+                "success": len(remaining_processes) == 0,
+                "killed_processes": killed_processes,
+                "remaining_processes": remaining_processes,
+                "total_killed": len(killed_processes),
+                "timestamp": datetime.now().isoformat(),
             }
 
         except Exception as e:
-            return {
-                'success': False,
-                'error': str(e),
-                'timestamp': datetime.now().isoformat()
-            }
+            return {"success": False, "error": str(e), "timestamp": datetime.now().isoformat()}
 
-    def check_container_health(self, container_name: str) -> Dict[str, Any]:
+    def check_container_health(self, container_name: str) -> dict[str, Any]:
         """
         检查容器健康状态
 
@@ -229,55 +218,39 @@ networks:
             健康检查结果
         """
         try:
-            result = subprocess.run(['docker', 'ps', '-a', '--filter', f'name={container_name}'],
-                                  capture_output=True, text=True)
+            result = subprocess.run(
+                ["docker", "ps", "-a", "--filter", f"name={container_name}"], capture_output=True, text=True
+            )
 
             if container_name not in result.stdout:
-                return {
-                    'exists': False,
-                    'status': 'not_found',
-                    'timestamp': datetime.now().isoformat()
-                }
+                return {"exists": False, "status": "not_found", "timestamp": datetime.now().isoformat()}
 
-            lines = result.stdout.strip().split('\n')[1:]
+            lines = result.stdout.strip().split("\n")[1:]
             if lines:
                 status_line = lines[0]
-                if 'Up' in status_line:
-                    status = 'running'
-                    health_status = 'unknown'
-                    if 'healthy' in status_line:
-                        health_status = 'healthy'
-                    elif 'unhealthy' in status_line:
-                        health_status = 'unhealthy'
-                    elif 'health: starting' in status_line:
-                        health_status = 'starting'
+                if "Up" in status_line:
+                    status = "running"
+                    health_status = "unknown"
+                    if "healthy" in status_line:
+                        health_status = "healthy"
+                    elif "unhealthy" in status_line:
+                        health_status = "unhealthy"
+                    elif "health: starting" in status_line:
+                        health_status = "starting"
 
                     return {
-                        'exists': True,
-                        'status': status,
-                        'health_status': health_status,
-                        'timestamp': datetime.now().isoformat()
+                        "exists": True,
+                        "status": status,
+                        "health_status": health_status,
+                        "timestamp": datetime.now().isoformat(),
                     }
                 else:
-                    return {
-                        'exists': True,
-                        'status': 'stopped',
-                        'timestamp': datetime.now().isoformat()
-                    }
+                    return {"exists": True, "status": "stopped", "timestamp": datetime.now().isoformat()}
 
-            return {
-                'exists': True,
-                'status': 'unknown',
-                'timestamp': datetime.now().isoformat()
-            }
+            return {"exists": True, "status": "unknown", "timestamp": datetime.now().isoformat()}
 
         except Exception as e:
-            return {
-                'exists': False,
-                'status': 'error',
-                'error': str(e),
-                'timestamp': datetime.now().isoformat()
-            }
+            return {"exists": False, "status": "error", "error": str(e), "timestamp": datetime.now().isoformat()}
 
     def generate_deployment_script(self, environment: str) -> str:
         """
@@ -288,7 +261,7 @@ networks:
         """
         script_content = f"""#!/bin/bash
 # FootballPrediction {environment} - 一键部署脚本
-# Generated at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+# Generated at {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
 
 set -e
 
@@ -337,7 +310,7 @@ echo "🔴 Redis: localhost:${{REDIS_PORT:-6379}}"
 """
         return script_content
 
-    def troubleshoot_container_issues(self, container_name: str) -> Dict[str, Any]:
+    def troubleshoot_container_issues(self, container_name: str) -> dict[str, Any]:
         """
         容器故障诊断和排除
 
@@ -350,52 +323,53 @@ echo "🔴 Redis: localhost:${{REDIS_PORT:-6379}}"
 
             health_result = self.check_container_health(container_name)
 
-            if not health_result['exists']:
+            if not health_result["exists"]:
                 issues.append("容器不存在")
                 recommendations.append("检查容器名称或重新创建容器")
                 return {
-                    'container_name': container_name,
-                    'issues': issues,
-                    'recommendations': recommendations,
-                    'status': 'container_not_found'
+                    "container_name": container_name,
+                    "issues": issues,
+                    "recommendations": recommendations,
+                    "status": "container_not_found",
                 }
 
-            if health_result['status'] == 'stopped':
-                logs_result = subprocess.run(['docker', 'logs', '--tail', '20', container_name],
-                                           capture_output=True, text=True)
+            if health_result["status"] == "stopped":
+                logs_result = subprocess.run(
+                    ["docker", "logs", "--tail", "20", container_name], capture_output=True, text=True
+                )
                 if logs_result.returncode == 0:
                     logs = logs_result.stdout
-                    if 'permission denied' in logs:
+                    if "permission denied" in logs:
                         issues.append("权限问题")
                         recommendations.append("修复文件挂载权限，检查UID/GID不匹配")
-                    elif 'Connection refused' in logs:
+                    elif "Connection refused" in logs:
                         issues.append("网络连接问题")
                         recommendations.append("检查服务依赖和网络配置")
 
                 recommendations.append("重启容器: docker restart " + container_name)
 
-            elif health_result['health_status'] == 'unhealthy':
+            elif health_result["health_status"] == "unhealthy":
                 issues.append("容器健康检查失败")
                 recommendations.append("查看容器日志: docker logs " + container_name)
 
             return {
-                'container_name': container_name,
-                'health_result': health_result,
-                'issues': issues,
-                'recommendations': recommendations,
-                'timestamp': datetime.now().isoformat()
+                "container_name": container_name,
+                "health_result": health_result,
+                "issues": issues,
+                "recommendations": recommendations,
+                "timestamp": datetime.now().isoformat(),
             }
 
         except Exception as e:
             return {
-                'container_name': container_name,
-                'issues': [f"诊断失败: {str(e)}"],
-                'recommendations': ["检查Docker服务状态"],
-                'status': 'troubleshooting_failed',
-                'timestamp': datetime.now().isoformat()
+                "container_name": container_name,
+                "issues": [f"诊断失败: {str(e)}"],
+                "recommendations": ["检查Docker服务状态"],
+                "status": "troubleshooting_failed",
+                "timestamp": datetime.now().isoformat(),
             }
 
-    def generate_monitoring_dashboard(self) -> Dict[str, Any]:
+    def generate_monitoring_dashboard(self) -> dict[str, Any]:
         """
         生成监控仪表板数据
 
@@ -404,20 +378,23 @@ echo "🔴 Redis: localhost:${{REDIS_PORT:-6379}}"
         """
         try:
             system_info = {
-                'timestamp': datetime.now().isoformat(),
-                'system_metrics': {
-                    'cpu_usage': psutil.cpu_percent(interval=1),
-                    'memory_usage': psutil.virtual_memory()._asdict(),
-                    'disk_usage': psutil.disk_usage('/')._asdict()
-                }
+                "timestamp": datetime.now().isoformat(),
+                "system_metrics": {
+                    "cpu_usage": psutil.cpu_percent(interval=1),
+                    "memory_usage": psutil.virtual_memory()._asdict(),
+                    "disk_usage": psutil.disk_usage("/")._asdict(),
+                },
             }
 
             container_info = {}
-            result = subprocess.run(['docker', 'ps', '--format', 'table "{{.Names}}\\t{{.Status}}\\t{{.Ports}}'],
-                                  capture_output=True, text=True)
+            result = subprocess.run(
+                ["docker", "ps", "--format", 'table "{{.Names}}\\t{{.Status}}\\t{{.Ports}}'],
+                capture_output=True,
+                text=True,
+            )
 
             if result.returncode == 0:
-                lines = result.stdout.strip().split('\n')[1:]  # 跳过标题行
+                lines = result.stdout.strip().split("\n")[1:]  # 跳过标题行
                 for line in lines:
                     if line.strip():
                         parts = line.split()
@@ -425,60 +402,49 @@ echo "🔴 Redis: localhost:${{REDIS_PORT:-6379}}"
                             container_name = parts[0]
                             status = parts[1]
                             container_info[container_name] = {
-                                'status': status,
-                                'ports': parts[2] if len(parts) > 2 else '',
+                                "status": status,
+                                "ports": parts[2] if len(parts) > 2 else "",
                             }
 
                             health_result = self.check_container_name(container_name)
-                            container_info[container_name]['health'] = health_result.get('status', 'unknown')
+                            container_info[container_name]["health"] = health_result.get("status", "unknown")
 
             # 计算健康评分
             total_containers = len(container_info)
-            healthy_containers = sum(1 for c in container_info.values()
-                                    if c.get('status') == 'Up')
+            healthy_containers = sum(1 for c in container_info.values() if c.get("status") == "Up")
 
             health_score = (healthy_containers / total_containers * 100) if total_containers > 0 else 0
 
             return {
-                'system_info': system_info,
-                'container_info': container_info,
-                'summary': {
-                    'total_containers': total_containers,
-                    'healthy_containers': healthy_containers,
-                    'health_score': round(health_score, 2),
-                    'status': 'healthy' if health_score >= 80 else 'warning' if health_score >= 60 else 'critical'
+                "system_info": system_info,
+                "container_info": container_info,
+                "summary": {
+                    "total_containers": total_containers,
+                    "healthy_containers": healthy_containers,
+                    "health_score": round(health_score, 2),
+                    "status": "healthy" if health_score >= 80 else "warning" if health_score >= 60 else "critical",
                 },
-                'timestamp': datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
 
         except Exception as e:
-            return {
-                'error': str(e),
-                'timestamp': datetime.now().isoformat(),
-                'status': 'monitoring_failed'
-            }
+            return {"error": str(e), "timestamp": datetime.now().isoformat(), "status": "monitoring_failed"}
 
-    def check_container_name(self, container_name: str) -> Dict[str, Any]:
+    def check_container_name(self, container_name: str) -> dict[str, Any]:
         """检查容器名称是否存在"""
         try:
-            result = subprocess.run(['docker', 'ps', '-a', '--filter', f'name={container_name}'],
-                                  capture_output=True, text=True)
+            result = subprocess.run(
+                ["docker", "ps", "-a", "--filter", f"name={container_name}"], capture_output=True, text=True
+            )
 
             exists = container_name in result.stdout
-            status = 'running' if exists and 'Up' in result.stdout else 'stopped' if exists else 'not_found'
+            status = "running" if exists and "Up" in result.stdout else "stopped" if exists else "not_found"
 
-            return {
-                'exists': exists,
-                'status': status
-            }
+            return {"exists": exists, "status": status}
         except Exception as e:
-            return {
-                'exists': False,
-                'status': 'error',
-                'error': str(e)
-            }
+            return {"exists": False, "status": "error", "error": str(e)}
 
-    def generate_deployment_report(self, environment: str) -> Dict[str, Any]:
+    def generate_deployment_report(self, environment: str) -> dict[str, Any]:
         """
         生成部署报告
 
@@ -491,7 +457,7 @@ echo "🔴 Redis: localhost:${{REDIS_PORT:-6379}}"
             containers_to_check = [
                 f"footballprediction-app-{environment}",
                 f"footballprediction-db-{environment}",
-                f"footballprediction-redis-{environment}"
+                f"footballprediction-redis-{environment}",
             ]
 
             container_health_results = {}
@@ -499,37 +465,37 @@ echo "🔴 Redis: localhost:${{REDIS_PORT:-6379}}"
                 container_health_results[container] = self.troubleshoot_container_issues(container)
 
             report = {
-                'deployment_info': {
-                    'environment': environment,
-                    'timestamp': datetime.now().isoformat(),
-                    'version': 'v2.3.0-production',
-                    'deployment_type': 'full_containerization'
+                "deployment_info": {
+                    "environment": environment,
+                    "timestamp": datetime.now().isoformat(),
+                    "version": "v2.3.0-production",
+                    "deployment_type": "full_containerization",
                 },
-                'container_health': container_health_results,
-                'monitoring_data': monitoring_data,
-                'summary': {
-                    'overall_status': monitoring_data.get('summary', {}).get('status', 'unknown'),
-                    'health_score': monitoring_data.get('summary', {}).get('health_score', 0),
-                    'recommendations': self._generate_recommendations(container_health_results)
+                "container_health": container_health_results,
+                "monitoring_data": monitoring_data,
+                "summary": {
+                    "overall_status": monitoring_data.get("summary", {}).get("status", "unknown"),
+                    "health_score": monitoring_data.get("summary", {}).get("health_score", 0),
+                    "recommendations": self._generate_recommendations(container_health_results),
                 },
-                'success': True
+                "success": True,
             }
 
             return report
 
         except Exception as e:
             return {
-                'error': str(e),
-                'timestamp': datetime.now().isoformat(),
-                'status': 'report_generation_failed',
-                'success': False
+                "error": str(e),
+                "timestamp": datetime.now().isoformat(),
+                "status": "report_generation_failed",
+                "success": False,
             }
 
-    def _generate_recommendations(self, container_health_results: Dict[str, Any]) -> List[str]:
+    def _generate_recommendations(self, container_health_results: dict[str, Any]) -> list[str]:
         """生成建议"""
         recommendations = []
 
-        issues_found = sum(len(result.get('issues', [])) for result in container_health_results.values())
+        issues_found = sum(len(result.get("issues", [])) for result in container_health_results.values())
 
         if issues_found == 0:
             recommendations.append("所有容器运行正常，系统状态良好")
@@ -537,22 +503,21 @@ echo "🔴 Redis: localhost:${{REDIS_PORT:-6379}}"
             recommendations.append(f"发现 {issues_found} 个问题，建议及时处理")
 
         # 通用建议
-        recommendations.extend([
-            "定期执行 docker ps 检查容器状态",
-            "使用 docker logs 监控容器日志",
-            "监控系统资源使用情况"
-        ])
+        recommendations.extend(
+            ["定期执行 docker ps 检查容器状态", "使用 docker logs 监控容器日志", "监控系统资源使用情况"]
+        )
 
         return recommendations
+
 
 # 技能示例使用说明
 def get_skill_info():
     """获取技能信息"""
     skill = DeploymentOperationsSkill()
     return {
-        'name': skill.skill_name,
-        'capabilities': skill.capabilities,
-        'total_capabilities': len(skill.capabilities),
-        'version': 'v2.3.0',
-        'description': '基于实战经验的容器化部署和自动化运维技能'
+        "name": skill.skill_name,
+        "capabilities": skill.capabilities,
+        "total_capabilities": len(skill.capabilities),
+        "version": "v2.3.0",
+        "description": "基于实战经验的容器化部署和自动化运维技能",
     }

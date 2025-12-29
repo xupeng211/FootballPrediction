@@ -30,7 +30,6 @@ Date: 2025-12-28
 import gc
 import logging
 import multiprocessing
-import os
 import stat
 import time
 from concurrent.futures import ProcessPoolExecutor, as_completed
@@ -39,10 +38,9 @@ from typing import Any
 
 import psutil
 import psycopg2
-from psycopg2.extras import execute_values
 
 # Phase 2.1: 导入数据库连接池
-from src.database.db_pool import SyncDatabasePool, DatabasePoolConfig
+from src.database.db_pool import DatabasePoolConfig, SyncDatabasePool
 
 logger = logging.getLogger(__name__)
 
@@ -445,7 +443,8 @@ class BulkInserter:
         # 构建 IN 子句
         placeholders = ",".join(["%s"] * len(external_ids))
 
-        cur.execute(f"""
+        cur.execute(
+            f"""
             SELECT
                 external_id,
                 match_time,
@@ -456,7 +455,9 @@ class BulkInserter:
                 league_name
             FROM matches
             WHERE external_id IN ({placeholders})
-        """, external_ids)
+        """,
+            external_ids,
+        )
 
         # 构建映射字典: external_id -> (match_time, home_team, away_team, home_score, away_score, league_name)
         matches_map = {row[0]: row[1:] for row in cur.fetchall()}
@@ -466,7 +467,7 @@ class BulkInserter:
             # record: (external_id, season, match_date, home_team, away_team, version, features_json, meta_json, feature_count, status)
             external_id = record[0]
             features_json = record[6]  # V26.2 特征 JSON
-            meta_json = record[7]       # 元数据 JSON
+            meta_json = record[7]  # 元数据 JSON
 
             # 检查是否在 matches 表中存在
             if external_id not in matches_map:
@@ -478,7 +479,8 @@ class BulkInserter:
             # Phase 2.2: 每条记录使用独立的事务，避免一条失败影响全部
             try:
                 # 使用 ON CONFLICT 直接 UPSERT，包含所有 NOT NULL 字段
-                cur.execute(f"""
+                cur.execute(
+                    f"""
                     INSERT INTO {table_name} AS tgt (
                         external_id,
                         match_time,
@@ -506,20 +508,22 @@ class BulkInserter:
                         feature_quality_score = GREATEST(tgt.feature_quality_score, EXCLUDED.feature_quality_score),
                         processing_status = EXCLUDED.processing_status,
                         updated_at = CURRENT_TIMESTAMP
-                """, (
-                    external_id,
-                    match_time,
-                    home_team,
-                    away_team,
-                    home_score,
-                    away_score,
-                    features_json,
-                    meta_json,
-                    record[5],  # feature_version
-                    0.9,        # extraction_confidence
-                    0.9,        # feature_quality_score
-                    "COMPLETED" # processing_status
-                ))
+                """,
+                    (
+                        external_id,
+                        match_time,
+                        home_team,
+                        away_team,
+                        home_score,
+                        away_score,
+                        features_json,
+                        meta_json,
+                        record[5],  # feature_version
+                        0.9,  # extraction_confidence
+                        0.9,  # feature_quality_score
+                        "COMPLETED",  # processing_status
+                    ),
+                )
 
                 inserted_count += 1
 

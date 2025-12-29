@@ -36,11 +36,11 @@ logger = logging.getLogger(__name__)
 # 联赛配置 (V36.2 - 修复正确的 FotMob League ID)
 # 根据 config/target_leagues.json 官方映射
 LEAGUE_CONFIGS = [
-    {"id": 47, "name": "Premier League", "code": "PL"},    # ✅ 380 场/赛季
-    {"id": 87, "name": "La Liga", "code": "LL"},          # V36.2 修复：从 55 改为 87
-    {"id": 54, "name": "Bundesliga", "code": "BL"},       # ✅ 306 场/赛季
-    {"id": 53, "name": "Ligue 1", "code": "L1"},           # V36.2 修复：从 61 改为 53
-    {"id": 55, "name": "Serie A", "code": "SA"},           # V36.2 修复：从 135 改为 55（意甲）
+    {"id": 47, "name": "Premier League", "code": "PL"},  # ✅ 380 场/赛季
+    {"id": 87, "name": "La Liga", "code": "LL"},  # V36.2 修复：从 55 改为 87
+    {"id": 54, "name": "Bundesliga", "code": "BL"},  # ✅ 306 场/赛季
+    {"id": 53, "name": "Ligue 1", "code": "L1"},  # V36.2 修复：从 61 改为 53
+    {"id": 55, "name": "Serie A", "code": "SA"},  # V36.2 修复：从 135 改为 55（意甲）
 ]
 
 # 赛季配置 (V36.1 修复后的格式)
@@ -84,10 +84,7 @@ class FiveSeasonHarvester:
         try:
             async with self.db_pool.acquire() as conn:
                 # 检查是否已存在
-                existing = await conn.fetchval(
-                    "SELECT match_id FROM matches WHERE match_id = $1",
-                    match["match_id"]
-                )
+                existing = await conn.fetchval("SELECT match_id FROM matches WHERE match_id = $1", match["match_id"])
 
                 # 解析 match_time_utc
                 match_date = None
@@ -114,10 +111,18 @@ class FiveSeasonHarvester:
                             updated_at = NOW()
                         WHERE match_id = $1
                         """,
-                        match["match_id"], league_id, match["league_name"],
-                        match["season_name"], match["home_team"], match["away_team"],
-                        home_team_id, away_team_id, match["status"],
-                        match_date, match["home_score"], match["away_score"],
+                        match["match_id"],
+                        league_id,
+                        match["league_name"],
+                        match["season_name"],
+                        match["home_team"],
+                        match["away_team"],
+                        home_team_id,
+                        away_team_id,
+                        match["status"],
+                        match_date,
+                        match["home_score"],
+                        match["away_score"],
                     )
                 else:
                     await conn.execute(
@@ -129,10 +134,18 @@ class FiveSeasonHarvester:
                             created_at, updated_at
                         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW(), NOW())
                         """,
-                        match["match_id"], league_id, match["league_name"],
-                        match["season_name"], match["home_team"], match["away_team"],
-                        home_team_id, away_team_id, match["status"],
-                        match_date, match["home_score"], match["away_score"],
+                        match["match_id"],
+                        league_id,
+                        match["league_name"],
+                        match["season_name"],
+                        match["home_team"],
+                        match["away_team"],
+                        home_team_id,
+                        away_team_id,
+                        match["status"],
+                        match_date,
+                        match["home_score"],
+                        match["away_score"],
                     )
 
                 return True
@@ -144,7 +157,7 @@ class FiveSeasonHarvester:
         """保存所有 L1 比赛到数据库"""
         saved_count = 0
         for match in matches:
-            match_dict = match.to_dict() if hasattr(match, 'to_dict') else match
+            match_dict = match.to_dict() if hasattr(match, "to_dict") else match
             if await self._save_l1_match_index(match_dict):
                 saved_count += 1
         return saved_count
@@ -158,9 +171,9 @@ class FiveSeasonHarvester:
             "by_league": {},
         }
 
-        logger.info(f"\n{'='*60}")
+        logger.info(f"\n{'=' * 60}")
         logger.info(f"🎯 开始采集: {season_display} 赛季")
-        logger.info(f"{'='*60}")
+        logger.info(f"{'=' * 60}")
 
         for league in LEAGUE_CONFIGS:
             self.stats["completed"] += 1
@@ -196,11 +209,11 @@ class FiveSeasonHarvester:
         """生成数据资产审计报告"""
         report = []
         report.append("\n")
-        report.append("╔" + "═"*78 + "╗")
-        report.append("║" + " "*20 + "五大联赛五年数据资产审计表" + " "*22 + "║")
-        report.append("╠" + "═"*78 + "╣")
-        report.append("║" + " "*5 + "赛季" + " "*8 + "| PL  | LL  | BL  | L1  | SA  |  小计" + " "*18 + "║")
-        report.append("╠" + "═"*78 + "╣")
+        report.append("╔" + "═" * 78 + "╗")
+        report.append("║" + " " * 20 + "五大联赛五年数据资产审计表" + " " * 22 + "║")
+        report.append("╠" + "═" * 78 + "╣")
+        report.append("║" + " " * 5 + "赛季" + " " * 8 + "| PL  | LL  | BL  | L1  | SA  |  小计" + " " * 18 + "║")
+        report.append("╠" + "═" * 78 + "╣")
 
         total_all = 0
         for season in SEASONS:
@@ -216,11 +229,15 @@ class FiveSeasonHarvester:
             subtotal = stats.get("matches_collected", 0)
             total_all += subtotal
 
-            report.append(f"║  {disp:<14} | {pl:>4} | {ll:>4} | {bl:>4} | {l1:>4} | {sa:>4} | {subtotal:>6}" + " "*24 + "║")
+            report.append(
+                f"║  {disp:<14} | {pl:>4} | {ll:>4} | {bl:>4} | {l1:>4} | {sa:>4} | {subtotal:>6}" + " " * 24 + "║"
+            )
 
-        report.append("╠" + "═"*78 + "╣")
-        report.append(f"║  {'总计':<14} | {'':>4} | {'':>4} | {'':>4} | {'':>4} | {'':>4} | {total_all:>6}" + " "*24 + "║")
-        report.append("╚" + "═"*78 + "╝")
+        report.append("╠" + "═" * 78 + "╣")
+        report.append(
+            f"║  {'总计':<14} | {'':>4} | {'':>4} | {'':>4} | {'':>4} | {'':>4} | {total_all:>6}" + " " * 24 + "║"
+        )
+        report.append("╚" + "═" * 78 + "╝")
         report.append("")
         report.append("📊 注: PL=Premier League, LL=La Liga, BL=Bundesliga, L1=Ligue 1, SA=Serie A")
         report.append("⚠️  Serie A 数据受 FotMob API 限制，部分赛季可能不足 380 场")
@@ -230,20 +247,17 @@ class FiveSeasonHarvester:
 
 async def five_season_harvest():
     """五年全量采集主函数"""
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s - %(levelname)s - %(message)s"
-    )
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
     progress_logger = logging.getLogger("progress")
     progress_logger.setLevel(logging.INFO)
     progress_logger.addHandler(logging.StreamHandler())
     progress_logger.propagate = False
 
-    progress_logger.info("="*60)
+    progress_logger.info("=" * 60)
     progress_logger.info("🌍 V36.2 五大联赛五年全量采集")
     progress_logger.info(f"📊 目标: {len(LEAGUE_CONFIGS)} 大联赛 × {len(SEASONS)} 赛季")
-    progress_logger.info("="*60)
+    progress_logger.info("=" * 60)
 
     # 创建数据库连接池
     settings = get_settings()

@@ -3,20 +3,18 @@
 使用 machine-learning-engineering Skill 的最佳实践
 """
 
-import pandas as pd
-import numpy as np
-from sklearn.model_selection import train_test_split, StratifiedKFold
-from sklearn.preprocessing import StandardScaler, LabelEncoder
-import xgboost as xgb
-from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
-import matplotlib.pyplot as plt
-import seaborn as sns
 import mlflow
 import mlflow.xgboost
+import numpy as np
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder, StandardScaler
+
+from .feature_engineering_analyzer import FootballFeatureAnalyzer
 
 # 导入我们的优化器
 from .xgboost_optimizer import FootballPredictionOptimizer
-from .feature_engineering_analyzer import FootballFeatureAnalyzer
+
 
 class FootballModelPipeline:
     """足球预测模型训练流水线"""
@@ -36,7 +34,7 @@ class FootballModelPipeline:
         print(f"数据形状: {df.shape}")
         return df
 
-    def preprocess_data(self, df: pd.DataFrame, target_col: str = 'target'):
+    def preprocess_data(self, df: pd.DataFrame, target_col: str = "target"):
         """数据预处理"""
         print("\n🔧 数据预处理...")
 
@@ -48,12 +46,12 @@ class FootballModelPipeline:
         y = df[target_col]
 
         # 处理分类特征
-        categorical_cols = X.select_dtypes(include=['object', 'category']).columns
+        categorical_cols = X.select_dtypes(include=["object", "category"]).columns
         for col in categorical_cols:
             X[col] = pd.get_dummies(X[col], prefix=col)
 
         # 标签编码
-        if y.dtype == 'object':
+        if y.dtype == "object":
             y = self.label_encoder.fit_transform(y)
 
         # 移除缺失值
@@ -69,9 +67,7 @@ class FootballModelPipeline:
         print("\n✂️  数据分割...")
 
         # 首先分离测试集
-        X_temp, X_test, y_temp, y_test = train_test_split(
-            X, y, test_size=test_size, random_state=42, stratify=y
-        )
+        X_temp, X_test, y_temp, y_test = train_test_split(X, y, test_size=test_size, random_state=42, stratify=y)
 
         # 再分离训练和验证集
         val_size_adjusted = val_size / (1 - test_size)
@@ -90,7 +86,7 @@ class FootballModelPipeline:
         print("\n🎯 特征工程...")
 
         # 特征分析
-        train_df = pd.concat([X_train, pd.Series(y_train, name='target')], axis=1)
+        train_df = pd.concat([X_train, pd.Series(y_train, name="target")], axis=1)
         analysis_results = self.feature_analyzer.analyze_feature_quality(train_df)
 
         # 获取特征工程建议
@@ -103,7 +99,7 @@ class FootballModelPipeline:
 
         # 特征选择
         X_train_selected, selected_features = self.feature_analyzer.optimize_features(
-            X_train_enhanced, y_train, method='mutual_info', k=20
+            X_train_enhanced, y_train, method="mutual_info", k=20
         )
 
         X_val_selected = X_val_enhanced[selected_features]
@@ -119,7 +115,7 @@ class FootballModelPipeline:
         return (
             pd.DataFrame(X_train_scaled, columns=selected_features),
             pd.DataFrame(X_val_scaled, columns=selected_features),
-            pd.DataFrame(X_test_scaled, columns=selected_features)
+            pd.DataFrame(X_test_scaled, columns=selected_features),
         )
 
     def train_model(self, X_train, y_train, X_val, y_val, optimize_hyperparams=True):
@@ -138,9 +134,7 @@ class FootballModelPipeline:
                 best_score = 0
 
             # 训练最终模型
-            model, val_accuracy = self.optimizer.train_final_model(
-                X_train, y_train, X_val, y_val, params=best_params
-            )
+            model, val_accuracy = self.optimizer.train_final_model(X_train, y_train, X_val, y_val, params=best_params)
 
             # 记录到MLflow
             mlflow.log_params(best_params or {})
@@ -148,7 +142,7 @@ class FootballModelPipeline:
             mlflow.log_metric("target_accuracy", self.target_accuracy)
             mlflow.log_metric("gap_to_target", self.target_accuracy - val_accuracy)
 
-            print(f"✅ 模型训练完成!")
+            print("✅ 模型训练完成!")
             print(f"验证集准确率: {val_accuracy:.4f}")
             print(f"目标准确率: {self.target_accuracy:.4f}")
 
@@ -165,37 +159,40 @@ class FootballModelPipeline:
         latency = self.optimizer.check_inference_latency(model, X_test)
 
         # 保存结果
-        results['inference_latency_ms'] = latency
-        results['target_latency_ms'] = self.target_latency_ms
-        results['meets_latency_target'] = latency <= self.target_latency_ms
+        results["inference_latency_ms"] = latency
+        results["target_latency_ms"] = self.target_latency_ms
+        results["meets_latency_target"] = latency <= self.target_latency_ms
 
         return results
 
-    def save_pipeline(self, model, results_dir='football_model_results'):
+    def save_pipeline(self, model, results_dir="football_model_results"):
         """保存整个流水线"""
         print(f"\n💾 保存流水线到 {results_dir}...")
 
         import os
+
         os.makedirs(results_dir, exist_ok=True)
 
         # 保存模型和组件
         import joblib
-        joblib.dump(model, f'{results_dir}/model.joblib')
-        joblib.dump(self.scaler, f'{results_dir}/scaler.joblib')
-        joblib.dump(self.label_encoder, f'{results_dir}/label_encoder.joblib')
+
+        joblib.dump(model, f"{results_dir}/model.joblib")
+        joblib.dump(self.scaler, f"{results_dir}/scaler.joblib")
+        joblib.dump(self.label_encoder, f"{results_dir}/label_encoder.joblib")
 
         # 保存优化器结果
         self.optimizer.save_optimization_results(model, results_dir)
 
         # 保存特征列表
-        if hasattr(self.feature_analyzer, 'selected_features'):
-            with open(f'{results_dir}/selected_features.json', 'w') as f:
+        if hasattr(self.feature_analyzer, "selected_features"):
+            with open(f"{results_dir}/selected_features.json", "w") as f:
                 import json
+
                 json.dump(self.feature_analyzer.selected_features, f, indent=2)
 
         print("✅ 流水线保存完成!")
 
-    def run_full_pipeline(self, data_path: str, target_col: str = 'target'):
+    def run_full_pipeline(self, data_path: str, target_col: str = "target"):
         """运行完整流水线"""
         print("🏈 足球赛果预测模型训练流水线")
         print("=" * 50)
@@ -211,14 +208,10 @@ class FootballModelPipeline:
             X_train, X_val, X_test, y_train, y_val, y_test = self.split_data(X, y)
 
             # 4. 特征工程
-            X_train_final, X_val_final, X_test_final = self.feature_engineering(
-                X_train, X_val, X_test, y_train
-            )
+            X_train_final, X_val_final, X_test_final = self.feature_engineering(X_train, X_val, X_test, y_train)
 
             # 5. 模型训练
-            model, val_accuracy = self.train_model(
-                X_train_final, y_train, X_val_final, y_val
-            )
+            model, val_accuracy = self.train_model(X_train_final, y_train, X_val_final, y_val)
 
             # 6. 模型评估
             results = self.evaluate_model(model, X_test_final, y_test)
