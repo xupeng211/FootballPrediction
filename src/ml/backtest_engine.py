@@ -1,258 +1,69 @@
-#!/usr/bin/env python3
 """
-V25.0 自动化策略回测引擎 - Quant Trading Backtester
-====================================================
+V35.0 生产级回测引擎 - 核心架构固化版
+========================================
 
-核心功能:
-    1. 载入 V24.1 模型并进行历史回测
-    2. 等额投注模拟（Level Staking）
-    3. 计算核心金融指标: ROI, Sharpe Ratio, Max Drawdown
-    4. 生成详细的回测报告
+整合经过验证的回测逻辑：
+- 模拟实战下注（基于模型概率）
+- 盈亏平衡表生成
+- 最佳下注阈值优化
+- 风险指标计算
 
-设计模式:
-    - Strategy Pattern: 可插拔投注策略
-    - Observer Pattern: 实时性能监控
-    - Factory Pattern: 指标计算器工厂
-
-作者: Quant Strategist
-版本: V25.0-Quant
-日期: 2025-12-25
+作者: V35.0 Architecture Team
+日期: 2025-12-28
+版本: V35.0 Production
 """
 
 import json
 import logging
-import os
-import sys
-from dataclasses import dataclass, field
-from datetime import datetime, timedelta
-from enum import Enum
+from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
-from typing import Any
-
-# 添加项目路径
-project_root = Path(__file__).parent.parent.parent
-sys.path.insert(0, str(project_root))
-src_root = Path(__file__).parent.parent
-sys.path.insert(0, str(src_root))
 
 import numpy as np
+import pandas as pd
 
-# 配置日志
-os.makedirs("logs", exist_ok=True)
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(name)s - %(message)s",
-    handlers=[logging.FileHandler("logs/v25_backtest.log"), logging.StreamHandler()],
-)
 logger = logging.getLogger(__name__)
-
-
-# ============================================================================
-# 枚举定义
-# ============================================================================
-
-
-class BetOutcome(str, Enum):
-    """投注结果"""
-
-    HOME_WIN = "H"
-    DRAW = "D"
-    AWAY_WIN = "A"
-    VOID = "V"  # 无效（比赛取消等）
-    PENDING = "P"
-
-
-class StrategyType(str, Enum):
-    """策略类型"""
-
-    LEVEL_STAKING = "level_staking"  # 等额投注
-    KELLY_CRITERION = "kelly"  # 凯利公式
-    FIXED_PROFIT = "fixed_profit"  # 固定利润
-    PROPORTIONAL = "proportional"  # 比例投注
-
-
-# ============================================================================
-# 数据模型定义
-# ============================================================================
-
-
-@dataclass
-class BacktestConfig:
-    """
-    回测配置
-
-    Attributes:
-        start_date: 回测开始日期
-        end_date: 回测结束日期
-        initial_bankroll: 初始资金
-        strategy_type: 投注策略类型
-        stake_per_bet: 每笔投注金额（等额投注）
-        min_confidence: 最小置信度阈值
-        min_edge: 最小优势阈值（Model Prob - Market Prob）
-        commission: 佣金比例（默认 0%，可设为 0.05 表示 5%）
-        enable_kelly: 是否启用凯利公式
-        kelly_fraction: 凯利分数（保守凯利建议 0.25）
-    """
-
-    start_date: datetime | None = None
-    end_date: datetime | None = None
-    initial_bankroll: float = 1000.0
-    strategy_type: StrategyType = StrategyType.LEVEL_STAKING
-    stake_per_bet: float = 10.0  # 等额投注: 每注 10 单位
-    min_confidence: float = 0.55  # 最小置信度 55%
-    min_edge: float = 0.05  # 最小优势 5%
-    commission: float = 0.0
-    enable_kelly: bool = False
-    kelly_fraction: float = 0.25
-
-
-@dataclass
-class MatchPrediction:
-    """
-    比赛预测
-
-    Attributes:
-        match_id: 比赛 ID
-        external_id: 外部 ID
-        home_team: 主队
-        away_team: 客队
-        match_time: 比赛时间
-        league: 联赛
-        season: 赛季
-        model_probs: 模型预测概率 [Home, Draw, Away]
-        market_odds: 市场赔率 [Home, Draw, Away] (小数格式)
-        market_probs: 市场隐含概率 [Home, Draw, Away]
-        recommended_bet: 推荐投注 (H/D/A)
-        confidence: 置信度
-        edge: 优势 (Model Prob - Market Prob)
-        actual_result: 实际结果（用于回测验证）
-    """
-
-    match_id: int
-    external_id: str
-    home_team: str
-    away_team: str
-    match_time: datetime
-    league: str
-    season: str
-    model_probs: list[float]  # [Home, Draw, Away]
-    market_odds: list[float]  # [Home, Draw, Away]
-    market_probs: list[float]  # [Home, Draw, Away]
-    recommended_bet: str | None = None
-    confidence: float = 0.0
-    edge: float = 0.0
-    actual_result: str | None = None
-
-
-@dataclass
-class BetRecord:
-    """
-    投注记录
-
-    Attributes:
-        prediction: 预测对象
-        bet_outcome: 投注选择 (H/D/A)
-        stake: 投注金额
-        odds: 投注赔率
-        expected_value: 期望值
-        outcome: 实际结果
-        profit: 盈亏
-        timestamp: 投注时间
-    """
-
-    prediction: MatchPrediction
-    bet_outcome: str
-    stake: float
-    odds: float
-    expected_value: float
-    outcome: BetOutcome
-    profit: float
-    timestamp: datetime
 
 
 @dataclass
 class BacktestMetrics:
+    """回测指标"""
+
+    total_bets: int
+    winning_bets: int
+    total_stake: float
+    total_return: float
+    roi_pct: float
+    max_drawdown: float
+    sharpe_ratio: float
+    win_rate: float
+    avg_odds: float
+    profit_per_bet: float
+    home_bets: int
+    draw_bets: int
+    away_bets: int
+    home_win_rate: float
+    draw_win_rate: float
+    away_win_rate: float
+
+
+@dataclass
+class BacktestConfig:
+    """回测配置"""
+
+    stake_per_bet: float = 100.0
+    min_prob_threshold: float = 0.55
+    max_prob_threshold: float = 0.85
+    commission_pct: float = 0.0
+    KellyCriterion: bool = False
+    KellyFraction: float = 0.25  # 保守 Kelly
+
+
+class BacktestEngine:
     """
-    回测指标
+    V35.0 生产级回测引擎
 
-    Attributes:
-        total_bets: 总投注次数
-        winning_bets: 获胜次数
-        losing_bets: 失败次数
-        void_bets: 无效次数
-        win_rate: 胜率
-        total_staked: 总投注金额
-        total_returns: 总回报
-        net_profit: 净利润
-        roi: 投资回报率
-        avg_roi_per_bet: 平均每注 ROI
-        sharpe_ratio: 夏普比率
-        max_drawdown: 最大回撤
-        max_drawdown_duration: 最大回撤持续天数
-        profit_factor: 盈利因子（总盈利/总亏损）
-        avg_stake: 平均投注金额
-        avg_win: 平均盈利
-        avg_loss: 平均亏损
-        largest_win: 最大单笔盈利
-        largest_loss: 最大单笔亏损
-        consecutive_wins: 最大连续获胜
-        consecutive_losses: 最大连续亏损
-        calmar_ratio: 卡玛比率 (年化收益/最大回撤)
-    """
-
-    total_bets: int = 0
-    winning_bets: int = 0
-    losing_bets: int = 0
-    void_bets: int = 0
-    win_rate: float = 0.0
-    total_staked: float = 0.0
-    total_returns: float = 0.0
-    net_profit: float = 0.0
-    roi: float = 0.0
-    avg_roi_per_bet: float = 0.0
-    sharpe_ratio: float = 0.0
-    max_drawdown: float = 0.0
-    max_drawdown_duration: int = 0
-    profit_factor: float = 0.0
-    avg_stake: float = 0.0
-    avg_win: float = 0.0
-    avg_loss: float = 0.0
-    largest_win: float = 0.0
-    largest_loss: float = 0.0
-    consecutive_wins: int = 0
-    consecutive_losses: int = 0
-    calmar_ratio: float = 0.0
-    equity_curve: list[float] = field(default_factory=list)
-    drawdown_curve: list[float] = field(default_factory=list)
-
-
-# ============================================================================
-# 核心回测引擎
-# ============================================================================
-
-
-class AutoBacktester:
-    """
-    自动化策略回测引擎 (V25.0)
-
-    职责:
-        1. 加载历史数据和模型
-        2. 模拟历史投注
-        3. 计算金融指标
-        4. 生成回测报告
-
-    算法流程:
-        ┌─────────────────────────────────────────────────────┐
-        │                    AutoBacktester                   │
-        │  ┌──────────────┐  ┌──────────────┐  ┌──────────┐  │
-        │  │ Data Loader  │->│ Bet Simulator│->│ Metrics  │  │
-        │  └──────────────┘  └──────────────┘  └──────────┘  │
-        │         │                   │               │        │
-        │         v                   v               v        │
-        │  ┌──────────────┐  ┌──────────────┐  ┌──────────┐  │
-        │  │ Model Loader │ │Risk Manager  │->│  Report  │  │
-        │  └──────────────┘  └──────────────┘  └──────────┘  │
-        └─────────────────────────────────────────────────────┘
+    模拟基于模型预测的下注策略
     """
 
     def __init__(self, config: BacktestConfig | None = None):
@@ -263,552 +74,252 @@ class AutoBacktester:
             config: 回测配置
         """
         self.config = config or BacktestConfig()
-        self.predictions: list[MatchPrediction] = []
-        self.bet_records: list[BetRecord] = []
-        self.equity_curve: list[float] = [self.config.initial_bankroll]
-        self.model = None
-
-        logger.info("=" * 60)
-        logger.info("V25.0 自动化回测引擎初始化完成")
-        logger.info("=" * 60)
-        logger.info(f"  初始资金: {self.config.initial_bankroll}")
-        logger.info(f"  投注策略: {self.config.strategy_type}")
+        logger.info("V35.0 回测引擎初始化完成")
         logger.info(f"  每注金额: {self.config.stake_per_bet}")
+        logger.info(f"  概率阈值: {self.config.min_prob_threshold} - {self.config.max_prob_threshold}")
 
-    # ========================================================================
-    # 数据加载与模型推理
-    # ========================================================================
-
-    def load_historical_predictions(self, days_back: int = 30, min_confidence: float = 0.55) -> list[MatchPrediction]:
+    def calculate_implied_odds(self, prob_home: float, prob_draw: float, prob_away: float) -> dict[str, float]:
         """
-        加载历史预测数据
+        基于模型概率计算隐含赔率
 
         Args:
-            days_back: 回溯天数
-            min_confidence: 最小置信度
+            prob_home: 主胜概率
+            prob_draw: 平局概率
+            prob_away: 客胜概率
 
         Returns:
-            预测列表
+            隐含赔率字典
         """
-        import psycopg2
-        from psycopg2.extras import RealDictCursor
+        # 添加利润率 (通常 5%)
+        margin = 0.05
+        total_prob = prob_home + prob_draw + prob_away
 
-        from src.config_unified import get_settings
+        # 调整后的概率
+        adj_home = prob_home / total_prob * (1 - margin)
+        adj_draw = prob_draw / total_prob * (1 - margin)
+        adj_away = prob_away / total_prob * (1 - margin)
 
-        settings = get_settings()
-        db_config = settings.database
+        # 计算小数赔率
+        odds_home = 1.0 / max(adj_home, 0.01)
+        odds_draw = 1.0 / max(adj_draw, 0.01)
+        odds_away = 1.0 / max(adj_away, 0.01)
 
-        # 计算日期范围
-        end_date = datetime.now()
-        start_date = end_date - timedelta(days=days_back)
+        return {
+            "home": odds_home,
+            "draw": odds_draw,
+            "away": odds_away,
+        }
 
-        logger.info(f"加载历史预测: {start_date.date()} 至 {end_date.date()}")
-
-        conn = None
-        predictions = []
-
-        try:
-            conn = psycopg2.connect(
-                host=db_config.host,
-                port=db_config.port,
-                database=db_config.name,
-                user=db_config.user,
-                password=db_config.password.get_secret_value(),
-                cursor_factory=RealDictCursor,
-            )
-
-            with conn.cursor() as cur:
-                # 获取已完成的比赛（有实际结果）
-                cur.execute(
-                    """
-                    SELECT
-                        m.id as match_id,
-                        m.external_id,
-                        m.home_team,
-                        m.away_team,
-                        m.match_time,
-                        m.league_id,
-                        m.season,
-                        m.home_score,
-                        m.away_score,
-                        m.actual_result,
-                        m.match_odds,
-                        f.enriched_features
-                    FROM matches m
-                    JOIN match_features_training f ON m.id = f.match_id
-                    WHERE m.status = 'Finished'
-                      AND m.match_time >= %s
-                      AND m.match_time < %s
-                      AND f.status = 'completed'
-                      AND m.actual_result IS NOT NULL
-                    ORDER BY m.match_time ASC
-                """,
-                    (start_date, end_date),
-                )
-
-                rows = cur.fetchall()
-
-                logger.info(f"找到 {len(rows)} 场历史比赛")
-
-                for row in rows:
-                    # 解析赔率
-                    market_odds = self._parse_odds(row.get("match_odds"))
-
-                    # 如果没有赔率，使用默认值
-                    if not market_odds or sum(market_odds) == 0:
-                        continue
-
-                    # 模拟模型预测（这里使用简化逻辑，实际应加载模型）
-                    model_probs = self._simulate_model_prediction(row)
-
-                    # 计算市场隐含概率（考虑5%抽水）
-                    market_probs = self._odds_to_implied_probs(market_odds)
-
-                    # 找到最佳投注
-                    recommended_bet, confidence, edge = self._find_best_bet(model_probs, market_probs, market_odds)
-
-                    # 只保留高置信度预测
-                    if confidence >= min_confidence:
-                        pred = MatchPrediction(
-                            match_id=row["match_id"],
-                            external_id=row["external_id"],
-                            home_team=row["home_team"],
-                            away_team=row["away_team"],
-                            match_time=row["match_time"],
-                            league=row.get("league_id", ""),
-                            season=row.get("season", ""),
-                            model_probs=model_probs,
-                            market_odds=market_odds,
-                            market_probs=market_probs,
-                            recommended_bet=recommended_bet,
-                            confidence=confidence,
-                            edge=edge,
-                            actual_result=row.get("actual_result"),
-                        )
-                        predictions.append(pred)
-
-            logger.info(f"✅ 生成 {len(predictions)} 条有效预测")
-
-        finally:
-            if conn:
-                conn.close()
-
-        self.predictions = predictions
-        return predictions
-
-    def _parse_odds(self, odds_data: Any) -> list[float] | None:
-        """解析赔率数据"""
-        if odds_data is None:
-            return None
-
-        try:
-            if isinstance(odds_data, str):
-                data = json.loads(odds_data)
-            elif isinstance(odds_data, dict):
-                data = odds_data
-            else:
-                data = odds_data
-
-            # 尝试提取赔率（多种格式兼容）
-            if "winner" in data:
-                odds = data["winner"]
-                return [odds.get("home", 1.0), odds.get("draw", 1.0), odds.get("away", 1.0)]
-            elif isinstance(data, list) and len(data) >= 3:
-                return [float(data[0]), float(data[1]), float(data[2])]
-
-        except (json.JSONDecodeError, TypeError, AttributeError):
-            pass
-
-        return None
-
-    def _simulate_model_prediction(self, row: dict[str, Any]) -> list[float]:
+    def run_backtest(
+        self,
+        df: pd.DataFrame,
+        model_predictions: np.ndarray,
+        model_probabilities: np.ndarray,
+    ) -> BacktestMetrics:
         """
-        模拟模型预测（简化版本，实际应加载真实模型）
-
-        基于实际结果添加噪声来模拟模型预测
-        """
-        actual_result = row.get("actual_result", "D")
-
-        # 基础概率（模拟模型的倾向）
-        if actual_result == "H":
-            base_probs = [0.55, 0.25, 0.20]
-        elif actual_result == "A":
-            base_probs = [0.25, 0.25, 0.50]
-        else:  # Draw
-            base_probs = [0.35, 0.40, 0.25]
-
-        # 添加随机噪声（模拟模型不确定性）
-        noise = np.random.normal(0, 0.05, 3)
-        probs = np.array(base_probs) + noise
-
-        # 确保概率和为1且非负
-        probs = np.clip(probs, 0.01, 0.98)
-        probs = probs / probs.sum()
-
-        return probs.tolist()
-
-    def _odds_to_implied_probs(self, odds: list[float]) -> list[float]:
-        """
-        将赔率转换为隐含概率（考虑抽水）
+        执行回测
 
         Args:
-            odds: 小数赔率 [Home, Draw, Away]
-
-        Returns:
-            隐含概率
-        """
-        # 计算原始隐含概率
-        probs = [1.0 / o if o > 0 else 0 for o in odds]
-
-        # 调整抽水（假设5%市场抽水）
-        total = sum(probs)
-        overround = total - 1.0
-
-        # 归一化
-        adjusted_probs = [p / (1 + overround) for p in probs]
-
-        return adjusted_probs
-
-    def _find_best_bet(
-        self, model_probs: list[float], market_probs: list[float], market_odds: list[float]
-    ) -> tuple[str | None, float, float]:
-        """
-        找到最佳投注
-
-        策略: 选择 Model Prob - Market Prob 最大的结果
-
-        Returns:
-            (投注选择, 置信度, 优势)
-        """
-        outcomes = ["H", "D", "A"]
-        edges = [model_probs[i] - market_probs[i] for i in range(3)]
-
-        # 找到最大优势
-        best_idx = int(np.argmax(edges))
-        max_edge = edges[best_idx]
-
-        # 置信度 = 模型概率
-        confidence = model_probs[best_idx]
-
-        # 只在有正优势时推荐
-        if max_edge > self.config.min_edge and confidence >= self.config.min_confidence:
-            return outcomes[best_idx], confidence, max_edge
-
-        return None, 0.0, 0.0
-
-    # ========================================================================
-    # 投注模拟
-    # ========================================================================
-
-    def run_backtest(self) -> BacktestMetrics:
-        """
-        运行回测
+            df: 测试数据集（必须包含 result 列）
+            model_predictions: 模型预测结果 (0=away, 1=draw, 2=home)
+            model_probabilities: 模型预测概率
 
         Returns:
             回测指标
         """
-        if not self.predictions:
-            logger.warning("没有预测数据，跳过回测")
-            return BacktestMetrics()
+        logger.info("=" * 70)
+        logger.info("V35.0 回测执行")
+        logger.info("=" * 70)
 
-        logger.info("=" * 60)
-        logger.info("开始回测模拟")
-        logger.info("=" * 60)
+        total_stake = 0.0
+        total_return = 0.0
+        winning_bets = 0
+        losing_bets = 0
 
-        bankroll = self.config.initial_bankroll
-        self.equity_curve = [bankroll]
+        home_bets = draw_bets = away_bets = 0
+        home_wins = draw_wins = away_wins = 0
 
-        winning_streak = 0
-        losing_streak = 0
-        max_consecutive_wins = 0
-        max_consecutive_losses = 0
+        equity_curve = [self.config.stake_per_bet * 100]  # 初始资金
 
-        for pred in self.predictions:
-            if not pred.recommended_bet:
+        for i, (_, row) in enumerate(df.iterrows()):
+            if i >= len(model_predictions):
+                break
+
+            # 获取预测和概率
+            pred = model_predictions[i]
+            probs = model_probabilities[i]
+            actual = row["result"]
+            actual_code = {"away": 0, "draw": 1, "home": 2}[actual]
+
+            # 获取最大概率
+            max_prob = np.max(probs)
+            pred_class = int(pred)
+
+            # 检查是否满足下注条件
+            if max_prob < self.config.min_prob_threshold:
+                continue
+            if max_prob > self.config.max_prob_threshold:
                 continue
 
-            # 确定投注结果
-            bet_outcome = pred.recommended_bet
-            bet_idx = {"H": 0, "D": 1, "A": 2}[bet_outcome]
-            odds = pred.market_odds[bet_idx]
+            # 计算赔率
+            odds = self.calculate_implied_odds(probs[2], probs[1], probs[0])
+            pred_odds = odds["home"] if pred_class == 2 else (odds["draw"] if pred_class == 1 else odds["away"])
 
-            # 计算投注金额（等额投注）
-            stake = min(self.config.stake_per_bet, bankroll * 0.05)  # 不超过5%本金
-
-            # 计算期望值
-            ev = (pred.model_probs[bet_idx] * odds - 1) * stake
-
-            # 判断实际结果
-            actual = pred.actual_result
-            if actual == bet_outcome:
-                outcome = (
-                    BetOutcome.HOME_WIN
-                    if bet_outcome == "H"
-                    else (BetOutcome.DRAW if bet_outcome == "D" else BetOutcome.AWAY_WIN)
-                )
-                profit = stake * (odds - 1)
-                bankroll += profit
-                winning_streak += 1
-                losing_streak = 0
-                max_consecutive_wins = max(max_consecutive_wins, winning_streak)
+            # 计算下注金额
+            if self.config.KellyCriterion:
+                # Kelly 公式: f = (bp - q) / b
+                # b = 赔率 - 1, p = 胜率, q = 1 - p
+                b = pred_odds - 1.0
+                p = max_prob
+                q = 1.0 - p
+                kelly_fraction = (b * p - q) / b
+                stake = self.config.stake_per_bet * max(0, min(kelly_fraction, 0.1)) * 4  # 限制最大下注
             else:
-                outcome = (
-                    BetOutcome.HOME_WIN
-                    if actual == "H"
-                    else (BetOutcome.DRAW if actual == "D" else BetOutcome.AWAY_WIN)
-                )
-                profit = -stake
-                bankroll += profit
-                losing_streak += 1
-                winning_streak = 0
-                max_consecutive_losses = max(max_consecutive_losses, losing_streak)
+                stake = self.config.stake_per_bet
 
-            # 记录投注
-            bet_record = BetRecord(
-                prediction=pred,
-                bet_outcome=bet_outcome,
-                stake=stake,
-                odds=odds,
-                expected_value=ev,
-                outcome=outcome,
-                profit=profit,
-                timestamp=datetime.now(),
+            total_stake += stake
+
+            # 统计下注类型
+            if pred_class == 2:
+                home_bets += 1
+            elif pred_class == 1:
+                draw_bets += 1
+            else:
+                away_bets += 1
+
+            # 计算收益
+            if pred_class == actual_code:
+                # 中奖
+                winning_bets += 1
+                returns = stake * pred_odds * (1 - self.config.commission_pct)
+                total_return += returns
+
+                if pred_class == 2:
+                    home_wins += 1
+                elif pred_class == 1:
+                    draw_wins += 1
+                else:
+                    away_wins += 1
+            else:
+                losing_bets += 1
+
+            # 更新资金曲线
+            current_equity = (
+                equity_curve[-1]
+                - stake
+                + (stake * pred_odds * (1 - self.config.commission_pct) if pred_class == actual_code else 0)
             )
-            self.bet_records.append(bet_record)
-
-            self.equity_curve.append(bankroll)
+            equity_curve.append(max(0, current_equity))
 
         # 计算指标
-        metrics = self._calculate_metrics(bankroll, max_consecutive_wins, max_consecutive_losses)
+        total_bets = winning_bets + losing_bets
+        profit = total_return - total_stake
+        roi_pct = (profit / total_stake * 100) if total_stake > 0 else 0
+        win_rate = (winning_bets / total_bets * 100) if total_bets > 0 else 0
+
+        # 计算最大回撤
+        max_drawdown = 0.0
+        peak = equity_curve[0]
+        for equity in equity_curve:
+            if equity > peak:
+                peak = equity
+            drawdown = (peak - equity) / peak * 100
+            if drawdown > max_drawdown:
+                max_drawdown = drawdown
+
+        # 计算夏普比率（简化版）
+        returns = np.diff(equity_curve)
+        sharpe_ratio = (
+            np.mean(returns) / np.std(returns) * np.sqrt(252) if len(returns) > 1 and np.std(returns) > 0 else 0
+        )
+
+        metrics = BacktestMetrics(
+            total_bets=total_bets,
+            winning_bets=winning_bets,
+            total_stake=total_stake,
+            total_return=total_return,
+            roi_pct=roi_pct,
+            max_drawdown=max_drawdown,
+            sharpe_ratio=sharpe_ratio,
+            win_rate=win_rate,
+            avg_odds=total_return / winning_bets if winning_bets > 0 else 0,
+            profit_per_bet=profit / total_bets if total_bets > 0 else 0,
+            home_bets=home_bets,
+            draw_bets=draw_bets,
+            away_bets=away_bets,
+            home_win_rate=(home_wins / home_bets * 100) if home_bets > 0 else 0,
+            draw_win_rate=(draw_wins / draw_bets * 100) if draw_bets > 0 else 0,
+            away_win_rate=(away_wins / away_bets * 100) if away_bets > 0 else 0,
+        )
+
+        self._log_metrics(metrics, equity_curve)
 
         return metrics
 
-    def _calculate_metrics(
-        self, final_bankroll: float, max_consecutive_wins: int, max_consecutive_losses: int
-    ) -> BacktestMetrics:
-        """计算回测指标"""
-        if not self.bet_records:
-            return BacktestMetrics()
+    def _log_metrics(self, metrics: BacktestMetrics, equity_curve: list[float]) -> None:
+        """记录回测指标"""
+        logger.info("\n【回测结果】")
+        logger.info(f"  总下注次数: {metrics.total_bets}")
+        logger.info(f"  获胜次数: {metrics.winning_bets}")
+        logger.info(f"  胜率: {metrics.win_rate:.2f}%")
+        logger.info(f"  总下注金额: {metrics.total_stake:.2f}")
+        logger.info(f"  总回报: {metrics.total_return:.2f}")
+        logger.info(f"  净利润: {metrics.total_return - metrics.total_stake:.2f}")
+        logger.info(f"  ROI: {metrics.roi_pct:.2f}%")
+        logger.info(f"  最大回撤: {metrics.max_drawdown:.2f}%")
+        logger.info(f"  夏普比率: {metrics.sharpe_ratio:.2f}")
+        logger.info(f"  每注平均利润: {metrics.profit_per_bet:.2f}")
 
-        wins = [b for b in self.bet_records if b.profit > 0]
-        losses = [b for b in self.bet_records if b.profit < 0]
+        logger.info("\n【分类别下注】")
+        logger.info(f"  主胜下注: {metrics.home_bets} 次 (胜率 {metrics.home_win_rate:.1f}%)")
+        logger.info(f"  平局下注: {metrics.draw_bets} 次 (胜率 {metrics.draw_win_rate:.1f}%)")
+        logger.info(f"  客胜下注: {metrics.away_bets} 次 (胜率 {metrics.away_win_rate:.1f}%)")
 
-        total_bets = len(self.bet_records)
-        winning_bets = len(wins)
-        losing_bets = len(losses)
-
-        total_staked = sum(b.stake for b in self.bet_records)
-        total_returns = sum(b.stake + b.profit for b in self.bet_records)
-        net_profit = final_bankroll - self.config.initial_bankroll
-        roi = (net_profit / total_staked * 100) if total_staked > 0 else 0
-
-        # 夏普比率计算
-        if len(self.bet_records) > 1:
-            returns = [b.profit / b.stake for b in self.bet_records]
-            sharpe_ratio = np.mean(returns) / np.std(returns) if np.std(returns) > 0 else 0
-            sharpe_ratio *= np.sqrt(252)  # 年化
+        logger.info("\n【最终评价】")
+        if metrics.roi_pct > 5:
+            logger.info("  ✓✓ 优秀 (ROI > 5%)")
+        elif metrics.roi_pct > 0:
+            logger.info("  ✓ 盈利 (ROI > 0%)")
         else:
-            sharpe_ratio = 0
+            logger.info("  ✗ 亏损")
 
-        # 最大回撤
-        equity = np.array(self.equity_curve)
-        running_max = np.maximum.accumulate(equity)
-        drawdown = (equity - running_max) / running_max
-        max_drawdown = abs(drawdown.min()) if len(drawdown) > 0 else 0
+        if metrics.max_drawdown < 20:
+            logger.info("  ✓ 风险可控 (最大回撤 < 20%)")
+        else:
+            logger.info("  ⚠ 风险较高 (最大回撤 >= 20%)")
 
-        # 最大回撤持续天数
-        max_dd_duration = 0
-        current_dd_duration = 0
-        for dd in drawdown:
-            if dd < 0:
-                current_dd_duration += 1
-                max_dd_duration = max(max_dd_duration, current_dd_duration)
-            else:
-                current_dd_duration = 0
+    def save_report(self, metrics: BacktestMetrics, output_path: Path | None = None) -> Path:
+        """保存回测报告"""
+        if output_path is None:
+            output_path = Path(__file__).parent.parent.parent / "reports/v35_backtest"
 
-        # 盈利因子
-        total_profit = sum(b.profit for b in wins)
-        total_loss = abs(sum(b.profit for b in losses))
-        profit_factor = total_profit / total_loss if total_loss > 0 else 0
+        output_path.mkdir(parents=True, exist_ok=True)
 
-        # 统计
-        avg_stake = total_staked / total_bets if total_bets > 0 else 0
-        avg_win = np.mean([b.profit for b in wins]) if wins else 0
-        avg_loss = np.mean([b.profit for b in losses]) if losses else 0
-        largest_win = max([b.profit for b in wins]) if wins else 0
-        largest_loss = min([b.profit for b in losses]) if losses else 0
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        report_path = output_path / f"v35_backtest_report_{timestamp}.json"
 
-        # 卡玛比率
-        annualized_return = (final_bankroll / self.config.initial_bankroll - 1) * (252 / max(len(self.equity_curve), 1))
-        calmar_ratio = annualized_return / max_drawdown if max_drawdown > 0 else 0
+        from dataclasses import asdict
 
-        return BacktestMetrics(
-            total_bets=total_bets,
-            winning_bets=winning_bets,
-            losing_bets=losing_bets,
-            void_bets=0,
-            win_rate=winning_bets / total_bets if total_bets > 0 else 0,
-            total_staked=total_staked,
-            total_returns=total_returns,
-            net_profit=net_profit,
-            roi=roi,
-            avg_roi_per_bet=roi / total_bets if total_bets > 0 else 0,
-            sharpe_ratio=sharpe_ratio,
-            max_drawdown=max_drawdown,
-            max_drawdown_duration=max_dd_duration,
-            profit_factor=profit_factor,
-            avg_stake=avg_stake,
-            avg_win=avg_win,
-            avg_loss=avg_loss,
-            largest_win=largest_win,
-            largest_loss=largest_loss,
-            consecutive_wins=max_consecutive_wins,
-            consecutive_losses=max_consecutive_losses,
-            calmar_ratio=calmar_ratio,
-            equity_curve=self.equity_curve,
-        )
+        report = asdict(metrics)
+        report["timestamp"] = datetime.now().isoformat()
+        report["version"] = "V35.0"
 
-    # ========================================================================
-    # 报告生成
-    # ========================================================================
+        with open(report_path, "w", encoding="utf-8") as f:
+            json.dump(report, f, indent=2, ensure_ascii=False)
 
-    def generate_report(self, metrics: BacktestMetrics) -> dict[str, Any]:
-        """
-        生成回测报告
-
-        Args:
-            metrics: 回测指标
-
-        Returns:
-            报告字典
-        """
-        report = {
-            "backtest_config": {
-                "start_date": self.config.start_date.isoformat() if self.config.start_date else None,
-                "end_date": self.config.end_date.isoformat() if self.config.end_date else None,
-                "initial_bankroll": self.config.initial_bankroll,
-                "strategy_type": self.config.strategy_type,
-                "stake_per_bet": self.config.stake_per_bet,
-                "min_confidence": self.config.min_confidence,
-                "min_edge": self.config.min_edge,
-            },
-            "performance_metrics": {
-                "total_bets": metrics.total_bets,
-                "winning_bets": metrics.winning_bets,
-                "losing_bets": metrics.losing_bets,
-                "win_rate": round(metrics.win_rate * 100, 2),
-                "total_staked": round(metrics.total_staked, 2),
-                "total_returns": round(metrics.total_returns, 2),
-                "net_profit": round(metrics.net_profit, 2),
-                "roi": round(metrics.roi, 2),
-                "avg_roi_per_bet": round(metrics.avg_roi_per_bet, 2),
-            },
-            "risk_metrics": {
-                "sharpe_ratio": round(metrics.sharpe_ratio, 4),
-                "max_drawdown": round(metrics.max_drawdown * 100, 2),
-                "max_drawdown_duration": metrics.max_drawdown_duration,
-                "profit_factor": round(metrics.profit_factor, 2),
-                "calmar_ratio": round(metrics.calmar_ratio, 2),
-                "largest_win": round(metrics.largest_win, 2),
-                "largest_loss": round(metrics.largest_loss, 2),
-                "consecutive_wins": metrics.consecutive_wins,
-                "consecutive_losses": metrics.consecutive_losses,
-            },
-            "betting_stats": {
-                "avg_stake": round(metrics.avg_stake, 2),
-                "avg_win": round(metrics.avg_win, 2),
-                "avg_loss": round(metrics.avg_loss, 2),
-            },
-            "equity_curve": metrics.equity_curve,
-            "generated_at": datetime.now().isoformat(),
-        }
-
-        return report
-
-    def save_report(self, report: dict[str, Any], output_path: str = "data/backtest/backtest_report.json"):
-        """保存报告到文件"""
-        os.makedirs(os.path.dirname(output_path), exist_ok=True)
-
-        with open(output_path, "w") as f:
-            json.dump(report, f, indent=2)
-
-        logger.info(f"回测报告已保存: {output_path}")
-
-    def print_summary(self, metrics: BacktestMetrics):
-        """打印回测摘要"""
-        print("\n" + "📊 " + "=" * 58)
-        print("V25.0 策略回测报告")
-        print("=" * 60)
-
-        print("\n投注统计:")
-        print(f"  • 总投注: {metrics.total_bets} 笔")
-        print(f"  🟢 获胜: {metrics.winning_bets} 笔")
-        print(f"  🔴 失败: {metrics.losing_bets} 笔")
-        print(f"  • 胜率: {metrics.win_rate * 100:.1f}%")
-
-        print("\n资金分析:")
-        print(f"  • 初始资金: {self.config.initial_bankroll:.2f}")
-        print(f"  • 最终资金: {self.config.initial_bankroll + metrics.net_profit:.2f}")
-        print(f"  • 总投注: {metrics.total_staked:.2f}")
-        print(f"  • 总回报: {metrics.total_returns:.2f}")
-
-        print("\n核心指标:")
-        roi_color = "🟢" if metrics.roi > 0 else "🔴"
-        print(f"  {roi_color} ROI: {metrics.roi:.2f}%")
-        print(f"  📈 夏普比率: {metrics.sharpe_ratio:.4f}")
-        print(f"  📉 最大回撤: {metrics.max_drawdown * 100:.2f}%")
-        print(f"  💰 盈利因子: {metrics.profit_factor:.2f}")
-
-        print("\n风险统计:")
-        print(f"  • 最大连胜: {metrics.consecutive_wins} 连")
-        print(f"  • 最大连败: {metrics.consecutive_losses} 连")
-        print(f"  • 最大单笔盈利: {metrics.largest_win:.2f}")
-        print(f"  • 最大单笔亏损: {metrics.largest_loss:.2f}")
-
-        print("\n" + "=" * 60)
+        logger.info(f"✅ 回测报告已保存: {report_path}")
+        return report_path
 
 
-# ============================================================================
-# 主程序入口
-# ============================================================================
+def create_backtest_engine(config: BacktestConfig | None = None) -> BacktestEngine:
+    """工厂函数：创建回测引擎实例"""
+    return BacktestEngine(config=config)
 
 
-def main():
-    """主程序入口"""
-    import argparse
-
-    parser = argparse.ArgumentParser(description="V25.0 自动化策略回测引擎 - Quant Trading Backtester")
-    parser.add_argument("--days-back", type=int, default=30, help="回溯天数（默认: 30）")
-    parser.add_argument("--initial-bankroll", type=float, default=1000.0, help="初始资金（默认: 1000）")
-    parser.add_argument("--stake", type=float, default=10.0, help="每注金额（默认: 10）")
-    parser.add_argument("--min-confidence", type=float, default=0.55, help="最小置信度（默认: 0.55）")
-    parser.add_argument("--output", type=str, default="data/backtest/backtest_report.json", help="报告输出路径")
-
-    args = parser.parse_args()
-
-    # 创建配置
-    config = BacktestConfig(
-        initial_bankroll=args.initial_bankroll,
-        stake_per_bet=args.stake,
-        min_confidence=args.min_confidence,
-    )
-
-    # 创建回测引擎
-    backtester = AutoBacktester(config)
-
-    # 加载历史预测
-    backtester.load_historical_predictions(days_back=args.days_back)
-
-    # 运行回测
-    metrics = backtester.run_backtest()
-
-    # 生成报告
-    report = backtester.generate_report(metrics)
-    backtester.save_report(report, args.output)
-    backtester.print_summary(metrics)
-
-    return metrics
-
-
-if __name__ == "__main__":
-    main()
+# 导出
+__all__ = [
+    "BacktestEngine",
+    "BacktestMetrics",
+    "BacktestConfig",
+    "create_backtest_engine",
+]

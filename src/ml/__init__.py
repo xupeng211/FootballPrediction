@@ -11,25 +11,17 @@ V35.0 生产级建模模块
 """
 
 from .backtest_engine import (
+    AutoBacktester,
     BacktestConfig,
-    BacktestEngine,
     BacktestMetrics,
-    create_backtest_engine,
-)
-from .trainer_v2 import (
-    ModelConfig,
-    TrainingMetrics,
-    V35Trainer,
-    create_trainer,
+    MatchPrediction,
+    BetRecord,
 )
 
 __all__ = [
-    "V35Trainer",
-    "TrainingMetrics",
-    "ModelConfig",
-    "create_trainer",
-    "BacktestEngine",
-    "BacktestMetrics",
+    "AutoBacktester",
     "BacktestConfig",
-    "create_backtest_engine",
+    "BacktestMetrics",
+    "MatchPrediction",
+    "BetRecord",
 ]
