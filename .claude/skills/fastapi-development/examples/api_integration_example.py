@@ -3,31 +3,37 @@ FastAPI系统集成示例
 将 fastapi-development Skill 应用于现有的足球预测系统
 """
 
-import sys
 import os
-sys.path.append(os.path.join(os.path.dirname(__file__), '../../../..'))
+import sys
 
-from fastapi import FastAPI, HTTPException, Depends, BackgroundTasks, Request
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+sys.path.append(os.path.join(os.path.dirname(__file__), "../../../.."))
+
 import asyncio
+import logging
 import time
 import uuid
-from typing import Optional
-import logging
+
+from fastapi import BackgroundTasks, FastAPI, HTTPException, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 # 导入现有系统组件
 try:
     from src.api.schemas import PredictionRequest, PredictionResponse
-    from src.services.inference_service_v2 import InferenceServiceV2
     from src.database.connection import get_connection
+    from src.services.inference_service_v2 import InferenceServiceV2
 except ImportError:
     print("⚠️  无法导入现有系统组件，使用模拟组件")
+
     # 创建模拟组件用于演示
     class MockService:
         async def predict_match(self, home: str, away: str):
             await asyncio.sleep(0.05)  # 模拟推理时间
-            return {"prediction": "HOME", "confidence": 0.75, "probabilities": {"HOME": 0.65, "DRAW": 0.22, "AWAY": 0.13}}
+            return {
+                "prediction": "HOME",
+                "confidence": 0.75,
+                "probabilities": {"HOME": 0.65, "DRAW": 0.22, "AWAY": 0.13},
+            }
 
     class PredictionRequest:
         def __init__(self, home_team: str, away_team: str):
@@ -37,23 +43,20 @@ except ImportError:
     InferenceServiceV2 = MockService
 
 # 导入我们的性能优化组件
-from ..scripts.api_performance_optimizer import (
-    APIPerformanceOptimizer, APICacheManager, PerformanceMetrics
-)
+from ..scripts.api_performance_optimizer import APICacheManager, APIPerformanceOptimizer, PerformanceMetrics
 from ..templates.performance_middleware import MiddlewareConfig
 
 # 配置日志
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 class EnhancedFootballAPI:
     """增强的足球预测API"""
 
     def __init__(self):
         self.app = FastAPI(
-            title="Enhanced Football Prediction API",
-            description="高性能足球赛果预测API v2.0",
-            version="2.0.0"
+            title="Enhanced Football Prediction API", description="高性能足球赛果预测API v2.0", version="2.0.0"
         )
 
         # 初始化性能优化器
@@ -94,14 +97,16 @@ class EnhancedFootballAPI:
             process_time = time.time() - start_time
 
             # 记录性能指标
-            self.optimizer.record_request(PerformanceMetrics(
-                endpoint=request.url.path,
-                method=request.method,
-                status_code=response.status_code,
-                duration=process_time,
-                timestamp=time.time(),
-                request_id=getattr(request.state, 'request_id', str(uuid.uuid4()))
-            ))
+            self.optimizer.record_request(
+                PerformanceMetrics(
+                    endpoint=request.url.path,
+                    method=request.method,
+                    status_code=response.status_code,
+                    duration=process_time,
+                    timestamp=time.time(),
+                    request_id=getattr(request.state, "request_id", str(uuid.uuid4())),
+                )
+            )
 
             # 添加性能头
             response.headers["X-Process-Time"] = str(process_time)
@@ -125,17 +130,10 @@ class EnhancedFootballAPI:
             performance_summary = self.optimizer.get_performance_summary()
             cache_stats = self.cache_manager.get_cache_stats()
 
-            return {
-                "performance": performance_summary,
-                "cache": cache_stats,
-                "timestamp": time.time()
-            }
+            return {"performance": performance_summary, "cache": cache_stats, "timestamp": time.time()}
 
         @self.app.post("/api/predict", response_model=dict, tags=["Prediction"])
-        async def predict_match(
-            request: dict,
-            background_tasks: BackgroundTasks
-        ):
+        async def predict_match(request: dict, background_tasks: BackgroundTasks):
             """预测端点 - 高性能版本"""
             start_time = time.time()
 
@@ -144,14 +142,11 @@ class EnhancedFootballAPI:
                 request_id = str(uuid.uuid4())
 
                 # 提取参数
-                home_team = request.get('home_team')
-                away_team = request.get('away_team')
+                home_team = request.get("home_team")
+                away_team = request.get("away_team")
 
                 if not home_team or not away_team:
-                    raise HTTPException(
-                        status_code=400,
-                        detail="home_team and away_team are required"
-                    )
+                    raise HTTPException(status_code=400, detail="home_team and away_team are required")
 
                 # 生成缓存键
                 cache_key = f"predict:{home_team}:{away_team}"
@@ -159,47 +154,38 @@ class EnhancedFootballAPI:
                 # 尝试从缓存获取
                 cached_result = await self.cache_manager.get(cache_key)
                 if cached_result:
-                    cached_result['cached'] = True
-                    cached_result['request_id'] = request_id
-                    cached_result['cache_hit'] = True
+                    cached_result["cached"] = True
+                    cached_result["request_id"] = request_id
+                    cached_result["cache_hit"] = True
 
                     # 后台任务：记录缓存命中
-                    background_tasks.add_task(
-                        self._log_prediction, request_id, home_team, away_team, "cache_hit"
-                    )
+                    background_tasks.add_task(self._log_prediction, request_id, home_team, away_team, "cache_hit")
 
                     duration = time.time() - start_time
                     logger.info(f"缓存命中预测: {home_team} vs {away_team} - {duration:.3f}s")
                     return cached_result
 
                 # 执行预测（使用优化后的服务）
-                prediction_result = await self._run_prediction_with_optimization(
-                    home_team, away_team
-                )
+                prediction_result = await self._run_prediction_with_optimization(home_team, away_team)
 
                 # 构建响应
                 response = {
                     "request_id": request_id,
-                    "match": {
-                        "home_team": home_team,
-                        "away_team": away_team
-                    },
+                    "match": {"home_team": home_team, "away_team": away_team},
                     "prediction": prediction_result.get("prediction"),
                     "confidence": prediction_result.get("confidence"),
                     "probabilities": prediction_result.get("probabilities", {}),
                     "cached": False,
                     "cache_hit": False,
                     "processing_time": time.time() - start_time,
-                    "timestamp": time.time()
+                    "timestamp": time.time(),
                 }
 
                 # 缓存结果（30分钟）
                 await self.cache_manager.set(cache_key, response, expire=1800)
 
                 # 后台任务：记录预测日志
-                background_tasks.add_task(
-                    self._log_prediction, request_id, home_team, away_team, "new_prediction"
-                )
+                background_tasks.add_task(self._log_prediction, request_id, home_team, away_team, "new_prediction")
 
                 return response
 
@@ -210,7 +196,7 @@ class EnhancedFootballAPI:
         @self.app.post("/api/predict/batch", tags=["Prediction"])
         async def batch_predict(request: dict, background_tasks: BackgroundTasks):
             """批量预测端点 - 优化版本"""
-            matches = request.get('matches', [])
+            matches = request.get("matches", [])
             if not matches:
                 raise HTTPException(status_code=400, detail="No matches provided")
 
@@ -227,13 +213,11 @@ class EnhancedFootballAPI:
                     "successful_predictions": len(results),
                     "processing_time": time.time() - start_time,
                     "predictions": results,
-                    "timestamp": time.time()
+                    "timestamp": time.time(),
                 }
 
                 # 后台任务：记录批量预测日志
-                background_tasks.add_task(
-                    self._log_batch_prediction, batch_id, len(matches), len(results)
-                )
+                background_tasks.add_task(self._log_batch_prediction, batch_id, len(matches), len(results))
 
                 return response
 
@@ -271,7 +255,7 @@ class EnhancedFootballAPI:
                 "cache": cache,
                 "health": health,
                 "version": "2.0.0-enhanced",
-                "timestamp": time.time()
+                "timestamp": time.time(),
             }
 
     def _setup_exception_handlers(self):
@@ -279,41 +263,28 @@ class EnhancedFootballAPI:
 
         @self.app.exception_handler(HTTPException)
         async def http_exception_handler(request: Request, exc: HTTPException):
-            request_id = getattr(request.state, 'request_id', 'unknown')
+            request_id = getattr(request.state, "request_id", "unknown")
             logger.error(
-                f"HTTP {exc.status_code}: {exc.detail}",
-                extra={"request_id": request_id, "path": str(request.url.path)}
+                f"HTTP {exc.status_code}: {exc.detail}", extra={"request_id": request_id, "path": str(request.url.path)}
             )
             return JSONResponse(
                 status_code=exc.status_code,
-                content={
-                    "error": exc.detail,
-                    "request_id": request_id,
-                    "timestamp": time.time()
-                }
+                content={"error": exc.detail, "request_id": request_id, "timestamp": time.time()},
             )
 
         @self.app.exception_handler(Exception)
         async def general_exception_handler(request: Request, exc: Exception):
-            request_id = getattr(request.state, 'request_id', 'unknown')
-            logger.error(
-                f"未处理异常: {str(exc)}",
-                exc_info=True,
-                extra={"request_id": request_id}
-            )
+            request_id = getattr(request.state, "request_id", "unknown")
+            logger.error(f"未处理异常: {str(exc)}", exc_info=True, extra={"request_id": request_id})
             return JSONResponse(
                 status_code=500,
-                content={
-                    "error": "Internal server error",
-                    "request_id": request_id,
-                    "timestamp": time.time()
-                }
+                content={"error": "Internal server error", "request_id": request_id, "timestamp": time.time()},
             )
 
     async def _run_prediction_with_optimization(self, home_team: str, away_team: str):
         """运行优化的预测"""
         # 使用推理服务
-        if hasattr(self.inference_service, 'predict_match'):
+        if hasattr(self.inference_service, "predict_match"):
             result = await self.inference_service.predict_match(home_team, away_team)
         else:
             # 模拟预测逻辑
@@ -321,7 +292,7 @@ class EnhancedFootballAPI:
             result = {
                 "prediction": "HOME",
                 "confidence": 0.75,
-                "probabilities": {"HOME": 0.65, "DRAW": 0.22, "AWAY": 0.13}
+                "probabilities": {"HOME": 0.65, "DRAW": 0.22, "AWAY": 0.13},
             }
 
         return result
@@ -370,8 +341,8 @@ async def root():
             "batch_predict": "/api/predict/batch",
             "metrics": "/metrics",
             "monitoring": "/api/monitoring",
-            "docs": "/docs"
-        }
+            "docs": "/docs",
+        },
     }
 
 
@@ -384,10 +355,4 @@ if __name__ == "__main__":
     import uvicorn
 
     # 运行开发服务器
-    uvicorn.run(
-        "api_integration_example:app",
-        host="0.0.0.0",
-        port=8000,
-        reload=True,
-        log_level="info"
-    )
+    uvicorn.run("api_integration_example:app", host="0.0.0.0", port=8000, reload=True, log_level="info")

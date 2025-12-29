@@ -9,10 +9,8 @@
 4. 更新索引和约束
 """
 
-import sys
-import os
 import logging
-from datetime import datetime
+import sys
 from pathlib import Path
 
 # 添加项目根目录到路径
@@ -21,17 +19,16 @@ sys.path.insert(0, str(project_root))
 
 # V19.4.1 修复：强制加载 .env 文件
 from dotenv import load_dotenv
+
 env_path = project_root / ".env"
 load_dotenv(env_path, override=True)
 
 import psycopg2
 from psycopg2.extras import RealDictCursor
+
 from src.config_unified import get_settings
 
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -65,7 +62,7 @@ class SchemaMigrator:
                 port=self.settings.database.port,
                 database=self.settings.database.name,
                 user=self.settings.database.user,
-                password=self.settings.database.password.get_secret_value()
+                password=self.settings.database.password.get_secret_value(),
             )
             logger.info(f"✅ 数据库连接成功: {self.settings.database.host}")
         except Exception as e:

@@ -78,40 +78,19 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## ⚡ 快速开始
 
-### 一键启动命令
+完整安装和部署指南请参阅 [README.md](README.md)。
+
+### 核心开发命令
 
 ```bash
-# V26.8 生产预测服务（联赛专项模型，推荐）
+# 生产预测服务（联赛专项模型）
 python -m src.ops.production_service
 
-# V26.8 联赛专项模型训练
-python scripts/train_v26_8_league.py --league "Premier League"
-
-# V26.7 通用模型训练（从零开始）
-python scripts/train_v26_7_aligned.py
-
-# 启动 FastAPI 服务（默认使用 ModelDispatcher）
+# FastAPI 服务
 python src/main.py
 
-# 运行测试
-pytest tests/ -v
-
-# 代码质量检查
-ruff check src/ tests/ --fix
-ruff format src/ tests/
-```
-
-### Docker 部署
-
-```bash
-# 核心服务 (db + redis + pipeline_worker)
+# Docker 部署
 docker-compose up -d
-
-# 核心 + API
-docker-compose --profile api up -d
-
-# 开发环境 (含管理工具)
-docker-compose --profile dev up -d
 ```
 
 ---
@@ -142,7 +121,9 @@ FootballPrediction/
 │   ├── run_v26_full_pipeline.py      # ⭐ 完整流水线
 │   ├── auto_harvest_batches.py       # ⭐ 自动收割
 │   ├── run_v26_full_harvest.py        # ⭐ 全量收割
-│   └── collectors/                   # 数据采集器
+│   ├── collectors/                   # 数据采集器
+│   └── exploration/                  # 🔍 探索性脚本（非生产）
+│       └── l3_feature_explorer.py    # L3 特征探索工具
 │
 ├── experiments/              # 🔬 实验性代码（V33+）
 │   ├── ml/
@@ -171,6 +152,8 @@ FootballPrediction/
 | 目录 | 职责 | 允许内容 | 禁止内容 |
 |------|------|----------|----------|
 | `src/` | 生产代码 | V25/V26/V50 相关代码 | ❌ 任何旧版本代码 |
+| `scripts/` | 核心脚本 | 流水线、收割脚本 | ❌ 一次性脚本 |
+| `scripts/exploration/` | 探索性脚本 | 特征探索、数据诊断 | ❌ 生产代码 |
 | `experiments/` | 实验性代码 | V33+ 研发代码 | ❌ 生产代码 |
 | `model_zoo/` | 历史模型 | .pkl/.json 模型文件 | ❌ 源代码 |
 | `data/` | 数据文件 | L1/L2/L3 数据 | ❌ 旧版本数据 |
@@ -811,11 +794,23 @@ docker-compose up -d pipeline_worker
 # 运行所有测试
 pytest tests/ -v
 
-# 运行特定测试
+# 运行单个测试文件
 pytest tests/ml/test_v26_feature_engine.py -v
+
+# 运行单个测试函数
+pytest tests/ml/test_v26_feature_engine.py::test_feature_extraction -v
+
+# 运行带特定标记的测试
+pytest tests/ -m "not slow" -v
+
+# 显示详细输出（print 语句）
+pytest tests/ -v -s
 
 # 生成覆盖率报告
 pytest tests/ --cov=src --cov-report=html
+
+# 并行运行测试（需要 pytest-xdist）
+pytest tests/ -n auto
 ```
 
 ### 技能调用

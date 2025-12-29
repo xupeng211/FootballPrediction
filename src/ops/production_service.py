@@ -400,10 +400,7 @@ def run_production_service(
     Returns:
         高置信度预测数量
     """
-    service = ProductionService(
-        model_type="v26_7_aligned",
-        use_model_dispatcher=use_model_dispatcher
-    )
+    service = ProductionService(model_type="v26_7_aligned", use_model_dispatcher=use_model_dispatcher)
     return service.run(hours_ahead=hours_ahead, min_confidence=min_confidence)
 
 

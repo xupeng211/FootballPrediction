@@ -19,84 +19,86 @@ Version: V28.0
 Date: 2025-12-27
 """
 
-import json
 import logging
 import re
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Tuple
 from enum import Enum
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
 
 class ExtractionPath(Enum):
     """提取路径枚举"""
-    CORE_STATS = "core_stats"           # content -> stats -> Periods -> All -> stats
-    MATCH_FACTS = "match_facts"       # content -> matchFacts -> stats
-    SCORE_STRING = "score_string"     # content -> header -> status -> scoreStr
+
+    CORE_STATS = "core_stats"  # content -> stats -> Periods -> All -> stats
+    MATCH_FACTS = "match_facts"  # content -> matchFacts -> stats
+    SCORE_STRING = "score_string"  # content -> header -> status -> scoreStr
 
 
 @dataclass
 class MatchStats:
     """单场比赛统计数据"""
+
     match_id: str
     match_date: str
     home_team: str
     away_team: str
-    home_score: Optional[int] = None
-    away_score: Optional[int] = None
+    home_score: int | None = None
+    away_score: int | None = None
 
     # 主队统计
-    home_xg: Optional[float] = None
-    home_possession: Optional[float] = None
-    home_shots: Optional[int] = None
-    home_shots_on_target: Optional[int] = None
-    home_passes: Optional[int] = None
-    home_team_rating: Optional[float] = None
+    home_xg: float | None = None
+    home_possession: float | None = None
+    home_shots: int | None = None
+    home_shots_on_target: int | None = None
+    home_passes: int | None = None
+    home_team_rating: float | None = None
 
     # 客队统计
-    away_xg: Optional[float] = None
-    away_possession: Optional[float] = None
-    away_shots: Optional[int] = None
-    away_shots_on_target: Optional[int] = None
-    away_passes: Optional[int] = None
-    away_team_rating: Optional[float] = None
+    away_xg: float | None = None
+    away_possession: float | None = None
+    away_shots: int | None = None
+    away_shots_on_target: int | None = None
+    away_passes: int | None = None
+    away_team_rating: float | None = None
 
     # 元数据
-    extraction_path: Optional[ExtractionPath] = None
+    extraction_path: ExtractionPath | None = None
     extraction_success: bool = False
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
-            'match_id': self.match_id,
-            'match_date': self.match_date,
-            'home_team': self.home_team,
-            'away_team': self.away_team,
-            'home_score': self.home_score,
-            'away_score': self.away_score,
-            'home_xg': self.home_xg,
-            'away_xg': self.away_xg,
-            'home_possession': self.home_possession,
-            'away_possession': self.away_possession,
-            'home_shots': self.home_shots,
-            'away_shots': self.away_shots,
-            'home_shots_on_target': self.home_shots_on_target,
-            'away_shots_on_target': self.away_shots_on_target,
-            'home_passes': self.home_passes,
-            'away_passes': self.away_passes,
-            'home_team_rating': self.home_team_rating,
-            'away_team_rating': self.away_team_rating,
-            'extraction_path': self.extraction_path.value if self.extraction_path else None,
-            'extraction_success': self.extraction_success,
+            "match_id": self.match_id,
+            "match_date": self.match_date,
+            "home_team": self.home_team,
+            "away_team": self.away_team,
+            "home_score": self.home_score,
+            "away_score": self.away_score,
+            "home_xg": self.home_xg,
+            "away_xg": self.away_xg,
+            "home_possession": self.home_possession,
+            "away_possession": self.away_possession,
+            "home_shots": self.home_shots,
+            "away_shots": self.away_shots,
+            "home_shots_on_target": self.home_shots_on_target,
+            "away_shots_on_target": self.away_shots_on_target,
+            "home_passes": self.home_passes,
+            "away_passes": self.away_passes,
+            "home_team_rating": self.home_team_rating,
+            "away_team_rating": self.away_team_rating,
+            "extraction_path": self.extraction_path.value if self.extraction_path else None,
+            "extraction_success": self.extraction_success,
         }
 
 
 @dataclass
 class ExtractionStats:
     """提取统计"""
+
     total_processed: int = 0
-    path_success_count: Dict[ExtractionPath, int] = field(default_factory=dict)
+    path_success_count: dict[ExtractionPath, int] = field(default_factory=dict)
 
     def record_success(self, path: ExtractionPath) -> None:
         """记录路径成功"""
@@ -128,23 +130,30 @@ class MultiPathExtractor:
 
     # 统计键到特征键的映射
     STAT_KEY_MAPPING = {
-        'BallPossesion': ('home_possession', 'away_possession'),
-        'expected_goals': ('home_xg', 'away_xg'),
-        'total_shots': ('home_shots', 'away_shots'),
-        'ShotsOnTarget': ('home_shots_on_target', 'away_shots_on_target'),
-        'accurate_passes': ('home_passes', 'away_passes'),
+        "BallPossesion": ("home_possession", "away_possession"),
+        "expected_goals": ("home_xg", "away_xg"),
+        "total_shots": ("home_shots", "away_shots"),
+        "ShotsOnTarget": ("home_shots_on_target", "away_shots_on_target"),
+        "accurate_passes": ("home_passes", "away_passes"),
     }
 
     # 正则表达式模式
-    SCORE_PATTERN = re.compile(r'(\d+)\s*[-:]\s*(\d+)')
+    SCORE_PATTERN = re.compile(r"(\d+)\s*[-:]\s*(\d+)")
 
     def __init__(self) -> None:
         """初始化提取器"""
         self.stats = ExtractionStats()
 
-    def extract_from_jsonb(self, match_id: str, raw_data: Dict[str, Any],
-                          match_date: str, home_team: str, away_team: str,
-                          home_score: Optional[int] = None, away_score: Optional[int] = None) -> MatchStats:
+    def extract_from_jsonb(
+        self,
+        match_id: str,
+        raw_data: dict[str, Any],
+        match_date: str,
+        home_team: str,
+        away_team: str,
+        home_score: int | None = None,
+        away_score: int | None = None,
+    ) -> MatchStats:
         """
         从 JSONB 数据中提取比赛统计
 
@@ -169,7 +178,7 @@ class MultiPathExtractor:
             home_team=home_team,
             away_team=away_team,
             home_score=home_score,
-            away_score=away_score
+            away_score=away_score,
         )
 
         # 按优先级尝试提取路径
@@ -199,7 +208,7 @@ class MultiPathExtractor:
         logger.debug(f"所有提取路径都失败: match_id={match_id}")
         return stats
 
-    def _extract_from_core_stats(self, raw_data: Dict[str, Any], stats: MatchStats) -> bool:
+    def _extract_from_core_stats(self, raw_data: dict[str, Any], stats: MatchStats) -> bool:
         """
         从核心统计路径提取数据
 
@@ -213,10 +222,10 @@ class MultiPathExtractor:
             bool: 是否提取成功
         """
         try:
-            content = raw_data.get('content', {})
-            stats_data = content.get('stats', {})
-            periods = stats_data.get('Periods', {})
-            all_stats = periods.get('All', {}).get('stats', [])
+            content = raw_data.get("content", {})
+            stats_data = content.get("stats", {})
+            periods = stats_data.get("Periods", {})
+            all_stats = periods.get("All", {}).get("stats", [])
 
             if not all_stats:
                 return False
@@ -224,8 +233,8 @@ class MultiPathExtractor:
             # 查找 top_stats 组
             top_stats = None
             for stat_group in all_stats:
-                if stat_group.get('key') == 'top_stats':
-                    top_stats = stat_group.get('stats', [])
+                if stat_group.get("key") == "top_stats":
+                    top_stats = stat_group.get("stats", [])
                     break
 
             if not top_stats:
@@ -234,8 +243,8 @@ class MultiPathExtractor:
             # 提取各项统计
             extracted_any = False
             for stat in top_stats:
-                key = stat.get('key')
-                values = stat.get('stats', [])
+                key = stat.get("key")
+                values = stat.get("stats", [])
 
                 if key in self.STAT_KEY_MAPPING and values and len(values) >= 2:
                     home_key, away_key = self.STAT_KEY_MAPPING[key]
@@ -250,9 +259,9 @@ class MultiPathExtractor:
                         extracted_any = True
 
             # 提取球队评分（注意：FotMob API 使用驼峰式命名）
-            lineup = content.get('lineup', {})
-            home_rating = lineup.get('homeTeam', {}).get('rating')
-            away_rating = lineup.get('awayTeam', {}).get('rating')
+            lineup = content.get("lineup", {})
+            home_rating = lineup.get("homeTeam", {}).get("rating")
+            away_rating = lineup.get("awayTeam", {}).get("rating")
 
             if home_rating:
                 try:
@@ -273,7 +282,7 @@ class MultiPathExtractor:
             logger.debug(f"核心路径提取失败: {e}")
             return False
 
-    def _extract_from_match_facts(self, raw_data: Dict[str, Any], stats: MatchStats) -> bool:
+    def _extract_from_match_facts(self, raw_data: dict[str, Any], stats: MatchStats) -> bool:
         """
         从 matchFacts 备用路径提取数据
 
@@ -287,31 +296,31 @@ class MultiPathExtractor:
             bool: 是否提取成功
         """
         try:
-            content = raw_data.get('content', {})
+            content = raw_data.get("content", {})
 
             # 尝试多个可能的 matchFacts 键名
             match_facts = (
-                content.get('matchFacts', {}) or
-                content.get('matchfacts', {}) or
-                content.get('header', {}).get('matchFacts', {})
+                content.get("matchFacts", {})
+                or content.get("matchfacts", {})
+                or content.get("header", {}).get("matchFacts", {})
             )
 
             if not match_facts:
                 return False
 
-            stats_data = match_facts.get('stats', [])
+            stats_data = match_facts.get("stats", [])
             if not stats_data:
                 return False
 
             # 尝试从 stats 数组中提取数据
             extracted_any = False
             for stat in stats_data:
-                if isinstance(stat, dict) and 'name' in stat and 'value' in stat:
-                    name = stat['name']
-                    value = stat['value']
+                if isinstance(stat, dict) and "name" in stat and "value" in stat:
+                    name = stat["name"]
+                    value = stat["value"]
 
                     # 映射到我们的特征
-                    if 'xg' in name.lower() or 'expected_goals' in name.lower():
+                    if "xg" in name.lower() or "expected_goals" in name.lower():
                         # 尝试解析 xG 值
                         parsed = self._parse_stat_value(value)
                         if parsed is not None and not stats.home_xg:
@@ -324,7 +333,7 @@ class MultiPathExtractor:
             logger.debug(f"matchFacts 路径提取失败: {e}")
             return False
 
-    def _extract_from_score_string(self, raw_data: Dict[str, Any], stats: MatchStats) -> bool:
+    def _extract_from_score_string(self, raw_data: dict[str, Any], stats: MatchStats) -> bool:
         """
         从比分字符串中提取数据（正则解析）
 
@@ -338,16 +347,12 @@ class MultiPathExtractor:
             bool: 是否提取成功
         """
         try:
-            content = raw_data.get('content', {})
-            header = content.get('header', {})
-            status = header.get('status', {})
+            content = raw_data.get("content", {})
+            header = content.get("header", {})
+            status = header.get("status", {})
 
             # 尝试多个可能的比分字段
-            score_str = (
-                status.get('scoreStr') or
-                status.get('score_str') or
-                header.get('scoreStr')
-            )
+            score_str = status.get("scoreStr") or status.get("score_str") or header.get("scoreStr")
 
             if not score_str:
                 return False
@@ -375,7 +380,7 @@ class MultiPathExtractor:
             logger.debug(f"比分字符串解析失败: {e}")
             return False
 
-    def _parse_stat_value(self, value: Any) -> Optional[float]:
+    def _parse_stat_value(self, value: Any) -> float | None:
         """
         解析统计值
 
@@ -397,7 +402,7 @@ class MultiPathExtractor:
 
         # FotMob API 格式: {"value": "..."}
         if isinstance(value, dict):
-            value = value.get('value') if 'value' in value else None
+            value = value.get("value") if "value" in value else None
             if value is None:
                 return None
 
@@ -409,7 +414,7 @@ class MultiPathExtractor:
             value = value.strip()
 
             # 提取数字部分
-            match = re.search(r'[-+]?\d*\.?\d+', value)
+            match = re.search(r"[-+]?\d*\.?\d+", value)
             if match:
                 try:
                     return float(match.group())
@@ -418,15 +423,12 @@ class MultiPathExtractor:
 
         return None
 
-    def get_extraction_report(self) -> Dict[str, Any]:
+    def get_extraction_report(self) -> dict[str, Any]:
         """获取提取报告"""
         return {
-            'total_processed': self.stats.total_processed,
-            'path_success_rates': {
-                path.value: self.stats.get_path_success_rate(path)
-                for path in ExtractionPath
-            },
-            'path_success_counts': self.stats.path_success_count,
+            "total_processed": self.stats.total_processed,
+            "path_success_rates": {path.value: self.stats.get_path_success_rate(path) for path in ExtractionPath},
+            "path_success_counts": self.stats.path_success_count,
         }
 
 
@@ -434,7 +436,8 @@ class MultiPathExtractor:
 # 便捷函数
 # ============================================================================
 
-def extract_match_stats_batch(match_records: List[Dict[str, Any]]) -> Tuple[List[MatchStats], ExtractionStats]:
+
+def extract_match_stats_batch(match_records: list[dict[str, Any]]) -> tuple[list[MatchStats], ExtractionStats]:
     """
     批量提取比赛统计
 
@@ -452,13 +455,13 @@ def extract_match_stats_batch(match_records: List[Dict[str, Any]]) -> Tuple[List
 
     for record in match_records:
         stats = extractor.extract_from_jsonb(
-            match_id=record['match_id'],
-            raw_data=record['raw_data'],
-            match_date=record['match_date'],
-            home_team=record['home_team'],
-            away_team=record['away_team'],
-            home_score=record.get('home_score'),
-            away_score=record.get('away_score')
+            match_id=record["match_id"],
+            raw_data=record["raw_data"],
+            match_date=record["match_date"],
+            home_team=record["home_team"],
+            away_team=record["away_team"],
+            home_score=record.get("home_score"),
+            away_score=record.get("away_score"),
         )
         results.append(stats)
 

@@ -16,37 +16,35 @@ V35.0 数据工程模块
 """
 
 from .feature_factory import (
-    FeatureFactory,
-    ELOEngine,
-    TableManager,
-    FatigueTracker,
     EfficiencyEngine,
-    create_feature_factory
+    ELOEngine,
+    FatigueTracker,
+    FeatureFactory,
+    TableManager,
+    create_feature_factory,
 )
-
 from .multipath_extractor import (
-    MultiPathExtractor,
-    MatchStats,
-    ExtractionStats,
     ExtractionPath,
-    extract_match_stats_batch
+    ExtractionStats,
+    MatchStats,
+    MultiPathExtractor,
+    extract_match_stats_batch,
 )
 
 __all__ = [
     # FeatureFactory (V35.0)
-    'FeatureFactory',
-    'ELOEngine',
-    'TableManager',
-    'FatigueTracker',
-    'EfficiencyEngine',
-    'create_feature_factory',
-
+    "FeatureFactory",
+    "ELOEngine",
+    "TableManager",
+    "FatigueTracker",
+    "EfficiencyEngine",
+    "create_feature_factory",
     # MultiPathExtractor
-    'MultiPathExtractor',
-    'MatchStats',
-    'ExtractionStats',
-    'ExtractionPath',
-    'extract_match_stats_batch',
+    "MultiPathExtractor",
+    "MatchStats",
+    "ExtractionStats",
+    "ExtractionPath",
+    "extract_match_stats_batch",
 ]
 
-__version__ = '35.2.0'
+__version__ = "35.2.0"

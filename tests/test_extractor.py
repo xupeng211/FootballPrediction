@@ -20,10 +20,25 @@ Version: V25.1
 Date: 2025-12-26
 """
 
+from typing import Any
+
 import pytest
-from typing import Any, Dict
-from unittest.mock import Mock, patch, MagicMock
-from datetime import datetime
+
+from src.processors.base_extractor import (
+    BaseExtractor,
+    ExtractionResult,
+    ExtractionStatus,
+    ExtractorRegistry,
+    ValidationConfig,
+    register_extractor,
+)
+from src.processors.exceptions import (
+    DataParsingError,
+    ExtractionError,
+    InsufficientFeaturesError,
+    SchemaMismatchError,
+    ValidationError,
+)
 
 # 导入 V25.1 提取器以确保注册
 from src.processors.v25_production_extractor import (
@@ -32,26 +47,7 @@ from src.processors.v25_production_extractor import (
     _parse_value,
     _sanitize_key,
     get_global_feature_keys,
-    register_feature_keys,
 )
-
-from src.processors.base_extractor import (
-    BaseExtractor,
-    ExtractionResult,
-    ExtractionStatus,
-    ValidationConfig,
-    ExtractorRegistry,
-    register_extractor,
-)
-from src.processors.exceptions import (
-    ExtractionError,
-    ValidationError,
-    InsufficientFeaturesError,
-    MissingRequiredKeyError,
-    DataParsingError,
-    SchemaMismatchError,
-)
-
 
 # ============================================================================
 # 测试数据夹具
@@ -59,7 +55,7 @@ from src.processors.exceptions import (
 
 
 @pytest.fixture
-def minimal_match_data() -> Dict[str, Any]:
+def minimal_match_data() -> dict[str, Any]:
     """
     最小化比赛数据（有效输入）
 
@@ -97,7 +93,7 @@ def minimal_match_data() -> Dict[str, Any]:
 
 
 @pytest.fixture
-def complex_nested_data() -> Dict[str, Any]:
+def complex_nested_data() -> dict[str, Any]:
     """
     复杂嵌套数据（测试递归打平能力）
     """
@@ -128,7 +124,7 @@ def complex_nested_data() -> Dict[str, Any]:
 
 
 @pytest.fixture
-def full_match_data() -> Dict[str, Any]:
+def full_match_data() -> dict[str, Any]:
     """
     完整比赛数据（包含所有可能的字段）
     """
@@ -176,19 +172,19 @@ def full_match_data() -> Dict[str, Any]:
 
 
 @pytest.fixture
-def invalid_match_data_missing_content() -> Dict[str, Any]:
+def invalid_match_data_missing_content() -> dict[str, Any]:
     """无效数据：缺少 content 字段"""
     return {"l2_json": {}, "other_field": "value"}
 
 
 @pytest.fixture
-def invalid_match_data_empty() -> Dict[str, Any]:
+def invalid_match_data_empty() -> dict[str, Any]:
     """无效数据：空字典"""
     return {}
 
 
 @pytest.fixture
-def invalid_match_data_malformed_json() -> Dict[str, Any]:
+def invalid_match_data_malformed_json() -> dict[str, Any]:
     """无效数据：格式错误的 JSON 结构"""
     return {"content": "not_a_dict"}
 
@@ -215,7 +211,6 @@ class TestParseValue:
 
     def test_nan(self):
         """测试 NaN 处理"""
-        import math
 
         assert _parse_value(float("nan")) is None
 
@@ -312,8 +307,6 @@ class TestFullyFlatten:
         assert "values_max" in result
         assert "values_sum" in result
         assert "values_len" in result
-
-        import numpy as np
 
         assert result["values_mean"] == 3.0
         assert result["values_min"] == 1.0
@@ -473,13 +466,13 @@ class MockExtractor(BaseExtractor):
     def version(self) -> str:
         return "V99.0"  # 使用不同的版本号，避免与 V25.1 冲突
 
-    def extract(self, raw_data: Dict[str, Any]) -> ExtractionResult:
+    def extract(self, raw_data: dict[str, Any]) -> ExtractionResult:
         return ExtractionResult(
             status=ExtractionStatus.SUCCESS,
             features={"feature_1": 1.0, "feature_2": 2.0},
         )
 
-    def validate(self, features: Dict[str, Any]) -> bool:
+    def validate(self, features: dict[str, Any]) -> bool:
         return len(features) >= 2
 
 
@@ -535,7 +528,7 @@ class TestExtractWithValidation:
         """测试提取过程抛出异常"""
 
         class FailingExtractor(MockExtractor):
-            def extract(self, raw_data: Dict[str, Any]) -> ExtractionResult:
+            def extract(self, raw_data: dict[str, Any]) -> ExtractionResult:
                 raise SchemaMismatchError("Missing content field", expected_path="content", actual_type="None")
 
         extractor = FailingExtractor()
@@ -551,7 +544,7 @@ class TestExtractWithValidation:
         """测试跳过验证"""
 
         class SkipExtractor(MockExtractor):
-            def validate(self, features: Dict[str, Any]) -> bool:
+            def validate(self, features: dict[str, Any]) -> bool:
                 raise ValidationError("Should not be called")
 
         extractor = SkipExtractor()

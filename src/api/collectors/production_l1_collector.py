@@ -70,10 +70,7 @@ class ProductionL1Collector:
         self.timeout = timeout
 
         # 弹性机制
-        self.rate_limiter = RateLimiter(
-            max_requests=max_requests_per_second,
-            time_window=1.0
-        )
+        self.rate_limiter = RateLimiter(max_requests=max_requests_per_second, time_window=1.0)
         self.concurrent_limiter = ConcurrentLimiter(max_concurrent=max_concurrent)
         self.circuit_breaker = CircuitBreaker(
             failure_threshold=5,
@@ -93,11 +90,7 @@ class ProductionL1Collector:
         """异步上下文管理器入口"""
         timeout = aiohttp.ClientTimeout(total=self.timeout)
         connector = aiohttp.TCPConnector(limit=self.max_concurrent)
-        self.session = aiohttp.ClientSession(
-            timeout=timeout,
-            connector=connector,
-            headers=self._get_headers()
-        )
+        self.session = aiohttp.ClientSession(timeout=timeout, connector=connector, headers=self._get_headers())
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
@@ -164,9 +157,7 @@ class ProductionL1Collector:
                     )
                 elif response.status >= 500:
                     # 服务器错误，记录失败并触发熔断器
-                    self.circuit_breaker.record_failure(
-                        aiohttp.ClientError(f"HTTP {response.status}")
-                    )
+                    self.circuit_breaker.record_failure(aiohttp.ClientError(f"HTTP {response.status}"))
                     raise aiohttp.ClientError(f"Server error: HTTP {response.status}")
                 else:
                     raise aiohttp.ClientError(f"Unexpected status: HTTP {response.status}")
@@ -277,10 +268,7 @@ class ProductionL1Collector:
         """
         # V36.0: 预检查 League ID 白名单
         if not LeagueId.is_valid_id(league_id):
-            raise ValueError(
-                f"❌ 非法 League ID: {league_id}。"
-                f"合法 IDs: {LeagueId.__members__.keys()}"
-            )
+            raise ValueError(f"❌ 非法 League ID: {league_id}。合法 IDs: {LeagueId.__members__.keys()}")
 
         league_name = LeagueId.get_league_name(str(league_id))
         logger.info(f"🎯 开始采集: {league_name} - {season_name}")
@@ -301,9 +289,7 @@ class ProductionL1Collector:
             all_matches = fixtures.get("allMatches", [])
 
             for match_data in all_matches:
-                validated = self._parse_and_validate_match(
-                    match_data, str(league_id), season_code, season_name
-                )
+                validated = self._parse_and_validate_match(match_data, str(league_id), season_code, season_name)
                 if validated:
                     matches.append(validated)
                     self.summary.add_success(str(league_id))
@@ -314,10 +300,7 @@ class ProductionL1Collector:
             logger.error(f"❌ 解析数据失败: {e}")
             return []
 
-        logger.info(
-            f"✅ {league_name} - {season_name}: "
-            f"{len(matches)} 场通过校验"
-        )
+        logger.info(f"✅ {league_name} - {season_name}: {len(matches)} 场通过校验")
 
         return matches
 
@@ -331,12 +314,10 @@ class ProductionL1Collector:
 # 使用示例
 # ============================================================================
 
+
 async def main():
     """生产级采集示例"""
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s - %(levelname)s - %(message)s"
-    )
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
     async with ProductionL1Collector() as collector:
         # 采集多个联赛

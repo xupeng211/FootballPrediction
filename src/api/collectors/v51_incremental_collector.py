@@ -18,12 +18,11 @@ import json
 import logging
 import random
 import time
-from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from dataclasses import dataclass
+from datetime import datetime
 
 import aiohttp
 import psycopg2
-from psycopg2.extras import RealDictCursor
 
 from src.config_unified import get_settings
 
@@ -156,9 +155,7 @@ class IncrementalCollector:
             cur.close()
             conn.close()
 
-    async def _fetch_live_matches(
-        self, since: datetime | None = None
-    ) -> list[dict]:
+    async def _fetch_live_matches(self, since: datetime | None = None) -> list[dict]:
         """
         从 FotMob API 获取最新的比赛数据
 
@@ -196,7 +193,7 @@ class IncrementalCollector:
 
                     async with session.get(url, timeout=self.request_timeout, headers=headers) as response:
                         elapsed = time.time() - start_time
-                        logger.info(f"  HTTP {response.status} | {elapsed*1000:.0f}ms")
+                        logger.info(f"  HTTP {response.status} | {elapsed * 1000:.0f}ms")
 
                         if response.status == 200:
                             self.stats.http_200 += 1
@@ -240,20 +237,22 @@ class IncrementalCollector:
                                 home_team = match_data.get("home", {})
                                 away_team = match_data.get("away", {})
 
-                                all_matches.append({
-                                    "match_id": match_id,
-                                    "league_id": league_id,
-                                    "league_name": league_name_en,
-                                    "season": CURRENT_SEASON,
-                                    "home_team": home_team.get("name", "Unknown"),
-                                    "away_team": away_team.get("name", "Unknown"),
-                                    "home_team_id": int(home_team.get("id", 0)),
-                                    "away_team_id": int(away_team.get("id", 0)),
-                                    "status": status,
-                                    "match_time_utc": match_time_utc,
-                                    "home_score": status_obj.get("homeScore"),
-                                    "away_score": status_obj.get("awayScore"),
-                                })
+                                all_matches.append(
+                                    {
+                                        "match_id": match_id,
+                                        "league_id": league_id,
+                                        "league_name": league_name_en,
+                                        "season": CURRENT_SEASON,
+                                        "home_team": home_team.get("name", "Unknown"),
+                                        "away_team": away_team.get("name", "Unknown"),
+                                        "home_team_id": int(home_team.get("id", 0)),
+                                        "away_team_id": int(away_team.get("id", 0)),
+                                        "status": status,
+                                        "match_time_utc": match_time_utc,
+                                        "home_score": status_obj.get("homeScore"),
+                                        "away_score": status_obj.get("awayScore"),
+                                    }
+                                )
 
                             recent_count = sum(1 for m in all_matches if m.get("match_time"))
                             logger.info(f"✓ {league_name_cn}: 找到 {recent_count} 场最近比赛")
@@ -273,14 +272,12 @@ class IncrementalCollector:
         logger.info(f"\n✓ 网络抓取完成: {len(all_matches)} 场比赛")
 
         # 限制到目标数量
-        all_matches = all_matches[:self.target_count]
+        all_matches = all_matches[: self.target_count]
         self.stats.fetched_l1 = len(all_matches)
 
         return all_matches
 
-    async def _fetch_full_match_details(
-        self, match_ids: list[int]
-    ) -> dict[int, dict]:
+    async def _fetch_full_match_details(self, match_ids: list[int]) -> dict[int, dict]:
         """
         下载完整的比赛详情 JSON
 
@@ -315,15 +312,12 @@ class IncrementalCollector:
                             full_match_data[match_id] = data
 
                             logger.info(
-                                f"  [{i+1}/{len(match_ids)}] Match {match_id}: "
-                                f"HTTP {response.status} | {elapsed*1000:.0f}ms"
+                                f"  [{i + 1}/{len(match_ids)}] Match {match_id}: "
+                                f"HTTP {response.status} | {elapsed * 1000:.0f}ms"
                             )
                         else:
                             self.stats.http_errors += 1
-                            logger.warning(
-                                f"  [{i+1}/{len(match_ids)}] Match {match_id}: "
-                                f"HTTP {response.status}"
-                            )
+                            logger.warning(f"  [{i + 1}/{len(match_ids)}] Match {match_id}: HTTP {response.status}")
 
                     # 随机延迟，避免触发限流
                     await asyncio.sleep(0.2 + 0.3 * (i % 3))
@@ -438,10 +432,7 @@ class IncrementalCollector:
         for match_id, raw_json in raw_data_map.items():
             try:
                 # 检查是否已存在
-                cur.execute(
-                    "SELECT id FROM raw_match_data WHERE external_id = %s",
-                    (str(match_id),)
-                )
+                cur.execute("SELECT id FROM raw_match_data WHERE external_id = %s", (str(match_id),))
                 existing = cur.fetchone()
 
                 raw_json_str = json.dumps(raw_json, ensure_ascii=False)
@@ -453,7 +444,7 @@ class IncrementalCollector:
                         SET raw_data = %s, api_source = %s, created_at = NOW()
                         WHERE external_id = %s
                     """,
-                        (raw_json_str, "live_crawl_v51", str(match_id))
+                        (raw_json_str, "live_crawl_v51", str(match_id)),
                     )
                     updated += 1
                 else:
@@ -462,7 +453,7 @@ class IncrementalCollector:
                         INSERT INTO raw_match_data (external_id, raw_data, api_source, created_at)
                         VALUES (%s, %s, %s, NOW())
                     """,
-                        (str(match_id), raw_json_str, "live_crawl_v51")
+                        (str(match_id), raw_json_str, "live_crawl_v51"),
                     )
                     inserted += 1
 
@@ -522,6 +513,7 @@ class IncrementalCollector:
 # ============================================================================
 # 便捷函数
 # ============================================================================
+
 
 async def quick_incremental_collect(target_count: int = 50) -> CollectStatistics:
     """

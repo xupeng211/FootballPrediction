@@ -4,10 +4,12 @@ V12.3 解析引擎完整性验证测试
 验证parse_raw_json_to_db是否会"买椟还珠"，确保数据提取的准确性
 """
 
-import pytest
 import json
 import logging
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import MagicMock, patch
+
+import pytest
+
 from src.api.collectors.fotmob_core import FotMobCoreCollector
 
 # 设置测试日志

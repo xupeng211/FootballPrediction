@@ -32,9 +32,7 @@ Date: 2025-12-28
 """
 
 import gc
-import json
 import logging
-import os
 import pickle
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -105,29 +103,36 @@ def merge_registries(
 # 核心特征白名单：保护高价值特征不被剪枝
 CORE_FEATURE_WHITELIST = {
     # 滚动特征 (V17.0 基线)
-    "rolling_xg", "rolling_xg_std",
-    "rolling_shots", "rolling_shots_std",
-    "rolling_shots_on_target", "rolling_shots_on_target_std",
-    "rolling_possession", "rolling_possession_std",
-    "rolling_team_rating", "rolling_team_rating_std",
-
+    "rolling_xg",
+    "rolling_xg_std",
+    "rolling_shots",
+    "rolling_shots_std",
+    "rolling_shots_on_target",
+    "rolling_shots_on_target_std",
+    "rolling_possession",
+    "rolling_possession_std",
+    "rolling_team_rating",
+    "rolling_team_rating_std",
     # 赛前特征 (V18.0)
-    "table_position", "table_position_diff",
-    "points", "points_diff",
+    "table_position",
+    "table_position_diff",
+    "points",
+    "points_diff",
     "recent_form_points",
-
     # ELO 评级 (V19.0)
-    "elo_gap", "adjusted_elo_gap",
-
+    "elo_gap",
+    "adjusted_elo_gap",
     # 疲劳度 (V19.0)
-    "fatigue_index", "fatigue_diff",
+    "fatigue_index",
+    "fatigue_diff",
     "rest_days",
-
     # 战意 (V19.0)
-    "relegation_incentive", "incentive_diff", "desperation",
-
+    "relegation_incentive",
+    "incentive_diff",
+    "desperation",
     # 平局敏感度 (V19.4)
-    "table_proximity", "low_scoring_tendency",
+    "table_proximity",
+    "low_scoring_tendency",
 }
 
 

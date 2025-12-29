@@ -31,6 +31,7 @@ class LeagueId(str, Enum):
     只有在此列表中的 League ID 才被允许通过校验
     这是防止"Premier League"标签污染的第一道防线
     """
+
     PREMIER_LEAGUE = "47"
     LA_LIGA = "87"  # V36.2 修复：从 55 改为 87
     BUNDESLIGA = "54"
@@ -63,6 +64,7 @@ class LeagueId(str, Enum):
 
 class MatchStatus(str, Enum):
     """比赛状态枚举"""
+
     FINISHED = "finished"
     ONGOING = "ongoing"
     SCHEDULED = "scheduled"
@@ -114,10 +116,7 @@ class L1MatchData(BaseModel):
         只有白名单中的 League ID 才能通过此校验
         """
         if not LeagueId.is_valid_id(v):
-            raise ValueError(
-                f"❌ 拒绝非法 League ID: {v}。"
-                f"合法的 League IDs: {[lid.value for lid in LeagueId]}"
-            )
+            raise ValueError(f"❌ 拒绝非法 League ID: {v}。合法的 League IDs: {[lid.value for lid in LeagueId]}")
         return v
 
     @field_validator("league_name")
@@ -168,14 +167,10 @@ class L1MatchData(BaseModel):
         """
         if self.status == MatchStatus.FINISHED:
             if self.home_score is None or self.away_score is None:
-                raise ValueError(
-                    f"❌ finished 状态必须有比分: match_id={self.match_id}"
-                )
+                raise ValueError(f"❌ finished 状态必须有比分: match_id={self.match_id}")
         elif self.status == MatchStatus.SCHEDULED:
             if self.home_score is not None or self.away_score is not None:
-                raise ValueError(
-                    f"❌ scheduled 状态不能有比分: match_id={self.match_id}"
-                )
+                raise ValueError(f"❌ scheduled 状态不能有比分: match_id={self.match_id}")
         return self
 
     def to_dict(self) -> dict:
@@ -204,6 +199,7 @@ class L1CollectionSummary(BaseModel):
 
     用于结构化监控和可观测性
     """
+
     collection_start_time: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
     collection_end_time: str | None = Field(default=None)
 
@@ -217,13 +213,12 @@ class L1CollectionSummary(BaseModel):
         default_factory=dict,
         description={
             "47": {"attempted": 100, "success": 98, "failed": 2},
-        }
+        },
     )
 
     # 错误分布
     error_distribution: dict[str, int] = Field(
-        default_factory=dict,
-        description={"404": 5, "ConnectionTimeout": 2, "ValidationError": 1}
+        default_factory=dict, description={"404": 5, "ConnectionTimeout": 2, "ValidationError": 1}
     )
 
     @property

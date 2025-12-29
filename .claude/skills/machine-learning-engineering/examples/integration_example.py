@@ -2,15 +2,17 @@
 集成示例：将 machine-learning-engineering Skill 应用于现有的足球预测系统
 """
 
-import sys
 import os
-sys.path.append(os.path.join(os.path.dirname(__file__), '../../../..'))
+import sys
 
-from src.ml.models.xgboost_classifier import XGBoostClassifier
-from src.ml.features.advanced_feature_transformer import AdvancedFeatureTransformer
+sys.path.append(os.path.join(os.path.dirname(__file__), "../../../.."))
+
 from src.ml.data.postgres_loader import PostgreSQLDataLoader
-from .scripts.xgboost_optimizer import FootballPredictionOptimizer
+from src.ml.features.advanced_feature_transformer import AdvancedFeatureTransformer
+
 from .scripts.feature_engineering_analyzer import FootballFeatureAnalyzer
+from .scripts.xgboost_optimizer import FootballPredictionOptimizer
+
 
 class EnhancedFootballPredictor:
     """增强的足球预测系统"""
@@ -42,8 +44,8 @@ class EnhancedFootballPredictor:
 
         # 3. 使用我们的特征分析器
         print("🔍 分析特征质量...")
-        if 'target' not in features_df.columns:
-            features_df['target'] = self._create_targets(matches_df)
+        if "target" not in features_df.columns:
+            features_df["target"] = self._create_targets(matches_df)
 
         analysis_results = self.feature_analyzer.analyze_feature_quality(features_df)
         suggestions = self.feature_analyzer.suggest_feature_engineering(analysis_results)
@@ -54,7 +56,7 @@ class EnhancedFootballPredictor:
 
         # 5. 优化模型
         print("⚡ 优化XGBoost模型...")
-        X, y = enhanced_features.drop('target', axis=1), enhanced_features['target']
+        X, y = enhanced_features.drop("target", axis=1), enhanced_features["target"]
         model_results = self._optimize_and_train(X, y)
 
         # 6. 集成到现有系统
@@ -65,23 +67,23 @@ class EnhancedFootballPredictor:
 
     def _create_sample_data(self):
         """创建示例数据用于演示"""
-        import pandas as pd
         import numpy as np
+        import pandas as pd
 
         np.random.seed(42)
         n_matches = 1000
 
         data = {
-            'home_team': np.random.choice(['Man Utd', 'Arsenal', 'Chelsea', 'Liverpool'], n_matches),
-            'away_team': np.random.choice(['Man City', 'Tottenham', 'Leicester', 'Everton'], n_matches),
-            'home_goals': np.random.poisson(1.5, n_matches),
-            'away_goals': np.random.poisson(1.2, n_matches),
-            'home_shots': np.random.poisson(12, n_matches),
-            'away_shots': np.random.poisson(10, n_matches),
-            'home_possession': np.random.uniform(40, 70, n_matches),
-            'away_possession': 100 - np.random.uniform(40, 70, n_matches),
-            'league_position': np.random.randint(1, 21, n_matches),
-            'recent_form': np.random.uniform(-1, 1, n_matches)
+            "home_team": np.random.choice(["Man Utd", "Arsenal", "Chelsea", "Liverpool"], n_matches),
+            "away_team": np.random.choice(["Man City", "Tottenham", "Leicester", "Everton"], n_matches),
+            "home_goals": np.random.poisson(1.5, n_matches),
+            "away_goals": np.random.poisson(1.2, n_matches),
+            "home_shots": np.random.poisson(12, n_matches),
+            "away_shots": np.random.poisson(10, n_matches),
+            "home_possession": np.random.uniform(40, 70, n_matches),
+            "away_possession": 100 - np.random.uniform(40, 70, n_matches),
+            "league_position": np.random.randint(1, 21, n_matches),
+            "recent_form": np.random.uniform(-1, 1, n_matches),
         }
 
         df = pd.DataFrame(data)
@@ -89,11 +91,11 @@ class EnhancedFootballPredictor:
 
     def _create_targets(self, matches_df):
         """根据比赛结果创建目标变量"""
-        if 'home_goals' in matches_df.columns and 'away_goals' in matches_df.columns:
+        if "home_goals" in matches_df.columns and "away_goals" in matches_df.columns:
             conditions = [
-                matches_df['home_goals'] > matches_df['away_goals'],  # 主胜
-                matches_df['home_goals'] == matches_df['away_goals'],  # 平局
-                matches_df['home_goals'] < matches_df['away_goals']   # 客胜
+                matches_df["home_goals"] > matches_df["away_goals"],  # 主胜
+                matches_df["home_goals"] == matches_df["away_goals"],  # 平局
+                matches_df["home_goals"] < matches_df["away_goals"],  # 客胜
             ]
             choices = [0, 1, 2]  # HOME, DRAW, AWAY
             return np.select(conditions, choices, default=1)
@@ -105,19 +107,19 @@ class EnhancedFootballPredictor:
         """应用特征工程建议"""
         enhanced_df = df.copy()
 
-        for suggestion in suggestions.get('suggestions', []):
-            action = suggestion.get('action')
-            features = suggestion.get('features', [])
+        for suggestion in suggestions.get("suggestions", []):
+            action = suggestion.get("action")
+            features = suggestion.get("features", [])
 
-            if action == 'drop_features' and features:
+            if action == "drop_features" and features:
                 enhanced_df = enhanced_df.drop(columns=features)
                 print(f"  删除了 {len(features)} 个特征: {features[:5]}")
 
-            elif action == 'impute' and features:
-                method = suggestion.get('method', 'median')
+            elif action == "impute" and features:
+                method = suggestion.get("method", "median")
                 for feature in features:
                     if feature in enhanced_df.columns:
-                        if method == 'median':
+                        if method == "median":
                             enhanced_df[feature] = enhanced_df[feature].fillna(enhanced_df[feature].median())
                         else:
                             enhanced_df[feature] = enhanced_df[feature].fillna(enhanced_df[feature].mean())
@@ -133,19 +135,13 @@ class EnhancedFootballPredictor:
         from sklearn.model_selection import train_test_split
 
         # 数据分割
-        X_train, X_test, y_train, y_test = train_test_split(
-            X, y, test_size=0.2, random_state=42, stratify=y
-        )
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
 
         # 超参数优化
-        best_params, best_score = self.optimizer.optimize_hyperparameters(
-            X_train, y_train, X_test, y_test, n_trials=30
-        )
+        best_params, best_score = self.optimizer.optimize_hyperparameters(X_train, y_train, X_test, y_test, n_trials=30)
 
         # 训练最终模型
-        model, accuracy = self.optimizer.train_final_model(
-            X_train, y_train, X_test, y_test, params=best_params
-        )
+        model, accuracy = self.optimizer.train_final_model(X_train, y_train, X_test, y_test, params=best_params)
 
         # 评估
         results = self.optimizer.evaluate_performance(model, X_test, y_test)
@@ -154,10 +150,10 @@ class EnhancedFootballPredictor:
         self.optimizer.save_optimization_results(model)
 
         return {
-            'model': model,
-            'best_params': best_params,
-            'accuracy': results['accuracy'],
-            'target_accuracy': self.optimizer.target_accuracy
+            "model": model,
+            "best_params": best_params,
+            "accuracy": results["accuracy"],
+            "target_accuracy": self.optimizer.target_accuracy,
         }
 
     def _integrate_to_system(self, model_results):
@@ -166,14 +162,15 @@ class EnhancedFootballPredictor:
 
         # 保存模型到现有系统目录
         import joblib
-        model_path = 'src/ml/models/enhanced_xgboost_classifier.joblib'
-        joblib.dump(model_results['model'], model_path)
+
+        model_path = "src/ml/models/enhanced_xgboost_classifier.joblib"
+        joblib.dump(model_results["model"], model_path)
 
         # 更新配置
         config_updates = {
-            'model_params': model_results['best_params'],
-            'model_path': model_path,
-            'target_accuracy': model_results['target_accuracy']
+            "model_params": model_results["best_params"],
+            "model_path": model_path,
+            "target_accuracy": model_results["target_accuracy"],
         }
 
         # 这里可以更新 src/config.py 或其他配置文件
@@ -204,7 +201,7 @@ class EnhancedFootballPredictor:
         # 计算改进幅度
         improvement = self.optimizer.best_score - 0.5869
         print(f"\n🎯 性能提升: +{improvement:.2f}%")
-        print(f"📊 相对改进: +{(improvement/0.5869)*100:.1f}%")
+        print(f"📊 相对改进: +{(improvement / 0.5869) * 100:.1f}%")
 
 
 def main():

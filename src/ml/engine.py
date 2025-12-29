@@ -363,7 +363,6 @@ class V17MLEngine:
 
         os.makedirs(output_dir, exist_ok=True)
 
-        from datetime import datetime
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         model_path = os.path.join(output_dir, f"rolling_model_{timestamp}.pkl")
         joblib.dump(self.model, model_path)
@@ -430,6 +429,7 @@ class V17MLEngine:
 # V26.4 Predictor - 统一推理接口
 # ============================================================================
 
+
 class Predictor:
     """
     V26.4 统一推理类
@@ -452,7 +452,6 @@ class Predictor:
             model_path: 模型文件路径，为 None 则使用默认路径
             model_type: 模型类型 (v26_mini, v19_rolling, v26_5_production, v26_6_pre_match, v26_7_aligned)
         """
-        import joblib
 
         self.model_type = model_type
         self.model = None
@@ -526,8 +525,8 @@ class Predictor:
 
     def _create_mini_model(self):
         """创建微型模型（用于测试）"""
-        import xgboost as xgb
         import numpy as np
+        import xgboost as xgb
         from sklearn.preprocessing import StandardScaler
 
         logger.info("创建微型 V26.4 模型...")
@@ -669,6 +668,7 @@ class Predictor:
 # V26.8 ModelDispatcher - 联赛专项模型分发器
 # ============================================================================
 
+
 class ModelDispatcher:
     """
     V26.8 联赛专项模型分发器（V5 Pure - 含降级策略）
@@ -690,11 +690,11 @@ class ModelDispatcher:
 
     # 联赛 ID 到模型映射
     LEAGUE_MODEL_MAPPING = {
-        47: "v26_8_epl",           # Premier League ✅
-        135: "v26_8_serie_a",      # Serie A ⚠️ 数据不足，将强制回退
-        55: "v26_8_la_liga",      # La Liga ✅
-        54: "v26_8_bund",         # Bundesliga ✅
-        61: "v26_8_ligue1",       # Ligue 1 ✅
+        47: "v26_8_epl",  # Premier League ✅
+        135: "v26_8_serie_a",  # Serie A ⚠️ 数据不足，将强制回退
+        55: "v26_8_la_liga",  # La Liga ✅
+        54: "v26_8_bund",  # Bundesliga ✅
+        61: "v26_8_ligue1",  # Ligue 1 ✅
     }
 
     # V5 Pure: 数据不足联赛（强制回退到通用模型）
@@ -722,10 +722,7 @@ class ModelDispatcher:
         """加载通用底座模型（确保至少有一个可用模型）"""
         base_model_path = self.MODEL_PATHS[self.FALLBACK_MODEL]
         if os.path.exists(base_model_path):
-            self.loaded_models[self.FALLBACK_MODEL] = Predictor(
-                model_path=base_model_path,
-                model_type="v26_7_aligned"
-            )
+            self.loaded_models[self.FALLBACK_MODEL] = Predictor(model_path=base_model_path, model_type="v26_7_aligned")
             logger.info(f"✅ 通用底座模型已加载: {self.FALLBACK_MODEL}")
         else:
             logger.warning(f"⚠️  通用底座模型未找到: {base_model_path}")
@@ -781,10 +778,7 @@ class ModelDispatcher:
         """
         # V5 Pure: 检查是否为数据不足联赛（强制回退）
         if league_id is not None and league_id in self.INSUFFICIENT_DATA_LEAGUES:
-            logger.info(
-                f"⚠️  联赛 ID {league_id} 数据不足，强制回退到通用模型 "
-                f"{self.FALLBACK_MODEL}"
-            )
+            logger.info(f"⚠️  联赛 ID {league_id} 数据不足，强制回退到通用模型 {self.FALLBACK_MODEL}")
             return self._get_fallback_model()
 
         # 如果有联赛 ID，尝试使用专项模型
@@ -796,10 +790,7 @@ class ModelDispatcher:
                 # 检查是否已加载
                 if model_type not in self.loaded_models:
                     try:
-                        self.loaded_models[model_type] = Predictor(
-                            model_path=model_path,
-                            model_type=model_type
-                        )
+                        self.loaded_models[model_type] = Predictor(model_path=model_path, model_type=model_type)
                         logger.info(f"✅ 加载联赛专项模型: {model_type}")
                     except Exception as e:
                         logger.warning(f"⚠️  加载联赛专项模型失败 {model_type}: {e}")
@@ -873,9 +864,7 @@ class ModelDispatcher:
             "dispatcher_phase": "V5_Pure",
             "league_model_mapping": self.LEAGUE_MODEL_MAPPING,
             "insufficient_data_leagues": list(self.INSUFFICIENT_DATA_LEAGUES),
-            "insufficient_data_league_names": {
-                135: "Serie A (数据不足: 4 场 < 500 阈值)"
-            },
+            "insufficient_data_league_names": {135: "Serie A (数据不足: 4 场 < 500 阈值)"},
             "fallback_model": self.FALLBACK_MODEL,
             "available_models": available_models,
             "loaded_models": list(self.loaded_models.keys()),

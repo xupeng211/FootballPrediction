@@ -4,10 +4,12 @@ V12.3 核心哨兵机制验证测试
 专门验证100KB质量红线是否严格执行
 """
 
-import pytest
 import json
 import logging
 from unittest.mock import Mock, patch
+
+import pytest
+
 from src.api.collectors.fotmob_core import FotMobCoreCollector
 
 # 设置测试日志

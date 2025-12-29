@@ -3,17 +3,16 @@ FastAPI性能中间件模板
 用于足球预测API的性能监控和优化
 """
 
+import logging
 import time
 import uuid
-import asyncio
-from typing import Callable
+from collections.abc import Callable
+
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.responses import StreamingResponse
-import logging
-import json
 
 logger = logging.getLogger(__name__)
+
 
 class PerformanceMonitoringMiddleware(BaseHTTPMiddleware):
     """性能监控中间件"""
@@ -43,8 +42,8 @@ class PerformanceMonitoringMiddleware(BaseHTTPMiddleware):
                 "method": request.method,
                 "path": request.url.path,
                 "query_params": str(request.query_params),
-                "client_ip": request.client.host if request.client else None
-            }
+                "client_ip": request.client.host if request.client else None,
+            },
         )
 
         try:
@@ -67,8 +66,8 @@ class PerformanceMonitoringMiddleware(BaseHTTPMiddleware):
                     "path": request.url.path,
                     "status_code": response.status_code,
                     "process_time": process_time,
-                    "response_size": response.headers.get("content-length", 0)
-                }
+                    "response_size": response.headers.get("content-length", 0),
+                },
             )
 
             # 更新统计信息
@@ -86,9 +85,9 @@ class PerformanceMonitoringMiddleware(BaseHTTPMiddleware):
                     "method": request.method,
                     "path": request.url.path,
                     "error": str(e),
-                    "process_time": process_time
+                    "process_time": process_time,
                 },
-                exc_info=True
+                exc_info=True,
             )
 
             # 更新错误统计
@@ -121,9 +120,10 @@ class PerformanceMonitoringMiddleware(BaseHTTPMiddleware):
                     "avg_response_time": sum(times) / len(times),
                     "min_response_time": min(times),
                     "max_response_time": max(times),
-                    "p95_response_time": sorted(times)[int(len(times) * 0.95)]
+                    "p95_response_time": sorted(times)[int(len(times) * 0.95)],
                 }
         return stats
+
 
 class RateLimitMiddleware(BaseHTTPMiddleware):
     """限流中间件"""
@@ -144,22 +144,19 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
         # 检查当前客户端请求计数
         recent_requests = [
-            timestamp for timestamp, _ in self.client_requests.get(client_ip, [])
+            timestamp
+            for timestamp, _ in self.client_requests.get(client_ip, [])
             if current_time - timestamp < 60  # 1分钟内
         ]
 
         # 检查是否超过限制
         if len(recent_requests) >= self.requests_per_minute:
             logger.warning(
-                f"Rate limit exceeded for {client_ip}: {len(recent_requests)}/min",
-                extra={"client_ip": client_ip}
+                f"Rate limit exceeded for {client_ip}: {len(recent_requests)}/min", extra={"client_ip": client_ip}
             )
             from fastapi import HTTPException
-            raise HTTPException(
-                status_code=429,
-                detail="Too many requests",
-                headers={"Retry-After": "60"}
-            )
+
+            raise HTTPException(status_code=429, detail="Too many requests", headers={"Retry-After": "60"})
 
         # 记录当前请求
         if client_ip not in self.client_requests:
@@ -179,11 +176,13 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         """清理过期的请求记录"""
         for client_ip in list(self.client_requests.keys()):
             self.client_requests[client_ip] = [
-                (timestamp, count) for timestamp, count in self.client_requests[client_ip]
+                (timestamp, count)
+                for timestamp, count in self.client_requests[client_ip]
                 if current_time - timestamp < 300  # 保留5分钟内的记录
             ]
             if not self.client_requests[client_ip]:
                 del self.client_requests[client_ip]
+
 
 class CacheControlMiddleware(BaseHTTPMiddleware):
     """缓存控制中间件"""
@@ -194,7 +193,7 @@ class CacheControlMiddleware(BaseHTTPMiddleware):
         self.cache_rules = {
             # 静态资源
             "/static/": {"max-age": 86400},  # 1天
-            "/docs": {"max-age": 3600},      # 1小时
+            "/docs": {"max-age": 3600},  # 1小时
             "/openapi.json": {"max-age": 3600},
             # API端点
             "/api/health": {"max-age": 30},  # 30秒
@@ -226,6 +225,7 @@ class CacheControlMiddleware(BaseHTTPMiddleware):
                 return rule
         return {"max-age": self.default_ttl}
 
+
 class CompressionMiddleware(BaseHTTPMiddleware):
     """响应压缩中间件"""
 
@@ -254,13 +254,7 @@ class CompressionMiddleware(BaseHTTPMiddleware):
 
         # 检查内容类型
         content_type = response.headers.get("content-type", "")
-        compressible_types = [
-            "application/json",
-            "text/html",
-            "text/css",
-            "text/javascript",
-            "application/javascript"
-        ]
+        compressible_types = ["application/json", "text/html", "text/css", "text/javascript", "application/javascript"]
         if not any(ct in content_type for ct in compressible_types):
             return False
 
@@ -270,6 +264,7 @@ class CompressionMiddleware(BaseHTTPMiddleware):
             return False
 
         return True
+
 
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     """安全头中间件"""
@@ -289,6 +284,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         response.headers.pop("Server", None)
 
         return response
+
 
 # 中间件配置类
 class MiddlewareConfig:
@@ -316,6 +312,7 @@ class MiddlewareConfig:
         app.add_middleware(CompressionMiddleware)
 
         print("✅ 所有中间件已设置完成")
+
 
 # 使用示例
 """

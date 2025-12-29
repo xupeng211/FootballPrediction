@@ -145,20 +145,16 @@ def retry_with_exponential_backoff(
 
                     # 最后一次尝试失败，不再重试
                     if attempt == max_attempts - 1:
-                        logger.error(
-                            f"❌ 重试失败: {func.__name__}() "
-                            f"(尝试 {attempt + 1}/{max_attempts})"
-                        )
+                        logger.error(f"❌ 重试失败: {func.__name__}() (尝试 {attempt + 1}/{max_attempts})")
                         raise
 
                     # 计算延迟时间（指数退避 + 抖动）
-                    delay = min(base_delay * (exponential_base ** attempt), max_delay)
+                    delay = min(base_delay * (exponential_base**attempt), max_delay)
                     if jitter:
                         delay = delay * (0.5 + random.random() * 0.5)
 
                     logger.warning(
-                        f"⚠️  {func.__name__}() 失败 (尝试 {attempt + 1}/{max_attempts}): {e} "
-                        f"| {delay:.2f}秒后重试..."
+                        f"⚠️  {func.__name__}() 失败 (尝试 {attempt + 1}/{max_attempts}): {e} | {delay:.2f}秒后重试..."
                     )
 
                     await asyncio.sleep(delay)
@@ -228,6 +224,5 @@ class CircuitBreaker:
                 if self.state != "OPEN":
                     self.state = "OPEN"
                     logger.error(
-                        f"🚨 熔断器已打开！连续失败 {self.failure_count} 次，"
-                        f"将在 {self.recovery_timeout} 秒后尝试恢复"
+                        f"🚨 熔断器已打开！连续失败 {self.failure_count} 次，将在 {self.recovery_timeout} 秒后尝试恢复"
                     )

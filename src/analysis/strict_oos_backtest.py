@@ -107,7 +107,7 @@ class StrictOOSBacktest:
 
         # 备用：如果 V19.4 不存在，尝试其他可用模型
         if not model_path.exists():
-            print(f"⚠️ V19.4 模型不存在，尝试备用模型...")
+            print("⚠️ V19.4 模型不存在，尝试备用模型...")
             model_path = Path("model_zoo/v19.3_hardened_model.pkl")
             metadata_path = Path("model_zoo/v19.3_hardened_metadata.json")
 

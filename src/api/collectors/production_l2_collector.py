@@ -77,10 +77,7 @@ class ProductionL2Collector:
         self.timeout = timeout
 
         # 弹性机制（复用 L1 的实现）
-        self.rate_limiter = RateLimiter(
-            max_requests=max_requests_per_second,
-            time_window=1.0
-        )
+        self.rate_limiter = RateLimiter(max_requests=max_requests_per_second, time_window=1.0)
         self.concurrent_limiter = ConcurrentLimiter(max_concurrent=max_concurrent)
         self.circuit_breaker = CircuitBreaker(
             failure_threshold=5,
@@ -100,11 +97,7 @@ class ProductionL2Collector:
         """异步上下文管理器入口"""
         timeout = aiohttp.ClientTimeout(total=self.timeout)
         connector = aiohttp.TCPConnector(limit=self.concurrent_limiter.max_concurrent)
-        self.session = aiohttp.ClientSession(
-            timeout=timeout,
-            connector=connector,
-            headers=self._get_headers()
-        )
+        self.session = aiohttp.ClientSession(timeout=timeout, connector=connector, headers=self._get_headers())
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
@@ -160,9 +153,7 @@ class ProductionL2Collector:
                         message=f"Match {match_id} not found",
                     )
                 elif response.status >= 500:
-                    self.circuit_breaker.record_failure(
-                        aiohttp.ClientError(f"HTTP {response.status}")
-                    )
+                    self.circuit_breaker.record_failure(aiohttp.ClientError(f"HTTP {response.status}"))
                     raise aiohttp.ClientError(f"Server error: HTTP {response.status}")
                 else:
                     raise aiohttp.ClientError(f"Unexpected status: HTTP {response.status}")
@@ -189,17 +180,13 @@ class ProductionL2Collector:
 
             stats_data = None
             if stats_obj:
-                # 提取 Period (通常包含全场数据)
-                periods = stats_obj.get("Period", [])
+                # V37.5 容错修复：优先找 Periods（复数），备选 Period（单数）
+                periods = stats_obj.get("Periods") or stats_obj.get("Period")
                 if periods:
-                    # 通常第一个 Period 是全场统计
-                    full_match = periods[0]
-                    stats_data = {
-                        "xg": self._extract_stat_list(full_match.get("xG")),
-                        "shots_on_target": self._extract_stat_list(full_match.get("shotsOnTarget")),
-                        "possession": self._extract_stat_list(full_match.get("possession")),
-                        "team_rating": self._extract_stat_list(full_match.get("teamRating")),
-                    }
+                    # FotMob API 结构：Periods -> All -> stats (数组)
+                    full_match = periods.get("All") if isinstance(periods, dict) else None
+                    if full_match and "stats" in full_match:
+                        stats_data = self._extract_stats_from_periods(full_match["stats"])
 
             # 提取球队颜色
             general = raw_data.get("general", {})
@@ -230,6 +217,57 @@ class ProductionL2Collector:
         except Exception as e:
             logger.error(f"❌ 解析异常 {match_id}: {e}")
             return None
+
+    def _extract_stats_from_periods(self, stats_array: list) -> dict | None:
+        """
+        V37.5: 从 FotMob Periods stats 数组中提取核心特征
+
+        FotMob API 结构:
+        [
+          {"key": "top_stats", "stats": [
+            {"key": "expected_goals", "stats": ["2.17", "0.59"]},
+            {"key": "ShotsOnTarget", "stats": [4, 3]},
+            {"key": "BallPossesion", "stats": [56, 44]}
+          ]},
+          ...
+        ]
+
+        Args:
+            stats_array: Periods.All.stats 数组
+
+        Returns:
+            包含 xg, shots_on_target, possession 的字典
+        """
+        if not stats_array:
+            return None
+
+        # 目标特征映射：FotMob key -> 我们的字段名
+        target_keys = {
+            "expected_goals": "xg",
+            "ShotsOnTarget": "shots_on_target",
+            "BallPossesion": "possession",
+        }
+
+        result = {}
+
+        # 扁平化搜索所有 stat groups
+        for stat_group in stats_array:
+            for stat_item in stat_group.get("stats", []):
+                key = stat_item.get("key", "")
+                if key in target_keys:
+                    stats_value = stat_item.get("stats", [])
+                    if isinstance(stats_value, list) and len(stats_value) >= 2:
+                        # 转换为 float
+                        try:
+                            result[target_keys[key]] = [
+                                float(stats_value[0]),
+                                float(stats_value[1]),
+                            ]
+                        except (ValueError, TypeError):
+                            result[target_keys[key]] = None
+
+        # 只有至少有一个特征时才返回
+        return result if result else None
 
     def _extract_stat_list(self, stat_obj: dict | None) -> list[float] | None:
         """
@@ -381,12 +419,10 @@ class ProductionL2Collector:
 # 使用示例
 # ============================================================================
 
+
 async def main():
     """生产级 L2 采集示例"""
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s - %(levelname)s - %(message)s"
-    )
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
     from src.config_unified import get_settings
 

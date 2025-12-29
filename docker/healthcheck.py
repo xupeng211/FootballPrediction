@@ -15,19 +15,15 @@ Docker健康检查脚本
 python healthcheck.py
 """
 
-import sys
-import os
 import asyncio
 import logging
+import os
+import sys
 import time
 from pathlib import Path
-from typing import Optional
 
 # 设置日志
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 # 添加项目路径
@@ -88,10 +84,10 @@ class HealthChecker:
 
             # 检查关键配置项
             required_configs = [
-                ('database.host', settings.database.host),
-                ('database.database', settings.database.database),
-                ('app.name', settings.app.name),
-                ('fotmob.base_url', settings.fotmob.base_url),
+                ("database.host", settings.database.host),
+                ("database.database", settings.database.database),
+                ("app.name", settings.app.name),
+                ("fotmob.base_url", settings.fotmob.base_url),
             ]
 
             for config_name, config_value in required_configs:
@@ -116,14 +112,15 @@ class HealthChecker:
             logger.info("检查FotMob API连接性...")
 
             # 简单的HTTP请求测试
+
             import aiohttp
-            import asyncio
 
             timeout = aiohttp.ClientTimeout(total=5)
 
             async with aiohttp.ClientSession(timeout=timeout) as session:
-                async with session.get("https://www.fotmob.com/api/",
-                                     headers={"User-Agent": "HealthCheck/1.0"}) as response:
+                async with session.get(
+                    "https://www.fotmob.com/api/", headers={"User-Agent": "HealthCheck/1.0"}
+                ) as response:
                     if response.status == 200:
                         logger.info("✅ FotMob API连接正常")
                         return True
@@ -138,8 +135,9 @@ class HealthChecker:
     async def check_memory_usage(self) -> bool:
         """检查内存使用情况"""
         try:
-            import psutil
             import os
+
+            import psutil
 
             # 获取当前进程内存使用
             process = psutil.Process(os.getpid())
@@ -184,7 +182,7 @@ class HealthChecker:
                     passed_checks += 1
                 else:
                     logger.error(f"健康检查失败: {check_name}")
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 logger.error(f"健康检查超时: {check_name}")
             except Exception as e:
                 logger.error(f"健康检查异常: {check_name} - {e}")
@@ -210,7 +208,7 @@ class HealthChecker:
 
             if attempt < self.max_retries - 1:
                 # 指数退避重试
-                delay = 2 ** attempt
+                delay = 2**attempt
                 logger.info(f"等待 {delay} 秒后重试...")
                 await asyncio.sleep(delay)
 

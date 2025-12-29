@@ -17,20 +17,20 @@ Professional Web Scraping and Data Collection Skill for Football Prediction
 import asyncio
 import json
 import logging
-import time
+import os
 import random
 import sys
-import os
-from datetime import datetime, timedelta
-from typing import Dict, List, Any, Optional, Tuple, Union
+import time
 from dataclasses import dataclass
-from pathlib import Path
+from datetime import datetime
+from typing import Any
 
 # 添加项目路径
-sys.path.insert(0, '/home/user/projects/FootballPrediction')
+sys.path.insert(0, "/home/user/projects/FootballPrediction")
 
 import aiohttp
 import asyncpg
+
 from src.config_unified import get_settings
 
 # 配置日志
@@ -41,12 +41,13 @@ logger = logging.getLogger(__name__)
 @dataclass
 class AuthHeader:
     """API认证头数据结构"""
+
     x_mas: str
     x_foo: str
     user_agent: str
     source: str
     created_at: datetime
-    last_success: Optional[datetime] = None
+    last_success: datetime | None = None
     success_count: int = 0
     failure_count: int = 0
 
@@ -54,13 +55,14 @@ class AuthHeader:
 @dataclass
 class CollectionResult:
     """采集结果数据结构"""
+
     success: bool
     data_size: int
     matches_found: int
     pl_matches: int
     duration_seconds: float
-    error_message: Optional[str] = None
-    response_headers: Optional[Dict[str, str]] = None
+    error_message: str | None = None
+    response_headers: dict[str, str] | None = None
 
 
 class DataCollectionSkill:
@@ -78,9 +80,9 @@ class DataCollectionSkill:
     def __init__(self):
         """初始化数据采集技能"""
         self.settings = get_settings()
-        self.current_headers: Optional[AuthHeader] = None
-        self.session: Optional[aiohttp.ClientSession] = None
-        self.db_pool: Optional[asyncpg.Pool] = None
+        self.current_headers: AuthHeader | None = None
+        self.session: aiohttp.ClientSession | None = None
+        self.db_pool: asyncpg.Pool | None = None
 
         # 采集配置
         self.max_retries = 3
@@ -105,15 +107,13 @@ class DataCollectionSkill:
         if not self.session or self.session.closed:
             self.session = aiohttp.ClientSession(
                 timeout=aiohttp.ClientTimeout(total=self.timeout),
-                connector=aiohttp.TCPConnector(limit=10, limit_per_host=5)
+                connector=aiohttp.TCPConnector(limit=10, limit_per_host=5),
             )
 
         # 数据库连接
         if not self.db_pool:
             self.db_pool = await asyncpg.create_pool(
-                self.settings.database.get_connection_string(),
-                min_size=2,
-                max_size=10
+                self.settings.database.get_connection_string(), min_size=2, max_size=10
             )
 
         # 加载当前认证头
@@ -147,13 +147,13 @@ class DataCollectionSkill:
                 x_foo=x_foo,
                 user_agent=random.choice(self.user_agents),
                 source="environment",
-                created_at=datetime.now()
+                created_at=datetime.now(),
             )
             logger.info("📥 已从环境变量加载认证头")
         else:
             logger.warning("⚠️ 环境变量中未找到认证头")
 
-    async def validate_headers(self) -> Tuple[bool, str]:
+    async def validate_headers(self) -> tuple[bool, str]:
         """
         验证当前认证头是否有效
 
@@ -191,7 +191,7 @@ class DataCollectionSkill:
             self.current_headers.failure_count += 1
             return False, f"认证头验证异常: {str(e)}"
 
-    async def update_headers_from_browser(self, headers_dict: Dict[str, str]) -> bool:
+    async def update_headers_from_browser(self, headers_dict: dict[str, str]) -> bool:
         """
         从浏览器捕获的请求头更新认证信息
 
@@ -212,11 +212,7 @@ class DataCollectionSkill:
 
             # 创建新的认证头
             new_headers = AuthHeader(
-                x_mas=x_mas,
-                x_foo=x_foo,
-                user_agent=user_agent,
-                source="browser_captured",
-                created_at=datetime.now()
+                x_mas=x_mas, x_foo=x_foo, user_agent=user_agent, source="browser_captured", created_at=datetime.now()
             )
 
             # 验证新头
@@ -244,7 +240,7 @@ class DataCollectionSkill:
             logger.error(f"❌ 更新认证头失败: {e}")
             return False
 
-    def _build_headers(self) -> Dict[str, str]:
+    def _build_headers(self) -> dict[str, str]:
         """构建完整的请求头"""
         if not self.current_headers:
             raise ValueError("没有可用的认证头")
@@ -289,17 +285,18 @@ class DataCollectionSkill:
                 """)
 
                 # 插入新记录
-                await conn.execute("""
+                await conn.execute(
+                    """
                     INSERT INTO api_auth_headers
                     (source, x_mas, x_foo, user_agent, last_success, success_count)
                     VALUES ($1, $2, $3, $4, $5, $6)
                 """,
-                self.current_headers.source,
-                self.current_headers.x_mas,
-                self.current_headers.x_foo,
-                self.current_headers.user_agent,
-                self.current_headers.last_success,
-                self.current_headers.success_count
+                    self.current_headers.source,
+                    self.current_headers.x_mas,
+                    self.current_headers.x_foo,
+                    self.current_headers.user_agent,
+                    self.current_headers.last_success,
+                    self.current_headers.success_count,
                 )
 
                 logger.info("💾 认证头已保存到数据库")
@@ -307,7 +304,7 @@ class DataCollectionSkill:
         except Exception as e:
             logger.error(f"❌ 保存认证头到数据库失败: {e}")
 
-    async def collect_with_retry(self, url: str, params: Optional[Dict] = None) -> CollectionResult:
+    async def collect_with_retry(self, url: str, params: dict | None = None) -> CollectionResult:
         """
         带重试机制的数据采集
 
@@ -326,9 +323,9 @@ class DataCollectionSkill:
 
                 # 智能延迟
                 if attempt > 0:
-                    delay = self.base_delay * (2 ** attempt) + random.uniform(0, 1)
+                    delay = self.base_delay * (2**attempt) + random.uniform(0, 1)
                     delay = min(delay, self.max_delay)
-                    logger.info(f"⏱️ 第{attempt+1}次重试，延迟 {delay:.1f}秒")
+                    logger.info(f"⏱️ 第{attempt + 1}次重试，延迟 {delay:.1f}秒")
                     await asyncio.sleep(delay)
 
                 async with self.session.get(url, headers=headers, params=params) as response:
@@ -353,11 +350,11 @@ class DataCollectionSkill:
                             matches_found=matches_found,
                             pl_matches=pl_matches,
                             duration_seconds=duration,
-                            response_headers=dict(response.headers)
+                            response_headers=dict(response.headers),
                         )
 
                     elif response.status == 404:
-                        logger.warning(f"⚠️ API返回404 - 可能认证头失效")
+                        logger.warning("⚠️ API返回404 - 可能认证头失效")
                         if attempt == self.max_retries - 1:
                             return CollectionResult(
                                 success=False,
@@ -365,14 +362,14 @@ class DataCollectionSkill:
                                 matches_found=0,
                                 pl_matches=0,
                                 duration_seconds=duration,
-                                error_message="API返回404，认证头可能已失效"
+                                error_message="API返回404，认证头可能已失效",
                             )
 
                     else:
                         logger.warning(f"⚠️ API返回状态码: {response.status}")
 
             except Exception as e:
-                logger.error(f"❌ 采集异常 (尝试{attempt+1}): {e}")
+                logger.error(f"❌ 采集异常 (尝试{attempt + 1}): {e}")
                 if attempt == self.max_retries - 1:
                     duration = time.time() - start_time
                     return CollectionResult(
@@ -381,7 +378,7 @@ class DataCollectionSkill:
                         matches_found=0,
                         pl_matches=0,
                         duration_seconds=duration,
-                        error_message=str(e)
+                        error_message=str(e),
                     )
 
         duration = time.time() - start_time
@@ -391,10 +388,10 @@ class DataCollectionSkill:
             matches_found=0,
             pl_matches=0,
             duration_seconds=duration,
-            error_message="达到最大重试次数"
+            error_message="达到最大重试次数",
         )
 
-    def _count_matches(self, data: Dict) -> int:
+    def _count_matches(self, data: dict) -> int:
         """统计比赛数量"""
         if "matches" in data:
             return len(data["matches"])
@@ -406,18 +403,16 @@ class DataCollectionSkill:
             return total
         return 0
 
-    def _count_pl_matches(self, data: Dict) -> int:
+    def _count_pl_matches(self, data: dict) -> int:
         """统计英超比赛数量"""
         if "leagues" in data:
             for league in data["leagues"]:
                 league_name = league.get("name", "").lower()
-                if ("premier league" in league_name or
-                    "english premier" in league_name or
-                    league.get("id") == 47):
+                if "premier league" in league_name or "english premier" in league_name or league.get("id") == 47:
                     return len(league.get("matches", []))
         return 0
 
-    async def get_collection_status(self) -> Dict[str, Any]:
+    async def get_collection_status(self) -> dict[str, Any]:
         """获取采集状态汇总"""
         try:
             async with self.db_pool.acquire() as conn:
@@ -447,7 +442,9 @@ class DataCollectionSkill:
                         "current_source": self.current_headers.source if self.current_headers else "none",
                         "success_count": self.current_headers.success_count if self.current_headers else 0,
                         "failure_count": self.current_headers.failure_count if self.current_headers else 0,
-                        "last_success": self.current_headers.last_success.isoformat() if self.current_headers and self.current_headers.last_success else None
+                        "last_success": self.current_headers.last_success.isoformat()
+                        if self.current_headers and self.current_headers.last_success
+                        else None,
                     },
                     "collection_stats": {
                         "total_matches": stats["total_matches"],
@@ -455,8 +452,8 @@ class DataCollectionSkill:
                         "pending": stats["pending"],
                         "failed": stats["failed"],
                         "l2_data_count": l2_stats["total_l2_data"],
-                        "completion_rate": round(stats["completed"] / max(stats["total_matches"], 1) * 100, 2)
-                    }
+                        "completion_rate": round(stats["completed"] / max(stats["total_matches"], 1) * 100, 2),
+                    },
                 }
 
         except Exception as e:
@@ -501,7 +498,7 @@ async def create_data_collection_skill() -> DataCollectionSkill:
 
 
 # Claude Skill接口
-async def test_api_headers() -> Dict[str, Any]:
+async def test_api_headers() -> dict[str, Any]:
     """
     测试API认证头 (Claude Skill接口)
 
@@ -513,11 +510,11 @@ async def test_api_headers() -> Dict[str, Any]:
         return {
             "valid": is_valid,
             "message": message,
-            "headers_source": skill.current_headers.source if skill.current_headers else "none"
+            "headers_source": skill.current_headers.source if skill.current_headers else "none",
         }
 
 
-async def update_api_headers(headers_dict: Dict[str, str]) -> Dict[str, Any]:
+async def update_api_headers(headers_dict: dict[str, str]) -> dict[str, Any]:
     """
     更新API认证头 (Claude Skill接口)
 
@@ -529,13 +526,10 @@ async def update_api_headers(headers_dict: Dict[str, str]) -> Dict[str, Any]:
     """
     async with DataCollectionSkill() as skill:
         success = await skill.update_headers_from_browser(headers_dict)
-        return {
-            "success": success,
-            "message": "认证头更新成功" if success else "认证头更新失败"
-        }
+        return {"success": success, "message": "认证头更新成功" if success else "认证头更新失败"}
 
 
-async def collect_matches(date: str) -> Dict[str, Any]:
+async def collect_matches(date: str) -> dict[str, Any]:
     """
     采集指定日期的比赛数据 (Claude Skill接口)
 
@@ -557,11 +551,11 @@ async def collect_matches(date: str) -> Dict[str, Any]:
             "matches_found": result.matches_found,
             "pl_matches": result.pl_matches,
             "duration": result.duration_seconds,
-            "error_message": result.error_message
+            "error_message": result.error_message,
         }
 
 
-async def get_collection_status() -> Dict[str, Any]:
+async def get_collection_status() -> dict[str, Any]:
     """
     获取采集状态 (Claude Skill接口)
 

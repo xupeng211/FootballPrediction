@@ -5,26 +5,25 @@ Production L2 Batch - Fixed database column issue
 """
 
 import asyncio
-import logging
-import sys
-import os
 import json
+import logging
+import os
+import sys
 from pathlib import Path
 
 # 添加项目路径
 sys.path.append(str(Path(__file__).parent / "src"))
 
-from src.collectors.fotmob_api_collector import FotMobAPICollector
-from src.database.async_manager import initialize_database, get_db_session
 from sqlalchemy import text
 
+from src.collectors.fotmob_api_collector import FotMobAPICollector
+from src.database.async_manager import get_db_session, initialize_database
+
 # 配置日志
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
 logger = logging.getLogger(__name__)
+
 
 async def process_l2_batch(limit=100):
     """处理L2批次"""
@@ -57,11 +56,7 @@ async def process_l2_batch(limit=100):
 
             # 初始化采集器
             collector = FotMobAPICollector(
-                max_concurrent=5,
-                timeout=30,
-                base_delay=1.5,
-                enable_proxy=False,
-                enable_jitter=True
+                max_concurrent=5, timeout=30, base_delay=1.5, enable_proxy=False, enable_jitter=True
             )
 
             await collector.initialize()
@@ -79,7 +74,7 @@ async def process_l2_batch(limit=100):
                     match_data = await collector.collect_match_details(fotmob_id)
 
                     if match_data:
-                        logger.info(f"✅ 数据采集成功")
+                        logger.info("✅ 数据采集成功")
                         logger.info(f"   xG: 主队{match_data.xg_home} vs 客队{match_data.xg_away}")
                         logger.info(f"   比分: {match_data.home_score}-{match_data.away_score}")
 
@@ -101,25 +96,32 @@ async def process_l2_batch(limit=100):
                             WHERE fotmob_id = :fotmob_id
                         """)
 
-                        await session.execute(update_query, {
-                            "fotmob_id": fotmob_id,
-                            "home_xg": match_data.xg_home,
-                            "away_xg": match_data.xg_away,
-                            "home_score": match_data.home_score,
-                            "away_score": match_data.away_score,
-                            "status": match_data.status,
-                            "venue": match_data.venue,
-                            "referee": match_data.referee,
-                            "stats_json": json.dumps(match_data.stats_json) if match_data.stats_json else None,
-                            "lineups_json": json.dumps(match_data.lineups_json) if match_data.lineups_json else None,
-                            "environment_json": json.dumps(match_data.environment_json) if match_data.environment_json else None
-                        })
+                        await session.execute(
+                            update_query,
+                            {
+                                "fotmob_id": fotmob_id,
+                                "home_xg": match_data.xg_home,
+                                "away_xg": match_data.xg_away,
+                                "home_score": match_data.home_score,
+                                "away_score": match_data.away_score,
+                                "status": match_data.status,
+                                "venue": match_data.venue,
+                                "referee": match_data.referee,
+                                "stats_json": json.dumps(match_data.stats_json) if match_data.stats_json else None,
+                                "lineups_json": json.dumps(match_data.lineups_json)
+                                if match_data.lineups_json
+                                else None,
+                                "environment_json": json.dumps(match_data.environment_json)
+                                if match_data.environment_json
+                                else None,
+                            },
+                        )
 
                         await session.commit()
-                        logger.info(f"✅ 数据库更新成功")
+                        logger.info("✅ 数据库更新成功")
                         success_count += 1
                     else:
-                        logger.warning(f"⚠️ 数据采集失败")
+                        logger.warning("⚠️ 数据采集失败")
                         error_count += 1
 
                 except Exception as e:
@@ -137,7 +139,7 @@ async def process_l2_batch(limit=100):
             logger.info(f"✅ 成功: {success_count}")
             logger.info(f"❌ 失败: {error_count}")
             if len(matches) > 0:
-                logger.info(f"📈 成功率: {(success_count/len(matches))*100:.1f}%")
+                logger.info(f"📈 成功率: {(success_count / len(matches)) * 100:.1f}%")
 
             # 采集器统计
             stats = collector.get_stats()
@@ -149,8 +151,10 @@ async def process_l2_batch(limit=100):
     except Exception as e:
         logger.error(f"❌ 批处理失败: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 if __name__ == "__main__":
     import argparse

@@ -150,6 +150,7 @@ class MarketPriceVerifier:
         # 从数据库查询最新赔率（使用统一配置）
         import psycopg2
         from psycopg2.extras import RealDictCursor
+
         from src.config_unified import get_settings
 
         try:

@@ -28,6 +28,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class BacktestMetrics:
     """回测指标"""
+
     total_bets: int
     winning_bets: int
     total_stake: float
@@ -49,6 +50,7 @@ class BacktestMetrics:
 @dataclass
 class BacktestConfig:
     """回测配置"""
+
     stake_per_bet: float = 100.0
     min_prob_threshold: float = 0.55
     max_prob_threshold: float = 0.85
@@ -76,12 +78,7 @@ class BacktestEngine:
         logger.info(f"  每注金额: {self.config.stake_per_bet}")
         logger.info(f"  概率阈值: {self.config.min_prob_threshold} - {self.config.max_prob_threshold}")
 
-    def calculate_implied_odds(
-        self,
-        prob_home: float,
-        prob_draw: float,
-        prob_away: float
-    ) -> dict[str, float]:
+    def calculate_implied_odds(self, prob_home: float, prob_draw: float, prob_away: float) -> dict[str, float]:
         """
         基于模型概率计算隐含赔率
 
@@ -166,9 +163,7 @@ class BacktestEngine:
 
             # 计算赔率
             odds = self.calculate_implied_odds(probs[2], probs[1], probs[0])
-            pred_odds = odds["home"] if pred_class == 2 else (
-                odds["draw"] if pred_class == 1 else odds["away"]
-            )
+            pred_odds = odds["home"] if pred_class == 2 else (odds["draw"] if pred_class == 1 else odds["away"])
 
             # 计算下注金额
             if self.config.KellyCriterion:
@@ -209,9 +204,10 @@ class BacktestEngine:
                 losing_bets += 1
 
             # 更新资金曲线
-            current_equity = equity_curve[-1] - stake + (
-                stake * pred_odds * (1 - self.config.commission_pct)
-                if pred_class == actual_code else 0
+            current_equity = (
+                equity_curve[-1]
+                - stake
+                + (stake * pred_odds * (1 - self.config.commission_pct) if pred_class == actual_code else 0)
             )
             equity_curve.append(max(0, current_equity))
 
@@ -234,8 +230,7 @@ class BacktestEngine:
         # 计算夏普比率（简化版）
         returns = np.diff(equity_curve)
         sharpe_ratio = (
-            np.mean(returns) / np.std(returns) * np.sqrt(252)
-            if len(returns) > 1 and np.std(returns) > 0 else 0
+            np.mean(returns) / np.std(returns) * np.sqrt(252) if len(returns) > 1 and np.std(returns) > 0 else 0
         )
 
         metrics = BacktestMetrics(
@@ -304,6 +299,7 @@ class BacktestEngine:
         report_path = output_path / f"v35_backtest_report_{timestamp}.json"
 
         from dataclasses import asdict
+
         report = asdict(metrics)
         report["timestamp"] = datetime.now().isoformat()
         report["version"] = "V35.0"

@@ -5,26 +5,26 @@
 """
 
 import asyncio
-import time
-import logging
-from typing import Dict, List, Any, Optional, Union
-from dataclasses import dataclass
-from contextlib import asynccontextmanager
-import asyncpg
-import aioredis
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
-from sqlalchemy import text, select, insert, update, delete
-from sqlalchemy.orm import selectinload
-import pandas as pd
 import json
-from datetime import datetime, timedelta
+import logging
+import time
+from contextlib import asynccontextmanager
+from dataclasses import dataclass
+from datetime import datetime
+from typing import Any
+
+import aioredis
+import asyncpg
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 @dataclass
 class ConnectionStats:
     """连接统计信息"""
+
     total_queries: int = 0
     successful_queries: int = 0
     failed_queries: int = 0
@@ -32,6 +32,7 @@ class ConnectionStats:
     avg_time: float = 0.0
     slow_queries: int = 0
     connection_errors: int = 0
+
 
 class DatabaseConnectionOptimizer:
     """数据库连接优化器"""
@@ -43,7 +44,7 @@ class DatabaseConnectionOptimizer:
         pool_size: int = 20,
         max_overflow: int = 30,
         pool_timeout: int = 30,
-        pool_recycle: int = 3600
+        pool_recycle: int = 3600,
     ):
         self.database_url = database_url
         self.redis_url = redis_url
@@ -83,15 +84,11 @@ class DatabaseConnectionOptimizer:
             pool_timeout=self.pool_timeout,
             pool_recycle=self.pool_recycle,
             pool_pre_ping=True,  # 连接前检查
-            echo=False,          # 生产环境关闭SQL日志
-            future=True
+            echo=False,  # 生产环境关闭SQL日志
+            future=True,
         )
 
-        self.SessionLocal = async_sessionmaker(
-            self.engine,
-            class_=AsyncSession,
-            expire_on_commit=False
-        )
+        self.SessionLocal = async_sessionmaker(self.engine, class_=AsyncSession, expire_on_commit=False)
 
         logger.info(f"📊 SQLAlchemy引擎已配置: pool_size={self.pool_size}, max_overflow={self.max_overflow}")
 
@@ -103,9 +100,9 @@ class DatabaseConnectionOptimizer:
             max_size=self.pool_size,
             command_timeout=60,
             server_settings={
-                'application_name': 'football_prediction_optimizer',
-                'jit': 'off'  # 关闭JIT优化，提高简单查询性能
-            }
+                "application_name": "football_prediction_optimizer",
+                "jit": "off",  # 关闭JIT优化，提高简单查询性能
+            },
         )
 
         logger.info(f"🐘 asyncpg连接池已配置: max_size={self.pool_size}")
@@ -117,7 +114,7 @@ class DatabaseConnectionOptimizer:
             max_connections=20,
             retry_on_timeout=True,
             socket_keepalive=True,
-            socket_keepalive_options={}
+            socket_keepalive_options={},
         )
 
         # 测试Redis连接
@@ -130,7 +127,7 @@ class DatabaseConnectionOptimizer:
         async with self.SessionLocal() as session:
             try:
                 yield session
-            except Exception as e:
+            except Exception:
                 await session.rollback()
                 self.stats.failed_queries += 1
                 raise
@@ -144,11 +141,7 @@ class DatabaseConnectionOptimizer:
             yield conn
 
     async def execute_query(
-        self,
-        query: str,
-        params: Optional[Dict] = None,
-        use_cache: bool = False,
-        cache_ttl: int = 300
+        self, query: str, params: dict | None = None, use_cache: bool = False, cache_ttl: int = 300
     ) -> Any:
         """执行查询并记录性能"""
         start_time = time.time()
@@ -190,11 +183,7 @@ class DatabaseConnectionOptimizer:
             raise
 
     async def batch_insert(
-        self,
-        table: str,
-        data: List[Dict],
-        batch_size: int = 1000,
-        on_conflict: str = "DO NOTHING"
+        self, table: str, data: list[dict], batch_size: int = 1000, on_conflict: str = "DO NOTHING"
     ) -> int:
         """批量插入优化"""
         total_inserted = 0
@@ -204,17 +193,17 @@ class DatabaseConnectionOptimizer:
 
             try:
                 for i in range(0, len(data), batch_size):
-                    batch = data[i:i + batch_size]
+                    batch = data[i : i + batch_size]
                     if not batch:
                         continue
 
                     # 构建批量插入SQL
                     columns = batch[0].keys()
-                    placeholders = ', '.join([f'${j+1}' for j in range(len(columns))])
-                    values_placeholders = ', '.join([f'({placeholders})' for _ in batch])
+                    placeholders = ", ".join([f"${j + 1}" for j in range(len(columns))])
+                    values_placeholders = ", ".join([f"({placeholders})" for _ in batch])
 
                     sql = f"""
-                    INSERT INTO {table} ({', '.join(columns)})
+                    INSERT INTO {table} ({", ".join(columns)})
                     VALUES {values_placeholders}
                     {on_conflict}
                     """
@@ -228,7 +217,7 @@ class DatabaseConnectionOptimizer:
                     batch_inserted = int(result.split()[-1]) if result else len(batch)
                     total_inserted += batch_inserted
 
-                    logger.debug(f"批量插入批次 {i//batch_size + 1}: {batch_inserted} 行")
+                    logger.debug(f"批量插入批次 {i // batch_size + 1}: {batch_inserted} 行")
 
                 await conn.execute("COMMIT")
                 logger.info(f"批量插入完成: {total_inserted} 行")
@@ -242,11 +231,11 @@ class DatabaseConnectionOptimizer:
 
     async def optimized_match_query(
         self,
-        team_ids: Optional[List[int]] = None,
-        date_from: Optional[datetime] = None,
-        date_to: Optional[datetime] = None,
-        limit: int = 100
-    ) -> List[Dict]:
+        team_ids: list[int] | None = None,
+        date_from: datetime | None = None,
+        date_to: datetime | None = None,
+        limit: int = 100,
+    ) -> list[dict]:
         """优化的比赛查询"""
         conditions = []
         params = {}
@@ -294,11 +283,7 @@ class DatabaseConnectionOptimizer:
         # 使用缓存
         return await self.execute_query(base_query, params, use_cache=True, cache_ttl=600)
 
-    async def get_team_statistics(
-        self,
-        team_id: int,
-        last_n_matches: int = 10
-    ) -> Dict[str, Any]:
+    async def get_team_statistics(self, team_id: int, last_n_matches: int = 10) -> dict[str, Any]:
         """获取球队统计信息"""
         query = """
         WITH team_matches AS (
@@ -330,9 +315,11 @@ class DatabaseConnectionOptimizer:
         FROM team_matches
         """
 
-        return await self.execute_query(query, {"team_id": team_id, "limit": last_n_matches}, use_cache=True, cache_ttl=1800)
+        return await self.execute_query(
+            query, {"team_id": team_id, "limit": last_n_matches}, use_cache=True, cache_ttl=1800
+        )
 
-    async def get_connection_pool_stats(self) -> Dict[str, Any]:
+    async def get_connection_pool_stats(self) -> dict[str, Any]:
         """获取连接池统计信息"""
         stats = {}
 
@@ -344,7 +331,7 @@ class DatabaseConnectionOptimizer:
                 "checked_in": pool.checkedin(),
                 "checked_out": pool.checkedout(),
                 "overflow": pool.overflow(),
-                "invalid": pool.invalid()
+                "invalid": pool.invalid(),
             }
 
         # asyncpg连接池统计
@@ -352,7 +339,7 @@ class DatabaseConnectionOptimizer:
             stats["asyncpg"] = {
                 "pool_size": self.asyncpg_pool.get_size(),
                 "pool_free": self.asyncpg_pool.get_idle_size(),
-                "pool_used": self.asyncpg_pool.get_size() - self.asyncpg_pool.get_idle_size()
+                "pool_used": self.asyncpg_pool.get_size() - self.asyncpg_pool.get_idle_size(),
             }
 
         # Redis连接统计
@@ -363,7 +350,7 @@ class DatabaseConnectionOptimizer:
                     "connected_clients": redis_info.get("connected_clients"),
                     "used_memory": redis_info.get("used_memory_human"),
                     "keyspace_hits": redis_info.get("keyspace_hits", 0),
-                    "keyspace_misses": redis_info.get("keyspace_misses", 0)
+                    "keyspace_misses": redis_info.get("keyspace_misses", 0),
                 }
             except Exception as e:
                 stats["redis"] = {"error": str(e)}
@@ -379,12 +366,10 @@ class DatabaseConnectionOptimizer:
             "CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_matches_away_team ON matches(away_team_id, date)",
             "CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_matches_league_date ON matches(league_id, date)",
             "CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_matches_teams ON matches(home_team_id, away_team_id, date)",
-
             # 特征表索引
             "CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_match_features_match_id ON match_features(match_id)",
             "CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_match_features_type ON match_features(feature_type, match_id)",
             "CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_match_features_created_at ON match_features(created_at)",
-
             # 球队表索引
             "CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_teams_league ON teams(league_id)",
             "CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_teams_name ON teams(name)",
@@ -398,7 +383,7 @@ class DatabaseConnectionOptimizer:
                 except Exception as e:
                     logger.warning(f"索引创建失败: {str(e)}")
 
-    async def analyze_slow_queries(self) -> List[Dict]:
+    async def analyze_slow_queries(self) -> list[dict]:
         """分析慢查询"""
         # 检查是否有pg_stat_statements扩展
         check_query = """
@@ -432,9 +417,7 @@ class DatabaseConnectionOptimizer:
 
     async def update_table_statistics(self):
         """更新表统计信息"""
-        tables = [
-            'matches', 'teams', 'leagues', 'match_features', 'predictions'
-        ]
+        tables = ["matches", "teams", "leagues", "match_features", "predictions"]
 
         async with self.get_connection() as conn:
             for table in tables:
@@ -444,13 +427,13 @@ class DatabaseConnectionOptimizer:
                 except Exception as e:
                     logger.warning(f"更新统计信息失败 {table}: {str(e)}")
 
-    async def health_check(self) -> Dict[str, Any]:
+    async def health_check(self) -> dict[str, Any]:
         """健康检查"""
         health_status = {
             "database": {"status": "unknown", "response_time": None},
             "redis": {"status": "unknown", "response_time": None},
             "connection_pools": {},
-            "query_stats": self.stats.__dict__
+            "query_stats": self.stats.__dict__,
         }
 
         # 数据库健康检查
@@ -459,30 +442,18 @@ class DatabaseConnectionOptimizer:
             async with self.get_connection() as conn:
                 await conn.fetchval("SELECT 1")
             response_time = time.time() - start_time
-            health_status["database"] = {
-                "status": "healthy",
-                "response_time": f"{response_time:.3f}s"
-            }
+            health_status["database"] = {"status": "healthy", "response_time": f"{response_time:.3f}s"}
         except Exception as e:
-            health_status["database"] = {
-                "status": "unhealthy",
-                "error": str(e)
-            }
+            health_status["database"] = {"status": "unhealthy", "error": str(e)}
 
         # Redis健康检查
         try:
             start_time = time.time()
             await self.redis_pool.ping()
             response_time = time.time() - start_time
-            health_status["redis"] = {
-                "status": "healthy",
-                "response_time": f"{response_time:.3f}s"
-            }
+            health_status["redis"] = {"status": "healthy", "response_time": f"{response_time:.3f}s"}
         except Exception as e:
-            health_status["redis"] = {
-                "status": "unhealthy",
-                "error": str(e)
-            }
+            health_status["redis"] = {"status": "unhealthy", "error": str(e)}
 
         # 连接池状态
         health_status["connection_pools"] = await self.get_connection_pool_stats()
@@ -502,19 +473,17 @@ class DatabaseConnectionOptimizer:
         if execution_time > self.slow_query_threshold:
             self.stats.slow_queries += 1
 
-    def get_performance_report(self) -> Dict[str, Any]:
+    def get_performance_report(self) -> dict[str, Any]:
         """获取性能报告"""
         return {
             "query_statistics": self.stats.__dict__,
             "slow_query_threshold": self.slow_query_threshold,
             "success_rate": (
-                self.stats.successful_queries / self.stats.total_queries
-                if self.stats.total_queries > 0 else 0
+                self.stats.successful_queries / self.stats.total_queries if self.stats.total_queries > 0 else 0
             ),
             "slow_query_rate": (
-                self.stats.slow_queries / self.stats.total_queries
-                if self.stats.total_queries > 0 else 0
-            )
+                self.stats.slow_queries / self.stats.total_queries if self.stats.total_queries > 0 else 0
+            ),
         }
 
     async def cleanup(self):
@@ -536,13 +505,14 @@ class DatabaseConnectionOptimizer:
 # 全局实例
 db_optimizer = None
 
+
 async def get_database_optimizer() -> DatabaseConnectionOptimizer:
     """获取数据库优化器实例"""
     global db_optimizer
     if db_optimizer is None:
         db_optimizer = DatabaseConnectionOptimizer(
             database_url="postgresql://football_user:football_pass@localhost/football_prediction_dev",
-            redis_url="redis://localhost:6379"
+            redis_url="redis://localhost:6379",
         )
         await db_optimizer.initialize()
     return db_optimizer
@@ -555,7 +525,7 @@ async def main():
 
     optimizer = DatabaseConnectionOptimizer(
         database_url="postgresql://football_user:football_pass@localhost/football_prediction_dev",
-        redis_url="redis://localhost:6379"
+        redis_url="redis://localhost:6379",
     )
 
     try:

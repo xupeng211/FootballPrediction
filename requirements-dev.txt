@@ -1,59 +1,48 @@
-# FootballPrediction V19.4.1 - 开发依赖
-# ========================================
-# 开发和测试工具依赖（不包含在生产环境中）
-#
-# 生成日期: 2025-12-24
-# Python版本: 3.11+
-# 版本: V19.4.1 Industrial Grade
+# FootballPrediction - Development Dependencies
+# ===============================================
+# Generated: 2025-12-29
+# Use `pip install -r requirements-dev.txt` to install development tools.
 
-# ========================================
-# 测试框架
-# ========================================
-pytest>=9.0.0
-pytest-cov>=7.0.0
-pytest-asyncio>=0.24.0
-pytest-mock>=3.15.0
-pytest-benchmark>=5.0.0
-pytest-xdist>=3.0.0
-pytest-postgresql>=7.0.0
+# --- Code Quality ---
+ruff==0.9.6
+black==25.12.0
+isort==7.0.0
+flake8==7.3.0
+mypy==1.15.0
+bandit==1.9.2
 
-# ========================================
-# 代码质量工具
-# ========================================
-ruff>=0.8.0
-mypy>=1.14.0
-bandit>=1.7.0
-black>=24.0.0
-coverage>=7.0.0
+# --- Testing ---
+pytest==9.0.2
+pytest-cov==7.0.0
+pytest-asyncio==1.3.0
+pytest-mock==3.15.1
+pytest-postgresql==7.0.2
+pytest-xdist==3.8.0
+pytest-benchmark==5.2.3
+hypothesis==6.148.7
+Faker==38.2.0
 
-# ========================================
-# 类型检查相关
-# ========================================
-types-requests>=2.0.0
+# --- Type Stubs ---
+types-requests==2.32.0.20250101
 
-# ========================================
-# 开发工具
-# ========================================
-ipython>=8.0.0
-ipdb>=0.13.0
-jupyterlab>=4.0.0
-notebook>=7.0.0
+# --- Documentation ---
+sphinx==8.1.3
+sphinx-rtd-theme==3.0.2
 
-# ========================================
-# 文档生成
-# ========================================
-mkdocs>=1.5.0
-mkdocs-material>=9.5.0
+# --- Jupyter ---
+jupyter==1.1.1
+jupyterlab==4.5.0
+ipython==9.8.0
+ipykernel==7.1.0
 
-# ========================================
-# 性能分析
-# ========================================
-py-spy>=0.3.0
-memory-profiler>=0.61.0
+# --- Debugging ---
+ipdb==0.13.13
+debugpy==1.8.18
 
-# ========================================
-# 模拟和测试数据
-# ========================================
-faker>=38.0.0
-responses>=0.25.0
-requests-mock>=1.12.0
+# --- Profiling ---
+py-spy==0.4.0
+memory-profiler==0.61.0
+
+# --- Build Tools ---
+build==1.3.0
+twine==6.1.0

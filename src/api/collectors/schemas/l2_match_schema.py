@@ -30,6 +30,7 @@ class L2DataQuality(str, Enum):
     - PARTIAL: 部分缺失，但可用于训练
     - WARNING: 关键特征缺失，需要人工审核
     """
+
     FULL = "full"
     PARTIAL = "partial"
     WARNING = "warning"
@@ -45,6 +46,7 @@ class L2MatchStats(BaseModel):
     - possession: 控球率
     - team_rating: 球队评分
     """
+
     xg: list[float] | None = Field(default=None, description="Expected Goals [home, away]")
     shots_on_target: list[int] | None = Field(default=None, description="Shots on Target [home, away]")
     possession: list[float] | None = Field(default=None, description="Possession % [home, away]")
@@ -165,6 +167,7 @@ class L2CollectionSummary(BaseModel):
 
     用于结构化监控和可观测性
     """
+
     collection_start_time: str = Field(default_factory=lambda: datetime.now(UTC).isoformat())
     collection_end_time: str | None = Field(default=None)
 
@@ -175,8 +178,7 @@ class L2CollectionSummary(BaseModel):
 
     # 数据质量分布
     quality_distribution: dict[str, int] = Field(
-        default_factory=dict,
-        description={"full": 95, "partial": 3, "warning": 2}
+        default_factory=dict, description={"full": 95, "partial": 3, "warning": 2}
     )
 
     # 性能指标

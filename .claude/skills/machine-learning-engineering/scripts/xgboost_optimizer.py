@@ -4,23 +4,24 @@ XGBoost模型优化器
 专门为足球赛果预测系统设计的模型优化工具
 """
 
-import optuna
-import numpy as np
-import pandas as pd
-import xgboost as xgb
-import shap
-import mlflow
-import mlflow.xgboost
-from sklearn.model_selection import train_test_split, cross_val_score, StratifiedKFold
-from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
-from sklearn.feature_selection import SelectKBest, mutual_info_classif
-import matplotlib.pyplot as plt
-import seaborn as sns
-from typing import Dict, List, Tuple, Any
-import joblib
 import json
 import warnings
-warnings.filterwarnings('ignore')
+
+import joblib
+import matplotlib.pyplot as plt
+import mlflow
+import mlflow.xgboost
+import optuna
+import pandas as pd
+import seaborn as sns
+import shap
+import xgboost as xgb
+from sklearn.feature_selection import SelectKBest, mutual_info_classif
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+from sklearn.model_selection import StratifiedKFold, cross_val_score
+
+warnings.filterwarnings("ignore")
+
 
 class FootballPredictionOptimizer:
     """足球赛果预测XGBoost优化器"""
@@ -39,21 +40,21 @@ class FootballPredictionOptimizer:
         def objective(trial):
             # 定义搜索空间
             params = {
-                'max_depth': trial.suggest_int('max_depth', 3, 10),
-                'learning_rate': trial.suggest_loguniform('learning_rate', 0.01, 0.3),
-                'n_estimators': trial.suggest_int('n_estimators', 50, 500),
-                'subsample': trial.suggest_uniform('subsample', 0.6, 1.0),
-                'colsample_bytree': trial.suggest_uniform('colsample_bytree', 0.6, 1.0),
-                'min_child_weight': trial.suggest_int('min_child_weight', 1, 10),
-                'gamma': trial.suggest_uniform('gamma', 0, 5),
-                'reg_alpha': trial.suggest_uniform('reg_alpha', 0, 1),
-                'reg_lambda': trial.suggest_uniform('reg_lambda', 0, 1),
-                'objective': 'multi:softprob',
-                'num_class': 3,  # HOME, DRAW, AWAY
-                'eval_metric': 'mlogloss',
-                'random_state': 42,
-                'tree_method': 'hist',  # 快速训练
-                'n_jobs': -1
+                "max_depth": trial.suggest_int("max_depth", 3, 10),
+                "learning_rate": trial.suggest_loguniform("learning_rate", 0.01, 0.3),
+                "n_estimators": trial.suggest_int("n_estimators", 50, 500),
+                "subsample": trial.suggest_uniform("subsample", 0.6, 1.0),
+                "colsample_bytree": trial.suggest_uniform("colsample_bytree", 0.6, 1.0),
+                "min_child_weight": trial.suggest_int("min_child_weight", 1, 10),
+                "gamma": trial.suggest_uniform("gamma", 0, 5),
+                "reg_alpha": trial.suggest_uniform("reg_alpha", 0, 1),
+                "reg_lambda": trial.suggest_uniform("reg_lambda", 0, 1),
+                "objective": "multi:softprob",
+                "num_class": 3,  # HOME, DRAW, AWAY
+                "eval_metric": "mlogloss",
+                "random_state": 42,
+                "tree_method": "hist",  # 快速训练
+                "n_jobs": -1,
             }
 
             # 创建模型
@@ -61,7 +62,7 @@ class FootballPredictionOptimizer:
 
             # 交叉验证
             cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
-            scores = cross_val_score(model, X_train, y_train, cv=cv, scoring='accuracy')
+            scores = cross_val_score(model, X_train, y_train, cv=cv, scoring="accuracy")
 
             # 记录到MLflow
             with mlflow.start_run(nested=True):
@@ -73,9 +74,9 @@ class FootballPredictionOptimizer:
 
         # 创建study
         study = optuna.create_study(
-            direction='maximize',
+            direction="maximize",
             sampler=optuna.samplers.TPESampler(seed=42),
-            pruner=optuna.pruners.MedianPruner(n_startup_trials=10)
+            pruner=optuna.pruners.MedianPruner(n_startup_trials=10),
         )
 
         # 优化
@@ -89,7 +90,7 @@ class FootballPredictionOptimizer:
 
         return self.best_params, self.best_score
 
-    def select_features(self, X, y, k: int = 20) -> Tuple[pd.DataFrame, List[str]]:
+    def select_features(self, X, y, k: int = 20) -> tuple[pd.DataFrame, list[str]]:
         """特征选择"""
         # 使用互信息进行特征选择
         selector = SelectKBest(mutual_info_classif, k=k)
@@ -101,32 +102,29 @@ class FootballPredictionOptimizer:
 
         return pd.DataFrame(X_selected, columns=selected_features), selected_features
 
-    def train_final_model(self, X_train, y_train, X_val, y_val, params: Dict = None):
+    def train_final_model(self, X_train, y_train, X_val, y_val, params: dict = None):
         """训练最终模型"""
         if params is None:
             params = self.best_params or self._get_default_params()
 
         # 添加最终训练参数
         final_params = params.copy()
-        final_params.update({
-            'objective': 'multi:softprob',
-            'num_class': 3,
-            'eval_metric': 'mlogloss',
-            'random_state': 42,
-            'tree_method': 'hist',
-            'n_jobs': -1
-        })
+        final_params.update(
+            {
+                "objective": "multi:softprob",
+                "num_class": 3,
+                "eval_metric": "mlogloss",
+                "random_state": 42,
+                "tree_method": "hist",
+                "n_jobs": -1,
+            }
+        )
 
         # 创建模型
         model = xgb.XGBClassifier(**final_params)
 
         # 训练模型
-        model.fit(
-            X_train, y_train,
-            eval_set=[(X_val, y_val)],
-            early_stopping_rounds=20,
-            verbose=False
-        )
+        model.fit(X_train, y_train, eval_set=[(X_val, y_val)], early_stopping_rounds=20, verbose=False)
 
         # 评估模型
         y_pred = model.predict(X_val)
@@ -134,13 +132,12 @@ class FootballPredictionOptimizer:
 
         print(f"验证集准确率: {accuracy:.4f}")
         print("\n分类报告:")
-        print(classification_report(y_val, y_pred, target_names=['HOME', 'DRAW', 'AWAY']))
+        print(classification_report(y_val, y_pred, target_names=["HOME", "DRAW", "AWAY"]))
 
         # 保存特征重要性
-        self.feature_importance = pd.DataFrame({
-            'feature': X_train.columns,
-            'importance': model.feature_importances_
-        }).sort_values('importance', ascending=False)
+        self.feature_importance = pd.DataFrame(
+            {"feature": X_train.columns, "importance": model.feature_importances_}
+        ).sort_values("importance", ascending=False)
 
         # 创建SHAP解释器
         self.shap_explainer = shap.TreeExplainer(model)
@@ -156,11 +153,10 @@ class FootballPredictionOptimizer:
         plt.figure(figsize=(12, 8))
 
         # 特征重要性摘要图
-        shap.summary_plot(shap_values, X_sample, max_display=max_display,
-                         class_names=['HOME', 'DRAW', 'AWAY'])
+        shap.summary_plot(shap_values, X_sample, max_display=max_display, class_names=["HOME", "DRAW", "AWAY"])
 
         # 保存图表
-        plt.savefig('shap_summary.png', dpi=300, bbox_inches='tight')
+        plt.savefig("shap_summary.png", dpi=300, bbox_inches="tight")
         plt.show()
 
         return shap_values
@@ -178,7 +174,7 @@ class FootballPredictionOptimizer:
         cm = confusion_matrix(y_test, y_pred)
 
         # 分类报告
-        report = classification_report(y_test, y_pred, target_names=['HOME', 'DRAW', 'AWAY'])
+        report = classification_report(y_test, y_pred, target_names=["HOME", "DRAW", "AWAY"])
 
         print(f"测试集准确率: {accuracy:.4f}")
         print(f"目标准确率: {self.target_accuracy:.4f}")
@@ -186,25 +182,25 @@ class FootballPredictionOptimizer:
 
         print("\n混淆矩阵:")
         plt.figure(figsize=(8, 6))
-        sns.heatmap(cm, annot=True, fmt='d', cmap='Blues',
-                   xticklabels=['HOME', 'DRAW', 'AWAY'],
-                   yticklabels=['HOME', 'DRAW', 'AWAY'])
-        plt.title('Confusion Matrix')
-        plt.ylabel('True Label')
-        plt.xlabel('Predicted Label')
+        sns.heatmap(
+            cm,
+            annot=True,
+            fmt="d",
+            cmap="Blues",
+            xticklabels=["HOME", "DRAW", "AWAY"],
+            yticklabels=["HOME", "DRAW", "AWAY"],
+        )
+        plt.title("Confusion Matrix")
+        plt.ylabel("True Label")
+        plt.xlabel("Predicted Label")
         plt.tight_layout()
-        plt.savefig('confusion_matrix.png', dpi=300, bbox_inches='tight')
+        plt.savefig("confusion_matrix.png", dpi=300, bbox_inches="tight")
         plt.show()
 
         print("\n分类报告:")
         print(report)
 
-        return {
-            'accuracy': accuracy,
-            'confusion_matrix': cm,
-            'classification_report': report,
-            'probabilities': y_proba
-        }
+        return {"accuracy": accuracy, "confusion_matrix": cm, "classification_report": report, "probabilities": y_proba}
 
     def check_inference_latency(self, model, X_sample, n_runs: int = 1000):
         """检查推理延迟"""
@@ -223,32 +219,33 @@ class FootballPredictionOptimizer:
 
         return avg_latency_ms
 
-    def save_optimization_results(self, model, results_dir: str = 'optimization_results'):
+    def save_optimization_results(self, model, results_dir: str = "optimization_results"):
         """保存优化结果"""
         import os
+
         os.makedirs(results_dir, exist_ok=True)
 
         # 保存模型
-        joblib.dump(model, f'{results_dir}/optimized_model.joblib')
+        joblib.dump(model, f"{results_dir}/optimized_model.joblib")
 
         # 保存最佳参数
         if self.best_params:
-            with open(f'{results_dir}/best_params.json', 'w') as f:
+            with open(f"{results_dir}/best_params.json", "w") as f:
                 json.dump(self.best_params, f, indent=2)
 
         # 保存特征重要性
         if self.feature_importance is not None:
-            self.feature_importance.to_csv(f'{results_dir}/feature_importance.csv', index=False)
+            self.feature_importance.to_csv(f"{results_dir}/feature_importance.csv", index=False)
 
         # 保存优化报告
         report = {
-            'best_cv_score': self.best_score,
-            'target_accuracy': self.target_accuracy,
-            'target_latency_ms': self.target_latency_ms,
-            'feature_count': len(self.feature_importance) if self.feature_importance is not None else 0
+            "best_cv_score": self.best_score,
+            "target_accuracy": self.target_accuracy,
+            "target_latency_ms": self.target_latency_ms,
+            "feature_count": len(self.feature_importance) if self.feature_importance is not None else 0,
         }
 
-        with open(f'{results_dir}/optimization_report.json', 'w') as f:
+        with open(f"{results_dir}/optimization_report.json", "w") as f:
             json.dump(report, f, indent=2)
 
         print(f"优化结果已保存到 {results_dir}")
@@ -256,15 +253,15 @@ class FootballPredictionOptimizer:
     def _get_default_params(self):
         """默认参数"""
         return {
-            'max_depth': 6,
-            'learning_rate': 0.1,
-            'n_estimators': 200,
-            'subsample': 0.8,
-            'colsample_bytree': 0.8,
-            'min_child_weight': 1,
-            'gamma': 0,
-            'reg_alpha': 0,
-            'reg_lambda': 1
+            "max_depth": 6,
+            "learning_rate": 0.1,
+            "n_estimators": 200,
+            "subsample": 0.8,
+            "colsample_bytree": 0.8,
+            "min_child_weight": 1,
+            "gamma": 0,
+            "reg_alpha": 0,
+            "reg_lambda": 1,
         }
 
 

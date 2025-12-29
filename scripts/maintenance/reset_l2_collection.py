@@ -25,7 +25,6 @@ Version: V37.4
 
 import argparse
 import sys
-from datetime import datetime
 from pathlib import Path
 
 import psycopg2
@@ -140,7 +139,7 @@ def show_preview(conn) -> None:
             )
             result = cur.fetchone()
             if result and result["earliest"]:
-                print(f"\n⏰ 采集时间范围:")
+                print("\n⏰ 采集时间范围:")
                 print(f"   最早: {result['earliest']}")
                 print(f"   最晚: {result['latest']}")
 
@@ -156,7 +155,7 @@ def confirm_action(action: str) -> bool:
     print(f"{Colors.RED}您即将执行: {action}{Colors.RESET}")
     print(f"{Colors.YELLOW}请输入 'YES I CONFIRM' 以确认操作:{Colors.RESET}")
 
-    response = input(f"\n> ").strip()
+    response = input("\n> ").strip()
 
     return response == "YES I CONFIRM"
 

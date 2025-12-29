@@ -130,9 +130,7 @@ class TableManager:
             self.records[team] = self.TeamRecord()
         return self.records[team]
 
-    def get_pre_match_stats(
-        self, team: str
-    ) -> tuple[int, int, int, int, int]:
+    def get_pre_match_stats(self, team: str) -> tuple[int, int, int, int, int]:
         """
         获取赛前统计（不更新）
 
@@ -249,7 +247,7 @@ class EfficiencyEngine:
             效率值（>1 表示高效，<1 表示低效）
         """
         history = self._get_team_history(team)
-        recent = history["recent_matches"][-self.window_size:]
+        recent = history["recent_matches"][-self.window_size :]
 
         if not recent:
             return 1.0
@@ -270,7 +268,7 @@ class EfficiencyEngine:
             效率值（>1 表示防守出色）
         """
         history = self._get_team_history(team)
-        recent = history["recent_matches"][-self.window_size:]
+        recent = history["recent_matches"][-self.window_size :]
 
         if not recent:
             return 1.0
@@ -291,7 +289,7 @@ class EfficiencyEngine:
             近期得分（胜3分，平1分，负0分）
         """
         history = self._get_team_history(team)
-        recent = history["recent_matches"][-self.window_size:]
+        recent = history["recent_matches"][-self.window_size :]
 
         if not recent:
             return 0.0
@@ -321,25 +319,29 @@ class EfficiencyEngine:
 
         # 更新主队历史
         home_history = self._get_team_history(home_team)
-        home_history["recent_matches"].append({
-            "goals_for": home_goals,
-            "goals_against": away_goals,
-            "xg_for": home_xg,
-            "xg_against": away_xg,
-            "result": result,
-            "is_home": True,
-        })
+        home_history["recent_matches"].append(
+            {
+                "goals_for": home_goals,
+                "goals_against": away_goals,
+                "xg_for": home_xg,
+                "xg_against": away_xg,
+                "result": result,
+                "is_home": True,
+            }
+        )
 
         # 更新客队历史
         away_history = self._get_team_history(away_team)
-        away_history["recent_matches"].append({
-            "goals_for": away_goals,
-            "goals_against": home_goals,
-            "xg_for": away_xg,
-            "xg_against": home_xg,
-            "result": result,
-            "is_home": False,
-        })
+        away_history["recent_matches"].append(
+            {
+                "goals_for": away_goals,
+                "goals_against": home_goals,
+                "xg_for": away_xg,
+                "xg_against": home_xg,
+                "result": result,
+                "is_home": False,
+            }
+        )
 
 
 @dataclass
@@ -357,33 +359,35 @@ class FeatureFactory:
     efficiency_engine: EfficiencyEngine = field(default_factory=EfficiencyEngine)
 
     # V35.0 核心特征列表
-    V35_FEATURES: list[str] = field(default_factory=lambda: [
-        # ELO 特征
-        "home_elo_pre",
-        "away_elo_pre",
-        "elo_gap_pre",
-        # 积分榜特征
-        "home_points_pre",
-        "away_points_pre",
-        "points_diff_pre",
-        "home_rank_pre",
-        "away_rank_pre",
-        "rank_diff_pre",
-        # 疲劳度特征
-        "home_rest_days_pre",
-        "away_rest_days_pre",
-        "rest_days_diff_pre",
-        # 效率特征
-        "home_scoring_efficiency",
-        "away_scoring_efficiency",
-        "scoring_efficiency_diff",
-        "home_save_efficiency",
-        "away_save_efficiency",
-        "save_efficiency_diff",
-        "home_form_momentum",
-        "away_form_momentum",
-        "momentum_diff",
-    ])
+    V35_FEATURES: list[str] = field(
+        default_factory=lambda: [
+            # ELO 特征
+            "home_elo_pre",
+            "away_elo_pre",
+            "elo_gap_pre",
+            # 积分榜特征
+            "home_points_pre",
+            "away_points_pre",
+            "points_diff_pre",
+            "home_rank_pre",
+            "away_rank_pre",
+            "rank_diff_pre",
+            # 疲劳度特征
+            "home_rest_days_pre",
+            "away_rest_days_pre",
+            "rest_days_diff_pre",
+            # 效率特征
+            "home_scoring_efficiency",
+            "away_scoring_efficiency",
+            "scoring_efficiency_diff",
+            "home_save_efficiency",
+            "away_save_efficiency",
+            "save_efficiency_diff",
+            "home_form_momentum",
+            "away_form_momentum",
+            "momentum_diff",
+        ]
+    )
 
     def process_match(self, row: pd.Series) -> dict:
         """
@@ -408,9 +412,7 @@ class FeatureFactory:
         pre_features = {}
 
         # ELO 特征
-        home_elo, away_elo, elo_gap = self.elo_engine.get_pre_match_ratings(
-            home_team, away_team
-        )
+        home_elo, away_elo, elo_gap = self.elo_engine.get_pre_match_ratings(home_team, away_team)
         pre_features["home_elo_pre"] = home_elo
         pre_features["away_elo_pre"] = away_elo
         pre_features["elo_gap_pre"] = elo_gap
@@ -475,9 +477,7 @@ class FeatureFactory:
 
         return pre_features
 
-    def build_all_features(
-        self, df: pd.DataFrame, output_path: Path | None = None
-    ) -> pd.DataFrame:
+    def build_all_features(self, df: pd.DataFrame, output_path: Path | None = None) -> pd.DataFrame:
         """
         为整个数据集生成特征
 
@@ -520,7 +520,7 @@ class FeatureFactory:
 
             except Exception as e:
                 failed_count += 1
-                match_id = row.get('match_id', f'index_{i}')
+                match_id = row.get("match_id", f"index_{i}")
                 logger.warning(f"⚠️  比赛处理失败 (ID: {match_id}, 索引: {i}): {e}")
                 # 继续处理下一场比赛，不中断流水线
                 continue
@@ -554,9 +554,7 @@ class FeatureFactory:
             fill_rate = df[feat].notnull().sum() / len(df) * 100
             mean_val = df[feat].mean()
             std_val = df[feat].std()
-            logger.info(
-                f"  {i:2d}. {feat:30s}: 填充率 {fill_rate:5.1f}%, 均值 {mean_val:7.2f}, 标准差 {std_val:7.2f}"
-            )
+            logger.info(f"  {i:2d}. {feat:30s}: 填充率 {fill_rate:5.1f}%, 均值 {mean_val:7.2f}, 标准差 {std_val:7.2f}")
 
 
 def create_feature_factory() -> FeatureFactory:

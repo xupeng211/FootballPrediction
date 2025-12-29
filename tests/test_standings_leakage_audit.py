@@ -15,12 +15,12 @@ Author: QA Automation & Security Auditor
 Version: 1.0.0
 """
 
-import pytest
-import pandas as pd
-import numpy as np
-from datetime import datetime, timedelta
-from typing import Dict, List
 import logging
+from datetime import datetime, timedelta
+
+import numpy as np
+import pandas as pd
+import pytest
 
 # Configure logging for audit trail
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - [AUDIT] %(message)s")
@@ -33,9 +33,6 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from src.ml.features.standings_calculator import (
     StandingsCalculator,
-    TeamStandings,
-    initialize_global_calculator,
-    get_global_calculator,
 )
 
 
@@ -485,16 +482,16 @@ class TestTimeLeakageAudit:
         severe_risks = [r for r in risks_detected if r.get("risk") == "INDEX_MISMATCH"]
 
         if len(severe_risks) > 0:
-            logger.error(f"[SEC-004-FAIL] 发现严重索引错位风险！")
-            logger.error(f"[SEC-004] pipeline_v19.py 中使用 pandas iterrows() 的索引")
-            logger.error(f"[SEC-004] 作为 get_team_stats_at_match() 的参数是错误的！")
+            logger.error("[SEC-004-FAIL] 发现严重索引错位风险！")
+            logger.error("[SEC-004] pipeline_v19.py 中使用 pandas iterrows() 的索引")
+            logger.error("[SEC-004] 作为 get_team_stats_at_match() 的参数是错误的！")
 
             # 提供修复建议
-            logger.error(f"\n[SEC-004] 修复建议：")
-            logger.error(f"[SEC-004] 1. 在 extract_v19_features() 中，使用 DataFrame 的")
-            logger.error(f"[SEC-004]    reset_index(drop=True) 后的索引")
-            logger.error(f"[SEC-004] 2. 或者在 get_team_stats_at_match() 中根据 match_time")
-            logger.error(f"[SEC-004]    查找正确的索引")
+            logger.error("\n[SEC-004] 修复建议：")
+            logger.error("[SEC-004] 1. 在 extract_v19_features() 中，使用 DataFrame 的")
+            logger.error("[SEC-004]    reset_index(drop=True) 后的索引")
+            logger.error("[SEC-004] 2. 或者在 get_team_stats_at_match() 中根据 match_time")
+            logger.error("[SEC-004]    查找正确的索引")
         else:
             logger.info("[SEC-004-PASS] ✅ 索引一致性检查通过")
 
@@ -571,7 +568,7 @@ class TestTimeLeakageAudit:
         standings_after_first = calculator.get_team_stats_at_match(2, "NewTeam")
 
         if standings_after_first is not None:
-            logger.info(f"[SEC-005] NewTeam 首场比赛后积分榜:")
+            logger.info("[SEC-005] NewTeam 首场比赛后积分榜:")
             logger.info(f"  Played: {standings_after_first['played']}")
             logger.info(f"  Points: {standings_after_first['points']}")
             logger.info(f"  Won: {standings_after_first['won']}")

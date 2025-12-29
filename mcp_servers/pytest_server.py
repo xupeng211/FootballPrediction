@@ -11,11 +11,12 @@ import os
 import subprocess
 import sys
 from pathlib import Path
-from typing import List, Dict, Any, Optional
+from typing import Any
 
 # 配置日志到 stderr，以免干扰 stdout 的 JSON 通信
 logging.basicConfig(level=logging.INFO, stream=sys.stderr)
 logger = logging.getLogger(__name__)
+
 
 class PytestMCPServer:
     def __init__(self):
@@ -37,7 +38,7 @@ class PytestMCPServer:
             "-k",
             "--co",
             "--help",
-            "-q"
+            "-q",
         ]
 
         self.forbidden_patterns = [
@@ -46,7 +47,7 @@ class PytestMCPServer:
             "--runxfail",
             "--lf",
             "--ff",
-            "--cleanup-on-failure"
+            "--cleanup-on-failure",
         ]
 
     def safe_path(self, path: str) -> Path:
@@ -60,7 +61,7 @@ class PytestMCPServer:
             logger.error(f"Path security check failed: {e}")
             raise ValueError(f"Path {path} is outside project root")
 
-    def validate_pytest_args(self, args: List[str]) -> bool:
+    def validate_pytest_args(self, args: list[str]) -> bool:
         """验证pytest参数安全性"""
         for arg in args:
             # 检查禁止的参数
@@ -71,12 +72,12 @@ class PytestMCPServer:
             # 检查允许的参数
             # 简单起见，只要不包含危险字符且不在禁止列表中，且看起来像参数
             if arg.startswith("-"):
-                 # 这里可以放宽一点，或者严格匹配 allowed_pytest_args
-                 # 为了实用性，我们暂时只拦截明确禁止的
-                 pass
+                # 这里可以放宽一点，或者严格匹配 allowed_pytest_args
+                # 为了实用性，我们暂时只拦截明确禁止的
+                pass
         return True
 
-    def run_pytest(self, test_path: Optional[str] = None, args: List[str] = None) -> Dict[str, Any]:
+    def run_pytest(self, test_path: str | None = None, args: list[str] = None) -> dict[str, Any]:
         """安全地运行pytest"""
         try:
             # 设置工作目录
@@ -85,8 +86,8 @@ class PytestMCPServer:
             # 构建pytest命令
             python_exec = self.venv_path / "bin" / "python"
             if not python_exec.exists():
-                 python_exec = "python3" # Fallback
-            
+                python_exec = "python3"  # Fallback
+
             cmd = [str(python_exec), "-m", "pytest"]
 
             # 添加测试路径
@@ -97,20 +98,12 @@ class PytestMCPServer:
                     rel_path = safe_test_path.relative_to(self.root_path)
                     cmd.append(str(rel_path))
                 except ValueError as e:
-                    return {
-                        "success": False,
-                        "error": str(e),
-                        "output": ""
-                    }
+                    return {"success": False, "error": str(e), "output": ""}
 
             # 验证并添加参数
             if args:
                 if not self.validate_pytest_args(args):
-                    return {
-                        "success": False,
-                        "error": "Unauthorized pytest arguments detected",
-                        "output": ""
-                    }
+                    return {"success": False, "error": "Unauthorized pytest arguments detected", "output": ""}
                 cmd.extend(args)
 
             # 安全环境变量
@@ -119,7 +112,7 @@ class PytestMCPServer:
             env["VIRTUAL_ENV"] = str(self.venv_path)
             env["PYTHONPATH"] = str(self.root_path)
             env["PYTEST_DISABLE_PLUGIN_AUTOLOAD"] = "1"
-            
+
             logger.info(f"Running command: {' '.join(cmd)}")
 
             # 运行pytest（只读模式，超时限制）
@@ -130,7 +123,7 @@ class PytestMCPServer:
                 capture_output=True,
                 text=True,
                 timeout=300,  # 5分钟超时
-                check=False
+                check=False,
             )
 
             return {
@@ -138,27 +131,19 @@ class PytestMCPServer:
                 "returncode": result.returncode,
                 "output": result.stdout,
                 "error": result.stderr,
-                "command": " ".join(cmd)
+                "command": " ".join(cmd),
             }
 
         except subprocess.TimeoutExpired:
-            return {
-                "success": False,
-                "error": "Pytest execution timeout (300s limit exceeded)",
-                "output": ""
-            }
+            return {"success": False, "error": "Pytest execution timeout (300s limit exceeded)", "output": ""}
         except Exception as e:
-            return {
-                "success": False,
-                "error": f"Pytest execution failed: {str(e)}",
-                "output": ""
-            }
+            return {"success": False, "error": f"Pytest execution failed: {str(e)}", "output": ""}
 
-    def list_tests(self, test_path: Optional[str] = None) -> Dict[str, Any]:
+    def list_tests(self, test_path: str | None = None) -> dict[str, Any]:
         """列出可用的测试"""
         return self.run_pytest(test_path, args=["--collect-only", "-q"])
 
-    def handle_request(self, request: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    def handle_request(self, request: dict[str, Any]) -> dict[str, Any] | None:
         """处理 MCP 请求"""
         method = request.get("method", "")
         params = request.get("params", {})
@@ -171,14 +156,9 @@ class PytestMCPServer:
                 "id": msg_id,
                 "result": {
                     "protocolVersion": "2024-11-05",
-                    "capabilities": {
-                        "tools": {}
-                    },
-                    "serverInfo": {
-                        "name": "pytest-server",
-                        "version": "1.0.0"
-                    }
-                }
+                    "capabilities": {"tools": {}},
+                    "serverInfo": {"name": "pytest-server", "version": "1.0.0"},
+                },
             }
 
         if method == "notifications/initialized":
@@ -199,15 +179,15 @@ class PytestMCPServer:
                                 "properties": {
                                     "test_path": {
                                         "type": "string",
-                                        "description": "Path to test file or directory (relative to project root)"
+                                        "description": "Path to test file or directory (relative to project root)",
                                     },
                                     "args": {
                                         "type": "array",
                                         "items": {"type": "string"},
-                                        "description": "Pytest arguments (only safe arguments allowed)"
-                                    }
-                                }
-                            }
+                                        "description": "Pytest arguments (only safe arguments allowed)",
+                                    },
+                                },
+                            },
                         },
                         {
                             "name": "list_tests",
@@ -217,25 +197,25 @@ class PytestMCPServer:
                                 "properties": {
                                     "test_path": {
                                         "type": "string",
-                                        "description": "Path to test file or directory (optional)"
+                                        "description": "Path to test file or directory (optional)",
                                     }
-                                }
-                            }
-                        }
+                                },
+                            },
+                        },
                     ]
-                }
+                },
             }
 
         # 处理工具调用
         if method == "tools/call":
             tool_name = params.get("name")
             tool_args = params.get("arguments", {})
-            
+
             handlers = {
                 "run_pytest": lambda: self.run_pytest(tool_args.get("test_path"), tool_args.get("args")),
                 "list_tests": lambda: self.list_tests(tool_args.get("test_path")),
             }
-            
+
             if tool_name in handlers:
                 try:
                     result = handlers[tool_name]()
@@ -244,33 +224,24 @@ class PytestMCPServer:
                         "jsonrpc": "2.0",
                         "id": msg_id,
                         "result": {
-                            "content": [{
-                                "type": "text",
-                                "text": json.dumps(result, indent=2)
-                            }],
-                            "isError": False
-                        }
+                            "content": [{"type": "text", "text": json.dumps(result, indent=2)}],
+                            "isError": False,
+                        },
                     }
                 except Exception as e:
                     return {
                         "jsonrpc": "2.0",
                         "id": msg_id,
                         "result": {
-                            "content": [{
-                                "type": "text",
-                                "text": f"Error executing tool: {str(e)}"
-                            }],
-                            "isError": True
-                        }
+                            "content": [{"type": "text", "text": f"Error executing tool: {str(e)}"}],
+                            "isError": True,
+                        },
                     }
             else:
-                 return {
+                return {
                     "jsonrpc": "2.0",
                     "id": msg_id,
-                    "error": {
-                        "code": -32601,
-                        "message": f"Tool not found: {tool_name}"
-                    }
+                    "error": {"code": -32601, "message": f"Tool not found: {tool_name}"},
                 }
 
         # 之前的直接方法调用（保留兼容性，或者直接移除）
@@ -283,53 +254,37 @@ class PytestMCPServer:
         if method in handlers:
             try:
                 result = handlers[method]()
-                return {
-                    "jsonrpc": "2.0",
-                    "id": msg_id,
-                    "result": result
-                }
+                return {"jsonrpc": "2.0", "id": msg_id, "result": result}
             except Exception as e:
-                return {
-                    "jsonrpc": "2.0",
-                    "id": msg_id,
-                    "error": {
-                        "code": -32000,
-                        "message": str(e)
-                    }
-                }
+                return {"jsonrpc": "2.0", "id": msg_id, "error": {"code": -32000, "message": str(e)}}
         else:
-             return {
-                "jsonrpc": "2.0",
-                "id": msg_id,
-                "error": {
-                    "code": -32601,
-                    "message": f"Method not found: {method}"
-                }
-            }
+            return {"jsonrpc": "2.0", "id": msg_id, "error": {"code": -32601, "message": f"Method not found: {method}"}}
+
 
 def main():
     server = PytestMCPServer()
-    
+
     # 简单的 stdin/stdout 循环
     while True:
         try:
             line = sys.stdin.readline()
             if not line:
                 break
-            
+
             try:
                 request = json.loads(line.strip())
             except json.JSONDecodeError:
                 continue
-                
+
             response = server.handle_request(request)
             if "id" in request:
                 response["id"] = request["id"]
-            
+
             print(json.dumps(response), flush=True)
-            
+
         except Exception as e:
             logger.error(f"Loop error: {e}")
+
 
 if __name__ == "__main__":
     main()

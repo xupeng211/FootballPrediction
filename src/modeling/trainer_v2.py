@@ -39,6 +39,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class TrainingMetrics:
     """训练性能指标"""
+
     version: str
     timestamp: str
     accuracy: float
@@ -64,22 +65,24 @@ class ModelConfig:
     """模型配置"""
 
     # XGBoost 参数
-    xgb_params: dict[str, int | float | str] = field(default_factory=lambda: {
-        "n_estimators": 500,
-        "max_depth": 5,
-        "learning_rate": 0.03,
-        "min_child_weight": 3,
-        "gamma": 0.1,
-        "subsample": 0.8,
-        "colsample_bytree": 0.8,
-        "reg_alpha": 1.0,
-        "reg_lambda": 2.0,
-        "random_state": 42,
-        "objective": "multi:softprob",
-        "num_class": 3,
-        "eval_metric": "mlogloss",
-        "tree_method": "hist",
-    })
+    xgb_params: dict[str, int | float | str] = field(
+        default_factory=lambda: {
+            "n_estimators": 500,
+            "max_depth": 5,
+            "learning_rate": 0.03,
+            "min_child_weight": 3,
+            "gamma": 0.1,
+            "subsample": 0.8,
+            "colsample_bytree": 0.8,
+            "reg_alpha": 1.0,
+            "reg_lambda": 2.0,
+            "random_state": 42,
+            "objective": "multi:softprob",
+            "num_class": 3,
+            "eval_metric": "mlogloss",
+            "tree_method": "hist",
+        }
+    )
 
     # 类别权重 - 强化平局学习
     class_weights: dict[int, float] = field(default_factory=lambda: {0: 1.0, 1: 3.0, 2: 1.0})
@@ -138,9 +141,7 @@ class V35Trainer:
             output_dir: 输出目录
         """
         self.config = config or ModelConfig()
-        self.output_dir = output_dir or (
-            Path(__file__).parent.parent.parent / "models/v35"
-        )
+        self.output_dir = output_dir or (Path(__file__).parent.parent.parent / "models/v35")
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
         self.model = None
@@ -161,9 +162,7 @@ class V35Trainer:
 
         return df
 
-    def prepare_training_data(
-        self, df: pd.DataFrame
-    ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    def prepare_training_data(self, df: pd.DataFrame) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """
         准备训练数据
 
@@ -211,9 +210,7 @@ class V35Trainer:
         logger.info(f"  测试集: {test_date_range[0]} ~ {test_date_range[1]} ({len(X_test)} 场)")
 
         # 计算样本权重
-        sample_weights = np.array([
-            self.config.class_weights.get(y_i, 1.0) for y_i in y_train
-        ])
+        sample_weights = np.array([self.config.class_weights.get(y_i, 1.0) for y_i in y_train])
 
         return X_train, X_test, y_train, y_test, sample_weights  # noqa: N806
 
@@ -240,18 +237,13 @@ class V35Trainer:
         logger.info(f"  max_depth: {self.config.xgb_params['max_depth']}")
         logger.info(f"  learning_rate: {self.config.xgb_params['learning_rate']}")
         logger.info(
-            f"  正则化: alpha={self.config.xgb_params['reg_alpha']}, "
-            f"lambda={self.config.xgb_params['reg_lambda']}"
+            f"  正则化: alpha={self.config.xgb_params['reg_alpha']}, lambda={self.config.xgb_params['reg_lambda']}"
         )
         logger.info(f"  类别权重: {self.config.class_weights}")
 
         logger.info("\n【开始训练...】")
         self.model = xgb.XGBClassifier(**self.config.xgb_params)
-        self.model.fit(
-            X_train, y_train,
-            sample_weight=sample_weights,
-            verbose=False
-        )
+        self.model.fit(X_train, y_train, sample_weight=sample_weights, verbose=False)
         logger.info("✅ 训练完成")
 
         # 概率校准 (Platt Scaling)
@@ -275,11 +267,7 @@ class V35Trainer:
             cv_folds = 2
             logger.warning(f"  样本不足（最少类别仅 {min_samples_per_class} 个），使用 {cv_folds} 折交叉验证")
 
-        self.calibrated_model = CalibratedClassifierCV(
-            self.model,
-            method=self.config.calibration_method,
-            cv=cv_folds
-        )
+        self.calibrated_model = CalibratedClassifierCV(self.model, method=self.config.calibration_method, cv=cv_folds)
         self.calibrated_model.fit(X_test, y_test)
         logger.info("✅ 校准完成")
 
@@ -289,9 +277,7 @@ class V35Trainer:
         y_pred_proba_calibrated = self.calibrated_model.predict_proba(X_test)
 
         # 计算指标
-        metrics = self._compute_metrics(
-            y_test, y_pred, y_pred_proba_calibrated, train_size=len(X_train)
-        )
+        metrics = self._compute_metrics(y_test, y_pred, y_pred_proba_calibrated, train_size=len(X_train))
 
         return {
             "metrics": metrics,
@@ -314,10 +300,7 @@ class V35Trainer:
 
         # 分类报告
         report = classification_report(
-            y_true, y_pred,
-            target_names=["Away", "Draw", "Home"],
-            output_dict=True,
-            zero_division=0
+            y_true, y_pred, target_names=["Away", "Draw", "Home"], output_dict=True, zero_division=0
         )
 
         # 分类别准确率
@@ -331,25 +314,20 @@ class V35Trainer:
 
         # 概率指标
         logloss = log_loss(y_true, y_pred_proba)
-        brier_loss = brier_score_loss(
-            label_binarize(y_true, classes=[0, 1, 2]).ravel(),
-            y_pred_proba.ravel()
-        )
+        brier_loss = brier_score_loss(label_binarize(y_true, classes=[0, 1, 2]).ravel(), y_pred_proba.ravel())
 
         # 计算 AUC
         y_true_bin = label_binarize(y_true, classes=[0, 1, 2])
-        auc_score = roc_auc_score(
-            y_true_bin, y_pred_proba,
-            average="macro",
-            multi_class="ovr"
-        )
+        auc_score = roc_auc_score(y_true_bin, y_pred_proba, average="macro", multi_class="ovr")
 
         # 特征重要性
-        feature_importance = dict(zip(
-            self.feature_columns,
-            self.model.feature_importances_.tolist(),
-            strict=True,
-        ))
+        feature_importance = dict(
+            zip(
+                self.feature_columns,
+                self.model.feature_importances_.tolist(),
+                strict=True,
+            )
+        )
 
         # 混淆矩阵
         cm = confusion_matrix(y_true, y_pred).tolist()
@@ -415,11 +393,7 @@ class V35Trainer:
         logger.info("=" * 70)
 
         logger.info("\n【特征贡献度 Top 10】")
-        sorted_importance = sorted(
-            metrics.feature_importance.items(),
-            key=lambda x: x[1],
-            reverse=True
-        )
+        sorted_importance = sorted(metrics.feature_importance.items(), key=lambda x: x[1], reverse=True)
         for i, (feat, imp) in enumerate(sorted_importance[:10], 1):
             logger.info(f"  {i:2d}. {feat:30s} = {imp:.4f}")
 
@@ -444,6 +418,7 @@ class V35Trainer:
 
         # 保存 JSON 报告
         from dataclasses import asdict
+
         report = asdict(metrics)
 
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
