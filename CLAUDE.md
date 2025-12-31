@@ -23,14 +23,29 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | 属性 | 值 |
 |------|-----|
 | **状态** | ✅ Production Ready |
-| **生产版本** | **V26.8** (联赛专项) + **V37.0** (数据采集基准) + **V25.1** (特征引擎) |
+| **生产版本** | **V26.8** (联赛专项) + **V37.0** (数据采集基准) + **V25.1** (特征引擎) + **V30.0** (赔率特征) |
 | **基线准确率** | 56% (真赛前) |
-| **特征维度** | 19 维动态特征 |
+| **特征维度** | 19 维动态特征 + 15 维赔率特征 (V30.0) |
 | **数据量** | 9,305+ 场对齐训练数据 |
 | **推理延迟** | <100ms |
 | **训练-推理对齐** | ✅ 完全对齐 |
 | **模型分发** | ✅ ModelDispatcher (联赛专项 vs 通用) |
-| **最后重构** | 2024-12-29 (目录结构标准化) |
+| **自动化调度** | ✅ ProductionScheduler (全流程自动化) |
+| **最后重构** | 2025-12-31 (熔断器 + 限流器 + 自动化调度) |
+
+### 版本说明
+
+| 模块 | 版本 | 文件位置 |
+|------|------|----------|
+| 预测模型 | V26.8 | `model_zoo/v26.8_*.pkl` |
+| 模型分发器 | ModelDispatcher | `src/ml/engine.py:668` |
+| 数据采集 | V37.0 | `experiments/marrow_cleaning_v37_harvester.py` |
+| 特征提取 | V25.1 | `src/processors/v25_production_extractor.py` |
+| 赔率特征 | V30.0 | `src/processors/v30_odds_features.py` |
+| 熔断器 | V1.0 | `src/api/collectors/circuit_breaker.py` |
+| 限流器 | V1.0 | `src/api/rate_limiter.py` |
+| 告警管理 | V1.0 | `src/ops/alert_manager.py` |
+| 自动化调度 | V1.0 | `scripts/automate_production.py` |
 
 ### 核心技术栈
 
@@ -49,7 +64,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | 模块 | 版本 | 说明 |
 |------|------|------|
 | **预测模型** | **V26.8** | 联赛专项模型 (EPL/LaLiga/Ligue1/Bundesliga) + 通用 V26.7 |
-| **模型分发** | **ModelDispatcher** | `src/ml/engine.py:ModelDispatcher` |
+| **模型分发** | **ModelDispatcher** | `src/ml/engine.py:668` |
 | **数据采集基准** | **V37.0** | `experiments/marrow_cleaning_v37_harvester.py` |
 | **特征引擎** | **V25.1** | `src/processors/v25_production_extractor.py` |
 | **生产服务** | **V26.8** | `src/ops/production_service.py` (自动联赛检测) |
@@ -102,8 +117,12 @@ docker-compose up -d
 
 ```
 FootballPrediction/
-├── src/                      # ⭐ 生产代码（V25/V26/V37）
+├── src/                      # ⭐ 生产代码（V25/V26/V30/V37）
 │   ├── api/                  # FastAPI endpoints + 数据采集
+│   │   ├── collectors/       # FotMob API 采集器
+│   │   │   ├── circuit_breaker.py   # 🆕 爬虫熔断器
+│   │   │   └── odds_api_client.py   # 🆕 赔率 API 客户端
+│   │   └── rate_limiter.py   # 🆕 API 限流器
 │   ├── config/               # 统一配置（合并后）
 │   ├── config_unified.py     # 全局配置管理
 │   ├── core/                 # 核心业务逻辑
@@ -115,20 +134,29 @@ FootballPrediction/
 │   │   ├── inference/        # 推理服务
 │   │   └── backtest_engine.py  # 回测引擎
 │   ├── ops/                  # 运维脚本
+│   │   └── alert_manager.py  # 🆕 告警管理器
 │   ├── processors/           # V25.1 特征提取引擎
+│   │   ├── v25_production_extractor.py
+│   │   └── v30_odds_features.py    # 🆕 V30.0 赔率特征
 │   └── services/             # 业务服务层
 │
 ├── scripts/                  # 核心脚本
+│   ├── automate_production.py        # 🆕 全流程自动化调度器
 │   ├── automate_v1_0_pipeline.py     # V1.0 流水线自动化
 │   ├── train_v27_0_epl_ewma.py       # V27.0 英超 EWMA 训练
-│   ├── cleanup_project.py            # 🆕 项目清理脚本
-│   ├── fix_imports.py                # 🆕 Import 路径修复脚本
+│   ├── cleanup_project.py            # 项目清理脚本
+│   ├── fix_imports.py                # Import 路径修复脚本
 │   ├── run_checks.sh                 # CI 质量门禁
 │   ├── system_verify.sh              # 系统健康检查
 │   ├── run_all_tests.sh              # 全量测试执行
+│   ├── verify_automation.sh          # 🆕 自动化验证脚本
 │   ├── collectors/                   # 数据采集脚本
+│   ├── production/                   # 🆕 生产环境脚本
 │   ├── exploration/                  # 🔍 探索性脚本（非生产）
 │   ├── maintenance/                  # 维护工具
+│   │   ├── backup_db.py              # 🆕 数据库备份
+│   │   └── import_ucl_history.py     # 🆕 UCL 历史数据导入
+│   ├── ml/                           # 🆕 ML 训练脚本
 │   ├── archive/                      # 历史归档脚本
 │   └── sql/                          # SQL 初始化脚本
 │
@@ -155,6 +183,7 @@ FootballPrediction/
 ├── docker/                   # Docker 配置
 ├── deploy/                   # 部署脚本
 ├── docs/                     # 文档
+│   └── v30_odds_features_explained.md  # 🆕 V30.0 赔率特征详解
 ├── docker-compose.yml        # Docker 编排
 ├── Makefile                  # 统一命令入口
 ├── pyproject.toml            # 项目配置
@@ -167,14 +196,18 @@ FootballPrediction/
 
 | 目录 | 职责 | 允许内容 | 禁止内容 |
 |------|------|----------|----------|
-| `src/` | 生产代码 | V25/V26/V37 相关代码 | ❌ 任何旧版本代码 |
+| `src/` | 生产代码 | V25/V26/V30/V37 相关代码 | ❌ 任何旧版本代码 |
 | `scripts/` | 核心脚本 | 流水线、收割脚本 | ❌ 一次性脚本 |
 | `scripts/exploration/` | 探索性脚本 | 特征探索、数据诊断 | ❌ 生产代码 |
+| `scripts/production/` | 生产脚本 | 自动化调度、备份脚本 | ❌ 实验性代码 |
+| `scripts/maintenance/` | 维护工具 | 数据库备份、历史导入 | ❌ 生产代码 |
 | `experiments/` | 实验性代码 | 仅 V37.0 采集器基准 | ❌ 旧版本实验 |
 | `model_zoo/` | 模型仓库 | .pkl/.json 模型文件 | ❌ 源代码 |
 | `data/` | 数据文件 | L1/L2/L3 数据 | ❌ 旧版本数据 |
+| `predictions/` | 🆕 预测输出 | 生产预测结果 | ❌ 测试数据 |
 | `tests/` | 测试代码 | 测试脚本 | ❌ 已删除功能的测试 |
 | `archive/` | 历史归档 | 重构后的历史代码 | ❌ 生产代码 |
+| `docs/` | 文档 | 技术文档、API 说明 | ❌ 临时笔记 |
 | **根目录** | 项目配置 | docker-compose.yml, Makefile, 等 | ❌ 临时文件、实验脚本 |
 
 ---
@@ -186,7 +219,7 @@ FootballPrediction/
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                    L1: 数据采集层                           │
-│  V37.0 数据采集基准 (experiments/marrow_cleaning_v37_*.py)│
+│  V37.0 数据采集基准 (experiments/marrow_cleaning_v37_harvester.py)│
 │  ┌────────────────────────────────────────────────────────┐ │
 │  │  FotMob API → 哨兵机制 → 熔断恢复 → PostgreSQL      │ │
 │  └────────────────────────────────────────────────────────┘ │
@@ -202,7 +235,7 @@ FootballPrediction/
                           ↓
 ┌─────────────────────────────────────────────────────────────┐
 │                    L3: 特征工程层                           │
-│  工业级特征锻造 + V26.1 稀疏度过滤                       │
+│  工业级特征锻造 + V26.7 稀疏度过滤                       │
 │  ┌────────────────────────────────────────────────────────┐ │
 │  │  滚动特征 (16维) + 赛前特征 (8维) + 高级特征 (13维)   │ │
 │  └────────────────────────────────────────────────────────┘ │
@@ -215,13 +248,39 @@ FootballPrediction/
                           ↓
 ┌─────────────────────────────────────────────────────────────┐
 │                    L5: 推理服务层                           │
-│  FastAPI + Redis 缓存 + <100ms 推理延迟                   │
+│  ModelDispatcher + Redis 缓存 + <100ms 推理延迟           │
 └─────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
 ## 🔧 开发指南
+
+### 快速开发工作流
+
+```bash
+# 1. 启动核心服务 (db + redis)
+make up
+
+# 2. 等待数据库健康检查通过
+make ps
+
+# 3. 运行代码质量检查（提交前必需）
+make verify
+
+# 4. 运行生产预测服务
+python -m src.ops.production_service
+
+# 5. 查看日志
+make logs
+```
+
+### 关键开发提示
+
+1. **数据库连接**: Docker 环境下 `DB_HOST` 使用 `db`，本地开发使用 `localhost`
+2. **类型注解**: 所有函数必须包含完整的类型注解
+3. **命名规范**: 严禁创建带版本后缀的新文件（如 `_v1`, `_v2`）
+4. **配置管理**: 使用 `src.config_unified.get_settings()` 获取配置
 
 ### Makefile 命令参考
 
@@ -310,7 +369,8 @@ def predict_match(home_team, away_team):
 
 ### 数据库连接标准
 
-**必须使用统一配置**:
+**推荐方式**: 使用 `config_unified.py` 的 `get_settings()` 获取配置，然后使用 `psycopg2` 建立连接：
+
 ```python
 from src.config_unified import get_settings
 from psycopg2.extras import RealDictCursor
@@ -325,6 +385,13 @@ conn = psycopg2.connect(
     cursor_factory=RealDictCursor
 )
 ```
+
+**Docker 环境注意**:
+- 容器内 `DB_HOST` 应设置为 `db`（服务名），而非 `localhost`
+- 在 `docker-compose.yml` 中，服务之间通过服务名互相访问
+- 本地开发时使用 `localhost`，容器内使用 `db`
+
+**连接池**: 对于高频访问场景，推荐使用 `src/database/db_pool.py` 中的连接池。
 
 ---
 
@@ -354,6 +421,23 @@ prediction = dispatcher.predict(
 - `model_zoo/v26.8_ligue1_production.pkl` - 法甲专项
 - `model_zoo/v26.8_bund_production.pkl` - 德甲专项
 - `model_zoo/v26.7_aligned_production.pkl` - 通用回退模型
+
+### ML 引擎多版本代码说明
+
+`src/ml/engine.py` 包含多个历史版本的引擎类（**这是有意保留的**）：
+
+| 类名 | 版本 | 用途 |
+|------|------|------|
+| `V17MLEngine` | V17.0 | 滚动特征训练引擎（16维特征） |
+| `V26Predictor` | V26.4 | 统一推理接口 |
+| `ModelDispatcher` | V26.8 | 联赛专项模型分发器 |
+
+**重要**: 这些类是不同时期的产物，各有其用途：
+- **V17MLEngine**: 用于模型训练和特征工程实验
+- **V26Predictor**: 提供向后兼容的预测接口
+- **ModelDispatcher**: 当前生产使用的模型分发器
+
+**新增代码应遵循**: 优先使用 `ModelDispatcher` 进行预测，训练新模型时可参考 `V17MLEngine`。
 
 ---
 
@@ -481,10 +565,15 @@ model.fit(X_train, y_train, sample_weight=sample_weights)
 | 变量 | 必需 | 默认值 | 说明 |
 |------|------|--------|------|
 | `DB_HOST` | 是 | localhost | 数据库主机（Docker 使用 "db"） |
-| `DB_PASSWORD` | **是** | - | 数据库密码 |
+| `DB_PORT` | 是 | 5432 | 数据库端口 |
+| `DB_NAME` | **是** | football_prediction_dev | 数据库名称（重要：当前生产环境为 `football_prediction_dev`） |
+| `DB_USER` | **是** | football_user | 数据库用户 |
+| `DB_PASSWORD` | **是** | football_password_change_in_production | 数据库密码 |
 | `SECRET_KEY` | **是** | - | 应用密钥（≥32 字符） |
 | `REDIS_HOST` | 否 | localhost | Redis 主机 |
 | `ENVIRONMENT` | 否 | development | 运行环境 |
+
+**注意**：`docker-compose.yml` 中的默认值 `${DB_NAME:-football_db}` 与实际数据库名称 `football_prediction_dev` 不一致。连接时请使用 `football_prediction_dev`。
 
 ### Docker 服务栈
 
@@ -496,6 +585,30 @@ model.fit(X_train, y_train, sample_weight=sample_weights)
 | `redis` | default | Redis 7 |
 | `pgadmin` | dev | PostgreSQL 管理 |
 | `redis-commander` | dev | Redis 管理 |
+
+### Docker Profile 使用说明
+
+项目使用 Docker Compose Profiles 管理不同场景的服务组合：
+
+```bash
+# 默认启动 - 核心服务（db + redis + pipeline_worker）
+docker-compose up -d
+
+# 启动 API 服务 - 核心 + FastAPI 预测服务
+docker-compose --profile api up -d
+
+# 启动开发环境 - 核心 + 管理工具（pgadmin + redis-commander）
+docker-compose --profile dev up -d
+
+# 启动所有服务
+docker-compose --profile all up -d
+```
+
+**Profile 划分**：
+- **default**: 核心数据流水线服务
+- **api**: API 服务器（用于提供 REST 预测接口）
+- **dev**: 开发工具（数据库和 Redis 管理界面）
+- **dashboard**: 监控仪表盘（如 Grafana）
 
 ### 健康检查
 
@@ -524,6 +637,7 @@ curl http://localhost:8000/health
 - **[.claude/architecture_boundary.skill.md](.claude/architecture_boundary.skill.md)** - 架构分层约束
 - **[.claude/test_guard.skill.md](.claude/test_guard.skill.md)** - 测试保护
 - **[.claude/minimal_change.skill.md](.claude/minimal_change.skill.md)** - 最小修改原则
+- **[.claude/change_impact.skill.md](.claude/change_impact.skill.md)** - 变更影响分析
 
 ### 优先级金字塔
 1. **Context Lock**: P0 核心模块修改需人工授权
@@ -876,7 +990,7 @@ User: "收集 FotMob 实时数据"
 
 #### 工程规范约束技能
 
-除了上述专业技能外，项目还配置了 4 个核心约束技能（`.claude/*.skill.md`）：
+除了上述专业技能外，项目还配置了 5 个核心约束技能（`.claude/*.skill.md`）：
 
 | 技能 | 约束等级 | 核心目标 |
 |------|----------|----------|
@@ -884,6 +998,7 @@ User: "收集 FotMob 实时数据"
 | `architecture_boundary` | 🔴 RED | 维护清晰的层次结构 |
 | `test_guard` | 🔴 RED | 确保测试的真实价值 |
 | `context_lock` | 🔴 RED | 保护核心模块不被破坏 |
+| `change_impact` | 🔴 RED | 分析变更影响，降低风险 |
 
 **注意**: 约束技能优先级高于业务技能，任何操作都必须首先通过约束检查。
 
@@ -910,8 +1025,124 @@ User: "收集 FotMob 实时数据"
 
 **🚨 CRITICAL**: This is a production system support document.
 
-**🧬 当前版本**: V26.8 (联赛专项) + V50.0 (数据采集) + V25.1 (特征引擎) |
-**最后更新**: 2025-12-29 (scripts 目录结构同步 + 版本信息更新) |
+**🧬 当前版本**: V26.8 (联赛专项) + V37.0 (数据采集) + V25.1 (特征引擎) + V30.0 (赔率特征) |
+**最后更新**: 2025-12-31 (熔断器 + 限流器 + 自动化调度 + V30.0 赔率特征) |
 **基线准确率**: 56% (真赛前) |
 **生产状态**: Production Ready |
 **项目愿景**: 年化 25% 收益率 |
+**Python 版本**: 3.11+ (支持 3.12) |
+
+---
+
+## 🧬 V30.0 技术实现细节
+
+### 赔率特征工程 (Odds Features)
+
+V30.0 引入 15 个高阶赔率特征，用于发现价值投注机会：
+
+```python
+from src.processors.v30_odds_features import OddsFeatureExtractor
+
+extractor = OddsFeatureExtractor()
+
+# 提取赔率特征
+features = extractor.extract_match_features(match_id="12345")
+
+# 特征列表 (15个)
+# 1. odds_variance_home/draw/away (3) - 赔率离散度
+# 2. market_bias_home/draw/away (3) - 资金流向
+# 3. upset_prediction_factor_* (4) - 冷门预测因子
+# 4. market_consensus_strength (2) - 市场共识强度
+# 5. value_bet_indicator (3) - 价值投注指标
+```
+
+**特征详情**: 见 [docs/v30_odds_features_explained.md](docs/v30_odds_features_explained.md)
+
+### 爬虫熔断器 (Circuit Breaker)
+
+V30.0 引入熔断器模式，防止 API 封禁：
+
+```python
+from src.api.collectors.circuit_breaker import CircuitBreaker, CircuitState
+
+# 创建熔断器
+breaker = CircuitBreaker(
+    failure_threshold=5,      # 连续失败阈值
+    timeout=300,              # 熔断超时 (秒)
+    half_open_attempts=3      # 半开状态尝试次数
+)
+
+# 使用熔断器
+@breaker.protect
+async def fetch_api_data():
+    # API 请求逻辑
+    pass
+
+# 状态机: CLOSED -> OPEN -> HALF_OPEN -> CLOSED
+```
+
+### API 限流器 (Rate Limiter)
+
+V30.0 使用 slowapi 实现 FastAPI 接口限流：
+
+```python
+from src.api.rate_limiter import init_rate_limiter, rate_limit
+from fastapi import FastAPI
+
+app = FastAPI()
+init_rate_limiter(app)
+
+@app.get("/predict")
+@rate_limit("10/minute")  # 每分钟 10 次
+async def predict():
+    pass
+```
+
+### 告警管理器 (Alert Manager)
+
+V30.0 统一告警管理，支持多种通知渠道：
+
+```python
+from src.ops.alert_manager import AlertSeverity, send_alert_sync
+
+# 发送告警
+send_alert_sync(
+    severity=AlertSeverity.CRITICAL,
+    title="API 封禁告警",
+    message="FotMob API 返回 429 状态码",
+    metadata={"error": "rate_limit_exceeded"}
+)
+```
+
+### 自动化调度器 (Production Scheduler)
+
+V30.0 全流程自动化调度：
+
+```python
+from scripts.automate_production import ProductionScheduler
+import asyncio
+
+# 创建调度器
+scheduler = ProductionScheduler(
+    enable_prediction=True,
+    target_match_count=50
+)
+
+# 运行全流程
+# 1. 数据采集 -> 2. 数据清洗 -> 3. 质量检查 -> 4. 生成预测
+summary = asyncio.run(scheduler.run())
+```
+
+**Docker 集成**: 在 `docker-compose.yml` 中配置 `production_cron` 服务，每天凌晨 3:00 自动执行。
+
+---
+
+## 🔄 版本历史
+
+| 版本 | 日期 | 主要变更 |
+|------|------|----------|
+| **V30.0** | 2025-12-31 | 赔率特征 + 熔断器 + 限流器 + 自动化调度 |
+| V26.8 | 2025-12-30 | 联赛专项模型 (EPL/LaLiga/Ligue1/Bundesliga) |
+| V26.7 | 2025-12-29 | 训练-推理完全对齐，19 维动态特征 |
+| V37.0 | 2025-12-26 | Industrial Grade L1 & Historical Database Rebuild |
+| V25.1 | 2025-12-25 | 万能自适应特征提取引擎 (48维 → 12061维) |

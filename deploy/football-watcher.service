@@ -1,0 +1,64 @@
+# FootballPrediction 2026 Watcher - Systemd Service Unit
+# ==========================================================
+#
+# 安装说明:
+#   1. 复制本文件到 /etc/systemd/system/
+#      sudo cp football-watcher@.service /etc/systemd/system/
+#
+#   2. 重载 systemd 配置
+#      sudo systemctl daemon-reload
+#
+#   3. 为当前用户启用服务
+#      sudo systemctl enable football-watcher@$(whoami).service
+#
+#   4. 启动服务
+#      sudo systemctl start football-watcher@$(whoami).service
+#
+#   5. 查看状态
+#      sudo systemctl status football-watcher@$(whoami).service
+#
+#   6. 查看日志
+#      sudo journalctl -u football-watcher@$(whoami).service -f
+#
+# 卸载说明:
+#   sudo systemctl stop football-watcher@$(whoami).service
+#   sudo systemctl disable football-watcher@$(whoami).service
+#   sudo rm /etc/systemd/system/football-watcher@.service
+
+[Unit]
+Description=FootballPrediction 2026 API Watcher
+Documentation=https://github.com/your-repo/FootballPrediction
+After=network.target postgresql.service redis.service
+Wants=postgresql.service redis.service
+
+[Service]
+Type=simple
+User=%i
+Group=%i
+WorkingDirectory=/home/%i/projects/FootballPrediction
+Environment="PATH=/home/%i/.venv/bin:/usr/local/bin:/usr/bin:/bin"
+Environment="PYTHONUNBUFFERED=1"
+Environment="TZ=Asia/Shanghai"
+
+# 执行监听器
+ExecStart=/home/%i/.venv/bin/python scripts/production/watch_2026_api.py
+
+# 重启策略
+Restart=on-failure
+RestartSec=60
+
+# 安全配置
+NoNewPrivileges=true
+PrivateTmp=true
+
+# 日志配置
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=football-watcher
+
+# 资源限制
+MemoryMax=512M
+CPUQuota=50%
+
+[Install]
+WantedBy=multi-user.target

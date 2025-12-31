@@ -1,22 +1,25 @@
 # ============================================
-# FootballPrediction V25.1 - Unified Docker Compose
+# FootballPrediction V30.0 - Unified Docker Compose
 # ============================================
-# 万能自适应特征提取引擎 - 工业级部署配置
-# 生成时间: 2025-12-26
-# 状态: V25.1 Production Ready
+# 生产级全流程自动化部署配置
+# 生成时间: 2025-12-30
+# 状态: V30.0 Production Ready
 # ============================================
 # 核心服务:
 #   1. db - PostgreSQL 15 数据库 (持久化存储)
 #   2. redis - Redis 7 缓存服务 (持久化存储)
 #   3. pipeline_worker - V25.1 数据流水线 (按需启动)
 #   4. predictor_api - FastAPI 预测服务 (按需启动)
+#   5. production_cron - 自动化调度器 (每天凌晨 3:00)
+#   6. db_backup - 数据库自动备份服务 (每天凌晨 2:00)
 # ============================================
 # 使用方式:
-#   docker-compose up -d                    # 启动核心服务 (db + redis)
-#   docker-compose --profile pipeline up -d  # 启动核心 + 数据流水线
-#   docker-compose --profile api up -d       # 启动核心 + API 服务
-#   docker-compose --profile dev up -d       # 启动 + 开发工具
-#   docker-compose --profile all up -d       # 启动所有服务
+#   docker-compose up -d                      # 启动核心服务 (db + redis)
+#   docker-compose --profile pipeline up -d   # 启动核心 + 数据流水线
+#   docker-compose --profile api up -d        # 启动核心 + API 服务
+#   docker-compose --profile automation up -d # 启动核心 + 自动化调度
+#   docker-compose --profile dev up -d        # 启动 + 开发工具
+#   docker-compose --profile all up -d        # 启动所有服务
 # ============================================
 
 services:
@@ -296,6 +299,213 @@ services:
       - dev
       - all
 
+  # ============================================
+  # db_backup - 数据库自动备份服务 (P0 安全加固)
+  # ============================================
+  db_backup:
+    build:
+      context: .
+      dockerfile: deploy/docker/Dockerfile
+      target: runner
+    image: footballprediction:v25.1
+    container_name: football_prediction_db_backup
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - DOCKER_ENV=true
+      - TZ=${TZ:-UTC}
+      # 备份配置
+      - BACKUP_RETENTION_DAYS=${BACKUP_RETENTION_DAYS:-30}
+      - BACKUP_SCHEDULE=${BACKUP_SCHEDULE:-0 2 * * *}
+    volumes:
+      - app_data:/app/data
+      - app_logs:/app/logs
+      # 备份目录需要独立卷，避免被清理
+      - db_backups:/app/data/backups
+    command: >
+      sh -c "
+      echo '启动数据库备份服务...' &&
+      echo '备份计划: ${BACKUP_SCHEDULE}' &&
+      echo '保留天数: ${BACKUP_RETENTION_DAYS:-30} 天' &&
+      pip install croniter &&
+      python -c '
+      import time
+      import logging
+      from croniter import croniter
+      from datetime import datetime
+      from pathlib import Path
+
+      logging.basicConfig(level=logging.INFO, format=\"%(asctime)s [%(levelname)s] %(message)s\")
+      logger = logging.getLogger(__name__)
+
+      # 导入备份模块
+      import sys
+      sys.path.insert(0, \"/app\")
+      from scripts.maintenance.backup_db import DatabaseBackupManager
+
+      manager = DatabaseBackupManager(retention_days=int(\"${BACKUP_RETENTION_DAYS:-30}\"))
+      schedule = \"${BACKUP_SCHEDULE:-0 2 * * *}\"
+
+      logger.info(f\"备份服务已启动，计划: {schedule}\")
+
+      # 计算下次执行时间
+      cron = croniter(schedule, datetime.now())
+      next_run = cron.get_next(datetime)
+
+      while True:
+          now = datetime.now()
+          if now >= next_run:
+              try:
+                  logger.info(\"开始执行定时备份...\")
+                  manager.backup()
+                  manager.cleanup_old_backups()
+                  logger.info(\"定时备份完成\")
+              except Exception as e:
+                  logger.error(f\"备份失败: {e}\")
+              # 更新下次执行时间
+              cron = croniter(schedule, datetime.now())
+              next_run = cron.get_next(datetime)
+          else:
+              # 计算剩余时间并休眠
+              wait_seconds = min((next_run - now).total_seconds(), 60)
+              time.sleep(wait_seconds)
+      '
+      "
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - football_network
+    profiles:
+      - backup
+      - all
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 256M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
+
+  # ============================================
+  # production_cron - 生产自动化调度器 (V30.0)
+  # ============================================
+  production_cron:
+    build:
+      context: .
+      dockerfile: deploy/docker/Dockerfile
+      target: runner
+    image: footballprediction:v30.0
+    container_name: football_prediction_cron
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - DOCKER_ENV=true
+      - TZ=${TZ:-UTC}
+      # 调度配置
+      - CRON_SCHEDULE=${CRON_SCHEDULE:-0 3 * * *}
+      - TARGET_MATCH_COUNT=${TARGET_MATCH_COUNT:-50}
+    volumes:
+      - app_data:/app/data
+      - app_logs:/app/logs
+      - predictions:/app/predictions
+    command: >
+      sh -c "
+      echo '启动生产自动化调度器...' &&
+      echo '调度计划: ${CRON_SCHEDULE:-0 3 * * *}' &&
+      echo '目标采集: ${TARGET_MATCH_COUNT:-50} 场' &&
+      pip install croniter &&
+      python -c '
+      import time
+      import logging
+      import asyncio
+      from croniter import croniter
+      from datetime import datetime
+      from pathlib import Path
+
+      logging.basicConfig(level=logging.INFO, format=\"%(asctime)s [%(levelname)s] %(message)s\")
+      logger = logging.getLogger(__name__)
+
+      # 导入调度模块
+      import sys
+      sys.path.insert(0, \"/app\")
+      from scripts.automate_production import ProductionScheduler
+
+      schedule = \"${CRON_SCHEDULE:-0 3 * * *}\"
+
+      logger.info(f\"自动化调度器已启动，计划: {schedule}\")
+
+      # 计算下次执行时间
+      cron = croniter(schedule, datetime.now())
+      next_run = cron.get_next(datetime)
+
+      while True:
+          now = datetime.now()
+          if now >= next_run:
+              try:
+                  logger.info(\"=\" * 60)
+                  logger.info(\"开始执行生产流程...\")
+                  logger.info(\"=\" * 60)
+
+                  scheduler = ProductionScheduler(
+                      enable_prediction=True,
+                      target_match_count=int(\"${TARGET_MATCH_COUNT:-50}\")
+                  )
+
+                  summary = asyncio.run(scheduler.run())
+
+                  if summary.result.value == \"success\":
+                      logger.info(\"✓ 生产流程执行成功\")
+                  else:
+                      logger.warning(f\"⚠ 生产流程执行结果: {summary.result.value}\")
+
+              except Exception as e:
+                  logger.error(f\"生产流程异常: {e}\")
+                  import traceback
+                  traceback.print_exc()
+
+              # 更新下次执行时间
+              cron = croniter(schedule, datetime.now())
+              next_run = cron.get_next(datetime)
+              logger.info(f\"下次执行时间: {next_run.isoformat()}\")
+          else:
+              # 计算剩余时间并休眠
+              wait_seconds = min((next_run - now).total_seconds(), 60)
+              time.sleep(wait_seconds)
+      '
+      "
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - football_network
+    profiles:
+      - automation
+      - all
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
 # ============================================
 # 数据卷 - 持久化存储
 # ============================================
@@ -315,6 +525,12 @@ volumes:
   app_logs:
     driver: local
     name: footballprediction_app_logs
+  db_backups:
+    driver: local
+    name: footballprediction_db_backups
+  predictions:
+    driver: local
+    name: footballprediction_predictions
 
 # ============================================
 # 网络

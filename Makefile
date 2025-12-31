@@ -144,18 +144,38 @@ clean: ## 清理所有垃圾文件、缓存和僵尸资产
 	find . -type f -name "*.pyc" -delete
 	find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
 	find . -type d -name ".pytest_cache" -exec rm -rf {} + 2>/dev/null || true
+	find . -type d -name ".ruff_cache" -exec rm -rf {} + 2>/dev/null || true
+	find . -type d -name "*.egg-info" -exec rm -rf {} + 2>/dev/null || true
 	find . -type f -name "*.bak" -delete
-	@echo "$(GREEN)垃圾文件已清理$(NC)"
+	find . -type f -name "*.覆盖" -delete 2>/dev/null || true
+	@echo "$(NC)  清理 Python 字节码和缓存..."
+	@echo "$(GREEN)✓ 垃圾文件已清理$(NC)"
+
+clean-csv: ## 清理临时测试生成的 CSV 文件
+	@echo "$(BLUE)清理临时预测 CSV 文件...$(NC)"
+	@find predictions -type f -name "*test*.csv" -delete 2>/dev/null || true
+	@find predictions -type f -name "*temp*.csv" -delete 2>/dev/null || true
+	@find predictions -type f -name "*_summary.txt" -mtime +30 -delete 2>/dev/null || true
+	@echo "$(GREEN)✓ 临时 CSV 文件已清理$(NC)"
+
+clean-logs: ## 清理超过 7 天的日志文件
+	@echo "$(BLUE)清理过期日志文件...$(NC)"
+	@find logs -type f -name "*.log" -mtime +7 -delete 2>/dev/null || true
+	@find logs -type f -name "*.txt" -mtime +30 -delete 2>/dev/null || true
+	@echo "$(GREEN)✓ 过期日志已清理$(NC)"
 
 clean-docker: ## 清理 Docker 资源
 	@echo "$(BLUE)清理 Docker 资源...$(NC)"
-	docker-compose down -v
+	docker-compose down -v 2>/dev/null || true
 	docker system prune -f
-	@echo "$(GREEN)Docker 资源已清理$(NC)"
+	@echo "$(GREEN)✓ Docker 资源已清理$(NC)"
 
-clean-all: ## 完全清理
+clean-all: ## 完全清理 (包括临时文件和日志)
 	$(MAKE) clean
+	$(MAKE) clean-csv
+	$(MAKE) clean-logs
 	$(MAKE) clean-docker
+	@echo "$(GREEN)✓ 完全清理完成$(NC)"
 
 # ============================================
 # 部署命令

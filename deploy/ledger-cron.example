@@ -1,0 +1,21 @@
+# FootballPrediction Ledger Cron Configuration
+# ==============================================
+#
+# 安装说明:
+#   1. 编辑本文件，确认路径正确
+#   2. 安装到 crontab:
+#      crontab -e
+#   3. 添加以下内容（去掉注释）
+#
+# 或使用一键安装:
+#   crontab -l | { cat; cat deploy/ledger-cron.example; } | crontab -
+
+# FootballPrediction - 每日收益对账
+# 每天早上 9:00 执行
+0 9 * * * cd /home/user/projects/FootballPrediction && /home/user/.venv/bin/python scripts/production/update_live_ledger.py >> logs/cron_ledger.log 2>&1
+
+# 备选: 每天早上 8:00 和 晚上 20:00 各执行一次
+# 0 8,20 * * * cd /home/user/projects/FootballPrediction && /home/user/.venv/bin/python scripts/production/update_live_ledger.py >> logs/cron_ledger.log 2>&1
+
+# 备选: 每小时执行一次（用于高频监控）
+# 0 * * * * cd /home/user/projects/FootballPrediction && /home/user/.venv/bin/python scripts/production/update_live_ledger.py >> logs/cron_ledger.log 2>&1
