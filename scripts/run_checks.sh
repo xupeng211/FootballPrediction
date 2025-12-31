@@ -3,8 +3,8 @@
 # FootballPrediction V29.0 - CI 质量门禁
 # ============================================
 # 自动化测试与代码质量检查
-# 生成时间: 2025-12-25
-# 状态: V29.0 CI Ready
+# 生成时间: 2025-12-30
+# 状态: V29.1 CI Ready (含模型性能回归测试)
 # ============================================
 # 功能:
 #   1. 代码格式化 (black/ruff)
@@ -12,7 +12,8 @@
 #   3. Lint 检查 (flake8/ruff)
 #   4. 类型检查 (mypy)
 #   5. 单元测试 (pytest)
-#   6. 安全扫描 (bandit)
+#   6. 模型性能回归测试 (baseline accuracy gate)
+#   7. 安全扫描 (bandit)
 # ============================================
 
 set -e  # 遇到错误立即退出
@@ -46,7 +47,7 @@ print_warning() {
 # ============================================
 # 1. 导入排序检查
 # ============================================
-print_header "Step 1/6: 导入排序检查 (isort)"
+print_header "Step 1/7: 导入排序检查 (isort)"
 if command -v isort &> /dev/null; then
     isort --check-only --diff src/ tests/ || {
         print_error "导入排序检查失败"
@@ -61,7 +62,7 @@ fi
 # ============================================
 # 2. 代码格式化检查
 # ============================================
-print_header "Step 2/6: 代码格式化检查"
+print_header "Step 2/7: 代码格式化检查"
 if command -v ruff &> /dev/null; then
     ruff format --check src/ tests/ || {
         print_error "代码格式化检查失败"
@@ -83,7 +84,7 @@ fi
 # ============================================
 # 3. Lint 检查
 # ============================================
-print_header "Step 3/6: Lint 检查"
+print_header "Step 3/7: Lint 检查"
 if command -v ruff &> /dev/null; then
     ruff check src/ tests/ || {
         print_error "Lint 检查失败"
@@ -104,7 +105,7 @@ fi
 # ============================================
 # 4. 类型检查
 # ============================================
-print_header "Step 4/6: 类型检查 (mypy)"
+print_header "Step 4/7: 类型检查 (mypy)"
 if command -v mypy &> /dev/null; then
     mypy src/ --ignore-missing-imports --no-error-summary || {
         print_error "类型检查失败"
@@ -118,7 +119,7 @@ fi
 # ============================================
 # 5. 单元测试
 # ============================================
-print_header "Step 5/6: 单元测试 (pytest)"
+print_header "Step 5/7: 单元测试 (pytest)"
 if command -v pytest &> /dev/null; then
     # 运行核心测试套件
     pytest tests/ml/test_backtest_engine.py tests/ops/test_signal_generator.py -v --tb=short || {
@@ -131,9 +132,27 @@ else
 fi
 
 # ============================================
-# 6. 安全扫描
+# 6. 模型性能回归测试
 # ============================================
-print_header "Step 6/6: 安全扫描 (bandit)"
+print_header "Step 6/7: 模型性能回归测试"
+if command -v python &> /dev/null; then
+    # 运行模型性能测试（含自动门禁）
+    python tests/ml/test_model_performance.py || {
+        print_error "模型性能回归测试失败"
+        print_warning "已生成报告: logs/performance_report.json"
+        print_warning "模型精度低于红线 (55%)，已发送 CRITICAL 告警"
+        print_warning "部署已被阻止！请检查模型或数据质量"
+        exit 1
+    }
+    print_success "模型性能回归测试通过"
+else
+    print_warning "Python 未安装，跳过"
+fi
+
+# ============================================
+# 7. 安全扫描
+# ============================================
+print_header "Step 7/7: 安全扫描 (bandit)"
 if command -v bandit &> /dev/null; then
     bandit -r src/ -f screen -ll || {
         print_error "安全扫描发现高危问题"

@@ -18,6 +18,7 @@ from src.api.health import router as health_router
 from src.api.model_management import router as model_management_router
 from src.api.monitoring import router as monitoring_router
 from src.api.schemas import RootResponse
+from src.api.rate_limiter import init_rate_limiter, rate_limit_predict
 from src.core.metrics import get_metrics
 from src.database.connection import initialize_database
 
@@ -76,6 +77,10 @@ app = FastAPI(
     redoc_url="/redoc",
     lifespan=lifespan,
 )
+
+# 初始化 API 限流器
+init_rate_limiter(app)
+logger.info("✅ API 限流器已初始化")
 
 # 添加CORS中间件
 cors_origins = os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",")
@@ -198,6 +203,7 @@ def get_predictor() -> "Predictor":
 
 
 @app.post("/predict", summary="预测比赛结果", tags=["预测"])
+@rate_limit_predict()
 async def predict_match(request: dict) -> dict:
     """
     V26.4 统一预测接口
@@ -253,6 +259,7 @@ async def predict_match(request: dict) -> dict:
 
 
 @app.post("/predict/batch", summary="批量预测", tags=["预测"])
+@rate_limit_predict()
 async def predict_batch(requests: list[dict]) -> list[dict]:
     """
     批量预测接口

@@ -11,17 +11,13 @@ V35.0 生产级建模模块
 """
 
 from .backtest_engine import (
-    AutoBacktester,
+    BacktestEngine,
     BacktestConfig,
     BacktestMetrics,
-    MatchPrediction,
-    BetRecord,
 )
 
 __all__ = [
-    "AutoBacktester",
+    "BacktestEngine",
     "BacktestConfig",
     "BacktestMetrics",
-    "MatchPrediction",
-    "BetRecord",
 ]
