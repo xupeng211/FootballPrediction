@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Production-Grade Automated Odds Harvesting Engine.
+"""V57.0 Production-Grade Automated Odds Harvesting Engine.
 
 This module orchestrates large-scale odds data collection across multiple
 seasons and leagues with intelligent self-healing capabilities.

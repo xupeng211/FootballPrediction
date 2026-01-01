@@ -1,16 +1,19 @@
 #!/usr/bin/env python3
 """
-V51.0 增量采集器 (Incremental Collector)
-==========================================
+V57.0 增量采集器 (Incremental Collector)
+========================================
+V57.0 生产体系组件 - FotMob L2 数据增量采集
+
 核心功能：
 1. 检查数据库中最新的 match_time
 2. 仅抓取该时间之后的比赛（增量收割）
 3. 支持直接入库（解决外键约束）
 4. 基于 Phase 2.5 验证的 API 调用逻辑
+5. 断点续传 + 熔断恢复
 
 Author: Senior Backend Architect
-Version: V51.0
-Date: 2025-12-28
+Version: V57.0 (Production Unified)
+Date: 2026-01-02
 """
 
 import asyncio
@@ -82,7 +85,7 @@ class CollectStatistics:
     http_404: int = 0
     http_errors: int = 0
 
-    # P0 系统自愈统计 (V51.1)
+    # P0 系统自愈统计 (V57.0)
     zombie_matches_fixed: int = 0  # 修复的僵尸比赛数（从非finished变为finished）
     status_updated_count: int = 0   # 总体状态更新次数
 
@@ -107,7 +110,7 @@ class CollectStatistics:
 
 class IncrementalCollector:
     """
-    V51.0 增量采集器
+    V57.0 增量采集器
 
     核心特性：
     1. 检查数据库最新 match_time，只抓取更新的比赛
@@ -116,7 +119,7 @@ class IncrementalCollector:
     4. 完整的错误处理和日志记录
     """
 
-    # V51.0: 拟人化反爬盔甲
+    # V57.0: 拟人化反爬盔甲
     USER_AGENTS = [
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",  # noqa: E501
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",  # noqa: E501
@@ -175,7 +178,7 @@ class IncrementalCollector:
             self.circuit_breaker = None
             logger.warning("⚠️ 熔断器未启用")
 
-        logger.info("🎯 V51.0 增量采集器已初始化")
+        logger.info("🎯 V57.0 增量采集器已初始化")
 
     def _get_latest_match_time(self) -> datetime | None:
         """
@@ -210,7 +213,7 @@ class IncrementalCollector:
             比赛数据列表
         """
         logger.info("=" * 60)
-        logger.info("V51.0 增量采集: 网络抓取")
+        logger.info("V57.0 增量采集: 网络抓取")
         logger.info("=" * 60)
 
         if since:
@@ -491,7 +494,7 @@ class IncrementalCollector:
 
     def _import_matches_to_db(self, match_l1_data: list[dict]) -> int:
         """
-        V51.1: 比分驱动的状态自愈 + 批量提交优化
+        V57.0: 比分驱动的状态自愈 + 批量提交优化
         =========================================================
         核心修复: 只要 L1 索引返回有效比分，强制将状态更新为 finished
 
@@ -508,7 +511,7 @@ class IncrementalCollector:
             插入/更新的记录数
         """
         logger.info("\n" + "=" * 60)
-        logger.info("V51.1 导入比赛到 matches 表 (比分驱动自愈)")
+        logger.info("V57.0 导入比赛到 matches 表 (比分驱动自愈)")
         logger.info("=" * 60)
 
         conn = psycopg2.connect(**self.conn_params)
@@ -541,7 +544,7 @@ class IncrementalCollector:
                 home_score = match_data.get("home_score")
                 away_score = match_data.get("away_score")
 
-                # ===== V51.1 核心逻辑: 比分驱动状态自愈 =====
+                # ===== V57.0 核心逻辑: 比分驱动状态自愈 =====
                 # 判断 L1 是否返回了有效比分
                 has_valid_score = (
                     home_score is not None
@@ -575,7 +578,7 @@ class IncrementalCollector:
                 logger.error(f"预处理 Match {match_data.get('match_id')} 失败: {e}")
 
         # ============================================
-        # V51.1 批量 UPSERT (使用 executemany 优化性能)
+        # V57.0 批量 UPSERT (使用 executemany 优化性能)
         # ============================================
         batch_size = 100
         total_batches = (len(batch_data) + batch_size - 1) // batch_size
@@ -592,7 +595,7 @@ class IncrementalCollector:
                     home_team, away_team, home_score, away_score
                 ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 ON CONFLICT (external_id) DO UPDATE SET
-                    -- ===== V51.1 核心修复: 比分驱动状态自愈 =====
+                    -- ===== V57.0 核心修复: 比分驱动状态自愈 =====
                     -- 当新数据有比分时，强制更新；否则保留旧值
                     home_score = CASE
                         WHEN EXCLUDED.home_score IS NOT NULL AND EXCLUDED.away_score IS NOT NULL
@@ -644,14 +647,14 @@ class IncrementalCollector:
         self.stats.status_updated_count = zombie_fixed
 
         # ============================================
-        # V51.1 自愈能力报告
+        # V57.0 自愈能力报告
         # ============================================
         logger.info(f"✓ 导入/更新 {imported} 场比赛到 matches 表")
 
         if zombie_fixed > 0:
             logger.info("")
             logger.info("╔════════════════════════════════════════════════════════════╗")
-            logger.info("║           V51.1 系统自愈报告 (比分驱动状态修复)              ║")
+            logger.info("║           V57.0 系统自愈报告 (比分驱动状态修复)              ║")
             logger.info("╚════════════════════════════════════════════════════════════╝")
             logger.info(f"🔄 本次运行共修复/唤醒: {zombie_fixed} 场僵尸比赛")
             logger.info("   这些比赛从 'scheduled'/'ongoing' 被修正为 'finished'")
@@ -771,7 +774,7 @@ class IncrementalCollector:
 
 async def quick_incremental_collect(target_count: int = 50) -> CollectStatistics:
     """
-    V51.1 快速增量采集
+    V57.0 快速增量采集
 
     Args:
         target_count: 目标采集数量
@@ -784,7 +787,7 @@ async def quick_incremental_collect(target_count: int = 50) -> CollectStatistics
 
     # 打印摘要
     print("\n" + "=" * 60)
-    print("V51.1 增量采集摘要 (比分驱动自愈)")
+    print("V57.0 增量采集摘要 (比分驱动自愈)")
     print("=" * 60)
     print(f"目标数量: {stats.target_count}")
     print(f"获取 L1: {stats.fetched_l1}")
@@ -795,7 +798,7 @@ async def quick_incremental_collect(target_count: int = 50) -> CollectStatistics
     print(f"HTTP 200: {stats.http_200}")
     print(f"HTTP 错误: {stats.http_errors}")
 
-    # V51.1: 僵尸比赛修复统计
+    # V57.0: 僵尸比赛修复统计
     if stats.zombie_matches_fixed > 0:
         print(f"🔄 僵尸比赛修复: {stats.zombie_matches_fixed} 场")
 
