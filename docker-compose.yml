@@ -395,6 +395,57 @@ services:
         max-file: "2"
 
   # ============================================
+  # V51.2: odds_scraper - 赔率数据采集服务
+  # ============================================
+  odds_scraper:
+    build:
+      context: .
+      dockerfile: deploy/docker/Dockerfile
+      target: runner
+    image: footballprediction:v51.2-odds
+    container_name: football_prediction_odds_scraper
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - DOCKER_ENV=true
+      - TZ=${TZ:-UTC}
+      # 赔率采集配置
+      - ODDS_SCRAPER_SCHEDULE=${ODDS_SCRAPER_SCHEDULE:-0 */4 * * *}
+      - ODDS_SOURCE=${ODDS_SOURCE:-oddsportal}
+      - BATCH_SIZE=${ODDS_BATCH_SIZE:-50}
+      - REQUEST_DELAY_MIN=${ODDS_DELAY_MIN:-2}
+      - REQUEST_DELAY_MAX=${ODDS_DELAY_MAX:-5}
+      # 代理配置
+      - HTTP_PROXY=${HTTP_PROXY:-}
+      - HTTPS_PROXY=${HTTPS_PROXY:-}
+    volumes:
+      - app_data:/app/data
+      - app_logs:/app/logs
+      - odds_data:/app/data/odds
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - football_network
+    profiles:
+      - odds
+      - all
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ============================================
   # production_cron - 生产自动化调度器 (V30.0)
   # ============================================
   production_cron:
@@ -531,6 +582,9 @@ volumes:
   predictions:
     driver: local
     name: footballprediction_predictions
+  odds_data:
+    driver: local
+    name: footballprediction_odds_data
 
 # ============================================
 # 网络

@@ -23,29 +23,33 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | 属性 | 值 |
 |------|-----|
 | **状态** | ✅ Production Ready |
-| **生产版本** | **V26.8** (联赛专项) + **V37.0** (数据采集基准) + **V25.1** (特征引擎) + **V30.0** (赔率特征) |
+| **生产版本** | **V51.1** (滚动特征) + **V26.8** (联赛专项) + **V37.0** (数据采集) + **V25.1** (特征引擎) |
+| **实验版本** | **V51.3** (Full Power) - 标签打乱验证通过 |
 | **基线准确率** | 56% (真赛前) |
-| **特征维度** | 19 维动态特征 + 15 维赔率特征 (V30.0) |
+| **特征维度** | 49-56 维滚动特征 (V51.x) + 642 维深度脱水特征 |
 | **数据量** | 9,305+ 场对齐训练数据 |
 | **推理延迟** | <100ms |
-| **训练-推理对齐** | ✅ 完全对齐 |
+| **训练-推理对齐** | ✅ 完全对齐 (V51.x 时空隔离协议) |
 | **模型分发** | ✅ ModelDispatcher (联赛专项 vs 通用) |
 | **自动化调度** | ✅ ProductionScheduler (全流程自动化) |
-| **最后重构** | 2025-12-31 (熔断器 + 限流器 + 自动化调度) |
+| **最后更新** | 2025-12-31 (V51.1 滚动特征 + V51.3 Full Power) |
 
 ### 版本说明
 
-| 模块 | 版本 | 文件位置 |
-|------|------|----------|
-| 预测模型 | V26.8 | `model_zoo/v26.8_*.pkl` |
-| 模型分发器 | ModelDispatcher | `src/ml/engine.py:668` |
-| 数据采集 | V37.0 | `experiments/marrow_cleaning_v37_harvester.py` |
-| 特征提取 | V25.1 | `src/processors/v25_production_extractor.py` |
-| 赔率特征 | V30.0 | `src/processors/v30_odds_features.py` |
-| 熔断器 | V1.0 | `src/api/collectors/circuit_breaker.py` |
-| 限流器 | V1.0 | `src/api/rate_limiter.py` |
-| 告警管理 | V1.0 | `src/ops/alert_manager.py` |
-| 自动化调度 | V1.0 | `scripts/automate_production.py` |
+| 模块 | 版本 | 文件位置 | 说明 |
+|------|------|----------|------|
+| 预测模型 | V51.3 | `model_zoo/v51_3_full_power_model.pkl` | 实验性 Full Power 模型 |
+| 滚动特征 | V51.1 | `scripts/ml/v51_1_rolling_feature_engine.py` | 49-56 维时空隔离特征 |
+| 增量采集器 | V51.0 | `src/api/collectors/v51_incremental_collector.py` | 断点续传 + 熔断恢复 |
+| 特征精炼器 | V51.0 | `src/processors/v51_feature_refiner.py` | 642 维深度脱水特征 |
+| 预测模型 | V26.8 | `model_zoo/v26.8_*.pkl` | 联赛专项模型 (EPL/LaLiga/Ligue1/Bundesliga) |
+| 模型分发器 | ModelDispatcher | `src/ml/engine.py:668` | 智能模型路由 |
+| 数据采集 | V37.0 | `experiments/marrow_cleaning_v37_harvester.py` | 生产级数据采集基准 |
+| 特征提取 | V25.1 | `src/processors/v25_production_extractor.py` | 万能自适应特征提取 |
+| 熔断器 | V1.0 | `src/api/collectors/circuit_breaker.py` | API 熔断保护 |
+| 限流器 | V1.0 | `src/api/rate_limiter.py` | FastAPI 接口限流 |
+| 告警管理 | V1.0 | `src/ops/alert_manager.py` | 多渠道告警管理 |
+| 自动化调度 | V1.0 | `scripts/automate_production.py` | 全流程自动化调度 |
 
 ### 核心技术栈
 
@@ -566,14 +570,16 @@ model.fit(X_train, y_train, sample_weight=sample_weights)
 |------|------|--------|------|
 | `DB_HOST` | 是 | localhost | 数据库主机（Docker 使用 "db"） |
 | `DB_PORT` | 是 | 5432 | 数据库端口 |
-| `DB_NAME` | **是** | football_prediction_dev | 数据库名称（重要：当前生产环境为 `football_prediction_dev`） |
-| `DB_USER` | **是** | football_user | 数据库用户 |
-| `DB_PASSWORD` | **是** | football_password_change_in_production | 数据库密码 |
-| `SECRET_KEY` | **是** | - | 应用密钥（≥32 字符） |
+| `DB_NAME` | 是 | football_prediction_dev | 数据库名称 |
+| `DB_USER` | 是 | football_user | 数据库用户 |
+| `DB_PASSWORD` | 是 | football_password_change_in_production | 数据库密码 |
+| `SECRET_KEY` | 是 | - | 应用密钥（≥32 字符） |
 | `REDIS_HOST` | 否 | localhost | Redis 主机 |
 | `ENVIRONMENT` | 否 | development | 运行环境 |
 
-**注意**：`docker-compose.yml` 中的默认值 `${DB_NAME:-football_db}` 与实际数据库名称 `football_prediction_dev` 不一致。连接时请使用 `football_prediction_dev`。
+**注意**：
+- 当前生产环境使用的数据库名称是 `football_prediction_dev`
+- `docker-compose.yml` 中的默认值 `${DB_NAME:-football_db}` 仅为示例，实际连接需使用 `football_prediction_dev`
 
 ### Docker 服务栈
 
@@ -630,29 +636,30 @@ curl http://localhost:8000/health
 
 ## 🛡️ 工程规范约束
 
-**Claude Code 必须严格遵守以下工程规范**：
+**Claude Code 必须严格遵守以下核心约束**：
 
-### 核心规范文件
-- **[.claude/context_lock.skill.md](.claude/context_lock.skill.md)** - 核心资产冻结
-- **[.claude/architecture_boundary.skill.md](.claude/architecture_boundary.skill.md)** - 架构分层约束
-- **[.claude/test_guard.skill.md](.claude/test_guard.skill.md)** - 测试保护
-- **[.claude/minimal_change.skill.md](.claude/minimal_change.skill.md)** - 最小修改原则
-- **[.claude/change_impact.skill.md](.claude/change_impact.skill.md)** - 变更影响分析
+### 约束优先级（从高到低）
+1. **Context Lock** - P0 核心模块修改需人工授权
+2. **Architecture Boundary** - 维护清晰的层次结构，禁止跨层直接调用
+3. **Test Guard** - 确保测试的真实价值
+4. **Minimal Change** - 满足上述条件后，修改行数越少越好
+5. **Change Impact** - 分析变更影响，降低风险
 
-### 优先级金字塔
-1. **Context Lock**: P0 核心模块修改需人工授权
-2. **Architecture Boundary**: 架构正确性 > 代码简洁性
-3. **Test Guard**: 功能正确性 > 性能优化
-4. **Minimal Change**: 满足上述条件后，修改行数越少越好
+### 核心冻结模块（P0）
+- `src/ml/inference/predictor.py` - 推理引擎
+- `src/ml/inference/model_loader.py` - 模型加载器
+- `src/services/inference_service.py` - 推理服务层
+
+> 详见 [`.claude/`](.claude/) 目录下的完整约束文档
 
 ---
 
-## 🚨 故障处理
+## 🚨 灾难恢复
 
-### 常见问题诊断
+### 快速问题诊断
 
-| 问题 | 原因 | 解决方案 |
-|------|------|----------|
+| 问题 | 原因 | 快速解决方案 |
+|------|------|-------------|
 | `connection refused` | PostgreSQL 未启动 | `docker-compose up -d db` |
 | `db_password 不能为空` | 缺少环境变量 | 在 `.env` 中配置 |
 | `Module import error` | 依赖未安装 | `pip install -r requirements.txt` |
@@ -664,11 +671,9 @@ curl http://localhost:8000/health
 |----------|------|
 | 应用日志 | `logs/app.log` |
 | 错误日志 | `logs/error.log` |
-| 收割日志 | `logs/auto_harvest.log` |
+| 采集器日志 | `logs/auto_harvest.log` |
 
 ---
-
-## 🚨 灾难恢复 (Disaster Recovery)
 
 ### 数据库故障恢复
 
@@ -945,72 +950,40 @@ pytest tests/ --cov=src --cov-report=html
 pytest tests/ -n auto
 ```
 
-### 技能调用
+### 技能自动调用机制
 
-项目配置了专业化技能（`.claude/skills/`），Claude Code 会自动调用：
+项目配置了专业化技能（`.claude/skills/`），Claude Code 会根据任务**自动加载**对应技能：
 
-#### 核心业务技能 (4个)
-- `football-prediction` - 足球预测核心 (XGBoost 2.0+, 67.2% 准确率, <100ms 响应)
-- `report-generation` - 报告生成 (PDF/Word/Excel, 专业可视化)
-- `machine-learning-engineering` - ML 工程工具 (XGBoost 调优, SHAP 解释)
-- `data-collection` - 数据采集 (FotMob API L2 数据, 实时统计)
+#### 自动触发示例
+- 用户: "预测曼联对阿森纳的比赛" → 自动加载 `football-prediction`
+- 用户: "检查代码质量" → 自动加载 `code-quality`
+- 用户: "收集 FotMob 实时数据" → 自动加载 `data-collection`
+- 用户: "部署到生产环境" → 自动加载 `deployment-management`
 
-#### 运维支撑技能 (4个)
-- `performance-monitoring` - 性能监控 (Prometheus + Grafana)
-- `deployment-management` - 部署管理 (Docker, 蓝绿部署, 回滚)
-- `deployment-operations` - 部署运维 (容器化管理, 健康监控, 故障诊断)
-- `database-operations` - 数据库操作 (PostgreSQL 连接池, 查询优化)
+#### 核心技能清单
+| 类别 | 技能 | 功能 |
+|------|------|------|
+| **核心业务** | `football-prediction` | XGBoost 2.0+ 预测 (67.2% 准确率, <100ms 响应) |
+| | `machine-learning-engineering` | XGBoost 调优, SHAP 解释 |
+| | `data-collection` | FotMob API L2 数据采集 |
+| **开发工具** | `code-quality` | Ruff, MyPy, Bandit, pytest 质量管理 |
+| | `fastapi-development` | FastAPI 异步/await, API 设计 |
+| **运维支撑** | `deployment-management` | Docker 蓝绿部署与回滚 |
+| | `database-operations` | PostgreSQL 连接池与查询优化 |
+| | `performance-monitoring` | Prometheus + Grafana 监控 |
 
-#### 开发工具技能 (6个)
-- `code-quality` - 代码质量管理 (Ruff, MyPy, Bandit, pytest)
-- `api-testing` - API 测试工具 (FastAPI endpoint 测试)
-- `data-engineering` - 数据管道工具 (ETL, 特征流水线)
-- `docker-devops` - Docker 运维 (容器编排, 健康监控)
-- `fastapi-development` - FastAPI 最佳实践 (异步/await, API 设计)
-- `feature-engineering` - 特征工程 (V25.1 自适应提取, 48→12061维)
+#### 工程规范约束（优先级最高）
+约束技能优先级高于业务技能，任何操作都必须首先通过约束检查：
 
-#### 数据采集技能 (1个)
-- `v26-harvest` - V26 生产级数据收割 (零缺陷, 批处理, 监控)
-
-#### 技能使用示例
-
-```
-User: "预测曼联对阿森纳的比赛"
-→ Claude 自动加载 football-prediction 技能
-→ 运行: python -m src.ops.production_service
-
-User: "检查代码质量"
-→ Claude 自动加载 code-quality 技能
-→ 运行: make verify
-
-User: "收集 FotMob 实时数据"
-→ Claude 自动加载 data-collection 技能
-→ 运行 V50.0 采集器
-```
-
-#### 工程规范约束技能
-
-除了上述专业技能外，项目还配置了 5 个核心约束技能（`.claude/*.skill.md`）：
-
-| 技能 | 约束等级 | 核心目标 |
-|------|----------|----------|
+| 约束 | 等级 | 核心目标 |
+|------|------|----------|
 | `minimal_change` | 🔴 RED | 防止过度重构，保持系统稳定 |
 | `architecture_boundary` | 🔴 RED | 维护清晰的层次结构 |
 | `test_guard` | 🔴 RED | 确保测试的真实价值 |
 | `context_lock` | 🔴 RED | 保护核心模块不被破坏 |
 | `change_impact` | 🔴 RED | 分析变更影响，降低风险 |
 
-**注意**: 约束技能优先级高于业务技能，任何操作都必须首先通过约束检查。
-
-#### 辅助技能文件
-
-除了技能目录外，项目还提供了 3 个辅助技能文件（`.claude/skills/*.md`）：
-
-| 文件 | 用途 |
-|------|------|
-| `async_testing.md` | 异步测试指南 (pytest-asyncio, 异步 mock) |
-| `dependency_injection_mock.md` | 依赖注入模拟 (FastAPI 依赖, Mock 策略) |
-| `naming_convention.md` | 命名规范 (文件名、变量名、类名规范) |
+> 完整技能列表详见 [`.claude/skills/`](.claude/skills/) 目录
 
 ---
 
@@ -1141,8 +1114,109 @@ summary = asyncio.run(scheduler.run())
 
 | 版本 | 日期 | 主要变更 |
 |------|------|----------|
+| **V51.3** | 2025-12-31 | Full Power 模型，标签打乱验证通过 (32% 真实 ROI) |
+| **V51.1** | 2025-12-31 | 滚动特征架构，49 维时空隔离特征，三层分离架构 |
+| **V51.0** | 2025-12-31 | 统一预测入口，增量采集器，收益对账系统 |
 | **V30.0** | 2025-12-31 | 赔率特征 + 熔断器 + 限流器 + 自动化调度 |
 | V26.8 | 2025-12-30 | 联赛专项模型 (EPL/LaLiga/Ligue1/Bundesliga) |
 | V26.7 | 2025-12-29 | 训练-推理完全对齐，19 维动态特征 |
 | V37.0 | 2025-12-26 | Industrial Grade L1 & Historical Database Rebuild |
 | V25.1 | 2025-12-25 | 万能自适应特征提取引擎 (48维 → 12061维) |
+
+---
+
+## 🧬 V51.x 技术实现细节
+
+### V51.1 滚动特征架构
+
+V51.1 引入三层分离架构，实现时空隔离的赛前特征计算：
+
+**数据表结构**:
+```sql
+-- 三层特征表
+feature_snapshots     -- 原始特征快照 (642维 JSONB)
+prematch_features     -- 赛前滚动特征 (49维时空隔离)
+feature_registry      -- 特征元数据注册表
+```
+
+**特征分类** (49-56 维):
+| 类别 | 特征数 | 示例 |
+|------|--------|------|
+| 实力底蕴 | 8 | rolling_xg, shots_on_target, possession, team_rating |
+| 即时状态 | 10 | recent_form_points, goals_scored, win_rate |
+| 主客场 | 14 | home/away_win_rate, goals_scored/conceded |
+| 疲劳度 | 10 | fatigue_index, rest_days, matches_7days |
+| 趋势 | 6 | recent_trend_encoded |
+
+**时空隔离协议**:
+```python
+# 保证 100% 不泄露未来信息
+def compute_rolling_features(team_name: str, target_match_date: date):
+    # 仅查询早于目标比赛的历史数据
+    historical_matches = query_matches(
+        team=team_name,
+        where="match_date < target_match_date",
+        limit=20  # 最近 20 场
+    )
+    return compute_statistics(historical_matches)
+```
+
+### V51.0 深度脱水特征
+
+V51.0 特征精炼器将 12,061 维原始特征压缩至 642 维：
+
+**特征分类**:
+| 类别 | 维度 | 占比 | 说明 |
+|------|------|------|------|
+| Header 基础 | 8 | 1.2% | 比赛基础信息、比分 |
+| Header 事件聚合 | 12 | 1.9% | 事件统计 (count/ratio/diff) |
+| Header 事件详情 | 81 | 12.6% | 前 5 个事件的详细属性 |
+| Content 统计 | 481 | 74.9% | FotMob 统计数据 (打平) |
+| Content 射门地图 | 46 | 7.2% | 射门位置坐标、xG |
+| 元数据 | 14 | 2.2% | match_id 等 |
+
+**过滤规则**:
+- 黑名单: `_id$`, `Id$`, `color`, `text`, `description`
+- 白名单: `rolling_xg_`, `elo_gap`, `\.xg$`, `home_score`
+
+### V51.3 模型验证
+
+V51.3 通过标签打乱实验验证模型有效性：
+
+| 指标 | 原始标签 | 打乱标签 | 真实能力 |
+|------|----------|----------|----------|
+| ROI (策略 C) | 52.43% | 20.43% | **32.00%** |
+| 胜率 (策略 C) | 49.46% | 37.50% | **11.96%** |
+
+**结论**: ✅ 模型真实有效，约 32% 的真实 ROI 远超市场正常水平
+
+**数据泄露排查**:
+- 显性数据泄露: ❌ 未发现
+- 隐性数据泄露: ❌ 未发现
+- 时间序列偏差: ✅ 确认 (2024-2025 相关性 0.65)
+
+### V51.0 增量采集器
+
+V51.0 增量采集器支持断点续传和熔断恢复：
+
+```python
+from src.api.collectors.v51_incremental_collector import V51IncrementalCollector
+
+collector = V51IncrementalCollector()
+
+# 自动检查数据库最新时间，仅采集增量数据
+matches = await collector.collect_matches(since=latest_db_time)
+
+# 熔断保护
+@collector.circuit_breaker.protect
+async def fetch_api_data():
+    # API 请求逻辑
+    pass
+```
+
+**特性**:
+- 断点续传: 自动从最新时间继续采集
+- 熔断恢复: 连续失败 5 次后熔断，300s 后半开尝试
+- 批量处理: 优化数据库写入性能
+
+---
