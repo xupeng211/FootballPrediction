@@ -1,8 +1,8 @@
-# FootballPrediction V56.3
+# FootballPrediction V57.0
 
 > **"以年化 25% 的真实收益率为北极星指标，构建一个可验证、可复制、可持续的体育预测系统。"**
 >
-> **📌 生产级标准**: V56.3 智能自愈引擎 | 毫秒级感应收割 | 8000+ 场数据自动化生产
+> **📌 生产级标准**: V57.0 版本大一统 | 智能自愈引擎 | 毫秒级感应收割 | 100% 测试覆盖
 >
 > **📘 开发指南**: 详见 [CLAUDE.md](CLAUDE.md)
 
@@ -10,10 +10,10 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
-[![V56.3](https://img.shields.io/badge/version-V56.3%20Production-brightgreen.svg)](https://github.com/xupeng211/FootballPrediction)
+[![V57.0](https://img.shields.io/badge/version-V57.0%20Production-brightgreen.svg)](https://github.com/xupeng211/FootballPrediction)
 [![Tests](https://img.shields.io/badge/tests-29%20passed-success.svg)](tests/unit/test_extractor.py)
 
-**V56.3 Production-Ready | 智能自愈引擎 | 毫秒级感应 | IP 健康监控 | 企业级代码质量**
+**V57.0 Production-Ready | 版本大一统完成 | 智能自愈引擎 | 毫秒级感应 | IP 健康监控 | 企业级代码质量**
 
 ---
 

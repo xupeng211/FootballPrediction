@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Production-Grade Odds Data Extraction Engine.
+"""V57.0 Production-Grade Odds Data Extraction Engine.
 
 This module provides a robust, self-healing engine for extracting odds data
 from betting websites using Playwright browser automation.
