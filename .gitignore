@@ -21,6 +21,9 @@ wheels/
 .installed.cfg
 *.egg
 
+# Ruff (Python linter)
+.ruff_cache/
+
 # Virtual Environment
 venv/
 .venv/
@@ -100,7 +103,6 @@ docker-compose.override.yml
 .pytest_cache/
 .coverage
 htmlcov/
-.pytest_cache/
 
 # Coverage
 .coverage
@@ -112,6 +114,20 @@ coverage.xml
 .mypy_cache/
 .dmypy.json
 dmypy.json
+
+# Ruff cache
+.ruff_cache/
+
+# Playwright & Browser Automation (V56.4)
+.playwright_stealth_profile/
+.playwright/
+test-results/
+playwright-report/
+playwright/.cache/
+browser_cache/
+ms-playwright/
+*.profraw
+*.heapsnapshot
 
 # Archives and backups
 archive/
