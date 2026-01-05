@@ -95,6 +95,8 @@ model_zoo/*.pt
 logs/
 *.log
 *log*
+logs/raw_payloads/*.json
+logs/*.json
 
 # Docker
 docker-compose.override.yml

@@ -46,7 +46,7 @@ slowapi==0.1.9
 playwright==1.49.0
 
 # --- Fuzzy String Matching ---
-thefuzz==0.3.2
+thefuzz>=0.19.0
 
 # --- Authentication ---
 python-jose[cryptography]==3.3.0

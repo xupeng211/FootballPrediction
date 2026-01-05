@@ -245,9 +245,17 @@ class UnifiedSettings(BaseSettings):
     # === 外部API配置 ===
     fotmob_base_url: str = Field(default="https://www.fotmob.com/api", description="FotMob API基础URL")
 
+    fotmob_web_url: str = Field(default="https://www.fotmob.com", description="FotMob 网站基础URL")
+
     fotmob_x_mas_header: str | None = Field(default=None, description="FotMob X-MAS Header")
 
     fotmob_x_foo_header: str | None = Field(default=None, description="FotMob X-FOO Header")
+
+    oddsportal_base_url: str = Field(default="https://www.oddsportal.com", description="OddsPortal基础URL")
+
+    oddsportal_timeout_ms: int = Field(default=30000, description="OddsPortal请求超时时间（毫秒）")
+
+    oddsportal_retry_attempts: int = Field(default=3, description="OddsPortal重试次数")
 
     # === 模型配置 ===
     # 使用 model_zoo 目录中的 V19.4 生产模型

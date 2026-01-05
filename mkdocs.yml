@@ -1,0 +1,141 @@
+# MkDocs 配置文件 - V106.0
+# ================================
+# 从代码 Docstrings 生成美观的 API 文档
+
+site_name: FootballPrediction API Docs
+site_description: 足球比赛预测系统 API 文档
+site_author: FootballPrediction Team
+copyright: Copyright &copy; 2024-2026 FootballPrediction
+
+# 仓库信息
+repo_url: https://github.com/yourusername/FootballPrediction
+repo_name: FootballPrediction
+
+# 目录结构
+nav:
+  - 首页: index.md
+  - API 文档:
+      - 核心模块: api/core.md
+      - 数据模型: api/models.md
+      - 数据采集器: api/collectors.md
+      - 配置管理: api/config.md
+  - 开发指南:
+      - 快速开始: guide/quickstart.md
+      - 贡献指南: guide/contributing.md
+      - 部署指南: guide/deployment.md
+
+# 主题配置
+theme:
+  name: material
+  language: zh
+  palette:
+    # 支持明暗模式切换
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: 切换到深色模式
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: 切换到浅色模式
+  features:
+    # 导航功能
+    - navigation.instant
+    - navigation.tracking
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.indexes
+    # 搜索功能
+    - search.suggest
+    - search.highlight
+    # 代码功能
+    - content.code.copy
+    - content.tabs.link
+    # 其他功能
+    - toc.follow
+    - announce.dismiss
+  icon:
+    repo: fontawesome/brands/github
+    edit: material/pencil
+    view: material/eye
+
+# 插件配置
+plugins:
+  - search
+  - mkdocstrings:
+      default_handler: python
+      handlers:
+        python:
+          options:
+            docstring_style: google
+            show_source: true
+            show_root_heading: true
+            show_root_full_path: false
+            show_signature_annotations: true
+            show_if_no_docstring: false
+            signature_backslashes: false
+            imported_members: true
+            inherited_members: false
+            undoc_members: false
+            filtering: true
+            merge_init_into_class: true
+
+  - literaleach:
+      css:
+        - style: python
+      default_level: 2
+
+# Markdown 扩展
+markdown_extensions:
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.details
+  - admonition
+  - attr_list
+  - md_in_html
+  - meta
+  - toc:
+      permalink: true
+      slugify: !!python/name:pymdownx.slugs.slugify(case=false)
+
+# 排除文件
+exclude_docs:
+  - "**/*.pyc"
+  - "**/__pycache__/*"
+
+# 监听文件变化（开发模式）
+watch:
+  - src
+
+# 额外 CSS
+extra_css:
+  - stylesheets/extra.css
+
+# 额外 JavaScript
+extra_javascript:
+  - javascripts/extra.js
+
+# 额外配置
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/yourusername/FootballPrediction
+    - icon: fontawesome/solid/envelope
+      link: mailto:contact@footballprediction.local
+  version:
+    provider: mike
+    default: latest

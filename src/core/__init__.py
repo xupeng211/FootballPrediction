@@ -99,3 +99,53 @@ __all__ = [
     "config",
     "logger",
 ]
+
+# ============================================================================
+# V105.0 新增模块
+# ============================================================================
+
+from src.core.circuit_breaker import (
+    CircuitBreaker,
+    CircuitBreakerError,
+    CircuitBreakerOpenError,
+    CircuitState,
+    api_breaker,
+    database_breaker,
+    network_breaker,
+)
+from src.core.graceful_shutdown import GracefulShutdownManager, graceful_shutdown
+from src.core.structured_logging import (
+    ComponentLogger,
+    EventCode,
+    HarvestStats,
+    LogLevel,
+    LogContext,
+    get_logger,
+    log_context,
+    performance_timer,
+    setup_structured_logging,
+)
+
+__all__ += [
+    # Circuit Breaker
+    "CircuitBreaker",
+    "CircuitBreakerError",
+    "CircuitBreakerOpenError",
+    "CircuitState",
+    "network_breaker",
+    "api_breaker",
+    "database_breaker",
+    # Graceful Shutdown
+    "GracefulShutdownManager",
+    "graceful_shutdown",
+    # Structured Logging
+    "ComponentLogger",
+    "EventCode",
+    "HarvestStats",
+    "LogLevel",
+    "LogContext",
+    "get_logger",
+    "log_context",
+    "performance_timer",
+    "setup_structured_logging",
+]

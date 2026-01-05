@@ -1,18 +1,161 @@
 """
 统一的测试配置和Fixtures
 提供测试所需的所有Mock数据和配置
+
+V119.0: 新增回归测试所需的数据库连接和Playwright浏览器fixtures
 """
 
 # 添加src路径
 import sys
 from pathlib import Path
 from unittest.mock import Mock
+from typing import AsyncGenerator, Generator, Any
 
 import numpy as np
 import pandas as pd
 import pytest
+import psycopg2
+import psycopg2.extras
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
+
+
+# ============================================================================
+# V119.0: 回归测试 Fixtures
+# ============================================================================
+
+@pytest.fixture(scope="session")
+def db_connection():
+    """V119.0: 数据库连接 Fixture (Session级别)
+
+    用于回归测试中查询历史比赛数据。
+
+    Yields:
+        psycopg2.connection: 数据库连接对象
+    """
+    from src.config_unified import get_settings
+
+    settings = get_settings()
+    conn = psycopg2.connect(
+        host=settings.database.host,
+        port=settings.database.port,
+        database=settings.database.name,
+        user=settings.database.user,
+        password=settings.database.password.get_secret_value(),
+        cursor_factory=psycopg2.extras.RealDictCursor
+    )
+
+    yield conn
+
+    conn.close()
+
+
+@pytest.fixture(scope="session")
+def historical_match_sample(db_connection: psycopg2.extensions.connection) -> dict[str, Any]:
+    """V119.0: 历史比赛样本 (Session级别)
+
+    用于 Test A - 2021-2022 年历史比赛兼容性测试。
+
+    Args:
+        db_connection: 数据库连接
+
+    Returns:
+        dict: 包含 match_id 和 oddsportal_url 的历史比赛样本
+    """
+    cursor = db_connection.cursor()
+    cursor.execute("""
+        SELECT match_id, oddsportal_url, match_date
+        FROM matches
+        WHERE oddsportal_url IS NOT NULL
+          AND oddsportal_url LIKE '%oddsportal.com%'
+          AND match_date >= '2021-01-01'
+          AND match_date <= '2022-12-31'
+          AND is_finished = true
+        ORDER BY RANDOM()
+        LIMIT 1
+    """)
+
+    result = cursor.fetchone()
+    cursor.close()
+
+    if not result:
+        pytest.skip("No historical matches found for testing")
+
+    return {
+        "match_id": result["match_id"],
+        "oddsportal_url": result["oddsportal_url"],
+        "match_date": result["match_date"]
+    }
+
+
+@pytest.fixture(scope="session")
+def recent_match_sample(db_connection: psycopg2.extensions.connection) -> dict[str, Any]:
+    """V119.0: 近期比赛样本 (Session级别)
+
+    用于 Test B - 2024-2025 年高精度验证测试。
+
+    Args:
+        db_connection: 数据库连接
+
+    Returns:
+        dict: 包含 match_id 和 oddsportal_url 的近期比赛样本
+    """
+    cursor = db_connection.cursor()
+    cursor.execute("""
+        SELECT match_id, oddsportal_url, match_date
+        FROM matches
+        WHERE oddsportal_url IS NOT NULL
+          AND oddsportal_url LIKE '%oddsportal.com%'
+          AND match_date >= '2024-01-01'
+          AND is_finished = true
+        ORDER BY RANDOM()
+        LIMIT 1
+    """)
+
+    result = cursor.fetchone()
+    cursor.close()
+
+    if not result:
+        pytest.skip("No recent matches found for testing")
+
+    return {
+        "match_id": result["match_id"],
+        "oddsportal_url": result["oddsportal_url"],
+        "match_date": result["match_date"]
+    }
+
+
+@pytest.fixture
+async def playwright_browser() -> AsyncGenerator:
+    """V119.0: Playwright 浏览器 Fixture (Function级别)
+
+    用于 E2E 回归测试。每次测试后自动关闭浏览器。
+
+    Yields:
+        Page: Playwright Page 对象
+    """
+    from playwright.async_api import async_playwright, Browser, Page
+
+    async with async_playwright() as p:
+        browser: Browser = await p.chromium.launch(
+            headless=True,
+            args=["--disable-dev-shm-usage", "--no-sandbox"]
+        )
+        context = await browser.new_context(
+            viewport={"width": 1920, "height": 1080},
+            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+        )
+        page: Page = await context.new_page()
+
+        yield page
+
+        await context.close()
+        await browser.close()
+
+
+# ============================================================================
+# 原有 Fixtures
+# ============================================================================
 
 
 @pytest.fixture(scope="session")
@@ -175,6 +318,7 @@ def pytest_configure(config):
     config.addinivalue_line("markers", "integration: 标记集成测试")
     config.addinivalue_line("markers", "slow: 标记慢速测试")
     config.addinivalue_line("markers", "network: 标记需要网络的测试")
+    config.addinivalue_line("markers", "e2e: 标记端到端测试 (V119.0)")
 
 
 # 测试收集钩子

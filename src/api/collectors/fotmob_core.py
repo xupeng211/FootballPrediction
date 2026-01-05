@@ -100,7 +100,10 @@ class FotMobCoreCollector:
 
     def __init__(self):
         """初始化核心采集器 - V11.2 隐身模式版"""
-        self.base_url = "https://www.fotmob.com/api"
+        from src.config_unified import get_settings
+        settings = get_settings()
+        self.base_url = settings.fotmob_base_url
+        self.web_url = settings.fotmob_web_url
 
         # V11.2: 动态生成随机 Headers（隐身模式）
         self._refresh_stealth_headers()
@@ -134,8 +137,8 @@ class FotMobCoreCollector:
             "Accept-Encoding": "gzip, deflate, br",
             "Cache-Control": "no-cache",
             "Pragma": "no-cache",
-            "Referer": "https://www.fotmob.com/",
-            "Origin": "https://www.fotmob.com",
+            "Referer": f"{self.web_url}/",
+            "Origin": self.web_url,
             "Sec-Ch-Ua": '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
             "Sec-Ch-Ua-Mobile": "?0",
             "Sec-Ch-Ua-Platform": '"Windows"',
