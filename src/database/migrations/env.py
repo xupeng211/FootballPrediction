@@ -27,14 +27,15 @@ if project_root_alt not in sys.path:
 try:
     from src.config_unified import get_settings  # noqa: E402
     from src.database.base import Base  # noqa: E402
-    from src.database.models import Odds  # noqa: F401, E402
+    # Odds model import removed - not needed for migrations
 
     # 提供兼容的 get_database_config 函数
     def get_database_config():
         """获取数据库配置（从 config_unified.py）"""
         return get_settings().database
 
-except ImportError:
+except ImportError as e:
+    print(f"Import error: {e}")
     sys.exit(1)
 
 # this is the Alembic Config object, which provides
@@ -63,7 +64,7 @@ def get_database_url():
     else:
         # 回退到配置文件
         db_config = get_database_config()
-        return db_config.alembic_url
+        return db_config.get_connection_string()
 
 
 # add your model's MetaData object here

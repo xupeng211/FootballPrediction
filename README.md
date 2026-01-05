@@ -279,6 +279,43 @@ docker-compose logs -f production_harvester
 docker-compose down
 ```
 
+### 网络架构说明 (V144.2)
+
+#### WSL2 + Docker 网络配置
+
+当使用 WSL2 环境时，需要正确配置数据库连接：
+
+| 环境 | `DB_HOST` | 说明 |
+|------|-----------|------|
+| **Docker 容器** | `db` | 容器间通信 (使用 docker-compose 服务名) |
+| **WSL2 本地** | `172.25.16.1` | WSL2 访问 Docker 容器 (默认桥接网关) |
+| **本地开发** | `localhost` | 直接访问本地数据库 |
+
+**重要配置** (`src/config_unified.py`):
+
+```python
+# Docker 环境 (容器内)
+DB_HOST=db
+DB_NAME=football_db
+
+# WSL2 本地环境
+DB_HOST=172.25.16.1
+DB_NAME=football_db
+```
+
+**验证网络连接**:
+
+```bash
+# 检查 Docker 容器网络
+docker network inspect footballprediction_default
+
+# 从 WSL2 测试数据库连接
+docker-compose exec db pg_isready -U football_user -d football_db
+
+# 测试 WSL2 → Docker 连通性
+nc -zv 172.25.16.1 5432
+```
+
 ---
 
 ## 🔧 生产运维

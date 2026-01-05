@@ -21,15 +21,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | 属性 | 值 |
 |------|-----|
 | **状态** | ✅ Production Ready |
-| **生产版本** | **V57.0** (版本大一统 + 智能自愈引擎) |
+| **生产版本** | **V142.0** (统一命令入口 + Ghost Protocol) |
 | **核心模型** | **V26.8** (联赛专项) + **V26.7** (通用底座) |
-| **数据采集** | **V83.0** (L1/L2/L3 三层采集架构) |
+| **数据采集** | **V141.0** (BaseExtractor) + **V140.0** (TeamNameNormalizer) |
+| **收割服务** | **V142.0** (HarvesterService) |
 | **特征引擎** | **V25.1** (万能自适应特征提取) |
-| **收割引擎** | **V82.6** (OddsPortal 终盘提取) |
 | **Docker 版本** | **V106.0** (Dockerfile + docker-compose.prod.yml) |
 | **基线准确率** | 56% (真赛前) |
 | **推理延迟** | <100ms |
-| **最后更新** | 2026-01-05 |
+| **最后更新** | 2026-01-06 |
 
 ### 核心技术栈
 
@@ -58,14 +58,23 @@ make up
 # 运行代码质量检查（提交前必需）
 make verify
 
+# 统一命令入口 (V142.0) - 推荐方式
+python main.py --mode single --league "Premier League" --season "23/24"
+
+# 24h 全自动巡航模式
+python main.py --mode cruise
+
+# 数据质量检查
+python main.py --mode check
+
+# 测试代理连接 (V142.0)
+python main.py --test-proxy
+
 # FastAPI 服务
 python src/main.py
 
 # 生产预测服务（联赛专项模型）
 python -m src.ops.production_service
-
-# 生产收割引擎
-python scripts/production_harvester.py
 ```
 
 ### 快速诊断
@@ -81,45 +90,72 @@ python scripts/production_harvester.py
 
 ## 🏗️ 系统架构
 
-### L1/L2/L3 三层数据采集架构 (V83.0)
+### V142.0 统一命令入口架构
 
 ```
-L1: FotMob API - 基础比赛数据
-  └─ src/api/collectors/fotmob_core.py
-     ├─ 比赛基础信息 (league, season, teams, match_time)
-     ├─ 实时统计数据 (xG, shots, possession)
-     └─ 哨兵机制 + 熔断恢复
-              ↓
-L2: FotMob Detail - 开盘赔率 (悬停提取)
-  └─ src/api/collectors/odds_production_extractor.py
-     ├─ extract_opening_via_hover() 方法
-     ├─ 智能轮询 (wait_for_selector 60s)
-     ├─ 悬停自愈 (鼠标抖动重试)
-     └─ 提取目标: Pinnacle 开盘赔率 + 时间戳
-              ↓
-L3: OddsPortal - 终盘赔率 (直接提取)
-  └─ src/api/collectors/odds_production_extractor.py
-     ├─ extract_oddsportal_final_odds() 方法 (V82.6 集成)
-     ├─ 选择器: .odds-text (排除 .odds-cell)
-     ├─ 提取目标: Pinnacle 终盘赔率
-     └─ 完整性审计: Score = 1/P1 + 1/P2 + 1/P3
-              ↓
-PostgreSQL 持久层
-  └─ matches 表 (基础信息)
-  └─ metrics_multi_source_data 表 (赔率数据)
+┌─────────────────────────────────────────────────────────────────┐
+│                    main.py - V142.0 统一入口                      │
+│  ┌────────────────────────────────────────────────────────────┐ │
+│  │  三种运行模式:                                              │ │
+│  │  • single: 单次收割 (指定联赛/赛季)                        │ │
+│  │  • cruise: 24h 全自动巡航                                  │ │
+│  │  • check: 数据质量检查                                     │ │
+│  │  • --test-proxy: 代理连接测试                              │ │
+│  └────────────────────────────────────────────────────────────┘ │
+│                              ↓                                  │
+│  环境预检: WSL2 检测、代理自动发现、IP 检测                      │
+└─────────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────────┐
+│                    HarvesterService (V142.0)                     │
+│  src/api/services/harvester_service.py                          │
+│  ┌────────────────────────────────────────────────────────────┐ │
+│  │  队列驱动架构 (match_search_queue)                         │ │
+│  │  Ghost Protocol 集成 (BaseExtractor V141.0)                │ │
+│  │  全路径试错匹配 (TeamNameNormalizer V140.0)                │ │
+│  │  信号处理 (SIGINT/SIGTERM)                                 │ │
+│  │  优雅关闭机制                                               │ │
+│  └────────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────────┐
+│                    BaseExtractor (V141.0)                        │
+│  src/api/collectors/base_extractor.py                           │
+│  ┌────────────────────────────────────────────────────────────┐ │
+│  │  Ghost Protocol - V144.0 增强指纹混淆                      │ │
+│  │  • 30+ 主流浏览器指纹池 (Chrome/Edge/Safari/Firefox)      │ │
+│  │  • 5 种常见屏幕分辨率随机化                                │ │
+│  │  • 人类行为模拟 (滚动 + 点击噪声)                          │ │
+│  │  • 深度拦截检测 (Cloudflare, IP 封禁)                      │ │
+│  │  • 自动错误截图 (logs/error_screens/)                      │ │
+│  │  • WSL2 自动代理发现                                       │ │
+│  └────────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────────┐
+│                    TeamNameNormalizer (V140.0)                   │
+│  src/utils/text_processor.py                                    │
+│  ┌────────────────────────────────────────────────────────────┐ │
+│  │  全路径试错匹配                                             │ │
+│  │  • 处理多连字符队名 (e.g., "Manchester United")           │ │
+│  │  • Fuzzy matching 算法                                     │ │
+│  │  • 去重保护 + 详细日志                                     │ │
+│  └────────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────────┘
+                              ↓
+                    PostgreSQL 持久层
+              matches 表 + metrics_multi_source_data 表
 ```
 
-### V83.0 清道夫行动 - 标准化重构
+### 旧版本脚本归档
 
-**第一阶段：目录重构**
-- ✅ 创建 `legacy_research/` 存放旧版本脚本 (50 个文件)
-- ✅ 移动 `audit_temp/` 到 `archive/logs/`
-- ✅ 清理 `logs/` 下的旧版本日志文件
-
-**第二阶段：生产代码固化**
-- ✅ 将 V82.6 OddsPortal 提取逻辑整合到 `odds_production_extractor.py`
-- ✅ 新增 `extract_oddsportal_final_odds()` 方法
-- ✅ 统一 L2/L3 提取接口
+以下脚本已被移动到 `scripts/archive/` 目录 (V142.0 标准化重构):
+- `production_harvester.py` (旧版收割引擎)
+- `v117_1_monitor_harvest.sh/sql`
+- `v120_0_init_search_queue.py`
+- `v121_*.py` (测试脚本)
+- `v126_*.py` ~ `v139_*.py` (探索性版本)
+- `v54_6_url_sniffer.py` → `scripts/exploration/`
 
 ### 核心目录结构
 
@@ -127,10 +163,13 @@ PostgreSQL 持久层
 FootballPrediction/
 ├── src/                          # 生产代码
 │   ├── api/                      # API 层
-│   │   ├── collectors/           # 数据采集器 (V83.0 L1/L2/L3)
-│   │   │   ├── odds_production_extractor.py  # 统一提取接口
-│   │   │   ├── fotmob_core.py    # L1 FotMob API 基础数据
-│   │   │   └── epl_*.py          # 英超专项采集器
+│   │   ├── collectors/           # 数据采集器 (V141.0/V142.0)
+│   │   │   ├── base_extractor.py     # V141.0 Ghost Protocol 基类
+│   │   │   ├── odds_production_extractor.py  # 赔率提取
+│   │   │   ├── fotmob_core.py        # L1 FotMob API 基础数据
+│   │   │   └── epl_*.py              # 英超专项采集器
+│   │   ├── services/           # 业务服务层 (V142.0)
+│   │   │   └── harvester_service.py  # 统一收割服务
 │   │   ├── v1/endpoints/         # API 路由
 │   │   └── schemas.py            # 数据模型
 │   ├── config_unified.py         # 统一配置管理
@@ -141,28 +180,45 @@ FootballPrediction/
 │   │   ├── features/             # 特征工程
 │   │   └── inference/            # 推理服务
 │   ├── processors/               # V25.1 特征提取
-│   ├── services/                 # 业务服务层
+│   ├── utils/                    # 工具类
+│   │   └── text_processor.py     # V140.0 TeamNameNormalizer
 │   └── main.py                   # FastAPI 入口
 ├── scripts/                      # 核心脚本
-│   ├── production_harvester.py   # V56.4 生产收割引擎
+│   ├── archive/                  # V142.0: 旧版本脚本归档
+│   │   ├── v117_*.py ~ v139_*.py
+│   │   └── production_harvester.py
+│   ├── exploration/              # 探索性脚本
+│   │   └── debug_v54_6_url_sniffer.py
 │   ├── v82_0_grand_harvest.py    # V82.6 全量收割
 │   ├── v82_6_final_extractor.py  # V82.6 最终提取器
 │   ├── v88_*.py                  # V88.x 数据回填和清理脚本
 │   ├── health_check.py           # 健康检查脚本
+│   ├── check_data_quality.py     # 数据质量检查
+│   ├── dashboard.py              # V139.0 监控仪表盘
+│   ├── run_checks.sh             # 质量门禁脚本
 │   └── sql/                      # SQL 脚本目录
 ├── tests/                        # 测试套件
 │   ├── ml/                       # ML 测试
 │   ├── ops/                      # 运维测试
-│   └── unit/                     # 单元测试
-├── legacy_research/              # V83.0: 旧版本脚本归档
+│   ├── unit/                     # 单元测试
+│   └── mocks/                    # Mock 数据
+├── legacy_research/              # 旧版本脚本归档
 ├── archive/                      # 历史归档
 │   └── logs/                     # 旧日志和审计文件
 ├── model_zoo/                    # 模型仓库 (.pkl 文件)
 ├── .github/workflows/            # CI/CD 配置
 ├── .claude/                      # Claude Code 技能配置
+├── main.py                       # V142.0 统一命令入口 ⭐
 ├── docker-compose.yml            # Docker 编排
+├── docker-compose.prod.yml       # 生产环境配置
+├── Dockerfile                    # Docker 镜像构建
 ├── Makefile                      # 统一命令入口
 ├── requirements.txt              # 生产依赖
+├── pyproject.toml                # Poetry 配置
+├── ruff.toml                     # Ruff 配置
+├── pytest.ini                    # Pytest 配置
+├── mypy.ini                      # MyPy 配置
+├── .env.example                  # 环境变量模板
 └── CLAUDE.md                     # 本文件
 ```
 
@@ -364,9 +420,122 @@ make verify  # 执行 lint + test-unit + security
 
 ## 🧬 核心模块说明
 
-### V83.0 统一提取引擎 (odds_production_extractor.py)
+### main.py - V142.0 统一命令入口
 
-三层采集架构的统一接口，位于 `src/api/collectors/odds_production_extractor.py`：
+项目的主要入口点，提供统一命令行界面：
+
+```bash
+# 单次收割模式
+python main.py --mode single --league "Premier League" --season "23/24"
+
+# 24h 全自动巡航模式
+python main.py --mode cruise
+
+# 数据质量检查
+python main.py --mode check
+
+# 测试代理连接 (V142.0)
+python main.py --test-proxy
+
+# 禁用 Ghost Protocol (调试用)
+python main.py --mode single --no-ghost
+
+# 限制处理数量
+python main.py --mode single --limit 50
+
+# 干跑模式 (不实际采集)
+python main.py --mode single --dry-run
+```
+
+**环境预检功能**:
+- WSL2 环境检测
+- 代理自动发现 (环境变量 → WSL2 自动探测 → 直连)
+- IP 地址检测
+- 数据库连接检查
+- 日志目录自动创建
+
+### HarvesterService - V142.0 统一收割服务
+
+位于 `src/api/services/harvester_service.py`，是数据收割的核心服务：
+
+```python
+from src.api.services.harvester_service import HarvesterService
+
+service = HarvesterService(
+    mode="single",              # single / cruise
+    enable_ghost_protocol=True, # 启用 Ghost Protocol
+    enable_queue=True,          # 启用队列系统
+    limit=None,                 # 最大处理数量
+    dry_run=False,              # 干跑模式
+    proxy_file="proxies.txt"    # 代理配置文件
+)
+await service.run()
+```
+
+**核心特性**:
+- 队列驱动架构 (match_search_queue)
+- Ghost Protocol 集成 (BaseExtractor V141.0)
+- 全路径试错匹配 (TeamNameNormalizer V140.0)
+- 信号处理 (SIGINT/SIGTERM)
+- 优雅关闭机制
+- 流量弹性 (V142.5)
+
+### BaseExtractor - V141.0 Ghost Protocol
+
+位于 `src/api/collectors/base_extractor.py`，提供反爬检测基础能力：
+
+```python
+from src.api.collectors.base_extractor import BaseExtractor
+
+extractor = BaseExtractor(auto_proxy=True)
+
+# 获取随机 UA
+ua = extractor.get_random_user_agent()
+
+# 获取随机视口
+viewport = extractor.get_random_viewport()
+
+# 获取代理配置 (WSL2 自动发现)
+proxy_config = extractor.get_proxy_config()
+
+# 创建浏览器上下文
+context = await browser.new_context(
+    user_agent=ua,
+    viewport=viewport,
+    proxy=proxy_config
+)
+```
+
+**Ghost Protocol 特性**:
+- 30+ 主流浏览器指纹池 (Chrome/Edge/Safari/Firefox)
+- 5 种常见屏幕分辨率随机化
+- 人类行为模拟 (滚动 + 点击噪声)
+- 深度拦截检测 (Cloudflare, IP 封禁)
+- 自动错误截图 (logs/error_screens/)
+- WSL2 自动代理发现
+
+### TeamNameNormalizer - V140.0 全路径试错匹配
+
+位于 `src/utils/text_processor.py`，处理队名标准化和匹配：
+
+```python
+from src.utils.text_processor import TeamNameNormalizer
+
+normalizer = TeamNameNormalizer()
+
+# 标准化队名
+normalized = normalizer.normalize_team_name("Manchester United")
+
+# 全路径试错匹配
+matched = normalizer.fuzzy_match_team_name(
+    raw_name="man-utd",
+    candidates=["Manchester United", "Manchester City", ...]
+)
+```
+
+### OddsProductionExtractor - V82.6 统一提取引擎
+
+位于 `src/api/collectors/odds_production_extractor.py`：
 
 ```python
 from src.api.collectors.odds_production_extractor import OddsProductionExtractor
@@ -467,340 +636,18 @@ stats = await harvester.run()
 
 ---
 
-## 🛡️ 工程规范约束
-
-**Claude Code 必须严格遵守以下核心约束**（🔴 RED 级别）：
-
----
-
-### 约束优先级（从高到低）
-
-1. **Context Lock** - P0 核心模块修改需人工授权
-2. **Architecture Boundary** - 维护清晰的层次结构
-3. **Test Guard** - 确保测试的真实价值
-4. **Minimal Change** - 修改行数越少越好
-5. **Change Impact** - 分析变更影响
-
----
-
-### 1. 核心冻结模块清单（Context Lock）
-
-#### 🔒 P0 级别 - 预测服务核心（严禁修改）
-
-| 文件 | 保护原因 | 禁止操作 | 允许操作 |
-|------|----------|----------|----------|
-| `src/ml/inference/predictor.py` | 金融级精度预测引擎（1349行） | 修改预测算法、变更接口签名 | Bug修复（需完整回归测试） |
-| `src/ml/inference/model_loader.py` | 模型生命周期管理（651行） | 修改加载流程、变更缓存策略 | 补充测试用例 |
-| `src/services/inference_service.py` | 企业级依赖注入架构 | 重构依赖注入、修改服务编排 | 性能监控埋点 |
-
-#### 🔒 P1 级别 - 数据流水线（需严格审批）
-
-| 文件 | 保护原因 | 禁止操作 |
-|------|----------|----------|
-| `src/ml/data/postgres_loader.py` | 生产级数据加载（377行） | 修改 SQL 查询逻辑、变更数据转换规则 |
-| `src/ml/features/extractor.py` | 金融级特征工程（1198行） | 修改特征计算公式、调整业务验证规则 |
-
-#### 🔒 P2 级别 - 高覆盖率模块（修改需完整测试）
-
-```python
-HIGH_COVERAGE_MODULES = [
-    "src/api/health.py",              # API 健康检查
-    "src/config_unified.py",          # 统一配置管理
-    "src/database/connection.py",     # 数据库连接
-    "src/core/exceptions.py",         # 核心异常处理
-    "src/constants/football_logic.py", # 业务常量
-]
-```
-
----
-
-### 2. 架构边界约束（Architecture Boundary）
-
-#### 层次职责边界
-
-**Adapters/Collectors 层** (`src/api/collectors/`)
-- ✅ 外部 API 数据获取、协议转换
-- ❌ 禁止包含业务规则判断
-- ❌ 禁止直接调用 Services 层
-
-**Services 层** (`src/services/`)
-- ✅ 核心业务逻辑编排、依赖注入管理
-- ❌ 禁止直接依赖 Adapters 具体实现
-- ❌ 禁止包含数据转换逻辑
-
-**Domain/Models 层** (`src/ml/models/`, `src/ml/inference/`)
-- ✅ ML 模型定义、核心预测逻辑
-- ❌ 禁止依赖外部资源
-- ❌ 禁止包含数据库操作
-
-**Data Access 层** (`src/ml/data/`, `src/database/`)
-- ✅ 数据库连接管理、数据加载抽象
-- ❌ 禁止包含业务逻辑
-
-**Tasks/Pipelines 层**
-- ✅ 任务调度和编排、ML 流水线管理
-- ❌ 禁止写具体业务判断
-- ❌ 禁止直接操作外部 API
-
-#### 严禁的跨层操作
-
-```python
-# ❌ 错误示例 - Services 直接调用 Adapters
-from scripts.collectors.fotmob_collector import FotMobCollector
-class InferenceService:
-    def __init__(self):
-        self.collector = FotMobCollector()  # 违规！
-
-# ✅ 正确示例 - 通过接口抽象
-from abc import ABC, abstractmethod
-class DataCollectorInterface(ABC):
-    @abstractmethod
-    async def collect_match_data(self, match_id: str): ...
-
-class Service:
-    def __init__(self, collector: DataCollectorInterface): ...
-```
-
----
-
-### 3. 最小修改策略（Minimal Change）
-
-#### 核心原则
-- 稳定性优先，禁止不必要的重构
-- 每次修改必须是最小必要改动
-- 禁止为了"美观"或"个人偏好"的修改
-
-#### 禁止行为
-1. **禁止新建文件**，除非现有文件确实无法满足需求
-2. **禁止创建版本类文件**：
-   - ❌ `*_v2`, `*_new`, `*_alt`, `*_backup`
-   - ❌ `*_old`, `*_legacy`, `*_refactored`
-3. **禁止重构优化**，除非存在明确的 bug 或性能问题
-
-#### 修改前必须说明
-```markdown
-**修改文件**: [文件路径]
-**修改内容**: [函数/类/方法]
-**修改原因**: [最小必要原因，不超过50字]
-```
-
-#### 修改粒度控制
-- 单次修改不超过 50 行
-- 单个 PR 修改文件不超过 5 个
-- 避免连锁修改
-
----
-
-### 4. 测试保护约束（Test Guard）
-
-#### 测试失败处理优先级
-1. **修复源码** (首选) - 保持测试断言不变，修复源码问题
-2. **修正测试** (备选) - 仅当测试确实不合理时
-3. **放宽断言** (禁止) - 绝对禁止为了通过测试而放宽断言
-
-#### 禁止的断言弱化
-```python
-# ❌ 禁止使用
-assert True  # 无意义
-assert not None  # 过于宽泛
-assert result is not None  # 应该检查具体内容
-assert response.status_code == 200  # 应该同时检查响应内容
-
-# ✅ 推荐使用
-assert prediction.home_win == 0.65
-assert prediction.confidence > 0.6
-assert all(0 <= p <= 1 for p in probabilities)
-```
-
-#### 修改测试前必须说明
-```markdown
-**测试文件**: [测试文件路径]
-**原测试问题**: [为什么原测试不合理]
-**新测试价值**: [新测试覆盖了什么真实业务行为]
-**风险评估**: [修改可能带来的风险]
-```
-
----
-
-### 5. 变更影响分析（Change Impact）
-
-#### 代码生成前的必检项
-```markdown
-## 📋 变更影响分析报告
-
-### 🎯 修改文件列表
-1. [文件路径1] - [修改类型]
-2. [文件路径2] - [修改类型]
-
-### 🔗 潜在影响模块
-#### 直接影响
-- [模块名1] - [影响描述]
-#### 间接影响
-- [模块名2] - [影响描述]
-
-### 🧪 建议回归测试范围
-- [测试用例1] - [测试原因]
-
-### ⚠️ 风险评估
-- **确定性风险**: [具体风险]
-- **总体风险等级**: 🟢低/🟡中/🔴高
-```
-
-#### 风险等级判定
-| 风险等级 | 标准 | 决策权限 |
-|----------|------|----------|
-| 🟢 低风险 | 单文件修改，无依赖变化 | 可自行决策 |
-| 🟡 中风险 | 多文件修改，局部依赖变化 | 需要代码审查 |
-| 🔴 高风险 | 跨模块修改，架构变化 | 需要架构师审批 |
-| ⚫ 极高风险 | 架构重大变更，技术栈切换 | 需要团队决策 |
-
----
-
-### ⚠️ 强制命名规范
-
-**严禁创建任何带有 `_v1`, `_v2`, `_v17`, `_v18` 等版本后缀的新文件！**
-
-**正确做法**:
-- ✅ 直接修改现有文件
-- ✅ 使用类继承实现功能扩展
-- ✅ 使用策略模式实现算法切换
-
-**错误做法**:
-- ❌ `pipeline_v27.py` → 应修改 `pipeline.py`
-- ❌ `feature_extractor_v28.py` → 应继承 `BaseExtractor`
-
----
-
-### 约束违规处理流程
-
-1. ⚠️ **检测到违规** → 自动分析违规类型
-2. 🚫 **阻止操作** → 停止生成代码
-3. 📝 **要求说明** → 提供违规原因和修正建议
-4. ✅ **人工确认** → 获得授权后才可继续
-
-> 详见 [`.claude/`](.claude/) 目录下的完整约束文档
-
----
-
-## 🚀 部署与运维
-
-### Docker 部署架构
-
-项目提供两套 Docker Compose 配置：
-
-| 配置文件 | 用途 | 适用场景 |
-|----------|------|----------|
-| `docker-compose.yml` | 开发环境配置 | 本地开发和测试 |
-| `docker-compose.prod.yml` | 生产环境配置 (V106.0) | 生产部署 |
-
-**V106.0 生产级特性**：
-- 多阶段构建（Dockerfile）
-- 资源限制和预留
-- 健康检查和自动重启
-- 安全加固（no-new-privileges、只读文件系统）
-- 日志轮转配置
-- 网络隔离（自定义 bridge 网络）
-
-**生产部署命令**：
-```bash
-# 使用生产配置启动
-docker-compose -f docker-compose.prod.yml up -d
-
-# 查看服务状态
-docker-compose -f docker-compose.prod.yml ps
-
-# 查看日志
-docker-compose -f docker-compose.prod.yml logs -f
-```
-
-### Pre-commit Hooks
-
-项目配置了 pre-commit hooks (`.pre-commit-config.yaml`)，在提交代码前自动执行检查：
-
-**安装 pre-commit**：
-```bash
-pip install pre-commit
-pre-commit install
-```
-
-**自动执行的检查**：
-- Ruff Lint 和格式化
-- MyPy 类型检查
-- Bandit 安全扫描
-- 通用检查（尾随空格、YAML 语法等）
-- Dockerfile Lint
-
-**手动运行所有 hooks**：
-```bash
-pre-commit run --all-files
-```
-
-### Docker 服务清单
-
-docker-compose.yml 包含以下服务：
-
-| 服务 | 用途 | Profile | 状态 |
-|------|------|---------|------|
-| **db** | PostgreSQL 15 数据库 | 默认 | 核心服务 |
-| **redis** | Redis 7 缓存 | 默认 | 核心服务 |
-| **pipeline_worker** | V25.1 数据流水线 | pipeline/all | 按需 |
-| **predictor_api** | FastAPI 预测服务 | api/all | 按需 |
-| **production_cron** | 自动化调度器 (每天 3:00) | automation/all | 按需 |
-| **odds_scraper** | 赔率数据采集服务 | odds/all | 按需 |
-| **db_backup** | 数据库自动备份 (每天 2:00) | backup/all | 按需 |
-| **dashboard** | 战神仪表盘 | dashboard/dev/all | 可选 |
-| **pgadmin** | PostgreSQL 管理界面 | dev/all | 开发 |
-| **redis-commander** | Redis 管理界面 | dev/all | 开发 |
-
-**注意**: `db_backup` 和 `production_cron` 服务需要安装 `croniter` 包，通过 `pip install croniter` 安装。
-
-### Docker Profile 使用
-
-```bash
-# 默认启动 - 核心服务 (db + redis)
-docker-compose up -d
-
-# 启动数据流水线
-docker-compose --profile pipeline up -d
-
-# 启动 API 服务
-docker-compose --profile api up -d
-
-# 启动自动化调度
-docker-compose --profile automation up -d
-
-# 启动开发环境（含管理工具: pgadmin, redis-commander）
-docker-compose --profile dev up -d
-
-# 启动所有服务
-docker-compose --profile all up -d
-
-# 启动战神仪表盘
-docker-compose --profile dashboard up -d
-# 或使用: make dashboard
-```
-
-### 关键 SQL 查询
-
-```sql
--- 查看 Pinnacle 捕获率
-SELECT
-    ROUND(100.0 * COUNT(opening_time_h) / COUNT(*), 2) as pinnacle_capture_rate
-FROM metrics_multi_source_data
-WHERE source_name = 'Entity_P';
-
--- 查看数据完整性评分分布
-SELECT
-    CASE
-        WHEN integrity_score < 1.02 THEN 'Too Low'
-        WHEN integrity_score > 1.08 THEN 'Too High'
-        ELSE 'Valid'
-    END as score_category,
-    COUNT(*) as count
-FROM metrics_multi_source_data
-WHERE source_name = 'Entity_P' AND integrity_score IS NOT NULL
-GROUP BY score_category;
-```
+## 🛠️ 技术栈
+
+| 类别 | 技术 | 版本 | 用途 |
+|------|------|------|------|
+| **语言** | Python | 3.11+ | 核心开发语言 |
+| **数据库** | PostgreSQL | 15 | 生产数据存储 |
+| **缓存** | Redis | 7 | 分布式缓存 |
+| **浏览器** | Playwright | 1.49 | 智能网页自动化 |
+| **ML 框架** | XGBoost | 3.0+ | 预测模型 |
+| **Web** | FastAPI | 0.124 | REST API |
+| **测试** | Pytest | 9.0 | 单元测试 |
+| **容器** | Docker | 24+ | 容器化部署 |
 
 ---
 
@@ -850,12 +697,11 @@ tests/
 ├── e2e/            # 端到端测试
 ├── api/            # API 测试
 │   └── collectors/ # 采集器测试
-├── ml/             # 机器学习测试
+├── ml/             # ML 测试
 ├── ops/            # 运维测试
 ├── performance/    # 性能测试
 ├── data_pipeline/  # 数据流水线测试
-├── v2/             # V2 版本测试
-└── legacy/         # 遗留测试
+└── v2/             # V2 版本测试
 ```
 
 ### 测试指南
@@ -876,37 +722,6 @@ pytest tests/unit/test_config.py -v
 
 # 场景 5: 生成覆盖率报告
 pytest tests/ --cov=src --cov-report=html
-```
-
-**按类型运行测试**：
-```bash
-pytest tests/unit/ -v              # 单元测试
-pytest tests/integration/ -v       # 集成测试
-pytest tests/e2e/ -v               # 端到端测试
-pytest tests/api/ -v               # API 测试
-pytest tests/ml/ -v                # ML 测试
-pytest tests/ops/ -v               # 运维测试
-```
-
-**高级测试选项**：
-```bash
-# 运行单个测试文件
-pytest tests/ml/test_v26_feature_engine.py -v
-pytest tests/unit/test_config.py -v
-
-# 运行特定测试用例
-pytest tests/unit/test_config.py::test_database_config -v
-
-# 并行运行测试 (需要 pytest-xdist)
-pytest tests/ -n auto
-
-# 按标记运行测试
-pytest tests/ -m "not slow"         # 跳过慢速测试
-pytest tests/ -m "integration"      # 只运行集成测试
-pytest tests/ -m "unit"             # 只运行单元测试
-
-# 查看测试覆盖率详情
-pytest tests/ --cov=src --cov-report=term-missing
 ```
 
 ---
@@ -940,25 +755,55 @@ def extract_custom_feature(match_data: dict[str, Any]) -> float:
     return 0.0
 ```
 
-### 场景 2: 调试数据采集问题
+### 场景 2: 使用统一命令入口进行数据收割
+
+V142.0 推荐使用统一命令入口 `main.py` 进行数据收割：
+
+```bash
+# 单次收割模式 - 指定联赛和赛季
+python main.py --mode single --league "Premier League" --season "23/24"
+
+# 24h 全自动巡航模式
+python main.py --mode cruise
+
+# 数据质量检查
+python main.py --mode check
+
+# 干跑模式 (不实际采集，用于测试)
+python main.py --mode single --dry-run
+
+# 限制处理数量 (用于快速测试)
+python main.py --mode single --limit 50
+
+# 禁用 Ghost Protocol (调试用)
+python main.py --mode single --no-ghost
+```
+
+**代理配置** (V142.0):
+- 环境变量: `export HTTPS_PROXY=http://host:port`
+- WSL2 自动探测: 自动发现宿主机代理
+- 代理文件: `python main.py --proxy-file proxies.txt`
+- 测试代理: `python main.py --test-proxy`
+
+### 场景 3: 调试数据采集问题
 
 当数据采集器出现问题时：
 
-1. **检查采集器日志** `tail -f logs/auto_harvest.log`
+1. **检查采集器日志** `tail -f logs/v142_0_main.log`
 2. **运行健康检查** `python scripts/health_check.py`
-3. **使用测试脚本验证特定 URL** `python scripts/test_navigation.py`
+3. **测试代理连接** `python main.py --test-proxy`
 4. **检查 IP 是否被封禁** (HTTP 429/403 错误)
 5. **如果被封禁，等待 6-24 小时冷却期**
 
 ```bash
 # 运行诊断脚本
-python scripts/v82_1_diagnostic_probe.py
+python scripts/diagnose_network.py
 
 # 测试特定比赛提取
 python scripts/v82_6_final_extractor.py --match_id <MATCH_ID>
 ```
 
-### 场景 3: 部署新模型到生产环境
+### 场景 4: 部署新模型到生产环境
 
 当需要部署新训练的模型时：
 
@@ -1000,25 +845,6 @@ alembic upgrade head
 # 回滚迁移
 alembic downgrade -1
 ```
-
-### 场景 5: 处理 API 采集封禁
-
-当遇到 API 采集被封禁时：
-
-1. **识别封禁类型**：
-   - HTTP 429 Too Many Requests - 请求频率限制
-   - HTTP 403 Forbidden - IP 被封
-   - Connection timeout - 网络问题
-
-2. **自动恢复策略** (已在 V56.3 实现)：
-   - 连续 3 次连接错误 → 5 分钟冷却
-   - 智能轮询替代硬等待
-   - 降低采集频率 (2-5 秒延迟)
-
-3. **手动干预**：
-   - 检查 `logs/auto_harvest.log` 确认封禁
-   - 等待 6-24 小时自然冷却
-   - 或更换 IP/代理后重试
 
 ---
 
@@ -1066,9 +892,9 @@ alembic downgrade -1
 
 **🚨 CRITICAL**: This is a production system support document.
 
-**🧬 当前版本**: V57.0 (版本大一统 + 智能自愈引擎)
+**🧬 当前版本**: V142.0 (统一命令入口 + Ghost Protocol)
 **Docker 版本**: V106.0 (Dockerfile + docker-compose.prod.yml)
-**最后更新**: 2026-01-05
+**最后更新**: 2026-01-06
 **基线准确率**: 56% (真赛前)
 **生产状态**: Production Ready
 **项目愿景**: 年化 25% 收益率

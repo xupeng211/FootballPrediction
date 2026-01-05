@@ -71,9 +71,10 @@ ENTITY_NAME_MAPPING = {
 }
 
 # Integrity score validation thresholds
-# Valid odds should satisfy: 1.02 < 1/P1 + 1/P2 + 1/P3 < 1.08
-MIN_INTEGRITY_SCORE = 1.02
-MAX_INTEGRITY_SCORE = 1.08
+# Valid odds should satisfy: 1.00 < 1/P1 + 1/P2 + 1/P3 < 1.15
+# Relaxed range (V139.1) to accommodate varying bookmaker margins (5-15%)
+MIN_INTEGRITY_SCORE = 1.00
+MAX_INTEGRITY_SCORE = 1.15
 
 # Smart polling configuration (V88.0 Optimized)
 POLLING_MAX_RETRIES = 3  # Increased from 2 to 3
@@ -1341,7 +1342,7 @@ class OddsProductionExtractor:
                 await page.goto(url, wait_until='domcontentloaded', timeout=30000)
                 await asyncio.sleep(random.uniform(3, 5))
 
-                # V82.6 Core Logic: Extract Pinnacle odds
+                # V82.6 Core Logic: Extract Pinnacle odds with Fallback Selectors
                 pinnacle_odds = await page.evaluate("""
                     () => {
                         // Step 1: Find Pinnacle container
@@ -1361,7 +1362,7 @@ class OddsProductionExtractor:
                                 for (let i = 0; i < 10; i++) {
                                     if (parent && parent.parentElement) {
                                         parent = parent.parentElement;
-                                        // V82.6: Only select .odds-text, exclude .odds-cell
+                                        // Try primary selector first
                                         const oddsElements = parent.querySelectorAll('.odds-text');
                                         if (oddsElements.length >= 3) {
                                             pinnacleContainer = parent;
@@ -1377,33 +1378,66 @@ class OddsProductionExtractor:
                             return { found: false, error: 'Pinnacle container not found' };
                         }
 
-                        // Step 2: Extract only .odds-text elements (exclude .odds-cell)
-                        const oddsElements = pinnacleContainer.querySelectorAll('.odds-text');
-                        const odds = [];
+                        // Step 2: Extract odds with fallback selectors
+                        // Fallback selector chain for robustness
+                        const selectorChain = [
+                            '.odds-text',           // Primary: V82.6 selector
+                            '.odds-cell .odd',      // Fallback 1: cell-based odds
+                            'td[data-odd]',         // Fallback 2: data attribute
+                            '.odd',                 // Fallback 3: generic odd class
+                            '[data-odd]'            // Fallback 4: any data-odd attribute
+                        ];
 
-                        for (let elem of oddsElements) {
-                            const text = elem.textContent?.trim();
-                            // Validate odds format (1.01 - 50.00)
-                            if (text) {
-                                const num = parseFloat(text);
-                                if (!isNaN(num) && num >= 1.01 && num <= 50.00) {
-                                    odds.push(num);
+                        let extractedOdds = [];
+                        let usedSelector = null;
+
+                        for (const selector of selectorChain) {
+                            const oddsElements = pinnacleContainer.querySelectorAll(selector);
+                            extractedOdds = [];
+
+                            for (let elem of oddsElements) {
+                                let text = null;
+
+                                // Handle different element types
+                                if (selector === 'td[data-odd]' || selector === '[data-odd]') {
+                                    text = elem.getAttribute('data-odd');
+                                } else {
+                                    text = elem.textContent?.trim();
                                 }
+
+                                // Validate odds format (1.01 - 50.00)
+                                if (text) {
+                                    const num = parseFloat(text);
+                                    if (!isNaN(num) && num >= 1.01 && num <= 50.00) {
+                                        extractedOdds.push(num);
+                                    }
+                                }
+                            }
+
+                            // Remove duplicates and sort
+                            extractedOdds = [...new Set(extractedOdds)].sort((a, b) => a - b);
+
+                            if (extractedOdds.length >= 3) {
+                                usedSelector = selector;
+                                break;
                             }
                         }
 
-                        if (odds.length >= 3) {
+                        if (extractedOdds.length >= 3) {
                             return {
                                 found: true,
-                                odds: [odds[0], odds[1], odds[2]],
-                                totalOdds: odds.length,
-                                allOdds: odds.slice(0, 10)
+                                odds: [extractedOdds[0], extractedOdds[1], extractedOdds[2]],
+                                totalOdds: extractedOdds.length,
+                                allOdds: extractedOdds.slice(0, 10),
+                                selector: usedSelector,
+                                allOddsRaw: extractedOdds
                             };
                         } else {
                             return {
                                 found: false,
-                                error: `Found ${odds.length} odds, need at least 3`,
-                                odds: odds
+                                error: `Found ${extractedOdds.length} odds, need at least 3`,
+                                odds: extractedOdds,
+                                attemptedSelectors: selectorChain
                             };
                         }
                     }
@@ -1429,10 +1463,15 @@ class OddsProductionExtractor:
                     except ZeroDivisionError:
                         result['is_valid'] = False
 
+                    # Log which selector was used (for debugging)
+                    selector_used = pinnacle_odds.get('selector', 'unknown')
+                    total_odds_found = pinnacle_odds.get('totalOdds', 0)
+
                     logger.info(
                         f"[OddsPortal L3] ✅ Pinnacle: "
                         f"{result['final_h']} / {result['final_d']} / {result['final_a']} "
-                        f"(Score: {result['integrity_score']:.4f}, Valid: {result['is_valid']})"
+                        f"(Score: {result['integrity_score']:.4f}, Valid: {result['is_valid']}, "
+                        f"Selector: '{selector_used}', Found: {total_odds_found} odds)"
                     )
                 else:
                     result['error'] = pinnacle_odds.get('error', 'Unknown error')

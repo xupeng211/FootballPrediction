@@ -166,12 +166,15 @@ class ProductionL2Collector:
         """
         解析并校验 L2 数据（Pydantic 强制校验）
 
+        V139.1: 即使 data_quality 为 WARNING 级别（无 stats），仍返回数据用于 URL 匹配。
+
         Args:
             raw_data: FotMob API 返回的原始数据
             match_id: 比赛 ID
 
         Returns:
-            L2MatchDetailSchema 对象，校验失败返回 None
+            L2MatchDetailSchema 对象，校验失败返回 None。
+            注意: WARNING 级别数据会返回，包含 match_id、team_colors 等基础信息。
         """
         try:
             # 提取核心统计数据
@@ -206,13 +209,13 @@ class ProductionL2Collector:
                 raw_data=raw_data,  # 保存完整原始数据
             )
 
-            # 记录数据质量
+            # 记录数据质量 (V139.1: WARNING 级别数据仍会返回用于 URL 匹配)
             if validated.data_quality == L2DataQuality.WARNING:
-                logger.warning(f"⚠️ 关键特征缺失: {match_id}")
+                logger.info(f"⚠️ 关键特征缺失: {match_id} - 降级存储，仍可用于 URL 匹配")
             elif validated.data_quality == L2DataQuality.PARTIAL:
                 logger.info(f"ℹ️ 部分特征缺失: {match_id}")
 
-            return validated
+            return validated  # V139.1: 始终返回，即使为 WARNING 级别
 
         except Exception as e:
             logger.error(f"❌ 解析异常 {match_id}: {e}")
