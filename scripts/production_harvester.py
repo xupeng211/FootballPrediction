@@ -52,7 +52,10 @@ logger = logging.getLogger(__name__)
 
 CONFIG = {
     # Season and league targets
-    "seasons": ["21/22", "22/23", "23/24"],
+    # V57.1 FIX: Use full-year format for correct URL generation
+    # Old: "21/22" → bundesliga-21/22/ (404 error)
+    # New: "2021-2022" → bundesliga-2021-2022/ (200 OK)
+    "seasons": ["2021-2022", "2022-2023", "2023-2024"],
 
     # League-specific configurations
     "league_configs": {
@@ -133,6 +136,35 @@ def build_1xbet_name() -> str:
     return "1" + "x" + "B" + "e" + "t"
 
 
+def url_season_to_db_season(url_season: str) -> str:
+    """Converts URL season format to database season format.
+
+    V57.3 Spacetime Mapping:
+    - URL format: "2021-2022", "2022-2023", "2023-2024"
+    - Database format: "21/22", "22/23", "23/24"
+
+    Args:
+        url_season: Season in URL format (e.g., "2023-2024")
+
+    Returns:
+        Season in database format (e.g., "23/24")
+
+    Examples:
+        >>> url_season_to_db_season("2023-2024")
+        '23/24'
+        >>> url_season_to_db_season("2021-2022")
+        '21/22'
+    """
+    # Remove century (20xx) and convert slash
+    parts = url_season.split("-")
+    if len(parts) == 2:
+        year1 = parts[0][-2:]  # Last 2 digits of first year
+        year2 = parts[1][-2:]  # Last 2 digits of second year
+        return f"{year1}/{year2}"
+    # Fallback: return original
+    return url_season
+
+
 # ============================================================================
 # Data Models
 # ============================================================================
@@ -165,14 +197,16 @@ class LeagueTarget:
 
     Attributes:
         league_name: Display name of the league
-        season: Season identifier (e.g., "21/22")
+        season: Season identifier (e.g., "2021-2022" for URL)
         url: Full URL to the results page
         db_league: League name as stored in database
+        db_season: Season identifier for database queries (e.g., "21/22")
     """
     league_name: str
-    season: str
+    season: str  # URL format: "2021-2022"
     url: str
     db_league: str
+    db_season: str  # Database format: "21/22"
 
 
 # ============================================================================
@@ -393,7 +427,7 @@ class ProductionHarvester:
     # Stage 2: Database Matching & Skip Detection
     # ========================================================================
 
-    def stage2_match_and_skip(
+    async def stage2_match_and_skip(
         self,
         discovered: list[DiscoveredMatch],
         target: LeagueTarget
@@ -410,7 +444,7 @@ class ProductionHarvester:
         logger.info(f"[Harvester] Stage 2: Matching + skip detection - {target.league_name} {target.season}")
 
         # Fetch all matches from database for this league/season
-        conn = self.get_db_connection().__await__()
+        conn = await self.get_db_connection()
         cursor = conn.cursor()
 
         cursor.execute("""
@@ -418,7 +452,7 @@ class ProductionHarvester:
             FROM matches
             WHERE league_name = %s AND season = %s
             ORDER BY match_date
-        """, (target.db_league, target.season))
+        """, (target.db_league, target.db_season))
 
         db_matches = cursor.fetchall()
         cursor.close()
@@ -437,7 +471,7 @@ class ProductionHarvester:
         existing_pinnacle_matches = set(row[0] for row in cursor.fetchall())
         cursor.close()
 
-        self.release_db_connection(conn).__await__()
+        await self.release_db_connection(conn)
 
         logger.info(f"[Harvester] Skip detection: {len(existing_pinnacle_matches)} with Pinnacle data")
 
@@ -757,11 +791,14 @@ class ProductionHarvester:
                 url = config["url_template"].format(
                     season=season.replace("/", "-")
                 )
+                # V57.3: Add db_season for database queries
+                db_season = url_season_to_db_season(season)
                 all_targets.append(LeagueTarget(
                     league_name=league_name,
                     season=season,
                     url=url,
                     db_league=config["db_name"],
+                    db_season=db_season,
                 ))
 
         logger.info(f"[Harvester] Target list: {len(all_targets)} league-seasons")
@@ -795,7 +832,7 @@ class ProductionHarvester:
                         continue
 
                     # Stage 2: Matching + Skip Detection
-                    target_matches = self.stage2_match_and_skip(discovered, target)
+                    target_matches = await self.stage2_match_and_skip(discovered, target)
 
                     if not target_matches:
                         logger.info("[Harvester] No matches to harvest, continuing")
