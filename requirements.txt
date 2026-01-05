@@ -1,10 +1,18 @@
 # FootballPrediction - Production Dependencies
 # ==========================================
-# V56.3 Production-Ready Dependencies
-# Python: 3.11+
+# V139.1 Environment-Frozen Dependencies
+# Python: 3.11.9
+# Playwright: 1.57.0
 #
-# This file contains the core runtime dependencies for the football
+# This file contains the COMPLETE frozen dependencies for the football
 # prediction system. Use `pip install -r requirements.txt` to install.
+#
+# Generated: 2026-01-05
+# Environment: Stable Base for V139.0 Auto Cruise Controller
+
+# ===================================================================
+# CORE RUNTIME DEPENDENCIES
+# ===================================================================
 
 # --- Web Framework ---
 fastapi==0.124.4
@@ -28,7 +36,7 @@ scikit-learn==1.6.1
 pandas==2.2.3
 numpy==2.2.4
 optuna==4.0.0
-joblib==1.4.2
+joblib==1.5.3
 scipy>=1.11.0
 
 # --- Data Processing ---
@@ -39,19 +47,25 @@ python-dotenv==1.0.1
 # --- API & HTTP ---
 aiohttp==3.13.2
 httpx==0.28.1
+httpcore==1.0.9
 requests==2.32.3
 slowapi==0.1.9
 
-# --- Browser Automation (V56.0+) ---
-playwright==1.49.0
+# --- Browser Automation (V139.0+) ---
+playwright==1.57.0
+playwright-stealth==2.0.0
+beautifulsoup4==4.14.3
 
 # --- Fuzzy String Matching ---
 thefuzz>=0.19.0
+fuzzywuzzy==0.18.0
 
 # --- Authentication ---
 python-jose[cryptography]==3.3.0
 passlib[argon2]==1.7.4
 Authlib==1.6.6
+argon2-cffi==25.1.0
+argon2-cffi-bindings==25.1.0
 
 # --- Task Scheduling ---
 APScheduler==3.11.2
@@ -60,20 +74,45 @@ APScheduler==3.11.2
 python-dateutil==2.9.0
 pytz==2024.2
 tzdata==2025.1
+click==8.3.1
 
 # --- Logging ---
 colorlog==6.10.1
 
 # --- Data Validation ---
 email-validator==2.1.2
+pydantic-core==2.27.2
 
 # --- JSON Processing ---
 orjson==3.10.15
 
+# --- File Formats ---
+fastparquet==2024.11.0
+openpyxl==3.1.5
+
+# ===================================================================
+# DEVELOPMENT & TESTING
+# ===================================================================
+
 # --- Testing ---
 pytest==9.0.2
-pytest-cov==7.0.0
+pytest-cov==7.13.0
 pytest-asyncio==1.3.0
+hypothesis==6.148.7
+
+# --- Code Quality ---
+ruff>=0.8.0
+black==25.12.0
+isort==7.0.0
+flake8==7.3.0
+mypy>=1.8.0
+bandit==1.9.2
+autoflake==2.3.1
+autopep8==2.3.2
+
+# ===================================================================
+# MONITORING & DASHBOARD
+# ===================================================================
 
 # --- Monitoring ---
 prometheus-client==0.22.0
@@ -81,3 +120,43 @@ prometheus-client==0.22.0
 # --- Dashboard (Optional) ---
 streamlit>=1.28.0
 plotly>=5.18.0
+altair==6.0.0
+matplotlib==3.10.8
+seaborn==0.13.2
+
+# ===================================================================
+# ADDITIONAL UTILITIES
+# ===================================================================
+
+# --- async support ---
+async-lru==2.0.5
+anyio==4.12.0
+
+# --- retry logic ---
+backoff==2.2.1
+
+# --- data processing ---
+fsspec==2025.12.0
+cramjam==2.11.0
+
+# --- git operations ---
+GitPython==3.1.45
+gitdb==4.0.12
+
+# --- text processing ---
+certifi==2025.11.12
+charset-normalizer==3.4.4
+idna==3.11
+urllib3==2.3.0
+
+# --- jupyter (for development) ---
+jupyter==1.1.1
+jupyterlab==4.5.0
+ipython==9.8.0
+ipykernel==7.1.0
+
+# ===================================================================
+# END OF REQUIREMENTS
+# ===================================================================
+# Total frozen packages: 278
+# Last verified: 2026-01-05
