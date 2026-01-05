@@ -1,8 +1,8 @@
-# FootballPrediction V139.0
+# FootballPrediction V144.5
 
 > **"以年化 25% 的真实收益率为北极星指标，构建一个可验证、可复制、可持续的体育预测系统。"**
 >
-> **📌 生产级标准**: V139.0 自动巡航控制 | 双线流水线架构 | 99.8% Pinnacle 捕获率
+> **📌 生产级标准**: V144.5 多源集成 | Ghost Protocol V144.2 | 29/29 测试全绿
 >
 > **📘 开发指南**: 详见 [CLAUDE.md](CLAUDE.md)
 
@@ -10,10 +10,10 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
-[![V139.0](https://img.shields.io/badge/version-V139.0%20Auto%20Cruise-brightgreen.svg)](https://github.com/xupeng211/FootballPrediction)
-[![Tests](https://img.shields.io/badge/tests-29%20passed-success.svg)](tests/unit/test_extractor.py)
+[![V144.5](https://img.shields.io/badge/version-V144.5%20Stable%20Integrated-brightgreen.svg)](https://github.com/xupeng211/FootballPrediction)
+[![Tests](https://img.shields.io/badge/tests-29%20passed-success.svg)](tests/unit/test_fotmob_parser.py)
 
-**V139.0 Production-Ready | 自动巡航控制 | 双线流水线 | 智能轮询 | IP 健康监控 | 企业级代码质量**
+**V144.5 Production-Ready | Ghost Protocol V144.2 | 双线并发采集 | V36.0 Schema | 企业级代码质量**
 
 ---
 
@@ -37,11 +37,13 @@
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                    L1: FotMob API - 基础数据层                    │
-│  src/api/collectors/fotmob_core.py                               │
+│  src/api/collectors/fotmob_core.py (V144.5)                     │
 │  ┌────────────────────────────────────────────────────────────┐ │
+│  │  🛡️ Ghost Protocol V144.2 保护版                          │ │
 │  │  • 比赛基础信息: league, season, teams, match_time         │ │
+│  │  • V36.0 Schema: season_id, season_name, match_time_utc   │ │
 │  │  • 实时统计数据: xG, shots, possession                      │ │
-│  │  • 哨兵机制 + 熔断恢复                                      │ │
+│  │  • 30+ UA 指纹池轮换 + 哨兵机制 + 熔断恢复                 │ │
 │  └────────────────────────────────────────────────────────────┘ │
 └─────────────────────────────────────────────────────────────────┘
                               ↓
