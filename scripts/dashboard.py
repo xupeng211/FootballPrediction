@@ -433,9 +433,12 @@ def render_ascii(timestamp: str, url_stats: Dict, pinnacle_stats: Dict,
     print(f"┌─ 🚀 V139.0 进程状态 {'─' * 52}┐")
     print(f"│ 状态: {status:<65} │")
     if process_status['is_running']:
-        print(f"│ PID: {process_status['pid']:<65} │")
-        print(f"│ CPU: {process_status['cpu_percent']:.1f}%{' ' * (64 - len(f'CPU: {process_status['cpu_percent']:.1f}%'))}│")
-        print(f"│ 内存: {process_status['memory_mb']:.1f} MB{' ' * (64 - len(f'内存: {process_status['memory_mb']:.1f} MB'))}│")
+        pid_line = f"PID: {process_status['pid']}"
+        cpu_line = f"CPU: {process_status['cpu_percent']:.1f}%"
+        mem_line = f"内存: {process_status['memory_mb']:.1f} MB"
+        print(f"│ {pid_line:<65} │")
+        print(f"│ {cpu_line:<65} │")
+        print(f"│ {mem_line:<65} │")
     print(f"└{'─' * 78}┘")
     print()
 
@@ -443,7 +446,8 @@ def render_ascii(timestamp: str, url_stats: Dict, pinnacle_stats: Dict,
     l2_bar = create_progress_bar("L2 链接补全", url_stats['new_format_urls'], url_stats['total_urls'], "cyan")
     print(f"┌─ 📊 L2: URL Harvest {'─' * 51}┐")
     print(f"│ {l2_bar:<76} │")
-    print(f"│ {'总计: ' + str(url_stats['total_urls']) + ' | 新格式: ' + str(url_stats['new_format_urls']) + ' | 空缺: ' + str(url_stats['missing_urls']):<76} │")
+    l2_detail = f"总计: {url_stats['total_urls']} | 新格式: {url_stats['new_format_urls']} | 空缺: {url_stats['missing_urls']}"
+    print(f"│ {l2_detail:<76} │")
     print(f"└{'─' * 78}┘")
     print()
 
@@ -452,7 +456,8 @@ def render_ascii(timestamp: str, url_stats: Dict, pinnacle_stats: Dict,
     l3_bar = create_progress_bar("L3 赔率转化", pinnacle_stats['with_opening_time'], pinnacle_stats['total_records'], "magenta")
     print(f"┌─ 💰 L3: RPA Extraction {'─' * 48}┐")
     print(f"│ {l3_bar:<76} │")
-    print(f"│ {f'Entity_P 记录: {pinnacle_stats[\"total_records\"]:,} | 有开盘时间: {pinnacle_stats[\"with_opening_time\"]:,}':<76} │")
+    l3_detail = f"Entity_P 记录: {pinnacle_stats['total_records']:,} | 有开盘时间: {pinnacle_stats['with_opening_time']:,}"
+    print(f"│ {l3_detail:<76} │")
     print(f"└{'─' * 78}┘")
     print()
 
@@ -476,7 +481,8 @@ def render_ascii(timestamp: str, url_stats: Dict, pinnacle_stats: Dict,
 
     # 平均完整性评分
     print(f"┌─ 📈 平均完整性评分 {'─' * 53}┐")
-    print(f"│  {pinnacle_stats['avg_integrity_score']:.4f}{' ' * (74 - len(f'{pinnacle_stats[\"avg_integrity_score\"]:.4f}'))}│")
+    score_str = f"{pinnacle_stats['avg_integrity_score']:.4f}"
+    print(f"│  {score_str:^76}│")
     print(f"└{'─' * 78}┘")
     print()
 
