@@ -1,8 +1,8 @@
-# FootballPrediction V57.0
+# FootballPrediction V139.0
 
 > **"以年化 25% 的真实收益率为北极星指标，构建一个可验证、可复制、可持续的体育预测系统。"**
 >
-> **📌 生产级标准**: V57.0 版本大一统 | 智能自愈引擎 | 毫秒级感应收割 | 100% 测试覆盖
+> **📌 生产级标准**: V139.0 自动巡航控制 | 双线流水线架构 | 99.8% Pinnacle 捕获率
 >
 > **📘 开发指南**: 详见 [CLAUDE.md](CLAUDE.md)
 
@@ -10,10 +10,10 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
-[![V57.0](https://img.shields.io/badge/version-V57.0%20Production-brightgreen.svg)](https://github.com/xupeng211/FootballPrediction)
+[![V139.0](https://img.shields.io/badge/version-V139.0%20Auto%20Cruise-brightgreen.svg)](https://github.com/xupeng211/FootballPrediction)
 [![Tests](https://img.shields.io/badge/tests-29%20passed-success.svg)](tests/unit/test_extractor.py)
 
-**V57.0 Production-Ready | 版本大一统完成 | 智能自愈引擎 | 毫秒级感应 | IP 健康监控 | 企业级代码质量**
+**V139.0 Production-Ready | 自动巡航控制 | 双线流水线 | 智能轮询 | IP 健康监控 | 企业级代码质量**
 
 ---
 
@@ -29,6 +29,78 @@
 ---
 
 ## 🏗️ 系统架构
+
+### V139.0 双线流水线架构
+
+项目采用**双线流水线架构**，实现数据采集的全自动化：
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    L1: FotMob API - 基础数据层                    │
+│  src/api/collectors/fotmob_core.py                               │
+│  ┌────────────────────────────────────────────────────────────┐ │
+│  │  • 比赛基础信息: league, season, teams, match_time         │ │
+│  │  • 实时统计数据: xG, shots, possession                      │ │
+│  │  • 哨兵机制 + 熔断恢复                                      │ │
+│  └────────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────────┐
+│                    L2: URL Harvest - 链接收割层                   │
+│  scripts/v139_0_auto_cruise_controller.py                        │
+│  ┌────────────────────────────────────────────────────────────┐ │
+│  │  • 自动导航联赛页面                                         │ │
+│  │  • 智能提取比赛详情链接                                     │ │
+│  │  • 【关键】仅提取新格式 URL: /football/.../.../...        │ │
+│  └────────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────────┐
+│                    L3: RPA Extraction - 赔率提取层                │
+│  src/api/collectors/odds_production_extractor.py                 │
+│  ┌────────────────────────────────────────────────────────────┐ │
+│  │  【黑科技 1】智能轮询                                       │ │
+│  │    • wait_for_selector(60s) 替代硬等待                     │ │
+│  │    • 元素一出现立即响应，毫秒级感应                        │ │
+│  │                                                            │ │
+│  │  【黑科技 2】悬停自愈                                       │ │
+│  │    • scroll_into_view_if_needed() 滚动对焦                │ │
+│  │    • 鼠标抖动自愈 (±5px) 重新触发 tooltip                  │ │
+│  │    • 10 次轮询 × 500ms = 5 秒智能等待                     │ │
+│  │                                                            │ │
+│  │  • 提取目标: Pinnacle 开盘赔率 + 时间戳                    │ │
+│  │  • 数据完整性: Score = 1/P1 + 1/P2 + 1/P3                │ │
+│  └────────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────────┐
+│                    PostgreSQL 持久层                              │
+│  matches 表 + metrics_multi_source_data 表                      │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### URL 格式规范（重要！）
+
+**⚠️ 仅支持新格式 URL，旧格式已被 OddsPortal 永久废弃！**
+
+| 格式 | URL 模式 | 状态 | Pinnacle 数据可用性 |
+|------|----------|------|---------------------|
+| **新格式** ✅ | `/football/{country}/{league}-{years}/{home-team}-{away-team}/{id}/` | **支持** | **99.8%** |
+| **旧格式** ❌ | `/match/{XXXXX}/` | **已废弃** | 0.1% (几乎不可用) |
+
+**新格式示例**：
+```
+https://www.oddsportal.com/football/england/premier-league-2022-2023/arsenal-chelsea/QZqX1icF/
+```
+
+**旧格式示例（已废弃）**：
+```
+https://www.oddsportal.com/match/QZqX1icF/  ❌ HTTP 403/429
+```
+
+---
+
+### V56.3 三层生产级架构
 
 V56.3 采用**三层生产级架构**，实现从调度到采集再到持久化的完整数据流：
 
@@ -324,24 +396,32 @@ make verify    # 完整验证（lint + test + security）
 ```
 FootballPrediction/
 ├── src/                           # 生产代码
-│   ├── api/collectors/           # V56.0 提取器
-│   │   └── odds_production_extractor.py
+│   ├── api/collectors/           # V139.0 提取器
+│   │   ├── fotmob_core.py        # L1 FotMob API 基础数据
+│   │   └── odds_production_extractor.py  # L3 RPA 赔率提取
 │   ├── config_unified.py         # 统一配置
 │   ├── database/                 # 数据库层
 │   ├── ml/                       # 机器学习层
 │   └── ops/                      # 运维脚本
 ├── scripts/                      # 核心脚本
+│   ├── v139_0_auto_cruise_controller.py  # L2 URL 收割（当前运行）
 │   ├── production_harvester.py   # V56.3 生产收割引擎
+│   ├── archive/                  # 归档脚本目录
+│   │   ├── v134_*.py             # V134 系列（已废弃）
+│   │   ├── v135_*.py             # V135 系列（已废弃）
+│   │   ├── v136_*.py             # V136 系列（已废弃）
+│   │   ├── v137_*.py             # V137 系列（已废弃）
+│   │   └── v138_*.py             # V138 系列（已废弃）
 │   ├── ml/                       # ML 训练脚本
 │   └── collectors/               # 数据采集脚本
 ├── tests/                        # 测试套件
 │   └── unit/test_extractor.py    # 29 个单元测试
 ├── archive/                      # 历史归档
-│   ├── v55_exploration/          # V55 探索脚本
-│   └── legacy_scripts/           # 遗留脚本
+│   ├── logs/                     # 旧日志和审计文件
+│   └── v55_exploration/          # V55 探索脚本
 ├── model_zoo/                    # 模型仓库
 ├── .env.example                  # 环境变量模板
-├── requirements.txt              # V56.3 生产依赖
+├── requirements.txt              # V57.0 生产依赖
 ├── CLAUDE.md                     # Claude 开发指南
 └── README.md                     # 本文档
 ```
@@ -400,4 +480,4 @@ MIT License - 详见 [LICENSE](LICENSE)
 
 ---
 
-**V56.3 Production-Ready | © 2026 FootballPrediction Project**
+**V139.0 Production-Ready | © 2026 FootballPrediction Project**
