@@ -16,7 +16,7 @@ FootballPrediction V139.0 - 实时监控看板
     python scripts/dashboard.py
 
 依赖：
-    pip install rich psycopg2-binary psutil
+    pip install rich psycopg2-binary psutil python-dotenv
 
 作者：V139.0 DevOps Team
 创建：2026-01-05
@@ -29,6 +29,16 @@ import time
 import signal
 from datetime import datetime
 from typing import Optional, Dict, List, Any
+from pathlib import Path
+
+# 加载 .env 文件（优先从项目根目录）
+try:
+    from dotenv import load_dotenv
+    # 尝试从项目根目录加载 .env
+    env_path = Path(__file__).parent.parent / '.env'
+    load_dotenv(env_path)
+except ImportError:
+    pass  # 如果没有 dotenv，继续使用系统环境变量
 
 import psycopg2
 from psycopg2.extras import RealDictCursor
@@ -113,8 +123,8 @@ def fetch_url_completion_stats(conn) -> Dict[str, Any]:
             cur.execute("""
                 SELECT COUNT(*) as count
                 FROM matches
-                WHERE odds_portal_url IS NOT NULL
-                  AND odds_portal_url LIKE '%/football/%'
+                WHERE oddsportal_url IS NOT NULL
+                  AND oddsportal_url LIKE '%/football/%'
             """)
             new_format = cur.fetchone()['count']
 
@@ -122,7 +132,7 @@ def fetch_url_completion_stats(conn) -> Dict[str, Any]:
             cur.execute("""
                 SELECT COUNT(*) as count
                 FROM matches
-                WHERE odds_portal_url IS NULL
+                WHERE oddsportal_url IS NULL
             """)
             missing = cur.fetchone()['count']
 
@@ -151,6 +161,7 @@ def fetch_pinnacle_stats(conn) -> Dict[str, Any]:
         Dict containing:
         - total_records: Entity_P 总记录数
         - with_opening_time: 有开盘时间的记录数
+        - matches_with_urls: 已拥有链接的场数（用于计算转化率）
         - avg_integrity_score: 平均完整性评分
     """
     try:
@@ -172,6 +183,14 @@ def fetch_pinnacle_stats(conn) -> Dict[str, Any]:
             """)
             with_opening = cur.fetchone()['count']
 
+            # 已拥有链接的场数（用于计算 L3 转化率）
+            cur.execute("""
+                SELECT COUNT(*) as count
+                FROM matches
+                WHERE oddsportal_url IS NOT NULL
+            """)
+            matches_with_urls = cur.fetchone()['count']
+
             # 平均完整性评分
             cur.execute("""
                 SELECT AVG(integrity_score) as avg_score
@@ -185,12 +204,14 @@ def fetch_pinnacle_stats(conn) -> Dict[str, Any]:
             return {
                 'total_records': total,
                 'with_opening_time': with_opening,
+                'matches_with_urls': matches_with_urls,
                 'avg_integrity_score': round(avg_score, 4) if avg_score else 0,
             }
     except Exception as e:
         return {
             'total_records': 0,
             'with_opening_time': 0,
+            'matches_with_urls': 0,
             'avg_integrity_score': 0,
         }
 
@@ -362,12 +383,12 @@ def render_with_rich(console: Console, timestamp: str, url_stats: Dict,
     )
     console.print(l2_panel)
 
-    # L3 层赔率转化进度
-    conversion_rate = (pinnacle_stats['with_opening_time'] / pinnacle_stats['total_records'] * 100) if pinnacle_stats['total_records'] > 0 else 0
+    # L3 层赔率转化进度（基于已拥有链接的场数）
+    conversion_rate = (pinnacle_stats['with_opening_time'] / pinnacle_stats['matches_with_urls'] * 100) if pinnacle_stats['matches_with_urls'] > 0 else 0
     l3_progress = Text()
     l3_progress.append("L3 层赔率转化率", style="bold magenta")
     l3_progress.append(f"\n{conversion_rate:.1f}%", style="bold yellow")
-    l3_progress.append(f"\nEntity_P 记录: {pinnacle_stats['total_records']:,} | 有开盘时间: {pinnacle_stats['with_opening_time']:,}")
+    l3_progress.append(f"\n已拥有链接: {pinnacle_stats['matches_with_urls']:,} | Entity_P 提取: {pinnacle_stats['with_opening_time']:,}")
 
     l3_panel = Panel(
         l3_progress,
@@ -451,12 +472,12 @@ def render_ascii(timestamp: str, url_stats: Dict, pinnacle_stats: Dict,
     print(f"└{'─' * 78}┘")
     print()
 
-    # L3 层赔率转化
-    conversion_rate = (pinnacle_stats['with_opening_time'] / pinnacle_stats['total_records'] * 100) if pinnacle_stats['total_records'] > 0 else 0
-    l3_bar = create_progress_bar("L3 赔率转化", pinnacle_stats['with_opening_time'], pinnacle_stats['total_records'], "magenta")
+    # L3 层赔率转化（基于已拥有链接的场数）
+    conversion_rate = (pinnacle_stats['with_opening_time'] / pinnacle_stats['matches_with_urls'] * 100) if pinnacle_stats['matches_with_urls'] > 0 else 0
+    l3_bar = create_progress_bar("L3 赔率转化", pinnacle_stats['with_opening_time'], pinnacle_stats['matches_with_urls'], "magenta")
     print(f"┌─ 💰 L3: RPA Extraction {'─' * 48}┐")
     print(f"│ {l3_bar:<76} │")
-    l3_detail = f"Entity_P 记录: {pinnacle_stats['total_records']:,} | 有开盘时间: {pinnacle_stats['with_opening_time']:,}"
+    l3_detail = f"已拥有链接: {pinnacle_stats['matches_with_urls']:,} | Entity_P 提取: {pinnacle_stats['with_opening_time']:,}"
     print(f"│ {l3_detail:<76} │")
     print(f"└{'─' * 78}┘")
     print()
