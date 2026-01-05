@@ -3,6 +3,7 @@
 提供测试所需的所有Mock数据和配置
 
 V119.0: 新增回归测试所需的数据库连接和Playwright浏览器fixtures
+V144.2: 新增.env文件自动加载，确保测试能获取正确的数据库配置
 """
 
 # 添加src路径
@@ -18,6 +19,14 @@ import psycopg2
 import psycopg2.extras
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
+
+# V144.2: 加载.env文件（必须在src导入之后，确保路径正确）
+from dotenv import load_dotenv
+import os
+
+project_root = Path(__file__).parent.parent
+env_file = project_root / ".env"
+load_dotenv(env_file, override=True)
 
 
 # ============================================================================

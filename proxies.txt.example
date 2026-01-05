@@ -1,0 +1,20 @@
+# V142.7: 代理配置文件示例
+#
+# 用法：
+# 1. 将此文件重命名为 "proxies.txt"
+# 2. 填入你的代理服务器地址（每行一个）
+# 3. 运行收割引擎时会自动加载
+#
+# 格式：scheme://host:port
+# 支持的协议：http, https, socks5
+#
+# 示例：
+# http://proxy1.example.com:7890
+# https://proxy2.example.com:8080
+# socks5://proxy3.example.com:1080
+#
+# 注意事项：
+# - 必须包含端口号
+# - 空行会被自动跳过
+# - 无效格式会被自动过滤
+# - 文件不存在时会回退到 WSL2 自动探测模式

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""V117.1 Text Processing Utilities.
+"""V144.2 Text Processing Utilities (Stable Baseline).
 
 This module provides text normalization and processing utilities for the
 Football Prediction system, including team name normalization, vendor name
@@ -25,9 +25,9 @@ Usage:
     url = mapper.construct_results_url("Premier League", "2023-2024")
 """
 
-import re
 import logging
-from typing import Optional
+import re
+
 from thefuzz import fuzz
 
 logger = logging.getLogger(__name__)
@@ -51,6 +51,7 @@ class TeamNameNormalizer:
         # English Premier League
         "man utd": "manchester united",
         "man united": "manchester united",
+        "manchester": "manchester united",  # V143.7: Handle stripped "United" suffix
         "man city": "manchester city",
         "mancity": "manchester city",
         "leeds": "leeds united",
@@ -62,6 +63,7 @@ class TeamNameNormalizer:
         "west ham": "west ham united",
         "wolves": "wolverhampton wanderers",
         "nottm forest": "nottingham forest",
+        "nottingham": "nottingham forest",  # V143.7: Handle stripped "Forest" suffix
 
         # Spanish La Liga
         "atleti": "atletico madrid",
@@ -173,9 +175,15 @@ class TeamNameNormalizer:
         if normalized_lower in self.TEAM_NAME_MAPPINGS:
             normalized = self.TEAM_NAME_MAPPINGS[normalized_lower]
         else:
-            # Case-insensitive search for partial matches
+            # V143.7: Improved partial matching - only match if key is a word boundary
+            # This prevents "brentford newcastle" from matching "newcastle" mapping
             for key, value in self.TEAM_NAME_MAPPINGS.items():
-                if key in normalized_lower or normalized_lower in key:
+                # Check if the normalized name starts with the key (e.g., "newcastle united" starts with "newcastle")
+                if normalized_lower.startswith(key + " ") or normalized_lower.endswith(" " + key):
+                    normalized = value
+                    break
+                # Check for exact match (already handled above, but kept for clarity)
+                if normalized_lower == key:
                     normalized = value
                     break
 
@@ -183,7 +191,8 @@ class TeamNameNormalizer:
         normalized = normalized.strip()
         normalized = re.sub(r"\s+", " ", normalized)
 
-        return normalized
+        # V143.7 FIX: Ensure the result is lowercase for case-insensitive comparison
+        return normalized.lower()
 
     def are_same_team(self, name1: str, name2: str) -> bool:
         """Check if two team names refer to the same team.
@@ -241,6 +250,301 @@ class TeamNameNormalizer:
         # Return the highest score
         return float(max(token_sort_score, partial_score, standard_score))
 
+    def parse_team_slug_full_path(
+        self,
+        teams_part: str,
+        db_team_names: set[str],
+        threshold: float = 85.0,
+    ) -> list[str] | None:
+        """V143.9: Full-path trial matching parser with intelligent fallback.
+
+        Core algorithm:
+        1. Try all possible split points (A-B-C-D → A|BCD, AB|CD, ABC|D)
+        2. For each split, find the best home_match and away_match
+        3. Use are_same_team for pre-checking (avoid substring matching)
+        4. Return the split with [highest combined score] AND [both teams above threshold]
+
+        Cold Start Mode (V143.7):
+        - When db_team_names is empty, uses heuristic parsing
+        - Rejects obvious non-match URLs (league slugs, standings, etc.)
+        - Allows reasonable team splits without database validation
+
+        V143.9: Intelligent Fallback Mode:
+        - When no split meets the threshold, use heuristic scoring
+        - Prefers balanced splits (e.g., 1-2, 2-2 over 1-3, 3-1)
+        - Avoids isolating common suffixes (united, city, utd, fc)
+
+        Args:
+            teams_part: Team portion from URL (without hash), e.g., "manchester-united-brentford"
+            db_team_names: Set of team names from database (for fast lookup)
+            threshold: Similarity threshold (0-100), default 85%
+
+        Returns:
+            [home_team_slug, away_team_slug] or None (if parsing failed)
+
+        Example:
+            >>> normalizer = TeamNameNormalizer()
+            >>> db_names = {"Manchester United", "Brentford", "Arsenal"}
+            >>> result = normalizer.parse_team_slug_full_path("manchester-united-brentford", db_names)
+            >>> print(result)
+            ['manchester-united', 'brentford']
+        """
+        parts = teams_part.split("-")
+
+        # V143.7: Detect cold start mode (empty database)
+        is_cold_start = len(db_team_names) == 0
+
+        # Full-path trial matching
+        best_split: list[str] | None = None
+        best_combined_score = 0.0
+
+        # V143.7: Common team suffixes that should not be isolated
+        suffixes = {"united", "city", "utd", "fc", "afc", "cfc", "rc", "bilbao"}
+
+        # V143.7: Cold start - reject obvious non-match URLs first
+        if is_cold_start:
+            # V143.8: Enhanced rejection - check if it's a league/season slug
+            # Reject if contains 4-digit year (2000-2099) or league keywords
+            has_year = any(len(part) == 4 and part.isdigit() and part.startswith("20") for part in parts)
+            league_keywords = {"league", "ligue", "bundesliga", "serie", "premier", "laliga", "eredivisie"}
+            has_league_keyword = any(keyword in teams_part.lower() for keyword in league_keywords)
+
+            if has_year or has_league_keyword:
+                logger.debug(f"[V143.8] Cold start: Rejected league/season slug: {teams_part}")
+                return None
+
+            # Reject navigation pages
+            if teams_part.lower() in {"standings", "table", "outrights", "fixtures", "results"}:
+                logger.debug(f"[V143.7] Cold start: Rejected navigation page: {teams_part}")
+                return None
+
+            # Reject single-word slugs
+            if len(parts) < 2:
+                logger.debug(f"[V143.7] Cold start: Rejected single-word slug: {teams_part}")
+                return None
+
+        # Try all possible split points
+        for i in range(1, len(parts)):
+            home_slug = "-".join(parts[:i])
+            away_slug = "-".join(parts[i:])
+
+            home_parts = home_slug.split("-")
+            away_parts = away_slug.split("-")
+
+            # V143.7: In cold start mode, use relaxed suffix protection
+            if is_cold_start:
+                # Reject if away is a single-word suffix (e.g., "utd" in "brentford-newcastle-utd")
+                # This prevents splits like: ["brentford-newcastle", "utd"]
+                if len(away_parts) == 1 and away_parts[0].lower() in suffixes:
+                    continue
+                # Reject if home is a single-word suffix
+                if len(home_parts) == 1 and home_parts[0].lower() in suffixes:
+                    continue
+            else:
+                # Original logic for warm start (with database)
+                # Check if home split isolates a suffix
+                if len(home_parts) > 1 and home_parts[-1].lower() in suffixes:
+                    home_display = " ".join(word.title() for word in home_parts)
+                    is_known_team = any(
+                        self.are_same_team(home_display, db_name) for db_name in db_team_names
+                    )
+                    if not is_known_team:
+                        continue
+
+                # Check if away split isolates a suffix
+                if len(away_parts) == 1 and away_parts[0].lower() in suffixes:
+                    away_display = " ".join(word.title() for word in away_parts)
+                    is_known_team = any(
+                        self.are_same_team(away_display, db_name) for db_name in db_team_names
+                    )
+                    if not is_known_team:
+                        continue
+
+                if len(away_parts) > 1 and away_parts[0].lower() in suffixes:
+                    away_display = " ".join(word.title() for word in away_parts)
+                    is_known_team = any(
+                        self.are_same_team(away_display, db_name) for db_name in db_team_names
+                    )
+                    if not is_known_team:
+                        continue
+
+            # Convert to display names
+            home_display = " ".join(word.title() for word in home_slug.split("-"))
+            away_display = " ".join(word.title() for word in away_slug.split("-"))
+
+            # V143.7: Cold start mode - use heuristic scoring
+            if is_cold_start:
+                # In cold start, all reasonable splits get a default high score
+                # Prefer splits that balance word count between home and away
+                home_word_count = len(home_parts)
+                away_word_count = len(away_parts)
+                word_count_balance = abs(home_word_count - away_word_count)
+
+                # Base score (lower is better for balance)
+                combined_score = 100.0 - (word_count_balance * 5.0)
+
+                # Minimum score threshold
+                if combined_score < 85.0:
+                    continue
+            else:
+                # Original warm start logic with database matching
+                max_home_score = 0.0
+                max_away_score = 0.0
+
+                for db_name in db_team_names:
+                    db_word_count = len(db_name.split())
+
+                    if self.are_same_team(home_display, db_name):
+                        if len(home_parts) == db_word_count:
+                            base_score = 100.0
+                        elif len(home_parts) < db_word_count and len(home_parts) >= 2:
+                            base_score = 95.0
+                        elif len(home_parts) == 1 and db_word_count >= 2:
+                            base_score = 92.0
+                        else:
+                            base_score = 85.0
+                        word_count_bonus = 1.0 + (db_word_count - len(home_parts)) * 0.1
+                        max_home_score = max(max_home_score, base_score * word_count_bonus)
+                    else:
+                        norm_home = self.normalize(home_display)
+                        norm_db = self.normalize(db_name)
+                        token_sort_score = fuzz.token_sort_ratio(norm_home, norm_db)
+                        standard_score = fuzz.ratio(norm_home, norm_db)
+                        home_score = float(max(token_sort_score, standard_score))
+                        word_count_ratio = db_word_count / len(home_parts)
+                        if word_count_ratio >= 1.0:
+                            home_score *= 1.0 + (word_count_ratio - 1.0) * 0.2
+                        max_home_score = max(max_home_score, home_score)
+
+                    # Same for away
+                    if self.are_same_team(away_display, db_name):
+                        db_word_count = len(db_name.split())
+                        if len(away_parts) == db_word_count:
+                            base_score = 100.0
+                        elif len(away_parts) < db_word_count and len(away_parts) >= 2:
+                            base_score = 95.0
+                        elif len(away_parts) == 1 and db_word_count >= 2:
+                            base_score = 92.0
+                        else:
+                            base_score = 85.0
+                        word_count_bonus = 1.0 + (db_word_count - len(away_parts)) * 0.1
+                        max_away_score = max(max_away_score, base_score * word_count_bonus)
+                    else:
+                        norm_away = self.normalize(away_display)
+                        norm_db = self.normalize(db_name)
+                        token_sort_score = fuzz.token_sort_ratio(norm_away, norm_db)
+                        standard_score = fuzz.ratio(norm_away, norm_db)
+                        away_score = float(max(token_sort_score, standard_score))
+                        word_count_ratio = db_word_count / len(away_parts)
+                        if word_count_ratio >= 1.0:
+                            away_score *= 1.0 + (word_count_ratio - 1.0) * 0.2
+                        max_away_score = max(max_away_score, away_score)
+
+                # Calculate combined score
+                combined_score = (max_home_score + max_away_score) / 2
+
+                # Check if threshold is met
+                if max_home_score < threshold or max_away_score < threshold:
+                    continue
+
+            if best_split is None or combined_score > best_combined_score:
+                best_combined_score = combined_score
+                best_split = [home_slug, away_slug]
+            elif combined_score == best_combined_score:
+                # Tie-breaker: prefer more balanced splits
+                home_word_count = len(home_parts)
+                away_word_count = len(away_parts)
+                current_balance = abs(home_word_count - away_word_count)
+                best_balance = (
+                    abs(len(best_split[0].split("-")) - len(best_split[1].split("-")))
+                    if best_split
+                    else 999
+                )
+                if current_balance < best_balance:
+                    best_split = [home_slug, away_slug]
+
+        # V143.9: Intelligent Fallback Mode
+        # If no split met the threshold, use heuristic scoring
+        if best_split is None and not is_cold_start:
+            logger.debug(f"[V143.9] No split met threshold, using intelligent fallback: {teams_part}")
+
+            # V143.9: Special handling for known patterns like "city-utd" or "name-united"
+            # Check if there's a "utd" or "united" pattern that should be attached to the preceding word
+            special_patterns = {
+                "utd": ["sheffield", "newcastle"],  # sheffield-utd, newcastle-utd
+                "united": ["manchester"],  # manchester-united
+            }
+
+            # Try all splits again with heuristic scoring
+            for i in range(1, len(parts)):
+                home_slug = "-".join(parts[:i])
+                away_slug = "-".join(parts[i:])
+
+                home_parts = home_slug.split("-")
+                away_parts = away_slug.split("-")
+
+                # V143.9: Enhanced suffix handling for known patterns
+                # Check if away starts with a suffix that should be attached to home
+                should_reject_split = False
+                if len(away_parts) >= 1 and away_parts[0].lower() in suffixes:
+                    suffix_to_attach = away_parts[0].lower()
+                    # Check if this suffix + home's last word forms a known pattern
+                    for pattern, cities in special_patterns.items():
+                        if suffix_to_attach == pattern and len(home_parts) >= 1:
+                            # Check if home's last word matches one of the known cities
+                            if any(city.lower() == home_parts[-1].lower() for city in cities):
+                                # This suffix should be attached to home, reject this split
+                                should_reject_split = True
+                                break
+
+                if should_reject_split:
+                    continue
+
+                # Reject if away is a single-word suffix (general case)
+                if len(away_parts) == 1 and away_parts[0].lower() in suffixes:
+                    continue
+                # Reject if home is a single-word suffix
+                if len(home_parts) == 1 and home_parts[0].lower() in suffixes:
+                    continue
+
+                # Calculate heuristic score based on word count balance
+                home_word_count = len(home_parts)
+                away_word_count = len(away_parts)
+                word_count_balance = abs(home_word_count - away_word_count)
+
+                # Base score (lower is better for balance)
+                combined_score = 100.0 - (word_count_balance * 5.0)
+
+                # Minimum score threshold
+                if combined_score < 85.0:
+                    continue
+
+                if best_split is None or combined_score > best_combined_score:
+                    best_combined_score = combined_score
+                    best_split = [home_slug, away_slug]
+                elif combined_score == best_combined_score:
+                    # Tie-breaker: prefer more balanced splits
+                    current_balance = word_count_balance
+                    best_balance = (
+                        abs(len(best_split[0].split("-")) - len(best_split[1].split("-")))
+                        if best_split
+                        else 999
+                    )
+                    if current_balance < best_balance:
+                        best_split = [home_slug, away_slug]
+
+        if best_split:
+            home_display = " ".join(word.title() for word in best_split[0].split("-"))
+            away_display = " ".join(word.title() for word in best_split[1].split("-"))
+            logger.info(
+                f"  ✨ Team match: [{home_display}] vs [{away_display}] "
+                f"(score: {int(best_combined_score)}%)"
+            )
+        else:
+            logger.warning(f"  ⚠️  Failed to parse team slug: {teams_part}")
+
+        return best_split
+
 
 class VendorNameCleaner:
     """V117.1: Vendor/Bookmaker name cleaning utility.
@@ -281,21 +585,21 @@ class VendorNameCleaner:
             return ""
 
         # Remove HTML entities and special characters
-        cleaned = re.sub(r'&[a-z]+;', '', raw_name)
-        cleaned = re.sub(r'<[^>]+>', '', cleaned)
+        cleaned = re.sub(r"&[a-z]+;", "", raw_name)
+        cleaned = re.sub(r"<[^>]+>", "", cleaned)
 
         # Remove "1x2" markers (common suffix/prefix)
-        cleaned = re.sub(r'1\s*x\s*2', '', cleaned, flags=re.IGNORECASE)
-        cleaned = re.sub(r'1x2', '', cleaned, flags=re.IGNORECASE)
+        cleaned = re.sub(r"1\s*x\s*2", "", cleaned, flags=re.IGNORECASE)
+        cleaned = re.sub(r"1x2", "", cleaned, flags=re.IGNORECASE)
 
         # Remove all non-alphabetic characters (keep only letters and spaces)
-        cleaned = re.sub(r'[^a-zA-Z\s]', '', cleaned)
+        cleaned = re.sub(r"[^a-zA-Z\s]", "", cleaned)
 
         # Remove extra whitespace
-        cleaned = re.sub(r'\s+', ' ', cleaned).strip()
+        cleaned = re.sub(r"\s+", " ", cleaned).strip()
 
         # Remove common non-provider suffixes
-        cleaned = self.suffix_pattern.sub('', cleaned)
+        cleaned = self.suffix_pattern.sub("", cleaned)
 
         return cleaned
 
@@ -395,7 +699,6 @@ class LeagueUrlMapper:
         "czech first league": ("czech-republic", "1-liga"),
 
         # Austrian Leagues
-        "bundesliga": ("austria", "bundesliga"),
         "austrian bundesliga": ("austria", "bundesliga"),
 
         # Swiss Leagues
@@ -414,8 +717,8 @@ class LeagueUrlMapper:
         "allsvenskan": ("sweden", "allsvenskan"),
 
         # Brazilian Leagues
-        "serie a": ("brazil", "serie-a"),
         "brasileirao": ("brazil", "serie-a"),
+        "brazilian serie a": ("brazil", "serie-a"),
 
         # Argentine Leagues
         "primera division": ("argentina", "primera-division"),
@@ -423,7 +726,7 @@ class LeagueUrlMapper:
 
         # Mexican Leagues
         "liga mx": ("mexico", "liga-mx"),
-        "primera division": ("mexico", "liga-mx"),
+        "mexican primera division": ("mexico", "liga-mx"),
 
         # USA/Canada Leagues
         "major league soccer": ("usa", "mls"),

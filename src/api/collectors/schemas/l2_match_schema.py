@@ -126,6 +126,9 @@ class L2MatchDetailSchema(BaseModel):
         - FULL: stats 存在且包含 xG（最关键特征）
         - PARTIAL: stats 存在但 xG 缺失
         - WARNING: stats 完全缺失
+
+        V139.1: WARNING 级别数据仍会保留，包含 match_id、team_colors、fetched_at
+                等基础信息，可用于 L3 URL 匹配（降级存储策略）。
         """
         if self.stats is None:
             self.data_quality = L2DataQuality.WARNING
