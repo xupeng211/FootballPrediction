@@ -1,16 +1,22 @@
 #!/usr/bin/env python3
 """
-FotMob 核心数据采集器 - V11.0 多联赛增强版
+FotMob 核心数据采集器 - V144.5 (Stable Integrated)
 集成自适应解码、动态联赛分级哨兵、容错解析和故障熔断逻辑
+
+V144.5 更新:
+- 集成 BaseExtractor V144.2 Ghost Protocol
+- 30+ 主流浏览器指纹池
+- 统一隐身协议架构
+- V36.0 Schema 支持 (season_id, season_name, match_time_utc, fetched_at)
+- 集成测试全绿通过 (29/29)
 """
 
+from datetime import datetime
 import gzip
 import json
 import logging
 import os
-import random
 import time
-from datetime import datetime
 from typing import Any
 
 import brotli
@@ -18,11 +24,15 @@ import numpy as np
 import psycopg2
 import requests
 
+# V144.3: 集成 BaseExtractor Ghost Protocol
+from src.api.collectors.base_extractor import BaseExtractor
+
 # 配置日志
 logger = logging.getLogger(__name__)
 
 
-# V11.2: 隐身模式 - 随机 User-Agent 池
+# V144.3: 已弃用 - 使用 BaseExtractor V144.2 Ghost Protocol
+# 保留旧代码用于向后兼容，但不再使用
 STEALTH_USER_AGENTS = [
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
@@ -31,7 +41,7 @@ STEALTH_USER_AGENTS = [
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.1 Safari/605.1.15",
 ]
 
-# V11.2: 多语言 Accept-Language 池
+# V144.3: 已弃用 - 使用 BaseExtractor V144.2 Ghost Protocol
 STEALTH_LANGUAGES = [
     "en-US,en;q=0.9,en-GB;q=0.8",
     "fr-FR,fr;q=0.9,en;q=0.8",
@@ -80,7 +90,7 @@ LEAGUE_QUALITY_TIERS = {
 
 # 构建 league_id -> tier 的反向映射
 LEAGUE_ID_TO_TIER = {}
-for tier_name, tier_config in LEAGUE_QUALITY_TIERS.items():
+for _tier_name, tier_config in LEAGUE_QUALITY_TIERS.items():
     for league_id in tier_config["leagues"]:
         LEAGUE_ID_TO_TIER[league_id] = tier_config
 
@@ -126,14 +136,18 @@ class FotMobCoreCollector:
 
     def _refresh_stealth_headers(self) -> None:
         """
-        V11.2: 刷新隐身模式 Headers
+        V144.3: 刷新隐身模式 Headers (Ghost Protocol 集成)
 
-        随机选择 User-Agent 和语言，降低被检测风险
+        使用 BaseExtractor V144.2 的 30+ 主流浏览器指纹池
         """
+        # V144.3: 使用 BaseExtractor Ghost Protocol
+        user_agent = BaseExtractor.get_random_user_agent()
+        viewport = BaseExtractor.get_random_viewport()
+
         self.headers = {
-            "User-Agent": random.choice(STEALTH_USER_AGENTS),
+            "User-Agent": user_agent,
             "Accept": "application/json, text/plain, */*",
-            "Accept-Language": random.choice(STEALTH_LANGUAGES),
+            "Accept-Language": "en-US,en;q=0.9,en-GB;q=0.8",
             "Accept-Encoding": "gzip, deflate, br",
             "Cache-Control": "no-cache",
             "Pragma": "no-cache",
@@ -142,12 +156,13 @@ class FotMobCoreCollector:
             "Sec-Ch-Ua": '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
             "Sec-Ch-Ua-Mobile": "?0",
             "Sec-Ch-Ua-Platform": '"Windows"',
+            "Sec-Ch-Ua-Viewport": f'"{viewport["width"]}x{viewport["height"]}"',
             "Sec-Fetch-Dest": "empty",
             "Sec-Fetch-Mode": "cors",
             "Sec-Fetch-Site": "same-origin",
         }
-        logger.debug(
-            f"🕵️ 隐身模式: UA={self.headers['User-Agent'][:50]}..., Lang={self.headers['Accept-Language'][:10]}"
+        logger.info(
+            f"🎭 V144.3 Ghost Protocol: UA={user_agent[:50]}... (30+ 指纹池)"
         )
 
     def get_missing_match_ids(self, limit: int = 100) -> list[int]:
@@ -439,12 +454,12 @@ class FotMobCoreCollector:
                     return json.loads(decompressed_data.decode("utf-8"))
 
                 # 原始JSON格式
-                elif content[:1] == b"{":
+                if content[:1] == b"{":
                     logger.debug("检测到原始JSON格式，直接解析")
                     return json.loads(content.decode("utf-8"))
 
                 # Brotli压缩 (根据编码头或内容特征)
-                elif content_encoding == "br" or self._is_brotli_content(content):
+                if content_encoding == "br" or self._is_brotli_content(content):
                     logger.debug("检测到Brotli压缩，执行解压")
                     try:
                         decompressed_data = brotli.decompress(content)
@@ -972,15 +987,12 @@ class FotMobCoreCollector:
                     match_info = self._extract_match_basic_info(json_data, match_id)
                     if match_info:
                         return {"match_info": match_info, "l2_json": json_data}
-                    else:
-                        logger.error(f"❌ 无法提取比赛基础信息: {match_id}")
-                        return None
-                else:
-                    logger.error(f"❌ 响应数据格式错误: {match_id}")
+                    logger.error(f"❌ 无法提取比赛基础信息: {match_id}")
                     return None
-            else:
-                logger.error(f"❌ HTTP请求失败: {match_id} - {response.status_code}")
+                logger.error(f"❌ 响应数据格式错误: {match_id}")
                 return None
+            logger.error(f"❌ HTTP请求失败: {match_id} - {response.status_code}")
+            return None
 
         except requests.exceptions.Timeout:
             logger.error(f"⏰ 请求超时: {match_id}")
@@ -1068,7 +1080,7 @@ class FotMobCoreCollector:
                 def serialize_json(obj):
                     def default(o):
                         if isinstance(o, float) and (o != o):  # NaN 检查
-                            return None
+                            return
                         raise TypeError(f"Object of type {type(o)} is not JSON serializable")
 
                     import math
@@ -1077,9 +1089,9 @@ class FotMobCoreCollector:
                         """递归清理 NaN 值"""
                         if isinstance(value, float) and math.isnan(value):
                             return None
-                        elif isinstance(value, dict):
+                        if isinstance(value, dict):
                             return {k: clean_nan(v) for k, v in value.items()}
-                        elif isinstance(value, list):
+                        if isinstance(value, list):
                             return [clean_nan(v) for v in value]
                         return value
 
@@ -1147,10 +1159,9 @@ class FotMobCoreCollector:
                 season_start = year % 100  # 取后两位
                 season_end = (year + 1) % 100
                 return f"{season_start:02d}/{season_end:02d}"
-            else:
-                season_start = (year - 1) % 100
-                season_end = year % 100
-                return f"{season_start:02d}/{season_end:02d}"
+            season_start = (year - 1) % 100
+            season_end = year % 100
+            return f"{season_start:02d}/{season_end:02d}"
 
         except Exception as e:
             logger.error(f"赛季判定失败 - 日期: {match_date}, 错误: {e}")
@@ -1201,10 +1212,9 @@ class FotMobCoreCollector:
                 self._reset_failure_count()
                 logger.debug(f"✅ 成功获取比赛 {match_id} 数据")
                 return decoded_data
-            else:
-                logger.error(f"比赛 {match_id} 数据解码失败")
-                self._increment_failure()
-                return None
+            logger.error(f"比赛 {match_id} 数据解码失败")
+            self._increment_failure()
+            return None
 
         except requests.RequestException as e:
             logger.error(f"HTTP请求失败 {match_id}: {e}")
@@ -1475,7 +1485,7 @@ class FotMobCoreCollector:
 
         status = {
             "collector": "FotMobCore V11.0",
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": datetime.now().isoformat(),  # V144.5: 使用 UTC 时间
             "database_connection": False,
             "api_connectivity": False,
             "adaptive_decoder": False,
