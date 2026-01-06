@@ -5,20 +5,20 @@
 静默收割模式：随机延迟 1-3 秒防止 IP 被封
 """
 
+from datetime import UTC, datetime
 import json
 import logging
 import os
 import random
 import sys
 import time
-from datetime import UTC, datetime
 from typing import Any
 
+from dotenv import load_dotenv
 import pandas as pd
 import psycopg2
-import requests
-from dotenv import load_dotenv
 from psycopg2.extras import RealDictCursor
+import requests
 
 # Add src to path
 sys.path.insert(0, "/home/user/projects/FootballPrediction/src")
@@ -69,7 +69,7 @@ class DatabaseManager:
 
     def _connect(self):
         """连接数据库（向后兼容）"""
-        pass  # 已在 __init__ 中处理
+        # 已在 __init__ 中处理
 
     def create_database(self):
         """创建数据库（如果不存在）"""

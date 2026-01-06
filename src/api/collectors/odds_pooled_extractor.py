@@ -35,24 +35,23 @@ Example:
 """
 
 import asyncio
-import logging
-import random
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
 from datetime import datetime
+import logging
 from pathlib import Path
-from typing import Any, AsyncGenerator
+import random
+from typing import Any
 
-from playwright.async_api import async_playwright, Browser, BrowserContext, Page
+from playwright.async_api import Browser, BrowserContext, Page, async_playwright
 
-from src.config_unified import get_settings
 from src.api.collectors.odds_production_extractor import (
-    OddsProductionExtractor,
-    MultiSourceEntityData,
-    TOOLTIP_OPENING_PATTERN,
     POLLING_TOOLTIP_ATTEMPTS,
     POLLING_TOOLTIP_DELAY_MS,
+    TOOLTIP_OPENING_PATTERN,
 )
+from src.config_unified import get_settings
 
 logger = logging.getLogger(__name__)
 
@@ -233,7 +232,7 @@ class PooledOddsExtractor:
         self._context_match_count = 0
         self._stats["context_resets"] += 1
 
-        logger.info(f"[PooledExtractor] ✓ Context reset with new fingerprint")
+        logger.info("[PooledExtractor] ✓ Context reset with new fingerprint")
 
     async def _simulate_human_behavior(self, page: Page) -> None:
         """V64.0: Simulate human-like mouse movements to bypass WAF detection.
@@ -285,7 +284,7 @@ class PooledOddsExtractor:
                 if p == page:
                     del self._pages[page_id]
                     break
-            logger.debug(f"[PooledExtractor] Closed page")
+            logger.debug("[PooledExtractor] Closed page")
         except Exception as e:
             logger.error(f"[PooledExtractor] Error closing page: {e}")
 
@@ -335,7 +334,7 @@ class PooledOddsExtractor:
             start_time = datetime.now().timestamp()
             await page.goto(
                 url,
-                wait_until='domcontentloaded',
+                wait_until="domcontentloaded",
                 timeout=30000,
                 referer=referer
             )
@@ -346,7 +345,7 @@ class PooledOddsExtractor:
             # Use V58.0 hover extraction (reused logic)
             result = await self._hover_extract(page, entity_code, match_date)
 
-            if result and not result.get('hover_failed'):
+            if result and not result.get("hover_failed"):
                 self._stats["successful_extractions"] += 1
             else:
                 self._stats["failed_extractions"] += 1
@@ -380,30 +379,30 @@ class PooledOddsExtractor:
                 # Save HTML content
                 html_path = str(debug_base) + ".html"
                 html_content = await page.content()
-                with open(html_path, 'w', encoding='utf-8') as f:
+                with open(html_path, "w", encoding="utf-8") as f:
                     f.write(html_content)
                 logger.info(f"[PooledExtractor] HTML saved: {html_path}")
 
                 # Check for Cloudflare / CAPTCHA indicators
-                if 'challenge-platform' in html_content.lower() or 'cf-challenge' in html_content.lower():
+                if "challenge-platform" in html_content.lower() or "cf-challenge" in html_content.lower():
                     logger.warning("[PooledExtractor] ⚠️  Cloudflare challenge detected!")
-                elif 'captcha' in html_content.lower():
+                elif "captcha" in html_content.lower():
                     logger.warning("[PooledExtractor] ⚠️  CAPTCHA detected!")
 
             except Exception as debug_error:
                 logger.error(f"[PooledExtractor] Failed to save debug artifacts: {debug_error}")
 
             return {
-                'hover_failed': True,
-                'hover_error': str(e),
-                'init_h': None,
-                'init_d': None,
-                'init_a': None,
-                'opening_time_h': None,
-                'opening_time_d': None,
-                'opening_time_a': None,
-                'debug_screenshot': screenshot_path if 'screenshot_path' in locals() else None,
-                'debug_html': html_path if 'html_path' in locals() else None,
+                "hover_failed": True,
+                "hover_error": str(e),
+                "init_h": None,
+                "init_d": None,
+                "init_a": None,
+                "opening_time_h": None,
+                "opening_time_d": None,
+                "opening_time_a": None,
+                "debug_screenshot": screenshot_path if "screenshot_path" in locals() else None,
+                "debug_html": html_path if "html_path" in locals() else None,
             }
 
     async def _hover_extract(
@@ -474,28 +473,28 @@ class PooledOddsExtractor:
                             """)
 
                             if tooltip_data:
-                                return self._parse_tooltip(tooltip_data['text'], match_year)
+                                return self._parse_tooltip(tooltip_data["text"], match_year)
 
                             await asyncio.sleep(POLLING_TOOLTIP_DELAY_MS / 1000)
 
                         return {
-                            'hover_failed': True,
-                            'hover_error': 'No tooltip found'
+                            "hover_failed": True,
+                            "hover_error": "No tooltip found"
                         }
 
                 except Exception:
                     continue
 
             return {
-                'hover_failed': True,
-                'hover_error': f'Bookmaker {real_name} not found'
+                "hover_failed": True,
+                "hover_error": f"Bookmaker {real_name} not found"
             }
 
         except Exception as e:
             logger.error(f"[PooledExtractor] Hover extraction error: {e}")
             return {
-                'hover_failed': True,
-                'hover_error': f'Exception: {str(e)}'
+                "hover_failed": True,
+                "hover_error": f"Exception: {e!s}"
             }
 
     def _parse_tooltip(self, tooltip_text: str, match_year: int) -> dict[str, Any]:
@@ -504,8 +503,8 @@ class PooledOddsExtractor:
 
         if not match:
             return {
-                'hover_failed': True,
-                'hover_error': 'Cannot parse tooltip'
+                "hover_failed": True,
+                "hover_error": "Cannot parse tooltip"
             }
 
         day, month_str, hour, minute, odd_value = match.groups()
@@ -514,26 +513,26 @@ class PooledOddsExtractor:
 
         if not month:
             return {
-                'hover_failed': True,
-                'hover_error': f'Invalid month: {month_str}'
+                "hover_failed": True,
+                "hover_error": f"Invalid month: {month_str}"
             }
 
         try:
             timestamp = datetime(match_year, month, int(day), int(hour), int(minute))
         except ValueError as e:
             return {
-                'hover_failed': True,
-                'hover_error': f'Invalid timestamp: {e}'
+                "hover_failed": True,
+                "hover_error": f"Invalid timestamp: {e}"
             }
 
         return {
-            'hover_failed': False,
-            'init_h': float(odd_value),
-            'init_d': None,
-            'init_a': None,
-            'opening_time_h': timestamp,
-            'opening_time_d': None,
-            'opening_time_a': None,
+            "hover_failed": False,
+            "init_h": float(odd_value),
+            "init_d": None,
+            "init_a": None,
+            "opening_time_h": timestamp,
+            "opening_time_d": None,
+            "opening_time_a": None,
         }
 
     def get_stats(self) -> dict[str, Any]:
@@ -597,15 +596,15 @@ async def extract_batch_pooled(
 
                 extraction_result = await extractor.extract_match(
                     page=page,
-                    url=match['url'],
+                    url=match["url"],
                     entity_code="Entity_P",
-                    match_date=match.get('match_date')
+                    match_date=match.get("match_date")
                 )
 
                 result.results.append({
-                    'match_id': match.get('match_id'),
-                    'url': match['url'],
-                    'result': extraction_result
+                    "match_id": match.get("match_id"),
+                    "url": match["url"],
+                    "result": extraction_result
                 })
 
                 await extractor.close_page(page)

@@ -4,8 +4,8 @@
 ================================
 """
 
-import json
 from datetime import datetime
+import json
 from pathlib import Path
 
 
@@ -18,7 +18,7 @@ def generate_final_report():
 
     if not index_files:
         print("❌ 未找到索引文件")
-        return
+        return None
 
     with open(index_files[-1]) as f:
         index_data = json.load(f)

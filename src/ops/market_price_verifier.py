@@ -15,9 +15,9 @@ V19.4 市场价格验证器 (Market Price Verifier)
 日期: 2025-12-23
 """
 
-import logging
 from dataclasses import dataclass
 from datetime import datetime
+import logging
 from pathlib import Path
 
 import pandas as pd
@@ -125,10 +125,10 @@ class MarketPriceVerifier:
 
         if prediction == "H":
             return latest["avg_home_odds"]
-        elif prediction == "D":
+        if prediction == "D":
             return latest["avg_draw_odds"]
-        else:  # 'A'
-            return latest["avg_away_odds"]
+        # 'A'
+        return latest["avg_away_odds"]
 
     def fetch_live_odds(self, home_team: str, away_team: str, prediction: str) -> float | None:
         """
@@ -192,10 +192,9 @@ class MarketPriceVerifier:
             if result:
                 if prediction == "H":
                     return float(result["b365_home_odds"]) if result["b365_home_odds"] else None
-                elif prediction == "D":
+                if prediction == "D":
                     return float(result["b365_draw_odds"]) if result["b365_draw_odds"] else None
-                else:
-                    return float(result["b365_away_odds"]) if result["b365_away_odds"] else None
+                return float(result["b365_away_odds"]) if result["b365_away_odds"] else None
 
         except Exception as e:
             logger.debug(f"获取实时赔率失败: {e}")

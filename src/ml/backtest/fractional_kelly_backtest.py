@@ -4,11 +4,11 @@
 Financial Logic Recovery - 使用半凯利策略重新回测52场意甲比赛
 """
 
+from datetime import datetime
 import json
 import logging
-import sys
-from datetime import datetime
 from pathlib import Path
+import sys
 
 import joblib
 import numpy as np
@@ -70,20 +70,19 @@ class FractionalKellyBacktester:
             for feature_name in self.feature_names:
                 if feature_name in match_data:
                     features.append(match_data[feature_name])
+                # 使用默认值或估算值
+                elif "xg" in feature_name.lower():
+                    features.append(1.0)  # 默认xG
+                elif "shots" in feature_name.lower():
+                    features.append(12.0)  # 默认射门数
+                elif "poss" in feature_name.lower() or "possession" in feature_name.lower():
+                    features.append(50.0)  # 默认控球率
+                elif "corner" in feature_name.lower():
+                    features.append(5.0)  # 默认角球数
+                elif "card" in feature_name.lower():
+                    features.append(2.0)  # 默认牌数
                 else:
-                    # 使用默认值或估算值
-                    if "xg" in feature_name.lower():
-                        features.append(1.0)  # 默认xG
-                    elif "shots" in feature_name.lower():
-                        features.append(12.0)  # 默认射门数
-                    elif "poss" in feature_name.lower() or "possession" in feature_name.lower():
-                        features.append(50.0)  # 默认控球率
-                    elif "corner" in feature_name.lower():
-                        features.append(5.0)  # 默认角球数
-                    elif "card" in feature_name.lower():
-                        features.append(2.0)  # 默认牌数
-                    else:
-                        features.append(0.0)
+                    features.append(0.0)
 
             # 转换为数组并标准化
             feature_array = np.array(features).reshape(1, -1)
@@ -292,9 +291,8 @@ class FractionalKellyBacktester:
 
             if bet_result["skip"]:
                 skipped_bets += 1
-            else:
-                if bet_result["won"]:
-                    won_bets += 1
+            elif bet_result["won"]:
+                won_bets += 1
 
             total_profit += bet_result["profit"]
 

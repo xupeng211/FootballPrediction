@@ -4,8 +4,8 @@
 提供模型热重载、版本查询等MLOps功能
 """
 
-import logging
 from datetime import datetime
+import logging
 from pathlib import Path
 from typing import Any
 
@@ -194,16 +194,15 @@ async def reload_model(request: ModelReloadRequest, background_tasks: Background
                 reload_time=datetime.now().isoformat(),
                 model_path=target_model_path,
             )
-        else:
-            background_tasks.add_task(log_model_reload, previous_version, "unknown", target_model_path, False)
+        background_tasks.add_task(log_model_reload, previous_version, "unknown", target_model_path, False)
 
-            raise HTTPException(status_code=500, detail="模型重载失败")
+        raise HTTPException(status_code=500, detail="模型重载失败")
 
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"模型重载异常: {e}")
-        raise HTTPException(status_code=500, detail=f"模型重载异常: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"模型重载异常: {e!s}")
 
 
 @router.get("/info", response_model=ModelInfoResponse)
@@ -244,7 +243,7 @@ async def get_model_info():
 
     except Exception as e:
         logger.error(f"获取模型信息失败: {e}")
-        raise HTTPException(status_code=500, detail=f"获取模型信息失败: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"获取模型信息失败: {e!s}")
 
 
 @router.get("/list")
@@ -279,7 +278,7 @@ async def list_models():
 
     except Exception as e:
         logger.error(f"列出模型失败: {e}")
-        raise HTTPException(status_code=500, detail=f"列出模型失败: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"列出模型失败: {e!s}")
 
 
 async def log_model_reload(old_version: str, new_version: str, model_path: str, success: bool):

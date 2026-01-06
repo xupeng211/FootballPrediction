@@ -27,12 +27,12 @@ Author: Football Prediction Team
 Version: 1.0.0
 """
 
-import logging
-import os
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from decimal import Context, Decimal
 from enum import Enum
+import logging
+import os
 from typing import Any
 
 import numpy as np
@@ -389,9 +389,8 @@ class KellyCriterion:
             self.safety_validator.config.enabled = False
             logger.critical(f"🚨 紧急停止已激活: {reason}")
             return True
-        else:
-            logger.warning("⚠️ 紧急停止功能已禁用")
-            return False
+        logger.warning("⚠️ 紧急停止功能已禁用")
+        return False
 
     def reset_daily_counters(self):
         """重置日计数器"""
@@ -721,14 +720,13 @@ class KellyCriterion:
             # 计算盈亏
             if result_profit_loss is not None:
                 profit_loss = Decimal(str(result_profit_loss))
+            elif actual_outcome == bet_record["outcome"]:
+                # 获胜
+                profit_loss = bet_record["stake"] * bet_record["odds"] - bet_record["stake"]
+                self.portfolio.winning_bets += 1
             else:
-                if actual_outcome == bet_record["outcome"]:
-                    # 获胜
-                    profit_loss = bet_record["stake"] * bet_record["odds"] - bet_record["stake"]
-                    self.portfolio.winning_bets += 1
-                else:
-                    # 失败
-                    profit_loss = -bet_record["stake"]
+                # 失败
+                profit_loss = -bet_record["stake"]
 
             # 更新投注记录
             bet_record["status"] = "settled"
@@ -743,10 +741,8 @@ class KellyCriterion:
 
             # 更新统计信息
             self.stats["total_profit_loss"] += profit_loss
-            if profit_loss > self.stats["max_single_win"]:
-                self.stats["max_single_win"] = profit_loss
-            if profit_loss < self.stats["max_single_loss"]:
-                self.stats["max_single_loss"] = profit_loss
+            self.stats["max_single_win"] = max(self.stats["max_single_win"], profit_loss)
+            self.stats["max_single_loss"] = min(self.stats["max_single_loss"], profit_loss)
 
             # 更新胜率
             self.portfolio.win_rate = Decimal(str(self.portfolio.winning_bets)) / Decimal(
@@ -805,25 +801,24 @@ class KellyCriterion:
         if self.kelly_strategy == KellyStrategy.FULL_KELLY:
             return full_kelly
 
-        elif self.kelly_strategy == KellyStrategy.FRACTIONAL_KELLY:
+        if self.kelly_strategy == KellyStrategy.FRACTIONAL_KELLY:
             return full_kelly * self.fraction_multiplier
 
-        elif self.kelly_strategy == KellyStrategy.CONSERVATIVE_KELLY:
+        if self.kelly_strategy == KellyStrategy.CONSERVATIVE_KELLY:
             # 保守策略：使用更小的分数
             conservative_fraction = self.fraction_multiplier * Decimal("0.5")
             return full_kelly * conservative_fraction
 
-        elif self.kelly_strategy == KellyStrategy.AGGRESSIVE_KELLY:
+        if self.kelly_strategy == KellyStrategy.AGGRESSIVE_KELLY:
             # 激进策略：使用更大的分数，但有上限
             aggressive_fraction = min(self.fraction_multiplier * Decimal("1.5"), Decimal("0.5"))  # 最大50%
             return full_kelly * aggressive_fraction
 
-        elif self.kelly_strategy == KellyStrategy.DYNAMIC_KELLY:
+        if self.kelly_strategy == KellyStrategy.DYNAMIC_KELLY:
             # 动态策略：基于历史表现调整
             return self._calculate_dynamic_kelly(full_kelly, prob, odds, outcome, confidence)
 
-        else:
-            return full_kelly * self.fraction_multiplier
+        return full_kelly * self.fraction_multiplier
 
     def _calculate_dynamic_kelly(
         self,
@@ -876,8 +871,7 @@ class KellyCriterion:
             return kelly_fraction
 
         # 检查最大投注比例
-        if kelly_fraction > self.max_stake_percentage:
-            kelly_fraction = self.max_stake_percentage
+        kelly_fraction = min(kelly_fraction, self.max_stake_percentage)
 
         # 检查当前回撤
         if self.portfolio.current_drawdown > self.MAX_DRAWDOWN_LIMIT:
@@ -925,12 +919,11 @@ class KellyCriterion:
         # 确定风险等级
         if risk_score >= 5:
             return RiskLevel.EXTREME
-        elif risk_score >= 3:
+        if risk_score >= 3:
             return RiskLevel.HIGH
-        elif risk_score >= 1:
+        if risk_score >= 1:
             return RiskLevel.MEDIUM
-        else:
-            return RiskLevel.LOW
+        return RiskLevel.LOW
 
     def _generate_reasoning(
         self,
@@ -970,12 +963,11 @@ class KellyCriterion:
         """获取置信度调整系数"""
         if confidence >= Decimal("0.8"):
             return Decimal("1.0")
-        elif confidence >= Decimal("0.6"):
+        if confidence >= Decimal("0.6"):
             return Decimal("0.9")
-        elif confidence >= Decimal("0.4"):
+        if confidence >= Decimal("0.4"):
             return Decimal("0.8")
-        else:
-            return Decimal("0.7")
+        return Decimal("0.7")
 
     def _update_calculation_stats(self, kelly_fraction: Decimal) -> None:
         """更新计算统计信息"""
@@ -1139,10 +1131,9 @@ class KellyCriterion:
 
         if risk_score >= 5:
             return "HIGH"
-        elif risk_score >= 3:
+        if risk_score >= 3:
             return "MEDIUM"
-        else:
-            return "LOW"
+        return "LOW"
 
     def get_system_stats(self) -> dict[str, Any]:
         """获取系统统计信息"""

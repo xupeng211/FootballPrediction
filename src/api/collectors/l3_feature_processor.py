@@ -16,10 +16,10 @@ Phase: L3 Feature Extraction
 Version: V38.5
 """
 
-import json
-import logging
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
+import json
+import logging
 from typing import Any
 
 import psycopg2

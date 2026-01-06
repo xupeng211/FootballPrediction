@@ -33,15 +33,15 @@ Example:
 """
 
 import asyncio
+from dataclasses import dataclass
+from datetime import datetime
 import logging
 import random
 import re
-from dataclasses import dataclass
-from datetime import datetime
 from typing import Any
 
-import psycopg2
 from playwright.async_api import Page, async_playwright
+import psycopg2
 
 from src.config_unified import get_settings
 
@@ -90,11 +90,11 @@ OPENING_ODDS_REGEX = re.compile(r"(?:opening|initial)[:\s]*([\d.]+)", re.IGNOREC
 
 # Tooltip parsing: "Opening odds:22 Dec, 08:131.19"
 TOOLTIP_MONTH_MAP = {
-    'Jan': 1, 'Feb': 2, 'Mar': 3, 'Apr': 4, 'May': 5, 'Jun': 6,
-    'Jul': 7, 'Aug': 8, 'Sep': 9, 'Oct': 10, 'Nov': 11, 'Dec': 12,
+    "Jan": 1, "Feb": 2, "Mar": 3, "Apr": 4, "May": 5, "Jun": 6,
+    "Jul": 7, "Aug": 8, "Sep": 9, "Oct": 10, "Nov": 11, "Dec": 12,
 }
 TOOLTIP_OPENING_PATTERN = re.compile(
-    r'Opening\s+odds:(\d{1,2})\s+([A-Za-z]{3})\s*,\s+(\d{1,2}):(\d{2})(\d+\.\d+)'
+    r"Opening\s+odds:(\d{1,2})\s+([A-Za-z]{3})\s*,\s+(\d{1,2}):(\d{2})(\d+\.\d+)"
 )
 
 
@@ -403,10 +403,10 @@ class OddsProductionExtractor:
                 f"隐藏 {result['hiddenCount']} 个高 z-index 层"
             )
 
-            if result['removedCount'] > 0:
+            if result["removedCount"] > 0:
                 logger.debug(f"[V89.0] 移除的元素: {result['removed']}")
 
-            if result['hiddenCount'] > 0:
+            if result["hiddenCount"] > 0:
                 logger.debug(f"[V89.0] 隐藏的元素: {result['hidden']}")
 
             # 可选：保存截图用于调试
@@ -438,19 +438,19 @@ class OddsProductionExtractor:
             """处理网络响应。"""
             try:
                 url = response.url.lower()
-                content_type = response.headers.get('content-type', '').lower()
+                content_type = response.headers.get("content-type", "").lower()
 
                 # 只关注 JSON 响应
-                if 'application/json' in content_type or url.endswith('.json'):
+                if "application/json" in content_type or url.endswith(".json"):
                     # 检查是否包含目标关键词
-                    if any(keyword in url for keyword in ['odds', 'opening', 'history', 'price', 'market']):
+                    if any(keyword in url for keyword in ["odds", "opening", "history", "price", "market"]):
                         try:
                             json_data = await response.json()
                             self._captured_responses.append({
-                                'url': response.url,
-                                'status': response.status,
-                                'json': json_data,
-                                'timestamp': datetime.now()
+                                "url": response.url,
+                                "status": response.status,
+                                "json": json_data,
+                                "timestamp": datetime.now()
                             })
                             logger.info(f"[V90.0 Ghost] 捕获 API 响应: {response.url[:100]}")
                         except Exception:
@@ -459,7 +459,7 @@ class OddsProductionExtractor:
                 logger.debug(f"[V90.0 Ghost] 响应处理错误: {e}")
 
         # 注册响应监听器
-        page.on('response', lambda response: asyncio.create_task(response_handler(response)))
+        page.on("response", lambda response: asyncio.create_task(response_handler(response)))
 
     async def _trigger_ghost_hover(
         self,
@@ -545,7 +545,7 @@ class OddsProductionExtractor:
         try:
             result = await page.evaluate(ghost_script)
 
-            if result.get('error'):
+            if result.get("error"):
                 logger.warning(f"[V90.0 Ghost] 事件触发失败: {result['error']}")
                 return None
 
@@ -594,7 +594,7 @@ class OddsProductionExtractor:
             self._setup_response_sniffer(page)
 
             # 步骤 2: 等待页面加载
-            await page.wait_for_load_state('networkidle', timeout=10000)
+            await page.wait_for_load_state("networkidle", timeout=10000)
 
             # 步骤 3: 触发 ghost hover
             ghost_result = await self._trigger_ghost_hover(page)
@@ -613,11 +613,11 @@ class OddsProductionExtractor:
                 for resp in self._captured_responses:
                     parsed = self._parse_api_response(resp, match_date)
                     if parsed:
-                        logger.info(f"[V90.0 Ghost] ✅ API 解析成功")
+                        logger.info("[V90.0 Ghost] ✅ API 解析成功")
                         return {
                             **parsed,
-                            'source': 'V90.0_Ghost_API',
-                            'hover_failed': False
+                            "source": "V90.0_Ghost_API",
+                            "hover_failed": False
                         }
 
             # 步骤 6: 回退到 DOM tooltip 检测
@@ -630,7 +630,7 @@ class OddsProductionExtractor:
 
         except Exception as e:
             logger.error(f"[V90.0 Ghost Protocol] 异常: {e}")
-            return self._build_hover_failed_result(f"异常: {str(e)}")
+            return self._build_hover_failed_result(f"异常: {e!s}")
 
     def _parse_api_response(
         self,
@@ -653,65 +653,65 @@ class OddsProductionExtractor:
             解析后的初盘数据
         """
         try:
-            json_data = response['json']
+            json_data = response["json"]
 
             if not isinstance(json_data, dict):
                 return None
 
             # 方案 1: 直接的 opening/initial/start 字段
-            for key in ['opening', 'initial', 'start']:
+            for key in ["opening", "initial", "start"]:
                 if key in json_data:
                     data = json_data[key]
                     if isinstance(data, dict):
                         # 支持多种字段名变体
-                        home = data.get('home') or data.get('h') or data.get('1')
-                        draw = data.get('draw') or data.get('d') or data.get('x')
-                        away = data.get('away') or data.get('a')
-                        time = data.get('timestamp') or data.get('time') or data.get('opening_time')
+                        home = data.get("home") or data.get("h") or data.get("1")
+                        draw = data.get("draw") or data.get("d") or data.get("x")
+                        away = data.get("away") or data.get("a")
+                        time = data.get("timestamp") or data.get("time") or data.get("opening_time")
 
                         if home and isinstance(home, (int, float)):
                             logger.debug(f"[V90.0 Ghost] 解析成功 ({key}): init_h={home}")
                             return {
-                                'init_h': float(home),
-                                'init_d': float(draw) if draw and isinstance(draw, (int, float)) else None,
-                                'init_a': float(away) if away and isinstance(away, (int, float)) else None,
-                                'opening_time_h': time
+                                "init_h": float(home),
+                                "init_d": float(draw) if draw and isinstance(draw, (int, float)) else None,
+                                "init_a": float(away) if away and isinstance(away, (int, float)) else None,
+                                "opening_time_h": time
                             }
 
             # 方案 2: 嵌套的 odds.opening 结构
-            if 'odds' in json_data:
-                odds = json_data['odds']
+            if "odds" in json_data:
+                odds = json_data["odds"]
                 if isinstance(odds, dict):
-                    result = self._parse_api_response({'json': odds}, match_date)
+                    result = self._parse_api_response({"json": odds}, match_date)
                     if result:
                         logger.debug(f"[V90.0 Ghost] 解析成功 (odds): init_h={result.get('init_h')}")
                         return result
 
             # 方案 3: data 数组格式
-            if 'data' in json_data:
-                data = json_data['data']
+            if "data" in json_data:
+                data = json_data["data"]
                 if isinstance(data, list):
                     for item in data:
                         if isinstance(item, dict):
-                            item_type = item.get('type', '') or str(item.get('name', ''))
-                            if 'opening' in item_type.lower() or 'initial' in item_type.lower():
-                                home = item.get('home') or item.get('h')
-                                draw = item.get('draw') or item.get('d')
-                                away = item.get('away') or item.get('a')
+                            item_type = item.get("type", "") or str(item.get("name", ""))
+                            if "opening" in item_type.lower() or "initial" in item_type.lower():
+                                home = item.get("home") or item.get("h")
+                                draw = item.get("draw") or item.get("d")
+                                away = item.get("away") or item.get("a")
                                 if home and isinstance(home, (int, float)):
                                     logger.debug(f"[V90.0 Ghost] 解析成功 (data array): init_h={home}")
                                     return {
-                                        'init_h': float(home),
-                                        'init_d': float(draw) if draw else None,
-                                        'init_a': float(away) if away else None,
-                                        'opening_time_h': item.get('timestamp')
+                                        "init_h": float(home),
+                                        "init_d": float(draw) if draw else None,
+                                        "init_a": float(away) if away else None,
+                                        "opening_time_h": item.get("timestamp")
                                     }
 
             # 方案 4: match.nested 结构
-            if 'match' in json_data:
-                match = json_data['match']
+            if "match" in json_data:
+                match = json_data["match"]
                 if isinstance(match, dict):
-                    result = self._parse_api_response({'json': match}, match_date)
+                    result = self._parse_api_response({"json": match}, match_date)
                     if result:
                         logger.debug(f"[V90.0 Ghost] 解析成功 (match): init_h={result.get('init_h')}")
                         return result
@@ -723,11 +723,11 @@ class OddsProductionExtractor:
                     return None
 
                 # 检查当前对象是否包含赔率数据
-                for key in ['opening', 'initial', 'start']:
+                for key in ["opening", "initial", "start"]:
                     if key in obj:
                         data = obj[key]
                         if isinstance(data, dict):
-                            home = data.get('home') or data.get('h')
+                            home = data.get("home") or data.get("h")
                             if home and isinstance(home, (int, float)):
                                 return obj
 
@@ -748,7 +748,7 @@ class OddsProductionExtractor:
 
             nested_result = find_odds_recursive(json_data)
             if nested_result:
-                result = self._parse_api_response({'json': nested_result}, match_date)
+                result = self._parse_api_response({"json": nested_result}, match_date)
                 if result:
                     logger.debug(f"[V90.0 Ghost] 解析成功 (recursive): init_h={result.get('init_h')}")
                     return result
@@ -815,7 +815,7 @@ class OddsProductionExtractor:
             # Step 2: Find target bookmaker container
             target_container = await self._find_bookmaker_container(page, real_name)
             if not target_container:
-                return self._build_hover_failed_result(f'Bookmaker {real_name} not found')
+                return self._build_hover_failed_result(f"Bookmaker {real_name} not found")
 
             # Step 3: Scroll into view (hover self-healing)
             await self._scroll_to_element(target_container)
@@ -827,21 +827,21 @@ class OddsProductionExtractor:
 
             # Step 5: Parse tooltip data
             if not tooltip_data:
-                return self._build_hover_failed_result('No tooltip data captured')
+                return self._build_hover_failed_result("No tooltip data captured")
 
             return self._parse_tooltip_data(tooltip_data, match_year)
 
         except Exception as e:
             logger.error(f"[OddsExtractor] Hover capture exception: {e}")
             return {
-                'hover_failed': True,
-                'hover_error': f'Exception: {str(e)}',
-                'init_h': None,
-                'init_d': None,
-                'init_a': None,
-                'opening_time_h': None,
-                'opening_time_d': None,
-                'opening_time_a': None,
+                "hover_failed": True,
+                "hover_error": f"Exception: {e!s}",
+                "init_h": None,
+                "init_d": None,
+                "init_a": None,
+                "opening_time_h": None,
+                "opening_time_d": None,
+                "opening_time_a": None,
             }
 
     # ========================================================================
@@ -950,7 +950,7 @@ class OddsProductionExtractor:
                 # V88.0: Use jitter offset for this attempt
                 jitter_offset = JITTER_OFFSETS[attempt % len(JITTER_OFFSETS)]
 
-                await element.hover(position={'x': jitter_offset[0], 'y': jitter_offset[1]})
+                await element.hover(position={"x": jitter_offset[0], "y": jitter_offset[1]})
 
                 # V88.0: Smart wait for tooltip using wait_for_function
                 tooltip_data = await self._poll_for_tooltip_enhanced(page)
@@ -1063,9 +1063,9 @@ class OddsProductionExtractor:
         logger.debug("[OddsExtractor] Mouse jitter self-healing: executing micro-movement")
         try:
             box = await element.bounding_box()
-            await page.mouse.move(box['x'] + 5, box['y'] + 5)
+            await page.mouse.move(box["x"] + 5, box["y"] + 5)
             await page.wait_for_timeout(100)
-            await page.mouse.move(box['x'], box['y'])
+            await page.mouse.move(box["x"], box["y"])
             await page.wait_for_timeout(100)
             logger.debug("[OddsExtractor] Mouse jitter complete")
         except Exception as e:
@@ -1086,23 +1086,23 @@ class OddsProductionExtractor:
             Parsed result dictionary with init odds and timestamps.
         """
         # Defensive check for missing or None text
-        if not tooltip_data or not tooltip_data.get('text'):
-            return self._build_hover_failed_result('Missing or null tooltip text')
+        if not tooltip_data or not tooltip_data.get("text"):
+            return self._build_hover_failed_result("Missing or null tooltip text")
 
-        match = TOOLTIP_OPENING_PATTERN.search(tooltip_data['text'])
+        match = TOOLTIP_OPENING_PATTERN.search(tooltip_data["text"])
 
         if not match:
             logger.warning(
                 f"[OddsExtractor] Cannot parse tooltip: "
                 f"{tooltip_data['text'][:100]}"
             )
-            return self._build_hover_failed_result('Cannot parse tooltip format')
+            return self._build_hover_failed_result("Cannot parse tooltip format")
 
         day, month_str, hour, minute, odd_value = match.groups()
         month = TOOLTIP_MONTH_MAP.get(month_str)
 
         if not month:
-            return self._build_hover_failed_result(f'Invalid month: {month_str}')
+            return self._build_hover_failed_result(f"Invalid month: {month_str}")
 
         try:
             opening_time = datetime(match_year, month, int(day), int(hour), int(minute))
@@ -1118,20 +1118,20 @@ class OddsProductionExtractor:
             logger.info(f"[OddsExtractor] Parsed: opening_time={opening_time.isoformat()}")
 
             return {
-                'init_h': opening_odd,
-                'init_d': None,
-                'init_a': None,
-                'opening_time_h': opening_time,
-                'opening_time_d': None,
-                'opening_time_a': None,
-                'hover_failed': False,
-                'hover_error': None,
-                'source': 'hover_tooltip_production',
+                "init_h": opening_odd,
+                "init_d": None,
+                "init_a": None,
+                "opening_time_h": opening_time,
+                "opening_time_d": None,
+                "opening_time_a": None,
+                "hover_failed": False,
+                "hover_error": None,
+                "source": "hover_tooltip_production",
             }
 
         except Exception as e:
             logger.error(f"[OddsExtractor] Date construction failed: {e}")
-            return self._build_hover_failed_result(f'Date construction failed: {e}')
+            return self._build_hover_failed_result(f"Date construction failed: {e}")
 
     def _build_hover_failed_result(self, error_msg: str) -> dict[str, Any]:
         """Builds a standard failure result dictionary.
@@ -1143,14 +1143,14 @@ class OddsProductionExtractor:
             Dictionary with hover_failed=True and error message.
         """
         return {
-            'hover_failed': True,
-            'hover_error': error_msg,
-            'init_h': None,
-            'init_d': None,
-            'init_a': None,
-            'opening_time_h': None,
-            'opening_time_d': None,
-            'opening_time_a': None,
+            "hover_failed": True,
+            "hover_error": error_msg,
+            "init_h": None,
+            "init_d": None,
+            "init_a": None,
+            "opening_time_h": None,
+            "opening_time_d": None,
+            "opening_time_a": None,
         }
 
     # ========================================================================
@@ -1200,21 +1200,21 @@ class OddsProductionExtractor:
         """
         if not data_list:
             return {
-                'total': 0,
-                'inserted': 0,
-                'updated': 0,
-                'valid': 0,
-                'invalid': 0,
-                'fully_captured': 0,
+                "total": 0,
+                "inserted": 0,
+                "updated": 0,
+                "valid": 0,
+                "invalid": 0,
+                "fully_captured": 0,
             }
 
         stats = {
-            'total': len(data_list),
-            'inserted': 0,
-            'updated': 0,
-            'valid': 0,
-            'invalid': 0,
-            'fully_captured': 0,
+            "total": len(data_list),
+            "inserted": 0,
+            "updated": 0,
+            "valid": 0,
+            "invalid": 0,
+            "fully_captured": 0,
         }
 
         conn = self.get_db_connection()
@@ -1224,12 +1224,12 @@ class OddsProductionExtractor:
             data.calculate_integrity_score()
 
             if data.is_valid:
-                stats['valid'] += 1
+                stats["valid"] += 1
             else:
-                stats['invalid'] += 1
+                stats["invalid"] += 1
 
             if data.fully_captured:
-                stats['fully_captured'] += 1
+                stats["fully_captured"] += 1
 
             try:
                 cursor.execute("""
@@ -1270,9 +1270,9 @@ class OddsProductionExtractor:
 
                 # Check if this was an insert or update
                 if cursor.rowcount > 0:
-                    stats['inserted'] += 1
+                    stats["inserted"] += 1
                 else:
-                    stats['updated'] += 1
+                    stats["updated"] += 1
 
             except Exception as e:
                 logger.error(f"Database error for match {data.match_id}: {e}")
@@ -1317,16 +1317,16 @@ class OddsProductionExtractor:
                 - error: Error message if failed
         """
         result = {
-            'match_id': match_id,
-            'url': url,
-            'success': False,
-            'pinnacle_found': False,
-            'final_h': None,
-            'final_d': None,
-            'final_a': None,
-            'integrity_score': None,
-            'is_valid': False,
-            'error': None
+            "match_id": match_id,
+            "url": url,
+            "success": False,
+            "pinnacle_found": False,
+            "final_h": None,
+            "final_d": None,
+            "final_a": None,
+            "integrity_score": None,
+            "is_valid": False,
+            "error": None
         }
 
         logger.info(f"[OddsPortal L3] Extracting final odds for match_id={match_id}")
@@ -1339,7 +1339,7 @@ class OddsProductionExtractor:
             page = await context.new_page()
 
             try:
-                await page.goto(url, wait_until='domcontentloaded', timeout=30000)
+                await page.goto(url, wait_until="domcontentloaded", timeout=30000)
                 await asyncio.sleep(random.uniform(3, 5))
 
                 # V82.6 Core Logic: Extract Pinnacle odds with Fallback Selectors
@@ -1443,29 +1443,29 @@ class OddsProductionExtractor:
                     }
                 """)
 
-                if pinnacle_odds.get('found'):
-                    result['pinnacle_found'] = True
-                    result['final_h'] = pinnacle_odds['odds'][0]
-                    result['final_d'] = pinnacle_odds['odds'][1]
-                    result['final_a'] = pinnacle_odds['odds'][2]
-                    result['success'] = True
+                if pinnacle_odds.get("found"):
+                    result["pinnacle_found"] = True
+                    result["final_h"] = pinnacle_odds["odds"][0]
+                    result["final_d"] = pinnacle_odds["odds"][1]
+                    result["final_a"] = pinnacle_odds["odds"][2]
+                    result["success"] = True
 
                     # Calculate integrity score
                     try:
-                        result['integrity_score'] = (
-                            1.0 / result['final_h'] +
-                            1.0 / result['final_d'] +
-                            1.0 / result['final_a']
+                        result["integrity_score"] = (
+                            1.0 / result["final_h"] +
+                            1.0 / result["final_d"] +
+                            1.0 / result["final_a"]
                         )
-                        result['is_valid'] = (
-                            MIN_INTEGRITY_SCORE < result['integrity_score'] < MAX_INTEGRITY_SCORE
+                        result["is_valid"] = (
+                            MIN_INTEGRITY_SCORE < result["integrity_score"] < MAX_INTEGRITY_SCORE
                         )
                     except ZeroDivisionError:
-                        result['is_valid'] = False
+                        result["is_valid"] = False
 
                     # Log which selector was used (for debugging)
-                    selector_used = pinnacle_odds.get('selector', 'unknown')
-                    total_odds_found = pinnacle_odds.get('totalOdds', 0)
+                    selector_used = pinnacle_odds.get("selector", "unknown")
+                    total_odds_found = pinnacle_odds.get("totalOdds", 0)
 
                     logger.info(
                         f"[OddsPortal L3] ✅ Pinnacle: "
@@ -1474,11 +1474,11 @@ class OddsProductionExtractor:
                         f"Selector: '{selector_used}', Found: {total_odds_found} odds)"
                     )
                 else:
-                    result['error'] = pinnacle_odds.get('error', 'Unknown error')
+                    result["error"] = pinnacle_odds.get("error", "Unknown error")
                     logger.debug(f"[OddsPortal L3] ⚠️ {result['error']}")
 
             except Exception as e:
-                result['error'] = str(e)
+                result["error"] = str(e)
                 logger.warning(f"[OddsPortal L3] ⚠️ Extraction failed: {e}")
 
             finally:
@@ -1545,7 +1545,7 @@ class OddsProductionExtractor:
             # Step 3: Find target bookmaker container
             target_container = await self._find_bookmaker_container(page, real_name)
             if not target_container:
-                return self._build_hover_failed_result(f'Bookmaker {real_name} not found')
+                return self._build_hover_failed_result(f"Bookmaker {real_name} not found")
 
             # Step 4: Scroll into view
             await self._scroll_to_element(target_container)
@@ -1571,10 +1571,10 @@ class OddsProductionExtractor:
                     )
                     logger.info("[V95.0] Fallback modal detected")
                 except Exception:
-                    return self._build_hover_failed_result('No modal detected after hover')
+                    return self._build_hover_failed_result("No modal detected after hover")
 
             # Step 7: Extract data from div.mt-2.gap-1 block
-            modal_data = await page.evaluate("""
+            modal_data = await page.evaluate(r"""
                 () => {
                     // Find the modal container with Odds movement header
                     const allElements = document.querySelectorAll('*');
@@ -1640,10 +1640,10 @@ class OddsProductionExtractor:
                 }
             """)
 
-            if not modal_data.get('found'):
-                error_msg = modal_data.get('error', 'Unknown error')
+            if not modal_data.get("found"):
+                error_msg = modal_data.get("error", "Unknown error")
                 logger.warning(f"[V95.0] Modal extraction failed: {error_msg}")
-                return self._build_hover_failed_result(f'Modal extraction failed: {error_msg}')
+                return self._build_hover_failed_result(f"Modal extraction failed: {error_msg}")
 
             # Step 8: Parse extracted data
             return self._parse_v95_modal_data(modal_data, match_year, match_month)
@@ -1653,15 +1653,15 @@ class OddsProductionExtractor:
             import traceback
             logger.debug(traceback.format_exc())
             return {
-                'hover_failed': True,
-                'hover_error': f'Exception: {str(e)}',
-                'init_h': None,
-                'init_d': None,
-                'init_a': None,
-                'opening_time_h': None,
-                'opening_time_d': None,
-                'opening_time_a': None,
-                'source': 'v95_failed',
+                "hover_failed": True,
+                "hover_error": f"Exception: {e!s}",
+                "init_h": None,
+                "init_d": None,
+                "init_a": None,
+                "opening_time_h": None,
+                "opening_time_d": None,
+                "opening_time_a": None,
+                "source": "v95_failed",
             }
 
     def _parse_v95_modal_data(
@@ -1685,11 +1685,11 @@ class OddsProductionExtractor:
             Parsed result dictionary with init odds and timestamps.
         """
         # Extract odds values
-        odds_values = modal_data.get('odds', [])
-        time_match = modal_data.get('timeMatch')
+        odds_values = modal_data.get("odds", [])
+        time_match = modal_data.get("timeMatch")
 
         if not odds_values or len(odds_values) == 0:
-            return self._build_hover_failed_result('No odds values found in modal')
+            return self._build_hover_failed_result("No odds values found in modal")
 
         # Primary value: first odds value (usually home win)
         init_h = odds_values[0]
@@ -1704,10 +1704,10 @@ class OddsProductionExtractor:
 
                 # Handle both dict (from JSON serialization) and list formats
                 if isinstance(time_match, dict):
-                    day = int(time_match.get('1'))
-                    month_str = time_match.get('2')
-                    hour = int(time_match.get('3'))
-                    minute = int(time_match.get('4'))
+                    day = int(time_match.get("1"))
+                    month_str = time_match.get("2")
+                    hour = int(time_match.get("3"))
+                    minute = int(time_match.get("4"))
                 else:
                     # Assume it's a list-like object
                     day = int(time_match[1]) if len(time_match) > 1 else None
@@ -1716,12 +1716,12 @@ class OddsProductionExtractor:
                     minute = int(time_match[4]) if len(time_match) > 4 else None
 
                 if not all([day, month_str, hour is not None, minute is not None]):
-                    raise ValueError('Incomplete time match data')
+                    raise ValueError("Incomplete time match data")
 
                 # Map month string to number
                 month_map = {
-                    'Jan': 1, 'Feb': 2, 'Mar': 3, 'Apr': 4, 'May': 5, 'Jun': 6,
-                    'Jul': 7, 'Aug': 8, 'Sep': 9, 'Oct': 10, 'Nov': 11, 'Dec': 12
+                    "Jan": 1, "Feb": 2, "Mar": 3, "Apr": 4, "May": 5, "Jun": 6,
+                    "Jul": 7, "Aug": 8, "Sep": 9, "Oct": 10, "Nov": 11, "Dec": 12
                 }
                 month = month_map.get(month_str)
 
@@ -1755,15 +1755,15 @@ class OddsProductionExtractor:
                 logger.warning(f"[V95.0] Date parsing failed: {e}")
 
         return {
-            'init_h': init_h,
-            'init_d': odds_values[1] if len(odds_values) > 1 else None,
-            'init_a': odds_values[2] if len(odds_values) > 2 else None,
-            'opening_time_h': opening_time,
-            'opening_time_d': None,
-            'opening_time_a': None,
-            'hover_failed': False,
-            'hover_error': None,
-            'source': 'v95_odds_movement_modal',
+            "init_h": init_h,
+            "init_d": odds_values[1] if len(odds_values) > 1 else None,
+            "init_a": odds_values[2] if len(odds_values) > 2 else None,
+            "opening_time_h": opening_time,
+            "opening_time_d": None,
+            "opening_time_a": None,
+            "hover_failed": False,
+            "hover_error": None,
+            "source": "v95_odds_movement_modal",
         }
 
     # ========================================================================
@@ -1802,16 +1802,16 @@ class OddsProductionExtractor:
         match_month = match_date.month
 
         result = {
-            'match_id': match_id,
-            'init_h': None,
-            'init_d': None,
-            'init_a': None,
-            'opening_time_h': None,
-            'opening_time_d': None,
-            'opening_time_a': None,
-            'hover_failed': True,
-            'hover_error': None,
-            'source': 'v95_oddsportal_opening',
+            "match_id": match_id,
+            "init_h": None,
+            "init_d": None,
+            "init_a": None,
+            "opening_time_h": None,
+            "opening_time_d": None,
+            "opening_time_a": None,
+            "hover_failed": True,
+            "hover_error": None,
+            "source": "v95_oddsportal_opening",
         }
 
         try:
@@ -1868,8 +1868,8 @@ class OddsProductionExtractor:
                 }
             """)
 
-            if not pinnacle_data.get('found'):
-                result['hover_error'] = pinnacle_data.get('error', 'Pinnacle not found')
+            if not pinnacle_data.get("found"):
+                result["hover_error"] = pinnacle_data.get("error", "Pinnacle not found")
                 return result
 
             logger.info("[V95.2] Pinnacle element found and hovered")
@@ -1885,11 +1885,11 @@ class OddsProductionExtractor:
                 logger.info("[V95.2] Odds movement modal detected!")
             except Exception:
                 logger.warning("[V95.2] Odds movement modal not found")
-                result['hover_error'] = 'Odds movement modal not found'
+                result["hover_error"] = "Odds movement modal not found"
                 return result
 
             # Step 4: Extract data from modal
-            modal_data = await page.evaluate("""
+            modal_data = await page.evaluate(r"""
                 () => {
                     // Find modal with Odds movement header
                     const allElements = document.querySelectorAll('*');
@@ -1948,8 +1948,8 @@ class OddsProductionExtractor:
                 }
             """)
 
-            if not modal_data.get('found'):
-                result['hover_error'] = modal_data.get('error', 'Modal extraction failed')
+            if not modal_data.get("found"):
+                result["hover_error"] = modal_data.get("error", "Modal extraction failed")
                 return result
 
             # Step 5: Parse with year inference
@@ -1960,7 +1960,7 @@ class OddsProductionExtractor:
             )
 
             result.update(parsed)
-            result['hover_failed'] = not parsed.get('init_h')
+            result["hover_failed"] = not parsed.get("init_h")
 
             return result
 
@@ -1968,7 +1968,7 @@ class OddsProductionExtractor:
             logger.error(f"[V95.2] Extraction exception: {e}")
             import traceback
             logger.debug(traceback.format_exc())
-            result['hover_error'] = f'Exception: {str(e)}'
+            result["hover_error"] = f"Exception: {e!s}"
             return result
 
     # ========================================================================
@@ -2011,16 +2011,16 @@ class OddsProductionExtractor:
         match_month = match_date.month
 
         result = {
-            'match_id': match_id,
-            'init_h': None,
-            'init_d': None,
-            'init_a': None,
-            'opening_time_h': None,
-            'opening_time_d': None,
-            'opening_time_a': None,
-            'hover_failed': True,
-            'hover_error': None,
-            'source': 'v96_network_sniffer',
+            "match_id": match_id,
+            "init_h": None,
+            "init_d": None,
+            "init_a": None,
+            "opening_time_h": None,
+            "opening_time_d": None,
+            "opening_time_a": None,
+            "hover_failed": True,
+            "hover_error": None,
+            "source": "v96_network_sniffer",
         }
 
         # Network capture container
@@ -2030,22 +2030,22 @@ class OddsProductionExtractor:
             """Handle network responses during page load."""
             try:
                 url = response.url
-                content_type = response.headers.get('content-type', '')
+                content_type = response.headers.get("content-type", "")
 
                 # Filter: Must be JSON and relevant URL
-                if ('application/json' in content_type or 
-                    url.endswith('.json') or
-                    'ajax' in url.lower()):
-                    
+                if ("application/json" in content_type or
+                    url.endswith(".json") or
+                    "ajax" in url.lower()):
+
                     # Check URL relevance
                     relevant_keywords = [
-                        'ajax-odds', 'opening', 'odds-history',
-                        'bookmaker', 'pinnacle', 'match-data', 'match-event'
+                        "ajax-odds", "opening", "odds-history",
+                        "bookmaker", "pinnacle", "match-data", "match-event"
                     ]
-                    
+
                     if any(kw in url.lower() for kw in relevant_keywords):
                         logger.info(f"[V96.0 Sniffer] Captured: {url[:100]}")
-                        
+
                         # Try to extract JSON
                         try:
                             # Capture response body before it's consumed
@@ -2068,25 +2068,25 @@ class OddsProductionExtractor:
             logger.info(f"[V96.0] Timeout set to {timeout}s for silent listening")
 
             # Step 1: Install listener BEFORE navigation
-            page.on('response', response_handler)
+            page.on("response", response_handler)
 
             # Step 2: Trigger page reload to ensure AJAX calls fire
             # Even if page is already loaded, reload() will trigger fresh AJAX
             try:
                 # Use reload instead of goto to ensure fresh AJAX requests
-                await page.reload(wait_until='domcontentloaded', timeout=timeout * 1000)
+                await page.reload(wait_until="domcontentloaded", timeout=timeout * 1000)
                 logger.info("[V96.0] Page reloaded, monitoring AJAX responses...")
             except Exception as e:
                 logger.debug(f"[V96.0] Reload timeout (expected): {e}")
 
             # Step 3: Silent listening period
             # Wait for AJAX calls to complete
-            logger.info(f"[V96.0] Entering silent listening period...")
+            logger.info("[V96.0] Entering silent listening period...")
             await asyncio.sleep(timeout)
 
             # Step 4: Check captured data
             if not captured_data["found"]:
-                result['hover_error'] = 'No relevant JSON captured'
+                result["hover_error"] = "No relevant JSON captured"
                 logger.warning("[V96.0] No JSON captured during listening period")
                 return result
 
@@ -2099,12 +2099,12 @@ class OddsProductionExtractor:
             )
 
             result.update(parsed)
-            result['hover_failed'] = not parsed.get('init_h')
+            result["hover_failed"] = not parsed.get("init_h")
 
-            if result['init_h']:
+            if result["init_h"]:
                 logger.info(f"[V96.0] SUCCESS: init_h={result['init_h']} at {result['opening_time_h']}")
             else:
-                logger.warning(f"[V96.0] JSON captured but no opening odds found")
+                logger.warning("[V96.0] JSON captured but no opening odds found")
 
             return result
 
@@ -2112,7 +2112,7 @@ class OddsProductionExtractor:
             logger.error(f"[V96.0] Extraction exception: {e}")
             import traceback
             logger.debug(traceback.format_exc())
-            result['hover_error'] = f'Exception: {str(e)}'
+            result["hover_error"] = f"Exception: {e!s}"
             return result
 
     def _parse_odds_json_v96(
@@ -2139,11 +2139,11 @@ class OddsProductionExtractor:
             Parsed odds dictionary
         """
         result = {
-            'init_h': None,
-            'init_d': None,
-            'init_a': None,
-            'opening_time_h': None,
-            'captured_url': captured_url
+            "init_h": None,
+            "init_d": None,
+            "init_a": None,
+            "opening_time_h": None,
+            "captured_url": captured_url
         }
 
         def recursive_search(obj, depth=0, max_depth=10):
@@ -2154,27 +2154,27 @@ class OddsProductionExtractor:
             # Case 1: Dictionary with direct odds keys
             if isinstance(obj, dict):
                 # Check for Pinnacle ID 18
-                if '18' in obj or 'pinnacle' in str(obj).lower():
-                    data = obj.get('18') or obj.get('pinnacle')
+                if "18" in obj or "pinnacle" in str(obj).lower():
+                    data = obj.get("18") or obj.get("pinnacle")
                     if data and isinstance(data, dict):
                         # Look for opening/initial keys
-                        for key in ['opening', 'initial', 'start', 'first']:
+                        for key in ["opening", "initial", "start", "first"]:
                             if key in data:
                                 odds = data[key]
                                 if isinstance(odds, dict):
-                                    h = odds.get('home') or odds.get('h') or odds.get('1')
-                                    d = odds.get('draw') or odds.get('d') or odds.get('x') or odds.get('2')
-                                    a = odds.get('away') or odds.get('a') or odds.get('3')
+                                    h = odds.get("home") or odds.get("h") or odds.get("1")
+                                    d = odds.get("draw") or odds.get("d") or odds.get("x") or odds.get("2")
+                                    a = odds.get("away") or odds.get("a") or odds.get("3")
                                     if h and isinstance(h, (int, float)):
                                         return {
-                                            'init_h': float(h),
-                                            'init_d': float(d) if d else None,
-                                            'init_a': float(a) if a else None,
-                                            'timestamp': odds.get('time') or odds.get('timestamp')
+                                            "init_h": float(h),
+                                            "init_d": float(d) if d else None,
+                                            "init_a": float(a) if a else None,
+                                            "timestamp": odds.get("time") or odds.get("timestamp")
                                         }
 
                 # Check for odds array format: [home, draw, away]
-                for key in ['opening', 'initial', 'start', 'first', 'odds']:
+                for key in ["opening", "initial", "start", "first", "odds"]:
                     if key in obj:
                         odds_val = obj[key]
                         if isinstance(odds_val, list) and len(odds_val) >= 3:
@@ -2182,10 +2182,10 @@ class OddsProductionExtractor:
                                 h, d, a = float(odds_val[0]), float(odds_val[1]), float(odds_val[2])
                                 if 1.01 <= h <= 50.0:
                                     return {
-                                        'init_h': h,
-                                        'init_d': d,
-                                        'init_a': a,
-                                        'timestamp': obj.get('time') or obj.get('timestamp')
+                                        "init_h": h,
+                                        "init_d": d,
+                                        "init_a": a,
+                                        "timestamp": obj.get("time") or obj.get("timestamp")
                                     }
                             except (ValueError, TypeError):
                                 pass
@@ -2202,7 +2202,7 @@ class OddsProductionExtractor:
                 for item in obj:
                     if isinstance(item, dict):
                         # Check if this item looks like odds data
-                        if any(k in str(item).lower() for k in ['home', 'draw', 'away', 'h', 'd', 'a']):
+                        if any(k in str(item).lower() for k in ["home", "draw", "away", "h", "d", "a"]):
                             found = recursive_search(item, depth + 1, max_depth)
                             if found:
                                 return found
@@ -2213,14 +2213,14 @@ class OddsProductionExtractor:
         found = recursive_search(json_data)
 
         if found:
-            result['init_h'] = found.get('init_h')
-            result['init_d'] = found.get('init_d')
-            result['init_a'] = found.get('init_a')
+            result["init_h"] = found.get("init_h")
+            result["init_d"] = found.get("init_d")
+            result["init_a"] = found.get("init_a")
 
             # Parse timestamp if present
-            ts = found.get('timestamp')
+            ts = found.get("timestamp")
             if ts:
-                result['opening_time_h'] = self._parse_v96_timestamp(ts, match_year, match_month)
+                result["opening_time_h"] = self._parse_v96_timestamp(ts, match_year, match_month)
 
         return result
 
@@ -2284,15 +2284,15 @@ class OddsProductionExtractor:
             try:
                 from datetime import datetime
                 import re
-                match = re.match(r'(\d{1,2})\s+([A-Za-z]{3})\s*,\s*(\d{1,2}):(\d{2})', timestamp)
+                match = re.match(r"(\d{1,2})\s+([A-Za-z]{3})\s*,\s*(\d{1,2}):(\d{2})", timestamp)
                 if match:
                     day = int(match.group(1))
                     month_str = match.group(2)
                     hour = int(match.group(3))
                     minute = int(match.group(4))
 
-                    months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-                            'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+                    months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                            "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
                     try:
                         month = months.index(month_str) + 1
                     except ValueError:
@@ -2346,14 +2346,14 @@ class OddsProductionExtractor:
             match_date = datetime.now()
 
         result = {
-            'match_id': match_id,
-            'init_h': None,
-            'init_d': None,
-            'init_a': None,
-            'opening_time_h': None,
-            'hover_failed': True,
-            'hover_error': None,
-            'source': 'v97_memory_dom',
+            "match_id": match_id,
+            "init_h": None,
+            "init_d": None,
+            "init_a": None,
+            "opening_time_h": None,
+            "hover_failed": True,
+            "hover_error": None,
+            "source": "v97_memory_dom",
         }
 
         try:
@@ -2399,18 +2399,18 @@ class OddsProductionExtractor:
                 }
             """)
 
-            if not extracted.get('success'):
-                result['hover_error'] = extracted.get('error', 'Extraction failed')
+            if not extracted.get("success"):
+                result["hover_error"] = extracted.get("error", "Extraction failed")
                 return result
 
-            all_odds = extracted.get('allOdds', [])
+            all_odds = extracted.get("allOdds", [])
 
             # V97.1: Smart candidate selection - try multiple 3-odds sets
             # and select the one with best integrity score
             if len(all_odds) >= 3:
                 best_candidate = None
                 best_score = None
-                best_distance = float('inf')
+                best_distance = float("inf")
 
                 # Try consecutive triplets (skip by 1 to find main 1X2 market)
                 for start_idx in range(min(10, len(all_odds) - 2)):
@@ -2435,20 +2435,20 @@ class OddsProductionExtractor:
 
                 if best_candidate:
                     h, d, a = best_candidate
-                    result['init_h'] = h
-                    result['init_d'] = d
-                    result['init_a'] = a
-                    result['hover_failed'] = False
+                    result["init_h"] = h
+                    result["init_d"] = d
+                    result["init_a"] = a
+                    result["hover_failed"] = False
 
                     # Try to infer timestamp (use match_date at noon)
                     try:
                         from datetime import datetime, time
-                        result['opening_time_h'] = datetime.combine(
+                        result["opening_time_h"] = datetime.combine(
                             match_date.date(),
                             time(12, 0)
                         )
                     except:
-                        result['opening_time_h'] = match_date
+                        result["opening_time_h"] = match_date
 
                     logger.info(f"[V97.1] SUCCESS: init_h={h}, init_d={d}, init_a={a}, score={best_score:.4f}")
                 else:
@@ -2457,10 +2457,10 @@ class OddsProductionExtractor:
                     d = float(all_odds[1])
                     a = float(all_odds[2])
                     score = 1/h + 1/d + 1/a
-                    result['hover_error'] = f'No valid odds found (best score: {score:.4f})'
+                    result["hover_error"] = f"No valid odds found (best score: {score:.4f})"
                     logger.warning(f"[V97.1] All candidates invalid, best: {score:.4f}")
             else:
-                result['hover_error'] = f'Not enough odds found: {len(all_odds)}'
+                result["hover_error"] = f"Not enough odds found: {len(all_odds)}"
 
             return result
 
@@ -2468,5 +2468,5 @@ class OddsProductionExtractor:
             logger.error(f"[V97.0] Extraction exception: {e}")
             import traceback
             logger.debug(traceback.format_exc())
-            result['hover_error'] = f'Exception: {str(e)}'
+            result["hover_error"] = f"Exception: {e!s}"
             return result

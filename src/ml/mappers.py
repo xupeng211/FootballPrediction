@@ -15,8 +15,8 @@ V20.5 球员位置映射模块
 版本: V20.5
 """
 
-import logging
 from enum import Enum
+import logging
 from typing import Any
 
 logger = logging.getLogger(__name__)

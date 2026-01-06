@@ -17,12 +17,11 @@ Date: 2026-01-02
 """
 
 import asyncio
-import json
+from dataclasses import dataclass
+from datetime import datetime
 import logging
 import random
 import time
-from dataclasses import dataclass
-from datetime import datetime
 
 import aiohttp
 import psycopg2
@@ -121,11 +120,11 @@ class IncrementalCollector:
 
     # V57.0: 拟人化反爬盔甲
     USER_AGENTS = [
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",  # noqa: E501
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",  # noqa: E501
-        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",  # noqa: E501
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0",
-        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.1 Safari/605.1.15",  # noqa: E501
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.1 Safari/605.1.15",
     ]
 
     def __init__(
@@ -482,15 +481,14 @@ class IncrementalCollector:
                 )
                 return data
 
-            elif response.status in {403, 429, 500, 502, 503, 504}:
+            if response.status in {403, 429, 500, 502, 503, 504}:
                 # 关键错误：抛出带状态码的异常，触发熔断器
                 self.stats.http_errors += 1
                 raise HTTPClientError(response.status, f"Match {match_id} 返回 {response.status}")
 
-            else:
-                self.stats.http_errors += 1
-                logger.warning(f"  [{index + 1}/{total_count}] Match {match_id}: HTTP {response.status}")
-                return None
+            self.stats.http_errors += 1
+            logger.warning(f"  [{index + 1}/{total_count}] Match {match_id}: HTTP {response.status}")
+            return None
 
     def _import_matches_to_db(self, match_l1_data: list[dict]) -> int:
         """

@@ -140,23 +140,21 @@ class ProductionL2Collector:
         # 构建 URL
         url = f"{self.API_URL}?matchId={match_id}"
 
-        async with self.concurrent_limiter:
-            async with self.session.get(url) as response:
-                if response.status == 200:
-                    self.circuit_breaker.record_success()
-                    return await response.json()
-                elif response.status == 404:
-                    raise aiohttp.ClientResponseError(
-                        response.request_info,
-                        response.history,
-                        status=404,
-                        message=f"Match {match_id} not found",
-                    )
-                elif response.status >= 500:
-                    self.circuit_breaker.record_failure(aiohttp.ClientError(f"HTTP {response.status}"))
-                    raise aiohttp.ClientError(f"Server error: HTTP {response.status}")
-                else:
-                    raise aiohttp.ClientError(f"Unexpected status: HTTP {response.status}")
+        async with self.concurrent_limiter, self.session.get(url) as response:
+            if response.status == 200:
+                self.circuit_breaker.record_success()
+                return await response.json()
+            if response.status == 404:
+                raise aiohttp.ClientResponseError(
+                    response.request_info,
+                    response.history,
+                    status=404,
+                    message=f"Match {match_id} not found",
+                )
+            if response.status >= 500:
+                self.circuit_breaker.record_failure(aiohttp.ClientError(f"HTTP {response.status}"))
+                raise aiohttp.ClientError(f"Server error: HTTP {response.status}")
+            raise aiohttp.ClientError(f"Unexpected status: HTTP {response.status}")
 
     def _parse_and_validate_l2_data(
         self,
@@ -303,20 +301,19 @@ class ProductionL2Collector:
 
         try:
             start_time = time.time()
-            async with self.db_pool.acquire() as conn:
-                async with conn.transaction():
-                    for match_id, validated_dict in batch:
-                        json_data = json.dumps(validated_dict, ensure_ascii=False)
-                        await conn.execute(
-                            """
+            async with self.db_pool.acquire() as conn, conn.transaction():
+                for match_id, validated_dict in batch:
+                    json_data = json.dumps(validated_dict, ensure_ascii=False)
+                    await conn.execute(
+                        """
                             INSERT INTO raw_match_data (match_id, raw_data, source)
                             VALUES ($1, $2::jsonb, 'fotmob')
                             ON CONFLICT (match_id) DO UPDATE
                             SET raw_data = EXCLUDED.raw_data, updated_at = NOW()
                             """,
-                            match_id,
-                            json_data,
-                        )
+                        match_id,
+                        json_data,
+                    )
 
             db_time = time.time() - start_time
             self.summary.add_db_time(db_time)

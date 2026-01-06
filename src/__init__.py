@@ -13,10 +13,10 @@ __email__ = "football@prediction.com"
 from . import api, core, database, ml, services, utils
 
 __all__ = [
+    "api",
     "core",
+    "database",
     "ml",
     "services",
     "utils",
-    "api",
-    "database",
 ]

@@ -5,9 +5,9 @@
 """
 
 import csv
+from datetime import UTC, datetime
 import logging
 import os
-from datetime import UTC, datetime
 
 import requests
 
@@ -292,9 +292,8 @@ class PremierLeagueL1Harvester:
                 logger.info(f"🎯 创世纪清单已生成: {self.output_file}")
                 logger.info("=" * 60)
                 return True
-            else:
-                logger.error("❌ 保存创世纪清单失败")
-                return False
+            logger.error("❌ 保存创世纪清单失败")
+            return False
 
         except Exception as e:
             logger.error(f"❌ 数据采集流程异常: {e}")

@@ -18,11 +18,11 @@
 4. Type Safety Layer (类型安全层)
 """
 
-import logging
-import time
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
+import logging
+import time
 from typing import Any, Protocol
 
 from .dependency_injection import ServiceLifecycle, injectable

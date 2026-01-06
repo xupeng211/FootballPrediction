@@ -15,11 +15,11 @@ Phase: Production-Grade Audit
 Version: V38.5.1-Hardened
 """
 
+from dataclasses import dataclass, field
+from datetime import UTC, datetime
 import json
 import logging
 import re
-from dataclasses import dataclass, field
-from datetime import UTC, datetime
 from typing import Any
 
 import psycopg2
@@ -369,7 +369,7 @@ class L3FeatureExtractor:
         except Exception as e:
             logger.error(f"[{match_id}] 特征提取异常: {e}", exc_info=True)
             self._extraction_stats["failed_count"] += 1
-            return self._create_default_features(match_id, league_id, season, [f"提取异常: {str(e)}"])
+            return self._create_default_features(match_id, league_id, season, [f"提取异常: {e!s}"])
 
     # ============================================
     # Stats 特征提取 (路径安全访问协议)
@@ -414,7 +414,7 @@ class L3FeatureExtractor:
         try:
             stats_dict = self._flatten_stats_array_safe(stats_array)
         except Exception as e:
-            warnings.append(f"stats 数组打平失败: {str(e)}")
+            warnings.append(f"stats 数组打平失败: {e!s}")
             return result, warnings
 
         # 步骤 5: 提取各特征（防御性转换）
@@ -542,8 +542,7 @@ class L3FeatureExtractor:
                 # 确保返回的是列表
                 if isinstance(value, list):
                     return value
-                else:
-                    logger.warning(f"stats.{key} 不是列表类型: {type(value)}")
+                logger.warning(f"stats.{key} 不是列表类型: {type(value)}")
 
         return None
 

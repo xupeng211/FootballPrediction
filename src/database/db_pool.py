@@ -31,20 +31,20 @@ V30.0 数据库连接池实现 (同步 + 异步双模支持)
 """
 
 import asyncio
+from contextlib import asynccontextmanager, contextmanager
+from dataclasses import dataclass, field
 import logging
 import os
 import threading
 import time
-import urllib.parse
-from contextlib import asynccontextmanager, contextmanager
-from dataclasses import dataclass, field
 from typing import Any, AsyncContextManager, ContextManager, Optional
+import urllib.parse
 
 import asyncpg
+from asyncpg import Connection, Pool
 
 # psycopg2 同步连接池
 import psycopg2
-from asyncpg import Connection, Pool
 from psycopg2 import pool as psycopg2_pool
 from psycopg2.extras import RealDictCursor, RealDictRow
 

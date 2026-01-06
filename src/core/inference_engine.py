@@ -14,8 +14,8 @@ Football Prediction Inference Engine
 import json
 import logging
 import os
-import sys
 from pathlib import Path
+import sys
 
 import joblib
 import numpy as np
@@ -112,16 +112,15 @@ class FootballPredictionInference:
             for feature_name in self.feature_names:
                 if feature_name in match_features:
                     feature_dict[feature_name] = match_features[feature_name]
+                # 使用默认值
+                elif "xg" in feature_name.lower():
+                    feature_dict[feature_name] = 1.0  # 默认xG
+                elif "possession" in feature_name.lower():
+                    feature_dict[feature_name] = 50.0  # 默认控球率
+                elif "odds" in feature_name.lower():
+                    feature_dict[feature_name] = 2.0  # 默认赔率
                 else:
-                    # 使用默认值
-                    if "xg" in feature_name.lower():
-                        feature_dict[feature_name] = 1.0  # 默认xG
-                    elif "possession" in feature_name.lower():
-                        feature_dict[feature_name] = 50.0  # 默认控球率
-                    elif "odds" in feature_name.lower():
-                        feature_dict[feature_name] = 2.0  # 默认赔率
-                    else:
-                        feature_dict[feature_name] = 0.0
+                    feature_dict[feature_name] = 0.0
 
             # 创建衍生特征
             if "home_xg" in feature_dict and "away_xg" in feature_dict:
@@ -251,22 +250,18 @@ class FootballPredictionInference:
         if max_idx == 2:  # 主胜
             if max_prob > 0.65:
                 return "强烈推荐主胜"
-            elif max_prob > 0.55:
+            if max_prob > 0.55:
                 return "推荐主胜"
-            else:
-                return "谨慎看好主胜"
-        elif max_idx == 1:  # 平局
+            return "谨慎看好主胜"
+        if max_idx == 1:  # 平局
             if max_prob > 0.35:
                 return "可考虑平局"
-            else:
-                return "平局概率较低"
-        else:  # 客胜
-            if max_prob > 0.65:
-                return "强烈推荐客胜"
-            elif max_prob > 0.55:
-                return "推荐客胜"
-            else:
-                return "谨慎看好客胜"
+            return "平局概率较低"
+        if max_prob > 0.65:
+            return "强烈推荐客胜"
+        if max_prob > 0.55:
+            return "推荐客胜"
+        return "谨慎看好客胜"
 
     def predict_batch(self, matches: list[dict]) -> list[dict]:
         """

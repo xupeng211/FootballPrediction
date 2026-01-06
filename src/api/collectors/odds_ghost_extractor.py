@@ -36,22 +36,19 @@ Example:
     ...     print(f"Opening time: {result.get('opening_time_h')}")
 """
 
+from datetime import datetime
 import logging
 import re
-from dataclasses import dataclass
-from datetime import datetime
 from typing import Any
 
 from playwright.async_api import Page
 
-from src.config_unified import get_settings
-
 # Import V58.0 for fallback
 from src.api.collectors.odds_production_extractor import (
-    OddsProductionExtractor,
     POLLING_TOOLTIP_ATTEMPTS,
     POLLING_TOOLTIP_DELAY_MS,
 )
+from src.config_unified import get_settings
 
 logger = logging.getLogger(__name__)
 
@@ -71,12 +68,12 @@ ENTITY_NAME_MAPPING = {
 
 # Tooltip parsing: "Opening odds:22 Dec, 08:131.19"
 TOOLTIP_MONTH_MAP = {
-    'Jan': 1, 'Feb': 2, 'Mar': 3, 'Apr': 4, 'May': 5, 'Jun': 6,
-    'Jul': 7, 'Aug': 8, 'Sep': 9, 'Oct': 10, 'Nov': 11, 'Dec': 12,
+    "Jan": 1, "Feb": 2, "Mar": 3, "Apr": 4, "May": 5, "Jun": 6,
+    "Jul": 7, "Aug": 8, "Sep": 9, "Oct": 10, "Nov": 11, "Dec": 12,
 }
 
 TOOLTIP_OPENING_PATTERN = re.compile(
-    r'Opening\s+odds:(\d{1,2})\s+([A-Za-z]{3})\s*,\s+(\d{1,2}):(\d{2})(\d+\.\d+)'
+    r"Opening\s+odds:(\d{1,2})\s+([A-Za-z]{3})\s*,\s+(\d{1,2}):(\d{2})(\d+\.\d+)"
 )
 
 # Smart polling configuration
@@ -161,18 +158,17 @@ class OddsGhostExtractor:
             # Step 2: Find target bookmaker container (same as V58.0)
             target_container = await self._find_bookmaker_container(page, real_name)
             if not target_container:
-                return self._build_ghost_failed_result(f'Bookmaker {real_name} not found')
+                return self._build_ghost_failed_result(f"Bookmaker {real_name} not found")
 
             # Step 3: GHOST MODE - Direct DOM query without hover
             tooltip_data = await self._ghost_hunt_dom(page, GHOST_POLL_ATTEMPTS)
 
             if not tooltip_data:
                 if enable_fallback:
-                    logger.info(f"[GhostExtractor] Ghost mode failed, falling back to hover...")
+                    logger.info("[GhostExtractor] Ghost mode failed, falling back to hover...")
                     self._stats["fallback_to_hover"] += 1
                     return await self._fallback_to_hover(page, target_container, match_year)
-                else:
-                    return self._build_ghost_failed_result('No tooltip data found in DOM')
+                return self._build_ghost_failed_result("No tooltip data found in DOM")
 
             # Step 4: Parse tooltip data (reuse V58.0 regex)
             return self._parse_tooltip_data(tooltip_data, match_year, method="ghost")
@@ -180,20 +176,19 @@ class OddsGhostExtractor:
         except Exception as e:
             logger.error(f"[GhostExtractor] Ghost mode exception: {e}")
             if enable_fallback:
-                logger.info(f"[GhostExtractor] Exception, falling back to hover...")
+                logger.info("[GhostExtractor] Exception, falling back to hover...")
                 self._stats["fallback_to_hover"] += 1
                 return await self._fallback_to_hover(page, target_container, match_year)
-            else:
-                return {
-                    'ghost_failed': True,
-                    'ghost_error': f'Exception: {str(e)}',
-                    'init_h': None,
-                    'init_d': None,
-                    'init_a': None,
-                    'opening_time_h': None,
-                    'opening_time_d': None,
-                    'opening_time_a': None,
-                }
+            return {
+                "ghost_failed": True,
+                "ghost_error": f"Exception: {e!s}",
+                "init_h": None,
+                "init_d": None,
+                "init_a": None,
+                "opening_time_h": None,
+                "opening_time_d": None,
+                "opening_time_a": None,
+            }
 
     # ========================================================================
     # Private Helper Methods
@@ -356,10 +351,10 @@ class OddsGhostExtractor:
 
                 await page.wait_for_timeout(POLLING_TOOLTIP_DELAY_MS)
 
-            return self._build_ghost_failed_result('Hover fallback: No tooltip found')
+            return self._build_ghost_failed_result("Hover fallback: No tooltip found")
 
         except Exception as e:
-            return self._build_ghost_failed_result(f'Hover fallback exception: {str(e)}')
+            return self._build_ghost_failed_result(f"Hover fallback exception: {e!s}")
 
     def _parse_tooltip_data(
         self,
@@ -368,30 +363,30 @@ class OddsGhostExtractor:
         method: str = "ghost"
     ) -> dict[str, Any]:
         """Parses tooltip data to extract opening odds and timestamp."""
-        if not tooltip_data or not tooltip_data.get('text'):
-            return self._build_ghost_failed_result('Missing or null tooltip text')
+        if not tooltip_data or not tooltip_data.get("text"):
+            return self._build_ghost_failed_result("Missing or null tooltip text")
 
-        match = TOOLTIP_OPENING_PATTERN.search(tooltip_data['text'])
+        match = TOOLTIP_OPENING_PATTERN.search(tooltip_data["text"])
 
         if not match:
             logger.warning(
                 f"[GhostExtractor] Cannot parse tooltip: "
                 f"{tooltip_data['text'][:100]}"
             )
-            return self._build_ghost_failed_result('Cannot parse tooltip format')
+            return self._build_ghost_failed_result("Cannot parse tooltip format")
 
         day, month_str, hour, minute, odd_value = match.groups()
         month = TOOLTIP_MONTH_MAP.get(month_str)
 
         if not month:
-            return self._build_ghost_failed_result(f'Invalid month: {month_str}')
+            return self._build_ghost_failed_result(f"Invalid month: {month_str}")
 
         # Reconstruct timestamp
         from datetime import datetime as dt
         try:
             timestamp = dt(match_year, month, int(day), int(hour), int(minute))
         except ValueError as e:
-            return self._build_ghost_failed_result(f'Invalid timestamp: {e}')
+            return self._build_ghost_failed_result(f"Invalid timestamp: {e}")
 
         logger.info(
             f"[GhostExtractor] ✓ Parsed via {method.upper()}: "
@@ -399,29 +394,29 @@ class OddsGhostExtractor:
         )
 
         return {
-            'ghost_failed': False,
-            'method': method,
-            'init_h': float(odd_value),
-            'init_d': None,  # Tooltip only contains home odds
-            'init_a': None,
-            'opening_time_h': timestamp,
-            'opening_time_d': None,
-            'opening_time_a': None,
-            'raw_tooltip': tooltip_data['text'],
+            "ghost_failed": False,
+            "method": method,
+            "init_h": float(odd_value),
+            "init_d": None,  # Tooltip only contains home odds
+            "init_a": None,
+            "opening_time_h": timestamp,
+            "opening_time_d": None,
+            "opening_time_a": None,
+            "raw_tooltip": tooltip_data["text"],
         }
 
     def _build_ghost_failed_result(self, error_msg: str) -> dict[str, Any]:
         """Builds a failure result dictionary."""
         return {
-            'ghost_failed': True,
-            'ghost_error': error_msg,
-            'method': 'none',
-            'init_h': None,
-            'init_d': None,
-            'init_a': None,
-            'opening_time_h': None,
-            'opening_time_d': None,
-            'opening_time_a': None,
+            "ghost_failed": True,
+            "ghost_error": error_msg,
+            "method": "none",
+            "init_h": None,
+            "init_d": None,
+            "init_a": None,
+            "opening_time_h": None,
+            "opening_time_d": None,
+            "opening_time_a": None,
         }
 
     def get_stats(self) -> dict[str, Any]:

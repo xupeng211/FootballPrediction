@@ -21,22 +21,20 @@ Date: 2025-12-30
 ... )
 """
 
-import asyncio
-import json
-import logging
-import smtplib
-import threading
-import time
 from abc import ABC, abstractmethod
+import asyncio
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime
 from email.message import EmailMessage
 from email.utils import formataddr
 from enum import Enum
+import json
+import logging
 from pathlib import Path
+import smtplib
+import threading
+import time
 from typing import Any
-
-from pydantic import BaseModel
 
 from src.config_unified import get_settings
 
@@ -105,12 +103,10 @@ class AlertChannel(ABC):
         Returns:
             是否发送成功
         """
-        pass
 
     @abstractmethod
     def get_name(self) -> str:
         """获取通道名称"""
-        pass
 
 
 # ============================================
@@ -591,7 +587,6 @@ def send_alert_sync(
 
 
 if __name__ == "__main__":
-    import sys
 
     async def main():
         """测试告警管理器"""

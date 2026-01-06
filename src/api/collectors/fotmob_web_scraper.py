@@ -11,14 +11,14 @@ V19.4 FotMob 网页抓取器 - 绕过 API 限制
 日期: 2025-12-23
 """
 
+from dataclasses import dataclass
 import json
 import logging
 import time
-from dataclasses import dataclass
 
 try:
-    import requests
     from bs4 import BeautifulSoup
+    import requests
 
     HAS_DEPS = True
 except ImportError:

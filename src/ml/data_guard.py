@@ -13,10 +13,10 @@ V20.5 数据资产一致性卫士
 版本: V20.5
 """
 
-import logging
-import re
 from dataclasses import dataclass, field
 from enum import Enum
+import logging
+import re
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -179,7 +179,7 @@ class FeatureSchemaValidator:
 
     def _validate_feature_names(self, features: dict[str, Any], result: ValidationResult):
         """验证特征名格式"""
-        for name in features.keys():
+        for name in features:
             if not isinstance(name, str):
                 result.add_error(
                     field=str(name),
@@ -298,10 +298,9 @@ class DataGuard:
             if self.enable_logging:
                 logger.info(f"✅ Match {match_data.get('match_id')} 数据验证通过")
             return True, result
-        else:
-            self._rejected_count += 1
-            logger.error(f"❌ Match {match_data.get('match_id')} 数据验证失败:\n{result.summary()}")
-            return False, result
+        self._rejected_count += 1
+        logger.error(f"❌ Match {match_data.get('match_id')} 数据验证失败:\n{result.summary()}")
+        return False, result
 
     def get_stats(self) -> dict[str, Any]:
         """获取统计信息"""

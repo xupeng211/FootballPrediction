@@ -15,8 +15,8 @@ Phase 5 Advanced Features 核心组件之一
 目标：通过场馆分离特征将模型准确率提升5-8%
 """
 
-import logging
 from dataclasses import dataclass
+import logging
 from typing import Any
 
 import pandas as pd
@@ -114,7 +114,7 @@ class VenueAnalyzer:
             return venue_stats
 
         except Exception as e:
-            logger.error(f"计算场馆特征失败: {str(e)}")
+            logger.error(f"计算场馆特征失败: {e!s}")
             return VenueStats()
 
     def calculate_venue_features_for_all_matches(self, df: pd.DataFrame) -> pd.DataFrame:
@@ -267,7 +267,7 @@ class VenueAnalyzer:
             return home_advantage
 
         except Exception as e:
-            logger.error(f"计算主场优势失败: {str(e)}")
+            logger.error(f"计算主场优势失败: {e!s}")
             return 1.0  # 默认中性优势
 
     def get_venue_summary(self, df: pd.DataFrame, team_id: int) -> dict[str, Any]:

@@ -18,8 +18,8 @@ from src.api.collectors.schemas.l1_match_schema import (
 )
 
 __all__ = [
-    "L1MatchData",
     "L1CollectionSummary",
+    "L1MatchData",
     "LeagueId",
     "MatchStatus",
 ]

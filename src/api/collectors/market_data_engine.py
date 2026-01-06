@@ -42,9 +42,8 @@ from dataclasses import dataclass, field
 from datetime import datetime
 import logging
 import random
-import re
 import time
-from typing import TYPE_CHECKING, Any, Optional, Dict, List, Tuple, TypeAlias
+from typing import Any, TypeAlias
 
 from playwright.async_api import Page
 from thefuzz import fuzz
@@ -68,9 +67,9 @@ except ImportError:
 # Type aliases for better type safety (V119.0: Enhanced type hints)
 # Using string annotations for forward reference compatibility
 ProviderID: TypeAlias = int | str
-ProviderDataDict: TypeAlias = Dict[str, Dict[str, float]]
-ExtractionResult: TypeAlias = Dict[str, Any]
-EntityDataDict: TypeAlias = Dict[str, "MetricEventData"]  # Forward reference
+ProviderDataDict: TypeAlias = dict[str, dict[str, float]]
+ExtractionResult: TypeAlias = dict[str, Any]
+EntityDataDict: TypeAlias = dict[str, "MetricEventData"]  # Forward reference
 
 logger = logging.getLogger(__name__)
 
@@ -259,7 +258,7 @@ class V100MultiVendorExtractor:
     def __init__(self) -> None:
         """Initialize the V119.0 extractor."""
         self.settings = get_settings()
-        self._stats: Dict[str, int] = {
+        self._stats: dict[str, int] = {
             "total_vendors_targeted": 0,
             "successful_extractions": 0,
             "failed_extractions": 0,
@@ -851,11 +850,11 @@ class V100MultiVendorExtractor:
         try:
             if dom_data.get("found") and dom_data.get("vendors"):
                 # V117.1: Silent logging - no raw values, only counts
-                anchors_count = dom_data.get('debug', {}).get('anchors_scanned', 0)
-                metrics_count = dom_data.get('debug', {}).get('metrics_scanned', 0)
-                filtered_count = dom_data.get('debug', {}).get('metrics_filtered_out', 0)
-                vendors_count = len(dom_data['vendors'])
-                column_tracks = dom_data.get('debug', {}).get('column_tracks', {})
+                anchors_count = dom_data.get("debug", {}).get("anchors_scanned", 0)
+                metrics_count = dom_data.get("debug", {}).get("metrics_scanned", 0)
+                filtered_count = dom_data.get("debug", {}).get("metrics_filtered_out", 0)
+                vendors_count = len(dom_data["vendors"])
+                column_tracks = dom_data.get("debug", {}).get("column_tracks", {})
 
                 logger.debug(
                     f"[V117.1] Column alignment found {vendors_count} vendors "
@@ -1049,7 +1048,7 @@ class V100MultiVendorExtractor:
             """)
 
             if gravity_data.get("found") and gravity_data.get("vendors"):
-                gravity_vendors_count = len(gravity_data.get('vendors', []))
+                gravity_vendors_count = len(gravity_data.get("vendors", []))
                 logger.debug(f"[V117.1] Gravity Mode found {gravity_vendors_count} vendors")
 
                 for vendor_data in gravity_data["vendors"]:
@@ -1138,7 +1137,7 @@ class V100MultiVendorExtractor:
 
             if text_data.get("found"):
                 # V117.1: Silent logging - no raw values
-                text_vendors_count = len(text_data.get('vendors', {}))
+                text_vendors_count = len(text_data.get("vendors", {}))
                 logger.debug(f"[V117.1] Text pattern found {text_vendors_count} vendors (Last Resort)")
                 raw_vendors = text_data.get("vendors", {})
 
@@ -1183,7 +1182,7 @@ class V100MultiVendorExtractor:
         # This is critical because Average/Market often use special characters
         raw_lower = raw_name.lower()
         if any(word in raw_lower for word in ["average", "avg", "market"]):
-            logger.debug(f"[V117.1] [Entity_AVG] -> OK (priority match)")
+            logger.debug("[V117.1] [Entity_AVG] -> OK (priority match)")
             return "Entity_AVG"
 
         # Step 1: Deep clean raw name (remove common impurities)
@@ -1192,7 +1191,7 @@ class V100MultiVendorExtractor:
         # V117.1: SECONDARY CHECK for Average/Market after cleaning
         cleaned_lower = cleaned_name.lower()
         if any(word in cleaned_lower for word in ["average", "avg", "market"]):
-            logger.debug(f"[V117.1] [Entity_AVG] -> OK (cleaned match)")
+            logger.debug("[V117.1] [Entity_AVG] -> OK (cleaned match)")
             return "Entity_AVG"
 
         # Step 2: Try exact match first (fast path)

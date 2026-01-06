@@ -3,11 +3,11 @@ FootballPrediction 数据库连接工具
 提供统一的数据库连接管理和操作
 """
 
-import logging
-import os
 from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import datetime
+import logging
+import os
 from typing import Any
 
 from psycopg2.extras import DictCursor, RealDictCursor
@@ -117,10 +117,10 @@ class DatabaseManager:
 
                 if fetch == "all":
                     return [dict(row) for row in cursor.fetchall()]
-                elif fetch == "one":
+                if fetch == "one":
                     result = cursor.fetchone()
                     return dict(result) if result else None
-                elif fetch == "none":
+                if fetch == "none":
                     conn.commit()
                     return None
 
@@ -438,4 +438,4 @@ def get_database_health_report() -> dict[str, Any]:
         }
 
     except Exception as e:
-        return {"status": "error", "message": f"健康检查异常: {str(e)}", "timestamp": datetime.now().isoformat()}
+        return {"status": "error", "message": f"健康检查异常: {e!s}", "timestamp": datetime.now().isoformat()}

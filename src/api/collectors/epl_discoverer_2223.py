@@ -5,8 +5,8 @@
 """
 
 import csv
-import logging
 from datetime import datetime
+import logging
 
 import requests
 
@@ -79,10 +79,8 @@ def test_match_id(match_id: int) -> dict:
                     "home_score": teams[0].get("score"),
                     "away_score": teams[1].get("score"),
                 }
-            else:
-                return {"valid": False, "reason": "Not EPL match", "home": home_team, "away": away_team}
-        else:
-            return {"valid": False, "reason": "No match data"}
+            return {"valid": False, "reason": "Not EPL match", "home": home_team, "away": away_team}
+        return {"valid": False, "reason": "No match data"}
 
     except Exception as e:
         return {"valid": False, "reason": str(e)}

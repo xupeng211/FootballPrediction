@@ -17,13 +17,12 @@ Usage:
 """
 
 import asyncio
-import logging
-import signal
-import sys
-from dataclasses import dataclass, field
+from collections.abc import Awaitable, Callable
+from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Awaitable, Callable, List, Optional
+import logging
+import signal
 
 logger = logging.getLogger(__name__)
 
@@ -49,16 +48,16 @@ class ShutdownStatus(str, Enum):
 class ShutdownMetrics:
     """停机指标"""
 
-    signal: Optional[ShutdownSignal] = None
-    initiated_at: Optional[datetime] = None
-    completed_at: Optional[datetime] = None
+    signal: ShutdownSignal | None = None
+    initiated_at: datetime | None = None
+    completed_at: datetime | None = None
     cleanup_handlers_registered: int = 0
     cleanup_handlers_executed: int = 0
     cleanup_handlers_failed: int = 0
     status: ShutdownStatus = ShutdownStatus.RUNNING
 
     @property
-    def duration_seconds(self) -> Optional[float]:
+    def duration_seconds(self) -> float | None:
         """获取停机耗时"""
         if self.initiated_at and self.completed_at:
             return (self.completed_at - self.initiated_at).total_seconds()
@@ -83,9 +82,9 @@ class GracefulShutdownManager:
         """
         self.timeout = timeout
         self.metrics = ShutdownMetrics()
-        self._cleanup_handlers: List[Callable[[], None | Awaitable[None]]] = []
+        self._cleanup_handlers: list[Callable[[], None | Awaitable[None]]] = []
         self._shutdown_event = asyncio.Event()
-        self._loop: Optional[asyncio.AbstractEventLoop] = None
+        self._loop: asyncio.AbstractEventLoop | None = None
 
     def register_cleanup_handler(
         self,
@@ -164,7 +163,7 @@ class GracefulShutdownManager:
                 self.metrics.cleanup_handlers_executed += 1
                 logger.info(f"✅ 完成: {handler_name}")
 
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 self.metrics.cleanup_handlers_failed += 1
                 logger.error(f"⏱️ 超时: {handler_name}")
             except Exception as e:
@@ -196,7 +195,7 @@ class GracefulShutdownManager:
             logger.info(f"❌ 失败: {self.metrics.cleanup_handlers_failed}")
             logger.info("=" * 60)
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             self.metrics.completed_at = datetime.now()
             self.metrics.status = ShutdownStatus.SHUTDOWN_TIMEOUT
 

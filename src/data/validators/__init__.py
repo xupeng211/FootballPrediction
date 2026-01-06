@@ -14,8 +14,8 @@ from .data_validator import (
 
 __all__ = [
     "DataValidator",
-    "ValidationResult",
     "ValidationIssue",
+    "ValidationResult",
     "ValidationSeverity",
     "validate_batch",
 ]

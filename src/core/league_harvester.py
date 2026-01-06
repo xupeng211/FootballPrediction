@@ -5,10 +5,10 @@
 """
 
 import asyncio
+from datetime import datetime
 import logging
 import os
 import sys
-from datetime import datetime
 
 import psycopg2
 from psycopg2.extras import RealDictCursor

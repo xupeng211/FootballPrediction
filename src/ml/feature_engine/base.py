@@ -14,9 +14,9 @@ BaseProcessor - 特征处理器抽象基类
 版本: V21.0-alpha
 """
 
-import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
+import logging
 from typing import Any, Generic, Optional, TypeVar
 
 logger = logging.getLogger(__name__)
@@ -152,7 +152,6 @@ class BaseProcessor(ABC, Generic[T]):
 
         用于资源初始化，如加载模型、建立连接等。
         """
-        pass
 
     @abstractmethod
     def process(self, data: T, context: "ProcessingContext") -> ProcessorResult:

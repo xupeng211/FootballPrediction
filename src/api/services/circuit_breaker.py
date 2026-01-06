@@ -12,10 +12,10 @@ Version: 1.0.0
 Date: 2026-01-06
 """
 
-import logging
-import sys
 from datetime import datetime
+import logging
 from pathlib import Path
+import sys
 from typing import Any, Literal
 
 logger = logging.getLogger(__name__)
@@ -99,7 +99,7 @@ class CircuitBreaker:
             SystemExit: If threshold exceeded (exit code 99)
         """
         # Check if this is a hard ban
-        is_hard_ban = self.HARD_BAN_SIGNATURE in reason or self.HARD_BAN_LENGTH == int(reason.split()[-1].replace(")", "")) if "bytes" in reason else False
+        is_hard_ban = self.HARD_BAN_SIGNATURE in reason or int(reason.split()[-1].replace(")", "")) == self.HARD_BAN_LENGTH if "bytes" in reason else False
 
         if is_hard_ban:
             self.consecutive_failures += 1
@@ -157,7 +157,7 @@ class CircuitBreaker:
         logger.critical("=" * 80)
         logger.critical(f"原因: 连续 {self.consecutive_failures} 次检测到 IP 硬封禁")
         logger.critical(f"阈值: {self.threshold} 次")
-        logger.critical(f"操作: 系统将执行 sys.exit(99) 强制关机")
+        logger.critical("操作: 系统将执行 sys.exit(99) 强制关机")
         logger.critical("")
         logger.critical("失败历史:")
         for i, record in enumerate(reversed(self.failure_history[-5:]), 1):
@@ -172,10 +172,10 @@ class CircuitBreaker:
             with open(CIRCUIT_BREAKER_LOG, "a") as f:
                 f.write("\n")
                 f.write("=" * 80 + "\n")
-                f.write(f"[V144.8] CIRCUIT BREAKER TRIGGERED - SHUTDOWN\n")
+                f.write("[V144.8] CIRCUIT BREAKER TRIGGERED - SHUTDOWN\n")
                 f.write(f"Timestamp: {datetime.now().isoformat()}\n")
                 f.write(f"Consecutive Failures: {self.consecutive_failures}/{self.threshold}\n")
-                f.write(f"Action: sys.exit(99)\n")
+                f.write("Action: sys.exit(99)\n")
                 f.write("=" * 80 + "\n\n")
         except Exception:
             pass

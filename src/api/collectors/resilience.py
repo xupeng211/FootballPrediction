@@ -16,11 +16,11 @@ Version: V36.0
 """
 
 import asyncio
+from collections.abc import Callable
 import functools
 import logging
 import random
 import time
-from collections.abc import Callable
 from typing import Any, TypeVar
 
 logger = logging.getLogger(__name__)

@@ -5,9 +5,9 @@
 仅支持异步操作，移除同步引擎以避免psycopg2依赖。
 """
 
-import logging
 from collections.abc import AsyncGenerator, Generator
 from contextlib import asynccontextmanager, contextmanager
+import logging
 from typing import Any, Optional
 
 from sqlalchemy.ext.asyncio import (
@@ -100,7 +100,7 @@ class DatabaseManager:
     def create_session(self) -> None:
         """创建同步数据库会话 - 已禁用，仅支持异步"""
         # 已禁用同步会话，仅支持异步操作
-        return None
+        return
 
     def create_async_session(self) -> AsyncSession:
         """创建异步数据库会话"""
@@ -197,7 +197,7 @@ def get_db_session() -> None:
         使用 get_async_db_session() 替代
     """
     # 已禁用同步会话，仅支持异步操作
-    return None
+    return
 
 
 def close_database() -> None:

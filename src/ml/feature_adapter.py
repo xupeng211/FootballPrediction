@@ -15,10 +15,10 @@ Version: V26.4
 Date: 2025-12-28
 """
 
-import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
+import logging
 from typing import Any
 
 import numpy as np
@@ -80,12 +80,10 @@ class BaseFeatureAdapter(ABC):
         Returns:
             AdaptationResult: 适配结果
         """
-        pass
 
     @abstractmethod
     def get_required_features(self) -> list[str]:
         """获取目标模型所需的特征列表"""
-        pass
 
 
 class V19RollingAdapter(BaseFeatureAdapter):

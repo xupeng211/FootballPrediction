@@ -22,12 +22,12 @@ Date: 2025-12-30
 """
 
 import asyncio
+from collections.abc import Callable
+from dataclasses import dataclass, field
+from enum import Enum
 import logging
 import time
-from dataclasses import dataclass, field
-from datetime import datetime
-from enum import Enum
-from typing import Any, Callable
+from typing import Any
 
 from src.ops.alert_manager import AlertSeverity, send_alert_sync
 
@@ -63,7 +63,6 @@ class CircuitBreakerOpenError(Exception):
 class CircuitBreakerError(Exception):
     """熔断器基础异常"""
 
-    pass
 
 
 # ============================================
@@ -381,7 +380,7 @@ class CircuitBreaker:
             self._record_success()
             return result
 
-        except asyncio.TimeoutError as e:
+        except TimeoutError as e:
             self._record_failure(e)
             raise
 
@@ -531,8 +530,7 @@ def with_circuit_breaker(
 
         if asyncio.iscoroutinefunction(func):
             return async_wrapper
-        else:
-            return sync_wrapper
+        return sync_wrapper
 
     return decorator
 

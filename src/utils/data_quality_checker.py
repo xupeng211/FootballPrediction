@@ -9,10 +9,10 @@
 - 异常检测机制
 """
 
-import logging
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
+import logging
 from typing import Any
 
 import asyncpg
@@ -263,13 +263,12 @@ class DataQualityChecker:
         # 根据表名进行特定的完整性检查
         if table_name == "match_features_training":
             return await self._check_features_integrity(total_records)
-        elif table_name == "matches":
+        if table_name == "matches":
             return await self._check_matches_integrity(total_records)
-        elif table_name == "raw_match_data":
+        if table_name == "raw_match_data":
             return await self._check_raw_data_integrity(total_records)
-        else:
-            # 通用完整性检查
-            return await self._check_generic_integrity(table_name, total_records)
+        # 通用完整性检查
+        return await self._check_generic_integrity(table_name, total_records)
 
     async def _check_features_integrity(self, total_records: int) -> DataIntegrityResult:
         """检查特征表完整性"""

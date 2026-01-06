@@ -14,10 +14,10 @@ FeatureEngine - 特征引擎主编排器
 版本: V24.0-alpha
 """
 
-import logging
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime
+import logging
 from typing import Any
 
 from .base import BaseProcessor, ProcessorResult
@@ -441,6 +441,5 @@ def extract_features_simple(data: MatchData) -> dict[str, Any]:
 
     if result.success and result.feature_vector:
         return result.feature_vector.to_dict()
-    else:
-        logger.error(f"Feature extraction failed: {result.errors}")
-        return {}
+    logger.error(f"Feature extraction failed: {result.errors}")
+    return {}

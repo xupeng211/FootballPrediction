@@ -112,8 +112,8 @@ class DataFormatNormalizer:
             return "home_stats_away_stats"
 
         # 检查是否已经是标准化格式
-        has_home_prefix = any(k.startswith("home_") for k in raw_data.keys())
-        has_away_prefix = any(k.startswith("away_") for k in raw_data.keys())
+        has_home_prefix = any(k.startswith("home_") for k in raw_data)
+        has_away_prefix = any(k.startswith("away_") for k in raw_data)
 
         if has_home_prefix and has_away_prefix:
             return "normalized"

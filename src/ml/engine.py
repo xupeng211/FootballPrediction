@@ -9,10 +9,10 @@ V26.4 ML Engine - 统一机器学习引擎
 - 特征适配层集成
 """
 
+from datetime import datetime
 import json
 import logging
 import os
-from datetime import datetime
 
 import numpy as np
 import pandas as pd
@@ -492,15 +492,15 @@ class Predictor:
         # V26.8 联赛专项模型
         if model_type.startswith("v26_8_"):
             return f"model_zoo/{model_type.replace('_', '.')}_production.pkl"
-        elif model_type == "v26_mini":
+        if model_type == "v26_mini":
             return "model_zoo/v26.5_mini.pkl"
-        elif model_type == "v19_rolling":
+        if model_type == "v19_rolling":
             return "model_zoo/v19.4_draw_sensitivity_model.pkl"
-        elif model_type == "v26_5_production":
+        if model_type == "v26_5_production":
             return "model_zoo/v26.5_production.pkl"
-        elif model_type == "v26_6_pre_match":
+        if model_type == "v26_6_pre_match":
             return "model_zoo/v26.6_pre_match.pkl"
-        elif model_type == "v26_7_aligned":
+        if model_type == "v26_7_aligned":
             return "model_zoo/v26.7_aligned_production.pkl"
         return "model_zoo/v26.5_mini.pkl"
 
@@ -526,8 +526,8 @@ class Predictor:
     def _create_mini_model(self):
         """创建微型模型（用于测试）"""
         import numpy as np
-        import xgboost as xgb
         from sklearn.preprocessing import StandardScaler
+        import xgboost as xgb
 
         logger.info("创建微型 V26.4 模型...")
 
@@ -798,8 +798,7 @@ class ModelDispatcher:
                         return self._get_fallback_model()
 
                 return self.loaded_models[model_type]
-            else:
-                logger.warning(f"⚠️  联赛专项模型文件不存在: {model_path}")
+            logger.warning(f"⚠️  联赛专项模型文件不存在: {model_path}")
 
         # 回退到通用模型
         return self._get_fallback_model()
@@ -808,8 +807,7 @@ class ModelDispatcher:
         """获取回退模型（通用底座）"""
         if self.FALLBACK_MODEL in self.loaded_models:
             return self.loaded_models[self.FALLBACK_MODEL]
-        else:
-            raise ValueError(f"回退模型 {self.FALLBACK_MODEL} 未加载！")
+        raise ValueError(f"回退模型 {self.FALLBACK_MODEL} 未加载！")
 
     def predict(self, match_data: dict) -> dict:
         """

@@ -80,7 +80,7 @@ class RealPredictionService:
             return True
 
         except Exception as e:
-            logger.error(f"❌ 模型加载失败: {str(e)}")
+            logger.error(f"❌ 模型加载失败: {e!s}")
             return False
 
     async def initialize(self) -> bool:
@@ -167,7 +167,7 @@ class RealPredictionService:
                 return df
 
         except Exception as e:
-            logger.error(f"❌ 获取比赛数据失败: {str(e)}")
+            logger.error(f"❌ 获取比赛数据失败: {e!s}")
             return None
 
     def create_features_for_prediction(self, match_data: pd.DataFrame, historical_data: pd.DataFrame) -> pd.DataFrame:
@@ -317,7 +317,7 @@ class RealPredictionService:
             return result
 
         except Exception as e:
-            logger.error(f"❌ 预测失败: {str(e)}")
+            logger.error(f"❌ 预测失败: {e!s}")
             import traceback
 
             traceback.print_exc()

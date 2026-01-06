@@ -25,8 +25,8 @@ Phase 8 特征 (新增)：
 目标：通过高级特征工程实现65%+的预测准确率
 """
 
-import logging
 from dataclasses import dataclass
+import logging
 from typing import Any
 
 import numpy as np
@@ -163,7 +163,7 @@ class AdvancedFeatureTransformer:
             return df_result
 
         except Exception as e:
-            logger.error(f"❌ 高级特征转换失败: {str(e)}")
+            logger.error(f"❌ 高级特征转换失败: {e!s}")
             raise
 
     def transform_for_prediction(self, match_data: pd.DataFrame, historical_data: pd.DataFrame) -> pd.DataFrame:
@@ -191,7 +191,7 @@ class AdvancedFeatureTransformer:
             return current_match_features
 
         except Exception as e:
-            logger.error(f"预测特征转换失败: {str(e)}")
+            logger.error(f"预测特征转换失败: {e!s}")
             return match_data
 
     def get_feature_importance_groups(self) -> dict[str, list[str]]:
@@ -482,12 +482,11 @@ class AdvancedFeatureTransformer:
         """解释相关性强弱"""
         if abs_corr >= 0.7:
             return "strong"
-        elif abs_corr >= 0.3:
+        if abs_corr >= 0.3:
             return "moderate"
-        elif abs_corr >= 0.1:
+        if abs_corr >= 0.1:
             return "weak"
-        else:
-            return "very_weak"
+        return "very_weak"
 
     def generate_feature_report(self, df: pd.DataFrame) -> dict[str, Any]:
         """

@@ -10,14 +10,10 @@ V35.0 生产级建模模块
 版本: V35.0 Production
 """
 
-from .backtest_engine import (
-    BacktestEngine,
-    BacktestConfig,
-    BacktestMetrics,
-)
+from .backtest_engine import BacktestConfig, BacktestEngine, BacktestMetrics
 
 __all__ = [
-    "BacktestEngine",
     "BacktestConfig",
+    "BacktestEngine",
     "BacktestMetrics",
 ]

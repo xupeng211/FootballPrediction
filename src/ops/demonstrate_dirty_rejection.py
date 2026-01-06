@@ -5,10 +5,10 @@ V35.2 脏数据拦截演示
 展示净水器如何识别并拦截不完整的脏数据
 """
 
-import json
-import sys
 from datetime import datetime
+import json
 from pathlib import Path
+import sys
 
 # Add src to path
 project_root = Path(__file__).parent.parent.parent

@@ -14,15 +14,15 @@ Sprint: 实时化、可观测性与策略调优
 """
 
 import asyncio
-import hashlib
-import json
-import logging
-import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
+import hashlib
+import json
+import logging
 from pathlib import Path
+import time
 from typing import Any
 
 import numpy as np
@@ -76,14 +76,13 @@ class ParameterSpace:
             if not self.choices:
                 return self.default
             return np.random.choice(self.choices)
-        elif self.param_type == "int":
+        if self.param_type == "int":
             return np.random.randint(self.low or 0, self.high or 100)
-        elif self.param_type == "float":
+        if self.param_type == "float":
             return np.random.uniform(self.low or 0.0, self.high or 1.0)
-        elif self.param_type == "bool":
+        if self.param_type == "bool":
             return np.random.choice([True, False])
-        else:
-            return self.default
+        return self.default
 
 
 @dataclass
@@ -712,20 +711,20 @@ class HyperparameterTuner:
             if metric == ObjectiveMetric.MAXIMIZE_SHARPE_RATIO:
                 return backtest_result.sharpe_ratio or 0.0
 
-            elif metric == ObjectiveMetric.MAXIMIZE_ROI:
+            if metric == ObjectiveMetric.MAXIMIZE_ROI:
                 return backtest_result.total_roi or 0.0
 
-            elif metric == ObjectiveMetric.MINIMIZE_MAX_DRAWDOWN:
+            if metric == ObjectiveMetric.MINIMIZE_MAX_DRAWDOWN:
                 # 转换为最大化问题
                 return -(backtest_result.max_drawdown or 100.0)
 
-            elif metric == ObjectiveMetric.MAXIMIZE_WIN_RATE:
+            if metric == ObjectiveMetric.MAXIMIZE_WIN_RATE:
                 return backtest_result.win_rate or 0.0
 
-            elif metric == ObjectiveMetric.MAXIMIZE_CALMAR_RATIO:
+            if metric == ObjectiveMetric.MAXIMIZE_CALMAR_RATIO:
                 return backtest_result.calmar_ratio or 0.0
 
-            elif metric == ObjectiveMetric.BALANCED_OBJECTIVE:
+            if metric == ObjectiveMetric.BALANCED_OBJECTIVE:
                 # 平衡目标：综合多个指标
                 sharpe = backtest_result.sharpe_ratio or 0.0
                 roi = max(backtest_result.total_roi or 0.0, 0)  # 确保非负
@@ -739,8 +738,7 @@ class HyperparameterTuner:
 
                 return max(0, score)  # 确保得分非负
 
-            else:
-                return 0.0
+            return 0.0
 
         except Exception as e:
             logger.warning(f"⚠️ 目标得分计算失败: {e}")
@@ -895,8 +893,7 @@ class HyperparameterTuner:
                 improvement = ((result.best_score - baseline_score) / baseline_score) * 100
                 logger.info(f"📈 相对基线改进: {improvement:.2f}%")
                 return improvement
-            else:
-                return 0.0
+            return 0.0
 
         except Exception as e:
             logger.warning(f"⚠️ 改进程度计算失败: {e}")
@@ -1067,7 +1064,7 @@ class HyperparameterTuner:
 
         except Exception as e:
             logger.error(f"❌ 报告生成失败: {e}")
-            return f"报告生成失败: {str(e)}"
+            return f"报告生成失败: {e!s}"
 
 
 # 便捷函数

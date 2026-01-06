@@ -48,8 +48,7 @@ def test_match_id(match_id: int) -> tuple[bool, dict]:
                 "status": data.get("status", {}).get("finished", False),
             }
             return True, match_info
-        else:
-            return False, {"reason": "No match data"}
+        return False, {"reason": "No match data"}
 
     except Exception as e:
         return False, {"reason": str(e)}
@@ -116,8 +115,8 @@ def generate_2223_manifest():
     基于 23/24 赛季的首场比赛 ID (4193450) 向前回推
     """
     import csv
-    import os
     from datetime import datetime
+    import os
 
     # 23/24 赛季首场 ID
     v23_first_id = 4193450

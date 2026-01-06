@@ -3,10 +3,10 @@ FootballPrediction V7.0 模型处理器模块
 封装LightGBM模型的加载、保存、推理和特征预处理逻辑
 """
 
+from datetime import datetime
 import logging
 import os
 import pickle
-from datetime import datetime
 from typing import Any
 
 import lightgbm as lgb
@@ -135,7 +135,7 @@ class ModelHandler:
         if "xg" in col:
             if "home_xg" in col and "home_xg" not in features and "home_total_shots" in features:
                 return features.get("home_total_shots", 0) * 0.1  # 平均xG/shot
-            elif "away_xg" in col and "away_xg" not in features and "away_total_shots" in features:
+            if "away_xg" in col and "away_xg" not in features and "away_total_shots" in features:
                 return features.get("away_total_shots", 0) * 0.1
 
         # 评分相关特征
@@ -403,11 +403,10 @@ class ModelHandler:
                 validation_result["error"] = "; ".join(error_messages)
                 if missing_features:
                     logger.error(f"关键特征缺失: {validation_result['error']}")
+            elif extra_features:
+                logger.info(f"✅ 特征验证通过，包含{len(extra_features)}个额外特征")
             else:
-                if extra_features:
-                    logger.info(f"✅ 特征验证通过，包含{len(extra_features)}个额外特征")
-                else:
-                    logger.info(f"✅ 特征对齐验证通过: {expected_count}个特征")
+                logger.info(f"✅ 特征对齐验证通过: {expected_count}个特征")
 
             return validation_result
 
@@ -415,7 +414,7 @@ class ModelHandler:
             logger.error(f"特征验证异常: {e}")
             return {
                 "valid": False,
-                "error": f"Validation exception: {str(e)}",
+                "error": f"Validation exception: {e!s}",
                 "missing_features": [],
                 "extra_features": [],
                 "model_features": [],
@@ -553,9 +552,7 @@ def validate_model_features() -> bool:
                 # 根据特征名类型设置默认值
                 if "ratio" in feature or "prob" in feature:
                     test_features[feature] = 0.5
-                elif "count" in feature or "num" in feature:
-                    test_features[feature] = 0
-                elif "is_" in feature:
+                elif "count" in feature or "num" in feature or "is_" in feature:
                     test_features[feature] = 0
                 else:
                     test_features[feature] = 1.0
@@ -565,9 +562,8 @@ def validate_model_features() -> bool:
         if validation_result["valid"]:
             logger.info("✅ 模型特征对齐验证通过")
             return True
-        else:
-            logger.error(f"❌ 模型特征对齐验证失败: {validation_result.get('error', 'Unknown error')}")
-            return False
+        logger.error(f"❌ 模型特征对齐验证失败: {validation_result.get('error', 'Unknown error')}")
+        return False
 
     except Exception as e:
         logger.error(f"模型特征验证异常: {e}")
@@ -580,5 +576,4 @@ def predict_match_result(match_features: dict[str, Any]) -> dict[str, Any] | Non
 
     if handler.is_loaded:
         return handler.predict_match(match_features)
-    else:
-        return handler.fallback_predict(match_features)
+    return handler.fallback_predict(match_features)

@@ -17,9 +17,9 @@ Version: V51.0 (Feature Refiner)
 Date: 2025-12-31
 """
 
-import re
 from dataclasses import dataclass
 from datetime import datetime
+import re
 from typing import Any
 
 import numpy as np
@@ -452,14 +452,13 @@ class V51FeatureRefiner:
 
         if "shot" in prefix_lower:
             return "shots"
-        elif "event" in prefix_lower:
+        if "event" in prefix_lower:
             return "events"
-        elif "lineup" in prefix_lower or "starting" in prefix_lower:
+        if "lineup" in prefix_lower or "starting" in prefix_lower:
             return "lineup"
-        elif "sub" in prefix_lower or "bench" in prefix_lower:
+        if "sub" in prefix_lower or "bench" in prefix_lower:
             return "subs"
-        else:
-            return "other"
+        return "other"
 
     def extract_single_match(
         self,
@@ -509,7 +508,7 @@ class V51FeatureRefiner:
         # 维度硬限制: 按特征出现频率排序，保留前 N 个
         if len(all_features) > self.max_features:
             # 更新特征计数
-            for key in all_features.keys():
+            for key in all_features:
                 self.feature_counts[key] = self.feature_counts.get(key, 0) + 1
 
             # 按频率排序，只保留前 max_features 个

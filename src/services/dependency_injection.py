@@ -12,12 +12,12 @@
 - Configuration Externalization (配置外部化)
 """
 
-import asyncio
-import logging
 from abc import ABC, abstractmethod
+import asyncio
 from collections.abc import Callable
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
+import logging
 from typing import Any, TypeVar
 
 logger = logging.getLogger(__name__)
@@ -31,18 +31,15 @@ class ServiceLifecycle(ABC):
     @abstractmethod
     async def initialize(self) -> None:
         """初始化服务"""
-        pass
 
     @abstractmethod
     async def shutdown(self) -> None:
         """关闭服务"""
-        pass
 
     @property
     @abstractmethod
     def is_initialized(self) -> bool:
         """检查是否已初始化"""
-        pass
 
 
 @dataclass

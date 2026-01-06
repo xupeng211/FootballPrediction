@@ -5,16 +5,16 @@
 """
 
 import asyncio
+from datetime import datetime
 import logging
 import time
-from datetime import datetime
 from typing import Any
 
 import numpy as np
 import pandas as pd
-import xgboost as xgb
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 from sklearn.model_selection import train_test_split
+import xgboost as xgb
 
 logger = logging.getLogger(__name__)
 

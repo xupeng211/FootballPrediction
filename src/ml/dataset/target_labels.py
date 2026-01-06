@@ -18,8 +18,8 @@ M4模块: 比赛结果标签定义
 - 性能优化: 高效的转换逻辑
 """
 
-import logging
 from enum import Enum
+import logging
 
 logger = logging.getLogger(__name__)
 
@@ -65,10 +65,9 @@ class MatchOutcome(str, Enum):
         """
         if team_side.lower() == "home":
             return self == MatchOutcome.HOME_WIN
-        elif team_side.lower() == "away":
+        if team_side.lower() == "away":
             return self == MatchOutcome.AWAY_WIN
-        else:
-            raise ValueError(f"team_side必须是'home'或'away'，当前值: {team_side}")
+        raise ValueError(f"team_side必须是'home'或'away'，当前值: {team_side}")
 
 
 def score_to_label(home_score: int | float | str, away_score: int | float | str) -> MatchOutcome:
@@ -304,7 +303,6 @@ if __name__ == "__main__":
             status = "✅" if result == expected else "❌"
         except Exception as e:
             status = f"❌ Error: {e}"
-            pass
 
     for outcome in MatchOutcome:
         numeric = label_to_numeric(outcome)

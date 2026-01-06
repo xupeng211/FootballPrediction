@@ -16,10 +16,10 @@ InjuryImpactProcessor - 战损与伤停深度处理器
 版本: V23.0-alpha
 """
 
-import logging
-import statistics
 from collections import Counter
 from dataclasses import dataclass
+import logging
+import statistics
 from typing import Any
 
 from ..base import BaseProcessor, ProcessorConfig, ProcessorResult

@@ -19,12 +19,11 @@ V35.0 核心功能：
 版本: V36.0 Production
 """
 
-import json
-import logging
 from dataclasses import dataclass
 from datetime import datetime
+import json
+import logging
 from pathlib import Path
-from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -189,9 +188,8 @@ class BacktestEngine:
                 # 缓存结果
                 self._odds_cache[match_id] = odds
                 return odds
-            else:
-                logger.debug(f"未找到终盘赔率: {match_id}")
-                return None
+            logger.debug(f"未找到终盘赔率: {match_id}")
+            return None
 
         except Exception as e:
             logger.warning(f"获取终盘赔率失败 ({match_id}): {e}")
@@ -357,11 +355,9 @@ class BacktestEngine:
         max_drawdown = 0.0
         peak = equity_curve[0]
         for equity in equity_curve:
-            if equity > peak:
-                peak = equity
+            peak = max(peak, equity)
             drawdown = (peak - equity) / peak * 100
-            if drawdown > max_drawdown:
-                max_drawdown = drawdown
+            max_drawdown = max(max_drawdown, drawdown)
 
         # 计算夏普比率（简化版）
         returns = np.diff(equity_curve)
@@ -479,8 +475,8 @@ def create_backtest_engine(config: BacktestConfig | None = None) -> BacktestEngi
 
 # 导出
 __all__ = [
+    "BacktestConfig",
     "BacktestEngine",
     "BacktestMetrics",
-    "BacktestConfig",
     "create_backtest_engine",
 ]

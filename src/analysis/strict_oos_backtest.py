@@ -19,10 +19,10 @@ Date: 2025-12-23
 """
 
 import json
+from pathlib import Path
 import pickle
 import sys
 import warnings
-from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -280,9 +280,9 @@ class StrictOOSBacktest:
             r = str(r).upper()
             if r == "H":
                 return "H"
-            elif r == "D":
+            if r == "D":
                 return "D"
-            elif r == "A":
+            if r == "A":
                 return "A"
             return r
 
@@ -479,10 +479,10 @@ class StrictOOSBacktest:
             result = row["result"]
             if bet_on == "h":
                 return row["B365H"] - 1 if result == "H" else -1
-            elif bet_on == "d":
+            if bet_on == "d":
                 return row["B365D"] - 1 if result == "D" else -1
-            else:  # 'a'
-                return row["B365A"] - 1 if result == "A" else -1
+            # 'a'
+            return row["B365A"] - 1 if result == "A" else -1
 
         # 确定预测是否正确
         def is_prediction_correct(row):

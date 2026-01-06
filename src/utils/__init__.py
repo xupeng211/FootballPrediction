@@ -20,8 +20,8 @@ except ImportError:
     _HAS_RETRY = False
 
 # 保持现有工具类的兼容性
-import sys
 from pathlib import Path
+import sys
 
 # 将项目根目录添加到路径
 project_root = Path(__file__).parent.parent.parent
@@ -73,11 +73,11 @@ __all__ = [
 if _HAS_RETRY:
     __all__.extend(
         [
-            "with_retry",
+            "retry_db_connection",
             "retry_on_connection_error",
             "retry_on_timeout",
-            "retry_db_connection",
             "retry_redis_connection",
+            "with_retry",
         ]
     )
 
@@ -85,11 +85,11 @@ if _HAS_RETRY:
 if _HAS_COMPATIBILITY_UTILS:
     __all__.extend(
         [
+            "CryptoUtils",
+            "DictUtils",
             "FileUtils",
             "OldDataValidator",  # 使用新名称避免与 data.validators 冲突
-            "TimeUtils",
-            "CryptoUtils",
             "StringUtils",
-            "DictUtils",
+            "TimeUtils",
         ]
     )

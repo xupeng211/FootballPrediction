@@ -22,9 +22,9 @@ from .venue_analyzer import VenueAnalyzer
 __all__ = [
     "AdvancedFeatureTransformer",
     "H2HCalculator",
-    "VenueAnalyzer",
     "MatchFeatureExtractor",
     "MatchFeatureSet",
+    "VenueAnalyzer",
 ]
 
 __version__ = "5.0.0"

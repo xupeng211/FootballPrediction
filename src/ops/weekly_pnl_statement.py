@@ -9,9 +9,9 @@ V19.4 每周实战对账单 (Weekly P&L Statement)
 日期: 2025-12-23
 """
 
+from datetime import datetime, timedelta
 import json
 import logging
-from datetime import datetime, timedelta
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -180,8 +180,7 @@ class WeeklyPnLGenerator:
         # 计算盈亏（下注1单位）
         if prediction == actual:
             return odds - 1  # 净收益
-        else:
-            return -1  # 损失本金
+        return -1  # 损失本金
 
     def generate_report(self, week_start: datetime = None, week_end: datetime = None) -> dict:
         """

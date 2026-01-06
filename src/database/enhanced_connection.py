@@ -3,16 +3,14 @@
 集成了性能优化器的生产级数据库连接
 """
 
-import logging
-import time
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
+import logging
+import time
 from typing import Any
 
 from sqlalchemy import text
-from sqlalchemy.ext.asyncio import (
-    AsyncSession,
-)
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from .connection import DatabaseManager
 
@@ -107,11 +105,10 @@ class EnhancedDatabaseManager(DatabaseManager):
         """
         if self.db_optimizer:
             return await self.db_optimizer.execute_query(query, params, use_cache=use_cache)
-        else:
-            # 降级到标准查询
-            async with self.get_async_session_with_stats() as session:
-                result = await session.execute(text(query), params or {})
-                return result.fetchall()
+        # 降级到标准查询
+        async with self.get_async_session_with_stats() as session:
+            result = await session.execute(text(query), params or {})
+            return result.fetchall()
 
     async def get_connection_stats(self) -> dict[str, Any]:
         """获取连接统计信息"""

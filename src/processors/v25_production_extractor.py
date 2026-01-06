@@ -33,8 +33,8 @@ Version: V26.2 (Phase 1.3 Optimization)
 Date: 2025-12-28
 """
 
-import re
 from dataclasses import dataclass
+import re
 from typing import Any
 
 import numpy as np
@@ -47,10 +47,7 @@ from src.processors.base_extractor import (
     ValidationConfig,
     register_extractor,
 )
-from src.processors.exceptions import (
-    DataParsingError,
-    InsufficientFeaturesError,
-)
+from src.processors.exceptions import DataParsingError, InsufficientFeaturesError
 
 logger = structlog.get_logger(__name__)
 
@@ -295,7 +292,7 @@ def _extract_semantic_key(item: dict[str, Any]) -> str | None:
             if isinstance(value, str) and value:
                 # 清理并返回
                 return _sanitize_key(value)
-            elif isinstance(value, (int, float)):
+            if isinstance(value, (int, float)):
                 # 对于数字类型，只在 type 字段时使用
                 if key == "type":
                     return f"type_{int(value)}"
@@ -407,7 +404,7 @@ def _fully_flatten(
                         val = item[key]
                         if isinstance(val, str):
                             return (0, val.lower())
-                        elif isinstance(val, (int, float)):
+                        if isinstance(val, (int, float)):
                             return (1, val)
                 return (2, "")
 
@@ -454,7 +451,7 @@ def _fully_flatten(
                         val = item[key]
                         if isinstance(val, str):
                             return (0, val.lower())
-                        elif isinstance(val, (int, float)):
+                        if isinstance(val, (int, float)):
                             return (1, val)
                 return (2, "")
 

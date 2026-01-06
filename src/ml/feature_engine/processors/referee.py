@@ -448,10 +448,9 @@ class RefereeProcessor(BaseProcessor[MatchData]):
 
         if name_lower in elite_referees:
             return 1.0  # 顶级
-        elif name_lower in senior_referees:
+        if name_lower in senior_referees:
             return 0.7  # 资深
-        else:
-            return 0.4  # 普通/新人
+        return 0.4  # 普通/新人
 
     def load_referee_database(self, db_path: str) -> None:
         """

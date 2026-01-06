@@ -27,13 +27,13 @@ Version: V26.2 (Phase 2.1 Optimization)
 Date: 2025-12-28
 """
 
+from concurrent.futures import ProcessPoolExecutor, as_completed
 import gc
 import logging
 import multiprocessing
+from pathlib import Path
 import stat
 import time
-from concurrent.futures import ProcessPoolExecutor, as_completed
-from pathlib import Path
 from typing import Any
 
 import psutil
@@ -800,8 +800,8 @@ class PerformancePipeline:
         features: dict[str, Any],
     ) -> tuple:
         """准备插入记录（Phase 2.1: 使用 external_id）"""
-        import json
         from datetime import datetime
+        import json
 
         meta_data = {
             "extraction_version": "V26.2",

@@ -15,11 +15,11 @@ V19.4 自动止损哨兵系统 (Auto-Stop Loss Sentinel)
 日期: 2025-12-23
 """
 
-import json
-import logging
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
+import json
+import logging
 from pathlib import Path
 
 import pandas as pd
@@ -35,7 +35,6 @@ logger = logging.getLogger(__name__)
 class VisionViolationException(Exception):
     """项目愿景违背异常 - 当操作严重违反项目愿景时抛出"""
 
-    pass
 
 
 class VisionLimits:
@@ -106,8 +105,7 @@ class RiskMetrics:
         if self.max_balance == 1000.0 and self.initial_balance != 1000.0:
             self.max_balance = self.initial_balance
         # 确保当前余额不超过历史最高
-        if self.current_balance > self.max_balance:
-            self.max_balance = self.current_balance
+        self.max_balance = max(self.max_balance, self.current_balance)
 
 
 @dataclass
@@ -364,8 +362,7 @@ class RiskMonitor:
         self.metrics.current_balance += profit
 
         # 更新历史最高余额
-        if self.metrics.current_balance > self.metrics.max_balance:
-            self.metrics.max_balance = self.metrics.current_balance
+        self.metrics.max_balance = max(self.metrics.max_balance, self.metrics.current_balance)
 
         # 计算回撤
         self.metrics.current_drawdown = self.metrics.max_balance - self.metrics.current_balance
@@ -495,7 +492,7 @@ class RiskMonitor:
 └─ 总盈亏: {self.metrics.total_profit - self.metrics.total_loss:+.2f}
 
 {"─" * 70}
-🎯 当前状态: {self.metrics.is_emergency_stopped and "已熔断 - 停止所有新下注" or "运行中"}
+🎯 当前状态: {(self.metrics.is_emergency_stopped and "已熔断 - 停止所有新下注") or "运行中"}
 {"=" * 70}
 """
         return message

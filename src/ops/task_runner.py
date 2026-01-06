@@ -4,13 +4,13 @@
 支持 Cron 和 APScheduler 调度数据采集（L2）和特征增量更新（L3）
 """
 
+from abc import ABC, abstractmethod
 import asyncio
+from datetime import datetime
 import logging
+from pathlib import Path
 import signal
 import sys
-from abc import ABC, abstractmethod
-from datetime import datetime
-from pathlib import Path
 from typing import Any
 
 from apscheduler.events import EVENT_JOB_ERROR, EVENT_JOB_EXECUTED
@@ -49,7 +49,6 @@ class BaseTask(ABC):
         Returns:
             Dict: 任务执行结果，包含 status, message, data 等字段
         """
-        pass
 
     def get_info(self) -> dict[str, Any]:
         """获取任务信息"""
@@ -281,7 +280,7 @@ class HealthCheckTask(BaseTask):
 
         except Exception as e:
             result["status"] = "error"
-            result["message"] = f"健康检查失败: {str(e)}"
+            result["message"] = f"健康检查失败: {e!s}"
             logger.error(f"❌ 健康检查失败: {e}")
 
         return result

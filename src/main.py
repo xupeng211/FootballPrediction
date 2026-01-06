@@ -4,9 +4,9 @@
 基于机器学习的足球比赛结果预测API服务
 """
 
+from contextlib import asynccontextmanager
 import logging
 import os
-from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
@@ -17,8 +17,8 @@ from prometheus_client import CONTENT_TYPE_LATEST
 from src.api.health import router as health_router
 from src.api.model_management import router as model_management_router
 from src.api.monitoring import router as monitoring_router
-from src.api.schemas import RootResponse
 from src.api.rate_limiter import init_rate_limiter, rate_limit_predict
+from src.api.schemas import RootResponse
 from src.core.metrics import get_metrics
 from src.database.connection import initialize_database
 
@@ -162,8 +162,7 @@ async def metrics():
     """
     if os.getenv("ENABLE_METRICS", "true").lower() == "true":
         return Response(get_metrics(), media_type=CONTENT_TYPE_LATEST)
-    else:
-        raise HTTPException(status_code=404, detail="Metrics endpoint is disabled")
+    raise HTTPException(status_code=404, detail="Metrics endpoint is disabled")
 
 
 @app.get("/", summary="根路径", tags=["基础"], response_model=RootResponse)
@@ -255,7 +254,7 @@ async def predict_match(request: dict) -> dict:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         logger.error(f"预测失败: {e}")
-        raise HTTPException(status_code=500, detail=f"预测失败: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"预测失败: {e!s}")
 
 
 @app.post("/predict/batch", summary="批量预测", tags=["预测"])
@@ -273,7 +272,7 @@ async def predict_batch(requests: list[dict]) -> list[dict]:
         return results
     except Exception as e:
         logger.error(f"批量预测失败: {e}")
-        raise HTTPException(status_code=500, detail=f"批量预测失败: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"批量预测失败: {e!s}")
 
 
 @app.exception_handler(HTTPException)

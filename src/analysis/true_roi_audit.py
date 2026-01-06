@@ -12,9 +12,9 @@ Author: FootballPrediction V18.2
 Date: 2025-12-23
 """
 
+from pathlib import Path
 import sys
 import warnings
-from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -175,9 +175,9 @@ class TrueROIAuditor:
             r = str(r).upper()
             if r == "H":
                 return "H"
-            elif r == "D":
+            if r == "D":
                 return "D"
-            elif r == "A":
+            if r == "A":
                 return "A"
             return r
 
@@ -202,9 +202,9 @@ class TrueROIAuditor:
         def standardize_result(r):
             if r == "H":
                 return "H"
-            elif r == "D":
+            if r == "D":
                 return "D"
-            elif r == "A":
+            if r == "A":
                 return "A"
             return r
 
@@ -314,10 +314,10 @@ class TrueROIAuditor:
         def calculate_profit_impl(row):
             if row["best_bet_impl"] == "ev_h_impl":
                 return row["B365H"] - 1 if row["result"] == "H" else -1
-            elif row["best_bet_impl"] == "ev_d_impl":
+            if row["best_bet_impl"] == "ev_d_impl":
                 return row["B365D"] - 1 if row["result"] == "D" else -1
-            else:  # ev_a_impl
-                return row["B365A"] - 1 if row["result"] == "A" else -1
+            # ev_a_impl
+            return row["B365A"] - 1 if row["result"] == "A" else -1
 
         if len(betting_df_impl) > 0:
             betting_df_impl = betting_df_impl.sort_values("date").reset_index(drop=True)
@@ -330,10 +330,10 @@ class TrueROIAuditor:
         def calculate_profit_model(row):
             if row["best_bet_model"] == "ev_h_model":
                 return row["B365H"] - 1 if row["result"] == "H" else -1
-            elif row["best_bet_model"] == "ev_d_model":
+            if row["best_bet_model"] == "ev_d_model":
                 return row["B365D"] - 1 if row["result"] == "D" else -1
-            else:  # ev_a_model
-                return row["B365A"] - 1 if row["result"] == "A" else -1
+            # ev_a_model
+            return row["B365A"] - 1 if row["result"] == "A" else -1
 
         if len(betting_df_model) > 0:
             betting_df_model = betting_df_model.sort_values("date").reset_index(drop=True)

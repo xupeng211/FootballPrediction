@@ -28,7 +28,6 @@ logger = logging.getLogger(__name__)
 class DatabaseConnectionError(Exception):
     """数据库连接错误"""
 
-    pass
 
 
 class HarvesterConnectionManager:

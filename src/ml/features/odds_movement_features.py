@@ -26,8 +26,8 @@ Author: Football Prediction Team
 Version: 1.0.0
 """
 
-import logging
 from datetime import datetime, timedelta
+import logging
 from typing import Any
 
 import numpy as np
@@ -505,8 +505,7 @@ class OddsMovementAnalyzer:
 
         if total_confidence > 0:
             return total_strength / len(steam_signals)
-        else:
-            return total_strength / len(steam_signals)
+        return total_strength / len(steam_signals)
 
     def _analyze_trends(self, odds_data: list[dict[str, Any]]) -> dict[str, Any]:
         """分析趋势"""
@@ -853,8 +852,7 @@ class OddsMovementAnalyzer:
         max_drawdown = 0
 
         for value in values:
-            if value > peak:
-                peak = value
+            peak = max(peak, value)
             drawdown = (peak - value) / peak if peak > 0 else 0
             max_drawdown = max(max_drawdown, drawdown)
 
@@ -864,14 +862,13 @@ class OddsMovementAnalyzer:
         """分类市场效率"""
         if efficiency_score >= 0.9:
             return "highly_efficient"
-        elif efficiency_score >= 0.7:
+        if efficiency_score >= 0.7:
             return "efficient"
-        elif efficiency_score >= 0.5:
+        if efficiency_score >= 0.5:
             return "moderately_efficient"
-        elif efficiency_score >= 0.3:
+        if efficiency_score >= 0.3:
             return "inefficient"
-        else:
-            return "highly_inefficient"
+        return "highly_inefficient"
 
     def _calculate_market_consensus(self, odds_data: list[dict[str, Any]]) -> float:
         """计算市场共识度"""
