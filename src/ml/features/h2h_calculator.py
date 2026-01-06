@@ -29,8 +29,9 @@ from typing import Any
 
 import pandas as pd
 
+# V146.1: 修复导入 - 使用绝对路径
 # 导入足球业务逻辑常量
-from ...constants import SCORING
+from src.constants import SCORING
 
 logger = logging.getLogger(__name__)
 
