@@ -434,8 +434,8 @@ class DataQualityChecker:
         orphaned_features = await self.conn.fetchval(
             """
             SELECT COUNT(*) FROM match_features_training mft
-            LEFT JOIN matches m ON mft.match_id = m.id
-            WHERE m.id IS NULL
+            LEFT JOIN matches m ON mft.match_id = m.match_id
+            WHERE m.match_id IS NULL
         """
         )
 

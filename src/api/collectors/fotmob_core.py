@@ -16,6 +16,8 @@ import gzip
 import json
 import logging
 import os
+import random
+import sys
 import time
 from typing import Any
 
@@ -1040,20 +1042,24 @@ class FotMobCoreCollector:
 
     def upsert_match_data(self, match_info: dict, l2_json: dict, league_id: int = None, season: str = None) -> bool:
         """
-        数据库UPSERT操作 - V145.1 修正版
+        数据库UPSERT操作 - V26.3 架构修复版
+
+        V26.3 变更:
+        1. l2_raw_json 现在存储原始 FotMob API JSON（而非提取后的特征）
+        2. 新增 collection_status 字段追踪采集状态
+        3. 新增 collected_at 字段记录采集时间
 
         功能：
         1. 插入新记录或更新现有记录
-        2. 同步真实赔率数据
-        3. 自动更新时间戳
-        4. V11.1: 正确存储 league_id 和 season
-        5. V145.1: 添加 l2_data_version 字段追踪数据收割版本
+        2. 存储原始 API JSON 到 l2_raw_json
+        3. 标记采集状态为 SUCCESS
+        4. 自动更新时间戳
 
         Args:
             match_info: 比赛基础信息
-            l2_json: L2数据JSON
+            l2_json: FotMob L2 API 原始 JSON（未处理）
             league_id: 联赛ID
-            season: 赛季代码 (如 '2223')
+            season: 赛季代码 (如 '2324')
 
         Returns:
             bool: 操作是否成功
@@ -1063,18 +1069,24 @@ class FotMobCoreCollector:
             conn = self.get_database_connection()
 
             with conn.cursor() as cur:
-                # V145.1: 添加 l2_data_version 字段用于数据版本追踪
+                # V26.3: 更新字段名以匹配新 schema
                 query = """
                 INSERT INTO matches (
-                    id, external_id, home_team, away_team, match_time, l2_raw_json, league_id, season, l2_data_version
+                    match_id, external_id, home_team, away_team, match_date,
+                    l2_raw_json,                    -- V26.3: 存储原始 API JSON
+                    collection_status, collected_at,
+                    league_name, season, data_source, data_version
                 ) VALUES (
-                    %s, %s, %s, %s, %s, %s, %s, %s, %s
+                    %s, %s, %s, %s, %s,
+                    %s,                             -- 原始 JSON
+                    %s, %s,
+                    %s, %s, %s, %s
                 )
-                ON CONFLICT (id) DO UPDATE SET
+                ON CONFLICT (match_id) DO UPDATE SET
                     l2_raw_json = EXCLUDED.l2_raw_json,
-                    l2_data_version = EXCLUDED.l2_data_version,
-                    league_id = COALESCE(EXCLUDED.league_id, matches.league_id),
-                    season = COALESCE(EXCLUDED.season, matches.season),
+                    collection_status = EXCLUDED.collection_status,
+                    collected_at = COALESCE(EXCLUDED.collected_at, matches.collected_at),
+                    data_version = EXCLUDED.data_version,
                     updated_at = NOW()
                 """
 
@@ -1100,15 +1112,18 @@ class FotMobCoreCollector:
                     return json.dumps(clean_nan(obj), default=default)
 
                 params = (
-                    match_info["match_id"],  # id
-                    match_info["match_id"],  # external_id
+                    match_info["match_id"],
+                    match_info["match_id"],
                     match_info["home_team"],
                     match_info["away_team"],
                     match_info["match_date"],
-                    serialize_json(l2_json),  # l2_raw_json（清理 NaN）
-                    league_id,  # V11.1: 联赛ID
-                    season,  # V11.1: 赛季代码
-                    "V145.1",  # V145.1: 数据收割版本号
+                    serialize_json(l2_json),        # V26.3: 原始 JSON
+                    "SUCCESS",                       # collection_status
+                    match_info.get("match_date"),     # collected_at
+                    match_info.get("league_name", "Premier League"),
+                    season,
+                    "FotMob",
+                    "V26.3",                         # data_version
                 )
 
                 cur.execute(query, params)
@@ -1125,6 +1140,82 @@ class FotMobCoreCollector:
             logger.error(f"UPSERT失败: {e}")
             import traceback
 
+            logger.error(f"详细错误: {traceback.format_exc()}")
+            return False
+        finally:
+            if conn:
+                conn.close()
+
+    def save_extracted_features(self, match_id: str, features: dict, extractor_version: str) -> bool:
+        """
+        V26.3: 保存提取后的特征到 l2_extracted_features
+
+        这是一个新方法，用于在特征提取后保存结果：
+        1. 将特征字典存入 l2_extracted_features
+        2. 更新 collection_status（根据特征数量）
+        3. 记录提取时间 extracted_at
+
+        Args:
+            match_id: 比赛 ID
+            features: V25ProductionExtractor 输出的特征字典
+            extractor_version: 提取器版本 (如 "V26.2")
+
+        Returns:
+            bool: 操作是否成功
+        """
+        conn = None
+        try:
+            conn = self.get_database_connection()
+
+            with conn.cursor() as cur:
+                # 计算特征数量（从 adaptive_features._meta.feature_count 或顶层）
+                feature_count = len(features)
+                if "adaptive_features" in features and "_meta" in features["adaptive_features"]:
+                    feature_count = features["adaptive_features"]["_meta"].get("feature_count", feature_count)
+
+                # 根据特征数量确定状态
+                if feature_count >= 3000:
+                    collection_status = "SUCCESS"
+                elif feature_count >= 1000:
+                    collection_status = "PARTIAL"
+                else:
+                    collection_status = "FAILED"
+
+                query = """
+                UPDATE matches SET
+                    l2_extracted_features = %s::jsonb,
+                    l2_data_version = %s,
+                    extracted_at = NOW(),
+                    collection_status = %s,
+                    last_error = CASE
+                        WHEN %s < 1000 THEN 'Insufficient features: ' || %s::text
+                        ELSE NULL
+                    END,
+                    updated_at = NOW()
+                WHERE match_id = %s
+                """
+
+                params = (
+                    json.dumps(features),
+                    extractor_version,
+                    collection_status,
+                    feature_count, feature_count,  # for last_error calculation
+                    match_id,
+                )
+
+                cur.execute(query, params)
+                conn.commit()
+
+                logger.info(
+                    f"特征保存成功: {match_id} (状态={collection_status}, 特征数={feature_count})"
+                )
+                return True
+
+        except Exception as e:
+            if conn:
+                conn.rollback()
+            logger.error(f"特征保存失败 ({match_id}): {e}")
+            import traceback
             logger.error(f"详细错误: {traceback.format_exc()}")
             return False
         finally:
@@ -1230,7 +1321,12 @@ class FotMobCoreCollector:
 
     def harvest_match_with_league(self, match_id: int, league_id: int = None, season: str = None) -> bool:
         """
-        V11.1: 联赛感知的比赛采集（修正版）
+        V26.4: 联赛感知的比赛采集（安全加固版）
+
+        V26.4 安全加固:
+        - 强制 Jittering 延迟 (2-5 秒) - 防止 IP 封禁
+        - 403/429 自杀逻辑 - 连续 3 次触发立即终止程序
+        - 使用 time.perf_counter() 提高计时精度
 
         Args:
             match_id: 比赛 ID
@@ -1248,6 +1344,30 @@ class FotMobCoreCollector:
 
         try:
             response = self.session.get(url, timeout=30)
+
+            # V26.4: 检查 403/429 错误，触发自杀逻辑
+            if response.status_code in [403, 429]:
+                self._increment_failure()
+                error_code = response.status_code
+                error_msg = "Forbidden" if error_code == 403 else "Too Many Requests"
+
+                # 记录严重错误
+                logger.critical(
+                    f"🚨 IP 封禁检测: HTTP {error_code} ({error_msg}) - match_id={match_id}"
+                )
+
+                # V26.4: 检查连续 403/429 失败次数，达到 3 次立即自杀
+                if self.consecutive_failures >= 3:
+                    logger.critical(
+                        f"💀 连续 {self.consecutive_failures} 次 IP 封禁！触发程序自杀机制"
+                    )
+                    logger.critical("⛔ 系统将立即终止，请等待 6-24 小时冷却期")
+                    logger.critical(f"📊 最后请求: match_id={match_id}, league={league_id}")
+                    # 立即终止程序
+                    sys.exit(1)
+
+                return False
+
             response.raise_for_status()
 
             # V11.3: 联赛+赛季感知的哨兵检查
@@ -1286,6 +1406,14 @@ class FotMobCoreCollector:
                         logger.info(
                             f"✅ 采集成功: {match_id} (league={league_id}, season={season}, tier={tier_info['name']})"
                         )
+
+                        # V26.4: 强制 Jittering 延迟（2-5 秒随机）
+                        jitter_delay = random.uniform(2.0, 5.0)
+                        logger.debug(
+                            f"⏱️  Jittering 延迟: {jitter_delay:.2f}秒 - 防止 IP 封禁"
+                        )
+                        time.sleep(jitter_delay)
+
                         return True
 
             self._increment_failure()

@@ -249,7 +249,7 @@ class ZombieAssetCleaner:
             cur.execute("""
                 SELECT COUNT(*) as total
                 FROM match_features_training f
-                JOIN matches m ON f.match_id = m.id
+                JOIN matches m ON f.match_id = m.match_id
                 WHERE f.status = 'completed'
                   AND COALESCE(f.meta_data->>'extraction_version', 'V0.0') < 'V24.1'
                   AND (m.l2_raw_json IS NULL OR jsonb_typeof(m.l2_raw_json) = 'null');
@@ -269,7 +269,7 @@ class ZombieAssetCleaner:
                     COALESCE(f.meta_data->>'extraction_version', 'V0.0') as current_version,
                     m.l2_raw_json IS NULL as missing_raw_json
                 FROM match_features_training f
-                JOIN matches m ON f.match_id = m.id
+                JOIN matches m ON f.match_id = m.match_id
                 WHERE f.status = 'completed'
                   AND COALESCE(f.meta_data->>'extraction_version', 'V0.0') < 'V24.1'
                   AND (m.l2_raw_json IS NULL OR jsonb_typeof(m.l2_raw_json) = 'null')
@@ -349,7 +349,7 @@ class ZombieAssetCleaner:
                     SET l2_raw_json = %s::jsonb,
                         l2_data_version = 'V25.0-recovered',
                         updated_at = CURRENT_TIMESTAMP
-                    WHERE id = %s;
+                    WHERE match_id = %s;
                 """
 
                 # 构造 JSON 结构

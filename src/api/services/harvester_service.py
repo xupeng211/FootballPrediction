@@ -36,6 +36,7 @@ import psycopg2
 from src.api.collectors.base_extractor import BaseExtractor
 from src.api.collectors.odds_production_extractor import OddsProductionExtractor
 from src.api.collectors.circuit_breaker import CircuitBreaker, CircuitBreakerConfig
+from src.api.collectors.collection_sentry import CollectionSentry
 from src.config_unified import get_settings
 from src.utils.text_processor import TeamNameNormalizer
 
@@ -920,6 +921,17 @@ class HarvesterService:
         self.stats = HarvesterStats()
         self.last_report_time = datetime.now()
 
+        # V26.5: 自动巡航哨兵（仅在 cruise 模式下启用）
+        self.collection_sentry: CollectionSentry | None = None
+        if mode == "cruise":
+            self.collection_sentry = CollectionSentry(
+                window_size=100,
+                success_rate_threshold=0.7,
+                consecutive_failure_threshold=5,
+                pause_duration_hours=12,
+            )
+            logger.info("[V26.5] 🤖 自动巡航哨兵已启用（窗口: 100, 成功率阈值: 70%, 连续失败阈值: 5）")
+
     async def stage1_fixtures_scan(
         self,
         browser: Browser,
@@ -1385,6 +1397,11 @@ class HarvesterService:
                     if is_blocked:
                         logger.error(f"🔴 {match['match_id']} 拦截: {block_reason}")
                         await self.base_extractor.save_error_screenshot(page, block_reason)
+
+                        # V26.5: 记录失败到哨兵
+                        if self.collection_sentry:
+                            self.collection_sentry.record_result(False)
+
                         await context.close()
                         continue
 
@@ -1400,11 +1417,19 @@ class HarvesterService:
                     )
                     self.stats.total_harvested += 1
 
+                    # V26.5: 记录成功到哨兵
+                    if self.collection_sentry:
+                        self.collection_sentry.record_result(True)
+
                     await context.close()
 
                 except Exception as e:
                     logger.error(f"❌ {match.get('match_id', 'unknown')} 处理失败: {e}")
                     self.stats.total_errors += 1
+
+                    # V26.5: 记录失败到哨兵
+                    if self.collection_sentry:
+                        self.collection_sentry.record_result(False)
 
             await browser.close()
 
@@ -1519,6 +1544,30 @@ class HarvesterService:
             logger.info(f"🚁 巡航周期 #{cycle_count}")
             logger.info("🔄" * 40)
             logger.info("")
+
+            # V26.5: 哨兵健康检查（在每次循环前）
+            if self.collection_sentry:
+                try:
+                    logger.info("[V26.5] 🔍 哨兵健康检查...")
+                    is_healthy = self.collection_sentry.check_health()
+                    success_rate = self.collection_sentry.get_success_rate()
+                    consecutive_failures = self.collection_sentry.get_consecutive_failures()
+
+                    logger.info(f"[V26.5] 📊 哨兵状态: 成功率={success_rate:.1%}, 连续失败={consecutive_failures}, 健康状态={'✅ 健康' if is_healthy else '❌ 不健康'}")
+
+                    # 如果不健康，触发停机保护
+                    if not is_healthy:
+                        logger.warning("[V26.5] ⚠️ 哨兵检测到系统不健康，即将触发停机保护")
+                        self.collection_sentry.check_health_or_stop()
+
+                except Exception as e:
+                    # 捕获 SecurityInterrupt 异常，优雅退出
+                    if "SecurityInterrupt" in type(e).__name__:
+                        logger.error(f"[V26.5] 🛑 哨兵触发停机保护: {e}")
+                        logger.error("[V26.5] 💡 系统已进入冷却期，请等待 12 小时后自动恢复")
+                        break
+                    else:
+                        logger.error(f"[V26.5] ❌ 哨兵健康检查异常: {e}")
 
             try:
                 # Stage 1: Single execution

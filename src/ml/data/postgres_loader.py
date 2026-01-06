@@ -96,7 +96,7 @@ class PostgresDataLoader:
         # 构建SQL查询 - Phase 8升级：包含所有高级特征列
         query = """
             SELECT
-                m.id,
+                m.match_id,
                 m.home_team_id,
                 m.away_team_id,
                 m.home_score,
@@ -137,8 +137,8 @@ class PostgresDataLoader:
                 -- 传统特征
                 m.weather_condition
             FROM matches m
-            LEFT JOIN teams ht ON m.home_team_id = ht.id
-            LEFT JOIN teams at ON m.away_team_id = at.id
+            LEFT JOIN teams ht ON m.home_team_id = ht.team_id
+            LEFT JOIN teams at ON m.away_team_id = at.team_id
             WHERE 1=1
         """
 
