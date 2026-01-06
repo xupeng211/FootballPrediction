@@ -293,7 +293,9 @@ class SchemaManager:
                 created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
                 l1_collected_at TIMESTAMP WITH TIME ZONE,
-                l2_collected_at TIMESTAMP WITH TIME ZONE
+                l2_collected_at TIMESTAMP WITH TIME ZONE,
+                l2_raw_json JSONB,
+                l2_data_version VARCHAR(20) DEFAULT 'V145.0'
             );
         """)
 
