@@ -37,7 +37,8 @@ import numpy as np
 import pandas as pd
 from scipy import stats
 
-from ...constants import STATISTICAL
+# V146.1: 修复导入 - 使用绝对路径
+from src.constants import STATISTICAL
 
 logger = logging.getLogger(__name__)
 

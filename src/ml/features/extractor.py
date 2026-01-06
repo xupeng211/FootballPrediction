@@ -30,8 +30,9 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
+# V146.1: 修复导入 - 使用绝对路径
 # 导入足球业务逻辑常量
-from ...constants import FOOTBALL, MATH, PROBABILITY, SCORING, STATISTICAL, VALIDATOR
+from src.constants import FOOTBALL, MATH, PROBABILITY, SCORING, STATISTICAL, VALIDATOR
 from .h2h_calculator import H2HCalculator
 from .venue_analyzer import VenueAnalyzer
 

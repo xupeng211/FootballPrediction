@@ -37,8 +37,13 @@ from typing import Any
 
 import numpy as np
 
-from ...config_secure import get_settings
-from ...constants import MATH
+# V146.1: 修复导入 - 使用绝对路径
+try:
+    from src.config_unified import get_settings
+except ImportError:
+    get_settings = None  # 可选依赖，如果不需要可以不导入
+
+from src.constants import MATH  # V146.1: 添加 MATH 导入
 
 logger = logging.getLogger(__name__)
 
