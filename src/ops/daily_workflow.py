@@ -23,6 +23,10 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
+# V144.7: 加载环境变量（必须在 import config_unified 之前）
+from dotenv import load_dotenv
+load_dotenv(override=True)
+
 # 添加项目路径
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
