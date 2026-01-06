@@ -302,6 +302,12 @@ class UnifiedSettings(BaseSettings):
     harvest_batch_size: int = Field(default=50, description="数据收集批量大小")
     harvest_delay_seconds: float = Field(default=1.0, description="数据收集间隔（秒）")
 
+    # V26.5: IP 冷却期安全配置
+    collection_pause_until: str | None = Field(
+        default=None,
+        description="IP 冷却期截止时间 (ISO 8601 格式)，在此时间之前禁止数据采集，防止 IP 封禁",
+    )
+
     # === V26.0 流水线配置 (标准化参数) ===
     # 比赛状态常量 (统一大小写处理)
     match_status_finished: str = Field(default="FINISHED", description="比赛完成状态")

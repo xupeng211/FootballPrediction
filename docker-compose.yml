@@ -47,8 +47,8 @@ services:
     ports:
       - "${DB_PORT:-5432}:5432"
     volumes:
-      # 持久化存储 (命名卷)
-      - postgres_data:/var/lib/postgresql/data
+      # V150.5: 持久化存储 (bind mount - 恢复旧数据库)
+      - ./data/postgres:/var/lib/postgresql/data
       # 数据库初始化脚本
       - ./deploy/docker/init_db.sql:/docker-entrypoint-initdb.d/init_db.sql:ro
     healthcheck:

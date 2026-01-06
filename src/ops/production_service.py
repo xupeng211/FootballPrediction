@@ -118,7 +118,7 @@ class ProductionService:
             cur.execute(
                 """
                 SELECT
-                    m.id,
+                    m.match_id,
                     m.external_id,
                     m.league_name,
                     m.home_team,
@@ -246,7 +246,7 @@ class ProductionService:
 
                 # 构建预测记录（V26.8 增强版）
                 prediction_record = {
-                    "match_id": match["id"],
+                    "match_id": match["match_id"],
                     "external_id": external_id,
                     "league": match["league_name"],
                     "home_team": match["home_team"],

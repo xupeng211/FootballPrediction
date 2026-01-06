@@ -31,7 +31,7 @@ Example:
 from __future__ import annotations
 
 import asyncio
-from datetime import datetime
+from datetime import datetime, timedelta
 import logging
 import os
 from pathlib import Path
@@ -43,6 +43,92 @@ from playwright.async_api import Browser, Page
 from src.config_unified import get_settings
 
 logger = logging.getLogger(__name__)
+
+
+# ============================================================================
+# V26.5: SecurityInterrupt Exception
+# ============================================================================
+
+class SecurityInterrupt(Exception):
+    """安全中断异常 - 当 IP 冷却期未结束时抛出
+
+    当 COLLECTION_PAUSE_UNTIL 环境变量设置的时间晚于当前时间时，
+    所有采集器的初始化将被此异常中断，防止在冷却期内发起网络请求。
+    """
+
+    pass
+
+
+# ============================================================================
+# V26.5: Collection Circuit Breaker
+# ============================================================================
+
+class CollectionCircuitBreaker:
+    """
+    V26.5: 采集熔断器 - 防止在冷却期内发起网络请求
+
+    功能：
+    1. 检查 COLLECTION_PAUSE_UNTIL 环境变量
+    2. 如果当前时间 < 冷却截止时间，抛出 SecurityInterrupt
+    3. 否则，允许采集器继续初始化
+    """
+
+    @staticmethod
+    def check_pause_period() -> None:
+        """
+        检查冷却期状态
+
+        Raises:
+            SecurityInterrupt: 如果当前时间在冷却期内
+
+        Returns:
+            None: 如果冷却期已过，允许继续执行
+        """
+        pause_until_str = os.getenv("COLLECTION_PAUSE_UNTIL")
+
+        if not pause_until_str:
+            # 未设置冷却期，允许继续
+            return
+
+        try:
+            pause_until = datetime.fromisoformat(pause_until_str.replace("Z", "+00:00"))
+        except ValueError as e:
+            # 环境变量格式错误，记录警告但允许继续
+            import warnings
+            warnings.warn(f"COLLECTION_PAUSE_UNTIL 格式错误: {e}")
+            return
+
+        # 获取当前时间（带时区信息）
+        current_time = datetime.now().astimezone()
+
+        if current_time < pause_until:
+            # 冷却期未结束，抛出异常
+            remaining_time = pause_until - current_time
+            raise SecurityInterrupt(
+                f"🛡️ IP 冷却期保护: 数据采集已暂停\n"
+                f"⏰ 当前时间: {current_time.isoformat()}\n"
+                f"🚫 冷却截止: {pause_until.isoformat()}\n"
+                f"⏳ 剩余时间: {CollectionCircuitBreaker._format_timedelta(remaining_time)}\n"
+                f"💡 提示: 请等待冷却期结束后重试，或手动清除 COLLECTION_PAUSE_UNTIL 环境变量"
+            )
+
+        # 冷却期已过
+        logger.info(f"✅ 冷却期已过 (截止: {pause_until.isoformat()})，允许采集")
+
+    @staticmethod
+    def _format_timedelta(td: timedelta) -> str:
+        """格式化时间差为易读字符串"""
+        total_seconds = int(td.total_seconds())
+        hours = total_seconds // 3600
+        minutes = (total_seconds % 3600) // 60
+        seconds = total_seconds % 60
+
+        if hours > 0:
+            return f"{hours}小时 {minutes}分钟 {seconds}秒"
+        elif minutes > 0:
+            return f"{minutes}分钟 {seconds}秒"
+        else:
+            return f"{seconds}秒"
 
 
 # ============================================================================
@@ -267,7 +353,13 @@ class BaseExtractor:
         Args:
             enable_ghost_protocol: Enable Ghost Protocol features (default: True)
             auto_proxy: Enable automatic proxy discovery (default: True)
+
+        Raises:
+            SecurityInterrupt: 如果当前时间在 IP 冷却期内
         """
+        # V26.5: 首先检查冷却期状态
+        CollectionCircuitBreaker.check_pause_period()
+
         self.settings = get_settings()
         self.enable_ghost_protocol = enable_ghost_protocol
         self.auto_proxy = auto_proxy

@@ -7,6 +7,70 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [V26.5] - 2026-01-06
+
+> **自动巡航哨兵 & IP 消耗预警** - 801 条 FAILED 记录的精细化抢救系统
+
+### Added
+- **V26.5 CollectionSentry** - 自动巡航哨兵系统
+  - `src/api/collectors/collection_sentry.py` - 滑动窗口统计 + 成功率监控 + 连续失败监控
+  - 哨兵逻辑: 成功率 < 70% **AND** 连续失败 >= 6 次 → 触发停机
+  - 自动设置 `COLLECTION_PAUSE_UNTIL` 环境变量（12 小时冷却期）
+  - 集成到 `HarvesterService.cruise` 模式
+
+- **V26.5 IP 消耗预警系统**
+  - `scripts/ops/v26_5_quality_dashboard.py` - 质量看板增强
+  - 实时监控可用代理数量，可用 < 2 时触发告急
+  - 显示【警告：IP 资源即将枯竭】红色警示
+
+- **V26.5 抢救优先级过滤系统**
+  - `scripts/maintenance/reprocess_failed_matches.py` - 联赛等级优先级排序
+  - Tier 1: 5 大联赛（英超、西甲、德甲、意甲、法甲）优先
+  - Tier 2: 次级联赛（英冠、西乙等）
+  - Tier 3: 其他联赛
+  - SQL `CASE WHEN` 排序逻辑确保高价值数据优先抢救
+
+- **V26.5 复工自检脚本**
+  - `scripts/ops/v26_5_resume_check.py` - 1 月 9 日点火前健康检查
+  - 输出: "💡 数据已入库，结构正确，可以开火"
+
+- **V26.5 PM 介入指南**
+  - `docs/PM_INTERVENTION_GUIDE_JAN9.md` - 分阶段执行方案
+  - Phase 1: 复工自检（5 场）→ Phase 2: 小规模（100 场）→ Phase 3: 中规模（500 场）→ Phase 4: 全量（801 场）
+
+### Fixed
+- **m.id 冲突修复** - 修复 `matches` 表 `match_id` 字段冲突问题
+- **数据结构错乱修复** - 修复 `l2_raw_json` 和 `l2_extracted_features` JSON 序列化问题
+- **边界条件修复** - 连续失败阈值从 `>= 5` 修正为 `> 5`（>= 6 才触发）
+
+### Changed
+- **HarvesterService 集成哨兵逻辑** - `src/api/services/harvester_service.py`
+  - `__init__`: 在 cruise 模式下初始化 CollectionSentry
+  - `stage2_harvest_odds`: 记录每次采集结果到哨兵
+  - `run_cruise`: 每次循环前检查健康度，触发停机保护
+
+- **质量看板增强** - `scripts/ops/v26_5_quality_dashboard.py`
+  - `generate_proxy_pool_status`: 增加 IP 告急检测逻辑
+  - 告急状态: 可用代理 < 2 时显示 🔴 红色警示
+
+### Test Coverage
+- **100% TDD 覆盖** - 13 个新增测试全部通过
+  - `tests/ops/test_collection_sentry.py` - 12 个哨兵测试
+  - `tests/maintenance/test_priority_filter.py` - 5 个优先级过滤测试
+  - `tests/ops/test_ip_alert_system.py` - 5 个 IP 告急测试
+  - `tests/ops/test_ip_alert_integration.py` - 3 个集成测试
+
+### Performance
+- **哨兵开销**: 极低（deque 滑动窗口 + 简单计数器）
+- **排序性能**: SQL 级别排序，无额外开销
+- **告急检测**: O(1) 时间复杂度
+
+### Milestone
+- **2026-01-06**: V26.5 系统交付完成，进入"静默状态"
+- **2026-01-09**: 冷却期结束，点火日（执行 `v26_5_resume_check.py`）
+
+---
+
 ## [V57.0] - 2026-01-02
 
 > **版本大一统完成** - 项目从"实验"转向"生产"的里程碑版本

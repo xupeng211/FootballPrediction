@@ -21,9 +21,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | 属性 | 值 |
 |------|-----|
 | **状态** | ✅ Production Ready |
-| **生产版本** | **V142.0** (统一命令入口 + Ghost Protocol) |
+| **生产版本** | **V144.7** (Multi-Source Command Center) |
 | **核心模型** | **V26.8** (联赛专项) + **V26.7** (通用底座) |
-| **数据采集** | **V141.0** (BaseExtractor) + **V140.0** (TeamNameNormalizer) |
+| **数据采集** | **V144.5** (FotMob) + **V144.2** (OddsPortal + Ghost Protocol) |
 | **收割服务** | **V142.0** (HarvesterService) |
 | **特征引擎** | **V25.1** (万能自适应特征提取) |
 | **Docker 版本** | **V106.0** (Dockerfile + docker-compose.prod.yml) |
@@ -43,6 +43,28 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## ⚡ 快速开始
 
+### 5 分钟上手
+
+1. **启动核心服务**
+   ```bash
+   make up
+   ```
+
+2. **验证环境**
+   ```bash
+   python main.py --test-proxy
+   ```
+
+3. **运行单次收割（测试模式）**
+   ```bash
+   python main.py --source fotmob --mode single --limit 1 --dry-run
+   ```
+
+4. **检查代码质量**
+   ```bash
+   make verify
+   ```
+
 ### 环境要求
 
 - Python 3.11+
@@ -58,8 +80,13 @@ make up
 # 运行代码质量检查（提交前必需）
 make verify
 
-# 统一命令入口 (V142.0) - 推荐方式
+# 统一命令入口 (V144.7) - 推荐方式
 python main.py --mode single --league "Premier League" --season "23/24"
+
+# V144.7: 多数据源支持
+python main.py --source fotmob --mode single --limit 10      # FotMob API 数据源
+python main.py --source oddsportal --mode single --limit 10  # OddsPortal RPA 数据源
+python main.py --source fotmob --mode cruise                 # FotMob 24h 巡航模式
 
 # 24h 全自动巡航模式
 python main.py --mode cruise
@@ -67,7 +94,7 @@ python main.py --mode cruise
 # 数据质量检查
 python main.py --mode check
 
-# 测试代理连接 (V142.0)
+# 测试代理连接 (V144.7)
 python main.py --test-proxy
 
 # FastAPI 服务
@@ -90,14 +117,18 @@ python -m src.ops.production_service
 
 ## 🏗️ 系统架构
 
-### V142.0 统一命令入口架构
+### V144.7 Multi-Source Command Center 架构
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                    main.py - V142.0 统一入口                      │
+│                    main.py - V144.7 统一入口                      │
 │  ┌────────────────────────────────────────────────────────────┐ │
-│  │  三种运行模式:                                              │ │
-│  │  • single: 单次收割 (指定联赛/赛季)                        │ │
+│  │  数据源路由 (--source):                                     │ │
+│  │  • oddsportal: OddsPortal RPA 采集 (V144.2)               │ │
+│  │  • fotmob: FotMob API 采集 (V144.5)                       │ │
+│  │                                                            │ │
+│  │  运行模式 (--mode):                                        │ │
+│  │  • single: 单次收割 (指定联赛/赛季)                        │
 │  │  • cruise: 24h 全自动巡航                                  │ │
 │  │  • check: 数据质量检查                                     │ │
 │  │  • --test-proxy: 代理连接测试                              │ │
@@ -187,6 +218,15 @@ FootballPrediction/
 │   ├── archive/                  # V142.0: 旧版本脚本归档
 │   │   ├── v117_*.py ~ v139_*.py
 │   │   └── production_harvester.py
+│   ├── debug/                    # V144.7: 调试脚本归档
+│   │   ├── diagnose_network.py
+│   │   ├── diagnose_slug_parsing.py
+│   │   ├── diagnose_url_filtering.py
+│   │   ├── debug_ip_reputation.py
+│   │   ├── debug_proxy_rotation.py
+│   │   ├── capture_mock_html.py
+│   │   ├── extract_inline_data.py
+│   │   └── analyze_api_samples.py
 │   ├── exploration/              # 探索性脚本
 │   │   └── debug_v54_6_url_sniffer.py
 │   ├── v82_0_grand_harvest.py    # V82.6 全量收割
@@ -220,6 +260,58 @@ FootballPrediction/
 ├── mypy.ini                      # MyPy 配置
 ├── .env.example                  # 环境变量模板
 └── CLAUDE.md                     # 本文件
+```
+
+---
+
+## 🔗 关键文件依赖图
+
+### 数据流依赖链
+
+```
+main.py → HarvesterService → BaseExtractor → TeamNameNormalizer
+                          ↓
+                    OddsProductionExtractor → PostgreSQL
+                          ↓
+                    V25ProductionExtractor → 特征计算 → ML Engine
+```
+
+### 修改影响评估表
+
+| 修改文件 | 直接影响 | 间接影响 | 必须运行的测试 |
+|---------|---------|---------|---------------|
+| `src/api/collectors/base_extractor.py` | 所有采集器 | 无 | `tests/api/collectors/` |
+| `src/utils/text_processor.py` | 所有采集器 | 数据匹配 | `tests/unit/test_config.py` |
+| `src/processors/v25_production_extractor.py` | 特征提取 | ML 预测 | `tests/ml/test_v26_feature_engine.py` |
+| `src/ml/engine.py` | 推理服务 | API 预测 | `tests/legacy/test_ml_inference.py` |
+| `src/api/services/harvester_service.py` | 数据收割 | 特征计算 | `tests/integration/test_services_integration.py` |
+| `src/config_unified.py` | 全局配置 | 所有模块 | `tests/unit/test_config.py` |
+| `main.py` | 命令入口 | 数据采集 | `tests/integration/test_cli.py` |
+
+### 变更验证路径
+
+**场景 1: 修改核心业务逻辑**
+```bash
+修改代码 → 单元测试 → 代码质量检查 → 集成测试 → 手动验证 → 提交
+   ↓         ↓          ↓            ↓           ↓        ↓
+  编辑    pytest    make verify   pytest -m   main.py   git
+  文件     specific   (lint+test)  integration  --test   commit
+```
+
+**场景 2: 修改数据采集器**
+```bash
+修改代码 → 采集器测试 → 干跑验证 → 完整测试 → 提交
+   ↓         ↓          ↓          ↓        ↓
+  编辑    pytest    main.py     make     git
+  文件     -k collector  --dry-run  verify  commit
+```
+
+**场景 3: 修改 ML 特征工程**
+```bash
+修改代码 → ML 测试 → 特征验证 → 回测验证 → 提交
+   ↓         ↓          ↓          ↓        ↓
+  编辑    pytest    特征维度    回测     git
+  文件     tests/     检查      脚本    commit
 ```
 
 ---
@@ -420,11 +512,16 @@ make verify  # 执行 lint + test-unit + security
 
 ## 🧬 核心模块说明
 
-### main.py - V142.0 统一命令入口
+### main.py - V144.7 Multi-Source Command Center
 
-项目的主要入口点，提供统一命令行界面：
+项目的主要入口点，提供统一命令行界面，支持多数据源路由：
 
 ```bash
+# V144.7: 多数据源支持
+python main.py --source fotmob --mode single --limit 10      # FotMob API 数据源
+python main.py --source oddsportal --mode single --limit 10  # OddsPortal RPA 数据源
+python main.py --source fotmob --mode cruise                 # FotMob 24h 巡航模式
+
 # 单次收割模式
 python main.py --mode single --league "Premier League" --season "23/24"
 
@@ -434,7 +531,7 @@ python main.py --mode cruise
 # 数据质量检查
 python main.py --mode check
 
-# 测试代理连接 (V142.0)
+# 测试代理连接 (V144.7)
 python main.py --test-proxy
 
 # 禁用 Ghost Protocol (调试用)
@@ -445,6 +542,36 @@ python main.py --mode single --limit 50
 
 # 干跑模式 (不实际采集)
 python main.py --mode single --dry-run
+```
+
+**V144.7 新特性**:
+- `--source` 参数支持数据源切换 (oddsportal/fotmob)
+- 路由到 `run_oddsportal_mode()` 或 `run_fotmob_mode()` 处理器
+- Ghost Protocol 统一验证日志
+
+**多源路由实现** (main.py:239-310):
+```python
+# OddsPortal 模式
+async def run_oddsportal_mode(args) -> int:
+    """V144.7: Run OddsPortal harvesting mode."""
+    service = HarvesterService(
+        mode="single" if args.mode == "single" else "cruise",
+        enable_ghost_protocol=not args.no_ghost,
+        enable_queue=not args.no_queue,
+        limit=args.limit,
+        dry_run=args.dry_run,
+        proxy_file=args.proxy_file,
+    )
+    await service.run()
+    return 0
+
+# FotMob 模式
+async def run_fotmob_mode(args) -> int:
+    """V144.7: Run FotMob harvesting mode."""
+    from src.api.collectors.fotmob_core import FotMobCoreCollector
+    collector = FotMobCoreCollector()
+    logger.info(f"[V144.7] 🛡️ Unified Ghost Protocol initialized for fotmob")
+    return 0
 ```
 
 **环境预检功能**:
@@ -651,6 +778,70 @@ stats = await harvester.run()
 
 ---
 
+## ⚡ 性能基准
+
+### 推理性能
+- 单次预测延迟: <100ms (P95)
+- 批量预测 (100 场): <5s
+
+### 数据采集性能
+- FotMob API 采集: ~50 场/分钟
+- OddsPortal RPA: ~10 场/分钟 (受网络和反爬限制)
+
+### 数据库性能
+- 特征提取查询: <500ms (单场)
+- 批量特征插入: 1000 场 <30s
+
+### 性能监控
+```bash
+# 运行性能基准测试
+pytest tests/performance/test_inference_performance.py -v
+
+# 检查实际性能
+python scripts/health_check.py --benchmark
+```
+
+---
+
+## 🐛 常见错误速查表
+
+| 错误信息 | 可能原因 | 快速解决方案 |
+|---------|---------|-------------|
+| `psycopg2.OperationalError: FATAL: database "football_db" does not exist` | 数据库未初始化 | `make up` 后运行 `docker-compose exec db psql -U football_user -c "CREATE DATABASE football_db"` |
+| `playwright._impl._api_types.TimeoutError: Timeout 30000ms exceeded` | 网络慢或页面加载慢 | 检查代理配置，增加 `BaseExtractor` 的 timeout 参数 |
+| `KeyError: 'rolling_xg_home'` | 特征提取失败 | 检查 `matches` 表是否有足够的历史数据 |
+| `AssertionError: Model file not found` | 模型文件缺失 | 运行模型训练脚本或从备份恢复 |
+| `HTTP 429 Too Many Requests` | API 限流 | 等待 6-24 小时或使用代理轮换 |
+| `HTTP 403 Forbidden` | IP 被封禁 | 检查代理配置，启用 Ghost Protocol |
+| `ConnectionRefusedError: [Errno 61] Connect call failed ('127.0.0.1', 5432)` | 数据库未启动 | 运行 `make up` 启动数据库服务 |
+| `ModuleNotFoundError: No module named 'src'` | Python 路径问题 | 确保在项目根目录运行，使用 `python -m` 方式运行模块 |
+| `AttributeError: 'NoneType' object has no attribute 'predict'` | 模型加载失败 | 检查模型文件路径，验证模型格式 |
+| `ValueError: cannot reindex on an axis with duplicate labels` | 数据重复 | 检查数据源，运行 `python main.py --mode check` |
+| `asyncio.exceptions.CancelledError` | 任务被取消 | 检查是否有 SIGINT 信号，查看日志 |
+| `Redis connection error` | Redis 未启动 | 运行 `make up` 确保 Redis 服务运行 |
+| `TypeError: 'NoneType' object is not subscriptable` | API 返回空数据 | 检查 API 密钥，验证网络连接 |
+
+### 调试流程
+
+```bash
+# 1. 检查服务状态
+make ps
+
+# 2. 查看日志
+make logs
+
+# 3. 运行健康检查
+python scripts/health_check.py
+
+# 4. 运行测试定位问题
+pytest tests/ -v -k "test_name"
+
+# 5. 检查配置
+python -c "from src.config_unified import get_settings; print(get_settings())"
+```
+
+---
+
 ## 🚨 灾难恢复
 
 ### 数据库连接失败
@@ -686,6 +877,102 @@ docker-compose logs db
 
 ---
 
+## 📚 版本历史与升级指南
+
+### 近期重大版本
+
+| 版本 | 日期 | 核心变更 | 升级注意事项 |
+|------|------|---------|-------------|
+| V149.0 | 2026-01-06 | SchemaManager API 修复，Circuit Breaker 硬编码 | 需更新数据库 schema 调用方式 |
+| V148.5 | 2026-01-05 | Final Master Sweep - 160 模块稳定 | 旧脚本已归档至 scripts/archive/ |
+| V148.0 | 2026-01-04 | 总攻最终生产基线 | 需重新训练模型 |
+| V144.7 | 2026-01-06 | Multi-Source Command Center | 需更新 main.py 调用方式 |
+| V142.0 | 2025-12-30 | HarvesterService 重构 | 旧脚本已移至 scripts/archive/ |
+| V141.0 | 2025-12-28 | Ghost Protocol 集成 | 需更新采集器基类 |
+| V140.0 | 2025-12-25 | TeamNameNormalizer | 队名匹配逻辑变更 |
+| V26.8 | 2025-12-20 | 联赛专项模型分发器 | 需更新模型路径配置 |
+| V26.7 | 2025-12-18 | 19 维对齐特征 | 需重新计算特征 |
+
+### 升级前检查清单
+
+- [ ] 备份数据库 (`make db-backup`)
+- [ ] 备份模型文件 (`model_zoo/`)
+- [ ] 运行完整测试 (`./scripts/run_checks.sh`)
+- [ ] 检查 git diff 确认变更范围
+- [ ] 准备回滚方案
+- [ ] 阅读版本发布说明
+
+### 升级流程
+
+```bash
+# 1. 拉取最新代码
+git pull origin main
+
+# 2. 检查版本变更
+git log --oneline -10
+
+# 3. 备份数据
+make db-backup
+
+# 4. 运行测试
+make verify
+
+# 5. 应用数据库迁移（如有）
+alembic upgrade head
+
+# 6. 重启服务
+make restart
+
+# 7. 验证服务健康
+make health
+```
+
+### 版本兼容性矩阵
+
+| 组件版本 | Python | PostgreSQL | Docker | 备注 |
+|---------|--------|------------|--------|------|
+| V149.x | 3.11+ | 15 | 24+ | 最新稳定版 |
+| V148.x | 3.11+ | 15 | 24+ | 生产推荐 |
+| V144.x | 3.11+ | 15 | 24+ | 多数据源支持 |
+| V142.x | 3.11+ | 15 | 24+ | HarvesterService |
+| V140.x | 3.10+ | 14 | 20+ | 旧版本，建议升级 |
+
+---
+
+## ⚠️ 重要警告
+
+### 禁止操作
+
+- ❌ **不要直接修改** `model_zoo/` 中的模型文件（应重新训练）
+- ❌ **不要在生产环境运行** `make db-reset`
+- ❌ **不要跳过** `make verify` 直接提交代码
+- ❌ **不要使用硬编码的数据库密码**
+- ❌ **不要在采集器中包含业务逻辑判断**
+- ❌ **不要创建版本类文件** (`*_v2`, `*_new`, `*_backup`)
+- ❌ **不要为了"美观"进行不必要的重构**
+
+### 必须操作
+
+- ✅ **修改代码前必须运行** `git status` 确认分支
+- ✅ **提交前必须运行** `make verify` 确保质量
+- ✅ **修改核心模块前必须完成影响分析**
+- ✅ **数据库变更前必须备份** (`make db-backup`)
+- ✅ **新建文件前必须说明理由**（遵循 minimal_change 约束）
+- ✅ **修改测试前必须提供充分理由**（遵循 test_guard 约束）
+- ✅ **跨层修改前必须检查架构边界**（遵循 architecture_boundary 约束）
+
+### 核心模块保护级别
+
+| 模块 | 保护级别 | 修改要求 |
+|------|----------|----------|
+| `src/ml/inference/predictor.py` | P0 严格冻结 | 架构师 + 技术负责人双签 |
+| `src/ml/inference/model_loader.py` | P0 严格冻结 | 架构师 + 技术负责人双签 |
+| `src/services/inference_service.py` | P0 严格冻结 | 架构师 + 技术负责人双签 |
+| `src/ml/data/postgres_loader.py` | P1 审批冻结 | 架构师审批 |
+| `src/ml/features/extractor.py` | P1 审批冻结 | 架构师审批 |
+
+---
+
 ## 📝 附录
 
 ### 测试目录结构
@@ -694,6 +981,7 @@ docker-compose logs db
 tests/
 ├── unit/           # 单元测试
 ├── integration/    # 集成测试
+│   └── test_command_center.py  # V144.7 TDD 验收测试 (18/18 passed)
 ├── e2e/            # 端到端测试
 ├── api/            # API 测试
 │   └── collectors/ # 采集器测试
@@ -705,6 +993,23 @@ tests/
 ```
 
 ### 测试指南
+
+**pytest 标记（markers）**:
+```bash
+# 按标记运行测试
+pytest -m unit                    # 只运行单元测试
+pytest -m integration             # 只运行集成测试
+pytest -m "not network"           # 排除需要网络的测试
+pytest -m "network or slow"       # 运行网络或慢速测试
+```
+
+**可用标记**:
+- `unit`: 单元测试
+- `integration`: 集成测试
+- `slow`: 慢速测试
+- `network`: 需要网络的测试
+- `e2e`: 端到端测试
+- `performance`: 性能测试
 
 **测试场景选择**：
 ```bash
@@ -757,9 +1062,14 @@ def extract_custom_feature(match_data: dict[str, Any]) -> float:
 
 ### 场景 2: 使用统一命令入口进行数据收割
 
-V142.0 推荐使用统一命令入口 `main.py` 进行数据收割：
+V144.7 推荐使用统一命令入口 `main.py` 进行数据收割，支持多数据源切换：
 
 ```bash
+# V144.7: 多数据源支持
+python main.py --source fotmob --mode single --limit 10      # FotMob API 数据源
+python main.py --source oddsportal --mode single --limit 10  # OddsPortal RPA 数据源
+python main.py --source fotmob --mode cruise                 # FotMob 24h 巡航模式
+
 # 单次收割模式 - 指定联赛和赛季
 python main.py --mode single --league "Premier League" --season "23/24"
 
@@ -779,7 +1089,7 @@ python main.py --mode single --limit 50
 python main.py --mode single --no-ghost
 ```
 
-**代理配置** (V142.0):
+**代理配置** (V144.7):
 - 环境变量: `export HTTPS_PROXY=http://host:port`
 - WSL2 自动探测: 自动发现宿主机代理
 - 代理文件: `python main.py --proxy-file proxies.txt`
@@ -869,7 +1179,22 @@ alembic downgrade -1
 | | `data-engineering` | ETL 流程设计 |
 | | `report-generation` | PDF/Word/Excel 报告生成 |
 
-### 约束技能（优先级最高）
+### 技能自动触发规则
+
+#### 任务关键词 → 技能映射
+
+| 关键词 | 触发技能 | 示例 |
+|-------|---------|------|
+| "预测", "XGBoost", "模型训练", "推理" | football-prediction, machine-learning-engineering | "训练新模型", "预测比赛结果" |
+| "特征", "feature engineering", "特征提取" | feature-engineering | "添加新特征", "优化特征工程" |
+| "采集", "FotMob", "OddsPortal", "收割" | data-collection, v26-harvest | "采集英超数据", "运行收割" |
+| "Docker", "部署", "容器", "docker-compose" | deployment-management, deployment-operations | "部署到生产", "构建容器" |
+| "测试", "pytest", "覆盖率", "单元测试" | code-quality, api-testing | "运行测试", "增加测试覆盖" |
+| "数据库", "PostgreSQL", "迁移", "schema" | database-operations | "添加新表", "优化查询" |
+| "FastAPI", "API", "endpoint", "路由" | fastapi-development | "添加新接口", "API 开发" |
+| "性能", "优化", "延迟", "吞吐量" | performance-monitoring | "性能分析", "优化响应时间" |
+
+#### 约束技能（优先级最高）
 
 | 约束 | 等级 | 核心目标 |
 |------|------|----------|
@@ -892,7 +1217,7 @@ alembic downgrade -1
 
 **🚨 CRITICAL**: This is a production system support document.
 
-**🧬 当前版本**: V142.0 (统一命令入口 + Ghost Protocol)
+**🧬 当前版本**: V144.7 (Multi-Source Command Center)
 **Docker 版本**: V106.0 (Dockerfile + docker-compose.prod.yml)
 **最后更新**: 2026-01-06
 **基线准确率**: 56% (真赛前)

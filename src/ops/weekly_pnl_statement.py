@@ -79,7 +79,7 @@ class WeeklyPnLGenerator:
 
         query = """
         SELECT
-            m.id as match_id,
+            m.match_id,
             m.home_team,
             m.away_team,
             m.match_time,
@@ -93,7 +93,7 @@ class WeeklyPnLGenerator:
             COALESCE(p.odds_d, 0.0) as odds_d,
             COALESCE(p.odds_a, 0.0) as odds_a
         FROM matches m
-        LEFT JOIN predictions p ON m.id = p.match_id
+        LEFT JOIN predictions p ON m.match_id = p.match_id
         WHERE m.match_time >= %s
           AND m.match_time <= %s
           AND m.result_score IS NOT NULL

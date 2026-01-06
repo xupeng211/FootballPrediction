@@ -314,7 +314,7 @@ async def run_fotmob_mode(args) -> int:
         # 查询待采集比赛（没有 L2 数据的比赛）
         # 使用 ON CONFLICT 跳过已存在的记录
         query = """
-            SELECT m.id
+            SELECT m.match_id
             FROM matches m
             WHERE m.l2_raw_json IS NULL
         """
