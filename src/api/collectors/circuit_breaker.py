@@ -259,7 +259,7 @@ class CircuitBreaker:
             logger.info(f"熔断器 [{self.name}] 已恢复到正常状态")
 
     def _record_failure(self, exception: Exception | None = None) -> None:
-        """记录失败"""
+        """记录失败（内部方法）"""
         self._stats.total_requests += 1
         self._stats.failed_requests += 1
         self._stats.consecutive_successes = 0
@@ -289,6 +289,55 @@ class CircuitBreaker:
             # 非关键错误不计入连续失败，但仍记录为失败请求
             logger.debug(
                 f"熔断器 [{self.name}] 记录非关键错误: {type(exception).__name__ if exception else 'Unknown'} "
+                f"(不计入熔断阈值)"
+            )
+
+    def record_failure(self, reason: str | None = None, is_critical: bool = True) -> None:
+        """V149.0: 公开方法 - 手动记录失败（用于外部熔断触发）
+
+        这是 HarvesterService 用来"硬接线"熔断器的公开接口。
+        当检测到 IP 硬封（如 39 字节错误）时，直接调用此方法触发熔断。
+
+        Args:
+            reason: 失败原因描述（如 "IP Hard Ban: 39 bytes"）
+            is_critical: 是否为严重错误（默认 True，计入连续失败阈值）
+
+        Example:
+            >>> breaker = CircuitBreaker("oddsportal")
+            >>> breaker.record_failure("IP Hard Ban: 39 bytes", is_critical=True)
+            >>> if breaker.state == CircuitState.OPEN:
+            >>>     print("熔断器已触发，进入冷却期")
+        """
+        self._stats.total_requests += 1
+        self._stats.failed_requests += 1
+        self._stats.consecutive_successes = 0
+        self._stats.last_failure_time = time.time()
+
+        if is_critical:
+            self._stats.consecutive_failures += 1
+            logger.warning(
+                f"🔴 熔断器 [{self.name}] 手动记录关键失败: {reason} "
+                f"(连续失败: {self._stats.consecutive_failures}/{self.config.failure_threshold})"
+            )
+
+            # 连续失败达到阈值，打开熔断器
+            if self._stats.consecutive_failures >= self.config.failure_threshold:
+                if self._state != CircuitState.OPEN:
+                    self._transition_to(CircuitState.OPEN)
+                    logger.error(
+                        f"🔴 熔断器 [{self.name}] 已触发! "
+                        f"连续失败 {self._stats.consecutive_failures} 次，"
+                        f"冷却 {self.config.cooldown_seconds} 秒..."
+                    )
+                    # V149.0: 自动退出 EXIT 99
+                    logger.critical(
+                        f"⛔ CIRCUIT_BREAKER: IP Hard Ban Detected - EXIT 99"
+                    )
+                    import sys
+                    sys.exit(99)
+        else:
+            logger.debug(
+                f"熔断器 [{self.name}] 手动记录非关键失败: {reason} "
                 f"(不计入熔断阈值)"
             )
 

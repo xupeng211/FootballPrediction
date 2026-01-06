@@ -35,6 +35,7 @@ import psycopg2
 
 from src.api.collectors.base_extractor import BaseExtractor
 from src.api.collectors.odds_production_extractor import OddsProductionExtractor
+from src.api.collectors.circuit_breaker import CircuitBreaker, CircuitBreakerConfig
 from src.config_unified import get_settings
 from src.utils.text_processor import TeamNameNormalizer
 
@@ -891,6 +892,14 @@ class HarvesterService:
 
         self.proxy_pool = proxy_pool
 
+        # V149.0: 集成 CircuitBreaker 熔断器
+        circuit_breaker_config = CircuitBreakerConfig(
+            failure_threshold=5,
+            cooldown_seconds=600,  # 10 分钟冷却
+        )
+        self.circuit_breaker = CircuitBreaker("oddsportal_harvester", circuit_breaker_config)
+        logger.info("[V149.0] ✅ CircuitBreaker 熔断器已集成（阈值: 5 次，冷却: 600 秒）")
+
         # V142.9: Context resilience enabled by default
         self.enable_context_resilience = True
 
@@ -975,6 +984,13 @@ class HarvesterService:
                     # V143.7: Special handling for "39 bytes" error (IP Hard Ban)
                     # Skip retry and force proxy rotation immediately
                     is_hard_ban = "39 bytes" in block_reason
+
+                    if is_hard_ban:
+                        # V149.0: 硬接线 CircuitBreaker 熔断器
+                        self.circuit_breaker.record_failure(
+                            reason=f"IP Hard Ban: {block_reason}",
+                            is_critical=True
+                        )
 
                     if is_hard_ban and self.proxy_pool and not self.proxy_pool.is_exhausted():
                         logger.error(

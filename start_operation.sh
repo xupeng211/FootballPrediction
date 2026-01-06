@@ -98,17 +98,18 @@ check_docker_health() {
 }
 
 ################################################################################
-# Step 1: 执行 alembic upgrade head
+# Step 1: 执行 SchemaManager.initialize_schema() - V149.0 统一入口
 ################################################################################
 upgrade_database_schema() {
-    print_step "1" "数据库 Schema 强制同步"
+    print_step "1" "数据库 Schema 初始化/升级 (V149.0)"
 
-    print_info "执行 alembic upgrade head..."
+    print_info "调用 SchemaManager.initialize_schema()..."
 
-    if alembic upgrade head; then
-        print_success "Schema 同步完成"
+    if python3 -c "from src.database.schema_manager import SchemaManager; SchemaManager().initialize_schema()" 2>&1 | tee /tmp/schema_upgrade.log; then
+        print_success "Schema 初始化/升级完成"
     else
-        print_error "Schema 同步失败"
+        print_error "Schema 初始化/升级失败"
+        print_info "查看详细日志: cat /tmp/schema_upgrade.log"
         exit 1
     fi
 }
