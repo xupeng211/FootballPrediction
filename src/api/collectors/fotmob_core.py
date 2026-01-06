@@ -1040,13 +1040,14 @@ class FotMobCoreCollector:
 
     def upsert_match_data(self, match_info: dict, l2_json: dict, league_id: int = None, season: str = None) -> bool:
         """
-        数据库UPSERT操作 - V11.1 修正版
+        数据库UPSERT操作 - V145.1 修正版
 
         功能：
         1. 插入新记录或更新现有记录
         2. 同步真实赔率数据
         3. 自动更新时间戳
         4. V11.1: 正确存储 league_id 和 season
+        5. V145.1: 添加 l2_data_version 字段追踪数据收割版本
 
         Args:
             match_info: 比赛基础信息
@@ -1062,15 +1063,16 @@ class FotMobCoreCollector:
             conn = self.get_database_connection()
 
             with conn.cursor() as cur:
-                # V11.1: 添加 league_id 和 season 字段
+                # V145.1: 添加 l2_data_version 字段用于数据版本追踪
                 query = """
                 INSERT INTO matches (
-                    id, external_id, home_team, away_team, match_time, l2_raw_json, league_id, season
+                    id, external_id, home_team, away_team, match_time, l2_raw_json, league_id, season, l2_data_version
                 ) VALUES (
-                    %s, %s, %s, %s, %s, %s, %s, %s
+                    %s, %s, %s, %s, %s, %s, %s, %s, %s
                 )
                 ON CONFLICT (id) DO UPDATE SET
                     l2_raw_json = EXCLUDED.l2_raw_json,
+                    l2_data_version = EXCLUDED.l2_data_version,
                     league_id = COALESCE(EXCLUDED.league_id, matches.league_id),
                     season = COALESCE(EXCLUDED.season, matches.season),
                     updated_at = NOW()
@@ -1106,6 +1108,7 @@ class FotMobCoreCollector:
                     serialize_json(l2_json),  # l2_raw_json（清理 NaN）
                     league_id,  # V11.1: 联赛ID
                     season,  # V11.1: 赛季代码
+                    "V145.1",  # V145.1: 数据收割版本号
                 )
 
                 cur.execute(query, params)
