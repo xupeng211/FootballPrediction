@@ -43,6 +43,10 @@ from typing import Any
 from playwright.async_api import async_playwright
 import psycopg2
 
+# V144.7: 加载环境变量（必须在 import config_unified 之前）
+from dotenv import load_dotenv
+load_dotenv(override=True)
+
 # Add project root to Python path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
