@@ -36,9 +36,12 @@ class SchemaManager:
             )
         return self.conn
 
-    def initialize_production_schema(self) -> bool:
+    def initialize_schema(self) -> bool:
         """
-        初始化生产环境完整Schema
+        初始化/升级数据库Schema - 无损升级接口
+
+        兼容"表已存在但缺少字段"的情况，实现断点续传式升级。
+        这是 V149.0 标准化的统一入口，用于一键启动脚本。
 
         Returns:
             bool: 初始化是否成功
@@ -47,25 +50,60 @@ class SchemaManager:
             conn = self.get_connection()
             cursor = conn.cursor()
 
-            logger.info("🏗️ 初始化生产环境数据库Schema...")
+            logger.info("🏗️ V149.0 Schema初始化/升级开始...")
 
-            # 创建match_features_training表
+            # Step 1: 创建所有表（如果不存在）
             self._create_match_features_table(cursor)
-
-            # 创建matches表
             self._create_matches_table(cursor)
-
-            # 创建raw_match_data表
             self._create_raw_match_data_table(cursor)
 
-            # 创建所有索引
+            # Step 2: 无损升级 - 添加L2字段（如果不存在）
+            logger.info("🔄 检查L2字段并执行无损升级...")
+            cursor.execute("""
+                DO $$
+                BEGIN
+                    -- 添加 l2_raw_json 字段
+                    IF NOT EXISTS (
+                        SELECT 1 FROM information_schema.columns
+                        WHERE table_name = 'matches' AND column_name = 'l2_raw_json'
+                    ) THEN
+                        ALTER TABLE matches ADD COLUMN l2_raw_json JSONB;
+                        RAISE NOTICE '✅ l2_raw_json 字段已添加';
+                    ELSE
+                        RAISE NOTICE 'ℹ️ l2_raw_json 字段已存在';
+                    END IF;
+
+                    -- 添加 l2_data_version 字段
+                    IF NOT EXISTS (
+                        SELECT 1 FROM information_schema.columns
+                        WHERE table_name = 'matches' AND column_name = 'l2_data_version'
+                    ) THEN
+                        ALTER TABLE matches ADD COLUMN l2_data_version VARCHAR(20) DEFAULT 'V145.0';
+                        RAISE NOTICE '✅ l2_data_version 字段已添加';
+                    ELSE
+                        RAISE NOTICE 'ℹ️ l2_data_version 字段已存在';
+                    END IF;
+                END $$;
+            """)
+
+            # Step 3: 创建/更新索引
             self._create_indexes(cursor)
 
-            # 创建触发器
+            # Step 4: 创建/更新触发器
             self._create_triggers(cursor)
 
+            # Step 5: 验证L2字段存在
+            cursor.execute("""
+                SELECT column_name, data_type, column_default
+                FROM information_schema.columns
+                WHERE table_name = 'matches' AND column_name IN ('l2_raw_json', 'l2_data_version')
+                ORDER BY column_name;
+            """)
+            result = cursor.fetchall()
+            logger.info(f"✅ L2字段验证结果: {len(result)} 个字段存在")
+
             conn.commit()
-            logger.info("✅ 生产环境Schema初始化完成")
+            logger.info("✅ V149.0 Schema初始化/升级完成 - 已支持 L2 Data Lake")
             return True
 
         except Exception as e:
@@ -73,6 +111,16 @@ class SchemaManager:
                 conn.rollback()
             logger.error(f"❌ Schema初始化失败: {e}")
             return False
+
+    def initialize_production_schema(self) -> bool:
+        """
+        初始化生产环境完整Schema
+
+        Returns:
+            bool: 初始化是否成功
+        """
+        # V149.0: 统一使用 initialize_schema() 入口
+        return self.initialize_schema()
 
     def _create_match_features_table(self, cursor):
         """创建match_features_training表"""
