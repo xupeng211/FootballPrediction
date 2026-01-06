@@ -5,49 +5,17 @@ API集成测试
 
 import pytest
 from fastapi.testclient import TestClient
-<<<<<<< Updated upstream
-from unittest.mock import patch, Mock
-import json
-=======
 import pytest_asyncio
 
->>>>>>> Stashed changes
 
 from src.config_unified import get_settings
 from src.api.schemas import HealthCheckResponse, ServiceCheck
 
 
-<<<<<<< Updated upstream
-class TestHealthEndpointsIntegration:
-    """健康检查端点集成测试"""
-
-    @pytest.fixture
-    def client(self):
-        """创建测试客户端"""
-        # 使用简化版的主应用
-        try:
-            from src.simple_enhanced_main import app
-        except ImportError:
-            # 如果简化版不可用，使用基础应用
-            from fastapi import FastAPI
-
-            app = FastAPI()
-
-            @app.get("/health")
-            async def health_check():
-                return {"status": "healthy", "service": "test"}
-
-        return TestClient(app)
-
-    def test_health_check_endpoint(self, client):
-        """测试健康检查端点"""
-        response = client.get("/health")
-=======
     def test_api_health_check(self, client: TestClient):
         """测试API健康检查端点"""
         response = test_client.get("/api/health")
         assert response.status_code == 200
->>>>>>> Stashed changes
 
         assert response.status_code == 200
         data = response.json()
@@ -130,13 +98,10 @@ class TestModelManagementIntegration:
         """测试重新加载模型端点"""
         response = client_with_model_api.post("/models/reload")
 
-<<<<<<< Updated upstream
-=======
     def test_api_info_endpoints(self, client: TestClient):
         """测试API信息端点"""
         # 测试根路径
         response = test_client.get("/api/")
->>>>>>> Stashed changes
         assert response.status_code == 200
         data = response.json()
 
@@ -150,8 +115,6 @@ class TestModelManagementIntegration:
 
         assert response.status_code == 200
         data = response.json()
-<<<<<<< Updated upstream
-=======
         assert "service" in data
         assert "version" in data
         assert "endpoints" in data
@@ -201,7 +164,6 @@ class TestModelManagementIntegration:
         # 测试不存在的端点
         response = test_client.get("/api/nonexistent")
         assert response.status_code == 404
->>>>>>> Stashed changes
 
         assert "models" in data
         assert isinstance(data["models"], list)
@@ -387,34 +349,6 @@ class TestErrorHandlingIntegration:
 
         assert response.status_code == 404
 
-<<<<<<< Updated upstream
-
-class TestCORSIntegration:
-    """CORS集成测试"""
-
-    @pytest.fixture
-    def client_with_cors(self):
-        """创建包含CORS的测试客户端"""
-        from fastapi import FastAPI
-        from fastapi.middleware.cors import CORSMiddleware
-
-        app = FastAPI(title="Football Prediction API")
-
-        # 添加CORS中间件
-        app.add_middleware(
-            CORSMiddleware,
-            allow_origins=["http://localhost:3000", "https://football-prediction.com"],
-            allow_credentials=True,
-            allow_methods=["*"],
-            allow_headers=["*"],
-        )
-
-        @app.get("/test-cors")
-        async def test_cors():
-            return {"message": "CORS test successful"}
-
-        return TestClient(app)
-=======
     def test_api_request_validation(self, client: TestClient):
         """测试API请求验证"""
         # 测试无效的JSON请求
@@ -513,7 +447,6 @@ class TestAPIBusinessLogic:
             "match_date": "2024-01-15T15:00:00",
             "league": "Test League",
         }
->>>>>>> Stashed changes
 
     def test_cors_headers(self, client_with_cors):
         """测试CORS头设置"""
@@ -525,11 +458,6 @@ class TestAPIBusinessLogic:
             },
         )
 
-<<<<<<< Updated upstream
-        # 检查CORS头
-        assert "access-control-allow-origin" in response.headers
-        assert "http://localhost:3000" in response.headers["access-control-allow-origin"]
-=======
     def test_prediction_workflow(self, client: TestClient):
         """测试预测工作流"""
         prediction_request = {
@@ -537,7 +465,6 @@ class TestAPIBusinessLogic:
             "away_team_id": 2,
             "model_version": "default",
         }
->>>>>>> Stashed changes
 
     def test_cors_invalid_origin(self, client_with_cors):
         """测试无效Origin的CORS处理"""
@@ -551,16 +478,8 @@ class TestAPIBusinessLogic:
 class TestRateLimitingIntegration:
     """速率限制集成测试"""
 
-<<<<<<< Updated upstream
-    @pytest.fixture
-    def client_with_rate_limiting(self):
-        """创建包含速率限制的测试客户端"""
-        from fastapi import FastAPI
-        from fastapi import HTTPException
-=======
     def test_api_response_time(self, client: TestClient):
         """测试API响应时间"""
->>>>>>> Stashed changes
         import time
 
         app = FastAPI(title="Football Prediction API")
@@ -572,23 +491,10 @@ class TestRateLimitingIntegration:
         async def predict_with_rate_limit(team_a: str, team_b: str):
             current_time = time.time()
 
-<<<<<<< Updated upstream
-            # 清理超过1分钟的请求记录
-            request_times[:] = [t for t in request_times if current_time - t < 60]
-
-            # 检查速率限制（每分钟最多10次请求）
-            if len(request_times) >= 10:
-                raise HTTPException(status_code=429, detail="Rate limit exceeded")
-
-            request_times.append(current_time)
-
-            return {"home_team": team_a, "away_team": team_b, "prediction": "HOME_WIN"}
-=======
     def test_api_concurrent_load(self, client: TestClient):
         """测试API并发负载"""
         import concurrent.futures
         import time
->>>>>>> Stashed changes
 
         return TestClient(app)
 
