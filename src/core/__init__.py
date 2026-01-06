@@ -92,10 +92,10 @@ logger = Logger.setup_logger("footballprediction")
 
 __all__ = [
     "Config",
-    "Logger",
-    "FootballPredictionError",
     "ConfigError",
     "DataError",
+    "FootballPredictionError",
+    "Logger",
     "config",
     "logger",
 ]
@@ -118,8 +118,8 @@ from src.core.structured_logging import (
     ComponentLogger,
     EventCode,
     HarvestStats,
-    LogLevel,
     LogContext,
+    LogLevel,
     get_logger,
     log_context,
     performance_timer,

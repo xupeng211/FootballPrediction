@@ -14,18 +14,18 @@ Usage:
     >>> metrics.record_extraction_success(vendor="Entity_P", duration=1.23)
 """
 
-import time
 from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime
 from threading import Lock
 from typing import Any
 
-from prometheus_client import Counter, Gauge, Histogram, Summary
+from prometheus_client import Counter, Gauge, Histogram
 
 # V113.0: Optional database support
 try:
     import psycopg2
+
     from src.config_unified import get_settings
     DB_AVAILABLE = True
 except ImportError:
@@ -327,7 +327,7 @@ class DeadLetterQueue:
             conn.commit()
             cursor.close()
             conn.close()
-        except Exception as e:
+        except Exception:
             # 静默失败，不影响主流程
             pass
 

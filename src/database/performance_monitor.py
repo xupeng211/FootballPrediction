@@ -13,10 +13,10 @@
 """
 
 import asyncio
-import logging
-import time
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
+import logging
+import time
 from typing import Any
 
 from .connection import get_connection
@@ -198,7 +198,7 @@ class DatabasePerformanceMonitor:
                 query_text=query,
                 execution_time_ms=0.0,
                 rows_returned=0,
-                recommendations=[f"分析失败: {str(e)}"],
+                recommendations=[f"分析失败: {e!s}"],
             )
 
     async def get_optimization_recommendations(self) -> list[str]:

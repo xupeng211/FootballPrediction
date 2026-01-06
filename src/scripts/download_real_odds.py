@@ -158,9 +158,8 @@ def download_odds_data():
         print(f"✅ 原始赔率数据已保存: {output_path}")
 
         return combined_df
-    else:
-        print("❌ 未下载到任何数据")
-        return None
+    print("❌ 未下载到任何数据")
+    return None
 
 
 def standardize_columns(df: pd.DataFrame) -> pd.DataFrame:

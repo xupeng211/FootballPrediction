@@ -7,4 +7,4 @@ API模块
 from .fotmob_client import FotMobAPIClient, fetch_match_data
 from .health import router as health_router
 
-__all__ = ["health_router", "FotMobAPIClient", "fetch_match_data"]
+__all__ = ["FotMobAPIClient", "fetch_match_data", "health_router"]

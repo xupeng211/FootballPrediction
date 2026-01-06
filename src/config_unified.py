@@ -21,10 +21,10 @@ Version: V26.0 (Stable)
 5. External API Settings (外部API设置)
 """
 
-import logging
-import os
 from dataclasses import dataclass, field
 from enum import Enum
+import logging
+import os
 from pathlib import Path
 from typing import Any
 
@@ -80,8 +80,7 @@ class DatabaseConfig:
         password = self.password.get_secret_value()
         if self.ssl_mode:
             return f"postgresql://{self.user}:{password}@{self.host}:{self.port}/{self.name}?sslmode=require"
-        else:
-            return f"postgresql://{self.user}:{password}@{self.host}:{self.port}/{self.name}"
+        return f"postgresql://{self.user}:{password}@{self.host}:{self.port}/{self.name}"
 
     def get_async_url(self) -> str:
         """获取异步连接字符串（用于 SQLAlchemy async）"""
@@ -113,8 +112,7 @@ class RedisConfig:
         if self.password:
             password = self.password.get_secret_value()
             return f"redis://:{password}@{self.host}:{self.port}/{self.db}"
-        else:
-            return f"redis://{self.host}:{self.port}/{self.db}"
+        return f"redis://{self.host}:{self.port}/{self.db}"
 
 
 @dataclass

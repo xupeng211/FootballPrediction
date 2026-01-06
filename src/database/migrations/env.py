@@ -5,9 +5,9 @@ Alembic环境配置
 """
 
 import asyncio
+from logging.config import fileConfig
 import os
 import sys
-from logging.config import fileConfig
 
 from alembic import context
 from sqlalchemy import engine_from_config, pool
@@ -25,8 +25,8 @@ if project_root_alt not in sys.path:
 
 
 try:
-    from src.config_unified import get_settings  # noqa: E402
-    from src.database.base import Base  # noqa: E402
+    from src.config_unified import get_settings
+    from src.database.base import Base
     # Odds model import removed - not needed for migrations
 
     # 提供兼容的 get_database_config 函数
@@ -61,10 +61,9 @@ def get_database_url():
     env_url = os.getenv("DATABASE_URL")
     if env_url:
         return env_url
-    else:
-        # 回退到配置文件
-        db_config = get_database_config()
-        return db_config.get_connection_string()
+    # 回退到配置文件
+    db_config = get_database_config()
+    return db_config.get_connection_string()
 
 
 # add your model's MetaData object here

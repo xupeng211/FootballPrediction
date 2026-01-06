@@ -13,15 +13,15 @@
 """
 
 import asyncio
+from collections.abc import Callable
+from contextlib import contextmanager
+from dataclasses import dataclass, field
+from datetime import datetime
 import functools
 import gc
 import logging
 import threading
 import time
-from collections.abc import Callable
-from contextlib import contextmanager
-from dataclasses import dataclass, field
-from datetime import datetime
 from typing import Any
 
 import pandas as pd
@@ -143,24 +143,23 @@ def monitor_performance(
         # 根据函数是否为协程函数返回合适的包装器
         if asyncio.iscoroutinefunction(func):
             return async_wrapper
-        else:
-            # 对于同步函数，返回包装后的异步版本
-            @functools.wraps(func)
-            def sync_wrapper(*args, **kwargs):
-                return asyncio.run(
-                    _monitor_function_execution(
-                        func,
-                        args,
-                        kwargs,
-                        log_calls,
-                        track_memory,
-                        track_gc,
-                        min_execution_time_ms,
-                        is_async=False,
-                    )
+        # 对于同步函数，返回包装后的异步版本
+        @functools.wraps(func)
+        def sync_wrapper(*args, **kwargs):
+            return asyncio.run(
+                _monitor_function_execution(
+                    func,
+                    args,
+                    kwargs,
+                    log_calls,
+                    track_memory,
+                    track_gc,
+                    min_execution_time_ms,
+                    is_async=False,
                 )
+            )
 
-            return sync_wrapper
+        return sync_wrapper
 
     return decorator
 

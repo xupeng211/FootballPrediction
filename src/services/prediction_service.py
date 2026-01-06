@@ -12,9 +12,9 @@
 - Error Handling and Validation (错误处理和验证)
 """
 
-import logging
 from dataclasses import dataclass, field
 from datetime import datetime
+import logging
 from typing import Any
 
 from .dependency_injection import ServiceLifecycle, injectable
@@ -431,7 +431,7 @@ class PredictionService(ServiceLifecycle):
             if isinstance(result, Exception):
                 error_response = PredictionResponse(
                     success=False,
-                    error=f"预测异常: {str(result)}",
+                    error=f"预测异常: {result!s}",
                     request_id=f"batch_item_{match_ids[i]}",
                 )
                 processed_results.append(error_response)

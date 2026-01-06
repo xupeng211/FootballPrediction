@@ -19,8 +19,8 @@ V20.6 ShotmapAggregator - 全量射门数据合成引擎
 版本: V20.6
 """
 
-import logging
 from dataclasses import dataclass
+import logging
 from typing import Any
 
 import numpy as np

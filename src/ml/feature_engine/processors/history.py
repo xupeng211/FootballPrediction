@@ -22,9 +22,9 @@ HistoricalRollingProcessor - 历史追溯处理器（V24.0 时序引擎）
 版本: V24.0-alpha
 """
 
+from dataclasses import dataclass
 import logging
 import statistics
-from dataclasses import dataclass
 from typing import Any
 
 from ..base import BaseProcessor, ProcessorConfig, ProcessorResult

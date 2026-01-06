@@ -7,13 +7,13 @@
 遵循单一职责原则，只负责模型生命周期管理。
 """
 
+from dataclasses import dataclass
 import json
 import logging
+from pathlib import Path
 import pickle
 import threading
 import time
-from dataclasses import dataclass
-from pathlib import Path
 from typing import Any
 
 # Import joblib for model loading
@@ -147,7 +147,7 @@ class ModelLoader:
         except ModelLoadError:
             raise
         except Exception as e:
-            error_msg = f"模型 {model_name} 加载失败: {str(e)}"
+            error_msg = f"模型 {model_name} 加载失败: {e!s}"
             logger.error(error_msg)
             raise ModelLoadError(error_msg) from e
 
@@ -167,7 +167,7 @@ class ModelLoader:
                 import xgboost as xgb
 
                 return xgb.XGBClassifier()
-            elif model_path.suffix in [".pkl", ".pickle"]:
+            if model_path.suffix in [".pkl", ".pickle"]:
                 with open(model_path, "rb") as f:
                     try:
                         model_data = pickle.load(f)  # nosec B301
@@ -181,7 +181,7 @@ class ModelLoader:
                 # 使用joblib加载，适合大型模型文件
                 return joblib.load(model_path)
         except Exception as e:
-            raise ModelLoadError(f"模型文件读取失败: {str(e)}") from e
+            raise ModelLoadError(f"模型文件读取失败: {e!s}") from e
 
     def _parse_model_data(self, model_data: Any, model_name: str) -> tuple[Any, ModelMetadata]:
         """
@@ -439,7 +439,7 @@ class ModelLoader:
                 self._check_for_model_updates()
                 time.sleep(self.reload_interval)
             except Exception as e:
-                logger.error(f"热更新检查出错: {str(e)}")
+                logger.error(f"热更新检查出错: {e!s}")
                 time.sleep(self.reload_interval)
 
         logger.info("热更新监听线程已停止")
@@ -468,7 +468,7 @@ class ModelLoader:
             self._load_current_best_model()
 
         except Exception as e:
-            logger.error(f"检查模型更新失败: {str(e)}")
+            logger.error(f"检查模型更新失败: {e!s}")
 
     def _load_current_best_model(self):
         """加载当前最佳模型"""
@@ -525,7 +525,7 @@ class ModelLoader:
                 logger.error(f"❌ 加载新模型失败: {current_version}")
 
         except Exception as e:
-            logger.error(f"加载当前最佳模型失败: {str(e)}")
+            logger.error(f"加载当前最佳模型失败: {e!s}")
 
     def _load_model_metadata(self, version: str) -> dict[str, Any] | None:
         """加载模型元数据"""
@@ -545,7 +545,7 @@ class ModelLoader:
             return model_data
 
         except Exception as e:
-            logger.error(f"加载模型元数据失败: {str(e)}")
+            logger.error(f"加载模型元数据失败: {e!s}")
             return None
 
     def trigger_model_reload(self) -> bool:
@@ -555,7 +555,7 @@ class ModelLoader:
             self._check_for_model_updates()
             return True
         except Exception as e:
-            logger.error(f"手动触发模型重载失败: {str(e)}")
+            logger.error(f"手动触发模型重载失败: {e!s}")
             return False
 
     def get_current_version(self) -> str | None:
@@ -591,7 +591,7 @@ class ModelLoader:
             return True
 
         except Exception as e:
-            logger.error(f"切换模型版本失败: {str(e)}")
+            logger.error(f"切换模型版本失败: {e!s}")
             return False
 
     def stop_hot_reload(self):

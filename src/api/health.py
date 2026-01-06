@@ -5,13 +5,13 @@
 实现真实的连接检查，适配 Docker 容器环境。
 """
 
+from datetime import datetime
 import logging
 import time
-from datetime import datetime
 from typing import Any
 
-import psycopg2
 from fastapi import APIRouter, Depends, HTTPException, status
+import psycopg2
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
@@ -294,19 +294,18 @@ async def _get_model_service_check() -> ServiceCheck:
                     "model_version": settings.model_version,
                 },
             )
-        else:
-            response_time = (time.time() - start_time) * 1000
-            logger.warning(f"⚠️ 模型文件不存在: {model_path}")
+        response_time = (time.time() - start_time) * 1000
+        logger.warning(f"⚠️ 模型文件不存在: {model_path}")
 
-            return ServiceCheck(
-                status="unhealthy",
-                response_time_ms=round(response_time, 2),
-                details={
-                    "message": "模型文件不存在",
-                    "model_path": str(model_path),
-                    "model_version": settings.model_version,
-                },
-            )
+        return ServiceCheck(
+            status="unhealthy",
+            response_time_ms=round(response_time, 2),
+            details={
+                "message": "模型文件不存在",
+                "model_path": str(model_path),
+                "model_version": settings.model_version,
+            },
+        )
     except Exception as e:
         response_time = (time.time() - start_time) * 1000
         logger.error(f"❌ 模型检查失败: {e}")
@@ -377,7 +376,7 @@ async def _check_database(db: Session) -> dict[str, Any]:
         logger.error(f"数据库健康检查失败: {e}")
         return {
             "healthy": False,
-            "message": f"数据库连接失败: {str(e)}",
+            "message": f"数据库连接失败: {e!s}",
             "error": str(e),
             "response_time_ms": 0,
         }
@@ -412,7 +411,7 @@ async def _check_redis() -> dict[str, Any]:
         logger.error(f"Redis健康检查失败: {e}")
         return {
             "healthy": False,
-            "message": f"Redis连接失败: {str(e)}",
+            "message": f"Redis连接失败: {e!s}",
             "error": str(e),
             "response_time_ms": 0,
         }
@@ -432,7 +431,7 @@ async def _check_filesystem() -> dict[str, Any]:
         logger.error(f"文件系统健康检查失败: {e}")
         return {
             "healthy": False,
-            "message": f"文件系统检查失败: {str(e)}",
+            "message": f"文件系统检查失败: {e!s}",
             "error": str(e),
         }
 
@@ -523,19 +522,18 @@ async def data_quality_check(full_check: bool = False) -> dict[str, Any]:
                     "anomalies_count": sum(r.anomaly_count for r in report.anomaly_results),
                 },
             }
-        else:
-            # 执行快速健康检查
-            health_status = await checker.get_quick_health_status()
-            return {
-                "status": "success",
-                "report_type": "quick",
-                "timestamp": health_status["timestamp"],
-                "health_status": health_status["status"],
-                "health_text": health_status["status_text"],
-                "score": health_status["score"],
-                "metrics": health_status.get("metrics", {}),
-                "error": health_status.get("error"),
-            }
+        # 执行快速健康检查
+        health_status = await checker.get_quick_health_status()
+        return {
+            "status": "success",
+            "report_type": "quick",
+            "timestamp": health_status["timestamp"],
+            "health_status": health_status["status"],
+            "health_text": health_status["status_text"],
+            "score": health_status["score"],
+            "metrics": health_status.get("metrics", {}),
+            "error": health_status.get("error"),
+        }
 
     except Exception as e:
         logger.error(f"数据质量检查失败: {e}")

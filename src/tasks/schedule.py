@@ -120,7 +120,7 @@ def train_new_model(self, description: str = "Scheduled weekly training"):
         return result
 
     except Exception as e:
-        logger.error(f"❌ 定时模型重训练任务失败: {str(e)}", exc_info=True)
+        logger.error(f"❌ 定时模型重训练任务失败: {e!s}", exc_info=True)
         raise
 
 
@@ -150,7 +150,7 @@ def check_model_performance(self):
         return status
 
     except Exception as e:
-        logger.error(f"❌ 模型性能检查失败: {str(e)}", exc_info=True)
+        logger.error(f"❌ 模型性能检查失败: {e!s}", exc_info=True)
         raise
 
 
@@ -204,7 +204,7 @@ def check_data_quality(self):
         return quality_report
 
     except Exception as e:
-        logger.error(f"❌ 数据质量检查失败: {str(e)}", exc_info=True)
+        logger.error(f"❌ 数据质量检查失败: {e!s}", exc_info=True)
         raise
 
 
@@ -231,7 +231,7 @@ def system_health_check(self):
             health_status["database"] = True
             logger.info("✅ 数据库连接正常")
         except Exception as e:
-            logger.warning(f"⚠️ 数据库连接异常: {str(e)}")
+            logger.warning(f"⚠️ 数据库连接异常: {e!s}")
 
         # 检查 Redis 连接
         try:
@@ -240,7 +240,7 @@ def system_health_check(self):
             health_status["redis"] = True
             logger.info("✅ Redis 连接正常")
         except Exception as e:
-            logger.warning(f"⚠️ Redis 连接异常: {str(e)}")
+            logger.warning(f"⚠️ Redis 连接异常: {e!s}")
 
         # 检查模型服务
         try:
@@ -252,7 +252,7 @@ def system_health_check(self):
             else:
                 logger.warning("⚠️ 无可用模型")
         except Exception as e:
-            logger.warning(f"⚠️ 模型服务异常: {str(e)}")
+            logger.warning(f"⚠️ 模型服务异常: {e!s}")
 
         # 计算整体健康状态
         health_status["overall"] = all(
@@ -271,7 +271,7 @@ def system_health_check(self):
         return health_status
 
     except Exception as e:
-        logger.error(f"❌ 系统健康检查失败: {str(e)}", exc_info=True)
+        logger.error(f"❌ 系统健康检查失败: {e!s}", exc_info=True)
         raise
 
 
@@ -319,7 +319,7 @@ def cleanup_old_models(self, keep_last_n: int = 10):
                 deleted_count += 1
 
             except Exception as e:
-                logger.error(f"❌ 删除模型 {model.version} 失败: {str(e)}")
+                logger.error(f"❌ 删除模型 {model.version} 失败: {e!s}")
 
         logger.info(f"✅ 模型清理完成，删除了 {deleted_count} 个旧模型")
 
@@ -331,7 +331,7 @@ def cleanup_old_models(self, keep_last_n: int = 10):
         }
 
     except Exception as e:
-        logger.error(f"❌ 模型清理任务失败: {str(e)}", exc_info=True)
+        logger.error(f"❌ 模型清理任务失败: {e!s}", exc_info=True)
         raise
 
 
@@ -360,7 +360,7 @@ def emergency_rollback(target_version: str):
         return result
 
     except Exception as e:
-        logger.error(f"❌ 紧急回滚任务失败: {str(e)}", exc_info=True)
+        logger.error(f"❌ 紧急回滚任务失败: {e!s}", exc_info=True)
         raise
 
 

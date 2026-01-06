@@ -75,13 +75,13 @@ class PrematchFeatureExtractor:
 
         if team == home_team:
             return self.POINTS_MAP.get(result, 0)
-        elif team == away_team:
+        if team == away_team:
             # 客队视角: H=0, D=1, A=3
             if result == "H":
                 return 0
-            elif result == "D":
+            if result == "D":
                 return 1
-            elif result == "A":
+            if result == "A":
                 return 3
         return 0
 

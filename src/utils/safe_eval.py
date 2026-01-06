@@ -102,11 +102,10 @@ class SafeExpressionEvaluator:
             # 确保返回浮点数或 NaN
             if isinstance(result, (int, float)):
                 return float(result)
-            elif np.isnan(result):
+            if np.isnan(result):
                 return np.nan
-            else:
-                logger.warning(f"表达式结果类型异常: {type(result)}")
-                return float(result) if result is not None else np.nan
+            logger.warning(f"表达式结果类型异常: {type(result)}")
+            return float(result) if result is not None else np.nan
 
         except (SyntaxError, ValueError) as e:
             logger.error(f"表达式解析失败: {expr}, 错误: {e}")
@@ -134,11 +133,11 @@ class SafeExpressionEvaluator:
             return node.value
 
         # 数字节点 (Python < 3.8)
-        elif isinstance(node, ast.Num):
+        if isinstance(node, ast.Num):
             return node.n
 
         # 二元运算
-        elif isinstance(node, ast.BinOp):
+        if isinstance(node, ast.BinOp):
             left = self._eval_node(node.left, context)
             right = self._eval_node(node.right, context)
 
@@ -152,11 +151,10 @@ class SafeExpressionEvaluator:
             # 应用运算符
             if op_type in self.OPERATORS:
                 return self.OPERATORS[op_type](left, right)
-            else:
-                raise ValueError(f"不支持的运算符: {op_type}")
+            raise ValueError(f"不支持的运算符: {op_type}")
 
         # 一元运算
-        elif isinstance(node, ast.UnaryOp):
+        if isinstance(node, ast.UnaryOp):
             operand = self._eval_node(node.operand, context)
 
             # NaN 安全检查
@@ -166,11 +164,10 @@ class SafeExpressionEvaluator:
             op_type = type(node.op)
             if op_type in self.OPERATORS:
                 return self.OPERATORS[op_type](operand)
-            else:
-                raise ValueError(f"不支持的一元运算符: {op_type}")
+            raise ValueError(f"不支持的一元运算符: {op_type}")
 
         # 比较运算
-        elif isinstance(node, ast.Compare):
+        if isinstance(node, ast.Compare):
             left = self._eval_node(node.left, context)
 
             for op, comparator_node in zip(node.ops, node.comparators):
@@ -191,28 +188,27 @@ class SafeExpressionEvaluator:
             return True
 
         # 变量名
-        elif isinstance(node, ast.Name):
+        if isinstance(node, ast.Name):
             return context.get(node.id, np.nan)
 
         # 属性访问 (如 home.xg)
-        elif isinstance(node, ast.Attribute):
+        if isinstance(node, ast.Attribute):
             obj = self._eval_node(node.value, context)
 
             # 处理字典访问
             if isinstance(obj, dict):
                 return obj.get(node.attr, np.nan)
             # 处理对象属性
-            else:
-                return getattr(obj, node.attr, np.nan)
+            return getattr(obj, node.attr, np.nan)
 
         # 下标访问 (如 array[0])
-        elif isinstance(node, ast.Subscript):
+        if isinstance(node, ast.Subscript):
             value = self._eval_node(node.value, context)
             slice_val = self._eval_node(node.slice, context) if hasattr(node.slice, "value") else None
 
             if isinstance(value, dict):
                 return value.get(slice_val, np.nan) if slice_val is not None else value
-            elif isinstance(value, (list, tuple)):
+            if isinstance(value, (list, tuple)):
                 try:
                     index = int(self._eval_node(node.slice, context))
                     return value[index]
@@ -238,8 +234,7 @@ class SafeExpressionEvaluator:
                     if any(self._is_nan(arg) for arg in args):
                         return np.nan
                 return self.FUNCTIONS[func_name](*args)
-            else:
-                raise ValueError(f"不支持的函数: {func_name}")
+            raise ValueError(f"不支持的函数: {func_name}")
 
         # 表达式列表
         elif isinstance(node, ast.Expr):

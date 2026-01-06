@@ -14,13 +14,13 @@ FotMob 数据收集服务 (FotMob Collection Service)
 """
 
 import asyncio
-import logging
-import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from functools import wraps
+import logging
+import time
 from typing import Any
 
 from src.config_unified import get_settings
@@ -271,14 +271,14 @@ class CircuitBreaker:
 
         if self.state == "CLOSED":
             return True
-        elif self.state == "OPEN":
+        if self.state == "OPEN":
             if now - self.last_failure_time >= self.recovery_timeout:
                 self.state = "HALF_OPEN"
                 self.half_open_calls = 0
                 logger.info("熔断器状态从OPEN转为HALF_OPEN")
                 return True
             return False
-        elif self.state == "HALF_OPEN":
+        if self.state == "HALF_OPEN":
             return self.half_open_calls < self.half_open_max_calls
 
         return False
@@ -794,7 +794,7 @@ class FotMobCollectionService(BaseService):
 
                 except Exception as e:
                     failed_count += 1
-                    error_msg = f"保存失败 {task.match_id}: {str(e)}"
+                    error_msg = f"保存失败 {task.match_id}: {e!s}"
                     errors.append(error_msg)
 
                     # 记录单个操作失败
@@ -857,12 +857,9 @@ class FotMobCollectionService(BaseService):
 
     def _count_data_points(self, data: dict[str, Any]) -> int:
         """计算收集的数据点数量"""
-        if isinstance(data, dict):
+        if isinstance(data, dict) or isinstance(data, list):
             return len(data)
-        elif isinstance(data, list):
-            return len(data)
-        else:
-            return 1
+        return 1
 
     async def execute_all_tasks(self, max_concurrent: int | None = None) -> list[dict[str, Any]]:
         """执行所有待处理的任务"""
@@ -979,31 +976,30 @@ class FotMobCollectionService(BaseService):
                     logger.info(f"✅ FotMob数据获取成功 (match_id: {match_id}, 数据大小: {len(str(data))} 字符)")
                     return data
 
-                elif response.status == 429:
+                if response.status == 429:
                     # 速率限制
                     error_msg = f"FotMob API速率限制 (match_id: {match_id})"
                     logger.warning(f"⚠️  {error_msg}")
                     self.circuit_breaker.call_failed()
                     raise aiohttp.ClientError(error_msg)
 
-                elif response.status in [500, 502, 503, 504]:
+                if response.status in [500, 502, 503, 504]:
                     # 服务器错误 - 可以重试
                     error_msg = f"FotMob API服务器错误: {response.status} (match_id: {match_id})"
                     logger.warning(f"⚠️  {error_msg}")
                     self.circuit_breaker.call_failed()
                     raise aiohttp.ServerError(error_msg)
 
-                else:
-                    # 其他HTTP错误 - 不可重试
-                    error_msg = f"FotMob API请求失败: {response.status} {response.reason} (match_id: {match_id})"
-                    logger.error(f"❌ {error_msg}")
-                    self.circuit_breaker.call_failed()
-                    raise aiohttp.ClientResponseError(
-                        request_info=response.request_info,
-                        history=response.history,
-                        status=response.status,
-                        message=error_msg,
-                    )
+                # 其他HTTP错误 - 不可重试
+                error_msg = f"FotMob API请求失败: {response.status} {response.reason} (match_id: {match_id})"
+                logger.error(f"❌ {error_msg}")
+                self.circuit_breaker.call_failed()
+                raise aiohttp.ClientResponseError(
+                    request_info=response.request_info,
+                    history=response.history,
+                    status=response.status,
+                    message=error_msg,
+                )
 
         except TimeoutError as e:
             # 超时错误
@@ -1014,21 +1010,21 @@ class FotMobCollectionService(BaseService):
 
         except aiohttp.ClientError as e:
             # 网络连接错误
-            error_msg = f"FotMob API网络错误: {str(e)} (match_id: {match_id})"
+            error_msg = f"FotMob API网络错误: {e!s} (match_id: {match_id})"
             logger.error(f"🔌 {error_msg}")
             self.circuit_breaker.call_failed()
             raise aiohttp.ClientError(error_msg) from e
 
         except ValueError as e:
             # 数据解析错误
-            error_msg = f"FotMob API数据解析错误: {str(e)} (match_id: {match_id})"
+            error_msg = f"FotMob API数据解析错误: {e!s} (match_id: {match_id})"
             logger.error(f"🔧 {error_msg}")
             self.circuit_breaker.call_failed()
             raise ValueError(error_msg) from e
 
         except Exception as e:
             # 其他未预期错误
-            error_msg = f"FotMob API未知错误: {str(e)} (match_id: {match_id})"
+            error_msg = f"FotMob API未知错误: {e!s} (match_id: {match_id})"
             logger.error(f"❓ {error_msg}")
             self.circuit_breaker.call_failed()
             raise RuntimeError(error_msg) from e
@@ -1060,7 +1056,7 @@ class FotMobCollectionService(BaseService):
                     data = await self.fetch_fotmob_data(match_id, timeout)
                     return match_id, data
                 except Exception as e:
-                    logger.error(f"❌ 批量获取失败: match_id={match_id}, error={str(e)}")
+                    logger.error(f"❌ 批量获取失败: match_id={match_id}, error={e!s}")
                     return match_id, None
 
         # 并发执行所有请求
@@ -1076,7 +1072,7 @@ class FotMobCollectionService(BaseService):
 
         for result in results:
             if isinstance(result, Exception):
-                logger.error(f"❌ 批量获取异常: {str(result)}")
+                logger.error(f"❌ 批量获取异常: {result!s}")
                 continue
 
             match_id, data = result
@@ -1233,8 +1229,8 @@ class FotMobCollectionService(BaseService):
                 }
             }
         """
-        import time
         from datetime import datetime, timedelta
+        import time
 
         start_time = time.time()
         collection_time = datetime.utcnow()
@@ -1334,7 +1330,7 @@ class FotMobCollectionService(BaseService):
                 return result
 
         except Exception as e:
-            error_msg = f"获取即将到来的比赛失败: {str(e)}"
+            error_msg = f"获取即将到来的比赛失败: {e!s}"
             logger.error(f"❌ {error_msg}")
 
             # 返回错误结果但保持结构一致性

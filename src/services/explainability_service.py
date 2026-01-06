@@ -77,7 +77,7 @@ class ExplainabilityService:
 
         except Exception as e:
             logger.error(f"SHAP贡献度计算失败: {e}")
-            raise ExplainabilityError(f"SHAP计算失败: {str(e)}")
+            raise ExplainabilityError(f"SHAP计算失败: {e!s}")
 
     async def _get_or_create_explainer(self, model: XGBoostClassifier):
         """获取或创建SHAP解释器（缓存优化）"""
@@ -145,7 +145,7 @@ class ExplainabilityService:
 
         except Exception as e:
             logger.error(f"SHAP值计算异常: {e}")
-            raise ExplainabilityError(f"SHAP值计算失败: {str(e)}")
+            raise ExplainabilityError(f"SHAP值计算失败: {e!s}")
 
     async def _format_contributions(
         self, features: pd.DataFrame, shap_values: np.ndarray, model: XGBoostClassifier
@@ -291,4 +291,4 @@ class ExplainabilityService:
 
         except Exception as e:
             logger.error(f"单个预测解释失败: {e}")
-            raise ExplainabilityError(f"预测解释失败: {str(e)}")
+            raise ExplainabilityError(f"预测解释失败: {e!s}")

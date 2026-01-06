@@ -13,24 +13,28 @@ Version: 1.0.0
 """
 
 import asyncio
+from datetime import datetime, timedelta
 import json
 import logging
-import sys
-from datetime import datetime, timedelta
 from pathlib import Path
+import sys
 from typing import Any
-
-import numpy as np
-import pandas as pd
 
 # V144.7: 加载环境变量（必须在 import config_unified 之前）
 from dotenv import load_dotenv
+import numpy as np
+import pandas as pd
+
 load_dotenv(override=True)
 
 # 添加项目路径
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from src.api.collectors.fotmob_core import LEAGUE_ID_TO_TIER, LEAGUE_QUALITY_TIERS, FotMobCoreCollector
+from src.api.collectors.fotmob_core import (
+    LEAGUE_ID_TO_TIER,
+    LEAGUE_QUALITY_TIERS,
+    FotMobCoreCollector,
+)
 from src.ops.market_price_verifier import MarketPriceVerifier
 
 # 配置日志
@@ -164,10 +168,9 @@ class L1DailyScheduleTask:
         mod = match_id % 10
         if mod < 7:
             return tier_1_leagues[match_id % len(tier_1_leagues)]
-        elif mod < 9:
+        if mod < 9:
             return tier_2_leagues[match_id % len(tier_2_leagues)]
-        else:
-            return tier_3_leagues[match_id % len(tier_3_leagues)]
+        return tier_3_leagues[match_id % len(tier_3_leagues)]
 
     def _generate_demo_matches(self) -> list[dict[str, Any]]:
         """生成演示用的比赛数据"""
@@ -269,10 +272,9 @@ class L1DailyScheduleTask:
         """获取联赛等级数字 (1=最高, 3=最低)"""
         if "tier_1" in tier_name:
             return 1
-        elif "tier_2" in tier_name:
+        if "tier_2" in tier_name:
             return 2
-        else:
-            return 3
+        return 3
 
 
 class L2IncrementalHarvestTask:

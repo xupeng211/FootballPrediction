@@ -6,8 +6,8 @@ Database Connection Factory
 提供统一的数据库连接管理，支持测试和生产环境
 """
 
-import logging
 from contextlib import contextmanager
+import logging
 from typing import Any
 
 import psycopg2
@@ -21,7 +21,6 @@ logger = logging.getLogger(__name__)
 class DatabaseConnectionError(Exception):
     """数据库连接异常"""
 
-    pass
 
 
 def get_db_connection(

@@ -4,18 +4,18 @@ MLOps 模型重训练服务
 负责执行完整的机器学习模型重训练流水线，包括数据获取、训练、评估和部署。
 """
 
+from datetime import UTC, datetime
 import json
 import logging
-import time
-from datetime import UTC, datetime
 from pathlib import Path
+import time
 from typing import Any
 
 import numpy as np
 import pandas as pd
-import xgboost as xgb
 from sklearn.metrics import accuracy_score, classification_report, log_loss
 from sklearn.model_selection import train_test_split
+import xgboost as xgb
 
 from src.config_unified import get_settings
 from src.ml.data.postgres_loader import PostgreSQLDataLoader
@@ -249,7 +249,7 @@ class RetrainingService:
             return result
 
         except Exception as e:
-            logger.error(f"❌ 重训练流水线失败: {str(e)}", exc_info=True)
+            logger.error(f"❌ 重训练流水线失败: {e!s}", exc_info=True)
             return {
                 "status": "failed",
                 "reason": str(e),
@@ -423,12 +423,11 @@ class RetrainingService:
                 "version": target_version,
                 "message": f"已回滚到模型版本 {target_version}",
             }
-        else:
-            logger.error(f"❌ 回滚失败，模型版本 {target_version} 不存在")
-            return {
-                "status": "failed",
-                "reason": f"Model version {target_version} not found",
-            }
+        logger.error(f"❌ 回滚失败，模型版本 {target_version} 不存在")
+        return {
+            "status": "failed",
+            "reason": f"Model version {target_version} not found",
+        }
 
     def get_training_status(self) -> dict[str, Any]:
         """获取训练状态和历史"""

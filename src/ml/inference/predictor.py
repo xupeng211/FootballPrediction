@@ -16,9 +16,9 @@ Phase 5 Advanced Features 核心组件之一
 目标：通过概率归一化稳定性将模型预测可靠性提升99%+
 """
 
-import logging
 from datetime import datetime
 from decimal import Decimal
+import logging
 from typing import Any
 
 import numpy as np
@@ -27,6 +27,7 @@ import pandas as pd
 # V146.1: 修复导入 - 使用绝对路径
 # 导入足球业务逻辑常量
 from src.constants import FOOTBALL, PROBABILITY, VALIDATOR, PrecisionContext
+
 from .cache_manager import PredictionCache
 from .model_loader import ModelLoader
 
@@ -40,13 +41,11 @@ class PredictionError(Exception):
 class ProbabilityNormalizationError(PredictionError):
     """概率归一化异常"""
 
-    pass
 
 
 class NumericalStabilityError(PredictionError):
     """数值稳定性异常"""
 
-    pass
 
 
 class MatchPredictor:
@@ -206,7 +205,7 @@ class MatchPredictor:
             raise
         except Exception as e:
             self._prediction_stats["errors"] += 1
-            error_msg = f"预测失败: {str(e)}"
+            error_msg = f"预测失败: {e!s}"
             logger.error(error_msg)
             raise PredictionError(error_msg) from e
 
@@ -231,28 +230,25 @@ class MatchPredictor:
                 feature_array = features.iloc[0].values
                 return feature_array.tolist()
 
-            elif isinstance(features, np.ndarray):
+            if isinstance(features, np.ndarray):
                 # 处理numpy数组
                 if features.ndim == 1:
                     return features.tolist()
-                elif features.ndim == 2 and features.shape[0] == 1:
+                if features.ndim == 2 and features.shape[0] == 1:
                     return features[0].tolist()
-                else:
-                    logger.warning(f"numpy数组形状异常: {features.shape}，展平处理")
-                    return features.flatten().tolist()
+                logger.warning(f"numpy数组形状异常: {features.shape}，展平处理")
+                return features.flatten().tolist()
 
-            elif isinstance(features, list):
+            if isinstance(features, list):
                 # 确保是数字列表
                 if all(isinstance(x, (int, float)) for x in features):
                     return features
-                else:
-                    raise ValueError("列表包含非数字元素")
+                raise ValueError("列表包含非数字元素")
 
-            else:
-                raise ValueError(f"不支持的特征类型: {type(features)}")
+            raise ValueError(f"不支持的特征类型: {type(features)}")
 
         except Exception as e:
-            raise PredictionError(f"特征格式转换失败: {str(e)}") from e
+            raise PredictionError(f"特征格式转换失败: {e!s}") from e
 
     def _execute_prediction(
         self,
@@ -365,7 +361,7 @@ class MatchPredictor:
             return result
 
         except Exception as e:
-            error_msg = f"模型预测执行失败: {str(e)}"
+            error_msg = f"模型预测执行失败: {e!s}"
             logger.error(error_msg)
 
             # 尝试恢复：使用默认概率分布
@@ -509,7 +505,7 @@ class MatchPredictor:
                 return validated_probs
 
         except Exception as e:
-            error_msg = f"概率归一化失败: {str(e)}"
+            error_msg = f"概率归一化失败: {e!s}"
             logger.error(error_msg)
             self._prediction_stats["errors"] += 1
 
@@ -883,7 +879,7 @@ class MatchPredictor:
             return validation_result
 
         except Exception as e:
-            return {"valid": False, "error": f"特征验证失败: {str(e)}"}
+            return {"valid": False, "error": f"特征验证失败: {e!s}"}
 
     def get_model_info(self, model_name: str | None = None) -> dict[str, Any]:
         """

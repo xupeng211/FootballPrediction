@@ -15,7 +15,7 @@ Date: 2026-01-06
 import asyncio
 import logging
 import time
-from typing import Any, Callable
+from typing import Any
 
 import psycopg2
 from psycopg2 import OperationalError
@@ -113,7 +113,7 @@ class ResilientConnection:
                     time.sleep(self.retry_delay)
 
         # All retries exhausted
-        logger.error(f"[V144.8] ❌ 所有连接尝试均失败")
+        logger.error("[V144.8] ❌ 所有连接尝试均失败")
         raise OperationalError(
             f"Failed to connect after {self.max_retries} attempts: {last_error}"
         ) from last_error
@@ -247,10 +247,9 @@ class ResilientConnection:
                         rows = cur.fetchall()
                         conn.commit()
                         return rows
-                    else:
-                        row_count = cur.rowcount
-                        conn.commit()
-                        return row_count
+                    row_count = cur.rowcount
+                    conn.commit()
+                    return row_count
 
                 finally:
                     cur.close()

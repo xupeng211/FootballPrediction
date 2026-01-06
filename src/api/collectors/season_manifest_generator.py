@@ -5,10 +5,10 @@
 """
 
 import csv
+from datetime import datetime
 import logging
 import os
 import sys
-from datetime import datetime
 
 import requests
 
@@ -98,10 +98,9 @@ class SeasonManifestGenerator:
 
         if home_score > away_score:
             return "H"
-        elif home_score < away_score:
+        if home_score < away_score:
             return "A"
-        else:
-            return "D"
+        return "D"
 
     def generate_manifest(self, season: str, output_path: str | None = None) -> str:
         """
@@ -190,8 +189,7 @@ def main():
 
     if output_path:
         return 0
-    else:
-        return 1
+    return 1
 
 
 if __name__ == "__main__":

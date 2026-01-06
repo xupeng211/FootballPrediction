@@ -93,9 +93,8 @@ def find_epl_range():
             logger.info(f"  ✓ 找到英超比赛: ID {test_id} - {home} vs {away}")
             if len(epl_found_positions) >= 3:
                 break
-        else:
-            if offset % 5000 == 0:
-                logger.info(f"  ✗ ID {test_id}: 不是英超比赛")
+        elif offset % 5000 == 0:
+            logger.info(f"  ✗ ID {test_id}: 不是英超比赛")
 
     if not epl_found_positions:
         logger.warning("未找到任何英超比赛，尝试更大范围...")

@@ -27,11 +27,7 @@ from src.api.collectors.resilience import (
     RateLimiter,
     retry_with_exponential_backoff,
 )
-from src.api.collectors.schemas.l1_match_schema import (
-    L1CollectionSummary,
-    L1MatchData,
-    LeagueId,
-)
+from src.api.collectors.schemas.l1_match_schema import L1CollectionSummary, L1MatchData, LeagueId
 
 logger = logging.getLogger(__name__)
 
@@ -148,19 +144,18 @@ class ProductionL1Collector:
                 if response.status == 200:
                     self.circuit_breaker.record_success()
                     return await response.json()
-                elif response.status == 404:
+                if response.status == 404:
                     raise aiohttp.ClientResponseError(
                         response.request_info,
                         response.history,
                         status=404,
                         message=f"League {league_id} not found",
                     )
-                elif response.status >= 500:
+                if response.status >= 500:
                     # 服务器错误，记录失败并触发熔断器
                     self.circuit_breaker.record_failure(aiohttp.ClientError(f"HTTP {response.status}"))
                     raise aiohttp.ClientError(f"Server error: HTTP {response.status}")
-                else:
-                    raise aiohttp.ClientError(f"Unexpected status: HTTP {response.status}")
+                raise aiohttp.ClientError(f"Unexpected status: HTTP {response.status}")
 
     def _parse_and_validate_match(
         self,

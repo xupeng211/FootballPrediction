@@ -4,8 +4,8 @@ Database Schema Manager - 生产级数据库架构管理
 统一管理所有数据库操作、ID对齐和Schema维护
 """
 
-import logging
 from datetime import datetime
+import logging
 from typing import Any
 
 import psycopg2

@@ -21,11 +21,6 @@ Sprint: 实时化、可观测性与策略调优
 """
 
 import asyncio
-import hashlib
-import json
-import logging
-import smtplib
-import time
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
@@ -33,6 +28,11 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.utils import formataddr
 from enum import Enum
+import hashlib
+import json
+import logging
+import smtplib
+import time
 from typing import Any
 
 import aiohttp
@@ -207,10 +207,9 @@ class AlertAggregator:
                 aggregated_alert = self._aggregate_alerts(similar_alerts + [alert])
                 self.alert_buffer.append(aggregated_alert)
                 return aggregated_alert
-            else:
-                # 添加新告警
-                self.alert_buffer.append(alert)
-                return alert
+            # 添加新告警
+            self.alert_buffer.append(alert)
+            return alert
 
     def _cleanup_expired_alerts(self) -> None:
         """清理过期的告警"""
@@ -707,14 +706,13 @@ class AlertNotifier:
                 if response.status == 200:
                     logger.info("✅ Slack告警发送成功")
                     return NotificationResult(success=True, channel=NotificationChannel.SLACK)
-                else:
-                    error_text = await response.text()
-                    logger.error(f"❌ Slack告警发送失败: {error_text}")
-                    return NotificationResult(
-                        success=False,
-                        channel=NotificationChannel.SLACK,
-                        error_message=error_text,
-                    )
+                error_text = await response.text()
+                logger.error(f"❌ Slack告警发送失败: {error_text}")
+                return NotificationResult(
+                    success=False,
+                    channel=NotificationChannel.SLACK,
+                    error_message=error_text,
+                )
 
         except Exception as e:
             return NotificationResult(success=False, channel=NotificationChannel.SLACK, error_message=str(e))
@@ -762,22 +760,20 @@ class AlertNotifier:
                     if result.get("errcode") == 0:
                         logger.info("✅ 企业微信告警发送成功")
                         return NotificationResult(success=True, channel=NotificationChannel.WECHAT_WORK)
-                    else:
-                        error_msg = result.get("errmsg", "Unknown error")
-                        logger.error(f"❌ 企业微信告警发送失败: {error_msg}")
-                        return NotificationResult(
-                            success=False,
-                            channel=NotificationChannel.WECHAT_WORK,
-                            error_message=error_msg,
-                        )
-                else:
-                    error_text = await response.text()
-                    logger.error(f"❌ 企业微信告警发送失败: {error_text}")
+                    error_msg = result.get("errmsg", "Unknown error")
+                    logger.error(f"❌ 企业微信告警发送失败: {error_msg}")
                     return NotificationResult(
                         success=False,
                         channel=NotificationChannel.WECHAT_WORK,
-                        error_message=error_text,
+                        error_message=error_msg,
                     )
+                error_text = await response.text()
+                logger.error(f"❌ 企业微信告警发送失败: {error_text}")
+                return NotificationResult(
+                    success=False,
+                    channel=NotificationChannel.WECHAT_WORK,
+                    error_message=error_text,
+                )
 
         except Exception as e:
             return NotificationResult(

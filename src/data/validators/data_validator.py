@@ -12,11 +12,11 @@ V20.0 数据验证器 - 金融量化级清洗准则
 版本: V20.0
 """
 
-import logging
 from collections import defaultdict
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
+import logging
 from typing import Any
 
 import numpy as np
@@ -418,9 +418,9 @@ class DataValidator:
         """
         if "technical_features" in raw_data:
             return "technical_features"
-        elif "home_stats" in raw_data and "away_stats" in raw_data:
+        if "home_stats" in raw_data and "away_stats" in raw_data:
             return "home_stats_away_stats"
-        elif all(k in raw_data for k in ["home_expected_goals", "away_expected_goals"]):
+        if all(k in raw_data for k in ["home_expected_goals", "away_expected_goals"]):
             return "normalized"
         return None
 

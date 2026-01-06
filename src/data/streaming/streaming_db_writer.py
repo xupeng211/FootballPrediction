@@ -14,11 +14,11 @@
 """
 
 import asyncio
-import logging
-import time
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from decimal import Decimal
+import logging
+import time
 from typing import Any
 
 import pandas as pd
@@ -399,8 +399,7 @@ class StreamingDBWriter:
         """计算重试延迟"""
         if self.config.exponential_backoff:
             return self.config.retry_delay_seconds * (2**attempt)
-        else:
-            return self.config.retry_delay_seconds
+        return self.config.retry_delay_seconds
 
     def _update_stats(self, rows_written: int, batch_time_ms: float, was_retry: bool) -> None:
         """更新写入统计"""

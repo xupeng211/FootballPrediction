@@ -10,17 +10,17 @@
 预期数据量: 760+ 场比赛
 """
 
+from dataclasses import dataclass
+from datetime import datetime
 import json
 import logging
 import os
-import sys
-from dataclasses import dataclass
-from datetime import datetime
 from pathlib import Path
+import sys
 
+from dotenv import load_dotenv
 import pandas as pd
 import psycopg2
-from dotenv import load_dotenv
 
 # 加载环境变量
 load_dotenv()
@@ -366,9 +366,8 @@ def main():
     if result["total_matches"] >= 760:
         logger.info("✅ 迁移成功！数据量达到预期 (≥760)")
         return 0
-    else:
-        logger.warning(f"⚠️ 数据量不足: {result['total_matches']} < 760")
-        return 1
+    logger.warning(f"⚠️ 数据量不足: {result['total_matches']} < 760")
+    return 1
 
 
 if __name__ == "__main__":

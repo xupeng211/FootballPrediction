@@ -19,13 +19,13 @@ V25.0 战神仪表盘 - Prediction Dashboard
 """
 
 import argparse
-import json
-import os
-import sys
-import time
 from dataclasses import dataclass
 from datetime import datetime
+import json
+import os
 from pathlib import Path
+import sys
+import time
 
 # 添加项目路径
 project_root = Path(__file__).parent.parent.parent
@@ -369,9 +369,8 @@ class WarGodDashboard:
                 # 分行显示（每行30个点）
                 if i > 0 and i % 30 == 0:
                     print(f"│    {color}{symbol}{DashboardStyles.RESET}")
-                else:
-                    if i == 0:
-                        print("│    ", end="")
+                elif i == 0:
+                    print("│    ", end="")
 
             # 补齐最后一行
             print(DashboardStyles.RESET + " " * (73 - (len(curve) % 30) * 2) + "│")

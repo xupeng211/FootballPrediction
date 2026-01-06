@@ -13,9 +13,9 @@ V35.0 生产级特征工厂 - 核心架构固化版
 版本: V35.0 Production
 """
 
-import logging
 from dataclasses import dataclass, field
 from datetime import datetime
+import logging
 from pathlib import Path
 
 import numpy as np
@@ -296,9 +296,7 @@ class EfficiencyEngine:
 
         momentum = 0
         for r in recent:
-            if r["result"] == "home" and r["is_home"]:
-                momentum += 3
-            elif r["result"] == "away" and not r["is_home"]:
+            if (r["result"] == "home" and r["is_home"]) or (r["result"] == "away" and not r["is_home"]):
                 momentum += 3
             elif r["result"] == "draw":
                 momentum += 1
@@ -564,10 +562,10 @@ def create_feature_factory() -> FeatureFactory:
 
 # 导出
 __all__ = [
-    "FeatureFactory",
     "ELOEngine",
-    "TableManager",
-    "FatigueTracker",
     "EfficiencyEngine",
+    "FatigueTracker",
+    "FeatureFactory",
+    "TableManager",
     "create_feature_factory",
 ]

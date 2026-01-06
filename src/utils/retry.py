@@ -5,10 +5,10 @@
 """
 
 import asyncio
+from collections.abc import Callable
 import functools
 import logging
 import time
-from collections.abc import Callable
 from typing import ParamSpec, TypeVar
 
 logger = logging.getLogger(__name__)
@@ -108,8 +108,7 @@ def with_retry(
         # 根据函数是否为协程函数选择包装器
         if asyncio.iscoroutinefunction(func):
             return async_wrapper
-        else:
-            return sync_wrapper
+        return sync_wrapper
 
     return decorator
 

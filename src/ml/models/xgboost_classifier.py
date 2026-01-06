@@ -25,18 +25,18 @@ M4模块: XGBoost分类器模型
 """
 
 import dataclasses
+from datetime import datetime
 import json
 import logging
-from datetime import datetime
 from pathlib import Path
 from typing import Any
 
 import numpy as np
 import pandas as pd
-import xgboost as xgb
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
 from sklearn.model_selection import train_test_split
+import xgboost as xgb
 
 logger = logging.getLogger(__name__)
 

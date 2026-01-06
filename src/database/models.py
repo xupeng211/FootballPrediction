@@ -14,10 +14,9 @@ Key Features:
 
 from datetime import datetime
 from enum import Enum
-from typing import Literal, Optional
+from typing import Literal
 
 from pydantic import BaseModel, Field, field_validator, model_validator
-
 
 # ============================================================================
 # Constants
@@ -58,15 +57,15 @@ class FotMobMatchData(BaseModel):
     match_date: datetime = Field(..., description="Match start time")
     league_name: str = Field(..., min_length=1, max_length=200, description="League name")
     season: str = Field(..., pattern=r"^\d{4}-\d{4}$", description="Season (e.g., 2024-2025)")
-    oddsportal_url: Optional[str] = Field(None, description="OddsPortal URL for L3 extraction")
+    oddsportal_url: str | None = Field(None, description="OddsPortal URL for L3 extraction")
 
     # Optional: Real-time statistics
-    home_xg: Optional[float] = Field(None, ge=0, le=20, description="Home team xG")
-    away_xg: Optional[float] = Field(None, ge=0, le=20, description="Away team xG")
-    home_possession: Optional[float] = Field(None, ge=0, le=100, description="Home possession %")
-    away_possession: Optional[float] = Field(None, ge=0, le=100, description="Away possession %")
+    home_xg: float | None = Field(None, ge=0, le=20, description="Home team xG")
+    away_xg: float | None = Field(None, ge=0, le=20, description="Away team xG")
+    home_possession: float | None = Field(None, ge=0, le=100, description="Home possession %")
+    away_possession: float | None = Field(None, ge=0, le=100, description="Away possession %")
 
-    @model_validator(mode='after')
+    @model_validator(mode="after")
     def validate_team_names_different(self):
         """Ensure home and away teams are different."""
         if self.home_team and self.away_team and self.home_team == self.away_team:
@@ -94,19 +93,19 @@ class OpeningOddsData(BaseModel):
     source_name: EntitySource = Field(..., description="Bookmaker entity code")
 
     # Opening odds (may have only one value from hover)
-    init_h: Optional[float] = Field(
+    init_h: float | None = Field(
         None,
         ge=MIN_ODDS_VALUE,
         le=MAX_ODDS_VALUE,
         description="Initial home win odds"
     )
-    init_d: Optional[float] = Field(
+    init_d: float | None = Field(
         None,
         ge=MIN_ODDS_VALUE,
         le=MAX_ODDS_VALUE,
         description="Initial draw odds"
     )
-    init_a: Optional[float] = Field(
+    init_a: float | None = Field(
         None,
         ge=MIN_ODDS_VALUE,
         le=MAX_ODDS_VALUE,
@@ -114,13 +113,13 @@ class OpeningOddsData(BaseModel):
     )
 
     # Opening timestamps
-    opening_time_h: Optional[datetime] = Field(None, description="Home odds opening time")
-    opening_time_d: Optional[datetime] = Field(None, description="Draw odds opening time")
-    opening_time_a: Optional[datetime] = Field(None, description="Away odds opening time")
+    opening_time_h: datetime | None = Field(None, description="Home odds opening time")
+    opening_time_d: datetime | None = Field(None, description="Draw odds opening time")
+    opening_time_a: datetime | None = Field(None, description="Away odds opening time")
 
     # Metadata
     hover_failed: bool = Field(False, description="Whether hover extraction failed")
-    hover_error: Optional[str] = Field(None, max_length=500, description="Error message if failed")
+    hover_error: str | None = Field(None, max_length=500, description="Error message if failed")
     extraction_method: Literal["hover_tooltip_production"] = Field(
         default="hover_tooltip_production",
         description="Extraction method identifier"
@@ -138,7 +137,7 @@ class OpeningOddsData(BaseModel):
             raise ValueError(f"Odds must be >= {MIN_ODDS_VALUE}, got {v}")
         return v
 
-    @model_validator(mode='after')
+    @model_validator(mode="after")
     def validate_hover_data_consistency(self):
         """Ensure hover data is consistent."""
         # If hover failed, error should be present
@@ -197,12 +196,12 @@ class FinalOddsData(BaseModel):
         description="Integrity score (1/P1 + 1/P2 + 1/P3)"
     )
     is_valid: bool = Field(default=False, description="Whether integrity score is in valid range")
-    validation_error: Optional[str] = Field(None, max_length=500, description="Validation error if any")
+    validation_error: str | None = Field(None, max_length=500, description="Validation error if any")
 
     # Extraction metadata
     pinnacle_found: bool = Field(..., description="Whether Pinnacle container was found")
     success: bool = Field(..., description="Whether extraction was successful")
-    error: Optional[str] = Field(None, max_length=500, description="Error message if failed")
+    error: str | None = Field(None, max_length=500, description="Error message if failed")
 
     data_timestamp: datetime = Field(
         default_factory=datetime.now,
@@ -218,7 +217,7 @@ class FinalOddsData(BaseModel):
             pass
         return v
 
-    @model_validator(mode='after')
+    @model_validator(mode="after")
     def calculate_and_validate_integrity(self) -> "FinalOddsData":
         """Calculate integrity score and validate data consistency."""
         # Calculate integrity score
@@ -237,7 +236,7 @@ class FinalOddsData(BaseModel):
 
         return self
 
-    @model_validator(mode='after')
+    @model_validator(mode="after")
     def validate_success_consistency(self) -> "FinalOddsData":
         """Ensure success flag is consistent with data."""
         # If pinnacle not found, should not have odds
@@ -270,30 +269,30 @@ class MultiSourceOddsData(BaseModel):
     source_name: EntitySource = Field(..., description="Bookmaker entity code")
 
     # Initial (opening) odds from L2
-    init_h: Optional[float] = Field(None, ge=MIN_ODDS_VALUE, le=MAX_ODDS_VALUE)
-    init_d: Optional[float] = Field(None, ge=MIN_ODDS_VALUE, le=MAX_ODDS_VALUE)
-    init_a: Optional[float] = Field(None, ge=MIN_ODDS_VALUE, le=MAX_ODDS_VALUE)
+    init_h: float | None = Field(None, ge=MIN_ODDS_VALUE, le=MAX_ODDS_VALUE)
+    init_d: float | None = Field(None, ge=MIN_ODDS_VALUE, le=MAX_ODDS_VALUE)
+    init_a: float | None = Field(None, ge=MIN_ODDS_VALUE, le=MAX_ODDS_VALUE)
 
     # Opening timestamps from L2
-    opening_time_h: Optional[datetime] = None
-    opening_time_d: Optional[datetime] = None
-    opening_time_a: Optional[datetime] = None
+    opening_time_h: datetime | None = None
+    opening_time_d: datetime | None = None
+    opening_time_a: datetime | None = None
 
     # Final odds from L3
-    final_h: Optional[float] = Field(None, ge=MIN_ODDS_VALUE, le=MAX_ODDS_VALUE)
-    final_d: Optional[float] = Field(None, ge=MIN_ODDS_VALUE, le=MAX_ODDS_VALUE)
-    final_a: Optional[float] = Field(None, ge=MIN_ODDS_VALUE, le=MAX_ODDS_VALUE)
+    final_h: float | None = Field(None, ge=MIN_ODDS_VALUE, le=MAX_ODDS_VALUE)
+    final_d: float | None = Field(None, ge=MIN_ODDS_VALUE, le=MAX_ODDS_VALUE)
+    final_a: float | None = Field(None, ge=MIN_ODDS_VALUE, le=MAX_ODDS_VALUE)
 
     # Validation metadata
-    integrity_score: Optional[float] = Field(None, ge=0.90, le=1.20)
+    integrity_score: float | None = Field(None, ge=0.90, le=1.20)
     is_valid: bool = Field(default=False)
-    validation_error: Optional[str] = Field(None, max_length=500)
+    validation_error: str | None = Field(None, max_length=500)
 
     # Capture status
     fully_captured: bool = Field(default=False, description="All data dimensions present")
     data_timestamp: datetime = Field(default_factory=datetime.now)
 
-    @model_validator(mode='after')
+    @model_validator(mode="after")
     def calculate_integrity_score(self) -> "MultiSourceOddsData":
         """Calculate integrity score if final odds are present."""
         if all([self.final_h, self.final_d, self.final_a]):
@@ -344,22 +343,22 @@ class OddsDataForInsert(BaseModel):
 
     match_id: str
     source_name: str
-    init_h: Optional[float] = None
-    init_d: Optional[float] = None
-    init_a: Optional[float] = None
-    opening_time_h: Optional[datetime] = None
-    opening_time_d: Optional[datetime] = None
-    opening_time_a: Optional[datetime] = None
-    final_h: Optional[float] = None
-    final_d: Optional[float] = None
-    final_a: Optional[float] = None
-    integrity_score: Optional[float] = None
+    init_h: float | None = None
+    init_d: float | None = None
+    init_a: float | None = None
+    opening_time_h: datetime | None = None
+    opening_time_d: datetime | None = None
+    opening_time_a: datetime | None = None
+    final_h: float | None = None
+    final_d: float | None = None
+    final_a: float | None = None
+    integrity_score: float | None = None
     is_valid: bool = False
-    validation_error: Optional[str] = None
+    validation_error: str | None = None
     fully_captured: bool = False
     data_timestamp: datetime = Field(default_factory=datetime.now)
 
-    @model_validator(mode='after')
+    @model_validator(mode="after")
     def validate_before_insert(self) -> "OddsDataForInsert":
         """Final validation before database insertion."""
         # Ensure at least some data is present

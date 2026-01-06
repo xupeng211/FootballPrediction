@@ -20,26 +20,21 @@ Example:
     >>> print(f"Opening time: {result.opening_time_h}")
 """
 
-import json
-import logging
-import re
 from dataclasses import dataclass
 from datetime import datetime
+import logging
+import re
 from typing import Any
-from urllib.parse import urlparse
 
 from playwright.async_api import Page, Response
 
-from src.config_unified import get_settings
-
 # Reuse V58.0 data model and constants
 from src.api.collectors.odds_production_extractor import (
-    MultiSourceEntityData,
     TARGET_ENTITIES,
-    MIN_INTEGRITY_SCORE,
-    MAX_INTEGRITY_SCORE,
-    logger
+    MultiSourceEntityData,
+    logger,
 )
+from src.config_unified import get_settings
 
 logger = logging.getLogger(__name__)
 
@@ -50,19 +45,19 @@ logger = logging.getLogger(__name__)
 
 # API endpoint patterns (discovered in Phase 1)
 API_PATTERNS = [
-    re.compile(r'/ajax-match-odds/'),
-    re.compile(r'/feed/'),
-    re.compile(r'/api/'),
+    re.compile(r"/ajax-match-odds/"),
+    re.compile(r"/feed/"),
+    re.compile(r"/api/"),
 ]
 
 # Field name mappings for JSON parsing (discovered in Phase 1)
 # These will be updated after analyzing captured samples
 POSSIBLE_FIELD_NAMES = {
-    'opening_odds': ['opening', 'initial', 'init', 'first', 'odds_opening'],
-    'timestamp': ['timestamp', 'time', 'opening_time', 'published_at', 'created_at'],
-    'home_odds': ['home', 'h', '1', 'odds_home'],
-    'draw_odds': ['draw', 'd', 'x', 'odds_draw'],
-    'away_odds': ['away', 'a', '2', 'odds_away'],
+    "opening_odds": ["opening", "initial", "init", "first", "odds_opening"],
+    "timestamp": ["timestamp", "time", "opening_time", "published_at", "created_at"],
+    "home_odds": ["home", "h", "1", "odds_home"],
+    "draw_odds": ["draw", "d", "x", "odds_draw"],
+    "away_odds": ["away", "a", "2", "odds_away"],
 }
 
 
@@ -92,12 +87,12 @@ class APIExtractionResult:
     def to_dict(self) -> dict:
         """Convert to dictionary."""
         return {
-            'success': self.success,
-            'entity_code': self.entity_code,
-            'data': self.data.to_dict() if self.data else None,
-            'raw_json_keys': list(self.raw_json.keys()) if self.raw_json else [],
-            'extraction_time_ms': self.extraction_time_ms,
-            'error': self.error
+            "success": self.success,
+            "entity_code": self.entity_code,
+            "data": self.data.to_dict() if self.data else None,
+            "raw_json_keys": list(self.raw_json.keys()) if self.raw_json else [],
+            "extraction_time_ms": self.extraction_time_ms,
+            "error": self.error
         }
 
 
@@ -130,7 +125,7 @@ class OddsAPIInterceptor:
         self.settings = get_settings()
         self.match_date = match_date
         self._captured_responses: list[dict] = []
-        self._target_pattern = re.compile(r'/ajax-match-odds/|/feed/')
+        self._target_pattern = re.compile(r"/ajax-match-odds/|/feed/")
 
         # Performance tracking
         self._start_time: datetime | None = None
@@ -159,8 +154,8 @@ class OddsAPIInterceptor:
             """Handle network response events."""
             try:
                 # Only capture JSON responses
-                content_type = response.header_value('content-type') or ''
-                if 'json' not in content_type.lower():
+                content_type = response.header_value("content-type") or ""
+                if "json" not in content_type.lower():
                     return
 
                 url = response.url
@@ -173,9 +168,9 @@ class OddsAPIInterceptor:
                 try:
                     json_data = await response.json()
                     self._captured_responses.append({
-                        'url': url,
-                        'status': response.status,
-                        'json': json_data
+                        "url": url,
+                        "status": response.status,
+                        "json": json_data
                     })
 
                     logger.debug(f"Captured API response: {url}")
@@ -187,19 +182,19 @@ class OddsAPIInterceptor:
                 logger.error(f"Error in response handler: {e}")
 
         # Attach listener
-        page.on('response', response_handler)
+        page.on("response", response_handler)
 
         # Wait a short time for network traffic
         await page.wait_for_timeout(3000)  # 3 seconds max
 
         # Remove listener
-        page.remove_listener('response', response_handler)
+        page.remove_listener("response", response_handler)
 
         self._end_time = datetime.now()
 
         # Return first captured response
         if self._captured_responses:
-            return self._captured_responses[0]['json']
+            return self._captured_responses[0]["json"]
 
         return None
 
@@ -237,19 +232,19 @@ class OddsAPIInterceptor:
 
             if found_data:
                 # Populate data object
-                data.init_h = found_data.get('init_h')
-                data.init_d = found_data.get('init_d')
-                data.init_a = found_data.get('init_a')
+                data.init_h = found_data.get("init_h")
+                data.init_d = found_data.get("init_d")
+                data.init_a = found_data.get("init_a")
 
                 # Parse timestamps
-                data.opening_time_h = self._parse_timestamp(found_data.get('opening_time_h'))
-                data.opening_time_d = self._parse_timestamp(found_data.get('opening_time_d'))
-                data.opening_time_a = self._parse_timestamp(found_data.get('opening_time_a'))
+                data.opening_time_h = self._parse_timestamp(found_data.get("opening_time_h"))
+                data.opening_time_d = self._parse_timestamp(found_data.get("opening_time_d"))
+                data.opening_time_a = self._parse_timestamp(found_data.get("opening_time_a"))
 
                 # Final odds (if available)
-                data.final_h = found_data.get('final_h')
-                data.final_d = found_data.get('final_d')
-                data.final_a = found_data.get('final_a')
+                data.final_h = found_data.get("final_h")
+                data.final_d = found_data.get("final_d")
+                data.final_a = found_data.get("final_a")
 
                 # Calculate integrity score
                 data.calculate_integrity_score()
@@ -261,22 +256,21 @@ class OddsAPIInterceptor:
                     success=True,
                     entity_code=entity_code,
                     data=data,
-                    raw_json=found_data.get('raw_context'),
+                    raw_json=found_data.get("raw_context"),
                     extraction_time_ms=extraction_time,
                     error=None
                 )
-            else:
-                end_time = datetime.now()
-                extraction_time = (end_time - start_time).total_seconds() * 1000
+            end_time = datetime.now()
+            extraction_time = (end_time - start_time).total_seconds() * 1000
 
-                return APIExtractionResult(
-                    success=False,
-                    entity_code=entity_code,
-                    data=None,
-                    raw_json=json_data,
-                    extraction_time_ms=extraction_time,
-                    error=f"No odds data found for entity {entity_code}"
-                )
+            return APIExtractionResult(
+                success=False,
+                entity_code=entity_code,
+                data=None,
+                raw_json=json_data,
+                extraction_time_ms=extraction_time,
+                error=f"No odds data found for entity {entity_code}"
+            )
 
         except Exception as e:
             end_time = datetime.now()
@@ -393,34 +387,34 @@ class OddsAPIInterceptor:
             key_lower = key.lower()
 
             # Opening/initial odds
-            if any(kw in key_lower for kw in POSSIBLE_FIELD_NAMES['opening_odds']):
+            if any(kw in key_lower for kw in POSSIBLE_FIELD_NAMES["opening_odds"]):
                 if isinstance(value, (int, float)):
                     # Need to determine if this is home/draw/away
                     # This is simplified - actual logic depends on JSON structure
-                    result['init_h'] = value  # Placeholder
+                    result["init_h"] = value  # Placeholder
                 elif isinstance(value, dict):
                     # Nested odds: {'home': 1.5, 'draw': 4.0, 'away': 6.0}
-                    result['init_h'] = value.get('home') or value.get('h') or value.get('1')
-                    result['init_d'] = value.get('draw') or value.get('d') or value.get('x')
-                    result['init_a'] = value.get('away') or value.get('a') or value.get('2')
+                    result["init_h"] = value.get("home") or value.get("h") or value.get("1")
+                    result["init_d"] = value.get("draw") or value.get("d") or value.get("x")
+                    result["init_a"] = value.get("away") or value.get("a") or value.get("2")
 
             # Timestamp
-            if any(kw in key_lower for kw in POSSIBLE_FIELD_NAMES['timestamp']):
-                result['opening_time_h'] = value
+            if any(kw in key_lower for kw in POSSIBLE_FIELD_NAMES["timestamp"]):
+                result["opening_time_h"] = value
 
             # Final odds
-            if key_lower in ['home', 'h', '1']:
+            if key_lower in ["home", "h", "1"]:
                 if isinstance(value, (int, float)):
-                    result['final_h'] = value
-            elif key_lower in ['draw', 'd', 'x']:
+                    result["final_h"] = value
+            elif key_lower in ["draw", "d", "x"]:
                 if isinstance(value, (int, float)):
-                    result['final_d'] = value
-            elif key_lower in ['away', 'a', '2']:
+                    result["final_d"] = value
+            elif key_lower in ["away", "a", "2"]:
                 if isinstance(value, (int, float)):
-                    result['final_a'] = value
+                    result["final_a"] = value
 
         # Store raw context for debugging
-        result['raw_context'] = entity_dict
+        result["raw_context"] = entity_dict
 
         return result if result else None
 
@@ -453,7 +447,7 @@ class OddsAPIInterceptor:
         if isinstance(value, str):
             try:
                 # Try ISO format first
-                return datetime.fromisoformat(value.replace('Z', '+00:00'))
+                return datetime.fromisoformat(value.replace("Z", "+00:00"))
             except ValueError:
                 pass
 

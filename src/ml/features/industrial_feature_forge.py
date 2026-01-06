@@ -8,9 +8,9 @@ V12.1 更新:
 - C-03: 使用 SafeExpressionEvaluator 替换 eval()
 """
 
+from datetime import datetime
 import json
 import logging
-from datetime import datetime
 
 import numpy as np
 import pandas as pd
@@ -240,9 +240,8 @@ class IndustrialFeatureForge:
                 )
 
                 return feature_df
-            else:
-                logger.error("❌ 特征锻造失败，无有效数据")
-                return pd.DataFrame()
+            logger.error("❌ 特征锻造失败，无有效数据")
+            return pd.DataFrame()
 
         except Exception as e:
             logger.error(f"❌ 特征矩阵锻造失败: {e}")
@@ -507,9 +506,8 @@ def main():
         logger.info(f"   结果分布: {report['result_distribution']}")
 
         return True
-    else:
-        logger.error("❌ 特征锻造失败")
-        return False
+    logger.error("❌ 特征锻造失败")
+    return False
 
 
 if __name__ == "__main__":

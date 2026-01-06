@@ -17,12 +17,10 @@ Version: V51.2
 Date: 2025-12-31
 """
 
-import logging
 from dataclasses import dataclass
 from enum import Enum
+import logging
 from typing import Any
-
-import numpy as np
 
 logger = logging.getLogger(__name__)
 
@@ -197,14 +195,13 @@ class ExpectedValueCalculator:
         """
         if ev < self.EV_THRESHOLD_NEGATIVE:
             return ValueBetLevel.NEGATIVE
-        elif ev < self.EV_THRESHOLD_LOW:
+        if ev < self.EV_THRESHOLD_LOW:
             return ValueBetLevel.LOW
-        elif ev < self.EV_THRESHOLD_MODERATE:
+        if ev < self.EV_THRESHOLD_MODERATE:
             return ValueBetLevel.MODERATE
-        elif ev < self.EV_THRESHOLD_HIGH:
+        if ev < self.EV_THRESHOLD_HIGH:
             return ValueBetLevel.HIGH
-        else:
-            return ValueBetLevel.EXCELLENT
+        return ValueBetLevel.EXCELLENT
 
     def calculate_value_metrics(
         self,

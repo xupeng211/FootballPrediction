@@ -22,11 +22,7 @@ from typing import Any
 
 import structlog
 
-from src.processors.exceptions import (
-    ExtractionError,
-    InsufficientFeaturesError,
-    ValidationError,
-)
+from src.processors.exceptions import ExtractionError, InsufficientFeaturesError, ValidationError
 
 logger = structlog.get_logger(__name__)
 
@@ -136,7 +132,6 @@ class BaseExtractor(ABC):
         Raises:
             ExtractionError: 提取过程中的严重错误
         """
-        pass
 
     @abstractmethod
     def validate(self, features: dict[str, Any]) -> bool:
@@ -153,7 +148,6 @@ class BaseExtractor(ABC):
             ValidationError: 验证失败时抛出
             InsufficientFeaturesError: 特征维度不足时抛出
         """
-        pass
 
     def pre_process(self, raw_data: dict[str, Any]) -> dict[str, Any]:
         """
@@ -192,7 +186,6 @@ class BaseExtractor(ABC):
         Returns:
             版本字符串，格式如 "V25.0"
         """
-        pass
 
     @property
     def validation_config(self) -> ValidationConfig:

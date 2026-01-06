@@ -5,11 +5,11 @@ V3.0 全球模型盈利能力回测器 - 半凯利0.5x策略
 维持Edge > 7%的策略，验证ROI表现
 """
 
+from datetime import datetime
 import json
 import logging
-import sys
-from datetime import datetime
 from pathlib import Path
+import sys
 
 import joblib
 import numpy as np
@@ -241,9 +241,8 @@ class V3ROIBacktest:
                             "draw_odds": odds_data["draw_odds"],
                         }
                     )
-                else:
-                    # V3.4: 无真实赔率的比赛直接跳过，不使用模拟赔率
-                    return pd.Series({"home_odds": None, "away_odds": None, "draw_odds": None})
+                # V3.4: 无真实赔率的比赛直接跳过，不使用模拟赔率
+                return pd.Series({"home_odds": None, "away_odds": None, "draw_odds": None})
 
             odds_data = odds_df.apply(fill_odds, axis=1)
 
@@ -350,10 +349,9 @@ class V3ROIBacktest:
                             home_score, away_score = map(int, score.split(" - "))
                             if home_score > away_score:
                                 return 2  # 主胜
-                            elif home_score < away_score:
+                            if home_score < away_score:
                                 return 0  # 客胜
-                            else:
-                                return 1  # 平局
+                            return 1  # 平局
                         except:
                             logger.warning(f"⚠️ 无法解析比分: {score}")
                             return 1  # 默认平局
@@ -375,10 +373,9 @@ class V3ROIBacktest:
                                     home_score, away_score = map(int, score.split(" - "))
                                     if home_score > away_score:
                                         return 2  # 主胜
-                                    elif home_score < away_score:
+                                    if home_score < away_score:
                                         return 0  # 客胜
-                                    else:
-                                        return 1  # 平局
+                                    return 1  # 平局
                                 except:
                                     logger.warning(f"⚠️ 无法解析比分: {score}")
                                     return 1  # 默认平局
@@ -522,8 +519,7 @@ class V3ROIBacktest:
             max_drawdown = 0
             peak = profit_series[0]
             for profit in profit_series:
-                if profit > peak:
-                    peak = profit
+                peak = max(peak, profit)
                 drawdown = (peak - profit) / max(peak, 1) * 100
                 max_drawdown = max(max_drawdown, drawdown)
             results["max_drawdown"] = max_drawdown
@@ -651,9 +647,8 @@ def main():
     if report:
         logger.info("✅ ROI回测成功完成")
         return 0
-    else:
-        logger.error("❌ ROI回测失败")
-        return 1
+    logger.error("❌ ROI回测失败")
+    return 1
 
 
 if __name__ == "__main__":

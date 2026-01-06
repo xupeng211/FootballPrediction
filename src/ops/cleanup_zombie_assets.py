@@ -19,15 +19,15 @@ V25.0 僵尸资产清理脚本 - Zombie Debt Cleanup
 日期: 2025-12-25
 """
 
-import json
-import logging
-import os
-import sys
-import time
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
+import json
+import logging
+import os
 from pathlib import Path
+import sys
+import time
 from typing import Any
 
 # 添加项目路径
@@ -315,10 +315,9 @@ class ZombieAssetCleaner:
                 logger.info(f"match_id={match_id}: 收割成功")
                 self.stats.harvest_success_count += 1
                 return True, raw_data
-            else:
-                logger.warning(f"match_id={match_id}: 收割返回空数据")
-                self.stats.harvest_failed_count += 1
-                return False, None
+            logger.warning(f"match_id={match_id}: 收割返回空数据")
+            self.stats.harvest_failed_count += 1
+            return False, None
 
         except ImportError:
             logger.warning("FotMobCollector 不可用，跳过自动收割")
@@ -456,14 +455,13 @@ class ZombieAssetCleaner:
             if harvest_success and raw_data:
                 # 收割成功，恢复记录
                 self.recover_zombie(zombie, raw_data)
+            # 收割失败，标记为删除
+            elif missing_raw:
+                logger.info(f"match_id={match_id}: 无原始数据，标记为删除")
+                self.mark_as_deleted(zombie)
             else:
-                # 收割失败，标记为删除
-                if missing_raw:
-                    logger.info(f"match_id={match_id}: 无原始数据，标记为删除")
-                    self.mark_as_deleted(zombie)
-                else:
-                    logger.info(f"match_id={match_id}: 保留现有数据（有原始 JSON）")
-                    self.stats.skipped_count += 1
+                logger.info(f"match_id={match_id}: 保留现有数据（有原始 JSON）")
+                self.stats.skipped_count += 1
 
     def run(self) -> CleanupStats:
         """

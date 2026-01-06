@@ -181,7 +181,6 @@ class ConfigurationError(ExtractionError):
     当提取器配置不正确时抛出。
     """
 
-    pass
 
 
 class CircuitBreakerOpenError(ExtractionError):

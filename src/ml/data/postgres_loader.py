@@ -5,8 +5,8 @@ PostgreSQL 数据加载器 - Phase 4 真实数据集成
 确保输出格式与 MockDataLoader 完全兼容。
 """
 
-import logging
 from datetime import datetime
+import logging
 from typing import Any
 
 import pandas as pd
@@ -176,7 +176,7 @@ class PostgresDataLoader:
                 return df
 
         except Exception as e:
-            logger.error(f"从PostgreSQL加载数据失败: {str(e)}")
+            logger.error(f"从PostgreSQL加载数据失败: {e!s}")
             # 返回空DataFrame而不是抛出异常
             return self._get_empty_dataframe()
 
@@ -351,7 +351,7 @@ class PostgresDataLoader:
         except Exception as e:
             return {
                 "status": "error",
-                "message": f"获取数据摘要失败: {str(e)}",
+                "message": f"获取数据摘要失败: {e!s}",
                 "total_records": 0,
             }
 
@@ -367,5 +367,5 @@ class PostgresDataLoader:
                 result = await session.execute(text("SELECT 1"))
                 return result.scalar() == 1
         except Exception as e:
-            logger.error(f"数据库连接测试失败: {str(e)}")
+            logger.error(f"数据库连接测试失败: {e!s}")
             return False

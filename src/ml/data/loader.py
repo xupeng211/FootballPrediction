@@ -6,8 +6,8 @@ Phase 2: AI Modeling - 数据加载器实现
 按照TDD原则，实现DataLoader类以满足测试用例的要求。
 """
 
-import logging
 from datetime import datetime
+import logging
 from typing import Any
 
 import pandas as pd
@@ -106,7 +106,7 @@ class DataLoader:
             return df
 
         except Exception as e:
-            logger.error(f"加载数据失败: {str(e)}")
+            logger.error(f"加载数据失败: {e!s}")
             # 即使出错也返回空 DataFrame 以保持类型安全，但记录错误
             return pd.DataFrame()
 

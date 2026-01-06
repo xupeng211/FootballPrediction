@@ -5,10 +5,11 @@ This module provides centralized configuration management for the crawler system
 It loads settings from crawler_settings.yaml and allows environment variable overrides.
 """
 
+from dataclasses import dataclass, field
 import os
 from pathlib import Path
-from typing import Dict, Any, Optional
-from dataclasses import dataclass, field
+from typing import Any
+
 import yaml
 
 # Default configuration file path
@@ -80,10 +81,10 @@ class CrawlerSettings:
     task_queue: TaskQueueConfig = field(default_factory=TaskQueueConfig)
 
     # 原始配置字典 (用于调试)
-    _raw_config: Dict[str, Any] = field(default_factory=dict)
+    _raw_config: dict[str, Any] = field(default_factory=dict)
 
     @classmethod
-    def load_from_yaml(cls, config_path: Optional[Path] = None) -> "CrawlerSettings":
+    def load_from_yaml(cls, config_path: Path | None = None) -> "CrawlerSettings":
         """从 YAML 文件加载配置
 
         Args:
@@ -99,7 +100,7 @@ class CrawlerSettings:
             # 如果配置文件不存在，使用默认配置
             return cls()
 
-        with open(config_path, "r", encoding="utf-8") as f:
+        with open(config_path, encoding="utf-8") as f:
             raw_config = yaml.safe_load(f)
 
         settings = cls()
@@ -212,7 +213,7 @@ class CrawlerSettings:
             except ValueError:
                 pass
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """转换为字典（用于调试）
 
         Returns:
@@ -251,7 +252,7 @@ class CrawlerSettings:
 
 
 # 全局配置单例
-_crawler_settings_instance: Optional[CrawlerSettings] = None
+_crawler_settings_instance: CrawlerSettings | None = None
 
 
 def get_crawler_settings() -> CrawlerSettings:

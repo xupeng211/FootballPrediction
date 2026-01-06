@@ -5,10 +5,10 @@ FotMob API Client - Real Data Collection with Tenacity Retry
 """
 
 import asyncio
-import logging
-import time
 from datetime import UTC, datetime
 from enum import Enum
+import logging
+import time
 from typing import Any
 
 import aiohttp
@@ -94,7 +94,7 @@ class CircuitBreaker:
         if self.failure_count >= self.failure_threshold:
             self.state = CircuitState.OPEN
             logger.warning(f"🚨 API熔断器触发！连续失败{self.failure_count}次，熔断{self.recovery_timeout}秒")
-            logger.warning(f"触发异常类型: {type(exception).__name__}: {str(exception)}")
+            logger.warning(f"触发异常类型: {type(exception).__name__}: {exception!s}")
 
 
 class FotMobAPIClient:
@@ -213,10 +213,9 @@ class FotMobAPIClient:
                     f"✅ 成功提取真实赔率: 主胜={odds_data['home_odds']}, 平局={odds_data['draw_odds']}, 客胜={odds_data['away_odds']}"
                 )
                 return odds_data
-            else:
-                logger.warning("⚠️ 赔率数据不完整，使用模拟赔率")
-                # 返回模拟赔率作为备用
-                return self._generate_fallback_odds(match_data)
+            logger.warning("⚠️ 赔率数据不完整，使用模拟赔率")
+            # 返回模拟赔率作为备用
+            return self._generate_fallback_odds(match_data)
 
         except Exception as e:
             logger.error(f"❌ 赔率提取失败: {e}")
@@ -358,9 +357,8 @@ class FotMobAPIClient:
                     matches = data.get("matches", [])
                     logger.info(f"成功获取 {len(matches)} 场比赛")
                     return matches
-                else:
-                    logger.error(f"API请求失败 - Status: {response.status}, Date: {date_str}")
-                    return None
+                logger.error(f"API请求失败 - Status: {response.status}, Date: {date_str}")
+                return None
         except Exception as e:
             logger.error(f"API请求异常 - Date: {date_str}, Error: {e}")
             return None
@@ -456,9 +454,8 @@ class FotMobAPIClient:
 
                     logger.info(f"成功获取联赛 {league_id} 的 {len(filtered_matches)} 场历史完场比赛")
                     return filtered_matches
-                else:
-                    logger.error(f"API请求失败 - Status: {response.status}, League ID: {league_id}")
-                    return None
+                logger.error(f"API请求失败 - Status: {response.status}, League ID: {league_id}")
+                return None
         except Exception as e:
             logger.error(f"API请求异常 - League ID: {league_id}, Error: {e}")
             return None

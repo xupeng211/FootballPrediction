@@ -154,9 +154,8 @@ def merge_multi_season_data():
         print(merged_df[sample_cols].head(10))
 
         return merged_df
-    else:
-        print("  ❌ 未找到匹配的比赛")
-        return None
+    print("  ❌ 未找到匹配的比赛")
+    return None
 
 
 def main():

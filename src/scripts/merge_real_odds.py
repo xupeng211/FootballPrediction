@@ -90,9 +90,8 @@ def merge_odds_and_predictions():
         print(merged_df[sample_cols].head())
 
         return merged_df
-    else:
-        print("  ❌ 未找到匹配的比赛")
-        return None
+    print("  ❌ 未找到匹配的比赛")
+    return None
 
 
 def main():

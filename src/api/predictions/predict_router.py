@@ -22,8 +22,8 @@ Sprint 3 改进:
 - Dependency Injection (依赖注入)
 """
 
-import logging
 from datetime import datetime
+import logging
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Query, status
@@ -122,11 +122,10 @@ async def predict_match(
                 "request_id": service_response.request_id,
                 "timestamp": service_response.timestamp.isoformat(),
             }
-        else:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail=service_response.error or "预测处理失败",
-            )
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=service_response.error or "预测处理失败",
+        )
 
     except HTTPException:
         raise
@@ -134,7 +133,7 @@ async def predict_match(
         logger.error(f"单场比赛预测处理失败: match_id={match_id}, error={e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"预测服务内部错误: {str(e)}",
+            detail=f"预测服务内部错误: {e!s}",
         )
 
 
@@ -176,11 +175,10 @@ async def predict_batch(
                 "request_id": service_response.request_id,
                 "timestamp": service_response.timestamp.isoformat(),
             }
-        else:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail=service_response.error or "批量预测处理失败",
-            )
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=service_response.error or "批量预测处理失败",
+        )
 
     except HTTPException:
         raise
@@ -188,7 +186,7 @@ async def predict_batch(
         logger.error(f"批量预测处理失败: match_ids={request.match_ids}, error={e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"批量预测服务内部错误: {str(e)}",
+            detail=f"批量预测服务内部错误: {e!s}",
         )
 
 
@@ -223,17 +221,16 @@ async def health_check(
                 "request_id": service_response.request_id,
                 "timestamp": service_response.timestamp.isoformat(),
             }
-        else:
-            return {
-                "success": False,
-                "error": service_response.error,
-                "timestamp": datetime.now().isoformat(),
-            }
+        return {
+            "success": False,
+            "error": service_response.error,
+            "timestamp": datetime.now().isoformat(),
+        }
 
     except Exception as e:
         logger.error(f"健康检查失败: {e}")
         return {
             "success": False,
-            "error": f"健康检查服务异常: {str(e)}",
+            "error": f"健康检查服务异常: {e!s}",
             "timestamp": datetime.now().isoformat(),
         }

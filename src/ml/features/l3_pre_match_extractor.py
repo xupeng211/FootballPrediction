@@ -9,10 +9,10 @@ V10.2 - 系统重启版本
 3. 实现 181 维"赛前全景特征"
 """
 
-import json
-import logging
 from dataclasses import dataclass
 from datetime import datetime
+import json
+import logging
 
 import numpy as np
 import psycopg2

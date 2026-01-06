@@ -29,8 +29,8 @@ Author: Football Prediction Team
 Version: 1.0.0
 """
 
-import logging
 from datetime import datetime
+import logging
 from typing import Any
 
 import numpy as np

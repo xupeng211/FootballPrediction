@@ -4,8 +4,8 @@ V9.3 综合数据扩容器
 将所有可用数据源合并，创建 500+ 场的完整数据集
 """
 
-import warnings
 from datetime import timedelta
+import warnings
 
 import numpy as np
 import pandas as pd
@@ -20,8 +20,7 @@ def calculate_season(date):
 
     if month >= 8:
         return f"{year}/{year + 1}"
-    else:
-        return f"{year - 1}/{year}"
+    return f"{year - 1}/{year}"
 
 
 def merge_all_available_data():
@@ -229,9 +228,8 @@ def merge_all_available_data():
         print(f"  实际结果比赛: {results_count} 场 ({results_count / len(merged_df) * 100:.1f}%)")
 
         return merged_df
-    else:
-        print("\n❌ 数据合并失败")
-        return None
+    print("\n❌ 数据合并失败")
+    return None
 
 
 def main():

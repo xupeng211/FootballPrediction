@@ -23,8 +23,8 @@ Author: Football Prediction Team
 Version: 1.0.0
 """
 
-import logging
 from datetime import datetime, timedelta
+import logging
 from typing import Any
 
 import numpy as np
@@ -422,14 +422,13 @@ class EloRatingSystem:
         """
         if rating_change > 50 and trend_slope > 1:
             return "EXCELLENT"
-        elif rating_change > 20 and trend_slope > 0.5:
+        if rating_change > 20 and trend_slope > 0.5:
             return "GOOD"
-        elif rating_change > -10 and abs(trend_slope) < 0.3:
+        if rating_change > -10 and abs(trend_slope) < 0.3:
             return "STABLE"
-        elif rating_change < -20 or trend_slope < -0.5:
+        if rating_change < -20 or trend_slope < -0.5:
             return "DECLINING"
-        else:
-            return "AVERAGE"
+        return "AVERAGE"
 
     def get_top_teams(self, limit: int = 20, min_matches: int = 10) -> list[dict[str, Any]]:
         """
@@ -577,7 +576,7 @@ class EloRatingSystem:
             import json
 
             return json.dumps(export_data, indent=2, ensure_ascii=False)
-        elif format == "csv":
+        if format == "csv":
             import csv
             import io
 
@@ -588,13 +587,13 @@ class EloRatingSystem:
                 writer.writerows(export_data)
 
             return output.getvalue()
-        else:  # dict
-            return {
-                "export_timestamp": datetime.now().isoformat(),
-                "total_teams": len(export_data),
-                "system_stats": self.stats,
-                "ratings": export_data,
-            }
+        # dict
+        return {
+            "export_timestamp": datetime.now().isoformat(),
+            "total_teams": len(export_data),
+            "system_stats": self.stats,
+            "ratings": export_data,
+        }
 
     def get_system_stats(self) -> dict[str, Any]:
         """获取系统统计信息"""

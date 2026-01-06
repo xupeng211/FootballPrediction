@@ -13,15 +13,15 @@ V20.5 故障容错系统 - 防崩塌机制
 版本: V20.5
 """
 
-import json
-import logging
-import threading
-import time
 from collections.abc import Callable
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from enum import Enum
+import json
+import logging
 from pathlib import Path
+import threading
+import time
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -456,12 +456,11 @@ class FaultTolerantProcessor:
                     self.checkpoint_tracker.record_success(match_id)
                     logger.info(f"✓ Match {match_id} 处理成功 (耗时: {result.duration:.2f}s)")
                     return result
+                last_error = result.error
+                if result.error_code:
+                    self.circuit_breaker.record_failure(result.error_code)
                 else:
-                    last_error = result.error
-                    if result.error_code:
-                        self.circuit_breaker.record_failure(result.error_code)
-                    else:
-                        self.circuit_breaker.record_failure()
+                    self.circuit_breaker.record_failure()
 
             except Exception as e:
                 last_error = str(e)

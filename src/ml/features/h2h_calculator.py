@@ -22,9 +22,9 @@ Phase 5 Advanced Features 核心组件之一
 目标：通过历史交锋特征将模型准确率提升3-5%
 """
 
-import logging
 from dataclasses import dataclass
 from decimal import Decimal
+import logging
 from typing import Any
 
 import pandas as pd
@@ -135,7 +135,7 @@ class H2HCalculator:
             return stats
 
         except Exception as e:
-            logger.error(f"计算H2H统计失败: {str(e)}")
+            logger.error(f"计算H2H统计失败: {e!s}")
             return self._get_default_stats()
 
     def calculate_h2h_for_all_matches(self, df: pd.DataFrame) -> pd.DataFrame:

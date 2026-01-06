@@ -18,10 +18,10 @@ Sprint 3 改进:
 - Configuration Externalization (配置外部化)
 """
 
-import logging
-import time
 from dataclasses import dataclass
 from datetime import datetime
+import logging
+import time
 from typing import Any, Protocol
 
 from .dependency_injection import ServiceLifecycle, injectable
@@ -264,8 +264,7 @@ class InferenceService(ServiceLifecycle):
             if self.config.enable_fallback:
                 self.stats["fallback_used"] += 1
                 return self._create_fallback_result(match_id, str(e))
-            else:
-                raise RuntimeError(f"预测服务内部错误: {str(e)}")
+            raise RuntimeError(f"预测服务内部错误: {e!s}")
 
     async def _fetch_match_data(self, match_id: str) -> dict[str, Any]:
         """从数据库获取比赛数据"""
@@ -294,7 +293,7 @@ class InferenceService(ServiceLifecycle):
 
         except Exception as e:
             self.logger.error(f"获取比赛数据失败 {match_id}: {e}")
-            raise RuntimeError(f"数据库查询失败: {str(e)}")
+            raise RuntimeError(f"数据库查询失败: {e!s}")
 
     async def _get_historical_data(self, match_data: dict[str, Any]) -> Any:
         """获取历史数据用于特征提取"""
@@ -387,7 +386,7 @@ class InferenceService(ServiceLifecycle):
 
         except Exception as e:
             self.logger.error(f"推理执行失败 {match_id}: {e}")
-            raise RuntimeError(f"模型推理失败: {str(e)}")
+            raise RuntimeError(f"模型推理失败: {e!s}")
 
     def _get_from_cache(self, match_id: str) -> dict[str, Any] | None:
         """从缓存获取结果"""
@@ -401,8 +400,7 @@ class InferenceService(ServiceLifecycle):
 
             if age < self.config.cache_ttl_seconds:
                 return result
-            else:
-                del self._prediction_cache[match_id]
+            del self._prediction_cache[match_id]
 
         return None
 

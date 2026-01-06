@@ -13,10 +13,10 @@ from src.api.models.schemas import (
 )
 
 __all__ = [
+    "DataSource",
     "MarketMetric",
-    "VendorOddsData",
     "MatchOddsPayload",
     "ValidationResult",
-    "DataSource",
     "VendorID",
+    "VendorOddsData",
 ]

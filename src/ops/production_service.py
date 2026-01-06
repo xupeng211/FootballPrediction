@@ -23,8 +23,8 @@ Version: 26.8 (League Specialized)
 """
 
 import csv
-import logging
 from datetime import datetime, timedelta
+import logging
 from pathlib import Path
 
 import psycopg2
@@ -417,11 +417,10 @@ def main():
         logger.info(f"\n✅ 生产预测完成! 发现 {high_conf_count} 场高置信度比赛")
         logger.info(f"查看预测结果: cat {FORECAST_FILE}")
         return 0
-    else:
-        logger.warning("\n⚠️ 未发现高置信度比赛，可能需要:")
-        logger.warning("  1. 先运行数据采集: python -m src.api.collectors.v51_incremental_collector")
-        logger.warning("  2. 降低置信度阈值")
-        return 1
+    logger.warning("\n⚠️ 未发现高置信度比赛，可能需要:")
+    logger.warning("  1. 先运行数据采集: python -m src.api.collectors.v51_incremental_collector")
+    logger.warning("  2. 降低置信度阈值")
+    return 1
 
 
 if __name__ == "__main__":

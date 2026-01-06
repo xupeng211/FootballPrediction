@@ -6,32 +6,22 @@
 采用 Facade 模式，将重构后的组件组合成统一接口。
 """
 
-import logging
-import warnings
 from datetime import datetime
+import logging
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
+import warnings
 
 # Import numpy and pandas for type annotations
 import numpy as np
 import pandas as pd
 
-from .cache_manager import (
-    CacheEntry,
-    CacheStats,
-)
-from .cache_manager import (
-    PredictionCache as _InternalPredictionCache,
-)
+from .cache_manager import CacheEntry, CacheStats
+from .cache_manager import PredictionCache as _InternalPredictionCache
 
 # 导入重构后的组件，使用别名避免循环引用
-from .model_loader import (
-    ModelLoader as _InternalModelLoader,
-)
-from .model_loader import (
-    ModelLoadError,
-    ModelMetadata,
-)
+from .model_loader import ModelLoader as _InternalModelLoader
+from .model_loader import ModelLoadError, ModelMetadata
 from .predictor import MatchPredictor, PredictionError
 
 logger = logging.getLogger(__name__)
@@ -67,7 +57,7 @@ class Predictor:
             self._model_loader.load_model(self._model_name, model_path)
         except ModelLoadError as e:
             # 保持原始异常类型
-            raise ModelLoadError(f"模型加载失败: {str(e)}") from e
+            raise ModelLoadError(f"模型加载失败: {e!s}") from e
 
         # 创建预测器
         self._predictor = MatchPredictor(
@@ -124,7 +114,7 @@ class Predictor:
             return original_result
 
         except Exception as e:
-            raise PredictionError(f"预测失败: {str(e)}") from e
+            raise PredictionError(f"预测失败: {e!s}") from e
 
     def get_model_info(self) -> dict[str, Any]:
         """
@@ -198,7 +188,7 @@ class ModelLoader:
             self._loaded_models[model_name] = predictor
             return True
         except Exception as e:
-            logger.error(f"模型 {model_name} 加载失败: {str(e)}")
+            logger.error(f"模型 {model_name} 加载失败: {e!s}")
             return False
 
     def get_model(self, model_name: str) -> Predictor | None:
@@ -455,7 +445,7 @@ def predict_match(
         return result
 
     except Exception as e:
-        logger.error(f"预测失败: {str(e)}")
+        logger.error(f"预测失败: {e!s}")
         raise
 
 

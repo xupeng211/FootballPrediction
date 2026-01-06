@@ -21,10 +21,10 @@ Phase 5 Advanced Features 核心组件之一
 目标：通过金融级精度计算将模型数值稳定性提升95%+
 """
 
-import logging
 from dataclasses import dataclass
 from datetime import datetime
 from decimal import ROUND_HALF_UP, Decimal
+import logging
 from typing import Any
 
 import numpy as np
@@ -33,6 +33,7 @@ import pandas as pd
 # V146.1: 修复导入 - 使用绝对路径
 # 导入足球业务逻辑常量
 from src.constants import FOOTBALL, MATH, PROBABILITY, SCORING, STATISTICAL, VALIDATOR
+
 from .h2h_calculator import H2HCalculator
 from .venue_analyzer import VenueAnalyzer
 
@@ -325,7 +326,7 @@ class MatchFeatureExtractor:
             return feature_set
 
         except Exception as e:
-            self.logger.error(f"特征提取失败: {str(e)}")
+            self.logger.error(f"特征提取失败: {e!s}")
             raise
 
     async def _extract_h2h_features(
@@ -367,7 +368,7 @@ class MatchFeatureExtractor:
             return features
 
         except Exception as e:
-            self.logger.warning(f"H2H特征提取失败: {str(e)}")
+            self.logger.warning(f"H2H特征提取失败: {e!s}")
             return self._get_default_h2h_features()
 
     async def _extract_venue_features(
@@ -419,7 +420,7 @@ class MatchFeatureExtractor:
             return features
 
         except Exception as e:
-            self.logger.warning(f"场馆特征提取失败: {str(e)}")
+            self.logger.warning(f"场馆特征提取失败: {e!s}")
             return self._get_default_venue_features()
 
     async def _extract_form_features(
@@ -481,7 +482,7 @@ class MatchFeatureExtractor:
             return features
 
         except Exception as e:
-            self.logger.warning(f"形态特征提取失败: {str(e)}")
+            self.logger.warning(f"形态特征提取失败: {e!s}")
             return self._get_default_form_features()
 
     async def _extract_ranking_features(
@@ -551,17 +552,16 @@ class MatchFeatureExtractor:
             return features
 
         except Exception as e:
-            self.logger.warning(f"排名特征提取失败: {str(e)}")
+            self.logger.warning(f"排名特征提取失败: {e!s}")
             return self._get_default_ranking_features()
 
     def _parse_match_date(self, date_value: Any) -> datetime:
         """解析比赛日期"""
         if isinstance(date_value, datetime):
             return date_value
-        elif isinstance(date_value, str):
+        if isinstance(date_value, str):
             return datetime.fromisoformat(date_value.replace("Z", "+00:00"))
-        else:
-            raise ValueError(f"无法解析日期: {date_value}")
+        raise ValueError(f"无法解析日期: {date_value}")
 
     def _get_recent_matches(
         self,
@@ -943,7 +943,7 @@ class MatchFeatureExtractor:
                 feature_set = await self.extract_features(match_data, historical_matches, team_stats)
                 feature_sets.append(feature_set)
             except Exception as e:
-                self.logger.error(f"比赛 {match_data.get('id')} 特征提取失败: {str(e)}")
+                self.logger.error(f"比赛 {match_data.get('id')} 特征提取失败: {e!s}")
                 continue
 
         self.logger.info(f"批量特征提取完成: {len(feature_sets)}/{len(matches_data)}")
@@ -1069,10 +1069,9 @@ class MatchFeatureExtractor:
 
         if overall_score >= 0.9:
             return "stable"
-        elif overall_score >= 0.7:
+        if overall_score >= 0.7:
             return "moderate"
-        else:
-            return "unstable"
+        return "unstable"
 
     def _check_business_validation_status(self) -> dict[str, bool]:
         """
