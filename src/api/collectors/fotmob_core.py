@@ -262,14 +262,16 @@ class FotMobCoreCollector:
         Returns:
             psycopg2连接对象
         """
-        logger.debug(f"🔧 连接数据库: {db.host}:{db.port}/{db.name}")
+        from src.config_unified import get_settings
+        settings = get_settings()
+        logger.debug(f"🔧 连接数据库: {settings.database.host}:{settings.database.port}/{settings.database.name}")
 
         return psycopg2.connect(
-            host=db.host,
-            port=db.port,
-            database=db.name,
-            user=db.user,
-            password=db.password.get_secret_value(),
+            host=settings.database.host,
+            port=settings.database.port,
+            database=settings.database.name,
+            user=settings.database.user,
+            password=settings.database.password.get_secret_value(),
         )
 
     def _log_hollow_match(self, match_id: int, content_size: int, reason: str) -> None:
@@ -954,7 +956,7 @@ class FotMobCoreCollector:
 
     def get_match_details(self, match_id: int) -> dict | None:
         """
-        获取比赛详情数据
+        获取比赛详情数据（V145.0 修复版）
 
         Args:
             match_id: 比赛外部ID
@@ -977,10 +979,8 @@ class FotMobCoreCollector:
                 )
 
                 if json_data and isinstance(json_data, dict):
-                    # V10.9哨兵检查：响应长度验证
-                    if len(str(json_data)) < self.min_response_size:
-                        logger.warning(f"⚠️ 响应数据过小: {len(str(json_data))} bytes")
-                        self._log_hollow_match(match_id, "response_too_small")
+                    # V145.0: 使用默认 tier 哨兵检查（无 league_id 时）
+                    if not self._validate_response_size(match_id, response.content):
                         return None
 
                     # 提取基础信息
