@@ -23,7 +23,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | **状态** | ✅ Production Ready |
 | **生产版本** | **V144.7** (Multi-Source Command Center) |
 | **核心模型** | **V26.8** (联赛专项) + **V26.7** (通用底座) |
-| **数据采集** | **V144.5** (FotMob) + **V144.2** (OddsPortal + Ghost Protocol) |
+| **数据采集** | **V144.5** (FotMob) + **V144.2** (OddsPortal + Ghost Protocol) + **V26.6** (全球数据扩充) |
 | **收割服务** | **V142.0** (HarvesterService) |
 | **特征引擎** | **V25.1** (万能自适应特征提取) |
 | **Docker 版本** | **V106.0** (Dockerfile + docker-compose.prod.yml) |
@@ -102,6 +102,11 @@ python src/main.py
 
 # 生产预测服务（联赛专项模型）
 python -m src.ops.production_service
+
+# V26.6: 历史数据回填
+python scripts/maintenance/fotmob_historical_backfill.py              # 回填所有联赛
+python scripts/maintenance/fotmob_historical_backfill.py --league-id 47 --years 5  # 回填指定联赛
+python scripts/maintenance/fotmob_historical_backfill.py --dry-run     # 干跑模式
 ```
 
 ### 快速诊断
@@ -177,6 +182,98 @@ python -m src.ops.production_service
                     PostgreSQL 持久层
               matches 表 + metrics_multi_source_data 表
 ```
+
+### V26.6 全球数据支持（2026-01-06 新增）
+
+V26.6 引入**FotMob 全球数据扩充系统**，在 OddsPortal 冷却期间扩展数据采集范围：
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    V26.6 全球联赛注册表                          │
+│  src/api/collectors/fotmob_league_registry.py                   │
+│  ┌────────────────────────────────────────────────────────────┐ │
+│  │  31 个全球联赛完整元数据                                    │ │
+│  │  • 欧洲 (17): 英超、西甲、德甲、意甲、法甲、葡超、荷甲等 │ │
+│  │  • 美洲 (4): 美职联、巴甲、阿甲、墨超                        │ │
+│  │  • 亚洲 (7): 日职联、中超、K联赛、沙特超、澳超等           │ │
+│  │  • 非洲 (3): 南非超、埃及超、尼日利亚超                      │ │
+│  │                                                            │ │
+│  │  Tier 质量分级系统:                                        │ │
+│  │  • Tier 1 Premium: 5 大联赛（英超、西甲、德甲、意甲、法甲） │ │
+│  │  • Tier 2 Standard: 次级联赛（英冠、葡超、荷甲等）         │ │
+│  │  • Tier 3 Basic: 低级别联赛（印超、南非超等）               │ │
+│  └────────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────────┐
+│                    V26.6 配置管理系统                             │
+│  src/config/harvest_config.py + config/global_harvest_list.yaml  │
+│  ┌────────────────────────────────────────────────────────────┐ │
+│  │  YAML 配置文件，轻松启用/禁用联赛                          │ │
+│  │  • enabled: true/false 开关控制                            │ │
+│  │  • seasons: 赛季列表（23/24, 24/25, 2024, 2025）            │ │
+│  │  • 采集任务列表自动生成                                    │ │
+│  │  • V26.5 哨兵配置集成                                      │ │
+│  └────────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────────┐
+│                    V26.6 历史回填引擎                              │
+│  scripts/maintenance/fotmob_historical_backfill.py               │
+│  ┌────────────────────────────────────────────────────────────┐ │
+│  │  自动发现历史比赛 ID（3-5 年）                             │ │
+│  │  批量采集比赛数据                                          │ │
+│  │  哨兵系统集成（自动停机保护）                              │ │
+│  │  断点续传 + 干跑模式                                       │ │
+│  └────────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**全球联赛覆盖清单**：
+
+**Tier 1 Premium (5 大联赛)**：
+- ✅ 英超 (47) - Premier League
+- ✅ 西甲 (87) - La Liga
+- ✅ 德甲 (78) - Bundesliga
+- ✅ 意甲 (126) - Serie A
+- ✅ 法甲 (53) - Ligue 1
+
+**Tier 2 Standard (17 个次级联赛)**：
+- ✅ 英冠 (48) - Championship
+- ✅ 西乙 (94) - Segunda División
+- ✅ 德乙 (95) - 2. Bundesliga
+- ✅ 意乙 (127) - Serie B
+- ✅ 葡超 (155) - Liga Portugal
+- ✅ 荷甲 (129) - Eredivisie
+- ✅ 比甲 (118) - Jupiler Pro League
+- ✅ 苏超 (157) - Scottish Premiership
+- ✅ 土超 (201) - Süper Lig
+- ✅ 希超 (96) - Super League Greece
+- ✅ 俄超 (153) - Premier League Russia
+- ✅ 乌超 (186) - Premier Liha
+- ✅ 美职联 (203) - MLS
+- ✅ 巴甲 (274) - Serie A Brazil
+- ✅ 日职联 (345) - J-League Division 1
+- ✅ 沙特超 (410) - Saudi Pro League
+- ✅ 澳超 (312) - A-League
+
+**Tier 3 Basic (9 个基础联赛)**：
+- ✅ 阿甲 (275) - Liga Profesional
+- ✅ 墨超 (298) - Liga MX
+- ✅ 中超 (322) - Chinese Super League
+- ✅ K联赛 (353) - K-League 1
+- ✅ 阿联酋职业联赛 (411) - ADNOC Pro League
+- ✅ 印超 (397) - Indian Super League
+- ✅ 南非超 (288) - Premier Soccer League
+- ✅ 埃及超 (287) - Premier League
+- ✅ 尼日利亚职业足球联赛 (412) - NPFL
+
+**V26.6 核心特性**:
+- ✅ **全球覆盖**: 31 个联赛，涵盖欧洲、美洲、亚洲、非洲四大洲
+- ✅ **Tier 分级**: 3 个质量等级，优先采集高价值联赛
+- ✅ **配置驱动**: YAML 配置文件，轻松启用/禁用联赛
+- ✅ **历史回填**: 自动发现和采集 3-5 年历史数据
+- ✅ **哨兵兼容**: 100% 兼容 V26.5 安全锁和监控系统
 
 ### 旧版本脚本归档
 
@@ -760,6 +857,90 @@ stats = await harvester.run()
 2. 悬停自愈 - 鼠标抖动自动重试
 3. IP 健康监控 - 连续 3 次错误 → 5 分钟冷却
 4. 数据完整性审计 - `Score = 1/P1 + 1/P2 + 1/P3`
+
+### HarvestConfigManager - V26.6 配置管理系统
+
+位于 `src/config/harvest_config.py`，管理全球联赛采集配置：
+
+```python
+from src.config.harvest_config import get_config_manager
+
+# 获取配置管理器单例
+config_manager = get_config_manager()
+
+# 查看配置摘要
+config_manager.print_summary()
+
+# 获取启用的联赛
+enabled_leagues = config_manager.get_enabled_leagues()
+
+# 按 Tier 获取联赛
+tier1_leagues = config_manager.get_leagues_by_tier(tier=1)  # 5 大联赛
+
+# 生成采集任务列表
+tasks = config_manager.get_harvest_tasks()
+```
+
+**核心特性**:
+- YAML 配置文件驱动 (`config/global_harvest_list.yaml`)
+- 31 个全球联赛元数据管理
+- 联赛启用/禁用状态控制
+- 采集任务列表自动生成
+- V26.5 哨兵配置集成
+
+### FotMobHistoricalBackfill - V26.6 历史回填引擎
+
+位于 `scripts/maintenance/fotmob_historical_backfill.py`：
+
+```bash
+# 回填所有启用的联赛（默认 3 年）
+python scripts/maintenance/fotmob_historical_backfill.py
+
+# 回填指定联赛
+python scripts/maintenance/fotmob_historical_backfill.py --league-id 47 --years 5
+
+# 干跑模式（不实际采集）
+python scripts/maintenance/fotmob_historical_backfill.py --dry-run
+
+# 禁用哨兵系统
+python scripts/maintenance/fotmob_historical_backfill.py --no-sentry
+```
+
+**核心特性**:
+- 自动发现历史比赛 ID（3-5 年）
+- 批量采集比赛数据
+- 哨兵系统集成（自动停机保护）
+- 断点续传支持
+- 干跑模式（测试用）
+
+### CollectionSentry - V26.5 自动巡航哨兵
+
+位于 `src/api/collectors/collection_sentry.py`：
+
+```python
+from src.api.collectors.collection_sentry import CollectionSentry
+
+# 初始化哨兵系统
+sentry = CollectionSentry(
+    window_size=100,
+    success_rate_threshold=0.7,
+    consecutive_failure_threshold=5,
+    pause_duration_hours=12
+)
+
+# 记录采集结果
+sentry.record_result(success=True)
+
+# 检查是否应该停机
+if sentry.should_stop():
+    logger.warning("⚠️ 哨兵触发：成功率过低，自动停机保护")
+```
+
+**核心特性**:
+- 滑动窗口统计（最近 N 个结果）
+- 成功率监控（低于 70% 触发停机）
+- 连续失败监控（超过 6 次触发停机）
+- 自动设置冷却期（12 小时）
 
 ---
 

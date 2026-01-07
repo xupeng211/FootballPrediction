@@ -133,6 +133,9 @@ class FotMobCoreCollector:
         self.fallback_attempts = {}  # {match_id: attempt_count}
         self.max_fallback_attempts = 2
 
+        # V26.7: 状态过滤统计
+        self.last_skipped_count = 0  # 最近一次 discover_ligue_matches 跳过的比赛数
+
         # V11.0: 联赛分级哨兵配置（不再使用硬编码的 100KB）
         # self.min_response_size 已废弃，改用 _get_league_tier() 动态获取
 
@@ -1407,6 +1410,40 @@ class FotMobCoreCollector:
                             f"✅ 采集成功: {match_id} (league={league_id}, season={season}, tier={tier_info['name']})"
                         )
 
+                        # V26.7: 深度特征提取 - 使用 V25ProductionExtractor
+                        try:
+                            from src.processors.v25_production_extractor import V25ProductionExtractor
+
+                            logger.info(f"🔬 开始深度特征提取: {match_id}")
+                            extractor = V25ProductionExtractor()
+                            extraction_result = extractor.extract(decoded_data)
+
+                            if extraction_result and extraction_result.features:
+                                features = extraction_result.features
+                                feature_count = len([k for k in features.keys() if not k.startswith("_")])
+
+                                # V26.7: 只有真正的 6000+ 维才输出成功日志
+                                if feature_count >= 6000:
+                                    logger.info(
+                                        f"📊 [深度解析成功] 维度: {feature_count}维 - {match_id}"
+                                    )
+                                else:
+                                    logger.warning(
+                                        f"⚠️  [深度解析维度不足] {feature_count}维 - {match_id} (期望 6000+)"
+                                    )
+
+                                # 保存深度提取的特征
+                                self.save_extracted_features(
+                                    str(match_id),
+                                    features,
+                                    extractor.version
+                                )
+                            else:
+                                logger.warning(f"⚠️ 深度特征提取失败: {match_id}")
+
+                        except Exception as extract_error:
+                            logger.error(f"❌ 深度特征提取异常: {match_id} - {extract_error}")
+
                         # V26.4: 强制 Jittering 延迟（2-5 秒随机）
                         jitter_delay = random.uniform(2.0, 5.0)
                         logger.debug(
@@ -1533,18 +1570,57 @@ class FotMobCoreCollector:
         logger.warning(f"⚠️ 球队回退策略失败: {match_id}")
         return None
 
+    @staticmethod
+    def filter_finished_matches(matches: list[dict]) -> list[dict]:
+        """
+        V26.7: 过滤已结束的比赛
+
+        过滤逻辑：
+        1. 只保留 status.finished == true 的比赛
+        2. 排除 status.cancelled == true 的比赛
+        3. 确保比赛有有效的 id 字段
+
+        Args:
+            matches: 原始比赛列表（来自 FotMob API）
+
+        Returns:
+            过滤后的比赛列表（只包含已结束的比赛）
+        """
+        finished_matches = []
+
+        for match in matches:
+            # 检查比赛是否有 ID
+            if not match.get("id"):
+                continue
+
+            # 获取状态对象
+            status = match.get("status", {})
+
+            # 检查比赛状态
+            is_finished = status.get("finished", False)
+            is_cancelled = status.get("cancelled", False)
+
+            # 只保留已结束且未取消的比赛
+            if is_finished and not is_cancelled:
+                finished_matches.append(match)
+
+        return finished_matches
+
     def discover_ligue_matches(self, league_id: int, season_code: str) -> list[int]:
         """
-        V11.2: 智能联赛比赛发现
+        V26.7: 智能联赛比赛发现（状态感知过滤）
 
-        支持多种发现策略，即使主端点失败也能获取比赛 ID
+        功能：
+        1. 从 FotMob API 获取比赛列表
+        2. **自动过滤未结束的比赛**（只保留 finished == true）
+        3. 支持多种发现策略
 
         Args:
             league_id: 联赛 ID
             season_code: 赛季代码
 
         Returns:
-            比赛 ID 列表
+            已结束的比赛 ID 列表
         """
         discovered_ids = []
 
@@ -1560,8 +1636,18 @@ class FotMobCoreCollector:
                 data = response.json()
                 if "fixtures" in data and "allMatches" in data["fixtures"]:
                     matches = data["fixtures"]["allMatches"]
-                    discovered_ids = [m.get("id") for m in matches if m.get("id")]
-                    logger.info(f"✅ 标准发现成功: {len(discovered_ids)} 场比赛")
+
+                    # V26.7: 应用状态过滤
+                    finished_matches = self.filter_finished_matches(matches)
+                    discovered_ids = [m.get("id") for m in finished_matches if m.get("id")]
+
+                    # V26.7: 记录跳过的比赛数
+                    self.last_skipped_count = len(matches) - len(finished_matches)
+
+                    logger.info(
+                        f"✅ 标准发现成功: {len(discovered_ids)} 场已结束比赛 "
+                        f"(跳过 {self.last_skipped_count} 场未结束/取消)"
+                    )
                     return discovered_ids
 
         except Exception as e:
