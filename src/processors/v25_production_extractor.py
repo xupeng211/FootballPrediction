@@ -183,6 +183,16 @@ def register_feature_keys(keys: set[str]) -> None:
     _GLOBAL_FEATURE_REGISTRY.register(keys)
 
 
+def reset_global_feature_registry() -> None:
+    """
+    重置全局特征注册表（用于测试或新批次）
+
+    V26.7: 添加此函数以支持测试环境下的干净状态
+    """
+    global _GLOBAL_FEATURE_REGISTRY
+    _GLOBAL_FEATURE_REGISTRY = ThreadSafeFeatureRegistry()
+
+
 # ============================================================================
 # V26.0 最小黑名单 (只过滤明显噪音)
 # ============================================================================
