@@ -778,7 +778,7 @@ class V25ProductionExtractor(BaseExtractor):
             self._metrics.string_features = len(string_features)
 
             # Step 3: 全局特征对齐（填充缺失特征）
-            global _GLOBAL_FEATURE_KEYS
+            # V26.7: 移除未使用的 global 声明（_GLOBAL_FEATURE_KEYS 未定义）
             reference_keys = get_global_feature_keys()
 
             if reference_keys:

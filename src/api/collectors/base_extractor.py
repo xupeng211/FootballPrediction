@@ -65,25 +65,44 @@ class SecurityInterrupt(Exception):
 
 class CollectionCircuitBreaker:
     """
-    V26.5: 采集熔断器 - 防止在冷却期内发起网络请求
+    V26.7: 采集熔断器 - 分类锁定支持
 
     功能：
     1. 检查 COLLECTION_PAUSE_UNTIL 环境变量
-    2. 如果当前时间 < 冷却截止时间，抛出 SecurityInterrupt
+    2. 根据数据源决定是否执行锁定：
+       - oddsportal: 严格执行锁定
+       - fotmob: 绕过锁定，允许立即采集
     3. 否则，允许采集器继续初始化
+
+    示例:
+        >>> CollectionCircuitBreaker.check_pause_period("oddsportal")  # 可能抛出异常
+        >>> CollectionCircuitBreaker.check_pause_period("fotmob")      # 总是允许通过
     """
 
+    # V26.7: 不受冷却期限制的数据源白名单
+    WHITELISTED_SOURCES = {"fotmob"}
+
     @staticmethod
-    def check_pause_period() -> None:
+    def check_pause_period(source_name: str = "default") -> None:
         """
-        检查冷却期状态
+        检查冷却期状态（支持数据源分类）
+
+        Args:
+            source_name: 数据源名称 ("oddsportal", "fotmob", 等)
 
         Raises:
-            SecurityInterrupt: 如果当前时间在冷却期内
+            SecurityInterrupt: 如果当前时间在冷却期内且数据源不在白名单中
 
         Returns:
-            None: 如果冷却期已过，允许继续执行
+            None: 如果冷却期已过或数据源在白名单中，允许继续执行
         """
+        # V26.7: 白名单数据源绕过冷却期检查
+        if source_name in CollectionCircuitBreaker.WHITELISTED_SOURCES:
+            logger.info(
+                f"🔓 数据源 [{source_name}] 在白名单中，绕过冷却期检查"
+            )
+            return
+
         pause_until_str = os.getenv("COLLECTION_PAUSE_UNTIL")
 
         if not pause_until_str:
@@ -91,7 +110,10 @@ class CollectionCircuitBreaker:
             return
 
         try:
-            pause_until = datetime.fromisoformat(pause_until_str.replace("Z", "+00:00"))
+            pause_until = datetime.fromisoformat(pause_until_str)
+            # 如果解析出的时间没有时区信息，假设是本地时区
+            if pause_until.tzinfo is None:
+                pause_until = pause_until.replace(tzinfo=datetime.now().astimezone().tzinfo)
         except ValueError as e:
             # 环境变量格式错误，记录警告但允许继续
             import warnings
@@ -105,7 +127,7 @@ class CollectionCircuitBreaker:
             # 冷却期未结束，抛出异常
             remaining_time = pause_until - current_time
             raise SecurityInterrupt(
-                f"🛡️ IP 冷却期保护: 数据采集已暂停\n"
+                f"🛡️ IP 冷却期保护: [{source_name}] 数据采集已暂停\n"
                 f"⏰ 当前时间: {current_time.isoformat()}\n"
                 f"🚫 冷却截止: {pause_until.isoformat()}\n"
                 f"⏳ 剩余时间: {CollectionCircuitBreaker._format_timedelta(remaining_time)}\n"

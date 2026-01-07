@@ -215,3 +215,8 @@ prediction_smoke_test_*.json
 models/v*/
 data/processed/*.parquet
 *.parquet
+
+# V26.7: Proxy Configuration (SENSITIVE)
+proxies.txt
+proxies_*.txt
+*.proxies

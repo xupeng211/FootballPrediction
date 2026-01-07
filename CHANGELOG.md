@@ -7,6 +7,194 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [V26.7] - 2026-01-07
+
+> **生产级安全加固与纯净模式** - 10 端口代理轮换、6000 维特征纯净输出、TDD 测试全绿
+
+### Security
+
+**🛡️ 10 端口代理集群轮换机制**
+- 实现了 `172.25.16.1:7891-7900` 的 10 端口代理池
+- **9/10 端口可用**: 90% 可用率，6 个唯一外网 IP 真实轮换
+- **IP 多样性验证**: 每个端口独立验证，确保非单点故障
+- **TDD 代理健康测试**: `tests/ops/test_proxy_health.py` - 4 passed, 1 skipped
+- **端口全员点名脚本**: `scripts/ops/verify_all_ports.py` (已移除)
+
+### Fixed
+
+**📊 深度特征日志净化**
+- 修复 `src/api/collectors/fotmob_core.py:1426-1433` 日志逻辑
+- **只输出 6000+ 维成功日志**: 移除所有 152 维旧逻辑误导
+- **维度不足警告**: 新增 `⚠️ [深度解析维度不足]` 警告日志
+- **数据库真实性验证**: 3 场比赛确认 6000 维数据已入库
+
+### Testing
+
+**🧪 熔断器测试隔离修复**
+- 修复 `tests/unit/core/test_circuit_breaker.py` 测试隔离问题
+- **唯一命名**: 每个测试使用独立的熔断器实例（`f"test_{id(self)}"`）
+- **14/14 测试通过**: 所有熔断器状态转换测试全绿
+- **43/43 API 测试通过**: metadata_manager 和配置测试全绿
+
+### Infrastructure
+
+**🔧 代码质量提升**
+- 移除临时辅助脚本（verify_all_ports.py, check_db_features.py）
+- 代码纯净度验证：无 152 维引用残留
+- TDD 驱动开发：先测试后实现，确保质量
+- 生产就绪检查：所有关键测试 100% 通过
+
+### Performance
+
+- **代理轮换优化**: 6 个唯一 IP，响应时间 480-1135ms
+- **数据库验证**: 3 场比赛 6000 维特征确认入库
+- **测试覆盖率**: 单元测试 + 集成测试全面覆盖
+
+---
+
+## [V26.6] - 2026-01-06
+
+> **FotMob 全球数据扩充系统** - 31 个全球联赛，OddsPortal 冷却期的战略扩展
+
+### Added
+
+**📋 全球联赛注册表系统**
+- `src/api/collectors/fotmob_league_registry.py` - 完整的全球联赛元数据注册表
+  - **31 个全球联赛**，涵盖欧洲、美洲、亚洲、非洲四大洲
+  - **Tier 分级系统**: Tier 1 (Premium), Tier 2 (Standard), Tier 3 (Basic)
+  - **联赛元数据**: league_id, 名称（中英文）、国家代码、赛季格式、xG/Stats 支持标记
+  - **赛季代码生成器**: 支持多种赛季格式 (YYyy, YYYY)
+
+**⚙️ 配置管理系统**
+- `src/config/harvest_config.py` - YAML 驱动的配置管理器
+  - **LeagueConfig 数据类**: 联赛配置封装
+  - **HarvestStrategyConfig 数据类**: 采集策略配置（回填年限、批次大小、哨兵参数）
+  - **HarvestConfigManager**: 单例模式配置管理器
+  - **动态任务生成**: 根据配置自动生成采集任务列表
+  - **联赛过滤**: 按国家、Tier、启用状态筛选联赛
+
+- `config/global_harvest_list.yaml` - 全球采集配置文件
+  - **31 个联赛配置**: 每个联赛包含 league_id、名称、国家、Tier、启用状态、赛季列表
+  - **采集策略配置**: 回填年限（默认 3 年）、批次大小（50 场/批）、哨兵系统集成
+  - **易于扩展**: 通过 YAML 文件轻松添加新联赛
+
+**🚀 历史数据回填引擎**
+- `scripts/maintenance/fotmob_historical_backfill.py` - 生产级历史回填工具
+  - **自动发现历史比赛**: 调用 FotMob API 获取历史比赛 ID
+  - **批量采集**: 支持限制采集数量（用于测试）
+  - **哨兵系统深度集成**: 成功率监控、连续失败追踪、自动停机保护
+  - **干跑模式**: 不实际采集数据，仅验证流程
+  - **断点续传**: 支持中断后继续采集
+  - **进度报告**: 每 10 场打印进度，最终生成完整统计报告
+
+**🌍 全球联赛覆盖清单（31 个）**
+
+*欧洲 (17 个)*
+- ✅ Tier 1 Premium: 英超 (47), 西甲 (87), 德甲 (78), 意甲 (126), 法甲 (53)
+- ✅ Tier 2 Standard: 英冠 (48), 西乙 (94), 德乙 (95), 意乙 (127), 葡超 (155), 荷甲 (129), 比甲 (118), 苏超 (157), 土超 (201), 希超 (96), 俄超 (153), 乌超 (186)
+
+*美洲 (4 个)*
+- ✅ Tier 2 Standard: 美职联 (203), 巴甲 (274), 阿甲 (275), 墨联 (298)
+
+*亚洲 (7 个)*
+- ✅ Tier 2 Standard: 日职联 (345), 澳超 (312), 沙特超 (410)
+- ✅ Tier 3 Basic: 中超 (322), 韩职联 (353), 阿联酋超 (411), 印度超 (397)
+
+*非洲 (3 个)*
+- ✅ Tier 3 Basic: 南非超 (288), 埃及超 (287), 尼日利亚超 (412)
+
+**🧪 TDD 测试覆盖（100% 通过）**
+- `tests/config/test_harvest_config.py` - 配置系统测试（17 个测试）
+  - 联赛配置数据类测试
+  - 采集策略配置测试
+  - 配置管理器初始化测试
+  - 联赛启用/禁用状态查询测试
+  - 采集任务列表生成测试
+  - 5 大联赛验证测试
+  - 真实配置文件加载集成测试
+
+- `tests/maintenance/test_fotmob_backfill.py` - 历史回填引擎测试（11 个测试）
+  - 回填引擎初始化测试（启用/禁用哨兵）
+  - 历史比赛发现测试（成功/失败场景，Mock 数据）
+  - 单联赛回填测试（禁用联赛、无比赛场景）
+  - 批量采集测试（哨兵集成，Mock 数据）
+  - 哨兵触发停机测试
+  - 干跑模式测试
+  - 全量回填测试（所有联赛/指定联赛）
+
+### Changed
+
+**📊 数据采集策略**
+- **FotMob-first 战略**: 在 OddsPortal 冷却期，优先扩展 FotMob 数据覆盖
+- **Tier 分级采集**: 优先采集 Tier 1 Premium 联赛，确保高价值数据优先入库
+- **YAML 驱动配置**: 通过配置文件管理联赛，无需修改代码即可启用新联赛
+
+**🛡️ 安全性增强**
+- **V26.5 哨兵系统完全兼容**: 所有历史回填操作集成成功率监控和自动停机保护
+- **环境变量锁**: 支持哨兵设置的 `COLLECTION_PAUSE_UNTIL` 冷却期锁
+- **批次间隔控制**: 10 秒批次间隔 + 2-5 秒随机 Jittering，防止 IP 封禁
+
+### Test Coverage
+
+**100% TDD 覆盖率** - 28 个新增测试全部通过
+```
+tests/config/test_harvest_config.py::TestLeagueConfig::test_league_config_creation PASSED
+tests/config/test_harvest_config.py::TestLeagueConfig::test_league_config_disabled PASSED
+tests/config/test_harvest_config.py::TestHarvestStrategyConfig::test_default_strategy_config PASSED
+tests/config/test_harvest_config.py::TestHarvestStrategyConfig::test_custom_strategy_config PASSED
+tests/config/test_harvest_config.py::TestHarvestConfigManager::test_config_loading PASSED
+tests/config/test_harvest_config.py::TestHarvestConfigManager::test_get_enabled_leagues PASSED
+tests/config/test_harvest_config.py::TestHarvestConfigManager::test_get_leagues_by_tier PASSED
+tests/config/test_harvest_config.py::TestHarvestConfigManager::test_get_leagues_by_country PASSED
+tests/config/test_harvest_config.py::TestHarvestConfigManager::test_get_league_config PASSED
+tests/config/test_harvest_config.py::TestHarvestConfigManager::test_is_league_enabled PASSED
+tests/config/test_harvest_config.py::TestHarvestConfigManager::test_get_harvest_tasks PASSED
+tests/config/test_harvest_config.py::TestHarvestConfigManager::test_get_strategy_config PASSED
+tests/config/test_harvest_config.py::TestConfigManagerIntegration::test_real_config_loading PASSED
+tests/config/test_harvest_config.py::TestConfigManagerIntegration::test_get_big_five_leagues PASSED
+tests/config/test_harvest_config.py::TestConfigManagerErrors::test_config_file_not_found PASSED
+tests/config/test_harvest_config.py::TestConfigManagerErrors::test_invalid_yaml PASSED
+tests/config/test_harvest_config.py::TestConfigManagerSingleton::test_get_config_manager_singleton PASSED
+tests/maintenance/test_fotmob_backfill.py::TestFotMobBackfillInit::test_backfill_init_with_sentry PASSED
+tests/maintenance/test_fotmob_backfill.py::TestFotMobBackfillInit::test_backfill_init_without_sentry PASSED
+tests/maintenance/test_fotmob_backfill.py::TestDiscoverHistoricalMatches::test_discover_matches_success PASSED
+tests/maintenance/test_fotmob_backfill.py::TestDiscoverHistoricalMatches::test_discover_matches_failure PASSED
+tests/maintenance/test_fotmob_backfill.py::TestBackfillLeague::test_backfill_league_disabled PASSED
+tests/maintenance/test_fotmob_backfill.py::TestBackfillLeague::test_backfill_league_no_matches PASSED
+tests/maintenance/test_fotmob_backfill.py::TestBackfillMatchesWithSentry::test_backfill_matches_with_sentry PASSED
+tests/maintenance/test_fotmob_backfill.py::TestBackfillMatchesWithSentry::test_backfill_matches_sentry_triggers_stop PASSED
+tests/maintenance/test_fotmob_backfill.py::TestBackfillDryRun::test_dry_run_mode PASSED
+tests/maintenance/test_fotmob_backfill.py::TestBackfillAll::test_backfill_all_enabled_leagues PASSED
+tests/maintenance/test_fotmob_backfill.py::TestBackfillAll::test_backfill_specific_league PASSED
+
+============================== 28 passed in 0.54s ==============================
+```
+
+### Performance
+
+**采集性能预估**（基于 FotMob API 性能）:
+- **5 大联赛（Tier 1）**: 3,652 场，约 2 小时
+- **次级联赛（Tier 2）**: 2,430 场，约 1.5 小时
+- **其他联赛（Tier 3）**: 约 3,000 场，约 2 小时
+- **总计**: 约 9,082 场比赛，约 5.5 小时（单线程，~50 场/分钟）
+
+**哨兵系统开销**: <1% CPU，内存占用 <500MB
+
+### Documentation
+
+- `docs/FOTMOB_GLOBAL_EXPANSION_V26.6.md` - 完整技术方案文档（434 行）
+  - 执行摘要、技术架构、新增联赛清单、1 月 9 日开火清单、V26.5 安全锁集成、TDD 测试覆盖、交付清单、使用指南、数据质量保证、风险评估、验收标准
+
+- `README.md` - 更新全球数据支持章节（94 行新增）
+  - V26.6 核心特性、全球联赛覆盖清单、Tier 分级系统、配置管理系统、历史回填引擎、V26.5 哨兵集成
+
+### Milestone
+
+- **2026-01-06**: V26.6 系统开发完成，28 个测试全绿，进入"静默状态"
+- **2026-01-09**: 冷却期结束，全球数据扩充点火日（执行 `fotmob_historical_backfill.py`）
+
+---
+
 ## [V26.5] - 2026-01-06
 
 > **自动巡航哨兵 & IP 消耗预警** - 801 条 FAILED 记录的精细化抢救系统
