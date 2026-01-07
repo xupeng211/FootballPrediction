@@ -21,15 +21,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | 属性 | 值 |
 |------|-----|
 | **状态** | ✅ Production Ready |
-| **生产版本** | **V144.7** (Multi-Source Command Center) |
+| **生产版本** | **V26.7** (全链路收割可靠性验证 - 生产级工业标准) |
+| **命令中心** | **V144.7** (Multi-Source Command Center) |
 | **核心模型** | **V26.8** (联赛专项) + **V26.7** (通用底座) |
 | **数据采集** | **V144.5** (FotMob) + **V144.2** (OddsPortal + Ghost Protocol) + **V26.6** (全球数据扩充) |
 | **收割服务** | **V142.0** (HarvesterService) |
-| **特征引擎** | **V25.1** (万能自适应特征提取) |
+| **特征引擎** | **V25.1** (万能自适应特征提取) + **V26.7** (特征清单管理器) |
 | **Docker 版本** | **V106.0** (Dockerfile + docker-compose.prod.yml) |
 | **基线准确率** | 56% (真赛前) |
 | **推理延迟** | <100ms |
-| **最后更新** | 2026-01-06 |
+| **最后更新** | 2026-01-07 |
 
 ### 核心技术栈
 
@@ -107,6 +108,11 @@ python -m src.ops.production_service
 python scripts/maintenance/fotmob_historical_backfill.py              # 回填所有联赛
 python scripts/maintenance/fotmob_historical_backfill.py --league-id 47 --years 5  # 回填指定联赛
 python scripts/maintenance/fotmob_historical_backfill.py --dry-run     # 干跑模式
+
+# V26.7: 特征管理和离线解析
+python scripts/ops/check_db_consistency.py                           # 数据库一致性检查
+python scripts/ops/lock_feature_manifest.py                          # 特征清单锁定
+python scripts/maintenance/reprocess_from_local.py                   # 离线特征重解析
 ```
 
 ### 快速诊断
@@ -308,6 +314,7 @@ FootballPrediction/
 │   │   ├── features/             # 特征工程
 │   │   └── inference/            # 推理服务
 │   ├── processors/               # V25.1 特征提取
+│   │   └── feature_manifest.py   # V26.7 特征清单管理器
 │   ├── utils/                    # 工具类
 │   │   └── text_processor.py     # V140.0 TeamNameNormalizer
 │   └── main.py                   # FastAPI 入口
@@ -326,14 +333,21 @@ FootballPrediction/
 │   │   └── analyze_api_samples.py
 │   ├── exploration/              # 探索性脚本
 │   │   └── debug_v54_6_url_sniffer.py
+│   ├── maintenance/              # 维护脚本
+│   │   ├── fotmob_historical_backfill.py  # V26.6 历史回填
+│   │   └── reprocess_from_local.py       # V26.7 离线解析
+│   ├── ops/                      # 运维脚本
+│   │   ├── check_db_consistency.py       # V26.7 一致性检查
+│   │   └── lock_feature_manifest.py      # V26.7 特征锁定
+│   ├── sql/                      # SQL 脚本目录
+│   │   └── v26_7_*.sql           # V26.7 数据库迁移脚本
 │   ├── v82_0_grand_harvest.py    # V82.6 全量收割
 │   ├── v82_6_final_extractor.py  # V82.6 最终提取器
 │   ├── v88_*.py                  # V88.x 数据回填和清理脚本
 │   ├── health_check.py           # 健康检查脚本
 │   ├── check_data_quality.py     # 数据质量检查
 │   ├── dashboard.py              # V139.0 监控仪表盘
-│   ├── run_checks.sh             # 质量门禁脚本
-│   └── sql/                      # SQL 脚本目录
+│   └── run_checks.sh             # 质量门禁脚本
 ├── tests/                        # 测试套件
 │   ├── ml/                       # ML 测试
 │   ├── ops/                      # 运维测试
@@ -343,9 +357,11 @@ FootballPrediction/
 ├── archive/                      # 历史归档
 │   └── logs/                     # 旧日志和审计文件
 ├── model_zoo/                    # 模型仓库 (.pkl 文件)
+├── config/                       # 配置文件
+│   └── v26_feature_manifest.json # V26.7 特征清单 (6346维锁定)
 ├── .github/workflows/            # CI/CD 配置
 ├── .claude/                      # Claude Code 技能配置
-├── main.py                       # V142.0 统一命令入口 ⭐
+├── main.py                       # V144.7 统一命令入口 ⭐
 ├── docker-compose.yml            # Docker 编排
 ├── docker-compose.prod.yml       # 生产环境配置
 ├── Dockerfile                    # Docker 镜像构建
@@ -942,6 +958,98 @@ if sentry.should_stop():
 - 连续失败监控（超过 6 次触发停机）
 - 自动设置冷却期（12 小时）
 
+### FeatureManifest - V26.7 特征清单管理器
+
+位于 `src/processors/feature_manifest.py`，实现"特征字典锁定"确保不同批次间的特征严格对齐：
+
+```python
+from src.processors.feature_manifest import FeatureManifest
+
+# 加载特征清单
+manifest = FeatureManifest.from_file("config/v26_feature_manifest.json")
+
+# 获取必需特征列表
+required_features = manifest.get_required_features()
+
+# 获取特征别名映射
+aliases = manifest.get_feature_aliases()
+
+# 验证特征清单完整性
+is_valid = manifest.validate()
+```
+
+**核心特性**:
+- 固定特征清单（6346 维锁定）
+- 验证提取的特征是否符合清单
+- 填充缺失特征，确保所有比赛的特征维度一致
+- 导出标准化特征字典（用于离线解析）
+- 特征别名映射（API 字段名 → 标准特征名）
+
+### V26.7 离线解析能力
+
+位于 `scripts/maintenance/reprocess_from_local.py`，实现"零网络请求"下的特征重解析：
+
+```bash
+# 从数据库读取 l2_raw_json，使用 V25ProductionExtractor 离线生成特征
+python scripts/maintenance/reprocess_from_local.py
+
+# 指定比赛 ID
+python scripts/maintenance/reprocess_from_local.py --match-id 12345
+
+# 干跑模式
+python scripts/maintenance/reprocess_from_local.py --dry-run
+```
+
+**核心特性**:
+- 零网络请求的离线特征重解析
+- 从数据库读取 `l2_raw_json` 数据
+- 使用 `V25ProductionExtractor` 生成特征
+- 支持单场比赛或批量处理
+- 干跑模式验证
+
+### V26.7 数据库一致性工具
+
+位于 `scripts/ops/check_db_consistency.py`，检查数据库特征一致性：
+
+```bash
+# 检查数据库一致性
+python scripts/ops/check_db_consistency.py
+
+# 检查指定联赛
+python scripts/ops/check_db_consistency.py --league "Premier League"
+
+# 修复不一致
+python scripts/ops/check_db_consistency.py --fix
+```
+
+**核心特性**:
+- 检查特征维度一致性
+- 检测缺失或多余特征
+- 自动修复不一致数据
+- 生成一致性报告
+
+### V26.7 League ID 数字骨架升级
+
+V26.7 引入 League ID 字段，实现双重识别（ID + Name）：
+
+**Schema 迁移脚本**:
+```bash
+# 添加 League ID 字段
+psql -U football_user -d football_db -f scripts/sql/v26_7_add_league_id.sql
+
+# 数据标签清理
+psql -U football_user -d football_db -f scripts/sql/v26_7_data_label_cleanup.sql
+
+# 历史数据对齐
+psql -U football_user -d football_db -f scripts/sql/v26_7_history_alignment.sql
+```
+
+**核心特性**:
+- League ID 字段添加
+- 双重识别（ID + Name）
+- 性能与可读性兼顾
+- 历史数据自动对齐
+
 ---
 
 ## 🛠️ 技术栈
@@ -1064,6 +1172,7 @@ docker-compose logs db
 
 | 版本 | 日期 | 核心变更 | 升级注意事项 |
 |------|------|---------|-------------|
+| V26.7 | 2026-01-07 | 全链路收割可靠性验证 - 特征清单管理器、离线解析、数据库一致性 | 需运行 v26_7_* 数据库迁移脚本 |
 | V149.0 | 2026-01-06 | SchemaManager API 修复，Circuit Breaker 硬编码 | 需更新数据库 schema 调用方式 |
 | V148.5 | 2026-01-05 | Final Master Sweep - 160 模块稳定 | 旧脚本已归档至 scripts/archive/ |
 | V148.0 | 2026-01-04 | 总攻最终生产基线 | 需重新训练模型 |
@@ -1072,7 +1181,7 @@ docker-compose logs db
 | V141.0 | 2025-12-28 | Ghost Protocol 集成 | 需更新采集器基类 |
 | V140.0 | 2025-12-25 | TeamNameNormalizer | 队名匹配逻辑变更 |
 | V26.8 | 2025-12-20 | 联赛专项模型分发器 | 需更新模型路径配置 |
-| V26.7 | 2025-12-18 | 19 维对齐特征 | 需重新计算特征 |
+| V26.7 (旧) | 2025-12-18 | 19 维对齐特征 | 需重新计算特征 |
 
 ### 升级前检查清单
 
@@ -1398,9 +1507,10 @@ alembic downgrade -1
 
 **🚨 CRITICAL**: This is a production system support document.
 
-**🧬 当前版本**: V144.7 (Multi-Source Command Center)
+**🧬 当前版本**: V26.7 (全链路收割可靠性验证 - 生产级工业标准)
+**命令中心**: V144.7 (Multi-Source Command Center)
 **Docker 版本**: V106.0 (Dockerfile + docker-compose.prod.yml)
-**最后更新**: 2026-01-06
+**最后更新**: 2026-01-07
 **基线准确率**: 56% (真赛前)
 **生产状态**: Production Ready
 **项目愿景**: 年化 25% 收益率

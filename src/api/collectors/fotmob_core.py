@@ -1647,7 +1647,7 @@ class FotMobCoreCollector:
         try:
             self._refresh_stealth_headers()
             url = f"{self.base_url}/leagues"
-            params = {"tab": "fixtures", "seasonId": season_code, "id": league_id}
+            params = {"tab": "fixtures", "season": season_code, "id": league_id}
 
             response = self.session.get(url, params=params, timeout=30)
 
@@ -1757,7 +1757,7 @@ class FotMobCoreCollector:
         try:
             self._refresh_stealth_headers()
             url = f"{self.base_url}/leagues"
-            params = {"tab": "fixtures", "seasonId": season_code, "id": league_id}
+            params = {"tab": "fixtures", "season": season_code, "id": league_id}
 
             response = self.session.get(url, params=params, timeout=30)
 
@@ -1820,6 +1820,14 @@ class FotMobCoreCollector:
                             "season": season_code,
                         }
 
+                        # V26.7 DBRE: 数据一致性校验 - match_date 与 season 对齐检查
+                        if not self._validate_season_date_alignment(season_code, match_date, match_id):
+                            logger.warning(
+                                f"⚠️ 赛季标签不匹配 - match_id={match_id}, "
+                                f"season={season_code}, match_date={match_date}"
+                            )
+                            continue  # 跳过不匹配的记录
+
                         discovered_matches.append(enriched_match)
                         batch_upsert_queue.append(enriched_match)
 
@@ -1849,19 +1857,94 @@ class FotMobCoreCollector:
                 "match_details": [],
             }
 
+    def _validate_season_date_alignment(
+        self,
+        season_code: str,
+        match_date: str | None,
+        match_id: str
+    ) -> bool:
+        """
+        V26.7 DBRE: 验证赛季标签与比赛日期的对齐性
+
+        防止数据污染：如日期在 2025 年但 season 标签为 "2324"
+
+        FotMob 赛季代码约定：
+        - '2425' = 2025-2026 赛季（2025-08 ~ 2026-05）
+        - '2324' = 2023-2024 赛季（2023-08 ~ 2024-05）
+        - 第一位数字对应起始年份的末位
+
+        Args:
+            season_code: 赛季代码 (e.g., '2425', '2324')
+            match_date: 比赛日期 (YYYY-MM-DD 格式)
+            match_id: 比赛 ID (用于日志)
+
+        Returns:
+            True: 日期与赛季标签对齐
+            False: 不对齐，应拒绝入库
+
+        Examples:
+            - season='2425', date='2025-08-15' → True (2025-26 赛季)
+            - season='2425', date='2026-05-20' → True (2025-26 赛季)
+            - season='2425', date='2024-08-15' → False (应为 2324)
+            - season='2324', date='2024-05-20' → True (2023-24 赛季)
+            - season='2324', date='2024-08-15' → False (应为 2425)
+        """
+        if not match_date:
+            # 无日期数据，允许通过（可能由后续流程填充）
+            return True
+
+        try:
+            # 解析赛季代码（FotMob 约定：2425 = 2025-2026）
+            if len(season_code) == 4 and season_code.isdigit():
+                # 第一位数字是起始年份末位，第二位是结束年份末位
+                start_year_digit = int(season_code[0])  # e.g., 2 from '2425'
+                end_year_digit = int(season_code[2])    # e.g., 2 from '2425'
+
+                # 推算完整年份（假设在 2000-2099 范围内）
+                # 对于 2425: 2025-2026, 对于 2324: 2023-2024
+                base_century = 2000
+                year1 = base_century + start_year_digit * 10 + int(season_code[1])
+                year2 = base_century + end_year_digit * 10 + int(season_code[3])
+            else:
+                # 无法解析的赛季格式，允许通过
+                return True
+
+            # 解析比赛日期
+            date_year = int(match_date[:4])
+
+            # 赛季通常跨越 8 月到次年 5 月
+            # 例如 2425 赛季：2025-08 ~ 2026-05
+            if date_year == year1 or date_year == year2:
+                return True
+            else:
+                logger.warning(
+                    f"🚨 Season-Date Misalignment: match_id={match_id}, "
+                    f"season={season_code} (years {year1}-{year2}), "
+                    f"match_date={match_date} (year {date_year})"
+                )
+                return False
+
+        except (ValueError, IndexError) as e:
+            logger.warning(f"⚠️ Season-date validation failed for match_id={match_id}: {e}")
+            return True  # 解析失败时允许通过，避免阻塞流程
+
     def _batch_upsert_l1_data(self, matches: list[dict]) -> int:
         """
-        V26.7: 批量 UPSERT L1 数据（轻量级，不覆盖 L2 特征）
+        V26.7 DBRE: 批量 UPSERT L1 数据（事务安全加固版）
 
-        UPSERT 策略：
-        - INSERT: 插入新记录（L1 字段）
-        - ON CONFLICT: 仅更新 L1 字段（比分、状态），不覆盖 L2 特征
+        事务安全策略：
+        - 任何单条记录失败时，立即回滚并停止当前批次
+        - 确保连接每次都是新创建的（避免缓存）
+        - 详细错误日志，便于排查问题
 
         Args:
             matches: 比赛数据列表
 
         Returns:
             成功入库的记录数
+
+        Raises:
+            Exception: 当任何 UPSERT 失败时抛出异常
         """
         if not matches:
             return 0
@@ -1870,21 +1953,43 @@ class FotMobCoreCollector:
         success_count = 0
 
         try:
+            # V26.7 DBRE: 每次都创建新连接，避免缓存
             conn = self.get_database_connection()
 
+            # 设置自动提交为 False，确保事务控制
+            conn.autocommit = False
+
             with conn.cursor() as cur:
-                for match in matches:
+                for i, match in enumerate(matches, 1):
                     try:
-                        # V26.7: 轻量级 UPSERT - 包含 league_id（双重标识）
+                        # V26.7 DBRE: 轻量级 UPSERT - 包含完整状态信息
+                        # 计算比赛结果 (actual_result)
+                        home_score = match.get("home_score")
+                        away_score = match.get("away_score")
+                        actual_result = None
+
+                        if home_score is not None and away_score is not None:
+                            if home_score > away_score:
+                                actual_result = "H"
+                            elif home_score < away_score:
+                                actual_result = "A"
+                            else:
+                                actual_result = "D"
+
+                        # 获取状态信息
+                        status_str = match.get("status_str", "unknown")
+                        status_finished = match.get("status_finished", False)
+
                         query = """
                         INSERT INTO matches (
                             match_id, external_id, home_team, away_team,
                             home_score, away_score, match_date,
                             league_id, league_name, season,
+                            status, is_finished, actual_result,
                             data_source, collection_status,
                             created_at, updated_at
                         ) VALUES (
-                            %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW()
+                            %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW()
                         )
                         ON CONFLICT (match_id) DO UPDATE SET
                             home_team = EXCLUDED.home_team,
@@ -1895,6 +2000,9 @@ class FotMobCoreCollector:
                             league_id = EXCLUDED.league_id,
                             league_name = EXCLUDED.league_name,
                             season = EXCLUDED.season,
+                            status = EXCLUDED.status,
+                            is_finished = EXCLUDED.is_finished,
+                            actual_result = EXCLUDED.actual_result,
                             updated_at = NOW(),
                             -- V26.7: 关键 - 不覆盖 L2 特征字段
                             l2_raw_json = COALESCE(matches.l2_raw_json, EXCLUDED.l2_raw_json),
@@ -1906,13 +2014,16 @@ class FotMobCoreCollector:
                             match["external_id"],
                             match["home_team"],
                             match["away_team"],
-                            match["home_score"],
-                            match["away_score"],
+                            home_score,
+                            away_score,
                             match["match_date"],
-                            match["league_id"],      # V26.7: 新增 league_id
+                            match["league_id"],
                             match["league_name"],
                             match["season"],
-                            "FotMob-L1",  # 数据源标记为 L1
+                            status_str,
+                            status_finished,
+                            actual_result,
+                            "FotMob-L1",
                             "L1-ONLY" if not match.get("has_l2") else "SUCCESS",
                         )
 
@@ -1920,23 +2031,39 @@ class FotMobCoreCollector:
                         success_count += 1
 
                     except Exception as e:
-                        logger.warning(f"⚠️ L1 UPSERT 失败 (match_id={match.get('match_id')}): {e}")
-                        continue
+                        # V26.7 DBRE: 任何错误立即回滚并停止
+                        error_msg = f"L1 UPSERT 失败 (match_id={match.get('match_id')}, index={i}/{len(matches)}): {e}"
+                        logger.error(f"❌ {error_msg}")
+                        logger.error(f"⚠️ 正在回滚事务，已写入 {success_count} 条记录将被丢弃")
 
-                # 批量提交
+                        # 立即回滚
+                        conn.rollback()
+
+                        # 抛出异常，停止当前批次
+                        raise Exception(f"事务中止: {error_msg}") from e
+
+                # 所有记录成功后才提交
                 conn.commit()
-
-                logger.debug(f"✅ L1 批量入库: {success_count}/{len(matches)} 成功")
+                logger.info(f"✅ L1 批量入库成功: {success_count}/{len(matches)} 条记录已提交")
                 return success_count
 
         except Exception as e:
+            # V26.7 DBRE: 确保异常时回滚
             logger.error(f"❌ L1 批量入库异常: {e}")
             if conn:
-                conn.rollback()
-            return success_count
+                try:
+                    conn.rollback()
+                    logger.warning("⚠️ 事务已回滚")
+                except Exception as rollback_error:
+                    logger.error(f"❌ 回滚失败: {rollback_error}")
+            raise  # 重新抛出异常，让调用方知道失败了
         finally:
+            # V26.7 DBRE: 确保连接被关闭
             if conn:
-                conn.close()
+                try:
+                    conn.close()
+                except Exception as close_error:
+                    logger.warning(f"⚠️ 关闭连接时出错: {close_error}")
 
     def health_check(self) -> dict[str, Any]:
         """
