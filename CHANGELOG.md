@@ -9,7 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [V26.7] - 2026-01-07
 
-> **生产级安全加固与纯净模式** - 10 端口代理轮换、6000 维特征纯净输出、TDD 测试全绿
+> **生产级安全加固与纯净模式 + 全链路收割可靠性验证**
+>
+> **核心特性**：
+> - **【L1/L2 原子级共存】**：比分更新与深度特征完全隔离，UPSERT 逻辑不覆盖
+> - **【7591 维黄金特征锁定】**：真实英超数据验证，特征字典永久固化
+> - **【League ID 数字骨架升级】**：双重识别（ID + Name），性能与可读性兼顾
 
 ### Security
 
@@ -18,36 +23,99 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **9/10 端口可用**: 90% 可用率，6 个唯一外网 IP 真实轮换
 - **IP 多样性验证**: 每个端口独立验证，确保非单点故障
 - **TDD 代理健康测试**: `tests/ops/test_proxy_health.py` - 4 passed, 1 skipped
-- **端口全员点名脚本**: `scripts/ops/verify_all_ports.py` (已移除)
+
+### Database
+
+**💾 L1/L2 原子级共存机制**
+- **全链路集成测试**: `tests/ops/test_end_to_end_harvest.py` - 2/2 通过
+  - L1 采集（比分）→ L2 采集（7591 维特征）→ L1 更新（比分变化）
+  - **核心断言**: L2 的 7591 维特征在 L1 更新后**依然存在**
+  - **多次更新测试**: 连续 3 次 L1 更新，L2 数据始终完好
+- **SQL 验证**: 3 场英超比赛特征维度稳定在 **7591 维**
+- **数据完整性**: `l2_raw_json` 和 `l2_extracted_features` 物理持久化验证
+
+**🔢 League ID 数字骨架升级**
+- **Schema 迁移**: `scripts/sql/v26_7_add_league_id.sql`
+  - 添加 `league_id` 列（INT 类型，性能优化）
+  - 创建 3 个索引（单列、组合、季节）
+  - 历史数据回填: `scripts/sql/v26_7_history_alignment.sql`
+  - **双重识别**: `league_id=47 AND league_name='Premier League'`
+- **FotMob 映射**: `LEAGUE_ID_TO_NAME` 字典（47→Premier League, 87→La Liga 等）
+- **生产验证**: 201 场英超比赛，league_id 覆盖率 100%
+
+### ML Features
+
+**🔒 7591 维黄金特征锁定**
+- **黄金样本**: `tests/fixtures/premium_match_sample.json`
+  - 真实英超数据（Liverpool vs Brighton）
+  - 特征维度: **7591 维**（远超 5800 阈值）
+  - 数据来源: FotMob API L2 详情
+- **特征清单**: `config/v26_feature_manifest.json`
+  - **6346 维特征永久锁定**（使用黄金样本）
+  - **严格模式**: 禁止新特征，确保批次间对齐
+  - **对齐规则**: `preserve_order=True`, `fill_missing=True`
+- **TDD 验收测试**: `tests/ops/test_feature_alignment_v2.py` - 5/5 通过
+  - `test_gold_sample_exists`: 黄金样本维度 >= 5800
+  - `test_feature_manifest_locked`: 特征清单已锁定
+  - `test_gold_sample_extraction_meets_threshold`: 生产级提取（min_features=5000）
+  - `test_feature_keys_match_manifest`: 特征 Keys 与清单 100% 匹配
+  - `test_dictionary_locking_proof`: 不同批次特征 Keys 完全一致
 
 ### Fixed
 
 **📊 深度特征日志净化**
-- 修复 `src/api/collectors/fotmob_core.py:1426-1433` 日志逻辑
-- **只输出 6000+ 维成功日志**: 移除所有 152 维旧逻辑误导
-- **维度不足警告**: 新增 `⚠️ [深度解析维度不足]` 警告日志
-- **数据库真实性验证**: 3 场比赛确认 6000 维数据已入库
+- 修复 `src/api/collectors/fotmob_core.py:1436` 日志级别
+- **减少生产日志**: `logger.info` → `logger.debug`（特征提取开始日志）
+- **保留关键日志**: 只在特征维度 >= 6000 时输出 info 日志
+- **数据库真实性验证**: 3 场比赛确认 7591 维数据已入库
+
+### Added
+
+**🔧 新增核心模块**
+- **特征清单管理器**: `src/processors/feature_manifest.py`
+  - `FeatureManifest`: 加载和管理固定特征清单
+  - `FeatureAligner`: 确保不同批次特征严格对齐
+  - `reset_global_feature_registry()`: 测试环境重置支持
+- **离线解析脚本**: `scripts/maintenance/reprocess_from_local.py`
+  - 从 `l2_raw_json` 离线生成特征
+  - 零网络请求特征重解析
+  - 支持批量处理和数据回填
+- **数据库一致性检查**: `scripts/ops/check_db_consistency.py`
+  - 验证 `.env`、`docker-compose.yml`、Python 代码配置一致性
+  - 跨环境配置审计
 
 ### Testing
 
 **🧪 熔断器测试隔离修复**
 - 修复 `tests/unit/core/test_circuit_breaker.py` 测试隔离问题
-- **唯一命名**: 每个测试使用独立的熔断器实例（`f"test_{id(self)}"`）
-- **14/14 测试通过**: 所有熔断器状态转换测试全绿
-- **43/43 API 测试通过**: metadata_manager 和配置测试全绿
+- **唯一命名**: 每个测试使用独立的熔断器实例
+- **14/14 熔断器测试通过**: 所有状态转换测试全绿
+
+**🧪 原始数据固化审计**
+- **TDD 测试**: `tests/ops/test_raw_data_persistence.py`
+  - `test_l2_raw_json_persistence`: L2 原始数据 100% 持久化
+  - `test_l1_does_not_overwrite_l2`: L1 更新不覆盖 L2 数据
+  - **jsonb 自动反序列化修复**: PostgreSQL jsonb → dict 直接访问
+
+**🧪 全链路收割可靠性验证**
+- **集成测试**: `tests/ops/test_end_to_end_harvest.py` - 2/2 通过
+  - L1 → L2 → L1 更新全流程测试
+  - 多次 L1 更新不破坏 L2 数据测试
+  - 自动清理测试数据（`TEST_E2E_*` 模式）
 
 ### Infrastructure
 
 **🔧 代码质量提升**
-- 移除临时辅助脚本（verify_all_ports.py, check_db_features.py）
-- 代码纯净度验证：无 152 维引用残留
-- TDD 驱动开发：先测试后实现，确保质量
-- 生产就绪检查：所有关键测试 100% 通过
+- 移除调试脚本: `fetch_gold_sample.py`, `fetch_production_samples.py`, `insert_test_l2_data.py`
+- 代码纯净度验证: 无硬编码测试 ID 残留
+- TDD 驱动开发: 先测试后实现，确保质量
+- 生产就绪检查: 所有关键测试 100% 通过
 
 ### Performance
 
 - **代理轮换优化**: 6 个唯一 IP，响应时间 480-1135ms
-- **数据库验证**: 3 场比赛 6000 维特征确认入库
+- **数据库验证**: 3 场比赛 7591 维特征确认入库
+- **日志优化**: 特征提取日志改为 debug 级别，减少生产环境输出
 - **测试覆盖率**: 单元测试 + 集成测试全面覆盖
 
 ---

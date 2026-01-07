@@ -96,6 +96,16 @@ for _tier_name, tier_config in LEAGUE_QUALITY_TIERS.items():
     for league_id in tier_config["leagues"]:
         LEAGUE_ID_TO_TIER[league_id] = tier_config
 
+# V26.7: league_id -> league_name 映射表
+LEAGUE_ID_TO_NAME = {
+    47: "Premier League",    # 英超
+    87: "La Liga",           # 西甲
+    94: "Serie A",           # 意甲
+    118: "Bundesliga",       # 德甲
+    126: "Ligue 1",          # 法甲
+    53: "Ligue 1",           # 法甲 (备用ID)
+}
+
 
 class FotMobCoreCollector:
     """
@@ -1090,6 +1100,8 @@ class FotMobCoreCollector:
                     collection_status = EXCLUDED.collection_status,
                     collected_at = COALESCE(EXCLUDED.collected_at, matches.collected_at),
                     data_version = EXCLUDED.data_version,
+                    league_name = EXCLUDED.league_name,
+                    season = EXCLUDED.season,
                     updated_at = NOW()
                 """
 
@@ -1114,6 +1126,13 @@ class FotMobCoreCollector:
 
                     return json.dumps(clean_nan(obj), default=default)
 
+                # V26.7: 智能 league_name 处理 - 优先使用 league_id 映射
+                extracted_league_name = match_info.get("league_name", "Premier League")
+                if (extracted_league_name == "Unknown League" and league_id is not None
+                    and league_id in LEAGUE_ID_TO_NAME):
+                    extracted_league_name = LEAGUE_ID_TO_NAME[league_id]
+                    logger.debug(f"✅ 使用 league_id 映射: {league_id} -> {extracted_league_name}")
+
                 params = (
                     match_info["match_id"],
                     match_info["match_id"],
@@ -1123,7 +1142,7 @@ class FotMobCoreCollector:
                     serialize_json(l2_json),        # V26.3: 原始 JSON
                     "SUCCESS",                       # collection_status
                     match_info.get("match_date"),     # collected_at
-                    match_info.get("league_name", "Premier League"),
+                    extracted_league_name,           # V26.7: 修复后的 league_name
                     season,
                     "FotMob",
                     "V26.3",                         # data_version
@@ -1414,7 +1433,7 @@ class FotMobCoreCollector:
                         try:
                             from src.processors.v25_production_extractor import V25ProductionExtractor
 
-                            logger.info(f"🔬 开始深度特征提取: {match_id}")
+                            logger.debug(f"🔬 开始深度特征提取: {match_id}")
                             extractor = V25ProductionExtractor()
                             extraction_result = extractor.extract(decoded_data)
 
@@ -1689,6 +1708,235 @@ class FotMobCoreCollector:
 
         logger.error(f"❌ 所有发现策略失败: league_id={league_id}, season={season_code}")
         return []
+
+    def enriched_l1_harvest(
+        self,
+        league_id: int,
+        season_code: str,
+        league_name: str = None,
+        batch_size: int = 50
+    ) -> dict[str, Any]:
+        """
+        V26.7: 全息 L1 索引入库（增强版）
+
+        核心改进：
+        1. **不再只返回 ID** - 返回完整的比赛元数据
+        2. **提取比分和状态** - 从 L1 API 直接获取 home_score, away_score, status
+        3. **轻量级 UPSERT** - 仅更新 L1 字段，不覆盖已有的 L2 高维特征
+        4. **批量入库优化** - 支持批量处理，减少数据库往返
+
+        约束：
+        - 严禁在 L1 阶段发起昂贵的详情页（L2）请求
+        - ON CONFLICT 逻辑不覆盖 l2_raw_json 和 l2_extracted_features
+
+        Args:
+            league_id: 联赛 ID (e.g., 47 for Premier League)
+            season_code: 赛季代码 (e.g., '2425')
+            league_name: 联赛名称 (e.g., 'Premier League')
+            batch_size: 批量入库大小
+
+        Returns:
+            dict: 采集统计
+                - total_discovered: 发现的总比赛数
+                - total_finished: 已结束的比赛数
+                - total_upserted: 成功入库的比赛数
+                - match_details: 前 5 场比赛的详细信息（用于验证）
+        """
+        # V26.7: 使用 league_id 映射获取 league_name
+        if league_name is None:
+            league_name = LEAGUE_ID_TO_NAME.get(
+                league_id,
+                match_header.get("league", {}).get("name", "Unknown League")
+                if 'match_header' in locals() else "Unknown League"
+            )
+
+        discovered_matches = []
+        batch_upsert_queue = []
+
+        # 策略 1: 标准端点（全息采集）
+        try:
+            self._refresh_stealth_headers()
+            url = f"{self.base_url}/leagues"
+            params = {"tab": "fixtures", "seasonId": season_code, "id": league_id}
+
+            response = self.session.get(url, params=params, timeout=30)
+
+            if response.status_code == 200 and response.content:
+                data = response.json()
+                if "fixtures" in data and "allMatches" in data["fixtures"]:
+                    matches = data["fixtures"]["allMatches"]
+
+                    # V26.7: 过滤已结束的比赛
+                    finished_matches = self.filter_finished_matches(matches)
+
+                    logger.info(
+                        f"🎯 全息 L1 采集: {len(finished_matches)} 场已结束比赛 "
+                        f"(总发现: {len(matches)}, 跳过: {len(matches) - len(finished_matches)})"
+                    )
+
+                    # V26.7: 提取完整元数据
+                    for match in finished_matches:
+                        match_id = match.get("id")
+                        if not match_id:
+                            continue
+
+                        # V26.7: 修复 - API 结构分析
+                        # 直接从顶层获取 home/away 对象
+                        home_team_obj = match.get("home", {})
+                        away_team_obj = match.get("away", {})
+                        status_obj = match.get("status", {})
+
+                        # V26.7: 从 status.scoreStr 解析比分（格式: "4 - 2"）
+                        home_score = None
+                        away_score = None
+                        score_str = status_obj.get("scoreStr", "")
+                        if score_str and " - " in score_str:
+                            try:
+                                scores = score_str.split(" - ")
+                                home_score = int(scores[0].strip())
+                                away_score = int(scores[1].strip())
+                            except (ValueError, IndexError):
+                                pass
+
+                        # V26.7: 提取日期（从 utcTime）
+                        utc_time = status_obj.get("utcTime", "")
+                        match_date = utc_time[:10] if utc_time else None  # YYYY-MM-DD
+
+                        # V26.7: 构建增强的 L1 数据结构
+                        enriched_match = {
+                            "match_id": str(match_id),
+                            "external_id": str(match_id),
+                            "home_team": home_team_obj.get("name", "Unknown Home"),
+                            "away_team": away_team_obj.get("name", "Unknown Away"),
+                            "home_score": home_score,
+                            "away_score": away_score,
+                            "match_date": match_date,
+                            "status_str": status_obj.get("reason", {}).get("short", "unknown"),
+                            "status_finished": status_obj.get("finished", False),
+                            "status_cancelled": status_obj.get("cancelled", False),
+                            "status_started": status_obj.get("started", False),
+                            "league_id": league_id,
+                            "league_name": league_name,
+                            "season": season_code,
+                        }
+
+                        discovered_matches.append(enriched_match)
+                        batch_upsert_queue.append(enriched_match)
+
+                        # V26.7: 批量入库
+                        if len(batch_upsert_queue) >= batch_size:
+                            upserted_count = self._batch_upsert_l1_data(batch_upsert_queue)
+                            batch_upsert_queue.clear()
+
+                    # 处理剩余批次
+                    if batch_upsert_queue:
+                        upserted_count = self._batch_upsert_l1_data(batch_upsert_queue)
+
+                    # 返回统计信息
+                    return {
+                        "total_discovered": len(matches),
+                        "total_finished": len(finished_matches),
+                        "total_upserted": len(discovered_matches),
+                        "match_details": discovered_matches[:5] if discovered_matches else [],
+                    }
+
+        except Exception as e:
+            logger.error(f"❌ 全息 L1 采集失败: {e}")
+            return {
+                "total_discovered": 0,
+                "total_finished": 0,
+                "total_upserted": 0,
+                "match_details": [],
+            }
+
+    def _batch_upsert_l1_data(self, matches: list[dict]) -> int:
+        """
+        V26.7: 批量 UPSERT L1 数据（轻量级，不覆盖 L2 特征）
+
+        UPSERT 策略：
+        - INSERT: 插入新记录（L1 字段）
+        - ON CONFLICT: 仅更新 L1 字段（比分、状态），不覆盖 L2 特征
+
+        Args:
+            matches: 比赛数据列表
+
+        Returns:
+            成功入库的记录数
+        """
+        if not matches:
+            return 0
+
+        conn = None
+        success_count = 0
+
+        try:
+            conn = self.get_database_connection()
+
+            with conn.cursor() as cur:
+                for match in matches:
+                    try:
+                        # V26.7: 轻量级 UPSERT - 包含 league_id（双重标识）
+                        query = """
+                        INSERT INTO matches (
+                            match_id, external_id, home_team, away_team,
+                            home_score, away_score, match_date,
+                            league_id, league_name, season,
+                            data_source, collection_status,
+                            created_at, updated_at
+                        ) VALUES (
+                            %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW(), NOW()
+                        )
+                        ON CONFLICT (match_id) DO UPDATE SET
+                            home_team = EXCLUDED.home_team,
+                            away_team = EXCLUDED.away_team,
+                            home_score = EXCLUDED.home_score,
+                            away_score = EXCLUDED.away_score,
+                            match_date = EXCLUDED.match_date,
+                            league_id = EXCLUDED.league_id,
+                            league_name = EXCLUDED.league_name,
+                            season = EXCLUDED.season,
+                            updated_at = NOW(),
+                            -- V26.7: 关键 - 不覆盖 L2 特征字段
+                            l2_raw_json = COALESCE(matches.l2_raw_json, EXCLUDED.l2_raw_json),
+                            l2_extracted_features = COALESCE(matches.l2_extracted_features, EXCLUDED.l2_extracted_features)
+                        """
+
+                        params = (
+                            match["match_id"],
+                            match["external_id"],
+                            match["home_team"],
+                            match["away_team"],
+                            match["home_score"],
+                            match["away_score"],
+                            match["match_date"],
+                            match["league_id"],      # V26.7: 新增 league_id
+                            match["league_name"],
+                            match["season"],
+                            "FotMob-L1",  # 数据源标记为 L1
+                            "L1-ONLY" if not match.get("has_l2") else "SUCCESS",
+                        )
+
+                        cur.execute(query, params)
+                        success_count += 1
+
+                    except Exception as e:
+                        logger.warning(f"⚠️ L1 UPSERT 失败 (match_id={match.get('match_id')}): {e}")
+                        continue
+
+                # 批量提交
+                conn.commit()
+
+                logger.debug(f"✅ L1 批量入库: {success_count}/{len(matches)} 成功")
+                return success_count
+
+        except Exception as e:
+            logger.error(f"❌ L1 批量入库异常: {e}")
+            if conn:
+                conn.rollback()
+            return success_count
+        finally:
+            if conn:
+                conn.close()
 
     def health_check(self) -> dict[str, Any]:
         """
