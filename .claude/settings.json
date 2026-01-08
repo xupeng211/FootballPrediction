@@ -1,53 +1,14 @@
 {
   "skills": {
-    "enabled": true,
-    "autoLoad": true,
-    "priority": [
-      "football-prediction",
-      "data-collection",
-      "report-generation",
-      "performance-monitoring",
-      "infrastructure-optimization",
-      "network-troubleshooting",
-      "database-performance"
-    ]
+    "enabled": false,
+    "note": "Skills configuration disabled - auto-load mechanism not verified. See .claude/skills/ for reference documentation."
   },
   "mcpServers": {
-    "postgres": {
+    "git": {
       "command": "python",
-      "args": ["mcp_servers/postgres_server.py"],
-      "env": {
-        "DB_HOST": "${DB_HOST}",
-        "DB_PORT": "${DB_PORT}",
-        "DB_NAME": "${DB_NAME}",
-        "DB_USER": "${DB_USER}",
-        "DB_PASSWORD": "${DB_PASSWORD}"
-      },
-      "description": "PostgreSQL database server for football prediction system"
-    },
-    "redis": {
-      "command": "python",
-      "args": ["mcp_servers/redis_server.py"],
-      "env": {
-        "REDIS_HOST": "${REDIS_HOST}",
-        "REDIS_PORT": "${REDIS_PORT}",
-        "REDIS_DB": "${REDIS_DB}",
-        "REDIS_PASSWORD": "${REDIS_PASSWORD:-}"
-      },
-      "description": "Redis cache server for performance optimization"
-    },
-    "filesystem": {
-      "command": "python",
-      "args": ["mcp_servers/filesystem_server.py"],
-      "description": "File system access for project management"
-    },
-    "system-monitor": {
-      "command": "python",
-      "args": ["mcp_servers/system_monitor_server.py"],
-      "description": "System performance monitoring and infrastructure analysis",
-      "env": {
-        "PYTHONPATH": "${PWD}"
-      }
+      "args": ["mcp_servers/git_server.py"],
+      "cwd": "/home/user/projects/FootballPrediction",
+      "description": "Git version control (READ-ONLY LOG) for code management"
     }
   },
   "permissions": {
