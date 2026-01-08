@@ -126,6 +126,28 @@ python scripts/maintenance/reprocess_from_local.py                   # 离线特
 
 ---
 
+## ⚙️ 配置状态说明
+
+### MCP 工具配置
+- ⚠️ **部分配置未实现**：`.claude/settings.json` 中原本配置了 postgres/redis/filesystem/system-monitor 服务器，
+  但实际只有 `git_server.py` 可用
+- ✅ **当前可用工具**：Git log (read-only) - 位于 `.claude/mcp_servers/git_server.py`
+- 📝 **配置已简化**：2026-01-08 已清理配置文件，移除未实现的服务器
+
+### Skills 配置
+- ⚠️ **状态未验证**：`.claude/skills/` 目录包含 15+ 个详细技能定义文档，
+  但自动加载机制未经验证
+- 📖 **参考用途**：技能文档可作为项目功能参考和架构理解
+- 🔧 **配置已禁用**：2026-01-08 已将 `skills.enabled` 设为 `false`
+
+### 对开发的影响
+- ✅ **核心功能不受影响**：所有核心功能（数据采集、ML 模型、API 服务）都正常工作
+- ✅ **本文档仍然有效**：CLAUDE.md 中的命令、架构和最佳实践都是准确的
+- ℹ️ **使用标准工具**：优先使用本文档中明确的命令（如 `python main.py`、`make verify`）
+- ℹ️ **技能文档作为参考**：`.claude/skills/` 目录中的文档可用于理解项目架构和功能
+
+---
+
 ## 🏗️ 系统架构
 
 ### V144.7 Multi-Source Command Center 架构
@@ -465,6 +487,63 @@ conn = psycopg2.connect(
     password=settings.database.password.get_secret_value(),
     cursor_factory=RealDictCursor
 )
+```
+
+### 核心数据库表结构
+
+**matches 表** - 比赛基础信息
+```sql
+match_id          VARCHAR(50) PRIMARY KEY
+league_name       VARCHAR(255)
+season            VARCHAR(20)
+home_team         VARCHAR(255)
+away_team         VARCHAR(255)
+match_time        TIMESTAMP
+l2_raw_json       JSONB           -- FotMob L2 原始数据
+l3_features       JSONB           -- V25.1 特征向量
+```
+
+**metrics_multi_source_data 表** - 赔率数据
+```sql
+match_id          VARCHAR(50) REFERENCES matches(match_id)
+source_name       VARCHAR(50)     -- Entity_P (Pinnacle), Entity_B3 (1xBet)
+init_h/d/a        FLOAT           -- 开盘赔率
+opening_time_h/d/a TIMESTAMP      -- 开盘时间
+final_h/d/a       FLOAT           -- 终盘赔率
+integrity_score   FLOAT           -- 完整性分数: 1/P1 + 1/P2 + 1/P3
+```
+
+### 常用 SQL 查询
+
+```sql
+-- 查看数据采集统计
+SELECT
+    source_name,
+    COUNT(*) as total_records,
+    COUNT(opening_time_h) as with_opening_time,
+    ROUND(100.0 * COUNT(opening_time_h) / COUNT(*), 2) as success_rate
+FROM metrics_multi_source_data
+GROUP BY source_name;
+
+-- 查看赛季覆盖情况
+SELECT
+    m.season,
+    m.league_name,
+    COUNT(DISTINCT m.match_id) as total_matches,
+    COUNT(DISTINCT CASE WHEN msd.opening_time_h IS NOT NULL THEN m.match_id END) as with_pinnacle_data
+FROM matches m
+LEFT JOIN metrics_multi_source_data msd
+    ON m.match_id = msd.match_id
+    AND msd.source_name = 'Entity_P'
+GROUP BY m.season, m.league_name
+ORDER BY m.season DESC;
+
+-- 查找需要重新处理的比赛
+SELECT match_id, league_name, season
+FROM matches
+WHERE l2_raw_json IS NOT NULL
+  AND l3_features IS NULL
+LIMIT 10;
 ```
 
 ### 代码质量规范
@@ -1229,6 +1308,97 @@ make health
 
 ---
 
+## 🔐 环境变量配置
+
+### 必需的环境变量 (.env)
+
+```bash
+# 数据库配置
+DB_HOST=localhost              # 或 db (Docker 环境)
+DB_PORT=5432
+DB_NAME=football_db
+DB_USER=football_user
+DB_PASSWORD=your_secure_password
+
+# Redis 配置
+REDIS_HOST=localhost
+REDIS_PORT=6379
+REDIS_PASSWORD=
+
+# API 配置
+API_HOST=0.0.0.0
+API_PORT=8000
+API_RELOAD=true
+LOG_LEVEL=INFO
+
+# 代理配置 (可选)
+# PROXY_SERVER=http://172.25.16.1:7890
+# HTTPS_PROXY=http://172.25.16.1:7890
+
+# 哨兵配置 (V26.5)
+COLLECTION_PAUSE_UNTIL=        # 哨兵暂停截止时间 (空 = 未暂停)
+```
+
+### 环境变量加载顺序
+
+1. `.env` 文件 (项目根目录)
+2. 系统环境变量
+3. WSL2 自动代理发现 (仅 WSL2 环境)
+
+---
+
+## 🌿 Git 工作流建议
+
+### 分支策略
+
+```bash
+# 主分支
+main                    # 生产环境，永远保持稳定
+
+# 开发分支 (按需创建)
+feature/新功能名称       # 功能开发
+fix/问题描述            # Bug 修复
+refactor/模块名称       # 代码重构
+hotfix/紧急修复         # 生产环境紧急修复
+```
+
+### 提交规范
+
+```bash
+# 提交格式
+<type>(<scope>): <subject>
+
+<body>
+
+<footer>
+```
+
+**类型 (type)**:
+- `feat`: 新功能
+- `fix`: Bug 修复
+- `refactor`: 代码重构
+- `docs`: 文档更新
+- `test`: 测试相关
+- `chore`: 构建/工具链相关
+- `perf`: 性能优化
+
+**示例**:
+```bash
+git commit -m "feat(collectors): 添加 FotMob L3 采集器支持"
+git commit -m "fix(database): 修复 l3_features 索引缺失问题"
+git commit -m "refactor(harvester): 重构 HarvesterService 队列逻辑"
+```
+
+### 提交前检查清单
+
+- [ ] 运行 `make verify` 通过
+- [ ] 新功能有对应测试
+- [ ] 更新了相关文档
+- [ ] 代码符合项目风格
+- [ ] 无遗留的 `TODO` 或调试代码
+
+---
+
 ## ⚠️ 重要警告
 
 ### 禁止操作
@@ -1300,6 +1470,28 @@ pytest -m "network or slow"       # 运行网络或慢速测试
 - `network`: 需要网络的测试
 - `e2e`: 端到端测试
 - `performance`: 性能测试
+
+**运行单个测试文件或测试用例**:
+```bash
+# 运行单个测试文件
+pytest tests/unit/test_config.py -v
+
+# 运行单个测试用例
+pytest tests/unit/test_config.py::TestConfig::test_database_config -v
+
+# 运行匹配关键词的测试
+pytest -k "test_database" -v
+
+# 显示打印输出
+pytest tests/unit/test_config.py -v -s
+
+# 失败时进入调试器
+pytest tests/unit/test_config.py -v --pdb
+
+# 生成覆盖率报告
+pytest tests/ --cov=src --cov-report=html
+pytest tests/ --cov=src --cov-report=term-missing  # 终端显示缺失行
+```
 
 **测试场景选择**：
 ```bash
@@ -1401,6 +1593,34 @@ python scripts/diagnose_network.py
 
 # 测试特定比赛提取
 python scripts/v82_6_final_extractor.py --match_id <MATCH_ID>
+
+# 调试单个采集器 (Python 方式)
+python -m pytest tests/api/collectors/test_base_extractor.py -v -s --pdb
+```
+
+### 场景 3.1: 调试单个采集器
+
+```bash
+# 方法 1: 使用 pytest 调试
+pytest tests/api/collectors/test_fotmob_core.py::TestFotMobCore::test_harvest_match -v -s
+
+# 方法 2: 创建调试脚本
+cat > debug_collector.py << 'EOF'
+import asyncio
+from src.api.collectors.fotmob_core import FotMobCoreCollector
+
+async def main():
+    collector = FotMobCoreCollector()
+    result = collector.harvest_match_with_league("match_id_here")
+    print(result)
+
+asyncio.run(main())
+EOF
+
+python debug_collector.py
+
+# 方法 3: 使用 Python 交互式调试
+python -m pdb scripts/debug/capture_mock_html.py
 ```
 
 ### 场景 4: 部署新模型到生产环境
@@ -1450,7 +1670,12 @@ alembic downgrade -1
 
 ## 🤖 技能自动调用机制
 
-项目配置了专业化技能（`.claude/skills/`），Claude Code 会根据任务自动加载对应技能：
+> ⚠️ **重要说明**：以下内容描述的是 `.claude/skills/` 目录中的技能定义，但自动加载机制未经验证。
+> 技能文档应作为**项目功能参考**使用，而非实际的自动加载配置。
+>
+> 📝 **配置状态**：`skills.enabled` 已设为 `false`（2026-01-08）
+
+项目配置了专业化技能（`.claude/skills/`），这些技能文档定义了项目的核心功能模块：
 
 | 类别 | 技能 | 功能 |
 |------|------|------|

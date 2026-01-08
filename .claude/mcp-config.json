@@ -1,43 +1,12 @@
 {
   "mcpServers": {
-    "postgres": {
-      "command": "python",
-      "args": ["mcp_servers/postgres_server.py"],
-      "env": {
-        "DATABASE_URL": "${DATABASE_URL}",
-        "POSTGRES_HOST": "${DB_HOST:-localhost}",
-        "POSTGRES_PORT": "${DB_PORT:-5432}",
-        "POSTGRES_DB": "${DB_NAME:-football_prediction_dev}",
-        "POSTGRES_USER": "${DB_USER:-football_user}",
-        "POSTGRES_PASSWORD": "${DB_PASSWORD:-football_pass}"
-      },
-      "description": "PostgreSQL database server (READ-ONLY) for football prediction system"
-    },
-    "filesystem": {
-      "command": "python",
-      "args": ["mcp_servers/filesystem_server.py"],
-      "env": {
-        "PROJECT_ROOT": "/home/user/projects/FootballPrediction"
-      },
-      "description": "File system access (PROJECT ROOT ONLY) for project management"
-    },
     "git": {
-      "command": "git",
-      "args": ["log", "--oneline", "-10"],
-      "cwd": "/home/user/projects/FootballPrediction",
-      "description": "Git version control (READ-ONLY LOG) for code management"
-    },
-    "pytest": {
       "command": "python",
-      "args": ["mcp_servers/pytest_server.py"],
+      "args": ["mcp_servers/git_server.py"],
       "cwd": "/home/user/projects/FootballPrediction",
-      "description": "Pytest test runner (RESTRICTED READ-ONLY MODE) for safe test execution"
-    },
-    "docker": {
-      "command": "docker-compose",
-      "args": ["ps"],
-      "cwd": "/home/user/projects/FootballPrediction",
-      "description": "Docker status monitoring (READ-ONLY PS COMMAND ONLY)"
+      "description": "Git version control (READ-ONLY LOG) for code management",
+      "note": "Only MCP server currently implemented. Other servers (postgres, redis, filesystem) are not yet implemented."
     }
-  }
+  },
+  "note": "This configuration has been simplified to reflect actual implementation. Only the git MCP server is available."
 }
