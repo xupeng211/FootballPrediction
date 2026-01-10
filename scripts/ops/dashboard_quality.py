@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-V26.5 采集质量看板脚本 - 实时监控
-=================================
+Quality Dashboard - Real-time Collection Monitoring
+===================================================
 
 核心功能：
     1. FotMob vs OddsPortal 成功率对比
@@ -15,7 +15,7 @@ V26.5 采集质量看板脚本 - 实时监控
     - 识别异常模式
 
 Author: TDD Expert & Monitoring Architect
-Version: V26.5
+Version: V26.5 (标准化为功能导向命名)
 Date: 2026-01-06
 """
 
@@ -41,7 +41,7 @@ logging.basicConfig(
     level=logging.INFO,
     format="[%(asctime)s] [%(levelname)s] %(message)s",
     handlers=[
-        logging.FileHandler("logs/v26_5_quality_dashboard.log"),
+        logging.FileHandler("logs/dashboard_quality.log"),
         logging.StreamHandler()
     ]
 )
