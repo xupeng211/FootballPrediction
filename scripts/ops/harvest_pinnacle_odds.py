@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
-"""V150.53 增量收割 - 快进快出版本
+"""Pinnacle Odds Incremental Harvester - Fast-Fail Edition
 
 核心改进:
 - Timeout 从 10s 降至 3s（快进快出）
 - 随机滚动行为（增强隐蔽性）
 - 等待抖动 20-40s（躲避频率检测）
-- 失败记录日志（logs/v150_53_failed_matches.json）
+- 失败记录日志（logs/harvest_pinnacle_failed.json）
 
 Author: 高级反爬虫专家 & 性能优化工程师
-Version: V150.53
+Version: V150.53 (标准化为功能导向命名)
 Date: 2026-01-11
 """
 
@@ -30,7 +30,7 @@ logging.basicConfig(
     level=logging.INFO,
     format='[%(asctime)s] [%(levelname)s] %(message)s',
     handlers=[
-        logging.FileHandler('logs/v150_35_incremental_harvest.log'),
+        logging.FileHandler('logs/harvest_pinnacle.log'),
         logging.StreamHandler()
     ]
 )
@@ -214,9 +214,9 @@ async def save_to_database(results: List[Dict[str, Any]]) -> Dict[str, int]:
         logger.error(f"❌ 数据库操作失败: {e}")
         raise
 
-    # V150.53: 保存失败记录日志
+    # 保存失败记录日志
     if failed_matches:
-        failed_log_path = Path('logs/v150_53_failed_matches.json')
+        failed_log_path = Path('logs/harvest_pinnacle_failed.json')
         failed_log_path.parent.mkdir(parents=True, exist_ok=True)
 
         # 追加模式保存
