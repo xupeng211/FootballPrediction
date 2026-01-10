@@ -259,7 +259,7 @@ class FeatureStatsRegistry:
     def __init__(
         self,
         prune_interval: int = 100,
-        max_features: int = 6000,  # V26.2: 8000 → 6000
+        max_features: int = 10000,  # V26.7: 6000 → 10000 (支持 GOLD 标准 6346+ 维)
         sparsity_threshold: float = 0.90,  # V26.2: 0.95 → 0.90
         min_variance: float = 1e-6,
     ):
@@ -431,12 +431,12 @@ _GLOBAL_REGISTRY: FeatureStatsRegistry | None = None
 
 
 def get_global_registry() -> FeatureStatsRegistry:
-    """获取全局特征统计注册表（V26.2 优化版）"""
+    """获取全局特征统计注册表（V26.7 修复版）"""
     global _GLOBAL_REGISTRY
     if _GLOBAL_REGISTRY is None:
         _GLOBAL_REGISTRY = FeatureStatsRegistry(
             prune_interval=100,
-            max_features=6000,  # V26.2: 8000 → 6000
+            max_features=10000,  # V26.7: 6000 → 10000 (支持 GOLD 标准)
             sparsity_threshold=0.90,  # V26.2: 0.95 → 0.90
             min_variance=1e-6,
         )
