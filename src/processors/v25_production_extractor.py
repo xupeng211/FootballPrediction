@@ -1,10 +1,14 @@
 #!/usr/bin/env python3
 """
-V26.2 生产级"零缺陷"收割流水线 (Phase 1.3 + Security Audit 优化版)
-=================================================================
+V26.7 生产级"零缺陷"收割流水线 (Phase 1.3 + Security Audit + 维度修复版)
+======================================================================
+
+V26.7 → V26.2 核心改进 (GOLD 维度修复)：
+    - max_features: 6000 → 10000 (支持 GOLD 标准 6346+ 维)
+    - 修复"维度锁死"Bug: 解除硬性剪枝限制
+    - 遵循 v26_feature_manifest.json 的 6346 维标准
 
 V26.2 → V26.1 核心改进 (Phase 1.3 优化)：
-    - max_features: 8000 → 6000 (减少 25% 维度)
     - sparsity_threshold: 0.95 → 0.90 (更激进剪枝)
     - 核心特征白名单: 保护滚动特征、赛前特征
     - 目标内存占用减少 40%
@@ -660,10 +664,14 @@ class V26ExtractionMetrics:
 
 class V25ProductionExtractor(BaseExtractor):
     """
-    V26.2 生产级"零缺陷"收割流水线 (Phase 1.3 优化版)
+    V26.7 生产级"零缺陷"收割流水线 (GOLD 维度修复版)
+
+    V26.7 → V26.2 核心改进：
+        - max_features: 6000 → 10000 (支持 GOLD 标准 6346+ 维)
+        - 修复"维度锁死"Bug: 解除硬性剪枝限制
+        - 遵循 v26_feature_manifest.json 的 6346 维标准
 
     V26.2 → V26.1 核心改进：
-        - max_features: 8000 → 6000 (减少 25% 维度)
         - sparsity_threshold: 0.95 → 0.90 (更激进剪枝)
         - 核心特征白名单: 保护滚动特征、赛前特征
         - 目标内存占用减少 40%
@@ -679,7 +687,7 @@ class V25ProductionExtractor(BaseExtractor):
     """
 
     # 版本标识
-    VERSION = "V26.2"
+    VERSION = "V26.7"
 
     # 验证配置（V26.0 调整）
     DEFAULT_CONFIG = ValidationConfig(
