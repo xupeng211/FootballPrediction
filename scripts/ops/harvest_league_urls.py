@@ -43,12 +43,32 @@ from thefuzz import fuzz
 # 配置
 # ============================================================================
 
-# OddsPortal 西甲赛果页 URL
-LA_LIGA_RESULTS_URLS = {
-    "latest": "https://www.oddsportal.com/football/spain/laliga/results/",
-    "23-24": "https://www.oddsportal.com/football/spain/laliga-2023-2024/results/",
-    "22-23": "https://www.oddsportal.com/football/spain/laliga-2022-2023/results/",
+# V32.2: OddsPortal 联赛赛果页 URL 映射（支持多联赛）
+LEAGUE_RESULTS_URLS = {
+    "La Liga": {
+        "latest": "https://www.oddsportal.com/football/spain/laliga/results/",
+        "23-24": "https://www.oddsportal.com/football/spain/laliga-2023-2024/results/",
+        "22-23": "https://www.oddsportal.com/football/spain/laliga-2022-2023/results/",
+    },
+    "Serie A": {
+        "latest": "https://www.oddsportal.com/football/italy/serie-a/results/",
+        "23-24": "https://www.oddsportal.com/football/italy/serie-a-2023-2024/results/",
+        "22-23": "https://www.oddsportal.com/football/italy/serie-a-2022-2023/results/",
+    },
+    "Bundesliga": {
+        "latest": "https://www.oddsportal.com/football/germany/bundesliga/results/",
+        "23-24": "https://www.oddsportal.com/football/germany/bundesliga-2023-2024/results/",
+        "22-23": "https://www.oddsportal.com/football/germany/bundesliga-2022-2023/results/",
+    },
+    "Ligue 1": {
+        "latest": "https://www.oddsportal.com/football/france/ligue-1/results/",
+        "23-24": "https://www.oddsportal.com/football/france/ligue-1-2023-2024/results/",
+        "22-23": "https://www.oddsportal.com/football/france/ligue-1-2022-2023/results/",
+    },
 }
+
+# 向后兼容
+LA_LIGA_RESULTS_URLS = LEAGUE_RESULTS_URLS["La Liga"]
 
 # 代理配置
 PROXY_SERVER = "http://172.25.16.1:7890"
@@ -82,8 +102,15 @@ def get_db_connection():
         password=settings.database.password.get_secret_value()
     )
 
+# V33.0: 内存缓存 - 避免高频数据库访问
+_FOTMOB_MATCHES_CACHE: Dict[str, List[Dict[str, Any]]] = {}
+_EXISTING_URLS_CACHE: set = None
+_CACHE_TIMESTAMP = None
+_CACHE_TTL_SECONDS = 300  # 5 分钟缓存过期时间
+
+
 def fetch_fotmob_matches(league_name: str) -> List[Dict[str, Any]]:
-    """从 matches 表获取指定联赛的比赛
+    """V33.0: 从 matches 表获取指定联赛的比赛（带内存缓存）
 
     Args:
         league_name: 联赛名称 (如 "La Liga")
@@ -91,6 +118,12 @@ def fetch_fotmob_matches(league_name: str) -> List[Dict[str, Any]]:
     Returns:
         比赛列表
     """
+    # V33.0: 检查缓存
+    global _FOTMOB_MATCHES_CACHE
+    if league_name in _FOTMOB_MATCHES_CACHE:
+        logger.debug(f"🎯 命中缓存: fetch_fotmob_matches({league_name})")
+        return _FOTMOB_MATCHES_CACHE[league_name]
+
     conn = get_db_connection()
     cursor = conn.cursor()
 
@@ -115,10 +148,30 @@ def fetch_fotmob_matches(league_name: str) -> List[Dict[str, Any]]:
     cursor.close()
     conn.close()
 
+    # V33.0: 更新缓存
+    _FOTMOB_MATCHES_CACHE[league_name] = matches
+    logger.debug(f"💾 缓存已更新: fetch_fotmob_matches({league_name}) = {len(matches)} 场")
+
     return matches
 
+
 def match_urls_in_database() -> set:
-    """获取数据库中已存在的 oddsportal_url 集合"""
+    """V33.0: 获取数据库中已存在的 oddsportal_url 集合（带内存缓存）
+
+    Returns:
+        已存在的 URL 集合
+    """
+    # V33.0: 检查缓存
+    global _EXISTING_URLS_CACHE, _CACHE_TIMESTAMP, _CACHE_TTL_SECONDS
+    import time
+    current_time = time.time()
+
+    if _EXISTING_URLS_CACHE is not None and _CACHE_TIMESTAMP is not None:
+        cache_age = current_time - _CACHE_TIMESTAMP
+        if cache_age < _CACHE_TTL_SECONDS:
+            logger.debug(f"🎯 命中缓存: match_urls_in_database() ({len(_EXISTING_URLS_CACHE)} URLs)")
+            return _EXISTING_URLS_CACHE
+
     conn = get_db_connection()
     cursor = conn.cursor()
 
@@ -127,6 +180,11 @@ def match_urls_in_database() -> set:
 
     cursor.close()
     conn.close()
+
+    # V33.0: 更新缓存
+    _EXISTING_URLS_CACHE = urls
+    _CACHE_TIMESTAMP = current_time
+    logger.debug(f"💾 缓存已更新: match_urls_in_database() = {len(urls)} URLs")
 
     return urls
 
@@ -474,21 +532,65 @@ async def fetch_league_results_page(
 
     return results
 
+def save_unmatched_teams(unmatched_entries: List[Dict[str, Any]], league_name: str):
+    """V33.0: 保存无法匹配的比赛到 JSON 文件
+
+    Args:
+        unmatched_entries: 无法匹配的比赛列表
+        league_name: 联赛名称
+    """
+    if not unmatched_entries:
+        return
+
+    import json
+    from datetime import datetime
+
+    log_file = Path("logs/unmatched_teams.json")
+
+    # 读取现有记录
+    existing_records = []
+    if log_file.exists():
+        try:
+            with open(log_file, 'r', encoding='utf-8') as f:
+                existing_records = json.load(f)
+        except Exception as e:
+            logger.warning(f"读取 unmatched_teams.json 失败: {e}")
+
+    # 添加时间戳和新记录
+    timestamp = datetime.now().isoformat()
+    for entry in unmatched_entries:
+        entry['audit_timestamp'] = timestamp
+        entry['league_name'] = league_name
+        existing_records.append(entry)
+
+    # 写回文件
+    try:
+        log_file.parent.mkdir(parents=True, exist_ok=True)
+        with open(log_file, 'w', encoding='utf-8') as f:
+            json.dump(existing_records, f, indent=2, ensure_ascii=False)
+        logger.info(f"💾 保存了 {len(unmatched_entries)} 条无法匹配的记录到 {log_file}")
+    except Exception as e:
+        logger.error(f"❌ 保存 unmatched_teams.json 失败: {e}")
+
+
 def match_fotmob_with_oddsportal(
     fotmob_matches: List[Dict[str, Any]],
-    oddsportal_matches: List[Dict[str, Any]]
-) -> List[Dict[str, Any]]:
-    """将 FotMob 比赛与 OddsPortal URL 进行模糊匹配
+    oddsportal_matches: List[Dict[str, Any]],
+    league_name: str = "La Liga"
+) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
+    """V33.0: 将 FotMob 比赛与 OddsPortal URL 进行模糊匹配
 
     Args:
         fotmob_matches: FotMatches 表中的比赛
         oddsportal_matches: 从列表页抓取的比赛
+        league_name: 联赛名称（V32.2 新增）
 
     Returns:
-        匹配成功的对: [(fotmob_id, oddsportal_url, home_team, away_team, ...), ...]
+        (匹配成功的对, 无法匹配的记录) 元组
     """
     matched_pairs = []
     matched_urls = set()
+    unmatched_entries = []
 
     for op_match in oddsportal_matches:
         op_home = op_match['home_team'].lower().strip()
@@ -523,13 +625,26 @@ def match_fotmob_with_oddsportal(
                 "fotmob_id": best_match['fotmob_id'],
                 "home_team": best_match['home_team'],
                 "away_team": best_match['away_team'],
-                "league_name": "La Liga",
+                "league_name": league_name,  # V32.2: 使用传入的联赛名称
                 "match_date": best_match.get('match_date'),
                 "oddsportal_url": op_url,
             })
             matched_urls.add(op_url)
+        else:
+            # V33.0: 记录无法匹配的比赛
+            unmatched_entries.append({
+                "oddsportal_url": op_url,
+                "parsed_home": op_match['home_team'],
+                "parsed_away": op_match['away_team'],
+                "best_score": best_score,
+                "confidence": op_match.get('confidence', 0.0),
+            })
 
-    return matched_pairs
+    # V33.0: 保存无法匹配的记录
+    if unmatched_entries:
+        save_unmatched_teams(unmatched_entries, league_name)
+
+    return matched_pairs, unmatched_entries
 
 # ============================================================================
 # 主流程
@@ -564,18 +679,27 @@ async def main(league: str = "La Liga", dry_run: bool = False, limit: Optional[i
     # 步骤 2: 从赛果页抓取 OddsPortal URL
     logger.info("\n🎯 步骤 2: 从赛果页抓取 OddsPortal URL...")
 
+    # V32.2: 根据联赛参数动态选择 URL
+    league_urls = LEAGUE_RESULTS_URLS.get(league)
+    if not league_urls:
+        logger.error(f"❌ 不支持的联赛: {league}")
+        logger.info(f"支持的联赛: {', '.join(LEAGUE_RESULTS_URLS.keys())}")
+        return
+
     all_oddsportal_matches = []
-    for season_name, url in LA_LIGA_RESULTS_URLS.items():
+    for season_name, url in league_urls.items():
         logger.info(f"\n  📅 处理赛季: {season_name}")
-        season_matches = await fetch_league_results_page(url, proxy=PROXY_SERVER)
+        season_matches = await fetch_league_results_page(url, proxy=PROXY_SERVER, league_name=league)
         all_oddsportal_matches.extend(season_matches)
 
     logger.info(f"\n✅ 总共抓取到 {len(all_oddsportal_matches)} 个 OddsPortal URL")
 
     # 步骤 3: 模糊匹配
     logger.info("\n🔗 步骤 3: 执行模糊匹配...")
-    matched_pairs = match_fotmob_with_oddsportal(fotmob_matches, all_oddsportal_matches)
+    matched_pairs, unmatched_entries = match_fotmob_with_oddsportal(fotmob_matches, all_oddsportal_matches, league)
     logger.info(f"✅ 成功匹配 {len(matched_pairs)} 场比赛")
+    if unmatched_entries:
+        logger.warning(f"⚠️ 无法匹配 {len(unmatched_entries)} 场比赛（已记录到 unmatched_teams.json）")
 
     # 步骤 4: 检查已存在的 URL
     logger.info("\n🔍 步骤 4: 检查已存在的 URL...")
