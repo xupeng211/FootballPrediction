@@ -350,7 +350,12 @@ def save_team_alias(
     alias_type: str = 'fuzzy',
     confidence: float = 0.7
 ) -> bool:
-    """V33.3: 保存新队名别名到数据库（自学习）
+    """V34.0: 保存新队名别名到数据库（自学习 + 审核机制）
+
+    V34.0 审核机制：
+    - 70% <= confidence < 85%: 标记为 review_needed=TRUE，需人工确认
+    - confidence >= 85%: 直接使用
+    - confidence < 70%: 不保存（低置信度）
 
     Args:
         alias_slug: URL slug 别名
@@ -362,6 +367,14 @@ def save_team_alias(
     Returns:
         是否保存成功
     """
+    # V34.0: 审核机制 - 低置信度不保存
+    if confidence < 0.70:
+        logger.debug(f"⚠️ 置信度过低 ({confidence:.2f})，跳过保存: {alias_slug}")
+        return False
+
+    # V34.0: 检查是否需要人工审核
+    review_needed = 0.70 <= confidence < 0.85
+
     try:
         settings = get_settings()
         conn = psycopg2.connect(
@@ -375,18 +388,24 @@ def save_team_alias(
 
         cursor = conn.cursor()
         cursor.execute("""
-            INSERT INTO team_aliases (alias_slug, canonical_name, league_name, alias_type, confidence)
-            VALUES (%s, %s, %s, %s, %s)
+            INSERT INTO team_aliases (alias_slug, canonical_name, league_name, alias_type, confidence, review_needed)
+            VALUES (%s, %s, %s, %s, %s, %s)
             ON CONFLICT (alias_slug, league_name) DO UPDATE SET
                 confidence = GREATEST(team_aliases.confidence, EXCLUDED.confidence),
                 usage_count = team_aliases.usage_count + 1,
-                last_used_at = NOW()
-        """, (alias_slug, canonical_name, league_name, alias_type, confidence))
+                last_used_at = NOW(),
+                review_needed = CASE
+                    WHEN EXCLUDED.confidence >= 0.85 THEN FALSE
+                    ELSE team_aliases.review_needed
+                END
+        """, (alias_slug, canonical_name, league_name, alias_type, confidence, review_needed))
 
         conn.commit()
         cursor.close()
         conn.close()
-        logger.info(f"✅ 自学习: 保存队名别名 {alias_slug} → {canonical_name}")
+
+        status = "🔍 需审核" if review_needed else "✅"
+        logger.info(f"{status} 自学习: 保存队名别名 {alias_slug} → {canonical_name} (conf={confidence:.2f})")
         return True
 
     except Exception as e:
@@ -554,9 +573,12 @@ def parse_match_url_with_league_teams(
                 best_home = home_match
                 best_away = away_match
 
-                # V33.3 自学习：模糊匹配成功后，自动保存到数据库
-                # 只有当高置信度匹配（> 0.85）且不是来自数据库时才保存
-                if total_score > 0.85:
+                # V34.0 自学习：模糊匹配成功后，自动保存到数据库
+                # 审核机制：
+                # - confidence >= 85%: 直接使用
+                # - 70% <= confidence < 85%: 保存但标记为需审核
+                # - confidence < 70%: 不保存
+                if total_score >= 0.70:
                     if not home_is_from_db and home_slug not in db_aliases:
                         save_team_alias(home_slug, home_match, league_name, 'fuzzy', home_score)
                     if not away_is_from_db and away_slug not in db_aliases:
