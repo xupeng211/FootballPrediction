@@ -1,0 +1,52 @@
+# Test scraper configuration for unit tests
+circuit_breaker:
+  failure_threshold: 5
+  cooldown_timeout: 600
+  emergency_stop_threshold: 0.2
+  auto_recovery: false
+
+delays:
+  min_page_delay: 3.0
+  max_page_delay: 8.0
+  min_task_delay: 10.0
+  max_task_delay: 20.0
+  hover_wait: 2.0
+  scroll_wait: 0.3
+
+fingerprints:
+  user_agents:
+    - TestAgent/1.0
+    - TestAgent/2.0
+  viewports:
+    - width: 800
+      height: 600
+  locale: en-US
+  timezone_id: America/New_York
+
+behavior_simulation:
+  enable_mouse_move: false
+  enable_scroll: false
+  mouse_move_range:
+    - 1
+    - 2
+  scroll_range:
+    - 1
+    - 2
+  scroll_delta_range:
+    - 50
+    - 100
+
+extraction:
+  target_bookmaker: "Bet365"
+  enable_aggressive_scroll: false
+  aggressive_scroll_iterations: 5
+  modal_selector: ".test-modal"
+  scroll_interval: 0.2
+
+logging:
+  output_dir: /tmp/test_logs
+  enable_audit: false
+  audit_file: test_audit.json
+  data_file: test_data.json
+  enable_screenshot: true
+  screenshot_dir: /tmp/test_screenshots

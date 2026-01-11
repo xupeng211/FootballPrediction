@@ -1129,6 +1129,70 @@ psql -U football_user -d football_db -f scripts/sql/v26_7_history_alignment.sql
 - 性能与可读性兼顾
 - 历史数据自动对齐
 
+### src/core - V105.0 核心基础设施
+
+位于 `src/core/__init__.py`，提供系统级基础设施：
+
+```python
+from src.core import Config, Logger, config, logger
+from src.core import CircuitBreaker, GracefulShutdownManager, get_logger
+```
+
+**核心功能**:
+- **配置管理** (`Config`): 统一的配置读写和持久化机制
+  - 配置文件存储在 `~/.footballprediction/config.json`
+  - 自动处理文件不存在或格式错误的情况
+  - 支持内存配置更新和持久化
+
+- **日志系统** (`Logger`, `ComponentLogger`): 结构化日志管理
+  - 支持多种日志级别 (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+  - 事件代码系统 (EventCode) 用于日志分类
+  - 性能计时器 (performance_timer) 用于性能监控
+
+- **异常处理**:
+  - `FootballPredictionError`: 基础异常类
+  - `ConfigError`: 配置相关异常
+  - `DataError`: 数据处理异常
+
+- **熔断器** (`CircuitBreaker`): V105.0 新增
+  - 防止级联故障
+  - 自动恢复机制
+  - 预定义熔断器: `api_breaker`, `database_breaker`, `network_breaker`
+
+- **优雅关闭** (`GracefulShutdownManager`): V105.0 新增
+  - SIGINT/SIGTERM 信号处理
+  - 资源清理保证
+  - 上下文管理器支持
+
+**使用示例**:
+```python
+from src.core import get_logger, log_context, performance_timer
+
+logger = get_logger("my_module")
+
+# 结构化日志上下文
+with log_context(module="my_module", operation="harvest"):
+    logger.info("开始数据采集")
+
+# 性能计时
+with performance_timer("operation_name"):
+    # 执行操作
+    pass
+```
+
+### 新增运维脚本
+
+V150.0+ 新增运维脚本，位于 `scripts/ops/`:
+
+| 脚本 | 功能 |
+|------|------|
+| `e2e_link_test.py` | 端到端链接测试 |
+| `check_url_health.py` | URL 健康检查 |
+| `smoke_test_production.py` | 生产环境冒烟测试 |
+| `dashboard_quality.py` | 数据质量仪表盘 |
+| `harvest_fotmob_full.py` | FotMob 全量收割 |
+| `harvest_pinnacle_odds.py` | Pinnacle 赔率收割 |
+
 ---
 
 ## 🛠️ 技术栈
@@ -1138,11 +1202,17 @@ psql -U football_user -d football_db -f scripts/sql/v26_7_history_alignment.sql
 | **语言** | Python | 3.11+ | 核心开发语言 |
 | **数据库** | PostgreSQL | 15 | 生产数据存储 |
 | **缓存** | Redis | 7 | 分布式缓存 |
-| **浏览器** | Playwright | 1.49 | 智能网页自动化 |
+| **浏览器** | Playwright | 1.57 | 智能网页自动化 |
+| **反爬检测** | playwright-stealth | 2.0 | 浏览器指纹混淆 |
 | **ML 框架** | XGBoost | 3.0+ | 预测模型 |
+| **数据处理** | pandas | 2.2.3 | 数据分析 |
+| **数据压缩** | brotli | 1.0+ | API 响应解压 |
 | **Web** | FastAPI | 0.124 | REST API |
 | **测试** | Pytest | 9.0 | 单元测试 |
 | **容器** | Docker | 24+ | 容器化部署 |
+| **代码质量** | Ruff | 0.8+ | 格式化 + Lint |
+| **类型检查** | MyPy | 1.8+ | 静态类型检查 |
+| **安全扫描** | Bandit | 1.9+ | 安全漏洞检测 |
 
 ---
 
@@ -1345,6 +1415,84 @@ COLLECTION_PAUSE_UNTIL=        # 哨兵暂停截止时间 (空 = 未暂停)
 2. 系统环境变量
 3. WSL2 自动代理发现 (仅 WSL2 环境)
 
+### V138.0+ URL Harvest 配置
+
+```bash
+# URL 搜索并发 (L2 Layer)
+URL_SEARCH_CONCURRENCY=4                # 并发搜索数量
+URL_SEARCH_TIMEOUT_MS=30000             # 搜索超时时间
+URL_SEARCH_RETRY_ATTEMPTS=3             # 重试次数
+
+# URL 格式验证 (关键: 仅支持新格式)
+URL_FORMAT_VALIDATE=true                # 启用格式验证
+URL_ALLOW_NEW_FORMAT=true               # 允许新格式 URL
+URL_ALLOW_LEGACY_FORMAT=false           # 禁用旧格式 URL (已废弃)
+```
+
+### V139.0 Auto Cruise Controller 配置
+
+```bash
+# 导航设置
+CRUISE_NAVIGATION_DELAY_MS=2000         # 导航延迟
+CRUISE_SCROLL_ATTEMPTS=3                # 滚动尝试次数
+CRUISE_WAIT_FOR_SELECTOR_TIMEOUT_MS=60000  # 等待超时
+
+# 提取设置
+CRUISE_EXTRACT_CONCURRENCY=2             # 提取并发数
+CRUISE_HOVER_RETRY_ATTEMPTS=10          # 悬停重试次数
+CRUISE_HOVER_RETRY_DELAY_MS=500         # 悬停重试延迟
+
+# 数据完整性
+CRUISE_INTEGRITY_SCORE_MIN=1.02         # 最小完整性分数
+CRUISE_INTEGRITY_SCORE_MAX=1.08         # 最大完整性分数
+CRUISE_VALIDATE_PROBABILITIES=true      # 验证概率
+```
+
+### Playwright 浏览器配置
+
+```bash
+# 浏览器选择
+PLAYWRIGHT_BROWSER_TYPE=chromium        # 浏览器类型
+PLAYWRIGHT_HEADLESS=true               # 无头模式
+PLAYWRIGHT_STEALTH_ENABLED=true         # 启用隐身模式
+
+# 视口配置
+PLAYWRIGHT_VIEWPORT_WIDTH=1920          # 视口宽度
+PLAYWRIGHT_VIEWPORT_HEIGHT=1080         # 视口高度
+
+# User-Agent 随机化
+PLAYWRIGHT_RANDOM_UA=true               # 随机 UA
+
+# 页面加载策略
+PLAYWRIGHT_WAIT_UNTIL=networkidle       # 等待策略
+PLAYWRIGHT_NAVIGATION_TIMEOUT_MS=90000  # 导航超时
+```
+
+### 业务逻辑配置
+
+```bash
+# 默认阈值
+DEFAULT_CONFIDENCE_THRESHOLD=0.6       # 默认置信度阈值
+MIN_EDGE=7.0                            # 最小优势
+MIN_CONFIDENCE=45.0                     # 最小置信度
+TARGET_ROI=13.35                        # 目标 ROI
+```
+
+### 备份与维护配置
+
+```bash
+# 数据库备份
+BACKUP_ENABLED=false                    # 启用备份
+BACKUP_INTERVAL_HOURS=24                # 备份间隔
+BACKUP_RETENTION_DAYS=30                # 保留天数
+BACKUP_PATH=backups/                    # 备份路径
+
+# 日志清理
+LOG_CLEANUP_ENABLED=true                # 启用日志清理
+LOG_CLEANUP_DAYS=7                      # 清理天数
+LOG_CLEANUP_INTERVAL_HOURS=24           # 清理间隔
+```
+
 ---
 
 ## 🌿 Git 工作流建议
@@ -1511,6 +1659,61 @@ pytest tests/unit/test_config.py -v
 pytest tests/ --cov=src --cov-report=html
 ```
 
+### E2E 测试说明
+
+端到端测试位于 `tests/e2e/` 目录，验证完整的系统功能：
+
+```bash
+# 运行所有 E2E 测试
+pytest tests/e2e/ -v -m e2e
+
+# 运行数据流水线 E2E 测试
+pytest tests/e2e/test_data_pipeline_workflow.py -v
+
+# 运行生产环境冒烟测试
+pytest tests/e2e/test_production_smoke.py -v
+```
+
+**E2E 测试类型**:
+| 测试文件 | 功能描述 | 运行时间 |
+|----------|----------|----------|
+| `test_data_pipeline_workflow.py` | 数据流水线端到端测试 | ~30s |
+| `test_production_smoke.py` | 生产环境冒烟测试 | ~15s |
+
+**E2E 测试运行前准备**:
+```bash
+# 1. 确保数据库服务运行
+make up
+
+# 2. 初始化测试数据库
+docker-compose exec db psql -U football_user -c "CREATE DATABASE IF NOT EXISTS football_test_db"
+
+# 3. 运行 E2E 测试
+pytest tests/e2e/ -v -m e2e
+```
+
+### 新增采集器测试
+
+V150.0+ 新增 `tests/unit/scrapers/` 目录，包含采集器单元测试：
+
+```bash
+# 运行采集器测试
+pytest tests/unit/scrapers/ -v
+
+# 运行 OddsPortal 采集器测试
+pytest tests/unit/scrapers/test_oddsportal.py -v
+
+# 生成采集器测试覆盖率报告
+pytest tests/unit/scrapers/ --cov=core.scrapers --cov-report=html
+```
+
+**采集器测试覆盖**:
+- 数据类 (ProxyConfig, CircuitBreakerConfig)
+- 熔断器管理器状态转换
+- 时区转换
+- 紧急停止异常
+- 人类行为模拟
+
 ---
 
 ## 🎯 常见开发场景快速指南
@@ -1664,6 +1867,89 @@ alembic upgrade head
 
 # 回滚迁移
 alembic downgrade -1
+```
+
+### 场景 5: Docker 容器化部署
+
+V106.0 多阶段生产级 Docker 构建：
+
+**Dockerfile 特性**:
+- **Builder 阶段**: 构建依赖和预编译字节码
+- **Runtime 阶段**: 最小化运行时镜像
+- **非特权用户**: `appuser` 用户运行容器
+- **健康检查**: `/health` 端点健康监控
+
+**构建镜像**:
+```bash
+# 构建生产镜像
+docker-compose build
+
+# 无缓存构建
+docker-compose build --no-cache
+
+# 构建测试镜像
+docker build --target test -f deploy/Dockerfile -t footballprediction:test .
+```
+
+**Docker Compose 配置** (V30.0):
+```bash
+# 启动核心服务 (db + redis)
+docker-compose up -d
+
+# 启动核心服务 + 数据流水线
+docker-compose --profile pipeline up -d
+
+# 启动核心服务 + API 服务
+docker-compose --profile api up -d
+
+# 启动核心服务 + 自动化调度
+docker-compose --profile automation up -d
+
+# 启动开发环境 (含管理工具)
+docker-compose --profile dev up -d
+
+# 启动所有服务
+docker-compose --profile all up -d
+```
+
+**服务配置说明**:
+
+| 服务 | 功能 | 端口 | 资源限制 |
+|------|------|------|----------|
+| `db` | PostgreSQL 15 数据库 | 5432 | 2 CPU / 2G 内存 |
+| `redis` | Redis 7 缓存服务 | 6379 | 0.5 CPU / 512M 内存 |
+| `pipeline_worker` | V25.1 数据流水线 | - | 2 CPU / 2G 内存 |
+| `predictor_api` | FastAPI 预测服务 | 8000 | 1 CPU / 1G 内存 |
+| `dashboard` | 战神仪表盘 | - | 0.5 CPU / 512M 内存 |
+| `db_backup` | 数据库自动备份 | - | 0.25 CPU / 256M 内存 |
+| `odds_scraper` | 赔率数据采集 | - | 1 CPU / 1G 内存 |
+| `production_cron` | 生产自动化调度 | - | 1 CPU / 1G 内存 |
+
+**开发工具** (仅 dev profile):
+| 服务 | 功能 | 端口 |
+|------|------|------|
+| `pgadmin` | PostgreSQL 管理 | 5050 |
+| `redis-commander` | Redis 管理 | 8081 |
+
+**Docker 环境变量**:
+```bash
+# .env 文件配置
+DOCKER_ENV=true           # Docker 环境标识
+DB_HOST=db                # Docker 内使用服务名
+REDIS_HOST=redis          # Docker 内使用服务名
+API_WORKERS=2             # API 工作进程数
+```
+
+**容器日志查看**:
+```bash
+# 查看核心服务日志
+docker-compose logs -f pipeline_worker
+
+# 查看 API 日志
+docker-compose logs -f predictor_api
+
+# 查看所有服务日志
+docker-compose logs -f
 ```
 
 ---

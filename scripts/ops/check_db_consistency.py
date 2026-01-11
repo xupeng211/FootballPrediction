@@ -18,6 +18,10 @@ import sys
 import psycopg2
 from pathlib import Path
 
+# V29.0 P0 整改: 标准化 .env 加载
+from dotenv import load_dotenv
+load_dotenv(override=True)
+
 # 添加项目路径
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 

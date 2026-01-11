@@ -10,16 +10,15 @@ V26.7: 最终生产烟雾测试
 import os
 import sys
 import json
+from pathlib import Path
 from typing import Dict, Any
 
-# 强制数据库配置
-os.environ['DB_HOST'] = 'localhost'
-os.environ['DB_NAME'] = 'football_db'
-os.environ['DB_USER'] = 'football_user'
-os.environ['DB_PASSWORD'] = 'football_pass'
-os.environ['DB_PORT'] = '5432'
+# V29.0 P0 整改: 标准化 .env 加载
+from dotenv import load_dotenv
+load_dotenv(override=True)
 
-sys.path.insert(0, '/home/user/projects/FootballPrediction')
+# 添加项目路径
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from src.config_unified import reload_settings
 reload_settings()
