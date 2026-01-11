@@ -20,14 +20,14 @@ Version: V32.1 (Log Lifecycle Management)
 """
 
 import argparse
-import logging
-import os
-import sys
 from datetime import datetime, timedelta
+import logging
 from pathlib import Path
+import sys
 
 # V29.0: 加载 .env 文件
 from dotenv import load_dotenv
+
 load_dotenv(override=True)
 
 
@@ -37,11 +37,8 @@ load_dotenv(override=True)
 
 logging.basicConfig(
     level=logging.INFO,
-    format='[%(asctime)s] [%(levelname)s] %(message)s',
-    handlers=[
-        logging.FileHandler('logs/clean_old_logs.log'),
-        logging.StreamHandler()
-    ]
+    format="[%(asctime)s] [%(levelname)s] %(message)s",
+    handlers=[logging.FileHandler("logs/clean_old_logs.log"), logging.StreamHandler()],
 )
 logger = logging.getLogger(__name__)
 
@@ -49,6 +46,7 @@ logger = logging.getLogger(__name__)
 # ============================================================================
 # Log Cleanup Functions
 # ============================================================================
+
 
 def cleanup_logs(log_dir: Path, days: int = 7, dry_run: bool = False) -> int:
     """清理超过指定天数的日志文件
@@ -66,7 +64,7 @@ def cleanup_logs(log_dir: Path, days: int = 7, dry_run: bool = False) -> int:
         return 0
 
     # 目标扩展名
-    target_extensions = {'.log', '.json'}
+    target_extensions = {".log", ".json"}
 
     # 计算截止时间
     cutoff_time = datetime.now() - timedelta(days=days)
@@ -75,7 +73,7 @@ def cleanup_logs(log_dir: Path, days: int = 7, dry_run: bool = False) -> int:
     deleted_count = 0
     scanned_count = 0
 
-    for file_path in log_dir.rglob('*'):
+    for file_path in log_dir.rglob("*"):
         if not file_path.is_file():
             continue
 
@@ -112,34 +110,19 @@ def cleanup_logs(log_dir: Path, days: int = 7, dry_run: bool = False) -> int:
 # Main Entry Point
 # ============================================================================
 
+
 def main():
     """主函数"""
-    parser = argparse.ArgumentParser(
-        description="V32.1 Log Lifecycle Management - 日志清理工具"
-    )
+    parser = argparse.ArgumentParser(description="V32.1 Log Lifecycle Management - 日志清理工具")
+    parser.add_argument("--log-dir", type=str, default="logs", help="日志目录路径 (默认: logs)")
+    parser.add_argument("--days", type=int, default=7, help="保留天数 (默认: 7)")
+    parser.add_argument("--dry-run", action="store_true", help="干跑模式，只预览不删除")
     parser.add_argument(
-        '--log-dir',
+        "--extensions",
         type=str,
-        default='logs',
-        help='日志目录路径 (默认: logs)'
-    )
-    parser.add_argument(
-        '--days',
-        type=int,
-        default=7,
-        help='保留天数 (默认: 7)'
-    )
-    parser.add_argument(
-        '--dry-run',
-        action='store_true',
-        help='干跑模式，只预览不删除'
-    )
-    parser.add_argument(
-        '--extensions',
-        type=str,
-        nargs='+',
-        default=['.log', '.json'],
-        help='要清理的文件扩展名 (默认: .log .json)'
+        nargs="+",
+        default=[".log", ".json"],
+        help="要清理的文件扩展名 (默认: .log .json)",
     )
 
     args = parser.parse_args()
@@ -163,11 +146,7 @@ def main():
     if args.dry_run:
         logger.info("🔍 干跑模式 - 预览将删除的文件...")
 
-    deleted = cleanup_logs(
-        log_dir=log_dir,
-        days=args.days,
-        dry_run=args.dry_run
-    )
+    deleted = cleanup_logs(log_dir=log_dir, days=args.days, dry_run=args.dry_run)
 
     logger.info("")
     logger.info("=" * 70)

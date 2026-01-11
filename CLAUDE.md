@@ -21,7 +21,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | 属性 | 值 |
 |------|-----|
 | **状态** | ✅ Production Ready |
-| **生产版本** | **V151.1** (Retry + Hash Hunting Edition) |
+| **生产版本** | **V32.1** (Production Guard & Log Lifecycle Management) |
 | **命令中心** | **V144.7** (Multi-Source Command Center) |
 | **核心模型** | **V26.8** (联赛专项) + **V26.7** (通用底座) |
 | **数据采集** | **V151.1** (OddsPortal V151.1) + **V144.5** (FotMob) + **V26.6** (全球数据扩充) |
@@ -129,22 +129,33 @@ python scripts/maintenance/reprocess_from_local.py                   # 离线特
 ## ⚙️ 配置状态说明
 
 ### MCP 工具配置
-- ⚠️ **部分配置未实现**：`.claude/settings.json` 中原本配置了 postgres/redis/filesystem/system-monitor 服务器，
-  但实际只有 `git_server.py` 可用
-- ✅ **当前可用工具**：Git log (read-only) - 位于 `.claude/mcp_servers/git_server.py`
-- 📝 **配置已简化**：2026-01-08 已清理配置文件，移除未实现的服务器
+- ✅ **当前可用**: Git log (read-only) - `.claude/mcp_servers/git_server.py`
+- ℹ️ **状态**: 配置已简化 (2026-01-08)
 
 ### Skills 配置
-- ⚠️ **状态未验证**：`.claude/skills/` 目录包含 15+ 个详细技能定义文档，
-  但自动加载机制未经验证
-- 📖 **参考用途**：技能文档可作为项目功能参考和架构理解
-- 🔧 **配置已禁用**：2026-01-08 已将 `skills.enabled` 设为 `false`
+- 📖 **参考文档**: `.claude/skills/` 包含 15+ 个技能定义文档
+- ℹ️ **用途**: 作为项目功能参考和架构理解
+- 🔧 **状态**: 自动加载机制已禁用 (2026-01-08)
 
-### 对开发的影响
-- ✅ **核心功能不受影响**：所有核心功能（数据采集、ML 模型、API 服务）都正常工作
-- ✅ **本文档仍然有效**：CLAUDE.md 中的命令、架构和最佳实践都是准确的
-- ℹ️ **使用标准工具**：优先使用本文档中明确的命令（如 `python main.py`、`make verify`）
-- ℹ️ **技能文档作为参考**：`.claude/skills/` 目录中的文档可用于理解项目架构和功能
+### 可用技能文档参考
+
+| 类别 | 技能文档 | 功能 |
+|------|----------|------|
+| **核心业务** | `football-prediction` | XGBoost 2.0+ 预测 |
+| | `machine-learning-engineering` | XGBoost 调优, SHAP |
+| | `feature-engineering` | V25.1 自适应特征提取 |
+| | `data-collection` | FotMob API 数据采集 |
+| | `v26-harvest` | V26.1 生产级收割流水线 |
+| **开发工具** | `code-quality` | Ruff, MyPy, Bandit, pytest |
+| | `fastapi-development` | FastAPI 开发 |
+| | `api-testing` | API 单元/集成/性能测试 |
+| **运维支撑** | `deployment-management` | Docker 部署 |
+| | `deployment-operations` | Docker 容器管理、故障诊断 |
+| | `database-operations` | PostgreSQL 优化 |
+| | `performance-monitoring` | Prometheus + Grafana |
+| | `data-engineering` | ETL 流程设计 |
+
+> **注意**: 技能文档仅供参考，自动加载机制已禁用。开发时请使用本文档中明确的标准命令。
 
 ---
 
@@ -1396,182 +1407,77 @@ docker-compose logs db
 
 ## 📚 版本历史与升级指南
 
-### 近期重大版本
+完整的版本历史请查看 [docs/CHANGELOG.md](docs/CHANGELOG.md)
 
-| 版本 | 日期 | 核心变更 | 升级注意事项 |
-|------|------|---------|-------------|
-| **V151.1** | **2026-01-11** | **Retry + Hash Hunting Edition** - 重试机制、哈希狩猎、并发收割器 | 需运行 v151_3_add_retry_count.sql |
-| V26.7 | 2026-01-07 | 全链路收割可靠性验证 - 特征清单管理器、离线解析、数据库一致性 | 需运行 v26_7_* 数据库迁移脚本 |
-| V149.0 | 2026-01-06 | SchemaManager API 修复，Circuit Breaker 硬编码 | 需更新数据库 schema 调用方式 |
-| V148.5 | 2026-01-05 | Final Master Sweep - 160 模块稳定 | 旧脚本已归档至 scripts/archive/ |
-| V148.0 | 2026-01-04 | 总攻最终生产基线 | 需重新训练模型 |
-| V144.7 | 2026-01-06 | Multi-Source Command Center | 需更新 main.py 调用方式 |
-| V142.0 | 2025-12-30 | HarvesterService 重构 | 旧脚本已移至 scripts/archive/ |
-| V141.0 | 2025-12-28 | Ghost Protocol 集成 | 需更新采集器基类 |
-| V140.0 | 2025-12-25 | TeamNameNormalizer | 队名匹配逻辑变更 |
-| V26.8 | 2025-12-20 | 联赛专项模型分发器 | 需更新模型路径配置 |
-| V26.7 (旧) | 2025-12-18 | 19 维对齐特征 | 需重新计算特征 |
+### 近期版本
 
-### 升级前检查清单
+| 版本 | 日期 | 核心变更 |
+|------|------|---------|
+| **V32.1** | 2026-01-11 | Production Guard & Log Lifecycle Management |
+| **V151.1** | 2026-01-11 | Retry + Hash Hunting Edition |
+| V150.0 | 2026-01-10 | 运维脚本扩展 |
+| V149.0 | 2026-01-06 | SchemaManager API 修复 |
+| V144.7 | 2026-01-06 | Multi-Source Command Center |
 
-- [ ] 备份数据库 (`make db-backup`)
-- [ ] 备份模型文件 (`model_zoo/`)
-- [ ] 运行完整测试 (`./scripts/run_checks.sh`)
-- [ ] 检查 git diff 确认变更范围
-- [ ] 准备回滚方案
-- [ ] 阅读版本发布说明
-
-### 升级流程
+### 快速升级流程
 
 ```bash
 # 1. 拉取最新代码
 git pull origin main
 
-# 2. 检查版本变更
-git log --oneline -10
-
-# 3. 备份数据
+# 2. 备份数据
 make db-backup
 
-# 4. 运行测试
+# 3. 运行测试
 make verify
 
-# 5. 应用数据库迁移（如有）
+# 4. 应用数据库迁移（如有）
 alembic upgrade head
 
-# 6. 重启服务
+# 5. 重启服务
 make restart
-
-# 7. 验证服务健康
-make health
 ```
 
-### 版本兼容性矩阵
-
-| 组件版本 | Python | PostgreSQL | Docker | 备注 |
-|---------|--------|------------|--------|------|
-| V149.x | 3.11+ | 15 | 24+ | 最新稳定版 |
-| V148.x | 3.11+ | 15 | 24+ | 生产推荐 |
-| V144.x | 3.11+ | 15 | 24+ | 多数据源支持 |
-| V142.x | 3.11+ | 15 | 24+ | HarvesterService |
-| V140.x | 3.10+ | 14 | 20+ | 旧版本，建议升级 |
+详细的升级前检查清单和版本兼容性矩阵请查看 [docs/CHANGELOG.md](docs/CHANGELOG.md)。
 
 ---
 
 ## 🔐 环境变量配置
 
-### 必需的环境变量 (.env)
+环境变量通过 `.env` 文件配置，完整的环境变量模板请查看 [`.env.example`](.env.example)。
+
+### 快速配置
 
 ```bash
-# 数据库配置
-DB_HOST=localhost              # 或 db (Docker 环境)
-DB_PORT=5432
-DB_NAME=football_db
-DB_USER=football_user
-DB_PASSWORD=your_secure_password
+# 1. 复制模板
+cp .env.example .env
 
-# Redis 配置
-REDIS_HOST=localhost
-REDIS_PORT=6379
-REDIS_PASSWORD=
+# 2. 编辑必需配置
+# 最少需要设置数据库密码:
+# DB_PASSWORD=your_secure_password
 
-# API 配置
-API_HOST=0.0.0.0
-API_PORT=8000
-API_RELOAD=true
-LOG_LEVEL=INFO
-
-# 代理配置 (可选)
-# PROXY_SERVER=http://172.25.16.1:7890
-# HTTPS_PROXY=http://172.25.16.1:7890
-
-# 哨兵配置 (V26.5)
-COLLECTION_PAUSE_UNTIL=        # 哨兵暂停截止时间 (空 = 未暂停)
+# 3. 启动服务
+make up
 ```
 
-### 环境变量加载顺序
+### 重要环境变量
 
-1. `.env` 文件 (项目根目录)
-2. 系统环境变量
-3. WSL2 自动代理发现 (仅 WSL2 环境)
+| 变量 | 说明 | 默认值 |
+|------|------|--------|
+| `DB_HOST` | 数据库主机 | `db` (Docker) / `localhost` (本地) |
+| `DB_PASSWORD` | 数据库密码 | *必需设置* |
+| `HTTPS_PROXY` | 代理服务器 | WSL2 自动探测 |
+| `COLLECTION_PAUSE_UNTIL` | 哨兵暂停截止时间 | 空 (未暂停) |
 
-### V138.0+ URL Harvest 配置
+### 环境差异
 
-```bash
-# URL 搜索并发 (L2 Layer)
-URL_SEARCH_CONCURRENCY=4                # 并发搜索数量
-URL_SEARCH_TIMEOUT_MS=30000             # 搜索超时时间
-URL_SEARCH_RETRY_ATTEMPTS=3             # 重试次数
+| 环境 | `DB_HOST` | 代理配置 |
+|------|-----------|----------|
+| **Docker 容器** | `db` | 环境变量 |
+| **WSL2 本地** | `172.25.16.1` | 自动探测 |
+| **本地开发** | `localhost` | 手动配置 |
 
-# URL 格式验证 (关键: 仅支持新格式)
-URL_FORMAT_VALIDATE=true                # 启用格式验证
-URL_ALLOW_NEW_FORMAT=true               # 允许新格式 URL
-URL_ALLOW_LEGACY_FORMAT=false           # 禁用旧格式 URL (已废弃)
-```
-
-### V139.0 Auto Cruise Controller 配置
-
-```bash
-# 导航设置
-CRUISE_NAVIGATION_DELAY_MS=2000         # 导航延迟
-CRUISE_SCROLL_ATTEMPTS=3                # 滚动尝试次数
-CRUISE_WAIT_FOR_SELECTOR_TIMEOUT_MS=60000  # 等待超时
-
-# 提取设置
-CRUISE_EXTRACT_CONCURRENCY=2             # 提取并发数
-CRUISE_HOVER_RETRY_ATTEMPTS=10          # 悬停重试次数
-CRUISE_HOVER_RETRY_DELAY_MS=500         # 悬停重试延迟
-
-# 数据完整性
-CRUISE_INTEGRITY_SCORE_MIN=1.02         # 最小完整性分数
-CRUISE_INTEGRITY_SCORE_MAX=1.08         # 最大完整性分数
-CRUISE_VALIDATE_PROBABILITIES=true      # 验证概率
-```
-
-### Playwright 浏览器配置
-
-```bash
-# 浏览器选择
-PLAYWRIGHT_BROWSER_TYPE=chromium        # 浏览器类型
-PLAYWRIGHT_HEADLESS=true               # 无头模式
-PLAYWRIGHT_STEALTH_ENABLED=true         # 启用隐身模式
-
-# 视口配置
-PLAYWRIGHT_VIEWPORT_WIDTH=1920          # 视口宽度
-PLAYWRIGHT_VIEWPORT_HEIGHT=1080         # 视口高度
-
-# User-Agent 随机化
-PLAYWRIGHT_RANDOM_UA=true               # 随机 UA
-
-# 页面加载策略
-PLAYWRIGHT_WAIT_UNTIL=networkidle       # 等待策略
-PLAYWRIGHT_NAVIGATION_TIMEOUT_MS=90000  # 导航超时
-```
-
-### 业务逻辑配置
-
-```bash
-# 默认阈值
-DEFAULT_CONFIDENCE_THRESHOLD=0.6       # 默认置信度阈值
-MIN_EDGE=7.0                            # 最小优势
-MIN_CONFIDENCE=45.0                     # 最小置信度
-TARGET_ROI=13.35                        # 目标 ROI
-```
-
-### 备份与维护配置
-
-```bash
-# 数据库备份
-BACKUP_ENABLED=false                    # 启用备份
-BACKUP_INTERVAL_HOURS=24                # 备份间隔
-BACKUP_RETENTION_DAYS=30                # 保留天数
-BACKUP_PATH=backups/                    # 备份路径
-
-# 日志清理
-LOG_CLEANUP_ENABLED=true                # 启用日志清理
-LOG_CLEANUP_DAYS=7                      # 清理天数
-LOG_CLEANUP_INTERVAL_HOURS=24           # 清理间隔
-```
+详细的配置选项请查看 [`.env.example`](.env.example)。
 
 ---
 
@@ -2034,59 +1940,6 @@ docker-compose logs -f
 
 ---
 
-## 🤖 技能自动调用机制
-
-> ⚠️ **重要说明**：以下内容描述的是 `.claude/skills/` 目录中的技能定义，但自动加载机制未经验证。
-> 技能文档应作为**项目功能参考**使用，而非实际的自动加载配置。
->
-> 📝 **配置状态**：`skills.enabled` 已设为 `false`（2026-01-08）
-
-项目配置了专业化技能（`.claude/skills/`），这些技能文档定义了项目的核心功能模块：
-
-| 类别 | 技能 | 功能 |
-|------|------|------|
-| **核心业务** | `football-prediction` | XGBoost 2.0+ 预测 |
-| | `machine-learning-engineering` | XGBoost 调优, SHAP |
-| | `feature-engineering` | V25.1 自适应特征提取 (48→12061维) |
-| | `data-collection` | FotMob API 数据采集 |
-| | `v26-harvest` | V26.1 生产级收割流水线 |
-| **开发工具** | `code-quality` | Ruff, MyPy, Bandit, pytest |
-| | `fastapi-development` | FastAPI 开发 |
-| | `api-testing` | API 单元/集成/性能测试 |
-| **运维支撑** | `deployment-management` | Docker 部署 |
-| | `deployment-operations` | Docker 容器管理、故障诊断 |
-| | `database-operations` | PostgreSQL 优化 |
-| | `performance-monitoring` | Prometheus + Grafana |
-| | `data-engineering` | ETL 流程设计 |
-| | `report-generation` | PDF/Word/Excel 报告生成 |
-
-### 技能自动触发规则
-
-#### 任务关键词 → 技能映射
-
-| 关键词 | 触发技能 | 示例 |
-|-------|---------|------|
-| "预测", "XGBoost", "模型训练", "推理" | football-prediction, machine-learning-engineering | "训练新模型", "预测比赛结果" |
-| "特征", "feature engineering", "特征提取" | feature-engineering | "添加新特征", "优化特征工程" |
-| "采集", "FotMob", "OddsPortal", "收割" | data-collection, v26-harvest | "采集英超数据", "运行收割" |
-| "Docker", "部署", "容器", "docker-compose" | deployment-management, deployment-operations | "部署到生产", "构建容器" |
-| "测试", "pytest", "覆盖率", "单元测试" | code-quality, api-testing | "运行测试", "增加测试覆盖" |
-| "数据库", "PostgreSQL", "迁移", "schema" | database-operations | "添加新表", "优化查询" |
-| "FastAPI", "API", "endpoint", "路由" | fastapi-development | "添加新接口", "API 开发" |
-| "性能", "优化", "延迟", "吞吐量" | performance-monitoring | "性能分析", "优化响应时间" |
-
-#### 约束技能（优先级最高）
-
-| 约束 | 等级 | 核心目标 |
-|------|------|----------|
-| `minimal_change` | 🔴 RED | 防止过度重构 |
-| `architecture_boundary` | 🔴 RED | 维护层次结构 |
-| `test_guard` | 🔴 RED | 确保测试价值 |
-| `context_lock` | 🔴 RED | 保护核心模块 |
-| `change_impact` | 🔴 RED | 分析变更影响 |
-
----
-
 ## 🔒 永久保留条款
 
 ### 语言要求
@@ -2098,7 +1951,7 @@ docker-compose logs -f
 
 **🚨 CRITICAL**: This is a production system support document.
 
-**🧬 当前版本**: V151.1 (Retry + Hash Hunting Edition)
+**🧬 当前版本**: V32.1 (Production Guard & Log Lifecycle Management)
 **命令中心**: V144.7 (Multi-Source Command Center)
 **Docker 版本**: V106.0 (Dockerfile + docker-compose.prod.yml)
 **最后更新**: 2026-01-11
