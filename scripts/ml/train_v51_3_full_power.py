@@ -149,7 +149,7 @@ class V53FeatureCalculator:
                         m.away_score,
                         m.status
                     FROM matches m
-                    WHERE m.status = 'finished'
+                    WHERE m.status = 'FT'
                       AND m.home_score IS NOT NULL
                       AND m.away_score IS NOT NULL
                       AND m.match_date < %s
@@ -483,7 +483,7 @@ class V53ModelTrainer:
                         m.away_score,
                         m.league_name
                     FROM matches m
-                    WHERE m.status = 'finished'
+                    WHERE m.status = 'FT'
                       AND m.home_score IS NOT NULL
                       AND m.away_score IS NOT NULL
                     ORDER BY m.match_date ASC
