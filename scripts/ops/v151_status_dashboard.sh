@@ -124,6 +124,58 @@ LIMIT 10
 echo ""
 
 # ===================================================================
+# 6. 漏斗审计 (Data Funnel Audit) - V33.0
+# ===================================================================
+echo "📊 漏斗审计 (V33.0)"
+echo "----------------------------"
+
+# 6.1 Unmatched Teams 记录数
+echo "🔴 无法匹配队名记录:"
+if [ -f "logs/unmatched_teams.json" ]; then
+    UNMATCHED_COUNT=$(python3 -c "import json; data=json.load(open('logs/unmatched_teams.json')); print(len(data) if isinstance(data, list) else 0)" 2>/dev/null || echo "0")
+    echo "   unmatched_teams.json 记录数: ${UNMATCHED_COUNT}"
+
+    # 按联赛统计
+    python3 -c "
+import json
+try:
+    with open('logs/unmatched_teams.json', 'r') as f:
+        data = json.load(f)
+    if isinstance(data, list):
+        leagues = {}
+        for item in data:
+            league = item.get('league_name', 'Unknown')
+            leagues[league] = leagues.get(league, 0) + 1
+        print('   按联赛分布:')
+        for league, count in sorted(leagues.items(), key=lambda x: -x[1])[:5]:
+            print(f'     - {league}: {count}')
+except:
+    pass
+" 2>/dev/null
+else
+    echo "   unmatched_teams.json 不存在"
+fi
+
+echo ""
+
+# 6.2 Abandoned 记录百分比
+echo "🟠 已放弃记录 (Abandoned) 比例:"
+psql -U football_user -d football_db -c "
+SELECT
+    COUNT(*) FILTER (WHERE retry_count >= 3) as abandoned_count,
+    COUNT(*) as total_count,
+    ROUND(
+        100.0 * COUNT(*) FILTER (WHERE retry_count >= 3) /
+        NULLIF(COUNT(*), 0),
+        2
+    ) as abandoned_pct
+FROM matches_mapping
+WHERE oddsportal_url IS NOT NULL
+" 2>/dev/null
+
+echo ""
+
+# ===================================================================
 # 7. 哈希缓存状态
 # ===================================================================
 echo "📊 哈希缓存状态"
