@@ -1,10 +1,10 @@
 #!/bin/bash
-# V151.3 采集状态仪表盘
-# 用途: 实时查看采集进度和统计数据
+# V151.3 → V32.1 采集状态仪表盘
+# 用途: 实时查看采集进度和统计数据 + 数据库连接监控
 # 日期: 2026-01-11
 
 echo "╔════════════════════════════════════════════════════════════╗"
-echo "║        V151.3 采集状态仪表盘                                  ║"
+echo "║        V32.1 采集状态仪表盘 (含数据库连接监控)               ║"
 echo "╚════════════════════════════════════════════════════════════╝"
 echo ""
 
@@ -90,7 +90,41 @@ WHERE oddsportal_url IS NOT NULL
 echo ""
 
 # ===================================================================
-# 5. 哈希缓存状态
+# 5. 数据库连接监控 (V32.1)
+# ===================================================================
+echo "📊 数据库连接监控 (V32.1)"
+echo "----------------------------"
+psql -U football_user -d football_db -c "
+SELECT
+    COUNT(*) as total_connections,
+    COUNT(CASE WHEN state = 'active' THEN 1 END) as active_connections,
+    COUNT(CASE WHEN state = 'idle' THEN 1 END) as idle_connections,
+    COUNT(CASE WHEN state = 'idle in transaction' THEN 1 END) as idle_in_transaction
+FROM pg_stat_activity
+WHERE datname = 'football_db'
+" 2>/dev/null
+
+echo ""
+echo "当前连接详情 (最近 10 条):"
+psql -U football_user -d football_db -c "
+SELECT
+    pid,
+    usename,
+    application_name,
+    client_addr,
+    state,
+    query_start,
+    state_change
+FROM pg_stat_activity
+WHERE datname = 'football_db'
+ORDER BY state_change DESC
+LIMIT 10
+" 2>/dev/null
+
+echo ""
+
+# ===================================================================
+# 7. 哈希缓存状态
 # ===================================================================
 echo "📊 哈希缓存状态"
 echo "----------------------------"
@@ -104,7 +138,7 @@ fi
 echo ""
 
 # ===================================================================
-# 6. 最近活动
+# 8. 最近活动
 # ===================================================================
 echo "📊 最近活动 (最近 5 条)"
 echo "----------------------------"
