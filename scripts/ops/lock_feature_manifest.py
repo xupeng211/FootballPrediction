@@ -14,8 +14,13 @@ V26.7 特征清单锁定脚本
 """
 
 import json
+import sys
 from pathlib import Path
 from typing import Any, Dict, List
+
+# V29.0 P0 整改: 标准化 .env 加载 (为一致性统一添加)
+from dotenv import load_dotenv
+load_dotenv(override=True)
 
 
 def load_gold_sample() -> Dict[str, Any]:

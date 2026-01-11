@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""V150.53 OddsPortal Scraper - Production-Ready Odds Extraction with Fast-Fail.
+"""V30.0 OddsPortal Scraper - Production-Ready Odds Extraction with Fault Tolerance.
 
 This module provides the unified OddsPortal scraper class with integrated
 "Ghost Protocol" capabilities and IP protection mechanisms.
@@ -12,7 +12,7 @@ Core Features:
     - Circuit Breaker: Automatic proxy rotation and cooldown
     - Aggressive Scroll: Enhanced modal data extraction (V150.32)
     - Time Conversion: BST/GMT → Beijing Time (UTC+8)
-    - V150.53 Fast-Fail: 3s timeout for graceful degradation (10s → 3s)
+    - V30.0 Fault Tolerance: 15s timeout for improved success rate (3s → 15s)
     - V150.53 Random Scroll: Enhanced stealth with random wheel deltas
 
 Example:
@@ -425,20 +425,20 @@ class OddsMovementExtractor:
             await cell_locator.hover()
             await asyncio.sleep(1.5)  # 减少悬停等待
 
-            # V150.53: 快速等待弹窗（3秒超时）
+            # V30.0: 容错等待弹窗（15秒超时）
             try:
                 modal = self.page.locator(self.config.modal_selector).first
-                await modal.wait_for(state="visible", timeout=3000)
+                await modal.wait_for(state="visible", timeout=15000)
             except Exception:
-                # V150.53: 快速判定为无变盘数据
-                logger.debug(f"[{bet_type}] 无变盘数据（3秒内未弹出）")
+                # V30.0: 容错判定为无变盘数据
+                logger.debug(f"[{bet_type}] 无变盘数据（15秒内未弹出）")
                 return []
 
             # 获取弹窗容器
             modal_container = self.page.locator(self.config.modal_selector).locator("xpath=ancestor::div[3]")
 
-            # V150.53: 快速提取（3秒超时）
-            html = await modal_container.inner_html(timeout=3000)
+            # V30.0: 容错提取（15秒超时）
+            html = await modal_container.inner_html(timeout=15000)
             soup = BeautifulSoup(html, "html.parser")
 
             timestamps = soup.select("div.flex.flex-col.gap-1 > div.flex.gap-3 > div.font-normal")
@@ -451,8 +451,8 @@ class OddsMovementExtractor:
             if self.config.enable_aggressive_scroll:
                 await self._aggressive_scroll(modal_container)
 
-                # V150.53: 再次提取（3秒超时）
-                html = await modal_container.inner_html(timeout=3000)
+                # V30.0: 再次提取（15秒超时）
+                html = await modal_container.inner_html(timeout=15000)
                 soup = BeautifulSoup(html, "html.parser")
 
                 timestamps_new = soup.select("div.flex.flex-col.gap-1 > div.flex.gap-3 > div.font-normal")

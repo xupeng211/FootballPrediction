@@ -8,7 +8,15 @@ V150.52 matches_mapping 表健康检查
 import asyncio
 import subprocess
 import sys
+from pathlib import Path
 from playwright.async_api import async_playwright
+
+# V29.0 P0 整改: 标准化 .env 加载
+from dotenv import load_dotenv
+load_dotenv(override=True)
+
+# 添加项目路径
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 
 async def verify_urls(sample_size: int = 20):
