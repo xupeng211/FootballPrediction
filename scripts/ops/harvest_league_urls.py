@@ -22,8 +22,9 @@ import logging
 import re
 import sys
 from datetime import datetime
+from functools import lru_cache
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 from urllib.parse import urljoin
 
 # 添加项目根目录到路径
@@ -36,6 +37,7 @@ load_dotenv(override=True)
 import psycopg2
 from playwright.async_api import async_playwright, Page, Browser
 from src.config_unified import get_settings
+from thefuzz import fuzz
 
 # ============================================================================
 # 配置
@@ -128,6 +130,208 @@ def match_urls_in_database() -> set:
 
     return urls
 
+
+# ============================================================================
+# V32.2: 智能 URL 队名解析 (修复多词队名 Bug)
+# ============================================================================
+
+@lru_cache(maxsize=10)
+def get_league_team_names(league_name: str) -> Dict[str, str]:
+    """从数据库获取联赛的所有合法队名
+
+    Args:
+        league_name: 联赛名称
+
+    Returns:
+        队名字典 {标准名称: URL slug}
+    """
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    # 获取联赛中的所有唯一队名
+    cursor.execute("""
+        SELECT DISTINCT home_team FROM matches
+        WHERE league_name = %s
+        UNION
+        SELECT DISTINCT away_team FROM matches
+        WHERE league_name = %s
+        ORDER BY 1
+    """, (league_name, league_name))
+
+    team_names = [row[0] for row in cursor.fetchall()]
+
+    cursor.close()
+    conn.close()
+
+    # 构建队名到 URL slug 的映射
+    team_slug_map = {}
+    for team in team_names:
+        # V32.2: 使用 team_name_to_slug 函数处理特殊映射
+        slug = team_name_to_slug(team)
+        team_slug_map[team] = slug
+
+    return team_slug_map
+
+
+def team_name_to_slug(team_name: str) -> str:
+    """将队名转换为 URL slug 格式
+
+    Args:
+        team_name: 队名 (如 "Real Sociedad")
+
+    Returns:
+        URL slug (如 "real-sociedad")
+
+    特殊处理西甲常见缩写:
+    - Real Sociedad → real-sociedad
+    - Atletico Madrid → atl-madrid
+    - Athletic Bilbao → ath-bilbao
+    """
+    # 西甲特殊缩写映射
+    special_mappings = {
+        "Atletico Madrid": "atl-madrid",
+        "Athletic Bilbao": "ath-bilbao",
+        "Athletic Club": "ath-bilbao",
+        "Real Betis": "betis",  # URL 常省略 'Real'
+    }
+
+    if team_name in special_mappings:
+        return special_mappings[team_name]
+
+    # 标准转换
+    slug = team_name.lower()
+    # 空格替换为连字符
+    slug = slug.replace(' ', '-')
+    # 移除特殊字符
+    slug = re.sub(r'[^a-z0-9-]', '', slug)
+    # 移除多余连字符
+    slug = re.sub(r'-+', '-', slug).strip('-')
+
+    return slug if slug else team_name.lower()
+
+
+def parse_match_url_with_league_teams(
+    url: str,
+    league_name: str
+) -> Tuple[str, str, float]:
+    """V32.2: 智能解析比赛 URL，支持多词队名
+
+    Args:
+        url: OddsPortal 比赛 URL
+        league_name: 联赛名称
+
+    Returns:
+        (home_team, away_team, confidence) 元组
+        confidence: 匹配置信度 (0-1)
+
+    算法:
+    1. 从 URL 提取 slug 部分 (如 "real-sociedad-almeria")
+    2. 获取联赛的所有合法队名
+    3. 将队名转换为 slug 格式
+    4. 使用 greedy matching 从左到右匹配队名
+    5. 返回匹配到的队名和置信度
+    """
+    # 获取联赛队名
+    team_slug_map = get_league_team_names(league_name)
+
+    if not team_slug_map:
+        # 回退到简单解析
+        return parse_match_url_simple(url)
+
+    # 提取 URL slug
+    url_parts = url.strip('/').split('/')
+    if len(url_parts) < 2:
+        return ("", "", 0.0)
+
+    # 最后部分是 match-{home}-{away}-{hash}
+    match_part = url_parts[-1]
+
+    # 移除哈希部分 (最后 8-12 位字母数字)
+    match_part = re.sub(r'-[a-zA-Z0-9]{8,12}$', '', match_part)
+
+    # 分割成 slug 列表
+    slug_parts = match_part.split('-')
+
+    # 使用 greedy matching 找到最佳队名分割
+    best_home = ""
+    best_away = ""
+    best_score = 0.0
+
+    # 尝试所有可能的分割点
+    for split_point in range(1, len(slug_parts)):
+        home_slug = '-'.join(slug_parts[:split_point])
+        away_slug = '-'.join(slug_parts[split_point:])
+
+        # 匹配主队
+        home_match = None
+        home_score = 0.0
+        for team_name, team_slug in team_slug_map.items():
+            # 完全匹配
+            if home_slug == team_slug:
+                home_match = team_name
+                home_score = 1.0
+                break
+            # 模糊匹配
+            score = fuzz.ratio(home_slug, team_slug) / 100.0
+            if score > home_score and score > 0.7:  # 70% 相似度阈值
+                home_match = team_name
+                home_score = score
+
+        # 匹配客队
+        away_match = None
+        away_score = 0.0
+        for team_name, team_slug in team_slug_map.items():
+            # 完全匹配
+            if away_slug == team_slug:
+                away_match = team_name
+                away_score = 1.0
+                break
+            # 模糊匹配
+            score = fuzz.ratio(away_slug, team_slug) / 100.0
+            if score > away_score and score > 0.7:  # 70% 相似度阈值
+                away_match = team_name
+                away_score = score
+
+        # 计算总置信度
+        if home_match and away_match:
+            total_score = (home_score + away_score) / 2.0
+            if total_score > best_score:
+                best_score = total_score
+                best_home = home_match
+                best_away = away_match
+
+    if best_home and best_away:
+        return (best_home, best_away, best_score)
+    else:
+        # 回退到简单解析
+        return parse_match_url_simple(url)
+
+
+def parse_match_url_simple(url: str) -> Tuple[str, str, float]:
+    """简单 URL 解析（回退方案）
+
+    Args:
+        url: OddsPortal 比赛 URL
+
+    Returns:
+        (home_team, away_team, confidence) 元组
+    """
+    url_parts = url.strip('/').split('/')
+    if len(url_parts) >= 2:
+        match_part = url_parts[-1]
+        # 移除哈希部分
+        name_part = re.sub(r'-[a-zA-Z0-9]{8,12}$', '', match_part)
+        teams = name_part.split('-')
+        if len(teams) >= 2:
+            # 标题格式化
+            home_team = ' '.join(teams[0].split()).title()
+            away_team = ' '.join(teams[1].split()).title()
+            return (home_team, away_team, 0.5)  # 低置信度
+    return ("", "", 0.0)
+
+
+# ============================================================================
+
 def batch_insert_urls(match_url_pairs: List[Dict[str, Any]]) -> int:
     """批量插入 URL 到 matches_mapping 表
 
@@ -182,13 +386,15 @@ def batch_insert_urls(match_url_pairs: List[Dict[str, Any]]) -> int:
 
 async def fetch_league_results_page(
     url: str,
-    proxy: Optional[str] = None
+    proxy: Optional[str] = None,
+    league_name: str = "La Liga"
 ) -> List[Dict[str, Any]]:
-    """从联赛赛果页抓取所有比赛 URL
+    """V32.2: 从联赛赛果页抓取所有比赛 URL（智能队名解析）
 
     Args:
         url: 赛果页 URL
         proxy: 代理服务器
+        league_name: 联赛名称（用于队名匹配）
 
     Returns:
         [(fotmob_id, oddsportal_url, home_team, away_team), ...]
@@ -196,6 +402,7 @@ async def fetch_league_results_page(
     results = []
 
     logger.info(f"📄 正在访问: {url}")
+    logger.info(f"🏆 联赛: {league_name}")
 
     async with async_playwright() as p:
         browser = await p.chromium.launch(
@@ -235,32 +442,26 @@ async def fetch_league_results_page(
                     match_id = hash_match.group(1)
                     full_url = urljoin("https://www.oddsportal.com/", href)
 
-                    # 从 URL 解析队名
-                    # URL 格式: /football/spain/laliga-2023-2024/barcelona-rayo-vallecano-4A6T7YOu/
-                    url_parts = href.strip('/').split('/')
-                    if len(url_parts) >= 4:
-                        match_part = url_parts[-1]  # barcelona-rayo-vallecano-4A6T7YOu
-                        # 移除哈希部分
-                        name_part = '-'.join(match_part.split('-')[:-1])  # barcelona-rayo-vallecano
-                        teams = name_part.split('-')
-                        if len(teams) >= 2:
-                            home_team = teams[0].replace('-', ' ').title()
-                            away_team = teams[1].replace('-', ' ').title()
-                        else:
-                            home_team = ""
-                            away_team = ""
-                    else:
-                        home_team = ""
-                        away_team = ""
+                    # V32.2: 使用智能队名解析（支持多词队名）
+                    home_team, away_team, confidence = parse_match_url_with_league_teams(
+                        full_url,
+                        league_name
+                    )
+
+                    if not home_team or not away_team:
+                        # 智能解析失败，跳过
+                        logger.warning(f"  ⚠️ 无法解析队名: {full_url}")
+                        continue
 
                     results.append({
                         "oddsportal_url": full_url,
                         "match_id": match_id,
                         "home_team": home_team,
                         "away_team": away_team,
+                        "confidence": confidence,  # V32.2: 添加置信度
                     })
 
-                    logger.info(f"  🎯 {home_team} vs {away_team} → {match_id}")
+                    logger.info(f"  🎯 {home_team} vs {away_team} → {match_id} (置信度: {confidence:.2f})")
 
                 except Exception as e:
                     logger.warning(f"  ⚠️ 链接解析失败: {e}")
