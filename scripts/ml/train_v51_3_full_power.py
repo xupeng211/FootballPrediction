@@ -616,9 +616,10 @@ class V53ModelTrainer:
         feature_df: pd.DataFrame,
         test_split_date: str = "2025-01-01"
     ):
-        """训练 V51.3 模型"""
-        # 合并数据
-        merged = df.merge(feature_df, on="match_id")
+        """V34.1: 训练 V51.3 模型（集成 V34.0 特征）"""
+        # V34.1: 合并数据前，从 df 中移除 V34.0 特征列（避免列名冲突）
+        df_features_only = df.drop(columns=["payout_ratio", "movement_velocity"], errors="ignore")
+        merged = df_features_only.merge(feature_df, on="match_id")
 
         # 构造标签
         merged["result"] = merged.apply(
