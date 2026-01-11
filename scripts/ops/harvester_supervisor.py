@@ -327,6 +327,137 @@ def check_malformed_alert() -> Dict[str, any]:
         }
 
 
+def check_batch_quality_alert(threshold_percent: float = 15.0) -> Dict[str, any]:
+    """V32.1.2: 检查批次质量告警（malformed 比例监控）
+
+    如果当前批次（最近采集的记录）的 malformed 比例超过阈值，
+    自动触发停止并保存现场快照。
+
+    Args:
+        threshold_percent: malformed 比例阈值（默认 15%）
+
+    Returns:
+        质量告警状态字典
+
+    示例:
+        >>> check_batch_quality_alert(threshold_percent=15.0)
+        {
+            'total_count': 100,
+            'malformed_count': 20,
+            'malformed_ratio': 0.20,  # 20%
+            'alert_threshold': 0.15,   # 15%
+            'alert_triggered': True,   # 触发告警
+            'by_league': {
+                'La Liga': {'total': 11, 'malformed': 4, 'ratio': 0.36},
+                'Premier League': {'total': 89, 'malformed': 16, 'ratio': 0.18}
+            }
+        }
+    """
+    try:
+        conn = psycopg2.connect(
+            host=os.getenv('DB_HOST', 'localhost'),
+            port=int(os.getenv('DB_PORT', 5432)),
+            database=os.getenv('DB_NAME', 'football_db'),
+            user=os.getenv('DB_USER', 'football_user'),
+            password=os.getenv('DB_PASSWORD')
+        )
+        cursor = conn.cursor()
+
+        # 检查最近 1 小时采集的批次数据质量
+        cursor.execute("""
+            WITH recent_batch AS (
+                SELECT
+                    league_name,
+                    COUNT(*) as total_count,
+                    COUNT(*) FILTER (WHERE is_malformed = TRUE) as malformed_count
+                FROM matches_mapping
+                WHERE updated_at >= NOW() - INTERVAL '1 hour'
+                  AND oddsportal_url IS NOT NULL
+                GROUP BY league_name
+            )
+            SELECT
+                SUM(total_count) as total_batch,
+                SUM(malformed_count) as total_malformed,
+                ARRAY_AGG(league_name) as leagues,
+                ARRAY_AGG(json_build_object(
+                    'league', league_name,
+                    'total', total_count,
+                    'malformed', malformed_count,
+                    'ratio', CASE
+                        WHEN total_count > 0 THEN ROUND(malformed_count::numeric / total_count, 4)
+                        ELSE 0
+                    END
+                )) as by_league
+            FROM recent_batch;
+        """)
+
+        result = cursor.fetchone()
+        cursor.close()
+        conn.close()
+
+        if not result or result[0] is None:
+            return {
+                'total_count': 0,
+                'malformed_count': 0,
+                'malformed_ratio': 0.0,
+                'alert_threshold': threshold_percent / 100.0,
+                'alert_triggered': False,
+                'by_league': {}
+            }
+
+        total_batch = result[0]
+        total_malformed = result[1]
+        by_league_raw = result[3] or []
+
+        # 计算 malformed 比例
+        malformed_ratio = total_malformed / total_batch if total_batch > 0 else 0.0
+
+        # 构建按联赛统计的字典
+        by_league = {}
+        for item in by_league_raw:
+            league = item['league']
+            by_league[league] = {
+                'total': item['total'],
+                'malformed': item['malformed'],
+                'ratio': item['ratio']
+            }
+
+        # 判断是否触发告警
+        alert_threshold = threshold_percent / 100.0
+        alert_triggered = malformed_ratio > alert_threshold
+
+        # 记录详细信息
+        if alert_triggered:
+            logger.error(f"🚨 批次质量告警触发！")
+            logger.error(f"   总计: {total_batch} 场 | Malformed: {total_malformed} 场 | 比例: {malformed_ratio:.2%}")
+            logger.error(f"   阈值: {threshold_percent}% | 实际: {malformed_ratio * 100:.2f}%")
+            logger.error(f"   按联赛统计:")
+            for league, stats in by_league.items():
+                logger.error(f"     - {league}: {stats['malformed']}/{stats['total']} ({stats['ratio']:.2%})")
+        else:
+            logger.info(f"✅ 批次质量检查通过: {total_malformed}/{total_batch} ({malformed_ratio:.2%}) < {threshold_percent}%")
+
+        return {
+            'total_count': total_batch,
+            'malformed_count': total_malformed,
+            'malformed_ratio': malformed_ratio,
+            'alert_threshold': alert_threshold,
+            'alert_triggered': alert_triggered,
+            'by_league': by_league
+        }
+
+    except Exception as e:
+        logger.error(f"❌ 检查批次质量告警失败: {e}")
+        return {
+            'total_count': 0,
+            'malformed_count': 0,
+            'malformed_ratio': 0.0,
+            'alert_threshold': threshold_percent / 100.0,
+            'alert_triggered': False,
+            'by_league': {}
+        }
+
+
 def save_scene_snapshot(reason: str = "MALFORMED_ALERT"):
     """保存现场快照
 
@@ -487,6 +618,13 @@ async def supervise():
             if alert_status['alert_triggered']:
                 logger.error(f"🚨 MALFORMED 告警触发！近10分钟异常: {alert_status['recent_malformed']} 场")
                 emergency_shutdown("CONSECUTIVE_MALFORMED_ALERT")
+                break  # 退出监控循环
+
+            # V32.1.2 新增：批次质量告警检查（malformed 比例 > 15%）
+            quality_status = check_batch_quality_alert(threshold_percent=15.0)
+            if quality_status['alert_triggered']:
+                logger.error(f"🚨 批次质量告警触发！malformed 比例: {quality_status['malformed_ratio']:.2%}")
+                emergency_shutdown("BATCH_QUALITY_ALERT")
                 break  # 退出监控循环
 
             # 检查进程状态
