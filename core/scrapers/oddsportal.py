@@ -400,17 +400,18 @@ class TimeConverter:
 
 
 class OddsMovementExtractor:
-    """变盘数据提取器 - V150.53 快进快出版本"""
+    """变盘数据提取器 - V151.2 支持自定义超时"""
 
-    def __init__(self, page: Page, config: ExtractionConfig, delay_config: DelayConfig = None):
+    def __init__(self, page: Page, config: ExtractionConfig, delay_config: DelayConfig = None, custom_timeout_ms: int = 15000):
         self.page = page
         self.config = config
         self.delay_config = delay_config or DelayConfig()
+        self.custom_timeout_ms = custom_timeout_ms  # V151.2: 自定义超时（用于 malformed 重试）
 
     async def extract_complete_history(self, bet_type: str, cell_locator) -> List[Dict[str, Any]]:
         """
         提取完整的历史变盘记录（含滚动）
-        V150.53: 快进快出 - 3秒超时，快速跳过无变盘数据的比赛
+        V151.2: 支持自定义超时（malformed 重试使用 30s，正常采集使用 15s）
 
         Args:
             bet_type: 投注类型 (home/draw/away)
@@ -428,20 +429,20 @@ class OddsMovementExtractor:
             await cell_locator.hover()
             await asyncio.sleep(1.5)  # 减少悬停等待
 
-            # V30.0: 容错等待弹窗（15秒超时）
+            # V151.2: 使用自定义超时（malformed 重试 30s，正常采集 15s）
             try:
                 modal = self.page.locator(self.config.modal_selector).first
-                await modal.wait_for(state="visible", timeout=15000)
+                await modal.wait_for(state="visible", timeout=self.custom_timeout_ms)
             except Exception:
                 # V30.0: 容错判定为无变盘数据
-                logger.debug(f"[{bet_type}] 无变盘数据（15秒内未弹出）")
+                logger.debug(f"[{bet_type}] 无变盘数据（{self.custom_timeout_ms/1000}s内未弹出）")
                 return []
 
             # 获取弹窗容器
             modal_container = self.page.locator(self.config.modal_selector).locator("xpath=ancestor::div[3]")
 
-            # V30.0: 容错提取（15秒超时）
-            html = await modal_container.inner_html(timeout=15000)
+            # V151.2: 使用自定义超时提取
+            html = await modal_container.inner_html(timeout=self.custom_timeout_ms)
             soup = BeautifulSoup(html, "html.parser")
 
             timestamps = soup.select("div.flex.flex-col.gap-1 > div.flex.gap-3 > div.font-normal")
@@ -454,8 +455,8 @@ class OddsMovementExtractor:
             if self.config.enable_aggressive_scroll:
                 await self._aggressive_scroll(modal_container)
 
-                # V30.0: 再次提取（15秒超时）
-                html = await modal_container.inner_html(timeout=15000)
+                # V151.2: 使用自定义超时再次提取
+                html = await modal_container.inner_html(timeout=self.custom_timeout_ms)
                 soup = BeautifulSoup(html, "html.parser")
 
                 timestamps_new = soup.select("div.flex.flex-col.gap-1 > div.flex.gap-3 > div.font-normal")
@@ -651,6 +652,7 @@ class OddsPortalScraper:
         away_team: str,
         url: Optional[str] = None,
         headless: bool = True,
+        custom_timeout_ms: Optional[int] = None,
     ) -> Dict[str, Any]:
         """执行核心逻辑：导航 -> 定位 Pinnacle 行 -> Hover 触发 -> 解析 JSON 赔率
 
@@ -660,6 +662,7 @@ class OddsPortalScraper:
             away_team: 客队名称
             url: 完整 URL (可选，如不提供则自动构建)
             headless: 是否无头模式
+            custom_timeout_ms: V151.2 自定义超时时间（毫秒）- 用于 malformed 重试
 
         Returns:
             {
@@ -738,7 +741,9 @@ class OddsPortalScraper:
                 if cell_count < 3:
                     raise Exception(f"赔率块数量不足: {cell_count}")
 
-                extractor = OddsMovementExtractor(page, self.config.extraction, self.config.delays)
+                # V151.2: 传递自定义超时给提取器（malformed 重试 30s，正常采集 15s）
+                timeout_ms = custom_timeout_ms if custom_timeout_ms else 15000
+                extractor = OddsMovementExtractor(page, self.config.extraction, self.config.delays, custom_timeout_ms=timeout_ms)
                 all_data = {}
                 bet_types = ["home", "draw", "away"]
                 total_records = 0
