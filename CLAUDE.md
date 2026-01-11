@@ -1564,6 +1564,39 @@ git commit -m "refactor(harvester): 重构 HarvesterService 队列逻辑"
 | `src/services/inference_service.py` | P0 严格冻结 | 架构师 + 技术负责人双签 |
 | `src/ml/data/postgres_loader.py` | P1 审批冻结 | 架构师审批 |
 | `src/ml/features/extractor.py` | P1 审批冻结 | 架构师审批 |
+| `scripts/ml/extract_features_v1.py` | P1 审批冻结 | 架构师审批 |
+
+### V29.2 特征工程准则
+
+**新增特征必须遵循 TDD 流程**：
+1. **测试先行**: 任何新增特征必须先在 `tests/unit/test_feature_extraction_v1.py` 补充 Mock 测试
+2. **残缺数据处理**: 测试必须验证残缺 JSON 处理（返回 None 而不崩溃）
+3. **增量逻辑验证**: 测试必须验证不会产生重复记录
+4. **SQL 注入防护**: 测试必须验证 SQL 查询的安全性
+
+**特征提取流程**：
+```bash
+# 1. 编写 TDD 测试 (Red Phase → Green Phase)
+pytest tests/unit/test_feature_extraction_v1.py -v
+
+# 2. 运行增量提取（默认增量模式）
+python scripts/ml/extract_features_v1.py --limit 1000
+
+# 3. 运行特征含金量审计
+python scripts/ops/audit_feature_quality.py
+
+# 4. 核验数据对齐
+docker-compose exec -T db psql -U football_user -d football_db -c "
+SELECT
+    (SELECT COUNT(*) FROM v_matches_clean) - (SELECT COUNT(*) FROM match_features) as gap;
+"
+```
+
+**数据质量红线**：
+- ❌ **禁止**: 在没有 TDD 测试的情况下修改特征提取逻辑
+- ❌ **禁止**: 提交会产生重复记录的特征提取代码
+- ✅ **必须**: 所有新特征通过残缺 JSON 测试
+- ✅ **必须**: 使用 UPSERT (ON CONFLICT) 防止重复插入
 
 ---
 
