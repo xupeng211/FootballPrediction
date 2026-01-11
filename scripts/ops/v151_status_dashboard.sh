@@ -1,15 +1,88 @@
 #!/bin/bash
-# V151.3 → V32.1 采集状态仪表盘
-# 用途: 实时查看采集进度和统计数据 + 数据库连接监控
+# V151.3 → V29.3 采集状态仪表盘 + 炼金进度条
+# 用途: 实时查看采集进度和统计数据 + 数据库连接监控 + 特征炼金进度
 # 日期: 2026-01-11
 
 echo "╔════════════════════════════════════════════════════════════╗"
-echo "║        V32.1 采集状态仪表盘 (含数据库连接监控)               ║"
+echo "║     V29.3 采集状态仪表盘 (含炼金进度条监控)                ║"
 echo "╚════════════════════════════════════════════════════════════╝"
 echo ""
 
 # 激活虚拟环境（如果使用）
 # source venv/bin/activate
+
+# ===================================================================
+# 0. 炼金进度条 (V29.3)
+# ===================================================================
+echo "🔥 炼金进度条 (V29.3 Alchemy Progress)"
+echo "----------------------------"
+psql -U football_user -d football_db -c "
+SELECT
+    (SELECT COUNT(*) FROM v_matches_clean) as total_matches,
+    (SELECT COUNT(*) FROM match_features) as extracted_features,
+    (SELECT COUNT(*) FROM odds) as total_odds,
+    CASE
+        WHEN (SELECT COUNT(*) FROM v_matches_clean) > 0 THEN
+            ROUND(100.0 * (SELECT COUNT(*) FROM match_features) /
+                  (SELECT COUNT(*) FROM v_matches_clean), 2)
+        ELSE 0
+    END as coverage_pct,
+    CASE
+        WHEN (SELECT COUNT(*) FROM match_features) >= (SELECT COUNT(*) FROM v_matches_clean)
+        THEN '✅ 完成'
+        WHEN (SELECT COUNT(*) FROM match_features) > 0
+        THEN '⏳ 进行中'
+        ELSE '❌ 未开始'
+    END as status
+" 2>/dev/null
+
+echo ""
+echo "进度条可视化:"
+python3 << 'PYTHON_EOF'
+import psycopg2
+import sys
+
+try:
+    conn = psycopg2.connect(
+        host="db",
+        port=5432,
+        database="football_db",
+        user="football_user",
+        password=""
+    )
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT
+            (SELECT COUNT(*) FROM v_matches_clean) as total,
+            (SELECT COUNT(*) FROM match_features) as extracted
+    """)
+    row = cur.fetchone()
+    if row:
+        total = row[0] or 0
+        extracted = row[1] or 0
+        pct = int(extracted / total * 100) if total > 0 else 0
+
+        # 进度条
+        bar_length = 50
+        filled = int(bar_length * extracted / total) if total > 0 else 0
+        bar = "█" * filled + "░" * (bar_length - filled)
+
+        print(f"[{bar}] {pct}% ({extracted}/{total})")
+
+        if pct >= 100:
+            print("✅ 炼金完成！所有比赛已提取特征。")
+        elif pct > 0:
+            print(f"⏳ 炼金进行中... 还需 {total - extracted} 场")
+        else:
+            print("❌ 炼金未开始。请先运行数据收割和特征提取。")
+
+    cur.close()
+    conn.close()
+except Exception as e:
+    print(f"⚠️ 无法连接数据库: {e}")
+PYTHON_EOF
+
+echo ""
 
 # ===================================================================
 # 1. 整体采集率

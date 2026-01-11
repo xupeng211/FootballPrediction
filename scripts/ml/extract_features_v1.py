@@ -375,12 +375,17 @@ def process_features_pipeline(limit: int = 100, incremental: bool = True) -> Lis
 def main():
     """主入口"""
     import argparse
+    import time
 
-    parser = argparse.ArgumentParser(description="V29.0 Feature Extraction - 特征炼金厂")
+    parser = argparse.ArgumentParser(description="V29.3 Feature Extraction - 炼金触发器")
     parser.add_argument("--limit", type=int, default=100,
                         help="最大处理记录数（默认: 100）")
     parser.add_argument("--dry-run", action="store_true",
                         help="干跑模式，不保存到数据库")
+    parser.add_argument("--watch", action="store_true",
+                        help="炼金触发器模式：每 10 分钟自动扫描新数据")
+    parser.add_argument("--interval", type=int, default=600,
+                        help="扫描间隔（秒），默认: 600 (10 分钟)")
 
     args = parser.parse_args()
 
@@ -394,7 +399,69 @@ def main():
         ]
     )
 
-    if args.dry_run:
+    if args.watch:
+        # V29.3 炼金触发器模式
+        logger.info("🔥 V29.3 炼金触发器启动")
+        logger.info(f"扫描间隔: {args.interval} 秒 ({args.interval // 60} 分钟)")
+
+        poll_count = 0
+        while True:
+            poll_count += 1
+            logger.info(f"")
+            logger.info("=" * 60)
+            logger.info(f"🔍 第 {poll_count} 次扫描")
+            logger.info("=" * 60)
+
+            try:
+                # 检查是否有新数据需要提取
+                conn = get_db_connection()
+                try:
+                    with conn.cursor() as cur:
+                        # 统计差距
+                        cur.execute("""
+                            SELECT
+                                (SELECT COUNT(*) FROM v_matches_clean) as total_matches,
+                                (SELECT COUNT(*) FROM match_features) as extracted_features,
+                                (SELECT COUNT(*) FROM odds) as total_odds
+                        """)
+                        row = cur.fetchone()
+                        total_matches = row['total_matches'] if row else 0
+                        extracted_features = row['extracted_features'] if row else 0
+                        total_odds = row['total_odds'] if row else 0
+
+                        gap = total_matches - extracted_features
+
+                        logger.info(f"📊 数据状态:")
+                        logger.info(f"   v_matches_clean: {total_matches}")
+                        logger.info(f"   match_features: {extracted_features}")
+                        logger.info(f"   odds 表: {total_odds}")
+                        logger.info(f"   差距: {gap} 条待提取")
+
+                        if gap > 0:
+                            logger.info(f"✅ 检测到 {gap} 条新数据，开始提取...")
+
+                            # 执行增量提取
+                            results = process_features_pipeline(limit=args.limit, incremental=True)
+
+                            if results:
+                                logger.info(f"🎉 本次提取完成: {len(results)} 条特征")
+                            else:
+                                logger.warning(f"⚠️ 未提取到特征（可能 odds 表为空）")
+                        else:
+                            logger.info(f"✅ 数据已对齐，无需提取")
+
+                finally:
+                    conn.close()
+
+            except Exception as e:
+                logger.error(f"❌ 扫描失败: {e}")
+
+            # 等待下一个扫描周期
+            logger.info(f"⏰ 等待 {args.interval} 秒后进行下次扫描...")
+            logger.info("=" * 60)
+            time.sleep(args.interval)
+
+    elif args.dry_run:
         logger.info("🔵 干跑模式：只提取特征，不保存到数据库")
         raw_data = fetch_from_clean_view(args.limit)
         logger.info(f"获取 {len(raw_data)} 条记录")
