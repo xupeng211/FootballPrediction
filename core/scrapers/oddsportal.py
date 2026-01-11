@@ -299,6 +299,43 @@ class CircuitBreakerManager:
                 return proxy
         return None
 
+    def reset_all_proxies(self) -> Dict[str, Any]:
+        """V32.0: 强制复位所有代理状态
+
+        清除所有黑名单、冷却期和失败计数，用于一键恢复代理池。
+
+        Returns:
+            复位摘要字典，包含清除的统计信息
+
+        Example:
+            >>> manager.reset_all_proxies()
+            {
+                'blacklisted_cleared': 2,
+                'cooldown_cleared': 1,
+                'total_cleared': 3
+            }
+        """
+        blacklisted_cleared = len(self.blacklist_until)
+        cooldown_cleared = len(self.cooldown_until)
+
+        # 清除所有状态
+        self.blacklist_until.clear()
+        self.forbidden_counts.clear()
+        self.cooldown_until.clear()
+        self.failed_counts.clear()
+
+        # 记录日志
+        logger.info(f"🔄 代理池已强制复位")
+        logger.info(f"   清除黑名单: {blacklisted_cleared} 个")
+        logger.info(f"   清除冷却期: {cooldown_cleared} 个")
+        logger.info(f"   总清除: {blacklisted_cleared + cooldown_cleared} 个")
+
+        return {
+            "blacklisted_cleared": blacklisted_cleared,
+            "cooldown_cleared": cooldown_cleared,
+            "total_cleared": blacklisted_cleared + cooldown_cleared,
+        }
+
 
 class EmergencyStopError(Exception):
     """紧急停止异常"""
