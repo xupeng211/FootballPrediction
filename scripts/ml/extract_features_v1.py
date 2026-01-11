@@ -138,13 +138,16 @@ def extract_features_from_json(match_data: Dict[str, Any]) -> Dict[str, Optional
 # 数据库操作
 # ============================================================================
 
-def fetch_from_clean_view(limit: int = 100) -> List[Dict[str, Any]]:
+def fetch_from_clean_view(limit: int = 100, incremental: bool = True) -> List[Dict[str, Any]]:
     """从 v_matches_clean 视图获取数据并构建 l3_features
+
+    V29.1: 支持增量提取，默认排除已有特征的比赛。
 
     从 odds 表读取赔率数据，构建符合测试格式的 l3_features 结构。
 
     Args:
         limit: 最大返回记录数
+        incremental: 是否使用增量模式（排除已处理比赛）- 默认 True
 
     Returns:
         包含 l3_features 的比赛数据列表
@@ -152,8 +155,14 @@ def fetch_from_clean_view(limit: int = 100) -> List[Dict[str, Any]]:
     conn = get_db_connection()
     try:
         with conn.cursor() as cur:
+            # V29.1: 增量提取 - 排除已有特征的比赛
+            # WHERE m.match_id NOT IN (SELECT match_id FROM match_features)
+            where_clause = ""
+            if incremental:
+                where_clause = "WHERE m.match_id NOT IN (SELECT match_id FROM match_features)"
+
             # 获取比赛及其赔率数据
-            cur.execute("""
+            cur.execute(f"""
                 SELECT
                     m.match_id,
                     m.league_name,
@@ -170,6 +179,7 @@ def fetch_from_clean_view(limit: int = 100) -> List[Dict[str, Any]]:
                     ) FILTER (WHERE o.bookmaker IS NOT NULL), '[]') as odds_data
                 FROM v_matches_clean m
                 LEFT JOIN odds o ON m.match_id = o.match_id
+                {where_clause}
                 GROUP BY m.match_id, m.league_name, m.home_team, m.away_team
                 LIMIT %s
             """, (limit,))
@@ -315,26 +325,30 @@ def save_features_to_db(features_list: List[Dict[str, Any]]) -> int:
 # 完整流水线
 # ============================================================================
 
-def process_features_pipeline(limit: int = 100) -> List[Dict[str, Any]]:
+def process_features_pipeline(limit: int = 100, incremental: bool = True) -> List[Dict[str, Any]]:
     """完整特征提取流水线
 
+    V29.1: 支持增量提取模式，默认排除已处理比赛。
+
     流程：
-    1. 从 v_matches_clean 获取数据
+    1. 从 v_matches_clean 获取数据（可选增量过滤）
     2. 提取特征
     3. 保存到 match_features 表
 
     Args:
         limit: 最大处理记录数
+        incremental: 是否使用增量模式（排除已处理比赛）- 默认 True
 
     Returns:
         处理结果列表
     """
-    logger.info(f"V29.0 特征炼金厂启动，limit={limit}")
+    mode = "增量" if incremental else "全量"
+    logger.info(f"V29.1 特征炼金厂启动 ({mode}模式)，limit={limit}")
 
     try:
         # 1. 获取数据
-        raw_data = fetch_from_clean_view(limit)
-        logger.info(f"从 v_matches_clean 获取 {len(raw_data)} 条记录")
+        raw_data = fetch_from_clean_view(limit, incremental=incremental)
+        logger.info(f"从 v_matches_clean 获取 {len(raw_data)} 条记录 ({mode})")
 
         # 2. 提取特征
         all_features = []
