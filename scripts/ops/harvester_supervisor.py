@@ -1,19 +1,25 @@
 #!/usr/bin/env python3
 """
-V30.1 收割机守护程序 - 自动化运维闭环 + 连续失败熔断
+V30.2 收割机守护程序 - 并发模式监控
 
 核心功能：
-1. 进程监控：每 60 秒检查 harvest_pinnacle_odds.py 是否存活
+1. 进程监控：每 60 秒检查 harvest_pinnacle_concurrent.py 是否存活
 2. 崩溃分析：自动提取最后 50 行日志，分析崩溃原因
 3. 自动重启：检测到进程退出后自动重启
 4. 崩溃审计：将崩溃原因存入 logs/crash_summary.json
-5. MALFORMED 熔断：连续 10 场失败自动停止并保存现场快照（V30.1 新增）
+5. MALFORMED 熔断：连续 10 场失败自动停止并保存现场快照
+6. V30.2 新增：多进程模式监控，默认 3 工作进程
+
+并发模式配置：
+- 默认工作进程数：3（保守方案，避免代理硬碰撞）
+- 代理端口：7890-7892
+- 每进程采集数：50 场
 
 准入红线：在 Supervisor 守护程序跑通之前，不准再手动启动任何收割脚本！
 
-Author: 高级站点可靠性工程师 (SRE)
+Author: 高级 DevOps 架构师 (Staff DevOps Engineer)
 Date: 2026-01-11
-Version: V30.1 (Observability Upgrade)
+Version: V30.2 (Concurrent Mode Support)
 """
 
 import asyncio
@@ -50,14 +56,15 @@ logger = logging.getLogger(__name__)
 
 
 # ============================================================================
-# 配置常量
+# 配置常量 (V30.2: 并发模式)
 # ============================================================================
 
-HARVESTER_SCRIPT = "scripts/ops/harvest_pinnacle_odds.py"
-HARVESTER_ARGS = ["--limit", "400"]  # V30.1 生产模式：扫尾英超剩余300场
+HARVESTER_SCRIPT = "scripts/ops/harvest_pinnacle_concurrent.py"
+HARVESTER_ARGS = ["--workers", "3", "--limit", "50"]  # V30.2: 3进程保守方案
 CHECK_INTERVAL = 60  # 检查间隔（秒）
 LOG_LINES_TO_ANALYZE = 50  # 分析日志行数
 CRASH_SUMMARY_FILE = "logs/crash_summary.json"
+CONCURRENT_LOG_FILE = "logs/harvest_pinnacle_concurrent.log"  # V30.2: 并发日志文件
 
 # 信号处理
 shutdown_requested = False
@@ -80,7 +87,7 @@ signal.signal(signal.SIGTERM, signal_handler)
 # ============================================================================
 
 def find_harvester_process() -> Optional[psutil.Process]:
-    """查找正在运行的收割机进程
+    """查找正在运行的收割机进程 (V30.2: 并发模式)
 
     Returns:
         找到的进程对象，如果未找到返回 None
@@ -88,15 +95,19 @@ def find_harvester_process() -> Optional[psutil.Process]:
     for proc in psutil.process_iter(['pid', 'name', 'cmdline', 'create_time']):
         try:
             cmdline = proc.info['cmdline']
-            if cmdline and 'harvest_pinnacle_odds.py' in ' '.join(cmdline):
-                return proc
+            if cmdline:
+                cmdline_str = ' '.join(cmdline)
+                # V30.2: 检测并发脚本或单线程脚本
+                if 'harvest_pinnacle_concurrent.py' in cmdline_str or \
+                   'harvest_pinnacle_odds.py' in cmdline_str:
+                    return proc
         except (psutil.NoSuchProcess, psutil.AccessDenied):
             continue
     return None
 
 
 def start_harvester() -> Optional[psutil.Popen]:
-    """启动收割机进程
+    """启动收割机进程 (V30.2: 并发模式)
 
     Returns:
         启动的进程对象，如果启动失败返回 None
@@ -107,11 +118,15 @@ def start_harvester() -> Optional[psutil.Popen]:
 
         logger.info(f"启动收割机: {' '.join(cmd)}")
 
+        # V30.2: 使用并发日志文件
+        log_file = Path(CONCURRENT_LOG_FILE)
+        log_file.parent.mkdir(parents=True, exist_ok=True)
+
         # 使用 Popen 启动进程
         process = psutil.Popen(
             cmd,
-            stdout=open("logs/harvest_pinnacle.log", "a"),
-            stderr=open("logs/harvest_pinnacle.log", "a"),
+            stdout=open(log_file, "a"),
+            stderr=open(log_file, "a"),
             cwd=str(Path(__file__).parent.parent.parent)
         )
 
@@ -418,11 +433,12 @@ def emergency_shutdown(reason: str):
 # ============================================================================
 
 async def supervise():
-    """主监控循环"""
+    """主监控循环 (V30.2: 并发模式)"""
     logger.info("=" * 70)
-    logger.info("🤖 收割机守护程序已启动")
+    logger.info("🤖 收割机守护程序已启动 (V30.2 并发模式)")
     logger.info("=" * 70)
     logger.info(f"监控脚本: {HARVESTER_SCRIPT}")
+    logger.info(f"启动参数: {' '.join(HARVESTER_ARGS)}")
     logger.info(f"检查间隔: {CHECK_INTERVAL} 秒")
     logger.info(f"崩溃摘要: {CRASH_SUMMARY_FILE}")
     logger.info("")
@@ -464,8 +480,8 @@ async def supervise():
                 # 进程已停止
                 logger.warning("⚠️  收割机进程已停止！")
 
-                # 分析崩溃原因
-                log_file = "logs/harvest_pinnacle.log"
+                # V30.2: 分析崩溃原因（使用并发日志文件）
+                log_file = CONCURRENT_LOG_FILE
                 logger.info(f"🔍 分析崩溃日志: {log_file}")
 
                 crash_data = analyze_crash(log_file)
@@ -513,11 +529,11 @@ async def supervise():
 # ============================================================================
 
 def main():
-    """命令行入口"""
+    """命令行入口 (V30.2: 并发模式)"""
     import argparse
 
     parser = argparse.ArgumentParser(
-        description="V29.0 收割机守护程序 - 自动化运维闭环"
+        description="V30.2 收割机守护程序 - 并发模式监控"
     )
     parser.add_argument(
         '--interval',

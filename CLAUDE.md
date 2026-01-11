@@ -21,16 +21,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | 属性 | 值 |
 |------|-----|
 | **状态** | ✅ Production Ready |
-| **生产版本** | **V26.7** (全链路收割可靠性验证 - 生产级工业标准) |
+| **生产版本** | **V151.1** (Retry + Hash Hunting Edition) |
 | **命令中心** | **V144.7** (Multi-Source Command Center) |
 | **核心模型** | **V26.8** (联赛专项) + **V26.7** (通用底座) |
-| **数据采集** | **V144.5** (FotMob) + **V144.2** (OddsPortal + Ghost Protocol) + **V26.6** (全球数据扩充) |
-| **收割服务** | **V142.0** (HarvesterService) |
+| **数据采集** | **V151.1** (OddsPortal V151.1) + **V144.5** (FotMob) + **V26.6** (全球数据扩充) |
+| **收割服务** | **V151.3** (并发收割器) + **V142.0** (HarvesterService) |
 | **特征引擎** | **V25.1** (万能自适应特征提取) + **V26.7** (特征清单管理器) |
 | **Docker 版本** | **V106.0** (Dockerfile + docker-compose.prod.yml) |
 | **基线准确率** | 56% (真赛前) |
 | **推理延迟** | <100ms |
-| **最后更新** | 2026-01-07 |
+| **最后更新** | 2026-01-11 |
 
 ### 核心技术栈
 
@@ -1129,6 +1129,81 @@ psql -U football_user -d football_db -f scripts/sql/v26_7_history_alignment.sql
 - 性能与可读性兼顾
 - 历史数据自动对齐
 
+### V151.1 Retry + Hash Hunting Edition
+
+V151.1 引入**重试机制**和**哈希狩猎**功能，大幅提升数据采集可靠性：
+
+**核心架构**:
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    V151.1 Hash Hunting Engine                    │
+│  scripts/ops/hunt_league_hashes.py                               │
+│  ┌────────────────────────────────────────────────────────────┐ │
+│  │  🎯 从 matches 表找出缺失比赛                             │ │
+│  │  🔍 使用 OddsPortalScraper.search_match_url() 搜索 URL    │ │
+│  │  💾 V151.3 哈希缓存保护（防止数据丢失）                   │ │
+│  │  📊 批量插入 matches_mapping 表                           │ │
+│  └────────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────────┐
+│                    V151.3 Concurrent Harvester                   │
+│  scripts/ops/harvest_pinnacle_concurrent.py                     │
+│  ┌────────────────────────────────────────────────────────────┐ │
+│  │  🚀 多进程并发采集（默认 3 进程）                         │ │
+│  │  🔌 进程间代理隔离 (7890-7899)                            │ │
+│  │  🔄 重试计数器（最多 3 次）                               │ │
+│  │  🛑 自动放弃 (abandoned 状态)                             │ │
+│  │  📊 实时统计汇总                                          │ │
+│  └────────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**V151.1 哈希狩猎** (`core/scrapers/oddsportal.py`):
+```bash
+# 搜索比赛 URL（通过队名）
+python scripts/ops/hunt_league_hashes.py --leagues "La Liga" "Serie A" --limit 50
+
+# 英超数据复活
+python scripts/ops/hunt_league_hashes.py --premier
+
+# V151.3: 同步缓存到数据库
+python scripts/ops/hunt_league_hashes.py --sync-cache
+```
+
+**V151.3 并发收割器**:
+```bash
+# 3 进程保守方案（推荐）
+python scripts/ops/harvest_pinnacle_concurrent.py --workers 3 --limit 100
+
+# 10 进程激进方案
+python scripts/ops/harvest_pinnacle_concurrent.py --workers 10 --limit 500
+
+# 干跑模式
+python scripts/ops/harvest_pinnacle_concurrent.py --dry-run
+```
+
+**V151.1 核心特性**:
+- **Hash Hunting**: 通过队名搜索自动发现 OddsPortal URL
+- **重试机制**: retry_count 字段记录重试次数（最多 3 次）
+- **自动放弃**: 超过 3 次失败后标记为 `abandoned` 状态
+- **并发采集**: 多进程独立代理隔离，提升采集效率
+- **缓存保护**: V151.3 哈希缓存防止数据库连接中断导致数据丢失
+
+**V151.2 SQL 迁移脚本**:
+```bash
+# 英超数据"复活"
+psql -U football_user -d football_db -f scripts/sql/v151_2_resurrect_premier_league.sql
+```
+
+**V151.3 SQL 迁移脚本**:
+```bash
+# 添加重试计数和放弃状态
+psql -U football_user -d football_db -f scripts/sql/v151_3_add_retry_count.sql
+```
+
+**准入红线**: 禁止在不使用 `matches` 表作为底座的情况下进行任何"抢救"工作！
+
 ### src/core - V105.0 核心基础设施
 
 位于 `src/core/__init__.py`，提供系统级基础设施：
@@ -1192,6 +1267,10 @@ V150.0+ 新增运维脚本，位于 `scripts/ops/`:
 | `dashboard_quality.py` | 数据质量仪表盘 |
 | `harvest_fotmob_full.py` | FotMob 全量收割 |
 | `harvest_pinnacle_odds.py` | Pinnacle 赔率收割 |
+| `harvest_pinnacle_concurrent.py` | **V151.3** 并发收割器（多进程） |
+| `hunt_league_hashes.py` | **V151.1** 哈希狩猎（队名搜索 URL） |
+| `v151_3_audit_report.py` | **V151.3** 审计报告生成器 |
+| `v151_3_concurrent_safety_audit.py` | **V151.3** 并发安全审计 |
 
 ---
 
@@ -1321,6 +1400,7 @@ docker-compose logs db
 
 | 版本 | 日期 | 核心变更 | 升级注意事项 |
 |------|------|---------|-------------|
+| **V151.1** | **2026-01-11** | **Retry + Hash Hunting Edition** - 重试机制、哈希狩猎、并发收割器 | 需运行 v151_3_add_retry_count.sql |
 | V26.7 | 2026-01-07 | 全链路收割可靠性验证 - 特征清单管理器、离线解析、数据库一致性 | 需运行 v26_7_* 数据库迁移脚本 |
 | V149.0 | 2026-01-06 | SchemaManager API 修复，Circuit Breaker 硬编码 | 需更新数据库 schema 调用方式 |
 | V148.5 | 2026-01-05 | Final Master Sweep - 160 模块稳定 | 旧脚本已归档至 scripts/archive/ |
@@ -2018,10 +2098,10 @@ docker-compose logs -f
 
 **🚨 CRITICAL**: This is a production system support document.
 
-**🧬 当前版本**: V26.7 (全链路收割可靠性验证 - 生产级工业标准)
+**🧬 当前版本**: V151.1 (Retry + Hash Hunting Edition)
 **命令中心**: V144.7 (Multi-Source Command Center)
 **Docker 版本**: V106.0 (Dockerfile + docker-compose.prod.yml)
-**最后更新**: 2026-01-07
+**最后更新**: 2026-01-11
 **基线准确率**: 56% (真赛前)
 **生产状态**: Production Ready
 **项目愿景**: 年化 25% 收益率
