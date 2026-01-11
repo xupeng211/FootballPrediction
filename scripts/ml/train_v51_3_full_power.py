@@ -70,7 +70,8 @@ class V53FeatureCalculator:
     V51.3 增强特征计算器 - 补全所有 58 个特征
     """
 
-    # V51.3 完整特征列表 (58 维)
+    # V34.1: 完整特征列表 (60 维)
+    # 原有 58 维 + V34.0 新增 2 维
     ALL_FEATURES = [
         # 实力底蕴 (16 维)
         "home_rolling_xg", "home_rolling_xg_std",
@@ -109,7 +110,57 @@ class V53FeatureCalculator:
 
         # 趋势 (6 维 - 编码后)
         "home_recent_trend_encoded", "away_recent_trend_encoded",
+
+        # V34.0: 赔率市场特征 (2 维)
+        "payout_ratio",           # V34.0: 博彩公司返还率（识别冷门诱导盘）
+        "movement_velocity",      # V34.0: 赛前 2 小时变盘速度（捕捉主力资金动向）
     ]
+
+    # V34.1: 特征权重系数配置
+    # 用于调节不同特征对预测的贡献度，测试 Feature Importance
+    FEATURE_WEIGHTS = {
+        # 实力底蕴特征权重
+        "home_rolling_xg": 1.0, "home_rolling_xg_std": 0.8,
+        "home_rolling_shots_on_target": 1.0, "home_rolling_shots_on_target_std": 0.8,
+        "home_rolling_possession": 1.0, "home_rolling_possession_std": 0.8,
+        "home_rolling_team_rating": 1.0, "home_rolling_team_rating_std": 0.8,
+        "away_rolling_xg": 1.0, "away_rolling_xg_std": 0.8,
+        "away_rolling_shots_on_target": 1.0, "away_rolling_shots_on_target_std": 0.8,
+        "away_rolling_possession": 1.0, "away_rolling_possession_std": 0.8,
+        "away_rolling_team_rating": 1.0, "away_rolling_team_rating_std": 0.8,
+        "rolling_xg_diff": 1.2, "rolling_possession_diff": 1.0,
+
+        # 即时状态特征权重
+        "home_recent_form_points": 1.5, "home_recent_goals_scored": 1.0,
+        "home_recent_goals_conceded": 1.0, "home_recent_win_rate": 1.5,
+        "away_recent_form_points": 1.5, "away_recent_goals_scored": 1.0,
+        "away_recent_goals_conceded": 1.0, "away_recent_win_rate": 1.5,
+        "recent_form_diff": 1.5, "momentum_gap": 1.2,
+
+        # 主客场特征权重
+        "home_home_win_rate": 1.2, "home_home_goals_scored": 1.0,
+        "home_home_goals_conceded": 1.0, "home_home_clean_sheets": 1.0,
+        "home_away_win_rate": 1.0, "home_away_goals_scored": 1.0,
+        "home_away_goals_conceded": 1.0, "home_away_clean_sheets": 1.0,
+        "away_home_win_rate": 1.0, "away_home_goals_scored": 1.0,
+        "away_home_goals_conceded": 1.0, "away_home_clean_sheets": 1.0,
+        "away_away_win_rate": 1.2, "away_away_goals_scored": 1.0,
+        "away_away_goals_conceded": 1.0, "away_away_clean_sheets": 1.0,
+        "home_advantage": 1.5, "venue_bias": 1.0,
+
+        # 疲劳度特征权重
+        "home_fatigue_index": 1.0, "away_fatigue_index": 1.0, "fatigue_diff": 1.2,
+        "home_rest_days": 1.0, "away_rest_days": 1.0, "rest_days_diff": 1.0,
+        "home_matches_7days": 1.0, "away_matches_7days": 1.0,
+        "home_matches_30days": 1.0, "away_matches_30days": 1.0,
+
+        # 趋势特征权重
+        "home_recent_trend_encoded": 1.0, "away_recent_trend_encoded": 1.0,
+
+        # V34.0: 新特征权重（可调节）
+        "payout_ratio": 2.0,       # 高权重：冷门诱导盘是重要信号
+        "movement_velocity": 1.5,   # 中高权重：主力资金动向
+    }
 
     def __init__(self):
         settings = get_settings()
@@ -469,42 +520,49 @@ class V53ModelTrainer:
         return psycopg2.connect(**self.conn_params)
 
     def extract_training_data(self, limit: int = 10000) -> pd.DataFrame:
-        """V32.2: 提取训练数据（使用黄金视图 v_matches_clean）
+        """V34.1: 提取训练数据（使用黄金视图 v_matches_clean + match_features 表）
 
         自动享受 V32.2 的过滤红利：
         - is_malformed = FALSE
         - status = 'harvested' OR NULL
         - match.status = 'FT'
         - 有比分数据
+
+        V34.1: 集成 match_features 表获取赔率市场特征
         """
         conn = self.get_connection()
         try:
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
-                # V32.2: 使用黄金视图，自动过滤 malformed 数据
+                # V34.1: 使用黄金视图 + LEFT JOIN match_features 获取 V34.0 新特征
                 cur.execute("""
                     SELECT
-                        match_id,
-                        match_date,
-                        home_team,
-                        away_team,
-                        home_score,
-                        away_score,
-                        league_name
-                    FROM v_matches_clean
-                    ORDER BY match_date ASC
+                        m.match_id,
+                        m.match_date,
+                        m.home_team,
+                        m.away_team,
+                        m.home_score,
+                        m.away_score,
+                        m.league_name,
+                        -- V34.0: 赔率市场特征
+                        mf.payout_ratio,
+                        mf.movement_velocity
+                    FROM v_matches_clean m
+                    LEFT JOIN match_features mf ON m.match_id = mf.match_id
+                    ORDER BY m.match_date ASC
                     LIMIT %s
                 """, (limit,))
 
                 rows = cur.fetchall()
                 df = pd.DataFrame([dict(row) for row in rows])
                 logger.info(f"从黄金视图提取 {len(df)} 场干净比赛（已过滤 malformed）")
+                logger.info(f"V34.0 特征统计: payout_ratio 非空 {df['payout_ratio'].notna().sum()}, movement_velocity 非空 {df['movement_velocity'].notna().sum()}")
                 return df
 
         finally:
             conn.close()
 
     def compute_all_features(self, df: pd.DataFrame) -> pd.DataFrame:
-        """计算所有比赛的特征"""
+        """V34.1: 计算所有比赛的特征（包含 V34.0 赔率市场特征）"""
         conn = self.get_connection()
         try:
             features_list = []
@@ -522,6 +580,11 @@ class V53ModelTrainer:
                         conn=conn,
                     )
                     features["match_id"] = row["match_id"]
+
+                    # V34.1: 从输入 DataFrame 获取赔率市场特征
+                    features["payout_ratio"] = row.get("payout_ratio", 0.0)
+                    features["movement_velocity"] = row.get("movement_velocity", 0.0)
+
                     features_list.append(features)
                 except Exception as e:
                     logger.warning(f"计算特征失败 {row['match_id']}: {e}")
