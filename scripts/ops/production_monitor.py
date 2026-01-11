@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
 """
-V30.1 生产监控看板 - 指标化监控与自动告警
+V30.2 生产监控看板 - 指标化监控 + 预计完成时间
 
 核心指标：
 1. 每小时吞吐量 (Throughput) - 当前小时成功采集了多少场
 2. 单位成功成本 (Unit Cost) - 平均多少次尝试能换回 1 场成功的 L2 数据
 3. MALFORMED 告警 - 连续失败计数
+4. 预计完成时间 (Estimated Finish) - 倒计时显示
 
 Author: 高级站点可靠性工程师 (SRE)
 Date: 2026-01-11
-Version: V30.1 (Observability Upgrade)
+Version: V30.2 (Incremental Persistence Upgrade)
 """
 
 import json
@@ -281,6 +282,81 @@ def save_metrics_snapshot(metrics: Dict):
         print(f"❌ 保存指标快照失败: {e}")
 
 
+def get_estimated_finish_time() -> Dict:
+    """计算预计完成时间（V151.0 新增）
+
+    Returns:
+        预计完成时间字典
+    """
+    try:
+        result = subprocess.run(
+            ['docker-compose', 'exec', '-T', 'db', 'psql', '-U', 'football_user',
+             '-d', 'football_db', '-c',
+             """
+             SELECT
+                 COUNT(*) FILTER (WHERE l2_raw_json IS NOT NULL) as harvested_count,
+                 COUNT(*) FILTER (WHERE l2_raw_json IS NULL) as remaining_count,
+                 COUNT(*) as total_count,
+                 MIN(updated_at) FILTER (WHERE l2_raw_json IS NOT NULL) as first_harvest_time,
+                 MAX(updated_at) FILTER (WHERE l2_raw_json IS NOT NULL) as last_harvest_time
+             FROM matches_mapping
+             WHERE oddsportal_url IS NOT NULL AND oddsportal_url != '';
+             """],
+            capture_output=True,
+            text=True,
+            cwd=str(Path(__file__).parent.parent.parent)
+        )
+
+        output = result.stdout
+
+        for line in output.split('\n'):
+            if '|' in line and 'harvested_count' not in line and '---' not in line:
+                parts = line.split('|')
+                if len(parts) >= 5:
+                    try:
+                        harvested_count = int(parts[0].strip())
+                        remaining_count = int(parts[1].strip())
+                        total_count = int(parts[2].strip())
+
+                        # 计算平均采集速度（场/小时）
+                        first_harvest_str = parts[3].strip()
+                        last_harvest_str = parts[4].strip()
+
+                        if first_harvest_str and last_harvest_str:
+                            # 简单计算：假设从第一次采集到现在的时间
+                            from datetime import datetime
+                            now = datetime.now()
+                            # 假设采集起始时间为最后一次更新的时间之前
+                            # 使用一个保守估计：160秒/场
+                            avg_seconds_per_match = 160
+
+                            if remaining_count > 0:
+                                estimated_seconds = remaining_count * avg_seconds_per_match
+                                finish_time = now + timedelta(seconds=estimated_seconds)
+
+                                hours = int(estimated_seconds // 3600)
+                                minutes = int((estimated_seconds % 3600) // 60)
+
+                                return {
+                                    'harvested_count': harvested_count,
+                                    'remaining_count': remaining_count,
+                                    'total_count': total_count,
+                                    'avg_seconds_per_match': avg_seconds_per_match,
+                                    'estimated_seconds': estimated_seconds,
+                                    'estimated_finish_time': finish_time.strftime('%Y-%m-%d %H:%M:%S'),
+                                    'estimated_hours_minutes': f"{hours}h {minutes}min",
+                                    'harvest_rate': harvested_count / total_count if total_count > 0 else 0
+                                }
+                    except (ValueError, IndexError):
+                        continue
+
+        return {}
+
+    except Exception as e:
+        print(f"❌ 计算预计完成时间失败: {e}")
+        return {}
+
+
 def get_process_status():
     """获取进程状态
 
@@ -384,7 +460,22 @@ def print_monitoring_dashboard(round_num: int):
 
     print()
 
-    # 2.3 MALFORMED 告警状态
+    # 2.3 预计完成时间（V151.0 新增）
+    estimated_finish = get_estimated_finish_time()
+    if estimated_finish:
+        print("  ⏱️  预计完成时间 (Estimated Finish):")
+        print(f"    已采集:     {estimated_finish.get('harvested_count', 0)} 场")
+        print(f"    剩余:       {estimated_finish.get('remaining_count', 0)} 场")
+        print(f"    总目标:     {estimated_finish.get('total_count', 0)} 场")
+        print(f"    采集率:     {estimated_finish.get('harvest_rate', 0)*100:.1f}%")
+        print(f"    预计完成:   {estimated_finish.get('estimated_finish_time', 'N/A')}")
+        print(f"    剩余时间:   {estimated_finish.get('estimated_hours_minutes', 'N/A')}")
+    else:
+        print("  ⏱️  预计完成时间: 暂无数据")
+
+    print()
+
+    # 2.4 MALFORMED 告警状态
     alert_status = get_malformed_alert_status()
     print("  🚨 MALFORMED 告警状态:")
     print(f"    总异常数:   {alert_status.get('malformed_count', 0)}")

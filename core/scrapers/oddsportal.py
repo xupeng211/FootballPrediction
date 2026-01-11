@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""V30.0 OddsPortal Scraper - Production-Ready Odds Extraction with Fault Tolerance.
+"""V151.1 OddsPortal Scraper - Hash Hunting + Fault Tolerance.
 
 This module provides the unified OddsPortal scraper class with integrated
 "Ghost Protocol" capabilities and IP protection mechanisms.
@@ -14,6 +14,7 @@ Core Features:
     - Time Conversion: BST/GMT → Beijing Time (UTC+8)
     - V30.0 Fault Tolerance: 15s timeout for improved success rate (3s → 15s)
     - V150.53 Random Scroll: Enhanced stealth with random wheel deltas
+    - V151.1 Hash Hunting: Search match URL by team names
 
 Example:
     >>> from core.scrapers.oddsportal import OddsPortalScraper
@@ -21,9 +22,11 @@ Example:
     >>> result = await scraper.fetch_snapshot("nsbKWw0O")
     >>> print(result["data"]["home"][0]["beijing_time"])
     '2024-04-27 15:30:00'
+    >>> # V151.1: 搜索模式
+    >>> search_result = await scraper.search_match_url("Real Madrid", "Barcelona")
 
 Author: 高级反爬虫专家 & 性能优化工程师
-Version: V150.53
+Version: V151.1 (Hash Hunting Edition)
 Date: 2026-01-11
 """
 
@@ -845,6 +848,164 @@ class OddsPortalScraper:
     def get_circuit_breaker_status(self) -> Dict[str, Any]:
         """获取熔断器状态"""
         return self.circuit_breaker.get_status()
+
+    async def search_match_url(
+        self,
+        home_team: str,
+        away_team: str,
+        league_hint: Optional[str] = None,
+        headless: bool = True,
+    ) -> Dict[str, Any]:
+        """V151.1: 通过 OddsPortal 搜索功能获取真实哈希 URL
+
+        核心逻辑:
+        1. 访问 OddsPortal 搜索页面
+        2. 输入对阵名称 (如 "Real Madrid vs Barcelona")
+        3. 点击搜索结果
+        4. 从重定向后的 URL 中提取真实哈希
+
+        Args:
+            home_team: 主队名称
+            away_team: 客队名称
+            league_hint: 联赛提示 (可选，用于筛选结果)
+            headless: 是否无头模式
+
+        Returns:
+            {
+                "success": True/False,
+                "url": "https://www.oddsportal.com/football/.../hash/",
+                "match_id": "8位哈希",
+                "home_team": "标准化后的主队名",
+                "away_team": "标准化后的客队名",
+                "proxy": "使用的代理",
+                "error": None (如果失败)
+            }
+        """
+        import re
+        from urllib.parse import urljoin
+
+        search_query = f"{home_team} {away_team}"
+        search_url = f"{self.BASE_URL}/search/{search_query.replace(' ', '-')}"
+
+        proxy = self.circuit_breaker.get_available_proxy()
+        if proxy is None:
+            return {
+                "success": False,
+                "url": None,
+                "match_id": None,
+                "home_team": home_team,
+                "away_team": away_team,
+                "proxy": None,
+                "error": "无可用代理"
+            }
+
+        logger.info(f"[搜索] 开始搜索: {home_team} vs {away_team}")
+        logger.info(f"[搜索] 搜索 URL: {search_url}")
+
+        try:
+            async with self.stealth_context(proxy=proxy, headless=headless) as (browser, page):
+                # 步骤 1: 访问搜索页面
+                logger.info(f"[搜索] 步骤 1: 访问搜索页面...")
+                await page.goto(search_url, wait_until="domcontentloaded", timeout=60000)
+
+                # 步骤 2: 等待搜索结果加载
+                logger.info(f"[搜索] 步骤 2: 等待搜索结果...")
+                await asyncio.sleep(5)
+
+                # 步骤 3: 查找比赛结果链接
+                logger.info(f"[搜索] 步骤 3: 查找比赛结果...")
+
+                # 尝试多种选择器
+                selectors = [
+                    f"a:has-text('{home_team}')",
+                    f"div[data-name] a:has-text('{home_team}')",
+                    "table tr a[href*='/football/']",
+                    "div.search-result a[href*='/football/']",
+                ]
+
+                match_link = None
+                for selector in selectors:
+                    try:
+                        elements = await page.locator(selector).all()
+                        for element in elements:
+                            href = await element.get_attribute("href")
+                            if href and "/football/" in href:
+                                # 检查是否包含两队名称
+                                text = await element.inner_text()
+                                if (home_team.lower() in text.lower() and
+                                    away_team.lower() in text.lower()):
+                                    match_link = element
+                                    logger.info(f"[搜索] 找到匹配结果: {text.strip()}")
+                                    break
+                        if match_link:
+                            break
+                    except Exception:
+                        continue
+
+                if not match_link:
+                    # 如果没找到，尝试使用更通用的搜索
+                    logger.warning(f"[搜索] 未找到精确匹配，尝试通用搜索...")
+                    match_link = page.locator("a[href*='/football/']").first
+
+                # 步骤 4: 点击链接并获取最终 URL
+                if match_link:
+                    logger.info(f"[搜索] 步骤 4: 点击链接...")
+                    await match_link.click()
+                    await asyncio.sleep(3)
+
+                    # 获取当前 URL (应该包含哈希)
+                    final_url = page.url
+                    logger.info(f"[搜索] 最终 URL: {final_url}")
+
+                    # 从 URL 中提取哈希
+                    hash_match = re.search(r'/([a-zA-Z0-9]{8,12})/?$', final_url)
+                    if hash_match:
+                        match_id = hash_match.group(1)
+                        logger.info(f"[搜索] ✅ 成功提取哈希: {match_id}")
+
+                        return {
+                            "success": True,
+                            "url": final_url,
+                            "match_id": match_id,
+                            "home_team": home_team,
+                            "away_team": away_team,
+                            "proxy": proxy,
+                            "error": None
+                        }
+                    else:
+                        logger.warning(f"[搜索] ⚠️ 无法从 URL 中提取哈希: {final_url}")
+                        return {
+                            "success": False,
+                            "url": final_url,
+                            "match_id": None,
+                            "home_team": home_team,
+                            "away_team": away_team,
+                            "proxy": proxy,
+                            "error": "无法从 URL 中提取哈希"
+                        }
+                else:
+                    logger.error(f"[搜索] ❌ 未找到比赛结果")
+                    return {
+                        "success": False,
+                        "url": None,
+                        "match_id": None,
+                        "home_team": home_team,
+                        "away_team": away_team,
+                        "proxy": proxy,
+                        "error": "未找到比赛结果"
+                    }
+
+        except Exception as e:
+            logger.error(f"[搜索] ❌ 搜索失败: {e}")
+            return {
+                "success": False,
+                "url": None,
+                "match_id": None,
+                "home_team": home_team,
+                "away_team": away_team,
+                "proxy": proxy,
+                "error": str(e)
+            }
 
 
 # ==============================================================================
