@@ -38,7 +38,7 @@ leagues:
     name_zh: "西甲"
     country: "ES"
     tier: 1
-    enabled: false  # V32.1: 暂停采集 - malformed 比例 36.36% (2026-01-11)
+    enabled: true  # V32.2: 重新启用 - 智能解析已修复
     seasons:
       - "2324"
       - "2425"
