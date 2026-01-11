@@ -184,7 +184,11 @@ class ScraperConfig:
 
 
 class CircuitBreakerManager:
-    """IP 熔断器管理器"""
+    """IP 熔断器管理器 (V30.3: 智能黑名单机制)"""
+
+    # V30.3: 常量定义
+    FORBIDDEN_THRESHOLD = 3  # 连续 3 次 403 错误触发黑名单
+    BLACKLIST_TIMEOUT_MINUTES = 15  # 黑名单持续时间（分钟）
 
     def __init__(self, config: CircuitBreakerConfig, proxy_pool: List[str]):
         self.config = config
@@ -193,9 +197,23 @@ class CircuitBreakerManager:
         self.cooldown_until: Dict[str, datetime] = {}
         self.tripped_count = 0
 
+        # V30.3: 智能黑名单机制
+        self.forbidden_counts: Dict[str, int] = defaultdict(int)  # 403 错误计数
+        self.blacklist_until: Dict[str, datetime] = {}  # 黑名单过期时间
+
     def is_available(self, proxy: str) -> bool:
         """检查代理是否可用"""
         beijing_tz = timezone(timedelta(hours=8))
+
+        # V30.3: 检查黑名单（优先级最高）
+        if proxy in self.blacklist_until:
+            if datetime.now(beijing_tz) < self.blacklist_until[proxy]:
+                return False
+            else:
+                # 黑名单过期，清除记录
+                del self.blacklist_until[proxy]
+                self.forbidden_counts[proxy] = 0
+                logger.info(f"🟢 代理 {proxy} 黑名单已解除")
 
         if proxy in self.cooldown_until:
             if datetime.now(beijing_tz) < self.cooldown_until[proxy]:
@@ -209,10 +227,30 @@ class CircuitBreakerManager:
     def record_success(self, proxy: str) -> None:
         """记录成功"""
         self.failed_counts[proxy] = 0
+        # V30.3: 成功时重置 403 计数
+        self.forbidden_counts[proxy] = 0
 
     def record_failure(self, proxy: str, error_type: str) -> None:
         """记录失败"""
         self.failed_counts[proxy] += 1
+
+        # V30.3: 检查是否为 403 Forbidden 错误
+        if error_type == "HTTP_ERROR_403" or "403" in str(error_type):
+            self.forbidden_counts[proxy] += 1
+            logger.warning(f"⚠️ 代理 {proxy} 403 错误计数: {self.forbidden_counts[proxy]}/{self.FORBIDDEN_THRESHOLD}")
+
+            # 连续 3 次 403 错误 → 黑名单
+            if self.forbidden_counts[proxy] >= self.FORBIDDEN_THRESHOLD:
+                beijing_tz = timezone(timedelta(hours=8))
+                blacklist_end = datetime.now(beijing_tz) + timedelta(minutes=self.BLACKLIST_TIMEOUT_MINUTES)
+                self.blacklist_until[proxy] = blacklist_end
+
+                timestamp = blacklist_end.strftime("%Y-%m-%d %H:%M:%S")
+                logger.error(
+                    f"🚨 代理 {proxy} 已加入黑名单至 {timestamp} "
+                    f"(连续 403 错误: {self.forbidden_counts[proxy]})"
+                )
+                return  # 已加入黑名单，不再触发普通熔断
 
         if self.failed_counts[proxy] >= self.config.failure_threshold:
             beijing_tz = timezone(timedelta(hours=8))
@@ -244,10 +282,13 @@ class CircuitBreakerManager:
     def get_status(self) -> Dict[str, Any]:
         """获取熔断器状态"""
         active = sum(1 for p in self.proxy_pool if self.is_available(p))
+        blacklisted = len(self.blacklist_until)
+
         return {
             "total_proxies": len(self.proxy_pool),
             "active_proxies": active,
             "tripped_proxies": self.tripped_count,
+            "blacklisted_proxies": blacklisted,  # V30.3
             "availability_rate": f"{active/len(self.proxy_pool)*100:.1f}%",
         }
 
@@ -861,18 +902,19 @@ class OddsPortalScraper:
         league_hint: Optional[str] = None,
         headless: bool = True,
     ) -> Dict[str, Any]:
-        """V151.1: 通过 OddsPortal 搜索功能获取真实哈希 URL
+        """V151.2: 通过 OddsPortal 搜索功能获取真实哈希 URL（深度加固版）
 
         核心逻辑:
-        1. 访问 OddsPortal 搜索页面
-        2. 输入对阵名称 (如 "Real Madrid vs Barcelona")
+        1. 访问 OddsPortal 搜索页面（带联赛提示）
+        2. 输入对阵名称 + 联赛名称 (如 "Real Madrid vs Barcelona La Liga")
         3. 点击搜索结果
-        4. 从重定向后的 URL 中提取真实哈希
+        4. 验证 URL 深度匹配（必须包含队名 Slug）
+        5. 从重定向后的 URL 中提取真实哈希
 
         Args:
             home_team: 主队名称
             away_team: 客队名称
-            league_hint: 联赛提示 (可选，用于筛选结果)
+            league_hint: 联赛提示 (可选，推荐使用以提高精度)
             headless: 是否无头模式
 
         Returns:
@@ -888,9 +930,29 @@ class OddsPortalScraper:
         """
         import re
         from urllib.parse import urljoin
+        import unicodedata
 
+        # V151.2: 搜索词增强 - 追加联赛名称
         search_query = f"{home_team} {away_team}"
+        if league_hint:
+            search_query = f"{search_query} {league_hint}"
         search_url = f"{self.BASE_URL}/search/{search_query.replace(' ', '-')}"
+
+        # V151.2: 预计算队名 Slug（用于深度匹配）
+        def slugify(name: str) -> str:
+            """将队名转换为 URL slug 格式"""
+            # Unicode 规范化 (NFD 分解)
+            normalized = unicodedata.normalize('NFD', name)
+            # 移除变音符号
+            ascii_only = ''.join(
+                c for c in normalized
+                if unicodedata.category(c) != 'Mn'
+            )
+            # 转小写，空格转连字符
+            return ascii_only.lower().replace(' ', '-').replace("'", '')
+
+        home_slug = slugify(home_team)
+        away_slug = slugify(away_team)
 
         proxy = self.circuit_breaker.get_available_proxy()
         if proxy is None:
@@ -904,8 +966,9 @@ class OddsPortalScraper:
                 "error": "无可用代理"
             }
 
-        logger.info(f"[搜索] 开始搜索: {home_team} vs {away_team}")
+        logger.info(f"[搜索] 开始搜索: {home_team} vs {away_team}" + (f" ({league_hint})" if league_hint else ""))
         logger.info(f"[搜索] 搜索 URL: {search_url}")
+        logger.info(f"[搜索] 预期 Slug: {home_slug} / {away_slug}")
 
         try:
             async with self.stealth_context(proxy=proxy, headless=headless) as (browser, page):
@@ -962,8 +1025,33 @@ class OddsPortalScraper:
                     final_url = page.url
                     logger.info(f"[搜索] 最终 URL: {final_url}")
 
+                    # V151.2: URL 深度匹配验证
+                    # 检查 URL 是否包含两队名称的 slug
+                    url_lower = final_url.lower()
+                    contains_home = home_slug in url_lower
+                    contains_away = away_slug in url_lower
+
+                    logger.info(f"[搜索] 深度匹配: home_slug={home_slug} ({contains_home}), away_slug={away_slug} ({contains_away})")
+
+                    if not (contains_home and contains_away):
+                        logger.error(f"[搜索] ❌ URL 深度匹配失败！URL 不包含预期的队名 Slug")
+                        logger.error(f"[搜索]    预期: {home_slug} 和 {away_slug}")
+                        logger.error(f"[搜索]    实际 URL: {final_url}")
+                        return {
+                            "success": False,
+                            "url": final_url,
+                            "match_id": None,
+                            "home_team": home_team,
+                            "away_team": away_team,
+                            "proxy": proxy,
+                            "error": f"URL 深度匹配失败: 不包含队名 Slug (预期: {home_slug}/{away_slug})"
+                        }
+
                     # 从 URL 中提取哈希
-                    hash_match = re.search(r'/([a-zA-Z0-9]{8,12})/?$', final_url)
+                    # V151.2: 支持带锚点的 URL（如 #1X2;2）
+                    # 先尝试移除锚点
+                    url_without_anchor = final_url.split('#')[0]
+                    hash_match = re.search(r'/([a-zA-Z0-9]{8,12})/?$', url_without_anchor)
                     if hash_match:
                         match_id = hash_match.group(1)
                         logger.info(f"[搜索] ✅ 成功提取哈希: {match_id}")

@@ -43,16 +43,39 @@ load_dotenv(override=True)
 # 添加项目根目录到路径
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-# 配置日志
-logging.basicConfig(
-    level=logging.INFO,
-    format='[%(asctime)s] [%(levelname)s] %(message)s',
-    handlers=[
-        logging.FileHandler('logs/harvester_supervisor.log'),
-        logging.StreamHandler()
-    ]
-)
+# V30.3: 配置日志轮转
+from logging.handlers import RotatingFileHandler
+
+# 确保日志目录存在
+log_dir = Path('logs')
+log_dir.mkdir(exist_ok=True)
+
+# 创建根日志记录器
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
+# 日志格式
+formatter = logging.Formatter('[%(asctime)s] [%(levelname)s] %(message)s')
+
+# 文件处理器 - 轮转 (50MB x 10)
+file_handler = RotatingFileHandler(
+    'logs/harvester_supervisor.log',
+    maxBytes=50*1024*1024,  # 50MB
+    backupCount=10,
+    encoding='utf-8'
+)
+file_handler.setFormatter(formatter)
+
+# 控制台处理器
+console_handler = logging.StreamHandler()
+console_handler.setFormatter(formatter)
+
+# 配置日志记录器
+logger.addHandler(file_handler)
+logger.addHandler(console_handler)
+
+# 防止重复日志
+logger.propagate = False
 
 
 # ============================================================================
@@ -60,7 +83,7 @@ logger = logging.getLogger(__name__)
 # ============================================================================
 
 HARVESTER_SCRIPT = "scripts/ops/harvest_pinnacle_concurrent.py"
-HARVESTER_ARGS = ["--workers", "3", "--limit", "50"]  # V30.2: 3进程保守方案
+HARVESTER_ARGS = ["--workers", "8", "--limit", "50"]  # V32.0: 8进程全速模式
 CHECK_INTERVAL = 60  # 检查间隔（秒）
 LOG_LINES_TO_ANALYZE = 50  # 分析日志行数
 CRASH_SUMMARY_FILE = "logs/crash_summary.json"

@@ -53,16 +53,38 @@ from typing import Any, Dict, List, Optional
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='[%(asctime)s] [%(levelname)s] %(name)s - %(message)s',
-    handlers=[
-        logging.FileHandler('logs/harvest_pinnacle_concurrent.log'),
-        logging.StreamHandler()
-    ]
-)
+# V30.3: 配置日志轮转
+from logging.handlers import RotatingFileHandler
+
+# 确保日志目录存在
+log_dir = Path('logs')
+log_dir.mkdir(exist_ok=True)
+
+# 创建根日志记录器
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
+# 日志格式
+formatter = logging.Formatter('[%(asctime)s] [%(levelname)s] %(name)s - %(message)s')
+
+# 文件处理器 - 轮转 (50MB x 10)
+file_handler = RotatingFileHandler(
+    'logs/harvest_pinnacle_concurrent.log',
+    maxBytes=50*1024*1024,  # 50MB
+    backupCount=10,
+    encoding='utf-8'
+)
+file_handler.setFormatter(formatter)
+
+# 控制台处理器
+console_handler = logging.StreamHandler()
+console_handler.setFormatter(formatter)
+
+# 配置根日志记录器（避免重复）
+logging.root.setLevel(logging.INFO)
+logging.root.handlers = []  # 清除现有处理器
+logging.root.addHandler(file_handler)
+logging.root.addHandler(console_handler)
 
 # 代理端口列表
 PROXY_PORTS = list(range(7890, 7900))  # 7890-7899
@@ -108,9 +130,17 @@ def worker_process(config: HarvestConfig) -> WorkerResult:
     # 设置进程专属日志
     process_logger = logging.getLogger(f"Worker-{config.proxy_port}")
     process_logger.setLevel(logging.INFO)
-    handler = logging.FileHandler(f'logs/harvest_worker_{config.proxy_port}.log')
-    handler.setFormatter(logging.Formatter('[%(asctime)s] [%(levelname)s] %(message)s'))
-    process_logger.addHandler(handler)
+    process_logger.propagate = False  # 防止传播到根日志记录器
+
+    # V30.3: 使用轮转文件处理器
+    worker_file_handler = RotatingFileHandler(
+        f'logs/harvest_worker_{config.proxy_port}.log',
+        maxBytes=50*1024*1024,  # 50MB
+        backupCount=10,
+        encoding='utf-8'
+    )
+    worker_file_handler.setFormatter(logging.Formatter('[%(asctime)s] [%(levelname)s] %(message)s'))
+    process_logger.addHandler(worker_file_handler)
 
     process_logger.info(f"=" * 60)
     process_logger.info(f"Worker 启动 (代理端口: {config.proxy_port})")
@@ -229,31 +259,71 @@ def worker_process(config: HarvestConfig) -> WorkerResult:
                     process_logger.info(f"✅ 成功: {target['fotmob_id']}")
 
                 elif harvest_result.get('success') and not is_valid:
-                    # 残缺数据
-                    new_retry_count = current_retry_count + 1
-                    if new_retry_count >= 3:
-                        cursor.execute("""
-                            UPDATE matches_mapping
-                            SET status = 'abandoned',
-                                retry_count = %s,
-                                updated_at = NOW()
-                            WHERE id = %s
-                        """, (new_retry_count, target['id']))
-                        result.abandoned += 1
-                        process_logger.error(f"🛑 放弃: {target['fotmob_id']} (retry_count={new_retry_count})")
-                    else:
-                        l2_json = json.dumps(harvest_result['data'], ensure_ascii=False)
+                    # V30.3: 残缺数据 - 尝试原地重试一次
+                    process_logger.warning(f"⚠️ 检测到残缺数据: {target['fotmob_id']}")
+                    process_logger.info(f"   缺失字段: home={has_home}, draw={has_draw}, away={has_away}")
+
+                    # 尝试使用当前代理进行一次原地重试
+                    process_logger.info(f"🔄 尝试原地重试 (代理: {config.proxy_port})...")
+                    retry_result = asyncio.run(scraper.fetch_snapshot(
+                        match_id=target['fotmob_id'],
+                        home_team=target['home_team'],
+                        away_team=target['away_team'],
+                        url=target['oddsportal_url'],
+                        headless=True,
+                        custom_timeout_ms=30000  # 增加超时时间
+                    ))
+
+                    # 验证重试结果
+                    retry_is_valid = True
+                    if retry_result.get('success') and retry_result.get('data'):
+                        retry_data = retry_result['data']
+                        has_home_r = 'home' in retry_data and retry_data['home']
+                        has_draw_r = 'draw' in retry_data and retry_data['draw']
+                        has_away_r = 'away' in retry_data and retry_data['away']
+                        retry_is_valid = has_home_r and has_draw_r and has_away_r
+
+                    if retry_result.get('success') and retry_is_valid:
+                        # 重试成功
+                        l2_json = json.dumps(retry_result['data'], ensure_ascii=False)
                         cursor.execute("""
                             UPDATE matches_mapping
                             SET l2_raw_json = %s,
-                                status = 'malformed',
-                                is_malformed = TRUE,
-                                retry_count = %s,
+                                status = 'harvested',
+                                is_malformed = FALSE,
+                                retry_count = 0,
                                 updated_at = NOW()
                             WHERE id = %s
-                        """, (l2_json, new_retry_count, target['id']))
-                        result.malformed += 1
-                        process_logger.warning(f"⚠️ 残缺: {target['fotmob_id']} (retry_count={new_retry_count})")
+                        """, (l2_json, target['id']))
+                        result.success += 1
+                        process_logger.info(f"✅ 重试成功: {target['fotmob_id']}")
+
+                    else:
+                        # 重试仍然失败，按原有逻辑处理
+                        new_retry_count = current_retry_count + 1
+                        if new_retry_count >= 3:
+                            cursor.execute("""
+                                UPDATE matches_mapping
+                                SET status = 'abandoned',
+                                    retry_count = %s,
+                                    updated_at = NOW()
+                            """, (new_retry_count, target['id']))
+                            result.abandoned += 1
+                            process_logger.error(f"🛑 放弃: {target['fotmob_id']} (retry_count={new_retry_count}, 重试失败)")
+                        else:
+                            # 保存原始残缺数据
+                            l2_json = json.dumps(harvest_result['data'], ensure_ascii=False)
+                            cursor.execute("""
+                                UPDATE matches_mapping
+                                SET l2_raw_json = %s,
+                                    status = 'malformed',
+                                    is_malformed = TRUE,
+                                    retry_count = %s,
+                                    updated_at = NOW()
+                                WHERE id = %s
+                            """, (l2_json, new_retry_count, target['id']))
+                            result.malformed += 1
+                            process_logger.warning(f"⚠️ 残缺: {target['fotmob_id']} (retry_count={new_retry_count}, 重试失败)")
 
                 else:
                     # 采集失败
@@ -316,7 +386,7 @@ def main():
     parser = argparse.ArgumentParser(
         description="V151.3 并发收割器 - 多进程采集"
     )
-    parser.add_argument('--workers', type=int, default=3,
+    parser.add_argument('--workers', type=int, default=8,  # V30.3: 默认 8 Workers
                         help='工作进程数 (默认: 3, 最大: 10)')
     parser.add_argument('--limit', type=int, default=50,
                         help='每个进程采集数量 (默认: 50)')
