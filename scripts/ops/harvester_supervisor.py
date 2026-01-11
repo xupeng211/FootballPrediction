@@ -621,7 +621,8 @@ async def supervise():
                 break  # 退出监控循环
 
             # V32.1.2 新增：批次质量告警检查（malformed 比例 > 15%）
-            quality_status = check_batch_quality_alert(threshold_percent=15.0)
+            # V33.2: 阈值调整 15% → 25%（给予队名规范化更大的容错空间）
+            quality_status = check_batch_quality_alert(threshold_percent=25.0)
             if quality_status['alert_triggered']:
                 logger.error(f"🚨 批次质量告警触发！malformed 比例: {quality_status['malformed_ratio']:.2%}")
                 emergency_shutdown("BATCH_QUALITY_ALERT")

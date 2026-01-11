@@ -39,6 +39,10 @@ from psycopg2.extras import RealDictCursor
 # 添加项目根目录到路径
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
+# V33.2: 显式加载 .env 文件，确保环境变量正确注入
+from dotenv import load_dotenv
+load_dotenv(override=True)
+
 from src.config_unified import get_settings
 
 logger = logging.getLogger(__name__)
