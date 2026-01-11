@@ -469,30 +469,35 @@ class V53ModelTrainer:
         return psycopg2.connect(**self.conn_params)
 
     def extract_training_data(self, limit: int = 10000) -> pd.DataFrame:
-        """提取训练数据"""
+        """V32.2: 提取训练数据（使用黄金视图 v_matches_clean）
+
+        自动享受 V32.2 的过滤红利：
+        - is_malformed = FALSE
+        - status = 'harvested' OR NULL
+        - match.status = 'FT'
+        - 有比分数据
+        """
         conn = self.get_connection()
         try:
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                # V32.2: 使用黄金视图，自动过滤 malformed 数据
                 cur.execute("""
                     SELECT
-                        m.match_id,
-                        m.match_date,
-                        m.home_team,
-                        m.away_team,
-                        m.home_score,
-                        m.away_score,
-                        m.league_name
-                    FROM matches m
-                    WHERE m.status = 'FT'
-                      AND m.home_score IS NOT NULL
-                      AND m.away_score IS NOT NULL
-                    ORDER BY m.match_date ASC
+                        match_id,
+                        match_date,
+                        home_team,
+                        away_team,
+                        home_score,
+                        away_score,
+                        league_name
+                    FROM v_matches_clean
+                    ORDER BY match_date ASC
                     LIMIT %s
                 """, (limit,))
 
                 rows = cur.fetchall()
                 df = pd.DataFrame([dict(row) for row in rows])
-                logger.info(f"提取 {len(df)} 场比赛")
+                logger.info(f"从黄金视图提取 {len(df)} 场干净比赛（已过滤 malformed）")
                 return df
 
         finally:
