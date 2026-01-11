@@ -240,17 +240,38 @@ def team_name_to_slug(team_name: str) -> str:
     Returns:
         URL slug (如 "real-sociedad")
 
-    特殊处理西甲常见缩写:
+    V33.2 特殊处理：
+    西甲缩写:
     - Real Sociedad → real-sociedad
     - Atletico Madrid → atl-madrid
     - Athletic Bilbao → ath-bilbao
+    - Real Betis → betis (URL 常省略 'Real')
+    - Real Valladolid → valladolid (URL 常省略 'Real')
+
+    英超昵称:
+    - Wolverhampton Wanderers → wolves
+    - West Ham United → west-ham
+    - Tottenham Hotspur → tottenham
+    - Luton Town → luton
+    - Newcastle United → newcastle-utd
+    - Sheffield United → sheffield-utd
     """
-    # 西甲特殊缩写映射
+    # V33.2: 完整特殊映射表（西甲缩写 + 英超昵称 + 前缀省略）
     special_mappings = {
+        # 西甲特殊缩写
         "Atletico Madrid": "atl-madrid",
         "Athletic Bilbao": "ath-bilbao",
         "Athletic Club": "ath-bilbao",
-        "Real Betis": "betis",  # URL 常省略 'Real'
+        "Real Betis": "betis",
+        "Real Valladolid": "valladolid",  # V33.2: 移除 'Real' 前缀
+
+        # 英超昵称映射
+        "Wolverhampton Wanderers": "wolves",
+        "West Ham United": "west-ham",
+        "Tottenham Hotspur": "tottenham",
+        "Luton Town": "luton",
+        "Newcastle United": "newcastle-utd",
+        "Sheffield United": "sheffield-utd",
     }
 
     if team_name in special_mappings:
@@ -260,7 +281,8 @@ def team_name_to_slug(team_name: str) -> str:
     slug = team_name.lower()
     # 空格替换为连字符
     slug = slug.replace(' ', '-')
-    # 移除特殊字符
+    # V33.2: 移除 & 符号（Brighton & Hove Albion → brighton-hove-albion）
+    slug = slug.replace('&', '')
     slug = re.sub(r'[^a-z0-9-]', '', slug)
     # 移除多余连字符
     slug = re.sub(r'-+', '-', slug).strip('-')
