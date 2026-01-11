@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-V33.3 Feature Extraction - 特征炼金厂 (Feature Alchemy)
+V34.0 Feature Extraction - 特征炼金厂 (Feature Alchemy)
 
 功能：从数据库提取赔率特征，处理残缺 JSON
 
@@ -29,7 +29,7 @@ Version: V29.0 (Feature Extraction)
 import json
 import logging
 import sys
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -135,7 +135,172 @@ def extract_features_from_json(match_data: Dict[str, Any]) -> Dict[str, Optional
     features["low_24h_draw"] = safe_extract(l3_features, "low_24h", "draw")
     features["low_24h_away"] = safe_extract(l3_features, "low_24h", "away")
 
+    # V34.0: 计算新特征
+    # 1. payout_ratio: 博彩公司返还率
+    closing_home = features.get("closing_home")
+    closing_draw = features.get("closing_draw")
+    closing_away = features.get("closing_away")
+    features["payout_ratio"] = calculate_payout_ratio(closing_home, closing_draw, closing_away)
+
+    # 2. movement_velocity: 赛前 2 小时变盘速度
+    odds_history = match_data.get("odds_history", []) if match_data else []
+    match_time_str = match_data.get("match_time") if match_data else None
+
+    if match_time_str and odds_history:
+        try:
+            if isinstance(match_time_str, str):
+                match_time_dt = datetime.fromisoformat(match_time_str.replace('Z', '+00:00'))
+            else:
+                match_time_dt = match_time_str
+            features["movement_velocity"] = calculate_movement_velocity(odds_history, match_time_dt)
+        except (ValueError, TypeError):
+            features["movement_velocity"] = 0.0
+    else:
+        features["movement_velocity"] = 0.0
+
     return features
+
+
+def calculate_payout_ratio(
+    home_odds: Optional[float],
+    draw_odds: Optional[float],
+    away_odds: Optional[float]
+) -> Optional[float]:
+    """V34.0: 计算博彩公司返还率
+
+    返还率公式: payout = 1 / (1/home + 1/draw + 1/away)
+
+    理论值范围:
+    - 正常盘口: 0.90-0.98 (博彩公司抽取 2-10% 水钱)
+    - 异常高返还率 (>0.98): 可能是"冷门诱导"盘
+
+    Args:
+        home_odds: 主队赔率
+        draw_odds: 平局赔率
+        away_odds: 客队赔率
+
+    Returns:
+        返还率 (0-1)，如果任何赔率无效则返回 None
+    """
+    # 检查所有赔率是否有效
+    if home_odds is None or draw_odds is None or away_odds is None:
+        return None
+
+    # 检查零值或负值
+    if home_odds <= 0 or draw_odds <= 0 or away_odds <= 0:
+        return None
+
+    try:
+        # 计算返还率
+        implied_prob = (1.0 / home_odds) + (1.0 / draw_odds) + (1.0 / away_odds)
+        payout = 1.0 / implied_prob
+
+        # 返还率应在合理范围内 (0.85-1.0)
+        if 0.85 <= payout <= 1.0:
+            return payout
+        else:
+            # 异常值（可能是数据错误）
+            return None
+
+    except (ZeroDivisionError, ValueError):
+        return None
+
+
+def calculate_movement_velocity(
+    odds_history: List[Dict[str, Any]],
+    match_time: datetime
+) -> float:
+    """V34.0: 计算赛前 2 小时内的变盘速度
+
+    变盘速度 = 赔率变动次数 / 实际时间跨度（小时）
+
+    极端场景:
+    - 10 分钟内跳动 5 次 = 30 次/小时 (高速度，主力资金活跃)
+    - 2 小时内跳动 3 次 = 1.5 次/小时 (低速度，市场平稳)
+
+    Args:
+        odds_history: 赔率历史记录列表
+            每条记录包含: home_odds, draw_odds, away_odds, collected_at
+        match_time: 比赛开始时间
+
+    Returns:
+        变盘速度 (次/小时)，如果无法计算则返回 0
+    """
+    if not odds_history:
+        return 0.0
+
+    # 过滤有效记录：必须有 collected_at 且在赛前 2 小时窗口内
+    valid_records = []
+    window_start = match_time - timedelta(hours=2)
+
+    for record in odds_history:
+        # 检查是否有 collected_at 字段
+        collected_at = record.get("collected_at")
+        if collected_at is None:
+            continue
+
+        # 处理字符串格式的时间戳
+        if isinstance(collected_at, str):
+            try:
+                collected_at = datetime.fromisoformat(collected_at.replace('Z', '+00:00'))
+            except ValueError:
+                continue
+
+        # 检查是否在 2 小时窗口内
+        if window_start <= collected_at <= match_time:
+            valid_records.append({
+                "home_odds": record.get("home_odds"),
+                "draw_odds": record.get("draw_odds"),
+                "away_odds": record.get("away_odds"),
+                "collected_at": collected_at
+            })
+
+    if len(valid_records) < 2:
+        # 至少需要 2 条记录才能检测变动
+        return 0.0
+
+    # 按时间排序
+    valid_records.sort(key=lambda x: x["collected_at"])
+
+    # 统计赔率变动次数
+    change_count = 0
+    prev_odds = None
+
+    for record in valid_records:
+        current_odds = (
+            record["home_odds"],
+            record["draw_odds"],
+            record["away_odds"]
+        )
+
+        # 检查是否有任何赔率缺失
+        if any(o is None for o in current_odds):
+            continue
+
+        if prev_odds is not None:
+            # 检查是否有任何赔率发生变化
+            # 使用容差 0.01 避免浮点数精度问题
+            tolerance = 0.01
+            if (abs(current_odds[0] - prev_odds[0]) > tolerance or
+                abs(current_odds[1] - prev_odds[1]) > tolerance or
+                abs(current_odds[2] - prev_odds[2]) > tolerance):
+                change_count += 1
+
+        prev_odds = current_odds
+
+    # 计算实际时间跨度（小时）
+    first_time = valid_records[0]["collected_at"]
+    last_time = valid_records[-1]["collected_at"]
+    time_span_seconds = (last_time - first_time).total_seconds()
+
+    if time_span_seconds > 0:
+        time_window_hours = time_span_seconds / 3600.0
+        velocity = change_count / time_window_hours
+    else:
+        # 所有记录时间相同，无法计算速度
+        velocity = 0.0
+
+    return velocity
 
 
 # ============================================================================
@@ -285,9 +450,10 @@ def save_features_to_db(features_list: List[Dict[str, Any]]) -> int:
                         closing_home, closing_draw, closing_away,
                         high_24h_home, high_24h_draw, high_24h_away,
                         low_24h_home, low_24h_draw, low_24h_away,
+                        payout_ratio, movement_velocity,
                         updated_at
                     ) VALUES (
-                        %s, %s, %s, %s,  %s, %s, %s,  %s, %s, %s,  %s, %s, %s,  CURRENT_TIMESTAMP
+                        %s, %s, %s, %s,  %s, %s, %s,  %s, %s, %s,  %s, %s, %s,  %s, %s, CURRENT_TIMESTAMP
                     )
                     ON CONFLICT (match_id) DO UPDATE SET
                         opening_home = EXCLUDED.opening_home,
@@ -302,6 +468,8 @@ def save_features_to_db(features_list: List[Dict[str, Any]]) -> int:
                         low_24h_home = EXCLUDED.low_24h_home,
                         low_24h_draw = EXCLUDED.low_24h_draw,
                         low_24h_away = EXCLUDED.low_24h_away,
+                        payout_ratio = EXCLUDED.payout_ratio,
+                        movement_velocity = EXCLUDED.movement_velocity,
                         updated_at = CURRENT_TIMESTAMP
                 """, (
                     match_id,
@@ -309,6 +477,8 @@ def save_features_to_db(features_list: List[Dict[str, Any]]) -> int:
                     features.get("closing_home"), features.get("closing_draw"), features.get("closing_away"),
                     features.get("high_24h_home"), features.get("high_24h_draw"), features.get("high_24h_away"),
                     features.get("low_24h_home"), features.get("low_24h_draw"), features.get("low_24h_away"),
+                    features.get("payout_ratio"),
+                    features.get("movement_velocity", 0.0),
                 ))
 
                 inserted_count += 1
