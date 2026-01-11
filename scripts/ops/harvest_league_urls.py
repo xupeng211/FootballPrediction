@@ -290,11 +290,146 @@ def team_name_to_slug(team_name: str) -> str:
     return slug if slug else team_name.lower()
 
 
+# ============================================================================
+# V33.3: 动态别名系统 - 自进化队名匹配
+# ============================================================================
+
+def get_team_aliases_from_db(league_name: str = None) -> Dict[str, Tuple[str, float]]:
+    """V33.3: 从数据库获取队名别名映射
+
+    Args:
+        league_name: 联赛名称（可选，用于过滤）
+
+    Returns:
+        {alias_slug: (canonical_name, confidence)} 字典
+    """
+    try:
+        settings = get_settings()
+        conn = psycopg2.connect(
+            host=settings.database.host,
+            port=settings.database.port,
+            database=settings.database.name,
+            user=settings.database.user,
+            password=settings.database.password.get_secret_value(),
+            cursor_factory=None
+        )
+
+        cursor = conn.cursor()
+        if league_name:
+            cursor.execute("""
+                SELECT alias_slug, canonical_name, confidence
+                FROM team_aliases
+                WHERE league_name = %s OR league_name IS NULL
+                ORDER BY confidence DESC, usage_count DESC
+            """, (league_name,))
+        else:
+            cursor.execute("""
+                SELECT alias_slug, canonical_name, confidence
+                FROM team_aliases
+                ORDER BY confidence DESC, usage_count DESC
+            """)
+
+        aliases = {}
+        for row in cursor.fetchall():
+            alias_slug, canonical_name, confidence = row
+            aliases[alias_slug] = (canonical_name, confidence)
+
+        cursor.close()
+        conn.close()
+        return aliases
+
+    except Exception as e:
+        logger.warning(f"获取队名别名失败: {e}")
+        return {}
+
+
+def save_team_alias(
+    alias_slug: str,
+    canonical_name: str,
+    league_name: str,
+    alias_type: str = 'fuzzy',
+    confidence: float = 0.7
+) -> bool:
+    """V33.3: 保存新队名别名到数据库（自学习）
+
+    Args:
+        alias_slug: URL slug 别名
+        canonical_name: 标准队名
+        league_name: 联赛名称
+        alias_type: 别名类型
+        confidence: 置信度
+
+    Returns:
+        是否保存成功
+    """
+    try:
+        settings = get_settings()
+        conn = psycopg2.connect(
+            host=settings.database.host,
+            port=settings.database.port,
+            database=settings.database.name,
+            user=settings.database.user,
+            password=settings.database.password.get_secret_value(),
+            cursor_factory=None
+        )
+
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO team_aliases (alias_slug, canonical_name, league_name, alias_type, confidence)
+            VALUES (%s, %s, %s, %s, %s)
+            ON CONFLICT (alias_slug, league_name) DO UPDATE SET
+                confidence = GREATEST(team_aliases.confidence, EXCLUDED.confidence),
+                usage_count = team_aliases.usage_count + 1,
+                last_used_at = NOW()
+        """, (alias_slug, canonical_name, league_name, alias_type, confidence))
+
+        conn.commit()
+        cursor.close()
+        conn.close()
+        logger.info(f"✅ 自学习: 保存队名别名 {alias_slug} → {canonical_name}")
+        return True
+
+    except Exception as e:
+        logger.error(f"保存队名别名失败: {e}")
+        return False
+
+
+def update_alias_usage(alias_slug: str, league_name: str) -> bool:
+    """V33.3: 更新别名使用次数"""
+    try:
+        settings = get_settings()
+        conn = psycopg2.connect(
+            host=settings.database.host,
+            port=settings.database.port,
+            database=settings.database.name,
+            user=settings.database.user,
+            password=settings.database.password.get_secret_value(),
+            cursor_factory=None
+        )
+
+        cursor = conn.cursor()
+        cursor.execute("""
+            UPDATE team_aliases
+            SET usage_count = usage_count + 1,
+                last_used_at = NOW()
+            WHERE alias_slug = %s AND league_name = %s
+        """, (alias_slug, league_name))
+
+        conn.commit()
+        cursor.close()
+        conn.close()
+        return True
+
+    except Exception as e:
+        logger.warning(f"更新别名使用失败: {e}")
+        return False
+
+
 def parse_match_url_with_league_teams(
     url: str,
     league_name: str
 ) -> Tuple[str, str, float]:
-    """V32.2: 智能解析比赛 URL，支持多词队名
+    """V33.3: 智能解析比赛 URL，支持动态别名学习
 
     Args:
         url: OddsPortal 比赛 URL
@@ -304,19 +439,15 @@ def parse_match_url_with_league_teams(
         (home_team, away_team, confidence) 元组
         confidence: 匹配置信度 (0-1)
 
-    算法:
-    1. 从 URL 提取 slug 部分 (如 "real-sociedad-almeria")
-    2. 获取联赛的所有合法队名
-    3. 将队名转换为 slug 格式
-    4. 使用 greedy matching 从左到右匹配队名
-    5. 返回匹配到的队名和置信度
+    V33.3 算法（自进化）：
+    1. 从数据库查询已有别名映射（最高优先级）
+    2. 将队名转换为 slug 格式
+    3. 使用 greedy matching 从左到右匹配队名
+    4. 模糊匹配成功后，自动保存到 team_aliases 表（学习）
+    5. 更新别名使用统计
     """
-    # 获取联赛队名
-    team_slug_map = get_league_team_names(league_name)
-
-    if not team_slug_map:
-        # 回退到简单解析
-        return parse_match_url_simple(url)
+    # V33.3 Step 1: 从数据库获取已有别名（最高优先级）
+    db_aliases = get_team_aliases_from_db(league_name)
 
     # 提取 URL slug
     url_parts = url.strip('/').split('/')
@@ -337,6 +468,27 @@ def parse_match_url_with_league_teams(
     best_away = ""
     best_score = 0.0
 
+    # 获取联赛队名（用于模糊匹配回退）
+    team_slug_map = get_league_team_names(league_name) if not db_aliases else {}
+
+    # 合并数据库别名和生成的 slug 映射
+    # 数据库别名格式: {alias_slug: (canonical_name, confidence)}
+    # 生成的 slug 映射格式: {canonical_name: alias_slug}
+    all_team_slugs = {}
+
+    # 添加数据库别名（最高优先级）
+    for alias_slug, (canonical_name, conf) in db_aliases.items():
+        all_team_slugs[canonical_name] = alias_slug
+
+    # 添加生成的 slug（用于模糊匹配）
+    for team_name, team_slug in team_slug_map.items():
+        if team_name not in all_team_slugs:
+            all_team_slugs[team_name] = team_slug
+
+    if not all_team_slugs:
+        # 回退到简单解析
+        return parse_match_url_simple(url)
+
     # 尝试所有可能的分割点
     for split_point in range(1, len(slug_parts)):
         home_slug = '-'.join(slug_parts[:split_point])
@@ -345,32 +497,54 @@ def parse_match_url_with_league_teams(
         # 匹配主队
         home_match = None
         home_score = 0.0
-        for team_name, team_slug in team_slug_map.items():
-            # 完全匹配
-            if home_slug == team_slug:
-                home_match = team_name
-                home_score = 1.0
-                break
-            # 模糊匹配
-            score = fuzz.ratio(home_slug, team_slug) / 100.0
-            if score > home_score and score > 0.7:  # 70% 相似度阈值
-                home_match = team_name
-                home_score = score
+        home_is_from_db = False
+
+        # 优先检查数据库别名
+        if db_aliases:
+            if home_slug in db_aliases:
+                home_match, home_score = db_aliases[home_slug]
+                home_is_from_db = True
+                update_alias_usage(home_slug, league_name)
+
+        # 如果数据库中没找到，使用模糊匹配
+        if not home_match:
+            for team_name, team_slug in all_team_slugs.items():
+                # 完全匹配
+                if home_slug == team_slug:
+                    home_match = team_name
+                    home_score = 1.0
+                    break
+                # 模糊匹配
+                score = fuzz.ratio(home_slug, team_slug) / 100.0
+                if score > home_score and score > 0.7:  # 70% 相似度阈值
+                    home_match = team_name
+                    home_score = score
 
         # 匹配客队
         away_match = None
         away_score = 0.0
-        for team_name, team_slug in team_slug_map.items():
-            # 完全匹配
-            if away_slug == team_slug:
-                away_match = team_name
-                away_score = 1.0
-                break
-            # 模糊匹配
-            score = fuzz.ratio(away_slug, team_slug) / 100.0
-            if score > away_score and score > 0.7:  # 70% 相似度阈值
-                away_match = team_name
-                away_score = score
+        away_is_from_db = False
+
+        # 优先检查数据库别名
+        if db_aliases:
+            if away_slug in db_aliases:
+                away_match, away_score = db_aliases[away_slug]
+                away_is_from_db = True
+                update_alias_usage(away_slug, league_name)
+
+        # 如果数据库中没找到，使用模糊匹配
+        if not away_match:
+            for team_name, team_slug in all_team_slugs.items():
+                # 完全匹配
+                if away_slug == team_slug:
+                    away_match = team_name
+                    away_score = 1.0
+                    break
+                # 模糊匹配
+                score = fuzz.ratio(away_slug, team_slug) / 100.0
+                if score > away_score and score > 0.7:  # 70% 相似度阈值
+                    away_match = team_name
+                    away_score = score
 
         # 计算总置信度
         if home_match and away_match:
@@ -379,6 +553,14 @@ def parse_match_url_with_league_teams(
                 best_score = total_score
                 best_home = home_match
                 best_away = away_match
+
+                # V33.3 自学习：模糊匹配成功后，自动保存到数据库
+                # 只有当高置信度匹配（> 0.85）且不是来自数据库时才保存
+                if total_score > 0.85:
+                    if not home_is_from_db and home_slug not in db_aliases:
+                        save_team_alias(home_slug, home_match, league_name, 'fuzzy', home_score)
+                    if not away_is_from_db and away_slug not in db_aliases:
+                        save_team_alias(away_slug, away_match, league_name, 'fuzzy', away_score)
 
     if best_home and best_away:
         return (best_home, best_away, best_score)
