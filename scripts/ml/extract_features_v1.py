@@ -53,8 +53,14 @@ logger = logging.getLogger(__name__)
 # ============================================================================
 
 def get_db_connection():
-    """获取数据库连接"""
+    """V36.0: 获取数据库连接（含显式验证日志）"""
     settings = get_settings()
+
+    # V36.0: 显式验证数据库连接参数
+    db_name = settings.database.name
+    db_host = settings.database.host
+    print(f"[DB_CONN] 当前连接数据库: {db_name} @ {db_host}")
+
     return psycopg2.connect(
         host=settings.database.host,
         port=settings.database.port,
