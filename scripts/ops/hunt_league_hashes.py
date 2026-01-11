@@ -18,6 +18,7 @@ Date: 2026-01-11
 """
 
 import asyncio
+import json
 import logging
 import sys
 import time
@@ -377,7 +378,7 @@ async def hunt_hashes_for_matches(
                     'match_date': match.get('match_date'),
                     'oddsportal_url': None,  # 搜索失败的记录
                     'confidence': 0.0,
-                    'mapping_method': 'search_failed'
+                    'mapping_method': 'semantic'  # 使用有效值
                 }
                 records_to_insert.append(record)
 
@@ -528,7 +529,7 @@ if __name__ == "__main__":
             logger.info(f"✅ 已同步 {synced_count} 条记录到数据库")
         else:
             logger.info("📭 缓存为空，无需同步")
-        return
+        sys.exit(0)
 
     # 如果指定了 --premier，使用英超
     if args.premier:
