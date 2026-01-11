@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-V29.0 Feature Extraction - 特征炼金厂 (Feature Alchemy)
+V33.3 Feature Extraction - 特征炼金厂 (Feature Alchemy)
 
 功能：从数据库提取赔率特征，处理残缺 JSON
 
@@ -404,11 +404,13 @@ def main():
     )
 
     if args.watch:
-        # V29.3 炼金触发器模式
-        logger.info("🔥 V29.3 炼金触发器启动")
+        # V33.3 炼金触发器模式（静默模式优化）
+        logger.info("🔥 V33.3 炼金触发器启动")
         logger.info(f"扫描间隔: {args.interval} 秒 ({args.interval // 60} 分钟)")
 
         poll_count = 0
+        last_odds_count = None  # V33.3: 跟踪上次 odds 表记录数
+
         while True:
             poll_count += 1
             logger.info(f"")
@@ -421,38 +423,56 @@ def main():
                 conn = get_db_connection()
                 try:
                     with conn.cursor() as cur:
-                        # 统计差距
-                        cur.execute("""
-                            SELECT
-                                (SELECT COUNT(*) FROM v_matches_clean) as total_matches,
-                                (SELECT COUNT(*) FROM match_features) as extracted_features,
-                                (SELECT COUNT(*) FROM odds) as total_odds
-                        """)
+                        # V33.3: 首先检查 odds 表是否有新数据
+                        cur.execute("SELECT COUNT(*) as total_odds FROM odds")
                         row = cur.fetchone()
-                        total_matches = row['total_matches'] if row else 0
-                        extracted_features = row['extracted_features'] if row else 0
-                        total_odds = row['total_odds'] if row else 0
+                        current_odds_count = row['total_odds'] if row else 0
 
-                        gap = total_matches - extracted_features
-
-                        logger.info(f"📊 数据状态:")
-                        logger.info(f"   v_matches_clean: {total_matches}")
-                        logger.info(f"   match_features: {extracted_features}")
-                        logger.info(f"   odds 表: {total_odds}")
-                        logger.info(f"   差距: {gap} 条待提取")
-
-                        if gap > 0:
-                            logger.info(f"✅ 检测到 {gap} 条新数据，开始提取...")
-
-                            # 执行增量提取
-                            results = process_features_pipeline(limit=args.limit, incremental=True)
-
-                            if results:
-                                logger.info(f"🎉 本次提取完成: {len(results)} 条特征")
-                            else:
-                                logger.warning(f"⚠️ 未提取到特征（可能 odds 表为空）")
+                        # V33.3 静默模式：如果 odds 表没有新数据，跳过扫描
+                        if last_odds_count is not None and current_odds_count == last_odds_count:
+                            logger.info(f"🤫 静默模式: odds 表无新数据 ({current_odds_count} 条)")
+                            logger.info(f"⏭️  跳过本次扫描，节省资源")
                         else:
-                            logger.info(f"✅ 数据已对齐，无需提取")
+                            # odds 表有新数据或首次扫描，执行完整检查
+                            if last_odds_count is not None:
+                                new_odds = current_odds_count - last_odds_count
+                                logger.info(f"🆕 检测到 {new_odds} 条新 odds 数据")
+                            else:
+                                logger.info(f"🔄 首次扫描，当前 odds: {current_odds_count} 条")
+
+                            # 统计差距
+                            cur.execute("""
+                                SELECT
+                                    (SELECT COUNT(*) FROM v_matches_clean) as total_matches,
+                                    (SELECT COUNT(*) FROM match_features) as extracted_features
+                            """)
+                            row = cur.fetchone()
+                            total_matches = row['total_matches'] if row else 0
+                            extracted_features = row['extracted_features'] if row else 0
+
+                            gap = total_matches - extracted_features
+
+                            logger.info(f"📊 数据状态:")
+                            logger.info(f"   v_matches_clean: {total_matches}")
+                            logger.info(f"   match_features: {extracted_features}")
+                            logger.info(f"   odds 表: {current_odds_count}")
+                            logger.info(f"   差距: {gap} 条待提取")
+
+                            if gap > 0:
+                                logger.info(f"✅ 检测到 {gap} 条新数据，开始提取...")
+
+                                # 执行增量提取
+                                results = process_features_pipeline(limit=args.limit, incremental=True)
+
+                                if results:
+                                    logger.info(f"🎉 本次提取完成: {len(results)} 条特征")
+                                else:
+                                    logger.warning(f"⚠️ 未提取到特征（可能 odds 表为空）")
+                            else:
+                                logger.info(f"✅ 数据已齐，无需提取")
+
+                            # 更新上次 odds 记录数
+                            last_odds_count = current_odds_count
 
                 finally:
                     conn.close()
