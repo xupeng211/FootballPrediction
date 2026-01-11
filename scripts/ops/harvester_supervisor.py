@@ -83,7 +83,7 @@ logger.propagate = False
 # ============================================================================
 
 HARVESTER_SCRIPT = "scripts/ops/harvest_pinnacle_concurrent.py"
-HARVESTER_ARGS = ["--workers", "8", "--limit", "50"]  # V32.0: 8进程全速模式
+HARVESTER_ARGS = ["--workers", "8", "--limit", "500"]  # V33.1: 8进程全速模式 + 500 限制
 CHECK_INTERVAL = 60  # 检查间隔（秒）
 LOG_LINES_TO_ANALYZE = 50  # 分析日志行数
 CRASH_SUMMARY_FILE = "logs/crash_summary.json"
