@@ -29,7 +29,7 @@ DB_USER="${DB_USER:-football_user}"
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 BACKUP_FILE="$BACKUP_DIR/football_db_${TIMESTAMP}.sql"
 COMPRESS_BACKUP="${COMPRESS_BACKUP:-true}"
-RETENTION_DAYS="${RETENTION_DAYS:-7}"
+RETENTION_DAYS="${RETENTION_DAYS:-15}"  # V36.1: 默认保留 15 天，防止硬盘被撑爆
 
 # ============================================================================
 # 辅助函数
