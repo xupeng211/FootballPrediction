@@ -40,6 +40,7 @@ import logging
 import os
 import random
 import re
+import sys
 from typing import ClassVar
 
 from bs4 import BeautifulSoup
@@ -58,6 +59,97 @@ from src.utils.text_processor import TeamNameNormalizer, YouthTeamDetector
 
 # 配置日志
 logger = logging.getLogger(__name__)
+
+
+# ============================================================================
+# V41.62: 反爬对抗配置 - 隐身逻辑回归
+# ============================================================================
+
+# User-Agent 轮换池（50+ 量，覆盖主流浏览器和版本）
+USER_AGENTS = [
+    # Chrome on Windows
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 11.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    # Firefox on Windows
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:120.0) Gecko/20100101 Firefox/120.0",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:119.0) Gecko/20100101 Firefox/119.0",
+    # Edge on Windows
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36 Edg/119.0.0.0",
+    # Chrome on macOS
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    # Safari on macOS
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.1 Safari/605.1.15",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_1) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15",
+    # Firefox on macOS
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:121.0) Gecko/20100101 Firefox/121.0",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 14.1; rv:120.0) Gecko/20100101 Firefox/120.0",
+    # Chrome on Linux
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (X11; Ubuntu; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    # Firefox on Linux
+    "Mozilla/5.0 (X11; Linux x86_64; rv:121.0) Gecko/20100101 Firefox/121.0",
+    "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:120.0) Gecko/20100101 Firefox/120.0",
+    # Additional Windows variants
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:118.0) Gecko/20100101 Firefox/118.0",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:117.0) Gecko/20100101 Firefox/117.0",
+    # Additional macOS variants
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Safari/605.1.15",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    # Additional Edge variants
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36 Edg/118.0.0.0",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36 Edg/117.0.0.0",
+    # Additional Safari variants
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.5 Safari/605.1.15",
+    "Mozilla/5.0 (iPhone; CPU iPhone OS 17_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.1 Mobile/15E148 Safari/604.1",
+    # Additional Linux variants
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (X11; Fedora; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (X11; Linux x86_64; rv:119.0) Gecko/20100101 Firefox/119.0",
+    # Chrome variations
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36",
+    # Firefox variations
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:116.0) Gecko/20100101 Firefox/116.0",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:115.0) Gecko/20100101 Firefox/115.0",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:121.0) Gecko/20100101 Firefox/121.0",
+    "Mozilla/5.0 (X11; Linux x86_64; rv:118.0) Gecko/20100101 Firefox/118.0",
+    # Edge variations
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36 Edg/116.0.0.0",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36 Edg/115.0.0.0",
+    # Safari mobile
+    "Mozilla/5.0 (iPad; CPU OS 17_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.1 Mobile/15E148 Safari/604.1",
+    # Mix of other versions
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:114.0) Gecko/20100101 Firefox/114.0",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:113.0) Gecko/20100101 Firefox/113.0",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36",
+]
+
+# 视口尺寸池（随机化窗口大小）
+VIEWPORT_SIZES = [
+    {"width": 1920, "height": 1080},
+    {"width": 1366, "height": 768},
+    {"width": 1536, "height": 864},
+    {"width": 1440, "height": 900},
+    {"width": 1680, "height": 1050},
+    {"width": 1600, "height": 900},
+    {"width": 1280, "height": 720},
+    {"width": 1024, "height": 768},
+]
 
 
 # ============================================================================
@@ -118,8 +210,8 @@ class HashAlignmentService:
         re.compile(r"/football/[^/]+/[^/]+/([^/]+)-([^/]+)-([A-Za-z0-9]{8})/"),
     ]
 
-    # V41.43: 隧道轮换配置 (10 端口隔离)
-    PROXY_PORTS: ClassVar[list[int]] = list(range(7890, 7900))  # 7890-7899
+    # V41.63: 隧道轮换配置 (6 端口物理对齐 - 严格匹配 Clash 脚本)
+    PROXY_PORTS: ClassVar[list[int]] = [7891, 7892, 7893, 7894, 7895, 7896]  # 6 个真实物理 IP (与 Clash 配置一致)
 
     # V41.50: WSL2 代理主机配置
     WSL2_PROXY_HOST: ClassVar[str] = "172.25.16.1"  # WSL2 宿主机默认 IP
@@ -1076,19 +1168,42 @@ class HashAlignmentService:
                 )
 
                 # V41.60: 使用 Playwright 的 proxy 参数（TDD 验证通过）
+                # V41.62: 添加指纹掩护 - ignoreDefaultArgs 隐藏自动化标记
                 browser = await p.chromium.launch(
                     headless=headless,
                     proxy={
                         "server": f"http://{self.get_proxy_host()}:{proxy_port}"
-                    }
+                    },
+                    args=[
+                        "--disable-blink-features=AutomationControlled",
+                        "--disable-dev-shm-usage",
+                        "--no-sandbox",
+                        "--disable-setuid-sandbox",
+                        "--disable-web-security",
+                        "--disable-features=IsolateOrigins,site-per-process"
+                    ],
+                    ignore_default_args=["--enable-automation"]
                 )
 
+                # V41.62: User-Agent 轮换 + 随机视口尺寸
+                random_ua = random.choice(USER_AGENTS)
+                random_viewport = random.choice(VIEWPORT_SIZES)
+
                 context = await browser.new_context(
-                    user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-                    viewport={"width": 1920, "height": 1080},
+                    user_agent=random_ua,
+                    viewport=random_viewport,
                     # V41.60: 添加真实浏览器特征（TDD 验证通过）
-                    locale="en-US",
-                    timezone_id="Europe/London"
+                    locale=random.choice(["en-US", "en-GB", "en-CA"]),
+                    timezone_id=random.choice([
+                        "Europe/London",
+                        "Europe/Paris",
+                        "Europe/Berlin",
+                        "America/New_York",
+                        "America/Los_Angeles"
+                    ]),
+                    # V41.62: 额外的浏览器指纹伪装
+                    device_scale_factor=random.choice([1.0, 1.25, 1.5]),
+                    has_touch=random.choice([True, False, False])  # 33% 触摸屏
                 )
 
                 page = await context.new_page()
@@ -1096,8 +1211,12 @@ class HashAlignmentService:
                 try:
                     # 访问联赛结果页面
                     await page.goto(base_url, wait_until="networkidle", timeout=30000)
-                    # V41.60: 增加等待时间确保 Vue 应用完全渲染（TDD 验证通过）
-                    await asyncio.sleep(5)
+                    # V41.64: 随机延迟 Jitter (5-9秒) - 强化反爬对抗
+                    initial_delay = random.uniform(5, 9)
+                    await asyncio.sleep(initial_delay)
+
+                    # V41.65: 初始化熔断机制计数器
+                    empty_page_count = 0
 
                     for page_num in range(1, max_pages + 1):
                         logger.info(f"📖 正在处理第 {page_num} 页...")
@@ -1117,6 +1236,26 @@ class HashAlignmentService:
                         stats["pages_visited"] += 1
 
                         logger.info(f"   提取到 {len(matches)} 场比赛")
+
+                        # V41.65: 熔断机制 - 检测 Shadow Ban
+                        if len(matches) == 0:
+                            try:
+                                page_title = await page.title()
+                                if "Results" in page_title:
+                                    empty_page_count += 1
+                                    logger.warning(f"⚠️  检测到空页面（标题包含 'Results'），计数器: {empty_page_count}/3")
+
+                                    if empty_page_count >= 3:
+                                        logger.error("🚨 触发 IP 保护熔断：检测到 Shadow Ban")
+                                        logger.error("   症状：连续 3 页提取到 0 场比赛，但页面标题正常")
+                                        logger.error("   建议：等待 6-24 小时冷却期，或更换代理 IP")
+                                        logger.error("   正在强制退出以避免 IP 被永久封禁...")
+                                        sys.exit(1)
+                            except Exception as title_e:
+                                logger.warning(f"⚠️  无法获取页面标题: {title_e}")
+                        else:
+                            # 重置计数器（检测到正常数据）
+                            empty_page_count = 0
 
                         # 入库
                         for match_info in matches:
@@ -1157,7 +1296,9 @@ class HashAlignmentService:
 
                         try:
                             await page.goto(next_page_url, wait_until="networkidle", timeout=30000)
-                            await asyncio.sleep(5)  # V41.60: 等待新页面加载
+                            # V41.62: 随机延迟 Jitter (4-8秒)
+                            page_delay = random.uniform(4, 8)
+                            await asyncio.sleep(page_delay)
 
                             # 检查是否有内容（如果没有 hash 链接，说明到了最后一页）
                             check_hash = await self.extract_matches_from_dom(page)
@@ -1180,6 +1321,12 @@ class HashAlignmentService:
                             except Exception as click_e:
                                 logger.warning(f"⚠️  点击翻页也失败: {click_e}")
                                 break
+
+                    # V41.64: 收割冷却期 - 模拟用户自然节奏（强化版）
+                    if stats["total_harvested"] > 0:
+                        cooldown = random.uniform(60, 120)
+                        logger.info(f"💤 收割冷却期: {cooldown:.1f} 秒（模拟用户自然节奏）")
+                        await asyncio.sleep(cooldown)
 
                 except Exception as e:
                     logger.error(f"❌ 收割过程出错: {e}")
