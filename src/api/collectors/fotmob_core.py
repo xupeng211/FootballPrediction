@@ -1126,7 +1126,7 @@ class FotMobCoreCollector:
 
                     return json.dumps(clean_nan(obj), default=default)
 
-                # V41.41: 动态标签推断 - 修复 Historical League Bug
+                # V41.54: Season 标签强制断言和自动推断加固
                 # 优先使用 league_id + match_time 推断准确的 league_name 和 season
                 if league_id is not None:
                     inferred_league, inferred_season = self.infer_league_and_season(
@@ -1137,13 +1137,35 @@ class FotMobCoreCollector:
                     if season is None:
                         season = inferred_season
                     logger.info(
-                        f"✅ V41.41 动态标签: league_id={league_id} -> "
+                        f"✅ V41.54 动态标签: league_id={league_id} -> "
                         f"league='{extracted_league_name}', season='{season}'"
                     )
                 else:
                     # 向后兼容：没有 league_id 时使用原有逻辑
                     extracted_league_name = match_info.get("league_name", "Premier League")
+
+                    # V41.54: 新增 fallback 推断 - 没有 league_id 时根据 match_date 推断 season
+                    if season is None:
+                        match_date = match_info.get("match_date", "")
+                        if match_date:
+                            inferred_season = self._determine_season(match_date)
+                            season = inferred_season
+                            logger.info(
+                                f"✅ V41.54 fallback 推断: match_date='{match_date}' -> season='{season}'"
+                            )
                     logger.debug(f"⚠️  无 league_id，使用默认 league_name: {extracted_league_name}")
+
+                # V41.54: Season 标签强制断言 - 确保所有数据自带"户口本"
+                if not season or season.strip() == "":
+                    raise ValueError(
+                        f"🚨 V41.54 Season 标签强制检查失败！\n"
+                        f"   match_id={match_info.get('match_id')}\n"
+                        f"   match_date={match_info.get('match_date')}\n"
+                        f"   league_id={league_id}\n"
+                        f"   extracted_league={extracted_league_name}\n"
+                        f"   season='{season}'\n"
+                        f"   原因: Season 标签是必填字段，不能为空"
+                    )
 
                 params = (
                     match_info["match_id"],
@@ -2006,6 +2028,18 @@ class FotMobCoreCollector:
             with conn.cursor() as cur:
                 for i, match in enumerate(matches, 1):
                     try:
+                        # V41.54: Season 标签强制断言 - 确保 L1 数据也有完整"户口本"
+                        season = match.get("season")
+                        if not season or (isinstance(season, str) and season.strip() == ""):
+                            raise ValueError(
+                                f"🚨 V41.54 L1 Season 标签强制检查失败！\n"
+                                f"   match_id={match.get('match_id')}\n"
+                                f"   match_date={match.get('match_date')}\n"
+                                f"   league_id={match.get('league_id')}\n"
+                                f"   season='{season}'\n"
+                                f"   原因: Season 标签是必填字段，不能为空"
+                            )
+
                         # V26.7 DBRE: 轻量级 UPSERT - 包含完整状态信息
                         # 计算比赛结果 (actual_result)
                         home_score = match.get("home_score")
