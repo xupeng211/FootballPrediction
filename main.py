@@ -39,26 +39,26 @@ import argparse
 import asyncio
 import logging
 import os
-import sys
-from datetime import datetime
 from pathlib import Path
+import sys
 
 # V144.2: 加载.env文件并覆盖环境变量（必须在import config_unified之前）
 from dotenv import load_dotenv
+
 load_dotenv(override=True)
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent))
 
-from src.config_unified import get_settings
 from src.api.services.harvester_service import HarvesterService
+from src.config_unified import get_settings
 
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
-    format='[%(asctime)s] [%(levelname)s] %(message)s',
+    format="[%(asctime)s] [%(levelname)s] %(message)s",
     handlers=[
-        logging.FileHandler('logs/v144_7_main.log'),
+        logging.FileHandler("logs/v144_7_main.log"),
         logging.StreamHandler()
     ]
 )
@@ -130,24 +130,24 @@ def check_environment() -> dict[str, str]:
                 logger.info(f"  ✓ 代理 (WSL2 自动探测): {proxy_url}")
         else:
             info["proxy"] = "None"
-            logger.info(f"  ℹ️ 代理: 未配置")
+            logger.info("  ℹ️ 代理: 未配置")
     except Exception as e:
         info["proxy"] = "error"
         logger.warning(f"  ⚠️ 代理检测失败: {e}")
 
     # Check WSL2 environment
     if os.path.exists("/proc/version"):
-        with open("/proc/version", "r") as f:
+        with open("/proc/version") as f:
             version_content = f.read().lower()
             is_wsl = "microsoft" in version_content
             info["is_wsl"] = str(is_wsl)
             if is_wsl:
-                logger.info(f"  ✓ WSL2 环境: 是")
+                logger.info("  ✓ WSL2 环境: 是")
             else:
-                logger.info(f"  ℹ️ WSL2 环境: 否")
+                logger.info("  ℹ️ WSL2 环境: 否")
     else:
         info["is_wsl"] = "False"
-        logger.info(f"  ℹ️ WSL2 环境: 无法检测")
+        logger.info("  ℹ️ WSL2 环境: 无法检测")
 
     # Check log directory
     log_dir = Path("logs")
@@ -192,7 +192,7 @@ async def check_ip_address(fail_fast: bool = False) -> str:
             proxy_url = proxy_config["server"]
             logger.info(f"  📡 使用代理: {proxy_url}")
         else:
-            logger.info(f"  ℹ️ 直连模式 (未发现代理)")
+            logger.info("  ℹ️ 直连模式 (未发现代理)")
     except Exception as e:
         logger.warning(f"  ⚠️ 代理探测跳过: {e}")
 
@@ -281,8 +281,9 @@ async def run_fotmob_mode(args) -> int:
 
     # Import FotMob core collector
     try:
-        from src.api.collectors.fotmob_core import FotMobCoreCollector
         import psycopg2
+
+        from src.api.collectors.fotmob_core import FotMobCoreCollector
 
         # V144.8: 初始化 FotMob 采集器（已集成 Ghost Protocol V144.2）
         collector = FotMobCoreCollector()
@@ -385,10 +386,143 @@ async def run_fotmob_mode(args) -> int:
 
     except ImportError as e:
         logger.error(f"❌ FotMob 模块导入失败: {e}")
-        logger.error(f"   请确保 src/api/collectors/fotmob_core.py 存在")
+        logger.error("   请确保 src/api/collectors/fotmob_core.py 存在")
         return 1
     except Exception as e:
         logger.error(f"❌ FotMob 采集失败: {e}")
+        return 1
+
+
+async def run_align_hashes_action(args) -> int:
+    """V41.41: Run hash alignment action.
+
+    Args:
+        args: Parsed command-line arguments
+
+    Returns:
+        Exit code (0 for success, non-zero for failure)
+    """
+    logger.info("🎯 V41.41 启动哈希对齐服务")
+    print("")
+
+    try:
+        import psycopg2
+
+        from src.services.hash_alignment_service import create_hash_alignment_service
+
+        # 获取配置
+        settings = get_settings()
+        season = args.season if args.season else "23/24"
+
+        logger.info(f"📊 目标赛季: {season}")
+        logger.info(f"📊 数据库: {settings.database.host}:{settings.database.port}/{settings.database.name}")
+        print("")
+
+        # 创建哈希对齐服务
+        service = create_hash_alignment_service(
+            db_host=settings.database.host,
+            db_name=settings.database.name,
+            db_user=settings.database.user,
+            db_password=settings.database.password.get_secret_value(),
+            season=season
+        )
+
+        # 获取缺失的比赛
+        logger.info("🔍 扫描缺失的比赛哈希...")
+        print("")
+
+        # V41.42: 从 YAML 动态加载联赛配置（彻底去硬编码）
+        import yaml
+        from pathlib import Path
+
+        config_path = Path("config/leagues.yaml")
+        if not config_path.exists():
+            logger.error(f"❌ 配置文件不存在: {config_path}")
+            return 1
+
+        with open(config_path, "r", encoding="utf-8") as f:
+            yaml_config = yaml.safe_load(f)
+
+        # 提取所有 tier: 1 的联赛
+        leagues = []
+        for league_key, league_config in yaml_config.get("leagues", {}).items():
+            if league_config.get("tier") == 1:
+                league_name = league_config.get("name")
+                if league_name:
+                    leagues.append(league_name)
+
+        if not leagues:
+            logger.warning("⚠️  未找到任何 tier: 1 的联赛")
+            return 1
+
+        logger.info(f"📊 从 YAML 加载了 {len(leagues)} 个顶级联赛: {', '.join(leagues)}")
+
+        total_missing = 0
+        missing_by_league = {}
+
+        for league in leagues:
+            missing = service.get_missing_matches(league)
+            count = len(missing)
+            missing_by_league[league] = count
+            total_missing += count
+
+            if count > 0:
+                logger.info(f"  - {league}: {count} 场缺失")
+
+        print("")
+        logger.info(f"📊 总计缺失: {total_missing} 场比赛")
+        print("")
+
+        if total_missing == 0:
+            logger.info("✅ 所有比赛哈希已对齐，无需处理")
+            return 0
+
+        # V41.42: 检查数据对齐准备情况
+        ready_for_alignment = 0
+        for league in leagues:
+            # 查询该联赛的总比赛数
+            query = """
+                SELECT COUNT(*) as total
+                FROM matches m
+                LEFT JOIN matches_mapping mm ON m.match_id = mm.fotmob_id
+                WHERE m.league_name = %s
+                  AND m.season = %s
+            """
+            with service.conn.cursor() as cur:
+                cur.execute(query, (league, season))
+                result = cur.fetchone()
+                if result:
+                    total = result[0]
+                    missing = missing_by_league.get(league, 0)
+                    coverage = (total - missing) / total * 100 if total > 0 else 0
+                    logger.info(f"  - {league}: {total - missing}/{total} 场已对齐 ({coverage:.1f}%)")
+
+                    if total > 0:
+                        ready_for_alignment += (total - missing)
+
+        logger.info("")
+        logger.info(f"🎯 数据大复活统计:")
+        logger.info(f"  - 准备好进行哈希对齐的比赛: {ready_for_alignment} 场")
+        logger.info(f"  - 缺失哈希需要补全的比赛: {total_missing} 场")
+        print("")
+
+        logger.info("⚠️  哈希对齐功能需要配合 DOM 收割器使用")
+        logger.info("📖 请参考以下命令:")
+        logger.info('   python scripts/ops/v40_22_improved_harvester.py --leagues "La Liga" "Ligue 1"')
+        logger.info("   python scripts/ops/v40_24_import_fixed.py --source logs/v40_22_improved_results.json")
+        print("")
+        logger.info("🎯 V41.42 哈希对齐服务扫描完成 (配置驱动版)")
+
+        return 0
+
+    except ImportError as e:
+        logger.error(f"❌ 模块导入失败: {e}")
+        logger.error("   请确保 src/services/hash_alignment_service.py 存在")
+        return 1
+    except Exception as e:
+        logger.error(f"❌ 哈希对齐失败: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
         return 1
 
 
@@ -410,7 +544,7 @@ async def run_check_mode(args) -> int:
         import check_data_quality
 
         # Run the check
-        result = await check_data_quality.main() if hasattr(check_data_quality, 'main') else 0
+        result = await check_data_quality.main() if hasattr(check_data_quality, "main") else 0
         return result if isinstance(result, int) else 0
     except ImportError:
         logger.warning("⚠️  check_data_quality.py 未找到，跳过数据质量检查")
@@ -478,13 +612,13 @@ Examples:
     parser.add_argument(
         "--league",
         type=str,
-        help="联赛名称 (例如: \"Premier League\")"
+        help='联赛名称 (例如: "Premier League")'
     )
 
     parser.add_argument(
         "--season",
         type=str,
-        help="赛季格式 (例如: \"23/24\")"
+        help='赛季格式 (例如: "23/24")'
     )
 
     parser.add_argument(
@@ -524,6 +658,14 @@ Examples:
         help="V142.7: 代理配置文件路径 (默认: proxies.txt，留空启用 WSL2 自动探测)"
     )
 
+    # V41.41: 新增 --action align-hashes 参数
+    parser.add_argument(
+        "--action",
+        type=str,
+        choices=["align-hashes"],
+        help="V41.41: 特殊操作 - align-hashes (哈希对齐服务)"
+    )
+
     return parser.parse_args()
 
 
@@ -546,6 +688,10 @@ async def main() -> int:
     logger.info(f"[V144.7] 🛡️ Unified Ghost Protocol initialized for {args.source}")
     print("")
 
+    # V41.41: 特殊操作路由（优先级高于数据源路由）
+    if args.action == "align-hashes":
+        return await run_align_hashes_action(args)
+
     # Environment pre-check
     if not args.skip_precheck:
         env_info = check_environment()
@@ -556,17 +702,14 @@ async def main() -> int:
     if args.source == "oddsportal":
         if args.mode == "check":
             return await run_check_mode(args)
-        else:
-            return await run_oddsportal_mode(args)
-    elif args.source == "fotmob":
+        return await run_oddsportal_mode(args)
+    if args.source == "fotmob":
         if args.mode == "check":
             # check 模式对 FotMob 也有效（数据质量检查）
             return await run_check_mode(args)
-        else:
-            return await run_fotmob_mode(args)
-    else:
-        logger.error(f"❌ 未知数据源: {args.source}")
-        return 1
+        return await run_fotmob_mode(args)
+    logger.error(f"❌ 未知数据源: {args.source}")
+    return 1
 
 
 if __name__ == "__main__":
