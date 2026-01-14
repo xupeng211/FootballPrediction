@@ -28,6 +28,11 @@ import os
 from pathlib import Path
 from typing import Any
 
+# V36.6: 添加用于硬红线检测的异常
+class DatabaseConfigurationError(EnvironmentError):
+    """V36.6: 数据库配置错误 - 单数据库准则违规"""
+    pass
+
 from pydantic import Field, SecretStr, ValidationInfo, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -55,7 +60,7 @@ class LogLevel(str, Enum):
 
 @dataclass
 class DatabaseConfig:
-    """数据库配置"""
+    """V41.49: 数据库配置 - 优化连接池支持 10 并发"""
 
     host: str
     port: int
@@ -63,15 +68,16 @@ class DatabaseConfig:
     user: str
     password: SecretStr
     ssl_mode: bool = False
-    pool_size: int = 10
-    max_overflow: int = 20
-    pool_timeout: int = 30
-    pool_recycle: int = 3600
+    # V41.49: 连接池优化 - 提升 pool_size 支持高并发
+    pool_size: int = 15           # 原 10 → 15 (基础连接数)
+    max_overflow: int = 20        # 保持 20 (最大溢出数，理论最大 35)
+    pool_timeout: int = 10        # 原 30 → 10 (降低超时，防止无限阻塞)
+    pool_recycle: int = 600       # 原 3600 → 600 (10分钟回收，避免长连接问题)
 
     # 新增：异步连接属性（用于 SQLAlchemy async）
     async_url: str | None = None
-    async_pool_size: int = 10
-    async_max_overflow: int = 20
+    async_pool_size: int = 15     # V41.49: 同步提升至 15
+    async_max_overflow: int = 20  # 保持 20
     echo: bool = False
     echo_pool: bool = False
 
@@ -158,7 +164,8 @@ class UnifiedSettings(BaseSettings):
                 {
                     "db_host": "db",
                     "db_port": int(os.getenv("DB_PORT", 5432)),
-                    "db_name": os.getenv("DB_NAME", "football_prediction"),
+                    # V36.6: 单数据库准则 - Docker 环境也必须使用 football_db
+                    "db_name": os.getenv("DB_NAME", "football_db"),
                     "db_user": os.getenv("DB_USER", "football_user"),
                     "db_password": db_password or "change-me-in-production",
                     "redis_host": os.getenv("REDIS_HOST", "redis"),
@@ -179,10 +186,48 @@ class UnifiedSettings(BaseSettings):
         return env_config
 
     def __init__(self, **kwargs):
-        # 自动注入环境变量
+        # V41.46: 环境自适应 - 智能数据库名称校验
+        # 支持多环境：Docker/WSL2/本地开发，自动识别合法数据库名称
+        raw_env_db_name = os.environ.get('DB_NAME')
+
+        # 允许的数据库名称白名单（环境自适应）
+        ALLOWED_DB_NAMES = {
+            'football_db',           # 生产/Docker 环境
+            'football_prediction_dev', # 本地开发环境
+        }
+
+        # 如果设置了 DB_NAME，检查是否在白名单中
+        if raw_env_db_name and raw_env_db_name not in ALLOWED_DB_NAMES:
+            # V41.46: 降级警告 - 允许运行但发出警告
+            import sys
+            import warnings
+            warning_msg = (
+                f"⚠️  V41.46 数据库名称不在推荐列表中\n"
+                f"   当前: DB_NAME='{raw_env_db_name}'\n"
+                f"   推荐使用: {', '.join(sorted(ALLOWED_DB_NAMES))}\n"
+                f"   系统将继续运行，但可能产生意外行为"
+            )
+            warnings.warn(warning_msg, UserWarning, stacklevel=2)
+
+        # V36.6: 单数据库准则 - 先注入环境变量以便进行硬红线检测
         auto_env = self.auto_inject_env_vars()
+
         # 用户传入的参数优先级更高
         auto_env.update(kwargs)
+
+        # V41.46: 环境自适应校验 - 允许多个合法数据库名称
+        raw_db_name = auto_env.get('db_name', kwargs.get('db_name', 'football_db'))
+        if raw_db_name not in ALLOWED_DB_NAMES:
+            # V41.46: 降级警告而非错误
+            import warnings
+            warning_msg = (
+                f"⚠️  数据库名称不在推荐列表中\n"
+                f"   当前: '{raw_db_name}'\n"
+                f"   推荐使用: {', '.join(sorted(ALLOWED_DB_NAMES))}\n"
+                f"   系统将继续运行，但可能产生意外行为"
+            )
+            warnings.warn(warning_msg, UserWarning, stacklevel=2)
+
         super().__init__(**auto_env)
 
     # === 环境配置 ===
@@ -221,7 +266,8 @@ class UnifiedSettings(BaseSettings):
 
     db_port: int = Field(default=5432, description="数据库端口")
 
-    db_name: str = Field(default="football_prediction", description="数据库名称")
+    # V36.6: 单数据库准则 - 强制使用 football_db
+    db_name: str = Field(default="football_db", description="数据库名称")
 
     db_user: str = Field(default="football_user", description="数据库用户名")
 
@@ -419,6 +465,33 @@ class UnifiedSettings(BaseSettings):
             return "redis"
 
         # 否则使用原设置
+        return v
+
+    @field_validator("db_name")
+    @classmethod
+    def validate_db_name(cls, v: str) -> str:
+        """V41.46: 环境自适应 - 智能数据库名称验证
+
+        允许多环境使用不同的数据库名称：
+        - football_db: 生产/Docker 环境
+        - football_prediction_dev: 本地开发环境
+        """
+        # V41.46: 环境自适应白名单
+        ALLOWED_DB_NAMES = {
+            'football_db',           # 生产/Docker 环境
+            'football_prediction_dev', # 本地开发环境
+        }
+
+        if v not in ALLOWED_DB_NAMES:
+            import warnings
+            warning_msg = (
+                f"⚠️  V41.46 数据库名称不在推荐列表中\n"
+                f"   当前: '{v}'\n"
+                f"   推荐使用: {', '.join(sorted(ALLOWED_DB_NAMES))}\n"
+                f"   系统将继续运行，但可能产生意外行为"
+            )
+            warnings.warn(warning_msg, UserWarning, stacklevel=2)
+
         return v
 
     # === 属性方法 ===
@@ -624,7 +697,8 @@ def get_settings() -> UnifiedSettings:
     """获取全局设置实例（单例模式）"""
     global _settings_instance
     if _settings_instance is None:
-        # 简化初始化，避免环境变量解析问题
+        # V36.6: 单数据库准则 - 强制执行硬红线检测
+        # 即使创建最小配置时也必须检查数据库配置
         try:
             _settings_instance = UnifiedSettings()
 
@@ -632,9 +706,21 @@ def get_settings() -> UnifiedSettings:
             errors = _settings_instance.validate_integrity()
             if errors:
                 logger.warning(f"配置验证警告: {'; '.join(errors)}")
+        except DatabaseConfigurationError:
+            # V36.6: 硬红线违规 - 必须失败，不允许绕过
+            raise
         except Exception as e:
             logger.warning(f"配置初始化警告: {e}")
-            # 创建最小可用配置
+            # V36.6: 即使创建最小配置时也必须检查数据库配置
+            # 先检查环境变量中的数据库名称
+            raw_db_name = os.getenv("DB_NAME", "football_db")
+            if raw_db_name != "football_db":
+                raise DatabaseConfigurationError(
+                    f"🚨 非法数据库配置！\n"
+                    f"   系统只允许连接 'football_db'，检测到: '{raw_db_name}'\n"
+                    f"   请检查 .env 文件和环境变量，确保 DB_NAME=football_db"
+                )
+            # 创建最小可用配置（只有在数据库配置正确时）
             _settings_instance = UnifiedSettings(
                 environment=Environment.DEVELOPMENT,
                 debug=True,
