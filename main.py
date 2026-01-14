@@ -523,10 +523,10 @@ async def run_align_hashes_action(args) -> int:
                   AND m.season = %s
             """
             with service.conn.cursor() as cur:
-                cur.execute(query, (league, season))
+                cur.execute(query, (league, service.season))
                 result = cur.fetchone()
                 if result:
-                    total = result[0]
+                    total = result['total']
                     missing = missing_by_league.get(league, 0)
                     coverage = (total - missing) / total * 100 if total > 0 else 0
                     logger.info(f"  - {league}: {total - missing}/{total} 场已对齐 ({coverage:.1f}%)")
