@@ -1126,12 +1126,24 @@ class FotMobCoreCollector:
 
                     return json.dumps(clean_nan(obj), default=default)
 
-                # V26.7: 智能 league_name 处理 - 优先使用 league_id 映射
-                extracted_league_name = match_info.get("league_name", "Premier League")
-                if (extracted_league_name == "Unknown League" and league_id is not None
-                    and league_id in LEAGUE_ID_TO_NAME):
-                    extracted_league_name = LEAGUE_ID_TO_NAME[league_id]
-                    logger.debug(f"✅ 使用 league_id 映射: {league_id} -> {extracted_league_name}")
+                # V41.41: 动态标签推断 - 修复 Historical League Bug
+                # 优先使用 league_id + match_time 推断准确的 league_name 和 season
+                if league_id is not None:
+                    inferred_league, inferred_season = self.infer_league_and_season(
+                        match_info["match_date"], league_id
+                    )
+                    # 使用推断的值，但允许 season 参数覆盖（向后兼容）
+                    extracted_league_name = inferred_league
+                    if season is None:
+                        season = inferred_season
+                    logger.info(
+                        f"✅ V41.41 动态标签: league_id={league_id} -> "
+                        f"league='{extracted_league_name}', season='{season}'"
+                    )
+                else:
+                    # 向后兼容：没有 league_id 时使用原有逻辑
+                    extracted_league_name = match_info.get("league_name", "Premier League")
+                    logger.debug(f"⚠️  无 league_id，使用默认 league_name: {extracted_league_name}")
 
                 params = (
                     match_info["match_id"],
@@ -1243,6 +1255,38 @@ class FotMobCoreCollector:
         finally:
             if conn:
                 conn.close()
+
+    def infer_league_and_season(self, match_time: str, league_id: int) -> tuple[str, str]:
+        """
+        V41.41: 根据比赛时间和 league_id 推断联赛名和赛季
+
+        修复 Historical League Bug - 9,305 场数据被错误标记为 "Historical League / 2020-2025"
+
+        Args:
+            match_time: 比赛时间字符串 (ISO格式: "2023-09-18T15:00:00Z")
+            league_id: FotMob 联赛 ID
+
+        Returns:
+            tuple: (league_name, season) - 联赛名和赛季代码
+
+        Examples:
+            >>> infer_league_and_season("2023-09-18T15:00:00Z", 47)
+            ("Premier League", "23/24")
+            >>> infer_league_and_season("2023-09-18T15:00:00Z", 999)
+            ("Unknown League", "23/24")
+        """
+        # 1. 根据 league_id 获取联赛名
+        league_name = LEAGUE_ID_TO_NAME.get(league_id, "Unknown League")
+
+        # 2. 根据比赛时间推断赛季
+        season = self._determine_season(match_time)
+
+        logger.debug(
+            f"🎯 V41.41 动态标签推断: league_id={league_id} -> "
+            f"league_name='{league_name}', season='{season}'"
+        )
+
+        return league_name, season
 
     def _determine_season(self, match_date: str) -> str:
         """

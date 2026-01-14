@@ -5,9 +5,12 @@ This module provides text normalization and processing utilities for the
 Football Prediction system, including team name normalization, vendor name
 cleaning, fuzzy matching support, and league URL mapping.
 
+V41.29: Enhanced with YouthTeamDetector for preventing youth team collisions.
+
 Usage:
     from src.utils.text_processor import (
         TeamNameNormalizer,
+        YouthTeamDetector,
         VendorNameCleaner,
         LeagueUrlMapper
     )
@@ -15,6 +18,14 @@ Usage:
     # Normalize team names
     normalizer = TeamNameNormalizer()
     normalized = normalizer.normalize("Man Utd")
+
+    # Detect youth teams (V41.29)
+    detector = YouthTeamDetector()
+    is_youth = detector.is_youth_team("PSG II")  # Returns True
+    different_tiers = detector.are_different_tiers("PSG", "PSG II")  # Returns True
+
+    # Check team matching (V41.29 enhanced)
+    same_team = normalizer.are_same_team("PSG", "PSG II")  # Returns False (blocked!)
 
     # Clean vendor names
     cleaner = VendorNameCleaner()
@@ -33,17 +44,221 @@ from thefuzz import fuzz
 logger = logging.getLogger(__name__)
 
 
+class YouthTeamDetector:
+    """V41.29: Youth team/B team detection utility.
+
+    Provides detection of youth team, reserve team, and B team indicators
+    to prevent false positive matches between first teams and youth teams.
+
+    Features:
+        - Roman numeral suffix detection (II, III, IV)
+        - Letter suffix detection (B, C)
+        - Age group detection (U19, U20, U21, U23)
+        - Reserve/Academy detection
+        - Multilingual keyword support
+    """
+
+    # Youth team keywords (case-insensitive matching)
+    # V41.29 FIX: Single-letter keywords (ii, iii, iv) cause false positives
+    # - "ii" matches "L**iv**erpool", "I**v**a", etc.
+    # - "iii" matches "Mississ**i**pp**i**", etc.
+    # Solution: Use regex patterns instead for Roman numerals
+    YOUTH_KEYWORDS = {
+        # Single letter suffixes (must have spaces to be standalone)
+        " b ", " c ", " d ",
+        # Age groups (multi-character only)
+        "u19", "u20", "u21", "u23", "u17",
+        # Reserve/Youth indicators (multi-character only)
+        "reserve", "reserves", "youth", "academy",
+        "amateur",
+        # Dotted versions (multi-character)
+        "ii.", "iii.", "iv.",
+        # Multilingual (multi-character)
+        "b team", "b-team", "c team", "c-team",
+        "filial", "junior", "juniors",
+    }
+
+    # Patterns that indicate youth teams (regex)
+    YOUTH_PATTERNS = [
+        r"\s+[IVX]+\s*$",  # Roman numerals at end: " PSG II"
+        r"\s+B\s*$",       # Single B at end: " Real Madrid B"
+        r"\s+C\s*$",       # Single C at end
+        r"\s+U\d{2}\s*$",  # U followed by 2 digits: " Chelsea U21"
+        r"\s+Reserves?\s*$",  # Reserve/Reserves
+        r"\s+Youth\s*$",   # Youth
+        r"\s+Academy\s*$", # Academy (V41.29: 强制匹配，不依赖后缀)
+        r"\s+Amateur\s*$", # Amateur
+    ]
+
+    def __init__(self) -> None:
+        """Initialize the youth team detector."""
+        self._compile_patterns()
+
+    def _compile_patterns(self) -> None:
+        """Compile regex patterns for better performance."""
+        self.patterns = [
+            re.compile(pattern, re.IGNORECASE)
+            for pattern in self.YOUTH_PATTERNS
+        ]
+
+    def is_youth_team(self, team_name: str) -> bool:
+        """Check if a team name indicates a youth/reserve/B team.
+
+        Args:
+            team_name: Team name to check
+
+        Returns:
+            True if the team name indicates a youth team, False otherwise
+        """
+        if not team_name:
+            return False
+
+        # Check regex patterns first (faster)
+        for pattern in self.patterns:
+            if pattern.search(team_name):
+                logger.debug(f"🚨 Youth team detected by pattern: {team_name}")
+                return True
+
+        # Check keyword list
+        normalized = team_name.lower().strip()
+        for keyword in self.YOUTH_KEYWORDS:
+            if keyword in normalized:
+                logger.debug(f"🚨 Youth team detected by keyword '{keyword}': {team_name}")
+                return True
+
+        return False
+
+    def get_youth_tier(self, team_name: str) -> int:
+        """Get the youth team tier level.
+
+        Returns:
+            0 for first team (no youth indicators)
+            1 for B team / II
+            2 for C team / III / U21
+            3 for lower youth teams
+        """
+        if not self.is_youth_team(team_name):
+            return 0  # First team
+
+        normalized_lower = team_name.lower()
+
+        # Tier 1: B team / II
+        if any(pattern in normalized_lower for pattern in [" b ", "ii", "ii.", " b-team"]):
+            return 1
+        # Tier 2: C team / III / U21
+        elif any(pattern in normalized_lower for pattern in [" c ", "iii", "iii.", "u21", "c-team"]):
+            return 2
+        # Tier 3: Lower youth teams
+        else:
+            return 3
+
+    def are_different_tiers(self, team1: str, team2: str) -> bool:
+        """Check if two team names represent different tier levels of the same club.
+
+        This is the key method for preventing youth team collisions.
+
+        Args:
+            team1: First team name
+            team2: Second team name
+
+        Returns:
+            True if the teams are from different tiers (should NOT match)
+            False if they are from the same tier OR completely different clubs
+        """
+        # If either is a youth team, check tiers
+        tier1 = self.get_youth_tier(team1)
+        tier2 = self.get_youth_tier(team2)
+
+        # If both are first teams (tier 0), they're not different tiers
+        if tier1 == 0 and tier2 == 0:
+            return False
+
+        # If one is youth and the other is first team, they're different tiers
+        if (tier1 == 0 and tier2 > 0) or (tier1 > 0 and tier2 == 0):
+            # Additional check: verify they're actually the same club
+            # (e.g., "Real Madrid" vs "Barcelona B" should return False)
+            if self._are_same_club_base(team1, team2):
+                logger.warning(
+                    f"🚨 YOUTH TEAM COLLISION BLOCKED: {team1} (tier {tier1}) "
+                    f"vs {team2} (tier {tier2})"
+                )
+                return True
+            return False
+
+        # If both are youth teams but different tiers, they're different
+        if tier1 != tier2:
+            if self._are_same_club_base(team1, team2):
+                logger.warning(
+                    f"🚨 YOUTH TEAM TIER MISMATCH: {team1} (tier {tier1}) "
+                    f"vs {team2} (tier {tier2})"
+                )
+                return True
+
+        return False
+
+    def _are_same_club_base(self, team1: str, team2: str) -> bool:
+        """Check if two team names refer to the same club (stripping youth indicators).
+
+        Args:
+            team1: First team name
+            team2: Second team name
+
+        Returns:
+            True if they're the same club base, False otherwise
+        """
+        # Normalize both names by removing youth indicators
+        base1 = self._strip_youth_indicators(team1)
+        base2 = self._strip_youth_indicators(team2)
+
+        # Compare normalized bases
+        return base1.lower().strip() == base2.lower().strip()
+
+    def _strip_youth_indicators(self, team_name: str) -> str:
+        """Strip youth team indicators from a team name.
+
+        Args:
+            team_name: Team name with possible youth indicators
+
+        Returns:
+            Team name with youth indicators removed
+        """
+        if not team_name:
+            return ""
+
+        # Remove regex patterns
+        result = team_name
+        for pattern in self.patterns:
+            result = pattern.sub("", result)
+
+        # Remove keyword suffixes
+        for keyword in self.YOUTH_KEYWORDS:
+            if keyword.strip() in result.lower():
+                # Find position of keyword
+                idx = result.lower().find(keyword.strip())
+                if idx > 0:  # Not at the start
+                    result = result[:idx].strip()
+
+        return result.strip()
+
+
+# Singleton instance
+_youth_detector = YouthTeamDetector()
+
+
 class TeamNameNormalizer:
     """V117.1: Team name normalization utility.
 
     Provides consistent team name normalization across the entire project,
     handling abbreviations, common variations, and international naming conventions.
 
+    V41.29: Enhanced with youth team collision detection.
+
     Features:
         - Abbreviation expansion (Man Utd -> Manchester United)
         - Common variation handling (Arsenal FC -> Arsenal)
         - International name mapping (Bayern Munich -> Bayern Munchen)
         - Whitespace and character normalization
+        - Youth team collision prevention
     """
 
     # Common team name abbreviations and variations
@@ -51,7 +266,11 @@ class TeamNameNormalizer:
         # English Premier League
         "man utd": "manchester united",
         "man united": "manchester united",
-        "manchester": "manchester united",  # V143.7: Handle stripped "United" suffix
+        # V41.35: Add full form mapping for Manchester Utd
+        "manchester utd": "manchester united",
+        # V41.35 FIX: REMOVED "manchester": "manchester united" mapping
+        # This prevents "Manchester City" from being incorrectly mapped to "Manchester United"
+        # Since we no longer strip "united" and "city" suffixes, these names stay distinct
         "man city": "manchester city",
         "mancity": "manchester city",
         "leeds": "leeds united",
@@ -73,6 +292,9 @@ class TeamNameNormalizer:
         "fc barcelona": "barcelona",
         "real betis": "real betis",
         "real sociedad": "real sociedad",
+        # V41.35: Add core word collision for abbreviated Real Sociedad
+        "r. sociedad": "real sociedad",
+        "r sociedad": "real sociedad",
         "real valladolid": "real valladolid",
         "ath bilbao": "athletic bilbao",
         "athletic bilbao": "athletic bilbao",
@@ -126,6 +348,9 @@ class TeamNameNormalizer:
     }
 
     # Suffixes to strip
+    # V41.30 FIX: DO NOT strip "united" or "city" - they are key team identifiers!
+    # - "Manchester United" and "Manchester City" must NOT be treated the same
+    # - Only strip generic club suffixes like FC, AC, etc.
     SUFFIXES_TO_STRIP = [
         r"\s+fc$", r"\s+f\.c\.$",
         r"\s+afcd?$", r"\s+a\.f\.c\.d?$",
@@ -133,8 +358,14 @@ class TeamNameNormalizer:
         r"\s+sc$", r"\s+s\.c\.$",
         r"\s+ac$", r"\s+a\.c\.$",
         r"\s+sd$", r"\s+s\.d\.$",
-        r"\s+united$", r"\s+city$",
+        # V41.30: REMOVED r"\s+united$" and r"\s+city$" to prevent false matches
         r"\s+town$", r"\s+athletic$",
+    ]
+
+    # V41.35: Prefixes to strip (for handling "AFC Bournemouth" -> "Bournemouth")
+    PREFIXES_TO_STRIP = [
+        r"^afc\s+", r"^AFC\s+",
+        r"^fc\s+", r"^FC\s+",
     ]
 
     def __init__(self) -> None:
@@ -146,6 +377,11 @@ class TeamNameNormalizer:
         self.suffix_patterns = [
             re.compile(pattern, re.IGNORECASE)
             for pattern in self.SUFFIXES_TO_STRIP
+        ]
+        # V41.35: Compile prefix patterns
+        self.prefix_patterns = [
+            re.compile(pattern, re.IGNORECASE)
+            for pattern in self.PREFIXES_TO_STRIP
         ]
 
     def normalize(self, team_name: str) -> str:
@@ -162,16 +398,36 @@ class TeamNameNormalizer:
 
         # Step 1: Basic cleaning
         normalized = team_name.strip()
-        normalized = re.sub(r"\s+", " ", normalized)  # Normalize whitespace
 
-        # Step 2: Remove common suffixes
+        # V41.30: Remove dots (periods) - they're abbreviations that should be ignored
+        # "Man. Utd" → "Man Utd", "Spurs." → "Spurs", "F.C." → "FC"
+        normalized = re.sub(r"\.", "", normalized)
+
+        # V41.30: Remove "&" and "and" - they're redundant
+        # "Brighton & Hove Albion" → "Brighton Hove Albion"
+        # "Brighton and Hove Albion" → "Brighton Hove Albion"
+        normalized = re.sub(r"\s*[&]\s*", " ", normalized)
+        normalized = re.sub(r"\s+and\s+", " ", normalized, flags=re.IGNORECASE)
+
+        # V41.30: Remove hyphens - they're often used inconsistently
+        # "West-Ham United" → "West Ham United"
+        normalized = re.sub(r"-", " ", normalized)
+
+        # Normalize whitespace
+        normalized = re.sub(r"\s+", " ", normalized)
+
+        # Step 2: Remove common prefixes (V41.35: AFC, FC)
+        for pattern in self.prefix_patterns:
+            normalized = pattern.sub("", normalized)
+
+        # Step 3: Remove common suffixes
         for pattern in self.suffix_patterns:
             normalized = pattern.sub("", normalized)
 
-        # Step 3: Convert to lowercase for mapping
+        # Step 4: Convert to lowercase for mapping
         normalized_lower = normalized.lower()
 
-        # Step 4: Apply team name mappings
+        # Step 5: Apply team name mappings
         if normalized_lower in self.TEAM_NAME_MAPPINGS:
             normalized = self.TEAM_NAME_MAPPINGS[normalized_lower]
         else:
@@ -187,7 +443,7 @@ class TeamNameNormalizer:
                     normalized = value
                     break
 
-        # Step 5: Final cleanup
+        # Step 6: Final cleanup
         normalized = normalized.strip()
         normalized = re.sub(r"\s+", " ", normalized)
 
@@ -197,22 +453,44 @@ class TeamNameNormalizer:
     def are_same_team(self, name1: str, name2: str) -> bool:
         """Check if two team names refer to the same team.
 
+        V41.29: Enhanced with youth team collision detection.
+        This is the P0 safety check that prevents matching first teams with youth teams.
+
+        V41.35: Enhanced with empty string handling.
+
         Args:
             name1: First team name
             name2: Second team name
 
         Returns:
-            True if the normalized names match, False otherwise
+            True if the normalized names match AND they're not different tiers
+            False otherwise (including youth team collisions or empty strings)
         """
+        # V41.35 P0: Handle empty strings - they should not match
+        if not name1 or not name2:
+            return False
+
+        # V41.29 P0: Check for youth team collision FIRST
+        # This prevents "PSG" from matching "PSG II" or "Real Madrid" from matching "Real Madrid B"
+        if _youth_detector.are_different_tiers(name1, name2):
+            logger.warning(
+                f"🚨 V41.29 BLOCKED: Youth team collision rejected: {name1} vs {name2}"
+            )
+            return False
+
+        # Original logic: normalize and compare
         return self.normalize(name1) == self.normalize(name2)
 
     def fuzzy_match(self, name1: str, name2: str) -> float:
         """Calculate fuzzy match score between two team names.
 
+        V41.29: Enhanced with youth team penalty - reduces score for youth team matches.
+
         Uses multiple matching strategies:
         1. Normalized exact match (score = 100)
         2. Token Sort Ratio (handles word order differences)
         3. Partial Ratio (handles substring matches)
+        4. Youth team penalty (V41.29)
 
         Args:
             name1: First team name
@@ -225,9 +503,35 @@ class TeamNameNormalizer:
             >>> normalizer = TeamNameNormalizer()
             >>> normalizer.fuzzy_match("Man Utd", "Manchester United")
             95.0
+            >>> normalizer.fuzzy_match("Nantes", "Nantes II")  # V41.29: youth penalty
+            50.0
         """
         if not name1 or not name2:
             return 0.0
+
+        # V41.29 P0: Check for youth team collision FIRST
+        # Apply heavy penalty for youth team matches
+        if _youth_detector.are_different_tiers(name1, name2):
+            # Calculate base score but apply heavy penalty
+            norm1 = self.normalize(name1)
+            norm2 = self.normalize(name2)
+
+            token_sort_score = fuzz.token_sort_ratio(norm1, norm2)
+            partial_score = fuzz.partial_ratio(norm1, norm2)
+            standard_score = fuzz.ratio(norm1, norm2)
+
+            base_score = float(max(token_sort_score, partial_score, standard_score))
+
+            # Apply 50% penalty for youth team matches
+            # This ensures "Nantes" vs "Nantes II" returns ~50% instead of 100%
+            penalty_score = base_score * 0.5
+
+            logger.debug(
+                f"🚨 Youth team penalty applied: {name1} vs {name2} "
+                f"(base: {base_score:.1f}% -> penalty: {penalty_score:.1f}%)"
+            )
+
+            return penalty_score
 
         # Normalize both names first
         norm1 = self.normalize(name1)
@@ -247,8 +551,43 @@ class TeamNameNormalizer:
         # Standard Ratio
         standard_score = fuzz.ratio(norm1, norm2)
 
+        # Calculate base score (highest of the three)
+        base_score = float(max(token_sort_score, partial_score, standard_score))
+
+        # V41.35: Apply similarity threshold enforcement
+        # If the normalized names are different AND they share a common prefix (e.g., "Manchester"),
+        # reduce the score to prevent false positives
+        if base_score >= 80.0 and base_score < 95.0:
+            # Check for common prefixes that might cause false matches
+            common_prefixes = ["manchester", "real", "fc", "athletic", "united", "city"]
+            norm1_words = set(norm1.split())
+            norm2_words = set(norm2.split())
+
+            # Find common words
+            common_words = norm1_words & norm2_words
+
+            # If they share common words but are not exact matches, apply penalty
+            if common_words and len(common_words) > 0:
+                # Calculate penalty based on how many words they share
+                common_words_list = list(common_words)
+                logger.debug(
+                    f"V41.35 Common words detected between '{name1}' and '{name2}': "
+                    f"{common_words_list} (base_score: {base_score:.1f}%)"
+                )
+
+                # Apply penalty: reduce score to 60% if they share words but aren't exact matches
+                # This ensures "Manchester United" vs "Manchester City" gets < 80%
+                penalty_score = base_score * 0.6
+
+                # If penalty brings it below 80%, use that
+                if penalty_score < 80.0:
+                    logger.debug(
+                        f"V41.35 Similarity penalty applied: {base_score:.1f}% -> {penalty_score:.1f}%"
+                    )
+                    return penalty_score
+
         # Return the highest score
-        return float(max(token_sort_score, partial_score, standard_score))
+        return base_score
 
     def parse_team_slug_full_path(
         self,

@@ -1,70 +1,314 @@
-# V41.40 联赛配置文件
-# 工业级统一配置驱动
+# V41.46 全球联赛配置文件 - 工业级统一配置驱动
+# 支持 31 个全球联赛（欧洲、美洲、亚洲、非洲）
 
+# ============================================================================
 # 联赛元数据
+# ============================================================================
+
 leagues:
+  # ==========================================================================
+  # Tier 1 Premium - 5 大联赛
+  # ==========================================================================
   premier_league:
     name: "Premier League"
     name_zh: "英超"
     country: "GB"
     fotmob_id: 47
-    oddsportal_slug: "premier-league-2023-2024"
+    oddsportal_slug: "england/premier-league-2023-2024"
     tier: 1
-    seasons:
-      - "23/24"
-      - "22/23"
+    seasons: ["23/24", "22/23"]
 
   la_liga:
     name: "La Liga"
     name_zh: "西甲"
     country: "ES"
     fotmob_id: 87
-    oddsportal_slug: "laliga-2023-2024"
+    oddsportal_slug: "spain/laliga-2023-2024"
     tier: 1
-    seasons:
-      - "23/24"
-      - "22/23"
+    seasons: ["23/24", "22/23"]
 
   bundesliga:
     name: "Bundesliga"
     name_zh: "德甲"
     country: "DE"
     fotmob_id: 78
-    oddsportal_slug: "bundesliga-2023-2024"
+    oddsportal_slug: "germany/bundesliga-2023-2024"
     tier: 1
-    seasons:
-      - "23/24"
-      - "22/23"
+    seasons: ["23/24", "22/23"]
 
   serie_a:
     name: "Serie A"
     name_zh: "意甲"
     country: "IT"
     fotmob_id: 94
-    oddsportal_slug: "serie-a-2023-2024"
+    oddsportal_slug: "italy/serie-a-2023-2024"
     tier: 1
-    seasons:
-      - "23/24"
-      - "22/23"
+    seasons: ["23/24", "22/23"]
 
   ligue_1:
     name: "Ligue 1"
     name_zh: "法甲"
     country: "FR"
     fotmob_id: 53
-    oddsportal_slug: "ligue-1-2023-2024"
+    oddsportal_slug: "france/ligue-1-2023-2024"
     tier: 1
-    seasons:
-      - "23/24"
-      - "22/23"
+    seasons: ["23/24", "22/23"]
 
-# OddsPortal URL配置
+  # ==========================================================================
+  # Tier 2 Standard - 17 个次级联赛
+  # ==========================================================================
+  championship:
+    name: "Championship"
+    name_zh: "英冠"
+    country: "GB"
+    fotmob_id: 48
+    oddsportal_slug: "england/championship-2023-2024"
+    tier: 2
+    seasons: ["23/24", "22/23"]
+
+  segunda_division:
+    name: "Segunda División"
+    name_zh: "西乙"
+    country: "ES"
+    fotmob_id: 94
+    oddsportal_slug: "spain/segunda-division-2023-2024"
+    tier: 2
+    seasons: ["23/24", "22/23"]
+
+  liga_2:
+    name: "2. Bundesliga"
+    name_zh: "德乙"
+    country: "DE"
+    fotmob_id: 95
+    oddsportal_slug: "germany/2bundesliga-2023-2024"
+    tier: 2
+    seasons: ["23/24", "22/23"]
+
+  serie_b:
+    name: "Serie B"
+    name_zh: "意乙"
+    country: "IT"
+    fotmob_id: 127
+    oddsportal_slug: "italy/serie-b-2023-2024"
+    tier: 2
+    seasons: ["23/24", "22/23"]
+
+  liga_portugal:
+    name: "Liga Portugal"
+    name_zh: "葡超"
+    country: "PT"
+    fotmob_id: 155
+    oddsportal_slug: "portugal/liga-portugal-2023-2024"
+    tier: 2
+    seasons: ["23/24", "22/23"]
+
+  eredivisie:
+    name: "Eredivisie"
+    name_zh: "荷甲"
+    country: "NL"
+    fotmob_id: 129
+    oddsportal_slug: "netherlands/eredivisie-2023-2024"
+    tier: 2
+    seasons: ["23/24", "22/23"]
+
+  jupiler_pro_league:
+    name: "Jupiler Pro League"
+    name_zh: "比甲"
+    country: "BE"
+    fotmob_id: 118
+    oddsportal_slug: "belgium/jupiler-pro-league-2023-2024"
+    tier: 2
+    seasons: ["23/24", "22/23"]
+
+  scottish_premiership:
+    name: "Scottish Premiership"
+    name_zh: "苏超"
+    country: "GB"
+    fotmob_id: 157
+    oddsportal_slug: "scotland/premiership-2023-2024"
+    tier: 2
+    seasons: ["23/24", "22/23"]
+
+  super_lig:
+    name: "Süper Lig"
+    name_zh: "土超"
+    country: "TR"
+    fotmob_id: 201
+    oddsportal_slug: "turkey/super-lig-2023-2024"
+    tier: 2
+    seasons: ["23/24", "22/23"]
+
+  super_league_greece:
+    name: "Super League Greece"
+    name_zh: "希超"
+    country: "GR"
+    fotmob_id: 96
+    oddsportal_slug: "greece/super-league-2023-2024"
+    tier: 2
+    seasons: ["23/24", "22/23"]
+
+  premier_league_russia:
+    name: "Premier League Russia"
+    name_zh: "俄超"
+    country: "RU"
+    fotmob_id: 153
+    oddsportal_slug: "russia/premier-league-2023-2024"
+    tier: 2
+    seasons: ["23/24", "22/23"]
+
+  premier_liha:
+    name: "Premier Liha"
+    name_zh: "乌超"
+    country: "UA"
+    fotmob_id: 186
+    oddsportal_slug: "ukraine/premier-liha-2023-2024"
+    tier: 2
+    seasons: ["23/24", "22/23"]
+
+  mls:
+    name: "MLS"
+    name_zh: "美职联"
+    country: "US"
+    fotmob_id: 203
+    oddsportal_slug: "usa/mls-2024"
+    tier: 2
+    seasons: ["2024", "2023"]
+
+  serie_a_brazil:
+    name: "Série A Brazil"
+    name_zh: "巴甲"
+    country: "BR"
+    fotmob_id: 274
+    oddsportal_slug: "brazil/serie-a-2024"
+    tier: 2
+    seasons: ["2024", "2023"]
+
+  j_league:
+    name: "J-League"
+    name_zh: "日职联"
+    country: "JP"
+    fotmob_id: 345
+    oddsportal_slug: "japan/j-league-2024"
+    tier: 2
+    seasons: ["2024", "2023"]
+
+  saudi_pro_league:
+    name: "Saudi Pro League"
+    name_zh: "沙特超"
+    country: "SA"
+    fotmob_id: 410
+    oddsportal_slug: "saudi-arabia/pro-league-2024"
+    tier: 2
+    seasons: ["2024", "2023"]
+
+  a_league:
+    name: "A-League"
+    name_zh: "澳超"
+    country: "AU"
+    fotmob_id: 312
+    oddsportal_slug: "australia/a-league-2023-2024"
+    tier: 2
+    seasons: ["23/24", "22/23"]
+
+  liga_profesional:
+    name: "Liga Profesional"
+    name_zh: "阿甲"
+    country: "AR"
+    fotmob_id: 275
+    oddsportal_slug: "argentina/primera-division-2024"
+    tier: 2
+    seasons: ["2024", "2023"]
+
+  liga_mx:
+    name: "Liga MX"
+    name_zh: "墨超"
+    country: "MX"
+    fotmob_id: 298
+    oddsportal_slug: "mexico/liga-mx-2024"
+    tier: 2
+    seasons: ["2024", "2023"]
+
+  # ==========================================================================
+  # Tier 3 Basic - 9 个基础联赛
+  # ==========================================================================
+  chinese_super_league:
+    name: "Chinese Super League"
+    name_zh: "中超"
+    country: "CN"
+    fotmob_id: 322
+    oddsportal_slug: "china/super-league-2024"
+    tier: 3
+    seasons: ["2024", "2023"]
+
+  k_league_1:
+    name: "K-League 1"
+    name_zh: "K联赛"
+    country: "KR"
+    fotmob_id: 353
+    oddsportal_slug: "south-korea/k-league-1-2024"
+    tier: 3
+    seasons: ["2024", "2023"]
+
+  adnoc_pro_league:
+    name: "ADNOC Pro League"
+    name_zh: "阿联酋职业联赛"
+    country: "AE"
+    fotmob_id: 411
+    oddsportal_slug: "united-arab-emirates/pro-league-2024"
+    tier: 3
+    seasons: ["2024", "2023"]
+
+  indian_super_league:
+    name: "Indian Super League"
+    name_zh: "印超"
+    country: "IN"
+    fotmob_id: 397
+    oddsportal_slug: "india/indian-super-league-2023"
+    tier: 3
+    seasons: ["23/24", "22/23"]
+
+  premier_soccer_league:
+    name: "Premier Soccer League"
+    name_zh: "南非超"
+    country: "ZA"
+    fotmob_id: 288
+    oddsportal_slug: "south-africa/premier-soccer-league-2023-2024"
+    tier: 3
+    seasons: ["23/24", "22/23"]
+
+  premier_league_egypt:
+    name: "Premier League Egypt"
+    name_zh: "埃及超"
+    country: "EG"
+    fotmob_id: 287
+    oddsportal_slug: "egypt/premier-league-2023-2024"
+    tier: 3
+    seasons: ["23/24", "22/23"]
+
+  npfl:
+    name: "NPFL"
+    name_zh: "尼日利亚职业足球联赛"
+    country: "NG"
+    fotmob_id: 412
+    oddsportal_slug: "nigeria/npfl-2023"
+    tier: 3
+    seasons: ["23/24", "22/23"]
+
+# ============================================================================
+# OddsPortal URL 配置
+# ============================================================================
+
 oddsportal:
   base_url: "https://www.oddsportal.com"
-  results_path: "/football/{country}/{slug}/results/"
+  # V41.46: 统一 results URL 格式
+  # URL 模板: {base_url}/football/{country}/{league_slug}/results/
+  results_path: "/football/{slug}/results/"
   search_path: "/search/{query}/"
 
+# ============================================================================
 # 反爬配置
+# ============================================================================
+
 anti_scraping:
   context_rebuild: true  # V41.36: 每个日期销毁重建Context
   random_delay:
@@ -75,7 +319,10 @@ anti_scraping:
     scroll_range: [100, 500]
     mouse_move: true
 
+# ============================================================================
 # 质量门禁
+# ============================================================================
+
 quality_gates:
   similarity_threshold: 0.85  # 队名相似度阈值
   date_tolerance_hours: 24    # 日期容差

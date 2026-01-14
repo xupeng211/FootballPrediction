@@ -17,6 +17,7 @@ Version: V36.0 (Morning Report)
 
 import sys
 import logging
+import shutil
 from pathlib import Path
 from datetime import datetime, timedelta
 from typing import Dict, Any
@@ -156,6 +157,34 @@ class MorningReport:
         finally:
             conn.close()
 
+    def get_disk_space_stats(self) -> Dict[str, Any]:
+        """
+        检查磁盘剩余空间
+
+        V36.2 新增功能：监控数据库和备份目录的磁盘使用情况
+
+        Returns:
+            磁盘空间统计字典
+        """
+        project_root = Path(__file__).parent.parent.parent
+
+        # 检查项目根目录磁盘空间
+        # 在 Docker 环境中，这会显示容器内的磁盘使用情况
+        usage = shutil.disk_usage(project_root)
+
+        total_gb = usage.total / (1024 ** 3)
+        used_gb = usage.used / (1024 ** 3)
+        free_gb = usage.free / (1024 ** 3)
+        used_pct = (used_gb / total_gb) * 100 if total_gb > 0 else 0
+
+        return {
+            "total_gb": round(total_gb, 2),
+            "used_gb": round(used_gb, 2),
+            "free_gb": round(free_gb, 2),
+            "used_pct": round(used_pct, 2),
+            "status": "warning" if used_pct > 80 else "ok"
+        }
+
     def generate_report(self, hours_ago: int = 12) -> str:
         """
         生成晨报
@@ -168,7 +197,7 @@ class MorningReport:
         """
         report_lines = []
         report_lines.append("=" * 70)
-        report_lines.append("🌅 V36.0 Morning Report - 晨报")
+        report_lines.append("🌅 V36.2 Morning Report - 晨报")
         report_lines.append("=" * 70)
         report_lines.append(f"⏰ 统计时间范围: 过去 {hours_ago} 小时")
         report_lines.append(f"📅 生成时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
@@ -194,10 +223,30 @@ class MorningReport:
         report_lines.append(f"   movement_velocity 非空: {payout_stats['movement_velocity_count']} ({payout_stats['movement_velocity_pct']}%)")
         report_lines.append("")
 
-        # 3. 高返还率比赛列表
+        # 3. V36.2 磁盘空间检查
+        report_lines.append("💾 3. V36.2 磁盘空间检查")
+        report_lines.append("-" * 40)
+
+        disk_stats = self.get_disk_space_stats()
+        status_icon = "✅" if disk_stats['status'] == "ok" else "⚠️"
+        report_lines.append(f"   {status_icon} 总空间: {disk_stats['total_gb']:.2f} GB")
+        report_lines.append(f"   📊 已使用: {disk_stats['used_gb']:.2f} GB ({disk_stats['used_pct']:.1f}%)")
+        report_lines.append(f"   📉 剩余: {disk_stats['free_gb']:.2f} GB")
+
+        if disk_stats['status'] == "warning":
+            report_lines.append("")
+            report_lines.append("   ⚠️  磁盘空间不足警告！")
+            report_lines.append("   建议:")
+            report_lines.append("      → 清理过期日志文件 (find logs/ -name '*.log' -mtime +7 -delete)")
+            report_lines.append("      → 清理旧备份文件 (find backups/ -name '*.sql.gz' -mtime +15 -delete)")
+            report_lines.append("      → 检查是否有大文件占用空间 (du -sh * | sort -hr)")
+
+        report_lines.append("")
+
+        # 4. 高返还率比赛列表
         high_payout_matches = self.get_high_payout_matches()
         if high_payout_matches:
-            report_lines.append("🎯 3. 高返还率比赛 (Top 10)")
+            report_lines.append("🎯 4. 高返还率比赛 (Top 10)")
             report_lines.append("-" * 40)
             for i, match in enumerate(high_payout_matches, 1):
                 report_lines.append(
@@ -207,8 +256,8 @@ class MorningReport:
                 )
             report_lines.append("")
 
-        # 4. 建议与结论
-        report_lines.append("💡 4. 建议与结论")
+        # 5. 建议与结论
+        report_lines.append("💡 5. 建议与结论")
         report_lines.append("-" * 40)
 
         payout_ratio_pct = payout_stats['payout_ratio_pct']
@@ -243,7 +292,7 @@ class MorningReport:
 
 def main():
     """主入口"""
-    logger.info("🌅 生成 V36.0 晨报...")
+    logger.info("🌅 生成 V36.2 晨报...")
 
     report = MorningReport()
 

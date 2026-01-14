@@ -10,11 +10,15 @@
 3. 模糊匹配 - 基于字符串相似度的智能匹配
 4. 置信度评分 - 0-100 分的质量评估
 
+V39.4 新增功能：
+5. 动态语义引擎 - 自动去噪（移除后缀）+ 地名提取
+6. 核心地名匹配 - Newcastle United vs Newcastle 提升到 >98% 置信度
+
 准入红线：严禁将置信度低于 85% 的匹配直接更新进数据库
 
 Author: 高级首席架构师 & 数据质量专家
-Version: V150.49
-Date: 2026-01-11
+Version: V39.4 (Dynamic Semantic Engine)
+Date: 2026-01-12
 """
 
 from __future__ import annotations
@@ -58,6 +62,8 @@ TEAM_ABBREVIATIONS: Dict[str, str] = {
     'addicks': 'charlton',    # 英冠
     'robins': 'bristol city', # 英冠
     'tykes': 'barnsley',      # 英冠
+    # V39.4 新增： Wolves 别名
+    'wolves': 'wolverhampton wanderers',
 }
 
 # 多词队名映射表（用于识别完整队名）
@@ -107,6 +113,202 @@ CONFIDENCE_THRESHOLD = {
     'MEDIUM': 70,    # 需人工确认
     'LOW': 0,        # 匹配失败
     'SAFE_MIN': 85   # 最低安全线（准入红线）
+}
+
+
+# ============================================================================
+# V39.4 动态语义引擎配置
+# ============================================================================
+
+# V40.3.8: 同城多球队映射表（用于德比拒绝检测）
+SAME_CITY_DERBIES: Dict[str, List[str]] = {
+    # 城市 -> [球队1, 球队2, ...]
+    # V40.4: 移除简称，只保留完整队名，避免误判
+    "manchester": ["manchester united", "manchester city"],
+    "milan": ["inter milan", "ac milan"],  # 移除 "milan"（独立球队，不是简称）
+    "madrid": ["real madrid", "atletico madrid", "rayo vallecano"],  # 移除 "atletico"
+    "london": ["arsenal", "tottenham hotspur", "chelsea", "west ham united",
+               "crystal palace", "fulham", "brentford"],
+    "liverpool": ["liverpool", "everton"],
+    "ruhr": ["borussia dortmund", "schalke", "bochum"],  # 移除 "dortmund"（简称）
+    "turin": ["juventus", "torino"],
+    "glasgow": ["rangers", "celtic"],
+    "athens": ["olympiakos", "panathinaikos", "aek athens"],
+    "istanbul": ["galatasaray", "fenerbahce", "besiktas"],
+    "rome": ["as roma", "ss lazio", "roma"],
+    "zagreb": ["dinamo zagreb", "nk lokomotiva"],
+}
+
+
+# 需要移除的后缀（用于去噪）
+TEAM_SUFFIXES: List[str] = [
+    'fc', 'f.c.', 'cf', 'c.f.',
+    'united', 'utd', 'untd',
+    'wanderers',  # wolves 是特殊别名，不在这里移除
+    'city', 'town',
+    'athletic', 'athletic club',
+    'club', 'ac', 'a.c.',
+    'rb', 'red bull',
+    'inter', 'internazionale', 'internazionale milano',
+    'milan', 'milano',
+    'hotspur', 'spurs',
+    'forest',
+    'albion',
+    'palace', 'crystal',
+    'borough',
+    'county',
+    'rang', 'rangers',
+    'celtic',
+    'dynamo', 'dinamo',
+    'sports', 'sporting',
+    # 注意：不要移除 'hove'（它是 Brighton & Hove 地名的一部分）
+]
+
+# 地名优先级表（用于提取核心地名）
+PLACE_NAME_PRIORITY: Dict[str, str] = {
+    # 多词城市名
+    'manchester': 'manchester',
+    'newcastle': 'newcastle',
+    'wolverhampton': 'wolverhampton',
+    'brighton hove': 'brighton',
+    'west bromwich': 'west bromwich',
+    'crystal palace': 'crystal palace',
+    'nottingham': 'nottingham',
+    'sheffield': 'sheffield',
+    'stoke city': 'stoke',
+    'west ham': 'west ham',
+    # 单词城市名（常见）
+    'london': 'london',
+    'liverpool': 'liverpool',
+    'manchester': 'manchester',
+    'leeds': 'leeds',
+    'leicester': 'leicester',
+    'everton': 'everton',
+    'bournemouth': 'bournemouth',
+    'southampton': 'southampton',
+    'burnley': 'burnley',
+    'watford': 'watford',
+    'brentford': 'brentford',
+    'norwich': 'norwich',
+    'fulham': 'fulham',
+    'aston villa': 'aston villa',
+    # 欧洲球队
+    'milan': 'milan',
+    'turin': 'turin',
+    'rome': 'rome',
+    'roma': 'roma',
+    'naples': 'naples',
+    'napoli': 'napoli',
+    'turin': 'turin',
+    'torino': 'torino',
+    'genoa': 'genoa',
+    'genova': 'genova',
+    'bergamo': 'bergamo',
+    'atalanta': 'atalanta',
+    'verona': 'verona',
+    'bologna': 'bologna',
+    'florence': 'florence',
+    'fiorentina': 'fiorentina',
+    'padua': 'padua',
+    'padova': 'padova',
+    'udine': 'udine',
+    'udinese': 'udinese',
+    'cagliari': 'cagliari',
+    'sassuolo': 'sassuolo',
+    'torino': 'torino',
+    'lecce': 'lecce',
+    'empoli': 'empoli',
+    'monza': 'monza',
+    'salernitana': 'salerno',
+    'verona': 'verona',
+    'venice': 'venice',
+    'venezia': 'venezia',
+    'genoa': 'genoa',
+    'liguria': 'genoa',
+    'madrid': 'madrid',
+    'barcelona': 'barcelona',
+    'seville': 'seville',
+    'sevilla': 'sevilla',
+    'valencia': 'valencia',
+    'bilbao': 'bilbao',
+    'san sebastian': 'san sebastian',
+    'donostia': 'san sebastian',
+    'real sociedad': 'san sebastian',
+    'villarreal': 'villarreal',
+    'vigo': 'vigo',
+    'celta vigo': 'vigo',
+    'getafe': 'getafe',
+    'alaves': 'vitoria',
+    'valladolid': 'valladolid',
+    'elche': 'elche',
+    'mallorca': 'mallorca',
+    'las palmas': 'las palmas',
+    'gran canaria': 'las palmas',
+    'tenerife': 'tenerife',
+    'cadiz': 'cadiz',
+    'almeria': 'almeria',
+    'osasuna': 'pamplona',
+    'pamplona': 'pamplona',
+    'rayo vallecano': 'madrid',
+    'leganes': 'leganes',
+    'eibar': 'eibar',
+    'huesca': 'huesca',
+    'murcia': 'murcia',
+    # 德国球队
+    'munich': 'munich',
+    'munchen': 'munich',
+    'münchen': 'munich',
+    'dortmund': 'dortmund',
+    'gelsenkirchen': 'gelsenkirchen',
+    'schalke': 'gelsenkirchen',
+    'leverkusen': 'leverkusen',
+    'leipzig': 'leipzig',
+    'wolfsburg': 'wolfsburg',
+    'freiburg': 'freiburg',
+    'hoffenheim': 'hoffenheim',
+    'mainz': 'mainz',
+    'frankfurt': 'frankfurt',
+    'eintracht frankfurt': 'frankfurt',
+    'bremen': 'bremen',
+    'werder': 'bremen',
+    'augsburg': 'augsburg',
+    'stuttgart': 'stuttgart',
+    'koln': 'cologne',
+    'koln': 'cologne',
+    'cologne': 'cologne',
+    'monchengladbach': 'monchengladbach',
+    'mgladbach': 'monchengladbach',
+    'bochum': 'bochum',
+    'hertha': 'berlin',
+    'berlin': 'berlin',
+    'union berlin': 'berlin',
+    'darmstadt': 'darmstadt',
+    'heidenheim': 'heidenheim',
+    # 法国球队
+    'paris': 'paris',
+    'saint germain': 'paris',
+    'psg': 'paris',
+    'marseille': 'marseille',
+    'lyon': 'lyon',
+    'monaco': 'monaco',
+    'lille': 'lille',
+    'lens': 'lens',
+    'nice': 'nice',
+    'rennes': 'rennes',
+    'strasbourg': 'strasbourg',
+    'bordeaux': 'bordeaux',
+    'nantes': 'nantes',
+    'toulouse': 'toulouse',
+    'montpellier': 'montpellier',
+    'reims': 'reims',
+    'brest': 'brest',
+    'metz': 'metz',
+    'lorient': 'lorient',
+    'clermont': 'clermont',
+    'troyes': 'troyes',
+    'angers': 'angers',
+    'auxerre': 'auxerre',
+    'le havre': 'le havre',
 }
 
 
@@ -184,6 +386,302 @@ def normalize_team_name(name: str) -> str:
     name = ' '.join(name.split())
 
     return name
+
+
+# ============================================================================
+# V39.4 动态语义引擎
+# ============================================================================
+
+def denoise_team_name(name: str) -> str:
+    """
+    V39.4: 去噪 - 移除队名后缀
+
+    将 "Manchester United FC" -> "Manchester"
+    将 "Newcastle United" -> "Newcastle"
+    将 "Wolverhampton Wanderers" -> "Wolverhampton"
+
+    Args:
+        name: 原始队名
+
+    Returns:
+        去噪后的队名（保留核心地名）
+    """
+    if not name:
+        return ""
+
+    # 标准化
+    name = normalize_team_name(name)
+
+    # 分词
+    words = name.split()
+
+    # 移除后缀
+    filtered_words = []
+    for word in words:
+        # 检查是否是后缀
+        is_suffix = False
+        for suffix in TEAM_SUFFIXES:
+            if word == suffix:
+                is_suffix = True
+                break
+
+        if not is_suffix:
+            filtered_words.append(word)
+
+    # 重新组合
+    result = ' '.join(filtered_words)
+
+    return result.strip()
+
+
+def extract_place_name(name: str) -> str:
+    """
+    V39.4: 地名提取 - 提取核心地名
+
+    从队名中提取核心地名，优先使用已知地名映射
+
+    Examples:
+        "Manchester United" -> "Manchester"
+        "Newcastle United" -> "Newcastle"
+        "Brighton & Hove Albion" -> "Brighton"
+        "Inter Milan" -> "Milan"
+        "FC Bayern München" -> "München"
+
+    Args:
+        name: 原始队名
+
+    Returns:
+        核心地名
+    """
+    if not name:
+        return ""
+
+    # 先标准化
+    normalized = normalize_team_name(name)
+
+    # 检查是否直接匹配已知地名
+    for place_key, place_value in PLACE_NAME_PRIORITY.items():
+        if place_key in normalized:
+            return place_value
+
+    # 如果没有直接匹配，使用去噪后的结果
+    denoised = denoise_team_name(name)
+
+    # 特殊处理："&" 符号
+    if '&' in denoised:
+        # 取 & 前的部分（通常是主要城市）
+        denoised = denoised.split('&')[0].strip()
+
+    # 再次检查地名映射
+    for place_key, place_value in PLACE_NAME_PRIORITY.items():
+        if place_key in denoised:
+            return place_value
+
+    # 返回去噪后的结果
+    return denoised
+
+
+def semantic_match(name1: str, name2: str) -> Tuple[float, str]:
+    """
+    V39.4: 语义匹配 - 使用去噪和地名提取进行智能匹配
+
+    V40.3.8: 增加同城德比拒绝逻辑，防止假阳性
+
+    这是核心匹配函数，专门解决以下问题：
+    - "Newcastle United" vs "Newcastle" (从 50% 提升到 >98%)
+    - "Manchester United" vs "Manchester"
+    - "Wolverhampton Wanderers" vs "Wolves"
+
+    V40.3.8 新增：
+    - 拒绝 "Manchester United" vs "Manchester City"（同城不同球队）
+    - 拒绝 "Inter Milan" vs "AC Milan"（德比）
+
+    Args:
+        name1: 队名 1
+        name2: 队名 2
+
+    Returns:
+        (置信度 0-100, 匹配说明)
+    """
+    if not name1 or not name2:
+        return 0.0, "Empty name"
+
+    # 1. 标准化匹配
+    norm1 = normalize_team_name(name1)
+    norm2 = normalize_team_name(name2)
+
+    if norm1 == norm2:
+        return 100.0, "Perfect match (normalized)"
+
+    # V40.3.8: 德比检测（准入红线）
+    derby_result = _check_derby_rejection(norm1, norm2)
+    if derby_result is not None:
+        # 这是同城德比，必须拒绝
+        return derby_result, f"Derby rejection: Different teams in same city"
+
+    # 2. 地名提取匹配（V39.4 核心）
+    place1 = extract_place_name(name1)
+    place2 = extract_place_name(name2)
+
+    if place1 and place2:
+        if place1 == place2:
+            # V40.3.8: 二次德比检测（基于地名）
+            # 即使地名相同，也需要检查是否是德比
+            derby_result_place = _check_derby_rejection_by_place(name1, name2, place1)
+            if derby_result_place is not None:
+                return derby_result_place, f"Derby rejection: '{place1}' has multiple teams"
+
+            # 地名匹配成功！
+            # 计算置信度（基于地名匹配度）
+            base_confidence = 95.0
+
+            # 如果原始名也包含对方，提升到 98%
+            if norm1 in norm2 or norm2 in norm1:
+                base_confidence = 98.0
+
+            return base_confidence, f"Place name match: '{place1}'"
+
+    # 3. 去噪匹配
+    denoised1 = denoise_team_name(name1)
+    denoised2 = denoise_team_name(name2)
+
+    if denoised1 == denoised2:
+        return 90.0, f"Denoised match: '{denoised1}'"
+
+    # 4. 传统的相似度匹配（回退方案）
+    similarity = calculate_similarity(name1, name2)
+
+    if similarity >= 85:
+        return similarity, f"High similarity: {similarity:.1f}%"
+
+    return similarity, f"Low similarity: {similarity:.1f}%"
+
+
+def _check_derby_rejection(norm1: str, norm2: str) -> Optional[float]:
+    """
+    V40.3.8: 检查是否是同城德比（标准化队名）
+
+    准入红线：只有当两个队名都包含明确的球队标识符时才拒绝。
+    例如：
+    - "Manchester United" vs "Manchester City" → 拒绝（都有标识符）
+    - "Manchester United" vs "Manchester" → 不拒绝（后者只是地名）
+
+    V40.4 更新：
+    - 如果队名在 SAME_CITY_DERBIES 映射表中，也视为包含德比标识符
+    - "Inter" vs "Milan" → 拒绝（都在 Milan 映射表中）
+
+    Args:
+        norm1: 标准化队名 1
+        norm2: 标准化队名 2
+
+    Returns:
+        如果是德比，返回拒绝置信度（<50%），否则返回 None
+    """
+    # 检查两个队名是否都包含明确的球队标识符
+    # 如果有一个只是纯地名，不视为德比
+    derby_indicators = ['united', 'city', 'hotspur', 'spurs', 'inter', 'ac', 'real',
+                        'atletico', 'athletic', 'fc', 'wanderers', 'rovers', 'palace',
+                        'albion', 'forest', 'borough', 'county', 'rangers', 'celtic',
+                        'dynamo', 'schalke', 'juventus', 'torino', 'roma', 'lazio',
+                        'olympiakos', 'panathinaikos', 'fenerbahce', 'galatasaray', 'besiktas']
+
+    # V40.4: 检查队名是否在德比映射表中
+    def has_derby_indicator(norm: str) -> bool:
+        """检查队名是否包含德比标识符或在映射表中"""
+        # 检查是否包含传统德比标识符
+        if any(indicator in norm for indicator in derby_indicators):
+            return True
+        # V40.4: 检查是否在德比映射表中
+        for city, teams in SAME_CITY_DERBIES.items():
+            for team in teams:
+                team_norm = normalize_team_name(team)
+                if norm == team_norm:
+                    return True
+        return False
+
+    # 检查 norm1 和 norm2 是否都包含德比标识符
+    has_derby_indicator_1 = has_derby_indicator(norm1)
+    has_derby_indicator_2 = has_derby_indicator(norm2)
+
+    # 如果只有一个队名包含标识符，不是德比
+    if not (has_derby_indicator_1 and has_derby_indicator_2):
+        return None
+
+    # 遍历所有城市的德比映射
+    for city, teams in SAME_CITY_DERBIES.items():
+        # 检查两个队名是否都在这个城市的球队列表中
+        team1_found = False
+        team2_found = False
+
+        for team in teams:
+            team_norm = normalize_team_name(team)
+            if norm1 == team_norm or (team_norm in norm1 and len(team_norm) > 3):
+                team1_found = True
+            if norm2 == team_norm or (team_norm in norm2 and len(team_norm) > 3):
+                team2_found = True
+
+        # 如果两个队都在同一城市，且队名不同 → 德比拒绝
+        if team1_found and team2_found and norm1 != norm2:
+            return 40.0  # 德比拒绝：40% 置信度
+
+    return None
+
+
+def _check_derby_rejection_by_place(name1: str, name2: str, place: str) -> Optional[float]:
+    """
+    V40.3.8: 基于地名检查是否是德比
+
+    准入红线：只有当两个队名都包含明确的球队标识符时才拒绝。
+
+    Args:
+        name1: 原始队名 1
+        name2: 原始队名 2
+        place: 匹配的地名
+
+    Returns:
+        如果是德比，返回拒绝置信度（<50%），否则返回 None
+    """
+    # 检查这个城市是否有多个球队
+    place_key = place.lower()
+    if place_key not in SAME_CITY_DERBIES:
+        return None
+
+    city_teams = SAME_CITY_DERBIES[place_key]
+
+    # 标准化输入队名
+    norm1 = normalize_team_name(name1)
+    norm2 = normalize_team_name(name2)
+
+    # 检查两个队名是否都包含明确的球队标识符
+    derby_indicators = ['united', 'city', 'hotspur', 'spurs', 'inter', 'ac', 'real',
+                        'atletico', 'athletic', 'fc', 'wanderers', 'rovers', 'palace',
+                        'albion', 'forest', 'borough', 'county', 'rangers', 'celtic']
+
+    has_derby_indicator_1 = any(indicator in norm1 for indicator in derby_indicators)
+    has_derby_indicator_2 = any(indicator in norm2 for indicator in derby_indicators)
+
+    # 如果只有一个队名包含标识符，不是德比
+    if not (has_derby_indicator_1 and has_derby_indicator_2):
+        return None
+
+    # 检查两个队是否都在这个城市的球队列表中
+    team1_matches = []
+    team2_matches = []
+
+    for team in city_teams:
+        team_norm = normalize_team_name(team)
+        if norm1 == team_norm or (team_norm in norm1 and len(team_norm) > 3):
+            team1_matches.append(team)
+        if norm2 == team_norm or (team_norm in norm2 and len(team_norm) > 3):
+            team2_matches.append(team)
+
+    # 如果两个队都在同一城市，且不是完全匹配 → 德比拒绝
+    if team1_matches and team2_matches:
+        # 检查是否是完全相同的队名
+        if norm1 != norm2:
+            return 40.0  # 德比拒绝：40% 置信度
+
+    return None
 
 
 def expand_team_name(name: str) -> List[str]:
@@ -529,10 +1027,87 @@ class _TeamAliasTests:
                 self.assertTrue(is_safe_confidence(90))
                 self.assertFalse(is_safe_confidence(80))
 
+            # ==================== V39.4 TDD 测试用例 ====================
+
+            def test_v39_4_denoise_team_name(self):
+                """V39.4: 测试去噪功能"""
+                self.assertEqual(denoise_team_name('Manchester United FC'), 'manchester')
+                self.assertEqual(denoise_team_name('Newcastle United'), 'newcastle')
+                self.assertEqual(denoise_team_name('Wolverhampton Wanderers'), 'wolverhampton')
+                # 注意：& 符号在 normalize_team_name 中被移除，所以 Brighton Hove Albion -> brighton hove
+                self.assertEqual(denoise_team_name('Brighton & Hove Albion'), 'brighton hove')
+
+            def test_v39_4_extract_place_name(self):
+                """V39.4: 测试地名提取"""
+                self.assertEqual(extract_place_name('Manchester United'), 'manchester')
+                self.assertEqual(extract_place_name('Newcastle United'), 'newcastle')
+                self.assertEqual(extract_place_name('Inter Milan'), 'milan')
+                self.assertEqual(extract_place_name('Brighton & Hove Albion'), 'brighton')
+
+            def test_v39_4_semantic_match_newcastle(self):
+                """
+                V39.4 核心测试：Newcastle United vs Newcastle
+                准入红线：置信度必须从 50% 提升到 >98%
+                """
+                confidence, details = semantic_match('Newcastle United', 'Newcastle')
+                self.assertGreaterEqual(confidence, 98.0,
+                    f"Newcastle United vs Newcastle 置信度 {confidence}% < 98%. 失败原因: {details}")
+                self.assertIn('newcastle', details.lower())
+
+            def test_v39_4_semantic_match_manchester(self):
+                """V39.4: 测试 Manchester United vs Manchester"""
+                confidence, details = semantic_match('Manchester United', 'Manchester')
+                self.assertGreaterEqual(confidence, 95.0,
+                    f"Manchester United vs Manchester 置信度 {confidence}% < 95%. 失败原因: {details}")
+
+            def test_v39_4_semantic_match_wolves(self):
+                """V39.4: 测试 Wolverhampton Wanderers vs Wolves"""
+                confidence, details = semantic_match('Wolverhampton Wanderers', 'Wolves')
+                self.assertGreaterEqual(confidence, 95.0,
+                    f"Wolverhampton Wanderers vs Wolves 置信度 {confidence}% < 95%. 失败原因: {details}")
+
+            def test_v39_4_semantic_match_crystal_palace(self):
+                """V39.4: 测试 Crystal Palace vs Crystal"""
+                confidence, details = semantic_match('Crystal Palace', 'Crystal')
+                self.assertGreaterEqual(confidence, 90.0,
+                    f"Crystal Palace vs Crystal 置信度 {confidence}% < 90%. 失败原因: {details}")
+
+            def test_v39_4_semantic_match_nottingham_forest(self):
+                """V39.4: 测试 Nottingham Forest vs Nottingham"""
+                confidence, details = semantic_match('Nottingham Forest', 'Nottingham')
+                self.assertGreaterEqual(confidence, 95.0,
+                    f"Nottingham Forest vs Nottingham 置信度 {confidence}% < 95%. 失败原因: {details}")
+
+            def test_v39_4_semantic_match_brighton(self):
+                """V39.4: 测试 Brighton & Hove Albion vs Brighton"""
+                confidence, details = semantic_match('Brighton & Hove Albion', 'Brighton')
+                self.assertGreaterEqual(confidence, 90.0,
+                    f"Brighton & Hove Albion vs Brighton 置信度 {confidence}% < 90%. 失败原因: {details}")
+
+            def test_v39_4_semantic_match_west_bromwich(self):
+                """V39.4: 测试 West Bromwich Albion vs West Bromwich"""
+                confidence, details = semantic_match('West Bromwich Albion', 'West Bromwich')
+                self.assertGreaterEqual(confidence, 95.0,
+                    f"West Bromwich Albion vs West Bromwich 置信度 {confidence}% < 95%. 失败原因: {details}")
+
         # 运行测试
         suite = unittest.TestLoader().loadTestsFromTestCase(TestTeamAlias)
-        runner = unittest.TextTestRunner(verbosity=0)
+        runner = unittest.TextTestRunner(verbosity=2)
         result = runner.run(suite)
+
+        # V39.4 额外检查：确保所有 TDD 测试通过
+        if not result.wasSuccessful():
+            print("\n" + "=" * 70)
+            print("❌ V39.4 TDD 测试失败！准入红线未通过！")
+            print("=" * 70)
+            for failure in result.failures + result.errors:
+                print(f"  {failure[0]}: {failure[1]}")
+            print("=" * 70)
+        else:
+            print("\n" + "=" * 70)
+            print("✅ V39.4 TDD 测试全部通过！准入红线验证成功！")
+            print("=" * 70)
+
         return result.wasSuccessful()
 
 
