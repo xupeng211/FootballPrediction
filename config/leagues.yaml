@@ -1,0 +1,83 @@
+# V41.40 联赛配置文件
+# 工业级统一配置驱动
+
+# 联赛元数据
+leagues:
+  premier_league:
+    name: "Premier League"
+    name_zh: "英超"
+    country: "GB"
+    fotmob_id: 47
+    oddsportal_slug: "premier-league-2023-2024"
+    tier: 1
+    seasons:
+      - "23/24"
+      - "22/23"
+
+  la_liga:
+    name: "La Liga"
+    name_zh: "西甲"
+    country: "ES"
+    fotmob_id: 87
+    oddsportal_slug: "laliga-2023-2024"
+    tier: 1
+    seasons:
+      - "23/24"
+      - "22/23"
+
+  bundesliga:
+    name: "Bundesliga"
+    name_zh: "德甲"
+    country: "DE"
+    fotmob_id: 78
+    oddsportal_slug: "bundesliga-2023-2024"
+    tier: 1
+    seasons:
+      - "23/24"
+      - "22/23"
+
+  serie_a:
+    name: "Serie A"
+    name_zh: "意甲"
+    country: "IT"
+    fotmob_id: 94
+    oddsportal_slug: "serie-a-2023-2024"
+    tier: 1
+    seasons:
+      - "23/24"
+      - "22/23"
+
+  ligue_1:
+    name: "Ligue 1"
+    name_zh: "法甲"
+    country: "FR"
+    fotmob_id: 53
+    oddsportal_slug: "ligue-1-2023-2024"
+    tier: 1
+    seasons:
+      - "23/24"
+      - "22/23"
+
+# OddsPortal URL配置
+oddsportal:
+  base_url: "https://www.oddsportal.com"
+  results_path: "/football/{country}/{slug}/results/"
+  search_path: "/search/{query}/"
+
+# 反爬配置
+anti_scraping:
+  context_rebuild: true  # V41.36: 每个日期销毁重建Context
+  random_delay:
+    min: 10.0  # 秒
+    max: 20.0  # 秒
+  human_behavior:
+    enabled: true
+    scroll_range: [100, 500]
+    mouse_move: true
+
+# 质量门禁
+quality_gates:
+  similarity_threshold: 0.85  # 队名相似度阈值
+  date_tolerance_hours: 24    # 日期容差
+  confidence_threshold: 0.90  # 置信度阈值
+  max_retry: 3                # 最大重试次数
