@@ -570,6 +570,10 @@ class HashAlignmentService:
         """
         幂等性更新比赛哈希（多次运行安全）
 
+        V41.56 增强:
+        - 拦截 OP_ 前缀的 match_id
+        - 验证 URL 赛季与数据库赛季一致
+
         Args:
             match_id: 比赛 ID
             hash_value: 哈希值
@@ -581,6 +585,42 @@ class HashAlignmentService:
         Returns:
             是否更新成功
         """
+        # V41.56: 拦截 OP_ 前缀的 match_id（幽灵记录）
+        if match_id and match_id.startswith("OP_"):
+            logger.error("🚨 V41.56: 拦截幽灵记录 - fotmob_id=%s 带有 OP_ 前缀", match_id)
+            self.stats.skipped += 1
+            return False
+
+        # V41.56: 验证 URL 赛季与数据库赛季一致
+        url_season = None
+        if url and "[0-9]{4}-[0-9]{4}" in url:
+            import re
+            season_match = re.search(r'([0-9]{4}-[0-9]{4})', url)
+            if season_match:
+                url_season = season_match.group(1).replace("-", "/")
+                # 从 matches 表获取实际赛季
+                check_season_query = """
+                    SELECT season FROM matches WHERE match_id = %s
+                """
+                with self.conn.cursor() as cur:
+                    cur.execute(check_season_query, (match_id,))
+                    result = cur.fetchone()
+                    if result:
+                        db_season = result[0]
+                        # 归一化赛季格式（23/24 → 2023/2024）
+                        normalized_db_season = db_season.replace("/", "")
+                        if len(normalized_db_season) == 4:
+                            normalized_db_season = f"20{normalized_db_season[:2]}/20{normalized_db_season[2:]}"
+
+                        # 检查赛季是否一致
+                        if url_season != db_season and url_season != normalized_db_season:
+                            logger.error(
+                                "🚨 V41.56: 赛季错位拦截 - match_id=%s, db_season=%s, url_season=%s, url=%s",
+                                match_id, db_season, url_season, url
+                            )
+                            self.stats.skipped += 1
+                            return False
+
         # 检查哈希是否已被其他 match_id 使用
         check_query = """
             SELECT fotmob_id FROM matches_mapping
@@ -594,7 +634,7 @@ class HashAlignmentService:
                 fotmob_id, league_name, season, home_team, away_team,
                 oddsportal_hash, oddsportal_url, confidence, mapping_method, review_status
             )
-            SELECT %s, %s, %s, m.home_team, m.away_team, %s, %s, %s, %s, 'approved'
+            SELECT %s, %s, m.season, m.home_team, m.away_team, %s, %s, %s, %s, 'approved'
             FROM matches m
             WHERE m.match_id = %s
             ON CONFLICT (fotmob_id)
@@ -618,9 +658,9 @@ class HashAlignmentService:
                     self.stats.conflicts += 1
                     return False
 
-                # 执行 UPSERT
+                # 执行 UPSERT（使用 matches 表的实际 season，而非 self.season）
                 cur.execute(upsert_query, (
-                    match_id, league_name, self.season,
+                    match_id, league_name,  # season 现在从 matches.m.season 获取
                     hash_value, url, confidence, method, match_id
                 ))
                 self.conn.commit()
