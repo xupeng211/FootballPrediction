@@ -168,7 +168,7 @@ class TestTeamAliasAutoLearning:
         }
 
         # 执行解析（使用完整的 URL 格式）
-        url = "/football/england/premier-league/wolves-manc-city/"
+        url = "/football/england/premier-league/wolves-manchester-city-W4E7KoZR/"
         league_name = "Premier League"
         home, away, score = parse_match_url_with_league_teams(url, league_name)
 
@@ -194,11 +194,11 @@ class TestTeamAliasAutoLearning:
         # Mock: 数据库已有完整别名
         mock_get_aliases.return_value = {
             'wolves': ('Wolverhampton Wanderers', 1.0),
-            'manc-city': ('Manchester City', 1.0),
+            'manchester-city': ('Manchester City', 1.0),
         }
 
         # 执行解析（使用完整的 URL 格式）
-        url = "/football/england/premier-league/wolves-manc-city/"
+        url = "/football/england/premier-league/wolves-manchester-city-W4E7KoZR/"
         league_name = "Premier League"
         home, away, score = parse_match_url_with_league_teams(url, league_name)
 
@@ -243,7 +243,7 @@ class TestTeamAliasAutoLearning:
         }
         mock_update.return_value = True
 
-        url = "/football/spain/laliga/ath-bilbao-real-madrid/"
+        url = "/football/spain/laliga/ath-bilbao-real-madrid-AbCd123/"
         league_name = "La Liga"
         home, away, score = parse_match_url_with_league_teams(url, league_name)
 
@@ -302,7 +302,7 @@ class TestTeamAliasIntegration:
             'Arsenal': 'arsenal',
         }
 
-        url = "/football/england/premier-league/tottenham-chelsea/"
+        url = "/football/england/premier-league/tottenham-chelsea-1a2B3c4/"
         league_name = "Premier League"
 
         # 第一次匹配

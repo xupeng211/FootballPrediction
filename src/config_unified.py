@@ -186,28 +186,21 @@ class UnifiedSettings(BaseSettings):
         return env_config
 
     def __init__(self, **kwargs):
-        # V41.46: 环境自适应 - 智能数据库名称校验
-        # 支持多环境：Docker/WSL2/本地开发，自动识别合法数据库名称
+        # V41.51: 数据库大一统 - 强制只允许 football_db
+        # 物理消除环境偏差，确保所有连接指向同一个真实数据库
         raw_env_db_name = os.environ.get('DB_NAME')
 
-        # 允许的数据库名称白名单（环境自适应）
-        ALLOWED_DB_NAMES = {
-            'football_db',           # 生产/Docker 环境
-            'football_prediction_dev', # 本地开发环境
-        }
+        # V41.51: 单数据库准则 - 强制只允许 football_db
+        ALLOWED_DB_NAME = 'football_db'
 
-        # 如果设置了 DB_NAME，检查是否在白名单中
-        if raw_env_db_name and raw_env_db_name not in ALLOWED_DB_NAMES:
-            # V41.46: 降级警告 - 允许运行但发出警告
-            import sys
-            import warnings
-            warning_msg = (
-                f"⚠️  V41.46 数据库名称不在推荐列表中\n"
-                f"   当前: DB_NAME='{raw_env_db_name}'\n"
-                f"   推荐使用: {', '.join(sorted(ALLOWED_DB_NAMES))}\n"
-                f"   系统将继续运行，但可能产生意外行为"
+        # 如果设置了 DB_NAME，必须是 football_db
+        if raw_env_db_name and raw_env_db_name != ALLOWED_DB_NAME:
+            raise DatabaseConfigurationError(
+                f"🚨 V41.51 数据库大一统：非法数据库名称\n"
+                f"   检测到: DB_NAME='{raw_env_db_name}'\n"
+                f"   系统只允许: '{ALLOWED_DB_NAME}'\n"
+                f"   请检查 .env 文件，确保 DB_NAME={ALLOWED_DB_NAME}"
             )
-            warnings.warn(warning_msg, UserWarning, stacklevel=2)
 
         # V36.6: 单数据库准则 - 先注入环境变量以便进行硬红线检测
         auto_env = self.auto_inject_env_vars()
@@ -215,18 +208,15 @@ class UnifiedSettings(BaseSettings):
         # 用户传入的参数优先级更高
         auto_env.update(kwargs)
 
-        # V41.46: 环境自适应校验 - 允许多个合法数据库名称
+        # V41.51: 单数据库准则 - 强制只允许 football_db
         raw_db_name = auto_env.get('db_name', kwargs.get('db_name', 'football_db'))
-        if raw_db_name not in ALLOWED_DB_NAMES:
-            # V41.46: 降级警告而非错误
-            import warnings
-            warning_msg = (
-                f"⚠️  数据库名称不在推荐列表中\n"
-                f"   当前: '{raw_db_name}'\n"
-                f"   推荐使用: {', '.join(sorted(ALLOWED_DB_NAMES))}\n"
-                f"   系统将继续运行，但可能产生意外行为"
+        if raw_db_name != ALLOWED_DB_NAME:
+            raise DatabaseConfigurationError(
+                f"🚨 V41.51 数据库大一统：非法数据库名称\n"
+                f"   检测到: '{raw_db_name}'\n"
+                f"   系统只允许: '{ALLOWED_DB_NAME}'\n"
+                f"   请检查配置文件，确保 db_name={ALLOWED_DB_NAME}"
             )
-            warnings.warn(warning_msg, UserWarning, stacklevel=2)
 
         super().__init__(**auto_env)
 
@@ -470,27 +460,20 @@ class UnifiedSettings(BaseSettings):
     @field_validator("db_name")
     @classmethod
     def validate_db_name(cls, v: str) -> str:
-        """V41.46: 环境自适应 - 智能数据库名称验证
+        """V41.51: 数据库大一统 - 强制只允许 football_db
 
-        允许多环境使用不同的数据库名称：
-        - football_db: 生产/Docker 环境
-        - football_prediction_dev: 本地开发环境
+        物理消除环境偏差，确保所有连接指向同一个真实数据库
         """
-        # V41.46: 环境自适应白名单
-        ALLOWED_DB_NAMES = {
-            'football_db',           # 生产/Docker 环境
-            'football_prediction_dev', # 本地开发环境
-        }
+        # V41.51: 单数据库准则 - 强制只允许 football_db
+        ALLOWED_DB_NAME = 'football_db'
 
-        if v not in ALLOWED_DB_NAMES:
-            import warnings
-            warning_msg = (
-                f"⚠️  V41.46 数据库名称不在推荐列表中\n"
-                f"   当前: '{v}'\n"
-                f"   推荐使用: {', '.join(sorted(ALLOWED_DB_NAMES))}\n"
-                f"   系统将继续运行，但可能产生意外行为"
+        if v != ALLOWED_DB_NAME:
+            raise DatabaseConfigurationError(
+                f"🚨 V41.51 数据库大一统：非法数据库名称\n"
+                f"   检测到: '{v}'\n"
+                f"   系统只允许: '{ALLOWED_DB_NAME}'\n"
+                f"   请检查配置文件，确保 db_name={ALLOWED_DB_NAME}"
             )
-            warnings.warn(warning_msg, UserWarning, stacklevel=2)
 
         return v
 

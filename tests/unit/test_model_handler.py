@@ -12,18 +12,18 @@ from pathlib import Path
 import tempfile
 import pickle
 
-# 添加src路径
+# V36.4 Final: 修复导入路径
 import sys
-sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
+from pathlib import Path
+
+# 添加项目根目录到路径
+project_root = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(project_root))
 
 try:
     from src.ml.model_handler import get_model_handler, ModelHandler
-except ImportError:
-    # 尝试其他可能的路径
-    try:
-        from src.ml.model_handler import get_model_handler, ModelHandler
-    except ImportError:
-        pytest.skip("ModelHandler not available", allow_module_level=True)
+except ImportError as e:
+    pytest.skip(f"ModelHandler not available: {e}", allow_module_level=True)
 
 
 @pytest.mark.unit

@@ -394,7 +394,7 @@ async def run_fotmob_mode(args) -> int:
 
 
 async def run_align_hashes_action(args) -> int:
-    """V41.41: Run hash alignment action.
+    """V41.44: Run hash alignment action with optional harvest.
 
     Args:
         args: Parsed command-line arguments
@@ -402,7 +402,7 @@ async def run_align_hashes_action(args) -> int:
     Returns:
         Exit code (0 for success, non-zero for failure)
     """
-    logger.info("🎯 V41.41 启动哈希对齐服务")
+    logger.info("🎯 V41.44 启动哈希对齐服务")
     print("")
 
     try:
@@ -412,7 +412,7 @@ async def run_align_hashes_action(args) -> int:
 
         # 获取配置
         settings = get_settings()
-        season = args.season if args.season else "23/24"
+        season = args.season if args.season else "2023/2024"
 
         logger.info(f"📊 目标赛季: {season}")
         logger.info(f"📊 数据库: {settings.database.host}:{settings.database.port}/{settings.database.name}")
@@ -426,10 +426,6 @@ async def run_align_hashes_action(args) -> int:
             db_password=settings.database.password.get_secret_value(),
             season=season
         )
-
-        # 获取缺失的比赛
-        logger.info("🔍 扫描缺失的比赛哈希...")
-        print("")
 
         # V41.42: 从 YAML 动态加载联赛配置（彻底去硬编码）
         import yaml
@@ -456,6 +452,44 @@ async def run_align_hashes_action(args) -> int:
             return 1
 
         logger.info(f"📊 从 YAML 加载了 {len(leagues)} 个顶级联赛: {', '.join(leagues)}")
+
+        # V41.44: 如果指定了 --run-harvest，执行全自动收割
+        if getattr(args, 'run_harvest', False):
+            logger.info("")
+            logger.info("=" * 60)
+            logger.info("🚀 V41.44 全自动收割模式启动")
+            logger.info("=" * 60)
+            print("")
+
+            # 确定要收割的联赛（如果指定了 --league，只收割该联赛）
+            target_leagues = [args.league] if args.league else leagues
+
+            total_harvested = 0
+            total_updated = 0
+
+            for league in target_leagues:
+                logger.info(f"🎯 正在收割: {league}")
+
+                stats = await service.active_harvest(
+                    league_name=league,
+                    max_pages=10,
+                    headless=True
+                )
+
+                total_harvested += stats.get("total_harvested", 0)
+                total_updated += stats.get("total_updated", 0)
+
+            logger.info("")
+            logger.info("=" * 60)
+            logger.info("📊 总收割统计:")
+            logger.info(f"   总采集: {total_harvested} 场")
+            logger.info(f"   成功更新: {total_updated} 场")
+            logger.info("=" * 60)
+            print("")
+
+        # 获取缺失的比赛
+        logger.info("🔍 扫描缺失的比赛哈希...")
+        print("")
 
         total_missing = 0
         missing_by_league = {}
@@ -506,12 +540,14 @@ async def run_align_hashes_action(args) -> int:
         logger.info(f"  - 缺失哈希需要补全的比赛: {total_missing} 场")
         print("")
 
-        logger.info("⚠️  哈希对齐功能需要配合 DOM 收割器使用")
-        logger.info("📖 请参考以下命令:")
-        logger.info('   python scripts/ops/v40_22_improved_harvester.py --leagues "La Liga" "Ligue 1"')
-        logger.info("   python scripts/ops/v40_24_import_fixed.py --source logs/v40_22_improved_results.json")
-        print("")
-        logger.info("🎯 V41.42 哈希对齐服务扫描完成 (配置驱动版)")
+        if not getattr(args, 'run_harvest', False):
+            logger.info("⚠️  提示: 使用 --run-harvest 参数可自动补全缺失哈希")
+            logger.info("📖 示例命令:")
+            logger.info('   python main.py --action align-hashes --season "2023/2024" --run-harvest')
+            logger.info('   python main.py --action align-hashes --league "Ligue 1" --run-harvest')
+            print("")
+
+        logger.info("🎯 V41.44 哈希对齐服务完成")
 
         return 0
 
@@ -664,6 +700,13 @@ Examples:
         type=str,
         choices=["align-hashes"],
         help="V41.41: 特殊操作 - align-hashes (哈希对齐服务)"
+    )
+
+    # V41.44: 新增 --run-harvest 参数 (全自动收割模式)
+    parser.add_argument(
+        "--run-harvest",
+        action="store_true",
+        help="V41.44: 执行全自动收割，补全缺失哈希 (配合 --action align-hashes 使用)"
     )
 
     return parser.parse_args()

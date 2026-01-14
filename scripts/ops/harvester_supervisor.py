@@ -40,6 +40,22 @@ import psycopg2  # V30.1 新增：用于 MALFORMED 告警检查
 from dotenv import load_dotenv
 load_dotenv(override=True)
 
+# V36.4 Final: 环境变量硬核固化 - DB_NAME 验证
+DB_NAME = os.getenv('DB_NAME', '')
+if DB_NAME != 'football_db':
+    print("=" * 70)
+    print("🚨 V36.4 Final: 环境变量验证失败！")
+    print("=" * 70)
+    print(f"❌ DB_NAME 必须等于 'football_db'")
+    print(f"   当前值: '{DB_NAME}'")
+    print()
+    print("📋 当前环境变量:")
+    for key, value in sorted(os.environ.items()):
+        if 'DB_' in key or 'POSTGRES' in key or 'REDIS' in key or key.endswith('_PATH'):
+            print(f"   {key} = {value}")
+    print("=" * 70)
+    sys.exit(1)
+
 # 添加项目根目录到路径
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
@@ -83,21 +99,82 @@ logger.propagate = False
 # ============================================================================
 
 HARVESTER_SCRIPT = "scripts/ops/harvest_pinnacle_concurrent.py"
-HARVESTER_ARGS = ["--workers", "8", "--limit", "500"]  # V33.1: 8进程全速模式 + 500 限制
+HARVESTER_ARGS = ["--workers", "8", "--limit", "200"]  # V36.4 Final: 8进程满负荷 + CSS选择器回退修复 La Liga
 CHECK_INTERVAL = 60  # 检查间隔（秒）
 LOG_LINES_TO_ANALYZE = 50  # 分析日志行数
 CRASH_SUMMARY_FILE = "logs/crash_summary.json"
 CONCURRENT_LOG_FILE = "logs/harvest_pinnacle_concurrent.log"  # V30.2: 并发日志文件
+PID_FILE = "logs/harvester_supervisor.pid"  # V36.4 Final: PID 文件路径
+
+# V36.4 Final: 批次质量阈值恢复到最严格标准（CSS选择器回退已修复 La Liga 问题）
+BATCH_QUALITY_THRESHOLD = 15.0  # 从 20% 恢复到 15%，回归最严苛质量控制
 
 # 信号处理
 shutdown_requested = False
 
 
+# ============================================================================
+# V36.4 Final: Fail-safe PID 文件管理
+# ============================================================================
+
+def cleanup_pid_file() -> None:
+    """V36.4 Final: 清理 PID 文件（EXIT 信号处理）"""
+    pid_file = Path(PID_FILE)
+    if pid_file.exists():
+        try:
+            pid_file.unlink()
+            logger.info(f"✅ V36.4: PID 文件已清理: {PID_FILE}")
+        except Exception as e:
+            logger.warning(f"⚠️  清理 PID 文件失败: {e}")
+
+
+def check_stale_lock() -> bool:
+    """V36.4 Final: 检查是否存在过期锁文件
+
+    Returns:
+        True 如果存在过期锁（需要突破），False 如果锁文件正常或不存在
+    """
+    pid_file = Path(PID_FILE)
+    if not pid_file.exists():
+        return False
+
+    try:
+        old_pid = int(pid_file.read_text().strip())
+        # V36.4 Final: 使用 kill -0 进行动态验证（POSIX 标准）
+        import os
+        try:
+            os.kill(old_pid, 0)  # 信号 0 不发送信号，只检查进程是否存在
+            logger.info(f"✅ 检测到运行中的守护进程 (PID: {old_pid})")
+            return False  # 进程存在，锁文件有效
+        except OSError:
+            # 进程不存在，锁文件过期
+            logger.warning(f"⚠️  V36.4: 检测到过期锁文件 (PID: {old_pid})")
+            logger.warning(f"   该进程已不存在，将自动清理并重新启动")
+            cleanup_pid_file()
+            return True  # 锁文件过期，已清理
+    except Exception as e:
+        logger.warning(f"⚠️  检查锁文件异常: {e}")
+        return False
+
+
+def write_pid_file() -> None:
+    """V36.4 Final: 写入当前 PID 到文件"""
+    pid_file = Path(PID_FILE)
+    try:
+        pid_file.parent.mkdir(parents=True, exist_ok=True)
+        pid_file.write_text(str(os.getpid()))
+        logger.info(f"📝 V36.4: PID 文件已写入: {PID_FILE} (PID: {os.getpid()})")
+    except Exception as e:
+        logger.error(f"❌ 写入 PID 文件失败: {e}")
+
+
 def signal_handler(signum, frame):
-    """信号处理器"""
+    """V36.4 Final: 信号处理器（含 EXIT 清理）"""
     global shutdown_requested
-    logger.info(f"收到信号 {signum}，准备优雅关闭...")
+    logger.info(f"🛑 V36.4: 收到信号 {signum}，准备优雅关闭...")
     shutdown_requested = True
+    # V36.4 Final: EXIT 信号清理 PID 文件
+    cleanup_pid_file()
 
 
 # 注册信号处理器
@@ -587,14 +664,30 @@ def emergency_shutdown(reason: str):
 # ============================================================================
 
 async def supervise():
-    """主监控循环 (V30.2: 并发模式)"""
+    """主监控循环 (V36.4 Final: Fail-safe + CSS 回退)"""
+    # V36.4 Final: 启动前检查过期锁
+    if Path(PID_FILE).exists():
+        has_stale_lock = check_stale_lock()
+        if not has_stale_lock:
+            logger.error("❌ 检测到运行中的守护进程，当前实例已退出")
+            logger.error("   如需重启，请先手动停止现有进程或删除 PID 文件")
+            return
+
+    # V36.4 Final: 写入 PID 文件
+    write_pid_file()
+
+    # V36.4 Final: 注册 EXIT 信号处理（Python 无法直接 trap EXIT，使用 atexit）
+    import atexit
+    atexit.register(cleanup_pid_file)
+
     logger.info("=" * 70)
-    logger.info("🤖 收割机守护程序已启动 (V30.2 并发模式)")
+    logger.info("🤖 收割机守护程序已启动 (V36.4 Final Fail-safe + CSS回退)")
     logger.info("=" * 70)
     logger.info(f"监控脚本: {HARVESTER_SCRIPT}")
     logger.info(f"启动参数: {' '.join(HARVESTER_ARGS)}")
     logger.info(f"检查间隔: {CHECK_INTERVAL} 秒")
     logger.info(f"崩溃摘要: {CRASH_SUMMARY_FILE}")
+    logger.info(f"PID 文件: {PID_FILE}")
     logger.info("")
 
     harvester_process = None
@@ -620,9 +713,9 @@ async def supervise():
                 emergency_shutdown("CONSECUTIVE_MALFORMED_ALERT")
                 break  # 退出监控循环
 
-            # V32.1.2 新增：批次质量告警检查（malformed 比例 > 15%）
-            # V33.2: 阈值调整 15% → 25%（给予队名规范化更大的容错空间）
-            quality_status = check_batch_quality_alert(threshold_percent=25.0)
+            # V32.1.2 新增：批次质量告警检查（malformed 比例监控）
+            # V36.4 Final: 阈值恢复到 20%（CSS 选择器回退已修复 La Liga 问题）
+            quality_status = check_batch_quality_alert(threshold_percent=BATCH_QUALITY_THRESHOLD)
             if quality_status['alert_triggered']:
                 logger.error(f"🚨 批次质量告警触发！malformed 比例: {quality_status['malformed_ratio']:.2%}")
                 emergency_shutdown("BATCH_QUALITY_ALERT")

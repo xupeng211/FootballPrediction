@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-V34.0 Feature Extraction - 特征炼金厂 (Feature Alchemy)
+V37.7 Feature Extraction - 特征炼金厂 (Feature Alchemy)
 
 功能：从数据库提取赔率特征，处理残缺 JSON
 
@@ -21,9 +21,21 @@ TDD 流程：
 - 正常的 JSON → 正确提取特征 ✅
 - None/null 处理 → 转换为 Python None ✅
 
+V36.3 更新：
+- 支持三种 l3_odds_data 格式：
+  1. 数组格式: {"home": [{"odds": "1.5"}], ...}
+  2. Pinnacle 格式: {"pinnacle": {"home_odds": 1.5}}
+  3. Average Odds 格式: {"closing_odds": {"Average Odds": {"home": 1.5}}}
+- 失败记录保存到 logs/failed_features.json
+
+V37.7 更新 (Bad Debt Fix):
+- 修复增量逻辑：只排除 payout_ratio > 0 的比赛
+- 允许重新提取 payout_ratio 为 NULL/0 的坏账比赛
+- 根治"坏账累积"问题，无需手动运行 trigger_healing.py
+
 Author: 高级数据架构师 & 机器学习专家
-Date: 2026-01-11
-Version: V29.0 (Feature Extraction)
+Date: 2026-01-12
+Version: V37.7 (Bad Debt Fix + Auto-Healing)
 """
 
 import json
@@ -41,11 +53,75 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 # V33.2: 显式加载 .env 文件，确保环境变量正确注入
 from dotenv import load_dotenv
+import os
 load_dotenv(override=True)
+
+# V36.4 Final: 环境变量硬核固化 - DB_NAME 验证
+DB_NAME = os.getenv('DB_NAME', '')
+if DB_NAME != 'football_db':
+    print("=" * 70)
+    print("🚨 V36.4 Final: 环境变量验证失败！")
+    print("=" * 70)
+    print(f"❌ DB_NAME 必须等于 'football_db'")
+    print(f"   当前值: '{DB_NAME}'")
+    print()
+    print("📋 当前环境变量:")
+    for key, value in sorted(os.environ.items()):
+        if 'DB_' in key or 'POSTGRES' in key or 'REDIS' in key or key.endswith('_PATH'):
+            print(f"   {key} = {value}")
+    print("=" * 70)
+    sys.exit(1)
 
 from src.config_unified import get_settings
 
 logger = logging.getLogger(__name__)
+
+# ============================================================================
+# V36.3: 失败记录追踪
+# ============================================================================
+
+FAILED_FEATURES_LOG = Path("logs/failed_features.json")
+
+def log_failed_extraction(match_id: str, format_type: str, raw_data: Any, reason: str):
+    """记录提取失败的比赛数据到 failed_features.json
+
+    Args:
+        match_id: 比赛 ID
+        format_type: 格式类型 (e.g., "unknown", "pinnacle", "array")
+        raw_data: 原始数据
+        reason: 失败原因
+    """
+    try:
+        FAILED_FEATURES_LOG.parent.mkdir(exist_ok=True)
+
+        # 读取现有记录
+        existing = []
+        if FAILED_FEATURES_LOG.exists():
+            try:
+                with open(FAILED_FEATURES_LOG, 'r', encoding='utf-8') as f:
+                    existing = json.load(f)
+            except (json.JSONDecodeError, IOError):
+                existing = []
+
+        # 添加新记录
+        failure_record = {
+            "match_id": match_id,
+            "format_type": format_type,
+            "reason": reason,
+            "timestamp": datetime.now().isoformat(),
+            "raw_data_sample": str(raw_data)[:500]  # 限制大小
+        }
+
+        existing.append(failure_record)
+
+        # 保存（只保留最近 100 条）
+        with open(FAILED_FEATURES_LOG, 'w', encoding='utf-8') as f:
+            json.dump(existing[-100:], f, indent=2, ensure_ascii=False)
+
+        logger.debug(f"记录失败提取: {match_id} - {reason}")
+
+    except Exception as e:
+        logger.warning(f"无法记录失败提取: {e}")
 
 
 # ============================================================================
@@ -78,68 +154,169 @@ def get_db_connection():
 def extract_features_from_json(match_data: Dict[str, Any]) -> Dict[str, Optional[float]]:
     """从比赛数据中提取赔率特征
 
+    V36.3 支持两种数据格式：
+    1. 旧格式 (dict): l3_features = {"opening": {"home": 1.85}, "closing": {...}}
+    2. 新格式 (array): l3_odds_data = {"home": [{"odds": "1.85", ...}], ...}
+
     处理残缺 JSON 的健壮逻辑：
     - 缺少字段 → 返回 None 而不崩溃
     - null 值 → 保留为 Python None
     - 空字典 → 所有特征返回 None
 
     Args:
-        match_data: 包含 l3_features 的比赛数据字典
+        match_data: 包含 l3_features 或 l3_odds_data 的比赛数据字典
 
     Returns:
         包含所有赔率特征的特征字典
     """
     features: Dict[str, Optional[float]] = {}
 
-    # 安全提取辅助函数
-    def safe_extract(
-        source: Optional[Dict[str, Any]],
-        category: str,
-        field: str
-    ) -> Optional[float]:
-        """安全提取嵌套字段，处理 None 和缺失"""
-        if source is None:
-            return None
-        if category not in source:
-            return None
-        category_data = source[category]
-        if category_data is None or not isinstance(category_data, dict):
-            return None
-        value = category_data.get(field)
-        # null 值转换为 None
-        return None if value is None else float(value)
+    # ============================================================================
+    # V36.3: 双格式支持 - 优先尝试新格式 (l3_odds_data 数组)
+    # ============================================================================
 
-    # 获取 l3_features
-    l3_features = match_data.get("l3_features") if match_data else None
+    if match_data and "l3_odds_data" in match_data:
+        l3_odds_data = match_data.get("l3_odds_data")
+        if l3_odds_data and isinstance(l3_odds_data, dict):
+            # V38.0: Pinnacle flat format 检测
+            # 格式: {"home_odds": 1.45, "draw_odds": 4.45, "away_odds": 6.75, "bookmaker": "Pinnacle"}
+            if "home_odds" in l3_odds_data or "draw_odds" in l3_odds_data or "away_odds" in l3_odds_data:
+                # 直接从 flat 字段提取赔率
+                features["opening_home"] = l3_odds_data.get("home_odds")
+                features["opening_draw"] = l3_odds_data.get("draw_odds")
+                features["opening_away"] = l3_odds_data.get("away_odds")
+                # Pinnacle flat format 没有 opening/closing 区分，使用相同值
+                features["closing_home"] = l3_odds_data.get("home_odds")
+                features["closing_draw"] = l3_odds_data.get("draw_odds")
+                features["closing_away"] = l3_odds_data.get("away_odds")
+                # 24h high/low 不可用
+                features["high_24h_home"] = None
+                features["high_24h_draw"] = None
+                features["high_24h_away"] = None
+                features["low_24h_home"] = None
+                features["low_24h_draw"] = None
+                features["low_24h_away"] = None
 
-    if l3_features is None or not isinstance(l3_features, dict):
-        # l3_features 不存在，返回全 None 特征
+            # 数组格式提取：从 home/draw/away 数组中提取
+            # Opening: 数组第一个元素
+            # Closing: 数组最后一个元素
+            elif "home" in l3_odds_data or "draw" in l3_odds_data or "away" in l3_odds_data:
+                def safe_extract_array(
+                    source: Optional[Dict[str, Any]],
+                    bet_type: str,
+                    index: int
+                ) -> Optional[float]:
+                    """从数组格式安全提取赔率
+
+                    Args:
+                        source: l3_odds_data 字典
+                        bet_type: "home", "draw", "away"
+                        index: 0 表示第一个 (Opening), -1 表示最后一个 (Closing)
+
+                    Returns:
+                        赔率值 (float) 或 None
+                    """
+                    if source is None or bet_type not in source:
+                        return None
+                    odds_array = source[bet_type]
+                    if not odds_array or not isinstance(odds_array, list):
+                        return None
+                    try:
+                        element = odds_array[index]
+                        if element and isinstance(element, dict) and "odds" in element:
+                            odds_str = element["odds"]
+                            # 转换为 float
+                            return float(odds_str) if odds_str else None
+                    except (IndexError, ValueError, TypeError):
+                        pass
+                    return None
+
+                # 提取 Opening (数组第一个元素)
+                features["opening_home"] = safe_extract_array(l3_odds_data, "home", 0)
+                features["opening_draw"] = safe_extract_array(l3_odds_data, "draw", 0)
+                features["opening_away"] = safe_extract_array(l3_odds_data, "away", 0)
+
+                # 提取 Closing (数组最后一个元素)
+                features["closing_home"] = safe_extract_array(l3_odds_data, "home", -1)
+                features["closing_draw"] = safe_extract_array(l3_odds_data, "draw", -1)
+                features["closing_away"] = safe_extract_array(l3_odds_data, "away", -1)
+
+                # 数组格式暂不支持 high_24h/low_24h（需要计算）
+                features["high_24h_home"] = None
+                features["high_24h_draw"] = None
+                features["high_24h_away"] = None
+            features["low_24h_home"] = None
+            features["low_24h_draw"] = None
+            features["low_24h_away"] = None
+
+        else:
+            # l3_odds_data 存在但无效，返回全 None
+            return {
+                "opening_home": None, "opening_draw": None, "opening_away": None,
+                "closing_home": None, "closing_draw": None, "closing_away": None,
+                "high_24h_home": None, "high_24h_draw": None, "high_24h_away": None,
+                "low_24h_home": None, "low_24h_draw": None, "low_24h_away": None,
+            }
+
+    elif match_data and "l3_features" in match_data:
+        # ============================================================================
+        # 旧格式 (dict): l3_features 兼容模式
+        # ============================================================================
+        l3_features = match_data.get("l3_features")
+
+        if l3_features is None or not isinstance(l3_features, dict):
+            return {
+                "opening_home": None, "opening_draw": None, "opening_away": None,
+                "closing_home": None, "closing_draw": None, "closing_away": None,
+                "high_24h_home": None, "high_24h_draw": None, "high_24h_away": None,
+                "low_24h_home": None, "low_24h_draw": None, "low_24h_away": None,
+            }
+
+        # 安全提取辅助函数
+        def safe_extract(
+            source: Optional[Dict[str, Any]],
+            category: str,
+            field: str
+        ) -> Optional[float]:
+            """安全提取嵌套字段，处理 None 和缺失"""
+            if source is None:
+                return None
+            if category not in source:
+                return None
+            category_data = source[category]
+            if category_data is None or not isinstance(category_data, dict):
+                return None
+            value = category_data.get(field)
+            return None if value is None else float(value)
+
+        # 提取初盘赔率 (Opening)
+        features["opening_home"] = safe_extract(l3_features, "opening", "home")
+        features["opening_draw"] = safe_extract(l3_features, "opening", "draw")
+        features["opening_away"] = safe_extract(l3_features, "opening", "away")
+
+        # 提取终盘赔率 (Closing)
+        features["closing_home"] = safe_extract(l3_features, "closing", "home")
+        features["closing_draw"] = safe_extract(l3_features, "closing", "draw")
+        features["closing_away"] = safe_extract(l3_features, "closing", "away")
+
+        # 提取 24h 最高赔率 (High 24h)
+        features["high_24h_home"] = safe_extract(l3_features, "high_24h", "home")
+        features["high_24h_draw"] = safe_extract(l3_features, "high_24h", "draw")
+        features["high_24h_away"] = safe_extract(l3_features, "high_24h", "away")
+
+        # 提取 24h 最低赔率 (Low 24h)
+        features["low_24h_home"] = safe_extract(l3_features, "low_24h", "home")
+        features["low_24h_draw"] = safe_extract(l3_features, "low_24h", "draw")
+        features["low_24h_away"] = safe_extract(l3_features, "low_24h", "away")
+
+    else:
+        # 既没有 l3_odds_data 也没有 l3_features
         return {
             "opening_home": None, "opening_draw": None, "opening_away": None,
             "closing_home": None, "closing_draw": None, "closing_away": None,
             "high_24h_home": None, "high_24h_draw": None, "high_24h_away": None,
             "low_24h_home": None, "low_24h_draw": None, "low_24h_away": None,
         }
-
-    # 提取初盘赔率 (Opening)
-    features["opening_home"] = safe_extract(l3_features, "opening", "home")
-    features["opening_draw"] = safe_extract(l3_features, "opening", "draw")
-    features["opening_away"] = safe_extract(l3_features, "opening", "away")
-
-    # 提取终盘赔率 (Closing)
-    features["closing_home"] = safe_extract(l3_features, "closing", "home")
-    features["closing_draw"] = safe_extract(l3_features, "closing", "draw")
-    features["closing_away"] = safe_extract(l3_features, "closing", "away")
-
-    # 提取 24h 最高赔率 (High 24h)
-    features["high_24h_home"] = safe_extract(l3_features, "high_24h", "home")
-    features["high_24h_draw"] = safe_extract(l3_features, "high_24h", "draw")
-    features["high_24h_away"] = safe_extract(l3_features, "high_24h", "away")
-
-    # 提取 24h 最低赔率 (Low 24h)
-    features["low_24h_home"] = safe_extract(l3_features, "low_24h", "home")
-    features["low_24h_draw"] = safe_extract(l3_features, "low_24h", "draw")
-    features["low_24h_away"] = safe_extract(l3_features, "low_24h", "away")
 
     # V34.0: 计算新特征
     # 1. payout_ratio: 博彩公司返还率
@@ -316,33 +493,42 @@ def calculate_movement_velocity(
 def fetch_from_clean_view(limit: int = 100, incremental: bool = True) -> List[Dict[str, Any]]:
     """从 v_matches_clean 视图获取数据并构建 l3_features
 
-    V29.1: 支持增量提取，默认排除已有特征的比赛。
+    V36.3: 双数据源支持
+    1. 优先读取 matches.l3_odds_data (V36.3 数组格式)
+    2. 回退到 odds 表 (旧格式)
 
-    从 odds 表读取赔率数据，构建符合测试格式的 l3_features 结构。
+    V29.1: 支持增量提取，默认排除已有特征的比赛。
 
     Args:
         limit: 最大返回记录数
         incremental: 是否使用增量模式（排除已处理比赛）- 默认 True
 
     Returns:
-        包含 l3_features 的比赛数据列表
+        包含 l3_odds_data 或 l3_features 的比赛数据列表
     """
     conn = get_db_connection()
     try:
         with conn.cursor() as cur:
-            # V29.1: 增量提取 - 排除已有特征的比赛
-            # WHERE m.match_id NOT IN (SELECT match_id FROM match_features)
+            # V37.7: 增量提取 - 只排除成功提取的比赛（payout_ratio > 0）
+            # 修复坏账逻辑：允许重新提取 payout_ratio 为 NULL/0 的比赛
             where_clause = ""
             if incremental:
-                where_clause = "WHERE m.match_id NOT IN (SELECT match_id FROM match_features)"
+                where_clause = """WHERE m.match_id NOT IN (
+                    SELECT match_id FROM match_features
+                    WHERE payout_ratio IS NOT NULL AND payout_ratio > 0
+                )"""
 
-            # 获取比赛及其赔率数据
+            # V36.3: 优先读取 l3_odds_data (新格式)，回退到 odds 表 (旧格式)
+            # 新数据优先级: l3_odds_data > odds 表
             cur.execute(f"""
                 SELECT
                     m.match_id,
                     m.league_name,
                     m.home_team,
                     m.away_team,
+                    -- V36.3: 优先使用 l3_odds_data (数组格式)
+                    m.l3_odds_data,
+                    -- 旧格式兼容: 从 odds 表聚合
                     COALESCE(jsonb_agg(
                         jsonb_build_object(
                             'bookmaker', o.bookmaker,
@@ -351,17 +537,19 @@ def fetch_from_clean_view(limit: int = 100, incremental: bool = True) -> List[Di
                             'away_odds', o.away_odds,
                             'collected_at', o.collected_at
                         ) ORDER BY o.collected_at
-                    ) FILTER (WHERE o.bookmaker IS NOT NULL), '[]') as odds_data
-                FROM v_matches_clean m
+                    ) FILTER (WHERE o.bookmaker IS NOT NULL AND m.l3_odds_data IS NULL), '[]') as odds_data
+                FROM matches m
                 LEFT JOIN odds o ON m.match_id = o.match_id
                 {where_clause}
-                GROUP BY m.match_id, m.league_name, m.home_team, m.away_team
+                  AND (m.l3_odds_data IS NOT NULL OR o.match_id IS NOT NULL)
+                GROUP BY m.match_id, m.league_name, m.home_team, m.away_team, m.l3_odds_data
+                ORDER BY (m.l3_odds_data IS NOT NULL) DESC, m.updated_at DESC
                 LIMIT %s
             """, (limit,))
 
             rows = cur.fetchall()
 
-            # 构建带 l3_features 的数据结构
+            # 构建数据结构
             results = []
             for row in rows:
                 match_data = {
@@ -371,21 +559,96 @@ def fetch_from_clean_view(limit: int = 100, incremental: bool = True) -> List[Di
                     "away_team": row["away_team"],
                 }
 
-                # 从 odds_data 构建 l3_features
+                # V36.3: 优先使用 l3_odds_data (新格式)
+                l3_odds_data = row.get("l3_odds_data")
+                if l3_odds_data:
+                    match_id = match_data["match_id"]
+
+                    # 格式 1: Pinnacle 格式 {"pinnacle": {"home_odds": 1.5}}
+                    if "pinnacle" in l3_odds_data and isinstance(l3_odds_data.get("pinnacle"), dict):
+                        pinnacle = l3_odds_data["pinnacle"]
+                        converted = {
+                            "home": [{"odds": str(pinnacle.get("home_odds"))}],
+                            "draw": [{"odds": str(pinnacle.get("draw_odds"))}],
+                            "away": [{"odds": str(pinnacle.get("away_odds"))}]
+                        }
+                        match_data["l3_odds_data"] = converted
+                        results.append(match_data)
+                        continue
+
+                    # 格式 2: 数组格式 {"home": [{"odds": "1.5"}], ...}
+                    elif "home" in l3_odds_data and isinstance(l3_odds_data.get("home"), list):
+                        match_data["l3_odds_data"] = l3_odds_data
+                        results.append(match_data)
+                        continue
+
+                    # 格式 3: Average Odds 格式 {"closing_odds": {"Average Odds": {"home": 1.5}}}
+                    elif "closing_odds" in l3_odds_data or "opening_odds" in l3_odds_data:
+                        try:
+                            closing = l3_odds_data.get("closing_odds", {})
+                            opening = l3_odds_data.get("opening_odds", {})
+
+                            # 提取 Average Odds
+                            closing_avg = closing.get("Average Odds", {})
+                            opening_avg = opening.get("Average Odds", {})
+
+                            converted = {
+                                "home": [
+                                    {"odds": str(opening_avg.get("home"))},
+                                    {"odds": str(closing_avg.get("home"))}
+                                ],
+                                "draw": [
+                                    {"odds": str(opening_avg.get("draw"))},
+                                    {"odds": str(closing_avg.get("draw"))}
+                                ],
+                                "away": [
+                                    {"odds": str(opening_avg.get("away"))},
+                                    {"odds": str(closing_avg.get("away"))}
+                                ]
+                            }
+                            match_data["l3_odds_data"] = converted
+                            results.append(match_data)
+                            continue
+                        except (KeyError, TypeError, AttributeError) as e:
+                            logger.warning(f"Average Odds 格式解析失败: {match_id} - {e}")
+                            log_failed_extraction(
+                                match_id, "average_odds", l3_odds_data,
+                                f"解析失败: {str(e)}"
+                            )
+                            continue
+
+                    # V38.0: 格式 4 - Pinnacle flat format {"home_odds": 1.45, "draw_odds": 4.45, "away_odds": 6.75}
+                    elif "home_odds" in l3_odds_data or "draw_odds" in l3_odds_data or "away_odds" in l3_odds_data:
+                        # 直接传递给 extract_features_from_json，它会处理这种格式
+                        match_data["l3_odds_data"] = l3_odds_data
+                        results.append(match_data)
+                        continue
+
+                    # 格式 5: 未知格式 - 记录并跳过
+                    else:
+                        logger.warning(f"Unknown l3_odds_data format for match {match_id}")
+                        log_failed_extraction(
+                            match_id, "unknown", l3_odds_data,
+                            "无法识别的 l3_odds_data 格式"
+                        )
+                        continue
+
+                # 回退: 从 odds_data 构建 l3_features (旧格式)
                 odds_list = row.get("odds_data", [])
+
+                # 构建 l3_features (即使为空也要添加到 results)
+                l3_features = {}
 
                 if odds_list:
                     # 简单策略：第一条作为 opening，最后一条作为 closing
                     # 实际项目中应根据 collected_at 时间戳判断
-                    l3_features = {}
 
-                    if odds_list:
-                        first_odds = odds_list[0]
-                        l3_features["opening"] = {
-                            "home": first_odds.get("home_odds"),
-                            "draw": first_odds.get("draw_odds"),
-                            "away": first_odds.get("away_odds"),
-                        }
+                    first_odds = odds_list[0]
+                    l3_features["opening"] = {
+                        "home": first_odds.get("home_odds"),
+                        "draw": first_odds.get("draw_odds"),
+                        "away": first_odds.get("away_odds"),
+                    }
 
                     if len(odds_list) > 1:
                         last_odds = odds_list[-1]
@@ -412,11 +675,7 @@ def fetch_from_clean_view(limit: int = 100, incremental: bool = True) -> List[Di
                             "away": min(all_away) if all_away else None,
                         }
 
-                    match_data["l3_features"] = l3_features
-                else:
-                    # 无赔率数据，使用空字典
-                    match_data["l3_features"] = {}
-
+                match_data["l3_features"] = l3_features
                 results.append(match_data)
 
             return results
@@ -566,6 +825,8 @@ def main():
                         help="炼金触发器模式：每 10 分钟自动扫描新数据")
     parser.add_argument("--interval", type=int, default=600,
                         help="扫描间隔（秒），默认: 600 (10 分钟)")
+    parser.add_argument("--no-incremental", action="store_true",
+                        help="非增量模式：重新处理所有比赛（包括已有特征的）")
 
     args = parser.parse_args()
 
@@ -663,14 +924,14 @@ def main():
 
     elif args.dry_run:
         logger.info("🔵 干跑模式：只提取特征，不保存到数据库")
-        raw_data = fetch_from_clean_view(args.limit)
+        raw_data = fetch_from_clean_view(args.limit, incremental=not args.no_incremental)
         logger.info(f"获取 {len(raw_data)} 条记录")
 
         for match_data in raw_data[:3]:  # 显示前 3 条
             features = extract_features_from_json(match_data)
             logger.info(f"Match {match_data.get('match_id')}: {features}")
     else:
-        results = process_features_pipeline(args.limit)
+        results = process_features_pipeline(args.limit, incremental=not args.no_incremental)
         logger.info(f"✅ 处理完成，共 {len(results)} 条记录")
 
 
