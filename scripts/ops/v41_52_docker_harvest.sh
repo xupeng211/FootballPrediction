@@ -85,6 +85,7 @@ run_harvest() {
     log_info "启动 Docker 收割容器..."
 
     docker-compose run --rm \
+        -e BACKUP_SCHEDULE="" \
         -e DB_HOST=db \
         -e DB_PORT=5432 \
         -e DB_NAME=football_db \
@@ -92,7 +93,7 @@ run_harvest() {
         -e DB_PASSWORD=football_pass \
         -e PYTHONPATH=/app \
         -w /app \
-        app \
+        pipeline_worker \
         python main.py --action align-hashes --league "$LEAGUE" --season "$SEASON" --run-harvest
 }
 
