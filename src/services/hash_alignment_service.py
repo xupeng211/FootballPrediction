@@ -270,14 +270,16 @@ class HashAlignmentService:
         from src.config_unified import DatabaseConfigurationError
 
         try:
-            with self.conn.cursor() as cursor:
+            with self.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cursor:
                 # 1. 检查当前连接的数据库名称
                 cursor.execute("SELECT current_database();")
-                current_db = cursor.fetchone()[0]
+                result = cursor.fetchone()
+                current_db = result['current_database'] if result else None
 
                 # 2. 检查 matches 表是否存在
                 cursor.execute("SELECT to_regclass('public.matches');")
-                matches_table = cursor.fetchone()[0]
+                result = cursor.fetchone()
+                matches_table = result['to_regclass'] if result else None
 
                 # 3. 验证数据库身份
                 if current_db != "football_db":
@@ -302,7 +304,8 @@ class HashAlignmentService:
                     SELECT COUNT(*) FROM information_schema.tables
                     WHERE table_schema = 'public' AND table_type = 'BASE TABLE';
                 """)
-                table_count = cursor.fetchone()[0]
+                result = cursor.fetchone()
+                table_count = result['count'] if result else 0
 
                 logger.info(f"✅ V41.51 数据库身份验证通过 (db={current_db}, tables={table_count})")
 
@@ -896,9 +899,9 @@ class HashAlignmentService:
     # V41.44: 全自动收割 (Active Harvest)
     # ========================================================================
 
-    def extract_matches_from_dom(self, page: Page) -> list[MatchInfo]:
+    async def extract_matches_from_dom(self, page: Page) -> list[MatchInfo]:
         """
-        V41.44: 从 Playwright Page 对象提取比赛信息（DOM 直取）
+        V41.59: 从 Playwright Page 对象提取比赛信息（DOM 直取）- 异步版本
 
         使用 page.evaluate() 直接在浏览器中执行 JavaScript，比 BeautifulSoup 更可靠
 
@@ -910,10 +913,11 @@ class HashAlignmentService:
         """
         if not PLAYWRIGHT_AVAILABLE:
             logger.warning("⚠️  Playwright 不可用，回退到 HTML 解析")
-            html = page.content()
+            html = await page.content()  # V41.59: page.content() 也是异步的
             return self.extract_matches_from_html(html)
 
-        matches = page.evaluate("""
+        # V41.59: 使用 await 调用 page.evaluate()
+        matches = await page.evaluate("""
             () => {
                 const results = [];
 
@@ -1105,8 +1109,8 @@ class HashAlignmentService:
                                 logger.info(f"🔌 切换代理端口: {proxy_port} → {new_proxy_port}")
                                 proxy_port = new_proxy_port
 
-                        # 提取比赛信息
-                        matches = self.extract_matches_from_dom(page)
+                        # V41.59: 使用 await 调用异步方法
+                        matches = await self.extract_matches_from_dom(page)
                         stats["pages_visited"] += 1
 
                         logger.info(f"   提取到 {len(matches)} 场比赛")

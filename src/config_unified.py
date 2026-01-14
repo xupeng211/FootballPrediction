@@ -147,32 +147,101 @@ class UnifiedSettings(BaseSettings):
     # === 环境自动检测和注入 ===
     @classmethod
     def auto_inject_env_vars(cls) -> dict[str, Any]:
-        """自动注入环境变量"""
+        """V41.59: 自动注入环境变量（增强环境检测）"""
         env_config = {}
 
-        # 检测Docker环境
-        docker_env = os.getenv("DOCKER_ENV", "").lower() in ("true", "1", "yes")
-        monitoring_mode = os.getenv("MONITORING_MODE", "").lower() in ("true", "1", "yes")
+        # V41.59: 首先加载 .env 文件（确保环境变量可用）
+        try:
+            from dotenv import load_dotenv
+            load_dotenv()
+        except ImportError:
+            logger.debug("python-dotenv 未安装，跳过 .env 文件加载")
 
-        if docker_env:
-            # Docker环境自动配置（db_password必须通过环境变量显式设置）
-            db_password = os.getenv("DB_PASSWORD")
-            if not db_password:
-                logger.warning("🚨 Docker环境检测到DB_PASSWORD未设置，请通过环境变量配置")
-
-            env_config.update(
-                {
-                    "db_host": "db",
-                    "db_port": int(os.getenv("DB_PORT", 5432)),
-                    # V36.6: 单数据库准则 - Docker 环境也必须使用 football_db
-                    "db_name": os.getenv("DB_NAME", "football_db"),
-                    "db_user": os.getenv("DB_USER", "football_user"),
-                    "db_password": db_password or "change-me-in-production",
-                    "redis_host": os.getenv("REDIS_HOST", "redis"),
-                    "redis_port": int(os.getenv("REDIS_PORT", 6379)),
-                    "environment": "monitoring" if monitoring_mode else "production",
-                }
+        # V41.59: 使用智能环境检测器
+        try:
+            from src.core.environment_detector import (
+                EnvironmentType,
+                get_optimal_db_host,
+                detect_environment
             )
+
+            current_env = detect_environment()
+            monitoring_mode = os.getenv("MONITORING_MODE", "").lower() in ("true", "1", "yes")
+
+            # 根据环境自动配置
+            if current_env == EnvironmentType.DOCKER:
+                logger.info("🐳 V41.59: Docker 环境自动配置")
+                env_config.update(
+                    {
+                        "db_host": "db",
+                        "db_port": int(os.getenv("DB_PORT", 5432)),
+                        "db_name": os.getenv("DB_NAME", "football_db"),
+                        "db_user": os.getenv("DB_USER", "football_user"),
+                        "db_password": os.getenv("DB_PASSWORD", "change-me-in-production"),
+                        "redis_host": os.getenv("REDIS_HOST", "redis"),
+                        "redis_port": int(os.getenv("REDIS_PORT", 6379)),
+                        "environment": "monitoring" if monitoring_mode else "production",
+                    }
+                )
+
+            elif current_env == EnvironmentType.WSL2:
+                logger.info("🟡 V41.59: WSL2 环境自动配置")
+                # 获取最优主机（检测端口冲突）
+                optimal_host = get_optimal_db_host(
+                    preferred_host=os.getenv("DB_HOST"),
+                    env_var_host=os.getenv("PGHOST")  # 支持 PGHOST 环境变量
+                )
+                env_config.update(
+                    {
+                        "db_host": optimal_host,
+                        "db_port": int(os.getenv("DB_PORT", 5432)),
+                        "db_name": os.getenv("DB_NAME", "football_db"),
+                        "db_user": os.getenv("DB_USER", "football_user"),
+                        "db_password": os.getenv("DB_PASSWORD") or os.getenv("PGPASSWORD", "change-me-in-production"),
+                        "redis_host": os.getenv("REDIS_HOST", "localhost"),
+                        "redis_port": int(os.getenv("REDIS_PORT", 6379)),
+                        "environment": "development",
+                    }
+                )
+
+            else:
+                logger.info("🏠 V41.59: 本地环境自动配置")
+                env_config.update(
+                    {
+                        "db_host": os.getenv("DB_HOST", "localhost"),
+                        "db_port": int(os.getenv("DB_PORT", 5432)),
+                        "db_name": os.getenv("DB_NAME", "football_db"),
+                        "db_user": os.getenv("DB_USER", "football_user"),
+                        "db_password": os.getenv("DB_PASSWORD") or os.getenv("PGPASSWORD", "change-me-in-production"),
+                        "redis_host": os.getenv("REDIS_HOST", "localhost"),
+                        "redis_port": int(os.getenv("REDIS_PORT", 6379)),
+                        "environment": "development",
+                    }
+                )
+
+        except ImportError:
+            # 回退到旧逻辑（兼容性）
+            logger.warning("⚠️  环境检测器未找到，使用旧版配置逻辑")
+            docker_env = os.getenv("DOCKER_ENV", "").lower() in ("true", "1", "yes")
+            monitoring_mode = os.getenv("MONITORING_MODE", "").lower() in ("true", "1", "yes")
+
+            if docker_env:
+                db_password = os.getenv("DB_PASSWORD")
+                if not db_password:
+                    logger.warning("🚨 Docker环境检测到DB_PASSWORD未设置，请通过环境变量配置")
+
+                env_config.update(
+                    {
+                        "db_host": "db",
+                        "db_port": int(os.getenv("DB_PORT", 5432)),
+                        "db_name": os.getenv("DB_NAME", "football_db"),
+                        "db_user": os.getenv("DB_USER", "football_user"),
+                        "db_password": db_password or "change-me-in-production",
+                        "redis_host": os.getenv("REDIS_HOST", "redis"),
+                        "redis_port": int(os.getenv("REDIS_PORT", 6379)),
+                        "environment": "monitoring" if monitoring_mode else "production",
+                    }
+                )
 
         # 自动注入所有FOOTBALL_前缀的环境变量
         for key, value in os.environ.items():
@@ -252,7 +321,11 @@ class UnifiedSettings(BaseSettings):
     )
 
     # === 数据库配置 ===
-    db_host: str = Field(default="localhost", description="数据库主机")
+    # V41.59: 智能环境检测 - 自动选择最优数据库主机
+    db_host: str = Field(
+        default="localhost",
+        description="数据库主机 (V41.59: 支持环境智能检测)"
+    )
 
     db_port: int = Field(default=5432, description="数据库端口")
 
