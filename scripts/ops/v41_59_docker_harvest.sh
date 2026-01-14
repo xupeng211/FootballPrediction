@@ -1,8 +1,9 @@
 #!/bin/bash
-# V41.52: Docker 专用收割脚本
+# V41.59: Docker 收割脚本 - 标准化版本
 # ============================================
-# 用途: 绕过 WSL2 网络转发 Bug，在 Docker 容器内执行收割
-# 环境: 必须在 Docker 容器内运行，确保连接到真实数据库
+# 用途: 在本地环境运行收割，连接到 Docker 数据库
+# 环境: WSL2/本地，通过端口映射连接 Docker 数据库
+# 确保本地 PostgreSQL 服务已停止
 
 set -e  # 遇到错误立即退出
 
@@ -38,26 +39,32 @@ check_docker() {
     log_info "✅ Docker 容器运行正常"
 }
 
-# 验证数据库身份（Docker 内部）
+# 验证数据库身份
 verify_database() {
-    log_info "验证数据库身份（Docker 内部检查）..."
+    log_info "验证数据库身份..."
 
-    # 在 Docker 容器内执行检查
-    TABLE_COUNT=$(docker-compose exec -T db psql -U football_user -d football_db -t -c "
+    TABLE_COUNT=$(PGPASSWORD=football_pass psql -h 127.0.0.1 -p 5432 -U football_user -d football_db -t -c "
         SELECT COUNT(*) FROM information_schema.tables
         WHERE table_schema = 'public' AND table_type = 'BASE TABLE';
     " | tr -d ' ')
 
+    if [ -z "$TABLE_COUNT" ]; then
+        log_error "无法连接到数据库！"
+        log_error "请确保 Docker 数据库已启动并映射到 127.0.0.1:5432"
+        exit 1
+    fi
+
     if [ "$TABLE_COUNT" -lt 10 ]; then
         log_error "数据库表数量异常: $TABLE_COUNT (期望 >=10)"
         log_error "可能连接到了错误的数据库实例！"
+        log_error "请停止本地 PostgreSQL 服务: sudo service postgresql stop"
         exit 1
     fi
 
     log_info "✅ 数据库验证通过 ($TABLE_COUNT 张表)"
 
     # 检查 matches 表记录数
-    MATCHES_COUNT=$(docker-compose exec -T db psql -U football_user -d football_db -t -c "
+    MATCHES_COUNT=$(PGPASSWORD=football_pass psql -h 127.0.0.1 -p 5432 -U football_user -d football_db -t -c "
         SELECT COUNT(*) FROM matches;
     " | tr -d ' ')
 
@@ -68,42 +75,58 @@ verify_database() {
     fi
 }
 
-# 构建并运行 Docker 收割命令
+# 检查端口占用
+check_port() {
+    log_info "检查端口占用..."
+
+    if netstat -tulpn 2>/dev/null | grep -q ":5432.*postgres"; then
+        log_warn "⚠️  检测到本地 PostgreSQL 服务占用 5432 端口"
+        log_warn "建议: 停止本地 PostgreSQL 服务"
+        log_warn "命令: sudo service postgresql stop"
+        read -p "是否继续? (y/N): " -n 1 -r
+        echo
+        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+            log_info "用户取消"
+            exit 0
+        fi
+    fi
+}
+
+# 运行收割
 run_harvest() {
     local LEAGUE="${1:-Ligue 1}"
     local SEASON="${2:-23/24}"
 
     log_info "=========================================="
-    log_info "V41.52 Docker 收割模式"
+    log_info "V41.59 Docker 收割模式（标准化）"
     log_info "=========================================="
     log_info "联赛: $LEAGUE"
     log_info "赛季: $SEASON"
-    log_info "环境: Docker 容器内部"
+    log_info "数据库: 127.0.0.1:5432 (Docker 映射)"
     log_info "=========================================="
+    echo ""
 
-    # 方式 1: 使用 docker-compose run（推荐）
-    log_info "启动 Docker 收割容器..."
+    # 设置环境变量
+    export PGHOST=127.0.0.1
+    export PGPORT=5432
+    export PGDATABASE=football_db
+    export PGUSER=football_user
+    export PGPASSWORD=football_pass
 
-    docker-compose run --rm \
-        -e BACKUP_SCHEDULE="" \
-        -e DB_HOST=db \
-        -e DB_PORT=5432 \
-        -e DB_NAME=football_db \
-        -e DB_USER=football_user \
-        -e DB_PASSWORD=football_pass \
-        -e PYTHONPATH=/app \
-        -w /app \
-        pipeline_worker \
-        python main_production.py --action align-hashes --league "$LEAGUE" --season "$SEASON" --run-harvest
+    # 运行收割
+    python main.py --action align-hashes --league "$LEAGUE" --season "$SEASON" --run-harvest
 }
 
 # 主函数
 main() {
-    log_info "🚀 V41.52 Docker 收割启动"
+    log_info "🚀 V41.59 Docker 收割启动（标准化版本）"
     echo ""
 
     # 检查 Docker 环境
     check_docker
+
+    # 检查端口占用
+    check_port
 
     # 验证数据库身份
     verify_database
