@@ -35,6 +35,7 @@ from typing import Any, Dict, List, Optional
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from psycopg2.extensions import connection
+from psycopg2 import sql as psycopg2_sql
 from contextlib import contextmanager
 
 from src.config_unified import get_settings
@@ -389,23 +390,27 @@ class OddsPortalDBManager:
         """
         try:
             with self.conn.cursor() as cur:
-                # 总记录数
-                cur.execute(f"SELECT COUNT(*) as total FROM {self.TABLE_NAME}")
+                # 总记录数（使用安全的标识符处理）
+                query = psycopg2_sql.SQL("SELECT COUNT(*) as total FROM {}").format(
+                    psycopg2_sql.Identifier(self.TABLE_NAME)
+                )
+                cur.execute(query)
                 total = cur.fetchone()["total"]
 
-                # 有 l2_raw_json 的记录数
-                cur.execute(
-                    f"SELECT COUNT(*) as count FROM {self.TABLE_NAME} "
-                    f"WHERE {self.L2_FIELD} IS NOT NULL"
+                # 有 l2_raw_json 的记录数（使用安全的标识符处理）
+                query = psycopg2_sql.SQL("SELECT COUNT(*) as count FROM {} WHERE {} IS NOT NULL").format(
+                    psycopg2_sql.Identifier(self.TABLE_NAME),
+                    psycopg2_sql.Identifier(self.L2_FIELD)
                 )
+                cur.execute(query)
                 with_l2 = cur.fetchone()["count"]
 
-                # 有 oddsportal 数据的记录数
-                cur.execute(
-                    f"SELECT COUNT(*) as count FROM {self.TABLE_NAME} "
-                    f"WHERE {self.L2_FIELD} -> %s IS NOT NULL",
-                    (self.ODDSPORTAL_KEY,)
+                # 有 oddsportal 数据的记录数（使用安全的标识符处理）
+                query = psycopg2_sql.SQL("SELECT COUNT(*) as count FROM {} WHERE {} -> %s IS NOT NULL").format(
+                    psycopg2_sql.Identifier(self.TABLE_NAME),
+                    psycopg2_sql.Identifier(self.L2_FIELD)
                 )
+                cur.execute(query, (self.ODDSPORTAL_KEY,))
                 with_oddsportal = cur.fetchone()["count"]
 
                 return {

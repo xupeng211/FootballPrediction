@@ -18,6 +18,7 @@ from dotenv import load_dotenv
 import pandas as pd
 import psycopg2
 from psycopg2.extras import RealDictCursor
+from psycopg2 import sql as psycopg2_sql
 import requests
 
 # Add src to path
@@ -84,10 +85,15 @@ class DatabaseManager:
             conn.autocommit = True
             cur = conn.cursor()
 
-            # Create database
-            cur.execute("SELECT 1 FROM pg_database WHERE datname = %s", (os.getenv("DB_NAME", "football_db"),))
+            # Create database（使用安全的标识符处理）
+            db_name = os.getenv("DB_NAME", "football_db")
+            cur.execute("SELECT 1 FROM pg_database WHERE datname = %s", (db_name,))
             if not cur.fetchone():
-                cur.execute(f"CREATE DATABASE {os.getenv('DB_NAME', 'football_db')} OWNER football_user")
+                # 使用 psycopg2.sql.Identifier 防止 SQL 注入
+                query = psycopg2_sql.SQL("CREATE DATABASE {} OWNER football_user").format(
+                    psycopg2_sql.Identifier(db_name)
+                )
+                cur.execute(query)
                 logger.info("✅ 数据库创建成功")
             else:
                 logger.info("ℹ️ 数据库已存在")

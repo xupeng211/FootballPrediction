@@ -64,9 +64,12 @@ make logs                # 查看核心服务日志
 | **生产版本** | V36.1 (Final Guard) |
 | **命令中心** | V144.7 (Multi-Source) |
 | **核心模型** | V26.8 (联赛专项) |
-| **数据采集** | V151.3 (8 Workers) |
+| **数据采集** | V151.3 (8 Workers) + V41.60 (全能之眼) |
+| **哈希对齐服务** | V41.60 (TDD 驱动的代理配置修复) |
+| **数据库优化** | V41.49 (连接池优化) |
 | **基线准确率** | 56% |
 | **推理延迟** | <100ms |
+| **五大联赛覆盖率** | 78.0% (1366/1752) |
 
 ### 核心技术栈
 - **ML**: XGBoost 3.0+, scikit-learn
@@ -209,6 +212,27 @@ conn = psycopg2.connect(
     cursor_factory=RealDictCursor
 )
 ```
+
+### V41.49 数据库连接池配置优化
+
+**连接池参数**（V41.49 优化）:
+```python
+class DatabaseConfig:
+    pool_size: int = 15           # V41.49: 原 10 → 15 (基础连接数)
+    max_overflow: int = 20        # 保持 20 (最大溢出数，理论最大 35)
+    pool_timeout: int = 10        # V41.49: 原 30 → 10 (降低超时，防止无限阻塞)
+    pool_recycle: int = 600       # V41.49: 原 3600 → 600 (10分钟回收，避免长连接问题)
+```
+
+**优化说明**:
+- ✅ **提升并发能力**: pool_size 从 10 提升到 15，支持更高并发
+- ✅ **降低阻塞风险**: pool_timeout 从 30s 降低到 10s，避免长时间等待
+- ✅ **避免长连接问题**: pool_recycle 从 1 小时降低到 10 分钟，定期回收连接
+
+**适用场景**:
+- 高并发数据采集（8 Workers 并发收割）
+- 批量特征提取（1000+ 场比赛）
+- API 服务（多用户并发请求）
 
 ### 核心数据库表
 
@@ -355,6 +379,62 @@ python scripts/ops/v40_22_improved_harvester.py --leagues "La Liga"
 python scripts/ops/v40_24_import_fixed.py --source logs/v40_22_results.json
 ```
 
+### V41.60 全能之眼 - DOM 提取与代理配置修复
+```bash
+# V41.60 诊断工具（DOM 结构深度采样）
+python scripts/ops/v41_60_dom_diagnostic.py --league "Premier League"
+
+# V41.60 代理诊断（代理环境隔离诊断）
+python scripts/ops/v41_60_proxy_diagnostic.py
+
+# V41.60 增强诊断（完整收割流程模拟）
+python scripts/ops/v41_60_enhanced_diagnostic.py --league "Premier League"
+```
+
+**V41.60 核心特性**:
+- ✅ **TDD 驱动的代理配置修复** - 使用 Playwright `proxy` 参数替代 `--proxy-server`
+- ✅ **浏览器指纹增强** - 添加 locale 和 timezone_id 使浏览器更像真实用户
+- ✅ **URL 遍历模式翻页** - 直接构造分页 URL，更可靠
+- ✅ **内容验证** - 检查新页面是否有 hash 链接，智能检测最后一页
+- ✅ **双重回退** - URL 失败时回退到点击翻页
+
+**V41.60 适用场景**:
+- ✅ 多联赛 DOM 兼容性问题（已解决英超、德甲、意甲提取失败）
+- ✅ 代理配置不稳定问题（已修复为 Playwright 原生参数）
+- ✅ 翻页逻辑可靠性问题（已升级为 URL 遍历模式）
+
+### V41.61 五大联赛 100% 满绿收官总攻
+```bash
+# V41.61 自动化收割脚本（按序收割五大联赛）
+python scripts/ops/v41_61_grand_finale_harvest.py --limit 100
+
+# V41.61 支持的参数
+python scripts/ops/v41_61_grand_finale_harvest.py --leagues "Premier League" "La Liga" --max-retries 3
+```
+
+**V41.61 核心特性**:
+- ✅ **按序收割五大联赛** - 自动按顺序收割所有联赛
+- ✅ **动态重试机制** - 失败自动重试 3 次
+- ✅ **实时覆盖率统计** - 追踪收割进度
+- ✅ **最终战报生成** - 自动生成收割报告
+
+**注意**: V41.61 收割可能触发 OddsPortal 反爬保护，建议间隔 6-24 小时后重试。
+
+### V41.63 代理连通性检查
+```bash
+# V41.63 全链路连通性测试（验证 6 个代理端口）
+python scripts/ops/v41_63_proxy_check.py
+
+# 检查指定代理端口
+python scripts/ops/v41_63_proxy_check.py --ports 7891 7892 7893
+```
+
+**V41.63 核心特性**:
+- ✅ **6 个代理端口连通性测试** - 验证 7891-7896 端口状态
+- ✅ **IP 唯一性验证** - 确保每个代理端口使用不同 IP
+- ✅ **并发测试** - 多线程并发测试提高效率
+- ✅ **详细报告** - 生成连通性和 IP 分配报告
+
 > 详细模块说明请参阅 [docs/module_reference.md](docs/module_reference.md)
 
 ---
@@ -452,8 +532,10 @@ pytest tests/ --cov=src --cov-report=html
 
 **🚨 CRITICAL**: This is a production system support document.
 
-**🧬 当前版本**: V36.1 (Final Guard & Test Suite Pass)
+**🧬 当前版本**: V41.60 (全能之眼 - 代理配置修复与翻页逻辑升级)
 **命令中心**: V144.7 (Multi-Source Command Center)
+**数据采集**: V41.60 (DOM 提取 + URL 遍历翻页)
+**哈希对齐服务**: V41.60 (TDD 驱动的代理配置修复)
 **最后更新**: 2026-01-14
 **基线准确率**: 56% (真赛前)
 **生产状态**: Production Ready

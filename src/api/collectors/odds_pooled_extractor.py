@@ -134,6 +134,7 @@ class PooledOddsExtractor:
         self.settings = get_settings()
 
         # Browser instances (managed by async context manager)
+        self._playwright = None  # V41.67: Store playwright for proper cleanup
         self._browser: Browser | None = None
         self._context: BrowserContext | None = None
         self._pages: dict[str, Page] = {}
@@ -175,7 +176,8 @@ class PooledOddsExtractor:
         logger.info("[PooledExtractor] Launching browser...")
         self._browser_launched_at = datetime.now().timestamp()
 
-        playwright = await async_playwright().start()
+        # V41.67: Store playwright for proper cleanup
+        self._playwright = await async_playwright().start()
         launch_options = {
             "headless": self.headless,
         }
@@ -183,7 +185,7 @@ class PooledOddsExtractor:
             launch_options["slow_mo"] = self.slow_mo
             logger.info(f"[PooledExtractor] Slow_mo enabled: {self.slow_mo}ms")
 
-        self._browser = await playwright.chromium.launch(**launch_options)
+        self._browser = await self._playwright.chromium.launch(**launch_options)
 
         # V64.0: Use random fingerprint for each session
         logger.info(f"[PooledExtractor] Fingerprint: viewport={self._current_viewport}, "
@@ -202,6 +204,12 @@ class PooledOddsExtractor:
             return
 
         logger.info("[PooledExtractor] Closing browser...")
+
+        # V41.67: Stop playwright object to prevent resource leak
+        if self._playwright is not None:
+            await self._playwright.stop()
+            self._playwright = None
+
         await self._browser.close()
         self._browser = None
         self._context = None

@@ -43,6 +43,7 @@ from typing import Any
 from playwright.async_api import Browser, Page
 
 from src.config_unified import get_settings
+from src.services.harvest_config import AntiScrapingConfig
 
 logger = logging.getLogger(__name__)
 
@@ -831,16 +832,16 @@ class BaseExtractor:
         if self._is_wsl2():
             wsl_host = self._get_wsl2_host_ip()
             if wsl_host:
-                # Try common proxy ports
-                common_ports = [7890, 10808, 10809, 7891, 1087]
-                for port in common_ports:
+                # V41.67: Use AntiScrapingConfig.PROXY_PORTS (7891-7896)
+                # Removed deprecated port 7890
+                for port in AntiScrapingConfig.PROXY_PORTS:
                     proxy_url = f"http://{wsl_host}:{port}"
                     logger.info(f"  🔍 WSL2 自动探测: 尝试 {proxy_url}")
                     # Quick connectivity test
                     if self._test_proxy_connection(proxy_url):
                         logger.info(f"  ✓ WSL2 代理成功: {proxy_url}")
                         return {"server": proxy_url}
-                logger.info(f"  ℹ️  WSL2 宿主机 IP: {wsl_host}，但常用端口均无响应")
+                logger.info(f"  ℹ️  WSL2 宿主机 IP: {wsl_host}，但所有代理端口均无响应")
 
         return None
 
