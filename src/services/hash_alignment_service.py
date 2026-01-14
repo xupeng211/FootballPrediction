@@ -609,7 +609,7 @@ class HashAlignmentService:
                     cur.execute(check_season_query, (match_id,))
                     result = cur.fetchone()
                     if result:
-                        db_season = result[0]
+                        db_season = result['season']
                         # 归一化赛季格式（23/24 → 2023/2024）
                         normalized_db_season = db_season.replace("/", "")
                         if len(normalized_db_season) == 4:
@@ -657,7 +657,7 @@ class HashAlignmentService:
                 existing = cur.fetchone()
 
                 if existing:
-                    logger.warning("⚠️  Hash %s 已被 match_id=%s 使用", hash_value, existing[0])
+                    logger.warning("⚠️  Hash %s 已被 match_id=%s 使用", hash_value, existing['fotmob_id'])
                     self.stats.conflicts += 1
                     return False
 
