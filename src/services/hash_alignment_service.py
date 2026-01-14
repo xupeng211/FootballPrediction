@@ -1075,18 +1075,20 @@ class HashAlignmentService:
                     max_retry=3
                 )
 
+                # V41.60: 使用 Playwright 的 proxy 参数（TDD 验证通过）
                 browser = await p.chromium.launch(
                     headless=headless,
-                    args=[
-                        # V41.50: 使用正确的代理主机地址（WSL2 适配）
-                        f"--proxy-server=http://{self.get_proxy_host()}:{proxy_port}",
-                        "--disable-blink-features=AutomationControlled"
-                    ]
+                    proxy={
+                        "server": f"http://{self.get_proxy_host()}:{proxy_port}"
+                    }
                 )
 
                 context = await browser.new_context(
                     user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-                    viewport={"width": 1920, "height": 1080}
+                    viewport={"width": 1920, "height": 1080},
+                    # V41.60: 添加真实浏览器特征（TDD 验证通过）
+                    locale="en-US",
+                    timezone_id="Europe/London"
                 )
 
                 page = await context.new_page()
@@ -1094,7 +1096,8 @@ class HashAlignmentService:
                 try:
                     # 访问联赛结果页面
                     await page.goto(base_url, wait_until="networkidle", timeout=30000)
-                    await asyncio.sleep(3)  # 等待页面完全加载
+                    # V41.60: 增加等待时间确保 Vue 应用完全渲染（TDD 验证通过）
+                    await asyncio.sleep(5)
 
                     for page_num in range(1, max_pages + 1):
                         logger.info(f"📖 正在处理第 {page_num} 页...")
@@ -1134,29 +1137,49 @@ class HashAlignmentService:
                             else:
                                 stats["total_conflicts"] += 1
 
-                        # 尝试翻页
+                        # V41.60: 尝试翻页（使用 URL 模式替代点击）
                         if page_num >= max_pages:
                             logger.info(f"✅ 已达到最大页数 {max_pages}")
                             break
 
-                        # 查找下一页按钮
-                        try:
-                            next_button = await page.query_selector(f"text={page_num + 1}")
-                            if next_button:
-                                # 检查按钮是否可点击
-                                is_disabled = await next_button.is_disabled()
-                                if is_disabled:
-                                    logger.info(f"✅ 第 {page_num + 1} 页按钮已禁用，结束翻页")
-                                    break
+                        # V41.60: URL 遍历模式（更可靠）
+                        # 检查当前页面 URL 是否包含 /page/#
+                        current_url = page.url
+                        if "/page/" in current_url:
+                            # 当前是分页 URL，构建下一页 URL
+                            base_url_without_page = current_url.split("/page/")[0]
+                            next_page_url = f"{base_url_without_page}/page/{page_num + 1}/"
+                        else:
+                            # 当前不是分页 URL，添加第一页
+                            next_page_url = f"{base_url.rstrip('/')}/page/{page_num + 1}/"
 
-                                await next_button.click()
-                                await asyncio.sleep(page_delay)  # V41.47: Tier 分级延迟
-                            else:
-                                logger.info(f"✅ 未找到第 {page_num + 1} 页按钮，结束翻页")
+                        logger.info(f"📍 翻页到第 {page_num + 1} 页: {next_page_url}")
+
+                        try:
+                            await page.goto(next_page_url, wait_until="networkidle", timeout=30000)
+                            await asyncio.sleep(5)  # V41.60: 等待新页面加载
+
+                            # 检查是否有内容（如果没有 hash 链接，说明到了最后一页）
+                            check_hash = await self.extract_matches_from_dom(page)
+                            if len(check_hash) == 0:
+                                logger.info(f"✅ 第 {page_num + 1} 页无内容，结束翻页")
                                 break
+
                         except Exception as e:
-                            logger.warning(f"⚠️  翻页失败: {e}")
-                            break
+                            logger.warning(f"⚠️  URL 翻页失败: {e}")
+                            # 回退到点击翻页
+                            logger.info("   回退到点击翻页模式...")
+                            try:
+                                next_button = await page.query_selector(f"text={page_num + 1}")
+                                if next_button:
+                                    await next_button.click()
+                                    await asyncio.sleep(page_delay)
+                                else:
+                                    logger.info(f"✅ 未找到第 {page_num + 1} 页按钮，结束翻页")
+                                    break
+                            except Exception as click_e:
+                                logger.warning(f"⚠️  点击翻页也失败: {click_e}")
+                                break
 
                 except Exception as e:
                     logger.error(f"❌ 收割过程出错: {e}")
