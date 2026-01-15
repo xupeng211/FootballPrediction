@@ -762,6 +762,10 @@ def get_settings() -> UnifiedSettings:
             errors = _settings_instance.validate_integrity()
             if errors:
                 logger.warning(f"配置验证警告: {'; '.join(errors)}")
+
+            # V41.77: 数据库隔离检测
+            _validate_database_environment(_settings_instance)
+
         except DatabaseConfigurationError:
             # V36.6: 硬红线违规 - 必须失败，不允许绕过
             raise
@@ -784,6 +788,55 @@ def get_settings() -> UnifiedSettings:
             )
 
     return _settings_instance
+
+
+def _validate_database_environment(settings: UnifiedSettings) -> None:
+    """
+    V41.77: 验证数据库环境
+
+    Args:
+        settings: 配置实例
+
+    Raises:
+        DatabaseConfigurationError: 环境验证失败时
+    """
+    # 检查环境变量是否禁用了环境检测
+    skip_validation = os.getenv("SKIP_ENV_VALIDATION", "").lower() in ("1", "true", "yes")
+
+    if skip_validation:
+        logger.warning("⚠️  环境检测已跳过 (SKIP_ENV_VALIDATION=1)")
+        return
+
+    try:
+        from src.core.environment_validator import (
+            validate_no_local_postgres_conflict,
+            validate_database_environment
+        )
+
+        db_port = settings.database.port
+
+        # 检查本地 PostgreSQL 冲突
+        validate_no_local_postgres_conflict(db_port)
+
+        # 验证数据库环境
+        db_host = settings.database.host
+        validate_database_environment(
+            db_host=db_host,
+            db_port=db_port,
+            allow_docker=True,
+            allow_local=False
+        )
+
+        logger.info("✅ V41.77: 数据库环境验证通过")
+
+    except ImportError:
+        logger.warning("⚠️  环境检测模块不可用，跳过验证")
+    except Exception as e:
+        raise DatabaseConfigurationError(
+            f"🚨 V41.77: 数据库环境验证失败\n"
+            f"   错误: {e}\n"
+            f"   请确保数据库环境正确配置"
+        )
 
 
 def reload_settings() -> UnifiedSettings:
