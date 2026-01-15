@@ -174,13 +174,13 @@ class AntiScrapingConfig:
     COOLDOWN_MIN: ClassVar[int] = 60
     COOLDOWN_MAX: ClassVar[int] = 120
 
-    # V41.66: 代理端口配置（6 个物理 IP）
+    # V41.71: 代理端口配置（19 个物理 IP）
     # 目的：IP 轮换，分散请求，降低单 IP 封禁风险
     #
     # 重要说明：
-    # - 7891-7896：6 个真实物理 IP（与 Clash 配置一致）
+    # - 7891-7909：19 个真实物理 IP（与 Clash Verge 配置一致）
     # - 7890 端口已弃用（严禁使用）
-    PROXY_PORTS: ClassVar[list[int]] = [7891, 7892, 7893, 7894, 7895, 7896]
+    PROXY_PORTS: ClassVar[list[int]] = list(range(7891, 7910))  # 19 个独立出口
     DEPRECATED_PROXY_PORT: ClassVar[int] = 7890  # 已弃用，禁止使用
 
     # V41.66: 熔断机制配置
