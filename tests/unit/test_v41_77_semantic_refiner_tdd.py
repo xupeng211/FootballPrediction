@@ -23,9 +23,12 @@ Date: 2026-01-15
 
 import csv
 import pytest
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from unittest.mock import MagicMock, Mock, patch
+
+from hypothesis import given, settings
+from hypothesis import strategies as st
 
 from src.core.semantic_refiner import (
     SemanticRefiner,
@@ -497,6 +500,133 @@ class TestConvenienceFunctions:
         assert refiner.conn == mock_conn
         assert refiner.confidence_threshold == 90.0
         assert "test_logs" in str(refiner.failure_log_path)
+
+
+# ============================================================================
+# V41.80: 属性测试（压力演习）
+# ============================================================================
+
+
+class TestPropertyBasedStress:
+    """
+    V41.80: 使用 Hypothesis 进行属性测试（压力演习）
+
+    模拟海量非标准字符、长 Slug、空字符，确保 SemanticRefiner 永远不抛出未捕获的错误。
+    """
+
+    @given(st.text(alphabet=st.characters(whitelist_categories=('Lu', 'Ll', 'Nd')), min_size=0, max_size=200))
+    @settings(max_examples=100, deadline=timedelta(milliseconds=5000))
+    def test_extract_hash_never_crashes_on_any_text(self, text):
+        """
+        V41.80: 测试 extract_hash_and_slug 对任何文本都不崩溃
+
+        使用 Hypothesis 生成各种奇怪的文本，确保函数永远不抛出未捕获的异常。
+        """
+        mock_conn = MagicMock()
+        refiner = SemanticRefiner(mock_conn)
+
+        try:
+            hash_value, slug = refiner.extract_hash_and_slug(text)
+            # 只要函数不崩溃，测试就通过
+            # 返回值可以是任何内容
+            assert isinstance(hash_value, str)
+            assert isinstance(slug, str)
+        except Exception as e:
+            # 如果有异常，确保是已知的异常类型
+            pytest.fail(f"extract_hash_and_slug crashed on: {text[:50]}... Error: {e}")
+
+    @given(st.from_regex(r'[a-zA-Z0-9\-_/vs]+'))
+    @settings(max_examples=100, deadline=timedelta(milliseconds=5000))
+    def test_parse_slug_never_crashes_on_valid_patterns(self, slug_pattern):
+        """
+        V41.80: 测试 parse_slug 对有效模式不崩溃
+
+        使用符合 URL 格式的文本进行测试。
+        """
+        mock_conn = MagicMock()
+        refiner = SemanticRefiner(mock_conn)
+
+        try:
+            home, away = refiner.parse_slug(slug_pattern)
+            # 只要函数不崩溃，测试就通过
+            assert isinstance(home, str)
+            assert isinstance(away, str)
+        except Exception as e:
+            pytest.fail(f"parse_slug crashed on: {slug_pattern[:50]}... Error: {e}")
+
+    @given(st.lists(st.text(min_size=1, max_size=50), min_size=1, max_size=5))
+    @settings(max_examples=50, deadline=timedelta(milliseconds=5000))
+    def test_parse_slug_handles_multiple_team_names(self, team_names):
+        """
+        V41.80: 测试 parse_slug 处理多个队名的情况
+
+        模拟各种奇怪的队名组合。
+        """
+        # 构造一个 slug
+        slug = "-vs-".join(team_names)
+        mock_conn = MagicMock()
+        refiner = SemanticRefiner(mock_conn)
+
+        try:
+            home, away = refiner.parse_slug(slug)
+            # 只要函数不崩溃，测试就通过
+            assert isinstance(home, str)
+            assert isinstance(away, str)
+        except Exception as e:
+            pytest.fail(f"parse_slug crashed on: {slug[:50]}... Error: {e}")
+
+    @given(st.text(min_size=0, max_size=1000))
+    @settings(max_examples=50, deadline=timedelta(milliseconds=5000))
+    def test_refine_url_never_crashes_on_any_url(self, url):
+        """
+        V41.80: 测试 refine_url 对任何 URL 都不崩溃
+
+        使用 Hypothesis 生成各种奇怪的 URL。
+        """
+        mock_conn = MagicMock()
+        refiner = SemanticRefiner(mock_conn)
+
+        try:
+            result = refiner.refine_url(url, "Test League", "2023/2024")
+            # 只要函数不崩溃，测试就通过
+            assert result is not None
+            assert isinstance(result.is_match, bool)
+        except Exception as e:
+            pytest.fail(f"refine_url crashed on: {url[:50]}... Error: {e}")
+
+    @given(st.text(alphabet=st.characters(whitelist_categories=('Lu', 'Ll')), min_size=1, max_size=100))
+    @settings(max_examples=50, deadline=timedelta(milliseconds=5000))
+    def test_clean_team_name_never_crashes(self, team_name):
+        """
+        V41.80: 测试 _clean_team_name 对任何队名都不崩溃
+
+        模拟各种奇怪的队名。
+        """
+        mock_conn = MagicMock()
+        refiner = SemanticRefiner(mock_conn)
+
+        try:
+            cleaned = refiner._clean_team_name(team_name)
+            # 只要函数不崩溃，测试就通过
+            assert isinstance(cleaned, str)
+        except Exception as e:
+            pytest.fail(f"_clean_team_name crashed on: {team_name[:50]}... Error: {e}")
+
+    @given(st.integers(min_value=0, max_value=100))
+    @settings(max_examples=20)
+    def test_confidence_threshold_acceptable_range(self, threshold):
+        """
+        V41.80: 测试各种置信度阈值都能正常工作
+        """
+        mock_conn = MagicMock()
+        try:
+            test_refiner = SemanticRefiner(
+                db_conn=mock_conn,
+                confidence_threshold=float(threshold)
+            )
+            assert test_refiner.confidence_threshold == float(threshold)
+        except Exception as e:
+            pytest.fail(f"SemanticRefiner init crashed with threshold={threshold}: {e}")
 
 
 # ============================================================================

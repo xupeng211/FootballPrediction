@@ -28,10 +28,8 @@ import os
 from pathlib import Path
 from typing import Any
 
-# V36.6: 添加用于硬红线检测的异常
-class DatabaseConfigurationError(EnvironmentError):
-    """V36.6: 数据库配置错误 - 单数据库准则违规"""
-    pass
+# V41.80: 使用统一的异常体系
+from src.core.exceptions import DatabaseConfigurationError
 
 from pydantic import Field, SecretStr, ValidationInfo, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict

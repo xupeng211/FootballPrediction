@@ -32,7 +32,22 @@ class BaseApplicationError(Exception):
 
 
 class DatabaseError(BaseApplicationError):
-    """数据库相关异常"""
+    """
+    数据库相关异常
+    """
+
+
+class DatabaseConfigurationError(DatabaseError):
+    """
+    数据库配置异常 (V41.80)
+
+    用于数据库配置错误、环境冲突等情况。
+
+    Examples:
+        >>> raise DatabaseConfigurationError("数据库配置错误", details={"db_name": "wrong_db"})
+    """
+
+    pass
 
 
 class ModelError(BaseApplicationError):
@@ -125,3 +140,112 @@ class CircuitBreakerError(BaseApplicationError):
 
 class RetryExhaustedError(BaseApplicationError):
     """重试耗尽异常"""
+
+
+# ============================================================================
+# V41.80: 分层异常体系扩展
+# ============================================================================
+
+
+class NetworkError(BaseApplicationError):
+    """
+    网络相关异常 (V41.80)
+
+    用于所有网络通信相关的错误，包括 HTTP 请求、连接超时、DNS 解析失败等。
+
+    Examples:
+        >>> raise NetworkError("无法连接到服务器", details={"host": "example.com", "port": 443})
+    """
+
+    pass
+
+
+class DataAlignmentError(BaseApplicationError):
+    """
+    数据对齐异常 (V41.80)
+
+    用于数据对齐过程中的各种错误。
+
+    Examples:
+        >>> raise DataAlignmentError("数据对齐失败")
+    """
+
+    pass
+
+
+class URLParsingError(DataAlignmentError):
+    """
+    URL 解析异常 (V41.80)
+
+    用于 URL 解析失败的情况。
+
+    Examples:
+        >>> raise URLParsingError("URL 格式无效", details={"url": "invalid-url"})
+    """
+
+    pass
+
+
+class TeamMatchingError(DataAlignmentError):
+    """
+    队名匹配异常 (V41.80)
+
+    用于队名匹配失败的情况。
+
+    Examples:
+        >>> raise TeamMatchingError("队名匹配失败", details={"team": "Unknown Team"})
+    """
+
+    pass
+
+
+class HashExtractionError(DataAlignmentError):
+    """
+    哈希提取异常 (V41.80)
+
+    用于哈希提取失败的情况。
+
+    Examples:
+        >>> raise HashExtractionError("哈希提取失败", details={"url": "example.com/xyz/"})
+    """
+
+    pass
+
+
+class ProxyError(BaseApplicationError):
+    """
+    代理相关异常 (V41.80)
+
+    用于代理操作相关的错误。
+
+    Examples:
+        >>> raise ProxyError("代理操作失败")
+    """
+
+    pass
+
+
+class ProxyConnectionError(ProxyError):
+    """
+    代理连接异常 (V41.80)
+
+    用于代理连接失败的情况。
+
+    Examples:
+        >>> raise ProxyConnectionError("代理连接失败", details={"host": "127.0.0.1", "port": 7891})
+    """
+
+    pass
+
+
+class ProxyHealthError(ProxyError):
+    """
+    代理健康检查异常 (V41.80)
+
+    用于代理健康检查失败的情况。
+
+    Examples:
+        >>> raise ProxyHealthError("代理不健康", details={"port": 7891, "failures": 3})
+    """
+
+    pass
