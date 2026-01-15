@@ -129,6 +129,9 @@ class CrawlerService:
     WSL2_PROXY_HOST: str = "172.25.16.1"
     LOCAL_PROXY_HOST: str = "127.0.0.1"
 
+    # V41.80: 并发流控配置
+    MAX_CONCURRENT_REQUESTS: int = 3  # 最大并发请求数（避免触发反爬）
+
     def __init__(
         self,
         db_conn,
@@ -137,6 +140,7 @@ class CrawlerService:
         enable_proxy_health_check: bool = True,
         headless: bool = True,
         confidence_threshold: float = 85.0,
+        max_concurrent_requests: int | None = None,
     ):
         """
         初始化爬虫服务
@@ -148,11 +152,16 @@ class CrawlerService:
             enable_proxy_health_check: 是否启用代理健康检查
             headless: 是否无头模式
             confidence_threshold: SemanticRefiner 置信度阈值
+            max_concurrent_requests: 最大并发请求数（V41.80 流控）
         """
         self.db_conn = db_conn
         self.proxy_ports = proxy_ports or self.PROXY_PORTS
         self.enable_bayesian = enable_bayesian
         self.headless = headless
+
+        # V41.80: 初始化并发流控 Semaphore
+        self.max_concurrent_requests = max_concurrent_requests or self.MAX_CONCURRENT_REQUESTS
+        self._concurrency_semaphore = asyncio.Semaphore(self.max_concurrent_requests)
 
         # V41.78: 初始化 SemanticRefiner
         self.semantic_refiner = SemanticRefiner(
@@ -204,10 +213,10 @@ class CrawlerService:
         self.proxy_host = self.WSL2_PROXY_HOST if self.is_wsl2 else self.LOCAL_PROXY_HOST
 
         logger.info(
-            f"✅ V41.78 CrawlerService 初始化完成 "
+            f"✅ V41.80 CrawlerService 初始化完成 "
             f"(proxies={len(self.available_ports)}/{len(self.proxy_ports)}, "
             f"bayesian={enable_bayesian}, wsl2={self.is_wsl2}, "
-            f"semantic_refiner=True)"
+            f"semantic_refiner=True, max_concurrent={self.max_concurrent_requests})"
         )
 
     # ========================================================================
@@ -299,6 +308,21 @@ class CrawlerService:
 
         logger.warning("⚠️  未找到健康代理端口")
         return None
+
+    async def _acquire_concurrency_slot(self) -> None:
+        """
+        V41.80: 获取并发槽位
+
+        使用 Semaphore 限制并发请求数，避免触发反爬保护。
+
+        Raises:
+            asyncio.TimeoutError: 如果在指定时间内无法获取槽位
+        """
+        await self._concurrency_semaphore.acquire()
+
+    def _release_concurrency_slot(self) -> None:
+        """V41.80: 释放并发槽位"""
+        self._concurrency_semaphore.release()
 
     # ========================================================================
     # 数据提取（V41.78: SemanticRefiner 集成）

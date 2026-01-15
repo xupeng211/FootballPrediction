@@ -23,6 +23,7 @@ Date: 2026-01-12
 
 from __future__ import annotations
 
+import functools
 import logging
 import re
 from dataclasses import dataclass
@@ -356,14 +357,17 @@ class TeamAliasMatch:
 # 核心算法
 # ============================================================================
 
+@functools.lru_cache(maxsize=4096)
 def normalize_team_name(name: str) -> str:
     """
-    标准化队名
+    V41.80: 标准化队名（带 LRU 缓存）
 
     处理：
     - 大小写统一
     - 移除特殊字符
     - 处理缩写
+
+    缓存：maxsize=4096，覆盖常见队名变体
 
     Args:
         name: 原始队名
@@ -406,13 +410,16 @@ def normalize_team_name(name: str) -> str:
 # V39.4 动态语义引擎
 # ============================================================================
 
+@functools.lru_cache(maxsize=2048)
 def denoise_team_name(name: str) -> str:
     """
-    V39.4: 去噪 - 移除队名后缀
+    V39.4: 去噪 - 移除队名后缀（V41.80: 带 LRU 缓存）
 
     将 "Manchester United FC" -> "Manchester"
     将 "Newcastle United" -> "Newcastle"
     将 "Wolverhampton Wanderers" -> "Wolverhampton"
+
+    缓存：maxsize=2048，覆盖常见去噪模式
 
     Args:
         name: 原始队名
@@ -448,9 +455,10 @@ def denoise_team_name(name: str) -> str:
     return result.strip()
 
 
+@functools.lru_cache(maxsize=2048)
 def extract_place_name(name: str) -> str:
     """
-    V39.4: 地名提取 - 提取核心地名
+    V39.4: 地名提取 - 提取核心地名（V41.80: 带 LRU 缓存）
 
     从队名中提取核心地名，优先使用已知地名映射
 
@@ -460,6 +468,8 @@ def extract_place_name(name: str) -> str:
         "Brighton & Hove Albion" -> "Brighton"
         "Inter Milan" -> "Milan"
         "FC Bayern München" -> "München"
+
+    缓存：maxsize=2048，覆盖全球联赛队名
 
     Args:
         name: 原始队名
@@ -495,9 +505,10 @@ def extract_place_name(name: str) -> str:
     return denoised
 
 
+@functools.lru_cache(maxsize=8192)
 def semantic_match(name1: str, name2: str) -> Tuple[float, str]:
     """
-    V39.4: 语义匹配 - 使用去噪和地名提取进行智能匹配
+    V39.4: 语义匹配 - 使用去噪和地名提取进行智能匹配（V41.80: 带 LRU 缓存）
 
     V40.3.8: 增加同城德比拒绝逻辑，防止假阳性
 
@@ -509,6 +520,8 @@ def semantic_match(name1: str, name2: str) -> Tuple[float, str]:
     V40.3.8 新增：
     - 拒绝 "Manchester United" vs "Manchester City"（同城不同球队）
     - 拒绝 "Inter Milan" vs "AC Milan"（德比）
+
+    缓存：maxsize=8192，覆盖常见队名配对（全球联赛）
 
     Args:
         name1: 队名 1
