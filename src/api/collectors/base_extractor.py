@@ -832,9 +832,9 @@ class BaseExtractor:
         if self._is_wsl2():
             wsl_host = self._get_wsl2_host_ip()
             if wsl_host:
-                # V41.67: Use AntiScrapingConfig.PROXY_PORTS (7891-7896)
+                # V41.121: Use AntiScrapingConfig.get_proxy_ports() (unified config)
                 # Removed deprecated port 7890
-                for port in AntiScrapingConfig.PROXY_PORTS:
+                for port in AntiScrapingConfig.get_proxy_ports():
                     proxy_url = f"http://{wsl_host}:{port}"
                     logger.info(f"  🔍 WSL2 自动探测: 尝试 {proxy_url}")
                     # Quick connectivity test

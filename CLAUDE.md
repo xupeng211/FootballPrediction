@@ -238,6 +238,60 @@ class DatabaseConfig:
 - 批量特征提取（1000+ 场比赛）
 - API 服务（多用户并发请求）
 
+### V41.121 统一代理配置 - 零硬编码架构
+
+**核心特性**:
+- ✅ **配置中心化**: 所有代理配置通过 `src.config_unified.ProxyConfig` 统一管理
+- ✅ **零配置启动**: 支持环境变量 `PROXY_PORTS` 和 `PROXY_WSL2_HOST` 动态配置
+- ✅ **WSL2 自动检测**: 自动识别 WSL2 环境并使用正确的代理主机地址
+- ✅ **类型安全**: 完整的类型注解和 Pydantic 验证
+
+**标准访问方式**:
+```python
+from src.config_unified import get_config
+
+config = get_config()
+proxy_config = config.proxy
+
+# 获取代理端口列表
+proxy_ports = proxy_config.proxy_ports  # [7892, 7893, 7894, 7895, 7896, 7898, 7899]
+
+# 获取 WSL2 代理主机
+wsl2_host = proxy_config.wsl2_bridge_host  # "172.25.16.1"
+
+# 获取健康检查配置
+timeout = proxy_config.health_check_timeout  # 2.0
+circuit_breaker = proxy_config.circuit_breaker_threshold  # 5
+```
+
+**环境变量配置**:
+```bash
+# .env 文件
+PROXY_PORTS=7892,7893,7894,7895,7896,7898,7899
+PROXY_WSL2_HOST=172.25.16.1
+```
+
+**各模块 Getter 方法**:
+```python
+# HashAlignmentService
+from src.services.hash_alignment_service import HashAlignmentService
+ports = HashAlignmentService.get_proxy_ports()
+host = HashAlignmentService.get_wsl2_proxy_host()
+
+# AntiScrapingConfig
+from src.services.harvest_config import AntiScrapingConfig
+ports = AntiScrapingConfig.get_proxy_ports()
+```
+
+**架构改进** (V41.121):
+| 模块 | 修改前 | 修改后 |
+|------|--------|--------|
+| `hash_alignment_service.py` | 硬编码 `PROXY_PORTS` 类变量 | `get_proxy_ports()` 读取统一配置 |
+| `harvest_config.py` | 硬编码端口列表 | `get_proxy_ports()` 类方法 |
+| `crawler_service.py` | 硬编码 `WSL2_PROXY_HOST` | `_get_proxy_host()` 使用统一配置 |
+| `base_extractor.py` | 直接访问 `AntiScrapingConfig.PROXY_PORTS` | 调用 `AntiScrapingConfig.get_proxy_ports()` |
+| `fotmob_core.py` | `backfill_missing_features()` 内部硬编码 | 通过 `get_config().proxy` 获取配置 |
+
 ### 核心数据库表
 
 **matches 表** - 比赛基础信息
@@ -521,8 +575,58 @@ UPDATE matches SET technical_features = %s WHERE match_id = %s
 **已归档的临时脚本** (V41.98-V41.105):
 - `v41_102_api_sniff_test.py` → `scripts/archive/`
 - `v41_103_smoke_test.py` → `scripts/archive/`
-- `v41_98_targeted_reharvest.py` → `scripts/archive/`
-- `v41_99_snipe_audit.py` → `scripts/archive/`
+
+### V41.121 精准回补引擎 - FotMobCoreCollector.backfill_missing_features()
+
+**V41.121 新增方法**: 使用现有 match_id 直接回补缺失的 technical_features，无需重新采集。
+
+**核心特性**:
+- ✅ **V41.120 验证方法**: 使用现有 match_id 直接查询 FotMob API（无需搜索）
+- ✅ **正确解析**: 修复 `header.teams[]` 数组解析，避免 `home.id` 错误
+- ✅ **双层回补**: 同时更新基础索引字段和 `technical_features`（152维）
+- ✅ **并发处理**: ThreadPoolExecutor + 代理轮换
+- ✅ **零硬编码**: 通过 `get_config().proxy` 获取代理配置
+- ✅ **JSON 序列化**: 自动转换 PostgreSQL Decimal 为 float
+
+**使用方式**:
+```python
+from src.api.collectors.fotmob_core import FotMobCoreCollector
+
+# 查询缺失 technical_features 的比赛
+import psycopg2
+conn = psycopg2.connect(...)
+cur = conn.cursor()
+cur.execute("""
+    SELECT match_id FROM matches
+    WHERE technical_features IS NULL
+    LIMIT 100
+""")
+match_ids = [row[0] for row in cur.fetchall()]
+
+# 创建采集器并执行回补
+collector = FotMobCoreCollector()
+result = collector.backfill_missing_features(
+    match_ids=match_ids,
+    concurrent_workers=5,
+    dry_run=False
+)
+
+# 查看结果
+print(f"成功: {result['successful']}, 失败: {result['failed']}")
+# 输出: 成功: 99, 失败: 1 (99.0%)
+```
+
+**V41.120 关键修复**:
+| 问题 | 旧方法 | V41.120 修复 |
+|------|--------|-------------|
+| 队伍 ID 解析 | `match_data['home']['id']` | `match_data['header']['teams'][0]['id']` |
+| Match ID 来源 | 搜索 API 获取 | 直接使用数据库现有 match_id |
+| 数据库操作 | UPSERT（可能创建重复） | UPDATE（仅更新现有记录） |
+
+**适用场景**:
+- 批量回补缺失的 `technical_features` 字段
+- 修复 `home_team_id` / `away_team_id` 索引字段
+- 数据迁移后的完整性修复
 
 **152 维技术特征分类**:
 | 类别 | 数量 | 占比 | 示例 |
