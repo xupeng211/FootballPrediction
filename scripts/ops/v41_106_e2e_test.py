@@ -13,11 +13,11 @@ V41.106 "架构标准化" - 全链路端到端测试
 依赖：src.api.collectors.fotmob_core, src.database.connection
 """
 
+from datetime import datetime
 import json
 import logging
-import sys
-from datetime import datetime
 from pathlib import Path
+import sys
 
 import psycopg2
 from psycopg2.extras import RealDictCursor
@@ -32,9 +32,9 @@ from src.config_unified import get_settings
 # 配置日志
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s',
+    format="%(asctime)s - %(levelname)s - %(message)s",
     handlers=[
-        logging.FileHandler('logs/v41_106_e2e_test.log'),
+        logging.FileHandler("logs/v41_106_e2e_test.log"),
         logging.StreamHandler(sys.stdout)
     ]
 )
@@ -69,7 +69,7 @@ class V41_106_E2ETest:
             match_data = self.collector.fetch_match_details(TEST_MATCH_ID)
 
             if match_data is None:
-                logger.error(f"❌ 抓取失败: 返回 None")
+                logger.error("❌ 抓取失败: 返回 None")
                 self.test_results["tests"]["fetch_match_data"] = {
                     "status": "failed",
                     "error": "返回 None"
@@ -78,7 +78,7 @@ class V41_106_E2ETest:
 
             # 验证数据结构
             if "content" not in match_data:
-                logger.error(f"❌ 数据结构错误: 缺少 'content' 字段")
+                logger.error("❌ 数据结构错误: 缺少 'content' 字段")
                 self.test_results["tests"]["fetch_match_data"] = {
                     "status": "failed",
                     "error": "缺少 'content' 字段"
@@ -113,15 +113,15 @@ class V41_106_E2ETest:
         logger.info("=" * 70)
 
         try:
-            if not hasattr(self, 'raw_match_data'):
-                logger.error(f"❌ 缺少原始数据: 请先运行测试 1")
+            if not hasattr(self, "raw_match_data"):
+                logger.error("❌ 缺少原始数据: 请先运行测试 1")
                 return False
 
             # 解析技术特征
             features = self.collector._parse_technical_features(self.raw_match_data)
 
             if features is None:
-                logger.error(f"❌ 解析失败: 返回 None")
+                logger.error("❌ 解析失败: 返回 None")
                 self.test_results["tests"]["parse_technical_features"] = {
                     "status": "failed",
                     "error": "返回 None"
@@ -132,7 +132,7 @@ class V41_106_E2ETest:
             home_xg = features.get("home_xg")
             away_xg = features.get("away_xg")
 
-            logger.info(f"📊 提取结果:")
+            logger.info("📊 提取结果:")
             logger.info(f"   home_xg: {home_xg} (期望: {EXPECTED_HOME_XG})")
             logger.info(f"   away_xg: {away_xg} (期望: {EXPECTED_AWAY_XG})")
 
@@ -191,7 +191,7 @@ class V41_106_E2ETest:
                 cursor_factory=RealDictCursor
             )
 
-            logger.info(f"✅ 数据库连接成功")
+            logger.info("✅ 数据库连接成功")
             logger.info(f"   主机: {self.settings.database.host}")
             logger.info(f"   端口: {self.settings.database.port}")
             logger.info(f"   数据库: {self.settings.database.name}")
@@ -231,15 +231,15 @@ class V41_106_E2ETest:
             result = self.db_cursor.fetchone()
 
             if not result:
-                logger.error(f"❌ technical_features 字段不存在")
-                logger.info(f"   请运行: psql -f scripts/sql/v41_105_add_technical_features.sql")
+                logger.error("❌ technical_features 字段不存在")
+                logger.info("   请运行: psql -f scripts/sql/v41_105_add_technical_features.sql")
                 self.test_results["tests"]["check_technical_features_field"] = {
                     "status": "failed",
                     "error": "字段不存在"
                 }
                 return False
 
-            logger.info(f"✅ technical_features 字段存在")
+            logger.info("✅ technical_features 字段存在")
             logger.info(f"   数据类型: {result['data_type']}")
             logger.info(f"   可空: {result['is_nullable']}")
 
@@ -256,8 +256,8 @@ class V41_106_E2ETest:
 
             self.test_results["tests"]["check_technical_features_field"] = {
                 "status": "passed",
-                "data_type": result['data_type'],
-                "indexes": [idx['indexname'] for idx in indexes]
+                "data_type": result["data_type"],
+                "indexes": [idx["indexname"] for idx in indexes]
             }
             return True
 
@@ -276,8 +276,8 @@ class V41_106_E2ETest:
         logger.info("=" * 70)
 
         try:
-            if not hasattr(self, 'technical_features'):
-                logger.error(f"❌ 缺少技术特征: 请先运行测试 2")
+            if not hasattr(self, "technical_features"):
+                logger.error("❌ 缺少技术特征: 请先运行测试 2")
                 return False
 
             # 检查比赛是否存在
@@ -306,7 +306,7 @@ class V41_106_E2ETest:
 
             self.db_conn.commit()
 
-            logger.info(f"✅ 更新成功")
+            logger.info("✅ 更新成功")
             logger.info(f"   比赛: {match['home_team']} vs {match['away_team']}")
             logger.info(f"   特征维度: {len(self.technical_features)}")
 
@@ -319,10 +319,10 @@ class V41_106_E2ETest:
 
             result = self.db_cursor.fetchone()
             # psycopg2 RealDictCursor 自动将 JSONB 反序列化为 dict
-            if isinstance(result['technical_features'], str):
-                stored_features = json.loads(result['technical_features'])
+            if isinstance(result["technical_features"], str):
+                stored_features = json.loads(result["technical_features"])
             else:
-                stored_features = result['technical_features']
+                stored_features = result["technical_features"]
 
             logger.info(f"   存储维度: {len(stored_features)}")
 
@@ -363,17 +363,17 @@ class V41_106_E2ETest:
             result = self.db_cursor.fetchone()
 
             if not result:
-                logger.warning(f"⚠️ xG 数据未找到或为空")
+                logger.warning("⚠️ xG 数据未找到或为空")
                 self.test_results["tests"]["verify_xg_query"] = {
                     "status": "skipped",
                     "reason": "xG 数据为空"
                 }
                 return True
 
-            home_xg = float(result['home_xg'])
-            away_xg = float(result['away_xg'])
+            home_xg = float(result["home_xg"])
+            away_xg = float(result["away_xg"])
 
-            logger.info(f"✅ xG 查询成功")
+            logger.info("✅ xG 查询成功")
             logger.info(f"   home_xg: {home_xg}")
             logger.info(f"   away_xg: {away_xg}")
 
@@ -426,9 +426,9 @@ class V41_106_E2ETest:
             results.append(self.test_06_verify_xg_query())
 
             # 关闭数据库连接
-            if hasattr(self, 'db_cursor'):
+            if hasattr(self, "db_cursor"):
                 self.db_cursor.close()
-            if hasattr(self, 'db_conn'):
+            if hasattr(self, "db_conn"):
                 self.db_conn.close()
 
         # 统计结果
@@ -443,7 +443,7 @@ class V41_106_E2ETest:
 
         # 保存结果
         results_file = Path("logs/v41_106_e2e_test_results.json")
-        with open(results_file, 'w', encoding='utf-8') as f:
+        with open(results_file, "w", encoding="utf-8") as f:
             self.test_results["summary"] = {
                 "total": total,
                 "passed": passed,
