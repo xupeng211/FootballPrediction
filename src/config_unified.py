@@ -121,13 +121,88 @@ class RedisConfig:
 
 @dataclass
 class FotMobAPIConfig:
-    """FotMob API配置"""
+    """FotMob API配置 - V41.114: 扩展支持League IDs和赛季映射"""
 
     base_url: str = "https://www.fotmob.com/api"
+    base_web_url: str = "https://www.fotmob.com"
     headers: dict[str, str] = field(default_factory=dict)
     timeout: int = 30
     retry_attempts: int = 3
     retry_delay: float = 1.0
+
+    # V41.114: League IDs 常量（修正后的正确ID）
+    LEAGUE_IDS: dict[str, int] = field(default_factory=lambda: {
+        "Premier League": 47,
+        "Championship": 48,
+        "La Liga": 87,
+        "Segunda División": 94,
+        "Bundesliga": 54,  # V41.110修正：78→54
+        "2. Bundesliga": 95,
+        "Serie A": 55,  # V41.110修正：126→55
+        "Serie B": 127,
+        "Ligue 1": 53,
+        "Liga Portugal": 155,
+        "Eredivisie": 129,
+        "Jupiler Pro League": 118,
+        "Scottish Premiership": 157,
+        "Süper Lig": 201,
+        "Super League Greece": 96,
+        "Premier League Russia": 153,
+        "Premier Liha": 186,
+        "MLS": 203,
+        "Serie A Brazil": 274,
+        "Liga Profesional": 275,
+        "Liga MX": 298,
+        "J-League Division 1": 345,
+        "Chinese Super League": 322,
+        "K-League 1": 353,
+        "Saudi Pro League": 410,
+        "ADNOC Pro League": 411,
+        "A-League": 312,
+        "Indian Super League": 397,
+        "Premier Soccer League": 288,
+        "Premier League Egypt": 287,
+        "NPFL": 412,
+    })
+
+    # V41.114: 赛季映射表（多种格式支持）
+    SEASON_MAPPING: dict[str, str] = field(default_factory=lambda: {
+        # 完整格式 → 短格式
+        "2020/2021": "2021",
+        "2021/2022": "2122",
+        "2022/2023": "2223",
+        "2023/2024": "2324",
+        "2024/2025": "2425",
+        # 短格式 → 完整格式
+        "2021": "2020/2021",
+        "2122": "2021/2022",
+        "2223": "2022/2023",
+        "2324": "2023/2024",
+        "2425": "2024/2025",
+        # 紧凑格式 → 完整格式
+        "20/21": "2020/2021",
+        "21/22": "2021/2022",
+        "22/23": "2022/2023",
+        "23/24": "2023/2024",
+        "24/25": "2024/2025",
+    })
+
+    # V41.114: 常用赛季列表
+    AVAILABLE_SEASONS: list[str] = field(default_factory=lambda: [
+        "2020/2021",
+        "2021/2022",
+        "2022/2023",
+        "2023/2024",
+        "2024/2025",
+    ])
+
+    # V41.114: API 端点路径
+    ENDPOINTS: dict[str, str] = field(default_factory=lambda: {
+        "match_details": "matchDetails",
+        "leagues": "leagues",
+        "teams": "teams",
+        "all_leagues": "allLeagues",
+    })
 
     def __post_init__(self) -> None:
         """初始化后验证"""
@@ -136,7 +211,33 @@ class FotMobAPIConfig:
             self.headers = {
                 "User-Agent": "FootballPrediction/1.0",
                 "Accept": "application/json",
+                "Referer": self.base_web_url,
+                "Origin": self.base_web_url,
             }
+
+    def get_league_id(self, league_name: str) -> int | None:
+        """获取League ID"""
+        return self.LEAGUE_IDS.get(league_name)
+
+    def normalize_season(self, season: str) -> str:
+        """标准化赛季格式（转换为完整格式 YYYY/YYYY）"""
+        return self.SEASON_MAPPING.get(season, season)
+
+    def build_url(self, endpoint: str, **params) -> str:
+        """构建API URL"""
+        endpoint_path = self.ENDPOINTS.get(endpoint, endpoint)
+        url = f"{self.base_url}/{endpoint_path}"
+
+        if params:
+            query_parts = []
+            for key, value in params.items():
+                if value is not None:
+                    query_parts.append(f"{key}={value}")
+
+            if query_parts:
+                url += "?" + "&".join(query_parts)
+
+        return url
 
 
 class UnifiedSettings(BaseSettings):
