@@ -892,6 +892,12 @@ class FotMobCoreCollector:
             else:
                 logger.info(f"📊 特征解析完成: {len(features)}维")
 
+            # V41.106: 转换 NaN 为 None (PostgreSQL JSONB 兼容性修复)
+            # PostgreSQL JSONB 不接受 NaN，需要转换为 null
+            for key, value in features.items():
+                if isinstance(value, float) and np.isnan(value):
+                    features[key] = None
+
             # V11.0: 永不返回 None，总是返回字典（即使为空）
             return features
 

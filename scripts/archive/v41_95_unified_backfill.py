@@ -14,17 +14,28 @@ V41.95 重构：
 2. 遍历所有存量 JSON，提取 xG、进球、红黄牌、控球率等 70+ 核心生产指标
 3. UPDATE 指令回填到 l2_raw_json->technical_features
 
+V41.98 更新：
+1. ✅ 修复 ModuleNotFoundError（添加项目根目录到 sys.path）
+2. ✅ 移除硬编码赛季，添加 --season 参数支持
+3. ✅ 修复 KeyError: 'failed_match_ids'（统一返回键）
+
 作者：SRE & Test Architect (V41.95)
 日期：2026-01-16
+更新：2026-01-16 (V41.98)
 依赖：src.config_unified, src.api.collectors.fotmob_core
 """
 
+import argparse
 import json
 import logging
 import re
 import sys
 from datetime import datetime
 from pathlib import Path
+
+# V41.98: 添加项目根目录到 sys.path（修复 ModuleNotFoundError）
+project_root = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(project_root))
 
 import numpy as np
 import psycopg2
@@ -400,7 +411,14 @@ def backfill_matches(conn, season: str = None, limit: int = None) -> dict:
 
         if total_matches == 0:
             logger.warning("⚠️ 没有需要回填的比赛!")
-            return {"total": 0, "success": 0, "failed": 0, "features_extracted": 0}
+            # V41.98: 修复 KeyError - 确保 failed_match_ids 键始终存在
+            return {
+                "total": 0,
+                "success": 0,
+                "failed": 0,
+                "features_extracted": 0,
+                "failed_match_ids": []
+            }
 
         # 统计结果
         stats = {
@@ -529,17 +547,53 @@ def verify_backfill_results(conn, season: str = None) -> dict:
 
 def main():
     """主函数"""
+    # V41.98: 添加命令行参数解析
+    parser = argparse.ArgumentParser(
+        description="V41.95/V41.98 统一回填引擎 - xG 特征提取与回填"
+    )
+    parser.add_argument(
+        "--season",
+        type=str,
+        default=None,
+        help="指定赛季 (例如: 2023/2024)。不指定则处理所有需要回填的比赛"
+    )
+    parser.add_argument(
+        "--limit",
+        type=int,
+        default=None,
+        help="限制处理数量（用于测试）"
+    )
+    parser.add_argument(
+        "--all-seasons",
+        action="store_true",
+        help="处理所有赛季（按顺序回填 2020/2021, 2021/2022, 2022/2023, 2024/2025）"
+    )
+    args = parser.parse_args()
+
     logger.info("=" * 70)
-    logger.info("V41.95 \"清除干扰与逻辑归宗\" - 统一回填引擎")
+    logger.info("V41.95/V41.98 \"清除干扰与逻辑归宗\" - 统一回填引擎")
     logger.info("=" * 70)
     logger.info(f"⏰ 开始时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    logger.info(" ")
+
+    # V41.98: 显示运行参数
+    if args.season:
+        logger.info(f"🎯 指定赛季: {args.season}")
+    elif args.all_seasons:
+        logger.info(f"🎯 处理模式: 所有赛季顺序回填")
+    else:
+        logger.info(f"🎯 处理模式: 所有需要回填的比赛")
+
+    if args.limit:
+        logger.info(f"📊 处理限制: {args.limit} 场")
+
     logger.info(" ")
 
     # V41.95: 验证数据库连接配置
     settings = get_settings()
     db = settings.database
     logger.info(f"🔧 数据库配置: {db.host}:{db.port}/{db.name}")
-    logger.info(f"   (V41.95: 使用统一配置，禁止硬编码)")
+    logger.info(f"   (V41.95/V41.98: 使用统一配置，禁止硬编码)")
 
     # 创建日志目录
     Path("logs").mkdir(exist_ok=True)
@@ -551,12 +605,47 @@ def main():
         # 步骤 1: 深度资产普查
         audit_results = audit_existing_data(conn)
 
-        # 步骤 2: 存量回填手术
-        # 先处理 2023/2024 赛季
-        stats = backfill_matches(conn, season="2023/2024", limit=None)
+        # V41.98: 根据参数决定处理模式
+        if args.all_seasons:
+            # 处理所有赛季（按顺序）
+            seasons_to_process = ["2020/2021", "2021/2022", "2022/2023", "2024/2025"]
+            all_stats = {
+                "total": 0,
+                "success": 0,
+                "failed": 0,
+                "features_extracted": 0,
+                "failed_match_ids": []
+            }
 
-        # 步骤 3: 验证与统计
-        verification_results = verify_backfill_results(conn, season="2023/2024")
+            for season in seasons_to_process:
+                logger.info(f"\n{'='*70}")
+                logger.info(f"开始处理赛季: {season}")
+                logger.info(f"{'='*70}")
+                stats = backfill_matches(conn, season=season, limit=args.limit)
+
+                # 累加统计
+                all_stats["total"] += stats["total"]
+                all_stats["success"] += stats["success"]
+                all_stats["failed"] += stats["failed"]
+                all_stats["features_extracted"] += stats["features_extracted"]
+                all_stats["failed_match_ids"].extend(stats["failed_match_ids"])
+
+                # 验证当前赛季结果
+                verify_backfill_results(conn, season=season)
+
+            # 使用总统计
+            stats = all_stats
+
+        else:
+            # 步骤 2: 存量回填手术（单个赛季或全部）
+            stats = backfill_matches(conn, season=args.season, limit=args.limit)
+
+            # 步骤 3: 验证与统计
+            if args.season:
+                verification_results = verify_backfill_results(conn, season=args.season)
+            else:
+                # 如果没有指定赛季，验证所有数据
+                verification_results = verify_backfill_results(conn, season=None)
 
         # 输出最终统计
         logger.info(" ")

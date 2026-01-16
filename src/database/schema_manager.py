@@ -83,6 +83,17 @@ class SchemaManager:
                     ELSE
                         RAISE NOTICE 'ℹ️ l2_data_version 字段已存在';
                     END IF;
+
+                    -- V41.106: 添加 technical_features 字段 (152维技术特征)
+                    IF NOT EXISTS (
+                        SELECT 1 FROM information_schema.columns
+                        WHERE table_name = 'matches' AND column_name = 'technical_features'
+                    ) THEN
+                        ALTER TABLE matches ADD COLUMN technical_features JSONB DEFAULT '{}'::jsonb;
+                        RAISE NOTICE '✅ technical_features 字段已添加';
+                    ELSE
+                        RAISE NOTICE 'ℹ️ technical_features 字段已存在';
+                    END IF;
                 END $$;
             """)
 
