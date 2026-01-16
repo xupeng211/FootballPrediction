@@ -226,3 +226,27 @@ coverage.json
 coverage.json
 *.output
 *.output.json
+
+# V41.123: Empty/cleanup directories and additional cache
+.benchmarks/
+*.benchmarks
+.ipynb_checkpoints/
+data_backup_safe/
+test_models/
+models/models/
+models/data/
+models/logs/
+deploy/prometheus/
+src/data_access/processors/
+src/database/migrations/.benchmarks/
+src/ml/engines/
+src/ml/feature_engine/models/
+src/ml/feature_engine/plugins/
+src/ml/reports/
+src/reports/optimized_training/
+src/logs/
+tests/core/
+tests/extractors/
+tests/fixtures/data/
+tests/integration/modeling/
+tests/unit/modeling/
