@@ -12,6 +12,7 @@ V144.5 更新:
 """
 
 from datetime import datetime
+from enum import Enum
 import gzip
 import json
 import logging
@@ -31,6 +32,36 @@ from src.api.collectors.base_extractor import BaseExtractor
 
 # 配置日志
 logger = logging.getLogger(__name__)
+
+
+# V41.114: 比赛状态枚举
+class MatchStatus(Enum):
+    """比赛状态枚举"""
+    SCHEDULED = "NS"  # Not Started
+    FIRST_HALF = "H1"  # 1st Half
+    HALF_TIME = "HT"  # Half-Time
+    SECOND_HALF = "H2"  # 2nd Half
+    FULL_TIME = "FT"  # Full-Time
+    POSTPONED = "PST"  # Postponed
+    CANCELLED = "CAN"  # Cancelled
+    ABANDONED = "ABD"  # Abandoned
+    AWARDED = "AWD"  # Awarded
+    UNKNOWN = "UNKNOWN"  # Unknown
+
+
+# V41.114: 采集错误类型枚举
+class FetchError(Enum):
+    """采集错误类型枚举"""
+    NETWORK_ERROR = "network_error"
+    TIMEOUT_ERROR = "timeout_error"
+    HTTP_ERROR = "http_error"
+    JSON_DECODE_ERROR = "json_decode_error"
+    JSON_STRUCTURE_ERROR = "json_structure_error"
+    MATCH_CANCELLED = "match_cancelled"
+    MATCH_POSTPONED = "match_postponed"
+    LEAGUE_NOT_FOUND = "league_not_found"
+    RATE_LIMITED = "rate_limited"
+    UNKNOWN_ERROR = "unknown_error"
 
 
 # V144.3: 已弃用 - 使用 BaseExtractor V144.2 Ghost Protocol
@@ -121,11 +152,16 @@ class FotMobCoreCollector:
     """
 
     def __init__(self):
-        """初始化核心采集器 - V11.2 隐身模式版"""
+        """初始化核心采集器 - V11.2 隐身模式版 + V41.114 配置驱动"""
         from src.config_unified import get_settings
         settings = get_settings()
         self.base_url = settings.fotmob_base_url
         self.web_url = settings.fotmob_web_url
+
+        # V41.114: 使用配置系统获取 League IDs 和赛季映射（杜绝硬编码）
+        self.api_config = settings.fotmob_api
+        self.league_ids = self.api_config.LEAGUE_IDS
+        self.season_mapping = self.api_config.SEASON_MAPPING
 
         # V11.2: 动态生成随机 Headers（隐身模式）
         self._refresh_stealth_headers()
@@ -2214,6 +2250,249 @@ class FotMobCoreCollector:
             status["decoder_error"] = str(e)
 
         return status
+
+    # ========== V41.114 增强方法（零死角审计） ==========
+
+    def fetch_match_details_safe(self, match_id: int) -> dict[str, Any] | None:
+        """
+        V41.114: 安全的比赛详情获取（增强异常处理）
+
+        Args:
+            match_id: 比赛 ID
+
+        Returns:
+            比赛详情字典，或 None（失败时）
+        """
+        url = self.api_config.build_url("match_details", matchId=match_id)
+
+        logger.info(f"🌍 V41.114: 请求比赛详情: {match_id}")
+        logger.debug(f"   URL: {url}")
+
+        try:
+            response = self.session.get(url, timeout=self.api_config.timeout)
+            response.raise_for_status()
+
+            # 解码响应
+            json_data = self.adaptive_decode_response(response.content)
+
+            if not json_data:
+                error_type = FetchError.JSON_DECODE_ERROR
+                self._log_fetch_error(match_id, error_type, "解码失败")
+                return None
+
+            # V41.114: 检查比赛状态
+            match_status = self._extract_match_status(json_data)
+
+            if match_status in (MatchStatus.CANCELLED, MatchStatus.ABANDONED):
+                # 比赛取消或放弃，但仍有基础数据
+                logger.warning(f"⚠️  比赛 {match_id} 已{match_status.value}，但保留基础数据")
+                return self._extract_basic_data_safe(json_data, match_id)
+
+            if match_status == MatchStatus.POSTPONED:
+                # 比赛延期，标记但不完全放弃
+                logger.warning(f"⚠️  比赛 {match_id} 已延期")
+                return self._extract_basic_data_safe(json_data, match_id)
+
+            # 正常比赛，返回完整数据
+            return json_data
+
+        except requests.exceptions.Timeout:
+            error_type = FetchError.TIMEOUT_ERROR
+            self._log_fetch_error(match_id, error_type, f"请求超时 (>{self.api_config.timeout}s)")
+            return None
+
+        except requests.exceptions.HTTPError as e:
+            if e.response.status_code == 429:
+                error_type = FetchError.RATE_LIMITED
+                self._log_fetch_error(match_id, error_type, f"API限流: {e}")
+            elif e.response.status_code == 404:
+                error_type = FetchError.LEAGUE_NOT_FOUND
+                self._log_fetch_error(match_id, error_type, f"比赛不存在: {e}")
+            else:
+                error_type = FetchError.HTTP_ERROR
+                self._log_fetch_error(match_id, error_type, f"HTTP错误: {e}")
+            return None
+
+        except requests.exceptions.RequestException as e:
+            error_type = FetchError.NETWORK_ERROR
+            self._log_fetch_error(match_id, error_type, f"网络请求异常: {e}")
+            return None
+
+        except Exception as e:
+            error_type = FetchError.UNKNOWN_ERROR
+            self._log_fetch_error(match_id, error_type, f"未知异常: {e}")
+            return None
+
+    def _extract_match_status(self, json_data: dict[str, Any]) -> MatchStatus:
+        """
+        提取比赛状态
+
+        Args:
+            json_data: API 返回的 JSON 数据
+
+        Returns:
+            MatchStatus 枚举值
+        """
+        try:
+            # 尝试从多个可能的路径提取状态
+            status_path = json_data.get("header", {}).get("status", {})
+            status_code = status_path.get("reason", {}).get("short", "")
+
+            # 映射到 MatchStatus 枚举
+            status_mapping = {
+                "NS": MatchStatus.SCHEDULED,
+                "H1": MatchStatus.FIRST_HALF,
+                "HT": MatchStatus.HALF_TIME,
+                "H2": MatchStatus.SECOND_HALF,
+                "FT": MatchStatus.FULL_TIME,
+                "PST": MatchStatus.POSTPONED,
+                "CAN": MatchStatus.CANCELLED,
+                "ABD": MatchStatus.ABANDONED,
+                "AWD": MatchStatus.AWARDED,
+            }
+
+            return status_mapping.get(status_code, MatchStatus.UNKNOWN)
+
+        except Exception:
+            return MatchStatus.UNKNOWN
+
+    def _extract_basic_data_safe(self, json_data: dict[str, Any], match_id: int) -> dict[str, Any]:
+        """
+        V41.114: 安全地提取基础数据（容错处理）
+
+        即使比赛取消/延期，也能提取基础信息：
+        - match_id
+        - home_team, away_team
+        - league_id, league_name
+        - season, match_time
+
+        Args:
+            json_data: API 返回的 JSON 数据
+            match_id: 比赛 ID
+
+        Returns:
+            提取的基础数据字典
+        """
+        basic_data = {
+            "match_id": match_id,
+            "extraction_status": "partial",  # 标记为部分提取
+            "extraction_time": datetime.now().isoformat(),
+        }
+
+        try:
+            # 提取 header 信息
+            header = json_data.get("header", {})
+
+            # 基础比赛信息
+            basic_data["home_team"] = header.get("teams", [{}])[0].get("name")
+            basic_data["away_team"] = header.get("teams", [{}])[1].get("name")
+
+            # 联赛信息
+            league = header.get("league", {})
+            basic_data["league_id"] = league.get("id")
+            basic_data["league_name"] = league.get("name")
+
+            # 比赛时间
+            basic_data["match_time"] = header.get("status", {}).get("utcTime")
+
+            # 赛季
+            basic_data["season"] = header.get("tier", {}).get("season")
+
+            # 比赛状态
+            status = header.get("status", {})
+            basic_data["status_code"] = status.get("reason", {}).get("short", "")
+            basic_data["is_finished"] = status.get("finished", False)
+            basic_data["is_started"] = status.get("started", False)
+
+            logger.info(f"✅ 基础数据提取成功: {match_id}")
+
+        except Exception as e:
+            logger.error(f"❌ 基础数据提取失败: {match_id} - {e}")
+            basic_data["extraction_error"] = str(e)
+
+        return basic_data
+
+    def _log_fetch_error(self, match_id: int, error_type: FetchError, message: str) -> None:
+        """
+        V41.114: 记录采集错误（结构化日志）
+
+        Args:
+            match_id: 比赛 ID
+            error_type: 错误类型
+            message: 错误消息
+        """
+        log_entry = {
+            "timestamp": datetime.now().isoformat(),
+            "match_id": match_id,
+            "error_type": error_type.value,
+            "error_message": message,
+            "collector_version": "V41.114",
+        }
+
+        logger.error(f"❌ [{error_type.value}] {message}")
+        logger.debug(f"   详细信息: {log_entry}")
+
+        # 可选：写入错误日志文件
+        # self._write_error_log(log_entry)
+
+    def harvest_league_matches_safe(
+        self,
+        league_name: str,
+        season: str,
+        limit: int = 100
+    ) -> dict[str, Any]:
+        """
+        V41.114: 安全的联赛比赛采集（使用配置）
+
+        Args:
+            league_name: 联赛名称（如 "Bundesliga"）
+            season: 赛季（如 "2023/2024"）
+            limit: 限制数量
+
+        Returns:
+            采集结果字典
+        """
+        # V41.114: 从配置获取 League ID
+        league_id = self.api_config.get_league_id(league_name)
+
+        if not league_id:
+            logger.error(f"❌ 联赛未在配置中找到: {league_name}")
+            return {
+                "success": False,
+                "error": f"League not found in config: {league_name}",
+                "total_discovered": 0,
+                "matches": [],
+            }
+
+        # V41.114: 标准化赛季格式
+        normalized_season = self.api_config.normalize_season(season)
+
+        logger.info(f"🔄 V41.114: 采集联赛比赛")
+        logger.info(f"   联赛: {league_name} (ID: {league_id})")
+        logger.info(f"   赛季: {season} → {normalized_season}")
+        logger.info(f"   限制: {limit}")
+
+        try:
+            # 使用父类方法采集
+            result = self.discover_ligue_matches(league_id, normalized_season, limit)
+
+            return {
+                "success": True,
+                "league_name": league_name,
+                "league_id": league_id,
+                "season": normalized_season,
+                "total_discovered": result.get("total_discovered", 0),
+                "matches": result.get("matches", []),
+            }
+
+        except Exception as e:
+            logger.error(f"❌ 联赛采集失败: {e}")
+            return {
+                "success": False,
+                "error": str(e),
+                "total_discovered": 0,
+                "matches": [],
+            }
 
 
 # 单例实例

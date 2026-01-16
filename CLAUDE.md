@@ -17,6 +17,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with th
 - [docs/onboarding.md](docs/onboarding.md) - 新开发者快速上手（30分钟）
 - [docs/troubleshooting.md](docs/troubleshooting.md) - 故障排除指南
 - [docs/CHANGELOG.md](docs/CHANGELOG.md) - 版本历史与升级指南
+- [docs/V41.108_INTEGRITY_AUDIT_REPORT.md](docs/V41.108_INTEGRITY_AUDIT_REPORT.md) - V41.108 地基贯通审计报告
 
 ### 详细参考
 - [docs/module_reference.md](docs/module_reference.md) - 核心模块详细说明
@@ -69,7 +70,7 @@ make logs                # 查看核心服务日志
 | **数据库优化** | V41.49 (连接池优化) |
 | **基线准确率** | 56% |
 | **推理延迟** | <100ms |
-| **五大联赛覆盖率** | 78.0% (1366/1752) |
+| **五大联赛覆盖率** | 53.0% (5,733/10,808) - V41.108 审计结果 |
 
 ### 核心技术栈
 - **ML**: XGBoost 3.0+, scikit-learn
@@ -95,6 +96,9 @@ python main.py --source fotmob --mode single --limit 1 --dry-run
 
 # 4. 质量检查
 make verify
+
+# 5. V41.108 完整性审计（可选）
+python scripts/ops/v41_108_integrity_check.py
 ```
 
 ### 环境要求
@@ -435,6 +439,53 @@ python scripts/ops/v41_63_proxy_check.py --ports 7891 7892 7893
 - ✅ **并发测试** - 多线程并发测试提高效率
 - ✅ **详细报告** - 生成连通性和 IP 分配报告
 
+### V41.108 地基贯通审计 - 完整性审计
+
+```bash
+# V41.108 完整性审计（4 项任务）
+python scripts/ops/v41_108_integrity_check.py
+```
+
+**V41.108 核心功能**:
+- ✅ **采集姿势审计** - 检查 API 端点、参数化、代理适配
+- ✅ **入口与入库对齐** - 验证 technical_features 初始化和版本追踪
+- ✅ **五大联赛完整性暴力测试** - 对比官方场数 vs 数据库场数
+- ✅ **回炉重造收益评估** - 统计低精度数据量和 CPU 成本
+
+**V41.108 审计结果** (2026-01-16):
+- 五大联赛覆盖率: 53.0% (5,733/10,808)
+- 德甲/意甲完全缺失: 0% 覆盖率
+- 待回炉重造: 8,813 场 (预计 14.7 分钟)
+
+### V41.109 架构合龙 - 回炉重造引擎与标准化采集器
+
+```bash
+# V41.109 回炉重造引擎（从 l2_raw_json 提取 technical_features）
+python scripts/ops/v41_109_reforge_engine.py --limit 100
+
+# V41.109 标准化 ID 采集器（德甲/意甲定向采集）
+python scripts/ops/v41_109_standardized_harvester.py --league-id 78 --seasons 2020 2021 2022  # 德甲
+python scripts/ops/v41_109_standardized_harvester.py --league-id 126 --seasons 2020 2021 2022  # 意甲
+```
+
+**V41.109 核心功能**:
+- ✅ **回炉重造引擎** - 从 l2_raw_json 中提取 technical_features（零网络成本）
+- ✅ **标准化 ID 采集器** - 参数化赛季支持 (--season)、代理池轮换
+- ✅ **入库对齐** - technical_features 字段显式包含
+- ✅ **德甲/意甲支持** - League ID 78 (Bundesliga)、126 (Serie A)
+
+**V41.109 回炉重造特性**:
+- ✅ 零 API 额度消耗（本地离线处理）
+- ✅ 零代理流量消耗
+- ✅ 批量处理，支持断点续传
+- ✅ 实时进度监控
+
+**V41.109 标准化采集器特性**:
+- ✅ V41.106 标准入口 (FotMobCoreCollector)
+- ✅ 代理池轮换 (19 端口)
+- ✅ 批量入库优化
+- ✅ 种子球队池配置（五大联赛）
+
 ### V41.106 架构标准化 - FotMob 采集唯一标准入口
 
 **重要**: V41.106 确立了 FotMob 数据采集的**唯一标准入口**，废除所有临时补丁脚本。
@@ -480,6 +531,34 @@ UPDATE matches SET technical_features = %s WHERE match_id = %s
 | **统计噪音** | 72 | 47.4% | `ratio_*` 冗余特征 |
 | **元数据** | 3 | 2.0% | `_meta.total_metrics` |
 | **缺失数据** | 29 | 19.1% | 需要修复映射 |
+
+### V41.108 五大联赛完整性统计
+
+```bash
+# 五大联赛覆盖率监控 SQL
+docker-compose exec db psql -U football_user -d football_db -c "
+SELECT
+    m.league_name,
+    COUNT(*) as total_matches,
+    COUNT(m.technical_features->>'home_xg') as with_xg,
+    ROUND(COUNT(m.technical_features->>'home_xg') * 100.0 / COUNT(*), 2) as xg_coverage
+FROM matches m
+WHERE m.league_name IN ('Premier League', 'La Liga', 'Bundesliga', 'Serie A', 'Ligue 1')
+  AND m.season IN ('2019', '2020', '2021', '2022', '2023', '2024')
+GROUP BY m.league_name
+ORDER BY xg_coverage DESC;
+"
+```
+
+**V41.108 审计结果** (2026-01-16):
+| 联赛 | 官方总计 | 数据库 | 覆盖率 | 状态 |
+|------|----------|--------|--------|------|
+| 英超 | 2,280 | 2,081 | 91.3% | ✅ 优秀 |
+| 西甲 | 2,280 | 1,900 | 83.3% | ✅ 良好 |
+| 德甲 | 1,836 | 0 | 0.0% | ❌ 完全缺失 |
+| 意甲 | 2,280 | 0 | 0.0% | ❌ 完全缺失 |
+| 法甲 | 2,132 | 1,752 | 82.2% | ✅ 良好 |
+| **总计** | **10,808** | **5,733** | **53.0%** | ⚠️ 待改进 |
 
 > 详细模块说明请参阅 [docs/module_reference.md](docs/module_reference.md)
 
@@ -591,11 +670,11 @@ pytest tests/ --cov=src --cov-report=html
 
 **🚨 CRITICAL**: This is a production system support document.
 
-**🧬 当前版本**: V41.60 (全能之眼 - 代理配置修复与翻页逻辑升级)
+**🧬 当前版本**: V41.109 (架构合龙 - 回炉重造引擎与标准化采集器)
 **命令中心**: V144.7 (Multi-Source Command Center)
-**数据采集**: V41.60 (DOM 提取 + URL 遍历翻页)
+**数据采集**: V41.109 (标准化 ID 采集器) + V151.3 (并发收割器)
 **哈希对齐服务**: V41.60 (TDD 驱动的代理配置修复)
-**最后更新**: 2026-01-14
+**最后更新**: 2026-01-16
 **基线准确率**: 56% (真赛前)
 **生产状态**: Production Ready
 **Python 版本**: 3.11+
