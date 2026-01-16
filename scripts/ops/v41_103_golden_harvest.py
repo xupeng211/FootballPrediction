@@ -13,27 +13,27 @@ V41.103 黄金收割任务：
 日期：2026-01-16
 """
 
-import json
-import logging
-import sys
-import time
-from datetime import datetime
-from pathlib import Path
-from typing import Any
-
 # 添加项目根目录到 sys.path
+from pathlib import Path
+import sys
+
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from src.config_unified import get_settings
+from datetime import datetime
+import json
+import logging
+import time
+from typing import Any
+
 from src.api.collectors.fotmob_core import FotMobCoreCollector
 
 # 配置日志
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s',
+    format="%(asctime)s - %(levelname)s - %(message)s",
     handlers=[
-        logging.FileHandler('logs/v41_103_golden_harvest.log'),
+        logging.FileHandler("logs/v41_103_golden_harvest.log"),
         logging.StreamHandler(sys.stdout)
     ]
 )
@@ -50,7 +50,7 @@ def load_dead_matches() -> dict[str, Any]:
         logger.error(f"❌ 死难者清单不存在: {DEAD_MATCHES_FILE}")
         sys.exit(1)
 
-    with open(DEAD_MATCHES_FILE, 'r', encoding='utf-8') as f:
+    with open(DEAD_MATCHES_FILE, encoding="utf-8") as f:
         data = json.load(f)
 
     logger.info(f"✅ 加载死难者清单: {data['metadata']['total_matches']} 场比赛")
@@ -64,7 +64,7 @@ def extract_all_match_ids(data: dict[str, Any]) -> list[dict[str, Any]]:
 
     for season, matches in matches_by_season.items():
         for match in matches:
-            match['season'] = season
+            match["season"] = season
             all_matches.append(match)
 
     logger.info(f"✅ 提取 {len(all_matches)} 场比赛待处理")
@@ -135,7 +135,7 @@ def harvest_xg_for_match(collector: FotMobCoreCollector, match: dict[str, Any]) 
 def main():
     """主函数"""
     logger.info("=" * 70)
-    logger.info("V41.103 \"黄金收割\" - 2777 场 xG 数据复活总攻")
+    logger.info('V41.103 "黄金收割" - 2777 场 xG 数据复活总攻')
     logger.info("=" * 70)
     logger.info(f"⏰ 开始时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     logger.info("")
@@ -149,9 +149,9 @@ def main():
     logger.info("=" * 70)
 
     collector = FotMobCoreCollector()
-    logger.info(f"✅ 采集器初始化完成")
+    logger.info("✅ 采集器初始化完成")
     logger.info(f"   Base URL: {collector.base_url}")
-    logger.info(f"   正确端点: /matchDetails (V41.102 确认)")
+    logger.info("   正确端点: /matchDetails (V41.102 确认)")
 
     # 加载死难者清单
     logger.info("\n" + "=" * 70)
@@ -235,7 +235,7 @@ def main():
     summary = results["summary"]
     total_processed = sum(summary.values())
 
-    logger.info(f"\n📊 总体统计:")
+    logger.info("\n📊 总体统计:")
     logger.info(f"   处理总数: {total_processed}")
     logger.info(f"   ✅ 成功复活: {summary.get('success', 0)} ({summary.get('success', 0)/total_processed*100:.1f}%)")
     logger.info(f"   ⚠️  无 xG 数据: {summary.get('no_xg', 0)} ({summary.get('no_xg', 0)/total_processed*100:.1f}%)")
@@ -246,13 +246,13 @@ def main():
     results["end_time"] = datetime.now().isoformat()
 
     result_file = Path("logs/v41_103_golden_harvest_results.json")
-    with open(result_file, 'w', encoding='utf-8') as f:
+    with open(result_file, "w", encoding="utf-8") as f:
         json.dump(results, f, indent=2, ensure_ascii=False)
 
     logger.info(f"\n✅ 详细结果已保存: {result_file}")
 
     # 成功率判定
-    success_rate = summary.get('success', 0) / total_processed * 100
+    success_rate = summary.get("success", 0) / total_processed * 100
     if success_rate >= 80:
         logger.info(f"\n🎉 【SUCCESS】收割成功！复活率 {success_rate:.1f}% >= 80%")
     elif success_rate >= 50:
