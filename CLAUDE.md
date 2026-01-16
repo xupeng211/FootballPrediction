@@ -435,6 +435,52 @@ python scripts/ops/v41_63_proxy_check.py --ports 7891 7892 7893
 - ✅ **并发测试** - 多线程并发测试提高效率
 - ✅ **详细报告** - 生成连通性和 IP 分配报告
 
+### V41.106 架构标准化 - FotMob 采集唯一标准入口
+
+**重要**: V41.106 确立了 FotMob 数据采集的**唯一标准入口**，废除所有临时补丁脚本。
+
+**标准采集方式** - 使用 `FotMobCoreCollector`:
+```python
+from src.api.collectors.fotmob_core import FotMobCoreCollector
+
+# 创建采集器实例
+collector = FotMobCoreCollector()
+
+# 采集比赛数据（标准入口）
+match_data = collector.fetch_match_details(match_id=3428850)
+
+# 解析 152 维技术特征
+technical_features = collector._parse_technical_features(match_data)
+
+# 存储到数据库
+UPDATE matches SET technical_features = %s WHERE match_id = %s
+```
+
+**V41.106 核心规范**:
+- ✅ **API 端点**: `/matchDetails?matchId={id}` (唯一正确端点)
+- ✅ **特征解析**: `_parse_technical_features()` 提取 152 维技术特征
+- ✅ **数据存储**: `matches.technical_features` (JSONB 字段)
+- ✅ **黄金收割**: `scripts/ops/v41_103_golden_harvest.py` (标准脚本)
+
+**禁止操作**:
+- ❌ **禁止使用** `/leagueMatchStats` 端点（返回 404）
+- ❌ **禁止直接拼写 API URL**（绕过 `FotMobCoreCollector`）
+- ❌ **禁止绕过 technical_features 字段**（存储到其他位置）
+
+**已归档的临时脚本** (V41.98-V41.105):
+- `v41_102_api_sniff_test.py` → `scripts/archive/`
+- `v41_103_smoke_test.py` → `scripts/archive/`
+- `v41_98_targeted_reharvest.py` → `scripts/archive/`
+- `v41_99_snipe_audit.py` → `scripts/archive/`
+
+**152 维技术特征分类**:
+| 类别 | 数量 | 占比 | 示例 |
+|------|------|------|------|
+| **黄金信号** | 48 | 31.6% | `home_xg`, `shots_on_target`, `possession` |
+| **统计噪音** | 72 | 47.4% | `ratio_*` 冗余特征 |
+| **元数据** | 3 | 2.0% | `_meta.total_metrics` |
+| **缺失数据** | 29 | 19.1% | 需要修复映射 |
+
 > 详细模块说明请参阅 [docs/module_reference.md](docs/module_reference.md)
 
 ---
@@ -466,18 +512,31 @@ refactor(harvester): 重构 HarvesterService 队列逻辑
 
 ## ⚠️ 重要警告
 
-### 禁止操作
-- ❌ 不要直接修改 `model_zoo/` 中的模型文件
-- ❌ 不要在生产环境运行 `make db-reset`
-- ❌ 不要跳过 `make verify` 直接提交
-- ❌ 不要使用硬编码的数据库密码
-- ❌ 不要创建版本类文件 (`*_v2`, `*_new`, `*_backup`)
+### V41.106 架构标准化（最高优先级）
 
-### 必须操作
-- ✅ 修改代码前运行 `git status` 确认分支
-- ✅ 提交前运行 `make verify` 确保质量
-- ✅ 修改核心模块前完成影响分析
-- ✅ 数据库变更前备份 (`make db-backup`)
+**唯一标准入口 - FotMob 采集与解析**:
+```
+采集与解析的唯一标准入口为 FotMobCoreCollector.fetch_match_details
+位置: src/api/collectors/fotmob_core.py
+```
+
+**禁止操作**:
+- ❌ **禁止直接拼写 API URL** - 必须通过 `FotMobCoreCollector.fetch_match_details()`
+- ❌ **禁止绕过 technical_features 字段** - 152 维技术特征必须存储在 `matches.technical_features` (JSONB)
+- ❌ **禁止使用错误的 API 端点** - `/matchDetails` 是唯一正确端点（`/leagueMatchStats` 返回 404）
+- ❌ **禁止直接修改 `model_zoo/`** 中的模型文件
+- ❌ **禁止在生产环境运行** `make db-reset`
+- ❌ **禁止跳过 `make verify`** 直接提交
+- ❌ **禁止使用硬编码的数据库密码**
+- ❌ **禁止创建版本类文件** (`*_v2`, `*_new`, `*_backup`)
+
+**必须操作**:
+- ✅ **所有 FotMob 采集必须使用** `FotMobCoreCollector.fetch_match_details(match_id)`
+- ✅ **152 维技术特征必须存储在** `matches.technical_features` 字段
+- ✅ **修改代码前运行** `git status` 确认分支
+- ✅ **提交前运行** `make verify` 确保质量
+- ✅ **修改核心模块前完成影响分析**
+- ✅ **数据库变更前备份** (`make db-backup`)
 
 ### 核心模块保护级别
 | 模块 | 保护级别 |

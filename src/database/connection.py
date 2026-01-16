@@ -3,8 +3,13 @@
 
 提供异步的PostgreSQL数据库连接、会话管理和生命周期控制。
 仅支持异步操作，移除同步引擎以避免psycopg2依赖。
+
+V41.98 新增:
+- verify_docker_environment(): 验证连接是否指向 Docker 容器
+- 环境纯净性检查: 防止连接到非 Docker 数据库
 """
 
+import sys
 from collections.abc import AsyncGenerator, Generator
 from contextlib import asynccontextmanager, contextmanager
 import logging
@@ -16,6 +21,7 @@ from sqlalchemy.ext.asyncio import (
     async_sessionmaker,
     create_async_engine,
 )
+from sqlalchemy import text
 
 logger = logging.getLogger(__name__)
 
@@ -26,6 +32,66 @@ def get_database_config():
 
     settings = get_settings()
     return settings.database
+
+
+async def verify_docker_environment(engine: AsyncEngine) -> bool:
+    """
+    V41.98: 验证数据库连接是否指向 Docker 容器
+
+    Args:
+        engine: SQLAlchemy 异步引擎
+
+    Returns:
+        True 如果连接到 Docker 容器，否则 False
+
+    Raises:
+        RuntimeError: 如果环境不纯净（连接到非 Docker 数据库）
+    """
+    async with engine.begin() as conn:
+        # 检查 PostgreSQL 版本信息
+        result = await conn.execute(text("SELECT version()"))
+        version = result.scalar()
+
+        # 检查数据库名称
+        result_db = await conn.execute(text("SELECT current_database()"))
+        db_name = result_db.scalar()
+
+        # 检查容器信息（PostgreSQL 容器识别）
+        try:
+            result_hostname = await conn.execute(text("SELECT inet_server_addr()"))
+            hostname = result_hostname.scalar()
+        except Exception:
+            hostname = "unknown"
+
+    # V41.98 环境纯净性检查
+    # 必须是 PostgreSQL 15 (Docker 镜像版本)
+    is_postgres_15 = "PostgreSQL 15" in version
+
+    # 必须是 football_db 数据库
+    is_correct_db = db_name == "football_db"
+
+    # 检查是否是 Docker 环境（通过 hostname 或版本判断）
+    is_docker = is_postgres_15 and is_correct_db
+
+    logger.info(f"V41.98 环境验证:")
+    logger.info(f"  PostgreSQL 版本: {version[:50]}...")
+    logger.info(f"  数据库名称: {db_name}")
+    logger.info(f"  服务器地址: {hostname}")
+    logger.info(f"  Docker 容器: {'✅ 是' if is_docker else '❌ 否'}")
+
+    if not is_docker:
+        error_msg = (
+            f"❌ V41.98 环境验证失败!\n"
+            f"   当前数据库: {db_name}\n"
+            f"   PostgreSQL 版本: {version[:50]}...\n"
+            f"   期望: PostgreSQL 15 + football_db (Docker 容器)\n"
+            f"   请确保 Docker 服务正在运行: make ps\n"
+            f"   请停止本地 PostgreSQL: sudo service postgresql stop"
+        )
+        logger.error(error_msg)
+        raise RuntimeError(error_msg)
+
+    return True
 
 
 class DatabaseManager:
@@ -51,10 +117,14 @@ class DatabaseManager:
 
     def initialize(self, config: Any | None = None) -> None:
         """
-        初始化数据库连接
+        初始化数据库连接（同步版本）
 
         Args:
             config: 数据库配置，如果为None则使用默认配置
+
+        Warning:
+            此方法不执行 Docker 环境验证。请使用 initialize_and_verify()
+            或在初始化后手动调用 verify_environment_async()
         """
         if config is None:
             config = get_database_config()
@@ -83,6 +153,43 @@ class DatabaseManager:
         )
 
         logger.info("数据库连接初始化完成")
+
+    async def initialize_and_verify(self, config: Any | None = None) -> None:
+        """
+        V41.98: 初始化数据库连接并验证 Docker 环境
+
+        Args:
+            config: 数据库配置，如果为None则使用默认配置
+
+        Raises:
+            RuntimeError: 如果数据库环境不是 Docker 容器
+        """
+        # 先执行标准初始化
+        self.initialize(config)
+
+        # V41.98: 验证 Docker 环境
+        logger.info("V41.98: 开始验证 Docker 数据库环境...")
+        try:
+            await verify_docker_environment(self._async_engine)
+            logger.info("✅ V41.98: Docker 环境验证通过")
+        except RuntimeError as e:
+            logger.error(f"❌ V41.98: Docker 环境验证失败: {e}")
+            raise
+
+    async def verify_environment_async(self) -> bool:
+        """
+        V41.98: 异步验证当前数据库连接是否指向 Docker 容器
+
+        Returns:
+            True 如果环境验证通过
+
+        Raises:
+            RuntimeError: 如果环境验证失败（连接到非 Docker 数据库）
+        """
+        if self._async_engine is None:
+            raise RuntimeError("数据库连接未初始化")
+
+        return await verify_docker_environment(self._async_engine)
 
     @property
     def sync_engine(self) -> None:
@@ -159,12 +266,41 @@ _db_manager = DatabaseManager()
 
 def initialize_database(config: Any | None = None) -> None:
     """
-    初始化数据库连接
+    初始化数据库连接（不验证环境）
 
     Args:
         config: 数据库配置，如果为None则使用默认配置
+
+    Warning:
+        此函数不执行 Docker 环境验证。推荐使用 initialize_database_and_verify()
     """
     _db_manager.initialize(config)
+
+
+async def initialize_database_and_verify(config: Any | None = None) -> None:
+    """
+    V41.98: 初始化数据库连接并验证 Docker 环境
+
+    Args:
+        config: 数据库配置，如果为None则使用默认配置
+
+    Raises:
+        RuntimeError: 如果连接到非 Docker 数据库
+    """
+    await _db_manager.initialize_and_verify(config)
+
+
+async def verify_database_environment() -> bool:
+    """
+    V41.98: 验证当前数据库连接是否指向 Docker 容器
+
+    Returns:
+        True 如果环境验证通过
+
+    Raises:
+        RuntimeError: 如果环境验证失败
+    """
+    return await _db_manager.verify_environment_async()
 
 
 def get_db_manager() -> DatabaseManager:
