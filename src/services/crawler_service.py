@@ -33,7 +33,7 @@ from bs4 import BeautifulSoup
 from playwright.async_api import Page, async_playwright
 
 from src.api.collectors.bayesian_delay_engine import BayesianDelayEngine
-from src.core.exceptions import NetworkError, ProxyError, ResourceNotFoundError
+from src.core.exceptions import NetworkError, ProxyError
 from src.core.proxy_health_checker import ProxyHealthChecker
 from src.core.semantic_refiner import SemanticRefiner
 from src.services.harvest_config import AntiScrapingConfig
@@ -106,10 +106,7 @@ class CrawlerService:
     - 异常对齐：使用自定义异常替代内置异常
     """
 
-    # 代理端口配置
-    PROXY_PORTS: list[int] = list(range(7891, 7910))
-    WSL2_PROXY_HOST: str = "172.25.16.1"
-    LOCAL_PROXY_HOST: str = "127.0.0.1"
+    # V41.121: 使用统一配置（移除硬编码）
     MAX_CONCURRENT_REQUESTS: int = 3
 
     def __init__(
@@ -123,20 +120,26 @@ class CrawlerService:
         max_concurrent_requests: int | None = None,
     ) -> None:
         """
-        V41.83: 初始化爬虫服务（重构版）
+        V41.121: 初始化爬虫服务（重构版 - 零硬编码）
 
         Args:
             db_conn: 数据库连接（用于 SemanticRefiner）
-            proxy_ports: 代理端口列表（默认使用 19 个端口）
+            proxy_ports: 代理端口列表（默认从统一配置读取）
             enable_bayesian: 是否启用贝叶斯延迟引擎
             enable_proxy_health_check: 是否启用代理健康检查
             headless: 是否无头模式
             confidence_threshold: SemanticRefiner 置信度阈值
             max_concurrent_requests: 最大并发请求数
         """
+        # V41.121: 从统一配置读取代理设置
+        from src.config_unified import get_config
+
+        config = get_config()
+        proxy_config = config.proxy
+
         # V41.83: 基础属性初始化
         self.db_conn = db_conn
-        self.proxy_ports = proxy_ports or self.PROXY_PORTS
+        self.proxy_ports = proxy_ports or proxy_config.proxy_ports
         self.enable_bayesian = enable_bayesian
         self.headless = headless
 
@@ -156,9 +159,9 @@ class CrawlerService:
         # 统计信息
         self.stats = CrawlStats()
 
-        # 环境检测
+        # V41.121: 环境检测 - 使用统一配置
         self.is_wsl2 = self._is_wsl2_environment()
-        self.proxy_host = self.WSL2_PROXY_HOST if self.is_wsl2 else self.LOCAL_PROXY_HOST
+        self.proxy_host = proxy_config.wsl2_bridge_host if self.is_wsl2 else "127.0.0.1"
 
         # V41.83: 统一日志记录
         self._log_initialization_status(
@@ -279,13 +282,20 @@ class CrawlerService:
 
     def _get_proxy_host(self) -> str:
         """
-        V41.83: 获取代理主机地址
+        V41.121: 获取代理主机地址（使用统一配置）
 
         Returns:
             代理主机地址
         """
+        from src.config_unified import get_config
+
+        config = get_config()
+        proxy_config = config.proxy
+
         is_wsl2 = self._is_wsl2_environment()
-        return self.WSL2_PROXY_HOST if is_wsl2 else self.LOCAL_PROXY_HOST
+        if is_wsl2:
+            return proxy_config.wsl2_bridge_host
+        return "127.0.0.1"
 
     # ========================================================================
     # 代理管理

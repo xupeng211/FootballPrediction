@@ -49,6 +49,7 @@ import psycopg2
 # V41.44: Playwright 集成（延迟导入以避免启动时的开销）
 try:
     from playwright.async_api import async_playwright, Browser, Page
+
     PLAYWRIGHT_AVAILABLE = True
 except ImportError:
     PLAYWRIGHT_AVAILABLE = False
@@ -156,9 +157,11 @@ VIEWPORT_SIZES = [
 # 数据模型
 # ============================================================================
 
+
 @dataclass
 class MatchInfo:
     """比赛信息"""
+
     home_team: str
     away_team: str
     hash_value: str
@@ -169,6 +172,7 @@ class MatchInfo:
 @dataclass
 class AlignmentResult:
     """对齐结果"""
+
     match_id: str
     hash_value: str
     url: str
@@ -180,6 +184,7 @@ class AlignmentResult:
 @dataclass
 class HarvestStats:
     """收割统计"""
+
     visited: int = 0
     extracted: int = 0
     matched: int = 0
@@ -192,6 +197,7 @@ class HarvestStats:
 # ============================================================================
 # 核心服务类
 # ============================================================================
+
 
 class HashAlignmentService:
     """
@@ -210,12 +216,36 @@ class HashAlignmentService:
         re.compile(r"/football/[^/]+/[^/]+/([^/]+)-([^/]+)-([A-Za-z0-9]{8})/"),
     ]
 
-    # V41.63: 隧道轮换配置 (6 端口物理对齐 - 严格匹配 Clash 脚本)
-    PROXY_PORTS: ClassVar[list[int]] = [7891, 7892, 7893, 7894, 7895, 7896]  # 6 个真实物理 IP (与 Clash 配置一致)
+    # V41.121: 隧道轮换配置（从统一配置读取）
+    # V41.63 原配置: 6 端口物理对齐 - 严格匹配 Clash 脚本
+    @classmethod
+    def get_proxy_ports(cls) -> list[int]:
+        """获取代理端口列表（从统一配置读取）"""
+        from src.config_unified import get_config
 
-    # V41.50: WSL2 代理主机配置
+        config = get_config()
+        return config.proxy.proxy_ports
+
+    @classmethod
+    def get_wsl2_proxy_host(cls) -> str:
+        """获取 WSL2 代理主机（从统一配置读取）"""
+        from src.config_unified import get_config
+
+        config = get_config()
+        return config.proxy.wsl2_bridge_host
+
+    # 保留向后兼容的默认值（如果统一配置不可用）
+    PROXY_PORTS: ClassVar[list[int]] = [
+        7892,
+        7893,
+        7894,
+        7895,
+        7896,
+        7898,
+        7899,
+    ]  # V41.121 更新: 使用验证后的端口
     WSL2_PROXY_HOST: ClassVar[str] = "172.25.16.1"  # WSL2 宿主机默认 IP
-    LOCAL_PROXY_HOST: ClassVar[str] = "127.0.0.1"   # 本地回环地址
+    LOCAL_PROXY_HOST: ClassVar[str] = "127.0.0.1"  # 本地回环地址
 
     # 联赛URL映射配置
     LEAGUE_URLS: ClassVar[dict[str, dict[str, str]]] = {
@@ -271,9 +301,15 @@ class HashAlignmentService:
         Returns:
             代理主机 IP 地址
         """
+        # V41.121: 使用统一配置获取 WSL2 代理主机
+        from src.config_unified import get_config
+
+        config = get_config()
+        proxy_config = config.proxy
+
         if cls.is_wsl2_environment():
-            return cls.WSL2_PROXY_HOST
-        return cls.LOCAL_PROXY_HOST
+            return proxy_config.wsl2_bridge_host
+        return "127.0.0.1"
 
     @staticmethod
     def normalize_season_format(season: str) -> str:
@@ -298,11 +334,11 @@ class HashAlignmentService:
             "2022/2023"
         """
         # 如果已经是完整格式 (4位/4位)，直接返回
-        if re.match(r'^\d{4}/\d{4}$', season):
+        if re.match(r"^\d{4}/\d{4}$", season):
             return season
 
         # 如果是简写格式 (2位/2位)，转换为完整格式
-        match = re.match(r'^(\d{2})/(\d{2})$', season)
+        match = re.match(r"^(\d{2})/(\d{2})$", season)
         if match:
             year1, year2 = match.groups()
             # 判断是 19xx 还是 20xx
@@ -343,11 +379,18 @@ class HashAlignmentService:
 
         # V41.50: 记录原始赛季和归一化后的赛季
         if season != self.season:
-            logger.info("✅ HashAlignmentService 初始化完成 (season: %s → %s, WSL2: %s)",
-                       season, self.season, self.is_wsl2_environment())
+            logger.info(
+                "✅ HashAlignmentService 初始化完成 (season: %s → %s, WSL2: %s)",
+                season,
+                self.season,
+                self.is_wsl2_environment(),
+            )
         else:
-            logger.info("✅ HashAlignmentService 初始化完成 (season=%s, WSL2: %s)",
-                       self.season, self.is_wsl2_environment())
+            logger.info(
+                "✅ HashAlignmentService 初始化完成 (season=%s, WSL2: %s)",
+                self.season,
+                self.is_wsl2_environment(),
+            )
 
     def _verify_database_identity(self) -> None:
         """
@@ -366,12 +409,12 @@ class HashAlignmentService:
                 # 1. 检查当前连接的数据库名称
                 cursor.execute("SELECT current_database();")
                 result = cursor.fetchone()
-                current_db = result['current_database'] if result else None
+                current_db = result["current_database"] if result else None
 
                 # 2. 检查 matches 表是否存在
                 cursor.execute("SELECT to_regclass('public.matches');")
                 result = cursor.fetchone()
-                matches_table = result['to_regclass'] if result else None
+                matches_table = result["to_regclass"] if result else None
 
                 # 3. 验证数据库身份
                 if current_db != "football_db":
@@ -397,7 +440,7 @@ class HashAlignmentService:
                     WHERE table_schema = 'public' AND table_type = 'BASE TABLE';
                 """)
                 result = cursor.fetchone()
-                table_count = result['count'] if result else 0
+                table_count = result["count"] if result else 0
 
                 logger.info(f"✅ V41.51 数据库身份验证通过 (db={current_db}, tables={table_count})")
 
@@ -405,9 +448,7 @@ class HashAlignmentService:
             raise
         except Exception as e:
             raise DatabaseConfigurationError(
-                f"🚨 V41.51 数据库身份验证异常\n"
-                f"   错误: {e}\n"
-                f"   请检查数据库连接配置"
+                f"🚨 V41.51 数据库身份验证异常\n   错误: {e}\n   请检查数据库连接配置"
             )
 
     # ========================================================================
@@ -498,12 +539,12 @@ class HashAlignmentService:
         base_slug = re.sub(
             r"-[\d]{4}-[\d]{4}/?$",  # 跨年: -2023-2024
             "",
-            slug
+            slug,
         )
         base_slug = re.sub(
             r"-[\d]{4}/?$",  # 自然年: -2024
             "",
-            base_slug
+            base_slug,
         )
 
         # 构建新 URL
@@ -570,12 +611,11 @@ class HashAlignmentService:
                     home_team = home_team_raw.replace("-", " ").title()
                     away_team = away_team_raw.replace("-", " ").title()
 
-                    matches.append(MatchInfo(
-                        home_team=home_team,
-                        away_team=away_team,
-                        hash_value=hash_str,
-                        url=href
-                    ))
+                    matches.append(
+                        MatchInfo(
+                            home_team=home_team, away_team=away_team, hash_value=hash_str, url=href
+                        )
+                    )
                     break  # 匹配成功后跳出循环
 
         return matches
@@ -660,7 +700,7 @@ class HashAlignmentService:
         url: str,
         league_name: str,
         confidence: float = 0.98,
-        method: str = "v41.40_carpet_sweep"
+        method: str = "v41.40_carpet_sweep",
     ) -> bool:
         """
         幂等性更新比赛哈希（多次运行安全）
@@ -690,7 +730,8 @@ class HashAlignmentService:
         url_season = None
         if url and "[0-9]{4}-[0-9]{4}" in url:
             import re
-            season_match = re.search(r'([0-9]{4}-[0-9]{4})', url)
+
+            season_match = re.search(r"([0-9]{4}-[0-9]{4})", url)
             if season_match:
                 url_season = season_match.group(1).replace("-", "/")
                 # 从 matches 表获取实际赛季
@@ -701,17 +742,22 @@ class HashAlignmentService:
                     cur.execute(check_season_query, (match_id,))
                     result = cur.fetchone()
                     if result:
-                        db_season = result['season']
+                        db_season = result["season"]
                         # 归一化赛季格式（23/24 → 2023/2024）
                         normalized_db_season = db_season.replace("/", "")
                         if len(normalized_db_season) == 4:
-                            normalized_db_season = f"20{normalized_db_season[:2]}/20{normalized_db_season[2:]}"
+                            normalized_db_season = (
+                                f"20{normalized_db_season[:2]}/20{normalized_db_season[2:]}"
+                            )
 
                         # 检查赛季是否一致
                         if url_season != db_season and url_season != normalized_db_season:
                             logger.error(
                                 "🚨 V41.56: 赛季错位拦截 - match_id=%s, db_season=%s, url_season=%s, url=%s",
-                                match_id, db_season, url_season, url
+                                match_id,
+                                db_season,
+                                url_season,
+                                url,
                             )
                             self.stats.skipped += 1
                             return False
@@ -749,15 +795,25 @@ class HashAlignmentService:
                 existing = cur.fetchone()
 
                 if existing:
-                    logger.warning("⚠️  Hash %s 已被 match_id=%s 使用", hash_value, existing['fotmob_id'])
+                    logger.warning(
+                        "⚠️  Hash %s 已被 match_id=%s 使用", hash_value, existing["fotmob_id"]
+                    )
                     self.stats.conflicts += 1
                     return False
 
                 # 执行 UPSERT（使用 matches 表的实际 season，而非 self.season）
-                cur.execute(upsert_query, (
-                    match_id, league_name,  # season 现在从 matches.m.season 获取
-                    hash_value, url, confidence, method, match_id
-                ))
+                cur.execute(
+                    upsert_query,
+                    (
+                        match_id,
+                        league_name,  # season 现在从 matches.m.season 获取
+                        hash_value,
+                        url,
+                        confidence,
+                        method,
+                        match_id,
+                    ),
+                )
                 self.conn.commit()
 
                 logger.info("✅ 更新哈希: %s -> %s", match_id, hash_value)
@@ -779,10 +835,7 @@ class HashAlignmentService:
     # ========================================================================
 
     def validate_cross_date(
-        self,
-        target_date: datetime,
-        actual_date: datetime,
-        tolerance_hours: int = 24
+        self, target_date: datetime, actual_date: datetime, tolerance_hours: int = 24
     ) -> bool:
         """
         V41.36: 验证日期是否在容差范围内
@@ -812,7 +865,9 @@ class HashAlignmentService:
         Returns:
             代理端口 (7890-7899)
         """
-        return random.choice(self.PROXY_PORTS)
+        # V41.121: 使用统一配置获取代理端口列表
+        proxy_ports = self.get_proxy_ports()
+        return random.choice(proxy_ports)
 
     def set_proxy_port(self, port: int | None = None) -> int:
         """
@@ -824,14 +879,17 @@ class HashAlignmentService:
         Returns:
             设置的代理端口
         """
+        # V41.121: 使用统一配置获取代理端口列表
+        proxy_ports = self.get_proxy_ports()
+
         if port is None:
             port = self.get_random_proxy_port()
 
-        if port not in self.PROXY_PORTS:
+        if port not in proxy_ports:
             logger.warning("⚠️  代理端口 %d 不在允许范围内，使用随机端口", port)
             port = self.get_random_proxy_port()
 
-        os.environ['PROXY_PORT'] = str(port)
+        os.environ["PROXY_PORT"] = str(port)
         logger.debug("🔌 设置代理端口: %d", port)
         return port
 
@@ -842,7 +900,7 @@ class HashAlignmentService:
         Returns:
             当前代理端口，如果未设置则返回 None
         """
-        port_str = os.environ.get('PROXY_PORT')
+        port_str = os.environ.get("PROXY_PORT")
         return int(port_str) if port_str else None
 
     # ========================================================================
@@ -876,9 +934,7 @@ class HashAlignmentService:
             return False
 
     def get_healthy_proxy_port(
-        self,
-        excluded_ports: set[int] | None = None,
-        max_attempts: int = None
+        self, excluded_ports: set[int] | None = None, max_attempts: int = None
     ) -> int | None:
         """
         V41.45: 获取健康的代理端口（带容错机制）
@@ -907,10 +963,13 @@ class HashAlignmentService:
         if excluded_ports is None:
             excluded_ports = set()
 
-        if max_attempts is None:
-            max_attempts = len(self.PROXY_PORTS)
+        # V41.121: 使用统一配置获取代理端口列表
+        proxy_ports = self.get_proxy_ports()
 
-        available_ports = [p for p in self.PROXY_PORTS if p not in excluded_ports]
+        if max_attempts is None:
+            max_attempts = len(proxy_ports)
+
+        available_ports = [p for p in proxy_ports if p not in excluded_ports]
 
         if not available_ports:
             logger.warning("⚠️  没有可用的代理端口（所有端口都被排除）")
@@ -930,10 +989,7 @@ class HashAlignmentService:
         return None
 
     def set_proxy_port_with_retry(
-        self,
-        port: int | None = None,
-        excluded_ports: set[int] | None = None,
-        max_retry: int = 3
+        self, port: int | None = None, excluded_ports: set[int] | None = None, max_retry: int = 3
     ) -> int:
         """
         V41.45: 设置代理端口（带重试和容错）
@@ -955,7 +1011,7 @@ class HashAlignmentService:
         # 如果指定了端口，先尝试该端口
         if port is not None:
             if self.check_proxy_port_health(port):
-                os.environ['PROXY_PORT'] = str(port)
+                os.environ["PROXY_PORT"] = str(port)
                 logger.info("🔌 设置代理端口: %d (首选)", port)
                 return port
             else:
@@ -967,23 +1023,25 @@ class HashAlignmentService:
         if port is not None:
             excluded_ports.add(port)
 
+        # V41.121: 使用统一配置获取代理端口列表
+        proxy_ports = self.get_proxy_ports()
+
         for attempt in range(max_retry):
             healthy_port = self.get_healthy_proxy_port(
-                excluded_ports=excluded_ports,
-                max_attempts=len(self.PROXY_PORTS)
+                excluded_ports=excluded_ports, max_attempts=len(proxy_ports)
             )
             if healthy_port is not None:
-                os.environ['PROXY_PORT'] = str(healthy_port)
-                logger.info("🔌 设置代理端口: %d (重试 %d/%d)",
-                           healthy_port, attempt + 1, max_retry)
+                os.environ["PROXY_PORT"] = str(healthy_port)
+                logger.info(
+                    "🔌 设置代理端口: %d (重试 %d/%d)", healthy_port, attempt + 1, max_retry
+                )
                 return healthy_port
             else:
-                logger.warning("⚠️  重试 %d/%d 失败，继续尝试...",
-                             attempt + 1, max_retry)
+                logger.warning("⚠️  重试 %d/%d 失败，继续尝试...", attempt + 1, max_retry)
 
         # 所有尝试都失败，使用随机端口（降级策略）
         fallback_port = self.get_random_proxy_port()
-        os.environ['PROXY_PORT'] = str(fallback_port)
+        os.environ["PROXY_PORT"] = str(fallback_port)
         logger.error("🚨 所有代理端口不可用，使用降级端口: %d", fallback_port)
         return fallback_port
 
@@ -1036,7 +1094,7 @@ class HashAlignmentService:
         # 解析URL
         parsed_matches = []
         for match in matches:
-            href = match.get('href', '')
+            href = match.get("href", "")
             for pattern in self.HASH_PATTERNS:
                 url_match = pattern.search(href)
                 if url_match:
@@ -1046,12 +1104,11 @@ class HashAlignmentService:
                     home_team = home_team_raw.replace("-", " ").title()
                     away_team = away_team_raw.replace("-", " ").title()
 
-                    parsed_matches.append(MatchInfo(
-                        home_team=home_team,
-                        away_team=away_team,
-                        hash_value=hash_str,
-                        url=href
-                    ))
+                    parsed_matches.append(
+                        MatchInfo(
+                            home_team=home_team, away_team=away_team, hash_value=hash_str, url=href
+                        )
+                    )
                     break
 
         return parsed_matches
@@ -1061,7 +1118,7 @@ class HashAlignmentService:
         league_name: str,
         max_pages: int = 10,
         headless: bool = True,
-        league_config: dict | None = None
+        league_config: dict | None = None,
     ) -> dict[str, int]:
         """
         V41.47: 全自动收割方法 - 集成 Playwright + 隧道轮换 + 代理容错 + Tier 分级延迟
@@ -1096,7 +1153,7 @@ class HashAlignmentService:
                 "total_harvested": 0,
                 "total_updated": 0,
                 "total_conflicts": 0,
-                "pages_visited": 0
+                "pages_visited": 0,
             }
 
         # V41.47: 从 YAML 配置加载联赛信息（如果未提供）
@@ -1113,9 +1170,11 @@ class HashAlignmentService:
                     # 从 URL 推断 tier（默认为 1）
                     league_config = {
                         "name": league_name,
-                        "oddsportal_slug": base_url.replace("https://www.oddsportal.com/football/", "").replace("/results/", ""),
+                        "oddsportal_slug": base_url.replace(
+                            "https://www.oddsportal.com/football/", ""
+                        ).replace("/results/", ""),
                         "tier": 1,
-                        "seasons": [self.season]
+                        "seasons": [self.season],
                     }
                 else:
                     logger.error(f"❌ 联赛配置未找到: {league_name}")
@@ -1123,7 +1182,7 @@ class HashAlignmentService:
                         "total_harvested": 0,
                         "total_updated": 0,
                         "total_conflicts": 0,
-                        "pages_visited": 0
+                        "pages_visited": 0,
                     }
 
         # 获取联赛信息
@@ -1148,12 +1207,7 @@ class HashAlignmentService:
         logger.info(f"   请求间隔: {page_delay}s")
         logger.info(f"   最大页数: {max_pages}")
 
-        stats = {
-            "total_harvested": 0,
-            "total_updated": 0,
-            "total_conflicts": 0,
-            "pages_visited": 0
-        }
+        stats = {"total_harvested": 0, "total_updated": 0, "total_conflicts": 0, "pages_visited": 0}
 
         # V41.45: 跟踪失效端口，避免重复尝试
         failed_ports: set[int] = set()
@@ -1163,26 +1217,23 @@ class HashAlignmentService:
             async with async_playwright() as p:
                 # V41.45: 使用容错机制选择初始代理端口
                 proxy_port = self.set_proxy_port_with_retry(
-                    excluded_ports=failed_ports,
-                    max_retry=3
+                    excluded_ports=failed_ports, max_retry=3
                 )
 
                 # V41.60: 使用 Playwright 的 proxy 参数（TDD 验证通过）
                 # V41.62: 添加指纹掩护 - ignoreDefaultArgs 隐藏自动化标记
                 browser = await p.chromium.launch(
                     headless=headless,
-                    proxy={
-                        "server": f"http://{self.get_proxy_host()}:{proxy_port}"
-                    },
+                    proxy={"server": f"http://{self.get_proxy_host()}:{proxy_port}"},
                     args=[
                         "--disable-blink-features=AutomationControlled",
                         "--disable-dev-shm-usage",
                         "--no-sandbox",
                         "--disable-setuid-sandbox",
                         "--disable-web-security",
-                        "--disable-features=IsolateOrigins,site-per-process"
+                        "--disable-features=IsolateOrigins,site-per-process",
                     ],
-                    ignore_default_args=["--enable-automation"]
+                    ignore_default_args=["--enable-automation"],
                 )
 
                 # V41.62: User-Agent 轮换 + 随机视口尺寸
@@ -1194,16 +1245,18 @@ class HashAlignmentService:
                     viewport=random_viewport,
                     # V41.60: 添加真实浏览器特征（TDD 验证通过）
                     locale=random.choice(["en-US", "en-GB", "en-CA"]),
-                    timezone_id=random.choice([
-                        "Europe/London",
-                        "Europe/Paris",
-                        "Europe/Berlin",
-                        "America/New_York",
-                        "America/Los_Angeles"
-                    ]),
+                    timezone_id=random.choice(
+                        [
+                            "Europe/London",
+                            "Europe/Paris",
+                            "Europe/Berlin",
+                            "America/New_York",
+                            "America/Los_Angeles",
+                        ]
+                    ),
                     # V41.62: 额外的浏览器指纹伪装
                     device_scale_factor=random.choice([1.0, 1.25, 1.5]),
-                    has_touch=random.choice([True, False, False])  # 33% 触摸屏
+                    has_touch=random.choice([True, False, False]),  # 33% 触摸屏
                 )
 
                 page = await context.new_page()
@@ -1224,8 +1277,7 @@ class HashAlignmentService:
                         # V41.45: 每页切换代理端口（带容错）
                         if page_num > 1:
                             new_proxy_port = self.set_proxy_port_with_retry(
-                                excluded_ports=failed_ports,
-                                max_retry=2
+                                excluded_ports=failed_ports, max_retry=2
                             )
                             if new_proxy_port != proxy_port:
                                 logger.info(f"🔌 切换代理端口: {proxy_port} → {new_proxy_port}")
@@ -1243,11 +1295,15 @@ class HashAlignmentService:
                                 page_title = await page.title()
                                 if "Results" in page_title:
                                     empty_page_count += 1
-                                    logger.warning(f"⚠️  检测到空页面（标题包含 'Results'），计数器: {empty_page_count}/3")
+                                    logger.warning(
+                                        f"⚠️  检测到空页面（标题包含 'Results'），计数器: {empty_page_count}/3"
+                                    )
 
                                     if empty_page_count >= 3:
                                         logger.error("🚨 触发 IP 保护熔断：检测到 Shadow Ban")
-                                        logger.error("   症状：连续 3 页提取到 0 场比赛，但页面标题正常")
+                                        logger.error(
+                                            "   症状：连续 3 页提取到 0 场比赛，但页面标题正常"
+                                        )
                                         logger.error("   建议：等待 6-24 小时冷却期，或更换代理 IP")
                                         logger.error("   正在强制退出以避免 IP 被永久封禁...")
                                         sys.exit(1)
@@ -1267,7 +1323,7 @@ class HashAlignmentService:
                                 url=match_info.url,
                                 league_name=league_name,
                                 confidence=0.98,
-                                method="v41.45_active_harvest"
+                                method="v41.45_active_harvest",
                             )
 
                             stats["total_harvested"] += 1
@@ -1359,12 +1415,13 @@ class HashAlignmentService:
 # 工厂函数
 # ============================================================================
 
+
 def create_hash_alignment_service(
     db_host: str = "localhost",
     db_name: str = "football_prediction_dev",
     db_user: str = "football_user",
     db_password: str = "football_pass",
-    season: str = "23/24"
+    season: str = "23/24",
 ) -> HashAlignmentService:
     """
     创建哈希对齐服务实例
@@ -1384,7 +1441,7 @@ def create_hash_alignment_service(
         database=db_name,
         user=db_user,
         password=db_password,
-        cursor_factory=psycopg2.extras.RealDictCursor
+        cursor_factory=psycopg2.extras.RealDictCursor,
     )
 
     return HashAlignmentService(conn, season=season)

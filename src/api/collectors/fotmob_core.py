@@ -37,6 +37,7 @@ logger = logging.getLogger(__name__)
 # V41.114: 比赛状态枚举
 class MatchStatus(Enum):
     """比赛状态枚举"""
+
     SCHEDULED = "NS"  # Not Started
     FIRST_HALF = "H1"  # 1st Half
     HALF_TIME = "HT"  # Half-Time
@@ -52,6 +53,7 @@ class MatchStatus(Enum):
 # V41.114: 采集错误类型枚举
 class FetchError(Enum):
     """采集错误类型枚举"""
+
     NETWORK_ERROR = "network_error"
     TIMEOUT_ERROR = "timeout_error"
     HTTP_ERROR = "http_error"
@@ -129,12 +131,12 @@ for _tier_name, tier_config in LEAGUE_QUALITY_TIERS.items():
 
 # V26.7: league_id -> league_name 映射表
 LEAGUE_ID_TO_NAME = {
-    47: "Premier League",    # 英超
-    87: "La Liga",           # 西甲
-    94: "Serie A",           # 意甲
-    118: "Bundesliga",       # 德甲
-    126: "Ligue 1",          # 法甲
-    53: "Ligue 1",           # 法甲 (备用ID)
+    47: "Premier League",  # 英超
+    87: "La Liga",  # 西甲
+    94: "Serie A",  # 意甲
+    118: "Bundesliga",  # 德甲
+    126: "Ligue 1",  # 法甲
+    53: "Ligue 1",  # 法甲 (备用ID)
 }
 
 
@@ -154,6 +156,7 @@ class FotMobCoreCollector:
     def __init__(self):
         """初始化核心采集器 - V11.2 隐身模式版 + V41.114 配置驱动"""
         from src.config_unified import get_settings
+
         settings = get_settings()
         self.base_url = settings.fotmob_base_url
         self.web_url = settings.fotmob_web_url
@@ -212,9 +215,7 @@ class FotMobCoreCollector:
             "Sec-Fetch-Mode": "cors",
             "Sec-Fetch-Site": "same-origin",
         }
-        logger.info(
-            f"🎭 V144.3 Ghost Protocol: UA={user_agent[:50]}... (30+ 指纹池)"
-        )
+        logger.info(f"🎭 V144.3 Ghost Protocol: UA={user_agent[:50]}... (30+ 指纹池)")
 
     def get_missing_match_ids(self, limit: int = 100) -> list[int]:
         """
@@ -314,8 +315,11 @@ class FotMobCoreCollector:
             psycopg2连接对象
         """
         from src.config_unified import get_settings
+
         settings = get_settings()
-        logger.debug(f"🔧 连接数据库: {settings.database.host}:{settings.database.port}/{settings.database.name}")
+        logger.debug(
+            f"🔧 连接数据库: {settings.database.host}:{settings.database.port}/{settings.database.name}"
+        )
 
         return psycopg2.connect(
             host=settings.database.host,
@@ -338,14 +342,14 @@ class FotMobCoreCollector:
             os.makedirs(os.path.dirname(self.hollow_matches_log), exist_ok=True)
 
             timestamp = datetime.now().isoformat()
-            log_entry = (
-                f"{timestamp} - HOLLOW_MATCH - MatchID: {match_id}, Size: {content_size} bytes, Reason: {reason}\n"
-            )
+            log_entry = f"{timestamp} - HOLLOW_MATCH - MatchID: {match_id}, Size: {content_size} bytes, Reason: {reason}\n"
 
             with open(self.hollow_matches_log, "a", encoding="utf-8") as f:
                 f.write(log_entry)
 
-            logger.warning(f"🚨 空心场次已记录: MatchID {match_id}, 响应大小: {content_size} bytes, 原因: {reason}")
+            logger.warning(
+                f"🚨 空心场次已记录: MatchID {match_id}, 响应大小: {content_size} bytes, 原因: {reason}"
+            )
 
         except Exception as e:
             logger.error(f"写入空心场次日志失败: {e}")
@@ -365,7 +369,9 @@ class FotMobCoreCollector:
         # 默认使用最宽松的标准
         return LEAGUE_QUALITY_TIERS["tier_default"]
 
-    def _validate_response_size(self, match_id: int, content: bytes, league_id: int = None, season: str = None) -> bool:
+    def _validate_response_size(
+        self, match_id: int, content: bytes, league_id: int = None, season: str = None
+    ) -> bool:
         """
         V11.3 联赛+赛季感知哨兵检查：验证响应大小
 
@@ -386,7 +392,9 @@ class FotMobCoreCollector:
         content_size = len(content)
 
         # V11.3: 根据联赛等级动态确定基准阈值
-        tier_config = self._get_league_tier(league_id) if league_id else LEAGUE_QUALITY_TIERS["tier_default"]
+        tier_config = (
+            self._get_league_tier(league_id) if league_id else LEAGUE_QUALITY_TIERS["tier_default"]
+        )
         base_min_size = tier_config["min_response_size"]
 
         # V11.4: 严格数据质量底线 - 五大联赛必须有完整统计数据
@@ -431,7 +439,9 @@ class FotMobCoreCollector:
     def _increment_failure(self) -> None:
         """增加失败计数"""
         self.consecutive_failures += 1
-        logger.warning(f"⚠️  连续失败次数: {self.consecutive_failures}/{self.max_consecutive_failures}")
+        logger.warning(
+            f"⚠️  连续失败次数: {self.consecutive_failures}/{self.max_consecutive_failures}"
+        )
 
         # 检查是否需要熔断
         if self.consecutive_failures >= self.max_consecutive_failures:
@@ -466,7 +476,9 @@ class FotMobCoreCollector:
                 cur.execute(query)
                 missing_ids = [row[0] for row in cur.fetchall()]
 
-                logger.info(f"🎯 断点查询结果: 总计 {len(match_ids)} 场，缺失 {len(missing_ids)} 场")
+                logger.info(
+                    f"🎯 断点查询结果: 总计 {len(match_ids)} 场，缺失 {len(missing_ids)} 场"
+                )
                 return missing_ids
 
         except Exception as e:
@@ -626,7 +638,12 @@ class FotMobCoreCollector:
 
                             if score_result:
                                 update_fields.extend(
-                                    ["home_score = %s", "away_score = %s", "actual_result = %s", "result_score = %s"]
+                                    [
+                                        "home_score = %s",
+                                        "away_score = %s",
+                                        "actual_result = %s",
+                                        "result_score = %s",
+                                    ]
                                 )
                                 update_values.extend(
                                     [
@@ -901,8 +918,12 @@ class FotMobCoreCollector:
             home_team_data = lineup.get("homeTeam", {})
             away_team_data = lineup.get("awayTeam", {})
 
-            home_player_count = len(home_team_data.get("starters", [])) + len(home_team_data.get("subs", []))
-            away_player_count = len(away_team_data.get("starters", [])) + len(away_team_data.get("subs", []))
+            home_player_count = len(home_team_data.get("starters", [])) + len(
+                home_team_data.get("subs", [])
+            )
+            away_player_count = len(away_team_data.get("starters", [])) + len(
+                away_team_data.get("subs", [])
+            )
 
             features.update(
                 {
@@ -920,11 +941,15 @@ class FotMobCoreCollector:
             features["_meta"] = {
                 "total_metrics": len(all_metrics),
                 "missing_features": missing_features,
-                "has_nan": any(np.isnan(v) for v in features.values() if isinstance(v, (int, float))),
+                "has_nan": any(
+                    np.isnan(v) for v in features.values() if isinstance(v, (int, float))
+                ),
             }
 
             if missing_features:
-                logger.info(f"📊 特征解析完成: {len(features)}维，缺失 {len(missing_features)} 个特征")
+                logger.info(
+                    f"📊 特征解析完成: {len(features)}维，缺失 {len(missing_features)} 个特征"
+                )
             else:
                 logger.info(f"📊 特征解析完成: {len(features)}维")
 
@@ -1099,7 +1124,9 @@ class FotMobCoreCollector:
                 "away_team": match_header.get("teams", [{}])[1].get("name", "Unknown Away"),
                 "league_name": match_header.get("league", {}).get("name", "Unknown League"),
                 "match_time": match_header.get("status", {}).get("utcTime", ""),
-                "match_date": match_header.get("status", {}).get("utcTime", "")[:10],  # 提取日期部分
+                "match_date": match_header.get("status", {}).get("utcTime", "")[
+                    :10
+                ],  # 提取日期部分
                 "venue": match_header.get("venue", {}).get("name", ""),
                 "home_score": None,  # 将在parse阶段填入
                 "away_score": None,  # 将在parse阶段填入
@@ -1111,7 +1138,9 @@ class FotMobCoreCollector:
             logger.error(f"❌ 提取比赛基础信息失败: {e}")
             return None
 
-    def upsert_match_data(self, match_info: dict, l2_json: dict, league_id: int = None, season: str = None) -> bool:
+    def upsert_match_data(
+        self, match_info: dict, l2_json: dict, league_id: int = None, season: str = None
+    ) -> bool:
         """
         数据库UPSERT操作 - V26.3 架构修复版
 
@@ -1231,13 +1260,13 @@ class FotMobCoreCollector:
                     match_info["home_team"],
                     match_info["away_team"],
                     match_info["match_date"],
-                    serialize_json(l2_json),        # V26.3: 原始 JSON
-                    "SUCCESS",                       # collection_status
-                    match_info.get("match_date"),     # collected_at
-                    extracted_league_name,           # V26.7: 修复后的 league_name
+                    serialize_json(l2_json),  # V26.3: 原始 JSON
+                    "SUCCESS",  # collection_status
+                    match_info.get("match_date"),  # collected_at
+                    extracted_league_name,  # V26.7: 修复后的 league_name
                     season,
                     "FotMob",
-                    "V26.3",                         # data_version
+                    "V26.3",  # data_version
                 )
 
                 cur.execute(query, params)
@@ -1260,7 +1289,9 @@ class FotMobCoreCollector:
             if conn:
                 conn.close()
 
-    def save_extracted_features(self, match_id: str, features: dict, extractor_version: str) -> bool:
+    def save_extracted_features(
+        self, match_id: str, features: dict, extractor_version: str
+    ) -> bool:
         """
         V26.3: 保存提取后的特征到 l2_extracted_features
 
@@ -1285,7 +1316,9 @@ class FotMobCoreCollector:
                 # 计算特征数量（从 adaptive_features._meta.feature_count 或顶层）
                 feature_count = len(features)
                 if "adaptive_features" in features and "_meta" in features["adaptive_features"]:
-                    feature_count = features["adaptive_features"]["_meta"].get("feature_count", feature_count)
+                    feature_count = features["adaptive_features"]["_meta"].get(
+                        "feature_count", feature_count
+                    )
 
                 # 根据特征数量确定状态
                 if feature_count >= 3000:
@@ -1313,7 +1346,8 @@ class FotMobCoreCollector:
                     json.dumps(features),
                     extractor_version,
                     collection_status,
-                    feature_count, feature_count,  # for last_error calculation
+                    feature_count,
+                    feature_count,  # for last_error calculation
                     match_id,
                 )
 
@@ -1330,6 +1364,7 @@ class FotMobCoreCollector:
                 conn.rollback()
             logger.error(f"特征保存失败 ({match_id}): {e}")
             import traceback
+
             logger.error(f"详细错误: {traceback.format_exc()}")
             return False
         finally:
@@ -1465,7 +1500,9 @@ class FotMobCoreCollector:
             self._increment_failure()
             return None
 
-    def harvest_match_with_league(self, match_id: int, league_id: int = None, season: str = None) -> bool:
+    def harvest_match_with_league(
+        self, match_id: int, league_id: int = None, season: str = None
+    ) -> bool:
         """
         V26.4: 联赛感知的比赛采集（安全加固版）
 
@@ -1547,7 +1584,9 @@ class FotMobCoreCollector:
                     if success:
                         self._reset_failure_count()
                         tier_info = (
-                            self._get_league_tier(league_id) if league_id else LEAGUE_QUALITY_TIERS["tier_default"]
+                            self._get_league_tier(league_id)
+                            if league_id
+                            else LEAGUE_QUALITY_TIERS["tier_default"]
                         )
                         logger.info(
                             f"✅ 采集成功: {match_id} (league={league_id}, season={season}, tier={tier_info['name']})"
@@ -1555,7 +1594,9 @@ class FotMobCoreCollector:
 
                         # V26.7: 深度特征提取 - 使用 V25ProductionExtractor
                         try:
-                            from src.processors.v25_production_extractor import V25ProductionExtractor
+                            from src.processors.v25_production_extractor import (
+                                V25ProductionExtractor,
+                            )
 
                             logger.debug(f"🔬 开始深度特征提取: {match_id}")
                             extractor = V25ProductionExtractor()
@@ -1563,7 +1604,9 @@ class FotMobCoreCollector:
 
                             if extraction_result and extraction_result.features:
                                 features = extraction_result.features
-                                feature_count = len([k for k in features.keys() if not k.startswith("_")])
+                                feature_count = len(
+                                    [k for k in features.keys() if not k.startswith("_")]
+                                )
 
                                 # V26.7: 只有真正的 6000+ 维才输出成功日志
                                 if feature_count >= 6000:
@@ -1577,9 +1620,7 @@ class FotMobCoreCollector:
 
                                 # 保存深度提取的特征
                                 self.save_extracted_features(
-                                    str(match_id),
-                                    features,
-                                    extractor.version
+                                    str(match_id), features, extractor.version
                                 )
                             else:
                                 logger.warning(f"⚠️ 深度特征提取失败: {match_id}")
@@ -1589,9 +1630,7 @@ class FotMobCoreCollector:
 
                         # V26.4: 强制 Jittering 延迟（2-5 秒随机）
                         jitter_delay = random.uniform(2.0, 5.0)
-                        logger.debug(
-                            f"⏱️  Jittering 延迟: {jitter_delay:.2f}秒 - 防止 IP 封禁"
-                        )
+                        logger.debug(f"⏱️  Jittering 延迟: {jitter_delay:.2f}秒 - 防止 IP 封禁")
                         time.sleep(jitter_delay)
 
                         return True
@@ -1656,7 +1695,9 @@ class FotMobCoreCollector:
 
         if self.fallback_attempts[match_id] < self.max_fallback_attempts:
             self.fallback_attempts[match_id] += 1
-            logger.info(f"🔄 回退策略 {self.fallback_attempts[match_id]}/{self.max_fallback_attempts}: {match_id}")
+            logger.info(
+                f"🔄 回退策略 {self.fallback_attempts[match_id]}/{self.max_fallback_attempts}: {match_id}"
+            )
 
             return self._fallback_fetch_via_team(match_id, league_id)
 
@@ -1679,10 +1720,28 @@ class FotMobCoreCollector:
         # 知道的球队 ID 池（按联赛分类）
         TEAM_IDS_BY_LEAGUE = {
             34: [9825, 4199, 4019, 4504, 4475],  # Ligue 1: PSG, Marseille, Lyon, Monaco, Lille
-            87: [3787, 8631, 8633, 3785, 4484],  # La Liga: Real Madrid, Barcelona, Atletico, Sevilla, Athletic
+            87: [
+                3787,
+                8631,
+                8633,
+                3785,
+                4484,
+            ],  # La Liga: Real Madrid, Barcelona, Atletico, Sevilla, Athletic
             55: [9857, 8628, 8636, 4023, 4031],  # Serie A: Inter, Milan, Juventus, Roma, Lazio
-            54: [9823, 9810, 8019, 8035, 9845],  # Bundesliga: Bayern, Dortmund, Leverkusen, Frankfurt, Wolfsburg
-            47: [9825, 8456, 8650, 8586, 10260],  # Premier League: Arsenal, Man City, Liverpool, Spurs, Man Utd
+            54: [
+                9823,
+                9810,
+                8019,
+                8035,
+                9845,
+            ],  # Bundesliga: Bayern, Dortmund, Leverkusen, Frankfurt, Wolfsburg
+            47: [
+                9825,
+                8456,
+                8650,
+                8586,
+                10260,
+            ],  # Premier League: Arsenal, Man City, Liverpool, Spurs, Man Utd
         }
 
         if league_id and league_id in TEAM_IDS_BY_LEAGUE:
@@ -1834,11 +1893,7 @@ class FotMobCoreCollector:
         return []
 
     def enriched_l1_harvest(
-        self,
-        league_id: int,
-        season_code: str,
-        league_name: str = None,
-        batch_size: int = 50
+        self, league_id: int, season_code: str, league_name: str = None, batch_size: int = 50
     ) -> dict[str, Any]:
         """
         V26.7: 全息 L1 索引入库（增强版）
@@ -1871,7 +1926,8 @@ class FotMobCoreCollector:
             league_name = LEAGUE_ID_TO_NAME.get(
                 league_id,
                 match_header.get("league", {}).get("name", "Unknown League")
-                if 'match_header' in locals() else "Unknown League"
+                if "match_header" in locals()
+                else "Unknown League",
             )
 
         discovered_matches = []
@@ -1945,7 +2001,9 @@ class FotMobCoreCollector:
                         }
 
                         # V26.7 DBRE: 数据一致性校验 - match_date 与 season 对齐检查
-                        if not self._validate_season_date_alignment(season_code, match_date, match_id):
+                        if not self._validate_season_date_alignment(
+                            season_code, match_date, match_id
+                        ):
                             logger.warning(
                                 f"⚠️ 赛季标签不匹配 - match_id={match_id}, "
                                 f"season={season_code}, match_date={match_date}"
@@ -1982,10 +2040,7 @@ class FotMobCoreCollector:
             }
 
     def _validate_season_date_alignment(
-        self,
-        season_code: str,
-        match_date: str | None,
-        match_id: str
+        self, season_code: str, match_date: str | None, match_id: str
     ) -> bool:
         """
         V26.7 DBRE: 验证赛季标签与比赛日期的对齐性
@@ -2022,7 +2077,7 @@ class FotMobCoreCollector:
             if len(season_code) == 4 and season_code.isdigit():
                 # 第一位数字是起始年份末位，第二位是结束年份末位
                 start_year_digit = int(season_code[0])  # e.g., 2 from '2425'
-                end_year_digit = int(season_code[2])    # e.g., 2 from '2425'
+                end_year_digit = int(season_code[2])  # e.g., 2 from '2425'
 
                 # 推算完整年份（假设在 2000-2099 范围内）
                 # 对于 2425: 2025-2026, 对于 2324: 2023-2024
@@ -2435,11 +2490,260 @@ class FotMobCoreCollector:
         # 可选：写入错误日志文件
         # self._write_error_log(log_entry)
 
-    def harvest_league_matches_safe(
+    # ========== V41.121 精准回补引擎（工业级标准化） ==========
+
+    def backfill_missing_features(
         self,
-        league_name: str,
-        season: str,
-        limit: int = 100
+        match_ids: list[str],
+        concurrent_workers: int = 5,
+        dry_run: bool = False,
+    ) -> dict[str, Any]:
+        """
+        V41.121: 精准回补引擎 - 使用现有 match_id 回补缺失数据
+
+        核心特性:
+        - 使用现有 match_id 直接查询 FotMob API（V41.120 验证方法）
+        - 正确解析 header.teams[] 数组获取 team_id（V41.120 修复）
+        - 双层回补：基础索引 + technical_features（152维）
+        - 并发处理 + 代理轮换
+        - Decimal 转换处理（JSON 序列化）
+        - 零硬编码：使用统一配置
+
+        Args:
+            match_ids: 待回补的 match_id 列表
+            concurrent_workers: 并发 Worker 数量
+            dry_run: 干跑模式（不实际更新数据库）
+
+        Returns:
+            回补结果字典
+        """
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+
+        logger.info("\n" + "=" * 70)
+        logger.info("🚀 V41.121 精准回补引擎启动")
+        logger.info("=" * 70)
+        logger.info(f"📊 待回补: {len(match_ids)} 场")
+        logger.info(f"🔧 并发数: {concurrent_workers}")
+
+        # 统计信息
+        stats = {
+            "total": len(match_ids),
+            "successful": 0,
+            "failed": 0,
+            "with_features": 0,
+            "without_features": 0,
+            "failed_match_ids": [],
+        }
+
+        # V41.121: 从统一配置获取代理池
+        from src.config_unified import get_config
+
+        config = get_config()
+        proxy_config = config.proxy
+
+        logger.info(f"🌐 代理数: {len(proxy_config.proxy_ports)}")
+        logger.info(f"   代理: {proxy_config.proxy_ports}")
+
+        results = []
+
+        # V41.120 验证: 使用现有 match_id 直接查询
+        def _backfill_single_match(match_id: str, index: int) -> dict[str, Any]:
+            """回补单场比赛"""
+            try:
+                # 轮换代理
+                proxy_port = proxy_config.proxy_ports[index % len(proxy_config.proxy_ports)]
+                proxy_url = f"http://{proxy_config.wsl2_bridge_host}:{proxy_port}"
+
+                # 设置环境变量代理（供 requests 使用）
+                import os
+
+                os.environ["HTTP_PROXY"] = proxy_url
+                os.environ["HTTPS_PROXY"] = proxy_url
+
+                logger.debug(f"  [{index + 1}/{len(match_ids)}] {match_id} -> 代理: {proxy_url}")
+
+                # V41.106: 使用标准端点获取比赛详情
+                match_data = self.fetch_match_details(int(match_id))
+
+                if not match_data:
+                    return {
+                        "match_id": match_id,
+                        "status": "FAILED",
+                        "error": "No data returned from FotMob API",
+                    }
+
+                # V41.120 修复: 正确解析 header.teams[] 数组
+                header = match_data.get("header", {})
+                teams = header.get("teams", [])
+
+                if len(teams) >= 2:
+                    home_team_id = str(teams[0].get("id"))
+                    away_team_id = str(teams[1].get("id"))
+                else:
+                    return {
+                        "match_id": match_id,
+                        "status": "FAILED",
+                        "error": "Team data not found in response",
+                    }
+
+                # 获取轮次名称
+                round_name = match_data.get("content", {}).get("matchInfo", {}).get("round", "")
+
+                # 解析 152 维 technical_features
+                technical_features = self._parse_technical_features(match_data)
+
+                if not dry_run:
+                    # 更新数据库
+                    import psycopg2
+
+                    conn = None
+                    try:
+                        # V41.121: 使用统一配置获取数据库连接
+                        conn = psycopg2.connect(
+                            host=config.database.host,
+                            port=config.database.port,
+                            database=config.database.name,
+                            user=config.database.user,
+                            password=config.database.password.get_secret_value(),
+                        )
+
+                        with conn.cursor() as cur:
+                            # V41.120: 直接 UPDATE（避免 UPSERT 创建重复记录）
+                            upsert_sql = """
+                            UPDATE matches SET
+                                home_team_id = %s,
+                                away_team_id = %s,
+                                round_name = %s,
+                                technical_features = %s,
+                                updated_at = NOW()
+                            WHERE match_id = %s
+                            """
+
+                            cur.execute(
+                                upsert_sql,
+                                (
+                                    home_team_id,
+                                    away_team_id,
+                                    round_name,
+                                    json.dumps(technical_features) if technical_features else None,
+                                    match_id,
+                                ),
+                            )
+
+                        conn.commit()
+
+                    except Exception as e:
+                        if conn:
+                            conn.rollback()
+                        return {
+                            "match_id": match_id,
+                            "status": "FAILED",
+                            "error": f"Database update failed: {e}",
+                        }
+                    finally:
+                        if conn:
+                            conn.close()
+
+                has_features = technical_features is not None and len(technical_features) > 0
+
+                return {
+                    "match_id": match_id,
+                    "status": "SUCCESS",
+                    "home_team_id": home_team_id,
+                    "away_team_id": away_team_id,
+                    "has_features": has_features,
+                    "features_count": len(technical_features) if has_features else 0,
+                    "dry_run": dry_run,
+                }
+
+            except Exception as e:
+                return {
+                    "match_id": match_id,
+                    "status": "FAILED",
+                    "error": str(e),
+                }
+
+        # 并发回补
+        import time
+
+        start_time = time.time()
+
+        with ThreadPoolExecutor(max_workers=concurrent_workers) as executor:
+            future_to_match_id = {
+                executor.submit(_backfill_single_match, match_id, i): match_id
+                for i, match_id in enumerate(match_ids)
+            }
+
+            for future in as_completed(future_to_match_id):
+                match_id = future_to_match_id[future]
+
+                try:
+                    result = future.result()
+                    results.append(result)
+
+                    if result["status"] == "SUCCESS":
+                        stats["successful"] += 1
+                        if result.get("has_features"):
+                            stats["with_features"] += 1
+                            logger.info(
+                                f"   ✅ {match_id}: 成功 (含 {result.get('features_count', 0)} 维特征)"
+                            )
+                        else:
+                            stats["without_features"] += 1
+                            logger.info(f"   ⚠️  {match_id}: 成功 (无特征)")
+                    else:
+                        stats["failed"] += 1
+                        stats["failed_match_ids"].append(match_id)
+                        logger.error(f"   ❌ {match_id}: {result.get('error', 'Unknown error')}")
+
+                except Exception as e:
+                    stats["failed"] += 1
+                    stats["failed_match_ids"].append(match_id)
+                    logger.error(f"   💥 {match_id}: 异常 - {e}")
+
+        elapsed = time.time() - start_time
+
+        logger.info("\n📊 回补完成:")
+        logger.info(f"   总耗时: {elapsed:.1f} 秒 ({elapsed / 60:.1f} 分钟)")
+        logger.info(f"   成功: {stats['successful']}")
+        logger.info(f"   失败: {stats['failed']}")
+        logger.info(f"   含特征: {stats['with_features']}")
+        logger.info(f"   无特征: {stats['without_features']}")
+        logger.info(f"   成功率: {100.0 * stats['successful'] / len(match_ids):.1f}%")
+
+        return {
+            "total_processed": len(match_ids),
+            "successful": stats["successful"],
+            "failed": stats["failed"],
+            "with_features": stats["with_features"],
+            "without_features": stats["without_features"],
+            "elapsed_seconds": elapsed,
+            "failed_match_ids": stats["failed_match_ids"],
+            "dry_run": dry_run,
+        }
+
+    def _convert_decimal_to_float(self, obj: Any) -> Any:
+        """
+        V41.121: 转换 Decimal 为 float（用于 JSON 序列化）
+
+        Args:
+            obj: 任意对象
+
+        Returns:
+            转换后的对象
+        """
+        from decimal import Decimal
+
+        if isinstance(obj, Decimal):
+            return float(obj)
+        elif isinstance(obj, dict):
+            return {k: self._convert_decimal_to_float(v) for k, v in obj.items()}
+        elif isinstance(obj, list):
+            return [self._convert_decimal_to_float(item) for item in obj]
+        return obj
+
+    def harvest_league_matches_safe(
+        self, league_name: str, season: str, limit: int = 100
     ) -> dict[str, Any]:
         """
         V41.114: 安全的联赛比赛采集（使用配置）
@@ -2467,7 +2771,7 @@ class FotMobCoreCollector:
         # V41.114: 标准化赛季格式
         normalized_season = self.api_config.normalize_season(season)
 
-        logger.info(f"🔄 V41.114: 采集联赛比赛")
+        logger.info("🔄 V41.114: 采集联赛比赛")
         logger.info(f"   联赛: {league_name} (ID: {league_id})")
         logger.info(f"   赛季: {season} → {normalized_season}")
         logger.info(f"   限制: {limit}")

@@ -18,7 +18,6 @@ Date: 2026-01-14
 
 from dataclasses import dataclass, field
 from typing import ClassVar
-import re
 
 
 @dataclass
@@ -183,12 +182,35 @@ class AntiScrapingConfig:
     #
     # 重要说明：
     # - 7890 端口已弃用（严禁使用）
-    # - 配置已更新为仅包含 V41.92 验证的可用端口
+    # - V41.121: 配置已迁移到统一配置系统
+    #
+    # V41.121: 使用统一配置（从 ProxyConfig 读取）
+    @classmethod
+    def get_proxy_ports(cls) -> list[int]:
+        """获取代理端口列表（从统一配置读取）"""
+        from src.config_unified import get_config
+
+        config = get_config()
+        return config.proxy.proxy_ports
+
+    # 保留向后兼容的默认值（如果统一配置不可用）
     PROXY_PORTS: ClassVar[list[int]] = [
-        7892, 7893, 7894, 7895, 7896,  # 前 6 个端口
-        7898, 7899,                      # 跳过 7897 (不可用)
-        7901, 7902, 7903, 7904, 7905,     # 跳过 7900 (不可用)
-        7906, 7907, 7908, 7909           # 后续端口
+        7892,
+        7893,
+        7894,
+        7895,
+        7896,  # 前 6 个端口
+        7898,
+        7899,  # 跳过 7897 (不可用)
+        7901,
+        7902,
+        7903,
+        7904,
+        7905,  # 跳过 7900 (不可用)
+        7906,
+        7907,
+        7908,
+        7909,  # 后续端口
     ]  # 16 个独立出口 (V41.92 验证)
     DEPRECATED_PROXY_PORT: ClassVar[int] = 7890  # 已弃用，禁止使用
 
@@ -240,6 +262,7 @@ class AntiScrapingConfig:
             随机选择的 User-Agent 字符串
         """
         import random
+
         return random.choice(cls.USER_AGENTS)
 
     @classmethod
@@ -251,6 +274,7 @@ class AntiScrapingConfig:
             包含 width 和 height 的字典
         """
         import random
+
         return random.choice(cls.VIEWPORT_SIZES)
 
     @classmethod
@@ -262,6 +286,7 @@ class AntiScrapingConfig:
             随机选择的 locale 字符串
         """
         import random
+
         return random.choice(cls.BROWSER_LOCALES)
 
     @classmethod
@@ -273,6 +298,7 @@ class AntiScrapingConfig:
             随机选择的 timezone_id 字符串
         """
         import random
+
         return random.choice(cls.BROWSER_TIMEZONES)
 
     @classmethod

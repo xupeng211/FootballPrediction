@@ -120,6 +120,90 @@ class RedisConfig:
 
 
 @dataclass
+class ProxyConfig:
+    """V41.121: 统一代理配置 - 零硬编码实现
+
+    设计原则:
+    - 所有代理相关配置从环境变量读取
+    - 支持 WSL2 自动检测和配置
+    - 代理池管理和健康检查配置
+    """
+
+    # WSL2 配置
+    wsl2_bridge_host: str = "172.25.16.1"  # WSL2 宿主机默认 IP
+    auto_detect_wsl2: bool = True  # 自动检测 WSL2 环境
+
+    # 代理池配置（从环境变量读取）
+    proxy_ports: list[int] = field(default_factory=lambda: [7892, 7893, 7894, 7895, 7896, 7898, 7899])
+    deprecated_proxy_ports: list[int] = field(default_factory=lambda: [7890, 7891])  # 已弃用端口
+
+    # 健康检查配置
+    health_check_timeout: float = 2.0  # 健康检查超时时间（秒）
+    health_check_retry: int = 3  # 健康检查重试次数
+    circuit_breaker_threshold: int = 5  # 熔断器触发阈值（连续失败次数）
+
+    # 性能阈值
+    response_time_excellent: int = 1000  # ms - 优秀
+    response_time_good: int = 2000  # ms - 良好
+    response_time_acceptable: int = 5000  # ms - 可接受
+
+    def __post_init__(self) -> None:
+        """初始化后处理"""
+        # 尝试从环境变量读取代理端口
+        env_proxy_ports = os.environ.get("PROXY_PORTS", "")
+        if env_proxy_ports:
+            try:
+                self.proxy_ports = [int(p.strip()) for p in env_proxy_ports.split(",")]
+            except ValueError:
+                logger.warning(f"PROXY_PORTS 格式错误: {env_proxy_ports}，使用默认值")
+
+        # 尝试从环境变量读取 WSL2 主机
+        env_wsl2_host = os.environ.get("WSL2_PROXY_HOST")
+        if env_wsl2_host:
+            self.wsl2_bridge_host = env_wsl2_host
+
+    def get_proxy_url(self, port: int | None = None) -> str | None:
+        """获取代理 URL
+
+        Args:
+            port: 代理端口，如果为 None 则使用第一个可用端口
+
+        Returns:
+            代理 URL，格式: http://host:port
+        """
+        if port is None:
+            port = self.proxy_ports[0] if self.proxy_ports else None
+
+        if port is None:
+            return None
+
+        return f"http://{self.wsl2_bridge_host}:{port}"
+
+    def get_all_proxy_urls(self) -> list[str]:
+        """获取所有代理 URL"""
+        return [self.get_proxy_url(port) for port in self.proxy_ports]
+
+    def is_port_deprecated(self, port: int) -> bool:
+        """检查端口是否已弃用"""
+        return port in self.deprecated_proxy_ports
+
+    def validate_port(self, port: int) -> bool:
+        """验证端口是否有效
+
+        Args:
+            port: 端口号
+
+        Returns:
+            True if port is valid, False otherwise
+        """
+        if self.is_port_deprecated(port):
+            return False
+        if port not in self.proxy_ports:
+            return False
+        return True
+
+
+@dataclass
 class FotMobAPIConfig:
     """FotMob API配置 - V41.114: 扩展支持League IDs和赛季映射"""
 
@@ -447,6 +531,22 @@ class UnifiedSettings(BaseSettings):
     redis_db: int = Field(default=0, description="Redis数据库")
 
     redis_password: SecretStr | None = Field(default=None, description="Redis密码")
+
+    # === V41.121 代理配置 ===
+    # WSL2 桥接主机（可从环境变量 WSL2_PROXY_HOST 读取）
+    proxy_wsl2_host: str = Field(default="172.25.16.1", description="WSL2 宿主机 IP")
+
+    # 代理端口列表（可从环境变量 PROXY_PORTS 读取，逗号分隔）
+    proxy_ports: str = Field(default="7892,7893,7894,7895,7896,7898,7899", description="可用代理端口列表")
+
+    # 已弃用的代理端口（禁止使用）
+    proxy_deprecated_ports: str = Field(default="7890,7891", description="已弃用的代理端口")
+
+    # 代理健康检查超时（秒）
+    proxy_health_timeout: float = Field(default=2.0, description="代理健康检查超时时间")
+
+    # 代理熔断器阈值（连续失败次数）
+    proxy_circuit_breaker_threshold: int = Field(default=5, description="代理熔断器触发阈值")
 
     # === 外部API配置 ===
     fotmob_base_url: str = Field(default="https://www.fotmob.com/api", description="FotMob API基础URL")
@@ -987,6 +1087,21 @@ class ConfigAccessor:
     def fotmob_api(self) -> FotMobAPIConfig:
         """获取FotMob API配置"""
         return self._settings.fotmob_api
+
+    @property
+    def proxy(self) -> ProxyConfig:
+        """V41.121: 获取代理配置"""
+        # 解析代理端口列表
+        proxy_ports = [int(p.strip()) for p in self._settings.proxy_ports.split(",")]
+        deprecated_ports = [int(p.strip()) for p in self._settings.proxy_deprecated_ports.split(",")]
+
+        return ProxyConfig(
+            wsl2_bridge_host=self._settings.proxy_wsl2_host,
+            proxy_ports=proxy_ports,
+            deprecated_proxy_ports=deprecated_ports,
+            health_check_timeout=self._settings.proxy_health_timeout,
+            circuit_breaker_threshold=self._settings.proxy_circuit_breaker_threshold,
+        )
 
     def reload(self) -> None:
         """重新加载配置"""
