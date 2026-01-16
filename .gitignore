@@ -220,3 +220,4 @@ data/processed/*.parquet
 proxies.txt
 proxies_*.txt
 *.proxies
+coverage.json
