@@ -221,3 +221,8 @@ proxies.txt
 proxies_*.txt
 *.proxies
 coverage.json
+
+# V41.91: Coverage and output files
+coverage.json
+*.output
+*.output.json

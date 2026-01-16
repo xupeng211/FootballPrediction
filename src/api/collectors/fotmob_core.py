@@ -778,16 +778,32 @@ class FotMobCoreCollector:
                         continue
 
                     stats_values = stat_item.get("stats", [])
-                    if not isinstance(stats_values, list) or len(stats_values) < 2:
-                        # V11.0: 数据不完整时记录但不中断
+                    if not isinstance(stats_values, list):
+                        logger.debug(f"⚪ 特征 '{key}' 不是列表类型，跳过")
+                        continue
+
+                    # V41.91: 处理嵌套结构 - stats_values 可能是字典数组
+                    # 需要找到 type="text" 的元素（实际数据）
+                    actual_values = None
+                    if len(stats_values) > 0 and isinstance(stats_values[0], dict):
+                        # 嵌套结构: 找到 type="text" 的元素
+                        for item in stats_values:
+                            if isinstance(item, dict) and item.get("type") == "text":
+                                actual_values = item.get("stats", [])
+                                break
+                    elif len(stats_values) >= 2:
+                        # 直接结构: [home, away] 格式
+                        actual_values = stats_values
+
+                    if actual_values is None or len(actual_values) < 2:
                         logger.debug(f"⚪ 特征 '{key}' 数据不完整，跳过")
                         continue
 
                     mapped_key = stat_mapping[key]
 
-                    # V11.0: 安全解析主客队数值
-                    home_value = self._safe_parse_stat(stats_values, 0)
-                    away_value = self._safe_parse_stat(stats_values, 1)
+                    # V41.91: 安全解析主客队数值
+                    home_value = self._safe_parse_stat(actual_values, 0)
+                    away_value = self._safe_parse_stat(actual_values, 1)
 
                     home_stats[mapped_key] = home_value
                     away_stats[mapped_key] = away_value
