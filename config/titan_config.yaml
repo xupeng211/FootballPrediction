@@ -1,0 +1,142 @@
+# V41.151 Titan Orchestrator Configuration
+#
+# This is the configuration template for the production-grade harvesting pipeline.
+# All settings are externalized - zero hardcoding in the orchestrator.
+#
+# Configuration Loading Order:
+#   1. Environment variables (highest priority)
+#   2. This YAML file
+#   3. Default values (lowest priority)
+#
+# Usage:
+#   export TITAN_CONFIG_PATH=/path/to/titan_config.yaml
+#   python scripts/ops/v41_151_titan_orchestrator.py --mode full --league "La Liga"
+
+# ============================================================================
+# Proxy Configuration
+# ============================================================================
+proxy:
+  # Primary proxy host address
+  host: "172.25.16.1"
+
+  # List of proxy ports for rotation (will be used in round-robin)
+  ports: [7890, 7891, 7892, 7893, 7894, 7895, 7896, 7897, 7898, 7899]
+
+  # WSL2 bridge host for auto-detection
+  wsl2_bridge_host: "172.25.16.1"
+
+# ============================================================================
+# League Configurations
+# ============================================================================
+leagues:
+  La Liga:
+    name: "La Liga"
+    url: "https://www.oddsportal.com/football/spain/laliga/results/"
+    season_suffix: "-2024-2025"
+
+  Ligue 1:
+    name: "Ligue 1"
+    url: "https://www.oddsportal.com/football/france/ligue-1/results/"
+    season_suffix: "-2024-2025"
+
+  Premier League:
+    name: "Premier League"
+    url: "https://www.oddsportal.com/football/england/premier-league/results/"
+    season_suffix: "-2024-2025"
+
+  Serie A:
+    name: "Serie A"
+    url: "https://www.oddsportal.com/football/italy/serie-a/results/"
+    season_suffix: "-2024-2025"
+
+  Bundesliga:
+    name: "Bundesliga"
+    url: "https://www.oddsportal.com/football/germany/bundesliga/results/"
+    season_suffix: "-2024-2025"
+
+# ============================================================================
+# Storage Configuration
+# ============================================================================
+storage:
+  # HTML vault directory (stores captured HTML files)
+  vault_dir: "storage/html_vault"
+
+  # Injection queue directory (stores JSONL batch files)
+  queue_dir: "storage/injection_queue"
+
+  # Log files directory
+  log_dir: "logs"
+
+# ============================================================================
+# Retry Mechanism Configuration
+# ============================================================================
+retry:
+  # Maximum number of retry attempts for failed operations
+  max_attempts: 3
+
+  # Base delay in seconds before first retry
+  base_delay: 1.0
+
+  # Maximum delay in seconds between retries
+  max_delay: 60.0
+
+  # Exponential base for backoff calculation (delay = base_delay * base^attempt)
+  exponential_base: 2.0
+
+  # Enable random jitter (±25%) to prevent thundering herd
+  jitter_enabled: true
+
+  # Consecutive failures before entering cooldown mode
+  cooldown_threshold: 5
+
+  # Cooldown duration in seconds (default: 5 minutes)
+  cooldown_duration: 300.0
+
+# ============================================================================
+# Business Code Names (Data Obfuscation)
+# ============================================================================
+business_code_names:
+  # Target metric field name in database
+  target_metric: "l3_odds_data"
+
+  # Primary odds supplier
+  supplier_alpha: "Pinnacle"
+
+  # Storage paths
+  vault_storage: "storage/html_vault"
+  queue_storage: "storage/injection_queue"
+
+  # Database entity
+  target_entity: "matches"
+
+  # URL path field
+  url_path_field: "page_url"
+
+# ============================================================================
+# Processing Limits (Optional)
+# ============================================================================
+# limits:
+#   # Maximum concurrent workers for CAPTURE mode
+#   max_capture_workers: 5
+#
+#   # Maximum HTML files to process in PROCESS mode
+#   max_process_files: 1000
+#
+#   # Maximum batch size for FIRE mode injection
+#   max_fire_batch_size: 100
+
+# ============================================================================
+# Observability Settings (Optional)
+# ============================================================================
+# observability:
+#   # Enable detailed metrics collection
+#   enable_metrics: true
+#
+#   # Metrics output format (json, prometheus)
+#   metrics_format: "json"
+#
+#   # Enable structured logging with context tags
+#   enable_structured_logging: true
+#
+#   # Log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+#   log_level: "INFO"

@@ -133,9 +133,13 @@ class ProxyConfig:
     wsl2_bridge_host: str = "172.25.16.1"  # WSL2 宿主机默认 IP
     auto_detect_wsl2: bool = True  # 自动检测 WSL2 环境
 
-    # 代理池配置（从环境变量读取）
-    proxy_ports: list[int] = field(default_factory=lambda: [7892, 7893, 7894, 7895, 7896, 7898, 7899])
-    deprecated_proxy_ports: list[int] = field(default_factory=lambda: [7890, 7891])  # 已弃用端口
+    # V41.130: 代理池配置（从环境变量读取）
+    # 19 个活跃代理端口（2026-01-17 普查结果）
+    proxy_ports: list[int] = field(default_factory=lambda: [
+        7890, 7892, 7893, 7894, 7895, 7896, 7897, 7898, 7899,
+        7900, 7901, 7902, 7903, 7904, 7905, 7906, 7907, 7908, 7909
+    ])
+    deprecated_proxy_ports: list[int] = field(default_factory=lambda: [7891, 7910])  # V41.130: 已死亡端口
 
     # 健康检查配置
     health_check_timeout: float = 2.0  # 健康检查超时时间（秒）

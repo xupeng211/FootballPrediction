@@ -45,7 +45,7 @@ from typing import Any, AsyncGenerator, Dict, List, Optional, Tuple
 
 import yaml
 from bs4 import BeautifulSoup
-from playwright.async_api import Browser, Page
+from playwright.async_api import Browser, BrowserContext, Page
 
 logger = logging.getLogger(__name__)
 
@@ -56,22 +56,9 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class ProxyConfig:
-    """V41.125: 代理配置 - 统一配置标准（零硬编码）"""
+    """代理配置"""
 
-    servers: List[str] = None
-
-    def __post_init__(self):
-        """V41.125: 从 src.config_unified 获取统一配置"""
-        if self.servers is None:
-            from src.config_unified import get_config
-
-            config = get_config()
-            proxy_host = config.proxy.wsl2_bridge_host  # WSL2 自动检测
-            proxy_ports = config.proxy.proxy_ports
-
-            # 构建代理服务器列表
-            self.servers = [f"http://{proxy_host}:{port}" for port in proxy_ports]
-
+    servers: List[str] = field(default_factory=lambda: [f"http://172.25.16.1:{port}" for port in range(7890, 7900)])
     auto_rotation: bool = True
     health_check_interval: int = 300
 
@@ -140,18 +127,6 @@ class ExtractionConfig:
     target_bookmaker: str = "Pinnacle"
     pinnacle_selector: str = "div.border-black-borders:has(img[title='Pinnacle'])"
     odds_cells_selector: str = "div.flex-center.flex-col.font-bold"
-    # V36.4: 备选CSS选择器，用于西甲等特殊联赛
-    fallback_selectors: List[str] = None
-
-    def __post_init__(self):
-        if self.fallback_selectors is None:
-            self.fallback_selectors = [
-                "div.flex-center.flex-col.font-bold",   # 主选择器
-                "div.flex-center.flex-col",             # 备选1: 缺少font-bold
-                "td[class*='odds']",                   # 备选2: 传统table结构
-                ".odds-cell",                           # 备选3: 通用类
-            ]
-
     modal_selector: str = "h3:has-text('Odds movement')"
     enable_aggressive_scroll: bool = True
     aggressive_scroll_iterations: int = 15
@@ -324,43 +299,6 @@ class CircuitBreakerManager:
                 return proxy
         return None
 
-    def reset_all_proxies(self) -> Dict[str, Any]:
-        """V32.0: 强制复位所有代理状态
-
-        清除所有黑名单、冷却期和失败计数，用于一键恢复代理池。
-
-        Returns:
-            复位摘要字典，包含清除的统计信息
-
-        Example:
-            >>> manager.reset_all_proxies()
-            {
-                'blacklisted_cleared': 2,
-                'cooldown_cleared': 1,
-                'total_cleared': 3
-            }
-        """
-        blacklisted_cleared = len(self.blacklist_until)
-        cooldown_cleared = len(self.cooldown_until)
-
-        # 清除所有状态
-        self.blacklist_until.clear()
-        self.forbidden_counts.clear()
-        self.cooldown_until.clear()
-        self.failed_counts.clear()
-
-        # 记录日志
-        logger.info("🔄 代理池已强制复位")
-        logger.info(f"   清除黑名单: {blacklisted_cleared} 个")
-        logger.info(f"   清除冷却期: {cooldown_cleared} 个")
-        logger.info(f"   总清除: {blacklisted_cleared + cooldown_cleared} 个")
-
-        return {
-            "blacklisted_cleared": blacklisted_cleared,
-            "cooldown_cleared": cooldown_cleared,
-            "total_cleared": blacklisted_cleared + cooldown_cleared,
-        }
-
 
 class EmergencyStopError(Exception):
     """紧急停止异常"""
@@ -530,17 +468,16 @@ class OddsMovementExtractor:
 
             # 触发 Hover
             await cell_locator.hover()
-            # V36.3: 使用配置中的 hover_wait 而非硬编码值
-            await asyncio.sleep(self.delay_config.hover_wait)
+            await asyncio.sleep(1.5)  # 减少悬停等待
 
             # V151.2: 使用自定义超时（malformed 重试 30s，正常采集 15s）
             try:
                 modal = self.page.locator(self.config.modal_selector).first
                 await modal.wait_for(state="visible", timeout=self.custom_timeout_ms)
             except Exception:
-                # V36.5: La Liga 等联赛没有历史变盘 modal，回退到提取当前可见赔率
-                logger.debug(f"[{bet_type}] 无变盘数据（{self.custom_timeout_ms/1000}s内未弹出），尝试提取当前可见赔率")
-                return await self._extract_current_visible_odds(bet_type, cell_locator)
+                # V30.0: 容错判定为无变盘数据
+                logger.debug(f"[{bet_type}] 无变盘数据（{self.custom_timeout_ms/1000}s内未弹出）")
+                return []
 
             # 获取弹窗容器
             modal_container = self.page.locator(self.config.modal_selector).locator("xpath=ancestor::div[3]")
@@ -596,55 +533,6 @@ class OddsMovementExtractor:
             })
 
         return data
-
-    async def _extract_current_visible_odds(self, bet_type: str, cell_locator) -> List[Dict[str, Any]]:
-        """
-        V36.5: 提取当前可见的赔率值（回退方案）
-        用于 La Liga 等没有历史变盘 modal 的联赛
-
-        Args:
-            bet_type: 投注类型 (home/draw/away)
-            cell_locator: 赔率单元格定位器
-
-        Returns:
-            单条当前赔率记录
-        """
-        try:
-            # 获取当前可见的文本内容
-            text_content = await cell_locator.inner_text(timeout=5000)
-
-            # 清理文本，提取赔率值
-            odds_value = text_content.strip()
-
-            # 验证是否为有效的赔率格式（正数，通常 1.01 - 100.00）
-            try:
-                odds_float = float(odds_value)
-                if not (1.01 <= odds_float <= 100.00):
-                    logger.warning(f"[{bet_type}] 可见赔率值异常: {odds_value}")
-                    return []
-            except ValueError:
-                logger.warning(f"[{bet_type}] 可见赔率值无法解析: {odds_value}")
-                return []
-
-            # 获取当前北京时间
-            beijing_tz = timezone(timedelta(hours=8))
-            current_time = datetime.now(beijing_tz).strftime("%Y-%m-%d %H:%M")
-
-            # 返回与历史数据相同格式的单条记录
-            result = [{
-                "original_time": current_time,
-                "beijing_time": current_time,
-                "odds": odds_value,
-                "timezone_info": "Current (No History)",
-                "is_current_only": True  # 标记这是当前赔率，非历史数据
-            }]
-
-            logger.info(f"[{bet_type}] ✅ 提取当前可见赔率: {odds_value}")
-            return result
-
-        except Exception as e:
-            logger.error(f"[{bet_type}] 提取当前可见赔率失败: {e}")
-            return []
 
     async def _aggressive_scroll(self, modal_element) -> None:
         """V150.32: 激进滚动弹窗以加载更多历史记录"""
@@ -755,14 +643,12 @@ class OddsPortalScraper:
         self,
         proxy: Optional[str] = None,
         headless: bool = True,
-        slow_mo: int = 0,
     ) -> AsyncGenerator[Tuple[Browser, Page], None]:
         """创建隐身浏览器上下文
 
         Args:
             proxy: 代理服务器 (None = 自动选择)
             headless: 是否无头模式
-            slow_mo: 慢动作延迟（毫秒），用于调试观察
 
         Yields:
             (Browser, Page) 元组
@@ -781,8 +667,7 @@ class OddsPortalScraper:
         async with async_playwright() as p:
             browser = await p.chromium.launch(
                 headless=headless,
-                args=["--disable-blink-features=AutomationControlled"],
-                slow_mo=slow_mo  # V40.6.1: 支持慢动作模式
+                args=["--disable-blink-features=AutomationControlled"]
             )
 
             context = await browser.new_context(
@@ -891,42 +776,11 @@ class OddsPortalScraper:
                 # 步骤 6: 提取变盘数据
                 logger.info(f"[{match_id}] 提取变盘数据...")
                 first_row = locator.first
-
-                # V36.4: CSS 选择器回退机制（应对西甲等特殊联赛页面结构）
-                selectors_to_try = [
-                    self.config.extraction.odds_cells_selector  # 主选择器
-                ] + self.config.extraction.fallback_selectors   # 回退选择器
-
-                odds_cells = None
-                cell_count = 0
-                successful_selector = None
-
-                for idx, selector in enumerate(selectors_to_try):
-                    selector_type = "主选择器" if idx == 0 else f"回退选择器 #{idx}"
-                    logger.info(f"[{match_id}] 尝试 {selector_type}: {selector}")
-
-                    test_cells = first_row.locator(selector)
-                    test_count = await test_cells.count()
-
-                    logger.info(f"[{match_id}] {selector_type} 找到 {test_count} 个单元格")
-
-                    if test_count >= 3:
-                        odds_cells = test_cells
-                        cell_count = test_count
-                        successful_selector = selector
-                        logger.info(f"[{match_id}] ✅ 使用 {selector_type}: {selector}")
-                        break
+                odds_cells = first_row.locator(self.config.extraction.odds_cells_selector)
+                cell_count = await odds_cells.count()
 
                 if cell_count < 3:
-                    # V36.4: 提供详细的失败信息（所有选择器都失败）
-                    selector_summary = "; ".join([
-                        f"{'主' if idx == 0 else f'回退#{idx}'}: sel='{sel}' count={await first_row.locator(sel).count()}"
-                        for idx, sel in enumerate(selectors_to_try)
-                    ])
-                    raise Exception(
-                        f"V36.4: 所有选择器均无法找到完整赔率数据 (cell_count={cell_count} < 3)\n"
-                        f"详细尝试: {selector_summary}"
-                    )
+                    raise Exception(f"赔率块数量不足: {cell_count}")
 
                 # V151.2: 传递自定义超时给提取器（malformed 重试 30s，正常采集 15s）
                 timeout_ms = custom_timeout_ms if custom_timeout_ms else 15000
@@ -1075,6 +929,7 @@ class OddsPortalScraper:
             }
         """
         import re
+        from urllib.parse import urljoin
         import unicodedata
 
         # V151.2: 搜索词增强 - 追加联赛名称
@@ -1118,15 +973,15 @@ class OddsPortalScraper:
         try:
             async with self.stealth_context(proxy=proxy, headless=headless) as (browser, page):
                 # 步骤 1: 访问搜索页面
-                logger.info("[搜索] 步骤 1: 访问搜索页面...")
+                logger.info(f"[搜索] 步骤 1: 访问搜索页面...")
                 await page.goto(search_url, wait_until="domcontentloaded", timeout=60000)
 
                 # 步骤 2: 等待搜索结果加载
-                logger.info("[搜索] 步骤 2: 等待搜索结果...")
+                logger.info(f"[搜索] 步骤 2: 等待搜索结果...")
                 await asyncio.sleep(5)
 
                 # 步骤 3: 查找比赛结果链接
-                logger.info("[搜索] 步骤 3: 查找比赛结果...")
+                logger.info(f"[搜索] 步骤 3: 查找比赛结果...")
 
                 # 尝试多种选择器
                 selectors = [
@@ -1157,12 +1012,12 @@ class OddsPortalScraper:
 
                 if not match_link:
                     # 如果没找到，尝试使用更通用的搜索
-                    logger.warning("[搜索] 未找到精确匹配，尝试通用搜索...")
+                    logger.warning(f"[搜索] 未找到精确匹配，尝试通用搜索...")
                     match_link = page.locator("a[href*='/football/']").first
 
                 # 步骤 4: 点击链接并获取最终 URL
                 if match_link:
-                    logger.info("[搜索] 步骤 4: 点击链接...")
+                    logger.info(f"[搜索] 步骤 4: 点击链接...")
                     await match_link.click()
                     await asyncio.sleep(3)
 
@@ -1179,7 +1034,7 @@ class OddsPortalScraper:
                     logger.info(f"[搜索] 深度匹配: home_slug={home_slug} ({contains_home}), away_slug={away_slug} ({contains_away})")
 
                     if not (contains_home and contains_away):
-                        logger.error("[搜索] ❌ URL 深度匹配失败！URL 不包含预期的队名 Slug")
+                        logger.error(f"[搜索] ❌ URL 深度匹配失败！URL 不包含预期的队名 Slug")
                         logger.error(f"[搜索]    预期: {home_slug} 和 {away_slug}")
                         logger.error(f"[搜索]    实际 URL: {final_url}")
                         return {
@@ -1194,11 +1049,9 @@ class OddsPortalScraper:
 
                     # 从 URL 中提取哈希
                     # V151.2: 支持带锚点的 URL（如 #1X2;2）
-                    # V40.6: 修复正则 - 哈希在队名组合末尾（如 aston-villa-everton-QqZ8ajtB）
                     # 先尝试移除锚点
                     url_without_anchor = final_url.split('#')[0]
-                    # 修复：匹配连字符后的 8-12 位哈希（支持混合大小写）
-                    hash_match = re.search(r'-([a-zA-Z0-9]{8,12})/?(?:#|$)', url_without_anchor)
+                    hash_match = re.search(r'/([a-zA-Z0-9]{8,12})/?$', url_without_anchor)
                     if hash_match:
                         match_id = hash_match.group(1)
                         logger.info(f"[搜索] ✅ 成功提取哈希: {match_id}")
@@ -1224,7 +1077,7 @@ class OddsPortalScraper:
                             "error": "无法从 URL 中提取哈希"
                         }
                 else:
-                    logger.error("[搜索] ❌ 未找到比赛结果")
+                    logger.error(f"[搜索] ❌ 未找到比赛结果")
                     return {
                         "success": False,
                         "url": None,
@@ -1245,473 +1098,6 @@ class OddsPortalScraper:
                 "away_team": away_team,
                 "proxy": proxy,
                 "error": str(e)
-            }
-
-
-# ==============================================================================
-# V40.6: Results Page Dynamic Loading (暴力滚动 + 循环点击策略)
-# ==============================================================================
-
-    async def detect_show_more_button(
-        self,
-        page: Page,
-        current_page_num: int = 1,
-        visited_pages: set = None
-    ) -> Optional[Locator]:
-        """V40.6: 检测 Show More 按钮
-
-        V40.6.1 更新: 支持"Show More"按钮和分页链接两种模式
-                     智能选择下一个未访问的页码
-
-        Args:
-            page: Playwright Page 对象
-            current_page_num: 当前页码
-            visited_pages: 已访问的页码集合
-
-        Returns:
-            按钮 Locator 对象，如果不存在返回 None
-        """
-        if visited_pages is None:
-            visited_pages = {1}
-
-        # 首先尝试检测分页链接（OddsPortal 使用分页）
-        try:
-            pagination_links = await page.locator('.pagination a').all()
-            if pagination_links and len(pagination_links) > 1:
-                # V40.6.1: 查找下一个未访问的页码
-                for link in pagination_links:
-                    text = await link.inner_text()
-                    text = text.strip()
-
-                    # 尝试解析为数字
-                    if text.isdigit():
-                        page_num = int(text)
-                        # 只返回未访问过的页码，且按顺序访问
-                        if page_num not in visited_pages and page_num > current_page_num:
-                            logger.debug(f"[V40.6.1] 🔍 找到未访问的分页链接: 第 {page_num} 页")
-                            return link
-                    elif text.lower() == 'next':
-                        # "Next"链接作为最后选择
-                        logger.debug(f"[V40.6.1] 🔍 找到 Next 分页链接")
-                        return link
-        except Exception as e:
-            logger.debug(f"[V40.6.1] ⚠️ 分页检测失败: {e}")
-
-        # 如果没有分页，尝试传统的"Show More"按钮
-        selectors = [
-            # V40.10: 优先使用 ID 选择器（法甲等页面使用）
-            "#show-more-btn",
-            "#showMoreButton",
-            "#load-more-btn",
-            # V40.6.1: 扩展选择器列表
-            ".eventRow-showMore",
-            ".show-more",
-            "[data-testid='show-more']",
-            "button:has-text('Show more')",
-            "button:has-text('Show More')",
-            "button:has-text('show more')",
-            "button:has-text('Load more')",
-            "button:has-text('Load More')",
-            "a:has-text('Show more')",
-            "a:has-text('Show More')",
-            # 尝试更通用的选择器
-            ".show-more-button",
-            ".load-more",
-            ".load-more-button",
-            "[data-action='show-more']",
-            "div:has-text('Show more')",
-            "div:has-text('Load more')",
-            "span:has-text('Show more')",
-            "span:has-text('Load more')",
-            # 尝试文字匹配
-            "text=Show more",
-            "text=Show More",
-            "text=show more",
-            "text=Load more",
-            "text=Load More",
-        ]
-
-        for selector in selectors:
-            try:
-                button = page.locator(selector).first
-                if await button.count() > 0:
-                    is_visible = await button.is_visible()
-                    if is_visible:
-                        logger.debug(f"[V40.6.1] 🔍 找到 Show More 按钮: {selector}")
-                        return button
-            except Exception:
-                continue
-
-        # V40.6.1: 如果没有找到按钮，尝试滚动到页面底部后再次检测
-        logger.debug(f"[V40.6.1] 🔄 未找到 Show More 按钮，尝试滚动到页面底部")
-        try:
-            await page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
-            await asyncio.sleep(1)
-
-            for selector in selectors:
-                try:
-                    button = page.locator(selector).first
-                    if await button.count() > 0:
-                        is_visible = await button.is_visible()
-                        if is_visible:
-                            logger.info(f"[V40.6.1] 🔍 滚动后找到 Show More 按钮: {selector}")
-                            return button
-                except Exception:
-                    continue
-        except Exception as e:
-            logger.debug(f"[V40.6.1] ⚠️ 滚动检测失败: {e}")
-
-        return None
-
-    async def is_page_height_stable(
-        self,
-        page: Page,
-        height_history: List[int],
-        current_height: int,
-        stable_threshold: int = 3,
-        height_tolerance: int = 100
-    ) -> bool:
-        """V40.6: 检测页面高度是否稳定
-
-        Args:
-            page: Playwright Page 对象
-            height_history: 高度历史记录
-            current_height: 当前高度
-            stable_threshold: 页面高度稳定阈值（连续N次高度不变视为稳定）
-            height_tolerance: 高度容忍度（像素）
-
-        Returns:
-            True 如果页面高度稳定
-        """
-        if len(height_history) < stable_threshold:
-            return False
-
-        # 检查最近 N 次高度变化是否在容忍范围内
-        recent_heights = height_history[-stable_threshold:]
-        min_height = min(recent_heights)
-        max_height = max(recent_heights)
-        height_diff = max_height - min_height
-
-        return height_diff <= height_tolerance
-
-    async def get_match_count_from_results_page(self, page: Page) -> int:
-        """V40.6: 从 Results 页面获取比赛数量
-
-        Args:
-            page: Playwright Page 对象
-
-        Returns:
-            比赛数量
-        """
-        try:
-            # 尝试多个可能的选择器
-            selectors = [
-                "table.participants tr",
-                ".eventRow",
-                "[data-testid='match-row']",
-                "tr.match-row",
-            ]
-
-            for selector in selectors:
-                try:
-                    count = await page.locator(selector).count()
-                    if count > 0:
-                        return count
-                except Exception:
-                    continue
-
-            # 如果所有选择器都失败，使用页面高度估算
-            height = await page.evaluate("() => document.body.scrollHeight")
-            estimated_count = height // 100  # 粗略估算
-            return max(estimated_count, 30)
-
-        except Exception:
-            # 默认返回 30（初始加载量）
-            return 30
-
-    async def harvest_results_page(
-        self,
-        results_url: str,
-        min_matches: int = 300,
-        max_iterations: int = 50,
-        headless: bool = True,
-        slow_mo: int = 0,
-    ) -> Dict[str, Any]:
-        """V40.6.1: 暴力滚动 + 循环点击策略 - 采集 Results 页面所有比赛
-
-        Args:
-            results_url: Results 页面 URL (例如: https://www.oddsportal.com/football/england/premier-league-2023-2024/results/)
-            min_matches: 最小比赛数量目标
-            max_iterations: 最大迭代次数（防止无限循环）
-            headless: 是否无头模式
-            slow_mo: 慢动作延迟（毫秒），用于调试观察
-
-        Returns:
-            {
-                "success": True/False,
-                "final_match_count": int,
-                "iterations": int,
-                "termination_reason": str,
-                "match_urls": List[str],  # 所有比赛的 URL
-                "match_count_history": List[int],  # V40.6.1: 比赛数量历史
-                "error": Optional[str]
-            }
-        """
-        start_time = datetime.now(timezone.utc)
-        height_history: List[int] = []
-        match_count_history: List[int] = []  # V40.6.1: 追踪比赛数量变化
-        no_progress_count: int = 0  # V40.6.1: 无进展计数器
-        iterations = 0
-        termination_reason = "unknown"
-        error = None
-        match_urls: List[str] = []
-
-        try:
-            async with self.stealth_context(headless=headless, slow_mo=slow_mo) as (browser, page):
-                logger.info(f"[V40.6.1] 🎯 开始采集 Results 页面: {results_url}")
-                logger.info(f"[V40.6.1] 🎯 目标: 最小 {min_matches} 场比赛")
-
-                # 步骤 1: 导航到 Results 页面
-                await page.goto(results_url, wait_until="domcontentloaded", timeout=60000)
-                await asyncio.sleep(2)
-                await self.behavior_simulator.simulate_reading(page)
-
-                # 步骤 2: 获取初始高度和比赛数量
-                initial_height = await page.evaluate("() => document.body.scrollHeight")
-                height_history.append(initial_height)
-                initial_match_count = await self.get_match_count_from_results_page(page)
-                match_count_history.append(initial_match_count)
-                logger.info(f"[V40.6.1] 📏 初始页面高度: {initial_height}px")
-                logger.info(f"[V40.6.1] 📊 初始比赛数量: {initial_match_count}")
-
-                # V40.6.2: 提取第 1 页的比赛 URL（使用 XPath 宽泛选择 + 手动过滤）
-                try:
-                    # 获取所有包含横杠的链接
-                    initial_links = await page.locator("//a[contains(@href, '-')]").all()
-                    for link in initial_links:
-                        href = await link.get_attribute("href")
-                        # V40.6.2: 修复哈希检测 - 使用横杠数量而非 /-/ 模式
-                        if href and href.count("-") >= 4:  # 比赛链接通常有 4+ 个横杠
-                            full_url = self.BASE_URL + href if href.startswith("/") else href
-                            if full_url not in match_urls:
-                                match_urls.append(full_url)
-                    logger.info(f"[V40.6.2] 📦 第 1 页提取 {len(match_urls)} 个唯一 URL")
-                except Exception as e:
-                    logger.warning(f"[V40.6.2] ⚠️ 提取第 1 页 URL 失败: {e}")
-
-                # V40.6.1: 初始滚动到页面底部（触发动态加载）
-                logger.info(f"[V40.6.1] 🔄 初始滚动到页面底部")
-                await page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
-                await asyncio.sleep(2)
-
-                # 重新获取滚动后的比赛数量
-                after_scroll_match_count = await self.get_match_count_from_results_page(page)
-                match_count_history.append(after_scroll_match_count)
-                logger.info(f"[V40.6.1] 📊 滚动后比赛数量: {after_scroll_match_count}")
-
-                # V40.6.1: 慢动作模式（用于观察）
-                if slow_mo > 0:
-                    logger.info(f"[V40.6.1] 🔍 慢动作模式: {slow_mo}ms 延迟")
-
-                # 步骤 3: 循环点击 Show More 按钮 / 分页链接
-                no_button_count = 0  # V40.6.1: 连续未找到按钮的次数
-                current_page_num = 1  # V40.6.1: 当前页码
-                visited_pages = {1}  # V40.6.1: 已访问的页码
-                prev_url_count = 0  # V40.6.2: 上一次迭代的 URL 数量
-
-                while iterations < max_iterations:
-                    iterations += 1
-                    prev_match_count = match_count_history[-1] if match_count_history else 0
-
-                    # 检测 Show More 按钮 / 分页链接
-                    # V40.6.1: 优先查找下一个未访问的页码链接
-                    show_more_button = await self.detect_show_more_button(page, current_page_num, visited_pages)
-
-                    if show_more_button is None:
-                        no_button_count += 1
-                        logger.info(f"[V40.6.1] ⚠️ 未找到 Show More 按钮 (第 {no_button_count} 次)")
-
-                        current_match_count = await self.get_match_count_from_results_page(page)
-                        if current_match_count >= min_matches:
-                            termination_reason = "button_disappeared_min_matches_reached"
-                            logger.info(f"[V40.6.1] ✅ Show More 按钮消失，已达到最小比赛数量: {current_match_count}")
-                            break
-                        elif no_button_count >= 5:  # V40.6.1: 连续 5 次未找到按钮才终止
-                            termination_reason = "no_button_found"
-                            logger.warning(f"[V40.6.1] ⚠️ 连续 5 次未找到 Show More 按钮，终止采集")
-                            break
-
-                        # 尝试滚动后再检测
-                        await page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
-                        await asyncio.sleep(1)
-                        continue
-                    else:
-                        no_button_count = 0  # 重置计数器
-
-                    # 点击 Show More 按钮 / 分页链接
-                    if show_more_button is not None:
-                        try:
-                            # V40.6.1: 检查是否是分页链接
-                            is_pagination = False
-                            target_page_num = current_page_num
-
-                            try:
-                                button_text = await show_more_button.inner_text()
-                                button_text = button_text.strip()
-
-                                is_pagination = button_text.isdigit() or button_text.lower() == 'next'
-
-                                if is_pagination and button_text.isdigit():
-                                    target_page_num = int(button_text)
-                                    logger.info(f"[V40.6.1] 🔘 点击分页链接: 第 {target_page_num} 页 (迭代 {iterations})")
-                                    visited_pages.add(target_page_num)
-                                    current_page_num = target_page_num
-                                elif is_pagination and button_text.lower() == 'next':
-                                    logger.info(f"[V40.6.1] 🔘 点击 Next 分页链接 (迭代 {iterations})")
-                                    current_page_num += 1
-                                    visited_pages.add(current_page_num)
-                                else:
-                                    logger.info(f"[V40.6.1] 🔘 点击 Show More 按钮 (迭代 {iterations})")
-                            except:
-                                logger.info(f"[V40.6.1] 🔘 点击 Show More 按钮 (迭代 {iterations})")
-
-                            await show_more_button.click()
-
-                            # V40.6.2: 等待页面导航或内容加载（增强版）
-                            if is_pagination:
-                                # 分页链接会导致页面导航，等待加载完成
-                                logger.info(f"[V40.6.2] ⏳ 等待页面导航...")
-                                try:
-                                    await page.wait_for_load_state("networkidle", timeout=15000)
-                                except:
-                                    await asyncio.sleep(3)  # 备用等待
-
-                                # V40.6.2: 关键修复 - 额外等待内容渲染
-                                logger.info(f"[V40.6.2] 🔄 等待内容渲染...")
-                                await asyncio.sleep(2)
-
-                                # V40.6.2: 滚动触发内容加载
-                                logger.info(f"[V40.6.2] 🔄 滚动触发内容加载...")
-                                await page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
-                                await asyncio.sleep(2)
-                            else:
-                                # Show More 按钮只会加载内容，不会导航
-                                if slow_mo > 0:
-                                    await asyncio.sleep(slow_mo / 1000)
-                                else:
-                                    await asyncio.sleep(0.5)
-                                await self.behavior_simulator.natural_scroll(page)
-
-                            # 滚动到页面底部
-                            await page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
-                            await asyncio.sleep(1)
-
-                            # V40.6.2: 提取当前页面的比赛 URL（累积模式 + 修复的选择器）
-                            try:
-                                # 获取所有包含横杠的链接
-                                page_links = await page.locator("//a[contains(@href, '-')]").all()
-                                page_urls_count = 0
-                                for link in page_links:
-                                    href = await link.get_attribute("href")
-                                    # V40.6.2: 修复哈希检测 - 使用横杠数量而非 /-/ 模式
-                                    if href and href.count("-") >= 4:  # 比赛链接通常有 4+ 个横杠
-                                        full_url = self.BASE_URL + href if href.startswith("/") else href
-                                        if full_url not in match_urls:
-                                            match_urls.append(full_url)
-                                        page_urls_count += 1
-
-                                logger.info(f"[V40.6.2] 📦 当前页面提取 {page_urls_count} 个 URL，总计 {len(match_urls)} 个唯一 URL")
-                            except Exception as e:
-                                logger.warning(f"[V40.6.2] ⚠️ 提取页面 URL 失败: {e}")
-
-                        except Exception as e:
-                            error = f"点击按钮失败: {e}"
-                            termination_reason = "click_error"
-                            logger.error(f"[V40.6.1] ❌ {error}")
-                            break
-
-                    # 检查页面高度
-                    current_height = await page.evaluate("() => document.body.scrollHeight")
-                    height_history.append(current_height)
-
-                    # 获取当前比赛数量
-                    current_match_count = await self.get_match_count_from_results_page(page)
-                    match_count_history.append(current_match_count)
-
-                    # V40.6.2: 熔断机制 - 检查累积 URL 数量增长（而非单页数量）
-                    url_count_diff = len(match_urls) - prev_url_count
-
-                    if url_count_diff == 0:
-                        no_progress_count += 1
-                        logger.info(f"[V40.6.2] ⚠️ 无进展计数: {no_progress_count}/3 (当前 URL: {len(match_urls)})")
-                        if no_progress_count >= 3:
-                            termination_reason = "no_progress_termination"
-                            logger.warning(f"[V40.6.2] 🛑 熔断触发: 连续 3 次无进展，终止采集")
-                            logger.warning(f"[V40.6.2] 📊 已捕获 URL: {len(match_urls)} 个")
-
-                            # V40.6.1: "死后现场"截图
-                            try:
-                                from pathlib import Path
-                                crash_site_path = Path("logs/v40_6_1_crash_site.png")
-                                crash_site_path.parent.mkdir(parents=True, exist_ok=True)
-                                await page.screenshot(path=str(crash_site_path), full_page=True)
-                                logger.info(f"[V40.6.1] 📸 死后现场截图已保存: {crash_site_path}")
-                            except Exception as e:
-                                logger.error(f"[V40.6.1] ⚠️ 截图失败: {e}")
-
-                            break
-                    else:
-                        no_progress_count = 0  # 重置计数器
-                        logger.info(f"[V40.6.2] 📈 进展: +{url_count_diff} 个 URL (总计: {len(match_urls)})")
-
-                    # 更新 prev_url_count 为下一次迭代做准备
-                    prev_url_count = len(match_urls)
-
-                    # V40.6.2: 禁用页面高度稳定检查（分页模式下不准确）
-                    # 分页后页面高度自然稳定，但不代表没有更多内容
-                    # 只有在找不到按钮时才停止
-
-                    # 检查比赛数量
-                    if current_match_count >= min_matches:
-                        termination_reason = "min_matches_reached"
-                        logger.info(f"[V40.6.1] ✅ 已达到最小比赛数量: {current_match_count}")
-                        break
-
-                    if iterations % 5 == 0:
-                        logger.info(f"[V40.6.1] 🔄 进度: 迭代 {iterations}, 当前比赛: {current_match_count}, 页面高度: {current_height}px")
-
-                # 步骤 4: 最终统计
-                # V40.6.1: 使用累积的唯一 URL 数量作为最终比赛数量
-                final_match_count = len(match_urls)
-                logger.info(f"[V40.6.1] 📊 最终唯一 URL 数量: {final_match_count}")
-                logger.info(f"[V40.6.1] 📜 比赛数量历史（各页）: {match_count_history}")
-
-                # 提取比赛链接（已累积，这里只是为了日志输出）
-                logger.info(f"[V40.6.1] 🔗 已收集 {len(match_urls)} 个唯一比赛链接")
-
-                success = final_match_count >= min_matches
-
-                return {
-                    "success": success,
-                    "final_match_count": final_match_count,
-                    "iterations": iterations,
-                    "termination_reason": termination_reason,
-                    "match_urls": match_urls,
-                    "match_count_history": match_count_history,  # V40.6.1
-                    "error": error
-                }
-
-        except Exception as e:
-            error = str(e)
-            logger.error(f"[V40.6.1] ❌ 采集 Results 页面失败: {e}")
-            return {
-                "success": False,
-                "final_match_count": match_count_history[-1] if match_count_history else 0,
-                "iterations": iterations,
-                "termination_reason": "exception",
-                "match_urls": match_urls,
-                "match_count_history": match_count_history,
-                "error": error
             }
 
 

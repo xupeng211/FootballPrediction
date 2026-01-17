@@ -127,13 +127,13 @@ class OddsL3Extractor:
         >>> print(result.l3_data.to_json())
     """
 
-    # 目标书商列表（按优先级排序）
+    # V41.133: 目标书商列表（Pinnacle 最高优先级）
     TARGET_BOOKMAKERS = [
-        "Pinnacle",
+        "Pinnacle",           # V41.133: 最高优先级
+        "Average Odds",       # 兜底选项
         "William Hill",
         "Ladbrokes",
-        "1xBet",
-        "Average Odds"
+        "1xBet"
     ]
 
     # 完整性分数阈值

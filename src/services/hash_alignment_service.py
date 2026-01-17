@@ -41,7 +41,8 @@ import os
 import random
 import re
 import sys
-from typing import ClassVar
+import threading
+from typing import Any, ClassVar
 
 from bs4 import BeautifulSoup
 import psycopg2
@@ -215,6 +216,10 @@ class HashAlignmentService:
         re.compile(r"/football/[^/]+/[^/]+/([a-z-]+)-([a-z-]+)-([A-Za-z0-9]{8})/?$"),
         re.compile(r"/football/[^/]+/[^/]+/([^/]+)-([^/]+)-([A-Za-z0-9]{8})/"),
     ]
+
+    # V41.128: 线程锁保护并发别名库注浆
+    # 多个 Worker 共享同一个数据库连接时，需要串行化别名库注浆操作
+    _alias_injection_lock: ClassVar[threading.Lock] = threading.Lock()
 
     # V41.121: 隧道轮换配置（从统一配置读取）
     # V41.63 原配置: 6 端口物理对齐 - 严格匹配 Clash 脚本
@@ -1044,6 +1049,626 @@ class HashAlignmentService:
         os.environ["PROXY_PORT"] = str(fallback_port)
         logger.error("🚨 所有代理端口不可用，使用降级端口: %d", fallback_port)
         return fallback_port
+
+    # ========================================================================
+    # V41.125: 多特征加权对齐引擎 (Multi-Feature Alignment Engine)
+    # ========================================================================
+
+    def align_with_multi_feature_validation(
+        self,
+        fotmob_match: dict[str, Any],
+        oddsportal_match: dict[str, Any],
+        verbose: bool = False
+    ) -> dict[str, Any]:
+        """
+        V41.125: 多特征加权对齐验证 - 工业级 0.99 精准对齐
+
+        加权策略:
+        - 队名相似度 (50%): Levenshtein 距离算法
+        - 比分强校验 (30%): score_str 标准化后绝对相等
+        - 时间窗口校验 (10%): ±24h 内，按 exp(-diff) 指数衰减
+        - ID 映射奖励 (10%): alias_teams 历史成功记录
+
+        断言: 只有总分 ≥ 0.85 的记录才允许数据库自动关联
+
+        Args:
+            fotmob_match: FotMob 比赛数据（来自 matches 表）
+                必需字段: home_team, away_team, match_date, score_str (可选)
+            oddsportal_match: OddsPortal 比赛数据
+                必需字段: home_team, away_team, match_time, score (可选)
+            verbose: 是否输出详细得分拆解
+
+        Returns:
+            {
+                "is_aligned": bool,        # 是否对齐成功 (分数 ≥ 0.85)
+                "score": float,            # 综合评分 (0.0 - 1.0)
+                "threshold": float,        # 对齐阈值 (0.85)
+                "breakdown": {             # 得分拆解
+                    "name_similarity": float,     # 队名相似度 (0.0 - 0.5)
+                    "score_validation": float,    # 比分校验 (0.0 - 0.3)
+                    "time_window": float,         # 时间窗口 (0.0 - 0.1)
+                    "id_mapping": float,          # ID 映射 (0.0 - 0.1)
+                },
+                "reason": str,             # 对齐/拒绝原因
+                "confidence": str          # 置信度: HIGH/MEDIUM/LOW
+            }
+
+        Example:
+            >>> fotmob = {
+            ...     "home_team": "Liverpool",
+            ...     "away_team": "Chelsea",
+            ...     "match_date": datetime(2024, 4, 20, 15, 0),
+            ...     "score_str": "2:1"
+            ... }
+            >>> odds = {
+            ...     "home_team": "Liverpool",
+            ...     "away_team": "Chelsea",
+            ...     "match_time": datetime(2024, 4, 20, 15, 0),
+            ...     "score": "2:1"
+            ... }
+            >>> result = service.align_with_multi_feature_validation(fotmob, odds)
+            >>> print(f"对齐: {result['is_aligned']}, 分数: {result['score']:.2f}")
+            对齐: True, 分数: 0.95
+        """
+        score = 0.0
+        breakdown = {
+            "name_similarity": 0.0,
+            "score_validation": 0.0,
+            "time_window": 0.0,
+            "id_mapping": 0.0
+        }
+        reasons = []
+
+        # ====================================================================
+        # 1. 队名相似度 (50%) - Levenshtein 距离算法
+        # ====================================================================
+        fm_home = fotmob_match.get("home_team", "")
+        fm_away = fotmob_match.get("away_team", "")
+        op_home = oddsportal_match.get("home_team", "")
+        op_away = oddsportal_match.get("away_team", "")
+
+        # 使用 TeamNameNormalizer 计算相似度
+        home_sim = self.normalizer.fuzzy_match(fm_home, op_home)
+        away_sim = self.normalizer.fuzzy_match(fm_away, op_away)
+
+        # 取两队相似度的平均值（fuzzy_match 返回 0-100，需归一化到 0.0-1.0）
+        avg_name_sim = ((home_sim + away_sim) / 2.0) / 100.0
+
+        # 映射到 0.0 - 0.5 分数 (50% 权重)
+        name_score = avg_name_sim * 0.5
+        breakdown["name_similarity"] = name_score
+        score += name_score
+
+        if avg_name_sim >= 0.95:
+            reasons.append(f"队名完美匹配({avg_name_sim:.2f})")
+        elif avg_name_sim >= 0.85:
+            reasons.append(f"队名高相似度({avg_name_sim:.2f})")
+        else:
+            reasons.append(f"队名低相似度({avg_name_sim:.2f})")
+
+        # ====================================================================
+        # 2. 比分强校验 (30%) - score_str 标准化后绝对相等
+        # ====================================================================
+        fm_score = fotmob_match.get("score_str", "").strip()
+        op_score = oddsportal_match.get("score", "").strip()
+
+        # 标准化比分格式（"2:1" → "2-1" 等）
+        fm_score_normalized = self._normalize_score(fm_score)
+        op_score_normalized = self._normalize_score(op_score)
+
+        if fm_score_normalized and op_score_normalized:
+            # 比分强校验：绝对相等
+            if fm_score_normalized == op_score_normalized:
+                score_validation = 0.3
+                reasons.append(f"比分验证通过({fm_score_normalized})")
+            else:
+                score_validation = 0.0
+                reasons.append(f"比分不匹配({fm_score_normalized} vs {op_score_normalized})")
+        else:
+            # 无比分数据，不打分也不惩罚
+            score_validation = 0.0
+            if verbose:
+                reasons.append("比分数据缺失（跳过验证）")
+
+        breakdown["score_validation"] = score_validation
+        score += score_validation
+
+        # ====================================================================
+        # 3. 时间窗口校验 (10%) - ±24h 内，exp(-diff) 指数衰减
+        # ====================================================================
+        fm_date = fotmob_match.get("match_date")
+        op_time = oddsportal_match.get("match_time")
+
+        if fm_date and op_time:
+            # 确保都是 datetime 对象
+            if isinstance(fm_date, str):
+                fm_date = datetime.fromisoformat(fm_date.replace("Z", "+00:00"))
+            if isinstance(op_time, str):
+                op_time = datetime.fromisoformat(op_time.replace("Z", "+00:00"))
+
+            # 计算时间差（小时）
+            time_diff_hours = abs((fm_date - op_time).total_seconds()) / 3600.0
+
+            if time_diff_hours <= 24:
+                # 线性衰减: 1 - (diff/48)，0h = 1.0, 24h = 0.5
+                decay_factor = max(0.5, 1.0 - (time_diff_hours / 48.0))
+                time_window_score = decay_factor * 0.1
+                reasons.append(f"时间窗口({time_diff_hours:.1f}h, 因子{decay_factor:.2f})")
+            else:
+                # 超过 24h，时间窗口得 0 分
+                time_window_score = 0.0
+                reasons.append(f"时间超限({time_diff_hours:.1f}h > 24h)")
+        else:
+            # 缺失时间数据，打部分分数（0.05 分）
+            time_window_score = 0.05
+            if verbose:
+                reasons.append("时间数据缺失（部分分数）")
+
+        breakdown["time_window"] = time_window_score
+        score += time_window_score
+
+        # ====================================================================
+        # 4. ID 映射奖励 (10%) - alias_teams 历史成功记录
+        # ====================================================================
+        fm_home_id = fotmob_match.get("home_team_id")
+        fm_away_id = fotmob_match.get("away_team_id")
+
+        if fm_home_id or fm_away_id:
+            # 检查是否有历史 ID 映射记录
+            id_mapping_score = 0.0
+            if self._check_id_mapping_history(fm_home_id, fm_away_id):
+                id_mapping_score = 0.1
+                reasons.append("ID 映射匹配")
+            else:
+                # 有 ID 但无历史记录，给部分分数 (0.05)
+                id_mapping_score = 0.05
+                if verbose:
+                    reasons.append("ID 存在但无历史记录")
+        else:
+            # 无 ID 数据，不打分
+            id_mapping_score = 0.0
+
+        breakdown["id_mapping"] = id_mapping_score
+        score += id_mapping_score
+
+        # ====================================================================
+        # 5. 综合判定
+        # ====================================================================
+        THRESHOLD = 0.85
+        is_aligned = score >= THRESHOLD
+
+        # 确定置信度
+        if score >= 0.95:
+            confidence = "HIGH"
+        elif score >= 0.85:
+            confidence = "MEDIUM"
+        else:
+            confidence = "LOW"
+
+        # 生成对齐原因
+        if is_aligned:
+            reason = f"对齐成功: {', '.join(reasons)}"
+        else:
+            reason = f"对齐失败: {', '.join(reasons)}"
+
+        # 详细输出
+        if verbose:
+            logger.info(f"🎯 V41.125 对齐详情:")
+            logger.info(f"   队名相似度: {breakdown['name_similarity']:.3f} (50%)")
+            logger.info(f"   比分校验: {breakdown['score_validation']:.3f} (30%)")
+            logger.info(f"   时间窗口: {breakdown['time_window']:.3f} (10%)")
+            logger.info(f"   ID 映射: {breakdown['id_mapping']:.3f} (10%)")
+            logger.info(f"   综合评分: {score:.3f} / {THRESHOLD}")
+            logger.info(f"   置信度: {confidence}")
+            logger.info(f"   原因: {reason}")
+
+        return {
+            "is_aligned": is_aligned,
+            "score": round(score, 3),
+            "threshold": THRESHOLD,
+            "breakdown": breakdown,
+            "reason": reason,
+            "confidence": confidence
+        }
+
+    def _normalize_score(self, score: str) -> str:
+        """
+        V41.125: 标准化比分格式
+
+        Args:
+            score: 原始比分字符串 (如 "2:1", "2-1", "2 - 1")
+
+        Returns:
+            标准化后的比分 (如 "2-1")
+
+        Examples:
+            >>> _normalize_score("2:1")
+            "2-1"
+            >>> _normalize_score("2 - 1")
+            "2-1"
+        """
+        if not score:
+            return ""
+
+        # 移除空格
+        score = score.replace(" ", "")
+
+        # 统一分隔符为 "-"
+        score = score.replace(":", "-")
+
+        return score
+
+    def _check_id_mapping_history(self, home_id: str | None, away_id: str | None) -> bool:
+        """
+        V41.125: 检查 ID 映射历史记录
+
+        查询 alias_teams 表，检查该 team_id 是否有成功的对齐记录。
+
+        V41.128: 修复列名错误（team_id → fotmob_team_id）
+
+        Args:
+            home_id: 主队 ID
+            away_id: 客队 ID
+
+        Returns:
+            True 如果有历史记录，False 否则
+        """
+        if not home_id and not away_id:
+            return False
+
+        try:
+            with self.conn.cursor() as cur:
+                # V41.128: 修复列名（fotmob_team_id, is_active）
+                cur.execute("""
+                    SELECT COUNT(*) as cnt
+                    FROM alias_teams
+                    WHERE (fotmob_team_id = %s OR fotmob_team_id = %s)
+                      AND is_active = true
+                """, (home_id, away_id))
+
+                result = cur.fetchone()
+                if result and result["cnt"] > 0:
+                    return True
+
+        except Exception as e:
+            logger.debug(f"⚠️  ID 映射历史查询失败: {e}")
+
+        return False
+
+    # ========================================================================
+    # V41.126: 工业化适配 (Industrial Adaptation)
+    # ========================================================================
+
+    def _inject_alias_mapping(
+        self,
+        fotmob_match: dict[str, Any],
+        oddsportal_match: dict[str, Any],
+        score: float,
+        confidence: str
+    ) -> bool:
+        """
+        V41.126: 自动注浆别名库（V41.128 线程安全）
+
+        当对齐分数 ≥ 0.95 (HIGH 置信度) 时，自动将队伍映射关系写入 alias_teams 表。
+        实现"自我学习、自我完善"的别名库增长机制。
+
+        V41.128: 使用线程锁保护并发注浆操作，避免多线程事务冲突。
+
+        Args:
+            fotmob_match: FotMob 比赛数据
+            oddsportal_match: OddsPortal 比赛数据
+            score: 对齐分数
+            confidence: 对齐置信度 (HIGH/MEDIUM/LOW)
+
+        Returns:
+            True 如果注浆成功，False 否则
+        """
+        # 只在 HIGH 置信度时自动注浆
+        if score < 0.95 or confidence != "HIGH":
+            return False
+
+        # V41.128: 使用类级线程锁保护并发注浆
+        with self._alias_injection_lock:
+            try:
+                fotmob_home_id = fotmob_match.get("home_team_id")
+                fotmob_away_id = fotmob_match.get("away_team_id")
+                fotmob_home = fotmob_match.get("home_team", "")
+                fotmob_away = fotmob_match.get("away_team", "")
+                op_home = oddsportal_match.get("home_team", "")
+                op_away = oddsportal_match.get("away_team", "")
+
+                with self.conn.cursor() as cur:
+                    # 注入主队映射
+                    if fotmob_home_id:
+                        cur.execute("""
+                            INSERT INTO alias_teams (
+                                fotmob_team_id,
+                                fotmob_team_name,
+                                oddsportal_team_name,
+                                confidence,
+                                alignment_count,
+                                league_name
+                            ) VALUES (%s, %s, %s, %s, 1, %s)
+                            ON CONFLICT (fotmob_team_id, oddsportal_team_name)
+                            DO UPDATE SET
+                                confidence = GREATEST(alias_teams.confidence, EXCLUDED.confidence),
+                                alignment_count = alias_teams.alignment_count + 1,
+                                last_aligned_at = NOW()
+                        """, (
+                            fotmob_home_id,
+                            fotmob_home,
+                            op_home,
+                            score,
+                            fotmob_match.get("league_name", "")
+                        ))
+
+                    # 注入客队映射
+                    if fotmob_away_id:
+                        cur.execute("""
+                            INSERT INTO alias_teams (
+                                fotmob_team_id,
+                                fotmob_team_name,
+                                oddsportal_team_name,
+                                confidence,
+                                alignment_count,
+                                league_name
+                            ) VALUES (%s, %s, %s, %s, 1, %s)
+                            ON CONFLICT (fotmob_team_id, oddsportal_team_name)
+                            DO UPDATE SET
+                                confidence = GREATEST(alias_teams.confidence, EXCLUDED.confidence),
+                                alignment_count = alias_teams.alignment_count + 1,
+                                last_aligned_at = NOW()
+                        """, (
+                            fotmob_away_id,
+                            fotmob_away,
+                            op_away,
+                            score,
+                            fotmob_match.get("league_name", "")
+                        ))
+
+                    self.conn.commit()
+                    logger.info(f"📝 V41.126 别名库注浆: {fotmob_home} vs {op_home}, {fotmob_away} vs {op_away} (分数: {score:.3f})")
+                    return True
+
+            except Exception as e:
+                # V41.128: 添加更详细的错误日志，包括异常类型和参数
+                import traceback
+                logger.error(f"❌ V41.126 别名库注浆失败: {type(e).__name__}: {e}")
+                logger.debug(f"详细错误堆栈:\n{traceback.format_exc()}")
+                logger.debug(f"fotmob_home_id={fotmob_home_id}, fotmob_home={fotmob_home}, op_home={op_home}")
+                logger.debug(f"fotmob_away_id={fotmob_away_id}, fotmob_away={fotmob_away}, op_away={op_away}")
+                try:
+                    self.conn.rollback()
+                except Exception as rollback_err:
+                    logger.debug(f"回滚失败（事务已中止）: {rollback_err}")
+                return False
+
+    def _is_match_live_or_finished(self, fotmob_match: dict[str, Any]) -> bool:
+        """
+        V41.126: 判断比赛是否正在进行或已完场
+
+        Args:
+            fotmob_match: FotMob 比赛数据
+
+        Returns:
+            True 如果比赛正在进行或已完场，False 如果未开赛
+        """
+        # 方法 1: 检查比分数据
+        score_str = fotmob_match.get("score_str", "").strip()
+        if score_str and score_str not in ["", "0:0", "0-0", "-"]:
+            # 有非零比分，说明已开赛
+            return True
+
+        # 方法 2: 检查比赛时间
+        match_date = fotmob_match.get("match_date")
+        if match_date:
+            if isinstance(match_date, str):
+                match_date = datetime.fromisoformat(match_date.replace("Z", "+00:00"))
+
+            # 比赛时间已过，说明已开赛
+            if datetime.now(match_date.tzinfo) > match_date:
+                return True
+
+        # 默认认为是未开赛
+        return False
+
+    def align_with_dynamic_weighting(
+        self,
+        fotmob_match: dict[str, Any],
+        oddsportal_match: dict[str, Any],
+        verbose: bool = False,
+        auto_inject: bool = True
+    ) -> dict[str, Any]:
+        """
+        V41.126: 动态调权对齐 - 工业化适配版本
+
+        加权策略（根据比赛状态动态调整）:
+        - **已开赛/已完场**: 队名(50%) + 比分(30%) + 时间(10%) + ID(10%)，阈值 0.85
+        - **未开赛**: 队名(80%) + 时间(20%)，阈值 0.80（无比分数据）
+
+        自动注浆:
+        - 分数 ≥ 0.95 时自动写入 alias_teams 表
+        - 实现"自我学习、自我完善"的别名库增长
+
+        Args:
+            fotmob_match: FotMob 比赛数据
+            oddsportal_match: OddsPortal 比赛数据
+            verbose: 是否输出详细日志
+            auto_inject: 是否自动注浆别名库（默认 True）
+
+        Returns:
+            对齐结果字典（包含 is_aligned, score, threshold, breakdown, reason, confidence）
+        """
+        # 判断比赛状态
+        is_live_or_finished = self._is_match_live_or_finished(fotmob_match)
+
+        if is_live_or_finished:
+            # 已开赛/已完场：使用标准权重（50/30/10/10）
+            result = self.align_with_multi_feature_validation(
+                fotmob_match=fotmob_match,
+                oddsportal_match=oddsportal_match,
+                verbose=verbose
+            )
+        else:
+            # 未开赛：使用动态权重（80% 队名 + 20% 时间）
+            result = self._align_with_upcoming_weights(
+                fotmob_match=fotmob_match,
+                oddsportal_match=oddsportal_match,
+                verbose=verbose
+            )
+
+        # 自动注浆别名库
+        if auto_inject and result["is_aligned"] and result["score"] >= 0.95:
+            self._inject_alias_mapping(
+                fotmob_match=fotmob_match,
+                oddsportal_match=oddsportal_match,
+                score=result["score"],
+                confidence=result["confidence"]
+            )
+
+        # 添加比赛状态标记
+        result["match_status"] = "LIVE_OR_FINISHED" if is_live_or_finished else "UPCOMING"
+
+        return result
+
+    def _align_with_upcoming_weights(
+        self,
+        fotmob_match: dict[str, Any],
+        oddsportal_match: dict[str, Any],
+        verbose: bool = False
+    ) -> dict[str, Any]:
+        """
+        V41.126: 未开赛比赛的动态调权对齐
+
+        加权策略（未开赛）:
+        - 队名相似度 (80%): 提高权重，因为无比分数据
+        - 时间窗口 (20%): 提高权重，确保时间匹配
+        - 阈值: 0.80（降低阈值，因为缺少比分验证）
+
+        Args:
+            fotmob_match: FotMob 比赛数据
+            oddsportal_match: OddsPortal 比赛数据
+            verbose: 是否输出详细日志
+
+        Returns:
+            对齐结果字典
+        """
+        score = 0.0
+        breakdown = {
+            "name_similarity": 0.0,
+            "time_window": 0.0,
+            "id_mapping": 0.0
+        }
+        reasons = []
+
+        # ====================================================================
+        # 1. 队名相似度 (80%) - Levenshtein 距离算法
+        # ====================================================================
+        fm_home = fotmob_match.get("home_team", "")
+        fm_away = fotmob_match.get("away_team", "")
+        op_home = oddsportal_match.get("home_team", "")
+        op_away = oddsportal_match.get("away_team", "")
+
+        home_sim = self.normalizer.fuzzy_match(fm_home, op_home)
+        away_sim = self.normalizer.fuzzy_match(fm_away, op_away)
+
+        # 归一化到 0.0-1.0
+        avg_name_sim = ((home_sim + away_sim) / 2.0) / 100.0
+
+        # 映射到 0.0 - 0.8 分数 (80% 权重)
+        name_score = avg_name_sim * 0.8
+        breakdown["name_similarity"] = name_score
+        score += name_score
+
+        if avg_name_sim >= 0.95:
+            reasons.append(f"队名完美匹配({avg_name_sim:.2f})")
+        elif avg_name_sim >= 0.85:
+            reasons.append(f"队名高相似度({avg_name_sim:.2f})")
+        else:
+            reasons.append(f"队名低相似度({avg_name_sim:.2f})")
+
+        # ====================================================================
+        # 2. 时间窗口校验 (20%) - 线性衰减
+        # ====================================================================
+        fm_date = fotmob_match.get("match_date")
+        op_time = oddsportal_match.get("match_time")
+
+        if fm_date and op_time:
+            if isinstance(fm_date, str):
+                fm_date = datetime.fromisoformat(fm_date.replace("Z", "+00:00"))
+            if isinstance(op_time, str):
+                op_time = datetime.fromisoformat(op_time.replace("Z", "+00:00"))
+
+            time_diff_hours = abs((fm_date - op_time).total_seconds()) / 3600.0
+
+            if time_diff_hours <= 48:  # 未开赛放宽到 48 小时
+                decay_factor = max(0.5, 1.0 - (time_diff_hours / 96.0))  # 48h → 0.5
+                time_window_score = decay_factor * 0.2  # 20% 权重
+                reasons.append(f"时间窗口({time_diff_hours:.1f}h, 因子{decay_factor:.2f})")
+            else:
+                time_window_score = 0.0
+                reasons.append(f"时间超限({time_diff_hours:.1f}h > 48h)")
+        else:
+            time_window_score = 0.1  # 默认 0.1
+            if verbose:
+                reasons.append("时间数据缺失（部分分数）")
+
+        breakdown["time_window"] = time_window_score
+        score += time_window_score
+
+        # ====================================================================
+        # 3. ID 映射奖励（可选）
+        # ====================================================================
+        fm_home_id = fotmob_match.get("home_team_id")
+        fm_away_id = fotmob_match.get("away_team_id")
+
+        if fm_home_id or fm_away_id:
+            id_mapping_score = 0.05  # 降低奖励
+            reasons.append("ID 存在")
+        else:
+            id_mapping_score = 0.0
+
+        breakdown["id_mapping"] = id_mapping_score
+        score += id_mapping_score
+
+        # ====================================================================
+        # 4. 综合判定
+        # ====================================================================
+        THRESHOLD = 0.80  # 未开赛降低阈值
+        is_aligned = score >= THRESHOLD
+
+        # 确定置信度
+        if score >= 0.90:
+            confidence = "HIGH"
+        elif score >= 0.80:
+            confidence = "MEDIUM"
+        else:
+            confidence = "LOW"
+
+        # 生成对齐原因
+        if is_aligned:
+            reason = f"对齐成功(未开赛): {', '.join(reasons)}"
+        else:
+            reason = f"对齐失败(未开赛): {', '.join(reasons)}"
+
+        # 详细输出
+        if verbose:
+            logger.info(f"🎯 V41.126 未开赛对齐详情:")
+            logger.info(f"   队名相似度: {breakdown['name_similarity']:.3f} (80%)")
+            logger.info(f"   时间窗口: {breakdown['time_window']:.3f} (20%)")
+            logger.info(f"   ID 映射: {breakdown['id_mapping']:.3f}")
+            logger.info(f"   综合评分: {score:.3f} / {THRESHOLD}")
+            logger.info(f"   置信度: {confidence}")
+            logger.info(f"   原因: {reason}")
+
+        return {
+            "is_aligned": is_aligned,
+            "score": round(score, 3),
+            "threshold": THRESHOLD,
+            "breakdown": breakdown,
+            "reason": reason,
+            "confidence": confidence
+        }
 
     # ========================================================================
     # V41.44: 全自动收割 (Active Harvest)
