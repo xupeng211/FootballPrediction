@@ -10,6 +10,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with th
 
 ---
 
+## 📖 项目简介
+
+**FootballPrediction** - 基于 XGBoost 3.0+ 的专业足球比赛预测系统
+
+**项目愿景**: 以年化 25% 的真实收益率为北极星指标，构建可验证、可复制、可持续的体育预测系统
+
+---
+
 ## 📚 文档导航
 
 ### 核心文档
@@ -17,18 +25,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with th
 - [docs/onboarding.md](docs/onboarding.md) - 新开发者快速上手（30分钟）
 - [docs/troubleshooting.md](docs/troubleshooting.md) - 故障排除指南
 - [docs/CHANGELOG.md](docs/CHANGELOG.md) - 版本历史与升级指南
-- [docs/V41.108_INTEGRITY_AUDIT_REPORT.md](docs/V41.108_INTEGRITY_AUDIT_REPORT.md) - V41.108 地基贯通审计报告
 
 ### 详细参考
 - [docs/module_reference.md](docs/module_reference.md) - 核心模块详细说明
-- [docs/deployment.md](docs/deployment.md) - Docker 部署完整指南
-- [docs/system_architecture.md](docs/system_architecture.md) - 系统架构详解
+- [docs/V41.121_PRECISION_BACKFILL_ENGINE.md](docs/V41.121_PRECISION_BACKFILL_ENGINE.md) - V41.121 精准回补引擎
+- [docs/V41.108_V41.109_AUDIT_AND_REFORGE.md](docs/V41.108_V41.109_AUDIT_AND_REFORGE.md) - V41.108/V41.109 审计与架构合龙
 
 ### 按角色阅读
 - **新开发者**: onboarding.md → 本文档（快速开始）
-- **数据采集工程师**: module_reference.md（采集器章节）
-- **机器学习工程师**: module_reference.md（ML 引擎章节）
-- **运维工程师**: deployment.md + troubleshooting.md
+- **数据采集工程师**: 本文档（数据采集系统章节）
+- **机器学习工程师**: 本文档（ML 引擎章节）
+- **运维工程师**: 本文档（Docker 部署章节）+ troubleshooting.md
 
 ---
 
@@ -37,7 +44,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with th
 ```bash
 # 环境管理
 make up                  # 启动核心服务 (db + redis)
-make verify              # 代码质量检查（提交前必需）
+make verify              # 代码质量检查（lint + test-unit + security）
 make ps                  # 查看容器状态
 
 # 数据采集
@@ -47,7 +54,7 @@ python main.py --mode cruise                                # 24h 巡航
 python main.py --test-proxy                                 # 测试代理
 
 # 开发测试
-make test-unit           # 运行单元测试
+make test-unit           # 运行核心单元测试（backtest_engine + signal_generator）
 make db-shell            # 进入 PostgreSQL Shell
 make logs                # 查看核心服务日志
 ```
@@ -62,12 +69,12 @@ make logs                # 查看核心服务日志
 | 属性 | 值 |
 |------|-----|
 | **状态** | ✅ Production Ready |
-| **生产版本** | V36.1 (Final Guard) |
 | **命令中心** | V144.7 (Multi-Source) |
 | **核心模型** | V26.8 (联赛专项) |
-| **数据采集** | V151.3 (8 Workers) + V41.60 (全能之眼) |
-| **哈希对齐服务** | V41.60 (TDD 驱动的代理配置修复) |
-| **数据库优化** | V41.49 (连接池优化) |
+| **数据采集** | V151.3 (8 Workers) + V144.5 (FotMob) |
+| **数据同步** | V36.3 (auto_sync_and_alchemy_v2.sh) |
+| **特征引擎** | V29.1 (多格式解析) |
+| **Docker 版本** | V106.0 (Dockerfile + docker-compose.prod.yml) |
 | **基线准确率** | 56% |
 | **推理延迟** | <100ms |
 | **五大联赛覆盖率** | 53.0% (5,733/10,808) - V41.108 审计结果 |
@@ -99,6 +106,22 @@ make verify
 
 # 5. V41.108 完整性审计（可选）
 python scripts/ops/v41_108_integrity_check.py
+```
+
+### 常用命令扩展
+
+```bash
+# V41.44: 哈希对齐服务（扫描并补充缺失的 oddsportal_hash）
+python main.py --action align-hashes --season "23/24"
+
+# 指定联赛和赛季采集
+python main.py --mode single --league "Premier League" --season "23/24"
+
+# 限制采集数量
+python main.py --mode single --limit 50
+
+# 禁用 Ghost Protocol（调试用）
+python main.py --mode single --no-ghost
 ```
 
 ### 环境要求
@@ -271,6 +294,11 @@ PROXY_PORTS=7892,7893,7894,7895,7896,7898,7899
 PROXY_WSL2_HOST=172.25.16.1
 ```
 
+**WSL2 环境自动检测** (重要):
+- 🔄 **自动发现宿主机 IP**: 在 WSL2 环境下自动探测 `172.25.16.1` 作为代理主机
+- 🔧 **配置优先级**: 环境变量 → WSL2 自动探测 → 直连模式
+- ✅ **零配置启动**: 在标准 WSL2 环境下无需额外配置即可使用代理
+
 **各模块 Getter 方法**:
 ```python
 # HashAlignmentService
@@ -398,12 +426,41 @@ pytest tests/ -v -k "test_name"  # 4. 运行测试
 
 ## 🧬 核心模块快速参考
 
-### main.py - V144.7 命令中心
+### main.py - V144.7 Multi-Source Command Center
+
 ```bash
-python main.py --source fotmob --mode single --limit 10
-python main.py --source oddsportal --mode single --limit 10
+# V144.7: 多数据源支持
+python main.py --source fotmob --mode single --limit 10      # FotMob API 数据源
+python main.py --source oddsportal --mode single --limit 10  # OddsPortal RPA 数据源
+python main.py --source fotmob --mode cruise                 # FotMob 24h 巡航模式
+
+# 单次收割模式 - 指定联赛和赛季
+python main.py --mode single --league "Premier League" --season "23/24"
+
+# 24h 全自动巡航模式
 python main.py --mode cruise
+
+# 数据质量检查
+python main.py --mode check
+
+# V41.44: 哈希对齐服务（扫描缺失哈希并自动采集）
+python main.py --action align-hashes --season "23/24"              # 扫描五大联赛缺失哈希
+python main.py --action align-hashes --league "Premier League"    # 指定联赛扫描
+
+# 测试代理 (V144.7)
 python main.py --test-proxy
+
+# 禁用 Ghost Protocol (调试用)
+python main.py --mode single --no-ghost
+
+# 限制处理数量
+python main.py --mode single --limit 50
+
+# 干跑模式 (不实际采集)
+python main.py --mode single --dry-run
+
+# 指定代理文件
+python main.py --mode single --proxy-file custom_proxies.txt
 ```
 
 ### HarvesterService - V142.0 收割服务
@@ -576,93 +633,72 @@ UPDATE matches SET technical_features = %s WHERE match_id = %s
 - `v41_102_api_sniff_test.py` → `scripts/archive/`
 - `v41_103_smoke_test.py` → `scripts/archive/`
 
-### V41.121 精准回补引擎 - FotMobCoreCollector.backfill_missing_features()
+### V41.121 精准回补引擎
 
-**V41.121 新增方法**: 使用现有 match_id 直接回补缺失的 technical_features，无需重新采集。
+**功能**: 使用现有 match_id 直接回补缺失的 technical_features，无需重新采集。
 
 **核心特性**:
-- ✅ **V41.120 验证方法**: 使用现有 match_id 直接查询 FotMob API（无需搜索）
-- ✅ **正确解析**: 修复 `header.teams[]` 数组解析，避免 `home.id` 错误
-- ✅ **双层回补**: 同时更新基础索引字段和 `technical_features`（152维）
-- ✅ **并发处理**: ThreadPoolExecutor + 代理轮换
-- ✅ **零硬编码**: 通过 `get_config().proxy` 获取代理配置
-- ✅ **JSON 序列化**: 自动转换 PostgreSQL Decimal 为 float
+- ✅ 零网络成本（本地离线处理）
+- ✅ 双层回补（索引字段 + 152维技术特征）
+- ✅ 并发处理（ThreadPoolExecutor + 代理轮换）
 
 **使用方式**:
 ```python
 from src.api.collectors.fotmob_core import FotMobCoreCollector
 
-# 查询缺失 technical_features 的比赛
-import psycopg2
-conn = psycopg2.connect(...)
-cur = conn.cursor()
-cur.execute("""
-    SELECT match_id FROM matches
-    WHERE technical_features IS NULL
-    LIMIT 100
-""")
-match_ids = [row[0] for row in cur.fetchall()]
-
-# 创建采集器并执行回补
 collector = FotMobCoreCollector()
 result = collector.backfill_missing_features(
-    match_ids=match_ids,
-    concurrent_workers=5,
-    dry_run=False
+    match_ids=["match1", "match2", ...],
+    concurrent_workers=5
 )
-
-# 查看结果
-print(f"成功: {result['successful']}, 失败: {result['failed']}")
 # 输出: 成功: 99, 失败: 1 (99.0%)
 ```
 
-**V41.120 关键修复**:
-| 问题 | 旧方法 | V41.120 修复 |
-|------|--------|-------------|
-| 队伍 ID 解析 | `match_data['home']['id']` | `match_data['header']['teams'][0]['id']` |
-| Match ID 来源 | 搜索 API 获取 | 直接使用数据库现有 match_id |
-| 数据库操作 | UPSERT（可能创建重复） | UPDATE（仅更新现有记录） |
+**成果统计**:
+- home_team_id 填充率: 99.99% (9,231/9,232)
+- technical_features 填充率: 100.0% (9,232/9,232)
+- 精准回补成功率: 99.98% (5,714/5,715)
 
-**适用场景**:
-- 批量回补缺失的 `technical_features` 字段
-- 修复 `home_team_id` / `away_team_id` 索引字段
-- 数据迁移后的完整性修复
+> 📖 **详细文档**: [docs/V41.121_PRECISION_BACKFILL_ENGINE.md](docs/V41.121_PRECISION_BACKFILL_ENGINE.md)
 
-**152 维技术特征分类**:
-| 类别 | 数量 | 占比 | 示例 |
-|------|------|------|------|
-| **黄金信号** | 48 | 31.6% | `home_xg`, `shots_on_target`, `possession` |
-| **统计噪音** | 72 | 47.4% | `ratio_*` 冗余特征 |
-| **元数据** | 3 | 2.0% | `_meta.total_metrics` |
-| **缺失数据** | 29 | 19.1% | 需要修复映射 |
+### V41.44 哈希对齐服务
 
-### V41.108 五大联赛完整性统计
+**功能**: 扫描五大联赛缺失的 oddsportal_hash，并自动采集补充。
 
+**核心特性**:
+- ✅ 从 YAML 动态加载联赛配置（彻底去硬编码）
+- ✅ 自动扫描 matches 表中缺失的 hash 字段
+- ✅ 支持指定赛季或联赛扫描
+- ✅ 自动调用 OddsPortal 采集器补充缺失数据
+
+**使用方式**:
 ```bash
-# 五大联赛覆盖率监控 SQL
-docker-compose exec db psql -U football_user -d football_db -c "
-SELECT
-    m.league_name,
-    COUNT(*) as total_matches,
-    COUNT(m.technical_features->>'home_xg') as with_xg,
-    ROUND(COUNT(m.technical_features->>'home_xg') * 100.0 / COUNT(*), 2) as xg_coverage
-FROM matches m
-WHERE m.league_name IN ('Premier League', 'La Liga', 'Bundesliga', 'Serie A', 'Ligue 1')
-  AND m.season IN ('2019', '2020', '2021', '2022', '2023', '2024')
-GROUP BY m.league_name
-ORDER BY xg_coverage DESC;
-"
+# 扫描五大联赛缺失哈希（默认 2023/2024 赛季）
+python main.py --action align-hashes --season "23/24"
+
+# 指定联赛扫描
+python main.py --action align-hashes --league "Premier League"
+
+# 干跑模式（不实际采集）
+python main.py --action align-hashes --dry-run
 ```
 
-**V41.108 审计结果** (2026-01-16):
-| 联赛 | 官方总计 | 数据库 | 覆盖率 | 状态 |
-|------|----------|--------|--------|------|
-| 英超 | 2,280 | 2,081 | 91.3% | ✅ 优秀 |
-| 西甲 | 2,280 | 1,900 | 83.3% | ✅ 良好 |
-| 德甲 | 1,836 | 0 | 0.0% | ❌ 完全缺失 |
-| 意甲 | 2,280 | 0 | 0.0% | ❌ 完全缺失 |
-| 法甲 | 2,132 | 1,752 | 82.2% | ✅ 良好 |
-| **总计** | **10,808** | **5,733** | **53.0%** | ⚠️ 待改进 |
+**配置文件**: `config/leagues.yaml` - 联赛元数据配置
+
+### V41.108/V41.109 审计与架构合龙
+
+**V41.108 地基贯通审计**:
+```bash
+python scripts/ops/v41_108_integrity_check.py
+```
+- 五大联赛覆盖率: 53.0% (5,733/10,808)
+- 德甲/意甲完全缺失: 0% 覆盖率
+
+**V41.109 架构合龙**:
+- 回炉重造引擎: 从 l2_raw_json 提取 technical_features（零网络成本）
+- 标准化采集器: 支持德甲/意甲定向采集
+
+> 📖 **详细文档**: [docs/V41.108_V41.109_AUDIT_AND_REFORGE.md](docs/V41.108_V41.109_AUDIT_AND_REFORGE.md)
 
 > 详细模块说明请参阅 [docs/module_reference.md](docs/module_reference.md)
 
@@ -748,8 +784,14 @@ pytest -k "test_database" -v
 
 ### 测试场景
 ```bash
-# 本地开发快速反馈
+# 本地开发快速反馈（仅运行核心单元测试）
 make test-unit
+
+# 运行所有单元测试
+pytest tests/unit/ -v
+
+# 运行特定测试文件
+pytest tests/unit/test_config.py -v
 
 # 提交前完整验证
 ./scripts/run_checks.sh
@@ -774,11 +816,13 @@ pytest tests/ --cov=src --cov-report=html
 
 **🚨 CRITICAL**: This is a production system support document.
 
-**🧬 当前版本**: V41.109 (架构合龙 - 回炉重造引擎与标准化采集器)
-**命令中心**: V144.7 (Multi-Source Command Center)
-**数据采集**: V41.109 (标准化 ID 采集器) + V151.3 (并发收割器)
-**哈希对齐服务**: V41.60 (TDD 驱动的代理配置修复)
-**最后更新**: 2026-01-16
+**🧬 当前版本**: V144.7 (Multi-Source Command Center)
+**核心模型**: V26.8 (联赛专项)
+**数据采集**: V151.3 (并发收割器) + V144.5 (FotMob)
+**数据同步**: V36.3 (auto_sync_and_alchemy_v2.sh)
+**特征引擎**: V29.1 (多格式解析)
+**Docker 版本**: V106.0
+**最后更新**: 2026-01-17
 **基线准确率**: 56% (真赛前)
 **生产状态**: Production Ready
 **Python 版本**: 3.11+

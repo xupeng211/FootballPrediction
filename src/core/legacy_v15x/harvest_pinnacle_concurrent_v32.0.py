@@ -86,15 +86,8 @@ logging.root.handlers = []  # 清除现有处理器
 logging.root.addHandler(file_handler)
 logging.root.addHandler(console_handler)
 
-# V41.125: 从统一配置获取代理端口列表
-from src.config_unified import get_config
-
-def get_proxy_ports():
-    """V41.125: 从统一配置获取代理端口（零硬编码）"""
-    config = get_config()
-    return config.proxy.proxy_ports
-
-PROXY_PORTS = get_proxy_ports()
+# 代理端口列表
+PROXY_PORTS = list(range(7890, 7900))  # 7890-7899
 
 
 @dataclass
