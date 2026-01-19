@@ -1,0 +1,24 @@
+{
+  "url": "https://geolocation.onetrust.com/cookieconsentpub/v1/geo/location",
+  "json_data": {
+    "country": "HK",
+    "state": "",
+    "stateName": "",
+    "continent": "AS"
+  },
+  "timestamp": "2026-01-18T12:53:00.621850+00:00",
+  "status_code": 200,
+  "headers": {
+    "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+    "content-encoding": "gzip",
+    "access-control-allow-methods": "GET, OPTIONS",
+    "cf-ray": "9bfe3b52bcc20723-HKG",
+    "access-control-allow-origin": "*",
+    "date": "Sun, 18 Jan 2026 12:52:49 GMT",
+    "content-type": "application/json",
+    "vary": "Accept-Encoding",
+    "server": "cloudflare",
+    "access-control-allow-headers": "Content-Type"
+  },
+  "matched_keywords": [],
+  "content_type": 
