@@ -250,3 +250,24 @@ tests/extractors/
 tests/fixtures/data/
 tests/integration/modeling/
 tests/unit/modeling/
+
+# =============================================================================
+# V41.237: Odds Sync System - Runtime Artifacts
+# =============================================================================
+
+# Storage Layer (V41.153+)
+storage/html_vault/
+storage/injection_queue/
+
+# Odds Sync Logs & Screenshots
+logs/odds_sync_*.log
+logs/industrial_audit_result.json
+logs/last_extraction_failure_*.png
+logs/proxy_smoke_test.json
+
+# Health Check Reports
+logs/health_report_*.json
+
+# V41.237: Ensure docs/ and config/ are NOT ignored
+!docs/
+!config/
