@@ -1,0 +1,24 @@
+{
+  "url": "https://geolocation.onetrust.com/cookieconsentpub/v1/geo/location",
+  "json_data": {
+    "country": "TW",
+    "state": "04",
+    "stateName": "Taiwan",
+    "continent": "AS"
+  },
+  "timestamp": "2026-01-18T12:48:50.939670+00:00",
+  "status_code": 200,
+  "headers": {
+    "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+    "content-encoding": "gzip",
+    "access-control-allow-methods": "GET, OPTIONS",
+    "cf-ray": "9bfe35011b3af209-KHH",
+    "access-control-allow-origin": "*",
+    "date": "Sun, 18 Jan 2026 12:48:30 GMT",
+    "content-type": "application/json",
+    "vary": "Accept-Encoding",
+    "server": "cloudflare",
+    "access-control-allow-headers": "Content-Type"
+  },
+  "matched_keywords": [],
+  "content_type": 

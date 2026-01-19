@@ -128,13 +128,18 @@ class EnvironmentDetector:
             return "db"
 
         elif env == EnvironmentType.WSL2:
-            # WSL2 环境: 检查端口占用情况
+            # V41.192: WSL2 环境智能检测
             if EnvironmentDetector._is_port_in_use("localhost", 5432):
-                logger.warning("⚠️  检测到本地 PostgreSQL 服务占用 5432 端口")
-                logger.warning("🚨 可能导致连接到错误的数据库（本地空库）")
-                logger.warning("💡 建议: 停止本地 PostgreSQL 服务 (sudo service postgresql stop)")
-                # 仍然返回 localhost，让用户自己处理
-                return "localhost"
+                # 检查是 Docker 容器还是本地 PostgreSQL 服务
+                if EnvironmentDetector._is_docker_db_on_5432():
+                    logger.info("🐳 检测到 Docker 数据库容器占用 5432 端口（正确配置）")
+                    return "localhost"
+                else:
+                    # 可能是本地 PostgreSQL 服务
+                    logger.warning("⚠️  检测到非 Docker 进程占用 5432 端口")
+                    logger.warning("🚨 可能导致连接到错误的数据库")
+                    logger.warning("💡 建议: 检查并停止本地 PostgreSQL 服务")
+                    return "localhost"
             else:
                 logger.info("✅ WSL2 环境: 5432 端口未被占用，安全使用 localhost")
                 return "localhost"
@@ -152,6 +157,34 @@ class EnvironmentDetector:
                 result = s.connect_ex((host, port))
                 return result == 0
         except Exception:
+            return False
+
+    @staticmethod
+    def _is_docker_db_on_5432() -> bool:
+        """
+        V41.192: 检测 5432 端口是否由 Docker 数据库容器占用
+
+        Returns:
+            bool: True 如果是 Docker 容器，False 如果是本地服务
+        """
+        try:
+            # 尝试运行 docker ps 命令
+            import subprocess
+            result = subprocess.run(
+                ["docker", "ps", "--filter", "publish=5432", "--format", "{{.Names}}"],
+                capture_output=True,
+                text=True,
+                timeout=5
+            )
+
+            # 如果有任何容器映射了 5432 端口，说明是 Docker
+            if result.returncode == 0 and result.stdout.strip():
+                return True
+
+            return False
+
+        except (subprocess.TimeoutExpired, subprocess.SubprocessError, FileNotFoundError):
+            # Docker 不可用或命令失败，无法确定
             return False
 
     @staticmethod

@@ -91,7 +91,7 @@ def check_port_in_use(port: int, timeout: float = 1.0) -> PortInfo:
 
 def _identify_process_on_port(port: int) -> ProcessType:
     """
-    识别占用端口的进程类型
+    V41.192: 识别占用端口的进程类型（增强 Docker 检测）
 
     Args:
         port: 端口号
@@ -99,10 +99,25 @@ def _identify_process_on_port(port: int) -> ProcessType:
     Returns:
         ProcessType 枚举值
     """
+    # 优先级 1: 检查 Docker 容器（V41.192 增强）
     try:
         import subprocess
         result = subprocess.run(
-            ['lsof', '-i', f':{port}', '-t', '-c'],
+            ["docker", "ps", "--filter", f"publish={port}", "--format", "{{.Names}}"],
+            capture_output=True,
+            text=True,
+            timeout=5
+        )
+
+        if result.returncode == 0 and result.stdout.strip():
+            return ProcessType.DOCKER
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        pass
+
+    # 优先级 2: 尝试使用 lsof（需要 root）
+    try:
+        result = subprocess.run(
+            ['sudo', 'lsof', '-i', f':{port}', '-t', '-c'],
             capture_output=True,
             text=True,
             timeout=5
@@ -110,21 +125,16 @@ def _identify_process_on_port(port: int) -> ProcessType:
 
         if result.returncode == 0:
             command = result.stdout.strip().lower()
-
-            if 'docker' in command or 'dockerd' in command:
-                return ProcessType.DOCKER
-            elif 'postgres' in command or 'postmaster' in command:
+            if 'postgres' in command or 'postmaster' in command:
                 return ProcessType.POSTGRES
             elif 'systemd' in command:
                 return ProcessType.SYSTEMD
-            else:
-                return ProcessType.UNKNOWN
-        else:
-            return ProcessType.UNKNOWN
 
-    except (FileNotFoundError, subprocess.TimeoutExpired) as e:
-        logger.debug(f"无法识别端口 {port} 的进程类型: {e}")
-        return ProcessType.UNKNOWN
+    except (FileNotFoundError, subprocess.TimeoutExpired, PermissionError):
+        pass
+
+    # 默认返回 UNKNOWN
+    return ProcessType.UNKNOWN
 
 
 def _get_process_name(process_type: ProcessType) -> str:

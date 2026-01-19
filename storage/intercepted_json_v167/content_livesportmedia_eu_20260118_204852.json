@@ -1,0 +1,18 @@
+{
+  "url": "https://content.livesportmedia.eu/api/v1/banners?zone-ids=3978%2C3979%2C3982%2C3983%2C3981%2C3980%2C3988%2C3984%2C5953&client-type=PC&programmatic=false&betting=false",
+  "json_data": [],
+  "timestamp": "2026-01-18T12:48:52.894898+00:00",
+  "status_code": 200,
+  "headers": {
+    "x-transaction-id": "3ac8b67d1b55e3581e2da57140c840da",
+    "x-vname": "adweb3-tt2/OPENX",
+    "x-hostname": "content.livesportmedia.eu",
+    "x-response-time": "2026-01-18T12:48:49.288Z",
+    "access-control-allow-origin": "*",
+    "content-length": "2",
+    "date": "Sun, 18 Jan 2026 12:48:49 GMT",
+    "content-type": "application/json; charset=utf-8",
+    "server": "nginx"
+  },
+  "matched_keywords": [],
+  "content_type": 
