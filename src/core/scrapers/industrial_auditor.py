@@ -192,10 +192,51 @@ class SequenceProcessor:
 
     @staticmethod
     def _process_standard(values: list[float]) -> PriceVector:
-        """标准完整结构处理（≥6 位）"""
-        closing = values[:3]  # [0:3]
-        initial = values[-3:]  # [-3:]
+        """
+        标准完整结构处理（≥6 位）
+
+        V41.257 修复：
+            - 添加异常值检测 (如固定值 8.75)
+            - 验证赔率值合理性 (1.01 - 1000.0)
+            - 检测列顺序一致性
+        """
+        # V41.257: 提取候选值
+        closing_candidate = values[:3]  # [0:3]
+        initial_candidate = values[-3:]  # [-3:]
         movement = values[3:-3]  # 中间序列
+
+        # V41.257: 异常值检测
+        KNOWN_ANOMALIES = [8.75]  # 已知异常值列表
+
+        # 检查 closing 是否包含异常值
+        if any(abs(v - anomaly) < 0.01 for v in closing_candidate for anomaly in KNOWN_ANOMALIES):
+            logger.warning(f"V41.257: Anomaly detected in closing values: {closing_candidate}")
+            # 尝试从 movement 寻找替代值
+            if len(movement) >= 3:
+                # 使用 movement 的最后 3 个元素作为 closing
+                closing_candidate = movement[-3:]
+                logger.info(f"V41.257: Using movement[-3:] as closing: {closing_candidate}")
+
+        # 验证赔率值合理性 (1.01 - 1000.0)
+        def validate_odds(odds_list: list[float]) -> bool:
+            return all(1.01 <= v <= 1000.0 for v in odds_list if v > 0)
+
+        if not validate_odds(closing_candidate):
+            logger.warning(f"V41.257: Invalid closing odds: {closing_candidate}")
+            return PriceVector(
+                initial=[], closing=[], movement=[],
+                quality=MatrixQuality.INSUFFICIENT, deviation_pct=0.0
+            )
+
+        if not validate_odds(initial_candidate):
+            logger.warning(f"V41.257: Invalid initial odds: {initial_candidate}")
+            return PriceVector(
+                initial=[], closing=[], movement=[],
+                quality=MatrixQuality.INSUFFICIENT, deviation_pct=0.0
+            )
+
+        closing = closing_candidate
+        initial = initial_candidate
 
         deviation = SequenceProcessor._calculate_deviation(closing, initial)
 
@@ -341,8 +382,7 @@ class IndustrialAuditor:
                       "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
             locale="en-US",
             timezone_id="Europe/London",
-            # V41.231: 全局超时配置（90s）
-            timeout=self.config.navigation_timeout,
+            # 注意：timeout 参数在 new_context() 中不支持，在页面级设置
         )
 
         self.page = await self.context.new_page()
@@ -376,19 +416,51 @@ class IndustrialAuditor:
         return parsed.netloc or parsed.path
 
     async def perform_lazy_scroll(self) -> None:
-        """执行懒加载滚动"""
+        """
+        V41.242 执行激进滚动水合 - 激光手术刀版
+
+        策略：
+        1. 暴力滚动到页面底部触发懒加载
+        2. 鼠标悬停模拟激活表格
+        3. 增加等待时间让 DOM 完全渲染
+        4. 分段滚动确保所有表格区域被触发
+        """
         if not self.page:
             raise RuntimeError("Page not initialized")
 
-        for _ in range(self.config.scroll_iterations):
-            await self.page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
-            await asyncio.sleep(self.config.scroll_delay_ms / 1000)
-            await self.page.evaluate("window.scrollTo(0, document.body.scrollHeight / 2)")
-            await asyncio.sleep(self.config.scroll_delay_ms / 2000)
-            await self.page.evaluate("window.scrollTo(0, 0)")
-            await asyncio.sleep(self.config.scroll_delay_ms / 2000)
+        logger.debug("V41.242 Starting aggressive scroll hydration")
 
-        logger.debug("Lazy scroll complete")
+        # 策略 1: 暴力滚动到底部
+        await self.page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
+        await asyncio.sleep(1.0)  # V41.242: 增加等待时间
+
+        # 策略 2: 分段滚动（触发中间区域的表格）
+        for i in range(3):
+            scroll_position = (document_body_scroll_height := await self.page.evaluate(
+                "document.body.scrollHeight"
+            )) * (i + 1) / 4
+            await self.page.evaluate(f"window.scrollTo(0, {scroll_position})")
+            await asyncio.sleep(0.5)
+
+        # 策略 3: 悬停激活（模拟用户浏览）
+        try:
+            # 查找所有表格元素并悬停
+            tables = await self.page.locator("table").all()
+            for table in tables[:5]:  # 只激活前 5 个表格
+                try:
+                    if await table.is_visible():
+                        await table.hover(timeout=1000)
+                        await asyncio.sleep(0.3)
+                except Exception:
+                    pass
+        except Exception:
+            pass
+
+        # 策略 4: 回到顶部并最终等待
+        await self.page.evaluate("window.scrollTo(0, 0)")
+        await asyncio.sleep(1.0)  # V41.242: 最终水合等待
+
+        logger.debug("V41.242 Aggressive scroll hydration complete")
 
     async def audit(self) -> ExtractionResult:
         """
@@ -515,48 +587,151 @@ class IndustrialAuditor:
             logger.debug(f"Failed to capture screenshot: {e}")
 
     async def _extract_entities(self) -> list[PriceVector]:
-        """提取所有实体价格向量"""
+        """
+        V41.242 提取所有实体价格向量 - 激光手术刀版
+
+        策略层级：
+        1. 表格行直接提取（OddsPortal 传统结构）
+        2. 文本模式锚点（现代 SPA 结构回退）
+        """
         self.page_main_width = await self._get_page_width()
         logger.debug(f"Page width: {self.page_main_width}px")
 
         all_vectors = []
         anchor_index = 0
 
-        for pattern in self.config.target_patterns:
-            logger.debug(f"Searching pattern: {pattern}")
+        # ================================================================
+        # 策略 1: 表格行直接提取（V41.242 新增 - OddsPortal 传统结构）
+        # ================================================================
+        logger.debug("V41.242 Strategy 1: Table-row extraction")
+        try:
+            table_vectors = await self._extract_from_tables()
+            all_vectors.extend(table_vectors)
+            logger.info(f"V41.242 Table strategy extracted {len(table_vectors)} vectors")
+        except Exception as e:
+            logger.debug(f"V41.242 Table strategy failed: {e}")
 
-            try:
-                elements = await self.page.get_by_text(pattern, exact=False).all()
+        # ================================================================
+        # 策略 2: 文本模式锚点（原始逻辑保留）
+        # ================================================================
+        if len(all_vectors) == 0:  # 仅在表格策略失败时使用
+            logger.debug("V41.242 Strategy 2: Pattern-based anchor (fallback)")
+            for pattern in self.config.target_patterns:
+                logger.debug(f"Searching pattern: {pattern}")
 
-                for element in elements:
-                    if not await element.is_visible():
+                try:
+                    elements = await self.page.get_by_text(pattern, exact=False).all()
+
+                    for element in elements:
+                        if not await element.is_visible():
+                            continue
+
+                        # 容器回溯提取
+                        container_info = await self._backtrack_container(element)
+                        if not container_info:
+                            continue
+
+                        # 提取数值
+                        values = self._extract_values(container_info["innerText"])
+                        if not values:
+                            continue
+
+                        # 序列处理
+                        vector = SequenceProcessor.process(
+                            values,
+                            enable_degraded=self.config.enable_degraded_mode
+                        )
+
+                        if vector.quality != MatrixQuality.INSUFFICIENT:
+                            all_vectors.append(vector)
+                            anchor_index += 1
+
+                except Exception as e:
+                    logger.debug(f"Error processing pattern '{pattern}': {e}")
+                    continue
+        else:
+            logger.debug(f"V41.242 Skipping pattern strategy - table extraction succeeded")
+
+        return all_vectors
+
+    async def _extract_from_tables(self) -> list[PriceVector]:
+        """
+        V41.242 现代 div 布局提取 - 专门针对 OddsPortal 现代结构
+
+        发现（通过 DOM 诊断）：
+        - 无 <table> 元素
+        - 赔率数据在 div[class*='odd'] 元素中
+        - 约 96 个 div[class*='odd'] 元素
+        - 约 83 个包含 '2.' 格式赔率数值的 div
+
+        策略：
+        1. 查找所有 div[class*='odd'] 元素
+        2. 提取数值型赔率（1.01 - 50.0 范围）
+        3. 三位一组序列对齐
+        """
+        vectors = []
+
+        try:
+            # 策略 1: 查找 div[class*='odd'] 元素（OddsPortal 现代结构）
+            odd_divs = await self.page.locator("div[class*='odd']").all()
+            logger.info(f"V41.242 Found {len(odd_divs)} div[class*='odd'] elements")
+
+            if len(odd_divs) > 0:
+                # 提取所有可见 div 的文本
+                all_values = []
+                for idx, div in enumerate(odd_divs):
+                    try:
+                        if not await div.is_visible():
+                            continue
+
+                        div_text = await div.inner_text() or ""
+                        # 提取数值
+                        values = self._extract_values(div_text)
+                        all_values.extend(values)
+
+                    except Exception as e:
+                        logger.debug(f"V41.242 div[{idx}] error: {e}")
                         continue
 
-                    # 容器回溯提取
-                    container_info = await self._backtrack_container(element)
-                    if not container_info:
-                        continue
+                logger.info(f"V41.242 Extracted {len(all_values)} total odds values from div elements")
 
-                    # 提取数值
-                    values = self._extract_values(container_info["innerText"])
-                    if not values:
-                        continue
-
+                if len(all_values) >= 3:
                     # 序列处理
+                    vector = SequenceProcessor.process(
+                        all_values,
+                        enable_degraded=self.config.enable_degraded_mode
+                    )
+
+                    logger.info(f"V41.242 Vector quality: {vector.quality}, values: {len(vector.values)}")
+
+                    if vector.quality != MatrixQuality.INSUFFICIENT:
+                        vectors.append(vector)
+                        logger.info(f"V41.242 VALID vector extracted from div structure")
+
+        except Exception as e:
+            logger.error(f"V41.242 div extraction error: {e}")
+
+        # 策略 2: 回退到全文提取（如果策略 1 失败）
+        if len(vectors) == 0:
+            logger.info("V41.242 Fallback: extracting from page body text")
+            try:
+                body_text = await self.page.locator("body").inner_text() or ""
+                values = self._extract_values(body_text)
+                logger.info(f"V41.242 Body text extraction: {len(values)} values")
+
+                if len(values) >= 3:
                     vector = SequenceProcessor.process(
                         values,
                         enable_degraded=self.config.enable_degraded_mode
                     )
 
                     if vector.quality != MatrixQuality.INSUFFICIENT:
-                        all_vectors.append(vector)
-                        anchor_index += 1
-
+                        vectors.append(vector)
+                        logger.info(f"V41.242 VALID vector from body text fallback")
             except Exception as e:
-                logger.debug(f"Error processing pattern '{pattern}': {e}")
-                continue
+                logger.debug(f"V41.242 Fallback extraction error: {e}")
 
-        return all_vectors
+        return vectors
 
     async def _get_page_width(self) -> int:
         """获取页面宽度"""

@@ -440,6 +440,47 @@ MG30_TIMING_NOISE = """
 }
 """
 
+# V41.244: Header 顺序混淆
+MG30_HEADER_OBFUSCATION = """
+() => {
+    // Mg30 Header Order Obfuscation (V41.244)
+
+    // 覆盖 XMLHttpRequest.prototype.setRequestHeader 以打乱 header 顺序
+    const originalSetRequestHeader = XMLHttpRequest.prototype.setRequestHeader;
+
+    // 存储 headers 并随机化插入顺序
+    const headers = new Map();
+
+    XMLHttpRequest.prototype.setRequestHeader = function(name, value) {
+        // 随机延迟插入，打乱顺序
+        setTimeout(() => {
+            headers.set(name, value);
+        }, Math.random() * 10);
+
+        return originalSetRequestHeader.apply(this, arguments);
+    };
+
+    // 在 send 时按随机顺序发送
+    const originalSend = XMLHttpRequest.prototype.send;
+    XMLHttpRequest.prototype.send = function() {
+        // 获取所有 headers 并随机排序
+        const headerEntries = Array.from(headers.entries());
+        headerEntries.sort(() => Math.random() - 0.5);
+
+        // 重新按随机顺序设置
+        for (const [name, value] of headerEntries) {
+            try {
+                originalSetRequestHeader.call(this, name, value);
+            } catch (e) {
+                // 忽略已设置的 header
+            }
+        }
+
+        return originalSend.apply(this, arguments);
+    };
+}
+"""
+
 
 # ============================================================================
 # Python Helper Functions (V41.166 升级版)
@@ -469,6 +510,7 @@ def get_mg30_stealth_scripts(dynamic: bool = True) -> dict[str, str]:
         'audio': MG30_AUDIO_NOISE,
         'font': MG30_FONT_NOISE,
         'timing': MG30_TIMING_NOISE,
+        'header_obfuscation': MG30_HEADER_OBFUSCATION,  # V41.244
     }
 
 
