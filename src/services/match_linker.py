@@ -41,7 +41,7 @@ from pathlib import Path
 from typing import Any
 
 import psycopg2
-from psycopg2.extras import RealDictCursor
+from psycopg2.extras import RealDictCursor, execute_values
 
 from src.config_unified import get_config
 
@@ -454,6 +454,148 @@ class MatchLinker:
             conn.rollback()
             logger.error(f"Failed to store odds intelligence: {e}")
             return False
+
+    def batch_store_odds_intelligence(
+        self,
+        records: list[dict[str, Any]],
+        batch_size: int = 100,
+    ) -> dict[str, int]:
+        """
+        V41.243 批量存储赔率情报 - 工业级性能优化
+
+        特性：
+        - 单次事务批量写入
+        - UPSERT 缓冲逻辑（ON CONFLICT DO UPDATE）
+        - 防止高并发时锁死 PostgreSQL
+        - 压力控制：超过 batch_size 自动分批提交
+
+        Args:
+            records: 待存储记录列表，每条记录包含：
+                - match_id: 比赛 ID
+                - initial_price: 初始价格列表
+                - closing_price: 当前价格列表
+                - movement_history: 变动历史列表
+                - metadata: 元数据（包含 Quality_Rating, Deviation_Percentage）
+                - similarity_score: 相似度分数（可选）
+                - link_method: 链接方法（可选）
+            batch_size: 批量大小（默认 100）
+
+        Returns:
+            统计字典 {success: 成功数, failed: 失败数, total: 总数}
+        """
+        stats = {"success": 0, "failed": 0, "total": len(records)}
+
+        if not records:
+            logger.info("No records to store (batch_store_odds_intelligence)")
+            return stats
+
+        conn = self._get_connection()
+        cursor = conn.cursor()
+
+        # 检查表是否存在
+        cursor.execute("""
+            SELECT EXISTS (
+                SELECT FROM information_schema.tables
+                WHERE table_name = 'match_odds_intelligence'
+            )
+        """)
+
+        if not cursor.fetchone()["exists"]:
+            # 创建表（V41.243: 添加 similarity_score 和 link_method 字段）
+            cursor.execute("""
+                CREATE TABLE match_odds_intelligence (
+                    id SERIAL PRIMARY KEY,
+                    match_id VARCHAR(50) REFERENCES matches(match_id),
+                    initial_price JSONB,
+                    closing_price JSONB,
+                    movement_history JSONB,
+                    quality_rating VARCHAR(20),
+                    deviation_percentage FLOAT,
+                    similarity_score FLOAT,
+                    link_method VARCHAR(20),
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    CONSTRAINT unique_match_id UNIQUE (match_id)
+                )
+            """)
+            conn.commit()
+            logger.info("Created table: match_odds_intelligence (V41.243)")
+
+        # 分批处理
+        total_batches = (len(records) + batch_size - 1) // batch_size
+
+        for batch_idx in range(total_batches):
+            start_idx = batch_idx * batch_size
+            end_idx = min(start_idx + batch_size, len(records))
+            batch = records[start_idx:end_idx]
+
+            try:
+                # 准备批量插入数据
+                values = []
+                for record in batch:
+                    metadata = record.get("metadata", {})
+                    quality_rating = metadata.get("Quality_Rating") if isinstance(metadata, dict) else None
+                    deviation_pct = metadata.get("Deviation_Percentage") if isinstance(metadata, dict) else None
+
+                    values.append((
+                        record.get("match_id"),
+                        json.dumps(record.get("initial_price", [])),
+                        json.dumps(record.get("closing_price", [])),
+                        json.dumps(record.get("movement_history", [])),
+                        quality_rating,
+                        deviation_pct,
+                        record.get("similarity_score"),
+                        record.get("link_method"),
+                    ))
+
+                # V41.248: 批量 UPSERT - 使用 execute_values 正确格式
+                # 移除 created_at/updated_at，让数据库使用默认值
+                from psycopg2.extras import execute_values
+
+                execute_values(
+                    cursor,
+                    """
+                    INSERT INTO match_odds_intelligence
+                    (match_id, initial_price, closing_price, movement_history,
+                     quality_rating, deviation_percentage, similarity_score, link_method)
+                    VALUES %s
+                    ON CONFLICT (match_id)
+                    DO UPDATE SET
+                        initial_price = EXCLUDED.initial_price,
+                        closing_price = EXCLUDED.closing_price,
+                        movement_history = EXCLUDED.movement_history,
+                        quality_rating = EXCLUDED.quality_rating,
+                        deviation_percentage = EXCLUDED.deviation_percentage,
+                        similarity_score = EXCLUDED.similarity_score,
+                        link_method = EXCLUDED.link_method,
+                        updated_at = CURRENT_TIMESTAMP
+                    """,
+                    values,
+                    template=None,
+                    page_size=100,
+                )
+
+                conn.commit()
+                stats["success"] += len(batch)
+                logger.debug(
+                    f"V41.243 Batch {batch_idx + 1}/{total_batches}: "
+                    f"stored {len(batch)} records"
+                )
+
+            except Exception as e:
+                conn.rollback()
+                stats["failed"] += len(batch)
+                logger.error(
+                    f"V41.243 Batch {batch_idx + 1}/{total_batches} failed: {e}"
+                )
+
+        logger.info(
+            f"V41.243 Batch store complete: "
+            f"{stats['success']}/{stats['total']} succeeded, "
+            f"{stats['failed']} failed"
+        )
+
+        return stats
 
     async def link_and_store(
         self,

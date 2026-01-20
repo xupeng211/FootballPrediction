@@ -16,122 +16,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with th
 
 **项目愿景**: 以年化 25% 的真实收益率为北极星指标，构建可验证、可复制、可持续的体育预测系统
 
----
+**当前状态**: ✅ Production Ready (V51.0 Industrial Grade Ready)
 
-## 📚 文档导航
-
-### 核心文档
-- **本文档** (CLAUDE.md) - 核心开发指南（精简版）
-- [docs/onboarding.md](docs/onboarding.md) - 新开发者快速上手（30分钟）
-- [docs/troubleshooting.md](docs/troubleshooting.md) - 故障排除指南
-- [docs/CHANGELOG.md](docs/CHANGELOG.md) - 版本历史与升级指南
-
-### 详细参考
-- [docs/module_reference.md](docs/module_reference.md) - 核心模块详细说明
-- [docs/V41.121_PRECISION_BACKFILL_ENGINE.md](docs/V41.121_PRECISION_BACKFILL_ENGINE.md) - V41.121 精准回补引擎
-- [docs/V41.108_V41.109_AUDIT_AND_REFORGE.md](docs/V41.108_V41.109_AUDIT_AND_REFORGE.md) - V41.108/V41.109 审计与架构合龙
-
-### 按角色阅读
-- **新开发者**: onboarding.md → 本文档（快速开始）
-- **数据采集工程师**: 本文档（数据采集系统章节）
-- **机器学习工程师**: 本文档（ML 引擎章节）
-- **运维工程师**: 本文档（Docker 部署章节）+ troubleshooting.md
+**基线准确率**: 56% (真赛前) | **推理延迟**: <100ms
 
 ---
 
-## 🎯 快速参考（10个核心命令）
+## 🎯 5 分钟快速开始
 
 ```bash
-# 环境管理
-make up                  # 启动核心服务 (db + redis)
-make verify              # 代码质量检查（lint + test-unit + security）
-make ps                  # 查看容器状态
-
-# 数据采集
-python main.py --source fotmob --mode single --limit 10    # FotMob 采集
-python main.py --source oddsportal --mode single --limit 10 # OddsPortal 采集
-python main.py --mode cruise                                # 24h 巡航
-python main.py --test-proxy                                 # 测试代理
-
-# V41.15x 生态系统（新一代运维工具）
-python scripts/ops/v41_155_joint_auditor.py           # V41.155 联合对账审计
-python scripts/ops/v41_156_ghost_capture.py          # V41.156 代理池健康检查
-python scripts/ops/v41_157_proxy_census.py           # V41.157 代理普查
-python scripts/ops/v41_158_stress_test.py            # V41.158 压力测试
-python scripts/ops/v41_159_eco_master.py             # V41.159 生态主控
-
-# V41.16x-V41.18x 反爬虫对抗工具集
-python scripts/ops/v41_164_titan_patch.py            # V41.164 泰坦补丁（链接大扫荡）
-python scripts/ops/v41_177_shield_breaker.py         # V41.177 盾牌突破（TLS 绕过）
-python scripts/ops/v41_178_hybrid_harvester.py       # V41.178 混合收割器
-python scripts/ops/v41_179_dual_tower.py             # V41.179 双塔收割器
-python scripts/ops/v41_180_memory_hook.py            # V41.180 内存钩子
-
-# 开发测试
-make test-unit           # 运行核心单元测试（backtest_engine + signal_generator）
-make db-shell            # 进入 PostgreSQL Shell
-make logs                # 查看核心服务日志
-```
-
-### 开发工作流程（典型场景）
-
-```bash
-# 1. 启动环境
-make up
-
-# 2. 验证服务状态
-make ps
-
-# 3. 运行测试
-make test-unit
-
-# 4. 数据采集（示例：FotMob 单次采集 10 场）
-python main.py --source fotmob --mode single --limit 10
-
-# 5. 查看日志
-make logs
-
-# 6. 提交前检查
-make verify
-
-# 7. 停止服务
-make down
-```
-
----
-
-## 📋 项目概览
-
-**FootballPrediction** - 基于 XGBoost 3.0+ 的专业足球比赛预测系统
-
-### 当前状态
-| 属性 | 值 |
-|------|-----|
-| **状态** | ✅ Production Ready |
-| **命令中心** | V144.7 (Multi-Source) |
-| **核心模型** | V26.8 (联赛专项) |
-| **数据采集** | V151.3 (8 Workers) + V144.5 (FotMob) |
-| **数据同步** | V36.3 (auto_sync_and_alchemy_v2.sh) |
-| **特征引擎** | V29.1 (多格式解析) |
-| **Docker 版本** | V51.0 (Industrial Grade Ready) |
-| **基线准确率** | 56% |
-| **推理延迟** | <100ms |
-| **五大联赛覆盖率** | 53.0% (5,733/10,808) - V41.108 审计结果 |
-
-### 核心技术栈
-- **ML**: XGBoost 3.0+, scikit-learn
-- **Backend**: Python 3.11+, FastAPI, PostgreSQL 15, Redis 7
-- **Automation**: Playwright, Docker, GitHub Actions
-- **Quality**: Ruff, MyPy, Bandit, pytest
-
----
-
-## ⚡ 快速开始
-
-### 5 分钟上手
-
-```bash
-# 1. 启动服务
+# 1. 启动核心服务
 make up
 
 # 2. 验证环境
@@ -142,35 +36,112 @@ python main.py --source fotmob --mode single --limit 1 --dry-run
 
 # 4. 质量检查
 make verify
-
-# 5. V41.108 完整性审计（可选）
-python scripts/ops/v41_108_integrity_check.py
 ```
-
-### 常用命令扩展
-
-```bash
-# V41.44: 哈希对齐服务（扫描并补充缺失的 oddsportal_hash）
-python main.py --action align-hashes --season "23/24"
-
-# 指定联赛和赛季采集
-python main.py --mode single --league "Premier League" --season "23/24"
-
-# 限制采集数量
-python main.py --mode single --limit 50
-
-# 禁用 Ghost Protocol（调试用）
-python main.py --mode single --no-ghost
-```
-
-### 环境要求
-- Python 3.11+
-- Docker & Docker Compose
-- PostgreSQL 15
 
 ---
 
-## 🏗️ 系统架构（高层概览）
+## 📋 核心命令速查
+
+### 环境管理
+```bash
+make help                # 显示所有可用命令
+make up                  # 启动核心服务 (db + redis)
+make up-pipeline         # 启动核心服务 + 数据流水线
+make up-api              # 启动核心服务 + API
+make up-dev              # 启动开发环境 (包含管理工具)
+make up-all              # 启动所有服务
+make verify              # 代码质量检查（lint + test-unit + security）
+make ps                  # 查看容器状态
+make down                # 停止服务
+make restart             # 重启核心服务
+make logs                # 查看核心服务日志
+make logs-api            # 查看 API 日志
+make logs-all            # 查看所有服务日志
+make health              # 检查服务健康状态
+```
+
+### 数据采集（main.py - V144.7 Command Center）
+```bash
+# FotMob 数据源
+python main.py --source fotmob --mode single --limit 10
+python main.py --source fotmob --mode cruise                 # 24h 巡航
+
+# OddsPortal 数据源
+python main.py --source oddsportal --mode single --limit 10
+
+# 测试代理
+python main.py --test-proxy
+
+# V41.44: 哈希对齐服务
+python main.py --action align-hashes --season "23/24"
+```
+
+### V41.230+ 生产级赔率同步
+```bash
+# 单场采集
+python run_odds_sync.py --url "https://www.oddsportal.com/.../"
+
+# 自动发现与批量采集 (V41.239)
+python scripts/ops/auto_odds_discover.py --concurrent 3
+python scripts/ops/auto_odds_discover.py --hours 72
+```
+
+### V41.15x 生态系统（运维工具）
+```bash
+python scripts/ops/v41_155_joint_auditor.py     # V41.155 联合对账审计
+python scripts/ops/v41_156_ghost_capture.py    # V41.156 代理池健康检查
+python scripts/ops/v41_157_proxy_census.py     # V41.157 代理普查
+python scripts/ops/v41_158_stress_test.py      # V41.158 压力测试
+python scripts/ops/v41_159_eco_master.py       # V41.159 生态主控
+```
+
+### V41.16x-V41.18x 反爬虫对抗工具
+```bash
+python scripts/ops/v41_164_titan_patch.py      # V41.164 泰坦补丁（链接大扫荡）
+python scripts/ops/v41_177_shield_breaker.py   # V41.177 盾牌突破（TLS 绕过）
+python scripts/ops/v41_178_hybrid_harvester.py # V41.178 混合收割器
+python scripts/ops/v41_179_dual_tower.py       # V41.179 双塔收割器
+python scripts/ops/v41_180_memory_hook.py      # V41.180 内存钩子
+```
+
+### 测试与质量
+```bash
+make test-unit           # 运行核心单元测试
+make test                # 运行全量测试（7 步质量门禁）
+make lint                # Lint 检查
+make format              # 格式化代码
+make security            # 安全扫描
+make verify              # 完整验证（lint + test-unit + security）
+./scripts/run_checks.sh  # 完整 CI 质量门禁（7 步）
+```
+
+### 数据库操作
+```bash
+make db-shell            # 进入 PostgreSQL Shell
+make db-backup           # 备份数据库
+make db-reset            # 重置数据库（危险操作！）
+make redis-shell         # 进入 Redis CLI
+```
+
+### 清理命令
+```bash
+make clean               # 清理垃圾文件、缓存和僵尸资产
+make clean-csv           # 清理临时测试生成的 CSV 文件
+make clean-logs          # 清理超过 7 天的日志文件
+make clean-docker        # 清理 Docker 资源
+make clean-all           # 完全清理（包括临时文件和日志）
+```
+
+### 部署命令
+```bash
+make deploy              # 部署到生产环境
+make build               # 构建生产镜像
+make dashboard           # 启动战神仪表盘
+```
+
+---
+
+## 🏗️ 系统架构
 
 ### 三层流水线架构
 
@@ -199,15 +170,28 @@ python main.py --mode single --no-ghost
 │  └──────────────────┘         └──────────────────┘              │
 │                              ↓                                  │
 │  ┌──────────────────┐         ┌──────────────────┐              │
-│  │  storage/        │         │  MatchSchema     │              │
-│  │  html_vault/     │         │  (统一数据模型)   │              │
-│  │  injection_queue/│         │  - Fusion_Score  │              │
-│  └──────────────────┘         │  - Quality_Rating│              │
-│                                └──────────────────┘              │
+│  │  MatchSchema     │         │  storage/        │              │
+│  │  (统一数据模型)   │         │  html_vault/     │              │
+│  └──────────────────┘         └──────────────────┘              │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-### 核心组件说明
+### V56.3 三层生产级架构
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  Master 调度层 → Production 提取层 → Database 持久层             │
+│  scripts/production_harvester.py                                 │
+│  ┌────────────────────────────────────────────────────────────┐ │
+│  │  • 跨赛季/跨联赛编排: 21/22, 22/23, 23/24                 │ │
+│  │  • 智能跳过检测: 自动跳过已有 opening_time 的比赛          │ │
+│  │  • 反封禁机制: 每 30 场休息 60 秒                          │ │
+│  │  • IP 健康监控: 连续 3 次连接错误 → 5 分钟冷却            │ │
+│  └────────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### 核心组件
 
 | 组件 | 版本 | 职责 |
 |------|------|------|
@@ -215,11 +199,8 @@ python main.py --mode single --no-ghost
 | **HarvesterService** | V142.0 | 队列驱动收割服务 |
 | **Ghost Protocol** | V141.0 | 反爬检测保护（UA 轮换、熔断器） |
 | **ModelDispatcher** | V26.8 | 联赛专项模型分发 |
-| **Feature Engine** | V29.1 | 多格式特征解析 |
 | **MatchSchema** | V41.155 | 统一比赛数据模型（Source_F + Source_O） |
 | **ProxyManager** | V41.156 | 代理池管理器（"幽灵网络"） |
-| **JointAuditor** | V41.155 | 联合对账审计（双源数据一致性） |
-| **EcoMaster** | V41.159 | 生态主控（自动化调度） |
 
 ### 数据流向
 
@@ -228,86 +209,6 @@ python main.py --mode single --no-ghost
 3. **入库**: PostgreSQL `matches` 表（Source_F）+ `matches_mapping` 表（Source_O）
 4. **建模** (V41.155+): `MatchSchema` 整合双源数据 → 计算 `Fusion_Score` → 质量评级
 5. **存储** (V41.153+): `storage/html_vault/` 离线 HTML 存储 + `storage/injection_queue/` 任务队列
-
-> 详细架构说明请参阅 [docs/system_architecture.md](docs/system_architecture.md)
-
-### 版本号说明
-
-- **V14x 系列**: 数据采集系统（Command Center, HarvesterService, Ghost Protocol）
-- **V26.x**: ML 模型和特征引擎
-- **V29.x**: 特征处理和解析
-- **V41.x**: 架构改进和审计工具
-- **V41.15x 系列**: 新一代运维工具集（V41.155-V41.159）
-  - **V41.153**: 铁军合龙 - production-ready architecture refactoring
-  - **V41.155**: 联合对账审计 - 双源数据一致性检查
-- **V41.16x-V41.18x 系列**: 反爬虫对抗工具集（V41.164-V41.180）
-  - **V41.164**: 泰坦补丁 - 链接大扫荡器 + Mg30 隐身内核
-  - **V41.166**: Mg30 隐身内核 - WebGL + Navigator 伪装
-  - **V41.177**: 盾牌突破者 - curl_cffi TLS 绕过
-  - **V41.178**: 混合收割器 - JSON API + DOM 回退
-  - **V41.179**: 双塔收割器 - 双管齐下策略
-  - **V41.180**: 内存钩子 - 零网络请求
-  - **V41.156**: 幽灵捕获 - 代理池健康检查与自动管理
-  - **V41.157**: 代理普查 - 全链路连通性测试
-  - **V41.158**: 压力测试 - 系统负载测试
-  - **V41.159**: 生态主控 - 自动化调度
-
-### V56.3 三层生产级架构
-
-V56.3 采用**三层生产级架构**，实现从调度到采集再到持久化的完整数据流：
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                    第一层：Master 调度层                          │
-│  scripts/production_harvester.py                                │
-│  ┌────────────────────────────────────────────────────────────┐ │
-│  │  • 跨赛季/跨联赛编排: 21/22, 22/23, 23/24                 │ │
-│  │  • 智能跳过检测: 自动跳过已有 opening_time 的比赛          │ │
-│  │  • 反封禁机制: 每 30 场休息 60 秒                          │ │
-│  │  • IP 健康监控: 连续 3 次连接错误 → 5 分钟冷却            │ │
-│  └────────────────────────────────────────────────────────────┘ │
-└─────────────────────────────────────────────────────────────────┘
-                              ↓
-┌─────────────────────────────────────────────────────────────────┐
-│                    第二层：Production 提取层                     │
-│  src/api/collectors/odds_production_extractor.py               │
-│  ┌────────────────────────────────────────────────────────────┐ │
-│  │  【黑科技 1】智能轮询                                       │ │
-│  │    • wait_for_selector(60s) 替代硬等待                     │ │
-│  │    • 元素一出现立即响应，毫秒级感应                        │ │
-│  │                                                            │ │
-│  │  【黑科技 2】悬停自愈                                       │ │
-│  │    • scroll_into_view_if_needed() 滚动对焦                │ │
-│  │    • 鼠标抖动自愈 (±5px) 重新触发 tooltip                  │ │
-│  │    • 10 次轮询 × 500ms = 5 秒智能等待                     │ │
-│  │                                                            │ │
-│  │  • 提取目标: Pinnacle, 1xBet 开盘赔率 + 时间戳            │ │
-│  │  • 数据完整性: Score = 1/P1 + 1/P2 + 1/P3                │ │
-│  └────────────────────────────────────────────────────────────┘ │
-└─────────────────────────────────────────────────────────────────┘
-                              ↓
-┌─────────────────────────────────────────────────────────────────┐
-│                    第三层：Database 持久层                       │
-│  PostgreSQL 15 + Unified Schema (V56.0)                        │
-│  ┌────────────────────────────────────────────────────────────┐ │
-│  │  matches 表 (match_id: VARCHAR(50))                       │ │
-│  │    • 比赛基础信息: league, season, teams, match_time      │ │
-│  │                                                            │ │
-│  │  metrics_multi_source_data 表 (match_id: VARCHAR(50))      │ │
-│  │    • init_h/d/a: 初盘赔率                                  │ │
-│  │    • opening_time_h/d/a: 初盘时间戳                        │ │
-│  │    • final_h/d/a: 终盘赔率                                │ │
-│  │    • integrity_score: 完整性审计分数                      │ │
-│  │    • source_name: 数据源 (Entity_P, Entity_B3)            │ │
-│  └────────────────────────────────────────────────────────────┘ │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-**V56.3 核心特性**:
-- ✅ **智能轮询**: 毫秒级感应，无时间浪费
-- ✅ **悬停自愈**: 鼠标抖动自动恢复，成功率提升 20%+
-- ✅ **IP 健康监控**: 自动检测封禁，5 分钟冷却恢复
-- ✅ **数据完整性**: 自动审计完整性分数
 
 ---
 
@@ -321,66 +222,30 @@ FootballPrediction/
 │   ├── processors/               # 特征提取
 │   ├── models/                   # V41.155 数据模型 (MatchSchema)
 │   ├── core/scrapers/            # V41.156 代理管理器
+│   ├── services/                 # 业务服务层
 │   └── config_unified.py         # 统一配置
 ├── scripts/                      # 运维脚本
-│   ├── ops/                      # 运维脚本
-│   │   ├── v41_155_joint_auditor.py   # V41.155 联合对账审计
-│   │   ├── v41_156_ghost_capture.py    # V41.156 幽灵捕获
-│   │   ├── v41_157_proxy_census.py     # V41.157 代理普查
-│   │   ├── v41_158_stress_test.py      # V41.158 压力测试
-│   │   └── v41_159_eco_master.py       # V41.159 生态主控
+│   ├── ops/                      # 运维脚本 (V41.x 系列)
 │   ├── maintenance/              # 维护脚本
-│   └── ml/                       # ML 训练脚本
+│   └── run_checks.sh             # CI 质量门禁
 ├── storage/                      # V41.153 存储层
 │   ├── html_vault/               # HTML 存储库 (离线解析)
 │   └── injection_queue/          # 注入队列 (待处理任务)
 ├── config/                       # 配置文件
 │   └── titan_config.yaml         # V41.151 统一代理和联赛配置
 ├── tests/                        # 测试套件
-├── model_zoo/                    # 模型仓库
-├── main.py                       # ⭐ 命令入口
+├── main.py                       # ⭐ V144.7 命令入口
+├── run_odds_sync.py              # ⭐ V41.230 生产级赔率同步入口
 ├── Makefile                      # ⭐ 快捷命令
 └── CLAUDE.md                     # ⭐ 本文档
 ```
 
 ---
 
-## ⚙️ MCP 和 Skills 配置
-
-### MCP 工具配置
-- ✅ **当前可用**: Git log (read-only) - `.claude/mcp_servers/git_server.py`
-- ℹ️ **状态**: 配置已简化 (2026-01-08)
-
-### Skills 配置
-- 📖 **参考文档**: `.claude/skills/` 包含 15+ 个技能定义文档
-- ℹ️ **用途**: 作为项目功能参考和架构理解
-- 🔧 **状态**: 自动加载机制已禁用 (2026-01-08)
-
-### 可用技能文档参考
-
-| 类别 | 技能文档 | 功能 |
-|------|----------|------|
-| **核心业务** | `football-prediction` | XGBoost 2.0+ 预测 |
-| | `machine-learning-engineering` | XGBoost 调优, SHAP |
-| | `feature-engineering` | V25.1 自适应特征提取 |
-| | `data-collection` | FotMob API 数据采集 |
-| | `v26-harvest` | V26.1 生产级收割流水线 |
-| **开发工具** | `code-quality` | Ruff, MyPy, Bandit, pytest |
-| | `fastapi-development` | FastAPI 开发 |
-| | `api-testing` | API 单元/集成/性能测试 |
-| **运维支撑** | `deployment-management` | Docker 部署 |
-| | `deployment-operations` | Docker 容器管理、故障诊断 |
-| | `database-operations` | PostgreSQL 优化 |
-| | `performance-monitoring` | Prometheus + Grafana |
-| | `data-engineering` | ETL 流程设计 |
-
-> **注意**: 技能文档仅供参考，自动加载机制已禁用。开发时请使用本文档中明确的标准命令。
-
----
-
 ## 🔧 开发指南
 
 ### 配置管理
+
 ```python
 from src.config_unified import get_settings
 
@@ -435,70 +300,11 @@ conn = psycopg2.connect(
 )
 ```
 
-### V41.49 数据库连接池配置优化
+### V41.156 代理管理器
 
-**连接池参数**（V41.49 优化）:
-```python
-class DatabaseConfig:
-    pool_size: int = 15           # V41.49: 原 10 → 15 (基础连接数)
-    max_overflow: int = 20        # 保持 20 (最大溢出数，理论最大 35)
-    pool_timeout: int = 10        # V41.49: 原 30 → 10 (降低超时，防止无限阻塞)
-    pool_recycle: int = 600       # V41.49: 原 3600 → 600 (10分钟回收，避免长连接问题)
-```
-
-**优化说明**:
-- ✅ **提升并发能力**: pool_size 从 10 提升到 15，支持更高并发
-- ✅ **降低阻塞风险**: pool_timeout 从 30s 降低到 10s，避免长时间等待
-- ✅ **避免长连接问题**: pool_recycle 从 1 小时降低到 10 分钟，定期回收连接
-
-**适用场景**:
-- 高并发数据采集（8 Workers 并发收割）
-- 批量特征提取（1000+ 场比赛）
-- API 服务（多用户并发请求）
-
-### V41.121 统一代理配置 - 零硬编码架构
-
-**核心特性**:
-- ✅ **配置中心化**: 所有代理配置通过 `src.config_unified.ProxyConfig` 统一管理
-- ✅ **零配置启动**: 支持环境变量 `PROXY_PORTS` 和 `PROXY_WSL2_HOST` 动态配置
-- ✅ **WSL2 自动检测**: 自动识别 WSL2 环境并使用正确的代理主机地址
-- ✅ **类型安全**: 完整的类型注解和 Pydantic 验证
-
-**标准访问方式**:
-```python
-from src.config_unified import get_config
-
-config = get_config()
-proxy_config = config.proxy
-
-# 获取代理端口列表
-proxy_ports = proxy_config.proxy_ports  # [7892, 7893, 7894, 7895, 7896, 7898, 7899]
-
-# 获取 WSL2 代理主机
-wsl2_host = proxy_config.wsl2_bridge_host  # "172.25.16.1"
-
-# 获取健康检查配置
-timeout = proxy_config.health_check_timeout  # 2.0
-circuit_breaker = proxy_config.circuit_breaker_threshold  # 5
-```
-
-**环境变量配置**:
-```bash
-# .env 文件
-PROXY_PORTS=7892,7893,7894,7895,7896,7898,7899
-PROXY_WSL2_HOST=172.25.16.1
-```
-
-**WSL2 环境自动检测** (重要):
-- 🔄 **自动发现宿主机 IP**: 在 WSL2 环境下自动探测 `172.25.16.1` 作为代理主机
-- 🔧 **配置优先级**: 环境变量 → WSL2 自动探测 → 直连模式
-- ✅ **零配置启动**: 在标准 WSL2 环境下无需额外配置即可使用代理
-
-**V41.156 代理管理器** (升级方案):
 ```python
 from src.core.scrapers.proxy_manager import ProxyManager, ProxyConfig
 
-# V41.156 推荐方式（替代 V41.121 硬编码配置）
 config = ProxyConfig(
     hosts=["172.25.16.1"],
     ports=[7890, 7892, 7893, 7894, 7895, 7896,  # 原 7 个端口
@@ -518,54 +324,6 @@ manager.record_success(proxy)
 manager.record_failure(proxy, status_code=403)  # 自动标记为脏 IP，禁封 30 分钟
 ```
 
-**配置文件** (`config/titan_config.yaml`):
-```yaml
-proxy:
-  hosts:
-  - 172.25.16.1
-  ports:
-  - 7890
-  - 7892
-  - 7893
-  - 7894
-  - 7895
-  - 7896
-  - 7897
-  - 7898
-  - 7899
-  ban_duration_seconds: 1800
-  max_failures: 10
-  enable_health_check: true
-  health_check_timeout_seconds: 5.0
-  rotation_strategy: random
-```
-
-**各模块 Getter 方法**:
-```python
-# HashAlignmentService
-from src.services.hash_alignment_service import HashAlignmentService
-ports = HashAlignmentService.get_proxy_ports()
-host = HashAlignmentService.get_wsl2_proxy_host()
-
-# AntiScrapingConfig
-from src.services.harvest_config import AntiScrapingConfig
-ports = AntiScrapingConfig.get_proxy_ports()
-```
-
-**架构改进** (V41.121):
-| 模块 | 修改前 | 修改后 |
-|------|--------|--------|
-| `hash_alignment_service.py` | 硬编码 `PROXY_PORTS` 类变量 | `get_proxy_ports()` 读取统一配置 |
-| `harvest_config.py` | 硬编码端口列表 | `get_proxy_ports()` 类方法 |
-| `crawler_service.py` | 硬编码 `WSL2_PROXY_HOST` | `_get_proxy_host()` 使用统一配置 |
-| `base_extractor.py` | 直接访问 `AntiScrapingConfig.PROXY_PORTS` | 调用 `AntiScrapingConfig.get_proxy_ports()` |
-| `fotmob_core.py` | `backfill_missing_features()` 内部硬编码 | 通过 `get_config().proxy` 获取配置 |
-
-**V41.156 升级路径** (推荐):
-- V41.121 配置方式继续支持（向后兼容）
-- 推荐迁移到 V41.156 `ProxyManager`（更强大、更灵活）
-- V41.156 支持自动健康检查、脏 IP 自动剔除、多种轮换策略
-
 ### 核心数据库表
 
 **matches 表** - 比赛基础信息 (Source_F)
@@ -576,21 +334,19 @@ season VARCHAR(20)
 home_team VARCHAR(255)
 away_team VARCHAR(255)
 match_time TIMESTAMP
-l2_raw_json JSONB       -- FotMob L2 原始数据
-l3_features JSONB       -- V25.1 特征向量
+technical_features JSONB      -- 152 维技术特征
+l2_raw_json JSONB            -- FotMob L2 原始数据
 ```
 
-**matches_mapping 表** - 哈希对齐 (Source_O, V41.153+)
+**matches_mapping 表** - 哈希对齐 (Source_O)
 ```sql
 fotmob_id VARCHAR(50) REFERENCES matches(match_id)
-oddsportal_hash VARCHAR(8)      -- OddsPortal 哈希（8字符）
-oddsportal_url TEXT             -- OddsPortal URL
-match_date TIMESTAMP           -- 比赛时间（Source_O）
-mapping_method VARCHAR(50)      -- 映射方法（v40.22_dom_harvest, etc）
-confidence FLOAT                -- 置信度（0-1）
-review_status VARCHAR(20)       -- 审核状态（pending, approved, rejected）
-created_at TIMESTAMP           -- 创建时间
-updated_at TIMESTAMP           -- 更新时间
+oddsportal_hash VARCHAR(8)
+oddsportal_url TEXT
+match_date TIMESTAMP
+mapping_method VARCHAR(50)
+confidence FLOAT
+review_status VARCHAR(20)
 ```
 
 **metrics_multi_source_data 表** - 赔率数据
@@ -601,13 +357,6 @@ init_h/d/a FLOAT             -- 开盘赔率
 final_h/d/a FLOAT            -- 终盘赔率
 integrity_score FLOAT        -- 完整性分数
 ```
-
-**V41.155 数据模型映射**:
-| 数据模型 | 数据库表 | 说明 |
-|----------|----------|------|
-| `SourceFData` | `matches` | FotMob 基础元数据 |
-| `SourceOData` | `matches_mapping` + `metrics_multi_source_data` | OddsPortal 市场数据 |
-| `MatchSchema` | 跨表 JOIN | 统一数据模型 |
 
 ### 代码质量规范
 
@@ -642,69 +391,26 @@ def predict_match(home_team, away_team):
     ...
 ```
 
-### Makefile 常用命令
+### CI/CD 质量门禁
+
+项目包含完整的 CI/CD 流水线 (`.github/workflows/`)，包含 7 步质量门禁：
+
+1. **导入排序检查** (isort)
+2. **代码格式化检查** (ruff format/black)
+3. **Lint 检查** (ruff check/flake8)
+4. **类型检查** (mypy)
+5. **单元测试** (pytest)
+6. **模型性能回归测试** (baseline accuracy gate)
+7. **安全扫描** (bandit)
+
+**本地运行完整门禁**:
 ```bash
-# 服务管理
-make up                # 启动核心服务 (db + redis)
-make up-pipeline       # 启动核心服务 + 数据流水线
-make up-api            # 启动核心服务 + API
-make up-dev            # 启动开发环境 (包含管理工具)
-make up-all            # 启动所有服务
-make down              # 停止服务
-make restart           # 重启服务
-make ps                # 查看状态
-make health            # 检查服务健康状态
-make dashboard         # 启动战神仪表盘
-
-# 代码质量
-make verify            # 完整验证
-make test-unit         # 单元测试
-make lint              # Lint 检查
-make format            # 格式化代码
-
-# 数据库
-make db-shell          # PostgreSQL Shell
-make db-backup         # 备份数据库
-
-# 日志
-make logs              # 核心服务日志
-make logs-api          # 查看 API 日志
-make logs-all          # 所有服务日志
-
-# 清理命令
-make clean             # 清理垃圾文件、缓存和僵尸资产
-make clean-csv         # 清理临时测试生成的 CSV 文件
-make clean-logs        # 清理超过 7 天的日志文件
-make clean-docker      # 清理 Docker 资源
-make clean-all         # 完全清理 (包括临时文件和日志)
-```
-
-### Docker 快速参考
-```bash
-# 基础操作
-docker-compose up -d              # 启动服务（后台）
-docker-compose down               # 停止并删除容器
-docker-compose ps                 # 查看容器状态
-docker-compose logs -f db         # 查看数据库日志
-
-# 进入容器
-docker-compose exec db bash       # 进入数据库容器
-docker-compose exec db psql -U football_user -d football_db  # 直接进入 PostgreSQL
-
-# 重建服务
-docker-compose up -d --build db   # 重建并启动数据库
-docker-compose restart api        # 重启 API 服务
-
-# 清理
-docker-compose down -v            # 停止并删除卷（谨慎！会删除数据）
-docker system prune -f            # 清理未使用的镜像和容器
+./scripts/run_checks.sh
 ```
 
 ---
 
 ## 🐛 常见错误速查表
-
-> 💡 **详细故障排除**: 请查看 [docs/troubleshooting.md](docs/troubleshooting.md)
 
 | 错误信息 | 快速解决方案 |
 |---------|-------------|
@@ -719,8 +425,7 @@ docker system prune -f            # 清理未使用的镜像和容器
 ```bash
 make ps                    # 1. 检查服务状态
 make logs                  # 2. 查看日志
-python scripts/health_check.py  # 3. 健康检查
-pytest tests/ -v -k "test_name"  # 4. 运行测试
+pytest tests/ -v -k "test_name"  # 3. 运行测试
 ```
 
 ---
@@ -741,15 +446,9 @@ python main.py --mode single --league "Premier League" --season "23/24"
 # 24h 全自动巡航模式
 python main.py --mode cruise
 
-# 数据质量检查
-python main.py --mode check
-
 # V41.44: 哈希对齐服务（扫描缺失哈希并自动采集）
-python main.py --action align-hashes --season "23/24"              # 扫描五大联赛缺失哈希
-python main.py --action align-hashes --league "Premier League"    # 指定联赛扫描
-
-# 测试代理 (V144.7)
-python main.py --test-proxy
+python main.py --action align-hashes --season "23/24"
+python main.py --action align-hashes --league "Premier League"
 
 # 禁用 Ghost Protocol (调试用)
 python main.py --mode single --no-ghost
@@ -759,12 +458,47 @@ python main.py --mode single --limit 50
 
 # 干跑模式 (不实际采集)
 python main.py --mode single --dry-run
-
-# 指定代理文件
-python main.py --mode single --proxy-file custom_proxies.txt
 ```
 
+### run_odds_sync.py - V41.230 Production Entry
+
+```bash
+# 单场采集
+python run_odds_sync.py --url "https://www.oddsportal.com/.../"
+
+# 指定模式
+python run_odds_sync.py --url "..." --patterns "Opening" "Closing"
+
+# 禁用无头模式（调试）
+python run_odds_sync.py --url "..." --no-headless
+
+# 指定代理端口
+python run_odds_sync.py --url "..." --proxy-port 7893
+
+# 仅提取数据（不存储）
+python run_odds_sync.py --url "..." --extract-only
+```
+
+### V41.239 自动发现与批量采集
+
+```bash
+# 扫描并分发（干跑模式）
+python scripts/ops/auto_odds_discover.py --dry-run
+
+# 执行采集
+python scripts/ops/auto_odds_discover.py --concurrent 3
+
+# 指定时间窗口（小时）
+python scripts/ops/auto_odds_discover.py --hours 72
+```
+
+**核心功能**:
+- A. 待办池提取 - 从数据库筛选未来 48 小时且无赔率记录的比赛
+- B. 智能 URL 生成 - 基于队名和日期动态生成 OddsPortal 搜索 URL
+- C. 批量作业分发 - 生产者-消费者模式调用 bin/odds_sync
+
 ### HarvesterService - V142.0 收割服务
+
 ```python
 from src.api.services.harvester_service import HarvesterService
 
@@ -773,6 +507,7 @@ await service.run()
 ```
 
 ### ModelDispatcher - V26.8 模型分发
+
 ```python
 from src.ml.engine import ModelDispatcher
 
@@ -783,120 +518,6 @@ prediction = dispatcher.predict(
     league_name="Premier League"
 )
 ```
-
-### V151.3 并发收割器
-```bash
-python scripts/ops/harvest_pinnacle_concurrent.py --workers 3 --limit 100
-```
-
-### V40 DOM 收割器（历史数据）
-```bash
-python scripts/ops/v40_22_improved_harvester.py --leagues "La Liga"
-python scripts/ops/v40_24_import_fixed.py --source logs/v40_22_results.json
-```
-
-### V41.60 全能之眼 - DOM 提取与代理配置修复
-```bash
-# V41.60 诊断工具（DOM 结构深度采样）
-python scripts/ops/v41_60_dom_diagnostic.py --league "Premier League"
-
-# V41.60 代理诊断（代理环境隔离诊断）
-python scripts/ops/v41_60_proxy_diagnostic.py
-
-# V41.60 增强诊断（完整收割流程模拟）
-python scripts/ops/v41_60_enhanced_diagnostic.py --league "Premier League"
-```
-
-**V41.60 核心特性**:
-- ✅ **TDD 驱动的代理配置修复** - 使用 Playwright `proxy` 参数替代 `--proxy-server`
-- ✅ **浏览器指纹增强** - 添加 locale 和 timezone_id 使浏览器更像真实用户
-- ✅ **URL 遍历模式翻页** - 直接构造分页 URL，更可靠
-- ✅ **内容验证** - 检查新页面是否有 hash 链接，智能检测最后一页
-- ✅ **双重回退** - URL 失败时回退到点击翻页
-
-**V41.60 适用场景**:
-- ✅ 多联赛 DOM 兼容性问题（已解决英超、德甲、意甲提取失败）
-- ✅ 代理配置不稳定问题（已修复为 Playwright 原生参数）
-- ✅ 翻页逻辑可靠性问题（已升级为 URL 遍历模式）
-
-### V41.61 五大联赛 100% 满绿收官总攻
-```bash
-# V41.61 自动化收割脚本（按序收割五大联赛）
-python scripts/ops/v41_61_grand_finale_harvest.py --limit 100
-
-# V41.61 支持的参数
-python scripts/ops/v41_61_grand_finale_harvest.py --leagues "Premier League" "La Liga" --max-retries 3
-```
-
-**V41.61 核心特性**:
-- ✅ **按序收割五大联赛** - 自动按顺序收割所有联赛
-- ✅ **动态重试机制** - 失败自动重试 3 次
-- ✅ **实时覆盖率统计** - 追踪收割进度
-- ✅ **最终战报生成** - 自动生成收割报告
-
-**注意**: V41.61 收割可能触发 OddsPortal 反爬保护，建议间隔 6-24 小时后重试。
-
-### V41.63 代理连通性检查
-```bash
-# V41.63 全链路连通性测试（验证 6 个代理端口）
-python scripts/ops/v41_63_proxy_check.py
-
-# 检查指定代理端口
-python scripts/ops/v41_63_proxy_check.py --ports 7891 7892 7893
-```
-
-**V41.63 核心特性**:
-- ✅ **6 个代理端口连通性测试** - 验证 7891-7896 端口状态
-- ✅ **IP 唯一性验证** - 确保每个代理端口使用不同 IP
-- ✅ **并发测试** - 多线程并发测试提高效率
-- ✅ **详细报告** - 生成连通性和 IP 分配报告
-
-### V41.108 地基贯通审计 - 完整性审计
-
-```bash
-# V41.108 完整性审计（4 项任务）
-python scripts/ops/v41_108_integrity_check.py
-```
-
-**V41.108 核心功能**:
-- ✅ **采集姿势审计** - 检查 API 端点、参数化、代理适配
-- ✅ **入口与入库对齐** - 验证 technical_features 初始化和版本追踪
-- ✅ **五大联赛完整性暴力测试** - 对比官方场数 vs 数据库场数
-- ✅ **回炉重造收益评估** - 统计低精度数据量和 CPU 成本
-
-**V41.108 审计结果** (2026-01-16):
-- 五大联赛覆盖率: 53.0% (5,733/10,808)
-- 德甲/意甲完全缺失: 0% 覆盖率
-- 待回炉重造: 8,813 场 (预计 14.7 分钟)
-
-### V41.109 架构合龙 - 回炉重造引擎与标准化采集器
-
-```bash
-# V41.109 回炉重造引擎（从 l2_raw_json 提取 technical_features）
-python scripts/ops/v41_109_reforge_engine.py --limit 100
-
-# V41.109 标准化 ID 采集器（德甲/意甲定向采集）
-python scripts/ops/v41_109_standardized_harvester.py --league-id 78 --seasons 2020 2021 2022  # 德甲
-python scripts/ops/v41_109_standardized_harvester.py --league-id 126 --seasons 2020 2021 2022  # 意甲
-```
-
-**V41.109 核心功能**:
-- ✅ **回炉重造引擎** - 从 l2_raw_json 中提取 technical_features（零网络成本）
-- ✅ **标准化 ID 采集器** - 参数化赛季支持 (--season)、代理池轮换
-- ✅ **入库对齐** - technical_features 字段显式包含
-- ✅ **德甲/意甲支持** - League ID 78 (Bundesliga)、126 (Serie A)
-
-**V41.109 回炉重造特性**:
-- ✅ 零 API 额度消耗（本地离线处理）
-- ✅ 零代理流量消耗
-- ✅ 批量处理，支持断点续传
-- ✅ 实时进度监控
-
-**V41.109 标准化采集器特性**:
-- ✅ V41.106 标准入口 (FotMobCoreCollector)
-- ✅ 代理池轮换 (19 端口)
-- ✅ 批量入库优化
-- ✅ 种子球队池配置（五大联赛）
 
 ### V41.106 架构标准化 - FotMob 采集唯一标准入口
 
@@ -923,27 +544,16 @@ UPDATE matches SET technical_features = %s WHERE match_id = %s
 - ✅ **API 端点**: `/matchDetails?matchId={id}` (唯一正确端点)
 - ✅ **特征解析**: `_parse_technical_features()` 提取 152 维技术特征
 - ✅ **数据存储**: `matches.technical_features` (JSONB 字段)
-- ✅ **黄金收割**: `scripts/ops/v41_103_golden_harvest.py` (标准脚本)
 
 **禁止操作**:
 - ❌ **禁止使用** `/leagueMatchStats` 端点（返回 404）
 - ❌ **禁止直接拼写 API URL**（绕过 `FotMobCoreCollector`）
 - ❌ **禁止绕过 technical_features 字段**（存储到其他位置）
 
-**已归档的临时脚本** (V41.98-V41.105):
-- `v41_102_api_sniff_test.py` → `scripts/archive/`
-- `v41_103_smoke_test.py` → `scripts/archive/`
-
 ### V41.121 精准回补引擎
 
 **功能**: 使用现有 match_id 直接回补缺失的 technical_features，无需重新采集。
 
-**核心特性**:
-- ✅ 零网络成本（本地离线处理）
-- ✅ 双层回补（索引字段 + 152维技术特征）
-- ✅ 并发处理（ThreadPoolExecutor + 代理轮换）
-
-**使用方式**:
 ```python
 from src.api.collectors.fotmob_core import FotMobCoreCollector
 
@@ -955,37 +565,6 @@ result = collector.backfill_missing_features(
 # 输出: 成功: 99, 失败: 1 (99.0%)
 ```
 
-**成果统计**:
-- home_team_id 填充率: 99.99% (9,231/9,232)
-- technical_features 填充率: 100.0% (9,232/9,232)
-- 精准回补成功率: 99.98% (5,714/5,715)
-
-> 📖 **详细文档**: [docs/V41.121_PRECISION_BACKFILL_ENGINE.md](docs/V41.121_PRECISION_BACKFILL_ENGINE.md)
-
-### V41.44 哈希对齐服务
-
-**功能**: 扫描五大联赛缺失的 oddsportal_hash，并自动采集补充。
-
-**核心特性**:
-- ✅ 从 YAML 动态加载联赛配置（彻底去硬编码）
-- ✅ 自动扫描 matches 表中缺失的 hash 字段
-- ✅ 支持指定赛季或联赛扫描
-- ✅ 自动调用 OddsPortal 采集器补充缺失数据
-
-**使用方式**:
-```bash
-# 扫描五大联赛缺失哈希（默认 2023/2024 赛季）
-python main.py --action align-hashes --season "23/24"
-
-# 指定联赛扫描
-python main.py --action align-hashes --league "Premier League"
-
-# 干跑模式（不实际采集）
-python main.py --action align-hashes --dry-run
-```
-
-**配置文件**: `config/leagues.yaml` - 联赛元数据配置
-
 ### V41.108/V41.109 审计与架构合龙
 
 **V41.108 地基贯通审计**:
@@ -993,35 +572,31 @@ python main.py --action align-hashes --dry-run
 python scripts/ops/v41_108_integrity_check.py
 ```
 - 五大联赛覆盖率: 53.0% (5,733/10,808)
-- 德甲/意甲完全缺失: 0% 覆盖率
 
 **V41.109 架构合龙**:
-- 回炉重造引擎: 从 l2_raw_json 提取 technical_features（零网络成本）
-- 标准化采集器: 支持德甲/意甲定向采集
+```bash
+# 回炉重造引擎（从 l2_raw_json 提取 technical_features）
+python scripts/ops/v41_109_reforge_engine.py --limit 100
 
-> 📖 **详细文档**: [docs/V41.108_V41.109_AUDIT_AND_REFORGE.md](docs/V41.108_V41.109_AUDIT_AND_REFORGE.md)
+# 标准化 ID 采集器（德甲/意甲定向采集）
+python scripts/ops/v41_109_standardized_harvester.py --league-id 78 --seasons 2020 2021 2022
+```
 
 ---
 
-## 🔧 V41.15x 生态系统 - 新一代运维工具集
+## 🛡️ V41.15x 生态系统 - 新一代运维工具集
 
 ### V41.155 联合对账审计 (Joint Auditor)
-
-**功能**: 双源数据一致性审计与逻辑缝合
 
 ```bash
 # 运行双源数据一致性审计
 python scripts/ops/v41_155_joint_auditor.py
-
-# 审计报告输出: logs/fused_data_health.md
 ```
 
 **核心功能**:
 - **孤儿记录检测**: 统计有基础数据但缺失哈希URL，或反之的记录
 - **时空一致性校验**: 比对 Source_F 和 Source_O 的 match_time，偏差 >15 分钟标记警报
 - **数据完整性评级**: 为每场比赛计算 Fusion_Score (0-100)
-  - 基础信息全 (50%): match_id, home_team, away_team, match_time, league_name, season
-  - 哈希对齐 (50%): oddsportal_hash 非空
 - **审计报告生成**: Markdown 格式，包含按联赛分布统计和行动建议
 
 **数据模型** (V41.155):
@@ -1036,440 +611,45 @@ print(f"Fusion Score: {schema.fusion_score}")  # 0-100
 print(f"Quality: {schema.quality_rating}")     # Excellent/Good/Fair/Poor
 ```
 
-**审计报告示例**:
-```markdown
-## 📊 执行摘要
-| 指标 | 数量 |
-|------|------|
-| 总比赛数 | 10000 |
-| 基础数据孤儿 | 150 |
-| 哈希数据孤儿 | 25 |
-| 时间偏差警报 | 8 |
-
-## 🎯 数据完整性评级
-| 评级 | 数量 | 占比 |
-|------|------|------|
-| 优秀 (≥90分) | 8500 | 85.0% |
-| 良好 (80-89分) | 1200 | 12.0% |
-| 一般 (60-79分) | 250 | 2.5% |
-| 较差 (<60分) | 50 | 0.5% |
-```
-
 ### V41.156 幽灵捕获 (Ghost Capture)
-
-**功能**: 代理池健康检查与自动管理
 
 ```bash
 # 代理池健康检查
 python scripts/ops/v41_156_ghost_capture.py
-
-# 检查指定端口
-python scripts/ops/v41_156_ghost_capture.py --ports 7890 7891 7892
 ```
 
 **核心功能**:
 - **代理健康度追踪**: 实时监控每个代理端点的状态
 - **"脏 IP" 自动剔除**: 403/429 禁封自动标记为 dirty，禁封 30 分钟
 - **并发安全设计**: threading.Lock 保证多线程环境安全
-- **多种轮换策略**:
-  - `random`: 随机选择（默认，推荐）
-  - `round_robin`: 轮询选择
-  - `weighted`: 根据成功率加权选择
+- **多种轮换策略**: random（默认）, round_robin, weighted
 
-**代理管理器使用** (V41.156):
-```python
-from src.core.scrapers.proxy_manager import ProxyManager, ProxyConfig
-
-# 创建代理管理器
-config = ProxyConfig(
-    hosts=["172.25.16.1"],
-    ports=[7890, 7892, 7893, 7894, 7895, 7896,  # 原 7 个端口
-          7897, 7898, 7899, 7900, 7901, 7902,  # V41.164 新增 6 个端口
-          7903, 7904, 7905, 7907, 7908, 7909],  # V41.164 新增 5 个端口
-    rotation_strategy="random",
-    ban_duration_seconds=1800,  # 30 分钟
-    max_failures=10
-)
-manager = ProxyManager(config)
-
-# 获取可用代理
-proxy = manager.get_proxy()
-
-# 记录成功/失败
-manager.record_success(proxy)
-manager.record_failure(proxy, status_code=403)  # 自动标记为脏 IP
-
-# 获取统计信息
-stats = manager.get_stats()
-print(f"可用代理: {stats['active']}/{stats['total_endpoints']}")
-print(f"成功率: {stats['success_rate']}%")
-```
-
-**配置文件** (`config/titan_config.yaml`):
-```yaml
-proxy:
-  hosts:
-  - 172.25.16.1
-  ports:
-  - 7890
-  - 7892
-  - 7893
-  - 7894
-  - 7895
-  - 7896
-  - 7897
-  - 7898
-  - 7899
-  ban_duration_seconds: 1800
-  max_failures: 10
-  enable_health_check: true
-  health_check_timeout_seconds: 5.0
-  rotation_strategy: random
-```
-
-### V41.157 代理普查 (Proxy Census)
-
-**功能**: 全链路连通性测试
+### V41.157 代理普查 / V41.158 压力测试 / V41.159 生态主控
 
 ```bash
-# 全链路连通性测试（16 个代理端口）
-python scripts/ops/v41_157_proxy_census.py
-
-# 检查指定端口
-python scripts/ops/v41_157_proxy_census.py --ports 7891 7892 7893
-
-# 并发测试（提高效率）
-python scripts/ops/v41_157_proxy_census.py --concurrent
-```
-
-**核心功能**:
-- **16 个代理端口连通性测试**: 验证 7890-7909 端口状态
-- **IP 唯一性验证**: 确保每个代理端口使用不同 IP
-- **并发测试**: 多线程并发测试提高效率
-- **详细报告**: 生成连通性和 IP 分配报告
-
-### V41.158 压力测试 (Stress Test)
-
-**功能**: 系统负载测试
-
-```bash
-# 运行压力测试
-python scripts/ops/v41_158_stress_test.py
-
-# 指定并发数
-python scripts/ops/v41_158_stress_test.py --concurrent 10
-
-# 指定测试时长（秒）
-python scripts/ops/v41_158_stress_test.py --duration 300
-```
-
-**核心功能**:
-- **并发负载测试**: 模拟高并发场景
-- **性能监控**: 实时监控系统资源使用
-- **瓶颈识别**: 发现系统性能瓶颈
-- **压力报告**: 生成详细的性能分析报告
-
-### V41.159 生态主控 (Eco Master)
-
-**功能**: 自动化调度，整合所有 V41.15x 工具
-
-```bash
-# 启动生态主控（自动化调度）
-python scripts/ops/v41_159_eco_master.py
-
-# 单次执行（调试用）
-python scripts/ops/v41_159_eco_master.py --once
-
-# 指定执行任务
-python scripts/ops/v41_159_eco_master.py --tasks audit,harvest,verify
-```
-
-**核心功能**:
-- **自动化调度**: 整合 V41.155-V41.158 所有工具
-- **任务编排**: 按依赖关系自动编排任务执行
-- **健康监控**: 实时监控系统健康状态
-- **故障自愈**: 检测故障自动恢复
-
-**工作流**:
-```mermaid
-graph LR
-    A[V41.155 审计] --> B{数据健康?}
-    B -->|是| C[V41.157 代理普查]
-    B -->|否| D[V41.156 修复]
-    C --> E[V41.158 压力测试]
-    E --> F[V41.159 自动化调度]
-    D --> F
+python scripts/ops/v41_157_proxy_census.py     # 全链路连通性测试
+python scripts/ops/v41_158_stress_test.py      # 系统负载测试
+python scripts/ops/v41_159_eco_master.py       # 自动化调度
 ```
 
 ---
 
 ## 🛡️ V41.16x-V41.18x 反爬虫对抗工具集
 
-V41.16x-V41.18x 系列引入了新一代反爬虫对抗技术，包括 Mg30 隐身内核、Response Interceptor 和混合收割器。
-
-### V41.164 泰坦补丁 (Titan Patch)
-
-**功能**: 链接大扫荡器 - 横扫五大联赛 results 页面，提取比赛链接
-
-```bash
-# 扫荡五大联赛所有链接
-python scripts/ops/v41_164_titan_patch.py --action sweep-leagues
-
-# 扫荡指定联赛
-python scripts/ops/v41_164_titan_patch.py --action sweep-leagues --league "Premier League"
-
-# 使用 JSON 拦截模式
-python scripts/ops/v41_164_titan_patch.py --action intercept-json --url "https://www.oddsportal.com/football/england/premier-league/results/"
-```
-
-**核心功能**:
-- **Mg30 隐身配置**: 移植自 browser.js 的反检测方案
-- **Response JSON 拦截**: 在 Playwright Response 层截获纯金数据
-- **链接大扫荡**: 批量提取五大联赛比赛链接
-- **18 路代理并发**: 支持多代理轮换采集
-
-**支持的联赛**:
-- ✅ Premier League (英超)
-- ✅ La Liga (西甲)
-- ✅ Bundesliga (德甲)
-- ✅ Serie A (意甲)
-- ✅ Ligue 1 (法甲)
-
-### V41.166 Mg30 隐身内核 (Stealth Core)
-
-**功能**: 基于 Mg30 browser.js 经验移植的高级隐身配置
-
-**核心特性**:
-- **WebGL 供应商伪装**: 深度伪装 GPU 指纹（Intel/NVIDIA/AMD 随机切换）
-- **Navigator 属性重写**: webdriver: false, plugins, languages
-- **窗口尺寸严格同步**: screen vs window inner sizes
-- **Chrome Runtime 注入伪装**
-- **设备内存随机化**
-- **权限 API 伪装**
-
-**使用方式**:
-```python
-from src.core.scrapers.mg30_stealth import get_combined_mg30_script
-
-# 获取组合脚本
-mg30_script = get_combined_mg30_script()
-
-# 注入到 Playwright 页面
-await page.evaluate(mg30_script)
-```
-
-**V41.166 升级特性**:
-- ✅ 动态显卡厂商（NVIDIA/Intel/Apple）
-- ✅ 动态浏览器语言环境（en-US/en-GB）
-- ✅ 深度 Hook：Object.defineProperty 绕过检测
-- ✅ 异常容错：单个属性注入失败不影响整体
-
-### V41.164 Response Interceptor (JSON 截胡器)
-
-**功能**: 在 Playwright Response 层直接截获纯金 JSON 数据，无需 BeautifulSoup 解析 HTML
-
-**核心功能**:
-- ✅ 拦截所有网络响应
-- ✅ 自动识别 `match/1-1-` 等关键字
-- ✅ JSON 数据验证和解析
-- ✅ 自动保存到文件
-- ✅ 支持自定义处理函数
-
-**使用方式**:
-```python
-from src.core.scrapers.response_interceptor import ResponseInterceptor, InterceptorConfig
-from playwright.async_api import async_playwright
-
-async with async_playwright() as p:
-    browser = await p.chromium.launch()
-    page = await browser.new_page()
-
-    # 创建拦截器
-    config = InterceptorConfig(
-        keywords=["match/1-1-", "pinnacle", "oddsportal"],
-        save_all=True,
-    )
-    interceptor = ResponseInterceptor(config)
-    await interceptor.attach_to_page(page)
-
-    # 访问页面
-    await page.goto("https://www.oddsportal.com/...")
-    await asyncio.sleep(10)
-
-    # 获取截获的数据
-    jsons = interceptor.get_intercepted_jsons()
-    print(f"截获了 {len(jsons)} 个 JSON")
-```
-
-### V41.177 Shield Breaker (盾牌突破者)
-
-**功能**: 使用 curl_cffi 绕过 TLS/JA3 指纹封锁
-
-```bash
-# 测试 TLS 绕过
-python scripts/ops/v41_177_shield_breaker.py --url "https://www.oddsportal.com/.../"
-
-# 指定代理
-python scripts/ops/v41_177_shield_breaker.py --url "..." --proxy-port 7892
-```
-
-**核心突破**:
-- ✅ curl_cffi 绕过 TLS/JA3 指纹封锁（验证 200 OK）
-- ✅ matchId/xhash 提取 - 从 HTML 中正则提取凭证
-- ✅ .dat JSON API - 使用提取的凭证直接请求后端接口
-
-### V41.178 Hybrid Harvester (混合收割器)
-
-**功能**: TLS 绕过 + JSON API 直接访问
-
-```bash
-# 基础用法
-python scripts/ops/v41_178_hybrid_harvester.py --url "https://www.oddsportal.com/.../...-S65f9YpE/"
-
-# 指定代理
-python scripts/ops/v41_178_hybrid_harvester.py --url "..." --proxy-port 7892
-
-# 回退到 DOM 提取（如果 JSON API 失败）
-python scripts/ops/v41_178_hybrid_harvester.py --url "..." --fallback-dom
-```
-
-**技术架构**:
-```
-curl_cffi (TLS 绕过) → HTML → 正则提取 → .dat API → JSON → Pinnacle
-```
-
-**依赖**:
-```bash
-pip install curl_cffi beautifulsoup4
-```
-
-### V41.179 Dual Tower (双塔收割器)
-
-**功能**: 双管齐下收割策略
-
-```bash
-# 运行双塔收割
-python scripts/ops/v41_179_dual_tower.py --league "Premier League"
-
-# 指定赛季
-python scripts/ops/v41_179_dual_tower.py --league "La Liga" --season "2024-2025"
-```
-
-**核心特性**:
-- ✅ JSON API 优先（快速）
-- ✅ DOM 提取回退（可靠）
-- ✅ 自动切换策略
-
-### V41.180 Memory Hook (内存钩子)
-
-**功能**: 直接从浏览器内存提取数据
-
-```bash
-# 运行内存钩子
-python scripts/ops/v41_180_memory_hook.py --url "https://www.oddsportal.com/.../"
-```
-
-**核心特性**:
-- ✅ 绕过网络层检测
-- ✅ 直接读取 JavaScript 变量
-- ✅ 零网络请求
-
-### 18 路代理配置 (V41.164 升级)
-
-V41.164 将代理端口从 7 个扩展到 18 个：
-
-```python
-PROXY_PORTS = [
-    7890, 7892, 7893, 7894, 7895, 7896,  # 原 7 个端口
-    7897, 7898, 7899, 7900, 7901, 7902,  # 新增 6 个端口
-    7903, 7904, 7905, 7907, 7908, 7909,  # 新增 5 个端口
-]
-```
-
-**配置文件** (`config/titan_config.yaml`):
-```yaml
-proxy:
-  hosts:
-  - 172.25.16.1
-  ports:
-  - 7890
-  - 7892
-  - 7893
-  - 7894
-  - 7895
-  - 7896
-  - 7897
-  - 7898
-  - 7899
-  - 7900
-  - 7901
-  - 7902
-  - 7903
-  - 7904
-  - 7905
-  - 7907
-  - 7908
-  - 7909
-  ban_duration_seconds: 1800
-  max_failures: 10
-  enable_health_check: true
-  health_check_timeout_seconds: 5.0
-  rotation_strategy: random
-```
-
-**V41.16x-V41.18x 工具对比**:
-
-| 工具 | 版本 | 核心技术 | 适用场景 |
-|------|------|----------|----------|
-| **V41.164 Titan Patch** | 泰坦补丁 | Mg30 + Response Interceptor | 链接大扫荡 |
-| **V41.166 Mg30 Stealth** | 隐身内核 | WebGL + Navigator 伪装 | 浏览器指纹混淆 |
-| **V41.177 Shield Breaker** | 盾牌突破 | curl_cffi TLS 绕过 | 指纹封锁突破 |
-| **V41.178 Hybrid Harvester** | 混合收割 | JSON API + DOM 回退 | 数据采集 |
-| **V41.179 Dual Tower** | 双塔收割 | 双管齐下策略 | 高可靠性采集 |
-| **V41.180 Memory Hook** | 内存钩子 | 内存直接读取 | 零网络请求 |
+| 工具 | 核心技术 | 适用场景 |
+|------|----------|----------|
+| **V41.164 Titan Patch** | Mg30 + Response Interceptor | 链接大扫荡 |
+| **V41.166 Mg30 Stealth** | WebGL + Navigator 伪装 | 浏览器指纹混淆 |
+| **V41.177 Shield Breaker** | curl_cffi TLS 绕过 | 指纹封锁突破 |
+| **V41.178 Hybrid Harvester** | JSON API + DOM 回退 | 数据采集 |
+| **V41.179 Dual Tower** | 双管齐下策略 | 高可靠性采集 |
+| **V41.180 Memory Hook** | 内存直接读取 | 零网络请求 |
 
 **推荐使用顺序**:
 1. **V41.178 Hybrid Harvester**（首选）- JSON API 优先，速度快
 2. **V41.179 Dual Tower**（备选）- 双管齐下，可靠性高
 3. **V41.164 Titan Patch**（扫荡）- 批量提取链接
 4. **V41.180 Memory Hook**（终极）- 绕过所有网络检测
-
----
-
-## 🗄️ V41.153 存储层架构
-
-### 存储目录结构
-
-```
-storage/
-├── html_vault/               # HTML 存储库（离线解析）
-│   ├── oddsportal/           # OddsPortal HTML 文件
-│   └── fotmob/               # FotMob HTML 文件
-└── injection_queue/          # 注入队列（待处理任务）
-    ├── pending/              # 待处理任务
-    ├── processing/           # 处理中任务
-    └── completed/            # 已完成任务
-```
-
-### 离线解析能力 (V41.156)
-
-```python
-from src.core.scrapers.offline_parser import OfflineParser
-
-# 从存储的 HTML 文件中提取数据
-parser = OfflineParser()
-
-# 解析 OddsPortal HTML
-data = parser.parse_oddsportal_html("storage/html_vault/oddsportal/match.html")
-
-# 零网络请求，完全离线
-```
-
-**优势**:
-- ✅ 零网络成本（本地离线处理）
-- ✅ 避免反爬检测
-- ✅ 可重复解析
-- ✅ 适用于历史数据回填
 
 ---
 
@@ -1484,60 +664,21 @@ data = parser.parse_oddsportal_html("storage/html_vault/oddsportal/match.html")
 │  │  Source_F (FotMob 基础元数据)                            │ │
 │  │  - match_id, home_team, away_team                        │ │
 │  │  - match_time, league_name, season                        │ │
-│  │  - status, home_score, away_score                        │ │
 │  └────────────────────────────────────────────────────────────┘ │
 │                              ↓                                  │
 │  ┌────────────────────────────────────────────────────────────┐ │
 │  │  Source_O (OddsPortal 市场数据)                          │ │
 │  │  - oddsportal_hash, oddsportal_url                       │ │
 │  │  - init_h/d/a, final_h/d/a                               │ │
-│  │  - integrity_score                                      │ │
 │  └────────────────────────────────────────────────────────────┘ │
 │                              ↓                                  │
 │  ┌────────────────────────────────────────────────────────────┐ │
 │  │  Fusion_Score (0-100)                                     │ │
 │  │  - 基础信息全 (50%): ID, 队名, 时间, 联赛              │ │
 │  │  - 哈希对齐 (50%): oddsportal_hash 非空                  │ │
-│  │  - 质量评级: Excellent/Good/Fair/Poor                    │ │
 │  └────────────────────────────────────────────────────────────┘ │
 └─────────────────────────────────────────────────────────────────┘
 ```
-
-**使用方式**:
-```python
-from src.models.match_schema import MatchSchema, SourceFData, SourceOData
-
-# 创建 Source_F 数据
-source_f = SourceFData(
-    match_id="4506536",
-    home_team="Everton",
-    away_team="Brentford",
-    match_time=datetime(2024, 11, 23, 15, 0),
-    league_name="Premier League",
-    season="2024/2025"
-)
-
-# 创建 Source_O 数据
-source_o = SourceOData(
-    match_id="4506536",
-    oddsportal_hash="a1b2c3d4",
-    final_h=2.50,
-    final_d=3.40,
-    final_a=2.80
-)
-
-# 整合为 MatchSchema
-schema = MatchSchema(
-    **source_f.model_dump(),
-    **source_o.model_dump(exclude_none=True)
-)
-
-# 计算融合分数
-print(f"Fusion Score: {schema.fusion_score}")  # 0-100
-print(f"Quality: {schema.quality_rating}")     # MatchQuality.EXCELLENT
-```
-
-> 详细模块说明请参阅 [docs/module_reference.md](docs/module_reference.md)
 
 ---
 
@@ -1616,21 +757,7 @@ tests/
 └── ops/               # 运维测试
 ```
 
-### pytest 标记
-```bash
-pytest -m unit                    # 单元测试
-pytest -m integration             # 集成测试
-pytest -m "not network"           # 排除网络测试
-```
-
-### 运行单个测试
-```bash
-pytest tests/unit/test_config.py -v
-pytest tests/unit/test_config.py::TestConfig::test_database_config -v
-pytest -k "test_database" -v
-```
-
-### 测试场景
+### 运行测试
 ```bash
 # 本地开发快速反馈（仅运行核心单元测试）
 make test-unit
@@ -1644,12 +771,34 @@ pytest tests/unit/test_config.py -v
 # 提交前完整验证
 ./scripts/run_checks.sh
 
-# 全量测试
-pytest tests/ -v
-
 # 生成覆盖率报告
 pytest tests/ --cov=src --cov-report=html
 ```
+
+---
+
+## 🔗 快速链接
+
+### 新手入门
+- [快速开始](#-5-分钟快速开始) - 5 分钟上手指南
+- [核心命令速查](#-核心命令速查) - 常用命令
+- [常见错误速查表](#-常见错误速查表) - 快速问题解决
+
+### 核心概念
+- [系统架构](#-系统架构) - 三层流水线架构
+- [核心数据库表](#核心数据库表) - 数据库结构说明
+- [开发指南](#-开发指南) - 配置、数据库连接、代码质量
+
+### 重要规范
+- [V41.106 架构标准化](#v41106-架构标准化---fotmob-采集唯一标准入口) - FotMob 采集规范
+- [核心模块保护级别](#核心模块保护级别) - 模块修改限制
+- [禁止操作](#禁止操作) - 必须避免的操作
+
+### 详细文档
+- [docs/onboarding.md](docs/onboarding.md) - 新开发者 30 分钟上手指南
+- [docs/troubleshooting.md](docs/troubleshooting.md) - 故障排除指南
+- [docs/CHANGELOG.md](docs/CHANGELOG.md) - 版本历史与升级指南
+- [docs/module_reference.md](docs/module_reference.md) - 核心模块详细说明
 
 ---
 
@@ -1667,7 +816,7 @@ pytest tests/ --cov=src --cov-report=html
 **🧬 当前版本**: V51.0 (Industrial Grade Ready)
 **核心模型**: V26.8 (联赛专项)
 **数据采集**: V151.3 (并发收割器) + V144.5 (FotMob) + V41.164-V41.180 (反爬虫对抗工具集)
-**数据同步**: V36.3 (auto_sync_and_alchemy_v2.sh)
+**数据同步**: V36.3 (auto_sync_and_alchemy_v2.sh) + V41.230 (run_odds_sync.py) + V41.239 (auto_odds_discover.py)
 **特征引擎**: V29.1 (多格式解析)
 **架构重构**: V41.153 (铁军合龙) + V56.3 (三层生产级架构)
 **反爬虫**: V41.16x-V41.18x (Mg30 隐身 + Response Interceptor + 混合收割器)
@@ -1677,32 +826,3 @@ pytest tests/ --cov=src --cov-report=html
 **基线准确率**: 56% (真赛前)
 **生产状态**: Production Ready
 **Python 版本**: 3.11+
-
----
-
-## 🔗 快速链接
-
-### 新手入门
-- [快速开始](#-快速开始) - 5 分钟上手指南
-- [开发工作流程](#-开发工作流程典型场景) - 典型开发场景
-- [常见错误速查表](#-常见错误速查表) - 快速问题解决
-
-### 核心概念
-- [系统架构](#-系统架构高层概览) - 三层流水线架构
-- [核心数据库表](#核心数据库表) - 数据库结构说明
-- [版本号说明](#版本号说明) - 版本号体系
-
-### 开发参考
-- [配置管理](#配置管理) - 统一配置系统
-- [数据库连接标准](#数据库连接标准) - 数据库连接模式
-- [代码质量规范](#代码质量规范) - 提交前检查清单
-
-### 运维指南
-- [Docker 快速参考](#docker-快速参考) - Docker 常用命令
-- [Makefile 常用命令](#makefile-常用命令) - Makefile 快捷命令
-- [Git 工作流](#-git-工作流) - 分支策略和提交规范
-
-### 重要规范
-- [V41.106 架构标准化](#v41106-架构标准化---fotmob-采集唯一标准入口) - FotMob 采集规范
-- [核心模块保护级别](#核心模块保护级别) - 模块修改限制
-- [禁止操作](#禁止操作) - 必须避免的操作
