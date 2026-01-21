@@ -1294,7 +1294,6 @@ class HashAlignmentService:
         # 统一分隔符为 "-"
         return score.replace(":", "-")
 
-
     def _check_id_mapping_history(self, home_id: str | None, away_id: str | None) -> bool:
         """
         V41.125: 检查 ID 映射历史记录

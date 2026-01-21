@@ -17,12 +17,11 @@ Usage:
 """
 
 import asyncio
-import logging
 from datetime import datetime
-from typing import Dict
+import logging
 
-import pytest
 from playwright.async_api import Page
+import pytest
 
 from src.api.collectors.market_data_engine import (
     MAX_INTEGRITY_SCORE,
@@ -42,7 +41,7 @@ logger = logging.getLogger(__name__)
 @pytest.mark.slow
 @pytest.mark.asyncio
 async def test_historical_compatibility_gravity_mode(
-    historical_match_sample: Dict, playwright_browser: Page
+    historical_match_sample: dict, playwright_browser: Page
 ):
     """V119.0 Test A: 历史兼容性测试 - Gravity Mode 保底抓取
 
@@ -106,7 +105,7 @@ async def test_historical_compatibility_gravity_mode(
 @pytest.mark.e2e
 @pytest.mark.slow
 @pytest.mark.asyncio
-async def test_high_precision_laser_mode(recent_match_sample: Dict, playwright_browser: Page):
+async def test_high_precision_laser_mode(recent_match_sample: dict, playwright_browser: Page):
     """V119.0 Test B: 高精度验证测试 - Laser Mode 满血抓取
 
     验证 V117.1 引擎对 2024-2025 年近期页面的高精度提取能力。
@@ -167,7 +166,7 @@ async def test_high_precision_laser_mode(recent_match_sample: Dict, playwright_b
 @pytest.mark.e2e
 @pytest.mark.slow
 @pytest.mark.asyncio
-async def test_entity_avg_synthesis(recent_match_sample: Dict, playwright_browser: Page):
+async def test_entity_avg_synthesis(recent_match_sample: dict, playwright_browser: Page):
     """V119.0 Test C: Entity_AVG 自动合成逻辑验证
 
     验证当 Entity_AVG 缺失时，系统能够从所有已识别 Entity 自动计算平均值。
@@ -244,7 +243,7 @@ async def test_entity_avg_synthesis(recent_match_sample: Dict, playwright_browse
 
 
 @pytest.mark.e2e
-def test_regression_summary(historical_match_sample: Dict, recent_match_sample: Dict):
+def test_regression_summary(historical_match_sample: dict, recent_match_sample: dict):
     """V119.0: 回归测试摘要报告
 
     显示测试样本信息，方便调试和追踪。
@@ -257,12 +256,12 @@ def test_regression_summary(historical_match_sample: Dict, recent_match_sample: 
     logger.info("V119.0 E2E Regression Test Suite - Test Samples")
     logger.info("=" * 80)
 
-    logger.info(f"\n[Test A] Historical Match (2021-2022):")
+    logger.info("\n[Test A] Historical Match (2021-2022):")
     logger.info(f"  Match ID: {historical_match_sample['match_id']}")
     logger.info(f"  Match Date: {historical_match_sample['match_date']}")
     logger.info(f"  URL: {historical_match_sample['oddsportal_url']}")
 
-    logger.info(f"\n[Test B] Recent Match (2024-2025):")
+    logger.info("\n[Test B] Recent Match (2024-2025):")
     logger.info(f"  Match ID: {recent_match_sample['match_id']}")
     logger.info(f"  Match Date: {recent_match_sample['match_date']}")
     logger.info(f"  URL: {recent_match_sample['oddsportal_url']}")

@@ -286,7 +286,6 @@ class VenueAnalyzer:
             # 加0.01防止除零错误
             return home_goals / (away_goals + 0.01)
 
-
         except Exception as e:
             logger.exception(f"计算主场优势失败: {e!s}")
             return 1.0  # 默认中性优势

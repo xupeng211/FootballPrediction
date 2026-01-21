@@ -267,9 +267,7 @@ class AtomicProcessor(BaseProcessor[MatchData]):
                 away_val = features[away_key]
 
                 # 检查是否为缺失值标记
-                if (
-                    self.config.missing_indicator not in (home_val, away_val)
-                ):
+                if self.config.missing_indicator not in (home_val, away_val):
                     diff_features[f"diff_{field}"] = round(home_val - away_val, 3)
                 else:
                     diff_features[f"diff_{field}"] = self.config.missing_indicator

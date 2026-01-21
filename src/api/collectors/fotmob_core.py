@@ -1130,13 +1130,16 @@ class FotMobCoreCollector:
                 "away_score": None,  # 将在parse阶段填入
             }
 
-
         except Exception as e:
             logger.exception(f"❌ 提取比赛基础信息失败: {e}")
             return None
 
     def upsert_match_data(
-        self, match_info: dict, l2_json: dict, league_id: int | None = None, season: str | None = None
+        self,
+        match_info: dict,
+        l2_json: dict,
+        league_id: int | None = None,
+        season: str | None = None,
     ) -> bool:
         """
         数据库UPSERT操作 - V26.3 架构修复版
@@ -1601,9 +1604,7 @@ class FotMobCoreCollector:
 
                             if extraction_result and extraction_result.features:
                                 features = extraction_result.features
-                                feature_count = len(
-                                    [k for k in features if not k.startswith("_")]
-                                )
+                                feature_count = len([k for k in features if not k.startswith("_")])
 
                                 # V26.7: 只有真正的 6000+ 维才输出成功日志
                                 if feature_count >= 6000:
@@ -1644,7 +1645,9 @@ class FotMobCoreCollector:
             self._increment_failure()
             return False
 
-    def smart_fetch(self, match_id: int, league_id: int | None = None, season: str | None = None) -> dict | None:
+    def smart_fetch(
+        self, match_id: int, league_id: int | None = None, season: str | None = None
+    ) -> dict | None:
         """
         V11.2: 智能获取 - 支持故障回退策略
 

@@ -237,7 +237,6 @@ class ProductionL1Collector:
                 away_score=away_score,
             )
 
-
         except ValueError as e:
             # Pydantic 校验失败，记录错误并拒绝数据
             logger.exception(f"❌ Pydantic 校验失败: {e}")

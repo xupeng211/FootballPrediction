@@ -1193,7 +1193,6 @@ class SchemaManager:
             # 7天3场比赛 = 0.43，7天1场比赛 = 0.14
             return min(1.0, match_count / lookback_days)
 
-
         except Exception as e:
             logger.exception(f"❌ 计算疲劳度失败 ({team_name}): {e}")
             return 0.5  # 默认中等疲劳度

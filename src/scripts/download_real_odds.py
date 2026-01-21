@@ -69,7 +69,6 @@ def get_random_user_agent() -> str:
 def download_odds_data():
     """V11.0: 下载真实赔率数据（增强版，带重试和 UA 轮换）"""
 
-
     # 数据源URLs - 扩展到三个赛季
     urls = {
         "22/23": "https://www.football-data.co.uk/mmz4281/2223/E0.csv",  # 英超
@@ -104,7 +103,6 @@ def download_odds_data():
                 # 读取CSV
                 df = pd.read_csv(url)
                 df["Season"] = season
-
 
                 # 标准化列名
                 df = standardize_columns(df)
@@ -243,8 +241,6 @@ def standardize_columns(df: pd.DataFrame) -> pd.DataFrame:
     return df[(df["home_team"].isin(valid_teams)) & (df["away_team"].isin(valid_teams))]
 
 
-
-
 def merge_with_predictions(real_odds_path: str, predictions_path: str) -> pd.DataFrame:
     """
     将真实赔率与预测数据合并
@@ -260,7 +256,6 @@ def merge_with_predictions(real_odds_path: str, predictions_path: str) -> pd.Dat
     # 加载数据
     odds_df = pd.read_csv(real_odds_path)
     pred_df = pd.read_csv(predictions_path)
-
 
     # 确保日期格式一致
     if "match_time" in pred_df.columns:
@@ -287,7 +282,6 @@ def merge_with_predictions(real_odds_path: str, predictions_path: str) -> pd.Dat
 
         merged_df["date_diff"] = abs((match_time - match_date).dt.days)
         merged_df = merged_df[merged_df["date_diff"] <= 3]
-
 
     # 保存合并数据
     output_path = "/home/user/projects/FootballPrediction/data/merged_real_odds.csv"

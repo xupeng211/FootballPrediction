@@ -13,18 +13,15 @@ V1.2.1 L3 特征提取器单元测试 (Golden Mocking)
 数据来源: 真实 FotMob API 数据样本 (match_id: 4535624)
 """
 
-import sys
 from pathlib import Path
+import sys
 
 import pytest
 
 # 添加项目路径
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.api.collectors.l3_feature_processor_v38_5_1 import (
-    L3FeatureExtractor,
-    L3MatchFeatures,
-)
+from src.api.collectors.l3_feature_processor_v38_5_1 import L3FeatureExtractor, L3MatchFeatures
 
 
 class TestDefensiveConversion:

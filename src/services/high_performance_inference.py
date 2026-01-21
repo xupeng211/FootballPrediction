@@ -140,10 +140,7 @@ class VectorizedOddsCalculator:
                 prob_vectors[idx] = VALIDATOR.normalize_probabilities(prob_vectors[idx].tolist())
 
         # 检查概率范围
-        return np.clip(
-            prob_vectors, PROBABILITY.MIN_PROBABILITY, PROBABILITY.MAX_PROBABILITY
-        )
-
+        return np.clip(prob_vectors, PROBABILITY.MIN_PROBABILITY, PROBABILITY.MAX_PROBABILITY)
 
     def convert_to_decimal_vectorized(
         self, float_array: np.ndarray, preserve_precision: bool = True

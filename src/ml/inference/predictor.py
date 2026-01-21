@@ -562,7 +562,6 @@ class MatchPredictor:
         # 重新归一化以确保总和为1
         return VALIDATOR.normalize_probabilities(validated_probs)
 
-
     def _check_numerical_stability(self, feature_list: list[float]) -> None:
         """
         数值稳定性检查

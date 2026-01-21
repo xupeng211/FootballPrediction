@@ -373,7 +373,6 @@ class MatchFeatureExtractor:
                 "h2h_avg_total_goals": float(h2h_stats.avg_total_goals),
             }
 
-
         except Exception as e:
             self.logger.warning(f"H2H特征提取失败: {e!s}")
             return self._get_default_h2h_features()
@@ -602,7 +601,6 @@ class MatchFeatureExtractor:
             .sort_values("match_date", ascending=False)
             .head(limit)
         )
-
 
     def _calculate_recent_form(self, team_matches: pd.DataFrame, team_id: int) -> dict[str, float]:
         """

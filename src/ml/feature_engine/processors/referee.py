@@ -217,7 +217,6 @@ class RefereeProcessor(BaseProcessor[MatchData]):
         # 取前 4 字节转换为 int32
         return int.from_bytes(hash_bytes[:4], byteorder="big", signed=True)
 
-
     def _compute_referee_strictness(
         self, referee_name: str, provided_strictness: float | None
     ) -> float:

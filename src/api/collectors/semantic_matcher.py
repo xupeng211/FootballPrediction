@@ -230,4 +230,3 @@ class SemanticMatcher:
 
         # Weighted average
         return 0.4 * time_score + 0.6 * name_similarity
-

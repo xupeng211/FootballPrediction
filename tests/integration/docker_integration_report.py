@@ -4,12 +4,12 @@ Docker 容器集成测试报告生成器
 生成《V19.3 Docker 容器集成测试报告》
 """
 
+from datetime import datetime
 import json
 import os
+from pathlib import Path
 import subprocess
 import sys
-from datetime import datetime
-from pathlib import Path
 
 # 添加项目路径
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
@@ -36,17 +36,16 @@ class IntegrationTestReport:
         """检测运行环境"""
         if os.path.exists("/.dockerenv"):
             return "docker_container"
-        elif os.getenv("DOCKER_ENV") == "true":
+        if os.getenv("DOCKER_ENV") == "true":
             return "docker_compose"
-        else:
-            return "local"
+        return "local"
 
     def run_connectivity_check(self) -> dict:
         """运行连通性检查"""
         print("\n🔍 执行连通性检查...")
 
         script_path = Path(__file__).parent / "docker_connectivity_check.py"
-        result = subprocess.run([sys.executable, str(script_path)], capture_output=True, text=True)
+        result = subprocess.run([sys.executable, str(script_path)], check=False, capture_output=True, text=True)
 
         output = result.stdout
         return_code = result.returncode
@@ -73,7 +72,7 @@ class IntegrationTestReport:
         print("\n🚀 执行冒烟测试...")
 
         script_path = Path(__file__).parent / "docker_smoke_test.py"
-        result = subprocess.run([sys.executable, str(script_path)], capture_output=True, text=True)
+        result = subprocess.run([sys.executable, str(script_path)], check=False, capture_output=True, text=True)
 
         return_code = result.returncode
 

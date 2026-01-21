@@ -240,7 +240,6 @@ class MatchFeatures(BaseModel):
         },
     )
 
-
     @computed_field
     @property
     def total_features_count(self) -> int:

@@ -222,7 +222,9 @@ class FailoverCollector:
 
         return fallback_success
 
-    def _try_fotmob(self, match_id: int, league_id: int | None = None, season: str | None = None) -> bool:
+    def _try_fotmob(
+        self, match_id: int, league_id: int | None = None, season: str | None = None
+    ) -> bool:
         """
         尝试使用 FotMob 采集
 

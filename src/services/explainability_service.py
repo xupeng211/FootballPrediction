@@ -297,7 +297,6 @@ class ExplainabilityService:
                 "feature_importance_ranking": importance_ranking,
             }
 
-
         except Exception as e:
             logger.exception(f"单个预测解释失败: {e}")
             raise ExplainabilityError(f"预测解释失败: {e!s}")

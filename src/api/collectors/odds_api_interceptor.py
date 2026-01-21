@@ -311,7 +311,6 @@ class OddsAPIInterceptor:
         # Step 2: Parse response
         return self.parse_api_response(raw_json, entity_code, match_id)
 
-
     # ========================================================================
     # Helper Methods
     # ========================================================================

@@ -32,11 +32,9 @@ def find_best_match(team_name, team_list, threshold=0.8):
 def merge_odds_and_predictions():
     """合并赔率和预测数据"""
 
-
     # 加载数据
     odds_df = pd.read_csv("/home/user/projects/FootballPrediction/data/real_odds_raw.csv")
     pred_df = pd.read_csv("/home/user/projects/FootballPrediction/data/multi_season_v85.csv")
-
 
     # 创建合并后的数据列表
     merged_data = []

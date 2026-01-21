@@ -818,7 +818,6 @@ if __name__ == "__main__":
         level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     )
 
-
     # 创建监控实例（针对 4813551: MNU vs NEW）
     monitor = MarketLiveMonitor(target_match_id="4813551")
 
@@ -832,4 +831,3 @@ if __name__ == "__main__":
 
     # 检查风控状态
     risk_level = monitor.risk_monitor.check_risk_level()
-

@@ -805,7 +805,6 @@ async def quick_incremental_collect(target_count: int = 50) -> CollectStatistics
     if stats.zombie_matches_fixed > 0:
         pass
 
-
     return stats
 
 

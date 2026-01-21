@@ -4,8 +4,8 @@ V12.3 核心组件验证测试 - 简化版
 专注验证核心逻辑是否正确，避免复杂的测试框架依赖
 """
 
-import logging
 from datetime import UTC, datetime
+import logging
 
 from src.api.collectors.fotmob_core import FotMobCoreCollector
 
@@ -38,10 +38,9 @@ class V123CoreValidation:
             logger.info(f"✅ 哨兵阈值正确: {actual_threshold} bytes")
             self.test_results["sentry_logic"]["threshold"] = "PASSED"
             return True
-        else:
-            logger.error(f"❌ 哨兵阈值错误: 期望{expected_threshold}，实际{actual_threshold}")
-            self.test_results["sentry_logic"]["threshold"] = "FAILED"
-            return False
+        logger.error(f"❌ 哨兵阈值错误: 期望{expected_threshold}，实际{actual_threshold}")
+        self.test_results["sentry_logic"]["threshold"] = "FAILED"
+        return False
 
     def test_size_validation_logic(self):
         """测试大小验证逻辑"""
@@ -63,7 +62,6 @@ class V123CoreValidation:
         medium_rejected = medium_size < threshold
         large_rejected = large_size < threshold
 
-
         if small_rejected and medium_rejected and not large_rejected:
             logger.info("✅ 大小验证逻辑正确")
             logger.info(f"   小数据({small_size}B): 拒绝={small_rejected}")
@@ -71,10 +69,9 @@ class V123CoreValidation:
             logger.info(f"   大数据({large_size}B): 拒绝={large_rejected}")
             self.test_results["sentry_logic"]["size_validation"] = "PASSED"
             return True
-        else:
-            logger.error("❌ 大小验证逻辑错误")
-            self.test_results["sentry_logic"]["size_validation"] = "FAILED"
-            return False
+        logger.error("❌ 大小验证逻辑错误")
+        self.test_results["sentry_logic"]["size_validation"] = "FAILED"
+        return False
 
     def test_hollow_match_logging(self):
         """测试空心比赛日志记录"""
@@ -107,17 +104,15 @@ class V123CoreValidation:
         historical_diff = self.current_time - historical_date
         should_accept_historical = historical_diff.total_seconds() > 0
 
-
         if should_reject_future and should_accept_historical:
             logger.info("✅ 历史过滤器逻辑正确")
             logger.info(f"   未来赛项({future_diff.days}天后): 拒绝={should_reject_future}")
             logger.info(f"   历史赛项({historical_diff.days}天前): 接受={should_accept_historical}")
             self.test_results["filter_logic"]["basic"] = "PASSED"
             return True
-        else:
-            logger.error("❌ 历史过滤器逻辑错误")
-            self.test_results["filter_logic"]["basic"] = "FAILED"
-            return False
+        logger.error("❌ 历史过滤器逻辑错误")
+        self.test_results["filter_logic"]["basic"] = "FAILED"
+        return False
 
     def test_data_structure_validation(self):
         """测试数据结构验证"""
@@ -142,10 +137,9 @@ class V123CoreValidation:
             logger.info("✅ 数据结构验证通过")
             self.test_results["parser_logic"]["structure"] = "PASSED"
             return True
-        else:
-            logger.error("❌ 数据结构验证失败")
-            self.test_results["parser_logic"]["structure"] = "FAILED"
-            return False
+        logger.error("❌ 数据结构验证失败")
+        self.test_results["parser_logic"]["structure"] = "FAILED"
+        return False
 
     def test_dynamic_id_loading(self):
         """测试动态ID加载"""
@@ -161,14 +155,12 @@ class V123CoreValidation:
                     logger.info(f"✅ 动态ID加载功能正常: 加载了{len(match_ids)}个ID")
                     self.test_results["parser_logic"]["dynamic_loading"] = "PASSED"
                     return True
-                else:
-                    logger.error(f"❌ 动态ID加载返回类型错误: 期望list，实际{type(match_ids)}")
-                    self.test_results["parser_logic"]["dynamic_loading"] = "FAILED"
-                    return False
-            else:
-                logger.error("❌ 缺少动态ID加载方法")
+                logger.error(f"❌ 动态ID加载返回类型错误: 期望list，实际{type(match_ids)}")
                 self.test_results["parser_logic"]["dynamic_loading"] = "FAILED"
                 return False
+            logger.error("❌ 缺少动态ID加载方法")
+            self.test_results["parser_logic"]["dynamic_loading"] = "FAILED"
+            return False
 
         except Exception as e:
             logger.error(f"❌ 动态ID加载测试失败: {e}")

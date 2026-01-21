@@ -4,8 +4,8 @@ V13.0 历史过滤器测试 - TDD驱动开发
 在代码实现前，先编写测试逻辑来验证未来赛项和历史赛项的判定
 """
 
-import logging
 from datetime import UTC, datetime, timedelta
+import logging
 from unittest.mock import patch
 
 import pytest

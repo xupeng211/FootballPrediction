@@ -220,8 +220,10 @@ class FeatureSchemaValidator:
             # 允许列表/字典 (用于 JSONB 存储)
             if isinstance(value, (list, dict)):
                 # 检查嵌套元素
-                if isinstance(value, list) and len(value) > 0 and not all(
-                    isinstance(v, (valid_types, list, dict)) for v in value
+                if (
+                    isinstance(value, list)
+                    and len(value) > 0
+                    and not all(isinstance(v, (valid_types, list, dict)) for v in value)
                 ):
                     result.add_warning(field=name, message="列表包含无效类型的元素")
                 continue

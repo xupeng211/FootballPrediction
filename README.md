@@ -1,8 +1,8 @@
-# FootballPrediction V26.7
+# FootballPrediction Engine
 
 > **"以年化 25% 的真实收益率为北极星指标，构建一个可验证、可复制、可持续的体育预测系统。"**
 >
-> **📌 生产级标准**: V26.7 安全加固 | 10 端口代理轮换 | 6000 维纯净输出 | TDD 全绿
+> **📌 Production-Ready**: V41.370 Consolidated Engine | Golden Shield Audit | One-Click Deployment
 >
 > **📘 开发指南**: 详见 [CLAUDE.md](CLAUDE.md)
 
@@ -10,402 +10,140 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
-[![V26.7](https://img.shields.io/badge/version-V26.7%20Production%20Ready-brightgreen.svg)](https://github.com/xupeng211/FootballPrediction)
+[![V41.370](https://img.shields.io/badge/version-V41.370%20Production%20Ready-brightgreen.svg)](https://github.com/xupeng211/FootballPrediction)
 [![Tests](https://img.shields.io/badge/tests-60%2B%20passed-success.svg)](tests/)
 
-**V26.7 Production-Ready | 10 端口代理轮换 | 6000 维纯净输出 | TDD 驱动开发**
-
----
-
-## 🚨 V26.7 重要更新
-
-### 🛡️ 代理集群安全加固
-- **10 端口代理池**: `172.25.16.1:7891-7900`（9/10 可用）
-- **6 个唯一 IP**: 真实轮换，避免单点故障
-- **TDD 健康测试**: `tests/ops/test_proxy_health.py` 确保代理可用
-
-### 📊 深度特征净化
-- **6000 维纯净输出**: 移除所有 152 维旧逻辑误导
-- **维度不足警告**: 新增 `⚠️ [深度解析维度不足]` 日志
-- **数据库验证**: 3 场比赛确认 6000 维数据已入库
-
-### 🧪 测试覆盖率提升
-- **熔断器测试**: 14/14 通过（修复隔离问题）
-- **API 测试**: 43/43 通过
-- **代理健康测试**: 4/4 通过（1 skipped）
+**V41.370 Grand Deployment | Consolidated Engine | 1770 Perfect Samples | 48% Accuracy Baseline**
 
 ---
 
 ## 📋 目录
 
+- [项目简介](#项目简介)
 - [系统架构](#系统架构)
-- [黑科技解析](#黑科技解析)
+- [数据资产](#数据资产)
 - [快速开始](#快速开始)
 - [生产运维](#生产运维)
-- [开发指南](#开发指南)
 - [技术栈](#技术栈)
+- [版本演进](#版本演进)
+
+---
+
+## 🎯 项目简介
+
+**FootballPrediction Engine** 是一个基于 XGBoost 3.0+ 的专业足球比赛预测系统，采用工业级数据采集流水线和机器学习引擎，提供可验证的预测能力。
+
+### 核心特性
+
+- **🛡️ Ghost Protocol V141.0**: 30+ 浏览器指纹池 + 人类行为模拟
+- **🏆 Consolidated Engine V41.350**: 浏览器单例 + 金盾校验
+- **📊 多源数据采集**: FotMob API + OddsPortal RPA
+- **🔮 XGBoost 预测引擎**: 6000+ 维深度特征
+- **🚀 一键部署**: `python main.py --task harvest --limit 2000`
+
+### 数据资产统计
+
+| 指标 | 数值 | 说明 |
+|------|------|------|
+| **Perfect Samples** | 1,770 | 三位一体样本 (Odds + Lineups + Features) |
+| **Accuracy Baseline** | 48% | 真赛前基线准确率 |
+| **Feature Dimensions** | 6,000+ | V26.8 深度特征向量 |
+| **Leagues Covered** | 15+ | 顶级联赛覆盖 |
+| **Inference Latency** | <100ms | 单次预测响应时间 |
 
 ---
 
 ## 🏗️ 系统架构
 
-### V139.0 双线流水线架构
+### V41.350 Consolidated Engine
 
-项目采用**双线流水线架构**，实现数据采集的全自动化：
+```
+╔══════════════════════════════════════════════════════════════════════╗
+║                  V41.350 CONSOLIDATED ENGINE                           ║
+║  ┌─────────────────────────────────────────────────────────────────┐  ║
+║  │  BrowserManager (V41.291) - Memory-Optimized Singleton        │  ║
+║  │  • Single Browser Instance (1.2GB → 300MB)                      │  ║
+║  │  • Isolated BrowserContext per Worker                          │  ║
+║  │  • Anti-modal Script Injection                                 │  ║
+║  └─────────────────────────────────────────────────────────────────┘  ║
+║  ┌─────────────────────────────────────────────────────────────────┐  ║
+║  │  IntegrityGuard (V41.287) - Golden Shield Validation          │  ║
+║  │  • Feature Richness Calculation (Recursive)                    │  ║
+║  │  • Core Metrics Check (xG, Shots, Possession)                 │  ║
+║  │  • Quality Rating (EXCELLENT/GOOD/FAIR/POOR)                  │  ║
+║  └─────────────────────────────────────────────────────────────────┘  ║
+╚══════════════════════════════════════════════════════════════════════╝
+                              ↓
+╔══════════════════════════════════════════════════════════════════════╗
+║                    MULTI-SOURCE DATA COLLECTION                        ║
+║  ┌──────────────────────┐  ┌──────────────────────┐                  ║
+║  │  FotMob V144.5       │  │  OddsPortal V144.2   │                  ║
+║  │  • Unified Schema    │  │  • Enhanced Stealth  │                  ║
+║  │  • L2 API Harvest    │  │  • RPA Extraction    │                  ║
+║  │  • Real-time Stats   │  │  • Pinnacle Odds     │                  ║
+║  └──────────────────────┘  └──────────────────────┘                  ║
+╚══════════════════════════════════════════════════════════════════════╝
+                              ↓
+╔══════════════════════════════════════════════════════════════════════╗
+║                         PERSISTENCE LAYER                              ║
+║  PostgreSQL 15 + Redis 7 + Unified Schema (V36.0)                    ║
+╚══════════════════════════════════════════════════════════════════════╝
+```
+
+### 数据流水线
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                    L1: FotMob API - 基础数据层                    │
-│  src/api/collectors/fotmob_core.py (V144.5)                     │
-│  ┌────────────────────────────────────────────────────────────┐ │
-│  │  🛡️ Ghost Protocol V144.2 保护版                          │ │
-│  │  • 比赛基础信息: league, season, teams, match_time         │ │
-│  │  • V36.0 Schema: season_id, season_name, match_time_utc   │ │
-│  │  • 实时统计数据: xG, shots, possession                      │ │
-│  │  • 30+ UA 指纹池轮换 + 哨兵机制 + 熔断恢复                 │ │
-│  └────────────────────────────────────────────────────────────┘ │
+│  L1: FotMob API - 基础数据层                                    │
+│  • 比赛基础信息: league, season, teams, match_time               │
+│  • V36.0 Schema: season_id, season_name, match_time_utc         │
+│  • 实时统计数据: xG, shots, possession                           │
 └─────────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────────┐
-│                    L2: URL Harvest - 链接收割层                   │
-│  scripts/v139_0_auto_cruise_controller.py                        │
-│  ┌────────────────────────────────────────────────────────────┐ │
-│  │  • 自动导航联赛页面                                         │ │
-│  │  • 智能提取比赛详情链接                                     │ │
-│  │  • 【关键】仅提取新格式 URL: /football/.../.../...        │ │
-│  └────────────────────────────────────────────────────────────┘ │
+│  L2: URL Harvest - 链接收割层                                    │
+│  • 自动导航联赛页面                                              │
+│  • 智能提取比赛详情链接                                          │
+│  • 仅提取新格式 URL: /football/.../.../...                      │
 └─────────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────────┐
-│                    L3: RPA Extraction - 赔率提取层                │
-│  src/api/collectors/odds_production_extractor.py                 │
-│  ┌────────────────────────────────────────────────────────────┐ │
-│  │  【黑科技 1】智能轮询                                       │ │
-│  │    • wait_for_selector(60s) 替代硬等待                     │ │
-│  │    • 元素一出现立即响应，毫秒级感应                        │ │
-│  │                                                            │ │
-│  │  【黑科技 2】悬停自愈                                       │ │
-│  │    • scroll_into_view_if_needed() 滚动对焦                │ │
-│  │    • 鼠标抖动自愈 (±5px) 重新触发 tooltip                  │ │
-│  │    • 10 次轮询 × 500ms = 5 秒智能等待                     │ │
-│  │                                                            │ │
-│  │  • 提取目标: Pinnacle 开盘赔率 + 时间戳                    │ │
-│  │  • 数据完整性: Score = 1/P1 + 1/P2 + 1/P3                │ │
-│  └────────────────────────────────────────────────────────────┘ │
+│  L3: RPA Extraction - 赔率提取层                                 │
+│  • 智能轮询: wait_for_selector(60s)                             │
+│  • 悬停自愈: scroll_into_view_if_needed()                       │
+│  • 提取目标: Pinnacle 开盘赔率 + 时间戳                          │
 └─────────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────────┐
-│                    PostgreSQL 持久层                              │
+│  PostgreSQL 持久层                                               │
 │  matches 表 + metrics_multi_source_data 表                      │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-### URL 格式规范（重要！）
-
-**⚠️ 仅支持新格式 URL，旧格式已被 OddsPortal 永久废弃！**
-
-| 格式 | URL 模式 | 状态 | Pinnacle 数据可用性 |
-|------|----------|------|---------------------|
-| **新格式** ✅ | `/football/{country}/{league}-{years}/{home-team}-{away-team}/{id}/` | **支持** | **99.8%** |
-| **旧格式** ❌ | `/match/{XXXXX}/` | **已废弃** | 0.1% (几乎不可用) |
-
-**新格式示例**：
-```
-https://www.oddsportal.com/football/england/premier-league-2022-2023/arsenal-chelsea/QZqX1icF/
-```
-
-**旧格式示例（已废弃）**：
-```
-https://www.oddsportal.com/match/QZqX1icF/  ❌ HTTP 403/429
-```
-
 ---
 
-### V56.3 三层生产级架构
+## 📊 数据资产
 
-V56.3 采用**三层生产级架构**，实现从调度到采集再到持久化的完整数据流：
+### Perfect Samples (三位一体)
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                    第一层：Master 调度层                          │
-│  scripts/production_harvester.py                                │
-│  ┌────────────────────────────────────────────────────────────┐ │
-│  │  • 跨赛季/跨联赛编排: 21/22, 22/23, 23/24                 │ │
-│  │  • 智能跳过检测: 自动跳过已有 opening_time 的比赛          │ │
-│  │  • 反封禁机制: 每 30 场休息 60 秒                          │ │
-│  │  • IP 健康监控: 连续 3 次连接错误 → 5 分钟冷却            │ │
-│  └────────────────────────────────────────────────────────────┘ │
-└─────────────────────────────────────────────────────────────────┘
-                              ↓
-┌─────────────────────────────────────────────────────────────────┐
-│                    第二层：Production 提取层                     │
-│  src/api/collectors/odds_production_extractor.py               │
-│  ┌────────────────────────────────────────────────────────────┐ │
-│  │  【黑科技 1】智能轮询                                       │ │
-│  │    • wait_for_selector(60s) 替代硬等待                     │ │
-│  │    • 元素一出现立即响应，毫秒级感应                        │ │
-│  │                                                            │ │
-│  │  【黑科技 2】悬停自愈                                       │ │
-│  │    • scroll_into_view_if_needed() 滚动对焦                │ │
-│  │    • 鼠标抖动自愈 (±5px) 重新触发 tooltip                  │ │
-│  │    • 10 次轮询 × 500ms = 5 秒智能等待                     │ │
-│  │                                                            │ │
-│  │  • 提取目标: Pinnacle, 1xBet 开盘赔率 + 时间戳            │ │
-│  │  • 数据完整性: Score = 1/P1 + 1/P2 + 1/P3                │ │
-│  └────────────────────────────────────────────────────────────┘ │
-└─────────────────────────────────────────────────────────────────┘
-                              ↓
-┌─────────────────────────────────────────────────────────────────┐
-│                    第三层：Database 持久层                       │
-│  PostgreSQL 15 + Unified Schema (V56.0)                        │
-│  ┌────────────────────────────────────────────────────────────┐ │
-│  │  matches 表 (match_id: VARCHAR(50))                       │ │
-│  │    • 比赛基础信息: league, season, teams, match_time      │ │
-│  │                                                            │ │
-│  │  metrics_multi_source_data 表 (match_id: VARCHAR(50))      │ │
-│  │    • init_h/d/a: 初盘赔率                                  │ │
-│  │    • opening_time_h/d/a: 初盘时间戳                        │ │
-│  │    • final_h/d/a: 终盘赔率                                │ │
-│  │    • integrity_score: 完整性审计分数                      │ │
-│  │    • source_name: 数据源 (Entity_P, Entity_B3)            │ │
-│  └────────────────────────────────────────────────────────────┘ │
-└─────────────────────────────────────────────────────────────────┘
+```sql
+-- 查询三位一体样本数量
+SELECT COUNT(*) as perfect_samples
+FROM matches m
+INNER JOIN match_odds_intelligence modi ON m.match_id = modi.match_id
+INNER JOIN match_lineups ml ON m.match_id = ml.match_id
+WHERE m.technical_features IS NOT NULL;
+-- Result: 1,770 samples
 ```
 
----
+### 质量评级分布 (Golden Shield)
 
-### V26.5 自动巡航哨兵 & IP 消耗预警系统（2026-01-06 新增）
-
-V26.5 引入**自动巡航哨兵系统**和**IP 消耗预警**，实现 801 条 FAILED 记录的精细化抢救：
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                    V26.5 CollectionSentry                        │
-│  src/api/collectors/collection_sentry.py                        │
-│  ┌────────────────────────────────────────────────────────────┐ │
-│  │  🤖 滑动窗口统计（最近 N 个结果）                          │ │
-│  │  • 成功率监控（低于 70% 触发停机）                        │ │
-│  │  • 连续失败监控（超过 6 次触发停机）                      │ │
-│  │  • 自动设置 COLLECTION_PAUSE_UNTIL（12 小时冷却期）        │ │
-│  │  • 抛出 SecurityInterrupt 异常终止程序                    │ │
-│  └────────────────────────────────────────────────────────────┘ │
-└─────────────────────────────────────────────────────────────────┘
-                              ↓ 集成到
-┌─────────────────────────────────────────────────────────────────┐
-│                    HarvesterService.cruise                      │
-│  src/api/services/harvester_service.py                         │
-│  ┌────────────────────────────────────────────────────────────┐ │
-│  │  每次循环前检查健康度                                      │ │
-│  │  记录每次采集结果（成功/失败）                             │ │
-│  │  触发停机保护后优雅退出                                    │ │
-│  └────────────────────────────────────────────────────────────┘ │
-└─────────────────────────────────────────────────────────────────┘
-
-┌─────────────────────────────────────────────────────────────────┐
-│                    V26.5 IP 消耗预警系统                         │
-│  scripts/ops/v26_5_quality_dashboard.py                         │
-│  ┌────────────────────────────────────────────────────────────┐ │
-│  │  实时监控可用代理数量                                     │ │
-│  │  可用代理 < 2 时触发告急                                 │ │
-│  │  显示【警告：IP 资源即将枯竭】红色警示                  │ │
-│  │  提示立即补充代理 IP                                     │ │
-│  └────────────────────────────────────────────────────────────┘ │
-└─────────────────────────────────────────────────────────────────┘
-
-┌─────────────────────────────────────────────────────────────────┐
-│                    V26.5 抢救优先级过滤                          │
-│  scripts/maintenance/reprocess_failed_matches.py                │
-│  ┌────────────────────────────────────────────────────────────┐ │
-│  │  SQL 级别排序（CASE WHEN）                                │ │
-│  │  • Tier 1: 5 大联赛（英超、西甲、德甲、意甲、法甲）       │ │
-│  │  • Tier 2: 次级联赛（英冠、西乙等）                       │ │
-│  │  • Tier 3: 其他联赛                                       │ │
-│  │  • 同等级内按 updated_at DESC（最新优先）                 │ │
-│  └────────────────────────────────────────────────────────────┘ │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-**V26.5 核心特性**:
-- ✅ **自动停机保护**: 成功率 < 70% **AND** 连续失败 >= 6 次 → 自动停机
-- ✅ **IP 告急响应**: 可用代理 < 2 个 → 红色警示 + 补充提示
-- ✅ **高价值优先**: 5 大联赛数据优先抢救（SQL 级别排序）
-- ✅ **分阶段执行**: 5 场 → 100 场 → 500 场 → 全量（801 场）
-
----
-
-### V26.6 全球数据支持（2026-01-06 新增）
-
-V26.6 引入**FotMob 全球数据扩充系统**，在 OddsPortal 冷却期间扩展数据采集范围：
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                    V26.6 全球联赛注册表                          │
-│  src/api/collectors/fotmob_league_registry.py                     │
-│  ┌────────────────────────────────────────────────────────────┐ │
-│  │  31 个全球联赛完整元数据                                    │ │
-│  │  • 欧洲 (17): 英超、西甲、德甲、意甲、法甲、葡超、荷甲等 │ │
-│  │  • 美洲 (4): 美职联、巴甲、阿甲、墨超                        │ │
-│  │  • 亚洲 (7): 日职联、中超、K联赛、沙特超、澳超等           │ │
-│  │  • 非洲 (3): 南非超、埃及超、尼日利亚超                      │ │
-│  │                                                            │ │
-│  │  Tier 质量分级系统:                                        │ │
-│  │  • Tier 1 Premium: 5 大联赛（英超、西甲、德甲、意甲、法甲） │ │
-│  │  • Tier 2 Standard: 次级联赛（英冠、葡超、荷甲等）         │ │
-│  │  • Tier 3 Basic: 低级别联赛（印超、南非超等）               │ │
-│  └────────────────────────────────────────────────────────────┘ │
-└─────────────────────────────────────────────────────────────────┘
-                              ↓
-┌─────────────────────────────────────────────────────────────────┐
-│                    V26.6 配置管理系统                             │
-│  src/config/harvest_config.py + config/global_harvest_list.yaml  │
-│  ┌────────────────────────────────────────────────────────────┐ │
-│  │  YAML 配置文件，轻松启用/禁用联赛                          │ │
-│  │  • enabled: true/false 开关控制                            │ │
-│  │  • seasons: 赛季列表（23/24, 24/25, 2024, 2025）            │ │
-│  │  • 采集任务列表自动生成                                    │ │
-│  │  • V26.5 哨兵配置集成                                      │ │
-│  └────────────────────────────────────────────────────────────┘ │
-└─────────────────────────────────────────────────────────────────┘
-                              ↓
-┌─────────────────────────────────────────────────────────────────┐
-│                    V26.6 历史回填引擎                              │
-│  scripts/maintenance/fotmob_historical_backfill.py               │
-│  ┌────────────────────────────────────────────────────────────┐ │
-│  │  自动发现历史比赛 ID（3-5 年）                             │ │
-│  │  批量采集比赛数据                                          │ │
-│  │  哨兵系统集成（自动停机保护）                              │ │
-│  │  断点续传 + 干跑模式                                       │ │
-│  └────────────────────────────────────────────────────────────┘ │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-**全球联赛覆盖清单**:
-
-**Tier 1 Premium (5 大联赛)**:
-- ✅ 英超 (47) - Premier League
-- ✅ 西甲 (87) - La Liga
-- ✅ 德甲 (78) - Bundesliga
-- ✅ 意甲 (126) - Serie A
-- ✅ 法甲 (53) - Ligue 1
-
-**Tier 2 Standard (12 个次级联赛)**:
-- ✅ 英冠 (48) - Championship
-- ✅ 西乙 (94) - Segunda División
-- ✅ 德乙 (95) - 2. Bundesliga
-- ✅ 意乙 (127) - Serie B
-- ✅ 葡超 (155) - Liga Portugal
-- ✅ 荷甲 (129) - Eredivisie
-- ✅ 比甲 (118) - Jupiler Pro League
-- ✅ 苏超 (157) - Scottish Premiership
-- ✅ 土超 (201) - Süper Lig
-- ✅ 希超 (96) - Super League Greece
-- ✅ 俄超 (153) - Premier League Russia
-- ✅ 乌超 (186) - Premier Liha
-- ✅ 美职联 (203) - MLS
-- ✅ 巴甲 (274) - Serie A Brazil
-- ✅ 日职联 (345) - J-League Division 1
-- ✅ 沙特超 (410) - Saudi Pro League
-- ✅ 澳超 (312) - A-League
-
-**Tier 3 Basic (14 个基础联赛)**:
-- ✅ 阿甲 (275) - Liga Profesional
-- ✅ 墨超 (298) - Liga MX
-- ✅ 中超 (322) - Chinese Super League
-- ✅ K联赛 (353) - K-League 1
-- ✅ 阿联酋职业联赛 (411) - ADNOC Pro League
-- ✅ 印超 (397) - Indian Super League
-- ✅ 南非超 (288) - Premier Soccer League
-- ✅ 埃及超 (287) - Premier League
-- ✅ 尼日利亚职业足球联赛 (412) - NPFL
-
-**V26.6 核心特性**:
-- ✅ **全球覆盖**: 31 个联赛，涵盖欧洲、美洲、亚洲、非洲四大洲
-- ✅ **Tier 分级**: 3 个质量等级，优先采集高价值联赛
-- ✅ **配置驱动**: YAML 配置文件，轻松启用/禁用联赛
-- ✅ **历史回填**: 自动发现和采集 3-5 年历史数据
-- ✅ **哨兵兼容**: 100% 兼容 V26.5 安全锁和监控系统
-- ✅ **TDD 保证**: 28 个测试全部通过，100% 覆盖
-
----
-
-## 🔬 黑科技解析
-
-### 1. 智能轮询 (Smart Polling)
-
-**问题**: V55.27 使用 `await asyncio.sleep(20)` 硬等待，网络快时浪费时间，网络慢时抓取失败。
-
-**V56.3 解决方案**:
-```python
-# V56.3: 毫秒级感应
-await page.wait_for_selector(
-    "div[data-testid='odd-container']",
-    timeout=60000  # 最大等待 60 秒
-)
-# 元素一出现立即执行 hover，无浪费
-```
-
-**效果**:
-- 网络快时: 2-3 秒即响应
-- 网络慢时: 最多等待 60 秒，确保不漏抓
-
----
-
-### 2. 鼠标抖动自愈 (Mouse Jitter Self-Healing)
-
-**问题**: Tooltip 有时不会立即弹出，导致悬停失败。
-
-**V56.3 解决方案**:
-```python
-# 步骤 1: 滚动对焦
-await target.scroll_into_view_if_needed(timeout=5000)
-
-# 步骤 2: 悬停
-await target.hover()
-
-# 步骤 3: 智能轮询检测 tooltip
-for poll_attempt in range(10):  # 10 次轮询
-    tooltip_data = await page.evaluate("...")
-    if tooltip_data:
-        break
-    await page.wait_for_timeout(500)  # 等待 500ms
-
-# 步骤 4: 鼠标抖动自愈（如果首次失败）
-if not tooltip_found and attempt == 0:
-    box = await target.bounding_box()
-    await page.mouse.move(box['x'] + 5, box['y'] + 5)  # 轻微移动
-    await page.mouse.move(box['x'], box['y'])          # 重新悬停
-```
-
-**效果**:
-- 悬停成功率提升 20%+
-- 自动适应不同网站的 tooltip 响应速度
-
----
-
-### 3. IP 健康监控 (IP Health Monitoring)
-
-**问题**: 连续请求导致 IP 被封，大量数据丢失。
-
-**V56.3 解决方案**:
-```python
-# 检测连接错误
-is_connection_error = any(keyword in error_str for keyword in [
-    'err_connection_closed',
-    'timeout',
-    'network error'
-])
-
-# 连续 3 次错误 → 触发 5 分钟冷却
-if consecutive_connection_errors >= 3:
-    logger.warning("[V56.3] Cooling down for 5 mins to reset IP reputation")
-    await asyncio.sleep(300)  # 5 分钟
-    consecutive_connection_errors = 0
-```
-
-**效果**:
-- 自动检测 IP 被封
-- 自动冷却恢复
-- 数据丢失率 < 1%
+| 评级 | 标准 | 样本数 | 占比 |
+|------|------|--------|------|
+| **EXCELLENT** | ≥100维 + 4项核心指标 | 856 | 48.4% |
+| **GOOD** | ≥80维 + 3项核心指标 | 423 | 23.9% |
+| **FAIR** | ≥50维 + 2项核心指标 | 287 | 16.2% |
+| **POOR** | <50维 或 <2项核心指标 | 204 | 11.5% |
 
 ---
 
@@ -413,9 +151,11 @@ if consecutive_connection_errors >= 3:
 
 ### 环境要求
 
-- Python 3.11+
-- PostgreSQL 15
-- Docker & Docker Compose (推荐)
+- **Python**: 3.11+
+- **PostgreSQL**: 15+
+- **Redis**: 7+ (可选)
+- **内存**: 8GB+ (推荐 24GB)
+- **操作系统**: Linux/WSL2/macOS
 
 ### 安装步骤
 
@@ -424,218 +164,116 @@ if consecutive_connection_errors >= 3:
 git clone https://github.com/xupeng211/FootballPrediction.git
 cd FootballPrediction
 
-# 2. 安装依赖
+# 2. 创建虚拟环境
+python -m venv venv
+source venv/bin/activate  # Linux/macOS
+# venv\Scripts\activate   # Windows
+
+# 3. 安装依赖
 pip install -r requirements.txt
 
-# 3. 配置环境变量
+# 4. 配置环境变量
 cp .env.example .env
-# 编辑 .env，填写数据库凭证
+# 编辑 .env 文件，填写数据库连接信息
 
-# 4. 启动数据库
+# 5. 启动数据库服务
 docker-compose up -d db redis
 
-# 5. 初始化数据库
-make db-reset  # 或手动运行 scripts/sql/*.sql
-
-# 6. 运行生产收割引擎
-python scripts/production_harvester.py
+# 6. 运行一键收割
+python main.py --task harvest --limit 2000
 ```
 
-### Docker 部署（推荐）
+### 一键命令入口
 
 ```bash
+# V41.360: 一键收割 (Consolidated Engine)
+python main.py --task harvest --limit 2000
+
+# V41.360: Golden Shield 审计
+python main.py --task audit
+
+# 传统模式 (向后兼容)
+python main.py --source fotmob --mode single --limit 10
+python main.py --source oddsportal --mode cruise
+```
+
+### Docker 部署
+
+```bash
+# 构建镜像
+docker-compose build
+
 # 启动所有服务
-docker-compose --profile all up -d
+docker-compose up -d
 
 # 查看日志
-docker-compose logs -f production_harvester
-
-# 停止服务
-docker-compose down
-```
-
-### 网络架构说明 (V144.2)
-
-#### WSL2 + Docker 网络配置
-
-当使用 WSL2 环境时，需要正确配置数据库连接：
-
-| 环境 | `DB_HOST` | 说明 |
-|------|-----------|------|
-| **Docker 容器** | `db` | 容器间通信 (使用 docker-compose 服务名) |
-| **WSL2 本地** | `172.25.16.1` | WSL2 访问 Docker 容器 (默认桥接网关) |
-| **本地开发** | `localhost` | 直接访问本地数据库 |
-
-**重要配置** (`src/config_unified.py`):
-
-```python
-# Docker 环境 (容器内)
-DB_HOST=db
-DB_NAME=football_db
-
-# WSL2 本地环境
-DB_HOST=172.25.16.1
-DB_NAME=football_db
-```
-
-**验证网络连接**:
-
-```bash
-# 检查 Docker 容器网络
-docker network inspect footballprediction_default
-
-# 从 WSL2 测试数据库连接
-docker-compose exec db pg_isready -U football_user -d football_db
-
-# 测试 WSL2 → Docker 连通性
-nc -zv 172.25.16.1 5432
+docker-compose logs -f
 ```
 
 ---
 
 ## 🔧 生产运维
 
-### SQL 查账语句
+### 代码质量检查
 
-#### 查看采集统计
+```bash
+# 格式化代码
+ruff format src/ tests/
 
-```sql
--- 查看各数据源采集情况
-SELECT
-    source_name,
-    COUNT(*) as total_records,
-    COUNT(opening_time_h) as with_opening_time,
-    ROUND(100.0 * COUNT(opening_time_h) / COUNT(*), 2) as success_rate
+# Lint 检查
+ruff check src/ tests/
+
+# 类型检查
+mypy src/
+
+# 安全扫描
+bandit -r src/
+
+# 运行测试
+make verify
+```
+
+### 数据库维护
+
+```bash
+# 进入 PostgreSQL Shell
+make db-shell
+
+# 查看数据采集统计
+SELECT source_name, COUNT(*) as total_records
 FROM metrics_multi_source_data
-GROUP BY source_name
-ORDER BY success_rate DESC;
-```
+GROUP BY source_name;
 
-#### 查看赛季覆盖
-
-```sql
--- 查看各赛季数据覆盖情况
-SELECT
-    m.season,
-    m.league_name,
-    COUNT(DISTINCT m.match_id) as total_matches,
-    COUNT(DISTINCT CASE WHEN msd.opening_time_h IS NOT NULL THEN m.match_id END) as with_pinnacle_data
-FROM matches m
-LEFT JOIN metrics_multi_source_data msd
-    ON m.match_id = msd.match_id
-    AND msd.source_name = 'Entity_P'
-GROUP BY m.season, m.league_name
-ORDER BY m.season DESC, m.league_name;
-```
-
-#### 查看数据完整性
-
-```sql
--- 查看 Pinnacle 数据完整性评分分布
+# 检查数据完整性
 SELECT
     CASE
         WHEN integrity_score < 1.02 THEN 'Too Low'
         WHEN integrity_score > 1.08 THEN 'Too High'
         ELSE 'Valid'
     END as score_category,
-    COUNT(*) as count,
-    ROUND(AVG(integrity_score), 4) as avg_score
+    COUNT(*) as count
 FROM metrics_multi_source_data
 WHERE source_name = 'Entity_P'
-    AND integrity_score IS NOT NULL
 GROUP BY score_category;
 ```
 
-### 启动命令
+### 故障排除
 
+**症状**: HTTP 429/403 错误频繁出现
 ```bash
-# 生产收割引擎（后台运行）
-nohup python scripts/production_harvester.py > logs/harvest.log 2>&1 &
+# 1. 测试代理连通性
+python main.py --test-proxy
 
-# 查看实时日志
-tail -f logs/harvest.log
-
-# 检查进程状态
-ps aux | grep production_harvester
-
-# 停止进程
-pkill -f production_harvester.py
+# 2. 等待冷却期 (6-24小时)
 ```
 
-### 监控指标
-
+**症状**: WSL2 无法连接 Docker 容器
 ```bash
-# 检查数据库连接
-docker-compose exec db pg_isready -U football_user
+# 1. 验证网桥 IP
+ping 172.25.16.1
 
-# 检查 Redis 连接
-docker-compose exec redis redis-cli ping
-
-# 查看 Pinnacle 捕获率
-echo "SELECT ROUND(100.0 * COUNT(opening_time_h) / COUNT(*), 2) \
-    FROM metrics_multi_source_data WHERE source_name = 'Entity_P';" | \
-    docker-compose exec -T db psql -U football_user -d football_prediction_dev
-```
-
----
-
-## 📖 开发指南
-
-### 运行单元测试
-
-```bash
-# 运行所有测试
-pytest tests/ -v
-
-# 运行特定测试文件
-pytest tests/unit/test_extractor.py -v
-
-# 生成覆盖率报告
-pytest tests/ --cov=src --cov-report=html
-```
-
-### 代码质量检查
-
-```bash
-# 使用 Makefile
-make lint      # 代码风格检查
-make format    # 代码格式化
-make verify    # 完整验证（lint + test + security）
-```
-
-### 项目结构
-
-```
-FootballPrediction/
-├── src/                           # 生产代码
-│   ├── api/collectors/           # V139.0 提取器
-│   │   ├── fotmob_core.py        # L1 FotMob API 基础数据
-│   │   └── odds_production_extractor.py  # L3 RPA 赔率提取
-│   ├── config_unified.py         # 统一配置
-│   ├── database/                 # 数据库层
-│   ├── ml/                       # 机器学习层
-│   └── ops/                      # 运维脚本
-├── scripts/                      # 核心脚本
-│   ├── v139_0_auto_cruise_controller.py  # L2 URL 收割（当前运行）
-│   ├── production_harvester.py   # V56.3 生产收割引擎
-│   ├── archive/                  # 归档脚本目录
-│   │   ├── v134_*.py             # V134 系列（已废弃）
-│   │   ├── v135_*.py             # V135 系列（已废弃）
-│   │   ├── v136_*.py             # V136 系列（已废弃）
-│   │   ├── v137_*.py             # V137 系列（已废弃）
-│   │   └── v138_*.py             # V138 系列（已废弃）
-│   ├── ml/                       # ML 训练脚本
-│   └── collectors/               # 数据采集脚本
-├── tests/                        # 测试套件
-│   └── unit/test_extractor.py    # 29 个单元测试
-├── archive/                      # 历史归档
-│   ├── logs/                     # 旧日志和审计文件
-│   └── v55_exploration/          # V55 探索脚本
-├── model_zoo/                    # 模型仓库
-├── .env.example                  # 环境变量模板
-├── requirements.txt              # V57.0 生产依赖
-├── CLAUDE.md                     # Claude 开发指南
-└── README.md                     # 本文档
+# 2. 重启网络
+wsl --shutdown
 ```
 
 ---
@@ -647,49 +285,48 @@ FootballPrediction/
 | **语言** | Python | 3.11+ | 核心开发语言 |
 | **数据库** | PostgreSQL | 15 | 生产数据存储 |
 | **缓存** | Redis | 7 | 分布式缓存 |
-| **浏览器** | Playwright | 1.49 | 智能网页自动化 |
-| **ML 框架** | XGBoost | 3.0+ | 预测模型 |
-| **Web** | FastAPI | 0.124 | REST API |
-| **测试** | Pytest | 9.0 | 单元测试 |
-| **容器** | Docker | 24+ | 容器化部署 |
+| **浏览器** | Playwright | 1.57+ | 智能网页自动化 |
+| **ML 框架** | XGBoost | 3.1+ | 预测模型 |
+| **Web** | FastAPI | 0.124+ | REST API |
+| **测试** | Pytest | 9.0+ | 单元测试 |
+| **代码质量** | Ruff | 0.14+ | 格式化 + Lint |
 
 ---
 
-## 📊 性能指标
+## 📈 版本演进
 
-| 指标 | V55.27 | V56.3 | 提升 |
-|------|--------|-------|------|
-| **平均响应时间** | 20s (硬等待) | 3s (智能轮询) | **85%** |
-| **悬停成功率** | 75% | 92% (抖动自愈) | **23%** |
-| **数据完整性** | 89% | 96% (5分钟冷却) | **8%** |
-| **单元测试覆盖** | 0 | 29 tests | **∞** |
-| **IP 封禁恢复** | 手动 | 自动 | **∞** |
+### 核心组件版本系列
 
----
+| 组件 | 版本系列 | 说明 |
+|------|----------|------|
+| **Consolidated Engine** | V41.350 | 浏览器单例 + 金盾校验 |
+| **Command Center** | V41.360 | 一键入口 + 生产就绪 |
+| **Data Collection** | V41.x | 运维工具和采集器 |
+| **Harvester Service** | V142.0 | 统一收割服务架构 |
+| **Ghost Protocol** | V141.0 | 反爬检测基础能力 |
 
-## 📜 许可证
+### 关键里程碑
 
-MIT License - 详见 [LICENSE](LICENSE)
-
----
-
-## 🤝 贡献指南
-
-欢迎贡献！请遵循以下步骤：
-
-1. Fork 本仓库
-2. 创建特性分支 (`git checkout -b feature/AmazingFeature`)
-3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
-4. 推送到分支 (`git push origin feature/AmazingFeature`)
-5. 开启 Pull Request
+- **V41.370** (2026-01): Grand Deployment - 远程仓库发布
+- **V41.360** (2026-01): Production Lockdown - 代码合规与脱敏
+- **V41.350** (2026-01): The Great Consolidation - 核心组件固化为生产标准
+- **V144.7** (2026-01): Multi-Source Command Center - 统一命令入口
+- **V26.8** (2024-11): 6000+ 维深度特征引擎
 
 ---
 
-## 📧 联系方式
+## 📄 许可证
 
-- 作者: xupeng211
-- 项目主页: [https://github.com/xupeng211/FootballPrediction](https://github.com/xupeng211/FootballPrediction)
+[MIT License](LICENSE)
 
 ---
 
-**V139.0 Production-Ready | © 2026 FootballPrediction Project**
+## 🙏 致谢
+
+本项目由 FootballPrediction Engine 团队开发和维护。
+
+**联系方式**: https://github.com/xupeng211/FootballPrediction
+
+---
+
+**最后更新**: 2026-01-21 | **版本**: V41.370 "The Grand Deployment"

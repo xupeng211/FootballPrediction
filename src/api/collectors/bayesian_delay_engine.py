@@ -208,7 +208,6 @@ class BayesianDelayEngine:
         # Final bounds check
         return max(self.min_delay, min(final_delay, self.max_delay))
 
-
     def record_result(
         self,
         delay: float,
@@ -345,7 +344,6 @@ if __name__ == "__main__":
         """Demonstrate the Bayesian delay engine."""
         engine = BayesianDelayEngine()
 
-
         # Simulate a sequence of requests
         results = [
             True,  # Success
@@ -360,7 +358,6 @@ if __name__ == "__main__":
         for _i, success in enumerate(results, 1):
             delay = engine.calculate_delay(last_success=success)
             engine.record_result(delay, success)
-
 
             await asyncio.sleep(0.1)  # Small sleep for demo
 

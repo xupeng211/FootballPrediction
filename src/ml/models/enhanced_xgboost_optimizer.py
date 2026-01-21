@@ -213,7 +213,6 @@ class EnhancedXGBooostOptimizer:
         # 创建新特征
         return self._create_interaction_features(df_enhanced)
 
-
     def _create_interaction_features(self, df: pd.DataFrame) -> pd.DataFrame:
         """创建交互特征"""
         df_enhanced = df.copy()

@@ -499,7 +499,19 @@ class ClassificationDatasetGenerator:
             feature_columns.append(f"feature_{i + 1:03d}_{name}")
 
         # 选择最终列
-        final_columns = ["match_id", "home_team_id", "away_team_id", "match_date", "final_home_score", "final_away_score", "target_label", "target_numeric", "feature_completeness_score", "data_quality_flag", *feature_columns]
+        final_columns = [
+            "match_id",
+            "home_team_id",
+            "away_team_id",
+            "match_date",
+            "final_home_score",
+            "final_away_score",
+            "target_label",
+            "target_numeric",
+            "feature_completeness_score",
+            "data_quality_flag",
+            *feature_columns,
+        ]
 
         final_dataset = filtered_data[final_columns].copy()
 

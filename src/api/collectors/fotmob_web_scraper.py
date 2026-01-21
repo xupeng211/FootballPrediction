@@ -74,7 +74,9 @@ class FotMobWebScraper:
 
         logger.info("FotMob 网页抓取器初始化完成")
 
-    def scrape_league_fixtures(self, league_id: int, date_str: str | None = None) -> list[ScrapedMatch]:
+    def scrape_league_fixtures(
+        self, league_id: int, date_str: str | None = None
+    ) -> list[ScrapedMatch]:
         """
         抓取指定联赛的 fixtures
 
@@ -252,16 +254,13 @@ if __name__ == "__main__":
         level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     )
 
-
     scraper = FotMobWebScraper()
 
     # 测试英超抓取
     matches = scraper.scrape_league_fixtures(47)
-
 
     for _i, _match in enumerate(matches[:10], 1):
         pass
 
     if len(matches) > 10:
         pass
-

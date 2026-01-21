@@ -4,8 +4,8 @@ V53.3 诊断脚本 V3: 精准分析机构行结构
 """
 
 import asyncio
-import sys
 from pathlib import Path
+import sys
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
@@ -38,7 +38,7 @@ async def analyze_provider_rows():
     print("[分析] 查找机构-赔率组合")
     print("=" * 60)
 
-    provider_rows = await page.evaluate("""
+    provider_rows = await page.evaluate(r"""
         () => {
             const results = [];
 

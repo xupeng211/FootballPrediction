@@ -75,7 +75,6 @@ def merge_multi_season_data():
     odds_df = pd.read_csv("/home/user/projects/FootballPrediction/data/real_odds_raw.csv")
     pred_df = pd.read_csv("/home/user/projects/FootballPrediction/data/multi_season_v85.csv")
 
-
     # 获取预测数据中的所有球队
     pred_teams = set(pred_df["home_team"].unique()) | set(pred_df["away_team"].unique())
 

@@ -358,7 +358,6 @@ class CoreInferenceService(ServiceLifecycle):
             processing_time_ms=(time.time() - start_time) * 1000,
         )
 
-
     def _update_performance_stats(self, success: bool, processing_time: float) -> None:
         """更新性能统计"""
         self._performance_stats["total_predictions"] += 1

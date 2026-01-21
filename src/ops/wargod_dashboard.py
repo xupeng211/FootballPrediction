@@ -266,19 +266,15 @@ class WarGodDashboard:
 
     def _render_header(self):
         """渲染标题"""
-        DashboardStyles.colorize(
-            "⚔️  战神仪表盘 V25.0 - 量化交易决策系统", DashboardStyles.HEADER
-        )
+        DashboardStyles.colorize("⚔️  战神仪表盘 V25.0 - 量化交易决策系统", DashboardStyles.HEADER)
         DashboardStyles.colorize(
             "   War God Dashboard - Quant Trading Decision System", DashboardStyles.DIM
         )
-
 
     def _render_health_module(self):
         """渲染健康监控模块"""
 
         # 健康分数
-
 
         # 健康状态进度条
         {
@@ -299,16 +295,13 @@ class WarGodDashboard:
         else:
             pass
 
-
     def _render_backtest_module(self):
         """渲染回测指标模块"""
 
         # 核心指标
 
-
         # 简单的资金曲线可视化
         if self.data.equity_curve and len(self.data.equity_curve) > 1:
-
             # 归一化并绘制曲线
             curve = self.data.equity_curve
             max_points = 70
@@ -334,10 +327,8 @@ class WarGodDashboard:
 
             # 补齐最后一行
 
-
     def _render_prediction_module(self):
         """渲染实盘信号模块"""
-
 
         # 显示前5个高价值信号
         if self.data.predictions:
@@ -359,13 +350,10 @@ class WarGodDashboard:
 
                     {"H": "🏠", "D": "🤝", "A": "✈️"}.get(bet, "❓")
 
-
-
     def _render_draw_alert_module(self):
         """渲染平局预警模块"""
 
         if self.data.high_risk_draws:
-
             for pred in self.data.high_risk_draws[:5]:
                 pred.get("match_time", "")[:16]
                 pred.get("home_team", "")
@@ -374,7 +362,6 @@ class WarGodDashboard:
 
         else:
             pass
-
 
     def _render_footer(self):
         """渲染页脚"""

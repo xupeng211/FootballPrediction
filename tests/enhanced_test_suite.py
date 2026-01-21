@@ -125,7 +125,7 @@ class EnhancedTestSuite:
                             "response_time_ms": 0,
                         }
                     )
-                    logger.error(f"❌ {test_case['name']}: {str(e)}")
+                    logger.error(f"❌ {test_case['name']}: {e!s}")
 
         self.test_results["functional_tests"] = results
         return results
@@ -285,7 +285,7 @@ class EnhancedTestSuite:
 
                 except Exception as e:
                     results.append({"name": test_case["name"], "passed": False, "error": str(e)})
-                    logger.error(f"❌ {test_case['name']}: {str(e)}")
+                    logger.error(f"❌ {test_case['name']}: {e!s}")
 
         self.test_results["security_tests"] = results
         return results
@@ -310,7 +310,7 @@ class EnhancedTestSuite:
                 "-v",
             ]
 
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
+            result = subprocess.run(cmd, check=False, capture_output=True, text=True, timeout=300)
 
             if result.returncode == 0:
                 # 读取覆盖率报告

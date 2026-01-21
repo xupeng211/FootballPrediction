@@ -3,19 +3,16 @@ pytest配置和fixture定义
 全局测试配置和共享fixture
 """
 
-import shutil
-import tempfile
 from collections.abc import Generator
 from pathlib import Path
+import shutil
+import tempfile
 from typing import Any
 from unittest.mock import Mock
 
 import pytest
 
-from tests.data.generators.test_data_generator import (
-    TestDataGenerator,
-    create_test_data_generator,
-)
+from tests.data.generators.test_data_generator import TestDataGenerator, create_test_data_generator
 
 
 # 全局测试数据生成器

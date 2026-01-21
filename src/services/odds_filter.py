@@ -348,4 +348,3 @@ if __name__ == "__main__":
 
     filter = SmartOddsFilter(debug=True)
     result = extract_pinnacle_from_v41_185_result(test_data)
-

@@ -1,36 +1,39 @@
 #!/usr/bin/env python3
-"""V144.7 FootballPrediction - Multi-Source Command Center.
+"""V41.360 FootballPrediction - Production-Ready Command Center.
 
-V144.7 更新:
-- ✅ 新增 --source 参数支持 oddsportal 和 fotmob 数据源切换
-- ✅ Ghost Protocol 统一验证日志
-- ✅ 配置参数透传至各采集器
-- ✅ 100% 生产就绪状态
+V41.360 "Production Lockdown" 更新:
+- ✅ 整合 V41.350 Consolidated Engine (BrowserManager + IntegrityGuard)
+- ✅ 新增 --task 参数支持统一任务入口
+- ✅ 代码美化与合规 (Ruff/Black 全量扫描)
+- ✅ 环境变量脱敏 (.env.example 模板)
+- ✅ 依赖项固化 (精确 requirements.txt)
 
 This is the unified command-line interface for the FootballPrediction system.
-It provides a single entry point for all operations, replacing the scattered
-script-based approach.
+Provides a single entry point for all operations with production-grade quality.
 
 Features:
     - Automatic environment pre-check (WSL2 proxy discovery, IP detection)
     - Mode scheduling (single/cruise/check)
     - Multi-source support (OddsPortal / FotMob)
+    - V41.350 Consolidated Engine integration
     - Rich console output with professional formatting
-    - Integration with all Phase 1 components (BaseExtractor V141.0, TeamNameNormalizer V140.0)
 
 Usage:
+    # V41.360: 一键收割 (新入口)
+    python main.py --task harvest --limit 2000
+
     # OddsPortal (默认)
     python main.py --source oddsportal --mode single --limit 10
 
     # FotMob
     python main.py --source fotmob --mode single --limit 10
 
-    # Cruise mode with FotMob
-    python main.py --source fotmob --mode cruise
+    # 数据质量审计 (Golden Shield)
+    python main.py --task audit
 
 Author: Chief System Architect
-Version: V144.7
-Date: 2026-01-06
+Version: V41.360 "Production Lockdown"
+Date: 2026-01-21
 """
 
 from __future__ import annotations
@@ -74,10 +77,12 @@ def print_banner() -> None:
     banner = """
 ╔══════════════════════════════════════════════════════════════════════╗
 ║                                                                        ║
-║         FootballPrediction V144.7 - Multi-Source Command Center         ║
+║       FootballPrediction V41.360 - Production-Ready Command Center     ║
 ║                                                                        ║
-║  Phase 4: Dual-Line Architecture                                       ║
-║  ├─ BaseExtractor V144.2 (Ghost Protocol)                            ║
+║  Consolidated Engine (V41.350):                                        ║
+║  ├─ BrowserManager (V41.291) - Memory-optimized Singleton            ║
+║  ├─ IntegrityGuard (V41.287) - Golden Shield Validation               ║
+║  ├─ BaseExtractor V141.0 (Ghost Protocol)                            ║
 ║  ├─ FotMob V144.5 (Unified Schema V36.0)                             ║
 ║  ├─ OddsPortal V144.2 (Enhanced Stealth)                            ║
 ║  └─ HarvesterService V142.0 (Queue-driven Architecture)               ║
@@ -591,6 +596,116 @@ async def run_check_mode(args) -> int:
 
 
 # ============================================================================
+# V41.360: Task Mode (Consolidated Engine Integration)
+# ============================================================================
+
+async def run_task_harvest(args) -> int:
+    """V41.360: Run harvest task using Consolidated Engine.
+
+    This is the one-click entry point for harvesting data.
+    Integrates V41.350 components: BrowserManager + IntegrityGuard.
+
+    Args:
+        args: Parsed command-line arguments
+
+    Returns:
+        Exit code (0 for success, non-zero for failure)
+    """
+    logger.info("🚀 V41.360: 启动一键收割模式 (Consolidated Engine)")
+    print("")
+
+    # V41.350: Load harvester settings
+    import json
+    from pathlib import Path
+
+    settings_path = Path("config/harvester_settings.json")
+    if settings_path.exists():
+        with open(settings_path) as f:
+            harvest_config = json.load(f)
+            logger.info(f"  ✓ 加载收割配置: {settings_path}")
+            logger.info(f"    - 并发数: {harvest_config['concurrency']['max_workers']}")
+            logger.info(f"    - 内存限额: {harvest_config['concurrency']['memory_limit_gb']}GB")
+            logger.info(f"    - Golden Shield 阈值: {harvest_config['golden_shield']['feature_richness_threshold']}")
+    else:
+        logger.warning(f"  ⚠️  收割配置文件不存在: {settings_path}")
+        harvest_config = None
+
+    print("")
+
+    # Route to appropriate harvester based on source
+    if args.source == "fotmob":
+        return await run_fotmob_mode(args)
+    else:
+        return await run_oddsportal_mode(args)
+
+
+async def run_task_audit(args) -> int:
+    """V41.360: Run Golden Shield audit task.
+
+    Uses IntegrityGuard to validate technical_features quality.
+
+    Args:
+        args: Parsed command-line arguments
+
+    Returns:
+        Exit code (0 for success, non-zero for failure)
+    """
+    logger.info("🛡️  V41.360: 启动 Golden Shield 审计模式")
+    print("")
+
+    try:
+        from src.processors import BatchAuditor, GoldenShieldConfig
+
+        # V41.350: Create auditor with custom config if limit specified
+        if args.limit:
+            config = GoldenShieldConfig(
+                feature_richness_threshold=args.limit,
+            )
+            auditor = BatchAuditor(config)
+        else:
+            auditor = BatchAuditor()
+
+        logger.info("  ✓ IntegrityGuard 初始化完成")
+        logger.info("  ✓ 开始数据库审计...")
+        print("")
+
+        # Run audit
+        report = auditor.audit_database(limit=100)
+
+        # Print report
+        logger.info("")
+        logger.info("=" * 60)
+        logger.info("📊 Golden Shield 审计报告 (V41.350)")
+        logger.info("=" * 60)
+        logger.info(f"样本总数: {report['stats']['total']}")
+        logger.info(f"合规数量: {report['stats']['compliant']}")
+        logger.info(f"不合规数量: {report['stats']['non_compliant']}")
+        logger.info(f"合规率: {report['compliance_rate']:.1f}%")
+        logger.info("")
+
+        # Quality breakdown
+        stats = report['stats']
+        logger.info("【质量评级分布】")
+        logger.info(f"  EXCELLENT: {stats['excellent']} ({stats['excellent']/stats['total']*100:.1f}%)")
+        logger.info(f"  GOOD: {stats['good']} ({stats['good']/stats['total']*100:.1f}%)")
+        logger.info(f"  FAIR: {stats['fair']} ({stats['fair']/stats['total']*100:.1f}%)")
+        logger.info(f"  POOR: {stats['poor']} ({stats['poor']/stats['total']*100:.1f}%)")
+        logger.info("=" * 60)
+
+        return 0
+
+    except ImportError as e:
+        logger.error(f"❌ IntegrityGuard 模块导入失败: {e}")
+        logger.error("   请确保 V41.350 Consolidated Engine 已正确安装")
+        return 1
+    except Exception as e:
+        logger.error(f"❌ 审计失败: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
+        return 1
+
+
+# ============================================================================
 # CLI Interface
 # ============================================================================
 
@@ -601,10 +716,16 @@ def parse_args() -> argparse.Namespace:
         Parsed arguments namespace
     """
     parser = argparse.ArgumentParser(
-        description="FootballPrediction V144.7 - Multi-Source Command Center",
+        description="FootballPrediction V41.360 - Production-Ready Command Center",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
+  # V41.360: 一键收割 (Consolidated Engine)
+  python main.py --task harvest --limit 2000
+
+  # V41.360: Golden Shield 审计
+  python main.py --task audit
+
   # OddsPortal (默认数据源)
   python main.py --source oddsportal --mode single --limit 10
 
@@ -626,6 +747,14 @@ Examples:
   # Dry run (test without actual collection)
   python main.py --source fotmob --mode single --dry-run
         """
+    )
+
+    # V41.360: 新增 --task 参数 (统一任务入口)
+    parser.add_argument(
+        "--task",
+        type=str,
+        choices=["harvest", "audit"],
+        help="V41.360: 统一任务入口 - harvest (一键收割) / audit (Golden Shield 审计)"
     )
 
     # V144.7: 新增 --source 参数
@@ -727,11 +856,18 @@ async def main() -> int:
     # Print banner
     print_banner()
 
-    # V144.7: Ghost Protocol 统一验证日志
-    logger.info(f"[V144.7] 🛡️ Unified Ghost Protocol initialized for {args.source}")
+    # V41.360: Ghost Protocol 统一验证日志
+    logger.info(f"[V41.360] 🛡️ Production-Ready Command Center initialized")
     print("")
 
-    # V41.41: 特殊操作路由（优先级高于数据源路由）
+    # V41.360: 统一任务路由 (最高优先级)
+    if args.task:
+        if args.task == "harvest":
+            return await run_task_harvest(args)
+        if args.task == "audit":
+            return await run_task_audit(args)
+
+    # V41.41: 特殊操作路由
     if args.action == "align-hashes":
         return await run_align_hashes_action(args)
 

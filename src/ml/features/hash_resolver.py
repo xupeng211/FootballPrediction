@@ -317,4 +317,3 @@ def resolve_hash_conflicts_from_db(conn) -> list[ArbitrationResult]:
 
     # 解决所有冲突
     return resolver.resolve_batch_conflicts(conflicts)
-

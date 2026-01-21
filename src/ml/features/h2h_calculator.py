@@ -190,7 +190,6 @@ class H2HCalculator:
 
         return df[h2h_mask & date_mask].sort_values("match_date")
 
-
     def _calculate_match_stats(self, past_matches: pd.DataFrame, target_home_id: int) -> H2HStats:
         """
         基于历史比赛计算统计数据 (金融级精度版本)
@@ -294,7 +293,6 @@ class H2HCalculator:
             avg_total_goals=SCORING.DEFAULT_AVG_TOTAL_GOALS,
             matches_count=0,
         )
-
 
     def _validate_stats(self, stats: H2HStats) -> bool:
         """

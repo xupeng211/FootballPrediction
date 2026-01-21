@@ -40,10 +40,17 @@ from src.processors.exceptions import (
     SchemaMismatchError,
     ValidationError,
 )
+from src.processors.integrity_guard import (
+    BatchAuditor,
+    GoldenShieldConfig,
+    IntegrityGuard,
+    ValidationResult,
+)
 
 __all__ = [
     # 抽象基类
     "BaseExtractor",
+    "BatchAuditor",
     "CircuitBreakerOpenError",
     "ConfigurationError",
     "DataParsingError",
@@ -54,13 +61,17 @@ __all__ = [
     "ExtractionStatus",
     # 工厂
     "ExtractorRegistry",
+    # V41.350: Integrity Guard (Golden Shield)
+    "GoldenShieldConfig",
     "InsufficientFeaturesError",
+    "IntegrityGuard",
     "MissingRequiredKeyError",
     "RateLimitError",
     "SchemaMismatchError",
     # 配置
     "ValidationConfig",
     "ValidationError",
+    "ValidationResult",
     "register_extractor",
 ]
 

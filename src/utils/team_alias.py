@@ -455,7 +455,6 @@ def normalize_team_name(name: str) -> str:
     return " ".join(name.split())
 
 
-
 # ============================================================================
 # V39.4 动态语义引擎
 # ============================================================================
@@ -1212,38 +1211,52 @@ class _TeamAliasTests:
                 准入红线：置信度必须从 50% 提升到 >98%
                 """
                 confidence, details = semantic_match("Newcastle United", "Newcastle")
-                assert confidence >= 98.0, f"Newcastle United vs Newcastle 置信度 {confidence}% < 98%. 失败原因: {details}"
+                assert confidence >= 98.0, (
+                    f"Newcastle United vs Newcastle 置信度 {confidence}% < 98%. 失败原因: {details}"
+                )
                 assert "newcastle" in details.lower()
 
             def test_v39_4_semantic_match_manchester(self):
                 """V39.4: 测试 Manchester United vs Manchester"""
                 confidence, details = semantic_match("Manchester United", "Manchester")
-                assert confidence >= 95.0, f"Manchester United vs Manchester 置信度 {confidence}% < 95%. 失败原因: {details}"
+                assert confidence >= 95.0, (
+                    f"Manchester United vs Manchester 置信度 {confidence}% < 95%. 失败原因: {details}"
+                )
 
             def test_v39_4_semantic_match_wolves(self):
                 """V39.4: 测试 Wolverhampton Wanderers vs Wolves"""
                 confidence, details = semantic_match("Wolverhampton Wanderers", "Wolves")
-                assert confidence >= 95.0, f"Wolverhampton Wanderers vs Wolves 置信度 {confidence}% < 95%. 失败原因: {details}"
+                assert confidence >= 95.0, (
+                    f"Wolverhampton Wanderers vs Wolves 置信度 {confidence}% < 95%. 失败原因: {details}"
+                )
 
             def test_v39_4_semantic_match_crystal_palace(self):
                 """V39.4: 测试 Crystal Palace vs Crystal"""
                 confidence, details = semantic_match("Crystal Palace", "Crystal")
-                assert confidence >= 90.0, f"Crystal Palace vs Crystal 置信度 {confidence}% < 90%. 失败原因: {details}"
+                assert confidence >= 90.0, (
+                    f"Crystal Palace vs Crystal 置信度 {confidence}% < 90%. 失败原因: {details}"
+                )
 
             def test_v39_4_semantic_match_nottingham_forest(self):
                 """V39.4: 测试 Nottingham Forest vs Nottingham"""
                 confidence, details = semantic_match("Nottingham Forest", "Nottingham")
-                assert confidence >= 95.0, f"Nottingham Forest vs Nottingham 置信度 {confidence}% < 95%. 失败原因: {details}"
+                assert confidence >= 95.0, (
+                    f"Nottingham Forest vs Nottingham 置信度 {confidence}% < 95%. 失败原因: {details}"
+                )
 
             def test_v39_4_semantic_match_brighton(self):
                 """V39.4: 测试 Brighton & Hove Albion vs Brighton"""
                 confidence, details = semantic_match("Brighton & Hove Albion", "Brighton")
-                assert confidence >= 90.0, f"Brighton & Hove Albion vs Brighton 置信度 {confidence}% < 90%. 失败原因: {details}"
+                assert confidence >= 90.0, (
+                    f"Brighton & Hove Albion vs Brighton 置信度 {confidence}% < 90%. 失败原因: {details}"
+                )
 
             def test_v39_4_semantic_match_west_bromwich(self):
                 """V39.4: 测试 West Bromwich Albion vs West Bromwich"""
                 confidence, details = semantic_match("West Bromwich Albion", "West Bromwich")
-                assert confidence >= 95.0, f"West Bromwich Albion vs West Bromwich 置信度 {confidence}% < 95%. 失败原因: {details}"
+                assert confidence >= 95.0, (
+                    f"West Bromwich Albion vs West Bromwich 置信度 {confidence}% < 95%. 失败原因: {details}"
+                )
 
         # 运行测试
         suite = unittest.TestLoader().loadTestsFromTestCase(TestTeamAlias)

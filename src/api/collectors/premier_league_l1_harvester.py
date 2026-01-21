@@ -190,7 +190,6 @@ class PremierLeagueL1Harvester:
                 "collection_date": datetime.now(UTC).isoformat(),
             }
 
-
         except Exception as e:
             logger.exception(f"❌ 提取比赛信息失败 {match.get('id', 'unknown')}: {e}")
             return None

@@ -4,12 +4,12 @@ Docker 容器内连通性验证脚本
 验证 app 容器与 db、redis 的连接状态
 """
 
+from datetime import datetime
 import logging
 import os
+from pathlib import Path
 import sys
 import time
-from datetime import datetime
-from pathlib import Path
 
 # 添加项目路径
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
@@ -218,7 +218,7 @@ class ConnectivityChecker:
                     test_file.unlink()
                     results[name] = "OK"
                 except Exception as e:
-                    results[name] = f"Fail: {str(e)}"
+                    results[name] = f"Fail: {e!s}"
 
             elapsed = (time.time() - start_time) * 1000
 

@@ -341,7 +341,6 @@ class GlobalL1Scanner:
     def print_summary(self):
         """打印扫描摘要"""
 
-
         for _league, count in sorted(self.scan_stats["by_league"].items()):
             (
                 (count / self.scan_stats["total_matches"] * 100)
@@ -361,12 +360,10 @@ class GlobalL1Scanner:
         achieved = len(self.match_index)
         (achieved / target * 100) if target > 0 else 0
 
-
         if achieved >= target:
             pass
         else:
             target - achieved
-
 
 
 async def main():
@@ -385,7 +382,6 @@ async def main():
         # 保存索引
         output_dir = Path("data/production/global_manifest_v34")
         scanner.save_index(output_dir)
-
 
 
 if __name__ == "__main__":

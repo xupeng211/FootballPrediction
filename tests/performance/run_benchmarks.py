@@ -20,9 +20,9 @@ Version: 1.0.0 (Sprint 7 Performance Testing)
 
 import argparse
 import asyncio
+from datetime import datetime
 import json
 import logging
-from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -474,7 +474,7 @@ async def main():
 
             return result
 
-        elif args.command == "compare":
+        if args.command == "compare":
             # 环境对比
             result = await runner.compare_environments(args.benchmark_name, args.environments)
 
@@ -491,7 +491,7 @@ async def main():
 
             return result
 
-        elif args.command == "trend":
+        if args.command == "trend":
             # 趋势分析
             result = await runner.analyze_performance_trends(
                 args.benchmark_name, args.environment, args.days
@@ -511,7 +511,7 @@ async def main():
 
             return result
 
-        elif args.command == "regression":
+        if args.command == "regression":
             # 回归检查
             result = await runner.check_regressions(args.benchmark_name, args.environment)
 
@@ -529,7 +529,7 @@ async def main():
 
             return result
 
-        elif args.command == "report":
+        if args.command == "report":
             # 生成报告
             result = await runner.generate_performance_report(args.output_dir)
 
@@ -540,9 +540,8 @@ async def main():
 
             return result
 
-        else:
-            parser.print_help()
-            return None
+        parser.print_help()
+        return None
 
     except Exception as e:
         logger.error(f"执行失败: {e}")

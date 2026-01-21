@@ -306,7 +306,6 @@ if __name__ == "__main__":
         ("max(1, 2, 3)", {}, 3.0),
     ]
 
-
     all_passed = True
     for expr, ctx, expected in test_cases:
         result = evaluator.evaluate(expr, ctx)

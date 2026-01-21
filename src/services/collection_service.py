@@ -128,7 +128,9 @@ def database_transaction(retry_on_deadlock: bool = True, max_retries: int = 3):
 
                 except Exception as e:
                     error_msg = str(e)
-                    logger.exception(f"❌ 事务 {transaction_id} 失败 (尝试 {attempt + 1}): {error_msg}")
+                    logger.exception(
+                        f"❌ 事务 {transaction_id} 失败 (尝试 {attempt + 1}): {error_msg}"
+                    )
 
                     # 检查是否是死锁错误，如果是且允许重试，则重试
                     if (
@@ -859,7 +861,9 @@ class FotMobCollectionService(BaseService):
             )
 
             transaction_ctx.status = TransactionStatus.FAILED
-            self.logger.exception(f"❌ 批量保存事务失败 (事务 {transaction_ctx.transaction_id}): {e}")
+            self.logger.exception(
+                f"❌ 批量保存事务失败 (事务 {transaction_ctx.transaction_id}): {e}"
+            )
             raise
 
     async def _save_league_data(self, data: dict[str, Any], task: FotMobCollectionTask) -> None:

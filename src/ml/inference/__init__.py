@@ -114,7 +114,6 @@ class Predictor:
                 "feature_count": result.get("feature_count", 0),
             }
 
-
         except Exception as e:
             raise PredictionError(f"预测失败: {e!s}") from e
 

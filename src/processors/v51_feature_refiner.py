@@ -723,7 +723,6 @@ def main():
     # 输出统计
 
     if not df.empty:
-
         # 保存 CSV
         if args.output:
             df.to_csv(args.output, index=False)

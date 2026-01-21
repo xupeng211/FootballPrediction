@@ -353,7 +353,6 @@ class PredictionService(ServiceLifecycle):
 
             return PredictionResponse(success=True, data=health_data, request_id="health_check")
 
-
         except Exception as e:
             self.logger.exception(f"服务健康检查失败: {e}")
             return PredictionResponse(success=False, error=str(e), request_id="health_check")
