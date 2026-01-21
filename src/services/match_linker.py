@@ -289,7 +289,6 @@ class MatchLinker:
         # 步骤 5: 压缩多余空格
         return re.sub(r"\s+", " ", normalized)
 
-
     def find_candidates(
         self,
         home_team: str,

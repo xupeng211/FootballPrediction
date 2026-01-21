@@ -20,13 +20,13 @@ Version: 1.0.0 (Sprint 7 Testing Coverage)
 
 import ast
 import asyncio
-import json
-import logging
-import subprocess
-import sys
 from dataclasses import dataclass
 from datetime import datetime
+import json
+import logging
 from pathlib import Path
+import subprocess
+import sys
 from typing import Any
 
 import coverage
@@ -207,7 +207,7 @@ class CoverageAnalyzer:
                 average_complexity=0,
                 coverage_percentage=0,
                 functions_coverage=[],
-                improvement_suggestions=[f"解析错误: {str(e)}"],
+                improvement_suggestions=[f"解析错误: {e!s}"],
             )
 
         # 分析覆盖率数据
@@ -296,11 +296,7 @@ class CoverageAnalyzer:
         complexity = 1  # 基础复杂度
 
         for child in ast.walk(node):
-            if isinstance(child, (ast.If, ast.While, ast.For, ast.AsyncFor)):
-                complexity += 1
-            elif isinstance(child, ast.ExceptHandler):
-                complexity += 1
-            elif isinstance(child, ast.With, ast.AsyncWith):
+            if isinstance(child, (ast.If, ast.While, ast.For, ast.AsyncFor)) or isinstance(child, ast.ExceptHandler) or isinstance(child, ast.With, ast.AsyncWith):
                 complexity += 1
             elif isinstance(child, ast.BoolOp):
                 complexity += len(child.values) - 1
@@ -459,27 +455,25 @@ class CoverageAnalyzer:
 
         if "覆盖率过低" in suggestion:
             return base_effort * 5
-        elif "高复杂度函数" in suggestion:
+        if "高复杂度函数" in suggestion:
             return base_effort * 3
-        elif "未测试函数" in suggestion:
+        if "未测试函数" in suggestion:
             return base_effort * 2
-        elif "未覆盖的分支" in suggestion:
+        if "未覆盖的分支" in suggestion:
             return base_effort * 1
-        else:
-            return base_effort
+        return base_effort
 
     def _estimate_coverage_gain(self, analysis: ModuleAnalysis, suggestion: str) -> float:
         """估算覆盖率提升幅度"""
         if analysis.coverage_percentage < 30:
             return 15.0
-        elif analysis.coverage_percentage < 50:
+        if analysis.coverage_percentage < 50:
             return 10.0
-        elif analysis.coverage_percentage < 75:
+        if analysis.coverage_percentage < 75:
             return 5.0
-        elif analysis.coverage_percentage < 90:
+        if analysis.coverage_percentage < 90:
             return 3.0
-        else:
-            return 1.0
+        return 1.0
 
     async def _analyze_complexity(
         self, module_analyses: dict[str, ModuleAnalysis]
@@ -989,7 +983,7 @@ async def main():
 
             return result
 
-        elif args.command == "improvement-plan":
+        if args.command == "improvement-plan":
             analysis_result = await analyzer.deep_coverage_analysis()
             improvement_plan = analysis_result["improvement_plan"]
 
@@ -1004,7 +998,7 @@ async def main():
 
             return improvement_plan
 
-        elif args.command == "complexity-analysis":
+        if args.command == "complexity-analysis":
             analysis_result = await analyzer.deep_coverage_analysis()
             complexity_analysis = analysis_result["complexity_analysis"]
 
@@ -1021,9 +1015,8 @@ async def main():
 
             return complexity_analysis
 
-        else:
-            parser.print_help()
-            return None
+        parser.print_help()
+        return None
 
     except Exception as e:
         logger.error(f"执行失败: {e}")

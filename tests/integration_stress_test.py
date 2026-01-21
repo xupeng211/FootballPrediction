@@ -20,13 +20,13 @@ Version: V26.0 (Stable)
 Date: 2025-12-27
 """
 
+from concurrent.futures import ProcessPoolExecutor, as_completed
 import gc
 import json
 import multiprocessing
+from pathlib import Path
 import sys
 import time
-from concurrent.futures import ProcessPoolExecutor, as_completed
-from pathlib import Path
 from typing import Any
 
 import pytest
@@ -37,11 +37,7 @@ sys.path.insert(0, str(project_root))
 
 from src.config_unified import get_settings
 from src.core.types import MatchID, MatchStatus, Season
-from src.ops.performance_engine import (
-    BulkInserter,
-    ParallelFeatureExtractor,
-    PerformancePipeline,
-)
+from src.ops.performance_engine import BulkInserter, ParallelFeatureExtractor, PerformancePipeline
 from src.processors.v25_production_extractor import V25ProductionExtractor
 
 # ============================================================================

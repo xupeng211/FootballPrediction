@@ -190,7 +190,6 @@ class AdvancedFeatureTransformer:
             # 提取当前比赛的特征
             return combined_with_features.iloc[-1:].copy()
 
-
         except Exception as e:
             logger.exception(f"预测特征转换失败: {e!s}")
             return match_data

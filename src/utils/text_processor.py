@@ -159,9 +159,7 @@ class YouthTeamDetector:
         if any(pattern in normalized_lower for pattern in [" b ", "ii", "ii.", " b-team"]):
             return 1
         # Tier 2: C team / III / U21
-        if any(
-            pattern in normalized_lower for pattern in [" c ", "iii", "iii.", "u21", "c-team"]
-        ):
+        if any(pattern in normalized_lower for pattern in [" c ", "iii", "iii.", "u21", "c-team"]):
             return 2
         # Tier 3: Lower youth teams
         return 3
@@ -955,7 +953,6 @@ class VendorNameCleaner:
 
         # Remove common non-provider suffixes
         return self.suffix_pattern.sub("", cleaned)
-
 
 
 class LeagueUrlMapper:

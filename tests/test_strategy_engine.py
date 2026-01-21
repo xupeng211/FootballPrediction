@@ -19,12 +19,7 @@ import pytest
 
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
-from src.logic.strategy_engine import (
-    BettingParameters,
-    RiskLevel,
-    StrategyEngine,
-    StrategyMode,
-)
+from src.logic.strategy_engine import BettingParameters, RiskLevel, StrategyEngine, StrategyMode
 
 
 class TestStrategyEngine:

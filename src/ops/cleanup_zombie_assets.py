@@ -532,16 +532,10 @@ class ZombieAssetCleaner:
         """打印最终统计"""
         stats = self.stats.to_dict()
 
-
-
-
-
-
         if stats["recovered_match_ids"]:
             pass
         if stats["deleted_match_ids"]:
             pass
-
 
 
 # ============================================================================

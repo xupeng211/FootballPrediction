@@ -536,7 +536,6 @@ def print_league_registry():
     """打印联赛注册表摘要"""
     get_all_leagues()
 
-
     # 按大洲分组
     continents = {
         "欧洲": ["GB", "ES", "DE", "IT", "FR", "PT", "NL", "BE", "GB", "TR", "GR", "RU", "UA"],
@@ -546,7 +545,6 @@ def print_league_registry():
     }
 
     for countries in continents.values():
-
         for country in countries:
             country_leagues = get_leagues_by_country(country)
             if not country_leagues:
@@ -554,7 +552,6 @@ def print_league_registry():
 
             for league in country_leagues:
                 {1: "⭐", 2: "✅", 3: "○"}.get(league.tier, "?")
-
 
 
 # ============================================================================

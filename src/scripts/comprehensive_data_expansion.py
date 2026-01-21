@@ -33,7 +33,6 @@ def merge_all_available_data():
     odds_df = pd.read_csv("/home/user/projects/FootballPrediction/data/real_odds_raw.csv")
     gold_df = pd.read_csv("/home/user/projects/FootballPrediction/data/gold_dataset_v1.csv")
 
-
     # 转换日期格式
     features_df["match_date"] = pd.to_datetime(features_df["match_date"])
     odds_df["match_date"] = pd.to_datetime(odds_df["match_date"])
@@ -91,14 +90,12 @@ def merge_all_available_data():
             merged_data.append(merged_row)
             matched_count += 1
 
-
     # 第二步：添加历史赛季的特征数据（使用模拟赔率）
 
     # 获取需要补充的赛季
     feature_seasons = set(features_df["season"].unique())
     odds_seasons = set(odds_df["season"].unique())
     additional_seasons = feature_seasons - odds_seasons
-
 
     additional_count = 0
     for season in additional_seasons:
@@ -147,7 +144,6 @@ def merge_all_available_data():
             merged_data.append(merged_row)
             additional_count += 1
 
-
     # 第三步：合并黄金数据
     gold_count = 0
 
@@ -179,7 +175,6 @@ def merge_all_available_data():
             merged_data.append(merged_row)
             gold_count += 1
 
-
     # 创建最终DataFrame
     if merged_data:
         merged_df = pd.DataFrame(merged_data)
@@ -210,7 +205,6 @@ def main():
     merged_df = merge_all_available_data()
 
     if merged_df is not None:
-
         if len(merged_df) >= 500:
             pass
         else:

@@ -209,7 +209,6 @@ class RealPredictionService:
         # 提取当前比赛的特征（最后一行）
         return combined_data.iloc[-1:].copy()
 
-
     async def predict_match(self, match_id: int) -> dict[str, Any] | None:
         """
         预测特定比赛的结果

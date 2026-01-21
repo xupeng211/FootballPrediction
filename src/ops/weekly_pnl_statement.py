@@ -195,7 +195,9 @@ class WeeklyPnLGenerator:
             return odds - 1  # 净收益
         return -1  # 损失本金
 
-    def generate_report(self, week_start: datetime | None = None, week_end: datetime | None = None) -> dict:
+    def generate_report(
+        self, week_start: datetime | None = None, week_end: datetime | None = None
+    ) -> dict:
         """
         生成每周对账报告
 
@@ -472,7 +474,6 @@ if __name__ == "__main__":
         level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     )
 
-
     generator = WeeklyPnLGenerator()
 
     # 生成本周报告
@@ -481,4 +482,3 @@ if __name__ == "__main__":
     # 打印摘要
     if "metrics" in report:
         m = report["metrics"]
-

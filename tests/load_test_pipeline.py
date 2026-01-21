@@ -13,19 +13,18 @@ V20.5 流水线压力测试桩
 版本: V20.5
 """
 
+from concurrent.futures import ThreadPoolExecutor
+from dataclasses import dataclass
 import logging
 import sys
 import threading
 import time
 import tracemalloc
-from concurrent.futures import ThreadPoolExecutor
-from dataclasses import dataclass
 from typing import Any
-
-import psutil
 
 # 加载环境变量
 from dotenv import load_dotenv
+import psutil
 
 load_dotenv(override=True)
 
@@ -231,10 +230,9 @@ def simulate_extraction(
 
         if features and features.get("enriched_features"):
             return ProcessingResult(match_id=match_data["match_id"], success=True, duration=0.01)
-        else:
-            return ProcessingResult(
-                match_id=match_data["match_id"], success=False, error="No features extracted"
-            )
+        return ProcessingResult(
+            match_id=match_data["match_id"], success=False, error="No features extracted"
+        )
     except Exception as e:
         return ProcessingResult(match_id=match_data["match_id"], success=False, error=str(e))
 

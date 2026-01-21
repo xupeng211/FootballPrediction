@@ -443,7 +443,9 @@ class ModelHandler:
 
         try:
             model_features = list(self.model.feature_name())
-            feature_importance = dict(zip(model_features, self.model.feature_importance(), strict=False))
+            feature_importance = dict(
+                zip(model_features, self.model.feature_importance(), strict=False)
+            )
 
             # 按重要性排序
             sorted_features = sorted(feature_importance.items(), key=lambda x: x[1], reverse=True)

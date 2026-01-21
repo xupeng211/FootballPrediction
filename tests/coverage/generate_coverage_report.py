@@ -21,10 +21,10 @@ Version: 1.0.0 (Sprint 7 Testing Coverage)
 
 import argparse
 import asyncio
-import json
-import logging
 from dataclasses import dataclass
 from datetime import datetime, timedelta
+import json
+import logging
 from pathlib import Path
 from typing import Any
 
@@ -644,10 +644,9 @@ class CoverageReportGenerator:
         def get_coverage_class(coverage):
             if coverage >= 90:
                 return "coverage-high"
-            elif coverage >= 75:
+            if coverage >= 75:
                 return "coverage-medium"
-            else:
-                return "coverage-low"
+            return "coverage-low"
 
         # 生成核心算法模块行
         core_module_rows = ""
@@ -963,7 +962,7 @@ async def main():
 
             return result
 
-        elif args.command == "trend-analysis":
+        if args.command == "trend-analysis":
             result = await generator.generate_trend_analysis_only()
 
             print("\n📈 趋势分析报告生成完成!")
@@ -981,7 +980,7 @@ async def main():
 
             return result
 
-        elif args.command == "badge-generation":
+        if args.command == "badge-generation":
             result = await generator.generate_badge_only()
 
             print("\n🏆 覆盖率徽章生成完成!")
@@ -992,9 +991,8 @@ async def main():
 
             return result
 
-        else:
-            parser.print_help()
-            return None
+        parser.print_help()
+        return None
 
     except Exception as e:
         logger.error(f"执行失败: {e}")

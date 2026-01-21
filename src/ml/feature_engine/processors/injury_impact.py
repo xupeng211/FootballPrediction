@@ -331,10 +331,7 @@ class InjuryImpactProcessor(BaseProcessor[MatchData]):
         expected_ids = {pid for pid, count in starter_counts.items() if count >= threshold}
 
         # 从当前球员列表中找到预期主力
-        return [
-            p for p in current_players if p.player_id and p.player_id in expected_ids
-        ]
-
+        return [p for p in current_players if p.player_id and p.player_id in expected_ids]
 
     def _analyze_missing_starters(
         self,

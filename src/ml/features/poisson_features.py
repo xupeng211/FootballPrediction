@@ -190,10 +190,14 @@ class PoissonFeatureCalculator:
         # 计算加权平均
         total_weight = sum(time_weights)
         weighted_goals_scored = sum(g * w for g, w in zip(goals_scored, time_weights, strict=False))
-        weighted_goals_conceded = sum(g * w for g, w in zip(goals_conceded, time_weights, strict=False))
+        weighted_goals_conceded = sum(
+            g * w for g, w in zip(goals_conceded, time_weights, strict=False)
+        )
 
         # 场地调整后的λ值
-        avg_venue_factor = sum(v * w for v, w in zip(venue_factors, time_weights, strict=False)) / total_weight
+        avg_venue_factor = (
+            sum(v * w for v, w in zip(venue_factors, time_weights, strict=False)) / total_weight
+        )
 
         # 基础λ值计算
         base_attack_lambda = weighted_goals_scored / total_weight

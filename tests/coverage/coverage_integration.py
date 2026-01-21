@@ -20,17 +20,17 @@ Version: 1.0.0 (Sprint 7 Testing Coverage)
 
 import argparse
 import asyncio
+from datetime import datetime
 import json
 import logging
-import time
-from datetime import datetime
 from pathlib import Path
+import time
 from typing import Any
 
 import coverage
-import pytest
 from coverage_analyzer import CoverageAnalyzer
 from generate_coverage_report import CoverageReportGenerator
+import pytest
 
 # 设置日志
 logging.basicConfig(
@@ -123,7 +123,7 @@ class CoverageIntegration:
             raise
 
         # 清理之前的覆盖率数据
-        cov_files = list(Path(".").glob(".coverage*"))
+        cov_files = list(Path().glob(".coverage*"))
         for cov_file in cov_files:
             cov_file.unlink()
 
@@ -447,20 +447,19 @@ class CoverageIntegration:
         """计算覆盖率等级"""
         if score >= 95:
             return "A+ (优秀)"
-        elif score >= 90:
+        if score >= 90:
             return "A (优秀)"
-        elif score >= 85:
+        if score >= 85:
             return "B+ (良好)"
-        elif score >= 80:
+        if score >= 80:
             return "B (良好)"
-        elif score >= 75:
+        if score >= 75:
             return "C+ (一般)"
-        elif score >= 70:
+        if score >= 70:
             return "C (一般)"
-        elif score >= 60:
+        if score >= 60:
             return "D (需要改进)"
-        else:
-            return "F (不合格)"
+        return "F (不合格)"
 
     async def _generate_recommendations(
         self,
@@ -779,7 +778,7 @@ async def main():
 
             return result
 
-        elif args.command == "ci-mode":
+        if args.command == "ci-mode":
             result = await integration.run_ci_mode()
 
             print("\n🚀 CI模式执行完成!")
@@ -792,7 +791,7 @@ async def main():
 
             return result
 
-        elif args.command == "watch-mode":
+        if args.command == "watch-mode":
             print("👁️ 启动监控模式...")
             await integration.run_watch_mode(args.interval)
 

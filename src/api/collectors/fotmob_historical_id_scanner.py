@@ -546,11 +546,9 @@ class FotMobHistoricalIDScanner:
         """打印发现摘要"""
         self.stats.get_elapsed()
 
-
         # 按联赛-赛季分组统计
         for (league_id, _season), _matches in sorted(self.discovered_matches.items()):
             SEED_TEAMS_BY_LEAGUE.get(league_id, {}).get("name", f"League {league_id}")
-
 
     async def __aenter__(self):
         """异步上下文管理器入口"""
@@ -574,16 +572,13 @@ async def main():
     """主函数"""
     logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
-
     # 目标配置
     target_leagues = [47, 87, 54, 55, 53]  # 五大联赛
     target_seasons = ["2223", "2324"]  # 22/23, 23/24
 
     async with FotMobHistoricalIDScanner(concurrency=2) as scanner:
         # 执行发现
-        await scanner.discover_all_target_seasons(
-            league_ids=target_leagues, seasons=target_seasons
-        )
+        await scanner.discover_all_target_seasons(league_ids=target_leagues, seasons=target_seasons)
 
         # 保存 manifest
         scanner.save_manifest()

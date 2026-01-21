@@ -9,8 +9,8 @@ V1.1 数据一致性单元测试
 3. 数据质量分布验证
 """
 
-import sys
 from pathlib import Path
+import sys
 from unittest.mock import MagicMock
 
 import pytest
@@ -56,9 +56,7 @@ class TestDataConsistency:
         def mock_execute(sql, params=None):
             nonlocal query_count
             query_count += 1
-            if "raw_match_data" in sql:
-                mock_db_cursor.fetchone.return_value = {"count": 8987}
-            elif "match_features_v1" in sql:
+            if "raw_match_data" in sql or "match_features_v1" in sql:
                 mock_db_cursor.fetchone.return_value = {"count": 8987}
 
         mock_db_cursor.execute.side_effect = mock_execute

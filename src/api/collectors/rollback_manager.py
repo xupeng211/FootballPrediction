@@ -148,4 +148,3 @@ class RollbackManager:
 
 class EmergencyStopException(Exception):
     """Exception raised when emergency stop is triggered."""
-

@@ -4,12 +4,12 @@ Docker 容器内全链路冒烟测试
 完整运行数据加载、特征提取、模型推理流程
 """
 
+from datetime import datetime
 import json
 import logging
+from pathlib import Path
 import sys
 import time
-from datetime import datetime
-from pathlib import Path
 
 # 添加项目路径
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))

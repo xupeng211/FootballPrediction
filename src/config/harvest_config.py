@@ -253,8 +253,6 @@ class HarvestConfigManager:
         """打印配置摘要"""
         enabled_leagues = self.get_enabled_leagues()
 
-
-
         # 按大洲分组统计
         continents = {
             "欧洲": ["GB", "ES", "DE", "IT", "FR", "PT", "NL", "BE", "TR", "GR", "RU", "UA"],
@@ -270,7 +268,6 @@ class HarvestConfigManager:
             if continent_leagues:
                 for league in continent_leagues:
                     "✅" if league.is_enabled() else "❌"
-
 
 
 # 单例实例

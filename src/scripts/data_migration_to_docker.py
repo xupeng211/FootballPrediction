@@ -156,7 +156,6 @@ class DataMigration:
                 "migration_note": "这是从 harvest_manifest 迁移的简化数据，需要完整 L2 采集",
             }
 
-
         except Exception as e:
             logger.warning(f"创建 L2 数据失败 (match_id={row.get('match_id')}): {e}")
             return None

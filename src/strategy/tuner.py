@@ -532,7 +532,6 @@ class HyperparameterTuner:
             # 5. 计算目标函数得分
             return self._calculate_objective_score(backtest_result, params)
 
-
         except Exception as e:
             logger.warning(f"⚠️ 参数评估失败: {e}")
             return float("-inf")

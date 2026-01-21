@@ -19,18 +19,18 @@ Version: 1.0.0 (Sprint 7 Performance Testing)
 """
 
 import asyncio
+from dataclasses import asdict, dataclass, field
+from datetime import datetime
 import gc
 import hashlib
 import json
 import logging
+from pathlib import Path
 import sqlite3
 import statistics
 import sys
 import time
 import traceback
-from dataclasses import asdict, dataclass, field
-from datetime import datetime
-from pathlib import Path
 from typing import Any
 
 import numpy as np
@@ -384,11 +384,10 @@ class PerformanceBenchmarkFramework:
                         error_traceback=traceback.format_exc(),
                     )
                     self.results.append(error_result)
+                elif isinstance(result, list):
+                    self.results.extend(result)
                 else:
-                    if isinstance(result, list):
-                        self.results.extend(result)
-                    else:
-                        self.results.append(result)
+                    self.results.append(result)
 
             # 3. 生成报告
             report = await self._generate_report()

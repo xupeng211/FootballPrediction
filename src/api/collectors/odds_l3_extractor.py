@@ -366,7 +366,6 @@ class OddsL3Extractor:
             "away"
         ) == oddsportal_score.get("away")
 
-
     async def _extract_opening_odds(self, page: Page) -> dict[str, Any]:
         """V150.2.2 提取开盘赔率（1X2）- 支持悬停交互和兜底逻辑.
 

@@ -15,13 +15,13 @@ Version: 1.0.0 (Sprint 8 - Production Readiness)
 """
 
 import asyncio
-import json
-import logging
-import random
-import time
 from dataclasses import dataclass
 from datetime import datetime
+import json
+import logging
 from pathlib import Path
+import random
+import time
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 
@@ -506,17 +506,16 @@ class LiveAPIStressTest:
         for result in batch_results:
             if isinstance(result, Exception):
                 error_count += 1
-            else:
-                if result.get("success"):
-                    success_count += 1
+            elif result.get("success"):
+                success_count += 1
 
-                    # 检查是否为优雅降级
-                    if "error" in result.get("data", {}):
-                        graceful_degradations += 1
-                else:
-                    error_count += 1
-                    if result.get("error_type") == "timeout":
-                        timeout_count += 1
+                # 检查是否为优雅降级
+                if "error" in result.get("data", {}):
+                    graceful_degradations += 1
+            else:
+                error_count += 1
+                if result.get("error_type") == "timeout":
+                    timeout_count += 1
 
     async def _analyze_graceful_degradation(
         self, scenario: APITestScenario, success_rate: float

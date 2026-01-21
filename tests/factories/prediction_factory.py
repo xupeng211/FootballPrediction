@@ -129,10 +129,9 @@ class MatchFactory(factory.Factory):
     def outcome(self):
         if self.home_score > self.away_score:
             return MockMatchOutcome.HOME_WIN
-        elif self.away_score > self.home_score:
+        if self.away_score > self.home_score:
             return MockMatchOutcome.AWAY_WIN
-        else:
-            return MockMatchOutcome.DRAW
+        return MockMatchOutcome.DRAW
 
 
 class PredictionFactory(factory.Factory):
@@ -274,20 +273,19 @@ def create_edge_case_match(edge_case_type: str) -> dict[str, Any]:
         match.team_stats["away"]["elo_rating"] = 1000  # 极低Elo
         return match.__dict__
 
-    elif edge_case_type == "perfect_form":
+    if edge_case_type == "perfect_form":
         match = MatchFactory()
         match.team_stats["home"]["recent_form"] = [1, 1, 1, 1, 1]  # 完美状态
         match.team_stats["away"]["recent_form"] = [0, 0, 0, 0, 0]  # 极差状态
         return match.__dict__
 
-    elif edge_case_type == "high_scoring":
+    if edge_case_type == "high_scoring":
         match = MatchFactory()
         match.home_score = fuzzy.FuzzyInteger(5, 10)
         match.away_score = fuzzy.FuzzyInteger(5, 10)
         return match.__dict__
 
-    else:
-        return MatchFactory().__dict__
+    return MatchFactory().__dict__
 
 
 if __name__ == "__main__":

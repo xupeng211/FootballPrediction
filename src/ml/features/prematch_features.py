@@ -304,8 +304,6 @@ def main():
     extractor = PrematchFeatureExtractor()
     extractor.extract_prematch_features(df)
 
-
-
     return 0
 
 

@@ -88,6 +88,7 @@ model_zoo/*.pkl
 model_zoo/*.joblib
 model_zoo/*.h5
 model_zoo/*.pt
+model_zoo/*.json
 !model_zoo/.gitkeep
 !model_zoo/registry.md
 

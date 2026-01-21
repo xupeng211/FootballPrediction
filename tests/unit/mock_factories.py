@@ -364,7 +364,7 @@ def create_mock_coroutine(return_value=None, side_effect=None):
         if side_effect:
             if isinstance(side_effect, Exception):
                 raise side_effect
-            elif callable(side_effect):
+            if callable(side_effect):
                 return side_effect(*args, **kwargs)
         return return_value
 

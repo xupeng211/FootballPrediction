@@ -60,7 +60,6 @@ class SecurityInterrupt(Exception):
     """
 
 
-
 # ============================================================================
 # V26.5: Collection Circuit Breaker
 # ============================================================================
@@ -804,9 +803,7 @@ class BaseExtractor:
         # Priority 1: PROXY_SERVER (legacy support)
         proxy_server = os.getenv("PROXY_SERVER")
         if proxy_server:
-            if (
-                proxy_server.startswith(("http://", "https://", "socks5://"))
-            ):
+            if proxy_server.startswith(("http://", "https://", "socks5://")):
                 return {"server": proxy_server}
             return {"server": f"http://{proxy_server}"}
 

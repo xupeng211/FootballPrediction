@@ -250,7 +250,6 @@ class RetrainingService:
                 model, metrics, feature_count, start_time, description
             )
 
-
         except Exception as e:
             logger.error(f"❌ 重训练流水线失败: {e!s}", exc_info=True)
             return {

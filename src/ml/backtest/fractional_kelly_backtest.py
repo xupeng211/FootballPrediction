@@ -92,7 +92,6 @@ class FractionalKellyBacktester:
             feature_array = np.array(features).reshape(1, -1)
             return self.scaler.transform(feature_array)
 
-
         except Exception as e:
             logger.warning(f"⚠️ 特征准备失败: {e}")
             return None
@@ -499,7 +498,6 @@ class FractionalKellyBacktester:
 使用模型: V2.1 Simple XGBoost
 策略版本: Fractional Kelly V2.0 (0.5x)
         """
-
 
 
 def main():

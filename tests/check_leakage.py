@@ -420,9 +420,8 @@ class DataLeakageDetector:
             print(f"\n❌ 检测失败！发现 {len(self.suspicious_features)} 个可疑特征")
             print("建议: 检查并清理可疑特征后重新训练")
             return results
-        else:
-            print("\n✅ 检测通过！未发现明显的数据泄露")
-            return results
+        print("\n✅ 检测通过！未发现明显的数据泄露")
+        return results
 
 
 def main():

@@ -510,9 +510,7 @@ class LineupCollector:
 
         return min(score, 100.0)
 
-    def _find_lineup_data_heuristic(
-        self, content: dict
-    ) -> tuple[dict | None, dict | None, str]:
+    def _find_lineup_data_heuristic(self, content: dict) -> tuple[dict | None, dict | None, str]:
         """
         V41.282: 启发式查找主客队阵容数据
 

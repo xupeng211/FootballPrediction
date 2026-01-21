@@ -10,8 +10,8 @@ V1.1 配置中心单元测试
 4. 模型训练参数验证
 """
 
-import sys
 from pathlib import Path
+import sys
 
 import pytest
 

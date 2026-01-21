@@ -15,8 +15,8 @@ Author: QA Automation & Security Auditor
 Version: 1.0.0
 """
 
-import logging
 from datetime import datetime, timedelta
+import logging
 
 import numpy as np
 import pandas as pd
@@ -28,14 +28,12 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-import sys
 from pathlib import Path
+import sys
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.ml.features.standings_calculator import (
-    StandingsCalculator,
-)
+from src.ml.features.standings_calculator import StandingsCalculator
 
 
 class TestTimeLeakageAudit:

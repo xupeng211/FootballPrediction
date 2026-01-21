@@ -4,8 +4,8 @@
 """
 
 import asyncio
-import time
 from pathlib import Path
+import time
 from unittest.mock import Mock, patch
 
 import pytest
@@ -223,9 +223,8 @@ class TestErrorHandling:
 
     def test_file_not_found_error(self):
         """文件不存在错误处理"""
-        with pytest.raises(FileNotFoundError):
-            with open("/nonexistent/file.txt"):
-                pass
+        with pytest.raises(FileNotFoundError), open("/nonexistent/file.txt"):
+            pass
 
     def test_value_error(self):
         """数值错误处理"""

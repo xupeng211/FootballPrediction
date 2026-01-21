@@ -135,7 +135,10 @@ class RiskMonitor:
     """
 
     def __init__(
-        self, initial_balance: float = 1000.0, config_path: str | None = None, load_state: bool = True
+        self,
+        initial_balance: float = 1000.0,
+        config_path: str | None = None,
+        load_state: bool = True,
     ):
         """
         初始化风控监控系统
@@ -618,7 +621,6 @@ def get_risk_monitor(config_path: str | None = None) -> RiskMonitor:
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
 
-
     # 创建风控监控
     monitor = RiskMonitor(initial_balance=1000.0)
 
@@ -633,4 +635,3 @@ if __name__ == "__main__":
     summary = monitor.get_status_summary()
     for _key, _value in summary.items():
         pass
-

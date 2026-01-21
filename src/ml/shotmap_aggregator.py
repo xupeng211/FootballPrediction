@@ -493,10 +493,8 @@ if __name__ == "__main__":
     home_team_id = general.get("homeTeam", {}).get("id", 0)
     away_team_id = general.get("awayTeam", {}).get("id", 0)
 
-
     # 执行合成
     features = synthesize_v20_6_features(content, home_team_id, away_team_id)
-
 
     # 按前缀分类统计
     feature_categories = {}
