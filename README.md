@@ -293,6 +293,107 @@ wsl --shutdown
 
 ---
 
+## 🏭 自动化特征工厂 (V41.500+)
+
+### V41.500 架构概览
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    V41.500 Automated Pipeline                    │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐      │
+│  │ Schema Map   │───▶│Path Resolver │───▶│Feature       │      │
+│  │ (YAML 配置)   │    │(安全路径访问)  │    │Factory       │      │
+│  └──────────────┘    └──────────────┘    │(特征工厂)    │      │
+│                                          └──────────────┘      │
+│                                                  │              │
+│                                                  ▼              │
+│  ┌──────────────────────────────────────────────────────────┐   │
+│  │              PipelineIntegrator                          │   │
+│  │  数据采集完成后自动生成 V41.500 特征并写入 golden_features │   │
+│  └──────────────────────────────────────────────────────────┘   │
+│                          │                                      │
+│                          ▼                                      │
+│  ┌──────────────────────────────────────────────────────────┐   │
+│  │              Database (matches 表)                       │   │
+│  │  golden_features = V41.500 + 原有特征                       │   │
+│  └──────────────────────────────────────────────────────────┘   │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### 核心组件
+
+| 组件 | 文件路径 | 功能 |
+|------|----------|------|
+| **Schema Map** | `config/schema_map.yaml` | JSON 路径配置，支持数据源变动 |
+| **Path Resolver** | `src/processors/path_resolver.py` | 安全路径访问，带默认值容错 |
+| **Feature Factory** | `src/processors/feature_factory.py` | 特征生成引擎（疲劳度/缺阵/赔率） |
+| **Pipeline Integrator** | `src/api/collectors/v41_500_pipeline_integration.py` | 流水线自动集成器 |
+
+### 如何更新 `schema_map.yaml`
+
+当数据源结构变化时，只需更新 `config/schema_map.yaml`，无需修改代码：
+
+```yaml
+# 示例：添加新的数据源路径
+new_source:
+  match_data:
+    path: "data.match"
+    home_team: "teams.home.name"
+    unavailable: "teams.home.unavailable_list"
+```
+
+### V41.500 新增特征定义
+
+| 特征类别 | 特征名称 | 说明 |
+|----------|----------|------|
+| **疲劳度** | `home_rest_days` | 主队休息天数 |
+| | `away_is_busy_week` | 客队是否为忙碌周（休息<4天） |
+| | `diff_rest_days` | 休息天数差值 |
+| **缺阵** | `home_unavailable_total_count` | 主队缺阵人数 |
+| | `home_unavailable_total_market_value` | 主队缺阵总身价（欧元） |
+| | `home_unavailable_star_count` | 主队缺阵球星数（身价>30M） |
+| **首发战力** | `home_starter_avg_rating` | 主队首发平均评分 |
+| | `home_missing_stars_count` | 主队缺阵大腿数（评分>=7.5） |
+| **赔率动向** | `home_drop_ratio` | 主胜赔率下降比率 |
+| | `total_movement` | 赔率总变化幅度 |
+| **联赛等级** | `is_top_5_league` | 是否为五大联赛 |
+
+### 使用方式
+
+```bash
+# 1. 数据采集完成后自动处理
+python -c "
+from src.api.collectors.v41_500_pipeline_integration import process_match_after_collection
+process_match_after_collection('match_id')
+"
+
+# 2. 批量处理最近 100 场比赛
+python src/api/collectors/v41_500_pipeline_integration.py
+
+# 3. 在代码中调用
+from src.processors.feature_factory import get_feature_factory
+factory = get_feature_factory()
+features = factory.process_match(match_data)
+```
+
+### 测试覆盖
+
+```bash
+# 运行 V41.500 端到端测试
+pytest tests/ai/test_v41_500_pipeline.py -v
+
+# 包含 29 个测试用例：
+# - Schema Map 配置测试
+# - Path Resolver 路径解析测试
+# - Feature Factory 特征生成测试
+# - V41.510 鲁棒性测试（空值/损坏 JSON）
+```
+
+---
+
 ## 📈 版本演进
 
 ### 核心组件版本系列
