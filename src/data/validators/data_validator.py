@@ -120,13 +120,17 @@ class SanitizationProtocol:
 
         # 检2: possession 熔断
         home_poss = cls._get_numeric(features, "possession")
-        if home_poss is not None and (home_poss < cls.MIN_POSSESSION or home_poss > cls.MAX_POSSESSION):
+        if home_poss is not None and (
+            home_poss < cls.MIN_POSSESSION or home_poss > cls.MAX_POSSESSION
+        ):
             return False, f"possession={home_poss} 超出范围", MatchStatus.INVALID
 
         return True, "", MatchStatus.READY
 
     @classmethod
-    def check_outlier(cls, features: dict[str, Any], league_context: dict | None = None) -> tuple[bool, str]:
+    def check_outlier(
+        cls, features: dict[str, Any], league_context: dict | None = None
+    ) -> tuple[bool, str]:
         """
         检查离群值
 
@@ -266,7 +270,11 @@ class DataValidator:
         for field in self.REQUIRED_FIELDS:
             if field not in match_data or match_data[field] is None:
                 issues.append(
-                    ValidationIssue(severity=ValidationSeverity.ERROR, field=field, message=f"缺少必需字段: {field}")
+                    ValidationIssue(
+                        severity=ValidationSeverity.ERROR,
+                        field=field,
+                        message=f"缺少必需字段: {field}",
+                    )
                 )
 
         # 2. 检查比分字段（如果比赛已完成）
@@ -275,7 +283,9 @@ class DataValidator:
                 if field not in match_data or match_data[field] is None:
                     issues.append(
                         ValidationIssue(
-                            severity=ValidationSeverity.ERROR, field=field, message=f"已完成的比赛缺少比分字段: {field}"
+                            severity=ValidationSeverity.ERROR,
+                            field=field,
+                            message=f"已完成的比赛缺少比分字段: {field}",
                         )
                     )
 
@@ -334,7 +344,9 @@ class DataValidator:
         # 严格模式下，警告也会导致验证失败
         is_valid = not any(i.severity == ValidationSeverity.ERROR for i in issues)
         if self.strict_mode:
-            is_valid = is_valid and not any(i.severity == ValidationSeverity.WARNING for i in issues)
+            is_valid = is_valid and not any(
+                i.severity == ValidationSeverity.WARNING for i in issues
+            )
 
         return ValidationResult(is_valid=is_valid, issues=issues, quality_score=quality_score)
 
@@ -353,7 +365,11 @@ class DataValidator:
             return ValidationResult(
                 is_valid=False,
                 issues=[
-                    ValidationIssue(severity=ValidationSeverity.ERROR, field="feature_matrix", message="特征矩阵为空")
+                    ValidationIssue(
+                        severity=ValidationSeverity.ERROR,
+                        field="feature_matrix",
+                        message="特征矩阵为空",
+                    )
                 ],
                 quality_score=0,
             )
@@ -377,9 +393,15 @@ class DataValidator:
         # 2. 检查无穷值
         for col in numeric_cols:
             try:
-                if (feature_df[col] == float("inf")).any() or (feature_df[col] == float("-inf")).any():
+                if (feature_df[col] == float("inf")).any() or (
+                    feature_df[col] == float("-inf")
+                ).any():
                     issues.append(
-                        ValidationIssue(severity=ValidationSeverity.ERROR, field=col, message=f"发现无穷值: {col}")
+                        ValidationIssue(
+                            severity=ValidationSeverity.ERROR,
+                            field=col,
+                            message=f"发现无穷值: {col}",
+                        )
                     )
             except (TypeError, ValueError):
                 # 跳过无法比较的列
@@ -452,8 +474,7 @@ class DataValidator:
         total_penalty = error_penalty + warning_penalty
         max_penalty = min(100, field_count * 2)
 
-        score = max(0, 100 - min(total_penalty, max_penalty))
-        return score
+        return max(0, 100 - min(total_penalty, max_penalty))
 
     def get_validation_summary(self, result: ValidationResult) -> str:
         """获取验证结果摘要
@@ -478,7 +499,9 @@ class DataValidator:
         return "\n".join(lines)
 
 
-def validate_batch(match_data_list: list[dict], validator: DataValidator | None = None) -> dict[str, Any]:
+def validate_batch(
+    match_data_list: list[dict], validator: DataValidator | None = None
+) -> dict[str, Any]:
     """批量验证多场比赛数据
 
     Args:
@@ -612,7 +635,11 @@ class FeatureForgeValidator(DataValidator):
             self.league_contexts[league_id]["std_total_shots"] = float(np.std(shots_array))
 
     def check_leakage(
-        self, match_id: int, features: dict[str, Any], match_time: datetime, historical_matches: list[dict]
+        self,
+        match_id: int,
+        features: dict[str, Any],
+        match_time: datetime,
+        historical_matches: list[dict],
     ) -> tuple[bool, str]:
         """
         时间旅行防护 - 检测数据泄露

@@ -21,8 +21,8 @@ import hashlib
 import logging
 from typing import Any
 
-from ..base import BaseProcessor, ProcessorConfig, ProcessorResult
-from ..models import MatchContext, MatchData
+from src.ml.feature_engine.base import BaseProcessor, ProcessorConfig, ProcessorResult
+from src.ml.feature_engine.models import MatchContext, MatchData
 
 logger = logging.getLogger(__name__)
 
@@ -139,7 +139,9 @@ class RefereeProcessor(BaseProcessor[MatchData]):
 
             # 裁判严格度（基于历史数据库或名单）
             if self.config.enable_strictness_analysis:
-                strictness = self._compute_referee_strictness(referee_name, match_context.referee_strictness)
+                strictness = self._compute_referee_strictness(
+                    referee_name, match_context.referee_strictness
+                )
                 features["ref_is_strict"] = strictness
 
                 # 二分类特征（便于决策树切分）
@@ -155,7 +157,9 @@ class RefereeProcessor(BaseProcessor[MatchData]):
 
             # 裁判主场偏向度（国籍匹配分析）
             if self.config.enable_home_bias_analysis:
-                home_advantage = self._compute_home_advantage(referee_name, data.home_team, data.league_id)
+                home_advantage = self._compute_home_advantage(
+                    referee_name, data.home_team, data.league_id
+                )
                 features["ref_home_advantage"] = home_advantage
 
                 # 裁判国籍与主队匹配度
@@ -189,7 +193,7 @@ class RefereeProcessor(BaseProcessor[MatchData]):
             return result
 
         except Exception as e:
-            logger.error(f"RefereeProcessor failed for match {data.match_id}: {e}")
+            logger.exception(f"RefereeProcessor failed for match {data.match_id}: {e}")
             return ProcessorResult.failure_result(str(e))
 
     def _hash_referee_name(self, name: str) -> int:
@@ -211,11 +215,12 @@ class RefereeProcessor(BaseProcessor[MatchData]):
         hash_bytes = hashlib.md5(normalized.encode()).digest()
 
         # 取前 4 字节转换为 int32
-        hash_int = int.from_bytes(hash_bytes[:4], byteorder="big", signed=True)
+        return int.from_bytes(hash_bytes[:4], byteorder="big", signed=True)
 
-        return hash_int
 
-    def _compute_referee_strictness(self, referee_name: str, provided_strictness: float | None) -> float:
+    def _compute_referee_strictness(
+        self, referee_name: str, provided_strictness: float | None
+    ) -> float:
         """
         计算裁判严格度
 
@@ -360,7 +365,9 @@ class RefereeProcessor(BaseProcessor[MatchData]):
         # 默认无匹配
         return 0.0
 
-    def _encode_referee_style(self, strictness: float, home_bias: float, penalty_bias: float) -> int:
+    def _encode_referee_style(
+        self, strictness: float, home_bias: float, penalty_bias: float
+    ) -> int:
         """
         将裁判风格编码为整数
 

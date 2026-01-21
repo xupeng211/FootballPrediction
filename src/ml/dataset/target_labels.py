@@ -18,6 +18,7 @@ M4模块: 比赛结果标签定义
 - 性能优化: 高效的转换逻辑
 """
 
+import contextlib
 from enum import Enum
 import logging
 
@@ -125,7 +126,7 @@ def score_to_label(home_score: int | float | str, away_score: int | float | str)
         return result
 
     except (ValueError, TypeError) as e:
-        logger.error(f"比分转换失败: 主队={home_score}, 客队={away_score}, 错误={e}")
+        logger.exception(f"比分转换失败: 主队={home_score}, 客队={away_score}, 错误={e}")
         raise  # 直接重新抛出原始异常，保持错误消息
 
 
@@ -184,7 +185,9 @@ def numeric_to_label(numeric_label: int) -> MatchOutcome:
     return mapping[numeric_label]
 
 
-def validate_scores(home_score: int | float | str, away_score: int | float | str) -> tuple[int, int]:
+def validate_scores(
+    home_score: int | float | str, away_score: int | float | str
+) -> tuple[int, int]:
     """
     验证并标准化比分输入
 
@@ -310,7 +313,5 @@ if __name__ == "__main__":
         status = "✅" if back_to_label == outcome else "❌"
 
     batch_scores: list[tuple[int | float | str, int | float | str]] = [(2, 1), (0, 0), (1, 3)]
-    try:
+    with contextlib.suppress(Exception):
         batch_results = batch_scores_to_labels(batch_scores)
-    except Exception:
-        pass

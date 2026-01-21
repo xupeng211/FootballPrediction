@@ -204,7 +204,7 @@ class AlertAggregator:
 
             if similar_alerts:
                 # 聚合告警
-                aggregated_alert = self._aggregate_alerts(similar_alerts + [alert])
+                aggregated_alert = self._aggregate_alerts([*similar_alerts, alert])
                 self.alert_buffer.append(aggregated_alert)
                 return aggregated_alert
             # 添加新告警
@@ -230,7 +230,9 @@ class AlertAggregator:
             ):
                 # 检查标题是否相似
                 existing_prefix = (
-                    existing_alert.title.split(":")[0] if ":" in existing_alert.title else existing_alert.title
+                    existing_alert.title.split(":")[0]
+                    if ":" in existing_alert.title
+                    else existing_alert.title
                 )
                 if title_prefix == existing_prefix:
                     similar.append(existing_alert)
@@ -251,7 +253,7 @@ class AlertAggregator:
 
         # 创建聚合告警
         count = len(alerts)
-        sources = list(set(alert.source for alert in alerts))
+        sources = list({alert.source for alert in alerts})
         earliest_time = min(alert.timestamp for alert in alerts)
 
         aggregated_title = f"[聚合] {base_alert.title} ({count}次)"
@@ -278,7 +280,7 @@ class AlertAggregator:
                 "original_alert_ids": [alert.id for alert in alerts],
                 "sources": sources,
             },
-            tags=["aggregated"] + base_alert.tags,
+            tags=["aggregated", *base_alert.tags],
         )
 
 
@@ -295,7 +297,9 @@ class RateLimiter:
         hour_ago = now - timedelta(hours=1)
 
         # 清理1小时前的记录
-        self.alert_history = [timestamp for timestamp in self.alert_history if timestamp >= hour_ago]
+        self.alert_history = [
+            timestamp for timestamp in self.alert_history if timestamp >= hour_ago
+        ]
 
         # 检查是否超过限制
         return len(self.alert_history) < self.max_alerts_per_hour
@@ -320,7 +324,9 @@ class AlertNotifier:
         self.rate_limiter = RateLimiter(max_alerts_per_hour=config.max_alerts_per_hour)
 
         # 初始化模板引擎
-        self.template_env = jinja2.Environment(loader=jinja2.FileSystemLoader(config.templates_dir), autoescape=True)
+        self.template_env = jinja2.Environment(
+            loader=jinja2.FileSystemLoader(config.templates_dir), autoescape=True
+        )
 
         # HTTP会话
         self.http_session: aiohttp.ClientSession | None = None
@@ -353,12 +359,11 @@ class AlertNotifier:
             logger.info("✅ 告警通知系统初始化成功")
 
         except Exception as e:
-            logger.error(f"❌ 告警通知系统初始化失败: {e}")
+            logger.exception(f"❌ 告警通知系统初始化失败: {e}")
             raise
 
     async def _validate_config(self) -> None:
         """验证配置"""
-        required_configs = []
 
         # 检查是否有至少一个通知渠道配置
         if self.config.telegram_bot_token and self.config.telegram_chat_ids:
@@ -423,7 +428,11 @@ class AlertNotifier:
                 return []
 
             # 检查速率限制
-            if not force_send and self.config.enable_rate_limit and not self.rate_limiter.can_send_alert():
+            if (
+                not force_send
+                and self.config.enable_rate_limit
+                and not self.rate_limiter.can_send_alert()
+            ):
                 logger.warning("⚠️ 超过速率限制，跳过告警发送")
                 return []
 
@@ -468,7 +477,7 @@ class AlertNotifier:
             return notification_results
 
         except Exception as e:
-            logger.error(f"❌ 告警发送失败: {e}")
+            logger.exception(f"❌ 告警发送失败: {e}")
             return [
                 NotificationResult(
                     success=False,
@@ -508,7 +517,9 @@ class AlertNotifier:
 
         return channels
 
-    async def _send_to_channel(self, alert: Alert, channel: NotificationChannel) -> NotificationResult:
+    async def _send_to_channel(
+        self, alert: Alert, channel: NotificationChannel
+    ) -> NotificationResult:
         """发送告警到指定渠道"""
         start_time = time.time()
 
@@ -530,7 +541,7 @@ class AlertNotifier:
             return result
 
         except Exception as e:
-            logger.error(f"❌ 发送到{channel.value}失败: {e}")
+            logger.exception(f"❌ 发送到{channel.value}失败: {e}")
             return NotificationResult(
                 success=False,
                 channel=channel,
@@ -648,7 +659,9 @@ class AlertNotifier:
             return NotificationResult(success=result, channel=NotificationChannel.EMAIL)
 
         except Exception as e:
-            return NotificationResult(success=False, channel=NotificationChannel.EMAIL, error_message=str(e))
+            return NotificationResult(
+                success=False, channel=NotificationChannel.EMAIL, error_message=str(e)
+            )
 
     def _send_email_sync(self, msg: MIMEMultipart) -> bool:
         """同步发送邮件"""
@@ -663,7 +676,7 @@ class AlertNotifier:
                 return True
 
         except Exception as e:
-            logger.error(f"❌ SMTP发送失败: {e}")
+            logger.exception(f"❌ SMTP发送失败: {e}")
             return False
 
     async def _send_slack_alert(self, alert: Alert) -> NotificationResult:
@@ -702,7 +715,9 @@ class AlertNotifier:
                 ],
             }
 
-            async with self.http_session.post(self.config.slack_webhook_url, json=payload) as response:
+            async with self.http_session.post(
+                self.config.slack_webhook_url, json=payload
+            ) as response:
                 if response.status == 200:
                     logger.info("✅ Slack告警发送成功")
                     return NotificationResult(success=True, channel=NotificationChannel.SLACK)
@@ -715,7 +730,9 @@ class AlertNotifier:
                 )
 
         except Exception as e:
-            return NotificationResult(success=False, channel=NotificationChannel.SLACK, error_message=str(e))
+            return NotificationResult(
+                success=False, channel=NotificationChannel.SLACK, error_message=str(e)
+            )
 
     def _get_slack_color(self, level: AlertLevel) -> str:
         """获取Slack颜色"""
@@ -754,12 +771,16 @@ class AlertNotifier:
                 },
             }
 
-            async with self.http_session.post(self.config.wechat_work_webhook_url, json=payload) as response:
+            async with self.http_session.post(
+                self.config.wechat_work_webhook_url, json=payload
+            ) as response:
                 if response.status == 200:
                     result = await response.json()
                     if result.get("errcode") == 0:
                         logger.info("✅ 企业微信告警发送成功")
-                        return NotificationResult(success=True, channel=NotificationChannel.WECHAT_WORK)
+                        return NotificationResult(
+                            success=True, channel=NotificationChannel.WECHAT_WORK
+                        )
                     error_msg = result.get("errmsg", "Unknown error")
                     logger.error(f"❌ 企业微信告警发送失败: {error_msg}")
                     return NotificationResult(
@@ -811,7 +832,9 @@ class AlertNotifier:
             return NotificationResult(success=success, channel=NotificationChannel.WEBHOOK)
 
         except Exception as e:
-            return NotificationResult(success=False, channel=NotificationChannel.WEBHOOK, error_message=str(e))
+            return NotificationResult(
+                success=False, channel=NotificationChannel.WEBHOOK, error_message=str(e)
+            )
 
     async def resolve_alert(self, alert_id: str) -> bool:
         """解决告警"""
@@ -884,8 +907,12 @@ class AlertNotifier:
         return {
             **self.stats,
             "total_alerts_in_history": len(self.alert_history),
-            "active_alerts": len([a for a in self.alert_history.values() if a.status == AlertStatus.ACTIVE]),
-            "resolved_alerts": len([a for a in self.alert_history.values() if a.status == AlertStatus.RESOLVED]),
+            "active_alerts": len(
+                [a for a in self.alert_history.values() if a.status == AlertStatus.ACTIVE]
+            ),
+            "resolved_alerts": len(
+                [a for a in self.alert_history.values() if a.status == AlertStatus.RESOLVED]
+            ),
             "acknowledged_alerts": len(
                 [a for a in self.alert_history.values() if a.status == AlertStatus.ACKNOWLEDGED]
             ),
@@ -905,7 +932,7 @@ class AlertNotifier:
             logger.info(f"💾 告警数据已导出: {filepath}")
 
         except Exception as e:
-            logger.error(f"❌ 告警数据导出失败: {e}")
+            logger.exception(f"❌ 告警数据导出失败: {e}")
 
     async def shutdown(self) -> None:
         """关闭通知系统"""
@@ -916,7 +943,7 @@ class AlertNotifier:
             logger.info("✅ 告警通知系统已关闭")
 
         except Exception as e:
-            logger.error(f"❌ 关闭告警通知系统失败: {e}")
+            logger.exception(f"❌ 关闭告警通知系统失败: {e}")
 
 
 # 便捷函数
@@ -1029,7 +1056,7 @@ async def main():
         )
 
         # 获取统计信息
-        stats = notifier.get_statistics()
+        notifier.get_statistics()
 
     finally:
         await notifier.shutdown()

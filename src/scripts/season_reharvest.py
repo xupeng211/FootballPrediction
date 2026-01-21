@@ -17,8 +17,8 @@ from typing import Any
 from dotenv import load_dotenv
 import pandas as pd
 import psycopg2
-from psycopg2.extras import RealDictCursor
 from psycopg2 import sql as psycopg2_sql
+from psycopg2.extras import RealDictCursor
 import requests
 
 # Add src to path
@@ -61,11 +61,15 @@ class DatabaseManager:
             db = settings.database
 
             self.conn = psycopg2.connect(
-                host=db.host, port=db.port, database=db.name, user=db.user, password=db.password.get_secret_value()
+                host=db.host,
+                port=db.port,
+                database=db.name,
+                user=db.user,
+                password=db.password.get_secret_value(),
             )
             logger.info(f"✅ 数据库连接成功: {db.host}:{db.port}/{db.name}")
         except Exception as e:
-            logger.error(f"❌ 数据库连接失败: {e}")
+            logger.exception(f"❌ 数据库连接失败: {e}")
             raise
 
     def _connect(self):
@@ -105,7 +109,7 @@ class DatabaseManager:
             self._connect()
             return True
         except Exception as e:
-            logger.error(f"❌ 创建数据库失败: {e}")
+            logger.exception(f"❌ 创建数据库失败: {e}")
             return False
 
     def create_tables(self):
@@ -174,9 +178,15 @@ class DatabaseManager:
                     """)
 
                     # Create indexes
-                    cur.execute("CREATE INDEX idx_match_features_external_id ON match_features_training(external_id);")
-                    cur.execute("CREATE INDEX idx_match_features_match_time ON match_features_training(match_time);")
-                    cur.execute("CREATE INDEX idx_match_features_league ON match_features_training(league_id);")
+                    cur.execute(
+                        "CREATE INDEX idx_match_features_external_id ON match_features_training(external_id);"
+                    )
+                    cur.execute(
+                        "CREATE INDEX idx_match_features_match_time ON match_features_training(match_time);"
+                    )
+                    cur.execute(
+                        "CREATE INDEX idx_match_features_league ON match_features_training(league_id);"
+                    )
 
                     logger.info("✅ 表结构创建成功")
                 else:
@@ -185,7 +195,7 @@ class DatabaseManager:
                 self.conn.commit()
                 return True
         except Exception as e:
-            logger.error(f"❌ 创建表失败: {e}")
+            logger.exception(f"❌ 创建表失败: {e}")
             self.conn.rollback()
             return False
 
@@ -198,7 +208,7 @@ class DatabaseManager:
                 logger.info("✅ 表数据已清空")
                 return True
         except Exception as e:
-            logger.error(f"❌ 清空表失败: {e}")
+            logger.exception(f"❌ 清空表失败: {e}")
             return False
 
     def insert_match_features(self, features: dict[str, Any]) -> bool:
@@ -227,7 +237,7 @@ class DatabaseManager:
                 self.conn.commit()
                 return True
         except Exception as e:
-            logger.error(f"❌ 插入数据失败: {e}")
+            logger.exception(f"❌ 插入数据失败: {e}")
             self.conn.rollback()
             return False
 
@@ -261,7 +271,7 @@ class DatabaseManager:
                 results = cur.fetchall()
                 return [dict(row) for row in results]
         except Exception as e:
-            logger.error(f"❌ 获取数据质量报告失败: {e}")
+            logger.exception(f"❌ 获取数据质量报告失败: {e}")
             return []
 
     def close(self):
@@ -335,10 +345,10 @@ class SeasonReharvester:
             logger.info(f"✅ 获取到 {len(matches)} 场已完成的比赛")
             return matches
         except Exception as e:
-            logger.error(f"❌ 获取比赛列表失败: {e}")
+            logger.exception(f"❌ 获取比赛列表失败: {e}")
             import traceback
 
-            logger.error(traceback.format_exc())
+            logger.exception(traceback.format_exc())
             return []
 
     def harvest_match(self, match_id: str) -> dict[str, Any] | None:
@@ -378,12 +388,16 @@ class SeasonReharvester:
             return features
 
         except requests.exceptions.RequestException as e:
-            logger.error(f"❌ API 请求失败 - 比赛 {match_id}: {e}")
-            self.failed_matches.append({"match_id": match_id, "error": str(e), "timestamp": datetime.now().isoformat()})
+            logger.exception(f"❌ API 请求失败 - 比赛 {match_id}: {e}")
+            self.failed_matches.append(
+                {"match_id": match_id, "error": str(e), "timestamp": datetime.now().isoformat()}
+            )
             return None
         except Exception as e:
-            logger.error(f"❌ 收割比赛 {match_id} 失败: {e}")
-            self.failed_matches.append({"match_id": match_id, "error": str(e), "timestamp": datetime.now().isoformat()})
+            logger.exception(f"❌ 收割比赛 {match_id} 失败: {e}")
+            self.failed_matches.append(
+                {"match_id": match_id, "error": str(e), "timestamp": datetime.now().isoformat()}
+            )
             return None
 
     def save_harvested_data(self):
@@ -398,7 +412,9 @@ class SeasonReharvester:
 
             # 生成文件名
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            filename = f"/home/user/projects/FootballPrediction/data/harvested_matches_v7_{timestamp}.csv"
+            filename = (
+                f"/home/user/projects/FootballPrediction/data/harvested_matches_v7_{timestamp}.csv"
+            )
 
             # 保存到 CSV
             df.to_csv(filename, index=False)
@@ -408,21 +424,27 @@ class SeasonReharvester:
             logger.info(f"  特征数量: {df.shape[1]}")
 
             # 同时保存到 final_v7_solid_features.csv（覆盖原文件）
-            final_filename = "/home/user/projects/FootballPrediction/data/final_v7_solid_features.csv"
+            final_filename = (
+                "/home/user/projects/FootballPrediction/data/final_v7_solid_features.csv"
+            )
             df.to_csv(final_filename, index=False)
             logger.info(f"✅ 已更新 final_v7_solid_features.csv: {len(df)} 场比赛")
 
             # 保存失败列表
             if self.failed_matches:
-                failed_filename = f"/home/user/projects/FootballPrediction/data/failed_matches_{timestamp}.json"
+                failed_filename = (
+                    f"/home/user/projects/FootballPrediction/data/failed_matches_{timestamp}.json"
+                )
                 with open(failed_filename, "w") as f:
                     json.dump(self.failed_matches, f, indent=2)
-                logger.info(f"⚠️ 失败列表已保存到: {failed_filename} ({len(self.failed_matches)} 场)")
+                logger.info(
+                    f"⚠️ 失败列表已保存到: {failed_filename} ({len(self.failed_matches)} 场)"
+                )
 
             return True
 
         except Exception as e:
-            logger.error(f"❌ 保存数据失败: {e}")
+            logger.exception(f"❌ 保存数据失败: {e}")
             return False
 
     def run(self):
@@ -486,7 +508,9 @@ class SeasonReharvester:
                 # Progress report every 50 matches
                 if i % 50 == 0:
                     logger.info("=" * 60)
-                    logger.info(f"📊 进度报告: {i}/{total_matches} ({i / total_matches * 100:.1f}%)")
+                    logger.info(
+                        f"📊 进度报告: {i}/{total_matches} ({i / total_matches * 100:.1f}%)"
+                    )
                     logger.info(f"  成功: {success_count}, 失败: {failure_count}")
                     logger.info(f"  成功率: {success_count / i * 100:.1f}%")
                     logger.info("=" * 60)
@@ -520,7 +544,9 @@ class SeasonReharvester:
                 logger.info(f"  控球: {match['home_possession']}% - {match['away_possession']}%")
                 logger.info(f"  射门: {match['home_total_shots']} - {match['away_total_shots']}")
                 logger.info(f"  红牌: {match['home_red_cards']} - {match['away_red_cards']}")
-                logger.info(f"  换人: {match['home_substitutions']} - {match['away_substitutions']}")
+                logger.info(
+                    f"  换人: {match['home_substitutions']} - {match['away_substitutions']}"
+                )
                 logger.info(f"  评分差: {match['rating_diff']}")
                 logger.info(f"  xG/射门: {match['home_xg_per_shot']} - {match['away_xg_per_shot']}")
 

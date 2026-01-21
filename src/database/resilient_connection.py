@@ -13,6 +13,7 @@ Date: 2026-01-06
 """
 
 import asyncio
+import contextlib
 import logging
 import time
 from typing import Any
@@ -29,6 +30,7 @@ logger = logging.getLogger(__name__)
 # ============================================================================
 # V144.8: Database Connection Resilience
 # ============================================================================
+
 
 class ResilientConnection:
     """V144.8: Resilient database connection with retry and heartbeat.
@@ -104,9 +106,7 @@ class ResilientConnection:
 
             except OperationalError as e:
                 last_error = e
-                logger.warning(
-                    f"[V144.8] ⚠️ 连接失败 (尝试 {attempt}/{self.max_retries}): {e}"
-                )
+                logger.warning(f"[V144.8] ⚠️ 连接失败 (尝试 {attempt}/{self.max_retries}): {e}")
 
                 if attempt < self.max_retries:
                     logger.info(f"[V144.8] ⏳ 等待 {self.retry_delay} 秒后重试...")
@@ -143,16 +143,14 @@ class ResilientConnection:
             return True
 
         except Exception as e:
-            logger.error(f"[V144.8] 💔 Heartbeat 检查失败: {e}")
+            logger.exception(f"[V144.8] 💔 Heartbeat 检查失败: {e}")
             return False
 
         finally:
             # If we created a temporary connection, close it
             if conn is None and target_conn:
-                try:
+                with contextlib.suppress(Exception):
                     target_conn.close()
-                except Exception:
-                    pass
 
     async def get_connection_async(self) -> connection:
         """Get a database connection from pool or create new one.
@@ -257,9 +255,7 @@ class ResilientConnection:
 
             except Exception as e:
                 last_error = e
-                logger.warning(
-                    f"[V144.8] ⚠️ 查询执行失败 (尝试 {attempt}/{self.max_retries}): {e}"
-                )
+                logger.warning(f"[V144.8] ⚠️ 查询执行失败 (尝试 {attempt}/{self.max_retries}): {e}")
 
                 if attempt < self.max_retries:
                     logger.info(f"[V144.8] ⏳ 等待 {self.retry_delay} 秒后重试...")
@@ -272,16 +268,15 @@ class ResilientConnection:
     def cleanup(self) -> None:
         """Clean up connection pool."""
         for conn in self._conn_pool:
-            try:
+            with contextlib.suppress(Exception):
                 conn.close()
-            except Exception:
-                pass
         self._conn_pool.clear()
 
 
 # ============================================================================
 # Convenience Functions
 # ============================================================================
+
 
 def get_resilient_connection() -> ResilientConnection:
     """Get a resilient connection manager instance.
@@ -312,10 +307,7 @@ async def execute_query_with_retry(
         Query results if fetch=True, row count otherwise
 
     Example:
-        >>> rows = await execute_query_with_retry(
-        ...     "SELECT * FROM matches LIMIT 10",
-        ...     fetch=True
-        ... )
+        >>> rows = await execute_query_with_retry("SELECT * FROM matches LIMIT 10", fetch=True)
     """
     resilient = get_resilient_connection()
     return await resilient.execute_with_retry(query, params, fetch)

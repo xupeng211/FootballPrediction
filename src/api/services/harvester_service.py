@@ -22,6 +22,7 @@ Example:
 from __future__ import annotations
 
 import asyncio
+import contextlib
 from dataclasses import dataclass
 from datetime import datetime
 import logging
@@ -34,9 +35,9 @@ from playwright.async_api import Browser, async_playwright
 import psycopg2
 
 from src.api.collectors.base_extractor import BaseExtractor
-from src.api.collectors.odds_production_extractor import OddsProductionExtractor
 from src.api.collectors.circuit_breaker import CircuitBreaker, CircuitBreakerConfig
 from src.api.collectors.collection_sentry import CollectionSentry
+from src.api.collectors.odds_production_extractor import OddsProductionExtractor
 from src.config_unified import get_settings
 from src.utils.text_processor import TeamNameNormalizer
 
@@ -223,9 +224,7 @@ async def wait_for_page_stable(page) -> None:
     try:
         await page.wait_for_load_state("networkidle", timeout=30000)
     except Exception as e:
-        logger.warning(
-            f"[V142.9] ⚠️ 页面稳定等待超时或失败: {e}，继续执行最佳努力提取"
-        )
+        logger.warning(f"[V142.9] ⚠️ 页面稳定等待超时或失败: {e}，继续执行最佳努力提取")
 
 
 async def evaluate_with_retry(page: Any, script: str, max_retries: int = 3) -> Any:
@@ -257,8 +256,7 @@ async def evaluate_with_retry(page: Any, script: str, max_retries: int = 3) -> A
     while retry_count < max_retries:
         try:
             # Try to evaluate the script
-            result = await page.evaluate(script)
-            return result
+            return await page.evaluate(script)
 
         except Exception as e:
             last_error = e
@@ -278,10 +276,7 @@ async def evaluate_with_retry(page: Any, script: str, max_retries: int = 3) -> A
 
                     # Retry the evaluation
                     continue
-                logger.error(
-                    f"[V142.9] ❌ 所有 {max_retries} 次重试均失败，"
-                    f"放弃执行上下文恢复"
-                )
+                logger.exception(f"[V142.9] ❌ 所有 {max_retries} 次重试均失败，放弃执行上下文恢复")
             else:
                 # Not a context destroyed error, raise immediately
                 raise
@@ -504,17 +499,14 @@ class ProxyLoader:
         """
         # Check if file exists
         if not self.file_path.exists():
-            logger.warning(
-                f"[V142.7] ⚠️ 代理文件未找到: {self.file_path}，"
-                f"将使用 WSL2 自动探测模式"
-            )
+            logger.warning(f"[V142.7] ⚠️ 代理文件未找到: {self.file_path}，将使用 WSL2 自动探测模式")
             return []
 
         # Read file content
         try:
             content = self.file_path.read_text(encoding="utf-8")
         except Exception as e:
-            logger.error(f"[V142.7] ❌ 读取代理文件失败: {e}")
+            logger.exception(f"[V142.7] ❌ 读取代理文件失败: {e}")
             return []
 
         # Parse and validate proxies
@@ -536,10 +528,7 @@ class ProxyLoader:
         if proxies:
             logger.info(f"[V142.7] ✅ 成功加载 {len(proxies)} 个代理")
         else:
-            logger.warning(
-                "[V142.7] ⚠️ 代理文件中未找到有效代理，"
-                "将使用 WSL2 自动探测模式"
-            )
+            logger.warning("[V142.7] ⚠️ 代理文件中未找到有效代理，将使用 WSL2 自动探测模式")
 
         return proxies
 
@@ -595,10 +584,7 @@ class ProxyLoader:
 
             # Port must be in valid range (1-65535)
             port_num = int(port)
-            if not (1 <= port_num <= 65535):
-                return False
-
-            return True
+            return 1 <= port_num <= 65535
 
         except Exception:
             # Any parsing error means invalid format
@@ -790,10 +776,8 @@ class QueueManager:
         """Clean up connection pool."""
         async with self._pool_lock:
             for conn in self._conn_pool:
-                try:
+                with contextlib.suppress(Exception):
                     conn.close()
-                except Exception:
-                    pass
             self._conn_pool.clear()
 
 
@@ -882,10 +866,7 @@ class HarvesterService:
                 proxy_pool = ProxyPool(loaded_proxies)
                 logger.info(f"[V142.7] ✅ 代理池已加载 {len(loaded_proxies)} 个代理")
             else:
-                logger.info(
-                    "[V142.7] ℹ️ 代理文件为空或不存在，"
-                    "将使用 WSL2 自动探测模式"
-                )
+                logger.info("[V142.7] ℹ️ 代理文件为空或不存在，将使用 WSL2 自动探测模式")
                 proxy_pool = ProxyPool([])  # Empty pool for WSL2 auto-detection
         elif proxy_pool is None and proxy_file is None:
             # No proxy pool specified, create empty pool for WSL2 auto-detection
@@ -930,7 +911,9 @@ class HarvesterService:
                 consecutive_failure_threshold=5,
                 pause_duration_hours=12,
             )
-            logger.info("[V26.5] 🤖 自动巡航哨兵已启用（窗口: 100, 成功率阈值: 70%, 连续失败阈值: 5）")
+            logger.info(
+                "[V26.5] 🤖 自动巡航哨兵已启用（窗口: 100, 成功率阈值: 70%, 连续失败阈值: 5）"
+            )
 
     async def stage1_fixtures_scan(
         self,
@@ -973,10 +956,7 @@ class HarvesterService:
 
             while page_num <= max_pages:
                 # Build URL for current page
-                if page_num == 1:
-                    url = base_url
-                else:
-                    url = f"{base_url}page/{page_num}/"
+                url = base_url if page_num == 1 else f"{base_url}page/{page_num}/"
 
                 logger.info(f"[V142.2] 扫描第 {page_num} 页: {url}")
                 await page.goto(url, wait_until="domcontentloaded", timeout=60000)
@@ -1000,17 +980,12 @@ class HarvesterService:
                     if is_hard_ban:
                         # V149.0: 硬接线 CircuitBreaker 熔断器
                         self.circuit_breaker.record_failure(
-                            reason=f"IP Hard Ban: {block_reason}",
-                            is_critical=True
+                            reason=f"IP Hard Ban: {block_reason}", is_critical=True
                         )
 
                     if is_hard_ban and self.proxy_pool and not self.proxy_pool.is_exhausted():
-                        logger.error(
-                            f"[V143.7] ⛔ 检测到 IP 硬封禁 ({block_reason})"
-                        )
-                        logger.warning(
-                            "[V143.7] 🚨 跳过重试，立即更换代理"
-                        )
+                        logger.error(f"[V143.7] ⛔ 检测到 IP 硬封禁 ({block_reason})")
+                        logger.warning("[V143.7] 🚨 跳过重试，立即更换代理")
                         # Mark current proxy as failed
                         self.proxy_pool.record_failure()
                         # Force proxy rotation
@@ -1021,9 +996,7 @@ class HarvesterService:
                             )
                             # Update BaseExtractor's proxy configuration
                             self.base_extractor.set_proxy_config(next_proxy)
-                            logger.info(
-                                "[V143.7] ✅ BaseExtractor 代理配置已更新"
-                            )
+                            logger.info("[V143.7] ✅ BaseExtractor 代理配置已更新")
                             # Recreate context with new proxy
                             try:
                                 await page.close()
@@ -1031,12 +1004,8 @@ class HarvesterService:
                             except Exception:
                                 pass  # Ignore close errors
                             context, page = await self.base_extractor.create_ghost_context(browser)
-                            logger.info(
-                                "[V143.7] ✅ 新 context 已创建（使用新代理）"
-                            )
-                            logger.info(
-                                f"[V143.7] 📄 将从第 {page_num} 页继续任务"
-                            )
+                            logger.info("[V143.7] ✅ 新 context 已创建（使用新代理）")
+                            logger.info(f"[V143.7] 📄 将从第 {page_num} 页继续任务")
                             continue
                         logger.error("[V143.7] ❌ 代理池已耗尽，无法切换到新代理")
 
@@ -1071,9 +1040,7 @@ class HarvesterService:
                             if self.proxy_pool:
                                 self.proxy_pool.record_success()
                             break
-                        logger.warning(
-                            f"[V142.5] 重试 #{retry_count} 仍然被拦截: {block_reason}"
-                        )
+                        logger.warning(f"[V142.5] 重试 #{retry_count} 仍然被拦截: {block_reason}")
                         # V142.6: Record failure for current proxy
                         if self.proxy_pool:
                             self.proxy_pool.record_failure()
@@ -1090,19 +1057,17 @@ class HarvesterService:
                                 )
                                 # V143.7: Update BaseExtractor's proxy configuration
                                 self.base_extractor.set_proxy_config(next_proxy)
-                                logger.info(
-                                    "[V143.7] ✅ BaseExtractor 代理配置已更新"
-                                )
+                                logger.info("[V143.7] ✅ BaseExtractor 代理配置已更新")
                                 # V143.7: Recreate context with new proxy
                                 try:
                                     await page.close()
                                     await context.close()
                                 except Exception:
                                     pass  # Ignore close errors
-                                context, page = await self.base_extractor.create_ghost_context(browser)
-                                logger.info(
-                                    "[V143.7] ✅ 新 context 已创建（使用新代理）"
+                                context, page = await self.base_extractor.create_ghost_context(
+                                    browser
                                 )
+                                logger.info("[V143.7] ✅ 新 context 已创建（使用新代理）")
                                 logger.info(
                                     f"[V142.6] 📄 将从第 {page_num} 页继续任务（而非重新开始）"
                                 )
@@ -1130,7 +1095,9 @@ class HarvesterService:
 
                 # Extract links with deep filtering (V142.4: Regex-based URL filtering)
                 # V142.9: Use evaluate_with_retry for automatic context recovery
-                matches_data = await self.evaluate_with_retry(page, """
+                matches_data = await self.evaluate_with_retry(
+                    page,
+                    """
                     () => {
                         const results = [];
                         const links = document.querySelectorAll('a[href]');
@@ -1196,7 +1163,8 @@ class HarvesterService:
                         });
                         return results;
                     }
-                """)
+                """,
+                )
 
                 logger.info(f"[V142.2] 第 {page_num} 页发现 {len(matches_data)} 个链接")
 
@@ -1215,7 +1183,7 @@ class HarvesterService:
                         """,
                             (db_league, db_season, db_league, db_season),
                         )
-                        db_team_names = set(row[0] for row in cur.fetchall())
+                        db_team_names = {row[0] for row in cur.fetchall()}
                         cur.close()
                         logger.info(f"[V143.6] 已加载 {len(db_team_names)} 个数据库队名")
 
@@ -1351,7 +1319,7 @@ class HarvesterService:
             logger.info(f"[V144.0] 分页扫描完成，共 {len(discovered)} 场比赛")
 
         except Exception as e:
-            logger.error(f"[V142.0] Fixtures 扫描失败: {e}")
+            logger.exception(f"[V142.0] Fixtures 扫描失败: {e}")
             self.stats.total_errors += 1
         finally:
             await page.close()
@@ -1424,7 +1392,7 @@ class HarvesterService:
                     await context.close()
 
                 except Exception as e:
-                    logger.error(f"❌ {match.get('match_id', 'unknown')} 处理失败: {e}")
+                    logger.exception(f"❌ {match.get('match_id', 'unknown')} 处理失败: {e}")
                     self.stats.total_errors += 1
 
                     # V26.5: 记录失败到哨兵
@@ -1553,7 +1521,9 @@ class HarvesterService:
                     success_rate = self.collection_sentry.get_success_rate()
                     consecutive_failures = self.collection_sentry.get_consecutive_failures()
 
-                    logger.info(f"[V26.5] 📊 哨兵状态: 成功率={success_rate:.1%}, 连续失败={consecutive_failures}, 健康状态={'✅ 健康' if is_healthy else '❌ 不健康'}")
+                    logger.info(
+                        f"[V26.5] 📊 哨兵状态: 成功率={success_rate:.1%}, 连续失败={consecutive_failures}, 健康状态={'✅ 健康' if is_healthy else '❌ 不健康'}"
+                    )
 
                     # 如果不健康，触发停机保护
                     if not is_healthy:
@@ -1563,11 +1533,10 @@ class HarvesterService:
                 except Exception as e:
                     # 捕获 SecurityInterrupt 异常，优雅退出
                     if "SecurityInterrupt" in type(e).__name__:
-                        logger.error(f"[V26.5] 🛑 哨兵触发停机保护: {e}")
-                        logger.error("[V26.5] 💡 系统已进入冷却期，请等待 12 小时后自动恢复")
+                        logger.exception(f"[V26.5] 🛑 哨兵触发停机保护: {e}")
+                        logger.exception("[V26.5] 💡 系统已进入冷却期，请等待 12 小时后自动恢复")
                         break
-                    else:
-                        logger.error(f"[V26.5] ❌ 哨兵健康检查异常: {e}")
+                    logger.exception(f"[V26.5] ❌ 哨兵健康检查异常: {e}")
 
             try:
                 # Stage 1: Single execution
@@ -1583,7 +1552,7 @@ class HarvesterService:
                     await asyncio.sleep(cooldown)
 
             except Exception as e:
-                logger.error(f"❌ 周期执行异常: {e}")
+                logger.exception(f"❌ 周期执行异常: {e}")
                 logger.info("⏳ 等待 5 分钟后重试...")
                 await asyncio.sleep(300)
 

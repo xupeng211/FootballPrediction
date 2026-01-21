@@ -24,8 +24,8 @@ import math
 import statistics
 from typing import Any
 
-from ..base import BaseProcessor, ProcessorConfig, ProcessorResult
-from ..models import MatchData
+from src.ml.feature_engine.base import BaseProcessor, ProcessorConfig, ProcessorResult
+from src.ml.feature_engine.models import MatchData
 
 logger = logging.getLogger(__name__)
 
@@ -240,7 +240,7 @@ class TacticalCrossProcessor(BaseProcessor[MatchData]):
             return result
 
         except Exception as e:
-            logger.error(f"TacticalCrossProcessor failed: {e}")
+            logger.exception(f"TacticalCrossProcessor failed: {e}")
             return ProcessorResult.failure_result(str(e))
 
     def _get_base_features(self, context: Any) -> dict[str, float]:
@@ -283,18 +283,28 @@ class TacticalCrossProcessor(BaseProcessor[MatchData]):
                         seg_num = seg_idx + 1
 
                         if len(seg_scores) >= 3:
-                            features[f"{prefix}_m{seg_num}_mean"] = round(statistics.mean(seg_scores), 4)
+                            features[f"{prefix}_m{seg_num}_mean"] = round(
+                                statistics.mean(seg_scores), 4
+                            )
                             # 计算速度
                             if len(seg_scores) >= 2:
-                                diffs = [seg_scores[i] - seg_scores[i - 1] for i in range(1, len(seg_scores))]
-                                features[f"{prefix}_m{seg_num}_velocity"] = round(statistics.mean(diffs), 4)
+                                diffs = [
+                                    seg_scores[i] - seg_scores[i - 1]
+                                    for i in range(1, len(seg_scores))
+                                ]
+                                features[f"{prefix}_m{seg_num}_velocity"] = round(
+                                    statistics.mean(diffs), 4
+                                )
                             else:
                                 features[f"{prefix}_m{seg_num}_velocity"] = 0.0
                             # 计算波动率
                             if len(seg_scores) > 1:
                                 mean_val = statistics.mean(seg_scores)
                                 features[f"{prefix}_m{seg_num}_volatility"] = round(
-                                    statistics.stdev(seg_scores) / abs(mean_val) if mean_val != 0 else 0, 4
+                                    statistics.stdev(seg_scores) / abs(mean_val)
+                                    if mean_val != 0
+                                    else 0,
+                                    4,
                                 )
                             else:
                                 features[f"{prefix}_m{seg_num}_volatility"] = 0.0
@@ -322,17 +332,27 @@ class TacticalCrossProcessor(BaseProcessor[MatchData]):
         features["diff_expected_goals"] = features.get("home_expected_goals", 0) - features.get(
             "away_expected_goals", 0
         )
-        features["diff_shots_total"] = features.get("home_shots_total", 0) - features.get("away_shots_total", 0)
-        features["diff_momentum_mean"] = features.get("home_momentum_mean", 0) - features.get("away_momentum_mean", 0)
-        features["diff_total_value"] = features.get("home_total_value", 0) - features.get("away_total_value", 0)
+        features["diff_shots_total"] = features.get("home_shots_total", 0) - features.get(
+            "away_shots_total", 0
+        )
+        features["diff_momentum_mean"] = features.get("home_momentum_mean", 0) - features.get(
+            "away_momentum_mean", 0
+        )
+        features["diff_total_value"] = features.get("home_total_value", 0) - features.get(
+            "away_total_value", 0
+        )
         features["diff_lineup_stability"] = features.get("home_lineup_stability", 0) - features.get(
             "away_lineup_stability", 0
         )
         features["diff_composite_health"] = features.get("home_composite_health", 0) - features.get(
             "away_composite_health", 0
         )
-        features["diff_pressure"] = features.get("home_pressure_score", 0) - features.get("away_pressure_score", 0)
-        features["diff_team_rating"] = features.get("home_team_rating", 0) - features.get("away_team_rating", 0)
+        features["diff_pressure"] = features.get("home_pressure_score", 0) - features.get(
+            "away_pressure_score", 0
+        )
+        features["diff_team_rating"] = features.get("home_team_rating", 0) - features.get(
+            "away_team_rating", 0
+        )
 
         return features
 
@@ -408,7 +428,9 @@ class TacticalCrossProcessor(BaseProcessor[MatchData]):
                 cross_features[f"{prefix}_pass_accuracy"] = 0.0
 
             # 压迫感 × 控球率
-            cross_features[f"{prefix}_pressure_possession_product"] = round(pressure * (possession / 100.0), 4)
+            cross_features[f"{prefix}_pressure_possession_product"] = round(
+                pressure * (possession / 100.0), 4
+            )
 
             # 动量 × 评分
             cross_features[f"{prefix}_momentum_rating_interaction"] = round(momentum * rating, 4)
@@ -420,13 +442,17 @@ class TacticalCrossProcessor(BaseProcessor[MatchData]):
                 cross_features[f"{prefix}_shot_accuracy"] = 0.0
 
             # 控球率 × 节奏
-            cross_features[f"{prefix}_possession_tempo_product"] = round((possession / 100.0) * tempo, 4)
+            cross_features[f"{prefix}_possession_tempo_product"] = round(
+                (possession / 100.0) * tempo, 4
+            )
 
             # xG × 动量
             cross_features[f"{prefix}_attacking_firepower"] = round(xg * (momentum + 1.0), 4)
 
             # 传球 × 控球率
-            cross_features[f"{prefix}_pass_possession_synergy"] = round(total_passes * (possession / 100.0), 4)
+            cross_features[f"{prefix}_pass_possession_synergy"] = round(
+                total_passes * (possession / 100.0), 4
+            )
 
             # 角球 × 压迫感
             cross_features[f"{prefix}_set_piece_threat"] = round(corners * pressure, 4)
@@ -441,7 +467,9 @@ class TacticalCrossProcessor(BaseProcessor[MatchData]):
             cross_features[f"{prefix}_shots_momentum_product"] = round(shots * (momentum + 0.5), 4)
 
             # 控球率 × 动量
-            cross_features[f"{prefix}_possession_momentum_synergy"] = round((possession / 100.0) * (momentum + 0.5), 4)
+            cross_features[f"{prefix}_possession_momentum_synergy"] = round(
+                (possession / 100.0) * (momentum + 0.5), 4
+            )
 
             # 传球精度 × 动量
             cross_features[f"{prefix}_pass_quality_momentum"] = round(
@@ -462,7 +490,9 @@ class TacticalCrossProcessor(BaseProcessor[MatchData]):
             cross_features[f"{prefix}_shots_per_corner"] = round(shots / (corners + 1), 4)
 
             # 控球率 / 压迫感
-            cross_features[f"{prefix}_possession_pressure_ratio"] = round((possession / 100.0) / (pressure + 0.1), 4)
+            cross_features[f"{prefix}_possession_pressure_ratio"] = round(
+                (possession / 100.0) / (pressure + 0.1), 4
+            )
 
             # 动量 × 越位
             offsides = features.get(f"{prefix}_offsides", 0.0)
@@ -500,7 +530,9 @@ class TacticalCrossProcessor(BaseProcessor[MatchData]):
         # 场馆因子
         match_importance = features.get("match_importance", 0.5)
         cross_features["stadium_choke_factor"] = round(match_importance * abs(value_diff), 4)
-        cross_features["stadium_pressure_magnifier"] = round(match_importance * abs(pressure_diff), 4)
+        cross_features["stadium_pressure_magnifier"] = round(
+            match_importance * abs(pressure_diff), 4
+        )
 
         # 综合优势指数
         cross_features["tactical_dominance"] = round((pressure_diff + momentum_diff) / 2.0, 4)
@@ -523,7 +555,9 @@ class TacticalCrossProcessor(BaseProcessor[MatchData]):
             stability = features.get(f"{prefix}_lineup_stability", 0.5)
 
             cross_features[f"{prefix}_xg_momentum_cross"] = round(l3_xg * (l5_xg_trend + 1.0), 4)
-            cross_features[f"{prefix}_form_consistency"] = round(l3_win_rate * (l5_xg_trend + 1.0), 4)
+            cross_features[f"{prefix}_form_consistency"] = round(
+                l3_win_rate * (l5_xg_trend + 1.0), 4
+            )
             cross_features[f"{prefix}_rating_stability_cross"] = round(l3_rating * stability, 4)
             cross_features[f"{prefix}_temporal_momentum"] = round(l3_xg * l3_win_rate, 4)
 
@@ -556,7 +590,9 @@ class TacticalCrossProcessor(BaseProcessor[MatchData]):
 
                         # 比率交叉（如果分母不为零）
                         if abs(val2) > 0.001:
-                            cross_features[f"{prefix}_{factor1}_div_{factor2}"] = round(val1 / val2, 4)
+                            cross_features[f"{prefix}_{factor1}_div_{factor2}"] = round(
+                                val1 / val2, 4
+                            )
 
         # 主客队因子交叉
         home_factors = {}
@@ -627,7 +663,13 @@ class TacticalCrossProcessor(BaseProcessor[MatchData]):
 
         # 对所有核心指标应用非线性变换
         for prefix in ["home", "away"]:
-            for factor in ["expected_goals", "shots_total", "possession", "total_passes", "total_value"]:
+            for factor in [
+                "expected_goals",
+                "shots_total",
+                "possession",
+                "total_passes",
+                "total_value",
+            ]:
                 key = f"{prefix}_{factor}"
                 value = features.get(key, 0.0)
 
@@ -635,7 +677,9 @@ class TacticalCrossProcessor(BaseProcessor[MatchData]):
                 nonlinear_features[f"log_{key}"] = round(math.log(abs(value) + 1.0), 4)
 
                 # Sigmoid 变换
-                nonlinear_features[f"sigmoid_{key}"] = round(1.0 / (1.0 + math.exp(-value / 10.0)), 4)
+                nonlinear_features[f"sigmoid_{key}"] = round(
+                    1.0 / (1.0 + math.exp(-value / 10.0)), 4
+                )
 
                 # Tanh 变换
                 nonlinear_features[f"tanh_{key}"] = round(math.tanh(value / 20.0), 4)
@@ -702,23 +746,33 @@ class TacticalCrossProcessor(BaseProcessor[MatchData]):
             )
 
             # xG 的平方根 × 动量
-            poly_features[f"{prefix}_sqrt_xg_momentum"] = round(math.sqrt(abs(xg)) * (momentum + 0.5), 4)
+            poly_features[f"{prefix}_sqrt_xg_momentum"] = round(
+                math.sqrt(abs(xg)) * (momentum + 0.5), 4
+            )
 
             # V24.0 扩展：更多交叉多项式
             # xG × 评分 × 控球率
-            poly_features[f"{prefix}_xg_rating_possession"] = round(xg * rating * (possession / 100.0), 4)
+            poly_features[f"{prefix}_xg_rating_possession"] = round(
+                xg * rating * (possession / 100.0), 4
+            )
 
             # 射门效率（射门 × 评分）
             poly_features[f"{prefix}_shots_rating_efficiency"] = round(shots * rating / 10.0, 4)
 
             # 角球 × 控球率
-            poly_features[f"{prefix}_corners_possession_product"] = round(corners * possession / 100.0, 4)
+            poly_features[f"{prefix}_corners_possession_product"] = round(
+                corners * possession / 100.0, 4
+            )
 
             # xG 立方根 × 动量立方
-            poly_features[f"{prefix}_cbrt_xg_momentum_cubed"] = round((abs(xg) ** (1 / 3)) * ((momentum + 0.5) ** 3), 6)
+            poly_features[f"{prefix}_cbrt_xg_momentum_cubed"] = round(
+                (abs(xg) ** (1 / 3)) * ((momentum + 0.5) ** 3), 6
+            )
 
             # 控球率平方 × xG 平方
-            poly_features[f"{prefix}_possession_sq_xg_sq"] = round(((possession / 100.0) ** 2) * (xg**2), 6)
+            poly_features[f"{prefix}_possession_sq_xg_sq"] = round(
+                ((possession / 100.0) ** 2) * (xg**2), 6
+            )
 
             # 评分 × 动量的绝对值
             poly_features[f"{prefix}_rating_momentum_abs"] = round(rating * abs(momentum), 4)
@@ -792,13 +846,19 @@ class TacticalCrossProcessor(BaseProcessor[MatchData]):
 
             # 动量时段对比（上半场 vs 下半场）
             fh_momentum = (
-                momentum_data.get("m1_mean", 0) + momentum_data.get("m2_mean", 0) + momentum_data.get("m3_mean", 0)
+                momentum_data.get("m1_mean", 0)
+                + momentum_data.get("m2_mean", 0)
+                + momentum_data.get("m3_mean", 0)
             )
             sh_momentum = (
-                momentum_data.get("m4_mean", 0) + momentum_data.get("m5_mean", 0) + momentum_data.get("m6_mean", 0)
+                momentum_data.get("m4_mean", 0)
+                + momentum_data.get("m5_mean", 0)
+                + momentum_data.get("m6_mean", 0)
             )
 
-            cross_features[f"{prefix}_fh_sh_momentum_ratio"] = round(fh_momentum / (sh_momentum + 0.001), 4)
+            cross_features[f"{prefix}_fh_sh_momentum_ratio"] = round(
+                fh_momentum / (sh_momentum + 0.001), 4
+            )
 
             # 动量波动率 × xG
             xg = tactical_data.get("expected_goals", 0.0)
@@ -813,7 +873,9 @@ class TacticalCrossProcessor(BaseProcessor[MatchData]):
                     "m6_volatility",
                 ]
             )
-            cross_features[f"{prefix}_momentum_volatility_xg_product"] = round(total_volatility * xg, 4)
+            cross_features[f"{prefix}_momentum_volatility_xg_product"] = round(
+                total_volatility * xg, 4
+            )
 
         # 主客队动量时段对比
         for seg in [1, 2, 3, 4, 5, 6]:
@@ -867,7 +929,9 @@ class TacticalCrossProcessor(BaseProcessor[MatchData]):
 
                 # 三阶乘积
                 combo_name = "_x_".join(combo)
-                cross_features[f"{prefix}_triple_{combo_name}"] = round(values[0] * values[1] * values[2], 6)
+                cross_features[f"{prefix}_triple_{combo_name}"] = round(
+                    values[0] * values[1] * values[2], 6
+                )
 
                 # 归一化三阶乘积
                 normalized_vals = [v / 100.0 if abs(v) > 100 else v for v in values]
@@ -883,11 +947,15 @@ class TacticalCrossProcessor(BaseProcessor[MatchData]):
                 away_v2 = features.get(f"away_{f2}", 0.0)
                 home_v3 = features.get(f"home_{f1}", 0.0)
 
-                cross_features[f"home_{f1}_x_away_{f2}_x_home_{f1}"] = round(home_v1 * away_v2 * home_v3, 6)
+                cross_features[f"home_{f1}_x_away_{f2}_x_home_{f1}"] = round(
+                    home_v1 * away_v2 * home_v3, 6
+                )
 
         return cross_features
 
-    def _compute_lineup_cross_features(self, data: MatchData, base_features: dict[str, float]) -> dict[str, float]:
+    def _compute_lineup_cross_features(
+        self, data: MatchData, base_features: dict[str, float]
+    ) -> dict[str, float]:
         """
         计算阵容位置级联交叉特征（V24.0 扩展）
 
@@ -939,11 +1007,15 @@ class TacticalCrossProcessor(BaseProcessor[MatchData]):
                     cross_features[f"{prefix}_{pos_name}_xg_x_total_xg"] = round(pos_xg * xg, 4)
 
                     # 位置射门 × 总体射门
-                    cross_features[f"{prefix}_{pos_name}_shots_x_total_shots"] = round(pos_shots * shots, 4)
+                    cross_features[f"{prefix}_{pos_name}_shots_x_total_shots"] = round(
+                        pos_shots * shots, 4
+                    )
 
                     # 位置评分 × 总体评分
                     team_rating = base_features.get(f"{prefix}_team_rating", 7.0)
-                    cross_features[f"{prefix}_{pos_name}_rating_x_team_rating"] = round(pos_rating * team_rating, 4)
+                    cross_features[f"{prefix}_{pos_name}_rating_x_team_rating"] = round(
+                        pos_rating * team_rating, 4
+                    )
 
                     # 位置身价 × 控球率
                     cross_features[f"{prefix}_{pos_name}_value_x_possession"] = round(
@@ -952,12 +1024,16 @@ class TacticalCrossProcessor(BaseProcessor[MatchData]):
 
                     # 位置效率指标
                     if shots > 0:
-                        cross_features[f"{prefix}_{pos_name}_xg_per_total_shot"] = round(pos_xg / shots, 4)
+                        cross_features[f"{prefix}_{pos_name}_xg_per_total_shot"] = round(
+                            pos_xg / shots, 4
+                        )
 
                     # 位置价值占比
                     total_value = base_features.get(f"{prefix}_total_value", 1.0)
                     if total_value > 0:
-                        cross_features[f"{prefix}_{pos_name}_value_ratio"] = round(pos_value / total_value, 4)
+                        cross_features[f"{prefix}_{pos_name}_value_ratio"] = round(
+                            pos_value / total_value, 4
+                        )
 
             # 位置间交叉
             if positions["gk"] and positions["df"]:
@@ -971,12 +1047,18 @@ class TacticalCrossProcessor(BaseProcessor[MatchData]):
                 cross_features[f"{prefix}_mf_fw_rating_synergy"] = round(mf_rating * fw_rating, 4)
 
             # 防守深度 × 进攻深度
-            df_xg = sum(p.expected_goals or 0.0 for p in positions["df"]) if positions["df"] else 0.0
-            fw_xg = sum(p.expected_goals or 0.0 for p in positions["fw"]) if positions["fw"] else 0.0
+            df_xg = (
+                sum(p.expected_goals or 0.0 for p in positions["df"]) if positions["df"] else 0.0
+            )
+            fw_xg = (
+                sum(p.expected_goals or 0.0 for p in positions["fw"]) if positions["fw"] else 0.0
+            )
             cross_features[f"{prefix}_df_fw_xg_cross"] = round(df_xg * fw_xg, 6)
 
             # 中场控制 × 边路威胁
-            mf_passes = sum(p.accurate_passes or 0 for p in positions["mf"]) if positions["mf"] else 0.0
+            mf_passes = (
+                sum(p.accurate_passes or 0 for p in positions["mf"]) if positions["mf"] else 0.0
+            )
             fw_shots = sum(p.total_shots or 0 for p in positions["fw"]) if positions["fw"] else 0.0
             cross_features[f"{prefix}_mf_fw_control_threat"] = round(mf_passes * fw_shots, 4)
 
@@ -1037,8 +1119,8 @@ class TacticalCrossProcessor(BaseProcessor[MatchData]):
                     p2 = player_data[j]
 
                     # 评分 × 评分
-                    cross_features[f"{prefix}_p{p1['index']}_rating_x_p{p2['index']}_rating"] = round(
-                        p1["rating"] * p2["rating"], 4
+                    cross_features[f"{prefix}_p{p1['index']}_rating_x_p{p2['index']}_rating"] = (
+                        round(p1["rating"] * p2["rating"], 4)
                     )
 
                     # 身价 × 身价
@@ -1047,7 +1129,9 @@ class TacticalCrossProcessor(BaseProcessor[MatchData]):
                     )
 
                     # xG × xG
-                    cross_features[f"{prefix}_p{p1['index']}_xg_x_p{p2['index']}_xg"] = round(p1["xg"] * p2["xg"], 6)
+                    cross_features[f"{prefix}_p{p1['index']}_xg_x_p{p2['index']}_xg"] = round(
+                        p1["xg"] * p2["xg"], 6
+                    )
 
                     # 评分和 × 身价和
                     cross_features[f"{prefix}_p{p1['index']}_rating_sum_x_value_sum"] = round(
@@ -1056,22 +1140,28 @@ class TacticalCrossProcessor(BaseProcessor[MatchData]):
 
                     # 触球差值
                     touches_diff = abs(p1["touches"] - p2["touches"])
-                    cross_features[f"{prefix}_p{p1['index']}_p{p2['index']}_touches_diff"] = round(touches_diff, 4)
+                    cross_features[f"{prefix}_p{p1['index']}_p{p2['index']}_touches_diff"] = round(
+                        touches_diff, 4
+                    )
 
                     # 年龄跨度
                     age_diff = abs(p1["age"] - p2["age"])
-                    cross_features[f"{prefix}_p{p1['index']}_p{p2['index']}_age_diff"] = round(age_diff, 4)
+                    cross_features[f"{prefix}_p{p1['index']}_p{p2['index']}_age_diff"] = round(
+                        age_diff, 4
+                    )
 
                     # 综合实力评分（评分 + 身价）
                     strength1 = p1["rating"] + p1["value"] / 100.0
                     strength2 = p2["rating"] + p2["value"] / 100.0
-                    cross_features[f"{prefix}_p{p1['index']}_strength_x_p{p2['index']}_strength"] = round(
-                        strength1 * strength2, 4
-                    )
+                    cross_features[
+                        f"{prefix}_p{p1['index']}_strength_x_p{p2['index']}_strength"
+                    ] = round(strength1 * strength2, 4)
 
                     # 传球配合
                     passes_synergy = (p1["passes"] + p2["passes"]) / 2.0
-                    cross_features[f"{prefix}_p{p1['index']}_p{p2['index']}_passes_synergy"] = round(passes_synergy, 4)
+                    cross_features[f"{prefix}_p{p1['index']}_p{p2['index']}_passes_synergy"] = (
+                        round(passes_synergy, 4)
+                    )
 
                     pair_count += 1
 
@@ -1106,7 +1196,9 @@ class TacticalCrossProcessor(BaseProcessor[MatchData]):
 
         return cross_features
 
-    def _compute_historical_interaction_features(self, features: dict[str, float]) -> dict[str, float]:
+    def _compute_historical_interaction_features(
+        self, features: dict[str, float]
+    ) -> dict[str, float]:
         """
         计算历史交互特征（V24.0 L3×L5 趋势爆破）
 
@@ -1156,11 +1248,15 @@ class TacticalCrossProcessor(BaseProcessor[MatchData]):
                 cross_features[f"{prefix}_{metric}_trend_acceleration"] = round(l5_trend**2, 6)
 
                 # L3 均值的平方 × L5 趋势
-                cross_features[f"{prefix}_{metric}_l3mean_sq_x_l5trend"] = round((l3_mean**2) * l5_trend, 6)
+                cross_features[f"{prefix}_{metric}_l3mean_sq_x_l5trend"] = round(
+                    (l3_mean**2) * l5_trend, 6
+                )
 
                 # L3 趋势一致性（均值与趋势的相关性模拟）
                 if l3_mean != 0:
-                    cross_features[f"{prefix}_{metric}_trend_consistency"] = round(l5_trend / abs(l3_mean), 4)
+                    cross_features[f"{prefix}_{metric}_trend_consistency"] = round(
+                        l5_trend / abs(l3_mean), 4
+                    )
                 else:
                     cross_features[f"{prefix}_{metric}_trend_consistency"] = 0.0
 
@@ -1195,7 +1291,9 @@ class TacticalCrossProcessor(BaseProcessor[MatchData]):
             l3_goals_mean = features.get(f"{prefix}_l3_goals_scored_mean", 0.0)
             l5_shots_trend = features.get(f"{prefix}_l5_shots_total_trend", 0.0)
 
-            cross_features[f"{prefix}_goals_x_shotstrend"] = round(l3_goals_mean * l5_shots_trend, 4)
+            cross_features[f"{prefix}_goals_x_shotstrend"] = round(
+                l3_goals_mean * l5_shots_trend, 4
+            )
             cross_features[f"{prefix}_goals_div_shotstrend"] = round(
                 l3_goals_mean / abs(l5_shots_trend) if abs(l5_shots_trend) > 0.001 else 0.0, 4
             )

@@ -65,6 +65,7 @@ POSSIBLE_FIELD_NAMES = {
 # API Response Parser
 # ============================================================================
 
+
 @dataclass
 class APIExtractionResult:
     """Result of API-based extraction.
@@ -77,6 +78,7 @@ class APIExtractionResult:
         extraction_time_ms: Time taken for extraction (milliseconds)
         error: Error message if extraction failed
     """
+
     success: bool
     entity_code: str
     data: MultiSourceEntityData | None
@@ -92,7 +94,7 @@ class APIExtractionResult:
             "data": self.data.to_dict() if self.data else None,
             "raw_json_keys": list(self.raw_json.keys()) if self.raw_json else [],
             "extraction_time_ms": self.extraction_time_ms,
-            "error": self.error
+            "error": self.error,
         }
 
 
@@ -167,11 +169,9 @@ class OddsAPIInterceptor:
                 # Parse JSON
                 try:
                     json_data = await response.json()
-                    self._captured_responses.append({
-                        "url": url,
-                        "status": response.status,
-                        "json": json_data
-                    })
+                    self._captured_responses.append(
+                        {"url": url, "status": response.status, "json": json_data}
+                    )
 
                     logger.debug(f"Captured API response: {url}")
 
@@ -179,7 +179,7 @@ class OddsAPIInterceptor:
                     logger.debug(f"Failed to parse JSON: {e}")
 
             except Exception as e:
-                logger.error(f"Error in response handler: {e}")
+                logger.exception(f"Error in response handler: {e}")
 
         # Attach listener
         page.on("response", response_handler)
@@ -199,10 +199,7 @@ class OddsAPIInterceptor:
         return None
 
     def parse_api_response(
-        self,
-        json_data: dict,
-        entity_code: str,
-        match_id: str
+        self, json_data: dict, entity_code: str, match_id: str
     ) -> APIExtractionResult:
         """Parse API response and extract odds data.
 
@@ -222,9 +219,7 @@ class OddsAPIInterceptor:
         try:
             # Create base data object
             data = MultiSourceEntityData(
-                match_id=match_id,
-                source_name=entity_code,
-                data_timestamp=datetime.now()
+                match_id=match_id, source_name=entity_code, data_timestamp=datetime.now()
             )
 
             # Recursive search for odds data
@@ -258,7 +253,7 @@ class OddsAPIInterceptor:
                     data=data,
                     raw_json=found_data.get("raw_context"),
                     extraction_time_ms=extraction_time,
-                    error=None
+                    error=None,
                 )
             end_time = datetime.now()
             extraction_time = (end_time - start_time).total_seconds() * 1000
@@ -269,7 +264,7 @@ class OddsAPIInterceptor:
                 data=None,
                 raw_json=json_data,
                 extraction_time_ms=extraction_time,
-                error=f"No odds data found for entity {entity_code}"
+                error=f"No odds data found for entity {entity_code}",
             )
 
         except Exception as e:
@@ -282,14 +277,11 @@ class OddsAPIInterceptor:
                 data=None,
                 raw_json=json_data,
                 extraction_time_ms=extraction_time,
-                error=str(e)
+                error=str(e),
             )
 
     async def extract_via_api(
-        self,
-        page: Page,
-        entity_code: str,
-        match_id: str
+        self, page: Page, entity_code: str, match_id: str
     ) -> APIExtractionResult:
         """Extract odds data via API interception.
 
@@ -313,23 +305,19 @@ class OddsAPIInterceptor:
                 data=None,
                 raw_json=None,
                 extraction_time_ms=0,
-                error="No API response captured"
+                error="No API response captured",
             )
 
         # Step 2: Parse response
-        result = self.parse_api_response(raw_json, entity_code, match_id)
+        return self.parse_api_response(raw_json, entity_code, match_id)
 
-        return result
 
     # ========================================================================
     # Helper Methods
     # ========================================================================
 
     def _recursive_search(
-        self,
-        obj: Any,
-        entity_code: str,
-        path: str = ""
+        self, obj: Any, entity_code: str, path: str = ""
     ) -> dict[str, Any] | None:
         """Recursively search JSON for odds data.
 
@@ -409,9 +397,8 @@ class OddsAPIInterceptor:
             elif key_lower in ["draw", "d", "x"]:
                 if isinstance(value, (int, float)):
                     result["final_d"] = value
-            elif key_lower in ["away", "a", "2"]:
-                if isinstance(value, (int, float)):
-                    result["final_a"] = value
+            elif key_lower in ["away", "a", "2"] and isinstance(value, (int, float)):
+                result["final_a"] = value
 
         # Store raw context for debugging
         result["raw_context"] = entity_dict
@@ -454,9 +441,10 @@ class OddsAPIInterceptor:
             # Try OddsPortal custom format: "22 Dec, 08:13"
             try:
                 from src.api.collectors.odds_production_extractor import TOOLTIP_OPENING_PATTERN
+
                 match = TOOLTIP_OPENING_PATTERN.search(value)
                 if match:
-                    day, month_str, hour, minute, _ = match.groups()
+                    _day, _month_str, hour, minute, _ = match.groups()
                     # This is simplified; actual parsing should match V58.0 logic
                     return datetime(2024, 1, 1, int(hour), int(minute))  # Placeholder
             except Exception:
@@ -469,10 +457,9 @@ class OddsAPIInterceptor:
 # Convenience Functions
 # ============================================================================
 
+
 async def extract_all_entities_via_api(
-    page: Page,
-    match_id: str,
-    match_date: datetime | None = None
+    page: Page, match_id: str, match_date: datetime | None = None
 ) -> dict[str, APIExtractionResult]:
     """Extract odds data for all target entities via API.
 

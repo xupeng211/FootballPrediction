@@ -65,29 +65,45 @@ class YouthTeamDetector:
     # Solution: Use regex patterns instead for Roman numerals
     YOUTH_KEYWORDS = {
         # Single letter suffixes (must have spaces to be standalone)
-        " b ", " c ", " d ",
+        " b ",
+        " c ",
+        " d ",
         # Age groups (multi-character only)
-        "u19", "u20", "u21", "u23", "u17",
+        "u19",
+        "u20",
+        "u21",
+        "u23",
+        "u17",
         # Reserve/Youth indicators (multi-character only)
-        "reserve", "reserves", "youth", "academy",
+        "reserve",
+        "reserves",
+        "youth",
+        "academy",
         "amateur",
         # Dotted versions (multi-character)
-        "ii.", "iii.", "iv.",
+        "ii.",
+        "iii.",
+        "iv.",
         # Multilingual (multi-character)
-        "b team", "b-team", "c team", "c-team",
-        "filial", "junior", "juniors",
+        "b team",
+        "b-team",
+        "c team",
+        "c-team",
+        "filial",
+        "junior",
+        "juniors",
     }
 
     # Patterns that indicate youth teams (regex)
     YOUTH_PATTERNS = [
         r"\s+[IVX]+\s*$",  # Roman numerals at end: " PSG II"
-        r"\s+B\s*$",       # Single B at end: " Real Madrid B"
-        r"\s+C\s*$",       # Single C at end
+        r"\s+B\s*$",  # Single B at end: " Real Madrid B"
+        r"\s+C\s*$",  # Single C at end
         r"\s+U\d{2}\s*$",  # U followed by 2 digits: " Chelsea U21"
         r"\s+Reserves?\s*$",  # Reserve/Reserves
-        r"\s+Youth\s*$",   # Youth
-        r"\s+Academy\s*$", # Academy (V41.29: 强制匹配，不依赖后缀)
-        r"\s+Amateur\s*$", # Amateur
+        r"\s+Youth\s*$",  # Youth
+        r"\s+Academy\s*$",  # Academy (V41.29: 强制匹配，不依赖后缀)
+        r"\s+Amateur\s*$",  # Amateur
     ]
 
     def __init__(self) -> None:
@@ -96,10 +112,7 @@ class YouthTeamDetector:
 
     def _compile_patterns(self) -> None:
         """Compile regex patterns for better performance."""
-        self.patterns = [
-            re.compile(pattern, re.IGNORECASE)
-            for pattern in self.YOUTH_PATTERNS
-        ]
+        self.patterns = [re.compile(pattern, re.IGNORECASE) for pattern in self.YOUTH_PATTERNS]
 
     def is_youth_team(self, team_name: str) -> bool:
         """Check if a team name indicates a youth/reserve/B team.
@@ -146,11 +159,12 @@ class YouthTeamDetector:
         if any(pattern in normalized_lower for pattern in [" b ", "ii", "ii.", " b-team"]):
             return 1
         # Tier 2: C team / III / U21
-        elif any(pattern in normalized_lower for pattern in [" c ", "iii", "iii.", "u21", "c-team"]):
+        if any(
+            pattern in normalized_lower for pattern in [" c ", "iii", "iii.", "u21", "c-team"]
+        ):
             return 2
         # Tier 3: Lower youth teams
-        else:
-            return 3
+        return 3
 
     def are_different_tiers(self, team1: str, team2: str) -> bool:
         """Check if two team names represent different tier levels of the same club.
@@ -186,13 +200,11 @@ class YouthTeamDetector:
             return False
 
         # If both are youth teams but different tiers, they're different
-        if tier1 != tier2:
-            if self._are_same_club_base(team1, team2):
-                logger.warning(
-                    f"🚨 YOUTH TEAM TIER MISMATCH: {team1} (tier {tier1}) "
-                    f"vs {team2} (tier {tier2})"
-                )
-                return True
+        if tier1 != tier2 and self._are_same_club_base(team1, team2):
+            logger.warning(
+                f"🚨 YOUTH TEAM TIER MISMATCH: {team1} (tier {tier1}) vs {team2} (tier {tier2})"
+            )
+            return True
 
         return False
 
@@ -283,7 +295,6 @@ class TeamNameNormalizer:
         "wolves": "wolverhampton wanderers",
         "nottm forest": "nottingham forest",
         "nottingham": "nottingham forest",  # V143.7: Handle stripped "Forest" suffix
-
         # Spanish La Liga
         "atleti": "atletico madrid",
         "atletico": "atletico madrid",
@@ -300,7 +311,6 @@ class TeamNameNormalizer:
         "athletic bilbao": "athletic bilbao",
         "valencia cf": "valencia",
         "espanyol": "espanyol",
-
         # German Bundesliga
         "bayern munich": "bayern munich",
         "bayern munchen": "bayern munich",
@@ -310,7 +320,6 @@ class TeamNameNormalizer:
         "bayer leverkusen": "bayer leverkusen",
         "e frankfurt": "eintracht frankfurt",
         "eintracht frankfurt": "eintracht frankfurt",
-
         # Italian Serie A
         "inter milan": "inter milan",
         "inter": "inter milan",
@@ -321,7 +330,6 @@ class TeamNameNormalizer:
         "roma": "roma",
         "as roma": "roma",
         "lazio": "lazio",
-
         # French Ligue 1
         "psg": "paris saint germain",
         "paris sg": "paris saint germain",
@@ -331,14 +339,12 @@ class TeamNameNormalizer:
         "lyon": "lyon",
         "nice": "nice",
         "monaco": "monaco",
-
         # Portuguese Liga
         "benfica": "benfica",
         "sporting cp": "sporting lisbon",
         "sporting lisbon": "sporting lisbon",
         "porto": "porto",
         "fc porto": "porto",
-
         # Dutch Eredivisie
         "ajax": "ajax",
         "afc ajax": "ajax",
@@ -352,20 +358,29 @@ class TeamNameNormalizer:
     # - "Manchester United" and "Manchester City" must NOT be treated the same
     # - Only strip generic club suffixes like FC, AC, etc.
     SUFFIXES_TO_STRIP = [
-        r"\s+fc$", r"\s+f\.c\.$",
-        r"\s+afcd?$", r"\s+a\.f\.c\.d?$",
-        r"\s+cf$", r"\s+c\.f\.$",
-        r"\s+sc$", r"\s+s\.c\.$",
-        r"\s+ac$", r"\s+a\.c\.$",
-        r"\s+sd$", r"\s+s\.d\.$",
+        r"\s+fc$",
+        r"\s+f\.c\.$",
+        r"\s+afcd?$",
+        r"\s+a\.f\.c\.d?$",
+        r"\s+cf$",
+        r"\s+c\.f\.$",
+        r"\s+sc$",
+        r"\s+s\.c\.$",
+        r"\s+ac$",
+        r"\s+a\.c\.$",
+        r"\s+sd$",
+        r"\s+s\.d\.$",
         # V41.30: REMOVED r"\s+united$" and r"\s+city$" to prevent false matches
-        r"\s+town$", r"\s+athletic$",
+        r"\s+town$",
+        r"\s+athletic$",
     ]
 
     # V41.35: Prefixes to strip (for handling "AFC Bournemouth" -> "Bournemouth")
     PREFIXES_TO_STRIP = [
-        r"^afc\s+", r"^AFC\s+",
-        r"^fc\s+", r"^FC\s+",
+        r"^afc\s+",
+        r"^AFC\s+",
+        r"^fc\s+",
+        r"^FC\s+",
     ]
 
     def __init__(self) -> None:
@@ -375,13 +390,11 @@ class TeamNameNormalizer:
     def _compile_patterns(self) -> None:
         """Compile regex patterns for better performance."""
         self.suffix_patterns = [
-            re.compile(pattern, re.IGNORECASE)
-            for pattern in self.SUFFIXES_TO_STRIP
+            re.compile(pattern, re.IGNORECASE) for pattern in self.SUFFIXES_TO_STRIP
         ]
         # V41.35: Compile prefix patterns
         self.prefix_patterns = [
-            re.compile(pattern, re.IGNORECASE)
-            for pattern in self.PREFIXES_TO_STRIP
+            re.compile(pattern, re.IGNORECASE) for pattern in self.PREFIXES_TO_STRIP
         ]
 
     def normalize(self, team_name: str) -> str:
@@ -473,9 +486,7 @@ class TeamNameNormalizer:
         # V41.29 P0: Check for youth team collision FIRST
         # This prevents "PSG" from matching "PSG II" or "Real Madrid" from matching "Real Madrid B"
         if _youth_detector.are_different_tiers(name1, name2):
-            logger.warning(
-                f"🚨 V41.29 BLOCKED: Youth team collision rejected: {name1} vs {name2}"
-            )
+            logger.warning(f"🚨 V41.29 BLOCKED: Youth team collision rejected: {name1} vs {name2}")
             return False
 
         # Original logic: normalize and compare
@@ -559,7 +570,6 @@ class TeamNameNormalizer:
         # reduce the score to prevent false positives
         if base_score >= 80.0 and base_score < 95.0:
             # Check for common prefixes that might cause false matches
-            common_prefixes = ["manchester", "real", "fc", "athletic", "united", "city"]
             norm1_words = set(norm1.split())
             norm2_words = set(norm2.split())
 
@@ -644,8 +654,18 @@ class TeamNameNormalizer:
         if is_cold_start:
             # V143.8: Enhanced rejection - check if it's a league/season slug
             # Reject if contains 4-digit year (2000-2099) or league keywords
-            has_year = any(len(part) == 4 and part.isdigit() and part.startswith("20") for part in parts)
-            league_keywords = {"league", "ligue", "bundesliga", "serie", "premier", "laliga", "eredivisie"}
+            has_year = any(
+                len(part) == 4 and part.isdigit() and part.startswith("20") for part in parts
+            )
+            league_keywords = {
+                "league",
+                "ligue",
+                "bundesliga",
+                "serie",
+                "premier",
+                "laliga",
+                "eredivisie",
+            }
             has_league_keyword = any(keyword in teams_part.lower() for keyword in league_keywords)
 
             if has_year or has_league_keyword:
@@ -805,7 +825,9 @@ class TeamNameNormalizer:
         # V143.9: Intelligent Fallback Mode
         # If no split met the threshold, use heuristic scoring
         if best_split is None and not is_cold_start:
-            logger.debug(f"[V143.9] No split met threshold, using intelligent fallback: {teams_part}")
+            logger.debug(
+                f"[V143.9] No split met threshold, using intelligent fallback: {teams_part}"
+            )
 
             # V143.9: Special handling for known patterns like "city-utd" or "name-united"
             # Check if there's a "utd" or "united" pattern that should be attached to the preceding word
@@ -899,17 +921,11 @@ class VendorNameCleaner:
     """
 
     # Suffixes to remove
-    SUFFIXES = [
-        "bet", "odds", "sports", "bookmaker", "bookies",
-        "sportsbook", "wagering", "gaming"
-    ]
+    SUFFIXES = ["bet", "odds", "sports", "bookmaker", "bookies", "sportsbook", "wagering", "gaming"]
 
     def __init__(self) -> None:
         """Initialize the vendor name cleaner."""
-        self.suffix_pattern = re.compile(
-            r"\s+(" + "|".join(self.SUFFIXES) + r")$",
-            re.IGNORECASE
-        )
+        self.suffix_pattern = re.compile(r"\s+(" + "|".join(self.SUFFIXES) + r")$", re.IGNORECASE)
 
     def clean(self, raw_name: str) -> str:
         """Clean and normalize a vendor name.
@@ -938,9 +954,8 @@ class VendorNameCleaner:
         cleaned = re.sub(r"\s+", " ", cleaned).strip()
 
         # Remove common non-provider suffixes
-        cleaned = self.suffix_pattern.sub("", cleaned)
+        return self.suffix_pattern.sub("", cleaned)
 
-        return cleaned
 
 
 class LeagueUrlMapper:
@@ -971,119 +986,91 @@ class LeagueUrlMapper:
         "championship": ("england", "championship"),
         "efl cup": ("england", "efl-cup"),
         "fa cup": ("england", "fa-cup"),
-
         # Spanish Leagues
         "la liga": ("spain", "laliga"),
         "primera divisin": ("spain", "laliga"),
         "segunda divisin": ("spain", "segunda-division"),
         "copa del rey": ("spain", "copa-del-rey"),
-
         # Italian Leagues
         "serie a": ("italy", "serie-a"),
         "serie b": ("italy", "serie-b"),
         "coppa italia": ("italy", "coppa-italia"),
-
         # German Leagues
         "bundesliga": ("germany", "bundesliga"),
         "1. bundesliga": ("germany", "bundesliga"),
         "2. bundesliga": ("germany", "2-bundesliga"),
         "dfb pokal": ("germany", "dfb-pokal"),
-
         # French Leagues
         "ligue 1": ("france", "ligue-1"),
         "ligue 2": ("france", "ligue-2"),
         "coupe de france": ("france", "coupe-de-france"),
-
         # Portuguese Leagues
         "primeira liga": ("portugal", "primeira-liga"),
         "taça de portugal": ("portugal", "tacca-de-portugal"),
         "taça da liga": ("portugal", "tacca-da-liga"),
-
         # Dutch Leagues
         "eredivisie": ("netherlands", "eredivisie"),
         "eerste divisie": ("netherlands", "eerste-divisie"),
         "knvb beker": ("netherlands", "knvb-beker"),
-
         # Belgian Leagues
         "first division a": ("belgium", "first-division-a"),
         "jupiler pro league": ("belgium", "first-division-a"),
         "belgian first division a": ("belgium", "first-division-a"),
         "belgian cup": ("belgium", "belgian-cup"),
-
         # Scottish Leagues
         "premiership": ("scotland", "premiership"),
         "scottish premiership": ("scotland", "premiership"),
         "scottish championship": ("scotland", "championship"),
         "scottish cup": ("scotland", "scottish-cup"),
-
         # Turkish Leagues
         "super lig": ("turkey", "super-lig"),
         "turkish super lig": ("turkey", "super-lig"),
-
         # Greek Leagues
         "super league greece": ("greece", "super-league"),
         "greek super league": ("greece", "super-league"),
-
         # Russian Leagues
         "russian premier league": ("russia", "premier-league"),
-
         # Ukrainian Leagues
         "ukrainian premier league": ("ukraine", "premier-league"),
-
         # Polish Leagues
         "ekstraklasa": ("poland", "ekstraklasa"),
-
         # Czech Leagues
         "first league": ("czech-republic", "1-liga"),
         "czech first league": ("czech-republic", "1-liga"),
-
         # Austrian Leagues
         "austrian bundesliga": ("austria", "bundesliga"),
-
         # Swiss Leagues
         "super league": ("switzerland", "super-league"),
         "swiss super league": ("switzerland", "super-league"),
-
         # Danish Leagues
         "superliga": ("denmark", "superliga"),
         "danish superliga": ("denmark", "superliga"),
-
         # Norwegian Leagues
         "eliteserien": ("norway", "eliteserien"),
         "norwegian eliteserien": ("norway", "eliteserien"),
-
         # Swedish Leagues
         "allsvenskan": ("sweden", "allsvenskan"),
-
         # Brazilian Leagues
         "brasileirao": ("brazil", "serie-a"),
         "brazilian serie a": ("brazil", "serie-a"),
-
         # Argentine Leagues
         "primera division": ("argentina", "primera-division"),
         "argentine primera division": ("argentina", "primera-division"),
-
         # Mexican Leagues
         "liga mx": ("mexico", "liga-mx"),
         "mexican primera division": ("mexico", "liga-mx"),
-
         # USA/Canada Leagues
         "major league soccer": ("usa", "mls"),
         "mls": ("usa", "mls"),
-
         # Chinese Leagues
         "chinese super league": ("china", "super-league"),
-
         # Japanese Leagues
         "j1 league": ("japan", "j1-league"),
         "j league": ("japan", "j1-league"),
-
         # Korean Leagues
         "k league 1": ("south-korea", "k-league-1"),
-
         # Australian A-League
         "a-league": ("australia", "a-league"),
-
         # International Competitions
         "champions league": ("europe", "champions-league"),
         "uefa champions league": ("europe", "champions-league"),
@@ -1110,11 +1097,7 @@ class LeagueUrlMapper:
             normalized = league_name.lower().strip()
             self._index[normalized] = (country, slug)
 
-    def get_league_slug(
-        self,
-        league_name: str,
-        season: str
-    ) -> tuple[str, str] | None:
+    def get_league_slug(self, league_name: str, season: str) -> tuple[str, str] | None:
         """Get OddsPortal URL slug for a league.
 
         Args:
@@ -1150,10 +1133,7 @@ class LeagueUrlMapper:
         return None
 
     def construct_results_url(
-        self,
-        league_name: str,
-        season: str,
-        base_url: str = "https://www.oddsportal.com"
+        self, league_name: str, season: str, base_url: str = "https://www.oddsportal.com"
     ) -> str | None:
         """Construct the full results page URL.
 
@@ -1206,11 +1186,7 @@ class LeagueUrlMapper:
             return True
 
         # Fuzzy check
-        for key in self._index.keys():
-            if normalized in key or key in normalized:
-                return True
-
-        return False
+        return any(normalized in key or key in normalized for key in self._index)
 
 
 def normalize_team_list(team_names: list[str]) -> list[str]:

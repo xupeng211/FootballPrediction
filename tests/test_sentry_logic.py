@@ -56,7 +56,10 @@ class TestSentryLogic:
                 "status": {"utcTime": "2024-12-22T15:00:00Z", "finished": True},
                 "league": {"name": "Premier League"},
             },
-            "content": {"stats": {"Periods": {"All": {"stats": []}}}, "playerStats": {"home": [], "away": []}},
+            "content": {
+                "stats": {"Periods": {"All": {"stats": []}}},
+                "playerStats": {"home": [], "away": []},
+            },
         }
 
         # 添加大量真实统计数据来达到120KB
@@ -96,7 +99,10 @@ class TestSentryLogic:
                 "status": {"utcTime": "2024-12-22T20:00:00Z", "finished": True},
                 "league": {"name": "La Liga"},
             },
-            "content": {"stats": {"Periods": {"All": {"stats": []}}}, "playerStats": {"home": [], "away": []}},
+            "content": {
+                "stats": {"Periods": {"All": {"stats": []}}},
+                "playerStats": {"home": [], "away": []},
+            },
         }
 
         # 添加大量详细统计数据来达到500KB
@@ -114,7 +120,11 @@ class TestSentryLogic:
         # 添加超详细的球员统计数据
         for team in ["home", "away"]:
             for player_idx in range(200):
-                player_stats = {"name": f"SuperPlayer_{team}_{player_idx}", "position": "Midfielder", "stats": {}}
+                player_stats = {
+                    "name": f"SuperPlayer_{team}_{player_idx}",
+                    "position": "Midfielder",
+                    "stats": {},
+                }
 
                 # 添加179个维度的技术指标
                 metrics = [
@@ -161,7 +171,9 @@ class TestSentryLogic:
         response_size = len(small_json_50kb)
         assert response_size < collector.min_response_size, "50KB数据应该小于最小阈值"
 
-        logger.warning(f"🚫 50KB数据正确被拒绝: {response_size} bytes < {collector.min_response_size} bytes")
+        logger.warning(
+            f"🚫 50KB数据正确被拒绝: {response_size} bytes < {collector.min_response_size} bytes"
+        )
 
     def test_valid_json_accepted(self, collector, valid_json_120kb):
         """测试: 120KB有效数据必须被接受"""
@@ -188,7 +200,9 @@ class TestSentryLogic:
         assert "content" in result, "解码数据应该包含content字段"
         assert "teams" in result["header"], "header应该包含teams信息"
 
-        logger.success(f"✅ 120KB数据正确被接受: {response_size} bytes >= {collector.min_response_size} bytes")
+        logger.success(
+            f"✅ 120KB数据正确被接受: {response_size} bytes >= {collector.min_response_size} bytes"
+        )
 
     def test_large_json_accepted(self, collector, large_json_500kb):
         """测试: 500KB大数据必须被接受"""
@@ -217,7 +231,9 @@ class TestSentryLogic:
         # 验证球员统计数据存在
         assert "playerStats" in result.get("content", {}), "大数据应该包含球员统计"
 
-        logger.success(f"✅ 500KB大数据正确被接受: {response_size} bytes >= {collector.min_response_size} bytes")
+        logger.success(
+            f"✅ 500KB大数据正确被接受: {response_size} bytes >= {collector.min_response_size} bytes"
+        )
 
     def test_sentry_threshold_value(self, collector):
         """测试: 哨兵阈值设置正确性"""
@@ -227,7 +243,9 @@ class TestSentryLogic:
         expected_threshold = 102400  # 100KB
         actual_threshold = collector.min_response_size
 
-        assert actual_threshold == expected_threshold, f"阈值应该是{expected_threshold}，实际是{actual_threshold}"
+        assert actual_threshold == expected_threshold, (
+            f"阈值应该是{expected_threshold}，实际是{actual_threshold}"
+        )
 
         logger.success(f"✅ 哨兵阈值设置正确: {actual_threshold} bytes")
 

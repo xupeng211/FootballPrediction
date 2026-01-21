@@ -2,6 +2,7 @@
 """
 调试脚本 V2: 深度分析 OddsPortal 页面
 """
+
 import asyncio
 import sys
 from pathlib import Path
@@ -10,7 +11,10 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from playwright.async_api import async_playwright
 
-TARGET_URL = "https://www.oddsportal.com/football/england/premier-league/liverpool-leeds-UJhOUJJM/#1X2;2"
+TARGET_URL = (
+    "https://www.oddsportal.com/football/england/premier-league/liverpool-leeds-UJhOUJJM/#1X2;2"
+)
+
 
 async def analyze_page_deep():
     """深度分析页面结构"""
@@ -37,7 +41,9 @@ async def analyze_page_deep():
     print("=" * 60)
 
     # 检查是否为单页应用
-    is_spa = await page.evaluate("() => !!window.__NUXT__ || !!window.__INITIAL_STATE__ || !!window.React")
+    is_spa = await page.evaluate(
+        "() => !!window.__NUXT__ || !!window.__INITIAL_STATE__ || !!window.React"
+    )
     print(f"单页应用: {'是' if is_spa else '否'}")
 
     # 检查页面主要内容区域
@@ -83,7 +89,7 @@ async def analyze_page_deep():
 
     print(f"找到 {len(odds_values)} 个可能的赔率数值:")
     for i, odd in enumerate(odds_values[:10]):
-        print(f"  [{i+1}] {odd['text']} (标签={odd['parent']}, 类={odd['class'][:30]})")
+        print(f"  [{i + 1}] {odd['text']} (标签={odd['parent']}, 类={odd['class'][:30]})")
 
     # 检查特定的 data 属性
     print("\n" + "=" * 60)
@@ -176,6 +182,7 @@ async def analyze_page_deep():
     print("\n" + "=" * 60)
     print("[诊断 V2] 完成")
     print("=" * 60)
+
 
 if __name__ == "__main__":
     asyncio.run(analyze_page_deep())

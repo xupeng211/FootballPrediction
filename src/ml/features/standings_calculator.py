@@ -70,7 +70,9 @@ class StandingsCalculator:
     POINTS_DRAW = 1
     POINTS_LOSS = 0
 
-    def __init__(self, latency_minutes: int = DEFAULT_LATENCY_MINUTES, league_id: str | None = None):
+    def __init__(
+        self, latency_minutes: int = DEFAULT_LATENCY_MINUTES, league_id: str | None = None
+    ):
         """
         初始化积分榜计算器
 
@@ -86,7 +88,9 @@ class StandingsCalculator:
         self.league_id = league_id  # V19.3: 联赛隔离
 
         if league_id:
-            logger.info(f"积分榜计算器初始化完成（时延: {latency_minutes} 分钟，联赛: {league_id}）")
+            logger.info(
+                f"积分榜计算器初始化完成（时延: {latency_minutes} 分钟，联赛: {league_id}）"
+            )
         else:
             logger.info(f"积分榜计算器初始化完成（时延: {latency_minutes} 分钟，未指定联赛）")
 
@@ -116,16 +120,22 @@ class StandingsCalculator:
         if "league_id" in df.columns:
             unique_leagues = df["league_id"].dropna().unique()
             if len(unique_leagues) > 1:
-                logger.warning(f"⚠️ DataFrame 中包含 {len(unique_leagues)} 个不同联赛: {unique_leagues}")
+                logger.warning(
+                    f"⚠️ DataFrame 中包含 {len(unique_leagues)} 个不同联赛: {unique_leagues}"
+                )
                 if self.league_id is not None:
                     logger.info(f"   只加载联赛 {self.league_id} 的比赛")
                     df = df[df["league_id"] == self.league_id].copy()
                 else:
-                    logger.warning("   未指定 league_id，将跨联赛计算积分榜（可能导致同名球队混淆）")
+                    logger.warning(
+                        "   未指定 league_id，将跨联赛计算积分榜（可能导致同名球队混淆）"
+                    )
             elif len(unique_leagues) == 1:
                 detected_league = unique_leagues[0]
                 if self.league_id is not None and self.league_id != detected_league:
-                    logger.warning(f"⚠️ 指定的联赛 {self.league_id} 与数据中的联赛 {detected_league} 不匹配")
+                    logger.warning(
+                        f"⚠️ 指定的联赛 {self.league_id} 与数据中的联赛 {detected_league} 不匹配"
+                    )
                 self.league_id = detected_league
                 logger.info(f"   检测到联赛: {detected_league}")
 
@@ -291,7 +301,9 @@ class StandingsCalculator:
 
         # 按积分、净胜球、进球数排序
         sorted_teams = sorted(
-            standings.items(), key=lambda x: (x[1].points, x[1].goal_difference, x[1].goals_for), reverse=True
+            standings.items(),
+            key=lambda x: (x[1].points, x[1].goal_difference, x[1].goals_for),
+            reverse=True,
         )
 
         # 分配排名

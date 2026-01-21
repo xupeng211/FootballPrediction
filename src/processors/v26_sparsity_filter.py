@@ -37,11 +37,11 @@ Version: V26.5 (FotMob Feature Protection)
 Date: 2026-01-06
 """
 
+from dataclasses import dataclass, field
 import gc
 import logging
-import pickle
-from dataclasses import dataclass, field
 from pathlib import Path
+import pickle
 from typing import Any
 
 import numpy as np
@@ -57,7 +57,9 @@ logger = logging.getLogger(__name__)
 _STATS_FILE_PATH = Path("data/monitoring/feature_stats_registry.pkl")
 
 
-def save_registry_to_file(registry: "FeatureStatsRegistry", filepath: Path = _STATS_FILE_PATH) -> None:
+def save_registry_to_file(
+    registry: "FeatureStatsRegistry", filepath: Path = _STATS_FILE_PATH
+) -> None:
     """将注册表保存到文件（跨进程安全）"""
     filepath.parent.mkdir(parents=True, exist_ok=True)
     with open(filepath, "wb") as f:
@@ -157,10 +159,7 @@ CORE_FEATURE_WHITELIST = {
 def is_core_feature(feature_key: str) -> bool:
     """检查特征是否为核心特征（白名单保护）"""
     key_lower = feature_key.lower()
-    for prefix in CORE_FEATURE_WHITELIST:
-        if prefix in key_lower:
-            return True
-    return False
+    return any(prefix in key_lower for prefix in CORE_FEATURE_WHITELIST)
 
 
 # ============================================================================
@@ -305,7 +304,10 @@ class FeatureStatsRegistry:
 
     def should_prune(self) -> bool:
         """检查是否应该触发剪枝"""
-        return self.processed_count % self.prune_interval == 0 or len(self.stats) > self.max_features * 1.5
+        return (
+            self.processed_count % self.prune_interval == 0
+            or len(self.stats) > self.max_features * 1.5
+        )
 
     def get_pruned_keys(self) -> set[str]:
         """
@@ -512,7 +514,7 @@ if __name__ == "__main__":
     )
 
     # 生成测试特征
-    for i in range(50):
+    for _i in range(50):
         features = {f"feature_{j}": np.random.randn() if j < 20 else 0.0 for j in range(150)}
         registry.update(features)
 

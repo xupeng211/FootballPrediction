@@ -274,7 +274,9 @@ class FotMobHistoricalIDScanner:
 
         return True, f"OK ({len(all_matches)} matches validated)"
 
-    def _log_discovery_fingerprint(self, team_id: int, team_name: str, match_count: int, seasons_found: list[str]):
+    def _log_discovery_fingerprint(
+        self, team_id: int, team_name: str, match_count: int, seasons_found: list[str]
+    ):
         """记录发现指纹"""
         timestamp = datetime.now().isoformat()
         log_entry = {
@@ -288,7 +290,9 @@ class FotMobHistoricalIDScanner:
         with open(self.fingerprint_log, "a", encoding="utf-8") as f:
             f.write(json.dumps(log_entry, ensure_ascii=False) + "\n")
 
-    async def fetch_team_matches(self, team_id: int, team_name: str, max_retries: int = 3) -> list[dict] | None:
+    async def fetch_team_matches(
+        self, team_id: int, team_name: str, max_retries: int = 3
+    ) -> list[dict] | None:
         """
         获取球队历史赛程 (带重试机制)
 
@@ -309,7 +313,9 @@ class FotMobHistoricalIDScanner:
                     # 指数退避 + 随机抖动
                     base_delay = 2.0 * (2**attempt)
                     delay = base_delay + random.uniform(0.5, 2.0)
-                    logger.info(f"⏳ 重试 {attempt + 1}/{max_retries}: Team {team_name} ({team_id}), 延迟 {delay:.1f}s")
+                    logger.info(
+                        f"⏳ 重试 {attempt + 1}/{max_retries}: Team {team_name} ({team_id}), 延迟 {delay:.1f}s"
+                    )
                     await asyncio.sleep(delay)
                 else:
                     # 首次请求: 自然随机延迟 (1-3 秒)
@@ -318,7 +324,9 @@ class FotMobHistoricalIDScanner:
                 # V36.0: 随机 UA
                 headers = self._get_random_headers()
 
-                async with self.session.get(url, headers=headers, timeout=aiohttp.ClientTimeout(total=30)) as response:
+                async with self.session.get(
+                    url, headers=headers, timeout=aiohttp.ClientTimeout(total=30)
+                ) as response:
                     if response.status != 200:
                         logger.warning(f"HTTP {response.status}: Team {team_name} ({team_id})")
                         continue
@@ -336,16 +344,20 @@ class FotMobHistoricalIDScanner:
                     all_matches = data["fixtures"]["allMatches"]
                     self.stats.successful_queries += 1
 
-                    logger.info(f"✅ 成功: Team {team_name} ({team_id}) - {len(all_matches)} 场比赛")
+                    logger.info(
+                        f"✅ 成功: Team {team_name} ({team_id}) - {len(all_matches)} 场比赛"
+                    )
 
                     return all_matches
 
             except TimeoutError:
-                logger.warning(f"⏰ 超时: Team {team_name} ({team_id}) (尝试 {attempt + 1}/{max_retries})")
+                logger.warning(
+                    f"⏰ 超时: Team {team_name} ({team_id}) (尝试 {attempt + 1}/{max_retries})"
+                )
             except aiohttp.ClientError as e:
                 logger.warning(f"🌐 网络错误: Team {team_name} ({team_id}) - {e}")
             except Exception as e:
-                logger.error(f"❌ 未知错误: Team {team_name} ({team_id}) - {e}")
+                logger.exception(f"❌ 未知错误: Team {team_name} ({team_id}) - {e}")
 
         self.stats.failed_queries += 1
         logger.error(f"❌ 达到最大重试次数: Team {team_name} ({team_id})")
@@ -399,7 +411,9 @@ class FotMobHistoricalIDScanner:
 
         return extracted
 
-    async def discover_league_season(self, league_id: int, season: str, seed_teams: list[dict]) -> list[dict]:
+    async def discover_league_season(
+        self, league_id: int, season: str, seed_teams: list[dict]
+    ) -> list[dict]:
         """
         发现指定联赛-赛季的所有比赛 ID
 
@@ -436,7 +450,7 @@ class FotMobHistoricalIDScanner:
                 all_discovered.extend(target_matches)
 
             # 记录指纹
-            seasons_found = list(set(m.get("season") for m in matches))
+            seasons_found = list({m.get("season") for m in matches})
             self._log_discovery_fingerprint(team_id, team_name, len(matches), seasons_found)
 
             # 短暂休眠，避免过于频繁
@@ -457,7 +471,7 @@ class FotMobHistoricalIDScanner:
         return unique_matches
 
     async def discover_all_target_seasons(
-        self, league_ids: list[int] = None, seasons: list[str] = None
+        self, league_ids: list[int] | None = None, seasons: list[str] | None = None
     ) -> dict[tuple[int, str], list[dict]]:
         """
         发现所有目标联赛-赛季的比赛
@@ -497,7 +511,7 @@ class FotMobHistoricalIDScanner:
 
         return results
 
-    def save_manifest(self, output_dir: Path = None):
+    def save_manifest(self, output_dir: Path | None = None):
         """
         保存发现结果到 manifest 文件
 
@@ -530,28 +544,13 @@ class FotMobHistoricalIDScanner:
 
     def print_summary(self):
         """打印发现摘要"""
-        elapsed = self.stats.get_elapsed()
+        self.stats.get_elapsed()
 
-        print(f"\n{'=' * 70}")
-        print("V36.0 纯净破冰 - 发现摘要")
-        print(f"{'=' * 70}")
-        print(f"⏱️  用时: {elapsed / 60:.1f} 分钟")
-        print(f"📊 球队查询: {self.stats.total_teams_queried} 次")
-        print(f"✅ 成功: {self.stats.successful_queries} 次")
-        print(f"❌ 失败: {self.stats.failed_queries} 次")
-        print(f"🚫 校验拒绝: {self.stats.validation_rejected} 次")
-        print("\n📈 发现数据:")
-        print(f"   覆盖联赛: {len(self.stats.leagues_covered)} 个")
-        print(f"   覆盖赛季: {len(self.stats.seasons_covered)} 个")
-        print(f"   总比赛数: {self.stats.matches_discovered} 场")
 
         # 按联赛-赛季分组统计
-        print("\n📋 按联赛-赛季分布:")
-        for (league_id, season), matches in sorted(self.discovered_matches.items()):
-            league_name = SEED_TEAMS_BY_LEAGUE.get(league_id, {}).get("name", f"League {league_id}")
-            print(f"   {league_name} {season}: {len(matches)} 场")
+        for (league_id, _season), _matches in sorted(self.discovered_matches.items()):
+            SEED_TEAMS_BY_LEAGUE.get(league_id, {}).get("name", f"League {league_id}")
 
-        print(f"{'=' * 70}\n")
 
     async def __aenter__(self):
         """异步上下文管理器入口"""
@@ -575,12 +574,6 @@ async def main():
     """主函数"""
     logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
-    print("\n" + "=" * 70)
-    print("🧊 V36.0 纯净破冰 - FotMob 历史赛季 ID 挖掘器")
-    print("=" * 70)
-    print("策略: 通过【球队路径】绕过联赛接口限制")
-    print("目标: 22/23、23/24 赛季，五大联赛，~3,800 场比赛")
-    print("=" * 70 + "\n")
 
     # 目标配置
     target_leagues = [47, 87, 54, 55, 53]  # 五大联赛
@@ -588,7 +581,9 @@ async def main():
 
     async with FotMobHistoricalIDScanner(concurrency=2) as scanner:
         # 执行发现
-        results = await scanner.discover_all_target_seasons(league_ids=target_leagues, seasons=target_seasons)
+        await scanner.discover_all_target_seasons(
+            league_ids=target_leagues, seasons=target_seasons
+        )
 
         # 保存 manifest
         scanner.save_manifest()

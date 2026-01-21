@@ -3,13 +3,14 @@
 测试足球预测系统的核心算法和业务规则
 """
 
-import pytest
-import numpy as np
-import pandas as pd
-from unittest.mock import Mock, patch
-from typing import Dict, List, Any
 import datetime
 import math
+from typing import Any, Dict, List
+from unittest.mock import Mock, patch
+
+import numpy as np
+import pandas as pd
+import pytest
 
 
 class TestMatchPredictionLogic:

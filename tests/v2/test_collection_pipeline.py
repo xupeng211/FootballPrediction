@@ -6,20 +6,21 @@ FotMob Collection Pipeline 测试
 确保V2架构的数据收集服务正常工作。
 """
 
-import pytest
 import asyncio
-import aiohttp
-from unittest.mock import AsyncMock, MagicMock, patch
 from datetime import datetime
-from typing import Dict, Any, List
+from typing import Any, Dict, List
+from unittest.mock import AsyncMock, MagicMock, patch
 
-from src.services.collection_service import (
-    FotMobCollectionService,
-    CollectionStatus,
-    FotMobCollectionTask,
-    CircuitBreaker,
-)
+import aiohttp
+import pytest
+
 from src.config_unified import get_settings
+from src.services.collection_service import (
+    CircuitBreaker,
+    CollectionStatus,
+    FotMobCollectionService,
+    FotMobCollectionTask,
+)
 
 
 class TestFotMobCollectionTask:

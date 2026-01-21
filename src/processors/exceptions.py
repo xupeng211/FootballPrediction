@@ -182,7 +182,6 @@ class ConfigurationError(ExtractionError):
     """
 
 
-
 class CircuitBreakerOpenError(ExtractionError):
     """
     熔断器打开异常

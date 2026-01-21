@@ -22,8 +22,8 @@ import logging
 import statistics
 from typing import Any
 
-from ..base import BaseProcessor, ProcessorConfig, ProcessorResult
-from ..models import HomeAway, LineupInfo, MatchData, PlayerStats
+from src.ml.feature_engine.base import BaseProcessor, ProcessorConfig, ProcessorResult
+from src.ml.feature_engine.models import HomeAway, LineupInfo, MatchData, PlayerStats
 
 logger = logging.getLogger(__name__)
 
@@ -164,7 +164,7 @@ class InjuryImpactProcessor(BaseProcessor[MatchData]):
             return result
 
         except Exception as e:
-            logger.error(f"InjuryImpactProcessor failed for match {data.match_id}: {e}")
+            logger.exception(f"InjuryImpactProcessor failed for match {data.match_id}: {e}")
             return ProcessorResult.failure_result(str(e))
 
     def _get_history_lineups(self, context: Any, side: HomeAway) -> list[LineupSnapshot]:
@@ -233,7 +233,7 @@ class InjuryImpactProcessor(BaseProcessor[MatchData]):
         current_starters = self._extract_starters(lineup)
 
         # 计算当前阵容总身价
-        current_value = self._compute_lineup_value(current_starters)
+        self._compute_lineup_value(current_starters)
 
         # 识别"预期主力"（基于历史）
         expected_starters = self._identify_expected_starters(history, current_starters)
@@ -248,7 +248,10 @@ class InjuryImpactProcessor(BaseProcessor[MatchData]):
             features.update(missing_features)
 
             # 2. 阵容稳定性分析
-            if self.config.enable_stability_analysis and len(history) >= self.config.min_history_matches:
+            if (
+                self.config.enable_stability_analysis
+                and len(history) >= self.config.min_history_matches
+            ):
                 stability_features = self._analyze_stability(
                     current_starters,
                     history,
@@ -259,7 +262,11 @@ class InjuryImpactProcessor(BaseProcessor[MatchData]):
                 features[f"{prefix}_availability_stability"] = 0.5
 
             # 3. 预期主力在场率
-            present_count = sum(1 for s in expected_starters if s.player_id in {p.player_id for p in current_starters})
+            present_count = sum(
+                1
+                for s in expected_starters
+                if s.player_id in {p.player_id for p in current_starters}
+            )
             features[f"{prefix}_expected_starters_present"] = round(
                 present_count / len(expected_starters) if expected_starters else 1.0, 4
             )
@@ -283,7 +290,9 @@ class InjuryImpactProcessor(BaseProcessor[MatchData]):
             current_ids = {p.player_id for p in current_starters if p.player_id}
             overlap = len(current_ids & last_starters)
             total = len(current_ids | last_starters)
-            features[f"{prefix}_lineup_continuity"] = round(overlap / total if total > 0 else 0.0, 4)
+            features[f"{prefix}_lineup_continuity"] = round(
+                overlap / total if total > 0 else 0.0, 4
+            )
         else:
             features[f"{prefix}_lineup_continuity"] = 0.5
 
@@ -322,9 +331,10 @@ class InjuryImpactProcessor(BaseProcessor[MatchData]):
         expected_ids = {pid for pid, count in starter_counts.items() if count >= threshold}
 
         # 从当前球员列表中找到预期主力
-        expected_starters = [p for p in current_players if p.player_id and p.player_id in expected_ids]
+        return [
+            p for p in current_players if p.player_id and p.player_id in expected_ids
+        ]
 
-        return expected_starters
 
     def _analyze_missing_starters(
         self,
@@ -361,7 +371,9 @@ class InjuryImpactProcessor(BaseProcessor[MatchData]):
         missing_value = sum(p.market_value or 0.0 for p in missing_players)
 
         if total_expected_value > 0:
-            features[f"{prefix}_missing_starter_value_ratio"] = round(missing_value / total_expected_value, 4)
+            features[f"{prefix}_missing_starter_value_ratio"] = round(
+                missing_value / total_expected_value, 4
+            )
         else:
             features[f"{prefix}_missing_starter_value_ratio"] = 0.0
 
@@ -412,7 +424,9 @@ class InjuryImpactProcessor(BaseProcessor[MatchData]):
         if similarities:
             features[f"{prefix}_availability_stability"] = round(statistics.mean(similarities), 4)
             # 变动率（1 - 稳定性）
-            features[f"{prefix}_turnover_rate"] = round(1 - features[f"{prefix}_availability_stability"], 4)
+            features[f"{prefix}_turnover_rate"] = round(
+                1 - features[f"{prefix}_availability_stability"], 4
+            )
         else:
             features[f"{prefix}_availability_stability"] = 0.5
             features[f"{prefix}_turnover_rate"] = 0.5
@@ -466,7 +480,9 @@ class InjuryImpactProcessor(BaseProcessor[MatchData]):
             features[f"{prefix}_bench_impact_potential"] = 0.25
 
         # 替补深度评分（综合人数和质量）
-        depth_score = min(bench_count / 10.0, 1.0) * 0.5 + features[f"{prefix}_bench_impact_potential"] * 0.5
+        depth_score = (
+            min(bench_count / 10.0, 1.0) * 0.5 + features[f"{prefix}_bench_impact_potential"] * 0.5
+        )
         features[f"{prefix}_bench_depth_score"] = round(depth_score, 4)
 
         return features
@@ -520,17 +536,23 @@ class InjuryImpactProcessor(BaseProcessor[MatchData]):
         home_stability = features.get("home_availability_stability", 0.5)
         home_bench = features.get("home_bench_depth_score", 0.5)
 
-        scores["home_composite_health"] = round((1 - home_missing) * 0.5 + home_stability * 0.3 + home_bench * 0.2, 4)
+        scores["home_composite_health"] = round(
+            (1 - home_missing) * 0.5 + home_stability * 0.3 + home_bench * 0.2, 4
+        )
 
         # 客队综合评分
         away_missing = features.get("away_missing_starter_value_ratio", 0.0)
         away_stability = features.get("away_availability_stability", 0.5)
         away_bench = features.get("away_bench_depth_score", 0.5)
 
-        scores["away_composite_health"] = round((1 - away_missing) * 0.5 + away_stability * 0.3 + away_bench * 0.2, 4)
+        scores["away_composite_health"] = round(
+            (1 - away_missing) * 0.5 + away_stability * 0.3 + away_bench * 0.2, 4
+        )
 
         # 健康差值
-        scores["diff_composite_health"] = round(scores["home_composite_health"] - scores["away_composite_health"], 4)
+        scores["diff_composite_health"] = round(
+            scores["home_composite_health"] - scores["away_composite_health"], 4
+        )
 
         return scores
 

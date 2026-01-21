@@ -18,13 +18,14 @@ from typing import Any
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
-
 # ============================================================================
 # 枚举定义
 # ============================================================================
 
+
 class MatchStatus(str, Enum):
     """比赛状态枚举"""
+
     FIXTURE = "Fixture"
     LIVE = "Live"
     FINISHED = "Finished"
@@ -36,21 +37,24 @@ class MatchStatus(str, Enum):
 
 class DataSourceType(str, Enum):
     """数据源类型枚举"""
-    FOTMOB = "Source_F"      # 基础元数据来源
-    ODDSPORTAL = "Source_O"   # 市场度量数据来源
+
+    FOTMOB = "Source_F"  # 基础元数据来源
+    ODDSPORTAL = "Source_O"  # 市场度量数据来源
 
 
 class MatchQuality(str, Enum):
     """数据质量评级"""
+
     EXCELLENT = "Excellent"  # Fusion_Score >= 90
-    GOOD = "Good"            # 80 <= Fusion_Score < 90
-    FAIR = "Fair"            # 60 <= Fusion_Score < 80
-    POOR = "Poor"            # Fusion_Score < 60
+    GOOD = "Good"  # 80 <= Fusion_Score < 90
+    FAIR = "Fair"  # 60 <= Fusion_Score < 80
+    POOR = "Poor"  # Fusion_Score < 60
 
 
 # ============================================================================
 # Source_F: FotMob 基础元数据模型
 # ============================================================================
+
 
 class SourceFData(BaseModel):
     """Source_F: FotMob 基础元数据
@@ -106,6 +110,7 @@ class SourceFData(BaseModel):
 # Source_O: OddsPortal 市场数据模型
 # ============================================================================
 
+
 class SourceOData(BaseModel):
     """Source_O: OddsPortal 市场度量数据
 
@@ -130,7 +135,9 @@ class SourceOData(BaseModel):
     final_a: float | None = Field(None, ge=1.01, le=50.00, description="终盘客胜赔率")
 
     # 数据质量指标
-    integrity_score: float | None = Field(None, ge=0.90, le=1.20, description="完整性分数 (1/P1+1/P2+1/P3)")
+    integrity_score: float | None = Field(
+        None, ge=0.90, le=1.20, description="完整性分数 (1/P1+1/P2+1/P3)"
+    )
     is_valid: bool = Field(default=False, description="数据是否有效")
 
     # 元数据
@@ -141,11 +148,7 @@ class SourceOData(BaseModel):
     def calculate_integrity_score(self) -> "SourceOData":
         """计算完整性分数"""
         if all([self.final_h, self.final_d, self.final_a]):
-            self.integrity_score = (
-                1.0 / self.final_h +
-                1.0 / self.final_d +
-                1.0 / self.final_a
-            )
+            self.integrity_score = 1.0 / self.final_h + 1.0 / self.final_d + 1.0 / self.final_a
             # 有效范围: 1.02 < integrity_score < 1.08
             self.is_valid = 1.02 < self.integrity_score < 1.08
         return self
@@ -154,6 +157,7 @@ class SourceOData(BaseModel):
 # ============================================================================
 # MatchSchema: 统一比赛数据模型
 # ============================================================================
+
 
 class MatchSchema(BaseModel):
     """V41.155 统一比赛数据模型
@@ -222,8 +226,14 @@ class MatchSchema(BaseModel):
         score = 0.0
 
         # 基础信息全 (50%)
-        if (self.match_id and self.home_team and self.away_team and
-            self.match_time and self.league_name and self.season):
+        if (
+            self.match_id
+            and self.home_team
+            and self.away_team
+            and self.match_time
+            and self.league_name
+            and self.season
+        ):
             score += 50.0
 
         # 哈希对齐 (50%)
@@ -249,15 +259,19 @@ class MatchSchema(BaseModel):
         """检测数据源可用性"""
         # Source_F 可用: 基础信息存在
         self.source_f_available = bool(
-            self.match_id and self.home_team and self.away_team and
-            self.match_time and self.league_name
+            self.match_id
+            and self.home_team
+            and self.away_team
+            and self.match_time
+            and self.league_name
         )
 
         # Source_O 可用: 有哈希或价格数据
         self.source_o_available = bool(
-            self.oddsportal_hash or
-            any([self.init_h, self.init_d, self.init_a,
-                 self.final_h, self.final_d, self.final_a])
+            self.oddsportal_hash
+            or any(
+                [self.init_h, self.init_d, self.init_a, self.final_h, self.final_d, self.final_a]
+            )
         )
 
         return self
@@ -336,10 +350,10 @@ class MatchSchema(BaseModel):
 # ============================================================================
 
 __all__ = [
-    "MatchStatus",
     "DataSourceType",
     "MatchQuality",
+    "MatchSchema",
+    "MatchStatus",
     "SourceFData",
     "SourceOData",
-    "MatchSchema",
 ]

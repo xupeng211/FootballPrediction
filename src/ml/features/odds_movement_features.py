@@ -169,7 +169,9 @@ class OddsMovementAnalyzer:
             "total_samples": len(self.odds_history[match_id]),
         }
 
-    def analyze_odds_movement(self, match_id: str, time_window_hours: int | None = None) -> dict[str, Any]:
+    def analyze_odds_movement(
+        self, match_id: str, time_window_hours: int | None = None
+    ) -> dict[str, Any]:
         """
         分析赔率变动
 
@@ -210,7 +212,9 @@ class OddsMovementAnalyzer:
 
         return analysis_result
 
-    def _perform_comprehensive_analysis(self, match_id: str, odds_data: list[dict[str, Any]]) -> dict[str, Any]:
+    def _perform_comprehensive_analysis(
+        self, match_id: str, odds_data: list[dict[str, Any]]
+    ) -> dict[str, Any]:
         """执行综合分析"""
         # 基础统计
         basic_stats = self._calculate_basic_statistics(odds_data)
@@ -225,7 +229,9 @@ class OddsMovementAnalyzer:
         trend_analysis = self._analyze_trends(odds_data) if self.enable_trend_analysis else {}
 
         # 异常检测
-        anomaly_detection = self._detect_anomalies(odds_data) if self.enable_anomaly_detection else {}
+        anomaly_detection = (
+            self._detect_anomalies(odds_data) if self.enable_anomaly_detection else {}
+        )
 
         # 市场情绪分析
         sentiment_analysis = self._analyze_market_sentiment(odds_data)
@@ -234,7 +240,9 @@ class OddsMovementAnalyzer:
         efficiency_metrics = self._calculate_market_efficiency(odds_data)
 
         # 生成交易信号
-        trading_signals = self._generate_trading_signals(movement_analysis, steam_signals, sentiment_analysis)
+        trading_signals = self._generate_trading_signals(
+            movement_analysis, steam_signals, sentiment_analysis
+        )
 
         # 提取模型特征
         model_features = self._extract_odds_movement_features(
@@ -247,7 +255,7 @@ class OddsMovementAnalyzer:
             "data_summary": {
                 "total_samples": len(odds_data),
                 "time_range_hours": self._get_time_range_hours(odds_data),
-                "bookmakers": list(set(entry["bookmaker"] for entry in odds_data)),
+                "bookmakers": list({entry["bookmaker"] for entry in odds_data}),
             },
             "basic_statistics": basic_stats,
             "movement_analysis": movement_analysis,
@@ -355,7 +363,11 @@ class OddsMovementAnalyzer:
                     "max_move": np.max([m["abs_move"] for m in outcome_moves]),
                     "move_std": np.std(moves),
                     "significant_moves": len(
-                        [m for m in outcome_moves if m["abs_move"] > self.significant_move_threshold]
+                        [
+                            m
+                            for m in outcome_moves
+                            if m["abs_move"] > self.significant_move_threshold
+                        ]
                     ),
                     "total_weighted_move": sum(m["move_pct"] * m["weight"] for m in outcome_moves),
                 }
@@ -400,7 +412,9 @@ class OddsMovementAnalyzer:
             "signal_count": len(steam_signals),
         }
 
-    def _detect_outcome_steam(self, odds_data: list[dict[str, Any]], outcome: str) -> dict[str, Any] | None:
+    def _detect_outcome_steam(
+        self, odds_data: list[dict[str, Any]], outcome: str
+    ) -> dict[str, Any] | None:
         """检测单个结果的Steam信号"""
         if len(odds_data) < 3:
             return None
@@ -447,7 +461,9 @@ class OddsMovementAnalyzer:
                             "duration": len([d for d in directions if d == recent_directions[0]]),
                             "total_move": total_move,
                             "confidence": min(1.0, steam_strength / self.steam_threshold),
-                            "start_timestamp": odds_data[-(len(recent_directions) + 1)]["timestamp"].isoformat(),
+                            "start_timestamp": odds_data[-(len(recent_directions) + 1)][
+                                "timestamp"
+                            ].isoformat(),
                             "end_timestamp": odds_data[-1]["timestamp"].isoformat(),
                         }
 
@@ -520,7 +536,7 @@ class OddsMovementAnalyzer:
 
             # 线性回归趋势
             x = np.arange(len(odds_values))
-            slope, intercept, r_value, p_value, std_err = stats.linregress(x, odds_values)
+            slope, _intercept, r_value, p_value, _std_err = stats.linregress(x, odds_values)
 
             # 移动平均趋势
             window_size = min(self.smoothing_window, len(odds_values) // 2)
@@ -560,7 +576,7 @@ class OddsMovementAnalyzer:
             # Z-score异常检测
             z_scores = np.abs(stats.zscore(odds_values))
 
-            for i, (entry, z_score) in enumerate(zip(odds_data, z_scores)):
+            for i, (entry, z_score) in enumerate(zip(odds_data, z_scores, strict=False)):
                 if z_score > self.OUTLIER_THRESHOLD:
                     anomalies.append(
                         {
@@ -589,7 +605,9 @@ class OddsMovementAnalyzer:
                             "outcome": outcome,
                             "price_move": price_move,
                             "anomaly_type": "large_price_movement",
-                            "severity": min(1.0, price_move / (self.significant_move_threshold * 3)),
+                            "severity": min(
+                                1.0, price_move / (self.significant_move_threshold * 3)
+                            ),
                         }
                     )
 
@@ -656,7 +674,11 @@ class OddsMovementAnalyzer:
             odds_values = [entry[odds_key] for entry in odds_data]
 
             # 赔率稳定性
-            cv = np.std(odds_values) / np.mean(odds_values) if np.mean(odds_values) > 0 else float("inf")
+            cv = (
+                np.std(odds_values) / np.mean(odds_values)
+                if np.mean(odds_values) > 0
+                else float("inf")
+            )
 
             # 价格冲击
             max_drawdown = self._calculate_max_drawdown(odds_values)
@@ -672,7 +694,9 @@ class OddsMovementAnalyzer:
             }
 
         # 整体市场效率
-        overall_efficiency = np.mean([metrics["efficiency_score"] for metrics in efficiency_metrics.values()])
+        overall_efficiency = np.mean(
+            [metrics["efficiency_score"] for metrics in efficiency_metrics.values()]
+        )
 
         return {
             "outcome_efficiency": efficiency_metrics,
@@ -715,7 +739,9 @@ class OddsMovementAnalyzer:
                         "outcome": outcome,
                         "direction": direction,
                         "strength": abs(metrics["total_weighted_move"]),
-                        "confidence": min(1.0, metrics["significant_moves"] / metrics["total_moves"]),
+                        "confidence": min(
+                            1.0, metrics["significant_moves"] / metrics["total_moves"]
+                        ),
                         "reasoning": f"Significant trend movement: {metrics['total_weighted_move']:.2f}%",
                     }
                 )
@@ -725,7 +751,9 @@ class OddsMovementAnalyzer:
         sentiment_strength = sentiment_analysis.get("sentiment_strength", 0)
 
         if sentiment_strength > 0.05 and dominant_sentiment != "none":
-            sentiment_metrics = sentiment_analysis.get("sentiment_metrics", {}).get(dominant_sentiment, {})
+            sentiment_metrics = sentiment_analysis.get("sentiment_metrics", {}).get(
+                dominant_sentiment, {}
+            )
             momentum = sentiment_metrics.get("momentum", 0)
 
             if abs(momentum) > 0.02:
@@ -741,7 +769,9 @@ class OddsMovementAnalyzer:
                 )
 
         # 信号优先级排序
-        priority_signals = sorted(signals, key=lambda x: x["strength"] * x["confidence"], reverse=True)
+        priority_signals = sorted(
+            signals, key=lambda x: x["strength"] * x["confidence"], reverse=True
+        )
 
         return {
             "signals": priority_signals[:5],  # 返回前5个最强信号
@@ -779,7 +809,7 @@ class OddsMovementAnalyzer:
         features["steam_signal_count"] = steam_signals.get("signal_count", 0)
 
         # 市场情绪特征
-        dominant_sentiment = sentiment_analysis.get("dominant_sentiment", "none")
+        sentiment_analysis.get("dominant_sentiment", "none")
         features["dominant_sentiment_strength"] = sentiment_analysis.get("sentiment_strength", 0)
 
         sentiment_metrics = sentiment_analysis.get("sentiment_metrics", {})
@@ -802,7 +832,9 @@ class OddsMovementAnalyzer:
             for outcome in ["home", "draw", "away"]:
                 odds_key = f"{outcome}_odds"
                 if len(odds_data) >= 2:
-                    latest_move = self._calculate_price_move(odds_data[-2][odds_key], odds_data[-1][odds_key])
+                    latest_move = self._calculate_price_move(
+                        odds_data[-2][odds_key], odds_data[-1][odds_key]
+                    )
                     latest_moves.append(abs(latest_move))
                     features[f"{outcome}_latest_move"] = latest_move
 
@@ -903,7 +935,9 @@ class OddsMovementAnalyzer:
 
         # 更新显著变动统计
         movement_summary = analysis_result.get("movement_analysis", {}).get("summary", {})
-        total_significant = sum(metrics.get("significant_moves", 0) for metrics in movement_summary.values())
+        total_significant = sum(
+            metrics.get("significant_moves", 0) for metrics in movement_summary.values()
+        )
         if total_significant > 0:
             self.stats["significant_moves"] += 1
 
@@ -930,7 +964,9 @@ class OddsMovementAnalyzer:
                 "matches_analyzed": len(self.analysis_cache),
                 "total_odds_samples": sum(len(data) for data in self.odds_history.values()),
                 "avg_samples_per_match": (
-                    np.mean([len(data) for data in self.odds_history.values()]) if self.odds_history else 0
+                    np.mean([len(data) for data in self.odds_history.values()])
+                    if self.odds_history
+                    else 0
                 ),
             },
         }

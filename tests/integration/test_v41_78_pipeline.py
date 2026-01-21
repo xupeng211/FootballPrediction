@@ -33,8 +33,7 @@ import pytest
 from bs4 import BeautifulSoup
 
 from src.core.semantic_refiner import SemanticRefiner
-from src.services.crawler_service import CrawlerService, MatchInfo, CrawlStats
-
+from src.services.crawler_service import CrawlerService, CrawlStats, MatchInfo
 
 # ============================================================================
 # 测试 fixtures

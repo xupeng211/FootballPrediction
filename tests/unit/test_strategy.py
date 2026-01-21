@@ -3,18 +3,16 @@
 极端情况下的系统健壮性验证
 """
 
-import unittest
-import sys
-from pathlib import Path
 import logging
+import sys
+import unittest
 from datetime import datetime
+from pathlib import Path
 
 # 添加项目路径
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from src.logic.strategy_engine import (
-    StrategyEngine, StrategyMode, BettingParameters, RiskLevel, BettingRecommendation
-)
+from src.logic.strategy_engine import BettingParameters, BettingRecommendation, RiskLevel, StrategyEngine, StrategyMode
 
 # 设置测试日志
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')

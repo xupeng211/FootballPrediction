@@ -46,8 +46,8 @@ Date: 2026-01-06
 # ============================================================================
 # 标准库导入 (P1-1: 移除内联导入)
 # ============================================================================
-import json
 from dataclasses import dataclass
+import json
 import re
 import threading
 from typing import Any
@@ -69,7 +69,7 @@ from src.processors.base_extractor import (
     register_extractor,
 )
 from src.processors.exceptions import DataParsingError, InsufficientFeaturesError
-from src.processors.extraction_decorators import safe_extract, ExtractionError
+from src.processors.extraction_decorators import safe_extract
 from src.processors.v26_sparsity_filter import apply_sparsity_filter
 
 logger = structlog.get_logger(__name__)
@@ -93,6 +93,7 @@ GLOBAL_REGISTRY_CLEANUP_THRESHOLD = 0.9  # 90% 容量时触发清理
 # 全局特征注册表（用于跨比赛特征对齐）
 # P0-1 + P0-2: 线程安全 + 内存泄漏防护
 # ============================================================================
+
 
 class ThreadSafeFeatureRegistry:
     """
@@ -264,11 +265,7 @@ def _should_skip_path(path: str) -> bool:
     path_lower = path.lower()
 
     # 只检查明显的噪音关键词
-    for blacklist_key in FEATURE_BLACKLIST:
-        if blacklist_key in path_lower:
-            return True
-
-    return False
+    return any(blacklist_key in path_lower for blacklist_key in FEATURE_BLACKLIST)
 
 
 def _should_skip_value(key: str, value: Any) -> bool:
@@ -291,9 +288,8 @@ def _should_skip_value(key: str, value: Any) -> bool:
     if isinstance(value, str):
         val_lower = value.lower()
         # 长文本描述（超过 100 字符）
-        if len(value) > 100:
-            if " " in val_lower and ("." in val_lower or "," in val_lower):
-                return True
+        if len(value) > 100 and " " in val_lower and ("." in val_lower or "," in val_lower):
+            return True
 
     return False
 
@@ -320,7 +316,7 @@ def _parse_value(value: Any) -> float | None:
     Returns:
         转换后的浮点数或 None
     """
-    if value is None or value == "" or value == "-":
+    if value is None or value in {"", "-"}:
         return None
 
     # 布尔值转换
@@ -392,8 +388,7 @@ def _sanitize_key(key: str) -> str:
     # 多个连续下划线替换为单个
     key = re.sub(r"_+", "_", key)
     # 去除首尾下划线
-    key = key.strip("_")
-    return key
+    return key.strip("_")
 
 
 def _extract_semantic_key(item: dict[str, Any]) -> str | None:
@@ -474,7 +469,9 @@ def _fully_flatten(
 
             # 递归处理
             if isinstance(value, (dict, list)):
-                result.update(_fully_flatten(value, new_prefix, max_depth, current_depth + 1, list_limit))
+                result.update(
+                    _fully_flatten(value, new_prefix, max_depth, current_depth + 1, list_limit)
+                )
             else:
                 parsed = _parse_value(value)
                 if parsed is not None:
@@ -556,7 +553,9 @@ def _fully_flatten(
                     # 这样确保不同比赛的特征列逻辑含义一致
                     new_prefix = f"{prefix}_{i}"
 
-                result.update(_fully_flatten(item, new_prefix, max_depth, current_depth + 1, list_limit))
+                result.update(
+                    _fully_flatten(item, new_prefix, max_depth, current_depth + 1, list_limit)
+                )
 
         else:
             # 混合类型列表
@@ -584,7 +583,7 @@ def _fully_flatten(
             dict_items.sort(key=lambda x: _sort_key(x[1]))
 
             # V26.0: 排序稳定性修复 - 处理字典元素（使用排序后的索引）
-            for sorted_idx, (original_i, item) in enumerate(dict_items):
+            for sorted_idx, (_original_i, item) in enumerate(dict_items):
                 semantic_key = _extract_semantic_key(item)
 
                 if semantic_key:
@@ -601,13 +600,17 @@ def _fully_flatten(
                     # V26.0 修复：使用排序后的索引
                     new_prefix = f"{prefix}_{sorted_idx}"
 
-                result.update(_fully_flatten(item, new_prefix, max_depth, current_depth + 1, list_limit))
+                result.update(
+                    _fully_flatten(item, new_prefix, max_depth, current_depth + 1, list_limit)
+                )
 
             # 处理非字典元素
             for i, item in other_items:
                 if isinstance(item, list):
                     new_prefix = f"{prefix}_{i}"
-                    result.update(_fully_flatten(item, new_prefix, max_depth, current_depth + 1, list_limit))
+                    result.update(
+                        _fully_flatten(item, new_prefix, max_depth, current_depth + 1, list_limit)
+                    )
                 else:
                     parsed = _parse_value(item)
                     if parsed is not None:
@@ -748,7 +751,7 @@ class V25ProductionExtractor(BaseExtractor):
 
         return raw_data
 
-    @safe_extract(match_id_field='match_id')
+    @safe_extract(match_id_field="match_id")
     def extract(self, raw_data: dict[str, Any]) -> ExtractionResult:
         """
         V26.0 全量自适应特征提取（核心方法）
@@ -774,7 +777,9 @@ class V25ProductionExtractor(BaseExtractor):
                 max_depth=MAX_RECURSION_DEPTH,  # P1-2: 使用常量
                 list_limit=SPECIAL_LIST_LIMIT,  # P1-2: 使用常量
             )
-            self._metrics.flatten_depth = max(len(k.split("_")) for k in flattened.keys()) if flattened else 0
+            self._metrics.flatten_depth = (
+                max(len(k.split("_")) for k in flattened) if flattened else 0
+            )
 
             # Step 2: 分类特征并注册到全局表
             self._logger.info("步骤 2/4: 特征分类与对齐")
@@ -863,7 +868,7 @@ class V25ProductionExtractor(BaseExtractor):
             )
 
         except Exception as e:
-            self._logger.error("特征提取异常", error=str(e), error_type=type(e).__name__)
+            self._logger.exception("特征提取异常", error=str(e), error_type=type(e).__name__)
             raise DataParsingError(
                 f"{self.version} 特征提取失败: {e}",
                 parse_error=str(e),
@@ -895,7 +900,10 @@ class V25ProductionExtractor(BaseExtractor):
             )
 
         # 检查最大限制（警告）
-        if self._validation_config.max_features is not None and feature_count > self._validation_config.max_features:
+        if (
+            self._validation_config.max_features is not None
+            and feature_count > self._validation_config.max_features
+        ):
             self._logger.warning(
                 "特征维度超过上限",
                 feature_count=feature_count,

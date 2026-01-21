@@ -4,10 +4,14 @@ MCP增强集成测试
 利用MCP工具进行更直接、更准确的集成测试
 """
 
-import pytest
 import asyncio
 from datetime import datetime, timedelta
-from unittest.mock import patch, AsyncMock
+from unittest.mock import AsyncMock, patch
+
+import pytest
+
+# 导入项目模块
+from tests.factories.prediction_factory import MatchFactory, PredictionFactory
 
 # 导入MCP工具 (暂时注释掉，MCP工具未安装)
 # from mcp__postgres__execute_sql import execute_sql
@@ -15,8 +19,6 @@ from unittest.mock import patch, AsyncMock
 # from mcp__redis__redis_set import redis_set
 # from mcp__system_monitor__get_system_metrics import get_system_metrics
 
-# 导入项目模块
-from tests.factories.prediction_factory import MatchFactory, PredictionFactory
 
 
 class TestMCPDatabaseIntegration:

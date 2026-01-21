@@ -33,7 +33,9 @@ from src.config_unified import get_settings
 from src.ml.fault_tolerance import CheckpointTracker, CircuitBreaker, ProcessingResult
 from src.ml.feature_forge_v20 import FeatureExtractor
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 
@@ -113,7 +115,9 @@ class MemoryMonitor:
                 "initial_mb": memories[0],
                 "final_mb": memories[-1],
                 "growth_mb": memories[-1] - memories[0],
-                "growth_percent": ((memories[-1] - memories[0]) / memories[0] * 100) if memories[0] > 0 else 0,
+                "growth_percent": ((memories[-1] - memories[0]) / memories[0] * 100)
+                if memories[0] > 0
+                else 0,
             }
 
 
@@ -122,7 +126,9 @@ class DatabaseConnectionMonitor:
 
     def __init__(self):
         self.settings = get_settings()
-        self.max_connections = self.settings.database.pool_size + self.settings.database.max_overflow
+        self.max_connections = (
+            self.settings.database.pool_size + self.settings.database.max_overflow
+        )
         logger.info(f"DB 连接池配置: max={self.max_connections}")
 
     def get_active_connections(self) -> int:
@@ -210,7 +216,9 @@ class MockMatchDataGenerator:
         }
 
 
-def simulate_extraction(extractor: FeatureExtractor, match_data: dict[str, Any]) -> ProcessingResult:
+def simulate_extraction(
+    extractor: FeatureExtractor, match_data: dict[str, Any]
+) -> ProcessingResult:
     """模拟特征提取"""
     try:
         # 模拟处理延迟
@@ -224,7 +232,9 @@ def simulate_extraction(extractor: FeatureExtractor, match_data: dict[str, Any])
         if features and features.get("enriched_features"):
             return ProcessingResult(match_id=match_data["match_id"], success=True, duration=0.01)
         else:
-            return ProcessingResult(match_id=match_data["match_id"], success=False, error="No features extracted")
+            return ProcessingResult(
+                match_id=match_data["match_id"], success=False, error="No features extracted"
+            )
     except Exception as e:
         return ProcessingResult(match_id=match_data["match_id"], success=False, error=str(e))
 
@@ -270,7 +280,10 @@ def run_load_test(config: LoadTestConfig = None) -> LoadTestResult:
                     if not circuit_breaker.can_execute():
                         errors.append(f"Circuit breaker OPEN at match {md['match_id']}")
                         return ProcessingResult(
-                            match_id=md["match_id"], success=False, error="Circuit breaker is OPEN", error_code=503
+                            match_id=md["match_id"],
+                            success=False,
+                            error="Circuit breaker is OPEN",
+                            error_code=503,
                         )
 
                     # 模拟处理
@@ -292,7 +305,9 @@ def run_load_test(config: LoadTestConfig = None) -> LoadTestResult:
                 # 定期检查 DB 连接
                 if i % 50 == 0:
                     db_conn = db_monitor.get_active_connections()
-                    logger.info(f"进度: {i}/{config.num_matches}, DB连接: {db_conn}/{db_monitor.max_connections}")
+                    logger.info(
+                        f"进度: {i}/{config.num_matches}, DB连接: {db_conn}/{db_monitor.max_connections}"
+                    )
 
             # 等待所有任务完成
             for future in futures:
@@ -305,7 +320,7 @@ def run_load_test(config: LoadTestConfig = None) -> LoadTestResult:
         duration = time.time() - start_time
 
         # 停止监控
-        memory_snapshots = memory_monitor.stop()
+        memory_monitor.stop()
         tracemalloc.stop()
 
         # 获取统计
@@ -329,7 +344,9 @@ def run_load_test(config: LoadTestConfig = None) -> LoadTestResult:
         logger.info(f"  初始: {memory_stats.get('initial_mb', 0):.2f} MB")
         logger.info(f"  最终: {memory_stats.get('final_mb', 0):.2f} MB")
         logger.info(f"  峰值: {memory_stats.get('max_mb', 0):.2f} MB")
-        logger.info(f"  增长: {memory_stats.get('growth_mb', 0):.2f} MB ({memory_stats.get('growth_percent', 0):.2f}%)")
+        logger.info(
+            f"  增长: {memory_stats.get('growth_mb', 0):.2f} MB ({memory_stats.get('growth_percent', 0):.2f}%)"
+        )
         logger.info(f"{'=' * 60}")
         logger.info(
             f"数据库连接: {db_connections}/{db_monitor.max_connections} ({db_connections / db_monitor.max_connections * 100:.1f}%)"
@@ -356,7 +373,9 @@ def run_load_test(config: LoadTestConfig = None) -> LoadTestResult:
     # 峰值内存检查
     if memory_stats.get("max_mb", 0) > config.max_memory_mb:
         success = False
-        errors.append(f"峰值内存 {memory_stats.get('max_mb', 0):.2f} MB 超过阈值 {config.max_memory_mb} MB")
+        errors.append(
+            f"峰值内存 {memory_stats.get('max_mb', 0):.2f} MB 超过阈值 {config.max_memory_mb} MB"
+        )
 
     return LoadTestResult(
         success=success,

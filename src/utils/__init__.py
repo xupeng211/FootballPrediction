@@ -61,12 +61,12 @@ except ImportError:
 
 
 __all__ = [
+    "DatabaseManager",
+    "database_connection",
+    "get_db_manager",
+    "get_logger",
     # 新模块
     "setup_logger",
-    "get_logger",
-    "DatabaseManager",
-    "get_db_manager",
-    "database_connection",
 ]
 
 # 如果重试装饰器可用，添加到导出列表

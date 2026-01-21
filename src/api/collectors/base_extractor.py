@@ -24,9 +24,7 @@ Example:
     >>> viewport = extractor.get_random_viewport()
     >>> # Create browser context with ghost protocol
     >>> context = await browser.new_context(
-    ...     user_agent=ua,
-    ...     viewport=viewport,
-    ...     proxy=extractor.get_proxy_config()
+    ...     user_agent=ua, viewport=viewport, proxy=extractor.get_proxy_config()
     ... )
 """
 
@@ -38,12 +36,13 @@ import logging
 import os
 from pathlib import Path
 import random
-from typing import Any
-
-from playwright.async_api import Browser, Page
+from typing import TYPE_CHECKING, Any
 
 from src.config_unified import get_settings
 from src.services.harvest_config import AntiScrapingConfig
+
+if TYPE_CHECKING:
+    from playwright.async_api import Browser, Page
 
 logger = logging.getLogger(__name__)
 
@@ -52,6 +51,7 @@ logger = logging.getLogger(__name__)
 # V26.5: SecurityInterrupt Exception
 # ============================================================================
 
+
 class SecurityInterrupt(Exception):
     """安全中断异常 - 当 IP 冷却期未结束时抛出
 
@@ -59,12 +59,12 @@ class SecurityInterrupt(Exception):
     所有采集器的初始化将被此异常中断，防止在冷却期内发起网络请求。
     """
 
-    pass
 
 
 # ============================================================================
 # V26.5: Collection Circuit Breaker
 # ============================================================================
+
 
 class CollectionCircuitBreaker:
     """
@@ -79,7 +79,7 @@ class CollectionCircuitBreaker:
 
     示例:
         >>> CollectionCircuitBreaker.check_pause_period("oddsportal")  # 可能抛出异常
-        >>> CollectionCircuitBreaker.check_pause_period("fotmob")      # 总是允许通过
+        >>> CollectionCircuitBreaker.check_pause_period("fotmob")  # 总是允许通过
     """
 
     # V26.7: 不受冷却期限制的数据源白名单
@@ -101,9 +101,7 @@ class CollectionCircuitBreaker:
         """
         # V26.7: 白名单数据源绕过冷却期检查
         if source_name in CollectionCircuitBreaker.WHITELISTED_SOURCES:
-            logger.info(
-                f"🔓 数据源 [{source_name}] 在白名单中，绕过冷却期检查"
-            )
+            logger.info(f"🔓 数据源 [{source_name}] 在白名单中，绕过冷却期检查")
             return
 
         pause_until_str = os.getenv("COLLECTION_PAUSE_UNTIL")
@@ -120,7 +118,8 @@ class CollectionCircuitBreaker:
         except ValueError as e:
             # 环境变量格式错误，记录警告但允许继续
             import warnings
-            warnings.warn(f"COLLECTION_PAUSE_UNTIL 格式错误: {e}")
+
+            warnings.warn(f"COLLECTION_PAUSE_UNTIL 格式错误: {e}", stacklevel=2)
             return
 
         # 获取当前时间（带时区信息）
@@ -150,10 +149,9 @@ class CollectionCircuitBreaker:
 
         if hours > 0:
             return f"{hours}小时 {minutes}分钟 {seconds}秒"
-        elif minutes > 0:
+        if minutes > 0:
             return f"{minutes}分钟 {seconds}秒"
-        else:
-            return f"{seconds}秒"
+        return f"{seconds}秒"
 
 
 # ============================================================================
@@ -184,12 +182,9 @@ USER_AGENTS = [
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 "
     "(KHTML, like Gecko) Version/17.2 Safari/605.1.15",
     # Firefox on Windows (Latest versions)
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) "
-    "Gecko/20100101 Firefox/121.0",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:120.0) "
-    "Gecko/20100101 Firefox/120.0",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:119.0) "
-    "Gecko/20100101 Firefox/119.0",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:121.0) Gecko/20100101 Firefox/121.0",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:120.0) Gecko/20100101 Firefox/120.0",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:119.0) Gecko/20100101 Firefox/119.0",
     # Chrome on macOS (Latest versions)
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
     "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
@@ -201,10 +196,8 @@ USER_AGENTS = [
     "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
     "(KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
     # Firefox on Linux (Latest versions)
-    "Mozilla/5.0 (X11; Linux x86_64; rv:121.0) "
-    "Gecko/20100101 Firefox/121.0",
-    "Mozilla/5.0 (X11; Linux x86_64; rv:120.0) "
-    "Gecko/20100101 Firefox/120.0",
+    "Mozilla/5.0 (X11; Linux x86_64; rv:121.0) Gecko/20100101 Firefox/121.0",
+    "Mozilla/5.0 (X11; Linux x86_64; rv:120.0) Gecko/20100101 Firefox/120.0",
     # Safari on iOS (Mobile)
     "Mozilla/5.0 (iPhone; CPU iPhone OS 17_1 like Mac OS X) "
     "AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.1 Mobile/15E148 Safari/604.1",
@@ -239,24 +232,24 @@ USER_AGENTS = [
 # V144.0: Expanded Viewport sizes (10 common screen resolutions)
 VIEWPORTS = [
     {"width": 1920, "height": 1080},  # Full HD
-    {"width": 1366, "height": 768},   # Laptop
-    {"width": 1536, "height": 864},   # Laptop 2
-    {"width": 1440, "height": 900},   # Mac
-    {"width": 1280, "height": 720},   # HD
+    {"width": 1366, "height": 768},  # Laptop
+    {"width": 1536, "height": 864},  # Laptop 2
+    {"width": 1440, "height": 900},  # Mac
+    {"width": 1280, "height": 720},  # HD
     {"width": 2560, "height": 1440},  # 2K
     {"width": 3840, "height": 2160},  # 4K
-    {"width": 1600, "height": 900},   # HD+
+    {"width": 1600, "height": 900},  # HD+
     {"width": 1728, "height": 1117},  # MacBook Pro 14"
     {"width": 1920, "height": 1200},  # MacBook Pro 16"
 ]
 
 # V144.0: Hardware configurations for fingerprint randomization
 HARDWARE_CONFIGS = [
-    {"hardware_concurrency": 4, "device_memory": 8},   # Common laptop
+    {"hardware_concurrency": 4, "device_memory": 8},  # Common laptop
     {"hardware_concurrency": 8, "device_memory": 16},  # High-end desktop
-    {"hardware_concurrency": 6, "device_memory": 8},   # Mid-range desktop
-    {"hardware_concurrency": 12, "device_memory": 32}, # Workstation
-    {"hardware_concurrency": 2, "device_memory": 4},   # Low-end laptop
+    {"hardware_concurrency": 6, "device_memory": 8},  # Mid-range desktop
+    {"hardware_concurrency": 12, "device_memory": 32},  # Workstation
+    {"hardware_concurrency": 2, "device_memory": 4},  # Low-end laptop
 ]
 
 # V144.0: Platform strings for fingerprint randomization
@@ -467,6 +460,7 @@ ERROR_SCREEN_DIR.mkdir(parents=True, exist_ok=True)
 # Main Base Extractor Class
 # ============================================================================
 
+
 class BaseExtractor:
     """V141.0: Base Extractor with Ghost Protocol integration.
 
@@ -483,11 +477,7 @@ class BaseExtractor:
         >>> # Create browser context with random UA and viewport
         >>> ua = extractor.get_random_user_agent()
         >>> viewport = extractor.get_random_viewport()
-        >>> context = await browser.new_context(
-        ...     user_agent=ua,
-        ...     viewport=viewport,
-        ...     proxy=extractor.proxy_config
-        ... )
+        >>> context = await browser.new_context(user_agent=ua, viewport=viewport, proxy=extractor.proxy_config)
         >>> page = await context.new_page()
         >>> # Simulate human behavior
         >>> await extractor.human_scroll(page)
@@ -814,7 +804,9 @@ class BaseExtractor:
         # Priority 1: PROXY_SERVER (legacy support)
         proxy_server = os.getenv("PROXY_SERVER")
         if proxy_server:
-            if proxy_server.startswith("http://") or proxy_server.startswith("https://") or proxy_server.startswith("socks5://"):
+            if (
+                proxy_server.startswith(("http://", "https://", "socks5://"))
+            ):
                 return {"server": proxy_server}
             return {"server": f"http://{proxy_server}"}
 
@@ -870,10 +862,9 @@ class BaseExtractor:
         # Method 1: Try to get default gateway via 'ip route' command
         try:
             import subprocess
+
             output = subprocess.check_output(
-                ["ip", "route", "show", "default"],
-                stderr=subprocess.DEVNULL,
-                text=True
+                ["ip", "route", "show", "default"], stderr=subprocess.DEVNULL, text=True
             )
             if output and "via" in output:
                 # Output format: "default via 172.x.x.1 dev eth0 ..."
@@ -1023,6 +1014,7 @@ class BaseExtractor:
         if enable_stealth:
             try:
                 from playwright_stealth import Stealth
+
                 stealth = Stealth()
                 await stealth.apply_stealth_async(page)
                 logger.info("  🕵️  playwright-stealth applied successfully")
@@ -1073,8 +1065,7 @@ class BaseExtractor:
             behavior_pattern = await page.evaluate("() => window.__behavior_pattern")
 
             logger.debug(
-                f"  🔐 TLS obfuscation applied: ID={fingerprint_id}, "
-                f"pattern={behavior_pattern}"
+                f"  🔐 TLS obfuscation applied: ID={fingerprint_id}, pattern={behavior_pattern}"
             )
         except Exception as e:
             logger.warning(f"  ⚠️ TLS obfuscation failed: {e}")
@@ -1088,7 +1079,7 @@ class BaseExtractor:
 
         Example:
             >>> headers = BaseExtractor.get_random_tls_headers()
-            >>> print(headers['Sec-Ch-Ua'])
+            >>> print(headers["Sec-Ch-Ua"])
             '"Chromium";v="122", "Not(A:Brand";v="24", "Google Chrome";v="122"'
         """
         return random.choice(TLS_OBFUSCATION_HEADERS).copy()

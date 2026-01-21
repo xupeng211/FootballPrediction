@@ -12,9 +12,8 @@ Version: V41.0
 Date: 2026-01-13
 """
 
-import logging
-from typing import Dict, Optional
 from dataclasses import dataclass
+import logging
 
 logger = logging.getLogger(__name__)
 
@@ -22,11 +21,12 @@ logger = logging.getLogger(__name__)
 @dataclass
 class TeamMapping:
     """队名映射数据类"""
-    fotmob_id: int           # FotMob ID
-    fotmob_name: str         # FotMob标准队名
-    oddsportal_slug: str     # OddsPortal URL slug
-    oddsportal_name: str     # OddsPortal显示队名
-    league: str              # 联赛名称
+
+    fotmob_id: int  # FotMob ID
+    fotmob_name: str  # FotMob标准队名
+    oddsportal_slug: str  # OddsPortal URL slug
+    oddsportal_name: str  # OddsPortal显示队名
+    league: str  # 联赛名称
 
     def __post_init__(self):
         """后处理：标准化队名"""
@@ -45,7 +45,7 @@ class TeamNameRegistry:
     """
 
     # 五大联赛完整映射表（96队）
-    _TEAM_MAPPINGS: Dict[str, TeamMapping] = {}
+    _TEAM_MAPPINGS: dict[str, TeamMapping] = {}
 
     @classmethod
     def initialize(cls):
@@ -106,7 +106,7 @@ class TeamNameRegistry:
                 fotmob_name=fotmob_name,
                 oddsportal_slug=op_slug,
                 oddsportal_name=op_name,
-                league="La Liga"
+                league="La Liga",
             )
             cls._register_mapping(mapping)
 
@@ -141,7 +141,7 @@ class TeamNameRegistry:
                 fotmob_name=fotmob_name,
                 oddsportal_slug=op_slug,
                 oddsportal_name=op_name,
-                league="Ligue 1"
+                league="Ligue 1",
             )
             cls._register_mapping(mapping)
 
@@ -177,7 +177,7 @@ class TeamNameRegistry:
                 fotmob_name=fotmob_name,
                 oddsportal_slug=op_slug,
                 oddsportal_name=op_name,
-                league="Premier League"
+                league="Premier League",
             )
             cls._register_mapping(mapping)
 
@@ -211,7 +211,7 @@ class TeamNameRegistry:
                 fotmob_name=fotmob_name,
                 oddsportal_slug=op_slug,
                 oddsportal_name=op_name,
-                league="Bundesliga"
+                league="Bundesliga",
             )
             cls._register_mapping(mapping)
 
@@ -247,7 +247,7 @@ class TeamNameRegistry:
                 fotmob_name=fotmob_name,
                 oddsportal_slug=op_slug,
                 oddsportal_name=op_name,
-                league="Serie A"
+                league="Serie A",
             )
             cls._register_mapping(mapping)
 
@@ -258,7 +258,7 @@ class TeamNameRegistry:
         cls._TEAM_MAPPINGS[mapping.oddsportal_slug] = mapping
 
     @classmethod
-    def get_mapping_by_slug(cls, slug: str) -> Optional[TeamMapping]:
+    def get_mapping_by_slug(cls, slug: str) -> TeamMapping | None:
         """
         通过OddsPortal slug获取映射
 
@@ -280,13 +280,13 @@ class TeamNameRegistry:
         # 尝试模糊匹配（处理连字符差异）
         for key, mapping in cls._TEAM_MAPPINGS.items():
             # 移除连字符后比较
-            if key.replace('-', '') == normalized_slug.replace('-', ''):
+            if key.replace("-", "") == normalized_slug.replace("-", ""):
                 return mapping
 
         return None
 
     @classmethod
-    def get_fotmob_id_by_slug(cls, slug: str) -> Optional[int]:
+    def get_fotmob_id_by_slug(cls, slug: str) -> int | None:
         """
         通过OddsPortal slug获取FotMob ID
 
@@ -300,7 +300,7 @@ class TeamNameRegistry:
         return mapping.fotmob_id if mapping else None
 
     @classmethod
-    def normalize_team_name(cls, raw_name: str) -> Optional[str]:
+    def normalize_team_name(cls, raw_name: str) -> str | None:
         """
         标准化队名（废弃split('-')逻辑）
 
@@ -317,8 +317,9 @@ class TeamNameRegistry:
 
         # 直接查找
         for mapping in cls._TEAM_MAPPINGS.values():
-            if (mapping.oddsportal_slug == normalized or
-                mapping.oddsportal_slug.replace('-', '') == normalized.replace('-', '')):
+            if mapping.oddsportal_slug == normalized or mapping.oddsportal_slug.replace(
+                "-", ""
+            ) == normalized.replace("-", ""):
                 return mapping.fotmob_name
 
         # 无法识别
@@ -326,7 +327,7 @@ class TeamNameRegistry:
         return None
 
     @classmethod
-    def get_all_teams(cls, league: Optional[str] = None) -> list[TeamMapping]:
+    def get_all_teams(cls, league: str | None = None) -> list[TeamMapping]:
         """
         获取所有支球队
 
@@ -344,7 +345,7 @@ class TeamNameRegistry:
 
 
 # 单例模式
-_registry_instance: Optional[TeamNameRegistry] = None
+_registry_instance: TeamNameRegistry | None = None
 
 
 def get_team_registry() -> TeamNameRegistry:

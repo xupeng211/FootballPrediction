@@ -3,15 +3,15 @@ ML特征工程覆盖率测试
 测试特征提取、转换和计算功能
 """
 
-import pytest
-import numpy as np
-import pandas as pd
-from unittest.mock import Mock, AsyncMock, patch
-from typing import Dict, List, Any
-
 # V36.4 Final: 修复导入路径 - 使用绝对导入而非相对导入
 import sys
 from pathlib import Path
+from typing import Any, Dict, List
+from unittest.mock import AsyncMock, Mock, patch
+
+import numpy as np
+import pandas as pd
+import pytest
 
 # 添加项目根目录到路径
 project_root = Path(__file__).parent.parent.parent
@@ -60,8 +60,9 @@ class TestAdvancedFeatureTransformer:
     async def test_match_feature_transformation(self):
         """测试比赛特征转换"""
         try:
-            from src.ml.features.advanced_feature_transformer import AdvancedFeatureTransformer
             import pandas as pd
+
+            from src.ml.features.advanced_feature_transformer import AdvancedFeatureTransformer
 
             transformer = AdvancedFeatureTransformer()
 
@@ -368,8 +369,9 @@ class TestMatchFeatureExtractor:
     async def test_match_feature_extraction(self):
         """测试比赛特征提取"""
         try:
-            from src.ml.features.extractor import MatchFeatureExtractor
             import pandas as pd
+
+            from src.ml.features.extractor import MatchFeatureExtractor
 
             extractor = MatchFeatureExtractor()
 
@@ -433,9 +435,9 @@ class TestFeatureIntegration:
         try:
             # V36.4 Final: 使用绝对导入路径
             from src.ml.features.advanced_feature_transformer import AdvancedFeatureTransformer
+            from src.ml.features.extractor import MatchFeatureExtractor
             from src.ml.features.h2h_calculator import H2HCalculator
             from src.ml.features.venue_analyzer import VenueAnalyzer
-            from src.ml.features.extractor import MatchFeatureExtractor
 
             # 测试各个组件的集成
             match_data = {

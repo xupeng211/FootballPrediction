@@ -427,7 +427,9 @@ class MultiPathExtractor:
         """获取提取报告"""
         return {
             "total_processed": self.stats.total_processed,
-            "path_success_rates": {path.value: self.stats.get_path_success_rate(path) for path in ExtractionPath},
+            "path_success_rates": {
+                path.value: self.stats.get_path_success_rate(path) for path in ExtractionPath
+            },
             "path_success_counts": self.stats.path_success_count,
         }
 
@@ -437,7 +439,9 @@ class MultiPathExtractor:
 # ============================================================================
 
 
-def extract_match_stats_batch(match_records: list[dict[str, Any]]) -> tuple[list[MatchStats], ExtractionStats]:
+def extract_match_stats_batch(
+    match_records: list[dict[str, Any]],
+) -> tuple[list[MatchStats], ExtractionStats]:
     """
     批量提取比赛统计
 

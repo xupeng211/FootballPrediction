@@ -189,11 +189,11 @@ class PoissonFeatureCalculator:
 
         # 计算加权平均
         total_weight = sum(time_weights)
-        weighted_goals_scored = sum(g * w for g, w in zip(goals_scored, time_weights))
-        weighted_goals_conceded = sum(g * w for g, w in zip(goals_conceded, time_weights))
+        weighted_goals_scored = sum(g * w for g, w in zip(goals_scored, time_weights, strict=False))
+        weighted_goals_conceded = sum(g * w for g, w in zip(goals_conceded, time_weights, strict=False))
 
         # 场地调整后的λ值
-        avg_venue_factor = sum(v * w for v, w in zip(venue_factors, time_weights)) / total_weight
+        avg_venue_factor = sum(v * w for v, w in zip(venue_factors, time_weights, strict=False)) / total_weight
 
         # 基础λ值计算
         base_attack_lambda = weighted_goals_scored / total_weight
@@ -352,7 +352,9 @@ class PoissonFeatureCalculator:
                 "home": {f"{k}_goals": float(v) for k, v in home_goals_dist.items()},
                 "away": {f"{k}_goals": float(v) for k, v in away_goals_dist.items()},
             },
-            "model_features": self._extract_model_features(exp_home_goals, exp_away_goals, score_matrix),
+            "model_features": self._extract_model_features(
+                exp_home_goals, exp_away_goals, score_matrix
+            ),
             "confidence_metrics": self._calculate_confidence_metrics(
                 home_team_id, away_team_id, exp_home_goals, exp_away_goals
             ),
@@ -420,7 +422,9 @@ class PoissonFeatureCalculator:
                 btts_prob += score_matrix[home_goals, away_goals]
         return btts_prob
 
-    def _get_top_probable_scores(self, score_matrix: np.ndarray, top_n: int = 5) -> list[dict[str, Any]]:
+    def _get_top_probable_scores(
+        self, score_matrix: np.ndarray, top_n: int = 5
+    ) -> list[dict[str, Any]]:
         """获取最可能的比分"""
         scores = []
         for home_goals in range(self.max_goals_calc + 1):
@@ -497,8 +501,7 @@ class PoissonFeatureCalculator:
         # 添加小值避免log(0)
         matrix_safe = score_matrix + 1e-10
         matrix_normalized = matrix_safe / np.sum(matrix_safe)
-        entropy = -np.sum(matrix_normalized * np.log2(matrix_normalized + 1e-10))
-        return entropy
+        return -np.sum(matrix_normalized * np.log2(matrix_normalized + 1e-10))
 
     def _calculate_confidence_metrics(
         self,
@@ -520,7 +523,9 @@ class PoissonFeatureCalculator:
 
         # 预测稳定性置信度（基于λ值的合理性）
         total_goals = exp_home_goals + exp_away_goals
-        stability_confidence = 1.0 - abs(total_goals - self.league_avg_goals) / self.league_avg_goals
+        stability_confidence = (
+            1.0 - abs(total_goals - self.league_avg_goals) / self.league_avg_goals
+        )
         metrics["stability_confidence"] = float(max(0.0, stability_confidence))
 
         # 综合置信度
@@ -602,7 +607,8 @@ class PoissonFeatureCalculator:
             "data_quality": {
                 "matches_analyzed": team_data.get("matches_analyzed", 0),
                 "last_updated": team_data.get("last_updated"),
-                "data_sufficient": team_data.get("matches_analyzed", 0) >= self.MIN_GAMES_FOR_LAMBDA,
+                "data_sufficient": team_data.get("matches_analyzed", 0)
+                >= self.MIN_GAMES_FOR_LAMBDA,
             },
         }
 
@@ -622,7 +628,9 @@ class PoissonFeatureCalculator:
             "team_data_count": len(self.team_data),
             "average_lambdas": {
                 "home_attack": (
-                    np.mean([data.get("attack_lambda", 0) for data in self.team_data.values()]) if self.team_data else 0
+                    np.mean([data.get("attack_lambda", 0) for data in self.team_data.values()])
+                    if self.team_data
+                    else 0
                 ),
                 "home_defense": (
                     np.mean([data.get("defense_lambda", 0) for data in self.team_data.values()])

@@ -95,11 +95,15 @@ class BacktestEngine:
         self._odds_cache: dict[str, dict[str, float]] = {}  # 赔率缓存
         logger.info("V36.0 回测引擎初始化完成")
         logger.info(f"  每注金额: {self.config.stake_per_bet}")
-        logger.info(f"  概率阈值: {self.config.min_prob_threshold} - {self.config.max_prob_threshold}")
+        logger.info(
+            f"  概率阈值: {self.config.min_prob_threshold} - {self.config.max_prob_threshold}"
+        )
         logger.info(f"  使用真实赔率: {self.config.use_real_odds}")
         logger.info(f"  最小价值阈值: {self.config.min_value_threshold}")
 
-    def calculate_implied_odds(self, prob_home: float, prob_draw: float, prob_away: float) -> dict[str, float]:
+    def calculate_implied_odds(
+        self, prob_home: float, prob_draw: float, prob_away: float
+    ) -> dict[str, float]:
         """
         基于模型概率计算隐含赔率
 
@@ -282,7 +286,11 @@ class BacktestEngine:
             else:
                 odds = self.calculate_implied_odds(probs[2], probs[1], probs[0])
 
-            pred_odds = odds["home"] if pred_class == 2 else (odds["draw"] if pred_class == 1 else odds["away"])
+            pred_odds = (
+                odds["home"]
+                if pred_class == 2
+                else (odds["draw"] if pred_class == 1 else odds["away"])
+            )
 
             # V36.0: 计算价值
             value = self.calculate_value(max_prob, pred_odds)
@@ -299,7 +307,9 @@ class BacktestEngine:
                 p = max_prob
                 q = 1.0 - p
                 kelly_fraction = (b * p - q) / b
-                stake = self.config.stake_per_bet * max(0, min(kelly_fraction, 0.1)) * 4  # 限制最大下注
+                stake = (
+                    self.config.stake_per_bet * max(0, min(kelly_fraction, 0.1)) * 4
+                )  # 限制最大下注
             else:
                 stake = self.config.stake_per_bet
 
@@ -341,7 +351,11 @@ class BacktestEngine:
             current_equity = (
                 equity_curve[-1]
                 - stake
-                + (stake * pred_odds * (1 - self.config.commission_pct) if pred_class == actual_code else 0)
+                + (
+                    stake * pred_odds * (1 - self.config.commission_pct)
+                    if pred_class == actual_code
+                    else 0
+                )
             )
             equity_curve.append(max(0, current_equity))
 
@@ -362,7 +376,9 @@ class BacktestEngine:
         # 计算夏普比率（简化版）
         returns = np.diff(equity_curve)
         sharpe_ratio = (
-            np.mean(returns) / np.std(returns) * np.sqrt(252) if len(returns) > 1 and np.std(returns) > 0 else 0
+            np.mean(returns) / np.std(returns) * np.sqrt(252)
+            if len(returns) > 1 and np.std(returns) > 0
+            else 0
         )
 
         # V36.0: 计算价值评估指标
@@ -473,10 +489,70 @@ def create_backtest_engine(config: BacktestConfig | None = None) -> BacktestEngi
     return BacktestEngine(config=config)
 
 
+# ============================================================
+# 兼容性类型定义（用于测试）
+# ============================================================
+
+
+from enum import Enum
+
+
+class StrategyType(Enum):
+    """策略类型"""
+
+    VALUE_BET = "value_bet"
+    KELLY = "kelly"
+    FIXED_STAKE = "fixed_stake"
+    PROPORTIONAL = "proportional"
+
+
+@dataclass
+class MatchPrediction:
+    """比赛预测数据"""
+
+    match_id: int
+    external_id: str
+    home_team: str
+    away_team: str
+    match_time: datetime
+    league: str
+    season: str
+    model_probs: list[float]
+    market_odds: list[float]
+    market_probs: list[float]
+    recommended_bet: str | None
+    confidence: float
+    edge: float
+    actual_result: str | None = None
+
+
+@dataclass
+class BetRecord:
+    """投注记录"""
+
+    match_id: int
+    bet_type: str
+    stake: float
+    odds: float
+    result: str
+    profit: float
+
+
+# 别名：BacktestEngine -> AutoBacktester（兼容测试文件）
+AutoBacktester = BacktestEngine
+
+# 从 value_bet_features 导入 BetOutcome
+from src.ml.features.value_bet_features import BetOutcome  # noqa: E402
+
 # 导出
 __all__ = [
+    "AutoBacktester",
     "BacktestConfig",
     "BacktestEngine",
     "BacktestMetrics",
+    "BetOutcome",
+    "BetRecord",
+    "MatchPrediction",
+    "StrategyType",
     "create_backtest_engine",
 ]

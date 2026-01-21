@@ -21,14 +21,11 @@ Example:
     >>> extractor = OddsProductionExtractor()
     >>> # L2: FotMob opening odds
     >>> result = await extractor.extract_opening_via_hover(
-    ...     page=page,
-    ...     entity_code="Entity_P",
-    ...     match_date=datetime(2024, 4, 20)
+    ...     page=page, entity_code="Entity_P", match_date=datetime(2024, 4, 20)
     ... )
     >>> # L3: OddsPortal final odds
     >>> result = await extractor.extract_oddsportal_final_odds(
-    ...     url="https://www.oddsportal.com/match/...",
-    ...     match_id=12345
+    ...     url="https://www.oddsportal.com/match/...", match_id=12345
     ... )
 """
 
@@ -54,10 +51,10 @@ logger = logging.getLogger(__name__)
 
 # Priority-ordered list of bookmakers to extract data from
 TARGET_ENTITIES = [
-    "Entity_P",    # Pinnacle (highest priority)
-    "Entity_WH",   # William Hill
-    "Entity_LB",   # Ladbrokes
-    "Entity_B3",   # 1xBet
+    "Entity_P",  # Pinnacle (highest priority)
+    "Entity_WH",  # William Hill
+    "Entity_LB",  # Ladbrokes
+    "Entity_B3",  # 1xBet
     "Entity_AVG",  # Average Odds (market consensus)
 ]
 
@@ -90,8 +87,18 @@ OPENING_ODDS_REGEX = re.compile(r"(?:opening|initial)[:\s]*([\d.]+)", re.IGNOREC
 
 # Tooltip parsing: "Opening odds:22 Dec, 08:131.19"
 TOOLTIP_MONTH_MAP = {
-    "Jan": 1, "Feb": 2, "Mar": 3, "Apr": 4, "May": 5, "Jun": 6,
-    "Jul": 7, "Aug": 8, "Sep": 9, "Oct": 10, "Nov": 11, "Dec": 12,
+    "Jan": 1,
+    "Feb": 2,
+    "Mar": 3,
+    "Apr": 4,
+    "May": 5,
+    "Jun": 6,
+    "Jul": 7,
+    "Aug": 8,
+    "Sep": 9,
+    "Oct": 10,
+    "Nov": 11,
+    "Dec": 12,
 }
 TOOLTIP_OPENING_PATTERN = re.compile(
     r"Opening\s+odds:(\d{1,2})\s+([A-Za-z]{3})\s*,\s+(\d{1,2}):(\d{2})(\d+\.\d+)"
@@ -101,6 +108,7 @@ TOOLTIP_OPENING_PATTERN = re.compile(
 # ============================================================================
 # Data Models
 # ============================================================================
+
 
 @dataclass
 class MultiSourceEntityData:
@@ -118,6 +126,7 @@ class MultiSourceEntityData:
         fully_captured: True if all three dimensions (init, time, final) are present
         data_timestamp: When this record was created
     """
+
     match_id: str
     source_name: str
 
@@ -170,11 +179,7 @@ class MultiSourceEntityData:
             return None
 
         try:
-            self.integrity_score = (
-                1.0 / self.final_h +
-                1.0 / self.final_d +
-                1.0 / self.final_a
-            )
+            self.integrity_score = 1.0 / self.final_h + 1.0 / self.final_d + 1.0 / self.final_a
 
             if MIN_INTEGRITY_SCORE < self.integrity_score < MAX_INTEGRITY_SCORE:
                 self.is_valid = True
@@ -227,6 +232,7 @@ class MultiSourceEntityData:
 # ============================================================================
 # Main Extraction Engine
 # ============================================================================
+
 
 class OddsProductionExtractor:
     """Production-grade odds data extraction engine.
@@ -412,6 +418,7 @@ class OddsProductionExtractor:
             # 可选：保存截图用于调试
             if save_screenshot:
                 from pathlib import Path
+
                 debug_dir = Path("logs/v89_debug")
                 debug_dir.mkdir(parents=True, exist_ok=True)
                 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -434,6 +441,7 @@ class OddsProductionExtractor:
         Args:
             page: Playwright Page 对象
         """
+
         async def response_handler(response):
             """处理网络响应。"""
             try:
@@ -443,15 +451,20 @@ class OddsProductionExtractor:
                 # 只关注 JSON 响应
                 if "application/json" in content_type or url.endswith(".json"):
                     # 检查是否包含目标关键词
-                    if any(keyword in url for keyword in ["odds", "opening", "history", "price", "market"]):
+                    if any(
+                        keyword in url
+                        for keyword in ["odds", "opening", "history", "price", "market"]
+                    ):
                         try:
                             json_data = await response.json()
-                            self._captured_responses.append({
-                                "url": response.url,
-                                "status": response.status,
-                                "json": json_data,
-                                "timestamp": datetime.now()
-                            })
+                            self._captured_responses.append(
+                                {
+                                    "url": response.url,
+                                    "status": response.status,
+                                    "json": json_data,
+                                    "timestamp": datetime.now(),
+                                }
+                            )
                             logger.info(f"[V90.0 Ghost] 捕获 API 响应: {response.url[:100]}")
                         except Exception:
                             pass  # 不是 JSON 响应
@@ -462,9 +475,7 @@ class OddsProductionExtractor:
         page.on("response", lambda response: asyncio.create_task(response_handler(response)))
 
     async def _trigger_ghost_hover(
-        self,
-        page: Page,
-        element_selector: str = "div[data-testid='odd-container']"
+        self, page: Page, element_selector: str = "div[data-testid='odd-container']"
     ) -> dict[str, Any] | None:
         """V90.0: JS 隔山打牛 - 通过事件触发绕过物理遮挡。
 
@@ -557,7 +568,7 @@ class OddsProductionExtractor:
             return result
 
         except Exception as e:
-            logger.error(f"[V90.0 Ghost] 事件触发异常: {e}")
+            logger.exception(f"[V90.0 Ghost] 事件触发异常: {e}")
             return None
 
     async def extract_via_ghost_protocol(
@@ -565,7 +576,7 @@ class OddsProductionExtractor:
         page: Page,
         entity_code: str = "Entity_P",
         match_date: datetime | None = None,
-        wait_time_ms: int = 2000
+        wait_time_ms: int = 2000,
     ) -> dict[str, Any] | None:
         """V90.0 幽灵协议 - 完整的数据提取流程。
 
@@ -614,11 +625,7 @@ class OddsProductionExtractor:
                     parsed = self._parse_api_response(resp, match_date)
                     if parsed:
                         logger.info("[V90.0 Ghost] ✅ API 解析成功")
-                        return {
-                            **parsed,
-                            "source": "V90.0_Ghost_API",
-                            "hover_failed": False
-                        }
+                        return {**parsed, "source": "V90.0_Ghost_API", "hover_failed": False}
 
             # 步骤 6: 回退到 DOM tooltip 检测
             tooltip_data = await self._poll_for_tooltip_enhanced(page)
@@ -629,13 +636,11 @@ class OddsProductionExtractor:
             return self._build_hover_failed_result("未捕获到任何数据")
 
         except Exception as e:
-            logger.error(f"[V90.0 Ghost Protocol] 异常: {e}")
+            logger.exception(f"[V90.0 Ghost Protocol] 异常: {e}")
             return self._build_hover_failed_result(f"异常: {e!s}")
 
     def _parse_api_response(
-        self,
-        response: dict,
-        match_date: datetime | None = None
+        self, response: dict, match_date: datetime | None = None
     ) -> dict[str, Any] | None:
         """V90.0 Enhanced: 解析捕获的 API 响应。
 
@@ -673,9 +678,13 @@ class OddsProductionExtractor:
                             logger.debug(f"[V90.0 Ghost] 解析成功 ({key}): init_h={home}")
                             return {
                                 "init_h": float(home),
-                                "init_d": float(draw) if draw and isinstance(draw, (int, float)) else None,
-                                "init_a": float(away) if away and isinstance(away, (int, float)) else None,
-                                "opening_time_h": time
+                                "init_d": float(draw)
+                                if draw and isinstance(draw, (int, float))
+                                else None,
+                                "init_a": float(away)
+                                if away and isinstance(away, (int, float))
+                                else None,
+                                "opening_time_h": time,
                             }
 
             # 方案 2: 嵌套的 odds.opening 结构
@@ -684,7 +693,9 @@ class OddsProductionExtractor:
                 if isinstance(odds, dict):
                     result = self._parse_api_response({"json": odds}, match_date)
                     if result:
-                        logger.debug(f"[V90.0 Ghost] 解析成功 (odds): init_h={result.get('init_h')}")
+                        logger.debug(
+                            f"[V90.0 Ghost] 解析成功 (odds): init_h={result.get('init_h')}"
+                        )
                         return result
 
             # 方案 3: data 数组格式
@@ -699,12 +710,14 @@ class OddsProductionExtractor:
                                 draw = item.get("draw") or item.get("d")
                                 away = item.get("away") or item.get("a")
                                 if home and isinstance(home, (int, float)):
-                                    logger.debug(f"[V90.0 Ghost] 解析成功 (data array): init_h={home}")
+                                    logger.debug(
+                                        f"[V90.0 Ghost] 解析成功 (data array): init_h={home}"
+                                    )
                                     return {
                                         "init_h": float(home),
                                         "init_d": float(draw) if draw else None,
                                         "init_a": float(away) if away else None,
-                                        "opening_time_h": item.get("timestamp")
+                                        "opening_time_h": item.get("timestamp"),
                                     }
 
             # 方案 4: match.nested 结构
@@ -713,7 +726,9 @@ class OddsProductionExtractor:
                 if isinstance(match, dict):
                     result = self._parse_api_response({"json": match}, match_date)
                     if result:
-                        logger.debug(f"[V90.0 Ghost] 解析成功 (match): init_h={result.get('init_h')}")
+                        logger.debug(
+                            f"[V90.0 Ghost] 解析成功 (match): init_h={result.get('init_h')}"
+                        )
                         return result
 
             # 方案 5: 递归深度搜索
@@ -750,7 +765,9 @@ class OddsProductionExtractor:
             if nested_result:
                 result = self._parse_api_response({"json": nested_result}, match_date)
                 if result:
-                    logger.debug(f"[V90.0 Ghost] 解析成功 (recursive): init_h={result.get('init_h')}")
+                    logger.debug(
+                        f"[V90.0 Ghost] 解析成功 (recursive): init_h={result.get('init_h')}"
+                    )
                     return result
 
             logger.debug(f"[V90.0 Ghost] API 结构未知，URL: {response.get('url', 'unknown')[:100]}")
@@ -769,7 +786,7 @@ class OddsProductionExtractor:
         page: Page,
         entity_code: str,
         match_date: datetime | None = None,
-        skip_if_exists: bool = False
+        skip_if_exists: bool = False,
     ) -> dict[str, Any] | None:
         """Extracts opening odds via hover with intelligent self-healing.
 
@@ -807,7 +824,9 @@ class OddsProductionExtractor:
             match_year = match_date.year
 
         try:
-            logger.info(f"[OddsExtractor] Hover capture: {real_name} (match_date: {match_date.date()})")
+            logger.info(
+                f"[OddsExtractor] Hover capture: {real_name} (match_date: {match_date.date()})"
+            )
 
             # Step 1: Smart polling - Wait for odd-container to appear
             await self._wait_for_element_ready(page)
@@ -821,9 +840,7 @@ class OddsProductionExtractor:
             await self._scroll_to_element(target_container)
 
             # Step 4: Execute hover with tooltip polling and retry
-            tooltip_data = await self._hover_with_retry(
-                page, target_container, POLLING_MAX_RETRIES
-            )
+            tooltip_data = await self._hover_with_retry(page, target_container, POLLING_MAX_RETRIES)
 
             # Step 5: Parse tooltip data
             if not tooltip_data:
@@ -832,7 +849,7 @@ class OddsProductionExtractor:
             return self._parse_tooltip_data(tooltip_data, match_year)
 
         except Exception as e:
-            logger.error(f"[OddsExtractor] Hover capture exception: {e}")
+            logger.exception(f"[OddsExtractor] Hover capture exception: {e}")
             return {
                 "hover_failed": True,
                 "hover_error": f"Exception: {e!s}",
@@ -859,8 +876,7 @@ class OddsProductionExtractor:
         try:
             logger.debug("[OddsExtractor] Smart polling: waiting for odd-container...")
             await page.wait_for_selector(
-                "div[data-testid='odd-container']",
-                timeout=SELECTOR_TIMEOUT_MS
+                "div[data-testid='odd-container']", timeout=SELECTOR_TIMEOUT_MS
             )
             logger.debug("[OddsExtractor] odd-container ready (millisecond response)")
         except Exception as e:
@@ -927,10 +943,7 @@ class OddsProductionExtractor:
             logger.debug(f"[OddsExtractor] Scroll failed, continuing: {e}")
 
     async def _hover_with_retry(
-        self,
-        page: Page,
-        element,
-        max_retries: int
+        self, page: Page, element, max_retries: int
     ) -> dict[str, Any] | None:
         """V88.0 Enhanced: Executes hover with multi-position jitter retry.
 
@@ -961,12 +974,11 @@ class OddsProductionExtractor:
                 # Last attempt failed
                 if attempt == max_retries - 1:
                     logger.warning(
-                        f"[OddsExtractor] No tooltip detected "
-                        f"after {max_retries} retries"
+                        f"[OddsExtractor] No tooltip detected after {max_retries} retries"
                     )
 
             except Exception as e:
-                logger.error(f"[OddsExtractor] Hover attempt {attempt + 1} failed: {e}")
+                logger.exception(f"[OddsExtractor] Hover attempt {attempt + 1} failed: {e}")
                 if attempt == max_retries - 1:
                     return None
 
@@ -1004,7 +1016,7 @@ class OddsProductionExtractor:
                     return false;
                 }
                 """,
-                timeout=2000  # Wait up to 2 seconds for tooltip to appear
+                timeout=2000,  # Wait up to 2 seconds for tooltip to appear
             )
 
             if tooltip_data:
@@ -1071,11 +1083,7 @@ class OddsProductionExtractor:
         except Exception as e:
             logger.debug(f"[OddsExtractor] Mouse jitter failed: {e}")
 
-    def _parse_tooltip_data(
-        self,
-        tooltip_data: dict[str, Any],
-        match_year: int
-    ) -> dict[str, Any]:
+    def _parse_tooltip_data(self, tooltip_data: dict[str, Any], match_year: int) -> dict[str, Any]:
         """Parses tooltip data to extract opening odds and timestamp.
 
         Args:
@@ -1092,10 +1100,7 @@ class OddsProductionExtractor:
         match = TOOLTIP_OPENING_PATTERN.search(tooltip_data["text"])
 
         if not match:
-            logger.warning(
-                f"[OddsExtractor] Cannot parse tooltip: "
-                f"{tooltip_data['text'][:100]}"
-            )
+            logger.warning(f"[OddsExtractor] Cannot parse tooltip: {tooltip_data['text'][:100]}")
             return self._build_hover_failed_result("Cannot parse tooltip format")
 
         day, month_str, hour, minute, odd_value = match.groups()
@@ -1130,7 +1135,7 @@ class OddsProductionExtractor:
             }
 
         except Exception as e:
-            logger.error(f"[OddsExtractor] Date construction failed: {e}")
+            logger.exception(f"[OddsExtractor] Date construction failed: {e}")
             return self._build_hover_failed_result(f"Date construction failed: {e}")
 
     def _build_hover_failed_result(self, error_msg: str) -> dict[str, Any]:
@@ -1232,7 +1237,8 @@ class OddsProductionExtractor:
                 stats["fully_captured"] += 1
 
             try:
-                cursor.execute("""
+                cursor.execute(
+                    """
                     INSERT INTO metrics_multi_source_data (
                         match_id, source_name,
                         init_h, init_d, init_a,
@@ -1259,14 +1265,26 @@ class OddsProductionExtractor:
                         validation_error = EXCLUDED.validation_error,
                         fully_captured = EXCLUDED.fully_captured,
                         data_timestamp = EXCLUDED.data_timestamp
-                """, (
-                    data.match_id, data.source_name,
-                    data.init_h, data.init_d, data.init_a,
-                    data.opening_time_h, data.opening_time_d, data.opening_time_a,
-                    data.final_h, data.final_d, data.final_a,
-                    data.integrity_score, data.is_valid, data.validation_error,
-                    data.fully_captured, data.data_timestamp,
-                ))
+                """,
+                    (
+                        data.match_id,
+                        data.source_name,
+                        data.init_h,
+                        data.init_d,
+                        data.init_a,
+                        data.opening_time_h,
+                        data.opening_time_d,
+                        data.opening_time_a,
+                        data.final_h,
+                        data.final_d,
+                        data.final_a,
+                        data.integrity_score,
+                        data.is_valid,
+                        data.validation_error,
+                        data.fully_captured,
+                        data.data_timestamp,
+                    ),
+                )
 
                 # Check if this was an insert or update
                 if cursor.rowcount > 0:
@@ -1275,7 +1293,7 @@ class OddsProductionExtractor:
                     stats["updated"] += 1
 
             except Exception as e:
-                logger.error(f"Database error for match {data.match_id}: {e}")
+                logger.exception(f"Database error for match {data.match_id}: {e}")
                 continue
 
         conn.commit()
@@ -1289,10 +1307,7 @@ class OddsProductionExtractor:
     # ========================================================================
 
     async def extract_oddsportal_final_odds(
-        self,
-        url: str,
-        match_id: int,
-        match_date: datetime | None = None
+        self, url: str, match_id: int, match_date: datetime | None = None
     ) -> dict[str, Any]:
         """Extracts Pinnacle final odds from OddsPortal (V82.6 Logic).
 
@@ -1326,7 +1341,7 @@ class OddsProductionExtractor:
             "final_a": None,
             "integrity_score": None,
             "is_valid": False,
-            "error": None
+            "error": None,
         }
 
         logger.info(f"[OddsPortal L3] Extracting final odds for match_id={match_id}")
@@ -1453,9 +1468,9 @@ class OddsProductionExtractor:
                     # Calculate integrity score
                     try:
                         result["integrity_score"] = (
-                            1.0 / result["final_h"] +
-                            1.0 / result["final_d"] +
-                            1.0 / result["final_a"]
+                            1.0 / result["final_h"]
+                            + 1.0 / result["final_d"]
+                            + 1.0 / result["final_a"]
                         )
                         result["is_valid"] = (
                             MIN_INTEGRITY_SCORE < result["integrity_score"] < MAX_INTEGRITY_SCORE
@@ -1495,7 +1510,7 @@ class OddsProductionExtractor:
         page: Page,
         entity_code: str,
         match_date: datetime | None = None,
-        skip_if_exists: bool = False
+        skip_if_exists: bool = False,
     ) -> dict[str, Any] | None:
         """V95.0: Extracts opening odds via hover using OddsHarvester-inspired approach.
 
@@ -1556,10 +1571,7 @@ class OddsProductionExtractor:
 
             # Step 6: Wait for Odds movement modal (THE NEW TARGET)
             try:
-                await page.wait_for_selector(
-                    "h3:has-text('Odds movement')",
-                    timeout=5000
-                )
+                await page.wait_for_selector("h3:has-text('Odds movement')", timeout=5000)
                 logger.info("[V95.0] Odds movement modal detected!")
             except Exception:
                 logger.warning("[V95.0] Odds movement modal not found, attempting fallback...")
@@ -1567,7 +1579,7 @@ class OddsProductionExtractor:
                 try:
                     await page.wait_for_selector(
                         "div[class*='modal'], div[class*='popup'], div[class*='tooltip']",
-                        timeout=3000
+                        timeout=3000,
                     )
                     logger.info("[V95.0] Fallback modal detected")
                 except Exception:
@@ -1649,8 +1661,9 @@ class OddsProductionExtractor:
             return self._parse_v95_modal_data(modal_data, match_year, match_month)
 
         except Exception as e:
-            logger.error(f"[V95.0] Extraction exception: {e}")
+            logger.exception(f"[V95.0] Extraction exception: {e}")
             import traceback
+
             logger.debug(traceback.format_exc())
             return {
                 "hover_failed": True,
@@ -1665,10 +1678,7 @@ class OddsProductionExtractor:
             }
 
     def _parse_v95_modal_data(
-        self,
-        modal_data: dict[str, Any],
-        match_year: int,
-        match_month: int
+        self, modal_data: dict[str, Any], match_year: int, match_month: int
     ) -> dict[str, Any]:
         """V95.0: Parse modal data with intelligent year inference.
 
@@ -1720,8 +1730,18 @@ class OddsProductionExtractor:
 
                 # Map month string to number
                 month_map = {
-                    "Jan": 1, "Feb": 2, "Mar": 3, "Apr": 4, "May": 5, "Jun": 6,
-                    "Jul": 7, "Aug": 8, "Sep": 9, "Oct": 10, "Nov": 11, "Dec": 12
+                    "Jan": 1,
+                    "Feb": 2,
+                    "Mar": 3,
+                    "Apr": 4,
+                    "May": 5,
+                    "Jun": 6,
+                    "Jul": 7,
+                    "Aug": 8,
+                    "Sep": 9,
+                    "Oct": 10,
+                    "Nov": 11,
+                    "Dec": 12,
                 }
                 month = month_map.get(month_str)
 
@@ -1747,8 +1767,7 @@ class OddsProductionExtractor:
 
                     opening_time = datetime(inferred_year, month, day, hour, minute)
                     logger.info(
-                        f"[V95.0] Parsed: opening_time={opening_time.isoformat()}, "
-                        f"init_h={init_h}"
+                        f"[V95.0] Parsed: opening_time={opening_time.isoformat()}, init_h={init_h}"
                     )
 
             except Exception as e:
@@ -1771,10 +1790,7 @@ class OddsProductionExtractor:
     # ========================================================================
 
     async def extract_oddsportal_opening_odds_v95(
-        self,
-        page: Page,
-        match_id: str,
-        match_date: datetime | None = None
+        self, page: Page, match_id: str, match_date: datetime | None = None
     ) -> dict[str, Any]:
         """V95.2: Extracts Pinnacle opening odds from OddsPortal with year inference.
 
@@ -1878,10 +1894,7 @@ class OddsProductionExtractor:
             await asyncio.sleep(2)  # Wait for modal to appear
 
             try:
-                await page.wait_for_selector(
-                    "h3:has-text('Odds movement')",
-                    timeout=5000
-                )
+                await page.wait_for_selector("h3:has-text('Odds movement')", timeout=5000)
                 logger.info("[V95.2] Odds movement modal detected!")
             except Exception:
                 logger.warning("[V95.2] Odds movement modal not found")
@@ -1953,11 +1966,7 @@ class OddsProductionExtractor:
                 return result
 
             # Step 5: Parse with year inference
-            parsed = self._parse_v95_modal_data(
-                modal_data,
-                match_year,
-                match_month
-            )
+            parsed = self._parse_v95_modal_data(modal_data, match_year, match_month)
 
             result.update(parsed)
             result["hover_failed"] = not parsed.get("init_h")
@@ -1965,8 +1974,9 @@ class OddsProductionExtractor:
             return result
 
         except Exception as e:
-            logger.error(f"[V95.2] Extraction exception: {e}")
+            logger.exception(f"[V95.2] Extraction exception: {e}")
             import traceback
+
             logger.debug(traceback.format_exc())
             result["hover_error"] = f"Exception: {e!s}"
             return result
@@ -1976,11 +1986,7 @@ class OddsProductionExtractor:
     # ========================================================================
 
     async def extract_oddsportal_opening_odds_v96(
-        self,
-        page: Page,
-        match_id: str,
-        match_date: datetime | None = None,
-        timeout: int = 15
+        self, page: Page, match_id: str, match_date: datetime | None = None, timeout: int = 15
     ) -> dict[str, Any]:
         """V96.0: Extracts Pinnacle opening odds via Network Interception.
 
@@ -2033,14 +2039,20 @@ class OddsProductionExtractor:
                 content_type = response.headers.get("content-type", "")
 
                 # Filter: Must be JSON and relevant URL
-                if ("application/json" in content_type or
-                    url.endswith(".json") or
-                    "ajax" in url.lower()):
-
+                if (
+                    "application/json" in content_type
+                    or url.endswith(".json")
+                    or "ajax" in url.lower()
+                ):
                     # Check URL relevance
                     relevant_keywords = [
-                        "ajax-odds", "opening", "odds-history",
-                        "bookmaker", "pinnacle", "match-data", "match-event"
+                        "ajax-odds",
+                        "opening",
+                        "odds-history",
+                        "bookmaker",
+                        "pinnacle",
+                        "match-data",
+                        "match-event",
                     ]
 
                     if any(kw in url.lower() for kw in relevant_keywords):
@@ -2052,12 +2064,15 @@ class OddsProductionExtractor:
                             body_text = await response.text()
                             if body_text:
                                 import json as json_module
+
                                 json_data = json_module.loads(body_text)
                                 captured_data["found"] = True
                                 captured_data["raw_json"] = json_data
                                 captured_data["url"] = url
                                 logger.info(f"[V96.0 Sniffer] JSON captured from {url[:80]}...")
-                                logger.info(f"[V96.0 Sniffer] Data size: {len(str(json_data))} chars")
+                                logger.info(
+                                    f"[V96.0 Sniffer] Data size: {len(str(json_data))} chars"
+                                )
                         except Exception as e:
                             logger.debug(f"[V96.0 Sniffer] JSON parse failed: {e}")
             except Exception as e:
@@ -2095,32 +2110,31 @@ class OddsProductionExtractor:
                 captured_data["raw_json"],
                 match_year,
                 match_month,
-                captured_url=captured_data.get("url", "")
+                captured_url=captured_data.get("url", ""),
             )
 
             result.update(parsed)
             result["hover_failed"] = not parsed.get("init_h")
 
             if result["init_h"]:
-                logger.info(f"[V96.0] SUCCESS: init_h={result['init_h']} at {result['opening_time_h']}")
+                logger.info(
+                    f"[V96.0] SUCCESS: init_h={result['init_h']} at {result['opening_time_h']}"
+                )
             else:
                 logger.warning("[V96.0] JSON captured but no opening odds found")
 
             return result
 
         except Exception as e:
-            logger.error(f"[V96.0] Extraction exception: {e}")
+            logger.exception(f"[V96.0] Extraction exception: {e}")
             import traceback
+
             logger.debug(traceback.format_exc())
             result["hover_error"] = f"Exception: {e!s}"
             return result
 
     def _parse_odds_json_v96(
-        self,
-        json_data: Any,
-        match_year: int,
-        match_month: int,
-        captured_url: str = ""
+        self, json_data: Any, match_year: int, match_month: int, captured_url: str = ""
     ) -> dict[str, Any]:
         """Parse captured JSON for Pinnacle opening odds.
 
@@ -2143,7 +2157,7 @@ class OddsProductionExtractor:
             "init_d": None,
             "init_a": None,
             "opening_time_h": None,
-            "captured_url": captured_url
+            "captured_url": captured_url,
         }
 
         def recursive_search(obj, depth=0, max_depth=10):
@@ -2163,14 +2177,19 @@ class OddsProductionExtractor:
                                 odds = data[key]
                                 if isinstance(odds, dict):
                                     h = odds.get("home") or odds.get("h") or odds.get("1")
-                                    d = odds.get("draw") or odds.get("d") or odds.get("x") or odds.get("2")
+                                    d = (
+                                        odds.get("draw")
+                                        or odds.get("d")
+                                        or odds.get("x")
+                                        or odds.get("2")
+                                    )
                                     a = odds.get("away") or odds.get("a") or odds.get("3")
                                     if h and isinstance(h, (int, float)):
                                         return {
                                             "init_h": float(h),
                                             "init_d": float(d) if d else None,
                                             "init_a": float(a) if a else None,
-                                            "timestamp": odds.get("time") or odds.get("timestamp")
+                                            "timestamp": odds.get("time") or odds.get("timestamp"),
                                         }
 
                 # Check for odds array format: [home, draw, away]
@@ -2185,7 +2204,7 @@ class OddsProductionExtractor:
                                         "init_h": h,
                                         "init_d": d,
                                         "init_a": a,
-                                        "timestamp": obj.get("time") or obj.get("timestamp")
+                                        "timestamp": obj.get("time") or obj.get("timestamp"),
                                     }
                             except (ValueError, TypeError):
                                 pass
@@ -2202,7 +2221,9 @@ class OddsProductionExtractor:
                 for item in obj:
                     if isinstance(item, dict):
                         # Check if this item looks like odds data
-                        if any(k in str(item).lower() for k in ["home", "draw", "away", "h", "d", "a"]):
+                        if any(
+                            k in str(item).lower() for k in ["home", "draw", "away", "h", "d", "a"]
+                        ):
                             found = recursive_search(item, depth + 1, max_depth)
                             if found:
                                 return found
@@ -2225,10 +2246,7 @@ class OddsProductionExtractor:
         return result
 
     def _parse_v96_timestamp(
-        self,
-        timestamp: Any,
-        match_year: int,
-        match_month: int
+        self, timestamp: Any, match_year: int, match_month: int
     ) -> datetime | None:
         """Parse various timestamp formats from captured JSON.
 
@@ -2267,6 +2285,7 @@ class OddsProductionExtractor:
             # ISO 8601
             try:
                 from dateutil import parser
+
                 return parser.parse(timestamp)
             except:
                 pass
@@ -2284,6 +2303,7 @@ class OddsProductionExtractor:
             try:
                 from datetime import datetime
                 import re
+
                 match = re.match(r"(\d{1,2})\s+([A-Za-z]{3})\s*,\s*(\d{1,2}):(\d{2})", timestamp)
                 if match:
                     day = int(match.group(1))
@@ -2291,8 +2311,20 @@ class OddsProductionExtractor:
                     hour = int(match.group(3))
                     minute = int(match.group(4))
 
-                    months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
-                            "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+                    months = [
+                        "Jan",
+                        "Feb",
+                        "Mar",
+                        "Apr",
+                        "May",
+                        "Jun",
+                        "Jul",
+                        "Aug",
+                        "Sep",
+                        "Oct",
+                        "Nov",
+                        "Dec",
+                    ]
                     try:
                         month = months.index(month_str) + 1
                     except ValueError:
@@ -2317,10 +2349,7 @@ class OddsProductionExtractor:
     # ========================================================================
 
     async def extract_oddsportal_memory_v97(
-        self,
-        page: Page,
-        match_id: str,
-        match_date: datetime | None = None
+        self, page: Page, match_id: str, match_date: datetime | None = None
     ) -> dict[str, Any]:
         """V97.0: Extracts Pinnacle odds via Memory/DOM inspection.
 
@@ -2367,20 +2396,20 @@ class OddsProductionExtractor:
                 () => {
                     // Get full page text
                     const fullText = String(document.body.innerText || document.body.textContent || '');
-                    
+
                     // Find Pinnacle section
                     const pinnacleIdx = fullText.toLowerCase().indexOf('pinnacle');
                     if (pinnacleIdx < 0) {
                         return { error: 'Pinnacle not found in page' };
                     }
-                    
+
                     // Get text around Pinnacle (next 2000 chars)
                     const nearbyText = fullText.substring(pinnacleIdx, pinnacleIdx + 2000);
-                    
+
                     // Extract all odds-like numbers
                     const oddsPattern = /\\b([1-9]\\.\\d{2})\\b/g;
                     const matches = nearbyText.match(oddsPattern) || [];
-                    
+
                     // Remove duplicates, preserve order
                     const seen = new Set();
                     const uniqueOdds = [];
@@ -2390,7 +2419,7 @@ class OddsProductionExtractor:
                             uniqueOdds.push(o);
                         }
                     }
-                    
+
                     return {
                         success: true,
                         allOdds: uniqueOdds,
@@ -2420,7 +2449,7 @@ class OddsProductionExtractor:
                         a = float(all_odds[start_idx + 2])
 
                         # Calculate integrity score
-                        score = 1/h + 1/d + 1/a
+                        score = 1 / h + 1 / d + 1 / a
 
                         # Check if valid (1.01 < score < 1.10)
                         if 1.01 < score < 1.10:
@@ -2443,20 +2472,20 @@ class OddsProductionExtractor:
                     # Try to infer timestamp (use match_date at noon)
                     try:
                         from datetime import datetime, time
-                        result["opening_time_h"] = datetime.combine(
-                            match_date.date(),
-                            time(12, 0)
-                        )
+
+                        result["opening_time_h"] = datetime.combine(match_date.date(), time(12, 0))
                     except:
                         result["opening_time_h"] = match_date
 
-                    logger.info(f"[V97.1] SUCCESS: init_h={h}, init_d={d}, init_a={a}, score={best_score:.4f}")
+                    logger.info(
+                        f"[V97.1] SUCCESS: init_h={h}, init_d={d}, init_a={a}, score={best_score:.4f}"
+                    )
                 else:
                     # Fallback: try first 3 odds even if score is invalid
                     h = float(all_odds[0])
                     d = float(all_odds[1])
                     a = float(all_odds[2])
-                    score = 1/h + 1/d + 1/a
+                    score = 1 / h + 1 / d + 1 / a
                     result["hover_error"] = f"No valid odds found (best score: {score:.4f})"
                     logger.warning(f"[V97.1] All candidates invalid, best: {score:.4f}")
             else:
@@ -2465,8 +2494,9 @@ class OddsProductionExtractor:
             return result
 
         except Exception as e:
-            logger.error(f"[V97.0] Extraction exception: {e}")
+            logger.exception(f"[V97.0] Extraction exception: {e}")
             import traceback
+
             logger.debug(traceback.format_exc())
             result["hover_error"] = f"Exception: {e!s}"
             return result

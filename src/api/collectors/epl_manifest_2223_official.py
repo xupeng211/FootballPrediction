@@ -145,7 +145,9 @@ def get_2223_manifest():
     # 显示前几场
     logger.info("\n📋 前3场比赛示例:")
     for m in matches_data[:3]:
-        logger.info(f"  ID {m['match_id']}: {m['home_team']} vs {m['away_team']} | {m['match_date']}")
+        logger.info(
+            f"  ID {m['match_id']}: {m['home_team']} vs {m['away_team']} | {m['match_date']}"
+        )
 
     return output_path
 

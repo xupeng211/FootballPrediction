@@ -4,12 +4,13 @@
 利用ServiceContainer和Mock工厂进行完整的请求流程测试
 """
 
-import pytest
 import asyncio
 import os
-from unittest.mock import AsyncMock, MagicMock, patch
 from datetime import datetime
-from typing import Dict, Any, List
+from typing import Any, Dict, List
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 
 # 设置环境变量
 os.environ["SECRET_KEY"] = "test_secret_key_32_characters_long"
@@ -21,11 +22,11 @@ os.environ["DB_USER"] = "test"
 os.environ["DB_PASSWORD"] = "test"
 
 from tests.unit.mock_factories import (
-    create_mock_di_container,
-    create_mock_model_service,
-    create_mock_cache_service,
-    create_mock_feature_extractor,
     create_async_context_manager,
+    create_mock_cache_service,
+    create_mock_di_container,
+    create_mock_feature_extractor,
+    create_mock_model_service,
 )
 
 

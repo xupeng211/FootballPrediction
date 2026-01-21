@@ -15,13 +15,14 @@ from pathlib import Path
 # 添加项目根目录到路径
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-import pytest
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
+import pytest
+
 from core.scrapers.oddsportal import (
-    CircuitBreakerManager,
     CircuitBreakerConfig,
+    CircuitBreakerManager,
 )
 
 

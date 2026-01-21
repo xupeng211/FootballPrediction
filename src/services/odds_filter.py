@@ -21,10 +21,11 @@ Version: V41.186 "终极缝合"
 
 from __future__ import annotations
 
+import builtins
+import contextlib
+from dataclasses import dataclass, field
 import logging
 import re
-from dataclasses import dataclass, field
-from datetime import datetime
 from typing import Any
 
 logger = logging.getLogger("V41.186")
@@ -34,9 +35,11 @@ logger = logging.getLogger("V41.186")
 # 数据模型
 # =============================================================================
 
+
 @dataclass
 class OddsSet:
     """单组赔率数据"""
+
     h: float
     d: float
     a: float
@@ -49,23 +52,27 @@ class OddsSet:
     def calculate_payout(self) -> float:
         """计算返还率"""
         if self.h and self.d and self.a:
-            return 1 / (1/self.h + 1/self.d + 1/self.a) * 100
+            return 1 / (1 / self.h + 1 / self.d + 1 / self.a) * 100
         return 0.0
 
     def is_valid(self) -> bool:
         """检查是否有效"""
         return (
-            self.h >= 1.01 and self.h <= 10.0 and
-            self.d >= 1.01 and self.d <= 15.0 and
-            self.a >= 1.01 and self.a <= 20.0 and
-            self.calculate_payout() >= 85 and
-            self.calculate_payout() <= 102
+            self.h >= 1.01
+            and self.h <= 10.0
+            and self.d >= 1.01
+            and self.d <= 15.0
+            and self.a >= 1.01
+            and self.a <= 20.0
+            and self.calculate_payout() >= 85
+            and self.calculate_payout() <= 102
         )
 
 
 @dataclass
 class PinnacleHistory:
     """Pinnacle 完整历史"""
+
     opening: OddsSet | None = None
     closing: OddsSet | None = None
     movements: list[OddsSet] = field(default_factory=list)
@@ -78,24 +85,20 @@ class PinnacleHistory:
                 "d": self.opening.d if self.opening else None,
                 "a": self.opening.a if self.opening else None,
                 "timestamp": self.opening.timestamp if self.opening else None,
-                "payout": self.opening.calculate_payout() if self.opening else None
+                "payout": self.opening.calculate_payout() if self.opening else None,
             },
             "closing": {
                 "h": self.closing.h if self.closing else None,
                 "d": self.closing.d if self.closing else None,
                 "a": self.closing.a if self.closing else None,
                 "timestamp": self.closing.timestamp if self.closing else None,
-                "payout": self.closing.calculate_payout() if self.closing else None
+                "payout": self.closing.calculate_payout() if self.closing else None,
             },
             "movements": [
-                {
-                    "h": m.h, "d": m.d, "a": m.a,
-                    "timestamp": m.timestamp,
-                    "sequence": m.sequence
-                }
+                {"h": m.h, "d": m.d, "a": m.a, "timestamp": m.timestamp, "sequence": m.sequence}
                 for m in self.movements
             ],
-            "movement_count": len(self.movements)
+            "movement_count": len(self.movements),
         }
 
 
@@ -103,26 +106,21 @@ class PinnacleHistory:
 # SmartOddsFilter - 智能过滤器
 # =============================================================================
 
+
 class SmartOddsFilter:
     """V41.186 智能赔率过滤器 - 从 71 组数据中提取 Pinnacle"""
 
     # Pinnacle 识别关键词
-    PINNACLE_KEYWORDS = ['pinnacle', 'pinna', 'pinn', 'id-18']
+    PINNACLE_KEYWORDS = ["pinnacle", "pinna", "pinn", "id-18"]
 
     # 赔率合理性范围
-    VALID_RANGES = {
-        'h': (1.1, 5.0),
-        'd': (2.0, 6.0),
-        'a': (1.5, 10.0)
-    }
+    VALID_RANGES = {"h": (1.1, 5.0), "d": (2.0, 6.0), "a": (1.5, 10.0)}
 
     def __init__(self, debug: bool = False):
         self.debug = debug
 
     def extract_pinnacle_data(
-        self,
-        odds_sets: list[dict] | list[tuple],
-        page_text: str | None = None
+        self, odds_sets: list[dict] | list[tuple], page_text: str | None = None
     ) -> PinnacleHistory:
         """
         从赔率集合中提取 Pinnacle 数据
@@ -162,16 +160,12 @@ class SmartOddsFilter:
                 # 只有两组但不同，记录为变盘
                 movements = [closing]
 
-            logger.info(f"  ✅ 提取成功:")
+            logger.info("  ✅ 提取成功:")
             logger.info(f"     初盘: [{opening.h}, {opening.d}, {opening.a}]")
             logger.info(f"     终盘: [{closing.h}, {closing.d}, {closing.a}]")
             logger.info(f"     变盘: {len(movements)} 次")
 
-            return PinnacleHistory(
-                opening=opening,
-                closing=closing,
-                movements=movements
-            )
+            return PinnacleHistory(opening=opening, closing=closing, movements=movements)
 
         # 如果没有找到 Pinnacle 数据，使用最佳替代方案
         logger.warning("⚠️  未找到明确的 Pinnacle 数据，使用最佳替代")
@@ -185,22 +179,17 @@ class SmartOddsFilter:
             # 选择主胜赔率最高的作为初盘
             opening = max(all_valid, key=lambda x: x.h)
 
-            logger.info(f"  ⚡ 替代方案:")
+            logger.info("  ⚡ 替代方案:")
             logger.info(f"     初盘: [{opening.h}, {opening.d}, {opening.a}]")
             logger.info(f"     终盘: [{closing.h}, {closing.d}, {closing.a}]")
 
-            return PinnacleHistory(
-                opening=opening,
-                closing=closing
-            )
+            return PinnacleHistory(opening=opening, closing=closing)
 
         logger.error("❌ 没有找到任何有效赔率数据")
         return PinnacleHistory()
 
     def _parse_odds_sets(
-        self,
-        odds_sets: list[dict] | list[tuple],
-        page_text: str | None = None
+        self, odds_sets: list[dict] | list[tuple], page_text: str | None = None
     ) -> list[OddsSet]:
         """解析赔率集合"""
         parsed = []
@@ -209,15 +198,15 @@ class SmartOddsFilter:
             try:
                 # 处理字典格式
                 if isinstance(item, dict):
-                    h = item.get('h')
-                    d = item.get('d')
-                    a = item.get('a')
+                    h = item.get("h")
+                    d = item.get("d")
+                    a = item.get("a")
 
                     if not all([h, d, a]):
                         # 尝试其他键名
-                        h = item.get('home') or item.get('1')
-                        d = item.get('draw') or item.get('x') or item.get('2')
-                        a = item.get('away') or item.get('12')
+                        h = item.get("home") or item.get("1")
+                        d = item.get("draw") or item.get("x") or item.get("2")
+                        a = item.get("away") or item.get("12")
 
                     if not all([h, d, a]):
                         continue
@@ -226,19 +215,16 @@ class SmartOddsFilter:
                         h=float(h),
                         d=float(d),
                         a=float(a),
-                        timestamp=item.get('time') or item.get('timestamp'),
-                        source=item.get('source', 'unknown'),
-                        bookmaker=item.get('bookmaker', 'unknown'),
-                        sequence=idx
+                        timestamp=item.get("time") or item.get("timestamp"),
+                        source=item.get("source", "unknown"),
+                        bookmaker=item.get("bookmaker", "unknown"),
+                        sequence=idx,
                     )
 
                 # 处理元组格式
                 elif isinstance(item, (list, tuple)) and len(item) >= 3:
                     odds_set = OddsSet(
-                        h=float(item[0]),
-                        d=float(item[1]),
-                        a=float(item[2]),
-                        sequence=idx
+                        h=float(item[0]), d=float(item[1]), a=float(item[2]), sequence=idx
                     )
                 else:
                     continue
@@ -259,7 +245,7 @@ class SmartOddsFilter:
 
         for odds_set in odds_sets:
             # 检查是否标记为 Pinnacle
-            if odds_set.bookmaker.lower() in ['pinnacle', 'entity_p']:
+            if odds_set.bookmaker.lower() in ["pinnacle", "entity_p"]:
                 odds_set.is_pinnacle = True
                 pinnacle.append(odds_set)
                 continue
@@ -268,7 +254,7 @@ class SmartOddsFilter:
             payout = odds_set.calculate_payout()
             if 96.5 <= payout <= 98.5:
                 odds_set.is_pinnacle = True
-                odds_set.source = 'pinnacle_by_payout'
+                odds_set.source = "pinnacle_by_payout"
                 pinnacle.append(odds_set)
 
         return pinnacle
@@ -280,10 +266,8 @@ class SmartOddsFilter:
         without_timestamp = [s for s in odds_sets if not s.timestamp]
 
         if with_timestamp:
-            try:
-                with_timestamp.sort(key=lambda x: x.timestamp or '')
-            except:
-                pass
+            with contextlib.suppress(builtins.BaseException):
+                with_timestamp.sort(key=lambda x: x.timestamp or "")
 
         # 按序列号排序没有时间戳的
         without_timestamp.sort(key=lambda x: x.sequence)
@@ -301,7 +285,7 @@ class SmartOddsFilter:
         这是 V41.185 发现的 71 组数据的来源
         """
         # 提取所有赔率数字组合
-        odds_pattern = r'\b([1-9]\.\d{2,3})[^\d]*([1-9]\.\d{2,3})[^\d]*([1-9]\.\d{2,3})\b'
+        odds_pattern = r"\b([1-9]\.\d{2,3})[^\d]*([1-9]\.\d{2,3})[^\d]*([1-9]\.\d{2,3})\b"
         matches = re.findall(odds_pattern, page_text)
 
         odds_sets = []
@@ -310,11 +294,12 @@ class SmartOddsFilter:
                 h, d, a = float(match[0]), float(match[1]), float(match[2])
 
                 # 验证合理性
-                if (self.VALID_RANGES['h'][0] <= h <= self.VALID_RANGES['h'][1] and
-                    self.VALID_RANGES['d'][0] <= d <= self.VALID_RANGES['d'][1] and
-                    self.VALID_RANGES['a'][0] <= a <= self.VALID_RANGES['a'][1]):
-
-                    odds_sets.append({'h': h, 'd': d, 'a': a})
+                if (
+                    self.VALID_RANGES["h"][0] <= h <= self.VALID_RANGES["h"][1]
+                    and self.VALID_RANGES["d"][0] <= d <= self.VALID_RANGES["d"][1]
+                    and self.VALID_RANGES["a"][0] <= a <= self.VALID_RANGES["a"][1]
+                ):
+                    odds_sets.append({"h": h, "d": d, "a": a})
 
             except ValueError:
                 continue
@@ -325,6 +310,7 @@ class SmartOddsFilter:
 # =============================================================================
 # 便捷函数
 # =============================================================================
+
 
 def extract_pinnacle_from_v41_185_result(v41_185_result: dict) -> PinnacleHistory:
     """
@@ -338,7 +324,7 @@ def extract_pinnacle_from_v41_185_result(v41_185_result: dict) -> PinnacleHistor
     """
     filter = SmartOddsFilter()
 
-    all_combinations = v41_185_result.get('odds_data', {}).get('all_combinations', [])
+    all_combinations = v41_185_result.get("odds_data", {}).get("all_combinations", [])
 
     return filter.extract_pinnacle_data(all_combinations)
 
@@ -349,21 +335,17 @@ if __name__ == "__main__":
 
     # 模拟 V41.185 的输出
     test_data = {
-        'odds_data': {
-            'closing': {'h': 1.62, 'd': 3.97, 'a': 6.16},
-            'all_combinations': [
-                {'h': 1.62, 'd': 3.97, 'a': 6.16},
-                {'h': 1.59, 'd': 3.88, 'a': 6.00},
-                {'h': 1.62, 'd': 3.75, 'a': 5.50},
-                {'h': 1.60, 'd': 3.90, 'a': 5.60},
-            ]
+        "odds_data": {
+            "closing": {"h": 1.62, "d": 3.97, "a": 6.16},
+            "all_combinations": [
+                {"h": 1.62, "d": 3.97, "a": 6.16},
+                {"h": 1.59, "d": 3.88, "a": 6.00},
+                {"h": 1.62, "d": 3.75, "a": 5.50},
+                {"h": 1.60, "d": 3.90, "a": 5.60},
+            ],
         }
     }
 
     filter = SmartOddsFilter(debug=True)
     result = extract_pinnacle_from_v41_185_result(test_data)
 
-    print("\n📊 提取结果:")
-    print(f"  初盘: {result.to_dict()['opening']}")
-    print(f"  终盘: {result.to_dict()['closing']}")
-    print(f"  变盘: {result.to_dict()['movement_count']} 次")

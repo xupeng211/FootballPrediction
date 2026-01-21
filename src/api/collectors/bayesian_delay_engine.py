@@ -19,9 +19,9 @@ Date: 2026-01-07
 from __future__ import annotations
 
 import asyncio
-import logging
 from dataclasses import dataclass, field
 from datetime import datetime
+import logging
 import random
 from typing import Any
 
@@ -31,6 +31,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class DelayHistory:
     """Single delay event record."""
+
     timestamp: datetime
     delay_seconds: float
     success: bool
@@ -40,9 +41,10 @@ class DelayHistory:
 @dataclass
 class BayesianState:
     """Bayesian inference state for delay calculation."""
+
     # Prior beliefs (Beta distribution parameters)
     alpha: float = 2.0  # Success count prior
-    beta: float = 1.0   # Failure count prior
+    beta: float = 1.0  # Failure count prior
 
     # Current estimates
     success_probability: float = 0.6667  # Initial estimate
@@ -163,7 +165,7 @@ class BayesianDelayEngine:
 
                 # Trigger exponential backoff
                 backoff_delay = self.base_delay * (
-                    self.backoff_multiplier ** self.consecutive_failures
+                    self.backoff_multiplier**self.consecutive_failures
                 )
                 self.current_delay = min(backoff_delay, self.max_delay)
 
@@ -187,9 +189,8 @@ class BayesianDelayEngine:
                 )
 
                 # Apply recovery rate
-                self.current_delay = (
-                    target_delay * self.recovery_rate
-                    + self.current_delay * (1 - self.recovery_rate)
+                self.current_delay = target_delay * self.recovery_rate + self.current_delay * (
+                    1 - self.recovery_rate
                 )
 
                 logger.debug(
@@ -205,9 +206,8 @@ class BayesianDelayEngine:
         final_delay = self.current_delay * jitter
 
         # Final bounds check
-        final_delay = max(self.min_delay, min(final_delay, self.max_delay))
+        return max(self.min_delay, min(final_delay, self.max_delay))
 
-        return final_delay
 
     def record_result(
         self,
@@ -241,8 +241,7 @@ class BayesianDelayEngine:
             self.state.history = self.state.history[-100:]
 
         logger.debug(
-            f"📊 Result recorded: delay={delay:.1f}s, "
-            f"success={success}, error={error_type}"
+            f"📊 Result recorded: delay={delay:.1f}s, success={success}, error={error_type}"
         )
 
     def get_statistics(self) -> dict[str, Any]:
@@ -300,6 +299,7 @@ class BayesianDelayEngine:
 # Convenience Functions
 # ============================================================================
 
+
 async def wait_with_bayesian_delay(
     engine: BayesianDelayEngine,
     last_success: bool | None = None,
@@ -345,40 +345,30 @@ if __name__ == "__main__":
         """Demonstrate the Bayesian delay engine."""
         engine = BayesianDelayEngine()
 
-        print("\n🧠 V150.0 Bayesian Delay Engine Demo\n")
-        print("=" * 60)
 
         # Simulate a sequence of requests
         results = [
-            True,   # Success
-            True,   # Success
+            True,  # Success
+            True,  # Success
             False,  # Failure (trigger backoff)
-            True,   # Success (recovery starts)
-            True,   # Success
-            True,   # Success
-            True,   # Success
+            True,  # Success (recovery starts)
+            True,  # Success
+            True,  # Success
+            True,  # Success
         ]
 
-        for i, success in enumerate(results, 1):
+        for _i, success in enumerate(results, 1):
             delay = engine.calculate_delay(last_success=success)
             engine.record_result(delay, success)
 
-            status = "✓" if success else "✗"
-            print(
-                f"Request {i}: {status} | Delay: {delay:6.1f}s | "
-                f"P(success): {engine.state.success_probability:.3f} | "
-                f"Consecutive failures: {engine.consecutive_failures}"
-            )
 
             await asyncio.sleep(0.1)  # Small sleep for demo
 
-        print("\n" + "=" * 60)
-        print("\n📊 Final Statistics:")
         stats = engine.get_statistics()
-        for key, value in stats.items():
+        for value in stats.values():
             if isinstance(value, float):
-                print(f"  {key}: {value:.4f}")
+                pass
             else:
-                print(f"  {key}: {value}")
+                pass
 
     asyncio.run(demo())

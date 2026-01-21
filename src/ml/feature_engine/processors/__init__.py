@@ -37,18 +37,18 @@ from .tactical import TacticalProcessor
 from .tactical_cross import TacticalCrossProcessor
 
 __all__ = [
-    "AtomicProcessor",
-    "TacticalProcessor",
-    "LineupProcessor",
-    "RefereeProcessor",
-    "ContextProcessor",
-    # V22.0 新增
-    "LineupValueProcessor",
     "AdvancedPassingProcessor",
-    # V23.0 新增
-    "MarketOddsProcessor",
-    "InjuryImpactProcessor",
+    "AtomicProcessor",
+    "ContextProcessor",
     # V24.0 新增
     "HistoricalRollingProcessor",
+    "InjuryImpactProcessor",
+    "LineupProcessor",
+    # V22.0 新增
+    "LineupValueProcessor",
+    # V23.0 新增
+    "MarketOddsProcessor",
+    "RefereeProcessor",
     "TacticalCrossProcessor",
+    "TacticalProcessor",
 ]

@@ -129,7 +129,9 @@ class PlayerStats(BaseModel):
     middle_third_passes: int | None = Field(None, ge=0, alias="middleThirdPasses")
     accurate_middle_third_passes: int | None = Field(None, ge=0, alias="accurateMiddleThirdPasses")
     defensive_third_passes: int | None = Field(None, ge=0, alias="defensiveThirdPasses")
-    accurate_defensive_third_passes: int | None = Field(None, ge=0, alias="accurateDefensiveThirdPasses")
+    accurate_defensive_third_passes: int | None = Field(
+        None, ge=0, alias="accurateDefensiveThirdPasses"
+    )
 
     # 传球 DNA（短中长传）
     short_passes: int | None = Field(None, ge=0, alias="shortPasses")
@@ -176,20 +178,26 @@ class MatchContext(BaseModel):
     # 场地信息（从 venue.* 解析）
     venue: str | None = None  # 体育场名称
     venue_capacity: int | None = Field(None, ge=0, alias="venueCapacity")
-    venue_attendance: int | None = Field(None, ge=0, alias="venueAttendance")  # V21.0 新增: 观众人数
+    venue_attendance: int | None = Field(
+        None, ge=0, alias="venueAttendance"
+    )  # V21.0 新增: 观众人数
     is_neutral: bool | None = Field(None, alias="isNeutral")
 
     # 裁判信息（从 matchFacts.info.referee 解析）
     referee_id: str | None = Field(None, alias="refereeId")
     referee_name: str | None = Field(None, alias="refereeName")
     referee_nationality: str | None = Field(None, alias="refereeNationality")  # V21.0 新增
-    referee_strictness: float | None = Field(None, ge=0, le=1, alias="refereeStrictness")  # 历史场均黄牌数
+    referee_strictness: float | None = Field(
+        None, ge=0, le=1, alias="refereeStrictness"
+    )  # 历史场均黄牌数
 
     # 天气信息（预留，需要天气 API）
     weather_temperature: float | None = Field(None, alias="weatherTemperature")
     weather_condition: str | None = Field(None, alias="weatherCondition")
     weather_wind_speed: float | None = Field(None, ge=0, alias="weatherWindSpeed")  # V21.0 新增
-    weather_humidity: float | None = Field(None, ge=0, le=100, alias="weatherHumidity")  # V21.0 新增
+    weather_humidity: float | None = Field(
+        None, ge=0, le=100, alias="weatherHumidity"
+    )  # V21.0 新增
 
     # 赛程背景
     is_cup_match: bool | None = Field(None, alias="isCupMatch")
@@ -339,8 +347,7 @@ class FeatureVector(BaseModel):
 
     def to_dict(self) -> dict[str, Any]:
         """转换为字典（移除元数据）"""
-        data = self.model_dump(exclude={"match_id", "feature_version", "extracted_at"})
-        return data
+        return self.model_dump(exclude={"match_id", "feature_version", "extracted_at"})
 
     def to_flat_dict(self) -> dict[str, Any]:
         """转换为扁平字典（包含元数据）"""
@@ -415,16 +422,16 @@ class ProcessingContext(BaseModel):
 # ============================================================================
 
 __all__ = [
-    # 枚举
-    "MatchStatus",
+    "FeatureVector",
     "HomeAway",
     "LeagueTier",
+    "LineupInfo",
+    "MatchContext",
     # 数据模型
     "MatchData",
-    "TeamStats",
+    # 枚举
+    "MatchStatus",
     "PlayerStats",
-    "MatchContext",
-    "LineupInfo",
-    "FeatureVector",
     "ProcessingContext",
+    "TeamStats",
 ]

@@ -93,11 +93,11 @@ def map_position_to_segment(player: dict[str, Any], strict_mode: bool = False) -
         ValueError: strict_mode=True 且映射失败时抛出
 
     Examples:
-        >>> player = {'positionId': 43, 'name': 'Haaland'}
+        >>> player = {"positionId": 43, "name": "Haaland"}
         >>> map_position_to_segment(player)
         'FW'
 
-        >>> player = {'usualPlayingPositionId': 2, 'name': 'De Bruyne'}
+        >>> player = {"usualPlayingPositionId": 2, "name": "De Bruyne"}
         >>> map_position_to_segment(player)
         'MF'
     """
@@ -155,10 +155,10 @@ def validate_position_mapping(player: dict[str, Any], expected_segment: str) -> 
         True 如果映射结果与预期一致，False 否则
 
     Examples:
-        >>> player = {'positionId': 43, 'name': 'Haaland'}
-        >>> validate_position_mapping(player, 'FW')
+        >>> player = {"positionId": 43, "name": "Haaland"}
+        >>> validate_position_mapping(player, "FW")
         True
-        >>> validate_position_mapping(player, 'GK')
+        >>> validate_position_mapping(player, "GK")
         False
     """
     actual_segment = map_position_to_segment(player)

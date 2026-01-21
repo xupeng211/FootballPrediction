@@ -176,7 +176,7 @@ class PostgresDataLoader:
                 return df
 
         except Exception as e:
-            logger.error(f"从PostgreSQL加载数据失败: {e!s}")
+            logger.exception(f"从PostgreSQL加载数据失败: {e!s}")
             # 返回空DataFrame而不是抛出异常
             return self._get_empty_dataframe()
 
@@ -337,7 +337,9 @@ class PostgresDataLoader:
 
             # 获取总记录数 - Phase 8：使用正确的状态字段名
             async with self.db_manager.get_async_session() as session:
-                count_query = "SELECT COUNT(*) as total FROM matches WHERE match_status = 'finished'"
+                count_query = (
+                    "SELECT COUNT(*) as total FROM matches WHERE match_status = 'finished'"
+                )
                 count_result = await session.execute(text(count_query))
                 total_records = count_result.scalar()
 
@@ -367,5 +369,5 @@ class PostgresDataLoader:
                 result = await session.execute(text("SELECT 1"))
                 return result.scalar() == 1
         except Exception as e:
-            logger.error(f"数据库连接测试失败: {e!s}")
+            logger.exception(f"数据库连接测试失败: {e!s}")
             return False

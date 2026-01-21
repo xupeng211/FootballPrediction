@@ -310,7 +310,7 @@ class FeatureOutput(BaseModel):
         这个方法在模型验证后自动调用。
         """
         # 计算总特征数（包括嵌套字段）
-        count = self.calculate_feature_count()
+        self.calculate_feature_count()
         # 注意：这里不做强制验证，因为允许部分特征缺失
         # 验证逻辑应该由 extractor.validate() 完成
         return self

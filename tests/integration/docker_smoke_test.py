@@ -52,7 +52,11 @@ class SmokeTest:
             step_start = time.time()
             if model_path.exists():
                 file_size = model_path.stat().st_size
-                phase_result["steps"]["file_check"] = {"status": "OK", "path": str(model_path), "size_bytes": file_size}
+                phase_result["steps"]["file_check"] = {
+                    "status": "OK",
+                    "path": str(model_path),
+                    "size_bytes": file_size,
+                }
                 logger.info(f"✅ 模型文件存在: {file_size} bytes")
             else:
                 phase_result["steps"]["file_check"] = {"status": "Fail", "error": "模型文件不存在"}
@@ -133,7 +137,11 @@ class SmokeTest:
             step_start = time.time()
 
             conn = psycopg2.connect(
-                host=db.host, port=db.port, database=db.name, user=db.user, password=db.password.get_secret_value()
+                host=db.host,
+                port=db.port,
+                database=db.name,
+                user=db.user,
+                password=db.password.get_secret_value(),
             )
 
             phase_result["steps"]["db_connect"] = {
@@ -268,7 +276,9 @@ class SmokeTest:
 
             # 计算衍生特征
             self.test_data["xg_diff"] = self.test_data["home_xg"] - self.test_data["away_xg"]
-            self.test_data["possession_diff"] = self.test_data["home_possession"] - self.test_data["away_possession"]
+            self.test_data["possession_diff"] = (
+                self.test_data["home_possession"] - self.test_data["away_possession"]
+            )
             self.test_data["shots_diff"] = (
                 self.test_data["home_shots_on_target"] - self.test_data["away_shots_on_target"]
             )
@@ -427,7 +437,9 @@ class SmokeTest:
         try:
             # 5.1 计算总体耗时
             logger.info("5.1 计算总体耗时...")
-            total_time = sum(phase.get("total_time_ms", 0) for phase in self.results["phases"].values())
+            total_time = sum(
+                phase.get("total_time_ms", 0) for phase in self.results["phases"].values()
+            )
 
             phase_result["steps"]["total_time"] = {
                 "status": "OK",
@@ -437,7 +449,10 @@ class SmokeTest:
 
             # 5.2 计算各阶段耗时占比
             logger.info("5.2 计算各阶段耗时占比...")
-            phase_times = {name: phase.get("total_time_ms", 0) for name, phase in self.results["phases"].items()}
+            phase_times = {
+                name: phase.get("total_time_ms", 0)
+                for name, phase in self.results["phases"].items()
+            }
 
             phase_percentages = {
                 name: round(time_ms / total_time * 100, 2) if total_time > 0 else 0
@@ -463,11 +478,19 @@ class SmokeTest:
 
                 phase_result["metrics"] = {
                     "total_predictions": pred_count,
-                    "prediction_latency_avg_ms": round(pred_time / pred_count, 2) if pred_count > 0 else 0,
+                    "prediction_latency_avg_ms": round(pred_time / pred_count, 2)
+                    if pred_count > 0
+                    else 0,
                     "throughput_predictions_per_sec": batch_pred.get("predictions_per_second", 0),
-                    "average_confidence_home_win": batch_pred.get("average_confidence", {}).get("home_win", 0),
-                    "average_confidence_draw": batch_pred.get("average_confidence", {}).get("draw", 0),
-                    "average_confidence_away_win": batch_pred.get("average_confidence", {}).get("away_win", 0),
+                    "average_confidence_home_win": batch_pred.get("average_confidence", {}).get(
+                        "home_win", 0
+                    ),
+                    "average_confidence_draw": batch_pred.get("average_confidence", {}).get(
+                        "draw", 0
+                    ),
+                    "average_confidence_away_win": batch_pred.get("average_confidence", {}).get(
+                        "away_win", 0
+                    ),
                 }
 
             phase_result["status"] = "OK"

@@ -9,6 +9,7 @@ V26.4 ML Engine - 统一机器学习引擎
 - 特征适配层集成
 """
 
+import contextlib
 from datetime import datetime
 import json
 import logging
@@ -163,8 +164,12 @@ class V17MLEngine:
         all_teams = set(df["home_team"].unique()) | set(df["away_team"].unique())
 
         for team in all_teams:
-            home_matches = df[df["home_team"] == team][["external_id", "match_time", "parsed_stats"]].copy()
-            away_matches = df[df["away_team"] == team][["external_id", "match_time", "parsed_stats"]].copy()
+            home_matches = df[df["home_team"] == team][
+                ["external_id", "match_time", "parsed_stats"]
+            ].copy()
+            away_matches = df[df["away_team"] == team][
+                ["external_id", "match_time", "parsed_stats"]
+            ].copy()
 
             home_matches["is_home"] = True
             away_matches["is_home"] = False
@@ -180,7 +185,12 @@ class V17MLEngine:
         return team_history
 
     def calculate_single_rolling_feature(
-        self, team_history: dict[str, pd.DataFrame], home_team: str, away_team: str, match_time: str, window: int = 10
+        self,
+        team_history: dict[str, pd.DataFrame],
+        home_team: str,
+        away_team: str,
+        match_time: str,
+        window: int = 10,
     ) -> dict[str, float]:
         """
         计算单场比赛的滚动特征
@@ -203,10 +213,8 @@ class V17MLEngine:
                 stats = row.get("stats", {})
                 val = stats.get(f"home_{metric}" if row["is_home"] else f"away_{metric}")
                 if val is not None:
-                    try:
+                    with contextlib.suppress(ValueError, TypeError):
                         home_values.append(float(val))
-                    except (ValueError, TypeError):
-                        pass
 
             if home_values:
                 features[f"home_rolling_{metric}"] = np.mean(home_values)
@@ -222,10 +230,8 @@ class V17MLEngine:
                 stats = row.get("stats", {})
                 val = stats.get(f"home_{metric}" if row["is_home"] else f"away_{metric}")
                 if val is not None:
-                    try:
+                    with contextlib.suppress(ValueError, TypeError):
                         away_values.append(float(val))
-                    except (ValueError, TypeError):
-                        pass
 
             if away_values:
                 features[f"away_rolling_{metric}"] = np.mean(away_values)
@@ -291,7 +297,9 @@ class V17MLEngine:
         merged_df = df.merge(rolling_df, left_on="external_id", right_on="match_id", how="inner")
 
         # 过滤有效数据
-        valid_mask = (merged_df["home_matches_count"] >= min_history) & (merged_df["away_matches_count"] >= min_history)
+        valid_mask = (merged_df["home_matches_count"] >= min_history) & (
+            merged_df["away_matches_count"] >= min_history
+        )
 
         X = merged_df.loc[valid_mask, self.ROLLING_FEATURES].copy()
         y = merged_df.loc[valid_mask, "actual_result"].map(self.label_mapping)
@@ -420,7 +428,11 @@ class V17MLEngine:
 
         return {
             "prediction": self.reverse_mapping[prediction],
-            "probabilities": {"Away": probabilities[0], "Draw": probabilities[1], "Home": probabilities[2]},
+            "probabilities": {
+                "Away": probabilities[0],
+                "Draw": probabilities[1],
+                "Home": probabilities[2],
+            },
             "confidence": float(probabilities.max()),
         }
 
@@ -473,7 +485,9 @@ class Predictor:
         elif model_type == "v26_6_pre_match":
             self.adapter = FeatureAdapterFactory.get_adapter(ModelType.V26_6_PRE_MATCH)
         elif model_type == "v26_7_aligned":
-            self.adapter = FeatureAdapterFactory.get_adapter(ModelType.V26_6_PRE_MATCH)  # Reuse V26_6 adapter
+            self.adapter = FeatureAdapterFactory.get_adapter(
+                ModelType.V26_6_PRE_MATCH
+            )  # Reuse V26_6 adapter
         else:
             raise ValueError(f"不支持的模型类型: {model_type}")
 
@@ -519,7 +533,11 @@ class Predictor:
         else:
             self.model = model_data
             self.scaler = None
-            self.feature_names = list(self.model.feature_names_in_) if hasattr(self.model, "feature_names_in_") else []
+            self.feature_names = (
+                list(self.model.feature_names_in_)
+                if hasattr(self.model, "feature_names_in_")
+                else []
+            )
 
         logger.info(f"✅ 模型加载成功，特征数: {len(self.feature_names)}")
 
@@ -586,10 +604,7 @@ class Predictor:
         features_df = adaptation_result.features
 
         # 2. 特征标准化
-        if self.scaler:
-            features_scaled = self.scaler.transform(features_df)
-        else:
-            features_scaled = features_df.values
+        features_scaled = self.scaler.transform(features_df) if self.scaler else features_df.values
 
         # 3. 模型预测
         prediction = self.model.predict(features_scaled)[0]
@@ -648,20 +663,17 @@ class Predictor:
     @classmethod
     def create_v26_5_production(cls) -> "Predictor":
         """创建 V26.5 生产预测器（加载真实训练的模型）"""
-        predictor = cls(model_type="v26_5_production")
-        return predictor
+        return cls(model_type="v26_5_production")
 
     @classmethod
     def create_v26_6_pre_match(cls) -> "Predictor":
         """创建 V26.6 真赛前预测器（无数据泄露）"""
-        predictor = cls(model_type="v26_6_pre_match")
-        return predictor
+        return cls(model_type="v26_6_pre_match")
 
     @classmethod
     def create_v26_7_aligned(cls) -> "Predictor":
         """创建 V26.7 对齐预测器（训练-推理完全对齐）"""
-        predictor = cls(model_type="v26_7_aligned")
-        return predictor
+        return cls(model_type="v26_7_aligned")
 
 
 # ============================================================================
@@ -722,7 +734,9 @@ class ModelDispatcher:
         """加载通用底座模型（确保至少有一个可用模型）"""
         base_model_path = self.MODEL_PATHS[self.FALLBACK_MODEL]
         if os.path.exists(base_model_path):
-            self.loaded_models[self.FALLBACK_MODEL] = Predictor(model_path=base_model_path, model_type="v26_7_aligned")
+            self.loaded_models[self.FALLBACK_MODEL] = Predictor(
+                model_path=base_model_path, model_type="v26_7_aligned"
+            )
             logger.info(f"✅ 通用底座模型已加载: {self.FALLBACK_MODEL}")
         else:
             logger.warning(f"⚠️  通用底座模型未找到: {base_model_path}")
@@ -778,7 +792,9 @@ class ModelDispatcher:
         """
         # V5 Pure: 检查是否为数据不足联赛（强制回退）
         if league_id is not None and league_id in self.INSUFFICIENT_DATA_LEAGUES:
-            logger.info(f"⚠️  联赛 ID {league_id} 数据不足，强制回退到通用模型 {self.FALLBACK_MODEL}")
+            logger.info(
+                f"⚠️  联赛 ID {league_id} 数据不足，强制回退到通用模型 {self.FALLBACK_MODEL}"
+            )
             return self._get_fallback_model()
 
         # 如果有联赛 ID，尝试使用专项模型
@@ -790,7 +806,9 @@ class ModelDispatcher:
                 # 检查是否已加载
                 if model_type not in self.loaded_models:
                     try:
-                        self.loaded_models[model_type] = Predictor(model_path=model_path, model_type=model_type)
+                        self.loaded_models[model_type] = Predictor(
+                            model_path=model_path, model_type=model_type
+                        )
                         logger.info(f"✅ 加载联赛专项模型: {model_type}")
                     except Exception as e:
                         logger.warning(f"⚠️  加载联赛专项模型失败 {model_type}: {e}")

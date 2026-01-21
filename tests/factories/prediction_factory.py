@@ -60,7 +60,9 @@ class MatchFactory(factory.Factory):
     )
 
     # 时间和场地
-    match_date = fuzzy.FuzzyDateTime(datetime.now(UTC) - timedelta(days=30), datetime.now(UTC) + timedelta(days=30))
+    match_date = fuzzy.FuzzyDateTime(
+        datetime.now(UTC) - timedelta(days=30), datetime.now(UTC) + timedelta(days=30)
+    )
     venue = fuzzy.FuzzyChoice(
         [
             "Old Trafford",
@@ -228,7 +230,12 @@ class PerformanceTestDataFactory(factory.Factory):
 
     # 生成大量测试数据用于性能测试
     test_scenario = fuzzy.FuzzyChoice(
-        ["high_volume_predictions", "concurrent_requests", "large_batch_processing", "cache_performance"]
+        [
+            "high_volume_predictions",
+            "concurrent_requests",
+            "large_batch_processing",
+            "cache_performance",
+        ]
     )
 
     data_size = fuzzy.FuzzyInteger(100, 10000)

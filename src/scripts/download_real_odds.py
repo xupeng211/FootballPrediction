@@ -69,8 +69,6 @@ def get_random_user_agent() -> str:
 def download_odds_data():
     """V11.0: 下载真实赔率数据（增强版，带重试和 UA 轮换）"""
 
-    print("📊 从 football-data.co.uk 下载真实赔率数据 (V11.0 增强版)")
-    print("=" * 60)
 
     # 数据源URLs - 扩展到三个赛季
     urls = {
@@ -85,7 +83,6 @@ def download_odds_data():
     session = create_robust_session()
 
     for season, url in urls.items():
-        print(f"\n📅 下载 {season} 赛季赔率数据...")
         success = False
 
         # V11.0: 尝试主源和备用源
@@ -108,8 +105,6 @@ def download_odds_data():
                 df = pd.read_csv(url)
                 df["Season"] = season
 
-                print(f"  ✅ 成功下载: {len(df)} 场比赛 (尝试 {attempt + 1}/5)")
-                print(f"  📋 列名: {list(df.columns)[:10]}...")
 
                 # 标准化列名
                 df = standardize_columns(df)
@@ -121,44 +116,33 @@ def download_odds_data():
                 if e.response.status_code == 429:
                     # 速率限制，等待后重试
                     wait_time = (2**attempt) + random.uniform(0, 1)
-                    print(f"  ⏳ 速率限制，等待 {wait_time:.1f} 秒后重试...")
                     time.sleep(wait_time)
-                else:
-                    print(f"  ❌ HTTP 错误 {e.response.status_code}: {e}")
-                    if attempt < 4:
-                        wait_time = (2**attempt) + random.uniform(0, 1)
-                        print(f"  ⏳ {wait_time:.1f} 秒后重试...")
-                        time.sleep(wait_time)
+                elif attempt < 4:
+                    wait_time = (2**attempt) + random.uniform(0, 1)
+                    time.sleep(wait_time)
 
             except requests.exceptions.Timeout:
-                print(f"  ⏰ 请求超时 (尝试 {attempt + 1}/5)")
                 if attempt < 4:
                     wait_time = (2**attempt) + random.uniform(0, 1)
-                    print(f"  ⏳ {wait_time:.1f} 秒后重试...")
                     time.sleep(wait_time)
 
-            except Exception as e:
-                print(f"  ❌ 下载失败: {e}")
+            except Exception:
                 if attempt < 4:
                     wait_time = (2**attempt) + random.uniform(0, 1)
-                    print(f"  ⏳ {wait_time:.1f} 秒后重试...")
                     time.sleep(wait_time)
 
         if not success:
-            print(f"  ⚠️  {season} 赛季下载失败，跳过")
+            pass
 
     if all_data:
         # 合并所有赛季数据
         combined_df = pd.concat(all_data, ignore_index=True)
-        print(f"\n✅ 合并完成: {len(combined_df)} 场比赛")
 
         # 保存到文件
         output_path = "/home/user/projects/FootballPrediction/data/real_odds_raw.csv"
         combined_df.to_csv(output_path, index=False)
-        print(f"✅ 原始赔率数据已保存: {output_path}")
 
         return combined_df
-    print("❌ 未下载到任何数据")
     return None
 
 
@@ -256,11 +240,9 @@ def standardize_columns(df: pd.DataFrame) -> pd.DataFrame:
         "Wolverhampton Wanderers",
     }
 
-    df = df[(df["home_team"].isin(valid_teams)) & (df["away_team"].isin(valid_teams))]
+    return df[(df["home_team"].isin(valid_teams)) & (df["away_team"].isin(valid_teams))]
 
-    print(f"  🔍 过滤后保留: {len(df)} 场比赛")
 
-    return df
 
 
 def merge_with_predictions(real_odds_path: str, predictions_path: str) -> pd.DataFrame:
@@ -274,14 +256,11 @@ def merge_with_predictions(real_odds_path: str, predictions_path: str) -> pd.Dat
     Returns:
         合并后的DataFrame
     """
-    print("\n🔗 合并真实赔率与预测数据...")
 
     # 加载数据
     odds_df = pd.read_csv(real_odds_path)
     pred_df = pd.read_csv(predictions_path)
 
-    print(f"  赔率数据: {len(odds_df)} 场")
-    print(f"  预测数据: {len(pred_df)} 场")
 
     # 确保日期格式一致
     if "match_time" in pred_df.columns:
@@ -309,12 +288,10 @@ def merge_with_predictions(real_odds_path: str, predictions_path: str) -> pd.Dat
         merged_df["date_diff"] = abs((match_time - match_date).dt.days)
         merged_df = merged_df[merged_df["date_diff"] <= 3]
 
-    print(f"  ✅ 合并成功: {len(merged_df)} 场比赛")
 
     # 保存合并数据
     output_path = "/home/user/projects/FootballPrediction/data/merged_real_odds.csv"
     merged_df.to_csv(output_path, index=False)
-    print(f"✅ 合并数据已保存: {output_path}")
 
     return merged_df
 
@@ -327,16 +304,12 @@ def main():
     if odds_df is not None:
         # 合并数据
         pred_path = "/home/user/projects/FootballPrediction/data/multi_season_v85.csv"
-        merged_df = merge_with_predictions("/home/user/projects/FootballPrediction/data/real_odds_raw.csv", pred_path)
+        merge_with_predictions(
+            "/home/user/projects/FootballPrediction/data/real_odds_raw.csv", pred_path
+        )
 
-        print("\n" + "=" * 60)
-        print("✅ 真实赔率数据接入完成")
-        print("=" * 60)
-        print(f"  📊 可用比赛: {len(merged_df)}")
-        print(f"  💰 Bet365 赔率覆盖: {'✅' if 'b365_home_odds' in merged_df.columns else '❌'}")
-        print(f"  📅 数据范围: {merged_df['match_time'].min()} ~ {merged_df['match_time'].max()}")
     else:
-        print("\n❌ 真实赔率数据下载失败")
+        pass
 
 
 if __name__ == "__main__":

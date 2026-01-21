@@ -9,20 +9,20 @@ V144.2: 新增.env文件自动加载，确保测试能获取正确的数据库�
 # 添加src路径
 import sys
 from pathlib import Path
+from typing import Any, AsyncGenerator
 from unittest.mock import Mock
-from typing import AsyncGenerator, Generator, Any
 
 import numpy as np
 import pandas as pd
-import pytest
 import psycopg2
 import psycopg2.extras
+import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
+
 # V144.2: 加载.env文件（必须在src导入之后，确保路径正确）
 from dotenv import load_dotenv
-import os
 
 project_root = Path(__file__).parent.parent
 env_file = project_root / ".env"
@@ -32,6 +32,7 @@ load_dotenv(env_file, override=True)
 # ============================================================================
 # V119.0: 回归测试 Fixtures
 # ============================================================================
+
 
 @pytest.fixture(scope="session")
 def db_connection():
@@ -51,7 +52,7 @@ def db_connection():
         database=settings.database.name,
         user=settings.database.user,
         password=settings.database.password.get_secret_value(),
-        cursor_factory=psycopg2.extras.RealDictCursor
+        cursor_factory=psycopg2.extras.RealDictCursor,
     )
 
     yield conn
@@ -93,7 +94,7 @@ def historical_match_sample(db_connection: psycopg2.extensions.connection) -> di
     return {
         "match_id": result["match_id"],
         "oddsportal_url": result["oddsportal_url"],
-        "match_date": result["match_date"]
+        "match_date": result["match_date"],
     }
 
 
@@ -130,7 +131,7 @@ def recent_match_sample(db_connection: psycopg2.extensions.connection) -> dict[s
     return {
         "match_id": result["match_id"],
         "oddsportal_url": result["oddsportal_url"],
-        "match_date": result["match_date"]
+        "match_date": result["match_date"],
     }
 
 
@@ -143,16 +144,15 @@ async def playwright_browser() -> AsyncGenerator:
     Yields:
         Page: Playwright Page 对象
     """
-    from playwright.async_api import async_playwright, Browser, Page
+    from playwright.async_api import Browser, Page, async_playwright
 
     async with async_playwright() as p:
         browser: Browser = await p.chromium.launch(
-            headless=True,
-            args=["--disable-dev-shm-usage", "--no-sandbox"]
+            headless=True, args=["--disable-dev-shm-usage", "--no-sandbox"]
         )
         context = await browser.new_context(
             viewport={"width": 1920, "height": 1080},
-            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
         )
         page: Page = await context.new_page()
 
@@ -219,7 +219,12 @@ def sample_match_data_edge_cases():
             "awayTeam": {"name": "Team B"},
         },
         # 缺失字段
-        {"id": "missing_fields", "homeTeam": {"name": "Team A"}, "awayTeam": {"name": "Team B"}, "content": {}},
+        {
+            "id": "missing_fields",
+            "homeTeam": {"name": "Team A"},
+            "awayTeam": {"name": "Team B"},
+            "content": {},
+        },
         # 异常数据类型
         {
             "id": "invalid_types",
@@ -233,7 +238,14 @@ def sample_match_data_edge_cases():
             "content": {
                 "stats": {
                     "Periods": {
-                        "All": {"stats": [{"key": "expected_goals", "stats": [{"value": 9999.9}, {"value": -1.0}]}]}
+                        "All": {
+                            "stats": [
+                                {
+                                    "key": "expected_goals",
+                                    "stats": [{"value": 9999.9}, {"value": -1.0}],
+                                }
+                            ]
+                        }
                     }
                 }
             },

@@ -114,7 +114,9 @@ class CircuitBreaker:
         with self._lock:
             if self._state == CircuitState.HALF_OPEN:
                 self._success_count += 1
-                logger.info(f"熔断器半开状态: 成功计数 {self._success_count}/{self.config.success_threshold}")
+                logger.info(
+                    f"熔断器半开状态: 成功计数 {self._success_count}/{self.config.success_threshold}"
+                )
 
                 if self._success_count >= self.config.success_threshold:
                     self._transition_to_closed()
@@ -149,7 +151,10 @@ class CircuitBreaker:
             )
 
             # 检查是否需要熔断
-            if self._state == CircuitState.CLOSED and self._failure_count >= self.config.failure_threshold:
+            if (
+                self._state == CircuitState.CLOSED
+                and self._failure_count >= self.config.failure_threshold
+            ):
                 self._transition_to_open()
             elif self._state == CircuitState.HALF_OPEN:
                 # 半开状态下失败，重新熔断
@@ -189,15 +194,15 @@ class CircuitBreaker:
 
             if self._state == CircuitState.OPEN:
                 # 检查是否超时，可以尝试半开
-                if self._last_failure_time and (time.time() - self._last_failure_time) >= self.config.timeout_seconds:
+                if (
+                    self._last_failure_time
+                    and (time.time() - self._last_failure_time) >= self.config.timeout_seconds
+                ):
                     self._transition_to_half_open()
                     return True
                 return False
 
-            if self._state == CircuitState.HALF_OPEN:
-                return True
-
-            return False
+            return self._state == CircuitState.HALF_OPEN
 
     def is_open(self) -> bool:
         """
@@ -210,7 +215,10 @@ class CircuitBreaker:
             # 如果是 OPEN 状态且未超时，则认为是熔断开启
             if self._state == CircuitState.OPEN:
                 # 检查是否超时
-                if self._last_failure_time and (time.time() - self._last_failure_time) >= self.config.timeout_seconds:
+                if (
+                    self._last_failure_time
+                    and (time.time() - self._last_failure_time) >= self.config.timeout_seconds
+                ):
                     return False  # 已超时，可以恢复
                 return True  # 仍在熔断中
             return False  # CLOSED 或 HALF_OPEN 状态
@@ -243,7 +251,9 @@ class CheckpointTracker:
         self._db_conn_getter = None  # 延迟初始化数据库连接getter
 
         logger.info(f"断点追踪器初始化: {self.checkpoint_file}")
-        logger.info(f"已加载快照: processed={self._snapshot.processed}/{self._snapshot.total_matches}")
+        logger.info(
+            f"已加载快照: processed={self._snapshot.processed}/{self._snapshot.total_matches}"
+        )
 
     def set_db_connection_getter(self, conn_getter):
         """
@@ -273,7 +283,7 @@ class CheckpointTracker:
             cur.execute("""
                 SELECT match_id FROM match_features_training
             """)
-            db_match_ids = set(row[0] for row in cur.fetchall())
+            db_match_ids = {row[0] for row in cur.fetchall()}
             cur.close()
 
             with self._lock:
@@ -291,7 +301,9 @@ class CheckpointTracker:
                     self._snapshot.successful += len(false_failures)
                     self._snapshot.failed -= len(false_failures)
                     self._save_snapshot()
-                    logger.info(f"✅ 修复伪失败: {len(false_failures)} 场比赛已从failed移到successful")
+                    logger.info(
+                        f"✅ 修复伪失败: {len(false_failures)} 场比赛已从failed移到successful"
+                    )
 
         except Exception as e:
             logger.warning(f"数据库同步失败: {e}")
@@ -411,7 +423,10 @@ class FaultTolerantProcessor:
     """
 
     def __init__(
-        self, circuit_breaker: CircuitBreaker = None, checkpoint_tracker: CheckpointTracker = None, max_retries: int = 2
+        self,
+        circuit_breaker: CircuitBreaker = None,
+        checkpoint_tracker: CheckpointTracker = None,
+        max_retries: int = 2,
     ):
         self.circuit_breaker = circuit_breaker or CircuitBreaker()
         self.checkpoint_tracker = checkpoint_tracker or CheckpointTracker()
@@ -419,7 +434,10 @@ class FaultTolerantProcessor:
         logger.info("容错处理器初始化完成")
 
     def process_with_retry(
-        self, match_id: int, processor_func: Callable[[int], ProcessingResult], skip_if_processed: bool = True
+        self,
+        match_id: int,
+        processor_func: Callable[[int], ProcessingResult],
+        skip_if_processed: bool = True,
     ) -> ProcessingResult:
         """
         带重试和容错的处理函数
@@ -441,7 +459,9 @@ class FaultTolerantProcessor:
         # 检查熔断器
         if not self.circuit_breaker.can_execute():
             logger.error(f"熔断器已开启，拒绝处理 Match {match_id}")
-            return ProcessingResult(match_id=match_id, success=False, error="Circuit breaker is OPEN", error_code=503)
+            return ProcessingResult(
+                match_id=match_id, success=False, error="Circuit breaker is OPEN", error_code=503
+            )
 
         # 执行处理（带重试）
         last_error = None
@@ -464,7 +484,9 @@ class FaultTolerantProcessor:
 
             except Exception as e:
                 last_error = str(e)
-                logger.warning(f"Match {match_id} 处理异常 (attempt {attempt + 1}/{self.max_retries + 1}): {e}")
+                logger.warning(
+                    f"Match {match_id} 处理异常 (attempt {attempt + 1}/{self.max_retries + 1}): {e}"
+                )
 
                 if attempt < self.max_retries:
                     time.sleep(2**attempt)  # 指数退避

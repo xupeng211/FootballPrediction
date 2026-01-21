@@ -9,12 +9,13 @@
 使用Mock来避免依赖问题，专注于测试业务逻辑。
 """
 
-import pytest
 import asyncio
+from typing import Any, Dict, List
+from unittest.mock import AsyncMock, Mock, patch
+
 import numpy as np
 import pandas as pd
-from unittest.mock import Mock, AsyncMock, patch
-from typing import Dict, Any, List
+import pytest
 
 
 class TestInferenceService:

@@ -120,7 +120,7 @@ class SchemaManager:
         except Exception as e:
             if conn:
                 conn.rollback()
-            logger.error(f"❌ Schema初始化失败: {e}")
+            logger.exception(f"❌ Schema初始化失败: {e}")
             return False
 
     def initialize_production_schema(self) -> bool:
@@ -505,7 +505,7 @@ class SchemaManager:
         except Exception as e:
             if conn:
                 conn.rollback()
-            logger.error(f"❌ ID对齐失败: {e}")
+            logger.exception(f"❌ ID对齐失败: {e}")
             raise
 
     def _verify_alignment(self, cursor) -> dict[str, Any]:
@@ -582,7 +582,7 @@ class SchemaManager:
         except Exception as e:
             if conn:
                 conn.rollback()
-            logger.error(f"❌ 批量插入失败: {e}")
+            logger.exception(f"❌ 批量插入失败: {e}")
             return {"success": False, "inserted_count": 0, "error": str(e)}
 
     def validate_features_data(self, features: dict[str, Any]) -> tuple[bool, list[str]]:
@@ -681,7 +681,7 @@ class SchemaManager:
             return stats
 
         except Exception as e:
-            logger.error(f"❌ 获取统计信息失败: {e}")
+            logger.exception(f"❌ 获取统计信息失败: {e}")
             return {}
 
     @staticmethod
@@ -773,7 +773,7 @@ class SchemaManager:
             possession_proxy = []  # 控球率代理（主场=55%，客场=45%）
 
             for match in matches:
-                home_team, away_team, home_score, away_score, status = match
+                home_team, _away_team, home_score, away_score, _status = match
 
                 # 确定是主队还是客队
                 is_home = home_team == team_name
@@ -801,17 +801,23 @@ class SchemaManager:
             return {
                 "rolling_xg": float(np.mean(xg_values)) if xg_values else 1.2,
                 "rolling_xg_std": float(np.std(xg_values)) if len(xg_values) > 1 else 0.5,
-                "rolling_shots_on_target": float(np.mean(shots_on_target_values)) if shots_on_target_values else 4.0,
+                "rolling_shots_on_target": float(np.mean(shots_on_target_values))
+                if shots_on_target_values
+                else 4.0,
                 "rolling_shots_on_target_std": float(np.std(shots_on_target_values))
                 if len(shots_on_target_values) > 1
                 else 2.0,
-                "rolling_possession": float(np.mean(possession_proxy)) if possession_proxy else 50.0,
-                "rolling_possession_std": float(np.std(possession_proxy)) if len(possession_proxy) > 1 else 10.0,
+                "rolling_possession": float(np.mean(possession_proxy))
+                if possession_proxy
+                else 50.0,
+                "rolling_possession_std": float(np.std(possession_proxy))
+                if len(possession_proxy) > 1
+                else 10.0,
                 "matches_count": len(matches),
             }
 
         except Exception as e:
-            logger.error(f"❌ 获取球队滚动统计失败 ({team_name}): {e}")
+            logger.exception(f"❌ 获取球队滚动统计失败 ({team_name}): {e}")
             # 出错时返回默认值
             return {
                 "rolling_xg": 1.2,
@@ -937,7 +943,7 @@ class SchemaManager:
 
             # 计算最近5场积分
             for match in recent_matches:
-                home_team, away_team, home_score, away_score = match
+                home_team, _away_team, home_score, away_score = match
                 try:
                     home_s = int(home_score) if home_score else 0
                     away_s = int(away_score) if away_score else 0
@@ -991,7 +997,7 @@ class SchemaManager:
             }
 
         except Exception as e:
-            logger.error(f"❌ 获取球队积分榜失败 ({team_name}): {e}")
+            logger.exception(f"❌ 获取球队积分榜失败 ({team_name}): {e}")
             return {
                 "position": 10,
                 "points": 30,
@@ -1006,7 +1012,9 @@ class SchemaManager:
             }
 
     @staticmethod
-    def get_elo_ratings(team_names: list[str], before_match_time: str | None = None) -> dict[str, float]:
+    def get_elo_ratings(
+        team_names: list[str], before_match_time: str | None = None
+    ) -> dict[str, float]:
         """
         计算球队的 ELO 评分
 
@@ -1073,7 +1081,7 @@ class SchemaManager:
 
             # 逐场更新 ELO
             for match in matches:
-                home_team, away_team, home_score, away_score, match_time = match
+                home_team, away_team, home_score, away_score, _match_time = match
 
                 # 只处理目标球队的比赛
                 if home_team not in elo_ratings and away_team not in elo_ratings:
@@ -1100,9 +1108,13 @@ class SchemaManager:
 
                     # 更新 ELO
                     if home_team in elo_ratings:
-                        elo_ratings[home_team] = home_elo + k_factor * (actual_score - expected_home)
+                        elo_ratings[home_team] = home_elo + k_factor * (
+                            actual_score - expected_home
+                        )
                     if away_team in elo_ratings:
-                        elo_ratings[away_team] = away_elo + k_factor * ((1 - actual_score) - (1 - expected_home))
+                        elo_ratings[away_team] = away_elo + k_factor * (
+                            (1 - actual_score) - (1 - expected_home)
+                        )
 
                 except (TypeError, ValueError):
                     continue
@@ -1110,7 +1122,7 @@ class SchemaManager:
             return elo_ratings
 
         except Exception as e:
-            logger.error(f"❌ 计算 ELO 失败: {e}")
+            logger.exception(f"❌ 计算 ELO 失败: {e}")
             # 返回默认 ELO
             return dict.fromkeys(team_names, 1500.0)
 
@@ -1179,12 +1191,11 @@ class SchemaManager:
 
             # 疲劳度 = 比赛场次 / 回溯天数
             # 7天3场比赛 = 0.43，7天1场比赛 = 0.14
-            fatigue = min(1.0, match_count / lookback_days)
+            return min(1.0, match_count / lookback_days)
 
-            return fatigue
 
         except Exception as e:
-            logger.error(f"❌ 计算疲劳度失败 ({team_name}): {e}")
+            logger.exception(f"❌ 计算疲劳度失败 ({team_name}): {e}")
             return 0.5  # 默认中等疲劳度
 
 

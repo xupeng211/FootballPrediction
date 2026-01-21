@@ -12,7 +12,6 @@ Date: 2026-01-07
 from __future__ import annotations
 
 import logging
-from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +32,7 @@ class LevenshteinMatcher:
         ...     fotmob_home="Man Utd",
         ...     fotmob_away="Chelsea",
         ...     oddsportal_home="Manchester United",
-        ...     oddsportal_away="Chelsea"
+        ...     oddsportal_away="Chelsea",
         ... )
         >>> print(is_match, confidence)
         True 0.9167
@@ -49,7 +48,9 @@ class LevenshteinMatcher:
         """
         self.threshold = threshold
         self.use_relative = threshold < 1.0
-        logger.info(f"🔍 LevenshteinMatcher initialized: threshold={threshold} ({'relative' if self.use_relative else 'absolute'})")
+        logger.info(
+            f"🔍 LevenshteinMatcher initialized: threshold={threshold} ({'relative' if self.use_relative else 'absolute'})"
+        )
 
     def match_team_names(
         self,
@@ -76,23 +77,11 @@ class LevenshteinMatcher:
             - confidence: Confidence score (0.0 to 1.0)
         """
         # Try both direct and swapped combinations
-        direct_dist_h = self._levenshtein_distance(
-            fotmob_home.lower(),
-            oddsportal_home.lower()
-        )
-        direct_dist_a = self._levenshtein_distance(
-            fotmob_away.lower(),
-            oddsportal_away.lower()
-        )
+        direct_dist_h = self._levenshtein_distance(fotmob_home.lower(), oddsportal_home.lower())
+        direct_dist_a = self._levenshtein_distance(fotmob_away.lower(), oddsportal_away.lower())
 
-        swapped_dist_h = self._levenshtein_distance(
-            fotmob_home.lower(),
-            oddsportal_away.lower()
-        )
-        swapped_dist_a = self._levenshtein_distance(
-            fotmob_away.lower(),
-            oddsportal_home.lower()
-        )
+        swapped_dist_h = self._levenshtein_distance(fotmob_home.lower(), oddsportal_away.lower())
+        swapped_dist_a = self._levenshtein_distance(fotmob_away.lower(), oddsportal_home.lower())
 
         # Use the better combination
         if direct_dist_h + direct_dist_a <= swapped_dist_h + swapped_dist_a:
@@ -116,13 +105,12 @@ class LevenshteinMatcher:
                 avg_ratio = (ratio_h + ratio_a) / 2
                 confidence = 1.0 - avg_ratio
                 return True, confidence
-        else:
-            # Absolute threshold: direct distance comparison
-            if dist_h <= self.threshold and dist_a <= self.threshold:
-                # Calculate confidence based on edit distance
-                max_len = max(len_h, len_a)
-                confidence = 1.0 - (dist_h + dist_a) / (2 * max_len)
-                return True, confidence
+        # Absolute threshold: direct distance comparison
+        elif dist_h <= self.threshold and dist_a <= self.threshold:
+            # Calculate confidence based on edit distance
+            max_len = max(len_h, len_a)
+            confidence = 1.0 - (dist_h + dist_a) / (2 * max_len)
+            return True, confidence
 
         return False, 0.0
 
@@ -146,6 +134,7 @@ class LevenshteinMatcher:
         # Try to use python-Levenshtein package if available (faster)
         try:
             import Levenshtein
+
             return Levenshtein.distance(s1, s2)
         except ImportError:
             # Fallback to pure Python implementation

@@ -30,9 +30,11 @@ MAX_ODDS_VALUE = 50.00
 MIN_INTEGRITY_SCORE = 1.02
 MAX_INTEGRITY_SCORE = 1.08
 
+
 # Entity source names
 class EntitySource(str, Enum):
     """Valid entity source names for odds data."""
+
     PINNACLE = "Entity_P"
     WILLIAM_HILL = "Entity_WH"
     LADBROKES = "Entity_LB"
@@ -43,6 +45,7 @@ class EntitySource(str, Enum):
 # ============================================================================
 # L1: FotMob API - Base Match Data
 # ============================================================================
+
 
 class FotMobMatchData(BaseModel):
     """L1: Base match data from FotMob API.
@@ -73,14 +76,13 @@ class FotMobMatchData(BaseModel):
         return self
 
     class Config:
-        json_encoders = {
-            datetime: lambda v: v.isoformat()
-        }
+        json_encoders = {datetime: lambda v: v.isoformat()}
 
 
 # ============================================================================
 # L2: FotMob Web - Opening Odds (Hover Extraction)
 # ============================================================================
+
 
 class OpeningOddsData(BaseModel):
     """L2: Opening odds data extracted via hover from FotMob Web.
@@ -94,22 +96,13 @@ class OpeningOddsData(BaseModel):
 
     # Opening odds (may have only one value from hover)
     init_h: float | None = Field(
-        None,
-        ge=MIN_ODDS_VALUE,
-        le=MAX_ODDS_VALUE,
-        description="Initial home win odds"
+        None, ge=MIN_ODDS_VALUE, le=MAX_ODDS_VALUE, description="Initial home win odds"
     )
     init_d: float | None = Field(
-        None,
-        ge=MIN_ODDS_VALUE,
-        le=MAX_ODDS_VALUE,
-        description="Initial draw odds"
+        None, ge=MIN_ODDS_VALUE, le=MAX_ODDS_VALUE, description="Initial draw odds"
     )
     init_a: float | None = Field(
-        None,
-        ge=MIN_ODDS_VALUE,
-        le=MAX_ODDS_VALUE,
-        description="Initial away win odds"
+        None, ge=MIN_ODDS_VALUE, le=MAX_ODDS_VALUE, description="Initial away win odds"
     )
 
     # Opening timestamps
@@ -121,12 +114,10 @@ class OpeningOddsData(BaseModel):
     hover_failed: bool = Field(False, description="Whether hover extraction failed")
     hover_error: str | None = Field(None, max_length=500, description="Error message if failed")
     extraction_method: Literal["hover_tooltip_production"] = Field(
-        default="hover_tooltip_production",
-        description="Extraction method identifier"
+        default="hover_tooltip_production", description="Extraction method identifier"
     )
     data_timestamp: datetime = Field(
-        default_factory=datetime.now,
-        description="When this record was created"
+        default_factory=datetime.now, description="When this record was created"
     )
 
     @field_validator("init_h", "init_d", "init_a")
@@ -156,6 +147,7 @@ class OpeningOddsData(BaseModel):
 # L3: OddsPortal - Final Odds (Direct Extraction)
 # ============================================================================
 
+
 class FinalOddsData(BaseModel):
     """L3: Final odds data extracted directly from OddsPortal.
 
@@ -166,37 +158,24 @@ class FinalOddsData(BaseModel):
     match_id: str = Field(..., min_length=1, description="Match identifier")
     url: str = Field(..., min_length=1, description="OddsPortal URL")
     source_name: EntitySource = Field(
-        default=EntitySource.PINNACLE,
-        description="Bookmaker entity code"
+        default=EntitySource.PINNACLE, description="Bookmaker entity code"
     )
 
     # Final odds (all three required for L3)
     final_h: float = Field(
-        ...,
-        ge=MIN_ODDS_VALUE,
-        le=MAX_ODDS_VALUE,
-        description="Final home win odds"
+        ..., ge=MIN_ODDS_VALUE, le=MAX_ODDS_VALUE, description="Final home win odds"
     )
-    final_d: float = Field(
-        ...,
-        ge=MIN_ODDS_VALUE,
-        le=MAX_ODDS_VALUE,
-        description="Final draw odds"
-    )
+    final_d: float = Field(..., ge=MIN_ODDS_VALUE, le=MAX_ODDS_VALUE, description="Final draw odds")
     final_a: float = Field(
-        ...,
-        ge=MIN_ODDS_VALUE,
-        le=MAX_ODDS_VALUE,
-        description="Final away win odds"
+        ..., ge=MIN_ODDS_VALUE, le=MAX_ODDS_VALUE, description="Final away win odds"
     )
 
     # Validation metadata
-    integrity_score: float = Field(
-        default=0.0,
-        description="Integrity score (1/P1 + 1/P2 + 1/P3)"
-    )
+    integrity_score: float = Field(default=0.0, description="Integrity score (1/P1 + 1/P2 + 1/P3)")
     is_valid: bool = Field(default=False, description="Whether integrity score is in valid range")
-    validation_error: str | None = Field(None, max_length=500, description="Validation error if any")
+    validation_error: str | None = Field(
+        None, max_length=500, description="Validation error if any"
+    )
 
     # Extraction metadata
     pinnacle_found: bool = Field(..., description="Whether Pinnacle container was found")
@@ -204,8 +183,7 @@ class FinalOddsData(BaseModel):
     error: str | None = Field(None, max_length=500, description="Error message if failed")
 
     data_timestamp: datetime = Field(
-        default_factory=datetime.now,
-        description="When this record was created"
+        default_factory=datetime.now, description="When this record was created"
     )
 
     @field_validator("integrity_score")
@@ -246,10 +224,9 @@ class FinalOddsData(BaseModel):
                 self.error = "Pinnacle container not found"
 
         # If success true, all odds should be present
-        if self.success:
-            if not all([self.final_h, self.final_d, self.final_a]):
-                self.success = False
-                self.error = "Success marked but odds missing"
+        if self.success and not all([self.final_h, self.final_d, self.final_a]):
+            self.success = False
+            self.error = "Success marked but odds missing"
 
         return self
 
@@ -257,6 +234,7 @@ class FinalOddsData(BaseModel):
 # ============================================================================
 # Combined: Multi-Source Odds Data (Unified Schema)
 # ============================================================================
+
 
 class MultiSourceOddsData(BaseModel):
     """Unified odds data model combining L2 and L3 data.
@@ -296,11 +274,7 @@ class MultiSourceOddsData(BaseModel):
     def calculate_integrity_score(self) -> "MultiSourceOddsData":
         """Calculate integrity score if final odds are present."""
         if all([self.final_h, self.final_d, self.final_a]):
-            self.integrity_score = (
-                1.0 / self.final_h +
-                1.0 / self.final_d +
-                1.0 / self.final_a
-            )
+            self.integrity_score = 1.0 / self.final_h + 1.0 / self.final_d + 1.0 / self.final_a
 
             # Validate integrity score
             self.is_valid = MIN_INTEGRITY_SCORE < self.integrity_score < MAX_INTEGRITY_SCORE
@@ -333,6 +307,7 @@ class MultiSourceOddsData(BaseModel):
 # ============================================================================
 # Database Insertion Models
 # ============================================================================
+
 
 class OddsDataForInsert(BaseModel):
     """Validated odds data ready for database insertion.
@@ -370,11 +345,7 @@ class OddsDataForInsert(BaseModel):
 
         # Recalculate integrity score if final odds present
         if all([self.final_h, self.final_d, self.final_a]):
-            self.integrity_score = (
-                1.0 / self.final_h +
-                1.0 / self.final_d +
-                1.0 / self.final_a
-            )
+            self.integrity_score = 1.0 / self.final_h + 1.0 / self.final_d + 1.0 / self.final_a
             self.is_valid = MIN_INTEGRITY_SCORE < self.integrity_score < MAX_INTEGRITY_SCORE
 
         return self
@@ -385,19 +356,19 @@ class OddsDataForInsert(BaseModel):
 # ============================================================================
 
 __all__ = [
-    # Constants
-    "MIN_ODDS_VALUE",
+    "MAX_INTEGRITY_SCORE",
     "MAX_ODDS_VALUE",
     "MIN_INTEGRITY_SCORE",
-    "MAX_INTEGRITY_SCORE",
+    # Constants
+    "MIN_ODDS_VALUE",
     "EntitySource",
-    # L1 Models
-    "FotMobMatchData",
-    # L2 Models
-    "OpeningOddsData",
     # L3 Models
     "FinalOddsData",
+    # L1 Models
+    "FotMobMatchData",
     # Combined Models
     "MultiSourceOddsData",
     "OddsDataForInsert",
+    # L2 Models
+    "OpeningOddsData",
 ]

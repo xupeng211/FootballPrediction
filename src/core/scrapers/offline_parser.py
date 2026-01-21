@@ -25,11 +25,10 @@ Version: 1.0.0 (Production)
 
 from __future__ import annotations
 
-import re
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import List, Optional, Union
+import re
 
 from bs4 import BeautifulSoup, Tag
 
@@ -57,12 +56,12 @@ class VendorConfig:
     bet_365: str = "bet365"
 
     @property
-    def priority_list(self) -> List[str]:
+    def priority_list(self) -> list[str]:
         """Get vendors in priority order (highest first)."""
         return [self.pinnacle, self.one_x_bet, self.bet_365]
 
     @classmethod
-    def from_names(cls, vendors: List[str]) -> "VendorConfig":
+    def from_names(cls, vendors: list[str]) -> VendorConfig:
         """Create config from vendor name list.
 
         Args:
@@ -90,7 +89,7 @@ class PriceExtractionResult:
     """
 
     source: str
-    prices: List[float]
+    prices: list[float]
     raw_text: str
     confidence: float = 1.0
 
@@ -135,10 +134,10 @@ class LocalHtmlParser:
 
     def __init__(
         self,
-        config: Optional[VendorConfig] = None,
+        config: VendorConfig | None = None,
         debug: bool = False,
-        price_pattern: Optional[re.Pattern] = None,
-        selectors: Optional[List[str]] = None,
+        price_pattern: re.Pattern | None = None,
+        selectors: list[str] | None = None,
     ):
         """Initialize the HTML parser.
 
@@ -153,7 +152,7 @@ class LocalHtmlParser:
         self.price_pattern = price_pattern or self.DEFAULT_PRICE_PATTERN
         self.selectors = selectors or self.DEFAULT_SELECTORS.copy()
 
-    def parse_file(self, file_path: Union[str, Path]) -> Optional[PriceExtractionResult]:
+    def parse_file(self, file_path: str | Path) -> PriceExtractionResult | None:
         """Parse HTML file and extract odds data.
 
         Args:
@@ -173,7 +172,7 @@ class LocalHtmlParser:
         html_content = path.read_text(encoding="utf-8")
         return self.parse_string(html_content)
 
-    def parse_string(self, html_string: str) -> Optional[PriceExtractionResult]:
+    def parse_string(self, html_string: str) -> PriceExtractionResult | None:
         """Parse HTML string and extract odds data.
 
         Args:
@@ -185,7 +184,7 @@ class LocalHtmlParser:
         soup = BeautifulSoup(html_string, "html.parser")
         return self._extract_by_priority(soup)
 
-    def _extract_by_priority(self, soup: BeautifulSoup) -> Optional[PriceExtractionResult]:
+    def _extract_by_priority(self, soup: BeautifulSoup) -> PriceExtractionResult | None:
         """Extract odds using priority-based vendor matching.
 
         Args:
@@ -249,7 +248,7 @@ class LocalHtmlParser:
         """
         return vendor.lower() in text.lower()
 
-    def _extract_prices(self, text: str) -> List[float]:
+    def _extract_prices(self, text: str) -> list[float]:
         """Extract all price values from text.
 
         Args:
@@ -271,7 +270,6 @@ class LocalHtmlParser:
         if self.debug:
             parts = [message]
             parts.extend([f"{k}={v}" for k, v in kwargs.items()])
-            print(f"   [DEBUG] {' | '.join(parts)}")
 
 
 class OfflineParserFactory:
@@ -288,8 +286,8 @@ class OfflineParserFactory:
 
     @staticmethod
     def create_custom(
-        vendors: List[str],
-        price_pattern: Optional[str] = None,
+        vendors: list[str],
+        price_pattern: str | None = None,
     ) -> LocalHtmlParser:
         """Create parser with custom configuration.
 
@@ -317,8 +315,8 @@ class OfflineParserFactory:
 # Convenience exports
 __all__ = [
     "LocalHtmlParser",
-    "VendorConfig",
-    "PriceExtractionResult",
-    "VendorPriority",
     "OfflineParserFactory",
+    "PriceExtractionResult",
+    "VendorConfig",
+    "VendorPriority",
 ]

@@ -74,12 +74,24 @@ class MatchFeatures(BaseModel):
     home_possession: float | None = Field(None, ge=0.0, le=100.0, description="主队控球率(%)")
     away_possession: float | None = Field(None, ge=0.0, le=100.0, description="客队控球率(%)")
     possession_diff: float | None = Field(None, ge=-100.0, le=100.0, description="控球率差值")
-    home_possession_first_half: float | None = Field(None, ge=0.0, le=100.0, description="上半场主队控球率")
-    away_possession_first_half: float | None = Field(None, ge=0.0, le=100.0, description="上半场客队控球率")
-    possession_first_half_diff: float | None = Field(None, ge=-100.0, le=100.0, description="上半场控球率差值")
-    home_possession_second_half: float | None = Field(None, ge=0.0, le=100.0, description="下半场主队控球率")
-    away_possession_second_half: float | None = Field(None, ge=0.0, le=100.0, description="下半场客队控球率")
-    possession_second_half_diff: float | None = Field(None, ge=-100.0, le=100.0, description="下半场控球率差值")
+    home_possession_first_half: float | None = Field(
+        None, ge=0.0, le=100.0, description="上半场主队控球率"
+    )
+    away_possession_first_half: float | None = Field(
+        None, ge=0.0, le=100.0, description="上半场客队控球率"
+    )
+    possession_first_half_diff: float | None = Field(
+        None, ge=-100.0, le=100.0, description="上半场控球率差值"
+    )
+    home_possession_second_half: float | None = Field(
+        None, ge=0.0, le=100.0, description="下半场主队控球率"
+    )
+    away_possession_second_half: float | None = Field(
+        None, ge=0.0, le=100.0, description="下半场客队控球率"
+    )
+    possession_second_half_diff: float | None = Field(
+        None, ge=-100.0, le=100.0, description="下半场控球率差值"
+    )
 
     # ==================== 射门数据 (12个) ====================
     home_shots_total: int | None = Field(None, ge=0, description="主队总射门数")
@@ -96,7 +108,9 @@ class MatchFeatures(BaseModel):
     shots_blocked_diff: int | None = Field(None, description="被封堵射门数差值")
     home_shot_accuracy: float | None = Field(None, ge=0.0, le=100.0, description="主队射门准确率")
     away_shot_accuracy: float | None = Field(None, ge=0.0, le=100.0, description="客队射门准确率")
-    shot_accuracy_diff: float | None = Field(None, ge=-100.0, le=100.0, description="射门准确率差值")
+    shot_accuracy_diff: float | None = Field(
+        None, ge=-100.0, le=100.0, description="射门准确率差值"
+    )
 
     # ==================== 角球数据 (8个) ====================
     home_corners: int | None = Field(None, ge=0, description="主队角球数")
@@ -131,7 +145,9 @@ class MatchFeatures(BaseModel):
     passes_diff: int | None = Field(None, description="传球数差值")
     home_pass_accuracy: float | None = Field(None, ge=0.0, le=100.0, description="主队传球准确率")
     away_pass_accuracy: float | None = Field(None, ge=0.0, le=100.0, description="客队传球准确率")
-    pass_accuracy_diff: float | None = Field(None, ge=-100.0, le=100.0, description="传球准确率差值")
+    pass_accuracy_diff: float | None = Field(
+        None, ge=-100.0, le=100.0, description="传球准确率差值"
+    )
     home_successful_passes: int | None = Field(None, ge=0, description="主队成功传球数")
     away_successful_passes: int | None = Field(None, ge=0, description="客队成功传球数")
     successful_passes_diff: int | None = Field(None, description="成功传球数差值")
@@ -140,9 +156,15 @@ class MatchFeatures(BaseModel):
     home_aerial_won: int | None = Field(None, ge=0, description="主队头球成功次数")
     away_aerial_won: int | None = Field(None, ge=0, description="客队头球成功次数")
     aerial_won_diff: int | None = Field(None, description="头球成功次数差值")
-    home_aerial_won_percentage: float | None = Field(None, ge=0.0, le=100.0, description="主队头球成功率")
-    away_aerial_won_percentage: float | None = Field(None, ge=0.0, le=100.0, description="客队头球成功率")
-    aerial_won_percentage_diff: float | None = Field(None, ge=-100.0, le=100.0, description="头球成功率差值")
+    home_aerial_won_percentage: float | None = Field(
+        None, ge=0.0, le=100.0, description="主队头球成功率"
+    )
+    away_aerial_won_percentage: float | None = Field(
+        None, ge=0.0, le=100.0, description="客队头球成功率"
+    )
+    aerial_won_percentage_diff: float | None = Field(
+        None, ge=-100.0, le=100.0, description="头球成功率差值"
+    )
 
     # ==================== 赔率数据 (13个) ====================
     home_opening_odds: float | None = Field(None, ge=0.0, description="主队开盘赔率")
@@ -200,7 +222,9 @@ class MatchFeatures(BaseModel):
     feature_version: FeatureVersion = Field(FeatureVersion.V1_0, description="特征版本")
     feature_quality_score: float | None = Field(None, ge=0.0, le=1.0, description="特征质量评分")
     extraction_confidence: float | None = Field(None, ge=0.0, le=1.0, description="提取置信度")
-    data_completeness_score: float | None = Field(None, ge=0.0, le=1.0, description="数据完整性评分")
+    data_completeness_score: float | None = Field(
+        None, ge=0.0, le=1.0, description="数据完整性评分"
+    )
     extracted_at: datetime = Field(default_factory=datetime.now, description="提取时间")
     updated_at: datetime = Field(default_factory=datetime.now, description="更新时间")
     created_at: datetime = Field(default_factory=datetime.now, description="创建时间")
@@ -216,9 +240,6 @@ class MatchFeatures(BaseModel):
         },
     )
 
-    xg_total: float | None = Field(default=None, description="总xG")
-    xg_diff: float | None = Field(default=None, description="xG差值")
-    possession_diff: float | None = Field(default=None, description="控球率差值")
 
     @computed_field
     @property
@@ -231,14 +252,25 @@ class MatchFeatures(BaseModel):
     def has_complete_xg_data(self) -> bool:
         """是否有完整的xG数据"""
         return all(
-            [self.home_xg is not None, self.away_xg is not None, self.xg_total is not None, self.xg_diff is not None]
+            [
+                self.home_xg is not None,
+                self.away_xg is not None,
+                self.xg_total is not None,
+                self.xg_diff is not None,
+            ]
         )
 
     @computed_field
     @property
     def has_complete_odds_data(self) -> bool:
         """是否有完整的赔率数据"""
-        return all([self.home_opening_odds is not None, self.away_opening_odds is not None, self.draw_odds is not None])
+        return all(
+            [
+                self.home_opening_odds is not None,
+                self.away_opening_odds is not None,
+                self.draw_odds is not None,
+            ]
+        )
 
 
 class MatchFeaturesTrainingBatch(BaseModel):
@@ -296,7 +328,9 @@ def create_match_features_from_dict(data: dict[str, Any]) -> MatchFeatures:
 def validate_feature_completeness(features: MatchFeatures) -> float:
     """验证特征完整性并返回完整性分数"""
     total_fields = 106
-    non_null_fields = sum(1 for field, value in features.model_dump().items() if value is not None and value != "")
+    non_null_fields = sum(
+        1 for field, value in features.model_dump().items() if value is not None and value != ""
+    )
     return non_null_fields / total_fields
 
 
@@ -317,8 +351,3 @@ if __name__ == "__main__":
     }
 
     features = create_match_features_from_dict(test_data)
-    print("✅ 创建特征模型成功!")
-    print(f"📊 总特征数: {features.total_features_count}")
-    print(f"🎯 xG数据完整: {features.has_complete_xg_data}")
-    print(f"💰 赔率数据完整: {features.has_complete_odds_data}")
-    print(f"📈 特征完整性: {validate_feature_completeness(features):.2%}")

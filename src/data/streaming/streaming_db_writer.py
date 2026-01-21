@@ -114,7 +114,9 @@ class StreamingDBWriter:
             task = asyncio.create_task(self._batch_writer_worker(i))
             self._writer_tasks.append(task)
 
-        self.logger.info(f"✅ 流式数据库写入器已启动 (并发数: {self.config.max_concurrent_batches})")
+        self.logger.info(
+            f"✅ 流式数据库写入器已启动 (并发数: {self.config.max_concurrent_batches})"
+        )
 
     async def stop(self) -> None:
         """停止写入器"""
@@ -139,7 +141,11 @@ class StreamingDBWriter:
         self.logger.info("✅ 流式数据库写入器已停止")
 
     async def write_dataframe(
-        self, df: pd.DataFrame, table_name: str, conflict_columns: list[str] | None = None, on_conflict: str = "UPDATE"
+        self,
+        df: pd.DataFrame,
+        table_name: str,
+        conflict_columns: list[str] | None = None,
+        on_conflict: str = "UPDATE",
     ) -> None:
         """
         异步写入DataFrame
@@ -154,7 +160,9 @@ class StreamingDBWriter:
             return
 
         # 分片处理
-        chunks = [df[i : i + self.config.batch_size] for i in range(0, len(df), self.config.batch_size)]
+        chunks = [
+            df[i : i + self.config.batch_size] for i in range(0, len(df), self.config.batch_size)
+        ]
 
         for chunk in chunks:
             write_task = {
@@ -166,9 +174,11 @@ class StreamingDBWriter:
             }
 
             try:
-                await asyncio.wait_for(self._write_queue.put(write_task), timeout=self.config.write_timeout_seconds)
+                await asyncio.wait_for(
+                    self._write_queue.put(write_task), timeout=self.config.write_timeout_seconds
+                )
             except TimeoutError:
-                self.logger.error("写入队列已满，丢弃数据块")
+                self.logger.exception("写入队列已满，丢弃数据块")
                 self._stats.failed_batches += 1
 
     async def write_matches_batch(self, matches_df: pd.DataFrame) -> None:
@@ -185,7 +195,9 @@ class StreamingDBWriter:
         processed_df = self._preprocess_matches_data(matches_df)
 
         # 使用专用的冲突处理
-        await self.write_dataframe(processed_df, "matches", conflict_columns=["match_id"], on_conflict="UPDATE")
+        await self.write_dataframe(
+            processed_df, "matches", conflict_columns=["match_id"], on_conflict="UPDATE"
+        )
 
     async def write_odds_batch(self, odds_df: pd.DataFrame) -> None:
         """
@@ -202,7 +214,10 @@ class StreamingDBWriter:
 
         # 使用专用的冲突处理
         await self.write_dataframe(
-            processed_df, "odds", conflict_columns=["match_id", "bookmaker", "timestamp"], on_conflict="UPDATE"
+            processed_df,
+            "odds",
+            conflict_columns=["match_id", "bookmaker", "timestamp"],
+            on_conflict="UPDATE",
         )
 
     async def _batch_writer_worker(self, worker_id: int) -> None:
@@ -223,7 +238,7 @@ class StreamingDBWriter:
                 # 超时继续循环，检查_running状态
                 continue
             except Exception as e:
-                self.logger.error(f"写入工作器 {worker_id} 异常: {e}")
+                self.logger.exception(f"写入工作器 {worker_id} 异常: {e}")
                 self._stats.failed_batches += 1
 
     async def _execute_batch_write(self, write_task: dict[str, Any], worker_id: int) -> None:
@@ -243,7 +258,9 @@ class StreamingDBWriter:
                 with self._transaction_context(conn):
                     if conflict_columns:
                         # 批量Upsert
-                        await self._batch_upsert(conn, data, table_name, conflict_columns, on_conflict)
+                        await self._batch_upsert(
+                            conn, data, table_name, conflict_columns, on_conflict
+                        )
                     else:
                         # 批量插入
                         await self._batch_insert(conn, data, table_name)
@@ -252,7 +269,9 @@ class StreamingDBWriter:
                 batch_time = (time.time() - start_time) * 1000
                 self._update_stats(len(data), batch_time, attempt > 0)
 
-                self.logger.info(f"工作器 {worker_id}: 写入 {len(data)} 行到 {table_name}, 耗时 {batch_time:.1f}ms")
+                self.logger.info(
+                    f"工作器 {worker_id}: 写入 {len(data)} 行到 {table_name}, 耗时 {batch_time:.1f}ms"
+                )
                 return
 
             except Exception as e:
@@ -263,12 +282,17 @@ class StreamingDBWriter:
                     )
                     await asyncio.sleep(delay)
                 else:
-                    self.logger.error(f"写入最终失败: {e}")
+                    self.logger.exception(f"写入最终失败: {e}")
                     self._stats.failed_batches += 1
                     raise
 
     async def _batch_upsert(
-        self, conn, data: pd.DataFrame, table_name: str, conflict_columns: list[str], on_conflict: str
+        self,
+        conn,
+        data: pd.DataFrame,
+        table_name: str,
+        conflict_columns: list[str],
+        on_conflict: str,
     ) -> None:
         """批量Upsert操作"""
         # 构建列名和占位符
@@ -360,7 +384,7 @@ class StreamingDBWriter:
         """初始化连接池"""
         pool_size = self.config.max_concurrent_batches + 2  # 额外2个连接
 
-        for i in range(pool_size):
+        for _i in range(pool_size):
             conn = await get_connection()
             self._connection_pool.append(conn)
 
@@ -419,7 +443,9 @@ class StreamingDBWriter:
         if self._stats.avg_batch_time_ms == 0:
             self._stats.avg_batch_time_ms = batch_time_ms
         else:
-            self._stats.avg_batch_time_ms = alpha * batch_time_ms + (1 - alpha) * self._stats.avg_batch_time_ms
+            self._stats.avg_batch_time_ms = (
+                alpha * batch_time_ms + (1 - alpha) * self._stats.avg_batch_time_ms
+            )
 
     async def _flush_remaining_data(self) -> None:
         """刷新剩余数据"""
@@ -467,7 +493,9 @@ async def create_streaming_writer(
         StreamingDBWriter: 流式写入器实例
     """
     config = BatchWriteConfig(
-        batch_size=batch_size, max_concurrent_batches=max_concurrent, use_transactions=enable_transactions
+        batch_size=batch_size,
+        max_concurrent_batches=max_concurrent,
+        use_transactions=enable_transactions,
     )
 
     writer = StreamingDBWriter(config)

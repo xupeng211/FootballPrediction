@@ -39,7 +39,9 @@ def get_version() -> str:
 
 
 # 配置日志
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 
@@ -59,7 +61,7 @@ async def lifespan(app: FastAPI):
         logger.info("✅ 服务启动成功")
 
     except Exception as e:
-        logger.error(f"❌ 启动失败: {e}")
+        logger.exception(f"❌ 启动失败: {e}")
         raise
 
     yield
@@ -106,7 +108,7 @@ try:
 except ImportError as e:
     logger.warning(f"⚠️ 管理API接口注册失败: {e}")
 except Exception as e:
-    logger.error(f"❌ 管理API接口注册异常: {e}")
+    logger.exception(f"❌ 管理API接口注册异常: {e}")
 
 # 初始化 Prometheus metrics (在应用创建后，启动前)
 if os.getenv("ENABLE_METRICS", "true").lower() == "true":
@@ -253,7 +255,7 @@ async def predict_match(request: dict) -> dict:
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        logger.error(f"预测失败: {e}")
+        logger.exception(f"预测失败: {e}")
         raise HTTPException(status_code=500, detail=f"预测失败: {e!s}")
 
 
@@ -271,7 +273,7 @@ async def predict_batch(requests: list[dict]) -> list[dict]:
         logger.info(f"批量预测完成: {len(results)} 场比赛")
         return results
     except Exception as e:
-        logger.error(f"批量预测失败: {e}")
+        logger.exception(f"批量预测失败: {e}")
         raise HTTPException(status_code=500, detail=f"批量预测失败: {e!s}")
 
 

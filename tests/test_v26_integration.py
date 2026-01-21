@@ -20,12 +20,12 @@ Version: V150.5 TDD Integration
 Date: 2026-01-06
 """
 
-import json
-import pytest
+import sys
 from typing import Any
 
-import sys
-sys.path.insert(0, '/home/user/projects/FootballPrediction')
+import pytest
+
+sys.path.insert(0, "/home/user/projects/FootballPrediction")
 
 
 class TestV26Integration:
@@ -103,21 +103,24 @@ class TestV26Integration:
         result = extractor.extract(sample_v26_raw_data)
 
         # 断言 1: 提取成功
-        assert result.status.value in ['success', 'partial'], \
+        assert result.status.value in ["success", "partial"], (
             f"Expected success/partial status, got {result.status.value}"
+        )
 
         # 断言 2: 特征维度在 5,000-9,000 之间 (V26.2 剪枝后范围)
         # V26.2 的目标是控制在 6000 以内
-        feature_count = len([k for k in result.features.keys() if not k.startswith('_')])
-        assert 5000 <= feature_count <= 9000, \
+        feature_count = len([k for k in result.features.keys() if not k.startswith("_")])
+        assert 5000 <= feature_count <= 9000, (
             f"Expected feature count between 5000-9000, got {feature_count}"
+        )
 
         # 断言 3: 版本标识正确
-        if '_meta' in result.features:
-            extraction_version = result.features['_meta'].get('extraction_version')
+        if "_meta" in result.features:
+            extraction_version = result.features["_meta"].get("extraction_version")
             # 接受 V26.1 或 V26.2 (当前版本)
-            assert extraction_version in ['V26.1', 'V26.2', 'V26.1_PROD'], \
+            assert extraction_version in ["V26.1", "V26.2", "V26.1_PROD"], (
                 f"Expected extraction_version in ['V26.1', 'V26.2', 'V26.1_PROD'], got '{extraction_version}'"
+            )
 
     def test_pruning_rate_threshold(self, large_sparse_features):
         """
@@ -134,12 +137,11 @@ class TestV26Integration:
 
         # 计算剪枝率
         input_features = 100000
-        output_features = len([k for k in result.features.keys() if not k.startswith('_')])
+        output_features = len([k for k in result.features.keys() if not k.startswith("_")])
         pruning_rate = (1 - output_features / input_features) * 100
 
         # 断言: 剪枝率 > 90%
-        assert pruning_rate > 90.0, \
-            f"Expected pruning rate >90%, got {pruning_rate:.2f}%"
+        assert pruning_rate > 90.0, f"Expected pruning rate >90%, got {pruning_rate:.2f}%"
 
     def test_idempotency(self, sample_v26_raw_data):
         """
@@ -158,18 +160,18 @@ class TestV26Integration:
         result2 = extractor.extract(sample_v26_raw_data)
 
         # 断言: 特征数量一致
-        count1 = len([k for k in result1.features.keys() if not k.startswith('_')])
-        count2 = len([k for k in result2.features.keys() if not k.startswith('_')])
-        assert count1 == count2, \
-            f"Idempotency failed: {count1} != {count2}"
+        count1 = len([k for k in result1.features.keys() if not k.startswith("_")])
+        count2 = len([k for k in result2.features.keys() if not k.startswith("_")])
+        assert count1 == count2, f"Idempotency failed: {count1} != {count2}"
 
         # 断言: 特征值一致 (抽样检查前 100 个)
-        features1 = {k: v for k, v in result1.features.items() if not k.startswith('_')}
-        features2 = {k: v for k, v in result2.features.items() if not k.startswith('_')}
+        features1 = {k: v for k, v in result1.features.items() if not k.startswith("_")}
+        features2 = {k: v for k, v in result2.features.items() if not k.startswith("_")}
 
         for key in list(features1.keys())[:100]:
-            assert features1[key] == features2[key], \
+            assert features1[key] == features2[key], (
                 f"Idempotency failed for {key}: {features1[key]} != {features2[key]}"
+            )
 
     def test_no_meta_exception_handling(self):
         """
@@ -193,8 +195,9 @@ class TestV26Integration:
         # 断言: 不会崩溃，返回有效状态
         # 注意: 由于全局特征注册表机制，空数据可能返回对齐的特征
         # 这实际上是正确的行为
-        assert result.status.value in ['failed', 'success', 'partial'], \
+        assert result.status.value in ["failed", "success", "partial"], (
             f"Expected valid status for empty data, got {result.status.value}"
+        )
 
         # 断言: 系统没有崩溃（有结果返回）
         assert result.features is not None, "Expected features dict, got None"
@@ -206,7 +209,6 @@ class TestV26Integration:
         验证点: 处理大特征集时内存占用合理
         """
         import gc
-        import sys
 
         from src.processors.v25_production_extractor import V25ProductionExtractor
 
@@ -230,8 +232,9 @@ class TestV26Integration:
 
         # 断言: 对象数量没有显著增长 (允许 20% 增长)
         object_growth = (final_objects - initial_objects) / initial_objects
-        assert object_growth < 0.2, \
-            f"Memory leak detected: object growth {object_growth*100:.1f}%"
+        assert object_growth < 0.2, (
+            f"Memory leak detected: object growth {object_growth * 100:.1f}%"
+        )
 
 
 # 运行标记

@@ -19,15 +19,18 @@ Date: 2026-01-18
 from __future__ import annotations
 
 import asyncio
+from dataclasses import dataclass, field
+from datetime import UTC, datetime
 import json
 import logging
-from dataclasses import dataclass, field
-from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Callable, Optional
+from typing import TYPE_CHECKING, Any
 from urllib.parse import urlparse
 
 from playwright.async_api import Page, Response
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 logger = logging.getLogger(__name__)
 
@@ -201,12 +204,11 @@ class ResponseInterceptor:
             content_type = response.header_value("content-type") or ""
 
             # 检查 Content-Type 白名单
-            if self.config.content_type_whitelist:
-                if not any(
-                    allowed in content_type.lower()
-                    for allowed in self.config.content_type_whitelist
-                ):
-                    return
+            if self.config.content_type_whitelist and not any(
+                allowed in content_type.lower()
+                for allowed in self.config.content_type_whitelist
+            ):
+                return
 
             # V41.166: 同步获取响应体（使用 all_raw_headers 或缓存响应）
             # 注意：response.body() 是异步的，不能在同步回调中使用
@@ -258,12 +260,11 @@ class ResponseInterceptor:
                 content_type = response.header_value("content-type") or ""
 
                 # 检查 Content-Type 白名单
-                if self.config.content_type_whitelist:
-                    if not any(
-                        allowed in content_type.lower()
-                        for allowed in self.config.content_type_whitelist
-                    ):
-                        continue
+                if self.config.content_type_whitelist and not any(
+                    allowed in content_type.lower()
+                    for allowed in self.config.content_type_whitelist
+                ):
+                    continue
 
                 # 异步获取响应体
                 try:
@@ -284,7 +285,7 @@ class ResponseInterceptor:
                 intercepted = InterceptedJSON(
                     url=url,
                     json_data=json_data,
-                    timestamp=datetime.now(timezone.utc).isoformat(),
+                    timestamp=datetime.now(UTC).isoformat(),
                     status_code=response.status,
                     headers=dict(response.headers),
                     matched_keywords=matched_keywords,
@@ -307,7 +308,7 @@ class ResponseInterceptor:
                     try:
                         handler(intercepted)
                     except Exception as e:
-                        logger.error(f"❌ 处理函数执行失败: {e}")
+                        logger.exception(f"❌ 处理函数执行失败: {e}")
 
                 # 自动保存（如果配置了）
                 if self.config.save_all:
@@ -370,7 +371,7 @@ class ResponseInterceptor:
                 path = intercepted.save_to_file(output_dir)
                 saved_paths.append(path)
             except Exception as e:
-                logger.error(f"❌ 保存失败: {e}")
+                logger.exception(f"❌ 保存失败: {e}")
 
         logger.info(f"💾 已保存 {len(saved_paths)} 个 JSON 文件到 {output_dir}")
         return saved_paths
@@ -452,15 +453,8 @@ def print_interceptor_summary(interceptor: ResponseInterceptor) -> None:
     """
     summary = interceptor.get_summary()
 
-    print("\n" + "=" * 60)
-    print("📊 Response Interceptor 摘要")
-    print("=" * 60)
-    print(f"总截获数量: {summary['total_intercepted']}")
-    print(f"\n关键字统计:")
-    for keyword, count in summary['keyword_counts'].items():
-        print(f"  - {keyword}: {count}")
-    print(f"\n输出目录: {summary['output_dir']}")
-    print("=" * 60 + "\n")
+    for _keyword, _count in summary["keyword_counts"].items():
+        pass
 
 
 # ============================================================================
@@ -507,6 +501,7 @@ class InterceptorContext:
 if __name__ == "__main__":
     # 测试代码
     import asyncio
+
     from playwright.async_api import async_playwright
 
     async def main():

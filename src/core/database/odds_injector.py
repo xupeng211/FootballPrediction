@@ -24,19 +24,18 @@ Version: 1.0.0 (Production)
 
 from __future__ import annotations
 
-import json
-import logging
 from dataclasses import dataclass, field
 from datetime import datetime
+import json
+import logging
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any
 
 import psycopg2
 from psycopg2.extras import execute_values
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 from src.config_unified import get_settings
-
 
 # ============================================================================
 # Data Models
@@ -60,7 +59,7 @@ class InjectionStats:
     skipped: int = 0
     failed: int = 0
     start_time: float = field(default_factory=lambda: datetime.utcnow().timestamp())
-    end_time: Optional[float] = None
+    end_time: float | None = None
 
     @property
     def duration(self) -> float:
@@ -75,7 +74,7 @@ class InjectionStats:
             return 0.0
         return (self.injected / self.total) * 100
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary representation."""
         return {
             "total": self.total,
@@ -98,20 +97,20 @@ class OddsRecord(BaseModel):
     """
 
     match_id: str
-    values: List[float] = Field(min_length=3, max_length=3)
+    values: list[float] = Field(min_length=3, max_length=3)
     source_alias: str = "Provider_Alpha"
-    timestamp: Optional[str] = None
+    timestamp: str | None = None
 
     @field_validator("values")
     @classmethod
-    def validate_values(cls, v: List[float]) -> List[float]:
+    def validate_values(cls, v: list[float]) -> list[float]:
         """Validate odds values are positive."""
         if not all(val > 0 for val in v):
             raise ValueError("All odds values must be positive")
         return v
 
     @model_validator(mode="after")
-    def validate_timestamp(self) -> "OddsRecord":
+    def validate_timestamp(self) -> OddsRecord:
         """Set default timestamp if not provided."""
         if not self.timestamp:
             self.timestamp = datetime.utcnow().isoformat() + "Z"
@@ -131,12 +130,12 @@ class InjectionPayload(BaseModel):
 
     match_id: str
     source: str
-    values: List[float]
+    values: list[float]
     quality_score: float
     timestamp: str
 
     @classmethod
-    def from_record(cls, record: OddsRecord) -> "InjectionPayload":
+    def from_record(cls, record: OddsRecord) -> InjectionPayload:
         """Create payload from odds record.
 
         Args:
@@ -156,7 +155,7 @@ class InjectionPayload(BaseModel):
         )
 
     @staticmethod
-    def _calculate_quality_score(values: List[float]) -> float:
+    def _calculate_quality_score(values: list[float]) -> float:
         """Calculate quality score (sum of reciprocals).
 
         Args:
@@ -234,7 +233,7 @@ class OddsInjector:
         self,
         quality_threshold_min: float = DEFAULT_QUALITY_MIN,
         quality_threshold_max: float = DEFAULT_QUALITY_MAX,
-        logger: Optional[logging.Logger] = None,
+        logger: logging.Logger | None = None,
     ):
         """Initialize odds injector.
 
@@ -250,7 +249,7 @@ class OddsInjector:
 
     def inject_from_jsonl(
         self,
-        file_path: Union[str, Path],
+        file_path: str | Path,
         batch_size: int = 500,
         dry_run: bool = False,
     ) -> InjectionStats:
@@ -306,7 +305,7 @@ class OddsInjector:
         self,
         file_path: Path,
         stats: InjectionStats,
-    ) -> List[OddsRecord]:
+    ) -> list[OddsRecord]:
         """Stream read JSONL file and validate records.
 
         Args:
@@ -316,9 +315,9 @@ class OddsInjector:
         Returns:
             List of validated records.
         """
-        valid_records: List[OddsRecord] = []
+        valid_records: list[OddsRecord] = []
 
-        with open(file_path, "r", encoding="utf-8") as f:
+        with open(file_path, encoding="utf-8") as f:
             for line_num, line in enumerate(f, 1):
                 line = line.strip()
                 if not line:
@@ -359,7 +358,7 @@ class OddsInjector:
 
     def _inject_records(
         self,
-        records: List[OddsRecord],
+        records: list[OddsRecord],
         stats: InjectionStats,
         batch_size: int,
     ) -> None:
@@ -381,7 +380,7 @@ class OddsInjector:
 
         try:
             # Prepare update data
-            update_data: List[Tuple[str, str, float]] = []
+            update_data: list[tuple[str, str, float]] = []
 
             for record in records:
                 payload = InjectionPayload.from_record(record)
@@ -421,7 +420,7 @@ class OddsInjector:
 
         except psycopg2.Error as e:
             conn.rollback()
-            self.logger.error(f"[INJECT] Database error: {e}")
+            self.logger.exception(f"[INJECT] Database error: {e}")
             raise
         finally:
             cursor.close()
@@ -464,7 +463,7 @@ class OddsInjector:
 # ============================================================================
 
 def inject_odds_data(
-    file_path: Union[str, Path],
+    file_path: str | Path,
     quality_min: float = 0.95,
     dry_run: bool = False,
 ) -> InjectionStats:
@@ -484,10 +483,10 @@ def inject_odds_data(
 
 # Convenience exports
 __all__ = [
-    "OddsInjector",
-    "OddsRecord",
     "InjectionPayload",
     "InjectionStats",
-    "inject_odds_data",
+    "OddsInjector",
+    "OddsRecord",
     "get_injection_logger",
+    "inject_odds_data",
 ]

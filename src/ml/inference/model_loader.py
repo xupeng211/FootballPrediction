@@ -7,6 +7,7 @@
 遵循单一职责原则，只负责模型生命周期管理。
 """
 
+import contextlib
 from dataclasses import dataclass
 import json
 import logging
@@ -148,7 +149,7 @@ class ModelLoader:
             raise
         except Exception as e:
             error_msg = f"模型 {model_name} 加载失败: {e!s}"
-            logger.error(error_msg)
+            logger.exception(error_msg)
             raise ModelLoadError(error_msg) from e
 
     def _load_model_file(self, model_path: Path) -> Any:
@@ -439,7 +440,7 @@ class ModelLoader:
                 self._check_for_model_updates()
                 time.sleep(self.reload_interval)
             except Exception as e:
-                logger.error(f"热更新检查出错: {e!s}")
+                logger.exception(f"热更新检查出错: {e!s}")
                 time.sleep(self.reload_interval)
 
         logger.info("热更新监听线程已停止")
@@ -468,7 +469,7 @@ class ModelLoader:
             self._load_current_best_model()
 
         except Exception as e:
-            logger.error(f"检查模型更新失败: {e!s}")
+            logger.exception(f"检查模型更新失败: {e!s}")
 
     def _load_current_best_model(self):
         """加载当前最佳模型"""
@@ -525,7 +526,7 @@ class ModelLoader:
                 logger.error(f"❌ 加载新模型失败: {current_version}")
 
         except Exception as e:
-            logger.error(f"加载当前最佳模型失败: {e!s}")
+            logger.exception(f"加载当前最佳模型失败: {e!s}")
 
     def _load_model_metadata(self, version: str) -> dict[str, Any] | None:
         """加载模型元数据"""
@@ -545,7 +546,7 @@ class ModelLoader:
             return model_data
 
         except Exception as e:
-            logger.error(f"加载模型元数据失败: {e!s}")
+            logger.exception(f"加载模型元数据失败: {e!s}")
             return None
 
     def trigger_model_reload(self) -> bool:
@@ -555,7 +556,7 @@ class ModelLoader:
             self._check_for_model_updates()
             return True
         except Exception as e:
-            logger.error(f"手动触发模型重载失败: {e!s}")
+            logger.exception(f"手动触发模型重载失败: {e!s}")
             return False
 
     def get_current_version(self) -> str | None:
@@ -591,7 +592,7 @@ class ModelLoader:
             return True
 
         except Exception as e:
-            logger.error(f"切换模型版本失败: {e!s}")
+            logger.exception(f"切换模型版本失败: {e!s}")
             return False
 
     def stop_hot_reload(self):
@@ -606,10 +607,8 @@ class ModelLoader:
 
     def __del__(self):
         """析构函数，确保线程正确停止"""
-        try:
+        with contextlib.suppress(Exception):
             self.stop_hot_reload()
-        except Exception:
-            pass
 
     def __len__(self) -> int:
         """

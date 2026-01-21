@@ -296,7 +296,9 @@ class EfficiencyEngine:
 
         momentum = 0
         for r in recent:
-            if (r["result"] == "home" and r["is_home"]) or (r["result"] == "away" and not r["is_home"]):
+            if (r["result"] == "home" and r["is_home"]) or (
+                r["result"] == "away" and not r["is_home"]
+            ):
                 momentum += 3
             elif r["result"] == "draw":
                 momentum += 1
@@ -417,18 +419,18 @@ class FeatureFactory:
 
         # 积分榜特征
         (
-            home_matches,
+            _home_matches,
             home_points,
-            home_gf,
-            home_ga,
-            home_gd,
+            _home_gf,
+            _home_ga,
+            _home_gd,
         ) = self.table_manager.get_pre_match_stats(home_team)
         (
-            away_matches,
+            _away_matches,
             away_points,
-            away_gf,
-            away_ga,
-            away_gd,
+            _away_gf,
+            _away_ga,
+            _away_gd,
         ) = self.table_manager.get_pre_match_stats(away_team)
 
         pre_features["home_points_pre"] = home_points
@@ -439,7 +441,9 @@ class FeatureFactory:
         rankings = self.table_manager.get_rankings()
         pre_features["home_rank_pre"] = rankings.get(home_team, 999)
         pre_features["away_rank_pre"] = rankings.get(away_team, 999)
-        pre_features["rank_diff_pre"] = pre_features["away_rank_pre"] - pre_features["home_rank_pre"]
+        pre_features["rank_diff_pre"] = (
+            pre_features["away_rank_pre"] - pre_features["home_rank_pre"]
+        )
 
         # 疲劳度特征
         home_rest = self.fatigue_tracker.get_rest_days(home_team, match_date)
@@ -492,7 +496,9 @@ class FeatureFactory:
 
         # 按时间排序（关键！）
         df_sorted = df.sort_values("match_date").reset_index(drop=True)
-        logger.info(f"✅ 数据已按时间排序: {df_sorted['match_date'].min()} ~ {df_sorted['match_date'].max()}")
+        logger.info(
+            f"✅ 数据已按时间排序: {df_sorted['match_date'].min()} ~ {df_sorted['match_date'].max()}"
+        )
 
         # 初始化特征列
         for feat in self.V35_FEATURES:
@@ -514,7 +520,9 @@ class FeatureFactory:
                 success_count += 1
 
                 if (i + 1) % 1000 == 0:
-                    logger.info(f"  进度: {i + 1}/{len(df_sorted)} ({(i + 1) / len(df_sorted) * 100:.1f}%)")
+                    logger.info(
+                        f"  进度: {i + 1}/{len(df_sorted)} ({(i + 1) / len(df_sorted) * 100:.1f}%)"
+                    )
 
             except Exception as e:
                 failed_count += 1
@@ -533,7 +541,9 @@ class FeatureFactory:
 
         # 保存数据
         if output_path is None:
-            output_path = Path(__file__).parent.parent.parent / "data/processed/V35_PRODUCTION_GOLD.parquet"
+            output_path = (
+                Path(__file__).parent.parent.parent / "data/processed/V35_PRODUCTION_GOLD.parquet"
+            )
 
         output_path.parent.mkdir(parents=True, exist_ok=True)
         df_sorted.to_parquet(output_path, index=False)
@@ -552,7 +562,9 @@ class FeatureFactory:
             fill_rate = df[feat].notnull().sum() / len(df) * 100
             mean_val = df[feat].mean()
             std_val = df[feat].std()
-            logger.info(f"  {i:2d}. {feat:30s}: 填充率 {fill_rate:5.1f}%, 均值 {mean_val:7.2f}, 标准差 {std_val:7.2f}")
+            logger.info(
+                f"  {i:2d}. {feat:30s}: 填充率 {fill_rate:5.1f}%, 均值 {mean_val:7.2f}, 标准差 {std_val:7.2f}"
+            )
 
 
 def create_feature_factory() -> FeatureFactory:

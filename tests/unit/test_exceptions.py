@@ -3,35 +3,36 @@
 测试自定义异常类的功能和行为
 """
 
+from typing import Any, Dict
+
 import pytest
-from typing import Dict, Any
 
 from src.core.exceptions import (
-    BaseApplicationError,
-    DatabaseError,
-    ModelError,
-    FeatureExtractionError,
-    PredictionError,
-    ConfigurationError,
-    ValidationError,
-    ExternalAPIError,
-    CacheError,
-    ExplainabilityError,
-    InferenceServiceError,
-    DataCollectionError,
-    ProcessingError,
     AuthenticationError,
     AuthorizationError,
+    BaseApplicationError,
+    CacheError,
+    CircuitBreakerError,
+    ConfigurationError,
+    ConflictError,
+    DatabaseError,
+    DataCollectionError,
+    ExplainabilityError,
+    ExternalAPIError,
+    FeatureExtractionError,
+    HealthCheckError,
+    InferenceServiceError,
+    IntegrationError,
+    ModelError,
+    MonitoringError,
+    PredictionError,
+    ProcessingError,
     RateLimitError,
     ResourceNotFoundError,
-    ConflictError,
+    RetryExhaustedError,
     ServiceUnavailableError,
     TimeoutError,
-    IntegrationError,
-    HealthCheckError,
-    MonitoringError,
-    CircuitBreakerError,
-    RetryExhaustedError,
+    ValidationError,
 )
 
 

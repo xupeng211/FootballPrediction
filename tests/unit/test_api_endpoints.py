@@ -3,10 +3,11 @@ API端点测试
 专注于FastAPI路由和HTTP接口的测试覆盖
 """
 
-import pytest
 import json
+from unittest.mock import AsyncMock, Mock, patch
+
+import pytest
 from fastapi.testclient import TestClient
-from unittest.mock import patch, Mock, AsyncMock
 
 
 class TestHealthEndpoint:
@@ -27,8 +28,9 @@ class TestHealthEndpoint:
     def test_health_check_success_response(self, mock_health_check):
         """测试健康检查成功响应"""
         try:
-            from src.api.health import router
             from fastapi import FastAPI
+
+            from src.api.health import router
 
             # 模拟健康检查响应
             mock_health_check.return_value = {
@@ -56,8 +58,9 @@ class TestHealthEndpoint:
     def test_health_check_failure_response(self, mock_health_check):
         """测试健康检查失败响应"""
         try:
-            from src.api.health import router
             from fastapi import FastAPI
+
+            from src.api.health import router
             from src.config_unified import ConfigurationError
 
             # 模拟健康检查失败
@@ -100,8 +103,9 @@ class TestPredictionEndpoints:
     def test_single_match_prediction_endpoint(self, mock_inference_service):
         """测试单场比赛预测端点"""
         try:
-            from src.api.schemas import PredictionRequest
             from fastapi import FastAPI
+
+            from src.api.schemas import PredictionRequest
 
             # 模拟推理服务
             mock_service = Mock()
@@ -225,8 +229,9 @@ class TestModelManagementEndpoints:
     def test_list_models_endpoint(self, mock_get_service):
         """测试列出模型端点"""
         try:
-            from src.api.model_management import router
             from fastapi import FastAPI
+
+            from src.api.model_management import router
 
             # 模拟推理服务
             mock_service = Mock()
@@ -255,8 +260,9 @@ class TestModelManagementEndpoints:
     def test_load_model_endpoint(self, mock_inference_service):
         """测试加载模型端点"""
         try:
-            from src.api.model_management import router
             from fastapi import FastAPI
+
+            from src.api.model_management import router
 
             # 模拟模型加载
             mock_service = Mock()
@@ -297,8 +303,9 @@ class TestMonitoringEndpoints:
     def test_metrics_endpoint(self, mock_collection, mock_inference):
         """测试指标端点"""
         try:
-            from src.api.monitoring import router
             from fastapi import FastAPI
+
+            from src.api.monitoring import router
 
             # 模拟服务统计
             mock_inference.return_value.get_service_stats.return_value = {
@@ -347,7 +354,7 @@ class TestAPISchemas:
     def test_prediction_response_schema(self):
         """测试预测响应模式"""
         try:
-            from src.api.schemas import PredictionResponse, PredictionRequest
+            from src.api.schemas import PredictionRequest, PredictionResponse
 
             request = PredictionRequest(home_team="A", away_team="B")
             response = PredictionResponse(success=True, prediction={"predicted_class": 1, "confidence": 0.7})
@@ -446,8 +453,9 @@ class TestAPIPerformance:
     def test_response_time_basic(self):
         """测试基本响应时间"""
         try:
-            from fastapi import FastAPI
             import time
+
+            from fastapi import FastAPI
 
             app = FastAPI()
 
@@ -471,9 +479,10 @@ class TestAPIPerformance:
     def test_concurrent_requests(self):
         """测试并发请求"""
         try:
-            from fastapi import FastAPI
             import threading
             import time
+
+            from fastapi import FastAPI
 
             app = FastAPI()
 

@@ -22,12 +22,11 @@ Date: 2026-01-15
 from __future__ import annotations
 
 import asyncio
+from dataclasses import dataclass
 import logging
 import random
 import socket
 import sys
-from dataclasses import dataclass
-from typing import Optional
 
 from bs4 import BeautifulSoup
 from playwright.async_api import Page, async_playwright
@@ -50,7 +49,7 @@ logger = logging.getLogger(__name__)
 class MatchInfo:
     """比赛信息（V41.83: 补充完整类型提示）"""
 
-    match_id: Optional[str]
+    match_id: str | None
     home_team: str
     away_team: str
     hash_value: str
@@ -274,10 +273,10 @@ class CrawlerService:
             True 如果运行在 WSL2 环境
         """
         try:
-            with open("/proc/version", "r") as f:
+            with open("/proc/version") as f:
                 version_content = f.read().lower()
                 return "microsoft" in version_content and "wsl2" in version_content
-        except (FileNotFoundError, IOError):
+        except (OSError, FileNotFoundError):
             return False
 
     def _get_proxy_host(self) -> str:
@@ -329,7 +328,7 @@ class CrawlerService:
             result = sock.connect_ex((self.proxy_host, port))
             sock.close()
             return result == 0
-        except (socket.error, OSError):
+        except OSError:
             return False
 
     def get_healthy_proxy_port(self, excluded_ports: set[int] | None = None) -> int | None:
@@ -626,7 +625,7 @@ class CrawlerService:
                     await self._cleanup_browser(browser)
 
         except Exception as e:
-            logger.error(f"❌ V41.83 crawl_league 失败: {e}")
+            logger.exception(f"❌ V41.83 crawl_league 失败: {e}")
             return CrawlResult(matches=all_matches, stats=stats, success=False, error=str(e))
 
         finally:
@@ -921,8 +920,7 @@ class CrawlerService:
         if "/page/" in current_url:
             base_url_without_page = current_url.split("/page/")[0]
             return f"{base_url_without_page}/page/{next_page_num}/"
-        else:
-            return f"{current_url.rstrip('/')}/page/{next_page_num}/"
+        return f"{current_url.rstrip('/')}/page/{next_page_num}/"
 
 
 # ============================================================================

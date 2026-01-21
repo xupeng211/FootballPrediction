@@ -81,9 +81,7 @@ class CircuitBreaker:
         # Check length
         content_len = len(content_str)
         if content_len == self.HARD_BAN_LENGTH:
-            logger.critical(
-                f"[V144.8] 🚨 检测到 IP 硬封禁签名: {content_len} 字节"
-            )
+            logger.critical(f"[V144.8] 🚨 检测到 IP 硬封禁签名: {content_len} 字节")
             return True
 
         return False
@@ -99,7 +97,12 @@ class CircuitBreaker:
             SystemExit: If threshold exceeded (exit code 99)
         """
         # Check if this is a hard ban
-        is_hard_ban = self.HARD_BAN_SIGNATURE in reason or int(reason.split()[-1].replace(")", "")) == self.HARD_BAN_LENGTH if "bytes" in reason else False
+        is_hard_ban = (
+            self.HARD_BAN_SIGNATURE in reason
+            or int(reason.split()[-1].replace(")", "")) == self.HARD_BAN_LENGTH
+            if "bytes" in reason
+            else False
+        )
 
         if is_hard_ban:
             self.consecutive_failures += 1
@@ -142,7 +145,7 @@ class CircuitBreaker:
                 f.write(f"Reason: {failure_record['reason']} | ")
                 f.write(f"Count: {failure_record['consecutive_count']}/{self.threshold}\n")
         except Exception as e:
-            logger.error(f"[V144.8] ❌ 写入熔断日志失败: {e}")
+            logger.exception(f"[V144.8] ❌ 写入熔断日志失败: {e}")
 
     def _trigger_shutdown(self) -> None:
         """Trigger immediate system shutdown.
@@ -200,9 +203,7 @@ class CircuitBreaker:
         self.consecutive_failures = 0
         self.failure_history.clear()
 
-        logger.info(
-            f"[V144.8] 🔄 熔断器已重置 (之前计数: {old_count})"
-        )
+        logger.info(f"[V144.8] 🔄 熔断器已重置 (之前计数: {old_count})")
 
     def get_status(self) -> dict[str, Any]:
         """Get current circuit breaker status.

@@ -44,7 +44,9 @@ class StreamingConfig:
     prefetch_chunks: int = 2
 
     # 类型优化配置
-    categorical_columns: list[str] = field(default_factory=lambda: ["home_team_id", "away_team_id", "league_id"])
+    categorical_columns: list[str] = field(
+        default_factory=lambda: ["home_team_id", "away_team_id", "league_id"]
+    )
     numeric_columns: list[str] = field(
         default_factory=lambda: ["home_score", "away_score", "home_odds", "draw_odds", "away_odds"]
     )
@@ -53,7 +55,9 @@ class StreamingConfig:
 
     # 精度配置
     use_decimal_for_precision: bool = True
-    precision_columns: list[str] = field(default_factory=lambda: ["home_odds", "draw_odds", "away_odds"])
+    precision_columns: list[str] = field(
+        default_factory=lambda: ["home_odds", "draw_odds", "away_odds"]
+    )
 
 
 @dataclass
@@ -114,7 +118,10 @@ class StreamingDataProcessor:
             self._memory_stats.peak_usage_mb = max(self._memory_stats.peak_usage_mb, end_memory)
 
     def stream_csv_file(
-        self, file_path: str | Path, columns: list[str] | None = None, filters: dict[str, Any] | None = None
+        self,
+        file_path: str | Path,
+        columns: list[str] | None = None,
+        filters: dict[str, Any] | None = None,
     ) -> Iterator[pd.DataFrame]:
         """
         流式读取CSV文件
@@ -165,7 +172,9 @@ class StreamingDataProcessor:
                 if chunk_idx % self.config.memory_check_interval == 0:
                     self._force_gc_if_needed()
 
-    def stream_json_file(self, file_path: str | Path, lines_per_chunk: int = 1000) -> Iterator[pd.DataFrame]:
+    def stream_json_file(
+        self, file_path: str | Path, lines_per_chunk: int = 1000
+    ) -> Iterator[pd.DataFrame]:
         """
         流式读取JSON Lines文件
 
@@ -214,7 +223,7 @@ class StreamingDataProcessor:
         data_source: str | Path | Iterator[pd.DataFrame],
         processor_func: Callable[[pd.DataFrame], Any],
         output_handler: Callable[[Any], None] | None = None,
-        parallel: bool = None,
+        parallel: bool | None = None,
     ) -> list[Any]:
         """
         使用流式处理数据
@@ -304,7 +313,7 @@ class StreamingDataProcessor:
                             results.append(result)
                             futures.remove(future)
                         except Exception as e:
-                            self.logger.error(f"并行处理失败: {e}")
+                            self.logger.exception(f"并行处理失败: {e}")
 
             # 处理剩余的任务
             for future in futures:
@@ -314,7 +323,7 @@ class StreamingDataProcessor:
                         output_handler(result)
                     results.append(result)
                 except Exception as e:
-                    self.logger.error(f"并行处理失败: {e}")
+                    self.logger.exception(f"并行处理失败: {e}")
 
             # 处理缓冲区剩余的分片
             for chunk in chunks_buffer:
@@ -354,7 +363,9 @@ class StreamingDataProcessor:
                 chunk[col] = chunk[col].astype(dtype, copy=False)
 
         # 删除不必要的列
-        chunk = chunk.drop(columns=[col for col in chunk.columns if col.startswith("Unnamed:")], errors="ignore")
+        chunk = chunk.drop(
+            columns=[col for col in chunk.columns if col.startswith("Unnamed:")], errors="ignore"
+        )
 
         # 重置索引以节省内存
         chunk.reset_index(drop=True, inplace=True)
@@ -392,7 +403,7 @@ class StreamingDataProcessor:
             self.logger.warning(f"JSON解析失败: {e}")
             return None
         except Exception as e:
-            self.logger.error(f"JSON分片处理失败: {e}")
+            self.logger.exception(f"JSON分片处理失败: {e}")
             return None
 
     def _get_memory_usage(self) -> float:
@@ -407,7 +418,9 @@ class StreamingDataProcessor:
 
         # 内存使用警告
         if current_memory > self.config.max_memory_usage_mb:
-            self.logger.warning(f"内存使用过高: {current_memory:.1f}MB > {self.config.max_memory_usage_mb}MB")
+            self.logger.warning(
+                f"内存使用过高: {current_memory:.1f}MB > {self.config.max_memory_usage_mb}MB"
+            )
             self._force_gc_if_needed()
 
     def _force_gc_if_needed(self) -> None:
@@ -420,7 +433,7 @@ class StreamingDataProcessor:
             self._memory_stats.gc_collections += 1
             self._last_gc_time = current_time
 
-            freed_memory = self._get_memory_usage()
+            self._get_memory_usage()
 
     def _update_stats(self, processed_rows: int) -> None:
         """更新处理统计"""
@@ -429,7 +442,9 @@ class StreamingDataProcessor:
         # 计算处理速率
         elapsed_time = time.time() - self._start_time
         if elapsed_time > 0:
-            self._memory_stats.processing_rate_rows_per_sec = self._memory_stats.processed_rows / elapsed_time
+            self._memory_stats.processing_rate_rows_per_sec = (
+                self._memory_stats.processed_rows / elapsed_time
+            )
 
     def get_memory_stats(self) -> MemoryStats:
         """获取内存统计信息"""
@@ -453,7 +468,9 @@ def create_streaming_processor(
         StreamingDataProcessor: 流式处理器实例
     """
     config = StreamingConfig(
-        chunk_size=chunk_size, max_memory_usage_mb=max_memory_mb, enable_parallel_processing=enable_parallel
+        chunk_size=chunk_size,
+        max_memory_usage_mb=max_memory_mb,
+        enable_parallel_processing=enable_parallel,
     )
     return StreamingDataProcessor(config)
 

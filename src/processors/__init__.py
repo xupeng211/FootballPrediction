@@ -44,24 +44,24 @@ from src.processors.exceptions import (
 __all__ = [
     # 抽象基类
     "BaseExtractor",
+    "CircuitBreakerOpenError",
+    "ConfigurationError",
+    "DataParsingError",
+    # 异常
+    "ExtractionError",
     # 结果类型
     "ExtractionResult",
     "ExtractionStatus",
-    # 配置
-    "ValidationConfig",
     # 工厂
     "ExtractorRegistry",
-    "register_extractor",
-    # 异常
-    "ExtractionError",
-    "ValidationError",
     "InsufficientFeaturesError",
     "MissingRequiredKeyError",
-    "DataParsingError",
-    "SchemaMismatchError",
-    "ConfigurationError",
-    "CircuitBreakerOpenError",
     "RateLimitError",
+    "SchemaMismatchError",
+    # 配置
+    "ValidationConfig",
+    "ValidationError",
+    "register_extractor",
 ]
 
 # 版本信息

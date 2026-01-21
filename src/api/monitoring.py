@@ -83,7 +83,7 @@ async def get_metrics(db: Session = Depends(get_db_session)) -> dict[str, Any]:
         }
 
     except Exception as e:
-        logger.error(f"监控指标获取失败: {e}")
+        logger.exception(f"监控指标获取失败: {e}")
         return {
             "status": "error",
             "error": str(e),
@@ -127,7 +127,7 @@ async def _get_database_metrics(db: Session) -> dict[str, Any]:
         }
 
     except Exception as e:
-        logger.error(f"数据库指标获取失败: {e}")
+        logger.exception(f"数据库指标获取失败: {e}")
         return {"healthy": False, "error": str(e)}
 
 
@@ -169,7 +169,7 @@ async def _get_business_metrics(db: Session) -> dict[str, Any]:
         }
 
     except Exception as e:
-        logger.error(f"业务指标获取失败: {e}")
+        logger.exception(f"业务指标获取失败: {e}")
         return {"error": str(e)}
 
 
@@ -210,7 +210,9 @@ async def get_service_status(db: Session = Depends(get_db_session)) -> dict[str,
     except Exception:
         services["cache"] = "unhealthy"
 
-    overall_status = "healthy" if all(status == "healthy" for status in services.values()) else "degraded"
+    overall_status = (
+        "healthy" if all(status == "healthy" for status in services.values()) else "degraded"
+    )
 
     return {
         "status": overall_status,

@@ -48,7 +48,6 @@ class LeagueHarvester:
             logger.info(f"🏆 正在获取联赛ID {league_id} 的比赛数据...")
 
             # 使用FotMob API获取联赛比赛
-            url = f"https://www.fotmob.com/api/leagues?id={league_id}&type=matches"
             matches_data = await self.api_client.get_league_matches(league_id)
 
             if not matches_data or "matches" not in matches_data:
@@ -60,7 +59,7 @@ class LeagueHarvester:
             return matches
 
         except Exception as e:
-            logger.error(f"❌ 获取联赛 {league_id} 比赛数据失败: {e}")
+            logger.exception(f"❌ 获取联赛 {league_id} 比赛数据失败: {e}")
             return []
 
     async def harvest_league(self, league_id: int, league_name: str, limit: int = 50):
@@ -134,7 +133,7 @@ class LeagueHarvester:
                     logger.info(f"✅ 已添加比赛: {home_team} vs {away_team} ({match_id})")
 
                 except Exception as e:
-                    logger.error(f"❌ 处理比赛失败: {match}, Error: {e}")
+                    logger.exception(f"❌ 处理比赛失败: {match}, Error: {e}")
                     continue
 
             conn.commit()
@@ -148,7 +147,7 @@ class LeagueHarvester:
     def get_league_config(self, league_id: int) -> dict | None:
         """从配置中获取联赛信息"""
         leagues = self.settings.supported_leagues
-        for league_key, league_config in leagues.items():
+        for league_config in leagues.values():
             if league_config["id"] == league_id:
                 return league_config
         return None
@@ -176,7 +175,6 @@ async def main():
     logger.info(f"✨ 收割完成！总共新增 {harvested} 场比赛")
 
     # 返回收割数量供脚本使用
-    print(harvested)
 
 
 if __name__ == "__main__":

@@ -23,11 +23,11 @@ Version: V29.0 (Feature Extraction)
 import json
 import os
 import sys
+import tempfile
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List
-from unittest.mock import Mock, patch, MagicMock
-import tempfile
+from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
@@ -402,8 +402,9 @@ class TestMalformedFormatHandling:
 
     def test_failed_extraction_log_created(self, tmp_path):
         """测试: 失败的提取应记录到 failed_features.json"""
-        from scripts.ml.extract_features_v1 import log_failed_extraction, FAILED_FEATURES_LOG
         import json
+
+        from scripts.ml.extract_features_v1 import FAILED_FEATURES_LOG, log_failed_extraction
 
         # 临时覆盖日志路径
         original_log = FAILED_FEATURES_LOG

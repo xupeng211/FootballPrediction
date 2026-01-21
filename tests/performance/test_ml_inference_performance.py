@@ -3,21 +3,22 @@ ML推理性能测试
 测试模型推理速度和并发处理能力
 """
 
-import pytest
 import asyncio
-import time
 import statistics
-from unittest.mock import Mock, AsyncMock, patch
+import time
 from concurrent.futures import ThreadPoolExecutor
-from typing import List, Dict, Any
+from typing import Any, Dict, List
+from unittest.mock import AsyncMock, Mock, patch
 
+import pytest
+
+from src.core.exceptions import PredictionError
+from src.ml.inference import MatchPredictor, ModelLoader
+from src.ml.inference.cache_manager import PredictionCache
 from src.services.inference_service import (
     InferenceService,
     InferenceServiceConfig,
 )
-from src.ml.inference import ModelLoader, MatchPredictor
-from src.ml.inference.cache_manager import PredictionCache
-from src.core.exceptions import PredictionError
 
 
 class TestMLInferencePerformance:
@@ -228,8 +229,9 @@ class TestMLInferencePerformance:
 
     def test_memory_usage_optimization(self, high_performance_service):
         """测试内存使用优化"""
-        import psutil
         import os
+
+        import psutil
 
         process = psutil.Process(os.getpid())
         initial_memory = process.memory_info().rss / 1024 / 1024  # MB

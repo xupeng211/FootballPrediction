@@ -3,12 +3,13 @@ CLI集成测试
 测试cli.py的完整命令行功能
 """
 
-import pytest
+import json
 import subprocess
 import sys
 from pathlib import Path
-from unittest.mock import patch, Mock
-import json
+from unittest.mock import Mock, patch
+
+import pytest
 
 # 添加src路径
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))

@@ -123,7 +123,7 @@ def get_available_models() -> list[str]:
 def get_model_metadata(model_path: str) -> dict[str, Any]:
     """获取模型元数据"""
     model_path_obj = Path(model_path)
-    metadata_path = model_path_obj.with_suffix("_metadata.json")
+    metadata_path = model_path_obj.with_suffix("._metadata.json")
 
     metadata = {}
     if metadata_path.exists():
@@ -184,7 +184,9 @@ async def reload_model(request: ModelReloadRequest, background_tasks: Background
             new_version = new_info.get("model_version", "unknown")
 
             # 后台任务：记录重载日志
-            background_tasks.add_task(log_model_reload, previous_version, new_version, target_model_path, True)
+            background_tasks.add_task(
+                log_model_reload, previous_version, new_version, target_model_path, True
+            )
 
             return ModelReloadResponse(
                 success=True,
@@ -194,14 +196,16 @@ async def reload_model(request: ModelReloadRequest, background_tasks: Background
                 reload_time=datetime.now().isoformat(),
                 model_path=target_model_path,
             )
-        background_tasks.add_task(log_model_reload, previous_version, "unknown", target_model_path, False)
+        background_tasks.add_task(
+            log_model_reload, previous_version, "unknown", target_model_path, False
+        )
 
         raise HTTPException(status_code=500, detail="模型重载失败")
 
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"模型重载异常: {e}")
+        logger.exception(f"模型重载异常: {e}")
         raise HTTPException(status_code=500, detail=f"模型重载异常: {e!s}")
 
 
@@ -242,7 +246,7 @@ async def get_model_info():
         )
 
     except Exception as e:
-        logger.error(f"获取模型信息失败: {e}")
+        logger.exception(f"获取模型信息失败: {e}")
         raise HTTPException(status_code=500, detail=f"获取模型信息失败: {e!s}")
 
 
@@ -277,11 +281,13 @@ async def list_models():
         return {"total_models": len(models), "models": models}
 
     except Exception as e:
-        logger.error(f"列出模型失败: {e}")
+        logger.exception(f"列出模型失败: {e}")
         raise HTTPException(status_code=500, detail=f"列出模型失败: {e!s}")
 
 
 async def log_model_reload(old_version: str, new_version: str, model_path: str, success: bool):
     """记录模型重载日志"""
     status = "成功" if success else "失败"
-    logger.info(f"模型重载{status}: {old_version} -> {new_version} 模型路径: {model_path} 时间: {datetime.now()}")
+    logger.info(
+        f"模型重载{status}: {old_version} -> {new_version} 模型路径: {model_path} 时间: {datetime.now()}"
+    )

@@ -16,8 +16,8 @@ Date: 2026-01-06
 
 from __future__ import annotations
 
-import logging
 from dataclasses import dataclass
+import logging
 from pathlib import Path
 
 import yaml
@@ -98,7 +98,7 @@ class HarvestConfigManager:
             raise FileNotFoundError(f"Config file not found: {self.config_path}")
 
         try:
-            with open(self.config_path, "r", encoding="utf-8") as f:
+            with open(self.config_path, encoding="utf-8") as f:
                 config_data = yaml.safe_load(f)
 
             # 解析联赛配置
@@ -137,15 +137,13 @@ class HarvestConfigManager:
             self.version = config_data.get("version", "Unknown")
             self.last_updated = config_data.get("last_updated", "Unknown")
 
-            logger.info(
-                f"✅ 配置加载成功: {len(self.leagues)} 个联赛, 版本 {self.version}"
-            )
+            logger.info(f"✅ 配置加载成功: {len(self.leagues)} 个联赛, 版本 {self.version}")
 
         except yaml.YAMLError as e:
-            logger.error(f"❌ YAML 解析失败: {e}")
+            logger.exception(f"❌ YAML 解析失败: {e}")
             raise
         except Exception as e:
-            logger.error(f"❌ 配置加载失败: {e}")
+            logger.exception(f"❌ 配置加载失败: {e}")
             raise
 
     def get_enabled_leagues(self) -> list[LeagueConfig]:
@@ -168,7 +166,9 @@ class HarvestConfigManager:
             该等级的联赛列表
         """
         return [
-            league for league in self.leagues.values() if league.tier == tier and league.is_enabled()
+            league
+            for league in self.leagues.values()
+            if league.tier == tier and league.is_enabled()
         ]
 
     def get_leagues_by_country(self, country_code: str) -> list[LeagueConfig]:
@@ -253,16 +253,7 @@ class HarvestConfigManager:
         """打印配置摘要"""
         enabled_leagues = self.get_enabled_leagues()
 
-        print("=" * 60)
-        print("FotMob 全球采集配置摘要")
-        print("=" * 60)
-        print(f"版本: {self.version}")
-        print(f"最后更新: {self.last_updated}")
-        print(f"")
 
-        print(f"总联赛数: {len(self.leagues)}")
-        print(f"启用联赛: {len(enabled_leagues)}")
-        print(f"")
 
         # 按大洲分组统计
         continents = {
@@ -272,21 +263,14 @@ class HarvestConfigManager:
             "非洲": ["ZA", "EG", "NG"],
         }
 
-        for continent, countries in continents.items():
+        for countries in continents.values():
             continent_leagues = [
                 league for league in enabled_leagues if league.country in countries
             ]
             if continent_leagues:
-                print(f"{continent}: {len(continent_leagues)} 个联赛")
                 for league in continent_leagues:
-                    status = "✅" if league.is_enabled() else "❌"
-                    print(f"  {status} {league.name_zh:8s} ({league.name})")
+                    "✅" if league.is_enabled() else "❌"
 
-        print("")
-        print(f"采集策略: backfill={self.strategy.backfill_years}年, "
-              f"batch={self.strategy.batch_size}, "
-              f"sentry={'启用' if self.strategy.enable_sentry else '禁用'}")
-        print("=" * 60)
 
 
 # 单例实例
@@ -317,6 +301,5 @@ if __name__ == "__main__":
 
     # 生成采集任务
     tasks = manager.get_harvest_tasks()
-    print(f"\n前 10 个任务:")
-    for task in tasks[:10]:
-        print(f"  {task['name_zh']} {task['season']}")
+    for _task in tasks[:10]:
+        pass

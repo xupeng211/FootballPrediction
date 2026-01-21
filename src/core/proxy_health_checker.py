@@ -15,12 +15,12 @@ Date: 2026-01-15
 """
 
 import asyncio
+import contextlib
+from dataclasses import dataclass
+from datetime import datetime, timedelta
 import logging
 import socket
 import time
-from dataclasses import dataclass, field
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Set
 
 import aiohttp
 import requests
@@ -34,8 +34,8 @@ class ProxyPortStatus:
     port: int
     is_healthy: bool
     last_check: datetime
-    last_success: Optional[datetime] = None
-    last_failure: Optional[datetime] = None
+    last_success: datetime | None = None
+    last_failure: datetime | None = None
     consecutive_failures: int = 0
     consecutive_successes: int = 0
     failure_reason: str = ""
@@ -47,7 +47,7 @@ class HealthCheckResult:
     port: int
     is_healthy: bool
     response_time: float
-    ip_address: Optional[str] = None
+    ip_address: str | None = None
     error: str = ""
 
 
@@ -84,20 +84,20 @@ class ProxyHealthChecker:
         self.recovery_check_interval = recovery_check_interval
 
         # 端口状态跟踪
-        self.port_status: Dict[int, ProxyPortStatus] = {}
-        self.available_ports: Set[int] = set()
-        self.failed_ports: Set[int] = set()
+        self.port_status: dict[int, ProxyPortStatus] = {}
+        self.available_ports: set[int] = set()
+        self.failed_ports: set[int] = set()
 
         # 运行状态
         self.is_running = False
-        self._check_task: Optional[asyncio.Task] = None
+        self._check_task: asyncio.Task | None = None
 
         logger.info(
             f"✅ V41.77 ProxyHealthChecker 初始化完成 "
             f"(host={proxy_host}, check_interval={check_interval}s)"
         )
 
-    def set_ports(self, ports: List[int]) -> None:
+    def set_ports(self, ports: list[int]) -> None:
         """
         设置初始代理端口列表
 
@@ -116,16 +116,16 @@ class ProxyHealthChecker:
 
         logger.info(f"📋 代理端口列表已设置: {len(ports)} 个端口")
 
-    def get_available_ports(self) -> List[int]:
+    def get_available_ports(self) -> list[int]:
         """
         获取当前可用端口列表
 
         Returns:
             可用端口列表
         """
-        return sorted(list(self.available_ports))
+        return sorted(self.available_ports)
 
-    def get_healthy_ports(self) -> List[int]:
+    def get_healthy_ports(self) -> list[int]:
         """
         获取健康端口列表
 
@@ -171,14 +171,13 @@ class ProxyHealthChecker:
                     ip_address=ip_address,
                     error=""
                 )
-            else:
-                return HealthCheckResult(
-                    port=port,
-                    is_healthy=False,
-                    response_time=0,
-                    ip_address=None,
-                    error=f"TCP connection failed (code={result})"
-                )
+            return HealthCheckResult(
+                port=port,
+                is_healthy=False,
+                response_time=0,
+                ip_address=None,
+                error=f"TCP connection failed (code={result})"
+            )
 
         except socket.gaierror:
             return HealthCheckResult(
@@ -188,7 +187,7 @@ class ProxyHealthChecker:
                 ip_address=None,
                 error="DNS resolution failed"
             )
-        except socket.timeout:
+        except TimeoutError:
             return HealthCheckResult(
                 port=port,
                 is_healthy=False,
@@ -205,7 +204,7 @@ class ProxyHealthChecker:
                 error=str(e)
             )
 
-    async def _get_proxy_ip(self, port: int, timeout: float = 5.0) -> Optional[str]:
+    async def _get_proxy_ip(self, port: int, timeout: float = 5.0) -> str | None:
         """
         通过代理获取 IP 地址
 
@@ -290,7 +289,7 @@ class ProxyHealthChecker:
                         f"(连续失败 {status.consecutive_failures} 次): {result.error}"
                     )
 
-    async def check_all_ports(self, ports: Optional[List[int]] = None) -> Dict[int, HealthCheckResult]:
+    async def check_all_ports(self, ports: list[int] | None = None) -> dict[int, HealthCheckResult]:
         """
         检查所有端口的健康状态
 
@@ -325,7 +324,7 @@ class ProxyHealthChecker:
 
         return results
 
-    async def check_failed_ports(self) -> Dict[int, HealthCheckResult]:
+    async def check_failed_ports(self) -> dict[int, HealthCheckResult]:
         """
         检查失败端口是否恢复
 
@@ -371,10 +370,8 @@ class ProxyHealthChecker:
 
         if self._check_task:
             self._check_task.cancel()
-            try:
+            with contextlib.suppress(asyncio.CancelledError):
                 await self._check_task
-            except asyncio.CancelledError:
-                pass
 
         logger.info("⏹️  后台健康检查任务已停止")
 
@@ -401,10 +398,10 @@ class ProxyHealthChecker:
                 logger.info("⏹️  健康检查任务被取消")
                 break
             except Exception as e:
-                logger.error(f"❌ 健康检查任务出错: {e}")
+                logger.exception(f"❌ 健康检查任务出错: {e}")
                 await asyncio.sleep(self.check_interval)
 
-    def get_status_summary(self) -> Dict:
+    def get_status_summary(self) -> dict:
         """
         获取状态摘要
 
@@ -416,8 +413,8 @@ class ProxyHealthChecker:
             "available_ports": len(self.available_ports),
             "failed_ports": len(self.failed_ports),
             "is_running": self.is_running,
-            "available_port_list": sorted(list(self.available_ports)),
-            "failed_port_list": sorted(list(self.failed_ports)),
+            "available_port_list": sorted(self.available_ports),
+            "failed_port_list": sorted(self.failed_ports),
         }
 
 
@@ -473,14 +470,13 @@ def check_proxy_port_sync(host: str, port: int, timeout: float = 5.0) -> HealthC
                 ip_address=ip_address,
                 error=""
             )
-        else:
-            return HealthCheckResult(
-                port=port,
-                is_healthy=False,
-                response_time=0,
-                ip_address=None,
-                error=f"TCP connection failed (code={result})"
-            )
+        return HealthCheckResult(
+            port=port,
+            is_healthy=False,
+            response_time=0,
+            ip_address=None,
+            error=f"TCP connection failed (code={result})"
+        )
 
     except Exception as e:
         return HealthCheckResult(
@@ -497,7 +493,7 @@ def check_proxy_port_sync(host: str, port: int, timeout: float = 5.0) -> HealthC
 # ============================================================================
 
 def create_proxy_health_checker(
-    proxy_ports: List[int],
+    proxy_ports: list[int],
     proxy_host: str = "127.0.0.1",
     check_interval: int = 60,
 ) -> ProxyHealthChecker:
@@ -523,11 +519,10 @@ def create_proxy_health_checker(
 
 if __name__ == "__main__":
     # 测试代理健康检查
-    import sys
 
     logging.basicConfig(
         level=logging.INFO,
-        format='%(asctime)s | %(levelname)-8s | %(message)s'
+        format="%(asctime)s | %(levelname)-8s | %(message)s"
     )
 
     async def test():
@@ -543,27 +538,14 @@ if __name__ == "__main__":
         # 执行一次检查
         results = await checker.check_all_ports()
 
-        print("\n" + "=" * 60)
-        print("代理端口健康检查结果")
-        print("=" * 60)
 
-        for port, result in sorted(results.items()):
-            status = "✅ 健康" if result.is_healthy else "❌ 不可用"
-            print(f"端口 {port}: {status}")
+        for _port, result in sorted(results.items()):
             if result.ip_address:
-                print(f"   IP: {result.ip_address}")
+                pass
             if result.error:
-                print(f"   错误: {result.error}")
+                pass
 
-        print("\n" + "=" * 60)
-        print("状态摘要")
-        print("=" * 60)
 
-        summary = checker.get_status_summary()
-        print(f"总端口数: {summary['total_ports']}")
-        print(f"可用端口: {summary['available_ports']}")
-        print(f"失败端口: {summary['failed_ports']}")
-        print(f"可用端口列表: {summary['available_port_list']}")
-        print(f"失败端口列表: {summary['failed_port_list']}")
+        checker.get_status_summary()
 
     asyncio.run(test())

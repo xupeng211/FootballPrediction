@@ -145,7 +145,9 @@ def retry_with_exponential_backoff(
 
                     # 最后一次尝试失败，不再重试
                     if attempt == max_attempts - 1:
-                        logger.error(f"❌ 重试失败: {func.__name__}() (尝试 {attempt + 1}/{max_attempts})")
+                        logger.exception(
+                            f"❌ 重试失败: {func.__name__}() (尝试 {attempt + 1}/{max_attempts})"
+                        )
                         raise
 
                     # 计算延迟时间（指数退避 + 抖动）

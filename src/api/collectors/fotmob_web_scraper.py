@@ -74,7 +74,7 @@ class FotMobWebScraper:
 
         logger.info("FotMob 网页抓取器初始化完成")
 
-    def scrape_league_fixtures(self, league_id: int, date_str: str = None) -> list[ScrapedMatch]:
+    def scrape_league_fixtures(self, league_id: int, date_str: str | None = None) -> list[ScrapedMatch]:
         """
         抓取指定联赛的 fixtures
 
@@ -119,7 +119,7 @@ class FotMobWebScraper:
             try:
                 data = json.loads(json_text)
             except json.JSONDecodeError:
-                logger.error("无法解析 JSON 数据")
+                logger.exception("无法解析 JSON 数据")
                 return []
 
             # 提取比赛数据
@@ -130,10 +130,10 @@ class FotMobWebScraper:
             return matches
 
         except requests.RequestException as e:
-            logger.error(f"网络请求失败: {e}")
+            logger.exception(f"网络请求失败: {e}")
             return []
         except Exception as e:
-            logger.error(f"抓取失败: {e}")
+            logger.exception(f"抓取失败: {e}")
             return []
 
     def _extract_matches_from_data(self, data: dict, league_id: int) -> list[ScrapedMatch]:
@@ -197,7 +197,7 @@ class FotMobWebScraper:
                 )
 
         except Exception as e:
-            logger.error(f"解析比赛数据失败: {e}")
+            logger.exception(f"解析比赛数据失败: {e}")
 
         return matches
 
@@ -213,7 +213,9 @@ class FotMobWebScraper:
         }
         return names.get(league_id, f"League {league_id}")
 
-    def scrape_multiple_leagues(self, league_ids: list[int], max_matches: int = 50) -> list[ScrapedMatch]:
+    def scrape_multiple_leagues(
+        self, league_ids: list[int], max_matches: int = 50
+    ) -> list[ScrapedMatch]:
         """
         抓取多个联赛的比赛
 
@@ -246,29 +248,20 @@ class FotMobWebScraper:
 # ============================================
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+    logging.basicConfig(
+        level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    )
 
-    print("=" * 70)
-    print("FotMob 网页抓取器测试")
-    print("=" * 70)
 
     scraper = FotMobWebScraper()
 
     # 测试英超抓取
-    print("\n测试抓取英超 fixtures...")
     matches = scraper.scrape_league_fixtures(47)
 
-    print(f"\n抓取到 {len(matches)} 场比赛:")
-    print("-" * 70)
 
-    for i, match in enumerate(matches[:10], 1):
-        print(f"{i}. {match.home_team} vs {match.away_team}")
-        print(f"   Match ID: {match.match_id}")
-        print(f"   Time: {match.match_time}")
-        print(f"   Status: {match.status}")
-        print()
+    for _i, _match in enumerate(matches[:10], 1):
+        pass
 
     if len(matches) > 10:
-        print(f"... 还有 {len(matches) - 10} 场比赛")
+        pass
 
-    print("=" * 70)

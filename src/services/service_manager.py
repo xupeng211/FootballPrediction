@@ -32,7 +32,7 @@ class ServiceManager:
                     self.logger.error(f"服务初始化失败: {service.name}")
             except Exception as e:
                 success = False
-                self.logger.error(f"服务初始化异常: {service.name}, {e}")
+                self.logger.exception(f"服务初始化异常: {service.name}, {e}")
 
         return success
 
@@ -44,7 +44,7 @@ class ServiceManager:
             try:
                 await service.shutdown()
             except Exception as e:
-                self.logger.error(f"服务关闭异常: {service.name}, {e}")
+                self.logger.exception(f"服务关闭异常: {service.name}, {e}")
 
     def get_service(self, name: str) -> BaseService:
         """获取服务实例"""

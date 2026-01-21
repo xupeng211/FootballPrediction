@@ -50,7 +50,9 @@ class DataLeakageDetector:
         self.suspicious_features = []
         self.warnings = []
 
-    def detect_correlation_leakage(self, df: pd.DataFrame, target_col: str = "actual_result") -> dict:
+    def detect_correlation_leakage(
+        self, df: pd.DataFrame, target_col: str = "actual_result"
+    ) -> dict:
         """
         检测相关性泄露
 
@@ -87,7 +89,12 @@ class DataLeakageDetector:
             try:
                 corr, p_value = pearsonr(df[col].fillna(0), y)
                 correlations.append(
-                    {"feature": col, "correlation": corr, "abs_correlation": abs(corr), "p_value": p_value}
+                    {
+                        "feature": col,
+                        "correlation": corr,
+                        "abs_correlation": abs(corr),
+                        "p_value": p_value,
+                    }
                 )
 
                 # 检查是否泄露
@@ -114,7 +121,9 @@ class DataLeakageDetector:
         if suspicious:
             print("  🚨 可疑特征:")
             for feat in suspicious[:10]:
-                print(f"     - {feat['feature']}: r={feat['correlation']:.4f} (严重程度: {feat['severity']})")
+                print(
+                    f"     - {feat['feature']}: r={feat['correlation']:.4f} (严重程度: {feat['severity']})"
+                )
 
         return {
             "status": "PASS" if len(suspicious) == 0 else "FAIL",
@@ -123,7 +132,9 @@ class DataLeakageDetector:
             "all_correlations": correlations,
         }
 
-    def detect_mutual_info_leakage(self, df: pd.DataFrame, target_col: str = "actual_result") -> dict:
+    def detect_mutual_info_leakage(
+        self, df: pd.DataFrame, target_col: str = "actual_result"
+    ) -> dict:
         """
         检测互信息泄露
 
@@ -167,7 +178,11 @@ class DataLeakageDetector:
                 # 检查是否泄露
                 if mi_score > self.mutual_info_threshold:
                     suspicious.append(
-                        {"feature": col, "mutual_info": mi_score, "severity": "HIGH" if mi_score > 0.8 else "MEDIUM"}
+                        {
+                            "feature": col,
+                            "mutual_info": mi_score,
+                            "severity": "HIGH" if mi_score > 0.8 else "MEDIUM",
+                        }
                     )
 
             # 按互信息排序
@@ -179,7 +194,9 @@ class DataLeakageDetector:
             if suspicious:
                 print("  🚨 可疑特征:")
                 for feat in suspicious[:10]:
-                    print(f"     - {feat['feature']}: MI={feat['mutual_info']:.4f} (严重程度: {feat['severity']})")
+                    print(
+                        f"     - {feat['feature']}: MI={feat['mutual_info']:.4f} (严重程度: {feat['severity']})"
+                    )
 
             return {
                 "status": "PASS" if len(suspicious) == 0 else "FAIL",
@@ -191,7 +208,9 @@ class DataLeakageDetector:
         except Exception as e:
             return {"status": "ERROR", "message": f"互信息计算失败: {e}"}
 
-    def detect_perfect_prediction(self, df: pd.DataFrame, target_col: str = "actual_result") -> dict:
+    def detect_perfect_prediction(
+        self, df: pd.DataFrame, target_col: str = "actual_result"
+    ) -> dict:
         """
         检测完美预测特征
 
@@ -209,9 +228,9 @@ class DataLeakageDetector:
 
         # 转换目标为数值
         if df[target_col].dtype == "object":
-            y = (df[target_col] == "H").astype(int)
+            (df[target_col] == "H").astype(int)
         else:
-            y = df[target_col].astype(int)
+            df[target_col].astype(int)
 
         suspicious = []
 
@@ -249,7 +268,9 @@ class DataLeakageDetector:
         if suspicious:
             print("  🚨 可疑特征:")
             for feat in suspicious[:10]:
-                print(f"     - {feat['feature']}: 值={feat['value']}, 目标均值={feat['target_mean']:.2f}")
+                print(
+                    f"     - {feat['feature']}: 值={feat['value']}, 目标均值={feat['target_mean']:.2f}"
+                )
 
         return {
             "status": "PASS" if len(suspicious) == 0 else "FAIL",
@@ -299,7 +320,13 @@ class DataLeakageDetector:
             outlier_ratio = len(outliers) / len(df)
 
             if outlier_ratio > 0.1:  # 超过10%的异常值
-                suspicious.append({"feature": col, "issue": f"high_outliers_{outlier_ratio:.2%}", "severity": "LOW"})
+                suspicious.append(
+                    {
+                        "feature": col,
+                        "issue": f"high_outliers_{outlier_ratio:.2%}",
+                        "severity": "LOW",
+                    }
+                )
 
         print(f"  发现 {len(suspicious)} 个可疑特征")
 
@@ -405,7 +432,9 @@ def main():
 
     # 加载测试数据
     try:
-        df = pd.read_csv("/home/user/projects/FootballPrediction/data/combined_multi_season_odds.csv")
+        df = pd.read_csv(
+            "/home/user/projects/FootballPrediction/data/combined_multi_season_odds.csv"
+        )
         print(f"加载数据: {len(df)} 行 x {len(df.columns)} 列")
 
         # 执行检测

@@ -20,8 +20,8 @@ LineupProcessor - 阵容稳定性处理器（V23.0 扩展版）
 import logging
 from typing import Any
 
-from ..base import BaseProcessor, ProcessorConfig, ProcessorResult
-from ..models import LineupInfo, MatchData, PlayerStats
+from src.ml.feature_engine.base import BaseProcessor, ProcessorConfig, ProcessorResult
+from src.ml.feature_engine.models import LineupInfo, MatchData, PlayerStats
 
 logger = logging.getLogger(__name__)
 
@@ -114,7 +114,7 @@ class LineupProcessor(BaseProcessor[MatchData]):
             )
 
         except Exception as e:
-            logger.error(f"LineupProcessor failed: {e}")
+            logger.exception(f"LineupProcessor failed: {e}")
             return ProcessorResult.failure_result(str(e))
 
     def _analyze_lineup(self, lineup: LineupInfo, prefix: str) -> dict[str, float]:
@@ -175,8 +175,12 @@ class LineupProcessor(BaseProcessor[MatchData]):
 
         # 基础聚合
         features[f"{prefix}_agg_touches"] = float(sum(p.touches or 0 for p in players))
-        features[f"{prefix}_agg_accurate_passes"] = float(sum(p.accurate_passes or 0 for p in players))
-        features[f"{prefix}_agg_player_xg"] = round(sum(p.expected_goals or 0.0 for p in players), 3)
+        features[f"{prefix}_agg_accurate_passes"] = float(
+            sum(p.accurate_passes or 0 for p in players)
+        )
+        features[f"{prefix}_agg_player_xg"] = round(
+            sum(p.expected_goals or 0.0 for p in players), 3
+        )
         features[f"{prefix}_agg_player_shots"] = float(sum(p.total_shots or 0 for p in players))
 
         # 出场时间
@@ -188,7 +192,9 @@ class LineupProcessor(BaseProcessor[MatchData]):
             features[f"{prefix}_avg_minutes_played"] = 0.0
 
         # 替补统计
-        substitution_count = len([p for p in players if not p.is_starter and (p.minutes_played or 0) > 0])
+        substitution_count = len(
+            [p for p in players if not p.is_starter and (p.minutes_played or 0) > 0]
+        )
         features[f"{prefix}_substitution_count"] = float(substitution_count)
 
         return features
@@ -235,33 +241,53 @@ class LineupProcessor(BaseProcessor[MatchData]):
         ]:
             if pos_players:
                 # 触球统计
-                features[f"{prefix}_{pos_name}_touches"] = float(sum(p.touches or 0 for p in pos_players))
-                features[f"{prefix}_{pos_name}_passes"] = float(sum(p.accurate_passes or 0 for p in pos_players))
-                features[f"{prefix}_{pos_name}_xg"] = round(sum(p.expected_goals or 0.0 for p in pos_players), 3)
-                features[f"{prefix}_{pos_name}_shots"] = float(sum(p.total_shots or 0 for p in pos_players))
+                features[f"{prefix}_{pos_name}_touches"] = float(
+                    sum(p.touches or 0 for p in pos_players)
+                )
+                features[f"{prefix}_{pos_name}_passes"] = float(
+                    sum(p.accurate_passes or 0 for p in pos_players)
+                )
+                features[f"{prefix}_{pos_name}_xg"] = round(
+                    sum(p.expected_goals or 0.0 for p in pos_players), 3
+                )
+                features[f"{prefix}_{pos_name}_shots"] = float(
+                    sum(p.total_shots or 0 for p in pos_players)
+                )
 
                 # 评分统计
                 ratings = [p.team_rating or 0 for p in pos_players]
                 import statistics
 
-                features[f"{prefix}_{pos_name}_avg_rating"] = round(statistics.mean(ratings), 2) if ratings else 0.0
-                features[f"{prefix}_{pos_name}_max_rating"] = round(max(ratings), 2) if ratings else 0.0
-                features[f"{prefix}_{pos_name}_min_rating"] = round(min(ratings), 2) if ratings else 0.0
+                features[f"{prefix}_{pos_name}_avg_rating"] = (
+                    round(statistics.mean(ratings), 2) if ratings else 0.0
+                )
+                features[f"{prefix}_{pos_name}_max_rating"] = (
+                    round(max(ratings), 2) if ratings else 0.0
+                )
+                features[f"{prefix}_{pos_name}_min_rating"] = (
+                    round(min(ratings), 2) if ratings else 0.0
+                )
 
                 # 年龄统计
                 ages = [p.age or 0 for p in pos_players]
-                features[f"{prefix}_{pos_name}_avg_age"] = round(statistics.mean(ages), 1) if ages else 0.0
+                features[f"{prefix}_{pos_name}_avg_age"] = (
+                    round(statistics.mean(ages), 1) if ages else 0.0
+                )
                 features[f"{prefix}_{pos_name}_total_age"] = float(sum(ages))
 
                 # 身价统计
                 values = [p.market_value or 0 for p in pos_players]
                 features[f"{prefix}_{pos_name}_total_value"] = round(sum(values), 2)
-                features[f"{prefix}_{pos_name}_avg_value"] = round(statistics.mean(values), 2) if values else 0.0
+                features[f"{prefix}_{pos_name}_avg_value"] = (
+                    round(statistics.mean(values), 2) if values else 0.0
+                )
 
                 # 出场时间
                 minutes = [p.minutes_played or 0 for p in pos_players]
                 features[f"{prefix}_{pos_name}_total_minutes"] = float(sum(minutes))
-                features[f"{prefix}_{pos_name}_avg_minutes"] = round(statistics.mean(minutes), 1) if minutes else 0.0
+                features[f"{prefix}_{pos_name}_avg_minutes"] = (
+                    round(statistics.mean(minutes), 1) if minutes else 0.0
+                )
 
                 # 球员数量
                 features[f"{prefix}_{pos_name}_count"] = float(len(pos_players))
@@ -301,12 +327,16 @@ class LineupProcessor(BaseProcessor[MatchData]):
             features[f"{prefix}_bench_count"] = float(len(bench_players))
             bench_values = [p.market_value or 0 for p in bench_players]
             features[f"{prefix}_bench_total_value"] = round(sum(bench_values), 2)
-            features[f"{prefix}_bench_avg_value"] = round(statistics.mean(bench_values), 2) if bench_values else 0.0
+            features[f"{prefix}_bench_avg_value"] = (
+                round(statistics.mean(bench_values), 2) if bench_values else 0.0
+            )
 
             # 替补出场时间
             bench_minutes = [p.minutes_played or 0 for p in bench_players]
             features[f"{prefix}_bench_total_minutes"] = float(sum(bench_minutes))
-            features[f"{prefix}_bench_avg_minutes"] = round(statistics.mean(bench_minutes), 1) if bench_minutes else 0.0
+            features[f"{prefix}_bench_avg_minutes"] = (
+                round(statistics.mean(bench_minutes), 1) if bench_minutes else 0.0
+            )
         else:
             features[f"{prefix}_bench_count"] = 0.0
             features[f"{prefix}_bench_total_value"] = 0.0
@@ -335,7 +365,9 @@ class LineupProcessor(BaseProcessor[MatchData]):
         away_value = features.get("away_total_value", 0)
 
         if home_value > 0 and away_value > 0:
-            comparison_features["lineup_value_ratio"] = round(home_value / (home_value + away_value), 4)
+            comparison_features["lineup_value_ratio"] = round(
+                home_value / (home_value + away_value), 4
+            )
             comparison_features["diff_lineup_value"] = round(home_value - away_value, 2)
         else:
             comparison_features["lineup_value_ratio"] = 0.5
@@ -352,7 +384,9 @@ class LineupProcessor(BaseProcessor[MatchData]):
 
         if home_touches > 0 or away_touches > 0:
             total = home_touches + away_touches
-            comparison_features["home_touches_ratio"] = round(home_touches / total if total > 0 else 0.5, 4)
+            comparison_features["home_touches_ratio"] = round(
+                home_touches / total if total > 0 else 0.5, 4
+            )
         else:
             comparison_features["home_touches_ratio"] = 0.5
 

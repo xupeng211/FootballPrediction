@@ -22,15 +22,17 @@ Version: V41.186 "终极缝合"
 
 from __future__ import annotations
 
-import logging
 from dataclasses import dataclass
-from datetime import datetime, timedelta
-from typing import Any
+import logging
+from typing import TYPE_CHECKING, Any
 
 import psycopg2
 from psycopg2.extras import RealDictCursor
 
 from src.config_unified import get_config, get_database_url
+
+if TYPE_CHECKING:
+    from datetime import datetime
 
 logger = logging.getLogger("V41.186")
 
@@ -39,9 +41,11 @@ logger = logging.getLogger("V41.186")
 # 数据模型
 # =============================================================================
 
+
 @dataclass
 class MatchAlignment:
     """比赛对齐数据"""
+
     match_id: str
     fotmob_id: str | None = None
     oddsportal_hash: str | None = None
@@ -56,16 +60,17 @@ class MatchAlignment:
     def is_valid(self) -> bool:
         """检查对齐是否有效"""
         return (
-            self.match_id and
-            self.oddsportal_hash and
-            self.time_valid and
-            self.alignment_confidence >= 0.7
+            self.match_id
+            and self.oddsportal_hash
+            and self.time_valid
+            and self.alignment_confidence >= 0.7
         )
 
 
 @dataclass
 class MissingOddsMatch:
     """缺失赔率的比赛"""
+
     match_id: str
     league_name: str
     season: str
@@ -83,6 +88,7 @@ class MissingOddsMatch:
 # =============================================================================
 # MatchAligner - 核心对齐引擎
 # =============================================================================
+
 
 class MatchAligner:
     """V41.186 比赛对齐器 - 数据源对齐审计"""
@@ -153,29 +159,28 @@ class MatchAligner:
 
             matches = []
             for row in rows:
-                matches.append(MissingOddsMatch(
-                    match_id=row['match_id'],
-                    league_name=row['league_name'],
-                    season=row['season'],
-                    home_team=row['home_team'],
-                    away_team=row['away_team'],
-                    match_time=row['match_date'],
-                    has_hash=row['has_hash'],
-                    has_url=row['has_url']
-                ))
+                matches.append(
+                    MissingOddsMatch(
+                        match_id=row["match_id"],
+                        league_name=row["league_name"],
+                        season=row["season"],
+                        home_team=row["home_team"],
+                        away_team=row["away_team"],
+                        match_time=row["match_date"],
+                        has_hash=row["has_hash"],
+                        has_url=row["has_url"],
+                    )
+                )
 
             logger.info(f"📊 找到 {len(matches)} 场缺失赔率的比赛")
             return matches
 
         except Exception as e:
-            logger.error(f"❌ 查询缺失赔率比赛失败: {e}")
+            logger.exception(f"❌ 查询缺失赔率比赛失败: {e}")
             return []
 
     def validate_alignment(
-        self,
-        match_id: str,
-        oddsportal_hash: str,
-        oddsportal_time: datetime | None = None
+        self, match_id: str, oddsportal_hash: str, oddsportal_time: datetime | None = None
     ) -> MatchAlignment:
         """
         验证比赛对齐
@@ -204,17 +209,17 @@ class MatchAligner:
                     match_id=match_id,
                     time_valid=False,
                     alignment_confidence=0.0,
-                    notes="match_id 不存在于 matches 表"
+                    notes="match_id 不存在于 matches 表",
                 )
 
-            fotmob_time = row['match_date']
+            fotmob_time = row["match_date"]
             alignment = MatchAlignment(
                 match_id=match_id,
                 fotmob_id=match_id,
                 oddsportal_hash=oddsportal_hash,
                 fotmob_time=fotmob_time,
                 oddsportal_time=oddsportal_time,
-                notes=""
+                notes="",
             )
 
             # 验证 hash 格式
@@ -231,10 +236,14 @@ class MatchAligner:
 
                 if time_diff > self.TIME_DIFF_THRESHOLD:
                     alignment.time_valid = False
-                    alignment.notes += f"时差过大 ({time_diff:.1f}h > {self.TIME_DIFF_THRESHOLD}h)；"
+                    alignment.notes += (
+                        f"时差过大 ({time_diff:.1f}h > {self.TIME_DIFF_THRESHOLD}h)；"
+                    )
                     alignment.alignment_confidence = max(0, 1.0 - (time_diff / 10))
                 else:
-                    alignment.alignment_confidence = 1.0 - (time_diff / self.TIME_DIFF_THRESHOLD) * 0.1
+                    alignment.alignment_confidence = (
+                        1.0 - (time_diff / self.TIME_DIFF_THRESHOLD) * 0.1
+                    )
 
             # 如果没有提供时间，默认认为有效
             else:
@@ -249,13 +258,13 @@ class MatchAligner:
             return alignment
 
         except Exception as e:
-            logger.error(f"❌ 验证对齐失败: {e}")
+            logger.exception(f"❌ 验证对齐失败: {e}")
             return MatchAlignment(
                 match_id=match_id,
                 oddsportal_hash=oddsportal_hash,
                 time_valid=False,
                 alignment_confidence=0.0,
-                notes=f"验证失败: {str(e)}"
+                notes=f"验证失败: {e!s}",
             )
 
     def _validate_hash_format(self, hash_value: str) -> bool:
@@ -287,7 +296,7 @@ class MatchAligner:
         oddsportal_hash: str,
         oddsportal_url: str,
         mapping_method: str = "v41_186_auto",
-        confidence: float = 1.0
+        confidence: float = 1.0,
     ) -> bool:
         """
         保存对齐记录到 matches_mapping 表
@@ -317,10 +326,10 @@ class MatchAligner:
         """
 
         try:
-            cursor.execute(query, (
-                match_id, oddsportal_hash, oddsportal_url, match_id,
-                mapping_method, confidence
-            ))
+            cursor.execute(
+                query,
+                (match_id, oddsportal_hash, oddsportal_url, match_id, mapping_method, confidence),
+            )
             conn.commit()
 
             logger.info(f"✅ 保存对齐记录: {match_id} -> {oddsportal_hash}")
@@ -328,7 +337,7 @@ class MatchAligner:
 
         except Exception as e:
             conn.rollback()
-            logger.error(f"❌ 保存对齐记录失败: {e}")
+            logger.exception(f"❌ 保存对齐记录失败: {e}")
             return False
 
     # ========================================================================
@@ -344,7 +353,7 @@ class MatchAligner:
 
         # 总比赛数
         cursor.execute("SELECT COUNT(*) as total FROM matches WHERE technical_features IS NOT NULL")
-        stats['total_matches'] = cursor.fetchone()['total']
+        stats["total_matches"] = cursor.fetchone()["total"]
 
         # 有 hash 的数量
         cursor.execute("""
@@ -352,29 +361,29 @@ class MatchAligner:
             LEFT JOIN matches_mapping mm ON m.match_id = mm.fotmob_id
             WHERE mm.oddsportal_hash IS NOT NULL
         """)
-        stats['has_hash'] = cursor.fetchone()['count']
+        stats["has_hash"] = cursor.fetchone()["count"]
 
         # 缺失 hash 的数量
-        stats['missing_hash'] = stats['total_matches'] - stats['has_hash']
+        stats["missing_hash"] = stats["total_matches"] - stats["has_hash"]
 
         # 有赔率数据的数量
         cursor.execute("""
             SELECT COUNT(DISTINCT match_id) as count FROM odds
             WHERE bookmaker = 'Pinnacle' AND home_odds IS NOT NULL
         """)
-        stats['has_odds'] = cursor.fetchone()['count']
+        stats["has_odds"] = cursor.fetchone()["count"]
 
         # 对齐率
-        if stats['total_matches'] > 0:
-            stats['alignment_rate'] = stats['has_hash'] / stats['total_matches'] * 100
+        if stats["total_matches"] > 0:
+            stats["alignment_rate"] = stats["has_hash"] / stats["total_matches"] * 100
         else:
-            stats['alignment_rate'] = 0.0
+            stats["alignment_rate"] = 0.0
 
         # 赔率覆盖率
-        if stats['total_matches'] > 0:
-            stats['odds_coverage'] = stats['has_odds'] / stats['total_matches'] * 100
+        if stats["total_matches"] > 0:
+            stats["odds_coverage"] = stats["has_odds"] / stats["total_matches"] * 100
         else:
-            stats['odds_coverage'] = 0.0
+            stats["odds_coverage"] = 0.0
 
         return stats
 
@@ -382,6 +391,7 @@ class MatchAligner:
 # =============================================================================
 # 便捷函数
 # =============================================================================
+
 
 def get_match_aligner() -> MatchAligner:
     """获取 MatchAligner 实例"""
@@ -396,14 +406,12 @@ if __name__ == "__main__":
 
     # 获取统计
     stats = aligner.get_alignment_stats()
-    print("\n📊 对齐统计:")
-    for key, value in stats.items():
-        print(f"  {key}: {value}")
+    for _key, _value in stats.items():
+        pass
 
     # 获取缺失赔率的比赛（前 10 场）
-    print("\n🔍 缺失赔率的比赛（前 10 场）:")
     missing = aligner.get_missing_odds_matches(limit=10)
-    for m in missing[:5]:
-        print(f"  {m.match_id}: {m.home_team} vs {m.away_team} ({m.match_time.date()})")
+    for _m in missing[:5]:
+        pass
 
     aligner.close()

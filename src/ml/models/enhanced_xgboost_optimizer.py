@@ -55,7 +55,7 @@ class EnhancedXGBooostOptimizer:
                 self.feature_analyzer = FootballFeatureAnalyzer()
                 logger.info("✅ 机器学习工程组件初始化成功")
             except Exception as e:
-                logger.error(f"机器学习工程组件初始化失败: {e}")
+                logger.exception(f"机器学习工程组件初始化失败: {e}")
                 self.prediction_optimizer = None
                 self.feature_analyzer = None
         else:
@@ -90,7 +90,7 @@ class EnhancedXGBooostOptimizer:
                 logger.info(f"✅ Optuna优化完成: 准确率 {best_score:.4f}")
                 return best_params, best_score
             except Exception as e:
-                logger.error(f"Optuna优化失败: {e}")
+                logger.exception(f"Optuna优化失败: {e}")
                 logger.info("降级到手动优化")
 
         # 手动优化（降级方案）
@@ -128,7 +128,7 @@ class EnhancedXGBooostOptimizer:
         logger.info(f"手动网格搜索: {total_combinations} 种参数组合")
 
         for i, combination in enumerate(product(*values)):
-            params = dict(zip(keys, combination))
+            params = dict(zip(keys, combination, strict=False))
 
             # 设置固定参数
             params.update(
@@ -165,7 +165,9 @@ class EnhancedXGBooostOptimizer:
 
         return best_params
 
-    def enhance_features(self, df: pd.DataFrame, target_col: str = "target") -> tuple[pd.DataFrame, list[str]]:
+    def enhance_features(
+        self, df: pd.DataFrame, target_col: str = "target"
+    ) -> tuple[pd.DataFrame, list[str]]:
         """
         特征工程增强
         """
@@ -190,7 +192,7 @@ class EnhancedXGBooostOptimizer:
                 return X_selected, selected_features
 
             except Exception as e:
-                logger.error(f"特征工程增强失败: {e}")
+                logger.exception(f"特征工程增强失败: {e}")
                 logger.info("使用基础特征处理")
 
         # 基础特征处理
@@ -209,9 +211,8 @@ class EnhancedXGBooostOptimizer:
                 logger.info(f"删除特征: {features}")
 
         # 创建新特征
-        df_enhanced = self._create_interaction_features(df_enhanced)
+        return self._create_interaction_features(df_enhanced)
 
-        return df_enhanced
 
     def _create_interaction_features(self, df: pd.DataFrame) -> pd.DataFrame:
         """创建交互特征"""
@@ -228,15 +229,16 @@ class EnhancedXGBooostOptimizer:
 
         return df_enhanced
 
-    def _basic_feature_engineering(self, df: pd.DataFrame, target_col: str) -> tuple[pd.DataFrame, list[str]]:
+    def _basic_feature_engineering(
+        self, df: pd.DataFrame, target_col: str
+    ) -> tuple[pd.DataFrame, list[str]]:
         """基础特征工程"""
         # 分离特征和目标
         if target_col in df.columns:
             X = df.drop(columns=[target_col])
-            y = df[target_col]
+            df[target_col]
         else:
             X = df
-            y = None
 
         # 基础清理
         # 移除常数特征
@@ -249,7 +251,7 @@ class EnhancedXGBooostOptimizer:
             high_corr_pairs = np.where(np.triu(corr_matrix, 1) > 0.95)
             cols_to_drop = set()
 
-            for i, j in zip(*high_corr_pairs):
+            for i, j in zip(*high_corr_pairs, strict=False):
                 if i < len(X.columns):
                     cols_to_drop.add(X.columns[j])
 
@@ -343,14 +345,16 @@ class EnhancedXGBooostOptimizer:
         # 预测
         start_time = time.time()
         y_pred = self.model.predict(X_test)
-        y_proba = self.model.predict_proba(X_test)
+        self.model.predict_proba(X_test)
         inference_time = time.time() - start_time
 
         # 基础指标
         accuracy = accuracy_score(y_test, y_pred)
 
         # 详细报告
-        class_report = classification_report(y_test, y_pred, target_names=["HOME", "DRAW", "AWAY"], output_dict=True)
+        class_report = classification_report(
+            y_test, y_pred, target_names=["HOME", "DRAW", "AWAY"], output_dict=True
+        )
 
         # 混淆矩阵
         conf_matrix = confusion_matrix(y_test, y_pred)
@@ -368,7 +372,9 @@ class EnhancedXGBooostOptimizer:
             "classification_report": class_report,
             "confusion_matrix": conf_matrix.tolist(),
             "feature_importance": (
-                self.feature_importance.to_dict("records") if self.feature_importance is not None else None
+                self.feature_importance.to_dict("records")
+                if self.feature_importance is not None
+                else None
             ),
             "training_history": (self.training_history[-1] if self.training_history else None),
         }
@@ -431,7 +437,9 @@ class EnhancedXGBooostOptimizer:
             "target_latency_ms": self.target_latency_ms,
             "best_score": self.best_score,
             "best_params": self.best_params,
-            "feature_count": (len(self.feature_importance) if self.feature_importance is not None else 0),
+            "feature_count": (
+                len(self.feature_importance) if self.feature_importance is not None else 0
+            ),
             "training_history": self.training_history,
             "ml_engineering_enabled": ML_ENGINEERING_ENABLED,
         }
@@ -451,11 +459,15 @@ async def quick_optimize_pipeline(
     y = df[target_col]
 
     # 数据分割
-    X_train, X_temp, y_train, y_temp = train_test_split(X, y, test_size=0.3, random_state=42, stratify=y)
-    X_val, X_test, y_val, y_test = train_test_split(X_temp, y_temp, test_size=0.5, random_state=42, stratify=y_temp)
+    X_train, X_temp, y_train, y_temp = train_test_split(
+        X, y, test_size=0.3, random_state=42, stratify=y
+    )
+    X_val, X_test, y_val, y_test = train_test_split(
+        X_temp, y_temp, test_size=0.5, random_state=42, stratify=y_temp
+    )
 
     # 超参数优化
-    best_params, best_score = optimizer.optimize_hyperparameters(X_train, y_train, X_val, y_val)
+    best_params, _best_score = optimizer.optimize_hyperparameters(X_train, y_train, X_val, y_val)
 
     # 训练最终模型
     model = optimizer.train_model(X_train, y_train, X_val, y_val, best_params)

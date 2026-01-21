@@ -5,14 +5,15 @@ MLOps Retraining Service 隔离单元测试套件
 """
 
 import json
-import pytest
+import shutil
+import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
-import tempfile
-import shutil
-import pandas as pd
+from unittest.mock import MagicMock, Mock, patch
+
 import numpy as np
+import pandas as pd
+import pytest
 import xgboost as xgb
 
 

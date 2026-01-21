@@ -28,8 +28,7 @@ Example:
     ...     # Browser launched once
     ...     async for match in matches:
     ...         result = await extractor.extract_match(
-    ...             page=extractor.get_new_page(),
-    ...             match_id=match['match_id']
+    ...             page=extractor.get_new_page(), match_id=match["match_id"]
     ...         )
     ...     # Browser closed automatically on exit
 """
@@ -91,6 +90,7 @@ REFERERS = [
 @dataclass
 class PooledExtractionResult:
     """Result from pooled extraction session."""
+
     total_matches: int = 0
     successful: int = 0
     failed: int = 0
@@ -120,7 +120,12 @@ class PooledOddsExtractor:
         ```
     """
 
-    def __init__(self, headless: bool = False, slow_mo: int = 0, random_delay_range: tuple[int, int] = (15, 45)):
+    def __init__(
+        self,
+        headless: bool = False,
+        slow_mo: int = 0,
+        random_delay_range: tuple[int, int] = (15, 45),
+    ):
         """Initialize the pooled extractor with V64.0 Chameleon Protocol.
 
         Args:
@@ -188,15 +193,18 @@ class PooledOddsExtractor:
         self._browser = await self._playwright.chromium.launch(**launch_options)
 
         # V64.0: Use random fingerprint for each session
-        logger.info(f"[PooledExtractor] Fingerprint: viewport={self._current_viewport}, "
-                   f"UA=Chrome/{'.'.join(self._current_user_agent.split('Chrome/')[1].split('.')[0:2])}")
-
-        self._context = await self._browser.new_context(
-            viewport=self._current_viewport,
-            user_agent=self._current_user_agent
+        logger.info(
+            f"[PooledExtractor] Fingerprint: viewport={self._current_viewport}, "
+            f"UA=Chrome/{'.'.join(self._current_user_agent.split('Chrome/')[1].split('.')[0:2])}"
         )
 
-        logger.info(f"[PooledExtractor] ✓ Browser launched in {datetime.now().timestamp() - self._browser_launched_at:.2f}s")
+        self._context = await self._browser.new_context(
+            viewport=self._current_viewport, user_agent=self._current_user_agent
+        )
+
+        logger.info(
+            f"[PooledExtractor] ✓ Browser launched in {datetime.now().timestamp() - self._browser_launched_at:.2f}s"
+        )
 
     async def _close_browser(self) -> None:
         """Close the browser instance."""
@@ -225,7 +233,9 @@ class PooledOddsExtractor:
         if self._browser is None:
             return
 
-        logger.info(f"[PooledExtractor] Resetting context (after {self._context_match_count} matches)...")
+        logger.info(
+            f"[PooledExtractor] Resetting context (after {self._context_match_count} matches)..."
+        )
         await self._context.close()
 
         # Generate new fingerprint
@@ -233,8 +243,7 @@ class PooledOddsExtractor:
         self._current_user_agent = random.choice(USER_AGENTS)
 
         self._context = await self._browser.new_context(
-            viewport=self._current_viewport,
-            user_agent=self._current_user_agent
+            viewport=self._current_viewport, user_agent=self._current_user_agent
         )
 
         self._context_match_count = 0
@@ -294,14 +303,14 @@ class PooledOddsExtractor:
                     break
             logger.debug("[PooledExtractor] Closed page")
         except Exception as e:
-            logger.error(f"[PooledExtractor] Error closing page: {e}")
+            logger.exception(f"[PooledExtractor] Error closing page: {e}")
 
     async def extract_match(
         self,
         page: Page,
         url: str,
         entity_code: str = "Entity_P",
-        match_date: datetime | None = None
+        match_date: datetime | None = None,
     ) -> dict[str, Any] | None:
         """Extract odds data for a single match with V64.0 Chameleon Protocol.
 
@@ -340,12 +349,7 @@ class PooledOddsExtractor:
 
             # Navigate to match URL with referer
             start_time = datetime.now().timestamp()
-            await page.goto(
-                url,
-                wait_until="domcontentloaded",
-                timeout=30000,
-                referer=referer
-            )
+            await page.goto(url, wait_until="domcontentloaded", timeout=30000, referer=referer)
             nav_time = datetime.now().timestamp() - start_time
 
             logger.info(f"[PooledExtractor] Page loaded in {nav_time:.2f}s")
@@ -371,7 +375,7 @@ class PooledOddsExtractor:
             return result
 
         except Exception as e:
-            logger.error(f"[PooledExtractor] Extraction error: {e}")
+            logger.exception(f"[PooledExtractor] Extraction error: {e}")
             self._stats["failed_extractions"] += 1
 
             # V63.0 Visual Debugging: Capture failure state
@@ -392,13 +396,16 @@ class PooledOddsExtractor:
                 logger.info(f"[PooledExtractor] HTML saved: {html_path}")
 
                 # Check for Cloudflare / CAPTCHA indicators
-                if "challenge-platform" in html_content.lower() or "cf-challenge" in html_content.lower():
+                if (
+                    "challenge-platform" in html_content.lower()
+                    or "cf-challenge" in html_content.lower()
+                ):
                     logger.warning("[PooledExtractor] ⚠️  Cloudflare challenge detected!")
                 elif "captcha" in html_content.lower():
                     logger.warning("[PooledExtractor] ⚠️  CAPTCHA detected!")
 
             except Exception as debug_error:
-                logger.error(f"[PooledExtractor] Failed to save debug artifacts: {debug_error}")
+                logger.exception(f"[PooledExtractor] Failed to save debug artifacts: {debug_error}")
 
             return {
                 "hover_failed": True,
@@ -414,10 +421,7 @@ class PooledOddsExtractor:
             }
 
     async def _hover_extract(
-        self,
-        page: Page,
-        entity_code: str,
-        match_date: datetime | None
+        self, page: Page, entity_code: str, match_date: datetime | None
     ) -> dict[str, Any] | None:
         """Perform hover extraction (V58.0 logic)."""
         real_name = "Pinnacle"  # Hardcoded for Entity_P
@@ -485,53 +489,47 @@ class PooledOddsExtractor:
 
                             await asyncio.sleep(POLLING_TOOLTIP_DELAY_MS / 1000)
 
-                        return {
-                            "hover_failed": True,
-                            "hover_error": "No tooltip found"
-                        }
+                        return {"hover_failed": True, "hover_error": "No tooltip found"}
 
                 except Exception:
                     continue
 
-            return {
-                "hover_failed": True,
-                "hover_error": f"Bookmaker {real_name} not found"
-            }
+            return {"hover_failed": True, "hover_error": f"Bookmaker {real_name} not found"}
 
         except Exception as e:
-            logger.error(f"[PooledExtractor] Hover extraction error: {e}")
-            return {
-                "hover_failed": True,
-                "hover_error": f"Exception: {e!s}"
-            }
+            logger.exception(f"[PooledExtractor] Hover extraction error: {e}")
+            return {"hover_failed": True, "hover_error": f"Exception: {e!s}"}
 
     def _parse_tooltip(self, tooltip_text: str, match_year: int) -> dict[str, Any]:
         """Parse tooltip text to extract opening odds."""
         match = TOOLTIP_OPENING_PATTERN.search(tooltip_text)
 
         if not match:
-            return {
-                "hover_failed": True,
-                "hover_error": "Cannot parse tooltip"
-            }
+            return {"hover_failed": True, "hover_error": "Cannot parse tooltip"}
 
         day, month_str, hour, minute, odd_value = match.groups()
-        month = {"Jan": 1, "Feb": 2, "Mar": 3, "Apr": 4, "May": 5, "Jun": 6,
-                "Jul": 7, "Aug": 8, "Sep": 9, "Oct": 10, "Nov": 11, "Dec": 12}[month_str]
+        month = {
+            "Jan": 1,
+            "Feb": 2,
+            "Mar": 3,
+            "Apr": 4,
+            "May": 5,
+            "Jun": 6,
+            "Jul": 7,
+            "Aug": 8,
+            "Sep": 9,
+            "Oct": 10,
+            "Nov": 11,
+            "Dec": 12,
+        }[month_str]
 
         if not month:
-            return {
-                "hover_failed": True,
-                "hover_error": f"Invalid month: {month_str}"
-            }
+            return {"hover_failed": True, "hover_error": f"Invalid month: {month_str}"}
 
         try:
             timestamp = datetime(match_year, month, int(day), int(hour), int(minute))
         except ValueError as e:
-            return {
-                "hover_failed": True,
-                "hover_error": f"Invalid timestamp: {e}"
-            }
+            return {"hover_failed": True, "hover_error": f"Invalid timestamp: {e}"}
 
         return {
             "hover_failed": False,
@@ -559,7 +557,9 @@ class PooledOddsExtractor:
 
 
 @asynccontextmanager
-async def create_pooled_extractor(headless: bool = False) -> AsyncGenerator[PooledOddsExtractor, None]:
+async def create_pooled_extractor(
+    headless: bool = False,
+) -> AsyncGenerator[PooledOddsExtractor, None]:
     """Convenience function to create a pooled extractor.
 
     Example:
@@ -578,9 +578,7 @@ async def create_pooled_extractor(headless: bool = False) -> AsyncGenerator[Pool
 
 
 async def extract_batch_pooled(
-    matches: list[dict[str, Any]],
-    headless: bool = False,
-    batch_size: int = 10
+    matches: list[dict[str, Any]], headless: bool = False, batch_size: int = 10
 ) -> PooledExtractionResult:
     """Extract a batch of matches using browser pooling.
 
@@ -606,31 +604,41 @@ async def extract_batch_pooled(
                     page=page,
                     url=match["url"],
                     entity_code="Entity_P",
-                    match_date=match.get("match_date")
+                    match_date=match.get("match_date"),
                 )
 
-                result.results.append({
-                    "match_id": match.get("match_id"),
-                    "url": match["url"],
-                    "result": extraction_result
-                })
+                result.results.append(
+                    {
+                        "match_id": match.get("match_id"),
+                        "url": match["url"],
+                        "result": extraction_result,
+                    }
+                )
 
                 await extractor.close_page(page)
 
                 # Every batch_size matches, take a short break
                 if (i + 1) % batch_size == 0:
-                    logger.info(f"[PooledExtractor] Processed {i + 1}/{len(matches)} matches, taking a short break...")
+                    logger.info(
+                        f"[PooledExtractor] Processed {i + 1}/{len(matches)} matches, taking a short break..."
+                    )
                     await asyncio.sleep(2)
 
             except Exception as e:
-                logger.error(f"[PooledExtractor] Error processing match {match.get('match_id')}: {e}")
+                logger.exception(
+                    f"[PooledExtractor] Error processing match {match.get('match_id')}: {e}"
+                )
                 result.failed += 1
 
     result.session_time = datetime.now().timestamp() - result._session_started_at
     result.successful = result.total_matches - result.failed
 
-    logger.info(f"[PooledExtractor] Batch complete: {result.successful}/{result.total_matches} successful")
+    logger.info(
+        f"[PooledExtractor] Batch complete: {result.successful}/{result.total_matches} successful"
+    )
     logger.info(f"[PooledExtractor] Total time: {result.session_time:.2f}s")
-    logger.info(f"[PooledExtractor] Avg per match: {result.session_time / result.total_matches:.2f}s")
+    logger.info(
+        f"[PooledExtractor] Avg per match: {result.session_time / result.total_matches:.2f}s"
+    )
 
     return result

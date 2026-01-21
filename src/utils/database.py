@@ -34,7 +34,13 @@ def get_db_config() -> DBConfig:
 
         settings = get_settings()
         db = settings.database
-        return DBConfig(host=db.host, port=db.port, name=db.name, user=db.user, password=db.password.get_secret_value())
+        return DBConfig(
+            host=db.host,
+            port=db.port,
+            name=db.name,
+            user=db.user,
+            password=db.password.get_secret_value(),
+        )
     except Exception:
         # 默认配置
         return DBConfig(
@@ -91,21 +97,20 @@ class DatabaseManager:
         conn = None
         try:
             conn = self.pool.getconn()
-            if dict_cursor:
-                cursor_class = RealDictCursor
-            else:
-                cursor_class = DictCursor
+            cursor_class = RealDictCursor if dict_cursor else DictCursor
             cursor = conn.cursor(cursor_factory=cursor_class)
             yield conn, cursor
-        except Exception as e:
+        except Exception:
             if conn:
                 conn.rollback()
-            raise e
+            raise
         finally:
             if conn:
                 self.pool.putconn(conn)
 
-    def execute_query(self, query: str, params: tuple = None, fetch: str = "all") -> list[dict] | dict | None:
+    def execute_query(
+        self, query: str, params: tuple | None = None, fetch: str = "all"
+    ) -> list[dict] | dict | None:
         """执行查询"""
         if not self.is_available():
             logger.warning("数据库不可用，跳过查询")
@@ -125,7 +130,7 @@ class DatabaseManager:
                     return None
 
         except Exception as e:
-            logger.error(f"查询执行失败: {e}")
+            logger.exception(f"查询执行失败: {e}")
             return None
 
     def execute_many(self, query: str, data_list: list[tuple]) -> bool:
@@ -142,7 +147,7 @@ class DatabaseManager:
                 return True
 
         except Exception as e:
-            logger.error(f"批量执行失败: {e}")
+            logger.exception(f"批量执行失败: {e}")
             return False
 
     def create_table_if_not_exists(self, table_name: str, create_sql: str) -> bool:
@@ -174,7 +179,7 @@ class DatabaseManager:
                 return True
 
         except Exception as e:
-            logger.error(f"创建表失败 {table_name}: {e}")
+            logger.exception(f"创建表失败 {table_name}: {e}")
             return False
 
     def get_table_info(self, table_name: str) -> dict[str, Any] | None:
@@ -204,7 +209,7 @@ class DatabaseManager:
             }
 
         except Exception as e:
-            logger.error(f"获取表信息失败 {table_name}: {e}")
+            logger.exception(f"获取表信息失败 {table_name}: {e}")
             return None
 
     def close(self):
@@ -326,13 +331,15 @@ def ensure_database_ready() -> bool:
                     # 验证表结构
                     table_info = db.get_table_info(table_name)
                     if table_info and table_info["columns"]:
-                        logger.debug(f"✅ 表验证成功: {table_name} ({len(table_info['columns'])}列)")
+                        logger.debug(
+                            f"✅ 表验证成功: {table_name} ({len(table_info['columns'])}列)"
+                        )
                         tables_verified += 1
                     else:
                         logger.warning(f"⚠️ 表结构异常: {table_name}")
 
             except Exception as e:
-                logger.error(f"❌ 表处理失败 {table_name}: {e}")
+                logger.exception(f"❌ 表处理失败 {table_name}: {e}")
                 return False
 
         # 3. 数据完整性检查
@@ -376,7 +383,7 @@ def ensure_database_ready() -> bool:
                 logger.warning("⚠️ 数据库性能测试异常")
 
         except Exception as e:
-            logger.error(f"❌ 数据库性能测试失败: {e}")
+            logger.exception(f"❌ 数据库性能测试失败: {e}")
             return False
 
         # 总结报告
@@ -389,7 +396,7 @@ def ensure_database_ready() -> bool:
         return True
 
     except Exception as e:
-        logger.error(f"❌ 数据库健康检查失败: {e}")
+        logger.exception(f"❌ 数据库健康检查失败: {e}")
         return False
 
 
@@ -404,7 +411,11 @@ def get_database_health_report() -> dict[str, Any]:
         db = get_db_manager()
 
         if not db.is_available():
-            return {"status": "unavailable", "message": "数据库连接失败", "timestamp": datetime.now().isoformat()}
+            return {
+                "status": "unavailable",
+                "message": "数据库连接失败",
+                "timestamp": datetime.now().isoformat(),
+            }
 
         # 获取表信息
         tables_info = {}
@@ -438,4 +449,8 @@ def get_database_health_report() -> dict[str, Any]:
         }
 
     except Exception as e:
-        return {"status": "error", "message": f"健康检查异常: {e!s}", "timestamp": datetime.now().isoformat()}
+        return {
+            "status": "error",
+            "message": f"健康检查异常: {e!s}",
+            "timestamp": datetime.now().isoformat(),
+        }

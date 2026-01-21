@@ -27,15 +27,14 @@ if project_root_alt not in sys.path:
 try:
     from src.config_unified import get_settings
     from src.database.base import Base
-    # Odds model import removed - not needed for migrations
 
+    # Odds model import removed - not needed for migrations
     # 提供兼容的 get_database_config 函数
     def get_database_config():
         """获取数据库配置（从 config_unified.py）"""
         return get_settings().database
 
-except ImportError as e:
-    print(f"Import error: {e}")
+except ImportError:
     sys.exit(1)
 
 # this is the Alembic Config object, which provides

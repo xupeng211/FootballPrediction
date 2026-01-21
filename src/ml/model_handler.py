@@ -55,13 +55,15 @@ class ModelHandler:
             return True
 
         except Exception as e:
-            logger.error(f"❌ 模型加载失败 {model_path}: {e}")
+            logger.exception(f"❌ 模型加载失败 {model_path}: {e}")
             self.model = None
             self.scaler = None
             self.is_loaded = False
             return False
 
-    def save_model(self, model_path: str | None = None, scaler: StandardScaler | None = None) -> bool:
+    def save_model(
+        self, model_path: str | None = None, scaler: StandardScaler | None = None
+    ) -> bool:
         """保存LightGBM模型"""
         if model_path is None:
             model_path = self.config.paths.current_model_path
@@ -89,7 +91,7 @@ class ModelHandler:
             return True
 
         except Exception as e:
-            logger.error(f"❌ 模型保存失败: {e}")
+            logger.exception(f"❌ 模型保存失败: {e}")
             return False
 
     def prepare_features(self, features: dict[str, Any]) -> pd.DataFrame:
@@ -126,7 +128,7 @@ class ModelHandler:
             return df
 
         except Exception as e:
-            logger.error(f"特征准备失败: {e}")
+            logger.exception(f"特征准备失败: {e}")
             return pd.DataFrame()
 
     def _derive_missing_feature(self, col: str, features: dict[str, Any]) -> float:
@@ -202,13 +204,15 @@ class ModelHandler:
             features_ordered = features[feature_cols]
 
             # 进行预测
-            prediction = self.model.predict(features_ordered, num_iteration=self.model.best_iteration)
+            prediction = self.model.predict(
+                features_ordered, num_iteration=self.model.best_iteration
+            )
 
             logger.debug(f"预测成功，输出形状: {prediction.shape}")
             return prediction
 
         except Exception as e:
-            logger.error(f"预测失败: {e}")
+            logger.exception(f"预测失败: {e}")
             return None
 
     def predict_match(self, features: dict[str, Any]) -> dict[str, Any] | None:
@@ -264,7 +268,7 @@ class ModelHandler:
             }
 
         except Exception as e:
-            logger.error(f"比赛预测失败: {e}")
+            logger.exception(f"比赛预测失败: {e}")
             return None
 
     def fallback_predict(self, features: dict[str, Any]) -> dict[str, Any]:
@@ -277,9 +281,13 @@ class ModelHandler:
             possession_diff = features.get("possession_diff", 0)
 
             # 简单的评分模型
-            home_score = home_xg * 0.6 + max(0, rating_diff) * 0.3 + max(0, possession_diff) * 0.1 + 0.5
+            home_score = (
+                home_xg * 0.6 + max(0, rating_diff) * 0.3 + max(0, possession_diff) * 0.1 + 0.5
+            )
 
-            away_score = away_xg * 0.6 + max(0, -rating_diff) * 0.3 + max(0, -possession_diff) * 0.1 + 0.5
+            away_score = (
+                away_xg * 0.6 + max(0, -rating_diff) * 0.3 + max(0, -possession_diff) * 0.1 + 0.5
+            )
 
             # 转换为概率
             draw_base = 1.0
@@ -308,7 +316,7 @@ class ModelHandler:
             }
 
         except Exception as e:
-            logger.error(f"降级预测失败: {e}")
+            logger.exception(f"降级预测失败: {e}")
             return {
                 "home_win_prob": 0.33,
                 "draw_prob": 0.34,
@@ -335,9 +343,9 @@ class ModelHandler:
                 "feature_count": self.model.num_feature(),
                 "best_iteration": self.model.best_iteration,
                 "tree_count": self.model.num_trees(),
-                "feature_importance": dict(zip(self.model.feature_name(), self.model.feature_importance()))[
-                    :10
-                ],  # 只返回前10个重要特征
+                "feature_importance": dict(
+                    zip(self.model.feature_name(), self.model.feature_importance(), strict=False)
+                )[:10],  # 只返回前10个重要特征
                 "has_scaler": self.scaler is not None,
             }
         except Exception as e:
@@ -388,14 +396,17 @@ class ModelHandler:
                 "missing_features": missing_features,
                 "extra_features": extra_features,
                 "model_features": model_features[:20],  # 显示前20个特征名
-                "alignment_score": 1.0 - (len(missing_features) + len(extra_features)) / expected_count,
+                "alignment_score": 1.0
+                - (len(missing_features) + len(extra_features)) / expected_count,
                 "timestamp": datetime.now().isoformat(),
             }
 
             if not is_valid:
                 error_messages = []
                 if missing_features:
-                    error_messages.append(f"缺失{len(missing_features)}个特征: {missing_features[:5]}...")
+                    error_messages.append(
+                        f"缺失{len(missing_features)}个特征: {missing_features[:5]}..."
+                    )
                 if extra_features:
                     # 额外特征只是警告，不是错误
                     logger.info(f"发现{len(extra_features)}个额外特征: {extra_features[:5]}...")
@@ -411,7 +422,7 @@ class ModelHandler:
             return validation_result
 
         except Exception as e:
-            logger.error(f"特征验证异常: {e}")
+            logger.exception(f"特征验证异常: {e}")
             return {
                 "valid": False,
                 "error": f"Validation exception: {e!s}",
@@ -432,7 +443,7 @@ class ModelHandler:
 
         try:
             model_features = list(self.model.feature_name())
-            feature_importance = dict(zip(model_features, self.model.feature_importance()))
+            feature_importance = dict(zip(model_features, self.model.feature_importance(), strict=False))
 
             # 按重要性排序
             sorted_features = sorted(feature_importance.items(), key=lambda x: x[1], reverse=True)
@@ -448,7 +459,7 @@ class ModelHandler:
             }
 
         except Exception as e:
-            logger.error(f"获取特征模式失败: {e}")
+            logger.exception(f"获取特征模式失败: {e}")
             return {"available": False, "error": str(e)}
 
     def _infer_feature_types(self) -> dict[str, str]:
@@ -566,7 +577,7 @@ def validate_model_features() -> bool:
         return False
 
     except Exception as e:
-        logger.error(f"模型特征验证异常: {e}")
+        logger.exception(f"模型特征验证异常: {e}")
         return False
 
 

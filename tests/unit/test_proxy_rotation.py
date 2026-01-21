@@ -14,21 +14,17 @@ Date: 2026-01-14
 """
 
 import os
-import pytest
-import psycopg2
-from unittest.mock import Mock, patch
-
 import sys
 from pathlib import Path
+from unittest.mock import Mock, patch
+
+import psycopg2
+import pytest
 
 # 添加项目根目录到路径
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.services.hash_alignment_service import (
-    HashAlignmentService,
-    create_hash_alignment_service
-)
-
+from src.services.hash_alignment_service import HashAlignmentService, create_hash_alignment_service
 
 # ============================================================================
 # 测试夹具

@@ -106,7 +106,7 @@ class DataLoader:
             return df
 
         except Exception as e:
-            logger.error(f"加载数据失败: {e!s}")
+            logger.exception(f"加载数据失败: {e!s}")
             # 即使出错也返回空 DataFrame 以保持类型安全，但记录错误
             return pd.DataFrame()
 
@@ -148,7 +148,7 @@ class DataLoader:
                 data.append(dict(record._mapping))
             elif hasattr(record, "keys"):
                 # SQLAlchemy Row 对象
-                data.append({key: getattr(record, key) for key in record.keys()})
+                data.append({key: getattr(record, key) for key in record})
             else:
                 # 字典或其他可迭代对象
                 data.append(dict(record))

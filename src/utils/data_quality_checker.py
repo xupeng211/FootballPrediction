@@ -175,7 +175,15 @@ class DataQualityChecker:
                 "Everton",
                 "Wolverhampton",
             ],
-            "Bundesliga": ["Bayern", "Dortmund", "Leipzig", "Leverkusen", "Frankfurt", "Mönchengladbach", "Hoffenheim"],
+            "Bundesliga": [
+                "Bayern",
+                "Dortmund",
+                "Leipzig",
+                "Leverkusen",
+                "Frankfurt",
+                "Mönchengladbach",
+                "Hoffenheim",
+            ],
         }
 
         # 数据质量阈值
@@ -200,7 +208,7 @@ class DataQualityChecker:
             )
             logger.info("数据质量检查器：数据库连接成功")
         except Exception as e:
-            logger.error(f"数据质量检查器：数据库连接失败 {e}")
+            logger.exception(f"数据质量检查器：数据库连接失败 {e}")
             raise
 
     async def close(self):
@@ -273,14 +281,23 @@ class DataQualityChecker:
     async def _check_features_integrity(self, total_records: int) -> DataIntegrityResult:
         """检查特征表完整性"""
         # 检查关键字段的空值情况
-        critical_fields = ["home_team", "away_team", "match_time", "home_xg", "away_xg", "home_opening_odds"]
+        critical_fields = [
+            "home_team",
+            "away_team",
+            "match_time",
+            "home_xg",
+            "away_xg",
+            "home_opening_odds",
+        ]
 
         missing_values = {}
         null_percentages = {}
         valid_records = total_records
 
         for field in critical_fields:
-            null_count = await self.conn.fetchval(f"SELECT COUNT(*) FROM match_features_training WHERE {field} IS NULL")
+            null_count = await self.conn.fetchval(
+                f"SELECT COUNT(*) FROM match_features_training WHERE {field} IS NULL"
+            )
             missing_values[field] = null_count
             null_percentages[field] = (null_count / total_records * 100) if total_records > 0 else 0
 
@@ -322,7 +339,9 @@ class DataQualityChecker:
         critical_fields = ["external_id", "league_id", "home_team_id", "away_team_id", "match_date"]
 
         for field in critical_fields:
-            null_count = await self.conn.fetchval(f"SELECT COUNT(*) FROM matches WHERE {field} IS NULL")
+            null_count = await self.conn.fetchval(
+                f"SELECT COUNT(*) FROM matches WHERE {field} IS NULL"
+            )
             null_counts[field] = null_count
 
         # 检查外部ID重复
@@ -373,12 +392,16 @@ class DataQualityChecker:
             total_records=total_records,
             valid_records=valid_records,
             missing_values={"empty_json": empty_json_count},
-            null_percentages={"empty_json": (empty_json_count / total_records * 100) if total_records > 0 else 0},
+            null_percentages={
+                "empty_json": (empty_json_count / total_records * 100) if total_records > 0 else 0
+            },
             integrity_score=integrity_score,
             issues=issues,
         )
 
-    async def _check_generic_integrity(self, table_name: str, total_records: int) -> DataIntegrityResult:
+    async def _check_generic_integrity(
+        self, table_name: str, total_records: int
+    ) -> DataIntegrityResult:
         """通用完整性检查"""
         # 获取所有列
         columns = await self.conn.fetch(
@@ -441,7 +464,11 @@ class DataQualityChecker:
 
         total_features = await self.conn.fetchval("SELECT COUNT(*) FROM match_features_training")
         is_consistent = orphaned_features == 0
-        consistency_rate = ((total_features - orphaned_features) / total_features * 100) if total_features > 0 else 100
+        consistency_rate = (
+            ((total_features - orphaned_features) / total_features * 100)
+            if total_features > 0
+            else 100
+        )
 
         recommendations = []
         if orphaned_features > 0:
@@ -476,7 +503,11 @@ class DataQualityChecker:
         )
 
         is_consistent = inconsistent_count == 0
-        consistency_rate = ((total_checked - inconsistent_count) / total_checked * 100) if total_checked > 0 else 100
+        consistency_rate = (
+            ((total_checked - inconsistent_count) / total_checked * 100)
+            if total_checked > 0
+            else 100
+        )
 
         return DataConsistencyResult(
             check_type="主场优势逻辑一致性",
@@ -543,7 +574,11 @@ class DataQualityChecker:
         )
 
         is_consistent = extreme_inconsistency < (total_checked * 0.05)  # 允许5%的极端情况
-        consistency_rate = ((total_checked - extreme_inconsistency) / total_checked * 100) if total_checked > 0 else 100
+        consistency_rate = (
+            ((total_checked - extreme_inconsistency) / total_checked * 100)
+            if total_checked > 0
+            else 100
+        )
 
         return DataConsistencyResult(
             check_type="比分-xG一致性",
@@ -666,7 +701,11 @@ class DataQualityChecker:
             for row in collection_gaps:
                 if row["count"] < avg_count * 0.1:  # 少于平均10%
                     anomalies.append(
-                        {"date": row["match_date"].isoformat(), "count": row["count"], "expected_avg": avg_count}
+                        {
+                            "date": row["match_date"].isoformat(),
+                            "count": row["count"],
+                            "expected_avg": avg_count,
+                        }
                     )
 
         return AnomalyDetectionResult(
@@ -754,7 +793,9 @@ class DataQualityChecker:
 
         # 计算覆盖率统计
         if integrity_results:
-            features_result = next((r for r in integrity_results if r.table_name == "match_features_training"), None)
+            features_result = next(
+                (r for r in integrity_results if r.table_name == "match_features_training"), None
+            )
             if features_result:
                 # xG覆盖率
                 xg_coverage = 100 - features_result.null_percentages.get("home_xg", 100)
@@ -802,7 +843,9 @@ class DataQualityChecker:
             if result.integrity_score < 90:
                 for field, null_pct in result.null_percentages.items():
                     if null_pct > 10:
-                        recommendations.append(f"表{result.table_name}的{field}字段空值率过高({null_pct:.1f}%)")
+                        recommendations.append(
+                            f"表{result.table_name}的{field}字段空值率过高({null_pct:.1f}%)"
+                        )
 
         # 一致性建议
         for result in consistency_results:
@@ -813,7 +856,9 @@ class DataQualityChecker:
         for result in anomaly_results:
             if result.anomaly_count > 0:
                 if result.severity == "critical":
-                    recommendations.append(f"紧急处理{result.anomaly_type}问题，发现{result.anomaly_count}个严重异常")
+                    recommendations.append(
+                        f"紧急处理{result.anomaly_type}问题，发现{result.anomaly_count}个严重异常"
+                    )
                 elif result.severity == "high":
                     recommendations.append(
                         f"优先处理{result.anomaly_type}问题，发现{result.anomaly_count}个高优先级异常"
@@ -831,12 +876,12 @@ class DataQualityChecker:
 
         # 1. 检查表结构
         table_validations = []
-        for table_name in self.expected_table_schemas.keys():
+        for table_name in self.expected_table_schemas:
             try:
                 validation = await self.check_table_structure(table_name)
                 table_validations.append(validation)
             except Exception as e:
-                logger.error(f"检查表{table_name}结构失败: {e}")
+                logger.exception(f"检查表{table_name}结构失败: {e}")
 
         # 2. 检查数据完整性
         integrity_results = []
@@ -845,7 +890,7 @@ class DataQualityChecker:
                 integrity = await self.check_data_integrity(table_name)
                 integrity_results.append(integrity)
             except Exception as e:
-                logger.error(f"检查表{table_name}完整性失败: {e}")
+                logger.exception(f"检查表{table_name}完整性失败: {e}")
 
         # 3. 检查数据一致性
         consistency_results = await self.check_data_consistency()
@@ -887,7 +932,9 @@ class DataQualityChecker:
         """获取快速健康状态"""
         try:
             # 获取关键指标
-            total_features = await self.conn.fetchval("SELECT COUNT(*) FROM match_features_training")
+            total_features = await self.conn.fetchval(
+                "SELECT COUNT(*) FROM match_features_training"
+            )
 
             xg_coverage = (
                 await self.conn.fetchval(
@@ -945,7 +992,7 @@ class DataQualityChecker:
             }
 
         except Exception as e:
-            logger.error(f"获取快速健康状态失败: {e}")
+            logger.exception(f"获取快速健康状态失败: {e}")
             return {
                 "status": "unhealthy",
                 "status_text": "检查失败",

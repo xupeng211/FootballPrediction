@@ -20,22 +20,22 @@ Date: 2026-01-11
 Version: V33.3 (Data Governance)
 """
 
-import pytest
-from unittest.mock import Mock, patch, MagicMock, call
-from typing import Dict, Tuple
-
 import sys
 from pathlib import Path
+from typing import Dict, Tuple
+from unittest.mock import MagicMock, Mock, call, patch
+
+import pytest
 
 # 添加项目根目录到路径
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from scripts.ops.harvest_league_urls import (
     get_team_aliases_from_db,
-    save_team_alias,
-    update_alias_usage,
     parse_match_url_with_league_teams,
-    team_name_to_slug
+    save_team_alias,
+    team_name_to_slug,
+    update_alias_usage,
 )
 
 

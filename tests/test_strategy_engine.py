@@ -92,7 +92,9 @@ class TestStrategyEngine:
         assert recommendation.kelly_fraction == 0.0
         assert recommendation.edge <= 0
 
-    def test_negative_edge_no_bet(self, strategy_engine: StrategyEngine, sample_market_odds: dict[str, float]):
+    def test_negative_edge_no_bet(
+        self, strategy_engine: StrategyEngine, sample_market_odds: dict[str, float]
+    ):
         """
         测试负优势场景 - 严格不下注
         """
@@ -113,7 +115,10 @@ class TestStrategyEngine:
 
         # 验证严格不下注
         assert recommendation.recommendation_type == "NO_BET"
-        assert recommendation.recommended_stake_pct is None or recommendation.recommended_stake_pct == 0.0
+        assert (
+            recommendation.recommended_stake_pct is None
+            or recommendation.recommended_stake_pct == 0.0
+        )
         assert any("负边际优势" in warning for warning in recommendation.warnings)
 
     # ==================== 极端优势测试 ====================
@@ -154,7 +159,7 @@ class TestStrategyEngine:
         """
         测试Kelly公式计算的硬上限
         """
-        engine = StrategyEngine(params=conservative_params, mode=StrategyMode.SANDBOX)
+        StrategyEngine(params=conservative_params, mode=StrategyMode.SANDBOX)
 
         # 测试各种极端场景
         test_cases = [
@@ -212,19 +217,31 @@ class TestStrategyEngine:
                 )
 
                 # 如果建议下注，模拟亏损
-                if recommendation.recommended_stake_pct and recommendation.recommended_stake_pct > 0:
-                    bet_amount = strategy_engine.portfolio.current_capital * recommendation.recommended_stake_pct
+                if (
+                    recommendation.recommended_stake_pct
+                    and recommendation.recommended_stake_pct > 0
+                ):
+                    bet_amount = (
+                        strategy_engine.portfolio.current_capital
+                        * recommendation.recommended_stake_pct
+                    )
                     strategy_engine.portfolio.current_capital -= bet_amount
                     strategy_engine.portfolio.consecutive_losses += 1
 
             # 验证系统稳定性
             assert strategy_engine.portfolio.current_capital >= 0
-            assert strategy_engine.portfolio.consecutive_losses <= strategy_engine.params.max_consecutive_losses + 5
+            assert (
+                strategy_engine.portfolio.consecutive_losses
+                <= strategy_engine.params.max_consecutive_losses + 5
+            )
 
             # 在低余额时应该触发风险控制
             if strategy_engine.portfolio.current_capital < 100:  # 低于10%初始资金
                 # 应该触发高级别风险控制
-                current_ratio = strategy_engine.portfolio.current_capital / strategy_engine.portfolio.initial_capital
+                current_ratio = (
+                    strategy_engine.portfolio.current_capital
+                    / strategy_engine.portfolio.initial_capital
+                )
                 if current_ratio < 0.1:  # 低于10%
                     # 系统应该进入紧急停止状态
                     break
@@ -252,7 +269,10 @@ class TestStrategyEngine:
 
         # 资金过少时，即使有优势也不应该下注
         if strategy_engine.portfolio.current_capital * recommendation.recommended_stake_pct < 1:
-            assert recommendation.recommendation_type == "NO_BET" or recommendation.recommended_stake_pct == 0.0
+            assert (
+                recommendation.recommendation_type == "NO_BET"
+                or recommendation.recommended_stake_pct == 0.0
+            )
 
     # ==================== 风险控制测试 ====================
 

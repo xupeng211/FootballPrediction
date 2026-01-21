@@ -187,7 +187,9 @@ async def _get_database_service_check() -> ServiceCheck:
 
         response_time = (time.time() - start_time) * 1000
 
-        logger.debug(f"✅ 数据库健康检查通过: {db.host}:{db.port}/{db.name} ({response_time:.2f}ms)")
+        logger.debug(
+            f"✅ 数据库健康检查通过: {db.host}:{db.port}/{db.name} ({response_time:.2f}ms)"
+        )
 
         return ServiceCheck(
             status="healthy",
@@ -201,7 +203,7 @@ async def _get_database_service_check() -> ServiceCheck:
         )
     except Exception as e:
         response_time = (time.time() - start_time) * 1000
-        logger.error(f"❌ 数据库健康检查失败: {e}")
+        logger.exception(f"❌ 数据库健康检查失败: {e}")
         return ServiceCheck(
             status="unhealthy",
             response_time_ms=round(response_time, 2),
@@ -241,7 +243,9 @@ async def _get_redis_service_check() -> ServiceCheck:
 
         response_time = (time.time() - start_time) * 1000
 
-        logger.debug(f"✅ Redis健康检查通过: {redis_config.host}:{redis_config.port} ({response_time:.2f}ms)")
+        logger.debug(
+            f"✅ Redis健康检查通过: {redis_config.host}:{redis_config.port} ({response_time:.2f}ms)"
+        )
 
         return ServiceCheck(
             status="healthy",
@@ -308,7 +312,7 @@ async def _get_model_service_check() -> ServiceCheck:
         )
     except Exception as e:
         response_time = (time.time() - start_time) * 1000
-        logger.error(f"❌ 模型检查失败: {e}")
+        logger.exception(f"❌ 模型检查失败: {e}")
         return ServiceCheck(
             status="unhealthy",
             response_time_ms=round(response_time, 2),
@@ -332,7 +336,7 @@ async def _get_filesystem_service_check() -> ServiceCheck:
             "models": "data/models",
         }
 
-        for name, path in directories.items():
+        for path in directories.values():
             if not os.path.exists(path):
                 os.makedirs(path, exist_ok=True)
 
@@ -348,7 +352,7 @@ async def _get_filesystem_service_check() -> ServiceCheck:
         )
     except Exception as e:
         response_time = (time.time() - start_time) * 1000
-        logger.error(f"❌ 文件系统健康检查失败: {e}")
+        logger.exception(f"❌ 文件系统健康检查失败: {e}")
         return ServiceCheck(
             status="unhealthy",
             response_time_ms=round(response_time, 2),
@@ -373,7 +377,7 @@ async def _check_database(db: Session) -> dict[str, Any]:
             "response_time_ms": response_time,
         }
     except Exception as e:
-        logger.error(f"数据库健康检查失败: {e}")
+        logger.exception(f"数据库健康检查失败: {e}")
         return {
             "healthy": False,
             "message": f"数据库连接失败: {e!s}",
@@ -408,7 +412,7 @@ async def _check_redis() -> dict[str, Any]:
             "response_time_ms": response_time,
         }
     except Exception as e:
-        logger.error(f"Redis健康检查失败: {e}")
+        logger.exception(f"Redis健康检查失败: {e}")
         return {
             "healthy": False,
             "message": f"Redis连接失败: {e!s}",
@@ -428,7 +432,7 @@ async def _check_filesystem() -> dict[str, Any]:
 
         return {"healthy": True, "message": "文件系统正常", "log_directory": log_dir}
     except Exception as e:
-        logger.error(f"文件系统健康检查失败: {e}")
+        logger.exception(f"文件系统健康检查失败: {e}")
         return {
             "healthy": False,
             "message": f"文件系统检查失败: {e!s}",
@@ -513,11 +517,14 @@ async def data_quality_check(full_check: bool = False) -> dict[str, Any]:
                     "tables_valid": len([v for v in report.table_validations if v.is_valid]),
                     "tables_total": len(report.table_validations),
                     "integrity_avg": (
-                        sum(r.integrity_score for r in report.integrity_results) / len(report.integrity_results)
+                        sum(r.integrity_score for r in report.integrity_results)
+                        / len(report.integrity_results)
                         if report.integrity_results
                         else 0
                     ),
-                    "consistency_passed": sum(1 for r in report.consistency_results if r.is_consistent),
+                    "consistency_passed": sum(
+                        1 for r in report.consistency_results if r.is_consistent
+                    ),
                     "consistency_total": len(report.consistency_results),
                     "anomalies_count": sum(r.anomaly_count for r in report.anomaly_results),
                 },
@@ -536,7 +543,7 @@ async def data_quality_check(full_check: bool = False) -> dict[str, Any]:
         }
 
     except Exception as e:
-        logger.error(f"数据质量检查失败: {e}")
+        logger.exception(f"数据质量检查失败: {e}")
         return {"status": "error", "timestamp": datetime.utcnow().isoformat(), "error": str(e)}
     finally:
         await checker.close()

@@ -19,11 +19,12 @@ Date: 2026-01-12
 Version: V36.0 (Full Harvest & Final Audit)
 """
 
-import pytest
-import numpy as np
 import sys
 from pathlib import Path
-from typing import Dict, Any
+from typing import Any, Dict
+
+import numpy as np
+import pytest
 
 # 添加项目根目录到路径
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
@@ -43,8 +44,9 @@ class TestPayoutRatioSensitivity:
         预期：模型对两个样本的预测概率应有显著差异
         """
         try:
-            from scripts.ml.train_v51_3_full_power import V53ModelTrainer, V53FeatureCalculator
             import joblib
+
+            from scripts.ml.train_v51_3_full_power import V53FeatureCalculator, V53ModelTrainer
 
             # 尝试加载已训练模型
             model_path = Path(__file__).parent.parent.parent / "model_zoo" / "v51_3_full_power_model.pkl"
@@ -163,8 +165,9 @@ class TestMovementVelocitySensitivity:
         预期：模型对两个样本的预测概率应有差异
         """
         try:
-            from scripts.ml.train_v51_3_full_power import V53ModelTrainer, V53FeatureCalculator
             import joblib
+
+            from scripts.ml.train_v51_3_full_power import V53FeatureCalculator, V53ModelTrainer
 
             # 尝试加载已训练模型
             model_path = Path(__file__).parent.parent.parent / "model_zoo" / "v51_3_full_power_model.pkl"
@@ -262,8 +265,9 @@ class TestCombinedSensitivity:
         预期：模型应该降低对热门的信心
         """
         try:
-            from scripts.ml.train_v51_3_full_power import V53ModelTrainer, V53FeatureCalculator
             import joblib
+
+            from scripts.ml.train_v51_3_full_power import V53FeatureCalculator, V53ModelTrainer
 
             model_path = Path(__file__).parent.parent.parent / "model_zoo" / "v51_3_full_power_model.pkl"
 
@@ -401,8 +405,9 @@ class TestSyntheticFeatureSensitivity:
         - 验证模型结构能正确处理 60 维特征
         """
         try:
-            from scripts.ml.train_v51_3_full_power import V53FeatureCalculator, V53ModelTrainer
             import joblib
+
+            from scripts.ml.train_v51_3_full_power import V53FeatureCalculator, V53ModelTrainer
 
             model_path = Path(__file__).parent.parent.parent / "model_zoo" / "v51_3_full_power_model.pkl"
 

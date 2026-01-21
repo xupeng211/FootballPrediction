@@ -70,40 +70,33 @@ def find_best_match(team_name, team_list, threshold=0.8):
 
 def merge_multi_season_data():
     """合并多赛季赔率和预测数据"""
-    print("🔗 多赛季赔率数据合并 (模糊匹配)")
-    print("=" * 60)
 
     # 加载数据
     odds_df = pd.read_csv("/home/user/projects/FootballPrediction/data/real_odds_raw.csv")
     pred_df = pd.read_csv("/home/user/projects/FootballPrediction/data/multi_season_v85.csv")
 
-    print(f"  赔率数据: {len(odds_df)} 场")
-    print(f"  预测数据: {len(pred_df)} 场")
-    print("  赛季分布:")
-    print(f"    22/23: {len(odds_df[odds_df.Season == '22/23'])} 场")
-    print(f"    23/24: {len(odds_df[odds_df.Season == '23/24'])} 场")
-    print(f"    24/25: {len(odds_df[odds_df.Season == '24/25'])} 场")
 
     # 获取预测数据中的所有球队
     pred_teams = set(pred_df["home_team"].unique()) | set(pred_df["away_team"].unique())
-    print(f"  预测数据中的球队: {len(pred_teams)} 支")
 
     # 合并数据
     merged_data = []
     matched_count = 0
     unmatched_count = 0
 
-    for idx, odds_row in odds_df.iterrows():
+    for _idx, odds_row in odds_df.iterrows():
         home_team_odds = odds_row["home_team"]
         away_team_odds = odds_row["away_team"]
 
         # 查找最佳匹配
-        home_match, home_score = find_best_match(home_team_odds, pred_teams)
+        home_match, _home_score = find_best_match(home_team_odds, pred_teams)
         away_match, away_score = find_best_match(away_team_odds, pred_teams)
 
         if home_match and away_score > 0.8:
             # 找到匹配，在预测数据中查找对应比赛
-            matches = pred_df[(pred_df["home_team"] == home_match) & (pred_df["away_team"] == away_match)]
+            matches = pred_df[
+                (pred_df["home_team"] == home_match) & (pred_df["away_team"] == away_match)
+            ]
 
             if len(matches) > 0:
                 # 取第一个匹配（如果有多个，取最新的）
@@ -124,7 +117,7 @@ def merge_multi_season_data():
                 matched_count += 1
 
                 if matched_count % 50 == 0:
-                    print(f"  已匹配: {matched_count} 场...")
+                    pass
             else:
                 unmatched_count += 1
         else:
@@ -133,28 +126,18 @@ def merge_multi_season_data():
     # 创建DataFrame
     if merged_data:
         merged_df = pd.DataFrame(merged_data)
-        print(f"\n✅ 合并成功: {len(merged_df)} 场比赛")
-        print(f"  匹配成功: {matched_count}")
-        print(f"  未匹配: {unmatched_count}")
 
         # 保存
         output_path = "/home/user/projects/FootballPrediction/data/multi_season_merged_odds.csv"
         merged_df.to_csv(output_path, index=False)
-        print(f"✅ 合并数据已保存: {output_path}")
 
         # 显示赛季分布
-        print("\n📊 赛季分布:")
         for season in merged_df["real_season"].unique():
-            count = len(merged_df[merged_df["real_season"] == season])
-            print(f"  {season}: {count} 场")
+            len(merged_df[merged_df["real_season"] == season])
 
         # 显示样本
-        print("\n📋 样本数据:")
-        sample_cols = ["home_team", "away_team", "real_season", "real_home_odds", "real_draw_odds", "real_away_odds"]
-        print(merged_df[sample_cols].head(10))
 
         return merged_df
-    print("  ❌ 未找到匹配的比赛")
     return None
 
 
@@ -162,14 +145,9 @@ def main():
     merged_df = merge_multi_season_data()
 
     if merged_df is not None:
-        print("\n" + "=" * 60)
-        print("✅ 多赛季赔率数据合并完成")
-        print("=" * 60)
-        print(f"  📊 总比赛数: {len(merged_df)}")
-        print("  🎯 目标: 500+ 场")
-        print(f"  ✅ 是否达标: {'是' if len(merged_df) >= 500 else '否 (需扩充更多数据)'}")
+        pass
     else:
-        print("\n❌ 数据合并失败")
+        pass
 
 
 if __name__ == "__main__":

@@ -16,17 +16,19 @@ Date: 2026-01-18
 from __future__ import annotations
 
 import asyncio
-import json
-import logging
-import threading
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+import json
+import logging
 from pathlib import Path
-from typing import Any, Callable, Optional
+from typing import TYPE_CHECKING, Any
 from urllib.parse import urlparse
 
-from playwright.async_api import Page, Response
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from playwright.async_api import Page, Response
 
 logger = logging.getLogger(__name__)
 
@@ -267,7 +269,7 @@ class ResponseInterceptor:
             intercepted = InterceptedJSON(
                 url=url,
                 json_data=json_data,
-                timestamp=datetime.now(timezone.utc).isoformat(),
+                timestamp=datetime.now(UTC).isoformat(),
                 status_code=status_code,
                 headers=headers,
                 matched_keywords=matched_keywords,
@@ -289,17 +291,17 @@ class ResponseInterceptor:
                 try:
                     handler(intercepted)
                 except Exception as e:
-                    logger.error(f"❌ 处理函数执行失败: {e}")
+                    logger.exception(f"❌ 处理函数执行失败: {e}")
 
             # 自动保存（如果配置了）
             if self.config.save_all:
                 try:
                     intercepted.save_to_file(self.config.output_dir)
                 except Exception as save_error:
-                    logger.error(f"❌ 保存失败: {save_error}")
+                    logger.exception(f"❌ 保存失败: {save_error}")
 
         except Exception as e:
-            logger.error(f"❌ 处理响应异常: {e}")
+            logger.exception(f"❌ 处理响应异常: {e}")
 
     async def _route_handler(self, route, request) -> None:
         """V41.167: Route 处理器 - 让请求继续，response 事件处理
@@ -488,17 +490,17 @@ class ResponseInterceptor:
                         try:
                             handler(intercepted)
                         except Exception as e:
-                            logger.error(f"❌ 处理函数执行失败: {e}")
+                            logger.exception(f"❌ 处理函数执行失败: {e}")
 
                     # 自动保存（如果配置了）
                     if self.config.save_all:
                         try:
                             intercepted.save_to_file(self.config.output_dir)
                         except Exception as save_error:
-                            logger.error(f"❌ 保存失败: {save_error}")
+                            logger.exception(f"❌ 保存失败: {save_error}")
 
         except Exception as e:
-            logger.error(f"❌ 获取浏览器数据失败: {e}")
+            logger.exception(f"❌ 获取浏览器数据失败: {e}")
 
         return self._intercept_count
 
@@ -548,7 +550,7 @@ class ResponseInterceptor:
                 path = intercepted.save_to_file(output_dir)
                 saved_paths.append(path)
             except Exception as e:
-                logger.error(f"❌ 保存失败: {e}")
+                logger.exception(f"❌ 保存失败: {e}")
 
         logger.info(f"💾 已保存 {len(saved_paths)} 个 JSON 文件到 {output_dir}")
         return saved_paths
@@ -624,16 +626,8 @@ def print_interceptor_summary(interceptor: ResponseInterceptor) -> None:
     """
     summary = interceptor.get_summary()
 
-    print("\n" + "=" * 60)
-    print("📊 Response Interceptor 摘要 (V41.167)")
-    print("=" * 60)
-    print(f"总截获数量: {summary['total_intercepted']}")
-    print(f"待处理数量: {summary['pending_responses']}")
-    print(f"\n关键字统计:")
-    for keyword, count in summary['keyword_counts'].items():
-        print(f"  - {keyword}: {count}")
-    print(f"\n输出目录: {summary['output_dir']}")
-    print("=" * 60 + "\n")
+    for _keyword, _count in summary["keyword_counts"].items():
+        pass
 
 
 # ============================================================================

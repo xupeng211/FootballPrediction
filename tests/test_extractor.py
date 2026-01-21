@@ -529,7 +529,9 @@ class TestExtractWithValidation:
 
         class FailingExtractor(MockExtractor):
             def extract(self, raw_data: dict[str, Any]) -> ExtractionResult:
-                raise SchemaMismatchError("Missing content field", expected_path="content", actual_type="None")
+                raise SchemaMismatchError(
+                    "Missing content field", expected_path="content", actual_type="None"
+                )
 
         extractor = FailingExtractor()
 
@@ -731,7 +733,7 @@ class TestV25ProductionExtractor:
         # 第一次提取
         extractor1 = V25ProductionExtractor()
         result1 = extractor1.extract_with_validation(minimal_match_data)
-        keys1 = set(k for k in result1.features.keys() if not k.startswith("_"))
+        set(k for k in result1.features.keys() if not k.startswith("_"))
 
         # 第二次提取（不同数据）
         different_data = {
@@ -741,7 +743,7 @@ class TestV25ProductionExtractor:
             }
         }
         extractor2 = V25ProductionExtractor()
-        result2 = extractor2.extract_with_validation(different_data)
+        extractor2.extract_with_validation(different_data)
 
         # 验证全局注册表增长
         global_keys = get_global_feature_keys()
@@ -811,7 +813,9 @@ class TestIntegration:
 
         # V25.1 应该提取大量特征（自适应吞噬）
         # 完整数据应该产生 100+ 特征
-        assert result.feature_count >= 50, f"V25.1 自适应引擎应该提取至少 50 个特征，实际: {result.feature_count}"
+        assert result.feature_count >= 50, (
+            f"V25.1 自适应引擎应该提取至少 50 个特征，实际: {result.feature_count}"
+        )
 
     def test_feature_key_consistency(self, minimal_match_data):
         """测试特征键一致性（路径命名规范）"""

@@ -151,7 +151,7 @@ class L3FeatureExtractor:
             try:
                 raw_json = json.loads(raw_json)
             except json.JSONDecodeError as e:
-                logger.error(f"[{match_id}] JSON 解析失败: {e}")
+                logger.exception(f"[{match_id}] JSON 解析失败: {e}")
                 self._extraction_stats["failed_count"] += 1
                 return self._create_default_features(match_id, league_id, season)
 
@@ -238,13 +238,17 @@ class L3FeatureExtractor:
             result["away_xg"] = self._normalize_float(xg_values[1])
 
         # 提取控球率
-        possession_values = self._extract_stat_value(stats_dict, ["BallPossesion", "BallPossession", "possession"])
+        possession_values = self._extract_stat_value(
+            stats_dict, ["BallPossesion", "BallPossession", "possession"]
+        )
         if possession_values and len(possession_values) >= 2:
             result["home_possession"] = self._normalize_percentage(possession_values[0])
             result["away_possession"] = self._normalize_percentage(possession_values[1])
 
         # 提取射正数
-        shots_values = self._extract_stat_value(stats_dict, ["ShotsOnTarget", "shots_on_target", "shotsOnTarget"])
+        shots_values = self._extract_stat_value(
+            stats_dict, ["ShotsOnTarget", "shots_on_target", "shotsOnTarget"]
+        )
         if shots_values and len(shots_values) >= 2:
             result["home_shots_on_target"] = self._normalize_int(shots_values[0])
             result["away_shots_on_target"] = self._normalize_int(shots_values[1])
@@ -445,7 +449,9 @@ class L3FeatureExtractor:
     # 辅助方法
     # ============================================
 
-    def _create_default_features(self, match_id: str, league_id: int, season: str) -> L3MatchFeatures:
+    def _create_default_features(
+        self, match_id: str, league_id: int, season: str
+    ) -> L3MatchFeatures:
         """创建默认特征对象（字段缺失时使用）"""
         return L3MatchFeatures(
             match_id=match_id,
@@ -530,7 +536,7 @@ class L3FeaturePersister:
             )
             logger.info("数据库连接成功")
         except Exception as e:
-            logger.error(f"数据库连接失败: {e}")
+            logger.exception(f"数据库连接失败: {e}")
             raise
 
     def close(self) -> None:
@@ -541,49 +547,6 @@ class L3FeaturePersister:
 
     def create_table(self) -> None:
         """创建 match_features_v1 表"""
-        create_table_sql = """
-        CREATE TABLE IF NOT EXISTS match_features_v1 (
-            match_id VARCHAR(20) PRIMARY KEY,
-            league_id INTEGER NOT NULL,
-            season VARCHAR(10) NOT NULL,
-
-            -- 主队特征
-            home_xg FLOAT,
-            home_possession FLOAT,
-            home_shots_on_target INTEGER,
-            home_big_chances INTEGER,
-            home_team_rating FLOAT,
-
-            -- 客队特征
-            away_xg FLOAT,
-            away_possession FLOAT,
-            away_shots_on_target INTEGER,
-            away_big_chances INTEGER,
-            away_team_rating FLOAT,
-
-            -- 球员评分特征
-            avg_player_rating FLOAT,
-            home_avg_player_rating FLOAT,
-            away_avg_player_rating FLOAT,
-
-            -- 元数据
-            extracted_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-            extraction_version VARCHAR(20) DEFAULT 'V38.5',
-
-            -- 索引
-            CONSTRAINT fk_league FOREIGN KEY (league_id) REFERENCES leagues(id)
-        );
-
-        -- 创建索引
-        CREATE INDEX IF NOT EXISTS idx_features_league_season ON match_features_v1(league_id, season);
-        CREATE INDEX IF NOT EXISTS idx_features_extraction_time ON match_features_v1(extracted_at DESC);
-
-        -- 添加注释
-        COMMENT ON TABLE match_features_v1 IS 'V38.5 L3 特征宽表 - 从原始 JSON 提取的标准化特征';
-        COMMENT ON COLUMN match_features_v1.home_xg IS '主队预期进球 (xG)';
-        COMMENT ON COLUMN match_features_v1.away_xg IS '客队预期进球 (xG)';
-        COMMENT ON COLUMN match_features_v1.avg_player_rating IS '首发22人平均评分';
-        """
 
         with self._conn.cursor() as cursor:
             try:
@@ -627,7 +590,7 @@ class L3FeaturePersister:
 
             except Exception as e:
                 self._conn.rollback()
-                logger.error(f"创建表失败: {e}")
+                logger.exception(f"创建表失败: {e}")
                 raise
 
     def insert_features(self, features: L3MatchFeatures) -> bool:
@@ -678,7 +641,7 @@ class L3FeaturePersister:
                 return True
         except Exception as e:
             self._conn.rollback()
-            logger.error(f"插入特征失败 [{features.match_id}]: {e}")
+            logger.exception(f"插入特征失败 [{features.match_id}]: {e}")
             return False
 
     def batch_insert_features(self, features_list: list[L3MatchFeatures]) -> dict[str, int]:

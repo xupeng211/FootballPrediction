@@ -27,8 +27,8 @@ import logging
 import statistics
 from typing import Any
 
-from ..base import BaseProcessor, ProcessorConfig, ProcessorResult
-from ..models import HomeAway, MatchData
+from src.ml.feature_engine.base import BaseProcessor, ProcessorConfig, ProcessorResult
+from src.ml.feature_engine.models import HomeAway, MatchData
 
 logger = logging.getLogger(__name__)
 
@@ -201,10 +201,12 @@ class HistoricalRollingProcessor(BaseProcessor[MatchData]):
             return result
 
         except Exception as e:
-            logger.error(f"HistoricalRollingProcessor failed: {e}")
+            logger.exception(f"HistoricalRollingProcessor failed: {e}")
             return ProcessorResult.failure_result(str(e))
 
-    def _get_match_history(self, context: Any, side: HomeAway, team_name: str) -> list[MatchSnapshot]:
+    def _get_match_history(
+        self, context: Any, side: HomeAway, team_name: str
+    ) -> list[MatchSnapshot]:
         """
         获取历史比赛数据
 
@@ -271,7 +273,9 @@ class HistoricalRollingProcessor(BaseProcessor[MatchData]):
                 features[f"{prefix}_l3_{metric}_cv"] = 0.0
 
         # 计算胜率
-        wins = sum(1 for m in recent_3 if m.stats.get("goals_scored", 0) > m.stats.get("goals_conceded", 0))
+        wins = sum(
+            1 for m in recent_3 if m.stats.get("goals_scored", 0) > m.stats.get("goals_conceded", 0)
+        )
         features[f"{prefix}_l3_win_rate"] = round(wins / len(recent_3), 4) if recent_3 else 0.0
 
         # 计算场均进球
@@ -319,7 +323,9 @@ class HistoricalRollingProcessor(BaseProcessor[MatchData]):
 
         return features
 
-    def _compute_h2h_stats(self, history: list[MatchSnapshot], opponent: str, is_home: bool) -> dict[str, float]:
+    def _compute_h2h_stats(
+        self, history: list[MatchSnapshot], opponent: str, is_home: bool
+    ) -> dict[str, float]:
         """
         计算 H2H 对战历史（对阵特定对手）
 
@@ -335,7 +341,9 @@ class HistoricalRollingProcessor(BaseProcessor[MatchData]):
         prefix = "home" if is_home else "away"
 
         # 筛选出对阵该对手的比赛
-        h2h_matches = [m for m in history if m.opponent_id and m.opponent_id == opponent][: self.config.h2h_window]
+        h2h_matches = [m for m in history if m.opponent_id and m.opponent_id == opponent][
+            : self.config.h2h_window
+        ]
 
         if not h2h_matches:
             # 无对战记录，返回默认值
@@ -350,8 +358,14 @@ class HistoricalRollingProcessor(BaseProcessor[MatchData]):
         features[f"{prefix}_h2h_matches_count"] = float(len(h2h_matches))
 
         # 胜率
-        wins = sum(1 for m in h2h_matches if m.stats.get("goals_scored", 0) > m.stats.get("goals_conceded", 0))
-        features[f"{prefix}_h2h_win_rate"] = round(wins / len(h2h_matches), 4) if h2h_matches else 0.5
+        wins = sum(
+            1
+            for m in h2h_matches
+            if m.stats.get("goals_scored", 0) > m.stats.get("goals_conceded", 0)
+        )
+        features[f"{prefix}_h2h_win_rate"] = (
+            round(wins / len(h2h_matches), 4) if h2h_matches else 0.5
+        )
 
         # 进球/失球均值
         goals_scored = [m.stats.get("goals_scored", 0) for m in h2h_matches]
@@ -363,7 +377,9 @@ class HistoricalRollingProcessor(BaseProcessor[MatchData]):
             features[f"{prefix}_h2h_goals_scored_mean"] = 0.0
 
         if goals_conceded:
-            features[f"{prefix}_h2h_goals_conceded_mean"] = round(statistics.mean(goals_conceded), 4)
+            features[f"{prefix}_h2h_goals_conceded_mean"] = round(
+                statistics.mean(goals_conceded), 4
+            )
         else:
             features[f"{prefix}_h2h_goals_conceded_mean"] = 0.0
 
@@ -385,15 +401,14 @@ class HistoricalRollingProcessor(BaseProcessor[MatchData]):
         n = len(x)
         sum_x = sum(x)
         sum_y = sum(y)
-        sum_xy = sum(xi * yi for xi, yi in zip(x, y))
+        sum_xy = sum(xi * yi for xi, yi in zip(x, y, strict=False))
         sum_x2 = sum(xi * xi for xi in x)
 
         denominator = n * sum_x2 - sum_x * sum_x
         if denominator == 0:
             return 0.0
 
-        slope = (n * sum_xy - sum_x * sum_y) / denominator
-        return slope
+        return (n * sum_xy - sum_x * sum_y) / denominator
 
     def _compute_comparison_features(self, features: dict[str, float]) -> dict[str, float]:
         """计算历史对比特征"""

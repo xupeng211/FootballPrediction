@@ -3,16 +3,17 @@
 专注于系统性能、并发处理和负载测试
 """
 
-import pytest
 import asyncio
-import time
-import threading
-import multiprocessing
-from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
-from unittest.mock import patch, Mock, AsyncMock
-from datetime import datetime
-import psutil
 import gc
+import multiprocessing
+import threading
+import time
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
+from datetime import datetime
+from unittest.mock import AsyncMock, Mock, patch
+
+import psutil
+import pytest
 
 
 class TestServicePerformance:
@@ -21,8 +22,8 @@ class TestServicePerformance:
     def test_service_initialization_time(self):
         """测试服务初始化时间"""
         try:
-            from src.services.inference_service import InferenceService
             from src.services.collection_service import FotMobCollectionService
+            from src.services.inference_service import InferenceService
 
             # 测试推理服务初始化时间
             start_time = time.time()
@@ -157,8 +158,8 @@ class TestMemoryPerformance:
 
     def test_large_data_memory_efficiency(self):
         """测试大数据内存效率"""
-        import pandas as pd
         import numpy as np
+        import pandas as pd
 
         try:
             from src.ml.features.h2h_calculator import H2HCalculator
@@ -452,8 +453,9 @@ class TestResourceUtilization:
     def test_cpu_utilization_efficiency(self):
         """测试CPU利用率效率"""
         try:
-            import pandas as pd
             import numpy as np
+            import pandas as pd
+
             from src.ml.features.h2h_calculator import H2HCalculator
 
             # 创建CPU密集型任务

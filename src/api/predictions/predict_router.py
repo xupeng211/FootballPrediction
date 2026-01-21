@@ -72,10 +72,9 @@ async def get_prediction_service_dependency() -> PredictionService:
     """获取预测服务依赖"""
     try:
         container = get_container()
-        prediction_service = await container.resolve("prediction_service")
-        return prediction_service
+        return await container.resolve("prediction_service")
     except Exception as e:
-        logger.error(f"预测服务依赖注入失败: {e}")
+        logger.exception(f"预测服务依赖注入失败: {e}")
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="预测服务不可用，请稍后重试",
@@ -130,7 +129,7 @@ async def predict_match(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"单场比赛预测处理失败: match_id={match_id}, error={e}")
+        logger.exception(f"单场比赛预测处理失败: match_id={match_id}, error={e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"预测服务内部错误: {e!s}",
@@ -183,7 +182,7 @@ async def predict_batch(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"批量预测处理失败: match_ids={request.match_ids}, error={e}")
+        logger.exception(f"批量预测处理失败: match_ids={request.match_ids}, error={e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"批量预测服务内部错误: {e!s}",
@@ -228,7 +227,7 @@ async def health_check(
         }
 
     except Exception as e:
-        logger.error(f"健康检查失败: {e}")
+        logger.exception(f"健康检查失败: {e}")
         return {
             "success": False,
             "error": f"健康检查服务异常: {e!s}",

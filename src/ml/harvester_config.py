@@ -27,7 +27,9 @@ class HarvesterSettings(BaseSettings):
     3. 默认值
     """
 
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", case_sensitive=False, extra="ignore")
+    model_config = SettingsConfigDict(
+        env_file=".env", env_file_encoding="utf-8", case_sensitive=False, extra="ignore"
+    )
 
     # ==================== 数据库配置 ====================
     # V20.8 显式环境变量（容器内优先）
@@ -50,7 +52,9 @@ class HarvesterSettings(BaseSettings):
     db_retry_delay: float = Field(default=1.0, alias="DB_RETRY_DELAY")
 
     # ==================== 日志配置 ====================
-    harvest_log_file: str = Field(default="/var/log/harvester/harvest.log", alias="HARVEST_LOG_FILE")
+    harvest_log_file: str = Field(
+        default="/var/log/harvester/harvest.log", alias="HARVEST_LOG_FILE"
+    )
     harvest_log_level: str = Field(default="INFO", alias="HARVEST_LOG_LEVEL")
     harvest_log_max_bytes: int = Field(default=50 * 1024 * 1024, alias="HARVEST_LOG_MAX_BYTES")
     harvest_log_backup_count: int = Field(default=5, alias="HARVEST_LOG_BACKUP_COUNT")

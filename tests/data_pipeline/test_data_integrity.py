@@ -4,11 +4,12 @@
 确保数据库关联率=100%，核心特征NULL密度<5%
 """
 
-import pytest
-import psycopg2
-from psycopg2.extras import RealDictCursor
-from typing import Dict, List, Tuple, Any
 import logging
+from typing import Any, Dict, List, Tuple
+
+import psycopg2
+import pytest
+from psycopg2.extras import RealDictCursor
 
 from src.config_unified import get_settings
 from src.database.schema_manager import get_schema_manager

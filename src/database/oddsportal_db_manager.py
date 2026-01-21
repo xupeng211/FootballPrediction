@@ -25,20 +25,20 @@ Date: 2026-01-09
 
 from __future__ import annotations
 
+from contextlib import contextmanager
+from dataclasses import dataclass, field
 import json
 import logging
-from dataclasses import dataclass, field
-from datetime import datetime
-from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any
 
 import psycopg2
-from psycopg2.extras import RealDictCursor
-from psycopg2.extensions import connection
 from psycopg2 import sql as psycopg2_sql
-from contextlib import contextmanager
+from psycopg2.extras import RealDictCursor
 
 from src.config_unified import get_settings
+
+if TYPE_CHECKING:
+    from psycopg2.extensions import connection
 
 logger = logging.getLogger(__name__)
 
@@ -51,22 +51,24 @@ logger = logging.getLogger(__name__)
 @dataclass
 class SyncResult:
     """同步结果"""
+
     success: bool
     match_id: str
     rows_affected: int = 0
-    error: Optional[str] = None
+    error: str | None = None
     operation: str = "upsert"  # upsert, merge, skip
 
 
 @dataclass
 class BatchSyncResult:
     """批量同步结果"""
+
     total: int
     successful: int
     failed: int
     skipped: int
-    results: List[SyncResult] = field(default_factory=list)
-    errors: Dict[str, int] = field(default_factory=dict)
+    results: list[SyncResult] = field(default_factory=list)
+    errors: dict[str, int] = field(default_factory=dict)
 
 
 # ==============================================================================
@@ -99,7 +101,7 @@ class OddsPortalDBManager:
     SNAPSHOT_KEY = "snapshot"
     METADATA_KEY = "metadata"
 
-    def __init__(self, conn: Optional[connection] = None):
+    def __init__(self, conn: connection | None = None):
         """初始化数据库管理器
 
         Args:
@@ -120,7 +122,7 @@ class OddsPortalDBManager:
             database=settings.database.name,
             user=settings.database.user,
             password=settings.database.password.get_secret_value(),
-            cursor_factory=RealDictCursor
+            cursor_factory=RealDictCursor,
         )
 
     @property
@@ -139,10 +141,10 @@ class OddsPortalDBManager:
             logger.debug("事务提交成功")
         except Exception as e:
             self.conn.rollback()
-            logger.error(f"事务回滚: {e}")
+            logger.exception(f"事务回滚: {e}")
             raise
 
-    def _build_l2_json_payload(self, scraped_data: Dict[str, Any]) -> Dict[str, Any]:
+    def _build_l2_json_payload(self, scraped_data: dict[str, Any]) -> dict[str, Any]:
         """构建 L2 JSON 数据载荷
 
         Args:
@@ -152,7 +154,7 @@ class OddsPortalDBManager:
             符合 l2_raw_json 结构的字典
         """
         # 提取核心数据
-        payload = {
+        return {
             self.ODDSPORTAL_KEY: {
                 self.SNAPSHOT_KEY: scraped_data.get("data", {}),
                 self.METADATA_KEY: {
@@ -160,17 +162,12 @@ class OddsPortalDBManager:
                     "proxy": scraped_data.get("proxy"),
                     "extraction_time": scraped_data.get("extraction_time"),
                     "scraper_version": "V150.33",
-                    "stats": scraped_data.get("stats", {})
-                }
+                    "stats": scraped_data.get("stats", {}),
+                },
             }
         }
-        return payload
 
-    def sync_match_data(
-        self,
-        scraped_data: Dict[str, Any],
-        sync_mode: str = "merge"
-    ) -> SyncResult:
+    def sync_match_data(self, scraped_data: dict[str, Any], sync_mode: str = "merge") -> SyncResult:
         """同步单场比赛数据到数据库
 
         Args:
@@ -186,102 +183,80 @@ class OddsPortalDBManager:
         match_id = scraped_data.get("match_id")
 
         if not match_id:
-            return SyncResult(
-                success=False,
-                match_id="",
-                error="缺少 match_id"
-            )
+            return SyncResult(success=False, match_id="", error="缺少 match_id")
 
         if not scraped_data.get("success"):
-            return SyncResult(
-                success=False,
-                match_id=match_id,
-                error="采集失败，跳过同步"
-            )
+            return SyncResult(success=False, match_id=match_id, error="采集失败，跳过同步")
 
         try:
-            with self.transaction():
-                with self.conn.cursor() as cur:
-                    # 构建载荷
-                    payload = self._build_l2_json_payload(scraped_data)
-                    payload_json = json.dumps(payload, ensure_ascii=False)
+            with self.transaction(), self.conn.cursor() as cur:
+                # 构建载荷
+                payload = self._build_l2_json_payload(scraped_data)
+                payload_json = json.dumps(payload, ensure_ascii=False)
 
-                    # 检查现有数据
-                    cur.execute(
-                        f"SELECT {self.L2_FIELD} FROM {self.TABLE_NAME} "
-                        f"WHERE {self.MATCH_ID_FIELD} = %s",
-                        (match_id,)
-                    )
-                    existing = cur.fetchone()
+                # 检查现有数据
+                cur.execute(
+                    f"SELECT {self.L2_FIELD} FROM {self.TABLE_NAME} "
+                    f"WHERE {self.MATCH_ID_FIELD} = %s",
+                    (match_id,),
+                )
+                existing = cur.fetchone()
 
-                    if existing and existing.get(self.L2_FIELD):
-                        existing_l2 = existing[self.L2_FIELD]
+                if existing and existing.get(self.L2_FIELD):
+                    existing[self.L2_FIELD]
 
-                        if sync_mode == "skip":
-                            logger.info(f"[{match_id}] 跳过: 已存在数据")
-                            return SyncResult(
-                                success=True,
-                                match_id=match_id,
-                                rows_affected=0,
-                                operation="skip"
-                            )
-
-                        elif sync_mode == "merge":
-                            # 使用 JSONB || 操作符合并
-                            cur.execute(
-                                f"UPDATE {self.TABLE_NAME} "
-                                f"SET {self.L2_FIELD} = {self.L2_FIELD} || %s::jsonb, "
-                                f"updated_at = NOW() "
-                                f"WHERE {self.MATCH_ID_FIELD} = %s",
-                                (payload_json, match_id)
-                            )
-
-                        elif sync_mode == "replace":
-                            # 完全替换
-                            cur.execute(
-                                f"UPDATE {self.TABLE_NAME} "
-                                f"SET {self.L2_FIELD} = %s::jsonb, "
-                                f"updated_at = NOW() "
-                                f"WHERE {self.MATCH_ID_FIELD} = %s",
-                                (payload_json, match_id)
-                            )
-                    else:
-                        # 插入新记录
-                        cur.execute(
-                            f"INSERT INTO {self.TABLE_NAME} "
-                            f"({self.MATCH_ID_FIELD}, {self.L2_FIELD}, created_at, updated_at) "
-                            f"VALUES (%s, %s::jsonb, NOW(), NOW()) "
-                            f"ON CONFLICT ({self.MATCH_ID_FIELD}) "
-                            f"DO UPDATE SET "
-                            f"{self.L2_FIELD} = EXCLUDED.{self.L2_FIELD} || %s::jsonb, "
-                            f"updated_at = NOW()",
-                            (match_id, payload_json, payload_json)
+                    if sync_mode == "skip":
+                        logger.info(f"[{match_id}] 跳过: 已存在数据")
+                        return SyncResult(
+                            success=True, match_id=match_id, rows_affected=0, operation="skip"
                         )
 
-                    rows_affected = cur.rowcount
+                    if sync_mode == "merge":
+                        # 使用 JSONB || 操作符合并
+                        cur.execute(
+                            f"UPDATE {self.TABLE_NAME} "
+                            f"SET {self.L2_FIELD} = {self.L2_FIELD} || %s::jsonb, "
+                            f"updated_at = NOW() "
+                            f"WHERE {self.MATCH_ID_FIELD} = %s",
+                            (payload_json, match_id),
+                        )
+
+                    elif sync_mode == "replace":
+                        # 完全替换
+                        cur.execute(
+                            f"UPDATE {self.TABLE_NAME} "
+                            f"SET {self.L2_FIELD} = %s::jsonb, "
+                            f"updated_at = NOW() "
+                            f"WHERE {self.MATCH_ID_FIELD} = %s",
+                            (payload_json, match_id),
+                        )
+                else:
+                    # 插入新记录
+                    cur.execute(
+                        f"INSERT INTO {self.TABLE_NAME} "
+                        f"({self.MATCH_ID_FIELD}, {self.L2_FIELD}, created_at, updated_at) "
+                        f"VALUES (%s, %s::jsonb, NOW(), NOW()) "
+                        f"ON CONFLICT ({self.MATCH_ID_FIELD}) "
+                        f"DO UPDATE SET "
+                        f"{self.L2_FIELD} = EXCLUDED.{self.L2_FIELD} || %s::jsonb, "
+                        f"updated_at = NOW()",
+                        (match_id, payload_json, payload_json),
+                    )
+
+                rows_affected = cur.rowcount
 
             logger.info(f"[{match_id}] 同步成功: {rows_affected} 行受影响 (模式: {sync_mode})")
 
             return SyncResult(
-                success=True,
-                match_id=match_id,
-                rows_affected=rows_affected,
-                operation=sync_mode
+                success=True, match_id=match_id, rows_affected=rows_affected, operation=sync_mode
             )
 
         except Exception as e:
-            logger.error(f"[{match_id}] 同步失败: {e}")
-            return SyncResult(
-                success=False,
-                match_id=match_id,
-                error=str(e)
-            )
+            logger.exception(f"[{match_id}] 同步失败: {e}")
+            return SyncResult(success=False, match_id=match_id, error=str(e))
 
     def sync_batch(
-        self,
-        scraped_results: List[Dict[str, Any]],
-        sync_mode: str = "merge",
-        batch_size: int = 50
+        self, scraped_results: list[dict[str, Any]], sync_mode: str = "merge", batch_size: int = 50
     ) -> BatchSyncResult:
         """批量同步数据
 
@@ -294,8 +269,8 @@ class OddsPortalDBManager:
             BatchSyncResult 对象
         """
         total = len(scraped_results)
-        results: List[SyncResult] = []
-        errors: Dict[str, int] = {}
+        results: list[SyncResult] = []
+        errors: dict[str, int] = {}
 
         for i, scraped_data in enumerate(scraped_results):
             result = self.sync_match_data(scraped_data, sync_mode)
@@ -321,10 +296,10 @@ class OddsPortalDBManager:
             failed=failed,
             skipped=skipped,
             results=results,
-            errors=errors
+            errors=errors,
         )
 
-    def verify_sync(self, match_id: str) -> Optional[Dict[str, Any]]:
+    def verify_sync(self, match_id: str) -> dict[str, Any] | None:
         """验证同步结果
 
         Args:
@@ -339,7 +314,7 @@ class OddsPortalDBManager:
                     f"SELECT {self.MATCH_ID_FIELD}, {self.L2_FIELD}, created_at, updated_at "
                     f"FROM {self.TABLE_NAME} "
                     f"WHERE {self.MATCH_ID_FIELD} = %s",
-                    (match_id,)
+                    (match_id,),
                 )
                 result = cur.fetchone()
 
@@ -347,17 +322,21 @@ class OddsPortalDBManager:
                     return {
                         "match_id": result[self.MATCH_ID_FIELD],
                         "l2_raw_json": result[self.L2_FIELD],
-                        "created_at": result["created_at"].isoformat() if result.get("created_at") else None,
-                        "updated_at": result["updated_at"].isoformat() if result.get("updated_at") else None,
-                        "has_oddsportal_data": self.ODDSPORTAL_KEY in result.get(self.L2_FIELD, {})
+                        "created_at": result["created_at"].isoformat()
+                        if result.get("created_at")
+                        else None,
+                        "updated_at": result["updated_at"].isoformat()
+                        if result.get("updated_at")
+                        else None,
+                        "has_oddsportal_data": self.ODDSPORTAL_KEY in result.get(self.L2_FIELD, {}),
                     }
                 return None
 
         except Exception as e:
-            logger.error(f"[{match_id}] 验证失败: {e}")
+            logger.exception(f"[{match_id}] 验证失败: {e}")
             return None
 
-    def get_missing_match_ids(self, expected_ids: List[str]) -> List[str]:
+    def get_missing_match_ids(self, expected_ids: list[str]) -> list[str]:
         """获取缺失的 match_id 列表
 
         Args:
@@ -372,17 +351,16 @@ class OddsPortalDBManager:
                 cur.execute(
                     f"SELECT {self.MATCH_ID_FIELD} FROM {self.TABLE_NAME} "
                     f"WHERE {self.MATCH_ID_FIELD} IN ({placeholders})",
-                    expected_ids
+                    expected_ids,
                 )
                 existing = {row[self.MATCH_ID_FIELD] for row in cur.fetchall()}
-                missing = [mid for mid in expected_ids if mid not in existing]
-                return missing
+                return [mid for mid in expected_ids if mid not in existing]
 
         except Exception as e:
-            logger.error(f"获取缺失 ID 失败: {e}")
+            logger.exception(f"获取缺失 ID 失败: {e}")
             return []
 
-    def get_sync_statistics(self) -> Dict[str, Any]:
+    def get_sync_statistics(self) -> dict[str, Any]:
         """获取同步统计信息
 
         Returns:
@@ -398,17 +376,19 @@ class OddsPortalDBManager:
                 total = cur.fetchone()["total"]
 
                 # 有 l2_raw_json 的记录数（使用安全的标识符处理）
-                query = psycopg2_sql.SQL("SELECT COUNT(*) as count FROM {} WHERE {} IS NOT NULL").format(
-                    psycopg2_sql.Identifier(self.TABLE_NAME),
-                    psycopg2_sql.Identifier(self.L2_FIELD)
+                query = psycopg2_sql.SQL(
+                    "SELECT COUNT(*) as count FROM {} WHERE {} IS NOT NULL"
+                ).format(
+                    psycopg2_sql.Identifier(self.TABLE_NAME), psycopg2_sql.Identifier(self.L2_FIELD)
                 )
                 cur.execute(query)
                 with_l2 = cur.fetchone()["count"]
 
                 # 有 oddsportal 数据的记录数（使用安全的标识符处理）
-                query = psycopg2_sql.SQL("SELECT COUNT(*) as count FROM {} WHERE {} -> %s IS NOT NULL").format(
-                    psycopg2_sql.Identifier(self.TABLE_NAME),
-                    psycopg2_sql.Identifier(self.L2_FIELD)
+                query = psycopg2_sql.SQL(
+                    "SELECT COUNT(*) as count FROM {} WHERE {} -> %s IS NOT NULL"
+                ).format(
+                    psycopg2_sql.Identifier(self.TABLE_NAME), psycopg2_sql.Identifier(self.L2_FIELD)
                 )
                 cur.execute(query, (self.ODDSPORTAL_KEY,))
                 with_oddsportal = cur.fetchone()["count"]
@@ -417,12 +397,14 @@ class OddsPortalDBManager:
                     "total_matches": total,
                     "with_l2_data": with_l2,
                     "with_oddsportal_data": with_oddsportal,
-                    "l2_coverage": f"{with_l2/total*100:.2f}%" if total > 0 else "0%",
-                    "oddsportal_coverage": f"{with_oddsportal/total*100:.2f}%" if total > 0 else "0%"
+                    "l2_coverage": f"{with_l2 / total * 100:.2f}%" if total > 0 else "0%",
+                    "oddsportal_coverage": f"{with_oddsportal / total * 100:.2f}%"
+                    if total > 0
+                    else "0%",
                 }
 
         except Exception as e:
-            logger.error(f"获取统计信息失败: {e}")
+            logger.exception(f"获取统计信息失败: {e}")
             return {}
 
     def close(self) -> None:
@@ -443,7 +425,7 @@ class OddsPortalDBManager:
 # ==============================================================================
 
 
-def sync_scraped_result(scraped_data: Dict[str, Any], sync_mode: str = "merge") -> SyncResult:
+def sync_scraped_result(scraped_data: dict[str, Any], sync_mode: str = "merge") -> SyncResult:
     """便捷函数：同步单个采集结果
 
     Example:
@@ -455,7 +437,9 @@ def sync_scraped_result(scraped_data: Dict[str, Any], sync_mode: str = "merge") 
         return db.sync_match_data(scraped_data, sync_mode)
 
 
-def sync_scraped_batch(scraped_results: List[Dict[str, Any]], sync_mode: str = "merge") -> BatchSyncResult:
+def sync_scraped_batch(
+    scraped_results: list[dict[str, Any]], sync_mode: str = "merge"
+) -> BatchSyncResult:
     """便捷函数：批量同步采集结果
 
     Example:

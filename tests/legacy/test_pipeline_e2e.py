@@ -13,15 +13,16 @@
 6. 模型加载和预测
 """
 
-import pytest
 import asyncio
-import tempfile
-import shutil
-from pathlib import Path
-import pandas as pd
-import numpy as np
-from datetime import datetime, timedelta
 import logging
+import shutil
+import tempfile
+from datetime import datetime, timedelta
+from pathlib import Path
+
+import numpy as np
+import pandas as pd
+import pytest
 
 # 配置日志
 logging.basicConfig(level=logging.INFO)
@@ -29,12 +30,12 @@ logger = logging.getLogger(__name__)
 
 # 导入需要测试的模块
 try:
+    from src.inference import Predictor, predict_match
     from src.ml.data.loader import DataLoader
+    from src.ml.dataset.dataset_generator import ClassificationDatasetGenerator
+    from src.ml.dataset.target_labels import label_to_numeric, score_to_label
     from src.ml.features.extractor import MatchFeatureExtractor
     from src.ml.training.training_pipeline import ClassificationTrainingPipeline
-    from src.ml.dataset.dataset_generator import ClassificationDatasetGenerator
-    from src.ml.dataset.target_labels import score_to_label, label_to_numeric
-    from src.inference import Predictor, predict_match
 except ImportError as e:
     logger.error(f"模块导入失败: {e}")
     pytest.skip(f"模块导入失败: {e}", allow_module_level=True)
@@ -415,8 +416,8 @@ if __name__ == "__main__":
     # 直接运行测试（用于调试）
     async def run_debug_test():
         """运行调试测试"""
-        import tempfile
         import shutil
+        import tempfile
 
         temp_dir = Path(tempfile.mkdtemp())
         try:

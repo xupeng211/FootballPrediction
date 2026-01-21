@@ -22,10 +22,10 @@ Date: 2026-01-06
 
 from __future__ import annotations
 
-import logging
-import os
 from collections import deque
 from datetime import datetime, timedelta
+import logging
+import os
 from typing import Any
 
 from src.api.collectors.base_extractor import SecurityInterrupt
@@ -36,6 +36,7 @@ logger = logging.getLogger(__name__)
 # ============================================================================
 # 自动巡航哨兵
 # ============================================================================
+
 
 class CollectionSentry:
     """
@@ -209,16 +210,16 @@ class CollectionSentry:
             error_message += f"   {i}. {reason}\n"
 
         error_message += (
-            f"\n"
-            f"💡 系统将在冷却期结束后自动恢复。\n"
-            f"💡 如需立即恢复，请手动清除 COLLECTION_PAUSE_UNTIL 环境变量。"
+            "\n"
+            "💡 系统将在冷却期结束后自动恢复。\n"
+            "💡 如需立即恢复，请手动清除 COLLECTION_PAUSE_UNTIL 环境变量。"
         )
 
         # 记录日志
-        logger.error("="*80)
+        logger.error("=" * 80)
         logger.error("🛑 自动巡航哨兵 - 触发停机保护")
         logger.error(error_message)
-        logger.error("="*80)
+        logger.error("=" * 80)
 
         # 抛出异常
         raise SecurityInterrupt(error_message)
@@ -288,6 +289,7 @@ class CollectionSentry:
 # ============================================================================
 # 便捷函数
 # ============================================================================
+
 
 def create_collection_sentry(
     window_size: int = 100,

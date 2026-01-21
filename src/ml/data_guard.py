@@ -51,14 +51,20 @@ class ValidationResult:
     @property
     def errors(self) -> list[ValidationIssue]:
         """获取所有错误级别的问题"""
-        return [i for i in self.issues if i.severity in (ValidationSeverity.ERROR, ValidationSeverity.CRITICAL)]
+        return [
+            i
+            for i in self.issues
+            if i.severity in (ValidationSeverity.ERROR, ValidationSeverity.CRITICAL)
+        ]
 
     @property
     def warnings(self) -> list[ValidationIssue]:
         """获取所有警告级别的问题"""
         return [i for i in self.issues if i.severity == ValidationSeverity.WARNING]
 
-    def add_error(self, field: str, message: str, actual_value: Any = None, expected_type: str = None):
+    def add_error(
+        self, field: str, message: str, actual_value: Any = None, expected_type: str | None = None
+    ):
         """添加错误"""
         self.issues.append(
             ValidationIssue(
@@ -75,7 +81,10 @@ class ValidationResult:
         """添加警告"""
         self.issues.append(
             ValidationIssue(
-                field_name=field, severity=ValidationSeverity.WARNING, message=message, actual_value=actual_value
+                field_name=field,
+                severity=ValidationSeverity.WARNING,
+                message=message,
+                actual_value=actual_value,
             )
         )
 
@@ -83,7 +92,10 @@ class ValidationResult:
         """添加严重错误"""
         self.issues.append(
             ValidationIssue(
-                field_name=field, severity=ValidationSeverity.CRITICAL, message=message, actual_value=actual_value
+                field_name=field,
+                severity=ValidationSeverity.CRITICAL,
+                message=message,
+                actual_value=actual_value,
             )
         )
         self.is_valid = False
@@ -137,7 +149,9 @@ class FeatureSchemaValidator:
         self.strict_mode = strict_mode
         logger.info(f"数据验证卫士初始化: strict_mode={strict_mode}")
 
-    def validate_match_features(self, match_data: dict[str, Any], features: dict[str, Any]) -> ValidationResult:
+    def validate_match_features(
+        self, match_data: dict[str, Any], features: dict[str, Any]
+    ) -> ValidationResult:
         """
         验证比赛特征数据
 
@@ -175,7 +189,9 @@ class FeatureSchemaValidator:
         """验证必需字段"""
         for field in self.REQUIRED_FIELDS:
             if field not in match_data or match_data[field] is None:
-                result.add_critical(field=field, message="必需字段缺失或为空", actual_value=match_data.get(field))
+                result.add_critical(
+                    field=field, message="必需字段缺失或为空", actual_value=match_data.get(field)
+                )
 
     def _validate_feature_names(self, features: dict[str, Any], result: ValidationResult):
         """验证特征名格式"""
@@ -204,9 +220,10 @@ class FeatureSchemaValidator:
             # 允许列表/字典 (用于 JSONB 存储)
             if isinstance(value, (list, dict)):
                 # 检查嵌套元素
-                if isinstance(value, list) and len(value) > 0:
-                    if not all(isinstance(v, valid_types) or isinstance(v, (list, dict)) for v in value):
-                        result.add_warning(field=name, message="列表包含无效类型的元素")
+                if isinstance(value, list) and len(value) > 0 and not all(
+                    isinstance(v, (valid_types, list, dict)) for v in value
+                ):
+                    result.add_warning(field=name, message="列表包含无效类型的元素")
                 continue
 
             result.add_error(
@@ -232,7 +249,9 @@ class FeatureSchemaValidator:
                 if constraint_key in name.lower():
                     if value < min_val or value > max_val:
                         result.add_error(
-                            field=name, message=f"值 {value} 超出约束范围 [{min_val}, {max_val}]", actual_value=value
+                            field=name,
+                            message=f"值 {value} 超出约束范围 [{min_val}, {max_val}]",
+                            actual_value=value,
                         )
                     break
 
@@ -254,7 +273,8 @@ class FeatureSchemaValidator:
 
         if feature_count < MIN_COMPATIBILITY:
             result.add_error(
-                field="feature_count", message=f"特征数量 {feature_count} 低于最小阈值 {MIN_COMPATIBILITY}"
+                field="feature_count",
+                message=f"特征数量 {feature_count} 低于最小阈值 {MIN_COMPATIBILITY}",
             )
         elif feature_count < MIN_HOLOGRAPHIC:
             result.add_warning(
@@ -264,7 +284,9 @@ class FeatureSchemaValidator:
 
         # 异常高特征数可能表示数据错误
         if feature_count > 2000:
-            result.add_warning(field="feature_count", message=f"特征数量 {feature_count} 异常高，可能包含冗余数据")
+            result.add_warning(
+                field="feature_count", message=f"特征数量 {feature_count} 异常高，可能包含冗余数据"
+            )
 
 
 class DataGuard:
@@ -280,7 +302,9 @@ class DataGuard:
         self._rejected_count = 0
         self._accepted_count = 0
 
-    def verify_before_save(self, match_data: dict[str, Any], features: dict[str, Any]) -> tuple[bool, ValidationResult]:
+    def verify_before_save(
+        self, match_data: dict[str, Any], features: dict[str, Any]
+    ) -> tuple[bool, ValidationResult]:
         """
         在保存前验证数据
 

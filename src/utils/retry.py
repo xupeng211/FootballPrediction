@@ -76,10 +76,14 @@ def with_retry(
                     return await func(*args, **kwargs)
                 except config.exceptions as e:
                     if attempt == config.max_attempts - 1:
-                        logger.error(f"函数 {func.__name__} 达到最大重试次数 ({config.max_attempts}) 后失败: {e}")
+                        logger.exception(
+                            f"函数 {func.__name__} 达到最大重试次数 ({config.max_attempts}) 后失败: {e}"
+                        )
                         raise
 
-                    delay = _calculate_delay(attempt, config.base_delay, config.max_delay, config.exponential)
+                    delay = _calculate_delay(
+                        attempt, config.base_delay, config.max_delay, config.exponential
+                    )
                     logger.warning(
                         f"函数 {func.__name__} 执行失败 ({attempt + 1}/{config.max_attempts}): {e}. "
                         f"{delay:.1f}秒后重试..."
@@ -94,10 +98,14 @@ def with_retry(
                     return func(*args, **kwargs)
                 except config.exceptions as e:
                     if attempt == config.max_attempts - 1:
-                        logger.error(f"函数 {func.__name__} 达到最大重试次数 ({config.max_attempts}) 后失败: {e}")
+                        logger.exception(
+                            f"函数 {func.__name__} 达到最大重试次数 ({config.max_attempts}) 后失败: {e}"
+                        )
                         raise
 
-                    delay = _calculate_delay(attempt, config.base_delay, config.max_delay, config.exponential)
+                    delay = _calculate_delay(
+                        attempt, config.base_delay, config.max_delay, config.exponential
+                    )
                     logger.warning(
                         f"函数 {func.__name__} 执行失败 ({attempt + 1}/{config.max_attempts}): {e}. "
                         f"{delay:.1f}秒后重试..."

@@ -21,9 +21,8 @@ V41.115 "铁板大一统" - 侦察兵模块化
 日期：2026-01-16
 """
 
-import json
-import logging
 from datetime import datetime
+import logging
 from typing import Any
 
 import requests
@@ -64,10 +63,7 @@ class FotMobScout:
         }
 
     def discover_league_matches(
-        self,
-        league_name: str,
-        seasons: list[str],
-        proxy: str | None = None
+        self, league_name: str, seasons: list[str], proxy: str | None = None
     ) -> dict[str, Any]:
         """
         发现联赛比赛（Scout 阶段）
@@ -92,7 +88,7 @@ class FotMobScout:
                 "matches": [],
             }
 
-        logger.info(f"🔍 V41.115 Scout: 发现联赛比赛")
+        logger.info("🔍 V41.115 Scout: 发现联赛比赛")
         logger.info(f"   联赛: {league_name} (ID: {league_id})")
         logger.info(f"   赛季: {', '.join(seasons)}")
 
@@ -138,10 +134,7 @@ class FotMobScout:
         }
 
     def _fetch_season_matches(
-        self,
-        league_id: int,
-        season: str,
-        proxy: str | None = None
+        self, league_id: int, season: str, proxy: str | None = None
     ) -> list[dict] | None:
         """
         获取指定赛季的比赛
@@ -171,7 +164,7 @@ class FotMobScout:
                 try:
                     response = self.session.get(url, headers=headers, proxies=proxies, timeout=30)
                 except requests.exceptions.ProxyError:
-                    logger.info(f"⚠️  代理不可用，切换到直连模式")
+                    logger.info("⚠️  代理不可用，切换到直连模式")
                     response = self.session.get(url, headers=headers, timeout=30)
             else:
                 response = self.session.get(url, headers=headers, timeout=30)
@@ -180,24 +173,19 @@ class FotMobScout:
                 data = response.json()
 
                 if "fixtures" not in data or "allMatches" not in data["fixtures"]:
-                    logger.warning(f"⚠️  数据格式异常")
+                    logger.warning("⚠️  数据格式异常")
                     return None
 
                 return data["fixtures"]["allMatches"]
-            else:
-                logger.warning(f"⚠️  HTTP {response.status_code}")
-                return None
+            logger.warning(f"⚠️  HTTP {response.status_code}")
+            return None
 
         except Exception as e:
-            logger.error(f"❌ 请求失败: {e}")
+            logger.exception(f"❌ 请求失败: {e}")
             return None
 
     def _enrich_match_data(
-        self,
-        match: dict,
-        league_id: int,
-        league_name: str,
-        season: str
+        self, match: dict, league_id: int, league_name: str, season: str
     ) -> dict:
         """
         V41.115: 丰富比赛数据（26维字段）
@@ -220,7 +208,6 @@ class FotMobScout:
         return {
             # === 核心标识 ===
             "match_id": match.get("id"),
-
             # === 球队信息 ===
             "home_team": match.get("home", {}).get("name"),
             "home_team_id": match.get("home", {}).get("id"),
@@ -228,25 +215,21 @@ class FotMobScout:
             "away_team": match.get("away", {}).get("name"),
             "away_team_id": match.get("away", {}).get("id"),
             "away_team_short_name": match.get("away", {}).get("shortName"),
-
             # === 比赛状态 ===
             "status_code": status_obj.get("reason", {}).get("short", ""),
             "is_finished": status_obj.get("finished", False),
             "is_started": status_obj.get("started", False),
             "is_cancelled": status_obj.get("cancelled", False),
             "is_awarded": status_obj.get("awarded", False),
-
             # === 比分和时间 ===
             "home_score": home_score,
             "away_score": away_score,
             "score_str": score_str,
             "match_time_utc": status_obj.get("utcTime"),
-
             # === 轮次和链接 ===
             "round": match.get("round"),
             "round_name": match.get("roundName"),
             "page_url": match.get("pageUrl"),
-
             # === 采集元数据 ===
             "league_id": league_id,
             "league_name": league_name,
@@ -279,9 +262,7 @@ class FotMobScout:
         return None, None
 
     def save_matches_to_database(
-        self,
-        matches: list[dict],
-        batch_size: int = 100
+        self, matches: list[dict], batch_size: int = 100
     ) -> dict[str, Any]:
         """
         保存比赛到数据库（UPSERT 机制）
@@ -294,6 +275,7 @@ class FotMobScout:
             保存结果
         """
         import psycopg2
+
         from src.config_unified import get_settings
 
         settings = get_settings()
@@ -312,7 +294,7 @@ class FotMobScout:
 
             # 批量处理
             for i in range(0, len(matches), batch_size):
-                batch = matches[i:i + batch_size]
+                batch = matches[i : i + batch_size]
 
                 with conn.cursor() as cur:
                     for match in batch:
@@ -358,7 +340,7 @@ class FotMobScout:
         except Exception as e:
             if conn:
                 conn.rollback()
-            logger.error(f"❌ 数据库保存失败: {e}")
+            logger.exception(f"❌ 数据库保存失败: {e}")
             return {
                 "success": False,
                 "error": str(e),
@@ -380,9 +362,7 @@ def create_scout() -> FotMobScout:
 
 
 def discover_and_save(
-    league_name: str,
-    seasons: list[str],
-    save_to_db: bool = True
+    league_name: str, seasons: list[str], save_to_db: bool = True
 ) -> dict[str, Any]:
     """
     发现并保存比赛（便捷函数）

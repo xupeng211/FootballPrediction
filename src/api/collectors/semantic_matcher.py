@@ -11,10 +11,12 @@ Date: 2026-01-07
 
 from __future__ import annotations
 
-import logging
 from dataclasses import dataclass
-from datetime import datetime
-from typing import Any
+import logging
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -29,6 +31,7 @@ class MatchSignature:
         home_team: Home team name
         away_team: Away team name
     """
+
     date: datetime
     league: str
     home_team: str
@@ -49,7 +52,7 @@ class SemanticMatcher:
         ...     date=datetime(2024, 11, 1, 15, 0),
         ...     league="Premier League",
         ...     home_team="Arsenal",
-        ...     away_team="Chelsea"
+        ...     away_team="Chelsea",
         ... )
         >>> candidates = [MatchSignature(...), ...]
         >>> results = matcher.find_candidates(fotmob_match, candidates)
@@ -60,6 +63,7 @@ class SemanticMatcher:
         # Import LevenshteinMatcher for team name comparison
         try:
             from src.api.collectors.levenshtein_matcher import LevenshteinMatcher
+
             self.levenshtein = LevenshteinMatcher(threshold=5)
         except ImportError:
             self.levenshtein = None
@@ -84,11 +88,7 @@ class SemanticMatcher:
             List of (candidate, confidence) tuples, sorted by confidence descending
 
         Example:
-            >>> results = matcher.find_candidates(
-            ...     fotmob_match,
-            ...     oddsportal_matches,
-            ...     date_tolerance_hours=6
-            ... )
+            >>> results = matcher.find_candidates(fotmob_match, oddsportal_matches, date_tolerance_hours=6)
             >>> for candidate, confidence in results:
             ...     print(f"{candidate.home_team} vs {candidate.away_team}: {confidence}")
         """
@@ -167,10 +167,7 @@ class SemanticMatcher:
 
         # Ligue 1 variations
         ligue1_variations = ["ligue 1", "ligue 1 uber eats", "french ligue 1"]
-        if league1_lower in ligue1_variations and league2_lower in ligue1_variations:
-            return True
-
-        return False
+        return bool(league1_lower in ligue1_variations and league2_lower in ligue1_variations)
 
     def _calculate_team_similarity(
         self,
@@ -194,20 +191,15 @@ class SemanticMatcher:
         """
         if self.levenshtein:
             # Use Levenshtein matcher
-            is_match_h, conf_h = self.levenshtein.match_team_names(
-                fotmob_home, "", op_home, ""
-            )
-            is_match_a, conf_a = self.levenshtein.match_team_names(
-                fotmob_away, "", op_away, ""
-            )
+            _is_match_h, conf_h = self.levenshtein.match_team_names(fotmob_home, "", op_home, "")
+            _is_match_a, conf_a = self.levenshtein.match_team_names(fotmob_away, "", op_away, "")
 
             # Average confidence
             return (conf_h + conf_a) / 2
-        else:
-            # Fallback: simple string comparison
-            home_sim = 1.0 if fotmob_home.lower() == op_home.lower() else 0.0
-            away_sim = 1.0 if fotmob_away.lower() == op_away.lower() else 0.0
-            return (home_sim + away_sim) / 2
+        # Fallback: simple string comparison
+        home_sim = 1.0 if fotmob_home.lower() == op_home.lower() else 0.0
+        away_sim = 1.0 if fotmob_away.lower() == op_away.lower() else 0.0
+        return (home_sim + away_sim) / 2
 
     def _calculate_confidence(
         self,
@@ -237,6 +229,5 @@ class SemanticMatcher:
         time_score = 1.0 - min(time_diff / max_time_diff, 1.0)
 
         # Weighted average
-        confidence = 0.4 * time_score + 0.6 * name_similarity
+        return 0.4 * time_score + 0.6 * name_similarity
 
-        return confidence

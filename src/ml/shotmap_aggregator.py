@@ -230,7 +230,9 @@ class ShotmapAggregator:
         features[f"away_{period_code}_synth_volatility"] = round(away_metrics.volatility, 4)
 
         # 生成差值特征
-        features[f"diff_{period_code}_synth_total_shots"] = home_metrics.total_shots - away_metrics.total_shots
+        features[f"diff_{period_code}_synth_total_shots"] = (
+            home_metrics.total_shots - away_metrics.total_shots
+        )
         features[f"diff_{period_code}_synth_xg"] = round(
             home_metrics.sum_expected_goals - away_metrics.sum_expected_goals, 3
         )
@@ -242,7 +244,9 @@ class ShotmapAggregator:
         )
 
         # 生成总计特征
-        features[f"total_{period_code}_synth_total_shots"] = home_metrics.total_shots + away_metrics.total_shots
+        features[f"total_{period_code}_synth_total_shots"] = (
+            home_metrics.total_shots + away_metrics.total_shots
+        )
         features[f"total_{period_code}_synth_xg"] = round(
             home_metrics.sum_expected_goals + away_metrics.sum_expected_goals, 3
         )
@@ -276,7 +280,9 @@ class ShotmapAggregator:
             if shots:
                 period_features = self.synthesize_period_features(shots, period_name)
                 all_features.update(period_features)
-                logger.debug(f"Synthesized {len(period_features)} features for {period_name} ({len(shots)} shots)")
+                logger.debug(
+                    f"Synthesized {len(period_features)} features for {period_name} ({len(shots)} shots)"
+                )
 
         logger.info(f"🎯 ShotmapAggregator: Synthesized {len(all_features)} features")
         return all_features
@@ -354,12 +360,14 @@ class PlayerStatsExtractor:
                         features[f"away_player_{normalized_key}"] = away_val
                         features[f"diff_player_{normalized_key}"] = (
                             home_val - away_val
-                            if isinstance(home_val, (int, float)) and isinstance(away_val, (int, float))
+                            if isinstance(home_val, (int, float))
+                            and isinstance(away_val, (int, float))
                             else None
                         )
                         features[f"total_player_{normalized_key}"] = (
                             home_val + away_val
-                            if isinstance(home_val, (int, float)) and isinstance(away_val, (int, float))
+                            if isinstance(home_val, (int, float))
+                            and isinstance(away_val, (int, float))
                             else None
                         )
 
@@ -422,13 +430,17 @@ class MomentumExtractor:
 
         # 差值特征
         if "home_momentum_peak" in features and "away_momentum_peak" in features:
-            features["diff_momentum_peak"] = round(features["home_momentum_peak"] - features["away_momentum_peak"], 2)
+            features["diff_momentum_peak"] = round(
+                features["home_momentum_peak"] - features["away_momentum_peak"], 2
+            )
 
         logger.info(f"📈 MomentumExtractor: Extracted {len(features)} momentum features")
         return features
 
 
-def synthesize_v20_6_features(content: dict, home_team_id: int, away_team_id: int) -> dict[str, Any]:
+def synthesize_v20_6_features(
+    content: dict, home_team_id: int, away_team_id: int
+) -> dict[str, Any]:
     """
     V20.6 全量特征合成 - 统一入口
 
@@ -468,7 +480,9 @@ if __name__ == "__main__":
     # 测试用例：读取实际数据
     import json
 
-    test_file = "/home/user/projects/FootballPrediction/data/backfill_stats/raw_json_match_3609929.json"
+    test_file = (
+        "/home/user/projects/FootballPrediction/data/backfill_stats/raw_json_match_3609929.json"
+    )
     with open(test_file) as f:
         data = json.load(f)
 
@@ -479,33 +493,21 @@ if __name__ == "__main__":
     home_team_id = general.get("homeTeam", {}).get("id", 0)
     away_team_id = general.get("awayTeam", {}).get("id", 0)
 
-    print(f"\n{'=' * 60}")
-    print("V20.6 ShotmapAggregator 测试")
-    print(f"{'=' * 60}")
-    print(f"Match ID: {data.get('matchId', 'N/A')}")
-    print(f"Home Team ID: {home_team_id}")
-    print(f"Away Team ID: {away_team_id}")
 
     # 执行合成
     features = synthesize_v20_6_features(content, home_team_id, away_team_id)
 
-    print(f"\n{'=' * 60}")
-    print("合成结果统计")
-    print(f"{'=' * 60}")
-    print(f"总特征数: {len(features)}")
 
     # 按前缀分类统计
     feature_categories = {}
-    for key in features.keys():
+    for key in features:
         prefix = key.split("_")[0] if "_" in key else "other"
         feature_categories[prefix] = feature_categories.get(prefix, 0) + 1
 
-    print("\n特征分类统计:")
-    for category, count in sorted(feature_categories.items()):
-        print(f"  {category}: {count}")
+    for _category, _count in sorted(feature_categories.items()):
+        pass
 
     # 显示部分特征
-    print("\n关键合成特征预览:")
-    critical_keys = [k for k in features.keys() if "synth" in k][:10]
+    critical_keys = [k for k in features if "synth" in k][:10]
     for key in critical_keys:
-        print(f"  {key}: {features[key]}")
+        pass

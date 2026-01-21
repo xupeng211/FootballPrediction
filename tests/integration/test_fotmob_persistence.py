@@ -6,10 +6,10 @@ Test FotMob data persistence with real database connection (172.25.16.1).
 Uses TCP handshake to verify database writes.
 """
 
-import pytest
 from datetime import datetime
 
 import psycopg2
+import pytest
 from pydantic import ValidationError
 
 from src.api.collectors.schemas.l1_match_schema import L1MatchData, LeagueId, MatchStatus

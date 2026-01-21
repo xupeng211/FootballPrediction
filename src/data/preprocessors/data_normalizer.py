@@ -251,21 +251,29 @@ class DataFormatNormalizer:
 
         # 主队统计
         home_stats = raw_data.get("home_stats", {})
-        normalized["home_expected_goals"] = self._extract_field(home_stats, ["xg", "expectedGoals", "expected_goals"])
+        normalized["home_expected_goals"] = self._extract_field(
+            home_stats, ["xg", "expectedGoals", "expected_goals"]
+        )
         normalized["home_shots_on_target"] = self._extract_field(
             home_stats, ["shotsOnTarget", "shots_on_target", "sot"]
         )
-        normalized["home_possession"] = self._extract_field(home_stats, ["possession", "ballPossession"])
+        normalized["home_possession"] = self._extract_field(
+            home_stats, ["possession", "ballPossession"]
+        )
         normalized["home_shots"] = self._extract_field(home_stats, ["totalShots", "shots"])
         normalized["home_corners"] = self._extract_field(home_stats, ["corners"])
 
         # 客队统计
         away_stats = raw_data.get("away_stats", {})
-        normalized["away_expected_goals"] = self._extract_field(away_stats, ["xg", "expectedGoals", "expected_goals"])
+        normalized["away_expected_goals"] = self._extract_field(
+            away_stats, ["xg", "expectedGoals", "expected_goals"]
+        )
         normalized["away_shots_on_target"] = self._extract_field(
             away_stats, ["shotsOnTarget", "shots_on_target", "sot"]
         )
-        normalized["away_possession"] = self._extract_field(away_stats, ["possession", "ballPossession"])
+        normalized["away_possession"] = self._extract_field(
+            away_stats, ["possession", "ballPossession"]
+        )
         normalized["away_shots"] = self._extract_field(away_stats, ["totalShots", "shots"])
         normalized["away_corners"] = self._extract_field(away_stats, ["corners"])
 

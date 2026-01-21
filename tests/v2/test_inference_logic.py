@@ -6,16 +6,17 @@ Inference Logic 测试
 验证ML推理层的核心功能和业务逻辑。
 """
 
-import pytest
+from datetime import datetime, timedelta
+from pathlib import Path
+from unittest.mock import AsyncMock, MagicMock, mock_open, patch
+
 import numpy as np
 import pandas as pd
-from datetime import datetime, timedelta
-from unittest.mock import AsyncMock, MagicMock, patch, mock_open
-from pathlib import Path
+import pytest
 
-from src.ml.inference.predictor import MatchPredictor, PredictionError
-from src.ml.inference.model_loader import ModelLoader, ModelLoadError
 from src.ml.inference.cache_manager import PredictionCache
+from src.ml.inference.model_loader import ModelLoader, ModelLoadError
+from src.ml.inference.predictor import MatchPredictor, PredictionError
 
 
 class TestModelLoader:

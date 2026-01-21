@@ -370,7 +370,7 @@ class HyperparameterTuner:
             logger.info(f"✅ 超参数调优器初始化成功: {self.optimization_id}")
 
         except Exception as e:
-            logger.error(f"❌ 超参数调优器初始化失败: {e}")
+            logger.exception(f"❌ 超参数调优器初始化失败: {e}")
             raise
 
     def _initialize_optimization_study(self) -> None:
@@ -380,8 +380,12 @@ class HyperparameterTuner:
             if self.config.strategy == OptimizationStrategy.BAYESIAN_OPTIMIZATION:
                 self.study = optuna.create_study(
                     direction="maximize",
-                    sampler=optuna.samplers.TPESampler(seed=self.config.random_seed, n_startup_trials=20),
-                    pruner=optuna.pruners.MedianPruner(n_startup_trials=10, n_warmup_steps=5, interval_steps=3),
+                    sampler=optuna.samplers.TPESampler(
+                        seed=self.config.random_seed, n_startup_trials=20
+                    ),
+                    pruner=optuna.pruners.MedianPruner(
+                        n_startup_trials=10, n_warmup_steps=5, interval_steps=3
+                    ),
                 )
             elif self.config.strategy == OptimizationStrategy.RANDOM_SEARCH:
                 self.study = optuna.create_study(
@@ -395,7 +399,7 @@ class HyperparameterTuner:
             logger.info(f"🎯 优化研究创建完成: {self.config.strategy.value}")
 
         except Exception as e:
-            logger.error(f"❌ 优化研究创建失败: {e}")
+            logger.exception(f"❌ 优化研究创建失败: {e}")
             raise
 
     async def optimize(self) -> OptimizationResult:
@@ -441,7 +445,9 @@ class HyperparameterTuner:
             # 运行最终验证回测
             if result.best_params:
                 logger.info("🔬 运行最终验证回测...")
-                result.final_backtest_result = await self._run_validation_backtest(result.best_params)
+                result.final_backtest_result = await self._run_validation_backtest(
+                    result.best_params
+                )
 
             # 计算改进程度
             result.improvement_over_baseline = await self._calculate_improvement(result)
@@ -455,7 +461,7 @@ class HyperparameterTuner:
             return result
 
         except Exception as e:
-            logger.error(f"❌ 参数优化失败: {e}")
+            logger.exception(f"❌ 参数优化失败: {e}")
             raise
 
     def _create_objective_function(self) -> Callable[[dict[str, Any]], float]:
@@ -468,7 +474,9 @@ class HyperparameterTuner:
                 for param_name, param_space in self.parameter_spaces.items():
                     if param_space.param_type == "categorical":
                         if param_space.param_type == "bool":
-                            params[param_name] = trial.suggest_categorical(param_name, [True, False])
+                            params[param_name] = trial.suggest_categorical(
+                                param_name, [True, False]
+                            )
                         else:
                             params[param_name] = trial.suggest_categorical(
                                 param_name, param_space.choices or [param_space.default]
@@ -522,9 +530,8 @@ class HyperparameterTuner:
             backtest_result = await engine.run_backtest()
 
             # 5. 计算目标函数得分
-            score = self._calculate_objective_score(backtest_result, params)
+            return self._calculate_objective_score(backtest_result, params)
 
-            return score
 
         except Exception as e:
             logger.warning(f"⚠️ 参数评估失败: {e}")
@@ -552,7 +559,9 @@ class HyperparameterTuner:
 
         return base_config
 
-    async def _inject_parameters_to_components(self, engine: BacktestEngine, params: dict[str, Any]) -> None:
+    async def _inject_parameters_to_components(
+        self, engine: BacktestEngine, params: dict[str, Any]
+    ) -> None:
         """将参数注入到回测引擎的各组件中"""
         try:
             # 1. Kelly准则参数
@@ -591,12 +600,16 @@ class HyperparameterTuner:
         except Exception as e:
             logger.warning(f"⚠️ 参数注入失败: {e}")
 
-    async def _update_kelly_parameters(self, kelly_system: KellyCriterion, params: dict[str, Any]) -> None:
+    async def _update_kelly_parameters(
+        self, kelly_system: KellyCriterion, params: dict[str, Any]
+    ) -> None:
         """更新Kelly准则参数"""
         try:
             if "kelly_strategy" in params:
                 strategy_map = {s.value: s for s in KellyStrategy}
-                kelly_system.kelly_strategy = strategy_map.get(params["kelly_strategy"], KellyStrategy.FRACTIONAL_KELLY)
+                kelly_system.kelly_strategy = strategy_map.get(
+                    params["kelly_strategy"], KellyStrategy.FRACTIONAL_KELLY
+                )
 
             if "kelly_fraction_multiplier" in params:
                 kelly_system.fraction_multiplier = params["kelly_fraction_multiplier"]
@@ -610,7 +623,9 @@ class HyperparameterTuner:
         except Exception as e:
             logger.warning(f"⚠️ Kelly参数更新失败: {e}")
 
-    async def _update_elo_parameters(self, elo_system: EloRatingSystem, params: dict[str, Any]) -> None:
+    async def _update_elo_parameters(
+        self, elo_system: EloRatingSystem, params: dict[str, Any]
+    ) -> None:
         """更新Elo评级参数"""
         try:
             if "elo_initial_rating" in params:
@@ -628,7 +643,9 @@ class HyperparameterTuner:
         except Exception as e:
             logger.warning(f"⚠️ Elo参数更新失败: {e}")
 
-    async def _update_poisson_parameters(self, poisson_calc: PoissonFeatureCalculator, params: dict[str, Any]) -> None:
+    async def _update_poisson_parameters(
+        self, poisson_calc: PoissonFeatureCalculator, params: dict[str, Any]
+    ) -> None:
         """更新泊松参数"""
         try:
             if "poisson_home_lambda_default" in params:
@@ -646,7 +663,9 @@ class HyperparameterTuner:
         except Exception as e:
             logger.warning(f"⚠️ 泊松参数更新失败: {e}")
 
-    async def _update_model_weights(self, predictor: MatchPredictor, params: dict[str, Any]) -> None:
+    async def _update_model_weights(
+        self, predictor: MatchPredictor, params: dict[str, Any]
+    ) -> None:
         """更新模型权重"""
         try:
             # 标准化权重
@@ -677,7 +696,9 @@ class HyperparameterTuner:
         except Exception as e:
             logger.warning(f"⚠️ 模型权重更新失败: {e}")
 
-    async def _update_strategy_parameters(self, engine: BacktestEngine, params: dict[str, Any]) -> None:
+    async def _update_strategy_parameters(
+        self, engine: BacktestEngine, params: dict[str, Any]
+    ) -> None:
         """更新策略参数"""
         try:
             # 这里可以添加更多策略特定的参数更新逻辑
@@ -694,7 +715,9 @@ class HyperparameterTuner:
         except Exception as e:
             logger.warning(f"⚠️ 策略参数更新失败: {e}")
 
-    def _calculate_objective_score(self, backtest_result: BacktestResult, params: dict[str, Any]) -> float:
+    def _calculate_objective_score(
+        self, backtest_result: BacktestResult, params: dict[str, Any]
+    ) -> float:
         """
         根据目标指标计算得分
 
@@ -734,7 +757,9 @@ class HyperparameterTuner:
                 drawdown_penalty = max(0, (backtest_result.max_drawdown or 0) - 20) * 0.1
 
                 # 综合得分 (权重可调)
-                score = 0.4 * sharpe + 0.3 * (roi / 100) + 0.2 * win_rate - drawdown_penalty  # ROI转换为0-1范围
+                score = (
+                    0.4 * sharpe + 0.3 * (roi / 100) + 0.2 * win_rate - drawdown_penalty
+                )  # ROI转换为0-1范围
 
                 return max(0, score)  # 确保得分非负
 
@@ -753,7 +778,7 @@ class HyperparameterTuner:
             self.trials_without_improvement += 1
 
         if self.trials_without_improvement >= self.config.early_stopping_patience:
-            raise optuna.exceptions.TrialPruned()
+            raise optuna.exceptions.TrialPruned
 
     async def _custom_optimization_loop(self, objective_func: Callable, n_jobs: int) -> None:
         """自定义优化循环 (用于非Bayesian策略)"""
@@ -851,7 +876,7 @@ class HyperparameterTuner:
             )
 
         except Exception as e:
-            logger.error(f"❌ 优化结果收集失败: {e}")
+            logger.exception(f"❌ 优化结果收集失败: {e}")
             raise
 
     async def _run_validation_backtest(self, best_params: dict[str, Any]) -> BacktestResult:
@@ -859,7 +884,9 @@ class HyperparameterTuner:
         try:
             # 使用最佳参数创建验证配置
             validation_config = self._create_custom_backtest_config(best_params)
-            validation_config.output_path = f"./optimization_results/validation_{self.optimization_id}/"
+            validation_config.output_path = (
+                f"./optimization_results/validation_{self.optimization_id}/"
+            )
 
             # 创建新的回测引擎
             validation_engine = BacktestEngine(validation_config)
@@ -870,12 +897,14 @@ class HyperparameterTuner:
             # 运行验证回测
             result = await validation_engine.run_backtest()
 
-            logger.info(f"✅ 验证回测完成: ROI={result.total_roi:.2f}%, Sharpe={result.sharpe_ratio:.2f}")
+            logger.info(
+                f"✅ 验证回测完成: ROI={result.total_roi:.2f}%, Sharpe={result.sharpe_ratio:.2f}"
+            )
 
             return result
 
         except Exception as e:
-            logger.error(f"❌ 验证回测失败: {e}")
+            logger.exception(f"❌ 验证回测失败: {e}")
             # 返回一个空的回测结果
             return BacktestResult()
 
@@ -933,7 +962,9 @@ class HyperparameterTuner:
                 "config": (
                     {
                         "strategy": (result.config.strategy.value if result.config else None),
-                        "objective_metric": (result.config.objective_metric.value if result.config else None),
+                        "objective_metric": (
+                            result.config.objective_metric.value if result.config else None
+                        ),
                         "n_trials": result.config.n_trials if result.config else None,
                     }
                     if result.config
@@ -959,7 +990,7 @@ class HyperparameterTuner:
             return filepath
 
         except Exception as e:
-            logger.error(f"❌ 结果保存失败: {e}")
+            logger.exception(f"❌ 结果保存失败: {e}")
             raise
 
     def load_results(self, filepath: str) -> OptimizationResult:
@@ -995,7 +1026,7 @@ class HyperparameterTuner:
             return result
 
         except Exception as e:
-            logger.error(f"❌ 结果加载失败: {e}")
+            logger.exception(f"❌ 结果加载失败: {e}")
             raise
 
     def generate_optimization_report(self, result: OptimizationResult) -> str:
@@ -1063,7 +1094,7 @@ class HyperparameterTuner:
             return report
 
         except Exception as e:
-            logger.error(f"❌ 报告生成失败: {e}")
+            logger.exception(f"❌ 报告生成失败: {e}")
             return f"报告生成失败: {e!s}"
 
 
@@ -1133,7 +1164,7 @@ if __name__ == "__main__":
         config = create_default_optimization_config()
 
         # 运行优化
-        result = await run_optimization(config)
+        await run_optimization(config)
 
         # 打印结果摘要
 

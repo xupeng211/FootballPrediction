@@ -9,6 +9,7 @@ import os
 from pathlib import Path
 from typing import Optional
 
+
 def setup_logger(
     name: str = 'football_prediction',
     log_file: Optional[str] = None,

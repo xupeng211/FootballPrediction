@@ -189,7 +189,7 @@ class InferenceService(ServiceLifecycle):
             self.logger.info("InferenceService 初始化完成")
 
         except Exception as e:
-            self.logger.error(f"InferenceService 初始化失败: {e}")
+            self.logger.exception(f"InferenceService 初始化失败: {e}")
             raise
 
     async def shutdown(self) -> None:
@@ -258,7 +258,7 @@ class InferenceService(ServiceLifecycle):
 
         except Exception as e:
             self.stats["errors"] += 1
-            self.logger.error(f"预测失败 {match_id}: {e}")
+            self.logger.exception(f"预测失败 {match_id}: {e}")
 
             # 使用降级策略
             if self.config.enable_fallback:
@@ -292,7 +292,7 @@ class InferenceService(ServiceLifecycle):
             return dict(record)
 
         except Exception as e:
-            self.logger.error(f"获取比赛数据失败 {match_id}: {e}")
+            self.logger.exception(f"获取比赛数据失败 {match_id}: {e}")
             raise RuntimeError(f"数据库查询失败: {e!s}")
 
     async def _get_historical_data(self, match_data: dict[str, Any]) -> Any:
@@ -356,7 +356,7 @@ class InferenceService(ServiceLifecycle):
             return records
 
         except Exception as e:
-            self.logger.error(f"获取历史数据失败: {e}")
+            self.logger.exception(f"获取历史数据失败: {e}")
             return []
 
     async def _perform_inference(self, match_id: str, features: Any) -> dict[str, Any]:
@@ -385,7 +385,7 @@ class InferenceService(ServiceLifecycle):
             return result
 
         except Exception as e:
-            self.logger.error(f"推理执行失败 {match_id}: {e}")
+            self.logger.exception(f"推理执行失败 {match_id}: {e}")
             raise RuntimeError(f"模型推理失败: {e!s}")
 
     def _get_from_cache(self, match_id: str) -> dict[str, Any] | None:
@@ -438,7 +438,9 @@ class InferenceService(ServiceLifecycle):
         # 更新平均响应时间
         current_avg = self.stats["avg_response_time_ms"]
         total_requests = self.stats["total_requests"]
-        self.stats["avg_response_time_ms"] = (current_avg * (total_requests - 1) + response_time_ms) / total_requests
+        self.stats["avg_response_time_ms"] = (
+            current_avg * (total_requests - 1) + response_time_ms
+        ) / total_requests
 
         # 更新最后预测时间
         self.stats["last_prediction_time"] = datetime.now().isoformat()

@@ -32,6 +32,7 @@ logger = logging.getLogger(__name__)
 
 class BetOutcome(Enum):
     """投注结果类型"""
+
     HOME_WIN = "home_win"
     DRAW = "draw"
     AWAY_WIN = "away_win"
@@ -39,11 +40,12 @@ class BetOutcome(Enum):
 
 class ValueBetLevel(Enum):
     """价值投注等级"""
-    NEGATIVE = "negative"      # EV < 0: 负价值，不建议投注
-    LOW = "low"               # 0% <= EV < 2%: 低价值
-    MODERATE = "moderate"     # 2% <= EV < 5%: 中等价值
-    HIGH = "high"             # 5% <= EV < 10%: 高价值
-    EXCELLENT = "excellent"   # EV >= 10%: 极高价值
+
+    NEGATIVE = "negative"  # EV < 0: 负价值，不建议投注
+    LOW = "low"  # 0% <= EV < 2%: 低价值
+    MODERATE = "moderate"  # 2% <= EV < 5%: 中等价值
+    HIGH = "high"  # 5% <= EV < 10%: 高价值
+    EXCELLENT = "excellent"  # EV >= 10%: 极高价值
 
 
 # ============================================================
@@ -56,22 +58,22 @@ class ValueBetMetrics:
     """价值投注指标"""
 
     # 基础输入
-    model_prob_home: float      # 模型预测主胜概率
-    model_prob_draw: float      # 模型预测平局概率
-    model_prob_away: float      # 模型预测客胜概率
-    market_odds_home: float     # 市场主胜赔率
-    market_odds_draw: float     # 市场平局赔率
-    market_odds_away: float     # 市场客胜赔率
+    model_prob_home: float  # 模型预测主胜概率
+    model_prob_draw: float  # 模型预测平局概率
+    model_prob_away: float  # 模型预测客胜概率
+    market_odds_home: float  # 市场主胜赔率
+    market_odds_draw: float  # 市场平局赔率
+    market_odds_away: float  # 市场客胜赔率
 
     # 价值指标 (3维)
-    ev_home: float | None = None       # 主胜期望收益
-    ev_draw: float | None = None       # 平局期望收益
-    ev_away: float | None = None       # 客胜期望收益
+    ev_home: float | None = None  # 主胜期望收益
+    ev_draw: float | None = None  # 平局期望收益
+    ev_away: float | None = None  # 客胜期望收益
 
     # Kelly Criterion (3维)
-    kelly_home: float | None = None    # 主胜 Kelly 比例
-    kelly_draw: float | None = None    # 平局 Kelly 比例
-    kelly_away: float | None = None    # 客胜 Kelly 比例
+    kelly_home: float | None = None  # 主胜 Kelly 比例
+    kelly_draw: float | None = None  # 平局 Kelly 比例
+    kelly_away: float | None = None  # 客胜 Kelly 比例
 
     # 推荐结果
     recommended_bet: BetOutcome | None = None
@@ -153,8 +155,7 @@ class ExpectedValueCalculator:
         if model_prob <= 0 or market_odds <= 1:
             return -1.0  # 无效输入，返回 -100% EV
 
-        ev = (model_prob * market_odds) - 1.0
-        return ev
+        return (model_prob * market_odds) - 1.0
 
     def calculate_kelly(self, model_prob: float, market_odds: float) -> float:
         """
@@ -287,17 +288,14 @@ class ExpectedValueCalculator:
             prob = metrics.model_prob_home
             ev = metrics.ev_home
             kelly = metrics.kelly_home
-            odds = metrics.market_odds_home
         elif metrics.recommended_bet == BetOutcome.DRAW:
             prob = metrics.model_prob_draw
             ev = metrics.ev_draw
             kelly = metrics.kelly_draw
-            odds = metrics.market_odds_draw
         else:  # AWAY_WIN
             prob = metrics.model_prob_away
             ev = metrics.ev_away
             kelly = metrics.kelly_away
-            odds = metrics.market_odds_away
 
         # 使用 Kelly 比例作为投注金额比例
         stake_ratio = kelly
@@ -434,20 +432,9 @@ if __name__ == "__main__":
     market_odds_1 = {"home": 2.20, "draw": 3.40, "away": 3.80}
 
     value_features_1 = calculate_value_gap(model_probs_1, market_odds_1)
-    print("示例 1 - 高价值投注:")
-    print(f"  EV 主胜: {value_features_1['ev_home']:.2%}")
-    print(f"  EV 最大: {value_features_1['ev_max']:.2%}")
-    print(f"  推荐投注: {value_features_1['recommended_bet_code']}")
-    print(f"  价值等级: {value_features_1['value_level_code']}")
-    print()
 
     # 示例 2: 低价值投注
     model_probs_2 = {"home": 0.45, "draw": 0.30, "away": 0.25}
     market_odds_2 = {"home": 2.10, "draw": 3.30, "away": 3.50}
 
     value_features_2 = calculate_value_gap(model_probs_2, market_odds_2)
-    print("示例 2 - 低价值投注:")
-    print(f"  EV 主胜: {value_features_2['ev_home']:.2%}")
-    print(f"  EV 最大: {value_features_2['ev_max']:.2%}")
-    print(f"  推荐投注: {value_features_2['recommended_bet_code']}")
-    print(f"  价值等级: {value_features_2['value_level_code']}")

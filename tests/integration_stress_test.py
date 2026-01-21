@@ -384,7 +384,9 @@ class TestV26IntegrationStress:
 
         # 验证性能
         # 目标: 1000 场/分钟 = 100 场应在 6 秒内完成
-        assert stats["elapsed_seconds"] < 30, f"100 场比赛应在 30 秒内完成，实际: {stats['elapsed_seconds']:.1f}秒"
+        assert stats["elapsed_seconds"] < 30, (
+            f"100 场比赛应在 30 秒内完成，实际: {stats['elapsed_seconds']:.1f}秒"
+        )
 
     # ========================================================================
     # 测试用例 5: 内存泄漏检测
@@ -402,7 +404,9 @@ class TestV26IntegrationStress:
 
         # 连续处理 50 个大型数据集
         for i in range(50):
-            large_data = {f"section_{j}": {f"value_{k}": j * k for k in range(100)} for j in range(100)}
+            large_data = {
+                f"section_{j}": {f"value_{k}": j * k for k in range(100)} for j in range(100)
+            }
             result = extractor.extract(large_data)
             del result
 

@@ -17,6 +17,7 @@ Date: 2026-01-02
 """
 
 import asyncio
+import contextlib
 from dataclasses import dataclass
 from datetime import datetime
 import logging
@@ -86,7 +87,7 @@ class CollectStatistics:
 
     # P0 系统自愈统计 (V57.0)
     zombie_matches_fixed: int = 0  # 修复的僵尸比赛数（从非finished变为finished）
-    status_updated_count: int = 0   # 总体状态更新次数
+    status_updated_count: int = 0  # 总体状态更新次数
 
     def to_dict(self) -> dict:
         """转换为字典"""
@@ -172,7 +173,9 @@ class IncrementalCollector:
                 critical_http_codes={403, 429, 500, 502, 503, 504},
             )
             self.circuit_breaker = CircuitBreaker("v51_fotmob_api", cb_config)
-            logger.info(f"🛡️ 熔断器已启用: {cb_config.failure_threshold}次失败触发, {cb_config.cooldown_seconds}秒冷却")
+            logger.info(
+                f"🛡️ 熔断器已启用: {cb_config.failure_threshold}次失败触发, {cb_config.cooldown_seconds}秒冷却"
+            )
         else:
             self.circuit_breaker = None
             logger.warning("⚠️ 熔断器未启用")
@@ -253,7 +256,7 @@ class IncrementalCollector:
                         )
 
                 except CircuitBreakerOpenError as e:
-                    logger.error(f"🔴 熔断器已打开: 剩余 {e.cooldown_remaining:.0f} 秒")
+                    logger.exception(f"🔴 熔断器已打开: 剩余 {e.cooldown_remaining:.0f} 秒")
                     logger.warning("⚠️ 停止采集，避免进一步触发 API 封禁")
                     break
 
@@ -264,7 +267,7 @@ class IncrementalCollector:
 
                 except Exception as e:
                     self.stats.http_errors += 1
-                    logger.error(f"扫描 {league_name_cn} 失败: {e}")
+                    logger.exception(f"扫描 {league_name_cn} 失败: {e}")
                     continue
 
                 # 短暂休息
@@ -337,10 +340,10 @@ class IncrementalCollector:
                     match_time_utc = status_obj.get("utcTime", "")
                     match_time = None
                     if match_time_utc:
-                        try:
-                            match_time = datetime.fromisoformat(match_time_utc.replace("Z", "+00:00"))
-                        except ValueError:
-                            pass
+                        with contextlib.suppress(ValueError):
+                            match_time = datetime.fromisoformat(
+                                match_time_utc.replace("Z", "+00:00")
+                            )
 
                     # 增量过滤：只获取 since 之后的比赛
                     if since and match_time and match_time <= since:
@@ -410,16 +413,20 @@ class IncrementalCollector:
                     # P0 安全加固: 使用熔断器保护 HTTP 请求
                     if self.circuit_breaker:
                         async with self.circuit_breaker:
-                            data = await self._fetch_match_detail(session, url, i, match_id, len(match_ids))
+                            data = await self._fetch_match_detail(
+                                session, url, i, match_id, len(match_ids)
+                            )
                             if data:
                                 full_match_data[match_id] = data
                     else:
-                        data = await self._fetch_match_detail(session, url, i, match_id, len(match_ids))
+                        data = await self._fetch_match_detail(
+                            session, url, i, match_id, len(match_ids)
+                        )
                         if data:
                             full_match_data[match_id] = data
 
                 except CircuitBreakerOpenError as e:
-                    logger.error(f"🔴 熔断器已打开: 剩余 {e.cooldown_remaining:.0f} 秒")
+                    logger.exception(f"🔴 熔断器已打开: 剩余 {e.cooldown_remaining:.0f} 秒")
                     logger.warning("⚠️ 停止采集，避免进一步触发 API 封禁")
                     break
 
@@ -430,7 +437,7 @@ class IncrementalCollector:
 
                 except Exception as e:
                     self.stats.http_errors += 1
-                    logger.error(f"  下载 Match {match_id} 失败: {e}")
+                    logger.exception(f"  下载 Match {match_id} 失败: {e}")
                     continue
 
                 # 随机延迟，避免触发限流
@@ -487,7 +494,9 @@ class IncrementalCollector:
                 raise HTTPClientError(response.status, f"Match {match_id} 返回 {response.status}")
 
             self.stats.http_errors += 1
-            logger.warning(f"  [{index + 1}/{total_count}] Match {match_id}: HTTP {response.status}")
+            logger.warning(
+                f"  [{index + 1}/{total_count}] Match {match_id}: HTTP {response.status}"
+            )
             return None
 
     def _import_matches_to_db(self, match_l1_data: list[dict]) -> int:
@@ -533,10 +542,8 @@ class IncrementalCollector:
                 match_time = None
                 match_time_utc = match_data.get("match_time_utc", "")
                 if match_time_utc:
-                    try:
+                    with contextlib.suppress(ValueError):
                         match_time = datetime.fromisoformat(match_time_utc.replace("Z", "+00:00"))
-                    except ValueError:
-                        pass
 
                 # 获取比分（核心判断依据）
                 home_score = match_data.get("home_score")
@@ -552,28 +559,32 @@ class IncrementalCollector:
                 )
 
                 # 如果有有效比分，强制状态为 finished；否则使用 L1 返回的 status
-                final_status = "finished" if has_valid_score else match_data.get("status", "scheduled")
+                final_status = (
+                    "finished" if has_valid_score else match_data.get("status", "scheduled")
+                )
 
                 # 准备数据库数据（11 个字段：match_id + external_id + 9 个其他字段）
-                batch_data.append((
-                    str(match_id),  # match_id (主键)
-                    str(match_id),  # external_id (用于 UPSERT 冲突检测)
-                    match_data.get("league_id"),
-                    match_data.get("league_name", "Unknown"),
-                    match_data.get("season"),
-                    match_time,
-                    final_status,
-                    match_data.get("home_team", "Unknown"),
-                    match_data.get("away_team", "Unknown"),
-                    home_score,
-                    away_score,
-                ))
+                batch_data.append(
+                    (
+                        str(match_id),  # match_id (主键)
+                        str(match_id),  # external_id (用于 UPSERT 冲突检测)
+                        match_data.get("league_id"),
+                        match_data.get("league_name", "Unknown"),
+                        match_data.get("season"),
+                        match_time,
+                        final_status,
+                        match_data.get("home_team", "Unknown"),
+                        match_data.get("away_team", "Unknown"),
+                        home_score,
+                        away_score,
+                    )
+                )
 
                 # 单独存储 has_valid_score 用于统计
                 zombie_flags.append(has_valid_score)
 
             except Exception as e:
-                logger.error(f"预处理 Match {match_data.get('match_id')} 失败: {e}")
+                logger.exception(f"预处理 Match {match_data.get('match_id')} 失败: {e}")
 
         # ============================================
         # V57.0 批量 UPSERT (使用 executemany 优化性能)
@@ -582,8 +593,8 @@ class IncrementalCollector:
         total_batches = (len(batch_data) + batch_size - 1) // batch_size
 
         for batch_idx in range(0, len(batch_data), batch_size):
-            current_batch = batch_data[batch_idx:batch_idx + batch_size]
-            current_flags = zombie_flags[batch_idx:batch_idx + batch_size]
+            current_batch = batch_data[batch_idx : batch_idx + batch_size]
+            current_flags = zombie_flags[batch_idx : batch_idx + batch_size]
 
             # 执行批量 UPSERT
             cur.executemany(
@@ -620,7 +631,7 @@ class IncrementalCollector:
                     away_team = COALESCE(EXCLUDED.away_team, matches.away_team),
                     updated_at = CURRENT_TIMESTAMP
                 """,
-                current_batch
+                current_batch,
             )
 
             imported += len(current_batch)
@@ -633,7 +644,9 @@ class IncrementalCollector:
             # 进度日志
             batch_num = batch_idx // batch_size + 1
             if total_batches > 5:  # 只有超过5批才显示进度
-                logger.info(f"  批量提交进度: {batch_num}/{total_batches} ({len(current_batch)} 场)")
+                logger.info(
+                    f"  批量提交进度: {batch_num}/{total_batches} ({len(current_batch)} 场)"
+                )
 
         conn.commit()
         cur.close()
@@ -685,11 +698,14 @@ class IncrementalCollector:
         for match_id, raw_json in raw_data_map.items():
             try:
                 # 检查是否已存在
-                cur.execute("SELECT id FROM raw_match_data WHERE external_id = %s", (str(match_id),))
+                cur.execute(
+                    "SELECT id FROM raw_match_data WHERE external_id = %s", (str(match_id),)
+                )
                 existing = cur.fetchone()
 
                 # 使用 psycopg2.extras.Json 处理 JSONB
                 from psycopg2.extras import Json
+
                 raw_json_data = Json(raw_json)
 
                 if existing:
@@ -713,7 +729,7 @@ class IncrementalCollector:
                     inserted += 1
 
             except Exception as e:
-                logger.error(f"保存 Match {match_id} 失败: {e}")
+                logger.exception(f"保存 Match {match_id} 失败: {e}")
 
         conn.commit()
         cur.close()
@@ -784,23 +800,11 @@ async def quick_incremental_collect(target_count: int = 50) -> CollectStatistics
     stats = await collector.collect(incremental=True)
 
     # 打印摘要
-    print("\n" + "=" * 60)
-    print("V57.0 增量采集摘要 (比分驱动自愈)")
-    print("=" * 60)
-    print(f"目标数量: {stats.target_count}")
-    print(f"获取 L1: {stats.fetched_l1}")
-    print(f"下载完整: {stats.fetched_full}")
-    print(f"入库 matches: {stats.saved_matches}")
-    print(f"入库 raw_data: {stats.saved_raw_data}")
-    print(f"耗时: {stats.elapsed_seconds:.2f} 秒")
-    print(f"HTTP 200: {stats.http_200}")
-    print(f"HTTP 错误: {stats.http_errors}")
 
     # V57.0: 僵尸比赛修复统计
     if stats.zombie_matches_fixed > 0:
-        print(f"🔄 僵尸比赛修复: {stats.zombie_matches_fixed} 场")
+        pass
 
-    print("=" * 60)
 
     return stats
 
@@ -813,7 +817,6 @@ if __name__ == "__main__":
 
     async def test():
         """测试函数"""
-        stats = await quick_incremental_collect(target_count=10)
-        print(f"\n✅ 测试完成! 统计: {stats.to_dict()}")
+        await quick_incremental_collect(target_count=10)
 
     asyncio.run(test())

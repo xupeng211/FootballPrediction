@@ -27,7 +27,7 @@ class RealPredictionService:
     复用训练时的特征工程逻辑确保数据一致性。
     """
 
-    def __init__(self, model_path: str = None):
+    def __init__(self, model_path: str | None = None):
         """
         初始化预测服务
 
@@ -80,7 +80,7 @@ class RealPredictionService:
             return True
 
         except Exception as e:
-            logger.error(f"❌ 模型加载失败: {e!s}")
+            logger.exception(f"❌ 模型加载失败: {e!s}")
             return False
 
     async def initialize(self) -> bool:
@@ -167,10 +167,12 @@ class RealPredictionService:
                 return df
 
         except Exception as e:
-            logger.error(f"❌ 获取比赛数据失败: {e!s}")
+            logger.exception(f"❌ 获取比赛数据失败: {e!s}")
             return None
 
-    def create_features_for_prediction(self, match_data: pd.DataFrame, historical_data: pd.DataFrame) -> pd.DataFrame:
+    def create_features_for_prediction(
+        self, match_data: pd.DataFrame, historical_data: pd.DataFrame
+    ) -> pd.DataFrame:
         """
         为预测创建特征
 
@@ -186,28 +188,27 @@ class RealPredictionService:
         combined_data = combined_data.sort_values(["home_team_id", "match_date"])
 
         # 创建滚动特征（与训练时相同）
-        combined_data["home_score_rolling_3"] = combined_data.groupby("home_team_id")["home_score"].transform(
-            lambda x: x.rolling(3, min_periods=1).mean().shift(1)
-        )
+        combined_data["home_score_rolling_3"] = combined_data.groupby("home_team_id")[
+            "home_score"
+        ].transform(lambda x: x.rolling(3, min_periods=1).mean().shift(1))
 
-        combined_data["home_score_rolling_5"] = combined_data.groupby("home_team_id")["home_score"].transform(
-            lambda x: x.rolling(5, min_periods=1).mean().shift(1)
-        )
+        combined_data["home_score_rolling_5"] = combined_data.groupby("home_team_id")[
+            "home_score"
+        ].transform(lambda x: x.rolling(5, min_periods=1).mean().shift(1))
 
         combined_data = combined_data.sort_values(["away_team_id", "match_date"])
 
-        combined_data["away_score_rolling_3"] = combined_data.groupby("away_team_id")["away_score"].transform(
-            lambda x: x.rolling(3, min_periods=1).mean().shift(1)
-        )
+        combined_data["away_score_rolling_3"] = combined_data.groupby("away_team_id")[
+            "away_score"
+        ].transform(lambda x: x.rolling(3, min_periods=1).mean().shift(1))
 
-        combined_data["away_score_rolling_5"] = combined_data.groupby("away_team_id")["away_score"].transform(
-            lambda x: x.rolling(5, min_periods=1).mean().shift(1)
-        )
+        combined_data["away_score_rolling_5"] = combined_data.groupby("away_team_id")[
+            "away_score"
+        ].transform(lambda x: x.rolling(5, min_periods=1).mean().shift(1))
 
         # 提取当前比赛的特征（最后一行）
-        current_match_features = combined_data.iloc[-1:].copy()
+        return combined_data.iloc[-1:].copy()
 
-        return current_match_features
 
     async def predict_match(self, match_id: int) -> dict[str, Any] | None:
         """
@@ -230,7 +231,9 @@ class RealPredictionService:
                 return None
 
             match_info = match_data.iloc[0]
-            logger.info(f"🏆 比赛: {match_info['home_team_name']} vs {match_info['away_team_name']}")
+            logger.info(
+                f"🏆 比赛: {match_info['home_team_name']} vs {match_info['away_team_name']}"
+            )
             logger.info(f"📅 日期: {match_info['match_date']}")
             logger.info(f"⚽ 真实比分: {match_info['home_score']} - {match_info['away_score']}")
 
@@ -317,7 +320,7 @@ class RealPredictionService:
             return result
 
         except Exception as e:
-            logger.error(f"❌ 预测失败: {e!s}")
+            logger.exception(f"❌ 预测失败: {e!s}")
             import traceback
 
             traceback.print_exc()

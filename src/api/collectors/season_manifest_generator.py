@@ -79,7 +79,9 @@ class SeasonManifestGenerator:
                         "season_id": season.replace("/", "/"),
                         "is_finished": match.get("status", {}).get("finished", False),
                         "venue": "",
-                        "status": "Finished" if match.get("status", {}).get("finished", False) else "Scheduled",
+                        "status": "Finished"
+                        if match.get("status", {}).get("finished", False)
+                        else "Scheduled",
                         "collection_date": datetime.utcnow().isoformat(),
                     }
                     matches.append(match_info)
@@ -88,7 +90,7 @@ class SeasonManifestGenerator:
             return matches
 
         except Exception as e:
-            logger.error(f"❌ 获取比赛清单失败: {e}")
+            logger.exception(f"❌ 获取比赛清单失败: {e}")
             return []
 
     def _get_result_from_scores(self, home_score: int | None, away_score: int | None) -> str:
@@ -177,7 +179,9 @@ def main():
     import argparse
 
     parser = argparse.ArgumentParser(description="生成英超赛季比赛清单")
-    parser.add_argument("--season", type=str, default="2022/2023", help="赛季标识 (如: 2022/2023 或 2023/2024)")
+    parser.add_argument(
+        "--season", type=str, default="2022/2023", help="赛季标识 (如: 2022/2023 或 2023/2024)"
+    )
     parser.add_argument("--output", type=str, help="输出文件路径")
 
     args = parser.parse_args()

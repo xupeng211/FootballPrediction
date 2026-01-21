@@ -54,7 +54,9 @@ class FractionalKellyCriterion:
         self.min_win_probability = min_win_probability
         self.max_stake_percent = max_stake_percent
 
-        logger.info(f"🎰 半凯利公式初始化: {kelly_fraction}x系数, 最小边缘优势: {min_edge_percent}%")
+        logger.info(
+            f"🎰 半凯利公式初始化: {kelly_fraction}x系数, 最小边缘优势: {min_edge_percent}%"
+        )
 
     def calculate_fractional_kelly_stake(
         self, model_probability: float, market_odds: float, outcome: str = "win"
@@ -79,7 +81,9 @@ class FractionalKellyCriterion:
         edge_percent = edge * 100
 
         # 检查投注有效性
-        is_valid_bet, reason = self._validate_bet_conditions(model_probability, market_odds, edge_percent)
+        is_valid_bet, reason = self._validate_bet_conditions(
+            model_probability, market_odds, edge_percent
+        )
 
         if not is_valid_bet:
             return FractionalKellyRecommendation(
@@ -233,7 +237,9 @@ class FractionalKellyCriterion:
 
         return recommendations
 
-    def validate_total_position_risk(self, recommendations: dict[str, FractionalKellyRecommendation]) -> bool:
+    def validate_total_position_risk(
+        self, recommendations: dict[str, FractionalKellyRecommendation]
+    ) -> bool:
         """
         验证总仓位风险
 
@@ -255,7 +261,9 @@ class FractionalKellyCriterion:
         max_total_stake = self.max_stake_percent
 
         if total_stake > max_total_stake:
-            logger.warning(f"⚠️ [FRACTIONAL_KELLY] 总仓位过高: {total_stake:.1f}% > {max_total_stake}%")
+            logger.warning(
+                f"⚠️ [FRACTIONAL_KELLY] 总仓位过高: {total_stake:.1f}% > {max_total_stake}%"
+            )
             return False
 
         # 检查是否有足够的有效投注
@@ -268,7 +276,9 @@ class FractionalKellyCriterion:
         return True
 
 
-def format_fractional_kelly_output(recommendation: FractionalKellyRecommendation, outcome: str = "") -> str:
+def format_fractional_kelly_output(
+    recommendation: FractionalKellyRecommendation, outcome: str = ""
+) -> str:
     """格式化半凯利公式输出为日志格式"""
 
     status_emoji = "✅" if recommendation.is_valid_bet else "❌"
@@ -297,7 +307,12 @@ fractional_kelly_calculator = FractionalKellyCriterion()
 
 
 def calculate_fractional_kelly_for_prediction(
-    home_prob: float, draw_prob: float, away_prob: float, home_odds: float, draw_odds: float, away_odds: float
+    home_prob: float,
+    draw_prob: float,
+    away_prob: float,
+    home_odds: float,
+    draw_odds: float,
+    away_odds: float,
 ) -> dict[str, FractionalKellyRecommendation]:
     """
     为足球预测计算半凯利公式建议

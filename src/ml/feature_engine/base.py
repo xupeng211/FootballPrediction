@@ -49,12 +49,16 @@ class ProcessorResult:
     warnings: list[str] = field(default_factory=list)
 
     @classmethod
-    def success_result(cls, data: dict[str, Any], metadata: dict[str, Any] | None = None) -> "ProcessorResult":
+    def success_result(
+        cls, data: dict[str, Any], metadata: dict[str, Any] | None = None
+    ) -> "ProcessorResult":
         """创建成功结果"""
         return cls(success=True, data=data, metadata=metadata or {})
 
     @classmethod
-    def failure_result(cls, errors: list[str] | str, data: dict[str, Any] | None = None) -> "ProcessorResult":
+    def failure_result(
+        cls, errors: list[str] | str, data: dict[str, Any] | None = None
+    ) -> "ProcessorResult":
         """创建失败结果"""
         if isinstance(errors, str):
             errors = [errors]
@@ -185,7 +189,9 @@ class BaseProcessor(ABC, Generic[T]):
         """
         return data, context
 
-    def post_process(self, result: ProcessorResult, context: "ProcessingContext") -> ProcessorResult:
+    def post_process(
+        self, result: ProcessorResult, context: "ProcessingContext"
+    ) -> ProcessorResult:
         """
         后处理钩子（可选重写）
 

@@ -24,24 +24,22 @@ Date: 2026-01-08
 from __future__ import annotations
 
 import asyncio
+from dataclasses import asdict, dataclass
+from datetime import datetime
 import json
 import logging
-import random
-import re
-from dataclasses import dataclass, asdict
-from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional
+import random
+from typing import Any
 
+from playwright.async_api import Browser, Page, async_playwright
 import psycopg2
-from playwright.async_api import async_playwright, Browser, Page
 
 from src.api.collectors.base_extractor import BaseExtractor, CollectionCircuitBreaker
 from src.config_unified import get_settings
 
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -49,6 +47,7 @@ logger = logging.getLogger(__name__)
 # ============================================================================
 # 数据模型
 # ============================================================================
+
 
 @dataclass
 class L3OddsData:
@@ -70,6 +69,7 @@ class L3OddsData:
         extraction_time: 提取时间
         error: 错误信息（如果有）
     """
+
     match_id: str
     oddsportal_url: str
     home_team: str
@@ -101,6 +101,7 @@ class ExtractionResult:
         data_mismatch: 数据是否不匹配
         error: 错误信息
     """
+
     success: bool
     match_id: str
     l3_data: L3OddsData | None
@@ -112,6 +113,7 @@ class ExtractionResult:
 # L3 提取器
 # ============================================================================
 
+
 class OddsL3Extractor:
     """V150.2 L3 赔率提取器.
 
@@ -122,18 +124,18 @@ class OddsL3Extractor:
         ...     oddsportal_url="https://www.oddsportal.com/...",
         ...     home_team="Nottingham Forest",
         ...     away_team="Brentford",
-        ...     fotmob_score={"home": 1, "away": 1}
+        ...     fotmob_score={"home": 1, "away": 1},
         ... )
         >>> print(result.l3_data.to_json())
     """
 
     # V41.133: 目标书商列表（Pinnacle 最高优先级）
     TARGET_BOOKMAKERS = [
-        "Pinnacle",           # V41.133: 最高优先级
-        "Average Odds",       # 兜底选项
+        "Pinnacle",  # V41.133: 最高优先级
+        "Average Odds",  # 兜底选项
         "William Hill",
         "Ladbrokes",
-        "1xBet"
+        "1xBet",
     ]
 
     # 完整性分数阈值
@@ -161,7 +163,7 @@ class OddsL3Extractor:
         home_team: str,
         away_team: str,
         fotmob_score: dict[str, int],
-        enable_debug_screenshot: bool = False
+        enable_debug_screenshot: bool = False,
     ) -> ExtractionResult:
         """V150.2.2 提取单场比赛的 L3 赔率数据（支持视觉调试）.
 
@@ -211,7 +213,7 @@ class OddsL3Extractor:
                         match_id=match_id,
                         l3_data=None,
                         data_mismatch=True,
-                        error=f"Score mismatch: {fotmob_score} vs {oddsportal_score}"
+                        error=f"Score mismatch: {fotmob_score} vs {oddsportal_score}",
                     )
 
                 # 提取开盘赔率（Initial State）
@@ -252,7 +254,7 @@ class OddsL3Extractor:
                     integrity_score=integrity_score,
                     is_valid=is_valid,
                     extraction_time=datetime.now().isoformat(),
-                    error=None
+                    error=None,
                 )
 
                 integrity_str = f"{integrity_score:.4f}" if integrity_score is not None else "null"
@@ -263,17 +265,13 @@ class OddsL3Extractor:
                     match_id=match_id,
                     l3_data=l3_data,
                     data_mismatch=False,
-                    error=None
+                    error=None,
                 )
 
         except Exception as e:
-            logger.error(f"❌ 提取失败: {match_id} - {e}")
+            logger.exception(f"❌ 提取失败: {match_id} - {e}")
             return ExtractionResult(
-                success=False,
-                match_id=match_id,
-                l3_data=None,
-                data_mismatch=False,
-                error=str(e)
+                success=False, match_id=match_id, l3_data=None, data_mismatch=False, error=str(e)
             )
 
     async def _create_browser(self, playwright) -> Browser:
@@ -283,7 +281,7 @@ class OddsL3Extractor:
             "args": [
                 "--disable-blink-features=AutomationControlled",
                 "--disable-dev-shm-usage",
-            ]
+            ],
         }
         return await playwright.chromium.launch(**launch_options)
 
@@ -295,8 +293,7 @@ class OddsL3Extractor:
                 viewport=self.base_extractor.get_random_viewport(),
                 proxy=self.base_extractor.get_proxy_config(),
             )
-        else:
-            return await browser.new_context()
+        return await browser.new_context()
 
     async def _simulate_human_behavior(self, page: Page):
         """模拟人类浏览行为."""
@@ -314,7 +311,7 @@ class OddsL3Extractor:
             dict: {"home": x, "away": y}
         """
         try:
-            score_text = await page.evaluate("""
+            score_text = await page.evaluate(r"""
                 () => {
                     // 尝试多种选择器查找比分
                     const selectors = [
@@ -349,11 +346,7 @@ class OddsL3Extractor:
 
         return {"home": None, "away": None}
 
-    def _verify_score(
-        self,
-        fotmob_score: dict[str, int],
-        oddsportal_score: dict[str, int]
-    ) -> bool:
+    def _verify_score(self, fotmob_score: dict[str, int], oddsportal_score: dict[str, int]) -> bool:
         """验证比分一致性.
 
         Args:
@@ -369,12 +362,10 @@ class OddsL3Extractor:
             return True  # 允许通过
 
         # 比对比分
-        match = (
-            fotmob_score.get("home") == oddsportal_score.get("home") and
-            fotmob_score.get("away") == oddsportal_score.get("away")
-        )
+        return fotmob_score.get("home") == oddsportal_score.get("home") and fotmob_score.get(
+            "away"
+        ) == oddsportal_score.get("away")
 
-        return match
 
     async def _extract_opening_odds(self, page: Page) -> dict[str, Any]:
         """V150.2.2 提取开盘赔率（1X2）- 支持悬停交互和兜底逻辑.
@@ -438,12 +429,16 @@ class OddsL3Extractor:
 
             if opening_from_attr:
                 opening_odds.update(opening_from_attr)
-                logger.info(f"     ✅ 策略 1 成功: 从 data-opening 属性提取到 {len(opening_from_attr)} 家书商")
+                logger.info(
+                    f"     ✅ 策略 1 成功: 从 data-opening 属性提取到 {len(opening_from_attr)} 家书商"
+                )
 
                 # 打印 Initial State 数据
                 for bookmaker, odds in opening_from_attr.items():
-                    logger.info(f"     📊 [Initial State] {bookmaker}: "
-                              f"Home={odds['home']:.2f}, Draw={odds['draw']:.2f}, Away={odds['away']:.2f}")
+                    logger.info(
+                        f"     📊 [Initial State] {bookmaker}: "
+                        f"Home={odds['home']:.2f}, Draw={odds['draw']:.2f}, Away={odds['away']:.2f}"
+                    )
 
         except Exception as e:
             logger.debug(f"     策略 1 失败: {e}")
@@ -474,7 +469,7 @@ class OddsL3Extractor:
 
                 if hover_result:
                     # 执行悬停
-                    await page.mouse.move(hover_result['x'], hover_result['y'])
+                    await page.mouse.move(hover_result["x"], hover_result["y"])
                     await asyncio.sleep(1)  # 等待悬停效果
 
                     # 提取悬停后的数据
@@ -498,11 +493,13 @@ class OddsL3Extractor:
                         }
                     """)
 
-                    if hover_odds and hover_odds['home'] > 1.0:
-                        opening_odds['Pinnacle'] = hover_odds
-                        logger.info(f"     ✅ 策略 2 成功: 从悬停交互提取 Pinnacle")
-                        logger.info(f"     📊 [Initial State] Pinnacle (Hover): "
-                                  f"Home={hover_odds['home']:.2f}, Draw={hover_odds['draw']:.2f}, Away={hover_odds['away']:.2f}")
+                    if hover_odds and hover_odds["home"] > 1.0:
+                        opening_odds["Pinnacle"] = hover_odds
+                        logger.info("     ✅ 策略 2 成功: 从悬停交互提取 Pinnacle")
+                        logger.info(
+                            f"     📊 [Initial State] Pinnacle (Hover): "
+                            f"Home={hover_odds['home']:.2f}, Draw={hover_odds['draw']:.2f}, Away={hover_odds['away']:.2f}"
+                        )
 
             except Exception as e:
                 logger.debug(f"     策略 2 失败: {e}")
@@ -562,15 +559,17 @@ class OddsL3Extractor:
                     }
                 """)
 
-                if fallback_odds and fallback_odds['home'] > 1.0:
-                    opening_odds['Average Odds'] = {
-                        'home': fallback_odds['home'],
-                        'draw': fallback_odds['draw'],
-                        'away': fallback_odds['away']
+                if fallback_odds and fallback_odds["home"] > 1.0:
+                    opening_odds["Average Odds"] = {
+                        "home": fallback_odds["home"],
+                        "draw": fallback_odds["draw"],
+                        "away": fallback_odds["away"],
                     }
-                    logger.info(f"     ✅ 策略 3 成功: 使用加权平均兜底")
-                    logger.info(f"     📊 [Initial State] Average Odds (Fallback): "
-                              f"Home={fallback_odds['home']:.2f}, Draw={fallback_odds['draw']:.2f}, Away={fallback_odds['away']:.2f}")
+                    logger.info("     ✅ 策略 3 成功: 使用加权平均兜底")
+                    logger.info(
+                        f"     📊 [Initial State] Average Odds (Fallback): "
+                        f"Home={fallback_odds['home']:.2f}, Draw={fallback_odds['draw']:.2f}, Away={fallback_odds['away']:.2f}"
+                    )
 
             except Exception as e:
                 logger.debug(f"     策略 3 失败: {e}")
@@ -642,22 +641,26 @@ class OddsL3Extractor:
 
             logger.info(f"     💰 提取到 {len(odds_data.get('allOdds', []))} 组赔率数据")
 
-            if odds_data.get('averageOdds'):
-                avg = odds_data['averageOdds']
-                closing_odds['Average Odds'] = {
-                    'home': round(avg['home'], 2),
-                    'draw': round(avg['draw'], 2),
-                    'away': round(avg['away'], 2)
+            if odds_data.get("averageOdds"):
+                avg = odds_data["averageOdds"]
+                closing_odds["Average Odds"] = {
+                    "home": round(avg["home"], 2),
+                    "draw": round(avg["draw"], 2),
+                    "away": round(avg["away"], 2),
                 }
 
                 # 打印 Final State 数据
-                logger.info(f"     ✅ [Final State] Average Odds: "
-                          f"Home={avg['home']:.2f}, Draw={avg['draw']:.2f}, Away={avg['away']:.2f}")
+                logger.info(
+                    f"     ✅ [Final State] Average Odds: "
+                    f"Home={avg['home']:.2f}, Draw={avg['draw']:.2f}, Away={avg['away']:.2f}"
+                )
 
                 # 显示前 3 组赔率
-                all_odds = odds_data.get('allOdds', [])
+                all_odds = odds_data.get("allOdds", [])
                 for i, odds in enumerate(all_odds[:3]):
-                    logger.info(f"        组 {i+1}: {odds['home']:.2f} / {odds['draw']:.2f} / {odds['away']:.2f}")
+                    logger.info(
+                        f"        组 {i + 1}: {odds['home']:.2f} / {odds['draw']:.2f} / {odds['away']:.2f}"
+                    )
 
         except Exception as e:
             logger.debug(f"     终盘赔率提取失败: {e}")
@@ -726,9 +729,9 @@ class OddsL3Extractor:
 
         # 优先使用 Pinnacle，其次使用 Average Odds
         bookmaker_data = None
-        if "Pinnacle" in odds and odds["Pinnacle"]:
+        if odds.get("Pinnacle"):
             bookmaker_data = odds["Pinnacle"]
-        elif "Average Odds" in odds and odds["Average Odds"]:
+        elif odds.get("Average Odds"):
             bookmaker_data = odds["Average Odds"]
         else:
             return None
@@ -737,12 +740,11 @@ class OddsL3Extractor:
             return None
 
         try:
-            score = (
-                1.0 / bookmaker_data["home"] +
-                1.0 / bookmaker_data["draw"] +
-                1.0 / bookmaker_data["away"]
+            return (
+                1.0 / bookmaker_data["home"]
+                + 1.0 / bookmaker_data["draw"]
+                + 1.0 / bookmaker_data["away"]
             )
-            return score
         except (ZeroDivisionError, TypeError):
             return None
 
@@ -795,7 +797,7 @@ class OddsL3Extractor:
         match_id: str,
         opening_odds: dict[str, Any],
         closing_odds: dict[str, Any],
-        integrity_score: float | None
+        integrity_score: float | None,
     ):
         """V150.2.2 捕获带数据标记的调试截图（视觉取证）.
 
@@ -823,11 +825,15 @@ Timestamp: {datetime.now().isoformat()}
             for bookmaker, odds in opening_odds.items():
                 summary_text += f"\n  {bookmaker}: Home={odds['home']:.2f}, Draw={odds['draw']:.2f}, Away={odds['away']:.2f}"
 
-            summary_text += f"\n\n[Final State - Closing Odds]"
+            summary_text += "\n\n[Final State - Closing Odds]"
             for bookmaker, odds in closing_odds.items():
                 summary_text += f"\n  {bookmaker}: Home={odds['home']:.2f}, Draw={odds['draw']:.2f}, Away={odds['away']:.2f}"
 
-            summary_text += f"\n\n[Integrity Score: {integrity_score:.4f}]" if integrity_score else "\n\n[Integrity Score: N/A]"
+            summary_text += (
+                f"\n\n[Integrity Score: {integrity_score:.4f}]"
+                if integrity_score
+                else "\n\n[Integrity Score: N/A]"
+            )
 
             # 保存截图和报告
             await page.screenshot(path=str(screenshot_path), full_page=True)
@@ -848,6 +854,7 @@ Timestamp: {datetime.now().isoformat()}
 # ============================================================================
 # 数据库操作
 # ============================================================================
+
 
 def save_l3_data_to_db(result: ExtractionResult) -> bool:
     """保存 L3 数据到数据库.
@@ -874,7 +881,8 @@ def save_l3_data_to_db(result: ExtractionResult) -> bool:
         cursor = conn.cursor()
 
         # 更新 matches 表
-        cursor.execute("""
+        cursor.execute(
+            """
             UPDATE matches
             SET
                 l3_odds_data = %s,
@@ -882,12 +890,14 @@ def save_l3_data_to_db(result: ExtractionResult) -> bool:
                 l3_extracted_at = NOW(),
                 l3_data_mismatch = %s
             WHERE match_id = %s
-        """, (
-            result.l3_data.to_json(),
-            "success" if result.l3_data.is_valid else "failed",
-            result.data_mismatch,
-            result.match_id
-        ))
+        """,
+            (
+                result.l3_data.to_json(),
+                "success" if result.l3_data.is_valid else "failed",
+                result.data_mismatch,
+                result.match_id,
+            ),
+        )
 
         # 检查是否真正更新了记录
         updated_rows = cursor.rowcount
@@ -898,12 +908,11 @@ def save_l3_data_to_db(result: ExtractionResult) -> bool:
         if updated_rows > 0:
             logger.info(f"✅ L3 数据已保存: {result.match_id}")
             return True
-        else:
-            logger.warning(f"⚠️  L3 数据保存失败: match_id '{result.match_id}' 不存在")
-            return False
+        logger.warning(f"⚠️  L3 数据保存失败: match_id '{result.match_id}' 不存在")
+        return False
 
     except Exception as e:
-        logger.error(f"❌ 数据库保存失败: {e}")
+        logger.exception(f"❌ 数据库保存失败: {e}")
         return False
 
 
@@ -928,7 +937,8 @@ def get_approved_matches(limit: int = 10) -> list[dict[str, Any]]:
         )
         cursor = conn.cursor()
 
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT
                 mm.fotmob_id,
                 mm.home_team,
@@ -944,20 +954,24 @@ def get_approved_matches(limit: int = 10) -> list[dict[str, Any]]:
             AND (m.l3_extraction_status IS NULL OR m.l3_extraction_status != 'success')
             ORDER BY RANDOM()
             LIMIT %s
-        """, (limit,))
+        """,
+            (limit,),
+        )
 
         rows = cursor.fetchall()
 
         matches = []
         for row in rows:
-            matches.append({
-                "match_id": str(row[0]),
-                "home_team": row[1],
-                "away_team": row[2],
-                "match_date": row[3],
-                "oddsportal_url": row[4],
-                "fotmob_score": {"home": row[5], "away": row[6]}
-            })
+            matches.append(
+                {
+                    "match_id": str(row[0]),
+                    "home_team": row[1],
+                    "away_team": row[2],
+                    "match_date": row[3],
+                    "oddsportal_url": row[4],
+                    "fotmob_score": {"home": row[5], "away": row[6]},
+                }
+            )
 
         cursor.close()
         conn.close()
@@ -965,5 +979,5 @@ def get_approved_matches(limit: int = 10) -> list[dict[str, Any]]:
         return matches
 
     except Exception as e:
-        logger.error(f"❌ 数据库查询失败: {e}")
+        logger.exception(f"❌ 数据库查询失败: {e}")
         return []

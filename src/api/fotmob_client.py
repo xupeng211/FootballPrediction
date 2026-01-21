@@ -17,7 +17,12 @@ from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_ex
 logger = logging.getLogger(__name__)
 
 # 配置常量 - 从配置系统读取
-DEFAULT_API_CONFIG = {"base_url": "https://www.fotmob.com/api", "timeout": 10, "max_retries": 3, "retry_delay": 1.0}
+DEFAULT_API_CONFIG = {
+    "base_url": "https://www.fotmob.com/api",
+    "timeout": 10,
+    "max_retries": 3,
+    "retry_delay": 1.0,
+}
 
 # 熔断器配置
 CIRCUIT_BREAKER_CONFIG = {
@@ -93,7 +98,9 @@ class CircuitBreaker:
 
         if self.failure_count >= self.failure_threshold:
             self.state = CircuitState.OPEN
-            logger.warning(f"🚨 API熔断器触发！连续失败{self.failure_count}次，熔断{self.recovery_timeout}秒")
+            logger.warning(
+                f"🚨 API熔断器触发！连续失败{self.failure_count}次，熔断{self.recovery_timeout}秒"
+            )
             logger.warning(f"触发异常类型: {type(exception).__name__}: {exception!s}")
 
 
@@ -129,9 +136,13 @@ class FotMobAPIClient:
         self.session = None
 
         # 初始化熔断器
-        cb_threshold = circuit_breaker_failure_threshold or CIRCUIT_BREAKER_CONFIG["failure_threshold"]
+        cb_threshold = (
+            circuit_breaker_failure_threshold or CIRCUIT_BREAKER_CONFIG["failure_threshold"]
+        )
         cb_timeout = circuit_breaker_recovery_timeout or CIRCUIT_BREAKER_CONFIG["recovery_timeout"]
-        self.circuit_breaker = CircuitBreaker(failure_threshold=cb_threshold, recovery_timeout=cb_timeout)
+        self.circuit_breaker = CircuitBreaker(
+            failure_threshold=cb_threshold, recovery_timeout=cb_timeout
+        )
 
     async def __aenter__(self):
         """异步上下文管理器入口"""
@@ -218,7 +229,7 @@ class FotMobAPIClient:
             return self._generate_fallback_odds(match_data)
 
         except Exception as e:
-            logger.error(f"❌ 赔率提取失败: {e}")
+            logger.exception(f"❌ 赔率提取失败: {e}")
             return self._generate_fallback_odds(match_data)
 
     def _generate_fallback_odds(self, match_data: dict[str, Any]) -> dict[str, Any]:
@@ -285,29 +296,31 @@ class FotMobAPIClient:
                         return data
                     except Exception as e:
                         text = await response.text()
-                        logger.error(f"JSON解析失败: {e}, Response: {text[:200]}")
+                        logger.exception(f"JSON解析失败: {e}, Response: {text[:200]}")
                         return None
                 else:
                     error_msg = f"API请求失败 - Status: {response.status}, Match ID: {match_id}"
                     logger.error(error_msg)
                     exc = aiohttp.ClientResponseError(
-                        request_info=response.request_info, history=response.history, status=response.status
+                        request_info=response.request_info,
+                        history=response.history,
+                        status=response.status,
                     )
                     self.circuit_breaker.record_failure(exc)
                     raise exc
         except TimeoutError as e:
             error_msg = f"API请求超时 - Match ID: {match_id}"
-            logger.error(error_msg)
+            logger.exception(error_msg)
             self.circuit_breaker.record_failure(e)
             raise
         except aiohttp.ClientError as e:
             error_msg = f"API客户端错误 - Match ID: {match_id}, Error: {e}"
-            logger.error(error_msg)
+            logger.exception(error_msg)
             self.circuit_breaker.record_failure(e)
             raise
         except Exception as e:
             error_msg = f"API请求异常 - Match ID: {match_id}, Error: {e}"
-            logger.error(error_msg)
+            logger.exception(error_msg)
             # 非网络错误不重试，但记录熔断器状态
             self.circuit_breaker.record_failure(e)
             return None
@@ -360,11 +373,11 @@ class FotMobAPIClient:
                 logger.error(f"API请求失败 - Status: {response.status}, Date: {date_str}")
                 return None
         except Exception as e:
-            logger.error(f"API请求异常 - Date: {date_str}, Error: {e}")
+            logger.exception(f"API请求异常 - Date: {date_str}, Error: {e}")
             return None
 
     async def get_league_matches(
-        self, league_id: str, season_id: str = None, fetch_history: bool = True
+        self, league_id: str, season_id: str | None = None, fetch_history: bool = True
     ) -> list[dict[str, Any]] | None:
         """获取联赛比赛列表（L1索引同步）- 支持历史赛果抓取
 
@@ -429,19 +442,23 @@ class FotMobAPIClient:
                     for match in matches:
                         # 检查比赛状态和时间
                         status = match.get("status", {}).get("finished", False)
-                        match_time_str = match.get("status", {}).get("utcTime", "") or match.get("time", {}).get(
-                            "utcTime", ""
-                        )
+                        match_time_str = match.get("status", {}).get("utcTime", "") or match.get(
+                            "time", {}
+                        ).get("utcTime", "")
 
                         # 只处理完场比赛且在指定时间范围内
                         if status and match_time_str:
                             try:
                                 # 解析比赛时间
                                 if "T" in match_time_str:
-                                    match_time = datetime.fromisoformat(match_time_str.replace("Z", "+00:00"))
+                                    match_time = datetime.fromisoformat(
+                                        match_time_str.replace("Z", "+00:00")
+                                    )
                                 else:
                                     # 处理其他时间格式
-                                    match_time = datetime.strptime(match_time_str[:10], "%Y-%m-%d").replace(tzinfo=UTC)
+                                    match_time = datetime.strptime(
+                                        match_time_str[:10], "%Y-%m-%d"
+                                    ).replace(tzinfo=UTC)
 
                                 # 检查是否在2025-08-01之后
                                 cutoff_date = datetime(2025, 8, 1, tzinfo=UTC)
@@ -452,12 +469,14 @@ class FotMobAPIClient:
                                 logger.warning(f"无法解析比赛时间 {match_time_str}: {e}")
                                 continue
 
-                    logger.info(f"成功获取联赛 {league_id} 的 {len(filtered_matches)} 场历史完场比赛")
+                    logger.info(
+                        f"成功获取联赛 {league_id} 的 {len(filtered_matches)} 场历史完场比赛"
+                    )
                     return filtered_matches
                 logger.error(f"API请求失败 - Status: {response.status}, League ID: {league_id}")
                 return None
         except Exception as e:
-            logger.error(f"API请求异常 - League ID: {league_id}, Error: {e}")
+            logger.exception(f"API请求异常 - League ID: {league_id}, Error: {e}")
             return None
 
 

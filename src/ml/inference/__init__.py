@@ -9,13 +9,10 @@
 from datetime import datetime
 import logging
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
 import warnings
 
 # Import numpy and pandas for type annotations
-import numpy as np
-import pandas as pd
-
 from .cache_manager import CacheEntry, CacheStats
 from .cache_manager import PredictionCache as _InternalPredictionCache
 
@@ -23,6 +20,10 @@ from .cache_manager import PredictionCache as _InternalPredictionCache
 from .model_loader import ModelLoader as _InternalModelLoader
 from .model_loader import ModelLoadError, ModelMetadata
 from .predictor import MatchPredictor, PredictionError
+
+if TYPE_CHECKING:
+    import numpy as np
+    import pandas as pd
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +50,9 @@ class Predictor:
         """
         # 创建重构后的组件
         self._model_loader = _InternalModelLoader()
-        self._cache_manager = _InternalPredictionCache(enable_auto_cleanup=False)  # 禁用自动清理以保持兼容性
+        self._cache_manager = _InternalPredictionCache(
+            enable_auto_cleanup=False
+        )  # 禁用自动清理以保持兼容性
         self._model_name = "compatibility_model"
 
         # 加载模型
@@ -99,7 +102,7 @@ class Predictor:
             result = self._predictor.predict(features, use_cache=False)  # 禁用缓存以保持兼容性
 
             # 转换为原始格式
-            original_result = {
+            return {
                 "away_win_prob": result.get("away_win_prob", 0.0),
                 "draw_prob": result.get("draw_prob", 0.0),
                 "home_win_prob": result.get("home_win_prob", 0.0),
@@ -111,7 +114,6 @@ class Predictor:
                 "feature_count": result.get("feature_count", 0),
             }
 
-            return original_result
 
         except Exception as e:
             raise PredictionError(f"预测失败: {e!s}") from e
@@ -138,12 +140,12 @@ class Predictor:
     # 保持原始的私有方法（虽然不再使用，但为了兼容性）
     def _validate_features(self, features) -> "np.ndarray":
         """特征验证（兼容性方法，已弃用）"""
-        warnings.warn("_validate_features is deprecated", DeprecationWarning)
+        warnings.warn("_validate_features is deprecated", DeprecationWarning, stacklevel=2)
         return features  # 直接返回，验证已在重构版本中完成
 
     def _class_to_outcome(self, predicted_class: int) -> str:
         """类别转换（兼容性方法，已弃用）"""
-        warnings.warn("_class_to_outcome is deprecated", DeprecationWarning)
+        warnings.warn("_class_to_outcome is deprecated", DeprecationWarning, stacklevel=2)
         outcome_map = {0: "AWAY_WIN", 1: "DRAW", 2: "HOME_WIN"}
         return outcome_map.get(predicted_class, "UNKNOWN")
 
@@ -181,14 +183,16 @@ class ModelLoader:
         """
         try:
             # 内部创建重构后的 Predictor
-            predictor = Predictor(model_path or f"{self._model_loader.get_cache_directory()}/{model_name}.pkl")
+            predictor = Predictor(
+                model_path or f"{self._model_loader.get_cache_directory()}/{model_name}.pkl"
+            )
             # 存储到内部映射中（模拟原始行为）
             if not hasattr(self, "_loaded_models"):
                 self._loaded_models = {}
             self._loaded_models[model_name] = predictor
             return True
         except Exception as e:
-            logger.error(f"模型 {model_name} 加载失败: {e!s}")
+            logger.exception(f"模型 {model_name} 加载失败: {e!s}")
             return False
 
     def get_model(self, model_name: str) -> Predictor | None:
@@ -445,7 +449,7 @@ def predict_match(
         return result
 
     except Exception as e:
-        logger.error(f"预测失败: {e!s}")
+        logger.exception(f"预测失败: {e!s}")
         raise
 
 
@@ -454,23 +458,23 @@ def predict_match(
 # ============================================================================
 
 __all__ = [
-    # 兼容性接口
-    "Predictor",
-    "ModelLoader",
-    "PredictionCache",
-    "HotReloadManager",
-    "ModelLoadError",
-    "PredictionError",
-    "get_predictor",
-    "get_model_loader",
-    "get_prediction_cache",
-    "get_hot_reload_manager",
-    "predict_match",
-    # 重构后组件（新代码推荐使用）
-    "MatchPredictor",
-    "ModelMetadata",
     "CacheEntry",
     "CacheStats",
+    "HotReloadManager",
+    # 重构后组件（新代码推荐使用）
+    "MatchPredictor",
+    "ModelLoadError",
+    "ModelLoader",
+    "ModelMetadata",
+    "PredictionCache",
+    "PredictionError",
+    # 兼容性接口
+    "Predictor",
+    "get_hot_reload_manager",
+    "get_model_loader",
+    "get_prediction_cache",
+    "get_predictor",
+    "predict_match",
 ]
 
 # 版本信息

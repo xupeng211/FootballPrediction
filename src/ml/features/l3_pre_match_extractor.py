@@ -204,7 +204,7 @@ class L3PreMatchExtractor:
                         content = l2_data.get("content", {})
                         player_stats = content.get("playerStats", {})
 
-                        for player_id, player_data in player_stats.items():
+                        for player_data in player_stats.values():
                             if player_data.get("teamName") == team_name:
                                 player_stat = PlayerMatchStats.from_l2_data(player_data)
                                 all_player_stats.append(player_stat)
@@ -274,7 +274,11 @@ class L3PreMatchExtractor:
         """计算球员多场比赛的平均统计"""
         if not player_matches:
             return PlayerMatchStats(
-                player_id="", player_name="Unknown", team_name="", is_goalkeeper=False, position="Unknown"
+                player_id="",
+                player_name="Unknown",
+                team_name="",
+                is_goalkeeper=False,
+                position="Unknown",
             )
 
         avg_player = PlayerMatchStats(
@@ -297,7 +301,9 @@ class L3PreMatchExtractor:
         """将球员统计转换为特征向量"""
         return np.array([getattr(player_stat, feature, 0) for feature in self.key_player_features])
 
-    def extract_match_features(self, home_team: str, away_team: str, match_time: datetime) -> np.ndarray:
+    def extract_match_features(
+        self, home_team: str, away_team: str, match_time: datetime
+    ) -> np.ndarray:
         """提取比赛的完整赛前特征向量 (181 维)"""
 
         logger.info(f"开始提取 {home_team} vs {away_team} 的 L3 赛前特征")
@@ -323,7 +329,7 @@ class L3PreMatchExtractor:
         ratio_features[home_only_mask] = 10.0  # 设为一个较大的固定值
 
         # 组合所有特征
-        total_features = len(home_features)
+        len(home_features)
         expected_dimension = 181
 
         # 如果特征维度不对，进行调整

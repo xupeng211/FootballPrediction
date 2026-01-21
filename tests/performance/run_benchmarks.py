@@ -35,7 +35,9 @@ from benchmark_framework import (
 )
 
 # 设置日志
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 
@@ -105,7 +107,9 @@ class BenchmarkRunner:
             "timestamp": datetime.now().isoformat(),
         }
 
-    async def compare_environments(self, benchmark_name: str, environments: list[str]) -> dict[str, Any]:
+    async def compare_environments(
+        self, benchmark_name: str, environments: list[str]
+    ) -> dict[str, Any]:
         """比较不同环境的性能"""
         logger.info(f"🔄 比较环境性能: {benchmark_name}")
 
@@ -123,15 +127,21 @@ class BenchmarkRunner:
             comparison_results[env] = result
 
         # 生成对比报告
-        comparison_report = await self._generate_comparison_report(benchmark_name, comparison_results)
+        comparison_report = await self._generate_comparison_report(
+            benchmark_name, comparison_results
+        )
         return comparison_report
 
-    async def analyze_performance_trends(self, benchmark_name: str, environment: str, days: int = 30) -> dict[str, Any]:
+    async def analyze_performance_trends(
+        self, benchmark_name: str, environment: str, days: int = 30
+    ) -> dict[str, Any]:
         """分析性能趋势"""
         logger.info(f"📈 分析性能趋势: {benchmark_name} ({environment}, {days}天)")
 
         # 获取历史数据
-        historical_results = self.db.get_historical_results(benchmark_name, environment=environment, days_back=days)
+        historical_results = self.db.get_historical_results(
+            benchmark_name, environment=environment, days_back=days
+        )
 
         if not historical_results:
             return {
@@ -181,17 +191,23 @@ class BenchmarkRunner:
         for bench_name in benchmark_names:
             for env in environments:
                 # 获取最近的结果
-                recent_results = self.db.get_historical_results(bench_name, environment=env, days_back=7)
+                recent_results = self.db.get_historical_results(
+                    bench_name, environment=env, days_back=7
+                )
 
                 if len(recent_results) < 2:
                     continue
 
                 # 检查回归
                 latest_result = recent_results[0]  # 最新的结果
-                historical_avg = statistics.mean([r.execution_time_ms for r in recent_results[1:] if r.success])
+                historical_avg = statistics.mean(
+                    [r.execution_time_ms for r in recent_results[1:] if r.success]
+                )
 
                 if latest_result.success and historical_avg > 0:
-                    regression_percent = ((latest_result.execution_time_ms - historical_avg) / historical_avg) * 100
+                    regression_percent = (
+                        (latest_result.execution_time_ms - historical_avg) / historical_avg
+                    ) * 100
 
                     if regression_percent > 10:  # 10%阈值
                         regression_results.append(
@@ -214,7 +230,9 @@ class BenchmarkRunner:
             "timestamp": datetime.now().isoformat(),
         }
 
-    async def generate_performance_report(self, output_dir: str = "performance_reports") -> dict[str, Any]:
+    async def generate_performance_report(
+        self, output_dir: str = "performance_reports"
+    ) -> dict[str, Any]:
         """生成性能报告"""
         logger.info("📊 生成性能报告")
 
@@ -238,7 +256,9 @@ class BenchmarkRunner:
         for bench_name in benchmark_names:
             for env in environments:
                 try:
-                    recent_results = self.db.get_historical_results(bench_name, environment=env, days_back=7)
+                    recent_results = self.db.get_historical_results(
+                        bench_name, environment=env, days_back=7
+                    )
 
                     if recent_results:
                         successful_results = [r for r in recent_results if r.success]
@@ -265,7 +285,9 @@ class BenchmarkRunner:
         output_path = Path(output_dir)
         output_path.mkdir(exist_ok=True)
 
-        report_file = output_path / f"performance_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        report_file = (
+            output_path / f"performance_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        )
         with open(report_file, "w", encoding="utf-8") as f:
             json.dump(report_data, f, indent=2, default=str)
 
@@ -285,7 +307,9 @@ class BenchmarkRunner:
         self, benchmark_name: str, comparison_results: dict[str, Any]
     ) -> dict[str, Any]:
         """生成环境对比报告"""
-        successful_results = {k: v for k, v in comparison_results.items() if v.get("success", False)}
+        successful_results = {
+            k: v for k, v in comparison_results.items() if v.get("success", False)
+        }
 
         if len(successful_results) < 2:
             return {
@@ -374,7 +398,8 @@ class BenchmarkRunner:
             "avg_execution_time_ms": statistics.mean(execution_times),
             "first_execution_time_ms": execution_times[0],
             "last_execution_time_ms": execution_times[-1],
-            "change_percent": ((execution_times[-1] - execution_times[0]) / execution_times[0]) * 100,
+            "change_percent": ((execution_times[-1] - execution_times[0]) / execution_times[0])
+            * 100,
         }
 
 
@@ -386,10 +411,14 @@ async def main():
 
     # 单个基准测试命令
     single_parser = subparsers.add_parser("run", help="运行单个基准测试")
-    single_parser.add_argument("--benchmark-name", default="football_prediction_system", help="基准测试名称")
+    single_parser.add_argument(
+        "--benchmark-name", default="football_prediction_system", help="基准测试名称"
+    )
     single_parser.add_argument("--environment", default="development", help="测试环境")
     single_parser.add_argument("--output-dir", default="benchmark_results", help="输出目录")
-    single_parser.add_argument("--target-prediction-time", type=float, default=50.0, help="目标预测时间(毫秒)")
+    single_parser.add_argument(
+        "--target-prediction-time", type=float, default=50.0, help="目标预测时间(毫秒)"
+    )
     single_parser.add_argument("--regression-check", action="store_true", help="启用回归检测")
     single_parser.add_argument("--generate-html", action="store_true", help="生成HTML报告")
 
@@ -464,7 +493,9 @@ async def main():
 
         elif args.command == "trend":
             # 趋势分析
-            result = await runner.analyze_performance_trends(args.benchmark_name, args.environment, args.days)
+            result = await runner.analyze_performance_trends(
+                args.benchmark_name, args.environment, args.days
+            )
 
             print("\n📈 趋势分析完成!")
             print(f"基准测试: {result['benchmark_name']}")

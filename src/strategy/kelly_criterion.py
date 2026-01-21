@@ -328,10 +328,15 @@ class KellyCriterion:
             # 从环境变量读取配置，或使用默认值
             production_safety_config = ProductionSafetyConfig(
                 enabled=settings.application.environment == "production",
-                max_stake_percentage_of_bankroll=Decimal(os.getenv("KELLY_MAX_STAKE_PERCENTAGE", "0.05")),
-                max_daily_stake_percentage=Decimal(os.getenv("KELLY_MAX_DAILY_STAKE_PERCENTAGE", "0.20")),
+                max_stake_percentage_of_bankroll=Decimal(
+                    os.getenv("KELLY_MAX_STAKE_PERCENTAGE", "0.05")
+                ),
+                max_daily_stake_percentage=Decimal(
+                    os.getenv("KELLY_MAX_DAILY_STAKE_PERCENTAGE", "0.20")
+                ),
                 emergency_stop_enabled=os.getenv("KELLY_EMERGENCY_STOP", "true").lower() == "true",
-                manual_override_required=os.getenv("KELLY_MANUAL_OVERRIDE", "false").lower() == "true",
+                manual_override_required=os.getenv("KELLY_MANUAL_OVERRIDE", "false").lower()
+                == "true",
                 audit_log_enabled=settings.application.environment == "production",
                 risk_alert_threshold=Decimal(os.getenv("KELLY_RISK_ALERT_THRESHOLD", "0.03")),
             )
@@ -367,8 +372,12 @@ class KellyCriterion:
         """
         return {
             "safety_enabled": self.safety_validator.config.enabled,
-            "max_stake_percentage": float(self.safety_validator.config.max_stake_percentage_of_bankroll * 100),
-            "max_daily_stake_percentage": float(self.safety_validator.config.max_daily_stake_percentage * 100),
+            "max_stake_percentage": float(
+                self.safety_validator.config.max_stake_percentage_of_bankroll * 100
+            ),
+            "max_daily_stake_percentage": float(
+                self.safety_validator.config.max_daily_stake_percentage * 100
+            ),
             "emergency_stop_enabled": self.safety_validator.config.emergency_stop_enabled,
             "manual_override_required": self.safety_validator.config.manual_override_required,
             "audit_log_enabled": self.safety_validator.config.audit_log_enabled,
@@ -486,7 +495,9 @@ class KellyCriterion:
             risk_level = self._assess_risk_level(final_kelly, edge, prob)
 
             # 生成推理说明
-            reasoning = self._generate_reasoning(full_kelly, final_kelly, edge, prob, odds, risk_level)
+            reasoning = self._generate_reasoning(
+                full_kelly, final_kelly, edge, prob, odds, risk_level
+            )
 
             result = {
                 "success": True,
@@ -524,7 +535,9 @@ class KellyCriterion:
         Returns:
             List[BetRecommendation]: 投注建议列表
         """
-        current_bankroll = Decimal(str(bankroll)) if bankroll is not None else self.portfolio.available_cash
+        current_bankroll = (
+            Decimal(str(bankroll)) if bankroll is not None else self.portfolio.available_cash
+        )
         max_bets = max_concurrent_bets or self.MAX_CONCURRENT_BETS
 
         recommendations = []
@@ -541,7 +554,9 @@ class KellyCriterion:
 
         # 排序并选择最优选项
         valid_outcomes = [
-            (outcome, result) for outcome, result in kelly_results.items() if result.get("should_bet", False)
+            (outcome, result)
+            for outcome, result in kelly_results.items()
+            if result.get("should_bet", False)
         ]
 
         # 按凯利比例排序
@@ -574,7 +589,9 @@ class KellyCriterion:
             stake_amount = min(stake_amount, current_bankroll)
 
             # 🔒 生产环境安全验证
-            safety_validation = self.safety_validator.validate_stake_amount(current_bankroll, stake_amount)
+            safety_validation = self.safety_validator.validate_stake_amount(
+                current_bankroll, stake_amount
+            )
 
             # 更新统计信息
             if not safety_validation["valid"]:
@@ -623,7 +640,9 @@ class KellyCriterion:
         else:
             self.stats["rejected_bets"] += 1
 
-        logger.info(f"生成了 {len(recommendations)} 个投注建议，总投注比例: {total_kelly_fraction:.3f}")
+        logger.info(
+            f"生成了 {len(recommendations)} 个投注建议，总投注比例: {total_kelly_fraction:.3f}"
+        )
 
         return recommendations
 
@@ -642,7 +661,9 @@ class KellyCriterion:
         Returns:
             Dict[str, Any]: 投注结果
         """
-        stake = Decimal(str(actual_stake)) if actual_stake is not None else recommendation.stake_amount
+        stake = (
+            Decimal(str(actual_stake)) if actual_stake is not None else recommendation.stake_amount
+        )
 
         # 检查资金充足性
         if stake > self.portfolio.available_cash:
@@ -737,7 +758,9 @@ class KellyCriterion:
             # 更新投资组合
             self.portfolio.committed_stakes -= bet_record["stake"]
             self.portfolio.available_cash += bet_record["stake"] + profit_loss
-            self.portfolio.total_bankroll = self.portfolio.available_cash + self.portfolio.committed_stakes
+            self.portfolio.total_bankroll = (
+                self.portfolio.available_cash + self.portfolio.committed_stakes
+            )
 
             # 更新统计信息
             self.stats["total_profit_loss"] += profit_loss
@@ -811,7 +834,9 @@ class KellyCriterion:
 
         if self.kelly_strategy == KellyStrategy.AGGRESSIVE_KELLY:
             # 激进策略：使用更大的分数，但有上限
-            aggressive_fraction = min(self.fraction_multiplier * Decimal("1.5"), Decimal("0.5"))  # 最大50%
+            aggressive_fraction = min(
+                self.fraction_multiplier * Decimal("1.5"), Decimal("0.5")
+            )  # 最大50%
             return full_kelly * aggressive_fraction
 
         if self.kelly_strategy == KellyStrategy.DYNAMIC_KELLY:
@@ -876,7 +901,9 @@ class KellyCriterion:
         # 检查当前回撤
         if self.portfolio.current_drawdown > self.MAX_DRAWDOWN_LIMIT:
             # 回撤过大时减少投注
-            drawdown_reduction = (self.portfolio.current_drawdown - self.MAX_DRAWDOWN_LIMIT) * Decimal("5")
+            drawdown_reduction = (
+                self.portfolio.current_drawdown - self.MAX_DRAWDOWN_LIMIT
+            ) * Decimal("5")
             kelly_fraction = max(Decimal("0"), kelly_fraction - drawdown_reduction)
 
         # 检查资金储备
@@ -893,7 +920,9 @@ class KellyCriterion:
 
         return kelly_fraction
 
-    def _assess_risk_level(self, kelly_fraction: Decimal, edge: Decimal, prob: Decimal) -> RiskLevel:
+    def _assess_risk_level(
+        self, kelly_fraction: Decimal, edge: Decimal, prob: Decimal
+    ) -> RiskLevel:
         """评估风险等级"""
         # 综合考虑凯利比例、优势和概率
         risk_score = 0
@@ -938,7 +967,9 @@ class KellyCriterion:
         reasoning_parts = []
 
         # 基础计算
-        reasoning_parts.append(f"完整凯利: {full_kelly:.3f} (优势: {edge:.3f}, 概率: {prob:.3f}, 赔率: {odds:.2f})")
+        reasoning_parts.append(
+            f"完整凯利: {full_kelly:.3f} (优势: {edge:.3f}, 概率: {prob:.3f}, 赔率: {odds:.2f})"
+        )
 
         # 策略调整
         if self.kelly_strategy != KellyStrategy.FULL_KELLY:
@@ -976,7 +1007,9 @@ class KellyCriterion:
         # 更新平均凯利比例
         total_recs = self.stats["total_recommendations"]
         current_avg = self.stats["avg_kelly_fraction"]
-        self.stats["avg_kelly_fraction"] = (current_avg * (total_recs - 1) + kelly_fraction) / total_recs
+        self.stats["avg_kelly_fraction"] = (
+            current_avg * (total_recs - 1) + kelly_fraction
+        ) / total_recs
 
         self.stats["last_updated"] = datetime.now().isoformat()
 
@@ -994,7 +1027,9 @@ class KellyCriterion:
         # 计算当前回撤
         if historical_peak > 0:
             self.portfolio.current_drawdown = (historical_peak - current_bankroll) / historical_peak
-            self.portfolio.max_drawdown = max(self.portfolio.max_drawdown, self.portfolio.current_drawdown)
+            self.portfolio.max_drawdown = max(
+                self.portfolio.max_drawdown, self.portfolio.current_drawdown
+            )
 
     def get_performance_report(self, days: int = 30) -> dict[str, Any]:
         """获取业绩报告"""
@@ -1048,7 +1083,11 @@ class KellyCriterion:
                 "avg_kelly_fraction": float(self.stats["avg_kelly_fraction"]),
                 "max_single_win": float(self.stats["max_single_win"]),
                 "max_single_loss": float(self.stats["max_single_loss"]),
-                "volatility": (np.std([float(v) for v in self.volatility_history]) if self.volatility_history else 0),
+                "volatility": (
+                    np.std([float(v) for v in self.volatility_history])
+                    if self.volatility_history
+                    else 0
+                ),
             },
             "recommendation_stats": {
                 "total_recommendations": self.stats["total_recommendations"],
@@ -1084,7 +1123,9 @@ class KellyCriterion:
                 "available": float(self.portfolio.available_cash),
                 "committed": float(self.portfolio.committed_stakes),
                 "initial": float(self.initial_bankroll),
-                "growth": float((self.portfolio.total_bankroll - self.initial_bankroll) / self.initial_bankroll),
+                "growth": float(
+                    (self.portfolio.total_bankroll - self.initial_bankroll) / self.initial_bankroll
+                ),
             },
             "performance": {
                 "total_bets": self.portfolio.total_bets,
@@ -1096,7 +1137,10 @@ class KellyCriterion:
             "risk_status": {
                 "risk_level": self._assess_current_risk_level(),
                 "safety_margin": float(
-                    (self.portfolio.available_cash - self.portfolio.total_bankroll * self.MIN_BANKROLL_RESERVE)
+                    (
+                        self.portfolio.available_cash
+                        - self.portfolio.total_bankroll * self.MIN_BANKROLL_RESERVE
+                    )
                     / self.portfolio.total_bankroll
                 ),
                 "leverage": float(self.portfolio.committed_stakes / self.portfolio.total_bankroll),

@@ -97,7 +97,9 @@ class GlobalL1Scanner:
         if self.session:
             await self.session.close()
 
-    async def fetch_league_matches(self, league_id: int, season_code: str, season_name: str) -> list[dict]:
+    async def fetch_league_matches(
+        self, league_id: int, season_code: str, season_name: str
+    ) -> list[dict]:
         """
         获取指定联赛和赛季的所有比赛
 
@@ -117,7 +119,9 @@ class GlobalL1Scanner:
 
             async with self.session.get(url) as response:
                 if response.status != 200:
-                    logger.warning(f"获取联赛 {league_id} 赛季 {season_name} 失败: {response.status}")
+                    logger.warning(
+                        f"获取联赛 {league_id} 赛季 {season_name} 失败: {response.status}"
+                    )
                     return []
 
                 data = await response.json()
@@ -129,7 +133,7 @@ class GlobalL1Scanner:
                 return matches
 
         except Exception as e:
-            logger.error(f"获取联赛 {league_id} 赛季 {season_name} 失败: {e}")
+            logger.exception(f"获取联赛 {league_id} 赛季 {season_name} 失败: {e}")
             return []
 
     def _parse_league_matches(self, data: dict, league_id: int, season_name: str) -> list[dict]:
@@ -175,7 +179,9 @@ class GlobalL1Scanner:
                     "home_team_id": int(home_team.get("id", 0)),
                     "away_team": away_team.get("name", "Unknown"),
                     "away_team_id": int(away_team.get("id", 0)),
-                    "status": "finished" if is_finished else ("scheduled" if is_scheduled else "ongoing"),
+                    "status": "finished"
+                    if is_finished
+                    else ("scheduled" if is_scheduled else "ongoing"),
                     "is_finished": is_finished,
                     "is_scheduled": is_scheduled,
                     "match_time": match_time,
@@ -188,7 +194,8 @@ class GlobalL1Scanner:
                 # 更新统计
                 self.scan_stats["total_matches"] += 1
                 league_name = next(
-                    (lc.league_name for lc in LEAGUE_CONFIGS if lc.league_id == league_id), str(league_id)
+                    (lc.league_name for lc in LEAGUE_CONFIGS if lc.league_id == league_id),
+                    str(league_id),
                 )
                 if league_name not in self.scan_stats["by_league"]:
                     self.scan_stats["by_league"][league_name] = 0
@@ -204,7 +211,7 @@ class GlobalL1Scanner:
                     self.scan_stats["scheduled_matches"] += 1
 
         except Exception as e:
-            logger.error(f"解析比赛数据失败: {e}")
+            logger.exception(f"解析比赛数据失败: {e}")
 
         return matches
 
@@ -333,47 +340,40 @@ class GlobalL1Scanner:
 
     def print_summary(self):
         """打印扫描摘要"""
-        print("\n" + "=" * 70)
-        print("全球广域 L1 扫描摘要")
-        print("=" * 70)
 
-        print("\n📊 总体统计:")
-        print(f"   总比赛数: {self.scan_stats['total_matches']:,}")
-        print(f"   已完成: {self.scan_stats['finished_matches']:,}")
-        print(f"   未开始: {self.scan_stats['scheduled_matches']:,}")
 
-        print("\n🏆 按联赛分布:")
-        for league, count in sorted(self.scan_stats["by_league"].items()):
-            percentage = (count / self.scan_stats["total_matches"] * 100) if self.scan_stats["total_matches"] > 0 else 0
-            print(f"   {league:20s}: {count:5d} 场 ({percentage:5.1f}%)")
+        for _league, count in sorted(self.scan_stats["by_league"].items()):
+            (
+                (count / self.scan_stats["total_matches"] * 100)
+                if self.scan_stats["total_matches"] > 0
+                else 0
+            )
 
-        print("\n📅 按赛季分布:")
-        for season, count in sorted(self.scan_stats["by_season"].items()):
-            percentage = (count / self.scan_stats["total_matches"] * 100) if self.scan_stats["total_matches"] > 0 else 0
-            print(f"   {season:6s}: {count:5d} 场 ({percentage:5.1f}%)")
+        for _season, count in sorted(self.scan_stats["by_season"].items()):
+            (
+                (count / self.scan_stats["total_matches"] * 100)
+                if self.scan_stats["total_matches"] > 0
+                else 0
+            )
 
         # 目标达成分析
         target = 5000
         achieved = len(self.match_index)
-        percentage = (achieved / target * 100) if target > 0 else 0
+        (achieved / target * 100) if target > 0 else 0
 
-        print("\n🎯 目标达成:")
-        print(f"   目标: {target:,} 场")
-        print(f"   实际: {achieved:,} 场")
-        print(f"   达成率: {percentage:.1f}%")
 
         if achieved >= target:
-            print("   ✅ 已达成 5,000 场目标!")
+            pass
         else:
-            remaining = target - achieved
-            print(f"   ⚠️  还需 {remaining:,} 场达成目标")
+            target - achieved
 
-        print("=" * 70)
 
 
 async def main():
     """主函数"""
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+    logging.basicConfig(
+        level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    )
 
     async with GlobalL1Scanner() as scanner:
         # 执行全量扫描
@@ -384,11 +384,8 @@ async def main():
 
         # 保存索引
         output_dir = Path("data/production/global_manifest_v34")
-        index_file = scanner.save_index(output_dir)
+        scanner.save_index(output_dir)
 
-        print("\n✅ 全球广域 L1 扫描完成!")
-        print(f"   索引文件: {index_file}")
-        print("   可用于后续 L2 全息收割任务")
 
 
 if __name__ == "__main__":

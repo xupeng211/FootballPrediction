@@ -62,7 +62,11 @@ class IntegrationTestReport:
         except:
             pass
 
-        return {"overall_status": "OK" if return_code == 0 else "Fail", "error": output, "return_code": return_code}
+        return {
+            "overall_status": "OK" if return_code == 0 else "Fail",
+            "error": output,
+            "return_code": return_code,
+        }
 
     def run_smoke_test(self) -> dict:
         """运行冒烟测试"""
@@ -95,7 +99,11 @@ class IntegrationTestReport:
             "task_runner": self.output_dir / "task_runner.log",
         }
 
-        result = {"log_dir_exists": self.output_dir.exists(), "log_files": {}, "total_size_bytes": 0}
+        result = {
+            "log_dir_exists": self.output_dir.exists(),
+            "log_files": {},
+            "total_size_bytes": 0,
+        }
 
         for name, path in log_files.items():
             exists = path.exists()
@@ -196,7 +204,7 @@ class IntegrationTestReport:
         all_ok = (
             connectivity.get("overall_status") == "OK"
             and smoke_test.get("overall_status") == "OK"
-            and logs.get("log_dir_exists") == True
+            and logs.get("log_dir_exists")
         )
         self.report["overall_status"] = "PASS" if all_ok else "FAIL"
 
@@ -291,7 +299,9 @@ class IntegrationTestReport:
     def save_report(self, filename: str | None = None):
         """保存报告"""
         if filename is None:
-            filename = f"docker_integration_test_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+            filename = (
+                f"docker_integration_test_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+            )
 
         output_path = self.output_dir / filename
 

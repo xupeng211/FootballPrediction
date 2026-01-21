@@ -59,7 +59,10 @@ class TestHistoricalFilter:
                                     "stats": [
                                         {"key": "homeScore", "value": 3},
                                         {"key": "awayScore", "value": 1},
-                                        {"key": "expected_goals", "value": {"home": 2.5, "away": 0.8}},
+                                        {
+                                            "key": "expected_goals",
+                                            "value": {"home": 2.5, "away": 0.8},
+                                        },
                                     ]
                                 }
                             ]
@@ -143,17 +146,23 @@ class TestHistoricalFilter:
             # 测试边界1: 当前时间（应该被接受）
             current_time_iso = current_time_mock.isoformat()
             current_match_time = datetime.fromisoformat(current_time_iso.replace("+00:00", ""))
-            should_accept_current = not self._should_reject_future_match(current_match_time, current_time_mock)
+            should_accept_current = not self._should_reject_future_match(
+                current_match_time, current_time_mock
+            )
             assert should_accept_current, "当前时间的比赛应该被接受"
 
             # 测试边界2: 1小时后的未来时间（应该被拒绝）
             one_hour_future = current_time_mock + timedelta(hours=1)
-            should_reject_hour_future = self._should_reject_future_match(one_hour_future, current_time_mock)
+            should_reject_hour_future = self._should_reject_future_match(
+                one_hour_future, current_time_mock
+            )
             assert should_reject_hour_future, "1小时后的比赛应该被拒绝"
 
             # 测试边界3: 1小时前的历史时间（应该被接受）
             one_hour_past = current_time_mock - timedelta(hours=1)
-            should_accept_hour_past = not self._should_reject_future_match(one_hour_past, current_time_mock)
+            should_accept_hour_past = not self._should_reject_future_match(
+                one_hour_past, current_time_mock
+            )
             assert should_accept_hour_past, "1小时前的比赛应该被接受"
 
             logger.success("✅ 时间边界条件测试通过")
@@ -164,12 +173,12 @@ class TestHistoricalFilter:
 
         # 验证未来比赛状态
         future_status = future_match_json["header"]["status"]
-        assert future_status["finished"] == False, "未来比赛应该未结束"
+        assert not future_status["finished"], "未来比赛应该未结束"
         assert not future_status.get("liveTime"), "未来比赛不应该有详细时间信息"
 
         # 验证历史比赛状态
         historical_status = historical_match_json["header"]["status"]
-        assert historical_status["finished"] == True, "历史比赛应该已结束"
+        assert historical_status["finished"], "历史比赛应该已结束"
         assert historical_status.get("liveTime"), "历史比赛应该有详细时间信息"
 
         logger.success("✅ 比赛状态验证通过")
@@ -181,15 +190,23 @@ class TestHistoricalFilter:
         # 验证未来比赛数据特点
         assert "header" in future_match_json, "未来比赛应该有header"
         assert "content" in future_match_json, "未来比赛应该有content"
-        assert len(future_match_json["content"]["stats"]["Periods"]["All"]["stats"]) == 0, "未来比赛统计数据可能为空"
+        assert len(future_match_json["content"]["stats"]["Periods"]["All"]["stats"]) == 0, (
+            "未来比赛统计数据可能为空"
+        )
 
         # 验证历史比赛数据完整性
         assert "header" in historical_match_json, "历史比赛应该有header"
         assert "content" in historical_match_json, "历史比赛应该有content"
-        assert len(historical_match_json["content"]["stats"]["Periods"]["All"]["stats"]) > 0, "历史比赛应该有统计数据"
+        assert len(historical_match_json["content"]["stats"]["Periods"]["All"]["stats"]) > 0, (
+            "历史比赛应该有统计数据"
+        )
         assert "playerStats" in historical_match_json["content"], "历史比赛应该有球员统计"
-        assert len(historical_match_json["content"]["playerStats"]["home"]) > 0, "历史比赛应该有主队球员统计"
-        assert len(historical_match_json["content"]["playerStats"]["away"]) > 0, "历史比赛应该有客队球员统计"
+        assert len(historical_match_json["content"]["playerStats"]["home"]) > 0, (
+            "历史比赛应该有主队球员统计"
+        )
+        assert len(historical_match_json["content"]["playerStats"]["away"]) > 0, (
+            "历史比赛应该有客队球员统计"
+        )
 
         logger.success("✅ 数据完整性验证通过")
 
@@ -211,12 +228,16 @@ class TestHistoricalFilter:
 
             # 测试边界情况3: 极端未来时间（1年后）
             extreme_future = current_time_mock + timedelta(days=365)
-            should_reject_extreme = self._should_reject_future_match(extreme_future, current_time_mock)
+            should_reject_extreme = self._should_reject_future_match(
+                extreme_future, current_time_mock
+            )
             assert should_reject_extreme, "极端未来时间应该被拒绝"
 
             # 测试边界情况4: 极端历史时间（10年前）
             extreme_past = current_time_mock - timedelta(days=3650)
-            should_accept_extreme = not self._should_reject_future_match(extreme_past, current_time_mock)
+            should_accept_extreme = not self._should_reject_future_match(
+                extreme_past, current_time_mock
+            )
             assert should_accept_extreme, "极端历史时间应该被接受"
 
             logger.success("✅ 过滤逻辑边界情况测试通过")
@@ -250,7 +271,9 @@ class TestHistoricalFilter:
         ]
 
         for date_str in invalid_formats:
-            should_fail = self._should_reject_invalid_time(str(date_str) if date_str is not None else "")
+            should_fail = self._should_reject_invalid_time(
+                str(date_str) if date_str is not None else ""
+            )
             assert should_fail, f"无效日期格式{date_str}应该被拒绝"
 
         logger.success("✅ 日期字符串解析鲁棒性测试通过")
@@ -311,7 +334,9 @@ class TestHistoricalFilter:
         assert accepted_count + rejected_count == large_dataset_size, "处理总数应该匹配"
         assert processing_time < 1.0, f"处理时间应该小于1秒，实际是{processing_time:.3f}秒"
 
-        logger.success(f"✅ 大数据集过滤性能测试通过: {large_dataset_size}条记录，耗时{processing_time:.3f}秒")
+        logger.success(
+            f"✅ 大数据集过滤性能测试通过: {large_dataset_size}条记录，耗时{processing_time:.3f}秒"
+        )
 
 
 if __name__ == "__main__":

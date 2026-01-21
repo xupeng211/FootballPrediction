@@ -33,19 +33,23 @@ Date: 2026-01-11
 from __future__ import annotations
 
 import asyncio
+from collections import defaultdict
+from contextlib import asynccontextmanager, suppress
+from dataclasses import dataclass, field
+from datetime import UTC, datetime, timedelta, timezone
 import json
 import logging
-import random
-from collections import defaultdict
-from contextlib import asynccontextmanager
-from dataclasses import dataclass, field
-from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Any, AsyncGenerator, Dict, List, Optional, Tuple
+import random
+from typing import TYPE_CHECKING, Any
 
-import yaml
 from bs4 import BeautifulSoup
-from playwright.async_api import Browser, BrowserContext, Page
+import yaml
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncGenerator
+
+    from playwright.async_api import Browser, Page
 
 logger = logging.getLogger(__name__)
 
@@ -58,7 +62,7 @@ logger = logging.getLogger(__name__)
 class ProxyConfig:
     """代理配置"""
 
-    servers: List[str] = field(default_factory=lambda: [f"http://172.25.16.1:{port}" for port in range(7890, 7900)])
+    servers: list[str] = field(default_factory=lambda: [f"http://172.25.16.1:{port}" for port in range(7890, 7900)])
     auto_rotation: bool = True
     health_check_interval: int = 300
 
@@ -89,7 +93,7 @@ class DelayConfig:
 class FingerprintConfig:
     """指纹配置"""
 
-    user_agents: List[str] = field(default_factory=lambda: [
+    user_agents: list[str] = field(default_factory=lambda: [
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0",
@@ -98,7 +102,7 @@ class FingerprintConfig:
         "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.1 Safari/605.1.15",
         "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Safari/605.1.15",
     ])
-    viewports: List[Dict[str, int]] = field(default_factory=lambda: [
+    viewports: list[dict[str, int]] = field(default_factory=lambda: [
         {"width": 1920, "height": 1080},
         {"width": 1366, "height": 768},
         {"width": 1536, "height": 864},
@@ -114,10 +118,10 @@ class BehaviorConfig:
     """行为模拟配置"""
 
     enable_mouse_move: bool = True
-    mouse_move_range: Tuple[int, int] = (3, 5)
+    mouse_move_range: tuple[int, int] = (3, 5)
     enable_scroll: bool = True
-    scroll_range: Tuple[int, int] = (2, 4)
-    scroll_delta_range: Tuple[int, int] = (100, 500)
+    scroll_range: tuple[int, int] = (2, 4)
+    scroll_delta_range: tuple[int, int] = (100, 500)
 
 
 @dataclass
@@ -158,10 +162,10 @@ class ScraperConfig:
     logging: LoggingConfig = field(default_factory=LoggingConfig)
 
     @classmethod
-    def from_yaml(cls, config_path: str = "config/scraper_config.yaml") -> "ScraperConfig":
+    def from_yaml(cls, config_path: str = "config/scraper_config.yaml") -> ScraperConfig:
         """从 YAML 文件加载配置"""
         try:
-            with open(config_path, "r", encoding="utf-8") as f:
+            with open(config_path, encoding="utf-8") as f:
                 data = yaml.safe_load(f)
 
             return cls(
@@ -190,16 +194,16 @@ class CircuitBreakerManager:
     FORBIDDEN_THRESHOLD = 3  # 连续 3 次 403 错误触发黑名单
     BLACKLIST_TIMEOUT_MINUTES = 15  # 黑名单持续时间（分钟）
 
-    def __init__(self, config: CircuitBreakerConfig, proxy_pool: List[str]):
+    def __init__(self, config: CircuitBreakerConfig, proxy_pool: list[str]):
         self.config = config
         self.proxy_pool = proxy_pool
-        self.failed_counts: Dict[str, int] = defaultdict(int)
-        self.cooldown_until: Dict[str, datetime] = {}
+        self.failed_counts: dict[str, int] = defaultdict(int)
+        self.cooldown_until: dict[str, datetime] = {}
         self.tripped_count = 0
 
         # V30.3: 智能黑名单机制
-        self.forbidden_counts: Dict[str, int] = defaultdict(int)  # 403 错误计数
-        self.blacklist_until: Dict[str, datetime] = {}  # 黑名单过期时间
+        self.forbidden_counts: dict[str, int] = defaultdict(int)  # 403 错误计数
+        self.blacklist_until: dict[str, datetime] = {}  # 黑名单过期时间
 
     def is_available(self, proxy: str) -> bool:
         """检查代理是否可用"""
@@ -209,19 +213,17 @@ class CircuitBreakerManager:
         if proxy in self.blacklist_until:
             if datetime.now(beijing_tz) < self.blacklist_until[proxy]:
                 return False
-            else:
-                # 黑名单过期，清除记录
-                del self.blacklist_until[proxy]
-                self.forbidden_counts[proxy] = 0
-                logger.info(f"🟢 代理 {proxy} 黑名单已解除")
+            # 黑名单过期，清除记录
+            del self.blacklist_until[proxy]
+            self.forbidden_counts[proxy] = 0
+            logger.info(f"🟢 代理 {proxy} 黑名单已解除")
 
         if proxy in self.cooldown_until:
             if datetime.now(beijing_tz) < self.cooldown_until[proxy]:
                 return False
-            else:
-                # 冷却期结束，重置
-                del self.cooldown_until[proxy]
-                self.failed_counts[proxy] = 0
+            # 冷却期结束，重置
+            del self.cooldown_until[proxy]
+            self.failed_counts[proxy] = 0
         return True
 
     def record_success(self, proxy: str) -> None:
@@ -279,7 +281,7 @@ class CircuitBreakerManager:
             logger.error(error_msg)
             raise EmergencyStopError(error_msg)
 
-    def get_status(self) -> Dict[str, Any]:
+    def get_status(self) -> dict[str, Any]:
         """获取熔断器状态"""
         active = sum(1 for p in self.proxy_pool if self.is_available(p))
         blacklisted = len(self.blacklist_until)
@@ -292,7 +294,7 @@ class CircuitBreakerManager:
             "availability_rate": f"{active/len(self.proxy_pool)*100:.1f}%",
         }
 
-    def get_available_proxy(self) -> Optional[str]:
+    def get_available_proxy(self) -> str | None:
         """获取可用代理"""
         for proxy in self.proxy_pool:
             if self.is_available(proxy):
@@ -303,7 +305,6 @@ class CircuitBreakerManager:
 class EmergencyStopError(Exception):
     """紧急停止异常"""
 
-    pass
 
 
 # ==============================================================================
@@ -363,7 +364,7 @@ class HumanBehaviorSimulator:
         await self.natural_scroll(page)
         await asyncio.sleep(random.uniform(0.3, 0.8))
 
-    def get_random_fingerprint(self) -> Tuple[str, Dict[str, int]]:
+    def get_random_fingerprint(self) -> tuple[str, dict[str, int]]:
         """获取随机指纹"""
         ua = random.choice(self.fingerprint_config.user_agents)
         viewport = random.choice(self.fingerprint_config.viewports)
@@ -381,7 +382,7 @@ class TimeConverter:
     BEIJING_TZ = timezone(timedelta(hours=8))
 
     @classmethod
-    def convert_to_beijing(cls, time_str: str) -> Dict[str, Any]:
+    def convert_to_beijing(cls, time_str: str) -> dict[str, Any]:
         """
         转换时间字符串为北京时间
 
@@ -449,7 +450,7 @@ class OddsMovementExtractor:
         self.delay_config = delay_config or DelayConfig()
         self.custom_timeout_ms = custom_timeout_ms  # V151.2: 自定义超时（用于 malformed 重试）
 
-    async def extract_complete_history(self, bet_type: str, cell_locator) -> List[Dict[str, Any]]:
+    async def extract_complete_history(self, bet_type: str, cell_locator) -> list[dict[str, Any]]:
         """
         提取完整的历史变盘记录（含滚动）
         V151.2: 支持自定义超时（malformed 重试使用 30s，正常采集使用 15s）
@@ -512,14 +513,14 @@ class OddsMovementExtractor:
             return data
 
         except Exception as e:
-            logger.error(f"提取失败 ({bet_type}): {e}")
+            logger.exception(f"提取失败 ({bet_type}): {e}")
             return []
 
-    def _parse_odds_data(self, timestamps, odds_values) -> List[Dict[str, Any]]:
+    def _parse_odds_data(self, timestamps, odds_values) -> list[dict[str, Any]]:
         """解析赔率数据"""
         data = []
 
-        for ts, odd in zip(timestamps, odds_values):
+        for ts, odd in zip(timestamps, odds_values, strict=False):
             time_str = ts.get_text(strip=True)
             odds_str = odd.get_text(strip=True)
 
@@ -565,7 +566,7 @@ class OddsMovementExtractor:
 
     async def _javascript_scroll(self, modal_element) -> None:
         """使用 JavaScript 进行更彻底的滚动"""
-        try:
+        with suppress(Exception):
             await modal_element.evaluate("""el => {
                 const scrollable = el.querySelector('[style*="overflow"]');
                 if (scrollable && scrollable.scrollHeight > scrollable.clientHeight) {
@@ -575,8 +576,6 @@ class OddsMovementExtractor:
                     scrollable.scrollTop = 0;
                 }
             }""")
-        except Exception:
-            pass
 
 
 # ==============================================================================
@@ -622,7 +621,7 @@ class OddsPortalScraper:
         self.behavior_simulator = HumanBehaviorSimulator(self.config.behavior, self.config.fingerprints)
 
         # 审计日志
-        self.audit_log: List[Dict[str, Any]] = []
+        self.audit_log: list[dict[str, Any]] = []
 
         # 确保输出目录存在
         Path(self.config.logging.output_dir).mkdir(parents=True, exist_ok=True)
@@ -641,9 +640,9 @@ class OddsPortalScraper:
     @asynccontextmanager
     async def stealth_context(
         self,
-        proxy: Optional[str] = None,
+        proxy: str | None = None,
         headless: bool = True,
-    ) -> AsyncGenerator[Tuple[Browser, Page], None]:
+    ) -> AsyncGenerator[tuple[Browser, Page], None]:
         """创建隐身浏览器上下文
 
         Args:
@@ -691,10 +690,10 @@ class OddsPortalScraper:
         match_id: str,
         home_team: str,
         away_team: str,
-        url: Optional[str] = None,
+        url: str | None = None,
         headless: bool = True,
-        custom_timeout_ms: Optional[int] = None,
-    ) -> Dict[str, Any]:
+        custom_timeout_ms: int | None = None,
+    ) -> dict[str, Any]:
         """执行核心逻辑：导航 -> 定位 Pinnacle 行 -> Hover 触发 -> 解析 JSON 赔率
 
         Args:
@@ -725,7 +724,7 @@ class OddsPortalScraper:
                 "error": None (如果失败)
             }
         """
-        start_time = datetime.now(timezone.utc)
+        start_time = datetime.now(UTC)
 
         # 构建 URL
         if url is None:
@@ -739,7 +738,7 @@ class OddsPortalScraper:
         result = None
 
         try:
-            async with self.stealth_context(proxy=proxy, headless=headless) as (browser, page):
+            async with self.stealth_context(proxy=proxy, headless=headless) as (_browser, page):
                 # 步骤 1: 访问页面
                 logger.info(f"[{match_id}] 步骤 1: 访问页面...")
                 await page.goto(url, wait_until="domcontentloaded", timeout=60000)
@@ -802,7 +801,7 @@ class OddsPortalScraper:
                     raise Exception("未提取到任何数据")
 
                 # 成功
-                elapsed = (datetime.now(timezone.utc) - start_time).total_seconds()
+                elapsed = (datetime.now(UTC) - start_time).total_seconds()
                 result = {
                     "success": True,
                     "match_id": match_id,
@@ -810,7 +809,7 @@ class OddsPortalScraper:
                     "away_team": away_team,
                     "source_url": url,
                     "proxy": proxy,
-                    "extraction_time": datetime.now(timezone.utc).isoformat(),
+                    "extraction_time": datetime.now(UTC).isoformat(),
                     "elapsed_seconds": elapsed,
                     "data": all_data,
                     "stats": {
@@ -825,7 +824,7 @@ class OddsPortalScraper:
         except Exception as e:
             error_msg = str(e)
             error_type = self._classify_error(error_msg)
-            logger.error(f"[{match_id}] ❌ 错误 ({error_type}): {error_msg}")
+            logger.exception(f"[{match_id}] ❌ 错误 ({error_type}): {error_msg}")
 
             self.circuit_breaker.record_failure(proxy, error_type)
             result = self._error_result(match_id, home_team, away_team, url, proxy, error_msg, error_type)
@@ -839,12 +838,11 @@ class OddsPortalScraper:
         """分类错误类型"""
         if "403" in error_msg or "ERR_HTTP_RESPONSE_CODE_FAILURE" in error_msg:
             return "BLOCKED"
-        elif "Timeout" in error_msg:
+        if "Timeout" in error_msg:
             return "TIMEOUT"
-        elif "被重定向" in error_msg or "拦截" in error_msg:
+        if "被重定向" in error_msg or "拦截" in error_msg:
             return "REDIRECTED"
-        else:
-            return "UNKNOWN"
+        return "UNKNOWN"
 
     def _error_result(
         self,
@@ -852,10 +850,10 @@ class OddsPortalScraper:
         home_team: str,
         away_team: str,
         url: str,
-        proxy: Optional[str],
+        proxy: str | None,
         error_msg: str,
         error_type: str = "UNKNOWN"
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """生成错误结果"""
         return {
             "success": False,
@@ -864,16 +862,16 @@ class OddsPortalScraper:
             "away_team": away_team,
             "source_url": url,
             "proxy": proxy,
-            "extraction_time": datetime.now(timezone.utc).isoformat(),
+            "extraction_time": datetime.now(UTC).isoformat(),
             "error": error_msg,
             "error_type": error_type
         }
 
-    def _record_audit(self, result: Dict[str, Any]) -> None:
+    def _record_audit(self, result: dict[str, Any]) -> None:
         """记录审计日志"""
         self.audit_log.append({
             **result,
-            "audit_timestamp": datetime.now(timezone.utc).isoformat()
+            "audit_timestamp": datetime.now(UTC).isoformat()
         })
 
     def save_audit_log(self) -> None:
@@ -883,7 +881,7 @@ class OddsPortalScraper:
         with open(output_path, "w", encoding="utf-8") as f:
             json.dump({
                 "scraper_version": "V150.33",
-                "audit_time": datetime.now(timezone.utc).isoformat(),
+                "audit_time": datetime.now(UTC).isoformat(),
                 "circuit_breaker_status": self.circuit_breaker.get_status(),
                 "total_records": len(self.audit_log),
                 "records": self.audit_log
@@ -891,7 +889,7 @@ class OddsPortalScraper:
 
         logger.info(f"审计日志已保存: {output_path}")
 
-    def get_circuit_breaker_status(self) -> Dict[str, Any]:
+    def get_circuit_breaker_status(self) -> dict[str, Any]:
         """获取熔断器状态"""
         return self.circuit_breaker.get_status()
 
@@ -899,9 +897,9 @@ class OddsPortalScraper:
         self,
         home_team: str,
         away_team: str,
-        league_hint: Optional[str] = None,
+        league_hint: str | None = None,
         headless: bool = True,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """V151.2: 通过 OddsPortal 搜索功能获取真实哈希 URL（深度加固版）
 
         核心逻辑:
@@ -929,7 +927,6 @@ class OddsPortalScraper:
             }
         """
         import re
-        from urllib.parse import urljoin
         import unicodedata
 
         # V151.2: 搜索词增强 - 追加联赛名称
@@ -942,14 +939,14 @@ class OddsPortalScraper:
         def slugify(name: str) -> str:
             """将队名转换为 URL slug 格式"""
             # Unicode 规范化 (NFD 分解)
-            normalized = unicodedata.normalize('NFD', name)
+            normalized = unicodedata.normalize("NFD", name)
             # 移除变音符号
-            ascii_only = ''.join(
+            ascii_only = "".join(
                 c for c in normalized
-                if unicodedata.category(c) != 'Mn'
+                if unicodedata.category(c) != "Mn"
             )
             # 转小写，空格转连字符
-            return ascii_only.lower().replace(' ', '-').replace("'", '')
+            return ascii_only.lower().replace(" ", "-").replace("'", "")
 
         home_slug = slugify(home_team)
         away_slug = slugify(away_team)
@@ -971,17 +968,17 @@ class OddsPortalScraper:
         logger.info(f"[搜索] 预期 Slug: {home_slug} / {away_slug}")
 
         try:
-            async with self.stealth_context(proxy=proxy, headless=headless) as (browser, page):
+            async with self.stealth_context(proxy=proxy, headless=headless) as (_browser, page):
                 # 步骤 1: 访问搜索页面
-                logger.info(f"[搜索] 步骤 1: 访问搜索页面...")
+                logger.info("[搜索] 步骤 1: 访问搜索页面...")
                 await page.goto(search_url, wait_until="domcontentloaded", timeout=60000)
 
                 # 步骤 2: 等待搜索结果加载
-                logger.info(f"[搜索] 步骤 2: 等待搜索结果...")
+                logger.info("[搜索] 步骤 2: 等待搜索结果...")
                 await asyncio.sleep(5)
 
                 # 步骤 3: 查找比赛结果链接
-                logger.info(f"[搜索] 步骤 3: 查找比赛结果...")
+                logger.info("[搜索] 步骤 3: 查找比赛结果...")
 
                 # 尝试多种选择器
                 selectors = [
@@ -1012,12 +1009,12 @@ class OddsPortalScraper:
 
                 if not match_link:
                     # 如果没找到，尝试使用更通用的搜索
-                    logger.warning(f"[搜索] 未找到精确匹配，尝试通用搜索...")
+                    logger.warning("[搜索] 未找到精确匹配，尝试通用搜索...")
                     match_link = page.locator("a[href*='/football/']").first
 
                 # 步骤 4: 点击链接并获取最终 URL
                 if match_link:
-                    logger.info(f"[搜索] 步骤 4: 点击链接...")
+                    logger.info("[搜索] 步骤 4: 点击链接...")
                     await match_link.click()
                     await asyncio.sleep(3)
 
@@ -1034,7 +1031,7 @@ class OddsPortalScraper:
                     logger.info(f"[搜索] 深度匹配: home_slug={home_slug} ({contains_home}), away_slug={away_slug} ({contains_away})")
 
                     if not (contains_home and contains_away):
-                        logger.error(f"[搜索] ❌ URL 深度匹配失败！URL 不包含预期的队名 Slug")
+                        logger.error("[搜索] ❌ URL 深度匹配失败！URL 不包含预期的队名 Slug")
                         logger.error(f"[搜索]    预期: {home_slug} 和 {away_slug}")
                         logger.error(f"[搜索]    实际 URL: {final_url}")
                         return {
@@ -1050,8 +1047,8 @@ class OddsPortalScraper:
                     # 从 URL 中提取哈希
                     # V151.2: 支持带锚点的 URL（如 #1X2;2）
                     # 先尝试移除锚点
-                    url_without_anchor = final_url.split('#')[0]
-                    hash_match = re.search(r'/([a-zA-Z0-9]{8,12})/?$', url_without_anchor)
+                    url_without_anchor = final_url.split("#")[0]
+                    hash_match = re.search(r"/([a-zA-Z0-9]{8,12})/?$", url_without_anchor)
                     if hash_match:
                         match_id = hash_match.group(1)
                         logger.info(f"[搜索] ✅ 成功提取哈希: {match_id}")
@@ -1065,31 +1062,29 @@ class OddsPortalScraper:
                             "proxy": proxy,
                             "error": None
                         }
-                    else:
-                        logger.warning(f"[搜索] ⚠️ 无法从 URL 中提取哈希: {final_url}")
-                        return {
-                            "success": False,
-                            "url": final_url,
-                            "match_id": None,
-                            "home_team": home_team,
-                            "away_team": away_team,
-                            "proxy": proxy,
-                            "error": "无法从 URL 中提取哈希"
-                        }
-                else:
-                    logger.error(f"[搜索] ❌ 未找到比赛结果")
+                    logger.warning(f"[搜索] ⚠️ 无法从 URL 中提取哈希: {final_url}")
                     return {
                         "success": False,
-                        "url": None,
+                        "url": final_url,
                         "match_id": None,
                         "home_team": home_team,
                         "away_team": away_team,
                         "proxy": proxy,
-                        "error": "未找到比赛结果"
+                        "error": "无法从 URL 中提取哈希"
                     }
+                logger.error("[搜索] ❌ 未找到比赛结果")
+                return {
+                    "success": False,
+                    "url": None,
+                    "match_id": None,
+                    "home_team": home_team,
+                    "away_team": away_team,
+                    "proxy": proxy,
+                    "error": "未找到比赛结果"
+                }
 
         except Exception as e:
-            logger.error(f"[搜索] ❌ 搜索失败: {e}")
+            logger.exception(f"[搜索] ❌ 搜索失败: {e}")
             return {
                 "success": False,
                 "url": None,
@@ -1110,10 +1105,10 @@ async def fetch_single_match(
     match_id: str,
     home_team: str,
     away_team: str,
-    url: Optional[str] = None,
+    url: str | None = None,
     config_path: str = "config/scraper_config.yaml",
     headless: bool = True,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """便捷函数：采集单场比赛
 
     Example:
@@ -1132,11 +1127,11 @@ async def fetch_single_match(
 
 
 async def fetch_batch_matches(
-    matches: List[Dict[str, str]],
+    matches: list[dict[str, str]],
     config_path: str = "config/scraper_config.yaml",
     headless: bool = True,
-    delay_range: Tuple[float, float] = (15.0, 30.0),
-) -> List[Dict[str, Any]]:
+    delay_range: tuple[float, float] = (15.0, 30.0),
+) -> list[dict[str, Any]]:
     """便捷函数：批量采集比赛
 
     Args:

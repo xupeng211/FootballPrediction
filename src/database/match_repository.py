@@ -39,6 +39,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class MatchHashInfo:
     """比赛哈希信息"""
+
     fotmob_id: str
     league_name: str
     season: str
@@ -53,6 +54,7 @@ class MatchHashInfo:
 @dataclass
 class MissingMatch:
     """缺失比赛信息"""
+
     match_id: str
     home_team: str
     away_team: str
@@ -82,7 +84,7 @@ class MatchRepository:
         ...     url="/football/.../abc12345/",
         ...     league_name="Premier League",
         ...     confidence=0.98,
-        ...     method="v41.71_active_harvest"
+        ...     method="v41.71_active_harvest",
         ... )
     """
 
@@ -120,12 +122,12 @@ class MatchRepository:
                 # 1. 检查当前连接的数据库名称
                 cursor.execute("SELECT current_database();")
                 result = cursor.fetchone()
-                current_db = result['current_database'] if result else None
+                current_db = result["current_database"] if result else None
 
                 # 2. 检查 matches 表是否存在
                 cursor.execute("SELECT to_regclass('public.matches');")
                 result = cursor.fetchone()
-                matches_table = result['to_regclass'] if result else None
+                matches_table = result["to_regclass"] if result else None
 
                 # 3. 验证数据库身份
                 if current_db != self.REQUIRED_DB_NAME:
@@ -151,7 +153,7 @@ class MatchRepository:
                     WHERE table_schema = 'public' AND table_type = 'BASE TABLE';
                 """)
                 result = cursor.fetchone()
-                table_count = result['count'] if result else 0
+                table_count = result["count"] if result else 0
 
                 logger.info(f"✅ V41.71 数据库身份验证通过 (db={current_db}, tables={table_count})")
 
@@ -159,9 +161,7 @@ class MatchRepository:
             raise
         except Exception as e:
             raise DatabaseConfigurationError(
-                f"🚨 V41.71 数据库身份验证异常\n"
-                f"   错误: {e}\n"
-                f"   请检查数据库连接配置"
+                f"🚨 V41.71 数据库身份验证异常\n   错误: {e}\n   请检查数据库连接配置"
             )
 
     # ========================================================================
@@ -206,7 +206,7 @@ class MatchRepository:
 
         # V41.56: 验证 URL 赛季与数据库赛季一致
         if url and "[0-9]{4}-[0-9]{4}" in url:
-            season_match = re.search(r'([0-9]{4}-[0-9]{4})', url)
+            season_match = re.search(r"([0-9]{4}-[0-9]{4})", url)
             if season_match:
                 url_season = season_match.group(1).replace("-", "/")
                 # 从 matches 表获取实际赛季
@@ -217,7 +217,7 @@ class MatchRepository:
                     cur.execute(check_season_query, (match_id,))
                     result = cur.fetchone()
                     if result:
-                        db_season = result['season']
+                        db_season = result["season"]
                         # 归一化赛季格式（23/24 → 2023/2024）
                         normalized_db_season = db_season.replace("/", "")
                         if len(normalized_db_season) == 4:
@@ -227,12 +227,15 @@ class MatchRepository:
                             normalized_db_season = f"{prefix}/{suffix}"
 
                         # 检查赛季是否一致
-                        if url_season != db_season and url_season != normalized_db_season:
+                        if url_season not in (db_season, normalized_db_season):
                             # V41.71: 拆分 logger.error 长消息
                             logger.error(
                                 "🚨 V41.71: 赛季错位拦截 - match_id=%s, "
                                 "db_season=%s, url_season=%s, url=%s",
-                                match_id, db_season, url_season, url
+                                match_id,
+                                db_season,
+                                url_season,
+                                url,
                             )
                             return False
 
@@ -249,7 +252,7 @@ class MatchRepository:
                 cur.execute(find_match_query, (home_team, away_team, league_name, season))
                 match_result = cur.fetchone()
                 if match_result:
-                    match_id = match_result['match_id']
+                    match_id = match_result["match_id"]
                 else:
                     # V41.76: 尝试规范化后的模糊匹配
                     home_norm = normalize_team_name(home_team)
@@ -265,22 +268,31 @@ class MatchRepository:
 
                     # 对每场比赛进行规范化比较
                     for m in all_matches:
-                        db_home_norm = normalize_team_name(m['home_team'])
-                        db_away_norm = normalize_team_name(m['away_team'])
+                        db_home_norm = normalize_team_name(m["home_team"])
+                        db_away_norm = normalize_team_name(m["away_team"])
 
                         # 检查主队和客队是否都匹配（忽略顺序）
-                        if (home_norm in db_home_norm or db_home_norm in home_norm) and \
-                           (away_norm in db_away_norm or db_away_norm in away_norm):
-                            match_id = m['match_id']
-                            logger.info("🔄 模糊匹配: %s vs %s → %s vs %s",
-                                       home_team, away_team, m['home_team'], m['away_team'])
+                        if (home_norm in db_home_norm or db_home_norm in home_norm) and (
+                            away_norm in db_away_norm or db_away_norm in away_norm
+                        ):
+                            match_id = m["match_id"]
+                            logger.info(
+                                "🔄 模糊匹配: %s vs %s → %s vs %s",
+                                home_team,
+                                away_team,
+                                m["home_team"],
+                                m["away_team"],
+                            )
                             break
 
                     if not match_id:
                         # V41.71: 拆分长日志消息
                         logger.warning(
                             "⚠️  未找到匹配: %s vs %s (%s %s)",
-                            home_team, away_team, league_name, season
+                            home_team,
+                            away_team,
+                            league_name,
+                            season,
                         )
                         return False
         elif not match_id:
@@ -323,16 +335,15 @@ class MatchRepository:
                     # V41.77: Use tuple indexing instead of dict key (fetchone returns tuple)
                     existing_fotmob_id = existing[0] if existing else None
                     logger.warning(
-                        "⚠️  Hash %s 已被 match_id=%s 使用",
-                        hash_value, existing_fotmob_id
+                        "⚠️  Hash %s 已被 match_id=%s 使用", hash_value, existing_fotmob_id
                     )
                     return False
 
                 # 执行 UPSERT（使用实际的 match_id）
-                cur.execute(upsert_query, (
-                    match_id, league_name,
-                    hash_value, url, confidence, method, match_id
-                ))
+                cur.execute(
+                    upsert_query,
+                    (match_id, league_name, hash_value, url, confidence, method, match_id),
+                )
 
                 # V41.76: 检查是否实际更新了行
                 if cur.rowcount == 0:
@@ -416,7 +427,7 @@ class MatchRepository:
             cur.execute(query, (hash_value, exclude_match_id))
             result = cur.fetchone()
 
-        return result['fotmob_id'] if result else None
+        return result["fotmob_id"] if result else None
 
     def get_match_season(self, match_id: str) -> str | None:
         """
@@ -434,7 +445,7 @@ class MatchRepository:
             cur.execute(query, (match_id,))
             result = cur.fetchone()
 
-        return result['season'] if result else None
+        return result["season"] if result else None
 
 
 # ============================================================================
@@ -465,7 +476,7 @@ def create_match_repository(
         database=db_name,
         user=db_user,
         password=db_password,
-        cursor_factory=psycopg2.extras.RealDictCursor
+        cursor_factory=psycopg2.extras.RealDictCursor,
     )
 
     return MatchRepository(conn)

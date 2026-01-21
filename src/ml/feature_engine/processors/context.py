@@ -26,8 +26,8 @@ ContextProcessor - 比赛上下文处理器（V21.0 深度爆破版）
 import logging
 from typing import Any
 
-from ..base import BaseProcessor, ProcessorConfig, ProcessorResult
-from ..models import MatchContext, MatchData
+from src.ml.feature_engine.base import BaseProcessor, ProcessorConfig, ProcessorResult
+from src.ml.feature_engine.models import MatchContext, MatchData
 
 logger = logging.getLogger(__name__)
 
@@ -170,7 +170,7 @@ class ContextProcessor(BaseProcessor[MatchData]):
             )
 
         except Exception as e:
-            logger.error(f"ContextProcessor failed for match {data.match_id}: {e}")
+            logger.exception(f"ContextProcessor failed for match {data.match_id}: {e}")
             return ProcessorResult.failure_result(str(e))
 
     def _encode_time_features(self, match_context: MatchContext) -> dict[str, float]:
@@ -377,7 +377,9 @@ class ContextProcessor(BaseProcessor[MatchData]):
             condition_lower = condition.lower()
 
             # 检测极端天气
-            is_extreme = any(extreme in condition_lower for extreme in self.EXTREME_WEATHER_CONDITIONS)
+            is_extreme = any(
+                extreme in condition_lower for extreme in self.EXTREME_WEATHER_CONDITIONS
+            )
             features["is_extreme_weather"] = 1.0 if is_extreme else 0.0
 
             # 天气状况编码
@@ -418,9 +420,8 @@ class ContextProcessor(BaseProcessor[MatchData]):
             adverse_score += 0.2
 
         # 温度偏离舒适区（15-25°C）
-        if temp is not None:
-            if temp < 5 or temp > 30:
-                adverse_score += 0.3
+        if temp is not None and (temp < 5 or temp > 30):
+            adverse_score += 0.3
 
         features["adverse_weather_score"] = round(min(adverse_score, 1.0), 4)
 

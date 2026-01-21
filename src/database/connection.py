@@ -9,19 +9,18 @@ V41.98 新增:
 - 环境纯净性检查: 防止连接到非 Docker 数据库
 """
 
-import sys
 from collections.abc import AsyncGenerator, Generator
 from contextlib import asynccontextmanager, contextmanager
 import logging
 from typing import Any, Optional
 
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
     AsyncSession,
     async_sessionmaker,
     create_async_engine,
 )
-from sqlalchemy import text
 
 logger = logging.getLogger(__name__)
 
@@ -73,7 +72,7 @@ async def verify_docker_environment(engine: AsyncEngine) -> bool:
     # 检查是否是 Docker 环境（通过 hostname 或版本判断）
     is_docker = is_postgres_15 and is_correct_db
 
-    logger.info(f"V41.98 环境验证:")
+    logger.info("V41.98 环境验证:")
     logger.info(f"  PostgreSQL 版本: {version[:50]}...")
     logger.info(f"  数据库名称: {db_name}")
     logger.info(f"  服务器地址: {hostname}")
@@ -173,7 +172,7 @@ class DatabaseManager:
             await verify_docker_environment(self._async_engine)
             logger.info("✅ V41.98: Docker 环境验证通过")
         except RuntimeError as e:
-            logger.error(f"❌ V41.98: Docker 环境验证失败: {e}")
+            logger.exception(f"❌ V41.98: Docker 环境验证失败: {e}")
             raise
 
     async def verify_environment_async(self) -> bool:
@@ -244,7 +243,7 @@ class DatabaseManager:
                 yield session
             except Exception as e:
                 await session.rollback()
-                logger.error(f"异步数据库操作失败: {e}")
+                logger.exception(f"异步数据库操作失败: {e}")
                 raise
             finally:
                 await session.close()

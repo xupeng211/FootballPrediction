@@ -21,7 +21,9 @@ sys.path.insert(0, str(project_root / "src"))
 from src.ml.strategy.fractional_kelly import calculate_fractional_kelly_for_prediction
 
 # 配置日志
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 
@@ -52,14 +54,16 @@ class FractionalKellyBacktester:
         """加载模型"""
         try:
             # 使用绝对路径
-            absolute_model_path = self.project_root / "data" / "models" / "xgb_football_v2.1_simple.joblib"
+            absolute_model_path = (
+                self.project_root / "data" / "models" / "xgb_football_v2.1_simple.joblib"
+            )
             model_data = joblib.load(absolute_model_path)
             self.model = model_data["model"]
             self.scaler = model_data["scaler"]
             self.feature_names = model_data["feature_names"]
             logger.info("✅ V2.1模型加载成功")
         except Exception as e:
-            logger.error(f"❌ 模型加载失败: {e}")
+            logger.exception(f"❌ 模型加载失败: {e}")
             raise
 
     def prepare_match_features(self, match_data: dict) -> np.ndarray | None:
@@ -86,9 +90,8 @@ class FractionalKellyBacktester:
 
             # 转换为数组并标准化
             feature_array = np.array(features).reshape(1, -1)
-            scaled_features = self.scaler.transform(feature_array)
+            return self.scaler.transform(feature_array)
 
-            return scaled_features
 
         except Exception as e:
             logger.warning(f"⚠️ 特征准备失败: {e}")
@@ -160,7 +163,9 @@ class FractionalKellyBacktester:
                 }
 
             # 获取最佳有效投注
-            best_bet = max(valid_recommendations.items(), key=lambda x: x[1].recommended_stake_percent)
+            best_bet = max(
+                valid_recommendations.items(), key=lambda x: x[1].recommended_stake_percent
+            )
             best_outcome, best_kelly = best_bet
 
             return {
@@ -347,7 +352,7 @@ class FractionalKellyBacktester:
             "Genoa",
         ]
 
-        for i in range(52):
+        for _i in range(52):
             home_team = np.random.choice(serie_a_teams)
             away_team = np.random.choice([t for t in serie_a_teams if t != home_team])
 
@@ -381,9 +386,15 @@ class FractionalKellyBacktester:
             # 计算衍生特征
             match_data["xg_difference"] = match_data["home_xg"] - match_data["away_xg"]
             match_data["total_xg"] = match_data["home_xg"] + match_data["away_xg"]
-            match_data["total_shots_difference"] = match_data["home_total_shots"] - match_data["away_total_shots"]
-            match_data["total_passes_difference"] = match_data["home_total_passes"] - match_data["away_total_passes"]
-            match_data["pass_accuracy_difference"] = match_data["home_pass_accuracy"] - match_data["away_pass_accuracy"]
+            match_data["total_shots_difference"] = (
+                match_data["home_total_shots"] - match_data["away_total_shots"]
+            )
+            match_data["total_passes_difference"] = (
+                match_data["home_total_passes"] - match_data["away_total_passes"]
+            )
+            match_data["pass_accuracy_difference"] = (
+                match_data["home_pass_accuracy"] - match_data["away_pass_accuracy"]
+            )
 
             matches.append(match_data)
 
@@ -410,7 +421,9 @@ class FractionalKellyBacktester:
             "max_profit": max(profits) if profits else 0,
             "max_loss": min(profits) if profits else 0,
             "profit_volatility": np.std(profits) if profits else 0,
-            "sharpe_ratio": np.mean(profits) / np.std(profits) if profits and np.std(profits) > 0 else 0,
+            "sharpe_ratio": np.mean(profits) / np.std(profits)
+            if profits and np.std(profits) > 0
+            else 0,
             "avg_edge": np.mean(edges) if edges else 0,
         }
 
@@ -442,7 +455,7 @@ class FractionalKellyBacktester:
         summary = results["summary"]
         metrics = results["performance_metrics"]
 
-        report = f"""
+        return f"""
 🎰 半凯利公式降噪回测报告
 {"=" * 60}
 
@@ -487,7 +500,6 @@ class FractionalKellyBacktester:
 策略版本: Fractional Kelly V2.0 (0.5x)
         """
 
-        return report
 
 
 def main():
@@ -504,14 +516,13 @@ def main():
         results = backtester.run_fractional_backtest_on_mock_data()
 
         # 生成并输出报告
-        report = backtester.generate_report(results)
-        print(report)
+        backtester.generate_report(results)
 
         logger.info("🎉 半凯利公式降噪回测完成!")
         return 0
 
     except Exception as e:
-        logger.error(f"❌ 半凯利回测失败: {e}")
+        logger.exception(f"❌ 半凯利回测失败: {e}")
         import traceback
 
         traceback.print_exc()

@@ -36,7 +36,6 @@ class VisionViolationException(Exception):
     """项目愿景违背异常 - 当操作严重违反项目愿景时抛出"""
 
 
-
 class VisionLimits:
     """项目愿景硬性约束 - 从 docs/PROJECT_VISION.md 提取"""
 
@@ -135,7 +134,9 @@ class RiskMonitor:
     4. 发送告警通知
     """
 
-    def __init__(self, initial_balance: float = 1000.0, config_path: str = None, load_state: bool = True):
+    def __init__(
+        self, initial_balance: float = 1000.0, config_path: str | None = None, load_state: bool = True
+    ):
         """
         初始化风控监控系统
 
@@ -197,7 +198,9 @@ class RiskMonitor:
         # 检查杠杆是否被禁用
         if VisionLimits.LEVERAGE_ENABLED:
             logger.critical("VIOLATION: 杠杆已被配置为启用，但项目愿景严禁使用杠杆！")
-            raise VisionViolationException("Leverage is strictly forbidden by project vision (docs/PROJECT_VISION.md)")
+            raise VisionViolationException(
+                "Leverage is strictly forbidden by project vision (docs/PROJECT_VISION.md)"
+            )
 
         # 检查最大连续亏损次数
         if self.metrics.max_consecutive_losses > VisionLimits.MAX_CONSECUTIVE_LOSSES:
@@ -245,7 +248,13 @@ class RiskMonitor:
             json.dump(state, f, indent=2)
 
     def place_bet(
-        self, match_id: str, home_team: str, away_team: str, prediction: str, odds: float, stake: float = 1.0
+        self,
+        match_id: str,
+        home_team: str,
+        away_team: str,
+        prediction: str,
+        odds: float,
+        stake: float = 1.0,
     ) -> BetRecord:
         """
         记录下注（在比赛开始前调用）
@@ -290,7 +299,9 @@ class RiskMonitor:
         # V19.4.1 愿景校验：检查杠杆（虽然本系统不使用杠杆，但作为防护性检查）
         if VisionLimits.LEVERAGE_ENABLED:
             logger.critical("VIOLATION: 系统检测到杠杆已启用，但项目愿景严禁使用杠杆！")
-            raise VisionViolationException("Leverage is strictly forbidden by project vision (docs/PROJECT_VISION.md)")
+            raise VisionViolationException(
+                "Leverage is strictly forbidden by project vision (docs/PROJECT_VISION.md)"
+            )
 
         record = BetRecord(
             match_id=match_id,
@@ -457,7 +468,9 @@ class RiskMonitor:
         self._send_email(subject, message)
 
         # 记录到文件
-        alert_file = self.data_dir / f"emergency_stop_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
+        alert_file = (
+            self.data_dir / f"emergency_stop_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
+        )
         with open(alert_file, "w") as f:
             f.write(message)
         logger.critical(f"紧急熔断已触发！详情已保存到: {alert_file}")
@@ -471,9 +484,14 @@ class RiskMonitor:
 
     def _generate_alert_message(self, risk_level: RiskLevel) -> str:
         """生成告警消息"""
-        emoji = {RiskLevel.NORMAL: "✅", RiskLevel.WARNING: "⚠️", RiskLevel.CRITICAL: "🔴", RiskLevel.EMERGENCY: "🚨"}
+        emoji = {
+            RiskLevel.NORMAL: "✅",
+            RiskLevel.WARNING: "⚠️",
+            RiskLevel.CRITICAL: "🔴",
+            RiskLevel.EMERGENCY: "🚨",
+        }
 
-        message = f"""
+        return f"""
 {"=" * 70}
 {emoji[risk_level]} V19.4 风控告警 - {risk_level.value.upper()}
 {"=" * 70}
@@ -495,7 +513,6 @@ class RiskMonitor:
 🎯 当前状态: {(self.metrics.is_emergency_stopped and "已熔断 - 停止所有新下注") or "运行中"}
 {"=" * 70}
 """
-        return message
 
     def _send_email(self, subject: str, message: str):
         """
@@ -524,7 +541,11 @@ class RiskMonitor:
         """
         # 统计今天的下注
         today = datetime.now().date()
-        today_bets = [r for r in self.bet_records if r.timestamp.date() == today and r.status in ["won", "lost"]]
+        today_bets = [
+            r
+            for r in self.bet_records
+            if r.timestamp.date() == today and r.status in ["won", "lost"]
+        ]
 
         if not today_bets:
             logger.info("今天没有已结算的下注")
@@ -565,7 +586,10 @@ class RiskMonitor:
             "risk_level": self.check_risk_level().value,
             "balance": self.metrics.current_balance,
             "profit_loss": self.metrics.current_balance - self.metrics.initial_balance,
-            "yield_pct": ((self.metrics.current_balance - self.metrics.initial_balance) / self.metrics.initial_balance)
+            "yield_pct": (
+                (self.metrics.current_balance - self.metrics.initial_balance)
+                / self.metrics.initial_balance
+            )
             * 100,
             "consecutive_losses": self.metrics.consecutive_losses,
             "max_drawdown_pct": self.metrics.max_drawdown_pct,
@@ -582,7 +606,7 @@ class RiskMonitor:
 # ============================================
 
 
-def get_risk_monitor(config_path: str = None) -> RiskMonitor:
+def get_risk_monitor(config_path: str | None = None) -> RiskMonitor:
     """获取风控监控实例"""
     return RiskMonitor(config_path=config_path)
 
@@ -594,29 +618,19 @@ def get_risk_monitor(config_path: str = None) -> RiskMonitor:
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
 
-    print("=" * 70)
-    print("V19.4 风控监控系统测试")
-    print("=" * 70)
 
     # 创建风控监控
     monitor = RiskMonitor(initial_balance=1000.0)
 
     # 模拟下注
-    print("\n模拟下注和结算...")
     monitor.place_bet("match_1", "Team A", "Team B", "H", odds=2.0, stake=10)
     profit = monitor.settle_bet("match_1", "H")  # 胜
-    print(f"  第1场: 盈亏 {profit:.2f}, 余额 {monitor.metrics.current_balance:.2f}")
 
     monitor.place_bet("match_2", "Team C", "Team D", "A", odds=3.0, stake=10)
     profit = monitor.settle_bet("match_2", "H")  # 负
-    print(f"  第2场: 盈亏 {profit:.2f}, 余额 {monitor.metrics.current_balance:.2f}")
 
     # 显示状态摘要
-    print("\n当前状态:")
     summary = monitor.get_status_summary()
-    for key, value in summary.items():
-        print(f"  {key}: {value}")
+    for _key, _value in summary.items():
+        pass
 
-    print("\n" + "=" * 70)
-    print("测试完成")
-    print("=" * 70)

@@ -94,7 +94,7 @@ class PredictionService(ServiceLifecycle):
             self.logger.info("PredictionService 初始化完成")
 
         except Exception as e:
-            self.logger.error(f"PredictionService 初始化失败: {e}")
+            self.logger.exception(f"PredictionService 初始化失败: {e}")
             raise
 
     async def shutdown(self) -> None:
@@ -154,7 +154,9 @@ class PredictionService(ServiceLifecycle):
                 request_id=request_id,
             )
 
-            self.logger.info(f"单场比赛预测完成: match_id={match_id}, processing_time={processing_time:.2f}ms")
+            self.logger.info(
+                f"单场比赛预测完成: match_id={match_id}, processing_time={processing_time:.2f}ms"
+            )
 
             return response
 
@@ -162,7 +164,7 @@ class PredictionService(ServiceLifecycle):
             processing_time = (datetime.now() - start_time).total_seconds() * 1000
             error_message = str(e)
 
-            self.logger.error(f"单场比赛预测失败: match_id={match_id}, error={error_message}")
+            self.logger.exception(f"单场比赛预测失败: match_id={match_id}, error={error_message}")
 
             return PredictionResponse(
                 success=False,
@@ -234,7 +236,7 @@ class PredictionService(ServiceLifecycle):
             processing_time = (datetime.now() - start_time).total_seconds() * 1000
             error_message = str(e)
 
-            self.logger.error(f"批量比赛预测失败: match_ids={match_ids}, error={error_message}")
+            self.logger.exception(f"批量比赛预测失败: match_ids={match_ids}, error={error_message}")
 
             return PredictionResponse(
                 success=False,
@@ -313,14 +315,16 @@ class PredictionService(ServiceLifecycle):
                 request_id=request_id,
             )
 
-            self.logger.info(f"预测解释完成: match_id={match_id}, processing_time={processing_time:.2f}ms")
+            self.logger.info(
+                f"预测解释完成: match_id={match_id}, processing_time={processing_time:.2f}ms"
+            )
             return response
 
         except Exception as e:
             processing_time = (datetime.now() - start_time).total_seconds() * 1000
             error_message = str(e)
 
-            self.logger.error(f"预测解释失败: match_id={match_id}, error={error_message}")
+            self.logger.exception(f"预测解释失败: match_id={match_id}, error={error_message}")
 
             return PredictionResponse(
                 success=False,
@@ -347,12 +351,11 @@ class PredictionService(ServiceLifecycle):
                 },
             }
 
-            response = PredictionResponse(success=True, data=health_data, request_id="health_check")
+            return PredictionResponse(success=True, data=health_data, request_id="health_check")
 
-            return response
 
         except Exception as e:
-            self.logger.error(f"服务健康检查失败: {e}")
+            self.logger.exception(f"服务健康检查失败: {e}")
             return PredictionResponse(success=False, error=str(e), request_id="health_check")
 
     # 私有方法
@@ -444,7 +447,9 @@ class PredictionService(ServiceLifecycle):
     async def _build_batch_response(self, results: list[PredictionResponse]) -> dict[str, Any]:
         """构建批量响应数据"""
         successful_results = [r.data for r in results if r.success]
-        failed_results = [{"match_id": r.request_id, "error": r.error} for r in results if not r.success]
+        failed_results = [
+            {"match_id": r.request_id, "error": r.error} for r in results if not r.success
+        ]
 
         # 转换为标准格式
         if successful_results:

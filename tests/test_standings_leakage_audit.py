@@ -23,7 +23,9 @@ import pandas as pd
 import pytest
 
 # Configure logging for audit trail
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - [AUDIT] %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - [AUDIT] %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 import sys
@@ -125,7 +127,9 @@ class TestTimeLeakageAudit:
             (df_sorted["home_team"] == target_home_team) & (df_sorted["id"] == target_match_idx)
         ].index[0]
 
-        corrupted_standings = calculator_corrupted.get_team_stats_at_match(target_match_in_corrupted, target_home_team)
+        corrupted_standings = calculator_corrupted.get_team_stats_at_match(
+            target_match_in_corrupted, target_home_team
+        )
 
         logger.info(f"[SEC-001] 被攻击后的积分榜 (Match {target_match_idx}):")
         logger.info(f"  Position: {corrupted_standings['position']}")
@@ -340,7 +344,9 @@ class TestTimeLeakageAudit:
                 calc_pts = calculated[team].points
 
                 if exp_pts != calc_pts:
-                    errors.append(f"Match[{match_idx}] {team}: expected {exp_pts} points, got {calc_pts}")
+                    errors.append(
+                        f"Match[{match_idx}] {team}: expected {exp_pts} points, got {calc_pts}"
+                    )
 
                 # 验证其他统计
                 assert expected[team]["played"] == calculated[team].played, (
@@ -428,7 +434,9 @@ class TestTimeLeakageAudit:
 
         logger.info(f"[SEC-004] 创建了 {len(df_shuffled)} 场乱序比赛")
         logger.info(f"[SEC-004] 原始索引范围: 0-{len(df_shuffled) - 1}")
-        logger.info(f"[SEC-004] 时间范围: {df_shuffled['match_time'].min()} 到 {df_shuffled['match_time'].max()}")
+        logger.info(
+            f"[SEC-004] 时间范围: {df_shuffled['match_time'].min()} 到 {df_shuffled['match_time'].max()}"
+        )
 
         # 初始化计算器（会进行排序）
         calculator = StandingsCalculator()
@@ -445,14 +453,16 @@ class TestTimeLeakageAudit:
             match_time = row["match_time"]
 
             try:
-                standings = calculator.get_team_stats_at_match(idx, team)
+                calculator.get_team_stats_at_match(idx, team)
 
                 # 验证：返回的积分榜是否与当前比赛时间一致
                 # 如果 idx 错位，played 数会异常
 
                 # 找到这场比赛在排序后的 DataFrame 中的真实位置
                 df_sorted = df_shuffled.sort_values("match_time").reset_index(drop=True)
-                true_idx = df_sorted[(df_sorted["home_team"] == team) & (df_sorted["match_time"] == match_time)].index
+                true_idx = df_sorted[
+                    (df_sorted["home_team"] == team) & (df_sorted["match_time"] == match_time)
+                ].index
 
                 if len(true_idx) > 0:
                     true_idx = true_idx[0]
@@ -560,7 +570,9 @@ class TestTimeLeakageAudit:
         if standings_before_first is None:
             logger.info("[SEC-005] NewTeam 首场比赛前积分榜: None ✅")
         else:
-            logger.error(f"[SEC-005-FAIL] 首场比赛前应返回 None，但返回了: {standings_before_first}")
+            logger.error(
+                f"[SEC-005-FAIL] 首场比赛前应返回 None，但返回了: {standings_before_first}"
+            )
             assert False, "[SEC-005-FAIL] 首场比赛前应返回 None"
 
         # 测试 2: 查询 NewTeam 在首场比赛后（match_idx=2）的积分榜

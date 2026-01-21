@@ -40,11 +40,10 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 # 导入生产代码
 from scripts.ops.harvest_league_urls import (
+    get_league_team_names,
     parse_match_url_with_league_teams,
     team_name_to_slug,
-    get_league_team_names,
 )
-
 
 # ============================================================================
 # Test Data: La Liga Team Names and URL Slugs

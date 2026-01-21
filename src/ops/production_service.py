@@ -138,7 +138,9 @@ class ProductionService:
 
             logger.info(f"找到 {len(matches)} 场未来 {hours_ahead} 小时内的比赛")
             for m in matches:
-                logger.info(f"  - {m['league_name']}: {m['home_team']} vs {m['away_team']} @ {m['match_time']}")
+                logger.info(
+                    f"  - {m['league_name']}: {m['home_team']} vs {m['away_team']} @ {m['match_time']}"
+                )
 
             return matches
 
@@ -276,7 +278,9 @@ class ProductionService:
                 predictions.append(prediction_record)
 
                 # 高亮高置信度预测
-                model_info = f" [{result.get('model_source', 'N/A')}]" if self.use_model_dispatcher else ""
+                model_info = (
+                    f" [{result.get('model_source', 'N/A')}]" if self.use_model_dispatcher else ""
+                )
                 if is_high_confidence:
                     logger.info(
                         f"✨ 高置信度{model_info}: {match['home_team']} vs {match['away_team']} "
@@ -289,7 +293,7 @@ class ProductionService:
                     )
 
             except Exception as e:
-                logger.error(f"预测 Match {external_id} 失败: {e}")
+                logger.exception(f"预测 Match {external_id} 失败: {e}")
                 continue
 
         return predictions
@@ -355,7 +359,9 @@ class ProductionService:
             高置信度预测数量
         """
         # 预测
-        predictions = self.predict_upcoming_matches(hours_ahead=hours_ahead, min_confidence=min_confidence)
+        predictions = self.predict_upcoming_matches(
+            hours_ahead=hours_ahead, min_confidence=min_confidence
+        )
 
         if not predictions:
             logger.warning("未生成任何预测")
@@ -400,7 +406,9 @@ def run_production_service(
     Returns:
         高置信度预测数量
     """
-    service = ProductionService(model_type="v26_7_aligned", use_model_dispatcher=use_model_dispatcher)
+    service = ProductionService(
+        model_type="v26_7_aligned", use_model_dispatcher=use_model_dispatcher
+    )
     return service.run(hours_ahead=hours_ahead, min_confidence=min_confidence)
 
 
@@ -411,7 +419,9 @@ def main():
     logger.info("=" * 60)
 
     # 运行预测（默认启用 ModelDispatcher）
-    high_conf_count = run_production_service(hours_ahead=24, min_confidence=HIGH_CONFIDENCE_THRESHOLD)
+    high_conf_count = run_production_service(
+        hours_ahead=24, min_confidence=HIGH_CONFIDENCE_THRESHOLD
+    )
 
     if high_conf_count > 0:
         logger.info(f"\n✅ 生产预测完成! 发现 {high_conf_count} 场高置信度比赛")

@@ -3,16 +3,18 @@
 从临时predict_match_v7.py迁移而来的核心预测测试逻辑
 """
 
-import pytest
-import pandas as pd
-import numpy as np
-import lightgbm as lgb
-from pathlib import Path
-import tempfile
 import json
 
 # 添加src路径
 import sys
+import tempfile
+from pathlib import Path
+
+import lightgbm as lgb
+import numpy as np
+import pandas as pd
+import pytest
+
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 
 

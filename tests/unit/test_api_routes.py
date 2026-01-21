@@ -9,12 +9,13 @@ API路由模块测试
 使用Mock来避免依赖问题，专注于测试API路由逻辑。
 """
 
-import pytest
 import asyncio
 import json
-from unittest.mock import Mock, AsyncMock, patch
+from typing import Any, Dict
+from unittest.mock import AsyncMock, Mock, patch
+
+import pytest
 from fastapi import HTTPException
-from typing import Dict, Any
 
 
 class TestModelManagementAPI:

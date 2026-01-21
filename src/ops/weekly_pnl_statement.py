@@ -36,7 +36,7 @@ class WeeklyPnLGenerator:
     4. 对比模型表现与市场基准
     """
 
-    def __init__(self, db_config: dict = None):
+    def __init__(self, db_config: dict | None = None):
         """
         初始化对账单生成器
 
@@ -124,7 +124,13 @@ class WeeklyPnLGenerator:
         valid_df = df[df["predicted_result"] != "N/A"].copy()
 
         if len(valid_df) == 0:
-            return {"total_matches": len(df), "predicted_matches": 0, "accuracy": 0, "yield_pct": 0, "total_profit": 0}
+            return {
+                "total_matches": len(df),
+                "predicted_matches": 0,
+                "accuracy": 0,
+                "yield_pct": 0,
+                "total_profit": 0,
+            }
 
         # 计算准确率
         valid_df["is_correct"] = valid_df["predicted_result"] == valid_df["result_score"]
@@ -143,11 +149,18 @@ class WeeklyPnLGenerator:
             type_total = type_mask.sum()
             type_accuracy = (type_correct / type_total * 100) if type_total > 0 else 0
 
-            results_by_type[result_type] = {"total": type_total, "correct": type_correct, "accuracy": type_accuracy}
+            results_by_type[result_type] = {
+                "total": type_total,
+                "correct": type_correct,
+                "accuracy": type_accuracy,
+            }
 
         # 混淆矩阵
         confusion = pd.crosstab(
-            valid_df["predicted_result"], valid_df["result_score"], rownames=["预测"], colnames=["实际"]
+            valid_df["predicted_result"],
+            valid_df["result_score"],
+            rownames=["预测"],
+            colnames=["实际"],
         )
 
         return {
@@ -182,7 +195,7 @@ class WeeklyPnLGenerator:
             return odds - 1  # 净收益
         return -1  # 损失本金
 
-    def generate_report(self, week_start: datetime = None, week_end: datetime = None) -> dict:
+    def generate_report(self, week_start: datetime | None = None, week_end: datetime | None = None) -> dict:
         """
         生成每周对账报告
 
@@ -226,7 +239,9 @@ class WeeklyPnLGenerator:
 
     def _save_report(self, report: dict):
         """保存报告到文件"""
-        report_file = self.data_dir / f"weekly_pnl_{report['week_start']}_to_{report['week_end']}.json"
+        report_file = (
+            self.data_dir / f"weekly_pnl_{report['week_start']}_to_{report['week_end']}.json"
+        )
 
         with open(report_file, "w") as f:
             json.dump(report, f, indent=2, ensure_ascii=False)
@@ -294,14 +309,18 @@ Yield: {m.get("yield_pct", 0):.2f}%
 
         fig, axes = plt.subplots(2, 2, figsize=(14, 10))
         fig.suptitle(
-            f"V19.4 每周实战对账单 ({metrics['week_start']} ~ {metrics['week_end']})", fontsize=16, fontweight="bold"
+            f"V19.4 每周实战对账单 ({metrics['week_start']} ~ {metrics['week_end']})",
+            fontsize=16,
+            fontweight="bold",
         )
 
         # 1. 累计收益曲线
         ax1 = axes[0, 0]
         valid_df = valid_df.sort_values("match_time").copy()
         valid_df["cumulative_profit"] = valid_df["profit"].cumsum()
-        ax1.plot(range(len(valid_df)), valid_df["cumulative_profit"], linewidth=2, color="steelblue")
+        ax1.plot(
+            range(len(valid_df)), valid_df["cumulative_profit"], linewidth=2, color="steelblue"
+        )
         ax1.axhline(0, color="red", linestyle="--", linewidth=1.5)
         ax1.fill_between(
             range(len(valid_df)),
@@ -342,7 +361,12 @@ Yield: {m.get("yield_pct", 0):.2f}%
         ax3 = axes[1, 0]
         if "confusion_matrix" in metrics:
             sns.heatmap(
-                metrics["confusion_matrix"], annot=True, fmt="d", cmap="Blues", ax=ax3, cbar_kws={"label": "场次"}
+                metrics["confusion_matrix"],
+                annot=True,
+                fmt="d",
+                cmap="Blues",
+                ax=ax3,
+                cbar_kws={"label": "场次"},
             )
         ax3.set_title("预测结果混淆矩阵")
 
@@ -365,7 +389,9 @@ Yield: {m.get("yield_pct", 0):.2f}%
         plt.tight_layout()
 
         # 保存图表
-        chart_file = self.data_dir / f"weekly_pnl_chart_{metrics['week_start']}_to_{metrics['week_end']}.png"
+        chart_file = (
+            self.data_dir / f"weekly_pnl_chart_{metrics['week_start']}_to_{metrics['week_end']}.png"
+        )
         plt.savefig(chart_file, dpi=150, bbox_inches="tight")
         logger.info(f"可视化图表已保存: {chart_file}")
         plt.close()
@@ -396,7 +422,8 @@ Yield: {m.get("yield_pct", 0):.2f}%
         comparison = {
             "backtest_accuracy": backtest_metrics.get("accuracy", 0),
             "actual_accuracy": actual_metrics.get("accuracy", 0),
-            "accuracy_diff": actual_metrics.get("accuracy", 0) - backtest_metrics.get("accuracy", 0),
+            "accuracy_diff": actual_metrics.get("accuracy", 0)
+            - backtest_metrics.get("accuracy", 0),
             "backtest_yield": backtest_metrics.get("yield_pct", 0),
             "actual_yield": actual_metrics.get("yield_pct", 0),
             "yield_diff": actual_metrics.get("yield_pct", 0) - backtest_metrics.get("yield_pct", 0),
@@ -416,7 +443,7 @@ Yield: {m.get("yield_pct", 0):.2f}%
 # ============================================
 
 
-def generate_weekly_pnl(week_start: str = None, week_end: str = None) -> dict:
+def generate_weekly_pnl(week_start: str | None = None, week_end: str | None = None) -> dict:
     """
     生成本周对账单的便捷函数
 
@@ -429,15 +456,9 @@ def generate_weekly_pnl(week_start: str = None, week_end: str = None) -> dict:
     """
     generator = WeeklyPnLGenerator()
 
-    if week_start:
-        start = datetime.strptime(week_start, "%Y-%m-%d")
-    else:
-        start = None
+    start = datetime.strptime(week_start, "%Y-%m-%d") if week_start else None
 
-    if week_end:
-        end = datetime.strptime(week_end, "%Y-%m-%d")
-    else:
-        end = None
+    end = datetime.strptime(week_end, "%Y-%m-%d") if week_end else None
 
     return generator.generate_report(start, end)
 
@@ -447,11 +468,10 @@ def generate_weekly_pnl(week_start: str = None, week_end: str = None) -> dict:
 # ============================================
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+    logging.basicConfig(
+        level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    )
 
-    print("=" * 70)
-    print("V19.4 每周实战对账单生成器")
-    print("=" * 70)
 
     generator = WeeklyPnLGenerator()
 
@@ -459,16 +479,6 @@ if __name__ == "__main__":
     report = generator.generate_report()
 
     # 打印摘要
-    print("\n报告摘要:")
-    print(f"  报告周期: {report['week_start']} ~ {report['week_end']}")
     if "metrics" in report:
         m = report["metrics"]
-        print(f"  总场次: {m.get('total_matches', 0)}")
-        print(f"  预测场: {m.get('predicted_matches', 0)}")
-        print(f"  准确率: {m.get('accuracy', 0) * 100:.2f}%")
-        print(f"  Yield: {m.get('yield_pct', 0):.2f}%")
-        print(f"  总盈亏: {m.get('total_profit', 0):.2f}")
 
-    print("\n" + "=" * 70)
-    print("对账单生成完成")
-    print("=" * 70)
