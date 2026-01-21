@@ -22,8 +22,8 @@ import logging
 import statistics
 from typing import Any
 
-from ..base import BaseProcessor, ProcessorConfig, ProcessorResult
-from ..models import MatchData, TeamStats
+from src.ml.feature_engine.base import BaseProcessor, ProcessorConfig, ProcessorResult
+from src.ml.feature_engine.models import MatchData, TeamStats
 
 logger = logging.getLogger(__name__)
 
@@ -164,7 +164,7 @@ class TacticalProcessor(BaseProcessor[MatchData]):
             return result
 
         except Exception as e:
-            logger.error(f"TacticalProcessor failed: {e}")
+            logger.exception(f"TacticalProcessor failed: {e}")
             return ProcessorResult.failure_result(str(e))
 
     def _analyze_momentum(self, stats: TeamStats | None) -> dict[str, float] | None:
@@ -179,17 +179,25 @@ class TacticalProcessor(BaseProcessor[MatchData]):
 
         features = {}
         features["momentum_mean"] = round(statistics.mean(momentum_scores), 4)
-        features["momentum_std"] = round(statistics.stdev(momentum_scores) if len(momentum_scores) > 1 else 0.0, 4)
+        features["momentum_std"] = round(
+            statistics.stdev(momentum_scores) if len(momentum_scores) > 1 else 0.0, 4
+        )
         features["momentum_max"] = round(max(momentum_scores), 4)
         features["momentum_min"] = round(min(momentum_scores), 4)
         features["momentum_velocity_mean"] = round(self._compute_velocity(momentum_scores), 4)
-        features["momentum_acceleration_mean"] = round(self._compute_acceleration(momentum_scores), 4)
+        features["momentum_acceleration_mean"] = round(
+            self._compute_acceleration(momentum_scores), 4
+        )
         features["momentum_volatility"] = round(self._compute_volatility(momentum_scores), 4)
 
         negative_momentum = [m for m in momentum_scores if m < 0]
         if negative_momentum:
-            features["momentum_neg_velocity_mean"] = round(self._compute_velocity(negative_momentum), 4)
-            features["momentum_neg_acceleration_mean"] = round(self._compute_acceleration(negative_momentum), 4)
+            features["momentum_neg_velocity_mean"] = round(
+                self._compute_velocity(negative_momentum), 4
+            )
+            features["momentum_neg_acceleration_mean"] = round(
+                self._compute_acceleration(negative_momentum), 4
+            )
         else:
             features["momentum_neg_velocity_mean"] = 0.0
             features["momentum_neg_acceleration_mean"] = 0.0
@@ -249,7 +257,9 @@ class TacticalProcessor(BaseProcessor[MatchData]):
 
                 # 2. 标准差
                 if len(segment_scores) > 1:
-                    features[f"{prefix}_m{seg_num}_std"] = round(statistics.stdev(segment_scores), 4)
+                    features[f"{prefix}_m{seg_num}_std"] = round(
+                        statistics.stdev(segment_scores), 4
+                    )
                 else:
                     features[f"{prefix}_m{seg_num}_std"] = 0.0
 
@@ -260,27 +270,39 @@ class TacticalProcessor(BaseProcessor[MatchData]):
                 features[f"{prefix}_m{seg_num}_min"] = round(min(segment_scores), 4)
 
                 # 5. 动量速度
-                features[f"{prefix}_m{seg_num}_velocity"] = round(self._compute_velocity(segment_scores), 4)
+                features[f"{prefix}_m{seg_num}_velocity"] = round(
+                    self._compute_velocity(segment_scores), 4
+                )
 
                 # 6. 动量加速度
-                features[f"{prefix}_m{seg_num}_acceleration"] = round(self._compute_acceleration(segment_scores), 4)
+                features[f"{prefix}_m{seg_num}_acceleration"] = round(
+                    self._compute_acceleration(segment_scores), 4
+                )
 
                 # 7. 波动率
-                features[f"{prefix}_m{seg_num}_volatility"] = round(self._compute_volatility(segment_scores), 4)
+                features[f"{prefix}_m{seg_num}_volatility"] = round(
+                    self._compute_volatility(segment_scores), 4
+                )
 
                 # 8. 负向速度
                 neg_scores = [s for s in segment_scores if s < 0]
                 if neg_scores:
-                    features[f"{prefix}_m{seg_num}_neg_velocity"] = round(self._compute_velocity(neg_scores), 4)
+                    features[f"{prefix}_m{seg_num}_neg_velocity"] = round(
+                        self._compute_velocity(neg_scores), 4
+                    )
                 else:
                     features[f"{prefix}_m{seg_num}_neg_velocity"] = 0.0
 
                 # 9. 线性趋势（简单线性回归斜率）
-                features[f"{prefix}_m{seg_num}_trend"] = round(self._compute_linear_trend(segment_scores), 4)
+                features[f"{prefix}_m{seg_num}_trend"] = round(
+                    self._compute_linear_trend(segment_scores), 4
+                )
 
                 # 10. 支配度（正值占比）
                 positive_count = sum(1 for s in segment_scores if s > 0)
-                features[f"{prefix}_m{seg_num}_dominance"] = round(positive_count / len(segment_scores), 4)
+                features[f"{prefix}_m{seg_num}_dominance"] = round(
+                    positive_count / len(segment_scores), 4
+                )
 
             else:
                 # 数据不足，填充默认值
@@ -352,7 +374,9 @@ class TacticalProcessor(BaseProcessor[MatchData]):
 
         # 主客队对比
         cross_features["diff_fh_sh_momentum"] = round(
-            features.get("home_fh_sh_momentum_diff", 0) - features.get("away_fh_sh_momentum_diff", 0), 4
+            features.get("home_fh_sh_momentum_diff", 0)
+            - features.get("away_fh_sh_momentum_diff", 0),
+            4,
         )
         cross_features["diff_opening_momentum"] = round(
             features.get("home_m1_mean", 0) - features.get("away_m1_mean", 0), 4
@@ -397,15 +421,14 @@ class TacticalProcessor(BaseProcessor[MatchData]):
 
         sum_x = sum(x)
         sum_y = sum(y)
-        sum_xy = sum(xi * yi for xi, yi in zip(x, y))
+        sum_xy = sum(xi * yi for xi, yi in zip(x, y, strict=False))
         sum_x2 = sum(xi * xi for xi in x)
 
         denominator = n * sum_x2 - sum_x * sum_x
         if denominator == 0:
             return 0.0
 
-        slope = (n * sum_xy - sum_x * sum_y) / denominator
-        return slope
+        return (n * sum_xy - sum_x * sum_y) / denominator
 
     def _aggregate_shot_data(self, data: MatchData) -> dict[str, float]:
         """聚合射门数据"""
@@ -455,7 +478,9 @@ class TacticalProcessor(BaseProcessor[MatchData]):
         """计算比赛节奏指标"""
         tempo_metrics = {}
 
-        total_shots = features.get("home_synth_total_shots", 0) + features.get("away_synth_total_shots", 0)
+        total_shots = features.get("home_synth_total_shots", 0) + features.get(
+            "away_synth_total_shots", 0
+        )
         total_passes = features.get("home_total_passes", 0) + features.get("away_total_passes", 0)
 
         tempo_metrics["tempo_total_shots"] = float(total_shots)

@@ -28,11 +28,9 @@ Architecture:
 Example:
     >>> extractor = OddsGhostExtractor()
     >>> result = await extractor.extract_opening_ghost_mode(
-    ...     page=page,
-    ...     entity_code="Entity_P",
-    ...     match_date=datetime(2024, 11, 10)
+    ...     page=page, entity_code="Entity_P", match_date=datetime(2024, 11, 10)
     ... )
-    >>> if result and not result.get('ghost_failed'):
+    >>> if result and not result.get("ghost_failed"):
     ...     print(f"Opening time: {result.get('opening_time_h')}")
 """
 
@@ -68,8 +66,18 @@ ENTITY_NAME_MAPPING = {
 
 # Tooltip parsing: "Opening odds:22 Dec, 08:131.19"
 TOOLTIP_MONTH_MAP = {
-    "Jan": 1, "Feb": 2, "Mar": 3, "Apr": 4, "May": 5, "Jun": 6,
-    "Jul": 7, "Aug": 8, "Sep": 9, "Oct": 10, "Nov": 11, "Dec": 12,
+    "Jan": 1,
+    "Feb": 2,
+    "Mar": 3,
+    "Apr": 4,
+    "May": 5,
+    "Jun": 6,
+    "Jul": 7,
+    "Aug": 8,
+    "Sep": 9,
+    "Oct": 10,
+    "Nov": 11,
+    "Dec": 12,
 }
 
 TOOLTIP_OPENING_PATTERN = re.compile(
@@ -85,6 +93,7 @@ GHOST_POLL_DELAY_MS = 200  # Faster polling
 # ============================================================================
 # Main Extraction Engine
 # ============================================================================
+
 
 class OddsGhostExtractor:
     """V60.0 Ghost Extractor - No-Hover DOM Direct Extraction.
@@ -113,7 +122,7 @@ class OddsGhostExtractor:
         page: Page,
         entity_code: str,
         match_date: datetime | None = None,
-        enable_fallback: bool = True
+        enable_fallback: bool = True,
     ) -> dict[str, Any] | None:
         """Extracts opening odds via ghost mode (no hover).
 
@@ -150,7 +159,9 @@ class OddsGhostExtractor:
         self._stats["total_ghost_extractions"] += 1
 
         try:
-            logger.info(f"[GhostExtractor] Ghost mode: {real_name} (match_date: {match_date.date()})")
+            logger.info(
+                f"[GhostExtractor] Ghost mode: {real_name} (match_date: {match_date.date()})"
+            )
 
             # Step 1: Smart polling - Wait for odd-container (same as V58.0)
             await self._wait_for_element_ready(page)
@@ -174,7 +185,7 @@ class OddsGhostExtractor:
             return self._parse_tooltip_data(tooltip_data, match_year, method="ghost")
 
         except Exception as e:
-            logger.error(f"[GhostExtractor] Ghost mode exception: {e}")
+            logger.exception(f"[GhostExtractor] Ghost mode exception: {e}")
             if enable_fallback:
                 logger.info("[GhostExtractor] Exception, falling back to hover...")
                 self._stats["fallback_to_hover"] += 1
@@ -199,8 +210,7 @@ class OddsGhostExtractor:
         try:
             logger.debug("[GhostExtractor] Smart polling: waiting for odd-container...")
             await page.wait_for_selector(
-                "div[data-testid='odd-container']",
-                timeout=SELECTOR_TIMEOUT_MS
+                "div[data-testid='odd-container']", timeout=SELECTOR_TIMEOUT_MS
             )
             logger.debug("[GhostExtractor] odd-container ready")
         except Exception as e:
@@ -298,18 +308,13 @@ class OddsGhostExtractor:
                     return tooltip_data
 
             except Exception as e:
-                logger.error(f"[GhostExtractor] Ghost hunt attempt {attempt + 1} failed: {e}")
+                logger.exception(f"[GhostExtractor] Ghost hunt attempt {attempt + 1} failed: {e}")
 
             await page.wait_for_timeout(GHOST_POLL_DELAY_MS)
 
         return None
 
-    async def _fallback_to_hover(
-        self,
-        page: Page,
-        element,
-        match_year: int
-    ) -> dict[str, Any]:
+    async def _fallback_to_hover(self, page: Page, element, match_year: int) -> dict[str, Any]:
         """Fallback to V58.0 hover extraction if ghost mode fails.
 
         This delegates to the proven V58.0 extraction logic with proper
@@ -357,10 +362,7 @@ class OddsGhostExtractor:
             return self._build_ghost_failed_result(f"Hover fallback exception: {e!s}")
 
     def _parse_tooltip_data(
-        self,
-        tooltip_data: dict[str, Any],
-        match_year: int,
-        method: str = "ghost"
+        self, tooltip_data: dict[str, Any], match_year: int, method: str = "ghost"
     ) -> dict[str, Any]:
         """Parses tooltip data to extract opening odds and timestamp."""
         if not tooltip_data or not tooltip_data.get("text"):
@@ -369,10 +371,7 @@ class OddsGhostExtractor:
         match = TOOLTIP_OPENING_PATTERN.search(tooltip_data["text"])
 
         if not match:
-            logger.warning(
-                f"[GhostExtractor] Cannot parse tooltip: "
-                f"{tooltip_data['text'][:100]}"
-            )
+            logger.warning(f"[GhostExtractor] Cannot parse tooltip: {tooltip_data['text'][:100]}")
             return self._build_ghost_failed_result("Cannot parse tooltip format")
 
         day, month_str, hour, minute, odd_value = match.groups()
@@ -383,14 +382,14 @@ class OddsGhostExtractor:
 
         # Reconstruct timestamp
         from datetime import datetime as dt
+
         try:
             timestamp = dt(match_year, month, int(day), int(hour), int(minute))
         except ValueError as e:
             return self._build_ghost_failed_result(f"Invalid timestamp: {e}")
 
         logger.info(
-            f"[GhostExtractor] ✓ Parsed via {method.upper()}: "
-            f"{odd_value} @ {timestamp.isoformat()}"
+            f"[GhostExtractor] ✓ Parsed via {method.upper()}: {odd_value} @ {timestamp.isoformat()}"
         )
 
         return {
@@ -428,11 +427,12 @@ class OddsGhostExtractor:
 # Convenience Functions
 # ============================================================================
 
+
 async def extract_opening_ghost_mode(
     page: Page,
     entity_code: str = "Entity_P",
     match_date: datetime | None = None,
-    enable_fallback: bool = True
+    enable_fallback: bool = True,
 ) -> dict[str, Any] | None:
     """Convenience function for ghost mode extraction.
 
@@ -443,13 +443,10 @@ async def extract_opening_ghost_mode(
         ...     page = await browser.new_page()
         ...     await page.goto(url)
         ...     result = await extract_opening_ghost_mode(page)
-        ...     if not result.get('ghost_failed'):
+        ...     if not result.get("ghost_failed"):
         ...         print(f"Success: {result['init_h']} @ {result['opening_time_h']}")
     """
     extractor = OddsGhostExtractor()
     return await extractor.extract_opening_ghost_mode(
-        page=page,
-        entity_code=entity_code,
-        match_date=match_date,
-        enable_fallback=enable_fallback
+        page=page, entity_code=entity_code, match_date=match_date, enable_fallback=enable_fallback
     )

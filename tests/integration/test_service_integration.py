@@ -17,25 +17,27 @@ Author: Football Prediction Team
 Version: 1.0.0 (Sprint 7 Testing)
 """
 
-import pytest
 import asyncio
 import json
 import time
 from datetime import datetime, timedelta
-from unittest.mock import Mock, AsyncMock, patch, MagicMock
-from typing import Dict, Any, List, Optional
+from typing import Any, Dict, List, Optional
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
-# 导入被测试的服务
-from src.services.prediction_service import (
-    PredictionService,
-    PredictionRequest,
-    PredictionResponse,
-)
+import pytest
+
 from src.services.collection_service import (
     FotMobCollectionService,
     FotMobCollectionTask,
 )
 from src.services.inference_service import InferenceService
+
+# 导入被测试的服务
+from src.services.prediction_service import (
+    PredictionRequest,
+    PredictionResponse,
+    PredictionService,
+)
 
 
 class TestServiceIntegration:
@@ -613,8 +615,9 @@ class TestServiceIntegration:
     @pytest.mark.asyncio
     async def test_memory_usage_during_batch_processing(self, prediction_service, mock_inference_service):
         """测试批量处理时的内存使用"""
-        import psutil
         import os
+
+        import psutil
 
         process = psutil.Process(os.getpid())
         initial_memory = process.memory_info().rss / 1024 / 1024  # MB

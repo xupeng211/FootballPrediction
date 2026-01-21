@@ -3,13 +3,14 @@
 测试从数据收集到特征工程的完整数据流程
 """
 
-import pytest
 import asyncio
-import time
 import json
-from unittest.mock import Mock, AsyncMock, patch
-from typing import Dict, Any, List
+import time
+from typing import Any, Dict, List
+from unittest.mock import AsyncMock, Mock, patch
+
 import pandas as pd
+import pytest
 
 from src.services.collection_service import FotMobCollectionService
 

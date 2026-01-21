@@ -19,13 +19,14 @@ Date: 2026-01-15
 """
 
 import pytest
+
 from src.utils.team_alias import (
-    normalize_team_name,
+    calculate_similarity,
     denoise_team_name,
     extract_place_name,
-    calculate_similarity,
-    match_teams,
     get_team_aliases,
+    match_teams,
+    normalize_team_name,
 )
 
 

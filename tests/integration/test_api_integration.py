@@ -3,13 +3,14 @@ API集成测试
 测试API端点的完整集成流程
 """
 
+import json
+from unittest.mock import Mock, patch
+
 import pytest
 from fastapi.testclient import TestClient
-from unittest.mock import patch, Mock
-import json
 
-from src.config_unified import get_settings
 from src.api.schemas import HealthCheckResponse, ServiceCheck
+from src.config_unified import get_settings
 
 
 class TestHealthEndpointsIntegration:
@@ -87,6 +88,7 @@ class TestModelManagementIntegration:
     def client_with_model_api(self):
         """创建包含模型管理API的测试客户端"""
         from fastapi import FastAPI
+
         from src.api.schemas import HealthCheckResponse, ServiceCheck
 
         app = FastAPI(title="Football Prediction API")
@@ -168,9 +170,10 @@ class TestPredictionIntegration:
     @pytest.fixture
     def client_with_prediction_api(self):
         """创建包含预测API的测试客户端"""
+        from typing import Optional
+
         from fastapi import FastAPI
         from pydantic import BaseModel
-        from typing import Optional
 
         app = FastAPI(title="Football Prediction API")
 
@@ -372,9 +375,9 @@ class TestRateLimitingIntegration:
     @pytest.fixture
     def client_with_rate_limiting(self):
         """创建包含速率限制的测试客户端"""
-        from fastapi import FastAPI
-        from fastapi import HTTPException
         import time
+
+        from fastapi import FastAPI, HTTPException
 
         app = FastAPI(title="Football Prediction API")
 

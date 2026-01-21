@@ -18,6 +18,7 @@ Usage:
 
 import asyncio
 from collections.abc import Awaitable, Callable
+import contextlib
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
@@ -165,10 +166,10 @@ class GracefulShutdownManager:
 
             except TimeoutError:
                 self.metrics.cleanup_handlers_failed += 1
-                logger.error(f"⏱️ 超时: {handler_name}")
+                logger.exception(f"⏱️ 超时: {handler_name}")
             except Exception as e:
                 self.metrics.cleanup_handlers_failed += 1
-                logger.error(f"❌ 失败: {handler_name} - {e}")
+                logger.exception(f"❌ 失败: {handler_name} - {e}")
 
         logger.info("🧹 清理处理器执行完成")
 
@@ -199,10 +200,10 @@ class GracefulShutdownManager:
             self.metrics.completed_at = datetime.now()
             self.metrics.status = ShutdownStatus.SHUTDOWN_TIMEOUT
 
-            logger.error("=" * 60)
-            logger.error("⏱️ 优雅停机超时")
-            logger.error(f"⏱️ 已执行: {self.metrics.cleanup_handlers_executed}/{self.metrics.cleanup_handlers_registered}")
-            logger.error("=" * 60)
+            logger.exception("=" * 60)
+            logger.exception("⏱️ 优雅停机超时")
+            logger.exception(f"⏱️ 已执行: {self.metrics.cleanup_handlers_executed}/{self.metrics.cleanup_handlers_registered}")
+            logger.exception("=" * 60)
 
     def wait_for_shutdown(self) -> None:
         """等待停机信号（同步版本）.
@@ -281,17 +282,14 @@ def graceful_shutdown(timeout: int = 30):
 
             try:
                 # 执行主函数
-                result = await func(*args, **kwargs)
-                return result
+                return await func(*args, **kwargs)
             except asyncio.CancelledError:
                 logger.info("主任务被取消，开始停机流程")
             finally:
                 # 取消停机等待任务
                 shutdown_task.cancel()
-                try:
+                with contextlib.suppress(asyncio.CancelledError):
                     await shutdown_task
-                except asyncio.CancelledError:
-                    pass
 
         return wrapper
     return decorator

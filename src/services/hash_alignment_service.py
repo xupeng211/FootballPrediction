@@ -33,23 +33,23 @@ Date: 2026-01-14
 from __future__ import annotations
 
 import asyncio
-import socket
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 import logging
 import os
 import random
 import re
+import socket
 import sys
 import threading
-from typing import Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from bs4 import BeautifulSoup
 import psycopg2
 
 # V41.44: Playwright 集成（延迟导入以避免启动时的开销）
 try:
-    from playwright.async_api import async_playwright, Browser, Page
+    from playwright.async_api import Browser, async_playwright
 
     PLAYWRIGHT_AVAILABLE = True
 except ImportError:
@@ -58,6 +58,9 @@ except ImportError:
 
 # 延迟导入避免循环依赖 - TeamNameNormalizer 需要在 __init__ 中导入
 from src.utils.text_processor import TeamNameNormalizer, YouthTeamDetector
+
+if TYPE_CHECKING:
+    from playwright.async_api import Page
 
 # 配置日志
 logger = logging.getLogger(__name__)
@@ -288,10 +291,10 @@ class HashAlignmentService:
             True 如果在 WSL2 环境中运行
         """
         try:
-            with open("/proc/version", "r") as f:
+            with open("/proc/version") as f:
                 version_content = f.read().lower()
                 return "microsoft" in version_content and "wsl2" in version_content
-        except (FileNotFoundError, IOError):
+        except (OSError, FileNotFoundError):
             return False
 
     @classmethod
@@ -567,18 +570,19 @@ class HashAlignmentService:
         Returns:
             联赛配置字典，如果未找到则返回 None
         """
-        import yaml
         from pathlib import Path
+
+        import yaml
 
         yaml_path = Path("config/leagues.yaml")
         if not yaml_path.exists():
             return None
 
-        with open(yaml_path, "r") as f:
+        with open(yaml_path) as f:
             config = yaml.safe_load(f)
 
         # 通过英文名称查找联赛
-        for league_key, league_config in config.get("leagues", {}).items():
+        for league_config in config.get("leagues", {}).values():
             if league_config.get("name") == league_name:
                 return league_config
 
@@ -756,7 +760,7 @@ class HashAlignmentService:
                             )
 
                         # 检查赛季是否一致
-                        if url_season != db_season and url_season != normalized_db_season:
+                        if url_season not in (db_season, normalized_db_season):
                             logger.error(
                                 "🚨 V41.56: 赛季错位拦截 - match_id=%s, db_season=%s, url_season=%s, url=%s",
                                 match_id,
@@ -934,12 +938,12 @@ class HashAlignmentService:
             result = sock.connect_ex((proxy_host, port))
             sock.close()
             return result == 0
-        except (socket.error, OSError) as e:
+        except OSError as e:
             logger.debug("⚠️  端口 %d 健康检查失败: %s", port, e)
             return False
 
     def get_healthy_proxy_port(
-        self, excluded_ports: set[int] | None = None, max_attempts: int = None
+        self, excluded_ports: set[int] | None = None, max_attempts: int | None = None
     ) -> int | None:
         """
         V41.45: 获取健康的代理端口（带容错机制）
@@ -987,8 +991,7 @@ class HashAlignmentService:
             if self.check_proxy_port_health(port):
                 logger.info("✅ 找到健康代理端口: %d", port)
                 return port
-            else:
-                logger.debug("⚠️  端口 %d 不可用，尝试下一个...", port)
+            logger.debug("⚠️  端口 %d 不可用，尝试下一个...", port)
 
         logger.warning("⚠️  在 %d 次尝试后未找到健康代理端口", max_attempts)
         return None
@@ -1019,8 +1022,7 @@ class HashAlignmentService:
                 os.environ["PROXY_PORT"] = str(port)
                 logger.info("🔌 设置代理端口: %d (首选)", port)
                 return port
-            else:
-                logger.warning("⚠️  首选端口 %d 不可用，尝试其他端口...", port)
+            logger.warning("⚠️  首选端口 %d 不可用，尝试其他端口...", port)
 
         # 尝试获取健康端口（排除首选失败端口）
         if excluded_ports is None:
@@ -1041,8 +1043,7 @@ class HashAlignmentService:
                     "🔌 设置代理端口: %d (重试 %d/%d)", healthy_port, attempt + 1, max_retry
                 )
                 return healthy_port
-            else:
-                logger.warning("⚠️  重试 %d/%d 失败，继续尝试...", attempt + 1, max_retry)
+            logger.warning("⚠️  重试 %d/%d 失败，继续尝试...", attempt + 1, max_retry)
 
         # 所有尝试都失败，使用随机端口（降级策略）
         fallback_port = self.get_random_proxy_port()
@@ -1055,10 +1056,7 @@ class HashAlignmentService:
     # ========================================================================
 
     def align_with_multi_feature_validation(
-        self,
-        fotmob_match: dict[str, Any],
-        oddsportal_match: dict[str, Any],
-        verbose: bool = False
+        self, fotmob_match: dict[str, Any], oddsportal_match: dict[str, Any], verbose: bool = False
     ) -> dict[str, Any]:
         """
         V41.125: 多特征加权对齐验证 - 工业级 0.99 精准对齐
@@ -1098,13 +1096,13 @@ class HashAlignmentService:
             ...     "home_team": "Liverpool",
             ...     "away_team": "Chelsea",
             ...     "match_date": datetime(2024, 4, 20, 15, 0),
-            ...     "score_str": "2:1"
+            ...     "score_str": "2:1",
             ... }
             >>> odds = {
             ...     "home_team": "Liverpool",
             ...     "away_team": "Chelsea",
             ...     "match_time": datetime(2024, 4, 20, 15, 0),
-            ...     "score": "2:1"
+            ...     "score": "2:1",
             ... }
             >>> result = service.align_with_multi_feature_validation(fotmob, odds)
             >>> print(f"对齐: {result['is_aligned']}, 分数: {result['score']:.2f}")
@@ -1115,7 +1113,7 @@ class HashAlignmentService:
             "name_similarity": 0.0,
             "score_validation": 0.0,
             "time_window": 0.0,
-            "id_mapping": 0.0
+            "id_mapping": 0.0,
         }
         reasons = []
 
@@ -1253,7 +1251,7 @@ class HashAlignmentService:
 
         # 详细输出
         if verbose:
-            logger.info(f"🎯 V41.125 对齐详情:")
+            logger.info("🎯 V41.125 对齐详情:")
             logger.info(f"   队名相似度: {breakdown['name_similarity']:.3f} (50%)")
             logger.info(f"   比分校验: {breakdown['score_validation']:.3f} (30%)")
             logger.info(f"   时间窗口: {breakdown['time_window']:.3f} (10%)")
@@ -1268,7 +1266,7 @@ class HashAlignmentService:
             "threshold": THRESHOLD,
             "breakdown": breakdown,
             "reason": reason,
-            "confidence": confidence
+            "confidence": confidence,
         }
 
     def _normalize_score(self, score: str) -> str:
@@ -1294,9 +1292,8 @@ class HashAlignmentService:
         score = score.replace(" ", "")
 
         # 统一分隔符为 "-"
-        score = score.replace(":", "-")
+        return score.replace(":", "-")
 
-        return score
 
     def _check_id_mapping_history(self, home_id: str | None, away_id: str | None) -> bool:
         """
@@ -1319,12 +1316,15 @@ class HashAlignmentService:
         try:
             with self.conn.cursor() as cur:
                 # V41.128: 修复列名（fotmob_team_id, is_active）
-                cur.execute("""
+                cur.execute(
+                    """
                     SELECT COUNT(*) as cnt
                     FROM alias_teams
                     WHERE (fotmob_team_id = %s OR fotmob_team_id = %s)
                       AND is_active = true
-                """, (home_id, away_id))
+                """,
+                    (home_id, away_id),
+                )
 
                 result = cur.fetchone()
                 if result and result["cnt"] > 0:
@@ -1344,7 +1344,7 @@ class HashAlignmentService:
         fotmob_match: dict[str, Any],
         oddsportal_match: dict[str, Any],
         score: float,
-        confidence: str
+        confidence: str,
     ) -> bool:
         """
         V41.126: 自动注浆别名库（V41.128 线程安全）
@@ -1380,7 +1380,8 @@ class HashAlignmentService:
                 with self.conn.cursor() as cur:
                     # 注入主队映射
                     if fotmob_home_id:
-                        cur.execute("""
+                        cur.execute(
+                            """
                             INSERT INTO alias_teams (
                                 fotmob_team_id,
                                 fotmob_team_name,
@@ -1394,17 +1395,20 @@ class HashAlignmentService:
                                 confidence = GREATEST(alias_teams.confidence, EXCLUDED.confidence),
                                 alignment_count = alias_teams.alignment_count + 1,
                                 last_aligned_at = NOW()
-                        """, (
-                            fotmob_home_id,
-                            fotmob_home,
-                            op_home,
-                            score,
-                            fotmob_match.get("league_name", "")
-                        ))
+                        """,
+                            (
+                                fotmob_home_id,
+                                fotmob_home,
+                                op_home,
+                                score,
+                                fotmob_match.get("league_name", ""),
+                            ),
+                        )
 
                     # 注入客队映射
                     if fotmob_away_id:
-                        cur.execute("""
+                        cur.execute(
+                            """
                             INSERT INTO alias_teams (
                                 fotmob_team_id,
                                 fotmob_team_name,
@@ -1418,25 +1422,34 @@ class HashAlignmentService:
                                 confidence = GREATEST(alias_teams.confidence, EXCLUDED.confidence),
                                 alignment_count = alias_teams.alignment_count + 1,
                                 last_aligned_at = NOW()
-                        """, (
-                            fotmob_away_id,
-                            fotmob_away,
-                            op_away,
-                            score,
-                            fotmob_match.get("league_name", "")
-                        ))
+                        """,
+                            (
+                                fotmob_away_id,
+                                fotmob_away,
+                                op_away,
+                                score,
+                                fotmob_match.get("league_name", ""),
+                            ),
+                        )
 
                     self.conn.commit()
-                    logger.info(f"📝 V41.126 别名库注浆: {fotmob_home} vs {op_home}, {fotmob_away} vs {op_away} (分数: {score:.3f})")
+                    logger.info(
+                        f"📝 V41.126 别名库注浆: {fotmob_home} vs {op_home}, {fotmob_away} vs {op_away} (分数: {score:.3f})"
+                    )
                     return True
 
             except Exception as e:
                 # V41.128: 添加更详细的错误日志，包括异常类型和参数
                 import traceback
-                logger.error(f"❌ V41.126 别名库注浆失败: {type(e).__name__}: {e}")
+
+                logger.exception(f"❌ V41.126 别名库注浆失败: {type(e).__name__}: {e}")
                 logger.debug(f"详细错误堆栈:\n{traceback.format_exc()}")
-                logger.debug(f"fotmob_home_id={fotmob_home_id}, fotmob_home={fotmob_home}, op_home={op_home}")
-                logger.debug(f"fotmob_away_id={fotmob_away_id}, fotmob_away={fotmob_away}, op_away={op_away}")
+                logger.debug(
+                    f"fotmob_home_id={fotmob_home_id}, fotmob_home={fotmob_home}, op_home={op_home}"
+                )
+                logger.debug(
+                    f"fotmob_away_id={fotmob_away_id}, fotmob_away={fotmob_away}, op_away={op_away}"
+                )
                 try:
                     self.conn.rollback()
                 except Exception as rollback_err:
@@ -1477,7 +1490,7 @@ class HashAlignmentService:
         fotmob_match: dict[str, Any],
         oddsportal_match: dict[str, Any],
         verbose: bool = False,
-        auto_inject: bool = True
+        auto_inject: bool = True,
     ) -> dict[str, Any]:
         """
         V41.126: 动态调权对齐 - 工业化适配版本
@@ -1505,16 +1518,12 @@ class HashAlignmentService:
         if is_live_or_finished:
             # 已开赛/已完场：使用标准权重（50/30/10/10）
             result = self.align_with_multi_feature_validation(
-                fotmob_match=fotmob_match,
-                oddsportal_match=oddsportal_match,
-                verbose=verbose
+                fotmob_match=fotmob_match, oddsportal_match=oddsportal_match, verbose=verbose
             )
         else:
             # 未开赛：使用动态权重（80% 队名 + 20% 时间）
             result = self._align_with_upcoming_weights(
-                fotmob_match=fotmob_match,
-                oddsportal_match=oddsportal_match,
-                verbose=verbose
+                fotmob_match=fotmob_match, oddsportal_match=oddsportal_match, verbose=verbose
             )
 
         # 自动注浆别名库
@@ -1523,7 +1532,7 @@ class HashAlignmentService:
                 fotmob_match=fotmob_match,
                 oddsportal_match=oddsportal_match,
                 score=result["score"],
-                confidence=result["confidence"]
+                confidence=result["confidence"],
             )
 
         # 添加比赛状态标记
@@ -1532,10 +1541,7 @@ class HashAlignmentService:
         return result
 
     def _align_with_upcoming_weights(
-        self,
-        fotmob_match: dict[str, Any],
-        oddsportal_match: dict[str, Any],
-        verbose: bool = False
+        self, fotmob_match: dict[str, Any], oddsportal_match: dict[str, Any], verbose: bool = False
     ) -> dict[str, Any]:
         """
         V41.126: 未开赛比赛的动态调权对齐
@@ -1554,11 +1560,7 @@ class HashAlignmentService:
             对齐结果字典
         """
         score = 0.0
-        breakdown = {
-            "name_similarity": 0.0,
-            "time_window": 0.0,
-            "id_mapping": 0.0
-        }
+        breakdown = {"name_similarity": 0.0, "time_window": 0.0, "id_mapping": 0.0}
         reasons = []
 
         # ====================================================================
@@ -1653,7 +1655,7 @@ class HashAlignmentService:
 
         # 详细输出
         if verbose:
-            logger.info(f"🎯 V41.126 未开赛对齐详情:")
+            logger.info("🎯 V41.126 未开赛对齐详情:")
             logger.info(f"   队名相似度: {breakdown['name_similarity']:.3f} (80%)")
             logger.info(f"   时间窗口: {breakdown['time_window']:.3f} (20%)")
             logger.info(f"   ID 映射: {breakdown['id_mapping']:.3f}")
@@ -1667,7 +1669,7 @@ class HashAlignmentService:
             "threshold": THRESHOLD,
             "breakdown": breakdown,
             "reason": reason,
-            "confidence": confidence
+            "confidence": confidence,
         }
 
     # ========================================================================
@@ -2010,7 +2012,7 @@ class HashAlignmentService:
                         await asyncio.sleep(cooldown)
 
                 except Exception as e:
-                    logger.error(f"❌ 收割过程出错: {e}")
+                    logger.exception(f"❌ 收割过程出错: {e}")
                     raise
                 finally:
                     # V41.45: 浏览器清理闭环（确保资源释放）
@@ -2022,7 +2024,7 @@ class HashAlignmentService:
                             logger.warning(f"⚠️  关闭浏览器时出错: {e}")
 
         except Exception as e:
-            logger.error(f"❌ V41.45 active_harvest 失败: {e}")
+            logger.exception(f"❌ V41.45 active_harvest 失败: {e}")
             # 确保即使外层异常也能返回统计信息
         finally:
             logger.info("=" * 60)

@@ -64,7 +64,6 @@ class CircuitBreakerError(Exception):
     """熔断器基础异常"""
 
 
-
 # ============================================
 # 熔断器配置
 # ============================================
@@ -183,7 +182,9 @@ class CircuitBreaker:
         # 统计数据
         self._stats = CircuitBreakerStats()
 
-        logger.info(f"熔断器初始化: {self.name} (阈值: {self.config.failure_threshold}, 冷却: {self.config.cooldown_seconds}s)")
+        logger.info(
+            f"熔断器初始化: {self.name} (阈值: {self.config.failure_threshold}, 冷却: {self.config.cooldown_seconds}s)"
+        )
 
     @property
     def state(self) -> CircuitState:
@@ -330,16 +331,12 @@ class CircuitBreaker:
                         f"冷却 {self.config.cooldown_seconds} 秒..."
                     )
                     # V149.0: 自动退出 EXIT 99
-                    logger.critical(
-                        f"⛔ CIRCUIT_BREAKER: IP Hard Ban Detected - EXIT 99"
-                    )
+                    logger.critical("⛔ CIRCUIT_BREAKER: IP Hard Ban Detected - EXIT 99")
                     import sys
+
                     sys.exit(99)
         else:
-            logger.debug(
-                f"熔断器 [{self.name}] 手动记录非关键失败: {reason} "
-                f"(不计入熔断阈值)"
-            )
+            logger.debug(f"熔断器 [{self.name}] 手动记录非关键失败: {reason} (不计入熔断阈值)")
 
     def _is_critical_error(self, exception: Exception | None) -> bool:
         """判断是否是严重错误"""
@@ -615,17 +612,14 @@ if __name__ == "__main__":
             return {"data": "success"}
 
         # 模拟多次调用
-        for i in range(15):
+        for _i in range(15):
             try:
-                print(f"\n--- 调用 {i + 1} ---")
-                result = await breaker.call(unreliable_api)
-                print(f"✅ 成功: {result}")
-            except CircuitBreakerOpenError as e:
-                print(f"🔴 熔断器已打开，等待 {e.cooldown_remaining:.0f} 秒")
-            except Exception as e:
-                print(f"❌ 失败: {e}")
+                await breaker.call(unreliable_api)
+            except CircuitBreakerOpenError:
+                pass
+            except Exception:
+                pass
 
-            print(f"状态: {breaker.get_status()}")
             await asyncio.sleep(0.5)
 
     asyncio.run(demo())

@@ -11,28 +11,28 @@ Mock策略：
 - Mock 异步操作和并发控制
 """
 
-import unittest
-from unittest.mock import Mock, patch, MagicMock, AsyncMock
 import asyncio
-import time
-from datetime import datetime, timedelta
-from typing import List, Dict, Any
 
 # 导入被测试的模块
 import sys
+import time
+import unittest
+from datetime import datetime, timedelta
+from typing import Any, Dict, List
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 sys.path.append("/home/user/projects/FootballPrediction/src")
 
+from src.services.collection_service import (
+    CollectionStats,
+    CollectionStatus,
+    FotMobCollectionService,
+    FotMobCollectionTask,
+)
+from src.services.inference_service import InferenceService
 from src.services.prediction_service import (
     PredictionRequest,
     PredictionResponse,
-)
-from src.services.inference_service import InferenceService
-from src.services.collection_service import (
-    FotMobCollectionService,
-    FotMobCollectionTask,
-    CollectionStats,
-    CollectionStatus,
 )
 
 

@@ -149,8 +149,12 @@ class CleanupStats:
     def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
         return {
-            "start_time": datetime.fromtimestamp(self.start_time).isoformat() if self.start_time else None,
-            "end_time": datetime.fromtimestamp(self.end_time).isoformat() if self.end_time else None,
+            "start_time": datetime.fromtimestamp(self.start_time).isoformat()
+            if self.start_time
+            else None,
+            "end_time": datetime.fromtimestamp(self.end_time).isoformat()
+            if self.end_time
+            else None,
             "elapsed_seconds": self.elapsed_time,
             "total_zombies": self.total_zombies,
             "recovered_count": self.recovered_count,
@@ -284,7 +288,9 @@ class ZombieAssetCleaner:
 
             return zombies
 
-    def attempt_harvest_recovery(self, zombie: dict[str, Any]) -> tuple[bool, dict[str, Any] | None]:
+    def attempt_harvest_recovery(
+        self, zombie: dict[str, Any]
+    ) -> tuple[bool, dict[str, Any] | None]:
         """
         尝试通过重新收割恢复僵尸记录
 
@@ -299,8 +305,8 @@ class ZombieAssetCleaner:
 
         match_id = zombie["match_id"]
         external_id = zombie["external_id"]
-        league_id = zombie.get("league_id", "47")
-        season = zombie.get("season", "2324")
+        zombie.get("league_id", "47")
+        zombie.get("season", "2324")
 
         logger.info(f"尝试收割 match_id={match_id}, external_id={external_id}")
 
@@ -324,7 +330,7 @@ class ZombieAssetCleaner:
             self.stats.harvest_failed_count += 1
             return False, None
         except Exception as e:
-            logger.error(f"match_id={match_id}: 收割失败 - {e}")
+            logger.exception(f"match_id={match_id}: 收割失败 - {e}")
             self.stats.harvest_failed_count += 1
             return False, None
 
@@ -386,7 +392,7 @@ class ZombieAssetCleaner:
                 return True
 
         except Exception as e:
-            logger.error(f"match_id={match_id}: 恢复失败 - {e}")
+            logger.exception(f"match_id={match_id}: 恢复失败 - {e}")
             self._conn.rollback()
             self.stats.failed_count += 1
             self.stats.failed_match_ids.append(match_id)
@@ -421,7 +427,10 @@ class ZombieAssetCleaner:
                     "deletion_reason": "No raw data available and harvest failed",
                 }
 
-                cur.execute(update_query, (self.config.mark_as_deleted_status, json.dumps(metadata), match_id))
+                cur.execute(
+                    update_query,
+                    (self.config.mark_as_deleted_status, json.dumps(metadata), match_id),
+                )
                 self._conn.commit()
 
                 self.stats.deleted_count += 1
@@ -431,7 +440,7 @@ class ZombieAssetCleaner:
                 return True
 
         except Exception as e:
-            logger.error(f"match_id={match_id}: 标记删除失败 - {e}")
+            logger.exception(f"match_id={match_id}: 标记删除失败 - {e}")
             self._conn.rollback()
             self.stats.failed_count += 1
             return False
@@ -507,7 +516,7 @@ class ZombieAssetCleaner:
             logger.info("\n用户中断，正在退出...")
 
         except Exception as e:
-            logger.error(f"清理运行异常: {e}")
+            logger.exception(f"清理运行异常: {e}")
             raise
 
         finally:
@@ -523,33 +532,16 @@ class ZombieAssetCleaner:
         """打印最终统计"""
         stats = self.stats.to_dict()
 
-        print("\n" + "🧹 " + "=" * 58)
-        print("V25.0 僵尸资产清理报告")
-        print("=" * 60)
 
-        print("\n执行时间:")
-        print(f"  • 开始时间: {stats['start_time']}")
-        print(f"  • 结束时间: {stats['end_time']}")
-        print(f"  • 运行时长: {stats['elapsed_seconds']:.1f} 秒")
 
-        print("\n清理结果:")
-        print(f"  🔄 已恢复: {stats['recovered_count']} 场")
-        print(f"  🗑️  已删除: {stats['deleted_count']} 场")
-        print(f"  ❌ 失败: {stats['failed_count']} 场")
-        print(f"  ⏭️  已跳过: {stats['skipped_count']} 场")
 
-        print("\n收割统计:")
-        print(f"  ✅ 收割成功: {stats['harvest_success_count']}")
-        print(f"  ❌ 收割失败: {stats['harvest_failed_count']}")
 
-        print(f"\n恢复率: {stats['recovery_rate']}%")
 
         if stats["recovered_match_ids"]:
-            print(f"\n已恢复比赛 ID (前10个): {stats['recovered_match_ids']}")
+            pass
         if stats["deleted_match_ids"]:
-            print(f"已删除比赛 ID (前10个): {stats['deleted_match_ids']}")
+            pass
 
-        print("\n" + "=" * 60)
 
 
 # ============================================================================
@@ -566,7 +558,10 @@ def main():
     parser.add_argument("--no-harvest", action="store_true", help="禁用自动收割")
     parser.add_argument("--max-retry", type=int, default=3, help="最大重试次数（默认: 3）")
     parser.add_argument(
-        "--delete-status", type=str, default="DELETED_INVALID", help="标记为删除的状态值（默认: DELETED_INVALID）"
+        "--delete-status",
+        type=str,
+        default="DELETED_INVALID",
+        help="标记为删除的状态值（默认: DELETED_INVALID）",
     )
 
     args = parser.parse_args()

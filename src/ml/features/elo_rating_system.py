@@ -234,14 +234,20 @@ class EloRatingSystem:
             actual_away = 0.5
 
         # 计算K因子
-        home_k_factor = home_k_factor_override or self._calculate_k_factor(home_team_id, competition_type)
-        away_k_factor = away_k_factor_override or self._calculate_k_factor(away_team_id, competition_type)
+        home_k_factor = home_k_factor_override or self._calculate_k_factor(
+            home_team_id, competition_type
+        )
+        away_k_factor = away_k_factor_override or self._calculate_k_factor(
+            away_team_id, competition_type
+        )
 
         # 应用净胜球调整
         goal_multiplier = 1.0
         if self.enable_goal_margin:
             goal_diff = abs(home_goals - away_goals)
-            goal_multiplier = self.GOAL_MARGIN_MULTIPLIER.get(min(goal_diff, 5), self.GOAL_MARGIN_MULTIPLIER[5])
+            goal_multiplier = self.GOAL_MARGIN_MULTIPLIER.get(
+                min(goal_diff, 5), self.GOAL_MARGIN_MULTIPLIER[5]
+            )
 
         # 计算评分变化
         home_rating_change = home_k_factor * goal_multiplier * (actual_home - expected_home)
@@ -339,7 +345,9 @@ class EloRatingSystem:
 
         return base_k
 
-    def _update_statistics(self, home_change: float, away_change: float, match_date: datetime) -> None:
+    def _update_statistics(
+        self, home_change: float, away_change: float, match_date: datetime
+    ) -> None:
         """更新统计信息"""
         self.stats["total_updates"] += 1
 
@@ -382,7 +390,7 @@ class EloRatingSystem:
 
         # 计算趋势指标
         ratings = [rating for _, rating in recent_history]
-        dates = [date for date, _ in recent_history]
+        [date for date, _ in recent_history]
 
         first_rating = ratings[0]
         last_rating = ratings[-1]
@@ -481,7 +489,9 @@ class EloRatingSystem:
             Dict[str, Any]: 预测结果
         """
         # 获取基本预期
-        expected_home, expected_away, home_win_prob = self.calculate_expected_score(home_team_id, away_team_id)
+        expected_home, _expected_away, home_win_prob = self.calculate_expected_score(
+            home_team_id, away_team_id
+        )
 
         # 使用泊松分布模拟进球数
         home_rating = self.get_team_rating(home_team_id)
@@ -510,7 +520,9 @@ class EloRatingSystem:
         score_matrix = np.zeros((6, 6))  # 0-5球的矩阵
         for h_goals in range(6):
             for a_goals in range(6):
-                prob = (np.sum(home_sim == h_goals) * np.sum(away_sim == a_goals)) / (num_simulations**2)
+                prob = (np.sum(home_sim == h_goals) * np.sum(away_sim == a_goals)) / (
+                    num_simulations**2
+                )
                 score_matrix[h_goals, a_goals] = prob
 
         most_likely_score = np.unravel_index(np.argmax(score_matrix), score_matrix.shape)
@@ -527,7 +539,9 @@ class EloRatingSystem:
                 "draw": float(draws),
                 "away_win": float(away_wins),
                 "over_2_5": float(np.sum(home_sim + away_sim > 2.5) / num_simulations),
-                "both_teams_score": float(np.sum((home_sim > 0) & (away_sim > 0)) / num_simulations),
+                "both_teams_score": float(
+                    np.sum((home_sim > 0) & (away_sim > 0)) / num_simulations
+                ),
             },
             "expected_goals": {
                 "home": exp_home_goals,
@@ -611,8 +625,12 @@ class EloRatingSystem:
             "rating_distribution": {
                 "average": (np.mean(list(self.team_ratings.values())) if self.team_ratings else 0),
                 "std_dev": (np.std(list(self.team_ratings.values())) if self.team_ratings else 0),
-                "min": (min(self.team_ratings.values()) if self.team_ratings else self.initial_rating),
-                "max": (max(self.team_ratings.values()) if self.team_ratings else self.initial_rating),
+                "min": (
+                    min(self.team_ratings.values()) if self.team_ratings else self.initial_rating
+                ),
+                "max": (
+                    max(self.team_ratings.values()) if self.team_ratings else self.initial_rating
+                ),
             },
         }
 

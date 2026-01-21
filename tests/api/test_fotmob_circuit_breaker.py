@@ -7,14 +7,15 @@ Circuit Breaker State Transition Tests for FotMob API Client
 CLOSED -> OPEN -> HALF_OPEN -> CLOSED
 """
 
-import pytest
 import asyncio
-from unittest.mock import Mock, AsyncMock, patch
 from datetime import datetime, timedelta
-from typing import Dict, Any
+from typing import Any, Dict
+from unittest.mock import AsyncMock, Mock, patch
 
-from src.api.fotmob_client import FotMobAPIClient, CircuitState
-from src.core.exceptions import ExternalAPIError, CircuitBreakerError
+import pytest
+
+from src.api.fotmob_client import CircuitState, FotMobAPIClient
+from src.core.exceptions import CircuitBreakerError, ExternalAPIError
 
 
 class TestFotMobAPIClientCircuitBreaker:

@@ -18,17 +18,19 @@ Author: Football Prediction Team
 Version: 1.0.0 (Sprint 7 Testing)
 """
 
-import pytest
+from datetime import datetime, timedelta
+from decimal import Decimal
+from typing import Any, Dict, List
+from unittest.mock import MagicMock, Mock, patch
+
 import numpy as np
 import pandas as pd
-from datetime import datetime, timedelta
-from unittest.mock import Mock, patch, MagicMock
-from typing import Dict, Any, List
-from decimal import Decimal
+import pytest
+
+from src.constants import FOOTBALL, MATH, PROBABILITY, STATISTICAL
 
 # 导入被测试的模块
 from src.ml.features.poisson_features import PoissonFeatureCalculator
-from src.constants import FOOTBALL, MATH, PROBABILITY, STATISTICAL
 
 
 class TestPoissonFeatureCalculator:

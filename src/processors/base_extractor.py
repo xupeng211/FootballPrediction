@@ -192,7 +192,9 @@ class BaseExtractor(ABC):
         """获取验证配置"""
         return self._validation_config
 
-    def extract_with_validation(self, raw_data: dict[str, Any], skip_validation: bool = False) -> ExtractionResult:
+    def extract_with_validation(
+        self, raw_data: dict[str, Any], skip_validation: bool = False
+    ) -> ExtractionResult:
         """
         提取特征并验证（完整流程）
 
@@ -252,7 +254,7 @@ class BaseExtractor(ABC):
                         if result.status == ExtractionStatus.FAILED:
                             result.status = ExtractionStatus.PARTIAL
                     else:
-                        self._logger.error("特征验证失败", error=str(e))
+                        self._logger.exception("特征验证失败", error=str(e))
                         raise
 
             # Step 5: 注入元数据
@@ -275,7 +277,7 @@ class BaseExtractor(ABC):
             return result
 
         except Exception as e:
-            self._logger.error("特征提取异常", error=str(e), error_type=type(e).__name__)
+            self._logger.exception("特征提取异常", error=str(e), error_type=type(e).__name__)
             raise ExtractionError(f"{self.version} 特征提取失败: {e}") from e
 
 

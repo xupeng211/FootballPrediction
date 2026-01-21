@@ -29,6 +29,7 @@ import asyncio
 from datetime import datetime, timedelta
 import logging
 from pathlib import Path
+import sys
 from typing import Any
 import warnings
 
@@ -182,7 +183,7 @@ class ClassificationDatasetGenerator:
             return final_dataset
 
         except Exception as e:
-            self.logger.error(f"数据集生成失败: {e}")
+            self.logger.exception(f"数据集生成失败: {e}")
             raise
 
     def _validate_inputs(self, league_id: str, start_date: str) -> None:
@@ -264,7 +265,7 @@ class ClassificationDatasetGenerator:
             return df
 
         except Exception as e:
-            self.logger.error(f"数据库查询失败: {e}")
+            self.logger.exception(f"数据库查询失败: {e}")
             raise Exception(f"获取比赛数据失败: {e}") from e
 
     async def _extract_features_batch(self, raw_match_data: pd.DataFrame) -> list[dict[str, Any]]:
@@ -291,7 +292,9 @@ class ClassificationDatasetGenerator:
         async def extract_single_features(match_id: str) -> dict[str, Any] | None:
             async with semaphore:
                 try:
-                    feature_set = await self.feature_extractor.extract_features(match_id, historical_data)
+                    feature_set = await self.feature_extractor.extract_features(
+                        match_id, historical_data
+                    )
 
                     return {
                         "match_id": match_id,
@@ -303,7 +306,7 @@ class ClassificationDatasetGenerator:
                     }
 
                 except Exception as e:
-                    self.logger.error(f"特征提取失败 {match_id}: {e}")
+                    self.logger.exception(f"特征提取失败 {match_id}: {e}")
                     self.stats["feature_extraction_errors"] += 1
                     return None
 
@@ -402,7 +405,7 @@ class ClassificationDatasetGenerator:
         labels = []
         numeric_labels = []
 
-        for idx, row in data.iterrows():
+        for _idx, row in data.iterrows():
             try:
                 home_score = row["final_home_score"]
                 away_score = row["final_away_score"]
@@ -415,7 +418,7 @@ class ClassificationDatasetGenerator:
                 numeric_labels.append(numeric_label)
 
             except Exception as e:
-                self.logger.error(f"标签计算失败 {row['match_id']}: {e}")
+                self.logger.exception(f"标签计算失败 {row['match_id']}: {e}")
                 labels.append(None)
                 numeric_labels.append(None)
 
@@ -496,22 +499,13 @@ class ClassificationDatasetGenerator:
             feature_columns.append(f"feature_{i + 1:03d}_{name}")
 
         # 选择最终列
-        final_columns = [
-            "match_id",
-            "home_team_id",
-            "away_team_id",
-            "match_date",
-            "final_home_score",
-            "final_away_score",
-            "target_label",
-            "target_numeric",
-            "feature_completeness_score",
-            "data_quality_flag",
-        ] + feature_columns
+        final_columns = ["match_id", "home_team_id", "away_team_id", "match_date", "final_home_score", "final_away_score", "target_label", "target_numeric", "feature_completeness_score", "data_quality_flag", *feature_columns]
 
         final_dataset = filtered_data[final_columns].copy()
 
-        self.logger.info(f"最终数据集准备完成: {final_dataset.shape} 列，{len(feature_columns)} 个特征列")
+        self.logger.info(
+            f"最终数据集准备完成: {final_dataset.shape} 列，{len(feature_columns)} 个特征列"
+        )
         return final_dataset
 
     def _create_empty_dataset(self) -> pd.DataFrame:
@@ -572,7 +566,7 @@ class ClassificationDatasetGenerator:
             self.logger.info(f"文件大小: {output_file.stat().st_size / 1024 / 1024:.2f} MB")
 
         except Exception as e:
-            self.logger.error(f"保存数据集失败: {e}")
+            self.logger.exception(f"保存数据集失败: {e}")
             raise Exception(f"保存数据集失败: {e}") from e
 
     def get_statistics(self) -> dict[str, Any]:
@@ -584,7 +578,10 @@ class ClassificationDatasetGenerator:
             "feature_extraction_errors": self.stats["feature_extraction_errors"],
             "final_dataset_size": self.stats["final_dataset_size"],
             "processing_time_seconds": self.stats["processing_time_seconds"],
-            "success_rate": (self.stats["final_dataset_size"] / max(self.stats["total_matches_processed"], 1)) * 100,
+            "success_rate": (
+                self.stats["final_dataset_size"] / max(self.stats["total_matches_processed"], 1)
+            )
+            * 100,
         }
 
     def reset_statistics(self) -> None:
@@ -637,8 +634,12 @@ if __name__ == "__main__":
             ClassificationDatasetGenerator()
 
             # 这里需要实际的数据才能运行
-            logger.info(">>> dataset = await generator.generate_dataset('premier_league', '2024-01-01')")
-            logger.info(">>> await generator.save_dataset_to_parquet(dataset, 'training_data.parquet')")
+            logger.info(
+                ">>> dataset = await generator.generate_dataset('premier_league', '2024-01-01')"
+            )
+            logger.info(
+                ">>> await generator.save_dataset_to_parquet(dataset, 'training_data.parquet')"
+            )
 
         except Exception:
             return False
@@ -648,4 +649,4 @@ if __name__ == "__main__":
     # 运行演示
     success = main()
     if not success:
-        exit(1)
+        sys.exit(1)

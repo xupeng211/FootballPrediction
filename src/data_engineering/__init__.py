@@ -32,18 +32,18 @@ from .multipath_extractor import (
 )
 
 __all__ = [
+    "ELOEngine",
+    "EfficiencyEngine",
+    "ExtractionPath",
+    "ExtractionStats",
+    "FatigueTracker",
     # FeatureFactory (V35.0)
     "FeatureFactory",
-    "ELOEngine",
-    "TableManager",
-    "FatigueTracker",
-    "EfficiencyEngine",
-    "create_feature_factory",
+    "MatchStats",
     # MultiPathExtractor
     "MultiPathExtractor",
-    "MatchStats",
-    "ExtractionStats",
-    "ExtractionPath",
+    "TableManager",
+    "create_feature_factory",
     "extract_match_stats_batch",
 ]
 

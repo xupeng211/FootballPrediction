@@ -118,7 +118,7 @@ class DataMigration:
                 else:
                     home_score, away_score = 0, 0
 
-            l2_data = {
+            return {
                 "match_id": str(row.get("external_id", row.get("match_id"))),
                 "fotmob_id": str(row.get("external_id", row.get("match_id"))),
                 "home_team": row.get("home_team", ""),
@@ -156,7 +156,6 @@ class DataMigration:
                 "migration_note": "这是从 harvest_manifest 迁移的简化数据，需要完整 L2 采集",
             }
 
-            return l2_data
 
         except Exception as e:
             logger.warning(f"创建 L2 数据失败 (match_id={row.get('match_id')}): {e}")
@@ -276,7 +275,7 @@ class DataMigration:
                 return count
 
         except Exception as e:
-            logger.error(f"导入失败: {e}")
+            logger.exception(f"导入失败: {e}")
             conn.rollback()
             raise
         finally:
@@ -340,7 +339,7 @@ class DataMigration:
         matches = self.prepare_match_data(df)
 
         # 3. 导入数据库
-        count = self.import_matches(matches)
+        self.import_matches(matches)
 
         # 4. 验证导入
         verification = self.verify_import()

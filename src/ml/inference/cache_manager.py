@@ -147,7 +147,9 @@ class PredictionCache:
         # 添加额外参数到键中
         if additional_params:
             sorted_params = sorted(additional_params.items())
-            params_hash = hashlib.sha256(str(sorted_params).encode(), usedforsecurity=False).hexdigest()[:8]
+            params_hash = hashlib.sha256(
+                str(sorted_params).encode(), usedforsecurity=False
+            ).hexdigest()[:8]
             key_parts.append(params_hash)
 
         return ":".join(key_parts)
@@ -212,7 +214,7 @@ class PredictionCache:
                 return cache_entry.result.copy()
 
             except Exception as e:
-                logger.error(f"缓存获取异常: {e}")
+                logger.exception(f"缓存获取异常: {e}")
                 self._stats.miss_count += 1
                 return None
 
@@ -264,7 +266,7 @@ class PredictionCache:
                 return True
 
             except Exception as e:
-                logger.error(f"缓存设置异常: {e}")
+                logger.exception(f"缓存设置异常: {e}")
                 return False
 
     def delete(
@@ -297,7 +299,7 @@ class PredictionCache:
                 return False
 
             except Exception as e:
-                logger.error(f"缓存删除异常: {e}")
+                logger.exception(f"缓存删除异常: {e}")
                 return False
 
     def clear(self, pattern: str | None = None) -> int:
@@ -319,7 +321,7 @@ class PredictionCache:
                     logger.info(f"所有缓存已清空，共清理 {deleted_count} 个条目")
                 else:
                     # 按模式清理
-                    keys_to_delete = [key for key in self._cache.keys() if pattern in key]
+                    keys_to_delete = [key for key in self._cache if pattern in key]
                     for key in keys_to_delete:
                         del self._cache[key]
                     deleted_count = len(keys_to_delete)
@@ -329,7 +331,7 @@ class PredictionCache:
                 return deleted_count
 
             except Exception as e:
-                logger.error(f"缓存清理异常: {e}")
+                logger.exception(f"缓存清理异常: {e}")
                 return 0
 
     def cleanup_expired(self) -> int:
@@ -361,7 +363,7 @@ class PredictionCache:
                 return len(expired_keys)
 
             except Exception as e:
-                logger.error(f"过期缓存清理异常: {e}")
+                logger.exception(f"过期缓存清理异常: {e}")
                 return 0
 
     def _start_cleanup_task(self) -> None:
@@ -387,7 +389,7 @@ class PredictionCache:
                     logger.debug(f"清理了 {cleaned_count} 个过期缓存项")
 
             except Exception as e:
-                logger.error(f"后台清理任务异常: {e}")
+                logger.exception(f"后台清理任务异常: {e}")
 
         logger.info("缓存自动清理任务已停止")
 
@@ -466,7 +468,9 @@ class PredictionCache:
                 "status": {
                     "current_size": len(self._cache),
                     "max_size": self.max_size,
-                    "utilization_rate": (len(self._cache) / self.max_size if self.max_size > 0 else 0),
+                    "utilization_rate": (
+                        len(self._cache) / self.max_size if self.max_size > 0 else 0
+                    ),
                 },
                 "performance": {
                     "hit_rate": stats.hit_rate,
@@ -478,12 +482,16 @@ class PredictionCache:
                 "maintenance": {
                     "expired_entries": stats.expired_entries,
                     "cleanup_count": stats.cleanup_count,
-                    "last_cleanup_time": (stats.last_cleanup_time.isoformat() if stats.last_cleanup_time else None),
+                    "last_cleanup_time": (
+                        stats.last_cleanup_time.isoformat() if stats.last_cleanup_time else None
+                    ),
                 },
                 "memory": {
                     "estimated_usage_mb": stats.memory_usage_mb,
                     "average_entry_size_kb": (
-                        (stats.memory_usage_mb * 1024 / len(self._cache)) if len(self._cache) > 0 else 0
+                        (stats.memory_usage_mb * 1024 / len(self._cache))
+                        if len(self._cache) > 0
+                        else 0
                     ),
                 },
             }

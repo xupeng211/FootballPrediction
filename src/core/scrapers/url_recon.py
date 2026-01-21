@@ -25,21 +25,18 @@ Version: 1.0.0 (Production)
 from __future__ import annotations
 
 import asyncio
-import logging
-import re
 from dataclasses import dataclass, field
 from datetime import datetime
-from enum import Enum
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+import logging
+import re
+from typing import Any
 from urllib.parse import urljoin
 
+from playwright.async_api import async_playwright
 import psycopg2
-from playwright.async_api import async_playwright, Browser, BrowserContext, Page
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, field_validator
 
 from src.config_unified import get_settings
-
 
 # ============================================================================
 # V151.4 Golden Regex Pattern
@@ -53,10 +50,10 @@ class MatchHashPattern:
     """
 
     # Core pattern: Extract 8-12 character alphanumeric hash
-    HASH_PATTERN = re.compile(r'/football/[^/]+/[^/]+/[^/]+-[^/]+-([a-zA-Z0-9]{8,12})/')
+    HASH_PATTERN = re.compile(r"/football/[^/]+/[^/]+/[^/]+-[^/]+-([a-zA-Z0-9]{8,12})/")
 
     @classmethod
-    def extract_hash(cls, url: str) -> Optional[str]:
+    def extract_hash(cls, url: str) -> str | None:
         """Extract match hash from URL.
 
         Args:
@@ -144,7 +141,7 @@ class ReconStats:
     matched: int = 0
     updated: int = 0
     start_time: float = field(default_factory=lambda: datetime.utcnow().timestamp())
-    end_time: Optional[float] = None
+    end_time: float | None = None
 
     @property
     def duration(self) -> float:
@@ -159,7 +156,7 @@ class ReconStats:
             return 0.0
         return (self.matched / self.discovered) * 100
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary representation."""
         return {
             "total_matches": self.total_matches,
@@ -217,7 +214,7 @@ class UrlReconEngine:
 
     def __init__(
         self,
-        logger: Optional[logging.Logger] = None,
+        logger: logging.Logger | None = None,
         proxy_host: str = "172.25.16.1",
         proxy_port: int = 7890,
     ):
@@ -236,7 +233,7 @@ class UrlReconEngine:
     async def discover_league_urls(
         self,
         league_name: str,
-        limit: Optional[int] = None,
+        limit: int | None = None,
     ) -> ReconStats:
         """Discover and update URLs for a league.
 
@@ -299,8 +296,8 @@ class UrlReconEngine:
     async def _fetch_missing_matches(
         self,
         league_name: str,
-        limit: Optional[int],
-    ) -> List[Dict[str, Any]]:
+        limit: int | None,
+    ) -> list[dict[str, Any]]:
         """Fetch matches missing URLs from database.
 
         Args:
@@ -340,7 +337,7 @@ class UrlReconEngine:
 
         return matches
 
-    async def _fetch_external_urls(self, url: str) -> List[Dict[str, Any]]:
+    async def _fetch_external_urls(self, url: str) -> list[dict[str, Any]]:
         """Fetch match URLs from external source using Playwright.
 
         Args:
@@ -398,7 +395,7 @@ class UrlReconEngine:
 
         return results
 
-    def _parse_teams_from_url(self, href: str) -> Optional[List[str]]:
+    def _parse_teams_from_url(self, href: str) -> list[str] | None:
         """Parse team names from URL path.
 
         Args:
@@ -422,9 +419,9 @@ class UrlReconEngine:
 
     def _fuzzy_match(
         self,
-        db_matches: List[Dict[str, Any]],
-        external_matches: List[Dict[str, Any]],
-    ) -> List[MatchUrlPair]:
+        db_matches: list[dict[str, Any]],
+        external_matches: list[dict[str, Any]],
+    ) -> list[MatchUrlPair]:
         """Perform fuzzy matching between datasets.
 
         Args:
@@ -434,7 +431,7 @@ class UrlReconEngine:
         Returns:
             List of matched pairs.
         """
-        matched_pairs: List[MatchUrlPair] = []
+        matched_pairs: list[MatchUrlPair] = []
         matched_urls = set()
 
         for external in external_matches:
@@ -472,7 +469,7 @@ class UrlReconEngine:
 
         return matched_pairs
 
-    async def _batch_update_urls(self, pairs: List[MatchUrlPair]) -> int:
+    async def _batch_update_urls(self, pairs: list[MatchUrlPair]) -> int:
         """Batch update database with discovered URLs.
 
         Args:
@@ -525,7 +522,7 @@ class UrlReconEngine:
 
 async def discover_urls(
     league_name: str,
-    limit: Optional[int] = None,
+    limit: int | None = None,
 ) -> ReconStats:
     """Convenience function for URL discovery.
 
@@ -542,10 +539,10 @@ async def discover_urls(
 
 # Convenience exports
 __all__ = [
-    "UrlReconEngine",
     "LeagueConfig",
+    "MatchHashPattern",
     "MatchUrlPair",
     "ReconStats",
-    "MatchHashPattern",
+    "UrlReconEngine",
     "discover_urls",
 ]

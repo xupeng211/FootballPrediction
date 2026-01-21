@@ -35,7 +35,7 @@ data_integrity:
   min_entities: 1
   value_ranges:
     odds:
-      min: 1.01
+      min: 1.01  # V41.272: 调优至 1.01，依赖物理约束（CHECK）过滤亚盘
       max: 1000.0
     xg_diff_threshold: 1.3
     xg_diff strong_threshold: 1.5
@@ -70,3 +70,11 @@ logging:
   level: INFO
   output_dir: logs
   screenshot_dir: logs
+# V41.278: FotMob API configuration for lineup collector
+fotmob:
+  base_url: https://www.fotmob.com
+  api_endpoints:
+    match_details: /api/matchDetails
+  request:
+    timeout_seconds: 30
+    follow_redirects: true

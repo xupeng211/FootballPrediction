@@ -23,11 +23,12 @@ Version: V41.243 "Skynet Protocol"
 
 from __future__ import annotations
 
-import logging
-import re
 from dataclasses import dataclass
-from typing import Optional
+import logging
 from pathlib import Path
+import re
+import sys
+
 import yaml
 
 logger = logging.getLogger("LeagueRouter")
@@ -41,11 +42,12 @@ logger = logging.getLogger("LeagueRouter")
 @dataclass
 class LeagueMetadata:
     """联赛元数据"""
-    name: str                    # 数据库中的联赛名
-    oddsportal_path: str         # OddsPortal 路径 (如 "/football/england/premier-league/")
-    country: str                 # 国家/地区
-    league_type: str             # league/cup/tournament
-    alt_names: list[str]         # 别名列表
+
+    name: str  # 数据库中的联赛名
+    oddsportal_path: str  # OddsPortal 路径 (如 "/football/england/premier-league/")
+    country: str  # 国家/地区
+    league_type: str  # league/cup/tournament
+    alt_names: list[str]  # 别名列表
 
 
 # =============================================================================
@@ -143,9 +145,8 @@ class URLTemplateBuilder:
             return cls.LEAGUE_SLUG_MAPPING[slug]
 
         # 默认处理：空格和斜杠替换为连字符
-        slug = re.sub(r'[\s/]+', '-', slug)
-        slug = re.sub(r'[^\w\-]', '', slug)  # 移除特殊字符
-        return slug
+        slug = re.sub(r"[\s/]+", "-", slug)
+        return re.sub(r"[^\w\-]", "", slug)  # 移除特殊字符
 
     @classmethod
     def detect_country(cls, league_name: str) -> str:
@@ -206,7 +207,7 @@ class LeagueRouter:
         - 新增联赛只需添加映射，无需修改代码
     """
 
-    def __init__(self, config_path: Optional[str] = None):
+    def __init__(self, config_path: str | None = None):
         """
         初始化路由器
 
@@ -228,18 +229,16 @@ class LeagueRouter:
         try:
             config_file = Path(config_path)
             if config_file.exists():
-                with open(config_file, 'r', encoding='utf-8') as f:
+                with open(config_file, encoding="utf-8") as f:
                     config = yaml.safe_load(f)
-                    self.custom_mappings = config.get('league_mappings', {})
-                    logger.info(f"Loaded {len(self.custom_mappings)} custom mappings from {config_path}")
+                    self.custom_mappings = config.get("league_mappings", {})
+                    logger.info(
+                        f"Loaded {len(self.custom_mappings)} custom mappings from {config_path}"
+                    )
         except Exception as e:
             logger.warning(f"Failed to load custom config: {e}")
 
-    def resolve_url(
-        self,
-        league_name: str,
-        season: Optional[str] = None
-    ) -> Optional[str]:
+    def resolve_url(self, league_name: str, season: str | None = None) -> str | None:
         """
         解析联赛名称为 OddsPortal URL
 
@@ -252,7 +251,7 @@ class LeagueRouter:
         """
         # 1. 检查自定义映射
         if league_name in self.custom_mappings:
-            custom_path = self.custom_mappings[league_name].get('oddsportal_path')
+            custom_path = self.custom_mappings[league_name].get("oddsportal_path")
             if custom_path:
                 url = f"{URLTemplateBuilder.BASE_URL}{custom_path}"
                 logger.debug(f"Custom mapping: {league_name} -> {url}")
@@ -273,11 +272,7 @@ class LeagueRouter:
         return url
 
     def resolve_with_fallback(
-        self,
-        league_name: str,
-        home_team: str,
-        away_team: str,
-        season: Optional[str] = None
+        self, league_name: str, home_team: str, away_team: str, season: str | None = None
     ) -> list[str]:
         """
         带回退策略的 URL 解析
@@ -327,6 +322,7 @@ class LeagueRouter:
             {league_name: oddsportal_url} 字典
         """
         import psycopg2
+
         from src.config_unified import get_config
 
         config = get_config()
@@ -371,7 +367,7 @@ def main():
     # 配置日志
     logging.basicConfig(
         level=logging.DEBUG if args.verbose else logging.INFO,
-        format="%(asctime)s | %(levelname)-8s | %(message)s"
+        format="%(asctime)s | %(levelname)-8s | %(message)s",
     )
 
     # 创建路由器
@@ -381,13 +377,9 @@ def main():
     url = router.resolve_url(args.league, args.season)
 
     if url:
-        print(f"\n✅ League: {args.league}")
-        print(f"   URL: {url}")
         return 0
-    else:
-        print(f"\n❌ Failed to resolve URL for: {args.league}")
-        return 1
+    return 1
 
 
 if __name__ == "__main__":
-    exit(main())
+    sys.exit(main())

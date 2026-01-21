@@ -97,7 +97,9 @@ class ProductionL2Collector:
         """异步上下文管理器入口"""
         timeout = aiohttp.ClientTimeout(total=self.timeout)
         connector = aiohttp.TCPConnector(limit=self.concurrent_limiter.max_concurrent)
-        self.session = aiohttp.ClientSession(timeout=timeout, connector=connector, headers=self._get_headers())
+        self.session = aiohttp.ClientSession(
+            timeout=timeout, connector=connector, headers=self._get_headers()
+        )
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
@@ -216,7 +218,7 @@ class ProductionL2Collector:
             return validated  # V139.1: 始终返回，即使为 WARNING 级别
 
         except Exception as e:
-            logger.error(f"❌ 解析异常 {match_id}: {e}")
+            logger.exception(f"❌ 解析异常 {match_id}: {e}")
             return None
 
     def _extract_stats_from_periods(self, stats_array: list) -> dict | None:
@@ -321,7 +323,7 @@ class ProductionL2Collector:
             return len(batch)
 
         except Exception as e:
-            logger.error(f"❌ 批量 Upsert 失败: {e}")
+            logger.exception(f"❌ 批量 Upsert 失败: {e}")
             return 0
 
     async def collect_and_validate_match(
@@ -353,7 +355,7 @@ class ProductionL2Collector:
             return validated
 
         except Exception as e:
-            logger.error(f"❌ L2 采集失败 {match_id}: {e}")
+            logger.exception(f"❌ L2 采集失败 {match_id}: {e}")
             self.summary.add_failure()
             return None
 
@@ -399,11 +401,10 @@ class ProductionL2Collector:
                     last_progress = progress
 
             # 达到批量大小或最后一批时，执行 Upsert
-            if len(batch) >= batch_size or completed == total:
-                if batch:
-                    saved = await self._batch_upsert_l2_data(batch)
-                    logger.info(f"⏳ 进度: {completed}/{total} | 批量保存: {saved} 场")
-                    batch = []
+            if (len(batch) >= batch_size or completed == total) and batch:
+                saved = await self._batch_upsert_l2_data(batch)
+                logger.info(f"⏳ 进度: {completed}/{total} | 批量保存: {saved} 场")
+                batch = []
 
         self.summary.finalize()
         logger.info("✅ L2 批量采集完成")
@@ -442,7 +443,6 @@ async def main():
             match_ids = [str(i) for i in range(4813374, 4813474)]
 
             await collector.collect_batch(match_ids, batch_size=50)
-            print(collector.get_summary_report())
 
     finally:
         await db_pool.close()

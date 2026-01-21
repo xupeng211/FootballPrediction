@@ -32,16 +32,15 @@ Version: V41.232 "Bulletproof Finalization"
 
 from __future__ import annotations
 
-import json
-import logging
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 from difflib import SequenceMatcher
-from pathlib import Path
+import json
+import logging
 from typing import Any
 
 import psycopg2
-from psycopg2.extras import RealDictCursor, execute_values
+from psycopg2.extras import RealDictCursor
 
 from src.config_unified import get_config
 
@@ -56,6 +55,7 @@ logger = logging.getLogger("MatchLinker")
 @dataclass
 class MatchCandidate:
     """比赛候选匹配"""
+
     match_id: str
     home_team: str
     away_team: str
@@ -67,6 +67,7 @@ class MatchCandidate:
 @dataclass
 class LinkResult:
     """关联结果"""
+
     vector_id: int
     matched_match_id: str | None
     similarity_score: float
@@ -78,6 +79,7 @@ class LinkResult:
 @dataclass
 class LinkerConfig:
     """关联器配置 - V41.232 优化"""
+
     time_window_hours: float = 48.0  # 时间窗口（小时）
     similarity_threshold: float = 0.75  # V41.232: 灵活相似度阈值（0.85 → 0.75）
     max_candidates: int = 10  # 最大候选数
@@ -244,15 +246,40 @@ class MatchLinker:
 
         # 步骤 3: 移除特殊字符
         import re
-        normalized = re.sub(r'[^\w\s]', ' ', normalized)
+
+        normalized = re.sub(r"[^\w\s]", " ", normalized)
 
         # 步骤 4: 移除后缀（扩展列表）
         suffixes = [
-            "fc", "fc ", "united", "city", "town", "athletic", "afc", "rc",
-            "cf", "ac", "ssc", "as", "bc", "losc", "hove albion",
-            "hotspur", "wanderers", " Rangers", "celtic", "dynamo",
-            "fenerbahce", "galatasaray", "besiktas", "olympique",
-            "saint germain", "etienne", "lens", "rennes", "reims",
+            "fc",
+            "fc ",
+            "united",
+            "city",
+            "town",
+            "athletic",
+            "afc",
+            "rc",
+            "cf",
+            "ac",
+            "ssc",
+            "as",
+            "bc",
+            "losc",
+            "hove albion",
+            "hotspur",
+            "wanderers",
+            " Rangers",
+            "celtic",
+            "dynamo",
+            "fenerbahce",
+            "galatasaray",
+            "besiktas",
+            "olympique",
+            "saint germain",
+            "etienne",
+            "lens",
+            "rennes",
+            "reims",
         ]
 
         for suffix in suffixes:
@@ -260,9 +287,8 @@ class MatchLinker:
                 normalized = normalized[: -len(suffix)].strip()
 
         # 步骤 5: 压缩多余空格
-        normalized = re.sub(r'\s+', ' ', normalized)
+        return re.sub(r"\s+", " ", normalized)
 
-        return normalized
 
     def find_candidates(
         self,
@@ -346,9 +372,7 @@ class MatchLinker:
 
         # 过滤低相似度候选
         qualified = [
-            c
-            for c in candidates
-            if c.similarity_score >= self.config.similarity_threshold
+            c for c in candidates if c.similarity_score >= self.config.similarity_threshold
         ]
 
         if not qualified:
@@ -417,7 +441,8 @@ class MatchLinker:
             quality_rating = metadata.get("Quality_Rating") if metadata else None
             deviation_pct = metadata.get("Deviation_Percentage") if metadata else None
 
-            cursor.execute("""
+            cursor.execute(
+                """
                 INSERT INTO match_odds_intelligence
                 (match_id, initial_price, closing_price, movement_history,
                  quality_rating, deviation_percentage, similarity_score, link_method,
@@ -435,16 +460,18 @@ class MatchLinker:
                     link_method = EXCLUDED.link_method,
                     updated_at = CURRENT_TIMESTAMP
                 RETURNING id
-            """, (
-                match_id,
-                json.dumps(initial_price),
-                json.dumps(closing_price),
-                json.dumps(movement_history),
-                quality_rating,
-                deviation_pct,
-                similarity_score,
-                link_method,
-            ))
+            """,
+                (
+                    match_id,
+                    json.dumps(initial_price),
+                    json.dumps(closing_price),
+                    json.dumps(movement_history),
+                    quality_rating,
+                    deviation_pct,
+                    similarity_score,
+                    link_method,
+                ),
+            )
 
             conn.commit()
             logger.info(f"Stored odds intelligence for match: {match_id}")
@@ -452,7 +479,7 @@ class MatchLinker:
 
         except Exception as e:
             conn.rollback()
-            logger.error(f"Failed to store odds intelligence: {e}")
+            logger.exception(f"Failed to store odds intelligence: {e}")
             return False
 
     def batch_store_odds_intelligence(
@@ -534,19 +561,25 @@ class MatchLinker:
                 values = []
                 for record in batch:
                     metadata = record.get("metadata", {})
-                    quality_rating = metadata.get("Quality_Rating") if isinstance(metadata, dict) else None
-                    deviation_pct = metadata.get("Deviation_Percentage") if isinstance(metadata, dict) else None
+                    quality_rating = (
+                        metadata.get("Quality_Rating") if isinstance(metadata, dict) else None
+                    )
+                    deviation_pct = (
+                        metadata.get("Deviation_Percentage") if isinstance(metadata, dict) else None
+                    )
 
-                    values.append((
-                        record.get("match_id"),
-                        json.dumps(record.get("initial_price", [])),
-                        json.dumps(record.get("closing_price", [])),
-                        json.dumps(record.get("movement_history", [])),
-                        quality_rating,
-                        deviation_pct,
-                        record.get("similarity_score"),
-                        record.get("link_method"),
-                    ))
+                    values.append(
+                        (
+                            record.get("match_id"),
+                            json.dumps(record.get("initial_price", [])),
+                            json.dumps(record.get("closing_price", [])),
+                            json.dumps(record.get("movement_history", [])),
+                            quality_rating,
+                            deviation_pct,
+                            record.get("similarity_score"),
+                            record.get("link_method"),
+                        )
+                    )
 
                 # V41.248: 批量 UPSERT - 使用 execute_values 正确格式
                 # 移除 created_at/updated_at，让数据库使用默认值
@@ -578,16 +611,13 @@ class MatchLinker:
                 conn.commit()
                 stats["success"] += len(batch)
                 logger.debug(
-                    f"V41.243 Batch {batch_idx + 1}/{total_batches}: "
-                    f"stored {len(batch)} records"
+                    f"V41.243 Batch {batch_idx + 1}/{total_batches}: stored {len(batch)} records"
                 )
 
             except Exception as e:
                 conn.rollback()
                 stats["failed"] += len(batch)
-                logger.error(
-                    f"V41.243 Batch {batch_idx + 1}/{total_batches} failed: {e}"
-                )
+                logger.exception(f"V41.243 Batch {batch_idx + 1}/{total_batches} failed: {e}")
 
         logger.info(
             f"V41.243 Batch store complete: "
@@ -648,16 +678,15 @@ class MatchLinker:
                 link_method=link_method,
                 stored=stored,
             )
-        else:
-            # 未找到匹配
-            return LinkResult(
-                vector_id=hash(str(vector_data)),
-                matched_match_id=None,
-                similarity_score=0.0,
-                time_diff_hours=0.0,
-                link_method="none",
-                stored=False,
-            )
+        # 未找到匹配
+        return LinkResult(
+            vector_id=hash(str(vector_data)),
+            matched_match_id=None,
+            similarity_score=0.0,
+            time_diff_hours=0.0,
+            link_method="none",
+            stored=False,
+        )
 
 
 # =============================================================================

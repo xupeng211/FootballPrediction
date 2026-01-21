@@ -10,9 +10,9 @@ Version: V150.0
 Date: 2026-01-07
 """
 
+from datetime import datetime, timedelta
 import logging
 import os
-from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -120,7 +120,7 @@ class RollbackManager:
                 f.write(f"Cooling ends: {cooling_end.isoformat()}\n")
                 f.write(f"{'=' * 70}\n")
         except Exception as e:
-            logger.error(f"Failed to save rollback event: {e}")
+            logger.exception(f"Failed to save rollback event: {e}")
 
     def is_emergency_stopped(self) -> bool:
         """Check if emergency stop has been triggered.
@@ -149,4 +149,3 @@ class RollbackManager:
 class EmergencyStopException(Exception):
     """Exception raised when emergency stop is triggered."""
 
-    pass

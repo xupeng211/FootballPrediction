@@ -3,23 +3,24 @@
 模拟完整的用户使用场景：从数据收集到预测结果
 """
 
-import pytest
 import asyncio
-import time
 import json
-from unittest.mock import Mock, AsyncMock, patch
-from typing import Dict, Any, List
+import time
+from typing import Any, Dict, List
+from unittest.mock import AsyncMock, Mock, patch
+
+import pytest
 from fastapi.testclient import TestClient
 
+from src.core.exceptions import PredictionError
+from src.ml.inference import MatchPredictor, ModelLoader
+from src.ml.inference.cache_manager import PredictionCache
+from src.services.collection_service import FotMobCollectionService
 from src.services.prediction_service import (
-    PredictionService,
     PredictionRequest,
     PredictionResponse,
+    PredictionService,
 )
-from src.services.collection_service import FotMobCollectionService
-from src.ml.inference import ModelLoader, MatchPredictor
-from src.ml.inference.cache_manager import PredictionCache
-from src.core.exceptions import PredictionError
 
 
 class TestEndToEndPredictionWorkflow:

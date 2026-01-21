@@ -38,26 +38,26 @@ def generate_dynamic_params() -> dict[str, Any]:
         包含随机显卡、语言等参数的字典
     """
     # 显卡厂商列表
-    gpu_vendors = ['Intel Inc.', 'NVIDIA Corporation', 'AMD', 'Qualcomm', 'Apple']
+    gpu_vendors = ["Intel Inc.", "NVIDIA Corporation", "AMD", "Qualcomm", "Apple"]
     gpu_renderers = [
-        'Intel(R) UHD Graphics 620',
-        'NVIDIA GeForce GTX 1660',
-        'NVIDIA GeForce RTX 3060',
-        'NVIDIA GeForce RTX 4070',
-        'AMD Radeon RX 580',
-        'AMD Radeon RX 6700 XT',
-        'Apple GPU',
-        'Adreno 650',
-        'Intel(R) Iris(R) Xe Graphics',
+        "Intel(R) UHD Graphics 620",
+        "NVIDIA GeForce GTX 1660",
+        "NVIDIA GeForce RTX 3060",
+        "NVIDIA GeForce RTX 4070",
+        "AMD Radeon RX 580",
+        "AMD Radeon RX 6700 XT",
+        "Apple GPU",
+        "Adreno 650",
+        "Intel(R) Iris(R) Xe Graphics",
     ]
 
     # 浏览器语言列表
     language_configs = [
-        ['en-US', 'en'],
-        ['en-GB', 'en'],
-        ['en-US', 'en', 'zh-CN'],
-        ['en-GB', 'en', 'de-DE', 'fr-FR'],
-        ['en-US', 'en', 'es-ES', 'it-IT'],
+        ["en-US", "en"],
+        ["en-GB", "en"],
+        ["en-US", "en", "zh-CN"],
+        ["en-GB", "en", "de-DE", "fr-FR"],
+        ["en-US", "en", "es-ES", "it-IT"],
     ]
 
     # 设备内存 (GB)
@@ -67,13 +67,13 @@ def generate_dynamic_params() -> dict[str, Any]:
     concurrency_options = [4, 6, 8, 12, 16]
 
     return {
-        'gpu_vendor': random.choice(gpu_vendors),
-        'gpu_renderer': random.choice(gpu_renderers),
-        'languages': random.choice(language_configs),
-        'device_memory': random.choice(memory_options),
-        'hardware_concurrency': random.choice(concurrency_options),
-        'timezone': random.choice(['America/New_York', 'Europe/London', 'Europe/Paris', 'Europe/Berlin']),
-        'locale': random.choice(['en-US', 'en-GB', 'en-CA']),
+        "gpu_vendor": random.choice(gpu_vendors),
+        "gpu_renderer": random.choice(gpu_renderers),
+        "languages": random.choice(language_configs),
+        "device_memory": random.choice(memory_options),
+        "hardware_concurrency": random.choice(concurrency_options),
+        "timezone": random.choice(["America/New_York", "Europe/London", "Europe/Paris", "Europe/Berlin"]),
+        "locale": random.choice(["en-US", "en-GB", "en-CA"]),
     }
 
 
@@ -504,13 +504,13 @@ def get_mg30_stealth_scripts(dynamic: bool = True) -> dict[str, str]:
     core_script = get_mg30_stealth_core_dynamic() if dynamic else MG30_STEALTH_CORE
 
     return {
-        'core': core_script,
-        'webgl': MG30_WEBGL_ENHANCED,
-        'canvas': MG30_CANVAS_NOISE,
-        'audio': MG30_AUDIO_NOISE,
-        'font': MG30_FONT_NOISE,
-        'timing': MG30_TIMING_NOISE,
-        'header_obfuscation': MG30_HEADER_OBFUSCATION,  # V41.244
+        "core": core_script,
+        "webgl": MG30_WEBGL_ENHANCED,
+        "canvas": MG30_CANVAS_NOISE,
+        "audio": MG30_AUDIO_NOISE,
+        "font": MG30_FONT_NOISE,
+        "timing": MG30_TIMING_NOISE,
+        "header_obfuscation": MG30_HEADER_OBFUSCATION,  # V41.244
     }
 
 
@@ -532,20 +532,19 @@ def get_combined_mg30_script(dynamic: bool = True) -> str:
     scripts = get_mg30_stealth_scripts(dynamic=dynamic)
 
     # 组合所有脚本
-    combined = """
+    return """
     () => {
         // ========== Mg30 Titan Stealth - V41.166 ==========
         // 完整隐身配置 - 所有模块一次性加载
         // 动态参数: 每次运行都有不同的 GPU、语言、内存配置
 
-        """ + scripts['core'] + scripts['webgl'] + scripts['canvas'] + """
-        """ + scripts['audio'] + scripts['font'] + scripts['timing'] + """
+        """ + scripts["core"] + scripts["webgl"] + scripts["canvas"] + """
+        """ + scripts["audio"] + scripts["font"] + scripts["timing"] + """
 
         // ========== 完成 ==========
         console.log('[Mg30] Titan Stealth V41.166 applied successfully with dynamic params');
     }
     """
-    return combined
 
 
 # V41.166: 新增获取动态参数的辅助函数
@@ -560,6 +559,4 @@ def get_dynamic_params() -> dict[str, Any]:
 
 if __name__ == "__main__":
     # 打印组合脚本用于调试
-    print(get_combined_mg30_script())
-    print("\n=== 动态参数 ===")
-    print(get_dynamic_params())
+    pass

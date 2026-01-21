@@ -3,13 +3,14 @@
 测试更多API路由和边界条件
 """
 
-import pytest
 import json
 import time
+from typing import Any, Dict, List, Optional
+from unittest.mock import AsyncMock, Mock, patch
+
+import pytest
 from fastapi.testclient import TestClient
-from unittest.mock import patch, Mock, AsyncMock
 from pydantic import BaseModel
-from typing import Optional, List, Dict, Any
 
 
 class TestPredictionAPIExtended:
@@ -371,8 +372,8 @@ class TestPredictionAPIExtended:
 
     def test_concurrent_predictions(self, api_client):
         """测试并发预测请求"""
-        import threading
         import queue
+        import threading
 
         results = queue.Queue()
 
@@ -497,8 +498,9 @@ class TestAPIIntegrationWithDependencies:
     @pytest.fixture
     def api_client_with_mocks(self):
         """创建带有Mock依赖的API客户端"""
+        from unittest.mock import AsyncMock, Mock
+
         from fastapi import FastAPI
-        from unittest.mock import Mock, AsyncMock
 
         app = FastAPI(title="Football Prediction API with Mocks")
 

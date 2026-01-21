@@ -77,7 +77,7 @@ def discover_season_range(start_id: int, max_tests: int = 1000) -> list[int]:
         if test_id < 4000000:  # FotMob 英超 ID 通常在 4000000 以上
             break
 
-        is_valid, info = test_match_id(test_id)
+        is_valid, _info = test_match_id(test_id)
 
         if is_valid:
             valid_ids.append(test_id)
@@ -212,8 +212,6 @@ if __name__ == "__main__":
     output = generate_2223_manifest()
 
     if output:
-        print(f"\n✅ 成功生成: {output}")
         sys.exit(0)
     else:
-        print("\n❌ 生成失败")
         sys.exit(1)

@@ -14,17 +14,14 @@ Version: V150.1
 Date: 2026-01-08
 """
 
-import logging
-import re
 from dataclasses import dataclass
 from datetime import timedelta
+import logging
+import re
 from typing import Any
 
-from src.config_unified import get_settings
-
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -35,15 +32,42 @@ logger = logging.getLogger(__name__)
 
 # 常见英超球队名（用于辅助 URL 解析）
 COMMON_EPL_TEAMS = {
-    "manchester city", "manchester united", "manchester utd", "man utd",
-    "liverpool", "chelsea", "arsenal", "tottenham hotspur", "spurs",
-    "newcastle united", "newcastle", "brighton", "brighton & hove albion",
-    "west ham united", "west ham", "wolverhampton wanderers", "wolves",
-    "aston villa", "leicester city", "leicester", "everton",
-    "southampton", "nottingham forest", "nottm forest", "west bromwich albion", "west brom",
-    "crystal palace", "bournemouth", "afc bournemouth", "fulham",
-    "leeds united", "burnley", "sheffield united", "norwich city",
-    "watford", "brentford", "brighton & hove albion",
+    "manchester city",
+    "manchester united",
+    "manchester utd",
+    "man utd",
+    "liverpool",
+    "chelsea",
+    "arsenal",
+    "tottenham hotspur",
+    "spurs",
+    "newcastle united",
+    "newcastle",
+    "brighton",
+    "brighton & hove albion",
+    "west ham united",
+    "west ham",
+    "wolverhampton wanderers",
+    "wolves",
+    "aston villa",
+    "leicester city",
+    "leicester",
+    "everton",
+    "southampton",
+    "nottingham forest",
+    "nottm forest",
+    "west bromwich albion",
+    "west brom",
+    "crystal palace",
+    "bournemouth",
+    "afc bournemouth",
+    "fulham",
+    "leeds united",
+    "burnley",
+    "sheffield united",
+    "norwich city",
+    "watford",
+    "brentford",
 }
 
 # 常见队名缩写/变体映射
@@ -54,48 +78,42 @@ TEAM_NAME_ALIASEES = {
     "manchester utd": "manchester united",
     "man-united": "manchester united",
     "man united": "manchester united",
-
     # 热刺变体
     "spurs": "tottenham hotspur",
     "tottenham": "tottenham hotspur",
-
     # 狼队变体
     "wolves": "wolverhampton wanderers",
     "wolverhampton": "wolverhampton wanderers",
-
     # 诺丁汉森林变体
     "nottm forest": "nottingham forest",
     "nottingham": "nottingham forest",
-
     # 西布朗变体
     "west brom": "west bromwich albion",
     "west bromwich": "west bromwich albion",
-
     # 布莱顿变体
     "brighton": "brighton & hove albion",
-
     # 莱斯特城变体
     "leicester": "leicester city",
     "leicester city": "leicester city",
-
     # 纽卡斯尔变体
     "newcastle": "newcastle united",
     "newcastle utd": "newcastle united",
-
     # 谢周三变体
     "sheffield wed": "sheffield wednesday",
     "sheffield wednesday": "sheffield wednesday",
-
     # 南安普顿变体
-    "southampton": "southampton",
     "southampton": "southampton",
 }
 
 # 常见前缀/后缀标准化
 TEAM_PREFIXES = [
-    "afc ", "a.f.c. ", "a.c. ",
-    "fc ", "f.c. ",
+    "afc ",
+    "a.f.c. ",
+    "a.c. ",
+    "fc ",
+    "f.c. ",
 ]
+
 
 def normalize_team_name(name: str) -> str:
     """标准化队名.
@@ -111,7 +129,7 @@ def normalize_team_name(name: str) -> str:
     # 移除常见前缀
     for prefix in TEAM_PREFIXES:
         if name.startswith(prefix):
-            name = name[len(prefix):]
+            name = name[len(prefix) :]
             break
 
     # 应用别名映射
@@ -124,6 +142,7 @@ def normalize_team_name(name: str) -> str:
 # ============================================================================
 # URL 解析器
 # ============================================================================
+
 
 def extract_team_names_from_url(url: str) -> tuple[str, str] | None:
     """从 OddsPortal URL 中提取队名.
@@ -138,14 +157,14 @@ def extract_team_names_from_url(url: str) -> tuple[str, str] | None:
         (home_team, away_team) 或 None
     """
     # 提取联赛后的部分
-    match = re.search(r'/football/england/premier-league/([^/]+)/?', url)
+    match = re.search(r"/football/england/premier-league/([^/]+)/?", url)
     if not match:
         return None
 
     teams_part = match.group(1)
 
     # 分割队名和 ID
-    parts = teams_part.split('-')
+    parts = teams_part.split("-")
 
     # DEBUG
     logger.debug(f"URL解析: teams_part={teams_part}, parts={parts}")
@@ -162,10 +181,7 @@ def extract_team_names_from_url(url: str) -> tuple[str, str] | None:
                 break
 
     # 获取队名部分
-    if id_idx is not None:
-        team_parts = parts[:id_idx]
-    else:
-        team_parts = parts
+    team_parts = parts[:id_idx] if id_idx is not None else parts
 
     if len(team_parts) < 2:
         return None
@@ -189,23 +205,26 @@ def _split_teams_smartly(parts: list[str]) -> tuple[str, str] | tuple[None, None
         (home_team, away_team) 或 (None, None)
     """
     # 尝试所有可能的分割点，优先选择"两者都已知"的分割
-    best_match = None
     fallback_match = None
 
     for i in range(1, len(parts)):
         home_parts = parts[:i]
         away_parts = parts[i:]
 
-        home_candidate = ' '.join(home_parts).title()
-        away_candidate = ' '.join(away_parts).title()
+        home_candidate = " ".join(home_parts).title()
+        away_candidate = " ".join(away_parts).title()
 
         # 标准化后检查是否匹配已知球队
         home_norm = normalize_team_name(home_candidate)
         away_norm = normalize_team_name(away_candidate)
 
         # 检查是否在已知球队列表中
-        home_known = home_norm in COMMON_EPL_TEAMS or any(home_norm in alias.split() for alias in TEAM_NAME_ALIASEES.keys())
-        away_known = away_norm in COMMON_EPL_TEAMS or any(away_norm in alias.split() for alias in TEAM_NAME_ALIASEES.keys())
+        home_known = home_norm in COMMON_EPL_TEAMS or any(
+            home_norm in alias.split() for alias in TEAM_NAME_ALIASEES
+        )
+        away_known = away_norm in COMMON_EPL_TEAMS or any(
+            away_norm in alias.split() for alias in TEAM_NAME_ALIASEES
+        )
 
         # 两者都是已知球队（最佳匹配）
         if home_known and away_known:
@@ -213,9 +232,7 @@ def _split_teams_smartly(parts: list[str]) -> tuple[str, str] | tuple[None, None
 
         # 至少一个已知且分割合理（备用匹配）
         if fallback_match is None:
-            if home_known and len(away_parts) <= 3:
-                fallback_match = (home_candidate, away_candidate)
-            elif away_known and len(home_parts) <= 3:
+            if (home_known and len(away_parts) <= 3) or (away_known and len(home_parts) <= 3):
                 fallback_match = (home_candidate, away_candidate)
 
     # 如果没有找到最佳匹配，使用备用匹配
@@ -233,9 +250,11 @@ def _split_teams_smartly(parts: list[str]) -> tuple[str, str] | tuple[None, None
 # 语义校准器
 # ============================================================================
 
+
 @dataclass
 class RefinementResult:
     """校准结果."""
+
     fotmob_id: str
     home_team: str
     away_team: str
@@ -266,7 +285,7 @@ class SemanticRefiner:
         away_team: str,
         match_date: Any,
         confidence: float,
-        oddsportal_url: str
+        oddsportal_url: str,
     ) -> RefinementResult:
         """校准单条记录.
 
@@ -296,7 +315,7 @@ class SemanticRefiner:
                 should_approve=False,
                 should_reject=False,
                 new_confidence=confidence,
-                reason="URL 无法解析"
+                reason="URL 无法解析",
             )
 
         url_home, url_away = url_teams
@@ -324,7 +343,7 @@ class SemanticRefiner:
                 should_approve=False,
                 should_reject=True,
                 new_confidence=0.0,
-                reason=f"队名不匹配: FotMob[{home_team} vs {away_team}] vs URL[{url_home} vs {url_away}]"
+                reason=f"队名不匹配: FotMob[{home_team} vs {away_team}] vs URL[{url_home} vs {url_away}]",
             )
 
         # 5. 队名匹配，计算新的置信度
@@ -347,7 +366,7 @@ class SemanticRefiner:
             should_approve=should_approve,
             should_reject=False,
             new_confidence=new_confidence,
-            reason=f"队名匹配提升: {confidence:.3f} → {new_confidence:.3f}"
+            reason=f"队名匹配提升: {confidence:.3f} → {new_confidence:.3f}",
         )
 
     def _team_names_match(self, name1: str, name2: str) -> bool:

@@ -126,7 +126,7 @@ class MetadataManager:
             response.raise_for_status()
             return response.json()
         except Exception as e:
-            logger.error(f"抓取 allLeagues API 失败: {e}")
+            logger.exception(f"抓取 allLeagues API 失败: {e}")
             return {}
 
     def discover_big_five_leagues(self, api_data: dict) -> list[LeagueMetadata]:
@@ -157,7 +157,7 @@ class MetadataManager:
         for league_item in popular:
             league_id = league_item.get("id", 0)
             league_name = league_item.get("name", "")
-            ccode = league_item.get("ccode", "")
+            league_item.get("ccode", "")
 
             # 检查是否是五大联赛之一
             for target_name, target_info in self.BIG_FIVE_LEAGUES.items():
@@ -195,7 +195,9 @@ class MetadataManager:
 
         return discovered
 
-    def _create_metadata(self, league_id: int, league_name: str, target_info: dict) -> LeagueMetadata:
+    def _create_metadata(
+        self, league_id: int, league_name: str, target_info: dict
+    ) -> LeagueMetadata:
         """创建联赛元数据并获取可用赛季
 
         Args:
@@ -287,7 +289,7 @@ class MetadataManager:
             return True
 
         except Exception as e:
-            logger.error(f"加载缓存失败: {e}")
+            logger.exception(f"加载缓存失败: {e}")
             return False
 
     def save_cache(self):
@@ -304,7 +306,7 @@ class MetadataManager:
                 json.dump(cache_data, f, indent=2, ensure_ascii=False)
             logger.info(f"✅ 元数据已缓存到 {cache_file}")
         except Exception as e:
-            logger.error(f"保存缓存失败: {e}")
+            logger.exception(f"保存缓存失败: {e}")
 
     def refresh_metadata(self, force: bool = False) -> bool:
         """刷新联赛元数据
@@ -371,7 +373,9 @@ class MetadataManager:
         """获取联赛元数据"""
         return self.leagues.get(league_id)
 
-    def convert_season_format(self, league_id: int, season: str, target_format: str = "storage") -> str | None:
+    def convert_season_format(
+        self, league_id: int, season: str, target_format: str = "storage"
+    ) -> str | None:
         """转换赛季格式
 
         Args:
@@ -440,7 +444,3 @@ if __name__ == "__main__":
     manager.print_registry()
 
     # 测试查询
-    print("\n=== 测试查询 ===")
-    print(f"Ligue 1 ID: {manager.get_league_id('Ligue 1')}")
-    print(f"Premier League ID: {manager.get_league_id('Premier League')}")
-    print(f"Season 2223 -> API: {manager.convert_season_format(53, '2223', 'api')}")

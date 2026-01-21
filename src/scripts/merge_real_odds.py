@@ -32,20 +32,16 @@ def find_best_match(team_name, team_list, threshold=0.8):
 def merge_odds_and_predictions():
     """合并赔率和预测数据"""
 
-    print("🔗 合并真实赔率与预测数据...")
-    print("=" * 60)
 
     # 加载数据
     odds_df = pd.read_csv("/home/user/projects/FootballPrediction/data/real_odds_raw.csv")
     pred_df = pd.read_csv("/home/user/projects/FootballPrediction/data/multi_season_v85.csv")
 
-    print(f"  赔率数据: {len(odds_df)} 场")
-    print(f"  预测数据: {len(pred_df)} 场")
 
     # 创建合并后的数据列表
     merged_data = []
 
-    for idx, pred_row in pred_df.iterrows():
+    for _idx, pred_row in pred_df.iterrows():
         pred_home = pred_row["home_team"]
         pred_away = pred_row["away_team"]
 
@@ -71,26 +67,16 @@ def merge_odds_and_predictions():
     # 创建DataFrame
     if merged_data:
         merged_df = pd.DataFrame(merged_data)
-        print(f"  ✅ 合并成功: {len(merged_df)} 场比赛")
 
         # 保存
         output_path = "/home/user/projects/FootballPrediction/data/merged_real_odds.csv"
         merged_df.to_csv(output_path, index=False)
-        print(f"✅ 合并数据已保存: {output_path}")
 
         # 显示赔率覆盖
-        print("\n📊 赔率覆盖统计:")
-        print(f"  Bet365 主胜赔率: {merged_df['real_home_odds'].notna().sum()}")
-        print(f"  Bet365 平局赔率: {merged_df['real_draw_odds'].notna().sum()}")
-        print(f"  Bet365 客胜赔率: {merged_df['real_away_odds'].notna().sum()}")
 
         # 显示样本
-        print("\n📋 样本数据:")
-        sample_cols = ["home_team", "away_team", "real_home_odds", "real_draw_odds", "real_away_odds"]
-        print(merged_df[sample_cols].head())
 
         return merged_df
-    print("  ❌ 未找到匹配的比赛")
     return None
 
 
@@ -98,14 +84,9 @@ def main():
     merged_df = merge_odds_and_predictions()
 
     if merged_df is not None:
-        print("\n" + "=" * 60)
-        print("✅ 真实赔率数据合并完成")
-        print("=" * 60)
-        print(f"  📊 可用比赛: {len(merged_df)}")
-        print("  💰 Bet365 赔率覆盖: ✅")
-        print(f"  📅 数据范围: {merged_df['match_time'].min()} ~ {merged_df['match_time'].max()}")
+        pass
     else:
-        print("\n❌ 数据合并失败")
+        pass
 
 
 if __name__ == "__main__":

@@ -75,14 +75,10 @@ class RateLimiterConfig:
         settings = get_settings()
 
         # /predict 接口限流 (每分钟请求数)
-        self.predict_per_minute = int(
-            getattr(settings, "rate_limit_predict_per_minute", 10)
-        )
+        self.predict_per_minute = int(getattr(settings, "rate_limit_predict_per_minute", 10))
 
         # 其他接口限流 (每分钟请求数)
-        self.default_per_minute = int(
-            getattr(settings, "rate_limit_default_per_minute", 60)
-        )
+        self.default_per_minute = int(getattr(settings, "rate_limit_default_per_minute", 60))
 
         # 限流存储方式
         self.storage_type = getattr(settings, "rate_limit_storage", "memory")
@@ -341,4 +337,4 @@ async def info():
 
 
 if __name__ == "__main__":
-    print(RATE_LIMIT_EXAMPLES)
+    pass

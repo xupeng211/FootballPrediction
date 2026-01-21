@@ -17,7 +17,6 @@ Date: 2026-01-06
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
 
 
 @dataclass
@@ -56,9 +55,8 @@ class LeagueInfo:
         if year_end is None:
             # 单年制赛季（例如某些跨年赛事）
             return str(year_start)[-2:]
-        else:
-            # 双年制赛季（例如 2023-2024）
-            return f"{year_start % 100:02d}{year_end % 100:02d}"
+        # 双年制赛季（例如 2023-2024）
+        return f"{year_start % 100:02d}{year_end % 100:02d}"
 
 
 # ============================================================================
@@ -69,7 +67,6 @@ FOTMOB_LEAGUE_REGISTRY: dict[int, LeagueInfo] = {
     # ========================================
     # 欧洲 (Europe)
     # ========================================
-
     # 🇬🇧 英格兰 (England)
     47: LeagueInfo(
         league_id=47,
@@ -95,7 +92,6 @@ FOTMOB_LEAGUE_REGISTRY: dict[int, LeagueInfo] = {
         has_stats=True,
         fotmob_url="https://www.fotmob.com/leagues/48/championship/",
     ),
-
     # 🇪🇸 西班牙 (Spain)
     87: LeagueInfo(
         league_id=87,
@@ -121,7 +117,6 @@ FOTMOB_LEAGUE_REGISTRY: dict[int, LeagueInfo] = {
         has_stats=False,
         fotmob_url="https://www.fotmob.com/leagues/94/segunda-division/",
     ),
-
     # 🇩🇪 德国 (Germany)
     78: LeagueInfo(
         league_id=78,
@@ -147,7 +142,6 @@ FOTMOB_LEAGUE_REGISTRY: dict[int, LeagueInfo] = {
         has_stats=False,
         fotmob_url="https://www.fotmob.com/leagues/95/2-bundesliga/",
     ),
-
     # 🇮🇹 意大利 (Italy)
     126: LeagueInfo(
         league_id=126,
@@ -173,7 +167,6 @@ FOTMOB_LEAGUE_REGISTRY: dict[int, LeagueInfo] = {
         has_stats=False,
         fotmob_url="https://www.fotmob.com/leagues/127/serie-b/",
     ),
-
     # 🇫🇷 法国 (France)
     53: LeagueInfo(
         league_id=53,
@@ -187,7 +180,6 @@ FOTMOB_LEAGUE_REGISTRY: dict[int, LeagueInfo] = {
         has_stats=True,
         fotmob_url="https://www.fotmob.com/leagues/53/ligue-1/",
     ),
-
     # 🇵🇹 葡萄牙 (Portugal)
     155: LeagueInfo(
         league_id=155,
@@ -201,7 +193,6 @@ FOTMOB_LEAGUE_REGISTRY: dict[int, LeagueInfo] = {
         has_stats=True,
         fotmob_url="https://www.fotmob.com/leagues/155/liga-portugal/",
     ),
-
     # 🇳🇱 荷兰 (Netherlands)
     129: LeagueInfo(
         league_id=129,
@@ -215,7 +206,6 @@ FOTMOB_LEAGUE_REGISTRY: dict[int, LeagueInfo] = {
         has_stats=True,
         fotmob_url="https://www.fotmob.com/leagues/129/eredivisie/",
     ),
-
     # 🇧🇪 比利时 (Belgium)
     118: LeagueInfo(
         league_id=118,
@@ -229,7 +219,6 @@ FOTMOB_LEAGUE_REGISTRY: dict[int, LeagueInfo] = {
         has_stats=True,
         fotmob_url="https://www.fotmob.com/leagues/118/jupiler-pro-league/",
     ),
-
     # 🇸🇨 苏格兰 (Scotland)
     157: LeagueInfo(
         league_id=157,
@@ -243,7 +232,6 @@ FOTMOB_LEAGUE_REGISTRY: dict[int, LeagueInfo] = {
         has_stats=True,
         fotmob_url="https://www.fotmob.com/leagues/157/scottish-premiership/",
     ),
-
     # 🇹🇷 土耳其 (Turkey)
     157: LeagueInfo(
         league_id=201,
@@ -257,7 +245,6 @@ FOTMOB_LEAGUE_REGISTRY: dict[int, LeagueInfo] = {
         has_stats=False,
         fotmob_url="https://www.fotmob.com/leagues/201/super-lig/",
     ),
-
     # 🇬🇷 希腊 (Greece)
     96: LeagueInfo(
         league_id=96,
@@ -271,7 +258,6 @@ FOTMOB_LEAGUE_REGISTRY: dict[int, LeagueInfo] = {
         has_stats=True,
         fotmob_url="https://www.fotmob.com/leagues/96/super-league-greece/",
     ),
-
     # 🇷🇺 俄罗斯 (Russia)
     153: LeagueInfo(
         league_id=153,
@@ -285,7 +271,6 @@ FOTMOB_LEAGUE_REGISTRY: dict[int, LeagueInfo] = {
         has_stats=True,
         fotmob_url="https://www.fotmob.com/leagues/153/premier-league-russia/",
     ),
-
     # 🇺🇦 乌克兰 (Ukraine)
     186: LeagueInfo(
         league_id=186,
@@ -299,11 +284,9 @@ FOTMOB_LEAGUE_REGISTRY: dict[int, LeagueInfo] = {
         has_stats=True,
         fotmob_url="https://www.fotmob.com/leagues/186/premier-liha/",
     ),
-
     # ========================================
     # 美洲 (Americas)
     # ========================================
-
     # 🇺🇸 美国 (USA) - MLS
     203: LeagueInfo(
         league_id=203,
@@ -317,7 +300,6 @@ FOTMOB_LEAGUE_REGISTRY: dict[int, LeagueInfo] = {
         has_stats=True,
         fotmob_url="https://www.fotmob.com/leagues/203/mls/",
     ),
-
     # 🇧🇷 巴西 (Brazil)
     274: LeagueInfo(
         league_id=274,
@@ -331,7 +313,6 @@ FOTMOB_LEAGUE_REGISTRY: dict[int, LeagueInfo] = {
         has_stats=True,
         fotmob_url="https://www.fotmob.com/leagues/274/serie-a-brazil/",
     ),
-
     # 🇦🇷 阿根廷 (Argentina)
     275: LeagueInfo(
         league_id=275,
@@ -345,7 +326,6 @@ FOTMOB_LEAGUE_REGISTRY: dict[int, LeagueInfo] = {
         has_stats=True,
         fotmob_url="https://www.fotmob.com/leagues/275/liga-profesional/",
     ),
-
     # 🇲exico 墨西哥
     298: LeagueInfo(
         league_id=298,
@@ -359,11 +339,9 @@ FOTMOB_LEAGUE_REGISTRY: dict[int, LeagueInfo] = {
         has_stats=True,
         fotmob_url="https://www.fotmob.com/leagues/298/liga-mx/",
     ),
-
     # ========================================
     # 亚洲 (Asia)
     # ========================================
-
     # 🇯🇵 日本 (Japan) - J-League
     345: LeagueInfo(
         league_id=345,
@@ -377,7 +355,6 @@ FOTMOB_LEAGUE_REGISTRY: dict[int, LeagueInfo] = {
         has_stats=True,
         fotmob_url="https://www.fotmob.com/leagues/345/j-league-division-1/",
     ),
-
     # 🇨🇳 中国 (China) - CSL
     322: LeagueInfo(
         league_id=322,
@@ -391,7 +368,6 @@ FOTMOB_LEAGUE_REGISTRY: dict[int, LeagueInfo] = {
         has_stats=True,
         fotmob_url="https://www.fotmob.com/leagues/322/chinese-super-league/",
     ),
-
     # 🇰🇷 韩国 (South Korea) - K-League
     353: LeagueInfo(
         league_id=353,
@@ -405,7 +381,6 @@ FOTMOB_LEAGUE_REGISTRY: dict[int, LeagueInfo] = {
         has_stats=True,
         fotmob_url="https://www.fotmob.com/leagues/353/k-league-1/",
     ),
-
     # 🇸🇦 沙特阿拉伯 (Saudi Arabia) - Saudi Pro League
     410: LeagueInfo(
         league_id=410,
@@ -419,7 +394,6 @@ FOTMOB_LEAGUE_REGISTRY: dict[int, LeagueInfo] = {
         has_stats=True,
         fotmob_url="https://www.fotmob.com/leagues/410/saudi-pro-league/",
     ),
-
     # 🇦🇪 阿联酋 (UAE) - ADNOC Pro League
     411: LeagueInfo(
         league_id=411,
@@ -433,7 +407,6 @@ FOTMOB_LEAGUE_REGISTRY: dict[int, LeagueInfo] = {
         has_stats=True,
         fotmob_url="https://www.fotmob.com/leagues/411/adnoc-pro-league/",
     ),
-
     # 🇦🇺 澳大利亚 (Australia) - A-League
     312: LeagueInfo(
         league_id=312,
@@ -447,7 +420,6 @@ FOTMOB_LEAGUE_REGISTRY: dict[int, LeagueInfo] = {
         has_stats=True,
         fotmob_url="https://www.fotmob.com/leagues/312/a-league/",
     ),
-
     # 🇮🇳 印度 (India) - ISL
     397: LeagueInfo(
         league_id=397,
@@ -461,11 +433,9 @@ FOTMOB_LEAGUE_REGISTRY: dict[int, LeagueInfo] = {
         has_stats=True,
         fotmob_url="https://www.fotmob.com/leagues/397/indian-super-league/",
     ),
-
     # ========================================
     # 非洲 (Africa)
     # ========================================
-
     # 🇿🇦 南非 (South Africa)
     288: LeagueInfo(
         league_id=288,
@@ -479,7 +449,6 @@ FOTMOB_LEAGUE_REGISTRY: dict[int, LeagueInfo] = {
         has_stats=False,
         fotmob_url="https://www.fotmob.com/leagues/288/premier-soccer-league/",
     ),
-
     # 🇪🇬 埃及 (Egypt)
     287: LeagueInfo(
         league_id=287,
@@ -493,7 +462,6 @@ FOTMOB_LEAGUE_REGISTRY: dict[int, LeagueInfo] = {
         has_stats=True,
         fotmob_url="https://www.fotmob.com/leagues/287/premier-league/",
     ),
-
     # 🇳🇬 尼日利亚 (Nigeria)
     412: LeagueInfo(
         league_id=412,
@@ -513,6 +481,7 @@ FOTMOB_LEAGUE_REGISTRY: dict[int, LeagueInfo] = {
 # ============================================================================
 # 辅助函数
 # ============================================================================
+
 
 def get_league_info(league_id: int) -> LeagueInfo | None:
     """
@@ -565,12 +534,8 @@ def get_all_leagues() -> list[LeagueInfo]:
 
 def print_league_registry():
     """打印联赛注册表摘要"""
-    leagues = get_all_leagues()
+    get_all_leagues()
 
-    print("=" * 80)
-    print("FotMob 全球联赛注册表 - V26.6")
-    print("=" * 80)
-    print("")
 
     # 按大洲分组
     continents = {
@@ -580,9 +545,7 @@ def print_league_registry():
         "非洲": ["ZA", "EG", "NG"],
     }
 
-    for continent, countries in continents.items():
-        print(f"🌍 {continent}")
-        print("-" * 60)
+    for countries in continents.values():
 
         for country in countries:
             country_leagues = get_leagues_by_country(country)
@@ -590,10 +553,8 @@ def print_league_registry():
                 continue
 
             for league in country_leagues:
-                tier_icon = {1: "⭐", 2: "✅", 3: "○"}.get(league.tier, "?")
-                print(f"{tier_icon} {league.league_id:3d} | {league.name_zh:8s} | {league.name}")
+                {1: "⭐", 2: "✅", 3: "○"}.get(league.tier, "?")
 
-        print("")
 
 
 # ============================================================================

@@ -22,6 +22,7 @@ from pydantic import BaseModel, Field, field_validator, model_validator
 # 枚举类型定义
 # ============================================================================
 
+
 class DataSource(str, Enum):
     """数据源枚举 - 标准化供应商标识"""
 
@@ -45,6 +46,7 @@ class VendorID(str, Enum):
 # ============================================================================
 # 核心数据模型
 # ============================================================================
+
 
 class MarketMetric(BaseModel):
     """市场指标数据模型 - 强类型验证.
@@ -80,7 +82,7 @@ class MarketMetric(BaseModel):
             "id": self.id,
             "value": self.value,
             "timestamp": self.timestamp.isoformat(),
-            "source": self.source.value if self.source else None
+            "source": self.source.value if self.source else None,
         }
 
 
@@ -194,7 +196,7 @@ class VendorOddsData(BaseModel):
             "integrity_score": self.integrity_score,
             "is_valid": self.is_valid,
             "validation_error": self.validation_error,
-            "extracted_at": self.extracted_at.isoformat()
+            "extracted_at": self.extracted_at.isoformat(),
         }
 
 
@@ -250,6 +252,7 @@ class MatchOddsPayload(BaseModel):
 # ============================================================================
 # 辅助模型
 # ============================================================================
+
 
 class ValidationResult(BaseModel):
     """验证结果模型.

@@ -20,7 +20,12 @@ class V123CoreValidation:
     def __init__(self):
         self.collector = FotMobCoreCollector()
         self.current_time = datetime(2024, 12, 22, 12, 0, 0, tzinfo=UTC)
-        self.test_results = {"sentry_logic": {}, "parser_logic": {}, "filter_logic": {}, "overall_status": "PENDING"}
+        self.test_results = {
+            "sentry_logic": {},
+            "parser_logic": {},
+            "filter_logic": {},
+            "overall_status": "PENDING",
+        }
 
     def test_sentry_threshold(self):
         """测试哨兵阈值设置"""
@@ -58,15 +63,6 @@ class V123CoreValidation:
         medium_rejected = medium_size < threshold
         large_rejected = large_size < threshold
 
-        results = {
-            "small_data_size": small_size,
-            "small_rejected": small_rejected,
-            "medium_data_size": medium_size,
-            "medium_rejected": medium_rejected,
-            "large_data_size": large_size,
-            "large_rejected": large_rejected,
-            "threshold": threshold,
-        }
 
         if small_rejected and medium_rejected and not large_rejected:
             logger.info("✅ 大小验证逻辑正确")
@@ -111,12 +107,6 @@ class V123CoreValidation:
         historical_diff = self.current_time - historical_date
         should_accept_historical = historical_diff.total_seconds() > 0
 
-        results = {
-            "future_days": future_diff.days,
-            "should_reject_future": should_reject_future,
-            "historical_days": historical_diff.days,
-            "should_accept_historical": should_accept_historical,
-        }
 
         if should_reject_future and should_accept_historical:
             logger.info("✅ 历史过滤器逻辑正确")

@@ -14,7 +14,6 @@ Version: 1.0.0
 
 import asyncio
 from datetime import datetime, timedelta
-import json
 import logging
 from pathlib import Path
 import sys
@@ -92,7 +91,11 @@ class L1DailyScheduleTask:
             db = settings.database
 
             conn = psycopg2.connect(
-                host=db.host, port=db.port, database=db.name, user=db.user, password=db.password.get_secret_value()
+                host=db.host,
+                port=db.port,
+                database=db.name,
+                user=db.user,
+                password=db.password.get_secret_value(),
             )
 
             cursor = conn.cursor()
@@ -259,7 +262,7 @@ class L1DailyScheduleTask:
             return matches
 
         except Exception as e:
-            logger.error(f"获取联赛 {league_id} 数据失败: {e}")
+            logger.exception(f"获取联赛 {league_id} 数据失败: {e}")
             return []
 
     def _get_league_tier(self, league_id: int) -> dict:
@@ -317,7 +320,9 @@ class L2IncrementalHarvestTask:
 
             try:
                 # 使用 V11.0 容错采集器（带联赛分级哨兵）
-                success = self.collector.harvest_match_with_league(match_id=match_id, league_id=league_id)
+                success = self.collector.harvest_match_with_league(
+                    match_id=match_id, league_id=league_id
+                )
 
                 if success:
                     result["success"] += 1
@@ -326,7 +331,7 @@ class L2IncrementalHarvestTask:
                     result["failed"] += 1
 
             except Exception as e:
-                logger.error(f"采集比赛 {match_id} 失败: {e}")
+                logger.exception(f"采集比赛 {match_id} 失败: {e}")
                 result["failed"] += 1
 
         logger.info(f"✅ 采集完成: {result['success']}/{result['total']} 成功")
@@ -376,7 +381,9 @@ class V19PredictionTask:
                     # 某些模型格式不同，适配处理
                     if isinstance(model_data, dict):
                         self.scaler = model_data.get("scaler")
-                        self.feature_columns = model_data.get("feature_columns", model_data.get("feature_names"))
+                        self.feature_columns = model_data.get(
+                            "feature_columns", model_data.get("feature_names")
+                        )
                     logger.info(f"✅ 模型加载成功: {model_path}")
                     model_loaded = True
                     break
@@ -407,10 +414,10 @@ class V19PredictionTask:
             return True
 
         except Exception as e:
-            logger.error(f"❌ 模型加载失败: {e}")
+            logger.exception(f"❌ 模型加载失败: {e}")
             import traceback
 
-            logger.error(traceback.format_exc())
+            logger.exception(traceback.format_exc())
             return False
 
     async def predict_matches(self, matches: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -427,9 +434,8 @@ class V19PredictionTask:
         logger.info("🤖 V19 预测: 开始计算预测")
         logger.info("=" * 60)
 
-        if self.model is None:
-            if not self.load_model():
-                return []
+        if self.model is None and not self.load_model():
+            return []
 
         predictions = []
 
@@ -448,7 +454,7 @@ class V19PredictionTask:
                 predictions.append(prediction)
 
             except Exception as e:
-                logger.error(f"预测比赛 {match_id} 失败: {e}")
+                logger.exception(f"预测比赛 {match_id} 失败: {e}")
                 continue
 
         logger.info(f"✅ 预测完成: {len(predictions)} 场比赛")
@@ -466,7 +472,11 @@ class V19PredictionTask:
             db = settings.database
 
             conn = psycopg2.connect(
-                host=db.host, port=db.port, database=db.name, user=db.user, password=db.password.get_secret_value()
+                host=db.host,
+                port=db.port,
+                database=db.name,
+                user=db.user,
+                password=db.password.get_secret_value(),
             )
 
             cursor = conn.cursor()
@@ -522,10 +532,7 @@ class V19PredictionTask:
     def _predict_single(self, features: np.ndarray, match: dict) -> dict[str, Any]:
         """单场比赛预测"""
         # 标准化特征
-        if self.scaler is not None:
-            features_scaled = self.scaler.transform(features)
-        else:
-            features_scaled = features
+        features_scaled = self.scaler.transform(features) if self.scaler is not None else features
 
         # 原始预测
         raw_proba = self.model.predict_proba(features_scaled)[0]
@@ -620,7 +627,7 @@ class MarketPriceVerificationTask:
             home_team = pred.get("home_team")
             away_team = pred.get("away_team")
             prediction = pred.get("prediction", "Unknown")
-            prediction_code = pred.get("prediction_code", -1)
+            pred.get("prediction_code", -1)
 
             # 转换预测代码到 H/D/A
             if prediction == "Home":
@@ -715,7 +722,11 @@ class BettingOpportunityGenerator:
         logger.info("=" * 60)
 
         # 筛选符合条件的预测
-        filtered = [p for p in predictions if p["confidence"] >= min_confidence and p["estimated_roi"] >= min_roi]
+        filtered = [
+            p
+            for p in predictions
+            if p["confidence"] >= min_confidence and p["estimated_roi"] >= min_roi
+        ]
 
         logger.info(f"📊 筛选结果: {len(filtered)}/{len(predictions)} 场比赛符合条件")
 
@@ -866,7 +877,9 @@ class DailyPredictionWorkflow:
 
             # Stage 5: Export - 生成清单
             logger.info("\n📍 Stage 5: 生成盈利机会清单")
-            output_path = self.exporter.generate_daily_picks(verified_predictions)  # 使用验证后的预测
+            output_path = self.exporter.generate_daily_picks(
+                verified_predictions
+            )  # 使用验证后的预测
             result["stages"]["export"] = {"status": "success", "path": output_path}
             result["final_output"] = output_path
 
@@ -882,10 +895,10 @@ class DailyPredictionWorkflow:
             logger.info(f"输出文件: {output_path}")
 
         except Exception as e:
-            logger.error(f"❌ 流水线执行失败: {e}")
+            logger.exception(f"❌ 流水线执行失败: {e}")
             import traceback
 
-            logger.error(traceback.format_exc())
+            logger.exception(traceback.format_exc())
             result["error"] = str(e)
 
         return result
@@ -957,12 +970,8 @@ def main():
 
         if args.test:
             # 测试运行
-            result = await workflow.run_daily_workflow()
+            await workflow.run_daily_workflow()
 
-            print("\n" + "=" * 60)
-            print("测试运行结果:")
-            print("=" * 60)
-            print(json.dumps(result, indent=2, default=str))
         else:
             # 正常调度运行
             from src.ops.task_runner import TaskRunner
@@ -970,21 +979,17 @@ def main():
             runner = TaskRunner()
 
             # 注册每日预测任务（每天 08:00 UTC 执行）
-            runner.register_task(DailyPredictionTask(), cron_expression="0 8 * * *", job_id="daily_prediction")
+            runner.register_task(
+                DailyPredictionTask(), cron_expression="0 8 * * *", job_id="daily_prediction"
+            )
 
             runner.start()
 
-            print("\n" + "=" * 60)
-            print("🚀 每日预测调度器已启动")
-            print("⏰ 计划: 每天 08:00 UTC 执行")
-            print("按 Ctrl+C 停止")
-            print("=" * 60 + "\n")
 
             # 保持运行
             try:
                 asyncio.Event().wait()
             except KeyboardInterrupt:
-                print("\n\n🛑 收到停止信号...")
                 runner.stop()
 
     asyncio.run(run())

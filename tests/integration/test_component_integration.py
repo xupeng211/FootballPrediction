@@ -3,11 +3,12 @@
 专注于不同模块间的协作和数据流测试
 """
 
-import pytest
 import asyncio
-import pandas as pd
-from unittest.mock import patch, Mock, AsyncMock
 from datetime import datetime
+from unittest.mock import AsyncMock, Mock, patch
+
+import pandas as pd
+import pytest
 
 
 class TestMLComponentsIntegration:
@@ -85,7 +86,7 @@ class TestMLComponentsIntegration:
     def test_ml_inference_pipeline_integration(self):
         """测试ML推理流水线集成"""
         try:
-            from src.ml.inference import ModelLoader, MatchPredictor
+            from src.ml.inference import MatchPredictor, ModelLoader
             from src.ml.inference.cache_manager import PredictionCache
 
             # 创建组件
@@ -215,6 +216,7 @@ class TestAPIIntegration:
         """测试API与服务集成"""
         try:
             from fastapi import FastAPI
+
             from src.services.inference_service import InferenceService
 
             # 创建FastAPI应用
@@ -238,8 +240,9 @@ class TestAPIIntegration:
     def test_health_check_with_services(self, mock_inference):
         """测试健康检查与服务集成"""
         try:
-            from src.api.health import router
             from fastapi import FastAPI
+
+            from src.api.health import router
 
             # 模拟服务状态
             mock_service = Mock()
@@ -368,6 +371,7 @@ class TestConfigurationIntegration:
         """测试环境特定集成"""
         try:
             import os
+
             from src.config_unified import get_settings
 
             # 测试环境变量影响

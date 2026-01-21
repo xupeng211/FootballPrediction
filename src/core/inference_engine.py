@@ -93,7 +93,7 @@ class FootballPredictionInference:
             return True
 
         except Exception as e:
-            logger.error(f"❌ 模型加载失败: {e}")
+            logger.exception(f"❌ 模型加载失败: {e}")
             return False
 
     def prepare_features(self, match_features: dict) -> np.ndarray:
@@ -148,12 +148,11 @@ class FootballPredictionInference:
             features = np.array(feature_vector).reshape(1, -1)
 
             # 标准化
-            features_scaled = self.scaler.transform(features)
+            return self.scaler.transform(features)
 
-            return features_scaled
 
         except Exception as e:
-            logger.error(f"❌ 特征准备失败: {e}")
+            logger.exception(f"❌ 特征准备失败: {e}")
             return None
 
     def predict_match(self, home_team: str, away_team: str, match_features: dict) -> dict:
@@ -168,9 +167,8 @@ class FootballPredictionInference:
         Returns:
             预测结果字典
         """
-        if not self.is_loaded:
-            if not self.load_model():
-                return {"error": "模型加载失败"}
+        if not self.is_loaded and not self.load_model():
+            return {"error": "模型加载失败"}
 
         try:
             # 准备特征
@@ -183,7 +181,6 @@ class FootballPredictionInference:
             predicted_class = self.model.predict(features)[0]
 
             # 解析结果
-            class_names = ["客胜(Away Win)", "平局(Draw)", "主胜(Home Win)"]
             result_map = {0: "客胜", 1: "平局", 2: "主胜"}
 
             # 🎰 凯利公式金融风险控制计算
@@ -206,7 +203,7 @@ class FootballPredictionInference:
             best_bet = max(kelly_recommendations.items(), key=lambda x: x[1].recommended_stake_percent)
             best_outcome, best_kelly = best_bet
 
-            results = {
+            return {
                 "home_team": home_team,
                 "away_team": away_team,
                 "predicted_class": int(predicted_class),
@@ -236,10 +233,9 @@ class FootballPredictionInference:
                 "kelly_summary": f"[KELLY] Recommended Stake: {best_kelly.recommended_stake_percent:.1f}%",
             }
 
-            return results
 
         except Exception as e:
-            logger.error(f"❌ 预测失败: {e}")
+            logger.exception(f"❌ 预测失败: {e}")
             return {"error": f"预测失败: {e}"}
 
     def _generate_recommendation(self, probabilities: np.ndarray) -> str:
@@ -300,7 +296,7 @@ class FootballPredictionInference:
         draw_pct = probs["draw"] * 100
         away_win_pct = probs["away_win"] * 100
 
-        log_line = (
+        return (
             f"[PREDICT] {prediction['home_team']} vs {prediction['away_team']} | "
             f"Home Win: {home_win_pct:.1f}% | "
             f"Draw: {draw_pct:.1f}% | "
@@ -309,7 +305,6 @@ class FootballPredictionInference:
             f"Confidence: {prediction['confidence']:.1f}"
         )
 
-        return log_line
 
 
 # 全局推理引擎实例

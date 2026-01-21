@@ -24,8 +24,9 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
-from ..constants import PROBABILITY
-from ..ml.inference.predictor import Predictor
+from src.constants import PROBABILITY
+from src.ml.inference.predictor import Predictor
+
 from .dependency_injection import ServiceLifecycle, injectable
 
 logger = logging.getLogger(__name__)
@@ -139,11 +140,14 @@ class VectorizedOddsCalculator:
                 prob_vectors[idx] = VALIDATOR.normalize_probabilities(prob_vectors[idx].tolist())
 
         # 检查概率范围
-        prob_vectors = np.clip(prob_vectors, PROBABILITY.MIN_PROBABILITY, PROBABILITY.MAX_PROBABILITY)
+        return np.clip(
+            prob_vectors, PROBABILITY.MIN_PROBABILITY, PROBABILITY.MAX_PROBABILITY
+        )
 
-        return prob_vectors
 
-    def convert_to_decimal_vectorized(self, float_array: np.ndarray, preserve_precision: bool = True) -> np.ndarray:
+    def convert_to_decimal_vectorized(
+        self, float_array: np.ndarray, preserve_precision: bool = True
+    ) -> np.ndarray:
         """
         向量化转换为Decimal类型
 
@@ -158,7 +162,9 @@ class VectorizedOddsCalculator:
             return float_array
 
         # 使用vectorize进行高效转换
-        decimal_converter = np.vectorize(lambda x: Decimal(str(x)).quantize(Decimal("0.000001")), otypes=[object])
+        decimal_converter = np.vectorize(
+            lambda x: Decimal(str(x)).quantize(Decimal("0.000001")), otypes=[object]
+        )
 
         return decimal_converter(float_array)
 
@@ -206,7 +212,7 @@ class HighPerformanceInferenceEngine(ServiceLifecycle):
             self.logger.info("✅ 高性能推理引擎初始化完成")
 
         except Exception as e:
-            self.logger.error(f"❌ 推理引擎初始化失败: {e}")
+            self.logger.exception(f"❌ 推理引擎初始化失败: {e}")
             raise
 
     async def shutdown(self) -> None:
@@ -276,7 +282,7 @@ class HighPerformanceInferenceEngine(ServiceLifecycle):
             return results
 
         except Exception as e:
-            self.logger.error(f"❌ 向量化批量预测失败: {e}")
+            self.logger.exception(f"❌ 向量化批量预测失败: {e}")
             raise
 
     async def predict_odds_batch_vectorized(
@@ -301,26 +307,37 @@ class HighPerformanceInferenceEngine(ServiceLifecycle):
             if isinstance(odds_data, pd.DataFrame):
                 odds_array = odds_data[["home_odds", "draw_odds", "away_odds"]].values
             elif isinstance(odds_data, list):
-                odds_array = np.array([[item["home_odds"], item["draw_odds"], item["away_odds"]] for item in odds_data])
+                odds_array = np.array(
+                    [
+                        [item["home_odds"], item["draw_odds"], item["away_odds"]]
+                        for item in odds_data
+                    ]
+                )
             else:
                 odds_array = odds_data
 
             # 向量化概率计算
-            prob_array = self._odds_calculator.calculate_implied_probabilities_vectorized(odds_array)
+            prob_array = self._odds_calculator.calculate_implied_probabilities_vectorized(
+                odds_array
+            )
 
             # 性能统计
             processing_time = time.time() - start_time
             self._stats.vectorized_operations += len(prob_array)
 
-            self.logger.info(f"向量化赔率计算完成: {len(prob_array)} 条记录, 耗时 {processing_time * 1000:.1f}ms")
+            self.logger.info(
+                f"向量化赔率计算完成: {len(prob_array)} 条记录, 耗时 {processing_time * 1000:.1f}ms"
+            )
 
             return prob_array
 
         except Exception as e:
-            self.logger.error(f"❌ 向量化赔率计算失败: {e}")
+            self.logger.exception(f"❌ 向量化赔率计算失败: {e}")
             raise
 
-    async def _preprocess_batch_vectorized(self, match_data_list: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    async def _preprocess_batch_vectorized(
+        self, match_data_list: list[dict[str, Any]]
+    ) -> list[dict[str, Any]]:
         """向量化预处理批量数据"""
         processed_data = []
 
@@ -342,7 +359,9 @@ class HighPerformanceInferenceEngine(ServiceLifecycle):
                     self._feature_cache[cache_key] = processed_match
 
             except Exception as e:
-                self.logger.warning(f"预处理比赛数据失败 {match_data.get('match_id', 'unknown')}: {e}")
+                self.logger.warning(
+                    f"预处理比赛数据失败 {match_data.get('match_id', 'unknown')}: {e}"
+                )
                 # 添加空结果以保持顺序
                 processed_data.append(None)
 
@@ -357,7 +376,9 @@ class HighPerformanceInferenceEngine(ServiceLifecycle):
     ) -> list[dict[str, Any]]:
         """并行向量化预测"""
         # 分割批次
-        batches = [processed_data[i : i + batch_size] for i in range(0, len(processed_data), batch_size)]
+        batches = [
+            processed_data[i : i + batch_size] for i in range(0, len(processed_data), batch_size)
+        ]
 
         all_results = []
 
@@ -365,7 +386,9 @@ class HighPerformanceInferenceEngine(ServiceLifecycle):
         with ThreadPoolExecutor(max_workers=self.config.max_workers) as executor:
             # 提交所有批次任务
             future_to_batch = {
-                executor.submit(self._predict_batch_chunk, batch, include_features, include_metadata): batch_idx
+                executor.submit(
+                    self._predict_batch_chunk, batch, include_features, include_metadata
+                ): batch_idx
                 for batch_idx, batch in enumerate(batches)
             }
 
@@ -376,7 +399,7 @@ class HighPerformanceInferenceEngine(ServiceLifecycle):
                     batch_results = future.result()
                     all_results.extend(batch_results)
                 except Exception as e:
-                    self.logger.error(f"批次 {batch_idx} 预测失败: {e}")
+                    self.logger.exception(f"批次 {batch_idx} 预测失败: {e}")
                     # 添加空结果以保持顺序
                     batch_size = len(batches[batch_idx])
                     all_results.extend([None] * batch_size)
@@ -395,7 +418,9 @@ class HighPerformanceInferenceEngine(ServiceLifecycle):
 
         for i in range(0, len(processed_data), batch_size):
             batch = processed_data[i : i + batch_size]
-            batch_results = await self._predict_batch_chunk(batch, include_features, include_metadata)
+            batch_results = await self._predict_batch_chunk(
+                batch, include_features, include_metadata
+            )
             all_results.extend(batch_results)
 
         return all_results
@@ -421,14 +446,18 @@ class HighPerformanceInferenceEngine(ServiceLifecycle):
             if self.config.enable_vectorized_computation:
                 features_vectors = await self._extract_features_vectorized(valid_data)
             else:
-                features_vectors = [await self._extract_single_features(data) for data in valid_data]
+                features_vectors = [
+                    await self._extract_single_features(data) for data in valid_data
+                ]
 
             # 批量预测
             predictions = await self._predict_batch_features(features_vectors)
 
             # 构建结果
-            for i, (data, prediction) in enumerate(zip(valid_data, predictions)):
-                result = self._build_prediction_result(data, prediction, include_features, include_metadata)
+            for _i, (data, prediction) in enumerate(zip(valid_data, predictions, strict=False)):
+                result = self._build_prediction_result(
+                    data, prediction, include_features, include_metadata
+                )
                 results.append(result)
 
             # 处理无效数据的位置
@@ -454,10 +483,12 @@ class HighPerformanceInferenceEngine(ServiceLifecycle):
             return final_results
 
         except Exception as e:
-            self.logger.error(f"批次预测失败: {e}")
+            self.logger.exception(f"批次预测失败: {e}")
             return [None] * len(batch)
 
-    async def _extract_features_vectorized(self, match_data_list: list[dict[str, Any]]) -> np.ndarray:
+    async def _extract_features_vectorized(
+        self, match_data_list: list[dict[str, Any]]
+    ) -> np.ndarray:
         """向量化特征提取"""
         # 这里可以实现更复杂的向量化特征提取
         # 目前简化为单个提取的组合
@@ -477,10 +508,12 @@ class HighPerformanceInferenceEngine(ServiceLifecycle):
             # 简化实现，实际应该集成现有的特征工程
             return np.random.rand(13)  # 临时实现
         except Exception as e:
-            self.logger.error(f"特征提取失败: {e}")
+            self.logger.exception(f"特征提取失败: {e}")
             return np.zeros(13)
 
-    async def _predict_batch_features(self, features_vectors: np.ndarray | list[np.ndarray]) -> list[dict[str, Any]]:
+    async def _predict_batch_features(
+        self, features_vectors: np.ndarray | list[np.ndarray]
+    ) -> list[dict[str, Any]]:
         """批量特征预测"""
         try:
             if isinstance(features_vectors, list):
@@ -493,7 +526,7 @@ class HighPerformanceInferenceEngine(ServiceLifecycle):
             # 这里需要实现与现有预测器的集成
             predictions = []
 
-            for i in range(len(features_array)):
+            for _i in range(len(features_array)):
                 # 临时实现，实际应该调用预测器
                 proba = np.random.rand(3)
                 proba = proba / proba.sum()  # 归一化
@@ -510,7 +543,7 @@ class HighPerformanceInferenceEngine(ServiceLifecycle):
             return predictions
 
         except Exception as e:
-            self.logger.error(f"批量特征预测失败: {e}")
+            self.logger.exception(f"批量特征预测失败: {e}")
             return []
 
     def _build_prediction_result(
@@ -555,7 +588,9 @@ class HighPerformanceInferenceEngine(ServiceLifecycle):
         self._stats.total_time_seconds += total_time
 
         if total_time > 0:
-            self._stats.avg_predictions_per_second = self._stats.total_predictions / self._stats.total_time_seconds
+            self._stats.avg_predictions_per_second = (
+                self._stats.total_predictions / self._stats.total_time_seconds
+            )
 
     def get_inference_stats(self) -> BatchInferenceStats:
         """获取推理统计"""

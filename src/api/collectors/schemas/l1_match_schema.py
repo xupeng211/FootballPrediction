@@ -116,7 +116,9 @@ class L1MatchData(BaseModel):
         只有白名单中的 League ID 才能通过此校验
         """
         if not LeagueId.is_valid_id(v):
-            raise ValueError(f"❌ 拒绝非法 League ID: {v}。合法的 League IDs: {[lid.value for lid in LeagueId]}")
+            raise ValueError(
+                f"❌ 拒绝非法 League ID: {v}。合法的 League IDs: {[lid.value for lid in LeagueId]}"
+            )
         return v
 
     @field_validator("league_name")

@@ -19,11 +19,10 @@ Version: V151.4 (List Page Harvesting)
 
 import asyncio
 import logging
+from pathlib import Path
 import re
 import sys
-from datetime import datetime
-from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 from urllib.parse import urljoin
 
 # 添加项目根目录到路径
@@ -31,10 +30,12 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 # V29.0: 加载 .env 文件
 from dotenv import load_dotenv
+
 load_dotenv(override=True)
 
+from playwright.async_api import async_playwright
 import psycopg2
-from playwright.async_api import async_playwright, Page, Browser
+
 from src.config_unified import get_settings
 
 # ============================================================================
@@ -57,9 +58,9 @@ PROXY_SERVER = "http://172.25.16.1:7890"
 
 logging.basicConfig(
     level=logging.INFO,
-    format='[%(asctime)s] [%(levelname)s] %(message)s',
+    format="[%(asctime)s] [%(levelname)s] %(message)s",
     handlers=[
-        logging.FileHandler('logs/harvest_league_urls.log'),
+        logging.FileHandler("logs/harvest_league_urls.log"),
         logging.StreamHandler()
     ]
 )
@@ -80,7 +81,7 @@ def get_db_connection():
         password=settings.database.password.get_secret_value()
     )
 
-def fetch_fotmob_matches(league_name: str) -> List[Dict[str, Any]]:
+def fetch_fotmob_matches(league_name: str) -> list[dict[str, Any]]:
     """从 matches 表获取指定联赛的比赛
 
     Args:
@@ -104,11 +105,11 @@ def fetch_fotmob_matches(league_name: str) -> List[Dict[str, Any]]:
     """
 
     cursor.execute(query, (league_name,))
-    columns = ['fotmob_id', 'home_team', 'away_team', 'match_date']
+    columns = ["fotmob_id", "home_team", "away_team", "match_date"]
 
     matches = []
     for row in cursor.fetchall():
-        matches.append(dict(zip(columns, row)))
+        matches.append(dict(zip(columns, row, strict=False)))
 
     cursor.close()
     conn.close()
@@ -128,7 +129,7 @@ def match_urls_in_database() -> set:
 
     return urls
 
-def batch_insert_urls(match_url_pairs: List[Dict[str, Any]]) -> int:
+def batch_insert_urls(match_url_pairs: list[dict[str, Any]]) -> int:
     """批量插入 URL 到 matches_mapping 表
 
     Args:
@@ -156,15 +157,15 @@ def batch_insert_urls(match_url_pairs: List[Dict[str, Any]]) -> int:
                     mapping_method = EXCLUDED.mapping_method,
                     updated_at = NOW()
             """, (
-                pair['fotmob_id'],
-                pair['home_team'],
-                pair['away_team'],
-                pair['league_name'],
-                pair['oddsportal_url'],
-                pair.get('match_date'),
+                pair["fotmob_id"],
+                pair["home_team"],
+                pair["away_team"],
+                pair["league_name"],
+                pair["oddsportal_url"],
+                pair.get("match_date"),
                 0.95,  # 列表页置信度较高
-                'semantic',  # V151.4: 使用有效枚举值
-                'pending'
+                "semantic",  # V151.4: 使用有效枚举值
+                "pending"
             ))
             inserted_count += 1
         except Exception as e:
@@ -182,8 +183,8 @@ def batch_insert_urls(match_url_pairs: List[Dict[str, Any]]) -> int:
 
 async def fetch_league_results_page(
     url: str,
-    proxy: Optional[str] = None
-) -> List[Dict[str, Any]]:
+    proxy: str | None = None
+) -> list[dict[str, Any]]:
     """从联赛赛果页抓取所有比赛 URL
 
     Args:
@@ -214,10 +215,10 @@ async def fetch_league_results_page(
 
             # V151.4: 新版页面结构 - 直接提取所有包含哈希的链接
             # 新格式: /football/spain/laliga-2023-2024/{home}-{away}-{hash}/
-            match_pattern = r'/football/[^/]+/[^/]+/[^/]+-[^/]+-([a-zA-Z0-9]{8,12})/'
+            match_pattern = r"/football/[^/]+/[^/]+/[^/]+-[^/]+-([a-zA-Z0-9]{8,12})/"
 
             # 获取所有链接
-            all_links = await page.locator('a').all()
+            all_links = await page.locator("a").all()
             logger.info(f"🔗 页面总链接数: {len(all_links)}")
 
             # 过滤出比赛链接
@@ -237,15 +238,15 @@ async def fetch_league_results_page(
 
                     # 从 URL 解析队名
                     # URL 格式: /football/spain/laliga-2023-2024/barcelona-rayo-vallecano-4A6T7YOu/
-                    url_parts = href.strip('/').split('/')
+                    url_parts = href.strip("/").split("/")
                     if len(url_parts) >= 4:
                         match_part = url_parts[-1]  # barcelona-rayo-vallecano-4A6T7YOu
                         # 移除哈希部分
-                        name_part = '-'.join(match_part.split('-')[:-1])  # barcelona-rayo-vallecano
-                        teams = name_part.split('-')
+                        name_part = "-".join(match_part.split("-")[:-1])  # barcelona-rayo-vallecano
+                        teams = name_part.split("-")
                         if len(teams) >= 2:
-                            home_team = teams[0].replace('-', ' ').title()
-                            away_team = teams[1].replace('-', ' ').title()
+                            home_team = teams[0].replace("-", " ").title()
+                            away_team = teams[1].replace("-", " ").title()
                         else:
                             home_team = ""
                             away_team = ""
@@ -274,9 +275,9 @@ async def fetch_league_results_page(
     return results
 
 def match_fotmob_with_oddsportal(
-    fotmob_matches: List[Dict[str, Any]],
-    oddsportal_matches: List[Dict[str, Any]]
-) -> List[Dict[str, Any]]:
+    fotmob_matches: list[dict[str, Any]],
+    oddsportal_matches: list[dict[str, Any]]
+) -> list[dict[str, Any]]:
     """将 FotMob 比赛与 OddsPortal URL 进行模糊匹配
 
     Args:
@@ -290,9 +291,9 @@ def match_fotmob_with_oddsportal(
     matched_urls = set()
 
     for op_match in oddsportal_matches:
-        op_home = op_match['home_team'].lower().strip()
-        op_away = op_match['away_team'].lower().strip()
-        op_url = op_match['oddsportal_url']
+        op_home = op_match["home_team"].lower().strip()
+        op_away = op_match["away_team"].lower().strip()
+        op_url = op_match["oddsportal_url"]
 
         # 如果 URL 已经匹配过，跳过
         if op_url in matched_urls:
@@ -302,8 +303,8 @@ def match_fotmob_with_oddsportal(
         best_score = 0
 
         for fm_match in fotmob_matches:
-            fm_home = fm_match['home_team'].lower().strip()
-            fm_away = fm_match['away_team'].lower().strip()
+            fm_home = fm_match["home_team"].lower().strip()
+            fm_away = fm_match["away_team"].lower().strip()
 
             # 简单匹配：两队名称都包含在 URL 中
             score = 0
@@ -319,11 +320,11 @@ def match_fotmob_with_oddsportal(
         # 如果两队都匹配成功
         if best_match and best_score >= 2:
             matched_pairs.append({
-                "fotmob_id": best_match['fotmob_id'],
-                "home_team": best_match['home_team'],
-                "away_team": best_match['away_team'],
+                "fotmob_id": best_match["fotmob_id"],
+                "home_team": best_match["home_team"],
+                "away_team": best_match["away_team"],
                 "league_name": "La Liga",
-                "match_date": best_match.get('match_date'),
+                "match_date": best_match.get("match_date"),
                 "oddsportal_url": op_url,
             })
             matched_urls.add(op_url)
@@ -334,7 +335,7 @@ def match_fotmob_with_oddsportal(
 # 主流程
 # ============================================================================
 
-async def main(league: str = "La Liga", dry_run: bool = False, limit: Optional[int] = None):
+async def main(league: str = "La Liga", dry_run: bool = False, limit: int | None = None):
     """主流程
 
     Args:
@@ -379,7 +380,7 @@ async def main(league: str = "La Liga", dry_run: bool = False, limit: Optional[i
     # 步骤 4: 检查已存在的 URL
     logger.info("\n🔍 步骤 4: 检查已存在的 URL...")
     existing_urls = match_urls_in_database()
-    new_pairs = [p for p in matched_pairs if p['oddsportal_url'] not in existing_urls]
+    new_pairs = [p for p in matched_pairs if p["oddsportal_url"] not in existing_urls]
     logger.info(f"✅ 过滤后待插入: {len(new_pairs)} 场")
 
     # 步骤 5: 批量插入
@@ -413,12 +414,12 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(description="V151.4 列表页批量抓哈希引擎")
-    parser.add_argument('--league', type=str, default='La Liga',
-                        help='联赛名称 (默认: La Liga)')
-    parser.add_argument('--dry-run', action='store_true',
-                        help='干跑模式，只验证不写入数据库')
-    parser.add_argument('--limit', type=int, default=None,
-                        help='限制处理数量')
+    parser.add_argument("--league", type=str, default="La Liga",
+                        help="联赛名称 (默认: La Liga)")
+    parser.add_argument("--dry-run", action="store_true",
+                        help="干跑模式，只验证不写入数据库")
+    parser.add_argument("--limit", type=int, default=None,
+                        help="限制处理数量")
 
     args = parser.parse_args()
 

@@ -14,13 +14,14 @@ Sprint 3 功能:
 
 import logging
 
-from ..ml.features.elo_rating_system import EloRatingSystem
-from ..ml.features.odds_movement_features import OddsMovementAnalyzer
-from ..ml.features.poisson_features import PoissonFeatureCalculator
-from ..strategy.kelly_criterion import KellyCriterion
+from src.ml.features.elo_rating_system import EloRatingSystem
+from src.ml.features.odds_movement_features import OddsMovementAnalyzer
+from src.ml.features.poisson_features import PoissonFeatureCalculator
+from src.strategy.kelly_criterion import KellyCriterion
 
 # Sprint 5 新增导入
-from ..testing.backtester import BacktestConfig, BacktestEngine
+from src.testing.backtester import BacktestConfig, BacktestEngine
+
 from .dependency_injection import container_context, get_container
 from .inference_service import InferenceService
 from .prediction_service import PredictionService
@@ -140,7 +141,7 @@ async def setup_services() -> None:
         logger.info("✅ 服务容器设置完成 (包含Sprint 5高级分析服务)")
 
     except Exception as e:
-        logger.error(f"❌ 服务容器设置失败: {e}")
+        logger.exception(f"❌ 服务容器设置失败: {e}")
         raise
 
 
@@ -363,40 +364,40 @@ async def initialize_services() -> None:
             logger.info("🔥 预热核心服务...")
 
             # 初始化推理服务
-            inference_service = await container.resolve("inference_service")
+            await container.resolve("inference_service")
             logger.info("✅ 推理服务初始化完成")
 
             # 初始化预测服务
-            prediction_service = await container.resolve("prediction_service")
+            await container.resolve("prediction_service")
             logger.info("✅ 预测服务初始化完成")
 
             # Sprint 5: 预热高级分析服务
             logger.info("🔥 预热Sprint 5高级分析服务...")
 
             # 初始化Elo评级系统
-            elo_system = await container.resolve("elo_rating_system")
+            await container.resolve("elo_rating_system")
             logger.info("✅ Elo评级系统预热完成")
 
             # 初始化泊松计算器
-            poisson_calculator = await container.resolve("poisson_calculator")
+            await container.resolve("poisson_calculator")
             logger.info("✅ 泊松特征计算器预热完成")
 
             # 初始化赔率分析器
-            odds_analyzer = await container.resolve("odds_analyzer")
+            await container.resolve("odds_analyzer")
             logger.info("✅ 赔率变动分析器预热完成")
 
             # 初始化凯利准则系统
-            kelly_criterion = await container.resolve("kelly_criterion")
+            await container.resolve("kelly_criterion")
             logger.info("✅ 凯利准则系统预热完成")
 
             # 初始化回测引擎
-            backtest_engine = await container.resolve("backtest_engine")
+            await container.resolve("backtest_engine")
             logger.info("✅ 回测引擎预热完成")
 
             logger.info("🎉 所有服务预热完成! (包含Sprint 5高级分析功能)")
 
         except Exception as e:
-            logger.error(f"❌ 服务预热失败: {e}")
+            logger.exception(f"❌ 服务预热失败: {e}")
             raise
 
 
@@ -414,12 +415,12 @@ async def example_usage():
     prediction_service = await container.resolve("prediction_service")
 
     # 进行预测
-    result = await prediction_service.predict_single_match(
+    await prediction_service.predict_single_match(
         match_id="example_match_123", include_features=True, include_metadata=True
     )
 
     # 健康检查
-    health = await prediction_service.get_service_health()
+    await prediction_service.get_service_health()
 
 
 if __name__ == "__main__":

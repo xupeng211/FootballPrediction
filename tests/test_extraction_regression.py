@@ -25,10 +25,9 @@ import pytest
 from playwright.async_api import Page
 
 from src.api.collectors.market_data_engine import (
-    V100MultiVendorExtractor,
-    PROVIDER_MAPPING,
+    MAX_INTEGRITY_SCORE,
     MIN_INTEGRITY_SCORE,
-    MAX_INTEGRITY_SCORE
+    V100MultiVendorExtractor,
 )
 
 logger = logging.getLogger(__name__)
@@ -38,12 +37,12 @@ logger = logging.getLogger(__name__)
 # Test A: Historical Compatibility (2021-2022) - Gravity Mode Fallback
 # ============================================================================
 
+
 @pytest.mark.e2e
 @pytest.mark.slow
 @pytest.mark.asyncio
 async def test_historical_compatibility_gravity_mode(
-    historical_match_sample: Dict,
-    playwright_browser: Page
+    historical_match_sample: Dict, playwright_browser: Page
 ):
     """V119.0 Test A: 历史兼容性测试 - Gravity Mode 保底抓取
 
@@ -74,9 +73,7 @@ async def test_historical_compatibility_gravity_mode(
     # Run V117.1 extraction
     extractor = V100MultiVendorExtractor()
     results = await extractor.extract_all_vendors(
-        page=playwright_browser,
-        match_id=match_id,
-        match_date=match_date
+        page=playwright_browser, match_id=match_id, match_date=match_date
     )
 
     # Validate results
@@ -89,8 +86,9 @@ async def test_historical_compatibility_gravity_mode(
     # Validate integrity score
     integrity_score = entity_p.integrity_score
     assert integrity_score is not None, "[Test A] Entity_P should have integrity_score"
-    assert MIN_INTEGRITY_SCORE < integrity_score < MAX_INTEGRITY_SCORE, \
+    assert MIN_INTEGRITY_SCORE < integrity_score < MAX_INTEGRITY_SCORE, (
         f"[Test A] Entity_P integrity score {integrity_score:.4f} should be in valid range"
+    )
 
     # Validate final odds
     assert entity_p.final_h is not None, "[Test A] Entity_P should have final_h"
@@ -104,13 +102,11 @@ async def test_historical_compatibility_gravity_mode(
 # Test B: High-Precision Validation (2024-2025) - Laser Mode Full Extraction
 # ============================================================================
 
+
 @pytest.mark.e2e
 @pytest.mark.slow
 @pytest.mark.asyncio
-async def test_high_precision_laser_mode(
-    recent_match_sample: Dict,
-    playwright_browser: Page
-):
+async def test_high_precision_laser_mode(recent_match_sample: Dict, playwright_browser: Page):
     """V119.0 Test B: 高精度验证测试 - Laser Mode 满血抓取
 
     验证 V117.1 引擎对 2024-2025 年近期页面的高精度提取能力。
@@ -140,22 +136,21 @@ async def test_high_precision_laser_mode(
     # Run V117.1 extraction
     extractor = V100MultiVendorExtractor()
     results = await extractor.extract_all_vendors(
-        page=playwright_browser,
-        match_id=match_id,
-        match_date=match_date
+        page=playwright_browser, match_id=match_id, match_date=match_date
     )
 
     # Validate results - should extract at least 3 entities
-    assert len(results) >= 3, \
-        f"[Test B] Should extract at least 3 entities, got {len(results)}"
+    assert len(results) >= 3, f"[Test B] Should extract at least 3 entities, got {len(results)}"
 
     # Validate each entity's integrity score
     for source_name, entity_data in results.items():
-        assert entity_data.integrity_score is not None, \
+        assert entity_data.integrity_score is not None, (
             f"[Test B] {source_name} should have integrity_score"
+        )
 
-        assert MIN_INTEGRITY_SCORE < entity_data.integrity_score < MAX_INTEGRITY_SCORE, \
+        assert MIN_INTEGRITY_SCORE < entity_data.integrity_score < MAX_INTEGRITY_SCORE, (
             f"[Test B] {source_name} integrity score {entity_data.integrity_score:.4f} should be in valid range"
+        )
 
         assert entity_data.final_h is not None, f"[Test B] {source_name} should have final_h"
         assert entity_data.final_d is not None, f"[Test B] {source_name} should have final_d"
@@ -168,13 +163,11 @@ async def test_high_precision_laser_mode(
 # Test C: Entity_AVG Synthesis Logic Validation
 # ============================================================================
 
+
 @pytest.mark.e2e
 @pytest.mark.slow
 @pytest.mark.asyncio
-async def test_entity_avg_synthesis(
-    recent_match_sample: Dict,
-    playwright_browser: Page
-):
+async def test_entity_avg_synthesis(recent_match_sample: Dict, playwright_browser: Page):
     """V119.0 Test C: Entity_AVG 自动合成逻辑验证
 
     验证当 Entity_AVG 缺失时，系统能够从所有已识别 Entity 自动计算平均值。
@@ -202,9 +195,7 @@ async def test_entity_avg_synthesis(
     # Run V117.1 extraction
     extractor = V100MultiVendorExtractor()
     results = await extractor.extract_all_vendors(
-        page=playwright_browser,
-        match_id=match_id,
-        match_date=match_date
+        page=playwright_browser, match_id=match_id, match_date=match_date
     )
 
     # Simulate Entity_AVG missing
@@ -215,12 +206,14 @@ async def test_entity_avg_synthesis(
 
     # Collect all valid non-AVG entities
     valid_entities = [
-        v for k, v in results.items()
+        v
+        for k, v in results.items()
         if k != "Entity_AVG" and v.is_valid and v.final_h and v.final_d and v.final_a
     ]
 
-    assert len(valid_entities) >= 2, \
+    assert len(valid_entities) >= 2, (
         "[Test C] Need at least 2 valid entities for Entity_AVG synthesis"
+    )
 
     # Calculate Entity_AVG manually
     avg_h = sum(v.final_h for v in valid_entities) / len(valid_entities)
@@ -235,22 +228,23 @@ async def test_entity_avg_synthesis(
     assert 1.01 <= avg_a <= 50.00, "[Test C] Synthesized avg_a should be in valid range"
 
     # Calculate integrity score for synthesized Entity_AVG
-    synthesized_integrity = 1.0/avg_h + 1.0/avg_d + 1.0/avg_a
-    assert MIN_INTEGRITY_SCORE < synthesized_integrity < MAX_INTEGRITY_SCORE, \
+    synthesized_integrity = 1.0 / avg_h + 1.0 / avg_d + 1.0 / avg_a
+    assert MIN_INTEGRITY_SCORE < synthesized_integrity < MAX_INTEGRITY_SCORE, (
         f"[Test C] Synthesized integrity score {synthesized_integrity:.4f} should be in valid range"
+    )
 
-    logger.info(f"[Test C] PASSED - Entity_AVG synthesis validated (integrity={synthesized_integrity:.4f})")
+    logger.info(
+        f"[Test C] PASSED - Entity_AVG synthesis validated (integrity={synthesized_integrity:.4f})"
+    )
 
 
 # ============================================================================
 # Summary Report
 # ============================================================================
 
+
 @pytest.mark.e2e
-def test_regression_summary(
-    historical_match_sample: Dict,
-    recent_match_sample: Dict
-):
+def test_regression_summary(historical_match_sample: Dict, recent_match_sample: Dict):
     """V119.0: 回归测试摘要报告
 
     显示测试样本信息，方便调试和追踪。

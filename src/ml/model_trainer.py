@@ -48,7 +48,7 @@ class ModelTrainer:
             return X, y
 
         except Exception as e:
-            self.logger.error(f"❌ 数据加载失败: {e}")
+            self.logger.exception(f"❌ 数据加载失败: {e}")
             return None, None
 
     def _clean_data(self, df: pd.DataFrame) -> pd.DataFrame:
@@ -137,7 +137,9 @@ class ModelTrainer:
         score_diff = xg_diff * 0.7 + rating_diff * 0.3
 
         # 创建三分类结果
-        y = pd.Series(np.where(score_diff > 0.5, "home_win", np.where(score_diff < -0.5, "away_win", "draw")))
+        y = pd.Series(
+            np.where(score_diff > 0.5, "home_win", np.where(score_diff < -0.5, "away_win", "draw"))
+        )
 
         # 编码为数值
         y_encoded = self.label_encoder.fit_transform(y)
@@ -151,7 +153,9 @@ class ModelTrainer:
             self.logger.info("🏋️ 开始模型训练...")
 
             # 数据分割
-            X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
+            X_train, X_test, y_train, y_test = train_test_split(
+                X, y, test_size=0.2, random_state=42, stratify=y
+            )
 
             # 特征标准化
             X_train_scaled = self.scaler.fit_transform(X_train)
@@ -202,7 +206,7 @@ class ModelTrainer:
             return model
 
         except Exception as e:
-            self.logger.error(f"❌ 模型训练失败: {e}")
+            self.logger.exception(f"❌ 模型训练失败: {e}")
             raise
 
     def save_model(self, model: lgb.LGBMClassifier) -> bool:
@@ -230,7 +234,10 @@ class ModelTrainer:
             self.logger.info(f"✅ 标签编码器已保存: {encoder_path}")
 
             # 保存训练报告
-            report_path = model_path.parent / f"training_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
+            report_path = (
+                model_path.parent
+                / f"training_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
+            )
             with open(report_path, "w", encoding="utf-8") as f:
                 f.write("FootballPrediction V7.0 训练报告\n")
                 f.write(f"训练时间: {datetime.now()}\n")
@@ -242,7 +249,7 @@ class ModelTrainer:
             return True
 
         except Exception as e:
-            self.logger.error(f"❌ 模型保存失败: {e}")
+            self.logger.exception(f"❌ 模型保存失败: {e}")
             return False
 
     def run_training(self) -> bool:
@@ -271,7 +278,7 @@ class ModelTrainer:
             return success
 
         except Exception as e:
-            self.logger.error(f"❌ 训练流程失败: {e}")
+            self.logger.exception(f"❌ 训练流程失败: {e}")
             return False
 
 

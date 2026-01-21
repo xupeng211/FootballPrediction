@@ -48,7 +48,9 @@ class L2MatchStats(BaseModel):
     """
 
     xg: list[float] | None = Field(default=None, description="Expected Goals [home, away]")
-    shots_on_target: list[int] | None = Field(default=None, description="Shots on Target [home, away]")
+    shots_on_target: list[int] | None = Field(
+        default=None, description="Shots on Target [home, away]"
+    )
     possession: list[float] | None = Field(default=None, description="Possession % [home, away]")
     team_rating: list[float] | None = Field(default=None, description="Team Rating [home, away]")
 

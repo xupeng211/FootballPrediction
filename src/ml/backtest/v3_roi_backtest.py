@@ -24,7 +24,9 @@ sys.path.insert(0, str(project_root / "src"))
 from src.config_unified import get_settings
 
 # 配置日志
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 
@@ -53,7 +55,9 @@ class V3ROIBacktest:
         self.STOP_LOSS_LINE = -20.0  # V3.3：硬编码止损线
 
         logger.info("🛡️ V3.1 风险控制ROI回测器初始化完成")
-        logger.info(f"💰 保守策略: {self.kelly_fraction}x凯利, 边际>{self.min_edge}%, 置信度>{self.min_confidence}%")
+        logger.info(
+            f"💰 保守策略: {self.kelly_fraction}x凯利, 边际>{self.min_edge}%, 置信度>{self.min_confidence}%"
+        )
         logger.info(f"🚨 风控限制: 最大回撤≤{self.max_drawdown_limit}%")
 
     def load_v3_model(self):
@@ -89,7 +93,11 @@ class V3ROIBacktest:
 
             db = self.settings.database
             conn = psycopg2.connect(
-                host=db.host, port=db.port, database=db.name, user=db.user, password=db.password.get_secret_value()
+                host=db.host,
+                port=db.port,
+                database=db.name,
+                user=db.user,
+                password=db.password.get_secret_value(),
             )
 
             # 查询所有可用数据
@@ -115,7 +123,7 @@ class V3ROIBacktest:
             return df
 
         except Exception as e:
-            logger.error(f"❌ 回测数据加载失败: {e}")
+            logger.exception(f"❌ 回测数据加载失败: {e}")
             raise
 
     def prepare_backtest_features(self, df: pd.DataFrame) -> pd.DataFrame:
@@ -145,10 +153,14 @@ class V3ROIBacktest:
 
         # 综合实力指标
         if all(col in df.columns for col in ["home_xg", "home_possession", "home_shots_total"]):
-            X["home_strength_index"] = X["home_xg"] * 0.4 + X["home_possession"] * 0.003 + X["home_shots_total"] * 0.02
+            X["home_strength_index"] = (
+                X["home_xg"] * 0.4 + X["home_possession"] * 0.003 + X["home_shots_total"] * 0.02
+            )
 
         if all(col in df.columns for col in ["away_xg", "away_possession", "away_shots_total"]):
-            X["away_strength_index"] = X["away_xg"] * 0.4 + X["away_possession"] * 0.003 + X["away_shots_total"] * 0.02
+            X["away_strength_index"] = (
+                X["away_xg"] * 0.4 + X["away_possession"] * 0.003 + X["away_shots_total"] * 0.02
+            )
 
         # 选择模型所需的特征
         available_features = [col for col in self.feature_names if col in X.columns]
@@ -268,8 +280,8 @@ class V3ROIBacktest:
             return matches_with_odds
 
         except Exception as e:
-            logger.error(f"❌ 加载真实赔率数据失败: {e}")
-            logger.error("🚨 V3.4: 禁止使用模拟赔率！")
+            logger.exception(f"❌ 加载真实赔率数据失败: {e}")
+            logger.exception("🚨 V3.4: 禁止使用模拟赔率！")
             raise
 
     def calculate_betting_odds(self, df: pd.DataFrame) -> pd.DataFrame:
@@ -334,7 +346,10 @@ class V3ROIBacktest:
             # 创建真实结果映射
             result_map = {}
             for _, row in real_results.iterrows():
-                result_map[row["external_id"]] = {"score": row["result_score"], "status": row["status"]}
+                result_map[row["external_id"]] = {
+                    "score": row["result_score"],
+                    "status": row["status"],
+                }
 
             # 解析比分并确定结果 - 处理ID匹配问题
             def determine_real_result(external_id):
@@ -402,10 +417,12 @@ class V3ROIBacktest:
             return real_outcomes
 
         except Exception as e:
-            logger.error(f"❌ 加载真实比赛结果失败: {e}")
+            logger.exception(f"❌ 加载真实比赛结果失败: {e}")
             raise
 
-    def backtest_strategy(self, df: pd.DataFrame, y_pred_proba: np.ndarray, real_results: pd.Series) -> dict:
+    def backtest_strategy(
+        self, df: pd.DataFrame, y_pred_proba: np.ndarray, real_results: pd.Series
+    ) -> dict:
         """执行真实结果回测策略"""
         logger.info(f"💰 执行真实结果回测策略: {self.kelly_fraction}x凯利")
 
@@ -471,7 +488,9 @@ class V3ROIBacktest:
 
                     # V3.3: 硬止损线，但只在真实亏损时触发
                     if cumulative_profit < 0 and current_drawdown >= abs(self.STOP_LOSS_LINE):
-                        logger.error(f"🛑 V3.3 硬止损触发！回撤{current_drawdown:.1f}% ≥ {abs(self.STOP_LOSS_LINE)}%")
+                        logger.error(
+                            f"🛑 V3.3 硬止损触发！回撤{current_drawdown:.1f}% ≥ {abs(self.STOP_LOSS_LINE)}%"
+                        )
                         logger.error("💀 投资组合已破产，立即停止所有投注活动")
                         break  # 强制终止回测
 
@@ -525,9 +544,15 @@ class V3ROIBacktest:
             results["max_drawdown"] = max_drawdown
 
         logger.info(f"✅ 真实回测完成: {results['total_bets']} 次投注")
-        logger.info(f"💰 总投注: {results['total_stake']:.2f}, 总收益: {results['total_return']:.2f}")
-        logger.info(f"📈 总盈亏: {results['total_profit']:.2f}, ROI: {results['roi_percentage']:.2f}%")
-        logger.info(f"🎯 胜率: {results['win_rate']:.2f}%, 最大回撤: {results['max_drawdown']:.2f}%")
+        logger.info(
+            f"💰 总投注: {results['total_stake']:.2f}, 总收益: {results['total_return']:.2f}"
+        )
+        logger.info(
+            f"📈 总盈亏: {results['total_profit']:.2f}, ROI: {results['roi_percentage']:.2f}%"
+        )
+        logger.info(
+            f"🎯 胜率: {results['win_rate']:.2f}%, 最大回撤: {results['max_drawdown']:.2f}%"
+        )
 
         return results
 
@@ -562,7 +587,9 @@ class V3ROIBacktest:
         }
 
         # 保存报告
-        report_path = self.reports_dir / f"v3_roi_backtest_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        report_path = (
+            self.reports_dir / f"v3_roi_backtest_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        )
         with open(report_path, "w", encoding="utf-8") as f:
             json.dump(report, f, indent=2, ensure_ascii=False)
 
@@ -615,9 +642,15 @@ class V3ROIBacktest:
 
             assessment = report["assessment"]
             logger.info("📊 风险评估:")
-            logger.info(f"   • 盈利能力:     {'✅ 通过' if assessment['profitable'] else '❌ 失败'}")
-            logger.info(f"   • ROI达标:     {'✅ 通过' if assessment['roi_acceptable'] else '❌ 失败'}")
-            logger.info(f"   • 风险控制:     {'✅ 通过' if assessment['risk_managed'] else '❌ 失败'}")
+            logger.info(
+                f"   • 盈利能力:     {'✅ 通过' if assessment['profitable'] else '❌ 失败'}"
+            )
+            logger.info(
+                f"   • ROI达标:     {'✅ 通过' if assessment['roi_acceptable'] else '❌ 失败'}"
+            )
+            logger.info(
+                f"   • 风险控制:     {'✅ 通过' if assessment['risk_managed'] else '❌ 失败'}"
+            )
 
             logger.info("=" * 100)
             if assessment["profitable"] and assessment["roi_acceptable"]:
@@ -629,7 +662,7 @@ class V3ROIBacktest:
             return report
 
         except Exception as e:
-            logger.error(f"❌ 回测失败: {e}")
+            logger.exception(f"❌ 回测失败: {e}")
             import traceback
 
             traceback.print_exc()

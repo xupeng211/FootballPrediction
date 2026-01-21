@@ -13,13 +13,13 @@ Date: 2026-01-06
 """
 
 import json
+
+# Add project root to path
+import sys
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-
-# Add project root to path
-import sys
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
@@ -252,8 +252,8 @@ class TestFotMobL2Persistence:
     @pytest.mark.asyncio
     async def test_ghost_protocol_headers_applied(self):
         """Test that Ghost Protocol headers are applied."""
-        from src.api.collectors.fotmob_core import FotMobCoreCollector
         from src.api.collectors.base_extractor import BaseExtractor
+        from src.api.collectors.fotmob_core import FotMobCoreCollector
 
         collector = FotMobCoreCollector()
 

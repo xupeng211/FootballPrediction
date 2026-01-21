@@ -6,14 +6,15 @@ Health API Schema 测试
 验证健康检查API的响应结构和数据格式。
 """
 
-import pytest
 import json
 from datetime import datetime
-from unittest.mock import AsyncMock, patch, MagicMock
-from fastapi.testclient import TestClient
-from fastapi import FastAPI
+from unittest.mock import AsyncMock, MagicMock, patch
 
-from src.api.health import router, health_check, liveness_check, readiness_check
+import pytest
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
+
+from src.api.health import health_check, liveness_check, readiness_check, router
 from src.api.schemas import HealthCheckResponse, ServiceCheck
 
 

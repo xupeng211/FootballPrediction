@@ -5,7 +5,8 @@
 
 import random
 from datetime import datetime, timedelta, timezone
-from typing import Dict, Any, List
+from typing import Any, Dict, List
+
 from faker import Faker
 
 # 初始化Faker

@@ -25,8 +25,8 @@ from dataclasses import dataclass
 import logging
 from typing import Any
 
-from ..base import BaseProcessor, ProcessorConfig, ProcessorResult
-from ..models import MatchData, PlayerStats
+from src.ml.feature_engine.base import BaseProcessor, ProcessorConfig, ProcessorResult
+from src.ml.feature_engine.models import MatchData, PlayerStats
 
 logger = logging.getLogger(__name__)
 
@@ -151,11 +151,15 @@ class AdvancedPassingProcessor(BaseProcessor[MatchData]):
             # 2. V23.0: 位置原子化维度
             if self.config.enable_position_atomization:
                 if data.home_lineup and data.home_lineup.players:
-                    home_pos_features = self._atomize_position_passing(data.home_lineup.players, "home")
+                    home_pos_features = self._atomize_position_passing(
+                        data.home_lineup.players, "home"
+                    )
                     features.update(home_pos_features)
 
                 if data.away_lineup and data.away_lineup.players:
-                    away_pos_features = self._atomize_position_passing(data.away_lineup.players, "away")
+                    away_pos_features = self._atomize_position_passing(
+                        data.away_lineup.players, "away"
+                    )
                     features.update(away_pos_features)
 
             # 3. 计算对比特征
@@ -176,7 +180,7 @@ class AdvancedPassingProcessor(BaseProcessor[MatchData]):
             )
 
         except Exception as e:
-            logger.error(f"AdvancedPassingProcessor failed: {e}")
+            logger.exception(f"AdvancedPassingProcessor failed: {e}")
             return ProcessorResult.failure_result(str(e))
 
     def _extract_aggregate_features(self, data: MatchData) -> dict[str, float]:
@@ -241,7 +245,9 @@ class AdvancedPassingProcessor(BaseProcessor[MatchData]):
 
         return features
 
-    def _atomize_position_passing(self, players: list[PlayerStats], prefix: str) -> dict[str, float]:
+    def _atomize_position_passing(
+        self, players: list[PlayerStats], prefix: str
+    ) -> dict[str, float]:
         """
         原子化位置传球特征（V23.0 核心爆破）
 
@@ -291,7 +297,9 @@ class AdvancedPassingProcessor(BaseProcessor[MatchData]):
                     + (representative.medium_passes or 0)
                 )
                 if total_passes > 0:
-                    features[f"{prefix}_{pos_name}_pass_accuracy"] = round(accurate_passes / total_passes * 100, 2)
+                    features[f"{prefix}_{pos_name}_pass_accuracy"] = round(
+                        accurate_passes / total_passes * 100, 2
+                    )
                 else:
                     features[f"{prefix}_{pos_name}_pass_accuracy"] = 0.0
 
@@ -299,7 +307,9 @@ class AdvancedPassingProcessor(BaseProcessor[MatchData]):
                 long_total = representative.long_passes or 0
                 long_accurate = representative.accurate_long_passes or 0
                 if long_total >= self.config.min_pass_threshold:
-                    features[f"{prefix}_{pos_name}_long_pass_success"] = round(long_accurate / long_total * 100, 2)
+                    features[f"{prefix}_{pos_name}_long_pass_success"] = round(
+                        long_accurate / long_total * 100, 2
+                    )
                 else:
                     features[f"{prefix}_{pos_name}_long_pass_success"] = -1.0
 
@@ -307,7 +317,9 @@ class AdvancedPassingProcessor(BaseProcessor[MatchData]):
                 cross_total = representative.crosses or 0
                 cross_accurate = representative.accurate_crosses or 0
                 if cross_total >= self.config.min_pass_threshold:
-                    features[f"{prefix}_{pos_name}_cross_success"] = round(cross_accurate / cross_total * 100, 2)
+                    features[f"{prefix}_{pos_name}_cross_success"] = round(
+                        cross_accurate / cross_total * 100, 2
+                    )
                 else:
                     features[f"{prefix}_{pos_name}_cross_success"] = -1.0
 
@@ -332,7 +344,9 @@ class AdvancedPassingProcessor(BaseProcessor[MatchData]):
 
         return features
 
-    def _group_players_by_position(self, players: list[PlayerStats]) -> dict[str, list[PlayerStats]]:
+    def _group_players_by_position(
+        self, players: list[PlayerStats]
+    ) -> dict[str, list[PlayerStats]]:
         """
         按关键位置分组球员
 
@@ -394,7 +408,9 @@ class AdvancedPassingProcessor(BaseProcessor[MatchData]):
             valid_libero = 1 if libero_long_acc >= 0 else 0
             if valid_gk + valid_libero > 0:
                 cross_features[f"{prefix}_backline_long_success"] = round(
-                    (gk_long_acc * valid_gk + libero_long_acc * valid_libero) / (valid_gk + valid_libero), 2
+                    (gk_long_acc * valid_gk + libero_long_acc * valid_libero)
+                    / (valid_gk + valid_libero),
+                    2,
                 )
             else:
                 cross_features[f"{prefix}_backline_long_success"] = -1.0
@@ -411,18 +427,25 @@ class AdvancedPassingProcessor(BaseProcessor[MatchData]):
             # 核心创造者评分（creator 的综合创造能力）
             creator_final_third = features.get(f"{prefix}_creator_final_third_passes", 0)
             creator_key_passes = features.get(f"{prefix}_creator_key_passes", 0)  # 需要添加这个字段
-            cross_features[f"{prefix}_creator_rating"] = round(creator_final_third + creator_key_passes * 2, 2)
+            cross_features[f"{prefix}_creator_rating"] = round(
+                creator_final_third + creator_key_passes * 2, 2
+            )
 
         # 主客队对比
         cross_features["diff_backline_long_passes"] = round(
-            cross_features.get("home_backline_long_passes", 0) - cross_features.get("away_backline_long_passes", 0), 2
+            cross_features.get("home_backline_long_passes", 0)
+            - cross_features.get("away_backline_long_passes", 0),
+            2,
         )
         cross_features["diff_midfield_through_balls"] = round(
-            cross_features.get("home_midfield_through_balls", 0) - cross_features.get("away_midfield_through_balls", 0),
+            cross_features.get("home_midfield_through_balls", 0)
+            - cross_features.get("away_midfield_through_balls", 0),
             2,
         )
         cross_features["diff_flank_crossing_threat"] = round(
-            cross_features.get("home_flank_crossing_threat", 0) - cross_features.get("away_flank_crossing_threat", 0), 2
+            cross_features.get("home_flank_crossing_threat", 0)
+            - cross_features.get("away_flank_crossing_threat", 0),
+            2,
         )
 
         return cross_features
@@ -435,18 +458,19 @@ class AdvancedPassingProcessor(BaseProcessor[MatchData]):
         chances_created = 0
 
         for player in players:
-            if isinstance(player, dict):
-                stats = player.get("stats", player)
-            else:
-                stats = player
+            stats = player.get("stats", player) if isinstance(player, dict) else player
 
             total_passes += (
                 getattr(stats, "accurate_passes", 0)
                 + getattr(stats, "total_passes", getattr(stats, "totalPasses", 0)) // 2
             )
-            accurate_passes += getattr(stats, "accurate_passes", getattr(stats, "accuratePasses", 0))
+            accurate_passes += getattr(
+                stats, "accurate_passes", getattr(stats, "accuratePasses", 0)
+            )
             key_passes += getattr(stats, "key_passes", getattr(stats, "keyPasses", 0))
-            chances_created += getattr(stats, "big_chances_created", getattr(stats, "bigChancesCreated", 0))
+            chances_created += getattr(
+                stats, "big_chances_created", getattr(stats, "bigChancesCreated", 0)
+            )
 
         pass_accuracy = (accurate_passes / total_passes * 100) if total_passes > 0 else 0.0
 
@@ -464,10 +488,7 @@ class AdvancedPassingProcessor(BaseProcessor[MatchData]):
         final_total = final_acc = middle_total = middle_acc = defensive_total = defensive_acc = 0
 
         for player in players:
-            if isinstance(player, dict):
-                stats = player.get("stats", player)
-            else:
-                stats = player
+            stats = player.get("stats", player) if isinstance(player, dict) else player
 
             final_total += getattr(stats, "final_third_passes", 0)
             final_acc += getattr(stats, "accurate_final_third_passes", 0)
@@ -488,7 +509,9 @@ class AdvancedPassingProcessor(BaseProcessor[MatchData]):
         )
 
         total_zones = final_total + middle_total + defensive_total
-        features[f"{prefix}_offensive_zone_ratio"] = round(final_total / total_zones if total_zones > 0 else 0.0, 4)
+        features[f"{prefix}_offensive_zone_ratio"] = round(
+            final_total / total_zones if total_zones > 0 else 0.0, 4
+        )
 
         return features
 
@@ -498,10 +521,7 @@ class AdvancedPassingProcessor(BaseProcessor[MatchData]):
         short = medium = long = long_acc = 0
 
         for player in players:
-            if isinstance(player, dict):
-                stats = player.get("stats", player)
-            else:
-                stats = player
+            stats = player.get("stats", player) if isinstance(player, dict) else player
 
             short += getattr(stats, "short_passes", 0)
             medium += getattr(stats, "medium_passes", 0)
@@ -518,7 +538,9 @@ class AdvancedPassingProcessor(BaseProcessor[MatchData]):
             features[f"{prefix}_medium_pass_ratio"] = 0.0
             features[f"{prefix}_long_pass_ratio"] = 0.0
 
-        features[f"{prefix}_long_pass_success"] = round(long_acc / long * 100 if long >= 5 else -1.0, 2)
+        features[f"{prefix}_long_pass_success"] = round(
+            long_acc / long * 100 if long >= 5 else -1.0, 2
+        )
 
         ratios = [
             features.get(f"{prefix}_short_pass_ratio", 0),
@@ -535,15 +557,14 @@ class AdvancedPassingProcessor(BaseProcessor[MatchData]):
         total = accurate = 0
 
         for player in players:
-            if isinstance(player, dict):
-                stats = player.get("stats", player)
-            else:
-                stats = player
+            stats = player.get("stats", player) if isinstance(player, dict) else player
 
             total += getattr(stats, "crosses", 0)
             accurate += getattr(stats, "accurate_crosses", 0)
 
-        features[f"{prefix}_cross_accuracy"] = round(accurate / total * 100 if total >= 3 else -1.0, 2)
+        features[f"{prefix}_cross_accuracy"] = round(
+            accurate / total * 100 if total >= 3 else -1.0, 2
+        )
         features[f"{prefix}_cross_total"] = float(total)
 
         return features
@@ -554,17 +575,16 @@ class AdvancedPassingProcessor(BaseProcessor[MatchData]):
         through = acc_through = key_passes = big_chances = 0
 
         for player in players:
-            if isinstance(player, dict):
-                stats = player.get("stats", player)
-            else:
-                stats = player
+            stats = player.get("stats", player) if isinstance(player, dict) else player
 
             through += getattr(stats, "through_balls", 0)
             acc_through += getattr(stats, "accurate_through_balls", 0)
             key_passes += getattr(stats, "key_passes", 0)
             big_chances += getattr(stats, "big_chances_created", 0)
 
-        features[f"{prefix}_through_ball_acc"] = round(acc_through / through * 100 if through >= 2 else -1.0, 2)
+        features[f"{prefix}_through_ball_acc"] = round(
+            acc_through / through * 100 if through >= 2 else -1.0, 2
+        )
         features[f"{prefix}_through_ball_total"] = float(through)
         features[f"{prefix}_key_pass_count"] = float(key_passes)
         features[f"{prefix}_big_chances_created"] = float(big_chances)
@@ -577,10 +597,7 @@ class AdvancedPassingProcessor(BaseProcessor[MatchData]):
         forward = backward = vertical = 0
 
         for player in players:
-            if isinstance(player, dict):
-                stats = player.get("stats", player)
-            else:
-                stats = player
+            stats = player.get("stats", player) if isinstance(player, dict) else player
 
             forward += getattr(stats, "forward_passes", 0)
             backward += getattr(stats, "backward_passes", 0)
@@ -595,7 +612,9 @@ class AdvancedPassingProcessor(BaseProcessor[MatchData]):
             features[f"{prefix}_backward_pass_ratio"] = 0.0
 
         features[f"{prefix}_vertical_progression"] = round(vertical, 2)
-        features[f"{prefix}_aggression_index"] = round(forward / backward if backward > 0 else float(forward), 2)
+        features[f"{prefix}_aggression_index"] = round(
+            forward / backward if backward > 0 else float(forward), 2
+        )
 
         return features
 

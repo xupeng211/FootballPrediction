@@ -199,7 +199,8 @@ class AdvancedOddsFeaturesExtractor:
 
         with conn.cursor() as cursor:
             # 获取该比赛所有供应商的最新 1X2 赔率
-            cursor.execute("""
+            cursor.execute(
+                """
                 WITH latest_odds AS (
                     SELECT DISTINCT ON (provider)
                         provider,
@@ -220,7 +221,9 @@ class AdvancedOddsFeaturesExtractor:
                     draw_odds,
                     away_win_odds
                 FROM latest_odds
-            """, (match_id,))
+            """,
+                (match_id,),
+            )
 
             odds_data = cursor.fetchall()
 
@@ -272,7 +275,8 @@ class AdvancedOddsFeaturesExtractor:
 
         with conn.cursor() as cursor:
             # 获取初盘和终盘赔率（使用平均赔率）
-            cursor.execute("""
+            cursor.execute(
+                """
                 WITH opening_odds AS (
                     SELECT
                         AVG(home_win_odds) as avg_home,
@@ -301,7 +305,9 @@ class AdvancedOddsFeaturesExtractor:
                     c.avg_draw as closing_draw,
                     c.avg_away as closing_away
                 FROM opening_odds o, closing_odds c
-            """, (match_id, match_id))
+            """,
+                (match_id, match_id),
+            )
 
             result = cursor.fetchone()
 
@@ -334,7 +340,8 @@ class AdvancedOddsFeaturesExtractor:
             market_bias_asymmetry = market_bias_home - market_bias_away
 
             # 计算赔率波动率 (使用中间时序数据)
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT
                     STDDEV(home_win_odds) / AVG(home_win_odds) as home_volatility,
                     STDDEV(away_win_odds) / AVG(away_win_odds) as away_volatility
@@ -344,7 +351,9 @@ class AdvancedOddsFeaturesExtractor:
                   AND away_win_odds IS NOT NULL
                   AND is_opening = FALSE
                   AND is_closing = FALSE
-            """, (match_id,))
+            """,
+                (match_id,),
+            )
 
             volatility = cursor.fetchone()
 
@@ -375,7 +384,8 @@ class AdvancedOddsFeaturesExtractor:
 
         # 首先获取比赛基本信息
         with conn.cursor() as cursor:
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT
                     m.home_team,
                     m.away_team,
@@ -383,7 +393,9 @@ class AdvancedOddsFeaturesExtractor:
                     m.league_id
                 FROM matches m
                 WHERE m.match_id = %s
-            """, (match_id,))
+            """,
+                (match_id,),
+            )
 
             match_info = cursor.fetchone()
 
@@ -397,7 +409,8 @@ class AdvancedOddsFeaturesExtractor:
 
         # 1. 计算客队疲劳指数 (最近30天客场作战次数)
         with conn.cursor() as cursor:
-            cursor.execute("""
+            cursor.execute(
+                """
                 WITH away_matches AS (
                     SELECT
                         m.match_date,
@@ -411,15 +424,22 @@ class AdvancedOddsFeaturesExtractor:
                 SELECT
                     SUM(is_away)::float / COUNT(*) as away_fatigue_index
                 FROM away_matches
-            """, (match_info["away_team"], match_info["away_team"],
-                  match_info["match_date"], match_info["match_date"]))
+            """,
+                (
+                    match_info["away_team"],
+                    match_info["away_team"],
+                    match_info["match_date"],
+                    match_info["match_date"],
+                ),
+            )
 
             fatigue_result = cursor.fetchone()
             away_fatigue = fatigue_result["away_fatigue_index"] if fatigue_result else 0.5
 
         # 2. 计算主队近期状态 (近5场场均积分)
         with conn.cursor() as cursor:
-            cursor.execute("""
+            cursor.execute(
+                """
                 WITH recent_matches AS (
                     SELECT
                         m.home_team,
@@ -446,15 +466,22 @@ class AdvancedOddsFeaturesExtractor:
                 SELECT
                     AVG(points)::float / 3.0 as home_momentum_score  -- 标准化到 [0,1]
                 FROM recent_matches
-            """, (match_info["home_team"], match_info["home_team"], match_info["home_team"],
-                  match_info["match_date"]))
+            """,
+                (
+                    match_info["home_team"],
+                    match_info["home_team"],
+                    match_info["home_team"],
+                    match_info["match_date"],
+                ),
+            )
 
             momentum_result = cursor.fetchone()
             home_momentum = momentum_result["home_momentum_score"] if momentum_result else 0.5
 
         # 3. 赔率变动对客队不利性
         with conn.cursor() as cursor:
-            cursor.execute("""
+            cursor.execute(
+                """
                 WITH odds_change AS (
                     SELECT
                         AVG(home_win_odds) FILTER (WHERE is_opening = TRUE) as open_home,
@@ -469,14 +496,19 @@ class AdvancedOddsFeaturesExtractor:
                     ((close_away - open_away) / open_away) -
                     ((close_home - open_home) / open_home) as away_unfavorable_movement
                 FROM odds_change
-            """, (match_id,))
+            """,
+                (match_id,),
+            )
 
             movement_result = cursor.fetchone()
-            away_unfavorable = movement_result["away_unfavorable_movement"] if movement_result else 0.0
+            away_unfavorable = (
+                movement_result["away_unfavorable_movement"] if movement_result else 0.0
+            )
 
         # 4. 历史交手冷门率
         with conn.cursor() as cursor:
-            cursor.execute("""
+            cursor.execute(
+                """
                 WITH h2h_matches AS (
                     SELECT
                         m.home_team,
@@ -518,12 +550,20 @@ class AdvancedOddsFeaturesExtractor:
                 SELECT
                     COALESCE(AVG(is_upset), 0.0) as historical_upset_rate
                 FROM upsets
-            """, (match_info["home_team"], match_info["away_team"],
-                  match_info["away_team"], match_info["home_team"],
-                  match_info["match_date"]))
+            """,
+                (
+                    match_info["home_team"],
+                    match_info["away_team"],
+                    match_info["away_team"],
+                    match_info["home_team"],
+                    match_info["match_date"],
+                ),
+            )
 
             upset_rate_result = cursor.fetchone()
-            historical_upset = upset_rate_result["historical_upset_rate"] if upset_rate_result else 0.0
+            historical_upset = (
+                upset_rate_result["historical_upset_rate"] if upset_rate_result else 0.0
+            )
 
         # 综合冷门因子 (加权组合)
         # 权重设计:
@@ -533,10 +573,10 @@ class AdvancedOddsFeaturesExtractor:
         # - 历史冷门: 20%
 
         upset_factor = (
-            away_fatigue * 0.30 +
-            (1.0 - home_momentum) * 0.25 +  # 主队状态差 → 冷门概率高
-            max(away_unfavorable, 0.0) * 0.25 +  # 客队赔率不利 → 主队优势大 → 冷门概率低
-            historical_upset * 0.20
+            away_fatigue * 0.30
+            + (1.0 - home_momentum) * 0.25  # 主队状态差 → 冷门概率高
+            + max(away_unfavorable, 0.0) * 0.25  # 客队赔率不利 → 主队优势大 → 冷门概率低
+            + historical_upset * 0.20
         )
 
         return {
@@ -562,7 +602,8 @@ class AdvancedOddsFeaturesExtractor:
 
         with conn.cursor() as cursor:
             # 获取供应商数量和赔率范围
-            cursor.execute("""
+            cursor.execute(
+                """
                 WITH latest_odds AS (
                     SELECT DISTINCT ON (provider)
                         provider,
@@ -593,7 +634,9 @@ class AdvancedOddsFeaturesExtractor:
                         ELSE 0
                     END as odds_range_ratio
                 FROM odds_stats
-            """, (match_id,))
+            """,
+                (match_id,),
+            )
 
             result = cursor.fetchone()
 
@@ -691,7 +734,7 @@ class AdvancedOddsFeaturesExtractor:
                     logger.info(f"  进度: {i + 1}/{len(match_ids)}")
 
             except Exception as e:
-                logger.error(f"提取失败 {match_id}: {e}")
+                logger.exception(f"提取失败 {match_id}: {e}")
                 continue
 
         logger.info(f"批量提取完成: {len(results)}/{len(match_ids)} 成功")
@@ -730,5 +773,4 @@ def merge_odds_features_to_raw_data(raw_data: dict, odds_features: dict[str, Any
         合并后的数据字典
     """
     # 在原始数据中添加高级赔率特征
-    merged = {**raw_data, **odds_features}
-    return merged
+    return {**raw_data, **odds_features}

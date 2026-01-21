@@ -109,7 +109,9 @@ class ConnectivityChecker:
                 host=redis_config.host,
                 port=redis_config.port,
                 db=redis_config.db,
-                password=redis_config.password.get_secret_value() if redis_config.password else None,
+                password=redis_config.password.get_secret_value()
+                if redis_config.password
+                else None,
                 socket_timeout=5,
             )
 
@@ -159,7 +161,7 @@ class ConnectivityChecker:
 
             from src.config_unified import get_settings
 
-            settings = get_settings()
+            get_settings()
 
             # 检查模型目录
             models_dir = Path("data/models")
@@ -248,7 +250,9 @@ class ConnectivityChecker:
         self.results["checks"]["filesystem"] = self.check_filesystem()
 
         # 计算总体状态
-        all_ok = all(check.get("status") in ["OK", "Partial"] for check in self.results["checks"].values())
+        all_ok = all(
+            check.get("status") in ["OK", "Partial"] for check in self.results["checks"].values()
+        )
         self.results["overall_status"] = "OK" if all_ok else "Fail"
 
         logger.info("=" * 60)

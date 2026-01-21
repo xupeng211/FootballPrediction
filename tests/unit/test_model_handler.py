@@ -3,25 +3,25 @@ Model Handler 单元测试
 测试模型加载、特征对齐和预测逻辑
 """
 
-import pytest
-import pandas as pd
-import numpy as np
-import lightgbm as lgb
-from unittest.mock import patch, Mock, MagicMock
-from pathlib import Path
-import tempfile
 import pickle
 
 # V36.4 Final: 修复导入路径
 import sys
+import tempfile
 from pathlib import Path
+from unittest.mock import MagicMock, Mock, patch
+
+import lightgbm as lgb
+import numpy as np
+import pandas as pd
+import pytest
 
 # 添加项目根目录到路径
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 try:
-    from src.ml.model_handler import get_model_handler, ModelHandler
+    from src.ml.model_handler import ModelHandler, get_model_handler
 except ImportError as e:
     pytest.skip(f"ModelHandler not available: {e}", allow_module_level=True)
 

@@ -2,6 +2,7 @@
 """
 V53.3 诊断脚本 V3: 精准分析机构行结构
 """
+
 import asyncio
 import sys
 from pathlib import Path
@@ -10,7 +11,10 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from playwright.async_api import async_playwright
 
-TARGET_URL = "https://www.oddsportal.com/football/england/premier-league/liverpool-leeds-UJhOUJJM/#1X2;2"
+TARGET_URL = (
+    "https://www.oddsportal.com/football/england/premier-league/liverpool-leeds-UJhOUJJM/#1X2;2"
+)
+
 
 async def analyze_provider_rows():
     """分析机构行结构"""
@@ -71,7 +75,7 @@ async def analyze_provider_rows():
     if provider_rows:
         print(f"找到 {len(provider_rows)} 个机构行:\n")
         for i, row in enumerate(provider_rows):
-            print(f"[{i+1}] 机构: {row['provider']}")
+            print(f"[{i + 1}] 机构: {row['provider']}")
             print(f"    完整文本: {row['fullText']}")
             print(f"    赔率数量: {row['oddsCount']}")
             print(f"    赔率值: {row['oddsValues']}")
@@ -122,7 +126,7 @@ async def analyze_provider_rows():
     for item in odds_analysis[:5]:
         print(f"\n  [{item['index']}] {item['text']}")
         print(f"    父元素: {item['parentClass'][:60]}")
-        if item['siblings']:
+        if item["siblings"]:
             print(f"    兄弟元素: {len(item['siblings'])} 个")
 
     # 检查页面上是否有任何表示 "opening" 或 "closing" 的文本

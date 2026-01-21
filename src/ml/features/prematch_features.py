@@ -143,7 +143,9 @@ class PrematchFeatureExtractor:
             team_played[away] += 1
 
         # 计算排名（按积分排序，积分相同按比赛场次排序）
-        sorted_teams = sorted(team_points.keys(), key=lambda t: (team_points[t], -team_played[t]), reverse=True)
+        sorted_teams = sorted(
+            team_points.keys(), key=lambda t: (team_points[t], -team_played[t]), reverse=True
+        )
 
         # 获取主客队排名
         home_pos = sorted_teams.index(home_team) + 1 if home_team in sorted_teams else 20
@@ -162,7 +164,9 @@ class PrematchFeatureExtractor:
             "points_diff": home_pts - away_pts,
         }
 
-    def calculate_recent_form(self, df: pd.DataFrame, match_idx: int, window: int = 5) -> dict[str, float]:
+    def calculate_recent_form(
+        self, df: pd.DataFrame, match_idx: int, window: int = 5
+    ) -> dict[str, float]:
         """
         计算近 N 场走势特征
 
@@ -205,10 +209,10 @@ class PrematchFeatureExtractor:
 
         # 计算加权积分（最近比赛权重更高）
         weights = [1.0, 0.9, 0.8, 0.7, 0.6][: len(home_recent)]
-        home_weighted = sum(p * w for p, w in zip(home_recent, weights))
+        home_weighted = sum(p * w for p, w in zip(home_recent, weights, strict=False))
 
         weights = [1.0, 0.9, 0.8, 0.7, 0.6][: len(away_recent)]
-        away_weighted = sum(p * w for p, w in zip(away_recent, weights))
+        away_weighted = sum(p * w for p, w in zip(away_recent, weights, strict=False))
 
         # 计算连续不败场次
         home_unbeaten = 0
@@ -298,13 +302,9 @@ def main():
 
     # 提取赛前特征
     extractor = PrematchFeatureExtractor()
-    prematch_df = extractor.extract_prematch_features(df)
+    extractor.extract_prematch_features(df)
 
-    print("\n📊 赛前特征统计:")
-    print(prematch_df[extractor.PREMATCH_FEATURES].describe())
 
-    print("\n📊 前 10 场比赛特征:")
-    print(prematch_df.head(10))
 
     return 0
 

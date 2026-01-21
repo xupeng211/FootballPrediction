@@ -6,19 +6,20 @@ MLOps Retraining Service 完整单元测试套件
 """
 
 import json
-import pytest
-from datetime import datetime, timezone
-from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock, mock_open
-import tempfile
+import os
 import shutil
-import pandas as pd
-import numpy as np
-import xgboost as xgb
 
 # 使用系统路径模块导入，避免配置依赖
 import sys
-import os
+import tempfile
+from datetime import datetime, timezone
+from pathlib import Path
+from unittest.mock import MagicMock, Mock, mock_open, patch
+
+import numpy as np
+import pandas as pd
+import pytest
+import xgboost as xgb
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
 

@@ -108,7 +108,9 @@ class EnhancedTestSuite:
                     results.append(test_result)
 
                     if test_result["passed"]:
-                        logger.info(f"✅ {test_case['name']}: {test_result['response_time_ms']:.2f}ms")
+                        logger.info(
+                            f"✅ {test_case['name']}: {test_result['response_time_ms']:.2f}ms"
+                        )
                     else:
                         logger.error(
                             f"❌ {test_case['name']}: {response.status_code} != {test_case['expected_status']}"
@@ -219,9 +221,13 @@ class EnhancedTestSuite:
         }
 
         if performance_result["meets_target"]:
-            logger.info(f"✅ {test_case['name']}: {avg_response_time:.2f}ms <= {test_case['target_time_ms']}ms")
+            logger.info(
+                f"✅ {test_case['name']}: {avg_response_time:.2f}ms <= {test_case['target_time_ms']}ms"
+            )
         else:
-            logger.warning(f"⚠️ {test_case['name']}: {avg_response_time:.2f}ms > {test_case['target_time_ms']}ms")
+            logger.warning(
+                f"⚠️ {test_case['name']}: {avg_response_time:.2f}ms > {test_case['target_time_ms']}ms"
+            )
 
         return performance_result
 
@@ -259,7 +265,8 @@ class EnhancedTestSuite:
                     # 检查响应是否包含恶意内容
                     response_text = response.text.lower()
                     contains_malicious = any(
-                        indicator in response_text for indicator in ["sql", "script", "alert", "drop", "select"]
+                        indicator in response_text
+                        for indicator in ["sql", "script", "alert", "drop", "select"]
                     )
 
                     result = {
@@ -373,7 +380,9 @@ class EnhancedTestSuite:
             "test_results": self.test_results,
         }
 
-        logger.info(f"✅ 测试套件完成: {passed_tests}/{total_tests} 通过 ({overall_summary['success_rate']:.1%})")
+        logger.info(
+            f"✅ 测试套件完成: {passed_tests}/{total_tests} 通过 ({overall_summary['success_rate']:.1%})"
+        )
         logger.info(f"📊 覆盖率: {overall_summary['overall_coverage']:.1f}%")
 
         return overall_summary

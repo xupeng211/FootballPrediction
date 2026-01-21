@@ -3,10 +3,11 @@
 测试Prometheus指标管理系统的功能
 """
 
-import pytest
 import time
-from unittest.mock import patch, Mock
-from prometheus_client import CollectorRegistry, REGISTRY
+from unittest.mock import Mock, patch
+
+import pytest
+from prometheus_client import REGISTRY, CollectorRegistry
 
 from src.core.metrics import MetricsManager, get_metrics
 
@@ -174,12 +175,12 @@ class TestGlobalMetrics:
     def test_global_metrics_instances(self):
         """测试全局指标实例"""
         from src.core.metrics import (
-            prediction_requests_total,
-            model_inference_latency,
-            prediction_accuracy_total,
+            cache_operations_total,
             data_collection_requests_total,
             feature_computation_latency,
-            cache_operations_total,
+            model_inference_latency,
+            prediction_accuracy_total,
+            prediction_requests_total,
         )
 
         # 验证所有指标实例都存在
@@ -192,7 +193,7 @@ class TestGlobalMetrics:
 
     def test_global_metrics_usage(self):
         """测试全局指标使用"""
-        from src.core.metrics import prediction_requests_total, model_inference_latency
+        from src.core.metrics import model_inference_latency, prediction_requests_total
 
         # 使用全局指标
         prediction_requests_total.labels(model_name="global_test", prediction_type="batch").inc()
@@ -212,10 +213,10 @@ class TestMetricsIntegration:
     def test_real_world_prediction_workflow(self):
         """测试真实世界预测工作流程的指标记录"""
         from src.core.metrics import (
-            prediction_requests_total,
-            model_inference_latency,
             cache_operations_total,
+            model_inference_latency,
             prediction_accuracy_total,
+            prediction_requests_total,
         )
 
         # 模拟预测请求
@@ -266,6 +267,7 @@ class TestMetricsIntegration:
     def test_metrics_thread_safety(self):
         """测试指标线程安全性"""
         import threading
+
         from src.core.metrics import prediction_requests_total
 
         def increment_counter(thread_id: int):
@@ -294,8 +296,9 @@ class TestMetricsIntegration:
 
     def test_metrics_memory_usage(self):
         """测试指标内存使用"""
-        import psutil
         import os
+
+        import psutil
 
         # 获取初始内存使用
         process = psutil.Process(os.getpid())

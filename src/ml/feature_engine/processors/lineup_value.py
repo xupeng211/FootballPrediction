@@ -24,8 +24,8 @@ from dataclasses import dataclass
 import logging
 from typing import Any
 
-from ..base import BaseProcessor, ProcessorConfig, ProcessorResult
-from ..models import LineupInfo, MatchData, PlayerStats
+from src.ml.feature_engine.base import BaseProcessor, ProcessorConfig, ProcessorResult
+from src.ml.feature_engine.models import LineupInfo, MatchData, PlayerStats
 
 logger = logging.getLogger(__name__)
 
@@ -148,12 +148,16 @@ class LineupValueProcessor(BaseProcessor[MatchData]):
             if self.config.enable_player_flattening:
                 # 主队球员平铺
                 if data.home_lineup and data.home_lineup.players:
-                    home_player_features = self._flatten_player_features(data.home_lineup.players, "home")
+                    home_player_features = self._flatten_player_features(
+                        data.home_lineup.players, "home"
+                    )
                     features.update(home_player_features)
 
                 # 客队球员平铺
                 if data.away_lineup and data.away_lineup.players:
-                    away_player_features = self._flatten_player_features(data.away_lineup.players, "away")
+                    away_player_features = self._flatten_player_features(
+                        data.away_lineup.players, "away"
+                    )
                     features.update(away_player_features)
 
             # 3. 计算对比特征
@@ -176,7 +180,7 @@ class LineupValueProcessor(BaseProcessor[MatchData]):
             )
 
         except Exception as e:
-            logger.error(f"LineupValueProcessor failed for match {data.match_id}: {e}")
+            logger.exception(f"LineupValueProcessor failed for match {data.match_id}: {e}")
             return ProcessorResult.failure_result(str(e))
 
     def _extract_aggregate_features(self, data: MatchData) -> dict[str, float]:
@@ -199,7 +203,9 @@ class LineupValueProcessor(BaseProcessor[MatchData]):
 
         return features
 
-    def _analyze_team_value(self, lineup: LineupInfo, prefix: str, team_stats: Any) -> dict[str, float]:
+    def _analyze_team_value(
+        self, lineup: LineupInfo, prefix: str, team_stats: Any
+    ) -> dict[str, float]:
         """
         分析单队阵容价值特征（聚合维度）
 
@@ -223,7 +229,9 @@ class LineupValueProcessor(BaseProcessor[MatchData]):
         if self.config.enable_market_value:
             squad_value = self._calculate_squad_value(starters)
             features[f"{prefix}_squad_value"] = squad_value
-            features[f"{prefix}_avg_player_value"] = round(squad_value / len(starters), 2) if len(starters) > 0 else 0.0
+            features[f"{prefix}_avg_player_value"] = (
+                round(squad_value / len(starters), 2) if len(starters) > 0 else 0.0
+            )
 
         # ========== 年龄维度 ==========
         if self.config.enable_age_analysis:
@@ -281,7 +289,9 @@ class LineupValueProcessor(BaseProcessor[MatchData]):
             features[f"{prefix}_p{p_num}_touches"] = float(player.touches or 0)
             features[f"{prefix}_p{p_num}_accurate_passes"] = float(player.accurate_passes or 0)
             features[f"{prefix}_p{p_num}_key_passes"] = float(player.key_passes or 0)
-            features[f"{prefix}_p{p_num}_big_chances_created"] = float(player.big_chances_created or 0)
+            features[f"{prefix}_p{p_num}_big_chances_created"] = float(
+                player.big_chances_created or 0
+            )
 
         # 如果不足 11 人，填充剩余位置
         for position_idx in range(len(starters) + 1, 12):
@@ -384,7 +394,9 @@ class LineupValueProcessor(BaseProcessor[MatchData]):
         features[f"{prefix}_veteran_ratio"] = round(veteran_count / len(ages), 4)
 
         # 黄金期球员
-        prime_count = sum(1 for age in ages if self.config.u23_threshold <= age < self.config.veteran_threshold)
+        prime_count = sum(
+            1 for age in ages if self.config.u23_threshold <= age < self.config.veteran_threshold
+        )
         features[f"{prefix}_prime_count"] = float(prime_count)
         features[f"{prefix}_prime_ratio"] = round(prime_count / len(ages), 4)
 
@@ -432,7 +444,9 @@ class LineupValueProcessor(BaseProcessor[MatchData]):
 
         if home_value > 0 and away_value > 0:
             comparison_features["value_gap_ratio"] = round(home_value / away_value, 4)
-            comparison_features["home_value_share"] = round(home_value / (home_value + away_value), 4)
+            comparison_features["home_value_share"] = round(
+                home_value / (home_value + away_value), 4
+            )
             comparison_features["diff_squad_value"] = round(home_value - away_value, 2)
             comparison_features["value_disparity_index"] = round(
                 abs(home_value - away_value) / (home_value + away_value), 4
@@ -462,7 +476,9 @@ class LineupValueProcessor(BaseProcessor[MatchData]):
 
         return comparison_features
 
-    def _calculate_wealth_score(self, features: dict[str, float], prefix: str, value: float, age: float) -> float:
+    def _calculate_wealth_score(
+        self, features: dict[str, float], prefix: str, value: float, age: float
+    ) -> float:
         """计算综合财富评分"""
         # 身价分（归一化到 0-50）
         value_score = min(value / 10, 50)

@@ -86,7 +86,9 @@ class ProductionL1Collector:
         """异步上下文管理器入口"""
         timeout = aiohttp.ClientTimeout(total=self.timeout)
         connector = aiohttp.TCPConnector(limit=self.max_concurrent)
-        self.session = aiohttp.ClientSession(timeout=timeout, connector=connector, headers=self._get_headers())
+        self.session = aiohttp.ClientSession(
+            timeout=timeout, connector=connector, headers=self._get_headers()
+        )
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
@@ -153,7 +155,9 @@ class ProductionL1Collector:
                     )
                 if response.status >= 500:
                     # 服务器错误，记录失败并触发熔断器
-                    self.circuit_breaker.record_failure(aiohttp.ClientError(f"HTTP {response.status}"))
+                    self.circuit_breaker.record_failure(
+                        aiohttp.ClientError(f"HTTP {response.status}")
+                    )
                     raise aiohttp.ClientError(f"Server error: HTTP {response.status}")
                 raise aiohttp.ClientError(f"Unexpected status: HTTP {response.status}")
 
@@ -217,7 +221,7 @@ class ProductionL1Collector:
             # 2. League Name 与 ID 一致性校验
             # 3. 类型校验
             # 4. 业务逻辑校验（比分一致性等）
-            validated_match = L1MatchData(
+            return L1MatchData(
                 match_id=match_id,
                 league_id=league_id,
                 league_name=LeagueId.get_league_name(league_id),  # 从 ID 获取标准名称
@@ -233,15 +237,14 @@ class ProductionL1Collector:
                 away_score=away_score,
             )
 
-            return validated_match
 
         except ValueError as e:
             # Pydantic 校验失败，记录错误并拒绝数据
-            logger.error(f"❌ Pydantic 校验失败: {e}")
+            logger.exception(f"❌ Pydantic 校验失败: {e}")
             logger.debug(f"   问题数据: {match_data}")
             return None
         except Exception as e:
-            logger.error(f"❌ 解析异常: {e}")
+            logger.exception(f"❌ 解析异常: {e}")
             return None
 
     async def collect_league_season(
@@ -263,7 +266,9 @@ class ProductionL1Collector:
         """
         # V36.0: 预检查 League ID 白名单
         if not LeagueId.is_valid_id(league_id):
-            raise ValueError(f"❌ 非法 League ID: {league_id}。合法 IDs: {LeagueId.__members__.keys()}")
+            raise ValueError(
+                f"❌ 非法 League ID: {league_id}。合法 IDs: {LeagueId.__members__.keys()}"
+            )
 
         league_name = LeagueId.get_league_name(str(league_id))
         logger.info(f"🎯 开始采集: {league_name} - {season_name}")
@@ -274,7 +279,7 @@ class ProductionL1Collector:
         except Exception as e:
             # 记录失败
             self.summary.add_failure(str(league_id), type(e).__name__)
-            logger.error(f"❌ 采集失败: {league_name} - {season_name}: {e}")
+            logger.exception(f"❌ 采集失败: {league_name} - {season_name}: {e}")
             return []
 
         # 解析并校验比赛数据
@@ -284,7 +289,9 @@ class ProductionL1Collector:
             all_matches = fixtures.get("allMatches", [])
 
             for match_data in all_matches:
-                validated = self._parse_and_validate_match(match_data, str(league_id), season_code, season_name)
+                validated = self._parse_and_validate_match(
+                    match_data, str(league_id), season_code, season_name
+                )
                 if validated:
                     matches.append(validated)
                     self.summary.add_success(str(league_id))
@@ -292,7 +299,7 @@ class ProductionL1Collector:
                     self.summary.add_failure(str(league_id), "ValidationError")
 
         except Exception as e:
-            logger.error(f"❌ 解析数据失败: {e}")
+            logger.exception(f"❌ 解析数据失败: {e}")
             return []
 
         logger.info(f"✅ {league_name} - {season_name}: {len(matches)} 场通过校验")
@@ -334,7 +341,6 @@ async def main():
             all_matches.extend(matches)
 
         # 输出摘要报告
-        print(collector.get_summary_report())
 
         logger.info(f"✅ 总计采集 {len(all_matches)} 场比赛")
 

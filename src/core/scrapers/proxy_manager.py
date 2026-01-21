@@ -13,7 +13,7 @@ Author: V41.156 Infrastructure Engineer
 Date: 2026-01-17
 """
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
 import logging
@@ -21,10 +21,8 @@ import random
 import socket
 import threading
 import time
-from typing import Dict, List, Optional, Tuple
 
 from pydantic import BaseModel, Field, field_validator
-
 
 # ============================================================================
 # 枚举定义
@@ -61,11 +59,11 @@ class ProxyEndpoint:
     host: str
     port: int
     status: ProxyStatus = ProxyStatus.ACTIVE
-    dirty_until: Optional[datetime] = None
+    dirty_until: datetime | None = None
     fail_count: int = 0
     success_count: int = 0
-    last_used: Optional[datetime] = None
-    last_error: Optional[str] = None
+    last_used: datetime | None = None
+    last_error: str | None = None
 
     @property
     def url(self) -> str:
@@ -113,7 +111,7 @@ class ProxyEndpoint:
         self.fail_count = 0
         self.last_used = datetime.now()
 
-    def record_failure(self, error: Optional[str] = None) -> None:
+    def record_failure(self, error: str | None = None) -> None:
         """记录失败请求"""
         self.fail_count += 1
         self.last_used = datetime.now()
@@ -133,8 +131,8 @@ class ProxyConfig(BaseModel):
         rotation_strategy: 轮换策略 (random, round_robin, weighted)
     """
 
-    hosts: List[str] = Field(default_factory=lambda: ["172.25.16.1"])
-    ports: List[int] = Field(
+    hosts: list[str] = Field(default_factory=lambda: ["172.25.16.1"])
+    ports: list[int] = Field(
         default_factory=lambda: [7890, 7891, 7892, 7893, 7894, 7895, 7896, 7897, 7898, 7899]
     )
     ban_duration_seconds: int = Field(default=1800, ge=60, le=86400)  # 1分钟 - 24小时
@@ -145,7 +143,7 @@ class ProxyConfig(BaseModel):
 
     @field_validator("ports")
     @classmethod
-    def validate_ports(cls, v: List[int]) -> List[int]:
+    def validate_ports(cls, v: list[int]) -> list[int]:
         """验证代理端口"""
         if not v:
             raise ValueError("代理端口列表不能为空")
@@ -156,7 +154,7 @@ class ProxyConfig(BaseModel):
 
     @field_validator("hosts")
     @classmethod
-    def validate_hosts(cls, v: List[str]) -> List[str]:
+    def validate_hosts(cls, v: list[str]) -> list[str]:
         """验证代理主机"""
         if not v:
             raise ValueError("代理主机列表不能为空")
@@ -191,14 +189,14 @@ class ProxyManager:
         manager.record_failure(proxy, 403)  # 会自动标记为脏 IP
     """
 
-    def __init__(self, config: Optional[ProxyConfig] = None):
+    def __init__(self, config: ProxyConfig | None = None):
         """初始化代理管理器
 
         Args:
             config: 代理配置
         """
         self.config = config or ProxyConfig()
-        self.endpoints: List[ProxyEndpoint] = []
+        self.endpoints: list[ProxyEndpoint] = []
         self._round_robin_index = 0
         self._lock = threading.Lock()
         self._logger = logging.getLogger(__name__)
@@ -259,13 +257,12 @@ class ProxyManager:
                     f"代理 {endpoint.url} 健康检查通过 ({latency_ms:.0f}ms)"
                 )
                 return True
-            else:
-                self._logger.warning(
-                    f"代理 {endpoint.url} 健康检查失败: 连接被拒绝"
-                )
-                return False
+            self._logger.warning(
+                f"代理 {endpoint.url} 健康检查失败: 连接被拒绝"
+            )
+            return False
 
-        except socket.timeout:
+        except TimeoutError:
             self._logger.warning(
                 f"代理 {endpoint.url} 健康检查失败: 超时"
             )
@@ -276,7 +273,7 @@ class ProxyManager:
             )
             return False
 
-    def get_proxy(self) -> Optional[str]:
+    def get_proxy(self) -> str | None:
         """获取一个可用的代理 URL
 
         根据配置的轮换策略选择代理:
@@ -331,7 +328,7 @@ class ProxyManager:
 
             return endpoint.url
 
-    def get_proxy_with_endpoint(self) -> Optional[Tuple[str, ProxyEndpoint]]:
+    def get_proxy_with_endpoint(self) -> tuple[str, ProxyEndpoint] | None:
         """获取代理 URL 和对应的端点对象
 
         Returns:
@@ -358,10 +355,7 @@ class ProxyManager:
                 weights = []
                 for e in available_endpoints:
                     total = e.success_count + e.fail_count
-                    if total > 0:
-                        weight = e.success_count / total
-                    else:
-                        weight = 1.0
+                    weight = e.success_count / total if total > 0 else 1.0
                     weights.append(max(0.1, weight))
 
                 total_weight = sum(weights)
@@ -393,8 +387,8 @@ class ProxyManager:
     def record_failure(
         self,
         proxy_url: str,
-        status_code: Optional[int] = None,
-        error: Optional[str] = None
+        status_code: int | None = None,
+        error: str | None = None
     ) -> None:
         """记录代理失败请求
 
@@ -437,7 +431,7 @@ class ProxyManager:
                         )
                     return
 
-    def get_stats(self) -> Dict:
+    def get_stats(self) -> dict:
         """获取代理池统计信息
 
         Returns:
@@ -465,7 +459,7 @@ class ProxyManager:
                 "ban_duration_seconds": self.config.ban_duration_seconds,
             }
 
-    def get_detailed_stats(self) -> List[Dict]:
+    def get_detailed_stats(self) -> list[dict]:
         """获取详细的端点统计信息
 
         Returns:
@@ -524,10 +518,10 @@ class ProxyManager:
 # 单例实例
 # ============================================================================
 
-_global_proxy_manager: Optional[ProxyManager] = None
+_global_proxy_manager: ProxyManager | None = None
 
 
-def get_proxy_manager(config: Optional[ProxyConfig] = None) -> ProxyManager:
+def get_proxy_manager(config: ProxyConfig | None = None) -> ProxyManager:
     """获取全局代理管理器单例
 
     Args:
@@ -547,9 +541,9 @@ def get_proxy_manager(config: Optional[ProxyConfig] = None) -> ProxyManager:
 # ============================================================================
 
 __all__ = [
-    "ProxyStatus",
-    "ProxyEndpoint",
     "ProxyConfig",
+    "ProxyEndpoint",
     "ProxyManager",
+    "ProxyStatus",
     "get_proxy_manager",
 ]

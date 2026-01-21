@@ -124,14 +124,14 @@ class PathManager:
             if current_level > 0:
                 # 相对导入，转换为基于src的绝对导入
                 remaining_parts = [p for p in parts if p]
-                absolute_path = ".".join(remaining_parts)
-                return absolute_path
+                return ".".join(remaining_parts)
         elif "." not in module_path:
             # 简单模块名，假设在src下
             return f"{module_path}"
         else:
             # 已经是绝对路径格式
             return module_path
+        return None
 
     def ensure_importable(self, module_name: str) -> bool:
         """
@@ -147,7 +147,7 @@ class PathManager:
             __import__(module_name)
             return True
         except ImportError as e:
-            logger.error(f"模块导入失败: {module_name} - {e}")
+            logger.exception(f"模块导入失败: {module_name} - {e}")
             return False
 
     def get_path_info(self) -> dict[str, Any]:
@@ -200,7 +200,7 @@ def ensure_system_ready() -> bool:
         return True
 
     except Exception as e:
-        logger.error(f"系统准备检查失败: {e}")
+        logger.exception(f"系统准备检查失败: {e}")
         return False
 
 
@@ -250,14 +250,11 @@ def auto_fix_imports(file_path: str) -> bool:
         return changes_made
 
     except Exception as e:
-        logger.error(f"自动修复导入失败: {file_path} - {e}")
+        logger.exception(f"自动修复导入失败: {file_path} - {e}")
         return False
 
 
 # 自动执行系统准备
 if __name__ == "__main__":
-    import json
 
     success = ensure_system_ready()
-    print(f"系统准备状态: {'✅ 就绪' if success else '❌ 失败'}")
-    print(json.dumps(path_manager.get_path_info(), indent=2, ensure_ascii=False))

@@ -5,15 +5,15 @@ Health API 完整单元测试套件
 使用pytest-mock进行依赖隔离，验证所有逻辑分支
 """
 
-import pytest
 from datetime import datetime
-from unittest.mock import Mock, AsyncMock, patch
-from sqlalchemy.orm import Session
+from unittest.mock import AsyncMock, Mock, patch
 
+import pytest
 from fastapi import HTTPException
 from fastapi.testclient import TestClient
+from sqlalchemy.orm import Session
 
-from src.api.health import router, health_check, readiness_check, _check_database
+from src.api.health import _check_database, health_check, readiness_check, router
 from src.api.schemas import HealthCheckResponse, ServiceCheck
 from src.database.connection import get_db_session
 

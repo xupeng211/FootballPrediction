@@ -3,15 +3,16 @@
 测试ML推理组件的性能指标和响应时间
 """
 
-import pytest
-import time
 import asyncio
+import time
+from typing import Any, Dict, List
 from unittest.mock import Mock, patch
-from typing import List, Dict, Any
 
-from src.ml.inference.predictor import MatchPredictor, PredictionError
+import pytest
+
 from src.ml.inference.cache_manager import PredictionCache
 from src.ml.inference.model_loader import ModelLoader
+from src.ml.inference.predictor import MatchPredictor, PredictionError
 
 
 class TestMatchPredictorPerformance:
@@ -148,8 +149,9 @@ class TestMatchPredictorPerformance:
 
     def test_memory_usage_stability(self, mock_predictor):
         """测试内存使用稳定性"""
-        import psutil
         import os
+
+        import psutil
 
         process = psutil.Process(os.getpid())
         initial_memory = process.memory_info().rss / 1024 / 1024  # MB

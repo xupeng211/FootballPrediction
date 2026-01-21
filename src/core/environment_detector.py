@@ -5,12 +5,10 @@ V41.59: 环境检测模块 - 智能识别 Docker/WSL2/本地环境
 用途: 彻底终结"敲错门"问题，智能选择数据库连接
 """
 
-import os
-import socket
 from enum import Enum
-from pathlib import Path
-from typing import Optional
 import logging
+from pathlib import Path
+import socket
 
 logger = logging.getLogger(__name__)
 
@@ -98,8 +96,8 @@ class EnvironmentDetector:
 
     @staticmethod
     def get_optimal_db_host(
-        preferred_host: Optional[str] = None,
-        env_var_host: Optional[str] = None
+        preferred_host: str | None = None,
+        env_var_host: str | None = None
     ) -> str:
         """
         获取最优数据库主机地址
@@ -127,26 +125,23 @@ class EnvironmentDetector:
             logger.info("🐳 Docker 环境: 使用 'db' 作为数据库主机")
             return "db"
 
-        elif env == EnvironmentType.WSL2:
+        if env == EnvironmentType.WSL2:
             # V41.192: WSL2 环境智能检测
             if EnvironmentDetector._is_port_in_use("localhost", 5432):
                 # 检查是 Docker 容器还是本地 PostgreSQL 服务
                 if EnvironmentDetector._is_docker_db_on_5432():
                     logger.info("🐳 检测到 Docker 数据库容器占用 5432 端口（正确配置）")
                     return "localhost"
-                else:
-                    # 可能是本地 PostgreSQL 服务
-                    logger.warning("⚠️  检测到非 Docker 进程占用 5432 端口")
-                    logger.warning("🚨 可能导致连接到错误的数据库")
-                    logger.warning("💡 建议: 检查并停止本地 PostgreSQL 服务")
-                    return "localhost"
-            else:
-                logger.info("✅ WSL2 环境: 5432 端口未被占用，安全使用 localhost")
+                # 可能是本地 PostgreSQL 服务
+                logger.warning("⚠️  检测到非 Docker 进程占用 5432 端口")
+                logger.warning("🚨 可能导致连接到错误的数据库")
+                logger.warning("💡 建议: 检查并停止本地 PostgreSQL 服务")
                 return "localhost"
-
-        else:
-            # 本地环境: 使用 localhost
+            logger.info("✅ WSL2 环境: 5432 端口未被占用，安全使用 localhost")
             return "localhost"
+
+        # 本地环境: 使用 localhost
+        return "localhost"
 
     @staticmethod
     def _is_port_in_use(host: str, port: int) -> bool:
@@ -172,16 +167,13 @@ class EnvironmentDetector:
             import subprocess
             result = subprocess.run(
                 ["docker", "ps", "--filter", "publish=5432", "--format", "{{.Names}}"],
-                capture_output=True,
+                check=False, capture_output=True,
                 text=True,
                 timeout=5
             )
 
             # 如果有任何容器映射了 5432 端口，说明是 Docker
-            if result.returncode == 0 and result.stdout.strip():
-                return True
-
-            return False
+            return bool(result.returncode == 0 and result.stdout.strip())
 
         except (subprocess.TimeoutExpired, subprocess.SubprocessError, FileNotFoundError):
             # Docker 不可用或命令失败，无法确定
@@ -210,7 +202,7 @@ class EnvironmentDetector:
         """
         # 处理 SecretStr 类型
         password = db_password
-        if hasattr(db_password, 'get_secret_value'):
+        if hasattr(db_password, "get_secret_value"):
             password = db_password.get_secret_value()
 
         try:
@@ -233,7 +225,7 @@ class EnvironmentDetector:
                     # 1. 检查 matches 表是否存在
                     cursor.execute("SELECT to_regclass('public.matches');")
                     result = cursor.fetchone()
-                    matches_table = result['to_regclass'] if result else None
+                    matches_table = result["to_regclass"] if result else None
 
                     if matches_table is None:
                         conn.close()
@@ -249,7 +241,7 @@ class EnvironmentDetector:
                     # 2. 检查 matches 表记录数
                     cursor.execute("SELECT COUNT(*) as count FROM matches;")
                     result = cursor.fetchone()
-                    match_count = result['count'] if result else 0
+                    match_count = result["count"] if result else 0
 
                     if match_count < 100:
                         conn.close()
@@ -266,7 +258,7 @@ class EnvironmentDetector:
                 conn.close()
 
         except Exception as e:
-            return False, f"❌ 数据库连接失败: {str(e)}"
+            return False, f"❌ 数据库连接失败: {e!s}"
 
 
 # 单例模式简化导出
@@ -279,17 +271,12 @@ verify_database_identity = _detector.verify_database_identity
 
 if __name__ == "__main__":
     """测试环境检测"""
-    print("=" * 60)
-    print("V41.59: 环境检测测试")
-    print("=" * 60)
 
     # 1. 环境检测
     env = detect_environment()
-    print(f"当前环境: {env.value}")
 
     # 2. 最优主机
     host = get_optimal_db_host()
-    print(f"推荐数据库主机: {host}")
 
     # 3. 数据库验证
     is_valid, message = verify_database_identity(
@@ -298,6 +285,4 @@ if __name__ == "__main__":
         db_user="football_user",
         db_password="football_pass"
     )
-    print(f"数据库验证: {message}")
 
-    print("=" * 60)

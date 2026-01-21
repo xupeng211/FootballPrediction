@@ -31,7 +31,7 @@ V30.0 数据库连接池实现 (同步 + 异步双模支持)
 """
 
 import asyncio
-from contextlib import asynccontextmanager, contextmanager
+from contextlib import asynccontextmanager, contextmanager, suppress
 from dataclasses import dataclass, field
 import logging
 import os
@@ -82,11 +82,17 @@ class DatabasePoolConfig:
 
     # 超时配置
     timeout: float = field(default_factory=lambda: float(os.getenv("DB_TIMEOUT", "60.0")))
-    command_timeout: float = field(default_factory=lambda: float(os.getenv("DB_COMMAND_TIMEOUT", "30.0")))
+    command_timeout: float = field(
+        default_factory=lambda: float(os.getenv("DB_COMMAND_TIMEOUT", "30.0"))
+    )
 
     # 健康检查配置
-    health_check_interval: float = field(default_factory=lambda: float(os.getenv("DB_HEALTH_CHECK_INTERVAL", "30.0")))
-    health_check_timeout: float = field(default_factory=lambda: float(os.getenv("DB_HEALTH_CHECK_TIMEOUT", "5.0")))
+    health_check_interval: float = field(
+        default_factory=lambda: float(os.getenv("DB_HEALTH_CHECK_INTERVAL", "30.0"))
+    )
+    health_check_timeout: float = field(
+        default_factory=lambda: float(os.getenv("DB_HEALTH_CHECK_TIMEOUT", "5.0"))
+    )
 
     # 重连配置
     max_retries: int = field(default_factory=lambda: int(os.getenv("DB_MAX_RETRIES", "3")))
@@ -243,7 +249,7 @@ class DatabasePool:
             await self._start_health_check()
 
         except Exception as e:
-            logger.error(f"❌ 数据库连接池初始化失败: {e}")
+            logger.exception(f"❌ 数据库连接池初始化失败: {e}")
             raise
 
     async def _setup_connection(self, conn: Connection) -> None:
@@ -316,7 +322,7 @@ class DatabasePool:
                 return result
             except Exception as e:
                 self._stats["total_errors"] += 1
-                logger.error(f"SQL执行失败: {query} - {e}")
+                logger.exception(f"SQL执行失败: {query} - {e}")
                 raise
 
     async def executemany(
@@ -343,7 +349,7 @@ class DatabasePool:
                 return result
             except Exception as e:
                 self._stats["total_errors"] += 1
-                logger.error(f"批量SQL执行失败: {query} - {e}")
+                logger.exception(f"批量SQL执行失败: {query} - {e}")
                 raise
 
     async def fetch(self, query: str, *args, timeout: float | None = None) -> list[asyncpg.Record]:
@@ -365,10 +371,12 @@ class DatabasePool:
                 return result
             except Exception as e:
                 self._stats["total_errors"] += 1
-                logger.error(f"查询执行失败: {query} - {e}")
+                logger.exception(f"查询执行失败: {query} - {e}")
                 raise
 
-    async def fetchrow(self, query: str, *args, timeout: float | None = None) -> asyncpg.Record | None:
+    async def fetchrow(
+        self, query: str, *args, timeout: float | None = None
+    ) -> asyncpg.Record | None:
         """
         执行查询并返回第一行结果
 
@@ -387,10 +395,12 @@ class DatabasePool:
                 return result
             except Exception as e:
                 self._stats["total_errors"] += 1
-                logger.error(f"查询执行失败: {query} - {e}")
+                logger.exception(f"查询执行失败: {query} - {e}")
                 raise
 
-    async def fetchval(self, query: str, *args, column: int = 0, timeout: float | None = None) -> Any:
+    async def fetchval(
+        self, query: str, *args, column: int = 0, timeout: float | None = None
+    ) -> Any:
         """
         执行查询并返回单个值
 
@@ -410,7 +420,7 @@ class DatabasePool:
                 return result
             except Exception as e:
                 self._stats["total_errors"] += 1
-                logger.error(f"查询执行失败: {query} - {e}")
+                logger.exception(f"查询执行失败: {query} - {e}")
                 raise
 
     async def close(self) -> None:
@@ -421,10 +431,8 @@ class DatabasePool:
         """
         if self._health_check_task:
             self._health_check_task.cancel()
-            try:
+            with suppress(asyncio.CancelledError):
                 await self._health_check_task
-            except asyncio.CancelledError:
-                pass
 
         if self._pool:
             await self._pool.close()
@@ -448,7 +456,7 @@ class DatabasePool:
             except asyncio.CancelledError:
                 break
             except Exception as e:
-                logger.error(f"健康检查异常: {e}")
+                logger.exception(f"健康检查异常: {e}")
 
     async def _perform_health_check(self) -> None:
         """执行健康检查"""
@@ -458,13 +466,13 @@ class DatabasePool:
         try:
             start_time = time.time()
             await self.fetchval("SELECT 1")
-            check_time = time.time() - start_time
+            time.time() - start_time
 
             self._stats["last_health_check"] = time.time()
             self._stats["health_check_count"] += 1
 
         except Exception as e:
-            logger.error(f"💔 健康检查失败: {e}")
+            logger.exception(f"💔 健康检查失败: {e}")
 
     def get_stats(self) -> dict[str, Any]:
         """
@@ -707,7 +715,7 @@ class SyncDatabasePool:
             logger.info(f"✅ 同步数据库连接池初始化成功 (耗时: {creation_time:.2f}s)")
 
         except Exception as e:
-            logger.error(f"❌ 同步数据库连接池初始化失败: {e}")
+            logger.exception(f"❌ 同步数据库连接池初始化失败: {e}")
             raise
 
     @contextmanager
@@ -738,7 +746,7 @@ class SyncDatabasePool:
 
         except Exception as e:
             self._stats["total_errors"] += 1
-            logger.error(f"数据库连接异常: {e}")
+            logger.exception(f"数据库连接异常: {e}")
             raise
         finally:
             if conn:
@@ -776,7 +784,7 @@ class SyncDatabasePool:
                 return result
         except Exception as e:
             self._stats["total_errors"] += 1
-            logger.error(f"查询执行失败: {query} - {e}")
+            logger.exception(f"查询执行失败: {query} - {e}")
             raise
         finally:
             if close_after:
@@ -812,7 +820,7 @@ class SyncDatabasePool:
                 return result
         except Exception as e:
             self._stats["total_errors"] += 1
-            logger.error(f"查询执行失败: {query} - {e}")
+            logger.exception(f"查询执行失败: {query} - {e}")
             raise
         finally:
             if close_after:
@@ -848,7 +856,7 @@ class SyncDatabasePool:
                 return f"执行成功，影响 {cursor.rowcount} 行"
         except Exception as e:
             self._stats["total_errors"] += 1
-            logger.error(f"SQL执行失败: {query} - {e}")
+            logger.exception(f"SQL执行失败: {query} - {e}")
             if conn:
                 conn.rollback()
             raise
@@ -886,7 +894,7 @@ class SyncDatabasePool:
                 return f"批量执行成功，影响 {cursor.rowcount} 行"
         except Exception as e:
             self._stats["total_errors"] += 1
-            logger.error(f"批量SQL执行失败: {query} - {e}")
+            logger.exception(f"批量SQL执行失败: {query} - {e}")
             if conn:
                 conn.rollback()
             raise

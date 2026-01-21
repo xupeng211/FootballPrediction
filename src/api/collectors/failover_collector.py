@@ -21,12 +21,11 @@ Date: 2026-01-06
 
 from __future__ import annotations
 
-import logging
-from typing import Any
 from dataclasses import dataclass, field
 from datetime import datetime
+import logging
+from typing import Any
 
-from src.api.collectors.odds_production_extractor import OddsProductionExtractor
 from src.api.collectors.fotmob_core import FotMobCoreCollector
 
 logger = logging.getLogger(__name__)
@@ -36,9 +35,11 @@ logger = logging.getLogger(__name__)
 # Failover 事件记录
 # ============================================================================
 
+
 @dataclass
 class FailoverEvent:
     """Failover 事件记录"""
+
     match_id: int
     league_id: int | None
     season: str | None
@@ -89,6 +90,7 @@ class FailoverLogger:
 # Failover 采集器
 # ============================================================================
 
+
 class FailoverCollector:
     """
     V26.5 Failover 采集器 - 数据源自动切换
@@ -101,11 +103,7 @@ class FailoverCollector:
 
     使用示例：
         >>> collector = FailoverCollector()
-        >>> success = collector.harvest_match_with_league(
-        ...     match_id=12345,
-        ...     league_id=47,
-        ...     season="2324"
-        ... )
+        >>> success = collector.harvest_match_with_league(match_id=12345, league_id=47, season="2324")
     """
 
     def __init__(
@@ -141,8 +139,8 @@ class FailoverCollector:
     def harvest_match_with_league(
         self,
         match_id: int,
-        league_id: int = None,
-        season: str = None,
+        league_id: int | None = None,
+        season: str | None = None,
     ) -> bool:
         """
         V26.5: 带 Failover 的比赛采集（级联逻辑）
@@ -187,8 +185,7 @@ class FailoverCollector:
 
         # 主数据源失败，触发 Failover
         logger.warning(
-            f"⚠️ 主数据源失败: {self.primary_source} | "
-            f"Match ID: {match_id} | Error: {primary_error}"
+            f"⚠️ 主数据源失败: {self.primary_source} | Match ID: {match_id} | Error: {primary_error}"
         )
         logger.info(f"🔄 触发 Failover: {self.primary_source} → {self.fallback_source}")
 
@@ -203,7 +200,7 @@ class FailoverCollector:
 
         except Exception as e:
             fallback_success = False
-            logger.error(f"备用数据源异常: {self.fallback_source} - {e}")
+            logger.exception(f"备用数据源异常: {self.fallback_source} - {e}")
 
         # Step 3: 记录 Failover 事件
         event = FailoverEvent(
@@ -225,9 +222,7 @@ class FailoverCollector:
 
         return fallback_success
 
-    def _try_fotmob(
-        self, match_id: int, league_id: int = None, season: str = None
-    ) -> bool:
+    def _try_fotmob(self, match_id: int, league_id: int | None = None, season: str | None = None) -> bool:
         """
         尝试使用 FotMob 采集
 
@@ -262,6 +257,7 @@ class FailoverCollector:
 # ============================================================================
 # 便捷函数
 # ============================================================================
+
 
 def create_failover_collector(
     primary_source: str = "oddsportal",

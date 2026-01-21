@@ -37,19 +37,22 @@ Usage:
 """
 
 import asyncio
-from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from datetime import datetime
 import logging
 import random
 import time
-from typing import Any, TypeAlias
+from typing import TYPE_CHECKING, Any, TypeAlias
 
-from playwright.async_api import Page
 from thefuzz import fuzz
 
 from src.config_unified import get_settings
 from src.utils.text_processor import VendorNameCleaner
+
+if TYPE_CHECKING:
+    from collections.abc import Awaitable, Callable
+
+    from playwright.async_api import Page
 
 # V106.0: Prometheus Metrics
 try:
@@ -58,6 +61,7 @@ try:
         metrics,
         record_extraction_metrics,
     )
+
     PROMETHEUS_AVAILABLE = True
 except ImportError:
     PROMETHEUS_AVAILABLE = False
@@ -85,32 +89,32 @@ PROVIDER_MAPPING = {
         "source_name": "Entity_P",
         "priority": 1,
         # V117.1: Minimal pattern fragments only (70% partial_ratio threshold)
-        "fuzzy_patterns": ["pinn", "pin"]
+        "fuzzy_patterns": ["pinn", "pin"],
     },
     16: {
         "source_name": "Entity_B",
         "priority": 2,
         # V117.1: Minimal pattern fragments only (70% partial_ratio threshold)
-        "fuzzy_patterns": ["will", "hill"]
+        "fuzzy_patterns": ["will", "hill"],
     },
     7: {
         "source_name": "Entity_W",
         "priority": 3,
         # V117.1: Minimal pattern fragments only (70% partial_ratio threshold)
-        "fuzzy_patterns": ["365", "bet"]
+        "fuzzy_patterns": ["365", "bet"],
     },
     2: {
         "source_name": "Entity_L",
         "priority": 4,
         # V117.1: Minimal pattern fragments only (70% partial_ratio threshold)
-        "fuzzy_patterns": ["lad", "1x"]
+        "fuzzy_patterns": ["lad", "1x"],
     },
     "avg": {
         "source_name": "Entity_AVG",
         "priority": 5,
         # V117.1: Minimal pattern fragments only (70% partial_ratio threshold)
-        "fuzzy_patterns": ["avg", "mark"]
-    }
+        "fuzzy_patterns": ["avg", "mark"],
+    },
 }
 
 # Backward compatibility alias
@@ -144,6 +148,7 @@ BASE_RETRY_DELAY = 2.0  # seconds
 # V100.0 Data Models
 # ============================================================================
 
+
 @dataclass
 class MetricEventData:
     """V110.2: Represents metric data from a single provider (sanitized).
@@ -159,6 +164,7 @@ class MetricEventData:
         validation_error: Error message if validation fails
         extracted_at: When this record was created
     """
+
     vendor_id: ProviderID
     source_name: str
     priority: int
@@ -201,7 +207,7 @@ class MetricEventData:
             return None
 
         try:
-            self.integrity_score = 1.0/h + 1.0/d + 1.0/a
+            self.integrity_score = 1.0 / h + 1.0 / d + 1.0 / a
             self.is_valid = MIN_INTEGRITY_SCORE < self.integrity_score < MAX_INTEGRITY_SCORE
 
             if not self.is_valid:
@@ -234,13 +240,14 @@ class MetricEventData:
             "integrity_score": self.integrity_score,
             "is_valid": self.is_valid,
             "validation_error": self.validation_error,
-            "extracted_at": self.extracted_at
+            "extracted_at": self.extracted_at,
         }
 
 
 # ============================================================================
 # V100.0 Main Extraction Engine
 # ============================================================================
+
 
 class V100MultiVendorExtractor:
     """V119.0 Universal extraction kernel with hybrid adaptive engine (Type-Safe).
@@ -267,10 +274,7 @@ class V100MultiVendorExtractor:
         }
 
     async def extract_all_vendors(
-        self,
-        page: Page,
-        match_id: str,
-        match_date: datetime | None = None
+        self, page: Page, match_id: str, match_date: datetime | None = None
     ) -> EntityDataDict:
         """V119.0: Extract metric data from all configured providers.
 
@@ -298,9 +302,7 @@ class V100MultiVendorExtractor:
         results: EntityDataDict = {}
 
         # Step 1: Unified page analysis - extract all provider data in one pass
-        all_vendor_data = await self._extract_all_vendors_from_page(
-            page, match_id, match_date
-        )
+        all_vendor_data = await self._extract_all_vendors_from_page(page, match_id, match_date)
 
         # Step 2: Process and validate each provider's data
         for vendor_id, vendor_config in PROVIDER_MAPPING.items():
@@ -319,13 +321,13 @@ class V100MultiVendorExtractor:
                         vendor=source_name,
                         success=False,
                         duration=time.time() - vendor_start_time,
-                        failure_reason="No data found"
+                        failure_reason="No data found",
                     )
                     dead_letter_queue.add_failure(
                         match_id=match_id,
                         vendor=source_name,
                         reason="No data found on page",
-                        metadata={"vendor_id": str(vendor_id)}
+                        metadata={"vendor_id": str(vendor_id)},
                     )
                 continue
 
@@ -334,7 +336,7 @@ class V100MultiVendorExtractor:
                 vendor_id=vendor_id,
                 source_name=source_name,
                 priority=vendor_config["priority"],
-                **raw_data
+                **raw_data,
             )
 
             # Step 3: Validate data distribution (filter non-standard data)
@@ -351,13 +353,13 @@ class V100MultiVendorExtractor:
                         vendor=source_name,
                         success=False,
                         duration=time.time() - vendor_start_time,
-                        failure_reason="Invalid data distribution"
+                        failure_reason="Invalid data distribution",
                     )
                     dead_letter_queue.add_failure(
                         match_id=match_id,
                         vendor=source_name,
                         reason="Invalid data distribution",
-                        metadata={"vendor_id": str(vendor_id)}
+                        metadata={"vendor_id": str(vendor_id)},
                     )
                 continue
 
@@ -370,7 +372,9 @@ class V100MultiVendorExtractor:
                 results[source_name] = vendor_data
                 self._stats["successful_extractions"] += 1
                 # V117.1: Silent logging - no raw values
-                logger.info(f"[V117.1] [{source_name}] -> OK (score: {vendor_data.integrity_score:.4f})")
+                logger.info(
+                    f"[V117.1] [{source_name}] -> OK (score: {vendor_data.integrity_score:.4f})"
+                )
 
                 # V106.0: Record success metrics
                 if PROMETHEUS_AVAILABLE:
@@ -378,13 +382,11 @@ class V100MultiVendorExtractor:
                         vendor=source_name,
                         success=True,
                         duration=vendor_duration,
-                        integrity_score=vendor_data.integrity_score
+                        integrity_score=vendor_data.integrity_score,
                     )
             else:
                 self._stats["failed_extractions"] += 1
-                logger.warning(
-                    f"[V100.0] {source_name}: ❌ {vendor_data.validation_error}"
-                )
+                logger.warning(f"[V100.0] {source_name}: ❌ {vendor_data.validation_error}")
 
                 # V106.0: Record failure metrics
                 if PROMETHEUS_AVAILABLE:
@@ -392,7 +394,7 @@ class V100MultiVendorExtractor:
                         vendor=source_name,
                         success=False,
                         duration=vendor_duration,
-                        failure_reason=vendor_data.validation_error or "Validation failed"
+                        failure_reason=vendor_data.validation_error or "Validation failed",
                     )
                     dead_letter_queue.add_failure(
                         match_id=match_id,
@@ -400,8 +402,8 @@ class V100MultiVendorExtractor:
                         reason=vendor_data.validation_error or "Validation failed",
                         metadata={
                             "vendor_id": str(vendor_id),
-                            "integrity_score": vendor_data.integrity_score
-                        }
+                            "integrity_score": vendor_data.integrity_score,
+                        },
                     )
 
         total_duration = time.time() - start_time
@@ -413,7 +415,8 @@ class V100MultiVendorExtractor:
         if "Entity_AVG" not in results:
             # Collect all valid non-AVG entities
             valid_entities = [
-                v for k, v in results.items()
+                v
+                for k, v in results.items()
                 if k != "Entity_AVG" and v.is_valid and v.final_h and v.final_d and v.final_a
             ]
 
@@ -430,7 +433,7 @@ class V100MultiVendorExtractor:
                     priority=5,
                     final_h=round(avg_h, 2),
                     final_d=round(avg_d, 2),
-                    final_a=round(avg_a, 2)
+                    final_a=round(avg_a, 2),
                 )
 
                 # Calculate integrity score
@@ -452,10 +455,7 @@ class V100MultiVendorExtractor:
         return results
 
     async def _extract_all_vendors_from_page(
-        self,
-        page: Page,
-        match_id: str,
-        match_date: datetime
+        self, page: Page, match_id: str, match_date: datetime
     ) -> ProviderDataDict:
         """V110.2: Extract all provider data using spatial association algorithm.
 
@@ -854,7 +854,7 @@ class V100MultiVendorExtractor:
                 metrics_count = dom_data.get("debug", {}).get("metrics_scanned", 0)
                 filtered_count = dom_data.get("debug", {}).get("metrics_filtered_out", 0)
                 vendors_count = len(dom_data["vendors"])
-                column_tracks = dom_data.get("debug", {}).get("column_tracks", {})
+                dom_data.get("debug", {}).get("column_tracks", {})
 
                 logger.debug(
                     f"[V117.1] Column alignment found {vendors_count} vendors "
@@ -872,7 +872,7 @@ class V100MultiVendorExtractor:
                             odds_dict = {
                                 "final_h": vendor_data["h"],
                                 "final_d": vendor_data["d"],
-                                "final_a": vendor_data["a"]
+                                "final_a": vendor_data["a"],
                             }
                             # Include opening odds if available
                             if vendor_data.get("init_h") is not None:
@@ -882,7 +882,9 @@ class V100MultiVendorExtractor:
 
                             mapped_results[matched_source] = odds_dict
                             # V117.1: Silent logging - no raw values
-                            logger.debug(f"[V117.1] [{matched_source}] -> Found (Laser Mode, Metrics: {row_metrics_count})")
+                            logger.debug(
+                                f"[V117.1] [{matched_source}] -> Found (Laser Mode, Metrics: {row_metrics_count})"
+                            )
                     except Exception as e:
                         logger.debug(f"[V117.1] [Processing_Error] -> {type(e).__name__}")
                         continue
@@ -895,7 +897,9 @@ class V100MultiVendorExtractor:
         # If V117.1 Column Alignment returns < 2 entities, trigger V117.1 Row-Clustering
         laser_mode_count = len(mapped_results)
         if laser_mode_count < 2:
-            logger.debug(f"[V117.1] Laser Mode found {laser_mode_count} entities (< 2), triggering Gravity Mode...")
+            logger.debug(
+                f"[V117.1] Laser Mode found {laser_mode_count} entities (< 2), triggering Gravity Mode..."
+            )
             gravity_data = await page.evaluate(r"""
                 () => {
                     const results = {
@@ -1063,7 +1067,7 @@ class V100MultiVendorExtractor:
                                 odds_dict = {
                                     "final_h": vendor_data["h"],
                                     "final_d": vendor_data["d"],
-                                    "final_a": vendor_data["a"]
+                                    "final_a": vendor_data["a"],
                                 }
                                 if vendor_data.get("init_h") is not None:
                                     odds_dict["init_h"] = vendor_data["init_h"]
@@ -1071,7 +1075,9 @@ class V100MultiVendorExtractor:
                                     odds_dict["init_a"] = vendor_data["init_a"]
 
                                 mapped_results[matched_source] = odds_dict
-                                logger.debug(f"[V117.1] [{matched_source}] -> Found (Gravity Mode, Metrics: {row_metrics_count})")
+                                logger.debug(
+                                    f"[V117.1] [{matched_source}] -> Found (Gravity Mode, Metrics: {row_metrics_count})"
+                                )
                     except Exception as e:
                         logger.debug(f"[V117.1] [Gravity_Processing_Error] -> {type(e).__name__}")
                         continue
@@ -1084,7 +1090,9 @@ class V100MultiVendorExtractor:
                 f"Gravity={gravity_only_count}, Total={total_count}"
             )
         else:
-            logger.debug(f"[V117.1] Laser Mode succeeded with {laser_mode_count} entities, Gravity Mode not triggered")
+            logger.debug(
+                f"[V117.1] Laser Mode succeeded with {laser_mode_count} entities, Gravity Mode not triggered"
+            )
 
         # ============================================================================
         # STRATEGY 3: Text Pattern Fallback (Last Resort)
@@ -1138,7 +1146,9 @@ class V100MultiVendorExtractor:
             if text_data.get("found"):
                 # V117.1: Silent logging - no raw values
                 text_vendors_count = len(text_data.get("vendors", {}))
-                logger.debug(f"[V117.1] Text pattern found {text_vendors_count} vendors (Last Resort)")
+                logger.debug(
+                    f"[V117.1] Text pattern found {text_vendors_count} vendors (Last Resort)"
+                )
                 raw_vendors = text_data.get("vendors", {})
 
                 for raw_name, odds_data in raw_vendors.items():
@@ -1148,7 +1158,7 @@ class V100MultiVendorExtractor:
                         mapped_odds = {
                             "final_h": odds_data["h"],
                             "final_d": odds_data["d"],
-                            "final_a": odds_data["a"]
+                            "final_a": odds_data["a"],
                         }
                         mapped_results[matched_source] = mapped_odds
                         # V117.1: Silent logging - no raw values
@@ -1195,7 +1205,7 @@ class V100MultiVendorExtractor:
             return "Entity_AVG"
 
         # Step 2: Try exact match first (fast path)
-        for vendor_id, config in PROVIDER_MAPPING.items():
+        for config in PROVIDER_MAPPING.values():
             patterns = config["fuzzy_patterns"]
             for pattern in patterns:
                 if cleaned_name.lower() == pattern.lower():
@@ -1205,7 +1215,7 @@ class V100MultiVendorExtractor:
         best_match = None
         best_score = 0
 
-        for vendor_id, config in PROVIDER_MAPPING.items():
+        for config in PROVIDER_MAPPING.values():
             patterns = config["fuzzy_patterns"]
             for pattern in patterns:
                 # Calculate similarity score using thefuzz.partial_ratio
@@ -1218,9 +1228,7 @@ class V100MultiVendorExtractor:
                     best_match = config["source_name"]
 
         if best_match:
-            logger.debug(
-                f"[V117.1] [{best_match}] -> OK (score: {best_score:.0f}%)"
-            )
+            logger.debug(f"[V117.1] [{best_match}] -> OK (score: {best_score:.0f}%)")
             return best_match
 
         # No match found
@@ -1285,6 +1293,7 @@ class V100MultiVendorExtractor:
 # V100.0 Network Resilience Protocol
 # ============================================================================
 
+
 class V100NetworkResilience:
     """Implements network resilience for multi-vendor extraction.
 
@@ -1325,9 +1334,7 @@ class V100NetworkResilience:
         self._active_requests = max(0, self._active_requests - 1)
 
     async def execute_with_retry(
-        self,
-        coro_factory: Callable[[], Awaitable[object]],
-        max_attempts: int = MAX_RETRY_ATTEMPTS
+        self, coro_factory: Callable[[], Awaitable[object]], max_attempts: int = MAX_RETRY_ATTEMPTS
     ) -> object:
         """Execute a coroutine with exponential backoff retry.
 
@@ -1352,7 +1359,7 @@ class V100NetworkResilience:
                 last_exception = e
                 if attempt < max_attempts - 1:
                     # Exponential backoff: 2^attempt seconds
-                    delay = BASE_RETRY_DELAY * (2 ** attempt)
+                    delay = BASE_RETRY_DELAY * (2**attempt)
                     logger.warning(
                         f"[V100.0] Request failed (attempt {attempt + 1}/{max_attempts}), "
                         f"retrying in {delay:.1f}s: {e}"
@@ -1366,6 +1373,7 @@ class V100NetworkResilience:
 # V100.0 Database Operations
 # ============================================================================
 
+
 class V100DatabaseManager:
     """Handles multi-provider database upsert operations.
 
@@ -1378,8 +1386,7 @@ class V100DatabaseManager:
         self.crawler_config = get_crawler_settings()
 
     def validate_contract(
-        self,
-        vendor_data: MetricEventData
+        self, vendor_data: MetricEventData
     ) -> tuple[bool, str | None, str | None]:
         """V120.0: Validate data contract before database insertion.
 
@@ -1416,9 +1423,8 @@ class V100DatabaseManager:
             return False, "out_of_range", f"Away odd {a} out of range [{min_value}, {max_value}]"
 
         # Check 3: Not all identical
-        if not self.crawler_config.data_quality.allow_identical:
-            if h == d == a:
-                return False, "identical", f"All three odds are identical (h={h}, d={d}, a={a})"
+        if not self.crawler_config.data_quality.allow_identical and h == d == a:
+            return False, "identical", f"All three odds are identical (h={h}, d={d}, a={a})"
 
         # Check 4: Integrity score in valid range
         min_score = self.crawler_config.data_quality.min_integrity_score
@@ -1426,8 +1432,11 @@ class V100DatabaseManager:
 
         if vendor_data.integrity_score is not None:
             if not (min_score <= vendor_data.integrity_score <= max_score):
-                return False, "integrity", \
-                    f"Integrity score {vendor_data.integrity_score:.4f} out of range [{min_score}, {max_score}]"
+                return (
+                    False,
+                    "integrity",
+                    f"Integrity score {vendor_data.integrity_score:.4f} out of range [{min_score}, {max_score}]",
+                )
 
         return True, None, None
 
@@ -1437,7 +1446,7 @@ class V100DatabaseManager:
         source_name: str,
         vendor_data: MetricEventData,
         failure_category: str,
-        error_message: str
+        error_message: str,
     ) -> None:
         """V120.0: Send failed validation to dead letter queue.
 
@@ -1460,7 +1469,8 @@ class V100DatabaseManager:
 
         cursor = conn.cursor()
 
-        cursor.execute("""
+        cursor.execute(
+            """
             INSERT INTO metrics_dead_letter_queue (
                 match_id, source_name,
                 init_h, init_d, init_a,
@@ -1469,26 +1479,32 @@ class V100DatabaseManager:
             ) VALUES (
                 %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
             )
-        """, (
-            match_id, source_name,
-            vendor_data.init_h, vendor_data.init_d, vendor_data.init_a,
-            vendor_data.final_h, vendor_data.final_d, vendor_data.final_a,
-            vendor_data.integrity_score, error_message[:500], failure_category
-        ))
+        """,
+            (
+                match_id,
+                source_name,
+                vendor_data.init_h,
+                vendor_data.init_d,
+                vendor_data.init_a,
+                vendor_data.final_h,
+                vendor_data.final_d,
+                vendor_data.final_a,
+                vendor_data.integrity_score,
+                error_message[:500],
+                failure_category,
+            ),
+        )
 
         conn.commit()
         cursor.close()
         conn.close()
 
         logger.warning(
-            f"[V120.0] Sent to DLQ: {match_id}/{source_name} - "
-            f"{failure_category}: {error_message}"
+            f"[V120.0] Sent to DLQ: {match_id}/{source_name} - {failure_category}: {error_message}"
         )
 
     def upert_all_vendors(
-        self,
-        match_id: str,
-        vendor_data: dict[str, MetricEventData]
+        self, match_id: str, vendor_data: dict[str, MetricEventData]
     ) -> dict[str, int]:
         """V120.0: Upsert all provider data to database with contract validation.
 
@@ -1527,14 +1543,14 @@ class V100DatabaseManager:
                 if not is_valid:
                     # Send to dead letter queue
                     self._send_to_dead_letter_queue(
-                        match_id, source_name, data,
-                        failure_category, error_message
+                        match_id, source_name, data, failure_category, error_message
                     )
                     stats["dead_letter"] += 1
                     continue
 
                 # Contract passed - insert into main table
-                cursor.execute("""
+                cursor.execute(
+                    """
                     INSERT INTO metrics_multi_source_data (
                         match_id, source_name,
                         init_h, init_d, init_a,
@@ -1556,21 +1572,27 @@ class V100DatabaseManager:
                         is_valid = EXCLUDED.is_valid,
                         validation_error = EXCLUDED.validation_error,
                         data_timestamp = EXCLUDED.data_timestamp
-                """, (
-                    match_id,
-                    source_name,
-                    data.init_h, data.init_d, data.init_a,
-                    data.final_h, data.final_d, data.final_a,
-                    data.integrity_score,
-                    data.is_valid,
-                    data.validation_error,
-                    data.extracted_at,
-                ))
+                """,
+                    (
+                        match_id,
+                        source_name,
+                        data.init_h,
+                        data.init_d,
+                        data.init_a,
+                        data.final_h,
+                        data.final_d,
+                        data.final_a,
+                        data.integrity_score,
+                        data.is_valid,
+                        data.validation_error,
+                        data.extracted_at,
+                    ),
+                )
 
                 stats["inserted"] += 1
 
             except Exception as e:
-                logger.error(f"[V120.0] Database error for {source_name}: {e}")
+                logger.exception(f"[V120.0] Database error for {source_name}: {e}")
                 stats["failed"] += 1
 
         conn.commit()
@@ -1584,11 +1606,9 @@ class V100DatabaseManager:
 # V100.0 Entry Point
 # ============================================================================
 
+
 async def extract_multi_vendor_odds(
-    page: Page,
-    match_id: str,
-    match_date: datetime | None = None,
-    save_to_db: bool = True
+    page: Page, match_id: str, match_date: datetime | None = None, save_to_db: bool = True
 ) -> ExtractionResult:
     """V110.2 Entry point for multi-provider metric data extraction.
 
@@ -1605,9 +1625,7 @@ async def extract_multi_vendor_odds(
 
     # Extract all providers
     results = await extractor.extract_all_vendors(
-        page=page,
-        match_id=match_id,
-        match_date=match_date
+        page=page, match_id=match_id, match_date=match_date
     )
 
     # Optionally save to database
@@ -1622,5 +1640,5 @@ async def extract_multi_vendor_odds(
         "vendor_data": {k: v.to_dict() for k, v in results.items()},
         "extraction_stats": extractor._stats,
         "database_stats": db_stats,
-        "success": len(results) > 0
+        "success": len(results) > 0,
     }

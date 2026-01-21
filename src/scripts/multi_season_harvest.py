@@ -104,12 +104,14 @@ class MultiSeasonHarvester:
 
                 # 进度报告
                 if i % 50 == 0:
-                    self.logger.info(f"  📊 {season_name} 进度: {i}/{len(matches)} ({i / len(matches) * 100:.1f}%)")
+                    self.logger.info(
+                        f"  📊 {season_name} 进度: {i}/{len(matches)} ({i / len(matches) * 100:.1f}%)"
+                    )
 
             return season_data
 
         except Exception as e:
-            self.logger.error(f"❌ 收割 {season_name} 赛季失败: {e}")
+            self.logger.exception(f"❌ 收割 {season_name} 赛季失败: {e}")
             return []
 
     def run(self) -> bool:
@@ -162,9 +164,9 @@ def main():
     success = harvester.run()
 
     if success:
-        print("\n🎉 多赛季收割完成!")
+        pass
     else:
-        print("\n❌ 收割失败")
+        pass
 
 
 if __name__ == "__main__":

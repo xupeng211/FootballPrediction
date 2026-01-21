@@ -32,18 +32,17 @@ Version: V38.0 Sentry Self-Healing
 Date: 2026-01-12
 """
 
-import asyncio
+from collections import deque
+from datetime import datetime
 import json
 import logging
 import os
+from pathlib import Path
 import subprocess
 import sys
 import threading
 import time
-from collections import deque
-from datetime import datetime, timedelta
-from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import psycopg2
 
@@ -59,6 +58,7 @@ logger = logging.getLogger(__name__)
 # EventBus - 极简监听服务
 # ============================================================================
 
+
 class EventBus:
     """
     V38.0 EventBus - PostgreSQL NOTIFY/LISTEN 监听服务 (Event-Driven Architecture)
@@ -73,10 +73,17 @@ class EventBus:
         7. V38.0: 哨兵自愈 - 后台周期任务扫描孤儿数据并重新推送 NOTIFY
     """
 
-    def __init__(self, poll_interval: float = 1.0, enable_self_check: bool = True,
-                 enable_layer_c_trigger: bool = True, enable_layer_d_trigger: bool = True,
-                 self_check_days: int = 7, max_concurrent_processes: int = 8,
-                 enable_sentry: bool = True, sentry_interval_minutes: int = 30):
+    def __init__(
+        self,
+        poll_interval: float = 1.0,
+        enable_self_check: bool = True,
+        enable_layer_c_trigger: bool = True,
+        enable_layer_d_trigger: bool = True,
+        self_check_days: int = 7,
+        max_concurrent_processes: int = 8,
+        enable_sentry: bool = True,
+        sentry_interval_minutes: int = 30,
+    ):
         """
         初始化 EventBus
 
@@ -97,15 +104,15 @@ class EventBus:
         self.self_check_days = self_check_days
         self.max_concurrent_processes = max_concurrent_processes
         self.settings = get_settings()
-        self.conn: Optional[psycopg2.extensions.connection] = None
-        self.cursor: Optional[psycopg2.extensions.cursor] = None
+        self.conn: psycopg2.extensions.connection | None = None
+        self.cursor: psycopg2.extensions.cursor | None = None
         self._running = False
 
         # V38.0: 哨兵自愈配置
         self.enable_sentry = enable_sentry
         self.sentry_interval_seconds = sentry_interval_minutes * 60
-        self._sentry_thread: Optional[threading.Thread] = None
-        self._last_sentry_run: Optional[datetime] = None
+        self._sentry_thread: threading.Thread | None = None
+        self._last_sentry_run: datetime | None = None
 
         # V37.3: 进程安全阀 - 使用 deque 跟踪活跃进程
         self.active_processes: deque = deque()
@@ -113,31 +120,31 @@ class EventBus:
 
         # V37.4: 移除 pending_layer_d 轮询队列（改用事件驱动）
         # 保留 timing_stats 用于"生产线全景视图"
-        self.timing_stats: Dict[str, List[float]] = {
-            'a_to_b': [],  # Layer A → B 耗时
-            'b_to_c': [],  # Layer B → C 耗时
-            'c_to_d': [],  # Layer C → D 耗时
+        self.timing_stats: dict[str, list[float]] = {
+            "a_to_b": [],  # Layer A → B 耗时
+            "b_to_c": [],  # Layer B → C 耗时
+            "c_to_d": [],  # Layer C → D 耗时
         }
         self.timing_lock = threading.Lock()
 
         # 统计
         self.stats = {
-            'started_at': None,
-            'notifications_received': 0,
-            'hash_hunts_triggered': 0,
-            'self_check_orphans_found': 0,
-            'self_check_processed': 0,
-            'layer_c_triggered': 0,
-            'layer_d_triggered': 0,
-            'processes_throttled': 0,
-            'errors': 0,
+            "started_at": None,
+            "notifications_received": 0,
+            "hash_hunts_triggered": 0,
+            "self_check_orphans_found": 0,
+            "self_check_processed": 0,
+            "layer_c_triggered": 0,
+            "layer_d_triggered": 0,
+            "processes_throttled": 0,
+            "errors": 0,
             # V37.4: 事件类型统计
-            'matches_insert_count': 0,
-            'odds_updated_count': 0,
+            "matches_insert_count": 0,
+            "odds_updated_count": 0,
             # V38.0: 哨兵自愈统计
-            'sentry_runs': 0,
-            'sentry_orphans_found': 0,
-            'sentry_notifies_sent': 0,
+            "sentry_runs": 0,
+            "sentry_orphans_found": 0,
+            "sentry_notifies_sent": 0,
         }
 
     def _get_active_process_count(self) -> int:
@@ -152,10 +159,9 @@ class EventBus:
                         # 进程还在运行，检查是否超时（10分钟）
                         if time.time() - start_time < 600:
                             break
-                        else:
-                            # 进程超时，从队列中移除
-                            self.active_processes.popleft()
-                            logger.warning(f"⚠️  进程 {pid} 超时，从活跃队列中移除")
+                        # 进程超时，从队列中移除
+                        self.active_processes.popleft()
+                        logger.warning(f"⚠️  进程 {pid} 超时，从活跃队列中移除")
                     else:
                         # 进程已完成，从队列中移除
                         self.active_processes.popleft()
@@ -168,7 +174,7 @@ class EventBus:
         """检查是否可以创建新进程（安全阀）"""
         active_count = self._get_active_process_count()
         if active_count >= self.max_concurrent_processes:
-            self.stats['processes_throttled'] += 1
+            self.stats["processes_throttled"] += 1
             logger.warning(
                 f"⚠️  进程安全阀触发: 当前活跃进程 {active_count}/{self.max_concurrent_processes}，"
                 f"新进程被限流"
@@ -189,7 +195,7 @@ class EventBus:
             port=self.settings.database.port,
             database=self.settings.database.name,
             user=self.settings.database.user,
-            password=self.settings.database.password.get_secret_value()
+            password=self.settings.database.password.get_secret_value(),
         )
         self.conn.autocommit = True
         self.cursor = self.conn.cursor()
@@ -222,7 +228,8 @@ class EventBus:
 
         try:
             # 查询遗漏的比赛（最近 N 天，且不在 matches_mapping 中）
-            self.cursor.execute("""
+            self.cursor.execute(
+                """
                 SELECT m.match_id, m.league_name, m.home_team, m.away_team, m.match_date
                 FROM matches m
                 LEFT JOIN matches_mapping mm ON m.match_id = mm.fotmob_id
@@ -230,7 +237,9 @@ class EventBus:
                   AND m.match_date >= NOW() - INTERVAL '%s days'
                   AND m.match_date <= NOW() + INTERVAL '30 days'
                 ORDER BY m.match_date DESC
-            """, (self.self_check_days,))
+            """,
+                (self.self_check_days,),
+            )
 
             orphaned_matches = self.cursor.fetchall()
 
@@ -238,11 +247,11 @@ class EventBus:
                 logger.info("✅ 启动自检完成: 未发现遗漏的比赛")
                 return
 
-            self.stats['self_check_orphans_found'] = len(orphaned_matches)
+            self.stats["self_check_orphans_found"] = len(orphaned_matches)
             logger.info(f"📊 发现 {len(orphaned_matches)} 场遗漏的比赛，开始补单...")
 
             processed = 0
-            for match_id, league_name, home_team, away_team, match_date in orphaned_matches:
+            for match_id, league_name, _home_team, _away_team, _match_date in orphaned_matches:
                 try:
                     logger.info(f"   处理: {match_id} ({league_name})")
                     self._trigger_hash_hunt(match_id, league_name)
@@ -252,17 +261,17 @@ class EventBus:
                     time.sleep(0.5)
 
                 except Exception as e:
-                    logger.error(f"   ❌ 处理失败 {match_id}: {e}")
-                    self.stats['errors'] += 1
+                    logger.exception(f"   ❌ 处理失败 {match_id}: {e}")
+                    self.stats["errors"] += 1
 
-            self.stats['self_check_processed'] = processed
+            self.stats["self_check_processed"] = processed
             logger.info("=" * 70)
             logger.info(f"✅ 启动自检完成: 处理了 {processed}/{len(orphaned_matches)} 场比赛")
             logger.info("=" * 70)
 
         except Exception as e:
-            logger.error(f"❌ 启动自检异常: {e}")
-            self.stats['errors'] += 1
+            logger.exception(f"❌ 启动自检异常: {e}")
+            self.stats["errors"] += 1
 
     def _trigger_layer_c_harvest(self, match_id: str, oddsportal_url: str):
         """
@@ -296,27 +305,26 @@ class EventBus:
             cmd = [
                 sys.executable,
                 str(harvest_script),
-                "--match-id", match_id,
-                "--workers", "1",
-                "--no-banner"
+                "--match-id",
+                match_id,
+                "--workers",
+                "1",
+                "--no-banner",
             ]
 
             process = subprocess.Popen(
-                cmd,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-                start_new_session=True
+                cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True
             )
 
             # V37.3: 注册进程到活跃队列
             self._register_process(process.pid)
 
-            self.stats['layer_c_triggered'] += 1
+            self.stats["layer_c_triggered"] += 1
             logger.info(f"   ✅ Layer C 采集进程已启动: {match_id} (PID: {process.pid})")
 
         except Exception as e:
-            logger.error(f"❌ Layer C 自动触发异常: {e}")
-            self.stats['errors'] += 1
+            logger.exception(f"❌ Layer C 自动触发异常: {e}")
+            self.stats["errors"] += 1
 
     def disconnect(self):
         """断开连接"""
@@ -340,14 +348,14 @@ class EventBus:
             # 动态导入 hunt_league_hashes 模块
             from scripts.ops.hunt_league_hashes import (
                 get_missing_matches_by_league,
-                insert_matches_mapping_batch
+                insert_matches_mapping_batch,
             )
 
             # 获取该比赛的详细信息
             matches = get_missing_matches_by_league([league_name])
             target_match = None
             for m in matches:
-                if m['fotmob_id'] == match_id:
+                if m["fotmob_id"] == match_id:
                     target_match = m
                     break
 
@@ -357,6 +365,7 @@ class EventBus:
 
             # 调用 OddsPortalScraper.search_match_url()
             import asyncio
+
             from core.scrapers.oddsportal import OddsPortalScraper
 
             scraper = OddsPortalScraper(config_path="config/scraper_config.yaml")
@@ -367,54 +376,56 @@ class EventBus:
             try:
                 result = loop.run_until_complete(
                     scraper.search_match_url(
-                        home_team=target_match['home_team'],
-                        away_team=target_match['away_team'],
+                        home_team=target_match["home_team"],
+                        away_team=target_match["away_team"],
                         league_hint=league_name,
-                        headless=True
+                        headless=True,
                     )
                 )
             finally:
                 loop.close()
 
             # 无论搜索成功与否，都记录到 matches_mapping 表
-            if result.get('success') and result.get('url'):
+            if result.get("success") and result.get("url"):
                 # 搜索成功
                 record = {
-                    'fotmob_id': match_id,
-                    'home_team': target_match['home_team'],
-                    'away_team': target_match['away_team'],
-                    'league_name': league_name,
-                    'match_date': target_match.get('match_date'),
-                    'oddsportal_url': result['url'],
-                    'confidence': 0.7,
-                    'mapping_method': 'semantic'  # 使用允许的值
+                    "fotmob_id": match_id,
+                    "home_team": target_match["home_team"],
+                    "away_team": target_match["away_team"],
+                    "league_name": league_name,
+                    "match_date": target_match.get("match_date"),
+                    "oddsportal_url": result["url"],
+                    "confidence": 0.7,
+                    "mapping_method": "semantic",  # 使用允许的值
                 }
                 logger.info(f"✅ URL 映射成功: {match_id} → {result['url']}")
 
                 # V37.2: Layer C 自动触发 - 当找到 URL 时立即启动采集
-                self._trigger_layer_c_harvest(match_id, result['url'])
+                self._trigger_layer_c_harvest(match_id, result["url"])
             else:
                 # 搜索失败 - 仍然记录，但 URL 为 NULL
                 record = {
-                    'fotmob_id': match_id,
-                    'home_team': target_match['home_team'],
-                    'away_team': target_match['away_team'],
-                    'league_name': league_name,
-                    'match_date': target_match.get('match_date'),
-                    'oddsportal_url': None,  # 搜索失败
-                    'confidence': 0.0,
-                    'mapping_method': 'semantic'  # 使用允许的值
+                    "fotmob_id": match_id,
+                    "home_team": target_match["home_team"],
+                    "away_team": target_match["away_team"],
+                    "league_name": league_name,
+                    "match_date": target_match.get("match_date"),
+                    "oddsportal_url": None,  # 搜索失败
+                    "confidence": 0.0,
+                    "mapping_method": "semantic",  # 使用允许的值
                 }
-                logger.warning(f"⚠️  URL 搜索失败: {match_id} - {result.get('error', 'Unknown error')}")
-                logger.info(f"   已记录到 matches_mapping 表 (URL=NULL)，证明自动化流程已触发")
+                logger.warning(
+                    f"⚠️  URL 搜索失败: {match_id} - {result.get('error', 'Unknown error')}"
+                )
+                logger.info("   已记录到 matches_mapping 表 (URL=NULL)，证明自动化流程已触发")
 
             # 插入到 matches_mapping 表
-            inserted = insert_matches_mapping_batch([record])
-            self.stats['hash_hunts_triggered'] += 1
+            insert_matches_mapping_batch([record])
+            self.stats["hash_hunts_triggered"] += 1
 
         except Exception as e:
-            logger.error(f"❌ 哈希狩猎异常: {e}")
-            self.stats['errors'] += 1
+            logger.exception(f"❌ 哈希狩猎异常: {e}")
+            self.stats["errors"] += 1
 
     def _process_notification(self, notification: psycopg2.extensions.Notify):
         """
@@ -423,12 +434,12 @@ class EventBus:
         Args:
             notification: psycopg2 Notify 对象
         """
-        self.stats['notifications_received'] += 1
+        self.stats["notifications_received"] += 1
 
         try:
             # 解析 JSON 载荷
             payload = json.loads(notification.payload)
-            match_id = payload.get('match_id')
+            match_id = payload.get("match_id")
             channel = notification.channel
 
             logger.info(
@@ -437,19 +448,19 @@ class EventBus:
             )
 
             # 根据频道类型分发处理
-            if channel == 'matches_insert':
+            if channel == "matches_insert":
                 # Layer B: 哈希狩猎
-                self.stats['matches_insert_count'] += 1
-                league_name = payload.get('league_name')
+                self.stats["matches_insert_count"] += 1
+                league_name = payload.get("league_name")
                 if match_id and league_name:
                     self._trigger_hash_hunt(match_id, league_name)
                 else:
                     logger.warning(f"⚠️  matches_insert 载荷格式错误: {notification.payload}")
 
-            elif channel == 'odds_updated':
+            elif channel == "odds_updated":
                 # V37.4: Layer D: 特征提取（事件驱动）
-                self.stats['odds_updated_count'] += 1
-                has_odds = payload.get('has_odds')
+                self.stats["odds_updated_count"] += 1
+                has_odds = payload.get("has_odds")
                 if match_id and has_odds:
                     self._trigger_layer_d_extraction(match_id)
                 else:
@@ -459,11 +470,11 @@ class EventBus:
                 logger.warning(f"⚠️  未知频道: {channel}")
 
         except json.JSONDecodeError as e:
-            logger.error(f"❌ JSON 解析失败: {notification.payload} - {e}")
-            self.stats['errors'] += 1
+            logger.exception(f"❌ JSON 解析失败: {notification.payload} - {e}")
+            self.stats["errors"] += 1
         except Exception as e:
-            logger.error(f"❌ 处理通知异常: {e}")
-            self.stats['errors'] += 1
+            logger.exception(f"❌ 处理通知异常: {e}")
+            self.stats["errors"] += 1
 
     def _trigger_layer_d_extraction(self, match_id: str):
         """
@@ -488,26 +499,18 @@ class EventBus:
                 return
 
             # 触发特征提取
-            cmd = [
-                sys.executable,
-                str(extract_script),
-                "--match-id", match_id,
-                "--limit", "1"
-            ]
+            cmd = [sys.executable, str(extract_script), "--match-id", match_id, "--limit", "1"]
 
             subprocess.Popen(
-                cmd,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-                start_new_session=True
+                cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True
             )
 
-            self.stats['layer_d_triggered'] += 1
+            self.stats["layer_d_triggered"] += 1
             logger.info(f"   ✅ Layer D 特征提取已触发: {match_id}")
 
         except Exception as e:
-            logger.error(f"❌ Layer D 自动触发异常: {e}")
-            self.stats['errors'] += 1
+            logger.exception(f"❌ Layer D 自动触发异常: {e}")
+            self.stats["errors"] += 1
 
     def _sentry_scan_orphans(self):
         """
@@ -530,7 +533,7 @@ class EventBus:
                 port=self.settings.database.port,
                 database=self.settings.database.name,
                 user=self.settings.database.user,
-                password=self.settings.database.password.get_secret_value()
+                password=self.settings.database.password.get_secret_value(),
             )
             sentry_conn.autocommit = True
             sentry_cursor = sentry_conn.cursor()
@@ -548,21 +551,21 @@ class EventBus:
             """)
 
             orphans = sentry_cursor.fetchall()
-            self.stats['sentry_runs'] += 1
-            self.stats['sentry_orphans_found'] += len(orphans)
+            self.stats["sentry_runs"] += 1
+            self.stats["sentry_orphans_found"] += len(orphans)
 
             if orphans:
                 logger.info(f"🛡️  哨兵扫描发现 {len(orphans)} 场孤儿数据")
 
                 # 重新推送 NOTIFY 信号
-                for match_id, league_name, match_date in orphans:
+                for match_id, league_name, _match_date in orphans:
                     try:
                         payload = json.dumps({"match_id": match_id, "has_odds": True})
                         sentry_cursor.execute("NOTIFY odds_updated, %s", (payload,))
-                        self.stats['sentry_notifies_sent'] += 1
+                        self.stats["sentry_notifies_sent"] += 1
                         logger.debug(f"   🔄 重推 NOTIFY: {match_id} ({league_name})")
                     except Exception as e:
-                        logger.error(f"   ❌ 重推 NOTIFY 失败 {match_id}: {e}")
+                        logger.exception(f"   ❌ 重推 NOTIFY 失败 {match_id}: {e}")
 
                 logger.info(f"   ✅ 哨兵自愈: 已重推 {len(orphans)} 个 NOTIFY 信号")
             else:
@@ -573,8 +576,8 @@ class EventBus:
             self._last_sentry_run = datetime.now()
 
         except Exception as e:
-            logger.error(f"❌ 哨兵扫描异常: {e}")
-            self.stats['errors'] += 1
+            logger.exception(f"❌ 哨兵扫描异常: {e}")
+            self.stats["errors"] += 1
 
     def _sentry_worker(self):
         """
@@ -591,12 +594,12 @@ class EventBus:
                 self._sentry_scan_orphans()
 
             except Exception as e:
-                logger.error(f"❌ 哨兵线程异常: {e}")
-                self.stats['errors'] += 1
+                logger.exception(f"❌ 哨兵线程异常: {e}")
+                self.stats["errors"] += 1
 
         logger.info("🛡️  哨兵线程已停止")
 
-    def listen(self, max_iterations: Optional[int] = None):
+    def listen(self, max_iterations: int | None = None):
         """
         开始监听 NOTIFY 事件（阻塞模式）
 
@@ -605,14 +608,12 @@ class EventBus:
         """
         self.connect()
         self._running = True
-        self.stats['started_at'] = datetime.now()
+        self.stats["started_at"] = datetime.now()
 
         # V38.0: 启动哨兵线程（事件驱动架构）
         if self.enable_sentry:
             self._sentry_thread = threading.Thread(
-                target=self._sentry_worker,
-                name="SentryWorker",
-                daemon=True
+                target=self._sentry_worker, name="SentryWorker", daemon=True
             )
             self._sentry_thread.start()
 
@@ -620,7 +621,7 @@ class EventBus:
         logger.info("=" * 70)
         logger.info("🚀 V38.0 EventBus 启动 (Sentry Self-Healing)")
         logger.info("=" * 70)
-        logger.info(f"监听频道: matches_insert, odds_updated")
+        logger.info("监听频道: matches_insert, odds_updated")
         logger.info(f"轮询间隔: {self.poll_interval}s")
         logger.info(f"启动自检: {'启用' if self.enable_self_check else '禁用'}")
         logger.info(f"Layer C 触发: {'启用' if self.enable_layer_c_trigger else '禁用'}")
@@ -656,7 +657,7 @@ class EventBus:
         except KeyboardInterrupt:
             logger.info("\n🛑 收到中断信号，正在停止...")
         except Exception as e:
-            logger.error(f"❌ 监听异常: {e}")
+            logger.exception(f"❌ 监听异常: {e}")
         finally:
             self._running = False
 
@@ -670,7 +671,7 @@ class EventBus:
 
     def _print_summary(self):
         """打印运行摘要"""
-        elapsed = (datetime.now() - self.stats['started_at']).total_seconds()
+        elapsed = (datetime.now() - self.stats["started_at"]).total_seconds()
 
         logger.info("")
         logger.info("=" * 70)
@@ -681,7 +682,9 @@ class EventBus:
         logger.info(f"  - matches_insert: {self.stats['matches_insert_count']}")
         logger.info(f"  - odds_updated: {self.stats['odds_updated_count']}")
         logger.info(f"触发狩猎: {self.stats['hash_hunts_triggered']}")
-        logger.info(f"启动自检: 发现 {self.stats['self_check_orphans_found']} 场遗漏，处理 {self.stats['self_check_processed']} 场")
+        logger.info(
+            f"启动自检: 发现 {self.stats['self_check_orphans_found']} 场遗漏，处理 {self.stats['self_check_processed']} 场"
+        )
         logger.info(f"Layer C 触发: {self.stats['layer_c_triggered']} 次")
         logger.info(f"Layer D 触发: {self.stats['layer_d_triggered']} 次")
         logger.info(f"进程限流: {self.stats['processes_throttled']} 次")
@@ -689,10 +692,12 @@ class EventBus:
         logger.info(f"错误次数: {self.stats['errors']}")
         # V38.0: 哨兵自愈统计
         if self.enable_sentry:
-            logger.info(f"哨兵自愈: 运行 {self.stats['sentry_runs']} 次，发现 {self.stats['sentry_orphans_found']} 场孤儿，重推 {self.stats['sentry_notifies_sent']} 个 NOTIFY")
+            logger.info(
+                f"哨兵自愈: 运行 {self.stats['sentry_runs']} 次，发现 {self.stats['sentry_orphans_found']} 场孤儿，重推 {self.stats['sentry_notifies_sent']} 个 NOTIFY"
+            )
         logger.info("=" * 70)
 
-    def get_production_metrics(self) -> Dict[str, Any]:
+    def get_production_metrics(self) -> dict[str, Any]:
         """
         V37.4: 获取生产线指标（用于全景视图）
 
@@ -700,22 +705,22 @@ class EventBus:
             包含成功率、平均耗时等指标的字典
         """
         with self.timing_lock:
-            a_to_b_times = self.timing_stats['a_to_b'][-100:]  # 最近 100 条
-            b_to_c_times = self.timing_stats['b_to_c'][-100:]
-            c_to_d_times = self.timing_stats['c_to_d'][-100:]
+            a_to_b_times = self.timing_stats["a_to_b"][-100:]  # 最近 100 条
+            b_to_c_times = self.timing_stats["b_to_c"][-100:]
+            c_to_d_times = self.timing_stats["c_to_d"][-100:]
 
         return {
-            'a_to_b': {
-                'count': len(a_to_b_times),
-                'avg_time': sum(a_to_b_times) / len(a_to_b_times) if a_to_b_times else 0,
+            "a_to_b": {
+                "count": len(a_to_b_times),
+                "avg_time": sum(a_to_b_times) / len(a_to_b_times) if a_to_b_times else 0,
             },
-            'b_to_c': {
-                'count': len(b_to_c_times),
-                'avg_time': sum(b_to_c_times) / len(b_to_c_times) if b_to_c_times else 0,
+            "b_to_c": {
+                "count": len(b_to_c_times),
+                "avg_time": sum(b_to_c_times) / len(b_to_c_times) if b_to_c_times else 0,
             },
-            'c_to_d': {
-                'count': len(c_to_d_times),
-                'avg_time': sum(c_to_d_times) / len(c_to_d_times) if c_to_d_times else 0,
+            "c_to_d": {
+                "count": len(c_to_d_times),
+                "avg_time": sum(c_to_d_times) / len(c_to_d_times) if c_to_d_times else 0,
             },
         }
 
@@ -728,6 +733,7 @@ class EventBus:
 # ============================================================================
 # 独立运行入口
 # ============================================================================
+
 
 def main():
     """
@@ -761,63 +767,34 @@ def main():
     # 解析命令行参数
     parser = argparse.ArgumentParser(
         description="V37.4 EventBus - Event-Driven Architecture",
-        formatter_class=argparse.RawDescriptionHelpFormatter
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    parser.add_argument("--no-self-check", action="store_true", help="禁用启动自检功能")
+    parser.add_argument("--no-layer-c", action="store_true", help="禁用 Layer C 自动触发功能")
+    parser.add_argument("--no-layer-d", action="store_true", help="禁用 Layer D 自动触发功能")
+    parser.add_argument(
+        "--self-check-days", type=int, default=7, help="启动自检扫描最近几天的数据 (默认: 7)"
     )
     parser.add_argument(
-        '--no-self-check',
-        action='store_true',
-        help='禁用启动自检功能'
+        "--max-processes", type=int, default=8, help="最大并发进程数/安全阀 (默认: 8)"
     )
+    parser.add_argument("--once", action="store_true", help="单次运行模式（处理启动自检后退出）")
     parser.add_argument(
-        '--no-layer-c',
-        action='store_true',
-        help='禁用 Layer C 自动触发功能'
-    )
-    parser.add_argument(
-        '--no-layer-d',
-        action='store_true',
-        help='禁用 Layer D 自动触发功能'
-    )
-    parser.add_argument(
-        '--self-check-days',
-        type=int,
-        default=7,
-        help='启动自检扫描最近几天的数据 (默认: 7)'
-    )
-    parser.add_argument(
-        '--max-processes',
-        type=int,
-        default=8,
-        help='最大并发进程数/安全阀 (默认: 8)'
-    )
-    parser.add_argument(
-        '--once',
-        action='store_true',
-        help='单次运行模式（处理启动自检后退出）'
-    )
-    parser.add_argument(
-        '--poll-interval',
-        type=float,
-        default=1.0,
-        help='轮询间隔（秒，默认: 1.0）'
+        "--poll-interval", type=float, default=1.0, help="轮询间隔（秒，默认: 1.0）"
     )
 
     args = parser.parse_args()
 
     # 环境校验
-    db_name = os.getenv('DB_NAME', '')
-    if db_name != 'football_db':
-        print(f"❌ DB_NAME 必须为 'football_db'，当前: '{db_name}'")
+    db_name = os.getenv("DB_NAME", "")
+    if db_name != "football_db":
         sys.exit(1)
 
     # 配置日志
     logging.basicConfig(
         level=logging.INFO,
-        format='[%(asctime)s] [%(levelname)s] %(name)s - %(message)s',
-        handlers=[
-            logging.FileHandler('logs/event_bus.log'),
-            logging.StreamHandler()
-        ]
+        format="[%(asctime)s] [%(levelname)s] %(name)s - %(message)s",
+        handlers=[logging.FileHandler("logs/event_bus.log"), logging.StreamHandler()],
     )
 
     # 创建并启动 EventBus
@@ -827,14 +804,13 @@ def main():
         enable_layer_c_trigger=not args.no_layer_c,
         enable_layer_d_trigger=not args.no_layer_d,
         self_check_days=args.self_check_days,
-        max_concurrent_processes=args.max_processes
+        max_concurrent_processes=args.max_processes,
     )
 
     try:
         if args.once:
             # 单次运行模式：只执行启动自检
             bus.connect()
-            print("✅ 单次运行完成")
             bus.disconnect()
         else:
             # 无限循环监听

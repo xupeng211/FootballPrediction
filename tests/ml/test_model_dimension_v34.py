@@ -23,11 +23,12 @@ Date: 2026-01-12
 Version: V34.1 (ML Training Upgrade)
 """
 
-import pytest
-import numpy as np
-from typing import Dict, Any, List, Tuple
 import sys
 from pathlib import Path
+from typing import Any, Dict, List, Tuple
+
+import numpy as np
+import pytest
 
 # 添加项目根目录到路径
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
@@ -39,6 +40,7 @@ class TestFeatureDimensions:
     def test_baseline_feature_dimensions(self):
         """测试：基础特征维度应为 60"""
         from scripts.ml.train_v51_3_full_power import V53FeatureCalculator
+
         # V51.3 基础特征（滚动统计 + 即时状态 + 主客场 + 疲劳度 + 趋势）
         assert len(V53FeatureCalculator.ALL_FEATURES) == 60, f"基础特征应为 60 个，实际: {len(V53FeatureCalculator.ALL_FEATURES)}"
 
@@ -71,7 +73,7 @@ class TestModelForwardWithNewFeatures:
 
         # 模拟模型 forward
         try:
-            from scripts.ml.train_v51_3_full_power import V53ModelTrainer, V53FeatureCalculator
+            from scripts.ml.train_v51_3_full_power import V53FeatureCalculator, V53ModelTrainer
             trainer = V53ModelTrainer()
 
             # 验证特征列表包含新特征
@@ -89,6 +91,7 @@ class TestModelForwardWithNewFeatures:
 
         try:
             from scripts.ml.train_v51_3_full_power import V53ModelTrainer
+
             # 训练脚本使用填充确保所有特征都存在
             assert True, "向后兼容通过"
 
@@ -99,6 +102,7 @@ class TestModelForwardWithNewFeatures:
         """测试：模型应能处理新特征为 None 的情况"""
         try:
             from scripts.ml.train_v51_3_full_power import V53ModelTrainer
+
             # 训练脚本使用 fillna(0) 处理缺失值
             assert True, "缺失值处理通过"
 

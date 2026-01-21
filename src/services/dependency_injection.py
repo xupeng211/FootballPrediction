@@ -183,7 +183,7 @@ class DIContainer:
             return instance
 
         except Exception as e:
-            self.logger.error(f"创建服务失败 {service_name}: {e}")
+            self.logger.exception(f"创建服务失败 {service_name}: {e}")
             raise
         finally:
             self._initializing.discard(service_name)
@@ -208,7 +208,7 @@ class DIContainer:
         try:
             await instance.shutdown()
         except Exception as e:
-            self.logger.error(f"关闭服务失败 {service_name}: {e}")
+            self.logger.exception(f"关闭服务失败 {service_name}: {e}")
 
     def get_service_info(self) -> dict[str, Any]:
         """获取服务信息"""

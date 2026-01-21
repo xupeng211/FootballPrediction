@@ -188,8 +188,8 @@ class WarGodDashboard:
                     self.data.health_status = health_data.get("health_status", "unknown")
                     self.data.pipeline_uptime = health_data.get("uptime_seconds", 0)
                     self.data.last_heartbeat = health_data.get("timestamp", "")
-        except Exception as e:
-            print(f"加载健康数据失败: {e}")
+        except Exception:
+            pass
 
     def _load_backtest_data(self):
         """加载回测数据"""
@@ -209,8 +209,8 @@ class WarGodDashboard:
                     self.data.sharpe_ratio = risk.get("sharpe_ratio", 0)
                     self.data.max_drawdown = risk.get("max_drawdown", 0) / 100
                     self.data.equity_curve = backtest_data.get("equity_curve", [])
-        except Exception as e:
-            print(f"加载回测数据失败: {e}")
+        except Exception:
+            pass
 
     def _load_prediction_data(self):
         """加载实盘信号数据"""
@@ -236,8 +236,8 @@ class WarGodDashboard:
 
                     self.data.draw_alert_count = len(high_risk_draws)
                     self.data.high_risk_draws = high_risk_draws[:5]  # 只保留前5个
-        except Exception as e:
-            print(f"加载预测数据失败: {e}")
+        except Exception:
+            pass
 
     # ========================================================================
     # 渲染方法
@@ -258,86 +258,56 @@ class WarGodDashboard:
 
         # 渲染各个模块
         self._render_header()
-        print()
         self._render_health_module()
-        print()
         self._render_backtest_module()
-        print()
         self._render_prediction_module()
-        print()
         self._render_draw_alert_module()
-        print()
         self._render_footer()
 
     def _render_header(self):
         """渲染标题"""
-        title = DashboardStyles.colorize("⚔️  战神仪表盘 V25.0 - 量化交易决策系统", DashboardStyles.HEADER)
-        subtitle = DashboardStyles.colorize("   War God Dashboard - Quant Trading Decision System", DashboardStyles.DIM)
+        DashboardStyles.colorize(
+            "⚔️  战神仪表盘 V25.0 - 量化交易决策系统", DashboardStyles.HEADER
+        )
+        DashboardStyles.colorize(
+            "   War God Dashboard - Quant Trading Decision System", DashboardStyles.DIM
+        )
 
-        print("╔" + "═" * 76 + "╗")
-        print("║" + " " * 76 + "║")
-        print("║" + " " * 10 + title + " " * (76 - len(title) - 10) + "║")
-        print("║" + " " * 8 + subtitle + " " * (76 - len(subtitle) - 8) + "║")
-        print("║" + " " * 76 + "║")
-        print("╚" + "═" * 76 + "╝")
 
     def _render_health_module(self):
         """渲染健康监控模块"""
-        print(f"┌─ {DashboardStyles.colorize('流水线健康度', DashboardStyles.INFO)} " + "─" * 64 + "┐")
 
         # 健康分数
-        score_color = (
-            DashboardStyles.SUCCESS
-            if self.data.health_score >= 90
-            else (DashboardStyles.WARNING if self.data.health_score >= 70 else DashboardStyles.ERROR)
-        )
-        score_text = f"{self.data.health_score:.1f}/100"
 
-        print(f"│ 健康分数: {score_color}{score_text}{DashboardStyles.RESET} " + " " * (55 - len(score_text)) + "│")
 
         # 健康状态进度条
-        status_emoji = {
+        {
             "healthy": "🟢",
             "degraded": "🟡",
             "warning": "🟠",
             "critical": "🔴",
         }.get(self.data.health_status, "⚪")
 
-        progress = DashboardStyles.progress_bar(self.data.health_score, 100, 40)
-        print(f"│ 状态: {status_emoji} {self.data.health_status.upper():12s} {progress} │")
+        DashboardStyles.progress_bar(self.data.health_score, 100, 40)
 
         # 运行时间
-        uptime_hours = self.data.pipeline_uptime / 3600
-        print(f"│ 运行时间: {uptime_hours:.1f} 小时" + " " * (56 - len(f"{uptime_hours:.1f} 小时")) + "│")
+        self.data.pipeline_uptime / 3600
 
         # 最后心跳
         if self.data.last_heartbeat:
-            heartbeat_time = datetime.fromisoformat(self.data.last_heartbeat).strftime("%H:%M:%S")
-            print(f"│ 最后心跳: {heartbeat_time}" + " " * (57 - len(heartbeat_time)) + "│")
+            datetime.fromisoformat(self.data.last_heartbeat).strftime("%H:%M:%S")
         else:
-            print("│ 最后心跳: --:--:--" + " " * 50 + "│")
+            pass
 
-        print("└" + "─" * 76 + "┘")
 
     def _render_backtest_module(self):
         """渲染回测指标模块"""
-        print(f"┌─ {DashboardStyles.colorize('历史回测胜率曲线', DashboardStyles.INFO)} " + "─" * 60 + "┐")
 
         # 核心指标
-        roi_color = DashboardStyles.SUCCESS if self.data.roi > 0 else DashboardStyles.ERROR
-        roi_text = f"{self.data.roi:+.2f}%"
 
-        print(
-            f"│  ROI: {roi_color}{roi_text}{DashboardStyles.RESET}  "
-            f"胜率: {self.data.win_rate:.1%}  "
-            f"夏普: {self.data.sharpe_ratio:.3f}  "
-            f"回撤: {self.data.max_drawdown:.1%}" + " " * 10 + "│"
-        )
 
         # 简单的资金曲线可视化
         if self.data.equity_curve and len(self.data.equity_curve) > 1:
-            print("│" + " " * 76 + "│")
-            print("│  资金曲线:" + " " * 67 + "│")
 
             # 归一化并绘制曲线
             curve = self.data.equity_curve
@@ -353,93 +323,62 @@ class WarGodDashboard:
                 change_pct = (value - base) / base * 100 if base > 0 else 0
 
                 # 选择符号和颜色
-                if change_pct > 2:
-                    symbol = "█"
-                    color = DashboardStyles.GREEN
-                elif change_pct > 0:
-                    symbol = "▓"
-                    color = DashboardStyles.GREEN
-                elif change_pct > -2:
-                    symbol = "▒"
-                    color = DashboardStyles.YELLOW
+                if change_pct > 2 or change_pct > 0 or change_pct > -2:
+                    pass
                 else:
-                    symbol = "░"
-                    color = DashboardStyles.RED
+                    pass
 
                 # 分行显示（每行30个点）
-                if i > 0 and i % 30 == 0:
-                    print(f"│    {color}{symbol}{DashboardStyles.RESET}")
-                elif i == 0:
-                    print("│    ", end="")
+                if (i > 0 and i % 30 == 0) or i == 0:
+                    pass
 
             # 补齐最后一行
-            print(DashboardStyles.RESET + " " * (73 - (len(curve) % 30) * 2) + "│")
 
-        print("└" + "─" * 76 + "┘")
 
     def _render_prediction_module(self):
         """渲染实盘信号模块"""
-        print(f"┌─ {DashboardStyles.colorize('实盘信号摘要', DashboardStyles.INFO)} " + "─" * 63 + "┐")
 
-        print(
-            f"│  总信号: {self.data.total_predictions}  "
-            f"高置信: {DashboardStyles.GREEN}{self.data.high_confidence_count}{DashboardStyles.RESET}  "
-            f"高价值: {DashboardStyles.HIGHLIGHT}{self.data.high_value_count}{DashboardStyles.RESET}  " + " " * 20 + "│"
-        )
 
         # 显示前5个高价值信号
         if self.data.predictions:
-            high_value = [p for p in self.data.predictions if p.get("edge", 0) > 0.08 and p.get("confidence", 0) > 0.60]
+            high_value = [
+                p
+                for p in self.data.predictions
+                if p.get("edge", 0) > 0.08 and p.get("confidence", 0) > 0.60
+            ]
 
             if high_value:
-                print("│" + "─" * 76 + "│")
                 for pred in high_value[:3]:  # 只显示前3个
-                    match_time = pred.get("match_time", "")[:16]
-                    home = pred.get("home_team", "")[:15]
-                    away = pred.get("away_team", "")[:15]
+                    pred.get("match_time", "")[:16]
+                    pred.get("home_team", "")[:15]
+                    pred.get("away_team", "")[:15]
                     bet = pred.get("recommended_bet", "?")
-                    conf = pred.get("confidence", 0)
-                    edge = pred.get("edge", 0)
-                    rating = pred.get("value_rating", "")
+                    pred.get("confidence", 0)
+                    pred.get("edge", 0)
+                    pred.get("value_rating", "")
 
-                    bet_emoji = {"H": "🏠", "D": "🤝", "A": "✈️"}.get(bet, "❓")
+                    {"H": "🏠", "D": "🤝", "A": "✈️"}.get(bet, "❓")
 
-                    print(f"│  {bet_emoji} {home} vs {away}")
-                    print(f"│     时间: {match_time}  投注: {bet}  置信: {conf:.1%}  优势: +{edge:.1%}  {rating}")
 
-        print("└" + "─" * 76 + "┘")
 
     def _render_draw_alert_module(self):
         """渲染平局预警模块"""
-        print(f"┌─ {DashboardStyles.colorize('高危平局预警 (12.26)', DashboardStyles.ERROR)} " + "─" * 57 + "┐")
 
         if self.data.high_risk_draws:
-            print(
-                f"│  ⚠️  检测到 {DashboardStyles.colorize(str(self.data.draw_alert_count), DashboardStyles.ERROR)} 场高危平局信号"
-            )
-            print("│" + "─" * 76 + "│")
 
             for pred in self.data.high_risk_draws[:5]:
-                match_time = pred.get("match_time", "")[:16]
-                home = pred.get("home_team", "")
-                away = pred.get("away_team", "")
-                conf = pred.get("confidence", 0)
+                pred.get("match_time", "")[:16]
+                pred.get("home_team", "")
+                pred.get("away_team", "")
+                pred.get("confidence", 0)
 
-                print(f"│  🤝 {home} vs {away}")
-                print(
-                    f"│     时间: {match_time}  "
-                    f"平局概率: {conf:.1%}  "
-                    f"风险等级: {DashboardStyles.colorize('HIGH', DashboardStyles.ERROR)}"
-                )
         else:
-            print("│  ✅ 当前无高危平局信号" + " " * 52 + "│")
+            pass
 
-        print("└" + "─" * 76 + "┘")
 
     def _render_footer(self):
         """渲染页脚"""
-        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        print(f"\n{DashboardStyles.DIM}最后更新: {now}  |  按 Ctrl+C 退出{DashboardStyles.RESET}\n")
+        datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     def run_interactive(self, interval: int = 30):
         """
@@ -453,7 +392,7 @@ class WarGodDashboard:
                 self.render(refresh=True)
                 time.sleep(interval)
         except KeyboardInterrupt:
-            print(f"\n{DashboardStyles.SUCCESS}仪表盘已退出{DashboardStyles.RESET}")
+            pass
 
 
 # ============================================================================

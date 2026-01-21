@@ -29,6 +29,7 @@ from datetime import datetime
 import json
 import logging
 from pathlib import Path
+import sys
 from typing import Any
 
 import numpy as np
@@ -225,10 +226,12 @@ class XGBoostClassifier(BaseEstimator, ClassifierMixin):
                 verbosity=1,
             )
 
-            self.logger.info(f"XGBoost模型初始化成功: {self.config.model_name} v{self.config.model_version}")
+            self.logger.info(
+                f"XGBoost模型初始化成功: {self.config.model_name} v{self.config.model_version}"
+            )
 
         except Exception as e:
-            self.logger.error(f"模型初始化失败: {e}")
+            self.logger.exception(f"模型初始化失败: {e}")
             raise
 
     def train(
@@ -308,7 +311,9 @@ class XGBoostClassifier(BaseEstimator, ClassifierMixin):
             all_metrics["training_time_seconds"] = training_time
             all_metrics["n_features"] = X_train.shape[1]
             all_metrics["n_samples"] = X_train.shape[0]
-            all_metrics["n_estimators_used"] = getattr(self.model, "best_iteration", self.model.n_estimators)
+            all_metrics["n_estimators_used"] = getattr(
+                self.model, "best_iteration", self.model.n_estimators
+            )
 
             # 记录训练历史
             self.training_history = {
@@ -330,7 +335,7 @@ class XGBoostClassifier(BaseEstimator, ClassifierMixin):
             return all_metrics
 
         except Exception as e:
-            self.logger.error(f"模型训练失败: {e}")
+            self.logger.exception(f"模型训练失败: {e}")
             raise
 
     def predict(self, X: pd.DataFrame | np.ndarray) -> np.ndarray:
@@ -350,10 +355,9 @@ class XGBoostClassifier(BaseEstimator, ClassifierMixin):
             raise RuntimeError("模型尚未训练，请先调用train()方法")
 
         try:
-            predictions = self.model.predict(X)
-            return predictions
+            return self.model.predict(X)
         except Exception as e:
-            self.logger.error(f"预测失败: {e}")
+            self.logger.exception(f"预测失败: {e}")
             raise
 
     def predict_proba(self, X: pd.DataFrame | np.ndarray) -> np.ndarray:
@@ -373,10 +377,9 @@ class XGBoostClassifier(BaseEstimator, ClassifierMixin):
             raise RuntimeError("模型尚未训练，请先调用train()方法")
 
         try:
-            probabilities = self.model.predict_proba(X)
-            return probabilities
+            return self.model.predict_proba(X)
         except Exception as e:
-            self.logger.error(f"概率预测失败: {e}")
+            self.logger.exception(f"概率预测失败: {e}")
             raise
 
     def evaluate(self, X: pd.DataFrame | np.ndarray, y: pd.Series | np.ndarray) -> dict[str, float]:
@@ -432,12 +435,11 @@ class XGBoostClassifier(BaseEstimator, ClassifierMixin):
                 importance_df["feature_display_name"] = importance_df["feature_name"]
 
             # 按重要性排序
-            importance_df = importance_df.sort_values("importance", ascending=False)
+            return importance_df.sort_values("importance", ascending=False)
 
-            return importance_df
 
         except Exception as e:
-            self.logger.error(f"获取特征重要性失败: {e}")
+            self.logger.exception(f"获取特征重要性失败: {e}")
             raise
 
     def save_model(self, model_path: str | Path, include_config: bool = True) -> None:
@@ -484,7 +486,7 @@ class XGBoostClassifier(BaseEstimator, ClassifierMixin):
             self.logger.info(f"模型已保存到: {model_path}")
 
         except Exception as e:
-            self.logger.error(f"模型保存失败: {e}")
+            self.logger.exception(f"模型保存失败: {e}")
             raise
 
     @classmethod
@@ -534,14 +536,16 @@ class XGBoostClassifier(BaseEstimator, ClassifierMixin):
             # 恢复元数据
             if metadata:
                 classifier.feature_names = metadata.get("feature_names")
-                classifier.classes_ = np.array(metadata["classes"]) if metadata.get("classes") else None
+                classifier.classes_ = (
+                    np.array(metadata["classes"]) if metadata.get("classes") else None
+                )
                 classifier.training_history = metadata.get("training_history", {})
 
             logger.info(f"模型已从 {model_path} 加载")
             return classifier
 
         except Exception as e:
-            logger.error(f"模型加载失败: {e}")
+            logger.exception(f"模型加载失败: {e}")
             raise
 
     def _validate_training_data(
@@ -549,24 +553,22 @@ class XGBoostClassifier(BaseEstimator, ClassifierMixin):
     ) -> tuple[np.ndarray, np.ndarray]:
         """验证和预处理训练数据"""
         # 转换为numpy数组
-        if isinstance(X, pd.DataFrame):
-            X_array = X.values
-        else:
-            X_array = np.array(X)
+        X_array = X.values if isinstance(X, pd.DataFrame) else np.array(X)
 
-        if isinstance(y, pd.Series):
-            y_array = y.values
-        else:
-            y_array = np.array(y)
+        y_array = y.values if isinstance(y, pd.Series) else np.array(y)
 
         # 验证形状
         if X_array.shape[0] != y_array.shape[0]:
-            raise ValueError(f"特征和标签的样本数不匹配: X={X_array.shape[0]}, y={y_array.shape[0]}")
+            raise ValueError(
+                f"特征和标签的样本数不匹配: X={X_array.shape[0]}, y={y_array.shape[0]}"
+            )
 
         # 验证标签范围
         unique_labels = np.unique(y_array)
         if not all(label in [0, 1, 2] for label in unique_labels):
-            logger.warning(f"检测到非标准标签: {unique_labels}，期望: [0, 1, 2] (AWAY_WIN, DRAW, HOME_WIN)")
+            logger.warning(
+                f"检测到非标准标签: {unique_labels}，期望: [0, 1, 2] (AWAY_WIN, DRAW, HOME_WIN)"
+            )
 
         # 处理NaN值
         if np.isnan(X_array).any():
@@ -607,7 +609,7 @@ class XGBoostClassifier(BaseEstimator, ClassifierMixin):
         labels = [0, 1, 2]  # AWAY_WIN, DRAW, HOME_WIN
         label_names = ["AWAY_WIN", "DRAW", "HOME_WIN"]
 
-        for i, (label, name) in enumerate(zip(labels, label_names)):
+        for i, (_label, name) in enumerate(zip(labels, label_names, strict=False)):
             if i < len(precision_per_class):
                 metrics[f"{prefix}_precision_{name}"] = precision_per_class[i]
                 metrics[f"{prefix}_recall_{name}"] = recall_per_class[i]
@@ -647,7 +649,7 @@ class XGBoostClassifier(BaseEstimator, ClassifierMixin):
         labels = [0, 1, 2]  # AWAY_WIN, DRAW, HOME_WIN
         label_names = ["AWAY_WIN", "DRAW", "HOME_WIN"]
 
-        for i, (label, name) in enumerate(zip(labels, label_names)):
+        for i, (_label, name) in enumerate(zip(labels, label_names, strict=False)):
             if i < len(precision_per_class):
                 metrics[f"{prefix}_precision_{name}"] = precision_per_class[i]
                 metrics[f"{prefix}_recall_{name}"] = recall_per_class[i]
@@ -718,7 +720,9 @@ if __name__ == "__main__":
         y = np.random.choice([0, 1, 2], n_samples, p=[0.28, 0.26, 0.46])  # 基于先验概率
 
         # 分割数据
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
+        X_train, X_test, y_train, y_test = train_test_split(
+            X, y, test_size=0.2, random_state=42, stratify=y
+        )
 
         # 训练模型
         metrics = classifier.train(X_train, y_train, X_test, y_test)
@@ -727,13 +731,13 @@ if __name__ == "__main__":
         predictions = classifier.predict(X_test[:5])
         probabilities = classifier.predict_proba(X_test[:5])
 
-        for i, (pred, prob) in enumerate(zip(predictions, probabilities)):
+        for _i, (_pred, _prob) in enumerate(zip(predictions, probabilities, strict=False)):
             # 处理每个预测结果
             pass
 
         # 特征重要性
         importance_df = classifier.get_feature_importance()
-        for _, row in importance_df.head().iterrows():
+        for _, _row in importance_df.head().iterrows():
             # 处理特征重要性
             pass
 
@@ -741,4 +745,4 @@ if __name__ == "__main__":
         import traceback
 
         traceback.print_exc()
-        exit(1)
+        sys.exit(1)

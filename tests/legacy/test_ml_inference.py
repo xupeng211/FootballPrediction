@@ -13,22 +13,24 @@ Mock策略：
 - 哈希计算 (hashlib)
 """
 
-import unittest
-from unittest.mock import Mock, patch, MagicMock, mock_open
 import asyncio
-import time
-import pickle
-import joblib
 import hashlib
+import pickle
+import time
+import unittest
+from datetime import datetime, timedelta
+from pathlib import Path
+from types import SimpleNamespace
+from unittest.mock import MagicMock, Mock, mock_open, patch
+
+import joblib
 import numpy as np
 import pandas as pd
-from pathlib import Path
-from datetime import datetime, timedelta
-from types import SimpleNamespace
+
+from src.ml.inference.cache_manager import CacheEntry, CacheStats, PredictionCache
 
 # 导入被测试的模块
-from src.ml.inference.model_loader import ModelLoader, ModelMetadata, ModelLoadError
-from src.ml.inference.cache_manager import PredictionCache, CacheEntry, CacheStats
+from src.ml.inference.model_loader import ModelLoader, ModelLoadError, ModelMetadata
 from src.ml.inference.predictor import MatchPredictor, PredictionError
 
 

@@ -15,9 +15,7 @@ Date: 2025-12-30
 >>> from src.ops.alert_manager import AlertManager, AlertSeverity
 >>> manager = AlertManager()
 >>> await manager.send_alert(
-...     title="数据库备份失败",
-...     message="无法连接到数据库服务器",
-...     severity=AlertSeverity.CRITICAL
+...     title="数据库备份失败", message="无法连接到数据库服务器", severity=AlertSeverity.CRITICAL
 ... )
 """
 
@@ -145,8 +143,12 @@ class EmailAlertChannel(AlertChannel):
         self.smtp_port = smtp_port or getattr(settings, "alert_smtp_port", 587)
         self.smtp_username = smtp_username or getattr(settings, "alert_smtp_username", None)
         self.smtp_password = smtp_password or getattr(settings, "alert_smtp_password", None)
-        self.from_email = from_email or getattr(settings, "alert_from_email", "alerts@footballprediction.local")
-        self.from_name = from_name or getattr(settings, "alert_from_name", "FootballPrediction Alert")
+        self.from_email = from_email or getattr(
+            settings, "alert_from_email", "alerts@footballprediction.local"
+        )
+        self.from_name = from_name or getattr(
+            settings, "alert_from_name", "FootballPrediction Alert"
+        )
         self.to_emails = to_emails or getattr(settings, "alert_to_emails", [])
 
         # 验证配置
@@ -184,7 +186,7 @@ class EmailAlertChannel(AlertChannel):
             return True
 
         except Exception as e:
-            logger.error(f"Email 告警发送失败: {e}")
+            logger.exception(f"Email 告警发送失败: {e}")
             return False
 
     def _send_smtp(self, msg: EmailMessage) -> None:
@@ -249,7 +251,7 @@ class EmailAlertChannel(AlertChannel):
         html += f"""
         </div>
         <div class="footer">
-            <p>时间: {alert.timestamp.strftime('%Y-%m-%d %H:%M:%S')}</p>
+            <p>时间: {alert.timestamp.strftime("%Y-%m-%d %H:%M:%S")}</p>
             <p>FootballPrediction 自动告警系统</p>
         </div>
     </div>
@@ -279,7 +281,7 @@ class LoggerAlertChannel(AlertChannel):
             log_file: 日志文件路径
             log_level: 日志级别
         """
-        settings = get_settings()
+        get_settings()
         project_root = Path(__file__).parent.parent.parent
 
         self.log_file = Path(log_file or project_root / "logs" / "alerts.log")
@@ -326,7 +328,9 @@ class LoggerAlertChannel(AlertChannel):
             }
 
             level = level_map.get(alert.severity, logging.INFO)
-            metadata_str = json.dumps(alert.metadata, ensure_ascii=False) if alert.metadata else "{}"
+            metadata_str = (
+                json.dumps(alert.metadata, ensure_ascii=False) if alert.metadata else "{}"
+            )
 
             self.logger.log(
                 level,
@@ -336,7 +340,7 @@ class LoggerAlertChannel(AlertChannel):
             return True
 
         except Exception as e:
-            logger.error(f"Logger 告警记录失败: {e}")
+            logger.exception(f"Logger 告警记录失败: {e}")
             return False
 
 
@@ -480,7 +484,7 @@ class AlertManager:
                 success = await channel.send(alert)
                 results[channel.get_name()] = success
             except Exception as e:
-                logger.error(f"告警通道 [{channel.get_name()}] 发送失败: {e}")
+                logger.exception(f"告警通道 [{channel.get_name()}] 发送失败: {e}")
                 results[channel.get_name()] = False
 
         return results
@@ -595,9 +599,7 @@ if __name__ == "__main__":
         manager = AlertManager()
 
         # 测试各级别告警
-        print("\n=== 测试告警管理器 ===\n")
 
-        print("1. 发送 INFO 告警...")
         await manager.send_alert(
             title="测试信息告警",
             message="这是一条测试信息",
@@ -605,7 +607,6 @@ if __name__ == "__main__":
             alert_type="test_info",
         )
 
-        print("\n2. 发送 WARNING 告警...")
         await manager.send_alert(
             title="测试警告",
             message="这是一条测试警告",
@@ -613,7 +614,6 @@ if __name__ == "__main__":
             alert_type="test_warning",
         )
 
-        print("\n3. 发送 ERROR 告警...")
         await manager.send_alert(
             title="测试错误",
             message="这是一条测试错误",
@@ -622,7 +622,6 @@ if __name__ == "__main__":
             metadata={"service": "test", "host": "localhost"},
         )
 
-        print("\n4. 发送 CRITICAL 告警...")
         await manager.send_alert(
             title="测试严重错误",
             message="这是一条测试严重错误",
@@ -631,7 +630,6 @@ if __name__ == "__main__":
             metadata={"traceback": "AssertionError: Test failed"},
         )
 
-        print("\n5. 测试限流器 (再次发送 INFO 告警)...")
         await manager.send_alert(
             title="测试信息告警",
             message="这应该被限流器拦截",
@@ -639,8 +637,6 @@ if __name__ == "__main__":
             alert_type="test_info",
         )
 
-        print("\n6. 获取告警管理器状态...")
-        status = manager.get_status()
-        print(json.dumps(status, indent=2, ensure_ascii=False))
+        manager.get_status()
 
     asyncio.run(main())

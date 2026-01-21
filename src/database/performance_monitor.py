@@ -13,6 +13,7 @@
 """
 
 import asyncio
+import contextlib
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 import logging
@@ -112,10 +113,8 @@ class DatabasePerformanceMonitor:
 
         if self._monitor_task:
             self._monitor_task.cancel()
-            try:
+            with contextlib.suppress(asyncio.CancelledError):
                 await self._monitor_task
-            except asyncio.CancelledError:
-                pass
 
         self.logger.info("✅ 数据库性能监控已停止")
 
@@ -159,7 +158,7 @@ class DatabasePerformanceMonitor:
             return metrics
 
         except Exception as e:
-            self.logger.error(f"收集性能指标失败: {e}")
+            self.logger.exception(f"收集性能指标失败: {e}")
             raise
 
     async def analyze_query_performance(self, query: str) -> QueryPerformance:
@@ -188,12 +187,14 @@ class DatabasePerformanceMonitor:
             performance.index_usage = self._extract_index_usage(plan_data)
 
             # 生成优化建议
-            performance.recommendations = self._generate_query_recommendations(plan_data, execution_time)
+            performance.recommendations = self._generate_query_recommendations(
+                plan_data, execution_time
+            )
 
             return performance
 
         except Exception as e:
-            self.logger.error(f"查询性能分析失败: {e}")
+            self.logger.exception(f"查询性能分析失败: {e}")
             return QueryPerformance(
                 query_text=query,
                 execution_time_ms=0.0,
@@ -230,7 +231,9 @@ class DatabasePerformanceMonitor:
         # 表大小建议
         for table_name, table_size in latest_metrics.table_size_mb.items():
             if table_size > 5000:  # 5GB警告阈值
-                recommendations.append(f"表 {table_name} 过大 ({table_size:.1f}MB)，考虑分区或归档历史数据")
+                recommendations.append(
+                    f"表 {table_name} 过大 ({table_size:.1f}MB)，考虑分区或归档历史数据"
+                )
 
         # 索引建议
         total_index_size = sum(latest_metrics.index_size_mb.values())
@@ -255,7 +258,7 @@ class DatabasePerformanceMonitor:
             except asyncio.CancelledError:
                 break
             except Exception as e:
-                self.logger.error(f"监控循环异常: {e}")
+                self.logger.exception(f"监控循环异常: {e}")
                 await asyncio.sleep(5)  # 短暂等待后继续
 
     async def _collect_connection_metrics(self, conn, metrics: DatabaseMetrics) -> None:
@@ -385,7 +388,9 @@ class DatabasePerformanceMonitor:
         extract_from_node(plan_data.get("Plan", {}))
         return list(set(indexes))
 
-    def _generate_query_recommendations(self, plan_data: dict[str, Any], execution_time: float) -> list[str]:
+    def _generate_query_recommendations(
+        self, plan_data: dict[str, Any], execution_time: float
+    ) -> list[str]:
         """生成查询优化建议"""
         recommendations = []
 

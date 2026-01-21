@@ -30,20 +30,18 @@ File Cache          Redis Cache           Memory Fallback
     >>> # 如果是 403，自动封禁并返回下一个可用代理
 """
 
-import asyncio
-import json
-import logging
-import random
-import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
+import json
+import logging
 from pathlib import Path
+import random
 from threading import Lock
+import time
 from typing import Optional
 
 import aiohttp
-import requests
 
 from src.config_unified import get_config
 
@@ -141,7 +139,7 @@ class ProxyGuardian:
         self._load_cache()
         self._initialize_proxies()
 
-        logger.info(f"🛡️ V41.130 ProxyGuardian 初始化完成")
+        logger.info("🛡️ V41.130 ProxyGuardian 初始化完成")
         logger.info(f"   管理代理数: {len(self._health_cache)}")
         logger.info(f"   健康代理数: {self._get_healthy_count()}")
 
@@ -175,7 +173,7 @@ class ProxyGuardian:
             return
 
         try:
-            with open(self._cache_file, "r", encoding="utf-8") as f:
+            with open(self._cache_file, encoding="utf-8") as f:
                 data = json.load(f)
 
             for port_str, health_data in data.items():
@@ -218,7 +216,7 @@ class ProxyGuardian:
                 count += 1
         return count
 
-    def get_healthy_proxy(self, exclude_ports: set[int] | None = None) -> Optional[int]:
+    def get_healthy_proxy(self, exclude_ports: set[int] | None = None) -> int | None:
         """获取一个健康的代理端口
 
         Args:
@@ -268,33 +266,31 @@ class ProxyGuardian:
         try:
             start_time = time.time()
 
-            async with aiohttp.ClientSession() as session:
-                async with session.get(
-                    self.HEALTH_CHECK_URL,
-                    proxy=proxy_url,
-                    timeout=aiohttp.ClientTimeout(total=self.HEALTH_CHECK_TIMEOUT)
-                ) as response:
-                    if response.status == 200:
-                        data = await response.json()
-                        ip = data.get("origin")
-                        response_time = (time.time() - start_time) * 1000
+            async with aiohttp.ClientSession() as session, session.get(
+                self.HEALTH_CHECK_URL,
+                proxy=proxy_url,
+                timeout=aiohttp.ClientTimeout(total=self.HEALTH_CHECK_TIMEOUT)
+            ) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    ip = data.get("origin")
+                    response_time = (time.time() - start_time) * 1000
 
-                        # 更新健康状态
-                        with self._cache_lock:
-                            health = self._health_cache.get(port)
-                            if health:
-                                health.ip = ip
-                                health.last_check = datetime.now().isoformat()
-                                health.response_time_ms = response_time
-                                health.status = ProxyStatus.HEALTHY
+                    # 更新健康状态
+                    with self._cache_lock:
+                        health = self._health_cache.get(port)
+                        if health:
+                            health.ip = ip
+                            health.last_check = datetime.now().isoformat()
+                            health.response_time_ms = response_time
+                            health.status = ProxyStatus.HEALTHY
 
-                        logger.info(f"✅ 代理 {port} 验证成功: IP={ip}, 响应={response_time:.0f}ms")
-                        return True, ip
-                    else:
-                        logger.warning(f"⚠️ 代理 {port} 健康检查失败: HTTP {response.status}")
-                        return False, None
+                    logger.info(f"✅ 代理 {port} 验证成功: IP={ip}, 响应={response_time:.0f}ms")
+                    return True, ip
+                logger.warning(f"⚠️ 代理 {port} 健康检查失败: HTTP {response.status}")
+                return False, None
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             logger.warning(f"⏰ 代理 {port} 健康检查超时")
             return False, None
         except Exception as e:

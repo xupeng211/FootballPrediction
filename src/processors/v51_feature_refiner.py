@@ -272,10 +272,7 @@ class V51FeatureRefiner:
             return False
 
         # 无穷值过滤
-        if isinstance(value, float) and np.isinf(value):
-            return False
-
-        return True
+        return not (isinstance(value, float) and np.isinf(value))
 
     def _extract_list_aggregations(
         self,
@@ -715,7 +712,7 @@ def main():
     args = parser.parse_args()
 
     # 提取特征
-    df, stats = extract_features_from_db(
+    df, _stats = extract_features_from_db(
         limit=args.limit,
         season_filter=args.season,
         league_filter=args.league,
@@ -724,20 +721,14 @@ def main():
     )
 
     # 输出统计
-    print("\n" + "=" * 60)
-    print(stats)
-    print("=" * 60)
 
     if not df.empty:
-        print(f"\n最终特征维度: {len(df.columns)}")
-        print("特征列表 (前 20 个):\n  " + "\n  ".join(list(df.columns[:20])))
 
         # 保存 CSV
         if args.output:
             df.to_csv(args.output, index=False)
-            print(f"\n已保存到: {args.output}")
     else:
-        print("\n未提取到任何特征!")
+        pass
 
 
 if __name__ == "__main__":

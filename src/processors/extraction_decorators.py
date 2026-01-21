@@ -18,12 +18,13 @@ Version: V151.0 (Security Audit Fixed)
 Date: 2026-01-06
 """
 
+from collections.abc import Callable
+from dataclasses import dataclass, field
 import functools
 import logging
 import time
 import traceback
-from typing import Any, Callable, TypeVar
-from dataclasses import dataclass, field
+from typing import Any, TypeVar
 
 logger = logging.getLogger(__name__)
 
@@ -32,9 +33,9 @@ logger = logging.getLogger(__name__)
 # 类型定义 (P1-3: 完备类型注解)
 # ============================================================================
 
-T = TypeVar('T')
+T = TypeVar("T")
 
-ExtractorFunc = Callable[[dict[str, Any]], 'ExtractionResult']
+ExtractorFunc = Callable[[dict[str, Any]], "ExtractionResult"]
 
 
 @dataclass
@@ -50,6 +51,7 @@ class ErrorContext:
         traceback: 堆栈跟踪
         timestamp: 发生时间戳
     """
+
     match_id: str
     error_type: str
     error_message: str
@@ -62,8 +64,9 @@ class ErrorContext:
 # 安全提取装饰器 (优化版)
 # ============================================================================
 
+
 def safe_extract(
-    match_id_field: str = 'match_id',
+    match_id_field: str = "match_id",
     include_traceback: bool = True,
     max_error_length: int = 500,
 ) -> Callable[[ExtractorFunc], ExtractorFunc]:
@@ -85,14 +88,17 @@ def safe_extract(
         def extract_features(self, raw_data: dict) -> ExtractionResult:
             ...
     """
+
     def decorator(func: ExtractorFunc) -> ExtractorFunc:
         @functools.wraps(func)
-        def wrapper(self: Any, raw_data: dict[str, Any], *args: Any, **kwargs: Any) -> 'ExtractionResult':
+        def wrapper(
+            self: Any, raw_data: dict[str, Any], *args: Any, **kwargs: Any
+        ) -> "ExtractionResult":
             try:
                 return func(self, raw_data, *args, **kwargs)
             except Exception as e:
                 # 提取 match_id 用于日志
-                match_id = raw_data.get(match_id_field, 'UNKNOWN')
+                match_id = raw_data.get(match_id_field, "UNKNOWN")
 
                 # 截断错误消息（防止日志爆炸）
                 error_message = str(e)
@@ -105,11 +111,11 @@ def safe_extract(
                     error_type=type(e).__name__,
                     error_message=error_message,
                     function=func.__name__,
-                    traceback=traceback.format_exc() if include_traceback else '',
+                    traceback=traceback.format_exc() if include_traceback else "",
                 )
 
                 # 记录到生产日志
-                logger.error(
+                logger.exception(
                     "Feature extraction failed",
                     match_id=error_details.match_id,
                     error_type=error_details.error_type,
@@ -119,24 +125,27 @@ def safe_extract(
 
                 # 返回失败结果而不是崩溃
                 from src.processors.base_extractor import ExtractionResult, ExtractionStatus
+
                 return ExtractionResult(
                     status=ExtractionStatus.FAILED,
                     features={},
                     errors=[error_message],
                     metadata={
-                        'match_id': match_id,
-                        'error_type': error_details.error_type,
-                        'function': error_details.function,
-                    }
+                        "match_id": match_id,
+                        "error_type": error_details.error_type,
+                        "function": error_details.function,
+                    },
                 )
 
         return wrapper
+
     return decorator
 
 
 # ============================================================================
 # 自定义异常类
 # ============================================================================
+
 
 class ExtractionError(Exception):
     """
@@ -148,7 +157,9 @@ class ExtractionError(Exception):
         context: 额外的上下文信息
     """
 
-    def __init__(self, message: str, match_id: str | None = None, context: dict[str, Any] | None = None):
+    def __init__(
+        self, message: str, match_id: str | None = None, context: dict[str, Any] | None = None
+    ):
         """
         初始化异常
 
@@ -164,10 +175,10 @@ class ExtractionError(Exception):
     def to_dict(self) -> dict[str, Any]:
         """转换为字典格式"""
         return {
-            'error_type': self.__class__.__name__,
-            'message': str(self),
-            'match_id': self.match_id,
-            'context': self.context,
+            "error_type": self.__class__.__name__,
+            "message": str(self),
+            "match_id": self.match_id,
+            "context": self.context,
         }
 
 

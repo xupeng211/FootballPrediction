@@ -6,7 +6,7 @@ Database Connection Factory
 提供统一的数据库连接管理，支持测试和生产环境
 """
 
-from contextlib import contextmanager
+from contextlib import contextmanager, suppress
 import logging
 from typing import Any
 
@@ -20,7 +20,6 @@ logger = logging.getLogger(__name__)
 
 class DatabaseConnectionError(Exception):
     """数据库连接异常"""
-
 
 
 def get_db_connection(
@@ -79,11 +78,11 @@ def get_db_connection(
 
     except psycopg2.Error as e:
         error_msg = f"数据库连接失败: {e}"
-        logger.error(error_msg)
+        logger.exception(error_msg)
         raise DatabaseConnectionError(error_msg) from e
     except Exception as e:
         error_msg = f"数据库配置错误: {e}"
-        logger.error(error_msg)
+        logger.exception(error_msg)
         raise DatabaseConnectionError(error_msg) from e
 
 
@@ -126,24 +125,18 @@ def get_db_cursor(
     except Exception as e:
         # 发生异常时回滚
         if conn and not conn.closed:
-            try:
+            with suppress(Exception):
                 conn.rollback()
-            except Exception:
-                pass
-        logger.error(f"数据库操作失败: {e}")
+        logger.exception(f"数据库操作失败: {e}")
         raise
     finally:
         # 清理资源
         if cursor:
-            try:
+            with suppress(Exception):
                 cursor.close()
-            except Exception:
-                pass
         if conn and not conn.closed:
-            try:
+            with suppress(Exception):
                 conn.close()
-            except Exception:
-                pass
 
 
 def get_test_db_connection():
@@ -171,7 +164,7 @@ def test_connection():
             result = cursor.fetchone()
             return result is not None
     except Exception as e:
-        logger.error(f"数据库连接测试失败: {e}")
+        logger.exception(f"数据库连接测试失败: {e}")
         return False
 
 

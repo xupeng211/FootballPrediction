@@ -71,10 +71,10 @@ class PremierLeagueL1Harvester:
             return matches
 
         except requests.exceptions.RequestException as e:
-            logger.error(f"❌ 请求英超数据失败: {e}")
+            logger.exception(f"❌ 请求英超数据失败: {e}")
             return []
         except Exception as e:
-            logger.error(f"❌ 解析英超数据异常: {e}")
+            logger.exception(f"❌ 解析英超数据异常: {e}")
             return []
 
     def _parse_season_data(self, data: dict) -> list[dict]:
@@ -106,7 +106,7 @@ class PremierLeagueL1Harvester:
             return matches
 
         except Exception as e:
-            logger.error(f"❌ 解析比赛数据失败: {e}")
+            logger.exception(f"❌ 解析比赛数据失败: {e}")
             return []
 
     def _extract_match_info(self, match: dict) -> dict | None:
@@ -171,7 +171,7 @@ class PremierLeagueL1Harvester:
             else:
                 venue_name = venue_data.get("name", "") if venue_data else ""
 
-            match_info = {
+            return {
                 "match_id": match_id,
                 "external_id": str(match_id) if match_id else "",
                 "home_team": home_team,
@@ -190,10 +190,9 @@ class PremierLeagueL1Harvester:
                 "collection_date": datetime.now(UTC).isoformat(),
             }
 
-            return match_info
 
         except Exception as e:
-            logger.error(f"❌ 提取比赛信息失败 {match.get('id', 'unknown')}: {e}")
+            logger.exception(f"❌ 提取比赛信息失败 {match.get('id', 'unknown')}: {e}")
             return None
 
     def save_manifest_csv(self, matches: list[dict]) -> bool:
@@ -251,7 +250,7 @@ class PremierLeagueL1Harvester:
             return True
 
         except Exception as e:
-            logger.error(f"❌ 保存清单文件失败: {e}")
+            logger.exception(f"❌ 保存清单文件失败: {e}")
             return False
 
     def harvest_premier_league_season(self) -> bool:
@@ -296,7 +295,7 @@ class PremierLeagueL1Harvester:
             return False
 
         except Exception as e:
-            logger.error(f"❌ 数据采集流程异常: {e}")
+            logger.exception(f"❌ 数据采集流程异常: {e}")
             return False
 
     def validate_manifest_quality(self) -> dict:
@@ -327,7 +326,9 @@ class PremierLeagueL1Harvester:
                 "status": "success",
                 "total_matches": total_matches,
                 "finished_matches": finished_matches,
-                "completion_rate": round(finished_matches / total_matches * 100, 2) if total_matches > 0 else 0,
+                "completion_rate": round(finished_matches / total_matches * 100, 2)
+                if total_matches > 0
+                else 0,
                 "result_distribution": results,
                 "file_size_mb": round(os.path.getsize(self.output_file) / 1024 / 1024, 2),
             }

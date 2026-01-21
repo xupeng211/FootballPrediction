@@ -20,8 +20,8 @@ import logging
 import statistics
 from typing import Any
 
-from ..base import BaseProcessor, ProcessorConfig, ProcessorResult
-from ..models import MatchData
+from src.ml.feature_engine.base import BaseProcessor, ProcessorConfig, ProcessorResult
+from src.ml.feature_engine.models import MatchData
 
 logger = logging.getLogger(__name__)
 
@@ -131,7 +131,9 @@ class MarketOddsProcessor(BaseProcessor[MatchData]):
             features.update(prob_features)
 
             # 7. 市场信心度
-            confidence_features = self._compute_market_confidence(odds_data, home_odds, draw_odds, away_odds)
+            confidence_features = self._compute_market_confidence(
+                odds_data, home_odds, draw_odds, away_odds
+            )
             features.update(confidence_features)
 
             # 8. 价值投注指数
@@ -153,7 +155,7 @@ class MarketOddsProcessor(BaseProcessor[MatchData]):
             return result
 
         except Exception as e:
-            logger.error(f"MarketOddsProcessor failed for match {data.match_id}: {e}")
+            logger.exception(f"MarketOddsProcessor failed for match {data.match_id}: {e}")
             return ProcessorResult.failure_result(str(e))
 
     def _extract_odds_data(self, data: MatchData, context: Any) -> dict[str, Any] | None:
@@ -196,7 +198,9 @@ class MarketOddsProcessor(BaseProcessor[MatchData]):
 
         return None
 
-    def _parse_odds(self, odds_data: dict[str, Any]) -> tuple[float | None, float | None, float | None]:
+    def _parse_odds(
+        self, odds_data: dict[str, Any]
+    ) -> tuple[float | None, float | None, float | None]:
         """
         解析赔率数据
 

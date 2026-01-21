@@ -22,17 +22,14 @@ from typing import Any
 
 from .base import BaseProcessor, ProcessorResult
 from .models import FeatureVector, MatchData, ProcessingContext
-from .processors import (
+from .processors import (  # V24.0 新增; V22.0 新增; V23.0 新增
     AdvancedPassingProcessor,
     AtomicProcessor,
     ContextProcessor,
-    # V24.0 新增
     HistoricalRollingProcessor,
     InjuryImpactProcessor,
     LineupProcessor,
-    # V22.0 新增
     LineupValueProcessor,
-    # V23.0 新增
     MarketOddsProcessor,
     RefereeProcessor,
     TacticalCrossProcessor,
@@ -160,7 +157,9 @@ class FeatureEngine:
         self.processors.sort(key=lambda p: p.priority)
 
         # 记录处理器信息
-        logger.info(f"{self.engine_name} v{self.engine_version} initialized with {len(self.processors)} processors")
+        logger.info(
+            f"{self.engine_name} v{self.engine_version} initialized with {len(self.processors)} processors"
+        )
         for proc in self.processors:
             logger.debug(f"  - {proc.processor_name} (priority={proc.priority})")
 
@@ -333,7 +332,7 @@ class FeatureEngine:
             return result
 
         except Exception as e:
-            logger.error(f"Feature extraction failed for match {data.match_id}: {e}")
+            logger.exception(f"Feature extraction failed for match {data.match_id}: {e}")
             all_errors.append(str(e))
             return EngineResult.failure_result(
                 errors=all_errors,

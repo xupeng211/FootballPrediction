@@ -125,7 +125,7 @@ LEAGUE_QUALITY_TIERS = {
 
 # 构建 league_id -> tier 的反向映射
 LEAGUE_ID_TO_TIER = {}
-for _tier_name, tier_config in LEAGUE_QUALITY_TIERS.items():
+for tier_config in LEAGUE_QUALITY_TIERS.values():
     for league_id in tier_config["leagues"]:
         LEAGUE_ID_TO_TIER[league_id] = tier_config
 
@@ -262,14 +262,14 @@ class FotMobCoreCollector:
                 return missing_ids
 
         except Exception as e:
-            logger.error(f"❌ 获取缺失比赛ID失败: {e}")
+            logger.exception(f"❌ 获取缺失比赛ID失败: {e}")
             # 出错时返回前N个ID
             return target_match_ids[:limit]
         finally:
             if "conn" in locals():
                 conn.close()
 
-    def _load_match_ids_from_manifest(self, manifest_path: str = None) -> list[int]:
+    def _load_match_ids_from_manifest(self, manifest_path: str | None = None) -> list[int]:
         """
         从harvest_manifest.csv加载比赛ID列表
 
@@ -304,7 +304,7 @@ class FotMobCoreCollector:
             return match_ids
 
         except Exception as e:
-            logger.error(f"❌ 读取manifest文件失败: {e}")
+            logger.exception(f"❌ 读取manifest文件失败: {e}")
             return []
 
     def get_database_connection(self) -> psycopg2.extensions.connection:
@@ -352,7 +352,7 @@ class FotMobCoreCollector:
             )
 
         except Exception as e:
-            logger.error(f"写入空心场次日志失败: {e}")
+            logger.exception(f"写入空心场次日志失败: {e}")
 
     def _get_league_tier(self, league_id: int) -> dict:
         """
@@ -370,7 +370,7 @@ class FotMobCoreCollector:
         return LEAGUE_QUALITY_TIERS["tier_default"]
 
     def _validate_response_size(
-        self, match_id: int, content: bytes, league_id: int = None, season: str = None
+        self, match_id: int, content: bytes, league_id: int | None = None, season: str | None = None
     ) -> bool:
         """
         V11.3 联赛+赛季感知哨兵检查：验证响应大小
@@ -482,7 +482,7 @@ class FotMobCoreCollector:
                 return missing_ids
 
         except Exception as e:
-            logger.error(f"断点查询失败: {e}")
+            logger.exception(f"断点查询失败: {e}")
             # 出错时返回完整列表，确保不遗漏
             return match_ids
         finally:
@@ -539,11 +539,11 @@ class FotMobCoreCollector:
             return json.loads(content.decode("utf-8"))
 
         except json.JSONDecodeError as e:
-            logger.error(f"JSON解析失败: {e}")
+            logger.exception(f"JSON解析失败: {e}")
             logger.debug(f"内容前100字节: {content[:100]}")
             return None
         except Exception as e:
-            logger.error(f"自适应解码失败: {e}")
+            logger.exception(f"自适应解码失败: {e}")
             return None
 
     def _is_brotli_content(self, content: bytes) -> bool:
@@ -606,8 +606,8 @@ class FotMobCoreCollector:
                     record_id = record[0]
                     external_id = record[1]
                     raw_json = record[2]
-                    home_team = record[3]
-                    away_team = record[4]
+                    record[3]
+                    record[4]
 
                     try:
                         # 解析JSON数据
@@ -678,17 +678,17 @@ class FotMobCoreCollector:
                             )
 
                     except json.JSONDecodeError as e:
-                        logger.error(f"❌ JSON解析失败 {external_id}: {e}")
+                        logger.exception(f"❌ JSON解析失败 {external_id}: {e}")
                         continue
                     except Exception as e:
-                        logger.error(f"❌ 解析异常 {external_id}: {e}")
+                        logger.exception(f"❌ 解析异常 {external_id}: {e}")
                         continue
 
                 conn.commit()
                 logger.info(f"🎉 JSON解析完成！成功处理 {processed_count} 条记录")
 
         except Exception as e:
-            logger.error(f"❌ JSON解析引擎失败: {e}")
+            logger.exception(f"❌ JSON解析引擎失败: {e}")
             if conn:
                 conn.rollback()
         finally:
@@ -737,7 +737,7 @@ class FotMobCoreCollector:
             return None
 
         except Exception as e:
-            logger.error(f"比分解析失败: {e}")
+            logger.exception(f"比分解析失败: {e}")
             return None
 
     def _parse_technical_features(self, json_data: dict) -> dict | None:
@@ -865,10 +865,8 @@ class FotMobCoreCollector:
             tier_expected = LEAGUE_QUALITY_TIERS["tier_default"]["expected_features"]
             for expected_key in tier_expected:
                 # 检查原始键是否存在
-                original_key = None
-                for orig_key, mapped in stat_mapping.items():
+                for mapped in stat_mapping.values():
                     if mapped == expected_key:
-                        original_key = orig_key
                         break
 
                 if expected_key not in home_stats:
@@ -963,7 +961,7 @@ class FotMobCoreCollector:
             return features
 
         except Exception as e:
-            logger.error(f"V11.0特征解析异常: {e}")
+            logger.exception(f"V11.0特征解析异常: {e}")
             import traceback
 
             logger.debug(f"详细错误: {traceback.format_exc()}")
@@ -986,7 +984,7 @@ class FotMobCoreCollector:
                 return np.nan
 
             value = stats_values[index]
-            if value is None or value == "" or value == "-":
+            if value is None or value in {"", "-"}:
                 return np.nan
 
             if isinstance(value, (int, float)):
@@ -1019,7 +1017,7 @@ class FotMobCoreCollector:
         Returns:
             解析后的浮点数
         """
-        if value is None or value == "" or value == "-":
+        if value is None or value in {"", "-"}:
             return 0.0
 
         try:
@@ -1093,13 +1091,13 @@ class FotMobCoreCollector:
             return None
 
         except requests.exceptions.Timeout:
-            logger.error(f"⏰ 请求超时: {match_id}")
+            logger.exception(f"⏰ 请求超时: {match_id}")
             return None
         except requests.exceptions.RequestException as e:
-            logger.error(f"❌ 网络请求异常: {match_id} - {e}")
+            logger.exception(f"❌ 网络请求异常: {match_id} - {e}")
             return None
         except Exception as e:
-            logger.error(f"❌ 获取比赛详情异常: {match_id} - {e}")
+            logger.exception(f"❌ 获取比赛详情异常: {match_id} - {e}")
             return None
 
     def _extract_match_basic_info(self, json_data: dict, match_id: int) -> dict | None:
@@ -1117,7 +1115,7 @@ class FotMobCoreCollector:
             # 提取基本信息
             match_header = json_data.get("header", {})
 
-            match_info = {
+            return {
                 "match_id": match_id,  # 添加match_id字段
                 "external_id": str(match_id),
                 "home_team": match_header.get("teams", [{}])[0].get("name", "Unknown Home"),
@@ -1132,14 +1130,13 @@ class FotMobCoreCollector:
                 "away_score": None,  # 将在parse阶段填入
             }
 
-            return match_info
 
         except Exception as e:
-            logger.error(f"❌ 提取比赛基础信息失败: {e}")
+            logger.exception(f"❌ 提取比赛基础信息失败: {e}")
             return None
 
     def upsert_match_data(
-        self, match_info: dict, l2_json: dict, league_id: int = None, season: str = None
+        self, match_info: dict, l2_json: dict, league_id: int | None = None, season: str | None = None
     ) -> bool:
         """
         数据库UPSERT操作 - V26.3 架构修复版
@@ -1280,10 +1277,10 @@ class FotMobCoreCollector:
         except Exception as e:
             if conn:
                 conn.rollback()
-            logger.error(f"UPSERT失败: {e}")
+            logger.exception(f"UPSERT失败: {e}")
             import traceback
 
-            logger.error(f"详细错误: {traceback.format_exc()}")
+            logger.exception(f"详细错误: {traceback.format_exc()}")
             return False
         finally:
             if conn:
@@ -1362,10 +1359,10 @@ class FotMobCoreCollector:
         except Exception as e:
             if conn:
                 conn.rollback()
-            logger.error(f"特征保存失败 ({match_id}): {e}")
+            logger.exception(f"特征保存失败 ({match_id}): {e}")
             import traceback
 
-            logger.error(f"详细错误: {traceback.format_exc()}")
+            logger.exception(f"详细错误: {traceback.format_exc()}")
             return False
         finally:
             if conn:
@@ -1439,7 +1436,7 @@ class FotMobCoreCollector:
             return f"{season_start:02d}/{season_end:02d}"
 
         except Exception as e:
-            logger.error(f"赛季判定失败 - 日期: {match_date}, 错误: {e}")
+            logger.exception(f"赛季判定失败 - 日期: {match_date}, 错误: {e}")
             # 强制使用当前赛季，绝不返回 Unknown
             current_year = datetime.now().year
             current_month = datetime.now().month
@@ -1492,16 +1489,16 @@ class FotMobCoreCollector:
             return None
 
         except requests.RequestException as e:
-            logger.error(f"HTTP请求失败 {match_id}: {e}")
+            logger.exception(f"HTTP请求失败 {match_id}: {e}")
             self._increment_failure()
             return None
         except Exception as e:
-            logger.error(f"获取比赛 {match_id} 详情失败: {e}")
+            logger.exception(f"获取比赛 {match_id} 详情失败: {e}")
             self._increment_failure()
             return None
 
     def harvest_match_with_league(
-        self, match_id: int, league_id: int = None, season: str = None
+        self, match_id: int, league_id: int | None = None, season: str | None = None
     ) -> bool:
         """
         V26.4: 联赛感知的比赛采集（安全加固版）
@@ -1605,7 +1602,7 @@ class FotMobCoreCollector:
                             if extraction_result and extraction_result.features:
                                 features = extraction_result.features
                                 feature_count = len(
-                                    [k for k in features.keys() if not k.startswith("_")]
+                                    [k for k in features if not k.startswith("_")]
                                 )
 
                                 # V26.7: 只有真正的 6000+ 维才输出成功日志
@@ -1626,7 +1623,7 @@ class FotMobCoreCollector:
                                 logger.warning(f"⚠️ 深度特征提取失败: {match_id}")
 
                         except Exception as extract_error:
-                            logger.error(f"❌ 深度特征提取异常: {match_id} - {extract_error}")
+                            logger.exception(f"❌ 深度特征提取异常: {match_id} - {extract_error}")
 
                         # V26.4: 强制 Jittering 延迟（2-5 秒随机）
                         jitter_delay = random.uniform(2.0, 5.0)
@@ -1639,15 +1636,15 @@ class FotMobCoreCollector:
             return False
 
         except requests.RequestException as e:
-            logger.error(f"HTTP 请求失败 {match_id}: {e}")
+            logger.exception(f"HTTP 请求失败 {match_id}: {e}")
             self._increment_failure()
             return False
         except Exception as e:
-            logger.error(f"采集比赛 {match_id} 失败: {e}")
+            logger.exception(f"采集比赛 {match_id} 失败: {e}")
             self._increment_failure()
             return False
 
-    def smart_fetch(self, match_id: int, league_id: int = None, season: str = None) -> dict | None:
+    def smart_fetch(self, match_id: int, league_id: int | None = None, season: str | None = None) -> dict | None:
         """
         V11.2: 智能获取 - 支持故障回退策略
 
@@ -1704,7 +1701,7 @@ class FotMobCoreCollector:
         logger.error(f"❌ 所有策略失败: {match_id}")
         return None
 
-    def _fallback_fetch_via_team(self, match_id: int, league_id: int = None) -> dict | None:
+    def _fallback_fetch_via_team(self, match_id: int, league_id: int | None = None) -> dict | None:
         """
         V11.2: 通过球队比赛列表回退获取
 
@@ -1893,7 +1890,7 @@ class FotMobCoreCollector:
         return []
 
     def enriched_l1_harvest(
-        self, league_id: int, season_code: str, league_name: str = None, batch_size: int = 50
+        self, league_id: int, season_code: str, league_name: str | None = None, batch_size: int = 50
     ) -> dict[str, Any]:
         """
         V26.7: 全息 L1 索引入库（增强版）
@@ -2031,7 +2028,7 @@ class FotMobCoreCollector:
                     }
 
         except Exception as e:
-            logger.error(f"❌ 全息 L1 采集失败: {e}")
+            logger.exception(f"❌ 全息 L1 采集失败: {e}")
             return {
                 "total_discovered": 0,
                 "total_finished": 0,
@@ -2093,15 +2090,14 @@ class FotMobCoreCollector:
 
             # 赛季通常跨越 8 月到次年 5 月
             # 例如 2425 赛季：2025-08 ~ 2026-05
-            if date_year == year1 or date_year == year2:
+            if date_year in (year1, year2):
                 return True
-            else:
-                logger.warning(
-                    f"🚨 Season-Date Misalignment: match_id={match_id}, "
-                    f"season={season_code} (years {year1}-{year2}), "
-                    f"match_date={match_date} (year {date_year})"
-                )
-                return False
+            logger.warning(
+                f"🚨 Season-Date Misalignment: match_id={match_id}, "
+                f"season={season_code} (years {year1}-{year2}), "
+                f"match_date={match_date} (year {date_year})"
+            )
+            return False
 
         except (ValueError, IndexError) as e:
             logger.warning(f"⚠️ Season-date validation failed for match_id={match_id}: {e}")
@@ -2224,8 +2220,8 @@ class FotMobCoreCollector:
                     except Exception as e:
                         # V26.7 DBRE: 任何错误立即回滚并停止
                         error_msg = f"L1 UPSERT 失败 (match_id={match.get('match_id')}, index={i}/{len(matches)}): {e}"
-                        logger.error(f"❌ {error_msg}")
-                        logger.error(f"⚠️ 正在回滚事务，已写入 {success_count} 条记录将被丢弃")
+                        logger.exception(f"❌ {error_msg}")
+                        logger.exception(f"⚠️ 正在回滚事务，已写入 {success_count} 条记录将被丢弃")
 
                         # 立即回滚
                         conn.rollback()
@@ -2240,13 +2236,13 @@ class FotMobCoreCollector:
 
         except Exception as e:
             # V26.7 DBRE: 确保异常时回滚
-            logger.error(f"❌ L1 批量入库异常: {e}")
+            logger.exception(f"❌ L1 批量入库异常: {e}")
             if conn:
                 try:
                     conn.rollback()
                     logger.warning("⚠️ 事务已回滚")
                 except Exception as rollback_error:
-                    logger.error(f"❌ 回滚失败: {rollback_error}")
+                    logger.exception(f"❌ 回滚失败: {rollback_error}")
             raise  # 重新抛出异常，让调用方知道失败了
         finally:
             # V26.7 DBRE: 确保连接被关闭
@@ -2462,7 +2458,7 @@ class FotMobCoreCollector:
             logger.info(f"✅ 基础数据提取成功: {match_id}")
 
         except Exception as e:
-            logger.error(f"❌ 基础数据提取失败: {match_id} - {e}")
+            logger.exception(f"❌ 基础数据提取失败: {match_id} - {e}")
             basic_data["extraction_error"] = str(e)
 
         return basic_data
@@ -2699,7 +2695,7 @@ class FotMobCoreCollector:
                 except Exception as e:
                     stats["failed"] += 1
                     stats["failed_match_ids"].append(match_id)
-                    logger.error(f"   💥 {match_id}: 异常 - {e}")
+                    logger.exception(f"   💥 {match_id}: 异常 - {e}")
 
         elapsed = time.time() - start_time
 
@@ -2736,9 +2732,9 @@ class FotMobCoreCollector:
 
         if isinstance(obj, Decimal):
             return float(obj)
-        elif isinstance(obj, dict):
+        if isinstance(obj, dict):
             return {k: self._convert_decimal_to_float(v) for k, v in obj.items()}
-        elif isinstance(obj, list):
+        if isinstance(obj, list):
             return [self._convert_decimal_to_float(item) for item in obj]
         return obj
 
@@ -2790,7 +2786,7 @@ class FotMobCoreCollector:
             }
 
         except Exception as e:
-            logger.error(f"❌ 联赛采集失败: {e}")
+            logger.exception(f"❌ 联赛采集失败: {e}")
             return {
                 "success": False,
                 "error": str(e),

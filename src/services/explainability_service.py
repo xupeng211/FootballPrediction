@@ -29,7 +29,9 @@ class ExplainabilityService:
         """初始化SHAP解释器"""
         self._explainer_cache = {}
 
-    async def get_shap_contributions(self, features: pd.DataFrame, model: XGBoostClassifier) -> list[dict[str, float]]:
+    async def get_shap_contributions(
+        self, features: pd.DataFrame, model: XGBoostClassifier
+    ) -> list[dict[str, float]]:
         """
         计算SHAP特征贡献度
 
@@ -76,7 +78,7 @@ class ExplainabilityService:
             return contributions_list
 
         except Exception as e:
-            logger.error(f"SHAP贡献度计算失败: {e}")
+            logger.exception(f"SHAP贡献度计算失败: {e}")
             raise ExplainabilityError(f"SHAP计算失败: {e!s}")
 
     async def _get_or_create_explainer(self, model: XGBoostClassifier):
@@ -144,7 +146,7 @@ class ExplainabilityService:
             return shap_values
 
         except Exception as e:
-            logger.error(f"SHAP值计算异常: {e}")
+            logger.exception(f"SHAP值计算异常: {e}")
             raise ExplainabilityError(f"SHAP值计算失败: {e!s}")
 
     async def _format_contributions(
@@ -162,7 +164,9 @@ class ExplainabilityService:
                 contributions[feature_name] = contribution_value
 
             # 按贡献度绝对值排序（可选）
-            sorted_contributions = dict(sorted(contributions.items(), key=lambda x: abs(x[1]), reverse=True))
+            sorted_contributions = dict(
+                sorted(contributions.items(), key=lambda x: abs(x[1]), reverse=True)
+            )
 
             contributions_list.append(sorted_contributions)
 
@@ -207,7 +211,9 @@ class ExplainabilityService:
         except Exception as e:
             logger.warning(f"SHAP一致性验证失败（不影响功能）: {e}")
 
-    def get_feature_importance_ranking(self, contributions_list: list[dict[str, float]]) -> dict[str, float]:
+    def get_feature_importance_ranking(
+        self, contributions_list: list[dict[str, float]]
+    ) -> dict[str, float]:
         """
         计算全局特征重要性排名
 
@@ -231,7 +237,9 @@ class ExplainabilityService:
                 feature_importance[feature].append(abs(shap_value))
 
         # 计算平均重要性并排序
-        avg_importance = {feature: np.mean(shap_values) for feature, shap_values in feature_importance.items()}
+        avg_importance = {
+            feature: np.mean(shap_values) for feature, shap_values in feature_importance.items()
+        }
 
         # 按重要性降序排序
         sorted_importance = dict(sorted(avg_importance.items(), key=lambda x: x[1], reverse=True))
@@ -245,7 +253,9 @@ class ExplainabilityService:
         self._explainer_cache.clear()
         logger.info(f"已清除SHAP解释器缓存，清除数量: {cache_size}")
 
-    async def explain_single_prediction(self, features: dict[str, Any], model: XGBoostClassifier) -> dict[str, Any]:
+    async def explain_single_prediction(
+        self, features: dict[str, Any], model: XGBoostClassifier
+    ) -> dict[str, Any]:
         """
         解释单个预测结果
 
@@ -271,7 +281,7 @@ class ExplainabilityService:
             importance_ranking = self.get_feature_importance_ranking([contributions])
 
             # 格式化解释结果
-            explanation = {
+            return {
                 "prediction": prediction_result,
                 "feature_contributions": contributions,
                 "top_positive_contributors": [
@@ -287,8 +297,7 @@ class ExplainabilityService:
                 "feature_importance_ranking": importance_ranking,
             }
 
-            return explanation
 
         except Exception as e:
-            logger.error(f"单个预测解释失败: {e}")
+            logger.exception(f"单个预测解释失败: {e}")
             raise ExplainabilityError(f"预测解释失败: {e!s}")

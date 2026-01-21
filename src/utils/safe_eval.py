@@ -108,10 +108,10 @@ class SafeExpressionEvaluator:
             return float(result) if result is not None else np.nan
 
         except (SyntaxError, ValueError) as e:
-            logger.error(f"表达式解析失败: {expr}, 错误: {e}")
+            logger.exception(f"表达式解析失败: {expr}, 错误: {e}")
             return np.nan
         except Exception as e:
-            logger.error(f"表达式计算失败: {expr}, 错误: {e}")
+            logger.exception(f"表达式计算失败: {expr}, 错误: {e}")
             return np.nan
 
     def _eval_node(self, node: ast.AST, context: dict[str, Any]) -> Any:
@@ -170,7 +170,7 @@ class SafeExpressionEvaluator:
         if isinstance(node, ast.Compare):
             left = self._eval_node(node.left, context)
 
-            for op, comparator_node in zip(node.ops, node.comparators):
+            for op, comparator_node in zip(node.ops, node.comparators, strict=False):
                 right = self._eval_node(comparator_node, context)
 
                 # NaN 安全检查
@@ -204,7 +204,9 @@ class SafeExpressionEvaluator:
         # 下标访问 (如 array[0])
         if isinstance(node, ast.Subscript):
             value = self._eval_node(node.value, context)
-            slice_val = self._eval_node(node.slice, context) if hasattr(node.slice, "value") else None
+            slice_val = (
+                self._eval_node(node.slice, context) if hasattr(node.slice, "value") else None
+            )
 
             if isinstance(value, dict):
                 return value.get(slice_val, np.nan) if slice_val is not None else value
@@ -304,26 +306,18 @@ if __name__ == "__main__":
         ("max(1, 2, 3)", {}, 3.0),
     ]
 
-    print("=" * 60)
-    print("安全表达式求值器测试")
-    print("=" * 60)
 
     all_passed = True
     for expr, ctx, expected in test_cases:
         result = evaluator.evaluate(expr, ctx)
-        if np.isnan(expected):
-            passed = np.isnan(result)
-        else:
-            passed = abs(result - expected) < 1e-6
+        passed = np.isnan(result) if np.isnan(expected) else abs(result - expected) < 1e-06
 
         status = "✅" if passed else "❌"
-        print(f"{status} {expr} = {result} (预期: {expected})")
 
         if not passed:
             all_passed = False
 
-    print("=" * 60)
     if all_passed:
-        print("✅ 所有测试通过")
+        pass
     else:
-        print("❌ 部分测试失败")
+        pass

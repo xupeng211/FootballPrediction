@@ -46,19 +46,34 @@ class TestParserIntegrity:
                                         {"key": "awayTeam", "value": {"name": "Chelsea"}},
                                         {"key": "homeScore", "value": 3},
                                         {"key": "awayScore", "value": 1},
-                                        {"key": "expected_goals", "value": {"home": 2.3, "away": 0.8}},
-                                        {"key": "ball_possession", "value": {"home": 65, "away": 35}},
+                                        {
+                                            "key": "expected_goals",
+                                            "value": {"home": 2.3, "away": 0.8},
+                                        },
+                                        {
+                                            "key": "ball_possession",
+                                            "value": {"home": 65, "away": 35},
+                                        },
                                         {"key": "shots", "value": {"home": 18, "away": 12}},
                                         {"key": "shots_on_target", "value": {"home": 7, "away": 3}},
                                         {"key": "passes", "value": {"home": 580, "away": 320}},
-                                        {"key": "passes_accuracy", "value": {"home": 88, "away": 82}},
-                                        {"key": "aerial_duels_won", "value": {"home": 25, "away": 18}},
+                                        {
+                                            "key": "passes_accuracy",
+                                            "value": {"home": 88, "away": 82},
+                                        },
+                                        {
+                                            "key": "aerial_duels_won",
+                                            "value": {"home": 25, "away": 18},
+                                        },
                                         {"key": "tackles", "value": {"home": 15, "away": 22}},
                                         {"key": "interceptions", "value": {"home": 12, "away": 18}},
                                         {"key": "clearances", "value": {"home": 8, "away": 15}},
                                         {"key": "blocks", "value": {"home": 5, "away": 8}},
                                         {"key": "key_passes", "value": {"home": 14, "away": 8}},
-                                        {"key": "big_chances_created", "value": {"home": 4, "away": 1}},
+                                        {
+                                            "key": "big_chances_created",
+                                            "value": {"home": 4, "away": 1},
+                                        },
                                     ]
                                 }
                             ]
@@ -149,7 +164,11 @@ class TestParserIntegrity:
 
         # 创建模拟数据库记录
         mock_record = (1, 12345)  # id, external_id
-        mock_record_dict = {"id": 1, "external_id": 12345, "l2_raw_json": json.dumps(real_l2_json_sample)}
+        {
+            "id": 1,
+            "external_id": 12345,
+            "l2_raw_json": json.dumps(real_l2_json_sample),
+        }
 
         # 解析比分
         result = collector._parse_match_score(mock_record)
@@ -163,7 +182,9 @@ class TestParserIntegrity:
         expected_score = "3-1"
         expected_result = "H"  # Home win
 
-        assert result["result_score"] == expected_score, f"比分应该是{expected_score}，实际是{result['result_score']}"
+        assert result["result_score"] == expected_score, (
+            f"比分应该是{expected_score}，实际是{result['result_score']}"
+        )
         assert result["actual_result"] == expected_result, (
             f"结果应该是{expected_result}，实际是{result['actual_result']}"
         )
@@ -182,7 +203,11 @@ class TestParserIntegrity:
 
         # 创建模拟数据库记录
         mock_record = (1, 12345)
-        mock_record_dict = {"id": 1, "external_id": 12345, "l2_raw_json": json.dumps(real_l2_json_sample)}
+        {
+            "id": 1,
+            "external_id": 12345,
+            "l2_raw_json": json.dumps(real_l2_json_sample),
+        }
 
         # 提取技术特征
         features = collector._parse_technical_features(mock_record)
@@ -226,10 +251,18 @@ class TestParserIntegrity:
         # 验证主队指标与预期值一致
         assert features["home_shots"] == 18, f"主队射门应该是18，实际是{features['home_shots']}"
         assert features["away_shots"] == 12, f"客队射门应该是12，实际是{features['away_shots']}"
-        assert features["home_xg"] == pytest.approx(2.3, rel=1e-2), f"主队xG应该是2.3，实际是{features['home_xg']}"
-        assert features["away_xg"] == pytest.approx(0.8, rel=1e-2), f"客队xG应该是0.8，实际是{features['away_xg']}"
-        assert features["home_possession"] == 65, f"主队控球率应该是65，实际是{features['home_possession']}"
-        assert features["away_possession"] == 35, f"客队控球率应该是35，实际是{features['away_possession']}"
+        assert features["home_xg"] == pytest.approx(2.3, rel=1e-2), (
+            f"主队xG应该是2.3，实际是{features['home_xg']}"
+        )
+        assert features["away_xg"] == pytest.approx(0.8, rel=1e-2), (
+            f"客队xG应该是0.8，实际是{features['away_xg']}"
+        )
+        assert features["home_possession"] == 65, (
+            f"主队控球率应该是65，实际是{features['home_possession']}"
+        )
+        assert features["away_possession"] == 35, (
+            f"客队控球率应该是35，实际是{features['away_possession']}"
+        )
 
         # 验证衍生计算正确性
         assert features["total_shots"] == 30, f"总射门应该是30，实际是{features['total_shots']}"
@@ -265,7 +298,9 @@ class TestParserIntegrity:
             for metric in core_player_metrics:
                 assert metric in player["stats"], f"球员统计应该包含{metric}"
 
-        logger.success(f"✅ 球员统计数据完整: 主队{len(home_players)}名球员, 客队{len(player_stats['away'])}名球员")
+        logger.success(
+            f"✅ 球员统计数据完整: 主队{len(home_players)}名球员, 客队{len(player_stats['away'])}名球员"
+        )
 
     @patch("src.api.collectors.fotmob_core.psycopg2.connect")
     def test_parse_raw_json_to_db_integration(self, mock_connect, collector, real_l2_json_sample):
@@ -301,7 +336,11 @@ class TestParserIntegrity:
 
         # 创建模拟记录
         mock_record = (1, 12345)
-        mock_record_dict = {"id": 1, "external_id": 12345, "l2_raw_json": json.dumps(real_l2_json_sample)}
+        {
+            "id": 1,
+            "external_id": 12345,
+            "l2_raw_json": json.dumps(real_l2_json_sample),
+        }
 
         # 提取特征
         features = collector._parse_technical_features(mock_record)
@@ -331,7 +370,9 @@ class TestParserIntegrity:
 
         assert pattern_matches >= 4, f"应该匹配至少4种特征命名模式，实际匹配{pattern_matches}种"
 
-        logger.success(f"✅ 特征维度完整验证通过: {feature_count}个维度，{pattern_matches}种命名模式")
+        logger.success(
+            f"✅ 特征维度完整验证通过: {feature_count}个维度，{pattern_matches}种命名模式"
+        )
 
     def test_data_type_consistency(self, collector, real_l2_json_sample):
         """测试: 数据类型一致性验证"""
@@ -339,7 +380,11 @@ class TestParserIntegrity:
 
         # 创建模拟记录
         mock_record = (1, 12345)
-        mock_record_dict = {"id": 1, "external_id": 12345, "l2_raw_json": json.dumps(real_l2_json_sample)}
+        {
+            "id": 1,
+            "external_id": 12345,
+            "l2_raw_json": json.dumps(real_l2_json_sample),
+        }
 
         # 提取特征
         features = collector._parse_technical_features(mock_record)

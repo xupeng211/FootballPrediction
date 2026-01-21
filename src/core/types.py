@@ -261,33 +261,22 @@ def parse_match_id(match_id_str: str) -> MatchID:
 
 if __name__ == "__main__":
     # 测试 MatchID
-    print("=== MatchID 测试 ===")
 
     # 创建
     mid1 = MatchID.create("4507094", "2324")
-    print(f"创建: {mid1}")
 
     # 解析
     mid2 = MatchID.parse("4507094_2324")
-    print(f"解析: {mid2}")
 
     # 属性访问
-    print(f"external_id: {mid2.external_id}")
-    print(f"season: {mid2.season}")
-    print(f"to_int_pair: {mid2.to_int_pair()}")
 
     # 测试 MatchStatus
-    print("\n=== MatchStatus 测试 ===")
 
     # 从字符串解析
     status1 = MatchStatus.from_string("finished")
-    print(f"解析状态: {status1}")
 
     # 判断
-    print(f"是终态: {status1.is_final()}")
-    print(f"允许提取特征: {status1.allows_feature_extraction()}")
 
     # 测试 Season
-    print("\n=== Season 测试 ===")
-    for s in ["23/24", "2023-2024", "23-24", "2023"]:
-        print(f"{s} -> {Season.normalize(s)}")
+    for _s in ["23/24", "2023-2024", "23-24", "2023"]:
+        pass

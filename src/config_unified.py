@@ -28,11 +28,11 @@ import os
 from pathlib import Path
 from typing import Any
 
-# V41.80: 使用统一的异常体系
-from src.core.exceptions import DatabaseConfigurationError
-
 from pydantic import Field, SecretStr, ValidationInfo, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# V41.80: 使用统一的异常体系
+from src.core.exceptions import DatabaseConfigurationError
 
 logger = logging.getLogger(__name__)
 
@@ -67,14 +67,14 @@ class DatabaseConfig:
     password: SecretStr
     ssl_mode: bool = False
     # V41.49: 连接池优化 - 提升 pool_size 支持高并发
-    pool_size: int = 15           # 原 10 → 15 (基础连接数)
-    max_overflow: int = 20        # 保持 20 (最大溢出数，理论最大 35)
-    pool_timeout: int = 10        # 原 30 → 10 (降低超时，防止无限阻塞)
-    pool_recycle: int = 600       # 原 3600 → 600 (10分钟回收，避免长连接问题)
+    pool_size: int = 15  # 原 10 → 15 (基础连接数)
+    max_overflow: int = 20  # 保持 20 (最大溢出数，理论最大 35)
+    pool_timeout: int = 10  # 原 30 → 10 (降低超时，防止无限阻塞)
+    pool_recycle: int = 600  # 原 3600 → 600 (10分钟回收，避免长连接问题)
 
     # 新增：异步连接属性（用于 SQLAlchemy async）
     async_url: str | None = None
-    async_pool_size: int = 15     # V41.49: 同步提升至 15
+    async_pool_size: int = 15  # V41.49: 同步提升至 15
     async_max_overflow: int = 20  # 保持 20
     echo: bool = False
     echo_pool: bool = False
@@ -135,11 +135,32 @@ class ProxyConfig:
 
     # V41.130: 代理池配置（从环境变量读取）
     # 19 个活跃代理端口（2026-01-17 普查结果）
-    proxy_ports: list[int] = field(default_factory=lambda: [
-        7890, 7892, 7893, 7894, 7895, 7896, 7897, 7898, 7899,
-        7900, 7901, 7902, 7903, 7904, 7905, 7906, 7907, 7908, 7909
-    ])
-    deprecated_proxy_ports: list[int] = field(default_factory=lambda: [7891, 7910])  # V41.130: 已死亡端口
+    proxy_ports: list[int] = field(
+        default_factory=lambda: [
+            7890,
+            7892,
+            7893,
+            7894,
+            7895,
+            7896,
+            7897,
+            7898,
+            7899,
+            7900,
+            7901,
+            7902,
+            7903,
+            7904,
+            7905,
+            7906,
+            7907,
+            7908,
+            7909,
+        ]
+    )
+    deprecated_proxy_ports: list[int] = field(
+        default_factory=lambda: [7891, 7910]
+    )  # V41.130: 已死亡端口
 
     # 健康检查配置
     health_check_timeout: float = 2.0  # 健康检查超时时间（秒）
@@ -202,9 +223,7 @@ class ProxyConfig:
         """
         if self.is_port_deprecated(port):
             return False
-        if port not in self.proxy_ports:
-            return False
-        return True
+        return port in self.proxy_ports
 
 
 @dataclass
@@ -219,78 +238,86 @@ class FotMobAPIConfig:
     retry_delay: float = 1.0
 
     # V41.114: League IDs 常量（修正后的正确ID）
-    LEAGUE_IDS: dict[str, int] = field(default_factory=lambda: {
-        "Premier League": 47,
-        "Championship": 48,
-        "La Liga": 87,
-        "Segunda División": 94,
-        "Bundesliga": 54,  # V41.110修正：78→54
-        "2. Bundesliga": 95,
-        "Serie A": 55,  # V41.110修正：126→55
-        "Serie B": 127,
-        "Ligue 1": 53,
-        "Liga Portugal": 155,
-        "Eredivisie": 129,
-        "Jupiler Pro League": 118,
-        "Scottish Premiership": 157,
-        "Süper Lig": 201,
-        "Super League Greece": 96,
-        "Premier League Russia": 153,
-        "Premier Liha": 186,
-        "MLS": 203,
-        "Serie A Brazil": 274,
-        "Liga Profesional": 275,
-        "Liga MX": 298,
-        "J-League Division 1": 345,
-        "Chinese Super League": 322,
-        "K-League 1": 353,
-        "Saudi Pro League": 410,
-        "ADNOC Pro League": 411,
-        "A-League": 312,
-        "Indian Super League": 397,
-        "Premier Soccer League": 288,
-        "Premier League Egypt": 287,
-        "NPFL": 412,
-    })
+    LEAGUE_IDS: dict[str, int] = field(
+        default_factory=lambda: {
+            "Premier League": 47,
+            "Championship": 48,
+            "La Liga": 87,
+            "Segunda División": 94,
+            "Bundesliga": 54,  # V41.110修正：78→54
+            "2. Bundesliga": 95,
+            "Serie A": 55,  # V41.110修正：126→55
+            "Serie B": 127,
+            "Ligue 1": 53,
+            "Liga Portugal": 155,
+            "Eredivisie": 129,
+            "Jupiler Pro League": 118,
+            "Scottish Premiership": 157,
+            "Süper Lig": 201,
+            "Super League Greece": 96,
+            "Premier League Russia": 153,
+            "Premier Liha": 186,
+            "MLS": 203,
+            "Serie A Brazil": 274,
+            "Liga Profesional": 275,
+            "Liga MX": 298,
+            "J-League Division 1": 345,
+            "Chinese Super League": 322,
+            "K-League 1": 353,
+            "Saudi Pro League": 410,
+            "ADNOC Pro League": 411,
+            "A-League": 312,
+            "Indian Super League": 397,
+            "Premier Soccer League": 288,
+            "Premier League Egypt": 287,
+            "NPFL": 412,
+        }
+    )
 
     # V41.114: 赛季映射表（多种格式支持）
-    SEASON_MAPPING: dict[str, str] = field(default_factory=lambda: {
-        # 完整格式 → 短格式
-        "2020/2021": "2021",
-        "2021/2022": "2122",
-        "2022/2023": "2223",
-        "2023/2024": "2324",
-        "2024/2025": "2425",
-        # 短格式 → 完整格式
-        "2021": "2020/2021",
-        "2122": "2021/2022",
-        "2223": "2022/2023",
-        "2324": "2023/2024",
-        "2425": "2024/2025",
-        # 紧凑格式 → 完整格式
-        "20/21": "2020/2021",
-        "21/22": "2021/2022",
-        "22/23": "2022/2023",
-        "23/24": "2023/2024",
-        "24/25": "2024/2025",
-    })
+    SEASON_MAPPING: dict[str, str] = field(
+        default_factory=lambda: {
+            # 完整格式 → 短格式
+            "2020/2021": "2021",
+            "2021/2022": "2122",
+            "2022/2023": "2223",
+            "2023/2024": "2324",
+            "2024/2025": "2425",
+            # 短格式 → 完整格式
+            "2021": "2020/2021",
+            "2122": "2021/2022",
+            "2223": "2022/2023",
+            "2324": "2023/2024",
+            "2425": "2024/2025",
+            # 紧凑格式 → 完整格式
+            "20/21": "2020/2021",
+            "21/22": "2021/2022",
+            "22/23": "2022/2023",
+            "23/24": "2023/2024",
+            "24/25": "2024/2025",
+        }
+    )
 
     # V41.114: 常用赛季列表
-    AVAILABLE_SEASONS: list[str] = field(default_factory=lambda: [
-        "2020/2021",
-        "2021/2022",
-        "2022/2023",
-        "2023/2024",
-        "2024/2025",
-    ])
+    AVAILABLE_SEASONS: list[str] = field(
+        default_factory=lambda: [
+            "2020/2021",
+            "2021/2022",
+            "2022/2023",
+            "2023/2024",
+            "2024/2025",
+        ]
+    )
 
     # V41.114: API 端点路径
-    ENDPOINTS: dict[str, str] = field(default_factory=lambda: {
-        "match_details": "matchDetails",
-        "leagues": "leagues",
-        "teams": "teams",
-        "all_leagues": "allLeagues",
-    })
+    ENDPOINTS: dict[str, str] = field(
+        default_factory=lambda: {
+            "match_details": "matchDetails",
+            "leagues": "leagues",
+            "teams": "teams",
+            "all_leagues": "allLeagues",
+        }
+    )
 
     def __post_init__(self) -> None:
         """初始化后验证"""
@@ -340,6 +367,7 @@ class UnifiedSettings(BaseSettings):
         # V41.59: 首先加载 .env 文件（确保环境变量可用）
         try:
             from dotenv import load_dotenv
+
             load_dotenv()
         except ImportError:
             logger.debug("python-dotenv 未安装，跳过 .env 文件加载")
@@ -348,8 +376,8 @@ class UnifiedSettings(BaseSettings):
         try:
             from src.core.environment_detector import (
                 EnvironmentType,
+                detect_environment,
                 get_optimal_db_host,
-                detect_environment
             )
 
             current_env = detect_environment()
@@ -376,7 +404,7 @@ class UnifiedSettings(BaseSettings):
                 # 获取最优主机（检测端口冲突）
                 optimal_host = get_optimal_db_host(
                     preferred_host=os.getenv("DB_HOST"),
-                    env_var_host=os.getenv("PGHOST")  # 支持 PGHOST 环境变量
+                    env_var_host=os.getenv("PGHOST"),  # 支持 PGHOST 环境变量
                 )
                 env_config.update(
                     {
@@ -384,7 +412,8 @@ class UnifiedSettings(BaseSettings):
                         "db_port": int(os.getenv("DB_PORT", 5432)),
                         "db_name": os.getenv("DB_NAME", "football_db"),
                         "db_user": os.getenv("DB_USER", "football_user"),
-                        "db_password": os.getenv("DB_PASSWORD") or os.getenv("PGPASSWORD", "change-me-in-production"),
+                        "db_password": os.getenv("DB_PASSWORD")
+                        or os.getenv("PGPASSWORD", "change-me-in-production"),
                         "redis_host": os.getenv("REDIS_HOST", "localhost"),
                         "redis_port": int(os.getenv("REDIS_PORT", 6379)),
                         "environment": "development",
@@ -399,7 +428,8 @@ class UnifiedSettings(BaseSettings):
                         "db_port": int(os.getenv("DB_PORT", 5432)),
                         "db_name": os.getenv("DB_NAME", "football_db"),
                         "db_user": os.getenv("DB_USER", "football_user"),
-                        "db_password": os.getenv("DB_PASSWORD") or os.getenv("PGPASSWORD", "change-me-in-production"),
+                        "db_password": os.getenv("DB_PASSWORD")
+                        or os.getenv("PGPASSWORD", "change-me-in-production"),
                         "redis_host": os.getenv("REDIS_HOST", "localhost"),
                         "redis_port": int(os.getenv("REDIS_PORT", 6379)),
                         "environment": "development",
@@ -444,10 +474,10 @@ class UnifiedSettings(BaseSettings):
     def __init__(self, **kwargs):
         # V41.51: 数据库大一统 - 强制只允许 football_db
         # 物理消除环境偏差，确保所有连接指向同一个真实数据库
-        raw_env_db_name = os.environ.get('DB_NAME')
+        raw_env_db_name = os.environ.get("DB_NAME")
 
         # V41.51: 单数据库准则 - 强制只允许 football_db
-        ALLOWED_DB_NAME = 'football_db'
+        ALLOWED_DB_NAME = "football_db"
 
         # 如果设置了 DB_NAME，必须是 football_db
         if raw_env_db_name and raw_env_db_name != ALLOWED_DB_NAME:
@@ -465,7 +495,7 @@ class UnifiedSettings(BaseSettings):
         auto_env.update(kwargs)
 
         # V41.51: 单数据库准则 - 强制只允许 football_db
-        raw_db_name = auto_env.get('db_name', kwargs.get('db_name', 'football_db'))
+        raw_db_name = auto_env.get("db_name", kwargs.get("db_name", "football_db"))
         if raw_db_name != ALLOWED_DB_NAME:
             raise DatabaseConfigurationError(
                 f"🚨 V41.51 数据库大一统：非法数据库名称\n"
@@ -501,7 +531,9 @@ class UnifiedSettings(BaseSettings):
         description="应用密钥（生产环境必须通过环境变量设置）",
     )
 
-    allowed_hosts: list[str] = Field(default=["localhost", "127.0.0.1"], description="允许的主机列表")
+    allowed_hosts: list[str] = Field(
+        default=["localhost", "127.0.0.1"], description="允许的主机列表"
+    )
 
     cors_origins: list[str] = Field(
         default=["http://localhost:3000", "http://localhost:8080"], description="CORS允许的源"
@@ -509,10 +541,7 @@ class UnifiedSettings(BaseSettings):
 
     # === 数据库配置 ===
     # V41.59: 智能环境检测 - 自动选择最优数据库主机
-    db_host: str = Field(
-        default="localhost",
-        description="数据库主机 (V41.59: 支持环境智能检测)"
-    )
+    db_host: str = Field(default="localhost", description="数据库主机 (V41.59: 支持环境智能检测)")
 
     db_port: int = Field(default=5432, description="数据库端口")
 
@@ -523,7 +552,9 @@ class UnifiedSettings(BaseSettings):
 
     db_password: SecretStr = Field(description="数据库密码")
 
-    db_ssl_mode: bool = Field(default=False, description="数据库SSL模式（生产环境建议启用，设置DB_SSL_MODE=true）")
+    db_ssl_mode: bool = Field(
+        default=False, description="数据库SSL模式（生产环境建议启用，设置DB_SSL_MODE=true）"
+    )
 
     db_pool_size: int = Field(default=10, description="数据库连接池大小")
 
@@ -541,7 +572,9 @@ class UnifiedSettings(BaseSettings):
     proxy_wsl2_host: str = Field(default="172.25.16.1", description="WSL2 宿主机 IP")
 
     # 代理端口列表（可从环境变量 PROXY_PORTS 读取，逗号分隔）
-    proxy_ports: str = Field(default="7892,7893,7894,7895,7896,7898,7899", description="可用代理端口列表")
+    proxy_ports: str = Field(
+        default="7892,7893,7894,7895,7896,7898,7899", description="可用代理端口列表"
+    )
 
     # 已弃用的代理端口（禁止使用）
     proxy_deprecated_ports: str = Field(default="7890,7891", description="已弃用的代理端口")
@@ -553,7 +586,9 @@ class UnifiedSettings(BaseSettings):
     proxy_circuit_breaker_threshold: int = Field(default=5, description="代理熔断器触发阈值")
 
     # === 外部API配置 ===
-    fotmob_base_url: str = Field(default="https://www.fotmob.com/api", description="FotMob API基础URL")
+    fotmob_base_url: str = Field(
+        default="https://www.fotmob.com/api", description="FotMob API基础URL"
+    )
 
     fotmob_web_url: str = Field(default="https://www.fotmob.com", description="FotMob 网站基础URL")
 
@@ -561,7 +596,9 @@ class UnifiedSettings(BaseSettings):
 
     fotmob_x_foo_header: str | None = Field(default=None, description="FotMob X-FOO Header")
 
-    oddsportal_base_url: str = Field(default="https://www.oddsportal.com", description="OddsPortal基础URL")
+    oddsportal_base_url: str = Field(
+        default="https://www.oddsportal.com", description="OddsPortal基础URL"
+    )
 
     oddsportal_timeout_ms: int = Field(default=30000, description="OddsPortal请求超时时间（毫秒）")
 
@@ -570,7 +607,8 @@ class UnifiedSettings(BaseSettings):
     # === 模型配置 ===
     # 使用 model_zoo 目录中的 V19.4 生产模型
     model_path: str = Field(
-        default="model_zoo/v19.4_draw_sensitivity_model.pkl", description="模型文件路径（指向 model_zoo 目录）"
+        default="model_zoo/v19.4_draw_sensitivity_model.pkl",
+        description="模型文件路径（指向 model_zoo 目录）",
     )
 
     model_version: str = Field(default="xgboost_v2", description="模型版本")
@@ -597,9 +635,27 @@ class UnifiedSettings(BaseSettings):
     # === V3.2 三联赛原生支持配置 ===
     supported_leagues: dict[str, Any] = Field(
         default_factory=lambda: {
-            "serie_a": {"id": 135, "name": "Serie A", "country": "Italy", "active": True, "priority": 1},
-            "la_liga": {"id": 87, "name": "La Liga", "country": "Spain", "active": True, "priority": 2},
-            "bundesliga": {"id": 54, "name": "Bundesliga", "country": "Germany", "active": True, "priority": 3},
+            "serie_a": {
+                "id": 135,
+                "name": "Serie A",
+                "country": "Italy",
+                "active": True,
+                "priority": 1,
+            },
+            "la_liga": {
+                "id": 87,
+                "name": "La Liga",
+                "country": "Spain",
+                "active": True,
+                "priority": 2,
+            },
+            "bundesliga": {
+                "id": 54,
+                "name": "Bundesliga",
+                "country": "Germany",
+                "active": True,
+                "priority": 3,
+            },
         },
         description="V3.2 三联赛原生支持配置",
     )
@@ -741,7 +797,7 @@ class UnifiedSettings(BaseSettings):
         物理消除环境偏差，确保所有连接指向同一个真实数据库
         """
         # V41.51: 单数据库准则 - 强制只允许 football_db
-        ALLOWED_DB_NAME = 'football_db'
+        ALLOWED_DB_NAME = "football_db"
 
         if v != ALLOWED_DB_NAME:
             raise DatabaseConfigurationError(
@@ -1012,8 +1068,8 @@ def _validate_database_environment(settings: UnifiedSettings) -> None:
 
     try:
         from src.core.environment_validator import (
+            validate_database_environment,
             validate_no_local_postgres_conflict,
-            validate_database_environment
         )
 
         db_port = settings.database.port
@@ -1024,10 +1080,7 @@ def _validate_database_environment(settings: UnifiedSettings) -> None:
         # 验证数据库环境
         db_host = settings.database.host
         validate_database_environment(
-            db_host=db_host,
-            db_port=db_port,
-            allow_docker=True,
-            allow_local=False
+            db_host=db_host, db_port=db_port, allow_docker=True, allow_local=False
         )
 
         logger.info("✅ V41.77: 数据库环境验证通过")
@@ -1036,9 +1089,7 @@ def _validate_database_environment(settings: UnifiedSettings) -> None:
         logger.warning("⚠️  环境检测模块不可用，跳过验证")
     except Exception as e:
         raise DatabaseConfigurationError(
-            f"🚨 V41.77: 数据库环境验证失败\n"
-            f"   错误: {e}\n"
-            f"   请确保数据库环境正确配置"
+            f"🚨 V41.77: 数据库环境验证失败\n   错误: {e}\n   请确保数据库环境正确配置"
         )
 
 
@@ -1097,7 +1148,9 @@ class ConfigAccessor:
         """V41.121: 获取代理配置"""
         # 解析代理端口列表
         proxy_ports = [int(p.strip()) for p in self._settings.proxy_ports.split(",")]
-        deprecated_ports = [int(p.strip()) for p in self._settings.proxy_deprecated_ports.split(",")]
+        deprecated_ports = [
+            int(p.strip()) for p in self._settings.proxy_deprecated_ports.split(",")
+        ]
 
         return ProxyConfig(
             wsl2_bridge_host=self._settings.proxy_wsl2_host,

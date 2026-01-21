@@ -170,15 +170,19 @@ class V19RollingAdapter(BaseFeatureAdapter):
         try:
             # 尝试从原始特征中提取可用数据
             # 比赛数据
-            home_score = self._safe_get(raw_features, "header", "teams", "home", "score", default=0)
-            away_score = self._safe_get(raw_features, "header", "teams", "away", "score", default=0)
+            self._safe_get(raw_features, "header", "teams", "home", "score", default=0)
+            self._safe_get(raw_features, "header", "teams", "away", "score", default=0)
 
             # 统计数据
             home_xg = self._safe_get(raw_features, "content", "stats", "home", "xg", default=1.0)
             away_xg = self._safe_get(raw_features, "content", "stats", "away", "xg", default=1.0)
 
-            home_shots = self._safe_get(raw_features, "content", "stats", "home", "shotsTotal", "total", default=10)
-            away_shots = self._safe_get(raw_features, "content", "stats", "away", "shotsTotal", "total", default=10)
+            home_shots = self._safe_get(
+                raw_features, "content", "stats", "home", "shotsTotal", "total", default=10
+            )
+            away_shots = self._safe_get(
+                raw_features, "content", "stats", "away", "shotsTotal", "total", default=10
+            )
 
             home_possession = self._safe_get(
                 raw_features, "content", "stats", "home", "possession", "percentage", default=50
@@ -270,7 +274,7 @@ class V19RollingAdapter(BaseFeatureAdapter):
             )
 
         except Exception as e:
-            logger.error(f"特征适配失败: {e}")
+            logger.exception(f"特征适配失败: {e}")
             return AdaptationResult(
                 success=False,
                 features=None,
@@ -325,11 +329,18 @@ class V26MiniAdapter(BaseFeatureAdapter):
 
         try:
             # 提取核心特征
-            adapted["home_score"] = self._safe_get(raw_features, "header", "teams", "home", "score", default=0)
-            adapted["away_score"] = self._safe_get(raw_features, "header", "teams", "away", "score", default=0)
+            adapted["home_score"] = self._safe_get(
+                raw_features, "header", "teams", "home", "score", default=0
+            )
+            adapted["away_score"] = self._safe_get(
+                raw_features, "header", "teams", "away", "score", default=0
+            )
 
             home_poss = (
-                self._safe_get(raw_features, "content", "stats", "home", "possession", "percentage", default=50) / 100
+                self._safe_get(
+                    raw_features, "content", "stats", "home", "possession", "percentage", default=50
+                )
+                / 100
             )
             adapted["home_possession"] = home_poss
             adapted["away_possession"] = 1 - home_poss
@@ -341,8 +352,12 @@ class V26MiniAdapter(BaseFeatureAdapter):
                 raw_features, "content", "stats", "away", "shotsTotal", "total", default=10
             )
 
-            adapted["home_xg"] = self._safe_get(raw_features, "content", "stats", "home", "xg", default=1.0)
-            adapted["away_xg"] = self._safe_get(raw_features, "content", "stats", "away", "xg", default=1.0)
+            adapted["home_xg"] = self._safe_get(
+                raw_features, "content", "stats", "home", "xg", default=1.0
+            )
+            adapted["away_xg"] = self._safe_get(
+                raw_features, "content", "stats", "away", "xg", default=1.0
+            )
 
             # 衍生特征
             adapted["possession_diff"] = adapted["home_possession"] - adapted["away_possession"]
@@ -368,7 +383,7 @@ class V26MiniAdapter(BaseFeatureAdapter):
             )
 
         except Exception as e:
-            logger.error(f"微型特征适配失败: {e}")
+            logger.exception(f"微型特征适配失败: {e}")
             return AdaptationResult(
                 success=False,
                 features=None,
@@ -454,11 +469,15 @@ class V26_5_ProductionAdapter(BaseFeatureAdapter):
             # 提取比赛时间（用于历史数据过滤）
             match_time = None
             try:
-                match_time_str = self._safe_get(raw_features, "header", "status", "startTimeStr", default=None)
+                match_time_str = self._safe_get(
+                    raw_features, "header", "status", "startTimeStr", default=None
+                )
                 if match_time_str:
                     from datetime import datetime
 
-                    match_time = datetime.fromisoformat(match_time_str.replace("Z", "+00:00")).isoformat()
+                    match_time = datetime.fromisoformat(
+                        match_time_str.replace("Z", "+00:00")
+                    ).isoformat()
             except:
                 pass
 
@@ -512,8 +531,12 @@ class V26_5_ProductionAdapter(BaseFeatureAdapter):
                     raw_features, "content", "stats", "away", "possession", "percentage", default=50
                 )
 
-                home_shots = self._safe_get(raw_features, "content", "stats", "home", "shotsTotal", "total", default=10)
-                away_shots = self._safe_get(raw_features, "content", "stats", "away", "shotsTotal", "total", default=10)
+                home_shots = self._safe_get(
+                    raw_features, "content", "stats", "home", "shotsTotal", "total", default=10
+                )
+                away_shots = self._safe_get(
+                    raw_features, "content", "stats", "away", "shotsTotal", "total", default=10
+                )
 
             # 估算射正次数（约 40% 的总射门）
             home_shots_on_target = home_shots * 0.4
@@ -579,7 +602,7 @@ class V26_5_ProductionAdapter(BaseFeatureAdapter):
             )
 
         except Exception as e:
-            logger.error(f"V26.5 特征适配失败: {e}")
+            logger.exception(f"V26.5 特征适配失败: {e}")
             return AdaptationResult(
                 success=False,
                 features=None,
@@ -626,7 +649,9 @@ class V26_5_ProductionAdapter(BaseFeatureAdapter):
             (home_value, away_value)
         """
         try:
-            stats_container = self._safe_get(raw_data, "content", "stats", "Periods", "All", "stats", default=[])
+            stats_container = self._safe_get(
+                raw_data, "content", "stats", "Periods", "All", "stats", default=[]
+            )
             if not stats_container:
                 return default_home, default_away
 
@@ -738,11 +763,15 @@ class V26_6_PreMatchAdapter(BaseFeatureAdapter):
             # 提取比赛时间（用于历史数据过滤）
             match_time = None
             try:
-                match_time_str = self._safe_get(raw_features, "header", "status", "startTimeStr", default=None)
+                match_time_str = self._safe_get(
+                    raw_features, "header", "status", "startTimeStr", default=None
+                )
                 if match_time_str:
                     from datetime import datetime
 
-                    match_time = datetime.fromisoformat(match_time_str.replace("Z", "+00:00")).isoformat()
+                    match_time = datetime.fromisoformat(
+                        match_time_str.replace("Z", "+00:00")
+                    ).isoformat()
             except:
                 pass
 
@@ -775,11 +804,17 @@ class V26_6_PreMatchAdapter(BaseFeatureAdapter):
             # - home_team_rating, away_team_rating (赛中评分)
 
             # 动态获取积分榜特征
-            home_standings = SchemaManager.get_team_standings(team_name=home_team, before_match_time=match_time)
-            away_standings = SchemaManager.get_team_standings(team_name=away_team, before_match_time=match_time)
+            home_standings = SchemaManager.get_team_standings(
+                team_name=home_team, before_match_time=match_time
+            )
+            away_standings = SchemaManager.get_team_standings(
+                team_name=away_team, before_match_time=match_time
+            )
 
             # 动态计算 ELO 评分
-            elo_ratings = SchemaManager.get_elo_ratings(team_names=[home_team, away_team], before_match_time=match_time)
+            elo_ratings = SchemaManager.get_elo_ratings(
+                team_names=[home_team, away_team], before_match_time=match_time
+            )
             home_elo = elo_ratings.get(home_team, 1500.0)
             away_elo = elo_ratings.get(away_team, 1500.0)
 
@@ -858,7 +893,7 @@ class V26_6_PreMatchAdapter(BaseFeatureAdapter):
             )
 
         except Exception as e:
-            logger.error(f"V26.6 特征适配失败: {e}")
+            logger.exception(f"V26.6 特征适配失败: {e}")
             return AdaptationResult(
                 success=False,
                 features=None,
@@ -914,7 +949,9 @@ class FeatureAdapterFactory:
 
 
 # 便捷函数
-def adapt_features(raw_features: dict[str, Any], model_type: ModelType = ModelType.V26_MINI) -> AdaptationResult:
+def adapt_features(
+    raw_features: dict[str, Any], model_type: ModelType = ModelType.V26_MINI
+) -> AdaptationResult:
     """
     适配特征到指定模型类型
 

@@ -29,7 +29,6 @@ class DatabaseConnectionError(Exception):
     """数据库连接错误"""
 
 
-
 class HarvesterConnectionManager:
     """
     V20.8 Harvester 数据库连接管理器
@@ -86,13 +85,14 @@ class HarvesterConnectionManager:
                         f"数据库: {db_params['database']}\n"
                         f"用户: {db_params['user']}"
                     )
-                    logger.error(error_msg)
+                    logger.exception(error_msg)
                     raise DatabaseConnectionError(error_msg) from e
 
             except Exception as e:
                 error_msg = f"数据库连接异常: {e}"
-                logger.error(error_msg)
+                logger.exception(error_msg)
                 raise DatabaseConnectionError(error_msg) from e
+        return None
 
     def _is_connected(self) -> bool:
         """
@@ -139,7 +139,7 @@ class HarvesterConnectionManager:
                 logger.debug(f"数据库健康检查通过: {version['version'][:50]}...")
             return True
         except Exception as e:
-            logger.error(f"数据库健康检查失败: {e}")
+            logger.exception(f"数据库健康检查失败: {e}")
             return False
 
     def close(self):

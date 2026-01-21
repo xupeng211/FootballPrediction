@@ -68,7 +68,16 @@ class MarketPriceSchema(BaseModel):
     @field_validator("provider")
     @classmethod
     def validate_provider(cls, v: str) -> str:
-        allowed = {"bet365", "william_hill", "ladbrokes", "pinnacle", "betfair", "unibet", "bwin", "other"}
+        allowed = {
+            "bet365",
+            "william_hill",
+            "ladbrokes",
+            "pinnacle",
+            "betfair",
+            "unibet",
+            "bwin",
+            "other",
+        }
         if v.lower() not in allowed:
             logger.warning(f"Unknown provider: {v}, defaulting to 'other'")
             return "other"
@@ -85,7 +94,11 @@ class MarketPriceSchema(BaseModel):
     @model_validator(mode="after")
     def validate_odds_not_all_none(self) -> "MarketPriceSchema":
         if self.home_win_odds is None and self.draw_odds is None and self.away_win_odds is None:
-            if self.asian_handicap_home_odds is None and self.over_odds is None and self.under_odds is None:
+            if (
+                self.asian_handicap_home_odds is None
+                and self.over_odds is None
+                and self.under_odds is None
+            ):
                 raise ValueError("至少需要提供一种赔率类型")
         return self
 
@@ -157,7 +170,9 @@ class OddsAPIClient:
         # 统计
         self.stats = OddsCollectionStats()
 
-        logger.info(f"OddsAPIClient 初始化完成 | 并发限制: {semaphore_limit} | 代理: {self.proxy_url}")
+        logger.info(
+            f"OddsAPIClient 初始化完成 | 并发限制: {semaphore_limit} | 代理: {self.proxy_url}"
+        )
 
     # ============================================================
     # 网络请求 (带重试和代理支持)
@@ -195,7 +210,13 @@ class OddsAPIClient:
         proxy = self.proxy_url if self.proxy_url else None
 
         try:
-            async with session.get(url, params=params, headers=headers, proxy=proxy, timeout=aiohttp.ClientTimeout(total=30)) as response:
+            async with session.get(
+                url,
+                params=params,
+                headers=headers,
+                proxy=proxy,
+                timeout=aiohttp.ClientTimeout(total=30),
+            ) as response:
                 # 429 Too Many Requests
                 if response.status == 429:
                     self.stats.rate_limited += 1
@@ -219,7 +240,7 @@ class OddsAPIClient:
             if e.status == 429:
                 raise  # 触发重试
             self.stats.failed += 1
-            logger.error(f"HTTP 错误: {e.status} | {url}")
+            logger.exception(f"HTTP 错误: {e.status} | {url}")
             raise
 
     # ============================================================
@@ -279,7 +300,7 @@ class OddsAPIClient:
 
         except Exception as e:
             self.stats.database_errors += 1
-            logger.error(f"数据库入库失败: {e} | match_id: {odds_data.match_id}")
+            logger.exception(f"数据库入库失败: {e} | match_id: {odds_data.match_id}")
             return False
 
     # ============================================================
@@ -342,8 +363,7 @@ class OddsAPIClient:
             采集到的赔率数据列表
         """
         tasks = [
-            self.collect_match_odds(m["match_id"], m.get("external_id"), provider)
-            for m in matches
+            self.collect_match_odds(m["match_id"], m.get("external_id"), provider) for m in matches
         ]
 
         # 添加随机延迟，避免触发限流
@@ -360,7 +380,7 @@ class OddsAPIClient:
 
         logger.info(
             f"批量采集完成 | 总计: {len(matches)} | "
-            f"成功: {len(results)} | 成功率: {len(results)/len(matches)*100:.1f}%"
+            f"成功: {len(results)} | 成功率: {len(results) / len(matches) * 100:.1f}%"
         )
 
         return results
@@ -381,6 +401,7 @@ class OddsAPIClient:
 # ============================================================
 # 便捷函数
 # ============================================================
+
 
 async def quick_collect(
     matches: list[dict[str, Any]],
@@ -408,8 +429,6 @@ if __name__ == "__main__":
             {"match_id": "test_001", "external_id": "ext_001"},
             {"match_id": "test_002", "external_id": "ext_002"},
         ]
-        results = await client.collect_batch(test_matches)
-        print(f"采集结果: {len(results)} 条")
-        print(f"统计: {client.get_stats()}")
+        await client.collect_batch(test_matches)
 
     asyncio.run(main())

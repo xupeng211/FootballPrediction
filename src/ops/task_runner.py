@@ -80,7 +80,7 @@ class L2DataHarvestTask(BaseTask):
             from src.api.collectors.fotmob_core import FotMobDataCollector
             from src.config_unified import get_settings
 
-            settings = get_settings()
+            get_settings()
             collector = FotMobDataCollector()
 
             # 获取需要采集的比赛列表
@@ -108,7 +108,7 @@ class L2DataHarvestTask(BaseTask):
                     else:
                         fail_count += 1
                 except Exception as e:
-                    logger.error(f"❌ 采集比赛 {match_id} 失败: {e}")
+                    logger.exception(f"❌ 采集比赛 {match_id} 失败: {e}")
                     fail_count += 1
 
             # 保存结果
@@ -128,7 +128,7 @@ class L2DataHarvestTask(BaseTask):
         except Exception as e:
             result["status"] = "error"
             result["message"] = str(e)
-            logger.error(f"❌ L2 数据采集失败: {e}")
+            logger.exception(f"❌ L2 数据采集失败: {e}")
 
         return result
 
@@ -160,7 +160,11 @@ class L3FeatureUpdateTask(BaseTask):
 
             db = settings.database
             conn = psycopg2.connect(
-                host=db.host, port=db.port, database=db.name, user=db.user, password=db.password.get_secret_value()
+                host=db.host,
+                port=db.port,
+                database=db.name,
+                user=db.user,
+                password=db.password.get_secret_value(),
             )
 
             cursor = conn.cursor()
@@ -201,7 +205,7 @@ class L3FeatureUpdateTask(BaseTask):
                     else:
                         fail_count += 1
                 except Exception as e:
-                    logger.error(f"❌ 更新比赛 {match_id} 特征失败: {e}")
+                    logger.exception(f"❌ 更新比赛 {match_id} 特征失败: {e}")
                     fail_count += 1
 
             elapsed = (datetime.now() - start_time).total_seconds()
@@ -220,7 +224,7 @@ class L3FeatureUpdateTask(BaseTask):
         except Exception as e:
             result["status"] = "error"
             result["message"] = str(e)
-            logger.error(f"❌ L3 特征更新失败: {e}")
+            logger.exception(f"❌ L3 特征更新失败: {e}")
 
         return result
 
@@ -264,7 +268,9 @@ class HealthCheckTask(BaseTask):
 
             redis_config = settings.redis
 
-            r = redis.Redis(host=redis_config.host, port=redis_config.port, db=redis_config.db, socket_timeout=2)
+            r = redis.Redis(
+                host=redis_config.host, port=redis_config.port, db=redis_config.db, socket_timeout=2
+            )
             r.ping()
             r.close()
 
@@ -281,7 +287,7 @@ class HealthCheckTask(BaseTask):
         except Exception as e:
             result["status"] = "error"
             result["message"] = f"健康检查失败: {e!s}"
-            logger.error(f"❌ 健康检查失败: {e}")
+            logger.exception(f"❌ 健康检查失败: {e}")
 
         return result
 
@@ -295,7 +301,9 @@ class TaskRunner:
         self.running = False
 
         # 注册任务监听器
-        self.scheduler.add_listener(self._job_executed_listener, EVENT_JOB_EXECUTED | EVENT_JOB_ERROR)
+        self.scheduler.add_listener(
+            self._job_executed_listener, EVENT_JOB_EXECUTED | EVENT_JOB_ERROR
+        )
 
         # 注册信号处理器
         signal.signal(signal.SIGINT, self._signal_handler)
@@ -338,7 +346,9 @@ class TaskRunner:
         # 添加任务
         self.scheduler.add_job(
             self._run_task,
-            trigger=CronTrigger(minute=minute, hour=hour, day=day, month=month, day_of_week=day_of_week),
+            trigger=CronTrigger(
+                minute=minute, hour=hour, day=day, month=month, day_of_week=day_of_week
+            ),
             id=job_id,
             name=task.name,
             args=[task],
@@ -367,7 +377,7 @@ class TaskRunner:
 
         except Exception as e:
             task.last_status = "error"
-            logger.error(f"❌ 任务执行异常: {task.name} - {e}")
+            logger.exception(f"❌ 任务执行异常: {task.name} - {e}")
 
     def start(self):
         """启动调度器"""
@@ -457,7 +467,9 @@ def main():
     import argparse
 
     parser = argparse.ArgumentParser(description="任务调度运行器")
-    parser.add_argument("--test", type=str, help="测试运行指定任务 (l2_harvest, l3_feature_update, health_check)")
+    parser.add_argument(
+        "--test", type=str, help="测试运行指定任务 (l2_harvest, l3_feature_update, health_check)"
+    )
     parser.add_argument("--status", action="store_true", help="显示调度器状态")
 
     args = parser.parse_args()
@@ -474,31 +486,21 @@ def main():
 
         task = task_map.get(args.test)
         if task:
-            result = asyncio.run(run_once(task))
-            print(f"\n任务执行结果: {result}")
+            asyncio.run(run_once(task))
         else:
-            print(f"❌ 未知任务: {args.test}")
-            print(f"可用任务: {list(task_map.keys())}")
+            pass
         return
 
     if args.status:
         # 显示状态
         runner.start()
-        status = runner.get_status()
-        print("\n调度器状态:")
-        print(f"运行中: {status['running']}")
-        print(f"任务: {status['tasks']}")
-        print(f"定时任务: {status['jobs']}")
+        runner.get_status()
         runner.stop()
         return
 
     # 正常运行调度器
     runner.start()
 
-    print("\n" + "=" * 60)
-    print("🚀 任务调度器正在运行...")
-    print("按 Ctrl+C 停止")
-    print("=" * 60 + "\n")
 
     # 保持运行
     try:
@@ -506,7 +508,6 @@ def main():
 
         asyncio.Event().wait()
     except KeyboardInterrupt:
-        print("\n\n🛑 收到停止信号...")
         runner.stop()
 
 

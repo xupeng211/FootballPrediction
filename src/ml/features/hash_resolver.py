@@ -16,10 +16,10 @@ Version: V41.31
 Date: 2026-01-13
 """
 
+from dataclasses import dataclass, field
 import logging
 import re
-from dataclasses import dataclass, field
-from typing import List, Dict, Optional, Tuple
+
 from thefuzz import fuzz
 
 logger = logging.getLogger(__name__)
@@ -28,9 +28,10 @@ logger = logging.getLogger(__name__)
 @dataclass
 class HashConflict:
     """哈希冲突数据结构"""
+
     hash_value: str
     league_name: str
-    records: List[Dict] = field(default_factory=list)
+    records: list[dict] = field(default_factory=list)
 
     def __post_init__(self):
         """验证冲突数据"""
@@ -41,9 +42,10 @@ class HashConflict:
 @dataclass
 class ArbitrationResult:
     """仲裁结果数据结构"""
+
     hash_value: str
-    winner: Optional[Dict]
-    losers: List[Dict] = field(default_factory=list)
+    winner: dict | None
+    losers: list[dict] = field(default_factory=list)
     arbitration_reason: str = ""
 
 
@@ -57,7 +59,7 @@ class HashResolver:
         """初始化仲裁器"""
         self.logger = logging.getLogger(__name__)
 
-    def is_shadow_id(self, record: Dict) -> bool:
+    def is_shadow_id(self, record: dict) -> bool:
         """检查是否为 Shadow ID
 
         Args:
@@ -79,7 +81,7 @@ class HashResolver:
             版本号（浮点数）
         """
         # 匹配模式：v40_3_6 -> 40.36, v40.22 -> 40.22
-        match = re.search(r'v?(\d+)\.?(\d+)?(?:\.?(\d+))?', mapping_method)
+        match = re.search(r"v?(\d+)\.?(\d+)?(?:\.?(\d+))?", mapping_method)
         if match:
             major = int(match.group(1))
             minor = int(match.group(2)) if match.group(2) else 0
@@ -87,7 +89,7 @@ class HashResolver:
             return major + minor / 100.0 + patch / 10000.0
         return 0.0
 
-    def calculate_team_similarity(self, record1: Dict, record2: Dict) -> float:
+    def calculate_team_similarity(self, record1: dict, record2: dict) -> float:
         """计算两个比赛的队名相似度
 
         Args:
@@ -114,7 +116,7 @@ class HashResolver:
         # 返回最高相似度
         return max(home_similarity, away_similarity, cross_similarity1, cross_similarity2)
 
-    def resolve_conflict(self, conflict: HashConflict) -> Tuple[Optional[Dict], List[Dict]]:
+    def resolve_conflict(self, conflict: HashConflict) -> tuple[dict | None, list[dict]]:
         """解决单个哈希冲突
 
         仲裁原则：
@@ -137,7 +139,9 @@ class HashResolver:
 
         # 如果只有 Shadow ID，无法仲裁
         if not normal_ids:
-            self.logger.warning(f"Hash {conflict.hash_value}: Only shadow IDs found, cannot arbitrate")
+            self.logger.warning(
+                f"Hash {conflict.hash_value}: Only shadow IDs found, cannot arbitrate"
+            )
             return None, shadow_ids
 
         # 第二步：按 Confidence 排序
@@ -145,13 +149,14 @@ class HashResolver:
 
         # 第三步：如果有多个最高 confidence 的记录，按 Mapping Method 版本号排序
         max_confidence = normal_ids[0].get("confidence", 0.0)
-        top_confidence_records = [r for r in normal_ids if r.get("confidence", 0.0) == max_confidence]
+        top_confidence_records = [
+            r for r in normal_ids if r.get("confidence", 0.0) == max_confidence
+        ]
 
         if len(top_confidence_records) > 1:
             # 按 Mapping Method 版本号排序
             top_confidence_records.sort(
-                key=lambda r: self.extract_version(r.get("mapping_method", "")),
-                reverse=True
+                key=lambda r: self.extract_version(r.get("mapping_method", "")), reverse=True
             )
 
         # 选择 winner
@@ -179,7 +184,7 @@ class HashResolver:
 
         return winner, losers
 
-    def resolve_batch_conflicts(self, conflicts: List[HashConflict]) -> List[ArbitrationResult]:
+    def resolve_batch_conflicts(self, conflicts: list[HashConflict]) -> list[ArbitrationResult]:
         """批量解决哈希冲突
 
         Args:
@@ -199,13 +204,13 @@ class HashResolver:
                 hash_value=conflict.hash_value,
                 winner=winner,
                 losers=losers,
-                arbitration_reason=reason
+                arbitration_reason=reason,
             )
             results.append(result)
 
         return results
 
-    def _build_arbitration_reason(self, winner: Optional[Dict], losers: List[Dict]) -> str:
+    def _build_arbitration_reason(self, winner: dict | None, losers: list[dict]) -> str:
         """构建仲裁原因说明
 
         Args:
@@ -237,14 +242,17 @@ class HashResolver:
                 winner_version = self.extract_version(winner.get("mapping_method", ""))
                 loser_version = self.extract_version(non_shadow_losers[0].get("mapping_method", ""))
                 if winner_version > loser_version:
-                    reasons.append(f"Higher mapping method version ({winner_version} > {loser_version})")
+                    reasons.append(
+                        f"Higher mapping method version ({winner_version} > {loser_version})"
+                    )
 
         return "; ".join(reasons) if reasons else "Default arbitration"
 
 
 # ========== 便捷函数 ==========
 
-def resolve_hash_conflicts_from_db(conn) -> List[ArbitrationResult]:
+
+def resolve_hash_conflicts_from_db(conn) -> list[ArbitrationResult]:
     """从数据库扫描并解决所有哈希冲突
 
     Args:
@@ -283,7 +291,7 @@ def resolve_hash_conflicts_from_db(conn) -> List[ArbitrationResult]:
     for dup in duplicate_hashes:
         hash_value = dup["oddsportal_hash"]
         league_name = dup["league_name"]
-        fotmob_ids = dup["fotmob_ids"]
+        dup["fotmob_ids"]
 
         # 获取每个记录的详细信息
         records_query = """
@@ -304,14 +312,9 @@ def resolve_hash_conflicts_from_db(conn) -> List[ArbitrationResult]:
             cur.execute(records_query, (hash_value, league_name))
             records = [dict(row) for row in cur.fetchall()]
 
-        conflict = HashConflict(
-            hash_value=hash_value,
-            league_name=league_name,
-            records=records
-        )
+        conflict = HashConflict(hash_value=hash_value, league_name=league_name, records=records)
         conflicts.append(conflict)
 
     # 解决所有冲突
-    results = resolver.resolve_batch_conflicts(conflicts)
+    return resolver.resolve_batch_conflicts(conflicts)
 
-    return results

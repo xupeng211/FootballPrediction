@@ -185,11 +185,7 @@ class DefensiveConverter:
         if value is None:
             return True
 
-        if isinstance(value, str):
-            if cls.INVALID_REGEX.match(value):
-                return True
-
-        return False
+        return bool(isinstance(value, str) and cls.INVALID_REGEX.match(value))
 
     @classmethod
     def to_float(cls, value: Any, default: float | None = None) -> float | None:
@@ -315,7 +311,7 @@ class L3FeatureExtractor:
             try:
                 raw_json = json.loads(raw_json)
             except json.JSONDecodeError as e:
-                logger.error(f"[{match_id}] JSON 解析失败: {e}")
+                logger.exception(f"[{match_id}] JSON 解析失败: {e}")
                 self._extraction_stats["failed_count"] += 1
                 return self._create_default_features(match_id, league_id, season, ["JSON 解析失败"])
 
@@ -419,7 +415,9 @@ class L3FeatureExtractor:
 
         # 步骤 5: 提取各特征（防御性转换）
         # xG
-        xg_values = self._extract_stat_value_safe(stats_dict, ["expectedGoals", "expected_goals", "xG"])
+        xg_values = self._extract_stat_value_safe(
+            stats_dict, ["expectedGoals", "expected_goals", "xG"]
+        )
         if xg_values and len(xg_values) >= 2:
             home_xg = DefensiveConverter.to_float(xg_values[0])
             away_xg = DefensiveConverter.to_float(xg_values[1])
@@ -435,7 +433,9 @@ class L3FeatureExtractor:
                 warnings.append("away_xg 转换失败")
 
         # 控球率
-        possession_values = self._extract_stat_value_safe(stats_dict, ["BallPossesion", "BallPossession", "possession"])
+        possession_values = self._extract_stat_value_safe(
+            stats_dict, ["BallPossesion", "BallPossession", "possession"]
+        )
         if possession_values and len(possession_values) >= 2:
             home_poss = DefensiveConverter.to_float(possession_values[0])
             away_poss = DefensiveConverter.to_float(possession_values[1])
@@ -451,7 +451,9 @@ class L3FeatureExtractor:
                 warnings.append("away_possession 转换失败")
 
         # 射正数
-        shots_values = self._extract_stat_value_safe(stats_dict, ["ShotsOnTarget", "shots_on_target", "shotsOnTarget"])
+        shots_values = self._extract_stat_value_safe(
+            stats_dict, ["ShotsOnTarget", "shots_on_target", "shotsOnTarget"]
+        )
         if shots_values and len(shots_values) >= 2:
             home_shots = DefensiveConverter.to_int(shots_values[0])
             away_shots = DefensiveConverter.to_int(shots_values[1])
@@ -702,7 +704,7 @@ class L3FeaturePersister:
             )
             logger.info("数据库连接成功")
         except Exception as e:
-            logger.error(f"数据库连接失败: {e}")
+            logger.exception(f"数据库连接失败: {e}")
             raise
 
     def close(self) -> None:
@@ -717,52 +719,6 @@ class L3FeaturePersister:
 
     def create_table(self) -> None:
         """创建 match_features_v1 表（包含 QA 字段）"""
-        create_table_sql = """
-        CREATE TABLE IF NOT EXISTS match_features_v1 (
-            match_id VARCHAR(20) PRIMARY KEY,
-            league_id INTEGER NOT NULL,
-            season VARCHAR(10) NOT NULL,
-
-            -- 主队特征
-            home_xg FLOAT,
-            home_possession FLOAT,
-            home_shots_on_target INTEGER,
-            home_big_chances INTEGER,
-            home_team_rating FLOAT,
-
-            -- 客队特征
-            away_xg FLOAT,
-            away_possession FLOAT,
-            away_shots_on_target INTEGER,
-            away_big_chances INTEGER,
-            away_team_rating FLOAT,
-
-            -- 球员评分特征
-            avg_player_rating FLOAT,
-            home_avg_player_rating FLOAT,
-            away_avg_player_rating FLOAT,
-
-            -- 数据质量监控 (QA Hooks)
-            valid_feature_count INTEGER NOT NULL DEFAULT 0,
-            missing_features TEXT[],
-            extraction_quality VARCHAR(20) DEFAULT 'unknown',
-            warnings TEXT[],
-
-            -- 元数据
-            extracted_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-            extraction_version VARCHAR(20) DEFAULT 'V38.5.1-Hardened'
-        );
-
-        -- 创建索引
-        CREATE INDEX IF NOT EXISTS idx_features_league_season ON match_features_v1(league_id, season);
-        CREATE INDEX IF NOT EXISTS idx_features_extraction_time ON match_features_v1(extracted_at DESC);
-        CREATE INDEX IF NOT EXISTS idx_features_quality ON match_features_v1(extraction_quality);
-
-        -- 添加注释
-        COMMENT ON TABLE match_features_v1 IS 'V38.5.1 L3 特征宽表 - 生产级加固版本';
-        COMMENT ON COLUMN match_features_v1.valid_feature_count IS '有效特征数量 (0-13)';
-        COMMENT ON COLUMN match_features_v1.extraction_quality IS '提取质量: full/partial/failed';
-        """
 
         with self._conn.cursor() as cursor:
             try:
@@ -814,7 +770,7 @@ class L3FeaturePersister:
 
             except Exception as e:
                 self._conn.rollback()
-                logger.error(f"创建表失败: {e}")
+                logger.exception(f"创建表失败: {e}")
                 raise
 
     def add_to_buffer(self, features: L3MatchFeatures) -> None:
@@ -932,7 +888,7 @@ class L3FeaturePersister:
 
         except Exception as e:
             self._conn.rollback()
-            logger.error(f"批量写入失败: {e}")
+            logger.exception(f"批量写入失败: {e}")
             # 返回失败，保留缓冲区以便重试
             return {"success": 0, "failed": len(self._buffer)}
 

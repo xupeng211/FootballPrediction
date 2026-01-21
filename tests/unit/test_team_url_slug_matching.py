@@ -24,13 +24,13 @@ Version: V33.2 (Data Cleaning)
 import sys
 from pathlib import Path
 from typing import Dict, List, Tuple
+
 import pytest
 
 # 添加项目根目录到路径
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from scripts.ops.harvest_league_urls import team_name_to_slug, parse_match_url_with_league_teams
-
+from scripts.ops.harvest_league_urls import parse_match_url_with_league_teams, team_name_to_slug
 
 # ============================================================================
 # Test Fixtures: 11 场失败案例

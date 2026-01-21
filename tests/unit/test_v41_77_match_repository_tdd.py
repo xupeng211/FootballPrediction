@@ -14,11 +14,12 @@ Version: V41.77
 Date: 2026-01-15
 """
 
-import pytest
 import threading
 import time
-from unittest.mock import Mock, MagicMock, patch
+from unittest.mock import MagicMock, Mock, patch
+
 import psycopg2
+import pytest
 from psycopg2 import sql
 
 from src.database.match_repository import MatchRepository

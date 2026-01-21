@@ -212,7 +212,10 @@ class TestDefensiveConversion:
                                             },
                                             {
                                                 "key": "BallPossesion",
-                                                "stats": ["invalid", "123"],  # 无效字符串 + 数字字符串
+                                                "stats": [
+                                                    "invalid",
+                                                    "123",
+                                                ],  # 无效字符串 + 数字字符串
                                             },
                                         ],
                                     }

@@ -21,8 +21,8 @@ AtomicProcessor - 原子级基础统计处理器
 import logging
 from typing import Any
 
-from ..base import BaseProcessor, ProcessorConfig, ProcessorResult
-from ..models import MatchData, TeamStats
+from src.ml.feature_engine.base import BaseProcessor, ProcessorConfig, ProcessorResult
+from src.ml.feature_engine.models import MatchData, TeamStats
 
 logger = logging.getLogger(__name__)
 
@@ -121,7 +121,7 @@ class AtomicProcessor(BaseProcessor[MatchData]):
             )
 
         except Exception as e:
-            logger.error(f"AtomicProcessor failed for match {data.match_id}: {e}")
+            logger.exception(f"AtomicProcessor failed for match {data.match_id}: {e}")
             return ProcessorResult.failure_result(str(e))
 
     def _extract_team_features(self, stats: TeamStats, prefix: str) -> dict[str, float]:
@@ -145,7 +145,9 @@ class AtomicProcessor(BaseProcessor[MatchData]):
             xg_value = self.config.zero_padding_default
             logger.debug(f"xG backfill applied for {prefix}_team")
 
-        features[f"{prefix}_xg"] = xg_value if xg_value is not None else self.config.zero_padding_default
+        features[f"{prefix}_xg"] = (
+            xg_value if xg_value is not None else self.config.zero_padding_default
+        )
         features[f"{prefix}_xg_from_shots"] = (
             stats.expected_goals_from_shots
             if stats.expected_goals_from_shots is not None
@@ -154,10 +156,14 @@ class AtomicProcessor(BaseProcessor[MatchData]):
 
         # 基础射门数据
         features[f"{prefix}_shots"] = (
-            float(stats.shots_total) if stats.shots_total is not None else self.config.zero_padding_default
+            float(stats.shots_total)
+            if stats.shots_total is not None
+            else self.config.zero_padding_default
         )
         features[f"{prefix}_shots_on_target"] = (
-            float(stats.shots_on_target) if stats.shots_on_target is not None else self.config.zero_padding_default
+            float(stats.shots_on_target)
+            if stats.shots_on_target is not None
+            else self.config.zero_padding_default
         )
 
         # 控球率
@@ -167,10 +173,14 @@ class AtomicProcessor(BaseProcessor[MatchData]):
 
         # 传球数据
         features[f"{prefix}_total_passes"] = (
-            float(stats.total_passes) if stats.total_passes is not None else self.config.zero_padding_default
+            float(stats.total_passes)
+            if stats.total_passes is not None
+            else self.config.zero_padding_default
         )
         features[f"{prefix}_accurate_passes"] = (
-            float(stats.accurate_passes) if stats.accurate_passes is not None else self.config.zero_padding_default
+            float(stats.accurate_passes)
+            if stats.accurate_passes is not None
+            else self.config.zero_padding_default
         )
 
         # 传球成功率（计算得出）
@@ -190,7 +200,9 @@ class AtomicProcessor(BaseProcessor[MatchData]):
             float(stats.corners) if stats.corners is not None else self.config.zero_padding_default
         )
         features[f"{prefix}_offsides"] = (
-            float(stats.offsides) if stats.offsides is not None else self.config.zero_padding_default
+            float(stats.offsides)
+            if stats.offsides is not None
+            else self.config.zero_padding_default
         )
         features[f"{prefix}_fouls"] = (
             float(stats.fouls) if stats.fouls is not None else self.config.zero_padding_default
@@ -255,7 +267,9 @@ class AtomicProcessor(BaseProcessor[MatchData]):
                 away_val = features[away_key]
 
                 # 检查是否为缺失值标记
-                if home_val != self.config.missing_indicator and away_val != self.config.missing_indicator:
+                if (
+                    self.config.missing_indicator not in (home_val, away_val)
+                ):
                     diff_features[f"diff_{field}"] = round(home_val - away_val, 3)
                 else:
                     diff_features[f"diff_{field}"] = self.config.missing_indicator

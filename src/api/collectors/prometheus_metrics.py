@@ -27,6 +27,7 @@ try:
     import psycopg2
 
     from src.config_unified import get_settings
+
     DB_AVAILABLE = True
 except ImportError:
     DB_AVAILABLE = False
@@ -37,74 +38,62 @@ except ImportError:
 
 # Extraction metrics
 extraction_total = Counter(
-    "market_extraction_total",
-    "Total number of extraction attempts",
-    ["vendor", "status"]
+    "market_extraction_total", "Total number of extraction attempts", ["vendor", "status"]
 )
 
 extraction_duration_seconds = Histogram(
     "market_extraction_duration_seconds",
     "Extraction duration in seconds",
     ["vendor"],
-    buckets=(0.1, 0.5, 1.0, 2.0, 5.0, 10.0, 30.0, 60.0, 120.0)
+    buckets=(0.1, 0.5, 1.0, 2.0, 5.0, 10.0, 30.0, 60.0, 120.0),
 )
 
 extraction_success_rate = Gauge(
-    "market_extraction_success_rate",
-    "Extraction success rate (0-100)",
-    ["vendor"]
+    "market_extraction_success_rate", "Extraction success rate (0-100)", ["vendor"]
 )
 
 # Vendor divergence metrics
 vendor_divergence = Gauge(
     "market_vendor_divergence_score",
     "Vendor divergence score (integrity difference from average)",
-    ["vendor"]
+    ["vendor"],
 )
 
 # Circuit breaker metrics
 circuit_breaker_state = Gauge(
     "circuit_breaker_state",
     "Circuit breaker state (0=CLOSED, 1=OPEN, 2=HALF_OPEN)",
-    ["breaker_name"]
+    ["breaker_name"],
 )
 
 circuit_breaker_failures = Counter(
-    "circuit_breaker_failures_total",
-    "Total circuit breaker failures",
-    ["breaker_name"]
+    "circuit_breaker_failures_total", "Total circuit breaker failures", ["breaker_name"]
 )
 
 # Database metrics
 database_operations = Counter(
-    "database_operations_total",
-    "Total database operations",
-    ["operation", "status"]
+    "database_operations_total", "Total database operations", ["operation", "status"]
 )
 
 database_operation_duration = Histogram(
     "database_operation_duration_seconds",
     "Database operation duration in seconds",
     ["operation"],
-    buckets=(0.01, 0.05, 0.1, 0.5, 1.0, 2.0, 5.0)
+    buckets=(0.01, 0.05, 0.1, 0.5, 1.0, 2.0, 5.0),
 )
 
 # Dead letter queue metrics
 failed_market_data_total = Counter(
-    "failed_market_data_total",
-    "Total failed market data records",
-    ["reason"]
+    "failed_market_data_total", "Total failed market data records", ["reason"]
 )
 
-dead_letter_queue_size = Gauge(
-    "dead_letter_queue_size",
-    "Current size of dead letter queue"
-)
+dead_letter_queue_size = Gauge("dead_letter_queue_size", "Current size of dead letter queue")
 
 
 # ============================================================================
 # V106.0 Metrics Collector
 # ============================================================================
+
 
 @dataclass
 class HarvestMetrics:
@@ -115,12 +104,14 @@ class HarvestMetrics:
 
     lock: Lock = field(default_factory=Lock)
     vendor_stats: dict[str, dict[str, Any]] = field(
-        default_factory=lambda: defaultdict(lambda: {
-            "attempts": 0,
-            "successes": 0,
-            "failures": 0,
-            "durations": [],
-        })
+        default_factory=lambda: defaultdict(
+            lambda: {
+                "attempts": 0,
+                "successes": 0,
+                "failures": 0,
+                "durations": [],
+            }
+        )
     )
 
     def record_extraction_attempt(self, vendor: str) -> None:
@@ -129,10 +120,7 @@ class HarvestMetrics:
             self.vendor_stats[vendor]["attempts"] += 1
 
     def record_extraction_success(
-        self,
-        vendor: str,
-        duration: float,
-        integrity_score: float | None = None
+        self, vendor: str, duration: float, integrity_score: float | None = None
     ) -> None:
         """记录提取成功"""
         with self.lock:
@@ -154,11 +142,7 @@ class HarvestMetrics:
         if integrity_score is not None:
             vendor_divergence.labels(vendor=vendor).set(abs(integrity_score - 1.05))
 
-    def record_extraction_failure(
-        self,
-        vendor: str,
-        reason: str = "unknown"
-    ) -> None:
+    def record_extraction_failure(self, vendor: str, reason: str = "unknown") -> None:
         """记录提取失败"""
         with self.lock:
             self.vendor_stats[vendor]["failures"] += 1
@@ -168,10 +152,7 @@ class HarvestMetrics:
         failed_market_data_total.labels(reason=reason).inc()
 
     def record_database_operation(
-        self,
-        operation: str,
-        duration: float,
-        success: bool = True
+        self, operation: str, duration: float, success: bool = True
     ) -> None:
         """记录数据库操作"""
         status = "success" if success else "failure"
@@ -181,7 +162,7 @@ class HarvestMetrics:
     def record_circuit_breaker_state(
         self,
         breaker_name: str,
-        state: str  # "CLOSED", "OPEN", "HALF_OPEN"
+        state: str,  # "CLOSED", "OPEN", "HALF_OPEN"
     ) -> None:
         """记录熔断器状态"""
         state_map = {"CLOSED": 0, "OPEN": 1, "HALF_OPEN": 2}
@@ -199,8 +180,7 @@ class HarvestMetrics:
                 total = stats["attempts"]
                 success_rate = (stats["successes"] / total * 100) if total > 0 else 0
                 avg_duration = (
-                    sum(stats["durations"]) / len(stats["durations"])
-                    if stats["durations"] else 0
+                    sum(stats["durations"]) / len(stats["durations"]) if stats["durations"] else 0
                 )
 
                 summary[vendor] = {
@@ -221,6 +201,7 @@ class HarvestMetrics:
 # ============================================================================
 # V106.0 Dead Letter Queue Manager
 # ============================================================================
+
 
 @dataclass
 class FailedMarketData:
@@ -268,11 +249,7 @@ class DeadLetterQueue:
         self._persist_to_db = persist_to_db and DB_AVAILABLE
 
     def add_failure(
-        self,
-        match_id: str,
-        vendor: str,
-        reason: str,
-        metadata: dict[str, Any] | None = None
+        self, match_id: str, vendor: str, reason: str, metadata: dict[str, Any] | None = None
     ) -> None:
         """添加失败记录"""
         record = FailedMarketData(
@@ -293,9 +270,7 @@ class DeadLetterQueue:
             self._persist_to_database(record, metadata)
 
     def _persist_to_database(
-        self,
-        record: FailedMarketData,
-        metadata: dict[str, Any] | None = None
+        self, record: FailedMarketData, metadata: dict[str, Any] | None = None
     ) -> None:
         """V113.0: 将失败记录写入数据库"""
         try:
@@ -312,17 +287,20 @@ class DeadLetterQueue:
             # 提取 URL 从 metadata
             url = metadata.get("url") if metadata else None
 
-            cursor.execute("""
+            cursor.execute(
+                """
                 INSERT INTO failed_market_data (
                     match_id, vendor, failure_reason, error_details, url
                 ) VALUES (%s, %s, %s, %s, %s)
-            """, (
-                record.match_id,
-                record.vendor,
-                record.failure_reason,
-                str(metadata) if metadata else None,
-                url
-            ))
+            """,
+                (
+                    record.match_id,
+                    record.vendor,
+                    record.failure_reason,
+                    str(metadata) if metadata else None,
+                    url,
+                ),
+            )
 
             conn.commit()
             cursor.close()
@@ -341,10 +319,7 @@ class DeadLetterQueue:
 
     def get_retry_candidates(self, max_retry_count: int = 3) -> list[FailedMarketData]:
         """获取可重试的记录"""
-        return [
-            r for r in self._failed_records
-            if r.retry_count < max_retry_count
-        ]
+        return [r for r in self._failed_records if r.retry_count < max_retry_count]
 
     def mark_retry(self, record: FailedMarketData, success: bool) -> None:
         """标记重试结果"""
@@ -388,12 +363,13 @@ dead_letter_queue = DeadLetterQueue()
 # Helper functions
 # ============================================================================
 
+
 def record_extraction_metrics(
     vendor: str,
     success: bool,
     duration: float,
     integrity_score: float | None = None,
-    failure_reason: str | None = None
+    failure_reason: str | None = None,
 ) -> None:
     """记录提取指标的辅助函数"""
     metrics.record_extraction_attempt(vendor)
@@ -413,7 +389,6 @@ def setup_metrics_exporter(port: int = 9090) -> None:
     from prometheus_client import start_http_server
 
     start_http_server(port)
-    print(f"Prometheus metrics available on http://localhost:{port}/metrics")
 
 
 # ============================================================================
@@ -421,25 +396,25 @@ def setup_metrics_exporter(port: int = 9090) -> None:
 # ============================================================================
 
 __all__ = [
-    # Prometheus metrics
-    "extraction_total",
-    "extraction_duration_seconds",
-    "extraction_success_rate",
-    "vendor_divergence",
-    "circuit_breaker_state",
-    "circuit_breaker_failures",
-    "database_operations",
-    "database_operation_duration",
-    "failed_market_data_total",
-    "dead_letter_queue_size",
+    "DeadLetterQueue",
+    "FailedMarketData",
     # Classes
     "HarvestMetrics",
-    "FailedMarketData",
-    "DeadLetterQueue",
+    "circuit_breaker_failures",
+    "circuit_breaker_state",
+    "database_operation_duration",
+    "database_operations",
+    "dead_letter_queue",
+    "dead_letter_queue_size",
+    "extraction_duration_seconds",
+    "extraction_success_rate",
+    # Prometheus metrics
+    "extraction_total",
+    "failed_market_data_total",
     # Global instances
     "metrics",
-    "dead_letter_queue",
     # Helpers
     "record_extraction_metrics",
     "setup_metrics_exporter",
+    "vendor_divergence",
 ]

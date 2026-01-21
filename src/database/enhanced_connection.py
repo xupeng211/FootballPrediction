@@ -86,7 +86,7 @@ class EnhancedDatabaseManager(DatabaseManager):
             self.query_stats["successful_queries"] += 1
         except Exception as e:
             self.query_stats["failed_queries"] += 1
-            logger.error(f"数据库会话错误: {e}")
+            logger.exception(f"数据库会话错误: {e}")
             raise
         finally:
             execution_time = time.time() - start_time
@@ -99,7 +99,9 @@ class EnhancedDatabaseManager(DatabaseManager):
 
             await session.close()
 
-    async def execute_query_with_stats(self, query: str, params: dict = None, use_cache: bool = True):
+    async def execute_query_with_stats(
+        self, query: str, params: dict | None = None, use_cache: bool = True
+    ):
         """
         执行带有统计和缓存的查询
         """
@@ -170,13 +172,15 @@ class EnhancedDatabaseManager(DatabaseManager):
             logger.info("✅ 数据库优化完成")
 
         except Exception as e:
-            logger.error(f"数据库优化失败: {e}")
+            logger.exception(f"数据库优化失败: {e}")
 
     def _update_query_stats(self, execution_time: float):
         """更新查询统计信息"""
         self.query_stats["total_queries"] += 1
         self.query_stats["total_time"] += execution_time
-        self.query_stats["avg_time"] = self.query_stats["total_time"] / self.query_stats["total_queries"]
+        self.query_stats["avg_time"] = (
+            self.query_stats["total_time"] / self.query_stats["total_queries"]
+        )
 
     async def cleanup(self):
         """清理资源"""

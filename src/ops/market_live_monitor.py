@@ -309,7 +309,7 @@ class MarketLiveMonitor:
                 await asyncio.sleep(self.POLL_INTERVAL_MINUTES * 60)
 
             except Exception as e:
-                logger.error(f"巡检循环异常: {e}")
+                logger.exception(f"巡检循环异常: {e}")
                 await asyncio.sleep(60)  # 出错后等待1分钟再重试
 
         self.is_running = False
@@ -324,9 +324,15 @@ class MarketLiveMonitor:
         # 1. 获取实体状态
         self.entity_status = await self._fetch_entity_status()
         if self.entity_status:
-            logger.info(f"📊 实体状态: {self.entity_status.home_team} vs {self.entity_status.away_team}")
-            logger.info(f"   主队阵容: {'✅ 已确认' if self.entity_status.home_lineup_confirmed else '⏳ 待确认'}")
-            logger.info(f"   客队阵容: {'✅ 已确认' if self.entity_status.away_lineup_confirmed else '⏳ 待确认'}")
+            logger.info(
+                f"📊 实体状态: {self.entity_status.home_team} vs {self.entity_status.away_team}"
+            )
+            logger.info(
+                f"   主队阵容: {'✅ 已确认' if self.entity_status.home_lineup_confirmed else '⏳ 待确认'}"
+            )
+            logger.info(
+                f"   客队阵容: {'✅ 已确认' if self.entity_status.away_lineup_confirmed else '⏳ 待确认'}"
+            )
             logger.info(f"   数据质量: {self.entity_status.data_quality_score:.2%}")
 
         # 2. 获取市场价格
@@ -364,7 +370,9 @@ class MarketLiveMonitor:
             logger.info(f"   客胜偏差: {self.delta_metrics.away_delta:+.2%}")
             logger.info(f"   预测偏差: {self.delta_metrics.prediction_delta:+.2%}")
             logger.info(f"   正向偏差: {'✅' if self.delta_metrics.is_positive else '❌'}")
-            logger.info(f"   超过阈值: {'✅' if self.delta_metrics.delta_above_threshold else '❌'}")
+            logger.info(
+                f"   超过阈值: {'✅' if self.delta_metrics.delta_above_threshold else '❌'}"
+            )
 
         # 5. 生成或更新信号
         await self._update_signal()
@@ -609,7 +617,9 @@ class MarketLiveMonitor:
             return
 
         if not self.delta_metrics.delta_above_threshold:
-            logger.info(f"❌ 偏差未达阈值 ({self.delta_metrics.prediction_delta:+.2%} < {self.DELTA_THRESHOLD:.2%})")
+            logger.info(
+                f"❌ 偏差未达阈值 ({self.delta_metrics.prediction_delta:+.2%} < {self.DELTA_THRESHOLD:.2%})"
+            )
             return
 
         # 检查风控状态
@@ -731,7 +741,8 @@ class MarketLiveMonitor:
         }
 
         snapshot_file = (
-            self.data_dir / f"snapshot_{self.target_match_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+            self.data_dir
+            / f"snapshot_{self.target_match_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
         )
         with open(snapshot_file, "w") as f:
             json.dump(snapshot, f, indent=2, default=str)
@@ -778,7 +789,9 @@ class MarketLiveMonitor:
 # ============================================
 
 
-async def monitor_match(match_id: str, match_time: datetime, initial_balance: float = 1000.0) -> MarketLiveMonitor:
+async def monitor_match(
+    match_id: str, match_time: datetime, initial_balance: float = 1000.0
+) -> MarketLiveMonitor:
     """
     启动比赛监控
 
@@ -801,33 +814,22 @@ async def monitor_match(match_id: str, match_time: datetime, initial_balance: fl
 # ============================================
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+    logging.basicConfig(
+        level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    )
 
-    print("=" * 70)
-    print("V19.4 实时市场巡检系统测试")
-    print("=" * 70)
 
     # 创建监控实例（针对 4813551: MNU vs NEW）
     monitor = MarketLiveMonitor(target_match_id="4813551")
 
     # 模拟单次巡检周期
-    print("\n执行模拟巡检周期...")
     asyncio.run(monitor._perform_monitoring_cycle())
 
     # 显示状态
-    print("\n当前状态:")
     status = monitor.get_status()
-    for key, value in status.items():
-        print(f"  {key}: {value}")
+    for _key, _value in status.items():
+        pass
 
     # 检查风控状态
-    print("\n风控检查:")
     risk_level = monitor.risk_monitor.check_risk_level()
-    print(f"  风险等级: {risk_level.value}")
-    print(f"  当前余额: {monitor.risk_monitor.metrics.current_balance:.2f}")
-    print(f"  最大回撤: {monitor.risk_monitor.metrics.max_drawdown_pct:.2%}")
-    print(f"  回撤阈值: {monitor.risk_monitor.metrics.max_drawdown_pct_limit:.2%}")
 
-    print("\n" + "=" * 70)
-    print("测试完成")
-    print("=" * 70)

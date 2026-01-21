@@ -135,7 +135,7 @@ class H2HCalculator:
             return stats
 
         except Exception as e:
-            logger.error(f"计算H2H统计失败: {e!s}")
+            logger.exception(f"计算H2H统计失败: {e!s}")
             return self._get_default_stats()
 
     def calculate_h2h_for_all_matches(self, df: pd.DataFrame) -> pd.DataFrame:
@@ -156,7 +156,7 @@ class H2HCalculator:
         # 初始化H2H特征列
         h2h_features = []
 
-        for idx, match in df_sorted.iterrows():
+        for _idx, match in df_sorted.iterrows():
             home_id = int(match["home_team_id"])
             away_id = int(match["away_team_id"])
             match_date = pd.to_datetime(match["match_date"])
@@ -188,9 +188,8 @@ class H2HCalculator:
         # 只获取当前日期前的比赛
         date_mask = pd.to_datetime(df["match_date"]) < match_date
 
-        past_matches = df[h2h_mask & date_mask].sort_values("match_date")
+        return df[h2h_mask & date_mask].sort_values("match_date")
 
-        return past_matches
 
     def _calculate_match_stats(self, past_matches: pd.DataFrame, target_home_id: int) -> H2HStats:
         """
@@ -289,14 +288,13 @@ class H2HCalculator:
         Returns:
             H2HStats: 默认统计数据
         """
-        stats = H2HStats(
+        return H2HStats(
             home_win_rate=SCORING.DEFAULT_H2H_WIN_RATE,
             avg_goal_diff=SCORING.DEFAULT_AVG_GOAL_DIFF,
             avg_total_goals=SCORING.DEFAULT_AVG_TOTAL_GOALS,
             matches_count=0,
         )
 
-        return stats
 
     def _validate_stats(self, stats: H2HStats) -> bool:
         """
@@ -319,12 +317,20 @@ class H2HCalculator:
             return False
 
         # 验证进球差范围
-        if not (SCORING.MIN_REASONABLE_GOAL_DIFF <= stats.avg_goal_diff <= SCORING.MAX_REASONABLE_GOAL_DIFF):
+        if not (
+            SCORING.MIN_REASONABLE_GOAL_DIFF
+            <= stats.avg_goal_diff
+            <= SCORING.MAX_REASONABLE_GOAL_DIFF
+        ):
             logger.warning(f"进球差超出合理范围: {stats.avg_goal_diff}")
             # 不返回False，因为极端情况确实可能发生
 
         # 验证总进球范围
-        if not (SCORING.MIN_REASONABLE_TOTAL_GOALS <= stats.avg_total_goals <= SCORING.MAX_REASONABLE_TOTAL_GOALS):
+        if not (
+            SCORING.MIN_REASONABLE_TOTAL_GOALS
+            <= stats.avg_total_goals
+            <= SCORING.MAX_REASONABLE_TOTAL_GOALS
+        ):
             logger.warning(f"总进球超出合理范围: {stats.avg_total_goals}")
             # 不返回False，因为极端情况确实可能发生
 
@@ -416,7 +422,9 @@ class H2HCalculator:
             # 获取最近比赛日期
             if not all_matches.empty:
                 last_match_date = pd.to_datetime(all_matches["match_date"]).max()
-                last_match_date_str = last_match_date.isoformat() if pd.notnull(last_match_date) else None
+                last_match_date_str = (
+                    last_match_date.isoformat() if pd.notnull(last_match_date) else None
+                )
             else:
                 last_match_date_str = None
 
@@ -458,7 +466,7 @@ class H2HCalculator:
             return summary
 
         except Exception as e:
-            logger.error(f"H2H摘要生成失败: {e}")
+            logger.exception(f"H2H摘要生成失败: {e}")
             return self._get_empty_h2h_summary(team1_id, team2_id)
 
     def _get_empty_h2h_summary(self, team1_id: int, team2_id: int) -> dict[str, Any]:
@@ -491,7 +499,11 @@ class H2HCalculator:
         """
         try:
             # 验证概率总和
-            prob_sum = summary.get("team1_win_rate", 0) + summary.get("draw_rate", 0) + summary.get("team2_win_rate", 0)
+            prob_sum = (
+                summary.get("team1_win_rate", 0)
+                + summary.get("draw_rate", 0)
+                + summary.get("team2_win_rate", 0)
+            )
             if abs(prob_sum - 1.0) > 0.01:  # 允许1%的舍入误差
                 logger.warning(f"H2H摘要概率总和不等于1: {prob_sum}")
 
@@ -501,12 +513,14 @@ class H2HCalculator:
             if avg_goals > 0 and total_goals > 0:
                 expected_total = avg_goals * summary.get("total_matches", 0)
                 if abs(total_goals - expected_total) > 5:  # 允许5球的误差
-                    logger.warning(f"H2H摘要进球数不一致: 实际={total_goals}, 期望={expected_total}")
+                    logger.warning(
+                        f"H2H摘要进球数不一致: 实际={total_goals}, 期望={expected_total}"
+                    )
 
             return True
 
         except Exception as e:
-            logger.error(f"H2H摘要验证失败: {e}")
+            logger.exception(f"H2H摘要验证失败: {e}")
             return False
 
 

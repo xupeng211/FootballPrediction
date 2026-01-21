@@ -47,7 +47,6 @@ class DatabaseConfigurationError(DatabaseError):
         >>> raise DatabaseConfigurationError("数据库配置错误", details={"db_name": "wrong_db"})
     """
 
-    pass
 
 
 class ModelError(BaseApplicationError):
@@ -157,7 +156,6 @@ class NetworkError(BaseApplicationError):
         >>> raise NetworkError("无法连接到服务器", details={"host": "example.com", "port": 443})
     """
 
-    pass
 
 
 class DataAlignmentError(BaseApplicationError):
@@ -170,7 +168,6 @@ class DataAlignmentError(BaseApplicationError):
         >>> raise DataAlignmentError("数据对齐失败")
     """
 
-    pass
 
 
 class URLParsingError(DataAlignmentError):
@@ -183,7 +180,6 @@ class URLParsingError(DataAlignmentError):
         >>> raise URLParsingError("URL 格式无效", details={"url": "invalid-url"})
     """
 
-    pass
 
 
 class TeamMatchingError(DataAlignmentError):
@@ -196,7 +192,6 @@ class TeamMatchingError(DataAlignmentError):
         >>> raise TeamMatchingError("队名匹配失败", details={"team": "Unknown Team"})
     """
 
-    pass
 
 
 class HashExtractionError(DataAlignmentError):
@@ -209,7 +204,6 @@ class HashExtractionError(DataAlignmentError):
         >>> raise HashExtractionError("哈希提取失败", details={"url": "example.com/xyz/"})
     """
 
-    pass
 
 
 class ProxyError(BaseApplicationError):
@@ -222,7 +216,6 @@ class ProxyError(BaseApplicationError):
         >>> raise ProxyError("代理操作失败")
     """
 
-    pass
 
 
 class ProxyConnectionError(ProxyError):
@@ -235,7 +228,6 @@ class ProxyConnectionError(ProxyError):
         >>> raise ProxyConnectionError("代理连接失败", details={"host": "127.0.0.1", "port": 7891})
     """
 
-    pass
 
 
 class ProxyHealthError(ProxyError):
@@ -248,4 +240,3 @@ class ProxyHealthError(ProxyError):
         >>> raise ProxyHealthError("代理不健康", details={"port": 7891, "failures": 3})
     """
 
-    pass

@@ -5,6 +5,7 @@ This module provides centralized configuration management for the crawler system
 It loads settings from crawler_settings.yaml and allows environment variable overrides.
 """
 
+import contextlib
 from dataclasses import dataclass, field
 import os
 from pathlib import Path
@@ -19,6 +20,7 @@ DEFAULT_CONFIG_PATH = Path(__file__).parent / "crawler_settings.yaml"
 @dataclass
 class HybridEngineConfig:
     """混合引擎配置"""
+
     # Laser Mode 参数
     track_tolerance: int = 30
 
@@ -33,6 +35,7 @@ class HybridEngineConfig:
 @dataclass
 class NetworkConfig:
     """网络韧性协议配置"""
+
     request_delay_min: float = 8.0
     request_delay_max: float = 15.0
     max_workers: int = 4
@@ -44,6 +47,7 @@ class NetworkConfig:
 @dataclass
 class DataQualityConfig:
     """数据质量契约配置"""
+
     # 完整性评分
     min_integrity_score: float = 1.00
     max_integrity_score: float = 1.08
@@ -61,6 +65,7 @@ class DataQualityConfig:
 @dataclass
 class TaskQueueConfig:
     """任务队列配置"""
+
     pending_status: str = "PENDING"
     searching_status: str = "SEARCHING"
     success_status: str = "SUCCESS"
@@ -74,6 +79,7 @@ class CrawlerSettings:
 
     集中管理所有爬虫相关配置，支持从 YAML 文件加载和环境变量覆盖。
     """
+
     # 子配置
     hybrid: HybridEngineConfig = field(default_factory=HybridEngineConfig)
     network: NetworkConfig = field(default_factory=NetworkConfig)
@@ -196,22 +202,16 @@ class CrawlerSettings:
         """
         # 网络配置
         if "CRAWLER_REQUEST_DELAY_MIN" in os.environ:
-            try:
+            with contextlib.suppress(ValueError):
                 self.network.request_delay_min = float(os.environ["CRAWLER_REQUEST_DELAY_MIN"])
-            except ValueError:
-                pass
 
         if "CRAWLER_REQUEST_DELAY_MAX" in os.environ:
-            try:
+            with contextlib.suppress(ValueError):
                 self.network.request_delay_max = float(os.environ["CRAWLER_REQUEST_DELAY_MAX"])
-            except ValueError:
-                pass
 
         if "CRAWLER_MAX_WORKERS" in os.environ:
-            try:
+            with contextlib.suppress(ValueError):
                 self.network.max_workers = int(os.environ["CRAWLER_MAX_WORKERS"])
-            except ValueError:
-                pass
 
     def to_dict(self) -> dict[str, Any]:
         """转换为字典（用于调试）

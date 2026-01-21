@@ -22,12 +22,11 @@ Date: 2026-01-06
 
 from __future__ import annotations
 
+from dataclasses import dataclass
+from datetime import datetime, timedelta
 import logging
 import random
 from typing import Any
-from dataclasses import dataclass, field
-from datetime import datetime, timedelta
-from collections import defaultdict
 
 logger = logging.getLogger(__name__)
 
@@ -36,9 +35,11 @@ logger = logging.getLogger(__name__)
 # 代理健康状态数据结构
 # ============================================================================
 
+
 @dataclass
 class ProxyHealthStatus:
     """单个代理的健康状态"""
+
     url: str
     score: int = 100  # 健康评分 (0-100)
     success_count: int = 0  # 成功次数
@@ -74,6 +75,7 @@ class ProxyHealthStatus:
 # ============================================================================
 # 代理健康评分管理器
 # ============================================================================
+
 
 class ProxyHealthManager:
     """
@@ -140,9 +142,7 @@ class ProxyHealthManager:
         """
         # Step 1: 过滤可用代理
         available_proxies = {
-            url: status
-            for url, status in self.proxy_status.items()
-            if not status.is_cooled()
+            url: status for url, status in self.proxy_status.items() if not status.is_cooled()
         }
 
         if not available_proxies:
@@ -167,7 +167,7 @@ class ProxyHealthManager:
                 return url
 
         # 兜底：返回第一个可用代理
-        return list(available_proxies.keys())[0]
+        return next(iter(available_proxies.keys()))
 
     # ========================================
     # 成功/失败记录
@@ -191,10 +191,7 @@ class ProxyHealthManager:
         old_score = status.score
         status.score = min(100, status.score + self.score_recovery_increment)
 
-        logger.info(
-            f"✅ 代理成功: {proxy_url} | "
-            f"评分: {old_score} → {status.score}"
-        )
+        logger.info(f"✅ 代理成功: {proxy_url} | 评分: {old_score} → {status.score}")
 
     def record_failure(
         self,
@@ -222,18 +219,12 @@ class ProxyHealthManager:
             # 被封禁：触发冷却期
             status.cooling_until = (datetime.now() + self.cooling_duration).isoformat()
             status.score = 0  # 冷却期间评分为 0
-            logger.warning(
-                f"🔒 代理被封禁: {proxy_url} | "
-                f"冷却期至: {status.cooling_until}"
-            )
+            logger.warning(f"🔒 代理被封禁: {proxy_url} | 冷却期至: {status.cooling_until}")
         elif error_type == "timeout":
             # 超时：降低评分
             old_score = status.score
             status.score = max(0, status.score - self.score_penalty_timeout)
-            logger.warning(
-                f"⏱️  代理超时: {proxy_url} | "
-                f"评分: {old_score} → {status.score}"
-            )
+            logger.warning(f"⏱️  代理超时: {proxy_url} | 评分: {old_score} → {status.score}")
         else:
             # 其他错误：轻微扣分
             old_score = status.score
@@ -255,10 +246,7 @@ class ProxyHealthManager:
             统计摘要字典
         """
         total_proxies = len(self.proxy_status)
-        cooled_proxies = sum(
-            1 for status in self.proxy_status.values()
-            if status.is_cooled()
-        )
+        cooled_proxies = sum(1 for status in self.proxy_status.values() if status.is_cooled())
         available_proxies = total_proxies - cooled_proxies
 
         avg_score = (
@@ -272,9 +260,7 @@ class ProxyHealthManager:
             "available_proxies": available_proxies,
             "cooled_proxies": cooled_proxies,
             "average_score": round(avg_score, 1),
-            "proxy_details": [
-                status.to_dict() for status in self.proxy_status.values()
-            ],
+            "proxy_details": [status.to_dict() for status in self.proxy_status.values()],
         }
 
     def get_proxy_status(self, proxy_url: str) -> ProxyHealthStatus | None:
@@ -329,6 +315,7 @@ class ProxyHealthManager:
 # ============================================================================
 # 便捷函数
 # ============================================================================
+
 
 def create_proxy_health_manager(
     proxy_list: list[str],

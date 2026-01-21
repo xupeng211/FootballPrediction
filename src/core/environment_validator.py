@@ -13,18 +13,16 @@ Version: V41.77
 Date: 2026-01-15
 """
 
-import logging
-import socket
 from dataclasses import dataclass
 from enum import Enum
-from typing import Optional
+import logging
+import socket
 
 logger = logging.getLogger(__name__)
 
 
 class EnvironmentValidationError(Exception):
     """环境验证失败异常"""
-    pass
 
 
 class ProcessType(Enum):
@@ -59,7 +57,7 @@ def check_port_in_use(port: int, timeout: float = 1.0) -> PortInfo:
     try:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(timeout)
-        result = sock.connect_ex(('127.0.0.1', port))
+        result = sock.connect_ex(("127.0.0.1", port))
         sock.close()
 
         is_in_use = (result == 0)
@@ -78,7 +76,7 @@ def check_port_in_use(port: int, timeout: float = 1.0) -> PortInfo:
             is_docker=(process_type == ProcessType.DOCKER)
         )
 
-    except (socket.error, OSError) as e:
+    except OSError as e:
         logger.warning(f"⚠️  检查端口 {port} 时出错: {e}")
         return PortInfo(
             port=port,
@@ -104,7 +102,7 @@ def _identify_process_on_port(port: int) -> ProcessType:
         import subprocess
         result = subprocess.run(
             ["docker", "ps", "--filter", f"publish={port}", "--format", "{{.Names}}"],
-            capture_output=True,
+            check=False, capture_output=True,
             text=True,
             timeout=5
         )
@@ -117,17 +115,17 @@ def _identify_process_on_port(port: int) -> ProcessType:
     # 优先级 2: 尝试使用 lsof（需要 root）
     try:
         result = subprocess.run(
-            ['sudo', 'lsof', '-i', f':{port}', '-t', '-c'],
-            capture_output=True,
+            ["sudo", "lsof", "-i", f":{port}", "-t", "-c"],
+            check=False, capture_output=True,
             text=True,
             timeout=5
         )
 
         if result.returncode == 0:
             command = result.stdout.strip().lower()
-            if 'postgres' in command or 'postmaster' in command:
+            if "postgres" in command or "postmaster" in command:
                 return ProcessType.POSTGRES
-            elif 'systemd' in command:
+            if "systemd" in command:
                 return ProcessType.SYSTEMD
 
     except (FileNotFoundError, subprocess.TimeoutExpired, PermissionError):
@@ -176,7 +174,7 @@ def validate_database_environment(
     logger.info(f"🔍 验证数据库环境: {db_host}:{db_port}")
 
     # 如果连接到本地，检查端口
-    if db_host in ('localhost', '127.0.0.1'):
+    if db_host in ("localhost", "127.0.0.1"):
         port_info = check_port_in_use(db_port)
 
         if not port_info.is_in_use:
@@ -218,8 +216,8 @@ def validate_docker_database_running() -> None:
     try:
         import subprocess
         result = subprocess.run(
-            ['docker', 'ps', '--filter', 'name=db', '--format', '{{.Status}}'],
-            capture_output=True,
+            ["docker", "ps", "--filter", "name=db", "--format", "{{.Status}}"],
+            check=False, capture_output=True,
             text=True,
             timeout=10
         )
@@ -230,7 +228,7 @@ def validate_docker_database_running() -> None:
             )
 
         status = result.stdout.strip()
-        if not status or 'Up' not in status:
+        if not status or "Up" not in status:
             raise EnvironmentValidationError(
                 "❌ Docker 数据库容器未运行\n"
                 "   💡 建议: 启动 Docker 数据库 (make up)"
@@ -261,8 +259,8 @@ def validate_no_local_postgres_conflict(db_port: int = 5432) -> None:
     try:
         import subprocess
         result = subprocess.run(
-            ['sudo', 'service', 'postgresql', 'status'],
-            capture_output=True,
+            ["sudo", "service", "postgresql", "status"],
+            check=False, capture_output=True,
             text=True,
             timeout=5
         )
@@ -270,7 +268,7 @@ def validate_no_local_postgres_conflict(db_port: int = 5432) -> None:
         # 检查服务是否在运行
         is_running = (
             result.returncode == 0 and
-            ('running' in result.stdout.lower() or 'active' in result.stdout.lower())
+            ("running" in result.stdout.lower() or "active" in result.stdout.lower())
         )
 
         if is_running:
@@ -281,7 +279,7 @@ def validate_no_local_postgres_conflict(db_port: int = 5432) -> None:
                 "   命令: sudo service postgresql stop"
             )
 
-        logger.info(f"✅ 无本地 PostgreSQL 冲突")
+        logger.info("✅ 无本地 PostgreSQL 冲突")
 
     except FileNotFoundError:
         # service 命令不存在，可能不是 systemd 系统
@@ -306,20 +304,20 @@ def _check_postgres_via_ps(db_port: int = 5432) -> None:
     try:
         import subprocess
         result = subprocess.run(
-            ['ps', 'aux'],
-            capture_output=True,
+            ["ps", "aux"],
+            check=False, capture_output=True,
             text=True,
             timeout=5
         )
 
-        if 'postgres' in result.stdout.lower() and f'-p {db_port}' in result.stdout:
+        if "postgres" in result.stdout.lower() and f"-p {db_port}" in result.stdout:
             raise EnvironmentValidationError(
                 f"❌ 检测到 PostgreSQL 进程正在使用端口 {db_port}\n"
                 "   这可能导致连接到错误的数据库\n"
                 "   💡 建议: 停止本地 PostgreSQL 服务"
             )
 
-        logger.info(f"✅ 无 PostgreSQL 进程冲突")
+        logger.info("✅ 无 PostgreSQL 进程冲突")
 
     except subprocess.TimeoutExpired:
         logger.warning("⚠️  ps 命令超时")
@@ -403,7 +401,7 @@ if __name__ == "__main__":
 
     logging.basicConfig(
         level=logging.INFO,
-        format='%(asctime)s | %(levelname)-8s | %(message)s'
+        format="%(asctime)s | %(levelname)-8s | %(message)s"
     )
 
     try:
@@ -412,8 +410,6 @@ if __name__ == "__main__":
             db_name="football_db",
             db_port=5432
         )
-        print("✅ 环境验证通过")
         sys.exit(0)
-    except EnvironmentValidationError as e:
-        print(f"❌ 环境验证失败: {e}")
+    except EnvironmentValidationError:
         sys.exit(1)

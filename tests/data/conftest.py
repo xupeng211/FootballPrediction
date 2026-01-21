@@ -11,6 +11,7 @@ from typing import Any
 from unittest.mock import Mock
 
 import pytest
+
 from tests.data.generators.test_data_generator import (
     TestDataGenerator,
     create_test_data_generator,

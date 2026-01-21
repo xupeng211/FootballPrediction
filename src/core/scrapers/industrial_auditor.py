@@ -19,6 +19,10 @@ V41.232 防弹级加固：
     - 视觉失效存证：anchors=0 时自动截图
     - 全链路稳定性：确保重试循环中零泄漏
 
+V41.283 异步修复：
+    - 修复 Modal Smasher 异步调用问题
+    - 正确使用 await add_init_script()
+
 架构说明：
     - Initial_Price: 初始价格（后 3 位）
     - Closing_Price: 当前价格（前 3 位）
@@ -33,21 +37,22 @@ Usage:
 
 Author: V41.232 Engineering Team
 Date: 2026-01-19
-Version: V41.232 "Bulletproof Finalization"
+Version: V41.283 "The Final Launchpad - Async Fix"
 """
 
 from __future__ import annotations
 
 import asyncio
-import logging
-import re
+import contextlib
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
+import logging
 from pathlib import Path
+import re
 from typing import Any
 
-from playwright.async_api import async_playwright, Page, Browser, BrowserContext
+from playwright.async_api import Browser, BrowserContext, Page, async_playwright
 
 from src.config_unified import get_config
 
@@ -76,6 +81,11 @@ class PriceVector:
     quality: MatrixQuality  # 质量评级
     deviation_pct: float  # 百分比偏差
 
+    @property
+    def values(self) -> list[float]:
+        """所有价格值的合并列表（V41.268 修复）"""
+        return self.initial + self.closing + self.movement
+
     def to_dict(self) -> dict[str, Any]:
         """转换为字典（标准化字段名）"""
         return {
@@ -95,6 +105,7 @@ class ExtractionResult:
     entities_extracted: int
     entities: list[PriceVector] = field(default_factory=list)
     metadata: dict[str, Any] = field(default_factory=dict)
+    raw_html: str = ""  # V41.268: 原始 HTML 源码（用于取证）
 
     def to_dict(self) -> dict[str, Any]:
         """转换为字典"""
@@ -121,7 +132,7 @@ class AuditorConfig:
     proxy_port: int = 7892
 
     # V41.230 新增配置
-    min_value_threshold: float = 1.01  # 最小数值阈值
+    min_value_threshold: float = 1.01  # V41.272: 调优至 1.01，依赖物理约束（CHECK）
     max_value_threshold: float = 50.00  # 最大数值阈值
     enable_degraded_mode: bool = True  # 启用降级模式
     container_width_ratio: float = 0.3  # 容器宽度阈值比例
@@ -390,6 +401,9 @@ class IndustrialAuditor:
         # V41.231: 设置页面默认超时
         self.page.set_default_timeout(self.config.navigation_timeout)
 
+        # V41.281: 弹窗粉碎器 - 自动屏蔽常见 Cookie 弹窗和对话框
+        await self._inject_anti_modal_script()
+
         logger.debug("Browser initialization complete")
 
     async def inject_consent_cookie(self) -> None:
@@ -408,6 +422,95 @@ class IndustrialAuditor:
         }])
 
         logger.debug(f"Consent cookie injected: {self.config.consent_cookie_name}")
+
+    async def _inject_anti_modal_script(self) -> None:
+        """
+        V41.281: 弹窗粉碎器 - 自动屏蔽常见 Cookie 弹窗和对话框
+
+        功能：
+        1. 隐藏常见 Cookie 同意横幅
+        2. 移除模态遮罩层
+        3. 阻止对话框弹出
+        4. 确保 1X2 表格永远可见
+        """
+        if not self.page:
+            logger.warning("Page not initialized, skipping anti-modal script injection")
+            return
+
+        anti_modal_script = """
+        (function() {
+            'use strict';
+
+            // 1. 移除常见 Cookie 弹窗选择器
+            const modalSelectors = [
+                // 通用 Cookie 横幅
+                '[id*="cookie"]', '[class*="cookie"]',
+                '[id*="consent"]', '[class*="consent"]',
+                '[id*="gdpr"]', '[class*="gdpr"]',
+                // OddsPortal 特定
+                '#onetrust-consent-sdk', '.ot-consent-sdk',
+                '.cookie-banner', '.consent-banner',
+                // 通用模态框
+                '[role="dialog"]', '[role="alertdialog"]',
+                '.modal', '.popup', '.overlay',
+                '.cookie-consent', '.gdpr-banner'
+            ];
+
+            // 2. 移除现有模态框
+            function removeModals() {
+                modalSelectors.forEach(selector => {
+                    document.querySelectorAll(selector).forEach(el => {
+                        el.style.display = 'none !important';
+                        el.style.visibility = 'hidden !important';
+                        el.style.opacity = '0 !important';
+                        el.remove();
+                    });
+                });
+            }
+
+            // 3. 阻止新模态框显示
+            const observer = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    mutation.addedNodes.forEach(function(node) {
+                        if (node.nodeType === 1) {  // Element node
+                            const element = node;
+                            modalSelectors.forEach(selector => {
+                                if (element.matches && element.matches(selector)) {
+                                    element.style.display = 'none !important';
+                                    element.remove();
+                                }
+                                // 检查子元素
+                                const children = element.querySelectorAll?.(selector);
+                                children?.forEach(child => {
+                                    child.style.display = 'none !important';
+                                    child.remove();
+                                });
+                            });
+                        }
+                    });
+                });
+            });
+
+            // 4. 立即执行一次清理
+            removeModals();
+
+            // 5. 持续监听 DOM 变化
+            observer.observe(document.documentElement, {
+                childList: true,
+                subtree: true
+            });
+
+            // 6. 覆盖常见弹窗 API
+            if (window.alert) window.alert = function() {};
+            if (window.confirm) window.confirm = function() { return true; };
+            if (window.prompt) window.prompt = function() { return null; };
+
+            console.log('[V41.281] Anti-modal script injected and active');
+        })();
+        """
+
+        await self.page.add_init_script(anti_modal_script)
+        logger.debug("V41.281: Anti-modal script injected")
 
     def _extract_domain(self, url: str) -> str:
         """从 URL 提取域名"""
@@ -436,7 +539,7 @@ class IndustrialAuditor:
 
         # 策略 2: 分段滚动（触发中间区域的表格）
         for i in range(3):
-            scroll_position = (document_body_scroll_height := await self.page.evaluate(
+            scroll_position = (_document_body_scroll_height := await self.page.evaluate(
                 "document.body.scrollHeight"
             )) * (i + 1) / 4
             await self.page.evaluate(f"window.scrollTo(0, {scroll_position})")
@@ -478,12 +581,10 @@ class IndustrialAuditor:
         logger.info("Starting industrial audit process (V41.232)")
 
         # V41.231: 重试计数器
-        last_error = None
 
         try:
             for attempt in range(1, self.config.max_retries + 1):
                 try:
-                    print(f"Attempt [{attempt}]: Navigating...")
 
                     await self.initialize()
                     await self.inject_consent_cookie()
@@ -499,9 +600,16 @@ class IndustrialAuditor:
                     # V41.231: 5 秒硬性水合等待
                     await self.page.wait_for_timeout(self.config.wait_after_load)
 
-                    print("Network Delay Handled: Yes")
 
                     await self.perform_lazy_scroll()
+
+                    # V41.268: 捕获原始 HTML 用于取证
+                    raw_html = ""
+                    try:
+                        if self.page and not self.page.is_closed():
+                            raw_html = await self.page.locator("html").inner_html() or ""
+                    except Exception as e:
+                        logger.debug(f"Failed to capture raw HTML: {e}")
 
                     # 提取所有实体
                     all_vectors = await self._extract_entities()
@@ -516,6 +624,7 @@ class IndustrialAuditor:
                         target_url=self.config.target_url,
                         entities_extracted=len(all_vectors),
                         entities=all_vectors,
+                        raw_html=raw_html,  # V41.268: 添加原始 HTML
                         metadata={
                             "page_width": self.page_main_width,
                             "config": {
@@ -531,7 +640,6 @@ class IndustrialAuditor:
                     return self.result
 
                 except Exception as e:
-                    last_error = e
                     logger.warning(f"Attempt [{attempt}] failed: {e}")
 
                     # V41.232: 异常时也尝试截图
@@ -542,10 +650,8 @@ class IndustrialAuditor:
                         pass
 
                     # 清理资源准备重试
-                    try:
+                    with contextlib.suppress(Exception):
                         await self.cleanup()
-                    except Exception:
-                        pass
 
                     # 如果还有重试机会，等待后继续
                     if attempt < self.config.max_retries:
@@ -553,10 +659,9 @@ class IndustrialAuditor:
                         logger.info(f"Retrying in {wait_time}s...")
                         await asyncio.sleep(wait_time)
                         continue
-                    else:
-                        # 所有重试都失败
-                        logger.error(f"All {self.config.max_retries} attempts failed")
-                        raise RuntimeError(f"Audit failed after {self.config.max_retries} attempts: {e}") from e
+                    # 所有重试都失败
+                    logger.exception(f"All {self.config.max_retries} attempts failed")
+                    raise RuntimeError(f"Audit failed after {self.config.max_retries} attempts: {e}") from e
 
         finally:
             await self.cleanup()
@@ -650,31 +755,90 @@ class IndustrialAuditor:
                     logger.debug(f"Error processing pattern '{pattern}': {e}")
                     continue
         else:
-            logger.debug(f"V41.242 Skipping pattern strategy - table extraction succeeded")
+            logger.debug("V41.242 Skipping pattern strategy - table extraction succeeded")
 
         return all_vectors
 
     async def _extract_from_tables(self) -> list[PriceVector]:
         """
-        V41.242 现代 div 布局提取 - 专门针对 OddsPortal 现代结构
+        V41.271 现代 div 布局提取 - 1X2 视觉标签锚定版
 
-        发现（通过 DOM 诊断）：
-        - 无 <table> 元素
-        - 赔率数据在 div[class*='odd'] 元素中
-        - 约 96 个 div[class*='odd'] 元素
-        - 约 83 个包含 '2.' 格式赔率数值的 div
+        核心改进：
+        - 视觉标签锚定：仅提取包含 "Full Time" 或 "1X2" 的表格
+        - 物理隔绝亚盘：拒绝所有不属于 1X2 表格区域的赔率数据
 
         策略：
-        1. 查找所有 div[class*='odd'] 元素
-        2. 提取数值型赔率（1.01 - 50.0 范围）
-        3. 三位一组序列对齐
+        1. 定位 1X2/Full Time 表格区域
+        2. 仅从该区域提取 div[class*='odd'] 元素
+        3. 拒绝其他表格（亚盘、让球等）
         """
         vectors = []
 
         try:
-            # 策略 1: 查找 div[class*='odd'] 元素（OddsPortal 现代结构）
-            odd_divs = await self.page.locator("div[class*='odd']").all()
-            logger.info(f"V41.242 Found {len(odd_divs)} div[class*='odd'] elements")
+            # ================================================================
+            # V41.271 Step 1: 视觉标签锚定 - 定位 1X2 表格区域
+            # ================================================================
+            logger.info("V41.271 Step 1: Visual Labeling - Locating 1X2/Full Time table")
+
+            # 尝试查找 "Full Time" 或 "1X2" 标签
+            table_found = False
+            table_container = None
+
+            # 尝试多种可能的 1X2 表格标识
+            x2_labels = ["Full Time", "1X2", "1x2", "full-time-result", "ft-result"]
+
+            for label in x2_labels:
+                try:
+                    # 查找包含标签的元素
+                    label_elements = await self.page.get_by_text(label, exact=False).all()
+                    logger.info(f"V41.271 Searching for label: '{label}', found {len(label_elements)} elements")
+
+                    for label_elem in label_elements:
+                        if not await label_elem.is_visible():
+                            continue
+
+                        # 回溯查找父容器（表格区域）
+                        container = await self._find_table_container(label_elem)
+                        if container:
+                            table_found = True
+                            table_container = container
+                            logger.info(f"V41.271 ✓ 1X2 table located with label: '{label}'")
+                            break
+
+                    if table_found:
+                        break
+
+                except Exception as e:
+                    logger.debug(f"V41.271 Label search error for '{label}': {e}")
+                    continue
+
+            if not table_found:
+                logger.warning("V41.271 ⚠️  NO 1X2 TABLE FOUND - Falling back to global extraction (RISKY)")
+                # 继续使用全局提取（但有警告）
+            else:
+                logger.info("V41.271 ✓ 1X2 table container located - extracting ONLY from this region")
+
+            # ================================================================
+            # V41.271 Step 2: 从 1X2 表格区域提取赔率
+            # ================================================================
+            odd_divs = []
+            if table_found and table_container:
+                # 仅从 1X2 表格容器内提取
+                try:
+                    container_divs = await table_container.locator("div[class*='odd']").all()
+                    odd_divs = container_divs
+                    logger.info(f"V41.271 Found {len(odd_divs)} div[class*='odd'] elements in 1X2 table region")
+                except Exception as e:
+                    logger.debug(f"V41.271 Container extraction error: {e}")
+                    # 回退到全局提取
+                    odd_divs = await self.page.locator("div[class*='odd']").all()
+                    logger.warning("V41.271 ⚠️  Fallback to global extraction due to container error")
+            else:
+                # 无 1X2 表格时使用全局提取（但有警告）
+                odd_divs = await self.page.locator("div[class*='odd']").all()
+                logger.warning(f"V41.271 ⚠️  Using GLOBAL extraction (risk of Asian Handicap contamination): {len(odd_divs)} elements")
+
+            logger.info(f"V41.271 Total div[class*='odd'] elements to process: {len(odd_divs)}")
 
             if len(odd_divs) > 0:
                 # 提取所有可见 div 的文本
@@ -696,20 +860,52 @@ class IndustrialAuditor:
                 logger.info(f"V41.242 Extracted {len(all_values)} total odds values from div elements")
 
                 if len(all_values) >= 3:
-                    # 序列处理
-                    vector = SequenceProcessor.process(
-                        all_values,
-                        enable_degraded=self.config.enable_degraded_mode
-                    )
+                    # ====================================================================
+                    # V41.273 Step 1: 软性锚点 - Overround 概率逆推
+                    # ====================================================================
+                    # 如果没有找到视觉标签，使用软性锚点来识别 1X2 数据
+                    if not table_found:
+                        logger.info("V41.273 Step 1: Fuzzy Anchoring - Using Overround to identify 1X2 data")
+                        fuzzy_triplet, fuzzy_overround = await self._fuzzy_anchoring(all_values)
 
-                    logger.info(f"V41.242 Vector quality: {vector.quality}, values: {len(vector.values)}")
+                        if fuzzy_triplet:
+                            # 使用软性锚点找到的三元组
+                            vector = SequenceProcessor.process(
+                                fuzzy_triplet,
+                                enable_degraded=self.config.enable_degraded_mode
+                            )
 
-                    if vector.quality != MatrixQuality.INSUFFICIENT:
-                        vectors.append(vector)
-                        logger.info(f"V41.242 VALID vector extracted from div structure")
+                            logger.info(f"V41.273 Fuzzy Anchoring vector quality: {vector.quality}, Overround: {fuzzy_overround:.4f}")
+
+                            if vector.quality != MatrixQuality.INSUFFICIENT:
+                                vectors.append(vector)
+                                logger.info("V41.273 ✓ VALID vector from Fuzzy Anchoring")
+                        else:
+                            # 软性锚点失败，回退到常规序列处理
+                            logger.warning("V41.273 ⚠️ Fuzzy Anchoring failed, falling back to standard sequence processing")
+                            vector = SequenceProcessor.process(
+                                all_values,
+                                enable_degraded=self.config.enable_degraded_mode
+                            )
+
+                            if vector.quality != MatrixQuality.INSUFFICIENT:
+                                vectors.append(vector)
+                                logger.info("V41.273 VALID vector from standard processing (no visual label)")
+                    else:
+                        # 找到了视觉标签，使用标准序列处理
+                        vector = SequenceProcessor.process(
+                            all_values,
+                            enable_degraded=self.config.enable_degraded_mode
+                        )
+
+                        logger.info(f"V41.242 Vector quality: {vector.quality}, values: {len(vector.values)}")
+
+                        if vector.quality != MatrixQuality.INSUFFICIENT:
+                            vectors.append(vector)
+                            logger.info("V41.242 VALID vector extracted from div structure")
 
         except Exception as e:
-            logger.error(f"V41.242 div extraction error: {e}")
+            logger.exception(f"V41.242 div extraction error: {e}")
 
         # 策略 2: 回退到全文提取（如果策略 1 失败）
         if len(vectors) == 0:
@@ -727,18 +923,70 @@ class IndustrialAuditor:
 
                     if vector.quality != MatrixQuality.INSUFFICIENT:
                         vectors.append(vector)
-                        logger.info(f"V41.242 VALID vector from body text fallback")
+                        logger.info("V41.242 VALID vector from body text fallback")
             except Exception as e:
                 logger.debug(f"V41.242 Fallback extraction error: {e}")
 
         return vectors
+
+    async def _find_table_container(self, label_element) -> Any | None:
+        """
+        V41.271 查找 1X2 表格容器
+
+        从标签元素回溯查找包含赔率数据的父容器。
+
+        策略：
+        1. 向上遍历 DOM 树
+        2. 查找包含 div[class*='odd'] 元素的父容器
+        3. 最多回溯 10 层
+
+        Args:
+            label_element: 包含 "1X2" 或 "Full Time" 文本的元素
+
+        Returns:
+            表格容器元素，如果未找到则返回 None
+        """
+        if not self.page:
+            return None
+
+        try:
+            return await label_element.evaluate("""
+                (element) => {
+                    let current = element;
+                    const maxIterations = 10;
+
+                    for (let i = 0; i < maxIterations && current; i++) {
+                        // 检查当前容器是否包含 div[class*='odd']
+                        const oddDivs = current.querySelectorAll ? current.querySelectorAll("div[class*='odd']") : [];
+
+                        if (oddDivs && oddDivs.length >= 3) {
+                            // 找到包含至少 3 个 odd 元素的容器
+                            return current;
+                        }
+
+                        // 停止条件
+                        if (current.tagName === 'BODY' || current.tagName === 'HTML') {
+                            break;
+                        }
+
+                        current = current.parentElement;
+                    }
+
+                    return null;
+                }
+            """)
+
+
+        except Exception as e:
+            logger.debug(f"V41.271 _find_table_container error: {e}")
+            return None
 
     async def _get_page_width(self) -> int:
         """获取页面宽度"""
         if not self.page:
             return 0
 
-        width = await self.page.evaluate("""
+        return await self.page.evaluate("""
             () => {
                 const body = document.body;
                 const html = document.documentElement;
@@ -749,7 +997,6 @@ class IndustrialAuditor:
                 );
             }
         """)
-        return width
 
     async def _backtrack_container(self, element) -> dict[str, Any] | None:
         """容器回溯算法"""
@@ -814,6 +1061,98 @@ class IndustrialAuditor:
 
         return extracted
 
+    def _calculate_overround(self, odds_triplet: list) -> Optional[float]:
+        """
+        V41.273 计算 Overround
+
+        Overround = (1/Home + 1/Draw + 1/Away)
+
+        Args:
+            odds_triplet: 赔率三元组 [home, draw, away]
+
+        Returns:
+            Overround 值 (四舍五入到 4 位小数)，无效时返回 None
+        """
+        if not odds_triplet or len(odds_triplet) < 3:
+            return None
+
+        try:
+            h, d, a = odds_triplet[:3]
+            if None in (h, d, a) or any(x is None or x <= 0 for x in (h, d, a)):
+                return None
+            overround = (1.0 / h) + (1.0 / d) + (1.0 / a)
+            return round(overround, 4)
+        except (TypeError, ZeroDivisionError):
+            return None
+
+    def _validate_overround(self, overround: Optional[float]) -> bool:
+        """
+        V41.273 验证 Overround 是否在有效范围内
+
+        1X2 赔率的 Overround 应该在 0.95 - 1.20 之间。
+
+        Args:
+            overround: Overround 值
+
+        Returns:
+            是否有效
+        """
+        if overround is None:
+            return False
+        return 0.95 <= overround <= 1.20
+
+    async def _fuzzy_anchoring(self, all_values: list[float]) -> tuple[list[float], Optional[float]]:
+        """
+        V41.273 软性锚点 - Overround 概率逆推
+
+        当找不到 "Full Time" 或 "1X2" 视觉标签时，通过数学方法识别 1X2 表格。
+
+        逻辑：
+        1. 将所有提取的数值组成连续的三元组
+        2. 计算每个三元组的 Overround
+        3. 选择 Overround 在 0.95-1.20 范围内的三元组
+        4. 如果有多个有效三元组，选择 Overround 最接近 1.00 的
+
+        Args:
+            all_values: 所有提取的赔率值
+
+        Returns:
+            (有效的赔率值列表, 计算出的 Overround)
+        """
+        if len(all_values) < 3:
+            return [], None
+
+        best_triplet = None
+        best_overround = None
+        best_deviation = float("inf")
+
+        # 滑动窗口检查所有可能的三元组
+        for i in range(len(all_values) - 2):
+            triplet = all_values[i:i+3]
+
+            # 检查是否在有效范围内
+            if all(self.config.min_value_threshold <= v <= self.config.max_value_threshold for v in triplet):
+                overround = self._calculate_overround(triplet)
+
+                if self._validate_overround(overround):
+                    # 计算 Overround 与 1.00 的偏差
+                    deviation = abs(overround - 1.00)
+
+                    if deviation < best_deviation:
+                        best_deviation = deviation
+                        best_triplet = triplet
+                        best_overround = overround
+
+        if best_triplet:
+            logger.info(
+                f"V41.273 ✓ Fuzzy Anchoring: Found valid 1X2 triplet with Overround={best_overround:.4f} "
+                f"(deviation from 1.00: {best_deviation:.4f})"
+            )
+            return best_triplet, best_overround
+
+        logger.warning("V41.273 ⚠️ Fuzzy Anchoring: No valid 1X2 triplet found")
+        return [], None
+
     async def cleanup(self) -> None:
         """
         V41.232 资源暴力回收 - 防止内存堆积
@@ -839,10 +1178,8 @@ class IndustrialAuditor:
             except Exception as e:
                 errors.append(f"Page cleanup: {e}")
                 # V41.232: 尝试暴力关闭
-                try:
+                with contextlib.suppress(Exception):
                     self.page = None
-                except Exception:
-                    pass
 
         # 步骤 2: 强制关闭 Context
         if self.context:
@@ -852,10 +1189,8 @@ class IndustrialAuditor:
                 logger.debug("Context closed successfully")
             except Exception as e:
                 errors.append(f"Context cleanup: {e}")
-                try:
+                with contextlib.suppress(Exception):
                     self.context = None
-                except Exception:
-                    pass
 
         # 步骤 3: 强制关闭 Browser
         if self.browser:
@@ -866,10 +1201,8 @@ class IndustrialAuditor:
                     logger.debug("Browser closed successfully")
             except Exception as e:
                 errors.append(f"Browser cleanup: {e}")
-                try:
+                with contextlib.suppress(Exception):
                     self.browser = None
-                except Exception:
-                    pass
 
         # 步骤 4: 强制停止 Playwright
         if self.playwright:
@@ -879,10 +1212,8 @@ class IndustrialAuditor:
                 logger.debug("Playwright stopped successfully")
             except Exception as e:
                 errors.append(f"Playwright cleanup: {e}")
-                try:
+                with contextlib.suppress(Exception):
                     self.playwright = None
-                except Exception:
-                    pass
 
         # V41.232: 清理摘要日志
         if cleanup_count > 0:
