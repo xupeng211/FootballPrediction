@@ -1,0 +1,213 @@
+# V41.500 Schema Map - JSON 路径配置文件
+# ==========================================
+#
+# 用途：存储所有 JSON 提取路径，实现 Schema 韧性
+# 当数据源结构变化时，只需更新此文件，无需修改代码
+#
+# Author: V41.500 Pipeline Team
+# Version: V41.500 "The Automated Pipeline"
+# Date: 2026-01-21
+
+# =============================================================================
+# FotMob L2 数据路径映射
+# =============================================================================
+fotmob:
+  l2_raw_json:
+    # 首发阵容
+    lineup:
+      path: "content.lineup"
+      home_team:
+        path: "homeTeam"
+        starters: "starters"
+        unavailable: "unavailable"
+        coach: "coach"
+        rating: "rating"
+      away_team:
+        path: "awayTeam"
+        starters: "starters"
+        unavailable: "unavailable"
+        coach: "coach"
+        rating: "rating"
+
+    # 缺阵球员结构
+    unavailable_player:
+      id: "id"
+      name: "name"
+      first_name: "firstName"
+      last_name: "lastName"
+      age: "age"
+      market_value: "marketValue"
+      position_id: "positionId"
+      country_code: "countryCode"
+      unavailability:
+        path: "unavailability"
+        type: "type"  # "injury" | "suspension" | "unknown"
+        injury_id: "injuryId"
+        reason: "reason"
+        expected_return: "expectedReturn"
+
+    # 首发球员结构
+    starter_player:
+      id: "id"
+      name: "name"
+      age: "age"
+      position_id: "positionId"
+      shirt_number: "shirtNumber"
+      performance:
+        path: "performance"
+        rating: "rating"
+
+    # 比赛基础信息
+    match:
+      general:
+        path: "content.general"
+        league_name: "leagueName"
+        season_id: "seasonId"
+        match_time: "matchTime"
+
+# =============================================================================
+# OddsPortal 数据路径映射（预留）
+# =============================================================================
+oddsportal:
+  # TODO: 添加 OddsPortal JSON 路径
+  odds:
+    opening: "initial_price"
+    closing: "closing_price"
+    movement_history: "movement_history"
+
+# =============================================================================
+# 数据库表路径映射
+# =============================================================================
+database:
+  # matches 表
+  matches:
+    match_id: "match_id"
+    league_name: "league_name"
+    season: "season"
+    home_team: "home_team"
+    away_team: "away_team"
+    match_date: "match_date"
+    actual_result: "actual_result"
+    technical_features: "technical_features"
+    golden_features: "golden_features"
+    l2_raw_json: "l2_raw_json"
+
+  # match_odds_intelligence 表
+  match_odds_intelligence:
+    match_id: "match_id"
+    initial_price: "initial_price"  # [home, draw, away]
+    closing_price: "closing_price"  # [home, draw, away]
+    movement_history: "movement_history"
+    quality_rating: "quality_rating"
+    deviation_percentage: "deviation_percentage"
+
+  # match_lineups 表（如果存在）
+  match_lineups:
+    match_id: "match_id"
+    home_formation: "home_formation"
+    away_formation: "away_formation"
+    home_starting_xi: "home_starting_xi"
+    away_starting_xi: "away_starting_xi"
+
+# =============================================================================
+# 特征计算参数配置
+# =============================================================================
+feature_params:
+  # 疲劳度参数
+  fatigue:
+    busy_week_threshold: 4  # 休息天数 < 4 视为忙碌周
+    default_rest_days: 14   # 无历史比赛时的默认值
+
+  # 伤病/禁赛参数
+  unavailability:
+    star_market_value: 30000000  # 3000万欧元以上视为球星
+    injury_types:
+      - "injury"
+      - "doubtful"
+      - "out"
+    suspension_types:
+      - "suspension"
+      - "suspended"
+      - "ban"
+
+  # 首发战力参数
+  starting_11:
+    star_rating_threshold: 7.5   # 评分 >= 7.5 视为球星
+    critical_rating_threshold: 8.0  # 评分 >= 8.0 视为关键球星
+
+  # 赔率参数
+  odds:
+    significant_drop_threshold: 0.05  # 赔率下降 > 5% 视为显著
+    significant_movement_threshold: 0.10  # 总变化 > 10% 视为显著
+
+# =============================================================================
+# 默认值配置
+# =============================================================================
+defaults:
+  # 缺失值的默认值
+  missing_values:
+    market_value: 0
+    rating: 6.0
+    rest_days: 14
+    unavailable_count: 0
+
+  # 数据类型映射
+  type_casting:
+    market_value: "float"
+    rating: "float"
+    age: "int"
+    count: "int"
+
+# =============================================================================
+# 特征输出映射
+# =============================================================================
+feature_output:
+  # 疲劳度特征
+  fatigue:
+    - "home_rest_days"
+    - "away_rest_days"
+    - "diff_rest_days"
+    - "home_is_busy_week"
+    - "away_is_busy_week"
+    - "home_less_rest"
+
+  # 缺阵特征
+  unavailability:
+    - "home_unavailable_total_count"
+    - "away_unavailable_total_count"
+    - "home_unavailable_injury_count"
+    - "away_unavailable_injury_count"
+    - "home_unavailable_suspension_count"
+    - "away_unavailable_suspension_count"
+    - "home_unavailable_total_market_value"
+    - "away_unavailable_total_market_value"
+    - "home_unavailable_star_count"
+    - "away_unavailable_star_count"
+    - "diff_unavailable_count"
+    - "diff_unavailable_mv"
+    - "diff_unavailable_stars"
+
+  # 首发战力特征
+  starting_11:
+    - "home_starter_avg_rating"
+    - "away_starter_avg_rating"
+    - "home_rating_delta"
+    - "away_rating_delta"
+    - "home_missing_stars_count"
+    - "away_missing_stars_count"
+    - "home_critical_weakened"
+    - "away_critical_weakened"
+
+  # 赔率特征
+  odds:
+    - "home_drop_ratio"
+    - "draw_change_ratio"
+    - "away_change_ratio"
+    - "total_movement"
+    - "significant_home_drop"
+    - "significant_movement"
+
+  # 联赛等级特征
+  league:
+    - "is_top_5_league"
+    - "is_major_league"
