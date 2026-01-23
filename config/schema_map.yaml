@@ -69,11 +69,73 @@ fotmob:
 # OddsPortal 数据路径映射（预留）
 # =============================================================================
 oddsportal:
-  # TODO: 添加 OddsPortal JSON 路径
+  # V41.541: Multi-source odds extraction from multiple bookmakers
+  bookmakers:
+    # Entity codes mapping (internal → display name)
+    Entity_P: "Pinnacle"           # Primary Source - highest priority
+    Entity_WH: "William Hill"       # Source_B
+    Entity_LB: "Ladbrokes"          # Source_L
+    Entity_B3: "1xBet"              # Source_U
+    Entity_AVG: "Average Odds"      # Market consensus
+
+  # Odds data paths for JSON extraction
   odds:
-    opening: "initial_price"
-    closing: "closing_price"
-    movement_history: "movement_history"
+    # Opening odds (初盘赔率)
+    opening:
+      path: "initial_price"
+      fields:
+        home: "h"
+        draw: "d"
+        away: "a"
+        timestamp: "opening_time"
+
+    # Closing odds (终盘赔率)
+    closing:
+      path: "closing_price"
+      fields:
+        home: "h"
+        draw: "d"
+        away: "a"
+        timestamp: "closing_time"
+
+    # Movement history (赔率变动历史)
+    movement_history:
+      path: "price_history"
+      format: "array"
+
+  # V41.541: Multi-source data table reference
+  multi_source_table:
+    name: "metrics_multi_source_data"
+    schema_version: "V105.0"
+    columns:
+      - id                      # Primary key (auto-increment)
+      - match_id                # Foreign key to matches
+      - source_name             # Bookmaker entity code
+      - init_h/d/a              # Opening odds
+      - opening_time_h/d/a      # Opening timestamps
+      - final_h/d/a             # Closing odds
+      - final_time              # Closing timestamp
+      - integrity_score         # Validation score (1/P1 + 1/P2 + 1/P3)
+      - is_valid                # Boolean validation flag
+      - validation_error        # Error message if invalid
+      - fully_captured          # All three dimensions present
+      - data_timestamp          # When record was created
+      - created_at              # Record creation time
+      - updated_at              # Record update time
+
+    # Constraints
+    constraints:
+      unique_key: ["match_id", "source_name"]
+      valid_score_range: [1.00, 1.15]
+
+    # Indexes for query optimization
+    indexes:
+      - match_id
+      - source_name
+      - final_h
+      - is_valid
+      - data_timestamp
+      - composite: ["match_id", "is_valid"]
 
 # =============================================================================
 # 数据库表路径映射

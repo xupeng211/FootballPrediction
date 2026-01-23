@@ -1328,80 +1328,93 @@ class HarvesterService:
         return discovered
 
     async def stage2_harvest_odds(self, matches: list[dict[str, Any]]) -> dict[str, int]:
-        """V57.0: Odds extraction.
+        """V41.541: Multi-source odds extraction (Quad Engine Integration).
 
         Args:
             matches: List of match dictionaries to harvest
 
         Returns:
-            Dictionary with processed count
+            Dictionary with processed count and multi-source statistics
         """
-        logger.info(f"[V142.0] 赔率提取: {len(matches)} 场")
+        logger.info(f"[V41.541 Quad Engine] 赔率提取: {len(matches)} 场")
+
+        stats = {
+            "processed": 0,
+            "multi_source_captured": 0,
+            "total_sources": 0,
+            "errors": 0
+        }
 
         if self.dry_run:
             logger.info("🏃 干跑模式 - 跳过实际采集")
             for m in matches[:5]:
                 logger.info(f"  [{m['match_id']}] {m['home_team']} vs {m['away_team']}")
-            return {"processed": len(matches)}
+            return {"processed": len(matches), "dry_run": True}
 
-        async with async_playwright() as pw:
-            browser = await pw.chromium.launch(
-                headless=True,
-                proxy=self.base_extractor.get_proxy_config(),
-            )
+        for match in matches:
+            try:
+                url = f"https://www.oddsportal.com{match['url_path']}"
+                match_id = match['match_id']
 
-            for match in matches:
-                try:
-                    # Use BaseExtractor to create context with Ghost Protocol (V142.2: returns tuple)
-                    context, page = await self.base_extractor.create_ghost_context(browser)
+                logger.info(
+                    f"[V41.541] Processing: {match_id} - "
+                    f"{match['home_team']} vs {match['away_team']}"
+                )
 
-                    url = f"https://www.oddsportal.com{match['url_path']}"
-                    await page.goto(url, wait_until="domcontentloaded", timeout=60000)
+                # V41.541: Use new multi-source extraction method
+                multi_source_data = await self.extractor.extract_all_entities_final_odds(
+                    url=url,
+                    match_id=match_id,
+                    match_date=match.get('match_date')
+                )
 
-                    # Detect blocking
-                    content = await page.content()
-                    is_blocked, block_reason = self.base_extractor.detect_blocking_method(content)
+                if multi_source_data:
+                    # Save all captured sources to database
+                    save_stats = self.extractor.save_multi_source_data(multi_source_data)
 
-                    if is_blocked:
-                        logger.error(f"🔴 {match['match_id']} 拦截: {block_reason}")
-                        await self.base_extractor.save_error_screenshot(page, block_reason)
+                    stats["multi_source_captured"] += 1
+                    stats["total_sources"] += save_stats.get("valid", 0)
 
-                        # V26.5: 记录失败到哨兵
-                        if self.collection_sentry:
-                            self.collection_sentry.record_result(False)
-
-                        await context.close()
-                        continue
-
-                    # Human behavior simulation
-                    if self.enable_ghost_protocol:
-                        await self.base_extractor.human_scroll(page, max_scrolls=2)
-                        await asyncio.sleep(random.uniform(2, 5))
-
-                    # Extract odds using OddsProductionExtractor
-                    # TODO: Integrate actual extraction logic
                     logger.info(
-                        f"✓ {match['match_id']}: {match['home_team']} vs {match['away_team']}"
+                        f"[V41.541] ✅ {match_id}: "
+                        f"{save_stats.get('valid', 0)} sources saved "
+                        f"({save_stats.get('fully_captured', 0)} fully captured)"
                     )
                     self.stats.total_harvested += 1
 
                     # V26.5: 记录成功到哨兵
                     if self.collection_sentry:
                         self.collection_sentry.record_result(True)
-
-                    await context.close()
-
-                except Exception as e:
-                    logger.exception(f"❌ {match.get('match_id', 'unknown')} 处理失败: {e}")
-                    self.stats.total_errors += 1
+                else:
+                    logger.warning(f"[V41.541] ⚠️ {match_id}: No sources captured")
+                    stats["errors"] += 1
 
                     # V26.5: 记录失败到哨兵
                     if self.collection_sentry:
                         self.collection_sentry.record_result(False)
 
-            await browser.close()
+                stats["processed"] += 1
 
-        return {"processed": len(matches)}
+                # Rate limiting: sleep between matches to avoid IP bans
+                await asyncio.sleep(random.uniform(5, 10))
+
+            except Exception as e:
+                logger.exception(f"❌ {match.get('match_id', 'unknown')} 处理失败: {e}")
+                stats["errors"] += 1
+                self.stats.total_errors += 1
+
+                # V26.5: 记录失败到哨兵
+                if self.collection_sentry:
+                    self.collection_sentry.record_result(False)
+
+        # Log summary statistics
+        logger.info("[V41.541 Quad Engine] Summary:")
+        logger.info(f"  Processed: {stats['processed']} matches")
+        logger.info(f"  Multi-source captured: {stats['multi_source_captured']} matches")
+        logger.info(f"  Total sources: {stats['total_sources']} bookmakers")
+        logger.info(f"  Errors: {stats['errors']}")
+
+        return stats
 
     def print_hourly_report(self) -> None:
         """V139.0: Hourly summary report."""

@@ -77,11 +77,12 @@ def print_banner() -> None:
     banner = """
 ╔══════════════════════════════════════════════════════════════════════╗
 ║                                                                        ║
-║       FootballPrediction V41.360 - Production-Ready Command Center     ║
+║       FootballPrediction V41.380 - The Golden Mine                     ║
 ║                                                                        ║
 ║  Consolidated Engine (V41.350):                                        ║
 ║  ├─ BrowserManager (V41.291) - Memory-optimized Singleton            ║
 ║  ├─ IntegrityGuard (V41.287) - Golden Shield Validation               ║
+║  ├─ GoldenExtractor (V41.380) - Market Value + Injury + Rating        ║
 ║  ├─ BaseExtractor V141.0 (Ghost Protocol)                            ║
 ║  ├─ FotMob V144.5 (Unified Schema V36.0)                             ║
 ║  ├─ OddsPortal V144.2 (Enhanced Stealth)                            ║
@@ -705,6 +706,161 @@ async def run_task_audit(args) -> int:
         return 1
 
 
+async def run_task_extract(args) -> int:
+    """V41.380: Run Golden Feature extraction task.
+
+    Extracts high-value features from 1524 unused fields:
+    - Market Value (身价): Average of starting 11 players
+    - Injury (伤病): Core players missing count
+    - Rating (评分): Last 5 matches average rating trend
+
+    Args:
+        args: Parsed command-line arguments
+
+    Returns:
+        Exit code (0 for success, non-zero for failure)
+    """
+    logger.info("⛏️  V41.380: 启动黄金特征提取模式")
+    print("")
+
+    try:
+        from src.processors.v41_380_golden_extractor import GoldenFeatureExtractor
+        import psycopg2
+        from datetime import datetime
+
+        # V41.380: Initialize Golden Feature Extractor
+        extractor = GoldenFeatureExtractor()
+        logger.info("  ✓ GoldenFeatureExtractor 初始化完成")
+        logger.info(f"  ✓ 并发线程数: {args.concurrent}")
+        print("")
+
+        # Get database connection
+        settings = get_settings()
+        conn = psycopg2.connect(
+            host=settings.database.host,
+            database=settings.database.name,
+            user=settings.database.user,
+            password=settings.database.password.get_secret_value(),
+        )
+        cursor = conn.cursor()
+
+        # Query matches with L2 data
+        limit = args.limit if args.limit else 1000
+        logger.info(f"  ✓ 查询待提取比赛 (limit: {limit})...")
+        print("")
+
+        query = """
+            SELECT match_id, l2_raw_json, match_date
+            FROM matches
+            WHERE l2_raw_json IS NOT NULL
+            ORDER BY match_date DESC
+            LIMIT %s
+        """
+
+        cursor.execute(query, (limit,))
+        matches = cursor.fetchall()
+        cursor.close()
+
+        logger.info(f"  ✓ 找到 {len(matches)} 场比赛")
+        print("")
+
+        # Extract features
+        import json
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+
+        stats = {
+            "total": len(matches),
+            "success": 0,
+            "failed": 0,
+            "new_features": 0,
+        }
+
+        def extract_single(match_row):
+            match_id, l2_raw, match_date = match_row
+            try:
+                if isinstance(l2_raw, str):
+                    l2_raw = json.loads(l2_raw)
+                elif isinstance(l2_raw, memoryview):
+                    l2_raw = json.loads(l2_raw.tobytes().decode('utf-8'))
+
+                features = extractor.extract_all_golden_features(l2_raw, match_date)
+                return match_id, features, None
+            except Exception as e:
+                return match_id, None, str(e)
+
+        # Parallel extraction
+        logger.info(f"  ✓ 开始 {args.concurrent} 线程并行提取...")
+        print("")
+
+        # Collect extracted features for batch saving
+        extracted_data = []
+        save_cursor = conn.cursor()
+
+        with ThreadPoolExecutor(max_workers=args.concurrent) as executor:
+            futures = {executor.submit(extract_single, match): match for match in matches}
+
+            for i, future in enumerate(as_completed(futures), 1):
+                match_id, features, error = future.result()
+
+                if error:
+                    stats["failed"] += 1
+                else:
+                    stats["success"] += 1
+                    stats["new_features"] = max(stats["new_features"], len(features))
+                    # Save feature immediately
+                    if features:
+                        extracted_data.append((match_id, json.dumps(features),))
+
+                # Batch save every 50 matches
+                if len(extracted_data) >= 50:
+                    save_cursor.executemany(
+                        "UPDATE matches SET golden_features = %s::jsonb WHERE match_id = %s",
+                        [(f, m) for m, f in extracted_data]
+                    )
+                    conn.commit()
+                    extracted_data.clear()
+
+                if i % 100 == 0:
+                    logger.info(f"  进度: {i}/{len(matches)} | 成功: {stats['success']} | 失败: {stats['failed']}")
+
+        # Save remaining features
+        if extracted_data:
+            save_cursor.executemany(
+                "UPDATE matches SET golden_features = %s::jsonb WHERE match_id = %s",
+                [(f, m) for m, f in extracted_data]
+            )
+            conn.commit()
+        save_cursor.close()
+
+        # Final report
+        logger.info("")
+        logger.info("=" * 60)
+        logger.info("📊 V41.380 黄金特征提取报告")
+        logger.info("=" * 60)
+        logger.info(f"处理比赛: {stats['total']} 场")
+        logger.info(f"提取成功: {stats['success']} 场")
+        logger.info(f"提取失败: {stats['failed']} 场")
+        logger.info(f"新增特征: {stats['new_features']} 维")
+        logger.info(f"成功率: {100*stats['success']/stats['total']:.1f}%")
+        logger.info("=" * 60)
+
+        # Cleanup
+        conn.close()
+        extractor.cleanup()
+
+        return 0 if stats["failed"] == 0 else 1
+
+    except ImportError as e:
+        logger.error(f"❌ GoldenFeatureExtractor 模块导入失败: {e}")
+        logger.error("   请确保 V41.380 Golden Feature Extractor 已正确安装")
+        return 1
+    except Exception as e:
+        logger.error(f"❌ 提取失败: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
+        return 1
+
+
 # ============================================================================
 # CLI Interface
 # ============================================================================
@@ -753,8 +909,16 @@ Examples:
     parser.add_argument(
         "--task",
         type=str,
-        choices=["harvest", "audit"],
-        help="V41.360: 统一任务入口 - harvest (一键收割) / audit (Golden Shield 审计)"
+        choices=["harvest", "audit", "extract"],
+        help="V41.360/380: 统一任务入口 - harvest (一键收割) / audit (Golden Shield 审计) / extract (黄金特征提取)"
+    )
+
+    # V41.380: 提取任务参数
+    parser.add_argument(
+        "--concurrent",
+        type=int,
+        default=12,
+        help="V41.380: 并发线程数 (默认: 12)"
     )
 
     # V144.7: 新增 --source 参数
@@ -860,12 +1024,14 @@ async def main() -> int:
     logger.info(f"[V41.360] 🛡️ Production-Ready Command Center initialized")
     print("")
 
-    # V41.360: 统一任务路由 (最高优先级)
+    # V41.360/380: 统一任务路由 (最高优先级)
     if args.task:
         if args.task == "harvest":
             return await run_task_harvest(args)
         if args.task == "audit":
             return await run_task_audit(args)
+        if args.task == "extract":
+            return await run_task_extract(args)
 
     # V41.41: 特殊操作路由
     if args.action == "align-hashes":

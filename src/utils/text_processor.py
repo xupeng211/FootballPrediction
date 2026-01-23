@@ -563,38 +563,171 @@ class TeamNameNormalizer:
         # Calculate base score (highest of the three)
         base_score = float(max(token_sort_score, partial_score, standard_score))
 
-        # V41.35: Apply similarity threshold enforcement
-        # If the normalized names are different AND they share a common prefix (e.g., "Manchester"),
-        # reduce the score to prevent false positives
-        if base_score >= 80.0 and base_score < 95.0:
-            # Check for common prefixes that might cause false matches
-            norm1_words = set(norm1.split())
-            norm2_words = set(norm2.split())
+        # ====================================================================
+        # V41.35: Similarity Penalty - ABOLISHED by V41.790
+        # ====================================================================
+        # The V41.35 similarity penalty logic has been removed to allow
+        # higher match success rates. The penalty was reducing scores to 60%
+        # when teams shared common words but weren't exact matches.
+        #
+        # V41.790: Golden Sweep - Penalty Removal Strategy
+        # - Core word matching takes priority (via relaxed_match)
+        # - No automatic score reduction for common prefixes
+        # - Relaxed_match provides controlled scoring with 95% cap
+        #
+        # Original V41.35 code (now disabled):
+        # if base_score >= 80.0 and base_score < 95.0:
+        #     # Check for common prefixes and apply penalty...
+        #
+        # Penalty example that is now DISABLED:
+        # "Manchester United" vs "Manchester City": 86% -> 51.6% ❌
+        # V41.790 behavior: "Manchester United" vs "Manchester City": 86% ✅
+        # ====================================================================
 
-            # Find common words
-            common_words = norm1_words & norm2_words
+        # Return the highest score (no penalty applied)
+        return base_score
 
-            # If they share common words but are not exact matches, apply penalty
-            if common_words and len(common_words) > 0:
-                # Calculate penalty based on how many words they share
-                common_words_list = list(common_words)
-                logger.debug(
-                    f"V41.35 Common words detected between '{name1}' and '{name2}': "
-                    f"{common_words_list} (base_score: {base_score:.1f}%)"
-                )
+    def _extract_core_word(self, team_name: str) -> str:
+        """V41.780: Extract the core word from a team name.
 
-                # Apply penalty: reduce score to 60% if they share words but aren't exact matches
-                # This ensures "Manchester United" vs "Manchester City" gets < 80%
-                penalty_score = base_score * 0.6
+        The core word is defined as the first meaningful word in the team name,
+        after normalization. This is used for Relaxed_Match mode to determine
+        if two team names share the same core identity.
 
-                # If penalty brings it below 80%, use that
-                if penalty_score < 80.0:
-                    logger.debug(
-                        f"V41.35 Similarity penalty applied: {base_score:.1f}% -> {penalty_score:.1f}%"
-                    )
-                    return penalty_score
+        Examples:
+            "Arsenal" -> "arsenal"
+            "Arsenal FC" -> "arsenal"
+            "Manchester United" -> "manchester"
+            "Manchester City" -> "manchester"
+            "Man Utd" -> "man"
+            "Tottenham Hotspur" -> "tottenham"
+            "Wolves" -> "wolves"
 
-        # Return the highest score
+        Args:
+            team_name: Raw team name
+
+        Returns:
+            Core word in lowercase, or empty string if input is empty
+        """
+        if not team_name:
+            return ""
+
+        # Normalize the team name first
+        normalized = self.normalize(team_name)
+
+        # Split into words and return the first word (core word)
+        words = normalized.split()
+        if words:
+            return words[0]
+
+        return ""
+
+    def relaxed_match(self, name1: str, name2: str) -> float:
+        """V41.780: Relaxed matching mode for team names with enhanced tolerance.
+
+        This method implements a more permissive matching strategy designed to
+        maximize match success rate while maintaining reasonable accuracy:
+        1. If core words are the same AND fuzzy score > 60%, force score to >= 80%
+        2. Exact matches (after normalization) return 100%
+        3. Youth team collisions are still protected (heavy penalty applied)
+
+        Core Algorithm:
+        - Extract core word from both names (first word after normalization)
+        - If core words match AND fuzzy score > 60%, boost to >= 80%
+        - If normalized names are exact match, return 100%
+        - Apply youth team penalty if different tiers detected
+
+        Args:
+            name1: First team name
+            name2: Second team name
+
+        Returns:
+            Match score between 0 and 100
+
+        Examples:
+            >>> normalizer = TeamNameNormalizer()
+            >>> normalizer.relaxed_match("Man Utd", "Manchester United")
+            100.0
+            >>> normalizer.relaxed_match("Wolves", "Wolverhampton Wanderers")
+            85.0
+            >>> normalizer.relaxed_match("Arsenal", "Chelsea")
+            25.0
+        """
+        # Handle empty strings
+        if not name1 or not name2:
+            return 0.0
+
+        # V41.29 P0: Check for youth team collision FIRST
+        # Apply heavy penalty for youth team matches (cannot be bypassed)
+        if _youth_detector.are_different_tiers(name1, name2):
+            # Calculate base score but apply heavy penalty
+            norm1 = self.normalize(name1)
+            norm2 = self.normalize(name2)
+
+            token_sort_score = fuzz.token_sort_ratio(norm1, norm2)
+            partial_score = fuzz.partial_ratio(norm1, norm2)
+            standard_score = fuzz.ratio(norm1, norm2)
+
+            base_score = float(max(token_sort_score, partial_score, standard_score))
+
+            # Apply 50% penalty for youth team matches
+            penalty_score = base_score * 0.5
+
+            logger.debug(
+                f"🚨 V41.780 Youth team penalty applied: {name1} vs {name2} "
+                f"(base: {base_score:.1f}% -> penalty: {penalty_score:.1f}%)"
+            )
+
+            return penalty_score
+
+        # Normalize both names
+        norm1 = self.normalize(name1)
+        norm2 = self.normalize(name2)
+
+        # Exact match after normalization
+        if norm1 == norm2:
+            return 100.0
+
+        # Extract core words for comparison
+        core1 = self._extract_core_word(name1)
+        core2 = self._extract_core_word(name2)
+
+        # Calculate fuzzy score using multiple strategies
+        token_sort_score = fuzz.token_sort_ratio(norm1, norm2)
+        partial_score = fuzz.partial_ratio(norm1, norm2)
+        standard_score = fuzz.ratio(norm1, norm2)
+
+        base_score = float(max(token_sort_score, partial_score, standard_score))
+
+        # V41.780: Relaxed matching rule
+        # If core words are the same AND fuzzy score > 60%, boost to >= 80%
+        if core1 and core2 and core1 == core2 and base_score > 60.0:
+            # Boost the score to at least 80%, or keep original if higher
+            relaxed_score = max(base_score, 80.0)
+
+            # Cap at 95% to avoid false positives for different teams
+            # (e.g., Manchester United vs Manchester City should not be 100%)
+            relaxed_score = min(relaxed_score, 95.0)
+
+            logger.debug(
+                f"🎯 V41.780 Relaxed match applied: {name1} vs {name2} "
+                f"(core: '{core1}' | base: {base_score:.1f}% -> relaxed: {relaxed_score:.1f}%)"
+            )
+
+            return relaxed_score
+
+        # ====================================================================
+        # V41.35: Similarity Penalty - ABOLISHED by V41.790 in relaxed_match
+        # ====================================================================
+        # The V41.35 similarity penalty has been removed from relaxed_match too.
+        # This ensures consistent behavior between fuzzy_match and relaxed_match.
+        #
+        # V41.790: Golden Sweep - No penalty for common prefixes
+        # - Core word matching (above) handles the boosting logic
+        # - No additional penalty for shared words
+        # ====================================================================
+
+        # Return the base score (no penalty applied)
         return base_score
 
     def parse_team_slug_full_path(

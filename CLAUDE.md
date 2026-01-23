@@ -31,16 +31,19 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | 属性 | 值 |
 |------|-----|
 | **状态** | ✅ Production Ready |
-| **生产版本** | **V41.287** (UTC Audit + Golden Shield) |
-| **命令中心** | **V144.7** (Multi-Source Command Center) |
+| **项目版本** | **V26.7.0** (pyproject.toml) |
+| **生产版本** | **V41.832** (工业级归档收割机) |
+| **命令中心** | **V144.9** (Multi-Source Command Center - Final Baseline) |
 | **核心模型** | **V26.8** (联赛专项) |
-| **数据采集** | **V151.3** (并发收割器) + **V144.5** (FotMob) |
+| **数据采集** | **V142.0** (HarvesterService) + **V144.5** (FotMob) |
 | **数据同步** | **V36.3** (auto_sync_and_alchemy_v2.sh) |
-| **特征引擎** | **V29.1** (多格式解析) |
+| **特征引擎** | **V41.380** (Golden Extractor) + **V41.390** (滚动特征) + **V41.500** (自动化特征工厂) |
 | **Docker 版本** | **V51.0** (Industrial Grade Ready) |
+| **模型框架** | XGBoost 3.0+ + CatBoost (V41.430) |
+| **代码质量** | **V106.0** (Ruff 配置) |
 | **基线准确率** | 56% (真赛前) |
 | **推理延迟** | <100ms |
-| **最后更新** | 2026-01-21 |
+| **最后更新** | 2026-01-23 |
 
 ---
 
@@ -48,21 +51,54 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 项目采用严格的版本管理体系，各主要组件版本独立演进：
 
+### 最新版本发布：V41.832 工业级归档收割机 (Production Blueprint)
+
+**说明**: V41.832 是一个工业级重构蓝图，将单文件脚本重构为模块化架构
+
+| 特性 | 说明 |
+|------|------|
+| **物理点击机制** | Playwright 精确定位分页按钮，解决 Vue.js 动态加载问题 |
+| **内容锁设计** | 等待页面内容完全填充后再提取，拒绝零场成功 |
+| **事务自愈逻辑** | 每场比赛独立 try-except 包裹，execute 报错立即 rollback |
+| **模块化架构** | 5 个独立模块 (harvesters, parsers, database_inserter, browser_helper, config) |
+| **16/16 测试通过** | 完整的单元测试覆盖，支持英超/西甲/意甲/德甲/法甲 |
+| **100% Type Hints** | 完整的类型注解覆盖 |
+| **Google Style Docstrings** | 标准化的文档字符串 |
+
+**详细文档**: `docs/MR_V41.832_production_blueprint.md`
+
+**五大联赛总攻计划**:
+- ✅ **英超**: 完成 (2024/2025 赛季已收割 380 场)
+- 🚀 **西甲**: V41.840 系列 (计划中)
+- 🚀 **意甲**: V41.850 系列 (计划中)
+- 🚀 **德甲**: V41.860 系列 (计划中)
+- 🚀 **法甲**: V41.870 系列 (计划中)
+
 ### 核心组件版本系列
 
 | 组件 | 版本系列 | 说明 |
 |------|----------|------|
-| **数据采集** | V41.x | 运维工具和采集器 (V41.287 最新) |
+| **数据采集** | V41.x | 运维工具和采集器 (V41.810 最新) |
 | **命令中心** | V144.x | 统一入口和数据源路由 (V144.7 最新) |
 | **预测模型** | V26.x | 特征引擎和模型训练 (V26.8 最新) |
 | **收割服务** | V142.x | 统一收割服务架构 (V142.0 最新) |
 | **Ghost Protocol** | V141.x | 反爬检测基础能力 (V141.0 最新) |
+| **特征工厂** | V41.500+ | 自动化特征提取引擎 (V41.500 最新) |
+| **代码质量** | V106.0 | Ruff 配置 (line-length: 100) |
 
 ### 关键里程碑
 
-- **V144.7** (2026-01): 多数据源统一命令入口
+- **V41.832** (2026-01): 工业级归档收割机 - 物理分页、内容锁与事务自愈
+- **V41.510** (2026-01): Automated Feature Factory Integration - Production Ready
+- **V41.810** (2026-01): Archive Brute Force - 档案暴力破解
+- **V41.800** (2026-01): Archive Breaker - 档案破解器
+- **V41.720** (2026-01): Lightning Harvest - 网络拦截型极速收割
+- **V41.710** (2026-01): 进度监控脚本
+- **V41.500** (2026-01): 自动化特征工厂 - Schema 韧性配置
+- **V144.9** (2026-01): Multi-Source Command Center - Final Baseline
 - **V41.287** (2026-01): UTC 审计 + Golden Shield 特征透视
 - **V51.0** (2025-12): 工业级 Docker 部署就绪
+- **V106.0** (2025-12): Ruff 代码质量配置
 - **V29.1** (2024-11): 多格式特征解析引擎
 
 ### 版本文档
@@ -179,11 +215,19 @@ FootballPrediction/
 │   │   ├── environment_detector.py  # 环境智能检测
 │   │   └── scrapers/             # V41.156 代理管理器
 │   ├── database/                 # 数据库层
+│   ├── harvesters/               # V41.832 工业级收割机
+│   │   └── oddsportal_archive.py # 模块化归档收割
+│   ├── parsers/                  # V41.832 数据解析器
+│   │   └── match_parser.py       # 比赛数据解析
 │   ├── ml/                       # ML 引擎
 │   │   └── engine.py             # XGBoost 引擎 + ModelDispatcher
 │   ├── models/                   # V41.155 数据模型
 │   │   └── match_schema.py      # MatchSchema 统一数据模型
 │   ├── processors/               # V25.1 特征提取
+│   │   ├── v41_380_golden_extractor.py    # Golden Shield 特征提取
+│   │   ├── rolling_feature_calculator.py  # V41.390 滚动特征计算
+│   │   ├── feature_factory.py    # V41.510 自动化特征工厂
+│   │   └── path_resolver.py      # Schema-Agnostic 路径解析
 │   └── utils/                    # 工具类
 │       └── text_processor.py     # V140.0 TeamNameNormalizer
 ├── scripts/                      # 核心脚本
@@ -194,16 +238,24 @@ FootballPrediction/
 │   │   ├── v41_287_golden_shield_audit.py # 特征深度透视
 │   │   ├── v41_290_golden_vault_seal.py  # 库存封存
 │   │   ├── v41_291_diagnostic_tool.py   # 诊断工具
+│   │   ├── v41_800_archive_breaker.py   # V41.800 档案破解器
+│   │   ├── v41_810_archive_brute_force.py # V41.810 档案暴力破解
+│   │   ├── v41_820_archive_real_click.py # V41.820 真实点击
+│   │   ├── v41_830_data_janitor.py      # V41.830 数据清理
+│   │   ├── v41_831_deep_purge.py        # V41.831 深度清理
 │   │   └── auto_sync_and_alchemy_v2.sh  # V36.3 数据同步
 │   ├── maintenance/              # 维护脚本
 │   ├── ml/                       # ML 训练脚本
 │   ├── sql/                      # SQL 迁移脚本
 │   └── run_checks.sh             # CI 质量门禁
 ├── tests/                        # 测试套件
+│   └── harvesters/               # V41.832 收割机测试
+│       └── test_oddsportal_archive.py
 ├── config/                       # 配置文件
 │   ├── titan_config.yaml         # V41.151 统一代理和联赛配置
 │   ├── global_harvest_list.yaml  # 全球联赛注册表
-│   └── harvester_v2.yaml        # 收割器配置
+│   ├── harvester_v2.yaml        # 收割器配置
+│   └── schema_map.yaml          # V41.500+ JSON 路径配置
 ├── storage/                      # V41.153 存储层
 │   ├── html_vault/               # HTML 存储库
 │   └── injection_queue/          # 注入队列
@@ -212,6 +264,8 @@ FootballPrediction/
 ├── Makefile                      # 统一命令入口
 ├── requirements.txt              # 生产依赖
 ├── pyproject.toml                # Poetry 配置
+├── docs/                         # 文档目录
+│   └── MR_V41.832_production_blueprint.md  # V41.832 工业级蓝图
 └── CLAUDE.md                     # 本文件
 ```
 
@@ -231,6 +285,17 @@ settings = get_settings()
 db_host = settings.database.host
 db_name = settings.database.name
 ```
+
+#### 配置文件说明 (config/ 目录)
+
+| 文件 | 用途 |
+|------|------|
+| `.env` | 环境变量配置（数据库、Redis、代理等） |
+| `leagues.yaml` | 联赛配置（tier 分级、名称映射） |
+| `global_harvest_list.yaml` | 全球联赛注册表 |
+| `titan_config.yaml` | 统一代理和联赛配置 |
+| `harvester_v2.yaml` | 收割器配置 |
+| `schema_map.yaml` | V41.500+ JSON 路径配置（数据源变动适配） |
 
 #### 环境智能检测 (V41.59)
 
@@ -369,6 +434,14 @@ GROUP BY score_category;
 make verify  # 快速验证 (lint + test-unit + security)
 ```
 
+**工具配置**:
+- **Ruff (V106.0)**: `ruff.toml` - 主代码质量工具
+  - `line-length`: 100 字符
+  - `target-version`: Python 3.11
+  - 规则集: E, W, F, I, N, UP, B, C4, DTZ, T10, EM, ISC, ICN, G, PIE, T20, PT, Q, RSE, RET, SIM, TID, TCH, ARG, PTH, ERA, PL, TRY, FLY, PERF, RUF
+  - McCabe 复杂度阈值: 15
+- **pyproject.toml**: 备用配置 (line-length: 120)
+
 **推荐的代码质量工作流**：
 ```bash
 # 1. 格式化代码（主要工具）
@@ -377,17 +450,20 @@ ruff format src/ tests/
 # 2. Lint 检查（主要工具）
 ruff check src/ tests/
 
-# 3. 类型检查
+# 3. 自动修复
+ruff check src/ tests/ --fix
+
+# 4. 类型检查
 mypy src/
 
-# 4. 安全扫描
+# 5. 安全扫描
 bandit -r src/
 ```
 
 **工具优先级**：
 | 工具 | 优先级 | 用途 |
 |------|--------|------|
-| **Ruff** | 🔴 主要 | 格式化 + Lint |
+| **Ruff** | 🔴 主要 | 格式化 + Lint (ruff.toml) |
 | **MyPy** | 🟡 推荐 | 类型检查 |
 | **Bandit** | 🟡 推荐 | 安全扫描 |
 
@@ -485,12 +561,21 @@ bandit -r src/
 
 ## 🧬 核心模块说明
 
-### main.py - V144.7 Multi-Source Command Center
+### main.py - V41.360 Production-Ready Command Center
 
 项目的主要入口点，提供统一命令行界面：
 
 ```bash
-# V144.7: 多数据源支持
+# V41.360: 一键收割 (Consolidated Engine)
+python main.py --task harvest --limit 2000
+
+# V41.360: Golden Shield 审计
+python main.py --task audit
+
+# V41.360: 黄金特征提取
+python main.py --task extract --concurrent 12
+
+# 多数据源支持
 python main.py --source fotmob --mode single --limit 10
 python main.py --source oddsportal --mode single --limit 10
 python main.py --source fotmob --mode cruise
@@ -572,6 +657,103 @@ result = collector.collect_and_save(match_id="3428850")
 - V41.281 双结构兼容：支持新旧 FotMob API 结构
 - V41.284 Supersonic Harvest：429 智能避让，5 秒休眠后自动重试
 
+### V41.380 GoldenExtractor - 特征深度提取
+
+位于 `src/processors/v41_380_golden_extractor.py`，深度特征提取引擎：
+
+```python
+from src.processors.v41_380_golden_extractor import GoldenExtractor
+
+extractor = GoldenExtractor()
+features = extractor.extract_golden_features(l2_raw_json)
+# 提取黄金特征用于模型训练和预测
+```
+
+### V41.390 RollingFeatureCalculator - 滚动特征计算
+
+位于 `src/processors/rolling_feature_calculator.py`，时序特征计算：
+
+```python
+from src.processors.rolling_feature_calculator import RollingFeatureCalculator
+
+calculator = RollingFeatureCalculator()
+rolling_features = calculator.calculate_team_form(team_id, window=5)
+# 计算球队近期表现特征
+```
+
+### V41.500+ 自动化特征工厂 - Schema 韧性配置
+
+**版本说明**: V41.510 (Automated Feature Factory Integration - Production Ready)
+
+位于 `config/schema_map.yaml` 和 `src/processors/feature_factory.py`，实现数据源变动适配：
+
+**V41.510 核心特性**:
+- ✅ 自动化特征生成流水线
+- ✅ Schema-Agnostic 路径访问（PathResolver）
+- ✅ 疲劳度、缺阵、首发战力、赔率动向特征
+- ✅ 五大联赛识别和分级
+- ✅ 生产就绪的批量处理能力
+
+**核心架构**:
+```
+┌──────────────┐    ┌──────────────┐    ┌──────────────┐
+│ Schema Map   │───▶│Path Resolver │───▶│Feature       │
+│ (YAML 配置)   │    │(安全路径访问)  │    │Factory       │
+└──────────────┘    └──────────────┘    │(特征工厂)    │
+                                          └──────────────┘
+```
+
+**核心组件**:
+| 组件 | 文件路径 | 功能 |
+|------|----------|------|
+| **Schema Map** | `config/schema_map.yaml` | JSON 路径配置，支持数据源变动 |
+| **Path Resolver** | `src/processors/path_resolver.py` | 安全路径访问，带默认值容错 |
+| **Feature Factory** | `src/processors/feature_factory.py` | 特征生成引擎（疲劳度/缺阵/赔率） |
+| **Pipeline Integrator** | `src/api/collectors/v41_500_pipeline_integration.py` | 流水线自动集成器 |
+
+**V41.500 新增特征定义**:
+| 特征类别 | 特征名称 | 说明 |
+|----------|----------|------|
+| **疲劳度** | `home_rest_days` | 主队休息天数 |
+| | `away_is_busy_week` | 客队是否为忙碌周（休息<4天） |
+| | `diff_rest_days` | 休息天数差值 |
+| **缺阵** | `home_unavailable_total_count` | 主队缺阵人数 |
+| | `home_unavailable_total_market_value` | 主队缺阵总身价（欧元） |
+| | `home_unavailable_star_count` | 主队缺阵球星数（身价>30M） |
+| **首发战力** | `home_starter_avg_rating` | 主队首发平均评分 |
+| | `home_missing_stars_count` | 主队缺阵大腿数（评分>=7.5） |
+| **赔率动向** | `home_drop_ratio` | 主胜赔率下降比率 |
+| | `total_movement` | 赔率总变化幅度 |
+| **联赛等级** | `is_top_5_league` | 是否为五大联赛 |
+
+**使用方式**:
+```bash
+# 1. 数据采集完成后自动处理
+python -c "
+from src.api.collectors.v41_500_pipeline_integration import process_match_after_collection
+process_match_after_collection('match_id')
+"
+
+# 2. 批量处理最近 100 场比赛
+python src/api/collectors/v41_500_pipeline_integration.py
+
+# 3. 在代码中调用
+from src.processors.feature_factory import get_feature_factory
+factory = get_feature_factory()
+features = factory.process_match(match_data)
+```
+
+**更新 schema_map.yaml**:
+当数据源结构变化时，只需更新 `config/schema_map.yaml`，无需修改代码：
+```yaml
+# 示例：添加新的数据源路径
+new_source:
+  match_data:
+    path: "data.match"
+    home_team: "teams.home.name"
+    unavailable: "teams.home.unavailable_list"
+```
+
 ---
 
 ## 📊 系统性能基准
@@ -613,7 +795,7 @@ result = collector.collect_and_save(match_id="3428850")
 | **数据库** | PostgreSQL | 15 | 生产数据存储 |
 | **缓存** | Redis | 7 | 分布式缓存 |
 | **浏览器** | Playwright | 1.49+ | 智能网页自动化 |
-| **ML 框架** | XGBoost | 3.0+ | 预测模型 |
+| **ML 框架** | XGBoost / CatBoost | 3.0+ / 1.2+ | 预测模型 (V41.430 支持 CatBoost) |
 | **Web** | FastAPI | 0.124+ | REST API |
 | **测试** | Pytest | 9.0+ | 单元测试 |
 | **容器** | Docker | 24+ | 容器化部署 |
@@ -636,6 +818,127 @@ python scripts/ops/v41_277_p0_lineup_rush.py --limit 50
 ### V41.280 Async Harvest - 异步收割
 ```bash
 python scripts/ops/v41_280_async_harvest.py --concurrent 10
+```
+
+### V41.390 Quality Spotcheck - 质量检查
+```bash
+python scripts/ops/v41_390_quality_spotcheck.py --limit 100
+```
+
+### V41.480 JSON Path Audit - JSON 路径审计
+```bash
+python scripts/ops/v41_480_json_path_audit.py --match-id <MATCH_ID>
+```
+
+### V41.520 Backfill Audit - 数据回填审计
+```bash
+python scripts/ops/v41_520_backfill_audit.py --season 2024-2025
+```
+
+### V41.710 进度监控 - 哈希补全进度监控
+```bash
+python scripts/ops/v41_710_monitor.py
+# 用于监控英超等联赛的哈希补全进度
+```
+
+### V41.720 Lightning Harvest - 网络拦截型极速收割
+```bash
+# 英超 2024/2025 赛季（闪电模式）
+python -m scripts.ops.v41_720_lightning_harvest --league "Premier League" --season "2024/2025"
+
+# 五大联赛全量
+python -m scripts.ops.v41_720_lightning_harvest --season "2024/2025"
+# 核心创新: 网络拦截直接捕获 XHR 响应，跳过 DOM 渲染
+```
+
+### V41.730 Bulk Harvest - 批量收割
+```bash
+python scripts/ops/v41_730_bulk_harvest.py
+```
+
+### V41.740 Lockdown - 封锁模式
+```bash
+python scripts/ops/v41_740_lockdown.py
+```
+
+### V41.750 Sovereign Harvest - 主权收割
+```bash
+python scripts/ops/v41_750_sovereign_harvest.py
+```
+
+### V41.760 Total Conquest - 完全征服
+```bash
+python scripts/ops/v41_760_total_conquest.py
+```
+
+### V41.770 Page Harvester - 页面收割器
+```bash
+python scripts/ops/v41_770_page_harvester.py
+```
+
+### V41.780 Perfectionist - 完美主义者
+```bash
+python scripts/ops/v41_780_perfectionist.py
+```
+
+### V41.781 Diagnose HTML - HTML 诊断
+```bash
+python scripts/ops/v41_781_diagnose_html.py
+```
+
+### V41.790 Golden Sweep - 黄金扫描
+```bash
+python scripts/ops/v41_790_golden_sweep.py
+```
+
+### V41.795 Diagnose Archive - 档案诊断
+```bash
+python scripts/ops/v41_795_diagnose_archive.py
+```
+
+### V41.795 Precision Sweep - 精密扫描
+```bash
+python scripts/ops/v41_795_precision_sweep.py
+```
+
+### V41.796 Direct URL Fetcher - 直接 URL 获取
+```bash
+python scripts/ops/v41_796_direct_url_fetcher.py
+```
+
+### V41.800 Archive Breaker - 档案破解器
+```bash
+python scripts/ops/v41_800_archive_breaker.py
+```
+
+### V41.832 工业级归档收割机 (Production Blueprint)
+
+**说明**: V41.832 是工业级重构蓝图，提供了模块化架构替代单文件脚本
+
+```bash
+# 蓝图文档 (详细设计)
+cat docs/MR_V41.832_production_blueprint.md
+
+# 模块化架构 (Python API)
+from src.harvesters.oddsportal_archive import OddsPortalArchiveHarvester
+
+harvester = OddsPortalArchiveHarvester()
+result = await harvester.harvest_season("Premier League", "2024/2025")
+
+# 运行单元测试 (16/16 通过)
+pytest tests/harvesters/test_oddsportal_archive.py -v
+```
+
+**核心特性**:
+- **物理点击机制**: Playwright 精确定位分页按钮
+- **内容锁设计**: 等待页面内容完全填充后再提取
+- **事务自愈逻辑**: 每场比赛独立 try-except 包裹
+- **模块化架构**: 5 个独立模块 (harvesters, parsers, database_inserter)
+- **测试覆盖**: 16/16 单元测试通过
+
+### V41.810 Archive Brute Force - 档案暴力破解
+```bash
+python scripts/ops/v41_810_archive_brute_force.py
 ```
 
 ---
@@ -822,13 +1125,16 @@ docker-compose exec db cat /var/lib/postgresql/data/log/postgresql.log | grep "d
 
 **🚨 CRITICAL**: This is a production system support document.
 
-**🧬 当前版本**: V41.287 (UTC Audit + Golden Shield)
-**命令中心**: V144.7 (Multi-Source Command Center)
-**收割引擎**: V41.285 (Stabilized Flow - 连接池扩容)
+**🧬 当前版本**: V26.7.0 (pyproject.toml) / V41.832 (工业级归档收割机)
+**命令中心**: V144.9 (Multi-Source Command Center - Final Baseline)
+**收割引擎**: V142.0 (HarvesterService - 统一收割服务)
 **阵容采集**: V41.284 (Supersonic Harvest - 429 智能避让)
-**工业审计**: V41.283 (Industrial Auditor - 异步修复)
+**特征引擎**: V41.380 (Golden Extractor) + V41.390 (滚动特征) + V41.510 (自动化特征工厂)
+**闪电收割**: V41.720 (Lightning Harvest - 网络拦截型极速收割)
+**归档收割**: V41.832 (工业级归档收割机 - 物理点击、内容锁、事务自愈)
 **Docker 版本**: V51.0 (Industrial Grade Ready)
-**最后更新**: 2026-01-21
+**代码质量**: V106.0 (Ruff 配置 - line-length: 100)
+**最后更新**: 2026-01-23
 **基线准确率**: 56% (真赛前)
 **生产状态**: Production Ready
 **Python 版本**: 3.11+
