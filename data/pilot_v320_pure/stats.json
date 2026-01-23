@@ -1,0 +1,18 @@
+{
+  "total_matches_db": 9927,
+  "samples_with_history": 9920,
+  "samples_insufficient_history": 7,
+  "total_features_extracted": 33,
+  "feature_matrix_shape": [
+    9920,
+    33
+  ],
+  "label_distribution": {
+    "H": 4255,
+    "D": 2518,
+    "A": 3147
+  },
+  "extraction_time_ms": 45582.16,
+  "has_odds_features": false,
+  "leakage_removed": true
+}

@@ -120,7 +120,6 @@ class MatchLinker:
         "tottenham": "tottenham hotspur",
         "tottenham hotspur": "tottenham hotspur",
         "wolves": "wolverhampton wanderers",
-        "wolves": "wolverhampton",
         "wolverhampton": "wolverhampton wanderers",
         "wolverhampton wanderers": "wolverhampton wanderers",
         "foxes": "leicester city",
@@ -686,6 +685,200 @@ class MatchLinker:
             link_method="none",
             stored=False,
         )
+
+    def sync_multi_source_to_intelligence(self, match_id: str) -> dict[str, Any]:
+        """V41.541: Sync multi-source odds data to match_odds_intelligence.
+
+        Reads from metrics_multi_source_data table and aggregates odds from
+        multiple bookmakers into match_odds_intelligence.
+
+        Args:
+            match_id: Match ID to sync
+
+        Returns:
+            Dictionary with sync status and statistics
+        """
+        conn = self._get_connection()
+        cursor = conn.cursor()
+
+        try:
+            # Check if multi_source table exists
+            cursor.execute("""
+                SELECT EXISTS (
+                    SELECT FROM information_schema.tables
+                    WHERE table_name = 'metrics_multi_source_data'
+                )
+            """)
+
+            if not cursor.fetchone()["exists"]:
+                logger.warning("[V41.541] metrics_multi_source_data table not found")
+                return {"status": "error", "message": "Source table does not exist"}
+
+            # Read multi-source data for this match
+            cursor.execute("""
+                SELECT source_name, init_h, init_d, init_a,
+                       final_h, final_d, final_a, is_valid, integrity_score
+                FROM metrics_multi_source_data
+                WHERE match_id = %s AND is_valid = TRUE
+                ORDER BY source_name
+            """, (match_id,))
+
+            multi_source_rows = cursor.fetchall()
+
+            if not multi_source_rows:
+                logger.debug(f"[V41.541] No valid multi-source data for match {match_id}")
+                return {"status": "no_data", "match_id": match_id}
+
+            # Aggregate odds across all sources
+            valid_final_odds = [
+                (row["final_h"], row["final_d"], row["final_a"])
+                for row in multi_source_rows
+                if all([row["final_h"], row["final_d"], row["final_a"]])
+            ]
+
+            if not valid_final_odds:
+                logger.warning(f"[V41.541] No valid final odds for match {match_id}")
+                return {"status": "no_valid_odds", "match_id": match_id}
+
+            # Calculate average closing odds
+            avg_h = sum(h for h, d, a in valid_final_odds) / len(valid_final_odds)
+            avg_d = sum(d for h, d, a in valid_final_odds) / len(valid_final_odds)
+            avg_a = sum(a for h, d, a in valid_final_odds) / len(valid_final_odds)
+
+            # Use Primary Source (Entity_P) for initial price if available
+            primary_row = next(
+                (row for row in multi_source_rows if row["source_name"] == "Entity_P"),
+                None
+            )
+
+            if primary_row and all([primary_row["init_h"], primary_row["init_d"], primary_row["init_a"]]):
+                initial_price = [primary_row["init_h"], primary_row["init_d"], primary_row["init_a"]]
+            else:
+                # Fall back to average of available opening odds
+                valid_init_odds = [
+                    (row["init_h"], row["init_d"], row["init_a"])
+                    for row in multi_source_rows
+                    if all([row["init_h"], row["init_d"], row["init_a"]])
+                ]
+                if valid_init_odds:
+                    initial_price = [
+                        sum(h for h, d, a in valid_init_odds) / len(valid_init_odds),
+                        sum(d for h, d, a in valid_init_odds) / len(valid_init_odds),
+                        sum(a for h, d, a in valid_init_odds) / len(valid_init_odds),
+                    ]
+                else:
+                    initial_price = []
+
+            closing_price = [avg_h, avg_d, avg_a]
+
+            # Calculate movement history (simple percentage change)
+            movement_history = []
+            if initial_price and closing_price:
+                movement_history = [
+                    (closing_price[0] - initial_price[0]) / initial_price[0] * 100,
+                    (closing_price[1] - initial_price[1]) / initial_price[1] * 100,
+                    (closing_price[2] - initial_price[2]) / initial_price[2] * 100,
+                ]
+
+            # Store to match_odds_intelligence
+            stored = self.store_odds_intelligence(
+                match_id=match_id,
+                initial_price=initial_price,
+                closing_price=closing_price,
+                movement_history=movement_history,
+                metadata={
+                    "Quality_Rating": "High" if len(valid_final_odds) >= 3 else "Medium",
+                    "Deviation_Percentage": None,
+                    "Source_Count": len(valid_final_odds),
+                    "Sources": [row["source_name"] for row in multi_source_rows]
+                },
+                similarity_score=1.0,  # Direct match from database
+                link_method="direct"
+            )
+
+            return {
+                "status": "success",
+                "match_id": match_id,
+                "sources_captured": len(valid_final_odds),
+                "sources": [row["source_name"] for row in multi_source_rows],
+                "stored": stored
+            }
+
+        except Exception as e:
+            logger.exception(f"[V41.541] Sync failed for match {match_id}: {e}")
+            return {"status": "error", "message": str(e), "match_id": match_id}
+
+    def batch_sync_multi_source(
+        self, match_ids: list[str] | None = None, limit: int = 100
+    ) -> dict[str, Any]:
+        """V41.541: Batch sync multi-source data to match_odds_intelligence.
+
+        Args:
+            match_ids: List of match IDs to sync (None = sync all recent)
+            limit: Maximum number of matches to process
+
+        Returns:
+            Dictionary with batch statistics
+        """
+        stats = {
+            "total": 0,
+            "success": 0,
+            "no_data": 0,
+            "errors": 0
+        }
+
+        conn = self._get_connection()
+        cursor = conn.cursor()
+
+        try:
+            # Check if multi_source table exists
+            cursor.execute("""
+                SELECT EXISTS (
+                    SELECT FROM information_schema.tables
+                    WHERE table_name = 'metrics_multi_source_data'
+                )
+            """)
+
+            if not cursor.fetchone()["exists"]:
+                logger.warning("[V41.541] metrics_multi_source_data table not found")
+                return {"status": "error", "message": "Source table does not exist"}
+
+            # Get match IDs to process
+            if match_ids is None:
+                # Get recent matches with multi-source data
+                cursor.execute("""
+                    SELECT match_id
+                    FROM metrics_multi_source_data
+                    WHERE is_valid = TRUE
+                    GROUP BY match_id
+                    ORDER BY MAX(data_timestamp) DESC
+                    LIMIT %s
+                """, (limit,))
+                match_ids = [row["match_id"] for row in cursor.fetchall()]
+
+            stats["total"] = len(match_ids)
+
+            for match_id in match_ids:
+                result = self.sync_multi_source_to_intelligence(match_id)
+                if result["status"] == "success":
+                    stats["success"] += 1
+                elif result["status"] in ["no_data", "no_valid_odds"]:
+                    stats["no_data"] += 1
+                else:
+                    stats["errors"] += 1
+
+            logger.info(
+                f"[V41.541] Batch sync complete: "
+                f"{stats['success']}/{stats['total']} succeeded, "
+                f"{stats['no_data']} no data, {stats['errors']} errors"
+            )
+
+            return stats
+
+        except Exception as e:
+            logger.exception(f"[V41.541] Batch sync failed: {e}")
+            stats["errors"] = stats["total"]
+            return stats
 
 
 # =============================================================================

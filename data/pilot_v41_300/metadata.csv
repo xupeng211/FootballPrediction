@@ -1,0 +1,1771 @@
+match_id,league_name,season,home_team,away_team,match_date,home_score,away_score,label,label_name
+4535605,Serie A,2024/2025,Empoli,Hellas Verona,2025-05-25 18:45:00+00:00,1,2,2,A
+4535611,Serie A,2024/2025,Venezia,Juventus,2025-05-25 18:45:00+00:00,2,3,2,A
+4535602,Serie A,2024/2025,Atalanta,Parma,2025-05-25 18:45:00+00:00,2,3,2,A
+4535610,Serie A,2024/2025,Udinese,Fiorentina,2025-05-25 18:45:00+00:00,2,3,2,A
+4535609,Serie A,2024/2025,Torino,Roma,2025-05-25 18:45:00+00:00,0,2,2,A
+4535606,Serie A,2024/2025,Lazio,Lecce,2025-05-25 18:45:00+00:00,0,1,2,A
+4507135,La Liga,2024/2025,Villarreal,Sevilla,2025-05-25 00:00:00+00:00,4,2,0,H
+4506601,Premier League,2024/2025,Tottenham Hotspur,Brighton & Hove Albion,2025-05-25 00:00:00+00:00,1,4,2,A
+4507132,La Liga,2024/2025,Girona,Atletico Madrid,2025-05-25 00:00:00+00:00,0,4,2,A
+4506597,Premier League,2024/2025,Manchester United,Aston Villa,2025-05-25 00:00:00+00:00,2,0,0,H
+4506600,Premier League,2024/2025,Southampton,Arsenal,2025-05-25 00:00:00+00:00,1,2,2,A
+4506596,Premier League,2024/2025,Liverpool,Crystal Palace,2025-05-25 00:00:00+00:00,1,1,1,D
+4506595,Premier League,2024/2025,Ipswich Town,West Ham United,2025-05-25 00:00:00+00:00,1,3,2,A
+4506594,Premier League,2024/2025,Fulham,Manchester City,2025-05-25 00:00:00+00:00,0,2,2,A
+4506599,Premier League,2024/2025,Nottingham Forest,Chelsea,2025-05-25 00:00:00+00:00,0,1,2,A
+4506598,Premier League,2024/2025,Newcastle United,Everton,2025-05-25 00:00:00+00:00,0,1,2,A
+4506602,Premier League,2024/2025,Wolverhampton Wanderers,Brentford,2025-05-25 00:00:00+00:00,1,1,1,D
+4506593,Premier League,2024/2025,AFC Bournemouth,Leicester City,2025-05-25 00:00:00+00:00,2,0,0,H
+4535607,Serie A,2024/2025,Milan,Monza,2025-05-24 18:45:00+00:00,2,0,0,H
+4535603,Serie A,2024/2025,Bologna,Genoa,2025-05-24 16:00:00+00:00,1,3,2,A
+4507130,La Liga,2024/2025,Leganes,Real Valladolid,2025-05-24 00:00:00+00:00,3,0,0,H
+4507133,La Liga,2024/2025,Getafe,Celta Vigo,2025-05-24 00:00:00+00:00,1,2,2,A
+4507129,La Liga,2024/2025,Deportivo Alaves,Osasuna,2025-05-24 00:00:00+00:00,1,1,1,D
+4507131,La Liga,2024/2025,Espanyol,Las Palmas,2025-05-24 00:00:00+00:00,2,0,0,H
+4507134,La Liga,2024/2025,Rayo Vallecano,Mallorca,2025-05-24 00:00:00+00:00,0,0,1,D
+4507128,La Liga,2024/2025,Real Madrid,Real Sociedad,2025-05-24 00:00:00+00:00,2,0,0,H
+4535604,Serie A,2024/2025,Como,Inter,2025-05-23 18:45:00+00:00,0,2,2,A
+4535608,Serie A,2024/2025,Napoli,Cagliari,2025-05-23 18:45:00+00:00,2,0,0,H
+4506591,Premier League,2024/2025,Manchester City,AFC Bournemouth,2025-05-20 00:00:00+00:00,3,1,0,H
+4506588,Premier League,2024/2025,Crystal Palace,Wolverhampton Wanderers,2025-05-20 00:00:00+00:00,4,2,0,H
+4506586,Premier League,2024/2025,Brighton & Hove Albion,Liverpool,2025-05-19 00:00:00+00:00,3,2,0,H
+4535595,Serie A,2024/2025,Hellas Verona,Como,2025-05-18 18:45:00+00:00,1,1,1,D
+4535596,Serie A,2024/2025,Inter,Lazio,2025-05-18 18:45:00+00:00,2,2,1,D
+4535600,Serie A,2024/2025,Parma,Napoli,2025-05-18 18:45:00+00:00,0,0,1,D
+4535599,Serie A,2024/2025,Monza,Empoli,2025-05-18 18:45:00+00:00,1,3,2,A
+4535598,Serie A,2024/2025,Lecce,Torino,2025-05-18 18:45:00+00:00,1,0,0,H
+4535601,Serie A,2024/2025,Roma,Milan,2025-05-18 18:45:00+00:00,3,1,0,H
+4535592,Serie A,2024/2025,Cagliari,Venezia,2025-05-18 18:45:00+00:00,3,0,0,H
+4535597,Serie A,2024/2025,Juventus,Udinese,2025-05-18 18:45:00+00:00,2,0,0,H
+4535593,Serie A,2024/2025,Fiorentina,Bologna,2025-05-18 18:45:00+00:00,3,2,0,H
+4506585,Premier League,2024/2025,Brentford,Fulham,2025-05-18 00:00:00+00:00,2,3,2,A
+4506589,Premier League,2024/2025,Everton,Southampton,2025-05-18 00:00:00+00:00,2,0,0,H
+4506590,Premier League,2024/2025,Leicester City,Ipswich Town,2025-05-18 00:00:00+00:00,2,0,0,H
+4507122,La Liga,2024/2025,Sevilla,Real Madrid,2025-05-18 00:00:00+00:00,0,2,2,A
+4506592,Premier League,2024/2025,West Ham United,Nottingham Forest,2025-05-18 00:00:00+00:00,1,2,2,A
+4507125,La Liga,2024/2025,Osasuna,Espanyol,2025-05-18 00:00:00+00:00,2,0,0,H
+4507120,La Liga,2024/2025,Mallorca,Getafe,2025-05-18 00:00:00+00:00,1,2,2,A
+4507124,La Liga,2024/2025,Las Palmas,Leganes,2025-05-18 00:00:00+00:00,0,1,2,A
+4506583,Premier League,2024/2025,Arsenal,Newcastle United,2025-05-18 00:00:00+00:00,1,0,0,H
+4507121,La Liga,2024/2025,Real Sociedad,Girona,2025-05-18 00:00:00+00:00,3,2,0,H
+4507123,La Liga,2024/2025,Real Valladolid,Deportivo Alaves,2025-05-18 00:00:00+00:00,0,1,2,A
+4507118,La Liga,2024/2025,Celta Vigo,Rayo Vallecano,2025-05-18 00:00:00+00:00,1,2,2,A
+4507117,La Liga,2024/2025,Barcelona,Villarreal,2025-05-18 00:00:00+00:00,2,3,2,A
+4535594,Serie A,2024/2025,Genoa,Atalanta,2025-05-17 18:45:00+00:00,2,3,2,A
+4513025,Ligue 1,2024/2025,Paris Saint-Germain,Auxerre,2025-05-17 00:00:00+00:00,3,1,0,H
+4513022,Ligue 1,2024/2025,Strasbourg,Le Havre,2025-05-17 00:00:00+00:00,2,3,2,A
+4513018,Ligue 1,2024/2025,Lyon,Angers,2025-05-17 00:00:00+00:00,2,0,0,H
+4513024,Ligue 1,2024/2025,Lens,Monaco,2025-05-17 00:00:00+00:00,4,0,0,H
+4513021,Ligue 1,2024/2025,Lille,Reims,2025-05-17 00:00:00+00:00,2,1,0,H
+4513019,Ligue 1,2024/2025,Nice,Brest,2025-05-17 00:00:00+00:00,6,0,0,H
+4513017,Ligue 1,2024/2025,Marseille,Rennes,2025-05-17 00:00:00+00:00,4,2,0,H
+4513023,Ligue 1,2024/2025,Nantes,Montpellier,2025-05-17 00:00:00+00:00,3,0,0,H
+4506584,Premier League,2024/2025,Aston Villa,Tottenham Hotspur,2025-05-16 00:00:00+00:00,2,0,0,H
+4506587,Premier League,2024/2025,Chelsea,Manchester United,2025-05-16 00:00:00+00:00,1,0,0,H
+4507110,La Liga,2024/2025,Rayo Vallecano,Real Betis,2025-05-15 00:00:00+00:00,2,2,1,D
+4507107,La Liga,2024/2025,Espanyol,Barcelona,2025-05-15 00:00:00+00:00,0,2,2,A
+4507113,La Liga,2024/2025,Real Madrid,Mallorca,2025-05-14 00:00:00+00:00,2,1,0,H
+4507106,La Liga,2024/2025,Deportivo Alaves,Valencia,2025-05-14 00:00:00+00:00,1,0,0,H
+4507115,La Liga,2024/2025,Villarreal,Leganes,2025-05-14 00:00:00+00:00,3,0,0,H
+4507112,La Liga,2024/2025,Real Valladolid,Girona,2025-05-13 00:00:00+00:00,0,1,2,A
+4507111,La Liga,2024/2025,Real Sociedad,Celta Vigo,2025-05-13 00:00:00+00:00,0,1,2,A
+4507114,La Liga,2024/2025,Sevilla,Las Palmas,2025-05-13 00:00:00+00:00,1,0,0,H
+4535622,Serie A,2024/2025,Atalanta,Roma,2025-05-12 18:45:00+00:00,2,1,0,H
+4535631,Serie A,2024/2025,Venezia,Fiorentina,2025-05-12 16:30:00+00:00,2,1,0,H
+4535628,Serie A,2024/2025,Napoli,Genoa,2025-05-11 18:45:00+00:00,2,2,1,D
+4535629,Serie A,2024/2025,Torino,Inter,2025-05-11 16:00:00+00:00,0,2,2,A
+4535625,Serie A,2024/2025,Hellas Verona,Lecce,2025-05-11 13:00:00+00:00,1,1,1,D
+4535630,Serie A,2024/2025,Udinese,Monza,2025-05-11 10:30:00+00:00,1,2,2,A
+4507097,La Liga,2024/2025,Barcelona,Real Madrid,2025-05-11 00:00:00+00:00,4,3,0,H
+4507105,La Liga,2024/2025,Leganes,Espanyol,2025-05-11 00:00:00+00:00,3,2,0,H
+4506576,Premier League,2024/2025,Liverpool,Arsenal,2025-05-11 00:00:00+00:00,2,2,1,D
+4506577,Premier League,2024/2025,Manchester United,West Ham United,2025-05-11 00:00:00+00:00,0,2,2,A
+4506578,Premier League,2024/2025,Newcastle United,Chelsea,2025-05-11 00:00:00+00:00,2,0,0,H
+4506579,Premier League,2024/2025,Nottingham Forest,Leicester City,2025-05-11 00:00:00+00:00,2,2,1,D
+4506581,Premier League,2024/2025,Tottenham Hotspur,Crystal Palace,2025-05-11 00:00:00+00:00,0,2,2,A
+4535624,Serie A,2024/2025,Empoli,Parma,2025-05-10 18:45:00+00:00,2,1,0,H
+4535626,Serie A,2024/2025,Lazio,Juventus,2025-05-10 16:00:00+00:00,1,1,1,D
+4535623,Serie A,2024/2025,Como,Cagliari,2025-05-10 13:00:00+00:00,3,1,0,H
+4507103,La Liga,2024/2025,Valencia,Getafe,2025-05-10 00:00:00+00:00,3,0,0,H
+4514153,Ligue 1,2024/2025,Brest,Lille,2025-05-10 00:00:00+00:00,2,0,0,H
+4514150,Ligue 1,2024/2025,Rennes,Nice,2025-05-10 00:00:00+00:00,2,0,0,H
+4514147,Ligue 1,2024/2025,Auxerre,Nantes,2025-05-10 00:00:00+00:00,1,1,1,D
+4514154,Ligue 1,2024/2025,Monaco,Lyon,2025-05-10 00:00:00+00:00,2,0,0,H
+4506574,Premier League,2024/2025,Fulham,Everton,2025-05-10 00:00:00+00:00,1,3,2,A
+4506575,Premier League,2024/2025,Ipswich Town,Brentford,2025-05-10 00:00:00+00:00,0,1,2,A
+4514152,Ligue 1,2024/2025,Toulouse,Lens,2025-05-10 00:00:00+00:00,1,1,1,D
+4506582,Premier League,2024/2025,Wolverhampton Wanderers,Brighton & Hove Albion,2025-05-10 00:00:00+00:00,0,2,2,A
+4506573,Premier League,2024/2025,AFC Bournemouth,Aston Villa,2025-05-10 00:00:00+00:00,0,1,2,A
+4506580,Premier League,2024/2025,Southampton,Manchester City,2025-05-10 00:00:00+00:00,0,0,1,D
+4514149,Ligue 1,2024/2025,Le Havre,Marseille,2025-05-10 00:00:00+00:00,1,3,2,A
+4507099,La Liga,2024/2025,Celta Vigo,Sevilla,2025-05-10 00:00:00+00:00,3,2,0,H
+4507101,La Liga,2024/2025,Mallorca,Real Valladolid,2025-05-10 00:00:00+00:00,2,1,0,H
+4514151,Ligue 1,2024/2025,Montpellier,Paris Saint-Germain,2025-05-10 00:00:00+00:00,1,4,2,A
+4507100,La Liga,2024/2025,Girona,Villarreal,2025-05-10 00:00:00+00:00,0,1,2,A
+4514148,Ligue 1,2024/2025,Angers,Strasbourg,2025-05-10 00:00:00+00:00,2,1,0,H
+4535627,Serie A,2024/2025,Milan,Bologna,2025-05-09 18:45:00+00:00,3,1,0,H
+4507102,La Liga,2024/2025,Las Palmas,Rayo Vallecano,2025-05-09 00:00:00+00:00,0,1,2,A
+4535615,Serie A,2024/2025,Genoa,Milan,2025-05-05 18:45:00+00:00,1,2,2,A
+4507086,La Liga,2024/2025,Girona,Mallorca,2025-05-05 00:00:00+00:00,1,0,0,H
+4506567,Premier League,2024/2025,Crystal Palace,Nottingham Forest,2025-05-05 00:00:00+00:00,1,1,1,D
+4535612,Serie A,2024/2025,Bologna,Juventus,2025-05-04 18:45:00+00:00,1,1,1,D
+4535620,Serie A,2024/2025,Roma,Fiorentina,2025-05-04 16:00:00+00:00,1,0,0,H
+4535618,Serie A,2024/2025,Monza,Atalanta,2025-05-04 13:00:00+00:00,0,4,2,A
+4535614,Serie A,2024/2025,Empoli,Lazio,2025-05-04 10:30:00+00:00,0,1,2,A
+4514140,Ligue 1,2024/2025,Brest,Montpellier,2025-05-04 00:00:00+00:00,1,0,0,H
+4506571,Premier League,2024/2025,West Ham United,Tottenham Hotspur,2025-05-04 00:00:00+00:00,1,1,1,D
+4506565,Premier League,2024/2025,Brentford,Manchester United,2025-05-04 00:00:00+00:00,4,3,0,H
+4514138,Ligue 1,2024/2025,Lille,Marseille,2025-05-04 00:00:00+00:00,1,1,1,D
+4514137,Ligue 1,2024/2025,Lyon,Lens,2025-05-04 00:00:00+00:00,1,2,2,A
+4506566,Premier League,2024/2025,Chelsea,Liverpool,2025-05-04 00:00:00+00:00,3,1,0,H
+4506572,Premier League,2024/2025,Brighton & Hove Albion,Newcastle United,2025-05-04 00:00:00+00:00,1,1,1,D
+4514145,Ligue 1,2024/2025,Auxerre,Le Havre,2025-05-04 00:00:00+00:00,1,2,2,A
+4514142,Ligue 1,2024/2025,Nantes,Angers,2025-05-04 00:00:00+00:00,0,1,2,A
+4507095,La Liga,2024/2025,Sevilla,Leganes,2025-05-04 00:00:00+00:00,2,2,1,D
+4507092,La Liga,2024/2025,Real Madrid,Celta Vigo,2025-05-04 00:00:00+00:00,3,2,0,H
+4535616,Serie A,2024/2025,Inter,Hellas Verona,2025-05-03 18:45:00+00:00,1,0,0,H
+4535617,Serie A,2024/2025,Lecce,Napoli,2025-05-03 16:00:00+00:00,0,1,2,A
+4535619,Serie A,2024/2025,Parma,Como,2025-05-03 13:00:00+00:00,0,1,2,A
+4535613,Serie A,2024/2025,Cagliari,Udinese,2025-05-03 13:00:00+00:00,1,2,2,A
+4507087,La Liga,2024/2025,Las Palmas,Valencia,2025-05-03 00:00:00+00:00,2,3,2,A
+4506569,Premier League,2024/2025,Leicester City,Southampton,2025-05-03 00:00:00+00:00,2,0,0,H
+4507091,La Liga,2024/2025,Real Valladolid,Barcelona,2025-05-03 00:00:00+00:00,1,2,2,A
+4506568,Premier League,2024/2025,Everton,Ipswich Town,2025-05-03 00:00:00+00:00,2,2,1,D
+4514144,Ligue 1,2024/2025,Strasbourg,Paris Saint-Germain,2025-05-03 00:00:00+00:00,2,1,0,H
+4506563,Premier League,2024/2025,Arsenal,AFC Bournemouth,2025-05-03 00:00:00+00:00,1,2,2,A
+4514143,Ligue 1,2024/2025,Toulouse,Rennes,2025-05-03 00:00:00+00:00,2,1,0,H
+4507094,La Liga,2024/2025,Villarreal,Osasuna,2025-05-03 00:00:00+00:00,4,2,0,H
+4506564,Premier League,2024/2025,Aston Villa,Fulham,2025-05-03 00:00:00+00:00,1,0,0,H
+4535621,Serie A,2024/2025,Torino,Venezia,2025-05-02 18:45:00+00:00,1,1,1,D
+4506570,Premier League,2024/2025,Manchester City,Wolverhampton Wanderers,2025-05-02 00:00:00+00:00,1,0,0,H
+4514139,Ligue 1,2024/2025,Nice,Reims,2025-05-02 00:00:00+00:00,1,0,0,H
+4507093,La Liga,2024/2025,Rayo Vallecano,Getafe,2025-05-02 00:00:00+00:00,1,0,0,H
+4506560,Premier League,2024/2025,Nottingham Forest,Brentford,2025-05-01 00:00:00+00:00,0,2,2,A
+4535585,Serie A,2024/2025,Hellas Verona,Cagliari,2025-04-28 18:45:00+00:00,0,2,2,A
+4535588,Serie A,2024/2025,Lazio,Parma,2025-04-28 18:45:00+00:00,2,2,1,D
+4535590,Serie A,2024/2025,Udinese,Bologna,2025-04-28 16:30:00+00:00,0,0,1,D
+4535589,Serie A,2024/2025,Napoli,Torino,2025-04-27 18:45:00+00:00,2,0,0,H
+4535582,Serie A,2024/2025,Atalanta,Lecce,2025-04-27 18:45:00+00:00,1,1,1,D
+4535587,Serie A,2024/2025,Juventus,Monza,2025-04-27 16:00:00+00:00,2,0,0,H
+4535584,Serie A,2024/2025,Fiorentina,Empoli,2025-04-27 13:00:00+00:00,2,1,0,H
+4535586,Serie A,2024/2025,Inter,Roma,2025-04-27 13:00:00+00:00,0,1,2,A
+4535591,Serie A,2024/2025,Venezia,Milan,2025-04-27 10:30:00+00:00,0,2,2,A
+4535583,Serie A,2024/2025,Como,Genoa,2025-04-27 10:30:00+00:00,1,0,0,H
+4514132,Ligue 1,2024/2025,Lens,Auxerre,2025-04-27 00:00:00+00:00,0,4,2,A
+4514135,Ligue 1,2024/2025,Marseille,Brest,2025-04-27 00:00:00+00:00,4,1,0,H
+4514133,Ligue 1,2024/2025,Angers,Lille,2025-04-27 00:00:00+00:00,0,2,2,A
+4514131,Ligue 1,2024/2025,Montpellier,Reims,2025-04-27 00:00:00+00:00,0,0,1,D
+4514130,Ligue 1,2024/2025,Nantes,Toulouse,2025-04-27 00:00:00+00:00,0,0,1,D
+4506557,Premier League,2024/2025,Liverpool,Tottenham Hotspur,2025-04-27 00:00:00+00:00,5,1,0,H
+4506553,Premier League,2024/2025,AFC Bournemouth,Manchester United,2025-04-27 00:00:00+00:00,1,1,1,D
+4506555,Premier League,2024/2025,Brighton & Hove Albion,West Ham United,2025-04-26 00:00:00+00:00,3,2,0,H
+4506559,Premier League,2024/2025,Newcastle United,Ipswich Town,2025-04-26 00:00:00+00:00,3,0,0,H
+4506562,Premier League,2024/2025,Wolverhampton Wanderers,Leicester City,2025-04-26 00:00:00+00:00,3,0,0,H
+4514136,Ligue 1,2024/2025,Lyon,Rennes,2025-04-26 00:00:00+00:00,4,1,0,H
+4514128,Ligue 1,2024/2025,Le Havre,Monaco,2025-04-26 00:00:00+00:00,1,1,1,D
+4506556,Premier League,2024/2025,Chelsea,Everton,2025-04-26 00:00:00+00:00,1,0,0,H
+4506561,Premier League,2024/2025,Southampton,Fulham,2025-04-26 00:00:00+00:00,1,2,2,A
+4514134,Ligue 1,2024/2025,Paris Saint-Germain,Nice,2025-04-25 00:00:00+00:00,1,3,2,A
+4535531,Serie A,2024/2025,Torino,Udinese,2025-04-23 16:30:00+00:00,2,0,0,H
+4507083,La Liga,2024/2025,Deportivo Alaves,Real Sociedad,2025-04-23 00:00:00+00:00,1,0,0,H
+4506554,Premier League,2024/2025,Arsenal,Crystal Palace,2025-04-23 00:00:00+00:00,2,2,1,D
+4507081,La Liga,2024/2025,Getafe,Real Madrid,2025-04-23 00:00:00+00:00,0,1,2,A
+4506558,Premier League,2024/2025,Manchester City,Aston Villa,2025-04-22 00:00:00+00:00,2,1,0,H
+4514058,Ligue 1,2024/2025,Nantes,Paris Saint-Germain,2025-04-22 00:00:00+00:00,1,1,1,D
+4514122,Ligue 1,2024/2025,Lille,Auxerre,2025-04-20 00:00:00+00:00,3,1,0,H
+4514121,Ligue 1,2024/2025,Brest,Lens,2025-04-20 00:00:00+00:00,1,3,2,A
+4514125,Ligue 1,2024/2025,Reims,Toulouse,2025-04-20 00:00:00+00:00,1,0,0,H
+4514120,Ligue 1,2024/2025,Nice,Angers,2025-04-20 00:00:00+00:00,2,1,0,H
+4514126,Ligue 1,2024/2025,Monaco,Strasbourg,2025-04-19 00:00:00+00:00,0,0,1,D
+4514124,Ligue 1,2024/2025,Marseille,Montpellier,2025-04-19 00:00:00+00:00,5,1,0,H
+4514123,Ligue 1,2024/2025,Paris Saint-Germain,Le Havre,2025-04-19 00:00:00+00:00,2,1,0,H
+4514127,Ligue 1,2024/2025,Rennes,Nantes,2025-04-18 00:00:00+00:00,2,1,0,H
+4507059,La Liga,2024/2025,Deportivo Alaves,Real Madrid,2025-04-13 00:00:00+00:00,0,1,2,A
+4535517,Serie A,2024/2025,Juventus,Lecce,2025-04-12 18:45:00+00:00,2,1,0,H
+4535509,Serie A,2024/2025,Parma,Inter,2025-04-05 16:00:00+00:00,2,2,1,D
+4514048,Ligue 1,2024/2025,Brest,Monaco,2025-04-05 00:00:00+00:00,2,1,0,H
+4507043,La Liga,2024/2025,Valencia,Mallorca,2025-03-30 00:00:00+00:00,1,0,0,H
+4535499,Serie A,2024/2025,Lecce,Roma,2025-03-29 19:45:00+00:00,0,1,2,A
+4535482,Serie A,2024/2025,Atalanta,Inter,2025-03-16 19:45:00+00:00,0,2,2,A
+4514032,Ligue 1,2024/2025,Lyon,Le Havre,2025-03-16 00:00:00+00:00,4,2,0,H
+4507027,La Liga,2024/2025,Rayo Vallecano,Real Sociedad,2025-03-16 00:00:00+00:00,2,2,1,D
+4513932,Ligue 1,2024/2025,Marseille,Nantes,2025-03-02 00:00:00+00:00,2,0,0,H
+4513936,Ligue 1,2024/2025,Lens,Le Havre,2025-03-01 00:00:00+00:00,3,4,2,A
+4513926,Ligue 1,2024/2025,Nantes,Lens,2025-02-23 00:00:00+00:00,3,1,0,H
+4534744,Bundesliga,2024/2025,Mainz 05,St. Pauli,2025-02-22 14:30:00+00:00,2,0,0,H
+4534733,Bundesliga,2024/2025,Werder Bremen,Hoffenheim,2025-02-16 14:30:00+00:00,1,3,2,A
+4535444,Serie A,2024/2025,Lazio,Napoli,2025-02-15 17:00:00+00:00,2,2,1,D
+4506988,La Liga,2024/2025,Osasuna,Real Madrid,2025-02-15 00:00:00+00:00,1,1,1,D
+4513917,Ligue 1,2024/2025,Brest,Auxerre,2025-02-14 00:00:00+00:00,2,2,1,D
+4534717,Bundesliga,2024/2025,Union Berlin,RB Leipzig,2025-02-01 17:30:00+00:00,0,0,1,D
+4535333,Serie A,2024/2025,Lazio,Fiorentina,2025-01-26 19:45:00+00:00,1,2,2,A
+4534702,Bundesliga,2024/2025,RB Leipzig,Bayer Leverkusen,2025-01-25 14:30:00+00:00,2,2,1,D
+4535323,Serie A,2024/2025,Como,Udinese,2025-01-20 19:45:00+00:00,4,1,0,H
+4535325,Serie A,2024/2025,Hellas Verona,Lazio,2025-01-19 17:00:00+00:00,0,3,2,A
+4534699,Bundesliga,2024/2025,Union Berlin,Mainz 05,2025-01-19 14:30:00+00:00,2,1,0,H
+4534695,Bundesliga,2024/2025,Bayern München,Wolfsburg,2025-01-18 14:30:00+00:00,3,2,0,H
+4513838,Ligue 1,2024/2025,Rennes,Brest,2025-01-18 00:00:00+00:00,1,2,2,A
+4535576,Serie A,2024/2025,Inter,Bologna,2025-01-15 19:45:00+00:00,2,2,1,D
+4535316,Serie A,2024/2025,Napoli,Hellas Verona,2025-01-12 19:45:00+00:00,2,0,0,H
+4514110,Ligue 1,2024/2025,Toulouse,Strasbourg,2025-01-12 00:00:00+00:00,1,2,2,A
+4514112,Ligue 1,2024/2025,Auxerre,Lille,2025-01-10 00:00:00+00:00,0,0,1,D
+4506929,La Liga,2024/2025,Real Madrid,Sevilla,2024-12-22 00:00:00+00:00,4,2,0,H
+4506931,La Liga,2024/2025,Osasuna,Athletic Club,2024-12-21 00:00:00+00:00,1,2,2,A
+4535549,Serie A,2024/2025,Milan,Genoa,2024-12-15 19:45:00+00:00,0,0,1,D
+4534657,Bundesliga,2024/2025,RB Leipzig,Eintracht Frankfurt,2024-12-15 18:30:00+00:00,2,1,0,H
+4534658,Bundesliga,2024/2025,Borussia Dortmund,Hoffenheim,2024-12-15 16:30:00+00:00,1,1,1,D
+4506922,La Liga,2024/2025,Mallorca,Girona,2024-12-14 00:00:00+00:00,2,1,0,H
+4506913,La Liga,2024/2025,Osasuna,Deportivo Alaves,2024-12-08 00:00:00+00:00,2,2,1,D
+4534651,Bundesliga,2024/2025,Eintracht Frankfurt,Augsburg,2024-12-07 14:30:00+00:00,2,2,1,D
+4506901,La Liga,2024/2025,Real Sociedad,Real Betis,2024-12-01 00:00:00+00:00,2,0,0,H
+4514080,Ligue 1,2024/2025,Marseille,Monaco,2024-12-01 00:00:00+00:00,2,1,0,H
+4514076,Ligue 1,2024/2025,Le Havre,Angers,2024-12-01 00:00:00+00:00,0,1,2,A
+4534642,Bundesliga,2024/2025,Werder Bremen,VfB Stuttgart,2024-11-30 14:30:00+00:00,2,2,1,D
+4514067,Ligue 1,2024/2025,Nice,Strasbourg,2024-11-24 00:00:00+00:00,2,1,0,H
+4514069,Ligue 1,2024/2025,Lille,Rennes,2024-11-24 00:00:00+00:00,1,0,0,H
+4535384,Serie A,2024/2025,Inter,Napoli,2024-11-10 19:45:00+00:00,1,1,1,D
+4535381,Serie A,2024/2025,Cagliari,Milan,2024-11-09 17:00:00+00:00,3,3,1,D
+4506884,La Liga,2024/2025,Villarreal,Deportivo Alaves,2024-11-09 00:00:00+00:00,3,0,0,H
+4534612,Bundesliga,2024/2025,Bayer Leverkusen,VfB Stuttgart,2024-11-01 19:30:00+00:00,0,0,1,D
+4506854,La Liga,2024/2025,Athletic Club,Espanyol,2024-10-19 00:00:00+00:00,4,1,0,H
+4535352,Serie A,2024/2025,Fiorentina,Milan,2024-10-06 18:45:00+00:00,2,1,0,H
+4513949,Ligue 1,2024/2025,Lyon,Nantes,2024-10-06 00:00:00+00:00,2,0,0,H
+4535300,Serie A,2024/2025,Bologna,Atalanta,2024-09-28 18:45:00+00:00,1,1,1,D
+4513905,Ligue 1,2024/2025,Lens,Nice,2024-09-28 00:00:00+00:00,0,0,1,D
+4513907,Ligue 1,2024/2025,Le Havre,Lille,2024-09-28 00:00:00+00:00,0,3,2,A
+4506808,La Liga,2024/2025,Girona,Rayo Vallecano,2024-09-25 00:00:00+00:00,0,0,1,D
+4534575,Bundesliga,2024/2025,St. Pauli,RB Leipzig,2024-09-22 17:30:00+00:00,0,0,1,D
+4513897,Ligue 1,2024/2025,Angers,Nantes,2024-09-22 00:00:00+00:00,1,1,1,D
+4506802,La Liga,2024/2025,Villarreal,Barcelona,2024-09-22 00:00:00+00:00,1,5,2,A
+4535296,Serie A,2024/2025,Lecce,Parma,2024-09-21 18:45:00+00:00,2,2,1,D
+4506767,La Liga,2024/2025,Real Betis,Getafe,2024-09-18 00:00:00+00:00,2,1,0,H
+4535282,Serie A,2024/2025,Como,Bologna,2024-09-14 13:00:00+00:00,2,2,1,D
+4506768,La Liga,2024/2025,Girona,Osasuna,2024-08-29 00:00:00+00:00,4,0,0,H
+4534548,Bundesliga,2024/2025,St. Pauli,FC Heidenheim,2024-08-25 15:30:00+00:00,0,2,2,A
+4534545,Bundesliga,2024/2025,Augsburg,Werder Bremen,2024-08-24 13:30:00+00:00,2,2,1,D
+4513010,Ligue 1,2024/2025,Angers,Lens,2024-08-18 00:00:00+00:00,0,1,2,A
+4230823,Serie A,2023/2024,Atalanta,Fiorentina,2024-06-02 16:00:00+00:00,2,3,2,A
+4230908,Serie A,2023/2024,Hellas Verona,Inter,2024-05-26 18:45:00+00:00,2,2,1,D
+4230906,Serie A,2023/2024,Empoli,Roma,2024-05-26 18:45:00+00:00,2,1,0,H
+4230910,Serie A,2023/2024,Lazio,Sassuolo,2024-05-26 18:45:00+00:00,1,1,1,D
+4230907,Serie A,2023/2024,Frosinone,Udinese,2024-05-26 18:45:00+00:00,0,1,2,A
+4230913,Serie A,2023/2024,Napoli,Lecce,2024-05-26 16:00:00+00:00,0,0,1,D
+4230904,Serie A,2023/2024,Atalanta,Torino,2024-05-26 16:00:00+00:00,3,0,0,H
+4205720,La Liga,2023/2024,Sevilla,Barcelona,2024-05-26 00:00:00+00:00,1,2,2,A
+4205714,La Liga,2023/2024,Celta Vigo,Valencia,2024-05-26 00:00:00+00:00,2,2,1,D
+4205715,La Liga,2023/2024,Getafe,Mallorca,2024-05-26 00:00:00+00:00,1,2,2,A
+4230911,Serie A,2023/2024,Milan,Salernitana,2024-05-25 18:45:00+00:00,3,3,1,D
+4230909,Serie A,2023/2024,Juventus,Monza,2024-05-25 16:00:00+00:00,2,0,0,H
+4205719,La Liga,2023/2024,Real Sociedad,Atletico Madrid,2024-05-25 00:00:00+00:00,0,2,2,A
+4205717,La Liga,2023/2024,Osasuna,Villarreal,2024-05-25 00:00:00+00:00,1,1,1,D
+4205713,La Liga,2023/2024,Almeria,Cadiz,2024-05-25 00:00:00+00:00,6,1,0,H
+4230912,Serie A,2023/2024,Genoa,Bologna,2024-05-24 18:45:00+00:00,2,0,0,H
+4205716,La Liga,2023/2024,Girona,Granada,2024-05-24 00:00:00+00:00,7,0,0,H
+4230905,Serie A,2023/2024,Cagliari,Fiorentina,2024-05-23 18:45:00+00:00,2,3,2,A
+4230894,Serie A,2023/2024,Bologna,Juventus,2024-05-20 18:45:00+00:00,3,3,1,D
+4230902,Serie A,2023/2024,Salernitana,Hellas Verona,2024-05-20 16:30:00+00:00,1,2,2,A
+4230901,Serie A,2023/2024,Roma,Genoa,2024-05-19 18:45:00+00:00,1,0,0,H
+4230896,Serie A,2023/2024,Inter,Lazio,2024-05-19 16:00:00+00:00,1,1,1,D
+4230900,Serie A,2023/2024,Monza,Frosinone,2024-05-19 13:00:00+00:00,0,1,2,A
+4230899,Serie A,2023/2024,Udinese,Empoli,2024-05-19 13:00:00+00:00,1,1,1,D
+4230898,Serie A,2023/2024,Sassuolo,Cagliari,2024-05-19 10:30:00+00:00,0,2,2,A
+4219176,Ligue 1,2023/2024,Lens,Montpellier,2024-05-19 00:00:00+00:00,2,2,1,D
+4219172,Ligue 1,2023/2024,Monaco,Nantes,2024-05-19 00:00:00+00:00,4,0,0,H
+4219171,Ligue 1,2023/2024,Lorient,Clermont Foot,2024-05-19 00:00:00+00:00,5,0,0,H
+4205711,La Liga,2023/2024,Valencia,Girona,2024-05-19 00:00:00+00:00,1,3,2,A
+4193901,Premier League,2023/2024,Arsenal,Everton,2024-05-19 00:00:00+00:00,2,1,0,H
+4193907,Premier League,2023/2024,Liverpool,Wolverhampton Wanderers,2024-05-19 00:00:00+00:00,2,0,0,H
+4193904,Premier League,2023/2024,Burnley,Nottingham Forest,2024-05-19 00:00:00+00:00,1,2,2,A
+4193905,Premier League,2023/2024,Chelsea,AFC Bournemouth,2024-05-19 00:00:00+00:00,2,1,0,H
+4205704,La Liga,2023/2024,Atletico Madrid,Osasuna,2024-05-19 00:00:00+00:00,1,4,2,A
+4193902,Premier League,2023/2024,Brentford,Newcastle United,2024-05-19 00:00:00+00:00,2,4,2,A
+4193903,Premier League,2023/2024,Brighton & Hove Albion,Manchester United,2024-05-19 00:00:00+00:00,0,2,2,A
+4205706,La Liga,2023/2024,Real Betis,Real Sociedad,2024-05-19 00:00:00+00:00,0,2,2,A
+4205705,La Liga,2023/2024,Barcelona,Rayo Vallecano,2024-05-19 00:00:00+00:00,3,0,0,H
+4193908,Premier League,2023/2024,Luton Town,Fulham,2024-05-19 00:00:00+00:00,2,4,2,A
+4205709,La Liga,2023/2024,Mallorca,Almeria,2024-05-19 00:00:00+00:00,2,2,1,D
+4205710,La Liga,2023/2024,Granada,Celta Vigo,2024-05-19 00:00:00+00:00,1,2,2,A
+4219173,Ligue 1,2023/2024,Lille,Nice,2024-05-19 00:00:00+00:00,2,2,1,D
+4219175,Ligue 1,2023/2024,Reims,Rennes,2024-05-19 00:00:00+00:00,2,1,0,H
+4219178,Ligue 1,2023/2024,Metz,Paris Saint-Germain,2024-05-19 00:00:00+00:00,0,2,2,A
+4219177,Ligue 1,2023/2024,Le Havre,Marseille,2024-05-19 00:00:00+00:00,1,2,2,A
+4205712,La Liga,2023/2024,Villarreal,Real Madrid,2024-05-19 00:00:00+00:00,4,4,1,D
+4193906,Premier League,2023/2024,Crystal Palace,Aston Villa,2024-05-19 00:00:00+00:00,5,0,0,H
+4193910,Premier League,2023/2024,Sheffield United,Tottenham Hotspur,2024-05-19 00:00:00+00:00,0,3,2,A
+4205707,La Liga,2023/2024,Cadiz,Las Palmas,2024-05-19 00:00:00+00:00,0,0,1,D
+4219170,Ligue 1,2023/2024,Toulouse,Brest,2024-05-19 00:00:00+00:00,0,3,2,A
+4219174,Ligue 1,2023/2024,Lyon,Strasbourg,2024-05-19 00:00:00+00:00,2,1,0,H
+4193909,Premier League,2023/2024,Manchester City,West Ham United,2024-05-19 00:00:00+00:00,3,1,0,H
+4230903,Serie A,2023/2024,Torino,Milan,2024-05-18 18:45:00+00:00,3,1,0,H
+4230897,Serie A,2023/2024,Lecce,Atalanta,2024-05-18 16:00:00+00:00,0,2,2,A
+4222384,Bundesliga,2023/2024,Wolfsburg,Mainz 05,2024-05-18 13:30:00+00:00,1,3,2,A
+4222382,Bundesliga,2023/2024,Bayer Leverkusen,Augsburg,2024-05-18 13:30:00+00:00,2,1,0,H
+4222380,Bundesliga,2023/2024,Borussia Dortmund,Darmstadt,2024-05-18 13:30:00+00:00,4,0,0,H
+4222383,Bundesliga,2023/2024,Eintracht Frankfurt,RB Leipzig,2024-05-18 13:30:00+00:00,2,2,1,D
+4222388,Bundesliga,2023/2024,FC Heidenheim,1. FC Köln,2024-05-18 13:30:00+00:00,4,1,0,H
+4222385,Bundesliga,2023/2024,Hoffenheim,Bayern München,2024-05-18 13:30:00+00:00,4,2,0,H
+4222381,Bundesliga,2023/2024,Union Berlin,Freiburg,2024-05-18 13:30:00+00:00,2,1,0,H
+4222387,Bundesliga,2023/2024,VfB Stuttgart,Borussia Mönchengladbach,2024-05-18 13:30:00+00:00,4,0,0,H
+4222386,Bundesliga,2023/2024,Werder Bremen,Bochum,2024-05-18 13:30:00+00:00,4,1,0,H
+4205708,La Liga,2023/2024,Deportivo Alaves,Getafe,2024-05-18 00:00:00+00:00,1,0,0,H
+4230895,Serie A,2023/2024,Fiorentina,Napoli,2024-05-17 18:45:00+00:00,2,2,1,D
+4205693,La Liga,2023/2024,Almeria,Barcelona,2024-05-16 00:00:00+00:00,0,2,2,A
+4205695,La Liga,2023/2024,Real Sociedad,Valencia,2024-05-16 00:00:00+00:00,1,0,0,H
+4205698,La Liga,2023/2024,Las Palmas,Real Betis,2024-05-16 00:00:00+00:00,2,2,1,D
+4205701,La Liga,2023/2024,Rayo Vallecano,Granada,2024-05-15 00:00:00+00:00,2,1,0,H
+4205697,La Liga,2023/2024,Getafe,Atletico Madrid,2024-05-15 00:00:00+00:00,0,3,2,A
+4219526,Ligue 1,2023/2024,Reims,Marseille,2024-05-15 00:00:00+00:00,1,0,0,H
+4205699,La Liga,2023/2024,Sevilla,Cadiz,2024-05-15 00:00:00+00:00,0,1,2,A
+4219525,Ligue 1,2023/2024,Nice,Paris Saint-Germain,2024-05-15 00:00:00+00:00,1,2,2,A
+4193862,Premier League,2023/2024,Brighton & Hove Albion,Chelsea,2024-05-15 00:00:00+00:00,1,2,2,A
+4193867,Premier League,2023/2024,Manchester United,Newcastle United,2024-05-15 00:00:00+00:00,3,2,0,H
+4205694,La Liga,2023/2024,Girona,Villarreal,2024-05-14 00:00:00+00:00,0,1,2,A
+4193869,Premier League,2023/2024,Tottenham Hotspur,Manchester City,2024-05-14 00:00:00+00:00,0,2,2,A
+4205700,La Liga,2023/2024,Osasuna,Mallorca,2024-05-14 00:00:00+00:00,1,1,1,D
+4205702,La Liga,2023/2024,Real Madrid,Deportivo Alaves,2024-05-14 00:00:00+00:00,5,0,0,H
+4230885,Serie A,2023/2024,Fiorentina,Monza,2024-05-13 18:45:00+00:00,2,1,0,H
+4230890,Serie A,2023/2024,Lecce,Udinese,2024-05-13 16:30:00+00:00,0,2,2,A
+4205685,La Liga,2023/2024,Barcelona,Real Sociedad,2024-05-13 00:00:00+00:00,2,0,0,H
+4193892,Premier League,2023/2024,Aston Villa,Liverpool,2024-05-13 00:00:00+00:00,3,3,1,D
+4230884,Serie A,2023/2024,Atalanta,Roma,2024-05-12 18:45:00+00:00,2,1,0,H
+4222377,Bundesliga,2023/2024,Bochum,Bayer Leverkusen,2024-05-12 17:30:00+00:00,0,5,2,A
+4230889,Serie A,2023/2024,Juventus,Salernitana,2024-05-12 16:00:00+00:00,1,1,1,D
+4222371,Bundesliga,2023/2024,Bayern München,Wolfsburg,2024-05-12 15:30:00+00:00,2,0,0,H
+4222379,Bundesliga,2023/2024,Darmstadt,Hoffenheim,2024-05-12 13:30:00+00:00,0,6,2,A
+4230887,Serie A,2023/2024,Genoa,Sassuolo,2024-05-12 13:00:00+00:00,2,1,0,H
+4230888,Serie A,2023/2024,Hellas Verona,Torino,2024-05-12 13:00:00+00:00,1,2,2,A
+4230893,Serie A,2023/2024,Lazio,Empoli,2024-05-12 10:30:00+00:00,2,0,0,H
+4205684,La Liga,2023/2024,Atletico Madrid,Celta Vigo,2024-05-12 00:00:00+00:00,1,0,0,H
+4219540,Ligue 1,2023/2024,Rennes,Lens,2024-05-12 00:00:00+00:00,1,1,1,D
+4193895,Premier League,2023/2024,Manchester United,Arsenal,2024-05-12 00:00:00+00:00,0,1,2,A
+4205690,La Liga,2023/2024,Valencia,Rayo Vallecano,2024-05-12 00:00:00+00:00,0,0,1,D
+4205689,La Liga,2023/2024,Real Betis,Almeria,2024-05-12 00:00:00+00:00,3,2,0,H
+4219533,Ligue 1,2023/2024,Paris Saint-Germain,Toulouse,2024-05-12 00:00:00+00:00,1,3,2,A
+4219544,Ligue 1,2023/2024,Marseille,Lorient,2024-05-12 00:00:00+00:00,3,1,0,H
+4219536,Ligue 1,2023/2024,Strasbourg,Metz,2024-05-12 00:00:00+00:00,2,1,0,H
+4219552,Ligue 1,2023/2024,Clermont Foot,Lyon,2024-05-12 00:00:00+00:00,0,1,2,A
+4219556,Ligue 1,2023/2024,Nantes,Lille,2024-05-12 00:00:00+00:00,1,2,2,A
+4219560,Ligue 1,2023/2024,Montpellier,Monaco,2024-05-12 00:00:00+00:00,0,2,2,A
+4205686,La Liga,2023/2024,Cadiz,Getafe,2024-05-12 00:00:00+00:00,1,0,0,H
+4230892,Serie A,2023/2024,Milan,Cagliari,2024-05-11 18:45:00+00:00,5,1,0,H
+4222374,Bundesliga,2023/2024,Mainz 05,Borussia Dortmund,2024-05-11 16:30:00+00:00,3,0,0,H
+4230891,Serie A,2023/2024,Napoli,Bologna,2024-05-11 16:00:00+00:00,0,2,2,A
+4222372,Bundesliga,2023/2024,RB Leipzig,Werder Bremen,2024-05-11 13:30:00+00:00,1,1,1,D
+4222375,Bundesliga,2023/2024,Borussia Mönchengladbach,Eintracht Frankfurt,2024-05-11 13:30:00+00:00,1,1,1,D
+4222373,Bundesliga,2023/2024,Freiburg,FC Heidenheim,2024-05-11 13:30:00+00:00,1,1,1,D
+4222376,Bundesliga,2023/2024,1. FC Köln,Union Berlin,2024-05-11 13:30:00+00:00,3,2,0,H
+4193897,Premier League,2023/2024,Nottingham Forest,Chelsea,2024-05-11 00:00:00+00:00,2,3,2,A
+4193891,Premier League,2023/2024,AFC Bournemouth,Brentford,2024-05-11 00:00:00+00:00,1,2,2,A
+4205687,La Liga,2023/2024,Granada,Real Madrid,2024-05-11 00:00:00+00:00,0,4,2,A
+4193894,Premier League,2023/2024,Fulham,Manchester City,2024-05-11 00:00:00+00:00,0,4,2,A
+4193900,Premier League,2023/2024,Wolverhampton Wanderers,Crystal Palace,2024-05-11 00:00:00+00:00,1,3,2,A
+4193899,Premier League,2023/2024,West Ham United,Luton Town,2024-05-11 00:00:00+00:00,3,1,0,H
+4193896,Premier League,2023/2024,Newcastle United,Brighton & Hove Albion,2024-05-11 00:00:00+00:00,1,1,1,D
+4193898,Premier League,2023/2024,Tottenham Hotspur,Burnley,2024-05-11 00:00:00+00:00,2,1,0,H
+4205692,La Liga,2023/2024,Mallorca,Las Palmas,2024-05-11 00:00:00+00:00,1,0,0,H
+4205691,La Liga,2023/2024,Villarreal,Sevilla,2024-05-11 00:00:00+00:00,3,2,0,H
+4193893,Premier League,2023/2024,Everton,Sheffield United,2024-05-11 00:00:00+00:00,1,0,0,H
+4230886,Serie A,2023/2024,Frosinone,Inter,2024-05-10 18:45:00+00:00,0,5,2,A
+4222378,Bundesliga,2023/2024,Augsburg,VfB Stuttgart,2024-05-10 18:30:00+00:00,0,1,2,A
+4219548,Ligue 1,2023/2024,Nice,Le Havre,2024-05-10 00:00:00+00:00,1,0,0,H
+4219564,Ligue 1,2023/2024,Brest,Reims,2024-05-10 00:00:00+00:00,1,1,1,D
+4205688,La Liga,2023/2024,Deportivo Alaves,Girona,2024-05-10 00:00:00+00:00,2,2,1,D
+4230883,Serie A,2023/2024,Udinese,Napoli,2024-05-06 18:45:00+00:00,1,1,1,D
+4230876,Serie A,2023/2024,Salernitana,Atalanta,2024-05-06 16:00:00+00:00,1,2,2,A
+4193886,Premier League,2023/2024,Crystal Palace,Manchester United,2024-05-06 00:00:00+00:00,4,0,0,H
+4219524,Ligue 1,2023/2024,Lille,Lyon,2024-05-06 00:00:00+00:00,3,4,2,A
+4230881,Serie A,2023/2024,Roma,Juventus,2024-05-05 18:45:00+00:00,1,1,1,D
+4222370,Bundesliga,2023/2024,FC Heidenheim,Mainz 05,2024-05-05 17:30:00+00:00,1,1,1,D
+4230879,Serie A,2023/2024,Milan,Genoa,2024-05-05 16:00:00+00:00,3,3,1,D
+4222364,Bundesliga,2023/2024,Eintracht Frankfurt,Bayer Leverkusen,2024-05-05 15:30:00+00:00,1,5,2,A
+4222363,Bundesliga,2023/2024,Union Berlin,Bochum,2024-05-05 13:30:00+00:00,3,4,2,A
+4230878,Serie A,2023/2024,Hellas Verona,Fiorentina,2024-05-05 13:00:00+00:00,2,1,0,H
+4230875,Serie A,2023/2024,Empoli,Frosinone,2024-05-05 13:00:00+00:00,0,0,1,D
+4230874,Serie A,2023/2024,Cagliari,Lecce,2024-05-05 10:30:00+00:00,1,1,1,D
+4205674,La Liga,2023/2024,Rayo Vallecano,Almeria,2024-05-05 00:00:00+00:00,0,1,2,A
+4193887,Premier League,2023/2024,Liverpool,Tottenham Hotspur,2024-05-05 00:00:00+00:00,4,2,0,H
+4193883,Premier League,2023/2024,Brighton & Hove Albion,Aston Villa,2024-05-05 00:00:00+00:00,1,0,0,H
+4205682,La Liga,2023/2024,Valencia,Deportivo Alaves,2024-05-05 00:00:00+00:00,0,1,2,A
+4205680,La Liga,2023/2024,Sevilla,Granada,2024-05-05 00:00:00+00:00,3,0,0,H
+4193885,Premier League,2023/2024,Chelsea,West Ham United,2024-05-05 00:00:00+00:00,5,0,0,H
+4205673,La Liga,2023/2024,Celta Vigo,Villarreal,2024-05-05 00:00:00+00:00,3,2,0,H
+4230880,Serie A,2023/2024,Sassuolo,Inter,2024-05-04 18:45:00+00:00,1,0,0,H
+4222366,Bundesliga,2023/2024,1. FC Köln,Freiburg,2024-05-04 16:30:00+00:00,0,0,1,D
+4230882,Serie A,2023/2024,Monza,Lazio,2024-05-04 16:00:00+00:00,2,2,1,D
+4222362,Bundesliga,2023/2024,Borussia Dortmund,Augsburg,2024-05-04 13:30:00+00:00,5,1,0,H
+4222368,Bundesliga,2023/2024,Werder Bremen,Borussia Mönchengladbach,2024-05-04 13:30:00+00:00,2,2,1,D
+4222365,Bundesliga,2023/2024,Wolfsburg,Darmstadt,2024-05-04 13:30:00+00:00,3,0,0,H
+4222369,Bundesliga,2023/2024,VfB Stuttgart,Bayern München,2024-05-04 13:30:00+00:00,3,1,0,H
+4193882,Premier League,2023/2024,Brentford,Fulham,2024-05-04 00:00:00+00:00,0,0,1,D
+4193881,Premier League,2023/2024,Arsenal,AFC Bournemouth,2024-05-04 00:00:00+00:00,3,0,0,H
+4205676,La Liga,2023/2024,Mallorca,Atletico Madrid,2024-05-04 00:00:00+00:00,0,1,2,A
+4193884,Premier League,2023/2024,Burnley,Newcastle United,2024-05-04 00:00:00+00:00,1,4,2,A
+4193889,Premier League,2023/2024,Manchester City,Wolverhampton Wanderers,2024-05-04 00:00:00+00:00,5,1,0,H
+4219529,Ligue 1,2023/2024,Metz,Rennes,2024-05-04 00:00:00+00:00,2,3,2,A
+4219530,Ligue 1,2023/2024,Brest,Nantes,2024-05-04 00:00:00+00:00,0,0,1,D
+4193890,Premier League,2023/2024,Sheffield United,Nottingham Forest,2024-05-04 00:00:00+00:00,1,3,2,A
+4205677,La Liga,2023/2024,Girona,Barcelona,2024-05-04 00:00:00+00:00,4,2,0,H
+4219523,Ligue 1,2023/2024,Monaco,Clermont Foot,2024-05-04 00:00:00+00:00,4,1,0,H
+4205679,La Liga,2023/2024,Real Madrid,Cadiz,2024-05-04 00:00:00+00:00,3,0,0,H
+4205681,La Liga,2023/2024,Real Sociedad,Las Palmas,2024-05-04 00:00:00+00:00,2,0,0,H
+4230877,Serie A,2023/2024,Torino,Bologna,2024-05-03 18:45:00+00:00,0,0,1,D
+4222367,Bundesliga,2023/2024,Hoffenheim,RB Leipzig,2024-05-03 18:30:00+00:00,1,1,1,D
+4193888,Premier League,2023/2024,Luton Town,Everton,2024-05-03 00:00:00+00:00,1,1,1,D
+4219522,Ligue 1,2023/2024,Toulouse,Montpellier,2024-05-03 00:00:00+00:00,1,2,2,A
+4219527,Ligue 1,2023/2024,Lens,Lorient,2024-05-03 00:00:00+00:00,2,0,0,H
+4193785,Premier League,2023/2024,Chelsea,Tottenham Hotspur,2024-05-02 00:00:00+00:00,2,0,0,H
+4230872,Serie A,2023/2024,Genoa,Cagliari,2024-04-29 18:45:00+00:00,3,0,0,H
+4205664,La Liga,2023/2024,Barcelona,Valencia,2024-04-29 00:00:00+00:00,4,2,0,H
+4230866,Serie A,2023/2024,Fiorentina,Sassuolo,2024-04-28 18:45:00+00:00,5,1,0,H
+4222361,Bundesliga,2023/2024,Darmstadt,FC Heidenheim,2024-04-28 17:30:00+00:00,0,1,2,A
+4230871,Serie A,2023/2024,Napoli,Roma,2024-04-28 16:00:00+00:00,2,2,1,D
+4230864,Serie A,2023/2024,Atalanta,Empoli,2024-04-28 16:00:00+00:00,2,0,0,H
+4222358,Bundesliga,2023/2024,Borussia Mönchengladbach,Union Berlin,2024-04-28 13:30:00+00:00,0,0,1,D
+4230865,Serie A,2023/2024,Bologna,Udinese,2024-04-28 13:00:00+00:00,1,1,1,D
+4230868,Serie A,2023/2024,Inter,Torino,2024-04-28 10:30:00+00:00,2,0,0,H
+4219520,Ligue 1,2023/2024,Metz,Lille,2024-04-28 00:00:00+00:00,1,2,2,A
+4219519,Ligue 1,2023/2024,Clermont Foot,Reims,2024-04-28 00:00:00+00:00,4,1,0,H
+4193877,Premier League,2023/2024,Nottingham Forest,Manchester City,2024-04-28 00:00:00+00:00,0,2,2,A
+4205671,La Liga,2023/2024,Villarreal,Rayo Vallecano,2024-04-28 00:00:00+00:00,3,0,0,H
+4219516,Ligue 1,2023/2024,Marseille,Lens,2024-04-28 00:00:00+00:00,2,1,0,H
+4205667,La Liga,2023/2024,Granada,Osasuna,2024-04-28 00:00:00+00:00,3,0,0,H
+4219517,Ligue 1,2023/2024,Lorient,Toulouse,2024-04-28 00:00:00+00:00,1,2,2,A
+4219514,Ligue 1,2023/2024,Strasbourg,Nice,2024-04-28 00:00:00+00:00,1,3,2,A
+4219518,Ligue 1,2023/2024,Lyon,Monaco,2024-04-28 00:00:00+00:00,3,2,0,H
+4193878,Premier League,2023/2024,Tottenham Hotspur,Arsenal,2024-04-28 00:00:00+00:00,2,3,2,A
+4219515,Ligue 1,2023/2024,Rennes,Brest,2024-04-28 00:00:00+00:00,4,5,2,A
+4205666,La Liga,2023/2024,Cadiz,Mallorca,2024-04-28 00:00:00+00:00,1,1,1,D
+4193871,Premier League,2023/2024,AFC Bournemouth,Brighton & Hove Albion,2024-04-28 00:00:00+00:00,3,0,0,H
+4230873,Serie A,2023/2024,Lazio,Hellas Verona,2024-04-27 18:45:00+00:00,1,0,0,H
+4222356,Bundesliga,2023/2024,Bayer Leverkusen,VfB Stuttgart,2024-04-27 16:30:00+00:00,2,2,1,D
+4230869,Serie A,2023/2024,Juventus,Milan,2024-04-27 16:00:00+00:00,0,0,1,D
+4222360,Bundesliga,2023/2024,Augsburg,Werder Bremen,2024-04-27 13:30:00+00:00,0,3,2,A
+4222353,Bundesliga,2023/2024,Bayern München,Eintracht Frankfurt,2024-04-27 13:30:00+00:00,2,1,0,H
+4222354,Bundesliga,2023/2024,RB Leipzig,Borussia Dortmund,2024-04-27 13:30:00+00:00,4,1,0,H
+4222355,Bundesliga,2023/2024,Freiburg,Wolfsburg,2024-04-27 13:30:00+00:00,1,2,2,A
+4230870,Serie A,2023/2024,Lecce,Monza,2024-04-27 13:00:00+00:00,1,1,1,D
+4193872,Premier League,2023/2024,Aston Villa,Chelsea,2024-04-27 00:00:00+00:00,2,2,1,D
+4205670,La Liga,2023/2024,Las Palmas,Girona,2024-04-27 00:00:00+00:00,0,2,2,A
+4193876,Premier League,2023/2024,Newcastle United,Sheffield United,2024-04-27 00:00:00+00:00,5,1,0,H
+4193875,Premier League,2023/2024,Manchester United,Burnley,2024-04-27 00:00:00+00:00,1,1,1,D
+4205668,La Liga,2023/2024,Deportivo Alaves,Celta Vigo,2024-04-27 00:00:00+00:00,3,0,0,H
+4193874,Premier League,2023/2024,Fulham,Crystal Palace,2024-04-27 00:00:00+00:00,1,1,1,D
+4193879,Premier League,2023/2024,West Ham United,Liverpool,2024-04-27 00:00:00+00:00,2,2,1,D
+4219513,Ligue 1,2023/2024,Paris Saint-Germain,Le Havre,2024-04-27 00:00:00+00:00,3,3,1,D
+4193880,Premier League,2023/2024,Wolverhampton Wanderers,Luton Town,2024-04-27 00:00:00+00:00,2,1,0,H
+4205663,La Liga,2023/2024,Almeria,Getafe,2024-04-27 00:00:00+00:00,1,3,2,A
+4193873,Premier League,2023/2024,Everton,Brentford,2024-04-27 00:00:00+00:00,1,0,0,H
+4230867,Serie A,2023/2024,Frosinone,Salernitana,2024-04-26 18:45:00+00:00,3,0,0,H
+4222359,Bundesliga,2023/2024,Bochum,Hoffenheim,2024-04-26 18:30:00+00:00,3,2,0,H
+4205672,La Liga,2023/2024,Real Sociedad,Real Madrid,2024-04-26 00:00:00+00:00,0,1,2,A
+4219521,Ligue 1,2023/2024,Montpellier,Nantes,2024-04-26 00:00:00+00:00,1,1,1,D
+4230853,Serie A,2023/2024,Udinese,Roma,2024-04-25 18:00:00+00:00,1,2,2,A
+4193812,Premier League,2023/2024,Brighton & Hove Albion,Manchester City,2024-04-25 00:00:00+00:00,0,4,2,A
+4219498,Ligue 1,2023/2024,Lorient,Paris Saint-Germain,2024-04-24 00:00:00+00:00,1,4,2,A
+4219497,Ligue 1,2023/2024,Marseille,Nice,2024-04-24 00:00:00+00:00,2,2,1,D
+4193818,Premier League,2023/2024,Manchester United,Sheffield United,2024-04-24 00:00:00+00:00,4,2,0,H
+4193820,Premier League,2023/2024,Wolverhampton Wanderers,AFC Bournemouth,2024-04-24 00:00:00+00:00,0,1,2,A
+4193815,Premier League,2023/2024,Everton,Liverpool,2024-04-24 00:00:00+00:00,2,0,0,H
+4219499,Ligue 1,2023/2024,Monaco,Lille,2024-04-24 00:00:00+00:00,1,0,0,H
+4193811,Premier League,2023/2024,Arsenal,Chelsea,2024-04-23 00:00:00+00:00,5,0,0,H
+4230862,Serie A,2023/2024,Milan,Inter,2024-04-22 18:45:00+00:00,1,2,2,A
+4205661,La Liga,2023/2024,Sevilla,Mallorca,2024-04-22 00:00:00+00:00,2,1,0,H
+4230858,Serie A,2023/2024,Monza,Atalanta,2024-04-21 18:45:00+00:00,1,2,2,A
+4222176,Bundesliga,2023/2024,Freiburg,Mainz 05,2024-04-21 17:30:00+00:00,1,1,1,D
+4230860,Serie A,2023/2024,Salernitana,Fiorentina,2024-04-21 16:00:00+00:00,0,2,2,A
+4222174,Bundesliga,2023/2024,Borussia Dortmund,Bayer Leverkusen,2024-04-21 15:30:00+00:00,1,1,1,D
+4222181,Bundesliga,2023/2024,Werder Bremen,VfB Stuttgart,2024-04-21 13:30:00+00:00,2,1,0,H
+4230861,Serie A,2023/2024,Torino,Frosinone,2024-04-21 13:00:00+00:00,0,0,1,D
+4230863,Serie A,2023/2024,Sassuolo,Lecce,2024-04-21 10:30:00+00:00,0,3,2,A
+4205657,La Liga,2023/2024,Deportivo Alaves,Atletico Madrid,2024-04-21 00:00:00+00:00,2,0,0,H
+4219506,Ligue 1,2023/2024,Lille,Strasbourg,2024-04-21 00:00:00+00:00,1,0,0,H
+4193864,Premier League,2023/2024,Everton,Nottingham Forest,2024-04-21 00:00:00+00:00,2,0,0,H
+4205658,La Liga,2023/2024,Real Madrid,Barcelona,2024-04-21 00:00:00+00:00,3,2,0,H
+4205656,La Liga,2023/2024,Getafe,Real Sociedad,2024-04-21 00:00:00+00:00,1,1,1,D
+4219512,Ligue 1,2023/2024,Brest,Monaco,2024-04-21 00:00:00+00:00,0,2,2,A
+4193865,Premier League,2023/2024,Fulham,Liverpool,2024-04-21 00:00:00+00:00,1,3,2,A
+4219511,Ligue 1,2023/2024,Le Havre,Metz,2024-04-21 00:00:00+00:00,0,1,2,A
+4219505,Ligue 1,2023/2024,Toulouse,Marseille,2024-04-21 00:00:00+00:00,2,2,1,D
+4193863,Premier League,2023/2024,Crystal Palace,West Ham United,2024-04-21 00:00:00+00:00,5,2,0,H
+4205653,La Liga,2023/2024,Almeria,Villarreal,2024-04-21 00:00:00+00:00,1,2,2,A
+4219504,Ligue 1,2023/2024,Paris Saint-Germain,Lyon,2024-04-21 00:00:00+00:00,4,1,0,H
+4219508,Ligue 1,2023/2024,Reims,Montpellier,2024-04-21 00:00:00+00:00,1,2,2,A
+4193861,Premier League,2023/2024,Aston Villa,AFC Bournemouth,2024-04-21 00:00:00+00:00,3,1,0,H
+4230857,Serie A,2023/2024,Hellas Verona,Udinese,2024-04-20 18:45:00+00:00,1,0,0,H
+4222175,Bundesliga,2023/2024,Union Berlin,Bayern München,2024-04-20 16:30:00+00:00,1,5,2,A
+4230855,Serie A,2023/2024,Empoli,Napoli,2024-04-20 16:00:00+00:00,1,0,0,H
+4222182,Bundesliga,2023/2024,FC Heidenheim,RB Leipzig,2024-04-20 13:30:00+00:00,1,2,2,A
+4222178,Bundesliga,2023/2024,Wolfsburg,Bochum,2024-04-20 13:30:00+00:00,1,0,0,H
+4222180,Bundesliga,2023/2024,Hoffenheim,Borussia Mönchengladbach,2024-04-20 13:30:00+00:00,4,3,0,H
+4222179,Bundesliga,2023/2024,1. FC Köln,Darmstadt,2024-04-20 13:30:00+00:00,0,2,2,A
+4205655,La Liga,2023/2024,Celta Vigo,Las Palmas,2024-04-20 00:00:00+00:00,4,1,0,H
+4219509,Ligue 1,2023/2024,Lens,Clermont Foot,2024-04-20 00:00:00+00:00,1,0,0,H
+4219510,Ligue 1,2023/2024,Nantes,Rennes,2024-04-20 00:00:00+00:00,0,3,2,A
+4205660,La Liga,2023/2024,Girona,Cadiz,2024-04-20 00:00:00+00:00,4,1,0,H
+4205659,La Liga,2023/2024,Valencia,Real Betis,2024-04-20 00:00:00+00:00,1,2,2,A
+4193868,Premier League,2023/2024,Sheffield United,Burnley,2024-04-20 00:00:00+00:00,1,4,2,A
+4193870,Premier League,2023/2024,Wolverhampton Wanderers,Arsenal,2024-04-20 00:00:00+00:00,0,2,2,A
+4193866,Premier League,2023/2024,Luton Town,Brentford,2024-04-20 00:00:00+00:00,1,5,2,A
+4230854,Serie A,2023/2024,Cagliari,Juventus,2024-04-19 18:45:00+00:00,2,2,1,D
+4222177,Bundesliga,2023/2024,Eintracht Frankfurt,Augsburg,2024-04-19 18:30:00+00:00,3,1,0,H
+4230856,Serie A,2023/2024,Genoa,Lazio,2024-04-19 16:30:00+00:00,0,1,2,A
+4219507,Ligue 1,2023/2024,Nice,Lorient,2024-04-19 00:00:00+00:00,3,0,0,H
+4230844,Serie A,2023/2024,Atalanta,Hellas Verona,2024-04-15 18:45:00+00:00,2,2,1,D
+4230846,Serie A,2023/2024,Fiorentina,Genoa,2024-04-15 16:30:00+00:00,1,1,1,D
+4193855,Premier League,2023/2024,Chelsea,Everton,2024-04-15 00:00:00+00:00,6,0,0,H
+4205647,La Liga,2023/2024,Osasuna,Valencia,2024-04-15 00:00:00+00:00,0,1,2,A
+4230848,Serie A,2023/2024,Inter,Cagliari,2024-04-14 18:45:00+00:00,2,2,1,D
+4222167,Bundesliga,2023/2024,Bayer Leverkusen,Werder Bremen,2024-04-14 15:30:00+00:00,5,0,0,H
+4222173,Bundesliga,2023/2024,Darmstadt,Freiburg,2024-04-14 13:30:00+00:00,0,1,2,A
+4230852,Serie A,2023/2024,Sassuolo,Milan,2024-04-14 13:00:00+00:00,3,3,1,D
+4230850,Serie A,2023/2024,Napoli,Frosinone,2024-04-14 10:30:00+00:00,2,2,1,D
+4193852,Premier League,2023/2024,Arsenal,Aston Villa,2024-04-14 00:00:00+00:00,0,2,2,A
+4205652,La Liga,2023/2024,Granada,Deportivo Alaves,2024-04-14 00:00:00+00:00,2,0,0,H
+4219501,Ligue 1,2023/2024,Clermont Foot,Montpellier,2024-04-14 00:00:00+00:00,1,1,1,D
+4205649,La Liga,2023/2024,Real Sociedad,Almeria,2024-04-14 00:00:00+00:00,2,2,1,D
+4205648,La Liga,2023/2024,Las Palmas,Sevilla,2024-04-14 00:00:00+00:00,0,2,2,A
+4193860,Premier League,2023/2024,West Ham United,Fulham,2024-04-14 00:00:00+00:00,0,2,2,A
+4193856,Premier League,2023/2024,Liverpool,Crystal Palace,2024-04-14 00:00:00+00:00,0,1,2,A
+4230845,Serie A,2023/2024,Bologna,Monza,2024-04-13 18:45:00+00:00,0,0,1,D
+4222172,Bundesliga,2023/2024,VfB Stuttgart,Eintracht Frankfurt,2024-04-13 16:30:00+00:00,3,0,0,H
+4230851,Serie A,2023/2024,Torino,Juventus,2024-04-13 16:05:00+00:00,0,0,1,D
+4222166,Bundesliga,2023/2024,RB Leipzig,Wolfsburg,2024-04-13 13:30:00+00:00,3,0,0,H
+4222168,Bundesliga,2023/2024,Mainz 05,Hoffenheim,2024-04-13 13:30:00+00:00,4,1,0,H
+4222170,Bundesliga,2023/2024,Bochum,FC Heidenheim,2024-04-13 13:30:00+00:00,1,1,1,D
+4222165,Bundesliga,2023/2024,Bayern München,1. FC Köln,2024-04-13 13:30:00+00:00,2,0,0,H
+4230849,Serie A,2023/2024,Lecce,Empoli,2024-04-13 13:00:00+00:00,1,0,0,H
+4193858,Premier League,2023/2024,Newcastle United,Tottenham Hotspur,2024-04-13 00:00:00+00:00,4,0,0,H
+4193859,Premier League,2023/2024,Nottingham Forest,Wolverhampton Wanderers,2024-04-13 00:00:00+00:00,2,2,1,D
+4205650,La Liga,2023/2024,Cadiz,Barcelona,2024-04-13 00:00:00+00:00,0,1,2,A
+4193851,Premier League,2023/2024,AFC Bournemouth,Manchester United,2024-04-13 00:00:00+00:00,2,2,1,D
+4219495,Ligue 1,2023/2024,Strasbourg,Reims,2024-04-13 00:00:00+00:00,3,1,0,H
+4219496,Ligue 1,2023/2024,Rennes,Toulouse,2024-04-13 00:00:00+00:00,1,2,2,A
+4205651,La Liga,2023/2024,Rayo Vallecano,Getafe,2024-04-13 00:00:00+00:00,0,0,1,D
+4205646,La Liga,2023/2024,Mallorca,Real Madrid,2024-04-13 00:00:00+00:00,0,1,2,A
+4193853,Premier League,2023/2024,Brentford,Sheffield United,2024-04-13 00:00:00+00:00,2,0,0,H
+4193857,Premier League,2023/2024,Manchester City,Luton Town,2024-04-13 00:00:00+00:00,5,1,0,H
+4205644,La Liga,2023/2024,Atletico Madrid,Girona,2024-04-13 00:00:00+00:00,3,1,0,H
+4193854,Premier League,2023/2024,Burnley,Brighton & Hove Albion,2024-04-13 00:00:00+00:00,1,1,1,D
+4230847,Serie A,2023/2024,Lazio,Salernitana,2024-04-12 18:45:00+00:00,4,1,0,H
+4222171,Bundesliga,2023/2024,Augsburg,Union Berlin,2024-04-12 18:30:00+00:00,2,0,0,H
+4205645,La Liga,2023/2024,Real Betis,Celta Vigo,2024-04-12 00:00:00+00:00,2,1,0,H
+4230820,Serie A,2023/2024,Udinese,Inter,2024-04-08 18:45:00+00:00,1,2,2,A
+4230816,Serie A,2023/2024,Juventus,Fiorentina,2024-04-07 18:45:00+00:00,1,0,0,H
+4230818,Serie A,2023/2024,Hellas Verona,Genoa,2024-04-07 16:00:00+00:00,1,2,2,A
+4230812,Serie A,2023/2024,Cagliari,Atalanta,2024-04-07 16:00:00+00:00,2,1,0,H
+4222162,Bundesliga,2023/2024,Hoffenheim,Augsburg,2024-04-07 13:30:00+00:00,3,1,0,H
+4230808,Serie A,2023/2024,Monza,Napoli,2024-04-07 13:00:00+00:00,2,4,2,A
+4230814,Serie A,2023/2024,Frosinone,Bologna,2024-04-07 10:30:00+00:00,0,0,1,D
+4193849,Premier League,2023/2024,Tottenham Hotspur,Nottingham Forest,2024-04-07 00:00:00+00:00,3,1,0,H
+4219442,Ligue 1,2023/2024,Nantes,Lyon,2024-04-07 00:00:00+00:00,1,3,2,A
+4219437,Ligue 1,2023/2024,Toulouse,Strasbourg,2024-04-07 00:00:00+00:00,0,0,1,D
+4193847,Premier League,2023/2024,Manchester United,Liverpool,2024-04-07 00:00:00+00:00,2,2,1,D
+4219443,Ligue 1,2023/2024,Montpellier,Lorient,2024-04-07 00:00:00+00:00,2,0,0,H
+4219438,Ligue 1,2023/2024,Monaco,Rennes,2024-04-07 00:00:00+00:00,1,0,0,H
+4193848,Premier League,2023/2024,Sheffield United,Chelsea,2024-04-07 00:00:00+00:00,2,2,1,D
+4230807,Serie A,2023/2024,Empoli,Torino,2024-04-06 18:45:00+00:00,3,2,0,H
+4222156,Bundesliga,2023/2024,Borussia Dortmund,VfB Stuttgart,2024-04-06 16:30:00+00:00,0,1,2,A
+4222163,Bundesliga,2023/2024,FC Heidenheim,Bayern München,2024-04-06 13:30:00+00:00,3,2,0,H
+4222158,Bundesliga,2023/2024,Freiburg,RB Leipzig,2024-04-06 13:30:00+00:00,1,4,2,A
+4222161,Bundesliga,2023/2024,Mainz 05,Darmstadt,2024-04-06 13:30:00+00:00,4,0,0,H
+4222157,Bundesliga,2023/2024,Union Berlin,Bayer Leverkusen,2024-04-06 13:30:00+00:00,0,1,2,A
+4230824,Serie A,2023/2024,Milan,Lecce,2024-04-06 13:00:00+00:00,3,0,0,H
+4219441,Ligue 1,2023/2024,Lens,Le Havre,2024-04-06 00:00:00+00:00,1,1,1,D
+4193850,Premier League,2023/2024,Wolverhampton Wanderers,West Ham United,2024-04-06 00:00:00+00:00,1,2,2,A
+4193842,Premier League,2023/2024,Brighton & Hove Albion,Arsenal,2024-04-06 00:00:00+00:00,0,3,2,A
+4219436,Ligue 1,2023/2024,Paris Saint-Germain,Clermont Foot,2024-04-06 00:00:00+00:00,1,1,1,D
+4193843,Premier League,2023/2024,Crystal Palace,Manchester City,2024-04-06 00:00:00+00:00,2,4,2,A
+4193844,Premier League,2023/2024,Everton,Burnley,2024-04-06 00:00:00+00:00,1,0,0,H
+4193846,Premier League,2023/2024,Luton Town,AFC Bournemouth,2024-04-06 00:00:00+00:00,2,1,0,H
+4193841,Premier League,2023/2024,Aston Villa,Brentford,2024-04-06 00:00:00+00:00,3,3,1,D
+4193845,Premier League,2023/2024,Fulham,Newcastle United,2024-04-06 00:00:00+00:00,0,1,2,A
+4230810,Serie A,2023/2024,Salernitana,Sassuolo,2024-04-05 18:45:00+00:00,2,2,1,D
+4222159,Bundesliga,2023/2024,Eintracht Frankfurt,Werder Bremen,2024-04-05 18:30:00+00:00,1,1,1,D
+4219439,Ligue 1,2023/2024,Lille,Marseille,2024-04-05 00:00:00+00:00,3,1,0,H
+4193839,Premier League,2023/2024,Liverpool,Sheffield United,2024-04-04 00:00:00+00:00,3,1,0,H
+4193837,Premier League,2023/2024,Chelsea,Manchester United,2024-04-04 00:00:00+00:00,4,3,0,H
+4205599,La Liga,2023/2024,Granada,Valencia,2024-04-04 00:00:00+00:00,0,1,2,A
+4193833,Premier League,2023/2024,Brentford,Brighton & Hove Albion,2024-04-03 00:00:00+00:00,0,0,1,D
+4193832,Premier League,2023/2024,Arsenal,Luton Town,2024-04-03 00:00:00+00:00,2,0,0,H
+4193840,Premier League,2023/2024,Manchester City,Aston Villa,2024-04-03 00:00:00+00:00,4,1,0,H
+4193834,Premier League,2023/2024,Burnley,Wolverhampton Wanderers,2024-04-02 00:00:00+00:00,1,1,1,D
+4193835,Premier League,2023/2024,Nottingham Forest,Fulham,2024-04-02 00:00:00+00:00,3,1,0,H
+4193836,Premier League,2023/2024,West Ham United,Tottenham Hotspur,2024-04-02 00:00:00+00:00,1,1,1,D
+4193831,Premier League,2023/2024,AFC Bournemouth,Crystal Palace,2024-04-02 00:00:00+00:00,1,0,0,H
+4193838,Premier League,2023/2024,Newcastle United,Everton,2024-04-02 00:00:00+00:00,1,1,1,D
+4230840,Serie A,2023/2024,Inter,Empoli,2024-04-01 18:45:00+00:00,2,0,0,H
+4230837,Serie A,2023/2024,Lecce,Roma,2024-04-01 16:00:00+00:00,0,0,1,D
+4230835,Serie A,2023/2024,Cagliari,Hellas Verona,2024-04-01 13:00:00+00:00,1,1,1,D
+4230838,Serie A,2023/2024,Sassuolo,Udinese,2024-04-01 13:00:00+00:00,1,1,1,D
+4230834,Serie A,2023/2024,Bologna,Salernitana,2024-04-01 10:30:00+00:00,3,0,0,H
+4205640,La Liga,2023/2024,Villarreal,Atletico Madrid,2024-04-01 00:00:00+00:00,1,2,2,A
+4222153,Bundesliga,2023/2024,Bochum,Darmstadt,2024-03-31 17:30:00+00:00,2,2,1,D
+4222155,Bundesliga,2023/2024,VfB Stuttgart,FC Heidenheim,2024-03-31 15:30:00+00:00,3,3,1,D
+4219434,Ligue 1,2023/2024,Le Havre,Montpellier,2024-03-31 00:00:00+00:00,0,2,2,A
+4193826,Premier League,2023/2024,Manchester City,Arsenal,2024-03-31 00:00:00+00:00,0,0,1,D
+4205638,La Liga,2023/2024,Deportivo Alaves,Real Sociedad,2024-03-31 00:00:00+00:00,0,1,2,A
+4219432,Ligue 1,2023/2024,Nice,Nantes,2024-03-31 00:00:00+00:00,1,2,2,A
+4219428,Ligue 1,2023/2024,Marseille,Paris Saint-Germain,2024-03-31 00:00:00+00:00,0,2,2,A
+4193825,Premier League,2023/2024,Liverpool,Brighton & Hove Albion,2024-03-31 00:00:00+00:00,2,1,0,H
+4205641,La Liga,2023/2024,Girona,Real Betis,2024-03-31 00:00:00+00:00,3,2,0,H
+4219429,Ligue 1,2023/2024,Lorient,Brest,2024-03-31 00:00:00+00:00,0,1,2,A
+4219427,Ligue 1,2023/2024,Strasbourg,Rennes,2024-03-31 00:00:00+00:00,2,0,0,H
+4219433,Ligue 1,2023/2024,Clermont Foot,Toulouse,2024-03-31 00:00:00+00:00,0,3,2,A
+4205636,La Liga,2023/2024,Celta Vigo,Rayo Vallecano,2024-03-31 00:00:00+00:00,0,0,1,D
+4230836,Serie A,2023/2024,Fiorentina,Milan,2024-03-30 19:45:00+00:00,1,2,2,A
+4222147,Bundesliga,2023/2024,Bayern München,Borussia Dortmund,2024-03-30 17:30:00+00:00,0,2,2,A
+4230842,Serie A,2023/2024,Lazio,Juventus,2024-03-30 17:00:00+00:00,1,0,0,H
+4222152,Bundesliga,2023/2024,Werder Bremen,Wolfsburg,2024-03-30 14:30:00+00:00,0,2,2,A
+4222149,Bundesliga,2023/2024,Bayer Leverkusen,Hoffenheim,2024-03-30 14:30:00+00:00,2,1,0,H
+4222150,Bundesliga,2023/2024,Eintracht Frankfurt,Union Berlin,2024-03-30 14:30:00+00:00,0,0,1,D
+4230843,Serie A,2023/2024,Torino,Monza,2024-03-30 14:00:00+00:00,1,0,0,H
+4230841,Serie A,2023/2024,Genoa,Frosinone,2024-03-30 14:00:00+00:00,1,1,1,D
+4230839,Serie A,2023/2024,Napoli,Atalanta,2024-03-30 11:30:00+00:00,0,3,2,A
+4193822,Premier League,2023/2024,Aston Villa,Wolverhampton Wanderers,2024-03-30 00:00:00+00:00,2,0,0,H
+4193821,Premier League,2023/2024,AFC Bournemouth,Everton,2024-03-30 00:00:00+00:00,2,1,0,H
+4193827,Premier League,2023/2024,Newcastle United,West Ham United,2024-03-30 00:00:00+00:00,4,3,0,H
+4193823,Premier League,2023/2024,Brentford,Manchester United,2024-03-30 00:00:00+00:00,1,1,1,D
+4193824,Premier League,2023/2024,Chelsea,Burnley,2024-03-30 00:00:00+00:00,2,2,1,D
+4205633,La Liga,2023/2024,Almeria,Osasuna,2024-03-30 00:00:00+00:00,0,3,2,A
+4193828,Premier League,2023/2024,Nottingham Forest,Crystal Palace,2024-03-30 00:00:00+00:00,1,1,1,D
+4193829,Premier League,2023/2024,Sheffield United,Fulham,2024-03-30 00:00:00+00:00,3,3,1,D
+4205634,La Liga,2023/2024,Barcelona,Las Palmas,2024-03-30 00:00:00+00:00,1,0,0,H
+4205635,La Liga,2023/2024,Cadiz,Granada,2024-03-29 00:00:00+00:00,1,0,0,H
+4230827,Serie A,2023/2024,Inter,Napoli,2024-03-17 19:45:00+00:00,1,1,1,D
+4230828,Serie A,2023/2024,Roma,Sassuolo,2024-03-17 17:00:00+00:00,1,0,0,H
+4222138,Bundesliga,2023/2024,Borussia Dortmund,Eintracht Frankfurt,2024-03-17 16:30:00+00:00,3,1,0,H
+4222140,Bundesliga,2023/2024,Freiburg,Bayer Leverkusen,2024-03-17 14:30:00+00:00,2,3,2,A
+4230831,Serie A,2023/2024,Juventus,Genoa,2024-03-17 11:30:00+00:00,0,0,1,D
+4219421,Ligue 1,2023/2024,Clermont Foot,Le Havre,2024-03-17 00:00:00+00:00,2,1,0,H
+4205630,La Liga,2023/2024,Villarreal,Valencia,2024-03-17 00:00:00+00:00,1,0,0,H
+4219420,Ligue 1,2023/2024,Monaco,Lorient,2024-03-17 00:00:00+00:00,2,2,1,D
+4219425,Ligue 1,2023/2024,Montpellier,Paris Saint-Germain,2024-03-17 00:00:00+00:00,2,6,2,A
+4205627,La Liga,2023/2024,Rayo Vallecano,Real Betis,2024-03-17 00:00:00+00:00,2,0,0,H
+4193819,Premier League,2023/2024,West Ham United,Aston Villa,2024-03-17 00:00:00+00:00,1,1,1,D
+4219418,Ligue 1,2023/2024,Rennes,Marseille,2024-03-17 00:00:00+00:00,2,0,0,H
+4205626,La Liga,2023/2024,Las Palmas,Almeria,2024-03-17 00:00:00+00:00,0,1,2,A
+4230825,Serie A,2023/2024,Frosinone,Lazio,2024-03-16 19:45:00+00:00,2,3,2,A
+4222144,Bundesliga,2023/2024,Hoffenheim,VfB Stuttgart,2024-03-16 17:30:00+00:00,0,3,2,A
+4230832,Serie A,2023/2024,Salernitana,Lecce,2024-03-16 17:00:00+00:00,0,1,2,A
+4222142,Bundesliga,2023/2024,Mainz 05,Bochum,2024-03-16 14:30:00+00:00,2,0,0,H
+4222146,Bundesliga,2023/2024,Darmstadt,Bayern München,2024-03-16 14:30:00+00:00,2,5,2,A
+4222139,Bundesliga,2023/2024,Union Berlin,Werder Bremen,2024-03-16 14:30:00+00:00,2,1,0,H
+4222141,Bundesliga,2023/2024,Wolfsburg,Augsburg,2024-03-16 14:30:00+00:00,1,3,2,A
+4230833,Serie A,2023/2024,Udinese,Torino,2024-03-16 14:00:00+00:00,0,2,2,A
+4230830,Serie A,2023/2024,Monza,Cagliari,2024-03-16 14:00:00+00:00,1,0,0,H
+4193816,Premier League,2023/2024,Fulham,Tottenham Hotspur,2024-03-16 00:00:00+00:00,3,0,0,H
+4205625,La Liga,2023/2024,Osasuna,Real Madrid,2024-03-16 00:00:00+00:00,2,4,2,A
+4205624,La Liga,2023/2024,Getafe,Girona,2024-03-16 00:00:00+00:00,1,0,0,H
+4205631,La Liga,2023/2024,Mallorca,Granada,2024-03-16 00:00:00+00:00,1,0,0,H
+4193813,Premier League,2023/2024,Burnley,Brentford,2024-03-16 00:00:00+00:00,2,1,0,H
+4193817,Premier League,2023/2024,Luton Town,Nottingham Forest,2024-03-16 00:00:00+00:00,1,1,1,D
+4230829,Serie A,2023/2024,Empoli,Bologna,2024-03-15 19:45:00+00:00,0,1,2,A
+4205628,La Liga,2023/2024,Real Sociedad,Cadiz,2024-03-15 00:00:00+00:00,2,0,0,H
+4421797,Premier League,2023/2024,AFC Bournemouth,Luton Town,2024-03-13 00:00:00+00:00,4,3,0,H
+4230811,Serie A,2023/2024,Lazio,Udinese,2024-03-11 19:45:00+00:00,1,2,2,A
+4193805,Premier League,2023/2024,Chelsea,Newcastle United,2024-03-11 00:00:00+00:00,3,2,0,H
+4205613,La Liga,2023/2024,Almeria,Sevilla,2024-03-11 00:00:00+00:00,2,2,1,D
+4230806,Serie A,2023/2024,Fiorentina,Roma,2024-03-10 19:45:00+00:00,2,2,1,D
+4222131,Bundesliga,2023/2024,Bayer Leverkusen,Wolfsburg,2024-03-10 18:30:00+00:00,2,0,0,H
+4230815,Serie A,2023/2024,Juventus,Atalanta,2024-03-10 17:00:00+00:00,2,2,1,D
+4222135,Bundesliga,2023/2024,Bochum,Freiburg,2024-03-10 14:30:00+00:00,1,2,2,A
+4230817,Serie A,2023/2024,Milan,Empoli,2024-03-10 14:00:00+00:00,1,0,0,H
+4230821,Serie A,2023/2024,Lecce,Hellas Verona,2024-03-10 11:30:00+00:00,0,1,2,A
+4193807,Premier League,2023/2024,Liverpool,Manchester City,2024-03-10 00:00:00+00:00,1,1,1,D
+4193803,Premier League,2023/2024,Aston Villa,Tottenham Hotspur,2024-03-10 00:00:00+00:00,0,4,2,A
+4205621,La Liga,2023/2024,Real Madrid,Celta Vigo,2024-03-10 00:00:00+00:00,4,0,0,H
+4205618,La Liga,2023/2024,Deportivo Alaves,Rayo Vallecano,2024-03-10 00:00:00+00:00,1,0,0,H
+4193804,Premier League,2023/2024,Brighton & Hove Albion,Nottingham Forest,2024-03-10 00:00:00+00:00,1,0,0,H
+4205615,La Liga,2023/2024,Real Betis,Villarreal,2024-03-10 00:00:00+00:00,2,3,2,A
+4219416,Ligue 1,2023/2024,Le Havre,Toulouse,2024-03-10 00:00:00+00:00,1,0,0,H
+4219413,Ligue 1,2023/2024,Lille,Rennes,2024-03-10 00:00:00+00:00,2,2,1,D
+4193809,Premier League,2023/2024,West Ham United,Burnley,2024-03-10 00:00:00+00:00,2,2,1,D
+4230809,Serie A,2023/2024,Genoa,Monza,2024-03-09 19:45:00+00:00,2,3,2,A
+4222134,Bundesliga,2023/2024,Werder Bremen,Borussia Dortmund,2024-03-09 17:30:00+00:00,1,2,2,A
+4230804,Serie A,2023/2024,Bologna,Inter,2024-03-09 17:00:00+00:00,0,1,2,A
+4222136,Bundesliga,2023/2024,Augsburg,FC Heidenheim,2024-03-09 14:30:00+00:00,1,0,0,H
+4222130,Bundesliga,2023/2024,RB Leipzig,Darmstadt,2024-03-09 14:30:00+00:00,2,0,0,H
+4230819,Serie A,2023/2024,Sassuolo,Frosinone,2024-03-09 14:00:00+00:00,1,0,0,H
+4230805,Serie A,2023/2024,Cagliari,Salernitana,2024-03-09 14:00:00+00:00,4,2,0,H
+4205616,La Liga,2023/2024,Girona,Osasuna,2024-03-09 00:00:00+00:00,2,0,0,H
+4205617,La Liga,2023/2024,Granada,Real Sociedad,2024-03-09 00:00:00+00:00,2,3,2,A
+4193806,Premier League,2023/2024,Crystal Palace,Luton Town,2024-03-09 00:00:00+00:00,1,1,1,D
+4193802,Premier League,2023/2024,Arsenal,Brentford,2024-03-09 00:00:00+00:00,2,1,0,H
+4205622,La Liga,2023/2024,Valencia,Getafe,2024-03-09 00:00:00+00:00,1,0,0,H
+4193810,Premier League,2023/2024,Wolverhampton Wanderers,Fulham,2024-03-09 00:00:00+00:00,2,1,0,H
+4193801,Premier League,2023/2024,AFC Bournemouth,Sheffield United,2024-03-09 00:00:00+00:00,2,2,1,D
+4205620,La Liga,2023/2024,Cadiz,Atletico Madrid,2024-03-09 00:00:00+00:00,2,0,0,H
+4219412,Ligue 1,2023/2024,Lorient,Lyon,2024-03-09 00:00:00+00:00,0,2,2,A
+4193808,Premier League,2023/2024,Manchester United,Everton,2024-03-09 00:00:00+00:00,2,0,0,H
+4230813,Serie A,2023/2024,Napoli,Torino,2024-03-08 19:45:00+00:00,1,1,1,D
+4222137,Bundesliga,2023/2024,VfB Stuttgart,Union Berlin,2024-03-08 19:30:00+00:00,2,0,0,H
+4205614,La Liga,2023/2024,Barcelona,Mallorca,2024-03-08 00:00:00+00:00,1,0,0,H
+4219414,Ligue 1,2023/2024,Nice,Montpellier,2024-03-08 00:00:00+00:00,1,2,2,A
+4230801,Serie A,2023/2024,Inter,Genoa,2024-03-04 19:45:00+00:00,2,1,0,H
+4205612,La Liga,2023/2024,Osasuna,Deportivo Alaves,2024-03-04 00:00:00+00:00,1,0,0,H
+4193799,Premier League,2023/2024,Sheffield United,Arsenal,2024-03-04 00:00:00+00:00,0,6,2,A
+4230802,Serie A,2023/2024,Napoli,Juventus,2024-03-03 19:45:00+00:00,2,1,0,H
+4230794,Serie A,2023/2024,Atalanta,Bologna,2024-03-03 17:00:00+00:00,1,2,2,A
+4222125,Bundesliga,2023/2024,Hoffenheim,Werder Bremen,2024-03-03 16:30:00+00:00,2,1,0,H
+4222124,Bundesliga,2023/2024,1. FC Köln,Bayer Leverkusen,2024-03-03 14:30:00+00:00,0,2,2,A
+4230799,Serie A,2023/2024,Empoli,Cagliari,2024-03-03 14:00:00+00:00,0,1,2,A
+4230795,Serie A,2023/2024,Frosinone,Lecce,2024-03-03 14:00:00+00:00,1,1,1,D
+4230796,Serie A,2023/2024,Hellas Verona,Sassuolo,2024-03-03 11:30:00+00:00,1,0,0,H
+4205611,La Liga,2023/2024,Villarreal,Granada,2024-03-03 00:00:00+00:00,5,1,0,H
+4219252,Ligue 1,2023/2024,Nantes,Metz,2024-03-03 00:00:00+00:00,0,2,2,A
+4205604,La Liga,2023/2024,Atletico Madrid,Real Betis,2024-03-03 00:00:00+00:00,2,1,0,H
+4219247,Ligue 1,2023/2024,Toulouse,Nice,2024-03-03 00:00:00+00:00,2,1,0,H
+4193792,Premier League,2023/2024,Burnley,AFC Bournemouth,2024-03-03 00:00:00+00:00,0,2,2,A
+4193796,Premier League,2023/2024,Manchester City,Manchester United,2024-03-03 00:00:00+00:00,3,1,0,H
+4222122,Bundesliga,2023/2024,Wolfsburg,VfB Stuttgart,2024-03-02 17:30:00+00:00,2,3,2,A
+4230798,Serie A,2023/2024,Monza,Roma,2024-03-02 17:00:00+00:00,1,4,2,A
+4222127,Bundesliga,2023/2024,FC Heidenheim,Eintracht Frankfurt,2024-03-02 14:30:00+00:00,1,2,2,A
+4222120,Bundesliga,2023/2024,Union Berlin,Borussia Dortmund,2024-03-02 14:30:00+00:00,0,2,2,A
+4222126,Bundesliga,2023/2024,Bochum,RB Leipzig,2024-03-02 14:30:00+00:00,1,4,2,A
+4222128,Bundesliga,2023/2024,Darmstadt,Augsburg,2024-03-02 14:30:00+00:00,0,6,2,A
+4230803,Serie A,2023/2024,Udinese,Salernitana,2024-03-02 14:00:00+00:00,1,1,1,D
+4193798,Premier League,2023/2024,Nottingham Forest,Liverpool,2024-03-02 00:00:00+00:00,0,1,2,A
+4205607,La Liga,2023/2024,Rayo Vallecano,Cadiz,2024-03-02 00:00:00+00:00,1,1,1,D
+4219250,Ligue 1,2023/2024,Clermont Foot,Marseille,2024-03-02 00:00:00+00:00,1,5,2,A
+4205609,La Liga,2023/2024,Valencia,Real Madrid,2024-03-02 00:00:00+00:00,2,2,1,D
+4219251,Ligue 1,2023/2024,Reims,Lille,2024-03-02 00:00:00+00:00,0,1,2,A
+4205610,La Liga,2023/2024,Sevilla,Real Sociedad,2024-03-02 00:00:00+00:00,3,2,0,H
+4193795,Premier League,2023/2024,Luton Town,Aston Villa,2024-03-02 00:00:00+00:00,2,3,2,A
+4205605,La Liga,2023/2024,Getafe,Las Palmas,2024-03-02 00:00:00+00:00,3,3,1,D
+4193793,Premier League,2023/2024,Everton,West Ham United,2024-03-02 00:00:00+00:00,1,3,2,A
+4193797,Premier League,2023/2024,Newcastle United,Wolverhampton Wanderers,2024-03-02 00:00:00+00:00,3,0,0,H
+4193791,Premier League,2023/2024,Brentford,Chelsea,2024-03-02 00:00:00+00:00,2,2,1,D
+4193794,Premier League,2023/2024,Fulham,Brighton & Hove Albion,2024-03-02 00:00:00+00:00,3,0,0,H
+4193800,Premier League,2023/2024,Tottenham Hotspur,Crystal Palace,2024-03-02 00:00:00+00:00,3,1,0,H
+4230797,Serie A,2023/2024,Lazio,Milan,2024-03-01 19:45:00+00:00,0,1,2,A
+4222121,Bundesliga,2023/2024,Freiburg,Bayern München,2024-03-01 19:30:00+00:00,2,2,1,D
+4219248,Ligue 1,2023/2024,Monaco,Paris Saint-Germain,2024-03-01 00:00:00+00:00,0,0,1,D
+4205606,La Liga,2023/2024,Celta Vigo,Almeria,2024-03-01 00:00:00+00:00,1,0,0,H
+4230736,Serie A,2023/2024,Inter,Atalanta,2024-02-28 19:45:00+00:00,4,0,0,H
+4230743,Serie A,2023/2024,Sassuolo,Napoli,2024-02-28 17:00:00+00:00,1,6,2,A
+4230786,Serie A,2023/2024,Fiorentina,Lazio,2024-02-26 19:45:00+00:00,2,1,0,H
+4205596,La Liga,2023/2024,Girona,Rayo Vallecano,2024-02-26 00:00:00+00:00,3,0,0,H
+4193789,Premier League,2023/2024,West Ham United,Brentford,2024-02-26 00:00:00+00:00,4,2,0,H
+4230789,Serie A,2023/2024,Milan,Atalanta,2024-02-25 19:45:00+00:00,1,1,1,D
+4222030,Bundesliga,2023/2024,Augsburg,Freiburg,2024-02-25 18:30:00+00:00,2,1,0,H
+4230792,Serie A,2023/2024,Lecce,Inter,2024-02-25 17:00:00+00:00,0,4,2,A
+4222024,Bundesliga,2023/2024,Borussia Dortmund,Hoffenheim,2024-02-25 16:30:00+00:00,2,3,2,A
+4222027,Bundesliga,2023/2024,Eintracht Frankfurt,Wolfsburg,2024-02-25 14:30:00+00:00,2,2,1,D
+4230785,Serie A,2023/2024,Cagliari,Napoli,2024-02-25 14:00:00+00:00,1,1,1,D
+4230791,Serie A,2023/2024,Juventus,Frosinone,2024-02-25 11:30:00+00:00,3,2,0,H
+4205600,La Liga,2023/2024,Las Palmas,Osasuna,2024-02-25 00:00:00+00:00,1,1,1,D
+4219240,Ligue 1,2023/2024,Marseille,Montpellier,2024-02-25 00:00:00+00:00,4,1,0,H
+4219239,Ligue 1,2023/2024,Toulouse,Lille,2024-02-25 00:00:00+00:00,3,1,0,H
+4219243,Ligue 1,2023/2024,Lens,Monaco,2024-02-25 00:00:00+00:00,2,3,2,A
+4219242,Ligue 1,2023/2024,Nice,Clermont Foot,2024-02-25 00:00:00+00:00,0,0,1,D
+4219237,Ligue 1,2023/2024,Paris Saint-Germain,Rennes,2024-02-25 00:00:00+00:00,1,1,1,D
+4205595,La Liga,2023/2024,Cadiz,Celta Vigo,2024-02-25 00:00:00+00:00,2,2,1,D
+4219244,Ligue 1,2023/2024,Le Havre,Reims,2024-02-25 00:00:00+00:00,1,2,2,A
+4205597,La Liga,2023/2024,Real Madrid,Sevilla,2024-02-25 00:00:00+00:00,1,0,0,H
+4193790,Premier League,2023/2024,Wolverhampton Wanderers,Sheffield United,2024-02-25 00:00:00+00:00,1,0,0,H
+4230787,Serie A,2023/2024,Genoa,Udinese,2024-02-24 19:45:00+00:00,2,0,0,H
+4222023,Bundesliga,2023/2024,Bayern München,RB Leipzig,2024-02-24 17:30:00+00:00,2,1,0,H
+4230793,Serie A,2023/2024,Salernitana,Monza,2024-02-24 17:00:00+00:00,0,2,2,A
+4222028,Bundesliga,2023/2024,Borussia Mönchengladbach,Bochum,2024-02-24 14:40:00+00:00,5,2,0,H
+4222029,Bundesliga,2023/2024,Werder Bremen,Darmstadt,2024-02-24 14:30:00+00:00,1,1,1,D
+4222031,Bundesliga,2023/2024,VfB Stuttgart,1. FC Köln,2024-02-24 14:30:00+00:00,1,1,1,D
+4222025,Bundesliga,2023/2024,Union Berlin,FC Heidenheim,2024-02-24 14:30:00+00:00,2,2,1,D
+4230790,Serie A,2023/2024,Sassuolo,Empoli,2024-02-24 14:00:00+00:00,2,3,2,A
+4193784,Premier League,2023/2024,Brighton & Hove Albion,Everton,2024-02-24 00:00:00+00:00,1,1,1,D
+4205593,La Liga,2023/2024,Almeria,Atletico Madrid,2024-02-24 00:00:00+00:00,2,2,1,D
+4193782,Premier League,2023/2024,Arsenal,Newcastle United,2024-02-24 00:00:00+00:00,4,1,0,H
+4193781,Premier League,2023/2024,AFC Bournemouth,Manchester City,2024-02-24 00:00:00+00:00,0,1,2,A
+4219241,Ligue 1,2023/2024,Lorient,Nantes,2024-02-24 00:00:00+00:00,0,1,2,A
+4205594,La Liga,2023/2024,Barcelona,Getafe,2024-02-24 00:00:00+00:00,4,0,0,H
+4205601,La Liga,2023/2024,Deportivo Alaves,Mallorca,2024-02-24 00:00:00+00:00,1,1,1,D
+4219238,Ligue 1,2023/2024,Strasbourg,Brest,2024-02-24 00:00:00+00:00,0,3,2,A
+4193788,Premier League,2023/2024,Manchester United,Fulham,2024-02-24 00:00:00+00:00,1,2,2,A
+4193783,Premier League,2023/2024,Aston Villa,Nottingham Forest,2024-02-24 00:00:00+00:00,4,2,0,H
+4193786,Premier League,2023/2024,Crystal Palace,Burnley,2024-02-24 00:00:00+00:00,3,0,0,H
+4230784,Serie A,2023/2024,Bologna,Hellas Verona,2024-02-23 19:45:00+00:00,2,0,0,H
+4222026,Bundesliga,2023/2024,Bayer Leverkusen,Mainz 05,2024-02-23 19:30:00+00:00,2,1,0,H
+4219245,Ligue 1,2023/2024,Metz,Lyon,2024-02-23 00:00:00+00:00,1,2,2,A
+4205598,La Liga,2023/2024,Real Sociedad,Villarreal,2024-02-23 00:00:00+00:00,1,3,2,A
+4230741,Serie A,2023/2024,Torino,Lazio,2024-02-22 19:45:00+00:00,0,2,2,A
+4193787,Premier League,2023/2024,Liverpool,Luton Town,2024-02-21 00:00:00+00:00,4,1,0,H
+4193706,Premier League,2023/2024,Manchester City,Brentford,2024-02-20 00:00:00+00:00,1,0,0,H
+4193773,Premier League,2023/2024,Everton,Crystal Palace,2024-02-19 00:00:00+00:00,1,1,1,D
+4230783,Serie A,2023/2024,Monza,Milan,2024-02-18 19:45:00+00:00,4,2,0,H
+4230776,Serie A,2023/2024,Frosinone,Roma,2024-02-18 17:00:00+00:00,0,3,2,A
+4222020,Bundesliga,2023/2024,Bochum,Bayern München,2024-02-18 16:30:00+00:00,3,2,0,H
+4222015,Bundesliga,2023/2024,Freiburg,Eintracht Frankfurt,2024-02-18 14:30:00+00:00,3,3,1,D
+4230780,Serie A,2023/2024,Udinese,Cagliari,2024-02-18 14:00:00+00:00,1,1,1,D
+4230775,Serie A,2023/2024,Empoli,Fiorentina,2024-02-18 14:00:00+00:00,1,1,1,D
+4230779,Serie A,2023/2024,Lazio,Bologna,2024-02-18 11:30:00+00:00,1,2,2,A
+4193775,Premier League,2023/2024,Luton Town,Manchester United,2024-02-18 00:00:00+00:00,1,2,2,A
+4219230,Ligue 1,2023/2024,Monaco,Toulouse,2024-02-18 00:00:00+00:00,1,2,2,A
+4205586,La Liga,2023/2024,Rayo Vallecano,Real Madrid,2024-02-18 00:00:00+00:00,1,1,1,D
+4219229,Ligue 1,2023/2024,Rennes,Clermont Foot,2024-02-18 00:00:00+00:00,3,1,0,H
+4219236,Ligue 1,2023/2024,Brest,Marseille,2024-02-18 00:00:00+00:00,1,0,0,H
+4205587,La Liga,2023/2024,Granada,Almeria,2024-02-18 00:00:00+00:00,1,1,1,D
+4193779,Premier League,2023/2024,Sheffield United,Brighton & Hove Albion,2024-02-18 00:00:00+00:00,0,5,2,A
+4219235,Ligue 1,2023/2024,Montpellier,Metz,2024-02-18 00:00:00+00:00,3,0,0,H
+4219228,Ligue 1,2023/2024,Strasbourg,Lorient,2024-02-18 00:00:00+00:00,1,3,2,A
+4230774,Serie A,2023/2024,Atalanta,Sassuolo,2024-02-17 19:45:00+00:00,3,0,0,H
+4222014,Bundesliga,2023/2024,RB Leipzig,Borussia Mönchengladbach,2024-02-17 17:30:00+00:00,2,0,0,H
+4230777,Serie A,2023/2024,Hellas Verona,Juventus,2024-02-17 17:00:00+00:00,2,2,1,D
+4222021,Bundesliga,2023/2024,FC Heidenheim,Bayer Leverkusen,2024-02-17 14:30:00+00:00,1,2,2,A
+4222019,Bundesliga,2023/2024,Hoffenheim,Union Berlin,2024-02-17 14:30:00+00:00,0,1,2,A
+4222017,Bundesliga,2023/2024,Mainz 05,Augsburg,2024-02-17 14:30:00+00:00,1,0,0,H
+4222016,Bundesliga,2023/2024,Wolfsburg,Borussia Dortmund,2024-02-17 14:30:00+00:00,1,1,1,D
+4230781,Serie A,2023/2024,Napoli,Genoa,2024-02-17 14:00:00+00:00,1,1,1,D
+4193776,Premier League,2023/2024,Manchester City,Chelsea,2024-02-17 00:00:00+00:00,1,1,1,D
+4193774,Premier League,2023/2024,Fulham,Aston Villa,2024-02-17 00:00:00+00:00,1,2,2,A
+4205588,La Liga,2023/2024,Celta Vigo,Barcelona,2024-02-17 00:00:00+00:00,1,2,2,A
+4193777,Premier League,2023/2024,Newcastle United,AFC Bournemouth,2024-02-17 00:00:00+00:00,2,2,1,D
+4193771,Premier League,2023/2024,Brentford,Liverpool,2024-02-17 00:00:00+00:00,1,4,2,A
+4205591,La Liga,2023/2024,Valencia,Sevilla,2024-02-17 00:00:00+00:00,0,0,1,D
+4193780,Premier League,2023/2024,Tottenham Hotspur,Wolverhampton Wanderers,2024-02-17 00:00:00+00:00,1,2,2,A
+4205589,La Liga,2023/2024,Osasuna,Cadiz,2024-02-17 00:00:00+00:00,2,0,0,H
+4193772,Premier League,2023/2024,Burnley,Arsenal,2024-02-17 00:00:00+00:00,0,5,2,A
+4193778,Premier League,2023/2024,Nottingham Forest,West Ham United,2024-02-17 00:00:00+00:00,2,0,0,H
+4219231,Ligue 1,2023/2024,Lille,Le Havre,2024-02-17 00:00:00+00:00,3,0,0,H
+4205584,La Liga,2023/2024,Atletico Madrid,Las Palmas,2024-02-17 00:00:00+00:00,5,0,0,H
+4230778,Serie A,2023/2024,Inter,Salernitana,2024-02-16 20:00:00+00:00,4,0,0,H
+4222018,Bundesliga,2023/2024,1. FC Köln,Werder Bremen,2024-02-16 19:30:00+00:00,0,1,2,A
+4230782,Serie A,2023/2024,Torino,Lecce,2024-02-16 18:00:00+00:00,2,0,0,H
+4219232,Ligue 1,2023/2024,Lyon,Nice,2024-02-16 00:00:00+00:00,1,0,0,H
+4205590,La Liga,2023/2024,Villarreal,Getafe,2024-02-16 00:00:00+00:00,1,1,1,D
+4230734,Serie A,2023/2024,Bologna,Fiorentina,2024-02-14 18:00:00+00:00,2,0,0,H
+4230767,Serie A,2023/2024,Juventus,Udinese,2024-02-12 19:45:00+00:00,0,1,2,A
+4193762,Premier League,2023/2024,Crystal Palace,Chelsea,2024-02-12 00:00:00+00:00,1,3,2,A
+4230770,Serie A,2023/2024,Genoa,Atalanta,2024-02-11 17:00:00+00:00,1,4,2,A
+4222007,Bundesliga,2023/2024,Hoffenheim,1. FC Köln,2024-02-11 16:30:00+00:00,1,1,1,D
+4222010,Bundesliga,2023/2024,VfB Stuttgart,Mainz 05,2024-02-11 14:30:00+00:00,3,1,0,H
+4230764,Serie A,2023/2024,Bologna,Lecce,2024-02-11 14:00:00+00:00,4,0,0,H
+4230772,Serie A,2023/2024,Monza,Hellas Verona,2024-02-11 14:00:00+00:00,0,0,1,D
+4230766,Serie A,2023/2024,Fiorentina,Frosinone,2024-02-11 11:30:00+00:00,5,1,0,H
+4219223,Ligue 1,2023/2024,Nice,Monaco,2024-02-11 00:00:00+00:00,2,3,2,A
+4219222,Ligue 1,2023/2024,Lorient,Reims,2024-02-11 00:00:00+00:00,2,0,0,H
+4219224,Ligue 1,2023/2024,Clermont Foot,Brest,2024-02-11 00:00:00+00:00,1,1,1,D
+4219227,Ligue 1,2023/2024,Montpellier,Lyon,2024-02-11 00:00:00+00:00,1,2,2,A
+4219220,Ligue 1,2023/2024,Toulouse,Nantes,2024-02-11 00:00:00+00:00,1,2,2,A
+4219226,Ligue 1,2023/2024,Le Havre,Rennes,2024-02-11 00:00:00+00:00,0,1,2,A
+4193761,Premier League,2023/2024,Aston Villa,Manchester United,2024-02-11 00:00:00+00:00,1,2,2,A
+4193769,Premier League,2023/2024,West Ham United,Arsenal,2024-02-11 00:00:00+00:00,0,6,2,A
+4205575,La Liga,2023/2024,Mallorca,Rayo Vallecano,2024-02-11 00:00:00+00:00,2,1,0,H
+4205578,La Liga,2023/2024,Sevilla,Atletico Madrid,2024-02-11 00:00:00+00:00,1,0,0,H
+4222004,Bundesliga,2023/2024,Bayer Leverkusen,Bayern München,2024-02-10 17:30:00+00:00,3,0,0,H
+4222009,Bundesliga,2023/2024,Augsburg,RB Leipzig,2024-02-10 14:30:00+00:00,2,2,1,D
+4222003,Bundesliga,2023/2024,Union Berlin,Wolfsburg,2024-02-10 14:30:00+00:00,1,0,0,H
+4222006,Bundesliga,2023/2024,Borussia Mönchengladbach,Darmstadt,2024-02-10 14:30:00+00:00,0,0,1,D
+4222008,Bundesliga,2023/2024,Werder Bremen,FC Heidenheim,2024-02-10 14:30:00+00:00,1,2,2,A
+4222005,Bundesliga,2023/2024,Eintracht Frankfurt,Bochum,2024-02-10 14:30:00+00:00,1,1,1,D
+4230765,Serie A,2023/2024,Cagliari,Lazio,2024-02-10 14:00:00+00:00,1,3,2,A
+4193764,Premier League,2023/2024,Liverpool,Burnley,2024-02-10 00:00:00+00:00,3,1,0,H
+4219225,Ligue 1,2023/2024,Lens,Strasbourg,2024-02-10 00:00:00+00:00,3,1,0,H
+4193767,Premier League,2023/2024,Nottingham Forest,Newcastle United,2024-02-10 00:00:00+00:00,2,3,2,A
+4205582,La Liga,2023/2024,Real Sociedad,Osasuna,2024-02-10 00:00:00+00:00,0,1,2,A
+4193765,Premier League,2023/2024,Luton Town,Sheffield United,2024-02-10 00:00:00+00:00,1,3,2,A
+4205581,La Liga,2023/2024,Real Madrid,Girona,2024-02-10 00:00:00+00:00,4,0,0,H
+4230771,Serie A,2023/2024,Salernitana,Empoli,2024-02-09 19:45:00+00:00,1,3,2,A
+4222002,Bundesliga,2023/2024,Borussia Dortmund,Freiburg,2024-02-09 19:30:00+00:00,3,0,0,H
+4205579,La Liga,2023/2024,Cadiz,Real Betis,2024-02-09 00:00:00+00:00,0,2,2,A
+4219221,Ligue 1,2023/2024,Marseille,Metz,2024-02-09 00:00:00+00:00,1,1,1,D
+4205566,La Liga,2023/2024,Rayo Vallecano,Sevilla,2024-02-05 00:00:00+00:00,1,2,2,A
+4193753,Premier League,2023/2024,Brentford,Manchester City,2024-02-05 00:00:00+00:00,1,3,2,A
+4230754,Serie A,2023/2024,Atalanta,Lazio,2024-02-04 17:00:00+00:00,3,1,0,H
+4221914,Bundesliga,2023/2024,Wolfsburg,Hoffenheim,2024-02-04 14:30:00+00:00,2,2,1,D
+4230761,Serie A,2023/2024,Napoli,Hellas Verona,2024-02-04 14:00:00+00:00,2,1,0,H
+4193758,Premier League,2023/2024,Manchester United,West Ham United,2024-02-04 00:00:00+00:00,3,0,0,H
+4219217,Ligue 1,2023/2024,Brest,Nice,2024-02-04 00:00:00+00:00,0,0,1,D
+4205571,La Liga,2023/2024,Villarreal,Cadiz,2024-02-04 00:00:00+00:00,0,0,1,D
+4193756,Premier League,2023/2024,Chelsea,Wolverhampton Wanderers,2024-02-04 00:00:00+00:00,2,4,2,A
+4205570,La Liga,2023/2024,Real Madrid,Atletico Madrid,2024-02-04 00:00:00+00:00,1,1,1,D
+4219211,Ligue 1,2023/2024,Monaco,Le Havre,2024-02-04 00:00:00+00:00,1,1,1,D
+4219214,Ligue 1,2023/2024,Reims,Toulouse,2024-02-04 00:00:00+00:00,2,3,2,A
+4193752,Premier League,2023/2024,Arsenal,Liverpool,2024-02-04 00:00:00+00:00,3,1,0,H
+4205572,La Liga,2023/2024,Osasuna,Celta Vigo,2024-02-04 00:00:00+00:00,0,3,2,A
+4193751,Premier League,2023/2024,AFC Bournemouth,Nottingham Forest,2024-02-04 00:00:00+00:00,1,1,1,D
+4221916,Bundesliga,2023/2024,1. FC Köln,Eintracht Frankfurt,2024-02-03 17:30:00+00:00,2,0,0,H
+4230757,Serie A,2023/2024,Frosinone,Milan,2024-02-03 17:00:00+00:00,2,3,2,A
+4221911,Bundesliga,2023/2024,Bayern München,Borussia Mönchengladbach,2024-02-03 14:30:00+00:00,3,1,0,H
+4221917,Bundesliga,2023/2024,Bochum,Augsburg,2024-02-03 14:30:00+00:00,1,1,1,D
+4221913,Bundesliga,2023/2024,Freiburg,VfB Stuttgart,2024-02-03 14:30:00+00:00,1,3,2,A
+4221915,Bundesliga,2023/2024,Mainz 05,Werder Bremen,2024-02-03 14:30:00+00:00,0,1,2,A
+4230756,Serie A,2023/2024,Empoli,Genoa,2024-02-03 14:00:00+00:00,0,0,1,D
+4230762,Serie A,2023/2024,Udinese,Monza,2024-02-03 14:00:00+00:00,0,0,1,D
+4205569,La Liga,2023/2024,Valencia,Almeria,2024-02-03 00:00:00+00:00,2,1,0,H
+4193759,Premier League,2023/2024,Newcastle United,Luton Town,2024-02-03 00:00:00+00:00,4,4,1,D
+4193757,Premier League,2023/2024,Everton,Tottenham Hotspur,2024-02-03 00:00:00+00:00,2,2,1,D
+4219215,Ligue 1,2023/2024,Nantes,Lens,2024-02-03 00:00:00+00:00,0,1,2,A
+4219210,Ligue 1,2023/2024,Rennes,Montpellier,2024-02-03 00:00:00+00:00,2,1,0,H
+4205567,La Liga,2023/2024,Granada,Las Palmas,2024-02-03 00:00:00+00:00,1,1,1,D
+4205568,La Liga,2023/2024,Deportivo Alaves,Barcelona,2024-02-03 00:00:00+00:00,1,3,2,A
+4193760,Premier League,2023/2024,Sheffield United,Aston Villa,2024-02-03 00:00:00+00:00,0,5,2,A
+4193754,Premier League,2023/2024,Brighton & Hove Albion,Crystal Palace,2024-02-03 00:00:00+00:00,4,1,0,H
+4193755,Premier League,2023/2024,Burnley,Fulham,2024-02-03 00:00:00+00:00,2,2,1,D
+4230760,Serie A,2023/2024,Lecce,Fiorentina,2024-02-02 19:45:00+00:00,3,2,0,H
+4221918,Bundesliga,2023/2024,FC Heidenheim,Borussia Dortmund,2024-02-02 19:30:00+00:00,0,0,1,D
+4219209,Ligue 1,2023/2024,Strasbourg,Paris Saint-Germain,2024-02-02 00:00:00+00:00,1,2,2,A
+4193746,Premier League,2023/2024,West Ham United,AFC Bournemouth,2024-02-01 00:00:00+00:00,1,1,1,D
+4193747,Premier League,2023/2024,Wolverhampton Wanderers,Manchester United,2024-02-01 00:00:00+00:00,3,4,2,A
+4205539,La Liga,2023/2024,Getafe,Real Madrid,2024-02-01 00:00:00+00:00,0,2,2,A
+4205536,La Liga,2023/2024,Barcelona,Osasuna,2024-01-31 00:00:00+00:00,1,0,0,H
+4193750,Premier League,2023/2024,Manchester City,Burnley,2024-01-31 00:00:00+00:00,3,1,0,H
+4205535,La Liga,2023/2024,Atletico Madrid,Rayo Vallecano,2024-01-31 00:00:00+00:00,2,1,0,H
+4193749,Premier League,2023/2024,Liverpool,Chelsea,2024-01-31 00:00:00+00:00,4,1,0,H
+4193743,Premier League,2023/2024,Luton Town,Brighton & Hove Albion,2024-01-30 00:00:00+00:00,4,0,0,H
+4193741,Premier League,2023/2024,Aston Villa,Newcastle United,2024-01-30 00:00:00+00:00,1,3,2,A
+4193742,Premier League,2023/2024,Fulham,Everton,2024-01-30 00:00:00+00:00,0,0,1,D
+4230753,Serie A,2023/2024,Salernitana,Roma,2024-01-29 19:45:00+00:00,1,2,2,A
+4205556,La Liga,2023/2024,Getafe,Granada,2024-01-29 00:00:00+00:00,2,0,0,H
+4230748,Serie A,2023/2024,Lazio,Napoli,2024-01-28 17:00:00+00:00,0,0,1,D
+4221902,Bundesliga,2023/2024,Borussia Dortmund,Bochum,2024-01-28 16:30:00+00:00,3,1,0,H
+4221903,Bundesliga,2023/2024,Union Berlin,Darmstadt,2024-01-28 14:30:00+00:00,1,0,0,H
+4230747,Serie A,2023/2024,Genoa,Lecce,2024-01-28 11:30:00+00:00,2,1,0,H
+4219207,Ligue 1,2023/2024,Reims,Nantes,2024-01-28 00:00:00+00:00,0,0,1,D
+4219206,Ligue 1,2023/2024,Clermont Foot,Strasbourg,2024-01-28 00:00:00+00:00,1,1,1,D
+4219208,Ligue 1,2023/2024,Montpellier,Lille,2024-01-28 00:00:00+00:00,0,0,1,D
+4219203,Ligue 1,2023/2024,Lorient,Le Havre,2024-01-28 00:00:00+00:00,3,3,1,D
+4205553,La Liga,2023/2024,Atletico Madrid,Valencia,2024-01-28 00:00:00+00:00,2,0,0,H
+4221904,Bundesliga,2023/2024,Bayer Leverkusen,Borussia Mönchengladbach,2024-01-27 17:30:00+00:00,0,0,1,D
+4221910,Bundesliga,2023/2024,VfB Stuttgart,RB Leipzig,2024-01-27 14:30:00+00:00,5,2,0,H
+4221909,Bundesliga,2023/2024,Augsburg,Bayern München,2024-01-27 14:30:00+00:00,2,3,2,A
+4221906,Bundesliga,2023/2024,Wolfsburg,1. FC Köln,2024-01-27 14:30:00+00:00,1,1,1,D
+4221908,Bundesliga,2023/2024,Werder Bremen,Freiburg,2024-01-27 14:30:00+00:00,3,1,0,H
+4221907,Bundesliga,2023/2024,Hoffenheim,FC Heidenheim,2024-01-27 14:30:00+00:00,1,1,1,D
+4230744,Serie A,2023/2024,Atalanta,Udinese,2024-01-27 14:00:00+00:00,2,0,0,H
+4205561,La Liga,2023/2024,Real Sociedad,Rayo Vallecano,2024-01-27 00:00:00+00:00,0,0,1,D
+4205557,La Liga,2023/2024,Las Palmas,Real Madrid,2024-01-27 00:00:00+00:00,1,2,2,A
+4219202,Ligue 1,2023/2024,Marseille,Monaco,2024-01-27 00:00:00+00:00,2,2,1,D
+4219205,Ligue 1,2023/2024,Nice,Metz,2024-01-27 00:00:00+00:00,1,0,0,H
+4221905,Bundesliga,2023/2024,Eintracht Frankfurt,Mainz 05,2024-01-26 19:30:00+00:00,1,0,0,H
+4205562,La Liga,2023/2024,Almeria,Deportivo Alaves,2024-01-26 00:00:00+00:00,0,3,2,A
+4221968,Bundesliga,2023/2024,Bayern München,Union Berlin,2024-01-24 19:30:00+00:00,1,0,0,H
+4205548,La Liga,2023/2024,Granada,Atletico Madrid,2024-01-22 00:00:00+00:00,0,1,2,A
+4230740,Serie A,2023/2024,Lecce,Juventus,2024-01-21 19:45:00+00:00,0,3,2,A
+4230738,Serie A,2023/2024,Salernitana,Genoa,2024-01-21 17:00:00+00:00,1,2,2,A
+4221897,Bundesliga,2023/2024,Borussia Mönchengladbach,Augsburg,2024-01-21 16:30:00+00:00,1,2,2,A
+4221893,Bundesliga,2023/2024,Bayern München,Werder Bremen,2024-01-21 14:30:00+00:00,0,1,2,A
+4221895,Bundesliga,2023/2024,Freiburg,Hoffenheim,2024-01-20 14:30:00+00:00,3,2,0,H
+4221900,Bundesliga,2023/2024,FC Heidenheim,Wolfsburg,2024-01-20 14:30:00+00:00,1,1,1,D
+4205545,La Liga,2023/2024,Deportivo Alaves,Cadiz,2024-01-19 00:00:00+00:00,1,0,0,H
+4230724,Serie A,2023/2024,Atalanta,Frosinone,2024-01-15 19:45:00+00:00,5,0,0,H
+4221890,Bundesliga,2023/2024,Bochum,Werder Bremen,2024-01-14 14:30:00+00:00,1,1,1,D
+4230731,Serie A,2023/2024,Cagliari,Bologna,2024-01-14 14:00:00+00:00,2,1,0,H
+4230728,Serie A,2023/2024,Lazio,Lecce,2024-01-14 11:30:00+00:00,1,0,0,H
+4219197,Ligue 1,2023/2024,Le Havre,Lyon,2024-01-14 00:00:00+00:00,3,1,0,H
+4219196,Ligue 1,2023/2024,Nantes,Clermont Foot,2024-01-14 00:00:00+00:00,1,2,2,A
+4219195,Ligue 1,2023/2024,Lens,Paris Saint-Germain,2024-01-14 00:00:00+00:00,0,2,2,A
+4193738,Premier League,2023/2024,Manchester United,Tottenham Hotspur,2024-01-14 00:00:00+00:00,2,2,1,D
+4219198,Ligue 1,2023/2024,Metz,Toulouse,2024-01-14 00:00:00+00:00,0,1,2,A
+4221887,Bundesliga,2023/2024,Mainz 05,Wolfsburg,2024-01-13 14:30:00+00:00,1,1,1,D
+4221886,Bundesliga,2023/2024,Freiburg,Union Berlin,2024-01-13 14:30:00+00:00,0,0,1,D
+4230730,Serie A,2023/2024,Napoli,Salernitana,2024-01-13 14:00:00+00:00,2,1,0,H
+4230726,Serie A,2023/2024,Genoa,Torino,2024-01-13 14:00:00+00:00,0,0,1,D
+4193736,Premier League,2023/2024,Chelsea,Fulham,2024-01-13 00:00:00+00:00,1,0,0,H
+4193739,Premier League,2023/2024,Newcastle United,Manchester City,2024-01-13 00:00:00+00:00,2,3,2,A
+4205541,La Liga,2023/2024,Mallorca,Celta Vigo,2024-01-13 00:00:00+00:00,1,1,1,D
+4219191,Ligue 1,2023/2024,Rennes,Nice,2024-01-13 00:00:00+00:00,2,0,0,H
+4219193,Ligue 1,2023/2024,Monaco,Reims,2024-01-13 00:00:00+00:00,1,3,2,A
+4221884,Bundesliga,2023/2024,Bayern München,Hoffenheim,2024-01-12 19:30:00+00:00,3,0,0,H
+4230721,Serie A,2023/2024,Salernitana,Juventus,2024-01-07 17:00:00+00:00,1,2,2,A
+4230723,Serie A,2023/2024,Torino,Napoli,2024-01-07 14:00:00+00:00,3,0,0,H
+4230718,Serie A,2023/2024,Lecce,Cagliari,2024-01-06 17:00:00+00:00,1,1,1,D
+4230716,Serie A,2023/2024,Frosinone,Monza,2024-01-06 14:00:00+00:00,2,3,2,A
+4230720,Serie A,2023/2024,Inter,Hellas Verona,2024-01-06 11:30:00+00:00,2,1,0,H
+4230714,Serie A,2023/2024,Bologna,Genoa,2024-01-05 19:45:00+00:00,1,1,1,D
+4205525,La Liga,2023/2024,Osasuna,Almeria,2024-01-04 00:00:00+00:00,1,0,0,H
+4205528,La Liga,2023/2024,Las Palmas,Barcelona,2024-01-04 00:00:00+00:00,1,2,2,A
+4205529,La Liga,2023/2024,Celta Vigo,Real Betis,2024-01-03 00:00:00+00:00,2,1,0,H
+4205531,La Liga,2023/2024,Real Madrid,Mallorca,2024-01-03 00:00:00+00:00,1,0,0,H
+4205530,La Liga,2023/2024,Granada,Cadiz,2024-01-03 00:00:00+00:00,2,0,0,H
+4205524,La Liga,2023/2024,Valencia,Villarreal,2024-01-02 00:00:00+00:00,3,1,0,H
+4193723,Premier League,2023/2024,Fulham,Arsenal,2023-12-31 00:00:00+00:00,2,1,0,H
+4193728,Premier League,2023/2024,Tottenham Hotspur,AFC Bournemouth,2023-12-31 00:00:00+00:00,3,1,0,H
+4230709,Serie A,2023/2024,Juventus,Roma,2023-12-30 19:45:00+00:00,1,0,0,H
+4230708,Serie A,2023/2024,Hellas Verona,Salernitana,2023-12-30 17:00:00+00:00,0,1,2,A
+4230705,Serie A,2023/2024,Cagliari,Empoli,2023-12-30 14:00:00+00:00,0,0,1,D
+4230711,Serie A,2023/2024,Udinese,Bologna,2023-12-30 14:00:00+00:00,3,0,0,H
+4230704,Serie A,2023/2024,Atalanta,Lecce,2023-12-30 11:30:00+00:00,1,0,0,H
+4193726,Premier League,2023/2024,Manchester City,Sheffield United,2023-12-30 00:00:00+00:00,2,0,0,H
+4193727,Premier League,2023/2024,Nottingham Forest,Manchester United,2023-12-30 00:00:00+00:00,2,1,0,H
+4193721,Premier League,2023/2024,Aston Villa,Burnley,2023-12-30 00:00:00+00:00,3,2,0,H
+4193725,Premier League,2023/2024,Luton Town,Chelsea,2023-12-30 00:00:00+00:00,2,3,2,A
+4193730,Premier League,2023/2024,Wolverhampton Wanderers,Everton,2023-12-30 00:00:00+00:00,3,0,0,H
+4193722,Premier League,2023/2024,Crystal Palace,Brentford,2023-12-30 00:00:00+00:00,3,1,0,H
+4230707,Serie A,2023/2024,Genoa,Inter,2023-12-29 19:45:00+00:00,1,1,1,D
+4193712,Premier League,2023/2024,Arsenal,West Ham United,2023-12-28 00:00:00+00:00,0,2,2,A
+4193714,Premier League,2023/2024,Brighton & Hove Albion,Tottenham Hotspur,2023-12-28 00:00:00+00:00,4,2,0,H
+4193716,Premier League,2023/2024,Chelsea,Crystal Palace,2023-12-27 00:00:00+00:00,2,1,0,H
+4193713,Premier League,2023/2024,Brentford,Wolverhampton Wanderers,2023-12-27 00:00:00+00:00,1,4,2,A
+4193717,Premier League,2023/2024,Everton,Manchester City,2023-12-27 00:00:00+00:00,1,3,2,A
+4193715,Premier League,2023/2024,Burnley,Liverpool,2023-12-26 00:00:00+00:00,0,2,2,A
+4193711,Premier League,2023/2024,AFC Bournemouth,Fulham,2023-12-26 00:00:00+00:00,3,0,0,H
+4193719,Premier League,2023/2024,Newcastle United,Nottingham Forest,2023-12-26 00:00:00+00:00,1,3,2,A
+4193718,Premier League,2023/2024,Manchester United,Aston Villa,2023-12-26 00:00:00+00:00,3,2,0,H
+4193710,Premier League,2023/2024,Wolverhampton Wanderers,Chelsea,2023-12-24 00:00:00+00:00,2,1,0,H
+4230699,Serie A,2023/2024,Hellas Verona,Cagliari,2023-12-23 17:00:00+00:00,2,0,0,H
+4230696,Serie A,2023/2024,Inter,Lecce,2023-12-23 17:00:00+00:00,2,0,0,H
+4230698,Serie A,2023/2024,Bologna,Atalanta,2023-12-23 14:00:00+00:00,1,0,0,H
+4230697,Serie A,2023/2024,Torino,Udinese,2023-12-23 14:00:00+00:00,1,1,1,D
+4193709,Premier League,2023/2024,West Ham United,Manchester United,2023-12-23 00:00:00+00:00,2,0,0,H
+4193708,Premier League,2023/2024,Tottenham Hotspur,Everton,2023-12-23 00:00:00+00:00,2,1,0,H
+4193707,Premier League,2023/2024,Nottingham Forest,AFC Bournemouth,2023-12-23 00:00:00+00:00,2,3,2,A
+4193703,Premier League,2023/2024,Fulham,Burnley,2023-12-23 00:00:00+00:00,0,2,2,A
+4193705,Premier League,2023/2024,Luton Town,Newcastle United,2023-12-23 00:00:00+00:00,1,0,0,H
+4193704,Premier League,2023/2024,Liverpool,Arsenal,2023-12-23 00:00:00+00:00,1,1,1,D
+4230700,Serie A,2023/2024,Monza,Fiorentina,2023-12-22 19:45:00+00:00,0,1,2,A
+4230701,Serie A,2023/2024,Sassuolo,Genoa,2023-12-22 17:30:00+00:00,1,2,2,A
+4193701,Premier League,2023/2024,Aston Villa,Sheffield United,2023-12-22 00:00:00+00:00,1,1,1,D
+4205517,La Liga,2023/2024,Mallorca,Osasuna,2023-12-21 00:00:00+00:00,3,2,0,H
+4205515,La Liga,2023/2024,Real Betis,Girona,2023-12-21 00:00:00+00:00,1,1,1,D
+4205520,La Liga,2023/2024,Deportivo Alaves,Real Madrid,2023-12-21 00:00:00+00:00,0,1,2,A
+4193702,Premier League,2023/2024,Crystal Palace,Brighton & Hove Albion,2023-12-21 00:00:00+00:00,1,1,1,D
+4221879,Bundesliga,2023/2024,Wolfsburg,Bayern München,2023-12-20 19:30:00+00:00,1,2,2,A
+4221877,Bundesliga,2023/2024,Bayer Leverkusen,Bochum,2023-12-20 19:30:00+00:00,4,0,0,H
+4221883,Bundesliga,2023/2024,FC Heidenheim,Freiburg,2023-12-20 19:30:00+00:00,3,2,0,H
+4221876,Bundesliga,2023/2024,Union Berlin,1. FC Köln,2023-12-20 17:30:00+00:00,2,0,0,H
+4219400,Ligue 1,2023/2024,Paris Saint-Germain,Metz,2023-12-20 00:00:00+00:00,3,1,0,H
+4205522,La Liga,2023/2024,Villarreal,Celta Vigo,2023-12-20 00:00:00+00:00,3,2,0,H
+4219407,Ligue 1,2023/2024,Montpellier,Marseille,2023-12-20 00:00:00+00:00,1,1,1,D
+4219406,Ligue 1,2023/2024,Reims,Le Havre,2023-12-20 00:00:00+00:00,1,0,0,H
+4219401,Ligue 1,2023/2024,Strasbourg,Lille,2023-12-20 00:00:00+00:00,2,1,0,H
+4219402,Ligue 1,2023/2024,Toulouse,Monaco,2023-12-20 00:00:00+00:00,1,2,2,A
+4205521,La Liga,2023/2024,Barcelona,Almeria,2023-12-20 00:00:00+00:00,3,2,0,H
+4221881,Bundesliga,2023/2024,Werder Bremen,RB Leipzig,2023-12-19 17:30:00+00:00,1,1,1,D
+4205518,La Liga,2023/2024,Rayo Vallecano,Valencia,2023-12-19 00:00:00+00:00,0,1,2,A
+4205519,La Liga,2023/2024,Granada,Sevilla,2023-12-19 00:00:00+00:00,0,3,2,A
+4205514,La Liga,2023/2024,Atletico Madrid,Getafe,2023-12-19 00:00:00+00:00,3,3,1,D
+4230692,Serie A,2023/2024,Lazio,Inter,2023-12-17 19:45:00+00:00,0,2,2,A
+4221986,Bundesliga,2023/2024,Bayern München,VfB Stuttgart,2023-12-17 18:30:00+00:00,3,0,0,H
+4221989,Bundesliga,2023/2024,Bayer Leverkusen,Eintracht Frankfurt,2023-12-17 16:30:00+00:00,3,0,0,H
+4221988,Bundesliga,2023/2024,Freiburg,1. FC Köln,2023-12-17 14:30:00+00:00,2,0,0,H
+4230693,Serie A,2023/2024,Udinese,Sassuolo,2023-12-17 14:00:00+00:00,2,2,1,D
+4230688,Serie A,2023/2024,Milan,Monza,2023-12-17 11:30:00+00:00,3,0,0,H
+4219395,Ligue 1,2023/2024,Lille,Paris Saint-Germain,2023-12-17 00:00:00+00:00,1,1,1,D
+4219392,Ligue 1,2023/2024,Marseille,Clermont Foot,2023-12-17 00:00:00+00:00,2,1,0,H
+4205510,La Liga,2023/2024,Las Palmas,Cadiz,2023-12-17 00:00:00+00:00,1,1,1,D
+4219397,Ligue 1,2023/2024,Nantes,Brest,2023-12-17 00:00:00+00:00,0,2,2,A
+4219393,Ligue 1,2023/2024,Lorient,Strasbourg,2023-12-17 00:00:00+00:00,1,2,2,A
+4205507,La Liga,2023/2024,Real Madrid,Villarreal,2023-12-17 00:00:00+00:00,4,1,0,H
+4193693,Premier League,2023/2024,Brentford,Aston Villa,2023-12-17 00:00:00+00:00,1,2,2,A
+4193700,Premier League,2023/2024,West Ham United,Wolverhampton Wanderers,2023-12-17 00:00:00+00:00,3,0,0,H
+4219391,Ligue 1,2023/2024,Toulouse,Rennes,2023-12-17 00:00:00+00:00,0,0,1,D
+4205509,La Liga,2023/2024,Real Sociedad,Real Betis,2023-12-17 00:00:00+00:00,0,0,1,D
+4193692,Premier League,2023/2024,Arsenal,Brighton & Hove Albion,2023-12-17 00:00:00+00:00,2,0,0,H
+4230690,Serie A,2023/2024,Torino,Empoli,2023-12-16 19:45:00+00:00,1,0,0,H
+4221990,Bundesliga,2023/2024,Mainz 05,FC Heidenheim,2023-12-16 14:30:00+00:00,0,1,2,A
+4221992,Bundesliga,2023/2024,Bochum,Union Berlin,2023-12-16 14:30:00+00:00,3,0,0,H
+4221993,Bundesliga,2023/2024,Augsburg,Borussia Dortmund,2023-12-16 14:30:00+00:00,1,1,1,D
+4230691,Serie A,2023/2024,Lecce,Frosinone,2023-12-16 14:00:00+00:00,2,1,0,H
+4219398,Ligue 1,2023/2024,Le Havre,Nice,2023-12-16 00:00:00+00:00,3,1,0,H
+4193695,Premier League,2023/2024,Chelsea,Sheffield United,2023-12-16 00:00:00+00:00,2,0,0,H
+4205508,La Liga,2023/2024,Valencia,Barcelona,2023-12-16 00:00:00+00:00,1,1,1,D
+4193694,Premier League,2023/2024,Burnley,Everton,2023-12-16 00:00:00+00:00,0,2,2,A
+4219394,Ligue 1,2023/2024,Monaco,Lyon,2023-12-15 00:00:00+00:00,0,1,2,A
+4193699,Premier League,2023/2024,Nottingham Forest,Tottenham Hotspur,2023-12-15 00:00:00+00:00,0,2,2,A
+4230675,Serie A,2023/2024,Cagliari,Sassuolo,2023-12-11 19:45:00+00:00,2,1,0,H
+4230676,Serie A,2023/2024,Empoli,Lecce,2023-12-11 17:30:00+00:00,1,1,1,D
+4205501,La Liga,2023/2024,Rayo Vallecano,Celta Vigo,2023-12-11 00:00:00+00:00,0,0,1,D
+4230681,Serie A,2023/2024,Salernitana,Bologna,2023-12-10 17:00:00+00:00,1,2,2,A
+4221981,Bundesliga,2023/2024,1. FC Köln,Mainz 05,2023-12-10 16:30:00+00:00,0,0,1,D
+4230677,Serie A,2023/2024,Frosinone,Torino,2023-12-10 11:30:00+00:00,0,0,1,D
+4205493,La Liga,2023/2024,Barcelona,Girona,2023-12-10 00:00:00+00:00,2,4,2,A
+4205495,La Liga,2023/2024,Cadiz,Osasuna,2023-12-10 00:00:00+00:00,1,1,1,D
+4193686,Premier League,2023/2024,Luton Town,Manchester City,2023-12-10 00:00:00+00:00,1,2,2,A
+4193684,Premier League,2023/2024,Everton,Chelsea,2023-12-10 00:00:00+00:00,2,0,0,H
+4219388,Ligue 1,2023/2024,Clermont Foot,Lille,2023-12-10 00:00:00+00:00,0,0,1,D
+4193689,Premier League,2023/2024,Tottenham Hotspur,Newcastle United,2023-12-10 00:00:00+00:00,4,1,0,H
+4230679,Serie A,2023/2024,Inter,Udinese,2023-12-09 19:45:00+00:00,4,0,0,H
+4221977,Bundesliga,2023/2024,Borussia Dortmund,RB Leipzig,2023-12-09 17:30:00+00:00,2,3,2,A
+4221978,Bundesliga,2023/2024,Union Berlin,Borussia Mönchengladbach,2023-12-09 14:30:00+00:00,3,1,0,H
+4221985,Bundesliga,2023/2024,FC Heidenheim,Darmstadt,2023-12-09 14:30:00+00:00,3,2,0,H
+4221980,Bundesliga,2023/2024,Wolfsburg,Freiburg,2023-12-09 14:30:00+00:00,0,1,2,A
+4230678,Serie A,2023/2024,Hellas Verona,Lazio,2023-12-09 14:00:00+00:00,1,1,1,D
+4193683,Premier League,2023/2024,Crystal Palace,Liverpool,2023-12-09 00:00:00+00:00,1,2,2,A
+4193687,Premier League,2023/2024,Manchester United,AFC Bournemouth,2023-12-09 00:00:00+00:00,0,3,2,A
+4205498,La Liga,2023/2024,Deportivo Alaves,Las Palmas,2023-12-09 00:00:00+00:00,0,1,2,A
+4193690,Premier League,2023/2024,Wolverhampton Wanderers,Nottingham Forest,2023-12-09 00:00:00+00:00,1,1,1,D
+4205502,La Liga,2023/2024,Villarreal,Real Sociedad,2023-12-09 00:00:00+00:00,0,3,2,A
+4193688,Premier League,2023/2024,Sheffield United,Brentford,2023-12-09 00:00:00+00:00,1,0,0,H
+4193682,Premier League,2023/2024,Brighton & Hove Albion,Burnley,2023-12-09 00:00:00+00:00,1,1,1,D
+4205497,La Liga,2023/2024,Mallorca,Sevilla,2023-12-09 00:00:00+00:00,1,0,0,H
+4230680,Serie A,2023/2024,Juventus,Napoli,2023-12-08 19:45:00+00:00,1,0,0,H
+4221982,Bundesliga,2023/2024,Hoffenheim,Bochum,2023-12-08 19:30:00+00:00,3,1,0,H
+4219363,Ligue 1,2023/2024,Brest,Strasbourg,2023-12-07 00:00:00+00:00,1,1,1,D
+4193677,Premier League,2023/2024,Tottenham Hotspur,West Ham United,2023-12-07 00:00:00+00:00,1,2,2,A
+4193671,Premier League,2023/2024,Aston Villa,Manchester City,2023-12-06 00:00:00+00:00,1,0,0,H
+4193672,Premier League,2023/2024,Brighton & Hove Albion,Brentford,2023-12-06 00:00:00+00:00,2,1,0,H
+4193675,Premier League,2023/2024,Luton Town,Arsenal,2023-12-05 00:00:00+00:00,3,4,2,A
+4221974,Bundesliga,2023/2024,Augsburg,Eintracht Frankfurt,2023-12-03 18:30:00+00:00,2,1,0,H
+4230664,Serie A,2023/2024,Fiorentina,Salernitana,2023-12-03 14:00:00+00:00,3,0,0,H
+4230670,Serie A,2023/2024,Udinese,Hellas Verona,2023-12-03 14:00:00+00:00,3,3,1,D
+4230666,Serie A,2023/2024,Lecce,Bologna,2023-12-03 11:30:00+00:00,1,1,1,D
+4205483,La Liga,2023/2024,Almeria,Real Betis,2023-12-03 00:00:00+00:00,0,0,1,D
+4219375,Ligue 1,2023/2024,Monaco,Montpellier,2023-12-03 00:00:00+00:00,2,0,0,H
+4221975,Bundesliga,2023/2024,VfB Stuttgart,Werder Bremen,2023-12-02 17:30:00+00:00,2,0,0,H
+4230667,Serie A,2023/2024,Lazio,Cagliari,2023-12-02 17:00:00+00:00,1,0,0,H
+4221973,Bundesliga,2023/2024,Bochum,Wolfsburg,2023-12-02 14:30:00+00:00,3,1,0,H
+4230668,Serie A,2023/2024,Genoa,Empoli,2023-12-02 14:00:00+00:00,1,1,1,D
+4205491,La Liga,2023/2024,Real Madrid,Granada,2023-12-02 00:00:00+00:00,2,0,0,H
+4205486,La Liga,2023/2024,Osasuna,Real Sociedad,2023-12-02 00:00:00+00:00,1,1,1,D
+4221976,Bundesliga,2023/2024,Darmstadt,1. FC Köln,2023-12-01 19:30:00+00:00,0,1,2,A
+4230655,Serie A,2023/2024,Bologna,Torino,2023-11-27 19:45:00+00:00,2,0,0,H
+4230659,Serie A,2023/2024,Hellas Verona,Lecce,2023-11-27 17:30:00+00:00,2,2,1,D
+4193654,Premier League,2023/2024,Fulham,Wolverhampton Wanderers,2023-11-27 00:00:00+00:00,3,2,0,H
+4230658,Serie A,2023/2024,Frosinone,Genoa,2023-11-26 14:00:00+00:00,2,1,0,H
+4230656,Serie A,2023/2024,Cagliari,Monza,2023-11-26 11:30:00+00:00,1,1,1,D
+4205475,La Liga,2023/2024,Cadiz,Real Madrid,2023-11-26 00:00:00+00:00,0,3,2,A
+4219369,Ligue 1,2023/2024,Nice,Toulouse,2023-11-26 00:00:00+00:00,1,0,0,H
+4193653,Premier League,2023/2024,Everton,Manchester United,2023-11-26 00:00:00+00:00,0,3,2,A
+4219366,Ligue 1,2023/2024,Rennes,Reims,2023-11-26 00:00:00+00:00,3,1,0,H
+4205482,La Liga,2023/2024,Villarreal,Osasuna,2023-11-26 00:00:00+00:00,3,1,0,H
+4205476,La Liga,2023/2024,Real Sociedad,Sevilla,2023-11-26 00:00:00+00:00,2,1,0,H
+4219372,Ligue 1,2023/2024,Montpellier,Brest,2023-11-26 00:00:00+00:00,1,3,2,A
+4205474,La Liga,2023/2024,Real Betis,Las Palmas,2023-11-26 00:00:00+00:00,1,0,0,H
+4230654,Serie A,2023/2024,Atalanta,Napoli,2023-11-25 17:00:00+00:00,1,2,2,A
+4221966,Bundesliga,2023/2024,Werder Bremen,Bayer Leverkusen,2023-11-25 14:30:00+00:00,0,3,2,A
+4230663,Serie A,2023/2024,Salernitana,Lazio,2023-11-25 14:00:00+00:00,2,1,0,H
+4219365,Ligue 1,2023/2024,Strasbourg,Marseille,2023-11-25 00:00:00+00:00,1,1,1,D
+4205473,La Liga,2023/2024,Atletico Madrid,Mallorca,2023-11-25 00:00:00+00:00,1,0,0,H
+4193657,Premier League,2023/2024,Newcastle United,Chelsea,2023-11-25 00:00:00+00:00,4,1,0,H
+4193655,Premier League,2023/2024,Luton Town,Crystal Palace,2023-11-25 00:00:00+00:00,2,1,0,H
+4193651,Premier League,2023/2024,Brentford,Arsenal,2023-11-25 00:00:00+00:00,0,1,2,A
+4193656,Premier League,2023/2024,Manchester City,Liverpool,2023-11-25 00:00:00+00:00,1,1,1,D
+4205477,La Liga,2023/2024,Deportivo Alaves,Granada,2023-11-24 00:00:00+00:00,3,1,0,H
+4221954,Bundesliga,2023/2024,Werder Bremen,Eintracht Frankfurt,2023-11-12 16:30:00+00:00,2,2,1,D
+4221952,Bundesliga,2023/2024,Bayer Leverkusen,Union Berlin,2023-11-12 14:30:00+00:00,4,0,0,H
+4230649,Serie A,2023/2024,Fiorentina,Bologna,2023-11-12 14:00:00+00:00,2,1,0,H
+4230648,Serie A,2023/2024,Udinese,Atalanta,2023-11-12 14:00:00+00:00,1,1,1,D
+4219359,Ligue 1,2023/2024,Lens,Marseille,2023-11-12 00:00:00+00:00,1,0,0,H
+4219356,Ligue 1,2023/2024,Lille,Toulouse,2023-11-12 00:00:00+00:00,1,1,1,D
+4193578,Premier League,2023/2024,West Ham United,Nottingham Forest,2023-11-12 00:00:00+00:00,3,2,0,H
+4205467,La Liga,2023/2024,Sevilla,Real Betis,2023-11-12 00:00:00+00:00,1,1,1,D
+4219357,Ligue 1,2023/2024,Clermont Foot,Lorient,2023-11-12 00:00:00+00:00,1,0,0,H
+4205465,La Liga,2023/2024,Atletico Madrid,Villarreal,2023-11-12 00:00:00+00:00,3,1,0,H
+4205472,La Liga,2023/2024,Barcelona,Deportivo Alaves,2023-11-12 00:00:00+00:00,2,1,0,H
+4230650,Serie A,2023/2024,Juventus,Cagliari,2023-11-11 17:00:00+00:00,2,1,0,H
+4221957,Bundesliga,2023/2024,VfB Stuttgart,Borussia Dortmund,2023-11-11 14:30:00+00:00,2,1,0,H
+4230646,Serie A,2023/2024,Lecce,Milan,2023-11-11 14:00:00+00:00,2,2,1,D
+4205471,La Liga,2023/2024,Osasuna,Las Palmas,2023-11-11 00:00:00+00:00,1,1,1,D
+4219360,Ligue 1,2023/2024,Le Havre,Monaco,2023-11-11 00:00:00+00:00,0,0,1,D
+4205469,La Liga,2023/2024,Granada,Getafe,2023-11-11 00:00:00+00:00,1,1,1,D
+4193579,Premier League,2023/2024,Wolverhampton Wanderers,Tottenham Hotspur,2023-11-11 00:00:00+00:00,2,1,0,H
+4221953,Bundesliga,2023/2024,Borussia Mönchengladbach,Wolfsburg,2023-11-10 19:30:00+00:00,4,0,0,H
+4230653,Serie A,2023/2024,Sassuolo,Salernitana,2023-11-10 17:30:00+00:00,2,2,1,D
+4219362,Ligue 1,2023/2024,Montpellier,Nice,2023-11-10 00:00:00+00:00,0,0,1,D
+4230643,Serie A,2023/2024,Torino,Sassuolo,2023-11-06 19:45:00+00:00,2,1,0,H
+4230640,Serie A,2023/2024,Frosinone,Empoli,2023-11-06 17:30:00+00:00,2,1,0,H
+4193569,Premier League,2023/2024,Tottenham Hotspur,Chelsea,2023-11-06 00:00:00+00:00,1,4,2,A
+4230637,Serie A,2023/2024,Fiorentina,Juventus,2023-11-05 19:45:00+00:00,0,1,2,A
+4221827,Bundesliga,2023/2024,Wolfsburg,Werder Bremen,2023-11-05 14:30:00+00:00,2,2,1,D
+4230636,Serie A,2023/2024,Cagliari,Genoa,2023-11-05 14:00:00+00:00,2,1,0,H
+4230638,Serie A,2023/2024,Hellas Verona,Monza,2023-11-05 11:30:00+00:00,1,3,2,A
+4205461,La Liga,2023/2024,Real Madrid,Rayo Vallecano,2023-11-05 00:00:00+00:00,0,0,1,D
+4219347,Ligue 1,2023/2024,Strasbourg,Clermont Foot,2023-11-05 00:00:00+00:00,0,0,1,D
+4205455,La Liga,2023/2024,Deportivo Alaves,Almeria,2023-11-05 00:00:00+00:00,1,0,0,H
+4193564,Premier League,2023/2024,Luton Town,Liverpool,2023-11-05 00:00:00+00:00,1,1,1,D
+4219348,Ligue 1,2023/2024,Toulouse,Le Havre,2023-11-05 00:00:00+00:00,1,2,2,A
+4219354,Ligue 1,2023/2024,Nantes,Reims,2023-11-05 00:00:00+00:00,0,1,2,A
+4193567,Premier League,2023/2024,Nottingham Forest,Aston Villa,2023-11-05 00:00:00+00:00,2,0,0,H
+4219351,Ligue 1,2023/2024,Monaco,Brest,2023-11-05 00:00:00+00:00,2,0,0,H
+4230639,Serie A,2023/2024,Milan,Udinese,2023-11-04 19:45:00+00:00,0,1,2,A
+4221824,Bundesliga,2023/2024,Borussia Dortmund,Bayern München,2023-11-04 17:30:00+00:00,0,4,2,A
+4230634,Serie A,2023/2024,Atalanta,Inter,2023-11-04 17:00:00+00:00,1,2,2,A
+4221825,Bundesliga,2023/2024,Union Berlin,Eintracht Frankfurt,2023-11-04 14:30:00+00:00,0,3,2,A
+4221826,Bundesliga,2023/2024,Freiburg,Borussia Mönchengladbach,2023-11-04 14:30:00+00:00,3,3,1,D
+4230642,Serie A,2023/2024,Salernitana,Napoli,2023-11-04 14:00:00+00:00,0,2,2,A
+4193566,Premier League,2023/2024,Newcastle United,Arsenal,2023-11-04 00:00:00+00:00,1,0,0,H
+4219350,Ligue 1,2023/2024,Lorient,Lens,2023-11-04 00:00:00+00:00,0,0,1,D
+4193563,Premier League,2023/2024,Fulham,Manchester United,2023-11-04 00:00:00+00:00,0,1,2,A
+4193562,Premier League,2023/2024,Everton,Brighton & Hove Albion,2023-11-04 00:00:00+00:00,1,1,1,D
+4219349,Ligue 1,2023/2024,Marseille,Lille,2023-11-04 00:00:00+00:00,0,0,1,D
+4230635,Serie A,2023/2024,Bologna,Lazio,2023-11-03 19:45:00+00:00,1,0,0,H
+4221832,Bundesliga,2023/2024,Darmstadt,Bochum,2023-11-03 19:30:00+00:00,1,2,2,A
+4230626,Serie A,2023/2024,Empoli,Atalanta,2023-10-30 17:30:00+00:00,0,3,2,A
+4221798,Bundesliga,2023/2024,Bayer Leverkusen,Freiburg,2023-10-29 16:30:00+00:00,2,1,0,H
+4219339,Ligue 1,2023/2024,Lille,Monaco,2023-10-29 00:00:00+00:00,2,0,0,H
+4205448,La Liga,2023/2024,Rayo Vallecano,Real Sociedad,2023-10-29 00:00:00+00:00,2,2,1,D
+4193556,Premier League,2023/2024,Liverpool,Nottingham Forest,2023-10-29 00:00:00+00:00,3,0,0,H
+4221796,Bundesliga,2023/2024,Bayern München,Darmstadt,2023-10-28 13:30:00+00:00,8,0,0,H
+4193559,Premier League,2023/2024,Wolverhampton Wanderers,Newcastle United,2023-10-28 00:00:00+00:00,2,2,1,D
+4193554,Premier League,2023/2024,Chelsea,Brentford,2023-10-28 00:00:00+00:00,0,2,2,A
+4221802,Bundesliga,2023/2024,Bochum,Mainz 05,2023-10-27 18:30:00+00:00,2,2,1,D
+4205450,La Liga,2023/2024,Girona,Celta Vigo,2023-10-27 00:00:00+00:00,1,0,0,H
+4193555,Premier League,2023/2024,Crystal Palace,Tottenham Hotspur,2023-10-27 00:00:00+00:00,1,2,2,A
+4230615,Serie A,2023/2024,Fiorentina,Empoli,2023-10-23 18:45:00+00:00,0,2,2,A
+4230619,Serie A,2023/2024,Udinese,Lecce,2023-10-23 16:30:00+00:00,1,1,1,D
+4193549,Premier League,2023/2024,Tottenham Hotspur,Fulham,2023-10-23 00:00:00+00:00,2,0,0,H
+4221791,Bundesliga,2023/2024,FC Heidenheim,Augsburg,2023-10-22 15:30:00+00:00,2,5,2,A
+4221789,Bundesliga,2023/2024,1. FC Köln,Borussia Mönchengladbach,2023-10-22 13:35:00+00:00,3,1,0,H
+4230614,Serie A,2023/2024,Salernitana,Cagliari,2023-10-22 13:00:00+00:00,2,2,1,D
+4230612,Serie A,2023/2024,Bologna,Frosinone,2023-10-22 13:00:00+00:00,2,1,0,H
+4205433,La Liga,2023/2024,Las Palmas,Rayo Vallecano,2023-10-22 00:00:00+00:00,0,1,2,A
+4193541,Premier League,2023/2024,Aston Villa,West Ham United,2023-10-22 00:00:00+00:00,4,1,0,H
+4205434,La Liga,2023/2024,Girona,Almeria,2023-10-22 00:00:00+00:00,5,2,0,H
+4230616,Serie A,2023/2024,Torino,Inter,2023-10-21 16:00:00+00:00,0,3,2,A
+4230613,Serie A,2023/2024,Hellas Verona,Napoli,2023-10-21 13:00:00+00:00,1,3,2,A
+4219334,Ligue 1,2023/2024,Nice,Marseille,2023-10-21 00:00:00+00:00,1,0,0,H
+4219328,Ligue 1,2023/2024,Paris Saint-Germain,Strasbourg,2023-10-21 00:00:00+00:00,3,0,0,H
+4205437,La Liga,2023/2024,Getafe,Real Betis,2023-10-21 00:00:00+00:00,1,1,1,D
+4221784,Bundesliga,2023/2024,Borussia Dortmund,Werder Bremen,2023-10-20 18:30:00+00:00,1,0,0,H
+4221775,Bundesliga,2023/2024,Bayern München,Freiburg,2023-10-08 15:30:00+00:00,3,0,0,H
+4221778,Bundesliga,2023/2024,Bayer Leverkusen,1. FC Köln,2023-10-08 13:30:00+00:00,3,0,0,H
+4230607,Serie A,2023/2024,Monza,Salernitana,2023-10-08 10:30:00+00:00,3,0,0,H
+4219327,Ligue 1,2023/2024,Brest,Toulouse,2023-10-08 00:00:00+00:00,1,1,1,D
+4193530,Premier League,2023/2024,Arsenal,Manchester City,2023-10-08 00:00:00+00:00,1,0,0,H
+4230604,Serie A,2023/2024,Genoa,Milan,2023-10-07 18:45:00+00:00,0,1,2,A
+4221781,Bundesliga,2023/2024,Werder Bremen,Hoffenheim,2023-10-07 16:30:00+00:00,2,3,2,A
+4230605,Serie A,2023/2024,Juventus,Torino,2023-10-07 16:00:00+00:00,2,0,0,H
+4221782,Bundesliga,2023/2024,Augsburg,Darmstadt,2023-10-07 13:30:00+00:00,1,2,2,A
+4221776,Bundesliga,2023/2024,Borussia Dortmund,Union Berlin,2023-10-07 13:30:00+00:00,4,2,0,H
+4221777,Bundesliga,2023/2024,RB Leipzig,Bochum,2023-10-07 13:30:00+00:00,0,0,1,D
+4221783,Bundesliga,2023/2024,VfB Stuttgart,Wolfsburg,2023-10-07 13:30:00+00:00,3,1,0,H
+4230609,Serie A,2023/2024,Inter,Bologna,2023-10-07 13:00:00+00:00,2,2,1,D
+4205430,La Liga,2023/2024,Real Madrid,Osasuna,2023-10-07 00:00:00+00:00,4,0,0,H
+4193532,Premier League,2023/2024,Burnley,Chelsea,2023-10-07 00:00:00+00:00,1,4,2,A
+4193535,Premier League,2023/2024,Fulham,Sheffield United,2023-10-07 00:00:00+00:00,3,1,0,H
+4230606,Serie A,2023/2024,Lecce,Sassuolo,2023-10-06 18:45:00+00:00,1,1,1,D
+4221780,Bundesliga,2023/2024,Borussia Mönchengladbach,Mainz 05,2023-10-06 18:30:00+00:00,2,2,1,D
+4230602,Serie A,2023/2024,Empoli,Udinese,2023-10-06 16:30:00+00:00,0,0,1,D
+4230594,Serie A,2023/2024,Fiorentina,Cagliari,2023-10-02 18:45:00+00:00,3,0,0,H
+4230600,Serie A,2023/2024,Sassuolo,Monza,2023-10-02 16:30:00+00:00,0,1,2,A
+4230592,Serie A,2023/2024,Bologna,Empoli,2023-10-01 10:30:00+00:00,3,0,0,H
+4205416,La Liga,2023/2024,Real Betis,Valencia,2023-10-01 00:00:00+00:00,3,0,0,H
+4230598,Serie A,2023/2024,Salernitana,Inter,2023-09-30 18:45:00+00:00,0,4,2,A
+4230599,Serie A,2023/2024,Milan,Lazio,2023-09-30 16:00:00+00:00,2,0,0,H
+4221768,Bundesliga,2023/2024,Wolfsburg,Eintracht Frankfurt,2023-09-30 13:30:00+00:00,2,0,0,H
+4221773,Bundesliga,2023/2024,FC Heidenheim,Union Berlin,2023-09-30 13:30:00+00:00,1,0,0,H
+4219316,Ligue 1,2023/2024,Clermont Foot,Paris Saint-Germain,2023-09-30 00:00:00+00:00,0,0,1,D
+4193528,Premier League,2023/2024,West Ham United,Sheffield United,2023-09-30 00:00:00+00:00,2,0,0,H
+4219314,Ligue 1,2023/2024,Monaco,Marseille,2023-09-30 00:00:00+00:00,3,2,0,H
+4193527,Premier League,2023/2024,Tottenham Hotspur,Liverpool,2023-09-30 00:00:00+00:00,2,1,0,H
+4193529,Premier League,2023/2024,Wolverhampton Wanderers,Manchester City,2023-09-30 00:00:00+00:00,2,1,0,H
+4221771,Bundesliga,2023/2024,Hoffenheim,Borussia Dortmund,2023-09-29 18:30:00+00:00,1,3,2,A
+4230590,Serie A,2023/2024,Frosinone,Fiorentina,2023-09-28 16:30:00+00:00,1,1,1,D
+4205408,La Liga,2023/2024,Granada,Real Betis,2023-09-28 00:00:00+00:00,1,1,1,D
+4205406,La Liga,2023/2024,Osasuna,Atletico Madrid,2023-09-28 00:00:00+00:00,0,2,2,A
+4230584,Serie A,2023/2024,Inter,Sassuolo,2023-09-27 18:45:00+00:00,1,2,2,A
+4230588,Serie A,2023/2024,Hellas Verona,Atalanta,2023-09-27 16:30:00+00:00,0,1,2,A
+4230582,Serie A,2023/2024,Empoli,Salernitana,2023-09-27 16:30:00+00:00,1,0,0,H
+4230581,Serie A,2023/2024,Cagliari,Milan,2023-09-27 16:30:00+00:00,1,3,2,A
+4205411,La Liga,2023/2024,Real Madrid,Las Palmas,2023-09-27 00:00:00+00:00,2,0,0,H
+4205409,La Liga,2023/2024,Villarreal,Girona,2023-09-27 00:00:00+00:00,1,2,2,A
+4205404,La Liga,2023/2024,Cadiz,Rayo Vallecano,2023-09-27 00:00:00+00:00,0,0,1,D
+4230585,Serie A,2023/2024,Juventus,Lecce,2023-09-26 18:45:00+00:00,1,0,0,H
+4205407,La Liga,2023/2024,Mallorca,Barcelona,2023-09-26 00:00:00+00:00,2,2,1,D
+4221761,Bundesliga,2023/2024,Eintracht Frankfurt,Freiburg,2023-09-24 15:30:00+00:00,0,0,1,D
+4221760,Bundesliga,2023/2024,Bayer Leverkusen,FC Heidenheim,2023-09-24 13:30:00+00:00,4,1,0,H
+4230571,Serie A,2023/2024,Atalanta,Cagliari,2023-09-24 13:00:00+00:00,2,0,0,H
+4193510,Premier League,2023/2024,Arsenal,Tottenham Hotspur,2023-09-24 00:00:00+00:00,2,2,1,D
+4205396,La Liga,2023/2024,Real Betis,Cadiz,2023-09-24 00:00:00+00:00,1,1,1,D
+4193514,Premier League,2023/2024,Chelsea,Aston Villa,2023-09-24 00:00:00+00:00,0,1,2,A
+4193519,Premier League,2023/2024,Sheffield United,Newcastle United,2023-09-24 00:00:00+00:00,0,8,2,A
+4193516,Premier League,2023/2024,Liverpool,West Ham United,2023-09-24 00:00:00+00:00,3,1,0,H
+4219307,Ligue 1,2023/2024,Metz,Strasbourg,2023-09-24 00:00:00+00:00,0,1,2,A
+4219301,Ligue 1,2023/2024,Paris Saint-Germain,Marseille,2023-09-24 00:00:00+00:00,4,0,0,H
+4193512,Premier League,2023/2024,Brighton & Hove Albion,AFC Bournemouth,2023-09-24 00:00:00+00:00,3,1,0,H
+4230574,Serie A,2023/2024,Lazio,Monza,2023-09-23 18:45:00+00:00,1,1,1,D
+4230579,Serie A,2023/2024,Sassuolo,Juventus,2023-09-23 16:00:00+00:00,4,2,0,H
+4221757,Bundesliga,2023/2024,Bayern München,Bochum,2023-09-23 13:30:00+00:00,7,0,0,H
+4221764,Bundesliga,2023/2024,Augsburg,Mainz 05,2023-09-23 13:30:00+00:00,2,1,0,H
+4221762,Bundesliga,2023/2024,Borussia Mönchengladbach,RB Leipzig,2023-09-23 13:30:00+00:00,0,1,2,A
+4221759,Bundesliga,2023/2024,Union Berlin,Hoffenheim,2023-09-23 13:30:00+00:00,0,2,2,A
+4230578,Serie A,2023/2024,Milan,Hellas Verona,2023-09-23 13:25:00+00:00,1,0,0,H
+4193513,Premier League,2023/2024,Burnley,Manchester United,2023-09-23 00:00:00+00:00,0,1,2,A
+4205393,La Liga,2023/2024,Almeria,Valencia,2023-09-23 00:00:00+00:00,2,2,1,D
+4193511,Premier League,2023/2024,Brentford,Everton,2023-09-23 00:00:00+00:00,1,3,2,A
+4219309,Ligue 1,2023/2024,Brest,Lyon,2023-09-23 00:00:00+00:00,1,0,0,H
+4230577,Serie A,2023/2024,Lecce,Genoa,2023-09-22 18:45:00+00:00,1,0,0,H
+4230568,Serie A,2023/2024,Hellas Verona,Bologna,2023-09-18 18:45:00+00:00,0,0,1,D
+4230566,Serie A,2023/2024,Salernitana,Torino,2023-09-18 16:30:00+00:00,0,3,2,A
+4205390,La Liga,2023/2024,Granada,Girona,2023-09-18 00:00:00+00:00,2,4,2,A
+4230567,Serie A,2023/2024,Fiorentina,Atalanta,2023-09-17 16:00:00+00:00,3,2,0,H
+4221755,Bundesliga,2023/2024,FC Heidenheim,Werder Bremen,2023-09-17 13:30:00+00:00,4,2,0,H
+4230561,Serie A,2023/2024,Cagliari,Udinese,2023-09-17 10:30:00+00:00,0,0,1,D
+4219298,Ligue 1,2023/2024,Clermont Foot,Nantes,2023-09-17 00:00:00+00:00,0,1,2,A
+4205391,La Liga,2023/2024,Sevilla,Las Palmas,2023-09-17 00:00:00+00:00,1,0,0,H
+4219293,Ligue 1,2023/2024,Strasbourg,Montpellier,2023-09-17 00:00:00+00:00,2,2,1,D
+4205387,La Liga,2023/2024,Real Madrid,Real Sociedad,2023-09-17 00:00:00+00:00,2,1,0,H
+4193500,Premier League,2023/2024,AFC Bournemouth,Chelsea,2023-09-17 00:00:00+00:00,0,0,1,D
+4193502,Premier League,2023/2024,Everton,Arsenal,2023-09-17 00:00:00+00:00,0,1,2,A
+4219299,Ligue 1,2023/2024,Reims,Brest,2023-09-17 00:00:00+00:00,1,2,2,A
+4230564,Serie A,2023/2024,Inter,Milan,2023-09-16 16:00:00+00:00,5,1,0,H
+4221751,Bundesliga,2023/2024,Wolfsburg,Union Berlin,2023-09-16 13:30:00+00:00,2,1,0,H
+4221752,Bundesliga,2023/2024,Mainz 05,VfB Stuttgart,2023-09-16 13:30:00+00:00,1,3,2,A
+4221753,Bundesliga,2023/2024,1. FC Köln,Hoffenheim,2023-09-16 13:30:00+00:00,1,3,2,A
+4230565,Serie A,2023/2024,Juventus,Lazio,2023-09-16 13:00:00+00:00,3,1,0,H
+4219294,Ligue 1,2023/2024,Rennes,Lille,2023-09-16 00:00:00+00:00,2,2,1,D
+4219300,Ligue 1,2023/2024,Lens,Metz,2023-09-16 00:00:00+00:00,0,1,2,A
+4193504,Premier League,2023/2024,Manchester United,Brighton & Hove Albion,2023-09-16 00:00:00+00:00,1,3,2,A
+4205389,La Liga,2023/2024,Valencia,Atletico Madrid,2023-09-16 00:00:00+00:00,3,0,0,H
+4221740,Bundesliga,2023/2024,Union Berlin,RB Leipzig,2023-09-03 15:30:00+00:00,0,3,2,A
+4221742,Bundesliga,2023/2024,Eintracht Frankfurt,1. FC Köln,2023-09-03 13:30:00+00:00,1,1,1,D
+4193495,Premier League,2023/2024,Crystal Palace,Wolverhampton Wanderers,2023-09-03 00:00:00+00:00,3,2,0,H
+4230557,Serie A,2023/2024,Torino,Genoa,2023-09-03 00:00:00+00:00,1,0,0,H
+4193490,Premier League,2023/2024,Arsenal,Manchester United,2023-09-03 00:00:00+00:00,3,1,0,H
+4193496,Premier League,2023/2024,Liverpool,Aston Villa,2023-09-03 00:00:00+00:00,3,0,0,H
+4219289,Ligue 1,2023/2024,Le Havre,Lorient,2023-09-03 00:00:00+00:00,3,0,0,H
+4219283,Ligue 1,2023/2024,Toulouse,Clermont Foot,2023-09-03 00:00:00+00:00,2,2,1,D
+4219290,Ligue 1,2023/2024,Metz,Reims,2023-09-03 00:00:00+00:00,2,2,1,D
+4219285,Ligue 1,2023/2024,Lille,Montpellier,2023-09-03 00:00:00+00:00,1,0,0,H
+4230555,Serie A,2023/2024,Inter,Fiorentina,2023-09-03 00:00:00+00:00,4,0,0,H
+4221743,Bundesliga,2023/2024,Borussia Mönchengladbach,Bayern München,2023-09-02 16:30:00+00:00,1,2,2,A
+4221746,Bundesliga,2023/2024,Augsburg,Bochum,2023-09-02 13:30:00+00:00,2,2,1,D
+4221741,Bundesliga,2023/2024,Bayer Leverkusen,Darmstadt,2023-09-02 13:30:00+00:00,5,1,0,H
+4221744,Bundesliga,2023/2024,Hoffenheim,Wolfsburg,2023-09-02 13:30:00+00:00,3,1,0,H
+4230551,Serie A,2023/2024,Atalanta,Monza,2023-09-02 00:00:00+00:00,3,0,0,H
+4193493,Premier League,2023/2024,Burnley,Tottenham Hotspur,2023-09-02 00:00:00+00:00,2,5,2,A
+4205381,La Liga,2023/2024,Real Madrid,Getafe,2023-09-02 00:00:00+00:00,2,1,0,H
+4193498,Premier League,2023/2024,Manchester City,Fulham,2023-09-02 00:00:00+00:00,5,1,0,H
+4193494,Premier League,2023/2024,Chelsea,Nottingham Forest,2023-09-02 00:00:00+00:00,0,1,2,A
+4193492,Premier League,2023/2024,Brighton & Hove Albion,Newcastle United,2023-09-02 00:00:00+00:00,3,1,0,H
+4230559,Serie A,2023/2024,Napoli,Lazio,2023-09-02 00:00:00+00:00,1,2,2,A
+4205378,La Liga,2023/2024,Deportivo Alaves,Valencia,2023-09-02 00:00:00+00:00,1,0,0,H
+4230552,Serie A,2023/2024,Bologna,Cagliari,2023-09-02 00:00:00+00:00,2,1,0,H
+4221739,Bundesliga,2023/2024,Borussia Dortmund,FC Heidenheim,2023-09-01 18:30:00+00:00,2,2,1,D
+4205373,La Liga,2023/2024,Almeria,Celta Vigo,2023-09-01 00:00:00+00:00,2,3,2,A
+4219288,Ligue 1,2023/2024,Nantes,Marseille,2023-09-01 00:00:00+00:00,1,1,1,D
+4230558,Serie A,2023/2024,Sassuolo,Hellas Verona,2023-09-01 00:00:00+00:00,3,1,0,H
+4205372,La Liga,2023/2024,Getafe,Deportivo Alaves,2023-08-28 00:00:00+00:00,1,0,0,H
+4230541,Serie A,2023/2024,Cagliari,Inter,2023-08-28 00:00:00+00:00,0,2,2,A
+4221730,Bundesliga,2023/2024,Bayern München,Augsburg,2023-08-27 15:30:00+00:00,3,1,0,H
+4219278,Ligue 1,2023/2024,Lorient,Lille,2023-08-27 00:00:00+00:00,4,1,0,H
+4219280,Ligue 1,2023/2024,Clermont Foot,Metz,2023-08-27 00:00:00+00:00,0,1,2,A
+4230542,Serie A,2023/2024,Fiorentina,Lecce,2023-08-27 00:00:00+00:00,2,2,1,D
+4193488,Premier League,2023/2024,Newcastle United,Liverpool,2023-08-27 00:00:00+00:00,1,2,2,A
+4205371,La Liga,2023/2024,Valencia,Osasuna,2023-08-27 00:00:00+00:00,1,2,2,A
+4230545,Serie A,2023/2024,Napoli,Sassuolo,2023-08-27 00:00:00+00:00,2,0,0,H
+4219282,Ligue 1,2023/2024,Montpellier,Reims,2023-08-27 00:00:00+00:00,1,3,2,A
+4230548,Serie A,2023/2024,Juventus,Bologna,2023-08-27 00:00:00+00:00,1,1,1,D
+4219276,Ligue 1,2023/2024,Rennes,Le Havre,2023-08-27 00:00:00+00:00,2,2,1,D
+4219275,Ligue 1,2023/2024,Strasbourg,Toulouse,2023-08-27 00:00:00+00:00,2,0,0,H
+4219279,Ligue 1,2023/2024,Nice,Lyon,2023-08-27 00:00:00+00:00,0,0,1,D
+4221737,Bundesliga,2023/2024,FC Heidenheim,Hoffenheim,2023-08-26 13:30:00+00:00,2,3,2,A
+4230547,Serie A,2023/2024,Frosinone,Atalanta,2023-08-26 00:00:00+00:00,2,1,0,H
+4205365,La Liga,2023/2024,Granada,Mallorca,2023-08-26 00:00:00+00:00,3,2,0,H
+4193487,Premier League,2023/2024,Manchester United,Nottingham Forest,2023-08-26 00:00:00+00:00,3,2,0,H
+4230549,Serie A,2023/2024,Monza,Empoli,2023-08-26 00:00:00+00:00,2,0,0,H
+4219277,Ligue 1,2023/2024,Marseille,Brest,2023-08-26 00:00:00+00:00,2,0,0,H
+4230544,Serie A,2023/2024,Milan,Torino,2023-08-26 00:00:00+00:00,4,1,0,H
+4230543,Serie A,2023/2024,Hellas Verona,Roma,2023-08-26 00:00:00+00:00,2,1,0,H
+4221731,Bundesliga,2023/2024,RB Leipzig,VfB Stuttgart,2023-08-25 18:30:00+00:00,5,1,0,H
+4193485,Premier League,2023/2024,Chelsea,Luton Town,2023-08-25 00:00:00+00:00,3,0,0,H
+4205366,La Liga,2023/2024,Las Palmas,Real Sociedad,2023-08-25 00:00:00+00:00,0,0,1,D
+4219281,Ligue 1,2023/2024,Nantes,Monaco,2023-08-25 00:00:00+00:00,3,3,1,D
+4193471,Premier League,2023/2024,Crystal Palace,Arsenal,2023-08-21 00:00:00+00:00,0,1,2,A
+4205356,La Liga,2023/2024,Granada,Rayo Vallecano,2023-08-21 00:00:00+00:00,0,2,2,A
+4230530,Serie A,2023/2024,Bologna,Milan,2023-08-21 00:00:00+00:00,0,2,2,A
+4221725,Bundesliga,2023/2024,Eintracht Frankfurt,Darmstadt,2023-08-20 15:30:00+00:00,1,0,0,H
+4221723,Bundesliga,2023/2024,Union Berlin,Mainz 05,2023-08-20 13:30:00+00:00,4,1,0,H
+4193470,Premier League,2023/2024,Aston Villa,Everton,2023-08-20 00:00:00+00:00,4,0,0,H
+4230535,Serie A,2023/2024,Sassuolo,Atalanta,2023-08-20 00:00:00+00:00,0,2,2,A
+4219266,Ligue 1,2023/2024,Lorient,Nice,2023-08-20 00:00:00+00:00,1,1,1,D
+4205354,La Liga,2023/2024,Barcelona,Cadiz,2023-08-20 00:00:00+00:00,2,0,0,H
+4219270,Ligue 1,2023/2024,Reims,Clermont Foot,2023-08-20 00:00:00+00:00,2,0,0,H
+4219271,Ligue 1,2023/2024,Lens,Rennes,2023-08-20 00:00:00+00:00,1,1,1,D
+4230539,Serie A,2023/2024,Lecce,Lazio,2023-08-20 00:00:00+00:00,2,1,0,H
+4205359,La Liga,2023/2024,Real Betis,Atletico Madrid,2023-08-20 00:00:00+00:00,0,0,1,D
+4219272,Ligue 1,2023/2024,Le Havre,Brest,2023-08-20 00:00:00+00:00,1,2,2,A
+4219268,Ligue 1,2023/2024,Lille,Nantes,2023-08-20 00:00:00+00:00,2,0,0,H
+4221726,Bundesliga,2023/2024,Wolfsburg,FC Heidenheim,2023-08-19 13:30:00+00:00,2,0,0,H
+4221727,Bundesliga,2023/2024,Hoffenheim,Freiburg,2023-08-19 13:30:00+00:00,1,2,2,A
+4221724,Bundesliga,2023/2024,Bayer Leverkusen,RB Leipzig,2023-08-19 13:30:00+00:00,3,2,0,H
+4193477,Premier League,2023/2024,Tottenham Hotspur,Manchester United,2023-08-19 00:00:00+00:00,2,0,0,H
+4219265,Ligue 1,2023/2024,Toulouse,Paris Saint-Germain,2023-08-19 00:00:00+00:00,1,1,1,D
+4205360,La Liga,2023/2024,Real Sociedad,Celta Vigo,2023-08-19 00:00:00+00:00,1,1,1,D
+4193479,Premier League,2023/2024,Wolverhampton Wanderers,Brighton & Hove Albion,2023-08-19 00:00:00+00:00,1,4,2,A
+4230532,Serie A,2023/2024,Frosinone,Napoli,2023-08-19 00:00:00+00:00,1,3,2,A
+4193472,Premier League,2023/2024,Fulham,Brentford,2023-08-19 00:00:00+00:00,0,3,2,A
+4193473,Premier League,2023/2024,Liverpool,AFC Bournemouth,2023-08-19 00:00:00+00:00,3,1,0,H
+4230531,Serie A,2023/2024,Empoli,Hellas Verona,2023-08-19 00:00:00+00:00,0,1,2,A
+4193475,Premier League,2023/2024,Manchester City,Newcastle United,2023-08-19 00:00:00+00:00,1,0,0,H
+4219269,Ligue 1,2023/2024,Lyon,Montpellier,2023-08-19 00:00:00+00:00,1,4,2,A
+4205353,La Liga,2023/2024,Almeria,Real Madrid,2023-08-19 00:00:00+00:00,1,3,2,A
+4230537,Serie A,2023/2024,Genoa,Fiorentina,2023-08-19 00:00:00+00:00,1,4,2,A
+4221721,Bundesliga,2023/2024,Werder Bremen,Bayern München,2023-08-18 18:30:00+00:00,0,4,2,A
+4205355,La Liga,2023/2024,Mallorca,Villarreal,2023-08-18 00:00:00+00:00,0,1,2,A
+4205362,La Liga,2023/2024,Valencia,Las Palmas,2023-08-18 00:00:00+00:00,1,0,0,H
+4205352,La Liga,2023/2024,Cadiz,Deportivo Alaves,2023-08-14 00:00:00+00:00,1,0,0,H
+4205345,La Liga,2023/2024,Atletico Madrid,Granada,2023-08-14 00:00:00+00:00,3,1,0,H
+4193459,Premier League,2023/2024,Manchester United,Wolverhampton Wanderers,2023-08-14 00:00:00+00:00,1,0,0,H
+4219155,Ligue 1,2023/2024,Clermont Foot,Monaco,2023-08-13 00:00:00+00:00,2,4,2,A
+4205350,La Liga,2023/2024,Villarreal,Real Betis,2023-08-13 00:00:00+00:00,1,2,2,A
+4193457,Premier League,2023/2024,Brentford,Tottenham Hotspur,2023-08-13 00:00:00+00:00,2,2,1,D
+4193458,Premier League,2023/2024,Chelsea,Liverpool,2023-08-13 00:00:00+00:00,1,1,1,D
+4219152,Ligue 1,2023/2024,Strasbourg,Lyon,2023-08-13 00:00:00+00:00,2,1,0,H
+4205346,La Liga,2023/2024,Celta Vigo,Osasuna,2023-08-13 00:00:00+00:00,0,2,2,A
+4219157,Ligue 1,2023/2024,Montpellier,Le Havre,2023-08-13 00:00:00+00:00,2,2,1,D
+4205349,La Liga,2023/2024,Getafe,Barcelona,2023-08-13 00:00:00+00:00,0,0,1,D
+4219153,Ligue 1,2023/2024,Rennes,Metz,2023-08-13 00:00:00+00:00,5,1,0,H
+4219158,Ligue 1,2023/2024,Brest,Lens,2023-08-13 00:00:00+00:00,3,2,0,H
+4193456,Premier League,2023/2024,Newcastle United,Aston Villa,2023-08-12 00:00:00+00:00,5,1,0,H
+4193451,Premier League,2023/2024,Arsenal,Nottingham Forest,2023-08-12 00:00:00+00:00,2,1,0,H
+4193453,Premier League,2023/2024,Brighton & Hove Albion,Luton Town,2023-08-12 00:00:00+00:00,4,1,0,H
+4219151,Ligue 1,2023/2024,Paris Saint-Germain,Lorient,2023-08-12 00:00:00+00:00,0,0,1,D
+4193452,Premier League,2023/2024,AFC Bournemouth,West Ham United,2023-08-12 00:00:00+00:00,1,1,1,D
+4193454,Premier League,2023/2024,Everton,Fulham,2023-08-12 00:00:00+00:00,0,1,2,A
+4219154,Ligue 1,2023/2024,Marseille,Reims,2023-08-12 00:00:00+00:00,2,1,0,H
+4205348,La Liga,2023/2024,Las Palmas,Mallorca,2023-08-12 00:00:00+00:00,1,1,1,D
+4205351,La Liga,2023/2024,Real Sociedad,Girona,2023-08-12 00:00:00+00:00,1,1,1,D
+4193450,Premier League,2023/2024,Burnley,Manchester City,2023-08-11 00:00:00+00:00,0,3,2,A
+4219159,Ligue 1,2023/2024,Nice,Lille,2023-08-11 00:00:00+00:00,1,1,1,D
+4205343,La Liga,2023/2024,Almeria,Rayo Vallecano,2023-08-11 00:00:00+00:00,0,2,2,A
+4205347,La Liga,2023/2024,Sevilla,Valencia,2023-08-11 00:00:00+00:00,1,2,2,A
+3919395,Serie A,2022/2023,Roma,Spezia,2023-06-04 00:00:00+00:00,2,1,0,H
+3918315,La Liga,2022/2023,Real Valladolid,Getafe,2023-06-04 00:00:00+00:00,0,0,1,D
+3919398,Serie A,2022/2023,Udinese,Juventus,2023-06-04 00:00:00+00:00,0,1,2,A
+3904766,Ligue 1,2022/2023,Nice,Lyon,2023-06-03 00:00:00+00:00,3,1,0,H
+3904769,Ligue 1,2022/2023,Reims,Montpellier,2023-06-03 00:00:00+00:00,1,3,2,A
+3904763,Ligue 1,2022/2023,Monaco,Toulouse,2023-06-03 00:00:00+00:00,1,2,2,A
+3904764,Ligue 1,2022/2023,Nantes,Angers,2023-06-03 00:00:00+00:00,1,0,0,H
+3904765,Ligue 1,2022/2023,Lorient,Strasbourg,2023-06-03 00:00:00+00:00,2,1,0,H
+3919396,Serie A,2022/2023,Sassuolo,Fiorentina,2023-06-02 00:00:00+00:00,1,3,2,A
+3919383,Serie A,2022/2023,Juventus,Milan,2023-05-28 00:00:00+00:00,0,1,2,A
+3918307,La Liga,2022/2023,Valencia,Espanyol,2023-05-28 00:00:00+00:00,2,2,1,D
+3919381,Serie A,2022/2023,Hellas Verona,Empoli,2023-05-28 00:00:00+00:00,1,1,1,D
+3901308,Premier League,2022/2023,Leeds United,Tottenham Hotspur,2023-05-28 00:00:00+00:00,1,4,2,A
+3901304,Premier League,2022/2023,Brentford,Manchester City,2023-05-28 00:00:00+00:00,1,0,0,H
+3901307,Premier League,2022/2023,Everton,AFC Bournemouth,2023-05-28 00:00:00+00:00,1,0,0,H
+3901309,Premier League,2022/2023,Leicester City,West Ham United,2023-05-28 00:00:00+00:00,2,1,0,H
+3918304,La Liga,2022/2023,Rayo Vallecano,Villarreal,2023-05-28 00:00:00+00:00,2,1,0,H
+3918301,La Liga,2022/2023,Barcelona,Mallorca,2023-05-28 00:00:00+00:00,3,0,0,H
+3918303,La Liga,2022/2023,Cadiz,Celta Vigo,2023-05-28 00:00:00+00:00,1,0,0,H
+3919385,Serie A,2022/2023,Monza,Lecce,2023-05-28 00:00:00+00:00,0,1,2,A
+3901310,Premier League,2022/2023,Manchester United,Fulham,2023-05-28 00:00:00+00:00,2,1,0,H
+3918302,La Liga,2022/2023,Getafe,Osasuna,2023-05-28 00:00:00+00:00,2,1,0,H
+3903849,Bundesliga,2022/2023,VfB Stuttgart,Hoffenheim,2023-05-27 13:30:00+00:00,1,1,1,D
+3903846,Bundesliga,2022/2023,Eintracht Frankfurt,Freiburg,2023-05-27 13:30:00+00:00,2,1,0,H
+3903847,Bundesliga,2022/2023,Wolfsburg,Hertha BSC,2023-05-27 13:30:00+00:00,1,2,2,A
+3903841,Bundesliga,2022/2023,Borussia Dortmund,Mainz 05,2023-05-27 13:30:00+00:00,2,2,1,D
+3903848,Bundesliga,2022/2023,Bochum,Bayer Leverkusen,2023-05-27 13:30:00+00:00,3,0,0,H
+3903842,Bundesliga,2022/2023,RB Leipzig,Schalke 04,2023-05-27 13:30:00+00:00,4,2,0,H
+3904753,Ligue 1,2022/2023,Lille,Nantes,2023-05-27 00:00:00+00:00,2,1,0,H
+3919386,Serie A,2022/2023,Salernitana,Udinese,2023-05-27 00:00:00+00:00,3,2,0,H
+3904754,Ligue 1,2022/2023,Montpellier,Nice,2023-05-27 00:00:00+00:00,2,3,2,A
+3904760,Ligue 1,2022/2023,Toulouse,Auxerre,2023-05-27 00:00:00+00:00,1,1,1,D
+3904751,Ligue 1,2022/2023,Angers,Troyes,2023-05-27 00:00:00+00:00,2,1,0,H
+3904755,Ligue 1,2022/2023,Lyon,Reims,2023-05-27 00:00:00+00:00,3,0,0,H
+3919387,Serie A,2022/2023,Sampdoria,Sassuolo,2023-05-26 00:00:00+00:00,2,2,1,D
+3918297,La Liga,2022/2023,Real Madrid,Rayo Vallecano,2023-05-24 00:00:00+00:00,2,1,0,H
+3918296,La Liga,2022/2023,Villarreal,Cadiz,2023-05-24 00:00:00+00:00,2,0,0,H
+3918291,La Liga,2022/2023,Elche,Sevilla,2023-05-24 00:00:00+00:00,1,1,1,D
+3918298,La Liga,2022/2023,Real Sociedad,Almeria,2023-05-23 00:00:00+00:00,1,0,0,H
+3901297,Premier League,2022/2023,Newcastle United,Leicester City,2023-05-22 00:00:00+00:00,0,0,1,D
+3919371,Serie A,2022/2023,Empoli,Juventus,2023-05-22 00:00:00+00:00,4,1,0,H
+3903837,Bundesliga,2022/2023,Augsburg,Borussia Dortmund,2023-05-21 15:30:00+00:00,0,3,2,A
+3903835,Bundesliga,2022/2023,Mainz 05,VfB Stuttgart,2023-05-21 13:30:00+00:00,1,4,2,A
+3919378,Serie A,2022/2023,Udinese,Lazio,2023-05-21 00:00:00+00:00,0,1,2,A
+3919374,Serie A,2022/2023,Napoli,Inter,2023-05-21 00:00:00+00:00,3,1,0,H
+3918288,La Liga,2022/2023,Valencia,Real Madrid,2023-05-21 00:00:00+00:00,1,0,0,H
+3901296,Premier League,2022/2023,Manchester City,Chelsea,2023-05-21 00:00:00+00:00,1,0,0,H
+3918280,La Liga,2022/2023,Atletico Madrid,Osasuna,2023-05-21 00:00:00+00:00,3,0,0,H
+3919372,Serie A,2022/2023,Lecce,Spezia,2023-05-21 00:00:00+00:00,0,0,1,D
+3904743,Ligue 1,2022/2023,Lorient,Lens,2023-05-21 00:00:00+00:00,1,3,2,A
+3919377,Serie A,2022/2023,Torino,Fiorentina,2023-05-21 00:00:00+00:00,1,1,1,D
+3918287,La Liga,2022/2023,Rayo Vallecano,Espanyol,2023-05-21 00:00:00+00:00,1,2,2,A
+3904749,Ligue 1,2022/2023,Reims,Angers,2023-05-21 00:00:00+00:00,2,2,1,D
+3904746,Ligue 1,2022/2023,Nice,Toulouse,2023-05-21 00:00:00+00:00,0,0,1,D
+3903832,Bundesliga,2022/2023,Bayern München,RB Leipzig,2023-05-20 16:30:00+00:00,1,3,2,A
+3903838,Bundesliga,2022/2023,Hertha BSC,Bochum,2023-05-20 13:30:00+00:00,1,1,1,D
+3903839,Bundesliga,2022/2023,Schalke 04,Eintracht Frankfurt,2023-05-20 13:30:00+00:00,2,2,1,D
+3919373,Serie A,2022/2023,Milan,Sampdoria,2023-05-20 00:00:00+00:00,5,1,0,H
+3901298,Premier League,2022/2023,Nottingham Forest,Arsenal,2023-05-20 00:00:00+00:00,1,0,0,H
+3918283,La Liga,2022/2023,Almeria,Mallorca,2023-05-20 00:00:00+00:00,3,0,0,H
+3904744,Ligue 1,2022/2023,Nantes,Montpellier,2023-05-20 00:00:00+00:00,0,3,2,A
+3919369,Serie A,2022/2023,Atalanta,Hellas Verona,2023-05-20 00:00:00+00:00,3,1,0,H
+3919370,Serie A,2022/2023,Cremonese,Bologna,2023-05-20 00:00:00+00:00,1,5,2,A
+3918286,La Liga,2022/2023,Getafe,Elche,2023-05-20 00:00:00+00:00,1,1,1,D
+3901301,Premier League,2022/2023,Wolverhampton Wanderers,Everton,2023-05-20 00:00:00+00:00,1,1,1,D
+3901292,Premier League,2022/2023,AFC Bournemouth,Manchester United,2023-05-20 00:00:00+00:00,0,1,2,A
+3918284,La Liga,2022/2023,Girona,Villarreal,2023-05-20 00:00:00+00:00,1,2,2,A
+3901295,Premier League,2022/2023,Liverpool,Aston Villa,2023-05-20 00:00:00+00:00,1,1,1,D
+3903834,Bundesliga,2022/2023,Freiburg,Wolfsburg,2023-05-19 18:30:00+00:00,2,0,0,H
+3904747,Ligue 1,2022/2023,Lyon,Monaco,2023-05-19 00:00:00+00:00,3,1,0,H
+3901289,Premier League,2022/2023,Leicester City,Liverpool,2023-05-15 00:00:00+00:00,0,3,2,A
+3904738,Ligue 1,2022/2023,Brest,Auxerre,2023-05-14 00:00:00+00:00,1,0,0,H
+3901287,Premier League,2022/2023,Everton,Manchester City,2023-05-14 00:00:00+00:00,0,3,2,A
+3919359,Serie A,2022/2023,Bologna,Roma,2023-05-14 00:00:00+00:00,0,0,1,D
+3918273,La Liga,2022/2023,Espanyol,Barcelona,2023-05-14 00:00:00+00:00,2,4,2,A
+3919365,Serie A,2022/2023,Monza,Napoli,2023-05-14 00:00:00+00:00,2,0,0,H
+3904734,Ligue 1,2022/2023,Marseille,Angers,2023-05-14 00:00:00+00:00,3,1,0,H
+3904739,Ligue 1,2022/2023,Rennes,Troyes,2023-05-14 00:00:00+00:00,4,0,0,H
+3904731,Ligue 1,2022/2023,Monaco,Lille,2023-05-14 00:00:00+00:00,0,0,1,D
+3918276,La Liga,2022/2023,Real Valladolid,Sevilla,2023-05-14 00:00:00+00:00,0,3,2,A
+3919361,Serie A,2022/2023,Hellas Verona,Torino,2023-05-14 00:00:00+00:00,0,1,2,A
+3903828,Bundesliga,2022/2023,Eintracht Frankfurt,Mainz 05,2023-05-13 13:30:00+00:00,3,0,0,H
+3903829,Bundesliga,2022/2023,Wolfsburg,Hoffenheim,2023-05-13 13:30:00+00:00,2,1,0,H
+3903826,Bundesliga,2022/2023,Union Berlin,Freiburg,2023-05-13 13:30:00+00:00,4,2,0,H
+3903830,Bundesliga,2022/2023,Bochum,Augsburg,2023-05-13 13:30:00+00:00,3,2,0,H
+3918274,La Liga,2022/2023,Real Madrid,Getafe,2023-05-13 00:00:00+00:00,1,0,0,H
+3901291,Premier League,2022/2023,Southampton,Fulham,2023-05-13 00:00:00+00:00,0,2,2,A
+3918277,La Liga,2022/2023,Osasuna,Almeria,2023-05-13 00:00:00+00:00,3,1,0,H
+3901288,Premier League,2022/2023,Leeds United,Newcastle United,2023-05-13 00:00:00+00:00,2,2,1,D
+3901285,Premier League,2022/2023,Chelsea,Nottingham Forest,2023-05-13 00:00:00+00:00,2,2,1,D
+3918278,La Liga,2022/2023,Real Sociedad,Girona,2023-05-13 00:00:00+00:00,2,2,1,D
+3901290,Premier League,2022/2023,Manchester United,Wolverhampton Wanderers,2023-05-13 00:00:00+00:00,2,0,0,H
+3919362,Serie A,2022/2023,Inter,Sassuolo,2023-05-13 00:00:00+00:00,4,2,0,H
+3901283,Premier League,2022/2023,Aston Villa,Tottenham Hotspur,2023-05-13 00:00:00+00:00,2,1,0,H
+3919366,Serie A,2022/2023,Salernitana,Atalanta,2023-05-13 00:00:00+00:00,1,0,0,H
+3901286,Premier League,2022/2023,Crystal Palace,AFC Bournemouth,2023-05-13 00:00:00+00:00,2,0,0,H
+3919364,Serie A,2022/2023,Lazio,Lecce,2023-05-12 00:00:00+00:00,2,2,1,D
+3901274,Premier League,2022/2023,Fulham,Leicester City,2023-05-08 00:00:00+00:00,5,3,0,H
+3919351,Serie A,2022/2023,Empoli,Salernitana,2023-05-08 00:00:00+00:00,2,1,0,H
+3904727,Ligue 1,2022/2023,Lyon,Montpellier,2023-05-07 00:00:00+00:00,5,4,0,H
+3901277,Premier League,2022/2023,Newcastle United,Arsenal,2023-05-07 00:00:00+00:00,0,2,2,A
+3901280,Premier League,2022/2023,West Ham United,Manchester United,2023-05-07 00:00:00+00:00,1,0,0,H
+3919354,Serie A,2022/2023,Napoli,Fiorentina,2023-05-07 00:00:00+00:00,1,0,0,H
+3919349,Serie A,2022/2023,Atalanta,Juventus,2023-05-07 00:00:00+00:00,0,2,2,A
+3919357,Serie A,2022/2023,Torino,Monza,2023-05-07 00:00:00+00:00,1,1,1,D
+3904724,Ligue 1,2022/2023,Lorient,Brest,2023-05-07 00:00:00+00:00,2,1,0,H
+3919352,Serie A,2022/2023,Lecce,Hellas Verona,2023-05-07 00:00:00+00:00,0,1,2,A
+3904723,Ligue 1,2022/2023,Angers,Monaco,2023-05-07 00:00:00+00:00,1,2,2,A
+3904725,Ligue 1,2022/2023,Nantes,Strasbourg,2023-05-07 00:00:00+00:00,0,2,2,A
+3903822,Bundesliga,2022/2023,Werder Bremen,Bayern München,2023-05-06 16:30:00+00:00,1,2,2,A
+3903818,Bundesliga,2022/2023,Hoffenheim,Eintracht Frankfurt,2023-05-06 13:30:00+00:00,3,1,0,H
+3904729,Ligue 1,2022/2023,Reims,Lille,2023-05-06 00:00:00+00:00,1,0,0,H
+3919350,Serie A,2022/2023,Cremonese,Spezia,2023-05-06 00:00:00+00:00,2,0,0,H
+3919355,Serie A,2022/2023,Roma,Inter,2023-05-06 00:00:00+00:00,0,2,2,A
+3901272,Premier League,2022/2023,AFC Bournemouth,Chelsea,2023-05-06 00:00:00+00:00,1,3,2,A
+3901275,Premier League,2022/2023,Liverpool,Brentford,2023-05-06 00:00:00+00:00,1,0,0,H
+3904728,Ligue 1,2022/2023,Lens,Marseille,2023-05-06 00:00:00+00:00,2,1,0,H
+3901279,Premier League,2022/2023,Tottenham Hotspur,Crystal Palace,2023-05-06 00:00:00+00:00,1,0,0,H
+3901276,Premier League,2022/2023,Manchester City,Leeds United,2023-05-06 00:00:00+00:00,2,1,0,H
+3904726,Ligue 1,2022/2023,Nice,Rennes,2023-05-06 00:00:00+00:00,2,1,0,H
+3901281,Premier League,2022/2023,Wolverhampton Wanderers,Aston Villa,2023-05-06 00:00:00+00:00,1,0,0,H
+3901205,Premier League,2022/2023,Brighton & Hove Albion,Manchester United,2023-05-04 00:00:00+00:00,1,0,0,H
+3901207,Premier League,2022/2023,Liverpool,Fulham,2023-05-03 00:00:00+00:00,1,0,0,H
+3901262,Premier League,2022/2023,Arsenal,Chelsea,2023-05-02 00:00:00+00:00,3,1,0,H
+3901263,Premier League,2022/2023,AFC Bournemouth,Leeds United,2023-04-30 00:00:00+00:00,4,1,0,H
+3901269,Premier League,2022/2023,Liverpool,Tottenham Hotspur,2023-04-30 00:00:00+00:00,4,3,0,H
+3918250,La Liga,2022/2023,Elche,Rayo Vallecano,2023-04-29 00:00:00+00:00,4,0,0,H
+3901259,Premier League,2022/2023,Chelsea,Brentford,2023-04-26 00:00:00+00:00,0,2,2,A
+3919287,Serie A,2022/2023,Spezia,Hellas Verona,2023-03-05 11:30:00+00:00,0,0,1,D
+3903733,Bundesliga,2022/2023,Bayern München,Union Berlin,2023-02-26 16:30:00+00:00,3,0,0,H
+3918132,La Liga,2022/2023,Elche,Villarreal,2023-02-04 00:00:00+00:00,3,1,0,H
+3918112,La Liga,2022/2023,Rayo Vallecano,Real Sociedad,2023-01-21 00:00:00+00:00,0,2,2,A
+3901079,Premier League,2022/2023,Tottenham Hotspur,Liverpool,2022-11-06 00:00:00+00:00,1,2,2,A
+3918023,La Liga,2022/2023,Valencia,Elche,2022-10-15 00:00:00+00:00,2,2,1,D
+3900967,Premier League,2022/2023,Liverpool,AFC Bournemouth,2022-08-27 00:00:00+00:00,9,0,0,H
+3919075,Serie A,2022/2023,Fiorentina,Cremonese,2022-08-14 16:30:00+00:00,3,2,0,H
+3900933,Premier League,2022/2023,Fulham,Liverpool,2022-08-06 00:00:00+00:00,2,2,1,D
+3900938,Premier League,2022/2023,Tottenham Hotspur,Southampton,2022-08-06 00:00:00+00:00,4,1,0,H
+3900939,Premier League,2022/2023,Everton,Chelsea,2022-08-06 00:00:00+00:00,0,1,2,A
+3657382,Serie A,2021/2022,Venezia,Cagliari,2022-05-22 19:00:00+00:00,0,0,1,D
+3657379,Serie A,2021/2022,Sassuolo,Milan,2022-05-22 16:00:00+00:00,0,3,2,A
+3629465,La Liga,2021/2022,Barcelona,Villarreal,2022-05-22 00:00:00+00:00,0,2,2,A
+3629473,La Liga,2021/2022,Elche,Getafe,2022-05-22 00:00:00+00:00,3,1,0,H
+3610300,Premier League,2021/2022,Arsenal,Everton,2022-05-22 00:00:00+00:00,5,1,0,H
+3610301,Premier League,2021/2022,Brentford,Leeds United,2022-05-22 00:00:00+00:00,1,2,2,A
+3629464,La Liga,2021/2022,Deportivo Alaves,Cadiz,2022-05-22 00:00:00+00:00,0,1,2,A
+3629467,La Liga,2021/2022,Osasuna,Mallorca,2022-05-22 00:00:00+00:00,0,2,2,A
+3657373,Serie A,2021/2022,Atalanta,Empoli,2022-05-21 18:50:00+00:00,0,1,2,A
+3657374,Serie A,2021/2022,Fiorentina,Juventus,2022-05-21 18:45:00+00:00,2,0,0,H
+3657377,Serie A,2021/2022,Lazio,Hellas Verona,2022-05-21 18:45:00+00:00,3,3,1,D
+3657375,Serie A,2021/2022,Genoa,Bologna,2022-05-21 15:15:00+00:00,0,1,2,A
+3626200,Ligue 1,2021/2022,Lille,Rennes,2022-05-21 00:00:00+00:00,2,2,1,D
+3626198,Ligue 1,2021/2022,Clermont Foot,Lyon,2022-05-21 00:00:00+00:00,1,2,2,A
+3626202,Ligue 1,2021/2022,Marseille,Strasbourg,2022-05-21 00:00:00+00:00,4,0,0,H
+3610193,Premier League,2021/2022,Chelsea,Leicester City,2022-05-19 00:00:00+00:00,1,1,1,D
+3610258,Premier League,2021/2022,Everton,Crystal Palace,2022-05-19 00:00:00+00:00,3,2,0,H
+3610294,Premier League,2021/2022,Southampton,Liverpool,2022-05-17 00:00:00+00:00,1,2,2,A
+3657371,Serie A,2021/2022,Sampdoria,Fiorentina,2022-05-16 16:30:00+00:00,4,1,0,H
+3610295,Premier League,2021/2022,Newcastle United,Arsenal,2022-05-16 00:00:00+00:00,2,0,0,H
+3657364,Serie A,2021/2022,Cagliari,Inter,2022-05-15 18:45:00+00:00,1,3,2,A
+3629463,La Liga,2021/2022,Villarreal,Real Sociedad,2022-05-15 00:00:00+00:00,1,2,2,A
+3629459,La Liga,2021/2022,Getafe,Barcelona,2022-05-15 00:00:00+00:00,0,0,1,D
+3629460,La Liga,2021/2022,Cadiz,Real Madrid,2022-05-15 00:00:00+00:00,1,1,1,D
+3610298,Premier League,2021/2022,Everton,Brentford,2022-05-15 00:00:00+00:00,2,3,2,A
+3657370,Serie A,2021/2022,Roma,Venezia,2022-05-14 18:45:00+00:00,1,1,1,D
+3657372,Serie A,2021/2022,Udinese,Spezia,2022-05-14 16:00:00+00:00,2,3,2,A
+3657366,Serie A,2021/2022,Hellas Verona,Torino,2022-05-14 16:00:00+00:00,0,1,2,A
+3624702,Bundesliga,2021/2022,Augsburg,Greuther Fürth,2022-05-14 13:30:00+00:00,2,1,0,H
+3624703,Bundesliga,2021/2022,Mainz 05,Eintracht Frankfurt,2022-05-14 13:30:00+00:00,2,2,1,D
+3624709,Bundesliga,2021/2022,Borussia Dortmund,Hertha BSC,2022-05-14 13:30:00+00:00,2,1,0,H
+3657365,Serie A,2021/2022,Empoli,Salernitana,2022-05-14 13:00:00+00:00,1,1,1,D
+3626189,Ligue 1,2021/2022,Monaco,Brest,2022-05-14 00:00:00+00:00,4,2,0,H
+3626188,Ligue 1,2021/2022,Metz,Angers,2022-05-14 00:00:00+00:00,1,0,0,H
+3629449,La Liga,2021/2022,Real Sociedad,Cadiz,2022-05-12 00:00:00+00:00,3,0,0,H
+3610250,Premier League,2021/2022,Wolverhampton Wanderers,Manchester City,2022-05-11 00:00:00+00:00,1,5,2,A
+3610257,Premier League,2021/2022,Leeds United,Chelsea,2022-05-11 00:00:00+00:00,0,3,2,A
+3626182,Ligue 1,2021/2022,Nantes,Rennes,2022-05-11 00:00:00+00:00,2,1,0,H
+3629444,La Liga,2021/2022,Deportivo Alaves,Espanyol,2022-05-11 00:00:00+00:00,2,1,0,H
+3657353,Serie A,2021/2022,Fiorentina,Roma,2022-05-09 18:45:00+00:00,2,0,0,H
+3657355,Serie A,2021/2022,Hellas Verona,Milan,2022-05-08 18:45:00+00:00,1,3,2,A
+3624699,Bundesliga,2021/2022,RB Leipzig,Augsburg,2022-05-08 17:30:00+00:00,4,0,0,H
+3657358,Serie A,2021/2022,Salernitana,Cagliari,2022-05-08 16:00:00+00:00,1,1,1,D
+3624700,Bundesliga,2021/2022,Bayern München,VfB Stuttgart,2022-05-08 15:30:00+00:00,2,2,1,D
+3657362,Serie A,2021/2022,Venezia,Bologna,2022-05-08 13:00:00+00:00,4,3,0,H
+3657360,Serie A,2021/2022,Spezia,Atalanta,2022-05-08 10:30:00+00:00,1,3,2,A
+3610283,Premier League,2021/2022,Leicester City,Everton,2022-05-08 00:00:00+00:00,1,2,2,A
+3626181,Ligue 1,2021/2022,Metz,Lyon,2022-05-08 00:00:00+00:00,3,2,0,H
+3629443,La Liga,2021/2022,Villarreal,Sevilla,2022-05-08 00:00:00+00:00,1,1,1,D
+3610289,Premier League,2021/2022,Arsenal,Leeds United,2022-05-08 00:00:00+00:00,2,1,0,H
+3657357,Serie A,2021/2022,Lazio,Sampdoria,2022-05-07 18:45:00+00:00,2,0,0,H
+3624695,Bundesliga,2021/2022,Hertha BSC,Mainz 05,2022-05-07 16:30:00+00:00,1,2,2,A
+3624696,Bundesliga,2021/2022,Hoffenheim,Bayer Leverkusen,2022-05-07 13:30:00+00:00,2,4,2,A
+3610284,Premier League,2021/2022,Crystal Palace,Watford,2022-05-07 00:00:00+00:00,1,0,0,H
+3626177,Ligue 1,2021/2022,Brest,Strasbourg,2022-05-07 00:00:00+00:00,0,1,2,A
+3610288,Premier League,2021/2022,Brentford,Southampton,2022-05-07 00:00:00+00:00,3,0,0,H
+3629438,La Liga,2021/2022,Mallorca,Granada,2022-05-07 00:00:00+00:00,2,6,2,A
+3629442,La Liga,2021/2022,Levante,Real Sociedad,2022-05-06 00:00:00+00:00,2,1,0,H
+3657343,Serie A,2021/2022,Atalanta,Salernitana,2022-05-02 18:45:00+00:00,1,1,1,D
+3624690,Bundesliga,2021/2022,Bayer Leverkusen,Eintracht Frankfurt,2022-05-02 18:30:00+00:00,2,0,0,H
+3610276,Premier League,2021/2022,Manchester United,Brentford,2022-05-02 00:00:00+00:00,3,0,0,H
+3657349,Serie A,2021/2022,Roma,Bologna,2022-05-01 18:45:00+00:00,0,0,1,D
+3657347,Serie A,2021/2022,Milan,Fiorentina,2022-05-01 13:00:00+00:00,1,0,0,H
+3629426,La Liga,2021/2022,Barcelona,Mallorca,2022-05-01 00:00:00+00:00,2,1,0,H
+3629433,La Liga,2021/2022,Elche,Osasuna,2022-05-01 00:00:00+00:00,1,1,1,D
+3629432,La Liga,2021/2022,Rayo Vallecano,Real Sociedad,2022-05-01 00:00:00+00:00,1,1,1,D
+3626167,Ligue 1,2021/2022,Brest,Clermont Foot,2022-05-01 00:00:00+00:00,2,0,0,H
+3629428,La Liga,2021/2022,Granada,Celta Vigo,2022-05-01 00:00:00+00:00,1,1,1,D
+3626175,Ligue 1,2021/2022,Troyes,Lille,2022-05-01 00:00:00+00:00,3,0,0,H
+3610271,Premier League,2021/2022,West Ham United,Arsenal,2022-05-01 00:00:00+00:00,1,2,2,A
+3626171,Ligue 1,2021/2022,Monaco,Angers,2022-05-01 00:00:00+00:00,2,0,0,H
+3610278,Premier League,2021/2022,Everton,Chelsea,2022-05-01 00:00:00+00:00,1,0,0,H
+3657350,Serie A,2021/2022,Sampdoria,Genoa,2022-04-30 16:00:00+00:00,1,0,0,H
+3624685,Bundesliga,2021/2022,Mainz 05,Bayern München,2022-04-30 13:30:00+00:00,3,1,0,H
+3624691,Bundesliga,2021/2022,Borussia Dortmund,Bochum,2022-04-30 13:30:00+00:00,3,4,2,A
+3624687,Bundesliga,2021/2022,VfB Stuttgart,Wolfsburg,2022-04-30 13:30:00+00:00,1,1,1,D
+3657344,Serie A,2021/2022,Cagliari,Hellas Verona,2022-04-30 13:00:00+00:00,1,2,2,A
+3657348,Serie A,2021/2022,Napoli,Sassuolo,2022-04-30 13:00:00+00:00,6,1,0,H
+3629431,La Liga,2021/2022,Valencia,Levante,2022-04-30 00:00:00+00:00,1,1,1,D
+3626168,Ligue 1,2021/2022,Lens,Nantes,2022-04-30 00:00:00+00:00,2,2,1,D
+3629429,La Liga,2021/2022,Real Madrid,Espanyol,2022-04-30 00:00:00+00:00,4,0,0,H
+3624689,Bundesliga,2021/2022,Union Berlin,Greuther Fürth,2022-04-29 18:30:00+00:00,1,1,1,D
+3626174,Ligue 1,2021/2022,Strasbourg,Paris Saint-Germain,2022-04-29 00:00:00+00:00,3,3,1,D
+3629430,La Liga,2021/2022,Sevilla,Cadiz,2022-04-29 00:00:00+00:00,1,1,1,D
+3657202,Serie A,2021/2022,Atalanta,Torino,2022-04-27 18:15:00+00:00,4,4,1,D
+3657203,Serie A,2021/2022,Bologna,Inter,2022-04-27 18:15:00+00:00,2,1,0,H
+3657290,Serie A,2021/2022,Sassuolo,Juventus,2022-04-25 18:45:00+00:00,1,2,2,A
+3657288,Serie A,2021/2022,Lazio,Milan,2022-04-24 18:45:00+00:00,1,2,2,A
+3624677,Bundesliga,2021/2022,Hertha BSC,VfB Stuttgart,2022-04-24 15:30:00+00:00,2,0,0,H
+3657283,Serie A,2021/2022,Bologna,Udinese,2022-04-24 13:00:00+00:00,2,2,1,D
+3657289,Serie A,2021/2022,Salernitana,Fiorentina,2022-04-24 10:30:00+00:00,2,1,0,H
+3626161,Ligue 1,2021/2022,Nice,Troyes,2022-04-24 00:00:00+00:00,1,0,0,H
+3626163,Ligue 1,2021/2022,Reims,Marseille,2022-04-24 00:00:00+00:00,0,1,2,A
+3626160,Ligue 1,2021/2022,Nantes,Bordeaux,2022-04-24 00:00:00+00:00,5,3,0,H
+3624682,Bundesliga,2021/2022,Bayern München,Borussia Dortmund,2022-04-23 16:30:00+00:00,3,1,0,H
+3624681,Bundesliga,2021/2022,RB Leipzig,Union Berlin,2022-04-23 13:30:00+00:00,1,2,2,A
+3624679,Bundesliga,2021/2022,Eintracht Frankfurt,Hoffenheim,2022-04-23 13:30:00+00:00,2,2,1,D
+3624680,Bundesliga,2021/2022,Wolfsburg,Mainz 05,2022-04-22 18:30:00+00:00,5,0,0,H
+3624668,Bundesliga,2021/2022,Hoffenheim,Greuther Fürth,2022-04-17 15:30:00+00:00,0,0,1,D
+3624673,Bundesliga,2021/2022,Borussia Dortmund,Wolfsburg,2022-04-16 13:30:00+00:00,6,1,0,H
+3624663,Bundesliga,2021/2022,RB Leipzig,Hoffenheim,2022-04-10 17:30:00+00:00,3,0,0,H
+3629391,La Liga,2021/2022,Levante,Villarreal,2022-04-02 00:00:00+00:00,2,0,0,H
+3629370,La Liga,2021/2022,Levante,Espanyol,2022-03-12 00:00:00+00:00,1,1,1,D
+3629352,La Liga,2021/2022,Rayo Vallecano,Real Madrid,2022-02-26 00:00:00+00:00,0,1,2,A
+3624563,Bundesliga,2021/2022,Arminia Bielefeld,Union Berlin,2022-02-19 14:30:00+00:00,1,0,0,H
+3624534,Bundesliga,2021/2022,Augsburg,Union Berlin,2022-02-05 14:30:00+00:00,2,0,0,H
+3629250,La Liga,2021/2022,Real Sociedad,Real Madrid,2021-12-04 00:00:00+00:00,0,2,2,A
+3629241,La Liga,2021/2022,Real Madrid,Sevilla,2021-11-28 00:00:00+00:00,2,1,0,H
+3629213,La Liga,2021/2022,Elche,Real Madrid,2021-10-30 00:00:00+00:00,1,2,2,A
+3629191,La Liga,2021/2022,Sevilla,Levante,2021-10-24 00:00:00+00:00,5,3,0,H
+3429142,Serie A,2020/2021,Atalanta,Milan,2021-05-23 18:45:00+00:00,0,2,2,A
+3429140,Serie A,2020/2021,Bologna,Juventus,2021-05-23 18:45:00+00:00,1,4,2,A
+3429146,Serie A,2020/2021,Napoli,Hellas Verona,2021-05-23 18:45:00+00:00,1,1,1,D
+3429145,Serie A,2020/2021,Inter,Udinese,2021-05-23 13:00:00+00:00,5,1,0,H
+3362263,Ligue 1,2020/2021,Strasbourg,Lorient,2021-05-23 00:00:00+00:00,1,1,1,D
+3411719,Premier League,2020/2021,Arsenal,Brighton & Hove Albion,2021-05-23 00:00:00+00:00,2,0,0,H
+3362255,Ligue 1,2020/2021,Brest,Paris Saint-Germain,2021-05-23 00:00:00+00:00,0,2,2,A
+3362258,Ligue 1,2020/2021,Metz,Marseille,2021-05-23 00:00:00+00:00,1,1,1,D
+3411720,Premier League,2020/2021,Aston Villa,Chelsea,2021-05-23 00:00:00+00:00,2,1,0,H
+3362257,Ligue 1,2020/2021,Lyon,Nice,2021-05-23 00:00:00+00:00,2,3,2,A
+3411721,Premier League,2020/2021,Fulham,Newcastle United,2021-05-23 00:00:00+00:00,0,2,2,A
+3362256,Ligue 1,2020/2021,Lens,Monaco,2021-05-23 00:00:00+00:00,0,0,1,D
+3362259,Ligue 1,2020/2021,Nantes,Montpellier,2021-05-23 00:00:00+00:00,1,2,2,A
+3399463,Bundesliga,2020/2021,VfB Stuttgart,Arminia Bielefeld,2021-05-22 13:30:00+00:00,0,2,2,A
+3399459,Bundesliga,2020/2021,Eintracht Frankfurt,Freiburg,2021-05-22 13:30:00+00:00,3,1,0,H
+3424412,La Liga,2020/2021,Levante,Cadiz,2021-05-21 00:00:00+00:00,2,2,1,D
+3411718,Premier League,2020/2021,West Bromwich Albion,West Ham United,2021-05-19 00:00:00+00:00,1,3,2,A
+3411714,Premier League,2020/2021,Manchester United,Fulham,2021-05-18 00:00:00+00:00,1,1,1,D
+3428998,Serie A,2020/2021,Hellas Verona,Bologna,2021-05-17 18:45:00+00:00,2,2,1,D
+3428999,Serie A,2020/2021,Milan,Cagliari,2021-05-16 18:45:00+00:00,0,0,1,D
+3399446,Bundesliga,2020/2021,RB Leipzig,Wolfsburg,2021-05-16 18:30:00+00:00,2,2,1,D
+3429005,Serie A,2020/2021,Parma,Sassuolo,2021-05-16 16:00:00+00:00,1,3,2,A
+3429000,Serie A,2020/2021,Benevento,Crotone,2021-05-16 13:00:00+00:00,1,1,1,D
+3429003,Serie A,2020/2021,Fiorentina,Napoli,2021-05-16 10:35:00+00:00,0,2,2,A
+3362251,Ligue 1,2020/2021,Nice,Strasbourg,2021-05-16 00:00:00+00:00,0,2,2,A
+3362253,Ligue 1,2020/2021,Paris Saint-Germain,Reims,2021-05-16 00:00:00+00:00,4,0,0,H
+3411708,Premier League,2020/2021,Crystal Palace,Aston Villa,2021-05-16 00:00:00+00:00,3,2,0,H
+3362245,Ligue 1,2020/2021,Dijon,Nantes,2021-05-16 00:00:00+00:00,0,4,2,A
+3362248,Ligue 1,2020/2021,Marseille,Angers,2021-05-16 00:00:00+00:00,3,2,0,H
+3424403,La Liga,2020/2021,Getafe,Levante,2021-05-16 00:00:00+00:00,2,1,0,H
+3424398,La Liga,2020/2021,Deportivo Alaves,Granada,2021-05-16 00:00:00+00:00,4,2,0,H
+3424404,La Liga,2020/2021,Cadiz,Elche,2021-05-16 00:00:00+00:00,1,3,2,A
+3424405,La Liga,2020/2021,Real Sociedad,Real Valladolid,2021-05-16 00:00:00+00:00,4,1,0,H
+3424406,La Liga,2020/2021,Valencia,Eibar,2021-05-16 00:00:00+00:00,4,1,0,H
+3411703,Premier League,2020/2021,West Bromwich Albion,Liverpool,2021-05-16 00:00:00+00:00,1,2,2,A
+3424407,La Liga,2020/2021,Villarreal,Sevilla,2021-05-16 00:00:00+00:00,4,0,0,H
+3399454,Bundesliga,2020/2021,Arminia Bielefeld,Hoffenheim,2021-05-15 13:30:00+00:00,1,1,1,D
+3399453,Bundesliga,2020/2021,Augsburg,Werder Bremen,2021-05-15 13:30:00+00:00,2,0,0,H
+3428997,Serie A,2020/2021,Genoa,Atalanta,2021-05-15 13:00:00+00:00,3,4,2,A
+3411699,Premier League,2020/2021,Brighton & Hove Albion,West Ham United,2021-05-15 00:00:00+00:00,1,1,1,D
+3411706,Premier League,2020/2021,Southampton,Fulham,2021-05-15 00:00:00+00:00,3,1,0,H
+3411700,Premier League,2020/2021,Burnley,Leeds United,2021-05-15 00:00:00+00:00,0,4,2,A
+3411705,Premier League,2020/2021,Newcastle United,Manchester City,2021-05-14 00:00:00+00:00,3,4,2,A
+3428945,Serie A,2020/2021,Crotone,Hellas Verona,2021-05-13 18:45:00+00:00,2,1,0,H
+3411530,Premier League,2020/2021,Aston Villa,Everton,2021-05-13 00:00:00+00:00,0,0,1,D
+3424396,La Liga,2020/2021,Real Valladolid,Villarreal,2021-05-13 00:00:00+00:00,0,2,2,A
+3428943,Serie A,2020/2021,Sampdoria,Spezia,2021-05-12 18:45:00+00:00,2,2,1,D
+3428936,Serie A,2020/2021,Atalanta,Benevento,2021-05-12 18:45:00+00:00,2,0,0,H
+3428938,Serie A,2020/2021,Bologna,Genoa,2021-05-12 18:45:00+00:00,0,2,2,A
+3428939,Serie A,2020/2021,Sassuolo,Juventus,2021-05-12 18:45:00+00:00,1,3,2,A
+3424395,La Liga,2020/2021,Sevilla,Valencia,2021-05-12 00:00:00+00:00,1,0,0,H
+3428944,Serie A,2020/2021,Napoli,Udinese,2021-05-11 18:45:00+00:00,5,1,0,H
+3411667,Premier League,2020/2021,Southampton,Crystal Palace,2021-05-11 00:00:00+00:00,3,1,0,H
+3411702,Premier League,2020/2021,Manchester United,Leicester City,2021-05-11 00:00:00+00:00,1,2,2,A
+3424393,La Liga,2020/2021,Levante,Barcelona,2021-05-11 00:00:00+00:00,3,3,1,D
+3424397,La Liga,2020/2021,Elche,Deportivo Alaves,2021-05-11 00:00:00+00:00,0,2,2,A
+3424394,La Liga,2020/2021,Osasuna,Cadiz,2021-05-11 00:00:00+00:00,3,2,0,H
+3428861,Serie A,2020/2021,Juventus,Milan,2021-05-09 18:45:00+00:00,0,3,2,A
+3428856,Serie A,2020/2021,Parma,Atalanta,2021-05-09 13:00:00+00:00,2,5,2,A
+3428858,Serie A,2020/2021,Benevento,Cagliari,2021-05-09 13:00:00+00:00,1,3,2,A
+3411697,Premier League,2020/2021,West Ham United,Everton,2021-05-09 00:00:00+00:00,0,1,2,A
+3424382,La Liga,2020/2021,Getafe,Eibar,2021-05-09 00:00:00+00:00,0,1,2,A
+3411690,Premier League,2020/2021,Aston Villa,Manchester United,2021-05-09 00:00:00+00:00,1,3,2,A
+3362237,Ligue 1,2020/2021,Metz,Nimes,2021-05-09 00:00:00+00:00,0,3,2,A
+3362234,Ligue 1,2020/2021,Angers,Dijon,2021-05-09 00:00:00+00:00,3,0,0,H
+3362243,Ligue 1,2020/2021,Strasbourg,Montpellier,2021-05-09 00:00:00+00:00,2,3,2,A
+3362240,Ligue 1,2020/2021,Reims,Monaco,2021-05-09 00:00:00+00:00,0,1,2,A
+3424384,La Liga,2020/2021,Real Madrid,Sevilla,2021-05-09 00:00:00+00:00,2,2,1,D
+3411689,Premier League,2020/2021,Arsenal,West Bromwich Albion,2021-05-09 00:00:00+00:00,3,1,0,H
+3424386,La Liga,2020/2021,Valencia,Real Valladolid,2021-05-09 00:00:00+00:00,3,0,0,H
+3399440,Bundesliga,2020/2021,Wolfsburg,Union Berlin,2021-05-08 13:30:00+00:00,3,0,0,H
+3399439,Bundesliga,2020/2021,Hoffenheim,Schalke 04,2021-05-08 13:30:00+00:00,4,2,0,H
+3428862,Serie A,2020/2021,Spezia,Napoli,2021-05-08 13:00:00+00:00,1,4,2,A
+3411694,Premier League,2020/2021,Liverpool,Southampton,2021-05-08 00:00:00+00:00,2,0,0,H
+3424383,La Liga,2020/2021,Cadiz,SD Huesca,2021-05-08 00:00:00+00:00,2,1,0,H
+3411692,Premier League,2020/2021,Leeds United,Tottenham Hotspur,2021-05-08 00:00:00+00:00,3,1,0,H
+3424378,La Liga,2020/2021,Deportivo Alaves,Levante,2021-05-08 00:00:00+00:00,2,2,1,D
+3411696,Premier League,2020/2021,Sheffield United,Crystal Palace,2021-05-08 00:00:00+00:00,0,2,2,A
+3362236,Ligue 1,2020/2021,Lyon,Lorient,2021-05-08 00:00:00+00:00,4,1,0,H
+3399445,Bundesliga,2020/2021,VfB Stuttgart,Augsburg,2021-05-07 18:30:00+00:00,2,1,0,H
+3362235,Ligue 1,2020/2021,Lens,Lille,2021-05-07 00:00:00+00:00,0,3,2,A
+3424385,La Liga,2020/2021,Real Sociedad,Elche,2021-05-07 00:00:00+00:00,2,0,0,H
+3399423,Bundesliga,2020/2021,Hertha BSC,Freiburg,2021-05-06 16:30:00+00:00,3,0,0,H
+3428803,Serie A,2020/2021,Torino,Parma,2021-05-03 18:45:00+00:00,1,0,0,H
+3428804,Serie A,2020/2021,Sampdoria,Roma,2021-05-02 18:45:00+00:00,2,0,0,H
+3428800,Serie A,2020/2021,Lazio,Genoa,2021-05-02 10:30:00+00:00,4,3,0,H
+3424370,La Liga,2020/2021,Granada,Cadiz,2021-05-02 00:00:00+00:00,0,1,2,A
+3362228,Ligue 1,2020/2021,Lorient,Angers,2021-05-02 00:00:00+00:00,2,0,0,H
+3362224,Ligue 1,2020/2021,Bordeaux,Rennes,2021-05-02 00:00:00+00:00,1,0,0,H
+3411687,Premier League,2020/2021,Tottenham Hotspur,Sheffield United,2021-05-02 00:00:00+00:00,4,0,0,H
+3411685,Premier League,2020/2021,Newcastle United,Arsenal,2021-05-02 00:00:00+00:00,0,2,2,A
+3362226,Ligue 1,2020/2021,Dijon,Metz,2021-05-02 00:00:00+00:00,1,5,2,A
+3362232,Ligue 1,2020/2021,Nimes,Reims,2021-05-02 00:00:00+00:00,2,2,1,D
+3362230,Ligue 1,2020/2021,Monaco,Lyon,2021-05-02 00:00:00+00:00,2,3,2,A
+3411683,Premier League,2020/2021,Everton,Aston Villa,2021-05-01 00:00:00+00:00,1,2,2,A
+3424372,La Liga,2020/2021,Real Madrid,Osasuna,2021-05-01 00:00:00+00:00,2,0,0,H
+3424371,La Liga,2020/2021,SD Huesca,Real Sociedad,2021-05-01 00:00:00+00:00,1,0,0,H
+3362229,Ligue 1,2020/2021,Marseille,Strasbourg,2021-04-30 00:00:00+00:00,1,1,1,D
+3424368,La Liga,2020/2021,Celta Vigo,Levante,2021-04-30 00:00:00+00:00,2,0,0,H
+3362216,Ligue 1,2020/2021,Lorient,Bordeaux,2021-04-25 00:00:00+00:00,4,1,0,H
+3362221,Ligue 1,2020/2021,Rennes,Dijon,2021-04-25 00:00:00+00:00,5,1,0,H
+3362215,Ligue 1,2020/2021,Lens,Nimes,2021-04-25 00:00:00+00:00,2,1,0,H
+3362223,Ligue 1,2020/2021,Strasbourg,Nantes,2021-04-25 00:00:00+00:00,1,2,2,A
+3399433,Bundesliga,2020/2021,Union Berlin,Werder Bremen,2021-04-24 13:30:00+00:00,3,1,0,H
+3399431,Bundesliga,2020/2021,Wolfsburg,Borussia Dortmund,2021-04-24 13:30:00+00:00,0,2,2,A
+3399419,Bundesliga,2020/2021,Bayern München,Bayer Leverkusen,2021-04-20 18:30:00+00:00,2,0,0,H
+3399426,Bundesliga,2020/2021,Arminia Bielefeld,Schalke 04,2021-04-20 18:30:00+00:00,1,0,0,H
+3399422,Bundesliga,2020/2021,Eintracht Frankfurt,Augsburg,2021-04-20 18:30:00+00:00,2,0,0,H
+3428995,Serie A,2020/2021,Sassuolo,Parma,2021-01-17 14:00:00+00:00,1,1,1,D
+3399187,Bundesliga,2020/2021,Schalke 04,Union Berlin,2020-10-18 16:00:00+00:00,1,1,1,D

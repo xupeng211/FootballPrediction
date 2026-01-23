@@ -1,0 +1,10 @@
+# V41.610 Proxy Blacklist - 自动生成
+# 生成时间: 2026-01-22 08:52:32
+# 淘汰原因: 连接失败/超时/IP 泄露
+#
+# Cannot connect to host www.oddsportal.com:443 ssl:False [None]
+http://172.25.16.1:7896
+# Cannot connect to host www.oddsportal.com:443 ssl:False [None]
+http://172.25.16.1:7908
+# Cannot connect to host www.oddsportal.com:443 ssl:False [None]
+http://172.25.16.1:7909

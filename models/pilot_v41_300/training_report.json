@@ -1,0 +1,60 @@
+{
+  "n_samples": 1770,
+  "n_features": 576,
+  "n_train": 1416,
+  "n_test": 354,
+  "train_accuracy": 1.0,
+  "test_accuracy": 0.6242937853107344,
+  "cv_accuracy_mean": 0.6028248587570622,
+  "cv_accuracy_std": 0.00921441041259891,
+  "precision_h": 0.6820809248554913,
+  "precision_d": 0.41818181818181815,
+  "precision_a": 0.6349206349206349,
+  "recall_h": 0.7564102564102564,
+  "recall_d": 0.26436781609195403,
+  "recall_a": 0.7207207207207207,
+  "f1_h": 0.7173252279635258,
+  "f1_d": 0.323943661971831,
+  "f1_a": 0.6751054852320675,
+  "f1_macro": 0.5721247917224748,
+  "top5_features": [
+    {
+      "name": "content_lineup_awayTeam_starters_1_verticalLayout_x",
+      "importance": 0.037044957280159
+    },
+    {
+      "name": "xg_diff",
+      "importance": 0.01975870504975319
+    },
+    {
+      "name": "content_stats_Periods_All_stats_3_stats_7_stats_sum",
+      "importance": 0.019210316240787506
+    },
+    {
+      "name": "content_stats_Periods_All_stats_3_stats_7_stats_min",
+      "importance": 0.01720728725194931
+    },
+    {
+      "name": "content_table_teams_std",
+      "importance": 0.015616935677826405
+    }
+  ],
+  "confusion_matrix": [
+    [
+      118,
+      17,
+      21
+    ],
+    [
+      39,
+      23,
+      25
+    ],
+    [
+      16,
+      15,
+      80
+    ]
+  ],
+  "training_time_ms": 5923.063
+}

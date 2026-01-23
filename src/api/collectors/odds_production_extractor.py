@@ -4,6 +4,10 @@
 This module provides a robust, self-healing engine for extracting odds data
 from multiple betting sources using Playwright browser automation.
 
+V41.570 Great Decoupling: Refactored to use separate modules:
+    - odds_models.py: Data models (MultiSourceEntityData)
+    - js_templates.py: JavaScript templates
+
 Multi-Layer Architecture:
     L1: FotMob API - Base match data
     L2: FotMob Detail - Opening odds via hover (data-testid selectors)
@@ -14,7 +18,7 @@ Core Features:
     - Intelligent polling: Uses wait_for_selector instead of hard sleeps
     - Hover self-healing: Auto-scroll + mouse jitter retry mechanism (L2)
     - Direct extraction: V82.6 OddsPortal final odds extraction (L3)
-    - Data integrity validation: Score-based validation (1.02 < Score < 1.08)
+    - Data integrity validation: Score-based validation (1.00 < Score < 1.15)
     - Temporal alignment: Preserves match_date for accurate timestamp construction
 
 Example:
@@ -30,7 +34,6 @@ Example:
 """
 
 import asyncio
-from dataclasses import dataclass
 from datetime import datetime
 import logging
 import random
@@ -41,6 +44,8 @@ from playwright.async_api import Page, async_playwright
 import psycopg2
 
 from src.config_unified import get_settings
+from src.api.collectors.odds_models import MultiSourceEntityData
+from src.api.collectors import js_templates
 
 logger = logging.getLogger(__name__)
 
@@ -66,12 +71,6 @@ ENTITY_NAME_MAPPING = {
     "Entity_B3": "1xBet",
     "Entity_AVG": "Average Odds",
 }
-
-# Integrity score validation thresholds
-# Valid odds should satisfy: 1.00 < 1/P1 + 1/P2 + 1/P3 < 1.15
-# Relaxed range (V139.1) to accommodate varying bookmaker margins (5-15%)
-MIN_INTEGRITY_SCORE = 1.00
-MAX_INTEGRITY_SCORE = 1.15
 
 # Smart polling configuration (V88.0 Optimized)
 POLLING_MAX_RETRIES = 3  # Increased from 2 to 3
@@ -103,130 +102,6 @@ TOOLTIP_MONTH_MAP = {
 TOOLTIP_OPENING_PATTERN = re.compile(
     r"Opening\s+odds:(\d{1,2})\s+([A-Za-z]{3})\s*,\s+(\d{1,2}):(\d{2})(\d+\.\d+)"
 )
-
-
-# ============================================================================
-# Data Models
-# ============================================================================
-
-
-@dataclass
-class MultiSourceEntityData:
-    """Represents odds data from a single bookmaker for a specific match.
-
-    Attributes:
-        match_id: Unique identifier for the match
-        source_name: Internal entity code (e.g., "Entity_P")
-        init_h/d/a: Initial (opening) odds for home/draw/away
-        opening_time_h/d/a: Timestamps when initial odds were published
-        final_h/d/a: Final odds before match start
-        integrity_score: Validation score (1/P1 + 1/P2 + 1/P3)
-        is_valid: Whether data passes integrity validation
-        validation_error: Error message if validation fails
-        fully_captured: True if all three dimensions (init, time, final) are present
-        data_timestamp: When this record was created
-    """
-
-    match_id: str
-    source_name: str
-
-    # Initial (opening) odds
-    init_h: float | None = None
-    init_d: float | None = None
-    init_a: float | None = None
-
-    # Initial odds timestamps
-    opening_time_h: datetime | None = None
-    opening_time_d: datetime | None = None
-    opening_time_a: datetime | None = None
-
-    # Final odds
-    final_h: float | None = None
-    final_d: float | None = None
-    final_a: float | None = None
-
-    # Validation metadata
-    integrity_score: float | None = None
-    is_valid: bool = False
-    validation_error: str | None = None
-    fully_captured: bool = False
-    data_timestamp: datetime | None = None
-
-    def calculate_integrity_score(self) -> float | None:
-        """Calculates and validates the integrity score.
-
-        The integrity score is computed as: Score = 1/P1 + 1/P2 + 1/P3
-        Valid data must satisfy: 1.02 < Score < 1.08
-
-        Special case: Data with only init_h + opening_time_h is marked
-        as valid (hover capture scenario) but not fully captured.
-
-        Returns:
-            The integrity score if final odds are present, None otherwise.
-        """
-        # Check for initial timestamp only (hover capture scenario)
-        has_init = self.init_h is not None
-        has_time = any([self.opening_time_h, self.opening_time_d, self.opening_time_a])
-
-        if has_init and has_time:
-            self.is_valid = True
-            self.validation_error = None
-            self.fully_captured = False
-            return None
-
-        # Full validation requires all final odds
-        if not all([self.final_h, self.final_d, self.final_a]):
-            return None
-
-        try:
-            self.integrity_score = 1.0 / self.final_h + 1.0 / self.final_d + 1.0 / self.final_a
-
-            if MIN_INTEGRITY_SCORE < self.integrity_score < MAX_INTEGRITY_SCORE:
-                self.is_valid = True
-                self.validation_error = None
-            else:
-                self.is_valid = False
-                self.validation_error = (
-                    f"Integrity score {self.integrity_score:.4f} "
-                    f"outside valid range [{MIN_INTEGRITY_SCORE}, {MAX_INTEGRITY_SCORE}]"
-                )
-
-            # Check full capture status
-            has_final = all([self.final_h, self.final_d, self.final_a])
-            has_initial = all([self.init_h, self.init_d, self.init_a])
-            self.fully_captured = has_final and has_initial and has_time
-
-            return self.integrity_score
-
-        except ZeroDivisionError:
-            self.is_valid = False
-            self.validation_error = "Division by zero in integrity calculation"
-            return None
-
-    def to_dict(self) -> dict[str, Any]:
-        """Converts the dataclass to a dictionary.
-
-        Returns:
-            Dictionary representation of all fields.
-        """
-        return {
-            "match_id": self.match_id,
-            "source_name": self.source_name,
-            "init_h": self.init_h,
-            "init_d": self.init_d,
-            "init_a": self.init_a,
-            "final_h": self.final_h,
-            "final_d": self.final_d,
-            "final_a": self.final_a,
-            "integrity_score": self.integrity_score,
-            "is_valid": self.is_valid,
-            "validation_error": self.validation_error,
-            "fully_captured": self.fully_captured,
-            "opening_time_h": self.opening_time_h,
-            "opening_time_d": self.opening_time_d,
-            "opening_time_a": self.opening_time_a,
-            "data_timestamp": self.data_timestamp,
-        }
 
 
 # ============================================================================
@@ -284,124 +159,8 @@ class OddsProductionExtractor:
             page: Playwright Page 对象
             save_screenshot: 是否保存清理后的截图（用于调试）
         """
-        cleanup_script = """
-        () => {
-            const removed = [];
-            const hidden = [];
-
-            // 1. 移除 OneTrust Cookie Banner
-            const onetrustSelectors = [
-                '[id^="onetrust"]',
-                '[id*="onetrust"]',
-                '[class*="ot-sdk-container"]',
-                '[class*="onetrust"]',
-                '.ot-bnr-w',
-                '#onetrust-consent-sdk',
-                '.ot-consent-sdk'
-            ];
-
-            onetrustSelectors.forEach(selector => {
-                try {
-                    const elements = document.querySelectorAll(selector);
-                    elements.forEach(el => {
-                        removed.push({tag: el.tagName, id: el.id, cls: el.className});
-                        el.remove();
-                    });
-                } catch (e) {
-                    // 忽略选择器错误
-                }
-            });
-
-            // 2. 移除 Bonus 广告
-            const bonusSelectors = [
-                '[class*="bonus"]',
-                '[class*="Bonus"]',
-                '[id*="bonus"]',
-                '[id*="Bonus"]',
-                '.banner',
-                '.promo',
-                '.advertisement'
-            ];
-
-            bonusSelectors.forEach(selector => {
-                try {
-                    const elements = document.querySelectorAll(selector);
-                    elements.forEach(el => {
-                        // 检查是否是广告元素（避免误删内容）
-                        const text = el.textContent?.toLowerCase() || '';
-                        if (text.includes('bonus') || text.includes('promo') ||
-                            el.className?.toLowerCase().includes('bonus')) {
-                            removed.push({tag: el.tagName, id: el.id, cls: el.className});
-                            el.remove();
-                        }
-                    });
-                } catch (e) {
-                    // 忽略选择器错误
-                }
-            });
-
-            // 3. 移除 Google iframe 和其他外部 iframe
-            const iframes = document.querySelectorAll('iframe');
-            iframes.forEach(iframe => {
-                const src = iframe.src || '';
-                if (src.includes('google') || src.includes('doubleclick') ||
-                    src.includes('facebook') || src.includes('analytics')) {
-                    removed.push({tag: 'iframe', src: src});
-                    iframe.remove();
-                }
-            });
-
-            // 4. 隐藏高 z-index 遮罩层（保留 Tooltip）
-            const allElements = document.querySelectorAll('*');
-            allElements.forEach(el => {
-                try {
-                    const style = window.getComputedStyle(el);
-                    const zIndex = parseInt(style.zIndex) || 0;
-
-                    // z-index > 100 且不是 tooltip 相关元素
-                    if (zIndex > 100) {
-                        const classes = el.className?.toLowerCase() || '';
-                        const id = el.id?.toLowerCase() || '';
-                        const isTooltip = classes.includes('tooltip') ||
-                                          classes.includes('popover') ||
-                                          id.includes('tooltip') ||
-                                          id.includes('popover') ||
-                                          el.getAttribute('role') === 'tooltip';
-
-                        if (!isTooltip && el.tagName !== 'BODY' && el.tagName !== 'HTML') {
-                            el.style.setProperty('display', 'none', 'important');
-                            hidden.push({
-                                tag: el.tagName,
-                                zIndex: zIndex,
-                                cls: el.className,
-                                id: el.id
-                            });
-                        }
-                    }
-                } catch (e) {
-                    // 忽略计算样式错误
-                }
-            });
-
-            // 5. 强制启用页面滚动
-            document.body.style.setProperty('overflow', 'auto', 'important');
-            document.documentElement.style.setProperty('overflow', 'auto', 'important');
-
-            // 6. 移除滚动锁定
-            document.body.classList.remove('scroll-locked');
-            document.body.classList.remove('modal-open');
-
-            return {
-                removedCount: removed.length,
-                hiddenCount: hidden.length,
-                removed: removed.slice(0, 10),  // 只返回前 10 个用于日志
-                hidden: hidden.slice(0, 10)
-            };
-        }
-        """
-
         try:
-            result = await page.evaluate(cleanup_script)
+            result = await page.evaluate(js_templates.DOM_CLEANUP_SCRIPT)
 
             logger.info(
                 f"[V89.0 Shield Breaker] DOM 清理完成: "
@@ -1226,6 +985,19 @@ class OddsProductionExtractor:
         cursor = conn.cursor()
 
         for data in data_list:
+            # V41.560: 硬化验证 - 宁缺毋滥原则
+            is_valid_hardened, error_hardened = data.validate_v41_560_hardened()
+
+            if not is_valid_hardened:
+                # 拦截不完整数据 - 宁缺毋滥
+                stats["invalid"] += 1
+                logger.warning(
+                    f"[V41.560 Hardened] DISCARDED: match_id={data.match_id}, "
+                    f"source={data.source_name}, error={error_hardened}"
+                )
+                continue  # 跳过此记录，不写入数据库
+
+            # 通过硬化验证，计算完整性评分
             data.calculate_integrity_score()
 
             if data.is_valid:
@@ -1500,6 +1272,377 @@ class OddsProductionExtractor:
                 await browser.close()
 
         return result
+
+    # ========================================================================
+    # V41.541 Quad Engine: Multi-Source Final Odds Extraction
+    # ========================================================================
+
+    async def extract_all_entities_final_odds(
+        self, url: str, match_id: str, match_date: datetime | None = None
+    ) -> list[MultiSourceEntityData]:
+        """V41.541: Extracts final odds from ALL configured bookmakers.
+
+        This method replaces the Entity_P-only extraction with a multi-source loop.
+        For each entity in TARGET_ENTITIES, it attempts to extract final odds.
+
+        Args:
+            url: OddsPortal match page URL
+            match_id: Database match ID
+            match_date: Match date for temporal alignment
+
+        Returns:
+            List of MultiSourceEntityData objects (one per successfully extracted source)
+        """
+        logger.info(
+            f"[V41.541 Quad Engine] Starting multi-source extraction for match_id={match_id}"
+        )
+        results = []
+
+        async with async_playwright() as p:
+            browser = await p.chromium.launch(headless=True)
+            context = await browser.new_context(
+                user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+            )
+            page = await context.new_page()
+
+            try:
+                await page.goto(url, wait_until="domcontentloaded", timeout=30000)
+                await asyncio.sleep(random.uniform(3, 5))
+
+                # Extract odds for each entity in TARGET_ENTITIES
+                for entity_code in TARGET_ENTITIES:
+                    real_name = ENTITY_NAME_MAPPING.get(entity_code, entity_code)
+                    logger.debug(f"[V41.541] Processing entity: {entity_code} ({real_name})")
+
+                    try:
+                        # V41.541: Entity-agnostic extraction logic
+                        entity_odds = await page.evaluate(
+                            """
+                            (entityName) => {
+                                // Step 1: Find the bookmaker container by name
+                                let targetContainer = null;
+                                const allElements = document.querySelectorAll('*');
+
+                                for (let el of allElements) {
+                                    const text = el.textContent || '';
+                                    // V41.541: Entity-agnostic matching (no hard-coded exclusions)
+                                    // Match exact bookmaker name with minimal context
+                                    const lowerText = text.toLowerCase();
+                                    const lowerEntityName = entityName.toLowerCase();
+
+                                    // Check if this element contains our target bookmaker name
+                                    // Use word boundary matching to avoid false positives
+                                    const entityPattern = new RegExp('\\\\b' + lowerEntityName + '\\\\b', 'i');
+                                    if (entityPattern.test(lowerText)) {
+                                        // Search upward for container with odds elements
+                                        let parent = el;
+                                        for (let i = 0; i < 15; i++) {
+                                            if (parent && parent.parentElement) {
+                                                parent = parent.parentElement;
+                                                // Look for odds container with multiple odds
+                                                const oddsElements = parent.querySelectorAll('.odds-text');
+                                                if (oddsElements.length >= 3) {
+                                                    // Verify this container is primarily for this bookmaker
+                                                    const containerText = parent.textContent || '';
+                                                    if (containerText.toLowerCase().includes(lowerEntityName)) {
+                                                        targetContainer = parent;
+                                                        break;
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        if (targetContainer) break;
+                                    }
+                                }
+
+                                if (!targetContainer) {
+                                    return { found: false, error: 'Bookmaker container not found' };
+                                }
+
+                                // Step 2: Extract odds using fallback selector chain
+                                const selectorChain = [
+                                    '.odds-text',
+                                    '.odds-cell .odd',
+                                    'td[data-odd]',
+                                    '.odd',
+                                    '[data-odd]'
+                                ];
+
+                                let extractedOdds = [];
+                                let usedSelector = null;
+
+                                for (const selector of selectorChain) {
+                                    const oddsElements = targetContainer.querySelectorAll(selector);
+                                    extractedOdds = [];
+
+                                    for (let elem of oddsElements) {
+                                        let text = null;
+
+                                        if (selector === 'td[data-odd]' || selector === '[data-odd]') {
+                                            text = elem.getAttribute('data-odd');
+                                        } else {
+                                            text = elem.textContent?.trim();
+                                        }
+
+                                        if (text) {
+                                            const num = parseFloat(text);
+                                            if (!isNaN(num) && num >= 1.01 && num <= 50.00) {
+                                                extractedOdds.push(num);
+                                            }
+                                        }
+                                    }
+
+                                    // Remove duplicates and sort
+                                    extractedOdds = [...new Set(extractedOdds)].sort((a, b) => a - b);
+
+                                    if (extractedOdds.length >= 3) {
+                                        usedSelector = selector;
+                                        break;
+                                    }
+                                }
+
+                                if (extractedOdds.length >= 3) {
+                                    return {
+                                        found: true,
+                                        odds: [extractedOdds[0], extractedOdds[1], extractedOdds[2]],
+                                        totalOdds: extractedOdds.length,
+                                        selector: usedSelector
+                                    };
+                                } else {
+                                    return {
+                                        found: false,
+                                        error: `Found ${extractedOdds.length} odds, need at least 3`
+                                    };
+                                }
+                            }
+                        """,
+                            real_name,
+                        )
+
+                        if entity_odds.get("found"):
+                            entity_data = MultiSourceEntityData(
+                                match_id=match_id,
+                                source_name=entity_code,
+                                final_h=entity_odds["odds"][0],
+                                final_d=entity_odds["odds"][1],
+                                final_a=entity_odds["odds"][2],
+                                data_timestamp=datetime.now(),
+                            )
+
+                            # Calculate integrity score
+                            entity_data.calculate_integrity_score()
+
+                            if entity_data.is_valid:
+                                logger.info(
+                                    f"[V41.541] ✅ {real_name}: "
+                                    f"{entity_data.final_h} / {entity_data.final_d} / {entity_data.final_a} "
+                                    f"(Score: {entity_data.integrity_score:.4f})"
+                                )
+                                results.append(entity_data)
+                            else:
+                                logger.warning(
+                                    f"[V41.541] ⚠️ {real_name} failed validation: "
+                                    f"{entity_data.validation_error}"
+                                )
+                        else:
+                            logger.debug(
+                                f"[V41.541] {real_name}: {entity_odds.get('error', 'Unknown error')}"
+                            )
+
+                    except Exception as e:
+                        logger.warning(f"[V41.541] {real_name} extraction error: {e}")
+                        continue
+
+            except Exception as e:
+                logger.exception(f"[V41.541] Multi-source extraction failed: {e}")
+
+            finally:
+                await browser.close()
+
+        logger.info(f"[V41.541 Quad Engine] Extraction complete: {len(results)} sources captured")
+        return results
+
+    async def extract_all_entities_final_odds_concurrent(
+        self, url: str, match_id: str, match_date: datetime | None = None
+    ) -> list[MultiSourceEntityData]:
+        """V41.560: Concurrent extraction of all bookmaker odds in a single JavaScript call.
+
+        This optimized version extracts all bookmaker odds in a single page.evaluate()
+        call instead of looping through each bookmaker separately. This is significantly
+        faster as it reduces the number of JavaScript executions from N to 1.
+
+        Args:
+            url: OddsPortal match page URL
+            match_id: Database match ID
+            match_date: Match date for temporal alignment
+
+        Returns:
+            List of MultiSourceEntityData objects (one per successfully extracted source)
+        """
+        logger.info(
+            f"[V41.560 Concurrent] Starting concurrent multi-source extraction for match_id={match_id}"
+        )
+
+        # Create entity mapping for JavaScript
+        entity_list = [
+            {"code": code, "name": ENTITY_NAME_MAPPING.get(code, code)} for code in TARGET_ENTITIES
+        ]
+
+        async with async_playwright() as p:
+            browser = await p.chromium.launch(headless=True)
+            context = await browser.new_context(
+                user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+            )
+            page = await context.new_page()
+
+            try:
+                await page.goto(url, wait_until="domcontentloaded", timeout=30000)
+                await asyncio.sleep(random.uniform(3, 5))
+
+                # Single JavaScript call to extract ALL bookmakers at once
+                all_entities_data = await page.evaluate(
+                    """
+                    (entityList) => {
+                        const results = [];
+                        const selectorChain = [
+                            '.odds-text',
+                            '.odds-cell .odd',
+                            'td[data-odd]',
+                            '.odd',
+                            '[data-odd]'
+                        ];
+
+                        for (const entity of entityList) {
+                            const entityName = entity.name;
+                            const entityCode = entity.code;
+                            let targetContainer = null;
+                            const allElements = document.querySelectorAll('*');
+
+                            // Step 1: Find bookmaker container
+                            for (let el of allElements) {
+                                const text = el.textContent || '';
+                                const lowerText = text.toLowerCase();
+                                const lowerEntityName = entityName.toLowerCase();
+                                const entityPattern = new RegExp('\\\\b' + lowerEntityName + '\\\\b', 'i');
+
+                                if (entityPattern.test(lowerText)) {
+                                    let parent = el;
+                                    for (let i = 0; i < 15; i++) {
+                                        if (parent && parent.parentElement) {
+                                            parent = parent.parentElement;
+                                            const oddsElements = parent.querySelectorAll('.odds-text');
+                                            if (oddsElements.length >= 3) {
+                                                const containerText = parent.textContent || '';
+                                                if (containerText.toLowerCase().includes(lowerEntityName)) {
+                                                    targetContainer = parent;
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                    }
+                                    if (targetContainer) break;
+                                }
+                            }
+
+                            if (!targetContainer) {
+                                results.push({ code: entityCode, found: false, error: 'Bookmaker container not found' });
+                                continue;
+                            }
+
+                            // Step 2: Extract odds using selector chain
+                            let extractedOdds = [];
+                            for (const selector of selectorChain) {
+                                const oddsElements = targetContainer.querySelectorAll(selector);
+                                extractedOdds = [];
+
+                                for (let elem of oddsElements) {
+                                    let text = null;
+                                    if (selector === 'td[data-odd]' || selector === '[data-odd]') {
+                                        text = elem.getAttribute('data-odd');
+                                    } else {
+                                        text = elem.textContent?.trim();
+                                    }
+
+                                    if (text) {
+                                        const oddsMatch = text.match(/^[\\d\\.]+$/);
+                                        if (oddsMatch) {
+                                            const numVal = parseFloat(text);
+                                            if (numVal >= 1.01 && numVal <= 20.0) {
+                                                extractedOdds.push(numVal);
+                                            }
+                                        }
+                                    }
+                                }
+
+                                if (extractedOdds.length >= 3) {
+                                    break;
+                                }
+                            }
+
+                            if (extractedOdds.length >= 3) {
+                                results.push({
+                                    code: entityCode,
+                                    found: true,
+                                    odds: [extractedOdds[0], extractedOdds[1], extractedOdds[2]]
+                                });
+                            } else {
+                                results.push({
+                                    code: entityCode,
+                                    found: false,
+                                    error: `Found ${extractedOdds.length} odds, need at least 3`
+                                });
+                            }
+                        }
+
+                        return results;
+                    }
+                """,
+                    entity_list,
+                )
+
+                # Process results
+                results = []
+                for entity_data in all_entities_data:
+                    entity_code = entity_data["code"]
+                    real_name = ENTITY_NAME_MAPPING.get(entity_code, entity_code)
+
+                    if entity_data.get("found"):
+                        entity = MultiSourceEntityData(
+                            match_id=match_id,
+                            source_name=entity_code,
+                            final_h=entity_data["odds"][0],
+                            final_d=entity_data["odds"][1],
+                            final_a=entity_data["odds"][2],
+                            data_timestamp=datetime.now(),
+                        )
+
+                        entity.calculate_integrity_score()
+
+                        if entity.is_valid:
+                            logger.info(
+                                f"[V41.560 Concurrent] ✅ {real_name}: "
+                                f"{entity.final_h} / {entity.final_d} / {entity.final_a} "
+                                f"(Score: {entity.integrity_score:.4f})"
+                            )
+                            results.append(entity)
+                        else:
+                            logger.warning(
+                                f"[V41.560 Concurrent] ⚠️ {real_name} failed validation: "
+                                f"{entity.validation_error}"
+                            )
+                    else:
+                        logger.debug(
+                            f"[V41.560 Concurrent] {real_name}: {entity_data.get('error', 'Unknown error')}"
+                        )
+
+            except Exception as e:
+                logger.exception(f"[V41.560 Concurrent] Multi-source extraction failed: {e}")
+
+            finally:
+                await browser.close()
+
+        logger.info(f"[V41.560 Concurrent] Extraction complete: {len(results)} sources captured")
+        return results
 
     # ========================================================================
     # V95.0 Gene Splicing: OddsHarvester-Inspired Extraction
