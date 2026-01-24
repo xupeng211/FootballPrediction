@@ -252,6 +252,10 @@ tests/fixtures/data/
 tests/integration/modeling/
 tests/unit/modeling/
 
+# V44.000: Node.js Dependencies (scripts/ops/)
+node_modules/
+package-lock.json
+
 # =============================================================================
 # V41.237: Odds Sync System - Runtime Artifacts
 # =============================================================================

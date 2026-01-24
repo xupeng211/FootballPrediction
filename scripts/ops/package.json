@@ -1,0 +1,24 @@
+{
+  "name": "v43-200-temporal-sync-engine",
+  "version": "1.0.0",
+  "description": "V43.200 Production Temporal Sync Engine",
+  "main": "temporal_sync_engine.js",
+  "scripts": {
+    "test": "node modules/test_helper_v43_100.js",
+    "start": "node temporal_sync_engine.js",
+    "sync": "node temporal_sync_engine.js"
+  },
+  "dependencies": {
+    "pg": "^8.17.2",
+    "playwright": "^1.57.0"
+  },
+  "devDependencies": {},
+  "keywords": [
+    "temporal",
+    "extraction",
+    "odds",
+    "playwright"
+  ],
+  "author": "Software Architect & QA Lead",
+  "license": "UNLICENSED"
+}
