@@ -1,0 +1,18 @@
+{
+  "name": "footballprediction-v42-700",
+  "version": "42.700.0",
+  "description": "Football Prediction System - Unified Node.js Environment",
+  "private": true,
+  "scripts": {
+    "install-browsers": "playwright install chromium",
+    "sync": "node scripts/ops/v42_660_node_temporal_sync.js",
+    "diagnose": "node diagnose_json_path.js"
+  },
+  "dependencies": {
+    "pg": "^8.17.2",
+    "playwright": "^1.57.0"
+  },
+  "devDependencies": {},
+  "author": "V42.700",
+  "license": "MIT"
+}

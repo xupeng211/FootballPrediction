@@ -33,17 +33,27 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | **状态** | ✅ Production Ready |
 | **项目版本** | **V26.7.0** (pyproject.toml) |
 | **生产版本** | **V41.832** (工业级归档收割机) |
-| **命令中心** | **V144.9** (Multi-Source Command Center - Final Baseline) |
+| **命令中心** | **V144.9** (Multi-Source Command Center) |
 | **核心模型** | **V26.8** (联赛专项) |
-| **数据采集** | **V142.0** (HarvesterService) + **V144.5** (FotMob) |
-| **数据同步** | **V36.3** (auto_sync_and_alchemy_v2.sh) |
-| **特征引擎** | **V41.380** (Golden Extractor) + **V41.390** (滚动特征) + **V41.500** (自动化特征工厂) |
-| **Docker 版本** | **V51.0** (Industrial Grade Ready) |
-| **模型框架** | XGBoost 3.0+ + CatBoost (V41.430) |
-| **代码质量** | **V106.0** (Ruff 配置) |
 | **基线准确率** | 56% (真赛前) |
 | **推理延迟** | <100ms |
 | **最后更新** | 2026-01-23 |
+
+### 版本号体系说明
+
+本项目采用**多版本号体系**，各组件独立演进：
+
+| 版本前缀 | 组件范围 | 当前版本 |
+|----------|----------|----------|
+| `V26.x` | ML 特征引擎和模型 | V26.8 |
+| `V36.x` | 数据同步和自动化 | V36.3 |
+| `V41.x` | 数据采集运维工具 | V41.832 |
+| `V51.x` | Docker 部署 | V51.0 |
+| `V106.x` | 代码质量配置 | V106.0 |
+| `V144.x` | 多数据源命令中心 | V144.9 |
+| `V151.x` | 并发收割和哈希狩猎 | V151.3 |
+
+> **注意**: 项目版本 (`V26.7.0`) 与组件版本是独立的，项目版本主要用于 Python 包管理。
 
 ---
 
@@ -111,47 +121,75 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### 5 分钟上手
 
-1. **启动核心服务**
-   ```bash
-   make up
-   ```
-
-2. **验证环境**
-   ```bash
-   python main.py --test-proxy
-   ```
-
-3. **运行单次收割（测试模式）**
-   ```bash
-   python main.py --source fotmob --mode single --limit 1 --dry-run
-   ```
-
-4. **检查代码质量**
-   ```bash
-   make verify
-   ```
-
-### 核心开发命令
-
 ```bash
-# 环境管理
+# 1. 启动核心服务 (db + redis)
+make up
+
+# 2. 验证环境
+python main.py --test-proxy
+
+# 3. 运行单次收割（测试模式）
+python main.py --source fotmob --mode single --limit 1 --dry-run
+
+# 4. 检查代码质量（提交前必需）
+make verify
+```
+
+### 核心开发命令速查表
+
+| 类别 | 命令 | 说明 |
+|------|------|------|
+| **环境管理** | `make up` | 启动核心服务 (db + redis) |
+| | `make ps` | 查看容器状态 |
+| | `make verify` | 代码质量检查（提交前必需） |
+| | `make logs` | 查看核心服务日志 |
+| **数据采集** | `python main.py --source fotmob --mode single --limit 10` | FotMob API 数据源 |
+| | `python main.py --source oddsportal --mode single --limit 10` | OddsPortal RPA 数据源 |
+| | `python main.py --mode cruise` | 24h 全自动巡航 |
+| | `python main.py --test-proxy` | 测试代理 |
+| **测试** | `make test-unit` | 运行单元测试 |
+| | `pytest tests/ -v` | 运行所有测试 |
+| | `pytest tests/path/to/test_file.py -v` | 运行单个测试文件 |
+| | `pytest tests/ -k "keyword" -v` | 运行匹配关键字的测试 |
+| **数据库** | `make db-shell` | 进入 PostgreSQL Shell |
+| | `make db-backup` | 备份数据库 |
+| | `make db-reset` | 重置数据库（危险！） |
+
+### 命令详解
+
+#### 环境管理
+```bash
 make up                  # 启动核心服务 (db + redis)
+make up-pipeline         # 启动核心服务 + 数据流水线
+make up-api              # 启动核心服务 + API
+make up-dev              # 启动开发环境 (含管理工具)
+make down                # 停止所有服务
 make ps                  # 查看容器状态
-make verify              # 运行代码质量检查（提交前必需）
-make logs                # 查看核心服务日志
+```
 
-# 数据采集 (V144.7 统一命令入口)
-python main.py --source fotmob --mode single --limit 10      # FotMob API 数据源
-python main.py --source oddsportal --mode single --limit 10  # OddsPortal RPA 数据源
-python main.py --mode cruise                                # 24h 全自动巡航
-python main.py --test-proxy                                 # 测试代理
+#### 代码质量
+```bash
+make verify              # 快速验证 (lint + test-unit + security)
+./scripts/run_checks.sh  # 完整质量门禁（7 步检查）
+ruff format src/ tests/  # 格式化代码
+ruff check src/ tests/   # Lint 检查
+```
 
-# 测试
-make test-unit           # 运行单元测试
-pytest tests/ -v         # 运行所有测试
+#### 测试
+```bash
+# 单元测试
+pytest tests/unit/test_config.py -v                     # 运行单个测试文件
+pytest tests/unit/test_config.py::test_database_config -v  # 运行单个测试函数
+pytest tests/ -k "test_database" -v                     # 运行匹配关键字的测试
 
-# 数据库
-make db-shell            # 进入 PostgreSQL Shell
+# 按标记运行测试
+pytest -m unit -v           # 只运行单元测试
+pytest -m integration -v    # 只运行集成测试
+pytest -m "not network" -v  # 排除网络测试
+
+# 覆盖率报告
+pytest tests/ --cov=src --cov-report=html              # 生成 HTML 覆盖率报告
+pytest tests/ --cov=src --cov-report=term-missing      # 终端显示缺失行
 ```
 
 ---
@@ -188,86 +226,46 @@ make db-shell            # 进入 PostgreSQL Shell
               matches 表 + metrics_multi_source_data 表
 ```
 
-### 三层生产级架构 (V56.3)
-
-```
-1. Master 调度层：跨赛季/跨联赛编排、智能跳过检测、反封禁机制
-2. Production 提取层：智能轮询、悬停自愈、IP健康监控
-3. Database 持久层：PostgreSQL 15 + Unified Schema
-```
-
-### 核心目录结构
+### 核心目录结构（简化版）
 
 ```
 FootballPrediction/
-├── src/                          # 生产代码
-│   ├── api/                      # API 层
-│   │   ├── collectors/           # 数据采集器 (V141.0/V142.0)
+├── src/                              # 生产代码
+│   ├── api/                          # API 层
+│   │   ├── collectors/               # 数据采集器 (V141.0/V142.0)
 │   │   │   ├── base_extractor.py     # V141.0 Ghost Protocol 基类
 │   │   │   ├── fotmob_core.py        # FotMob API 采集
-│   │   │   ├── odds_production_extractor.py  # 赔率提取
-│   │   │   └── lineup_collector.py  # V41.284 阵容采集器
-│   │   └── services/           # 业务服务层
+│   │   │   └── odds_production_extractor.py  # 赔率提取
+│   │   └── services/                 # 业务服务层
 │   │       └── harvester_service.py  # V142.0 统一收割服务
-│   ├── config_unified.py         # V26.0 统一配置管理
-│   ├── core/                     # V105.0 核心基础设施
-│   │   ├── exceptions.py         # 统一异常体系
-│   │   ├── environment_detector.py  # 环境智能检测
-│   │   └── scrapers/             # V41.156 代理管理器
-│   ├── database/                 # 数据库层
-│   ├── harvesters/               # V41.832 工业级收割机
-│   │   └── oddsportal_archive.py # 模块化归档收割
-│   ├── parsers/                  # V41.832 数据解析器
-│   │   └── match_parser.py       # 比赛数据解析
-│   ├── ml/                       # ML 引擎
-│   │   └── engine.py             # XGBoost 引擎 + ModelDispatcher
-│   ├── models/                   # V41.155 数据模型
-│   │   └── match_schema.py      # MatchSchema 统一数据模型
-│   ├── processors/               # V25.1 特征提取
-│   │   ├── v41_380_golden_extractor.py    # Golden Shield 特征提取
-│   │   ├── rolling_feature_calculator.py  # V41.390 滚动特征计算
-│   │   ├── feature_factory.py    # V41.510 自动化特征工厂
-│   │   └── path_resolver.py      # Schema-Agnostic 路径解析
-│   └── utils/                    # 工具类
-│       └── text_processor.py     # V140.0 TeamNameNormalizer
-├── scripts/                      # 核心脚本
-│   ├── ops/                      # V41.x 系列运维工具
-│   │   ├── v41_277_p0_lineup_rush.py    # 阵容急速采集
-│   │   ├── v41_280_async_harvest.py      # 异步收割
-│   │   ├── v41_287_utc_audit.py          # UTC 时间审计
-│   │   ├── v41_287_golden_shield_audit.py # 特征深度透视
-│   │   ├── v41_290_golden_vault_seal.py  # 库存封存
-│   │   ├── v41_291_diagnostic_tool.py   # 诊断工具
-│   │   ├── v41_800_archive_breaker.py   # V41.800 档案破解器
-│   │   ├── v41_810_archive_brute_force.py # V41.810 档案暴力破解
-│   │   ├── v41_820_archive_real_click.py # V41.820 真实点击
-│   │   ├── v41_830_data_janitor.py      # V41.830 数据清理
-│   │   ├── v41_831_deep_purge.py        # V41.831 深度清理
-│   │   └── auto_sync_and_alchemy_v2.sh  # V36.3 数据同步
-│   ├── maintenance/              # 维护脚本
-│   ├── ml/                       # ML 训练脚本
-│   ├── sql/                      # SQL 迁移脚本
-│   └── run_checks.sh             # CI 质量门禁
-├── tests/                        # 测试套件
-│   └── harvesters/               # V41.832 收割机测试
-│       └── test_oddsportal_archive.py
-├── config/                       # 配置文件
-│   ├── titan_config.yaml         # V41.151 统一代理和联赛配置
-│   ├── global_harvest_list.yaml  # 全球联赛注册表
-│   ├── harvester_v2.yaml        # 收割器配置
-│   └── schema_map.yaml          # V41.500+ JSON 路径配置
-├── storage/                      # V41.153 存储层
-│   ├── html_vault/               # HTML 存储库
-│   └── injection_queue/          # 注入队列
-├── model_zoo/                    # 模型仓库
-├── main.py                       # V144.7 统一命令入口 ⭐
-├── Makefile                      # 统一命令入口
-├── requirements.txt              # 生产依赖
-├── pyproject.toml                # Poetry 配置
-├── docs/                         # 文档目录
-│   └── MR_V41.832_production_blueprint.md  # V41.832 工业级蓝图
-└── CLAUDE.md                     # 本文件
+│   ├── config_unified.py             # V26.0 统一配置管理
+│   ├── core/                         # V105.0 核心基础设施
+│   ├── harvesters/                   # V41.832 工业级收割机 ⭐
+│   ├── parsers/                      # V41.832 数据解析器 ⭐
+│   ├── ml/                           # ML 引擎
+│   │   └── engine.py                 # XGBoost 引擎 + ModelDispatcher
+│   ├── processors/                   # V25.1 特征提取
+│   ├── utils/                        # 工具类
+│   └── config/                       # 配置模块
+├── scripts/                          # 核心脚本
+│   ├── ops/                          # V41.x 系列运维工具
+│   ├── maintenance/                  # 维护脚本
+│   └── run_checks.sh                 # CI 质量门禁
+├── tests/                            # 测试套件
+│   ├── harvesters/                   # V41.832 收割机测试 ⭐
+│   ├── unit/                         # 单元测试
+│   └── integration/                  # 集成测试
+├── config/                           # 配置文件
+├── model_zoo/                        # 模型仓库
+├── main.py                           # V144.7 统一命令入口 ⭐
+├── Makefile                          # 统一命令入口
+├── requirements.txt                  # 生产依赖
+├── pyproject.toml                    # Poetry 配置
+├── ruff.toml                         # V106.0 Ruff 配置
+└── CLAUDE.md                         # 本文件
 ```
+
+> **提示**: 使用 `tree -L 2 -I '__pycache__|*.pyc'` 查看完整目录结构
 
 ---
 
@@ -466,6 +464,46 @@ bandit -r src/
 | **Ruff** | 🔴 主要 | 格式化 + Lint (ruff.toml) |
 | **MyPy** | 🟡 推荐 | 类型检查 |
 | **Bandit** | 🟡 推荐 | 安全扫描 |
+
+### 测试场景选择指南
+
+根据不同开发场景选择合适的测试命令：
+
+| 场景 | 推荐命令 | 说明 |
+|------|----------|------|
+| **本地开发快速反馈** | `make test-unit` | 只运行核心测试套件（2 个文件） |
+| **提交前完整验证** | `./scripts/run_checks.sh` | 完整质量门禁（7 步检查） |
+| **快速验证** | `make verify` | lint + test-unit + security (3 步) |
+| **全量测试（CI 环境）** | `pytest tests/ -v` | 运行所有测试 |
+| **调试单个测试文件** | `pytest tests/unit/test_config.py -v` | 聚焦特定文件 |
+| **生成覆盖率报告** | `pytest tests/ --cov=src --cov-report=html` | 生成 HTML 覆盖率报告 |
+
+**`make verify` vs `./scripts/run_checks.sh` 的区别**:
+- **`make verify`** (快速验证): 执行 3 步检查 - lint + test-unit + security，适合本地开发快速反馈
+- **`./scripts/run_checks.sh`** (完整质量门禁): 执行 7 步完整检查，包括导入排序、类型检查、模型性能回归测试等，适合 CI/CD 流水线
+
+**按标记运行测试**:
+```bash
+# 只运行单元测试
+pytest -m unit -v
+
+# 只运行集成测试
+pytest -m integration -v
+
+# 排除网络测试
+pytest -m "not network" -v
+
+# 运行性能测试
+pytest -m performance -v
+```
+
+**可用标记 (markers)**:
+- `unit`: 单元测试
+- `integration`: 集成测试
+- `slow`: 慢速测试
+- `network`: 需要网络的测试
+- `e2e`: 端到端测试
+- `performance`: 性能测试
 
 ---
 
@@ -803,6 +841,46 @@ new_source:
 
 ---
 
+## 🔄 V26.x 数据维护与对齐系列
+
+### V26.7 Deep Alignment - 深度对齐
+```bash
+# V26.7 深度对齐 - 标签对齐和特征完整性检查
+python scripts/maintenance/v26_7_deep_alignment.py
+
+# V26.7 离线升级 - 批量更新历史数据
+python scripts/maintenance/v26_7_offline_upgrade.py
+
+# V26.7 数据标签清理
+psql -f scripts/sql/v26_7_data_label_cleanup.sql
+
+# V26.7 添加联赛 ID
+psql -f scripts/sql/v26_7_add_league_id.sql
+```
+
+### V26.x 验收与验证
+```bash
+# V26.3 冒烟测试
+python scripts/verification/v26_3_smoke_test.py
+
+# V26.4 最终冒烟测试
+python scripts/verification/v26_4_final_smoke_test.py
+
+# V26 验收审计
+python scripts/maintenance/v26_acceptance_audit.py
+```
+
+### V26.x 数据导入
+```bash
+# 导入 V26 黄金特征数据
+python scripts/maintenance/import_v26_gold.py
+
+# 生成 V26.7 对齐数据集
+python scripts/archive/generate_v267_aligned_dataset.py
+```
+
+---
+
 ## 🚨 V41.280+ 火力全开收割系列
 
 ### V41.273 Final URL Recovery - URL 深度恢复
@@ -915,26 +993,114 @@ python scripts/ops/v41_800_archive_breaker.py
 
 **说明**: V41.832 是工业级重构蓝图，提供了模块化架构替代单文件脚本
 
+**详细文档**: `docs/MR_V41.832_production_blueprint.md`
+
+#### 模块化架构
+
+V41.832 将单文件 1200+ 行脚本重构为 5 个独立模块，职责清晰：
+
+```
+src/
+├── harvesters/
+│   ├── oddsportal_archive.py    # 主收割机 (核心逻辑)
+│   └── database_inserter.py      # 数据库操作 (持久化)
+├── parsers/
+│   └── match_parser.py          # 比赛数据解析 (HTML → 结构化数据)
+├── utils/
+│   └── browser_helper.py        # 浏览器辅助 (通用工具)
+└── config/
+    └── crawler_config.py        # 配置管理 (常量集中化)
+```
+
+#### 核心模块说明
+
+| 模块 | 文件 | 职责 | 关键类/函数 |
+|------|------|------|------------|
+| **主收割机** | `oddsportal_archive.py` | 数据采集协调 | `OddsPortalArchiveHarvester` |
+| **数据库操作** | `database_inserter.py` | 数据持久化 | `DatabaseInserter.find_best_match()`, `bulk_insert()` |
+| **数据解析** | `match_parser.py` | HTML 解析 | `MatchExtractor.extract_from_html()`, `TeamNameParser.parse()` |
+| **浏览器辅助** | `browser_helper.py` | 浏览器工具 | `BrowserHelper.get_browser_context()` |
+| **配置管理** | `crawler_config.py` | 常量配置 | CSS Selectors, URL 模板, 超时配置 |
+
+#### 核心黑科技
+
+1. **物理点击机制** (Physical Click)
+   - 使用 Playwright 精确定位分页按钮，解决 Vue.js 动态加载问题
+   ```python
+   selector = f".pagination a:text-is('{page_num}')"
+   await page.locator(selector).click()
+   ```
+
+2. **内容锁设计** (Content Lock)
+   - 等待页面内容完全填充后再提取，拒绝零场成功
+   ```python
+   for i in range(max_wait):
+       row_count = await page.locator("tbody.eventHolder tr").count()
+       if row_count >= min_matches:
+           return True
+   ```
+
+3. **事务自愈逻辑** (Transaction Healer)
+   - 每场比赛独立 try-except 包裹，execute 报错立即 rollback
+   ```python
+   for match in matches:
+       try:
+           cursor.execute(sql, (...))
+       except IntegrityError:
+           self.conn.rollback()  # 立即回滚
+           continue  # 静默跳过
+   ```
+
+#### 使用方式
+
 ```bash
-# 蓝图文档 (详细设计)
+# 1. 查看蓝图文档 (详细设计)
 cat docs/MR_V41.832_production_blueprint.md
 
-# 模块化架构 (Python API)
+# 2. 运行单元测试 (16/16 通过)
+pytest tests/harvesters/test_oddsportal_archive.py -v
+
+# 3. Python API 调用
 from src.harvesters.oddsportal_archive import OddsPortalArchiveHarvester
 
 harvester = OddsPortalArchiveHarvester()
 result = await harvester.harvest_season("Premier League", "2024/2025")
-
-# 运行单元测试 (16/16 通过)
-pytest tests/harvesters/test_oddsportal_archive.py -v
 ```
 
-**核心特性**:
-- **物理点击机制**: Playwright 精确定位分页按钮
-- **内容锁设计**: 等待页面内容完全填充后再提取
-- **事务自愈逻辑**: 每场比赛独立 try-except 包裹
-- **模块化架构**: 5 个独立模块 (harvesters, parsers, database_inserter)
-- **测试覆盖**: 16/16 单元测试通过
+#### 测试覆盖
+
+```
+tests/harvesters/test_oddsportal_archive.py::TestTeamNameParser::test_parse_arsenal_chelsea PASSED
+tests/harvesters/test_oddsportal_archive.py::TestTeamNameParser::test_parse_manchester_teams PASSED
+tests/harvesters/test_oddsportal_archive.py::TestTeamNameParser::test_parse_empty_slug_returns_none PASSED
+tests/harvesters/test_oddsportal_archive.py::TestTeamNameParser::test_normalize_known_teams PASSED
+tests/harvesters/test_oddsportal_archive.py::TestMatchExtractor::test_extract_from_html_returns_matches PASSED
+tests/harvesters/test_oddsportal_archive.py::TestMatchExtractor::test_extract_with_duplicate_hashes PASSED
+tests/harvesters/test_oddsportal_archive.py::TestMatchExtractor::test_validate_match_count_pass PASSED
+tests/harvesters/test_oddsportal_archive.py::TestMatchExtractor::test_validate_match_count_fails_last_page PASSED
+tests/harvesters/test_oddsportal_archive.py::TestMatchExtractor::test_validate_match_count_fails_normal_page PASSED
+tests/harvesters/test_oddsportal_archive.py::TestDatabaseInserter::test_find_best_match_returns_id_and_similarity PASSED
+tests/harvesters/test_oddsportal_archive.py::TestDatabaseInserter::test_bulk_insert_handles_integrity_error PASSED
+tests/harvesters/test_oddsportal_archive.py::TestOddsPortalArchiveHarvester::test_config_validation PASSED
+tests/harvesters/test_oddsportal_archive.py::TestOddsPortalArchiveHarvester::test_build_url PASSED
+tests/harvesters/test_oddsportal_archive.py::TestOddsPortalArchiveHarvester::test_connect_database_success PASSED
+tests/harvesters/test_oddsportal_archive.py::TestIntegration::test_harvest_result_initialization PASSED
+tests/harvesters/test_oddsportal_archive.py::TestIntegration::test_match_data_defaults PASSED
+
+============================== 16 passed in 0.61s ==============================
+```
+
+#### 五大联赛总攻计划
+
+利用此工业级模具，扩展到五大联赛：
+
+| 联赛 | 状态 | 计划 |
+|------|------|------|
+| **英超** | ✅ 完成 | 2024/2025 赛季已收割 380 场 |
+| **西甲** | 🚀 计划中 | V41.840 系列 |
+| **意甲** | 🚀 计划中 | V41.850 系列 |
+| **德甲** | 🚀 计划中 | V41.860 系列 |
+| **法甲** | 🚀 计划中 | V41.870 系列 |
 
 ### V41.810 Archive Brute Force - 档案暴力破解
 ```bash
@@ -966,7 +1132,21 @@ python scripts/ops/v41_810_archive_brute_force.py
 
 ## 🐛 故障排除指南
 
-### 网络与代理问题
+### 快速诊断表
+
+| 错误信息 | 可能原因 | 快速解决方案 |
+|---------|---------|-------------|
+| `psycopg2.OperationalError: FATAL: database "football_db" does not exist` | 数据库未初始化 | `make up` 后运行 `docker-compose exec db psql -U football_user -c "CREATE DATABASE football_db"` |
+| `HTTP 429 Too Many Requests` | API 限流 | 等待 6-24 小时或使用代理轮换 |
+| `HTTP 403 Forbidden` | IP 被封禁 | 检查代理配置，启用 Ghost Protocol |
+| `ConnectionRefusedError: [Errno 61] Connect call failed ('127.0.0.1', 5432)` | 数据库未启动 | 运行 `make up` 启动数据库服务 |
+| `playwright._impl._api_types.TimeoutError: Timeout 30000ms exceeded` | 网络慢或页面加载慢 | 检查代理配置，增加 timeout 参数 |
+| `ModuleNotFoundError: No module named 'src'` | Python 路径问题 | 确保在项目根目录运行 |
+| `KeyError: 'rolling_xg_home'` | 特征提取失败 | 检查 `matches` 表是否有足够的历史数据 |
+
+### 详细故障排除流程
+
+#### 网络与代理问题
 
 **症状**: `HTTP 429/403` 错误频繁出现
 ```bash
@@ -1125,16 +1305,20 @@ docker-compose exec db cat /var/lib/postgresql/data/log/postgresql.log | grep "d
 
 **🚨 CRITICAL**: This is a production system support document.
 
-**🧬 当前版本**: V26.7.0 (pyproject.toml) / V41.832 (工业级归档收割机)
+**🧬 当前版本**: V26.7.0 (pyproject.toml)
 **命令中心**: V144.9 (Multi-Source Command Center - Final Baseline)
 **收割引擎**: V142.0 (HarvesterService - 统一收割服务)
-**阵容采集**: V41.284 (Supersonic Harvest - 429 智能避让)
-**特征引擎**: V41.380 (Golden Extractor) + V41.390 (滚动特征) + V41.510 (自动化特征工厂)
-**闪电收割**: V41.720 (Lightning Harvest - 网络拦截型极速收割)
 **归档收割**: V41.832 (工业级归档收割机 - 物理点击、内容锁、事务自愈)
-**Docker 版本**: V51.0 (Industrial Grade Ready)
 **代码质量**: V106.0 (Ruff 配置 - line-length: 100)
 **最后更新**: 2026-01-23
 **基线准确率**: 56% (真赛前)
 **生产状态**: Production Ready
 **Python 版本**: 3.11+
+
+---
+
+## 文档维护
+
+**变更历史**:
+- 2026-01-23: 添加快速诊断表，优化版本号说明，简化目录结构
+- 原始版本: 基于 docs/CLAUDE.md 和项目代码库自动生成
