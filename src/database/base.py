@@ -4,7 +4,7 @@ SQLAlchemy基础模型
 提供所有数据模型的基础类，包含通用字段和方法。
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 
 from sqlalchemy import Column, DateTime, Integer
@@ -20,12 +20,17 @@ class Base(DeclarativeBase):
 class TimestampMixin:
     """时间戳混入类，为模型添加创建时间和更新时间字段"""
 
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False, comment="创建时间")
+    created_at = Column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        nullable=False,
+        comment="创建时间",
+    )
 
     updated_at = Column(
-        DateTime,
-        default=datetime.utcnow,
-        onupdate=datetime.utcnow,
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
         nullable=False,
         comment="更新时间",
     )
