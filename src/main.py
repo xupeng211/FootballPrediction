@@ -20,7 +20,7 @@ from src.api.monitoring import router as monitoring_router
 from src.api.rate_limiter import init_rate_limiter, rate_limit_predict
 from src.api.schemas import RootResponse
 from src.core.metrics import get_metrics
-from src.database.connection import initialize_database
+from src.database.db_pool import DatabasePool
 
 # Prometheus指标通过独立模块管理，避免重复注册
 
@@ -52,9 +52,10 @@ async def lifespan(app: FastAPI):
     logger.info("🚀 足球预测API启动中...")
 
     try:
-        # 初始化数据库连接
+        # V76.100: 初始化 asyncpg 数据库连接池
         logger.info("📊 初始化数据库连接...")
-        initialize_database()
+        pool = await DatabasePool.get_instance()
+        await pool.init_pool()
 
         # Prometheus metrics 已在应用创建后初始化
 
@@ -68,6 +69,10 @@ async def lifespan(app: FastAPI):
 
     # 关闭时清理
     logger.info("🛑 服务正在关闭...")
+    # V76.100: 关闭 asyncpg 数据库连接池
+    pool = await DatabasePool.get_instance()
+    await pool.close()
+    logger.info("✅ 数据库连接池已关闭")
 
 
 # 创建FastAPI应用

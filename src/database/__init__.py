@@ -2,19 +2,19 @@
 足球预测系统 - 数据库模块
 
 此模块提供PostgreSQL数据库连接、会话管理和基础配置。
+
+V76.100: 移除 SQLAlchemy 双轨制，统一使用 asyncpg (DatabasePool)
 """
 
 from .base import Base
-from .connection import DatabaseManager, get_async_db_session, get_db_session
 from .db_pool import DatabasePool, get_db_pool
+from .async_dependencies import get_db_connection
 
 __all__ = [
     "Base",
-    "DatabaseManager",
     "DatabasePool",
-    "get_async_db_session",
     "get_db_pool",
-    "get_db_session",
+    "get_db_connection",  # V76.100: FastAPI 依赖注入
 ]
 
 # 配置现在通过 config_unified.py 管理

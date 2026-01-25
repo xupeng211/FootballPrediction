@@ -428,7 +428,7 @@ def main():
         logger.info(f"查看预测结果: cat {FORECAST_FILE}")
         return 0
     logger.warning("\n⚠️ 未发现高置信度比赛，可能需要:")
-    logger.warning("  1. 先运行数据采集: python -m src.api.collectors.v51_incremental_collector")
+    logger.warning("  1. 先运行数据采集: python main.py --task harvest")
     logger.warning("  2. 降低置信度阈值")
     return 1
 

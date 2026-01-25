@@ -1,0 +1,42 @@
+{
+  "status": "COMPLETED",
+  "test_version": "V64.100",
+  "timestamp": "2026-01-24T16:30:18.709Z",
+  "statistics": {
+    "urls_processed": 0,
+    "urls_failed": 4,
+    "providers_tested": 0,
+    "tooltips_captured": 0,
+    "records_parsed": 0,
+    "records_stored": 0,
+    "errors": [
+      {
+        "url": "https://www.oddsportal.com/football/spain/laliga-2024-2025-real-madrid-barcelona-abcdefgh/",
+        "error": "page.waitForSelector: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('tbody.eventHolder tr') to be visible\u001b[22m\n"
+      },
+      {
+        "url": "https://www.oddsportal.com/football/england/premier-league-2024-2025-liverpool-manchester-city-12345678/",
+        "error": "page.waitForSelector: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('tbody.eventHolder tr') to be visible\u001b[22m\n"
+      },
+      {
+        "url": "https://www.oddsportal.com/football/italy/serie-a-2024-2025-juventus-inter-milan-23456789/",
+        "error": "page.waitForSelector: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('tbody.eventHolder tr') to be visible\u001b[22m\n"
+      },
+      {
+        "url": "https://www.oddsportal.com/football/germany/bundesliga-2024-2025-bayern-munich-dortmund-34567890/",
+        "error": "page.waitForSelector: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('tbody.eventHolder tr') to be visible\u001b[22m\n"
+      }
+    ]
+  },
+  "config": {
+    "min_rows_expected": 2,
+    "target_providers": [
+      "pinnacle",
+      "bet365",
+      "william_hill",
+      "ladbrokes",
+      "unibet"
+    ],
+    "baseline_tag": "BASELINE_V64"
+  }
+}

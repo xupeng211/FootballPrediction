@@ -1,5 +1,5 @@
 {
-  "version": "V43.100",
+  "version": "V49.321",
   "description": "Centralized selector configuration for temporal data extraction",
   "last_updated": "2026-01-24",
   "selectors": {
@@ -27,9 +27,9 @@
       },
       "container": {
         "name": "Tooltip Container",
-        "selector": "div[class*='tooltip']",
-        "fallback": "div[class*='movement'], div[class*='popover'], [role='tooltip']",
-        "description": "Main tooltip container element"
+        "selector": "div.height-content.absolute.bottom-\\[30px\\]",
+        "fallback": "Use h3:text('Odds movement') + closest() approach instead",
+        "description": "V53.000: Specific tooltip class pattern (height-content + absolute + bottom-[30px])"
       }
     },
     "data_extraction": {
@@ -72,10 +72,20 @@
   "rate_limiting": {
     "concurrency": 2,
     "delay": 800,
-    "max_providers": 2
+    "max_providers": 5
   },
   "target_providers": {
-    "primary": ["pinnacle", "bet365"],
-    "secondary": ["sbobet", "william hill", "ladbrokes"]
+    "primary": [
+      "william-hill",
+      "betway",
+      "188bet",
+      "bet365",
+      "pinnacle"
+    ],
+    "secondary": [
+      "sbobet",
+      "william hill",
+      "ladbrokes"
+    ]
   }
 }

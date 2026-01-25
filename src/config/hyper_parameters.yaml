@@ -1,0 +1,167 @@
+# V79.100 Hyper-Parameters Configuration
+# ========================================
+# This file contains all hardcoded thresholds and parameters
+# that were previously scattered across the codebase.
+#
+# Last Updated: 2026-01-25
+# Version: V79.100
+
+# =============================================================================
+# Fatigue Index Parameters (赛程疲劳度参数)
+# =============================================================================
+fatigue:
+  busy_week_threshold: 4        # 休息天数 < 4 视为忙碌周
+  default_rest_days: 14         # 无历史比赛时的默认休息天数
+
+# =============================================================================
+# Injury/Suspension Parameters (伤病/禁赛参数)
+# =============================================================================
+unavailable:
+  star_market_value: 30000000  # 3000万欧元以上视为球星 (30M)
+
+# =============================================================================
+# Feature Extraction Parameters (特征提取参数)
+# =============================================================================
+feature_extraction:
+  # Core player threshold (V41.380)
+  core_player_threshold: 0.7    # 核心球员定义：评分阈值 (0.7)
+
+  # Sparsity threshold (V26.2)
+  sparsity_threshold: 0.90      # 稀疏度阈值（超过则剔除）
+
+  # Feature richness thresholds (Golden Shield)
+  feature_richness:
+    excellent_threshold: 100   # EXCELLENT 评级维度数
+    good_threshold: 80         # GOOD 评级维度数
+    fair_threshold: 50         # FAIR 评级维度数
+    minimum_threshold: 30      # 最小特征丰富度要求
+
+# =============================================================================
+# Similarity Thresholds (相似度阈值)
+# =============================================================================
+similarity:
+  # Team name matching (Fuzzy matching)
+  team_match_threshold: 85.0   # 队名匹配相似度阈值 (85%)
+
+  # BridgeEngine hash mapping confidence levels
+  bridge_confidence:
+    excellent_min: 95          # EXCELLENT 置信度下限
+    good_min: 85               # GOOD 置信度下限
+    fair_min: 70               # FAIR 置信度下限
+    reject_below: 70           # 低于此值拒绝映射
+
+  # Youth team penalty
+  youth_penalty_ratio: 0.5     # 青年队匹配惩罚比例 (50%)
+
+# =============================================================================
+# Odds Integrity Parameters (赔率完整性参数)
+# =============================================================================
+odds_integrity:
+  # Payout integrity score range
+  min_payout: 1.02              # 最小返还率 (1.02)
+  max_payout: 1.08              # 最大返还率 (1.08)
+
+  # Minimum odds value (prevent division by zero)
+  min_odds_value: 0.01
+
+# =============================================================================
+# Database Parameters (数据库参数)
+# =============================================================================
+database:
+  # Connection pool settings
+  pool_size: 15                 # 基础连接池大小
+  pool_max_overflow: 20         # 最大溢出连接数
+  pool_timeout: 10              # 连接超时 (秒)
+  pool_recycle: 600             # 连接回收时间 (10分钟)
+
+  # Query timeouts
+  query_timeout: 30000          # 查询超时 (30秒)
+  connection_timeout: 10000     # 连接超时 (10秒)
+
+# =============================================================================
+# API/Crawler Parameters (API/爬虫参数)
+# =============================================================================
+crawler:
+  # Request delays
+  default_delay: 5.0            # 默认请求延迟 (秒)
+  min_delay: 3.0                # 最小延迟 (秒)
+  max_delay: 15.0               # 最大延迟 (秒)
+
+  # Retry settings
+  max_retries: 3                # 最大重试次数
+  retry_backoff_multiplier: 2.0 # 指数退避系数
+  retry_max_delay: 10000        # 重试最大延迟 (10秒)
+  retry_jitter_range: 0.1      # 抖动范围 (±10%)
+
+  # Circuit breaker
+  circuit_breaker:
+    failure_threshold: 5        # 连续失败触发熔断的次数
+    recovery_timeout: 60        # 恢复超时 (秒)
+    success_threshold: 2        # 半开状态成功次数
+
+  # Ghost Protocol (反爬虫)
+  ghost:
+    browser_pool_size: 5        # 浏览器池大小
+    browser_viewports:          # 屏幕分辨率配置
+      - {width: 1920, height: 1080}
+      - {width: 1366, height: 768}
+      - {width: 1536, height: 864}
+      - {width: 1440, height: 900}
+      - {width: 1280, height: 720}
+
+# =============================================================================
+# League Classification (联赛分级)
+# =============================================================================
+leagues:
+  top_5_leagues:
+    - "Premier League"
+    - "La Liga"
+    - "Bundesliga"
+    - "Serie A"
+    - "Ligue 1"
+
+  tier_1: []  # Tier 1 Premium (same as top 5)
+  tier_2:    # Tier 2 Standard
+    - "Championship"
+    - "Segunda División"
+    - "2. Bundesliga"
+    - "Serie B"
+    - "Ligue 2"
+    - "Primeira Liga"
+    - "Eredivisie"
+  tier_3: []  # Tier 3 Basic (其他联赛)
+
+# =============================================================================
+# Performance Benchmarks (性能基准)
+# =============================================================================
+performance:
+  # Target latencies
+  target_inference_latency_ms: 100     # 推理延迟目标 (P95)
+  target_fotmob_api_latency_s: 3.0     # FotMob API 延迟目标 (P95)
+  target_oddsportal_rpa_latency_s: 8.0 # OddsPortal RPA 延迟目标 (P95)
+
+  # Resource limits
+  max_memory_mb: 8192                  # 最大内存使用 (8GB)
+  max_cpu_cores: 4                      # 最大 CPU 核心数
+
+  # Data quality
+  min_data_completeness: 0.95           # 最小数据完整性 (95%)
+  min_mapping_success_rate: 0.90        # 最小哈希对齐成功率 (90%)
+
+# =============================================================================
+# Cache Configuration (缓存配置)
+# =============================================================================
+cache:
+  enable: true                  # 是否启用缓存
+  size: 1000                     # 缓存大小
+  ttl_seconds: 3600              # 缓存过期时间 (1小时)
+
+# =============================================================================
+# Logging Configuration (日志配置)
+# =============================================================================
+logging:
+  level: "INFO"                  # 默认日志级别
+  format: "structured"           # 日志格式 (structured/simple)
+  rotation:
+    max_size_mb: 100            # 单文件最大大小
+    backup_count: 5              # 保留的备份文件数量

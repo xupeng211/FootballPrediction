@@ -436,4 +436,45 @@ make verify
 
 ---
 
-**最后更新**: 2026-01-11
+## 新增问题 (2026-01-25)
+
+### Node.js 运维工具运行错误
+
+**症状**: `Cannot find module 'js-yaml'` 或 Playwright 相关错误
+
+**原因**: Node.js 依赖未安装或浏览器未安装
+
+**解决方案**:
+```bash
+# 1. 安装 Node.js 依赖
+npm install
+
+# 2. 安装 Playwright 浏览器
+npm run install-browsers
+
+# 3. 验证安装
+node --version  # 应该是 18+
+npm --version
+```
+
+### 数据采集后特征提取失败
+
+**症状**: 数据采集成功但 `l3_extraction_status` 仍为 `PENDING`
+
+**原因**: V69.000 Pipeline Orchestrator 未运行
+
+**解决方案**:
+```bash
+# 1. 检查 Pipeline Orchestrator 状态
+node src/ops/v69_000_pipeline_orchestrator.js --status
+
+# 2. 手动触发 L2 Enrichment
+python scripts/ops/v69_010_l2_trigger.py
+
+# 3. 手动触发特征提取
+python scripts/ml/extract_features_v1.py --limit 100
+```
+
+---
+
+**最后更新**: 2026-01-25

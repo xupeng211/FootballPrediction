@@ -10,9 +10,8 @@ import logging
 from typing import Any
 
 import pandas as pd
-from sqlalchemy import text
 
-from src.database.connection import get_database_manager
+from src.database.db_pool import DatabasePool
 
 logger = logging.getLogger(__name__)
 
@@ -69,10 +68,7 @@ class PostgresDataLoader:
         ]
         self.max_records = max_records
 
-        # 初始化数据库连接
-        self.db_manager = get_database_manager()
-        if not hasattr(self.db_manager, "_async_engine") or self.db_manager._async_engine is None:
-            self.db_manager.initialize()
+        # V76.100: DatabasePool 延迟初始化，在首次使用时初始化
 
     async def load_data(
         self,
@@ -84,6 +80,8 @@ class PostgresDataLoader:
         """
         从数据库加载比赛数据
 
+        V76.100: 使用 asyncpg 替代 SQLAlchemy
+
         Args:
             limit: 最大加载记录数
             start_date: 开始日期过滤
@@ -94,6 +92,7 @@ class PostgresDataLoader:
             pd.DataFrame: 包含比赛数据的DataFrame，格式与MockDataLoader一致
         """
         # 构建SQL查询 - Phase 8升级：包含所有高级特征列
+        # V76.100: 使用 PostgreSQL 占位符 $1, $2, $3 替代 SQLAlchemy 的 :param
         query = """
             SELECT
                 m.match_id,
@@ -142,38 +141,43 @@ class PostgresDataLoader:
             WHERE 1=1
         """
 
-        params = {}
+        # V76.100: 构建位置参数列表
+        params = []
+        param_idx = 1
 
-        # 添加状态过滤 - Phase 8：使用正确的状态字段名
+        # 添加状态过滤
         if status_filter:
             # 将FT转换为finished
             db_status = "finished" if status_filter == "FT" else status_filter
-            query += " AND m.match_status = :status"
-            params["status"] = db_status
+            query += f" AND m.match_status = ${param_idx}"
+            params.append(db_status)
+            param_idx += 1
 
-        # 添加日期过滤 - Phase 8：使用正确的表别名
+        # 添加日期过滤
         if start_date:
-            query += " AND m.match_date >= :start_date"
-            params["start_date"] = start_date
+            query += f" AND m.match_date >= ${param_idx}"
+            params.append(start_date)
+            param_idx += 1
 
         if end_date:
-            query += " AND m.match_date <= :end_date"
-            params["end_date"] = end_date
+            query += f" AND m.match_date <= ${param_idx}"
+            params.append(end_date)
+            param_idx += 1
 
-        # 添加限制和排序 - Phase 8：按时间倒序
-        query += " ORDER BY m.match_date DESC LIMIT :limit"
-        params["limit"] = min(limit, self.max_records or limit)
+        # 添加限制和排序
+        query += f" ORDER BY m.match_date DESC LIMIT ${param_idx}"
+        params.append(min(limit, self.max_records or limit))
 
         try:
-            async with self.db_manager.get_async_session() as session:
-                result = await session.execute(text(query), params)
-                records = result.fetchall()
+            # V76.100: 使用 DatabasePool 和 asyncpg
+            pool = await DatabasePool.get_instance()
+            records = await pool.fetch(query, *params)
 
-                # 转换为DataFrame
-                df = self._process_records(records)
+            # 转换为DataFrame
+            df = self._process_records(records)
 
-                logger.info(f"成功从PostgreSQL加载 {len(df)} 条比赛数据")
-                return df
+            logger.info(f"成功从PostgreSQL加载 {len(df)} 条比赛数据")
+            return df
 
         except Exception as e:
             logger.exception(f"从PostgreSQL加载数据失败: {e!s}")
@@ -183,6 +187,8 @@ class PostgresDataLoader:
     def _process_records(self, records: list[Any]) -> pd.DataFrame:
         """
         将数据库记录转换为DataFrame并处理格式
+
+        V76.100: 兼容 asyncpg Record 和 SQLAlchemy Row
 
         Args:
             records: 数据库查询结果
@@ -194,13 +200,14 @@ class PostgresDataLoader:
             return self._get_empty_dataframe()
 
         # 转换记录为字典列表
+        # V76.100: asyncpg.Record 对象可以直接用 dict() 转换
         data = []
         for record in records:
             if hasattr(record, "_mapping"):
-                # SQLAlchemy Row对象
+                # SQLAlchemy Row对象 (遗留兼容)
                 row_dict = dict(record._mapping)
             else:
-                # 其他类型
+                # asyncpg.Record 对象或其他类型
                 row_dict = dict(record)
             data.append(row_dict)
 
@@ -322,6 +329,8 @@ class PostgresDataLoader:
         """
         获取数据摘要信息
 
+        V76.100: 使用 asyncpg 替代 SQLAlchemy
+
         Returns:
             Dict: 数据摘要，包含记录数、日期范围等信息
         """
@@ -335,13 +344,10 @@ class PostgresDataLoader:
                     "total_records": 0,
                 }
 
-            # 获取总记录数 - Phase 8：使用正确的状态字段名
-            async with self.db_manager.get_async_session() as session:
-                count_query = (
-                    "SELECT COUNT(*) as total FROM matches WHERE match_status = 'finished'"
-                )
-                count_result = await session.execute(text(count_query))
-                total_records = count_result.scalar()
+            # V76.100: 使用 DatabasePool 获取总记录数
+            pool = await DatabasePool.get_instance()
+            count_query = "SELECT COUNT(*) as total FROM matches WHERE match_status = 'finished'"
+            total_records = await pool.fetchval(count_query)
 
             return {
                 "status": "success",
@@ -361,13 +367,16 @@ class PostgresDataLoader:
         """
         测试数据库连接是否正常
 
+        V76.100: 使用 asyncpg 替代 SQLAlchemy
+
         Returns:
             bool: 连接是否成功
         """
         try:
-            async with self.db_manager.get_async_session() as session:
-                result = await session.execute(text("SELECT 1"))
-                return result.scalar() == 1
+            # V76.100: 使用 DatabasePool 测试连接
+            pool = await DatabasePool.get_instance()
+            result = await pool.fetchval("SELECT 1")
+            return result == 1
         except Exception as e:
             logger.exception(f"数据库连接测试失败: {e!s}")
             return False

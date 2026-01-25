@@ -202,8 +202,8 @@ class DatabasePool:
             if self.config.ssl_mode and self.config.ssl_mode.lower() != "disable":
                 import ssl
 
-                # 创建 SSL 上下文
-                ssl_context = ssl.create_ssl_context(ssl.PROTOCOL_TLS_CLIENT)
+                # V76.100: 创建 SSL 上下文 (使用 SSLContext 而不是 create_ssl_context)
+                ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
                 ssl_context.check_hostname = False
                 ssl_context.verify_mode = ssl.CERT_NONE
 

@@ -23,7 +23,7 @@ from typing import Any
 
 import pandas as pd
 
-from src.database.connection import get_connection
+from src.database.db_pool import DatabasePool
 
 logger = logging.getLogger(__name__)
 
@@ -242,7 +242,10 @@ class StreamingDBWriter:
                 self._stats.failed_batches += 1
 
     async def _execute_batch_write(self, write_task: dict[str, Any], worker_id: int) -> None:
-        """执行批量写入"""
+        """执行批量写入
+
+        V76.100: 使用 DatabasePool.get_connection() 作为异步上下文管理器
+        """
         start_time = time.time()
         data = write_task["data"]
         table_name = write_task["table_name"]
@@ -252,10 +255,9 @@ class StreamingDBWriter:
         # 重试逻辑
         for attempt in range(self.config.max_retries + 1):
             try:
-                # 获取连接
-                conn = await self._get_connection()
-
-                with self._transaction_context(conn):
+                # V76.100: 使用 DatabasePool 的异步上下文管理器
+                pool = await DatabasePool.get_instance()
+                async with pool.get_connection() as conn:
                     if conflict_columns:
                         # 批量Upsert
                         await self._batch_upsert(
@@ -381,28 +383,30 @@ class StreamingDBWriter:
         return processed_df
 
     async def _initialize_connection_pool(self) -> None:
-        """初始化连接池"""
-        pool_size = self.config.max_concurrent_batches + 2  # 额外2个连接
+        """初始化连接池
 
-        for _i in range(pool_size):
-            conn = await get_connection()
-            self._connection_pool.append(conn)
+        V76.100: DatabasePool 已经是连接池，无需预创建连接
+        """
+        pool = await DatabasePool.get_instance()
+        await pool.init_pool()
+        self.logger.info("✅ DatabasePool 已初始化")
 
     async def _get_connection(self) -> Any:
-        """获取数据库连接"""
-        # 简化版连接获取，实际项目中应该使用连接池
-        return await get_connection()
+        """获取数据库连接
+
+        V76.100: 使用 DatabasePool.get_connection() 上下文管理器
+        """
+        pool = await DatabasePool.get_instance()
+        return pool.get_connection()
 
     async def _close_connection_pool(self) -> None:
-        """关闭连接池"""
-        for conn in self._connection_pool:
-            try:
-                if hasattr(conn, "close"):
-                    await conn.close()
-            except Exception as e:
-                self.logger.warning(f"关闭连接失败: {e}")
+        """关闭连接池
 
+        V76.100: DatabasePool 管理自己的生命周期，无需手动关闭连接
+        """
+        # DatabasePool 单例在应用关闭时统一关闭
         self._connection_pool.clear()
+        self.logger.debug("连接池引用已清空")
 
     @asynccontextmanager
     async def _transaction_context(self, conn):
