@@ -2,6 +2,20 @@
 """
 V41.50 Hash Alignment Service - 工业级哈希对齐服务
 
+⚠️ DEPRECATED (V73.200) ⚠️
+=======================
+This service has been superseded by BridgeEngine (src/modules/bridge_engine.js).
+The new implementation provides:
+  - Fixed Levenshtein algorithm (no 3D indexing bug)
+  - 120+ team name normalizations (5 leagues)
+  - Premier League priority strategy (2020-2022 seasons)
+  - Direct matches_mapping→matches_mapping matching
+  - 70% fuzzy threshold (optimized from 85%)
+
+Please use BridgeEngine for all new bridge/mapping operations.
+
+Original documentation below:
+
 核心功能:
 1. 地毯扫射 (Carpet Sweep) - V41.35 算法
 2. 雷达搜索 (Radar Search) - V41.37 算法

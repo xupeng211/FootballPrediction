@@ -49,21 +49,36 @@ LEAGUE_RESULTS_URLS = {
         "latest": "https://www.oddsportal.com/football/spain/laliga/results/",
         "23-24": "https://www.oddsportal.com/football/spain/laliga-2023-2024/results/",
         "22-23": "https://www.oddsportal.com/football/spain/laliga-2022-2023/results/",
+        "21-22": "https://www.oddsportal.com/football/spain/laliga-2021-2022/results/",
+        "20-21": "https://www.oddsportal.com/football/spain/laliga-2020-2021/results/",
     },
     "Serie A": {
         "latest": "https://www.oddsportal.com/football/italy/serie-a/results/",
         "23-24": "https://www.oddsportal.com/football/italy/serie-a-2023-2024/results/",
         "22-23": "https://www.oddsportal.com/football/italy/serie-a-2022-2023/results/",
+        "21-22": "https://www.oddsportal.com/football/italy/serie-a-2021-2022/results/",
+        "20-21": "https://www.oddsportal.com/football/italy/serie-a-2020-2021/results/",
     },
     "Bundesliga": {
         "latest": "https://www.oddsportal.com/football/germany/bundesliga/results/",
         "23-24": "https://www.oddsportal.com/football/germany/bundesliga-2023-2024/results/",
         "22-23": "https://www.oddsportal.com/football/germany/bundesliga-2022-2023/results/",
+        "21-22": "https://www.oddsportal.com/football/germany/bundesliga-2021-2022/results/",
+        "20-21": "https://www.oddsportal.com/football/germany/bundesliga-2020-2021/results/",
     },
     "Ligue 1": {
         "latest": "https://www.oddsportal.com/football/france/ligue-1/results/",
         "23-24": "https://www.oddsportal.com/football/france/ligue-1-2023-2024/results/",
         "22-23": "https://www.oddsportal.com/football/france/ligue-1-2022-2023/results/",
+        "21-22": "https://www.oddsportal.com/football/france/ligue-1-2021-2022/results/",
+        "20-21": "https://www.oddsportal.com/football/france/ligue-1-2020-2021/results/",
+    },
+    "Premier League": {
+        "latest": "https://www.oddsportal.com/football/england/premier-league/results/",
+        "23-24": "https://www.oddsportal.com/football/england/premier-league-2023-2024/results/",
+        "22-23": "https://www.oddsportal.com/football/england/premier-league-2022-2023/results/",
+        "21-22": "https://www.oddsportal.com/football/england/premier-league-2021-2022/results/",
+        "20-21": "https://www.oddsportal.com/football/england/premier-league-2020-2021/results/",
     },
 }
 

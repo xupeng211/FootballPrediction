@@ -20,7 +20,7 @@ import logging
 import time
 from typing import Any
 
-from .connection import get_connection
+from .db_pool import DatabasePool
 
 logger = logging.getLogger(__name__)
 
@@ -119,79 +119,85 @@ class DatabasePerformanceMonitor:
         self.logger.info("✅ 数据库性能监控已停止")
 
     async def collect_metrics(self) -> DatabaseMetrics:
-        """收集性能指标"""
+        """收集性能指标
+
+        V76.100: 使用 DatabasePool 替代 get_connection()
+        """
         try:
-            conn = await get_connection()
+            pool = await DatabasePool.get_instance()
+            async with pool.get_connection() as conn:
+                metrics = DatabaseMetrics(
+                    timestamp=datetime.now(),
+                    active_connections=0,
+                    total_connections=0,
+                    database_size_mb=0.0,
+                    table_size_mb={},
+                    index_size_mb={},
+                    cache_hit_ratio=0.0,
+                    rows_inserted=0,
+                    rows_updated=0,
+                    rows_deleted=0,
+                    dead_tuples=0,
+                    vacuum_status="unknown",
+                )
 
-            metrics = DatabaseMetrics(
-                timestamp=datetime.now(),
-                active_connections=0,
-                total_connections=0,
-                database_size_mb=0.0,
-                table_size_mb={},
-                index_size_mb={},
-                cache_hit_ratio=0.0,
-                rows_inserted=0,
-                rows_updated=0,
-                rows_deleted=0,
-                dead_tuples=0,
-                vacuum_status="unknown",
-            )
+                # 收集连接指标
+                await self._collect_connection_metrics(conn, metrics)
 
-            # 收集连接指标
-            await self._collect_connection_metrics(conn, metrics)
+                # 收集存储指标
+                await self._collect_storage_metrics(conn, metrics)
 
-            # 收集存储指标
-            await self._collect_storage_metrics(conn, metrics)
+                # 收集性能指标
+                await self._collect_performance_metrics(conn, metrics)
 
-            # 收集性能指标
-            await self._collect_performance_metrics(conn, metrics)
+                # 检查告警条件
+                self._check_alerts(metrics)
 
-            # 检查告警条件
-            self._check_alerts(metrics)
+                # 保存历史数据
+                self._metrics_history.append(metrics)
+                if len(self._metrics_history) > 1000:  # 保留最近1000条记录
+                    self._metrics_history.pop(0)
 
-            # 保存历史数据
-            self._metrics_history.append(metrics)
-            if len(self._metrics_history) > 1000:  # 保留最近1000条记录
-                self._metrics_history.pop(0)
-
-            return metrics
+                return metrics
 
         except Exception as e:
             self.logger.exception(f"收集性能指标失败: {e}")
             raise
 
     async def analyze_query_performance(self, query: str) -> QueryPerformance:
-        """分析查询性能"""
+        """分析查询性能
+
+        V76.100: 使用 DatabasePool 替代 get_connection()
+        """
         try:
-            conn = await get_connection()
+            pool = await DatabasePool.get_instance()
+            async with pool.get_connection() as conn:
+                start_time = time.time()
 
-            start_time = time.time()
+                # 执行EXPLAIN ANALYZE
+                explain_query = f"EXPLAIN (ANALYZE, FORMAT JSON) {query}"
+                result = await conn.fetchrow(explain_query)
 
-            # 执行EXPLAIN ANALYZE
-            explain_query = f"EXPLAIN (ANALYZE, FORMAT JSON) {query}"
-            result = await conn.fetchrow(explain_query)
+                execution_time = (time.time() - start_time) * 1000
+                plan_data = result["QUERY PLAN"][0]
 
-            execution_time = (time.time() - start_time) * 1000
-            plan_data = result["QUERY PLAN"][0]
+                # 提取性能信息
+                performance = QueryPerformance(
+                    query_text=query,
+                    execution_time_ms=execution_time,
+                    rows_returned=plan_data["Plan"].get("Actual Rows", 0),
+                    plan_json=plan_data,
+                )
 
-            # 提取性能信息
-            performance = QueryPerformance(
-                query_text=query,
-                execution_time_ms=execution_time,
-                rows_returned=plan_data["Plan"].get("Actual Rows", 0),
-                plan_json=plan_data,
-            )
+                # 分析索引使用
+                performance.index_usage = self._extract_index_usage(plan_data)
 
-            # 分析索引使用
-            performance.index_usage = self._extract_index_usage(plan_data)
+                # 生成优化建议
+                performance.recommendations = self._generate_query_recommendations(
+                    plan_data, execution_time
+                )
 
-            # 生成优化建议
-            performance.recommendations = self._generate_query_recommendations(
-                plan_data, execution_time
-            )
-
-            return performance
+                return performance
 
         except Exception as e:
             self.logger.exception(f"查询性能分析失败: {e}")

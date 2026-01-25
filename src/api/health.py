@@ -3,6 +3,8 @@
 
 提供系统健康状态检查，包括数据库连接、Redis连接、模型文件等。
 实现真实的连接检查，适配 Docker 容器环境。
+
+V76.100: 移除 SQLAlchemy 双轨制，统一使用 asyncpg 连接池。
 """
 
 from datetime import datetime
@@ -11,13 +13,11 @@ import time
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, status
-import psycopg2
-from sqlalchemy import text
-from sqlalchemy.orm import Session
 
 from src.api.schemas import HealthCheckResponse, ServiceCheck
 from src.config_unified import get_settings
-from src.database.connection import get_db_session
+from src.database.async_dependencies import get_db_connection
+from src.database.db_pool import DatabasePool
 
 logger = logging.getLogger(__name__)
 
@@ -103,13 +103,13 @@ async def liveness_check() -> dict[str, Any]:
     summary="就绪性检查",
     description="检查服务是否就绪，包括依赖服务检查",
 )
-async def readiness_check(db: Session = Depends(get_db_session)) -> dict[str, Any]:
+async def readiness_check() -> dict[str, Any]:
     """就绪性检查 - 用于K8s readiness probe"""
     checks: dict[str, Any] = {}
 
-    # 检查数据库
+    # 检查数据库 (V76.100: 使用 asyncpg)
     try:
-        database_result = await _check_database(db)
+        database_result = await _check_database_async()
         # 转换为ServiceCheck格式
         if database_result["healthy"]:
             checks["database"] = ServiceCheck(
@@ -161,34 +161,21 @@ async def _get_database_service_check() -> ServiceCheck:
     """
     获取数据库服务检查结果 - 真实连接检查
 
-    使用 psycopg2 直接连接数据库进行验证
+    V76.100: 使用 DatabasePool (asyncpg) 替代 psycopg2
     """
     start_time = time.time()
     try:
-        settings = get_settings()
-        db = settings.database
+        # V76.100: 使用 DatabasePool 进行健康检查
+        from src.database.db_pool import DatabasePool
 
-        # 尝试连接数据库
-        conn = psycopg2.connect(
-            host=db.host,
-            port=db.port,
-            database=db.name,
-            user=db.user,
-            password=db.password.get_secret_value(),
-            connect_timeout=5,  # 5秒超时
-        )
-
-        # 执行简单查询
-        cursor = conn.cursor()
-        cursor.execute("SELECT 1")
-        cursor.fetchone()
-        cursor.close()
-        conn.close()
+        pool = await DatabasePool.get_instance()
+        async with pool.get_connection() as conn:
+            await conn.fetchrow("SELECT 1")
 
         response_time = (time.time() - start_time) * 1000
 
         logger.debug(
-            f"✅ 数据库健康检查通过: {db.host}:{db.port}/{db.name} ({response_time:.2f}ms)"
+            f"✅ 数据库健康检查通过 (asyncpg): ({response_time:.2f}ms)"
         )
 
         return ServiceCheck(
@@ -196,9 +183,7 @@ async def _get_database_service_check() -> ServiceCheck:
             response_time_ms=round(response_time, 2),
             details={
                 "message": "数据库连接正常",
-                "host": db.host,
-                "port": db.port,
-                "database": db.name,
+                "driver": "asyncpg",
             },
         )
     except Exception as e:
@@ -363,26 +348,35 @@ async def _get_filesystem_service_check() -> ServiceCheck:
         )
 
 
-async def _check_database(db: Session) -> dict[str, Any]:
-    """检查数据库连接健康状态"""
+async def _check_database_async() -> dict[str, Any]:
+    """
+    V76.100: 检查数据库连接健康状态 (asyncpg 版本)
+
+    使用 DatabasePool 和 asyncpg 替代 SQLAlchemy
+    """
+    start_time = time.time()
     try:
-        # 执行简单查询测试连接
-        start_time = time.time()
-        db.execute(text("SELECT 1"))
-        response_time = (time.time() - start_time) * 1000  # 转换为毫秒
+        pool = DatabasePool.get_instance()
+        async with pool.get_connection() as conn:
+            await conn.fetchrow("SELECT 1")
+
+        response_time = (time.time() - start_time) * 1000
+
+        logger.debug(f"✅ 数据库健康检查通过 (asyncpg): ({response_time:.2f}ms)")
 
         return {
             "healthy": True,
             "message": "数据库连接正常",
-            "response_time_ms": response_time,
+            "response_time_ms": round(response_time, 2),
         }
     except Exception as e:
-        logger.exception(f"数据库健康检查失败: {e}")
+        response_time = (time.time() - start_time) * 1000
+        logger.exception(f"❌ 数据库健康检查失败: {e}")
         return {
             "healthy": False,
             "message": f"数据库连接失败: {e!s}",
             "error": str(e),
-            "response_time_ms": 0,
+            "response_time_ms": round(response_time, 2),
         }
 
 
@@ -450,6 +444,8 @@ async def quick_health_check() -> dict[str, Any]:
     """
     快速健康检查 - 最小化开销
 
+    V76.100: 使用 DatabasePool (asyncpg) 替代 psycopg2
+
     用于负载均衡器或容器编排系统的频繁健康探测
     """
     # 仅检查关键服务的连通性，不执行复杂查询
@@ -457,18 +453,12 @@ async def quick_health_check() -> dict[str, Any]:
     timestamp = datetime.utcnow().isoformat()
 
     try:
-        # 快速数据库检查
-        settings = get_settings()
-        db = settings.database
-        conn = psycopg2.connect(
-            host=db.host,
-            port=db.port,
-            database=db.name,
-            user=db.user,
-            password=db.password.get_secret_value(),
-            connect_timeout=2,
-        )
-        conn.close()
+        # V76.100: 快速数据库检查 (使用 DatabasePool)
+        from src.database.db_pool import DatabasePool
+
+        pool = await DatabasePool.get_instance()
+        async with pool.get_connection() as conn:
+            await conn.fetchrow("SELECT 1")
     except Exception:
         status = "unhealthy"
 

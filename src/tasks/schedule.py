@@ -214,13 +214,17 @@ def check_data_quality(self):
 
 @celery_app.task(bind=True, name="src.tasks.schedule.system_health_check")
 def system_health_check(self):
-    """系统健康检查任务"""
+    """系统健康检查任务
+
+    V76.100: 使用同步包装器测试 asyncpg 数据库连接
+    """
     logger.info("🔍 开始系统健康检查")
 
     try:
+        import asyncio
         import redis
 
-        from src.database.connection import test_database_connection
+        from src.database.db_pool import DatabasePool
 
         health_status = {
             "database": False,
@@ -229,10 +233,20 @@ def system_health_check(self):
             "overall": False,
         }
 
-        # 检查数据库连接
+        # V76.100: 检查数据库连接 (同步包装器)
+        async def test_db():
+            pool = await DatabasePool.get_instance()
+            await pool.init_pool()
+            result = await pool.fetchval("SELECT 1")
+            return result == 1
+
         try:
-            test_database_connection()
-            health_status["database"] = True
+            # 在新的事件循环中运行异步测试
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            db_ok = loop.run_until_complete(test_db())
+            loop.close()
+            health_status["database"] = db_ok
             logger.info("✅ 数据库连接正常")
         except Exception as e:
             logger.warning(f"⚠️ 数据库连接异常: {e!s}")
