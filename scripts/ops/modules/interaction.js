@@ -139,10 +139,17 @@ async function smartHover(element, page, config = {}) {
             // Wait for tooltip to appear
             await page.waitForTimeout(finalConfig.hoverWait);
 
-            // Check for tooltip presence (anchor-based detection)
+            // V84.700: Enhanced tooltip detection - use multiple strategies
+            // Strategy 1: Check for bottom-positioned divs (tooltip containers)
+            const tooltipDiv = await page.$("div[class*='bottom-']");
+            // Strategy 2: Check for height-content absolute elements
+            const tooltipAbsolute = await page.$("div.height-content.absolute");
+            // Strategy 3: Check for data-testid tooltip elements
+            const tooltipTestId = await page.$("[data-testid*='tooltip']");
+            // Strategy 4: Legacy anchor (may not exist in 2026)
             const tooltipAnchor = await page.$("h3:text('Odds movement')");
 
-            if (tooltipAnchor) {
+            if (tooltipDiv || tooltipAbsolute || tooltipTestId || tooltipAnchor) {
                 return {
                     success: true,
                     attempts: attempt,

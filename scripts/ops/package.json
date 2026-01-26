@@ -1,24 +1,61 @@
 {
-  "name": "v43-200-temporal-sync-engine",
+  "name": "v87-ops-harvest",
   "version": "1.0.0",
-  "description": "V43.200 Production Temporal Sync Engine",
-  "main": "temporal_sync_engine.js",
+  "description": "V87.203 全量收割系统 - Jest 单元测试套件",
+  "main": "index.js",
   "scripts": {
-    "test": "node modules/test_helper_v43_100.js",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:verbose": "jest --verbose",
     "start": "node temporal_sync_engine.js",
     "sync": "node temporal_sync_engine.js"
   },
   "dependencies": {
+    "jsdom": "^27.4.0",
     "pg": "^8.17.2",
     "playwright": "^1.57.0"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "@types/jest": "^29.5.0",
+    "@types/node": "^20.0.0",
+    "jest": "^29.5.0",
+    "jest-environment-node": "^29.5.0"
+  },
   "keywords": [
+    "jest",
+    "testing",
+    "harvest",
+    "automation",
     "temporal",
     "extraction",
     "odds",
     "playwright"
   ],
-  "author": "Software Architect & QA Lead",
-  "license": "UNLICENSED"
+  "author": "V88.000 Testing Suite",
+  "license": "MIT",
+  "jest": {
+    "testEnvironment": "node",
+    "testMatch": [
+      "**/tests/**/*.test.js"
+    ],
+    "collectCoverageFrom": [
+      "modules/**/*.js",
+      "!tests/**",
+      "!node_modules/**"
+    ],
+    "coverageThreshold": {
+      "global": {
+        "branches": 80,
+        "functions": 80,
+        "lines": 80,
+        "statements": 80
+      }
+    },
+    "verbose": true,
+    "testTimeout": 10000,
+    "modulePathIgnorePatterns": [
+      "<rootDir>/node_modules/"
+    ]
+  }
 }
