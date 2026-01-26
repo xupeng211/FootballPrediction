@@ -28,6 +28,15 @@ const path = require('path');
 // Import modules
 const interaction = require('./modules/interaction');
 const parserV49 = require('./modules/parser_v49');
+// V51.000: 可选使用新模块
+let parserV51 = null;
+let interactionV51 = null;
+try {
+    parserV51 = require('./modules/parser_v51');
+    interactionV51 = require('./modules/interaction_v51');
+} catch (e) {
+    // V51 模块不可用，使用 V49
+}
 const storage = require('./modules/storage');
 const logger = require('./modules/logger');
 const log = logger.createLogger('temporal_sync_v49');
@@ -236,10 +245,9 @@ async function runFullSpectrumExtraction(url, sourceId) {
                 try {
                     logInfo(`  Processing API response from ${apiResponse.url.substring(0, 60)}...`);
 
-                    const parsedRecords = parserV49.parseRawJsonResponse(
-                        apiResponse.json,
-                        sourceId  // Use sourceId as provider name
-                    );
+                    const parsedRecords = parserV51
+                        ? parserV51.parseRawJsonResponse(apiResponse.json, sourceId)
+                        : parserV49.parseRawJsonResponse(apiResponse.json, sourceId);
 
                     if (parsedRecords.length > 0) {
                         allMovementData.push(...parsedRecords);
@@ -329,8 +337,10 @@ async function runFullSpectrumExtraction(url, sourceId) {
                         // V53.000: Use outerHTML to ensure we capture the full tooltip structure
                         const rawHTML = await tooltipContainer.evaluate(el => el.outerHTML);
 
-                        // V49.000: Use full-spectrum parser (3D extraction)
-                        const movementData = parserV49.parseFullTooltipHTML(rawHTML, nodeLabel);
+                        // V51.000: Use enhanced parser with contract validation (if available)
+                        const movementData = parserV51
+                            ? parserV51.parseFullTooltipHTMLWithContract(rawHTML, nodeLabel)
+                            : parserV49.parseFullTooltipHTML(rawHTML, nodeLabel);
 
                         if (movementData.length > 0) {
                             extractionStats.temporalPointsExtracted += movementData.length;

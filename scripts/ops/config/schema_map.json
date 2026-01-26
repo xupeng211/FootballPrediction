@@ -1,43 +1,43 @@
 {
-  "version": "V49.321",
-  "description": "Centralized selector configuration for temporal data extraction",
-  "last_updated": "2026-01-24",
+  "version": "V84.700",
+  "description": "Centralized selector configuration for temporal data extraction (Updated for OddsPortal 2026)",
+  "last_updated": "2026-01-25",
   "selectors": {
     "row_identification": {
       "formula_a": {
-        "name": "Provider Row Selector",
-        "selector": "div[class*='border-black-borders'][class*='flex'][class*='h-9']",
-        "description": "Main container for provider rows",
-        "fallback": "tr[data-provider], table tr, tbody tr"
+        "name": "Provider Row Selector (V84.700)",
+        "selector": "[data-testid='betting-exchanges-table-row'], [data-testid='bookmaker-table-header-line']",
+        "description": "V84.700: Use data-testid for stable selection (OddsPortal 2026)",
+        "fallback": "[data-testid='dropping-odds'], [aria-label*='bookmaker']"
       }
     },
     "interaction_trigger": {
       "formula_b": {
-        "name": "Hover Trigger Selector",
-        "selector": "div.flex-center.flex-col.font-bold",
-        "description": "Element that triggers tooltip on hover",
-        "fallback": "[data-odd], [data-value], span[class*='odd']"
+        "name": "Hover Trigger Selector (V84.700)",
+        "selector": "[data-testid='bookie-logo'], [data-testid='bookmaker-name']",
+        "description": "V84.700: Use data-testid for trigger elements",
+        "fallback": "[data-testid*='trigger'], [aria-label*='odds']"
       }
     },
     "tooltip_detection": {
       "anchor": {
         "name": "Tooltip Anchor",
         "selector": "h3:text('Odds movement')",
-        "description": "Stable header element that confirms tooltip presence"
+        "description": "Stable header element that confirms tooltip presence (may not exist in 2026)"
       },
       "container": {
-        "name": "Tooltip Container",
-        "selector": "div.height-content.absolute.bottom-\\[30px\\]",
-        "fallback": "Use h3:text('Odds movement') + closest() approach instead",
-        "description": "V53.000: Specific tooltip class pattern (height-content + absolute + bottom-[30px])"
+        "name": "Tooltip Container (V84.700)",
+        "selector": "div[class*='bottom-'], div.height-content.absolute",
+        "fallback": "Use visual detection based on bottom positioning",
+        "description": "V84.700: Tooltip detection based on bottom-positioned divs"
       }
     },
     "data_extraction": {
       "structural_anchors": {
         "name": "Row Container (Relative Path)",
         "description": "Navigates from anchor to data rows using relative positioning",
-        "strategy": "nth-child",
-        "note": "Uses relative positioning from anchor rather than class names"
+        "strategy": "time-pattern-based",
+        "note": "V84.700: Uses time pattern extraction rather than DOM structure"
       },
       "time_field": {
         "name": "Timestamp Cell",
@@ -87,5 +87,11 @@
       "william hill",
       "ladbrokes"
     ]
+  },
+  "v84_700_notes": {
+    "dom_structure": "Vue.js + Tailwind CSS with dynamic rendering",
+    "stable_selectors": "data-testid attributes are reliable",
+    "unstable_selectors": "Tailwind class names are randomly generated",
+    "recommended_approach": "Use data-testid-based selectors + time-pattern extraction"
   }
 }

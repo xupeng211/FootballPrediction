@@ -1,5 +1,5 @@
 /**
- * V43.200 Storage Module
+ * V87.300 Storage Module
  * ======================
  *
  * Encapsulates PostgreSQL UPSERT logic with connection pool management
@@ -10,10 +10,15 @@
  *   - Batch Operations (bulk upsert with conflict handling)
  *   - Error Recovery (graceful degradation)
  *
+ * V87.300 Enhancements:
+ *   - Empty data protection (validates records before UPSERT)
+ *   - Empty data alert manager (tracks consecutive empty data)
+ *   - Automatic DEBUG_DUMP trigger on threshold breach
+ *
  * @module storage
  * @author Senior DevOps & Systems Engineer
- * @version V43.200
- * @since 2026-01-24
+ * @version V87.300
+ * @since 2026-01-26
  */
 
 'use strict';
@@ -181,8 +186,33 @@ async function getOrCreateEntity(client, sourceId, sourceUrl, entityType = 'matc
  * @returns {Promise<Object>} - Operation result with counts
  */
 async function upsertTemporalRecords(client, entityId, records) {
+    // V87.300: 空数据保护 - 早期返回，避免无效事务
     if (!records || records.length === 0) {
-        return { inserted: 0, updated: 0, skipped: 0, total: 0 };
+        log.warn(`[V87.300] 空数据跳过: entityId=${entityId}, records=0`);
+        return { inserted: 0, updated: 0, skipped: 0, total: 0, emptyData: true };
+    }
+
+    // V87.300: 验证记录有效性（检查必需字段）
+    const validRecords = records.filter(r => {
+        const isValid = r &&
+                        r.provider_name &&
+                        (r.value !== undefined && r.value !== null) &&
+                        r.occurred_at;
+
+        if (!isValid) {
+            log.debug(`[V87.300] 跳过无效记录: ${JSON.stringify(r).substring(0, 100)}`);
+        }
+
+        return isValid;
+    });
+
+    if (validRecords.length === 0) {
+        log.error(`[V87.300] 所有记录均无效，跳过 UPSERT: entityId=${entityId}`);
+        return { inserted: 0, updated: 0, skipped: records.length, total: records.length, allInvalid: true };
+    }
+
+    if (validRecords.length < records.length) {
+        log.warn(`[V87.300] 过滤无效记录: ${records.length} → ${validRecords.length} (跳过 ${records.length - validRecords.length} 条)`);
     }
 
     await client.query('BEGIN');
@@ -192,13 +222,16 @@ async function upsertTemporalRecords(client, entityId, records) {
         let updated = 0;
         let skipped = 0;
 
-        for (const record of records) {
+        // V95.000: 使用验证后的记录 - 修复 ON CONFLICT 约束匹配
+        for (const record of validRecords) {
             try {
+                // V95.000: 使用正确的 ON CONFLICT 约束匹配数据库实际结构
+                // 约束: (entity_id, provider_name, occurred_at, dimension, sequence)
                 const result = await client.query(
                     `INSERT INTO temporal_metric_records
-                     (entity_id, provider_name, metric_type, value, occurred_at, raw_data)
-                     VALUES ($1, $2, $3, $4, $5, $6)
-                     ON CONFLICT (entity_id, provider_name, metric_type, occurred_at)
+                     (entity_id, provider_name, metric_type, dimension, sequence, value, occurred_at, raw_data)
+                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                     ON CONFLICT (entity_id, provider_name, occurred_at, dimension, sequence)
                      DO UPDATE SET
                          value = EXCLUDED.value,
                          raw_data = EXCLUDED.raw_data,
@@ -208,6 +241,8 @@ async function upsertTemporalRecords(client, entityId, records) {
                         entityId,
                         record.provider_name,
                         record.metric_type || 'temporal_odds_1x2',
+                        record.dimension || 'single',
+                        record.sequence || 0,
                         record.value,
                         record.occurred_at,
                         JSON.stringify(record.raw_data || {})
@@ -221,19 +256,22 @@ async function upsertTemporalRecords(client, entityId, records) {
                 }
 
             } catch (error) {
-                // Single record failure doesn't break transaction
+                // V95.000: Report actual errors instead of silently skipping
                 skipped++;
-                log.debug(`Record skip: ${error.message.substring(0, 100)}`);
+                log.error(`[V95.000] Record INSERT ERROR: ${error.message.substring(0, 200)}`);
             }
         }
 
         await client.query('COMMIT');
 
+        // V87.300: 返回详细统计，包含原始记录数和有效记录数
         return {
             inserted,
             updated,
             skipped,
-            total: records.length
+            total: validRecords.length,
+            originalTotal: records.length,
+            filteredOut: records.length - validRecords.length
         };
 
     } catch (error) {
@@ -241,7 +279,7 @@ async function upsertTemporalRecords(client, entityId, records) {
         throw new StorageError(
             'UPSERT_FAILED',
             `Batch upsert failed, transaction rolled back: ${error.message}`,
-            { recordCount: records.length }
+            { recordCount: validRecords.length, originalCount: records.length }
         );
     }
 }
@@ -444,7 +482,15 @@ async function upsertFullTemporalRecords(client, entityId, movementData) {
                 } catch (error) {
                     // Single dimension failure doesn't break transaction
                     skipped++;
-                    log.debug(`Dimension skip [${dimension}]: ${error.message.substring(0, 100)}`);
+                    log.error(`[V88.210] Dimension INSERT ERROR [${dimension}]: ${error.message}`);
+                    log.error(`[V88.210] Error detail: ${JSON.stringify({
+                        code: error.code,
+                        detail: error.detail,
+                        hint: error.hint,
+                        schema: error.schema,
+                        table: error.table,
+                        constraint: error.constraint
+                    })}`);
                 }
             }
         }
@@ -515,6 +561,115 @@ async function getFull1X2Movement(client, entityId) {
 }
 
 // ============================================================================
+// V87.300: 连续空数据报警机制
+// ============================================================================
+
+/**
+ * 空数据报警器 - 跟踪连续的空数据情况
+ *
+ * 当连续出现空数据时，自动触发 DEBUG_DUMP
+ */
+class EmptyDataAlertManager {
+    constructor() {
+        this.emptyDataCount = 0;
+        this.threshold = 10;  // 连续 10 场空数据触发报警
+        this.lastResetTime = Date.now();
+        this.alertCallbacks = [];
+    }
+
+    /**
+     * 记录 UPSERT 结果
+     * @param {Object} result - upsertTemporalRecords 的返回值
+     * @param {string} entityId - 实体 ID
+     * @returns {boolean} - 是否触发报警
+     */
+    recordUpsertResult(result, entityId) {
+        const isEmpty = result.emptyData || result.allInvalid || (result.inserted === 0 && result.updated === 0 && result.total > 0);
+
+        if (isEmpty) {
+            this.emptyDataCount++;
+            log.warn(`[V87.300] 空数据计数: ${this.emptyDataCount}/${this.threshold} (entityId: ${entityId})`);
+
+            if (this.emptyDataCount >= this.threshold) {
+                this._triggerAlert(entityId);
+                return true;  // 触发了报警
+            }
+        } else {
+            // 有数据，重置计数器
+            if (this.emptyDataCount > 0) {
+                log.info(`[V87.300] 空数据重置: ${this.emptyDataCount} → 0 (entityId: ${entityId})`);
+            }
+            this.emptyDataCount = 0;
+            this.lastResetTime = Date.now();
+        }
+
+        return false;  // 未触发报警
+    }
+
+    /**
+     * 注册报警回调
+     * @param {Function} callback - 报警触发时的回调函数
+     */
+    onAlert(callback) {
+        this.alertCallbacks.push(callback);
+    }
+
+    /**
+     * 手动重置计数器
+     */
+    reset() {
+        this.emptyDataCount = 0;
+        this.lastResetTime = Date.now();
+        log.info('[V87.300] 空数据报警器已手动重置');
+    }
+
+    /**
+     * 获取当前状态
+     */
+    getStatus() {
+        return {
+            emptyDataCount: this.emptyDataCount,
+            threshold: this.threshold,
+            percentage: (this.emptyDataCount / this.threshold * 100).toFixed(1) + '%',
+            timeSinceLastReset: Date.now() - this.lastResetTime
+        };
+    }
+
+    /**
+     * 触发报警
+     * @private
+     * @param {string} entityId - 触发报警的实体 ID
+     */
+    _triggerAlert(entityId) {
+        const alertMessage = `[V87.300] 🚨 空数据报警触发！连续 ${this.emptyDataCount} 场空数据 (阈值: ${this.threshold})`;
+
+        log.error(alertMessage);
+        log.error(`[V87.300] 最后失败实体: ${entityId}`);
+        log.error(`[V87.300] 建议: 检查 OneTrust Cookie Consent 横幅是否已处理`);
+
+        // 触发所有注册的回调
+        this.alertCallbacks.forEach(callback => {
+            try {
+                callback({
+                    count: this.emptyDataCount,
+                    threshold: this.threshold,
+                    entityId: entityId,
+                    timestamp: new Date().toISOString()
+                });
+            } catch (error) {
+                log.error(`[V87.300] 回调执行失败: ${error.message}`);
+            }
+        });
+
+        // 重置计数器
+        this.emptyDataCount = 0;
+    }
+}
+
+// 全局单例
+const emptyDataAlertManager = new EmptyDataAlertManager();
+
+// ============================================================================
 // EXPORTS
 // ============================================================================
 
@@ -540,5 +695,9 @@ module.exports = {
     entityHasRecords,
 
     // Error class
-    StorageError
+    StorageError,
+
+    // V87.300: 空数据报警管理器
+    EmptyDataAlertManager,
+    emptyDataAlertManager
 };
