@@ -1,14 +1,19 @@
 /**
- * QuantHarvester - V122.000 Industrial Grade Quant Price Trajectory Harvester
+ * QuantHarvester - V133.000 Ultimate Visual Breakthrough
  * =============================================================================
  *
  * Standard production engine for extracting multi-dimensional quantitative data
  * trajectories from OddsPortal using Playwright automation.
  *
+ * V133.000 Features:
+ * - BRUTE FORCE PURGE: Physical DOM deletion of overlay nodes
+ * - Signal Focus: Network traffic monitoring for .dat data packets
+ * - Fuzzy Matching: Tailwind CSS compatible selectors
+ *
  * @module QuantHarvester
- * @version V122.000
+ * @version V133.000
  * @since 2026-01-27
- * @author Senior Staff Engineer (Tier-1 Standard)
+ * @author Senior Lead Systems Architect
  *
  * @example
  * const harvester = new QuantHarvester();
@@ -76,6 +81,10 @@ const DEFAULT_CONFIG = {
     waitBaseMs: parseInt(process.env.WAIT_BASE_MS) || 2000,
     waitJitterMs: parseInt(process.env.WAIT_JITTER_MS) || 1500,
     cookieBannerTimeout: parseInt(process.env.COOKIE_BANNER_TIMEOUT) || 2000,
+
+    // V133.000: Ultimate Visual Breakthrough Configuration
+    signalWaitTimeout: parseInt(process.env.SIGNAL_WAIT_TIMEOUT) || 15000,
+    forceRemoveOverlays: process.env.FORCE_REMOVE_OVERLAYS === 'true',
 
     // V129.000: Dynamic Proxy Discovery Configuration
     proxyHost: process.env.PROXY_HOST || '172.25.16.1',
@@ -497,11 +506,13 @@ class QuantHarvesterError extends Error {
 
 /**
  * QuantHarvester - Main harvester class
- * V122.000: Refactored for production readiness
- * - Memory leaks fixed
- * - Hardcoding eliminated
- * - Dependency standardized (uses storage.js)
- * - Export compliance for unit tests
+ * V133.000: Ultimate Visual Breakthrough
+ * - BRUTE FORCE overlay removal (V133.000)
+ * - Signal focus for .dat packets (V133.000)
+ * - Fuzzy matching selectors (V133.000)
+ * - Memory leaks fixed (V122.000)
+ * - Hardcoding eliminated (V122.000)
+ * - Dynamic proxy discovery (V129.000)
  */
 class QuantHarvester {
     static #instance = null;
@@ -644,9 +655,11 @@ class QuantHarvester {
     }
 
     /**
-     * V127.000: Handle cookie consent overlays
-     * Automatically detects and dismisses OneTrust Cookie banners
-     * @returns {Promise<boolean>} True if banner was handled
+     * V133.000: Handle cookie consent overlays - BRUTE FORCE PURGE
+     * V132.100 Finding: OneTrust popup was hidden but not removed, blocking hover interactions
+     * Solution: Physical DOM deletion using page.evaluate()
+     *
+     * @returns {Promise<boolean>} True if overlays were removed
      * @private
      */
     async handleOverlays() {
@@ -654,44 +667,152 @@ class QuantHarvester {
             // Wait briefly for overlay to appear
             await this.page.waitForTimeout(500);
 
-            // Try multiple selector patterns for OneTrust/Accept buttons
-            const selectors = [
-                'button:has-text("Accept All")',
-                'button:has-text("Accept")',
-                'button:has-text("OK")',
-                'button[aria-label*="Accept" i]',
-                'button[aria-label*="Consent" i]',
-                '.onetrust-pc-dark-filter',  // Dark background overlay
-                '#onetrust-consent-sdk'  // Main container
-            ];
+            let removedCount = 0;
 
-            for (const selector of selectors) {
-                try {
-                    const element = await this.page.$(selector);
-                    if (element) {
-                        // Check if element is visible
-                        const isVisible = await element.isVisible();
-                        if (isVisible) {
+            if (this.config.forceRemoveOverlays) {
+                // V133.000: BRUTE FORCE - Physical DOM deletion
+                // "宁可错杀，不准挡路" - Better to over-remove than miss blocking elements
+                removedCount = await this.page.evaluate(() => {
+                    const keywords = ['onetrust', 'cookie', 'consent', 'overlay', 'banner', 'popup'];
+                    let count = 0;
+
+                    // Remove by ID
+                    keywords.forEach(keyword => {
+                        const elements = document.querySelectorAll(`[id*="${keyword}"]`);
+                        elements.forEach(el => {
+                            el.remove();
+                            count++;
+                        });
+                    });
+
+                    // Remove by class
+                    keywords.forEach(keyword => {
+                        const elements = document.querySelectorAll(`[class*="${keyword}"]`);
+                        elements.forEach(el => {
+                            el.remove();
+                            count++;
+                        });
+                    });
+
+                    // Remove known OneTrust selectors specifically
+                    const specificSelectors = [
+                        '#onetrust-consent-sdk',
+                        '#onetrust-banner-sdk',
+                        '.onetrust-pc-dark-filter',
+                        '.ot-pc-container',
+                        '[role="dialog"]',
+                        '.cookie-consent'
+                    ];
+
+                    specificSelectors.forEach(selector => {
+                        try {
+                            const elements = document.querySelectorAll(selector);
+                            elements.forEach(el => {
+                                el.remove();
+                                count++;
+                            });
+                        } catch (e) {
+                            // Selector errors ignored
+                        }
+                    });
+
+                    return count;
+                });
+
+                if (this.config.logLevel === 'debug' && removedCount > 0) {
+                    console.log(`[V133.000] BRUTE FORCE PURGE: ${removedCount} overlay nodes removed`);
+                }
+            } else {
+                // V127.000: Original click-based approach (fallback)
+                const selectors = [
+                    'button:has-text("Accept All")',
+                    'button:has-text("Accept")',
+                    'button:has-text("OK")',
+                    'button[aria-label*="Accept" i]',
+                    'button[aria-label*="Consent" i]'
+                ];
+
+                for (const selector of selectors) {
+                    try {
+                        const element = await this.page.$(selector);
+                        if (element && await element.isVisible()) {
                             await element.click();
+                            removedCount++;
                             if (this.config.logLevel === 'debug') {
                                 console.log(`[V127.000] Dismissed cookie banner: ${selector}`);
                             }
                             await this.page.waitForTimeout(1000);
-                            return true;
+                            break;
                         }
+                    } catch (e) {
+                        // Continue to next selector
                     }
-                } catch (e) {
-                    // Selector not found or error, continue to next
                 }
             }
 
-            // If we reached here, no banner was dismissed (which is OK)
-            return false;
+            return removedCount > 0;
 
         } catch (error) {
-            // Silently fail - don't block execution if banner handling fails
             if (this.config.logLevel === 'debug') {
-                console.warn(`[V127.000] Cookie banner handling skipped: ${error.message}`);
+                console.warn(`[V133.000] Overlay handling error: ${error.message}`);
+            }
+            return false;
+        }
+    }
+
+    /**
+     * V133.000: Wait for trajectory data packet signal
+     * Monitors network traffic for OddsPortal's .dat file response
+     * This is the core变盘 data packet that indicates data readiness
+     *
+     * @returns {Promise<boolean>} True if signal detected
+     * @private
+     */
+    async waitForTrajectorySignal() {
+        try {
+            let signalDetected = false;
+
+            // Setup response listener before page actions
+            const signalPromise = this.page.waitForResponse(
+                response => {
+                    const url = response.url();
+                    // Match .dat file pattern (OddsPortal trajectory data)
+                    const isDatFile = /.*\.dat.*/i.test(url);
+                    const isStatusOk = response.status() === 200;
+
+                    if (isDatFile && isStatusOk) {
+                        if (this.config.logLevel === 'debug') {
+                            console.log(`[V133.000] SIGNAL LOCKED: ${url.substring(0, 80)}...`);
+                        }
+                        return true;
+                    }
+                    return false;
+                },
+                { timeout: this.config.signalWaitTimeout }
+            ).then(() => {
+                signalDetected = true;
+                return true;
+            }).catch(() => {
+                // Timeout is acceptable - data may already be loaded
+                if (this.config.logLevel === 'debug') {
+                    console.log('[V133.000] Signal timeout - data may be pre-loaded');
+                }
+                return false;
+            });
+
+            // Wait for signal or timeout
+            await signalPromise;
+
+            // Additional wait for DOM to stabilize after signal
+            if (signalDetected) {
+                await this.jitterWait(1000, 500);
+            }
+
+            return signalDetected;
+
+        } catch (error) {
+            if (this.config.logLevel === 'debug') {
+                console.warn(`[V133.000] Signal detection error: ${error.message}`);
             }
             return false;
         }
@@ -727,13 +848,20 @@ class QuantHarvester {
                 waitUntil: 'networkidle'
             });
 
-            // V127.000: Handle cookie consent overlays
+            // V133.000: Handle cookie consent overlays (BRUTE FORCE PURGE)
             await this.handleOverlays();
+
+            // V133.000: Wait for trajectory data packet signal
+            const signalLocked = await this.waitForTrajectorySignal();
+            if (this.config.logLevel === 'debug') {
+                console.log(`[V133.000] Signal status: ${signalLocked ? 'LOCKED' : 'TIMEOUT/PRE-LOADED'}`);
+            }
 
             // Wait for content
             let waitAttempts = 0;
             while (waitAttempts < 30) {
-                const oddsCellCount = await this.page.$$eval('div.odds-cell, .odds-cell', els => els.length);
+                // V133.000: Updated selector to use fuzzy matching
+                const oddsCellCount = await this.page.$$eval('[class*="odds-cell"]', els => els.length);
                 if (oddsCellCount > 0) break;
                 await this.jitterWait(1000, 500);  // V127.000: Randomized wait
                 waitAttempts++;
@@ -763,8 +891,8 @@ class QuantHarvester {
 
                     whitelistedProviders.add(standardVenueId);
 
-                    // Get odds cells
-                    const oddsCells = await row.$$('div.odds-cell, div[class*="odd"]');
+                    // Get odds cells (V133.000: Fuzzy matching for Tailwind CSS compatibility)
+                    const oddsCells = await row.$$('[class*="odds-cell"]');
                     if (oddsCells.length < 3) continue;
 
                     // Process each axis
@@ -805,8 +933,10 @@ class QuantHarvester {
                                 }
 
                                 if (modalHtml) {
-                                    const trajectory = this.trajectoryParser.extractFullTrajectoryDOM(modalHtml);
-                                    const validation = this.trajectoryParser.validateTrajectory(trajectory);
+                                    // V133.000: Handle new TrajectoryParser return format
+                                    const extractionResult = this.trajectoryParser.extractFullTrajectoryDOM(modalHtml);
+                                    const trajectory = extractionResult.trajectory || [];
+                                    const validation = this.trajectoryParser.validateTrajectory(extractionResult);
 
                                     if (validation.valid) {
                                         axesData[axisName] = {
@@ -815,10 +945,14 @@ class QuantHarvester {
                                             standardVenueId: standardVenueId,
                                             trajectory: trajectory,
                                             state: validation,
-                                            success: true
+                                            success: true,
+                                            quality: extractionResult.quality // V133.000: Quality metric
                                         };
 
                                         result.trajectoryPoints += trajectory.length;
+                                    } else if (this.config.logLevel === 'debug' && extractionResult.warning) {
+                                        // V133.000: Log warnings for low quality data
+                                        console.warn(`[V133.000] ${extractionResult.warning}`);
                                     }
                                 }
 
