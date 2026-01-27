@@ -100,6 +100,26 @@ class SurgicalInteraction {
     }
 
     /**
+     * V150.000: Random render wait for deep trajectory extraction
+     * Wait for React SPA to render full trajectory data (800-1200ms)
+     * This gives the modal enough time to populate historical odds data
+     *
+     * @returns {Promise<number>} Actual wait time (ms)
+     */
+    async randomRenderWait() {
+        const minMs = 800;
+        const maxMs = 1200;
+        const delay = Math.floor(Math.random() * (maxMs - minMs + 1)) + minMs;
+
+        if (this.config.logLevel === 'debug') {
+            console.log(`[V150.000] 🎨 Deep render wait: ${delay}ms (range: ${minMs}-${maxMs}ms)`);
+        }
+
+        await this.page.waitForTimeout(delay);
+        return delay;
+    }
+
+    /**
      * V145.000: Generate pixel jitter - simulates hand tremor
      * @param {number} range - Pixel range (default: from config)
      * @returns {Object} X and Y offset values
@@ -299,6 +319,11 @@ class SurgicalInteraction {
 
                 if (titleDetected) {
                     console.log(`[V148.000] ✅ SUCCESS: Modal detected via 'Odds movement' title on attempt ${attempt + 1}`);
+
+                    // V150.000: Deep render wait for full trajectory extraction
+                    // Wait for React SPA to populate historical odds data (800-1200ms)
+                    await this.randomRenderWait();
+
                     modalDetected = true;
                     break;
                 } else {
