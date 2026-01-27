@@ -21,13 +21,15 @@
 'use strict';
 
 const { chromium } = require('playwright');
-const { JSDOM } = require('jsdom');
+const fs = require('fs');
+const path = require('path');
 const {
     createConnection,
     getOrCreateEntity,
     upsertTemporalRecords,
     StorageError
 } = require('../../scripts/ops/modules/storage');
+const { TrajectoryParser, SyncTimestamp, alignTimestamp } = require('./parsers/TrajectoryParser');
 
 // ============================================================================
 // CONFIGURATION (Environment-First, Zero Hardcoding)
@@ -68,7 +70,20 @@ const DEFAULT_CONFIG = {
     dbPassword: process.env.DB_PASSWORD || '',
 
     // Logging
-    logLevel: process.env.LOG_LEVEL || 'info'
+    logLevel: process.env.LOG_LEVEL || 'info',
+
+    // V127.000: Stealth Mode - Human behavior simulation
+    waitBaseMs: parseInt(process.env.WAIT_BASE_MS) || 2000,
+    waitJitterMs: parseInt(process.env.WAIT_JITTER_MS) || 1500,
+    cookieBannerTimeout: parseInt(process.env.COOKIE_BANNER_TIMEOUT) || 2000,
+
+    // V129.000: Dynamic Proxy Discovery Configuration
+    proxyHost: process.env.PROXY_HOST || '172.25.16.1',
+    proxyPortStart: parseInt(process.env.PROXY_PORT_START) || 7891,
+    proxyPortEnd: parseInt(process.env.PROXY_PORT_END) || 7913,
+    proxyScanTimeout: parseInt(process.env.PROXY_SCAN_TIMEOUT) || 500,
+    proxyProtocol: process.env.PROXY_PROTOCOL || 'http',
+    enableProxyRotation: process.env.ENABLE_PROXY_ROTATION === 'true'
 };
 
 // ============================================================================
@@ -155,236 +170,298 @@ const MARKET_VENUE_WHITELIST = {
 };
 
 // ============================================================================
-// SYNC TIMESTAMP MODULE (2026 Calibration)
+// V129.000: DYNAMIC PROXY DISCOVERY ENGINE
 // ============================================================================
 
 /**
- * SyncTimestamp - Time alignment utilities
- * Handles parsing of various timestamp formats into ISO 8601
+ * V129.000 Dynamic Proxy Discovery Engine
+ * Auto-discovers proxy nodes via port scanning with circuit breaker pattern
  */
-class SyncTimestamp {
-    /**
-     * @param {number} currentYear - Current year for timestamp calibration
-     */
-    constructor(currentYear = new Date().getFullYear()) {
-        this.currentYear = currentYear;
-        this.monthMap = {
-            'jan': 0, 'jan.': 0, 'january': 0,
-            'feb': 1, 'feb.': 1, 'february': 1,
-            'mar': 2, 'mar.': 2, 'march': 2,
-            'apr': 3, 'apr.': 3, 'april': 3,
-            'may': 4, 'may.': 4,
-            'jun': 5, 'jun.': 5, 'june': 5,
-            'jul': 6, 'jul.': 6, 'july': 6,
-            'aug': 7, 'aug.': 7, 'august': 7,
-            'sep': 8, 'sep.': 8, 'september': 8,
-            'oct': 9, 'oct.': 9, 'october': 9,
-            'nov': 10, 'nov.': 10, 'november': 10,
-            'dec': 11, 'dec.': 11, 'december': 11
+class ProxyPoolManager {
+    constructor(config = {}) {
+        // Discovery configuration
+        this.discoveryConfig = {
+            host: config.proxyHost || process.env.PROXY_HOST || '172.25.16.1',
+            portStart: parseInt(config.proxyPortStart || process.env.PROXY_PORT_START) || 7891,
+            portEnd: parseInt(config.proxyPortEnd || process.env.PROXY_PORT_END) || 7913,
+            scanTimeout: config.scanTimeout || 500,  // 500ms per port
+            protocol: config.protocol || 'http'
         };
+
+        // Memory-only proxy pool (no file I/O)
+        this.proxies = [];
+        this.currentIndex = 0;
+        this.enabled = false;
+
+        // V129.000: Circuit Breaker - Health tracking
+        this.failureCount = new Map();  // proxyId -> consecutive failures
+        this.maxFailures = 3;  // Auto-eject after 3 consecutive failures
+
+        // V129.000: Fallback to static file only if auto-discovery fails
+        this.configPath = config.proxyConfigPath || path.join(__dirname, '../../config/proxies.json');
     }
 
     /**
-     * Parse date string to ISO 8601 format
-     * @param {string} dateStr - Date string in various formats
-     * @returns {string|null} ISO 8601 timestamp or null
+     * V129.000: Auto-discover proxy nodes via port scanning
+     * Uses concurrent probing with ultra-short timeout for fast discovery
+     *
+     * @param {string} host - Target host to scan (optional, uses config default)
+     * @param {number} startPort - Start port (optional, uses config default)
+     * @param {number} endPort - End port (optional, uses config default)
+     * @returns {Promise<number>} Number of discovered proxies
      */
-    parse(dateStr) {
-        if (!dateStr || typeof dateStr !== 'string') {
-            return null;
+    async discoverProxies(host = null, startPort = null, endPort = null) {
+        const targetHost = host || this.discoveryConfig.host;
+        const start = startPort || this.discoveryConfig.portStart;
+        const end = endPort || this.discoveryConfig.portEnd;
+
+        console.log(`[V129.000] Starting proxy discovery: ${targetHost}:${start}-${end}`);
+
+        const discovered = [];
+        const totalPorts = end - start + 1;
+
+        // Create probe promises for all ports
+        const probePromises = [];
+        for (let port = start; port <= end; port++) {
+            probePromises.push(this._probePort(targetHost, port));
         }
 
+        // Execute probes concurrently (Promise.allSettled for resilience)
+        const results = await Promise.allSettled(probePromises);
+
+        // Collect successful probes
+        results.forEach((result, index) => {
+            const port = start + index;
+            if (result.status === 'fulfilled' && result.value) {
+                discovered.push({
+                    id: `PROXY-${String(port).slice(-2)}`,
+                    protocol: this.discoveryConfig.protocol,
+                    host: targetHost,
+                    port: port,
+                    source: 'auto_discovery',
+                    verified: true,
+                    last_checked: new Date().toISOString()
+                });
+            }
+        });
+
+        // Update memory pool
+        this.proxies = discovered;
+        this.enabled = discovered.length > 0;
+
+        console.log(`[V129.000] Discovery complete: ${discovered.length}/${totalPorts} nodes available`);
+
+        // Fallback to static file if no proxies discovered
+        if (this.enabled === false) {
+            console.warn('[V129.000] Auto-discovery found no proxies, attempting fallback...');
+            await this._loadFallback();
+        }
+
+        return discovered.length;
+    }
+
+    /**
+     * V129.000: Probe single port with ultra-short timeout
+     * Uses Node.js net.connect for TCP-level handshake test
+     *
+     * @param {string} host - Target host
+     * @param {number} port - Target port
+     * @returns {Promise<boolean>} True if port is open
+     * @private
+     */
+    async _probePort(host, port) {
+        return new Promise((resolve) => {
+            const net = require('net');
+            const socket = new net.Socket();
+
+            // Set ultra-short timeout for fast scanning
+            socket.setTimeout(this.discoveryConfig.scanTimeout);
+
+            socket.on('connect', () => {
+                socket.destroy();
+                resolve(true);  // Port is open
+            });
+
+            socket.on('timeout', () => {
+                socket.destroy();
+                resolve(false);  // Port timeout
+            });
+
+            socket.on('error', () => {
+                socket.destroy();
+                resolve(false);  // Port closed
+            });
+
+            socket.connect(port, host);
+        });
+    }
+
+    /**
+     * V129.000: Fallback loader for static proxy configuration
+     * Only used if auto-discovery fails completely
+     *
+     * @returns {Promise<boolean>}
+     * @private
+     */
+    async _loadFallback() {
         try {
-            // Format: "24 Jan, 10:00" or "Jan 24, 10:00"
-            const pattern1 = /^(\d{1,2})\s+(\w+\.?)\s*,?\s*(\d{1,2}):(\d{2})$/i;
-            const match1 = dateStr.trim().match(pattern1);
-            if (match1) {
-                const day = parseInt(match1[1]);
-                const monthStr = match1[2].toLowerCase();
-                const hour = parseInt(match1[3]);
-                const minute = parseInt(match1[4]);
-
-                if (this.monthMap[monthStr] !== undefined) {
-                    const date = new Date(Date.UTC(this.currentYear, this.monthMap[monthStr], day, hour, minute));
-                    return date.toISOString();
-                }
+            if (fs.existsSync(this.configPath)) {
+                const config = JSON.parse(fs.readFileSync(this.configPath, 'utf8'));
+                this.proxies = config.proxies || [];
+                this.enabled = this.proxies.length > 0;
+                console.log(`[V129.000] Fallback loaded: ${this.proxies.length} proxies from ${this.configPath}`);
+                return this.enabled;
             }
-
-            const pattern2 = /^(\w+\.?)\s+(\d{1,2})\s*,?\s*(\d{1,2}):(\d{2})$/i;
-            const match2 = dateStr.trim().match(pattern2);
-            if (match2) {
-                const monthStr = match2[1].toLowerCase();
-                const day = parseInt(match2[2]);
-                const hour = parseInt(match2[3]);
-                const minute = parseInt(match2[4]);
-
-                if (this.monthMap[monthStr] !== undefined) {
-                    const date = new Date(Date.UTC(this.currentYear, this.monthMap[monthStr], day, hour, minute));
-                    return date.toISOString();
-                }
-            }
-
         } catch (error) {
+            console.warn(`[V129.000] Fallback failed: ${error.message}`);
+        }
+        return false;
+    }
+
+    /**
+     * V129.000: Get next proxy with circuit breaker health check
+     * Skips proxies with consecutive failure count >= maxFailures
+     *
+     * @returns {Object|null} Proxy configuration or null
+     */
+    getNextProxy() {
+        if (!this.enabled || this.proxies.length === 0) {
             return null;
         }
+
+        // Find next healthy proxy (round-robin with skip logic)
+        let attempts = 0;
+        const maxAttempts = this.proxies.length;
+        let proxy = null;
+        let originalIndex = this.currentIndex;
+
+        do {
+            proxy = this.proxies[this.currentIndex];
+            this.currentIndex = (this.currentIndex + 1) % this.proxies.length;
+            attempts++;
+
+            // Check circuit breaker status
+            const failures = this.failureCount.get(proxy.id) || 0;
+            if (failures < this.maxFailures) {
+                return {
+                    server: `${proxy.protocol}://${proxy.host}:${proxy.port}`,
+                    id: proxy.id,
+                    username: proxy.username || undefined,
+                    password: proxy.password || undefined
+                };
+            }
+
+            // All proxies exhausted
+            if (attempts >= maxAttempts) {
+                console.warn('[V129.000] Circuit Breaker: All proxies exhausted, resetting...');
+                this.failureCount.clear();
+                this.currentIndex = originalIndex;
+                return null;
+            }
+        } while (attempts < maxAttempts);
 
         return null;
     }
-}
 
-/**
- * Standalone alignTimestamp function for test compatibility
- * @param {string} dateStr - Date string to align
- * @returns {string|null} ISO 8601 timestamp
- */
-function alignTimestamp(dateStr) {
-    const sync = new SyncTimestamp();
-    return sync.parse(dateStr);
-}
-
-// ============================================================================
-// DOM-FIRST TRAJECTORY PARSER
-// ============================================================================
-
-/**
- * TrajectoryParser - DOM-based trajectory extraction
- * Extracts quantitative data trajectories from modal HTML
- */
-class TrajectoryParser {
     /**
-     * Extract full trajectory from modal HTML using DOM traversal
-     * V122.000: Memory leak fixed with explicit JSDOM cleanup
+     * V129.000: Report proxy failure (triggers circuit breaker)
+     * Call this when harvestMatch encounters proxy-related errors
      *
-     * @param {string} modalHtml - Modal HTML content
-     * @returns {Array<{time: string, value: number, type: string}>}
+     * @param {string} proxyId - Proxy identifier
      */
-    extractFullTrajectoryDOM(modalHtml) {
-        const trajectory = [];
-        let dom = null;
+    reportFailure(proxyId) {
+        if (!proxyId) return;
 
-        try {
-            if (!modalHtml || typeof modalHtml !== 'string') {
-                return trajectory;
-            }
+        const currentFailures = this.failureCount.get(proxyId) || 0;
+        const newFailures = currentFailures + 1;
+        this.failureCount.set(proxyId, newFailures);
 
-            dom = new JSDOM(modalHtml);
-            const document = dom.window.document;
-
-            // Step 1: Extract Opening odds
-            const openingElements = document.querySelectorAll('*');
-            for (const el of openingElements) {
-                if (el.textContent && el.textContent.includes('Opening odds')) {
-                    const parent = el.parentElement;
-                    if (parent) {
-                        const textContent = parent.textContent;
-                        const timeMatch = textContent.match(/(\d{1,2}\s+\w+\.?\s*,?\s*\d{1,2}:\d{2})/);
-                        const oddsMatch = textContent.match(/(\d+\.\d+)/);
-
-                        if (timeMatch && oddsMatch) {
-                            const sync = new SyncTimestamp();
-                            const timestamp = sync.parse(timeMatch[1]);
-                            if (timestamp) {
-                                trajectory.push({
-                                    time: timestamp,
-                                    value: parseFloat(oddsMatch[1]),
-                                    type: 'Initial'
-                                });
-                            }
-                        }
-                    }
-                    break;
-                }
-            }
-
-            // Step 2: Extract Historical data
-            const tableRows = document.querySelectorAll('tr');
-            tableRows.forEach((row) => {
-                try {
-                    const cells = row.querySelectorAll('td');
-                    if (cells.length >= 2) {
-                        const firstCell = cells[0].textContent.trim();
-                        const secondCell = cells[1].textContent.trim();
-
-                        const sync = new SyncTimestamp();
-                        const timestamp = sync.parse(firstCell);
-                        const value = parseFloat(secondCell);
-
-                        if (timestamp && !isNaN(value) && value > 1.0) {
-                            // Check for duplicates
-                            const exists = trajectory.some(p =>
-                                p.time === timestamp && p.value === value
-                            );
-                            if (!exists) {
-                                trajectory.push({
-                                    time: timestamp,
-                                    value: value,
-                                    type: 'Historical'
-                                });
-                            }
-                        }
-                    }
-                } catch (e) {
-                    // Ignore row errors
-                }
-            });
-
-            // Step 3: Sort by time
-            trajectory.sort((a, b) => new Date(a.time) - new Date(b.time));
-
-        } catch (error) {
-            // Log error but don't fail
-            console.error('[TrajectoryParser] Extraction error:', error.message);
-        } finally {
-            // V122.000: CRITICAL - Fix memory leak by explicitly closing JSDOM
-            if (dom) {
-                try {
-                    dom.window.close();
-                } catch (e) {
-                    // Ignore cleanup errors
-                }
-            }
+        if (newFailures >= this.maxFailures) {
+            console.warn(`[V129.000] Circuit Breaker: Proxy ${proxyId} ejected (${newFailures} failures)`);
         }
-
-        return trajectory;
     }
 
     /**
-     * Validate trajectory state
-     * @param {Array} trajectory - Trajectory array
-     * @returns {Object} Validation result
+     * V129.000: Report proxy success (resets circuit breaker counter)
+     * Call this when harvestMatch succeeds
+     *
+     * @param {string} proxyId - Proxy identifier
      */
-    validateTrajectory(trajectory) {
-        if (!Array.isArray(trajectory) || trajectory.length === 0) {
-            return {
-                valid: false,
-                initial: null,
-                current: null,
-                hasDrift: false,
-                error: 'Trajectory is empty'
-            };
+    reportSuccess(proxyId) {
+        if (!proxyId) return;
+
+        const currentFailures = this.failureCount.get(proxyId);
+        if (currentFailures && currentFailures > 0) {
+            this.failureCount.delete(proxyId);
+            console.log(`[V129.000] Circuit Breaker: Proxy ${proxyId} recovered`);
+        }
+    }
+
+    /**
+     * V129.000: Get random proxy (alternative strategy, not recommended for circuit breaker)
+     * @returns {Object|null} Proxy configuration or null
+     */
+    getRandomProxy() {
+        if (!this.enabled || this.proxies.length === 0) {
+            return null;
         }
 
-        if (trajectory.length < DEFAULT_CONFIG.minTrajectoryPoints) {
-            return {
-                valid: false,
-                initial: trajectory[0]?.value || null,
-                current: trajectory[trajectory.length - 1]?.value || null,
-                hasDrift: false,
-                error: `Insufficient points: ${trajectory.length} < ${DEFAULT_CONFIG.minTrajectoryPoints}`
-            };
+        // Filter healthy proxies only
+        const healthyProxies = this.proxies.filter(p => {
+            const failures = this.failureCount.get(p.id) || 0;
+            return failures < this.maxFailures;
+        });
+
+        if (healthyProxies.length === 0) {
+            return null;
         }
 
-        const initial = trajectory[0].value;
-        const current = trajectory[trajectory.length - 1].value;
-        const hasDrift = Math.abs(current - initial) > 0.001;
+        const proxy = healthyProxies[Math.floor(Math.random() * healthyProxies.length)];
+        return {
+            server: `${proxy.protocol}://${proxy.host}:${proxy.port}`,
+            id: proxy.id,
+            username: proxy.username || undefined,
+            password: proxy.password || undefined
+        };
+    }
+
+    /**
+     * Check if proxy pool is enabled
+     * @returns {boolean}
+     */
+    isEnabled() {
+        return this.enabled;
+    }
+
+    /**
+     * V129.000: Get proxy pool statistics including circuit breaker status
+     * @returns {Object}
+     */
+    getStats() {
+        const healthyCount = this.proxies.filter(p => {
+            const failures = this.failureCount.get(p.id) || 0;
+            return failures < this.maxFailures;
+        }).length;
+
+        const ejectedCount = this.proxies.length - healthyCount;
 
         return {
-            valid: true,
-            initial,
-            current,
-            hasDrift,
-            trajectoryLength: trajectory.length
+            total: this.proxies.length,
+            enabled: this.enabled,
+            healthy: healthyCount,
+            ejected: ejectedCount,
+            currentIndex: this.currentIndex,
+            discoveryRange: `${this.discoveryConfig.host}:${this.discoveryConfig.portStart}-${this.discoveryConfig.portEnd}`,
+            failureMap: Object.fromEntries(this.failureCount)
         };
+    }
+
+    /**
+     * V129.000: Reset circuit breaker (manual recovery)
+     */
+    resetCircuitBreaker() {
+        this.failureCount.clear();
+        console.log('[V129.000] Circuit Breaker: Manual reset complete');
     }
 }
 
@@ -446,6 +523,15 @@ class QuantHarvester {
         this.page = null;
         this.isInitialized = false;
 
+        // V129.000: Dynamic Proxy Discovery Engine (no static config path)
+        this.proxyPool = new ProxyPoolManager({
+            proxyHost: this.config.proxyHost,
+            proxyPortStart: this.config.proxyPortStart,
+            proxyPortEnd: this.config.proxyPortEnd,
+            scanTimeout: this.config.proxyScanTimeout,
+            protocol: this.config.proxyProtocol
+        });
+
         // Statistics
         this.stats = {
             totalMatches: 0,
@@ -483,16 +569,38 @@ class QuantHarvester {
             // Connect to database using storage module
             this.dbClient = await createConnection();
 
+            // V129.000: Auto-discover proxy nodes if rotation is enabled
+            if (this.config.enableProxyRotation) {
+                const discovered = await this.proxyPool.discoverProxies();
+                console.log(`[V129.000] Proxy discovery: ${discovered} nodes found`);
+            }
+
             // Launch browser
             this.browser = await chromium.launch({
                 headless: this.config.headless,
                 args: ['--disable-blink-features=AutomationControlled']
             });
 
-            this.context = await this.browser.newContext({
+            // V129.000: Get proxy configuration for this instance
+            const contextConfig = {
                 userAgent: this.config.userAgent,
                 viewport: this.config.viewport
-            });
+            };
+
+            // Inject proxy if rotation is enabled and pool is available
+            this.currentProxyId = null;
+            if (this.config.enableProxyRotation && this.proxyPool.isEnabled()) {
+                const proxy = this.proxyPool.getNextProxy();
+                if (proxy) {
+                    contextConfig.proxy = proxy;
+                    this.currentProxyId = proxy.id;
+                    if (this.config.logLevel === 'debug') {
+                        console.log(`[V129.000] Using proxy: ${proxy.server} (ID: ${proxy.id})`);
+                    }
+                }
+            }
+
+            this.context = await this.browser.newContext(contextConfig);
 
             this.page = await this.context.newPage();
 
@@ -518,6 +626,75 @@ class QuantHarvester {
      */
     async initDatabaseOnly() {
         this.dbClient = await createConnection();
+    }
+
+    /**
+     * V127.000: Randomized jitter wait for stealth
+     * Replaces all hardcoded waitForTimeout calls with human-like random delays
+     * @param {number} baseMs - Base wait time in milliseconds
+     * @param {number} rangeMs - Random jitter range in milliseconds
+     * @returns {Promise<void>}
+     * @private
+     */
+    async jitterWait(baseMs = null, rangeMs = null) {
+        const base = baseMs ?? this.config.waitBaseMs;
+        const range = rangeMs ?? this.config.waitJitterMs;
+        const delay = base + Math.random() * range;
+        await this.page.waitForTimeout(delay);
+    }
+
+    /**
+     * V127.000: Handle cookie consent overlays
+     * Automatically detects and dismisses OneTrust Cookie banners
+     * @returns {Promise<boolean>} True if banner was handled
+     * @private
+     */
+    async handleOverlays() {
+        try {
+            // Wait briefly for overlay to appear
+            await this.page.waitForTimeout(500);
+
+            // Try multiple selector patterns for OneTrust/Accept buttons
+            const selectors = [
+                'button:has-text("Accept All")',
+                'button:has-text("Accept")',
+                'button:has-text("OK")',
+                'button[aria-label*="Accept" i]',
+                'button[aria-label*="Consent" i]',
+                '.onetrust-pc-dark-filter',  // Dark background overlay
+                '#onetrust-consent-sdk'  // Main container
+            ];
+
+            for (const selector of selectors) {
+                try {
+                    const element = await this.page.$(selector);
+                    if (element) {
+                        // Check if element is visible
+                        const isVisible = await element.isVisible();
+                        if (isVisible) {
+                            await element.click();
+                            if (this.config.logLevel === 'debug') {
+                                console.log(`[V127.000] Dismissed cookie banner: ${selector}`);
+                            }
+                            await this.page.waitForTimeout(1000);
+                            return true;
+                        }
+                    }
+                } catch (e) {
+                    // Selector not found or error, continue to next
+                }
+            }
+
+            // If we reached here, no banner was dismissed (which is OK)
+            return false;
+
+        } catch (error) {
+            // Silently fail - don't block execution if banner handling fails
+            if (this.config.logLevel === 'debug') {
+                console.warn(`[V127.000] Cookie banner handling skipped: ${error.message}`);
+            }
+            return false;
+        }
     }
 
     /**
@@ -550,12 +727,15 @@ class QuantHarvester {
                 waitUntil: 'networkidle'
             });
 
+            // V127.000: Handle cookie consent overlays
+            await this.handleOverlays();
+
             // Wait for content
             let waitAttempts = 0;
             while (waitAttempts < 30) {
                 const oddsCellCount = await this.page.$$eval('div.odds-cell, .odds-cell', els => els.length);
                 if (oddsCellCount > 0) break;
-                await this.page.waitForTimeout(1000);
+                await this.jitterWait(1000, 500);  // V127.000: Randomized wait
                 waitAttempts++;
             }
 
@@ -594,7 +774,7 @@ class QuantHarvester {
 
                         try {
                             await cell.hover();
-                            await this.page.waitForTimeout(2000);
+                            await this.jitterWait();  // V127.000: Randomized 2-3.5s wait
 
                             // Wait for modal
                             const modalSelector = 'h3:has-text("Odds movement")';
@@ -643,7 +823,7 @@ class QuantHarvester {
                                 }
 
                                 await this.page.mouse.move(0, 0);
-                                await this.page.waitForTimeout(500);
+                                await this.jitterWait(500, 300);  // V127.000: Randomized 0.5-0.8s wait
                             }
 
                         } catch (e) {
@@ -689,8 +869,18 @@ class QuantHarvester {
             result.axes = axesData;
             result.persistResult = persistResult;
 
+            // V129.000: Report success to circuit breaker
+            if (this.currentProxyId) {
+                this.proxyPool.reportSuccess(this.currentProxyId);
+            }
+
         } catch (error) {
             result.error = error.message;
+
+            // V129.000: Report failure to circuit breaker
+            if (this.currentProxyId) {
+                this.proxyPool.reportFailure(this.currentProxyId);
+            }
         }
 
         result.endTime = Date.now();
@@ -847,6 +1037,7 @@ module.exports = {
     QuantHarvester,
     QuantHarvesterError,
     MARKET_VENUE_WHITELIST,
+    ProxyPoolManager,
     SyncTimestamp,
     alignTimestamp,
     TrajectoryParser,
