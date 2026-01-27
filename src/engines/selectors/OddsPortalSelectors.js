@@ -260,12 +260,13 @@ class OddsPortalSelectors {
                 });
 
                 // Remove specific OneTrust selectors
+                // V149.000: DO NOT remove generic [role="dialog"] - it may contain data modals!
                 const specificSelectors = [
                     '#onetrust-consent-sdk',
                     '#onetrust-banner-sdk',
                     '.onetrust-pc-dark-filter',
                     '.ot-pc-container',
-                    '[role="dialog"]',
+                    // '[role="dialog"]',  // V149.000: REMOVED - breaks data modal detection
                     '.cookie-consent',
                     '.overlay-bookie-modal'
                 ];

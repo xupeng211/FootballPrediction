@@ -36,6 +36,13 @@ const { OddsPortalSelectors } = require('./selectors/OddsPortalSelectors');
 const { TelemetryService } = require('./services/TelemetryService');
 const { SurgicalInteraction } = require('./services/SurgicalInteraction');
 const { SignalRadar } = require('./services/SignalRadar');
+// V146.000: Import React SPA index configuration
+const {
+    AXIS_INDEX_OFFSETS,
+    CELLS_PER_ROW,
+    getIndexOffset,
+    validateRowStructure
+} = require('./config/ReactIndexConfig');
 
 // ============================================================================
 // MARKET VENUE WHITELIST (V133.000)
@@ -358,6 +365,9 @@ class QuantHarvester {
             // V141.000: Use SurgicalInteraction for overlay handling
             await this.surgicalInteraction.handleOverlays();
 
+            // V146.000: Wait for React async rendering (NEW for SPA architecture)
+            await this.surgicalInteraction.waitForReactRender();
+
             // V141.000: Use SignalRadar for signal detection
             const signalResult = await this.signalRadar.waitForTrajectorySignal();
             if (this.config.logLevel === 'debug') {
@@ -407,12 +417,49 @@ class QuantHarvester {
             // Extract trajectory for each axis
             const axesData = {};
 
+            // V146.000: Get all odds cells once (React SPA architecture)
+            const allOddsCells = await this.page.$$('[class*="odds-cell"]');
+            const totalCells = allOddsCells.length;
+
+            console.log(`[V146.000] 📊 React SPA Index-based Targeting`);
+            console.log(`[V146.000] 📦 Total cells found: ${totalCells}`);
+
+            // V146.000: Validate row structure
+            if (!validateRowStructure(totalCells)) {
+                console.log(`[V146.000] ⚠️  Row structure invalid: ${totalCells} cells (expected >= ${CELLS_PER_ROW})`);
+                return result;
+            }
+
+            // V146.000: Calculate number of complete rows
+            const numberOfRows = Math.floor(totalCells / CELLS_PER_ROW);
+            console.log(`[V146.000] 📏 Complete rows detected: ${numberOfRows}`);
+
             for (const axisName of this.config.axes) {
                 try {
                     const dimension = this.config.axisDimensions[axisName];
+                    const indexOffset = getIndexOffset(axisName);
 
-                    // Find odds cells for this axis
-                    const oddsCells = await this.page.$$(`div[data-testid="odd-container-default"][data-type="${dimension}"]`);
+                    // Debug: log axis lookup
+                    if (this.config.logLevel === 'debug') {
+                        console.log(`[V146.000] 🔍 Axis lookup: ${axisName} -> offset=${indexOffset}, dim=${dimension}`);
+                    }
+
+                    if (indexOffset === null) {
+                        console.log(`[V146.000] ⚠️  Unknown axis: ${axisName}`);
+                        console.log(`[V146.000] 🔍 Available offsets:`, JSON.stringify(AXIS_INDEX_OFFSETS));
+                        continue;
+                    }
+
+                    // V146.000: Collect cells for this axis using index-based mapping
+                    const oddsCells = [];
+                    for (let row = 0; row < numberOfRows; row++) {
+                        const cellIndex = row * CELLS_PER_ROW + indexOffset;
+                        if (cellIndex < totalCells) {
+                            oddsCells.push(allOddsCells[cellIndex]);
+                        }
+                    }
+
+                    console.log(`[V146.000] 🎯 Axis ${axisName} (offset ${indexOffset}): ${oddsCells.length} cells`);
 
                     if (oddsCells.length === 0) continue;
 
@@ -425,17 +472,48 @@ class QuantHarvester {
                                 cell, i, axisName, oddsCells.length
                             );
 
-                            // Check for modal
+                            // V148.000: Check for modal using TARGET REDIRECTED selector
+                            // Based on V147 competitive analysis, we look for "Odds movement" title
+                            // Note: Can't use Playwright pseudo-selectors in page.evaluate()
                             const modalExists = await this.page.evaluate(() => {
-                                const modal = document.querySelector('.height-content');
+                                // Look for the "Odds movement" heading using native DOM methods
+                                const h3Elements = document.querySelectorAll('h3');
+                                let titleElement = null;
+                                for (const h3 of h3Elements) {
+                                    if (h3.textContent && h3.textContent.includes('Odds movement')) {
+                                        titleElement = h3;
+                                        break;
+                                    }
+                                }
+
+                                if (!titleElement) return false;
+
+                                // V149.000: Traverse up to find the modal container (.tooltip is the actual container)
+                                const modal = titleElement.closest('.tooltip, [role="dialog"], .modal-content, [class*="popup"]');
+
                                 return modal && modal.offsetParent !== null;
                             });
 
                             if (modalExists) {
                                 let modalHtml = null;
                                 try {
+                                    // V148.000: Capture the modal HTML using native DOM methods
                                     modalHtml = await this.page.evaluate(() => {
-                                        const modal = document.querySelector('.height-content');
+                                        // Find the title using text content
+                                        const h3Elements = document.querySelectorAll('h3');
+                                        let titleElement = null;
+                                        for (const h3 of h3Elements) {
+                                            if (h3.textContent && h3.textContent.includes('Odds movement')) {
+                                                titleElement = h3;
+                                                break;
+                                            }
+                                        }
+
+                                        if (!titleElement) return null;
+
+                                        // Get the modal container
+                                        const modal = titleElement.closest('[role="dialog"], .modal-content, [class*="popup"]');
+
                                         return modal ? modal.outerHTML : null;
                                     });
                                 } catch (e) {
@@ -642,6 +720,225 @@ class QuantHarvester {
 
         } catch (error) {
             throw new QuantHarvesterError('QUEUE_FAILED', `Queue processing failed: ${error.message}`);
+        }
+    }
+
+    /**
+     * V149.000: Diagnostic Method - Capture Modal HTML
+     *
+     * Captures the actual modal HTML for diagnostic purposes.
+     * This method is used by v149_000_diagnostic.js to investigate
+     * why TrajectoryParser returns 0 points despite successful modal detection.
+     *
+     * @param {string} url - OddsPortal match URL
+     * @returns {Promise<string|null>} Modal HTML or null if not found
+     */
+    async _captureModalForDiagnostic(url) {
+        let tempBrowser = null;
+        let tempContext = null;
+        let tempPage = null;
+
+        try {
+            // Initialize browser if not already initialized
+            if (!this.isInitialized) {
+                await this.init();
+            }
+
+            // Navigate to URL
+            console.log(`[V149.000] 📍 Navigating to: ${url}`);
+            await this.page.goto(url, { waitUntil: 'networkidle', timeout: this.config.timeout });
+
+            // Wait for React rendering
+            await this.surgicalInteraction.waitForReactRender();
+
+            // V149.000: Remove overlays (Cookie banners, etc.)
+            console.log('[V149.000] 🧹 Removing overlays...');
+            await this.surgicalInteraction.handleOverlays();
+
+            // Find first odds cell
+            const oddsCells = await this.page.$$('.odds-cell');
+            if (oddsCells.length === 0) {
+                console.log('[V149.000] ⚠️  No odds cells found');
+                return null;
+            }
+
+            console.log(`[V149.000] 🎯 Found ${oddsCells.length} odds cells, hovering on first...`);
+
+            // Perform hover on first cell
+            const cell = oddsCells[0];
+
+            // Scroll into view if needed
+            if (this.config.scrollIntoViewBeforeHover) {
+                await cell.scrollIntoViewIfNeeded();
+                await this.surgicalInteraction.scrollSettle();
+            }
+
+            // Get bounding box for hover
+            const boundingBox = await cell.boundingBox();
+            if (!boundingBox) {
+                console.log('[V149.000] ⚠️  Could not get bounding box');
+                return null;
+            }
+
+            // Calculate hover position (center with jitter)
+            const jitter = this.surgicalInteraction.generatePixelJitter();
+            const centerX = boundingBox.x + boundingBox.width / 2;
+            const centerY = boundingBox.y + boundingBox.height / 2;
+            const hoverX = centerX + jitter.offsetX;
+            const hoverY = centerY + jitter.offsetY;
+
+            // Perform hover
+            await this.page.mouse.move(hoverX, hoverY);
+            console.log(`[V149.000] 🎯 Hovered at (${hoverX.toFixed(1)}, ${hoverY.toFixed(1)})`);
+
+            // Wait for random stabilization
+            await this.surgicalInteraction.randomStabilize();
+
+            // V149.000: Additional wait for modal to appear (React async rendering)
+            console.log('[V149.000] ⏳ Waiting 3s for modal to appear...');
+            await this.page.waitForTimeout(3000);
+
+            // Detect and capture modal
+            console.log('[V149.000] 🔍 Looking for modal...');
+            const diagnosticInfo = await this.page.evaluate(() => {
+                const result = {
+                    h3Count: 0,
+                    h3Texts: [],
+                    dialogCount: 0,
+                    popupCount: 0,
+                    modalContentCount: 0,
+                    fixedCount: 0,
+                    tooltipCount: 0,
+                    maxContentCount: 0,
+                    foundTitle: false,
+                    foundModal: false,
+                    modalHtml: null,
+                    parentChain: []
+                };
+
+                // Count all h3 elements
+                const h3Elements = document.querySelectorAll('h3');
+                result.h3Count = h3Elements.length;
+                h3Elements.forEach((h3, idx) => {
+                    result.h3Texts.push(`h3[${idx}]: "${h3.textContent?.trim().substring(0, 50)}"`);
+                });
+
+                // Count potential modal containers
+                result.dialogCount = document.querySelectorAll('[role="dialog"]').length;
+                result.popupCount = document.querySelectorAll('[class*="popup"]').length;
+                result.modalContentCount = document.querySelectorAll('.modal-content').length;
+                result.fixedCount = document.querySelectorAll('[class*="fixed"]').length;
+                result.tooltipCount = document.querySelectorAll('[class*="tooltip"]').length;
+                result.maxContentCount = document.querySelectorAll('[class*="max-content"]').length;
+
+                // Find "Odds movement" title
+                let titleElement = null;
+                for (const h3 of h3Elements) {
+                    if (h3.textContent && h3.textContent.includes('Odds movement')) {
+                        titleElement = h3;
+                        result.foundTitle = true;
+                        console.log('[V149.000] ✅ Found "Odds movement" title');
+                        break;
+                    }
+                }
+
+                if (!titleElement) {
+                    console.log('[V149.000] ❌ "Odds movement" title not found');
+                    console.log('[V149.000] Available h3 texts:', result.h3Texts.join('\n'));
+                    return result;
+                }
+
+                // V149.000: Capture parent chain to understand DOM structure
+                let parent = titleElement.parentElement;
+                let depth = 0;
+                while (parent && depth < 15) {
+                    const tagInfo = parent.tagName?.toLowerCase() || 'unknown';
+                    const idInfo = parent.id ? `#${parent.id}` : '';
+                    const classInfo = parent.className ? `.${parent.className.split(' ')[0]}` : '';
+                    const roleInfo = parent.getAttribute('role') ? `[role="${parent.getAttribute('role')}"]` : '';
+
+                    result.parentChain.push({
+                        depth,
+                        tag: tagInfo,
+                        id: parent.id || '',
+                        class: parent.className || '',
+                        role: parent.getAttribute('role') || '',
+                        selector: tagInfo + idInfo + classInfo + roleInfo
+                    });
+
+                    // Try to find modal-like container at each level
+                    if (parent.getAttribute('role') === 'dialog' ||
+                        parent.classList.contains('modal-content') ||
+                        Array.from(parent.classList).some(c => c.includes('popup')) ||
+                        Array.from(parent.classList).some(c => c.includes('fixed')) ||
+                        Array.from(parent.classList).some(c => c.includes('tooltip'))) {
+                        console.log(`[V149.000] ✅ Found potential modal at depth ${depth}:`, result.parentChain[result.parentChain.length - 1].selector);
+                        result.foundModal = true;
+                        result.modalHtml = parent.outerHTML;
+                        break;
+                    }
+
+                    parent = parent.parentElement;
+                    depth++;
+                }
+
+                // If still not found, get the entire parent chain as HTML
+                if (!result.modalHtml && titleElement.parentElement) {
+                    console.log('[V149.000] ⚠️  No modal container found, capturing parent tree...');
+                    // Get a reasonable chunk of HTML (5 levels up)
+                    let htmlChunk = titleElement.outerHTML;
+                    let p = titleElement.parentElement;
+                    for (let i = 0; i < 5 && p; i++) {
+                        htmlChunk = p.outerHTML;
+                        p = p.parentElement;
+                    }
+                    result.modalHtml = htmlChunk;
+                }
+
+                return result;
+            });
+
+            console.log('[V149.000] 📊 Diagnostic info:');
+            console.log(`  - h3 elements: ${diagnosticInfo.h3Count}`);
+            console.log(`  - [role="dialog"]: ${diagnosticInfo.dialogCount}`);
+            console.log(`  - [class*="popup"]: ${diagnosticInfo.popupCount}`);
+            console.log(`  - .modal-content: ${diagnosticInfo.modalContentCount}`);
+            console.log(`  - [class*="fixed"]: ${diagnosticInfo.fixedCount}`);
+            console.log(`  - [class*="tooltip"]: ${diagnosticInfo.tooltipCount}`);
+            console.log(`  - [class*="max-content"]: ${diagnosticInfo.maxContentCount}`);
+            console.log(`  - Found title: ${diagnosticInfo.foundTitle}`);
+            console.log(`  - Found modal: ${diagnosticInfo.foundModal}`);
+
+            if (diagnosticInfo.parentChain.length > 0) {
+                console.log('[V149.000] Parent chain of "Odds movement" h3:');
+                diagnosticInfo.parentChain.slice(0, 8).forEach(p => {
+                    console.log(`  [${p.depth}] ${p.selector}`);
+                });
+            }
+
+            if (diagnosticInfo.h3Texts.length > 0 && !diagnosticInfo.foundTitle) {
+                console.log('[V149.000] Available h3 elements:');
+                diagnosticInfo.h3Texts.slice(0, 5).forEach(t => console.log('  - ' + t));
+            }
+
+            const modalHtml = diagnosticInfo.modalHtml;
+            if (modalHtml) {
+                console.log(`[V149.000] ✅ Captured ${modalHtml.length} chars of modal HTML`);
+            } else {
+                console.log('[V149.000] ❌ Failed to capture modal HTML');
+            }
+
+            return modalHtml;
+
+        } catch (error) {
+            console.error(`[V149.000] ❌ Error capturing modal: ${error.message}`);
+            return null;
+        } finally {
+            // Move mouse away to dismiss modal
+            if (this.page) {
+                await this.page.mouse.move(0, 0);
+                await this.jitterWait(500, 300);
+            }
         }
     }
 
