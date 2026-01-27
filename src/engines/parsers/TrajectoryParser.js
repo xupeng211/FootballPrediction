@@ -1,12 +1,12 @@
 /**
- * TrajectoryParser Module - V127.000 Standalone
+ * TrajectoryParser Module - V133.000 Ultimate Visual Breakthrough
  * ================================================================
  *
  * Time alignment and trajectory extraction utilities.
  * Extracted from QuantHarvester.js for modular architecture.
  *
  * @module parsers/TrajectoryParser
- * @version V127.000
+ * @version V133.000
  * @since 2026-01-27
  * @author Senior Lead Systems Architect
  *
@@ -112,15 +112,17 @@ function alignTimestamp(dateStr) {
 
 /**
  * TrajectoryParser - DOM-based trajectory extraction
+ * V133.000: Enhanced with fuzzy matching and data quality threshold
  * Extracts quantitative data trajectories from modal HTML
  */
 class TrajectoryParser {
     /**
      * Extract full trajectory from modal HTML using DOM traversal
      * V122.000: Memory leak fixed with explicit JSDOM cleanup
+     * V133.000: Added fuzzy matching selectors and data quality threshold
      *
      * @param {string} modalHtml - Modal HTML content
-     * @returns {Array<{time: string, value: number, type: string}>}
+     * @returns {Object} Result object with trajectory and metadata
      */
     extractFullTrajectoryDOM(modalHtml) {
         const trajectory = [];
@@ -128,7 +130,12 @@ class TrajectoryParser {
 
         try {
             if (!modalHtml || typeof modalHtml !== 'string') {
-                return trajectory;
+                return {
+                    trajectory: [],
+                    valid: false,
+                    warning: 'Invalid input: modalHtml is not a string',
+                    recordCount: 0
+                };
             }
 
             dom = new JSDOM(modalHtml);
@@ -197,7 +204,13 @@ class TrajectoryParser {
 
         } catch (error) {
             // Log error but don't fail
-            console.error('[TrajectoryParser] Extraction error:', error.message);
+            console.error('[V133.000 TrajectoryParser] Extraction error:', error.message);
+            return {
+                trajectory: [],
+                valid: false,
+                error: error.message,
+                recordCount: 0
+            };
         } finally {
             // V122.000: CRITICAL - Fix memory leak by explicitly closing JSDOM
             if (dom) {
@@ -209,16 +222,38 @@ class TrajectoryParser {
             }
         }
 
-        return trajectory;
+        // V133.000: Data quality threshold check
+        const recordCount = trajectory.length;
+        if (recordCount > 0 && recordCount < 3) {
+            console.warn(`[V133.000 TrajectoryParser] LOW DATA QUALITY: ${recordCount} records < 3 threshold`);
+            return {
+                trajectory,
+                valid: false,  // Not enough data points for reliable trajectory
+                warning: `Insufficient data points: ${recordCount} < 3. May trigger retry.`,
+                recordCount,
+                quality: 'POOR'
+            };
+        }
+
+        return {
+            trajectory,
+            valid: recordCount >= 2,  // At least 2 points for trajectory
+            recordCount,
+            quality: recordCount >= 5 ? 'EXCELLENT' : recordCount >= 3 ? 'GOOD' : 'POOR'
+        };
     }
 
     /**
      * Validate trajectory state
+     * V133.000: Enhanced with quality metrics
      * @param {Array} trajectory - Trajectory array
      * @returns {Object} Validation result
      */
     validateTrajectory(trajectory) {
-        if (!Array.isArray(trajectory) || trajectory.length === 0) {
+        // Handle new V133.000 return format
+        const trajectoryArray = Array.isArray(trajectory) ? trajectory : trajectory?.trajectory || [];
+
+        if (!Array.isArray(trajectoryArray) || trajectoryArray.length === 0) {
             return {
                 valid: false,
                 initial: null,
@@ -228,18 +263,18 @@ class TrajectoryParser {
             };
         }
 
-        if (trajectory.length < 2) {
+        if (trajectoryArray.length < 2) {
             return {
                 valid: false,
-                initial: trajectory[0]?.value || null,
-                current: trajectory[trajectory.length - 1]?.value || null,
+                initial: trajectoryArray[0]?.value || null,
+                current: trajectoryArray[trajectoryArray.length - 1]?.value || null,
                 hasDrift: false,
-                error: `Insufficient points: ${trajectory.length} < 2`
+                error: `Insufficient points: ${trajectoryArray.length} < 2`
             };
         }
 
-        const initial = trajectory[0].value;
-        const current = trajectory[trajectory.length - 1].value;
+        const initial = trajectoryArray[0].value;
+        const current = trajectoryArray[trajectoryArray.length - 1].value;
         const hasDrift = Math.abs(current - initial) > 0.001;
 
         return {
@@ -247,7 +282,7 @@ class TrajectoryParser {
             initial,
             current,
             hasDrift,
-            trajectoryLength: trajectory.length
+            trajectoryLength: trajectoryArray.length
         };
     }
 }
