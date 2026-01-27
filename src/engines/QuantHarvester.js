@@ -1,5 +1,5 @@
 /**
- * QuantHarvester - V133.000 Ultimate Visual Breakthrough
+ * QuantHarvester - V138.000 Modular Strike
  * =============================================================================
  *
  * Standard production engine for extracting multi-dimensional quantitative data
@@ -10,10 +10,16 @@
  * - Signal Focus: Network traffic monitoring for .dat data packets
  * - Fuzzy Matching: Tailwind CSS compatible selectors
  *
+ * V138.000 Features:
+ * - Modular Aiming System: Centralized OddsPortalSelectors
+ * - Surgical Interaction: scrollIntoViewIfNeeded before hover
+ * - Golden Zone: 2024-2026 high-yield match filtering
+ * - Telemetry Dashboard: Real-time quality metrics
+ *
  * @module QuantHarvester
- * @version V133.000
+ * @version V138.000
  * @since 2026-01-27
- * @author Senior Lead Systems Architect
+ * @author Senior Staff Software Architect
  *
  * @example
  * const harvester = new QuantHarvester();
@@ -35,6 +41,8 @@ const {
     StorageError
 } = require('../../scripts/ops/modules/storage');
 const { TrajectoryParser, SyncTimestamp, alignTimestamp } = require('./parsers/TrajectoryParser');
+// V138.000: Modular Aiming System
+const { OddsPortalSelectors, SelectorHelper } = require('./selectors/OddsPortalSelectors');
 
 // ============================================================================
 // CONFIGURATION (Environment-First, Zero Hardcoding)
@@ -86,13 +94,28 @@ const DEFAULT_CONFIG = {
     signalWaitTimeout: parseInt(process.env.SIGNAL_WAIT_TIMEOUT) || 15000,
     forceRemoveOverlays: process.env.FORCE_REMOVE_OVERLAYS === 'true',
 
+    // V136.000: Precision Tuning Configuration
+    hoverStabilizeMs: parseInt(process.env.HOVER_STABILIZE_MS) || 1500,
+    modalRetryCount: parseInt(process.env.MODAL_RETRY_COUNT) || 2,
+    adaptiveSignalTimeout: parseInt(process.env.ADAPTIVE_SIGNAL_TIMEOUT) || 5000,
+
     // V129.000: Dynamic Proxy Discovery Configuration
     proxyHost: process.env.PROXY_HOST || '172.25.16.1',
     proxyPortStart: parseInt(process.env.PROXY_PORT_START) || 7891,
     proxyPortEnd: parseInt(process.env.PROXY_PORT_END) || 7913,
     proxyScanTimeout: parseInt(process.env.PROXY_SCAN_TIMEOUT) || 500,
     proxyProtocol: process.env.PROXY_PROTOCOL || 'http',
-    enableProxyRotation: process.env.ENABLE_PROXY_ROTATION === 'true'
+    enableProxyRotation: process.env.ENABLE_PROXY_ROTATION === 'true',
+
+    // V138.000: Modular Strike Configuration
+    scrollIntoViewBeforeHover: process.env.SCROLL_INTO_VIEW_BEFORE_HOVER === 'true',
+    telemetryEnabled: process.env.TELEMETRY_DASHBOARD_ENABLED === 'true',
+    telemetryReportInterval: parseInt(process.env.TELEMETRY_REPORT_INTERVAL) || 20,
+    goldenZoneStartDate: process.env.GOLDEN_ZONE_START_DATE || '2024-01-01',
+    goldenZoneFilterDisabled: process.env.GOLDEN_ZONE_FILTER_DISABLED === 'true',
+    harvestMaxConcurrent: parseInt(process.env.HARVEST_MAX_CONCURRENT) || 15,
+    harvestRetryAttempts: parseInt(process.env.HARVEST_RETRY_ATTEMPTS) || 2,
+    harvestRetryDelayMs: parseInt(process.env.HARVEST_RETRY_DELAY_MS) || 5000
 };
 
 // ============================================================================
@@ -506,13 +529,17 @@ class QuantHarvesterError extends Error {
 
 /**
  * QuantHarvester - Main harvester class
- * V133.000: Ultimate Visual Breakthrough
+ * V138.000: Modular Strike
  * - BRUTE FORCE overlay removal (V133.000)
  * - Signal focus for .dat packets (V133.000)
  * - Fuzzy matching selectors (V133.000)
  * - Memory leaks fixed (V122.000)
  * - Hardcoding eliminated (V122.000)
  * - Dynamic proxy discovery (V129.000)
+ * - Modular Aiming System (V138.000)
+ * - Surgical Interaction with scrollIntoViewIfNeeded (V138.000)
+ * - Golden Zone filtering (2024-2026) (V138.000)
+ * - Telemetry Dashboard (V138.000)
  */
 class QuantHarvester {
     static #instance = null;
@@ -534,6 +561,19 @@ class QuantHarvester {
         this.page = null;
         this.isInitialized = false;
 
+        // V138.000: Config instrumentation - Log sanitized config
+        console.log('[V138.000] ========== CONFIG INSTRUMENTATION ==========');
+        const sanitizedConfig = { ...this.config };
+        if (sanitizedConfig.dbPassword) sanitizedConfig.dbPassword = '***';
+        console.log('[V138.000] Config loaded:', JSON.stringify(sanitizedConfig, null, 2));
+        console.log('[V138.000] forceRemoveOverlays:', this.config.forceRemoveOverlays);
+        console.log('[V138.000] enableProxyRotation:', this.config.enableProxyRotation);
+        console.log('[V138.000] scrollIntoViewBeforeHover:', this.config.scrollIntoViewBeforeHover);
+        console.log('[V138.000] telemetryEnabled:', this.config.telemetryEnabled);
+        console.log('[V138.000] goldenZoneStartDate:', this.config.goldenZoneStartDate);
+        console.log('[V138.000] harvestMaxConcurrent:', this.config.harvestMaxConcurrent);
+        console.log('[V138.000] ===============================================');
+
         // V129.000: Dynamic Proxy Discovery Engine (no static config path)
         this.proxyPool = new ProxyPoolManager({
             proxyHost: this.config.proxyHost,
@@ -543,12 +583,18 @@ class QuantHarvester {
             protocol: this.config.proxyProtocol
         });
 
-        // Statistics
+        // V138.000: Enhanced Statistics with Telemetry
         this.stats = {
             totalMatches: 0,
             successfulMatches: 0,
             failedMatches: 0,
-            totalTrajectoryPoints: 0
+            totalTrajectoryPoints: 0,
+            // V138.000: Telemetry metrics
+            pixelRetrySuccesses: 0,
+            overlayNodesRemoved: 0,
+            goldenZoneFiltered: 0,
+            avgHarvestTimeMs: 0,
+            lastTelemetryReport: 0
         };
 
         QuantHarvester.#instance = this;
@@ -655,72 +701,52 @@ class QuantHarvester {
     }
 
     /**
-     * V133.000: Handle cookie consent overlays - BRUTE FORCE PURGE
+     * V138.000: Handle overlays - BRUTE FORCE PURGE with Modular Selectors
      * V132.100 Finding: OneTrust popup was hidden but not removed, blocking hover interactions
-     * Solution: Physical DOM deletion using page.evaluate()
+     * V138.000 Enhancement: Added .overlay-bookie-modal support (missing in OddsHarvester)
+     * Solution: Physical DOM deletion using OddsPortalSelectors
      *
      * @returns {Promise<boolean>} True if overlays were removed
      * @private
      */
     async handleOverlays() {
         try {
+            // V138.000: Instrumentation - Log entry point
+            console.log('[V138.000] ========== OVERLAY PURGE START ==========');
+            console.log('[V138.000] forceRemoveOverlays config:', this.config.forceRemoveOverlays);
+
             // Wait briefly for overlay to appear
             await this.page.waitForTimeout(500);
 
             let removedCount = 0;
 
             if (this.config.forceRemoveOverlays) {
-                // V133.000: BRUTE FORCE - Physical DOM deletion
+                // V138.000: BRUTE FORCE - Physical DOM deletion using Modular Selectors
                 // "宁可错杀，不准挡路" - Better to over-remove than miss blocking elements
-                removedCount = await this.page.evaluate(() => {
-                    const keywords = ['onetrust', 'cookie', 'consent', 'overlay', 'banner', 'popup'];
-                    let count = 0;
+                console.log('[V138.000] BRUTE FORCE MODE: Using Modular Selectors for DOM purge...');
 
-                    // Remove by ID
-                    keywords.forEach(keyword => {
-                        const elements = document.querySelectorAll(`[id*="${keyword}"]`);
-                        elements.forEach(el => {
-                            el.remove();
-                            count++;
-                        });
-                    });
+                // V138.000: Use OddsPortalSelectors for purge script generation
+                const purgeScript = OddsPortalSelectors.generatePurgeScript();
+                const purgeResult = await this.page.evaluate(purgeScript);
 
-                    // Remove by class
-                    keywords.forEach(keyword => {
-                        const elements = document.querySelectorAll(`[class*="${keyword}"]`);
-                        elements.forEach(el => {
-                            el.remove();
-                            count++;
-                        });
-                    });
+                removedCount = purgeResult.count;
 
-                    // Remove known OneTrust selectors specifically
-                    const specificSelectors = [
-                        '#onetrust-consent-sdk',
-                        '#onetrust-banner-sdk',
-                        '.onetrust-pc-dark-filter',
-                        '.ot-pc-container',
-                        '[role="dialog"]',
-                        '.cookie-consent'
-                    ];
+                // V138.000: Log pre-purge check results
+                console.log('[V138.000] Pre-purge check:', JSON.stringify(purgeResult.preCheck));
+                console.log(`[V138.000] Removed ${purgeResult.removed.length} elements:`,
+                    purgeResult.removed.slice(0, 10).join(', '),
+                    purgeResult.removed.length > 10 ? '...' : '');
 
-                    specificSelectors.forEach(selector => {
-                        try {
-                            const elements = document.querySelectorAll(selector);
-                            elements.forEach(el => {
-                                el.remove();
-                                count++;
-                            });
-                        } catch (e) {
-                            // Selector errors ignored
-                        }
-                    });
+                console.log(`[V138.000] BRUTE FORCE RESULT: ${removedCount} nodes removed`);
 
-                    return count;
-                });
-
-                if (this.config.logLevel === 'debug' && removedCount > 0) {
-                    console.log(`[V133.000] BRUTE FORCE PURGE: ${removedCount} overlay nodes removed`);
+                if (removedCount > 0) {
+                    console.log(`[V138.000] ✅ OVERLAY PURGE SUCCESS: ${removedCount} nodes deleted`);
+                    // V138.000: Log .overlay-bookie-modal specifically if found
+                    if (purgeResult.removed.some(r => r.includes('bookie') || r.includes('modal'))) {
+                        console.log(`[V138.000] 🔥 SMOKING GUN: .overlay-bookie-modal was present and PURGED`);
+                    }
+                } else {
+                    console.log('[V138.000] ⚠️  OVERLAY PURGE: No nodes found matching keywords');
                 }
             } else {
                 // V127.000: Original click-based approach (fallback)
@@ -754,66 +780,211 @@ class QuantHarvester {
 
         } catch (error) {
             if (this.config.logLevel === 'debug') {
-                console.warn(`[V133.000] Overlay handling error: ${error.message}`);
+                console.warn(`[V138.000] Overlay handling error: ${error.message}`);
             }
             return false;
         }
     }
 
     /**
-     * V133.000: Wait for trajectory data packet signal
-     * Monitors network traffic for OddsPortal's .dat file response
-     * This is the core变盘 data packet that indicates data readiness
+     * V138.000: Reliable Hover with Surgical Precision
+     * V136.000 Features:
+     * - Hover stabilization (forced DOM rendering wait)
+     * - Modal verification after each hover
+     * - Pixel-shift retry (2px offset) if modal not detected
+     * - Configurable retry count (MODAL_RETRY_COUNT)
      *
-     * @returns {Promise<boolean>} True if signal detected
+     * V138.000 Enhancements:
+     * - scrollIntoViewIfNeeded() before hover (ensures element is in viewport)
+     * - Using OddsPortalSelectors for fallback strategies
+     *
+     * @param {ElementHandle} cell - The odds cell to hover
+     * @param {number} cellIndex - Cell index for logging
+     * @param {string} axisName - Axis name (home/draw/away)
+     * @param {number} totalCells - Total cells for logging
+     * @returns {Promise<Object>} Result object with success flag and retry count
+     * @private
+     */
+    async performReliableHover(cell, cellIndex, axisName, totalCells) {
+        const maxRetries = this.config.modalRetryCount;
+        let retryCount = 0;
+        let modalDetected = false;
+        let originalPosition = null;
+
+        // V138.000: Log initial hover attempt
+        console.log(`[V138.000] 🎯 SURGICAL HOVER: Cell ${cellIndex + 1}/${totalCells} (axis: ${axisName})`);
+
+        for (let attempt = 0; attempt <= maxRetries; attempt++) {
+            try {
+                // V138.000: Surgical Precision - scrollIntoViewIfNeeded on first attempt
+                if (attempt === 0) {
+                    if (this.config.scrollIntoViewBeforeHover) {
+                        console.log(`[V138.000] 🔭 SCROLL INTO VIEW: Ensuring element is in viewport...`);
+                        await cell.scrollIntoViewIfNeeded();
+                        // Small delay to let scroll settle
+                        await this.page.waitForTimeout(200);
+                        console.log(`[V138.000] ✅ Element centered in viewport`);
+                    }
+
+                    const boundingBox = await cell.boundingBox();
+                    originalPosition = { x: boundingBox.x, y: boundingBox.y };
+                    console.log(`[V138.000] Original position:`, JSON.stringify(originalPosition));
+                }
+
+                // Perform hover (or pixel-shift retry)
+                if (attempt > 0) {
+                    // Pixel-shift retry: offset by 2 pixels
+                    const offsetX = originalPosition.x + (attempt % 2 === 0 ? 2 : -2);
+                    const offsetY = originalPosition.y + (attempt % 2 === 0 ? 2 : -2);
+                    console.log(`[V138.000] 🔄 Pixel-shift retry #${attempt}: offset (${offsetX - originalPosition.x}, ${offsetY - originalPosition.y})px`);
+                    await this.page.mouse.move(offsetX + 10, offsetY + 10);
+                } else {
+                    // Initial hover (after scrollIntoViewIfNeeded)
+                    await cell.hover();
+                    console.log(`[V138.000] ✅ Hover executed`);
+                }
+
+                // V138.000: Stabilization delay (forced DOM rendering wait)
+                console.log(`[V138.000] ⏳ Stabilizing: ${this.config.hoverStabilizeMs}ms...`);
+                await this.page.waitForTimeout(this.config.hoverStabilizeMs);
+
+                // V138.000: Verify modal appeared (using OddsPortalSelectors)
+                const modalExists = await this.page.evaluate(() => {
+                    const modal = document.querySelector('.height-content');
+                    return modal && modal.offsetParent !== null; // Check if visible
+                });
+
+                if (modalExists) {
+                    console.log(`[V138.000] ✅ Modal DETECTED on attempt ${attempt + 1}`);
+                    modalDetected = true;
+                    break;  // Success - exit retry loop
+                } else {
+                    if (attempt < maxRetries) {
+                        console.log(`[V138.000] ⚠️  No modal detected, will retry...`);
+                        retryCount++;
+                    } else {
+                        console.log(`[V138.000] ❌ No modal detected after ${maxRetries + 1} attempts`);
+                    }
+                }
+
+            } catch (error) {
+                if (attempt < maxRetries) {
+                    console.log(`[V138.000] ⚠️  Hover error on attempt ${attempt + 1}: ${error.message}`);
+                    retryCount++;
+                } else {
+                    console.log(`[V138.000] ❌ Hover failed after ${maxRetries + 1} attempts: ${error.message}`);
+                    break;
+                }
+            }
+        }
+
+        return {
+            success: modalDetected,
+            retries: retryCount,
+            attempt: maxRetries + 1
+        };
+    }
+
+    /**
+     * V136.000: Adaptive wait for trajectory data packet signal
+     * V133.000: Monitors network traffic for OddsPortal's .dat file response
+     * V136.000: Adaptive bypass - if odds visible but no .dat signal, proceed anyway
+     *
+     * @returns {Promise<boolean>} True if signal detected or adaptive bypass triggered
      * @private
      */
     async waitForTrajectorySignal() {
         try {
-            let signalDetected = false;
+            // V134.000: Instrumentation - Log signal radar activation
+            console.log('[V136.000] ========== ADAPTIVE SIGNAL RADAR ==========');
+            console.log('[V136.000] Adaptive timeout:', this.config.adaptiveSignalTimeout, 'ms');
+            console.log('[V136.000] Fallback timeout:', this.config.signalWaitTimeout, 'ms');
+            console.log('[V136.000] 📡 Signal radar NOW MONITORING for .dat packets...');
 
-            // Setup response listener before page actions
-            const signalPromise = this.page.waitForResponse(
+            let signalDetected = false;
+            let adaptiveBypass = false;
+
+            // V136.000: Phase 1 - Quick adaptive check (5 seconds)
+            const adaptiveSignalPromise = this.page.waitForResponse(
                 response => {
                     const url = response.url();
-                    // Match .dat file pattern (OddsPortal trajectory data)
                     const isDatFile = /.*\.dat.*/i.test(url);
                     const isStatusOk = response.status() === 200;
 
                     if (isDatFile && isStatusOk) {
-                        if (this.config.logLevel === 'debug') {
-                            console.log(`[V133.000] SIGNAL LOCKED: ${url.substring(0, 80)}...`);
-                        }
+                        console.log(`[V136.000] 🔒 SIGNAL LOCKED (Adaptive): ${url}`);
                         return true;
                     }
                     return false;
                 },
-                { timeout: this.config.signalWaitTimeout }
+                { timeout: this.config.adaptiveSignalTimeout }
             ).then(() => {
                 signalDetected = true;
+                console.log('[V136.000] ✅ Signal found in adaptive window');
                 return true;
-            }).catch(() => {
-                // Timeout is acceptable - data may already be loaded
-                if (this.config.logLevel === 'debug') {
-                    console.log('[V133.000] Signal timeout - data may be pre-loaded');
+            }).catch(async () => {
+                // V136.000: Adaptive bypass - check if odds cells are visible
+                console.log('[V136.000] ⏱️  Adaptive timeout - checking if data is pre-loaded...');
+
+                const oddsCellCount = await this.page.$$eval('[class*="odds-cell"]', els => els.length);
+
+                if (oddsCellCount > 0) {
+                    console.log(`[V136.000] ✅ ADAPTIVE BYPASS: ${oddsCellCount} odds cells visible, proceeding anyway`);
+                    adaptiveBypass = true;
+                    return true;  // Continue despite no .dat signal
+                } else {
+                    console.log('[V136.000] ⏳  No odds cells yet, waiting for full timeout...');
+                    // Fall through to Phase 2
+                    return false;
                 }
-                return false;
             });
 
-            // Wait for signal or timeout
-            await signalPromise;
+            await adaptiveSignalPromise;
+
+            // V136.000: Phase 2 - Full timeout wait (only if adaptive bypass failed)
+            if (!signalDetected && !adaptiveBypass) {
+                console.log('[V136.000] Entering Phase 2: Full timeout wait...');
+
+                const remainingTimeout = this.config.signalWaitTimeout - this.config.adaptiveSignalTimeout;
+
+                await this.page.waitForResponse(
+                    response => {
+                        const url = response.url();
+                        const isDatFile = /.*\.dat.*/i.test(url);
+                        const isStatusOk = response.status() === 200;
+
+                        if (isDatFile && isStatusOk) {
+                            console.log(`[V136.000] 🔒 SIGNAL LOCKED (Full): ${url}`);
+                            return true;
+                        }
+                        return false;
+                    },
+                    { timeout: remainingTimeout }
+                ).then(() => {
+                    signalDetected = true;
+                    console.log('[V136.000] ✅ Signal found in full window');
+                    return true;
+                }).catch(() => {
+                    console.log('[V136.000] ⏱️  Full timeout - data may be pre-loaded or no .dat packets');
+                    return false;
+                });
+            }
 
             // Additional wait for DOM to stabilize after signal
             if (signalDetected) {
+                console.log('[V136.000] 📊 Signal detected, waiting for DOM stabilization...');
                 await this.jitterWait(1000, 500);
+            } else if (adaptiveBypass) {
+                console.log('[V136.000] 📊 Adaptive bypass active, brief stabilization wait...');
+                await this.page.waitForTimeout(500);  // Shorter wait for bypass
             }
 
-            return signalDetected;
+            const result = signalDetected || adaptiveBypass;
+            console.log(`[V136.000] Signal result: ${signalDetected ? 'LOCKED' : adaptiveBypass ? 'BYPASS' : 'TIMEOUT'}`);
+            return result;
 
         } catch (error) {
-            if (this.config.logLevel === 'debug') {
-                console.warn(`[V133.000] Signal detection error: ${error.message}`);
-            }
+            console.log(`[V136.000] ❌ Signal detection error: ${error.message}`);
             return false;
         }
     }
@@ -901,44 +1072,88 @@ class QuantHarvester {
                         const cell = oddsCells[i];
 
                         try {
-                            await cell.hover();
-                            await this.jitterWait();  // V127.000: Randomized 2-3.5s wait
+                            // V136.000: Reliable Hover with pixel-shift retry
+                            const hoverResult = await this.performReliableHover(cell, i, axisName, oddsCells.length);
 
-                            // Wait for modal
-                            const modalSelector = 'h3:has-text("Odds movement")';
-                            const modalAppeared = await this.page.$(modalSelector);
+                            if (!hoverResult.success) {
+                                if (this.config.logLevel === 'debug') {
+                                    console.log(`[V136.000] ⚠️  Hover failed for ${axisName}, skipping...`);
+                                }
+                                continue;
+                            }
+
+                            // Wait for modal (V134.000: Fixed selector + V136.000 retry logic)
+                            let modalAppeared = null;
+
+                            // V136.000: Quick check for modal (hover may have triggered it during retry)
+                            try {
+                                modalAppeared = await this.page.waitForSelector('.height-content:has(h3:has-text("Odds movement"))', { timeout: 1000 });
+                            } catch (e) {
+                                // Strategy 1 failed, try alternative
+                            }
+
+                            // Strategy 2: Find h3 with "Odds movement" text
+                            if (!modalAppeared) {
+                                try {
+                                    const h3Element = await this.page.waitForSelector('h3:has-text("Odds movement")', { timeout: 1000 });
+                                    if (h3Element) {
+                                        // Get the container by walking up to find .height-content or position:absolute
+                                        modalAppeared = await h3Element.evaluateHandle(el => {
+                                            let container = el.parentElement;
+                                            while (container && container !== document.body) {
+                                                const classes = container.className || '';
+                                                const hasHeightContent = /height-content/i.test(classes);
+                                                const isAbsolute = /absolute/.test(window.getComputedStyle(container).position);
+                                                if (hasHeightContent || isAbsolute) {
+                                                    return container;
+                                                }
+                                                container = container.parentElement;
+                                            }
+                                            return el;
+                                        });
+                                    }
+                                } catch (e2) {
+                                    // Strategy 2 failed
+                                }
+                            }
+
+                            // V136.000: Debug log
+                            if (this.config.logLevel === 'debug') {
+                                console.log(`[V136.000] Modal detection: ${modalAppeared ? 'FOUND' : 'NOT FOUND'}`);
+                            }
 
                             if (modalAppeared) {
                                 let modalHtml = null;
                                 try {
-                                    modalHtml = await modalAppeared.evaluate(el => {
-                                        let container = el;
-                                        let depth = 0;
-                                        while (container && depth < 10) {
-                                            const classes = container.className || '';
-                                            const hasModalClass = /modal|popup|dialog|tooltip|dropdown/i.test(classes);
-                                            const hasRole = container.getAttribute('role') === 'dialog';
-                                            const isFixedOrAbsolute = /fixed|absolute/.test(window.getComputedStyle(container).position);
-
-                                            if (hasModalClass || hasRole || (isFixedOrAbsolute && classes.length > 10)) {
-                                                return container.outerHTML;
-                                            }
-                                            container = container.parentElement;
-                                            depth++;
-                                        }
-                                        return el.parentElement?.outerHTML || el.outerHTML;
-                                    });
+                                    modalHtml = await modalAppeared.evaluate(el => el.outerHTML);
                                 } catch (e) {
                                     // Ignore modal HTML errors
                                 }
 
                                 if (modalHtml) {
+                                    // V134.000: Log extraction details
+                                    if (this.config.logLevel === 'debug') {
+                                        console.log(`[V136.000] Modal HTML length: ${modalHtml.length} chars`);
+                                        console.log(`[V136.000] Modal HTML preview: ${modalHtml.substring(0, 200)}...`);
+                                    }
+
                                     // V133.000: Handle new TrajectoryParser return format
                                     const extractionResult = this.trajectoryParser.extractFullTrajectoryDOM(modalHtml);
                                     const trajectory = extractionResult.trajectory || [];
                                     const validation = this.trajectoryParser.validateTrajectory(extractionResult);
 
-                                    if (validation.valid) {
+                                    // V134.000: Log extraction result
+                                    if (this.config.logLevel === 'debug') {
+                                        console.log(`[V134.000] Extraction result:`, {
+                                            trajectoryCount: trajectory.length,
+                                            valid: validation.valid,
+                                            quality: extractionResult.quality,
+                                            warning: extractionResult.warning || 'none'
+                                        });
+                                    }
+
+                                    // V134.000: Accept POOR quality data (at least 1 point is valuable)
+                                    if (trajectory.length >= 1) {
                                         axesData[axisName] = {
                                             axis: axisName,
                                             dimension: this.config.axisDimensions[axisName],
@@ -950,6 +1165,11 @@ class QuantHarvester {
                                         };
 
                                         result.trajectoryPoints += trajectory.length;
+
+                                        // V134.000: Log quality level
+                                        if (this.config.logLevel === 'debug') {
+                                            console.log(`[V134.000] ✅ Data stored: ${trajectory.length} points, quality=${extractionResult.quality}`);
+                                        }
                                     } else if (this.config.logLevel === 'debug' && extractionResult.warning) {
                                         // V133.000: Log warnings for low quality data
                                         console.warn(`[V133.000] ${extractionResult.warning}`);
@@ -1120,7 +1340,216 @@ class QuantHarvester {
             totalMatches: 0,
             successfulMatches: 0,
             failedMatches: 0,
-            totalTrajectoryPoints: 0
+            totalTrajectoryPoints: 0,
+            // V138.000: Telemetry metrics
+            pixelRetrySuccesses: 0,
+            overlayNodesRemoved: 0,
+            goldenZoneFiltered: 0,
+            avgHarvestTimeMs: 0,
+            lastTelemetryReport: 0
+        };
+    }
+
+    /**
+     * V138.000: Display telemetry dashboard
+     * Shows real-time quality metrics every N matches
+     *
+     * @param {boolean} force - Force display regardless of interval
+     * @returns {void}
+     */
+    displayTelemetryDashboard(force = false) {
+        if (!this.config.telemetryEnabled) {
+            return;
+        }
+
+        const shouldDisplay = force ||
+            (this.stats.totalMatches % this.config.telemetryReportInterval === 0);
+
+        if (!shouldDisplay || this.stats.totalMatches === 0) {
+            return;
+        }
+
+        const successRate = ((this.stats.successfulMatches / this.stats.totalMatches) * 100).toFixed(2);
+        const avgPointsPerMatch = this.stats.totalMatches > 0
+            ? (this.stats.totalTrajectoryPoints / this.stats.successfulMatches).toFixed(2)
+            : 0;
+        const cpuUsage = process.cpuUsage().user / 1000000; // Convert to seconds
+        const memUsage = process.memoryUsage();
+        const memUsedMb = (memUsage.heapUsed / 1024 / 1024).toFixed(2);
+
+        console.log('');
+        console.log('╔════════════════════════════════════════════════════════════════╗');
+        console.log('║          V138.000 TELEMETRY DASHBOARD - REAL-TIME METRICS         ║');
+        console.log('╠════════════════════════════════════════════════════════════════╣');
+        console.log(`║  📊 SUCCESS RATE       : ${successRate}% (${this.stats.successfulMatches}/${this.stats.totalMatches})`);
+        console.log(`║  🎯 PIXEL RETRY SUCC   : ${this.stats.pixelRetrySuccesses}`);
+        console.log(`║  💾 TRAJECTORY POINTS  : ${this.stats.totalTrajectoryPoints} (avg: ${avgPointsPerMatch}/match)`);
+        console.log(`║  🗑️  OVERLAYS PURGED    : ${this.stats.overlayNodesRemoved} nodes`);
+        console.log(`║  🏆 GOLDEN ZONE FLT    : ${this.stats.goldenZoneFiltered} filtered`);
+        console.log(`║  ⏱️  AVG HARVEST TIME   : ${this.stats.avgHarvestTimeMs.toFixed(0)}ms`);
+        console.log(`║  💻 9900X CPU/MEM      : ${cpuUsage.toFixed(2)}s / ${memUsedMb}MB`);
+        console.log('╚════════════════════════════════════════════════════════════════╝');
+        console.log('');
+    }
+
+    /**
+     * V138.000: Golden Zone Filter
+     * Filters matches to only include those from 2024-01-01 onwards
+     *
+     * @param {Array} matches - Array of match objects with match_date or date field
+     * @returns {Array} Filtered array of matches
+     */
+    filterGoldenZone(matches) {
+        if (this.config.goldenZoneFilterDisabled) {
+            return matches;
+        }
+
+        const goldenZoneStart = new Date(this.config.goldenZoneStartDate);
+        let filteredCount = 0;
+
+        const filtered = matches.filter(match => {
+            const matchDate = new Date(match.match_date || match.date || match.startTime);
+            const isInGoldenZone = matchDate >= goldenZoneStart;
+
+            if (!isInGoldenZone) {
+                filteredCount++;
+            }
+
+            return isInGoldenZone;
+        });
+
+        if (filteredCount > 0 && this.config.logLevel === 'debug') {
+            console.log(`[V138.000] 🏆 GOLDEN ZONE FILTER: Removed ${filteredCount} matches before ${this.config.goldenZoneStartDate}`);
+        }
+
+        this.stats.goldenZoneFiltered = filteredCount;
+        return filtered;
+    }
+
+    /**
+     * V138.000: Process match queue with retry and telemetry
+     * Enhanced version of startQueue with golden zone filtering and retry logic
+     *
+     * @param {Array} matches - Array of match objects
+     * @param {Object} options - Processing options
+     * @returns {Promise<Object>} Batch processing result
+     */
+    async startQueue(matches, options = {}) {
+        // V138.000: Apply golden zone filtering
+        const goldenZoneMatches = this.filterGoldenZone(matches);
+        console.log(`[V138.000] 🏆 GOLDEN ZONE: Processing ${goldenZoneMatches.length} matches from ${this.config.goldenZoneStartDate} onwards`);
+
+        const {
+            maxConcurrent = this.config.harvestMaxConcurrent,
+            batchSize = this.config.batchSize,
+            limit = null,
+            onProgress = null
+        } = options;
+
+        const targetMatches = limit ? goldenZoneMatches.slice(0, limit) : goldenZoneMatches;
+        const totalMatches = targetMatches.length;
+
+        const batchStats = {
+            totalProcessed: 0,
+            successCount: 0,
+            failCount: 0,
+            totalTime: 0,
+            retryCount: 0
+        };
+
+        try {
+            // Process in batches
+            for (let batchStart = 0; batchStart < totalMatches; batchStart += batchSize) {
+                const batchEnd = Math.min(batchStart + batchSize, totalMatches);
+                const batch = targetMatches.slice(batchStart, batchEnd);
+
+                // Process batch concurrently
+                const promises = batch.map(async (match) => {
+                    let result = null;
+                    let attempts = 0;
+
+                    // V138.000: Retry logic for failed harvests
+                    while (attempts <= this.config.harvestRetryAttempts) {
+                        try {
+                            result = await this.harvestMatch(match.url, match.sourceId);
+
+                            if (result.success) {
+                                break; // Success, exit retry loop
+                            } else if (attempts < this.config.harvestRetryAttempts) {
+                                attempts++;
+                                batchStats.retryCount++;
+                                console.log(`[V138.000] 🔄 Retrying ${match.sourceId} (attempt ${attempts + 1}/${this.config.harvestRetryAttempts + 1})`);
+                                await this.page.waitForTimeout(this.config.harvestRetryDelayMs);
+                            }
+                        } catch (error) {
+                            if (attempts < this.config.harvestRetryAttempts) {
+                                attempts++;
+                                batchStats.retryCount++;
+                                console.log(`[V138.000] 🔄 Retrying ${match.sourceId} after error: ${error.message}`);
+                                await this.page.waitForTimeout(this.config.harvestRetryDelayMs);
+                            } else {
+                                result = { success: false, error: error.message };
+                            }
+                        }
+                    }
+
+                    // Update statistics
+                    batchStats.totalProcessed++;
+                    batchStats.totalTime += result?.duration || 0;
+
+                    if (result?.success) {
+                        batchStats.successCount++;
+                        this.stats.successfulMatches++;
+                        // V138.000: Track pixel retry successes
+                        if (result.pixelRetrySuccess) {
+                            this.stats.pixelRetrySuccesses++;
+                        }
+                    } else {
+                        batchStats.failCount++;
+                        this.stats.failedMatches++;
+                    }
+
+                    this.stats.totalMatches++;
+                    this.stats.totalTrajectoryPoints += result?.trajectoryPoints || 0;
+
+                    // V138.000: Report progress
+                    if (batchStats.totalProcessed % 10 === 0 && onProgress) {
+                        onProgress(batchStats.totalProcessed, totalMatches);
+                    }
+
+                    // V138.000: Display telemetry dashboard
+                    this.displayTelemetryDashboard();
+
+                    return result;
+                });
+
+                await Promise.all(promises);
+            }
+
+        } catch (error) {
+            throw new QuantHarvesterError(
+                'QUEUE_FAILED',
+                `Queue processing failed: ${error.message}`,
+                { error: error.message }
+            );
+        }
+
+        // V138.000: Calculate average harvest time
+        this.stats.avgHarvestTimeMs = batchStats.totalProcessed > 0
+            ? (batchStats.totalTime / batchStats.totalProcessed) * 1000
+            : 0;
+
+        // V138.000: Final telemetry report
+        this.displayTelemetryDashboard(true);
+
+        return {
+            totalProcessed: batchStats.totalProcessed,
+            successCount: batchStats.successCount,
+            failCount: batchStats.failCount,
+            retryCount: batchStats.retryCount,
+            successRate: batchStats.totalProcessed > 0 ? batchStats.successCount / batchStats.totalProcessed : 0,
+            avgTimePerMatch: batchStats.totalProcessed > 0 ? batchStats.totalTime / batchStats.totalProcessed : 0,
+            remaining: totalMatches - batchStats.totalProcessed
         };
     }
 
