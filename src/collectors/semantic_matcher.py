@@ -62,7 +62,7 @@ class SemanticMatcher:
         """Initialize the semantic matcher."""
         # Import LevenshteinMatcher for team name comparison
         try:
-            from src.api.collectors.levenshtein_matcher import LevenshteinMatcher
+            from src.collectors.levenshtein_matcher import LevenshteinMatcher
 
             self.levenshtein = LevenshteinMatcher(threshold=5)
         except ImportError:
