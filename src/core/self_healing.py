@@ -27,7 +27,7 @@ from typing import Any, Callable
 
 from playwright.async_api import Page
 
-from src.core.proxy_manager import ProxyManager, get_proxy_manager
+from src.core.proxy.proxy_manager import ProxyManager, get_proxy_manager
 
 logger = logging.getLogger(__name__)
 

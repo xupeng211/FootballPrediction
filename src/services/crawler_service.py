@@ -33,7 +33,7 @@ from playwright.async_api import Page, async_playwright
 
 from src.api.collectors.bayesian_delay_engine import BayesianDelayEngine
 from src.core.exceptions import NetworkError, ProxyError
-from src.core.proxy_health_checker import ProxyHealthChecker
+from src.core.proxy.proxy_health_checker import ProxyHealthChecker
 from src.core.semantic_refiner import SemanticRefiner
 from src.services.harvest_config import AntiScrapingConfig
 
