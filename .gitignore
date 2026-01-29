@@ -276,3 +276,21 @@ logs/health_report_*.json
 # V41.237: Ensure docs/ and config/ are NOT ignored
 !docs/
 !config/
+
+# =============================================================================
+# V164.Sanitization: Temporary diagnostic and canary test scripts
+# =============================================================================
+scripts/ops/v13[2-9]_*.js
+scripts/ops/v14[0-9]_*.js
+scripts/ops/v15[0-9]_*.js
+scripts/ops/v16[0-9]_*.js
+scripts/ops/v139_200_*.py
+scripts/ops/scripts/
+scripts/ops/debug_cells.js
+scripts/verify_v*.js
+v1[0-9]*_*.js
+modal_dump.html
+=/
+=
+config/proxies.json
+scripts/sql/v160_*.sql

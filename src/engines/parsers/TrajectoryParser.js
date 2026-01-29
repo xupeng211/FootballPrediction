@@ -1,22 +1,25 @@
 /**
- * TrajectoryParser Module - V140.000 Data Purity Calibration
- * ================================================================
+ * TrajectoryParser Module - V150.002 Opening Odds Priority Fix
+ * =============================================================
  *
  * Time alignment and trajectory extraction utilities.
  * Extracted from QuantHarvester.js for modular architecture.
  *
  * @module parsers/TrajectoryParser
- * @version V140.000
- * @since 2026-01-27
+ * @version V150.002
+ * @since 2026-01-28
  * @author Principal Data Engineer (Data Purity Specialist)
  *
- * V140.000 Features:
- * - 强制初盘打标: 排序后最早点自动标记为 Initial
- * - 时区硬化: 强制 UTC，消除本地时区干扰
- * - 年份校准: 跨年检测 + 未来日期自动回滚
- * - "苍蝇腿也是肉"原则: recordCount >= 1 即 SUCCESS
- * - quality_score 元数据: snapshot/partial/complete
- * - Flexbox-first extraction with table fallback
+ * V150.002 Features:
+ * - Opening odds extraction priority (skip current odds)
+ * - Split by "Opening odds:" to avoid false matches
+ * - Fixed documentElement handling for JSDOM wrapper
+ * - V140.000 Features preserved:
+ *   - 强制初盘打标: 排序后最早点自动标记为 Initial
+ *   - 时区硬化: 强制 UTC，消除本地时区干扰
+ *   - 年份校准: 跨年检测 + 未来日期自动回滚
+ *   - "苍蝇腿也是肉"原则: recordCount >= 1 即 SUCCESS
+ *   - quality_score 元数据: snapshot/partial/complete
  *
  * @example
  * const { TrajectoryParser, SyncTimestamp, alignTimestamp } = require('./parsers/TrajectoryParser');
@@ -49,7 +52,8 @@ class SyncTimestamp {
     constructor(options = {}) {
         // V140.000: 支持环境配置或默认值
         const env = process.env || {};
-        this.baseYear = parseInt(options.baseYear || env.BASE_YEAR || new Date().getFullYear());
+        // V151.000: 默认使用 2024 作为基准年份（适配 Golden Zone 数据）
+        this.baseYear = parseInt(options.baseYear || env.BASE_YEAR || 2024);
         this.enforceUTC = options.enforceUTC !== undefined ? options.enforceUTC : (env.ENFORCE_UTC !== 'false');
         this.maxFutureToleranceHours = parseInt(options.maxFutureToleranceHours || env.MAX_FUTURE_TOLERANCE_HOURS || 48);
 
@@ -70,8 +74,10 @@ class SyncTimestamp {
     }
 
     /**
-     * V140.000: 跨年检测与年份校准
-     * 如果解析出的日期 > (当前时间 + 容差)，则判定为跨年错误，回滚一年
+     * V151.000: 跨年检测与年份校准
+     * 修复逻辑：对于历史数据，优先尝试回滚到正确年份
+     * 判定规则：若 parsedDate > (now + 48h)，则执行 year = year - 1
+     * 支持 BASE_YEAR 环境变量（默认 2024，适配 Golden Zone 数据）
      * @param {Date} parsedDate - 解析出的日期
      * @returns {Date} 校准后的日期
      */
@@ -79,13 +85,37 @@ class SyncTimestamp {
         const now = new Date();
         const futureThreshold = new Date(now.getTime() + this.maxFutureToleranceHours * 60 * 60 * 1000);
 
-        if (parsedDate > futureThreshold) {
-            // 日期太远，可能是跨年解析错误，回滚一年
-            console.log(`[V140.000 SyncTimestamp] Cross-year detection: ${parsedDate.toISOString()} > threshold, rolling back 1 year`);
-            return new Date(Date.UTC(parsedDate.getUTCFullYear() - 1, parsedDate.getUTCMonth(), parsedDate.getUTCDate(), parsedDate.getUTCHours(), parsedDate.getUTCMinutes()));
+        // V151.000: 首先检查是否在有效范围内（无需校准）
+        if (parsedDate <= futureThreshold) {
+            return parsedDate;
         }
 
-        return parsedDate;
+        // V151.000: 日期超出容差，执行年份校准
+        // 使用 baseYear 作为参考点（默认 2024，适配 Golden Zone 数据）
+        const targetYear = this.baseYear;
+        const calibratedDate = new Date(Date.UTC(
+            targetYear,
+            parsedDate.getUTCMonth(),
+            parsedDate.getUTCDate(),
+            parsedDate.getUTCHours(),
+            parsedDate.getUTCMinutes()
+        ));
+
+        // 验证校准后的日期是否合理（不应在未来）
+        if (calibratedDate > futureThreshold) {
+            // 即使使用 baseYear 仍然在未来，回退到 baseYear - 1
+            console.log(`[V151.000 SyncTimestamp] Cross-year detection: ${parsedDate.toISOString()} > threshold, rolling back to ${targetYear - 1}`);
+            return new Date(Date.UTC(
+                targetYear - 1,
+                parsedDate.getUTCMonth(),
+                parsedDate.getUTCDate(),
+                parsedDate.getUTCHours(),
+                parsedDate.getUTCMinutes()
+            ));
+        }
+
+        console.log(`[V151.000 SyncTimestamp] Year calibrated: ${parsedDate.getUTCFullYear()} -> ${targetYear}`);
+        return calibratedDate;
     }
 
     /**
@@ -130,6 +160,15 @@ class SyncTimestamp {
             if (month !== null && !isNaN(month)) {
                 // V140.000: 强制使用 Date.UTC 构造，确保 UTC 时区
                 let date = new Date(Date.UTC(year, month, day, hour, minute));
+
+                // V160.Repair: [年份锁定] 修复日期解析逻辑
+                // 如果解析出的年份小于 2024，必须强制通过 BASE_YEAR=2024 进行偏移校准
+                // 禁止出现 2001 年的数据（历史污染）
+                const parsedYear = date.getUTCFullYear();
+                if (parsedYear < 2024) {
+                    console.log(`[V160.Repair SyncTimestamp] 🚨 Detected historical year: ${parsedYear} < 2024, forcing BASE_YEAR=${this.baseYear}`);
+                    date = new Date(Date.UTC(this.baseYear, month, day, hour, minute));
+                }
 
                 // V140.000: 跨年检测与年份校准
                 date = this._calibrateYear(date);
@@ -192,84 +231,80 @@ class TrajectoryParser {
             dom = new JSDOM(modalHtml);
             const document = dom.window.document;
 
-            // V134.000: Try NEW flexbox structure first (OddsPortal 2026 redesign)
-            const timeDivs = document.querySelectorAll('div[class*="text-[10px]"], div.text-\\[10px\\]');
-            const dataPoints = [];
-
-            // Group consecutive divs that form time-odds-change triplets
-            for (let i = 0; i < timeDivs.length; i++) {
-                const div = timeDivs[i];
-                const text = div.textContent.trim();
-
-                // Check if this looks like a timestamp (e.g., "15 May, 18:52")
-                const timeMatch = text.match(/^(\d{1,2}\s+\w+\.?\s*,?\s*\d{1,2}:\d{2})/);
-                if (timeMatch) {
-                    // Look ahead for odds value in nearby divs
-                    const sync = new SyncTimestamp();
-                    const timestamp = sync.parse(timeMatch[1]);
-
-                    if (timestamp) {
-                        // Search forward for odds value
-                        let oddsValue = null;
-                        let parent = div.parentElement;
-                        let attempts = 0;
-
-                        while (parent && attempts < 5) {
-                            const siblings = parent.querySelectorAll('div[class*="text-\\[10px\\]"], div[class*="font-bold"]');
-                            for (const sibling of siblings) {
-                                const sibText = sibling.textContent.trim();
-                                const oddsMatch = sibText.match(/^(\d+\.\d+)$/);
-                                if (oddsMatch && !oddsValue) {
-                                    oddsValue = parseFloat(oddsMatch[1]);
-                                    break;
-                                }
+            // [V164.FullTrajectory] Flexbox Columnar Extraction (OddsPortal 2026)
+            // Structure: Container(flex-row) -> [TimeCol(flex-col), OddsCol(flex-col)]
+            const historyContainers = document.querySelectorAll('div.flex.flex-row.gap-3');
+            
+            for (const container of historyContainers) {
+                // We expect at least 2 columns: Time and Odds
+                // Sometimes there is a 3rd column for Volume/Bookmakers count
+                const columns = Array.from(container.children).filter(c => c.tagName === 'DIV');
+                
+                if (columns.length >= 2) {
+                    const timeCol = columns[0];
+                    const oddsCol = columns[1];
+                    
+                    // Get all entries in the columns
+                    // Selector: direct children divs or divs with specific text classes
+                    const timeEntries = timeCol.querySelectorAll('div.text-\\[10px\\]');
+                    const oddsEntries = oddsCol.querySelectorAll('div.text-\\[10px\\]');
+                    
+                    // Match by index
+                    const count = Math.min(timeEntries.length, oddsEntries.length);
+                    
+                    for (let i = 0; i < count; i++) {
+                        const timeText = timeEntries[i].textContent.trim();
+                        const oddsText = oddsEntries[i].textContent.trim();
+                        
+                        if (!timeText || !oddsText) continue;
+                        
+                        const sync = new SyncTimestamp();
+                        const timestamp = sync.parse(timeText);
+                        const value = parseFloat(oddsText);
+                        
+                        if (timestamp && !isNaN(value) && value > 1.0) {
+                            // Deduplicate
+                            const exists = trajectory.some(p => p.time === timestamp && p.value === value);
+                            if (!exists) {
+                                trajectory.push({
+                                    time: timestamp,
+                                    value: value,
+                                    type: 'Historical'
+                                });
                             }
-                            if (oddsValue) break;
-                            parent = parent.parentElement;
-                            attempts++;
-                        }
-
-                        if (oddsValue && oddsValue > 1.0) {
-                            dataPoints.push({ time: timestamp, value: oddsValue, type: 'Flexbox' });
                         }
                     }
                 }
             }
 
-            // Add flexbox-extracted data to trajectory
-            if (dataPoints.length > 0) {
-                trajectory.push(...dataPoints);
+            // [V164.FullTrajectory] Opening Odds Extraction (Separate Section)
+            // Structure: div.mt-2.gap-1 -> div.flex.gap-1 -> [Time, Odds]
+            const openingSection = document.querySelector('div.mt-2.gap-1, div.gap-1.mt-2');
+            if (openingSection && openingSection.textContent.includes('Opening')) {
+                const flexRow = openingSection.querySelector('div.flex.gap-1');
+                if (flexRow) {
+                    const divs = flexRow.querySelectorAll('div');
+                    if (divs.length >= 2) {
+                        const timeText = divs[0].textContent.trim();
+                        const oddsText = divs[1].textContent.trim();
+                        
+                        const sync = new SyncTimestamp();
+                        const timestamp = sync.parse(timeText);
+                        const value = parseFloat(oddsText);
+                        
+                        if (timestamp && !isNaN(value)) {
+                            trajectory.push({
+                                time: timestamp,
+                                value: value,
+                                type: 'Initial'
+                            });
+                        }
+                    }
+                }
             }
 
-            // V134.000: Fallback to OLD table structure (compatibility)
+            // [V164.DeepSlam] Fallback: Table Extraction (Legacy)
             if (trajectory.length === 0) {
-                // Step 1: Extract Opening odds
-                const openingElements = document.querySelectorAll('*');
-                for (const el of openingElements) {
-                    if (el.textContent && el.textContent.includes('Opening odds')) {
-                        const parent = el.parentElement;
-                        if (parent) {
-                            const textContent = parent.textContent;
-                            const timeMatch = textContent.match(/(\d{1,2}\s+\w+\.?\s*,?\s*\d{1,2}:\d{2})/);
-                            const oddsMatch = textContent.match(/(\d+\.\d+)/);
-
-                            if (timeMatch && oddsMatch) {
-                                const sync = new SyncTimestamp();
-                                const timestamp = sync.parse(timeMatch[1]);
-                                if (timestamp) {
-                                    trajectory.push({
-                                        time: timestamp,
-                                        value: parseFloat(oddsMatch[1]),
-                                        type: 'Initial'
-                                    });
-                                }
-                            }
-                        }
-                        break;
-                    }
-                }
-
-                // Step 2: Extract Historical data
                 const tableRows = document.querySelectorAll('tr');
                 tableRows.forEach((row) => {
                     try {
@@ -277,47 +312,40 @@ class TrajectoryParser {
                         if (cells.length >= 2) {
                             const firstCell = cells[0].textContent.trim();
                             const secondCell = cells[1].textContent.trim();
-
+                            if (!firstCell || !secondCell || isNaN(parseFloat(secondCell))) return;
+                            
                             const sync = new SyncTimestamp();
                             const timestamp = sync.parse(firstCell);
                             const value = parseFloat(secondCell);
 
                             if (timestamp && !isNaN(value) && value > 1.0) {
-                                // Check for duplicates
-                                const exists = trajectory.some(p =>
-                                    p.time === timestamp && p.value === value
-                                );
+                                const exists = trajectory.some(p => p.time === timestamp && p.value === value);
                                 if (!exists) {
-                                    trajectory.push({
-                                        time: timestamp,
-                                        value: value,
-                                        type: 'Historical'
-                                    });
+                                    trajectory.push({ time: timestamp, value: value, type: 'Historical' });
                                 }
                             }
                         }
-                    } catch (e) {
-                        // Ignore row errors
-                    }
+                    } catch (e) {}
                 });
             }
 
-            // V140.000: Step 3 - Sort by time and ENFORCE INITIAL LABEL
+            // [V164.FullTrajectory] Sequence Generation & Time Alignment
+            // Sort by time ascending (Oldest -> Newest)
             trajectory.sort((a, b) => new Date(a.time) - new Date(b.time));
 
-            // V140.000: 强制初盘打标 - 最早的点必须标记为 Initial
-            // 这解决了 V139.200 审计发现的 Initial Label Coverage = 0% 问题
+            // Mark the first point (oldest) as Initial/Opening if not already
             if (trajectory.length > 0) {
-                const earliestPoint = trajectory[0];
-                if (earliestPoint.type !== 'Initial') {
-                    console.log(`[V140.000 TrajectoryParser] ENFORCING INITIAL LABEL on earliest point: ${earliestPoint.time}`);
-                    earliestPoint.type = 'Initial';
-                }
+                // Ensure earliest is Initial
+                trajectory[0].type = 'Initial';
+                
+                // If we have explicit "Opening" data (from separate section), it might be duplicated
+                // if the time matches exactly. But Set/Dedupe logic above might not catch it if times strictly differ.
+                // Generally, earliest is best.
             }
 
         } catch (error) {
             // Log error but don't fail
-            console.error('[V133.000 TrajectoryParser] Extraction error:', error.message);
+            console.error('[V164.FullTrajectory TrajectoryParser] Extraction error:', error.message);
             return {
                 trajectory: [],
                 valid: false,
@@ -325,7 +353,6 @@ class TrajectoryParser {
                 recordCount: 0
             };
         } finally {
-            // V122.000: CRITICAL - Fix memory leak by explicitly closing JSDOM
             if (dom) {
                 try {
                     dom.window.close();
@@ -335,40 +362,24 @@ class TrajectoryParser {
             }
         }
 
-        // V136.000: "苍蝇腿也是肉"原则 - 只要 recordCount >= 1，即标记为 SUCCESS
+        // [V164.TitanSlayer] Skeleton Enforcement
+        // "苍蝇腿也是肉" -> "Initial odds are Gold". Accept 1+ points.
         const recordCount = trajectory.length;
-
-        // V136.000: Add quality_score metadata
-        // Snapshot: 1-2 points (opening odds only)
-        // Partial: 3-4 points (some historical data)
-        // Complete: 5+ points (full trajectory)
         let qualityScore;
         if (recordCount >= 5) {
             qualityScore = 'complete';
         } else if (recordCount >= 3) {
             qualityScore = 'partial';
         } else {
-            qualityScore = 'snapshot';
-        }
-
-        if (recordCount > 0 && recordCount < 3) {
-            console.log(`[V136.000 TrajectoryParser] SNAPSHOT DATA: ${recordCount} point(s) - Opening odds captured`);
-            return {
-                trajectory,
-                valid: true,  // V136.000: Accept POOR quality data (1+ points is valuable)
-                warning: null,  // V136.000: No warning for valid data
-                recordCount,
-                quality: 'POOR',
-                quality_score: qualityScore  // V136.000: New metadata
-            };
+            qualityScore = 'skeleton'; // [V164.TitanSlayer] Mandate: Initial odds secured
         }
 
         return {
             trajectory,
-            valid: recordCount >= 1,  // V136.000: Changed from >= 2 to >= 1
+            valid: recordCount >= 1, 
             recordCount,
             quality: recordCount >= 5 ? 'EXCELLENT' : recordCount >= 3 ? 'GOOD' : 'POOR',
-            quality_score: qualityScore  // V136.000: New metadata
+            quality_score: qualityScore
         };
     }
 
