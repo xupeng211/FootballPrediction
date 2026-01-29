@@ -160,7 +160,7 @@ LIMIT 5
 
 ```python
 from src.database.db_pool import SyncDatabasePool
-from src.data_engineering.feature_pipeline import V28FeaturePipeline
+from src.data.feature_pipeline import V28FeaturePipeline
 
 # 初始化数据库连接池
 db_pool = SyncDatabasePool()
@@ -181,7 +181,7 @@ print(f"平均填充率: {sum(report.fill_rates.values()) / len(report.fill_rate
 
 ```python
 from src.database.db_pool import SyncDatabasePool
-from src.data_engineering.feature_pipeline import run_v28_pipeline
+from src.data.feature_pipeline import run_v28_pipeline
 
 # 一键运行（使用默认配置）
 db_pool = SyncDatabasePool()
@@ -191,7 +191,7 @@ report = run_v28_pipeline(db_pool, batch_size=500, rolling_window=5)
 ### 单独使用 MultiPathExtractor
 
 ```python
-from src.data_engineering.multipath_extractor import MultiPathExtractor
+from src.data.multipath_extractor import MultiPathExtractor
 
 # 创建提取器
 extractor = MultiPathExtractor()
@@ -339,15 +339,15 @@ logging.basicConfig(level=logging.INFO)
 
 ```bash
 # 验证类型注解完整性
-mypy src/data_engineering/
+mypy src/data/
 # 预期结果：0 Errors
 ```
 
 ### Pytest 单元测试
 
 ```bash
-# 运行 data_engineering 测试
-pytest tests/data_engineering/ -v
+# 运行 data 测试
+pytest tests/data/ -v
 ```
 
 ### CI/CD 集成

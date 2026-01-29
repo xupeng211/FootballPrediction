@@ -188,14 +188,21 @@ class ProxyManager:
 
     def _enable_wsl2_autodetect(self) -> None:
         """启用 WSL2 自动代理探测"""
-        # WSL2 默认网关代理
-        wsl2_proxies = [
-            "http://172.25.16.1:7890",
-            "http://172.25.16.1:7891",
-            "http://172.25.16.1:7892",
-        ]
+        # 从环境变量读取代理配置（V164.Sanitization 解耦）
+        proxy_host = os.getenv("WSL2_PROXY_HOST", "172.25.16.1")
+        proxy_ports_str = os.getenv("PROXY_PORTS", "7892,7893,7894,7895,7896,7898,7899")
+
+        # 解析端口列表
+        try:
+            proxy_ports = [int(p.strip()) for p in proxy_ports_str.split(",")]
+        except ValueError:
+            logger.warning(f"[ProxyManager] PROXY_PORTS 格式错误: {proxy_ports_str}")
+            proxy_ports = [7892, 7893, 7894]  # 默认端口
+
+        # 构建代理列表（避免已弃用的端口）
+        wsl2_proxies = [f"http://{proxy_host}:{port}" for port in proxy_ports]
         self.config.proxies.extend(wsl2_proxies)
-        logger.info("[ProxyManager] 启用 WSL2 自动探测代理")
+        logger.info(f"[ProxyManager] 启用 WSL2 自动探测代理: {len(wsl2_proxies)} 个代理")
 
     def get_random_proxy(self) -> str | None:
         """获取随机可用代理

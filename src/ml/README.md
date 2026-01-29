@@ -303,7 +303,7 @@ Drawdown = (Peak - Equity) / Peak * 100
 
 ```python
 from src.modeling import create_trainer, create_backtest_engine
-from src.data_engineering import create_feature_factory
+from src.data import create_feature_factory
 import pandas as pd
 
 # 1. 准备数据

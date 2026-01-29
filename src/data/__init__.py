@@ -1,31 +1,50 @@
+#!/usr/bin/env python3
 """
-数据处理模块
+V35.0 数据工程模块
+==================
 
-提供数据验证、标准化和预处理功能。
+提供生产级数据管道能力:
+- FeatureFactory: V35.0 特征工厂 (ELO + Table + Fatigue + Efficiency)
+- MultiPathExtractor: 多路径 JSONB 提取器
+
+使用示例:
+    from src.data import FeatureFactory, create_feature_factory
+
+    # 创建特征工厂
+    factory = create_feature_factory()
+    df_features = factory.build_all_features(df_matches)
 """
 
-from .preprocessors.data_normalizer import (
-    DataFormatNormalizer,
-    detect_data_format,
-    normalize_match_data,
+from .feature_factory import (
+    EfficiencyEngine,
+    ELOEngine,
+    FatigueTracker,
+    FeatureFactory,
+    TableManager,
+    create_feature_factory,
 )
-from .validators.data_validator import (
-    DataValidator,
-    ValidationIssue,
-    ValidationResult,
-    ValidationSeverity,
-    validate_batch,
+from .multipath_extractor import (
+    ExtractionPath,
+    ExtractionStats,
+    MatchStats,
+    MultiPathExtractor,
+    extract_match_stats_batch,
 )
 
 __all__ = [
-    # 标准化器
-    "DataFormatNormalizer",
-    # 验证器
-    "DataValidator",
-    "ValidationIssue",
-    "ValidationResult",
-    "ValidationSeverity",
-    "detect_data_format",
-    "normalize_match_data",
-    "validate_batch",
+    "ELOEngine",
+    "EfficiencyEngine",
+    "ExtractionPath",
+    "ExtractionStats",
+    "FatigueTracker",
+    # FeatureFactory (V35.0)
+    "FeatureFactory",
+    "MatchStats",
+    # MultiPathExtractor
+    "MultiPathExtractor",
+    "TableManager",
+    "create_feature_factory",
+    "extract_match_stats_batch",
 ]
+
+__version__ = "35.2.0"
