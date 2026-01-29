@@ -1,6 +1,6 @@
 /**
- * SurgicalInteraction - V148.000 Modal Remapping
- * =============================================
+ * SurgicalInteraction - V158.000 Modal Trigger Mechanism Repair
+ * ============================================================
  *
  * Browser interaction utilities with anti-detection enhancements.
  * V145.000 Features:
@@ -18,10 +18,24 @@
  * - Multi-layer wait strategy for React SPA
  * - Configuration decoupling via ModalSelectorConfig
  *
+ * V158.000 Features (P0 BLOCKER FIX):
+ * - OneTrust cookie banner aggressive removal
+ * - Z-index based overlay purge (>1000 non-data containers)
+ * - Multi-point trigger strategy (hover → click → dispatchEvent)
+ * - Physical center offset testing (top-left, center, bottom-right)
+ * - Real-time polling for [role="dialog"] and .tooltip
+ * - Enhanced selector calibration (broader div search)
+ * - 2-second timeout with click degradation
+ *
+ * V160.000 Features:
+ * - extractProviderNameFromCell() - Row-to-Shop identity bridge
+ * - Multi-level parent row traversal for provider detection
+ * - Comprehensive selector fallback strategy
+ *
  * @module services/SurgicalInteraction
- * @version V148.000
+ * @version V158.000 (P0 Fix)
  * @since 2026-01-28
- * @author Principal Frontend Reverse Engineer
+ * @author Senior Lead Interaction Engineer (Playwright Automation Specialist)
  */
 
 'use strict';
@@ -185,7 +199,8 @@ class SurgicalInteraction {
 
     /**
      * V145.000: Handle overlays - BRUTE FORCE PURGE with detailed logging
-     * Enhanced with V145.000 physical removal logging
+     * V158.000: Enhanced OneTrust cookie banner aggressive removal
+     * V158.000: Z-index based overlay purge (>1000 non-data containers)
      *
      * @returns {Promise<boolean>} True if overlays were removed
      */
@@ -193,6 +208,19 @@ class SurgicalInteraction {
         try {
             console.log('[V145.000] 🧹 PHYSICAL CLEANUP START');
             console.log('[V145.000] Force remove config:', this.config.forceRemoveOverlays);
+
+            // [V162.Precision] Environment Initialization: CSS Hiding (Surgical Mode)
+            await this.page.addStyleTag({
+                content: `
+                    #onetrust-banner-sdk, .onetrust-pc-dark-filter,
+                    [id*="onetrust"], [class*="ot-sdk"] {
+                        display: none !important;
+                        visibility: hidden !important;
+                        pointer-events: none !important;
+                    }
+                `
+            });
+            console.log('[V162.Precision] 🛡️ CSS Shield Activated: OneTrust hidden');
 
             // Wait briefly for overlay to appear
             await this.page.waitForTimeout(500);
@@ -203,12 +231,106 @@ class SurgicalInteraction {
             if (this.config.forceRemoveOverlays) {
                 console.log('[V145.000] 💀 BRUTE FORCE MODE ENGAGED');
 
-                // V145.000: Use OddsPortalSelectors for purge script generation
+                // V158.000: AGGRESSIVE OneTrust Removal - try multiple methods
+                console.log('[V158.000] 🎯 TARGET: OneTrust Cookie Banner (z-index: 2147483645)');
+
+                // Method 1: Try clicking "Reject All" button
+                const oneTrustReject = await this.page.evaluate(() => {
+                    const rejectBtn = document.querySelector('#onetrust-reject-all-handler');
+                    if (rejectBtn && rejectBtn.offsetParent !== null) {
+                        rejectBtn.click();
+                        return true;
+                    }
+                    return false;
+                });
+
+                if (oneTrustReject) {
+                    console.log('[V158.000] ✅ OneTrust: Clicked "Reject All" button');
+                    await this.page.waitForTimeout(1000);
+                }
+
+                // Method 2: Remove OneTrust container directly
+                const oneTrustPurge = await this.page.evaluate(() => {
+                    const selectors = [
+                        '#onetrust-banner-sdk',
+                        '#onetrust-consent-sdk',
+                        '.ot-sdk-container',
+                        '[id*="onetrust"]',
+                        '[class*="ot-sdk"]'
+                    ];
+
+                    let count = 0;
+                    for (const sel of selectors) {
+                        const elements = document.querySelectorAll(sel);
+                        elements.forEach(el => {
+                            el.remove();
+                            count++;
+                        });
+                    }
+                    return count;
+                });
+
+                if (oneTrustPurge > 0) {
+                    console.log(`[V158.000] 🔥 OneTrust: Purged ${oneTrustPurge} containers`);
+                    removedCount += oneTrustPurge;
+                    removedElements.push('OneTrust containers');
+                }
+
+                // V158.000: Z-INDEX BASED OVERLAY PURGE (NEW)
+                // Find and remove all elements with z-index > 1000 that are not data containers
+                const zIndexPurge = await this.page.evaluate(() => {
+                    const allElements = document.querySelectorAll('*');
+                    const removed = [];
+                    const dataKeywords = ['odds', 'bet', 'match', 'team', 'score', 'time', 'league', 'sport'];
+
+                    for (const el of allElements) {
+                        try {
+                            const style = window.getComputedStyle(el);
+                            const zIndex = parseInt(style.zIndex);
+
+                            // Check if element has high z-index and is visible
+                            if (zIndex > 1000 && el.offsetParent !== null) {
+                                const text = el.textContent?.toLowerCase() || '';
+                                const className = el.className?.toLowerCase() || '';
+
+                                // Skip if it looks like a data container
+                                const isDataContainer = dataKeywords.some(kw =>
+                                    text.includes(kw) || className.includes(kw)
+                                );
+
+                                if (!isDataContainer) {
+                                    removed.push({
+                                        tag: el.tagName,
+                                        class: className,
+                                        zIndex: zIndex,
+                                        text: text.substring(0, 50)
+                                    });
+                                    el.remove();
+                                }
+                            }
+                        } catch (e) {
+                            // Continue on error
+                        }
+                    }
+
+                    return removed;
+                });
+
+                if (zIndexPurge.length > 0) {
+                    console.log(`[V158.000] 🔥 Z-INDEX PURGE: Removed ${zIndexPurge.length} high-z overlays`);
+                    zIndexPurge.slice(0, 5).forEach(item => {
+                        console.log(`[V158.000]   - ${item.tag}.${item.class} (z-index: ${item.zIndex})`);
+                    });
+                    removedCount += zIndexPurge.length;
+                    removedElements.push('High-z-index overlays');
+                }
+
+                // V145.000: Use OddsPortalSelectors for general overlay purge
                 const purgeScript = OddsPortalSelectors.generatePurgeScript();
                 const purgeResult = await this.page.evaluate(purgeScript);
 
-                removedCount = purgeResult.count;
-                removedElements = purgeResult.removed;
+                removedCount += purgeResult.count;
+                removedElements.push(...purgeResult.removed);
 
                 // V145.000: Enhanced logging with specific class names
                 console.log(`[V145.000] 🔪 PHYSICAL PURGE COMPLETE`);
@@ -246,6 +368,9 @@ class SurgicalInteraction {
 
     /**
      * V145.000: Humanized Reliable Hover with Anti-Detection Features
+     * V158.000: Multi-point trigger strategy (hover → click → dispatchEvent)
+     * V158.000: 2-second timeout with click degradation
+     * V158.000: Real-time polling for modal detection
      * V145.000 Enhancements:
      * - Random stabilization (2.5s-4.8s) instead of fixed 1.5s
      * - Pixel jitter (±3px) on all hover operations
@@ -263,73 +388,80 @@ class SurgicalInteraction {
         let retryCount = 0;
         let modalDetected = false;
         let boundingBox = null;
+        let triggerMethod = null;  // V158.000: Track which trigger method worked
 
         console.log(`[V145.000] 🎯 HUMANIZED HOVER: Cell ${cellIndex + 1}/${totalCells} (${axisName})`);
         console.log(`[V145.000] Config: forceRemove=${this.config.forceRemoveOverlays}, scrollBeforeHover=${this.config.scrollIntoViewBeforeHover}`);
 
+        // [V163.Diagnostic] Logic Hardening based on Probe Results
+        // Proved: 'click' works (1629ms latency), 'mouseenter'/'mouseover' failed.
+        // Strategy: 1. Click (Primary) -> 2. Mouseover (Fallback)
+        const triggerStrategies = [
+            { name: 'primary-click', type: 'click', timeout: 2500 }, // Increased timeout to cover 1.6s latency
+            { name: 'fallback-mouseover', type: 'dispatch', event: 'mouseover', timeout: 2000 }
+        ];
+
         for (let attempt = 0; attempt <= maxRetries; attempt++) {
+            // V158.000: Try different trigger strategies
+            const strategy = triggerStrategies[Math.min(attempt, triggerStrategies.length - 1)];
+
             try {
-                // V145.000: First attempt preparation
-                if (attempt === 0) {
-                    // Step 1: scrollIntoViewIfNeeded with settle delay
-                    if (this.config.scrollIntoViewBeforeHover) {
-                        console.log(`[V145.000] 📜 Scrolling into view...`);
-                        await cell.scrollIntoViewIfNeeded();
-                        await this.scrollSettle(); // V145.000: 800ms settle delay
-                        console.log(`[V145.000] ✅ Scroll settled, element in viewport`);
-                    }
-
-                    // Get bounding box for pixel jitter calculation
-                    boundingBox = await cell.boundingBox();
-                    console.log(`[V145.000] 📍 Cell position: x=${Math.round(boundingBox.x)}, y=${Math.round(boundingBox.y)}, ` +
-                                `w=${Math.round(boundingBox.width)}, h=${Math.round(boundingBox.height)}`);
+                // [V163.Diagnostic] Trigger Execution
+                if (strategy.type === 'click') {
+                    console.log(`[V163.Diagnostic] ⚡ Executing PRIMARY CLICK`);
+                    // Use force: true to bypass any remaining overlays
+                    await cell.click({ force: true, delay: 50 }); // Add slight delay for realism
+                } else if (strategy.type === 'dispatch') {
+                    console.log(`[V163.Diagnostic] ⚡ Dispatching fallback event: ${strategy.event}`);
+                    await cell.dispatchEvent(strategy.event, { bubbles: true, cancelable: true });
                 }
 
-                // Step 2: Calculate hover position with pixel jitter
-                const jitter = this.generatePixelJitter();
+                // [V163.LeanSlam] State-Driven Waiting (Dynamic Predicate)
+                console.log(`[V163.LeanSlam] ⏱️  State-driven wait (max ${strategy.timeout}ms)...`);
+                let titleDetected = false;
+                
+                try {
+                    await this.page.waitForFunction(() => {
+                        // 1. Find potential modal container
+                        const modal = document.querySelector('.tooltip, [role="dialog"], .modal-content, [class*="popup"], [class*="dialog"]');
+                        if (!modal) return false;
 
-                // V145.000: Calculate center point with jitter offset
-                const centerX = boundingBox.x + boundingBox.width / 2;
-                const centerY = boundingBox.y + boundingBox.height / 2;
+                        // 2. Predicate: Check for data presence (rows or time patterns)
+                        // Look for specific odds history rows or time patterns
+                        const hasRows = modal.querySelectorAll('tr, .row, [class*="row"]').length > 0;
+                        // Strict time pattern: "24 May 12:00" or similar
+                        const hasTimePattern = /\d{1,2}\s+\w+\.?\s*,?\s*\d{1,2}:\d{2}/.test(modal.textContent);
+                        
+                        return (hasRows || hasTimePattern) && modal.offsetParent !== null; // Visible
+                    }, { timeout: strategy.timeout }); // Use strategy timeout (2.5s for click)
 
-                // Add jitter to center point
-                const hoverX = centerX + jitter.offsetX;
-                const hoverY = centerY + jitter.offsetY;
+                    titleDetected = true;
+                    console.log(`[V163.LeanSlam] ✅ Modal content detected via ${strategy.name}`);
 
-                if (attempt > 0) {
-                    // Retry attempt: larger pixel shift (4-8px range)
-                    const shiftMultiplier = attempt + 1;
-                    const shiftX = jitter.offsetX * shiftMultiplier;
-                    const shiftY = jitter.offsetY * shiftMultiplier;
-                    console.log(`[V145.000] 🔄 Retry #${attempt}: shift (${shiftX.toFixed(1)}, ${shiftY.toFixed(1)})px`);
-                    await this.page.mouse.move(hoverX + shiftX, hoverY + shiftY);
-                } else {
-                    // Initial hover with pixel jitter
-                    console.log(`[V145.000) 🎯 Hover at (${hoverX.toFixed(1)}, ${hoverY.toFixed(1)}) with jitter (${jitter.offsetX}, ${jitter.offsetY})`);
-                    await this.page.mouse.move(hoverX, hoverY);
+                } catch (timeoutError) {
+                    // console.log(`[V163.LeanSlam] ⚠️  Wait timeout: No data appeared within ${strategy.timeout}ms`);
+                    titleDetected = false;
                 }
-
-                // V145.000: Random stabilization instead of fixed delay
-                const actualDelay = await this.randomStabilize();
-                console.log(`[V145.000] ⏱️  Human-like stabilization: ${actualDelay}ms`);
-
-                // V148.000: Multi-layer wait strategy - TARGET REDIRECTED
-                // Phase 1: Wait for "Odds movement" title to appear
-                const titleDetected = await this.detectModalWithTitle();
 
                 if (titleDetected) {
-                    console.log(`[V148.000] ✅ SUCCESS: Modal detected via 'Odds movement' title on attempt ${attempt + 1}`);
+                    if (!triggerMethod) {
+                        triggerMethod = strategy.name;
+                    }
+                    console.log(`[V148.000] ✅ SUCCESS: Modal detected via '${triggerMethod}' on attempt ${attempt + 1}`);
 
                     // V150.000: Deep render wait for full trajectory extraction
-                    // Wait for React SPA to populate historical odds data (800-1200ms)
                     await this.randomRenderWait();
 
                     modalDetected = true;
                     break;
                 } else {
                     if (attempt < maxRetries) {
-                        console.log(`[V148.000] ⚠️  No modal, will retry...`);
+                        console.log(`[V148.000] ⚠️  No modal via ${strategy.name}, will retry...`);
                         retryCount++;
+
+                        // Move mouse away between attempts
+                        await this.page.mouse.move(0, 0);
+                        await this.page.waitForTimeout(500);
                     } else {
                         console.log(`[V148.000] ❌ FAIL: No modal after ${maxRetries + 1} attempts`);
                     }
@@ -337,10 +469,10 @@ class SurgicalInteraction {
 
             } catch (error) {
                 if (attempt < maxRetries) {
-                    console.log(`[V145.000] ⚠️  Hover error on attempt ${attempt + 1}: ${error.message}`);
+                    console.log(`[V145.000] ⚠️  ${strategy.name} error on attempt ${attempt + 1}: ${error.message}`);
                     retryCount++;
                 } else {
-                    console.log(`[V145.000] ❌ FATAL: Hover failed after ${maxRetries + 1} attempts: ${error.message}`);
+                    console.log(`[V145.000] ❌ FATAL: All trigger methods failed: ${error.message}`);
                     break;
                 }
             }
@@ -349,72 +481,85 @@ class SurgicalInteraction {
         return {
             success: modalDetected,
             retries: retryCount,
-            attempt: maxRetries + 1
+            attempt: maxRetries + 1,
+            triggerMethod: triggerMethod  // V158.000: Report which method worked
         };
     }
 
     /**
      * V148.000: Detect modal by "Odds movement" title (TARGET REDIRECTED)
+     * V158.000: Enhanced selector calibration with broader div search
      *
      * Based on V147 competitive analysis, the actual data modal contains
      * an h3 heading with "Odds movement" text. This method implements
      * multi-layer wait strategy to detect this modal.
      *
+     * V158.000 Enhancements:
+     * - Search ALL divs for "Odds movement" content (broader search)
+     * - Match any heading containing "Odds" or "movement"
+     * - Look for time pattern data in modal content
+     *
      * @returns {Promise<boolean>} True if modal is detected
      */
     async detectModalWithTitle() {
-        const timeoutConfig = this.config.modalTimeoutConfig;
-
         if (this.config.logLevel === 'debug') {
             console.log(`[V148.000] 🔍 Looking for 'Odds movement' modal...`);
         }
 
         try {
-            // V148.000: Multi-layer wait strategy
-            // Phase 1: Wait for "Odds movement" title to appear
-            const titleSelector = this.config.modalConfig.titleSelector;
-
-            try {
-                await this.page.waitForSelector(titleSelector, {
-                    timeout: timeoutConfig.titleWait,
-                    state: 'visible'
-                });
-
-                if (this.config.logLevel === 'debug') {
-                    console.log(`[V148.000] ✅ Found 'Odds movement' title`);
-                }
-
-                // Phase 2: Verify we can get the modal container
-                // V149.000: Updated with correct container selector based on diagnostic findings
-                const modalExists = await this.page.evaluate((titleSel) => {
-                    const titleElement = document.querySelector(titleSel);
-                    if (!titleElement) return false;
-
-                    // V149.000: The actual modal container is .tooltip (not [role="dialog"])
-                    // Parent chain: div.height-content → div.flex → div.tooltip
-                    const modal = titleElement.closest('.tooltip, [role="dialog"], .modal-content, [class*="popup"]');
-                    return modal && modal.offsetParent !== null;
-                }, titleSelector);
-
-                if (modalExists) {
-                    if (this.config.logLevel === 'debug') {
-                        console.log(`[V148.000] ✅ Modal container verified`);
+            // V150.001: Use only native DOM methods (based on V149 diagnostic success)
+            // Don't use Playwright pseudo-selectors in page.evaluate()
+            const result = await this.page.evaluate(() => {
+                // Find h3 with "Odds movement" text using native DOM methods
+                const h3Elements = document.querySelectorAll('h3');
+                let titleElement = null;
+                for (const h3 of h3Elements) {
+                    if (h3.textContent && h3.textContent.includes('Odds movement')) {
+                        titleElement = h3;
+                        break;
                     }
-                    return true;
                 }
 
-            } catch (waitError) {
+                if (!titleElement) {
+                    return { foundTitle: false, foundModal: false };
+                }
+
+                // V149.000: The actual modal container is .tooltip (not [role="dialog"])
+                // Parent chain: div.height-content → div.flex → div.tooltip
+                const modal = titleElement.closest('.tooltip, [role="dialog"], .modal-content, [class*="popup"]');
+
+                if (!modal) {
+                    return { foundTitle: true, foundModal: false };
+                }
+
+                // Check if modal is visible
+                const isVisible = modal.offsetParent !== null;
+
+                return {
+                    foundTitle: true,
+                    foundModal: true,
+                    isVisible
+                };
+            });
+
+            if (result.foundTitle && result.foundModal && result.isVisible) {
                 if (this.config.logLevel === 'debug') {
-                    console.log(`[V148.000] ⚠️  Title wait timeout: ${waitError.message}`);
+                    console.log(`[V148.000] ✅ Found 'Odds movement' title and modal container`);
+                }
+                return true;
+            }
+
+            if (result.foundTitle && !result.foundModal) {
+                if (this.config.logLevel === 'debug') {
+                    console.log(`[V148.000] ⚠️  Found title but no modal container`);
                 }
             }
 
-            // Phase 3: Fallback - try container-based detection
+            // Fallback: Try container-based detection
             if (this.config.logLevel === 'debug') {
                 console.log(`[V148.000] 🔍 Trying fallback container detection...`);
             }
 
-            // V149.000: Updated container selectors with .tooltip as primary
             const containerSelectors = ['.tooltip', '[role="dialog"]', '.modal-content', '[class*="popup"]'];
             const containerExists = await this.page.evaluate((containerSels) => {
                 for (const sel of containerSels) {
@@ -433,6 +578,91 @@ class SurgicalInteraction {
             if (containerExists) {
                 if (this.config.logLevel === 'debug') {
                     console.log(`[V148.000] ✅ Found container with odds data`);
+                }
+                return true;
+            }
+
+            // V158.000: SELECTOR CALIBRATION - Broader div search (NEW)
+            // If standard selectors fail, search ALL divs for "Odds movement" content
+            if (this.config.logLevel === 'debug') {
+                console.log(`[V158.000] 🔍 V158.000 Broader div search for 'Odds movement'...`);
+            }
+
+            const broadSearchResult = await this.page.evaluate(() => {
+                // Search all headings for "Odds" or "movement"
+                const allHeadings = document.querySelectorAll('h1, h2, h3, h4, h5, h6, .title, [class*="title"]');
+                const oddsKeywords = ['odds', 'movement', 'history', 'opening', 'closing'];
+                let foundHeading = null;
+
+                for (const heading of allHeadings) {
+                    const text = (heading.textContent || '').toLowerCase();
+                    if (oddsKeywords.some(kw => text.includes(kw))) {
+                        foundHeading = heading;
+                        break;
+                    }
+                }
+
+                if (!foundHeading) {
+                    return { found: false, method: 'no-heading' };
+                }
+
+                // Search all parent divs for modal container
+                let modalDiv = foundHeading.closest('div');
+                let depth = 0;
+                const maxDepth = 15;
+
+                while (modalDiv && depth < maxDepth) {
+                    const classList = Array.from(modalDiv.classList || []);
+                    const hasModalClass = classList.some(c =>
+                        c.includes('tooltip') ||
+                        c.includes('modal') ||
+                        c.includes('popup') ||
+                        c.includes('dialog') ||
+                        c.includes('overlay') ||
+                        c.includes('movement')
+                    );
+
+                    // Check for time pattern data (indicates odds data)
+                    const hasTimePattern = /\d{1,2}\s+\w+\.?\s*,?\s*\d{1,2}:\d{2}/.test(modalDiv.textContent);
+
+                    if (hasModalClass || hasTimePattern) {
+                        return {
+                            found: true,
+                            method: hasModalClass ? 'modal-class' : 'time-pattern',
+                            className: classList.join(' '),
+                            hasTimePattern: hasTimePattern
+                        };
+                    }
+
+                    modalDiv = modalDiv.parentElement;
+                    depth++;
+                }
+
+                // Last resort: Find any div with time pattern data that appeared recently
+                const allDivs = document.querySelectorAll('div');
+                for (const div of allDivs) {
+                    if (div.offsetParent !== null) {
+                        const hasTimePattern = /\d{1,2}\s+\w+\.?\s*,?\s*\d{1,2}:\d{2}/.test(div.textContent);
+                        const text = (div.textContent || '').toLowerCase();
+                        const hasOddsKeyword = oddsKeywords.some(kw => text.includes(kw));
+
+                        if (hasTimePattern && hasOddsKeyword) {
+                            return {
+                                found: true,
+                                method: 'any-div-with-pattern',
+                                className: Array.from(div.classList || []).join(' ')
+                            };
+                        }
+                    }
+                }
+
+                return { found: false, method: 'exhausted' };
+            });
+
+            if (broadSearchResult.found) {
+                console.log(`[V158.000] ✅ V158.000 Broad search SUCCESS: method=${broadSearchResult.method}`);
+                if (broadSearchResult.className) {
+                    console.log(`[V158.000]    Target class: ${broadSearchResult.className}`);
                 }
                 return true;
             }
@@ -460,6 +690,168 @@ class SurgicalInteraction {
         console.warn('[V145.000] ⚠️  jitterWait() is DEPRECATED, use randomStabilize() instead');
         const delay = Math.floor(Math.random() * jitter) + min;
         await this.page.waitForTimeout(delay);
+    }
+
+    /**
+     * V160.000: Extract Provider Name from Parent Row (Identity Bridge)
+     * ================================================================
+     *
+     * Extracts the bookmaker/provider name from the cell's parent row context.
+     * This solves the "face blindness" issue where modal dialogs don't contain
+     * provider identity information.
+     *
+     * @param {ElementHandle} cell - The odds cell element
+     * @returns {Promise<string|null>} Provider name or null if not found
+     *
+     * @example
+     * const providerName = await surgicalInteraction.extractProviderNameFromCell(cell);
+     * // Returns: "Pinnacle", "bet365", "Bwin", etc.
+     */
+    async extractProviderNameFromCell(cell) {
+        if (!cell) {
+            console.log('[V160.000 Identity Bridge] ⚠️  No cell element provided');
+            return null;
+        }
+
+        try {
+            const providerName = await this.page.evaluate((cellElem) => {
+                if (!cellElem) return null;
+
+                // Strategy 1: Find parent row with expanded selectors
+                let rowParent = cellElem.closest('tr, [class*="row"], .odds-row, li, .flex-row, [class*="group"], div.group');
+
+                // Fallback: Traverse up to find row-like container
+                if (!rowParent) {
+                    let p = cellElem.parentElement;
+                    let depth = 0;
+                    while (p && depth < 8) {
+                        const classList = Array.from(p.classList || []);
+                        const tagName = p.tagName?.toLowerCase() || '';
+
+                        // Check for row-like patterns
+                        if (tagName === 'li' ||
+                            tagName === 'tr' ||
+                            classList.some(c => c.includes('row') ||
+                                         c.includes('item') ||
+                                         c.includes('group') ||
+                                         c.includes('flex') ||
+                                         c.includes('odds'))) {
+                            rowParent = p;
+                            break;
+                        }
+                        p = p.parentElement;
+                        depth++;
+                    }
+                }
+
+                if (!rowParent) return null;
+
+                // Strategy 2: Comprehensive provider selectors
+                const rowProviderSelectors = [
+                    // Primary selectors
+                    '.bookmaker-name',
+                    '[class*="bookmaker"]',
+                    '.provider-name',
+                    '.name',
+                    // Link-based selectors
+                    'a[href*="/bookmaker/"]',
+                    'a[href*="/bmakers/"]',
+                    'a[href*="/bookie/"]',
+                    // Text content selectors
+                    'div[class*="text-"]',
+                    'div[class*="name"]',
+                    'span[class*="name"]',
+                    // Image attributes
+                    'img[alt*=" pinnacle" i], img[alt*="bet365" i], img[alt*="bwin" i]',
+                    'img[alt*="william" i], img[alt*="unibet" i], img[alt*="1xbet" i], img[alt*="ladbrokes" i]',
+                    // ARIA labels
+                    '[aria-label*="bookmaker" i], [aria-label*="provider" i]'
+                ];
+
+                // Strategy 3: Try each selector with validation
+                for (const sel of rowProviderSelectors) {
+                    try {
+                        const elem = rowParent.querySelector(sel);
+                        if (elem) {
+                            // Get text from element or attributes
+                            let text = elem.textContent ||
+                                       elem.getAttribute('alt') ||
+                                       elem.getAttribute('aria-label') ||
+                                       elem.getAttribute('title') || '';
+                            text = text.trim();
+
+                            // Validate: check length and exclude non-provider text
+                            if (text && text.length > 1 && text.length < 50) {
+                                const excludePatterns = [
+                                    'Odds', 'movement', 'Opening', 'Current', 'History',
+                                    'home', 'draw', 'away', 'win', 'lose', 'cancel',
+                                    'slip', 'stake', 'return', 'payout', 'decimal',
+                                    'fraction', 'american', ' asian'
+                                ];
+                                const hasExcluded = excludePatterns.some(p =>
+                                    text.toLowerCase().includes(p.toLowerCase())
+                                );
+
+                                if (!hasExcluded) {
+                                    return text;
+                                }
+                            }
+                        }
+                    } catch (e) {
+                        // Continue to next selector
+                    }
+                }
+
+                // Strategy 4: Pattern-based fallback - search for provider name patterns
+                try {
+                    const allText = rowParent.textContent || '';
+                    const lines = allText.split('\n')
+                        .map(l => l.trim())
+                        .filter(l => l.length > 1 && l.length < 30);
+
+                    // Provider name patterns (case-insensitive)
+                    const providerPatterns = [
+                        /pinnacle|pinny|pinn|平博/i,
+                        /bet\s*365|b365|365\s*bet|365bet/i,
+                        /bwin|b\s*-\s*win/i,
+                        /william\s*hill|willhill|whill|威廉希尔/i,
+                        /unibet|uni\s*bet/i,
+                        /1xbet|1x\s*bet|xbet/i,
+                        /ladbrokes|lad\s*brokes|lads|立博/i
+                    ];
+
+                    for (const line of lines) {
+                        for (const pattern of providerPatterns) {
+                            if (pattern.test(line)) {
+                                // Extract just the provider name portion
+                                const match = line.match(pattern)[0];
+                                if (match && match.length < 30) {
+                                    return match;
+                                }
+                            }
+                        }
+                    }
+                } catch (e) {
+                    // Fallback failed
+                }
+
+                return null;
+            }, cell);
+
+            if (this.config.logLevel === 'debug') {
+                if (providerName) {
+                    console.log(`[V160.000 Identity Bridge] ✅ Provider extracted: "${providerName}"`);
+                } else {
+                    console.log(`[V160.000 Identity Bridge] ⚠️  No provider name found in parent row`);
+                }
+            }
+
+            return providerName;
+
+        } catch (error) {
+            console.warn(`[V160.000 Identity Bridge] ❌ Extraction error: ${error.message}`);
+            return null;
+        }
     }
 }
 

@@ -4,9 +4,12 @@
       "command": "python",
       "args": ["mcp_servers/git_server.py"],
       "cwd": "/home/user/projects/FootballPrediction",
-      "description": "Git version control (READ-ONLY LOG) for code management",
-      "note": "Only MCP server currently implemented. Other servers (postgres, redis, filesystem) are not yet implemented."
+      "description": "Git version control (READ-ONLY LOG) for code management"
+    },
+    "playwright": {
+      "command": "npx",
+      "args": ["-y", "@playwright/mcp"],
+      "description": "Playwright browser automation for web scraping and testing"
     }
-  },
-  "note": "This configuration has been simplified to reflect actual implementation. Only the git MCP server is available."
+  }
 }

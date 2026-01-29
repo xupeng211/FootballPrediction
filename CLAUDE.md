@@ -73,19 +73,19 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 |------|-----|
 | **状态** | ✅ Production Ready |
 | **项目版本** | **V26.7.0** (pyproject.toml) |
-| **生产版本** | **V132.0** (Ghost Fleet Harvesting Mission - QuantHarvester) |
+| **生产版本** | **V160.0** (Identity Bridge - Row-to-Shop Recognition) |
 | **命令中心** | **V144.9** (Multi-Source Command Center) |
 | **核心模型** | **V26.8** (联赛专项) |
 | **特征提取** | **V41.380** (GoldenExtractor - 市场价值/缺阵/评分) |
 | **JavaScript 运维** | **V66.000** (收割引擎) / V69.000 (Pipeline) |
-| **QuantHarvester** | **V122.000** (V129.0 动态代理发现 + V127.0 人类行为模拟) |
+| **QuantHarvester** | **V160.000** (Identity Bridge + Modular Refactoring) |
 | **取证分析** | **V132.000** (Forensic Analyzer - 全页码收割引擎) |
 | **数据同步** | **V36.3** (auto_sync_and_alchemy_v2.sh) |
 | **代码质量** | **V106.0** (Ruff 配置 - line-length: 100) |
 | **Docker 版本** | **V51.0** (Industrial Grade Ready) |
 | **基线准确率** | 56% (真赛前) |
 | **推理延迟** | <100ms |
-| **最后更新** | 2026-01-27 |
+| **最后更新** | 2026-01-28 |
 
 ### 版本号体系说明
 
@@ -104,13 +104,33 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | `V70.x` | 数据质量门禁 | V70.200 |
 | `V84.x` | JavaScript 诊断和测试工具 | V84.910 |
 | `V85.x` | JavaScript 视觉提取引擎 | V85.000 |
-| `V106.x` | 代码质量配置 | V106.0 |
-| `V144.x` | 多数据源命令中心 | V144.9 |
-| `V151.x` | 并发收割和哈希狩猎 | V151.3 |
 | `V86.x` | JavaScript Master Harvest | V86 (Master/Turbo Harvest) |
 | `V87.x` | JavaScript Master Pipeline | V87.203 (全量收割 + Jest 测试) |
-| `V122.x` | QuantHarvester | V122.000 (V129.0 动态代理 + V127.0 人类模拟) |
+| `V91.x` | 配置管理和监控服务 | V91.000 (Main/Monitor/Parser) |
+| `V106.x` | 代码质量配置 | V106.0 |
+| `V114.x` | 量化价格同步引擎 | V114.000 (Quant Price Sync) |
+| `V122.x` | QuantHarvester 早期版本 | V122.000 (V129.0 动态代理 + V127.0 人类模拟) |
+| `V126.x` | 生产运行器 | V126.000 (Production Runner) |
 | `V132.x` | 取证分析工具 | V132.000 (Forensic Analyzer - 全页码收割) |
+| `V140.x` | 数据纯度校准 | V140.000 (UTC enforcement + year detection) |
+| `V141.x` | Ghost Protocol 模块化重构 | V141.000 (TelemetryService + SurgicalInteraction + SignalRadar) |
+| `V142.x` | 统一收割服务架构 | V142.0 |
+| `V143.x` | 代理健康审计 | V143.000 (Proxy Health Auditor) |
+| `V144.x` | 多数据源命令中心 | V144.9 |
+| `V145.x` | 快速打击工具 | V145.000 (Quick Strike) |
+| `V146.x` | React 适配系列 | V146.000-V146.007 (Modal/DOM/Hover 诊断) |
+| `V148.x` | Modal 重新映射 | V148.000 (Modal Remapping) |
+| `V149.x` | 诊断工具 | V149.000 (Diagnostic) |
+| `V150.x` | Depth 补丁系列 | V150.000-V150.005 (Depth Patch + Sequential Harvest) |
+| `V151.x` | 补丁验证 | V151.000 (Patch Verification) |
+| `V152.x` | 金丝雀测试 | V152.000 (Canary Test) |
+| `V153.x` | 全力审计 | V153.000 (Full Power Audit) |
+| `V155.x` | 全面进攻 V151 | V155.000 (Total Offensive V151) |
+| `V156.x` | 验证测试 | V156.000 (Verification Test) |
+| `V157.x` | 金丝雀/全量同步 | V157.100 (Canary + Full Sync) |
+| `V158.x` | 潜行绕过取证 | V158.000-V158.002 (Stealth Bypass + DOM Forensic) |
+| `V159.x` | 金丝雀验证 | V159.000 (Canary Validation) |
+| `V160.x` | Identity Bridge | V160.000 (Row-to-Shop Recognition) |
 
 > **注意**: 项目版本 (`V26.7.0`) 与组件版本是独立的，项目版本主要用于 Python 包管理。
 
@@ -199,6 +219,27 @@ DISCOVERED → ENRICHED → MAPPED → HARVESTED
 
 ### 关键里程碑
 
+- **V160.000** (2026-01): Identity Bridge - Row-to-Shop Recognition (修复面部识别问题)
+- **V158.002** (2026-01): Stealth Bypass - 潜行绕过取证 (DOM Forensic + Enhanced)
+- **V157.100** (2026-01): Full Sync - 金丝雀测试与全量同步
+- **V156.000** (2026-01): Verification Test - 验证测试工具
+- **V155.000** (2026-01): Total Offensive V151 - 全面进攻工具
+- **V153.000** (2026-01): Full Power Audit - 全力审计工具
+- **V152.000** (2026-01): Canary Test - 金丝雀测试工具
+- **V151.000** (2026-01): Patch Verification - 补丁验证工具
+- **V150.000** (2026-01): Depth Patch - 深度补丁（完整轨迹等待）
+- **V149.000** (2026-01): Diagnostic - 诊断工具
+- **V148.000** (2026-01): Modal Remapping - Modal 重新映射
+- **V146.007** (2026-01): Nearby Monitor - 附近监控 (React 适配系列)
+- **V145.000** (2026-01): Quick Strike - 快速打击工具
+- **V144.000** (2026-01): Final Backfill - 最终回填验证脚本
+- **V143.000** (2026-01): Proxy Auditor - 代理健康审计
+- **V142.000** (2026-01): Final Canary - 最终金丝雀飞行 (模块化架构验证)
+- **V141.000** (2026-01): Slender Commander - QuantHarvester 模块化重构 (1608 → 679 行)
+- **V140.000** (2026-01): Data Purity - 数据纯度校准 (UTC enforcement + year detection)
+- **V139.000** (2026-01): Total Offensive - 全面进攻工具
+- **V138.000** (2026-01): Modular Strike - Targeting, Precision & Golden Zone
+- **V132.000** (2026-01): Forensic Analyzer - 取证分析工具（全页码收割引擎）
 - **V85.000** (2026-01): Visual-First Extraction - 视觉优先提取引擎（Logo-based detection + 悬停取证）
 - **V84.910** (2026-01): Deep Extractor - 深度数据提取工具
 - **V84.x 系列** (2026-01): 诊断和测试工具集（金丝雀测试、综合诊断、悬停诊断、API 突击测试）
@@ -2121,6 +2162,398 @@ UNIQUE (entity_id, provider_name, metric_type, occurred_at, dimension, sequence)
 
 ---
 
+## 🚀 V132-V160 JavaScript 工具系列 - 模块化重构与取证分析
+
+### V132.000 Forensic Analyzer - 取证分析工具
+
+**说明**: V132.000 是深度取证分析工具，用于调查空收割结果的根本原因
+
+**核心特性**:
+- ✅ **V132.1 显式分页循环捕获**: 强制跳转 URL + 深度滚动触发
+- ✅ **V132.2 全赛季数据脱水**: 解密所有分页并汇总到全局列表
+- ✅ **V132.3 高精度原子对账**: 标准规范化 + Fuzzy Matching (80% 阈值)
+- ✅ **V132.4 巡航大盘**: 实时统计和匹配率显示
+- ✅ **截图和 HTML 保存**: 完整的取证证据链
+
+**使用方式**:
+```bash
+node scripts/ops/v132_000_forensic_analyzer.js
+```
+
+### V134.000 Debug Runner - 调试运行器
+
+**说明**: V134.000 是调试运行器，用于快速诊断和验证收割逻辑
+
+**核心特性**:
+- ✅ **快速诊断**: 单场比赛快速验证
+- ✅ **Modal 诊断**: Modal 检测和数据提取诊断
+- ✅ **调试输出**: 详细的调试日志输出
+
+**使用方式**:
+```bash
+# 调试运行器
+node scripts/ops/v134_000_debug_runner.js
+
+# Modal 诊断
+node scripts/ops/v134_001_modal_diagnostic.js
+```
+
+### V135.000 Canary Validation - 金丝雀验证
+
+**说明**: V135.000 是金丝雀验证工具，用于小规模快速验证
+
+**使用方式**:
+```bash
+node scripts/ops/v135_000_canary_validation.js
+```
+
+### V136.000 Precision Canary - 精密金丝雀
+
+**说明**: V136.000 是精密金丝雀测试工具，提供更精确的验证
+
+**使用方式**:
+```bash
+# 精密金丝雀
+node scripts/ops/v136_000_precision_canary.js
+
+# 诊断工具
+node scripts/ops/v136_001_diagnostic.js
+```
+
+### V138.000 Modular Strike - 模块化打击
+
+**说明**: V138.000 引入模块化架构，将 QuantHarvester 重构为独立模块
+
+**核心特性**:
+- ✅ **Golden Zone**: 2024-2026 高收益比赛过滤
+- ✅ **代理轮换**: 支持多代理轮换
+- ✅ **模块化设计**: Targeting, Precision & Golden Zone
+
+**使用方式**:
+```bash
+node src/engines/QuantHarvester.js
+```
+
+### V139.000 Total Offensive - 全面进攻
+
+**说明**: V139.000 是全面进攻工具，提供全方位的数据采集能力
+
+**使用方式**:
+```bash
+node scripts/ops/v139_000_total_offensive.js
+```
+
+### V140.000 Data Purity Calibration - 数据纯度校准
+
+**说明**: V140.000 是数据纯度校准工具，确保 UTC 时间强制执行和年份检测
+
+**核心特性**:
+- ✅ **UTC 强制执行**: 统一时间标准
+- ✅ **年份检测**: 自动检测和修正年份
+- ✅ **数据纯度验证**: 确保数据质量
+
+**使用方式**:
+```bash
+node scripts/ops/v140_000_purity_verification.js
+```
+
+### V141.000 Slender Commander - 模块化重构
+
+**说明**: V141.000 是 QuantHarvester 的模块化重构版本，从 1608 行精简到 679 行
+
+**核心特性**:
+- ✅ **TelemetryService 提取**: 遥测服务独立模块
+- ✅ **SurgicalInteraction 提取**: 精确交互服务
+- ✅ **SignalRadar 提取**: 信号雷达服务
+- ✅ **模块化架构**: 清晰的职责分离
+
+**核心架构**:
+```
+src/engines/
+├── QuantHarvester.js           # V141.000 主收割机 (精简版)
+├── services/
+│   ├── TelemetryService      # 遥测服务
+│   ├── SurgicalInteraction   # 精确交互
+│   └── SignalRadar           # 信号雷达
+└── parsers/
+    └── TrajectoryParser     # 轨迹解析器
+```
+
+### V142.000 Final Canary - 最终金丝雀
+
+**说明**: V142.000 是最终金丝雀飞行验证工具，用于模块化架构验证
+
+**使用方式**:
+```bash
+node scripts/ops/v142_000_final_canary.js
+```
+
+### V143.000 Proxy Auditor - 代理健康审计
+
+**说明**: V143.000 是代理健康审计工具，监控和管理代理状态
+
+**使用方式**:
+```bash
+node scripts/ops/v143_proxy_auditor.js
+```
+
+### V144.000 Final Backfill - 最终回填
+
+**说明**: V144.000 是最终回填验证脚本，用于数据补全
+
+**使用方式**:
+```bash
+node scripts/ops/v144_000_final_backfill.js
+```
+
+### V145.000 Quick Strike - 快速打击
+
+**说明**: V145.000 是快速打击工具，用于快速数据采集
+
+**使用方式**:
+```bash
+node scripts/ops/v145_000_quick_strike.js
+```
+
+### V146.000 React Adaptation Series - React 适配系列
+
+**说明**: V146.000-V146.007 是 React SPA 适配系列，针对 OddsPortal 的 React 架构优化
+
+**核心特性**:
+- ✅ **React SPA 索引配置**: `AXIS_INDEX_OFFSETS`, `CELLS_PER_ROW`
+- ✅ **Modal 检测**: Modal 弹窗检测和数据提取
+- ✅ **DOM 监控**: DOM 变化监控
+- ✅ **Hover 差异**: 悬停操作差异分析
+
+**使用方式**:
+```bash
+# React 适配
+node scripts/ops/v146_000_react_adaptation.js
+
+# Modal 诊断
+node scripts/ops/v146_001_modal_diagnostic.js
+
+# Modal 查找器
+node scripts/ops/v146_002_modal_finder.js
+
+# 目标捕获
+node scripts/ops/v146_003_targeted_capture.js
+
+# DOM 监控
+node scripts/ops/v146_004_dom_monitor.js
+
+# Hover 差异
+node scripts/ops/v146_005_hover_diff.js
+
+# 内容变化
+node scripts/ops/v146_006_content_changes.js
+
+# 附近监控
+node scripts/ops/v146_007_nearby_monitor.js
+```
+
+### V148.000 Modal Remapping - Modal 重新映射
+
+**说明**: V148.000 是 Modal 重新映射工具，修复 Modal 数据提取问题
+
+**使用方式**:
+```bash
+node scripts/ops/v148_000_modal_remapping.js
+```
+
+### V149.000 Diagnostic - 诊断工具
+
+**说明**: V149.000 是综合诊断工具
+
+**使用方式**:
+```bash
+node scripts/ops/v149_000_diagnostic.js
+```
+
+### V150.000 Depth Patch - 深度补丁系列
+
+**说明**: V150.000 是深度补丁，解决完整轨迹等待问题
+
+**核心特性**:
+- ✅ **V150.004**: 修复 whitelistedProviders 空检查
+- ✅ **V150.003**: 修复 modal HTML 捕获选择器
+- ✅ **完整轨迹等待**: 深度渲染等待
+
+**使用方式**:
+```bash
+# 金丝雀测试
+node scripts/ops/v150_001_canary_test.js
+
+# 顺序收割
+node scripts/ops/v150_005_sequential_harvest.js
+```
+
+### V151.000 Patch Verification - 补丁验证
+
+**说明**: V151.000 是补丁验证工具，验证补丁应用效果
+
+**使用方式**:
+```bash
+node scripts/ops/v151_000_patch_verification.js
+```
+
+### V152.000 Canary Test - 金丝雀测试
+
+**说明**: V152.000 是金丝雀测试工具
+
+**使用方式**:
+```bash
+node scripts/ops/v152_000_canary_test.js
+```
+
+### V153.000 Full Power Audit - 全力审计
+
+**说明**: V153.000 是全力审计工具
+
+**使用方式**:
+```bash
+node scripts/ops/v153_000_full_power_audit.js
+```
+
+### V155.000 Total Offensive V151 - 全面进攻 V151
+
+**说明**: V155.000 是全面进攻工具的 V151 版本
+
+**使用方式**:
+```bash
+node scripts/ops/v155_000_total_offensive_v151.js
+```
+
+### V156.000 Verification Test - 验证测试
+
+**说明**: V156.000 是验证测试工具
+
+**使用方式**:
+```bash
+node scripts/ops/v156_000_verification_test.js
+```
+
+### V157.100 Canary Test & Full Sync - 金丝雀与全量同步
+
+**说明**: V157.100 提供金丝雀测试和全量同步功能
+
+**使用方式**:
+```bash
+# 金丝雀测试
+node scripts/ops/v157_100_canary_test.js
+
+# 全量同步
+node scripts/ops/v157_100_full_sync.js
+```
+
+### V158.000 Stealth Bypass Series - 潜行绕过取证系列
+
+**说明**: V158.000-V158.002 是潜行绕过取证系列，提供深度取证分析
+
+**核心特性**:
+- ✅ **V158.000**: 金丝雀测试
+- ✅ **V158.000**: 金丝雀验证
+- ✅ **V158.000**: 取证调查
+- ✅ **V158.001**: DOM 取证
+- ✅ **V158.001a**: 增强取证
+- ✅ **V158.002**: 潜行绕过
+
+**使用方式**:
+```bash
+# 金丝雀测试
+node scripts/ops/v158_000_canary_test.js
+
+# 金丝雀验证
+node scripts/ops/v158_000_canary_validation.js
+
+# 取证调查
+node scripts/ops/v158_000_forensic_investigation.js
+
+# DOM 取证
+node scripts/ops/v158_001_dom_forensic.js
+
+# 增强取证
+node scripts/ops/v158_001a_enhanced_forensic.js
+
+# 潜行绕过
+node scripts/ops/v158_002_stealth_bypass.js
+```
+
+### V159.000 Canary Validation - 金丝雀验证
+
+**说明**: V159.000 是金丝雀验证工具
+
+**使用方式**:
+```bash
+node scripts/ops/v159_000_canary_validation.js
+node scripts/ops/v159_000_modal_text_forensics.js
+```
+
+### V160.000 Identity Bridge - 身份桥接 (Row-to-Shop Recognition)
+
+**说明**: V160.000 是最新的 Identity Bridge 版本，修复了"面部识别"问题
+
+**V160.000 核心特性**:
+- ✅ **Row-to-Shop Recognition**: 从父行提取提供商名称
+- ✅ **Enhanced Parent Row Selectors**: React SPA 结构父行选择器
+- ✅ **Multi-level Fallback**: 多级回退提供商名称检测
+- ✅ **7 Core Providers**: Entity_B365, Entity_P, Entity_WH, Entity_BWIN, Entity_1XBT, Entity_UH, Entity_LADB
+- ✅ **V141.000 模块化重构**: 提取 TelemetryService, SurgicalInteraction, SignalRadar
+
+**核心架构**:
+```
+src/engines/
+├── QuantHarvester.js           # V160.000 主收割机
+├── config/
+│   └── ReactIndexConfig       # React SPA 索引配置
+├── parsers/
+│   └── TrajectoryParser       # 轨迹解析器
+├── selectors/
+│   └── OddsPortalSelectors    # OddsPortal 选择器
+└── services/
+    ├── TelemetryService       # 遥测服务
+    ├── SurgicalInteraction    # 精确交互
+    └── SignalRadar            # 信号雷达
+```
+
+**使用方式**:
+```bash
+# 运行 QuantHarvester (V160.000)
+node src/engines/QuantHarvester.js
+
+# 查看巡航大盘
+# ╔═══════════════════════════════════════════════════════════╗
+# ║  V160.000 巡航大盘                                           ║
+# ║  联赛: Premier League                                        ║
+# ║  理论总数: 380                                               ║
+# ║  实际提取: 380                                               ║
+# ║  状态:     ✅ SUCCESS                                        ║
+# ╚═══════════════════════════════════════════════════════════╝
+```
+
+**V160.000 Identity Bridge 核心改进**:
+```javascript
+// 修复 "面部识别" 问题 - 从父行提取提供商名称
+const MARKET_VENUE_WHITELIST = {
+    PINNACLE: {
+        id: 'Entity_P',
+        name: 'Pinnacle',
+        priority: 1,
+        // V159.000: 添加中文名称 '平博' 和变体
+        keywords: ['pinnacle', 'pinny', 'pinn', '平博', 'pin', 'pina']
+    },
+    BET365: {
+        id: 'Entity_B365',
+        name: 'bet365',
+        priority: 2,
+        keywords: ['bet365', 'b365', '365', 'bet 365', '365bet']
+    },
+    // ... 其他 5 个提供商
+};
+```
+
+---
+
 ## ⚠️ 重要警告
 
 ### 禁止操作
@@ -2371,12 +2804,12 @@ docker-compose exec db cat /var/lib/postgresql/data/log/postgresql.log | grep "d
 
 **🚨 CRITICAL**: This is a production system support document.
 
-**🧬 当前版本**: V132.000 (Ghost Fleet Harvesting Mission - QuantHarvester)
+**🧬 当前版本**: V160.000 (Identity Bridge - Row-to-Shop Recognition + Modular Refactoring)
 **命令中心**: V144.9 (Multi-Source Command Center - Final Baseline)
 **特征提取**: V41.380 (GoldenExtractor - 市场价值/缺阵/评分) ⭐
 **收割引擎**: V142.0 (HarvesterService - 统一收割服务)
 **数据同步**: V36.3 (auto_sync_and_alchemy_v2.sh - 数据链路全自动闭环)
-**QuantHarvester**: V122.000 (V129.0 动态代理 + V127.0 人类模拟) 🌐
+**QuantHarvester**: V160.000 (Identity Bridge + Modular Refactoring - TelemetryService + SurgicalInteraction + SignalRadar) 🌐
 **取证分析**: V132.000 (Forensic Analyzer - 全页码收割引擎) 🌐
 **Master Pipeline**: V87.203 (全量收割 + Jest 测试套件) 🌐
 **视觉提取**: V85.000 (Visual-First Extraction - Logo-based detection + 悬停取证) 🌐
@@ -2386,7 +2819,7 @@ docker-compose exec db cat /var/lib/postgresql/data/log/postgresql.log | grep "d
 **Pipeline 编排**: V69.000 (全链路自动化状态流转) 🌐
 **数据门禁**: V70.200 (Data Sentinel - 质量门禁) 🌐
 **代码质量**: V106.0 (Ruff 配置 - line-length: 100)
-**最后更新**: 2026-01-27 (V132.0 取证分析工具集成版)
+**最后更新**: 2026-01-28 (V160.0 Identity Bridge 集成版)
 **基线准确率**: 56% (真赛前)
 **生产状态**: Production Ready
 **Python 版本**: 3.11+
@@ -2397,6 +2830,10 @@ docker-compose exec db cat /var/lib/postgresql/data/log/postgresql.log | grep "d
 ## 文档维护
 
 **变更历史**:
+- 2026-01-28: V160.000 Identity Bridge - 添加 V132-V160 JavaScript 工具系列完整文档，包含 29 个版本的工具说明
+- 2026-01-28: 模块化架构更新 - 更新 src/engines/ 模块结构，添加 config/selectors/services 子模块说明
+- 2026-01-28: 版本号体系扩展 - 添加 V132.x-V160.x 版本前缀说明，包含 29 个新版本系列
+- 2026-01-28: 关键里程碑更新 - 添加 V132-V160 系列关键里程碑，包含 Identity Bridge 和 Stealth Bypass
 - 2026-01-27: V132.0 取证分析工具集成 - 添加 V122.000 QuantHarvester 和 V132.000 Forensic Analyzer 详细说明
 - 2026-01-27: 快速故障排除流程图 - 添加 Mermaid 流程图，直观展示问题诊断路径
 - 2026-01-27: 版本号统一 - 更新当前版本到 V132.000，确保文档一致性

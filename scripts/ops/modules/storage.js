@@ -225,29 +225,40 @@ async function upsertTemporalRecords(client, entityId, records) {
         // V95.000: 使用验证后的记录 - 修复 ON CONFLICT 约束匹配
         for (const record of validRecords) {
             try {
-                // V95.000: 使用正确的 ON CONFLICT 约束匹配数据库实际结构
-                // 约束: (entity_id, provider_name, occurred_at, dimension, sequence)
-                const result = await client.query(
-                    `INSERT INTO temporal_metric_records
-                     (entity_id, provider_name, metric_type, dimension, sequence, value, occurred_at, raw_data)
-                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                // V160.Repair: [强制标签] 在 SQL 拼装前强制 is_baseline 字段
+                // 规则: sequence === 0 的记录必须标记为 baseline
+                if (record.sequence === 0) {
+                    record.is_baseline = true;
+                }
+
+                // V163.FinalFix: Trace Injection
+                const sqlQuery = `INSERT INTO temporal_metric_records
+                     (entity_id, provider_name, metric_type, dimension, sequence, value, occurred_at, raw_data, is_baseline)
+                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
                      ON CONFLICT (entity_id, provider_name, occurred_at, dimension, sequence)
                      DO UPDATE SET
                          value = EXCLUDED.value,
                          raw_data = EXCLUDED.raw_data,
+                         is_baseline = EXCLUDED.is_baseline,
                          updated_at = NOW()
-                     RETURNING (xmax = 0) AS inserted`,
-                    [
-                        entityId,
-                        record.provider_name,
-                        record.metric_type || 'temporal_odds_1x2',
-                        record.dimension || 'single',
-                        record.sequence || 0,
-                        record.value,
-                        record.occurred_at,
-                        JSON.stringify(record.raw_data || {})
-                    ]
-                );
+                     RETURNING (xmax = 0) AS inserted`;
+                
+                const sqlParams = [
+                    entityId,
+                    record.provider_name,
+                    record.metric_type || 'temporal_odds_1x2',
+                    record.dimension || 'single',
+                    record.sequence || 0,
+                    record.value,
+                    record.occurred_at,
+                    JSON.stringify(record.raw_data || {}),
+                    record.is_baseline || false
+                ];
+
+                console.log(`[V163.FinalFix] 💉 EXEC SQL: ${sqlQuery}`);
+                console.log(`[V163.FinalFix] 💉 PARAMS: ${JSON.stringify(sqlParams)}`);
+
+                const result = await client.query(sqlQuery, sqlParams);
 
                 if (result.rows[0].inserted) {
                     inserted++;
@@ -258,6 +269,9 @@ async function upsertTemporalRecords(client, entityId, records) {
             } catch (error) {
                 // V95.000: Report actual errors instead of silently skipping
                 skipped++;
+                console.error(`[V163.FinalFix] 💥 STORAGE ERROR: ${error.message}`);
+                console.error(`[V163.FinalFix] 🔍 STACK: ${error.stack}`);
+                console.error(`[V163.FinalFix] 🔍 DETAIL: ${error.detail}`);
                 log.error(`[V95.000] Record INSERT ERROR: ${error.message.substring(0, 200)}`);
             }
         }
@@ -448,13 +462,14 @@ async function upsertFullTemporalRecords(client, entityId, movementData) {
                     const query = `
                         INSERT INTO temporal_metric_records
                             (entity_id, provider_name, metric_type, dimension,
-                             value, occurred_at, sequence, payout, raw_data)
-                        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+                             value, occurred_at, sequence, payout, raw_data, is_baseline)
+                        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
                         ON CONFLICT (entity_id, provider_name, occurred_at, dimension, sequence)
                         DO UPDATE SET
                             value = EXCLUDED.value,
                             payout = EXCLUDED.payout,
                             raw_data = EXCLUDED.raw_data,
+                            is_baseline = EXCLUDED.is_baseline,
                             updated_at = NOW()
                         RETURNING (xmax = 0) AS inserted
                     `;
@@ -468,7 +483,8 @@ async function upsertFullTemporalRecords(client, entityId, movementData) {
                         record.timestamp,
                         record.sequence,
                         record.payout,
-                        JSON.stringify(record.raw_data || {})
+                        JSON.stringify(record.raw_data || {}),
+                        record.is_baseline || false
                     ]);
 
                     totalRecords++;
