@@ -16,7 +16,7 @@ Core Features (Ghost Protocol - V55.2 → V150.0):
     - V150.0: Enhanced HTTP Headers for TLS fingerprint randomization
 
 Example:
-    >>> from src.api.collectors.base_extractor import BaseExtractor
+    >>> from src.collectors.base_extractor import BaseExtractor
     >>> extractor = BaseExtractor()
     >>> # Get random UA
     >>> ua = extractor.get_random_user_agent()

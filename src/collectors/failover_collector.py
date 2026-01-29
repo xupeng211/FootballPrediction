@@ -26,7 +26,7 @@ from datetime import datetime
 import logging
 from typing import Any
 
-from src.api.collectors.fotmob_core import FotMobCoreCollector
+from src.collectors.fotmob_core import FotMobCoreCollector
 
 logger = logging.getLogger(__name__)
 

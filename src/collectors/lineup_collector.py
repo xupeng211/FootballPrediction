@@ -16,7 +16,7 @@ V41.284: Supersonic Harvest
 - 不阻塞主收割流程
 
 Usage:
-    from src.api.collectors.lineup_collector import LineupCollector
+    from src.collectors.lineup_collector import LineupCollector
 
     collector = LineupCollector()
     result = collector.collect_lineup(match_id)

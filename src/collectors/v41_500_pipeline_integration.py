@@ -289,7 +289,7 @@ def process_match_after_collection(match_id: str) -> bool:
 
     在 FotMobCoreCollector 或其他采集器中调用：
 
-    >>> from src.api.collectors.v41_500_pipeline_integration import process_match_after_collection
+    >>> from src.collectors.v41_500_pipeline_integration import process_match_after_collection
     >>> process_match_after_collection(match_id)
 
     Args:

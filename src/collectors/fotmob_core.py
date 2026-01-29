@@ -28,7 +28,7 @@ import psycopg2
 import requests
 
 # V144.3: 集成 BaseExtractor Ghost Protocol
-from src.api.collectors.base_extractor import BaseExtractor
+from src.collectors.base_extractor import BaseExtractor
 
 # 配置日志
 logger = logging.getLogger(__name__)

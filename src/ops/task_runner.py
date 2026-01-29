@@ -77,7 +77,7 @@ class L2DataHarvestTask(BaseTask):
 
         try:
             # 导入采集器
-            from src.api.collectors.fotmob_core import FotMobDataCollector
+            from src.collectors.fotmob_core import FotMobDataCollector
             from src.config_unified import get_settings
 
             get_settings()

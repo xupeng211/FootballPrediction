@@ -10,7 +10,7 @@ Phase: Production-Grade Refactor
 Version: V36.0
 """
 
-from src.api.collectors.schemas.l1_match_schema import (
+from src.collectors.schemas.l1_match_schema import (
     L1CollectionSummary,
     L1MatchData,
     LeagueId,

@@ -29,7 +29,7 @@ load_dotenv(override=True)
 # 添加项目路径
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from src.api.collectors.fotmob_core import (
+from src.collectors.fotmob_core import (
     LEAGUE_ID_TO_TIER,
     LEAGUE_QUALITY_TIERS,
     FotMobCoreCollector,

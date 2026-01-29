@@ -28,7 +28,7 @@ import logging
 import os
 from typing import Any
 
-from src.api.collectors.base_extractor import SecurityInterrupt
+from src.collectors.base_extractor import SecurityInterrupt
 
 logger = logging.getLogger(__name__)
 

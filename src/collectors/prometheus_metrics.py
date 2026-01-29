@@ -9,7 +9,7 @@
 5. 失败数据数据库持久化 (V113.0)
 
 Usage:
-    >>> from src.api.collectors.prometheus_metrics import HarvestMetrics
+    >>> from src.collectors.prometheus_metrics import HarvestMetrics
     >>> metrics = HarvestMetrics()
     >>> metrics.record_extraction_success(vendor="Entity_P", duration=1.23)
 """

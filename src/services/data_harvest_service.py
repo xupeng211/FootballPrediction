@@ -54,7 +54,7 @@ from psycopg2 import pool
 from psycopg2.extras import RealDictCursor
 
 from src.config_unified import get_config as get_unified_config
-from src.core.scrapers.industrial_auditor import AuditorConfig, IndustrialAuditor
+from src.scrapers.industrial_auditor import AuditorConfig, IndustrialAuditor
 from src.services.harvester_config import HarvesterV2Config, get_harvester_config
 
 logger = logging.getLogger("OddsHarvestService")
@@ -922,7 +922,7 @@ class OddsHarvestService:
             是否成功（失败不影响主流程）
         """
         try:
-            from src.api.collectors.lineup_collector import LineupCollector
+            from src.collectors.lineup_collector import LineupCollector
 
             collector = LineupCollector()
             result = collector.collect_and_save(match_id)

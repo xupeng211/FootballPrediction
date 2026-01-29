@@ -312,7 +312,7 @@ class ZombieAssetCleaner:
 
         try:
             # 动态导入 FotMob 收割器
-            from src.api.collectors.fotmob_core import FotMobCollector
+            from src.collectors.fotmob_core import FotMobCollector
 
             collector = FotMobCollector()
             raw_data = collector.fetch_match_data(external_id)

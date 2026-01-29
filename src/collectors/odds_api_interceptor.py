@@ -29,7 +29,7 @@ from typing import Any
 from playwright.async_api import Page, Response
 
 # Reuse V58.0 data model and constants
-from src.api.collectors.odds_production_extractor import (
+from src.collectors.odds_production_extractor import (
     TARGET_ENTITIES,
     MultiSourceEntityData,
     logger,
@@ -439,7 +439,7 @@ class OddsAPIInterceptor:
 
             # Try OddsPortal custom format: "22 Dec, 08:13"
             try:
-                from src.api.collectors.odds_production_extractor import TOOLTIP_OPENING_PATTERN
+                from src.collectors.odds_production_extractor import TOOLTIP_OPENING_PATTERN
 
                 match = TOOLTIP_OPENING_PATTERN.search(value)
                 if match:

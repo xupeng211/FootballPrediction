@@ -34,10 +34,10 @@ from typing import Any
 from playwright.async_api import Browser, async_playwright
 import psycopg2
 
-from src.api.collectors.base_extractor import BaseExtractor
-from src.api.collectors.circuit_breaker import CircuitBreaker, CircuitBreakerConfig
-from src.api.collectors.collection_sentry import CollectionSentry
-from src.api.collectors.odds_production_extractor import OddsProductionExtractor
+from src.collectors.base_extractor import BaseExtractor
+from src.collectors.circuit_breaker import CircuitBreaker, CircuitBreakerConfig
+from src.collectors.collection_sentry import CollectionSentry
+from src.collectors.odds_production_extractor import OddsProductionExtractor
 from src.config_unified import get_settings
 from src.utils.text_processor import TeamNameNormalizer
 

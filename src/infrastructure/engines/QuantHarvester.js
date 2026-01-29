@@ -10,7 +10,7 @@ const {
     createConnection,
     getOrCreateEntity,
     upsertTemporalRecords
-} = require('../../scripts/ops/modules/storage');
+} = require('../../../scripts/ops/modules/storage');
 const { TrajectoryParser } = require('./parsers/TrajectoryParser');
 const { TelemetryService } = require('./services/TelemetryService');
 const { SurgicalInteraction } = require('./services/SurgicalInteraction');
