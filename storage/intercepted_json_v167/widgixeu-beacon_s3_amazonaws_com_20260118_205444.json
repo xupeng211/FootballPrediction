@@ -1,0 +1,52 @@
+{
+  "url": "https://widgixeu-beacon.s3.amazonaws.com/beaconconfigs/OTAwMjE0NDEtNmFhZWJhNDA1OTEzYWY3ZTQ1NTJhZGE4NjNhNzQ3YjBlYzlmMDg0YjM3YjBhZTM0Njk%3D.json",
+  "json_data": {
+    "status": "ok",
+    "beacon_status": 1,
+    "domain": [
+      "oddsportal.com"
+    ],
+    "links": {
+      "894440": {
+        "id": 894440,
+        "close": false,
+        "open": false,
+        "triggers": "((e('PC', 10)) && (e('CKEX', 20)))",
+        "html": {
+          "link_text": "Take Survey",
+          "type": "footer",
+          "fill": "",
+          "text": "We would love to get your opinion on your experience with our site with a short survey",
+          "bg": "#FFFFFF",
+          "color": "#444444",
+          "link_color": "#0000EE",
+          "fixed": "true",
+          "js": "",
+          "css": ".sg-b-p {\r\n    left: 0%; \r\n    min-height: 320px;\r\n    right: 0%;\r\n  \tpadding: 35px 0px;\r\n  \ttop: 0px;\r\n}\r\n\r\n.sg-b-f.sg-b-bar {\r\n    margin: 80px 15px;\r\n    width: 280px !important;\r\n    right: 0 !important;\r\n    left: auto !important;\r\n    border-radius: 8px;\r\n    padding: 5px 8px 16px 16px;\r\n    border: 1px solid #e9e9e9;\r\n    box-shadow: 0 4px 32px 0 rgba(0, 0, 0, 0.08);\r\n    transition: all 0.4s ease;\r\n    color: #656565;\r\n    font-family: Tahoma, sans-serif;\r\n    background-image: url(https://i.ibb.co/c2MN1SW/OP.png);\r\n    background-repeat: no-repeat;\r\n    background-size: 20%;\r\n    background-position: 195px center;\r\n    background-color: white;\r\n    z-index: 1000;\r\n  \tline-height: 16px;\r\n  }\r\n\r\n.sg-b-f p {\r\n    text-align: left;\r\n    margin: 11px 0;\r\n    font-weight: bold;\r\n    width: 180px;\r\n    font-size: 8pt;\r\n}\r\n\r\n.sg-b-l-t {\r\n    font-weight: 600;\r\n    color: #fff !important;\r\n    background-color: #ff9800;\r\n    padding: 5px;\r\n    text-decoration: none !important;\r\n    border-radius: 3px;\r\n  }\r\n\r\n.sg-b-l-m {\r\n    width: 60%;\r\n    font-weight: 600;\r\n    color: #fff !important;\r\n    background-color: #FF0046;\r\n    padding: 5px;\r\n    text-decoration: none !important;\r\n    border-radius: 3px;\r\n    text-align: center;\r\n  }\r\n\r\n.sg-b-f {\r\n    text-align: left;\r\n}"
+        },
+        "url": "//survey.alchemer.eu/s3/90453723/e12fc57a5113"
+      }
+    }
+  },
+  "timestamp": "2026-01-18T12:54:44.166200+00:00",
+  "status_code": 200,
+  "headers": {
+    "access-control-expose-headers": "x-forwarded-for",
+    "etag": "\"a93b78b8fe09ee248d0bd3c24642add1\"",
+    "x-amz-version-id": "qZ3GRggEXO477c4w6PM8Wx5lFfMwwlSg",
+    "access-control-allow-methods": "GET",
+    "x-amz-storage-class": "INTELLIGENT_TIERING",
+    "date": "Sun, 18 Jan 2026 12:54:35 GMT",
+    "last-modified": "Wed, 31 Jul 2024 06:28:14 GMT",
+    "vary": "Origin, Access-Control-Request-Headers, Access-Control-Request-Method",
+    "content-type": "application/json",
+    "x-amz-id-2": "4c9EwEnz6+BxlnOL1f2KUPMB+1dzIRHVuiI++9q7vO4vSt71MZ9VH6+uOGDKy2+5EtZvx4uIJ5zpFKrDkWE768bfytFhZTI/It6IIDaG2zI=",
+    "x-amz-request-id": "P841H4P1VXBBN6W0",
+    "accept-ranges": "bytes",
+    "access-control-allow-origin": "*",
+    "content-length": "1887",
+    "server": "AmazonS3",
+    "x-amz-server-side-encryption": "AES256"
+  },
+  "matched_keywords": [],
+  "content_type": 

@@ -1,0 +1,97 @@
+{
+  "version": "V84.700",
+  "description": "Centralized selector configuration for temporal data extraction (Updated for OddsPortal 2026)",
+  "last_updated": "2026-01-25",
+  "selectors": {
+    "row_identification": {
+      "formula_a": {
+        "name": "Provider Row Selector (V84.700)",
+        "selector": "[data-testid='betting-exchanges-table-row'], [data-testid='bookmaker-table-header-line']",
+        "description": "V84.700: Use data-testid for stable selection (OddsPortal 2026)",
+        "fallback": "[data-testid='dropping-odds'], [aria-label*='bookmaker']"
+      }
+    },
+    "interaction_trigger": {
+      "formula_b": {
+        "name": "Hover Trigger Selector (V84.700)",
+        "selector": "[data-testid='bookie-logo'], [data-testid='bookmaker-name']",
+        "description": "V84.700: Use data-testid for trigger elements",
+        "fallback": "[data-testid*='trigger'], [aria-label*='odds']"
+      }
+    },
+    "tooltip_detection": {
+      "anchor": {
+        "name": "Tooltip Anchor",
+        "selector": "h3:text('Odds movement')",
+        "description": "Stable header element that confirms tooltip presence (may not exist in 2026)"
+      },
+      "container": {
+        "name": "Tooltip Container (V84.700)",
+        "selector": "div[class*='bottom-'], div.height-content.absolute",
+        "fallback": "Use visual detection based on bottom positioning",
+        "description": "V84.700: Tooltip detection based on bottom-positioned divs"
+      }
+    },
+    "data_extraction": {
+      "structural_anchors": {
+        "name": "Row Container (Relative Path)",
+        "description": "Navigates from anchor to data rows using relative positioning",
+        "strategy": "time-pattern-based",
+        "note": "V84.700: Uses time pattern extraction rather than DOM structure"
+      },
+      "time_field": {
+        "name": "Timestamp Cell",
+        "pattern": "text-[10px].font-normal",
+        "description": "Time format: '24 Jan, 10:00' or 'Jan 24, 10:00'",
+        "regex": "\\d{1,2}\\s+\\w+\\.?\\s*,?\\s+\\d{1,2}:\\d{2}"
+      },
+      "value_field": {
+        "name": "Odds Value Cell",
+        "pattern": "text-[10px].font-bold",
+        "description": "Decimal odds value",
+        "regex": "\\d+\\.\\d+",
+        "validation": "value > 1 && value < 100"
+      },
+      "delta_field": {
+        "name": "Change Delta Cell",
+        "pattern": "text-[10px].font-bold.text-green-dark",
+        "description": "Optional change indicator (e.g., '+0.05')",
+        "optional": true
+      }
+    }
+  },
+  "retry_config": {
+    "hover": {
+      "max_retries": 3,
+      "base_delay": 500,
+      "max_delay": 5000,
+      "backoff_multiplier": 2,
+      "hover_wait": 2000
+    }
+  },
+  "rate_limiting": {
+    "concurrency": 2,
+    "delay": 800,
+    "max_providers": 5
+  },
+  "target_providers": {
+    "primary": [
+      "william-hill",
+      "betway",
+      "188bet",
+      "bet365",
+      "pinnacle"
+    ],
+    "secondary": [
+      "sbobet",
+      "william hill",
+      "ladbrokes"
+    ]
+  },
+  "v84_700_notes": {
+    "dom_structure": "Vue.js + Tailwind CSS with dynamic rendering",
+    "stable_selectors": "data-testid attributes are reliable",
+    "unstable_selectors": "Tailwind class names are randomly generated",
+    "recommended_approach": "Use data-testid-based selectors + time-pattern extraction"
+  }
+}

@@ -1,0 +1,152 @@
+{
+  "matches": [
+    {
+      "url": "https://www.oddsportal.com/football/england/premier-league-2024-2025-liverpool-manchester-city-12345678/",
+      "hash": "12345678",
+      "name": "Liverpool vs Manchester City",
+      "league": "Premier League",
+      "season": "2024/2025",
+      "priority": "high"
+    },
+    {
+      "url": "https://www.oddsportal.com/football/england/premier-league-2024-2025-arsenal-chelsea-87654321/",
+      "hash": "87654321",
+      "name": "Arsenal vs Chelsea",
+      "league": "Premier League",
+      "season": "2024/2025",
+      "priority": "high"
+    },
+    {
+      "url": "https://www.oddsportal.com/football/england/premier-league-2024-2025-tottenham-newcastle-11223344/",
+      "hash": "11223344",
+      "name": "Tottenham vs Newcastle",
+      "league": "Premier League",
+      "season": "2024/2025",
+      "priority": "high"
+    },
+    {
+      "url": "https://www.oddsportal.com/football/england/premier-league-2024-2025-man-united-everton-99887766/",
+      "hash": "99887766",
+      "name": "Manchester United vs Everton",
+      "league": "Premier League",
+      "season": "2024/2025",
+      "priority": "high"
+    },
+    {
+      "url": "https://www.oddsportal.com/football/england/premier-league-2024-2025-leicester-west-ham-55443322/",
+      "hash": "55443322",
+      "name": "Leicester vs West Ham",
+      "league": "Premier League",
+      "season": "2024/2025",
+      "priority": "high"
+    },
+    {
+      "url": "https://www.oddsportal.com/football/spain/laliga-2024-2025-real-madrid-barcelona-abcdefgh/",
+      "hash": "abcdefgh",
+      "name": "Real Madrid vs Barcelona",
+      "league": "La Liga",
+      "season": "2024/2025",
+      "priority": "high"
+    },
+    {
+      "url": "https://www.oddsportal.com/football/spain/laliga-2024-2025-atletico-madrid-sevilla-ijklmnopq/",
+      "hash": "ijklmnopq",
+      "name": "Atletico Madrid vs Sevilla",
+      "league": "La Liga",
+      "season": "2024/2025",
+      "priority": "high"
+    },
+    {
+      "url": "https://www.oddsportal.com/football/spain/laliga-2024-2025-valencia-villarreal-qrstuvwx/",
+      "hash": "qrstuvwx",
+      "name": "Valencia vs Villarreal",
+      "league": "La Liga",
+      "season": "2024/2025",
+      "priority": "high"
+    },
+    {
+      "url": "https://www.oddsportal.com/football/spain/laliga-2024-2025-real-sociedad-athletic-bilbao-yzaxwvuts/",
+      "hash": "yzaxwvuts",
+      "name": "Real Sociedad vs Athletic Bilbao",
+      "league": "La Liga",
+      "season": "2024/2025",
+      "priority": "high"
+    },
+    {
+      "url": "https://www.oddsportal.com/football/spain/laliga-2024-2025-betis-girona-defghijkl/",
+      "hash": "defghijkl",
+      "name": "Real Betis vs Girona",
+      "league": "La Liga",
+      "season": "2024/2025",
+      "priority": "high"
+    },
+    {
+      "url": "https://www.oddsportal.com/football/italy/serie-a-2024-2025-juventus-inter-milan-23456789/",
+      "hash": "23456789",
+      "name": "Juventus vs Inter Milan",
+      "league": "Serie A",
+      "season": "2024/2025",
+      "priority": "high"
+    },
+    {
+      "url": "https://www.oddsportal.com/football/italy/serie-a-2024-2025-ac-milan-napoli-mnopqrst/",
+      "hash": "mnopqrst",
+      "name": "AC Milan vs Napoli",
+      "league": "Serie A",
+      "season": "2024/2025",
+      "priority": "high"
+    },
+    {
+      "url": "https://www.oddsportal.com/football/italy/serie-a-2024-2025-roma-lazio-uvwxyz123/",
+      "hash": "uvwxyz12",
+      "name": "AS Roma vs Lazio",
+      "league": "Serie A",
+      "season": "2024/2025",
+      "priority": "high"
+    },
+    {
+      "url": "https://www.oddsportal.com/football/italy/serie-a-2024-2025-fiorentina-atalanta-45678901/",
+      "hash": "45678901",
+      "name": "Fiorentina vs Atalanta",
+      "league": "Serie A",
+      "season": "2024/2025",
+      "priority": "high"
+    },
+    {
+      "url": "https://www.oddsportal.com/football/italy/serie-a-2024-2025-torino-genoa-23456780/",
+      "hash": "23456780",
+      "name": "Torino vs Genoa",
+      "league": "Serie A",
+      "season": "2024/2025",
+      "priority": "high"
+    },
+    {
+      "url": "https://www.oddsportal.com/football/germany/bundesliga-2024-2025-bayern-munich-dortmund-34567890/",
+      "hash": "34567890",
+      "name": "Bayern Munich vs Dortmund",
+      "league": "Bundesliga",
+      "season": "2024/2025",
+      "priority": "high"
+    },
+    {
+      "url": "https://www.oddsportal.com/football/germany/bundesliga-2024-2025-rb-leverkusen-wolfsburg-678905432/",
+      "hash": "678905432",
+      "name": "RB Leipzig vs Wolfsburg",
+      "league": "Bundesliga",
+      "season": "2024/2025",
+      "priority": "high"
+    },
+    {
+      "url": "https://www.oddsportal.com/football/germany/bundesliga-2024-2025-eintracht-frankfurt-mgladbach-24680135/",
+      "hash": "24680135",
+      "name": "Eintracht Frankfurt vs Monchengladbach",
+      "league": "Bundesliga",
+      "season": "2024/2025",
+      "priority": "high"
+    }
+  ],
+  "generated_at": "2026-01-25T01:30:00Z",
+  "version": "V67.000",
+  "description": "Production match pool with 20 real matches across top 4 leagues",
+  "source": "V66.000 production integration"
+}

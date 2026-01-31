@@ -1,0 +1,825 @@
+{
+  "report": {
+    "total_fotmob_teams": 133,
+    "total_oddsportal_teams": 94,
+    "successful_mappings": 99,
+    "low_confidence_mappings": 17,
+    "unmatched_teams": 36,
+    "mapping_rate": 74.43609022556392,
+    "generated_at": "2025-12-31T20:52:30.406679"
+  },
+  "mappings": [
+    {
+      "fotmob_name": "Augsburg",
+      "oddsportal_name": "Augsburg",
+      "confidence_score": 100.0,
+      "league_name": "Bundesliga",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "Bayer Leverkusen",
+      "oddsportal_name": "Leverkusen",
+      "confidence_score": 90.0,
+      "league_name": "Bundesliga",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "Bayern München",
+      "oddsportal_name": "Bayern Munich",
+      "confidence_score": 81.4814814814815,
+      "league_name": "Bundesliga",
+      "needs_review": true
+    },
+    {
+      "fotmob_name": "Bochum",
+      "oddsportal_name": "Bochum",
+      "confidence_score": 100.0,
+      "league_name": "Bundesliga",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "Borussia Dortmund",
+      "oddsportal_name": "B. Dortmund",
+      "confidence_score": 85.5,
+      "league_name": "Bundesliga",
+      "needs_review": true
+    },
+    {
+      "fotmob_name": "Borussia Mönchengladbach",
+      "oddsportal_name": "B. Monchengladbach",
+      "confidence_score": 76.19047619047619,
+      "league_name": "Bundesliga",
+      "needs_review": true
+    },
+    {
+      "fotmob_name": "Eintracht Frankfurt",
+      "oddsportal_name": "Eintracht Frankfurt",
+      "confidence_score": 100.0,
+      "league_name": "Bundesliga",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "FC Heidenheim",
+      "oddsportal_name": "Heidenheim",
+      "confidence_score": 95.0,
+      "league_name": "Bundesliga",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "Freiburg",
+      "oddsportal_name": "Freiburg",
+      "confidence_score": 100.0,
+      "league_name": "Bundesliga",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "Hoffenheim",
+      "oddsportal_name": "Hoffenheim",
+      "confidence_score": 100.0,
+      "league_name": "Bundesliga",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "Mainz 05",
+      "oddsportal_name": "Mainz",
+      "confidence_score": 90.0,
+      "league_name": "Bundesliga",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "RB Leipzig",
+      "oddsportal_name": "RB Leipzig",
+      "confidence_score": 100.0,
+      "league_name": "Bundesliga",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "St. Pauli",
+      "oddsportal_name": "St. Pauli",
+      "confidence_score": 100.0,
+      "league_name": "Bundesliga",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "Union Berlin",
+      "oddsportal_name": "Union Berlin",
+      "confidence_score": 100.0,
+      "league_name": "Bundesliga",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "VfB Stuttgart",
+      "oddsportal_name": "Stuttgart",
+      "confidence_score": 95.0,
+      "league_name": "Bundesliga",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "Werder Bremen",
+      "oddsportal_name": "Werder Bremen",
+      "confidence_score": 100.0,
+      "league_name": "Bundesliga",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "Wolfsburg",
+      "oddsportal_name": "Wolfsburg",
+      "confidence_score": 100.0,
+      "league_name": "Bundesliga",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "Atletico Madrid",
+      "oddsportal_name": "Atl. Madrid",
+      "confidence_score": 76.92307692307692,
+      "league_name": "La Liga",
+      "needs_review": true
+    },
+    {
+      "fotmob_name": "Barcelona",
+      "oddsportal_name": "Barcelona",
+      "confidence_score": 100.0,
+      "league_name": "La Liga",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "Celta Vigo",
+      "oddsportal_name": "Celta Vigo",
+      "confidence_score": 100.0,
+      "league_name": "La Liga",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "Deportivo Alaves",
+      "oddsportal_name": "Alaves",
+      "confidence_score": 90.0,
+      "league_name": "La Liga",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "Getafe",
+      "oddsportal_name": "Getafe",
+      "confidence_score": 100.0,
+      "league_name": "La Liga",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "Girona",
+      "oddsportal_name": "Girona",
+      "confidence_score": 100.0,
+      "league_name": "La Liga",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "Las Palmas",
+      "oddsportal_name": "Las Palmas",
+      "confidence_score": 100.0,
+      "league_name": "La Liga",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "Leganes",
+      "oddsportal_name": "Lens",
+      "confidence_score": 72.72727272727273,
+      "league_name": "La Liga",
+      "needs_review": true
+    },
+    {
+      "fotmob_name": "Mallorca",
+      "oddsportal_name": "Mallorca",
+      "confidence_score": 100.0,
+      "league_name": "La Liga",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "Osasuna",
+      "oddsportal_name": "Osasuna",
+      "confidence_score": 100.0,
+      "league_name": "La Liga",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "Rayo Vallecano",
+      "oddsportal_name": "Rayo Vallecano",
+      "confidence_score": 100.0,
+      "league_name": "La Liga",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "Real Betis",
+      "oddsportal_name": "Betis",
+      "confidence_score": 90.0,
+      "league_name": "La Liga",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "Real Madrid",
+      "oddsportal_name": "Real Madrid",
+      "confidence_score": 100.0,
+      "league_name": "La Liga",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "Real Sociedad",
+      "oddsportal_name": "Real Sociedad",
+      "confidence_score": 100.0,
+      "league_name": "La Liga",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "Real Valladolid",
+      "oddsportal_name": "Valladolid",
+      "confidence_score": 90.0,
+      "league_name": "La Liga",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "Sevilla",
+      "oddsportal_name": "Sevilla",
+      "confidence_score": 100.0,
+      "league_name": "La Liga",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "Valencia",
+      "oddsportal_name": "Valencia",
+      "confidence_score": 100.0,
+      "league_name": "La Liga",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "Villarreal",
+      "oddsportal_name": "Villarreal",
+      "confidence_score": 100.0,
+      "league_name": "La Liga",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "Angers",
+      "oddsportal_name": "Angers",
+      "confidence_score": 100.0,
+      "league_name": "Ligue 1",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "Auxerre",
+      "oddsportal_name": "Auxerre",
+      "confidence_score": 100.0,
+      "league_name": "Ligue 1",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "Brest",
+      "oddsportal_name": "Brest",
+      "confidence_score": 100.0,
+      "league_name": "Ligue 1",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "Le Havre",
+      "oddsportal_name": "Le Havre",
+      "confidence_score": 100.0,
+      "league_name": "Ligue 1",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "Lens",
+      "oddsportal_name": "Lens",
+      "confidence_score": 100.0,
+      "league_name": "Ligue 1",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "Lille",
+      "oddsportal_name": "Lille",
+      "confidence_score": 100.0,
+      "league_name": "Ligue 1",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "Lorient",
+      "oddsportal_name": "Lorient",
+      "confidence_score": 100.0,
+      "league_name": "Ligue 1",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "Lyon",
+      "oddsportal_name": "Lyon",
+      "confidence_score": 100.0,
+      "league_name": "Ligue 1",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "Marseille",
+      "oddsportal_name": "Marseille",
+      "confidence_score": 100.0,
+      "league_name": "Ligue 1",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "Metz",
+      "oddsportal_name": "Metz",
+      "confidence_score": 100.0,
+      "league_name": "Ligue 1",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "Monaco",
+      "oddsportal_name": "Monaco",
+      "confidence_score": 100.0,
+      "league_name": "Ligue 1",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "Montpellier",
+      "oddsportal_name": "Montpellier",
+      "confidence_score": 100.0,
+      "league_name": "Ligue 1",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "Nantes",
+      "oddsportal_name": "Nantes",
+      "confidence_score": 100.0,
+      "league_name": "Ligue 1",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "Nice",
+      "oddsportal_name": "Nice",
+      "confidence_score": 100.0,
+      "league_name": "Ligue 1",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "Reims",
+      "oddsportal_name": "Reims",
+      "confidence_score": 100.0,
+      "league_name": "Ligue 1",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "Rennes",
+      "oddsportal_name": "Rennes",
+      "confidence_score": 100.0,
+      "league_name": "Ligue 1",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "Saint-Etienne",
+      "oddsportal_name": "Rennes",
+      "confidence_score": 72.0,
+      "league_name": "Ligue 1",
+      "needs_review": true
+    },
+    {
+      "fotmob_name": "Strasbourg",
+      "oddsportal_name": "Strasbourg",
+      "confidence_score": 100.0,
+      "league_name": "Ligue 1",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "Toulouse",
+      "oddsportal_name": "Toulouse",
+      "confidence_score": 100.0,
+      "league_name": "Ligue 1",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "AFC Bournemouth",
+      "oddsportal_name": "Bournemouth",
+      "confidence_score": 95.0,
+      "league_name": "Premier League",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "Arsenal",
+      "oddsportal_name": "Arsenal",
+      "confidence_score": 100.0,
+      "league_name": "Premier League",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "Aston Villa",
+      "oddsportal_name": "Aston Villa",
+      "confidence_score": 100.0,
+      "league_name": "Premier League",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "Brentford",
+      "oddsportal_name": "Brentford",
+      "confidence_score": 100.0,
+      "league_name": "Premier League",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "Brighton & Hove Albion",
+      "oddsportal_name": "Brighton",
+      "confidence_score": 90.0,
+      "league_name": "Premier League",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "Chelsea",
+      "oddsportal_name": "Chelsea",
+      "confidence_score": 100.0,
+      "league_name": "Premier League",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "Crystal Palace",
+      "oddsportal_name": "Crystal Palace",
+      "confidence_score": 100.0,
+      "league_name": "Premier League",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "Everton",
+      "oddsportal_name": "Everton",
+      "confidence_score": 100.0,
+      "league_name": "Premier League",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "Fulham",
+      "oddsportal_name": "Fulham",
+      "confidence_score": 100.0,
+      "league_name": "Premier League",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "Ipswich Town",
+      "oddsportal_name": "Ipswich",
+      "confidence_score": 90.0,
+      "league_name": "Premier League",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "Leeds United",
+      "oddsportal_name": "Man United",
+      "confidence_score": 71.25,
+      "league_name": "Premier League",
+      "needs_review": true
+    },
+    {
+      "fotmob_name": "Leicester City",
+      "oddsportal_name": "Leicester",
+      "confidence_score": 90.0,
+      "league_name": "Premier League",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "Liverpool",
+      "oddsportal_name": "Liverpool",
+      "confidence_score": 100.0,
+      "league_name": "Premier League",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "Manchester City",
+      "oddsportal_name": "Man City",
+      "confidence_score": 85.5,
+      "league_name": "Premier League",
+      "needs_review": true
+    },
+    {
+      "fotmob_name": "Manchester United",
+      "oddsportal_name": "Man United",
+      "confidence_score": 85.5,
+      "league_name": "Premier League",
+      "needs_review": true
+    },
+    {
+      "fotmob_name": "Newcastle United",
+      "oddsportal_name": "Newcastle",
+      "confidence_score": 90.0,
+      "league_name": "Premier League",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "Norwich City",
+      "oddsportal_name": "Man City",
+      "confidence_score": 85.5,
+      "league_name": "Premier League",
+      "needs_review": true
+    },
+    {
+      "fotmob_name": "Nottingham Forest",
+      "oddsportal_name": "Nottingham Forest",
+      "confidence_score": 100.0,
+      "league_name": "Premier League",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "Sheffield United",
+      "oddsportal_name": "Man United",
+      "confidence_score": 85.5,
+      "league_name": "Premier League",
+      "needs_review": true
+    },
+    {
+      "fotmob_name": "Southampton",
+      "oddsportal_name": "Southampton",
+      "confidence_score": 100.0,
+      "league_name": "Premier League",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "Tottenham Hotspur",
+      "oddsportal_name": "Tottenham",
+      "confidence_score": 90.0,
+      "league_name": "Premier League",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "West Bromwich Albion",
+      "oddsportal_name": "West Ham",
+      "confidence_score": 85.5,
+      "league_name": "Premier League",
+      "needs_review": true
+    },
+    {
+      "fotmob_name": "West Ham United",
+      "oddsportal_name": "West Ham",
+      "confidence_score": 90.0,
+      "league_name": "Premier League",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "Wolverhampton Wanderers",
+      "oddsportal_name": "Wolves",
+      "confidence_score": 81.81818181818181,
+      "league_name": "Premier League",
+      "needs_review": true
+    },
+    {
+      "fotmob_name": "Atalanta",
+      "oddsportal_name": "Atalanta",
+      "confidence_score": 100.0,
+      "league_name": "Serie A",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "Bologna",
+      "oddsportal_name": "Bologna",
+      "confidence_score": 100.0,
+      "league_name": "Serie A",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "Cagliari",
+      "oddsportal_name": "Cagliari",
+      "confidence_score": 100.0,
+      "league_name": "Serie A",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "Como",
+      "oddsportal_name": "Como",
+      "confidence_score": 100.0,
+      "league_name": "Serie A",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "Empoli",
+      "oddsportal_name": "Empoli",
+      "confidence_score": 100.0,
+      "league_name": "Serie A",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "Fiorentina",
+      "oddsportal_name": "Fiorentina",
+      "confidence_score": 100.0,
+      "league_name": "Serie A",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "Genoa",
+      "oddsportal_name": "Genoa",
+      "confidence_score": 100.0,
+      "league_name": "Serie A",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "Hellas Verona",
+      "oddsportal_name": "Verona",
+      "confidence_score": 90.0,
+      "league_name": "Serie A",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "Inter",
+      "oddsportal_name": "Inter",
+      "confidence_score": 100.0,
+      "league_name": "Serie A",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "Juventus",
+      "oddsportal_name": "Juventus",
+      "confidence_score": 100.0,
+      "league_name": "Serie A",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "Lazio",
+      "oddsportal_name": "Lazio",
+      "confidence_score": 100.0,
+      "league_name": "Serie A",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "Lecce",
+      "oddsportal_name": "Lecce",
+      "confidence_score": 100.0,
+      "league_name": "Serie A",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "Milan",
+      "oddsportal_name": "Milan",
+      "confidence_score": 100.0,
+      "league_name": "Serie A",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "Monza",
+      "oddsportal_name": "Monza",
+      "confidence_score": 100.0,
+      "league_name": "Serie A",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "Napoli",
+      "oddsportal_name": "Napoli",
+      "confidence_score": 100.0,
+      "league_name": "Serie A",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "Parma",
+      "oddsportal_name": "Parma",
+      "confidence_score": 100.0,
+      "league_name": "Serie A",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "Roma",
+      "oddsportal_name": "Roma",
+      "confidence_score": 100.0,
+      "league_name": "Serie A",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "Torino",
+      "oddsportal_name": "Torino",
+      "confidence_score": 100.0,
+      "league_name": "Serie A",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "Udinese",
+      "oddsportal_name": "Udinese",
+      "confidence_score": 100.0,
+      "league_name": "Serie A",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "Venezia",
+      "oddsportal_name": "Venezia",
+      "confidence_score": 100.0,
+      "league_name": "Serie A",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "AFC Bournemouth",
+      "oddsportal_name": "Bournemouth",
+      "confidence_score": 95.0,
+      "league_name": "英超",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "Arsenal",
+      "oddsportal_name": "Arsenal",
+      "confidence_score": 100.0,
+      "league_name": "英超",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "Aston Villa",
+      "oddsportal_name": "Aston Villa",
+      "confidence_score": 100.0,
+      "league_name": "英超",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "Brentford",
+      "oddsportal_name": "Brentford",
+      "confidence_score": 100.0,
+      "league_name": "英超",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "Brighton & Hove Albion",
+      "oddsportal_name": "Brighton",
+      "confidence_score": 90.0,
+      "league_name": "英超",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "Chelsea",
+      "oddsportal_name": "Chelsea",
+      "confidence_score": 100.0,
+      "league_name": "英超",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "Crystal Palace",
+      "oddsportal_name": "Crystal Palace",
+      "confidence_score": 100.0,
+      "league_name": "英超",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "Everton",
+      "oddsportal_name": "Everton",
+      "confidence_score": 100.0,
+      "league_name": "英超",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "Fulham",
+      "oddsportal_name": "Fulham",
+      "confidence_score": 100.0,
+      "league_name": "英超",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "Leeds United",
+      "oddsportal_name": "Man United",
+      "confidence_score": 71.25,
+      "league_name": "英超",
+      "needs_review": true
+    },
+    {
+      "fotmob_name": "Liverpool",
+      "oddsportal_name": "Liverpool",
+      "confidence_score": 100.0,
+      "league_name": "英超",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "Manchester City",
+      "oddsportal_name": "Man City",
+      "confidence_score": 85.5,
+      "league_name": "英超",
+      "needs_review": true
+    },
+    {
+      "fotmob_name": "Manchester United",
+      "oddsportal_name": "Man United",
+      "confidence_score": 85.5,
+      "league_name": "英超",
+      "needs_review": true
+    },
+    {
+      "fotmob_name": "Newcastle United",
+      "oddsportal_name": "Newcastle",
+      "confidence_score": 90.0,
+      "league_name": "英超",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "Nottingham Forest",
+      "oddsportal_name": "Nottingham Forest",
+      "confidence_score": 100.0,
+      "league_name": "英超",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "Tottenham Hotspur",
+      "oddsportal_name": "Tottenham",
+      "confidence_score": 90.0,
+      "league_name": "英超",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "West Ham United",
+      "oddsportal_name": "West Ham",
+      "confidence_score": 90.0,
+      "league_name": "英超",
+      "needs_review": false
+    },
+    {
+      "fotmob_name": "Wolverhampton Wanderers",
+      "oddsportal_name": "Wolves",
+      "confidence_score": 81.81818181818181,
+      "league_name": "英超",
+      "needs_review": true
+    }
+  ]
+}

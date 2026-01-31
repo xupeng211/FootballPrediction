@@ -1,0 +1,21 @@
+﻿match_id,home_team,away_team,league_name,match_date,home_xg,away_xg,real_home_prob,market_home_prob,value_gap_pct,market_shock_pct,price_volatility,possession_gap,shots_gap,tactical_bias_score,alpha_score,signal_type
+4506314,Arsenal,Leicester City,Premier League,2024-09-28,4.6,0.32,0.9350,0.1923,+74.27,222.98,53.19,50.0,30.0,83.33,92.191,UNDERVALUED
+4193839,Liverpool,Sheffield United,Premier League,2024-04-04,1.83,0.59,0.7562,0.1923,+56.39,222.98,53.19,66.0,24.0,82.00,91.720,UNDERVALUED
+4193907,Liverpool,Wolverhampton Wanderers,Premier League,2024-05-19,4.74,0.5,0.9046,0.1923,+71.23,222.98,53.19,34.0,32.0,78.00,90.579,UNDERVALUED
+4193796,Manchester City,Manchester United,Premier League,2024-03-03,3.33,0.25,0.9302,0.1923,+73.79,222.98,53.19,46.0,24.0,75.33,89.790,UNDERVALUED
+4193909,Manchester City,West Ham United,Premier League,2024-05-19,2.04,0.36,0.8500,0.1923,+65.77,222.98,53.19,42.0,25.0,75.11,89.691,UNDERVALUED
+4506623,Aston Villa,Ipswich Town,Premier League,2025-02-15,2.42,0.37,0.8674,0.1923,+67.51,222.98,53.19,52.0,21.0,74.00,89.364,UNDERVALUED
+4193724,Liverpool,Newcastle United,Premier League,2024-01-01,7.11,0.6,0.9222,0.1923,+72.99,222.98,53.19,24.0,29.0,73.56,89.253,UNDERVALUED
+4193799,Sheffield United,Arsenal,Premier League,2024-03-04,0.24,2.31,0.0941,0.1923,-9.82,222.98,53.19,-62.0,-18.0,74.00,89.134,NEUTRAL
+4506402,Wolverhampton Wanderers,Manchester City,Premier League,2024-10-20,0.97,1.62,0.3745,0.1923,+18.22,222.98,53.19,-56.0,-19.0,73.11,88.901,UNDERVALUED
+4193776,Manchester City,Chelsea,Premier League,2024-02-17,2.69,1.44,0.6513,0.1923,+45.90,222.98,53.19,40.0,22.0,71.11,88.411,UNDERVALUED
+4193901,Arsenal,Everton,Premier League,2024-05-19,3.01,0.61,0.8315,0.1923,+63.92,222.98,53.19,38.0,21.0,69.33,87.950,UNDERVALUED
+4506267,Newcastle United,Southampton,Premier League,2024-08-17,0.25,1.77,0.1238,0.1923,-6.85,222.98,53.19,-56.0,-16.0,69.78,87.855,NEUTRAL
+4506464,Fulham,Brentford,Premier League,2024-11-04,1.35,0.59,0.6959,0.1923,+50.36,222.98,53.19,36.0,21.0,68.67,87.696,UNDERVALUED
+4193769,West Ham United,Arsenal,Premier League,2024-02-11,0.22,3.59,0.0577,0.1923,-13.46,222.98,53.19,-40.0,-20.0,68.89,87.615,NEUTRAL
+4193706,Manchester City,Brentford,Premier League,2024-02-20,2.45,0.35,0.8750,0.1923,+68.27,222.98,53.19,40.0,19.0,67.78,87.501,UNDERVALUED
+4193801,AFC Bournemouth,Sheffield United,Premier League,2024-03-09,3.35,1.25,0.7283,0.1923,+53.60,222.98,53.19,40.0,19.0,67.78,87.442,UNDERVALUED
+4193829,Sheffield United,Fulham,Premier League,2024-03-30,1.88,1.3,0.5912,0.1923,+39.89,222.98,53.19,-48.0,-16.0,67.11,87.187,UNDERVALUED
+4506429,Leicester City,West Ham United,Premier League,2024-12-03,1.67,3.1,0.3501,0.1923,+15.78,222.98,53.19,-22.0,-23.0,66.22,86.824,UNDERVALUED
+4193879,West Ham United,Liverpool,Premier League,2024-04-27,0.7,1.75,0.2857,0.1923,+9.34,222.98,53.19,-42.0,-17.0,66.22,86.798,NEUTRAL
+4193833,Brentford,Brighton & Hove Albion,Premier League,2024-04-03,0.57,1.14,0.3333,0.1923,+14.10,222.98,53.19,-34.0,-19.0,65.78,86.684,NEUTRAL

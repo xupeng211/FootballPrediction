@@ -1,0 +1,289 @@
+# Docker Compose - V106.0 生产环境配置
+# ============================================
+# 生产级部署配置，包含：
+# 1. 资源限制和资源预留
+# 2. 健康检查和自动重启
+# 3. 日志驱动配置
+# 4. 安全加固
+# 5. 多阶段构建镜像引用
+# ============================================
+
+services:
+  # ============================================
+  # db - PostgreSQL 15 数据库 (生产配置)
+  # ============================================
+  db:
+    image: postgres:15-alpine
+    container_name: football_prediction_db_prod
+    restart: always
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_DB=${DB_NAME:-football_db}
+      - POSTGRES_USER=${DB_USER:-football_user}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    ports:
+      - "127.0.0.1:${DB_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/sql:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-football_user} -d ${DB_NAME:-football_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - football_network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 2G
+        reservations:
+          cpus: "0.5"
+          memory: 512M
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /var/run/postgresql
+
+  # ============================================
+  # redis - Redis 7 缓存 (生产配置)
+  # ============================================
+  redis:
+    image: redis:7-alpine
+    container_name: football_prediction_redis_prod
+    restart: always
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-}
+    ports:
+      - "127.0.0.1:${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+    networks:
+      - football_network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+        reservations:
+          cpus: "0.25"
+          memory: 128M
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+
+  # ============================================
+  # api - FastAPI 服务 (生产配置)
+  # ============================================
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+    container_name: football_prediction_api_prod
+    restart: always
+    env_file:
+      - .env
+    environment:
+      - DOCKER_ENV=true
+      - ENVIRONMENT=production
+      - DB_HOST=db
+      - REDIS_HOST=redis
+    ports:
+      - "${API_PORT:-8000}:8000"
+    volumes:
+      - ./model_zoo:/app/model_zoo:ro
+      - ./logs:/app/logs
+      - ./data:/app/data
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - football_network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 1G
+        reservations:
+          cpus: "0.5"
+          memory: 256M
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+      - CHOWN
+      - SETGID
+      - SETUID
+
+  # ============================================
+  # worker - 后台任务处理 (生产配置)
+  # ============================================
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+    container_name: football_prediction_worker_prod
+    restart: always
+    env_file:
+      - .env
+    environment:
+      - DOCKER_ENV=true
+      - ENVIRONMENT=production
+      - DB_HOST=db
+      - REDIS_HOST=redis
+    volumes:
+      - ./model_zoo:/app/model_zoo:ro
+      - ./logs:/app/logs
+      - ./data:/app/data
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: ["python", "scripts/run_sync.py", "--workers", "4"]
+    healthcheck:
+      test: ["CMD-SHELL", "ps aux | grep -v grep | grep 'python.*run_sync.py' || exit 1"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - football_network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+        reservations:
+          cpus: "0.25"
+          memory: 128M
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 5
+        window: 120s
+    security_opt:
+      - no-new-privileges:true
+
+  # ============================================
+  # backup - 数据库备份服务 (生产配置)
+  # ============================================
+  backup:
+    image: postgres:15-alpine
+    container_name: football_prediction_backup_prod
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_DB=${DB_NAME:-football_db}
+      - POSTGRES_USER=${DB_USER:-football_user}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+    volumes:
+      - ./backups:/backups
+      - backup_scripts:/scripts:ro
+    depends_on:
+      db:
+        condition: service_healthy
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        while true; do
+          echo "[$(date)] Starting backup..."
+          pg_dump -h db -U ${DB_USER:-football_user} -d ${DB_NAME:-football_db} \
+            -Fc -f /backups/football_db_$(date +%Y%m%d_%H%M%S).dump
+          echo "[$(date)] Backup completed"
+          sleep 86400
+        done
+    networks:
+      - football_network
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+    restart: unless-stopped
+
+# ============================================
+# 网络配置
+# ============================================
+networks:
+  football_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+    driver_opts:
+      com.docker.network.bridge.name: football_br0
+      com.docker.network.bridge.enable_icc: "true"
+      com.docker.network.bridge.enable_ip_masquerade: "true"
+
+# ============================================
+# 数据卷配置
+# ============================================
+volumes:
+  postgres_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /var/lib/football_prediction/postgres
+
+  redis_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /var/lib/football_prediction/redis
+
+  backup_scripts:
+    driver: local
