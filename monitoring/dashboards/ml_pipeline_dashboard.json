@@ -1,0 +1,86 @@
+{
+  "dashboard": {
+    "title": "P0-4 ML Pipeline 监控面板",
+    "tags": [
+      "ml",
+      "pipeline",
+      "p0-4"
+    ],
+    "timezone": "browser",
+    "panels": [
+      {
+        "title": "训练准确率趋势",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "training_accuracy",
+            "legendFormat": "{{algorithm}}"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 0
+        }
+      },
+      {
+        "title": "训练时间分布",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "training_duration_seconds",
+            "legendFormat": "{{algorithm}}"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 0
+        }
+      },
+      {
+        "title": "算法性能比较",
+        "type": "table",
+        "targets": [
+          {
+            "expr": "algorithm_performance",
+            "format": "table"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 24,
+          "x": 0,
+          "y": 8
+        }
+      },
+      {
+        "title": "系统资源使用",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "memory_usage_percent",
+            "legendFormat": "内存使用率"
+          },
+          {
+            "expr": "cpu_usage_percent",
+            "legendFormat": "CPU使用率"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 16
+        }
+      }
+    ],
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "refresh": "30s"
+  }
+}

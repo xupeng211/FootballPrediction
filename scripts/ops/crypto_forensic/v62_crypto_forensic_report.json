@@ -1,0 +1,29 @@
+{
+  "timestamp": "2026-01-24T16:08:18.430Z",
+  "cryptoLibraries": [
+    {
+      "file": "gtm.js?id=GTM-W3GJZ5",
+      "library": "Web Crypto API",
+      "occurrences": 1
+    },
+    {
+      "file": "js?id=G-5YY4JY41P1&cx=c&gtm=4e61m0",
+      "library": "Web Crypto API",
+      "occurrences": 1
+    }
+  ],
+  "decryptFunctions": [],
+  "base64Operations": [
+    {
+      "file": "gtm.js?id=GTM-W3GJZ5",
+      "type": "atob",
+      "call": "atob(a.replace(/-/g,\"+\")"
+    },
+    {
+      "file": "js?id=G-5YY4JY41P1&cx=c&gtm=4e61m0",
+      "type": "atob",
+      "call": "atob(a.replace(/-/g,\"+\")"
+    }
+  ],
+  "apiReferences": []
+}

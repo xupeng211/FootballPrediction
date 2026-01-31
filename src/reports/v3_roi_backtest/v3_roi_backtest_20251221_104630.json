@@ -1,0 +1,25 @@
+{
+  "backtest_info": {
+    "model_version": "v3.0_global",
+    "backtest_date": "2025-12-21T10:46:30.978559",
+    "strategy": "半凯利 0.2x",
+    "min_edge": "10.0%",
+    "min_confidence": "55.0%"
+  },
+  "performance": {
+    "total_bets": 450,
+    "winning_bets": 131,
+    "win_rate": 29.11111111111111,
+    "total_stake": 2250.0,
+    "total_return": 6897.149999999985,
+    "total_profit": 4647.1500000000015,
+    "roi_percentage": 206.54000000000008,
+    "max_drawdown": 16.611295681063122,
+    "sharpe_ratio": 0.0
+  },
+  "assessment": {
+    "profitable": true,
+    "roi_acceptable": true,
+    "risk_managed": true
+  }
+}

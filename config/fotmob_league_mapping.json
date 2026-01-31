@@ -1,0 +1,93 @@
+{
+  "core_leagues": {
+    "47": {
+      "name": "Premier League",
+      "country": "England",
+      "short_name": "EPL",
+      "seasons": [
+        "2020-2021",
+        "2021-2022",
+        "2022-2023",
+        "2023-2024",
+        "2024-2025"
+      ]
+    },
+    "87": {
+      "name": "La Liga",
+      "country": "Spain",
+      "short_name": "LAL",
+      "seasons": [
+        "2020-2021",
+        "2021-2022",
+        "2022-2023",
+        "2023-2024",
+        "2024-2025"
+      ]
+    },
+    "54": {
+      "name": "Bundesliga",
+      "country": "Germany",
+      "short_name": "BUN",
+      "seasons": [
+        "2020-2021",
+        "2021-2022",
+        "2022-2023",
+        "2023-2024",
+        "2024-2025"
+      ]
+    },
+    "55": {
+      "name": "Serie A",
+      "country": "Italy",
+      "short_name": "SA",
+      "seasons": [
+        "2020-2021",
+        "2021-2022",
+        "2022-2023",
+        "2023-2024",
+        "2024-2025"
+      ]
+    },
+    "53": {
+      "name": "Ligue 1",
+      "country": "France",
+      "short_name": "L1",
+      "seasons": [
+        "2020-2021",
+        "2021-2022",
+        "2022-2023",
+        "2023-2024",
+        "2024-2025"
+      ]
+    }
+  },
+  "extended_leagues": {
+    "118": {
+      "name": "Championship",
+      "country": "England",
+      "short_name": "CHAMP"
+    },
+    "109": {
+      "name": "Eredivisie",
+      "country": "Netherlands",
+      "short_name": "ERE"
+    },
+    "129": {
+      "name": "Primeira Liga",
+      "country": "Portugal",
+      "short_name": "PRL"
+    },
+    "39": {
+      "name": "MLS",
+      "country": "USA",
+      "short_name": "MLS"
+    },
+    "99": {
+      "name": "Brasileirão",
+      "country": "Brazil",
+      "short_name": "BRA"
+    }
+  },
+  "generated_at": "2025-12-04",
+  "version": "1.0.0"
+}

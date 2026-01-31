@@ -1,0 +1,30 @@
+<!--
+V43.100 Test Fixture: Malformed Structure
+=========================================
+Scenario: Page structure has changed (simulating redesign)
+Expected: Parser resilient to structure variations
+-->
+
+<div class="tooltip-container redesigned-layout">
+    <!-- Structure changed: header moved, different nesting -->
+    <div class="header-section">
+        <span class="title">Odds movement</span>
+    </div>
+
+    <!-- Different structure: using list instead of flex rows -->
+    <ul class="odds-list">
+        <li class="odds-item">
+            <span class="time">24 Jan, 10:00</span>
+            <span class="value">1.95</span>
+        </li>
+        <li class="odds-item">
+            <span class="time">24 Jan, 08:30</span>
+            <span class="value">1.90</span>
+        </li>
+    </ul>
+
+    <!-- Legacy footer -->
+    <div class="footer">
+        Opening: 1.87
+    </div>
+</div>

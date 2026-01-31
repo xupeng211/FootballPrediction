@@ -1,0 +1,185 @@
+# Prometheus Alert Rules for Football Prediction v2.0
+groups:
+  - name: football-prediction-alerts
+    rules:
+      # ================================
+      # API Performance Alerts
+      # ================================
+      - alert: APIHighErrorRate
+        expr: api:error_rate_5m > 5.0
+        for: 2m
+        labels:
+          severity: warning
+          service: api
+        annotations:
+          summary: "API error rate is {{ $value | printf \"%.2f\" }}%"
+          description: "API error rate has exceeded 5% for more than 2 minutes"
+          runbook_url: "https://github.com/xupeng211/FootballPrediction/wiki/Alerts#APIHighErrorRate"
+
+      - alert: APIHighLatency
+        expr: api:p95_latency_5m > 1.0
+        for: 5m
+        labels:
+          severity: warning
+          service: api
+        annotations:
+          summary: "API P95 latency is {{ $value | printf \"%.3f\" }}s"
+          description: "API P95 latency has exceeded 1 second for more than 5 minutes"
+
+      - alert: APIDown
+        expr: up{job="football-prediction-api"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: api
+        annotations:
+          summary: "Football Prediction API is down"
+          description: "The Football Prediction API has been down for more than 1 minute"
+
+      # ================================
+      # Business Metrics Alerts
+      # ================================
+      - alert: PredictionRequestsDropping
+        expr: rate(prediction_requests_total[5m]) < 0.1
+        for: 10m
+        labels:
+          severity: warning
+          service: business
+        annotations:
+          summary: "Prediction request rate has dropped significantly"
+          description: "Prediction request rate is {{ $value | printf \"%.2f\" }}/s, below expected threshold"
+
+      - alert: ModelInferenceLatencyHigh
+        expr: business:model_latency_p95_5m > 2.0
+        for: 5m
+        labels:
+          severity: warning
+          service: ml
+        annotations:
+          summary: "Model inference latency is high: {{ $value | printf \"%.3f\" }}s"
+          description: "95th percentile model inference latency has exceeded 2 seconds"
+
+      # ================================
+      # System Resource Alerts
+      # ================================
+      - alert: HighCPUUsage
+        expr: system:cpu_usage_percent > 80
+        for: 10m
+        labels:
+          severity: warning
+          service: system
+        annotations:
+          summary: "CPU usage is {{ $value | printf \"%.1f\" }}%"
+          description: "CPU usage has exceeded 80% for more than 10 minutes"
+
+      - alert: HighMemoryUsage
+        expr: system:memory_usage_percent > 85
+        for: 10m
+        labels:
+          severity: warning
+          service: system
+        annotations:
+          summary: "Memory usage is {{ $value | printf \"%.1f\" }}%"
+          description: "Memory usage has exceeded 85% for more than 10 minutes"
+
+      - alert: HighDiskUsage
+        expr: system:disk_usage_percent > 90
+        for: 5m
+        labels:
+          severity: critical
+          service: system
+        annotations:
+          summary: "Disk usage is {{ $value | printf \"%.1f\" }}%"
+          description: "Disk usage has exceeded 90% for more than 5 minutes"
+
+      # ================================
+      # Redis Alerts
+      # ================================
+      - alert: RedisDown
+        expr: up{job="redis-exporter"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: cache
+        annotations:
+          summary: "Redis is down"
+          description: "Redis server has been down for more than 1 minute"
+
+      - alert: RedisHighMemoryUsage
+        expr: redis_memory_used_bytes / redis_memory_max_bytes * 100 > 90
+        for: 5m
+        labels:
+          severity: warning
+          service: cache
+        annotations:
+          summary: "Redis memory usage is {{ $value | printf \"%.1f\" }}%"
+          description: "Redis memory usage has exceeded 90%"
+
+      - alert: RedisLowHitRate
+        expr: redis_keyspace_hits_total / (redis_keyspace_hits_total + redis_keyspace_misses_total) * 100 < 50
+        for: 15m
+        labels:
+          severity: warning
+          service: cache
+        annotations:
+          summary: "Redis hit rate is {{ $value | printf \"%.1f\" }}%"
+          description: "Redis cache hit rate has dropped below 50% for 15 minutes"
+
+      # ================================
+      # Database Alerts
+      # ================================
+      - alert: DatabaseDown
+        expr: up{job="postgres-exporter"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: database
+        annotations:
+          summary: "PostgreSQL database is down"
+          description: "PostgreSQL database has been down for more than 1 minute"
+
+      - alert: DatabaseConnectionsHigh
+        expr: pg_stat_activity_count > 80
+        for: 5m
+        labels:
+          severity: warning
+          service: database
+        annotations:
+          summary: "Database connections: {{ $value }}"
+          description: "Database connection count has exceeded 80 connections"
+
+      # ================================
+      # Service Health Alerts
+      # ================================
+      - alert: ContainerDown
+        expr: up == 0
+        for: 2m
+        labels:
+          severity: critical
+          service: infrastructure
+        annotations:
+          summary: "Container {{ $labels.job }} is down"
+          description: "Container {{ $labels.instance }} has been down for more than 2 minutes"
+
+      - alert: DiskSpaceRunningOut
+        expr: (node_filesystem_avail_bytes / node_filesystem_size_bytes) * 100 < 10
+        for: 5m
+        labels:
+          severity: critical
+          service: infrastructure
+        annotations:
+          summary: "Disk space running out on {{ $labels.instance }}"
+          description: "Disk space on {{ $labels.instance }} is {{ $value | printf \"%.1f\" }}% full"
+
+      # ================================
+      # Custom Business Alerts
+      # ================================
+      - alert: ModelAccuracyDropping
+        expr: prediction_accuracy_rate < 0.60
+        for: 30m
+        labels:
+          severity: warning
+          service: ml
+        annotations:
+          summary: "Model accuracy has dropped to {{ $value | printf \"%.2f\" }}"
+          description: "Prediction model accuracy has dropped below 60% for 30 minutes"

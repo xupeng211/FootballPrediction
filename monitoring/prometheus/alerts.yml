@@ -1,0 +1,27 @@
+# Prometheus Alerts Configuration
+groups:
+  - name: football_prediction_alerts
+    rules:
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{status=~"5.."}[5m]) > 0.05
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: High error rate detected
+
+      - alert: HighLatency
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: High latency detected
+
+      - alert: HighResourceUsage
+        expr: cpu_usage_percent > 80 or memory_usage_percent > 80
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: High resource usage detected

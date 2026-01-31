@@ -1,0 +1,236 @@
+# ============================================================================
+# V120.0 生产级爬虫配置中心
+# ============================================================================
+# 本配置文件集中管理所有爬虫相关参数，支持环境变量覆盖
+#
+# 使用方式:
+#   from src.config.crawler_settings import get_crawler_settings
+#   settings = get_crawler_settings()
+#
+# 环境变量覆盖:
+#   export CRAWLER_REQUEST_DELAY_MIN=5
+#   export CRAWLER_REQUEST_DELAY_MAX=10
+# ============================================================================
+
+# ----------------------------------------------------------------------------
+# 混合引擎参数 (Hybrid Engine Settings)
+# ----------------------------------------------------------------------------
+hybrid_engine:
+  # Laser Mode: 列对齐算法参数
+  laser:
+    # 列轨道容差 (像素)
+    track_tolerance: 30
+
+    # 表头自动校准灵敏度
+    auto_calibration:
+      enabled: true
+      bin_width: 10        # X轴分箱宽度 (像素)
+      min_samples: 10      # 触发自动校准的最小样本数
+
+  # Gravity Mode: 行簇关联算法参数
+  gravity:
+    # Y轴关联容差 (像素)
+    delta_y_start: -10    # 行起始位置偏移
+    delta_y_end: 40       # 行结束位置偏移
+
+  # 模式切换阈值
+  mode_switch:
+    min_entities_trigger: 2  # Laser Mode提取 < 2 entities时触发Gravity Mode
+
+# ----------------------------------------------------------------------------
+# 网络韧性协议 (Network Resilience Protocol)
+# ----------------------------------------------------------------------------
+network:
+  # 请求延迟 (秒)
+  request_delay:
+    min: 8.0   # 最小延迟 (V120.0: 提升到8秒以避免被封禁)
+    max: 15.0  # 最大延迟 (V120.0: 提升到15秒)
+
+  # 并发控制
+  concurrency:
+    max_workers: 4          # 最大并发worker数
+    queue_size: 100         # 任务队列大小
+
+  # 重试策略
+  retry:
+    max_attempts: 3         # 最大重试次数
+    base_delay: 2.0         # 基础重试延迟 (秒)
+    exponential_backoff: true  # 指数退避
+
+# ----------------------------------------------------------------------------
+# 数据质量契约 (Data Contract)
+# ----------------------------------------------------------------------------
+data_quality:
+  # 完整性评分阈值
+  integrity_score:
+    min: 1.00   # V117.1: 降低到1.00以支持零Juice市场
+    max: 1.08   # 最大正常值
+    ideal: 1.05 # 理想值
+
+  # 数据分布验证
+  distribution:
+    min_value: 1.01   # 最小允许值
+    max_value: 50.00  # 最大允许值
+
+    # V117.1: 放宽验证 - 仅拒绝完全相同的值
+    allow_identical: false
+
+  # 死信队列阈值
+  dead_letter:
+    max_retries: 5         # 超过此次数后转入死信队列
+
+# ----------------------------------------------------------------------------
+# 任务队列配置 (Task Queue Settings)
+# ----------------------------------------------------------------------------
+task_queue:
+  # 任务状态定义
+  status:
+    pending: "PENDING"       # 待处理
+    searching: "SEARCHING"   # 搜索中
+    success: "SUCCESS"       # 成功
+    failed: "FAILED"         # 失败
+
+  # 批量处理
+  batch:
+    fetch_size: 50          # 每批获取的任务数
+
+  # 任务优先级
+  priority:
+    # 按match_date排序，优先处理较新的比赛
+    order_by: "match_date DESC"
+    limit: 100              # 单次处理的任务上限
+
+# ----------------------------------------------------------------------------
+# 提取引擎参数 (Extraction Engine)
+# ----------------------------------------------------------------------------
+extraction:
+  # Provider 映射 (Entity IDs)
+  providers:
+    entity_p:
+      id: 18
+      priority: 1
+      source_name: "Entity_P"
+      fuzzy_patterns: ["pinn", "pin"]
+    entity_b:
+      id: 16
+      priority: 2
+      source_name: "Entity_B"
+      fuzzy_patterns: ["will", "hill"]
+    entity_w:
+      id: 7
+      priority: 3
+      source_name: "Entity_W"
+      fuzzy_patterns: ["365", "bet"]
+    entity_l:
+      id: 2
+      priority: 4
+      source_name: "Entity_L"
+      fuzzy_patterns: ["lad", "1x"]
+    entity_avg:
+      id: "avg"
+      priority: 5
+      source_name: "Entity_AVG"
+      fuzzy_patterns: ["avg", "mark"]
+      auto_synthesize: true  # 自动合成标记
+
+  # Fuzzy 匹配置
+  fuzzy_matching:
+    threshold: 70           # partial_ratio 阈值 (百分比)
+    method: "partial_ratio"  # 匹配方法: partial_ratio, ratio, token_sort_ratio
+
+# ----------------------------------------------------------------------------
+# 日志配置 (Logging)
+# ----------------------------------------------------------------------------
+logging:
+  level: "INFO"              # DEBUG, INFO, WARNING, ERROR
+  format: "[%(levelname)s] [%(name)s] %(message)s"
+
+  # 日志文件
+  files:
+    main: "logs/v120_discovery.log"
+    error: "logs/v120_error.log"
+    dead_letter: "logs/dead_letter_queue.log"
+
+# ----------------------------------------------------------------------------
+# 监控指标 (Monitoring Metrics)
+# ----------------------------------------------------------------------------
+monitoring:
+  # Prometheus 指标
+  prometheus:
+    enabled: true
+    port: 9090
+
+  # 性能追踪
+  performance:
+    track_duration: true   # 追踪任务耗时
+    track_memory: true      # 追踪内存使用
+    alert_threshold:
+      duration: 30          # 超过30秒记录警告
+      memory_mb: 500        # 超过500MB记录警告
+
+# ----------------------------------------------------------------------------
+# 数据库连接 (Database Connection)
+# ----------------------------------------------------------------------------
+database:
+  # 连接池配置
+  pool:
+    min_connections: 2
+    max_connections: 20
+    connection_timeout: 10
+    idle_timeout: 300
+
+  # 查询超时
+  statement_timeout: 60
+
+# ----------------------------------------------------------------------------
+# 浏览器配置 (Browser Configuration)
+# ----------------------------------------------------------------------------
+browser:
+  # Playwright 配置
+  playwright:
+    headless: true          # 无头模式
+    timeout: 30000          # 默认超时 (毫秒)
+    user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+
+  # 浏览器启动参数
+  launch_args:
+    - "--disable-dev-shm-usage"
+    - "--no-sandbox"
+    - "--disable-blink-features=AutomationControlled"
+
+  # 视口配置
+  viewport:
+    width: 1920
+    height: 1080
+
+# ----------------------------------------------------------------------------
+# Phase 2 特定配置 (Phase 2 Specific Settings)
+# ----------------------------------------------------------------------------
+phase2:
+  # 搜索任务配置
+  discovery:
+    # OddsPortal URL 模板
+    url_template: "https://www.oddsportal.com/match/"
+
+    # 搜索策略
+    search_strategy:
+      # 优先级: 1 = 直搜, 2 = Google搜索, 3 = Bing搜索
+      priority: [1, 2, 3]
+
+    # 批量注入配置
+    initial_batch_size: 5872   # Phase 2 总任务数
+
+  # 进度报告
+  progress:
+    checkpoint_interval: 100   # 每100条记录检查点
+    summary_interval: 500      # 每500条记录摘要
+
+# ----------------------------------------------------------------------------
+# 环境覆盖 (Environment Overrides)
+# ----------------------------------------------------------------------------
+# 可以通过环境变量覆盖以下配置:
+#   CRAWLER_REQUEST_DELAY_MIN
+#   CRAWLER_REQUEST_DELAY_MAX
+#   CRAWLER_MAX_WORKERS
+#   CRAWLER_LOG_LEVEL
+#   CRAWLER_HEADLESS (true/false)
