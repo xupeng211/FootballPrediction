@@ -304,3 +304,6 @@ Master_Harvest_Runner.py
 docs/ASSET_TRUTH_MANIFESTO.md
 docs/BPA_AUDIT_REPORT.md
 src/bridge/
+# [Genesis.FinalClearance] 本地配置文件
+mypy_core.ini
+proxies.txt.example
