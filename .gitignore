@@ -294,3 +294,13 @@ modal_dump.html
 =
 config/proxies.json
 scripts/sql/v160_*.sql
+
+# =============================================================================
+# [Genesis.Hardening_Final]: Local Verification & Deployment Scripts
+# =============================================================================
+Genesis_Ignition.py
+Live_Fire_Test.py
+Master_Harvest_Runner.py
+docs/ASSET_TRUTH_MANIFESTO.md
+docs/BPA_AUDIT_REPORT.md
+src/bridge/

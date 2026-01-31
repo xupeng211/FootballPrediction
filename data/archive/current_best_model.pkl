@@ -1,1 +1,0 @@
-models/football_prediction_v4_optuna.pkl
