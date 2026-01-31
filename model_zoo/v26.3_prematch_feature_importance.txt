@@ -1,8 +1,0 @@
-Feature Importance TOP 30 (赛前特征)
-============================================================
-
- 1. rolling_team_rating_away                          : 11.8762
- 2. rolling_team_rating_home                          : 10.2136
- 3. rolling_xg_home                                   : 1.4282
- 4. rolling_possession_home                           : 1.3308
- 5. rolling_xg_away                                   : 0.4614
