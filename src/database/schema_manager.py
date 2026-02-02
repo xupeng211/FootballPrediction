@@ -139,7 +139,7 @@ class SchemaManager:
             CREATE TABLE IF NOT EXISTS match_features_training (
                 id SERIAL PRIMARY KEY,
                 external_id VARCHAR(50) NOT NULL UNIQUE,
-                match_time TIMESTAMP WITH TIME ZONE NOT NULL,
+                match_date TIMESTAMP WITH TIME ZONE NOT NULL,
                 home_team VARCHAR(100) NOT NULL,
                 away_team VARCHAR(100) NOT NULL,
                 home_score INTEGER,
@@ -335,7 +335,7 @@ class SchemaManager:
                 external_id VARCHAR(50) NOT NULL UNIQUE,
                 league_name VARCHAR(100) NOT NULL,
                 season VARCHAR(20) NOT NULL,
-                match_time TIMESTAMP WITH TIME ZONE NOT NULL,
+                match_date TIMESTAMP WITH TIME ZONE NOT NULL,
                 status VARCHAR(50) NOT NULL DEFAULT 'Fixture',
                 home_team VARCHAR(100) NOT NULL,
                 away_team VARCHAR(100) NOT NULL,
@@ -380,13 +380,13 @@ class SchemaManager:
         """创建性能优化索引"""
         indexes = [
             "CREATE INDEX IF NOT EXISTS idx_match_features_external_id ON match_features_training(external_id);",
-            "CREATE INDEX IF NOT EXISTS idx_match_features_match_time ON match_features_training(match_time DESC);",
+            "CREATE INDEX IF NOT EXISTS idx_match_features_match_date ON match_features_training(match_date DESC);",
             "CREATE INDEX IF NOT EXISTS idx_match_features_data_source ON match_features_training(data_source);",
             "CREATE INDEX IF NOT EXISTS idx_match_features_processing_status ON match_features_training(processing_status);",
             "CREATE INDEX IF NOT EXISTS idx_match_features_created_at ON match_features_training(created_at DESC);",
             "CREATE INDEX IF NOT EXISTS idx_matches_external_id ON matches(external_id);",
             "CREATE INDEX IF NOT EXISTS idx_matches_league_season ON matches(league_name, season);",
-            "CREATE INDEX IF NOT EXISTS idx_matches_match_time ON matches(match_time DESC);",
+            "CREATE INDEX IF NOT EXISTS idx_matches_match_date ON matches(match_date DESC);",
             "CREATE INDEX IF NOT EXISTS idx_matches_status ON matches(status);",
             "CREATE INDEX IF NOT EXISTS idx_matches_collection_status ON matches(collection_status);",
             "CREATE INDEX IF NOT EXISTS idx_raw_match_external_id ON raw_match_data(external_id);",
@@ -464,27 +464,27 @@ class SchemaManager:
 
             # 为新ID创建对应的matches记录
             cursor.execute("""
-                INSERT INTO matches (external_id, home_team, away_team, league_name, season, status, collection_status, match_time, created_at, updated_at)
+                INSERT INTO matches (match_id, home_team, away_team, league_name, season, status, collection_status, match_date, created_at, updated_at)
                 SELECT
-                    ft.external_id,
+                    ft.match_id,
                     COALESCE(ft.home_team, 'Unknown Home'),
                     COALESCE(ft.away_team, 'Unknown Away'),
                     CASE
-                        WHEN ft.external_id LIKE '10%' OR ft.external_id LIKE '11%' THEN 'Bundesliga'
-                        WHEN ft.external_id LIKE '20%' OR ft.external_id LIKE '21%' THEN 'La Liga'
-                        WHEN ft.external_id LIKE '30%' OR ft.external_id LIKE '31%' THEN 'Serie A'
+                        WHEN ft.match_id LIKE '10%' OR ft.match_id LIKE '11%' THEN 'Bundesliga'
+                        WHEN ft.match_id LIKE '20%' OR ft.match_id LIKE '21%' THEN 'La Liga'
+                        WHEN ft.match_id LIKE '30%' OR ft.match_id LIKE '31%' THEN 'Serie A'
                         ELSE 'Unknown League'
                     END,
                     '2024',
                     'Finished',
                     'completed',
-                    COALESCE(ft.match_time, CURRENT_TIMESTAMP),
+                    COALESCE(ft.match_date, CURRENT_TIMESTAMP),
                     CURRENT_TIMESTAMP,
                     CURRENT_TIMESTAMP
                 FROM match_features_training ft
-                LEFT JOIN matches m ON ft.external_id = m.external_id
-                WHERE m.external_id IS NULL
-                  AND ft.external_id ~ '^[0-9]+$';
+                LEFT JOIN matches m ON ft.match_id = m.match_id
+                WHERE m.match_id IS NULL
+                  AND ft.match_id ~ '^[0-9]+$';
             """)
 
             created_count = cursor.rowcount
@@ -598,7 +598,7 @@ class SchemaManager:
         errors = []
 
         # 必需字段检查
-        required_fields = ["external_id", "home_team", "away_team", "match_time"]
+        required_fields = ["match_id", "home_team", "away_team", "match_date"]
         for field in required_fields:
             if not features.get(field):
                 errors.append(f"Missing required field: {field}")
@@ -686,7 +686,7 @@ class SchemaManager:
 
     @staticmethod
     def get_team_rolling_stats(
-        team_name: str, n_matches: int = 5, before_match_time: str | None = None
+        team_name: str, n_matches: int = 5, before_match_date: str | None = None
     ) -> dict[str, float]:
         """
         获取球队最近 N 场比赛的滚动统计数据
@@ -696,7 +696,7 @@ class SchemaManager:
         Args:
             team_name: 球队名称
             n_matches: 统计最近 N 场比赛
-            before_match_time: 只统计此时间之前的比赛（用于预测时的历史数据）
+            before_match_date: 只统计此时间之前的比赛（用于预测时的历史数据）
 
         Returns:
             Dict: 滚动统计指标
@@ -727,7 +727,7 @@ class SchemaManager:
             cursor = conn.cursor()
 
             # 查询该球队最近 N 场比赛的比分
-            time_filter = "AND m.match_time < %s" if before_match_time else ""
+            time_filter = "AND m.match_date < %s" if before_match_date else ""
             query = f"""
                 SELECT
                     m.home_team,
@@ -741,13 +741,13 @@ class SchemaManager:
                     AND m.away_score IS NOT NULL
                     AND m.status IN ('finished', 'Finished')
                     {time_filter}
-                ORDER BY m.match_time DESC
+                ORDER BY m.match_date DESC
                 LIMIT %s
             """
 
             params = [team_name, team_name]
-            if before_match_time:
-                params.append(before_match_time)
+            if before_match_date:
+                params.append(before_match_date)
             params.append(n_matches)
 
             cursor.execute(query, params)
@@ -831,14 +831,14 @@ class SchemaManager:
 
     @staticmethod
     def get_team_standings(
-        team_name: str, before_match_time: str | None = None, league_name: str | None = None
+        team_name: str, before_match_date: str | None = None, league_name: str | None = None
     ) -> dict[str, Any]:
         """
         获取球队在指定时间前的积分榜数据
 
         Args:
             team_name: 球队名称
-            before_match_time: 只统计此时间之前的比赛
+            before_match_date: 只统计此时间之前的比赛
             league_name: 联赛名称（可选，用于过滤）
 
         Returns:
@@ -872,7 +872,7 @@ class SchemaManager:
             cursor = conn.cursor()
 
             # 时间过滤
-            time_filter = "AND m.match_time < %s" if before_match_time else ""
+            time_filter = "AND m.match_date < %s" if before_match_date else ""
             league_filter = "AND m.league_name = %s" if league_name else ""
 
             # 获取所有球队的积分数据
@@ -889,12 +889,12 @@ class SchemaManager:
                     AND (m.home_team = %s OR m.away_team = %s)
                     {time_filter}
                     {league_filter}
-                ORDER BY m.match_time ASC
+                ORDER BY m.match_date ASC
             """
 
             params = [team_name, team_name]
-            if before_match_time:
-                params.append(before_match_time)
+            if before_match_date:
+                params.append(before_match_date)
             if league_name:
                 params.append(league_name)
 
@@ -1013,7 +1013,7 @@ class SchemaManager:
 
     @staticmethod
     def get_elo_ratings(
-        team_names: list[str], before_match_time: str | None = None
+        team_names: list[str], before_match_date: str | None = None
     ) -> dict[str, float]:
         """
         计算球队的 ELO 评分
@@ -1023,7 +1023,7 @@ class SchemaManager:
 
         Args:
             team_names: 需要计算 ELO 的球队列表
-            before_match_time: 只统计此时间之前的比赛
+            before_match_date: 只统计此时间之前的比赛
 
         Returns:
             Dict: {team_name: elo_rating}
@@ -1044,7 +1044,7 @@ class SchemaManager:
             cursor = conn.cursor()
 
             # 获取所有相关比赛（按时间顺序）
-            time_filter = "AND m.match_time < %s" if before_match_time else ""
+            time_filter = "AND m.match_date < %s" if before_match_date else ""
             placeholders = ",".join(["%s"] * len(team_names))
 
             query = f"""
@@ -1053,19 +1053,19 @@ class SchemaManager:
                     m.away_team,
                     m.home_score,
                     m.away_score,
-                    m.match_time
+                    m.match_date
                 FROM matches m
                 WHERE m.home_score IS NOT NULL
                     AND m.away_score IS NOT NULL
                     AND m.is_finished = true
                     AND (m.home_team IN ({placeholders}) OR m.away_team IN ({placeholders}))
                     {time_filter}
-                ORDER BY m.match_time ASC
+                ORDER BY m.match_date ASC
             """
 
             params = team_names + team_names
-            if before_match_time:
-                params.append(before_match_time)
+            if before_match_date:
+                params.append(before_match_date)
 
             cursor.execute(query, params)
             matches = cursor.fetchall()
@@ -1081,7 +1081,7 @@ class SchemaManager:
 
             # 逐场更新 ELO
             for match in matches:
-                home_team, away_team, home_score, away_score, _match_time = match
+                home_team, away_team, home_score, away_score, _match_date = match
 
                 # 只处理目标球队的比赛
                 if home_team not in elo_ratings and away_team not in elo_ratings:
@@ -1127,7 +1127,7 @@ class SchemaManager:
             return dict.fromkeys(team_names, 1500.0)
 
     @staticmethod
-    def get_team_fatigue_index(team_name: str, match_time: str, lookback_days: int = 7) -> float:
+    def get_team_fatigue_index(team_name: str, match_date: str, lookback_days: int = 7) -> float:
         """
         计算球队疲劳度指数
 
@@ -1136,7 +1136,7 @@ class SchemaManager:
 
         Args:
             team_name: 球队名称
-            match_time: 比赛时间（用于计算之前的比赛）
+            match_date: 比赛时间（用于计算之前的比赛）
             lookback_days: 回溯天数
 
         Returns:
@@ -1167,21 +1167,21 @@ class SchemaManager:
                     AND m.home_score IS NOT NULL
                     AND m.away_score IS NOT NULL
                     AND m.is_finished = true
-                    AND m.match_time >= %s
-                    AND m.match_time < %s
+                    AND m.match_date >= %s
+                    AND m.match_date < %s
             """
 
             # 计算时间窗口
             try:
                 from datetime import datetime
 
-                match_dt = datetime.fromisoformat(match_time.replace("Z", "+00:00"))
+                match_dt = datetime.fromisoformat(match_date.replace("Z", "+00:00"))
                 start_time = match_dt - timedelta(days=lookback_days)
             except (ValueError, TypeError):
                 # 时间解析失败，使用默认值
                 return 0.5
 
-            cursor.execute(query, (team_name, team_name, start_time, match_time))
+            cursor.execute(query, (team_name, team_name, start_time, match_date))
             result = cursor.fetchone()
 
             cursor.close()
