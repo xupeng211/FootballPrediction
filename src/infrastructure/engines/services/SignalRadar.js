@@ -1,188 +1,914 @@
 /**
- * SignalRadar - V141.000 Refactored Module
- * ===============================================
+ * SignalRadar - V168.002 Modular Edition
+ * ==========================================
  *
- * Network traffic monitoring for trajectory data packet signals.
- * Extracted from QuantHarvester.js for modular architecture.
+ * [Genesis.Architect] 网络雷达调度中心 - 模块化重构
+ *
+ * 核心变更:
+ * - 网络拦截逻辑已移至 intercept/NetworkInterceptor.js
+ * - 文本提取逻辑已移至 extractors/TextSurgicalExtractor.js
+ * - 日志工具已移至 logging/RadarLogger.js
+ * - 常量已移至 utils/constants/
+ * - 本文件只保留流程编排和向后兼容适配
  *
  * @module services/SignalRadar
- * @version V141.000
- * @since 2026-01-27
- * @author Senior Lead Software Architect (Refactoring Specialist)
- *
- * Features:
- * - Adaptive signal detection (V136.000)
- * - .dat file response monitoring
- * - Pre-loaded data bypass
- * - Configurable timeouts
+ * @version V168.002
+ * @since 2026-02-02
+ * @author [Genesis.Architect]
  */
 
 'use strict';
 
+// V168.002: 从独立模块导入
+const { NetworkInterceptor, ResponseBuffer } = require('./intercept/NetworkInterceptor');
+const { TextSurgicalExtractor } = require('./extractors/TextSurgicalExtractor');
+const { RadarLogger } = require('./logging/RadarLogger');
+const { TITAN_ID_SIGNATURES } = require('../utils/constants/TitanIds');
+const { EXTRACTION_PATTERNS } = require('../utils/constants/ExtractionPatterns');
+
 /**
- * SignalRadar - Monitors network traffic for trajectory data signals
+ * 信号雷达服务 - V164.1 ForceIntercept Edition
+ *
+ * 数据流: /match-event/*.dat → Base64 → atob() → JXG.decompress → JSON → window._TITAN_ARTERY_DATA
  */
 class SignalRadar {
     /**
-     * @param {Object} page - Playwright page object
-     * @param {Object} config - Configuration object
-     * @param {number} config.signalWaitTimeout - Full timeout for signal wait (ms)
-     * @param {number} config.adaptiveSignalTimeout - Quick adaptive check timeout (ms)
-     * @param {string} config.logLevel - Logging level
+     * V168.002: 构造函数 - 使用模块化组件
+     * @param {Page} page - Playwright page instance
+     * @param {Object} options - Configuration options
      */
-    constructor(page, config = {}) {
+    constructor(page, options = {}) {
         this.page = page;
+
+        // V168.002: 使用模块化组件
+        this.logger = new RadarLogger({
+            prefix: '[SignalRadar.V168.002]',
+            level: options.logLevel || 'info'
+        });
+
+        this.interceptor = new NetworkInterceptor(page, {
+            maxResponseSize: options.maxResponseSize,
+            minResponseSize: options.minResponseSize,
+            pollingInterval: options.pollingInterval,
+            interceptWindow: options.interceptWindow
+        });
+
+        this.extractor = new TextSurgicalExtractor({
+            logger: this.logger,
+            debug: options.debug || false
+        });
+
+        // V168.002: 保留向后兼容的数据存储
+        this.capturedResponses = [];
+        this.isInterceptionEnabled = false;
+        this.decompressionResults = [];
+        this.capturedAjaxData = [];
+
+        // 配置
         this.config = {
-            signalWaitTimeout: config.signalWaitTimeout || 15000,
-            adaptiveSignalTimeout: config.adaptiveSignalTimeout || 5000,
-            logLevel: config.logLevel || 'info'
+            memoryHookTimeout: options.memoryHookTimeout || 12000,
+            domFallbackTimeout: options.domFallbackTimeout || 5000,
+            // V168.002 Fix: 响应大小限制配置 (用于 enableTriggerMode)
+            minResponseSize: options.minResponseSize || 100,
+            maxResponseSize: options.maxResponseSize || (200 * 1024)  // 200KB
         };
     }
 
     /**
-     * V127.000: Randomized jitter wait (human behavior simulation)
-     * @param {number} min - Minimum wait time (ms)
-     * @param {number} jitter - Jitter range (ms)
-     * @returns {Promise<void>}
+     * V168.002: 日志方法委托
      */
-    async jitterWait(min = 2000, jitter = 1500) {
-        const delay = Math.floor(Math.random() * jitter) + min;
-        await this.page.waitForTimeout(delay);
+    debug(...args) { this.logger.debug(...args); }
+    info(...args) { this.logger.info(...args); }
+    warn(...args) { this.logger.warn(...args); }
+    error(...args) { this.logger.error(...args); }
+
+    /**
+     * [Genesis.TextSurgical] 从原始 JavaScript 文本中提取数据
+     *
+     * 核心功能:
+     * - 纯文本解析，不执行任何代码
+     * - 支持变量赋值模式 (var/let/const/window.prop = ...)
+     * - 处理字符转义 (\x22, \u0022, \n, \t, etc.)
+     * - 智能边界检测 (配对括号匹配)
+     *
+     * @param {string} rawJsText - 原始 JavaScript 响应文本
+     * @returns {Object|null} 提取的 JSON 数据，失败返回 null
+     */
+    _extractFromRawJs(rawJsText) {
+        this.info('[Genesis.TextSurgical] 📜 Extracting from raw JS text');
+
+        let extractedString = null;
+        let extractionMethod = null;
+
+        // 修剪空白字符
+        const trimmed = rawJsText.trim();
+
+        // 策略 1: 检测直接 JSON (以 { 或 [ 开头)
+        if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+            this.debug('[Genesis.TextSurgical] Strategy 1: Direct JSON detected');
+            extractedString = this._extractDirectJson(trimmed);
+            extractionMethod = 'Direct JSON';
+        }
+
+        // 策略 2: JavaScript 变量赋值 (var/let/const)
+        if (!extractedString && trimmed.match(/\b(var|let|const)\s/)) {
+            this.debug('[Genesis.TextSurgical] Strategy 2: JS Variable assignment');
+            extractedString = this._extractJsVariable(trimmed);
+            extractionMethod = 'JS Variable';
+        }
+
+        // 策略 3: Window 属性赋值
+        if (!extractedString && trimmed.includes('window.')) {
+            this.debug('[Genesis.TextSurgical] Strategy 3: Window property');
+            extractedString = this._extractWindowProperty(trimmed);
+            extractionMethod = 'Window Property';
+        }
+
+        // 策略 4: 搜索包含 Titan ID 的片段
+        if (!extractedString) {
+            this.debug('[Genesis.TextSurgical] Strategy 4: Titan ID search');
+            extractedString = this._extractByTitanId(trimmed);
+            extractionMethod = 'Titan ID Search';
+        }
+
+        if (!extractedString) {
+            this.warn('[Genesis.TextSurgical] ❌ No extraction strategy succeeded');
+            return null;
+        }
+
+        // 处理转义字符
+        const deescaped = this._processEscapeSequences(extractedString);
+        this.info('[Genesis.TextSurgical] ✅ Escape sequences processed');
+
+        // 尝试解析 JSON
+        try {
+            const jsonData = JSON.parse(deescaped);
+            this.info('[Genesis.TextSurgical] ✅ JSON parse success via', extractionMethod);
+            return jsonData;
+        } catch (e) {
+            this.error('[Genesis.TextSurgical] ❌ JSON parse failed:', e.message);
+            this.debug('[Genesis.TextSurgical] Extracted string (first 200 chars):', deescaped.substring(0, 200));
+            return null;
+        }
     }
 
     /**
-     * V136.000: Adaptive wait for trajectory data packet signal
-     * V133.000: Monitors network traffic for OddsPortal's .dat file response
-     * V136.000: Adaptive bypass - if odds visible but no .dat signal, proceed anyway
-     *
-     * @returns {Promise<Object>} Result object with detected, bypass, and method flags
+     * 策略 1: 提取直接 JSON (从开头到结尾配对括号)
      */
-    async waitForTrajectorySignal() {
-        try {
-            // V134.000: Instrumentation - Log signal radar activation
-            console.log('[V136.000] ========== ADAPTIVE SIGNAL RADAR ==========');
-            console.log('[V136.000] Adaptive timeout:', this.config.adaptiveSignalTimeout, 'ms');
-            console.log('[V136.000] Fallback timeout:', this.config.signalWaitTimeout, 'ms');
-            console.log('[V136.000] 📡 Signal radar NOW MONITORING for .dat packets...');
+    _extractDirectJson(text) {
+        this.debug('[Genesis.TextSurgical] Attempting direct JSON extraction');
 
-            let signalDetected = false;
-            let adaptiveBypass = false;
+        const firstChar = text.charAt(0);
+        let openCount = 0;
+        let closeIndex = -1;
 
-            // V136.000: Phase 1 - Quick adaptive check (5 seconds)
-            const adaptiveSignalPromise = this.page.waitForResponse(
-                response => {
-                    const url = response.url();
-                    const isDatFile = /.*\.dat.*/i.test(url);
-                    const isStatusOk = response.status() === 200;
+        for (let i = 0; i < text.length; i++) {
+            const char = text.charAt(i);
+            if (char === firstChar) {
+                openCount++;
+            } else if ((firstChar === '{' && char === '}') || (firstChar === '[' && char === ']')) {
+                openCount--;
+                if (openCount === 0) {
+                    closeIndex = i;
+                    break;
+                }
+            }
+        }
 
-                    if (isDatFile && isStatusOk) {
-                        console.log(`[V136.000] 🔒 SIGNAL LOCKED (Adaptive): ${url}`);
+        if (closeIndex > 0) {
+            return text.substring(0, closeIndex + 1);
+        }
+
+        return null;
+    }
+
+    /**
+     * 策略 2: 提取 JavaScript 变量赋值
+     * 匹配: var name = {...}; 或 let name = [...];
+     */
+    _extractJsVariable(text) {
+        this.debug('[Genesis.TextSurgical] Attempting JS variable extraction');
+
+        const match = text.match(EXTRACTION_PATTERNS.JS_VARIABLE);
+        if (match && match[1]) {
+            this.debug('[Genesis.TextSurgical] JS variable pattern matched');
+            // 使用配对括号匹配确保完整性
+            return this._extractPairedBrackets(match[1]);
+        }
+
+        // 尝试更宽松的模式 (允许跨行)
+        const looseMatch = text.match(/\b(?:var|let|const)\s+\w+\s*=\s*([\s\S]*?)(?:;|$)/);
+        if (looseMatch && looseMatch[1]) {
+            this.debug('[Genesis.TextSurgical] Loose JS variable pattern matched');
+            return this._extractPairedBrackets(looseMatch[1].trim());
+        }
+
+        return null;
+    }
+
+    /**
+     * 策略 3: 提取 Window 属性赋值
+     * 匹配: window.name = {...};
+     */
+    _extractWindowProperty(text) {
+        this.debug('[Genesis.TextSurgical] Attempting window property extraction');
+
+        const match = text.match(EXTRACTION_PATTERNS.WINDOW_PROPERTY);
+        if (match && match[1]) {
+            this.debug('[Genesis.TextSurgical] Window property pattern matched');
+            return this._extractPairedBrackets(match[1]);
+        }
+
+        // 尝试更宽松的模式
+        const looseMatch = text.match(/window\.\w+\s*=\s*([\s\S]*?)(?:;|$)/);
+        if (looseMatch && looseMatch[1]) {
+            this.debug('[Genesis.TextSurgical] Loose window property pattern matched');
+            return this._extractPairedBrackets(looseMatch[1].trim());
+        }
+
+        return null;
+    }
+
+    /**
+     * 策略 4: 通过 Titan ID 搜索提取
+     * 查找包含 "18", "32", "2" 等签名周围的 JSON 对象
+     */
+    _extractByTitanId(text) {
+        this.debug('[Genesis.TextSurgical] Searching for Titan ID signatures');
+
+        for (const titanId of TITAN_ID_SIGNATURES) {
+            const patterns = [
+                new RegExp(`\\{[^}]*"${titanId}"[^}]*\\}`, 'g'),  // 对象
+                new RegExp(`\\[[^\\]]*"${titanId}"[^\\]]*\\]`, 'g')  // 数组
+            ];
+
+            for (const pattern of patterns) {
+                const matches = text.match(pattern);
+                if (matches && matches.length > 0) {
+                    this.debug(`[Genesis.TextSurgical] Found Titan ID "${titanId}" in pattern`);
+                    return matches[0];
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * 辅助函数: 提取配对括号内的完整内容
+     * 处理嵌套对象和数组
+     */
+    _extractPairedBrackets(text) {
+        const firstChar = text.charAt(0);
+
+        if (firstChar !== '{' && firstChar !== '[') {
+            return text;  // 不是对象或数组开头，直接返回
+        }
+
+        const closeChar = firstChar === '{' ? '}' : ']';
+        let openCount = 1;
+        let closeIndex = -1;
+
+        for (let i = 1; i < text.length; i++) {
+            const char = text.charAt(i);
+            if (char === firstChar) {
+                openCount++;
+            } else if (char === closeChar) {
+                openCount--;
+                if (openCount === 0) {
+                    closeIndex = i;
+                    break;
+                }
+            }
+        }
+
+        if (closeIndex > 0) {
+            return text.substring(0, closeIndex + 1);
+        }
+
+        return text;  // 无法配对，返回原文本
+    }
+
+    /**
+     * 处理转义字符序列
+     * 支持:
+     * - 十六进制: \x22 → "
+     * - Unicode: \u0022 → "
+     * - 标准转义: \n → newline, \t → tab, etc.
+     */
+    _processEscapeSequences(text) {
+        let processed = text;
+        let replacements = 0;
+
+        // 1. 处理十六进制转义 \x22
+        processed = processed.replace(EXTRACTION_PATTERNS.HEX_ESCAPE, (match, hex) => {
+            replacements++;
+            return String.fromCharCode(parseInt(hex, 16));
+        });
+
+        // 2. 处理 Unicode 转义 \u0022
+        processed = processed.replace(EXTRACTION_PATTERNS.UNICODE_ESCAPE, (match, unicode) => {
+            replacements++;
+            return String.fromCharCode(parseInt(unicode, 16));
+        });
+
+        // 3. 处理标准转义序列
+        const escapeMap = {
+            'n': '\n',
+            'r': '\r',
+            't': '\t',
+            'b': '\b',
+            'f': '\f',
+            'v': '\v',
+            '"': '"',
+            "'": "'",
+            '\\': '\\'
+        };
+
+        processed = processed.replace(EXTRACTION_PATTERNS.STANDARD_ESCAPE, (match, char) => {
+            replacements++;
+            return escapeMap[char] || match;
+        });
+
+        this.debug('[Genesis.TextSurgical] Escape replacements:', replacements);
+
+        return processed;
+    }
+
+    /**
+     * [Genesis.TextSurgical] 扩展响应拦截
+     * 同时拦截 /match-event/*.dat 和 ajax-user-data
+     *
+     * V168.001: 返回 cleanup 函数用于资源清理
+     */
+    async enableAjaxDataIntercept() {
+        if (this.isInterceptionEnabled) {
+            this.warn('[Genesis.TextSurgical] Ajax intercept already enabled');
+            return { cleanup: () => {} };
+        }
+
+        this.info('[Genesis.TextSurgical] 🎯 ENABLING AJAX DATA INTERCEPTION');
+
+        // Clear previous captures
+        this.capturedResponses = [];
+        this.decompressionResults = [];
+        this.capturedAjaxData = [];  // V165.1: Clear ajax captures (V169.100: Removed duplicate)
+
+        // V168.001: Store handler for cleanup
+        const ajaxResponseHandler = async (response) => {
+            const url = response.url();
+
+            // 拦截 /match-event/*.dat URLs (原有逻辑)
+            if (url.includes('/match-event/') && url.includes('.dat')) {
+                try {
+                    const text = await response.text();
+
+                    if (text.length >= this.config.minResponseSize &&
+                        text.length <= this.config.maxResponseSize) {
+                        this.capturedResponses.push({
+                            url,
+                            text,
+                            size: text.length,
+                            timestamp: Date.now(),
+                            type: 'match-event'
+                        });
+                        this.info('[V164.1] ✅ CAPTURED match-event:', url.substring(0, 80));
+                    }
+                } catch (e) {
+                    this.error('[V164.1] Response capture error:', e.message);
+                }
+            }
+
+            // [NEW] 拦截 ajax-user-data URLs
+            if (url.includes('ajax-user-data')) {
+                try {
+                    const rawText = await response.text();
+
+                    this.capturedAjaxData.push({
+                        url,
+                        rawText,
+                        size: rawText.length,
+                        timestamp: Date.now(),
+                        type: 'ajax-user-data'
+                    });
+
+                    this.info('[Genesis.TextSurgical] ✅ CAPTURED ajax-user-data:', url.substring(0, 80));
+
+                    // 立即尝试提取
+                    const extracted = this._extractFromRawJs(rawText);
+                    if (extracted) {
+                        this.info('[Genesis.TextSurgical] ✅ EXTRACTION SUCCESS');
+                        // 存储到解压结果列表
+                        this.decompressionResults.push({
+                            source: 'ajax-user-data',
+                            data: extracted,
+                            method: 'TextSurgical'
+                        });
+                    }
+                } catch (e) {
+                    this.error('[Genesis.TextSurgical] Ajax capture error:', e.message);
+                }
+            }
+        };
+
+        // Register the listener
+        this.page.on('response', ajaxResponseHandler);
+
+        // Initialize browser context
+        await this.page.evaluate(() => {
+            window._TITAN_ARTERY_DATA = [];
+            window._V164_1_FORCE_INTERCEPT = true;
+            window._GENESIS_TEXT_SURGICAL = true;  // New flag
+        });
+
+        this.isInterceptionEnabled = true;
+        this.info('[Genesis.TextSurgical] ✅ AJAX INTERCEPTION ENABLED');
+
+        // V168.001: Return cleanup function
+        return {
+            cleanup: () => {
+                this.page.off('response', ajaxResponseHandler);
+                this.info('[V168.001] ✅ Ajax response handler cleaned up');
+            }
+        };
+    }
+
+    /**
+     * V164.1: Enable force interception mode
+     * This MUST be called BEFORE page.goto()
+     *
+     * V168.001: 返回 cleanup 函数用于资源清理
+     *
+     * Sets up page.on('response') handler to intercept /match-event/*.dat URLs
+     */
+    async enableForceIntercept() {
+        if (this.isInterceptionEnabled) {
+            this.warn('[V164.1] Force intercept already enabled');
+            return { cleanup: () => {} };
+        }
+
+        this.info('[V164.1] 🎯 ENABLING FORCE INTERCEPTION MODE');
+
+        // Clear previous captures
+        this.capturedResponses = [];
+        this.decompressionResults = [];
+        this.capturedAjaxData = [];  // V165.1: Clear ajax captures
+
+        // V164.1: Active network interception
+        // V168.001: Store handler for cleanup
+        const forceResponseHandler = async (response) => {
+            const url = response.url();
+
+            // Intercept /match-event/*.dat URLs
+            if (url.includes('/match-event/') && url.includes('.dat')) {
+                try {
+                    const text = await response.text();
+
+                    // Memory overflow protection
+                    if (text.length < this.config.minResponseSize ||
+                        text.length > this.config.maxResponseSize) {
+                        this.debug('[V164.1] Response size out of range:', text.length, 'bytes');
+                        return;
+                    }
+
+                    // Store captured response
+                    this.capturedResponses.push({
+                        url,
+                        text,
+                        size: text.length,
+                        timestamp: Date.now()
+                    });
+
+                    this.info('[V164.1] ✅ CAPTURED:', url.substring(0, 80), '(' + text.length + ' bytes)');
+
+                } catch (e) {
+                    this.error('[V164.1] Response capture error:', e.message);
+                }
+            }
+        };
+
+        // Register the listener
+        this.page.on('response', forceResponseHandler);
+
+        // Initialize window._TITAN_ARTERY_DATA in browser context
+        await this.page.evaluate(() => {
+            window._TITAN_ARTERY_DATA = [];
+            window._V164_1_FORCE_INTERCEPT = true;
+        });
+
+        this.isInterceptionEnabled = true;
+        this.info('[V164.1] ✅ FORCE INTERCEPTION ENABLED - Network listener ACTIVE');
+
+        // V168.001: Return cleanup function
+        return {
+            cleanup: () => {
+                this.page.off('response', forceResponseHandler);
+                this.info('[V168.001] ✅ Force intercept response handler cleaned up');
+            }
+        };
+    }
+
+    /**
+     * V164.1: Process captured responses (manual decompression)
+     * This is called AFTER page navigation completes
+     *
+     * Decompression pipeline: Base64 → atob() → JXG.decompress → JSON
+     */
+    async processCapturedResponses() {
+        if (!this.isInterceptionEnabled) {
+            this.warn('[V164.1] Force intercept not enabled, call enableForceIntercept() first');
+            return { success: false, error: 'Interception not enabled' };
+        }
+
+        this.info('[V164.1] 🔬 PROCESSING CAPTURED RESPONSES:', this.capturedResponses.length);
+
+        if (this.capturedResponses.length === 0) {
+            this.warn('[V164.1] ⚠️  No responses captured');
+            return { success: false, captured: 0 };
+        }
+
+        let decompressedCount = 0;
+
+        for (const captured of this.capturedResponses) {
+            try {
+                // Step 1: Base64 decode using atob()
+                const decoded = await this.page.evaluate((text) => {
+                    try {
+                        return window.atob(text);
+                    } catch (e) {
+                        return null;
+                    }
+                }, captured.text);
+
+                if (!decoded) {
+                    this.warn('[V164.1] Base64 decode failed');
+                    continue;
+                }
+
+                this.info('[V164.1] ✅ Base64 decoded:', decoded.length, 'bytes');
+
+                // Step 2: Manual JXG.decompress
+                const decompressed = await this.page.evaluate((data) => {
+                    try {
+                        // Check if JXG is available
+                        if (typeof window.JXG === 'undefined' || !window.JXG.decompress) {
+                            console.error('[V164.1] JXG.decompress not available');
+                            return null;
+                        }
+
+                        // Force decompress
+                        const result = window.JXG.decompress(data);
+                        return result;
+                    } catch (e) {
+                        console.error('[V164.1] JXG.decompress error:', e.message);
+                        return null;
+                    }
+                }, decoded);
+
+                if (!decompressed) {
+                    this.warn('[V164.1] JXG decompress failed');
+                    continue;
+                }
+
+                this.info('[V164.1] ✅ JXG decompressed:', decompressed.length, 'bytes');
+
+                // Step 3: Parse JSON
+                const jsonData = await this.page.evaluate((jsonString) => {
+                    try {
+                        return JSON.parse(jsonString);
+                    } catch (e) {
+                        return null;
+                    }
+                }, decompressed);
+
+                if (!jsonData) {
+                    this.warn('[V164.1] JSON parse failed');
+                    continue;
+                }
+
+                // Step 4: Store in window._TITAN_ARTERY_DATA
+                const stored = await this.page.evaluate((data, titanIds) => {
+                    // Check if data contains Titan ID signatures
+                    const dataStr = JSON.stringify(data);
+                    const hasTitanSignature = titanIds.some(id => dataStr.includes('"' + id + '"'));
+
+                    if (hasTitanSignature) {
+                        window._TITAN_ARTERY_DATA.push({
+                            source: 'V164.1_ForceIntercept',
+                            timestamp: Date.now(),
+                            data: data
+                        });
                         return true;
                     }
                     return false;
-                },
-                { timeout: this.config.adaptiveSignalTimeout }
-            ).then(() => {
-                signalDetected = true;
-                console.log('[V136.000] ✅ Signal found in adaptive window');
-                return true;
-            }).catch(async () => {
-                // V136.000: Adaptive bypass - check if odds cells are visible
-                console.log('[V136.000] ⏱️  Adaptive timeout - checking if data is pre-loaded...');
+                }, jsonData, TITAN_ID_SIGNATURES);
 
-                const oddsCellCount = await this.page.$$eval('[class*="odds-cell"]', els => els.length);
-
-                if (oddsCellCount > 0) {
-                    console.log(`[V136.000] ✅ ADAPTIVE BYPASS: ${oddsCellCount} odds cells visible, proceeding anyway`);
-                    adaptiveBypass = true;
-                    return true;  // Continue despite no .dat signal
-                } else {
-                    console.log('[V136.000] ⏳  No odds cells yet, waiting for full timeout...');
-                    // Fall through to Phase 2
-                    return false;
+                if (stored) {
+                    decompressedCount++;
+                    this.info('[V164.1] ✅ STORED IN MEMORY - Titan signatures detected');
                 }
+
+            } catch (e) {
+                this.error('[V164.1] Processing error:', e.message);
+            }
+        }
+
+        this.info('[V164.1] 📊 DECOMPRESSION SUMMARY:', decompressedCount, '/', this.capturedResponses.length);
+
+        return {
+            success: decompressedCount > 0,
+            captured: this.capturedResponses.length,
+            decompressed: decompressedCount
+        };
+    }
+
+    /**
+     * V164.1: Wait for trajectory signal in memory
+     *
+     * Polls window._TITAN_ARTERY_DATA for captured data
+     * Timeout: 12s (strong intercept window)
+     */
+    async waitForTrajectorySignal() {
+        const startTime = Date.now();
+        this.info('[V164.1] 👁️  Waiting for trajectory signal (12s intercept window)...');
+
+        const result = {
+            success: false,
+            method: 'UNKNOWN',
+            capturedData: null,
+            elapsedMs: 0
+        };
+
+        // V164.1: Polling loop with 100ms interval
+        while (Date.now() - startTime < this.config.interceptWindow) {
+            const captured = await this.page.evaluate(() => {
+                return window._TITAN_ARTERY_DATA || [];
             });
 
-            await adaptiveSignalPromise;
+            if (captured.length > 0) {
+                this.info('[V164.1] ✅ SIGNAL DETECTED -', captured.length, 'streams in memory');
+                result.success = true;
+                result.method = 'MEMORY_HOOK';
+                result.capturedData = captured;
+                result.elapsedMs = Date.now() - startTime;
+                return result;
+            }
 
-            // V136.000: Phase 2 - Full timeout wait (only if adaptive bypass failed)
-            if (!signalDetected && !adaptiveBypass) {
-                console.log('[V136.000] Entering Phase 2: Full timeout wait...');
+            // Wait before next poll
+            await new Promise(resolve => setTimeout(resolve, this.config.pollingInterval));
+        }
 
-                const remainingTimeout = this.config.signalWaitTimeout - this.config.adaptiveSignalTimeout;
+        // Timeout - try DOM fallback
+        this.warn('[V164.1] ⏱️  Memory hook timeout - trying DOM fallback...');
+        result.method = 'DOM_FALLBACK';
+        result.elapsedMs = Date.now() - startTime;
 
-                await this.page.waitForResponse(
-                    response => {
-                        const url = response.url();
-                        const isDatFile = /.*\.dat.*/i.test(url);
-                        const isStatusOk = response.status() === 200;
+        return result;
+    }
 
-                        if (isDatFile && isStatusOk) {
-                            console.log(`[V136.000] 🔒 SIGNAL LOCKED (Full): ${url}`);
-                            return true;
+    /**
+     * V165.1: Clear captured data from memory
+     */
+    async clearCapturedData() {
+        await this.page.evaluate(() => {
+            window._TITAN_ARTERY_DATA = [];
+        });
+        this.capturedResponses = [];
+        this.decompressionResults = [];
+        this.capturedAjaxData = [];  // V165.1: Clear ajax captures
+        this.info('[V165.1] 🧹 Captured data cleared');
+    }
+
+    /**
+     * V164.1: Get captured data count
+     */
+    async getCapturedDataCount() {
+        const count = await this.page.evaluate(() => {
+            return (window._TITAN_ARTERY_DATA || []).length;
+        });
+        return count;
+    }
+
+    /**
+     * V164.1: Legacy DOM fallback scan
+     * Used when memory hook fails
+     */
+    async performDOMFallbackScan() {
+        this.info('[V164.1] 🔍 DOM FALLBACK SCAN - Scanning for odds cells...');
+
+        try {
+            const cellCount = await this.page.evaluate(() => {
+                // Look for odds cells
+                const cells = document.querySelectorAll('.odds-cell, .odds-text, [data-odd]');
+                return cells.length;
+            });
+
+            this.info('[V164.1] ✅ DOM FALLBACK:', cellCount, 'odds cells visible');
+
+            // Try to trigger data load
+            await this.page.evaluate(() => {
+                const keywords = ['show all', 'more', 'comparison', 'all bookmakers', 'bookmakers'];
+                const allElements = Array.from(document.querySelectorAll('a, button, span, li, div[role="tab"]'));
+
+                allElements.forEach(el => {
+                    const text = (el.innerText || '').toLowerCase();
+                    if (keywords.some(kw => text.includes(kw))) {
+                        if (el.offsetParent !== null) {
+                            el.click();
                         }
-                        return false;
-                    },
-                    { timeout: remainingTimeout }
-                ).then(() => {
-                    signalDetected = true;
-                    console.log('[V136.000] ✅ Signal found in full window');
-                    return true;
-                }).catch(() => {
-                    console.log('[V136.000] ⏱️  Full timeout - data may be pre-loaded or no .dat packets');
-                    return false;
+                    }
                 });
-            }
+            });
 
-            // Additional wait for DOM to stabilize after signal
-            if (signalDetected) {
-                console.log('[V136.000] 📊 Signal detected, waiting for DOM stabilization...');
-                await this.jitterWait(1000, 500);
-            } else if (adaptiveBypass) {
-                console.log('[V136.000] 📊 Adaptive bypass active, brief stabilization wait...');
-                await this.page.waitForTimeout(500);  // Shorter wait for bypass
-            }
+            await this.page.waitForTimeout(2000);
 
-            const result = {
-                detected: signalDetected,
-                bypass: adaptiveBypass,
-                success: signalDetected || adaptiveBypass,
-                method: signalDetected ? 'LOCKED' : adaptiveBypass ? 'BYPASS' : 'TIMEOUT'
-            };
-
-            console.log(`[V136.000] Signal result: ${result.method}`);
-            return result;
-
-        } catch (error) {
-            console.log(`[V136.000] ❌ Signal detection error: ${error.message}`);
             return {
-                detected: false,
-                bypass: false,
-                success: false,
-                method: 'ERROR',
-                error: error.message
+                success: cellCount > 0,
+                cellCount
             };
+
+        } catch (e) {
+            this.error('[V164.1] DOM fallback error:', e.message);
+            return { success: false, error: e.message };
         }
     }
 
     /**
-     * Wait for odds content to appear on page
-     * @param {number} maxAttempts - Maximum wait attempts (default: 30)
-     * @returns {Promise<boolean>} True if odds content found
+     * V164.1: Legacy compatibility method - injectMemoryHook
+     * Maps to enableForceIntercept for backward compatibility
+     */
+    async injectMemoryHook() {
+        this.info('[V164.1] injectMemoryHook() → enableForceIntercept() [Legacy compatibility]');
+        return await this.enableForceIntercept();
+    }
+
+    /**
+     * V164.1: Legacy compatibility method - getCapturedData
+     * Returns captured data from memory
+     */
+    async getCapturedData() {
+        const data = await this.page.evaluate(() => {
+            return (window._TITAN_ARTERY_DATA || []).map(item => item.data);
+        });
+        this.info('[V164.1] Retrieved', data.length, 'streams from memory');
+        return data;
+    }
+
+    /**
+     * V164.1: Get hook statistics (legacy compatibility)
+     */
+    async getHookStats() {
+        return await this.page.evaluate(() => ({
+            interceptCount: (window._TITAN_ARTERY_DATA || []).length,
+            decompressCalls: this.capturedResponses.length,
+            forceInterceptEnabled: window._V164_1_FORCE_INTERCEPT || false
+        }));
+    }
+
+    /**
+     * V164.1: Legacy compatibility - waitForOddsContent
+     * @deprecated Use waitForTrajectorySignal() instead
      */
     async waitForOddsContent(maxAttempts = 30) {
-        let waitAttempts = 0;
-        while (waitAttempts < maxAttempts) {
-            const oddsCellCount = await this.page.$$eval('[class*="odds-cell"]', els => els.length);
-            if (oddsCellCount > 0) {
-                console.log(`[V136.000] ✅ Odds content found: ${oddsCellCount} cells`);
-                return true;
+        const result = await this.waitForTrajectorySignal();
+        return result.success;
+    }
+
+    /**
+     * V166.000: [Genesis.FinalWall] Enable Trigger Mode
+     * ===============================================
+     * 发令枪模式：网络拦截仅作为"到货通知"，触发 DOM 语义收割
+     *
+     * 工作流程:
+     * 1. 启用网络拦截，监听 /match-event/*.dat
+     * 2. 一旦拦截到响应（无需解密），立即触发 DOM 语义提取
+     * 3. 等待最大 15 秒的渲染窗口
+     * 4. 返回触发结果（包含 cleanup 函数）
+     *
+     * @param {Object} surgicalInteraction - SurgicalInteraction 实例
+     * @param {Object} options - 配置选项
+     * @param {number} options.renderWindow - 渲染等待窗口 (ms, default: 15000)
+     * @param {boolean} options.enableTrajectoryCapture - 是否捕获轨迹数据 (default: true)
+     * @returns {Promise<Object>} 触发结果 {success, method, extractedData, cleanup}
+     */
+    async enableTriggerMode(surgicalInteraction, options = {}) {
+        const config = {
+            renderWindow: options.renderWindow || 15000,
+            enableTrajectoryCapture: options.enableTrajectoryCapture !== false,
+            ...options
+        };
+
+        this.info('[V166.000] [Genesis.FinalWall] 🎯 ENABLING TRIGGER MODE');
+        this.info('[V166.000] Network interception → Delivery notification → DOM semantic extraction');
+        this.info('[V166.000] Render window:', config.renderWindow, 'ms');
+
+        // Step 1: Enable network interception (as delivery notification)
+        let matchEventCaptured = false;
+        let captureUrl = null;
+
+        // V168.001: Store response handler for cleanup
+        const responseHandler = async (response) => {
+            const url = response.url();
+
+            // Intercept /match-event/*.dat URLs
+            if (url.includes('/match-event/') && url.includes('.dat') && !url.includes('postmatch')) {
+                try {
+                    const text = await response.text();
+
+                    // Size validation (basic check)
+                    if (text.length >= this.config.minResponseSize &&
+                        text.length <= this.config.maxResponseSize) {
+                        matchEventCaptured = true;
+                        captureUrl = url;
+
+                        this.info('[V166.000] 📬 DELIVERY NOTIFICATION:', url.substring(0, 80));
+                        this.info('[V166.000] Data size:', text.length, 'bytes (no decryption needed)');
+                    }
+                } catch (e) {
+                    this.error('[V166.000] Response capture error:', e.message);
+                }
             }
-            await this.jitterWait(1000, 500);
-            waitAttempts++;
+        };
+
+        // Register the listener
+        this.page.on('response', responseHandler);
+
+        // Step 2: Wait for capture or timeout
+        const startTime = Date.now();
+        const captureTimeout = config.renderWindow; // Use render window as capture timeout
+
+        this.info('[V166.000] Waiting for match-event delivery...');
+
+        while (!matchEventCaptured && (Date.now() - startTime < captureTimeout)) {
+            await new Promise(resolve => setTimeout(resolve, 100));
         }
-        console.log('[V136.000] ⚠️  No odds content found after ' + maxAttempts + ' attempts');
-        return false;
+
+        if (!matchEventCaptured) {
+            this.warn('[V166.000] ⏱️  No match-event delivery captured within', config.renderWindow, 'ms');
+
+            // V168.001: Cleanup listener before returning
+            this.page.off('response', responseHandler);
+
+            return {
+                success: false,
+                method: 'TRIGGER_MODE',
+                error: 'No match-event captured',
+                renderWindowElapsed: Date.now() - startTime,
+                cleanup: () => this.page.off('response', responseHandler)
+            };
+        }
+
+        this.info('[V166.000] ✅ MATCH-EVENT CAPTURED - Triggering DOM semantic extraction...');
+
+        // Step 3: Wait for page rendering (with buffer)
+        this.info('[V166.000] ⏳ Waiting for page rendering (15s window)...');
+        await new Promise(resolve => setTimeout(resolve, 2000)); // Initial buffer
+
+        // Step 4: Trigger semantic extraction
+        const extractResult = await surgicalInteraction.harvestBySemanticPatterns({
+            enableTrajectoryCapture: config.enableTrajectoryCapture,
+            titanIdSignatures: TITAN_ID_SIGNATURES,
+            maxWaitTime: config.renderWindow - 2000 // Remaining time
+        });
+
+        this.info('[V166.000] 📊 Semantic extraction result:', extractResult.success ? 'SUCCESS' : 'FAILED');
+
+        // V168.001: Cleanup listener after extraction
+        this.page.off('response', responseHandler);
+
+        return {
+            success: extractResult.success,
+            method: 'SEMANTIC_DOM_EXTRACTION',
+            extractedData: extractResult.data,
+            providerCount: extractResult.providerCount,
+            trajectoryCount: extractResult.trajectoryCount,
+            renderWindowElapsed: Date.now() - startTime,
+            cleanup: () => this.page.off('response', responseHandler)
+        };
+    }
+
+    /**
+     * V166.000: [Genesis.FinalWall] Quick Trigger Check
+     * ============================================
+     * 快速检查是否已捕获 match-event（用于轮询模式）
+     *
+     * @returns {Promise<boolean>} 是否已捕获 match-event
+     */
+    async hasMatchEventCaptured() {
+        return await this.page.evaluate(() => {
+            return window._V166_0_MATCH_EVENT_CAPTURERED || false;
+        });
+    }
+
+    /**
+     * V165.1: Shutdown cleanup
+     */
+    async shutdown() {
+        this.info('[V165.1] 🔌 Shutting down SignalRadar...');
+        this.isInterceptionEnabled = false;
+        this.capturedResponses = [];
+        this.decompressionResults = [];
+        this.capturedAjaxData = [];  // Clear ajax captures
     }
 }
 

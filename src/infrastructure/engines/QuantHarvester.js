@@ -1,236 +1,326 @@
 /**
- * QuantHarvester - V164.TitanSlayer - V26.1 Brute Logic & Decryption
- * ================================================================
+ * QuantHarvester - V168.000 [Genesis.Solidify] Edition
+ * =======================================================
+ *
+ * [Genesis.Solidify] 实战收割逻辑固化至主干
+ *
+ * Core Features:
+ * - Native Concurrency: Built-in p-limit task scheduling
+ * - Auto-Healing: Retry logic for failed extractions
+ * - Fast Fail: Optimized SurgicalInteraction integration
+ * - Unified Config: Powered by EngineConfig
+ * - Multi-Source Storage: Writes to metrics_multi_source_data
+ *
+ * @module engines/QuantHarvester
+ * @version V168.000
+ * @since 2026-02-02
+ * @author [Genesis.Solidify]
  */
 
 'use strict';
 
 const { chromium } = require('playwright');
-const {
-    createConnection,
-    getOrCreateEntity,
-    upsertTemporalRecords
-} = require('../../../scripts/ops/modules/storage');
+const pLimit = require('p-limit');
+const { createPool } = require('../../../scripts/ops/modules/storage');
+const { EngineConfig } = require('./config/EngineConfig');
 const { TrajectoryParser } = require('./parsers/TrajectoryParser');
-const { TelemetryService } = require('./services/TelemetryService');
 const { SurgicalInteraction } = require('./services/SurgicalInteraction');
 const { SignalRadar } = require('./services/SignalRadar');
 
-// [V164.Sanitization] Load configuration from environment variables
-const PROXY_HOST = process.env.WSL2_PROXY_HOST || '172.25.16.1';
-const PROXY_PORT = process.env.DEFAULT_PROXY_PORT || '7892';
-const DB_HOST = process.env.DB_HOST || '172.25.16.1';
+const { RadarLogger } = require('./services/logging/RadarLogger');
 
-const DEFAULT_CONFIG = {
-    timeout: 60000,
-    headless: true,
-    axes: ['home', 'draw', 'away'],
-    axisDimensions: { home: 'A', draw: 'B', away: 'C' },
-    maxConcurrency: 1
+// Provider ID Mapping (internal to DB)
+const PROVIDER_MAP = {
+    'Pinnacle': 18,
+    'bet365': 32,
+    'William Hill': 25679340,
+    'Ladbrokes': 16,
+    'Bwin': 2,
+    '1xBet': 2,
+    'Unibet': 5,
+    'Average': 999
 };
 
 class QuantHarvester {
     constructor(config = {}) {
-        this.config = { ...DEFAULT_CONFIG, ...config };
-        this.trajectoryParser = new TrajectoryParser();
-        this.telemetryService = new TelemetryService(this.config);
-        this.isInitialized = false;
-        this.rawArteryBuffer = [];
-        // [V164.Sanitization] Use env-based proxy URL
-        this.proxyUrl = `http://${PROXY_HOST}:${PROXY_PORT}`;
-    }
-
-    async init() {
-        if (this.isInitialized) return;
-        this.dbClient = await createConnection();
-        const browserOptions = {
-            headless: this.config.headless,
-            // [V164.Sanitization] Use env-based proxy configuration
-            proxy: { server: this.proxyUrl },
-            args: ['--no-sandbox', '--disable-setuid-sandbox']
-        };
-        this.browser = await chromium.launch(browserOptions);
-        
-        // [V164.Safety] Single Context per Initialization
-        this.context = await this.browser.newContext({
-            viewport: { width: 1920, height: 1080 },
-            locale: 'en-GB',
-            timezoneId: 'Europe/London',
-            userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36'
+        this.config = new EngineConfig(config);
+        this.pool = null; // DB Pool
+        this.parser = new TrajectoryParser();
+        this.logger = new RadarLogger({
+            prefix: '[QuantHarvester]',
+            level: this.config.logLevel.toLowerCase()
         });
-
-        this.page = await this.context.newPage();
-        this.surgicalInteraction = new SurgicalInteraction(this.page, this.config);
-        this.signalRadar = new SignalRadar(this.page, this.config);
-        this.isInitialized = true;
     }
 
     /**
-     * [V164.VaultBreaker] V26.1 Brute Force UI Interaction
+     * Initialize resources (DB Pool)
      */
-    async vaultBreaker() {
-        console.log('[V164.VaultBreaker] 🔨 Initiating Brute Force UI Blast...');
-        try {
-            // 1. Keyword-based Button Smashing
-            await this.page.evaluate(() => {
-                const keywords = ['show all', 'more', 'comparison', 'all bookmakers', 'bookmakers'];
-                const allElements = Array.from(document.querySelectorAll('a, button, span, li, div[role="tab"]'));
-                
-                allElements.forEach(el => {
-                    const text = (el.innerText || '').toLowerCase();
-                    if (keywords.some(kw => text.includes(kw))) {
-                        if (el.offsetParent !== null) { // Visible
-                            el.click();
-                        }
-                    }
-                });
-            });
-            await this.page.waitForTimeout(2000);
-
-            // 2. Turbo Scroll (Force React Hydration)
-            console.log('[V164.VaultBreaker] 🚀 Turbo Scrolling...');
-            await this.page.evaluate(async () => {
-                const scrollStep = 500;
-                const totalHeight = document.body.scrollHeight;
-                for (let i = 0; i < totalHeight; i += scrollStep) {
-                    window.scrollTo(0, i);
-                    await new Promise(r => setTimeout(r, 100));
-                }
-                window.scrollTo(0, 0);
-            });
-            await this.page.waitForTimeout(2000);
-        } catch (e) {
-            console.log('[V164.VaultBreaker] Blast Warning:', e.message);
+    async init() {
+        if (!this.pool) {
+            this.pool = createPool();
+            this.logger.info('DB Pool Initialized');
         }
     }
 
-    async decompressInBrowser(rawData) {
-        return await this.page.evaluate((raw) => {
-            try {
-                if (typeof window.JXG !== 'undefined' && JXG.decompress) {
-                    return JXG.decompress(raw);
-                }
-                return null;
-            } catch (e) { return null; }
-        }, rawData);
-    }
+    /**
+     * Batch Harvest Entry Point
+     * @param {Array} matches - Array of match objects {id, url, ...}
+     */
+    async harvestBatch(matches) {
+        if (!this.pool) await this.init();
 
-    async harvestMatch(url, sourceId) {
-        if (!this.isInitialized) await this.init();
-        const result = { sourceId, url, entityId: null, success: false, providerCount: 0, startTime: Date.now() };
+        const concurrency = this.config.concurrency.MAX_CONCURRENT_BROWSERS || 15;
+        const limit = pLimit(concurrency);
         
-        this.rawArteryBuffer = [];
-        const responseHandler = async (resp) => {
+        this.logger.info(`Starting batch harvest. Concurrency: ${concurrency}, Total: ${matches.length}`);
+
+        const tasks = matches.map(match => limit(async () => {
             try {
-                const u = resp.url();
-                if (u.includes('.dat')) {
-                    const text = await resp.text();
-                    if (text.length > 100) {
-                        this.rawArteryBuffer.push({ url: u, data: text });
-                    }
-                }
-            } catch (e) {}
-        };
-        this.page.on('response', responseHandler);
-
-        try {
-            console.log(`[V164.Nav] Engaged: ${url}`);
-            await this.page.goto(url, { timeout: this.config.timeout, waitUntil: 'networkidle' });
-            
-            // [V164.VaultBreaker] Restore V26.1 Logic
-            await this.vaultBreaker();
-
-            result.entityId = await getOrCreateEntity(this.dbClient, sourceId, url, 'match');
-            const axesData = { home: [], draw: [], away: [] };
-            const capturedTitans = new Set();
-
-            console.log(`[V164.TitanSlayer] ⚔️  Decrypting ${this.rawArteryBuffer.length} triggered streams...`);
-            for (const stream of this.rawArteryBuffer) {
-                const decrypted = await this.decompressInBrowser(stream.data);
-                if (decrypted) {
-                    const arteryResults = this.parseArteryData(decrypted);
-                    arteryResults.forEach(art => {
-                        if (!axesData[art.axis]) axesData[art.axis] = [];
-                        axesData[art.axis].push(art);
-                        capturedTitans.add(art.standardVenueId);
-                    });
-                }
+                return await this.processMatch(match);
+            } catch (e) {
+                this.logger.error(`Task failed for ${match.id}: ${e.message}`);
+                return { success: false, matchId: match.id, error: e.message };
             }
+        }));
 
-            const records = [];
-            Object.keys(axesData).forEach(axis => {
-                axesData[axis].forEach(prov => {
-                    prov.trajectory.forEach((pt, seq) => {
-                        records.push({
-                            provider_name: prov.standardVenueId,
-                            metric_type: `quant_price_trajectory_${axis}`,
-                            dimension: prov.dimension,
-                            value: pt.value,
-                            occurred_at: pt.time,
-                            sequence: seq,
-                            is_baseline: seq === 0,
-                            raw_data: { axis, source: 'cipher_breaker', protocol: 'ghost_slayer' }
-                        });
-                    });
-                });
-            });
-
-            if (records.length > 0) {
-                await upsertTemporalRecords(this.dbClient, result.entityId, records);
-                result.success = true;
-                result.providerCount = capturedTitans.size;
-                console.log(`[V164.TitanSlayer] ✅ Slain: [${Array.from(capturedTitans).join(', ')}]`);
-            }
-
-            // [V164.Safety] Memory Guard
-            await this.context.clearCookies();
-            console.log('[V164.Safety] Context cleared.');
-
-        } catch (e) { result.error = e.message; }
+        const results = await Promise.all(tasks);
         
-        this.page.removeListener('response', responseHandler);
-        return result;
-    }
+        const stats = results.reduce((acc, r) => {
+            if (r.success) acc.success++; else acc.failed++;
+            return acc;
+        }, { success: 0, failed: 0 });
 
-    parseArteryData(decryptedData) {
-        const results = [];
-        try {
-            const json = typeof decryptedData === 'string' ? JSON.parse(decryptedData) : decryptedData;
-            const data = json.d || json;
-            const TITAN_ID_MAP = { '18': 'Entity_P', '32': 'Entity_WH', '2': 'Entity_B365', '25679340': 'Entity_1XBT' };
-            const AXIS_MAP = { '1': 'home', '2': 'draw', '3': 'away' };
-
-            const find = (obj) => {
-                if (!obj || typeof obj !== 'object') return;
-                for (const k of Object.keys(obj)) {
-                    if (TITAN_ID_MAP[k]) {
-                        const titanId = TITAN_ID_MAP[k];
-                        const node = obj[k];
-                        Object.keys(node).forEach(typeId => {
-                            const axis = AXIS_MAP[typeId];
-                            if (!axis) return;
-                            const pts = Array.isArray(node[typeId]) ? node[typeId] : Object.values(node[typeId]);
-                            const trajectory = pts.filter(p => p.t && p.v).map(p => ({
-                                time: new Date(p.t * 1000).toISOString(),
-                                value: p.v
-                            }));
-                            if (trajectory.length > 0) {
-                                results.push({ axis, dimension: axis === 'home' ? 'A' : axis === 'draw' ? 'B' : 'C', standardVenueId: titanId, trajectory });
-                            }
-                        });
-                    } else find(obj[k]);
-                }
-            };
-            find(data);
-        } catch (e) {}
+        this.logger.info(`Batch complete. Success: ${stats.success}, Failed: ${stats.failed}`);
         return results;
     }
 
+    /**
+     * Single Match Harvest Logic (Solidified from v168)
+     * @param {Object} match - {id, url, ...}
+     */
+    async processMatch(match) {
+        const startTime = Date.now();
+        // Launch isolated browser per match (V168 Strategy)
+        // Note: In high-scale, might want to move to context reuse, but adhering to V168 for stability.
+        const browser = await chromium.launch({
+            headless: this.config.concurrency.headless !== false, // default true
+            args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
+        });
+
+        let success = false;
+        let dataPoints = 0;
+        let method = 'UNKNOWN';
+
+        try {
+            const page = await browser.newPage();
+            // Use config-driven timeouts
+            const timeout = this.config.harvest.RENDER_WINDOW || 60000;
+            
+            // Initialize Services
+            const radar = new SignalRadar(page, { 
+                logLevel: this.config.logLevel.toLowerCase(),
+                memoryHookTimeout: this.config.timeouts.MEMORY_HOOK_TIMEOUT,
+                domFallbackTimeout: this.config.timeouts.DOM_FALLBACK_TIMEOUT
+            });
+            const surgical = new SurgicalInteraction(page, this.config);
+
+            // Step 1: Enable Trigger Mode
+            let triggerPromise = radar.enableTriggerMode(surgical, {
+                renderWindow: timeout,
+                enableTrajectoryCapture: true
+            });
+
+            // Step 2: Navigate
+            await page.goto(match.url, { 
+                waitUntil: 'networkidle', 
+                timeout: timeout 
+            });
+
+            // Step 3: Handle Overlays & Activate
+            await surgical.handleOverlays();
+
+            // Step 4: Wait for Trigger Result
+            let triggerResult = await triggerPromise;
+
+            // [Auto-Healing] Retry Logic
+            if (!triggerResult.success) {
+                this.logger.warn(`⚠️ Retrying ${match.id}...`);
+                
+                triggerPromise = radar.enableTriggerMode(surgical, {
+                    renderWindow: timeout,
+                    enableTrajectoryCapture: true
+                });
+
+                await page.reload({ waitUntil: 'networkidle', timeout: timeout });
+                await surgical.handleOverlays();
+                
+                triggerResult = await triggerPromise;
+            }
+
+            if (!triggerResult.success || !triggerResult.extractedData || triggerResult.extractedData.length === 0) {
+                throw new Error(triggerResult.error || 'No data extracted');
+            }
+
+            method = triggerResult.method;
+
+            // Step 5: Parse Data
+            const processedData = this.parser.processDeepL3Data(
+                triggerResult.extractedData,
+                { matchId: match.id, matchTime: new Date().toISOString() }
+            );
+
+            // [Validation Gate]
+            const bet365Data = processedData.find(p => p.provider === 'bet365');
+            const hasValidBet365 = bet365Data && bet365Data.opening && bet365Data.closing;
+
+            if (!hasValidBet365 && processedData.length < this.config.harvest.MIN_PROVIDERS) {
+                throw new Error('Gate: No valid data (bet365 missing Opening/Closing or insufficient providers)');
+            }
+
+            // Step 6: Trajectory Simulation (Gap Filling)
+            this._simulateTrajectories(processedData);
+
+            // Step 7: Save to DB
+            await this._saveToDb(match.id, processedData);
+
+            success = true;
+            dataPoints = processedData.reduce((sum, p) => sum + (p.curve ? p.curve.length : 0), 0);
+            
+            this.logger.info(`✅ SLAIN: ${match.id} | Points: ${dataPoints} | Method: ${method}`);
+
+        } catch (error) {
+            this.logger.error(`❌ Failed ${match.id}: ${error.message}`);
+            throw error;
+        } finally {
+            await browser.close();
+        }
+
+        return {
+            success,
+            matchId: match.id,
+            dataPoints,
+            method,
+            elapsed: Date.now() - startTime
+        };
+    }
+
+    /**
+     * Helper: Simulate trajectories for missing curves
+     * @private
+     */
+    _simulateTrajectories(dataList) {
+        dataList.forEach(p => {
+            if (!p.curve || p.curve.length === 0) {
+                if (p.instant) {
+                    const now = Date.now() / 1000;
+                    p.curve = [
+                        { t: now, v: p.instant, iso: new Date().toISOString(), type: 'Simulated' },
+                        { t: now + 1, v: p.instant, iso: new Date().toISOString(), type: 'Simulated' }
+                    ];
+                    // Ensure opening/closing exist if we simulate
+                    if (!p.opening) p.opening = { val: p.instant, time: new Date().toISOString() };
+                    if (!p.closing) p.closing = { val: p.instant, time: new Date().toISOString() };
+                }
+            }
+        });
+    }
+
+    /**
+     * Helper: Save to DB (metrics_multi_source_data)
+     * V168.001: 增强异常安全性，确保 client 在所有情况下都被释放
+     * @private
+     */
+    async _saveToDb(matchId, dataList) {
+        let client = null;
+        try {
+            client = await this.pool.connect();
+            await client.query('BEGIN');
+
+            for (const data of dataList) {
+                const providerId = PROVIDER_MAP[data.provider] || 999;
+                const sourceName = `Entity_${data.provider.replace(/\s+/g, '')}`;
+
+                const opening = data.opening || {};
+                const closing = data.closing || {};
+
+                // Use the v168 query structure
+                const query = `
+                    INSERT INTO metrics_multi_source_data (
+                        match_id, source_name,
+                        init_h, init_d, init_a,
+                        final_h, final_d, final_a,
+                        odds_history, market_payout, provider_internal_id,
+                        integrity_score, is_valid, data_timestamp
+                    ) VALUES (
+                        $1, $2,
+                        $3, $4, $5,
+                        $6, $7, $8,
+                        $9::jsonb, $10, $11,
+                        $12, $13, NOW()
+                    )
+                    ON CONFLICT (match_id, source_name)
+                    DO UPDATE SET
+                        init_h = EXCLUDED.init_h,
+                        init_d = EXCLUDED.init_d,
+                        init_a = EXCLUDED.init_a,
+                        final_h = EXCLUDED.final_h,
+                        final_d = EXCLUDED.final_d,
+                        final_a = EXCLUDED.final_a,
+                        odds_history = EXCLUDED.odds_history,
+                        market_payout = EXCLUDED.market_payout,
+                        provider_internal_id = EXCLUDED.provider_internal_id,
+                        data_timestamp = NOW()
+                `;
+
+                await client.query(query, [
+                    matchId,
+                    sourceName,
+                    opening.val || null, null, null,
+                    closing.val || null, null, null,
+                    JSON.stringify(data.curve),
+                    data.market_payout || null,
+                    providerId,
+                    1.05, // Integrity Score default
+                    true
+                ]);
+            }
+
+            await client.query('COMMIT');
+        } catch (error) {
+            // V168.001: Safe ROLLBACK with client existence check
+            if (client) {
+                try {
+                    await client.query('ROLLBACK');
+                } catch (rollbackError) {
+                    console.error('[V168.001] ROLLBACK error:', rollbackError.message);
+                }
+            }
+            throw error;
+        } finally {
+            // V168.001: Defensive client release with null check
+            if (client) {
+                try {
+                    client.release();
+                } catch (releaseError) {
+                    console.error('[V168.001] Client release error:', releaseError.message);
+                }
+            }
+        }
+    }
+
+    /**
+     * Legacy single match wrapper for backward compatibility
+     */
+    async harvestMatch(url, sourceId) {
+        // Adapt single call to new processMatch
+        await this.init();
+        return this.processMatch({ id: sourceId, url: url });
+    }
+
     async shutdown() {
-        if (this.page) await this.page.close();
-        if (this.context) await this.context.close();
-        if (this.browser) await this.browser.close();
-        if (this.dbClient) await this.dbClient.end();
+        if (this.pool) {
+            await this.pool.end();
+        }
     }
 }
 

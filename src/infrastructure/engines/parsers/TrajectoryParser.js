@@ -1,215 +1,91 @@
 /**
- * TrajectoryParser Module - V150.002 Opening Odds Priority Fix
- * =============================================================
+ * TrajectoryParser - V168.002 Modular Edition
+ * ==============================================
  *
- * Time alignment and trajectory extraction utilities.
- * Extracted from QuantHarvester.js for modular architecture.
+ * [Genesis.Architect] V168.002 模块化重构 - 主控制器
+ *
+ * 核心变更:
+ * - PAYOUT CALCULATOR: 已移至 calculators/PayoutCalculator.js
+ * - SYNC TIMESTAMP: 已移至 temporal/SyncTimestamp.js
+ * - 本文件只保留 DOM 提取和数据编排逻辑
  *
  * @module parsers/TrajectoryParser
- * @version V150.002
- * @since 2026-01-28
- * @author Principal Data Engineer (Data Purity Specialist)
- *
- * V150.002 Features:
- * - Opening odds extraction priority (skip current odds)
- * - Split by "Opening odds:" to avoid false matches
- * - Fixed documentElement handling for JSDOM wrapper
- * - V140.000 Features preserved:
- *   - 强制初盘打标: 排序后最早点自动标记为 Initial
- *   - 时区硬化: 强制 UTC，消除本地时区干扰
- *   - 年份校准: 跨年检测 + 未来日期自动回滚
- *   - "苍蝇腿也是肉"原则: recordCount >= 1 即 SUCCESS
- *   - quality_score 元数据: snapshot/partial/complete
- *
- * @example
- * const { TrajectoryParser, SyncTimestamp, alignTimestamp } = require('./parsers/TrajectoryParser');
+ * @version V168.002
+ * @since 2026-02-02
+ * @author [Genesis.Architect]
  */
 
 'use strict';
 
 const { JSDOM } = require('jsdom');
+const { EngineConfig, TITAN_ID_MAPPING } = require('../config/EngineConfig');
+const { PayoutCalculator } = require('./calculators/PayoutCalculator');
+const { SyncTimestamp, alignTimestamp } = require('./temporal/SyncTimestamp');
 
 // ============================================================================
-// SYNC TIMESTAMP MODULE (V140.000 Data Purity Calibration)
+// V168.002: MODULAR ARCHITECTURE - Imports from separated modules
+// ============================================================================
+// PayoutCalculator imported from: ./calculators/PayoutCalculator.js
+// SyncTimestamp imported from: ./temporal/SyncTimestamp.js
+// ============================================================================
+
+// ============================================================================
+// V167.000: CONSOLIDATED TRAJECTORY PARSER (Main Controller)
 // ============================================================================
 
 /**
- * SyncTimestamp - V140.000 Time alignment utilities with hardened timezone/year
- * Handles parsing of various timestamp formats into ISO 8601 UTC
+ * TrajectoryParser - V167.000 Consolidated Edition
  *
- * V140.000 Enhancements:
- * - 强制 UTC 输出，消除本地时区干扰
- * - 跨年检测: 解析日期 > (now + 48h) 自动回滚一年
- * - 支持环境配置: ENFORCE_UTC, BASE_YEAR, MAX_FUTURE_TOLERANCE_HOURS
- */
-class SyncTimestamp {
-    /**
-     * @param {Object} options - Configuration options
-     * @param {number} options.baseYear - Base year for calibration (default: current year)
-     * @param {boolean} options.enforceUTC - Force UTC timezone (default: true)
-     * @param {number} options.maxFutureToleranceHours - Max future date tolerance (default: 48)
-     */
-    constructor(options = {}) {
-        // V140.000: 支持环境配置或默认值
-        const env = process.env || {};
-        // V151.000: 默认使用 2024 作为基准年份（适配 Golden Zone 数据）
-        this.baseYear = parseInt(options.baseYear || env.BASE_YEAR || 2024);
-        this.enforceUTC = options.enforceUTC !== undefined ? options.enforceUTC : (env.ENFORCE_UTC !== 'false');
-        this.maxFutureToleranceHours = parseInt(options.maxFutureToleranceHours || env.MAX_FUTURE_TOLERANCE_HOURS || 48);
-
-        this.monthMap = {
-            'jan': 0, 'jan.': 0, 'january': 0,
-            'feb': 1, 'feb.': 1, 'february': 1,
-            'mar': 2, 'mar.': 2, 'march': 2,
-            'apr': 3, 'apr.': 3, 'april': 3,
-            'may': 4, 'may.': 4,
-            'jun': 5, 'jun.': 5, 'june': 5,
-            'jul': 6, 'jul.': 6, 'july': 6,
-            'aug': 7, 'aug.': 7, 'august': 7,
-            'sep': 8, 'sep.': 8, 'september': 8,
-            'oct': 9, 'oct.': 9, 'october': 9,
-            'nov': 10, 'nov.': 10, 'november': 10,
-            'dec': 11, 'dec.': 11, 'december': 11
-        };
-    }
-
-    /**
-     * V151.000: 跨年检测与年份校准
-     * 修复逻辑：对于历史数据，优先尝试回滚到正确年份
-     * 判定规则：若 parsedDate > (now + 48h)，则执行 year = year - 1
-     * 支持 BASE_YEAR 环境变量（默认 2024，适配 Golden Zone 数据）
-     * @param {Date} parsedDate - 解析出的日期
-     * @returns {Date} 校准后的日期
-     */
-    _calibrateYear(parsedDate) {
-        const now = new Date();
-        const futureThreshold = new Date(now.getTime() + this.maxFutureToleranceHours * 60 * 60 * 1000);
-
-        // V151.000: 首先检查是否在有效范围内（无需校准）
-        if (parsedDate <= futureThreshold) {
-            return parsedDate;
-        }
-
-        // V151.000: 日期超出容差，执行年份校准
-        // 使用 baseYear 作为参考点（默认 2024，适配 Golden Zone 数据）
-        const targetYear = this.baseYear;
-        const calibratedDate = new Date(Date.UTC(
-            targetYear,
-            parsedDate.getUTCMonth(),
-            parsedDate.getUTCDate(),
-            parsedDate.getUTCHours(),
-            parsedDate.getUTCMinutes()
-        ));
-
-        // 验证校准后的日期是否合理（不应在未来）
-        if (calibratedDate > futureThreshold) {
-            // 即使使用 baseYear 仍然在未来，回退到 baseYear - 1
-            console.log(`[V151.000 SyncTimestamp] Cross-year detection: ${parsedDate.toISOString()} > threshold, rolling back to ${targetYear - 1}`);
-            return new Date(Date.UTC(
-                targetYear - 1,
-                parsedDate.getUTCMonth(),
-                parsedDate.getUTCDate(),
-                parsedDate.getUTCHours(),
-                parsedDate.getUTCMinutes()
-            ));
-        }
-
-        console.log(`[V151.000 SyncTimestamp] Year calibrated: ${parsedDate.getUTCFullYear()} -> ${targetYear}`);
-        return calibratedDate;
-    }
-
-    /**
-     * Parse date string to ISO 8601 UTC format
-     * V140.000: 强制 UTC 输出，支持跨年检测
-     * @param {string} dateStr - Date string in various formats
-     * @returns {string|null} ISO 8601 UTC timestamp or null
-     */
-    parse(dateStr) {
-        if (!dateStr || typeof dateStr !== 'string') {
-            return null;
-        }
-
-        try {
-            let year = this.baseYear;
-            let month = null;
-            let day = null;
-            let hour = null;
-            let minute = null;
-
-            // Format: "24 Jan, 10:00" or "Jan 24, 10:00"
-            const pattern1 = /^(\d{1,2})\s+(\w+\.?)\s*,?\s*(\d{1,2}):(\d{2})$/i;
-            const match1 = dateStr.trim().match(pattern1);
-            if (match1) {
-                day = parseInt(match1[1]);
-                const monthStr = match1[2].toLowerCase();
-                hour = parseInt(match1[3]);
-                minute = parseInt(match1[4]);
-                month = this.monthMap[monthStr];
-            }
-
-            const pattern2 = /^(\w+\.?)\s+(\d{1,2})\s*,?\s*(\d{1,2}):(\d{2})$/i;
-            const match2 = dateStr.trim().match(pattern2);
-            if (match2) {
-                const monthStr = match2[1].toLowerCase();
-                day = parseInt(match2[2]);
-                hour = parseInt(match2[3]);
-                minute = parseInt(match2[4]);
-                month = this.monthMap[monthStr];
-            }
-
-            if (month !== null && !isNaN(month)) {
-                // V140.000: 强制使用 Date.UTC 构造，确保 UTC 时区
-                let date = new Date(Date.UTC(year, month, day, hour, minute));
-
-                // V160.Repair: [年份锁定] 修复日期解析逻辑
-                // 如果解析出的年份小于 2024，必须强制通过 BASE_YEAR=2024 进行偏移校准
-                // 禁止出现 2001 年的数据（历史污染）
-                const parsedYear = date.getUTCFullYear();
-                if (parsedYear < 2024) {
-                    console.log(`[V160.Repair SyncTimestamp] 🚨 Detected historical year: ${parsedYear} < 2024, forcing BASE_YEAR=${this.baseYear}`);
-                    date = new Date(Date.UTC(this.baseYear, month, day, hour, minute));
-                }
-
-                // V140.000: 跨年检测与年份校准
-                date = this._calibrateYear(date);
-
-                // V140.000: 强制返回 UTC ISO-8601 格式
-                return date.toISOString();
-            }
-
-        } catch (error) {
-            console.error(`[V140.000 SyncTimestamp] Parse error for "${dateStr}":`, error.message);
-            return null;
-        }
-
-        return null;
-    }
-}
-
-/**
- * Standalone alignTimestamp function for test compatibility
- * @param {string} dateStr - Date string to align
- * @returns {string|null} ISO 8601 timestamp
- */
-function alignTimestamp(dateStr) {
-    const sync = new SyncTimestamp();
-    return sync.parse(dateStr);
-}
-
-// ============================================================================
-// DOM-FIRST TRAJECTORY PARSER
-// ============================================================================
-
-/**
- * TrajectoryParser - DOM-based trajectory extraction
- * V133.000: Enhanced with fuzzy matching and data quality threshold
- * Extracts quantitative data trajectories from modal HTML
+ * 职责:
+ * - DOM 提取 (Opening/Closing/Points)
+ * - Payout 计算 (统一逻辑)
+ * - 时间戳对齐
+ * - 数据验证
  */
 class TrajectoryParser {
     /**
-     * Extract full trajectory from modal HTML using DOM traversal
-     * V122.000: Memory leak fixed with explicit JSDOM cleanup
-     * V133.000: Added fuzzy matching selectors and data quality threshold
+     * @param {Object} options - 配置选项
+     */
+    constructor(options = {}) {
+        this.config = new EngineConfig(options);
+        this.sync = new SyncTimestamp(options);
+    }
+
+    // ========================================================================
+    // V167.000: PAYOUT CALCULATION (Consolidated)
+    // ========================================================================
+
+    /**
+     * V167.000: 计算市场返还率
+     * @param {number} h - Home odds
+     * @param {number} d - Draw odds
+     * @param {number} a - Away odds
+     * @returns {number|null} 返还率百分比
+     */
+    calculatePayout(h, d, a) {
+        return PayoutCalculator.calculate(h, d, a);
+    }
+
+    /**
+     * V167.000: 从赔率对象计算返还率
+     * @param {Object} odds - 赔率对象
+     * @returns {number|null} 返还率百分比
+     */
+    calculatePayoutFromObject(odds) {
+        return PayoutCalculator.fromOddsObject(odds);
+    }
+
+    // ========================================================================
+    // V167.000: DOM TRAJECTORY EXTRACTION
+    // ========================================================================
+
+    /**
+     * V167.000: Extract full trajectory from modal HTML using DOM traversal
+     *
+     * 核心改进:
+     * - Opening/Closing 识别强化
+     * - Points 序列生成
+     * - Payout 自动计算
      *
      * @param {string} modalHtml - Modal HTML content
      * @returns {Object} Result object with trajectory and metadata
@@ -232,38 +108,30 @@ class TrajectoryParser {
             const document = dom.window.document;
 
             // [V164.FullTrajectory] Flexbox Columnar Extraction (OddsPortal 2026)
-            // Structure: Container(flex-row) -> [TimeCol(flex-col), OddsCol(flex-col)]
             const historyContainers = document.querySelectorAll('div.flex.flex-row.gap-3');
-            
+
             for (const container of historyContainers) {
-                // We expect at least 2 columns: Time and Odds
-                // Sometimes there is a 3rd column for Volume/Bookmakers count
                 const columns = Array.from(container.children).filter(c => c.tagName === 'DIV');
-                
+
                 if (columns.length >= 2) {
                     const timeCol = columns[0];
                     const oddsCol = columns[1];
-                    
-                    // Get all entries in the columns
-                    // Selector: direct children divs or divs with specific text classes
+
                     const timeEntries = timeCol.querySelectorAll('div.text-\\[10px\\]');
                     const oddsEntries = oddsCol.querySelectorAll('div.text-\\[10px\\]');
-                    
-                    // Match by index
+
                     const count = Math.min(timeEntries.length, oddsEntries.length);
-                    
+
                     for (let i = 0; i < count; i++) {
                         const timeText = timeEntries[i].textContent.trim();
                         const oddsText = oddsEntries[i].textContent.trim();
-                        
+
                         if (!timeText || !oddsText) continue;
-                        
-                        const sync = new SyncTimestamp();
-                        const timestamp = sync.parse(timeText);
+
+                        const timestamp = this.sync.parse(timeText);
                         const value = parseFloat(oddsText);
-                        
+
                         if (timestamp && !isNaN(value) && value > 1.0) {
-                            // Deduplicate
                             const exists = trajectory.some(p => p.time === timestamp && p.value === value);
                             if (!exists) {
                                 trajectory.push({
@@ -278,7 +146,6 @@ class TrajectoryParser {
             }
 
             // [V164.FullTrajectory] Opening Odds Extraction (Separate Section)
-            // Structure: div.mt-2.gap-1 -> div.flex.gap-1 -> [Time, Odds]
             const openingSection = document.querySelector('div.mt-2.gap-1, div.gap-1.mt-2');
             if (openingSection && openingSection.textContent.includes('Opening')) {
                 const flexRow = openingSection.querySelector('div.flex.gap-1');
@@ -287,11 +154,10 @@ class TrajectoryParser {
                     if (divs.length >= 2) {
                         const timeText = divs[0].textContent.trim();
                         const oddsText = divs[1].textContent.trim();
-                        
-                        const sync = new SyncTimestamp();
-                        const timestamp = sync.parse(timeText);
+
+                        const timestamp = this.sync.parse(timeText);
                         const value = parseFloat(oddsText);
-                        
+
                         if (timestamp && !isNaN(value)) {
                             trajectory.push({
                                 time: timestamp,
@@ -313,9 +179,8 @@ class TrajectoryParser {
                             const firstCell = cells[0].textContent.trim();
                             const secondCell = cells[1].textContent.trim();
                             if (!firstCell || !secondCell || isNaN(parseFloat(secondCell))) return;
-                            
-                            const sync = new SyncTimestamp();
-                            const timestamp = sync.parse(firstCell);
+
+                            const timestamp = this.sync.parse(firstCell);
                             const value = parseFloat(secondCell);
 
                             if (timestamp && !isNaN(value) && value > 1.0) {
@@ -330,21 +195,14 @@ class TrajectoryParser {
             }
 
             // [V164.FullTrajectory] Sequence Generation & Time Alignment
-            // Sort by time ascending (Oldest -> Newest)
             trajectory.sort((a, b) => new Date(a.time) - new Date(b.time));
 
             // Mark the first point (oldest) as Initial/Opening if not already
             if (trajectory.length > 0) {
-                // Ensure earliest is Initial
                 trajectory[0].type = 'Initial';
-                
-                // If we have explicit "Opening" data (from separate section), it might be duplicated
-                // if the time matches exactly. But Set/Dedupe logic above might not catch it if times strictly differ.
-                // Generally, earliest is best.
             }
 
         } catch (error) {
-            // Log error but don't fail
             console.error('[V164.FullTrajectory TrajectoryParser] Extraction error:', error.message);
             return {
                 trajectory: [],
@@ -363,7 +221,6 @@ class TrajectoryParser {
         }
 
         // [V164.TitanSlayer] Skeleton Enforcement
-        // "苍蝇腿也是肉" -> "Initial odds are Gold". Accept 1+ points.
         const recordCount = trajectory.length;
         let qualityScore;
         if (recordCount >= 5) {
@@ -371,12 +228,12 @@ class TrajectoryParser {
         } else if (recordCount >= 3) {
             qualityScore = 'partial';
         } else {
-            qualityScore = 'skeleton'; // [V164.TitanSlayer] Mandate: Initial odds secured
+            qualityScore = 'skeleton';
         }
 
         return {
             trajectory,
-            valid: recordCount >= 1, 
+            valid: recordCount >= 1,
             recordCount,
             quality: recordCount >= 5 ? 'EXCELLENT' : recordCount >= 3 ? 'GOOD' : 'POOR',
             quality_score: qualityScore
@@ -384,13 +241,278 @@ class TrajectoryParser {
     }
 
     /**
-     * Validate trajectory state
-     * V133.000: Enhanced with quality metrics
+     * V167.000: [Genesis.FinalWall] Parse DOM-Extracted Odds Data
+     *
+     * V167.000 修复: 统一配置命名为 `conf`
+     *
+     * @param {Array} semanticData - 从 DOM 提取的语义数据
+     * @param {Object} options - 配置选项
+     * @returns {Object} 轨迹数据对象
+     */
+    parseDOMExtractedData(semanticData, options = {}) {
+        // V167.000: 统一命名为 conf (消除作用域阴影 bug)
+        const conf = {
+            matchId: options.matchId || 'unknown',
+            matchTime: options.matchTime || new Date().toISOString(),
+            source: 'semantic_extraction',
+            titanIdMapping: {
+                'Pinnacle': '18',
+                'bet365': '32',
+                'Bwin': '2',
+                'William Hill': '25679340'
+            },
+            ...options
+        };
+
+        const results = {
+            trajectory: [],
+            providers: [],
+            l3OddsHash: null,
+            valid: false,
+            recordCount: 0
+        };
+
+        if (!Array.isArray(semanticData)) {
+            return {
+                ...results,
+                error: 'Invalid input: semanticData is not an array'
+            };
+        }
+
+        try {
+            for (const item of semanticData) {
+                // Map provider name to Titan ID
+                const titanId = conf.titanIdMapping[item.provider] ||
+                                 Object.entries(conf.titanIdMapping).find(([_, v]) => v === item.provider)?.[0];
+
+                if (!titanId) {
+                    console.warn('[V167.000] Unknown provider:', item.provider);
+                    continue;
+                }
+
+                // Create trajectory point
+                const timestamp = this.sync.parse(item.timestamp || conf.matchTime);
+
+                const trajectoryPoint = {
+                    providerId: titanId,
+                    providerName: item.provider,
+                    matchId: conf.matchId,
+                    dimension: '1',
+                    occurred_at: timestamp,
+                    value: item.home || null,
+                    type: 'SemanticSnapshot'
+                };
+
+                results.trajectory.push(trajectoryPoint);
+
+                // Add Home/Draw/Away points
+                if (item.home !== undefined) {
+                    results.trajectory.push({
+                        ...trajectoryPoint,
+                        dimension: '1',
+                        value: item.home
+                    });
+                }
+                if (item.draw !== undefined) {
+                    results.trajectory.push({
+                        ...trajectoryPoint,
+                        dimension: 'X',
+                        value: item.draw
+                    });
+                }
+                if (item.away !== undefined) {
+                    results.trajectory.push({
+                        ...trajectoryPoint,
+                        dimension: '2',
+                        value: item.away
+                    });
+                }
+
+                // V167.000: CONSOLIDATED PAYOUT CALCULATION
+                if (item.home && item.draw && item.away) {
+                    const payout = this.calculatePayout(item.home, item.draw, item.away);
+                    if (payout !== null) {
+                        results.trajectory.push({
+                            ...trajectoryPoint,
+                            dimension: 'payout',
+                            value: payout,
+                            type: 'PayoutPoint'
+                        });
+                    }
+                }
+
+                results.providers.push({
+                    providerId: titanId,
+                    providerName: item.provider,
+                    home: item.home,
+                    draw: item.draw,
+                    away: item.away,
+                    payout: this.calculatePayoutFromObject(item) // V167.000: 统一计算
+                });
+            }
+
+            // Generate l3_odds_hash (8-digit hex)
+            results.l3OddsHash = this._generateL3OddsHash(results.providers);
+
+            results.recordCount = results.trajectory.length;
+            results.valid = results.recordCount >= 1;
+
+            console.log('[V167.000] Parsed', results.providers.length, 'providers,',
+                results.recordCount, 'trajectory points');
+
+        } catch (e) {
+            results.error = e.message;
+            console.error('[V167.000] Parse error:', e.message);
+        }
+
+        return results;
+    }
+
+    /**
+     * V167.000: Process Deep L3 Data with Payout Calculation
+     *
+     * V167.000 修复: 统一配置命名为 `conf`
+     *
+     * @param {Array} rawData - Raw data from SurgicalInteraction
+     * @param {Object} matchConfig - Match context { matchId, matchTime }
+     * @returns {Array} Structured L3 data objects
+     */
+    processDeepL3Data(rawData, matchConfig = {}) {
+        // V167.000: 统一命名为 conf
+        const conf = {
+            matchId: matchConfig.matchId || 'unknown',
+            matchTime: matchConfig.matchTime || new Date().toISOString(),
+            ...matchConfig
+        };
+
+        const results = [];
+        const sync = this.sync;
+        const now = new Date();
+        const matchDate = conf.matchTime ? new Date(conf.matchTime) : now;
+
+        if (!Array.isArray(rawData)) return results;
+
+        for (const item of rawData) {
+            try {
+                const struct = {
+                    match_id: conf.matchId,
+                    provider: item.provider,
+                    dimension: item.dimension || '1x2',
+                    instant: item.instant,
+                    curve: [],
+                    opening: null,
+                    closing: null
+                };
+
+                // Process Curve
+                if (Array.isArray(item.curve)) {
+                    for (const point of item.curve) {
+                        let timestamp = null;
+                        const raw = point.raw_time;
+
+                        if (raw === 'now') {
+                            timestamp = now.toISOString();
+                        } else if (raw.match(/^\d{2}:\d{2}$/)) {
+                            const [hh, mm] = raw.split(':').map(Number);
+                            timestamp = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), hh, mm)).toISOString();
+                        } else {
+                            sync.baseYear = matchDate.getUTCFullYear();
+                            timestamp = sync.parse(raw);
+                        }
+
+                        if (timestamp) {
+                            const dataPoint = {
+                                t: new Date(timestamp).getTime() / 1000,
+                                v: point.v,
+                                iso: timestamp
+                            };
+                            if (point.payout) {
+                                dataPoint.payout = point.payout;
+                            }
+                            struct.curve.push(dataPoint);
+                        }
+                    }
+
+                    // Sort curve chronologically
+                    struct.curve.sort((a, b) => a.t - b.t);
+
+                    // Identify Opening (Earliest)
+                    if (struct.curve.length > 0) {
+                        const first = struct.curve[0];
+                        struct.opening = {
+                            val: first.v,
+                            time: first.iso
+                        };
+                        if (first.payout) struct.opening.payout = first.payout;
+                    }
+
+                    // Identify Closing (Latest)
+                    if (struct.curve.length > 0) {
+                        const last = struct.curve[struct.curve.length - 1];
+                        struct.closing = {
+                            val: last.v,
+                            time: last.iso
+                        };
+                        if (last.payout) struct.closing.payout = last.payout;
+
+                        // V166.1: Top-level Market Payout (from latest)
+                        if (last.payout) struct.market_payout = last.payout;
+                    }
+                }
+
+                results.push(struct);
+
+            } catch (e) {
+                console.warn(`[V167.000] Failed to process L3 item for ${item.provider}: ${e.message}`);
+            }
+        }
+
+        return results;
+    }
+
+    /**
+     * V167.000: Generate L3 Odds Hash
+     * @param {Array} providers - 提供商数据
+     * @returns {string} 8 位十六进制哈希
+     */
+    _generateL3OddsHash(providers) {
+        if (!providers || providers.length === 0) {
+            return null;
+        }
+
+        try {
+            const limit = Math.min(providers.length, 2);
+            let hash = '';
+
+            for (let i = 0; i < limit; i++) {
+                const p = providers[i];
+                const providerId = p.providerId || '00';
+
+                const h = Math.round((p.home || 0) * 100).toString(16).padStart(2, '0');
+                const d = Math.round((p.draw || 0) * 100).toString(16).padStart(2, '0');
+                const a = Math.round((p.away || 0) * 100).toString(16).padStart(2, '0');
+
+                hash += providerId.toString().padStart(2, '0') + h + d + a;
+            }
+
+            while (hash.length < 8) {
+                hash += '0';
+            }
+
+            return hash.substring(0, 8);
+
+        } catch (e) {
+            console.error('[V167.000] Hash generation error:', e.message);
+            return null;
+        }
+    }
+
+    /**
+     * V167.000: Validate trajectory state
      * @param {Array} trajectory - Trajectory array
      * @returns {Object} Validation result
      */
     validateTrajectory(trajectory) {
-        // Handle new V133.000 return format
         const trajectoryArray = Array.isArray(trajectory) ? trajectory : trajectory?.trajectory || [];
 
         if (!Array.isArray(trajectoryArray) || trajectoryArray.length === 0) {
@@ -428,11 +550,20 @@ class TrajectoryParser {
 }
 
 // ============================================================================
-// EXPORTS
+// V168.002: EXPORTS - Modular Architecture
 // ============================================================================
 
 module.exports = {
+    // V168.002: Main parser (保留主控制器)
     TrajectoryParser,
+
+    // V168.002: Payout calculation (从 calculators/PayoutCalculator.js 导入)
+    PayoutCalculator,
+
+    // V168.002: Time alignment (从 temporal/SyncTimestamp.js 导入)
     SyncTimestamp,
-    alignTimestamp
+    alignTimestamp,
+
+    // V167.000: Configuration
+    EngineConfig
 };
