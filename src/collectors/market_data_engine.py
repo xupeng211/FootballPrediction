@@ -184,6 +184,11 @@ class MetricEventData:
     is_valid: bool = False
     validation_error: str | None = None
 
+    # V166.1: Elite Harvest Fields
+    odds_history: list[dict] | None = None  # Full L3 trajectory
+    market_payout: float | None = None      # Real market payout %
+    provider_internal_id: int | None = None # Internal ID (18, 32, etc)
+
     # Metadata
     extracted_at: datetime = field(default_factory=datetime.now)
 
@@ -1516,6 +1521,7 @@ class V100DatabaseManager:
             Statistics dictionary with inserted/updated/failed/dead_letter counts
         """
         import psycopg2
+        import json
 
         stats = {
             "total": len(vendor_data),
@@ -1556,9 +1562,10 @@ class V100DatabaseManager:
                         init_h, init_d, init_a,
                         final_h, final_d, final_a,
                         integrity_score, is_valid, validation_error,
-                        data_timestamp
+                        data_timestamp,
+                        odds_history, market_payout, provider_internal_id
                     ) VALUES (
-                        %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+                        %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
                     )
                     ON CONFLICT (match_id, source_name)
                     DO UPDATE SET
@@ -1571,7 +1578,10 @@ class V100DatabaseManager:
                         integrity_score = EXCLUDED.integrity_score,
                         is_valid = EXCLUDED.is_valid,
                         validation_error = EXCLUDED.validation_error,
-                        data_timestamp = EXCLUDED.data_timestamp
+                        data_timestamp = EXCLUDED.data_timestamp,
+                        odds_history = EXCLUDED.odds_history,
+                        market_payout = EXCLUDED.market_payout,
+                        provider_internal_id = EXCLUDED.provider_internal_id
                 """,
                     (
                         match_id,
@@ -1586,6 +1596,9 @@ class V100DatabaseManager:
                         data.is_valid,
                         data.validation_error,
                         data.extracted_at,
+                        json.dumps(data.odds_history) if data.odds_history else None,
+                        data.market_payout,
+                        data.provider_internal_id
                     ),
                 )
 

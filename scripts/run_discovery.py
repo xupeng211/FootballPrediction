@@ -436,8 +436,23 @@ class QueueBasedDiscoveryEngine:
         match_ids = [t["match_id"] for t in tasks]
         self.queue_manager.update_status_to_searching(match_ids)
 
+        # [Genesis.ReLink] 代理支持 - 从配置获取随机代理
+        proxy_config = None
+        try:
+            from src.bridge.adapters.proxy_manager import ProxyManager
+            pm = ProxyManager()
+            proxy = pm.get_random_proxy()
+            if proxy:
+                proxy_config = {"server": proxy.proxy_url}
+                logger.info(f"[DISCOVERY] Using proxy: {proxy.id}")
+        except Exception as e:
+            logger.warning(f"[DISCOVERY] ProxyManager not available ({e}), using direct connection")
+
         async with async_playwright() as p:
-            browser = await p.chromium.launch(headless=True)
+            browser = await p.chromium.launch(
+                headless=True,
+                proxy=proxy_config
+            )
             page = await browser.new_page()
 
             for i, task in enumerate(tasks, 1):

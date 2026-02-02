@@ -485,10 +485,10 @@ class V26_5_ProductionAdapter(BaseFeatureAdapter):
             from src.database.schema_manager import SchemaManager
 
             home_stats = SchemaManager.get_team_rolling_stats(
-                team_name=home_team, n_matches=5, before_match_time=match_time
+                team_name=home_team, n_matches=5, before_match_date=match_time
             )
             away_stats = SchemaManager.get_team_rolling_stats(
-                team_name=away_team, n_matches=5, before_match_time=match_time
+                team_name=away_team, n_matches=5, before_match_date=match_time
             )
 
             logger.debug(
@@ -779,10 +779,10 @@ class V26_6_PreMatchAdapter(BaseFeatureAdapter):
             from src.database.schema_manager import SchemaManager
 
             home_stats = SchemaManager.get_team_rolling_stats(
-                team_name=home_team, n_matches=5, before_match_time=match_time
+                team_name=home_team, n_matches=5, before_match_date=match_time
             )
             away_stats = SchemaManager.get_team_rolling_stats(
-                team_name=away_team, n_matches=5, before_match_time=match_time
+                team_name=away_team, n_matches=5, before_match_date=match_time
             )
 
             logger.debug(
@@ -805,15 +805,15 @@ class V26_6_PreMatchAdapter(BaseFeatureAdapter):
 
             # 动态获取积分榜特征
             home_standings = SchemaManager.get_team_standings(
-                team_name=home_team, before_match_time=match_time
+                team_name=home_team, before_match_date=match_time
             )
             away_standings = SchemaManager.get_team_standings(
-                team_name=away_team, before_match_time=match_time
+                team_name=away_team, before_match_date=match_time
             )
 
             # 动态计算 ELO 评分
             elo_ratings = SchemaManager.get_elo_ratings(
-                team_names=[home_team, away_team], before_match_time=match_time
+                team_names=[home_team, away_team], before_match_date=match_time
             )
             home_elo = elo_ratings.get(home_team, 1500.0)
             away_elo = elo_ratings.get(away_team, 1500.0)

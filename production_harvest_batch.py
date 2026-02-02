@@ -52,7 +52,8 @@ TOP_5_LEAGUES = {
     53: "Ligue 1",
 }
 
-TARGET_SEASON = "2526"  # 2025/2026 赛季
+# [Genesis.FixSeasonID] 修复: API 返回 "2025/2026" 格式，不是 "2526"
+TARGET_SEASON = "2025/2026"  # 2025/2026 赛季
 
 # 并发配置
 MAX_WORKERS = 5
@@ -228,32 +229,55 @@ class SeasonIDRefresher:
 
             data = response.json()
 
+            # [Genesis.FixSeasonID] 修复: API 路径适配
+            # FotMob API /leagues?id={N} 结构:
+            #   { "fixtures": { "allMatches": [...] }, "details": { "selectedSeason": "2025/2026" } }
+            # 比赛对象中没有 'season' 字段，需要从 details.selectedSeason 获取
+            api_season = data.get("details", {}).get("selectedSeason", "")
+
+            # 验证赛季匹配
+            if api_season != TARGET_SEASON:
+                logger.warning(f"[IDRefresher] League {league_id}: API season={api_season}, target={TARGET_SEASON}")
+                # 不返回空，继续处理（可能是跨赛季数据）
+
+            matches_container = data.get("fixtures", {}).get("allMatches", [])
+
+            if not matches_container:
+                response_str = json.dumps(data, ensure_ascii=False)
+                logger.warning(f"[IDRefresher] League {league_id}: 无比赛数据! API 摘要 (前300字符):")
+                logger.warning(f"  {response_str[:300]}")
+                return []
+
             # 提取比赛列表
             matches = []
-            league_data = data.get("leagues", [{}])[0] if data.get("leagues") else {}
+            for match in matches_container:
+                match_id = match.get("id")
+                if not match_id:
+                    continue
 
-            # 获取当前赛季比赛
-            if "matches" in league_data:
-                for match in league_data["matches"].get("allMatches", []):
-                    match_id = match.get("id")
-                    if not match_id:
-                        continue
+                # 获取 UTC 时间 (从 status.utcTime)
+                utc_time = match.get("status", {}).get("utcTime", "")
 
-                    # 过滤 2025/2026 赛季
-                    season = match.get("season", "")
-                    if TARGET_SEASON not in season:
-                        continue
+                # 获取比赛状态
+                status_obj = match.get("status", {})
+                status_str = "UNKNOWN"
+                if status_obj.get("finished"):
+                    status_str = "FINISHED"
+                elif status_obj.get("started"):
+                    status_str = "LIVE"
+                else:
+                    status_str = "SCHEDULED"
 
-                    matches.append({
-                        "match_id": str(match_id),
-                        "league_id": league_id,
-                        "league_name": TOP_5_LEAGUES.get(league_id, f"League {league_id}"),
-                        "season": TARGET_SEASON,
-                        "home_team": match.get("home", {}).get("name", "Unknown"),
-                        "away_team": match.get("away", {}).get("name", "Unknown"),
-                        "status": match.get("status", {}).get("state", "UNKNOWN"),
-                        "utc_time": match.get("time", {}).get("utcTime", ""),
-                    })
+                matches.append({
+                    "match_id": str(match_id),
+                    "league_id": league_id,
+                    "league_name": TOP_5_LEAGUES.get(league_id, f"League {league_id}"),
+                    "season": api_season,  # 使用 API 返回的赛季
+                    "home_team": match.get("home", {}).get("name", "Unknown"),
+                    "away_team": match.get("away", {}).get("name", "Unknown"),
+                    "status": status_str,
+                    "utc_time": utc_time,
+                })
 
             logger.info(f"[IDRefresher] League {league_id}: 发现 {len(matches)} 场 {TARGET_SEASON} 赛季比赛")
             return matches
@@ -312,15 +336,19 @@ class SeasonIDRefresher:
             return 0
 
         updated_count = 0
+        failed_count = 0
+
+        # [Genesis.DeepDiagnostics] 详细日志
+        logger.info(f"[IDRefresher] 准备写入 {len(matches)} 场比赛到数据库...")
 
         try:
             conn = get_db_connection()
             cursor = conn.cursor()
 
-            for match in matches:
+            for i, match in enumerate(matches):
                 try:
                     cursor.execute("""
-                        INSERT INTO matches (match_id, league_name, season, home_team, away_team, match_time)
+                        INSERT INTO matches (match_id, league_name, season, home_team, away_team, match_date)
                         VALUES (%s, %s, %s, %s, %s, %s)
                         ON CONFLICT (match_id)
                         DO UPDATE SET
@@ -328,7 +356,7 @@ class SeasonIDRefresher:
                             season = EXCLUDED.season,
                             home_team = EXCLUDED.home_team,
                             away_team = EXCLUDED.away_team,
-                            match_time = COALESCE(EXCLUDED.match_time, matches.match_time)
+                            match_date = COALESCE(EXCLUDED.match_date, matches.match_date)
                     """, (
                         match.match_id,
                         match.league_name,
@@ -339,18 +367,24 @@ class SeasonIDRefresher:
                     ))
                     updated_count += 1
 
+                    # 每 100 场打印一次进度
+                    if (i + 1) % 100 == 0:
+                        logger.info(f"[IDRefresher] 写入进度: {i+1}/{len(matches)}")
+
                 except Exception as e:
-                    logger.debug(f"[IDRefresher] 插入比赛 {match.match_id} 失败: {e}")
+                    # [Genesis.DeepDiagnostics] 改为 WARNING 级别
+                    logger.warning(f"[IDRefresher] ❌ 插入失败 {match.match_id[:12]}... ({match.home_team} vs {match.away_team}): {e}")
+                    failed_count += 1
 
             conn.commit()
             cursor.close()
             conn.close()
 
-            logger.info(f"[IDRefresher] 数据库更新完成: {updated_count} 条记录")
+            logger.info(f"[IDRefresher] ✅ 数据库更新完成: {updated_count} 成功, {failed_count} 失败")
             return updated_count
 
         except Exception as e:
-            logger.error(f"[IDRefresher] 数据库操作失败: {e}")
+            logger.error(f"[IDRefresher] ❌ 数据库操作失败: {e}")
             return updated_count
 
 
@@ -554,21 +588,31 @@ class ProductionHarvestPipeline:
         Returns:
             HarvestResult
         """
+        # [Genesis.DeepDiagnostics] 强制 Debug 日志
+        logger.info(f"[DEBUG] 🔍 开始处理比赛 {match.match_id} | {match.home_team} vs {match.away_team} | date={match.match_date}")
+
         start_time = time.time()
         result = HarvestResult(match_id=match.match_id, success=False)
 
         try:
             # 1. 检查断点续传
+            logger.info(f"[DEBUG]   ├─ 检查断点续传...")
             if self.check_match_processed(match.match_id):
                 result.error_message = "Already processed (skip)"
+                logger.info(f"[DEBUG]   └─ 已跳过 (有 L2 数据)")
                 with self.stats_lock:
                     self.stats.skipped_matches += 1
                 return result
 
             # 2. 获取 L2 数据
+            logger.info(f"[DEBUG]   ├─ 获取 L2 数据...")
             l2_data = self.fetch_l2_data(match.match_id)
             if not l2_data:
                 result.error_message = "Failed to fetch L2 data"
+                logger.warning(f"[DEBUG]   └─ L2 数据为空! ⚠️")
+                # [Genesis.DeepDiagnostics] 增加 failed 计数
+                with self.stats_lock:
+                    self.stats.failed_matches += 1
                 return result
 
             result.data_collected = True
@@ -750,6 +794,7 @@ def main():
         logger.info("[Step B] 生产级收割流水线...")
         logger.info("-" * 40)
 
+        # [Genesis.DeepDiagnostics] 修复完成: 列名 match_time → match_date
         pipeline = ProductionHarvestPipeline()
         stats = pipeline.process_batch(matches)
 

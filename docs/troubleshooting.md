@@ -1,23 +1,41 @@
-# 故障排除指南 (Troubleshooting)
+# 故障排除指南
 
 本文档提供 FootballPrediction 项目常见问题的诊断和解决方案。
 
 ---
 
-## 📋 目录
+## 快速诊断流程
 
-- [数据库问题](#数据库问题)
-- [网络与代理问题](#网络与代理问题)
-- [数据采集问题](#数据采集问题)
-- [ML 模型问题](#ml-模型问题)
-- [Docker 问题](#docker-问题)
-- [性能问题](#性能问题)
+遇到问题时，按以下顺序诊断：
+
+```bash
+# 1. 检查服务状态
+make ps
+
+# 2. 查看所有日志
+make logs-all
+
+# 3. 运行健康检查
+python scripts/health_check.py
+
+# 4. 检查网络连接
+python main.py --test-proxy
+
+# 5. 检查数据库连接
+docker-compose exec db pg_isready -U football_user -d football_db
+
+# 6. 运行数据质量检查
+python main.py --mode check
+
+# 7. 运行测试套件
+make verify
+```
 
 ---
 
 ## 数据库问题
 
-### `psycopg2.OperationalError: FATAL: database "football_db" does not exist`
+### `database does not exist`
 
 **原因**: 数据库未初始化
 
@@ -78,6 +96,43 @@ export DB_HOST=172.25.16.1
 
 ---
 
+### 数据库查询慢
+
+**诊断步骤**:
+```bash
+# 1. 检查慢查询日志
+docker-compose exec db psql -U football_user -d football_db -c "
+    SELECT query, mean_exec_time, calls
+    FROM pg_stat_statements
+    ORDER BY mean_exec_time DESC
+    LIMIT 10;
+"
+
+# 2. 检查索引
+docker-compose exec db psql -U football_user -d football_db -c "
+    SELECT tablename, indexname, indexdef
+    FROM pg_indexes
+    WHERE tablename = 'matches';
+"
+```
+
+**解决方案**:
+```bash
+# 1. 创建缺失的索引
+docker-compose exec db psql -U football_user -d football_db -c "
+    CREATE INDEX IF NOT EXISTS idx_match_league_season
+    ON matches(league_name, season);
+"
+
+# 2. 更新表统计信息
+docker-compose exec db psql -U football_user -d football_db -c "
+    VACUUM ANALYZE matches;
+    VACUUM ANALYZE metrics_multi_source_data;
+"
+```
+
+---
+
 ## 网络与代理问题
 
 ### `HTTP 429 Too Many Requests` 或 `HTTP 403 Forbidden`
@@ -90,7 +145,7 @@ export DB_HOST=172.25.16.1
 python main.py --test-proxy
 
 # 2. 查看采集器日志
-tail -f logs/v142_0_main.log | grep -E "403|429|被封"
+tail -f logs/v144_7_main.log | grep -E "403|429|被封"
 ```
 
 **恢复策略**:
@@ -331,44 +386,46 @@ export DB_HOST=$(ip route | awk '/docker0/ {print $NF}')
 
 ---
 
-## 性能问题
+## JavaScript/Node.js 问题
 
-### 数据库查询慢
+### `Cannot find module 'playwright'` 或相关错误
 
-**诊断步骤**:
-```bash
-# 1. 检查慢查询日志
-docker-compose exec db psql -U football_user -d football_db -c "
-    SELECT query, mean_exec_time, calls
-    FROM pg_stat_statements
-    ORDER BY mean_exec_time DESC
-    LIMIT 10;
-"
-
-# 2. 检查索引
-docker-compose exec db psql -U football_user -d football_db -c "
-    SELECT tablename, indexname, indexdef
-    FROM pg_indexes
-    WHERE tablename = 'matches';
-"
-```
+**原因**: Node.js 依赖未安装或浏览器未安装
 
 **解决方案**:
 ```bash
-# 1. 创建缺失的索引
-docker-compose exec db psql -U football_user -d football_db -c "
-    CREATE INDEX IF NOT EXISTS idx_match_league_season
-    ON matches(league_name, season);
-"
+cd scripts/ops
 
-# 2. 更新表统计信息
-docker-compose exec db psql -U football_user -d football_db -c "
-    VACUUM ANALYZE matches;
-    VACUUM ANALYZE metrics_multi_source_data;
-"
+# 1. 安装 Node.js 依赖
+npm install
+
+# 2. 安装 Playwright 浏览器
+npx playwright install chromium
+
+# 3. 验证安装
+node --version  # 应该是 18+
+npm --version
+```
+
+### Jest 测试失败
+
+**解决方案**:
+```bash
+cd scripts/ops
+
+# 运行特定测试文件
+npx jest tests/interaction_v52.test.js
+
+# 运行特定测试
+npx jest -t "test_name"
+
+# 查看覆盖率
+npm run test:coverage
 ```
 
 ---
+
+## 性能问题
 
 ### 采集速度慢
 
@@ -396,32 +453,19 @@ python scripts/ops/harvest_pinnacle_concurrent.py --workers 5
 
 ---
 
-## 完整诊断流程
+## 完整错误速查表
 
-当遇到未分类的问题时，按以下步骤诊断：
-
-```bash
-# 1. 检查服务状态
-make ps
-
-# 2. 查看所有日志
-make logs-all
-
-# 3. 运行健康检查
-python scripts/health_check.py
-
-# 4. 检查网络连接
-python main.py --test-proxy
-
-# 5. 检查数据库连接
-docker-compose exec db pg_isready -U football_user -d football_db
-
-# 6. 运行数据质量检查
-python main.py --mode check
-
-# 7. 运行测试套件
-make verify
-```
+| 错误 | 原因 | 快速解决方案 |
+|------|------|-------------|
+| `database does not exist` | 数据库未初始化 | `make up` |
+| `ConnectionRefusedError` | 数据库未启动 | `make up` |
+| `HTTP 429` | API 限流 | 等待 6-24 小时 |
+| `HTTP 403` | IP 被封禁 | 检查代理配置 |
+| `TimeoutError` | 网络慢 | 检查代理，增加超时 |
+| `KeyError: 'rolling_xg_home'` | 特征提取失败 | 运行历史回填 |
+| `cannot reindex` | 数据重复 | 运行 `python main.py --mode check` |
+| `Model file not found` | 模型缺失 | 重新训练或从备份恢复 |
+| `Cannot find module 'playwright'` | Node.js 依赖缺失 | `cd scripts/ops && npm install` |
 
 ---
 
@@ -436,45 +480,4 @@ make verify
 
 ---
 
-## 新增问题 (2026-01-25)
-
-### Node.js 运维工具运行错误
-
-**症状**: `Cannot find module 'js-yaml'` 或 Playwright 相关错误
-
-**原因**: Node.js 依赖未安装或浏览器未安装
-
-**解决方案**:
-```bash
-# 1. 安装 Node.js 依赖
-npm install
-
-# 2. 安装 Playwright 浏览器
-npm run install-browsers
-
-# 3. 验证安装
-node --version  # 应该是 18+
-npm --version
-```
-
-### 数据采集后特征提取失败
-
-**症状**: 数据采集成功但 `l3_extraction_status` 仍为 `PENDING`
-
-**原因**: V69.000 Pipeline Orchestrator 未运行
-
-**解决方案**:
-```bash
-# 1. 检查 Pipeline Orchestrator 状态
-node src/ops/v69_000_pipeline_orchestrator.js --status
-
-# 2. 手动触发 L2 Enrichment
-python scripts/ops/v69_010_l2_trigger.py
-
-# 3. 手动触发特征提取
-python scripts/ml/extract_features_v1.py --limit 100
-```
-
----
-
-**最后更新**: 2026-01-25
+**最后更新**: 2026-01-31
