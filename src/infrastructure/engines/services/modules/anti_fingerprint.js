@@ -226,6 +226,29 @@ class AntiFingerprint {
                     removedElements.push('High-z-index overlays');
                 }
 
+                // V166.000: Sticky Header Suppression
+                // Hide fixed headers that might intercept clicks/hovers
+                const stickyHeaderPurge = await this.page.evaluate(() => {
+                    const fixedElements = Array.from(document.querySelectorAll('*')).filter(el => {
+                        const style = window.getComputedStyle(el);
+                        return style.position === 'fixed' && style.top === '0px' && el.offsetHeight < 150;
+                    });
+                    
+                    let count = 0;
+                    fixedElements.forEach(el => {
+                        el.style.display = 'none';
+                        el.style.visibility = 'hidden';
+                        el.style.pointerEvents = 'none';
+                        count++;
+                    });
+                    return count;
+                });
+                
+                if (stickyHeaderPurge > 0) {
+                     console.log(`[V166.000] 🛡️ Sticky Header Suppression: Hidden ${stickyHeaderPurge} elements`);
+                     removedCount += stickyHeaderPurge;
+                }
+
                 // V145.000: Use OddsPortalSelectors for general overlay purge
                 const purgeScript = OddsPortalSelectors.generatePurgeScript();
                 const purgeResult = await this.page.evaluate(purgeScript);
