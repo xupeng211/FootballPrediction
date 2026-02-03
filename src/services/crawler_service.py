@@ -33,7 +33,15 @@ from playwright.async_api import Page, async_playwright
 
 from src.collectors.bayesian_delay_engine import BayesianDelayEngine
 from src.core.exceptions import NetworkError, ProxyError
-from src.core.proxy.proxy_health_checker import ProxyHealthChecker
+# TODO: [Genesis.SmokeTest] Replace with NetworkGuardian
+# The old proxy system (ProxyHealthChecker) was archived in favor of NetworkShield
+# This file is scheduled for refactoring - see GoldenDataMerger.py audit notes
+# from src.core.proxy.proxy_health_checker import ProxyHealthChecker
+try:
+    from src.infrastructure.engines.match_engine.shared import NetworkGuardian
+    ProxyHealthChecker = None  # Will be replaced by NetworkGuardian logic
+except ImportError:
+    ProxyHealthChecker = None
 from src.core.semantic_refiner import SemanticRefiner
 from src.services.harvest_config import AntiScrapingConfig
 

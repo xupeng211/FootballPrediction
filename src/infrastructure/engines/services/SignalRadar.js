@@ -791,16 +791,33 @@ class SignalRadar {
      * @param {boolean} options.enableTrajectoryCapture - 是否捕获轨迹数据 (default: true)
      * @returns {Promise<Object>} 触发结果 {success, method, extractedData, cleanup}
      */
+    /**
+     * V169.300 [Genesis.FallbackRevolution] 双模提取模式
+     * =====================================================
+     *
+     * 核心改进:
+     * - 快速降级: 20秒内未捕获 match-event 立即触发 DOM fallback
+     * - 不再死等完整的 renderWindow
+     * - DOM fallback 模式直接从页面提取 Opening/Closing 数据
+     *
+     * @param {SurgicalInteraction} surgicalInteraction - 外科手术式交互服务
+     * @param {Object} options - 配置选项
+     * @param {number} options.renderWindow - 渲染等待窗口 (ms, default: 15000)
+     * @param {boolean} options.enableTrajectoryCapture - 是否捕获轨迹数据 (default: true)
+     * @param {number} options.fallbackTimeout - 快速降级超时 (ms, default: 20000)
+     * @returns {Promise<Object>} 触发结果 {success, method, extractedData, cleanup}
+     */
     async enableTriggerMode(surgicalInteraction, options = {}) {
         const config = {
             renderWindow: options.renderWindow || 15000,
             enableTrajectoryCapture: options.enableTrajectoryCapture !== false,
+            fallbackTimeout: options.fallbackTimeout || 20000, // V169.300: 快速降级超时
             ...options
         };
 
-        this.info('[V166.000] [Genesis.FinalWall] 🎯 ENABLING TRIGGER MODE');
-        this.info('[V166.000] Network interception → Delivery notification → DOM semantic extraction');
-        this.info('[V166.000] Render window:', config.renderWindow, 'ms');
+        this.info('[V169.300] [Genesis.FallbackRevolution] 🎯 DUAL-MODE EXTRACTION ENABLED');
+        this.info('[V169.300] Network interception → 20s fallback → DOM semantic extraction');
+        this.info('[V169.300] Fallback timeout:', config.fallbackTimeout, 'ms, Render window:', config.renderWindow, 'ms');
 
         // Step 1: Enable network interception (as delivery notification)
         let matchEventCaptured = false;
@@ -821,11 +838,11 @@ class SignalRadar {
                         matchEventCaptured = true;
                         captureUrl = url;
 
-                        this.info('[V166.000] 📬 DELIVERY NOTIFICATION:', url.substring(0, 80));
-                        this.info('[V166.000] Data size:', text.length, 'bytes (no decryption needed)');
+                        this.info('[V169.300] 📬 DELIVERY NOTIFICATION:', url.substring(0, 80));
+                        this.info('[V169.300] Data size:', text.length, 'bytes (no decryption needed)');
                     }
                 } catch (e) {
-                    this.error('[V166.000] Response capture error:', e.message);
+                    this.error('[V169.300] Response capture error:', e.message);
                 }
             }
         };
@@ -833,45 +850,79 @@ class SignalRadar {
         // Register the listener
         this.page.on('response', responseHandler);
 
-        // Step 2: Wait for capture or timeout
+        // Step 2: V169.300 快速降级策略 - 20秒内未捕获立即触发 DOM fallback
         const startTime = Date.now();
-        const captureTimeout = config.renderWindow; // Use render window as capture timeout
+        const quickFallbackTimeout = config.fallbackTimeout;
 
-        this.info('[V166.000] Waiting for match-event delivery...');
+        this.info('[V169.300] Waiting for match-event delivery (', quickFallbackTimeout, 'ms fallback )...');
 
-        while (!matchEventCaptured && (Date.now() - startTime < captureTimeout)) {
+        while (!matchEventCaptured && (Date.now() - startTime < quickFallbackTimeout)) {
             await new Promise(resolve => setTimeout(resolve, 100));
         }
 
+        // V169.300: 快速降级逻辑 - 如果 20 秒内未捕获，直接触发 DOM fallback
         if (!matchEventCaptured) {
-            this.warn('[V166.000] ⏱️  No match-event delivery captured within', config.renderWindow, 'ms');
+            this.warn('[V169.300] ⚡ FAST FALLBACK - No match-event in', quickFallbackTimeout, 'ms, activating DOM scraping mode');
 
-            // V168.001: Cleanup listener before returning
+            // Cleanup listener before fallback
             this.page.off('response', responseHandler);
 
-            return {
-                success: false,
-                method: 'TRIGGER_MODE',
-                error: 'No match-event captured',
-                renderWindowElapsed: Date.now() - startTime,
-                cleanup: () => this.page.off('response', responseHandler)
-            };
+            // Step 3: V169.300 DOM Fallback - 直接从页面提取数据
+            this.info('[V169.300] 🔧 DOM SCRAPE FALLBACK - Extracting static odds from page table');
+
+            try {
+                // 等待页面渲染完成
+                await new Promise(resolve => setTimeout(resolve, 3000));
+
+                // 使用 SurgicalInteraction 的 DOM 提取能力
+                const extractResult = await surgicalInteraction.harvestBySemanticPatterns({
+                    enableTrajectoryCapture: false, // Fallback 模式不需要轨迹
+                    titanIdSignatures: TITAN_ID_SIGNATURES,
+                    maxWaitTime: 10000,
+                    forceDOMExtraction: true, // V169.300: 强制 DOM 提取
+                    matchId: config.matchId // [V169.600] Pass matchId
+                });
+
+                this.info('[V169.300] 📊 DOM fallback extraction result:', extractResult.success ? 'SUCCESS' : 'FAILED');
+
+                return {
+                    success: extractResult.success,
+                    method: 'DOM_SCRAPE_FALLBACK',
+                    extractedData: extractResult.data,
+                    providerCount: extractResult.providerCount,
+                    trajectoryCount: 0, // Fallback 模式无轨迹
+                    renderWindowElapsed: Date.now() - startTime,
+                    fallback: true,
+                    cleanup: () => this.page.off('response', responseHandler)
+                };
+            } catch (fallbackError) {
+                this.error('[V169.300] ❌ DOM fallback failed:', fallbackError.message);
+                return {
+                    success: false,
+                    method: 'DOM_SCRAPE_FALLBACK',
+                    error: fallbackError.message,
+                    renderWindowElapsed: Date.now() - startTime,
+                    fallback: true,
+                    cleanup: () => this.page.off('response', responseHandler)
+                };
+            }
         }
 
-        this.info('[V166.000] ✅ MATCH-EVENT CAPTURED - Triggering DOM semantic extraction...');
+        this.info('[V169.300] ✅ MATCH-EVENT CAPTURED - Triggering DOM semantic extraction...');
 
-        // Step 3: Wait for page rendering (with buffer)
-        this.info('[V166.000] ⏳ Waiting for page rendering (15s window)...');
+        // Step 4: Wait for page rendering (with buffer)
+        this.info('[V169.300] ⏳ Waiting for page rendering (15s window)...');
         await new Promise(resolve => setTimeout(resolve, 2000)); // Initial buffer
 
-        // Step 4: Trigger semantic extraction
+        // Step 5: Trigger semantic extraction
         const extractResult = await surgicalInteraction.harvestBySemanticPatterns({
             enableTrajectoryCapture: config.enableTrajectoryCapture,
             titanIdSignatures: TITAN_ID_SIGNATURES,
-            maxWaitTime: config.renderWindow - 2000 // Remaining time
+            maxWaitTime: config.renderWindow - 2000, // Remaining time
+            matchId: config.matchId // [V169.600] Pass matchId
         });
 
-        this.info('[V166.000] 📊 Semantic extraction result:', extractResult.success ? 'SUCCESS' : 'FAILED');
+        this.info('[V169.300] 📊 Semantic extraction result:', extractResult.success ? 'SUCCESS' : 'FAILED');
 
         // V168.001: Cleanup listener after extraction
         this.page.off('response', responseHandler);
@@ -883,6 +934,7 @@ class SignalRadar {
             providerCount: extractResult.providerCount,
             trajectoryCount: extractResult.trajectoryCount,
             renderWindowElapsed: Date.now() - startTime,
+            fallback: false,
             cleanup: () => this.page.off('response', responseHandler)
         };
     }

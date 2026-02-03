@@ -28,7 +28,20 @@ from typing import Any
 
 from playwright.async_api import Page
 
-from src.core.proxy.proxy_manager import ProxyManager, get_proxy_manager
+# TODO: [Genesis.SmokeTest] Replace with NetworkGuardian
+# The old proxy system (ProxyManager) was archived in favor of NetworkShield
+# This file is scheduled for refactoring - see GoldenDataMerger.py audit notes
+# from src.core.proxy.proxy_manager import ProxyManager, get_proxy_manager
+try:
+    from src.infrastructure.engines.match_engine.shared import NetworkGuardian
+    # Stub for compatibility - full refactoring pending
+    ProxyManager = None
+    def get_proxy_manager():
+        return None
+except ImportError:
+    ProxyManager = None
+    def get_proxy_manager():
+        return None
 
 logger = logging.getLogger(__name__)
 

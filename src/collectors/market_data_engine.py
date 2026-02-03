@@ -56,7 +56,7 @@ if TYPE_CHECKING:
 
 # V106.0: Prometheus Metrics
 try:
-    from src.collectors.prometheus_metrics import (
+    from src.api.monitoring.prometheus_metrics import (
         dead_letter_queue,
         metrics,
         record_extraction_metrics,
