@@ -255,6 +255,7 @@ FootballPrediction/
 │   │   │   │   ├── fotmob/            # FotMob 引擎
 │   │   │   │   │   └── fotmob_engine.py      # V145.0
 │   │   │   │   └── discovery/         # 发现引擎
+│   │   │   │       └── dynamic_discovery_engine.py  # ✨ 动态发现引擎
 │   │   │   ├── services/             # 模块化服务
 │   │   │   │   ├── SignalRadar.js     # 网络雷达
 │   │   │   │   └── SurgicalInteraction.js  # 精确交互
@@ -610,7 +611,7 @@ src/infrastructure/engines/match_engine/
 | **BaseHarvestEngine** | `base/base_harvest_engine.py` | 基础收割引擎抽象类 |
 | **CircuitBreaker** | `shared/circuit_breaker.py` | 熔断器模式实现 |
 | **NetworkGuardian** | `shared/network_guardian.py` | 网络状态监控 |
-| **DiscoveryEngine** | `discovery/discovery_engine.py` | 比赛发现引擎 |
+| **DynamicDiscoveryEngine** | `discovery/dynamic_discovery_engine.py` | 动态比赛发现引擎（新增） |
 | **FotMobEngine** | `fotmob/fotmob_engine.py` | FotMob 数据采集 |
 
 ### 使用方式
@@ -661,8 +662,9 @@ make verify  # 快速验证 (lint + test-unit + security)
 ```
 
 **配置优先级**:
-1. **`ruff.toml`** (最高优先级) - `line-length`: **100 字符**
-2. **`pyproject.toml`** (备用配置) - `line-length`: 120 字符
+1. **`ruff.toml`** (最高优先级) - `line-length`: **100 字符** - 这是项目标准
+2. **`pyproject.toml`** (备用配置) - `line-length`: 120 字符 - 仅当 ruff.toml 不存在时使用
+3. **注意**: Black 和 isort 在 pyproject.toml 中配置为 120 字符，但项目使用 Ruff 作为主要格式化工具，遵循 ruff.toml 的 100 字符限制
 
 **推荐的代码质量工作流**：
 ```bash
@@ -678,6 +680,23 @@ mypy src/
 # 4. 安全扫描
 bandit -r src/
 ```
+
+### 配置文件说明
+
+**重要配置文件及其作用**：
+
+| 配置文件 | 作用 | 优先级/说明 |
+|----------|------|-------------|
+| `ruff.toml` | Ruff 代码质量配置 | **最高优先级** - line-length: 100 |
+| `.env` | 环境变量 | 数据库、Redis 连接等（不提交到版本控制） |
+| `config/active_registry.json` | NetworkShield 节点配置 | 22 个代理节点配置 |
+| `config/schema_map.yaml` | Schema 韧性配置 | 数据源 API 路径映射 |
+| `pyproject.toml` | 项目元数据和依赖 | 备用代码质量配置 (line-length: 120) |
+
+**配置文件冲突解决**：
+- 当 `ruff.toml` 存在时，Ruff 优先使用该配置（100 字符限制）
+- `pyproject.toml` 中的 Ruff 配置仅在 `ruff.toml` 不存在时使用
+- Black 和 isort 配置为 120 字符，但项目使用 Ruff 作为主要格式化工具
 
 ### Git 工作流
 
@@ -811,11 +830,11 @@ prediction = dispatcher.predict(
 
 | 场景 | 推荐命令 | 说明 |
 |------|----------|------|
-| **本地开发快速反馈** | `make test-unit` | 2 个文件 |
-| **单元测试验证** | `pytest tests/unit/ -v` | 80+ 文件 |
+| **本地开发快速反馈** | `make test-unit` | 仅运行 2 个核心测试文件 (backtest_engine + signal_generator) |
+| **单元测试验证** | `pytest tests/unit/ -v` | 80+ 文件完整单元测试 |
 | **JavaScript 测试** | `cd scripts/ops && npm test` | V87.203 Jest |
 | **提交前完整验证** | `./scripts/run_checks.sh` | 7 步检查 |
-| **快速验证** | `make verify` | lint + test-unit |
+| **快速验证** | `make verify` | lint + test-unit (2 个文件) + security |
 | **全量测试** | `pytest tests/ -v` | 所有测试 |
 | **性能测试** | `pytest -m performance -v --benchmark-only` | 需要插件 |
 
@@ -949,8 +968,8 @@ make deploy              # 部署到生产
 **收割引擎**: V142.0 (HarvesterService)
 **QuantHarvester**: V170.000 (双模提取 + NetworkShield)
 **NetworkShield**: V1.1.0 (22节点工业级代理管理)
-**Match Engine**: Python 基础收割引擎
-**代码质量**: V106.0 (Ruff - line-length: 100)
+**Match Engine**: Python 基础收割引擎（新增动态发现引擎）
+**代码质量**: V106.0 (Ruff - line-length: 100，pyproject.toml 备用为 120)
 **最后更新**: 2026-02-03
 **基线准确率**: 56% (真赛前)
 **生产状态**: Production Ready
