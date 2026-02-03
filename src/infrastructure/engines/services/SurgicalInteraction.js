@@ -388,21 +388,21 @@ class SurgicalInteraction {
             await this.activeAllData();
             
             // [V168.000] Genesis.Solidify: Fast Fail Mechanism
-            // Check if key providers are present before proceeding with expensive operations
             const hasCrucialData = await this.page.evaluate(() => {
-                const text = document.body.innerText;
-                return text.includes('bet365') || text.includes('Pinnacle');
+                const html = document.body.innerHTML.toLowerCase();
+                return html.includes('bet365') || html.includes('pinnacle') || 
+                       html.includes('bookmaker') || html.includes('odds') ||
+                       html.includes('average');
             });
 
             if (!hasCrucialData) {
-                // Give a small grace period (5s) just in case
                 try {
                     await this.page.waitForFunction(() => {
-                        const t = document.body.innerText;
-                        return t.includes('bet365') || t.includes('Pinnacle');
-                    }, { timeout: 5000 });
+                        const h = document.body.innerHTML.toLowerCase();
+                        return h.includes('bet365') || h.includes('pinnacle') || h.includes('average');
+                    }, { timeout: 15000 });
                 } catch (e) {
-                    throw new Error('SOURCE_MISSING: Critical providers (bet365/Pinnacle) not found in DOM');
+                    this.warn('[V169.670] Source check failed after 15s. Proceeding with semantic extraction anyway.');
                 }
             }
             
@@ -411,18 +411,25 @@ class SurgicalInteraction {
             // Step 1: 在浏览器沙盒内执行，显式传递 runConfig
             const semanticData = await this.page.evaluate((conf) => {
                 const results = { candidates: [] };
-                const rows = document.querySelectorAll('tr, div.flex-row, div.border-b');
+                const rows = document.querySelectorAll('tr, div.flex-row, div.border-b, div.border-black-borders');
                 
                 rows.forEach(row => {
                     const rowText = row.innerText || "";
+                    const rowHtml = row.innerHTML || "";
                     let provider = null;
                     
-                    // 基于 ID 指纹和关键字的精准识别
-                    if (rowText.includes('Pinnacle')) provider = 'Pinnacle';
-                    else if (rowText.includes('bet365')) provider = 'bet365';
-                    else if (rowText.includes('William Hill')) provider = 'William Hill';
-                    else if (rowText.includes('Ladbrokes')) provider = 'Ladbrokes';
-                    else if (rowText.includes('Bwin')) provider = 'Bwin';
+                    // [V169.650] Precise identification including Logos
+                    const isPinnacle = rowText.includes('Pinnacle') || /pinnacle/i.test(rowHtml);
+                    const isBet365 = rowText.includes('bet365') || /bet365/i.test(rowHtml) || /b365/i.test(rowHtml);
+                    const isWH = rowText.includes('William Hill') || /william hill/i.test(rowHtml);
+                    const isLadbrokes = rowText.includes('Ladbrokes') || /ladbrokes/i.test(rowHtml);
+                    const isBwin = rowText.includes('Bwin') || /bwin/i.test(rowHtml);
+
+                    if (isPinnacle) provider = 'Pinnacle';
+                    else if (isBet365) provider = 'bet365';
+                    else if (isWH) provider = 'William Hill';
+                    else if (isLadbrokes) provider = 'Ladbrokes';
+                    else if (isBwin) provider = 'Bwin';
                     else if (rowText.includes('Average')) provider = 'Average';
 
                     if (provider) {
@@ -431,20 +438,23 @@ class SurgicalInteraction {
                             /^\s*\d+\.\d{2}\s*$/.test(c.innerText)
                         );
                         
-                        if (oddsCells.length >= 3) {
+                        if (oddsCells.length >= 2) {
                             const targetCell = oddsCells[0]; // 选取第一个有效格进行 Hover
                             const uniqueId = `genesis-${provider.replace(/\s+/g, '')}`;
                             targetCell.setAttribute('data-genesis-target', uniqueId);
                             
                             // Calc instant payout for fallback
-                            const [h, d, a] = oddsCells.slice(0, 3).map(c => parseFloat(c.innerText));
-                            const margin = (1/h + 1/d + 1/a);
-                            const calcPayout = margin > 0 ? (1 / margin) * 100 : null;
+                            const [h, d, a] = oddsCells.map(c => parseFloat(c.innerText));
+                            let calcPayout = null;
+                            if (h && d && a) {
+                                const margin = (1/h + 1/d + 1/a);
+                                calcPayout = margin > 0 ? (1 / margin) * 100 : null;
+                            }
 
                             results.candidates.push({
                                 provider: provider,
                                 selector: `[data-genesis-target="${uniqueId}"]`,
-                                instantValue: h, // Use Home for now
+                                instantValue: h || 0,
                                 calculatedPayout: calcPayout
                             });
                         }
@@ -457,7 +467,8 @@ class SurgicalInteraction {
             const config = runConfig; // Map back for consistent usage below
             if (config.enableTrajectoryCapture && semanticData.candidates.length > 0) {
                 this.info(`[V166.4] 🎯 Identified targets: ${semanticData.candidates.map(t => t.provider).join(', ')}`);
-                const trajectoryData = await this._captureTrajectories(semanticData.candidates);
+                // [Genesis.EfficiencyBalance] Pass options for matchId-based audit
+                const trajectoryData = await this._captureTrajectories(semanticData.candidates, options);
                 
                 // Inject calculated payout if missing
                 trajectoryData.forEach(td => {
@@ -579,37 +590,44 @@ class SurgicalInteraction {
     }
 
     /**
-     * V169.000: [Genesis.DeepForensic] Deep Trajectory Capture with Humanized Interaction
-     * ==================================================================================
-     * Deep sampling: Humanized Hover -> Raw Text Dump -> Line-by-Line Regex -> L3 Data
+     * V169.600: [Genesis.EfficiencyBalance] Optimized Trajectory Capture
+     * ==================================================================
      *
-     * 增强:
-     * - 人类化鼠标移动轨迹
-     * - 坐标校准 (scrollIntoView + 1s 等待)
-     * - 多点尝试 (center, topLeft)
-     * - 气泡死亡等待 (3秒超时 + 刷新动作)
+     * 优化项:
+     * - [Early Exit]: 见好就收，捕获成功立即跳出多点探测。
+     * - [Audit Capping]: 仅对尾号为 0 的 matchId 执行影子审计。
      */
-    async _captureTrajectories(targets) {
+    async _captureTrajectories(targets, options = {}) {
         const results = [];
+        const matchId = options.matchId || 'UNKNOWN';
 
         for (const target of targets) {
             const hoverPoints = [
                 { name: 'center', offset: { x: 0.5, y: 0.5 } },
-                { name: 'topLeft', offset: { x: 0.2, y: 0.2 } }
+                { name: 'topLeft', offset: { x: 0.1, y: 0.1 } },
+                { name: 'topRight', offset: { x: 0.9, y: 0.1 } },
+                { name: 'bottomLeft', offset: { x: 0.1, y: 0.9 } },
+                { name: 'bottomRight', offset: { x: 0.9, y: 0.9 } }
             ];
 
             let captured = false;
+            let lastInnerHTML = '';
 
             for (const point of hoverPoints) {
+                // [Early Exit] 见好就收
                 if (captured) break;
 
                 try {
-                    this.info(`[V169.000] 🖱️  Hovering ${target.provider} (${point.name})...`);
+                    this.info(`[Genesis.DeepScrape] 🖱️  Hovering ${target.provider} (${point.name})...`);
 
                     const element = await this.page.$(target.selector);
                     if (!element) continue;
 
-                    // V169.000: 坐标校准 - 滚动到视野 + 强制等待 1 秒
+                    // [Audit Capping] 仅在采样场次抓取 HTML
+                    if (matchId.endsWith('0')) {
+                        lastInnerHTML = await element.innerHTML().catch(() => 'UNREADABLE');
+                    }
+
                     await element.evaluate(el => {
                         el.scrollIntoView({ block: 'center', inline: 'center' });
                     });
@@ -618,169 +636,107 @@ class SurgicalInteraction {
                     const box = await element.boundingBox();
                     if (!box) continue;
 
-                    // 计算目标点坐标
                     const targetX = box.x + box.width * point.offset.x;
                     const targetY = box.y + box.height * point.offset.y;
 
-                    // V169.000: 获取当前鼠标位置 (假设在页面左上角)
-                    const currentPos = { x: 0, y: 0 };
+                    await this._humanizedHover(0, 0, targetX, targetY, 10, 15);
 
-                    // V169.000: 人类化悬停 - 平滑移动
-                    await this._humanizedHover(
-                        currentPos.x,
-                        currentPos.y,
-                        targetX,
-                        targetY,
-                        10,  // steps
-                        15   // delayPerStep (ms)
-                    );
-
-                    // V169.000: 停留时长 - 随机 500-1000ms，模拟人类阅读
-                    const dwellTime = 500 + Math.random() * 500;
+                    const dwellTime = 1500 + Math.random() * 1000;
                     await this.page.waitForTimeout(dwellTime);
 
-                    // V169.000: 气泡死亡等待 - 初始检查
                     let tooltipAppeared = await this._ensureTooltipVisible(2000);
 
-                    // [V169.100] Force Trigger Fallback
                     if (!tooltipAppeared) {
-                        this.info('[V169.100] 🛡️ Physical hover blocked. Attempting ForceTrigger...');
                         await this._forceTriggerTooltip(target.selector);
                         await this.page.waitForTimeout(1000);
                         tooltipAppeared = await this._ensureTooltipVisible(2000);
                     }
 
-                    if (!tooltipAppeared && point.name === 'center') {
-                        this.info(`[V169.000] ⚠️  Tooltip not appeared at ${point.name}, trying next point...`);
-                        // 移开鼠标，准备尝试下一个点
+                    if (!tooltipAppeared) {
                         await this.page.mouse.move(0, 0);
                         await this.page.waitForTimeout(300);
                         continue;
                     }
 
-                    // 提取 tooltip 文本
                     const tooltipText = await this.page.evaluate(() => {
                         const allDivs = Array.from(document.querySelectorAll('div, ul, span, table'));
-                        // Filter candidates: visible, floating, contains time + odds pattern
                         const candidates = allDivs.filter(el => {
                             const style = window.getComputedStyle(el);
                             const isVisible = style.display !== 'none' && style.visibility !== 'hidden' && parseFloat(style.opacity) > 0;
                             const isFloating = style.position === 'absolute' || style.position === 'fixed';
                             const text = el.innerText || '';
-                            // Must contain at least one time pattern AND one odds-like pattern
                             const hasTime = /\d{2}:\d{2}/.test(text);
                             const hasOdds = /\d+\.\d{2}/.test(text);
                             return isVisible && isFloating && hasTime && hasOdds;
                         });
-
-                        // Sort by z-index descending
-                        candidates.sort((a, b) => {
-                             return (parseInt(window.getComputedStyle(b).zIndex) || 0) - (parseInt(window.getComputedStyle(a).zIndex) || 0);
-                        });
-
+                        candidates.sort((a, b) => (parseInt(window.getComputedStyle(b).zIndex) || 0) - (parseInt(window.getComputedStyle(a).zIndex) || 0));
                         return candidates.length > 0 ? candidates[0].innerText : null;
                     });
 
                     if (tooltipText) {
-                    this.info('[[RAW TOOLTIP]]:', tooltipText.replace(/\n/g, ' | ').substring(0, 150));
-                    
-                    // 2. LINE-BY-LINE PARSING (State Machine)
-                    const lines = tooltipText.split('\n');
-                    const curve = [];
-                    let lastTime = null;
-                    let linesSinceTime = 0;
-                    
-                    lines.forEach(line => {
-                        const cleanLine = line.trim().replace(/\s+/g, ' ');
-                        if (!cleanLine) return;
-
-                        // Time Match: "24 May, 22:10", "10:00", "Today, 10:00"
-                        const timeMatch = cleanLine.match(/^(\d{2}\s\w{3},?\s\d{2}:\d{2}|\d{2}\/\d{2}\s\d{2}:\d{2}|\d{2}:\d{2}|Today,?\s\d{2}:\d{2}|Yesterday,?\s\d{2}:\d{2})/i);
+                        const lines = tooltipText.split('\n');
+                        const curve = [];
+                        let lastTime = null;
+                        let linesSinceTime = 0;
                         
-                        if (timeMatch) {
-                            lastTime = timeMatch[0];
-                            linesSinceTime = 0;
-                            // Check if this line ALSO has odds (same line case)
-                            const inlineOdds = cleanLine.match(/(\d+\.\d{2})/);
-                            if (inlineOdds) {
-                                // Fallthrough to odds processing with this line
-                            } else {
-                                return; // Just a time line, wait for next lines
+                        lines.forEach(line => {
+                            const cleanLine = line.trim().replace(/\s+/g, ' ');
+                            if (!cleanLine) return;
+                            const timeMatch = cleanLine.match(/^(\d{2}\s\w{3},?\s\d{2}:\d{2}|\d{2}\/\d{2}\s\d{2}:\d{2}|\d{2}:\d{2}|Today,?\s\d{2}:\d{2}|Yesterday,?\s\d{2}:\d{2})/i);
+                            if (timeMatch) {
+                                lastTime = timeMatch[0];
+                                linesSinceTime = 0;
+                                const inlineOdds = cleanLine.match(/(\d+\.\d{2})/);
+                                if (!inlineOdds) return;
                             }
-                        }
-
-                        // Odds Match: Look for odds if we have a recent time anchor (within 3 lines)
-                        if (lastTime && linesSinceTime <= 2) {
-                             const allNumbers = cleanLine.match(/(\d+\.\d{2}|\d+\.\d{1}|\d{2,3}%)/g);
-                             if (allNumbers) {
-                                let oddsVal = null;
-                                let payoutVal = null;
-
-                                allNumbers.forEach(numStr => {
-                                    const val = parseFloat(numStr.replace('%', ''));
-                                    if (isNaN(val)) return;
-
-                                    if (val >= 1.01 && val <= 50.0) {
-                                        oddsVal = val;
-                                    } else if (val > 50.0 && val <= 100.0) {
-                                        payoutVal = val;
+                            if (lastTime && linesSinceTime <= 2) {
+                                 const allNumbers = cleanLine.match(/(\d+\.\d{2}|\d+\.\d{1}|\d{2,3}%)/g);
+                                 if (allNumbers) {
+                                    let oddsVal = null;
+                                    let payoutVal = null;
+                                    allNumbers.forEach(numStr => {
+                                        const val = parseFloat(numStr.replace('%', ''));
+                                        if (isNaN(val)) return;
+                                        if (val >= 1.01 && val <= 50.0) oddsVal = val;
+                                        else if (val > 50.0 && val <= 100.0) payoutVal = val;
+                                    });
+                                    if (oddsVal !== null) {
+                                        curve.push({ raw_time: lastTime, v: oddsVal, payout: payoutVal });
+                                        lastTime = null; 
                                     }
-                                });
-
-                                if (oddsVal !== null) {
-                                    const point = {
-                                        raw_time: lastTime,
-                                        v: oddsVal
-                                    };
-                                if (payoutVal !== null) {
-                                    point.payout = payoutVal;
-                                    // DEBUG: Log payout capture
-                                    // console.log(`[Payout] ${target.provider} @ ${lastTime}: ${payoutVal}%`);
-                                }
-                                
-                                // Deduplicate: Don't add if identical to last point (timestamp & value)
-                                    // Actually, we might have multiple updates at same time?
-                                    // Let's just push.
-                                    curve.push(point);
-                                    
-                                    // Reset time anchor to avoid reusing it for unrelated numbers further down?
-                                    // Usually 1 Time -> 1 Odds row.
-                                    lastTime = null; 
-                                }
-                             }
-                        }
-                        
-                        if (lastTime) linesSinceTime++;
-                    });
-
-                    if (curve.length > 0) {
-                        results.push({
-                            provider: target.provider,
-                            dimension: '1x2',
-                            instant: target.instantValue,
-                            curve: curve,
-                            _meta: { source: 'brute_force_text' }
+                                 }
+                            }
+                            if (lastTime) linesSinceTime++;
                         });
-                        this.info(`[V169.000] ✅ Extracted ${curve.length} points for ${target.provider}`);
-                        captured = true;
-                    } else {
-                        this.warn(`[V169.000] ⚠️ Tooltip text found but no valid lines parsed.`);
-                    }
-                } else {
-                    this.warn(`[V169.000] ⚠️ No valid tooltip found for ${target.provider}`);
-                }
 
-                // 移开鼠标，准备处理下一个目标
-                await this.page.mouse.move(0, 0);
-                await this.page.waitForTimeout(300);
+                        if (curve.length > 0) {
+                            results.push({
+                                provider: target.provider,
+                                dimension: '1x2',
+                                instant: target.instantValue,
+                                curve: curve,
+                                _meta: { source: 'brute_force_text' }
+                            });
+                            this.info(`[Genesis.EfficiencyBalance] ✅ Success at ${point.name} for ${target.provider}. Early Exiting.`);
+                            captured = true; // [Early Exit] 触发
+                        }
+                    }
 
                 } catch (e) {
-                    this.warn(`[V169.000] ⚠️ Failed ${target.provider} (${point.name}): ${e.message}`);
-                    // 移开鼠标，准备重试
+                    this.warn(`[Genesis.DeepScrape] ⚠️ Failed ${target.provider} (${point.name}): ${e.message}`);
                     await this.page.mouse.move(0, 0);
                     await this.page.waitForTimeout(300);
                 }
             }
+
+            // [Audit Capping] 仅在采样场次且失败时审计
+            if (!captured && matchId.endsWith('0') && lastInnerHTML) {
+                this.warn(`[Genesis.EfficiencyBalance] 🕵️  SAMPLE SHADOW AUDIT for ${target.provider} (${matchId}):`);
+                this.warn(`[INNER_HTML]: ${lastInnerHTML.substring(0, 500)}...`);
+            }
+
+            await this.page.mouse.move(0, 0);
+            await this.page.waitForTimeout(300);
         }
 
         return results;

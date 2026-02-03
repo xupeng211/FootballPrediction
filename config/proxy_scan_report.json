@@ -1,0 +1,182 @@
+{
+  "scan_timestamp": "2026-02-03T04:21:23.784766",
+  "scan_duration_seconds": 4.341858863830566,
+  "total_scanned": 22,
+  "summary": {
+    "active_nodes": 21,
+    "dead_nodes": 0,
+    "no_access_nodes": 1,
+    "slow_nodes": 0
+  },
+  "latency_stats": {
+    "average_ms": 1452.82,
+    "min_ms": 857.86,
+    "max_ms": 2712.47
+  },
+  "pool_assessment": {
+    "ready_for_10_concurrent": true,
+    "recommended_concurrency": 10
+  },
+  "dead_ports": [],
+  "slow_ports": [],
+  "no_access_ports": [
+    7911
+  ],
+  "active_ports": [
+    7891,
+    7892,
+    7893,
+    7894,
+    7895,
+    7896,
+    7897,
+    7898,
+    7899,
+    7900,
+    7901,
+    7902,
+    7903,
+    7904,
+    7905,
+    7906,
+    7907,
+    7908,
+    7909,
+    7910,
+    7912
+  ],
+  "detailed_results": [
+    {
+      "port": 7891,
+      "status": "\u2705 ACTIVE",
+      "latency_ms": 915.01,
+      "error": null
+    },
+    {
+      "port": 7892,
+      "status": "\u2705 ACTIVE",
+      "latency_ms": 857.86,
+      "error": null
+    },
+    {
+      "port": 7893,
+      "status": "\u2705 ACTIVE",
+      "latency_ms": 863.72,
+      "error": null
+    },
+    {
+      "port": 7894,
+      "status": "\u2705 ACTIVE",
+      "latency_ms": 972.17,
+      "error": null
+    },
+    {
+      "port": 7895,
+      "status": "\u2705 ACTIVE",
+      "latency_ms": 971.59,
+      "error": null
+    },
+    {
+      "port": 7896,
+      "status": "\u2705 ACTIVE",
+      "latency_ms": 971.95,
+      "error": null
+    },
+    {
+      "port": 7897,
+      "status": "\u2705 ACTIVE",
+      "latency_ms": 2712.47,
+      "error": null
+    },
+    {
+      "port": 7898,
+      "status": "\u2705 ACTIVE",
+      "latency_ms": 1255.51,
+      "error": null
+    },
+    {
+      "port": 7899,
+      "status": "\u2705 ACTIVE",
+      "latency_ms": 2712.04,
+      "error": null
+    },
+    {
+      "port": 7900,
+      "status": "\u2705 ACTIVE",
+      "latency_ms": 2093.69,
+      "error": null
+    },
+    {
+      "port": 7901,
+      "status": "\u2705 ACTIVE",
+      "latency_ms": 1369.45,
+      "error": null
+    },
+    {
+      "port": 7902,
+      "status": "\u2705 ACTIVE",
+      "latency_ms": 1350.3,
+      "error": null
+    },
+    {
+      "port": 7903,
+      "status": "\u2705 ACTIVE",
+      "latency_ms": 1233.75,
+      "error": null
+    },
+    {
+      "port": 7904,
+      "status": "\u2705 ACTIVE",
+      "latency_ms": 1252.2,
+      "error": null
+    },
+    {
+      "port": 7905,
+      "status": "\u2705 ACTIVE",
+      "latency_ms": 1223.43,
+      "error": null
+    },
+    {
+      "port": 7906,
+      "status": "\u2705 ACTIVE",
+      "latency_ms": 1295.23,
+      "error": null
+    },
+    {
+      "port": 7907,
+      "status": "\u2705 ACTIVE",
+      "latency_ms": 1327.66,
+      "error": null
+    },
+    {
+      "port": 7908,
+      "status": "\u2705 ACTIVE",
+      "latency_ms": 1261.35,
+      "error": null
+    },
+    {
+      "port": 7909,
+      "status": "\u2705 ACTIVE",
+      "latency_ms": 2189.29,
+      "error": null
+    },
+    {
+      "port": 7910,
+      "status": "\u2705 ACTIVE",
+      "latency_ms": 2034.02,
+      "error": null
+    },
+    {
+      "port": 7911,
+      "status": "\u26a0\ufe0f NO_ACCESS",
+      "latency_ms": 0,
+      "error": "Access failed: Cannot connect to host www.oddsportal.com:443 ssl:"
+    },
+    {
+      "port": 7912,
+      "status": "\u2705 ACTIVE",
+      "latency_ms": 1646.44,
+      "error": null
+    }
+  ]
+}

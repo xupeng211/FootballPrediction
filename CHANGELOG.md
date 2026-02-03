@@ -7,6 +7,94 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [V170.000] - 2026-02-03 [Genesis.ProductionFreeze]
+
+> **生产级代码审计与架构重构**
+>
+> **核心成果**：
+> - **【遗留代码清理】**：23 个文件 + 3 个目录已归档到 `archive/legacy/`
+> - **【Python Match Engine】**：新增基础设施层 (BaseHarvestEngine + NetworkGuardian)
+> - **【GoldenDataMerger】**：L1+L2+L3 数据融合缝合器
+> - **【production_fire.py】**：一键数据采集入口
+> - **【Import 路径修复】**：6 个文件的导入错误已修复
+
+### Added
+
+#### 核心基础设施
+- **Python Match Engine**: `src/infrastructure/engines/match_engine/`
+  - `base/base_harvest_engine.py` - 基础收割引擎抽象类 (V1.0.0)
+  - `shared/network_guardian.py` - NetworkShield 统一接口适配器
+  - `shared/circuit_breaker.py` - 统一熔断器实现
+  - `fotmob/fotmob_engine.py` - FotMob V145.0 数据采集引擎
+  - `discovery/discovery_engine.py` - 比赛发现引擎
+
+#### 数据融合层
+- **GoldenDataMerger**: `src/infrastructure/merger/GoldenDataMerger.py`
+  - L1 (基础数据) → L2 (FotMob) → L3 (OddsPortal) 顺序执行
+  - 断点续传支持
+  - NetworkShield 集成
+  - 批量处理支持
+
+#### 目录重组
+- `src/api/models/` - 赔率数据模型 (从 `src/collectors/` 迁移)
+- `src/api/monitoring/` - Prometheus 监控模块 (从 `src/collectors/` 迁移)
+- `src/config/league/` - 联赛配置专用目录 (从 `src/collectors/` 迁移)
+- `src/utils/` - 匹配器工具函数 (从 `src/collectors/` 迁移)
+- `src/infrastructure/engines/selectors/` - 选择器模块 (从 `src/collectors/` 迁移)
+
+#### 一键数据采集
+- **production_fire.py**: 一键数据采集入口脚本
+  - 单场比赛采集: `--match-id`
+  - 批量采集: `--batch matches.txt`
+  - 最近比赛: `--recent N`
+  - 干跑模式: `--dry-run`
+
+### Changed
+
+#### Import 路径修复
+- `src.utils.semantic_matcher`: `src.collectors.levenshtein_matcher` → `src.utils.levenshtein_matcher`
+- `src.collectors.market_data_engine`: `src.collectors.prometheus_metrics` → `src.api.monitoring.prometheus_metrics`
+- `src.api.services.harvester_service`: `src.collectors.circuit_breaker` → `src.core.circuit_breaker`
+- `src.infrastructure.engines.match_engine.base.base_harvest_engine`: `.shared.network_guardian` → `..shared.network_guardian`
+
+#### 代码质量改进
+- 类型注解现代化: `Dict[str, Any]` → `dict[str, Any]`
+- 时区感知: `datetime.now()` → `datetime.now(timezone.utc)`
+- Import 排序: 15 个文件修复
+- Docstring 规范: 修复全角标点符号
+
+### Removed
+
+#### 已归档组件 (23 个文件 + 3 个目录)
+- `src/core/proxy/` (6 个文件) - 被 NetworkShield 替代
+- `src/collectors/` (15 个文件) - 已重组到相应目录
+- `src/bridge/`, `src/analysis/`, `src/modules/` (3 个目录) - 空目录/已迁移
+
+详见: `scripts/ops/genesis_cleanup.sh`
+
+### Fixed
+
+#### 数据库
+- 创建 `metrics_multi_source_data` 表 (V55.0)
+- 修复 L2 状态检查 SQL 查询
+
+#### 工具脚本
+- 添加 `scripts/ops/genesis_cleanup.sh` - 遗留代码清理脚本
+- 修复 make verify 中的 lint 检查
+
+### Documentation
+
+#### 新增文档
+- `docs/QUICKSTART_GUIDE.md` - 一键运行指南
+- `docs/TECHNICAL_DEBT.md` - 技术债务追踪
+- `docs/AUDIT_GENESIS_CLEAN_SWEEP.md` - 清理审计报告备份
+
+#### 更新文档
+- `CLAUDE.md` - 更新核心目录结构和版本信息
+- `CHANGELOG.md` - 本文件
+
+---
+
 ## [V26.7] - 2026-01-07
 
 > **生产级安全加固与纯净模式 + 全链路收割可靠性验证**

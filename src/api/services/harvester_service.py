@@ -35,7 +35,7 @@ from playwright.async_api import Browser, async_playwright
 import psycopg2
 
 from src.collectors.base_extractor import BaseExtractor
-from src.collectors.circuit_breaker import CircuitBreaker, CircuitBreakerConfig
+from src.core.circuit_breaker import CircuitBreaker, CircuitBreakerConfig
 from src.collectors.collection_sentry import CollectionSentry
 from src.collectors.odds_production_extractor import OddsProductionExtractor
 from src.config_unified import get_settings

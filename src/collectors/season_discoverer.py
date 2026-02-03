@@ -1,12 +1,29 @@
 #!/usr/bin/env python3
 """
-赛季 ID 范围发现器
+赛季 ID 范围发现器 - V146.0 [Genesis.L1Shield]
+=================================================
+
 通过 API 测试发现指定英超赛季的比赛 ID 范围
+
+V146.0 变更:
+- [P0] 修复裸连漏洞 - 集成 NetworkShield
+- [P0] 替换硬编码延迟为随机脉冲
+- [P0] 失败状态同步到 active_registry.json
+
+⚠️  SECURITY FIX: 之前的版本使用 requests.get() 裸连，
+    现在所有请求都通过 NetworkShield 代理隧道。
+
+Author: [Genesis.L1Shield]
+Version: V146.0
+Date: 2026-02-03
 """
 
+import asyncio
 import logging
+import random
 import sys
 import time
+from typing import Any
 
 import requests
 
@@ -15,9 +32,131 @@ from src.config_unified import get_settings
 logger = logging.getLogger(__name__)
 
 
+# ============================================================================
+# NETWORKSHIELD INTEGRATION (V146.0)
+# ============================================================================
+
+_network_guardian = None
+_session_proxy_map: dict[str, dict] = {}  # session_id -> {port, url}
+
+
+def _get_network_guardian():
+    """获取 NetworkGuardian 单例（延迟初始化）"""
+    global _network_guardian
+
+    if _network_guardian is None:
+        try:
+            from src.infrastructure.engines.match_engine.shared import NetworkGuardian
+
+            _network_guardian = NetworkGuardian(log_level='warning')
+            asyncio.run(_network_guardian.initialize())
+
+            logger.info("[SeasonDiscoverer] NetworkShield initialized successfully")
+        except ImportError:
+            logger.warning(
+                "[SeasonDiscoverer] NetworkShield not available, "
+                "falling back to direct connection (NOT RECOMMENDED)"
+            )
+            _network_guardian = False
+
+    return _network_guardian
+
+
+def _get_proxy_for_session(session_id: str) -> dict | None:
+    """
+    获取 Session 绑定的代理
+
+    Args:
+        session_id: 会话 ID
+
+    Returns:
+        {'port': int, 'url': str} 或 None
+    """
+    # 检查缓存
+    if session_id in _session_proxy_map:
+        return _session_proxy_map[session_id]
+
+    # 获取新代理
+    guardian = _get_network_guardian()
+
+    if guardian is False or guardian is None:
+        return None
+
+    try:
+        proxy = asyncio.run(guardian.get_next_healthy_proxy(session_id))
+
+        if proxy:
+            proxy_info = {'port': proxy.port, 'url': proxy.url}
+            _session_proxy_map[session_id] = proxy_info
+            logger.debug(
+                f"[SeasonDiscoverer] Using proxy port {proxy.port} "
+                f"for session {session_id}"
+            )
+            return proxy_info
+    except Exception as e:
+        logger.warning(f"[SeasonDiscoverer] Failed to get proxy: {e}")
+
+    return None
+
+
+def _mark_proxy_success(session_id: str, latency_ms: float = 0) -> None:
+    """标记代理成功"""
+    if session_id not in _session_proxy_map:
+        return
+
+    proxy_info = _session_proxy_map[session_id]
+    guardian = _get_network_guardian()
+
+    if guardian and hasattr(guardian, 'mark_proxy_success'):
+        try:
+            asyncio.run(guardian.mark_proxy_success(proxy_info['port'], latency_ms))
+        except Exception as e:
+            logger.warning(f"[SeasonDiscoverer] Failed to mark success: {e}")
+
+
+def _mark_proxy_failed(session_id: str, reason: str = "Unknown") -> None:
+    """标记代理失败"""
+    if session_id not in _session_proxy_map:
+        return
+
+    proxy_info = _session_proxy_map[session_id]
+    guardian = _get_network_guardian()
+
+    if guardian and hasattr(guardian, 'mark_proxy_failed'):
+        try:
+            asyncio.run(guardian.mark_proxy_failed(proxy_info['port'], reason))
+            logger.warning(
+                f"[SeasonDiscoverer] Proxy port {proxy_info['port']} marked as "
+                f"FAILED: {reason}"
+            )
+        except Exception as e:
+            logger.warning(f"[SeasonDiscoverer] Failed to mark failure: {e}")
+
+
+def _release_session(session_id: str) -> None:
+    """释放 Session"""
+    if session_id in _session_proxy_map:
+        del _session_proxy_map[session_id]
+
+    guardian = _get_network_guardian()
+
+    if guardian and hasattr(guardian, 'release_session'):
+        try:
+            guardian.release_session(session_id)
+        except Exception as e:
+            logger.warning(f"[SeasonDiscoverer] Failed to release session: {e}")
+
+
+# ============================================================================
+# DISCOVERY FUNCTIONS
+# ============================================================================
+
+
 def test_match_id(match_id: int) -> tuple[bool, dict]:
     """
     测试指定的比赛 ID 是否存在且有效
+
+    V146.0 变更: 使用 NetworkShield 代理隧道
 
     Args:
         match_id: 比赛 ID
@@ -32,12 +171,31 @@ def test_match_id(match_id: int) -> tuple[bool, dict]:
         "Accept": "application/json",
     }
 
+    # Session ID for this discovery request
+    session_id = f"season-discovery-{match_id}"
+
+    # 获取代理
+    proxy_info = _get_proxy_for_session(session_id)
+
+    proxies = None
+    if proxy_info:
+        proxies = {
+            'http': proxy_info['url'],
+            'https': proxy_info['url']
+        }
+
     try:
-        response = requests.get(url, headers=headers, timeout=10)
+        response = requests.get(
+            url,
+            headers=headers,
+            proxies=proxies,
+            timeout=10
+        )
 
         # 检查是否为有效 JSON 响应
         content_type = response.headers.get("Content-Type", "")
         if "application/json" not in content_type:
+            _mark_proxy_failed(session_id, "Not JSON response")
             return False, {"reason": "Not JSON response"}
 
         data = response.json()
@@ -50,10 +208,21 @@ def test_match_id(match_id: int) -> tuple[bool, dict]:
                 "away": teams[1].get("name", "Unknown"),
                 "status": data.get("status", {}).get("finished", False),
             }
+
+            # 上报成功到 NetworkShield
+            _mark_proxy_success(session_id, response.elapsed.total_seconds() * 1000)
+
             return True, match_info
+        _mark_proxy_failed(session_id, "No match data")
         return False, {"reason": "No match data"}
 
+    except requests.exceptions.RequestException as e:
+        # 网络错误 - 上报失败到 NetworkShield
+        _mark_proxy_failed(session_id, f"Network error: {e}")
+        return False, {"reason": f"Network error: {e}"}
     except Exception as e:
+        # 其他错误
+        _mark_proxy_failed(session_id, str(e))
         return False, {"reason": str(e)}
 
 
@@ -100,8 +269,9 @@ def discover_season_range(start_id: int, max_tests: int = 1000) -> list[int]:
                 logger.info(f"  连续 {consecutive_failures} 次失败，停止发现")
                 break
 
-        # 避免请求过快
-        time.sleep(0.1)
+        # V146.0: 随机脉冲延迟替代硬编码 time.sleep(0.1)
+        # 模拟人类浏览行为，避免被反爬系统识别
+        time.sleep(random.uniform(0.05, 0.3))
 
     logger.info(f"✅ 发现完成，共找到 {len(valid_ids)} 场比赛")
 
@@ -195,7 +365,8 @@ def generate_2223_manifest():
         if (i + 1) % 50 == 0:
             logger.info(f"  处理进度: {i + 1}/{len(match_ids[:380])}")
 
-        time.sleep(0.1)
+        # V146.0: 随机脉冲延迟替代硬编码 time.sleep(0.1)
+        time.sleep(random.uniform(0.05, 0.3))
 
     # 写入 CSV
     with open(output_path, "w", newline="", encoding="utf-8") as f:

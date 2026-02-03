@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to Claude Code (claude.ai/code) when working in this repository.
 
 ---
 
@@ -35,9 +35,9 @@ graph LR
 | 角色 | 推荐阅读 | 预计时间 |
 |------|----------|----------|
 | **新开发者** | [docs/onboarding.md](docs/onboarding.md) → [快速开始](#-快速开始) | 30 分钟 |
-| **数据采集工程师** | [数据采集系统](#-数据采集系统) + [Ghost Protocol](#核心模块) | 45 分钟 |
+| **数据采集工程师** | [数据采集系统](#-数据采集系统) + [QuantHarvester](#-quantharvester-v170000) + [NetworkShield](#-networkshield-v110-工业级代理管理) | 60 分钟 |
 | **机器学习工程师** | [ML 引擎](#核心模块) + [特征工程](#核心模块) | 60 分钟 |
-| **运维工程师** | [Docker 部署](#docker-容器化部署) + [故障排除](#-常见错误速查表) | 30 分钟 |
+| **运维工程师** | [Docker 部署](#docker-容器化部署) + [环境检测](#️-环境检测系统) | 30 分钟 |
 | **JavaScript 工具** | [JavaScript 运维工具文档](docs/CLAUDE_JS_TOOLS.md) | 45 分钟 |
 
 ### 按任务查找
@@ -51,6 +51,7 @@ graph LR
 | 🔍 检查代理连通性 | `python main.py --test-proxy` |
 | 🗄️ 进入数据库 | `make db-shell` |
 | 📈 查看系统日志 | `make logs` |
+| 🌐 JavaScript 收割 | `node src/infrastructure/engines/QuantHarvester.js` |
 
 ---
 
@@ -62,11 +63,15 @@ make up                  # 启动核心服务 (db + redis)
 make verify              # 运行代码质量检查
 make ps                  # 查看容器状态
 
-# 数据采集
+# 数据采集（Python）
 python main.py --source fotmob --mode single --limit 10    # FotMob API
 python main.py --source oddsportal --mode single --limit 10  # OddsPortal RPA
 python main.py --mode cruise                                # 24h 巡航
 python main.py --test-proxy                                 # 测试代理
+
+# 数据采集（JavaScript）
+node src/infrastructure/engines/QuantHarvester.js           # V170.000 收割
+python -c "from src.infrastructure.network import get_network_shield; import asyncio; shield = asyncio.run(get_network_shield()); print(shield.getStatus())"  # NetworkShield 状态
 
 # 开发和测试
 make test-unit           # 单元测试
@@ -87,14 +92,15 @@ make logs                # 系统日志
 | 属性 | 值 |
 |------|-----|
 | **状态** | ✅ Production Ready |
-| **生产版本** | **V160.0** (Identity Bridge) |
+| **QuantHarvester** | **V170.000** (Genesis.NetworkShield) |
+| **NetworkShield** | **V1.1.0** (工业级代理管理) |
 | **命令中心** | **V144.9** (Multi-Source Command Center) |
 | **核心模型** | **V26.8** (联赛专项) |
 | **特征提取** | **V41.380** (GoldenExtractor) |
 | **代码质量** | **V106.0** (Ruff - line-length: 100) |
 | **基线准确率** | 56% (真赛前) |
 | **推理延迟** | <100ms |
-| **最后更新** | 2026-01-31 |
+| **最后更新** | 2026-02-03 |
 
 ### 版本兼容性矩阵
 
@@ -120,7 +126,7 @@ make logs                # 系统日志
 # 1. 验证 Git 分支（开发前检查）
 git status
 
-# 2. 启动核心服务
+# 2. 启动核心服务（自动检测环境）
 make up
 
 # 3. 验证环境并采集测试数据
@@ -141,6 +147,56 @@ make verify
 
 ---
 
+## 🌐 环境检测系统
+
+### V26.0 智能环境检测
+
+项目内置**智能环境检测系统**，自动识别运行环境并配置最优参数：
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    V26.0 智能环境检测                           │
+│  ┌────────────────────────────────────────────────────────────┐ │
+│  │  环境类型检测                                             │ │
+│  │  • Docker Environment (DOCKER_ENV=true)                   │ │
+│  │  • WSL2 Environment (/proc/version 包含 "microsoft")      │ │
+│  │  • Local Environment (默认)                               │ │
+│  └────────────────────────────────────────────────────────────┘ │
+│                              ↓                                  │
+│  ┌────────────────────────────────────────────────────────────┐ │
+│  │  自动配置响应                                             │ │
+│  │  • Docker: DB_HOST=db, REDIS_HOST=redis                 │ │
+│  │  • WSL2: DB_HOST=172.25.16.1 (最优主机检测)              │ │
+│  │  • Local: DB_HOST=localhost                             │ │
+│  └────────────────────────────────────────────────────────────┘ │
+│                              ↓                                  │
+│  ┌────────────────────────────────────────────────────────────┐ │
+│  │  代理自动发现                                             │ │
+│  │  • 环境变量 (HTTPS_PROXY/HTTP_PROXY)                     │ │
+│  │  • WSL2 自动探测 (宿主机代理)                            │ │
+│  │  • 直连模式 (无代理)                                     │ │
+│  └────────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### 环境配置示例
+
+| 环境类型 | DB_HOST | 代理配置 | 启动方式 |
+|----------|---------|----------|----------|
+| **Docker** | `db` | 环境变量 | `make up` |
+| **WSL2** | `172.25.16.1` | 自动探测 | `make up` |
+| **本地** | `localhost` | 手动配置 | `make up` |
+
+### 禁用自动检测
+
+如需手动配置，可设置环境变量：
+```bash
+export DB_HOST=custom_host
+export DB_NAME=football_db  # 必须为 football_db
+```
+
+---
+
 ## 🏗️ 系统架构
 
 ### 简化数据流图
@@ -149,6 +205,9 @@ make verify
 ┌─────────────────────────────────────────────────────────────────┐
 │  数据采集层                                                      │
 │  FotMob API (L2数据) + OddsPortal RPA (赔率数据)              │
+│  QuantHarvester V170.000 (JavaScript 双模提取)                │
+│  NetworkShield V1.1.0 (22节点工业级代理管理)                   │
+│  Match Engine (Python 基础收割引擎)                           │
 └─────────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────────┐
@@ -173,24 +232,402 @@ make verify
 ```
 FootballPrediction/
 ├── src/                              # 生产代码
-│   ├── api/collectors/               # 数据采集器
-│   │   ├── base_extractor.py         # V141.0 Ghost Protocol
-│   │   ├── fotmob_core.py            # FotMob API 采集
-│   │   └── odds_production_extractor.py  # 赔率提取
-│   ├── api/services/                 # 业务服务层
-│   │   └── harvester_service.py      # V142.0 统一收割服务
-│   ├── ml/engine.py                  # V26.8 ModelDispatcher
-│   ├── processors/                   # V25.1 特征提取
-│   ├── infrastructure/engines/       # QuantHarvester (V160.000)
-│   └── config_unified.py             # V26.0 统一配置
-├── scripts/ops/                      # V41.x 运维工具 ⭐
-├── config/                           # 配置文件
-├── tests/                            # 测试套件
-│   ├── unit/                         # 单元测试 (80+ 文件)
-│   └── harvesters/                   # V41.832 收割机测试
-├── main.py                           # V144.7 统一命令入口 ⭐
-├── Makefile                          # 统一命令入口
-└── CLAUDE.md                         # 本文件
+│   ├── api/                          # API 层
+│   │   ├── collectors/                # 数据采集器
+│   │   │   ├── base_extractor.py      # V141.0 Ghost Protocol
+│   │   │   ├── fotmob_core.py         # FotMob API 采集
+│   │   │   └── odds_production_extractor.py  # 赔率提取
+│   │   ├── models/                   # ✨ 数据模型 (新增)
+│   │   │   └── odds_models.py         # 赔率数据模型
+│   │   ├── monitoring/               # ✨ 监控模块 (新增)
+│   │   │   └── prometheus_metrics.py  # Prometheus 指标
+│   │   └── services/                 # 业务服务层
+│   │       └── harvester_service.py  # V142.0 统一收割服务
+│   ├── infrastructure/               # 基础设施层
+│   │   ├── engines/                  # 引擎系统
+│   │   │   ├── QuantHarvester.js      # V170.000 主收割机
+│   │   │   ├── match_engine/         # ✨ Python 基础收割引擎 (新增)
+│   │   │   │   ├── base/              # 基础引擎抽象类
+│   │   │   │   │   └── base_harvest_engine.py  # V1.0.0
+│   │   │   │   ├── shared/            # 共享组件
+│   │   │   │   │   ├── network_guardian.py  # NetworkShield 适配器
+│   │   │   │   │   └── circuit_breaker.py    # 统一熔断器
+│   │   │   │   ├── fotmob/            # FotMob 引擎
+│   │   │   │   │   └── fotmob_engine.py      # V145.0
+│   │   │   │   └── discovery/         # 发现引擎
+│   │   │   ├── services/             # 模块化服务
+│   │   │   │   ├── SignalRadar.js     # 网络雷达
+│   │   │   │   └── SurgicalInteraction.js  # 精确交互
+│   │   │   ├── parsers/              # 解析器
+│   │   │   ├── selectors/            # ✨ 选择器 (新增)
+│   │   │   │   └── js_templates.py
+│   │   │   └── config/               # 引擎配置
+│   │   ├── merger/                   # ✨ 数据融合层 (新增)
+│   │   │   └── GoldenDataMerger.py   # V1.0.0 黄金数据缝合器
+│   │   └── network/                 # NetworkShield 代理管理
+│   │       ├── NetworkShield.js      # V1.1.0 中央代理管理器
+│   │       ├── core/                 # 核心组件
+│   │       │   ├── CircuitBreaker.js
+│   │       │   ├── LRUSessionManager.js
+│   │       │   └── RegistryManager.js
+│   │       └── health/               # 健康检查
+│   ├── config/                       # ✨ 配置模块 (新增)
+│   │   └── league/                   # 联赛配置
+│   │       ├── fotmob_league_registry.py
+│   │       ├── metadata_manager.py
+│   │       └── season_manifest_generator.py
+│   ├── ml/                          # 机器学习
+│   │   ├── engine.py                 # V26.8 ModelDispatcher
+│   │   └── processors/               # V25.1 特征提取
+│   ├── utils/                       # ✨ 工具函数 (新增)
+│   │   ├── semantic_matcher.py      # 语义匹配
+│   │   ├── semantic_refiner.py       # 语义校准
+│   │   └── levenshtein_matcher.py   # 编辑距离匹配
+│   └── config_unified.py            # V26.0 统一配置
+├── scripts/ops/                   # V41.x 运维工具 ⭐
+├── config/                        # 配置文件
+│   ├── active_proxies.json        # V169.300 代理池配置
+│   ├── active_registry.json       # V1.1.0 NetworkShield 节点注册表
+│   └── schema_map.yaml            # V41.500+ Schema 韧性配置
+├── archive/legacy/               # ✨ 遗留代码归档 (新增)
+│   └── src/                      # 已归档的遗留文件
+├── docs/                         # 文档
+│   └── TECHNICAL_DEBT.md         # ✨ 技术债务追踪 (新增)
+├── tests/                        # 测试套件
+│   ├── unit/                      # 单元测试 (80+ 文件)
+│   └── harvesters/                # V41.832 收割机测试
+├── production_fire.py            # ✨ 一键数据采集入口 (新增)
+├── main.py                       # V144.7 统一命令入口 ⭐
+├── Makefile                      # 统一命令入口
+└── CLAUDE.md                     # 本文件
+```
+
+**目录结构变更说明 (V169.300 → V170.000)**:
+- ✨ `src/api/models/`: 赔率数据模型
+- ✨ `src/api/monitoring/`: Prometheus 监控模块
+- ✨ `src/infrastructure/merger/`: 黄金数据缝合器
+- ✨ `src/infrastructure/engines/match_engine/`: Python 基础收割引擎
+- ✨ `src/config/league/`: 联赛配置专用目录
+- ✨ `src/utils/`: 匹配器工具函数
+- ✨ `archive/legacy/`: 遗留代码归档
+- ✨ `docs/TECHNICAL_DEBT.md`: 技术债务追踪
+- ✨ `production_fire.py`: 一键数据采集入口
+
+---
+
+## 🧬 QuantHarvester V170.000 - Genesis.NetworkShield
+
+### 概述
+
+**QuantHarvester V170.000** 是最新的 JavaScript 数据收割引擎，集成 **NetworkShield V1.1.0** 工业级代理管理系统，实现了**双模提取**和**跨语言代理管理**，专门用于从 OddsPortal 采集高价值赔率数据。
+
+### 核心特性
+
+| 特性 | 说明 |
+|------|------|
+| **双模提取** | 20秒快速回退到 DOM 抓取 |
+| **NetworkShield 集成** | 22节点工业级代理管理 |
+| **Session 绑定** | 一个会话 = 一个 IP |
+| **跨语言同步** | Python + Node.js 状态共享 |
+| **人类脉冲延迟** | 2000-5000ms 随机延迟 |
+| **并发上限锁定** | 5 个并发浏览器（硬锁定） |
+| **自动愈合** | 失败自动重试逻辑 |
+
+### 核心架构
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  QuantHarvester V170.000                                        │
+│  ┌────────────────────────────────────────────────────────────┐ │
+│  │  NetworkShieldAdapter - NetworkShield 适配器               │ │
+│  │  • Session 绑定 (一个会话 = 一个 IP)                      │ │
+│  │  • 跨语言状态同步 (Python + Node.js)                       │ │
+│  │  • 兼容原有 ProxyPoolManager 接口                          │ │
+│  └────────────────────────────────────────────────────────────┘ │
+│                              ↓                                  │
+│  ┌────────────────────────────────────────────────────────────┐ │
+│  │  SignalRadar - 网络雷达调度中心 (V168.002)                │ │
+│  │  • NetworkInterceptor - 网络拦截                          │ │
+│  │  • TextSurgicalExtractor - 文本提取                       │ │
+│  │  • RadarLogger - 结构化日志                              │ │
+│  └────────────────────────────────────────────────────────────┘ │
+│                              ↓                                  │
+│  ┌────────────────────────────────────────────────────────────┐ │
+│  │  SurgicalInteraction - 精确交互服务 (V165.000)            │ │
+│  │  • DOMNavigator - DOM 导航                                │ │
+│  │  • EventSimulator - 事件模拟                              │ │
+│  │  • AntiFingerprint - 反指纹检测                           │ │
+│  └────────────────────────────────────────────────────────────┘ │
+│                              ↓                                  │
+│  ┌────────────────────────────────────────────────────────────┐ │
+│  │  TrajectoryParser - 轨迹解析器                            │ │
+│  │  • 处理深度 L3 数据                                       │ │
+│  │  • 轨迹模拟 (Gap Filling)                                 │ │
+│  └────────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────────┘
+                              ↓
+                    PostgreSQL (metrics_multi_source_data)
+```
+
+### 使用方式
+
+```bash
+# 基本用法（自动使用 NetworkShield）
+node src/infrastructure/engines/QuantHarvester.js
+
+# 禁用代理
+PROXY_ENABLED=false node src/infrastructure/engines/QuantHarvester.js
+
+# 查看代理池统计
+# 日志输出: [NetworkShield] Status: 22/22 nodes available, Proxy: ENABLED
+```
+
+### 模块化组件
+
+V170.000 采用**模块化架构**，各组件职责清晰：
+
+| 组件 | 文件路径 | 功能 |
+|------|----------|------|
+| **NetworkShieldAdapter** | `QuantHarvester.js` | NetworkShield 适配器 |
+| **SignalRadar** | `services/SignalRadar.js` | 网络雷达调度中心 |
+| **SurgicalInteraction** | `services/SurgicalInteraction.js` | 精确交互服务 |
+| **TrajectoryParser** | `parsers/TrajectoryParser.js` | 轨迹解析器 |
+| **NetworkInterceptor** | `services/intercept/NetworkInterceptor.js` | 网络拦截 |
+| **TextSurgicalExtractor** | `services/extractors/TextSurgicalExtractor.js` | 文本提取 |
+| **RadarLogger** | `services/logging/RadarLogger.js` | 结构化日志 |
+
+### 双模提取机制
+
+V170.000 继承了 V169.300 的**智能回退机制**：
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  模式一: 网络拦截提取（首选）                                   │
+│  • 监听 /match-event/*.dat 请求                                │
+│  • Base64 → atob() → JXG.decompress → JSON                    │
+│  • 超时: 15秒 (renderTimeout)                                 │
+└─────────────────────────────────────────────────────────────────┘
+         ↓ 15秒超时或失败
+┌─────────────────────────────────────────────────────────────────┐
+│  模式二: DOM 抓取（回退）                                      │
+│  • 直接从页面 DOM 提取数据                                    │
+│  • 悬停取证 + 视觉定位                                       │
+│  • 优雅降级确保数据完整性                                    │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### 数据写入
+
+所有采集数据写入 `metrics_multi_source_data` 表：
+
+```sql
+-- 数据表结构
+match_id              VARCHAR(50)      -- 比赛ID
+source_name           VARCHAR(50)      -- Entity_P, Entity_B365, etc.
+init_h/d/a            FLOAT           -- 开盘赔率
+final_h/d/a           FLOAT           -- 终盘赔率
+odds_history          JSONB           -- 赔率历史曲线
+provider_internal_id  INTEGER         -- 提供商ID
+integrity_score       FLOAT           -- 完整性分数 (1.05 = good)
+data_timestamp        TIMESTAMP       -- 采集时间
+```
+
+---
+
+## 🛡️ NetworkShield V1.1.0 - 工业级代理管理
+
+### 概述
+
+**NetworkShield V1.1.0** 是中央代理管理系统，统一管理 Python (L2) 和 Node.js (L3) 的网络出口，深度对接 Windows 端的 Clash Verge (22个节点)。
+
+### 核心特性
+
+| 特性 | 说明 |
+|------|------|
+| **解耦设计** | 模块化架构，独立组件可替换 |
+| **中央注册制** | 统一节点注册和状态管理 |
+| **自适应健康检查** | 自动检测节点可用性 |
+| **智能轮换** | Session 绑定确保一致性 |
+| **自愈熔断** | 连续失败自动屏蔽节点 |
+| **跨语言同步** | Python + Node.js 状态共享 |
+| **LRU 会话管理** | 防止长时间运行的内存泄漏 |
+| **错误码标准化** | 统一的异常处理机制 |
+
+### 核心架构
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    NetworkShield V1.1.0                         │
+│  ┌────────────────────────────────────────────────────────────┐ │
+│  │  RegistryManager - 中央注册管理器                          │ │
+│  │  • 节点注册 (22 个 Clash Verge 节点)                      │ │
+│  │  • 状态持久化 (active_registry.json)                      │ │
+│  │  • 原子锁保护 (防止并发冲突)                              │ │
+│  └────────────────────────────────────────────────────────────┘ │
+│                              ↓                                  │
+│  ┌────────────────────────────────────────────────────────────┐ │
+│  │  BatchHealthChecker - 批量健康检查器                       │ │
+│  │  • 并发健康检查 (最多 22 个节点)                          │ │
+│  │  • 延迟统计 (avg/min/max)                                 │ │
+│  │  • 状态更新 (active/circuited/cooldown)                   │ │
+│  └────────────────────────────────────────────────────────────┘ │
+│                              ↓                                  │
+│  ┌────────────────────────────────────────────────────────────┐ │
+│  │  CircuitBreakerRegistry - 熔断器注册表                     │ │
+│  │  • 连续失败计数 (maxConsecutiveFailures=2)                │ │
+│  │  • 自动熔断 (连续 2 次失败后屏蔽)                         │ │
+│  │  • 冷却恢复 (15 分钟后自动尝试恢复)                       │ │
+│  └────────────────────────────────────────────────────────────┘ │
+│                              ↓                                  │
+│  ┌────────────────────────────────────────────────────────────┐ │
+│  │  LRUSessionManager - LRU 会话管理器                        │ │
+│  │  • Session 绑定 (一个会话 = 一个 IP)                      │ │
+│  │  • LRU 淘汰 (超过 500 个会话自动清理)                      │ │
+│  │  • 超时清理 (30 分钟不活跃自动清理)                        │ │
+│  └────────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────────┘
+                              ↓
+                    跨语言状态同步 (Python + Node.js)
+```
+
+### 配置文件
+
+节点配置位于 `config/active_registry.json`：
+
+```json
+{
+  "nodes": [
+    {
+      "id": "NODE-7891",
+      "port": 7891,
+      "status": "active",
+      "last_check": "2026-02-03T10:00:00Z",
+      "avg_latency_ms": 150,
+      "consecutive_failures": 0
+    }
+  ],
+  "metadata": {
+    "total_nodes": 22,
+    "active_nodes": 22,
+    "circuited_nodes": 0,
+    "cooldown_nodes": 0
+  }
+}
+```
+
+### 使用方式
+
+**Python (L2 数据采集)**:
+```python
+from src.infrastructure.network import get_network_shield
+
+# 初始化 NetworkShield
+shield = get_network_shield(log_level='info')
+await shield.initialize()
+
+# 获取健康代理
+proxy = await shield.get_next_healthy_proxy(session_id='my-session')
+print(f"Using proxy: {proxy.url}")
+
+# 上报成功/失败
+await shield.report_success(proxy.port)
+await shield.report_failure(proxy.port)
+
+# 获取状态
+status = shield.get_status()
+print(f"Active nodes: {status.nodes.active}/{status.nodes.total}")
+```
+
+**Node.js (L3 数据采集)**:
+```javascript
+const { getNetworkShield } = require('./NetworkShield');
+
+// 初始化 NetworkShield
+const shield = getNetworkShield({ logLevel: 'info' });
+await shield.initialize();
+
+// 获取健康代理
+const proxy = await shield.getNextHealthyProxy('my-session');
+console.log(`Using proxy: ${proxy.url}`);
+
+// 上报成功/失败
+await shield.reportSuccess(proxy.port);
+await shield.reportFailure(proxy.port);
+```
+
+### 熔断器机制
+
+NetworkShield 实现了**自愈熔断**机制：
+
+| 状态 | 触发条件 | 恢复条件 |
+|------|----------|----------|
+| **active** | 默认状态 | - |
+| **circuited** | 连续失败 2 次 | 15 分钟冷却后尝试恢复 |
+| **cooldown** | 手动设置冷却 | 冷却时间结束后恢复 |
+
+### Session 绑定
+
+Session 绑定确保**一个浏览器会话始终使用同一 IP**：
+
+```python
+# 创建会话
+session_id = f"MATCH-{match_id}"
+proxy = await shield.get_next_healthy_proxy(session_id)
+
+# 同一会话多次请求返回相同代理
+proxy1 = await shield.get_next_healthy_proxy(session_id)
+proxy2 = await shield.get_next_healthy_proxy(session_id)
+# proxy1.port == proxy2.port  # True
+```
+
+---
+
+## ⚙️ Match Engine - Python 基础收割引擎
+
+### 概述
+
+**Match Engine** 是 Python 基础收割引擎架构，提供统一的数据采集基础框架。
+
+### 核心架构
+
+```
+src/infrastructure/engines/match_engine/
+├── base/
+│   └── base_harvest_engine.py    # 基础收割引擎抽象类
+├── shared/
+│   ├── circuit_breaker.py        # 熔断器
+│   └── network_guardian.py       # 网络守护者
+├── discovery/
+│   └── discovery_engine.py       # 发现引擎
+└── fotmob/
+    └── fotmob_engine.py          # FotMob 采集引擎
+```
+
+### 核心组件
+
+| 组件 | 文件路径 | 功能 |
+|------|----------|------|
+| **BaseHarvestEngine** | `base/base_harvest_engine.py` | 基础收割引擎抽象类 |
+| **CircuitBreaker** | `shared/circuit_breaker.py` | 熔断器模式实现 |
+| **NetworkGuardian** | `shared/network_guardian.py` | 网络状态监控 |
+| **DiscoveryEngine** | `discovery/discovery_engine.py` | 比赛发现引擎 |
+| **FotMobEngine** | `fotmob/fotmob_engine.py` | FotMob 数据采集 |
+
+### 使用方式
+
+```python
+from src.infrastructure.engines.match_engine.fotmob import FotMobEngine
+
+# 初始化引擎
+engine = FotMobEngine()
+
+# 发现比赛
+matches = await engine.discover_matches(league_id=47, season="2324")
+
+# 采集数据
+for match in matches:
+    data = await engine.harvest_match(match_id)
+    print(f"Harvested: {data}")
 ```
 
 ---
@@ -348,6 +785,7 @@ prediction = dispatcher.predict(
 | **特征维度** | 6000+ | 6142 维 |
 | **FotMob API** | ~2s/match | 1.8s/match |
 | **OddsPortal RPA** | ~5s/match | 4.7s/match |
+| **QuantHarvester** | ~20s/match | V170.000 双模提取 (NetworkShield 集成) |
 
 ---
 
@@ -405,6 +843,8 @@ pytest -m performance -v        # 运行性能测试
 | `ConnectionRefusedError: 5432` | 数据库未启动 | `make up` |
 | `ModuleNotFoundError: No module named 'src'` | Python 路径问题 | 在项目根目录运行 |
 | `KeyError: 'rolling_xg_home'` | 特征提取失败 | 检查历史数据 |
+| `ProxyPool: No available proxies` | 所有代理被屏蔽 | 检查 `config/active_registry.json` |
+| `NetworkShield: No healthy nodes` | 所有节点不可用 | 运行健康检查 `python -c "from src.infrastructure.network import get_network_shield; import asyncio; asyncio.run(get_network_shield().health_check())"` |
 
 ---
 
@@ -459,8 +899,10 @@ make deploy              # 部署到生产
 | `V69.x` | Pipeline 编排器 | V69.000 |
 | `V84/V85.x` | JavaScript 视觉提取 | V85.000 |
 | `V86/V87.x` | Master Pipeline | V87.203 |
-| `V132-V160.x` | QuantHarvester 系列 | V160.000 |
+| `V132-V169.x` | QuantHarvester 系列 | V169.300 |
+| `V170.x` | QuantHarvester + NetworkShield | **V170.000** |
 | `V144.x` | 多数据源命令中心 | V144.9 |
+| `V1.x` | NetworkShield 代理管理 | **V1.1.0** |
 
 > **注意**: 项目版本 (`V26.7.0`) 与组件版本独立。
 
@@ -478,19 +920,15 @@ make deploy              # 部署到生产
 
 ### JavaScript 运维工具
 
-**V132-V160 系列**完整文档请查看：
-📖 **[docs/CLAUDE_JS_TOOLS.md](docs/CLAUDE_JS_TOOLS.md)**
+**完整文档请查看**: 📖 **[docs/CLAUDE_JS_TOOLS.md](docs/CLAUDE_JS_TOOLS.md)**
 
-包含：
-- V132.000 Forensic Analyzer - 取证分析工具
-- V160.000 Identity Bridge - 身份桥接
-- V49.000 Full-Spectrum Temporal Sync Engine
+包含以下系列：
+- V132-V169 QuantHarvester 系列（数据收割）
+- V170.x QuantHarvester + NetworkShield 系列（工业级代理管理）
+- V48/V49 时间同步引擎
+- V69 Pipeline 编排器
 - V84/V85 诊断和测试工具集
 - V86/V87 Master Pipeline 系列
-
-### 版本发布说明
-
-详细版本变更记录位于 `docs/V*.md` 文件中。
 
 ---
 
@@ -505,13 +943,15 @@ make deploy              # 部署到生产
 
 **🚨 CRITICAL**: This is a production system support document.
 
-**🧬 当前版本**: V160.000 (Identity Bridge)
+**🧬 当前版本**: V170.000 (Genesis.NetworkShield)
 **命令中心**: V144.9 (Multi-Source Command Center)
 **特征提取**: V41.380 (GoldenExtractor)
 **收割引擎**: V142.0 (HarvesterService)
-**QuantHarvester**: V160.000 (Identity Bridge + Modular Refactoring)
+**QuantHarvester**: V170.000 (双模提取 + NetworkShield)
+**NetworkShield**: V1.1.0 (22节点工业级代理管理)
+**Match Engine**: Python 基础收割引擎
 **代码质量**: V106.0 (Ruff - line-length: 100)
-**最后更新**: 2026-01-31
+**最后更新**: 2026-02-03
 **基线准确率**: 56% (真赛前)
 **生产状态**: Production Ready
 **Python 版本**: 3.11+

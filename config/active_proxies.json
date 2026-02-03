@@ -1,0 +1,154 @@
+{
+  "version": "V169.100",
+  "last_updated": "2026-02-03T07:10:43.341Z",
+  "discovery_method": "[Genesis.ProxyCheck] Health Scan",
+  "scan_summary": {
+    "total_nodes": 21,
+    "active_nodes": 20
+  },
+  "cooldown_minutes": 15,
+  "rotation_strategy": "weighted_round_robin",
+  "max_concurrent_per_proxy": 1,
+  "proxies": [
+    {
+      "id": "NODE-7891",
+      "protocol": "http",
+      "host": "172.25.16.1",
+      "port": 7891,
+      "status": "active"
+    },
+    {
+      "id": "NODE-7892",
+      "protocol": "http",
+      "host": "172.25.16.1",
+      "port": 7892,
+      "status": "active"
+    },
+    {
+      "id": "NODE-7893",
+      "protocol": "http",
+      "host": "172.25.16.1",
+      "port": 7893,
+      "status": "active"
+    },
+    {
+      "id": "NODE-7894",
+      "protocol": "http",
+      "host": "172.25.16.1",
+      "port": 7894,
+      "status": "active"
+    },
+    {
+      "id": "NODE-7895",
+      "protocol": "http",
+      "host": "172.25.16.1",
+      "port": 7895,
+      "status": "active"
+    },
+    {
+      "id": "NODE-7896",
+      "protocol": "http",
+      "host": "172.25.16.1",
+      "port": 7896,
+      "status": "active"
+    },
+    {
+      "id": "NODE-7897",
+      "protocol": "http",
+      "host": "172.25.16.1",
+      "port": 7897,
+      "status": "active"
+    },
+    {
+      "id": "NODE-7898",
+      "protocol": "http",
+      "host": "172.25.16.1",
+      "port": 7898,
+      "status": "active"
+    },
+    {
+      "id": "NODE-7899",
+      "protocol": "http",
+      "host": "172.25.16.1",
+      "port": 7899,
+      "status": "active"
+    },
+    {
+      "id": "NODE-7900",
+      "protocol": "http",
+      "host": "172.25.16.1",
+      "port": 7900,
+      "status": "active"
+    },
+    {
+      "id": "NODE-7901",
+      "protocol": "http",
+      "host": "172.25.16.1",
+      "port": 7901,
+      "status": "active"
+    },
+    {
+      "id": "NODE-7902",
+      "protocol": "http",
+      "host": "172.25.16.1",
+      "port": 7902,
+      "status": "active"
+    },
+    {
+      "id": "NODE-7903",
+      "protocol": "http",
+      "host": "172.25.16.1",
+      "port": 7903,
+      "status": "active"
+    },
+    {
+      "id": "NODE-7904",
+      "protocol": "http",
+      "host": "172.25.16.1",
+      "port": 7904,
+      "status": "active"
+    },
+    {
+      "id": "NODE-7905",
+      "protocol": "http",
+      "host": "172.25.16.1",
+      "port": 7905,
+      "status": "active"
+    },
+    {
+      "id": "NODE-7906",
+      "protocol": "http",
+      "host": "172.25.16.1",
+      "port": 7906,
+      "status": "active"
+    },
+    {
+      "id": "NODE-7907",
+      "protocol": "http",
+      "host": "172.25.16.1",
+      "port": 7907,
+      "status": "active"
+    },
+    {
+      "id": "NODE-7908",
+      "protocol": "http",
+      "host": "172.25.16.1",
+      "port": 7908,
+      "status": "active"
+    },
+    {
+      "id": "NODE-7910",
+      "protocol": "http",
+      "host": "172.25.16.1",
+      "port": 7910,
+      "status": "active"
+    },
+    {
+      "id": "NODE-7912",
+      "protocol": "http",
+      "host": "172.25.16.1",
+      "port": 7912,
+      "status": "active"
+    }
+  ]
+}

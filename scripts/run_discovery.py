@@ -21,6 +21,7 @@ Usage:
 import argparse
 import asyncio
 import logging
+import random
 import re
 import sys
 from datetime import datetime
@@ -341,7 +342,8 @@ class QueueBasedDiscoveryEngine:
             archive_url = f"{self.base_url}/football/{year_str}/{date_str[5:7]}/{date_str[8:10]}/"
 
             await page.goto(archive_url, timeout=30000, wait_until="networkidle")
-            await asyncio.sleep(2)
+            # V146.0: 随机脉冲延迟替代硬编码 await asyncio.sleep(2)
+            await asyncio.sleep(random.uniform(1.5, 2.5))
 
             match_links = await page.query_selector_all("a[href*='/match/']")
 
@@ -370,7 +372,8 @@ class QueueBasedDiscoveryEngine:
             search_url = f"{self.base_url}/search/{quote(search_query)}/"
 
             await page.goto(search_url, timeout=30000, wait_until="networkidle")
-            await asyncio.sleep(3)
+            # V146.0: 随机脉冲延迟替代硬编码 await asyncio.sleep(3)
+            await asyncio.sleep(random.uniform(2.0, 4.0))
 
             if "/match/" in page.url:
                 result["url"] = page.url
@@ -436,17 +439,38 @@ class QueueBasedDiscoveryEngine:
         match_ids = [t["match_id"] for t in tasks]
         self.queue_manager.update_status_to_searching(match_ids)
 
-        # [Genesis.ReLink] 代理支持 - 从配置获取随机代理
+        # V146.0 [Genesis.L1Shield]: NetworkShield 集成替代 ProxyManager
         proxy_config = None
+        proxy_port = None
         try:
-            from src.bridge.adapters.proxy_manager import ProxyManager
-            pm = ProxyManager()
-            proxy = pm.get_random_proxy()
+            from src.infrastructure.engines.match_engine.shared import NetworkGuardian
+
+            guardian = NetworkGuardian(log_level='warning')
+            asyncio.run(guardian.initialize())
+
+            session_id = f"discovery-batch-{int(datetime.now().timestamp())}"
+            proxy = asyncio.run(guardian.get_next_healthy_proxy(session_id))
+
             if proxy:
-                proxy_config = {"server": proxy.proxy_url}
-                logger.info(f"[DISCOVERY] Using proxy: {proxy.id}")
+                # Playwright 代理格式: "http://user:pass@host:port" 或 "http://host:port"
+                proxy_url = proxy.url if '://' in proxy.url else f"http://{proxy.url}"
+                proxy_config = {"server": proxy_url}
+                proxy_port = proxy.port
+                logger.info(
+                    f"[DISCOVERY] [NetworkShield] Assigned Clean IP (Port {proxy.port}) "
+                    f"for Discovery Session: {session_id}"
+                )
+
+                # 保存 guardian 引用用于后续状态上报
+                self._network_guardian = guardian
+                self._current_session_id = session_id
         except Exception as e:
-            logger.warning(f"[DISCOVERY] ProxyManager not available ({e}), using direct connection")
+            logger.warning(
+                f"[DISCOVERY] NetworkShield not available ({e}), "
+                "using direct connection (NOT RECOMMENDED)"
+            )
+            self._network_guardian = None
+            self._current_session_id = None
 
         async with async_playwright() as p:
             browser = await p.chromium.launch(
@@ -482,6 +506,38 @@ class QueueBasedDiscoveryEngine:
                 await delay
 
             await browser.close()
+
+            # V146.0: 批处理完成后上报 NetworkShield 状态
+            if self._network_guardian and proxy_port:
+                success_rate = stats["success"] / len(tasks) if tasks else 0
+                if success_rate >= 0.8:
+                    # 80%+ 成功率视为整体成功
+                    asyncio.run(
+                        self._network_guardian.mark_proxy_success(
+                            proxy_port,
+                            0  # 不记录延迟，因为这是批量处理
+                        )
+                    )
+                    logger.info(
+                        f"[DISCOVERY] [NetworkShield] Port {proxy_port} "
+                        f"marked as SUCCESS ({stats['success']}/{len(tasks)} tasks succeeded)"
+                    )
+                else:
+                    # 低成功率上报失败
+                    asyncio.run(
+                        self._network_guardian.mark_proxy_failed(
+                            proxy_port,
+                            f"Low success rate: {success_rate:.1%}"
+                        )
+                    )
+                    logger.warning(
+                        f"[DISCOVERY] [NetworkShield] Port {proxy_port} "
+                        f"marked as FAILED (success rate: {success_rate:.1%})"
+                    )
+
+                # 释放 Session
+                if self._current_session_id:
+                    self._network_guardian.release_session(self._current_session_id)
 
         return stats
 
