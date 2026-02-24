@@ -15,7 +15,8 @@
     "diagnose": "node diagnose_json_path.js",
     "test": "node --test tests/*.test.js",
     "test:unit": "node --test tests/parser.test.js tests/config.test.js",
-    "test:mock": "node --test tests/interceptor.test.js",
+    "test:v171": "node --test tests/test_v171_database_config.js",
+    "test:python": "pytest tests/test_v171_*.py -v",
     "test:coverage": "node --test --experimental-test-coverage tests/*.test.js",
     "lint": "eslint . --ext .js --ignore-pattern node_modules/",
     "lint:fix": "eslint . --ext .js --ignore-pattern node_modules/ --fix",
@@ -23,7 +24,7 @@
     "format:check": "prettier --check \"**/*.{js,json,md}\" --ignore-path .gitignore",
     "lint:python": "ruff check src/",
     "format:python": "ruff format src/",
-    "qa": "npm run lint && npm run lint:python"
+    "qa": "npm run lint && npm run lint:python && npm run test:v171"
   },
   "dependencies": {
     "dotenv": "^16.4.5",
