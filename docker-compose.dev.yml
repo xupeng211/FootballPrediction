@@ -1,0 +1,231 @@
+# =============================================================================
+# FootballPrediction - 开发环境 Docker Compose
+# =============================================================================
+# 版本: V170.000-dev
+# 用途: 全程容器化开发模式
+# 特性: 热更新、代理支持、完整开发工具链
+# =============================================================================
+# 使用方式:
+#   docker-compose -f docker-compose.dev.yml up -d    # 启动开发环境
+#   docker-compose -f docker-compose.dev.yml exec dev bash  # 进入开发容器
+#   docker-compose -f docker-compose.dev.yml down     # 停止开发环境
+# =============================================================================
+
+services:
+  # ===========================================================================
+  # dev - 开发容器 (Python 3.11 + Node.js 20)
+  # ===========================================================================
+  dev:
+    build:
+      context: .
+      dockerfile: .devcontainer/Dockerfile
+      args:
+        INSTALL_PLAYWRIGHT: "true"
+        # 构建时代理（WSL2 访问 Windows 代理）
+        HTTP_PROXY: http://172.25.16.1:7890
+        HTTPS_PROXY: http://172.25.16.1:7890
+    image: footballprediction:v170.000-dev
+    container_name: football_prediction_dev
+    restart: unless-stopped
+
+    # 热更新: 挂载本地代码目录
+    volumes:
+      # 主代码目录 - 双向同步
+      - .:/app:cached
+      # 排除虚拟环境（使用容器内的）
+      - /opt/venv
+      # 排除 node_modules（使用容器内的）
+      - /app/node_modules
+      # 持久化缓存
+      - dev_cache:/root/.cache
+      - dev_npm:/root/.npm
+      # Git 配置持久化
+      - dev_gitconfig:/root/.config/git
+
+    # 工作目录
+    working_dir: /app
+
+    # 环境变量
+    environment:
+      # Docker 环境标识
+      - DOCKER_ENV=true
+      - DOCKER_DEV_CONTAINER=true
+      # 时区
+      - TZ=Asia/Shanghai
+      # 数据库连接（连接到宿主机）
+      - DB_HOST=host.docker.internal
+      - DB_PORT=5432
+      - DB_NAME=football_db
+      - DB_USER=${DB_USER:-football_user}
+      - DB_PASSWORD=${DB_PASSWORD:-football_pass}
+      # Redis 连接
+      - REDIS_HOST=host.docker.internal
+      - REDIS_PORT=6379
+      # 代理配置（WSL2 访问 Windows Clash Verge）
+      - HTTP_PROXY=http://172.25.16.1:7890
+      - HTTPS_PROXY=http://172.25.16.1:7890
+      - NO_PROXY=localhost,127.0.0.1,host.docker.internal
+      # Python 配置
+      - PYTHONUNBUFFERED=1
+      - PYTHONDONTWRITEBYTECODE=1
+      # Node.js 配置
+      - NODE_ENV=development
+      - NODE_OPTIONS=--max-old-space-size=4096
+
+    # 端口映射
+    ports:
+      - "${API_PORT:-8000}:8000"    # API 服务
+      - "${DASHBOARD_PORT:-3000}:3000"  # Dashboard
+      - "${DEBUG_PORT:-5678}:5678"  # Python Debug
+
+    # 网络 - 使用 host 模式以便访问宿主机服务
+    # extra_hosts:
+    #   - "host.docker.internal:host-gateway"
+
+    # 健康检查
+    healthcheck:
+      test: ["CMD", "python", "-c", "import sys; sys.exit(0)"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+    # 资源限制（开发环境宽松）
+    deploy:
+      resources:
+        limits:
+          cpus: '4.0'
+          memory: 8G
+        reservations:
+          cpus: '0.5'
+          memory: 1G
+
+    # 日志配置
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+
+    # 依赖服务
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  # ===========================================================================
+  # db - PostgreSQL 15 数据库
+  # ===========================================================================
+  db:
+    image: postgres:15-alpine
+    container_name: football_prediction_db_dev
+    restart: always
+
+    environment:
+      - POSTGRES_DB=${DB_NAME:-football_db}
+      - POSTGRES_USER=${DB_USER:-football_user}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-football_pass}
+      - PGDATA=/var/lib/postgresql/data/pgdata
+      # 性能优化
+      - MAX_CONNECTIONS=100
+      - SHARED_BUFFERS=256MB
+
+    ports:
+      - "${DB_PORT:-5432}:5432"
+
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+      - ./deploy/docker/init_db.sql:/docker-entrypoint-initdb.d/init_db.sql:ro
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-football_user} -d ${DB_NAME:-football_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ===========================================================================
+  # redis - Redis 7 缓存服务
+  # ===========================================================================
+  redis:
+    image: redis:7-alpine
+    container_name: football_prediction_redis_dev
+    restart: always
+
+    command: >
+      redis-server
+      --maxmemory 512mb
+      --maxmemory-policy allkeys-lru
+      --save 900 1
+      --save 300 10
+
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+
+    volumes:
+      - redis_dev_data:/data
+
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.1'
+          memory: 128M
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
+
+# =============================================================================
+# 数据卷
+# =============================================================================
+volumes:
+  postgres_dev_data:
+    driver: local
+    name: footballprediction_postgres_dev_data
+  redis_dev_data:
+    driver: local
+    name: footballprediction_redis_dev_data
+  dev_cache:
+    driver: local
+    name: footballprediction_dev_cache
+  dev_npm:
+    driver: local
+    name: footballprediction_dev_npm
+  dev_gitconfig:
+    driver: local
+    name: footballprediction_dev_gitconfig
+
+# =============================================================================
+# 网络
+# =============================================================================
+networks:
+  default:
+    name: football_prediction_dev_network
+    driver: bridge

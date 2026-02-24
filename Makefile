@@ -6,7 +6,8 @@
 # 状态: V51.0 Industrial Grade Ready
 # ============================================
 
-.PHONY: help up down restart logs test clean build db-reset db-shell lint format security
+.PHONY: help up down restart logs test clean build db-reset db-shell lint format security \
+        dev-up dev-down dev-shell dev-logs dev-build dev-harvest dev-test
 
 # 默认目标
 .DEFAULT_GOAL := help
@@ -186,6 +187,32 @@ deploy: ## 部署到生产环境
 	$(MAKE) build
 	$(MAKE) up
 	@echo "$(GREEN)部署完成!$(NC)"
+
+# ============================================
+# 开发容器命令 (V170.000)
+# ============================================
+dev-up: ## 启动容器化开发环境
+	@echo "$(BLUE)启动开发容器...$(NC)"
+	@./scripts/ops/dev_container.sh
+
+dev-down: ## 停止开发容器
+	@echo "$(BLUE)停止开发容器...$(NC)"
+	@./scripts/ops/dev_container.sh --stop
+
+dev-shell: ## 进入开发容器 Shell
+	@./scripts/ops/dev_container.sh --shell
+
+dev-logs: ## 查看开发容器日志
+	@./scripts/ops/dev_container.sh --logs
+
+dev-build: ## 强制重建开发镜像
+	@./scripts/ops/dev_container.sh --build
+
+dev-harvest: ## 在容器中运行 QuantHarvester
+	docker-compose -f docker-compose.dev.yml exec dev node src/infrastructure/engines/QuantHarvester.js
+
+dev-test: ## 在容器中运行测试
+	docker-compose -f docker-compose.dev.yml exec dev python main.py --test-proxy
 
 # ============================================
 # 监控命令
