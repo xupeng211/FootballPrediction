@@ -1,132 +1,294 @@
-# Technical Debt - [Genesis.ProductionFreeze]
+# V171 技术债务清单 (Technical Debt Backlog)
 
-本文档汇总项目中所有待完成的技术债务项。
-
-## 优先级分类
-
-| 优先级 | 说明 |
-|--------|------|
-| **P0 - Critical** | 影响生产功能的重大缺失 |
-| **P1 - High** | 重要功能缺失，影响开发效率 |
-| **P2 - Medium** | 改进型优化，不影响核心功能 |
-| **P3 - Low** | 代码风格或文档完善 |
+> **审计日期**: 2026-02-25
+> **审计范围**: 代码质量、DRY、错误处理、数据验证、测试质量
 
 ---
 
-## P0 - Critical (影响生产功能)
+## 🔴 高优先级 (P0) - 需立即修复
 
-### 1. OddsPortalEngine 实现
-**文件**: `src/infrastructure/merger/GoldenDataMerger.py:480`
-**TODO**: `# TODO: [Genesis.SmokeTest] Create OddsPortalEngine`
-**状态**: L3 数据采集暂不可用
-**影响**: 无法通过 GoldenDataMerger 完成 L3 赔率数据采集
-**解决方案**:
-- 创建 `src/infrastructure/engines/match_engine/oddsportal/oddsportal_engine.py`
-- 继承 `BaseHarvestEngine` 并实现 `harvest_match()` 方法
-- 集成 NetworkShield 代理管理
-- 临时方案: 使用 QuantHarvester.js 进行 L3 采集
+### 1. DRY 违规: 数据库连接代码分散
 
-**预估工作量**: 4-6 小时
+**问题**: 8 个文件中重复实现数据库连接逻辑
 
----
-
-## P1 - High (重要功能缺失)
-
-### 2. crawler_service.py NetworkShield 重构
-**文件**: `src/services/crawler_service.py:40`
-**TODO**: `# TODO: [Genesis.SmokeTest] Replace with NetworkGuardian`
-**状态**: 使用已归档的 ProxyHealthChecker
-**影响**: 功能正常但依赖遗留代码
-**解决方案**:
-- 替换 `ProxyHealthChecker` 为 `NetworkGuardian`
-- 更新代理获取逻辑: `get_next_healthy_proxy(session_id)`
-- 更新失败上报逻辑: `mark_proxy_failed(port, reason)`
-
-**预估工作量**: 2-3 小时
-
----
-
-### 3. self_healing.py NetworkShield 重构
-**文件**: `src/core/self_healing.py:35`
-**TODO**: `# TODO: [Genesis.SmokeTest] Replace with NetworkGuardian`
-**状态**: 使用已归档的 ProxyManager
-**影响**: 功能正常但依赖遗留代码
-**解决方案**:
-- 替换 `ProxyManager` 为 `NetworkGuardian`
-- 更新 API 调用以匹配 NetworkGuardian 接口
-- 移除 `get_proxy_manager()` 单例模式
-
-**预估工作量**: 2-3 小时
-
----
-
-## P2 - Medium (改进型优化)
-
-### 4. 代码质量优化
-**影响范围**: `src/api/models/`, `src/infrastructure/`
-**问题**:
-- RUF002: Docstring 包含全角标点符号
-- COM812: 缺少尾部逗号
-- TRY300: 可优化 try/except 结构
-
-**解决方案**:
-```bash
-ruff check src/ --select=RUF002,COM812,TRY300 --fix
+```
+scripts/ops/v171_live_fire.js
+scripts/ops/v171_live_harvest.js
+scripts/ops/v171_mass_harvest.js
+scripts/ops/v171_production_harvest.js
+scripts/ops/v171_quick_harvest.js
+scripts/ops/v171_real_fire.js
+scripts/ops/v171_real_url_extractor.js
+scripts/ops/v171_scheduler.js
 ```
 
-**预估工作量**: 30 分钟
+**影响**:
+- 修改数据库配置需要改 8 个文件
+- 容易出现不一致
+- 违反 DRY 原则
+
+**建议**:
+- 统一使用 `config/database.js` 模块
+- 创建 `getDbConnection()` 工厂函数
 
 ---
 
-## P3 - Low (文档完善)
+### 2. DRY 违规: URL 提取器双版本
 
-### 5. API 文档完善
-**状态**: 大部分公共方法缺少 Google Style Docstring
-**文件**:
-- `src/infrastructure/engines/match_engine/base/base_harvest_engine.py`
-- `src/infrastructure/engines/match_engine/shared/network_guardian.py`
-- `src/infrastructure/engines/match_engine/fotmob/fotmob_engine.py`
-- `src/infrastructure/merger/GoldenDataMerger.py`
+**问题**: Node.js 和 Python 双版本实现相同功能
 
-**解决方案**:
-- 为所有公共方法添加 Google Style Docstring
-- 包含 Args, Returns, Raises, Examples
+```
+scripts/ops/v171_real_url_extractor.js  (Node.js)
+scripts/ops/v171_real_url_extractor.py  (Python)
+```
 
-**预估工作量**: 2-3 小时
+**影响**:
+- 维护成本翻倍
+- 行为可能不一致
 
----
-
-## 已解决项 (Resolved)
-
-### ✅ 1. Import 路径修复
-**日期**: 2026-02-03
-**文件**: 6 个文件
-**解决**:
-- `src.utils.semantic_matcher`: 修复 LevenshteinMatcher 导入
-- `src.collectors.market_data_engine`: 修复 prometheus_metrics 导入
-- `src.api.services.harvester_service`: 修复 circuit_breaker 导入
-- `src.infrastructure.engines.match_engine.base`: 修复 shared 导入路径
-
-### ✅ 2. 遗留代码归档
-**日期**: 2026-02-03
-**归档位置**: `archive/legacy/src/`
-**归档数量**: 23 个文件 + 3 个目录
-**脚本**: `scripts/ops/genesis_cleanup.sh`
-
-### ✅ 3. 数据库表创建
-**日期**: 2026-02-03
-**表**: `metrics_multi_source_data`
-**脚本**: `scripts/sql/v55_0_multi_source_metrics.sql`
+**建议**:
+- 保留 Node.js 版本 (与收割流程一致)
+- Python 版本标记为废弃
 
 ---
 
-## 下一步计划
+### 3. 错误处理: 缺少重试策略
 
-1. **Week 1**: 完成 OddsPortalEngine 实现 (P0)
-2. **Week 2**: 完成 crawler_service.py 和 self_healing.py 重构 (P1)
-3. **Week 3**: 代码质量优化和文档完善 (P2-P3)
+**问题**: 所有 catch 块只打印日志，无重试
+
+```javascript
+// 当前实现
+catch (e) {
+    console.error('❌ FATAL ERROR:', e.message);
+    // 无重试!
+}
+```
+
+**影响**:
+- 网络抖动导致整个流程失败
+- 需要手动重启
+
+**建议**:
+- 实现 `withRetry(fn, maxRetries, delay)` 包装器
+- 区分可重试错误和不可重试错误
 
 ---
 
-**最后更新**: 2026-02-03
-**负责人**: [Genesis.ProductionFreeze]
+## 🟠 中优先级 (P1) - 本周修复
+
+### 4. 错误处理: 缺少 Timeout
+
+**问题**: 异步操作没有超时保护
+
+```javascript
+// 当前实现 (无超时)
+await this.client.connect();
+await page.goto(url);
+```
+
+**影响**:
+- 挂起风险
+- 资源泄漏
+
+**建议**:
+- 所有网络操作添加 timeout
+- 使用 `Promise.race([op, timeout(ms)])`
+
+---
+
+### 5. 数据验证: 缺少 Schema 校验
+
+**问题**: 网络数据直接写入数据库，无校验
+
+```javascript
+// 当前实现 (裸奔)
+await client.query(`
+    INSERT INTO predictions (...)
+    VALUES ($1, $2, ...)
+`, [match_id, result, confidence]);  // 无校验!
+```
+
+**影响**:
+- 脏数据风险
+- 类型不匹配导致运行时错误
+
+**建议**:
+- 创建 `PredictionSchema` 使用 Zod/Joi
+- 写入前验证: `validatePrediction(data)`
+
+---
+
+### 6. 函数复杂度: 超大文件
+
+**问题**: 部分文件过大，难以维护
+
+| 文件 | 行数 | 风险 |
+|------|------|------|
+| v171_scheduler.js | 805 | 高 |
+| v171_mass_harvest.js | 705 | 高 |
+| QuantHarvester.js | 595 | 中 |
+
+**影响**:
+- 难以理解
+- 测试困难
+- 容易引入 Bug
+
+**建议**:
+- 拆分为多个小模块
+- 单一职责原则
+
+---
+
+## 🟡 低优先级 (P2) - 下周修复
+
+### 7. 测试质量: Mock 机制不完善
+
+**问题**: 测试覆盖率虽高，但 Mock 使用有限
+
+```
+tests/test_v171_cpp_bridge.py: 10 个 Mock
+tests/test_v171_integration.py: 12 个 Mock
+```
+
+**影响**:
+- 集成测试可能依赖真实环境
+- CI/CD 不稳定
+
+**建议**:
+- 所有外部依赖 Mock
+- 使用 fixture 隔离测试数据
+
+---
+
+### 8. 环境变量: 分散读取
+
+**问题**: 环境变量读取点分散在 8 个文件
+
+```
+v171_live_fire.js: 5 处
+v171_mass_harvest.js: 8 处
+...
+```
+
+**影响**:
+- 配置难以追踪
+- 环境不一致风险
+
+**建议**:
+- 集中在 `config/database.js`
+- 启动时验证必需变量
+
+---
+
+## 📊 技术债务汇总
+
+| 优先级 | 问题数 | 预计工时 |
+|--------|--------|----------|
+| P0 (高) | 3 | 16h |
+| P1 (中) | 3 | 12h |
+| P2 (低) | 2 | 8h |
+| **总计** | **8** | **36h** |
+
+---
+
+## 🎯 需重构的 3 个病灶文件
+
+### 1. scripts/ops/v171_mass_harvest.js (705 行)
+
+**问题**:
+- 文件过大
+- 数据库连接重复
+- 错误处理不完善
+
+**重构方向**:
+- 拆分为: `HarvestOrchestrator.js`, `HarvestRepository.js`
+- 使用 `config/database.js`
+- 添加重试策略
+
+---
+
+### 2. scripts/ops/v171_scheduler.js (805 行)
+
+**问题**:
+- 最大文件
+- 包含调度、收割、数据库逻辑
+
+**重构方向**:
+- 拆分为: `Scheduler.js`, `TaskQueue.js`, `HealthChecker.js`
+- 单一职责
+
+---
+
+### 3. src/infrastructure/engines/QuantHarvester.js (595 行)
+
+**问题**:
+- 核心引擎复杂度高
+- 缺少超时控制
+
+**重构方向**:
+- 提取: `PageNavigator.js`, `DataExtractor.js`, `ProxyManager.js`
+- 所有网络操作添加 timeout
+
+---
+
+## 📋 重构建议方案
+
+### 第一阶段 (P0): 统一数据库连接 (4h)
+
+```javascript
+// 创建 scripts/ops/lib/db.js
+const { DatabaseConfig } = require('../../config/database');
+
+async function getDbConnection() {
+    const { Client } = require('pg');
+    const client = new Client({
+        host: DatabaseConfig.host,
+        port: DatabaseConfig.port,
+        database: DatabaseConfig.database,
+        user: DatabaseConfig.user,
+        password: DatabaseConfig.password
+    });
+    await client.connect();
+    return client;
+}
+
+module.exports = { getDbConnection };
+```
+
+### 第二阶段 (P0): 实现重试包装器 (4h)
+
+```javascript
+// 创建 scripts/ops/lib/retry.js
+async function withRetry(fn, maxRetries = 3, delay = 1000) {
+    let lastError;
+    for (let i = 0; i < maxRetries; i++) {
+        try {
+            return await fn();
+        } catch (e) {
+            lastError = e;
+            if (i < maxRetries - 1) {
+                await new Promise(r => setTimeout(r, delay * (i + 1)));
+            }
+        }
+    }
+    throw lastError;
+}
+```
+
+### 第三阶段 (P1): 添加超时包装器 (2h)
+
+```javascript
+// 创建 scripts/ops/lib/timeout.js
+function withTimeout(promise, ms) {
+    return Promise.race([
+        promise,
+        new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('Timeout')), ms)
+        )
+    ]);
+}
+```
+
+---
+
+*最后更新: 2026-02-25*
