@@ -12,27 +12,17 @@
     }
   },
   "permissions": {
-    "allowedTools": [
-      "Read(**/*.{js,ts,json,md,py,yml,yaml})",
-      "Edit(**/*.{js,ts,py,json,md})",
-      "Bash(python:*scripts/*)",
-      "Bash(python:*src/*)",
-      "Bash(make:*)",
-      "Bash(git:*)",
-      "Bash(docker-compose:*)",
-      "Bash(docker:*ps)",
-      "Bash(docker:*logs)",
-      "Bash(curl:*localhost*)",
-      "Bash(ls:*)",
-      "Bash(find:*.py)",
-      "Bash(grep:*.py)",
-      "Bash(head:*config*)",
-      "Bash(tail:*log*)"
-    ],
-    "deniedTools": [
-      "Bash(rm -rf:*)",
-      "Edit(**/secrets.json)",
-      "Edit(**/.env*)"
+    "allow": [
+      "Bash(*)",
+      "Read(*)",
+      "Write(*)",
+      "Edit(*)",
+      "Glob(*)",
+      "Grep(*)",
+      "WebFetch(*)",
+      "WebSearch(*)",
+      "Task(*)",
+      "NotebookEdit(*)"
     ]
   },
   "project": {

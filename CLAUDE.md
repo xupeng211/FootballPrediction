@@ -51,10 +51,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working in this
 
 | 角色 | 推荐阅读 | 预计时间 |
 |------|----------|----------|
-| **新开发者** | [docs/onboarding.md](docs/onboarding.md) → [快速开始](#-快速开始) | 30 分钟 |
-| **数据采集工程师** | [数据采集系统](#-数据采集系统) + [QuantHarvester](#-quantharvester-v170000) + [NetworkShield](#-networkshield-v110-工业级代理管理) | 60 分钟 |
-| **机器学习工程师** | [ML 引擎](#核心模块) + [特征工程](#核心模块) | 60 分钟 |
-| **运维工程师** | [Docker 部署](#docker-容器化部署) + [环境检测](#️-环境检测系统) | 30 分钟 |
+| **新开发者** | [快速开始](#-快速开始) → [开发指南](#-开发指南) | 30 分钟 |
+| **数据采集工程师** | [QuantHarvester](#-quantharvester-v171001---integrated-harvester) + [NetworkShield](#-networkshield-v110---工业级代理管理) + [Match Engine](#-match-engine---python-基础收割引擎) | 60 分钟 |
+| **机器学习工程师** | [ML引擎架构](#ml-引擎架构训练-vs-推理分离) + [核心模块](#-核心模块) | 60 分钟 |
+| **运维工程师** | [Docker 部署](#-docker-容器化部署) + [环境检测](#️-环境检测系统) | 30 分钟 |
 | **JavaScript 工具** | [JavaScript 运维工具文档](docs/CLAUDE_JS_TOOLS.md) | 45 分钟 |
 
 ### 按任务查找
@@ -75,39 +75,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working in this
 
 ---
 
-## ⚡ 超快速索引（15 个核心命令）
-
-```bash
-# 开发容器（推荐）
-make dev-up              # 启动容器化开发环境
-make dev-shell           # 进入开发容器
-make dev-down            # 停止开发容器
-make dev-harvest         # 在容器中运行 QuantHarvester
-
-# 环境管理
-make up                  # 启动核心服务 (db + redis)
-make verify              # lint + test-unit + security
-make ps                  # 查看容器状态
-
-# 数据采集（Python）
-python main.py --source fotmob --mode single --limit 10    # FotMob API
-python main.py --source oddsportal --mode single --limit 10  # OddsPortal RPA
-python main.py --mode cruise                                # 24h 巡航
-python main.py --test-proxy                                 # 测试代理
-
-# 数据采集（一键入口）
-python production_fire.py                                   # 一键数据采集
-
-# 数据采集（JavaScript）
-node src/infrastructure/engines/QuantHarvester.js           # V170.000 收割
-
-# 开发和测试
-make test-unit           # 单元测试
-make db-shell            # PostgreSQL Shell
-```
-
----
-
 ## 📋 项目概览
 
 **FootballPrediction** - 基于 XGBoost 3.0+ 的专业足球比赛预测系统
@@ -119,13 +86,13 @@ make db-shell            # PostgreSQL Shell
 | 属性 | 值 |
 |------|-----|
 | **状态** | ✅ Production Ready |
-| **QuantHarvester** | V170.000 (Genesis.NetworkShield) |
-| **NetworkShield** | V1.1.0 (工业级代理管理) |
+| **QuantHarvester** | V171.001 (Integrated Harvester + Multi-Model Consensus) |
+| **NetworkShield** | V1.1.0 (工业级代理管理, 22节点) |
 | **命令中心** | V144.9 (Multi-Source Command Center) |
 | **核心模型** | V26.8 (联赛专项) |
 | **特征提取** | V41.380 (GoldenExtractor) |
 | **代码质量** | V106.0 (Ruff - line-length: 100) |
-| **基线准确率** | 56% (真赛前) |
+| **基线准确率** | 56% (真赛前) / 62%+ (V171 目标) |
 | **推理延迟** | <100ms |
 
 ### 版本兼容性矩阵
@@ -240,14 +207,76 @@ export DB_NAME=football_db  # 必须为 football_db
 
 ## 🏗️ 系统架构
 
-### 数据流
+### 数据流水线（三层架构）
 
 ```
-数据采集层 (FotMob API + OddsPortal RPA + QuantHarvester)
-    → 特征工程层 (GoldenExtractor V41.380, 6000+ 维特征)
-    → 数据持久层 (PostgreSQL: matches + metrics_multi_source_data)
-    → 预测引擎层 (ModelDispatcher V26.8 → XGBoost)
+┌─────────────────────────────────────────────────────────────────────┐
+│  L1: FotMob API - 基础数据层                                         │
+│  • 比赛基础信息: league, season, teams, match_time                   │
+│  • 实时统计数据: xG, shots, possession                               │
+└─────────────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────────────┐
+│  L2: URL Harvest - 链接收割层 (Python Match Engine)                  │
+│  • 自动导航联赛页面，智能提取比赛详情链接                              │
+│  • NetworkShield 代理池 + 熔断器模式                                  │
+└─────────────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────────────┐
+│  L3: RPA Extraction - 赔率提取层 (QuantHarvester.js)                 │
+│  • 双模提取: 网络拦截（首选）→ DOM 抓取（回退）                        │
+│  • MultiModelValidator: 3模型并发 + 2/3一致性验证                     │
+│  • FundamentalHarvester: 首发阵容 + 伤停名单 + 球队身价               │
+└─────────────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────────────┐
+│  PostgreSQL 持久层                                                   │
+│  matches 表 + metrics_multi_source_data 表 + match_odds_intelligence │
+└─────────────────────────────────────────────────────────────────────┘
 ```
+
+### ML 引擎架构（训练 vs 推理分离）
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                        ML Engine Architecture                        │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│  训练层 (src/ml/training/)          推理层 (src/ml/inference/)       │
+│  ┌──────────────────────┐          ┌──────────────────────┐        │
+│  │ V17MLEngine          │          │ ModelDispatcher      │        │
+│  │ • 数据集生成          │          │ • 联赛专项模型路由     │        │
+│  │ • 特征工程            │          │ • XGBoost 预测        │        │
+│  │ • 模型训练            │          │ • MultiModelValidator │        │
+│  └──────────────────────┘          └──────────────────────┘        │
+│           ↓                                   ↓                      │
+│  ┌──────────────────────┐          ┌──────────────────────┐        │
+│  │ model_zoo/           │◀─────────│ Predictor            │        │
+│  │ • league_specific/   │  模型加载 │ • 特征适配            │        │
+│  │ • generic/           │          │ • 概率输出            │        │
+│  └──────────────────────┘          └──────────────────────┘        │
+│                                                                      │
+│  特征工程层 (src/ml/feature_engine/)                                 │
+│  ┌──────────────────────────────────────────────────────────────┐   │
+│  │ GoldenExtractor V41.380 (6000+维特征)                         │   │
+│  │ • 市场价值特征: 球队总身价、身价差值                            │   │
+│  │ • 缺阵特征: 伤停球员、身价影响                                  │   │
+│  │ • 评分特征: 球队评分、球员评分                                  │   │
+│  └──────────────────────────────────────────────────────────────┘   │
+│                                                                      │
+│  向后兼容层: src/ml/engine.py - ModelDispatcher (保持旧版API)        │
+│                                                                      │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+### 核心数据库表
+
+| 表名 | 用途 | 关键字段 |
+|------|------|----------|
+| `matches` | 比赛主表 | match_id, home_team, away_team, technical_features, golden_features |
+| `metrics_multi_source_data` | 多源数据 | match_id, source_name, odds_data, integrity_score |
+| `match_odds_intelligence` | 赔率智能 | match_id, pinnacle_opening, pinnacle_closing |
+| `match_lineups` | 首发阵容 | match_id, home_lineup, away_lineup, unavailable_list |
 
 ### 核心目录结构
 
@@ -256,16 +285,29 @@ FootballPrediction/
 ├── src/                              # 生产代码
 │   ├── api/                          # API 层
 │   │   ├── collectors/               # 数据采集器 (base_extractor, fotmob_core, odds_production_extractor)
-│   │   ├── models/                   # 数据模型
-│   │   └── services/                 # 业务服务层 (harvester_service)
+│   │   ├── models/                   # 数据模型 (schemas.py V105.0 Pydantic)
+│   │   └── services/                 # 业务服务层 (harvester_service, 队列驱动)
 │   ├── infrastructure/               # 基础设施层
 │   │   ├── engines/                  # QuantHarvester.js + match_engine/
+│   │   │   └── match_engine/         # Python 基础收割引擎
+│   │   │       ├── base/             # BaseHarvestEngine 抽象类
+│   │   │       ├── fotmob/           # FotMobEngine 数据采集
+│   │   │       ├── discovery/        # DynamicDiscoveryEngine 动态发现
+│   │   │       └── shared/           # CircuitBreaker + NetworkGuardian
 │   │   └── network/                  # NetworkShield 代理管理
-│   ├── ml/                           # 机器学习 (engine.py, processors/)
+│   ├── ml/                           # 机器学习
+│   │   ├── training/                 # 训练引擎 (v17_engine.py)
+│   │   ├── inference/                # 推理引擎 (model_dispatcher.py, predictor.py)
+│   │   ├── feature_engine/           # 特征工程处理器
+│   │   ├── dataset/                  # 数据集生成和标签管理
+│   │   └── engine.py                 # 向后兼容层 (ModelDispatcher)
 │   └── config/                       # 配置模块 (league/, utils/)
 ├── config/                           # 配置文件
-│   ├── active_registry.json          # NetworkShield 节点配置
-│   └── schema_map.yaml               # Schema 韧性配置
+│   ├── active_registry.json          # NetworkShield 节点配置 (22节点)
+│   └── schema_map.yaml               # Schema 韧性配置 (数据源 API 路径映射)
+├── model_zoo/                        # 模型存储 (禁止手动修改)
+│   ├── league_specific/              # 联赛专项模型
+│   └── generic/                      # 通用模型
 ├── tests/                            # 测试套件
 ├── scripts/ops/                      # 运维工具
 ├── main.py                           # V144.7 统一命令入口
@@ -274,11 +316,22 @@ FootballPrediction/
 └── ruff.toml                         # 代码质量配置 (line-length: 100)
 ```
 
+### 关键架构模式
+
+| 模式 | 实现位置 | 用途 |
+|------|----------|------|
+| **熔断器模式** | `match_engine/shared/circuit_breaker.py` | 连续失败2次后自动屏蔽，15分钟冷却恢复 |
+| **队列驱动架构** | `harvester_service.py` | match_search_queue，生产者-消费者模式 |
+| **Session 绑定** | `NetworkShield` | 一个会话=一个IP，确保请求一致性 |
+| **双模提取** | `QuantHarvester.js` | 网络拦截（首选）→ 20秒超时后DOM抓取（回退） |
+| **多模型共识** | `MultiModelValidator` | 3模型并发 + 2/3一致性验证 |
+| **PythonBridge** | `src/infrastructure/engines/` | Node.js ↔ Python 无缝桥接 |
+
 ---
 
-## 🧬 QuantHarvester V170.000 - Genesis.NetworkShield
+## 🧬 QuantHarvester V171.001 - Integrated Harvester
 
-**QuantHarvester V170.000** 是最新的 JavaScript 数据收割引擎，集成 **NetworkShield V1.1.0** 工业级代理管理系统，专门用于从 OddsPortal 采集高价值赔率数据。
+**QuantHarvester V171.001** 是最新的 JavaScript 数据收割引擎，集成 **NetworkShield V1.1.0** 工业级代理管理系统和 **MultiModelValidator** 多模型共识验证，专门用于从 OddsPortal 采集高价值赔率数据。
 
 ### 核心特性
 
@@ -286,7 +339,10 @@ FootballPrediction/
 |------|------|
 | **双模提取** | 网络拦截（首选）→ 20秒超时后 DOM 抓取（回退） |
 | **NetworkShield 集成** | 22节点工业级代理管理，Session 绑定 |
-| **跨语言同步** | Python + Node.js 状态共享 |
+| **MultiModelValidator** | 3 模型并发 + 2/3 一致性验证 |
+| **FundamentalHarvester** | 首发阵容 + 伤停名单 + 球队身价 |
+| **PythonBridge** | Node.js ↔ Python 无缝桥接 |
+| **GoldenDataMerger** | L1/L2/L3 数据融合 + 异常检测 |
 
 ### 使用方式
 
@@ -296,6 +352,9 @@ node src/infrastructure/engines/QuantHarvester.js
 
 # 禁用代理
 PROXY_ENABLED=false node src/infrastructure/engines/QuantHarvester.js
+
+# V171 一键部署验证
+./scripts/ops/verify_deployment.sh && node scripts/ops/v171_real_fire.js
 ```
 
 ---
@@ -332,17 +391,17 @@ proxy = await shield.get_next_healthy_proxy(session_id='my-session')
 
 ## ⚙️ Match Engine - Python 基础收割引擎
 
-**Match Engine** 是 Python 基础收割引擎架构，提供统一的数据采集基础框架。
+**Match Engine** 是 Python 基础收割引擎架构，位于 `src/infrastructure/engines/match_engine/`，提供统一的数据采集基础框架。
 
 ### 核心组件
 
 | 组件 | 文件路径 | 功能 |
 |------|----------|------|
-| **BaseHarvestEngine** | `base/base_harvest_engine.py` | 基础收割引擎抽象类 |
-| **CircuitBreaker** | `shared/circuit_breaker.py` | 熔断器模式实现 |
-| **NetworkGuardian** | `shared/network_guardian.py` | NetworkShield 适配器 |
-| **DynamicDiscoveryEngine** | `discovery/dynamic_discovery_engine.py` | 动态比赛发现引擎 |
-| **FotMobEngine** | `fotmob/fotmob_engine.py` | FotMob 数据采集 |
+| **BaseHarvestEngine** | `match_engine/base/base_harvest_engine.py` | 基础收割引擎抽象类 |
+| **CircuitBreaker** | `match_engine/shared/circuit_breaker.py` | 熔断器模式实现 |
+| **NetworkGuardian** | `match_engine/shared/network_guardian.py` | NetworkShield 适配器 |
+| **DynamicDiscoveryEngine** | `match_engine/discovery/dynamic_discovery_engine.py` | 动态比赛发现引擎 |
+| **FotMobEngine** | `match_engine/fotmob/fotmob_engine.py` | FotMob 数据采集 |
 
 ### 使用方式
 
@@ -357,45 +416,92 @@ matches = await engine.discover_matches(league_id=47, season="2324")
 
 ## 🔧 开发指南
 
-### 🚨 核心约束
+### 🚨 核心约束（红线）
 
-| 约束 | 说明 |
-|------|------|
-| **单数据库准则** | `DB_NAME` 必须为 `football_db` |
-| **禁止绕过 FotMobCoreCollector** | 所有 FotMob 采集必须使用指定方法 |
-| **禁止直接修改 model_zoo/** | 模型文件只能通过重新训练更新 |
-| **禁止创建版本类文件** | 不创建 `*_v2.py`, `*_new.py`, `*_backup.py` |
-
-### 代码质量规范
-
-**提交前必须运行**: `make verify` (lint + test-unit + security)
-
-**代码格式化**: `ruff.toml` (line-length: **100**) 优先级高于 `pyproject.toml` (line-length: 120)
-
-**推荐的代码质量工作流**：
-```bash
-ruff format src/ tests/    # 格式化代码
-ruff check src/ tests/     # Lint 检查
-mypy src/                  # 类型检查
-bandit -r src/             # 安全扫描
-```
+| 约束 | 说明 | 违反后果 |
+|------|------|----------|
+| **单数据库准则** | `DB_NAME=football_db`，禁止创建其他数据库 | 连接失败 |
+| **禁止绕过 FotMobCoreCollector** | 所有 FotMob 采集必须走 `src/api/collectors/fotmob_core.py` | 数据不一致 |
+| **禁止修改 model_zoo/** | 模型只能通过训练流程更新 | 模型损坏 |
+| **禁止版本类文件** | 不创建 `*_v2.py`、`*_new.py`、`*_backup.py`，直接修改原文件 | 代码腐烂 |
+| **禁止分支创建** | 除非用户明确要求，所有变更直接提交 main 分支 | 工作流混乱 |
+| **禁止创建 Git Tag** | Tag 由用户手动输入指令创建 | 版本混乱 |
+| **容器化优先** | 所有开发、测试、依赖安装必须在 Docker 容器内 | 污染宿主机 |
 
 ### 配置文件优先级
 
 | 配置文件 | 作用 | 优先级 |
 |----------|------|--------|
-| `ruff.toml` | 代码质量配置 (line-length: 100) | **最高** |
+| `ruff.toml` | 代码质量配置 (**line-length: 100**) | **最高** |
 | `config/active_registry.json` | NetworkShield 22 节点配置 | 高 |
 | `config/schema_map.yaml` | Schema 韧性配置（数据源 API 路径映射） | 高 |
 | `.env` | 环境变量（数据库、Redis 连接） | 高 |
-| `pyproject.toml` | 项目元数据和依赖 | 备用 |
+| `pyproject.toml` | 项目元数据和依赖（line-length: 120，被 ruff.toml 覆盖） | 备用 |
+
+### 代码质量规范
+
+**提交前必须运行**: `make verify` (lint + test-unit + security)
+
+**关键规则**: `ruff.toml` (line-length: **100**) 优先级高于 `pyproject.toml` (line-length: 120)
+
+```bash
+# 完整质量检查流程
+ruff format src/ tests/    # 格式化代码
+ruff check src/ tests/     # Lint 检查
+mypy src/                  # 类型检查
+bandit -r src/             # 安全扫描
+make verify                # 提交前完整验证
+```
+
+### 测试运行方法
+
+```bash
+# 日常快速反馈
+make test-unit
+
+# 单文件测试
+pytest tests/unit/test_config.py -v
+
+# 单用例测试
+pytest tests/unit/test_config.py::TestConfig::test_database_config -v
+
+# 关键词匹配
+pytest -k "test_database" -v
+
+# 带覆盖率报告
+pytest tests/ --cov=src --cov-report=term-missing
+
+# 调试模式（显示打印 + 失败时进入调试器）
+pytest tests/unit/test_config.py -v -s --pdb
+```
+
+### 环境变量配置
+
+```bash
+# 最小配置（复制模板后编辑）
+cp .env.example .env
+
+# 关键变量
+DB_HOST=db                  # Docker 环境
+DB_HOST=172.25.16.1         # WSL2 环境
+DB_NAME=football_db         # 必须为 football_db（禁止修改）
+DB_PASSWORD=your_password   # 必需设置
+```
 
 ### Git 工作流
 
 ```bash
-git checkout -b feature/your-feature-name   # 创建功能分支
+# 检查当前分支（应为 main）
+git status
+
+# 提交流程
 make verify                                  # 提交前质量检查
+git add <specific_files>                     # 添加指定文件
 git commit -m "feat: 添加 XXX 功能"          # 提交 (feat|fix|docs|refactor|test|chore)
+
+# 禁止操作
+# ❌ git checkout -b feature/xxx  （除非用户明确要求）
+# ❌ git tag v1.0.0               （Tag 由用户手动创建）
 ```
 
 ---
@@ -414,22 +520,67 @@ python main.py --test-proxy                                 # 测试代理
 ### production_fire.py - 一键数据采集
 
 ```bash
-python production_fire.py    # 一键数据采集入口
+python production_fire.py    # 一键数据采集入口（GoldenDataMerger + NetworkShield）
 ```
 
-### ModelDispatcher (V26.8)
+### ML 预测接口 (V26.8)
 
 ```python
+# 推理入口（推荐）
 from src.ml.engine import ModelDispatcher
+
 dispatcher = ModelDispatcher()
-prediction = dispatcher.predict(home_team="Arsenal", away_team="Chelsea", league_name="Premier League")
+prediction = dispatcher.predict(
+    home_team="Arsenal",
+    away_team="Chelsea",
+    league_name="Premier League"
+)
+# 返回: {'home_win_prob': 0.45, 'draw_prob': 0.28, 'away_win_prob': 0.27}
 ```
 
-### GoldenExtractor (V41.380) - 三大黄金特征
+### ML 训练工作流
 
-- **市场价值特征**: 球队总身价、身价差值
-- **缺阵特征**: 伤停球员、身价影响
-- **评分特征**: 球队评分、球员评分
+```python
+# 训练入口
+from src.ml.training.v17_engine import V17MLEngine
+
+engine = V17MLEngine()
+# 1. 数据集生成
+dataset = engine.generate_dataset(league_filter="Premier League")
+# 2. 特征工程
+features = engine.extract_features(dataset)
+# 3. 模型训练
+model = engine.train(features, target="result")
+# 4. 模型保存到 model_zoo/league_specific/
+```
+
+### 特征工程 - V41.500 自动化特征工厂
+
+```python
+from src.processors.feature_factory import get_feature_factory
+
+factory = get_feature_factory()
+features = factory.process_match(match_data)
+# 输出特征类别：
+# - 疲劳度: home_rest_days, away_is_busy_week, diff_rest_days
+# - 缺阵: home_unavailable_total_count, home_unavailable_star_count
+# - 首发战力: home_starter_avg_rating, home_missing_stars_count
+# - 赔率动向: home_drop_ratio, total_movement
+# - 联赛等级: is_top_5_league
+```
+
+### 配置文件更新（数据源变动时）
+
+当数据源 API 结构变化时，只需更新 `config/schema_map.yaml`，无需修改代码：
+
+```yaml
+# 示例：添加新的数据源路径
+fotmob:
+  match_data:
+    path: "data.match"
+    home_team: "teams.home.name"
+    unavailable: "teams.home.unavailable_list"
+```
 
 ---
 
@@ -465,13 +616,19 @@ prediction = dispatcher.predict(home_team="Arsenal", away_team="Chelsea", league
 
 ## 🧪 测试指南
 
-| 场景 | 命令 |
-|------|------|
-| **快速反馈** | `make test-unit` (2 个核心测试文件) |
-| **完整单元测试** | `pytest tests/unit/ -v` (80+ 文件) |
-| **提交前验证** | `make verify` (lint + test-unit + security) |
-| **全量测试** | `pytest tests/ -v` |
-| **JavaScript 测试** | `cd scripts/ops && npm test` |
+```bash
+# 快速反馈（推荐日常使用）
+make test-unit
+
+# 提交前验证
+make verify
+
+# V41.500 端到端测试
+pytest tests/ai/test_v41_500_pipeline.py -v
+
+# JavaScript 测试
+cd scripts/ops && npm test
+```
 
 ---
 
@@ -482,11 +639,13 @@ prediction = dispatcher.predict(home_team="Arsenal", away_team="Chelsea", league
 | 错误 | 原因 | 解决方案 |
 |------|------|----------|
 | `database "football_db" does not exist` | 数据库未初始化 | `make up` |
-| `Timeout 30000ms exceeded` | 网络慢 | 检查代理配置 |
-| `HTTP 429/403` | IP 限流/封禁 | 等待 6-24h 或启用 Ghost Protocol |
 | `ConnectionRefusedError: 5432` | 数据库未启动 | `make up` |
 | `ModuleNotFoundError: No module named 'src'` | Python 路径问题 | 在项目根目录运行 |
-| `NetworkShield: No healthy nodes` | 所有节点不可用 | 运行健康检查 |
+| `Timeout 30000ms exceeded` | 网络慢/代理问题 | 检查代理配置或运行 `python main.py --test-proxy` |
+| `HTTP 429/403` | IP 限流/封禁 | 等待 6-24h 或启用 NetworkShield 代理轮换 |
+| `NetworkShield: No healthy nodes` | 所有代理节点不可用 | 检查 `config/active_registry.json` 或运行健康检查 |
+| `Playwright browser not found` | 浏览器未安装 | `playwright install chromium` |
+| `WSL2 无法连接 Docker` | 网桥 IP 问题 | `ping 172.25.16.1` 或 `wsl --shutdown` 重启 |
 
 ---
 
@@ -518,37 +677,29 @@ make deploy              # 部署到生产
 
 ## 🌐 版本号体系
 
-本项目采用**多版本号体系**，各组件独立演进：
+本项目采用**多版本号体系**，各组件独立演进，互不影响：
 
-| 版本前缀 | 组件范围 | 当前版本 |
-|----------|----------|----------|
-| `V170.x` | QuantHarvester + NetworkShield | V170.000 |
-| `V144.x` | 多数据源命令中心 | V144.9 |
-| `V26.x` | ML 特征引擎和模型 | V26.8 |
-| `V41.x` | 数据采集运维工具 | V41.832 |
-| `V1.x` | NetworkShield 代理管理 | V1.1.0 |
+| 版本前缀 | 组件范围 | 当前版本 | 主要职责 |
+|----------|----------|----------|----------|
+| `V171.x` | QuantHarvester + Multi-Model Consensus | V171.001 | JavaScript 数据收割引擎 + 多模型共识验证 |
+| `V144.x` | 多数据源命令中心 | V144.9 | main.py 统一命令入口 |
+| `V41.x` | 数据采集运维工具 | V41.832 | GoldenExtractor 特征提取 + 自动化特征工厂 |
+| `V26.x` | ML 特征引擎和模型 | V26.8 | ModelDispatcher + XGBoost 预测模型 |
+| `V1.x` | NetworkShield 代理管理 | V1.1.0 | 22节点工业级代理池 + 熔断器 |
 
-> **注意**: 项目版本 (`V26.7.0`) 与组件版本独立。
+> **重要**: 各组件版本独立演进，互不影响。修改 ML 模型不会影响 QuantHarvester 版本号。
 
 ---
 
 ## 📚 延伸阅读
 
-| 文档 | 内容 |
-|------|------|
-| [docs/onboarding.md](docs/onboarding.md) | 新开发者快速上手 |
-| [docs/troubleshooting.md](docs/troubleshooting.md) | 故障排除指南 |
-| [docs/CLAUDE_JS_TOOLS.md](docs/CLAUDE_JS_TOOLS.md) | JavaScript 运维工具完整参考 |
+| 文档 | 内容 | 预计阅读时间 |
+|------|------|--------------|
+| [docs/onboarding.md](docs/onboarding.md) | 新开发者快速上手指南 | 30 分钟 |
+| [docs/troubleshooting.md](docs/troubleshooting.md) | 故障排除完整指南 | 20 分钟 |
+| [docs/CLAUDE_JS_TOOLS.md](docs/CLAUDE_JS_TOOLS.md) | JavaScript 运维工具完整参考 | 45 分钟 |
+| [README.md](README.md) | 项目概览和 V171 特性介绍 | 15 分钟 |
 
 ---
 
-## 🔒 永久保留条款
-
-### 语言要求
-**请务必使用中文回复用户！**
-
-这一要求具有最高优先级，必须始终保留在文件的显眼位置。
-
----
-
-**生产状态**: Production Ready | **Python**: 3.11+ | **Node.js**: 18+
+**生产状态**: ✅ Production Ready | **Python**: 3.11+ | **Node.js**: 18+ | **最后更新**: 2026-02-24
