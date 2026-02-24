@@ -16,7 +16,14 @@
     "test": "node --test tests/*.test.js",
     "test:unit": "node --test tests/parser.test.js tests/config.test.js",
     "test:mock": "node --test tests/interceptor.test.js",
-    "test:coverage": "node --test --experimental-test-coverage tests/*.test.js"
+    "test:coverage": "node --test --experimental-test-coverage tests/*.test.js",
+    "lint": "eslint . --ext .js --ignore-pattern node_modules/",
+    "lint:fix": "eslint . --ext .js --ignore-pattern node_modules/ --fix",
+    "format": "prettier --write \"**/*.{js,json,md}\" --ignore-path .gitignore",
+    "format:check": "prettier --check \"**/*.{js,json,md}\" --ignore-path .gitignore",
+    "lint:python": "ruff check src/",
+    "format:python": "ruff format src/",
+    "qa": "npm run lint && npm run lint:python"
   },
   "dependencies": {
     "dotenv": "^16.4.5",
@@ -26,9 +33,10 @@
     "pg": "^8.17.2",
     "playwright": "^1.57.0"
   },
-  "author": "V171 Engineering Team",
-  "license": "MIT",
   "devDependencies": {
-    "jest": "^30.2.0"
-  }
+    "eslint": "^8.57.0",
+    "prettier": "^3.2.0"
+  },
+  "author": "V171 Engineering Team",
+  "license": "MIT"
 }
