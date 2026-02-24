@@ -7,6 +7,102 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [V171.001] - 2026-02-24 [Integration.Alpha]
+
+> **多模型共识验证 + 基本面数据采集 + 生产级质量审计**
+>
+> **核心成果**：
+> - **【MultiModelValidator】**：3 模型并发 + 2/3 一致性验证
+> - **【PythonBridge】**：Node.js ↔ Python 无缝桥接
+> - **【FundamentalHarvester】**：首发阵容 + 伤停名单 + 球队身价
+> - **【NetworkShield V1.1】**：22 节点代理池 + Session 绑定
+> - **【实时赔率计算】**：不再依赖 Mock 数据，置信度波动反映真实市场
+
+### Added
+
+#### 多模型验证系统
+- **MultiModelValidator**: `src/ml/inference/multi_model_validator.py`
+  - 3 模型并发预测 (v26_7_aligned + v26_8_epl + v26_8_la_liga)
+  - 2/3 一致性验证机制
+  - 实时赔率隐含概率计算
+  - 置信度聚合与输出
+  - 预测结果存储到 `predictions` 表
+
+- **PythonBridge**: `src/infrastructure/engines/bridge/PythonBridge.js`
+  - Node.js spawn Python 子进程
+  - JSON 序列化通信
+  - 超时管理 (默认 2 分钟)
+  - 环境检测与依赖验证
+
+#### 基本面数据采集
+- **FundamentalHarvester**: `src/infrastructure/engines/FundamentalHarvester.js`
+  - FotMob API 集成
+  - Python LineupCollector 调用
+  - 首发阵容提取
+  - 伤停名单提取
+  - 球队身价计算
+  - 市值差距分析
+
+#### 数据库扩展
+- **match_fundamentals 表**: 存储基本面数据
+  - 首发阵容 JSONB
+  - 伤停名单 JSONB
+  - 球队身价
+  - 市值差距
+
+#### 运维脚本
+- **verify_deployment.sh**: 一键部署验证
+  - Docker 容器状态
+  - 数据库连接
+  - 代理池可用性
+  - Python 桥接器响应
+
+- **check_daily_bets.py**: 战果看板
+  - 高置信度预测筛选
+  - 推荐级别分类 (SSR/SR/R)
+  - 联赛分组统计
+
+### Changed
+
+#### GoldenDataMerger 升级
+- 新增基本面数据加载
+- 新增异常检测分析
+- 新增预测与市场背离检测
+- MergeSummary 数据结构扩展
+
+#### QuantHarvester 升级
+- 集成 PythonBridge
+- 自动触发多模型验证
+- URL 格式更新 (/football/ 替代 /soccer/)
+
+#### 常量模块完善
+- `src/constants/football_logic.py`: 添加 HOME_WIN/DRAW/AWAY_WIN 枚举
+- `src/utils/logger.py`: 统一日志模块
+- `src/core/structured_logging.py`: 结构化日志
+
+### Fixed
+
+#### Mock 数据问题修复
+- 删除 `mock_odds_data.json`
+- MultiModelValidator 现在使用真实赔率计算概率
+- 置信度输出有真实波动 (63.6%, 54.3% 等)
+
+#### 路径问题修复
+- PythonBridge 项目根目录路径计算
+- RadarLogger 模块路径
+- logger.js 模块路径
+
+### Performance
+
+| 指标 | V170 | V171 |
+|------|------|------|
+| 预测准确率 | 48% | 62%+ (目标) |
+| 置信度输出 | 无 | 2/3 一致性 |
+| 模型数量 | 1 | 3 并发 |
+| 代理节点 | 5 | 22 |
+
+---
+
 ## [V170.000] - 2026-02-03 [Genesis.ProductionFreeze]
 
 > **生产级代码审计与架构重构**

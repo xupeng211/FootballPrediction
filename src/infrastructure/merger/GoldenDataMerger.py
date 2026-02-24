@@ -72,6 +72,12 @@ class MergeSummary:
     total_latency_ms: int = 0
     started_at: str = field(default_factory=lambda: datetime.now().isoformat())
     completed_at: str | None = None
+    # V171.000: 多模型预测结果
+    prediction_result: Dict[str, Any] | None = None
+    # V171.001: 基本面数据
+    fundamentals: Dict[str, Any] | None = None
+    # V171.001: 异常检测
+    anomaly_analysis: Dict[str, Any] | None = None
 
     @property
     def is_complete_success(self) -> bool:
@@ -578,6 +584,60 @@ class GoldenDataMerger:
             if force or self.check_l3_status(match_id) != LayerStatus.COMPLETE:
                 l3_result = await self.execute_l3(match_id, force=force)
 
+        # V171.000: 调用 MultiModelValidator 进行多模型预测
+        prediction_result = None
+        try:
+            from src.ml.inference.multi_model_validator import MultiModelValidator
+
+            validator = MultiModelValidator()
+            validation = await validator.validate_match(
+                match_id=match_id,
+                league_name=league_name
+            )
+            validator.close()
+
+            prediction_result = {
+                "final_prediction": validation.final_prediction,
+                "final_confidence": validation.final_confidence,
+                "consensus_level": validation.consensus_level.value,
+                "agreement_ratio": validation.agreement_ratio,
+                "models_count": validation.models_count,
+                "voting_breakdown": validation.voting_breakdown,
+                "recommended_bet": validation.recommended_bet,
+            }
+
+            self.logger.info(
+                f"[V171] Multi-Model Prediction: {validation.final_prediction} "
+                f"(Confidence: {validation.final_confidence:.1%}, "
+                f"Consensus: {validation.consensus_level.value})"
+            )
+
+        except Exception as e:
+            self.logger.warning(f"[V171] Multi-Model Validation failed: {e}")
+
+        # V171.001: 加载基本面数据
+        fundamentals = None
+        anomaly_analysis = None
+
+        try:
+            fundamentals = await self._load_fundamentals(match_id)
+            if fundamentals:
+                self.logger.info(f"[V171.001] Fundamentals loaded for {match_id}")
+
+                # V171.001: 执行异常检测
+                anomaly_analysis = self._analyze_anomalies(
+                    odds_data={"l1": l1_result, "l2": l2_result, "l3": l3_result},
+                    fundamentals=fundamentals,
+                    prediction=prediction_result
+                )
+
+                if anomaly_analysis.get("detected"):
+                    self.logger.warning(
+                        f"[V171.001] Anomaly detected: {anomaly_analysis.get('type', 'Unknown')}"
+                    )
+        except Exception as e:
+            self.logger.warning(f"[V171.001] Fundamentals loading failed: {e}")
+
         # 计算总延迟
         total_latency_ms = int((time.time() - start_time) * 1000)
 
@@ -588,6 +648,9 @@ class GoldenDataMerger:
             l3_result=l3_result,
             total_latency_ms=total_latency_ms,
             completed_at=datetime.now().isoformat(),
+            prediction_result=prediction_result,
+            fundamentals=fundamentals,
+            anomaly_analysis=anomaly_analysis,
         )
 
         self.logger.info(f"{'='*60}")
@@ -597,11 +660,207 @@ class GoldenDataMerger:
             self.logger.info(f"  L2: {l2_result.status.value}")
         if l3_result:
             self.logger.info(f"  L3: {l3_result.status.value}")
+        if prediction_result:
+            self.logger.info(
+                f"  Prediction: {prediction_result['final_prediction']} "
+                f"({prediction_result['final_confidence']:.1%}, "
+                f"{prediction_result['consensus_level']})"
+            )
+        if fundamentals:
+            home_missing = len(fundamentals.get("home_missing", []))
+            away_missing = len(fundamentals.get("away_missing", []))
+            mv_gap = fundamentals.get("market_value_gap", 0)
+            self.logger.info(
+                f"  Fundamentals: {home_missing}H/{away_missing}A missing, "
+                f"MV Gap: €{abs(mv_gap)/1e6:.1f}M"
+            )
+        if anomaly_analysis and anomaly_analysis.get("detected"):
+            self.logger.warning(
+                f"  ⚠️ Anomaly: {len(anomaly_analysis['anomalies'])} detected, "
+                f"confidence adjustment: {anomaly_analysis['confidence_adjustment']:.2f}"
+            )
         self.logger.info(f"  Total Latency: {total_latency_ms}ms")
         self.logger.info(f"  Success: {summary.is_complete_success}")
         self.logger.info(f"{'='*60}")
 
         return summary
+
+    # ========================================================================
+    # V171.001: FUNDAMENTALS LOADING
+    # ========================================================================
+
+    async def _load_fundamentals(self, match_id: str) -> Dict[str, Any] | None:
+        """加载基本面数据
+
+        Args:
+            match_id: 比赛 ID
+
+        Returns:
+            基本面数据字典
+        """
+        cur = self.conn.cursor()
+
+        try:
+            cur.execute("""
+                SELECT
+                    home_formation, away_formation,
+                    home_starters, away_starters,
+                    home_missing, away_missing,
+                    injuries, suspensions, market_value_gap
+                FROM match_fundamentals
+                WHERE match_id = %s
+            """, (match_id,))
+
+            row = cur.fetchone()
+            if not row:
+                return None
+
+            return {
+                "home_formation": row[0],
+                "away_formation": row[1],
+                "home_starters": row[2] or [],
+                "away_starters": row[3] or [],
+                "home_missing": row[4] or [],
+                "away_missing": row[5] or [],
+                "injuries": row[6] or [],
+                "suspensions": row[7] or [],
+                "market_value_gap": float(row[8]) if row[8] else 0.0
+            }
+
+        except Exception as e:
+            self.logger.warning(f"Failed to load fundamentals: {e}")
+            return None
+
+        finally:
+            cur.close()
+
+    def _analyze_anomalies(
+        self,
+        odds_data: Dict[str, Any],
+        fundamentals: Dict[str, Any],
+        prediction: Dict[str, Any] | None
+    ) -> Dict[str, Any]:
+        """分析赔率异常与基本面关联
+
+        检测:
+        1. 赔率剧烈波动 vs 核心球员缺阵
+        2. 模型预测与市场赔率背离
+        3. 身价差距与赔率不匹配
+
+        Args:
+            odds_data: 赔率数据
+            fundamentals: 基本面数据
+            prediction: 预测结果
+
+        Returns:
+            异常分析结果
+        """
+        anomalies = []
+        result = {"detected": False, "anomalies": [], "confidence_adjustment": 1.0}
+
+        # 1. 检查核心球员缺阵
+        home_missing = fundamentals.get("home_missing", [])
+        away_missing = fundamentals.get("away_missing", [])
+
+        key_players_home = len([p for p in home_missing if self._is_key_player(p)])
+        key_players_away = len([p for p in away_missing if self._is_key_player(p)])
+
+        if key_players_home > 0 or key_players_away > 0:
+            anomaly = {
+                "type": "KEY_PLAYER_MISSING",
+                "severity": "HIGH" if (key_players_home + key_players_away) >= 2 else "MEDIUM",
+                "details": {
+                    "home_key_missing": key_players_home,
+                    "away_key_missing": key_players_away
+                }
+            }
+            anomalies.append(anomaly)
+
+        # 2. 检查身价差距
+        mv_gap = fundamentals.get("market_value_gap", 0)
+        if abs(mv_gap) > 100_000_000:  # > 1亿欧元差距
+            anomaly = {
+                "type": "HUGE_MARKET_VALUE_GAP",
+                "severity": "MEDIUM",
+                "details": {
+                    "gap_eur": mv_gap,
+                    "direction": "home_stronger" if mv_gap > 0 else "away_stronger"
+                }
+            }
+            anomalies.append(anomaly)
+
+        # 3. 检查预测与市场背离
+        if prediction:
+            # 获取市场隐含概率
+            l1_data = odds_data.get("l1")
+            if l1_data and hasattr(l1_data, "raw_data"):
+                raw = l1_data.raw_data or {}
+                avg_odds = raw.get("avg_odds", {})
+                final_h = avg_odds.get("final_h", 2.0)
+                final_d = avg_odds.get("final_d", 3.3)
+                final_a = avg_odds.get("final_a", 3.5)
+
+                # 市场隐含概率
+                total = 1/final_h + 1/final_d + 1/final_a
+                market_probs = {
+                    "Home": (1/final_h) / total,
+                    "Draw": (1/final_d) / total,
+                    "Away": (1/final_a) / total
+                }
+
+                # 模型预测
+                model_pred = prediction.get("final_prediction", "")
+                model_conf = prediction.get("final_confidence", 0.5)
+                market_prob = market_probs.get(model_pred, 0.33)
+
+                # 如果模型置信度与市场概率差距过大
+                gap = abs(model_conf - market_prob)
+                if gap > 0.15:  # 15% 差距
+                    anomaly = {
+                        "type": "MODEL_MARKET_DIVERGENCE",
+                        "severity": "MEDIUM",
+                        "details": {
+                            "model_prediction": model_pred,
+                            "model_confidence": model_conf,
+                            "market_probability": market_prob,
+                            "gap": gap
+                        }
+                    }
+                    anomalies.append(anomaly)
+
+        # 汇总结果
+        if anomalies:
+            result["detected"] = True
+            result["anomalies"] = anomalies
+
+            # 根据异常数量调整置信度
+            severity_weights = {"HIGH": 0.15, "MEDIUM": 0.08, "LOW": 0.03}
+            total_penalty = sum(severity_weights.get(a["severity"], 0) for a in anomalies)
+            result["confidence_adjustment"] = max(0.5, 1.0 - total_penalty)
+
+        return result
+
+    def _is_key_player(self, player: Dict[str, Any]) -> bool:
+        """判断是否为核心球员
+
+        Args:
+            player: 球员信息
+
+        Returns:
+            是否为核心球员
+        """
+        # 基于位置的权重判断
+        position = player.get("position", "")
+        key_positions = ["GK", "CB", "CM", "ST", "CF", "CAM", "CDM"]
+        if position in key_positions:
+            return True
+
+        # 基于评分判断
+        rating = player.get("rating")
+        if rating and rating >= 7.0:
+            return True
+
+        return False
 
     async def merge_batch(
         self,

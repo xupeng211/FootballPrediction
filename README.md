@@ -2,7 +2,7 @@
 
 > **"以年化 25% 的真实收益率为北极星指标，构建一个可验证、可复制、可持续的体育预测系统。"**
 >
-> **📌 Production-Ready**: V41.370 Consolidated Engine | Golden Shield Audit | One-Click Deployment
+> **📌 Production-Ready**: V171.001 [Integration.Alpha] | Multi-Model Consensus | NetworkShield 22 Nodes
 >
 > **📘 开发指南**: 详见 [CLAUDE.md](CLAUDE.md)
 
@@ -10,10 +10,11 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
-[![V41.370](https://img.shields.io/badge/version-V41.370%20Production%20Ready-brightgreen.svg)](https://github.com/xupeng211/FootballPrediction)
-[![Tests](https://img.shields.io/badge/tests-60%2B%20passed-success.svg)](tests/)
+[![V171.001](https://img.shields.io/badge/version-V171.001%20Integration.Alpha-blueviolet.svg)](https://github.com/xupeng211/FootballPrediction)
+[![Node 20+](https://img.shields.io/badge/node-20+-brightgreen.svg)](https://nodejs.org/)
+[![Docker](https://img.shields.io/badge/docker-ready-blue.svg)](deploy/docker/)
 
-**V41.370 Grand Deployment | Consolidated Engine | 1770 Perfect Samples | 48% Accuracy Baseline**
+**V171.001 [Integration.Alpha] | Multi-Model Consensus | 22-Node Proxy Pool | Real-Time Odds Calculation**
 
 ---
 
@@ -21,7 +22,7 @@
 
 - [项目简介](#项目简介)
 - [系统架构](#系统架构)
-- [数据资产](#数据资产)
+- [核心模块](#核心模块)
 - [快速开始](#快速开始)
 - [生产运维](#生产运维)
 - [技术栈](#技术栈)
@@ -31,23 +32,27 @@
 
 ## 🎯 项目简介
 
-**FootballPrediction Engine** 是一个基于 XGBoost 3.0+ 的专业足球比赛预测系统，采用工业级数据采集流水线和机器学习引擎，提供可验证的预测能力。
+**FootballPrediction Engine** 是一个基于 XGBoost 3.0+ 的专业足球比赛预测系统，采用工业级数据采集流水线和多模型共识验证引擎，提供可验证的高置信度预测能力。
 
-### 核心特性
+### V171 核心特性
 
-- **🛡️ Ghost Protocol V141.0**: 30+ 浏览器指纹池 + 人类行为模拟
-- **🏆 Consolidated Engine V41.350**: 浏览器单例 + 金盾校验
-- **📊 多源数据采集**: FotMob API + OddsPortal RPA
-- **🔮 XGBoost 预测引擎**: 6000+ 维深度特征
-- **🚀 一键部署**: `python main.py --task harvest --limit 2000`
+- **🛡️ NetworkShield V1.1**: 22 节点代理池 + Session 绑定 + 自动熔断
+- **🔮 MultiModelValidator**: 3 模型并发 + 2/3 一致性验证 + 实时赔率计算
+- **🌉 PythonBridge**: Node.js ↔ Python 无缝桥接
+- **📊 FundamentalHarvester**: 首发阵容 + 伤停名单 + 球队身价
+- **⚡ GoldenDataMerger**: L1/L2/L3 数据融合 + 异常检测
+- **🚀 一键部署**: `./scripts/ops/verify_deployment.sh && node scripts/ops/v171_real_fire.js`
 
-### 数据资产统计
+### 性能指标
 
-| 指标 | 数值 | 说明 |
+| 指标 | V140 | V171 |
 |------|------|------|
-| **Perfect Samples** | 1,770 | 三位一体样本 (Odds + Lineups + Features) |
-| **Accuracy Baseline** | 48% | 真赛前基线准确率 |
-| **Feature Dimensions** | 6,000+ | V26.8 深度特征向量 |
+| **预测准确率** | 48% | 62%+ (目标) |
+| **置信度输出** | 无 | 2/3 一致性验证 |
+| **模型数量** | 1 | 3 并发 |
+| **特征维度** | 6000+ | 7500+ |
+| **代理节点** | 5 | 22 |
+| **基本面数据** | 无 | 阵容+伤停+身价 |
 | **Leagues Covered** | 15+ | 顶级联赛覆盖 |
 | **Inference Latency** | <100ms | 单次预测响应时间 |
 

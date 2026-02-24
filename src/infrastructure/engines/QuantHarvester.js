@@ -33,6 +33,7 @@ const { TrajectoryParser } = require('./parsers/TrajectoryParser');
 const { SurgicalInteraction } = require('./services/SurgicalInteraction');
 const { SignalRadar } = require('./services/SignalRadar');
 const { getNetworkShield } = require('../network/NetworkShield');
+const { PythonBridge } = require('./bridge/PythonBridge');
 
 const { RadarLogger } = require('./services/logging/RadarLogger');
 
@@ -191,6 +192,10 @@ class QuantHarvester {
             min: config.randomDelayMin || 2000,
             max: config.randomDelayMax || 8000
         };
+
+        // V171.000: PythonBridge for Multi-Model Validation
+        this.enablePythonBridge = config.enablePythonBridge !== false; // 默认启用
+        this.pythonBridge = null;
     }
 
     /**
@@ -217,6 +222,12 @@ class QuantHarvester {
                 `[StealthMode] Human-Pulse Delay: ${this.randomDelay.min}-${this.randomDelay.max}ms ` +
                 `(between matches)`
             );
+        }
+
+        // V171.000: 初始化 PythonBridge
+        if (this.enablePythonBridge) {
+            this.pythonBridge = new PythonBridge({ logLevel: this.config.logLevel });
+            this.logger.info('[PythonBridge] Initialized for Multi-Model Validation');
         }
     }
 
@@ -382,6 +393,32 @@ class QuantHarvester {
                 `✅ SLAIN: ${match.id} | Points: ${dataPoints} | Method: ${method}` +
                 `${usedProxyPort ? ` | Proxy: ${usedProxyPort}` : ''}`
             );
+
+            // V171.000: 调用 PythonBridge 进行多模型验证
+            if (this.enablePythonBridge && this.pythonBridge) {
+                try {
+                    this.logger.info(`[V171] Triggering Multi-Model Validation for ${match.id}...`);
+
+                    // 调用验证器进行预测
+                    const validationResult = await this.pythonBridge.callValidator({
+                        match_id: match.id,
+                        league_name: match.league_name || null
+                    });
+
+                    if (validationResult) {
+                        this.logger.info(
+                            `[V171] ✅ Validation Complete: ${validationResult.final_prediction} ` +
+                            `(Confidence: ${(validationResult.final_confidence * 100).toFixed(1)}%, ` +
+                            `Consensus: ${validationResult.consensus_level})`
+                        );
+                    }
+                } catch (bridgeError) {
+                    // 验证失败不影响采集成功
+                    this.logger.warn(
+                        `[V171] ⚠️ Multi-Model Validation failed for ${match.id}: ${bridgeError.message}`
+                    );
+                }
+            }
 
             // V170.000: 标记代理成功
             if (usedProxyPort) {

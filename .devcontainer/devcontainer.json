@@ -1,0 +1,172 @@
+{
+  "$schema": "https://raw.githubusercontent.com/devcontainers/spec/main/schemas/devContainer.schema.json",
+  "name": "FootballPrediction Dev Container",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": "..",
+    "args": {
+      "INSTALL_PLAYWRIGHT": "true"
+    }
+  },
+
+  "workspaceFolder": "/app",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/app,type=bind,consistency=cached",
+
+  "features": {
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "installZsh": false,
+      "configureZshAsDefaultShell": false,
+      "installOhMyZsh": false,
+      "upgradePackages": true
+    },
+    "ghcr.io/devcontainers/features/git:1": {
+      "version": "latest",
+      "ppa": false
+    }
+  },
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        // Python 开发
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "ms-python.debugpy",
+        "charliermarsh.ruff",
+        "matangover.mypy",
+
+        // JavaScript/TypeScript 开发
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "ms-vscode.vscode-typescript-next",
+
+        // Git 工具
+        "eamodio.gitlens",
+        "github.vscode-pull-request-github",
+        "github.vscode-github-actions",
+
+        // Docker 工具
+        "ms-azuretools.vscode-docker",
+        "ms-vscode-remote.remote-containers",
+
+        // 数据库工具
+        "cweijan.vscode-database-client2",
+        "mtxr.sqltools",
+        "mtxr.sqltools-driver-pg",
+
+        // 文档和笔记
+        "yzhang.markdown-all-in-one",
+        "shd101wyy.markdown-preview-enhanced",
+        "redhat.vscode-yaml",
+
+        // 其他推荐
+        "editorconfig.editorconfig",
+        "visualstudioexptteam.vscodeintellicode",
+        "wayou.vscode-todo-highlight",
+        "aaron-bond.better-comments",
+        "usernamehw.errorlens",
+        "streetsidesoftware.code-spell-checker"
+      ],
+      "settings": {
+        // Python 配置
+        "python.defaultInterpreterPath": "/opt/venv/bin/python",
+        "python.terminal.activateEnvironment": true,
+        "python.analysis.typeCheckingMode": "basic",
+        "python.formatting.provider": "none",
+        "[python]": {
+          "editor.defaultFormatter": "charliermarsh.ruff",
+          "editor.formatOnSave": true,
+          "editor.codeActionsOnSave": {
+            "source.fixAll": "explicit",
+            "source.organizeImports": "explicit"
+          },
+          "editor.rulers": [100],
+          "editor.tabSize": 4
+        },
+        "ruff.lineLength": 100,
+        "ruff.lint.select": ["E", "F", "W", "I", "N", "UP", "B", "C4"],
+
+        // JavaScript/TypeScript 配置
+        "[javascript]": {
+          "editor.defaultFormatter": "esbenp.prettier-vscode",
+          "editor.formatOnSave": true,
+          "editor.tabSize": 2
+        },
+        "[typescript]": {
+          "editor.defaultFormatter": "esbenp.prettier-vscode",
+          "editor.formatOnSave": true,
+          "editor.tabSize": 2
+        },
+        "[json]": {
+          "editor.defaultFormatter": "esbenp.prettier-vscode",
+          "editor.formatOnSave": true
+        },
+        "prettier.printWidth": 100,
+        "prettier.tabWidth": 2,
+
+        // Git 配置
+        "git.autofetch": true,
+        "git.confirmSync": false,
+        "gitlens.currentLine.enabled": true,
+        "gitlens.codeLens.enabled": true,
+
+        // 文件相关
+        "files.eol": "\n",
+        "files.trimTrailingWhitespace": true,
+        "files.insertFinalNewline": true,
+        "files.exclude": {
+          "**/__pycache__": true,
+          "**/*.pyc": true,
+          "**/.pytest_cache": true,
+          "**/.mypy_cache": true,
+          "**/.ruff_cache": true,
+          "**/node_modules": true
+        },
+
+        // 终端配置
+        "terminal.integrated.defaultProfile.linux": "bash",
+        "terminal.integrated.scrollback": 10000
+      }
+    }
+  },
+
+  "forwardPorts": [8000, 5432, 6379, 3000],
+  "portsAttributes": {
+    "8000": {
+      "label": "API Server",
+      "onAutoForward": "notify"
+    },
+    "5432": {
+      "label": "PostgreSQL",
+      "onAutoForward": "silent"
+    },
+    "6379": {
+      "label": "Redis",
+      "onAutoForward": "silent"
+    },
+    "3000": {
+      "label": "Dashboard",
+      "onAutoForward": "notify"
+    }
+  },
+
+  "postCreateCommand": "pip install -r requirements.txt && npm install",
+
+  "postStartCommand": "git config --global --add safe.directory /app",
+
+  "remoteUser": "root",
+
+  "runArgs": [
+    "--network=host"
+  ],
+
+  "containerEnv": {
+    "HTTP_PROXY": "${localEnv:HTTP_PROXY}",
+    "HTTPS_PROXY": "${localEnv:HTTPS_PROXY}",
+    "NO_PROXY": "${localEnv:NO_PROXY}",
+    "DB_HOST": "localhost",
+    "DB_NAME": "football_db",
+    "REDIS_HOST": "localhost",
+    "DOCKER_ENV": "true"
+  }
+}
