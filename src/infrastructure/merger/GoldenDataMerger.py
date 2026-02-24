@@ -27,6 +27,7 @@ import asyncio
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
+import json
 import logging
 from typing import Any, Dict, List, Optional
 
@@ -584,6 +585,15 @@ class GoldenDataMerger:
             if force or self.check_l3_status(match_id) != LayerStatus.COMPLETE:
                 l3_result = await self.execute_l3(match_id, force=force)
 
+        # V171.001: 采集并写入基本面数据（阵容、伤停、身价）
+        fundamentals_harvested = False
+        try:
+            fundamentals_harvested = await self._harvest_and_save_fundamentals(match_id)
+            if fundamentals_harvested:
+                self.logger.info(f"[V171.001] Fundamentals harvested and saved for {match_id}")
+        except Exception as e:
+            self.logger.warning(f"[V171.001] Fundamentals harvest failed: {e}")
+
         # V171.000: 调用 MultiModelValidator 进行多模型预测
         prediction_result = None
         try:
@@ -689,6 +699,252 @@ class GoldenDataMerger:
     # V171.001: FUNDAMENTALS LOADING
     # ========================================================================
 
+    async def _harvest_and_save_fundamentals(self, match_id: str) -> bool:
+        """采集并保存基本面数据
+
+        尝试多种数据源采集阵容、伤停、身价数据，并写入 match_fundamentals 表。
+
+        Args:
+            match_id: 比赛 ID
+
+        Returns:
+            是否成功采集并保存
+        """
+        import aiohttp
+
+        self.logger.info(f"[Fundamentals] Harvesting data for match: {match_id}")
+
+        fundamentals_data = None
+
+        # 方法1: 尝试从 FotMob API 获取
+        try:
+            fundamentals_data = await self._fetch_fotmob_fundamentals(match_id)
+            if fundamentals_data:
+                self.logger.info(f"[Fundamentals] Got data from FotMob API")
+        except Exception as e:
+            self.logger.warning(f"[Fundamentals] FotMob API failed: {e}")
+
+        # 方法2: 如果 FotMob 失败，尝试调用 Node.js FundamentalHarvester
+        if not fundamentals_data:
+            try:
+                fundamentals_data = await self._call_js_fundamental_harvester(match_id)
+                if fundamentals_data:
+                    self.logger.info(f"[Fundamentals] Got data from JS FundamentalHarvester")
+            except Exception as e:
+                self.logger.warning(f"[Fundamentals] JS Harvester failed: {e}")
+
+        # 如果获取到数据，写入数据库
+        if fundamentals_data:
+            try:
+                await self._save_fundamentals_to_db(match_id, fundamentals_data)
+                self.logger.info(f"[Fundamentals] Saved to match_fundamentals table")
+                return True
+            except Exception as e:
+                self.logger.error(f"[Fundamentals] Failed to save: {e}")
+                return False
+
+        return False
+
+    async def _fetch_fotmob_fundamentals(self, match_id: str) -> Dict[str, Any] | None:
+        """从 FotMob API 获取基本面数据
+
+        Args:
+            match_id: FotMob match ID
+
+        Returns:
+            基本面数据字典
+        """
+        import aiohttp
+        import json
+
+        url = f"https://www.fotmob.com/api/matchDetails?matchId={match_id}"
+
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+            "Accept": "application/json",
+            "Origin": "https://www.fotmob.com",
+            "Referer": "https://www.fotmob.com/"
+        }
+
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, headers=headers, timeout=aiohttp.ClientTimeout(total=30)) as response:
+                if response.status != 200:
+                    return None
+
+                data = await response.json()
+                return self._parse_fotmob_fundamentals(data, match_id)
+
+    def _parse_fotmob_fundamentals(self, data: Dict[str, Any], match_id: str) -> Dict[str, Any]:
+        """解析 FotMob API 返回的基本面数据
+
+        Args:
+            data: FotMob API 响应数据
+            match_id: 比赛 ID
+
+        Returns:
+            结构化的基本面数据
+        """
+        result = {
+            "match_id": match_id,
+            "home_squad": {"formation": None, "starters": [], "missing_players": []},
+            "away_squad": {"formation": None, "starters": [], "missing_players": []},
+            "injuries": [],
+            "suspensions": [],
+            "market_value_gap": None
+        }
+
+        content = data.get("content", {})
+
+        # 递归查找 lineup 数据
+        def find_lineup(obj, depth=0):
+            if depth > 8 or not obj or not isinstance(obj, dict):
+                return None
+            if obj.get("home") and obj.get("away"):
+                if obj.get("home", {}).get("lineup") or obj.get("away", {}).get("lineup"):
+                    return obj
+            for key, val in obj.items():
+                if isinstance(val, dict):
+                    found = find_lineup(val, depth + 1)
+                    if found:
+                        return found
+            return None
+
+        lineup_data = find_lineup(content)
+
+        if lineup_data:
+            home = lineup_data.get("home", {})
+            away = lineup_data.get("away", {})
+
+            result["home_squad"]["formation"] = home.get("formation")
+            result["away_squad"]["formation"] = away.get("formation")
+
+            # 提取首发球员
+            for player in home.get("lineup", []):
+                result["home_squad"]["starters"].append({
+                    "name": player.get("name") or player.get("playerName", "Unknown"),
+                    "position": player.get("position") or player.get("role"),
+                    "rating": player.get("rating")
+                })
+
+            for player in away.get("lineup", []):
+                result["away_squad"]["starters"].append({
+                    "name": player.get("name") or player.get("playerName", "Unknown"),
+                    "position": player.get("position") or player.get("role"),
+                    "rating": player.get("rating")
+                })
+
+            # 提取缺阵球员
+            for player in home.get("missingPlayers", []):
+                result["home_squad"]["missing_players"].append({
+                    "name": player.get("name", "Unknown"),
+                    "reason": player.get("reason", "Unknown")
+                })
+
+            for player in away.get("missingPlayers", []):
+                result["away_squad"]["missing_players"].append({
+                    "name": player.get("name", "Unknown"),
+                    "reason": player.get("reason", "Unknown")
+                })
+
+        return result
+
+    async def _call_js_fundamental_harvester(self, match_id: str) -> Dict[str, Any] | None:
+        """调用 Node.js FundamentalHarvester
+
+        Args:
+            match_id: 比赛 ID
+
+        Returns:
+            基本面数据
+        """
+        import asyncio
+        import json
+
+        cmd = [
+            "node", "-e",
+            f"""
+const {{ FundamentalHarvester }} = require('./src/infrastructure/engines/FundamentalHarvester.js');
+
+async function main() {{
+    const harvester = new FundamentalHarvester();
+    try {{
+        const data = await harvester.harvest('{match_id}', {{ saveToDb: false }});
+        console.log(JSON.stringify(data));
+    }} catch (e) {{
+        console.error(JSON.stringify({{ error: e.message }}));
+    }} finally {{
+        await harvester.close();
+    }}
+}}
+
+main();
+"""
+        ]
+
+        proc = await asyncio.create_subprocess_exec(
+            *cmd,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+            cwd="/app"
+        )
+
+        stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=60)
+
+        if proc.returncode != 0:
+            return None
+
+        try:
+            return json.loads(stdout.decode().strip())
+        except json.JSONDecodeError:
+            return None
+
+    async def _save_fundamentals_to_db(self, match_id: str, data: Dict[str, Any]) -> None:
+        """保存基本面数据到数据库
+
+        Args:
+            match_id: 比赛 ID
+            data: 基本面数据
+        """
+        conn = self._get_connection()
+        cur = conn.cursor()
+
+        try:
+            cur.execute("""
+                INSERT INTO match_fundamentals (
+                    match_id, home_formation, away_formation,
+                    home_starters, away_starters,
+                    home_missing, away_missing,
+                    injuries, suspensions, market_value_gap
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                ON CONFLICT (match_id) DO UPDATE SET
+                    home_formation = EXCLUDED.home_formation,
+                    away_formation = EXCLUDED.away_formation,
+                    home_starters = EXCLUDED.home_starters,
+                    away_starters = EXCLUDED.away_starters,
+                    home_missing = EXCLUDED.home_missing,
+                    away_missing = EXCLUDED.away_missing,
+                    injuries = EXCLUDED.injuries,
+                    suspensions = EXCLUDED.suspensions,
+                    market_value_gap = EXCLUDED.market_value_gap,
+                    updated_at = NOW()
+            """, (
+                match_id,
+                data.get("home_squad", {}).get("formation"),
+                data.get("away_squad", {}).get("formation"),
+                json.dumps(data.get("home_squad", {}).get("starters", [])),
+                json.dumps(data.get("away_squad", {}).get("starters", [])),
+                json.dumps(data.get("home_squad", {}).get("missing_players", [])),
+                json.dumps(data.get("away_squad", {}).get("missing_players", [])),
+                json.dumps(data.get("injuries", [])),
+                json.dumps(data.get("suspensions", [])),
+                data.get("market_value_gap")
+            ))
+
+            conn.commit()
+
+        finally:
+            cur.close()
+
     async def _load_fundamentals(self, match_id: str) -> Dict[str, Any] | None:
         """加载基本面数据
 
@@ -698,7 +954,8 @@ class GoldenDataMerger:
         Returns:
             基本面数据字典
         """
-        cur = self.conn.cursor()
+        conn = self._get_connection()
+        cur = conn.cursor()
 
         try:
             cur.execute("""

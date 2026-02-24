@@ -12,9 +12,10 @@
     "sync": "node temporal_sync_engine.js"
   },
   "dependencies": {
+    "httpx": "^3.0.1",
     "jsdom": "^27.4.0",
-    "pg": "^8.17.2",
-    "playwright": "^1.57.0"
+    "pg": "^8.18.0",
+    "playwright": "^1.58.2"
   },
   "devDependencies": {
     "@types/jest": "^29.5.0",
