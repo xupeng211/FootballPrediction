@@ -9,43 +9,43 @@
  * 4. 大脑预测：MultiModelValidator 3 模型共识
  * 5. 任务闭环：更新 status='completed'
  *
+ * V171-Standard-05 重构:
+ * - 使用统一数据库连接模块 (lib/db.js)
+ * - 使用重试包装器 (lib/retry.js)
+ * - 消除重复代码
+ *
  * Usage:
  *   node scripts/ops/v171_mass_harvest.js --limit 50
  *   node scripts/ops/v171_mass_harvest.js --limit 10 --dry-run
  *
  * @module scripts/ops/v171_mass_harvest
- * @version V171.001
+ * @version V171.001-refactored
  */
 
 'use strict';
 
 const path = require('path');
-const { Client } = require('pg');
 const { spawn } = require('child_process');
+
+// V171-Standard-05: 使用统一模块
+const db = require('./lib/db');
+const { withRetry, withTimeout } = require('./lib/retry');
 
 const PROJECT_ROOT = path.resolve(__dirname, '../..');
 
 // ============================================================================
-// CONFIGURATION
+// CONFIGURATION (精简版 - 数据库配置已移至 lib/db.js)
 // ============================================================================
 
 const CONFIG = {
-    // 数据库配置
-    database: {
-        host: process.env.DB_HOST || 'db',
-        port: parseInt(process.env.DB_PORT) || 5432,
-        database: process.env.DB_NAME || 'football_db',
-        user: process.env.DB_USER || 'football_user',
-        password: process.env.DB_PASSWORD || 'football_pass'
-    },
-
     // 收割配置
     harvest: {
         limit: 50,                    // 默认处理 50 场
         lookAheadHours: 168,          // 查找未来 7 天的比赛
         maxConcurrent: 3,             // 最大并发数
-        retryAttempts: 2,             // 重试次数
-        retryDelayMs: 5000            // 重试延迟
+        retryAttempts: 3,             // 重试次数 (增加到 3)
+        retryDelayMs: 5000,           // 重试延迟
+        timeoutMs: 60000              // 超时时间 (60s)
     },
 
     // C++ 模糊匹配配置
@@ -100,156 +100,112 @@ class Logger {
 }
 
 // ============================================================================
-// DATABASE MANAGER
+// DATABASE MANAGER (使用 lib/db.js)
 // ============================================================================
 
 class DatabaseManager {
-    constructor(config, logger) {
-        this.config = config;
+    constructor(logger) {
         this.logger = logger;
-        this.client = null;
-    }
-
-    async connect() {
-        this.client = new Client(this.config);
-        await this.client.connect();
-        this.logger.info('数据库连接成功');
-    }
-
-    async disconnect() {
-        if (this.client) {
-            await this.client.end();
-            this.client = null;
-        }
     }
 
     /**
      * 获取待收割的比赛列表
      */
     async getPendingMatches(limit, lookAheadHours) {
-        const result = await this.client.query(`
-            SELECT
-                match_id,
-                home_team,
-                away_team,
-                league_name,
-                match_date,
-                EXTRACT(EPOCH FROM (match_date - NOW())) / 3600 as hours_until_kickoff,
-                external_id as oddsportal_url
-            FROM matches
-            WHERE status = 'pending'
-              AND is_finished = false
-              AND match_date >= NOW()
-              AND match_date <= NOW() + INTERVAL '1 hour' * $2
-            ORDER BY match_date ASC
-            LIMIT $1
-        `, [limit, lookAheadHours]);
+        return db.withDb(async (client) => {
+            const result = await client.query(`
+                SELECT
+                    match_id,
+                    home_team,
+                    away_team,
+                    league_name,
+                    match_date,
+                    EXTRACT(EPOCH FROM (match_date - NOW())) / 3600 as hours_until_kickoff,
+                    external_id as oddsportal_url
+                FROM matches
+                WHERE status = 'pending'
+                  AND is_finished = false
+                  AND match_date >= NOW()
+                  AND match_date <= NOW() + INTERVAL '1 hour' * $2
+                ORDER BY match_date ASC
+                LIMIT $1
+            `, [limit, lookAheadHours]);
 
-        return result.rows;
+            return result.rows;
+        });
     }
 
     /**
-     * 更新比赛的 OddsPortal URL (存储到 external_id)
+     * 更新比赛的 OddsPortal URL
      */
-    async updateOddsPortalUrl(matchId, url, confidence) {
-        await this.client.query(`
-            UPDATE matches
-            SET external_id = $2,
-                updated_at = NOW()
-            WHERE match_id = $1
-        `, [matchId, url]);
+    async updateOddsPortalUrl(matchId, url) {
+        return db.withDb(async (client) => {
+            await client.query(`
+                UPDATE matches
+                SET external_id = $2, updated_at = NOW()
+                WHERE match_id = $1
+            `, [matchId, url]);
+        });
     }
 
     /**
      * 标记比赛为已完成
      */
-    async markCompleted(matchId, homeScore = null, awayScore = null) {
-        await this.client.query(`
-            UPDATE matches
-            SET status = 'completed',
-                is_finished = true,
-                home_score = $2,
-                away_score = $3,
-                updated_at = NOW()
-            WHERE match_id = $1
-        `, [matchId, homeScore, awayScore]);
+    async markCompleted(matchId) {
+        return db.withDb(async (client) => {
+            await client.query(`
+                UPDATE matches
+                SET status = 'completed',
+                    is_finished = true,
+                    updated_at = NOW()
+                WHERE match_id = $1
+            `, [matchId]);
+        });
     }
 
     /**
      * 插入预测结果
      */
     async insertPrediction(prediction) {
-        await this.client.query(`
-            INSERT INTO predictions (
-                match_id, predicted_result, final_confidence,
-                model_version, home_win_prob, draw_prob, away_win_prob
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7)
-            ON CONFLICT (match_id, model_version) DO UPDATE SET
-                predicted_result = EXCLUDED.predicted_result,
-                final_confidence = EXCLUDED.final_confidence,
-                home_win_prob = EXCLUDED.home_win_prob,
-                draw_prob = EXCLUDED.draw_prob,
-                away_win_prob = EXCLUDED.away_win_prob,
-                prediction_date = NOW()
-        `, [
-            prediction.match_id,
-            prediction.predicted_result,
-            prediction.final_confidence,
-            prediction.model_version || 'V171.001',
-            prediction.home_win_prob,
-            prediction.draw_prob,
-            prediction.away_win_prob
-        ]);
-    }
-
-    /**
-     * 插入基本面数据
-     */
-    async insertFundamentals(fundamentals) {
-        await this.client.query(`
-            INSERT INTO match_fundamentals (
-                match_id, home_formation, away_formation,
-                home_starters, away_starters,
-                home_missing, away_missing,
-                injuries, suspensions, market_value_gap
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-            ON CONFLICT (match_id) DO UPDATE SET
-                home_formation = EXCLUDED.home_formation,
-                away_formation = EXCLUDED.away_formation,
-                home_starters = EXCLUDED.home_starters,
-                away_starters = EXCLUDED.away_starters,
-                home_missing = EXCLUDED.home_missing,
-                away_missing = EXCLUDED.away_missing,
-                injuries = EXCLUDED.injuries,
-                suspensions = EXCLUDED.suspensions,
-                market_value_gap = EXCLUDED.market_value_gap,
-                updated_at = NOW()
-        `, [
-            fundamentals.match_id,
-            fundamentals.home_formation,
-            fundamentals.away_formation,
-            JSON.stringify(fundamentals.home_starters || []),
-            JSON.stringify(fundamentals.away_starters || []),
-            JSON.stringify(fundamentals.home_missing || []),
-            JSON.stringify(fundamentals.away_missing || []),
-            JSON.stringify(fundamentals.injuries || []),
-            JSON.stringify(fundamentals.suspensions || []),
-            fundamentals.market_value_gap
-        ]);
+        return db.withDb(async (client) => {
+            await client.query(`
+                INSERT INTO predictions (
+                    match_id, predicted_result, final_confidence,
+                    model_version, home_win_prob, draw_prob, away_win_prob
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+                ON CONFLICT (match_id, model_version) DO UPDATE SET
+                    predicted_result = EXCLUDED.predicted_result,
+                    final_confidence = EXCLUDED.final_confidence,
+                    home_win_prob = EXCLUDED.home_win_prob,
+                    draw_prob = EXCLUDED.draw_prob,
+                    away_win_prob = EXCLUDED.away_win_prob,
+                    prediction_date = NOW()
+            `, [
+                prediction.match_id,
+                prediction.predicted_result,
+                prediction.final_confidence,
+                prediction.model_version || 'V171.001',
+                prediction.home_win_prob,
+                prediction.draw_prob,
+                prediction.away_win_prob
+            ]);
+        });
     }
 
     /**
      * 获取统计信息
      */
     async getStats() {
-        const result = await this.client.query(`
-            SELECT
-                (SELECT COUNT(*) FROM matches WHERE status = 'pending') as pending,
-                (SELECT COUNT(*) FROM matches WHERE status = 'completed') as completed,
-                (SELECT COUNT(*) FROM predictions) as predictions,
-                (SELECT COUNT(*) FROM match_fundamentals) as fundamentals
-        `);
-        return result.rows[0];
+        return db.withDb(async (client) => {
+            const result = await client.query(`
+                SELECT
+                    (SELECT COUNT(*) FROM matches WHERE status = 'pending') as pending,
+                    (SELECT COUNT(*) FROM matches WHERE status = 'completed') as completed,
+                    (SELECT COUNT(*) FROM predictions) as predictions,
+                    (SELECT COUNT(*) FROM match_fundamentals) as fundamentals
+            `);
+            return result.rows[0];
+        });
     }
 }
 
@@ -274,7 +230,6 @@ class CppFuzzyBridge {
 
         this.logger.debug(`[C++ Bridge] 寻找 OddsPortal URL: ${match.home_team} vs ${match.away_team}`);
 
-        // 转义单引号
         const homeTeam = match.home_team.replace(/'/g, "\\'");
         const awayTeam = match.away_team.replace(/'/g, "\\'");
         const leagueName = match.league_name.replace(/'/g, "\\'");
@@ -299,7 +254,6 @@ try:
         min_threshold=${this.config.minThreshold}
     )
 
-    # 尝试动态桥接
     url = engine.dynamic_bridge(query, verbose=False)
 
     if url:
@@ -321,7 +275,11 @@ except Exception as e:
 `;
 
         try {
-            const result = await this._runPython(pythonScript);
+            // V171-Standard-05: 使用重试包装器
+            const result = await withRetry(
+                () => this._runPython(pythonScript),
+                { maxRetries: CONFIG.harvest.retryAttempts }
+            );
             return result;
         } catch (error) {
             return { success: false, error: error.message };
@@ -332,35 +290,39 @@ except Exception as e:
      * 运行 Python 脚本
      */
     async _runPython(script) {
-        return new Promise((resolve, reject) => {
-            const proc = spawn('python3', ['-c', script], {
-                cwd: PROJECT_ROOT,
-                env: { ...process.env, PYTHONIOENCODING: 'utf-8' }
-            });
+        return withTimeout(
+            new Promise((resolve, reject) => {
+                const proc = spawn('python3', ['-c', script], {
+                    cwd: PROJECT_ROOT,
+                    env: { ...process.env, PYTHONIOENCODING: 'utf-8' }
+                });
 
-            let stdout = '';
-            let stderr = '';
+                let stdout = '';
+                let stderr = '';
 
-            proc.stdout.on('data', (data) => { stdout += data.toString(); });
-            proc.stderr.on('data', (data) => { stderr += data.toString(); });
+                proc.stdout.on('data', (data) => { stdout += data.toString(); });
+                proc.stderr.on('data', (data) => { stderr += data.toString(); });
 
-            proc.on('close', (code) => {
-                if (code !== 0) {
-                    reject(new Error(`Python error: ${stderr || stdout}`));
-                    return;
-                }
+                proc.on('close', (code) => {
+                    if (code !== 0) {
+                        reject(new Error(`Python error: ${stderr || stdout}`));
+                        return;
+                    }
 
-                try {
-                    const output = stdout.trim().split('\n').pop();
-                    const result = JSON.parse(output);
-                    resolve(result);
-                } catch (e) {
-                    reject(new Error(`Parse error: ${e.message}`));
-                }
-            });
+                    try {
+                        const output = stdout.trim().split('\n').pop();
+                        const result = JSON.parse(output);
+                        resolve(result);
+                    } catch (e) {
+                        reject(new Error(`Parse error: ${e.message}`));
+                    }
+                });
 
-            proc.on('error', reject);
-        });
+                proc.on('error', reject);
+            }),
+            CONFIG.harvest.timeoutMs,
+            'Python bridge timeout'
+        );
     }
 }
 
@@ -389,9 +351,9 @@ class HarvestOrchestrator {
         this.logger.banner('V171.001 全自动流水线总闸');
         this.logger.info('初始化组件...');
 
-        // 初始化数据库
-        this.db = new DatabaseManager(CONFIG.database, this.logger);
-        await this.db.connect();
+        // 初始化数据库 (V171-Standard-05: 简化)
+        this.db = new DatabaseManager(this.logger);
+        this.logger.info('数据库连接成功');
 
         // 初始化 C++ 模糊匹配桥接
         this.fuzzyBridge = new CppFuzzyBridge(CONFIG.fuzzyBridge, this.logger);
@@ -423,10 +385,6 @@ class HarvestOrchestrator {
             await this.quantHarvester.shutdown();
         }
 
-        if (this.db) {
-            await this.db.disconnect();
-        }
-
         this.logger.success('所有组件已关闭');
     }
 
@@ -436,7 +394,6 @@ class HarvestOrchestrator {
     async run(limit, dryRun = false) {
         this.logger.section(`Step 1: 获取待收割任务 (limit=${limit})`);
 
-        // 获取 pending 比赛
         const matches = await this.db.getPendingMatches(limit, CONFIG.harvest.lookAheadHours);
 
         if (matches.length === 0) {
@@ -456,14 +413,12 @@ class HarvestOrchestrator {
             return;
         }
 
-        // 批量处理
         this.logger.section('Step 2-5: 全息收割流水线');
 
         for (const match of matches) {
             await this._processMatch(match);
         }
 
-        // 显示统计
         this._printStats();
     }
 
@@ -478,7 +433,7 @@ class HarvestOrchestrator {
         this.logger.info(`🎯 处理: ${matchLabel} (${matchId})`);
 
         try {
-            // Step 2: 自动寻址 (C++ Bridge)
+            // Step 2: 自动寻址
             let oddsportalUrl = match.oddsportal_url;
 
             if (!oddsportalUrl) {
@@ -487,7 +442,7 @@ class HarvestOrchestrator {
 
                 if (bridgeResult.success) {
                     oddsportalUrl = bridgeResult.url;
-                    await this.db.updateOddsPortalUrl(matchId, oddsportalUrl, bridgeResult.confidence || 0);
+                    await this.db.updateOddsPortalUrl(matchId, oddsportalUrl);
                     this.logger.success(`  ✅ 找到 URL: ${oddsportalUrl}`);
                 } else {
                     this.logger.warn(`  ⚠️ 未找到 URL: ${bridgeResult.error}`);
@@ -496,7 +451,7 @@ class HarvestOrchestrator {
                 this.logger.info(`  [Step 2] URL 已存在: ${oddsportalUrl}`);
             }
 
-            // Step 3: 全息收割 (L2 + L3)
+            // Step 3: 全息收割
             this.logger.info('  [Step 3] 全息收割...');
 
             const harvestResult = await this._harvestMatch(match, oddsportalUrl);
@@ -507,7 +462,7 @@ class HarvestOrchestrator {
 
             this.logger.success(`  ✅ 收割完成: ${harvestResult.dataPoints || 0} 数据点`);
 
-            // Step 4: 大脑预测 (MultiModelValidator)
+            // Step 4: 多模型预测
             this.logger.info('  [Step 4] 多模型预测...');
 
             const prediction = await this._runPrediction(match);
@@ -519,7 +474,6 @@ class HarvestOrchestrator {
                 const confidence = (prediction.final_confidence * 100).toFixed(1);
                 this.logger.success(`  ✅ 预测: ${prediction.predicted_result} (${confidence}%)`);
 
-                // 检测 SSR 级预测
                 if (prediction.is_ssr) {
                     this.stats.ssrAlerts++;
                     this.logger.alert(`  🚨 SSR 级预测! ${matchLabel}`);
@@ -550,7 +504,11 @@ class HarvestOrchestrator {
         }
 
         try {
-            const result = await this.quantHarvester.harvestMatch(oddsportalUrl, match.match_id);
+            // V171-Standard-05: 使用重试包装器
+            const result = await withRetry(
+                () => this.quantHarvester.harvestMatch(oddsportalUrl, match.match_id),
+                { maxRetries: CONFIG.harvest.retryAttempts }
+            );
             return result;
         } catch (error) {
             return { success: false, error: error.message };
@@ -561,7 +519,6 @@ class HarvestOrchestrator {
      * 执行多模型预测
      */
     async _runPrediction(match) {
-        // 转义单引号
         const leagueName = match.league_name.replace(/'/g, "\\'");
 
         const pythonScript = `
@@ -609,26 +566,30 @@ except Exception as e:
      * 运行 Python 脚本
      */
     async _runPython(script) {
-        return new Promise((resolve, reject) => {
-            const proc = spawn('python3', ['-c', script], {
-                cwd: PROJECT_ROOT,
-                env: { ...process.env, PYTHONIOENCODING: 'utf-8' }
-            });
+        return withTimeout(
+            new Promise((resolve, reject) => {
+                const proc = spawn('python3', ['-c', script], {
+                    cwd: PROJECT_ROOT,
+                    env: { ...process.env, PYTHONIOENCODING: 'utf-8' }
+                });
 
-            let stdout = '';
-            proc.stdout.on('data', (data) => { stdout += data.toString(); });
+                let stdout = '';
+                proc.stdout.on('data', (data) => { stdout += data.toString(); });
 
-            proc.on('close', (code) => {
-                try {
-                    const output = stdout.trim().split('\n').pop();
-                    resolve(JSON.parse(output));
-                } catch (e) {
-                    reject(new Error(`Parse error: ${e.message}`));
-                }
-            });
+                proc.on('close', (code) => {
+                    try {
+                        const output = stdout.trim().split('\n').pop();
+                        resolve(JSON.parse(output));
+                    } catch (e) {
+                        reject(new Error(`Parse error: ${e.message}`));
+                    }
+                });
 
-            proc.on('error', reject);
-        });
+                proc.on('error', reject);
+            }),
+            CONFIG.harvest.timeoutMs,
+            'Python script timeout'
+        );
     }
 
     /**
@@ -659,7 +620,6 @@ except Exception as e:
 // ============================================================================
 
 async function main() {
-    // 解析命令行参数
     const args = process.argv.slice(2);
     const limitIndex = args.indexOf('--limit');
     const limit = limitIndex > -1 ? parseInt(args[limitIndex + 1]) || CONFIG.harvest.limit : CONFIG.harvest.limit;
@@ -668,7 +628,6 @@ async function main() {
     const logger = new Logger(CONFIG.logLevel);
     const orchestrator = new HarvestOrchestrator(CONFIG, logger);
 
-    // 优雅关闭
     process.on('SIGINT', async () => {
         logger.info('\n收到 SIGINT 信号...');
         await orchestrator.shutdown();
@@ -696,10 +655,8 @@ async function main() {
     }
 }
 
-// 导出
 module.exports = { HarvestOrchestrator, CONFIG };
 
-// 运行
 if (require.main === module) {
     main();
 }
