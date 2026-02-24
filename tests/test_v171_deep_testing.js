@@ -343,13 +343,14 @@ describe('lib/TaskQueue.js - 优先级测试', () => {
     it('应该将强队比赛提升优先级', () => {
         const queue = new SimpleTaskQueue();
 
-        queue.add({ match_id: '普通比赛', hoursUntil: 1, isTopTeam: false });
-        queue.add({ match_id: '强队比赛', hoursUntil: 1, isTopTeam: true });
+        // 使用 hoursUntil: 0.5 满足 < 1 条件，获得 +50 优先级
+        queue.add({ match_id: '普通比赛', hoursUntil: 0.5, isTopTeam: false });  // 100 + 50 = 150
+        queue.add({ match_id: '强队比赛', hoursUntil: 0.5, isTopTeam: true });    // 100 + 50 + 5 = 155
 
         const first = queue.getNext();
 
         assert.strictEqual(first.match_id, '强队比赛');
-        assert.ok(first.priority > 145);  // 基础 100 + 时间 50 + 强队 5 = 155
+        assert.strictEqual(first.priority, 155);  // 基础 100 + 时间 50 + 强队 5 = 155
         console.log('  ✅ 强队优先级提升正确:', first.priority);
     });
 });
