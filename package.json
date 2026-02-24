@@ -1,26 +1,32 @@
 {
-  "name": "footballprediction-v66-000",
-  "version": "66.000.0",
-  "description": "Football Prediction System - V66.000 Refactored Architecture",
+  "name": "footballprediction-v171",
+  "version": "171.2.0",
+  "description": "V171 全息收割系统 - 工业级足球预测平台",
   "private": true,
   "scripts": {
+    "start": "node scripts/ops/v171_scheduler.js",
+    "harvest": "node scripts/ops/v171_mass_harvest.js",
+    "harvest:quick": "node scripts/ops/v171_quick_harvest.js",
+    "harvest:limit": "node scripts/ops/v171_mass_harvest.js --limit",
+    "extract-urls": "node scripts/ops/v171_real_url_extractor.js",
+    "scheduler": "node scripts/ops/v171_scheduler.js",
     "install-browsers": "playwright install chromium",
     "sync": "node scripts/ops/v42_660_node_temporal_sync.js",
     "diagnose": "node diagnose_json_path.js",
-    "start": "node src/main.js",
     "test": "node --test tests/*.test.js",
     "test:unit": "node --test tests/parser.test.js tests/config.test.js",
     "test:mock": "node --test tests/interceptor.test.js",
     "test:coverage": "node --test --experimental-test-coverage tests/*.test.js"
   },
   "dependencies": {
-    "js-yaml": "^4.1.1",
+    "dotenv": "^16.4.5",
+    "js-yaml": "^4.1.0",
     "jsdom": "^27.4.0",
     "p-limit": "^3.1.0",
     "pg": "^8.17.2",
     "playwright": "^1.57.0"
   },
-  "author": "V66.000",
+  "author": "V171 Engineering Team",
   "license": "MIT",
   "devDependencies": {
     "jest": "^30.2.0"
