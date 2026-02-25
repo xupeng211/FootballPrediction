@@ -59,11 +59,12 @@ class DatabasePoolConfig:
     """
 
     # 基本连接配置
+    # V172: 统一默认值，与 config/database.js 保持一致
     host: str = field(default_factory=lambda: os.getenv("DB_HOST", "localhost"))
     port: int = field(default_factory=lambda: int(os.getenv("DB_PORT", "5432")))
-    user: str = field(default_factory=lambda: os.getenv("DB_USER", "postgres"))
-    password: str = field(default_factory=lambda: os.getenv("DB_PASSWORD", "postgres"))
-    database: str = field(default_factory=lambda: os.getenv("DB_NAME", "football_prediction"))
+    user: str = field(default_factory=lambda: os.getenv("DB_USER", "football_user"))
+    password: str = field(default_factory=lambda: os.getenv("DB_PASSWORD", "dev_password"))
+    database: str = field(default_factory=lambda: os.getenv("DB_NAME", "football_db"))
 
     # SSL 安全配置（Phase 2.9 强制安全加固）
     # 生产环境强制使用 SSL，开发环境可通过 DB_SSL_MODE=disable 禁用
