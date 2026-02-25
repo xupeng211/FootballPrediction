@@ -35,6 +35,14 @@
 - DOM 检查和模拟测试
 - 过时的生产脚本
 
+### zombie_l1/ (4个) - V171-Governance-05 新增
+| 文件 | 原因 |
+|------|------|
+| `test_l1_discovery.js` | 旧版 L1 测试，功能已合并到 v171_l1_api_fetch.js |
+| `v171_l1_expand_pool.js` | 旧版比赛池扩充，已被全量快照取代 |
+| `v86_turbo_harvest.js` | V86 版本收割器，已被 V171 架构取代 |
+| `v86_master_harvest.js` | V86 版本主收割器，已被 V171 架构取代 |
+
 ---
 
 ## 保留期限
@@ -51,7 +59,8 @@ cp _deprecated/root/canary_stress_test.js ./
 
 ## 统计
 
-- **总计**: 54 个文件
+- **总计**: 58 个文件
 - **根目录**: 5 个
 - **scripts/ops**: 7 个
 - **research**: 42 个
+- **zombie_l1**: 4 个 (V171-Governance-05 新增)
