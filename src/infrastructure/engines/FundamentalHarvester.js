@@ -28,6 +28,9 @@
 const path = require('path');
 const { Client } = require('pg');
 
+// V172: 使用统一数据库配置
+const { DatabaseConfig } = require(path.resolve(__dirname, '../../../config/database'));
+
 const PROJECT_ROOT = path.resolve(__dirname, '../..');
 
 // ============================================================================
@@ -82,11 +85,11 @@ class FundamentalHarvester {
     async _getConnection() {
         if (!this._conn || this._conn.closed) {
             this._conn = new Client({
-                host: process.env.DB_HOST || 'db',
-                port: parseInt(process.env.DB_PORT) || 5432,
-                database: process.env.DB_NAME || 'football_db',
-                user: process.env.DB_USER || 'football_user',
-                password: process.env.DB_PASSWORD || 'football_pass'
+                host: DatabaseConfig.host,
+                port: DatabaseConfig.port,
+                database: DatabaseConfig.database,
+                user: DatabaseConfig.user,
+                password: DatabaseConfig.password
             });
             await this._conn.connect();
         }

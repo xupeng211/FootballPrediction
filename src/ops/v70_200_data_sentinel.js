@@ -32,8 +32,12 @@
 
 'use strict';
 
+const path = require('path');
 const { Pool } = require('pg');
 const { createPool } = require('../modules/sink');
+
+// V172: 使用统一数据库配置
+const { DatabaseConfig } = require(path.resolve(__dirname, '../../config/database'));
 
 // ============================================================================
 // CONFIGURATION
@@ -57,13 +61,13 @@ const SENTINEL_CONFIG = {
     // Throughput calculation window
     throughputWindowHours: 1,
 
-    // Database connection
+    // Database connection - V172: 使用统一配置
     db: {
-        host: process.env.DB_HOST || '172.25.16.1',
-        port: parseInt(process.env.DB_PORT) || 5432,
-        database: process.env.DB_NAME || 'football_db',
-        user: process.env.DB_USER || 'football_user',
-        password: process.env.DB_PASSWORD || 'football_pass',
+        host: DatabaseConfig.host,
+        port: DatabaseConfig.port,
+        database: DatabaseConfig.database,
+        user: DatabaseConfig.user,
+        password: DatabaseConfig.password,
         max: 20
     }
 };

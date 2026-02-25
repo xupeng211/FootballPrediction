@@ -27,16 +27,19 @@ const { Client, Pool } = require('pg');
 const logger = require('./logger');
 const log = logger.createLogger('storage');
 
+// V172: 使用统一数据库配置
+const { DatabaseConfig } = require('../../../config/database');
+
 // ============================================================================
 // CONFIGURATION (Environment Isolation)
 // ============================================================================
 
 const getDBConfig = () => ({
-    host: process.env.DB_HOST || '172.25.16.1',
-    port: parseInt(process.env.DB_PORT) || 5432,
-    database: process.env.DB_NAME || 'football_db',
-    user: process.env.DB_USER || 'football_user',
-    password: process.env.DB_PASSWORD || 'football_pass',
+    host: DatabaseConfig.host,
+    port: DatabaseConfig.port,
+    database: DatabaseConfig.database,
+    user: DatabaseConfig.user,
+    password: DatabaseConfig.password,
     // Connection pool settings
     max: parseInt(process.env.DB_POOL_MAX) || 20,
     idleTimeoutMillis: parseInt(process.env.DB_IDLE_TIMEOUT) || 30000,

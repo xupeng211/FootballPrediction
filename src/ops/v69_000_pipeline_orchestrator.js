@@ -60,6 +60,9 @@ const path = require('path');
 const { Pool } = require('pg');
 const { spawn } = require('child_process');
 
+// V172: 使用统一数据库配置
+const { DatabaseConfig } = require(path.resolve(__dirname, '../../config/database'));
+
 // V73.200: Import unified BridgeEngine (Single Source of Excellence)
 const { BridgeEngine } = require('../modules/bridge_engine');
 
@@ -284,11 +287,11 @@ class OrchestratorError extends Error {
  */
 function createOrchestratorPool(config = {}) {
     const poolConfig = {
-        host: process.env.DB_HOST || '172.25.16.1',
-        port: parseInt(process.env.DB_PORT) || 5432,
-        database: process.env.DB_NAME || 'football_db',
-        user: process.env.DB_USER || 'football_user',
-        password: process.env.DB_PASSWORD || 'football_pass',
+        host: DatabaseConfig.host,
+        port: DatabaseConfig.port,
+        database: DatabaseConfig.database,
+        user: DatabaseConfig.user,
+        password: DatabaseConfig.password,
         max: config.max || 20,
         min: config.min || 2,
         idleTimeoutMillis: config.idleTimeout || 30000
