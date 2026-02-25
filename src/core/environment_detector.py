@@ -278,11 +278,11 @@ if __name__ == "__main__":
     # 2. 最优主机
     host = get_optimal_db_host()
 
-    # 3. 数据库验证
+    # 3. 数据库验证 - V172: 使用环境变量
     is_valid, message = verify_database_identity(
         db_host=host,
-        db_name="football_db",
-        db_user="football_user",
-        db_password="football_pass"
+        db_name=os.getenv("DB_NAME", "football_db"),
+        db_user=os.getenv("DB_USER", "football_user"),
+        db_password=os.getenv("DB_PASSWORD", "dev_password")
     )
 

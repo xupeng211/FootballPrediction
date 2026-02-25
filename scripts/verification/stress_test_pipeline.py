@@ -48,14 +48,13 @@ class StressTestPipeline:
         }
 
     def get_db_connection(self):
-        """获取数据库连接（V36.6: 使用显式配置避免环境变量污染）"""
-        # V36.6: 直接使用正确的数据库配置，绕过环境变量
+        """获取数据库连接 - V172: 使用统一配置"""
         return psycopg2.connect(
-            host="localhost",
-            port=5432,
-            database="football_db",  # 显式指定正确的数据库名
-            user="football_user",
-            password="football_pass",
+            host=self.settings.db_host,
+            port=self.settings.db_port,
+            database=self.settings.db_name,
+            user=self.settings.db_user,
+            password=self.settings.db_password.get_secret_value(),
             cursor_factory=RealDictCursor
         )
 
