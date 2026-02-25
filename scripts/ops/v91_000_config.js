@@ -16,6 +16,9 @@
 
 const path = require('path');
 
+// V172: 使用统一数据库配置
+const { DatabaseConfig } = require(path.resolve(__dirname, '../../config/database'));
+
 // ============================================================================
 // V104.000 CONFIGURATION
 // ============================================================================
@@ -56,13 +59,13 @@ const CONFIG = {
         ignoreDefaultArgs: ['--enable-automation']
     },
 
-    // Database configuration
+    // Database configuration - V172: 使用统一配置
     database: {
-        host: process.env.DB_HOST || '172.25.16.1',
-        port: parseInt(process.env.DB_PORT) || 5432,
-        database: process.env.DB_NAME || 'football_db',
-        user: process.env.DB_USER || 'football_user',
-        password: process.env.DB_PASSWORD || 'football_pass',
+        host: DatabaseConfig.host,
+        port: DatabaseConfig.port,
+        database: DatabaseConfig.database,
+        user: DatabaseConfig.user,
+        password: DatabaseConfig.password,
         pool: {
             min: 2,
             max: 20,
