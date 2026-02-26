@@ -1,0 +1,23 @@
+{
+  "match_id": "EPL_20260203_BHA_WHU",
+  "home_team": "Brighton",
+  "away_team": "West Ham",
+  "league_name": "Premier League",
+  "match_date": "2026-02-03T00:00:00.000Z",
+  "home_score": 2,
+  "away_score": 0,
+  "l2_fotmob": {
+    "source": "fotmob",
+    "data": {
+      "url": "https://www.fotmob.com/matches/club-brugge-vs-atletico-madrid/2r4yuu#5161870",
+      "xg": {
+        "home": 0,
+        "away": 45
+      },
+      "possession": null,
+      "shots": null
+    },
+    "timestamp": "2026-02-25T07:54:40.589Z"
+  },
+  "collected_at": "2026-02-25T07:54:40.594Z"
+}

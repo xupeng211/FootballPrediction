@@ -1,0 +1,20 @@
+{
+  "match_id": "LALIGA_20260203_VAL_VIL",
+  "home_team": "Valencia",
+  "away_team": "Villarreal",
+  "league_name": "La Liga",
+  "match_date": "2026-02-03T00:00:00.000Z",
+  "home_score": 0,
+  "away_score": 0,
+  "l2_fotmob": {
+    "source": "fotmob",
+    "data": null,
+    "error": "page.goto: Timeout 30000ms exceeded.\nCall log:\n  - navigating to \"https://www.fotmob.com/search?query=Valencia%20vs%20Villarreal\", waiting until \"networkidle\"\n"
+  },
+  "l3_oddsportal": {
+    "source": "oddsportal",
+    "data": null,
+    "error": "Odds not found"
+  },
+  "collected_at": "2026-02-25T07:23:03.494Z"
+}

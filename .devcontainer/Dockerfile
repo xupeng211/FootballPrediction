@@ -42,12 +42,42 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     # 进程管理
     htop \
     procps \
-    # 字体（Playwright 浏览器自动化需要）
+    # ============================================================
+    # V172-L2-04: 浏览器环境补全（Turnstile 绕过）
+    # ============================================================
+    # 字体库（Canvas 指纹必需）
     fonts-liberation \
     fonts-noto-cjk \
+    fonts-noto-color-emoji \
+    fonts-dejavu-core \
+    fonts-freefont-ttf \
+    fontconfig \
+    # Playwright 完整依赖（避免渲染降级）
+    libnss3 \
+    libnss3-tools \
+    libnspr4 \
+    libatk1.0-0 \
+    libatk-bridge2.0-0 \
+    libcups2 \
+    libdrm2 \
+    libxkbcommon0 \
+    libxcomposite1 \
+    libxdamage1 \
+    libxfixes3 \
+    libxrandr2 \
+    libgbm1 \
+    libasound2 \
+    libpango-1.0-0 \
+    libcairo2 \
+    # 图形渲染支持
+    libgl1 \
+    libglx0 \
+    libegl1 \
     # 清理缓存
     && rm -rf /var/lib/apt/lists/* \
-    && apt-get clean
+    && apt-get clean \
+    # 刷新字体缓存
+    && fc-cache -fv
 
 # -----------------------------------------------------------------------------
 # 阶段 2: Node.js 20 LTS 安装（使用 NodeSource 镜像）

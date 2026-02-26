@@ -1,0 +1,23 @@
+# V173-A1 增量数据工厂 - Cron 调度配置
+# ==========================================
+#
+# 安装方法:
+#   crontab -e
+#   粘贴以下内容
+#
+# 日志位置:
+#   /var/log/factory/
+#
+# ==========================================
+
+# 每天凌晨 4:00 运行增量收割
+0 4 * * * cd /home/xupeng/projects/FootballPrediction && docker exec football_prediction_dev node scripts/ops/incremental_factory.js >> /var/log/factory/incremental.log 2>&1
+
+# 每天凌晨 5:00 运行补漏任务 (修复失败的比赛)
+0 5 * * * cd /home/xupeng/projects/FootballPrediction && docker exec football_prediction_dev node scripts/ops/incremental_factory.js FACTORY_MODE=repair >> /var/log/factory/repair.log 2>&1
+
+# 每周日凌晨 6:00 运行全量扫描 (确保无遗漏)
+0 6 * * 0 cd /home/xupeng/projects/FootballPrediction && docker exec football_prediction_dev node scripts/ops/incremental_factory.js FACTORY_MODE=full >> /var/log/factory/full.log 2>&1
+
+# 每小时检查健康状态
+0 * * * * cat /app/logs/factory_health.json | grep -q '"health":"critical"' && echo "FACTORY ALERT: Critical health detected" | mail -s "Factory Alert" admin@example.com

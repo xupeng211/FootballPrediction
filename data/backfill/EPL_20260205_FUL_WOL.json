@@ -1,0 +1,23 @@
+{
+  "match_id": "EPL_20260205_FUL_WOL",
+  "home_team": "Fulham",
+  "away_team": "Wolves",
+  "league_name": "Premier League",
+  "match_date": "2026-02-05T00:00:00.000Z",
+  "home_score": 2,
+  "away_score": 2,
+  "l2_fotmob": {
+    "source": "fotmob",
+    "data": {
+      "url": "https://www.fotmob.com/matches/club-brugge-vs-atletico-madrid/2r4yuu#5161870",
+      "xg": {
+        "home": 4,
+        "away": 100
+      },
+      "possession": null,
+      "shots": null
+    },
+    "timestamp": "2026-02-25T07:53:34.880Z"
+  },
+  "collected_at": "2026-02-25T07:53:34.887Z"
+}

@@ -41,6 +41,12 @@ services:
       - dev_npm:/root/.npm
       # Git 配置持久化
       - dev_gitconfig:/root/.config/git
+      # ============================================================
+      # V172-L2-04: 浏览器身份持久化 (Turnstile 绕过)
+      # ============================================================
+      - ./data/browser_profile:/app/data/browser_profile
+      # Playwright 浏览器缓存
+      - playwright_cache:/root/.cache/ms-playwright
 
     # 工作目录
     working_dir: /app
@@ -64,6 +70,7 @@ services:
       # 代理配置（WSL2 访问 Windows Clash Verge）
       - HTTP_PROXY=http://172.25.16.1:7890
       - HTTPS_PROXY=http://172.25.16.1:7890
+      - CONTAINER_PROXY=http://172.25.16.1:7890
       - NO_PROXY=localhost,127.0.0.1,host.docker.internal
       # Python 配置
       - PYTHONUNBUFFERED=1
@@ -71,6 +78,10 @@ services:
       # Node.js 配置
       - NODE_ENV=development
       - NODE_OPTIONS=--max-old-space-size=4096
+      # ============================================================
+      # V172-L2-04: 浏览器 Profile 路径
+      # ============================================================
+      - BROWSER_PROFILE_PATH=/app/data/browser_profile
 
     # 端口映射
     ports:
@@ -78,9 +89,9 @@ services:
       - "${DASHBOARD_PORT:-3000}:3000"  # Dashboard
       - "${DEBUG_PORT:-5678}:5678"  # Python Debug
 
-    # 网络 - 使用 host 模式以便访问宿主机服务
-    # extra_hosts:
-    #   - "host.docker.internal:host-gateway"
+    # V172-L2-04: 启用 host.docker.internal
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
     # 健康检查
     healthcheck:
@@ -221,6 +232,10 @@ volumes:
   dev_gitconfig:
     driver: local
     name: footballprediction_dev_gitconfig
+  # V172-L2-04: Playwright 浏览器缓存
+  playwright_cache:
+    driver: local
+    name: footballprediction_playwright_cache
 
 # =============================================================================
 # 网络

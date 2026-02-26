@@ -1,0 +1,308 @@
+{
+  "cookies": [
+    {
+      "name": "cto_bundle",
+      "value": "IzVzDV96cGR1Tjc3SE9LalB6RFNSUVMySCUyQnczZiUyRkxUQmtMdGFiWnF4UjdFTUJRSXBHOXlSQUJ4Q2Q0VFlzJTJCVUNPN2ZxcyUyRiUyRmxuUXlQWlUlMkJHQkE5U2plQlJzdkwxOGFZUUdaVDQ5aDVpMHZPeTJRNCUyRnhvTjVzNmhrU0hHaUVQTm96U0ZUcmoybllHTXAxOHplTE9aM2szbWlNQSUzRCUzRA",
+      "domain": ".fotmob.com",
+      "path": "/",
+      "expires": 1774638529,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "_cc_id",
+      "value": "dc083b9ce6d19cf07d9f3937028b99b8",
+      "domain": ".fotmob.com",
+      "path": "/",
+      "expires": 1774638529,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "_hjSessionUser_2585474",
+      "value": "eyJpZCI6ImQ4M2NkMWM2LTQxNTYtNTJkNC1iYWU4LTk5MmU5NzE5MDI1OCIsImNyZWF0ZWQiOjE3NjQwNTIyOTI0OTQsImV4aXN0aW5nIjp0cnVlfQ==",
+      "domain": ".fotmob.com",
+      "path": "/",
+      "expires": 1803663249,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "__gads",
+      "value": "ID=6c2e5d5466bad63c:T=1764052292:RT=1764055716:S=ALNI_MbbSZAozSqs9vT4QC2vdsC-oXXHMg",
+      "domain": ".fotmob.com",
+      "path": "/",
+      "expires": 1774638529,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "__gpi",
+      "value": "UID=000011bc5e971d16:T=1764052292:RT=1764055716:S=ALNI_MZJ5v_vQ7dU5YOIzsCi9cNSIW96VQ",
+      "domain": ".fotmob.com",
+      "path": "/",
+      "expires": 1774638529,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "__eoi",
+      "value": "ID=489d7718b9688a8a:T=1764052292:RT=1764055716:S=AA-AfjbcEeT-YD_G1fI_PPDN2MlE",
+      "domain": ".fotmob.com",
+      "path": "/",
+      "expires": 1774638529,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "_gcl_au",
+      "value": "1.1.8841610.1764598363",
+      "domain": ".fotmob.com",
+      "path": "/",
+      "expires": 1772374363,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "NEXT_LOCALE",
+      "value": "zh-Hans",
+      "domain": ".fotmob.com",
+      "path": "/",
+      "expires": 1774638529,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "_ga",
+      "value": "GA1.1.1566902830.1764052285",
+      "domain": ".fotmob.com",
+      "path": "/",
+      "expires": 1806687247.963317,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "_ga_SQ24F7Q7YW",
+      "value": "GS2.1.s1765126559",
+      "domain": ".fotmob.com",
+      "path": "/",
+      "expires": 1774638529,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "_ga_K2ECMCJBFQ",
+      "value": "GS2.1.s1765126558",
+      "domain": ".fotmob.com",
+      "path": "/",
+      "expires": 1774638529,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "FCCDCF",
+      "value": "%5Bnull%2Cnull%2Cnull%2Cnull%2Cnull%2Cnull%2C%5B%5B32%2C%22%5B%5C%225574c635-de60-4ed1-a194-c6f6627f31aa%5C%22%2C%5B1764052294%2C906000000%5D%5D%22%5D%5D%5D",
+      "domain": ".fotmob.com",
+      "path": "/",
+      "expires": 1774638529,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "FCNEC",
+      "value": "%5B%5B%22AKsRol-AIOQbN5W3mY6v10b9vOtTBJ_T8S5Bc-TmKJyKfLGjYXBUEjz_zvSg-yolPVMPdraERYlCZeoKpTLrC1o2n48UqfgPFGc7uq8xLW_rE43ibB5cvvCCqTtASxdhkJD9-olj09m8Mms-K1JWOsIPXPF8jwIGKg%3D%3D%22%5D%5D",
+      "domain": ".fotmob.com",
+      "path": "/",
+      "expires": 1774638529,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "u:location",
+      "value": "%7B%22countryCode%22%3A%22HK%22%2C%22regionId%22%3Anull%2C%22ip%22%3A%22127.0.0.1%22%2C%22ccode3%22%3A%22HKG%22%2C%22ccode3NoRegion%22%3A%22HKG%22%2C%22timezone%22%3A%22Asia%2FShanghai%22%7D",
+      "domain": ".fotmob.com",
+      "path": "/",
+      "expires": 1774638529,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "turnstile_verified",
+      "value": "1.1772046239.cb177ccbe1c88d1565b6760983ff9cf3ac61c69098df5637c134b0671e53bdda",
+      "domain": ".fotmob.com",
+      "path": "/",
+      "expires": 1774638529,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "g_state",
+      "value": "{i_l:0,i_ll:1772046240664,i_b:Fv94g9+Txt/4z0RFJnOQV87aherf1UUMY25IUM2fIBE,i_e:{enable_itp_optimization:0}}",
+      "domain": ".fotmob.com",
+      "path": "/",
+      "expires": 1774638529,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "NEXT_LOCALE",
+      "value": "zh-Hans",
+      "domain": "www.fotmob.com",
+      "path": "/",
+      "expires": 1803663246.625028,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "u:location",
+      "value": "%7B%22countryCode%22%3A%22HK%22%2C%22regionId%22%3Anull%2C%22ip%22%3A%22127.0.0.1%22%2C%22ccode3%22%3A%22HKG%22%2C%22ccode3NoRegion%22%3A%22HKG%22%2C%22timezone%22%3A%22Asia%2FShanghai%22%7D",
+      "domain": "www.fotmob.com",
+      "path": "/",
+      "expires": 1772213647,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "id",
+      "value": "22bb5a89fa06018a||t=1772046569|et=730|cs=002213fd48edce7386ca910039",
+      "domain": ".doubleclick.net",
+      "path": "/",
+      "expires": 1806687249.762462,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "_hjSession_2585474",
+      "value": "eyJpZCI6ImViYmQzYzZlLWE1YjQtNGYzNy1iN2YyLTMxZDRjNDQxZTU1ZiIsImMiOjE3NzIxMjY4MDcxODksInMiOjAsInIiOjAsInNiIjowLCJzciI6MCwic2UiOjAsImZzIjowLCJzcCI6MX0=",
+      "domain": ".fotmob.com",
+      "path": "/",
+      "expires": 1772128607,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "_ga_G0V1WDW9B2",
+      "value": "GS2.1.s1772104723$o3$g1$t1772127247$j9$l0$h687140265",
+      "domain": ".fotmob.com",
+      "path": "/",
+      "expires": 1806687247.962652,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "g_state",
+      "value": "{\"i_l\":0,\"i_ll\":1772127249770,\"i_b\":\"XKLfiooHUlRe7zRg1L766TbWyszTFPHhtPTTZ1WPl5U\",\"i_e\":{\"enable_itp_optimization\":0}}",
+      "domain": "www.fotmob.com",
+      "path": "/",
+      "expires": 1787679249,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    }
+  ],
+  "origins": [
+    {
+      "origin": "https://www.fotmob.com",
+      "localStorage": [
+        {
+          "name": "unleash:repository:sessionId",
+          "value": "\"40058007\""
+        },
+        {
+          "name": "wsc_ias_refreshToken",
+          "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VySWQiOiI2OWEwNDU1MjcyMDA5NGQ0MmFmYmE2M2UiLCJuYmYiOjE3NzIxMTExODYsImV4cCI6MTc3NDczOTE4NiwiaWF0IjoxNzcyMTExMTg2LCJpc3MiOiJXU0MifQ.m7d1snPV5t3qU74w8z2ccbew3vAlGpB_YIUNzdlfSU8"
+        },
+        {
+          "name": "wsc_ias_accessToken",
+          "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJVc2VySWQiOiI2OWEwNDU1MjcyMDA5NGQ0MmFmYmE2M2UiLCJJc0Fub255bW91cyI6IlRydWUiLCJFeHRlcm5hbElkIjoiYW5vbnltb3VzNTk5MzhiM2MtNzJmMi00Y2YyLWIyOWQtMTJlYmRhMDZkOTA1IiwiSXNUZW1wIjoiVHJ1ZSIsIk9yaWdpbmFsQW5vbnltb3VzVXNlcklkIjoiNjlhMDQ1NTI3MjAwOTRkNDJhZmJhNjNlIiwibmJmIjoxNzcyMTExMTg2LCJleHAiOjE3NzIxOTc1ODYsImlhdCI6MTc3MjExMTE4NiwiaXNzIjoiV1NDIn0.3sQbwKB7Y-tUwZqzrhjO6ft4CPl0qKvaolC2gRFkIaY"
+        },
+        {
+          "name": "user:firstVisit",
+          "value": "false"
+        },
+        {
+          "name": "matchPreferences",
+          "value": "[]"
+        },
+        {
+          "name": "visitedPages",
+          "value": "[{\"id\":\"4860944\",\"type\":\"match\",\"matchDate\":\"Sat, Feb 28, 2026, 13:00 UTC\",\"parentLeagueId\":512,\"leagueId\":901354,\"leagueName\":\"Regionalliga Southwest\",\"homeTeamId\":145498,\"homeTeamName\":\"TSG Balingen\",\"homeTeamScore\":null,\"awayTeamId\":94935,\"awayTeamName\":\"Freiberg\",\"awayTeamScore\":null,\"status\":{\"utcTime\":\"2026-02-28T13:00:00.000Z\",\"cancelled\":false,\"started\":false,\"finished\":false},\"score\":0},{\"id\":\"4860951\",\"type\":\"match\",\"matchDate\":\"Sun, Mar 1, 2026, 13:00 UTC\",\"parentLeagueId\":512,\"leagueId\":901354,\"leagueName\":\"Regionalliga Southwest\",\"homeTeamId\":94938,\"homeTeamName\":\"FCA Walldorf\",\"homeTeamScore\":null,\"awayTeamId\":1734,\"awayTeamName\":\"Homburg\",\"awayTeamScore\":null,\"status\":{\"utcTime\":\"2026-03-01T13:00:00.000Z\",\"cancelled\":false,\"started\":false,\"finished\":false},\"score\":0},{\"id\":\"4846896\",\"type\":\"match\",\"matchDate\":\"Fri, Feb 27, 2026, 18:00 UTC\",\"parentLeagueId\":208,\"leagueId\":208,\"leagueName\":\"3. Liga\",\"homeTeamId\":94940,\"homeTeamName\":\"Hoffenheim II\",\"homeTeamScore\":null,\"awayTeamId\":9753,\"awayTeamName\":\"1860 München\",\"awayTeamScore\":null,\"status\":{\"utcTime\":\"2026-02-27T18:00:00.000Z\",\"cancelled\":false,\"started\":false,\"finished\":false},\"score\":0},{\"id\":\"4829530\",\"type\":\"match\",\"matchDate\":\"Sat, Feb 28, 2026, 14:30 UTC\",\"parentLeagueId\":54,\"leagueId\":54,\"leagueName\":\"Bundesliga\",\"homeTeamId\":8697,\"homeTeamName\":\"Werder Bremen\",\"homeTeamScore\":null,\"awayTeamId\":94937,\"awayTeamName\":\"FC Heidenheim\",\"awayTeamScore\":null,\"status\":{\"utcTime\":\"2026-02-28T14:30:00.000Z\",\"cancelled\":false,\"started\":false,\"finished\":false},\"score\":0},{\"id\":\"4860942\",\"type\":\"match\",\"matchDate\":\"Wed, Feb 25, 2026, 18:00 UTC\",\"parentLeagueId\":512,\"leagueId\":901354,\"leagueName\":\"Regionalliga Southwest\",\"homeTeamId\":94941,\"homeTeamName\":\"Sonnenhof Großaspach\",\"homeTeamScore\":2,\"awayTeamId\":6594,\"awayTeamName\":\"Freiburg II\",\"awayTeamScore\":1,\"status\":{\"utcTime\":\"2026-02-25T18:00:00.000Z\",\"cancelled\":false,\"started\":true,\"finished\":true,\"reason\":{\"short\":\"FT\",\"shortKey\":\"fulltime_short\",\"long\":\"Full-Time\",\"longKey\":\"finished\"}},\"score\":0}]"
+        },
+        {
+          "name": "wsc_ias_userId",
+          "value": "69a04552720094d42afba63e"
+        },
+        {
+          "name": "unleash:repository:repo",
+          "value": "[{\"name\":\"web-show-about-the-player\",\"enabled\":true,\"variant\":{\"name\":\"disabled\",\"enabled\":false,\"payload\":null},\"impression_data\":false},{\"name\":\"web-wsc-blaze-highlights\",\"enabled\":true,\"variant\":{\"name\":\"disabled\",\"enabled\":false,\"payload\":null},\"impression_data\":false},{\"name\":\"predictor-disable-leagues-scrollbox\",\"enabled\":true,\"variant\":{\"name\":\"disabled\",\"enabled\":false,\"payload\":null},\"impression_data\":false},{\"name\":\"web-team-page-ssr\",\"enabled\":true,\"variant\":{\"name\":\"disabled\",\"enabled\":false,\"payload\":null},\"impression_data\":false},{\"name\":\"web-show-market-value-graph\",\"enabled\":true,\"variant\":{\"name\":\"disabled\",\"enabled\":false,\"payload\":null},\"impression_data\":false},{\"name\":\"web-virtualize-front-page\",\"enabled\":true,\"variant\":{\"name\":\"disabled\",\"enabled\":false,\"payload\":null},\"impression_data\":false},{\"name\":\"predictor-hide-xmas-leagues-outside-of-xmas\",\"enabled\":true,\"variant\":{\"name\":\"disabled\",\"enabled\":false,\"payload\":null},\"impression_data\":false},{\"name\":\"web-enable-livewrapped\",\"enabled\":true,\"variant\":{\"name\":\"disabled\",\"enabled\":false,\"payload\":null},\"impression_data\":false},{\"name\":\"predictor-show-reminders-toggle\",\"enabled\":true,\"variant\":{\"name\":\"disabled\",\"enabled\":false,\"payload\":null},\"impression_data\":false},{\"name\":\"web-lineup-builder-transfer-value\",\"enabled\":true,\"variant\":{\"name\":\"disabled\",\"enabled\":false,\"payload\":null},\"impression_data\":false},{\"name\":\"predictor-show-reminders-popup\",\"enabled\":true,\"variant\":{\"name\":\"disabled\",\"enabled\":false,\"payload\":null},\"impression_data\":false},{\"name\":\"web-continue-in-app-popup\",\"enabled\":true,\"variant\":{\"name\":\"disabled\",\"enabled\":false,\"payload\":null},\"impression_data\":false},{\"name\":\"predictor-show-countdown-to-next-week\",\"enabled\":true,\"variant\":{\"name\":\"disabled\",\"enabled\":false,\"payload\":null},\"impression_data\":false},{\"name\":\"predictor-join-by-code\",\"enabled\":true,\"variant\":{\"name\":\"disabled\",\"enabled\":false,\"payload\":null},\"impression_data\":false},{\"name\":\"web-heatmap-players-match-facts\",\"enabled\":true,\"variant\":{\"name\":\"disabled\",\"enabled\":false,\"payload\":null},\"impression_data\":false},{\"name\":\"predcitor-remove-user-from-league\",\"enabled\":true,\"variant\":{\"name\":\"disabled\",\"enabled\":false,\"payload\":null},\"impression_data\":false},{\"name\":\"web-show-about-the-team\",\"enabled\":true,\"variant\":{\"name\":\"disabled\",\"enabled\":false,\"payload\":null},\"impression_data\":false},{\"name\":\"predictor-enable-in-app-browser-detection\",\"enabled\":true,\"variant\":{\"name\":\"disabled\",\"enabled\":false,\"payload\":null},\"impression_data\":false},{\"name\":\"web-disable-add-pulse-items-autogenerated-ticker\",\"enabled\":true,\"variant\":{\"name\":\"disabled\",\"enabled\":false,\"payload\":null},\"impression_data\":false},{\"name\":\"web-show-lineup-builder-promo\",\"enabled\":true,\"variant\":{\"name\":\"disabled\",\"enabled\":false,\"payload\":null},\"impression_data\":false}]"
+        },
+        {
+          "name": "__rm_sid__",
+          "value": "1772104722456530"
+        },
+        {
+          "name": "_gcl_ls",
+          "value": "{\"schema\":\"gcl\",\"version\":1,\"gcl_ctr\":{\"value\":{\"value\":0,\"timeouts\":0,\"errors\":0,\"creationTimeMs\":1772046561487},\"expires\":1779822561487}}"
+        },
+        {
+          "name": "fotmob:client",
+          "value": "\"dc326e49-bab4-483c-82ed-484821a14872\""
+        },
+        {
+          "name": "__rm_sid_ts__",
+          "value": "1772127249768"
+        },
+        {
+          "name": "hasLoggedEngagement",
+          "value": "\"\""
+        },
+        {
+          "name": "allLeaguesExpanded",
+          "value": "false"
+        },
+        {
+          "name": "forceShowSuperlive",
+          "value": "false"
+        },
+        {
+          "name": "user:hasRedirectedLocale",
+          "value": "true"
+        },
+        {
+          "name": "continue_in_app_visit_count",
+          "value": "1455"
+        }
+      ]
+    },
+    {
+      "origin": "https://www.google.com",
+      "localStorage": [
+        {
+          "name": "rc::h",
+          "value": "1772126997685"
+        }
+      ]
+    }
+  ]
+}
