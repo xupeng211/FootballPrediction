@@ -1,66 +1,34 @@
-# 废弃文件隔离区
+# _deprecated 历史代码冷存储
 
-**迁移日期**: 2026-02-25
-**迁移分支**: feat/refactor-core-v2
-**迁移原因**: [V171-Governance-03] 代码库清理与架构标准化
+⚠️ **警告**: 本目录包含 V1-V170 时代的历史代码，仅供参考。
 
----
+## 目录结构
 
-## 文件清单
-
-### root/ (5个)
-| 文件 | 原因 |
-|------|------|
-| `canary_stress_test.js` | 旧版压力测试，与现在架构不符 |
-| `launch_pure_l3.js` | 废弃的 L3 启动器，包含硬编码数据库配置 |
-| `ignite_full_harvest.js` | 废弃的收割启动器，已被新收割引擎取代 |
-| `proxy_scrub.js` | 废弃的代理清理脚本，功能已集成到 NetworkShield |
-| `test_network_shield.js` | 测试文件位置错误，应在 tests/ 目录 |
-
-### scripts_ops/ (7个)
-| 文件 | 原因 |
-|------|------|
-| `demo_telemetry.js` | 演示性质，仅用于展示遥测功能 |
-| `odds_stealth_engine_debug.js` | 调试脚本，开发调试时使用 |
-| `gen_proxies.js` | 代理生成器，功能已集成 |
-| `force_deep_capture.js` | 临时修复脚本，用于修复特定问题 |
-| `fix_parser.js` | 一次性解析器修复工具 |
-| `test_helper.js` | 旧版测试辅助，已被新版本取代 |
-| `test_helper_v43_100.js` | V43.100 版本测试辅助 |
-
-### research/ (42个)
-完整的 `scripts/ops/_research/deprecated/` 目录内容，包括：
-- 各版本的实验性代码 (v39_*, v48_*, v64_*, v67_*, v68_*, v69_*, v71_*, v73_*, v77_*, v84_*, v85_*, v88_*)
-- 诊断脚本和调查脚本
-- DOM 检查和模拟测试
-- 过时的生产脚本
-
-### zombie_l1/ (4个) - V171-Governance-05 新增
-| 文件 | 原因 |
-|------|------|
-| `test_l1_discovery.js` | 旧版 L1 测试，功能已合并到 v171_l1_api_fetch.js |
-| `v171_l1_expand_pool.js` | 旧版比赛池扩充，已被全量快照取代 |
-| `v86_turbo_harvest.js` | V86 版本收割器，已被 V171 架构取代 |
-| `v86_master_harvest.js` | V86 版本主收割器，已被 V171 架构取代 |
-
----
-
-## 保留期限
-
-**这些文件将在 30 天后（2026-03-27）确认无问题后永久删除。**
-
-如需恢复任何文件，请从本目录复制回原位置：
-```bash
-# 恢复示例
-cp _deprecated/root/canary_stress_test.js ./
+```
+_deprecated/
+├── legacy_scripts_v1_v170/     # V1-V170 历史脚本
+│   ├── ai/                    # AI 模块 (已废弃)
+│   ├── analysis/              # 分析脚本 (已废弃)
+│   ├── audit/                 # 审计脚本 (已废弃)
+│   ├── collectors/            # 采集器 (已废弃)
+│   ├── logs/                  # 日志 (已废弃)
+│   ├── migrations/            # 迁移脚本 (已废弃)
+│   ├── ml/                    # ML 模块 (已废弃)
+│   ├── production/            # 生产脚本 (已废弃)
+│   ├── verification/          # 验证脚本 (已废弃)
+│   ├── root_python/           # 根目录 Python 脚本 (已废弃)
+│   └── root_shell/            # 根目录 Shell 脚本 (已废弃)
+│
+└── legacy_sql_migrations/     # 历史 SQL 迁移
+    ├── sql/                   # SQL 脚本
+    └── *.sql                  # 根目录 SQL 文件
 ```
 
----
+## 归档日期
+
+2026-02-27 (V172-ULTIMATE 发布)
 
 ## 统计
 
-- **总计**: 58 个文件
-- **根目录**: 5 个
-- **scripts/ops**: 7 个
-- **research**: 42 个
-- **zombie_l1**: 4 个 (V171-Governance-05 新增)
+- 总文件数: 110+
+- 涵盖版本: V1 - V170

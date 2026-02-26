@@ -1,15 +1,43 @@
 {
   "mcpServers": {
-    "git": {
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "/home/xupeng/projects/FootballPrediction"
+      ],
+      "description": "Filesystem MCP - 项目文件读写 (仅限项目目录)",
+      "env": {
+        "NODE_OPTIONS": "--max-old-space-size=4096"
+      }
+    },
+    "postgres": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-postgres",
+        "postgresql://claude_reader:claude_readonly_2026@localhost:5432/football_db"
+      ],
+      "description": "PostgreSQL MCP - 只读数据库查询 (claude_reader 用户)"
+    },
+    "pytest": {
       "command": "python",
-      "args": ["mcp_servers/git_server.py"],
-      "cwd": "/home/user/projects/FootballPrediction",
-      "description": "Git version control (READ-ONLY LOG) for code management"
+      "args": ["/home/xupeng/projects/FootballPrediction/mcp_servers/pytest_server.py"],
+      "description": "pytest MCP - 测试执行、失败日志、覆盖率报告",
+      "env": {
+        "PYTHONPATH": "/home/xupeng/projects/FootballPrediction/src"
+      }
+    },
+    "docker": {
+      "command": "python",
+      "args": ["/home/xupeng/projects/FootballPrediction/mcp_servers/docker_server.py"],
+      "description": "Docker MCP - 容器管理 (仅限项目 docker-compose)"
     },
     "playwright": {
       "command": "npx",
       "args": ["-y", "@playwright/mcp"],
-      "description": "Playwright browser automation for web scraping and testing"
+      "description": "Playwright 浏览器自动化 (用于网页抓取和测试)"
     }
   }
 }

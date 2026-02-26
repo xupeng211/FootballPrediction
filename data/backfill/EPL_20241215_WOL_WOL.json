@@ -1,0 +1,32 @@
+{
+  "match_id": "EPL_20241215_WOL_WOL",
+  "home_team": "Wolverhampton Wanderers",
+  "away_team": "Wolverhampton Wanderers",
+  "league_name": "Premier League",
+  "match_date": "2024-12-15T00:00:00.000Z",
+  "home_score": null,
+  "away_score": null,
+  "l2_fotmob": {
+    "source": "fotmob",
+    "data": {
+      "url": "https://www.fotmob.com/matches/atalanta-vs-dortmund/2rufmy#5161872",
+      "xg": null,
+      "possession": null,
+      "shots": null,
+      "fouls": null,
+      "corners": null
+    },
+    "error": "xG data not extracted",
+    "timestamp": "2026-02-25T07:45:48.962Z"
+  },
+  "l3_oddsportal": {
+    "source": "oddsportal",
+    "data": {
+      "url": "https://www.oddsportal.com/search/results/Wolverhampton%20Wanderers%20Wolverhampton%20Wanderers/",
+      "opening": null,
+      "closing": null
+    },
+    "error": "Odds not found"
+  },
+  "collected_at": "2026-02-25T07:45:58.427Z"
+}

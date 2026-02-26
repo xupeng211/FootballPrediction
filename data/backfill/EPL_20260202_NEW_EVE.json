@@ -1,0 +1,20 @@
+{
+  "match_id": "EPL_20260202_NEW_EVE",
+  "home_team": "Newcastle",
+  "away_team": "Everton",
+  "league_name": "Premier League",
+  "match_date": "2026-02-02T00:00:00.000Z",
+  "home_score": 3,
+  "away_score": 1,
+  "l2_fotmob": {
+    "source": "fotmob",
+    "data": null,
+    "error": "page.goto: Timeout 30000ms exceeded.\nCall log:\n  - navigating to \"https://www.fotmob.com/search?query=Newcastle%20vs%20Everton\", waiting until \"networkidle\"\n"
+  },
+  "l3_oddsportal": {
+    "source": "oddsportal",
+    "data": null,
+    "error": "Odds not found"
+  },
+  "collected_at": "2026-02-25T07:25:02.611Z"
+}

@@ -1,0 +1,20 @@
+{
+  "match_id": "EPL_20260208_LIV_NEW",
+  "home_team": "Liverpool",
+  "away_team": "Newcastle",
+  "league_name": "Premier League",
+  "match_date": "2026-02-08T00:00:00.000Z",
+  "home_score": 3,
+  "away_score": 1,
+  "l2_fotmob": {
+    "source": "fotmob",
+    "data": {
+      "url": "https://www.fotmob.com/matches/club-brugge-vs-atletico-madrid/2r4yuu#5161870",
+      "xg": null,
+      "possession": null,
+      "shots": null
+    },
+    "timestamp": "2026-02-25T07:52:48.348Z"
+  },
+  "collected_at": "2026-02-25T07:52:48.354Z"
+}

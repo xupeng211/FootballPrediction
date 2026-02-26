@@ -1,0 +1,79 @@
+# ============================================
+# FootballPrediction - MCP Docker Compose 扩展
+# ============================================
+# 用途: 为 MCP 服务提供独立的 Docker 环境
+# 使用: docker-compose -f docker-compose.yml -f docker-compose.mcp.yml up -d
+# ============================================
+
+services:
+  # ============================================
+  # MCP PostgreSQL 只读用户初始化
+  # ============================================
+  mcp_init:
+    image: postgres:15-alpine
+    container_name: football_prediction_mcp_init
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./deploy/docker/init_claude_reader.sql:/init.sql:ro
+    command: >
+      sh -c "
+        echo '初始化 MCP 只读用户...' &&
+        PGPASSWORD=football_pass psql -h db -U football_user -d football_db -f /init.sql &&
+        echo 'MCP 只读用户创建完成'
+      "
+    networks:
+      - football_network
+    profiles:
+      - mcp
+      - all
+
+  # ============================================
+  # MCP Gateway (可选) - 提供 API 接口
+  # ============================================
+  mcp_gateway:
+    build:
+      context: .
+      dockerfile: deploy/docker/Dockerfile
+      target: runner
+    image: footballprediction:v25.1
+    container_name: football_prediction_mcp_gateway
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - DOCKER_ENV=true
+      - TZ=${TZ:-UTC}
+      - MCP_GATEWAY_PORT=${MCP_GATEWAY_PORT:-9000}
+    ports:
+      - "${MCP_GATEWAY_PORT:-9000}:9000"
+    volumes:
+      - ./mcp_servers:/app/mcp_servers:ro
+      - ./src:/app/src:ro
+      - app_logs:/app/logs
+    command: >
+      python -c "
+      import asyncio
+      import sys
+      sys.path.insert(0, '/app')
+      print('MCP Gateway 启动中...')
+      # 这里可以添加 HTTP API 包装器
+      asyncio.get_event_loop().run_forever()
+      "
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - football_network
+    profiles:
+      - mcp
+      - all
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.1'
+          memory: 128M
