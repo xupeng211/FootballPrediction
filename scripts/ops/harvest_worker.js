@@ -45,20 +45,54 @@ const COOKIE_SAVE_INTERVAL = parseInt(process.env.COOKIE_SAVE_INTERVAL) || Facto
 const STATIC_FINGERPRINT = FactoryConfig.FINGERPRINT.static;
 
 // ============================================================================
-// Logger
+// Logger (V172-STRENGTHEN: 标准化日志)
 // ============================================================================
 
 const log = {
-    info: (msg) => console.log(`[Worker ${WORKER_ID}] ${msg}`),
-    success: (msg) => console.log(`[Worker ${WORKER_ID}] ✅ ${msg}`),
-    warn: (msg) => console.log(`[Worker ${WORKER_ID}] ⚠️  ${msg}`),
-    error: (msg) => console.log(`[Worker ${WORKER_ID}] ❌ ${msg}`),
+    // 时间戳生成器
+    _ts: () => {
+        const d = new Date();
+        return `${d.toISOString().slice(0, 10)} ${d.toTimeString().slice(0, 8)}`;
+    },
+
+    info: (msg) => console.log(`${log._ts()} [W${WORKER_ID}] [INFO] ${msg}`),
+    success: (msg) => console.log(`${log._ts()} [W${WORKER_ID}] [OK] ✅ ${msg}`),
+    warn: (msg) => console.log(`${log._ts()} [W${WORKER_ID}] [WARN] ⚠️  ${msg}`),
+    error: (msg, err = null) => {
+        const stack = err?.stack ? `\n${err.stack}` : '';
+        console.error(`${log._ts()} [W${WORKER_ID}] [ERR] ❌ ${msg}${stack}`);
+    },
     debug: (msg) => {
         if (FactoryConfig.LOG_CONFIG.level === 'debug') {
-            console.log(`[Worker ${WORKER_ID}] 🔍 ${msg}`);
+            console.log(`${log._ts()} [W${WORKER_ID}] [DBG] 🔍 ${msg}`);
         }
     }
 };
+
+// ============================================================================
+// V172-STRENGTHEN: 安全 JSON 解析器
+// ============================================================================
+
+function safeJsonParse(str, fallback = null) {
+    if (!str || typeof str !== 'string') {
+        return fallback;
+    }
+    try {
+        return JSON.parse(str);
+    } catch (e) {
+        log.warn(`JSON 解析失败: ${e.message}, 输入前 100 字符: ${str.slice(0, 100)}`);
+        return fallback;
+    }
+}
+
+function safeJsonStringify(obj, fallback = '{}') {
+    try {
+        return JSON.stringify(obj);
+    } catch (e) {
+        log.warn(`JSON 序列化失败: ${e.message}`);
+        return fallback;
+    }
+}
 
 // ============================================================================
 // HarvestWorker 类 (生产就绪版)

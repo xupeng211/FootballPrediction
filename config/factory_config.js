@@ -161,15 +161,21 @@ const CONCURRENCY = {
 };
 
 // ============================================================================
-// 代理配置 (Proxy)
+// 代理配置 (Proxy) - V172-STRENGTHEN: 动态端口池
 // ============================================================================
 
 const PROXY_CONFIG = {
-    /** 代理端口池 */
-    ports: (ENV.PROXY_PORTS || '7890,7891,7892,7893,7894')
-        .split(',')
-        .map(p => parseInt(p.trim()))
-        .filter(p => !isNaN(p)),
+    /** 代理端口池 (支持动态扩展) */
+    ports: (() => {
+        // 优先使用环境变量
+        if (ENV.PROXY_PORTS) {
+            return ENV.PROXY_PORTS.split(',')
+                .map(p => parseInt(p.trim()))
+                .filter(p => !isNaN(p));
+        }
+        // 默认 5 个端口，可扩展到 100+
+        return Array.from({ length: 5 }, (_, i) => 7890 + i);
+    })(),
 
     /** 默认代理端口 */
     defaultPort: parseInt(ENV.PROXY_PORT) || 7890,
@@ -187,6 +193,26 @@ const PROXY_CONFIG = {
      */
     getServer(port = this.defaultPort) {
         return this.serverTemplate.replace('{port}', port);
+    },
+
+    /**
+     * V172-STRENGTHEN: 根据 Worker ID 自动分配端口
+     * @param {number} workerId - Worker 编号
+     * @returns {number} 代理端口
+     */
+    getPortByWorker(workerId) {
+        return this.ports[workerId % this.ports.length];
+    },
+
+    /**
+     * V172-STRENGTHEN: 动态扩展端口池
+     * @param {number} count - 需要的端口数量
+     */
+    expandPorts(count) {
+        const currentMax = Math.max(...this.ports);
+        while (this.ports.length < count) {
+            this.ports.push(currentMax + this.ports.length);
+        }
     }
 };
 
