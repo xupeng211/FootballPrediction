@@ -28,7 +28,7 @@ const { Client } = require('pg');
 
 const PROJECT_ROOT = process.env.PROJECT_ROOT || '/app';
 const FactoryConfig = require(path.join(PROJECT_ROOT, 'config/factory_config'));
-const { DatabaseConfig } = require(path.join(PROJECT_ROOT, 'config/database'));
+const { DatabaseConfig } = require(path.join(PROJECT_ROOT, 'src/infrastructure/database/PostgresClient'));
 
 // ============================================================================
 // 代理端口池管理
