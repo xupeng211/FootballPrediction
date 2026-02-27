@@ -26,7 +26,7 @@ const fs = require('fs');
 
 const PROJECT_ROOT = process.env.PROJECT_ROOT || '/app';
 const FactoryConfig = require(path.join(PROJECT_ROOT, 'config/factory_config'));
-const { DatabaseConfig } = require(path.join(PROJECT_ROOT, 'config/database'));
+const { DatabaseConfig } = require(path.join(PROJECT_ROOT, 'src/infrastructure/database/PostgresClient'));
 const { Client } = require('pg');
 const { chromium } = require('playwright');
 
@@ -263,7 +263,7 @@ class HarvestWorker {
             this.page = await this.context.newPage();
 
             // V172: 访问首页预热
-            await page.goto('https://www.fotmob.com/', {
+            await this.page.goto('https://www.fotmob.com/', {
                 timeout: FactoryConfig.TIMING.apiTimeout
             });
             await this.page.waitForTimeout(2000);
