@@ -256,6 +256,11 @@ tests/unit/modeling/
 node_modules/
 package-lock.json
 
+# V173: Browser Profile Data (SENSITIVE)
+data/browser_profile/*.json
+data/browser_profile/*.json.*
+!data/browser_profile/.gitkeep
+
 # =============================================================================
 # V41.237: Odds Sync System - Runtime Artifacts
 # =============================================================================

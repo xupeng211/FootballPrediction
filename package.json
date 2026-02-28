@@ -1,19 +1,22 @@
 {
-  "name": "footballprediction-v172",
-  "version": "172.1.0",
-  "description": "V172 数据收割引擎 - 原始 JSON 高质量入库系统",
+  "name": "footballprediction-v173",
+  "version": "173.0.0",
+  "description": "V173 数据收割引擎 - 网页渗透模式 + 中央监控大屏",
   "private": true,
   "scripts": {
     "start": "node scripts/ops/v171_scheduler.js",
-    "harvest": "node scripts/ops/v171_mass_harvest.js",
+    "harvest": "node scripts/ops/harvest_fleet_master.js",
     "harvest:quick": "node scripts/ops/v171_quick_harvest.js",
     "harvest:limit": "node scripts/ops/v171_mass_harvest.js --limit",
-    "harvest:v172": "node scripts/ops/harvest_fleet_master.js",
+    "harvest:v173": "node scripts/ops/harvest_fleet_master.js",
+    "watch": "node scripts/ops/monitor_dashboard.js",
+    "report": "node scripts/ops/asset_report.js",
+    "status": "node scripts/ops/monitor_dashboard.js",
     "extract-urls": "node scripts/ops/v171_real_url_extractor.js",
     "scheduler": "node scripts/ops/v171_scheduler.js",
     "install-browsers": "playwright install chromium",
     "sync": "node scripts/ops/v42_660_node_temporal_sync.js",
-    "diagnose": "node diagnose_json_path.js",
+    "diagnose": "node scripts/ops/diagnostic_experiment.js",
     "test": "node --test tests/unit/*.test.js",
     "test:unit": "node --test tests/unit/*.test.js",
     "test:integration": "node --test tests/integration/*.test.js",
@@ -30,13 +33,10 @@
   },
   "dependencies": {
     "dotenv": "^16.4.5",
-    "js-yaml": "^4.1.0",
     "jsdom": "^27.4.0",
     "p-limit": "^3.1.0",
     "pg": "^8.17.2",
-    "playwright": "^1.57.0",
-    "playwright-extra": "^4.3.6",
-    "puppeteer-extra-plugin-stealth": "^2.11.2"
+    "playwright": "^1.57.0"
   },
   "devDependencies": {
     "eslint": "^8.57.0",
@@ -63,6 +63,6 @@
     },
     "verbose": true
   },
-  "author": "V172 Engineering Team",
+  "author": "V173 Engineering Team",
   "license": "MIT"
 }

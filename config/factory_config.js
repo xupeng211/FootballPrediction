@@ -1,12 +1,16 @@
 /**
- * V172-FINAL 工厂级配置中心
- * ==========================
+ * V173-SENTINEL 工厂级配置中心 (免疫系统加固版)
+ * ==============================================
  *
  * 所有收割系统的魔术数字统一归口管理
  * 严禁在业务代码中硬编码任何参数
  *
+ * V173 新增:
+ * - 动态 UA 轮换池 (20 个主流 User-Agent)
+ * - 深度静默模式 (FOTMOB_COOL_DOWN)
+ *
  * @module config/factory_config
- * @version V172.100 (Production Ready)
+ * @version V173.0.0 (Sentinel Edition)
  */
 
 'use strict';
@@ -31,8 +35,8 @@ const QUALITY_GATE = {
     /** 必须包含的 JSON 路径 */
     requiredPaths: ['content'],
 
-    /** 禁止包含的错误关键词 */
-    errorKeywords: ['TURNSTILE', 'error', 'Failed', 'blocked', 'captcha', 'challenge'],
+    /** 禁止包含的错误关键词 - V173: 只检测明确的 API 错误响应 */
+    errorKeywords: ['TURNSTILE_REQUIRED', 'Verification required', 'ACCESS_DENIED', 'CAPTCHA', 'cf-browser-verification', 'challenge-platform'],
 
     /**
      * 验证数据是否有效
@@ -57,10 +61,17 @@ const QUALITY_GATE = {
             }
         }
 
-        // 错误关键字检查
-        const lowerStr = jsonStr.toLowerCase();
+        // V173: 智能错误关键字检查
+        // 只检查核心数据区域，忽略翻译文本（translations）
+        const coreData = {
+            content: rawData.content,
+            general: rawData.general,
+            header: rawData.header
+        };
+        const coreStr = JSON.stringify(coreData).toLowerCase();
+
         for (const keyword of this.errorKeywords) {
-            if (lowerStr.includes(keyword.toLowerCase())) {
+            if (coreStr.includes(keyword.toLowerCase())) {
                 return { valid: false, reason: `CONTAINS_${keyword.toUpperCase()}` };
             }
         }
@@ -74,11 +85,11 @@ const QUALITY_GATE = {
 // ============================================================================
 
 const TIMING = {
-    /** 单场收割最小延时 (ms) */
-    minDelayMs: parseInt(ENV.MIN_DELAY_MS) || 5000,
+    /** 单场收割最小延时 (ms) - V173: 默认 10s 潜行频率 */
+    minDelayMs: parseInt(ENV.MIN_DELAY_MS) || 10000,
 
-    /** 单场收割最大延时 (ms) */
-    maxDelayMs: parseInt(ENV.MAX_DELAY_MS) || 12000,
+    /** 单场收割最大延时 (ms) - V173: 默认 15s 潜行频率 */
+    maxDelayMs: parseInt(ENV.MAX_DELAY_MS) || 15000,
 
     /** 首页预热延时范围 [min, max] (ms) */
     preVisitDelay: [3000, 6000],
@@ -120,7 +131,10 @@ const RETRY = {
         'NETWORK_ERROR',
         'TIMEOUT',
         'ECONNRESET',
-        'ENOTFOUND'
+        'ENOTFOUND',
+        'NO_NEXT_DATA',
+        'DATA_TRANSFORM_FAILED',
+        'CF_BLOCK'  // V173: Cloudflare 拦截也尝试重试（会自动切换端口）
     ],
 
     /** 不可重试的错误类型 (永久失败) */
@@ -147,8 +161,8 @@ const RETRY = {
 // ============================================================================
 
 const CONCURRENCY = {
-    /** 最大 Worker 数量 */
-    maxWorkers: parseInt(ENV.MAX_WORKERS) || 5,
+    /** 最大 Worker 数量 - V173: 默认 1 (最稳模式) */
+    maxWorkers: parseInt(ENV.MAX_WORKERS) || 1,
 
     /** 每批次任务数 */
     batchSize: parseInt(ENV.BATCH_SIZE) || 50,
@@ -161,11 +175,15 @@ const CONCURRENCY = {
 };
 
 // ============================================================================
-// 代理配置 (Proxy) - V172-STRENGTHEN: 动态端口池
+// 代理配置 (Proxy) - V173-OVERHAUL: 22 个独立 IP 火力全开
 // ============================================================================
 
 const PROXY_CONFIG = {
-    /** 代理端口池 (支持动态扩展) */
+    /**
+     * V173-OVERHAUL: 22 个独立 IP 代理端口池
+     * 端口范围: 7890 - 7911 (共 22 个)
+     * 每个端口对应一个独立 IP 地址
+     */
     ports: (() => {
         // 优先使用环境变量
         if (ENV.PROXY_PORTS) {
@@ -173,8 +191,8 @@ const PROXY_CONFIG = {
                 .map(p => parseInt(p.trim()))
                 .filter(p => !isNaN(p));
         }
-        // 默认 5 个端口，可扩展到 100+
-        return Array.from({ length: 5 }, (_, i) => 7890 + i);
+        // V173: 默认 22 个端口，火力全开！
+        return Array.from({ length: 22 }, (_, i) => 7890 + i);
     })(),
 
     /** 默认代理端口 */
@@ -196,12 +214,33 @@ const PROXY_CONFIG = {
     },
 
     /**
-     * V172-STRENGTHEN: 根据 Worker ID 自动分配端口
-     * @param {number} workerId - Worker 编号
+     * V173-OVERHAUL: 根据 Worker ID 完美映射到 22 个端口
+     * @param {number} workerId - Worker 编号 (1-based)
      * @returns {number} 代理端口
      */
     getPortByWorker(workerId) {
-        return this.ports[workerId % this.ports.length];
+        // Worker ID 是 1-based，端口数组是 0-based
+        const index = (workerId - 1) % this.ports.length;
+        return this.ports[index];
+    },
+
+    /**
+     * V173-OVERHAUL: 获取下一个可用端口 (用于故障切换)
+     * @param {number} currentPort - 当前端口
+     * @returns {number} 下一个端口
+     */
+    getNextPort(currentPort) {
+        const currentIndex = this.ports.indexOf(currentPort);
+        const nextIndex = (currentIndex + 1) % this.ports.length;
+        return this.ports[nextIndex];
+    },
+
+    /**
+     * V173-OVERHAUL: 获取随机端口 (用于分散压力)
+     * @returns {number} 随机端口
+     */
+    getRandomPort() {
+        return this.ports[Math.floor(Math.random() * this.ports.length)];
     },
 
     /**
@@ -213,6 +252,14 @@ const PROXY_CONFIG = {
         while (this.ports.length < count) {
             this.ports.push(currentMax + this.ports.length);
         }
+    },
+
+    /**
+     * V173-OVERHAUL: 打印端口池状态
+     */
+    printStatus() {
+        console.log(`📡 代理池状态: ${this.ports.length} 个独立 IP 就绪`);
+        console.log(`   端口范围: ${this.ports[0]} - ${this.ports[this.ports.length - 1]}`);
     }
 };
 
@@ -367,7 +414,149 @@ const FINGERPRINT = {
     languages: ['en-US,en;q=0.9', 'en-GB,en;q=0.9', 'en-US,en;q=0.9,en-GB;q=0.8'],
 
     /** 时区池 */
-    timezones: ['Europe/London', 'America/New_York', 'Europe/Paris']
+    timezones: ['Europe/London', 'America/New_York', 'Europe/Paris'],
+
+    /**
+     * V173: 动态 User-Agent 轮换池 (20 个主流 UA)
+     * 包含最新的桌面端和移动端浏览器指纹
+     */
+    uaPool: [
+        // Chrome 桌面端 (Windows)
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36',
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36',
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36',
+        // Chrome 桌面端 (macOS)
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36',
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36',
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+        // Edge 桌面端
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36 Edg/133.0.0.0',
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36 Edg/132.0.0.0',
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36 Edg/133.0.0.0',
+        // Firefox 桌面端
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:135.0) Gecko/20100101 Firefox/135.0',
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:134.0) Gecko/20100101 Firefox/134.0',
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:135.0) Gecko/20100101 Firefox/135.0',
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 14.0; rv:134.0) Gecko/20100101 Firefox/134.0',
+        // Safari 桌面端 (macOS)
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15',
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Safari/605.1.15',
+        // Chrome 移动端 (Android)
+        'Mozilla/5.0 (Linux; Android 14; SM-S918B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Mobile Safari/537.36',
+        'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Mobile Safari/537.36',
+        // Safari 移动端 (iOS)
+        'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1',
+        'Mozilla/5.0 (iPad; CPU OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1'
+    ],
+
+    /**
+     * V173: 获取随机 User-Agent
+     * @returns {string} 随机 UA 字符串
+     */
+    getRandomUA() {
+        return this.uaPool[Math.floor(Math.random() * this.uaPool.length)];
+    },
+
+    /**
+     * V173: 获取随机视口尺寸
+     * @returns {Object} 视口配置
+     */
+    getRandomViewport() {
+        const viewports = [
+            { width: 1920, height: 1080 },
+            { width: 1366, height: 768 },
+            { width: 1440, height: 900 },
+            { width: 1536, height: 864 },
+            { width: 1280, height: 720 },
+            { width: 1600, height: 900 },
+            { width: 2560, height: 1440 },
+            { width: 1287, height: 1271 }  // 原始会话镜像尺寸
+        ];
+        return viewports[Math.floor(Math.random() * viewports.length)];
+    }
+};
+
+// ============================================================================
+// V173: FotMob 深度静默模式配置 (Cool Down)
+// ============================================================================
+
+const FOTMOB_COOL_DOWN = {
+    /** 是否启用深度静默模式 */
+    enabled: ENV.ENABLE_COOL_DOWN !== 'false',
+
+    /** 触发熔断的连续失败次数 */
+    triggerThreshold: parseInt(ENV.COOL_DOWN_THRESHOLD) || 3,
+
+    /** 冷却时间 (毫秒) - 默认 30 分钟 */
+    durationMs: parseInt(ENV.COOL_DOWN_DURATION_MS) || 30 * 60 * 1000,
+
+    /** 需要触发冷却的错误类型 */
+    triggerErrors: [
+        'SIZE_TOO_SMALL',
+        'TURNSTILE_REQUIRED',
+        'CONTAINS_TURNSTILE',
+        'BLOCKED',
+        'CAPTCHA'
+    ],
+
+    /** 当前冷却状态 (运行时) */
+    _activeCoolDowns: new Map(),
+
+    /**
+     * 检查是否应该触发冷却
+     * @param {string} errorType - 错误类型
+     * @param {number} consecutiveFailures - 连续失败次数
+     * @returns {boolean}
+     */
+    shouldTrigger(errorType, consecutiveFailures) {
+        const isErrorMatch = this.triggerErrors.some(e =>
+            errorType.includes(e) || e.includes(errorType)
+        );
+        return isErrorMatch && consecutiveFailures >= this.triggerThreshold;
+    },
+
+    /**
+     * 进入冷却状态
+     * @param {number} workerId - Worker ID
+     */
+    enterCoolDown(workerId) {
+        const endTime = Date.now() + this.durationMs;
+        this._activeCoolDowns.set(workerId, {
+            startTime: Date.now(),
+            endTime,
+            duration: this.durationMs
+        });
+        const minutes = Math.round(this.durationMs / 60000);
+        console.log(`❄️ Worker ${workerId} 进入深度静默模式，冷却 ${minutes} 分钟`);
+    },
+
+    /**
+     * 检查是否在冷却中
+     * @param {number} workerId - Worker ID
+     * @returns {boolean}
+     */
+    isInCoolDown(workerId) {
+        const state = this._activeCoolDowns.get(workerId);
+        if (!state) return false;
+
+        if (Date.now() >= state.endTime) {
+            this._activeCoolDowns.delete(workerId);
+            return false;
+        }
+        return true;
+    },
+
+    /**
+     * 获取剩余冷却时间 (毫秒)
+     * @param {number} workerId - Worker ID
+     * @returns {number} 剩余毫秒数，0 表示不在冷却中
+     */
+    getRemainingTime(workerId) {
+        const state = this._activeCoolDowns.get(workerId);
+        if (!state) return 0;
+        return Math.max(0, state.endTime - Date.now());
+    }
 };
 
 // ============================================================================
@@ -536,6 +725,9 @@ module.exports = {
     INCREMENTAL_CONFIG,
     RUN_MODES,
 
+    // V173: 新增配置
+    FOTMOB_COOL_DOWN,
+
     // 辅助函数
     getRandomDelay,
     getExponentialBackoff,
@@ -543,6 +735,6 @@ module.exports = {
     randomChoice,
 
     // 版本信息
-    VERSION: 'V172.100',
-    BUILD_DATE: '2026-02-27'
+    VERSION: 'V173.0.0',
+    BUILD_DATE: '2026-02-28'
 };

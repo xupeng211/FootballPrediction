@@ -1,8 +1,8 @@
-# FootballPrediction V171
+# FootballPrediction V173
 
-> **工业级足球预测平台** - 全息收割系统
+> **工业级足球预测平台** - 网页渗透模式 + 中央监控大屏
 
-[![Version](https://img.shields.io/badge/version-171.2.0-blue.svg)](https://github.com/xupeng211/FootballPrediction)
+[![Version](https://img.shields.io/badge/version-173.0.0-blue.svg)](https://github.com/xupeng211/FootballPrediction)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Node](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen.svg)](https://nodejs.org/)
 [![Python](https://img.shields.io/badge/python-3.11+-blue.svg)](https://python.org)
@@ -11,15 +11,17 @@
 
 ## 🎯 项目简介
 
-V171 是一个**工业级足球预测平台**，通过多源数据采集、C++ 模糊匹配和 AI 多模型共识，实现高精度的比赛预测。
+V173 是一个**工业级足球预测平台**，通过多源数据采集、C++ 模糊匹配和 AI 多模型共识，实现高精度的比赛预测。
 
 ### 核心特性
 
 - 🔍 **L1 Discovery**: 自动发现未来 7 天的比赛
 - 🔗 **C++ Fuzzy Bridge**: RapidFuzz 高性能队名匹配
 - 🌐 **L2/L3 Harvest**: 多源数据采集 (FotMob + OddsPortal)
-- 🧠 **V171 Prediction**: 3 模型共识预测
+- 🧠 **V173 Prediction**: 3 模型共识预测
 - 🛡️ **NetworkShield**: 22 节点代理池熔断保护
+- 🕵️ **网页渗透模式**: 绕过 API 限制，直接从网页提取数据
+- 📊 **中央监控大屏**: 实时查看收割进度和状态
 
 ---
 
@@ -142,11 +144,20 @@ flowchart TB
 
 | 命令 | 描述 |
 |------|------|
-| `npm run harvest` | 批量收割 (50 场) |
+| `npm run harvest` | 批量收割 (50 场) - V173 装甲群模式 |
 | `npm run harvest:quick` | 快速收割测试 |
 | `npm run harvest:limit 10` | 限制收割 10 场 |
 | `npm run extract-urls` | 提取真实 URL Hash |
 | `npm run scheduler` | 启动无人值守调度器 |
+
+### V173 监控与诊断
+
+| 命令 | 描述 |
+|------|------|
+| `npm run watch` | 启动中央监控大屏 (实时进度) |
+| `npm run status` | 查看当前收割状态 |
+| `npm run report` | 生成资产报告 |
+| `npm run diagnose` | 运行诊断实验 |
 
 ### 代码质量
 
@@ -165,6 +176,79 @@ flowchart TB
 | `npm test` | 运行所有测试 |
 | `npm run test:v171` | V171 专项测试 |
 | `npm run test:python` | Python 测试 |
+
+---
+
+## 🕵️ V173 网页渗透模式
+
+V173 引入了全新的**网页渗透模式**，绕过 API 限制，直接从 FotMob 网页版提取数据。
+
+### 工作原理
+
+```
+传统 API 模式:
+  API 请求 → JSON 响应 → 数据存储
+
+网页渗透模式:
+  浏览器访问 → __NEXT_DATA__ 提取 → 数据转换 → 存储
+```
+
+### 核心优势
+
+- **绕过 API 限制**: 直接从网页提取数据，无需 API 密钥
+- **更丰富的数据**: 包含 API 不提供的详细统计
+- **动态 UA 轮换**: 20 个主流 User-Agent 随机切换
+- **深度静默模式**: 连续失败时自动进入冷却期
+
+### 使用方式
+
+```bash
+# 启动 V173 装甲群收割器
+docker-compose -f docker-compose.dev.yml exec dev npm run harvest
+
+# 查看实时进度
+docker-compose -f docker-compose.dev.yml exec dev npm run watch
+
+# 查看状态文件 (实时更新的 JSON)
+cat /app/logs/live_status.json
+```
+
+---
+
+## 📊 中央监控大屏
+
+V173 新增**中央监控大屏**，实时查看收割进度。
+
+### 启动监控
+
+```bash
+npm run watch
+```
+
+### 监控内容
+
+- **Worker 状态**: 每个 Worker 的运行状态、成功/失败次数
+- **总进度**: 实时进度条、预估剩余时间
+- **代理状态**: 22 个代理端口的使用情况
+- **心跳机制**: 每 10 秒更新一次状态文件
+
+### 状态文件
+
+状态文件位于 `/app/logs/live_status.json`，包含：
+
+```json
+{
+  "version": "V173.0.0",
+  "timestamp": "2026-02-28T10:00:00Z",
+  "total": 100,
+  "processed": 45,
+  "success": 42,
+  "failed": 3,
+  "progressPct": "45.0",
+  "workers": { ... },
+  "proxyStatus": { ... }
+}
+```
 
 ---
 
